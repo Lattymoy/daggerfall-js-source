@@ -161,7 +161,7 @@ test('WM4b: the wiring - the pipeline answers 41601 before ARCH3D, and both inte
   const pipeline = src('src/scenes/dataPipeline.js');
   // The replacement arm sits ABOVE the ARCH3D lookup in getGpuMesh, as
   // DFU asks MeshReplacement before it reads the classic record.
-  const fn = pipeline.slice(pipeline.indexOf('async function getGpuMesh('));
+  const fn = pipeline.slice(pipeline.indexOf('async function buildGpuMesh('));   // AUDIT 68: getGpuMesh's build (cachedMesh is its cache door)
   const replaceAt = fn.indexOf('MACHINERY_MODEL_ID');
   const archAt = fn.indexOf('arch.getRecordIndex(modelIdNum)');
   assert.ok(replaceAt > 0 && replaceAt < archAt, 'the replacement must be tried before ARCH3D');

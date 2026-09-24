@@ -15,8 +15,7 @@ import { raceActivation } from '../src/player/activationRace.js';
 import { corpseLootTargets, pileBody } from '../src/scenes/corpseMarker.js';
 import { worldHoverFrame, destroyWorldPlaque, bodyStackText } from '../src/ui/worldPlaque.js';
 import { setBindings } from '../src/ui/input.js';
-import { ACTIONS, DEFAULT_BINDINGS, createBindings, resetDefaults } from '../src/systems/inputActions.js';
-import { PORT_ROWS } from '../src/ui/enhancedControls.js';
+import { ACTIONS, DEFAULT_BINDINGS, ACTION_GROUPS, createBindings, resetDefaults } from '../src/systems/inputActions.js';
 import { mountEnhancedInventory, remoteModel } from '../src/ui/enhancedInventory.js';
 import { NativeInventoryWindow, pileLabel } from '../src/ui/nativeInventory.js';
 import { REMOTE_TARGET_ICON_RECT } from '../src/ui/targetIconPanel.js';
@@ -281,7 +280,7 @@ test('LOOT-STACK the hosts by source: all four corpse doors hand the window the 
   const dc = rd('src/scenes/dungeonContext.js');
   assert.match(dc, /takeLoot\(key, mode = 'grab', pileKeys = null\) \{/);
   assert.match(dc, /if \(!pileKeys && quickLootTake\(key, /);
-  assert.match(dc, /const pile = kind === 'corpse' \? lootPile\(key, \{\n\s*keys: pileKeys,\n\s*describe: \(k\) => \{ const b = foes\[Number\(k\.split\(':'\)\[1\]\)\]; return b\?\.dead \? pileBody\(b\) : null; \},\n\s*open: \(k, keys\) => \{ this\.takeLoot\(k, 'grab', keys\); \},\n\s*\}\) : null;\n\s*if \(pile\) lootHooks = \{ \.\.\.\(lootHooks \?\? \{\}\), pile \};/);
+  assert.match(dc, /const pile = kind === 'corpse' \? lootPile\(key, \{\n\s*keys: pileKeys,\n\s*describe: \(k\) => \{ const b = foes\[Number\(k\.split\(':'\)\[1\]\)\]; return lootableBody\(b\) \? pileBody\(b\) : null; \},[^\n]*\n\s*open: \(k, keys\) => \{ this\.takeLoot\(k, 'grab', keys\); \},\n\s*\}\) : null;\n\s*if \(pile\) lootHooks = \{ \.\.\.\(lootHooks \?\? \{\}\), pile \};/);
   // a tab closes its window and opens the next in one click, before the frame's drain empties the slot
   assert.match(dc, /if \(activeOverlay && !activeOverlay\.done\) return source\.length;/);
   for (const f of ['src/scenes/exteriorFoes.js', 'src/scenes/cityGuards.js']) assert.match(rd(f), /pileBody: \(key\) => pileBody\(corpseEntryFor\((?:foes|guards), key, '(?:foe|guard)Corpse', corpseLens\)\),/, `${f}: the pool's word on a body`);
@@ -290,7 +289,7 @@ test('LOOT-STACK the hosts by source: all four corpse doors hand the window the 
 test('LOOT-STACK the key is gone: no NextBody action, no default on ], no controls row, and no host arms a turn - the pile lives in the window (mutant: a host still arming one)', () => {
   assert.ok(!ACTIONS.includes('NextBody'));
   assert.ok(!DEFAULT_BINDINGS.some(([c, a]) => c === 'BracketRight' || a === 'NextBody'));
-  assert.ok(!PORT_ROWS.some((r) => r.action === 'NextBody'));
+  assert.ok(!ACTION_GROUPS.some((grp) => grp.rows.some((r) => r.action === 'NextBody')));   // KB1: the controls page draws the registry's groups
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js', 'src/ui/worldPlaque.js']) {
     assert.doesNotMatch(rd(f), /NextBody|armBodyTurn|turnBodyStack/, f);
   }

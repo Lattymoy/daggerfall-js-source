@@ -61,7 +61,7 @@
 // head, which this camera never moves, so there is nothing to
 // re-origin and `Don'tOffsetAttacks` has nothing to stop.
 
-import { MOD_SETTINGS } from '../systems/modSettings.js';
+import { MOD_SETTINGS, modSettingsGeneration } from '../systems/modSettings.js';
 import { AUTO_TOGGLE_ROWS, AUTO_TOGGLE, autoToggleRows } from './eotbBillboard.js';   // [IL] LateUpdate's table
 
 /** `eyeRadius` is a field initialiser in the mod's own .ctor, not a
@@ -89,6 +89,21 @@ export const OVERRIDE_ORDER = Object.freeze(['Boat', 'Mount', 'Weapon']);
 export const AUTO_TOGGLE_MESSAGES = Object.freeze({ armed: 'Auto-toggle POV enabled!', disarmed: 'Auto-toggle POV disabled!' });
 
 const setting = (name) => MOD_SETTINGS['eye-of-the-beholder'].keys[name];
+
+/** [IL] LoadSettings' tail (IL_1156-IL_1195): ToggleOffset(offset) re-runs
+ *  only when one of these four sections `HasChanged`. */
+const TOGGLE_SECTIONS = Object.freeze(['Camera', 'Graphics', 'Animation', 'Compatibility']);
+/** AUDIT 68 S15-eotb-settings-snapshot: the mod's values, section by
+ *  section, so a load can answer `ModSettingsChange.HasChanged` - a new
+ *  rig re-reading the same store is not a change, a pane edit is. */
+function sectionValues(get) {
+  const out = {};
+  for (const key of Object.keys(MOD_SETTINGS['eye-of-the-beholder'].keys)) {
+    (out[key.split('.')[0]] ??= []).push(get?.('eye-of-the-beholder', key) ?? null);
+  }
+  for (const section of Object.keys(out)) out[section] = JSON.stringify(out[section]);
+  return out;
+}
 
 /**
  * Read the mod's settings the way `LoadSettings` reads them, including
@@ -134,9 +149,8 @@ export function readCameraSettings(get) {
     scrollable: !!g('CameraScrolling.ScrollableZOffset'),
     increment: g('CameraScrolling.ScrollIncrement') ?? 0,
     boatTarget: g('CameraOverrideBoat.Target') ?? 0,
-    // the two keys the mod binds beside the wheel
-    switchShoulderKey: g('Camera.SwitchShoulder') ?? null,
-    autoToggleKey: g('AutoTogglePerspective.ToggleInput') ?? null,
+    // KB1: the two keys the mod binds beside the wheel are the registry's ShoulderSwitch and AutoPerspective
+    // actions (systems/inputActions.js MOD_ACTIONS), read by the rig - not settings of the camera's
     auto,
     /** [IL] `autoPOVSwitch` is DERIVED (IL_10e1-IL_112d): the nine rows
      *  summed, armed when any is not Don'tChange. The bundle ships every
@@ -244,6 +258,9 @@ export function createEotbCamera() {
   let popup = null;
   /** `spellCasting.enabled`, the FPS spell hands - false in third person */
   let spellHandsEnabled = true;
+  /** AUDIT 68 S15-eotb-settings-snapshot: the last LoadSettings - its
+   *  reader, the store's generation then, and what each section read. */
+  let loaded = null;
 
   /**
    * `posOffset`, the mod's own property. Four arms in the order the IL
@@ -370,6 +387,29 @@ export function createEotbCamera() {
     } else mirror = mirrorOriginal;
   }
 
+  /** [IL] `LoadSettings` (IL_0ae2-IL_119a): the fields, `autoPOVSwitch`
+   *  derived when its section changed (IL_10e1-IL_112d), and - when the
+   *  Camera, Graphics, Animation or Compatibility section changed - the
+   *  billboard re-read and `ToggleOffset(offset)` re-run so it, the torch
+   *  and the hands take the new values. AUDIT 68
+   *  S15-eotb-settings-snapshot: DFU hands it what changed; the port
+   *  compares sections, so a new rig re-reading the same store neither
+   *  resets the zoom nor re-arms the table, and `tick` re-runs it when
+   *  the store moves, so a pane edit is live. */
+  function loadSettings(get) {
+    const was = loaded?.sections;
+    const sections = sectionValues(get);
+    const changed = (section) => !was || was[section] !== sections[section];
+    loaded = { get, generation: modSettingsGeneration(), sections };
+    cfg = readCameraSettings(get);
+    if (changed('AutoTogglePerspective')) autoPOVSwitch = cfg.autoPOVSwitch;
+    if (TOGGLE_SECTIONS.some(changed)) {
+      billboard?.reload?.();
+      toggleOffset(offset);
+    }
+    return cfg;
+  }
+
   /** One row of the table, applied: 1 takes first person, 2 third, 0
    *  leaves the view where it is. */
   function applyRow(row) {
@@ -409,17 +449,7 @@ export function createEotbCamera() {
     /** The mod's OnToggleOffset event - MessageReceiver's subscribers. */
     onToggleOffset(fn) { listeners.add(fn); return () => listeners.delete(fn); },
 
-    /** [IL] `LoadSettings` (IL_0ae2-IL_119a): the fields, `autoPOVSwitch`
-     *  derived, and - when the Camera, Graphics, Animation or
-     *  Compatibility section changed - `ToggleOffset(offset)` re-run so
-     *  the billboard, the torch and the hands take the new values.
-     *  `changed` is that flag; the pane's live edit passes it. */
-    loadSettings(get, { changed = true } = {}) {
-      cfg = readCameraSettings(get);
-      autoPOVSwitch = cfg.autoPOVSwitch;
-      if (changed) toggleOffset(offset);
-      return cfg;
-    },
+    loadSettings,
 
     /** [IL] `Start` (IL_0668-IL_067b): `offset = offsetDefault;
      *  ToggleOffset(offset)`. The port's camera is one instance across
@@ -511,6 +541,7 @@ export function createEotbCamera() {
      * LateUpdate's auto-toggle (IL_1847-IL_1c6e) rides the same frame.
      */
     tick(state = {}) {
+      if (loaded && loaded.generation !== modSettingsGeneration()) loadSettings(loaded.get);   // AUDIT 68 S15-eotb-settings-snapshot: a pane edit, live
       lastState = state;
       const clicks = pending;
       pending = 0;

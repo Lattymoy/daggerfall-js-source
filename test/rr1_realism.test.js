@@ -12,8 +12,8 @@ import {
   RR_MOD, LOAN_VALUES, BED_MODELS, rrAdjustWeaponHitChanceMod, rrAdjustWeaponAttackDamage, rrClimbingChance, NO_CLIMB_HOLDING_WEAPON,
   rrMeleeWeaponAnimTime, rrWeaponToHit, rrConditionDamageThroughPhysicalHit, rrDamageModifierClassic, rrLoanMaxPerLevel, rrMaxBankLoan,
   rrShipAvailable, rrEncumbranceEffect, rrBandageHeal, rrDouseOnDungeonExit, RR_POTION_RECIPES, RR_ENEMY_APPEARANCE, applyEnemyAppearance,
-  revertEnemyAppearance, enemyAppearanceApplied, RR_UNDERWORLD, rrUnderworldRule, RR_FIGHTERS_GUILD_SKILLS, RR_FIGHTERS_TRAINING_SKILLS,
-  rrFightersGuildSkills, rrFightersTrainingSkills, isBedModel, bedSleepingOn,
+  revertEnemyAppearance, enemyAppearanceApplied, RR_UNDERWORLD, rrUnderworldRule,
+  isBedModel, bedSleepingOn,
 } from '../src/systems/rrRealism.js';
 import { installRoleplayRealism, setRrHostSeams, roleplayRealismInstalled } from '../src/systems/rrInstall.js';
 import { formulaOverride, adjustWeaponHitChanceMod, adjustWeaponAttackDamage, damageModifier, damageEquipment, maxEncumbrance } from '../src/combat/formulas.js';
@@ -27,7 +27,7 @@ import { runMagicRoundsFor } from '../src/systems/worldTick.js';
 import { potionRecipeByKey, potionRecipeKey, potionBundle } from '../src/systems/potions.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 import { MOBILE_TYPES } from '../src/characters/mobileTypes.js';
-import { GUILDS, calculateNewRank, joinGuild, updateRank, guildSkillsOf, underworldRuleOf } from '../src/systems/guilds.js';
+import { GUILDS, calculateNewRank, joinGuild, updateRank, underworldRuleOf } from '../src/systems/guilds.js';
 import { trainingSkills, TRAINING_SKILLS } from '../src/systems/guildServices.js';
 import { createFactionRep, getReputation } from '../src/systems/factionRep.js';
 import { SKILLS } from '../src/systems/skills.js';
@@ -48,7 +48,7 @@ const sword = (material = 0) => mint({ group: 'Weapons', templateIndex: WEAPONS.
 
 installRoleplayRealism();
 
-test('RR1 the record: the manifest, the switches (27 keys, the mod\'s words and defaults), the install once', () => {
+test('RR1 the record: the manifest, the switches (27 keys - 26 on the pane, fightersTeachHandToHand retired - the mod\'s words and defaults), the install once', () => {
   assert.equal(RR_MOD.guid, 'd828b782-46e9-40e7-8ae6-19cde308032e');
   const vendored = JSON.parse(rd('vendor/roleplay-realism/roleplay-realism.dfmod.json'));
   assert.equal(vendored.GUID, RR_MOD.guid); assert.equal(vendored.ModVersion, '1.8');
@@ -58,6 +58,7 @@ test('RR1 the record: the manifest, the switches (27 keys, the mod\'s words and 
   for (const sec of settings.Sections) {
     for (const k of sec.Keys) {
       const name = sec.Name === 'Modules' ? k.Name : `${sec.Name}.${k.Name}`;
+      if (name === 'fightersTeachHandToHand') { assert.equal(keys[name], undefined, 'FGH2H-R: the ONE retired switch - the base guild counts HandToHand beside Giantish'); n++; continue; }
       assert.ok(keys[name], `${name} is on the pane`);
       assert.equal(keys[name].description, k.Description, `${name}: the mod's own words`);
       const expected = typeof k.Value === 'string' ? (k.Value === 'True' ? true : k.Value === 'False' ? false : Number(k.Value)) : k.Value;
@@ -290,7 +291,7 @@ test('RR1 enemyAppearance: the eight class rows re-textured with their frames (:
   revertEnemyAppearance(ENEMY_BASICS);
 });
 
-test('RR1 underworldExpulsion: the two guild classes - expulsion allowed, the join floor at 2, the death squad, the mod\'s own lines; fightersTeachHandToHand: the two lists with HandToHand for Giantish', () => {
+test('RR1 underworldExpulsion: the two guild classes - expulsion allowed, the join floor at 2, the death squad, the mod\'s own lines; fightersTeachHandToHand retired: the Fighters read their own lists', () => {
   reset();
   assert.equal(rrUnderworldRule('ThievesGuild'), RR_UNDERWORLD.ThievesGuild);
   assert.equal(rrUnderworldRule('MagesGuild'), null);
@@ -325,16 +326,10 @@ test('RR1 underworldExpulsion: the two guild classes - expulsion allowed, the jo
   assert.deepEqual(spawned[0], [MOBILE_TYPES.Rogue, 1, 8]); assert.deepEqual(spawned[15], [MOBILE_TYPES.Thief, 1, 4]);
   assert.equal(underworldRuleOf(tg), RR_UNDERWORLD.ThievesGuild);
   setRrHostSeams({ spawnFoe: null });
-  // the Fighters
-  assert.deepEqual(RR_FIGHTERS_GUILD_SKILLS, [SKILLS.Archery, SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.HandToHand, SKILLS.LongBlade, SKILLS.Orcish, SKILLS.ShortBlade]);
-  assert.equal(RR_FIGHTERS_TRAINING_SKILLS.length, 11); assert.ok(RR_FIGHTERS_TRAINING_SKILLS.includes(SKILLS.HandToHand) && !RR_FIGHTERS_TRAINING_SKILLS.includes(SKILLS.Giantish));
-  assert.equal(rrFightersGuildSkills('FightersGuild'), null, 'the switch ships OFF');
-  assert.deepEqual(guildSkillsOf(GUILDS.FightersGuild), GUILDS.FightersGuild.skills);
-  on('fightersTeachHandToHand', true);
-  assert.equal(rrFightersGuildSkills('FightersGuild'), RR_FIGHTERS_GUILD_SKILLS);
-  assert.equal(rrFightersTrainingSkills('MagesGuild'), null);
-  assert.equal(guildSkillsOf(GUILDS.FightersGuild), RR_FIGHTERS_GUILD_SKILLS, 'GuildSkills, the virtual');
-  assert.equal(trainingSkills(GUILDS.FightersGuild), RR_FIGHTERS_TRAINING_SKILLS, 'TrainingSkills, the virtual');
+  // the Fighters: FightersGuildRR is retired (FGH2H-R) - the guild's own lists, which carry HandToHand beside Giantish
+  assert.equal(MOD_SETTINGS[V].keys.fightersTeachHandToHand, undefined, 'the switch is off the pane');
+  assert.equal(trainingSkills(GUILDS.FightersGuild), TRAINING_SKILLS.FightersGuild);
+  assert.ok(GUILDS.FightersGuild.skills.includes(SKILLS.HandToHand) && GUILDS.FightersGuild.skills.includes(SKILLS.Giantish));
   assert.equal(trainingSkills(GUILDS.MagesGuild), TRAINING_SKILLS.MagesGuild);
   reset();
 });
@@ -356,7 +351,8 @@ test('RR1 bedSleeping and the wiring: the three bed models, listed by the interi
   assert.match(rd('src/combat/formulas.js'), /chanceToHitMod \+= _overrides\.get\('calculateWeaponToHit'\)\?\.\(weapon\) \?\? \(WEAPON_MATERIAL_MODIFIER\[weapon\.material\] \?\? 0\) \* 10;/);
   assert.match(rd('src/combat/formulas.js'), /if \(_overrides\.get\('applyConditionDamageThroughPhysicalHit'\)\?\.\(item, owner, damage, \{ say \}\) === true\) return;/);
   assert.match(rd('src/player/climbing.js'), /const chance = climbingChanceOverride\(base, \{ \.\.\.i, say: this\.deps\.say \?\? null \}\) \?\? climbingChance\(/);
-  assert.match(rd('src/combat/weaponRig.js'), /setWeaponPoseProbe\(\(\) => \(\{ \.\.\.weaponPoseOf\(playerWeapon\), weaponType: weaponTypeForItem\(playerWeapon\.weapon\) \}\)\);/, 'the pair through its one law (HARD2c)');
+  assert.match(rd('src/combat/weaponRig.js'), /const poseProbe = \(\) => \(\{ \.\.\.weaponPoseOf\(playerWeapon\), weaponType: weaponTypeForItem\(playerWeapon\.weapon\) \}\);/, 'the pair through its one law (HARD2c)');
+  assert.match(rd('src/combat/weaponRig.js'), /setWeaponPoseProbe\(poseProbe\);/, 'AUDIT 68 S09-rig-globals-last-built: re-claimed by the stepping rig');
   assert.match(rd('src/player/mountRig.js'), /shipAvailable: isShipAvailable\(\{ canSail: !!onShip, ownsShip: ownsShip\(playerEntity\), \.\.\.\(shipLocation\?\.\(\) \?\? \{\}\) \}\)/);
   assert.match(rd('src/systems/worldTick.js'), /for \(const fn of _roundHooks\.values\(\)\) fn\(entity, \{ nowMinutes: r \+ 1, sinks, say \}\);/);
   assert.match(rd('src/systems/guilds.js'), /return guild\?\.neverExpels && !underworldRuleOf\(guild\) && newRank < 0 \? 0 : newRank;/);

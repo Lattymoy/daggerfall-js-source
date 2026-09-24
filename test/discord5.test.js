@@ -69,12 +69,14 @@ test('BLACK-ARMS, driven: an RGB triple through drawScreenQuad uploads a FINITE 
   assert.equal(screenQuadBlends(null, [1, 1, 1, 0.5]), true);
   assert.equal(screenQuadBlends({}, [1, 1, 1]), false, 'a textured cutout blends only when asked');
   assert.equal(screenQuadBlends({}, [1, 1, 1], { blend: true }), true);
+  assert.equal(screenQuadBlends({}, [1, 1, 1], {}, true), true, 'OVH2: a UI pack\'s alpha art blends without being asked at the call');
+  assert.equal(screenQuadBlends(null, [1, 1, 1], {}, true), false, '...and the flag means nothing on a solid quad');
 });
 
 test('BLACK-ARMS by source: the rig hands the triple through as it is (the fix is at the one seam every classic sprite ends in, not at four callers), the renderer defaults the fourth, and the browser probe draws the TRIPLE and reads the alpha back', () => {
   const rr = rd('src/render/renderer.js');
   assert.match(rr, /const a = color\[3\] \?\? 1;\s*if \(q\.r !== color\[0\] \|\| q\.g !== color\[1\] \|\| q\.b !== color\[2\] \|\| q\.a !== a\) \{\s*gl\.uniform4f\(this\._screenQuad\.color, color\[0\], color\[1\], color\[2\], a\);\s*q\.r = color\[0\]; q\.g = color\[1\]; q\.b = color\[2\]; q\.a = a;/);
-  assert.match(rr, /return \(!tex && \(color\[3\] \?\? 1\) < 1\) \|\| Boolean\(tex && opts\.blend\);/);
+  assert.match(rr, /return \(!tex && \(color\[3\] \?\? 1\) < 1\) \|\| Boolean\(tex && \(opts\.blend \|\| alphaArt\)\);/, 'OVH2: a texture uploaded as alpha art blends too - the solid arm is unchanged');
   assert.match(rd('src/combat/weaponRig.js'), /const fpTint = fpLightingOn\(\) \? \(renderer\?\.flatLightAt\?\.\(\) \?\? null\) : null;/, 'the triple, unchanged - MAC-I\'s own shape');
   assert.match(rr, /for \(let i = 0; i < 3; i\+\+\) out\[i\] = Math\.max\(floor, Math\.min\(1, out\[i\]\)\);\s*return out;/, 'flatLightAt answers THREE');
   const probe = rd('tools/macfpLightProbe.mjs');
@@ -96,21 +98,25 @@ test('3ARMS by source: both mods compare the IL\'s 2 to the port\'s Both - DFU d
 
 // ── TORCH-BIND ───────────────────────────────────────────────────────────
 
-test('TORCH-BIND, driven: every TextKey a module READS reaches its mod\'s tile drawer - the three torch keys, Eye Of The Beholder\'s two, Travel Options\' custom key - and the relaxed switch rides the torch tile', () => {
-  const READ_KEYS = [
-    ['handheld-torches', 'Handling.ToggleLightInput'], ['handheld-torches', 'Handling.ManualDropInput'], ['handheld-torches', 'Throwing.ThrowTorchInput'],
-    ['eye-of-the-beholder', 'Camera.SwitchShoulder'], ['eye-of-the-beholder', 'AutoTogglePerspective.ToggleInput'],
-    ['travel-options', 'RoadsIntegration.FollowPathsCustomKeyBind'],
-  ];
-  for (const [v, k] of READ_KEYS) {
-    assert.equal(MOD_SETTINGS[v].keys[k].text, true, `${v}/${k} is a TextKey`);
-    assert.ok(modDials(v).includes(k), `${v}/${k} has a row in the tile drawer - the one door left after FT14`);
+test('TORCH-BIND (re-aimed by KB1): every key a vendored mod answers is a registry action with a row in Controls under the mod\'s name - the three torch keys, Eye Of The Beholder\'s two, Travel Options\' follow key, HCC\'s two - and no module reads a TextKey for a key any more', async () => {
+  // TORCH-BIND (a player: "No option to rebind Handheld Torches actions") put the TextKeys on the mods' tiles,
+  // because each module read its own key raw and that tile was the one door left. KB1 closed the door properly:
+  // the keys are actions (MOD_ACTIONS), drawn in Controls beside every other key where a clash can be seen, and the
+  // tiles carry no key dials. The relaxed switch still rides the torch tile.
+  const { MOD_ACTIONS, ACTION_GROUPS } = await import('../src/systems/inputActions.js');
+  const byMod = Object.fromEntries(ACTION_GROUPS.filter((g) => g.mod).map((g) => [g.mod, g.rows.map((r) => r.action)]));
+  for (const [vendor, rows] of Object.entries(MOD_ACTIONS)) {
+    assert.deepEqual(rows.map((r) => r.action), byMod[vendor], `${vendor}: every key has a Controls row, under the mod`);
+    for (const r of rows) {
+      assert.ok(MOD_SETTINGS[vendor].keys[r.legacy], `${vendor}/${r.legacy} is still declared - the one-time carry reads a player's old choice off it`);
+      assert.ok(!modDials(vendor).includes(r.legacy), `${vendor}/${r.legacy} is off the tile - its door is Controls`);
+    }
   }
   assert.ok(modDials('handheld-torches').includes('Handling.RelaxedTwoHandedWeapons'));
-  // the reads, so the table above cannot go stale in silence
-  assert.match(rd('src/player/eotbCamera.js'), /g\('Camera\.SwitchShoulder'\)[\s\S]{0,80}g\('AutoTogglePerspective\.ToggleInput'\)/);
-  assert.match(rd('src/systems/travelOptions.js'), /get\('RoadsIntegration\.FollowPathsCustomKeyBind'\)/);
-  assert.match(rd('src/systems/handheldTorches.js'), /s\['Handling\.ToggleLightInput'\][\s\S]{0,200}s\['Handling\.ManualDropInput'\][\s\S]{0,200}s\['Throwing\.ThrowTorchInput'\]/);
+  // the reads are gone, so the table above cannot go stale in silence
+  assert.doesNotMatch(rd('src/player/eotbCamera.js'), /g\('Camera\.SwitchShoulder'\)|g\('AutoTogglePerspective\.ToggleInput'\)/);
+  assert.doesNotMatch(rd('src/systems/travelOptions.js'), /get\('RoadsIntegration\.FollowPaths(Key|CustomKeyBind)'\)/);
+  assert.doesNotMatch(rd('src/systems/handheldTorches.js'), /s\['Handling\.ToggleLightInput'\]|s\['Handling\.ManualDropInput'\]|s\['Throwing\.ThrowTorchInput'\]/);
 });
 
 test('TORCH-BIND, driven: the controls pane carries TWO Continues - the head card, sticky, and a foot card after the last group - and the foot one saves', async () => {
@@ -201,7 +207,7 @@ test('HOTSLOT by source: the HUD\'s empty spell chip is a SOCKET (drawn dim, wea
   const hud = rd('src/ui/enhancedHud.js');
   assert.match(hud, /chip\.chip\.classList\.toggle\('empty', !sp\);\s*if \(!sp\) \{\s*chip\.chip\.classList\.remove\('readied', 'ghost', 'cycling'\);\s*chip\.name\.textContent = 'No spell';\s*quickTag\(chip, 'spellcap', tag\);\s*return;\s*\}/);
   assert.match(rd('src/ui/enhancedStyle.js'), /\.hud-qspell\.empty \{ display: flex; opacity: 0\.55; \}/);
-  assert.match(rd('src/ui/enhancedControls.js'), /\{ action: 'QuickSpell', label: 'Ready quickslot spell \(hold to cycle the book\)' \}/);
+  assert.match(rd('src/systems/inputActions.js'), /\['QuickSpell', 'Ready quickslot spell \(hold to cycle the book\) \/ hotbar slot 3'\]/, 'KB1: the label lives in the registry\'s groups');
 });
 
 // ── LOOT-REGEN ───────────────────────────────────────────────────────────

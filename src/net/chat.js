@@ -43,11 +43,18 @@ import { validRoll, rollText } from './dice.js';   // DICE1: a roll's line is th
  *  mark: drawn as one, and never stood over a head (ui/nameLayer.js bubbleLineOk).
  *
  *  `link`: the tab rides a room of its OWN, so the host opens one channel session for it (CHAT1's one session per
- *  tab, now per tab that has a room) - the World tab and the Region tab; the Party and Local tabs ride others'. */
+ *  tab, now per tab that has a room) - the World tab and the Region tab; the Party and Local tabs ride others'.
+ *
+ *  CHAT-P (2026-09-24, Mac: "Party chat should only show if in a party"): `hidden` is a tab that starts OFF the bar
+ *  and is put on it by the host while it has something to say - the Party tab while the player sits in a party
+ *  (ChatLog.setShown). `peekAll` (CHAT-W): a line on this tab stands over the world whatever tab the chat opens on -
+ *  a party's line is said to the player, where every other tab's is said to a room they happen to be in. */
+/** @typedef {{ id: string, label: string, room: string|null, link: boolean, hint: string, hidden?: boolean, peekAll?: boolean }} ChatTabRow */
+/** @type {ReadonlyArray<ChatTabRow>} */
 export const CHAT_TABS = Object.freeze([
   Object.freeze({ id: 'world', label: 'World', room: CHAT_WORLD_ROOM, link: true, hint: 'Everyone online' }),
   Object.freeze({ id: 'region', label: 'Region', room: null, link: true, hint: 'Everyone in the region you stand in' }),
-  Object.freeze({ id: 'party', label: 'Party', room: null, link: false, hint: 'Your party alone' }),
+  Object.freeze({ id: 'party', label: 'Party', room: null, link: false, hint: 'Your party alone', hidden: true, peekAll: true }),
   Object.freeze({ id: 'local', label: 'Local', room: null, link: false, hint: 'Those near enough to hear you - speak in character here, and put an aside out of character in (( ))' }),
 ]);
 /** CHAT-CHAN: how long the player must stand in another region before the Region tab moves to its channel, ms - a
@@ -94,6 +101,17 @@ export function localLineHeard(line, near, here, range = CHAT_SAY_RANGE) {
   const who = Array.isArray(near) ? near.find((p) => p?.id === line?.id) : null;
   return !!who && inEarshot(here, who.feet, range);
 }
+/** CHAT-P: the tab a social note lands on. A party's news goes to the Party tab beside its conversation (CHAT-CHAN) -
+ *  but only while that tab is on the bar, which is while the player sits in a party: a note about a party they are not
+ *  in (an invite answered, the one they just left) would land on a tab nobody can open. And the note that ENDS their
+ *  seat ("You were removed from the party") goes to the tab they are reading whatever order it and the party frame
+ *  arrive in - the Party tab is about to leave the bar with it on. */
+export function partyNoteTab(note, social, fallback) {
+  const code = String(note?.code ?? '');
+  if (!code.startsWith('party.') || !social?.party) return fallback;
+  if (code === 'party.kicked' && note?.acct != null && note.acct === social.acct) return fallback;
+  return 'party';
+}
 /** The most lines a tab keeps; the oldest go first. */
 export const CHAT_KEEP = 200;
 /** How long a line stays over the world once the panel is closed, ms; the last quarter fades. */
@@ -113,8 +131,8 @@ export function tagOf(id) {
 
 export class ChatLog {
   constructor({ tabs = CHAT_TABS, keep = CHAT_KEEP, now = () => Date.now() } = {}) {
-    this.tabs = tabs.map((t) => ({ id: t.id, label: t.label, room: t.room, link: t.link !== false, hint: t.hint ?? '', place: null, messages: [], unread: 0 }));
-    this.active = this.tabs[0]?.id ?? null;
+    this.tabs = tabs.map((t) => ({ id: t.id, label: t.label, room: t.room, link: t.link !== false, hint: t.hint ?? '', place: null, messages: [], unread: 0, shown: t.hidden !== true, peekAll: t.peekAll === true }));
+    this.active = this.tabs.find((t) => t.shown)?.id ?? null;
     this.open = false;        // the panel's state, as the log counts unread by it
     this.version = 0;         // bumps on every change the panel would show; the panel repaints on a new number, never per frame
     this._keep = Math.max(1, keep | 0);
@@ -177,7 +195,7 @@ export class ChatLog {
   /** The line's record, or null for nothing to say. DICE1: `roll` is a roll the RELAY made (the host hands it from the
    *  frame type, `onRoll`, never from a chat line) - kept only when the dice's law holds, and then the line's words are
    *  the dice's (rollText), its kind 'roll'. */
-  _line({ id = '', name = '', text = '', at = null, mine = false, system = false, red = false, roll = null, me = false } = {}, tabId) {
+  _line({ id = '', name = '', text = '', at = null, mine = false, system = false, red = false, dm = false, roll = null, me = false } = {}, tabId) {
     const rolled = roll && validRoll(roll) ? { n: roll.n, m: roll.m, k: roll.k, dice: [...roll.dice], total: roll.total } : null;
     if (roll && !rolled) return null;
     if (rolled) text = rollText(rolled);
@@ -199,9 +217,11 @@ export class ChatLog {
     // DICE1: 'roll', a roll the relay made (`roll` above), which no text can be; EMOTE1: 'me', an action - what the
     // speaker DOES, said with `me: true` on the wire (the relay's word) and drawn "Bran waves", never a system line.
     // `tab` is the tab the line was said on, or null for a line the game said on every tab.
-    const sys = !!system || !!red;
+    // TITLE-N: `dm` is the DUNGEON MASTER speaking - RED1's kind of flag for RED1's reason, set here from the relay's
+    // own frame type (`t:'dm'`), which a player cannot send; a voice over the game, so a system line too.
+    const sys = !!system || !!red || !!dm;
     const kind = rolled ? 'roll' : sys ? '' : me === true ? 'me' : isOocText(text) ? 'ooc' : '';
-    return { seq: ++this._seq, id: String(id), name: String(name), text, at: Number.isFinite(at) ? at : now, t: now, mine: !!mine, system: sys, red: !!red, kind, tab: tabId, ...(rolled ? { roll: rolled } : {}) };
+    return { seq: ++this._seq, id: String(id), name: String(name), text, at: Number.isFinite(at) ? at : now, t: now, mine: !!mine, system: sys, red: !!red, ...(dm ? { dm: true } : {}), kind, tab: tabId, ...(rolled ? { roll: rolled } : {}) };
   }
 
   /** A line onto a tab, the oldest dropped past the cap. */
@@ -210,9 +230,29 @@ export class ChatLog {
     if (tab.messages.length > this._keep) tab.messages.splice(0, tab.messages.length - this._keep);
   }
 
-  /** A tab to the front. */
+  /** CHAT-P: a tab on the bar or off it (the Party tab, while the player sits in a party). A tab taken off stops
+   *  counting unread - a number on a button nobody can see is a badge on the Chat button that no tab explains - and
+   *  when it was the front tab the first tab still on the bar takes its place. Its lines stay: the history of a
+   *  channel is not lost because the bar stopped showing it. */
+  setShown(id, shown) {
+    const tab = this.tab(id);
+    shown = !!shown;
+    if (!tab || tab.shown === shown) return false;
+    tab.shown = shown;
+    if (!shown) {
+      tab.unread = 0;
+      if (this.active === id) {
+        this.active = this.tabs.find((t) => t.shown)?.id ?? null;
+        if (this.open && this.active) this.markRead(this.active);
+      }
+    }
+    this.version++;
+    return true;
+  }
+
+  /** A tab to the front - one on the bar (CHAT-P: a hidden tab cannot be selected into view). */
   select(id) {
-    if (!this.tab(id) || id === this.active) return false;
+    if (!this.tab(id)?.shown || id === this.active) return false;
     this.active = id;
     if (this.open) this.markRead(id);
     this.version++;
@@ -233,7 +273,7 @@ export class ChatLog {
     if (tab && tab.unread) { tab.unread = 0; this.version++; }
   }
 
-  unreadTotal() { return this.tabs.reduce((n, t) => n + t.unread, 0); }
+  unreadTotal() { return this.tabs.reduce((n, t) => n + (t.shown ? t.unread : 0), 0); }
 
   /** The active tab's last `count` lines, newest last. */
   recent(count = this._keep) {
@@ -246,19 +286,25 @@ export class ChatLog {
    *  1 through three quarters of the window, then down to 0 - so a line
    *  arrives, stands, and goes.
    *
-   *  CHAT-CHAN: from EVERY tab, in the order they were heard. With one
-   *  tab the peek was that tab; with four, a line on a tab the player is
-   *  not reading would stand nowhere over the world and wait on a badge
-   *  - a party member's "help" is exactly the line that cannot wait. The
-   *  open panel keeps its tabs apart (the IC/OOC separation is the
-   *  reading, not the glance); the panel marks a peek line from another
-   *  tab with that tab's name (`line.tab`). A line kept on every tab
-   *  (pushAll) is one line here. */
+   *  CHAT-W (2026-09-24, Mac: "Messages sent in world chat shouldnt carry
+   *  over to region chat"): from THE TAB THE CHAT OPENS ON, and from a
+   *  tab whose lines are said to the player (`peekAll`, the Party tab
+   *  while it is on the bar). CHAT-CHAN drew every tab's here, so a World
+   *  line stood over the screen of a player reading Region - the open
+   *  panel kept the channels apart and the glance put them back
+   *  together. A room's line is that room's: the others say they have
+   *  news with their badge. A party member's "help" still cannot wait on
+   *  one - it is said to this player, not to a room they are in - and
+   *  the panel marks it with its tab's name (`line.tab`). A line kept on
+   *  every tab (pushAll) is one line here. */
   peek({ count = CHAT_PEEK, fade = CHAT_FADE_MS } = {}) {
     const now = this._now();
     const out = [];
     const heard = new Set();
-    for (const tab of this.tabs) for (let i = Math.max(0, tab.messages.length - count); i < tab.messages.length; i++) heard.add(tab.messages[i]);
+    for (const tab of this.tabs) {
+      if (!tab.shown || (tab.id !== this.active && !tab.peekAll)) continue;
+      for (let i = Math.max(0, tab.messages.length - count); i < tab.messages.length; i++) heard.add(tab.messages[i]);
+    }
     const lines = [...heard].sort((a, b) => a.seq - b.seq);
     for (const line of lines.slice(-count)) {
       const age = now - line.t;

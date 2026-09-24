@@ -17,7 +17,8 @@
 
 import { ImgFile } from '../formats/imgFile.js';
 import { bitmapToColor32 } from '../formats/color32Order.js';
-import { drawText, measureText } from './text.js';
+import { drawText, measureText, sdfOf, SDF_SHADOW_SCALE } from './text.js';
+import { packImgTexture } from './packArt.js';   // OVH2: the worn UI pack's picture
 
 export const NATIVE_W = 320;
 export const NATIVE_H = 200;
@@ -40,12 +41,20 @@ export function nativeMetrics(canvas) {
 }
 
 /** One IMG as a texture: { tex, w, h } (throws on missing art -
- *  callers keep their text fallback). */
+ *  callers keep their text fallback).
+ *  OVH2: a worn UI pack's picture stands in for the classic texture
+ *  (ui/packArt.js) and `w`/`h` stay the CLASSIC size - DFU's
+ *  ImageReader keeps imageData.size classic under a replacement
+ *  (:306), and every draw below divides by them, so the layout, the
+ *  hit rects and the sub-rects are the classic ones over the pack's
+ *  pixels. The classic file is still read: it is the size, and the
+ *  fallback when the pack's file does not load. */
 export async function loadImg({ renderer, fetchBytes, palette }, name) {
   const img = new ImgFile();
   img.load(await fetchBytes(name), name, palette);
   const bmp = img.getDFBitmap();
-  return { tex: renderer.uploadTexture('img', name, bitmapToColor32(bmp, palette)), w: bmp.width, h: bmp.height };
+  const packed = await packImgTexture(renderer, name);
+  return { tex: packed ?? renderer.uploadTexture('img', name, bitmapToColor32(bmp, palette)), w: bmp.width, h: bmp.height };
 }
 
 /** Draw an IMG at a virtual position (its own size by default).
@@ -98,7 +107,8 @@ export function shadowText(renderer, font, text, m, x, y, { color = DEFAULT_TEXT
   const tw = measureText(font.fnt, text) * scale;
   const ax = align === 'center' ? x + (w - tw) / 2 : x;
   if (shadowOffset !== 0) {
-    drawText(renderer, font, text, m.ox + (ax + shadowOffset) * m.s, m.oy + (y + shadowOffset) * m.s, m.s * scale, shadow);
+    const so = sdfOf(font.fnt) ? shadowOffset * SDF_SHADOW_SCALE : shadowOffset;   // OVH2: an SDF face's shadow stands 0.4 away (DaggerfallFont :221)
+    drawText(renderer, font, text, m.ox + (ax + so) * m.s, m.oy + (y + so) * m.s, m.s * scale, shadow);
   }
   drawText(renderer, font, text, m.ox + ax * m.s, m.oy + y * m.s, m.s * scale, color);
   return tw;

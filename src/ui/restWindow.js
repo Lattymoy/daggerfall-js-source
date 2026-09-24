@@ -219,6 +219,10 @@ export class RestWindow {
     // and that is the behaviour: rebinding Rest while the window stands
     // open does not change the key that closes it.
     this.toggleClosedBinding = getBinding(bindings(), 'Rest');
+    // AUDIT KB1: and the SECONDARY slot's code - the pad's button (PAD1 binds View to Inventory and Menu to Escape in the
+    // secondary dict) opened this window through the host's dual-dict read and could not close it; DFU's field is the
+    // primary alone because DFU's pad closes through GetBackButtonUp, a door this port's windows do not carry.
+    this.toggleClosedSecondary = getBinding(bindings(), 'Rest', false);
     // ROAD-E E1: StopButton_OnKeyboardEvent's own latch (:714-726). Its
     // KeyDown arm plays ButtonClick and raises this; its KeyUp arm ends
     // the rest. DFU's field name (:75).
@@ -229,7 +233,7 @@ export class RestWindow {
     // (InputManager.cs:634-637) - so the opening release is already
     // spent when DFU's window first runs, and :193's bare `GetKeyUp`
     // is safe there. Every host here opens on the key DOWN
-    // (world.js:7881, exterior.js:3081, ui/input.js:813), and that same
+    // (world.js:7926, exterior.js:3088, ui/input.js:881), and that same
     // key's release is then routed straight into the freshly mounted
     // window, so the release door needs the deferral DFU gives every
     // window whose open edge IS the down: DaggerfallAutomapWindow.cs
@@ -414,8 +418,9 @@ export class RestWindow {
    *  binding at all (a cleared row) has no toggle, which is DFU's
    *  KeyCode.None answering false. */
   _togglePressed(action, e) {
-    if (!this.toggleClosedBinding) return false;
-    return normalizeCode(action, e) === this.toggleClosedBinding;
+    const code = normalizeCode(action, e);
+    return (!!this.toggleClosedBinding && code === this.toggleClosedBinding)
+      || (!!this.toggleClosedSecondary && code === this.toggleClosedSecondary);
   }
 
   /** StopButton_OnMouseClick / the Update block's `currentRestMode !=

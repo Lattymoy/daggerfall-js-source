@@ -145,8 +145,10 @@ export function pickLocationSide({ travelStart = null, worldPos = null, roll = M
  * @param {{x:number,z:number}} [opts.worldPos] LocalPlayerGPS.WorldX/WorldZ,
  *   already moved to the destination pixel (:1084-1086)
  * @param {Function} [opts.roll] UnityEngine.Random.Range's stream
- * @returns {{pos:[number,number,number], yaw:number, side:string, usedStartMarker:boolean}}
- *   `yaw` is RADIANS, the port's own camera unit.
+ * @returns {{pos:[number,number,number], yaw:number, side:string, usedStartMarker:boolean, edge:[number,number,number]}}
+ *   `yaw` is RADIANS, the port's own camera unit. `edge` is the outside
+ *   point of the SAME side, marker or not (AUDIT 68 S22: the host's TL2
+ *   roof refusal falls back to it, facing the way `yaw` already does).
  */
 export function positionPlayerToLocation({
   mapWidth, mapHeight,
@@ -185,9 +187,9 @@ export function positionPlayerToLocation({
       const d = Math.hypot(world[0] - out[0], world[1] - out[1], world[2] - out[2]);
       if (d < bestDist) { bestDist = d; best = world; }
     }
-    if (best) return { pos: [best[0], best[1], best[2]], yaw, side: side.name, usedStartMarker: true };
+    if (best) return { pos: [best[0], best[1], best[2]], yaw, side: side.name, usedStartMarker: true, edge: out };
   }
-  return { pos: out, yaw, side: side.name, usedStartMarker: false };
+  return { pos: out, yaw, side: side.name, usedStartMarker: false, edge: out };
 }
 
 /** DFRegion.LocationTypes, the two rows :1462-1464 reads

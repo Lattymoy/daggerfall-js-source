@@ -163,24 +163,24 @@
   {
     "name": "INS-link-inbound-gate-dropped",
     "file": "src/net/online.js",
-    "old": "        if (!g.pass) {\n          if (!this._inCardSaid)",
-    "new": "        if (false) {\n          if (!this._inCardSaid)",
+    "old": "    if (!g.pass) {\n      if (!this._inDirectedSaid.has(kind))",
+    "new": "    if (false) {\n      if (!this._inDirectedSaid.has(kind))",
     "tests": ["test/inspect1.test.js"],
     "note": "Every card frame in delivered, however fast a sender floods."
   },
   {
     "name": "INS-link-someone-elses-delivered",
     "file": "src/net/online.js",
-    "old": "          if (d && d.to === this.id) this._deliver('card', () => this.onCard?.(m.id, d));",
-    "new": "          if (d) this._deliver('card', () => this.onCard?.(m.id, d));",
+    "old": "    if (d && d.to === this.id) this._deliver(kind, () => deliver(m.id, d));",
+    "new": "    if (d) this._deliver(kind, () => deliver(m.id, d));",
     "tests": ["test/inspect1.test.js"],
     "note": "A frame addressed to someone else delivered to me."
   },
   {
     "name": "INS-link-my-own-echo",
     "file": "src/net/online.js",
-    "old": "      if (typeof m.id === 'string' && m.id !== this.id) {\n        if (this._inCardBuckets.size",
-    "new": "      if (typeof m.id === 'string') {\n        if (this._inCardBuckets.size",
+    "old": "    if (typeof m.id !== 'string' || m.id === this.id) return;\n    if (buckets.size > TRADE_IN_SENDERS_MAX)",
+    "new": "    if (typeof m.id !== 'string') return;\n    if (buckets.size > TRADE_IN_SENDERS_MAX)",
     "tests": ["test/inspect1.test.js"],
     "note": "My own frame back delivered as a peer's."
   },

@@ -51,7 +51,7 @@ test('HCC-PARK wire: the frame names its CHARACTER; the anchor names the cell (M
   assert.equal(parseClient(JSON.stringify({ t: 'park', data: null }), { hasHello: true }).error, 'bad park', 'the old null word names no character');
   assert.equal(parseClient(JSON.stringify({ t: 'park', data: { c: CA } })).error, 'park before hello');
   assert.equal(relaySupportsPark('world98'), false, 'an older relay closes the socket on the frame - never sent to it (world98 is SPELLFX1\'s, which has no park arm)');
-  assert.equal(relaySupportsPark('world99'), true);
+  assert.equal(relaySupportsPark('world102'), true);
   // the owner key: stable, per account AND character, opaque
   const k = await K('acct-ann1', CA);
   assert.match(k, /^[0-9a-f]{24}$/);

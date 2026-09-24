@@ -37,8 +37,8 @@
 // worldModes.js, dungeonContext.js and exterior.js each hand their
 // own doors to `openPixelDial` below — the singleton wrapper over
 // mountPixelDial — on Tab, the key the per-host audit found free in
-// all four tables, routed by ui/input.js's `case 'Tab'` arm to
-// `ctx.toggleDial()`. The audit came first for AUDIT 17e's reason: a
+// all four tables, routed by ui/input.js's QuickDial arm (KB1: the
+// registry's action, Tab by default) to `ctx.toggleDial()`. The audit came first for AUDIT 17e's reason: a
 // key grab without reading each host's table is how F5 reloaded the
 // page. PX28 then made Tab put away whatever it had opened before it
 // raises the rose again.
@@ -48,6 +48,7 @@ import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeTopOverlay, registerOverlay } from './enhancedOverlays.js';   // PX28; AUDIT CHAT C1: the dial is on the stack like every other enhanced overlay
 import { isEnhanced } from '../systems/uiSkin.js';
 import { requestLook } from '../player/pointerLock.js';   // PL3: the dial gives the pointer back when it goes
+import { eventAction } from './input.js';   // KB1: the key that opened it is the registry's QuickDial
 
 const el = (t, cls, txt) => {
   const n = document.createElement(t);
@@ -148,7 +149,7 @@ export function mountPixelDial(hostEl, { entries = [], onClose = () => {} } = {}
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); return; }
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); commit(); return; }
-    if (e.key === 'Tab') { e.preventDefault(); e.stopPropagation(); close(); return; }   // PX15: Tab toggles - the key that opened it closes it
+    if (eventAction(e) === 'QuickDial') { e.preventDefault(); e.stopPropagation(); if (!e.repeat) close(); return; }   // PX15: the key that opened it closes it - KB1: QuickDial's, wherever it is bound (it was a literal Tab)
     for (const [dir, { keys }] of Object.entries(DIRS)) {
       if (keys.includes(e.key)) {
         e.preventDefault(); e.stopPropagation();

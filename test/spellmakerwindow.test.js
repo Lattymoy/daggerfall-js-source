@@ -65,7 +65,8 @@ test('S1 catalog: DFU offers 90 spell-maker effects, families expanded in DFCare
   // GetEffectTemplate, which sees rows no crafting station offers.
   // The OFFER is still exactly 90 - what `craftable` gates.
   assert.equal(SPELL_MAKER_EFFECTS.filter((e) => e.craftable).length, 90, 'the maker offers 90');
-  assert.equal(SPELL_MAKER_EFFECTS.length, 91, 'and the registry carries one more (MorphSelf)');
+  assert.equal(SPELL_MAKER_EFFECTS.length, 92, 'and the registry carries two more - MorphSelf, and the port\'s own Resurrect (RESURRECT1, sold ready-made online)');
+  assert.equal(SPELL_MAKER_EFFECTS.find((e) => e.key === '45,255')?.craftable, false, 'Resurrect is never crafted: the Spell Maker is offline too, and has no one to raise');
   // PERSONALITY is stat 5, ahead of Speed - the classic subType order
   assert.deepEqual(STAT_SUBGROUPS, ['Strength', 'Intelligence', 'Willpower', 'Agility', 'Endurance', 'Personality', 'Speed', 'Luck']);
   assert.equal(effectByKey('9,5').name, 'Fortify Attribute Personality');

@@ -41,7 +41,8 @@ import {
   townBytes, townChains, quarterChains, quarterOfType, isBuilt, QUARTERS, sheetY,
   paintTownStatic, paintTownOverlay, BLOCK_PX,
 } from './inkTown.js';
-import { nameplateAnchor, resolveNameplates } from './nameplateLayout.js';
+import { nameplateAnchor, resolveNameplates, WORLD_PER_PX } from './nameplateLayout.js';
+import { readPartyBodies, PARTY_MARK_CSS } from './partyMapMarks.js';   // DISC23-A: the party's bodies in the streets
 
 /** The fit at rest has ONE HOME in ui/inkMap.js - re-exported so a
  *  pin that has this sheet does not also have to reach for it. */
@@ -91,9 +92,13 @@ const EMPTY_SIZE = Object.freeze({ width: 1, height: 1 });
  *   discovered?: () => Array<Discovered>,
  *   revealAll?: () => boolean,
  *   player?: () => {x:number, y:number, yaw?:number}|null,
+ *   party?: () => Array<{acct?: string|null, name?: string, feet?: number[], yaw?: number}>,
  *   title?: string,
  * }} deps
  */
+/** DISC23-A: how near a pointer must come to a party member's caret, in paper pixels (the automap's MARK_REACH). */
+const PARTY_REACH = 12;
+
 export function createTownSheet(deps = {}) {
   let field = null;      // the town's bytes, built once
   let plan = null;       // { chains, wash }, traced once
@@ -172,6 +177,17 @@ export function createTownSheet(deps = {}) {
     const p = deps.player?.() ?? null;
     if (!p) return null;
     return { ...p, y: sheetY(ensureField().h, p.y) };
+  }
+
+  /** DISC23-A: the party members in the streets, in sheet space. The host hands their feet in the LOCATION's own
+   *  frame - the frame it measures the player's `local` in (scenes/world.js toggleExteriorAutomap) - so a member
+   *  crosses into the sheet by the player's own two steps: metres to layout pixels (WORLD_PER_PX, the host's
+   *  townPlayer division), then +Z up (sheetY, EM-BUG3's one seam). Read fresh each paint: they walk. */
+  function partyOnSheet() {
+    const h = ensureField().h;
+    return readPartyBodies(deps.party).map((m) => ({
+      x: m.feet[0] / WORLD_PER_PX, y: sheetY(h, m.feet[2] / WORLD_PER_PX), yaw: m.yaw, name: m.name,
+    }));
   }
 
   /** Every residence a quest has marked, named or not, in layout
@@ -299,6 +315,8 @@ export function createTownSheet(deps = {}) {
           ctx?.measureText ? (t, s) => { ctx.font = `${Math.round(s)}px ${NAME_FACE}`; return ctx.measureText(t).width; } : null,
           env.reserveTop ?? 0, env.reserveHands ?? null),
         player: playerOnSheet(),
+        party: partyOnSheet(),   // DISC23-A
+        partyFill: PARTY_MARK_CSS,
       });
     },
 
@@ -309,6 +327,11 @@ export function createTownSheet(deps = {}) {
       // so what the player is told is what the player can see, rather
       // than a building the solver dropped
       if (lastView) {
+        // DISC23-A: a party member under the pointer answers their name first - a friend stands in front of a shop
+        for (const m of partyOnSheet()) {
+          const [x, y] = toPaper(lastView, m.x, m.y);
+          if ((x - px) ** 2 + (y - py) ** 2 <= PARTY_REACH * PARTY_REACH) return { label: m.name, cursor: '' };
+        }
         for (const p of plates?.rows ?? []) {
           if (Math.abs(p.x - px) <= p.size * p.text.length * 0.3 && Math.abs(p.y - py) <= p.size) {
             return { label: p.text, cursor: 'pointer' };
@@ -318,10 +341,12 @@ export function createTownSheet(deps = {}) {
       return { label: deps.title ?? '', cursor: '' };
     },
 
+    /** DISC23-A: the street plan repaints on the window's beat while a party member walks it. */
+    breathes() { return readPartyBodies(deps.party).length > 0; },
+
     mark() { /* the middle button marks a place on the BAY; a street has none */ },
     key() { return false; },
     tick() { /* the plates are rebuilt off the view, on demand */ },
-    paintUnder() { /* nothing lies under the plan's ink */ },
     mount() { /* the town claims none of the world map's chrome */ },
     unmount() { },
 
@@ -335,6 +360,7 @@ export function createTownSheet(deps = {}) {
     get plan() { ensureField(); return plan; },
     names: named,
     quests: questMarks,
+    party: partyOnSheet,
     platesAt: (view, paperW, paperH, measure, reserveTop = 0, hands = null) => ensurePlates(view, paperW, paperH, measure, reserveTop, hands),
     get paperW() { return lastPaper; },
     /** One block is this many layout pixels - re-exported so a caller

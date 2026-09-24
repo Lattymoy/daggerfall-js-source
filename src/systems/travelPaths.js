@@ -87,7 +87,7 @@ export function mapPixelWorldOrigin(mapPixelX, mapPixelY) {
 /** TravelOptionsMod.cs:427-434, GetNormalisedPlayerYaw. Degrees,
  *  clockwise from north, in [0, 360); `invert` answers the direction
  *  the player came FROM. The port's camera yaw is radians with 0 at
- *  +z (north) and the same clockwise sense (ui/hud.js:137-147), so the
+ *  +z (north) and the same clockwise sense (ui/hud.js:141-151), so the
  *  caller converts once and this takes degrees. */
 export function normalisedYaw(yawDegrees, invert = false) {
   let yaw = (yawDegrees + (invert ? 180 : 0)) % 360;

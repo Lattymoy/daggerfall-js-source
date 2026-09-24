@@ -140,7 +140,7 @@ whenever there is no bake, no route, or the classic detour is running.
 
 The follow laws are project-final's at 8ba9100 - enemyShared.js
 `repathToward` and `stuckWatch` re-homed on `this`, enemyMelee.js
-htClose's `WP_REACH` advance, main.js:303 `navWalkable`, enemy.js:402
+htClose's `WP_REACH` advance, main.js:310 `navWalkable`, enemy.js:402
 `PATH_BUDGET_PER_FRAME` - constants and comments verbatim, pinned.
 The host chooses the motor by the pref at both construction sites,
 hands it the bake as a THUNK (a foe built before the bake lands is
@@ -337,6 +337,6 @@ unwritten (this container has no ARENA2), so the pin now reports what it
 is - SKIPPED when `ARENA2_PATH` is unset or does not exist, TODO when it
 does, asserting nothing either way - with the body it owes written out
 beside it: the loader through the host's own path, `collider.addMesh
-('dungeon', ...)` as `dungeonContext.js:581` feeds it, a bake anchored at
+('dungeon', ...)` as `dungeonContext.js:590` feeds it, a bake anchored at
 the entry marker, then `bake.stats.polys > 0`, every waypoint locating on
 the mesh, and the path across the first hall.

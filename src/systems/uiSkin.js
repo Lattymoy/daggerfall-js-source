@@ -30,7 +30,6 @@
 // an instruction, and the port's own settings law reads a bad value as
 // the default rather than as a new one.
 import { getPref, setPref } from './uiPrefs.js';
-import { onlineForcedPref } from './onlineLane.js';   // OL1: online is the enhanced lane, whole
 
 export const SKINS = Object.freeze(['enhanced', 'classic']);
 export const DEFAULT_SKIN = 'enhanced';
@@ -46,15 +45,23 @@ export function skinOverride(search = globalThis.location?.search ?? '') {
   return clean(new URLSearchParams(search).get('skin'));
 }
 
-/** The skin in effect: online, enhanced (OL1 - over the URL override
- *  too: a shared world has one lane); else the URL override, else the
- *  stored choice, else enhanced. */
+/** The skin in effect: the URL override, else the stored choice, else
+ *  enhanced. OVH3: online too - the online lane forced 'enhanced' here
+ *  (OL1) until the online panels mounted on both skins; the skin is the
+ *  player's UI Overhaul now (systems/onlineLane.js ONLINE_FORCED_PREFS). */
 export function uiSkin(search) {
-  return onlineForcedPref('skin', search) ?? skinOverride(search) ?? clean(getPref('skin')) ?? DEFAULT_SKIN;
+  return skinOverride(search) ?? clean(getPref('skin')) ?? DEFAULT_SKIN;
 }
 
 /** The predicate every mount site should call. */
 export const isEnhanced = (search) => uiSkin(search) === 'enhanced';
+
+/** AUDIT CONTRIB H1: THE HOTBAR IS IN FORCE - the enhanced skin with the hotbar chosen (systems/features.js
+ *  'quickbar-style') - and the quickslot diamond is put AWAY, not hidden: its actions (a pad's d-pad, a rebound key)
+ *  and its hold machine stand down, so nothing reaches slots the player cannot see. On the classic skin the pref is
+ *  inert and the diamond is the quickbar, as ever. Here, beside the skin, so the input ladder can read it without
+ *  the quickslot model's import ring. */
+export const hotbarInForce = () => isEnhanced() && getPref('quickbarStyle') === 'hotbar';
 
 /** Store a choice. Ignores anything not a skin, for the same reason
  *  the override does: a bad value is a typo. Returns what is now

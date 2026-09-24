@@ -47,7 +47,8 @@ import { hudReticle } from './hud.js';   // the reticle's own two terms, from th
 import { pickActivatableHit } from '../player/activate.js';
 import { frameMark } from '../systems/frameClock.js';   // AUDIT-WH P3: the frame in flight, so the gate's two terms are computed once in it
 import { resolveHover, frameSignature } from '../systems/worldHover.js';
-import { foldQuickLoot, quickLootRow, quickLootStats, resetQuickLoot } from '../systems/quickLoot.js';   // QUICK-LOOT B3: the highlight is the FEATURE's - this draws it and frees it, it does not own it; QUICK-LOOT-STATS: and the lit row's own numbers
+import { foldQuickLoot, quickLootRow, quickLootStats, resetQuickLoot, quickLootOn } from '../systems/quickLoot.js';
+import { setClassicLootFrame } from '../systems/classicLootFrame.js';   // DISC22-C: the classic panel's frame, a leaf hud.js can read   // QUICK-LOOT B3: the highlight is the FEATURE's - this draws it and frees it, it does not own it; QUICK-LOOT-STATS: and the lit row's own numbers
 import { bodyStackMark, resetBodyStack } from '../player/lootStack.js';   // LOOT-STACK: the plaque counts the pile the pick noted
 
 /** The gap in CSS pixels between the cross's lower arm tip and the
@@ -155,6 +156,13 @@ export const worldPlaqueOn = () => {
 };
 let _gateMark = null;
 let _gateOn = false;
+
+/** DISC22-C: the classic skins resolve the same frame for quick loot - no DOM, and only while quick loot is on
+ *  (DFU's classic HUD names nothing in the world; the panel exists to take from a pile, ui/classicLootPanel.js). */
+export const classicPlaqueOn = () => !isEnhanced() && !isTouchDevice() && quickLootOn();
+
+/** DISC22-C: the DOM plaque, blanked WITHOUT folding the highlight - the classic face owns the selection now. */
+function blankDom() { if (node && shownSig !== null) { shownSig = null; blank(node); } }
 
 /**
  * Where the reticle is THIS frame, in CSS pixels, or null off a canvas.
@@ -326,6 +334,7 @@ export function hideWorldPlaque() {
   _cancel(_watchdog);
   _watchdog = null;
   foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it
+  setClassicLootFrame(null);   // DISC22-C: and the classic panel's frame with it
   if (!node) return;
   shownSig = null;
   blank(node);
@@ -446,12 +455,17 @@ export function worldHoverFrame({
   // node injects nothing).
   // ACT-MENU: a plaque that stands down folds NOTHING - the highlight goes with it, so a verb lit before a window
   // opened (or the skin changed) cannot be pressed later by a click that never saw it
-  if (!worldPlaqueOn()) { hideWorldPlaque(); return null; }   // (the hide folds the highlight away too: AUDIT DISC7 A8)
+  // DISC22-C: ...and the CLASSIC skins resolve the same frame for their canvas panel - the gate that stood over the
+  // whole resolve was about the DOM plaque, and quick loot never needed the DOM
+  const dom = worldPlaqueOn();
+  const classic = !dom && classicPlaqueOn();
+  if (!dom && !classic) { hideWorldPlaque(); return null; }   // (the hide folds the highlight away too: AUDIT DISC7 A8)
+  if (classic) blankDom();
   // `cursorActive` is the crosshair's OWN first statement (there is no
-  // reticle while a window is up, hudCrosshair.js:114) and so it is the
+  // reticle while a window is up, hudCrosshair.js:117) and so it is the
   // plaque's. In the dungeon this was an accident of scheduling - the
   // driver only ran with no overlay up - and an accident is not a law.
-  if (cursorActive || !eye || !dir || !collider) { foldQuickLoot(null); showWorldPlaque(null); return null; }
+  if (cursorActive || !eye || !dir || !collider) { foldQuickLoot(null); setClassicLootFrame(null); if (dom) showWorldPlaque(null); return null; }
   // CONTAINED, COUNTED AND SAID - ONCRASH1's law, and a READOUT is a
   // stronger case for it than the wire frame that law was written for:
   // nothing this surface can compute is worth a dead game.
@@ -478,7 +492,8 @@ export function worldHoverFrame({
     // whether or not it moved anything, so a wheel click spent while
     // looking at a door does not arrive later at a chest.
     foldQuickLoot(frame);
-    showWorldPlaque(frame, plaqueAnchor(canvas));
+    if (dom) showWorldPlaque(frame, plaqueAnchor(canvas));
+    else setClassicLootFrame(frame, frameMark(), quickLootRow(frame));   // DISC22-C: drawHud draws it, this frame, its lit row with it
     return frame;
   } catch (e) {
     _faults += 1;
@@ -488,6 +503,7 @@ export function worldHoverFrame({
     }
     foldQuickLoot(null);   // AUDIT DISC7 A8: a contained fault lights nothing - a click must not press the last good frame's verb
     try { showWorldPlaque(null); } catch { /* the draw itself is gone; nothing left to hide */ }
+    setClassicLootFrame(null);   // DISC22-C: and the classic panel draws nothing either
     return null;
   }
 }

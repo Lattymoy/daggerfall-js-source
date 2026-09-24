@@ -73,7 +73,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import {
-  PEN, HALO_PEN, NAME_FACE, toPaper, paintCaret, CARET_R, quarterWash, quarterInk,
+  PEN, HALO_PEN, NAME_FACE, toPaper, paintCaret, paintPartyCarets, CARET_R, quarterWash, quarterInk,
 } from './inkMap.js';
 import { QUARTERS, CLASSIC_ARGB, argbChannels, quarterOf } from './townQuarters.js';
 
@@ -156,7 +156,7 @@ export const LEAD_AT = 0.9;
  *   `autoMapData` is an FLD-header grid, and every FLD grid in the port
  *   is read with its row index REVERSED - `buildGroundTilemap` takes
  *   `groundTiles[x][15 - y]` for "row 0 nearest Z=0"
- *   (world/rmbLayout.js:268), which is the same law at 16 rows that
+ *   (world/rmbLayout.js:270), which is the same law at 16 rows that
  *   ExteriorAutomap.cs:1481 is at 64. Copying `data[y * 64 + x]`
  *   straight into row y laid every block's bytes MIRRORED north-south
  *   against the anchors, the quest rings and the player's own caret -
@@ -362,7 +362,8 @@ export function paintTownStatic(ctx, plan, view, opts) {
  *          quests?: Array<{x:number,y:number}>,
  *          plates?: Array<{x:number,y:number,text:string,size:number,quest?:boolean,
  *                          quarter?:string|null, anchorY?:number}>,
- *          player?: {x:number,y:number,yaw?:number}|null}} opts
+ *          player?: {x:number,y:number,yaw?:number}|null,
+ *          party?: Array<{x:number,y:number,yaw?:number,name?:string}>, partyFill?: string}} opts
  */
 export function paintTownOverlay(ctx, view, opts) {
   if (!ctx?.setTransform) return;
@@ -415,6 +416,14 @@ export function paintTownOverlay(ctx, view, opts) {
       ctx.fillStyle = p.quest ? TOWN_PEN.quest : (QUARTER_INK[p.quarter ?? ''] ?? TOWN_PEN.name);
       ctx.fillText(p.text, p.x, p.y);
     }
+  }
+
+  // DISC23-A: the party in the streets, over the names and under the player's own caret
+  if (opts.party?.length && opts.partyFill) {
+    paintPartyCarets(ctx, opts.party.map((m) => {
+      const [x, y] = toPaper(view, m.x, m.y);
+      return { x, y, yaw: m.yaw, name: m.name };
+    }), { fill: opts.partyFill, halo: TOWN_PEN.halo });
   }
 
   if (opts.player) {

@@ -266,16 +266,16 @@
   {
     "name": "JRN-session-someone-elses-delivered",
     "file": "src/net/online.js",
-    "old": "          if (d && d.to === this.id) this._deliver('page'",
-    "new": "          if (d) this._deliver('page'",
+    "old": "    if (d && d.to === this.id) this._deliver(kind, () => deliver(m.id, d));",
+    "new": "    if (d) this._deliver(kind, () => deliver(m.id, d));",
     "tests": ["test/journal1.test.js"],
     "note": "A page for someone else is held out to me."
   },
   {
     "name": "JRN-session-no-inbound-gate",
     "file": "src/net/online.js",
-    "old": "        const g = pageInGate(this._inPageBuckets.get(m.id) ?? null, now);\n        this._inPageBuckets.set(m.id, g.bucket);\n        if (!g.pass) {",
-    "new": "        const g = pageInGate(this._inPageBuckets.get(m.id) ?? null, now);\n        this._inPageBuckets.set(m.id, g.bucket);\n        if (false) {",
+    "old": "    buckets.set(m.id, g.bucket);\n    if (!g.pass) {\n      if (!this._inDirectedSaid",
+    "new": "    buckets.set(m.id, g.bucket);\n    if (false) {\n      if (!this._inDirectedSaid",
     "tests": ["test/journal1.test.js"],
     "note": "Every page a writer floods is delivered."
   },

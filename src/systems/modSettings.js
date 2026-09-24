@@ -288,7 +288,7 @@ export const MOD_SETTINGS = Object.freeze({
       classicStrengthDamageBonus: Object.freeze({ default: false, description: 'Display the strength damage bonus like classic Daggerfall (half) rather than the value used internally that DFU displays' }),
       variantNpcs: Object.freeze({ default: true, description: 'Enable variant NPC sprites in shops & taverns' }),
       variantResidents: Object.freeze({ default: true, description: 'This populates 80% of houses with the townsfolk you see walking around insteam of random adventurer flats' }),
-      fightersTeachHandToHand: Object.freeze({ default: false, description: 'Enable this module to replace Giantish with Hand 2 Hand for training and guild ranks. (Not compatible with other mods that change Fighters Guild)' }),
+      // fightersTeachHandToHand RETIRED (FGH2H-R, 2026-09-24, Mac: "retire it") - see RETIRED_KEYS below
       loanAmountPerLevel: Object.freeze({ default: 4, options: Object.freeze(['2000', '4000', '6000', '8000', '10000', '20000', '30000', '40000', '50000']), description: 'Sets the maximum amount per level that can be borrowed from banks' }),
       // EnhancedRiding (RR2)
       'EnhancedRiding.enhancedRiding': Object.freeze({ default: true, description: 'Enable enhanced horse riding module, improving presentation and allowing galloping.' }),
@@ -433,7 +433,7 @@ export const MOD_SETTINGS = Object.freeze({
       // and by every other vendored mod, and it says what it does: on and off.
       // The player may still bind it wherever they like; this is about what
       // SHIPS. test/ht1_handheldtorches.test.js HT4 is the gate that caught it.
-      'Handling.ToggleLightInput': Object.freeze({ default: "O", text: true, description: 'Button used to quickly ignite or douse your light source' }),
+      'Handling.ToggleLightInput': Object.freeze({ default: "O", text: true, description: 'Button used to quickly ignite or douse your light source' }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'Handling.RememberLastLightSource': Object.freeze({ default: true, description: 'Igniting with the key re-lights the light you last doused, if you still carry one.' }),
       // HT4 (2026-09-15, Mac: "Pressing tab drops torches, tab is reserved
       // for the menu"): THE ONE DEPARTURE FROM THE MOD'S SHIPPED KEYS.
@@ -445,7 +445,7 @@ export const MOD_SETTINGS = Object.freeze({
       // have known; the port has to answer for it. G is unbound in DFU's
       // own defaults (inputActions.js DEFAULT_BINDINGS) and unused by the
       // mod's other two keys, and it stays the player's to rebind.
-      'Handling.ManualDropInput': Object.freeze({ default: "G", text: true, description: 'Button used to manually drop a light source' }),
+      'Handling.ManualDropInput': Object.freeze({ default: "G", text: true, description: 'Button used to manually drop a light source' }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       // HT7 (2026-09-17, Mac: "Take care of both") - THE ONE DEFAULT THIS
       // PORT MOVES, and it is an owner decision rather than a misread.
       //
@@ -472,7 +472,7 @@ export const MOD_SETTINGS = Object.freeze({
       'Handling.StowWhenSwimming': Object.freeze({ default: true, description: 'Swimming stows the light: no free hand.' }),
       'Handling.RelaxedTwoHandedWeapons': Object.freeze({ default: false, description: 'Two-handed weapons will only occupy your off-hand when attacking' }),   // 3ARMS: the mod ships true; the port ships false - see the departure in Handheld-Torches.md
       'Handling.RelaxedLanterns': Object.freeze({ default: false, description: 'If enabled, will not stow lanterns when both hands are occupied' }),
-      'Throwing.ThrowTorchInput': Object.freeze({ default: "X", text: true, description: 'Hold to wind up a throw, release to throw a torch.' }),
+      'Throwing.ThrowTorchInput': Object.freeze({ default: "X", text: true, description: 'Hold to wind up a throw, release to throw a torch.' }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'Throwing.ThrowStrength': Object.freeze({ default: 1.0, min: 0.0, max: 10.0, float: true, step: 0.25, description: 'Multiplier on the throw\u2019s speed (25 at full Strength).' }),
       'Throwing.GravityStrength': Object.freeze({ default: 1.0, min: 0.0, max: 10.0, float: true, step: 0.25, description: 'Multiplier on the thrown torch\u2019s fall.' }),
       'Throwing.ThrowAngleOffset': Object.freeze({ default: 15.0, min: 0.0, max: 45.0, float: true, step: 0.25, description: 'Degrees above the look the torch leaves at.' }),
@@ -603,7 +603,7 @@ export const MOD_SETTINGS = Object.freeze({
       // to the port's own pixel dial (ui/input.js). B is unbound in
       // DFU's defaults and unused by the port and by this mod's other
       // keys, and it stays the player's to rebind.
-      'Camera.SwitchShoulder': Object.freeze({ default: 'B', text: true, description: 'Mirrors the camera\u2019s X offset if it is non-zero (the mod ships Tab; the port had already spent it on the pixel dial).' }),
+      'Camera.SwitchShoulder': Object.freeze({ default: 'B', text: true, description: 'Mirrors the camera\u2019s X offset if it is non-zero (the mod ships Tab; the port had already spent it on the pixel dial).' }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'CameraOverrideWeapon.Enable': Object.freeze({ default: false, description: 'Use this section\u2019s offsets while a weapon or spell is readied.' }),
       'CameraOverrideWeapon.FrontalPlaneOffset': Object.freeze({ default: Object.freeze([0.0, 0.5]), tuple: 'float', description: 'Moves the camera position on the X and Y axes' }),
       'CameraOverrideWeapon.LongitudinalDistance': Object.freeze({ default: 2.0, min: 1, max: 10, float: true, description: 'Moves the camera position nearer or further to the player' }),
@@ -628,7 +628,7 @@ export const MOD_SETTINGS = Object.freeze({
       // which it is not and never could be. The port's wheel is the
       // DOM's, so this is informational here.
       'CameraScrolling.ScrollableZOffsetAxis': Object.freeze({ default: 'Mouse ScrollWheel', text: true, axis: true, description: 'The axis the mod reads to move the camera offset. The port takes the browser\u2019s own wheel, so this names the input rather than choosing it.' }),
-      'AutoTogglePerspective.ToggleInput': Object.freeze({ default: 'KeypadPlus', text: true, description: 'Button that arms or disarms the automatic view changes below.' }),
+      'AutoTogglePerspective.ToggleInput': Object.freeze({ default: 'KeypadPlus', text: true, description: 'Button that arms or disarms the automatic view changes below.' }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'AutoTogglePerspective.OnFoot': Object.freeze({ default: 0, options: Object.freeze(['Don\'tChange', 'FirstPerson', 'ThirdPerson']), description: 'Which view to take on foot, with nothing readied.' }),
       'AutoTogglePerspective.OnFootMelee': Object.freeze({ default: 0, options: Object.freeze(['Don\'tChange', 'FirstPerson', 'ThirdPerson']), description: 'Which view to take on foot with a weapon readied.' }),
       'AutoTogglePerspective.OnFootRanged': Object.freeze({ default: 0, options: Object.freeze(['Don\'tChange', 'FirstPerson', 'ThirdPerson']), description: 'Which view to take on foot with a bow readied.' }),
@@ -639,8 +639,21 @@ export const MOD_SETTINGS = Object.freeze({
       'AutoTogglePerspective.OnTransitionInterior': Object.freeze({ default: 0, options: Object.freeze(['Don\'tChange', 'FirstPerson', 'ThirdPerson']), description: 'Which view to take on stepping indoors.' }),
       'AutoTogglePerspective.OnTransitionExterior': Object.freeze({ default: 0, options: Object.freeze(['Don\'tChange', 'FirstPerson', 'ThirdPerson']), description: 'Which view to take on stepping back outside.' }),
       'Graphics.Enable': Object.freeze({ default: true, description: 'Toggle the player graphic' }),
-      'Graphics.OnFoot': Object.freeze({ default: 0, min: 0, max: 15, description: 'Sprite when on foot' }),
-      'Graphics.OnHorse': Object.freeze({ default: 0, min: 0, max: 4, description: 'Sprite when riding a horse' }),
+      // DISC23-B (2026-09-24, Gryphoth and Scratchie on Discord: "EOTB comes with 16 ground models and different
+      // mounted models, it would be nice to be able to change our models like in the original mod" / "the game is not
+      // allowing us to choose between the different index slots"): the mod's two SLIDERS, kept sliders (0-15, 0-4, as
+      // modsettings.json declares them), each index NAMED - the pane drew a bare number, and "7" is not a sprite anyone
+      // can choose by. The names are the mod's own preset titles (modpresets.json: Light Fighters 0, Medium Fighters 2,
+      // Heavy Fighter F 4 and M 5, Mage F 6 and M 7, Thief Mage 8/9, Fighter Mage 10/11, Thief 12/13, Fighter Thief
+      // 14/15), and the art says the rest: every even set is a woman and every odd set a man, and the five riders are
+      // the fighters by their helms and boots (green-booted women, cyan-booted men - the on-foot sets' own colours).
+      'Graphics.OnFoot': Object.freeze({ default: 0, min: 0, max: 15, description: 'Sprite when on foot',
+        labels: Object.freeze(['Light Fighter (female)', 'Light Fighter (male)', 'Medium Fighter (female)', 'Medium Fighter (male)',
+          'Heavy Fighter (female)', 'Heavy Fighter (male)', 'Mage (female)', 'Mage (male)',
+          'Thief Mage (female)', 'Thief Mage (male)', 'Fighter Mage (female)', 'Fighter Mage (male)',
+          'Thief (female)', 'Thief (male)', 'Fighter Thief (female)', 'Fighter Thief (male)']) }),
+      'Graphics.OnHorse': Object.freeze({ default: 0, min: 0, max: 4, description: 'Sprite when riding a horse',
+        labels: Object.freeze(['Light Fighter (female)', 'Medium Fighter (male)', 'Medium Fighter (female)', 'Heavy Fighter (male)', 'Heavy Fighter (female)']) }),
       'Graphics.ReadyStance': Object.freeze({ default: 2, options: Object.freeze(['Never', 'When Idle', 'When Idle or Moving']), description: 'Whether the sprite will change states when readying a weapon or spell' }),
       'Graphics.TurnToView': Object.freeze({ default: 2, options: Object.freeze(['Never', 'Only When Animating', 'When Weapon Readied', 'Always']), description: 'Configure when the sprite turns to face the view' }),
       'Graphics.AttackStrings': Object.freeze({ default: 3, options: Object.freeze(['None', 'Mirror', 'PingPong', 'Mixed']), description: 'Optional attack animations' }),
@@ -858,8 +871,8 @@ export const MOD_SETTINGS = Object.freeze({
       // SHIPS. `keyChoice` DECLARES the kind, the way `axis` does, so
       // the HT4 pin walks this choice list as it walks a TextKey and
       // never has to guess whether "U" is a key or a bob shape.
-      'RoadsIntegration.FollowPathsKey': Object.freeze({ default: 3, keyChoice: true, options: Object.freeze(["None", "F", "G", "K", "O", "X", "Custom Key Bind"]), description: "Sets the key to initiate time accelerated travelling following paths if roads integration enabled" }),
-      'RoadsIntegration.FollowPathsCustomKeyBind': Object.freeze({ default: "", text: true, description: "Custom key bind for following paths used if CustomBind set above" }),
+      'RoadsIntegration.FollowPathsKey': Object.freeze({ default: 3, keyChoice: true, options: Object.freeze(["None", "F", "G", "K", "O", "X", "Custom Key Bind"]), description: "Sets the key to initiate time accelerated travelling following paths if roads integration enabled" }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
+      'RoadsIntegration.FollowPathsCustomKeyBind': Object.freeze({ default: "", text: true, description: "Custom key bind for following paths used if CustomBind set above" }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'RoadsIntegration.EnableWaterways': Object.freeze({ default: false, description: "Enhances the travel map with rivers and streams with a toggle button" }),
       'RoadsIntegration.EnableStreamsToggle': Object.freeze({ default: false, description: "Adds a streams toggle button separate from rivers button" }),
       'RoadsIntegration.MarkLocationColor': Object.freeze({ default: '#ffeb05ff', color: true, description: "The colour used to highlight locations using middle mouse button on travel map" }),
@@ -930,8 +943,8 @@ export const MOD_SETTINGS = Object.freeze({
       'Following.AvoidCombat': Object.freeze({ default: true, description: 'Following Horse Avoids Combat. When enabled, a following horse or horse-and-wagon team will try to keep away from hostile enemies during combat.' }),
       'Following.FollowFastTravel': Object.freeze({ default: true, description: 'Following Transport Fast Travels With You. When disabled, transport currently commanded to Follow waits where it was when fast travel begins.' }),
       'WagonAccess.InteriorAccessDistance': Object.freeze({ default: 50, min: 10, max: 100, description: 'Interior Wagon Access Distance. Sets how close your wagon must be parked to a building or dungeon entrance to access it from inside.' }),
-      'Hotkeys.QuickMountDismount': Object.freeze({ default: 'Alpha5', text: true, description: 'Quick Mount / Dismount. Mounts your last-used horse or wagon using the same range and ownership rules as the Transport menu. Pressing it while riding dismounts immediately. Click it and press a key to rebind; \u2715 clears it (None).' }),
-      'Hotkeys.SummonTransport': Object.freeze({ default: 'Alpha6', text: true, description: 'Summon Horse & Wagon. Teleports owned transport to a nearby layout while outdoors. Click it and press a key to rebind; \u2715 clears it (None).' }),
+      'Hotkeys.QuickMountDismount': Object.freeze({ default: 'Alpha5', text: true, description: 'Quick Mount / Dismount. Mounts your last-used horse or wagon using the same range and ownership rules as the Transport menu. Pressing it while riding dismounts immediately. Click it and press a key to rebind; \u2715 clears it (None).' }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
+      'Hotkeys.SummonTransport': Object.freeze({ default: 'Alpha6', text: true, description: 'Summon Horse & Wagon. Teleports owned transport to a nearby layout while outdoors. Click it and press a key to rebind; \u2715 clears it (None).' }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
     }),
   }),
 });
@@ -958,11 +971,41 @@ export const KEY_MIGRATIONS = Object.freeze([
   Object.freeze({ vendor: 'horse-cart-and-cargo', key: 'Hotkeys.QuickMountDismount', was: 'F7' }),
   Object.freeze({ vendor: 'horse-cart-and-cargo', key: 'Hotkeys.SummonTransport', was: 'F10' }),
 ]);
+/** DISC20-E (2026-09-24, Mac: "The weapon widget default toggle under diverse weapons should be set to off by
+ *  default"): A SWITCH WHOSE DEFAULT MOVED, RESET ONCE. Diverse Weapons' Weapon Widget Preset has shipped off since
+ *  DISC16-B, but a default only answers for a player who never touched the switch, and every player who turned it on
+ *  while DW-CLIP shipped it on (or tried it) holds a SAVED value and still sees it on. So a stored value WITHOUT this
+ *  entry's stamp is let go on load and the file written back, and the shipped off applies. setModSetting stamps the
+ *  key when a player sets it from now on, so a choice made after the reset is kept across reloads - unlike
+ *  KEY_MIGRATIONS, which can only match a value. A file that never mentioned the mod is not grown one. */
+export const SWITCH_RESETS = Object.freeze([
+  Object.freeze({ vendor: 'diverse-weapons', key: 'WeaponWidgetPreset', stamp: 'WeaponWidgetPreset@DISC20' }),
+]);
+/** FGH2H-R (2026-09-24, Mac: "retire it"): A SWITCH TAKEN OFF THE PANE. Roleplay & Realism's
+ *  fightersTeachHandToHand swapped Giantish for HandToHand in the Fighters Guild's lists; FGH2H put HandToHand in the
+ *  base lists beside Giantish, which left the switch one effect - taking Giantish away - so it is retired whole (the
+ *  Port-Ledger's FGH2H row). A player who turned it on holds a SAVED true for a key nothing declares, so the stored
+ *  value is let go on load, once, and the file written back; a file that never mentioned the key is not touched. */
+export const RETIRED_KEYS = Object.freeze([
+  Object.freeze({ vendor: 'roleplay-realism', key: 'fightersTeachHandToHand' }),
+]);
 function migrate(m) {
   let changed = false;
+  for (const { vendor, key } of RETIRED_KEYS) {
+    const held = m?.[vendor];
+    if (!held || !Object.hasOwn(held, key)) continue;
+    delete held[key];
+    changed = true;
+  }
   for (const { vendor, key, was } of KEY_MIGRATIONS) {
     const held = m?.[vendor];
     if (!held || held[key] !== was) continue;
+    delete held[key];
+    changed = true;
+  }
+  for (const { vendor, key, stamp } of SWITCH_RESETS) {
+    const held = m?.[vendor];
+    if (!held || !Object.hasOwn(held, key) || held[stamp] === true) continue;
     delete held[key];
     changed = true;
   }
@@ -1095,6 +1138,13 @@ export function modSetting(vendor, key) {
 
 /** DS1: every key of one vendored mod, resolved - what a mod reads its
  *  ModSettings as, in one object. */
+/** KB1: the value a player SAVED for a key, raw, or undefined when they never touched it - the keybinding registry's
+ *  one-time carry of the mods' old TextKeys (systems/inputActions.js migrateKeyBinds) needs "chose" from "shipped". */
+export function storedModSetting(vendor, key) {
+  if (!declaredKey(vendor, key)) return undefined;
+  return load()[vendor]?.[key];
+}
+
 export function modSettingsOf(vendor) {
   const keys = MOD_SETTINGS[vendor]?.keys;
   if (!keys) throw new Error(`modSettingsOf: ${vendor} is not a vendored mod with switches`);
@@ -1103,13 +1153,22 @@ export function modSettingsOf(vendor) {
   return out;
 }
 
+/** AUDIT 68 S15-eotb-settings-snapshot: DFU's ModSettingsChange, as a
+ *  number. Every write moves it, so a reader that holds a resolved copy
+ *  (the EOTB camera and body) re-reads when there is something new
+ *  rather than never - the same idiom as `morrowindDataGeneration`. */
+let _generation = 0;
+export const modSettingsGeneration = () => _generation;
+
 export function setModSetting(vendor, key, value) {
   const def = declaredKey(vendor, key);
   if (!def) throw new Error(`setModSetting: ${vendor}/${key} is not a declared switch`);
   const m = load();
   const v = coerce(def, value);
   (m[vendor] ??= {})[key] = v;
+  for (const r of SWITCH_RESETS) if (r.vendor === vendor && r.key === key) m[vendor][r.stamp] = true;   // DISC20-E: chosen after the reset - kept
   save();
+  _generation++;
   return v;
 }
 
@@ -1145,4 +1204,4 @@ export function flattenModPreset(vendor, values) {
 }
 
 /** For tests: forget everything. */
-export function _resetModSettings() { memory = null; try { appStorage()?.removeItem(STORE_KEY); } catch { /* none */ } }
+export function _resetModSettings() { memory = null; _generation++; try { appStorage()?.removeItem(STORE_KEY); } catch { /* none */ } }

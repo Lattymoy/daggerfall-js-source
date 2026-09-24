@@ -494,6 +494,7 @@ export class Quest {
       questors: [...this.questors.entries()].map(([name, q]) => ({ name, symbol: symbolToSaveData(q.symbol), displayName: q.name })),
       tasks: [...this.tasks.values()].map((t) => t.getSaveData()),
       oneTimeDisplayedMessages: [...this.oneTimeDisplayedMessages],
+      shareId: this.shareId ?? null,   // DISC22-F: the shared copy's identity - the port's own member, absent in DFU's saves
     };
   }
 
@@ -508,6 +509,7 @@ export class Quest {
   restoreSaveData(data, resolvers = {}) {
     this.uid = data.uid;
     ensureUidAtLeast(data.uid);
+    this.shareId = typeof data.shareId === 'string' && data.shareId ? data.shareId : null;   // DISC22-F
     this.questComplete = data.questComplete;
     this.questSuccess = data.questSuccess;
     this.questName = data.questName;

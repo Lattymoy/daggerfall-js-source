@@ -121,8 +121,9 @@ test('RF3: bare continuations MOVE under the content check - every spelling, up 
   assert.deepEqual(continuations('see world.js:10, :12', t, map, { oldLines, newLines }).map((c) => [c.text, c.from, c.to, c.status]), [[', :12', 12, 13, 'move']]);
   // the two regexes are one law, shared with citeMerge
   assert.ok(ANY_CITE.source.includes('|cs)') && CONTINUATION.source.includes('\\(:'), 'the .cs stop and the (: opener');
-  assert.match(readFileSync(join(root, 'tools/citeMerge.mjs'), 'utf8'), /import \{ hunksFromDiff, lineMap, citeSpellings, regionStops, continuationsIn, SELF_DOCS \} from '.\/citeShift\.mjs';/, 'citeMerge imports them (CITE-SLASH, CITE-CS: through the two helpers that read ANY_CITE and CONTINUATION)');
-  assert.doesNotMatch(readFileSync(join(root, 'tools/citeMerge.mjs'), 'utf8'), /\b(ANY_CITE|CONTINUATION|CS_MEMBER)\b|function\*? *(continuationsIn|regionStops)/, 'and declares no copy, nor reads a regex past the helpers');
+  // AUDIT 68: citeMerge takes the whole plan (planDoc, applyPlan), not the helpers - its own copy of the verdict had parted from this one
+  assert.match(readFileSync(join(root, 'tools/citeMerge.mjs'), 'utf8'), /import \{ hunksFromDiff, lineMap, planDoc, applyPlan, SELF_DOCS \} from '.\/citeShift\.mjs';/, 'citeMerge imports the plan (CITE-SLASH, CITE-CS and the struck law come with it)');
+  assert.doesNotMatch(readFileSync(join(root, 'tools/citeMerge.mjs'), 'utf8'), /\b(ANY_CITE|CONTINUATION|CS_MEMBER|citeSpellings|continuationsIn|regionStops|same1)\b|const verdict\b/, 'and declares no copy, nor reads a regex or a helper past the plan');
 });
 
 test('CITE-SLASH: a bare slash continues only the chain it touches - "8076/8077" a sentence after a cite is two message ids, not world.js:8077 (mutant: the touch dropped)', () => {
@@ -187,4 +188,17 @@ test('CITE-CS: a C# member, or a table cell\'s edge, ends a cite\'s region as a 
   assert.equal(out('world.js:10 then terrainGen.setRoads (:12)'), 'world.js:11 then terrainGen.setRoads (:13)');
   assert.equal(out('world.js:10 falls back `a || b` (:12)'), 'world.js:11 falls back `a || b` (:13)');
   assert.deepEqual(regionStops('| a `world.js:1` | B.Cc (:2) |'), [0, 5, 17, 19, 29], 'the cite, the member and the cells\' edges, in order');
+});
+
+test('CITE-BUF: the git helper answers with the whole of the port\'s largest file - execFileSync\'s 1 MiB default made `git show` of scenes/world.js (1,057,642 bytes) throw, the new-file catch skipped the target, and every world.js cite went unmoved in a run that reported nothing wrong (mutants: the default buffer back; a buffer smaller than the biggest file)', async () => {
+  const { GIT_MAX_BUFFER } = await import('../tools/citeShift.mjs');
+  const { readFileSync: rf, statSync } = await import('node:fs');
+  const { execFileSync } = await import('node:child_process');
+  const root = new URL('..', import.meta.url);
+  const src = rf(new URL('tools/citeShift.mjs', root), 'utf8');
+  assert.match(src, /const git = \(\.\.\.args\) => execFileSync\('git', args, \{ cwd: ROOT, encoding: 'utf8', maxBuffer: GIT_MAX_BUFFER \}\);/, 'the helper carries the wide buffer');
+  const files = execFileSync('git', ['ls-files', 'src', 'bible', 'test', 'tools'], { cwd: root, encoding: 'utf8', maxBuffer: GIT_MAX_BUFFER }).split('\n').filter(Boolean);
+  const biggest = Math.max(...files.map((f) => { try { return statSync(new URL(f, root)).size; } catch { return 0; } }));
+  assert.ok(biggest > 1024 * 1024, 'the case is real: a tracked file is past the 1 MiB default');
+  assert.ok(GIT_MAX_BUFFER >= biggest * 16, `room for the largest file (${biggest} bytes) many times over`);
 });

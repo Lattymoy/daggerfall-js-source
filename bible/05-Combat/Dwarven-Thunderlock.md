@@ -43,7 +43,7 @@ Mac's call and the weapon's nature agreed.
 `test/audit24_onehome.test.js`'s ratchet had been naming for months —
 and that copy answered `null`, so `isBowWeapon` said false and the gun
 fell through to the melee arc in every host. The table is one table
-now; `WEAPON_SKILL_BY_TEMPLATE` is derived from it so it cannot drift.
+now; `hostCombat.js` re-exports its door, `weaponSkillUsed`.
 
 ## Ranged is not Bow
 
@@ -747,7 +747,7 @@ the orb is, so the two answers cannot drift apart.
 **One residual, named rather than half-fixed:** the multiplayer wire
 carries a hit's `kind` (`'arrow'`), not its weapon, so a peer-owned
 puppet struck by a Thunderlock still gains a shaft on its owner's
-client (`exteriorFoes.js:1957`, `dungeonContext.js:3708`, both gated on
+client (`exteriorFoes.js:2016`, `dungeonContext.js:3736`, both gated on
 `data.ar === 1`). Fixing it means widening the hit packet, which is a
 protocol change and not this slice's.
 

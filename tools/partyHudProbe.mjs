@@ -22,6 +22,7 @@
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const PORT = 5226;
@@ -30,7 +31,7 @@ if (SHOTS) mkdirSync(SHOTS, { recursive: true });
 let fails = 0;
 const check = (name, ok, detail = '') => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`); if (!ok) fails++; };
 
-const server = await createServer({ root: new URL('..', import.meta.url).pathname, server: { port: PORT, strictPort: true, hmr: false } });
+const server = await createServer({ root: fileURLToPath(new URL('..', import.meta.url)), server: { port: PORT, strictPort: true, hmr: false } });
 await server.listen();
 const BASE = `http://127.0.0.1:${PORT}`;
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });

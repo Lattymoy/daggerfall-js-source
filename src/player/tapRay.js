@@ -25,7 +25,10 @@
 
 import { multiply } from '../world/mat4.js';
 
-/** Column-major 4x4 inverse (gl-matrix's layout - mat4.js's own). */
+/** Column-major 4x4 inverse (gl-matrix's layout - mat4.js's own), or
+ *  null for a singular matrix; the automap's pick reads it too (AUDIT 68
+ *  S15-invert4-duplicate). It lives here, not in mat4.js, because mat4.js
+ *  is in the relay's bundle (test/relayversion.test.js). */
 export function invert4(m, out = new Float32Array(16)) {
   const a00 = m[0], a01 = m[1], a02 = m[2], a03 = m[3];
   const a10 = m[4], a11 = m[5], a12 = m[6], a13 = m[7];

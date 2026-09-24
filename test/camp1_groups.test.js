@@ -168,7 +168,7 @@ test('CAMP1 by source: both exterior hosts roll it after the single roll comes b
   const ci = w.indexOf('stream: entered ${r.current.x}');
   const chunk = w.slice(ci, w.indexOf('\n    pump();', ci));
   assert.match(chunk, /if \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior' && !playerEntity\.isResting && getPref\('wildernessCamps'\) !== false && amGroupRollOwner\(online\?\.id \?\? null, player\.feetAt\(\), peersNear\(\)\)\) \{/, 'outdoors, not resting, switched on, and mine to roll');
-  assert.match(chunk, /const chunkCampHit = rollCampEncounterOnChunkLoad\(\{\s*\n\s*inside: false, inLocationRect: _musicInLocationRect\(\),\s*\n\s*climateIndex: maps\.getClimateIndex\(r\.current\.x, r\.current\.y\),/, 'the entered pixel\'s own climate');
+  assert.match(chunk, /const chunkCampHit = rollCampEncounterOnChunkLoad\(\{\s*\n\s*inside: false, inLocationRect: _inAnyLocationRect\(walkMode \? player\.pos : cam\.pos\),[^\n]*\n\s*climateIndex: maps\.getClimateIndex\(r\.current\.x, r\.current\.y\),/, 'the entered pixel\'s own climate');
   assert.match(chunk, /if \(chunkCampHit\) _standCampEncounter\(chunkCampHit, player\.feetAt\(\)\);/);
   // the shout across the camp
   const ef = read('src/scenes/exteriorFoes.js');

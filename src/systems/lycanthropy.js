@@ -150,10 +150,11 @@ export function isWearingHircineRing(entity) {
  * grant the free spell. Returns the entry, or null if the entity
  * already carries an override.
  */
-export function createLycanthropyCurse(entity, infectionType, { now = 0, rolls = Math.random } = {}) {
+export function createLycanthropyCurse(entity, infectionType, { now = 0, rolls = Math.random, restore = false } = {}) {
   if (!entity || liveLycanthropy(entity) || entity.racialOverride) return null;
   const entry = {
     kind: 'racialOverride',
+    permanent: true,   // CURSE-PERSIST1: lifelong - ended by its cure, never by the magic-round clock (diseases' and poisons' own flag)
     racial: 'lycanthropy',
     key: LYCANTHROPY_CURSE_KEY,
     infectionType,
@@ -173,7 +174,9 @@ export function createLycanthropyCurse(entity, infectionType, { now = 0, rolls =
     // note that stood here said the opposite about the reference.
     moveSoundTimer: initMoveSoundTimer(rolls),
   };
-  endOldLifeEffects(entity);
+  // CURSE-REPAIR1: `restore` gives back a curse the player already had (systems/curseRepair.js) - its Start ran when
+  // it was caught, so the old life is not ended a second time: the buffs and drains running now are this life's.
+  if (!restore) endOldLifeEffects(entity);
   entity.activeEffects = entity.activeEffects || [];
   entity.activeEffects.push(entry);
   // the marker infectionAccepted and the disease gate read - REBUILT

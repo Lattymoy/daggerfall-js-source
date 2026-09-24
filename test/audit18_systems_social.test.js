@@ -357,7 +357,7 @@ test('audit18 social F3: the quicksave carries the crime and the per-region lega
     stats: { strength: 50, endurance: 50 }, skills: [], skillUses: [], items: [], spells: [],
     activeEffects: [], legalRep: { 17: -30, 3: 12 }, crimeCommitted: 5, haveShownSurrenderDialogue: true,
   };
-  // A real quicksave round trip: writeQuicksave JSON-stringifies.
+  // A real quicksave round trip: the slot store JSON-stringifies.
   const snap = JSON.parse(JSON.stringify(snapshotPlayer(live)));
   assert.deepEqual(snap.legalRep, { 17: -30, 3: 12 });
   assert.equal(snap.crimeCommitted, 5);

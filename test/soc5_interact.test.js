@@ -23,7 +23,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { ACTIONS, DEFAULT_BINDINGS, parseActionName, createBindings, resetDefaults, setBinding, getBinding, actionForCode, loadKeyBinds, serializeKeyBinds } from '../src/systems/inputActions.js';
 import { routeAction } from '../src/ui/input.js';
-import { GRID_ACTIONS, ADVANCED_ROWS, PORT_ROWS, PORT_GROUPS, PORT_GROUP_TITLE } from '../src/ui/enhancedControls.js';
+import { KEYBIND_ROWS } from '../src/ui/mouseControlsWindow.js';   // KB1: the ADVANCED popup's own six
+import { ACTION_GROUPS, HIDDEN_ACTIONS } from '../src/systems/inputActions.js';
 import { KEY_GROUPS, gridButtons } from '../src/ui/controlsWindow.js';
 import { pickPeerInFront, SOCIAL_REACH } from '../src/player/socialPick.js';
 import { rayPersonDistance, PERSON_HIT_RADIUS, PERSON_HIT_HEIGHT } from '../src/scenes/townTalk.js';
@@ -55,7 +56,12 @@ test('SOC5: the port\'s own action - appended past DFU\'s forty-four, parseable,
   const defaults = new Map(DEFAULT_BINDINGS.map(([c, a]) => [c, a]));
   assert.equal(defaults.get('KeyF'), 'SocialInteract');
   assert.equal(DEFAULT_BINDINGS.filter(([, a]) => a === 'SocialInteract').length, 1);
-  assert.equal(DEFAULT_BINDINGS[44][1], 'SocialInteract', 'appended past DFU\'s table, like the action itself (QS2 appended three more behind it)');
+  // appended past DFU's table, like the action itself (QS2 appended three more behind it). KB1 took DFU's
+  // ToggleConsole and Slide rows OUT of that table (Ledger A: they ship unbound, their keys freed), so the index
+  // moved from 44 to 42; what holds is that every row before it is one of DFU's own.
+  const at = DEFAULT_BINDINGS.findIndex(([, a]) => a === 'SocialInteract');
+  assert.ok(DEFAULT_BINDINGS.slice(0, at).every(([, a]) => ACTIONS.indexOf(a) < 44), 'only DFU\'s rows stand before it');
+  assert.equal(at, 42);
   const codes = DEFAULT_BINDINGS.map(([c]) => c);
   assert.equal(codes.filter((c) => c === 'KeyF').length, 1, 'KeyF was free in SetupDefaults and is spent exactly once');
   // a live store built from the defaults answers F with the action, and the action with F
@@ -92,26 +98,22 @@ test('SOC5: a bindings file written BEFORE this slice gains KeyF on the next boo
 });
 
 test('SOC5: the enhanced controls window offers the action in its own group, and the CLASSIC window cannot place it - which is the reason the group exists (mutants: the action dropped from the pane and so unrebindable; GRID_ACTIONS widened past DFU\'s slice; a seventh ADVANCED row the classic popup has never heard of)', () => {
-  // QS2: PORT_ROWS is the flat union of the port's groups now, and SOC5's row
-  // is the whole of the ONLINE one - which is the claim this pin makes.
-  assert.deepEqual(PORT_GROUPS[0], { title: 'Online', rows: [
-    { action: 'SocialInteract', label: 'Interact with player' },
-    { action: 'Chat', label: 'Open chat' },
-  ] });
-  assert.ok(PORT_ROWS.some((r) => r.action === 'SocialInteract' && r.label === 'Interact with player'));
-  assert.equal(PORT_GROUP_TITLE, 'Online');
-  // the two existing lists keep their meaning exactly
-  assert.deepEqual([...GRID_ACTIONS], ACTIONS.slice(2, 40), 'GRID_ACTIONS is still DFU\'s SetupKeybindButtons slice');
-  assert.equal(GRID_ACTIONS.length, 38);
-  assert.equal(ADVANCED_ROWS.length, 6);
-  assert.ok(!GRID_ACTIONS.includes('SocialInteract') && !ADVANCED_ROWS.some((r) => r.action === 'SocialInteract'));
-  // coverage: every bindable action has exactly one row across the three groups
-  const all = [...GRID_ACTIONS, ...ADVANCED_ROWS.map((r) => r.action), ...PORT_ROWS.map((r) => r.action)];
+  // KB1: the pane's groups are the registry's ACTION_GROUPS, and SOC5's row is the whole of the Online one -
+  // which is the claim this pin makes.
+  const online = ACTION_GROUPS.find((g) => g.title === 'Online');
+  assert.deepEqual(online.rows.map((r) => ({ ...r })), [{ action: 'SocialInteract', label: 'Interact with player' }]);
+  // the classic faces keep their meaning exactly, read off the windows that draw them
+  const grid = gridButtons().map((b) => b.action);
+  assert.deepEqual(grid, ACTIONS.slice(2, 40), 'the grid is still DFU\'s SetupKeybindButtons slice');
+  assert.equal(KEYBIND_ROWS.length, 6);
+  assert.ok(!grid.includes('SocialInteract') && !KEYBIND_ROWS.some((r) => r.action === 'SocialInteract'));
+  // coverage: every bindable action has exactly one row across the groups
+  const all = ACTION_GROUPS.flatMap((g) => g.rows.map((r) => r.action));
   assert.equal(new Set(all).size, all.length, 'none twice');
-  assert.deepEqual([...all].sort(), [...ACTIONS].sort(), 'and none missing');
-  // the pane draws the third group
+  assert.deepEqual([...all, ...HIDDEN_ACTIONS].sort(), [...ACTIONS].sort(), 'and none missing');
+  // the pane draws the groups
   const pane = rd('src/ui/enhancedControls.js');
-  assert.match(pane, /for \(const g of PORT_GROUPS\) group\(body, g\.title, g\.rows\.map\(\(r\) => \[r\.action, r\.label\]\)\);/, 'the groups are rendered, not merely declared');
+  assert.match(pane, /for \(const grp of shownGroups\(\)\) group\(body, grp\.title, grp\.rows\.map\(\(r\) => \[r\.action, r\.label\]\)\);/, 'the groups are rendered, not merely declared');
   // THE CLASSIC WINDOW CANNOT. Its buttons are pixels on CNFG00I0.IMG, nine groups over Actions[2..40), and the
   // lowest rows already run to within two pixels of the tab row at y=190 - a tenth row needs eleven.
   assert.equal(KEY_GROUPS.at(-1).end, 40, 'the classic grid still ends at DFU\'s 40');
@@ -119,7 +121,7 @@ test('SOC5: the enhanced controls window offers the action in its own group, and
   assert.ok(!gridButtons().some((b) => b.action === 'SocialInteract'));
   const lowest = Math.max(...KEY_GROUPS.map((g) => g.y + (g.end - g.start - 1) * 11));
   assert.equal(lowest, 181); assert.ok(lowest + 7 + 11 > 190, 'no room below the last row before the tabs');
-  assert.match(rd('src/ui/controlsWindow.js'), /SOC5[\s\S]{0,1600}enhancedControls\.js PORT_ROWS/, 'and the window says so where the table is, with the pointer to the door that does have room');
+  assert.match(rd('src/ui/controlsWindow.js'), /SOC5[\s\S]{0,1600}enhancedControls\.js, over systems\/inputActions\.js ACTION_GROUPS/, 'and the window says so where the table is, with the pointer to the door that does have room');
 });
 
 // ── THE ROUTE ────────────────────────────────────────────────────────
@@ -492,7 +494,7 @@ test('AUDIT SOC D3: the port own action YIELDS in the classic windows - a grid a
   // same reason - the classic grid is Actions[2..40) on fixed art and the
   // ADVANCED popup is DFU's six, so none of the four is drawable there.
   assert.deepEqual([...PORT_ACTIONS], ['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell',
-    'QuickLootAll', 'QuickLootOpen', 'FreeMouse', 'Chat']);   // QUICK-LOOT B4: the two loot keys yield on the same rule - neither the grid's art nor DFU's six can draw them; QS6: the spell slot yields there too; FREEMOUSE: and the mouse toggle's own row, for the same reason
+    'QuickLootAll', 'QuickLootOpen', 'FreeMouse', ...ACTIONS.slice(53)]);   // KB1: and its seventeen - no classic art draws them either   // QUICK-LOOT B4: the two loot keys yield on the same rule - neither the grid's art nor DFU's six can draw them; QS6: the spell slot yields there too; FREEMOUSE: and the mouse toggle's own row, for the same reason
   const store = createBindings();
   resetDefaults(store);
   assert.equal(getBinding(store, 'SocialInteract'), 'KeyF');

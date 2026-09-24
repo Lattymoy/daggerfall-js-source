@@ -134,7 +134,23 @@ export function openPauseFlow(show, hooks = {}) {
   // headless, has no document, and must keep the canvas window rather
   // than get a special case written for it.
   if (isEnhanced() && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);
-  return openClassicPauseFlow(show, hooks);
+  return classicPauseWithSettings(show, hooks);
+}
+
+/** DISC22-B (2026-09-24, kurkku on Discord: "could replace the controls button here with the full settings menu"):
+ *  THE CLASSIC PAUSE WINDOW'S CONTROLS BUTTON OPENS THE PORT'S WHOLE SETTINGS SCREEN. DFU's button opens its controls
+ *  grid alone, and on the classic skin that grid was the only settings a player could reach from a game in progress -
+ *  every other key (the video, the HUD, the gameplay rules, the mods' dials) lived behind the enhanced screen. That
+ *  screen holds the controls too (FT16: Controls is a Settings category, the grid's every key and the port's own), so
+ *  the button lands on its Settings page, and its Resume comes BACK to this window - DFU's controls window pops back
+ *  to the pause window it was opened from (previousWindow), and a player who opened settings from a menu expects that
+ *  menu under it. Without a document (a node host) the classic grid stands. */
+function classicPauseWithSettings(show, hooks) {
+  const again = () => classicPauseWithSettings(show, hooks);
+  const openSettings = typeof document !== 'undefined'
+    ? () => enhancedPauseOverlay(show, { ...hooks, at: 'settings', onResume: again })
+    : null;
+  return openClassicPauseFlow(show, { ...hooks, openSettings });
 }
 
 /**
@@ -262,13 +278,16 @@ function enhancedPauseOverlay(show, base) {
   }
 
   // THE FOUR EXITS. Every one of them takes the screen down FIRST and
-  // then acts, which is classic's own order (pauseWindow.js:254, :290,
+  // then acts, which is classic's own order (pauseWindow.js:271, :307,
   // :198 - `_closeWith()` then the hook) and matters more here: the
   // port answers a save or a load with a HUD line, and this screen is
   // an opaque div over the entire canvas, so a hook fired underneath a
   // live door would put its own confirmation out of sight.
   const act = (action) => {
     close();
+    // DISC22-B: opened from the classic pause window, Resume goes back to that window - the settings were a page of
+    // it, not the way out of it (save, load and exit still leave as they always do).
+    if (action === 'resume' && typeof hooks.onResume === 'function') { hooks.onResume(); return; }
     // MAC1 (Mac, 2026-09-10: "opening menu returning to game requiring
     // player to press buttons twice"). This close runs INSIDE the Resume
     // click or the Escape keydown - the transient activation a

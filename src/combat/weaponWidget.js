@@ -51,8 +51,8 @@
 // it, which the gun lab imports without dragging this file's world in.
 // Re-exported here because this is still the mod's front door.
 import {
-  readWidgetSettings, moveTowards, moveTowards2, roundHalfEven, snap,
-  offsetStep, bobStep, inertiaStep, widgetTransformRect,
+  readWidgetSettings, offsetStep, bobStep, inertiaStep, widgetTransformRect,
+  WINDUP, RECOVERY, RECOIL_CONDITION, MISS_VFX_AT,
 } from './weaponWidgetMotion.js';
 export {
   WEAPON_WIDGET_VENDOR, WINDUP, RECOVERY, BOB_SHAPE, STEP_CONDITION, RECOIL_CONDITION, MISS_VFX_AT,
@@ -66,16 +66,13 @@ import {
 } from '../characters/weaponStates.js';
 import { WEAPON_TYPES, STATE_INDEX, ALIGN, NATIVE_W, NATIVE_H, WEAPON_FILE, weaponTypeForItem } from './fpsWeapon.js';
 import { weaponOffsetHeight } from '../ui/hudLarge.js';
-import { swingSoundFor, SOUND } from '../systems/soundClips.js';
+import { swingSoundFor } from '../systems/soundClips.js';
 import { isEnchanted } from '../systems/inventory.js';
 import { atlasFileName, customTextureNames } from './diverseWeapons.js';   // DW1
 import { customWeaponImage } from './diverseWeaponsAssets.js';   // DW1: both bundles, this mod's first
-import { MATERIAL_NAMES } from '../systems/itemInfo.js';
-import { WEAPON_MATERIALS } from '../characters/weapons.js';
+import { widgetMetalName } from './weaponWidgetAssets.js';
 import { getItemHands } from '../systems/equip.js';
 import { ITEM_HANDS } from '../characters/equipTable.js';
-
-import { WINDUP, RECOVERY, RECOIL_CONDITION, MISS_VFX_AT } from './weaponWidgetMotion.js';
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const inverseLerp = (a, b, v) => (a === b ? 0 : clamp((v - a) / (b - a), 0, 1));
@@ -239,7 +236,7 @@ export function createWeaponWidget({
     // under DoubleScaleTextures the `w_` ask falls through to the plain
     // one (combat/diverseWeapons.js customTextureNames says why).
     const file = atlasFileName(w.specificWeapon, classic);
-    const metal = w.currentMetalType != null && w.currentMetalType !== WEAPON_MATERIALS.None ? MATERIAL_NAMES[w.currentMetalType] : null;
+    const metal = widgetMetalName(w.currentMetalType);   // AUDIT 68 S09-texname-dup: the one metal rule
     const cache = (w.customCache ??= new Map());
     const misses = (w.customMisses ??= new Set());
     for (const name of customTextureNames(file, record, frame, metal, w.s.doubleScale)) {

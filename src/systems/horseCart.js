@@ -26,7 +26,8 @@
 //     fadeInProgress() -> bool                                     DaggerfallUI.FadeBehaviour.FadeInProgress
 //     say(line), setMidScreenText(text, seconds), tooFarText()    AddHUDText / SetMidScreenText / youAreTooFarAway
 //     settings() -> the eight keys (systems/modSettings.js horse-cart-and-cargo)
-//     keyDown(keyCodeName) -> bool                                 InputManager.GetKeyDown, this frame
+//     actionPressed(action) -> bool                                InputManager.GetKeyDown, this frame - KB1: of the registry's
+//                                                                  HorseMount/HorseSummon actions, not the mod's two KeyCodes
 //     now() -> unscaled seconds
 //     travelOptionsActive() -> bool | null                         the isTravelActive mod message (null: no mod)
 //     worldCoordToMapPixel(wx, wz) -> {x, y}                       MapsFile.WorldCoordToMapPixel
@@ -57,9 +58,10 @@ import {
 } from './horseCartLaw.js';
 import { HorseFollowPath, HorseFollowController, WagonTrail, groundedPoseStep, tryFindGround } from './horseFollow.js';
 import { quatLookRotation, quatForward, quatFromBasis, quatRotate, UNITY_QUAT_IDENTITY } from '../world/quat.js';
-import { isBindableKeyCode, KEYCODE_NONE } from './keyCodes.js';
 
-export const DEFAULT_QUICK_MOUNT_KEY = 'K', DEFAULT_SUMMON_KEY = 'G';
+/** KB1: the mod's two hotkeys are the port's keybinding registry's actions (systems/inputActions.js MOD_ACTIONS) -
+ *  bound in the controls pane beside every other key, not parsed off the mod's own TextKeys here. */
+export const HCC_MOUNT_ACTION = 'HorseMount', HCC_SUMMON_ACTION = 'HorseSummon';
 /** The port ships F7/F10 (HCC-KEYS, modSettings.js); the mod's own fallbacks are what an unparseable entry falls to. */
 
 const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
@@ -243,7 +245,6 @@ export function createHorseCartRuntime(deps) {
   let pendingInteriorEntranceDistance = Infinity;
   let physicalPersistenceEnabled = true, showTrailingWagon = true, horseFollowDistance = DEFAULT_HORSE_FOLLOW_DISTANCE, avoidCombat = true;
   let interiorWagonAccessDistance = DEFAULT_INTERIOR_ACCESS_DISTANCE, followingTransportFastTravels = true;
-  let quickMountHotkey = DEFAULT_QUICK_MOUNT_KEY, summonTransportHotkey = DEFAULT_SUMMON_KEY;
   let settingsInitialized = false, pendingPersistenceSettingTransition = false, pendingPersistenceNormalization = false;
   // the moving (trailing / following) wagon's presentation
   let wagonVisual = null;   // { pose, wheel, cargoTier, interaction } - the port's stand-in for the Unity object
@@ -254,7 +255,6 @@ export function createHorseCartRuntime(deps) {
   // the parked wagon and the standing horse
   let deployedVisual = null, stationaryHorseVisual = null;
   let nextDeployedSpawnRetryTime = 0, deployedSpawnFailureLogged = false, nextHorseSpawnRetryTime = 0, horseSpawnFailureLogged = false;
-  let horseTextureLoadAttempted = false, horseTextureFailureLogged = false, horseWalkTextureLoadAttempted = false, horseWalkTextureFailureLogged = false;
   // the interior transition
   let pendingInteriorWorldX = 0, pendingInteriorWorldZ = 0, pendingInteriorHorseWorldX = 0, pendingInteriorHorseWorldZ = 0;
   let pendingInteriorTransportMode = TRANSPORT.Foot, hasPendingInteriorDeployment = false, hasPendingInteriorHorseDeployment = false, pendingInteriorEntranceEligible = false;
@@ -266,7 +266,6 @@ export function createHorseCartRuntime(deps) {
   let travelOptionsWasActive = false, travelOptionsQueryFailed = false;
   let selectWagonOnNextInventoryOpen = false;
   let horseNameInputBox = null;
-  let lastDt = 0;
 
   const tm = () => deps.transport;
   const pee = () => deps.enterExit;
@@ -292,14 +291,8 @@ export function createHorseCartRuntime(deps) {
   const isTeamFollowing = () => isHitchedTeamFollowing(wagonState.Mode, wagonState.HorseMode);
   const isHorseFollowing = () => isAutonomousHorseFollowing(wagonState);
 
-  // ── settings (HandleSettingsChanged [IL_486c]; ParseConfiguredHotkey [IL_4a58])
-  function parseConfiguredHotkey(value, fallback, label) {
-    const text = typeof value === 'string' ? value.trim() : '';
-    if (text === KEYCODE_NONE) return KEYCODE_NONE;
-    if (text && isBindableKeyCode(text)) return text;
-    log.warn?.(`[TrailingWagon] ${label} hotkey '${value}' is not a Unity KeyCode; using ${fallback}.`);
-    return fallback;
-  }
+  // ── settings (HandleSettingsChanged [IL_486c]). ParseConfiguredHotkey [IL_4a58] has no twin since KB1: the two
+  // hotkeys are keybinding-registry actions, parsed and stored by the registry like every other key.
   function handleSettingsChanged() {
     const s = deps.settings?.() ?? {};
     const persistence = s.physicalPersistence !== false;
@@ -308,9 +301,7 @@ export function createHorseCartRuntime(deps) {
     const avoid = s.avoidCombat !== false;
     const followFT = s.followFastTravel !== false;
     const interiorDist = clampInteriorWagonAccessDistance(s.interiorAccessDistance ?? DEFAULT_INTERIOR_ACCESS_DISTANCE);
-    const quickKey = parseConfiguredHotkey(s.quickMountKey, DEFAULT_QUICK_MOUNT_KEY, 'Quick Mount / Dismount');
-    const summonKey = parseConfiguredHotkey(s.summonKey, DEFAULT_SUMMON_KEY, 'Summon Horse & Wagon');
-    const assign = () => { physicalPersistenceEnabled = persistence; showTrailingWagon = showTrailing; horseFollowDistance = followDist; avoidCombat = avoid; interiorWagonAccessDistance = interiorDist; followingTransportFastTravels = followFT; quickMountHotkey = quickKey; summonTransportHotkey = summonKey; };
+    const assign = () => { physicalPersistenceEnabled = persistence; showTrailingWagon = showTrailing; horseFollowDistance = followDist; avoidCombat = avoid; interiorWagonAccessDistance = interiorDist; followingTransportFastTravels = followFT; };
     if (!settingsInitialized) { assign(); settingsInitialized = true; pendingPersistenceNormalization = !persistence; return; }
     const persistenceChanged = persistence !== physicalPersistenceEnabled;
     const avoidChanged = avoid !== avoidCombat;
@@ -340,12 +331,13 @@ export function createHorseCartRuntime(deps) {
     return true;
   }
   function clearMovingPresentation() {
+    const had = !!wagonVisual;
     wagonVisual = null;
     trail.clear(); hitchedWagonPath.clear(); hitchedWagonPathInitialized = false;
     followingWagonFailureLogged = false; horseRecoveredThisFrame = false; nextFollowingWagonSpawnRetryTime = 0;
     hasLastValidGroundState = false;
     spawnFailureLogged = false; cargoFailureLogged = false;
-    changed();
+    if (had) changed();   // AUDIT 68 S27-hcc-changed-every-frame: only a teardown that tore something down is a word - lateUpdate runs this every frame no wagon trails
   }
   function resetWheelMotionState() { if (wagonVisual) wagonVisual.wheel = { has: false, prevPos: [...V_ZERO], prevFwd: [...V_FORWARD], angle: 0 }; }
   const wagonActive = () => !!wagonVisual?.pose.active;
@@ -710,9 +702,10 @@ export function createHorseCartRuntime(deps) {
 
   // ── the hotkeys [IL_67c0-IL_6a3e]
   function handleConfiguredHotkeys() {
-    if (!deps.keyDown) return;
-    if (quickMountHotkey !== KEYCODE_NONE && deps.keyDown(quickMountHotkey)) { handleQuickMountOrDismount(); return; }
-    if (summonTransportHotkey !== KEYCODE_NONE && deps.keyDown(summonTransportHotkey)) { handleSummonTransport(); }
+    // KB1: GetKeyDown on the registry's two actions - the host answers the press through its own edge ring and gate
+    if (!deps.actionPressed) return;
+    if (deps.actionPressed(HCC_MOUNT_ACTION)) { handleQuickMountOrDismount(); return; }
+    if (deps.actionPressed(HCC_SUMMON_ACTION)) { handleSummonTransport(); }
   }
   function handleQuickMountOrDismount() {
     const mode = tm().get();
@@ -1042,14 +1035,10 @@ export function createHorseCartRuntime(deps) {
   }
 
   // ── the presentations, frame by frame [IL_4ff8-IL_5ef9, IL_7990-IL_7d3e]
-  function ensureHorseTextures() {
-    if (horseTextureLoadAttempted && !deps.presentation?.horseArt?.ensureStationary?.()) return false;
-    horseTextureLoadAttempted = true;
-    const ok = !!deps.presentation?.horseArt?.ensureStationary?.();
-    if (!ok) { if (!horseTextureFailureLogged && deps.presentation?.horseArt?.failed?.()) { horseTextureFailureLogged = true; log.error?.('[TrailingWagon] stationary horse graphics disabled: the horse art could not be loaded'); } return false; }   // the port's art arrives asynchronously - a load in flight is not a failure (the mod's TryLoad is synchronous and fails once)
-    horseTextureFailureLogged = false; return true;
-  }
-  function ensureHorseWalkTextures() { if (horseWalkTextureLoadAttempted && deps.presentation?.horseArt?.hasWalk?.()) return; horseWalkTextureLoadAttempted = true; deps.presentation?.horseArt?.ensureWalk?.(); }
+  // AUDIT 68 S27-hcc-walk-fetch-storm: the pool owns the art's load state and its one failure line (the mod's TryLoad
+  // fails once - horseCartPool's two latches); the attempt flags here never stopped a retry and their log was unreachable
+  function ensureHorseTextures() { return !!deps.presentation?.horseArt?.ensureStationary?.(); }
+  function ensureHorseWalkTextures() { deps.presentation?.horseArt?.ensureWalk?.(); }
   function shouldShowMovingWagon() {
     if (!showTrailingWagon) return false;
     const teamOk = physicalPersistenceEnabled ? (wagonState.HorseMode === HORSE_MODE.HitchedToWagon && tm().hasHorse()) : tm().hasCart();
@@ -1058,10 +1047,8 @@ export function createHorseCartRuntime(deps) {
   }
   function applyGroundedPose(target, pathForward, dt) {
     const next = groundedPoseStep(phys, wagonVisual.pose, target, pathForward, dt);
-    if (next.hasLastValid) hasLastValidGroundState = true;
-    if (!next.hasLastValid) { wagonVisual.pose = next; resetWheelMotionState(); return; }
-    if (!wagonVisual.pose.active) { wagonVisual.pose = next; return; }
     wagonVisual.pose = next;
+    if (next.hasLastValid) hasLastValidGroundState = true; else resetWheelMotionState();
   }
   function updateWheelAnimation() {
     if (!wagonVisual || !wagonActive() || !wagonVisual.parts) { resetWheelMotionState(); return; }
@@ -1203,7 +1190,6 @@ export function createHorseCartRuntime(deps) {
 
   // ── LateUpdate [IL_4e60] - the frame
   function lateUpdate(dt) {
-    lastDt = dt;
     if (!ready()) { clearPendingTransportModeRefresh(); clearMovingPresentation(); destroyAllStationaryPresentations(); return; }
     refreshHorseNameInputState();
     applyPendingPersistenceWork();
@@ -1245,6 +1231,17 @@ export function createHorseCartRuntime(deps) {
     deployedVisual?.offset(d); stationaryHorseVisual?.offset(d);
     trail.offset(d); hitchedWagonPath.offset(d); horseFollower.offset(d);
   }
+  /** DISC20-C (2026-09-24, Mac: "Horse and carts can be seen parked in the sky"): the ground under the standing team
+   *  was built again (the pool's groundMoved - a pixel streamed in, the road network or a late World of Daggerfall
+   *  pack rebuilding one). The mod grounds the parked wagon and the waiting horse once (Tick's `grounded` return, the
+   *  requested pose's tolerance) because its terrain never changes under a scene; the port's can, by metres on a
+   *  levelled site - so they stand again, on what is there now, on the next frame. `within(position)` narrows it to
+   *  the ground that moved; a following horse is grounded every step already.
+   *  @param {(position: number[]) => boolean} [within] */
+  function regroundStanding(within = () => true) {
+    if (deployedVisual?.isAlive && within(deployedVisual.position)) { deployedVisual.grounded = false; deployedVisual.nextGroundRetryTime = 0; }
+    if (stationaryHorseVisual?.isAlive && !isHorseFollowing() && within(stationaryHorseVisual.position)) stationaryHorseVisual.hasRequestedPose = false;
+  }
   function handleStartLoad() { wagonState = newSaveData(); clearAllTransientState(); pendingPersistenceNormalization = !physicalPersistenceEnabled; }
   function handleNewGame() { wagonState = newSaveData(); clearAllTransientState(); pendingPersistenceNormalization = !physicalPersistenceEnabled; }
   function getSaveData() {
@@ -1260,7 +1257,7 @@ export function createHorseCartRuntime(deps) {
   function suspend() { clearAllTransientState(); }
 
   return {
-    lateUpdate, rebase, handleSettingsChanged,
+    lateUpdate, rebase, regroundStanding, handleSettingsChanged,
     handleStartLoad, handleNewGame, getSaveData, restoreSaveData, newSaveData, suspend,
     handlePreTransition, handleSuccessfulInteriorTransition, handleFailedTransition, handleExteriorTransition,
     handlePreFastTravel, handlePostFastTravel,

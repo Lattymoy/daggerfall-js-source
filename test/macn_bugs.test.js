@@ -405,7 +405,7 @@ test('MAC-N3: the URL it writes is the URL the lane reads - Play Online is onlin
     const search = publishBootParams(params, page);
     assert.equal(page.location.search, search, 'the page now carries what the door decided');
     assert.equal(isOnlinePage(search), true);
-    assert.equal(uiSkin(search), 'enhanced', 'OL1: online is the enhanced lane, over the stored choice');
+    assert.equal(uiSkin(search), 'classic', 'OVH3: online wears the player\'s own UI Overhaul - the stored choice, as offline');
     // the other door: every other choice DELETES it, and the lane reads offline again
     params.delete('online');
     const off = publishBootParams(params, page);
@@ -441,11 +441,10 @@ test('MAC-N3: main.js publishes before BOTH world boots the front door reaches, 
   assert.deepEqual(decided, [...BOOT_DOOR_KEYS].sort());
 });
 
-test('MAC-N3: the chat is the enhanced skin\'s, and the skin it asks is the lane\'s read - which is why the URL had to carry the flag', () => {
+test('MAC-N3 + OVH3: the chat mounts on either skin (the online panels keep their own face over any UI Overhaul), and the online read is the one off location.search', () => {
   const world = rd('src/scenes/world.js');
-  assert.match(world, /const enhanced = isEnhanced\(\);/);
-  assert.match(world, /if \(enhanced && typeof document !== 'undefined'\) chatStart\(\);/);
-  assert.match(rd('src/systems/uiSkin.js'), /return onlineForcedPref\('skin', search\) \?\? skinOverride\(search\)/);
+  assert.match(world, /if \(typeof document !== 'undefined'\) chatStart\(\);/);
+  assert.match(rd('src/systems/uiSkin.js'), /return skinOverride\(search\) \?\? clean\(getPref\('skin'\)\)/, 'the skin reads no lane');
   assert.match(rd('src/systems/onlineLane.js'), /export const isOnlinePage = \(search = globalThis\.location\?\.search \?\? ''\) => new URLSearchParams\(search\)\.has\('online'\);/,
     'the one read, off location.search - the copy main.js edits is not it');
 });

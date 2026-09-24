@@ -30,7 +30,7 @@ import { LETTER_OF_CREDIT_TEMPLATE } from '../src/systems/inventory.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 import { cureOfferMessageOffset } from '../src/systems/guildServiceActions.js';
 import { TARGET_DESCRIPTIONS, ELEMENT_DESCRIPTIONS } from '../src/ui/spellIcons.js';
-import { SPELLBOOK_DESCRIPTION_IDS, spellBookDescriptionId, SPELL_MAKER_EFFECTS } from '../src/systems/spellEffects.js';
+import { SPELLBOOK_DESCRIPTION_IDS, spellBookDescriptionId, SPELL_MAKER_EFFECTS, portEffectDescription } from '../src/systems/spellEffects.js';
 import { audio } from '../src/systems/audio.js';
 import { SOUND } from '../src/systems/soundClips.js';
 import { FNT_ASCII_START } from '../src/formats/fntFile.js';
@@ -364,7 +364,7 @@ test('U42 sort: alphabetical, then point cost only if the alpha pass changed not
 });
 
 test('U42: every mutation lands on the player\'s OWN array - the save envelope sees it', () => {
-  // PlayerEntity.GetSpells() is the book itself and save.js:335 maps
+  // PlayerEntity.GetSpells() is the book itself and save.js:336 maps
   // that array in order. This pin fails if the window ever copies.
   const { entity, w } = book(spell('B', 5, { index: 7 }), spell('A', 5, { index: 9 }));
   const arr = entity.spells;
@@ -385,7 +385,7 @@ test('U42 rename: a COPY takes the new name, marked custom so the save carries i
   // RenameSpellPromptHandler (:937-950). DFU's EffectBundleSettings
   // is a struct, so GetSpell/SetSpell is a copy-then-write; the
   // port's records are shared objects, so the copy is explicit. The
-  // `custom` flag is what save.js:335 reads to store the whole
+  // `custom` flag is what save.js:336 reads to store the whole
   // record instead of a bare SPELLS.STD index.
   const shared = spell('Fireball', 20, { index: 12 });
   const { entity, w } = book(shared);
@@ -405,7 +405,7 @@ test('U42 rename: a COPY takes the new name, marked custom so the save carries i
 });
 
 test('U42 rename: the renamed COPY survives the save envelope', () => {
-  // The `custom` flag is not decoration - save.js:335 stores the whole
+  // The `custom` flag is not decoration - save.js:336 stores the whole
   // record for a custom spell and a bare SPELLS.STD index for every
   // other, so without it a reload would hand back the ORIGINAL name.
   // This drives the real envelope rather than asserting the flag.
@@ -820,7 +820,7 @@ test('U42 clicks: a list row selects, and a second click inside the double-click
   //
   // AUDIT 65 UI-1: driven through the HOST'S CALL SHAPE. Every host
   // that owns an overlay slot dispatches `click(vx, vy, right, middle)`
-  // - townTalk.js:1236, worldModes.js:8868, dungeonContext.js:6589 -
+  // - townTalk.js:1241, worldModes.js:8880, dungeonContext.js:6625 -
   // so the clock is stubbed on the window's OWN `_now()` seam, not
   // handed to a positional the hosts already fill with a button.
   // MUTANT: `click(vx, vy, now)` with `const t = now ?? Date.now()`
@@ -1207,7 +1207,7 @@ test('U42: BuySpells and BuySpellsMages are no longer FLAGGED nulls', () => {
   const modes = readFileSync(new URL('../src/scenes/worldModes.js', import.meta.url), 'utf8');
   assert.ok(modes.includes("destination === 'guildServiceSpellbook'"), 'the interior host runs the arm');
   assert.ok(/\{ buyMode: true \}/.test(modes), '...in BUY mode');
-  assert.ok(/offered: \(\) => \[\.\.\.sbi\.values\(\)\]/.test(modes), 'over the whole of SPELLS.STD');
+  assert.ok(/offered: \(\) => \[\.\.\.sbi\.values\(\), \.\.\.\(isOnlinePage\(\) \? \[resurrectionSpell\(\)\] : \[\]\)\]/.test(modes), 'over the whole of SPELLS.STD - and, online, RESURRECT1\'s ready-made Resurrection');
   // The popup's onService reads what openServiceFlow RETURNS and
   // answers "not available yet" on a null, so this arm hands the
   // window back as the repair arm does rather than mounting silently.
@@ -1269,9 +1269,11 @@ test('D10: SpellBookDescription ids are the effect classes own, and every catalo
   assert.equal(spellBookDescriptionId('99,255'), null);
   // and every registry row the spellbook can print an effect panel
   // for has an id, so the popup is never empty on real data
+  // (RESURRECT1: the port's OWN effect has no TEXT.RSC record, so its box reads the port's own words instead)
   for (const e of SPELL_MAKER_EFFECTS) {
-    assert.ok(SPELLBOOK_DESCRIPTION_IDS.has(e.key), `${e.key} (${e.group}) has a SpellBookDescription`);
+    assert.ok(SPELLBOOK_DESCRIPTION_IDS.has(e.key) || portEffectDescription(e.key)?.length > 0, `${e.key} (${e.group}) has a SpellBookDescription`);
   }
+  assert.equal(SPELLBOOK_DESCRIPTION_IDS.has('45,255'), false, 'Resurrect claims no classic record');
 });
 
 test('D10: clicking an effect panel pops that effect SpellBookDescription record', () => {

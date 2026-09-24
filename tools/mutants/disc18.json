@@ -1,0 +1,73 @@
+[
+  {
+    "name": "DISC18-the-body-on-the-camera-s-low-pass",
+    "file": "src/player/motor.js",
+    "old": "    return [q[0] + dx * a, q[1] + dy * a, q[2] + dz * a];\n  }",
+    "new": "    return [q[0] + dx * a, this._eyeFeetY ?? (q[1] + dy * a), q[2] + dz * a];\n  }",
+    "tests": [
+      "test/disc18.test.js"
+    ]
+  },
+  {
+    "name": "DISC18-the-body-s-snap-primes-the-camera-s-filter",
+    "file": "src/player/motor.js",
+    "old": "SNAP_SPAN * PlayerMotor.SNAP_SPAN) return [p[0], p[1], p[2]];",
+    "new": "SNAP_SPAN * PlayerMotor.SNAP_SPAN) { this._eyeFeetY = null; return [p[0], p[1], p[2]]; }",
+    "tests": [
+      "test/disc18.test.js"
+    ]
+  },
+  {
+    "name": "DISC18-the-world-draws-the-body-on-the-camera-s-feet",
+    "file": "src/scenes/world.js",
+    "old": "mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: cam.yaw });",
+    "new": "mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.feetAt(), yaw: cam.yaw });",
+    "tests": [
+      "test/disc18.test.js",
+      "test/mac1_playreport.test.js",
+      "test/mwbody1.test.js"
+    ]
+  },
+  {
+    "name": "DISC18-the-town-draws-the-body-on-the-camera-s-feet",
+    "file": "src/scenes/exterior.js",
+    "old": "mwViewDrawBody(canvas, { proj, view, eye, feet: player.bodyFeetAt(), yaw: cam.yaw });",
+    "new": "mwViewDrawBody(canvas, { proj, view, eye, feet: player.feetAt(), yaw: cam.yaw });",
+    "tests": [
+      "test/disc18.test.js",
+      "test/mac1_playreport.test.js"
+    ]
+  },
+  {
+    "name": "DISC18-the-dungeon-draws-the-body-on-the-camera-s-feet",
+    "file": "src/scenes/dungeon.js",
+    "old": "if (walkMode) mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: cam.yaw });",
+    "new": "if (walkMode) mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.feetAt(), yaw: cam.yaw });",
+    "tests": [
+      "test/disc18.test.js",
+      "test/mac1_playreport.test.js"
+    ]
+  },
+  {
+    "name": "DISC18-the-modal-dungeon-draws-the-body-on-the-camera-s-feet",
+    "file": "src/scenes/worldModes.js",
+    "old": "\n      mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: cam.yaw });",
+    "new": "\n      mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.feetAt(), yaw: cam.yaw });",
+    "tests": [
+      "test/disc18.test.js",
+      "test/mac1_playreport.test.js",
+      "test/mwbody1.test.js"
+    ]
+  },
+  {
+    "name": "DISC18-the-interior-draws-the-body-on-the-camera-s-feet",
+    "file": "src/scenes/worldModes.js",
+    "old": "\n    mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: cam.yaw });",
+    "new": "\n    mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.feetAt(), yaw: cam.yaw });",
+    "tests": [
+      "test/disc18.test.js",
+      "test/mac1_playreport.test.js",
+      "test/mwbody1.test.js"
+    ]
+  }
+]

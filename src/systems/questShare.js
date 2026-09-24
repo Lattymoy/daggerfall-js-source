@@ -65,7 +65,7 @@
 // own counters, so keeping the sender's risks colliding with a quest
 // the receiver already has for an unrelated reason.
 
-import { MEMBERSHIP_STATUS } from './quest/questLists.js';
+import { MEMBERSHIP_STATUS, isMainQuestName } from './quest/questLists.js';
 import { GUILDS, hasJoined } from './guilds.js';
 import { QUEST_FRAME_MAX } from '../net/wire.js';
 
@@ -79,13 +79,6 @@ import { QUEST_FRAME_MAX } from '../net/wire.js';
  *  the wire envelope (t, quest.questName, quest.displayName) around
  *  this payload. */
 export const QUEST_SHARE_MAX_BYTES = QUEST_FRAME_MAX - 512;
-
-/** ui/questRail.js's own isMainQuest, duplicated rather than imported -
- *  that module is UI-layer and this one is systems-layer, and a quest
- *  UID's own name is enough that the two never need to agree through a
- *  shared import to agree in fact. Keep this in step with questRail.js's
- *  copy if either ever changes. */
-const isMainQuestName = (questName) => /^S0000/.test(questName ?? '') || questName === '_BRISIEN';
 
 /** SENDER SIDE: one quest's shareable envelope, or a refusal.
  *  `machine` is the sender's own QuestMachine. */
@@ -127,11 +120,12 @@ export function prepareQuestShare(machine, uid) {
  *  in the catalog row, and are not replicated here. A receiver who
  *  has joined the right guild always passes; a receiver who has not
  *  always fails - the one direction that must never be wrong. */
-export function canReceiveSharedQuest(machine, questLists, questName, { memberships = {} } = {}) {
+export function canReceiveSharedQuest(machine, questLists, questName, { memberships = {}, shareId } = {}) {
   // AUDIT DROPS A2: a quest this player already FINISHED under a share is never received again this session -
   // a fresh receipt rebuilds it from the sender's envelope and "counts as advance" would pay every completed
   // GivePc/TrainPc a second time. (The tombstone only lives a week; the memory of having been paid outlives it.)
-  if (machine.hasFinishedSharedQuestNamed?.(questName)) return { ok: false, reason: 'done' };
+  // DISC22-F: by the COPY (the envelope's shareId), not the name - a new share of a repeatable quest is a new copy
+  if (shareId !== undefined ? machine.hasFinishedSharedCopy?.(questName, shareId) : machine.hasFinishedSharedQuestNamed?.(questName)) return { ok: false, reason: 'done' };
   // AUDIT DROPS A1: the main quest is refused on RECEIPT as well as on send - the sender's own gate is the sender's
   // client, and a hand-built envelope is not bound by it.
   if (isMainQuestName(questName)) return { ok: false, reason: 'mainQuest' };
@@ -168,7 +162,7 @@ export function canReceiveSharedQuest(machine, questLists, questName, { membersh
  *  one - the result still carries `quest`, so a caller need not branch
  *  on which arm ran to read the outcome. */
 export function receiveSharedQuest(machine, questLists, questName, data, ctx = {}) {
-  const check = canReceiveSharedQuest(machine, questLists, questName, ctx);
+  const check = canReceiveSharedQuest(machine, questLists, questName, { ...ctx, shareId: data?.shareId ?? null });   // DISC22-F: the copy being offered
   if (!check.ok) return check;
   // AUDIT DROPS A1: THE ENVELOPE IS NOT TRUSTED. The wire's `questName` gated the receipt above, but the quest is
   // BUILT from `data` - so the two must agree, and the envelope's SHAPE (every task symbol and every action TYPE in
@@ -239,9 +233,10 @@ export const SHARE_REFUSAL_TEXT = Object.freeze({
   gone: 'That quest is no longer active.',
   tooLarge: 'This quest is too complex to share.',
   mainQuest: 'The main quest cannot be shared.',
-  active: 'already has this quest.',
-  done: 'has already done this quest.',
-  mismatch: 'received a quest that did not match its own copy.',   // AUDIT DROPS A1: the envelope is not the quest it names
-  unknown: 'does not know this quest.',   // AUDIT DROPS A1: no local source to check the envelope against
-  guild: 'is not a member of the guild this quest requires.',
+  // DISC22-F: the fragments below are said to the RECEIVER, after "... but you" (scenes/world.js) - second person
+  active: 'already have this quest.',
+  done: 'have already done this quest.',
+  mismatch: 'received a quest that did not match your own copy.',   // AUDIT DROPS A1: the envelope is not the quest it names
+  unknown: 'do not know this quest.',   // AUDIT DROPS A1: no local source to check the envelope against
+  guild: 'are not a member of the guild this quest requires.',
 });

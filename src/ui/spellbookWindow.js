@@ -74,7 +74,7 @@
 // and SetSpell writes it back into the player's slot - the shared
 // SPELLS.STD record is untouched. The port's records are objects
 // shared by every caster, so confirmRename copies explicitly and
-// marks the copy `custom`, which is exactly the flag save.js:335
+// marks the copy `custom`, which is exactly the flag save.js:336
 // already reads to store a whole record instead of a bare index.
 // U4's "rename needs per-entity copies + name persistence first" is
 // answered: it has both.
@@ -136,7 +136,7 @@ import {
   preloadSpellIcons, drawSpellIcon, drawTargetIcon, drawElementIcon,
   TARGET_DESCRIPTIONS, ELEMENT_DESCRIPTIONS,
 } from './spellIcons.js';
-import { effectByKey, spellBookDescriptionId, effectMacroSource } from '../systems/spellEffects.js';
+import { effectByKey, spellBookDescriptionId, effectMacroSource, portEffectDescription } from '../systems/spellEffects.js';
 import { expandRowValues, sourceValues } from '../systems/quest/questMacros.js';   // MACRO-5: the effect popup's source
 import { calculateTradePrice } from '../systems/shopStock.js';
 import { ROW_SPACING, SELECTED_TEXT_COLOR } from './listPicker.js';   // ListBox.cs:36-37 and DaggerfallUI.cs:62 - one home each
@@ -239,6 +239,17 @@ export function spellPointCost(spell, castCost) {
  *  quirk - what SortSpellsPointCost orders by (AUDIT 26 F179). */
 export function rawSpellPointCost(spell, castCost) {
   return castCost ? castCost(spell) : (spell?.cost ?? 0);
+}
+
+/** GetSpell/SetSpell (:940-951, :960-974): an edit lands on a COPY of the
+ *  book's entry, marked `custom` so the save keeps it whole - the entry
+ *  may be the shared SPELLS.STD record or a frozen RRI one.
+ *  AUDIT 68 S31-enhanced-rename-mutates-shared-spell: both skins edit here.
+ *  Answers the new entry, or null when the row is empty. */
+export function editBookSpell(list, index, fields) {
+  const spell = list?.[index];
+  if (!spell) return null;
+  return (list[index] = { ...spell, ...fields, custom: true });
 }
 
 let _art = null;
@@ -516,7 +527,7 @@ export class SpellbookWindow {
    *  spellings of "no subtype": a SPELLS.STD record reads it as a
    *  SIGNED byte and stores -1, while a spell built in the maker
    *  copies the catalog's 255. Every other consumer normalizes the
-   *  same way (systems/effects.js:158's classicSub, spellcost.js:128)
+   *  same way (systems/effects.js:158's classicSub, spellcost.js:129)
    *  and the effect table is keyed on 255, so a Free Action off the
    *  file would otherwise print "Effect not found" in the book. */
   effectLabels(slot) {
@@ -650,7 +661,7 @@ export class SpellbookWindow {
    *  copy, and SetSpell writes it into the player's slot - the shared
    *  SPELLS.STD record is never touched. The port's records are
    *  objects shared by every caster, so the copy has to be explicit,
-   *  and it is marked `custom` so save.js:335 stores the whole record
+   *  and it is marked `custom` so save.js:336 stores the whole record
    *  instead of the bare index it would otherwise write (which would
    *  reload the ORIGINAL name). That retires the U4 ledger's rename
    *  row: renaming is real and it persists. */
@@ -660,10 +671,7 @@ export class SpellbookWindow {
     // port keeps it legal rather than quietly being stricter.
     this.top = null;
     if (this.selectedIndex === -1 || !input) return;   // "Must not be blank" (:943-944)
-    const list = this.deps.spells?.() ?? [];
-    const spell = list[this.selectedIndex];
-    if (!spell) return;
-    list[this.selectedIndex] = { ...spell, name: input, custom: true };
+    if (!editBookSpell(this.deps.spells?.(), this.selectedIndex, { name: input })) return;
     this.refreshSpellsList(true);
     this._edit();
   }
@@ -681,10 +689,7 @@ export class SpellbookWindow {
         this.top = null;
         this._iconPicker = null;
         if (!icon) return;
-        const list = this.deps.spells?.() ?? [];
-        const spell = list[this.selectedIndex];
-        if (!spell) return;   // GetSpell's false arm (:963-964)
-        list[this.selectedIndex] = { ...spell, icon: icon.index, custom: true };
+        if (!editBookSpell(this.deps.spells?.(), this.selectedIndex, { icon: icon.index })) return;   // GetSpell's false arm (:963-964)
         this._edit();   // editSpellBook (:972)
       },
     });
@@ -799,8 +804,8 @@ export class SpellbookWindow {
 
   /** AUDIT 65 UI-1: THE HOSTS OWN THE THIRD AND FOURTH SLOTS. Every
    *  host that holds an overlay slot dispatches
-   *  `click(vx, vy, right, middle)` - `scenes/townTalk.js:1236`,
-   *  `scenes/worldModes.js:8868`, `scenes/dungeonContext.js:6589` - so
+   *  `click(vx, vy, right, middle)` - `scenes/townTalk.js:1241`,
+   *  `scenes/worldModes.js:8880`, `scenes/dungeonContext.js:6625` - so
    *  a clock threaded positionally here arrived as `e.button === 2`, a
    *  BOOLEAN. `false ?? Date.now()` keeps the `false`, `false != null`
    *  is true and `false - false === 0 < 300`, which made EVERY second
@@ -918,8 +923,9 @@ export class SpellbookWindow {
   _effectDescription(slot) {
     const e = spellEffects(this.selected)[slot];
     if (!e) return null;
-    const id = spellBookDescriptionId(`${e.type},${e.subType & 0xff}`);
-    if (id == null) return null;
+    const key = `${e.type},${e.subType & 0xff}`;
+    const id = spellBookDescriptionId(key);
+    if (id == null) { const own = portEffectDescription(key); return own ? [...own] : null; }   // RESURRECT1: the port's own effect's own words
     // MACRO-5: SetTextTokens(effect.SpellBookDescription, EFFECT) - the
     // box's source is the effect itself (EntityEffectMCP), not the
     // book's trade source, so %bdr..%clm are its own settings.

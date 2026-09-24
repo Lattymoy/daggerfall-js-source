@@ -68,7 +68,7 @@ export function emoteText(name, target = '') {
   const e = EMOTES[name];
   if (!e) return null;
   const t = String(target ?? '').replace(/\s+/g, ' ').trim().slice(0, 24);
-  return t ? e[1].replace('{t}', t) : e[0];
+  return t ? e[1].replace('{t}', () => t) : e[0];   // AUDIT 68 S14-emote-target-replacement-pattern: a function, so a typed `$&`/`$'`/`$$` is a name, not a pattern
 }
 /** EMOTE1: THE SHORTCODES - `:smile:` is its emoji in anything said (the pixel face has none of these glyphs; the
  *  browser's own emoji face draws them). A code the table does not know stays as typed. */
@@ -143,70 +143,7 @@ export const SHORTCODES = Object.freeze(Object.fromEntries(SHORTCODE_LIST));
 /** EMOTE1: every `:code:` the table knows, its emoji - the rest as typed. */
 export const expandShortcodes = (text) => String(text ?? '').replace(/:([a-z0-9_+-]{1,20}):/gi, (all, code) => SHORTCODES[code.toLowerCase()] ?? all);
 /** The commands the host handles itself, before this parser is asked (their own slices pin their grammar). */
-export const HOST_COMMANDS = Object.freeze(['unstuck', 'red', 'mute', 'unmute', 'ready']);
-/** VOICE1: /speech mirrors the OpenMW server command; /voice and /v are aliases.
- * `/s` remains this game's established Local-chat command. A source-less command means Morrowind,
- * preserving the familiar "/speech hello 1" shape; prepend "df" for DAGGER.SND combat voices. */
-const MW_TYPE_ALIASES = Object.freeze({
-  atk: 'attack', attack: 'attack',
-  cratk: 'crattack', crattack: 'crattack', creatureattack: 'crattack',
-  flee: 'flee', fle: 'flee',
-  follower: 'follower', flw: 'follower',
-  hello: 'hello', hlo: 'hello',
-  hit: 'hit', hurt: 'hit', pain: 'hit',
-  idle: 'idle', idl: 'idle',
-  intruder: 'intruder', int: 'intruder',
-  oppose: 'oppose', op: 'oppose',
-  service: 'service', srv: 'service',
-  thief: 'thief', thf: 'thief',
-  uniform: 'uniform', uni: 'uniform',
-  misc: 'misc', special: 'special', extras: 'special', extra: 'special',
-  werewolf: 'werewolf', wolf: 'werewolf', ww: 'werewolf',
-});
-const MW_COLLECTION_ALIASES = Object.freeze({
-  default: 'default',
-  tb: 'tb', tribunal: 'tb',
-  bm: 'bm', bloodmoon: 'bm',
-  ord: 'ord', ordinator: 'ord',
-  v: 'vampire', vamp: 'vampire', vampire: 'vampire',
-});
-const parseMwKind = (raw) => {
-  const value = String(raw ?? '').toLowerCase();
-  const global = MW_TYPE_ALIASES[value];
-  if (global === 'misc' || global === 'special' || global === 'werewolf') return { collection: 'global', type: global };
-  const split = value.indexOf('_');
-  let collection = 'default', typeWord = value;
-  if (split > 0) {
-    collection = MW_COLLECTION_ALIASES[value.slice(0, split)];
-    typeWord = value.slice(split + 1);
-    if (!collection) return null;
-  }
-  const type = MW_TYPE_ALIASES[typeWord];
-  return type && !['misc', 'special', 'werewolf'].includes(type) ? { collection, type } : null;
-};
-const parseVoiceCommand = (rest) => {
-  const words = String(rest ?? '').trim().split(/\s+/).filter(Boolean);
-  if (!words.length) return { kind: 'voicehelp' };
-  let source = words[0].toLowerCase();
-  if (source === 'daggerfall') source = 'df';
-  if (source === 'morrowind') source = 'mw';
-  if (source === 'df') {
-    const type = String(words[1] ?? '').toLowerCase();
-    const index = words[2] == null ? 1 : Number(words[2]);
-    const req = validVoiceRequest({ source: 'df', type, index });
-    return req && words.length <= 3 ? { kind: 'voice', request: req } : { kind: 'badvoice' };
-  }
-  const offset = source === 'mw' ? 1 : 0;
-  const key = parseMwKind(words[offset]);
-  const id = words[offset + 1];
-  if (!key || id == null || words.length !== offset + 2) return { kind: 'badvoice' };
-  const req = validVoiceRequest({ source: 'mw', ...key, voiceId: id });
-  return req ? { kind: 'voice', request: req } : { kind: 'badvoice' };
-};
-export const VOICE_CHAT_COMMANDS = Object.freeze([
-  Object.freeze({ names: Object.freeze(['speech', 'voice', 'v']), parse: parseVoiceCommand }),
-  Object.freeze({ names: Object.freeze(['speechhelp', 'voicehelp', 'voices']), parse: (rest) => rest ? { kind: 'badvoice' } : { kind: 'voicehelp' } }),
-]);
+export const HOST_COMMANDS = Object.freeze(['unstuck', 'red', 'dm', 'mute', 'unmute', 'ready']);   // TITLE-N: /dm, the Dungeon Master's line
 /** CHAT-HELP (2026-09-23, Mac: "a non-intrusive greeting message that says something along the lines of (use /help
  *  for commands)"): the line the chat greets the player with each time they go online - theirs alone, never counted
  *  unread (net/chat.js push's `quiet`), so /help is found without being announced. */

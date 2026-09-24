@@ -418,7 +418,7 @@ dungeon geometry. All are fixed and rooted; the durable record:
   input (active keys, live pitch). This is the instrument that
   finally cracked the real bugs; it stays.
 - **Per-commit build tag**: scripts/buildTag.mjs stamps
-  `git rev-parse --short HEAD` into src/buildTag.js on prebuild, so a
+  `git rev-parse --short=12 HEAD` into src/buildTag.js on prebuild, so a
   screenshot self-identifies its bundle and stale-cache ambiguity
   dies.
 - **`[spawn]` console line**: marker -> feet on every dungeon boot.
@@ -965,7 +965,7 @@ all four caught, then reverted).
   update's worth; the cadence, the submergence geometry and the
   SetHealth(0) stay in dungeonContext.breathTick, which BOTH
   dungeon-mode hosts drive through dungeonCtx.drawFoes
-  (worldModes.js:817). exterior.js and world.js have no submersion
+  (worldModes.js:819). exterior.js and world.js have no submersion
   path for it to ride yet - when exterior water lands, it consumes
   this same step. New in the step:
   (1) THE ARGONIAN COIN REFUND (:331-333): on each drain tick,
@@ -1032,8 +1032,12 @@ their setting as residue.
   skill tallying ONCE PER CHECK before the roll, and the underwater
   forgiveness (:837-843 - the foot position collapses to
   feetY - 0.25 against the block water surface).
-- **The motor's capsule work**: _climbWallProbe - two rays at
-  0.4h/0.8h along the wall direction, reach radius+0.1, standing in
+- **The motor's capsule work**: _climbWallProbe - rays at 0.4h,
+  0.8h, the cylinder's base (r) and the lower cap's lowest wall
+  contact (CLIMB_CAP_LOW = r - sqrt((r+0.1)^2 - r^2), about 0.067 -
+  DISC21: the two upper rays alone let go of the wall with the
+  feet 0.72 m under the lip, and the climber fell back into the pit)
+  along the wall direction, reach radius+0.1, standing in
   for CollisionFlags.Sides + the GetClimbedWallInfo capsule cast
   (documented departure); a hit latches myLedgeDirection = the
   horizontal -normal (:608) so turning the camera mid-climb keeps
@@ -1692,12 +1696,12 @@ that `worldModes`'s own mousedown/mouseup handlers never call
 `mouseCode(e.button)`, so `held(keys, 'AutoRun')` was dead in that host
 at the shipped `Mouse2` default, and handed it to the input lane.
 `worldModes` has no `keys` Set of its own: it destructures one from
-`host` (`worldModes.js:408`), and its only two callers are `world.js`
+`host` (`worldModes.js:407`), and its only two callers are `world.js`
 (`:6147`) and `exterior.js` (`:2769`), both of which pass their own Set
-and both of whose WINDOW-level handlers (`world.js:8022-8023`,
-`exterior.js:3248-3249`) call `mouseCode(e.button)` and add/delete
+and both of whose WINDOW-level handlers (`world.js:8070-8071`,
+`exterior.js:3256-3257`) call `mouseCode(e.button)` and add/delete
 unconditionally - outside every mode and overlay gate. `MOUSE_CODES`
-maps button 2 to `Mouse2` (`input.js:446`), which is the shipped
+maps button 2 to `Mouse2` (`input.js:491`), which is the shipped
 binding (`InputManager.cs:995`). The latch is live in that host; there
 was no gap to hand on and none is queued.
 
@@ -1713,7 +1717,7 @@ not gate on `HasAction`; it gates on `playerMotor.IsStandingStill`
 that `GroundedMovement` writes straight into `moveDirection`, so DFU
 plays the stride. The port walked the autorunner forward in silence in
 every host. All four now pass `standingStill: player.standing`, the
-motor's own mirror of that getter (`world.js:14532` already did at its
+motor's own mirror of that getter (`world.js:14717` already did at its
 other footstep site) - which is also still the paralysis answer,
 because the hosts zero both axes for a frozen player.
 
@@ -2127,3 +2131,14 @@ rounded bottom, with its feet r (1 / cos - 1) over that ground: 5 cm at
 own width. It is read by both the floor snap and the clamp, so MAC3's
 downhill adhesion holds, and flat ground is unchanged.
 `01-Overview/Field-Bugs-2026-09-23.md` DISC16-A.
+
+## DISC18 - the body stands on the capsule's feet, not the camera's (2026-09-24, Mac)
+
+"My characterless [character's legs] are in the ground." The hosts drew the third-person
+body (the Morrowind body and the EOTB sprite) at `feetAt()`, the camera's
+low-passed feet (MAC1's `STEP_SMOOTH_TAU`, AUDIT 65 XL-4), which trail a
+climb by the climb's vertical speed times the time constant. Walking up
+a 30-degree hill the body sat 13 cm under the ground, and 23 cm running.
+`bodyFeetAt()` is EV1's interpolation alone. The five body draws take it,
+and the cameras keep the smoothing. `01-Overview/Field-Bugs-2026-09-23.md`
+DISC18.

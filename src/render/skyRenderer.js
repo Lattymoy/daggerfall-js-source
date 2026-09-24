@@ -31,6 +31,8 @@
 // atan(dir.x, dir.z), which is 0 at +Z - so that half runs north -> east ->
 // south and is CENTRED on map east at u = 0.25. Documented equivalence.
 
+import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
+
 export const SKY_ANGLE_PER_PIXEL = Math.PI / 512;
 
 /** NITE??I0.IMG index for a sky archive, verbatim LoadVanillaNightSky. */
@@ -188,22 +190,7 @@ void main() {
 export class SkyRenderer {
   constructor(gl) {
     this.gl = gl;
-    const compile = (type, src) => {
-      const sh = gl.createShader(type);
-      gl.shaderSource(sh, src);
-      gl.compileShader(sh);
-      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
-        throw new Error(gl.getShaderInfoLog(sh));
-      }
-      return sh;
-    };
-    const prog = gl.createProgram();
-    gl.attachShader(prog, compile(gl.VERTEX_SHADER, SKY_VS));
-    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, SKY_FS));
-    gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-      throw new Error(gl.getProgramInfoLog(prog));
-    }
+    const prog = buildProgram(gl, SKY_VS, SKY_FS);
     this.program = prog;
     this.uSky = gl.getUniformLocation(prog, 'uSky');
     this.uClear = gl.getUniformLocation(prog, 'uClear');

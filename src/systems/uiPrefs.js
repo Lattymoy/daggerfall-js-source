@@ -43,6 +43,9 @@ export const PREF_DEFAULTS = Object.freeze({
   // uiSkin.js rather than here - that module resolves the ?skin
   // override on top of this and is the one place the vocabulary lives.
   skin: 'enhanced',
+  // OVH2 (2026-09-24): the UI pack worn over the CLASSIC skin - 'none' or a systems/uiPack.js UI_PACKS id
+  // (GrimoireUI). Read it through uiPack.js activeUiPack, which answers the URL and the skin on top of it.
+  uiPack: 'none',
   // ONLINE1 (2026-09-12): the Online door's two fields - the name over the
   // player's head and the relay to join (net/online.js DEFAULT_SERVER when empty).
   onlineServer: '',

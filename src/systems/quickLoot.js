@@ -42,12 +42,15 @@
 // arc was split to avoid: a take that lives in a draw, or a systems
 // module reaching into `ui/` to read a highlight. Moving the state to
 // the feature closes both.
+import { setClassicLootFrame } from './classicLootFrame.js';   // DISC22-C: a leaf - the classic panel's frame, cleared with the selection
 import { getPref } from './uiPrefs.js';
 import { itemNameParts, itemStatRows } from './itemInfo.js';   // RF6: the long name's name part, the same one the plaque's rows wear; QUICK-LOOT-STATS: and the rows the lit one says about itself
 import { nextSelection, selectedRow, hoverItemAt } from './worldHover.js';   // the fold's LAW and the row -> item walk, both driven there
 import { planTake, applyTransfer } from './itemTransfer.js';   // QL-WEIGHT1: the window's own plan and move - the carry gate, the summoned and quest guards, the split, the gold door
 import { isMap } from './useItem.js';   // the map the window USES rather than takes (F156) - left for the window here
 import { racialSuppressInventory } from './lycanthropy.js';   // DISC10-E L3: the beast takes nothing into a pack it cannot open
+import { audio } from './audio.js';   // SND1: the take's own sound
+import { SOUND } from './soundClips.js';
 
 /** The player's own switch (features.js, `quick-loot`). Off is
  *  Daggerfall's loot exactly: the activate key opens the window it has
@@ -89,10 +92,22 @@ export const QUICK_LOOT_REFUSED = Object.freeze({ refused: true });
  *  `applyTransfer` spends into the counter and answers null for),
  *  `{ refusal }` when the plan says no, or null for a row the plan
  *  would USE rather than take. */
+/** SND1 (Discord, 2026-09-23: "everything you pick up with click loot
+ *  needs the Daggerfall click sound, except gold, which needs the gold
+ *  pickup sound"). The window's own two sounds for a take
+ *  (DoTransferItem: ButtonClick, and GoldPieces for gold - the plan's
+ *  `sound` already says which), played ONCE per press: a take-all that
+ *  moved gold says gold, anything else clicks. */
+let _tookSound = null;
+function takeSound() {
+  if (_tookSound) audio.playOneShot(_tookSound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);
+  _tookSound = null;
+}
 function takeThrough(playerEntity, items, item, getQuest) {
   if (isMap(item)) return null;
   const plan = planTake(item, { bag: playerEntity.items ?? [], entity: playerEntity, getQuest });
   if (!plan.ok) return { refusal: plan.refusal };
+  if (plan.sound === 'gold' || !_tookSound) _tookSound = plan.sound === 'gold' ? 'gold' : 'click';
   return applyTransfer(item, plan, items, (playerEntity.items ??= []), { entity: playerEntity, toPlayer: true }) ?? item;
 }
 
@@ -244,7 +259,8 @@ export function quickLootStats(frame) {
 /** Freed with the host that raised it: a selection is ABOUT a key in a
  *  world a teardown is unmaking, and a nudge spent in a dungeon must
  *  not move the highlight in the street. */
-export function resetQuickLoot() { _sel = null; _nudge = 0; _pending = null; _actionIds = null; _lastKey = null; }
+export function resetQuickLoot() { _sel = null; _nudge = 0; _pending = null; _actionIds = null; _lastKey = null; _tookSound = null; setClassicLootFrame(null); }   // DISC22-C: and the classic panel's frame
+   // SND1: and a press's sound, never carried across a teardown
 
 /**
  * ── THE TAKE, AND THE DOOR IT GOES THROUGH ──────────────────────
@@ -296,6 +312,7 @@ export function quickLootTake(key, hooks, playerEntity, say = () => {}, { getQue
     // not is the line said when nothing fitted at all, and the rows left
     // stay on the pile for the window or the next press.
     let n = 0, refusal = null;
+    _tookSound = null;
     for (const it of [...items]) {
       const got = takeThrough(playerEntity, items, it, getQuest);
       if (got?.refusal) { refusal ??= got.refusal; continue; }
@@ -303,15 +320,17 @@ export function quickLootTake(key, hooks, playerEntity, say = () => {}, { getQue
     }
     // AUDIT QL-WEIGHT1: a count with rows LEFT says why they stayed, on the same line - "You take 2 items." over a
     // pile that still holds three read as a door that stuck, with the reason unsaid
+    takeSound();   // SND1
     if (n) say((n === 1 ? 'You take 1 item.' : `You take ${n} items.`) + (refusal?.text ? ` ${refusal.text}` : ''));   // AUDIT: a refusal with no line (none the loop can meet today) adds nothing
     else if (refusal) { say(refusal.text); return QUICK_LOOT_REFUSED; }
     return n ? items : null;
   }
   const item = quickLootItemAt(key, items);
   if (!item) return null;
+  _tookSound = null;
   const got = takeThrough(playerEntity, items, item, getQuest);
   if (got?.refusal) { say(got.refusal.text); return QUICK_LOOT_REFUSED; }
-  if (got) say(tookItemText(got));
+  if (got) { takeSound(); say(tookItemText(got)); }   // SND1
   return got;
 }
 

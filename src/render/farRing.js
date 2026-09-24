@@ -49,6 +49,7 @@
 import { SCALED_OCEAN_ELEVATION, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } from '../world/terrainSampler.js';
 import { overworldTint, BASE_HEIGHT_SCALE } from '../ui/overworldModel.js';
 import { perspective, mirrorProjectionX } from '../world/mat4.js';
+import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 
 /** Ring radius in map pixels around the base - ~39 km of horizon. */
 export const RING_RADIUS = 48;
@@ -221,22 +222,7 @@ export class FarRingRenderer {
     this.gl = gl;
     this.lane = opts.lane ?? null;
     this._dec = new Float32Array(3);
-    const compile = (type, src) => {
-      const sh = gl.createShader(type);
-      gl.shaderSource(sh, src);
-      gl.compileShader(sh);
-      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
-        throw new Error(`far ring shader: ${gl.getShaderInfoLog(sh)}`);
-      }
-      return sh;
-    };
-    const p = gl.createProgram();
-    gl.attachShader(p, compile(gl.VERTEX_SHADER, VS));
-    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, this.lane ? this.lane.farRingFs : FS));
-    gl.linkProgram(p);
-    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
-      throw new Error(`far ring link: ${gl.getProgramInfoLog(p)}`);
-    }
+    const p = buildProgram(gl, VS, this.lane ? this.lane.farRingFs : FS, 'far ring');
     this.program = p;
     this.u = {};
     for (const name of ['uProj', 'uView', 'uOrigin', 'uLightDir', 'uAmbient', 'uSunScale', 'uSunColor',

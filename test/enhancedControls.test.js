@@ -30,16 +30,17 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  paneControls, discardControlsStaging, captureArmed, controlsStaging,
-  controlsDuplicates, GRID_ACTIONS, ADVANCED_ROWS, PORT_ROWS, PORT_GROUPS, MULTIPLE_ASSIGNMENTS, DEFAULTS_PROMPT,
+  paneControls, discardControlsStaging, captureArmed, controlsStaging, controlsPromptOpen, dismissControlsPrompt,
+  controlsDuplicates, shownGroups, MULTIPLE_ASSIGNMENTS, DEFAULTS_PROMPT,
 } from '../src/ui/enhancedControls.js';
 import { CATEGORY_IDS } from '../src/ui/settingsMap.js';   // AUDIT FT16 CTRL-a: the door the bindings live behind
 import { SYSTEM_PANES } from '../src/ui/enhancedMenu.js';
 import { KEYBIND_ROWS } from '../src/ui/mouseControlsWindow.js';
 import { bindings, setBindings, isTextEntryTarget } from '../src/ui/input.js';
 import {
-  ACTIONS, createBindings, resetDefaults, getBinding, onSavedKeyBinds, comboCode,
+  ACTIONS, createBindings, resetDefaults, getBinding, setBinding, onSavedKeyBinds, comboCode, ACTION_GROUPS, HIDDEN_ACTIONS,
 } from '../src/systems/inputActions.js';
+import { setModSetting, modSetting } from '../src/systems/modSettings.js';   // KB1: a mod's group follows its switch
 import { currentDict, buttonText, removeKeybindPromptRows } from '../src/systems/controlsConfig.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -120,6 +121,10 @@ function withPane(fn) {
 }
 
 const keyBtn = (view, action) => find(view.body, 'ctl-key').find((b) => b.dataset.action === action);
+/** KB1: a key NO default holds. The fixtures used KeyG as their free key; KB1 gave G to Handheld Torches' drop (one
+ *  key, one action - every letter is somebody's now), and a taken key asks before it binds. */
+const FREE = 'Semicolon';
+const answer = (view, yes) => find(view.body, 'act').find((b) => b.textContent === (yes ? 'Yes' : 'No')).onclick();
 const clearBtn = (view, action) => {
   const row = find(view.body, 'ctl-row').find((r) => one(r, 'ctl-key').dataset.action === action);
   return one(row, 'ctl-clear');
@@ -192,57 +197,34 @@ test('FT16: the key bindings live inside Settings, and both doors still reach th
     'a category change drops the staged dicts');
 });
 
-test('FIX-F: the pane offers the classic grid’s 38 actions and the ADVANCED six', () => {
-  // The grid covers Actions[2..40) - ui/controlsWindow.js's KEY_GROUPS,
-  // DFU's SetupKeybindButtons. Escape/ToggleConsole sit before it and
-  // QuickSave/QuickLoad/PrintScreen/AutoRun past its end, which is why
-  // those six live in the ADVANCED popup.
-  assert.deepEqual([...GRID_ACTIONS], ACTIONS.slice(2, 40));
-  assert.equal(GRID_ACTIONS.length, 38);
-  // The six are mouseControlsWindow's own six, in its order, with its
-  // labels - restated in the enhanced module so the skin does not pull
-  // 600 lines of canvas drawing in for six strings, and pinned here so
-  // the restatement cannot drift.
-  assert.deepEqual(ADVANCED_ROWS.map((r) => [r.action, r.label]),
-    KEYBIND_ROWS.map((r) => [r.action, r.label]));
-  // SOC5 WIDENED THIS PIN BY A THIRD GROUP, and by nothing else. The port's own
-  // actions belong to neither of the two lists above - GRID_ACTIONS is DFU's
-  // SetupKeybindButtons slice and ADVANCED_ROWS is mouseControlsWindow's six -
-  // so PORT_ROWS is where they go, and the COVERAGE rule below is what makes it
-  // compulsory rather than tidy: a bindable action with no row is a key nobody
-  // can rebind, and the classic window cannot draw this one at all.
-  // QS2 WIDENED IT AGAIN, by a fourth group rather than three more rows under
-  // the third: 'Online' is a true heading for the F-menu and a false one for a
-  // potion press, and a group whose title does not describe its rows is worse
-  // than no group. PORT_ROWS stays the flat union, because the coverage rule
-  // below is asked of the union and not of any one heading.
-  // QUICK-LOOT B4 WIDENED IT BY A FIFTH GROUP, on the same rule: two
-  // more port actions that belong to neither DFU list, under a heading
-  // that describes them both.
-  // FREEMOUSE WIDENED IT BY A SIXTH, holding ONE row - and the heading
-  // is the reason it is not filed under 'Online', where the Enter/chat
-  // collision that motivates it lives. Freeing the mouse is not an
-  // online thing; it is a thing you do to read the screen, and QS2
-  // already paid for the lesson that a group whose title does not
-  // describe its rows is worse than no group.
-  assert.deepEqual(PORT_ROWS.map((r) => r.action),
-    ['SocialInteract', 'Chat', 'QuickUse1', 'QuickUse2', 'QuickSpell', 'QuickSwap', 'QuickOffHand',
-      'QuickLootAll', 'QuickLootOpen', 'FreeMouse']);   // QS6: the spell slot, above the swap it took the key from
-  assert.deepEqual(PORT_GROUPS.map((g) => [g.title, ...g.rows.map((r) => r.action)]), [
-    ['Online', 'SocialInteract', 'Chat'],
-    ['Quickslots', 'QuickUse1', 'QuickUse2', 'QuickSpell', 'QuickSwap', 'QuickOffHand'],
-    ['Quick loot', 'QuickLootAll', 'QuickLootOpen'],
-    ['Mouse', 'FreeMouse'],
-  ]);
-  assert.deepEqual(PORT_GROUPS.flatMap((g) => g.rows), [...PORT_ROWS], 'the union really is the groups, not a second list beside them');
-  // together: every bindable action, none twice
-  const all = [...GRID_ACTIONS, ...ADVANCED_ROWS.map((r) => r.action), ...PORT_ROWS.map((r) => r.action)];
-  assert.equal(new Set(all).size, all.length);
-  assert.deepEqual([...all].sort(), [...ACTIONS].sort());
-  withPane(({ view }) => {
-    assert.equal(find(view.body, 'ctl-row').length, ACTIONS.length, 'a row for every action');   // QUICK-LOOT B4: derived rather than restated - the coverage rule above already says the union IS `ACTIONS`, so a hard 50 was one more copy of that number to forget; QS6: it was fifty, including the swap that ships unbound
-    for (const a of all) assert.ok(keyBtn(view, a), `${a} needs a row`);
-  });
+test('KB1: the pane draws the standard\'s groups - every action once, the two DFU leaves nothing reads never, a mod\'s group only while that mod is on (mutant: draw the classic grid slice again)', () => {
+  // FIX-F built this pane as the classic window's second face - DFU's 38-button grid slice, the ADVANCED popup's
+  // six, then the port's rows under four more headings (SOC5, QS2, QUICK-LOOT B4, FREEMOUSE each widened it). KB1
+  // (Mac: "ensuring keybinds are organized") replaced the faces with the one table a player reads: Movement,
+  // Combat, Magic, Interaction, Windows, Quickslots and hotbar, Mouse, Online, Game, and one group per vendored mod.
+  // The coverage rule the old pin held - every bindable action has a row, none twice - is held of that table.
+  const all = ACTION_GROUPS.flatMap((g) => g.rows.map((r) => r.action));
+  assert.equal(new Set(all).size, all.length, 'no action in two groups');
+  assert.deepEqual([...all, ...HIDDEN_ACTIONS].sort(), [...ACTIONS].sort(), 'every action is in a group, or hidden');
+  assert.deepEqual([...HIDDEN_ACTIONS], ['ToggleConsole', 'Slide'], 'hidden: DFU\'s console key (no console) and Slide (read by nothing in DFU either)');
+  assert.deepEqual(ACTION_GROUPS.filter((g) => g.mod).map((g) => g.mod), ['handheld-torches', 'eye-of-the-beholder', 'travel-options', 'horse-cart-and-cargo']);
+  const torches = 'handheld-torches';
+  const was = modSetting(torches, 'Enabled');
+  try {
+    setModSetting(torches, 'Enabled', true);
+    withPane(({ view }) => {
+      const shown = shownGroups().flatMap((g) => g.rows.map((r) => r.action));
+      assert.equal(find(view.body, 'ctl-row').length, shown.length, 'a row for every action the shown groups hold');
+      for (const a of shown) assert.ok(keyBtn(view, a), `${a} needs a row`);
+      for (const a of HIDDEN_ACTIONS) assert.ok(!keyBtn(view, a), `${a} is not drawn`);
+      assert.ok(keyBtn(view, 'TorchDrop'), 'the torch mod on: its keys are on the page');
+    });
+    setModSetting(torches, 'Enabled', false);
+    withPane(({ view }) => {
+      assert.ok(!keyBtn(view, 'TorchDrop'), 'the torch mod off: its group is not drawn');
+      assert.ok(keyBtn(view, 'MoveForwards'));
+    });
+  } finally { setModSetting(torches, 'Enabled', was); }
 });
 
 // ── THE CAPTURE ──────────────────────────────────────────────────
@@ -269,7 +251,7 @@ test('FIX-F: arming then a keydown binds through the STAGED dict, and the listen
     const l = doc.listeners.find((x) => x.type === 'keydown');
     assert.equal(keyBtn(view, 'MoveForwards').textContent, 'PRESS A KEY OR BUTTON');
 
-    const e = keyEvent('KeyG');
+    const e = keyEvent(FREE);
     l.fn(e);
     assert.equal(e.prevented, true, 'the captured key must not do its browser default');
     assert.equal(e.stopped, true, 'and world.js/exterior.js/worldModes.js must never see it');
@@ -277,10 +259,10 @@ test('FIX-F: arming then a keydown binds through the STAGED dict, and the listen
     assert.equal(doc.listeners.length, 0, 'and BOTH listeners leave with it - a half-disarm is a live listener outliving its screen');
 
     // THE STAGED WRITE, and only the staged write.
-    assert.equal(currentDict(controlsStaging()).get('MoveForwards'), 'KeyG');
+    assert.equal(currentDict(controlsStaging()).get('MoveForwards'), FREE);
     assert.equal(getBinding(store, 'MoveForwards', true), 'KeyW',
       'the LIVE registry is untouched until CONTINUE - that is what staging is');
-    assert.equal(keyBtn(view, 'MoveForwards').textContent, 'G', 'and the repaint shows it');
+    assert.equal(keyBtn(view, 'MoveForwards').textContent, buttonText(FREE, true), 'and the repaint shows it');
   });
 });
 
@@ -294,7 +276,11 @@ test('FIX-F: Escape binds like any other key, and the shell stands down for it',
   withPane(({ doc, view }) => {
     keyBtn(view, 'Jump').onclick();
     doc.listeners[0].fn(keyEvent('Escape'));
+    // KB1: Escape is the pause's, so the pane ASKS (law 4) - it is still a key like any other, not refused
+    assert.ok(textOf(one(view.body, 'ctl-prompt')).some((t) => /is used by Pause menu/.test(t)), 'the replace prompt names the holder');
+    answer(view, true);
     assert.equal(currentDict(controlsStaging()).get('Jump'), 'Escape');
+    assert.equal(currentDict(controlsStaging()).get('Escape'), null, 'and the holder gave it up - one key, one action');
   });
 });
 
@@ -302,6 +288,11 @@ test('FIX-F: a key held under a modifier binds the COMBO', () => {
   withPane(({ doc, view }) => {
     keyBtn(view, 'Inventory').onclick();
     doc.listeners[0].fn(keyEvent('KeyT', { shiftKey: true }));
+    // AUDIT KB1 F5: Run holds Left Shift bare, and DFU's combo law (GetDuplicates :188-196) makes that a clash - so
+    // the combo is ASKED for, like any held key, and Yes lands it with Run staged unbound.
+    assert.ok(!captureArmed() && find(view.body, 'act').some((b) => b.textContent === 'Yes'), 'the prompt stands');
+    answer(view, true);
+    assert.equal(currentDict(controlsStaging()).get('Run'), null, 'the bare modifier\'s holder gives it up');
     const code = currentDict(controlsStaging()).get('Inventory');
     assert.equal(code, comboCode('ShiftLeft', 'KeyT'),
       'comboFromEvent maps the event’s virtual flag onto the LEFT physical key');
@@ -310,8 +301,8 @@ test('FIX-F: a key held under a modifier binds the COMBO', () => {
     // ...and a modifier pressed ALONE binds itself, never a combo of
     // itself (EVENT_MODIFIERS excludes its own two codes).
     keyBtn(view, 'Sneak').onclick();
-    doc.listeners[0].fn(keyEvent('ShiftLeft', { shiftKey: true }));
-    assert.equal(currentDict(controlsStaging()).get('Sneak'), 'ShiftLeft');
+    doc.listeners[0].fn(keyEvent('ControlLeft', { ctrlKey: true }));   // KB1: Left Ctrl is free since Slide shipped unbound
+    assert.equal(currentDict(controlsStaging()).get('Sneak'), 'ControlLeft');
   });
 });
 
@@ -356,9 +347,12 @@ test('MAC-K1: arming from a click cannot itself be the bound BUTTON, but the nex
     down.fn(e);
     assert.equal(e.prevented, true, 'the captured press must not do its browser default');
     assert.equal(e.stopped, true, 'and no host ladder may see it');
-    assert.equal(currentDict(controlsStaging()).get('MoveForwards'), 'Mouse1');
     assert.equal(captureArmed(), null, 'one press ends the capture');
     assert.equal(doc.listeners.length, 0, 'and both listeners leave');
+    // KB1: all three buttons are somebody's (Mouse1 is the swing), so the press asks before it moves (law 4)
+    assert.ok(textOf(one(view.body, 'ctl-prompt')).some((t) => /is used by Swing weapon/.test(t)));
+    answer(view, true);
+    assert.equal(currentDict(controlsStaging()).get('MoveForwards'), 'Mouse1');
     assert.equal(keyBtn(view, 'MoveForwards').textContent, buttonText('Mouse1', true));
   });
 });
@@ -375,6 +369,7 @@ test('MAC-K1: a FOURTH button is not a binding, and the capture stays armed for 
     assert.equal(captureArmed(), 'Jump', 'the fourth button is not a KeyCode: the capture waits on');
     assert.equal(currentDict(controlsStaging()).get('Jump'), 'Space', 'and nothing was written');
     down.fn({ button: 0, preventDefault() {}, stopPropagation() {} });
+    answer(view, true);   // KB1: the left button is the activate's - asked, then given
     assert.equal(currentDict(controlsStaging()).get('Jump'), 'Mouse0', 'the left button still binds');
   });
 });
@@ -384,6 +379,7 @@ test('MAC-K1: a button pressed under a modifier binds the COMBO, as a key does',
     keyBtn(view, 'Inventory').onclick();
     doc.listeners.find((l) => l.type === 'mousedown')
       .fn({ button: 1, shiftKey: true, preventDefault() {}, stopPropagation() {} });
+    answer(view, true);   // AUDIT KB1 F5: Run's bare Left Shift heads the combo - asked, then given
     assert.equal(currentDict(controlsStaging()).get('Inventory'), comboCode('ShiftLeft', 'Mouse2'),
       'one combo law, whichever door the code came through');
   });
@@ -395,7 +391,7 @@ test('FIX-F: while a capture is armed EVERY other control is inert (:281 etc.)',
   // Defaults (:299), Continue (:321), CurrentBindings (:338), the
   // keybind button (:361) and the right-click remove (:372, ANDed
   // with the unbound refusal). The classic grid carries it in one
-  // line (ui/controlsWindow.js:355 `if (this.capture) return true;`);
+  // line (ui/controlsWindow.js:383 `if (this.capture) return true;`);
   // this face carries it as the `act` wrapper. Without it CONTINUE
   // saves and re-stages under a LIVE capture, and the Primary toggle
   // flips the dict the pending keystroke is about to be written into.
@@ -443,9 +439,9 @@ test('FIX-F: while a capture is armed EVERY other control is inert (:281 etc.)',
 
       // ...and the capture the player actually armed is still the one
       // live gesture on the screen, landing where they aimed it.
-      armedListeners.find((l) => l.type === 'keydown').fn(keyEvent('KeyG'));
+      armedListeners.find((l) => l.type === 'keydown').fn(keyEvent(FREE));
       assert.equal(captureArmed(), null);
-      assert.equal(currentDict(controlsStaging()).get('MoveForwards'), 'KeyG');
+      assert.equal(currentDict(controlsStaging()).get('MoveForwards'), FREE);
       assert.equal(controlsStaging().usingPrimary, true);
     } finally { off(); }
   });
@@ -453,17 +449,46 @@ test('FIX-F: while a capture is armed EVERY other control is inert (:281 etc.)',
 
 // ── DUPLICATES, DEFAULTS, REMOVE ─────────────────────────────────
 
-test('FIX-F: duplicates are flagged and BLOCK Continue with the classic window’s words', () => {
+test('KB1: a key another action holds ASKS before it moves (law 4) - No stages nothing, Yes gives it over and clears the holder', () => {
   withPane(({ doc, view, store }) => {
-    // KeyS is MoveBackwards' default; putting it on MoveForwards is an
-    // internal clash inside the shown dict.
+    // KeyS is MoveBackwards' default. FIX-F staged it onto MoveForwards and coloured both rows red; KB1 asks.
     keyBtn(view, 'MoveForwards').onclick();
     doc.listeners[0].fn(keyEvent('KeyS'));
+    const lines = textOf(one(view.body, 'ctl-prompt'));
+    assert.ok(lines.includes('S is used by Move backwards.'), 'the prompt names the key and its holder in the player\'s words');
+    assert.ok(lines.includes('Give it to Move forwards instead?'));
+    answer(view, false);
+    assert.equal(currentDict(controlsStaging()).get('MoveForwards'), 'KeyW', 'No: nothing moved');
+    assert.equal(currentDict(controlsStaging()).get('MoveBackwards'), 'KeyS');
+    keyBtn(view, 'MoveForwards').onclick();
+    doc.listeners[0].fn(keyEvent('KeyS'));
+    answer(view, true);
+    assert.equal(currentDict(controlsStaging()).get('MoveForwards'), 'KeyS');
+    assert.equal(currentDict(controlsStaging()).get('MoveBackwards'), null, 'Yes: the holder is staged unbound');
+    assert.equal(controlsDuplicates().ok, true, 'and there is no clash to colour');
+    assert.equal(getBinding(store, 'MoveForwards', true), 'KeyW', 'still only staged');
+    // a mod's key names its mod
+    keyBtn(view, 'Jump').onclick();
+    doc.listeners[0].fn(keyEvent('KeyG'));
+    assert.ok(textOf(one(view.body, 'ctl-prompt')).includes('G is used by Drop the light (Handheld Torches).'));
+    answer(view, false);
+  });
+});
+
+test('FIX-F: duplicates are flagged and BLOCK Continue with the classic window’s words', () => {
+  withPane(({ view, store, render }) => {
+    // KB1 + AUDIT KB1 F5: every capture ASKS now, exact codes and DFU's combo law alike, so a clash reaches the pane
+    // only from the FILE - a hand-edited one, or one saved before the prompt existed. Here the live registry holds
+    // Inventory on Shift+T while Run holds Left Shift bare (GetDuplicates' second phase, :188-196), and the pane
+    // stages what it is handed.
+    setBinding(store, comboCode('ShiftLeft', 'KeyT'), 'Inventory');
+    discardControlsStaging();
+    render();
     assert.equal(controlsDuplicates().ok, false);
-    assert.ok(controlsDuplicates().internal.has('KeyS'));
+    assert.ok(controlsDuplicates().internal.has(comboCode('ShiftLeft', 'KeyT')));
     const flagged = find(view.body, 'ctl-dupe').map((b) => b.dataset.action).sort();
-    assert.deepEqual(flagged, ['MoveBackwards', 'MoveForwards'],
-      'both holders of the clashing code are marked, as the grid colours them');
+    assert.deepEqual(flagged, ['Inventory', 'Run'],
+      'both halves of the clash are marked, as the grid colours them');
 
     one(view.body, 'ctl-continue').onclick();
     const notices = find(view.body, 'ctl-notice').map((n) => n.textContent);
@@ -472,9 +497,9 @@ test('FIX-F: duplicates are flagged and BLOCK Continue with the classic window�
     assert.equal(MULTIPLE_ASSIGNMENTS, 'You have multiple assignments...');
     assert.match(read('src/ui/controlsWindow.js'), /'You have multiple assignments\.\.\.'/,
       'and the two windows say the same thing because it is the same refusal');
-    // ...and NOTHING reached the registry.
-    assert.equal(getBinding(store, 'MoveForwards', true), 'KeyW');
-    assert.equal(getBinding(store, 'MoveBackwards', true), 'KeyS');
+    // ...and NOTHING reached the registry: it holds what it held.
+    assert.equal(getBinding(store, 'Inventory', true), comboCode('ShiftLeft', 'KeyT'));
+    assert.equal(getBinding(store, 'Run', true), 'ShiftLeft');
   });
 });
 
@@ -484,13 +509,13 @@ test('FIX-F: CONTINUE applies to the live registry and saves', () => {
     const off = onSavedKeyBinds(() => { saved++; });
     try {
       keyBtn(view, 'MoveForwards').onclick();
-      doc.listeners[0].fn(keyEvent('KeyG'));
+      doc.listeners[0].fn(keyEvent(FREE));
       assert.equal(getBinding(store, 'MoveForwards', true), 'KeyW', 'still staged');
 
       one(view.body, 'ctl-continue').onclick();
-      assert.equal(getBinding(store, 'MoveForwards', true), 'KeyG',
+      assert.equal(getBinding(store, 'MoveForwards', true), FREE,
         'applyUnsavedKeybinds pushes the staged dicts into the registry');
-      assert.equal(store.primary.get('KeyG'), 'MoveForwards', 'and the code answers the action');
+      assert.equal(store.primary.get(FREE), 'MoveForwards', 'and the code answers the action');
       assert.equal(store.primary.has('KeyW'), false, 'the old code is gone with it');
       assert.equal(saved, 1, 'saveKeyBinds ran - OnSavedKeyBinds is raised inside it');
       assert.ok(find(view.body, 'ctl-notice').some((n) => n.textContent === 'Controls saved.'));
@@ -501,8 +526,8 @@ test('FIX-F: CONTINUE applies to the live registry and saves', () => {
 test('FIX-F: leaving without CONTINUE discards', () => {
   withPane(({ doc, view, store, render }) => {
     keyBtn(view, 'MoveForwards').onclick();
-    doc.listeners[0].fn(keyEvent('KeyG'));
-    assert.equal(currentDict(controlsStaging()).get('MoveForwards'), 'KeyG');
+    doc.listeners[0].fn(keyEvent(FREE));
+    assert.equal(currentDict(controlsStaging()).get('MoveForwards'), FREE);
 
     discardControlsStaging();          // what the rail, go() and unmount call
     assert.equal(controlsStaging(), null, 'the staged copy is dropped whole');
@@ -511,7 +536,7 @@ test('FIX-F: leaving without CONTINUE discards', () => {
 
     render();                          // the player comes back
     assert.equal(currentDict(controlsStaging()).get('MoveForwards'), 'KeyW',
-      're-staged from the LIVE registry, which never heard about KeyG');
+      're-staged from the LIVE registry, which never heard about the staged key');
     assert.equal(getBinding(store, 'MoveForwards', true), 'KeyW');
     assert.equal(keyBtn(view, 'MoveForwards').textContent, 'W');
   });
@@ -573,36 +598,45 @@ test('FIX-F: the ✕ prompts to remove, refuses an unbound slot, and Yes stages 
   });
 });
 
-test('FIX-F: DEFAULTS resets behind a confirm, through the registry’s own law', () => {
+test('FIX-F / KB1: DEFAULTS resets behind a confirm, through the registry’s own law - STAGED, as the page says, and committed by Continue', () => {
   withPane(({ doc, view, store }) => {
     keyBtn(view, 'MoveForwards').onclick();
-    doc.listeners[0].fn(keyEvent('KeyG'));
+    doc.listeners[0].fn(keyEvent(FREE));
+    one(view.body, 'ctl-continue').onclick();
+    assert.equal(getBinding(store, 'MoveForwards', true), FREE, 'a live rebind to reset from');
+    store.removedPrimary.add('QuickSwap');
 
     one(view.body, 'ctl-defaults').onclick();
     assert.ok(textOf(one(view.body, 'ctl-prompt')).includes(DEFAULTS_PROMPT));
-    find(view.body, 'act').find((b) => b.textContent === 'No').onclick();
-    assert.equal(currentDict(controlsStaging()).get('MoveForwards'), 'KeyG', 'No changes nothing');
+    answer(view, false);
+    assert.equal(currentDict(controlsStaging()).get('MoveForwards'), FREE, 'No changes nothing');
 
     one(view.body, 'ctl-defaults').onclick();
-    find(view.body, 'act').find((b) => b.textContent === 'Yes').onclick();
-    assert.equal(currentDict(controlsStaging()).get('MoveForwards'), 'KeyW');
-    // SetDefaults (:296-317) resets the LIVE registry and saves there
-    // and then - DFU's own order, not the staged-only reset it looks like.
-    assert.equal(getBinding(store, 'MoveForwards', true), 'KeyW');
+    answer(view, true);
+    assert.equal(currentDict(controlsStaging()).get('MoveForwards'), 'KeyW', 'the defaults are STAGED');
+    // KB1: the page says "Nothing is saved until you press Continue", and DFU's SetDefaults (:296-317) reset the
+    // live registry and saved it on the spot - so the sentence lied. The reset is staged off a copy now.
+    assert.equal(getBinding(store, 'MoveForwards', true), FREE, 'the live registry is untouched until Continue');
     assert.equal(keyBtn(view, 'MoveForwards').textContent, 'W');
+    one(view.body, 'ctl-continue').onclick();
+    assert.equal(getBinding(store, 'MoveForwards', true), 'KeyW', 'Continue commits it');
+    assert.equal(store.removedPrimary.has('QuickSwap'), false, 'with the live reset\'s own law - the removal marks go too');
   });
+  assert.match(read('src/ui/enhancedControls.js'), /if \(pendingDefaults\) \{ resetDefaults\(bindings\(\)\); pendingDefaults = false; \}/);
 });
 
 test('FIX-F: the PRIMARY/SECONDARY toggle is refused while the shown dict clashes', () => {
-  withPane(({ doc, view }) => {
+  withPane(({ view, store, render }) => {
     assert.equal(controlsStaging().usingPrimary, true);
     one(view.body, 'ctl-which').onclick();
     assert.equal(controlsStaging().usingPrimary, false, 'the secondary dict is editable');
     assert.equal(keyBtn(view, 'MoveForwards').textContent, 'NONE', 'and it starts empty');
     one(view.body, 'ctl-which').onclick();
 
-    keyBtn(view, 'MoveForwards').onclick();
-    doc.listeners[0].fn(keyEvent('KeyS'));
+    // AUDIT KB1 F5: every capture asks, so the clash comes from the file (the combo law against Run's Left Shift)
+    setBinding(store, comboCode('ShiftLeft', 'KeyT'), 'Inventory');
+    discardControlsStaging();
+    render();
     one(view.body, 'ctl-which').onclick();
     assert.equal(controlsStaging().usingPrimary, true,
       'DaggerfallControlsWindow refuses the switch while the shown dict clashes (:337-343)');
@@ -625,14 +659,29 @@ test('FIX-F: the pane wears the skin’s own classes and adds no face of its own
   assert.ok(!/style\.cssText|\.style\./.test(src), 'no inline styling - the sheet is the one place a media query can see');
   // and the law is BORROWED, never restated
   for (const fn of ['createUnsavedKeybinds', 'setUnsavedBinding', 'checkDuplicates',
-    'applyUnsavedKeybinds', 'resetUnsavedToDefaults', 'comboFromEvent', 'buttonText']) {
+    'applyUnsavedKeybinds', 'stagedDefaults', 'comboFromEvent', 'buttonText', 'bindingHolder', 'stageReplace']) {
     assert.ok(src.includes(fn), `${fn} must be driven, not reimplemented`);
   }
   const imports = [...src.matchAll(/from '([^']+)'/g)].map((m) => m[1]);
   assert.ok(imports.includes('../systems/controlsConfig.js'));
   assert.deepEqual(imports.sort(),
-    ['../systems/controlsConfig.js', '../systems/inputActions.js', './input.js'],
+    ['../systems/controlsConfig.js', '../systems/inputActions.js', '../systems/modSettings.js', './input.js'],
     'the enhanced pane drives the LAW modules and nothing else - dragging the '
     + 'classic canvas windows (controlsWindow/mouseControlsWindow/nativePanel) in '
     + 'would make the enhanced skin pay for art it never draws');
+});
+
+test('AUDIT KB1 (UI 4): Escape on the replace prompt answers No and KEEPS the staged binds - the menu\'s back stack asks the pane first (mutant: the prompt not reported open, so the section is left and the staging discarded)', () => {
+  withPane(({ doc, view }) => {
+    keyBtn(view, 'MoveForwards').onclick();
+    doc.listeners[0].fn(keyEvent(FREE));
+    assert.equal(currentDict(controlsStaging()).get('MoveForwards'), FREE, 'a staged bind');
+    keyBtn(view, 'Jump').onclick();
+    doc.listeners[0].fn(keyEvent('KeyE'));
+    assert.equal(controlsPromptOpen(), true, 'E is Interact\'s - the prompt stands');
+    dismissControlsPrompt();   // what the back stack's Escape now calls
+    assert.equal(controlsPromptOpen(), false);
+    assert.equal(currentDict(controlsStaging()).get('Jump'), 'Space', 'No: nothing moved');
+    assert.equal(currentDict(controlsStaging()).get('MoveForwards'), FREE, 'and the earlier staged bind is still there');
+  });
 });

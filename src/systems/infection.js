@@ -141,6 +141,7 @@ export const vampireClanForFaction = (regionFaction) =>
 export function createInfection(key, { day = 0, regionIndex = -1 } = {}) {
   return {
     kind: 'disease',
+    permanent: true,   // CURSE-PERSIST1: lifelong until it turns or is cured - never the magic-round clock's (a plain disease's own flag, diseases.js)
     infection: key,
     disease: null,                       // classicDiseaseType = Diseases.None
     daysOfSymptomsLeft: PERMANENT_DISEASE_VALUE,

@@ -200,8 +200,8 @@
   {
     "name": "AAC-link-delivers-anyone's",
     "file": "src/net/online.js",
-    "old": "          if (d && d.to === this.id) this._deliver('cast', () => this.onCast?.(m.id, d));",
-    "new": "          if (d) this._deliver('cast', () => this.onCast?.(m.id, d));",
+    "old": "    if (d && d.to === this.id) this._deliver(kind, () => deliver(m.id, d));",
+    "new": "    if (d) this._deliver(kind, () => deliver(m.id, d));",
     "tests": [
       "test/allycast.test.js"
     ]
@@ -254,7 +254,7 @@
   {
     "name": "AAC-host-casteronly-instant",
     "file": "src/scenes/hostMagic.js",
-    "old": "      if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH)) { say(PRESS_BUTTON_TO_FIRE_SPELL); return; }\n",
+    "old": "      if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH)) { say(PRESS_BUTTON_TO_FIRE_SPELL); return true; }\n",
     "new": "",
     "tests": [
       "test/allycast.test.js"

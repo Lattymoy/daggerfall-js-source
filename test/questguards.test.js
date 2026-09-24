@@ -356,7 +356,7 @@ test('QG1 seams: the ready-spell doors are raised by the cast engine and routed 
   // release handler does at :2137-2141.
   assert.match(hm, /const done = \(v\) => \{ lastSpell = sp; onCastReadySpell\?\.\(sp\); readiedSpell = null; readiedFree = false; readiedCost = 0; return v; \};/,   // FIX-F: lastSpell first (:2136), as DFU's own order
     'every release path raises CAST before the ready clears');
-  assert.equal((hm.match(/return done\((?:true|false|v)\);/g) ?? []).length, 6,   // ALLY-CAST: and the cast on a party mate, a sixth
+  assert.equal((hm.match(/return done\((?:true|false|v)\);/g) ?? []).length, 7,   // ALLY-CAST: and the cast on a party mate, a sixth; RESURRECT1: the raise at a fallen body, a seventh
     'four range arms plus the unknown-range refusal all leave through it');
   const world = readSrc('src/scenes/world.js');
   assert.match(world, /onNewReadySpell: \(sp\) => questBridge\?\.machine\?\.notifyNewReadySpell\?\.\(sp\)/);
@@ -382,7 +382,7 @@ test('QG1 seams: the ready-spell doors are raised by the cast engine and routed 
 test('QG1 seams: the two world reads stand on questWorld, byte-folded like MakeClassicKey', () => {
   // ROAD-G G2 (review): both hosts that mount a machine over a real
   // city answer them. Absent, CastSpellDo self-completes at PARSE
-  // (actions.js:2757/:2764) and the task can never fire, whatever the
+  // (actions.js:2756/:2763) and the task can never fire, whatever the
   // ready-spell doors raise.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const world = readSrc(f);

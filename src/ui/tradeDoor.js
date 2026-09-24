@@ -50,11 +50,9 @@ export function createTradeWindow(hooks = {}) {
  * every host's frame already drives (isChoiceWindow, done, input,
  * click, wheel, hover, tick, draw, dispose) - the same wrapper
  * ui/inventoryDoor.js builds around `mountEnhancedInventory`. A host
- * that sets `win.hooks.onClose` after construction (nativeTrade.js's
- * own `openMerchantSell`) still finds a `.hooks` here to write to; the
- * assignment is exactly as inert on this skin as the note there says
- * it is on the classic one - both skins clear themselves through the
- * host's own `done` sweep, not through that callback.
+ * that writes to `win.hooks` after construction still finds a `.hooks`
+ * here. Neither skin calls `hooks.onClose` - both clear themselves
+ * through the host's own `done` sweep.
  */
 function enhancedTradeOverlay(hooks) {
   let fired = false;
@@ -78,10 +76,9 @@ function enhancedTradeOverlay(hooks) {
   unregister = registerOverlay(close);
 
   // THE SAME REFERENCE, NOT A COPY. worldModes.js writes to `win.hooks`
-  // AFTER construction in two places - `openMerchantSell`'s
-  // `onClose` (inert, per the note above) and `openIdentifyWindow`'s
+  // AFTER construction - `openIdentifyWindow`'s
   // `usingIdentifySpell = true`, which the Identify SPELL's mode
-  // action reads at click time and is NOT inert. Spreading `hooks`
+  // action reads at click time. Spreading `hooks`
   // into a fresh object for the view (as ui/inventoryDoor.js's
   // `{ ...deps, onExit }` does for the pack, which owns no such
   // late write) would leave that flag on a copy the view never reads.
@@ -90,7 +87,7 @@ function enhancedTradeOverlay(hooks) {
   hooks.onExit = close;
   const overlay = {
     isChoiceWindow: true,
-    hooks,   // NOTE (found wiring X6, nativeTrade.js): inert for onClose; see the doc comment above
+    hooks,   // NOTE (found wiring X6): onClose is never called; see the doc comment above
     get done() { return fired; },
     input() { /* the view's own capture keydown owns the keyboard */ },
     click() { /* the view is a fixed opaque div; pointers never get here */ },

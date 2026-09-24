@@ -221,8 +221,10 @@ export function createDroppedTorches({
       if (p.dead || !entry?.count) return;
       p.base = { w: entry.size.w / scale(), h: entry.size.h / scale() };
       p.size = { ...p.base };
-      p.batch = renderer?.createBillboardBatch?.(DROPPED_ARCHIVE, record, p.size, [flightBase(p)]) ?? null;
-      if (p.batch) p.batch.frame = 0;
+      // AUDIT 68 S18-torch-batch-churn: built ONCE about the origin; the flight rides `origin` and the spin rides
+      // `size` (both draw-time uniforms), where every 0.02 s step used to free the VAO and build another.
+      p.batch = renderer?.createBillboardBatch?.(DROPPED_ARCHIVE, record, p.size, [[0, 0, 0]]) ?? null;
+      if (p.batch) { p.batch.frame = 0; p.batch.origin = flightBase(p); }
       p.anim = entry.count > 1 ? new FlatAnim(DROPPED_ARCHIVE, entry.count, false) : null;
     };
     if (ready) build(ready); else framesLoading.get(record).then(build).catch(() => {});
@@ -282,7 +284,7 @@ export function createDroppedTorches({
     } else {
       p.pos = [p.pos[0] + step[0], p.pos[1] + step[1], p.pos[2] + step[2]];
     }
-    if (p.batch) { renderer.destroyBillboardBatch(p.batch); p.batch = renderer.createBillboardBatch(DROPPED_ARCHIVE, p.record, p.size, [flightBase(p)]); p.batch.frame = p.anim?.frame ?? 0; }
+    if (p.batch) { p.batch.origin = flightBase(p); p.batch.size = p.size; }
     p.loop?.move?.(p.pos);
   }
   function retireProjectile(p) {
@@ -335,8 +337,9 @@ export function createDroppedTorches({
           for (let i = 0; i < count; i++) uploadRecordFrame?.(PUFF.archive, PUFF.record, i);
           const size = t.getSize(PUFF.record);
           entry.size = { w: size.width * GLOBAL_SCALE, h: -size.height * GLOBAL_SCALE };   // localScale.y negated (0x4614): the flame drawn upside down
-          entry.batch = renderer.createBillboardBatch(PUFF.archive, PUFF.record, entry.size, [entry.pos]);
+          entry.batch = renderer.createBillboardBatch(PUFF.archive, PUFF.record, entry.size, [[0, 0, 0]]);   // AUDIT 68 S18-torch-batch-churn: placed by origin
           entry.batch.frame = 0;
+          entry.batch.origin = entry.pos;
           entry.anim = count > 1 ? new FlatAnim(PUFF.archive, count, false, PUFF.fps) : null;
         }).catch(() => {});
       } else if (!burning && fl) {
@@ -344,11 +347,7 @@ export function createDroppedTorches({
         flames.delete(f);
       } else if (burning && fl?.batch) {
         const at = foeLightPos(f);
-        if (at && (at[0] !== fl.pos[0] || at[1] !== fl.pos[1] || at[2] !== fl.pos[2])) {
-          fl.pos = at;
-          renderer.destroyBillboardBatch(fl.batch);
-          fl.batch = renderer.createBillboardBatch(PUFF.archive, PUFF.record, fl.size, [fl.pos]);
-        }
+        if (at) { fl.pos = at; fl.batch.origin = at; }   // AUDIT 68 S18-torch-batch-churn: a moving foe's flame was a new batch per frame
         if (fl.anim) fl.batch.frame = fl.anim.tick(dt);
       }
     }
@@ -472,19 +471,15 @@ export function createDroppedTorches({
     }
     for (const p of projectiles) {
       p.pos = [p.pos[0] + dx, p.pos[1] + dy, p.pos[2] + dz];
-      if (p.batch) { renderer.destroyBillboardBatch(p.batch); p.batch = renderer.createBillboardBatch(DROPPED_ARCHIVE, p.record, p.size, [flightBase(p)]); p.batch.frame = p.anim?.frame ?? 0; }
+      if (p.batch) p.batch.origin = flightBase(p);
       p.loop?.move?.(p.pos);   // AUDIT 66 F3: a recenter moves the flight's sprite and its loop, as it moves a dropped light's
     }
-    // AUDIT 66 F12: the burning foe's flame moved its POSITION and left
-    // its quad where it stood. The dropped lights above rebuild theirs
-    // because a batch's centers are baked at build; the flame's only
-    // other rebuild is tickFlames' "the foe moved" test, which compares
-    // the foe's own (already recentred) feet against this (already
-    // recentred) position and finds them equal - so the flame stayed at
-    // the pre-recenter spot for as long as the foe burned.
+    // AUDIT 66 F12: the burning foe's flame moves with the recenter -
+    // its position AND its quad (AUDIT 68: the quad is the batch's
+    // origin now, so moving it is a write, not a rebuild).
     for (const [, fl] of flames) {
       fl.pos = [fl.pos[0] + dx, fl.pos[1] + dy, fl.pos[2] + dz];
-      if (fl.batch) { renderer.destroyBillboardBatch(fl.batch); fl.batch = renderer.createBillboardBatch(PUFF.archive, PUFF.record, fl.size, [fl.pos]); fl.batch.frame = fl.anim?.frame ?? 0; }
+      if (fl.batch) fl.batch.origin = fl.pos;
     }
   }
   /** HandheldTorchesSaveData (0x4c34 / 0x4cc8): position, time and template of each; restored by spawning each. */

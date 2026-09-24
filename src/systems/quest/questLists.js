@@ -18,8 +18,9 @@
 //                                as C# checks QuestSourceFolder)
 //   parseQuest(lines, factionId, partialParse) - parse WITHOUT
 //                                scheduling (the machine's parse
-//                                glue; the caller schedules via
-//                                scheduleParsedQuest; partialParse
+//                                glue; the offer flow starts the
+//                                accepted quest through the machine's
+//                                startQuestImmediate; partialParse
 //                                skips QRC/QBN for the quest picker)
 //   rolls()                    - SelectQuest's pool draw
 //                                (UnityEngine.Random - THE ENGINE-PRNG
@@ -28,6 +29,7 @@
 //                                (the adult-quest gate; default false)
 
 import { Table } from './table.js';
+import { intTryParse } from './parseUtils.js';
 import { GUILD_GROUPS, SOCIAL_GROUPS } from '../../formats/factionFile.js';
 
 /** QuestListsManager.MembershipStatus - char-backed, the table's
@@ -38,8 +40,14 @@ export const MEMBERSHIP_STATUS = Object.freeze({
   Kynareth: 'K', Mara: 'R', Stendarr: 'S', Zenithar: 'Z',
 });
 
+/** The MAIN QUEST, by the pack's own naming - DFU ships the story as
+ *  S0000*.txt and _BRISIEN is its opener - read off the QUEST NAME,
+ *  never the display name. AUDIT 68 S31-questshare-mainquest-dup: one
+ *  home for the chronicle's rail (ui/questRail.js) and the share gates
+ *  (systems/questShare.js), which kept two copies "in step". */
+export const isMainQuestName = (questName) => /^S0000/.test(questName ?? '') || questName === '_BRISIEN';
+
 const INIT_AT_GAME_START = 'InitAtGameStart';
-const isInt = (s) => /^\s*[+-]?\d+\s*$/.test(s);   // int.TryParse's accepting surface
 
 /** QuestListsManager.RegisterQuestList (:138-147): a mod's list by name,
  *  false when the name is in use; LoadQuestLists reads every registered
@@ -103,14 +111,14 @@ export class QuestListsManager {
    *  "TODO other groups"). */
   _parseQuestList(table) {
     for (let i = 0; i < table.rowCount; i++) {
-      const minRep = table.getValue('minReq', i);
-      if (!isInt(minRep)) continue;
+      const minReq = intTryParse(table.getValue('minReq', i));   // AUDIT 68 S30-tryparse-dup: int.TryParse, int32 bound and all
+      if (minReq === null) continue;
       const flag = table.getValue('flag', i)[0];
       const questData = {
         name: table.getValue('name', i),
         group: table.getValue('group', i),
         membership: table.getValue('membership', i)[0],
-        minReq: parseInt(minRep, 10),
+        minReq,
         oneTime: flag === '1',
         adult: flag === 'X',
       };

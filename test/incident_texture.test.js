@@ -262,6 +262,6 @@ test('incident: every palettized-IMG load site in src/ mints its own palette - a
   // PRIS00I0 one function above it.
   for (const x of sites.filter((y) => !y.isPal)) {
     assert.ok(!x.fresh,
-      `${x.f}:${x.line} loads ${x.name}, which is NOT one of the six palettized IMGs, on a freshly minted DFPalette - nothing ever writes it, so the art paints all-red (dfPalette.js:11-17). It takes the host's shared palette, as DFU's LoadPalette(imgFile.PaletteName) does`);
+      `${x.f}:${x.line} loads ${x.name}, which is NOT one of the six palettized IMGs, on a freshly minted DFPalette - nothing ever writes it, so the art paints all-red (dfPalette.js:12-18). It takes the host's shared palette, as DFU's LoadPalette(imgFile.PaletteName) does`);
   }
 });

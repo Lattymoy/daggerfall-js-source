@@ -7,7 +7,7 @@
 // (ItemHelper.GetEnumArray/GetItemTemplate).
 
 import { clampArmorVariant } from './armorMaterials.js';   // AUDIT 23 (items-6)
-import { conditionMultipliersByMaterial } from '../characters/weapons.js';   // AUDIT 23 (items-5)
+import { conditionMultipliersByMaterial, valueMultipliersByMaterial, WEAPONS } from '../characters/weapons.js';   // AUDIT 23 (items-5); AUDIT 68 S27-weightForMaterial-dup: ItemBuilder's value ladder and the Weapons enum, one home each
 import { GROUP_TEMPLATE_INDICES } from './itemTemplatesData.js';
 import TEMPLATES_JSON from '../characters/itemTemplates.json' with { type: 'json' };
 import { playerArchiveFor, resolvePaperdollRecord } from '../characters/paperdollArt.js';   // AUDIT 17f: SetRace, one home; NT3 (F006): the record law too
@@ -78,8 +78,22 @@ export function groupTemplates(group) {
   return (GROUP_TEMPLATE_INDICES[group] ?? []).map((i) => _overrides.get(i) ?? ITEM_TEMPLATES[i]);   // AUDIT-RR2 G9: the shelf's rarity gate (DaggerfallLoot.cs:219-222) reads the patched row
 }
 
-// ItemBuilder.valueMultipliersByMaterial (weapons + plate armor).
-export const VALUE_MULT_BY_MATERIAL = Object.freeze([1, 2, 4, 8, 16, 32, 64, 128, 256, 512]);
+/** AMMUNITION SKIPS THE MATERIAL LADDER. CreateWeapon's arrow arm never
+ *  runs ApplyWeaponMaterial - no material weight or value, no material
+ *  name, the ammunition info record - and the port's own ammunition (the
+ *  Dwemer Pellet) is the same kind of thing, so every reader asks this
+ *  rather than "is it the Arrow". A mod that adds ammunition registers it
+ *  (thunderlock.js), since this file has no business knowing what a
+ *  Dwemer Pellet is. AUDIT 68 S27-ammo-arrow-only: the registry lived in
+ *  lootRarity.js, which no weight, value or name reader imports, and six
+ *  of them spelled it "is the Arrow" - the pellet weighed nothing, cost
+ *  three times its price and read "Iron Dwemer Pellet". */
+const _ammunition = new Set([WEAPONS.Arrow]);
+export function registerAmmunition(templateIndex) {
+  if (Number.isFinite(templateIndex)) _ammunition.add(templateIndex);
+  return _ammunition.size;
+}
+export const isAmmunition = (item) => _ammunition.has(item?.templateIndex);
 
 /** The item's BASE VALUE for cost math (DaggerfallUnityItem.value
  *  after ItemBuilder): weapons/plate = basePrice * 3 * mult[material];
@@ -91,12 +105,12 @@ export function itemBaseValue(item) {
   // AUDIT 17e F14: CreateWeapon's arrow branch never applies the
   // material multiplier (ItemBuilder.cs) - an arrow is worth its
   // basePrice, not 6x it.
-  if (item.group === 'Weapons' && item.templateIndex === 131) return t.basePrice;
-  if (item.group === 'Weapons') return t.basePrice * 3 * (VALUE_MULT_BY_MATERIAL[item.material ?? 0] ?? 1);
+  if (item.group === 'Weapons' && isAmmunition(item)) return t.basePrice;
+  if (item.group === 'Weapons') return t.basePrice * 3 * (valueMultipliersByMaterial[item.material ?? 0] ?? 1);
   if (item.group === 'Armor') {
     const m = item.material ?? 0;
     if (m === 0x0100) return t.basePrice * 2;                     // chain
-    if (m >= 0x0200) return t.basePrice * 3 * (VALUE_MULT_BY_MATERIAL[m - 0x0200] ?? 1);   // plate
+    if (m >= 0x0200) return t.basePrice * 3 * (valueMultipliersByMaterial[m - 0x0200] ?? 1);   // plate
     return t.basePrice;                                           // leather
   }
   return t.basePrice;
@@ -155,15 +169,13 @@ const WORLD_TEXTURE_GROUPS = new Set(['UselessItems1', 'ReligiousItems', 'MiscIt
 /** MAC-D2: the six ItemGroups.Transportation rows - a cart, a horse and
  *  four boats. Read off the group table rather than spelled again. */
 const TRANSPORTATION_INDICES = new Set(GROUP_TEMPLATE_INDICES.Transportation ?? []);
-const ARROW_TEMPLATE = 131;
-const KATANA_TEMPLATE = 121;
 
 /** UseWorldTexture verbatim. */
 export function usesWorldTexture(item, template = templateByIndex(item.templateIndex)) {
   if (template?.custom) return true;   // SURV2: a custom template draws its world icon (the item's own fields first, as DFU's world arm does)
   if (WORLD_TEXTURE_GROUPS.has(item.group)) return true;
   if (template?.isIngredient) return true;
-  if (item.group === 'Weapons' && item.templateIndex === ARROW_TEMPLATE) return true;
+  if (item.group === 'Weapons' && item.templateIndex === WEAPONS.Arrow) return true;
   return false;
 }
 
@@ -318,7 +330,7 @@ export function inventoryItemImage(item, identity = undefined) {
   // this and the fallback below are GetItemImage's, one level ABOVE
   // GetInventoryTexture*, so they run after every arm of the chain -
   // including the artifact carve-out - exactly as C# has them.
-  if (item.group === 'Weapons' && item.templateIndex === KATANA_TEMPLATE) record += 1;
+  if (item.group === 'Weapons' && item.templateIndex === WEAPONS.Katana) record += 1;
   // "Use world texture archive if inventory texture not set" - and the
   // TEMPLATE's, deliberately (ItemHelper.cs:425-429 reads
   // item.ItemTemplate, not the item).

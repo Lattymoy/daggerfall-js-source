@@ -92,7 +92,7 @@ test('audit26 F103: the tavern gates read totalGoldAmount', () => {
 // ---------------------------------------------------------------
 test('audit26 F066: a closed shop opens the steal-shaped inventory, never the Buy window', () => {
   const m = rd('src/scenes/worldModes.js');
-  assert.match(m, /if \(interiorBuilding\) interiorBuilding\.insideOpenShop = insideOpenShop;/,
+  assert.match(m, /if \(building\) building\.insideOpenShop = insideOpenShop;/,   // AUDIT 68 S23-failed-entry-stale-building: onto the door's record, committed with the context
     'the door-time latch rides the building record (:1120, latched once)');
   const shelf = m.slice(m.indexOf('function openShelf'), m.indexOf('function openMerchantSell'));
   assert.ok(shelf.includes('if (b.insideOpenShop === false) {'), 'the closed arm gates BEFORE the trade window');

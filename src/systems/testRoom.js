@@ -24,6 +24,7 @@
 // "a real character" - the armory below supersedes it.
 
 import { RACES } from './races.js';
+import { resurrectionSpell } from './resurrect.js';   // RESURRECT1: the sorceress carries one, to test with
 import { applyHeadlessChargen } from './chargenSession.js';
 import { addItem } from './inventory.js';
 import { equipItem } from './equip.js';
@@ -324,7 +325,8 @@ export function testMissileSpells(spellsByIndex = null) {
 }
 export function addTestMissileSpells(entity, spellsByIndex = null) {
   entity.spells ??= [];
-  for (const sp of testMissileSpells(spellsByIndex)) {
+  // RESURRECT1 (2026-09-23): and a Resurrection, to raise a fallen party mate in the test room
+  for (const sp of [...testMissileSpells(spellsByIndex), resurrectionSpell()]) {
     if (!entity.spells.some((k) => k === sp || (k?.index === sp.index && k?.name === sp.name))) entity.spells.push(sp);
   }
   return entity.spells;

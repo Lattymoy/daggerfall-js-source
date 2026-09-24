@@ -213,10 +213,9 @@ test('MAC1 D: the far rings draw the trees and the flats that move, and nothing 
 
 // ── H ────────────────────────────────────────────────────────────
 test('MAC1 H: the politeness gate reads PlayerMotor.IsStandingStill, not the camera', () => {
-  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    const s = src(host);
-    assert.match(s, /_playerStill = walkMode(?: && playerSpawned)? \? !!player\.standing : \(_lastPlayerPos/, `${host}: the walker's gate is the motor's standing`);
-  }
+  assert.match(src('src/scenes/world.js'), /_playerStill = walkMode && playerSpawned \? !!player\.standing : \(_lastPlayerPos/, 'world.js: the walker\'s gate is the motor\'s standing');
+  // AUDIT 68 S20-dead-lastPlayerPos: the fixed-city host reads it inside `if (walkMode)`, where the camera arm could never run
+  assert.match(src('src/scenes/exterior.js'), /if \(walkMode\) \{\n(?:\s*\/\/[^\n]*\n)*\s*const _playerStill = !!player\.standing;/, 'exterior.js: the walker\'s gate is the motor\'s standing');
   // and standing IS DFU's IsStandingStill: grounded over a zero move
   const m = new PlayerMotor(new Collider(() => 0));
   m.pos = [0, 0, 0]; m.grounded = true;
@@ -374,15 +373,19 @@ test('AUDIT 65 XL-4: the third-person focal rides the SMOOTHED feet, and no host
   assert.deepEqual(m2.feetAt(), [m2.pos[0], m2.pos[1], m2.pos[2]], 'a placement answers the raw feet');
   assert.equal(m2._eyeFeetY, null, 'and primes the filter afresh, exactly as eyeAt does');
 
-  // 3. THE HOSTS (the four-hosts rule): every mwView call site takes
-  //    the render feet, and `player.pos` reaches neither.
+  // 3. THE HOSTS (the four-hosts rule): every mwView camera call takes
+  //    the render feet, and `player.pos` reaches neither. DISC18: the
+  //    BODY's draw takes the capsule's own interpolated feet
+  //    (bodyFeetAt) - on the camera's low-passed ones it stood under
+  //    the ground on every climb.
   for (const [host, sites] of [['src/scenes/world.js', 2], ['src/scenes/worldModes.js', 3],
     ['src/scenes/exterior.js', 2], ['src/scenes/dungeon.js', 2]]) {
     const s = src(host);
     let n = 0;
     for (const hit of s.matchAll(/mwView(?:Frame|DrawBody)\(/g)) {
       const call = s.slice(hit.index, hit.index + 320);
-      assert.match(call, /feet: player\.feetAt\(\)/, `${host}: a mwView call takes the render feet`);
+      const body = s.startsWith('mwViewDrawBody(', hit.index);
+      assert.match(call, body ? /feet: player\.bodyFeetAt\(\)/ : /feet: player\.feetAt\(\)/, `${host}: a mwView ${body ? 'body draw takes the body\'s feet' : 'camera call takes the render feet'}`);
       assert.ok(!/feet: player\.pos/.test(call), `${host}: the raw stepped feet must not reach the camera`);
       n++;
     }
@@ -492,7 +495,7 @@ test('MAC1 J: the pause door relocks the pointer inside the resume gesture, and 
   for (const [file, text] of OUT) {
     const s = spy();
     const hooks = mountLiteral(text, 'openPauseFlow((w) => townTalk.showOverlay(w), ', { opts: {}, requestLook: s.requestLook, canvas: `CANVAS-${file}` });
-    assert.equal(typeof hooks.relock, 'function', `${file}: its own pause door hands pauseDoor.js:282 a relock`);
+    assert.equal(typeof hooks.relock, 'function', `${file}: its own pause door hands pauseDoor.js:301 a relock`);
     hooks.relock();
     assert.deepEqual(s.seen, [`CANVAS-${file}`], `${file}: ...and it relocks THIS host's canvas`);
   }

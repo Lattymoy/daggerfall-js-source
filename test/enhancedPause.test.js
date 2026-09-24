@@ -401,8 +401,11 @@ test('PX22: a quest is filed under its kind, never TITLED by it', () => {
   // and a second copy is two laws. It is still the pack's own naming,
   // S0000*.txt, so nothing about which quest is which changed.
   assert.match(read('src/ui/questRail.js'), /main: isMainQuest\(q\.questName\)/);
-  assert.match(read('src/ui/questRail.js'),
-    /export const isMainQuest = \(questName\) => \/\^S0000\/\.test\(questName \?\? ''\) \|\| questName === '_BRISIEN';/);
+  // AUDIT 68 S31-questshare-mainquest-dup: MOVED, deliberately - the predicate had a second copy in
+  // systems/questShare.js; its one home is systems/quest/questLists.js and the rail imports it.
+  assert.match(read('src/ui/questRail.js'), /import \{ isMainQuestName as isMainQuest \} from '\.\.\/systems\/quest\/questLists\.js';/);
+  assert.match(read('src/systems/quest/questLists.js'),
+    /export const isMainQuestName = \(questName\) => \/\^S0000\/\.test\(questName \?\? ''\) \|\| questName === '_BRISIEN';/);
   assert.match(src, /from '\.\/questRail\.js'/, 'and the pause window takes it from there');
   // The archive is NOT split by kind, and that is the data's shape: the
   // notebook's filed header keeps only the display name, so the
@@ -580,7 +583,7 @@ test('PX28b: TAB ITSELF closes an open window - the registry answers the key', (
   // ONE listener, where the registry already knows what is open, so a
   // window added later is covered by having registered at all.
   assert.match(reg, /window\.addEventListener\('keydown', onTab, true\);/, 'capture phase');
-  assert.match(reg, /if \(e\.code !== 'Tab'/);
+  assert.match(reg, /eventAction\(e\) !== 'QuickDial'\) return;/, 'KB1: the dial\'s key, wherever it is bound - not a literal Tab (AUDIT KB1: eventAction, so a combo closes it)');
   assert.match(reg, /closeTopOverlay\(\);/);
   // OT1 added closeOnOutsideTap, a listener on each window's SHELL (a
   // pointer on a scrim is that scrim's); the Tab listener stays ONE.

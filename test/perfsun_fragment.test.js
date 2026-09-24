@@ -14,7 +14,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { SHADOW_GLSL, SHADOW_CASCADES, SHADOW_PCF_CASCADES, SHADOW_SUN_SIZE } from '../src/render/shadowPass.js';
+import { SHADOW_GLSL, SHADOW_CASCADES, SHADOW_PCF_CASCADES, SHADOW_SUN_SIZE, ShadowPass } from '../src/render/shadowPass.js';
 import { EL_MESH_FS, EL_TERRAIN_FS, EL_CHAR_FS, EL_BB_FS } from '../src/render/enhancedLighting.js';
 import { waterSurfaceFs } from '../src/render/waterSurface.js';
 import { floraSwayOn, floraSwayOf, swayDisabled } from '../src/systems/windDrive.js';
@@ -25,18 +25,29 @@ test('PERF-SUN1: the far cascade takes ONE tap, and the near ones keep the kerne
   // Each tap is ALREADY a hardware 2x2: the sun map is
   // COMPARE_REF_TO_TEXTURE with LINEAR filtering, so `texture()` on it is
   // a bilinear PCF over four texels and the 3x3 loop is an effective 4x4.
-  // THE SUN MAP'S OWN BLOCK, not the file. The cube map below sets the
+  // THE SUN MAP'S OWN PARAMETERS, not the file. The cube map sets the
   // same two parameters on the same target, so a file-wide grep passed
   // clean over the sun's removal - the first draft of this pin did, and
-  // two mutants walked through it.
-  const all = read('src/render/shadowPass.js');
-  const sunFrom = all.indexOf('const sun = gl.createTexture();');
-  const sunTo = all.indexOf('// the cube map', sunFrom);
-  assert.ok(sunFrom > 0 && sunTo > sunFrom, 'the sun map\u2019s setup block is where this pin thinks it is');
-  const sp = all.slice(sunFrom, sunTo);
-  assert.match(sp, /gl\.texParameteri\(gl\.TEXTURE_2D_ARRAY, gl\.TEXTURE_COMPARE_MODE, gl\.COMPARE_REF_TO_TEXTURE\);/,
-    'the comparison sampler - without it a single tap really would be one texel');
-  assert.match(sp, /gl\.texParameteri\(gl\.TEXTURE_2D_ARRAY, gl\.TEXTURE_MIN_FILTER, gl\.LINEAR\);/, '...filtered, which is what makes one tap a 2x2');
+  // two mutants walked through it. AUDIT 68 S17-shadowpass-layer-dup: the
+  // arrays share one builder now, so the pin reads what the real pass SETS
+  // on the texture it keeps as its sun map, not a block of its text.
+  const params = new Map();
+  let bound = null;
+  const gl = new Proxy({}, {
+    get: (_, k) => {
+      if (typeof k !== 'string') return undefined;
+      if (k === 'bindTexture') return (target, tex) => { if (target === 'TEXTURE_2D_ARRAY') bound = tex; };
+      if (k === 'texParameteri') return (target, pname, value) => { if (target === 'TEXTURE_2D_ARRAY') params.set(bound, { ...params.get(bound), [pname]: value }); };
+      if (k === k.toUpperCase()) return k;   // gl.LINEAR and friends, by name
+      if (k.startsWith('create')) return () => ({});
+      return () => {};
+    },
+  });
+  const pass = new ShadowPass(gl, { build: () => ({}), vs: {} });
+  const sun = params.get(pass.sunTex);
+  assert.ok(sun, 'the sun map is a TEXTURE_2D_ARRAY the pass set parameters on');
+  assert.equal(sun.TEXTURE_COMPARE_MODE, 'COMPARE_REF_TO_TEXTURE', 'the comparison sampler - without it a single tap really would be one texel');
+  assert.equal(sun.TEXTURE_MIN_FILTER, 'LINEAR', '...filtered, which is what makes one tap a 2x2');
   // the branch, and which side of it each cascade falls
   assert.match(SHADOW_GLSL, /if \(!soft && c >= 2\) return texture\(uSunShadow, vec4\(p\.xy, float\(c\), ref\)\);/,
     'the far cascade returns on one tap, before the loop (TREES1: for a per-fragment caller)');

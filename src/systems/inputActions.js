@@ -32,6 +32,8 @@
 // every existing index still means what it meant.
 
 import { appStorage } from './appStorage.js';   // DA1: the storage seam
+import { storedModSetting, modSetting } from './modSettings.js';   // KB1: a player's own mod key, carried into the registry once; and whether its mod is on
+import { domCodeForKeyCode, KEYCODE_NONE } from './keyCodes.js';   // KB1: the mods' TextKeys are Unity KeyCode names
 
 /** InputManager.Actions (:324-384), names and ORDER verbatim.
  *  'Unknown' (:383) is the parse sentinel, not a bindable action -
@@ -96,8 +98,24 @@ export const ACTIONS = Object.freeze([
   // Both mouse actions still OR at the one reader (player/pointerLock.js),
   // so there is only one cursor state to keep in step.
   'FreeMouse',
-  // CHAT-POLISH1: chat owns its own action now. Appended - never inserted - so every saved/classic action index keeps its meaning.
-  'Chat',
+  // KB1 (2026-09-23, Mac: "We have a lot of mods, a lot of keybinds. I really want to formalize a solid solution"):
+  // EVERY KEY THAT DOES SOMETHING IN THE WORLD IS AN ACTION HERE. Appended, like every port action before them.
+  //  - 'Interact': the E activate, a raw `KeyE` read in four hosts beside DFU's E-AbortSpell - one press did both.
+  //  - 'QuickDial': the pixel dial, a raw `Tab` read in three places.
+  //  - 'Hotbar5'..'Hotbar10': the hotbar's slots past the diamond's four (slots 1-4 ARE QuickUse1, QuickUse2,
+  //    QuickSpell and QuickOffHand - the same keys, which press the hotbar's first four while it is in force).
+  //  - the vendored mods' hotkeys, which each mod read off its own TextKey where the controls pane could not see them:
+  //    Handheld Torches' three, Eye Of The Beholder's two, Travel Options' follow key, Horse Cart and Cargo's two.
+  //  - 'DebugOverlay': the dungeon's diagnostics readout, a raw `F8` read that answered only while F8 was UNBOUND -
+  //    and DFU binds F8 to PrintScreen, so it never answered for anyone who had not unbound the screenshot. It ships
+  //    unbound: a developer's key, bound in Controls by whoever wants it.
+  'Interact', 'QuickDial',
+  'Hotbar5', 'Hotbar6', 'Hotbar7', 'Hotbar8', 'Hotbar9', 'Hotbar10',
+  'TorchToggleLight', 'TorchDrop', 'TorchThrow',
+  'ShoulderSwitch', 'AutoPerspective',
+  'FollowPaths',
+  'HorseMount', 'HorseSummon',
+  'DebugOverlay',
 ]);
 
 /** AUDIT SOC D3: THE PORT'S OWN ROWS, NAMED SO THE CLASSIC WINDOWS CAN YIELD THEM.
@@ -107,10 +125,12 @@ export const ACTIONS = Object.freeze([
  *  row they could not see, could not clear, and could not close the window past. So the port's own actions YIELD
  *  there: systems/controlsConfig.js checkDuplicates takes `{ yield: PORT_ACTIONS }` from the two classic windows
  *  and unbinds the port's row rather than colouring a clash nobody can resolve. The ENHANCED window passes nothing,
- *  because it draws the row (ui/enhancedControls.js PORT_ROWS, the 'Online' group) and can rebind it.
+ *  because it draws the row (ui/enhancedControls.js over ACTION_GROUPS, the 'Online' group) and can rebind it.
  *  QS2: the three quickslot actions join it for the same reason, off the same face - the enhanced pane draws them
  *  under their own 'Quickslots' heading and the classic windows cannot draw them at all. */
-export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen', 'FreeMouse', 'Chat']);   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
+export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen', 'FreeMouse',
+  'Interact', 'QuickDial', 'Hotbar5', 'Hotbar6', 'Hotbar7', 'Hotbar8', 'Hotbar9', 'Hotbar10',
+  'TorchToggleLight', 'TorchDrop', 'TorchThrow', 'ShoulderSwitch', 'AutoPerspective', 'FollowPaths', 'HorseMount', 'HorseSummon', 'DebugOverlay']);   // KB1   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
 
 const ACTION_SET = new Set(ACTIONS);
 
@@ -123,7 +143,6 @@ export const parseActionName = (name) => (ACTION_SET.has(name) ? name : 'Unknown
  *  Unity Mouse0/1/2 = left/right/middle. */
 export const DEFAULT_BINDINGS = Object.freeze([
   ['Escape', 'Escape'],
-  ['Backquote', 'ToggleConsole'],
   ['KeyW', 'MoveForwards'],
   ['KeyS', 'MoveBackwards'],
   ['KeyA', 'MoveLeft'],
@@ -134,7 +153,6 @@ export const DEFAULT_BINDINGS = Object.freeze([
   ['PageDown', 'FloatDown'],
   ['Space', 'Jump'],
   ['KeyC', 'Crouch'],
-  ['ControlLeft', 'Slide'],
   ['ShiftLeft', 'Run'],
   ['Mouse2', 'AutoRun'],
   ['KeyR', 'Rest'],
@@ -145,7 +163,7 @@ export const DEFAULT_BINDINGS = Object.freeze([
   ['F4', 'TalkMode'],
   ['Backspace', 'CastSpell'],
   ['KeyQ', 'RecastSpell'],
-  ['KeyE', 'AbortSpell'],
+  ['Backquote', 'AbortSpell'],   // KB1: E is Interact's (Mac's call); the console key DFU spent on a console this port has not
   ['KeyU', 'UseMagicItem'],
   ['KeyZ', 'ReadyWeapon'],
   ['Mouse1', 'SwingWeapon'],
@@ -229,7 +247,155 @@ export const DEFAULT_BINDINGS = Object.freeze([
   // slice spends and still unspent by DFU, by the port and by every vendored
   // mod's TextKey defaults.
   ['Digit4', 'QuickOffHand'],
+  // KB1 - THE REST OF THE STANDARD'S DEFAULTS.
+  //  - E INTERACTS (Mac, 2026-09-23: "E = Activate"). DFU spends E on AbortSpell, which moves to Backquote above.
+  //  - TAB IS THE DIAL, as it has been since PX15 - an action now, so the pane sees it and a player can move it.
+  //  - THE DIGITS ARE THE QUICK SLOTS' AND THE HOTBAR'S (Mac: "Digits = quickbar/hotbar"): 1-4 above, 5-0 here.
+  //  - THE MODS' KEYS keep the port's shipped defaults (HT4's O/G/X, EOTB's B and NumpadAdd, Travel Options' K), and
+  //    Horse Cart and Cargo moves off the digits to the comma and the period - every letter is spent, F7 is the
+  //    browser's caret browsing and F10 DFU's HUD toggle (AUDIT HCC K1), and these two are free on every count.
+  ['KeyE', 'Interact'],
+  ['Tab', 'QuickDial'],
+  ['Digit5', 'Hotbar5'],
+  ['Digit6', 'Hotbar6'],
+  ['Digit7', 'Hotbar7'],
+  ['Digit8', 'Hotbar8'],
+  ['Digit9', 'Hotbar9'],
+  ['Digit0', 'Hotbar10'],
+  ['KeyO', 'TorchToggleLight'],
+  ['KeyG', 'TorchDrop'],
+  ['KeyX', 'TorchThrow'],
+  ['KeyB', 'ShoulderSwitch'],
+  ['NumpadAdd', 'AutoPerspective'],
+  ['KeyK', 'FollowPaths'],
+  ['Comma', 'HorseMount'],
+  ['Period', 'HorseSummon'],
 ]);
+
+/** KB1: THE TWO DFU ACTIONS THE PORT DOES NOT HAVE - ToggleConsole (there is no console) and Slide (DFU declares it
+ *  and binds Left Ctrl; nothing in DFU reads it either). They stay in ACTIONS (the list is never cut: a saved file
+ *  and the classic grid resolve by position) but ship unbound and the enhanced pane does not draw them - a row that
+ *  holds a key and does nothing is how a key gets spent twice. */
+export const HIDDEN_ACTIONS = Object.freeze(['ToggleConsole', 'Slide']);
+
+/** KB1: THE HOTBAR'S TEN KEYS, in slot order. Slots 1-4 are the quickslot diamond's own four actions - one key,
+ *  one action: the diamond reads them while it is the quickbar, the hotbar while it is (systems/uiSkin.js
+ *  hotbarInForce), never both - so a pad's d-pad, which carries those four, reaches the hotbar too. */
+export const HOTBAR_SLOT_ACTIONS = Object.freeze(['QuickUse1', 'QuickUse2', 'QuickSpell', 'QuickOffHand',
+  'Hotbar5', 'Hotbar6', 'Hotbar7', 'Hotbar8', 'Hotbar9', 'Hotbar10']);
+
+/** KB1: A MOD'S KEYS ARE ITS OWN ACTIONS, answering only while that mod is on. `legacy` is the mod's old TextKey
+ *  setting (modSettings.js) and every value the port ever shipped on it - a player's own choice there, anything
+ *  else, is carried into the registry once (migrateKeyBinds). */
+export const MOD_ACTIONS = Object.freeze({
+  'handheld-torches': Object.freeze([
+    Object.freeze({ action: 'TorchToggleLight', legacy: 'Handling.ToggleLightInput', shipped: Object.freeze(['O', 'F']) }),
+    Object.freeze({ action: 'TorchDrop', legacy: 'Handling.ManualDropInput', shipped: Object.freeze(['G', 'Tab']) }),
+    Object.freeze({ action: 'TorchThrow', legacy: 'Throwing.ThrowTorchInput', shipped: Object.freeze(['X']) }),
+  ]),
+  'eye-of-the-beholder': Object.freeze([
+    Object.freeze({ action: 'ShoulderSwitch', legacy: 'Camera.SwitchShoulder', shipped: Object.freeze(['B', 'Tab']) }),
+    Object.freeze({ action: 'AutoPerspective', legacy: 'AutoTogglePerspective.ToggleInput', shipped: Object.freeze(['KeypadPlus']) }),
+  ]),
+  'travel-options': Object.freeze([
+    // the mod's key is a CHOICE, not a KeyCode: an index into its six (TravelOptionsMod.cs:132), and an index past
+    // the end is "Custom Key Bind", read from the second setting (:224-232)
+    Object.freeze({ action: 'FollowPaths', legacy: 'RoadsIntegration.FollowPathsKey', choice: 'RoadsIntegration.FollowPathsCustomKeyBind',
+      options: Object.freeze(['None', 'F', 'G', 'K', 'O', 'X']), shipped: Object.freeze([3]) }),
+  ]),
+  'horse-cart-and-cargo': Object.freeze([
+    Object.freeze({ action: 'HorseMount', legacy: 'Hotkeys.QuickMountDismount', shipped: Object.freeze(['Alpha5', 'F7', 'K']) }),
+    Object.freeze({ action: 'HorseSummon', legacy: 'Hotkeys.SummonTransport', shipped: Object.freeze(['Alpha6', 'F10', 'G']) }),
+  ]),
+});
+const _modOf = new Map(Object.entries(MOD_ACTIONS).flatMap(([vendor, rows]) => rows.map((r) => [r.action, vendor])));
+/** The vendored mod an action belongs to, or null for the game's own. */
+export const actionMod = (action) => _modOf.get(action) ?? null;
+/** KB1: WHETHER AN ACTION ANSWERS AT ALL. The game's own always do; a mod's only while that mod is on (its `Enabled`,
+ *  through modSetting, so online the room's forced value decides as it does for the mod itself). This is the ONE
+ *  gate - every reader in ui/input.js takes it - so a mod switched off cannot act on its key anywhere, and no mod
+ *  carries a check of its own. The key stays bound: switching the mod back on must not find it given away. */
+export function actionLive(action) {
+  const vendor = _modOf.get(action);
+  return !vendor || !!modSetting(vendor, 'Enabled');
+}
+
+/**
+ * KB1: THE CONTROLS PAGE'S ORDER - every action, in the group a player looks for it under, with the words they would
+ * use. ONE table, read by the enhanced Controls pane (ui/enhancedControls.js), the replace prompt's names
+ * (systems/controlsConfig.js actionLabel) and bible Controls.md; test/kb1_keybinds.test.js holds that every action
+ * in ACTIONS is in exactly one group or in HIDDEN_ACTIONS. A group with `mod` is that vendored mod's keys, drawn only
+ * while the mod is on (the readers' actionLive gate is the same switch).
+ *
+ * THE KEYS THAT ARE NOT HERE are a window's own, and they do not move: Escape and Enter in every window (the back
+ * and confirm doors), the arrows and +/- on the maps, Y/N on a message box, the letters a DFU window binds through
+ * its own DaggerfallShortcut table (systems/dialogShortcuts.js), the travel panel's M/C/H while it is up, the dial's
+ * WASD/arrows while it is up, and the fly-cam's raw WASD (a developer mode). They answer only while their window is
+ * the top one, so they share nothing with the world's keys below.
+ */
+const g = (title, rows, mod = null) => Object.freeze({ title, mod, rows: Object.freeze(rows.map(([action, label]) => Object.freeze({ action, label }))) });
+export const ACTION_GROUPS = Object.freeze([
+  g('Movement', [
+    ['MoveForwards', 'Move forwards'], ['MoveBackwards', 'Move backwards'], ['MoveLeft', 'Move left'], ['MoveRight', 'Move right'],
+    ['TurnLeft', 'Turn left'], ['TurnRight', 'Turn right'], ['LookUp', 'Look up'], ['LookDown', 'Look down'],
+    ['CenterView', 'Centre the view'], ['Jump', 'Jump'], ['Crouch', 'Crouch'], ['Run', 'Run'], ['AutoRun', 'Auto run'],
+    ['Sneak', 'Sneak'], ['FloatUp', 'Float up (levitate, swim)'], ['FloatDown', 'Float down (levitate, swim)'],
+  ]),
+  g('Combat', [
+    ['ReadyWeapon', 'Ready or sheathe weapon'], ['SwingWeapon', 'Swing weapon'], ['SwitchHand', 'Switch hand'],
+  ]),
+  g('Magic', [
+    ['CastSpell', 'Spellbook'], ['RecastSpell', 'Ready the last spell'], ['AbortSpell', 'Drop the readied spell'],
+    ['UseMagicItem', 'Use magic item'],
+  ]),
+  g('Interaction', [
+    ['ActivateCenterObject', 'Activate (mouse)'], ['Interact', 'Interact'],
+    ['StealMode', 'Steal mode'], ['GrabMode', 'Grab mode'], ['InfoMode', 'Info mode'], ['TalkMode', 'Talk mode'],
+    ['QuickLootAll', 'Take everything'], ['QuickLootOpen', 'Open the container'],
+    ['Transport', 'Transport'], ['Rest', 'Rest'],
+  ]),
+  g('Windows', [
+    ['Escape', 'Pause menu'], ['CharacterSheet', 'Character sheet'], ['Inventory', 'Inventory'], ['Status', 'Status'],
+    ['LogBook', 'Quest log'], ['NoteBook', 'Notebook'], ['AutoMap', 'Map'], ['TravelMap', 'Travel map'],
+    ['QuickDial', 'Quick dial'],
+  ]),
+  g('Quickslots and hotbar', [
+    ['QuickUse1', 'Use quickslot 1 / hotbar slot 1'], ['QuickUse2', 'Use quickslot 2 / hotbar slot 2'],
+    ['QuickSpell', 'Ready quickslot spell (hold to cycle the book) / hotbar slot 3'],
+    ['QuickOffHand', 'Off hand: light, douse or swap / hotbar slot 4'], ['QuickSwap', 'Swap weapon'],
+    ['Hotbar5', 'Hotbar slot 5'], ['Hotbar6', 'Hotbar slot 6'], ['Hotbar7', 'Hotbar slot 7'], ['Hotbar8', 'Hotbar slot 8'],
+    ['Hotbar9', 'Hotbar slot 9'], ['Hotbar10', 'Hotbar slot 10'],
+  ]),
+  g('Mouse', [
+    ['ActivateCursor', 'Free the mouse (offline) / open chat (online)'], ['FreeMouse', 'Free the mouse (press again to look)'],
+  ]),
+  g('Online', [
+    ['SocialInteract', 'Interact with player'],
+  ]),
+  g('Game', [
+    ['QuickSave', 'Quick save'], ['QuickLoad', 'Quick load'], ['PrintScreen', 'Screenshot'], ['DebugOverlay', 'Diagnostics readout'],
+  ]),
+  g('Handheld Torches', [
+    ['TorchToggleLight', 'Light or douse'], ['TorchDrop', 'Drop the light'], ['TorchThrow', 'Throw a torch (hold to charge)'],
+  ], 'handheld-torches'),
+  g('Eye of the Beholder', [
+    ['ShoulderSwitch', 'Switch shoulder'], ['AutoPerspective', 'Auto perspective on/off'],
+  ], 'eye-of-the-beholder'),
+  g('Travel Options', [
+    ['FollowPaths', 'Follow the road'],
+  ], 'travel-options'),
+  g('Horse Cart and Cargo', [
+    ['HorseMount', 'Mount or dismount'], ['HorseSummon', 'Summon horse and wagon'],
+  ], 'horse-cart-and-cargo'),
+]);
+const _groupOf = new Map(ACTION_GROUPS.flatMap((grp) => grp.rows.map((r) => [r.action, grp])));
+/** KB1: the words a player reads for an action - its row's label, with its mod's name after a mod's. */
+export function actionLabel(action) {
+  const grp = _groupOf.get(action);
+  const row = grp?.rows.find((r) => r.action === action);
+  if (!row) return String(action ?? '').replace(/([a-z])([A-Z])/g, '$1 $2');
+  return grp.mod ? `${row.label} (${grp.title})` : row.label;
+}
 
 /**
  * PAD1 (2026-09-21, Mac: "a comprehensive pass on m/kb keybinds and
@@ -475,15 +641,11 @@ export function clearAxisBinding(store, action) {
   touched(store);
   for (const [axis, a] of [...store.axisActions]) if (a === action) store.axisActions.delete(axis);
 }
-/** ClearAxisBinding(code) (:816-822): by axis name. */
-export function clearAxisBindingByAxis(store, axis) { touched(store); store.axisActions.delete(axis); }
 /** ClearJoystickUIBinding(action) (:862-867). */
 export function clearJoystickUIBinding(store, action) {
   touched(store);
   for (const [code, a] of [...store.joystickUI]) if (a === action) store.joystickUI.delete(code);
 }
-/** ClearJoystickUIBinding(code) (:851-856). */
-export function clearJoystickUIBindingByCode(store, code) { touched(store); store.joystickUI.delete(code); }
 /** SetAxisBinding (:763-776): "Not allowing multi-bind" - the action's
  *  old axis is cleared first, then the axis takes the action (stealing
  *  it from whatever the axis held). */
@@ -686,6 +848,7 @@ export function serializeKeyBinds(store) {
   const joystickUIKeyBinds = {};
   for (const [code, action] of store.joystickUI) joystickUIKeyBinds[code] = action;
   return {
+    version: KEYBINDS_VERSION,   // KB1: the port's own field - DFU's KeyBindData_v1 has none, and a file without it is v1
     actionKeyBinds,
     secondaryActionKeyBinds,
     removedPrimaryActions: [...store.removedPrimary],
@@ -773,7 +936,7 @@ export function loadKeyBinds(store, data) {
 // DFU keeps KeyBindings.txt BESIDE settings.ini, its own file with its
 // own serializer (GetKeyBindsSavePath) - so the port keeps its own
 // localStorage key beside the settings store's, same try/catch shield
-// as systems/settings.js:156.
+// as systems/settings.js:157.
 const STORAGE_KEY = 'dagger.keybinds';
 
 // DA1: the storage seam - localStorage in a browser, the desktop
@@ -851,14 +1014,69 @@ export function repairUnloseableBindings(store) {
   return fixed;
 }
 
-/** CHAT-POLISH1: migrate the one legacy default that blocks Y from becoming Chat.
- * Only the exact old default (primary KeyY -> FreeMouse, no Chat binding anywhere) moves; custom bindings are left alone.
- * resetDefaults(autofill) then gives FreeMouse its new F7 default if F7 is actually free. */
-export function migrateLegacyChatDefault(store) {
-  if (getBinding(store, 'Chat', true) != null || getBinding(store, 'Chat', false) != null) return false;
-  if (store.primary.get('KeyY') !== 'FreeMouse') return false;
-  setBinding(store, 'KeyY', 'Chat', true);
-  return true;
+/** KB1: THE FILE'S VERSION. 1 is every file before the keybinding standard (it carried no field); 2 is the standard. */
+export const KEYBINDS_VERSION = 2;
+
+/**
+ * KB1: A v1 FILE COMES FORWARD, ONCE. The standard moved three defaults a saved file may still hold, and the
+ * autofill that follows every load fills a missing action only on a FREE code - so a v1 file keeps E on AbortSpell
+ * and Interact never lands, keeps Backquote on the console and AbortSpell never lands.
+ *
+ * AUDIT KB1 F1/F2/F3 - THE ORDER IS THE LAW. The first cut carried the mods' old keys BEFORE the autofill, and
+ * "a free code" then meant free in the v1 file, not free once the standard's defaults stood - so a torch key saved
+ * as E took E from Interact, an old Travel Options G (the mod switched off, the key dead) took G from the torch
+ * drop, and the action that lost its key was never named. And E was let go of AbortSpell whether or not Backquote
+ * could take it, so a player who had spent Backquote lost the spell's abort without a word. Now, in three steps:
+ *  1. LET GO. E, Backquote and Left Ctrl are let go where they still hold the OLD default (AbortSpell,
+ *     ToggleConsole, Slide), and the two hidden actions let go of ANY code they hold - they do nothing, and a row
+ *     that holds a key and does nothing is how a key gets spent twice (HIDDEN_ACTIONS).
+ *  2. THE STANDARD'S DEFAULTS LAND - the autofill, on every code the player's own file left free.
+ *  3. THE MODS' OLD KEYS come in, onto a code free AFTER step 2 - a player's choice never takes a key from another
+ *     action. A value they SAVED that the port never shipped is their choice; `None` keeps the action unbound; a
+ *     shipped value is left to the new default. A choice that could not land is reported (`kept`).
+ * Then every action the standard gives a key and this file left keyless (its default spent by the player's own
+ * binding, not removed on purpose) is reported (`lost`), so the player is TOLD - the caller hands the report to the
+ * HUD (ui/input.js setKeybindNoticeSink). Answers `{ moved, kept, lost }`; a file already at the version answers
+ * all three empty and touches nothing.
+ */
+export function migrateKeyBinds(store, fromVersion) {
+  const report = { moved: [], kept: [], lost: [] };
+  if (fromVersion >= KEYBINDS_VERSION) return report;
+  for (const [code, was] of [['KeyE', 'AbortSpell'], ['Backquote', 'ToggleConsole'], ['ControlLeft', 'Slide']]) {
+    if (store.primary.get(code) === was) { store.primary.delete(code); touched(store); report.moved.push(`${was} off ${code}`); }
+  }
+  for (const hidden of HIDDEN_ACTIONS) {
+    for (const primary of [true, false]) {
+      const had = getBinding(store, hidden, primary);
+      if (had != null) { clearBinding(store, hidden, primary); report.moved.push(`${hidden} off ${had}`); }
+    }
+  }
+  resetDefaults(store, true);   // step 2: the standard's defaults, on every code still free
+  const spoken = (code) => actionForCode(store, code) != null || comboModifiers(store).has(code);
+  for (const [vendor, rows] of Object.entries(MOD_ACTIONS)) {
+    for (const row of rows) {
+      let saved;
+      try { saved = storedModSetting(vendor, row.legacy); } catch { saved = undefined; }
+      if (saved === undefined || row.shipped.includes(saved)) continue;
+      let name = saved;
+      if (row.choice) {   // Travel Options: one of its six by index, else its custom bind (an empty one is no choice)
+        const i = saved | 0;
+        name = i < row.options.length ? row.options[i] : (String(storedModSetting(vendor, row.choice) ?? '').trim() || null);
+        if (name == null) continue;
+      }
+      if (name === KEYCODE_NONE || name === 'None') { clearBinding(store, row.action, true); store.removedPrimary.add(row.action); report.moved.push(`${row.action} unbound`); continue; }
+      const code = domCodeForKeyCode(String(name));
+      if (!code || getBinding(store, row.action, true) === code) continue;   // a key that parses to nothing, or the one it already has
+      if (spoken(code)) { report.kept.push({ action: row.action, code, holder: actionForCode(store, code) }); continue; }
+      setBinding(store, code, row.action, true);
+      report.moved.push(`${row.action} on ${code}`);
+    }
+  }
+  for (const [code, action] of DEFAULT_BINDINGS) {
+    if (getBinding(store, action, true) != null || store.removedPrimary.has(action)) continue;
+    report.lost.push({ action, code, holder: actionForCode(store, code) });
+  }
+  return report;
 }
 
 export function loadOrCreateBindings() {
@@ -867,9 +1085,18 @@ export function loadOrCreateBindings() {
   const raw = ls?.getItem(STORAGE_KEY);
   if (raw) {
     try {
-      loadKeyBinds(store, JSON.parse(raw));
-      const chatMigrated = migrateLegacyChatDefault(store);
+      const data = JSON.parse(raw);
+      loadKeyBinds(store, data);
+      const from = Number(data?.version) || 1;
+      const report = migrateKeyBinds(store, from);   // KB1: runs the autofill inside it, between its steps
       resetDefaults(store, true);
+      if (from < KEYBINDS_VERSION) {
+        const said = [...report.moved, ...report.kept.map((k) => `${k.action} kept its key (${k.code} is ${k.holder}'s)`),
+          ...report.lost.map((l) => `${l.action} has no key (${l.code} is ${l.holder}'s)`)];
+        if (said.length) console.info(`[keybinds] brought forward to v${KEYBINDS_VERSION}: ${said.join(', ')}`);
+        if (report.kept.length || report.lost.length) store.carried = report;   // AUDIT KB1 F3: for the player, not the console only (ui/input.js)
+        saveKeyBinds(store);   // written as v2 at once, so the carry runs exactly once
+      }
       // MAC-D1: ...and the autofill pass above will NOT do this, by
       // design - it obeys the removal marks. This runs after it and
       // writes the repair back, so the next load starts sound.

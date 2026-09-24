@@ -86,7 +86,8 @@ test('ACT-MENU: the plaque draws the verbs as the loot list\'s rows, the lit one
   assert.match(plaque, /if \(f\.kind === 'actions'\) \{[\s\S]*?row\.className = 'wplaque-row wplaque-act';\s*\n\s*if \(i === sel\) row\.classList\.add\('sel'\);/);
   assert.match(plaque, /export function hideWorldPlaque\(\) \{[\s\S]{0,700}?_watchdog = null;\n\s*foldQuickLoot\(null\);/, 'AUDIT DISC7 A8: every hide folds nothing - the skin gate, the hosts\' branches');
   assert.match(plaque, /foldQuickLoot\(null\);   \/\/ AUDIT DISC7 A8: a contained fault lights nothing[^\n]*\n\s*try \{ showWorldPlaque\(null\); \}/, 'and the contained fault');
-  assert.match(plaque, /if \(cursorActive \|\| !eye \|\| !dir \|\| !collider\) \{ foldQuickLoot\(null\); showWorldPlaque\(null\); return null; \}/);
+  // DISC22-C: the classic panel's frame is cleared with the highlight, and the DOM hide is the DOM face's
+  assert.match(plaque, /if \(cursorActive \|\| !eye \|\| !dir \|\| !collider\) \{ foldQuickLoot\(null\); setClassicLootFrame\(null\); if \(dom\) showWorldPlaque\(null\); return null; \}/);
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     assert.match(rd(host), /hcc\.activate\(_hccPick\.key, _hccPick\.distance, \(l\) => townTalk\.say\(l\), \(\) => setMidScreenText\(TOO_FAR_AWAY_TEXT\), plaqueActionFor\(_hccPick\.key\)\);/, host);
   }
@@ -183,7 +184,7 @@ test('DISC7 wire: the rider\'s half-speed bit rides the pose mounted and moving 
   assert.equal(poseChanged(validPose({ ...base, hs: 1 }), validPose(base)), true);
   assert.equal(lerpPose(validPose(base), validPose({ ...base, hs: 1 }), 0.5).hs, 1);
   assert.equal('hs' in lerpPose(validPose(base), validPose(base), 0.5), false);
-  assert.ok(['world100', 'world101', 'world102', 'world103'].includes(RELAY_VERSION), 'world100 carried hs; DISC12 moved it on (world101) with lh and wb, and the community arc (world102) with its frames and AUDIT ATTACH\'s meters');
+  assert.ok(['world100', 'world101', 'world102', 'world103', 'world104', 'world105', 'world106'].includes(RELAY_VERSION), 'world100 carried hs; DISC12 moved it on (world101) with lh and wb, and the community arc (world102) with its frames and AUDIT ATTACH\'s meters');
   assert.match(rd('src/scenes/world.js'), /hs: riding && moved && _hsLatch \? 1 : undefined,/);
   assert.match(rd('src/scenes/world.js'), /if \(movedThisFrame\) \{ _onlineMovingUntil = now \+ ONLINE_MOVE_HOLD_MS; _hsLatch = !!player\.movingLessThanHalfSpeed; \}/, 'AUDIT DISC7 B2: latched off a frame that moved');
   assert.equal('hs' in validPose({ ...base, hs: '0' }), false, 'AUDIT DISC7 B8: uint\'s law - a string zero is no bit'); assert.equal(validPose({ ...base, hs: 7 }).hs, 1);

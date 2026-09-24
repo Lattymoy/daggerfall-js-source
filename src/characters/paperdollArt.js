@@ -35,11 +35,7 @@ export function resolvePaperdollRecord(template, variant = 0) {
 // speak MATERIAL FAMILIES keep working, and `armorArchive` keeps its
 // C6a signature - (gender, RACE) - as a thin wrapper over the
 // morphology-keyed law rather than a rival definition of the name.
-export {
-  FIRST_FEMALE_ARCHIVE as ARCHIVE_FEMALE_BASE,
-  FIRST_MALE_ARCHIVE as ARCHIVE_MALE_BASE,
-  BODY_MORPHOLOGY, MATERIAL_FAMILY, armorVariant,
-} from '../systems/armorMaterials.js';
+export { MATERIAL_FAMILY, armorVariant } from '../systems/armorMaterials.js';
 
 /** GetBodyMorphology (ItemBuilder.cs:910-925). The race table
  *  (systems/races.js) is the one place a race names its morphology;

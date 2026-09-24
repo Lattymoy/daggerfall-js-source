@@ -112,7 +112,7 @@ let _courtArt = null;
  *  as DFU's `LoadPalette(imgFile.PaletteName)` does for it
  *  (DaggerfallUI.cs:1225-1231, reached from :75). Minting one here
  *  hands the decode an UNLOADED DFPalette - all 256 entries (255,0,0)
- *  by its constructor (dfPalette.js:11-17) - and the courtroom draws
+ *  by its constructor (dfPalette.js:12-18) - and the courtroom draws
  *  as a solid red panel. The mint-your-own law belongs to PRIS00I0
  *  below and to those six names only; read
  *  test/incident_texture.test.js, which now sweeps both directions. */

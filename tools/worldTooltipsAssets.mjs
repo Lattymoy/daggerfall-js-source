@@ -17,7 +17,9 @@
 // size and sha256, which is what test/vendorIntegrity.test.js pins.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 import { readUnityBundle } from '../src/formats/unityBundle.js';
+import { isMain } from './lib/isMain.mjs';
 
 /** The bundle's three text assets, by the name they carry inside it,
  *  mapped to the path this tree keeps them at. */
@@ -37,10 +39,10 @@ export function readWorldTooltips(bytes) {
   }));
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isMain(import.meta.url)) {
   const src = process.argv[2];
   if (!src) { console.error('usage: node tools/worldTooltipsAssets.mjs <world tooltips.dfmod> [outDir]'); process.exit(1); }
-  const outDir = process.argv[3] ?? new URL('../vendor/world-tooltips/', import.meta.url).pathname;
+  const outDir = process.argv[3] ?? fileURLToPath(new URL('../vendor/world-tooltips/', import.meta.url));
   const assets = readWorldTooltips(readFileSync(src));
   for (const a of assets) {
     const sha = createHash('sha256').update(a.body).digest('hex');

@@ -109,8 +109,15 @@ export const GUILDS = Object.freeze({
     name: 'FightersGuild',
     guildGroup: GUILD_GROUPS.FightersGuild,
     factionId: 41,
+    // FGH2H (2026-09-24, Mac: "change the fighter guild requirements where it
+    // allows bare handed"): HandToHand joins DFU's seven (FightersGuild.cs's
+    // guildSkills) and Giantish stays - a DEPARTURE, rowed in the Port-Ledger
+    // (this file), in both lanes. Added, never swapped: the rank law counts
+    // skills past a bar, so one more only lets a fist-fighter in and turns no
+    // member out. Roleplay & Realism's fightersTeachHandToHand, which swapped
+    // Giantish out, is RETIRED with it (FGH2H-R, rrRealism.js).
     skills: [SKILLS.Archery, SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.Giantish,
-      SKILLS.LongBlade, SKILLS.Orcish, SKILLS.ShortBlade],
+      SKILLS.HandToHand, SKILLS.LongBlade, SKILLS.Orcish, SKILLS.ShortBlade],
     rankTitles: ['Apprentice', 'Journeyman', 'Swordsman', 'Protector', 'Defender',
       'Warder', 'Guardian', 'Champion', 'Warrior', 'Master'],
     text: { ineligibleBadRep: 679, ineligibleLowSkill: 680, eligible: 681, welcome: 684, promotion: 686 },
@@ -205,7 +212,7 @@ export const daySinceZero = (date) =>
  *  enchantment never moves guild rank. */
 export function numHighLowSkills(entity, guild, rank) {
   let high = 0, low = 0;
-  for (const skill of guildSkillsOf(guild)) {   // RR1: GuildSkills, the virtual
+  for (const skill of guild?.skills ?? []) {   // GuildSkills (FGH2H-R: no mod overrides it now)
     const v = permanentSkillValue(entity, skill);
     if (v >= RANK_REQ_SKILL_HIGH[rank]) high++;
     else if (v >= RANK_REQ_SKILL_LOW[rank]) low++;
@@ -218,8 +225,8 @@ export function numHighLowSkills(entity, guild, rank) {
 // GuildManager.RegisterCustomGuild(group, type) - Roleplay & Realism's
 // ThievesGuildRR / DarkBrotherhoodRR (AllowGuildExpulsion answering the
 // rank as it comes, a join floor on reputation, the death squad on
-// leaving, their own expulsion text) and FightersGuildRR (its skill
-// lists). The port's guilds are rows, so the class is a RULE by guild
+// leaving, their own expulsion text); FightersGuildRR (its skill lists)
+// is RETIRED (FGH2H-R). The port's guilds are rows, so the class is a RULE by guild
 // name, registered once: `{ joinReputationFloor, squad(level),
 // expulsion: [lines] }` or null for DFU's own.
 let _underworldRule = null;
@@ -229,10 +236,6 @@ export const underworldRuleOf = (guild) => _underworldRule?.(guild?.name) ?? nul
  *  host's seam for what a mod's Leave does - the squad. */
 let _onExpelled = null;
 export function setGuildExpelledHook(fn) { _onExpelled = typeof fn === 'function' ? fn : null; }
-/** GuildSkills, the virtual (FightersGuildRR overrides it). */
-let _guildSkillsOverride = null;
-export function setGuildSkillsOverride(fn) { _guildSkillsOverride = typeof fn === 'function' ? fn : null; }
-export const guildSkillsOf = (guild) => _guildSkillsOverride?.(guild?.name) ?? guild?.skills ?? [];
 
 export function calculateNewRank(entity, guild, store) {
   // AUDIT 21 F1: DFU's shape exactly. Guild.CalculateNewRank is the base

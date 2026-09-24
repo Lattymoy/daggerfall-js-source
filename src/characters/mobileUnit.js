@@ -43,6 +43,7 @@
 // edges: a blow the player should have taken on waking was dropped.
 
 import { rand } from '../formats/dfRandom.js';   // NT2 (F210): the gender roll is a DFRandom draw
+import { MOBILE_TYPES } from './mobileTypes.js';
 
 // Speeds in frames-per-second (EnemyBasics).
 export const MOVE_ANIM_SPEED = 6;
@@ -130,12 +131,13 @@ export const SEDUCER_TRANSFORM2_ANIMS = SEDUCER_ROW(22);   // stand and spread w
 export const SEDUCER_IDLE_MOVE_ANIMS = SEDUCER_ROW(21);    // the winged form's move, idle AND hurt
 export const SEDUCER_ATTACK_ANIMS = SEDUCER_ROW(20);       // the winged form's attack AND spell
 
-export const MOBILE_RAT = 0;
-export const MOBILE_SLAUGHTERFISH = 11;
-export const MOBILE_GHOST = 18;
-export const MOBILE_GIANT_SCORPION = 20;
-export const MOBILE_WRAITH = 23;
-export const MOBILE_DAEDRA_SEDUCER = 29;
+// AUDIT 68 S05-mobile-id-literals: the generated table's ids, not copies.
+export const MOBILE_RAT = MOBILE_TYPES.Rat;
+export const MOBILE_SLAUGHTERFISH = MOBILE_TYPES.Slaughterfish;
+export const MOBILE_GHOST = MOBILE_TYPES.Ghost;
+export const MOBILE_GIANT_SCORPION = MOBILE_TYPES.GiantScorpion;
+export const MOBILE_WRAITH = MOBILE_TYPES.Wraith;
+export const MOBILE_DAEDRA_SEDUCER = MOBILE_TYPES.DaedraSeducer;
 
 /** GetStateAnims, verbatim branch order (DaggerfallMobileUnit.cs:
  *  787-858). hasSpellAnimation routes the SPELL state to records 20-24;
@@ -324,14 +326,18 @@ export class MobileUnit {
    * Seducer. Hosts that patch their live foes in place (the dungeon's
    * applyWorld, whose un-kill arm is the same shape) have to undo the
    * :208-224 struct-copy rewrite by hand: back to the shared row, the
-   * flag down, and the caller re-mints SeducerTransformBehaviour so
-   * the eight-second clock starts over exactly as a fresh
+   * flag down, and SeducerTransformBehaviour.rewind (which calls this)
+   * starts the eight-second clock over exactly as a fresh
    * SetupDemoEnemy.cs:191-195 component would.
    */
   clearSpecialTransformationCompleted() {
     this.basics = this._sharedBasics;
     this._basicsOwned = false;
     this.specialTransformationCompleted = false;
+    // AUDIT 68 S05-seducer-rewind-incomplete: a save taken before the
+    // transform also predates a transform in PROGRESS - a rebuilt
+    // mobile is not crouched mid-wing.
+    if (this.state === 'transform1' || this.state === 'transform2') this._change('idle');
   }
 
   /** MobileUnit.IsPlayingOneShot (Base/MobileUnit.cs:153-168) - Hurt,
@@ -502,7 +508,7 @@ export class MobileUnit {
     // enemies move/idle at FlyAnimSpeed 10 (GetStateAnims' tail
     // override; audit 08-17) - the table stays frozen, the clock
     // overrides.
-    const a = anims[this.orientation];
+    let a = anims[this.orientation];
     let fps = (this.basics.behaviour === 'Flying' && (this.state === 'move' || this.state === 'idle'))
       ? FLY_ANIM_SPEED : a.fps;
     // AUDIT 23 (characters-11) - DaggerfallMobileUnit.cs:530-534: the
@@ -515,7 +521,13 @@ export class MobileUnit {
     const stepEvery = 1 / fps;
     while (this._timer >= stepEvery) {
       this._timer -= stepEvery;
+      const before = this.state;
       this._stepFrame(a);
+      // AUDIT 68 S05-mobileunit-stale-record: a one-shot that ENDS here
+      // switches the table (ApplyEnemyState -> UpdateOrientation sets the
+      // new state's material at once) - the old record with the new
+      // state's frame 0 flashed the wrong sprite for a frame.
+      if (this.state !== before) a = this._anims()[this.orientation];
     }
     // OrientEnemy: scorpion animations are inverted (verbatim quirk).
     const flip = this.mobileType === MOBILE_GIANT_SCORPION ? !a.flip : a.flip;
@@ -606,6 +618,19 @@ export class SeducerTransformBehaviour {
     this.transformCountdown = 0;
     this.mobile.startTransformation();
     this.transformStarted = true;
+  }
+
+  /** AUDIT 68 S05-seducer-rewind-incomplete: the in-place restore of a
+   *  save taken BEFORE the transform. DFU restores over a rebuilt enemy
+   *  with a fresh component (SetupDemoEnemy.cs:191-195), so ALL of the
+   *  transform's state goes: the mobile's rewrite and any transform in
+   *  progress, the clock, and the infighting latch - this behaviour is
+   *  its only writer, and nothing else ever lowers it. */
+  rewind() {
+    this.mobile.clearSpecialTransformationCompleted();
+    this.transformCountdown = SECONDS_TO_TRANSFORM;
+    this.transformStarted = false;
+    this.entity.suppressInfighting = false;
   }
 
   update(dt, targetIsPlayer = false) {

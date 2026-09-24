@@ -29,8 +29,8 @@
   {
     "name": "OL4-suns-rest-is-a-real-time-outage",
     "file": "src/systems/buildingLocks.js",
-    "old": "  const classicOpen = classicBuildingOpen(type, hour) && !holidayClosed;",
-    "new": "  const classicOpen = classicBuildingOpen(type, hour) && !holidayClosed;\n  if (shop && online && !classicOpen && !holidayClosed) {",
+    "old": "  if (relieved && online && !classicOpen) {",
+    "new": "  if (relieved && online && !classicOpen && !holidayClosed) {",
     "tests": [
       "test/lockpicking.test.js"
     ]

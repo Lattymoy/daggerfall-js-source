@@ -12,7 +12,7 @@
 // are: F3 is TalkToneBlunt - ET1-AUDIT F1: DFU's own DialogShortcuts
 // row, which the window walks first (nativeTalk.js input) - KeyW opens the
 // where-is categories (:430) and a digit uses a visible row (:435).
-// What moved is what is READ: `native` (townTalk.js:1471, true only
+// What moved is what is READ: `native` (townTalk.js:1476, true only
 // when the art window is up), `tone`, and the ABSENCE of
 // `overlayOptions` - which is the positive statement that the window
 // under the keys is the native one and not the keyed fallback.
@@ -25,7 +25,7 @@ const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 // T2: `class=16` SKIPS THE CHARGEN WIZARD. Without it the wizard holds
 // townTalk's overlay slot and townTalk.keydown - FIRST in this host's
-// keydown ladder (exterior.js:2948-2950) - swallows every
+// keydown ladder (exterior.js:2947-2949) - swallows every
 // page.keyboard.press below, so this probe pressed its keys into a
 // character-creation screen it never knew was up.
 await page.goto('http://localhost:5199/play/?shot&play&exterior&time=12:00&class=16');

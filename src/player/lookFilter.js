@@ -52,8 +52,14 @@ let _floorProvider = null;
 export function setPitchFloorProvider(fn) { _floorProvider = typeof fn === 'function' ? fn : null; }
 export const pitchFloor = () => { const d = _floorProvider?.(); return Number.isFinite(d) ? Math.min((Math.max(d, -90) * Math.PI) / 180, PITCH_FLOOR) : PITCH_FLOOR; };   // AUDIT-RR2 G23: `pitchMax = Mathf.Clamp(value, PitchMin, PitchMax)` (PlayerMouseLook.cs:87-90), PitchMin -90 - a steep bank cannot push the floor past vertical
 
-/** GetFrameRateScaledFractionOfProgression (:100-105), verbatim. */
+/** GetFrameRateScaledFractionOfProgression (:100-105), verbatim - and
+ *  AUDIT 68 S15-lookfilter-nan-dt0: at its two edges. A browser frame
+ *  can repeat its timestamp (dt 0), where fraction 1 made 0/0 = NaN
+ *  and the camera NaN for good; no smoothing is full progress at any
+ *  dt, and a frame with no time in it makes none. */
 export function frameRateScaledFraction(fractionAt60FPS, dt) {
+  if (fractionAt60FPS >= 1) return 1;
+  if (!(dt > 0)) return 0;
   const frames = dt * 60;
   const c = (1 - fractionAt60FPS) / fractionAt60FPS;
   return 1 - c / (frames + c);
@@ -141,6 +147,14 @@ export class LookFilter {
   settle() {
     this.residualYaw = 0;
     this.residualPitch = 0;
+  }
+
+  /** KB1: CenterView (Home) - the view LEVELLED. DFU binds the action and reads it nowhere; this is classic
+   *  Daggerfall's centre key. The owed pitch is replaced by the one that lands the target at level, and the filter
+   *  pays it out like any look - not latched as the frame's look (`add` would be), so the weapon widget does not
+   *  sway to a key that is not a hand moving the mouse. */
+  centerPitch(cam) {
+    this.residualPitch = -(cam?.pitch ?? 0);
   }
 
   /** ApplyLook's `lookTarget += delta` (:126): the scaled deltas, in

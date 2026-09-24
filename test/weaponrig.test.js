@@ -189,7 +189,7 @@ test('FX1 (F024/F025): the show clocks - the bow cooldown FREEZES the state, an 
 // AND THE FIRST DIAGNOSIS OFF THIS HARNESS WAS WRONG, which is the
 // reason the idle loop below is not decoration. Attacking on the very
 // first frame reads machine.isBow ONE FRAME STALE - update() is what
-// sets it (playerWeapon.js:384, "read per step"), and update() runs
+// sets it (playerWeapon.js:385, "read per step"), and update() runs
 // AFTER gesture() inside frame(). The bow swings StrikeRight on the
 // melee clock, and it looks exactly like the reported bug. It is not
 // the bug: real play has frames between drawing and shooting. The pin

@@ -101,8 +101,8 @@
   {
     "name": "glsl-ao-off-dark",
     "file": "src/render/airPass.js",
-    "old": "    gl.uniform1f(P.resolve.uAOMix, this.f ? AIR_AO_RESOLVE : 0);",
-    "new": "    gl.uniform1f(P.resolve.uAOMix, this.f ? 1 : 0);",
+    "old": "    gl.uniform1f(P.resolve.uAOMix, prepared ? AIR_AO_RESOLVE : 0);",
+    "new": "    gl.uniform1f(P.resolve.uAOMix, prepared ? 1 : 0);",
     "tests": [
       "test/el3_air.test.js"
     ]

@@ -135,7 +135,9 @@ test('AUDIT REACH B4: the records in hand follow the floating origin - told of a
 
 test('AUDIT REACH: the cube\'s faces are looked up in the cube\'s own order in BOTH lookups - +X is face 0, -X 1, +Y 2, -Y 3, +Z 4, -Z 5, the order the six layers were drawn in (CUBE_FACES) - the receiver\'s and the air\'s (mutant: a sign swapped, which the fake GL cannot see and no pin held)', () => {
   const faces = SHADOW_GLSL.match(/if \(a\.x >= a\.y && a\.x >= a\.z\) \{ face = d\.x > 0\.0 \? 0 : 1; m = a\.x; \}\n  else if \(a\.y >= a\.z\) \{ face = d\.y > 0\.0 \? 2 : 3; m = a\.y; \}\n  else \{ face = d\.z > 0\.0 \? 4 : 5; m = a\.z; \}/g) || [];
-  assert.equal(faces.length, 4, 'pointShadowAt and pointShadowOne, and DISC15\'s pointShadowLoAt and pointShadowLoOne - the same six lines');
+  // AUDIT 68 S17-shadowpass-layer-dup: the six lines live once, in cubeFaceUv, and all four readers take them
+  assert.equal(faces.length, 1, 'the one face pick');
+  assert.equal((SHADOW_GLSL.match(/vec2 uv = cubeFaceUv\(d, face, m\);/g) || []).length, 4, 'pointShadowAt and pointShadowOne, and DISC15\'s pointShadowLoAt and pointShadowLoOne');
   assert.match(SHADOW_GLSL, /float layer = float\(k \* 6 \+ face\);/);
   assert.match(SHADOW_GLSL, /vec4\(uv, float\(k \* 6 \+ face\), cubeDepthOfM/);
 });

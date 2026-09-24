@@ -31,6 +31,8 @@ import { FootstepMachine, FOOTSTEP_VOLUME } from '../src/systems/footsteps.js';
 import { setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
 import { createWeaponRig } from '../src/combat/weaponRig.js';
 import { domCodeForKeyCode } from '../src/systems/keyCodes.js';
+import { held, setBindings } from '../src/ui/input.js';   // KB1: the rig reads the registry's actions
+import { createBindings, resetDefaults } from '../src/systems/inputActions.js';
 import { motionBagOf } from '../src/player/motor.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -385,8 +387,9 @@ test('EOTB-IL: the hides - the FPV weapon and horse behind their keys, the spell
   assert.match(rig, /const eotbHidesSpellHands = \(\) => !fpArm\.canThirdPerson\(\) && eotbBody\.hides\(\)\.spellHands;/);
   // the hide folds into the frame's texture read, so the gate keeps the
   // shape fpsspellcasting.test.js pins (WeaponManager.cs:247)
-  assert.match(rig, /const c = eotbHidesSpellHands\(\) \? null : \(cv\(\)\);/, 'the hands\' picture goes in third person');
-  assert.match(rig, /if \(c && !fpArm\.active\(\)\) \{\s*\n\s*drawSpellCastHands\(/, 'and the draw gate is unchanged');
+  // AUDIT 68 S09-eotb-canvas-null: the hide is the HANDS' alone - nulling the canvas took Don'tHideWeapon's weapon with it
+  assert.match(rig, /const c = cv\(\);/);
+  assert.match(rig, /if \(c && !fpArm\.active\(\) && !eotbHidesSpellHands\(\)\) \{\s*\n\s*drawSpellCastHands\(/, 'the hands\' picture goes in third person');
   assert.equal((rig.match(/thirdPerson: fpArm\.thirdActive\(\) \|\| eotbHidesWeapon\(\)/g) ?? []).length, 2, 'the widget and the torch hand');
   assert.match(rig, /if \(eotbHidesWeapon\(\)\) return;\s*\n\s*if \(fpArm\.active\(\)\) \{ fpArm\.draw\(c\); return; \}/, 'the picture goes before any first-person draw');
   assert.match(rd('src/player/mountRig.js'), /if \(art && isRiding\(player\.transportMode\) && !ridePaused && !mwViewHides\(\)\.horse\) \{/);
@@ -485,16 +488,22 @@ test('EOTB-IL: OnNewGame and OnLoad - a transition row when armed and nothing el
   } finally { closeLane(); }
 });
 
-test('EOTB-IL: the SwitchShoulder and ToggleInput keys on their RELEASE edge (GetKeyUp) - driven through a real rig', () => {
+test('EOTB-IL: the SwitchShoulder and ToggleInput keys on their RELEASE edge (GetKeyUp) - driven through a real rig, on the registry\'s actions (KB1)', () => {
   _resetModSettings();
+  setModSetting(MOD, 'Enabled', true);
   setModSetting(MOD, 'Camera.FrontalPlaneOffset', [0.5, 0.5]);   // "if it is non-zero" - the shipped X of 0 makes the switch a no-op
+  // KB1: the mod's two keys are the registry's ShoulderSwitch and AutoPerspective actions; their defaults are the
+  // mod's own B and KeypadPlus, and the rig reads them through the host's held read, so a rebind moves them.
   assert.equal(domCodeForKeyCode('B'), 'KeyB');
   assert.equal(domCodeForKeyCode('KeypadPlus'), 'NumpadAdd');
+  const store = createBindings();
+  resetDefaults(store);
+  setBindings(store);
   const keys = new Set();
   const audio = { playOneShot: () => 0, play3d: () => 0, setLoop: () => {} };
   const rig = createWeaponRig({
     renderer: {}, canvas: { width: 320, height: 200 }, fetchBytes: () => { throw new Error('no art'); }, palette: null,
-    audio, entity: { items: [], health: 50 }, keyDown: (c) => keys.has(c),
+    audio, entity: { items: [], health: 50 }, actionDown: (a) => held(keys, a),
   });
   try {
     const before = eotbCamera.mirrored();
@@ -511,7 +520,13 @@ test('EOTB-IL: the SwitchShoulder and ToggleInput keys on their RELEASE edge (Ge
     assert.equal(eotbCamera.autoArmed(), !armed, 'ToggleInput arms or disarms the table, once per release');
     keys.add('NumpadAdd'); rig.frame(1 / 60); keys.delete('NumpadAdd'); rig.frame(1 / 60);
     assert.equal(eotbCamera.autoArmed(), armed);
+    // the mod switched off: its keys answer nothing (the readers' actionLive gate)
+    setModSetting(MOD, 'Enabled', false);
+    const now = eotbCamera.mirrored();
+    keys.add('KeyB'); rig.frame(1 / 60); keys.delete('KeyB'); rig.frame(1 / 60);
+    assert.equal(eotbCamera.mirrored(), now, 'off, B switches nothing');
   } finally {
+    setBindings(null);
     keys.clear(); rig.frame(1 / 60);
     eotbCamera.toggleOffset(false);
     _resetModSettings();

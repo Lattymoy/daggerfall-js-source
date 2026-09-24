@@ -201,7 +201,7 @@ test('audit24 wave31: the host tick runs the kill check, and rest cannot', () =>
 
   // every entity has an EntityEffectManager, so the foes get it too
   const dc = rd('src/scenes/dungeonContext.js');
-  assert.ok(dc.includes('for (const f of foes) if (!f.dead) killIfAnyLiveStatZero(f.entity, foeSinks(f), dt);'),
+  assert.ok(dc.includes('for (const f of foes) if (!f.dead) killIfAnyLiveStatZero(f.entity, foeSinks(f, false), dt);'),   // AUDIT 68 S19-round-ticks-player-provenance: SetHealth(0) has no source
     'the dungeon pool runs it per frame');
 });
 

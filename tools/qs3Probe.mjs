@@ -138,7 +138,6 @@ const touchButtons = (W, H) => ({ x: W - 296, y: H - 64, right: W - 16, bottom: 
 const fixedStickBox = (H) => ({ x: 36, y: H - 148, right: 148, bottom: H - 36 });
 const overlaps = (a, b) => !!a && !!b && a.x < b.right && b.x < a.right && a.y < b.bottom && b.y < a.bottom;
 
-await writeFile(PAGE_PATH, PAGE);
 const vite = await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });
 await vite.listen();
 const port = vite.httpServer.address().port;
@@ -146,6 +145,8 @@ const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: p
 const fails = [];
 const notes = [];
 try {
+  // AUDIT 68 X2-probe-tmp-page-leak: written inside the try, so the finally that unlinks it always runs.
+  await writeFile(PAGE_PATH, PAGE);
   const sizes = [['desktop', { width: 1280, height: 800 }], ['phone-landscape', { width: 860, height: 400 }], ['phone-portrait', { width: 430, height: 860 }]];
   for (const [name, size] of sizes) {
     for (const scale of [1, 1.5, 2]) {

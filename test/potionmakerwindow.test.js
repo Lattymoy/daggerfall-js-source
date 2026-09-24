@@ -302,7 +302,7 @@ test('AUDIT 58: the mixer\'s gold label is GetGoldAmount - coins PLUS letters of
   assert.equal(totalGoldAmount(entity), 5000, 'GetGoldAmount sees the letter');
 
   // the DRAW is the observation: a font that records the glyph indices
-  // it is asked for (text.js:88-89) reconstructs the painted string.
+  // it is asked for (text.js:166-167) reconstructs the painted string.
   _setPotionArtForTests({ tex: 'mask00', w: 320, h: 200 });
   try {
     const chars = [];

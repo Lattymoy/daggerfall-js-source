@@ -12,7 +12,7 @@ import { readFileSync } from 'node:fs';
 import {
   windDrive, legacyGust, floraSwayOf, floraSwayOn, WIND_NONE, WIND_STEP_DT_MAX, LAB_WIND_RATE, WIND_SLIDER_MAX,
 } from '../src/systems/windDrive.js';
-import { WindWispsRenderer, wispCount, wispsOn, WISP_MAX, WISP_FLOOR, WISP_BOX, WISP_VS, WISP_FS, WISP_LOOK } from '../src/render/windWisps.js';
+import { WindWispsRenderer, wispCount, wispsOn, WISP_MAX, WISP_FLOOR, WISP_BOX, WISP_VS, WISP_FS, WISP_LOOK, WISP_GUST_DIV } from '../src/render/windWisps.js';
 import {
   createWindAudio, windGain, windClipFor, windPitchFor, windSoundOn, WIND_GAIN_MAX, WIND_SLEW_PER_S, WIND_GAIN_FLOOR, WIND_BLOW_AT, WIND_LOOP,
 } from '../src/systems/windAudio.js';
@@ -101,7 +101,7 @@ test('WIND3 wisps: the count follows the strength with a floor; the renderer com
   assert.match(WISP_VS, /float ph = fract\(uTime\*rate \+ seed\*7\.0\);\n  vLife = sin\(ph \* 3\.14159\);/, 'the wisp\'s own clock (WIND5: its phase also draws the flourish on)');
   assert.match(WISP_VS, /p \+= \(vel \* \(c\.x - 0\.5\) \+ up \* c\.y\) \* len;/, 'stretched along the wind (WIND5: along the flourish\'s path, down the wind and across it in the curl\'s plane)');
   assert.match(WISP_FS, /a \*= vLife \* \(uAlpha\.x \+ uAlpha\.y \* uStrength\);/, 'never more than a breath (WEATHER2d: the look\'s alpha)');
-  assert.deepEqual([...WISP_LOOK.alpha], [0.10, 0.12]); assert.deepEqual([...WISP_LOOK.color], [0.86, 0.89, 0.94]);
+  assert.deepEqual([...WISP_LOOK.alpha], [0.20, 0.24]); assert.deepEqual([...WISP_LOOK.color], [0.86, 0.89, 0.94]);   // DISC17-A: the alpha doubled (WIND3's 0.10, 0.12)
   assert.doesNotMatch(WISP_VS + WISP_FS, /uTime \* uWindV|uWindV \* uTime/, 'no wind x time anywhere');
   const { gl, calls } = stubGl();
   const r = new WindWispsRenderer(gl);
@@ -126,9 +126,11 @@ test('WIND3 wisps: the count follows the strength with a floor; the renderer com
   assert.ok(off && near(off[2][0], calm.step[0] + gale.step[0], 1e-5) && near(off[2][1], calm.step[1] + gale.step[1], 1e-5), 'the travel is the sum of the steps');
   assert.ok(calls.some((c) => c[0] === 'depthMask' && c[1] === false) && calls.some((c) => c[0] === 'depthMask' && c[1] === true), 'no depth write, put back');
   assert.ok(calls.some((c) => c[0] === 'blendFunc' && c[1] === 17 && c[2] === 18), 'alpha blended');
-  // the travel wraps: a long walk down the wind stays inside [0, WISP_BOX)
+  // the travel wraps: a long walk down the wind stays inside [0, WISP_BOX x WISP_GUST_DIV)
+  // (AUDIT 68 S17-wisp-wrap-gust: one box was no common period of the wisps' gusts)
   for (let i = 0; i < 100000; i++) r.advance([gale.windV[0] * 0.05, gale.windV[1] * 0.05]);
-  assert.ok(r.windOff[0] >= 0 && r.windOff[0] < WISP_BOX && r.windOff[1] >= 0 && r.windOff[1] < WISP_BOX, `bounded: ${r.windOff}`);
+  const span = WISP_BOX * WISP_GUST_DIV;
+  assert.ok(r.windOff[0] >= 0 && r.windOff[0] < span && r.windOff[1] >= 0 && r.windOff[1] < span, `bounded: ${r.windOff}`);
   r.advance([-3, -3]);
   assert.ok(r.windOff[0] >= 0 && r.windOff[1] >= 0, 'a backward step wraps up, never negative');
 });

@@ -39,18 +39,11 @@ export class Symbol {
     this.name = getInnerSymbolName(original);
   }
 
-  getValue() { return this.original; }
-
   clone() {
     const c = new Symbol();
     c.original = this.original;
     c.name = this.name;
     return c;
-  }
-
-  equals(other) {
-    if (!other) return false;
-    return other.name === this.name && other.original === this.original;
   }
 }
 

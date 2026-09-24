@@ -56,6 +56,8 @@
 
 import { loadImg, nativeMetrics, drawImg, drawImgSub, drawImgCrop, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { getBool } from '../systems/settings.js';   // UI4: EnableInventoryInfoPanel
+import { bindings } from './input.js';   // KB1: the live registry
+import { getBinding } from '../systems/inputActions.js';   // KB1: the toggle-close binding, GetBinding(Actions.Inventory)
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U25
 import { useItem, isLightSource, isPotionRecipe, nextVariant, USE_PENDING } from '../systems/useItem.js';   // U25; AUDIT 64 F49/F50
 import { potionRecipeByKey } from '../systems/potions.js';   // AUDIT 64 F49: PotionRecipeIngredients' recipe lookup
@@ -88,7 +90,7 @@ import {
 } from '../systems/inventorySession.js';
 import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, isBrokenItem, EQUIP_SLOTS, FORBIDDEN_EQUIPMENT_TEXT_ID, ITEM_BROKEN_TEXT_ID, equipDelaySnapshot, billEquipDelayOnClose } from '../systems/equip.js';   // S23; FX1 (F128): the per-visit swap-pause clock
 import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } from './paperDoll.js';
-import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, safeScrollIndex, beginScrollerDrag, dragScrollerIndex,   // MAC-N2: the thumb drag
+import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, preloadIconRecord, drawStackLabel, safeScrollIndex, beginScrollerDrag, dragScrollerIndex,   // MAC-N2: the thumb drag
   preloadScrollerArrowArt, drawScrollerArrows, drawScrollerThumb, playScrollerArrowClick,
   makeSlotToolTip, itemBackgroundColour, drawCellBackground } from './itemScroller.js';
 import { templateByIndex, itemBaseValue, inventoryItemImage } from '../systems/itemTemplates.js';
@@ -355,7 +357,7 @@ function makeAccessoryIconDrawer(icons, identityOf = null) {
       warm.add(key);
       icons.getTexture(img.archive).then(async (tex) => {
         if (img.record < tex.recordCount) {
-          await icons.preloadRecord?.(img.archive, img.record, img.dye);   // AUDIT-DW F1: this record's replacement, decoded when it is drawn - not the archive's 280 before the first classic icon
+          await preloadIconRecord(icons, img);   // AUDIT-DW F1 / DISC22-D: this record's replacement, decoded when it is drawn - by the drawer itself
           const variant = icons.uploadRecord(img.archive, img.record, { mips: false, removeMask: true, dye: img.dye });   // REVIEW 2026-09-05: item art is UI art - ImageReader.cs:59, no mip chain; HM1: GetInventoryImage strips the 0xFF mask (the helm's halo)
           glKeys.set(key, `${img.archive}_${img.record}${variant ?? '#ui'}`);
           sizes.set(key, tex.getSize(img.record));
@@ -394,6 +396,13 @@ export class NativeInventoryWindow {
     this.hooks = hooks;
     this.done = false;
     this.isChoiceWindow = true;    // raw codes through the overlay seam
+    // KB1: "Store toggle closed binding for this window" (DaggerfallInventoryWindow, GetBinding(Actions.Inventory)),
+    // read once at push - it was a literal F6, so an Inventory rebound off F6 opened this window and could not close it.
+    this.toggleClosedBinding = getBinding(bindings(), 'Inventory');
+    // AUDIT KB1: and the SECONDARY slot's code - the pad's button (PAD1 binds View to Inventory and Menu to Escape in the
+    // secondary dict) opened this window through the host's dual-dict read and could not close it; DFU's field is the
+    // primary alone because DFU's pad closes through GetBackButtonUp, a door this port's windows do not carry.
+    this.toggleClosedSecondary = getBinding(bindings(), 'Inventory', false);
     this.tab = 'weapons';          // SelectTabPage(TabPages.WeaponsAndArmor) on setup
     // U57: selectedActionMode, CheckWagonAccess and SetChooseOne are
     // one read now (systems/inventorySession.js) - the enhanced pack
@@ -1020,13 +1029,14 @@ export class NativeInventoryWindow {
       return;
     }
     if (this.topBox) { this._dismissBox(); return; }   // the click-anywhere boxes answer any key
-    // F6 is the TOGGLE binding closing its own window (the port's
+    // The Inventory binding (F6 by default) is the TOGGLE closing its own window (the port's
     // toggleClosedBinding arm); Escape and Enter are the overlay
     // seam's. Everything else on this screen is DaggerfallShortcut's,
     // and A8 retired the interim letters that stood here: E used to
     // close, which is InventoryEquip's letter in DFU, and the tabs
     // answered to digits 1-4 where DFU gives them F1-F4.
-    if (code === 'Escape' || code === 'Enter' || code === 'F6') { this._close(); return; }
+    if (code === 'Escape' || code === 'Enter' || (!!this.toggleClosedBinding && code === this.toggleClosedBinding)
+      || (!!this.toggleClosedSecondary && code === this.toggleClosedSecondary)) { this._close(); return; }
     if (code === 'KeyN') this.scroll = applyScroll(this.scroll, 'down', this._filtered().length);
     if (code === 'KeyP') this.scroll = applyScroll(this.scroll, 'up', this._filtered().length);
     // DaggerfallInventoryWindow.cs's own Hotkey assignments, in its

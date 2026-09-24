@@ -167,6 +167,19 @@ turned off: DW1's design. `flattenModPreset` is the general reader for DFU's
 `{ Values: { Section: { Key: "string" } } }` shape, coercing by the
 declared key's kind ("False" is `false`, not a non-empty string).
 
+**DISC20-E (2026-09-24): A VALUE SAVED BEFORE IS LET GO, ONCE.** Mac:
+*"The weapon widget default toggle under diverse weapons should be set to
+off by default."* It had shipped off since DISC16-B, but a default only
+answers for a player who never touched the switch: anyone who turned it
+on while DW-CLIP shipped it on, or tried it, held a saved value and still
+saw it on. `modSettings.js` `SWITCH_RESETS` lets a stored
+`WeaponWidgetPreset` without the entry's stamp go on load and writes the
+file back, so the shipped off applies; `setModSetting` stamps the key
+when a player sets it from then on, so a choice made after the reset is
+kept across reloads (`KEY_MIGRATIONS`, which match on a value, could not
+tell the two apart). A file that never mentioned the mod is not grown
+one. `test/disc20.test.js` (E).
+
 ## The icons (DW3)
 
 `233`/`234` by metal and `432`/`433` for the Wabbajack are asked for in

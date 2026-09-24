@@ -289,6 +289,3 @@ const wallSeconds = () => (typeof performance !== 'undefined' ? performance.now(
 
 /** Update, once per host frame. Returns the line said, or null. */
 export const tickAmbientText = (unscaledTime = wallSeconds()) => _mod.update(unscaledTime);
-
-/** The one component, for the suite and for a host that wants its state. */
-export const ambientTextMod = () => _mod;

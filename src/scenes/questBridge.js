@@ -23,7 +23,8 @@
 //   playerRaceName()            - the birth race name (%ra)
 //   getReputation(factionId)    - factionRep.getReputation over the
 //                                 player's store
-//   getGold()/deductGold(n)/addGold(n), giveItemToPlayer(dfItem),
+//   getGoldPieces()/deductGoldPieces(n)/deductGold(n)/addGold(n),
+//   giveItemToPlayer(dfItem),
 //   removeItemFromPlayer, playerHasItem, carriesQuestItem,
 //   releaseQuestItem, makeHeldQuestItemsPermanent, offerReward,
 //   isPlayerInTown()            - the item/click seams (Q2b)
@@ -178,16 +179,16 @@ export const QUEST_CTX_CONTRACT = Object.freeze([
   'classicSeconds', 'clearEnemies', 'cureDisease', 'data',
   'dateTimeString', 'deductGold', 'deductGoldPieces', 'dialogLink',
   'dropFace', 'endLycanthropy', 'endVampirism', 'forceTopicListsUpdate',
-  'getGold', 'getGoldPieces', 'getGuild', 'getGuildFactionId',
-  'getReputation', 'getTotalGold', 'giveItemToPlayer', 'isHouseOwned',
+  'getGoldPieces', 'getGuild', 'getGuildFactionId',
+  'getReputation', 'getTotalGold', 'giveItemToPlayer',
   'isPlayerInTown', 'isPlayerInsideCastle', 'makeEnemiesHostile',
   'makeHeldQuestItemsPermanent', 'makePcDiseased', 'midDateTimeString',
   'offerReward', 'onQuestEnded', 'onQuestStarted', 'playSong',
   'playSound', 'playVideo', 'playerEntity', 'playerHasItem',
   'playerRaceName', 'questClockStepMax', 'questFoeInstances',
   'raiseTime', 'regionPriceAdjustment', 'releaseQuestItem',
-  'removeItemFromPlayer', 'removeNpcQuestor', 'removeProgressRumors',
-  'removeQuestInfoTopics', 'removeQuestRumors',
+  'relinkQuestTopics', 'removeItemFromPlayer', 'removeNpcQuestor',
+  'removeProgressRumors', 'removeQuestInfoTopics', 'removeQuestRumors',
   'removeQuestorPostMessage', 'setPlayerCrime', 'showPopup',
   'showPrompt', 'showPromptMulti', 'spawnCityGuards',
   'undiscoverBuilding', 'world',
@@ -247,7 +248,6 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     clearEnemies: () => ctx.clearEnemies?.(),
     questFoeInstances: (symbol) => ctx.questFoeInstances?.(symbol) ?? [],   // MT-iii
     getReputation: (fid) => ctx.getReputation?.(fid) ?? 0,
-    getGold: () => ctx.getGold?.() ?? 0,
     getTotalGold: () => ctx.getTotalGold?.() ?? 0,   // PayMoney's `money` arm - GetGoldAmount
     deductGold: (n) => ctx.deductGold?.(n),
     addGold: (n) => ctx.addGold?.(n),
@@ -276,11 +276,6 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     // That is the WHOLE of the subscription - no host fan-out to
     // forget to mount, because DFU has no second subscriber.
     onOfferPending: (givePc) => noteOfferPending(givePc),
-    // H1: DaggerfallBankManager.IsHouseOwned. place.js has read this
-    // since the quest arc landed (:439 - a house you own is never
-    // handed out as a quest site) and nothing could answer it, so it
-    // defaulted false and your own home stayed eligible.
-    isHouseOwned: (buildingKey) => ctx.isHouseOwned?.(buildingKey) ?? false,
     getGuild: (fid) => ctx.getGuild?.(fid) ?? null,
     regionPriceAdjustment: () => ctx.regionPriceAdjustment?.() ?? 0,
     changeReputation: (fid, amount, propagate) => ctx.changeReputation?.(fid, amount, propagate),
@@ -291,6 +286,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     endLycanthropy: () => ctx.endLycanthropy?.(),
     // the talk seams (the talk arc's consumers; silent while absent)
     addQuestTopics: (q) => ctx.addQuestTopics?.(q),
+    relinkQuestTopics: (q) => ctx.relinkQuestTopics?.(q),   // AUDIT 68 S29-share-topics: a resync's rebuilt resources
     dialogLink: (...a) => ctx.dialogLink?.(...a),
     addDialog: (...a) => ctx.addDialog?.(...a),
     addQuestRumor: (uid, m) => ctx.addQuestRumor?.(uid, m),
@@ -325,7 +321,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     // AUDIT 24 (the seven-slice sweep): a LIVE read, not a hardcoded
     // false. DaggerfallUnity.Settings.PlayerNudity is a real setting
     // the port already stores and the launcher already renders as a
-    // toggle - and questLists.js:195 gates adult quests on it, so
+    // toggle - and questLists.js:203 gates adult quests on it, so
     // flipping it did nothing at all. A GETTER because C# reads the
     // setting at the point of use, and the consumer reads
     // `deps.playerNudity` as a value.
@@ -336,7 +332,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     isPlayerInsideCastle: () => ctx.isPlayerInsideCastle?.() ?? false,
     removeNpcQuestor: (seed) => ctx.removeNpcQuestor?.(seed),
     getGuildFactionId: (g) => ctx.getGuildFactionId?.(g) ?? 0,
-    // likewise: offerFlow.js:144 branches on this and the launcher
+    // likewise: offerFlow.js:156 branches on this and the launcher
     // offers it, so the list-box arm was unreachable. Defaults off,
     // which is the classic random draw.
     get guildQuestListBox() { return getBool('Enhancements', 'GuildQuestListBox'); },
@@ -527,6 +523,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     restore(data) {
       if (!data) return;
       machine.clearState();   // C#'s load path: ClearState before RestoreSaveData
+      offerFlow.reset();   // QUEST-UID1: an offer parsed in the game being replaced is not the loaded game's to start
       machine.restoreSaveData(data.machine ?? { siteLinks: [], quests: [] });
       // AUDIT 26 F102: DFU restores the notebook only when the save
       // CARRIES one (`if (!string.IsNullOrEmpty(notebookDataJson))`,

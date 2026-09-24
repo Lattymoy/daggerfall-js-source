@@ -24,7 +24,7 @@ const read = (f) => readFileSync(join(ROOT, f), 'utf8');
 
 test('TL3: the fast-travel arrival takes DFU\'s reposition - the start marker or the edge, never the pixel\'s centre - so TL2\'s roof guard is live on it', () => {
   const w = read('src/scenes/world.js');
-  const fn = w.slice(w.indexOf('async function fastTravelTo('), w.indexOf('async function fastTravelTo(') + 4000);
+  const fn = w.slice(w.indexOf('async function fastTravelTo('), w.indexOf('\n  }\n', w.indexOf('async function fastTravelTo(')));   // AUDIT 68: to the function's own close - a fixed 4000 characters broke on one added line (WOD4's lesson below)
   // AUDIT 64 F18 (integrated the same day): the method is DFU's own
   // DirectionFromStartMarker (DaggerfallTravelPopUp.cs:334) with the
   // cached departure as the facing hint; SIB2's travel event rides too.

@@ -33,7 +33,7 @@ test('I2: actionOf reads the LIVE bindings, not a table', () => {
   assert.equal(actionOf({ code: 'F6' }), 'Inventory');
   assert.equal(actionOf({ code: 'Backspace' }), 'CastSpell');
   assert.equal(actionOf({ code: 'KeyC' }), 'Crouch', 'I2 retired the C-cast: DFU\'s C crouches');
-  assert.equal(actionOf({ code: 'KeyX' }), null, 'and X is unbound');
+  assert.equal(actionOf({ code: 'Semicolon' }), null, 'and ; is unbound (KB1: X is Handheld Torches\' throw now - every letter is spoken for)');
   assert.equal(actionOf({ code: 'KeyV' }), 'TravelMap');
   // a REBIND moves the answer - the whole point of the registry
   const b = withDefaults();
@@ -133,7 +133,9 @@ test('I2: the sweep\'s escapes are themselves bounded', () => {
   const FLY = { 'src/scenes/exterior.js': 5, 'src/scenes/world.js': 5,
     'src/scenes/dungeon.js': 5, 'src/scenes/worldModes.js': 0 };
   for (const [rel, fly] of Object.entries(FLY)) {
-    assert.equal(count(rel, 'I2 departure'), 1, `${rel} carries exactly one E-departure line`);
+    // KB1 CLOSED THE E DEPARTURE: E is the Interact action, read with `pressed`, so the escape it needed is gone
+    // with it - and an escape nobody needs is a hole, so none may come back.
+    assert.equal(count(rel, 'I2 departure'), 0, `${rel} carries no E-departure escape - E is an action`);
     assert.equal(count(rel, 'fly-cam \\(dev\\)'), fly,
       `${rel} fly-cam escapes are counted - a new one is a decision, not a drift`);
   }
@@ -156,10 +158,10 @@ test('U43: the two journal doors are in the ONE dispatch, and are one window', (
   assert.ok(routeKey({ key: 'l', code: 'KeyL' }, ctx), 'L opens the logbook');
   assert.ok(routeKey({ key: 'n', code: 'KeyN' }, ctx), 'N opens the notebook');
   assert.deepEqual(calls, ['log', 'note']);
-  // a host without the seam is not consumed - the table is optional
-  // per host, the way Rest and AutoMap already are
-  assert.equal(routeKey({ key: 'l', code: 'KeyL' }, { uiOverlayActive: false }), true,
-    'the case still answers; the hook is optional-chained');
+  // a host without the seam does not consume the key. KB1: it answered `true` here (the case "answered", the hook
+  // optional-chained), which told routeKey's host to swallow a key that did nothing - every arm reports its door now
+  assert.equal(routeKey({ key: 'l', code: 'KeyL' }, { uiOverlayActive: false }), false,
+    'no door, no answer - the key is left to the next ladder');
   // and an open overlay owns them, like every other window key - the
   // letter reaches the WINDOW as a typed character, which is what a
   // spell being renamed in the book needs
@@ -223,7 +225,7 @@ test('U43: ONE dispatch - the interior host routes the same table as the dungeon
 
 test('U43-ii: every modal mode can SPEAK - no HUD line goes to the console', () => {
   // townTalk.frame ticks and DRAWS the HUD text layer as well as the
-  // overlay (townTalk.js:1162, :1187), and the two exterior hosts called
+  // overlay (townTalk.js:1167, :1192), and the two exterior hosts called
   // it in their modal branch only when a window was up. So a broken
   // weapon, a fatigue warning and a level-up inside a building all
   // spoke to devtools while the player watched a HUD with nothing on

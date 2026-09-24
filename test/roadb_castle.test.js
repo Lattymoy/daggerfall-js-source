@@ -264,8 +264,11 @@ test('ROAD-B B4: RMBLayout.IsTavern / IsResidence over every building type', () 
 test('ROAD-B B4: the mode host latches both flags at the door and publishes all three', () => {
   const wm = SRC('scenes/worldModes.js');
   // PlayerActivate.cs:1121-1122, in the same block as insideOpenShop.
-  assert.match(wm, /_insideTavern = isTavern\(interiorBuilding\?\.buildingType \?\? BUILDING_TYPES\.None\);/);
-  assert.match(wm, /_insideResidence = isResidence\(interiorBuilding\?\.buildingType \?\? BUILDING_TYPES\.None\);/);
+  // AUDIT 68 S23-failed-entry-stale-building: computed at the door into
+  // locals, committed with the context below the landing test.
+  assert.match(wm, /const insideTavern = isTavern\(building\?\.buildingType \?\? BUILDING_TYPES\.None\);/);
+  assert.match(wm, /const insideResidence = isResidence\(building\?\.buildingType \?\? BUILDING_TYPES\.None\);/);
+  assert.match(wm, /interiorBuilding = building;\n\s*_insideTavern = insideTavern;\n\s*_insideResidence = insideResidence;\n\s*_insidePartyRestExempt = partyRestExempt;/);
   assert.match(wm, /get insideTavern\(\) \{ return _insideTavern; \}/);
   assert.match(wm, /get insideResidence\(\) \{ return _insideResidence; \}/);
   assert.match(wm, /get insideOpenShop\(\) \{ return !!interiorBuilding\?\.insideOpenShop; \}/);

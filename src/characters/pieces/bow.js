@@ -14,29 +14,17 @@
 //   targets. The string is rigid (a thin loft, undrawn line); the
 //   DRAW reads through the arm, not string deformation - a geometric
 //   simplification at mitten fidelity, same class as the fused hand.
-import { loftPiece, shadePiece, compress } from './pieceLoft.js';
+import { loftPiece, shadePiece, compress, LEFT_FIST_X, GRIP_Y, pitchAbout } from './pieceLoft.js';
 
-const ARM_X = -0.235;
-const GRIP_Y = 0.90;
 const GRIP_PITCH = -Math.PI / 2;
-
-function bakeGrip(faces) {
-  const c = Math.cos(GRIP_PITCH), s = Math.sin(GRIP_PITCH);
-  for (const f of faces) {
-    for (let i = 0; i < 4; i++) {
-      const dy = f.p[i*3+1] - GRIP_Y, z = f.p[i*3+2];
-      f.p[i*3+1] = GRIP_Y + c*dy - s*z;
-      f.p[i*3+2] = s*dy + c*z;
-    }
-    const ny = f.n[1], nz = f.n[2];
-    f.n[1] = c*ny - s*nz; f.n[2] = s*ny + c*nz;
-  }
-  return faces;
-}
+// The NOCK: authoring-space + = the ARCHER side after the -pi/2 bake
+// (rest-above-grip -> behind the fist at aim). The bow's string and nock
+// station AND the nocked arrow's tail read this one value.
+const NOCK_CZ = 0.30;
 
 function buildBow(ramp, half) {
   const faces = [];
-  const G = { group: 'armL', cx: ARM_X, seg: 8 };
+  const G = { group: 'armL', cx: LEFT_FIST_X, seg: 8 };
   const lo = GRIP_Y - half, hi = GRIP_Y + half;
   // STAVE: recurve - riser bulges forward at the grip, limbs sweep
   // back to the tips (where the string meets them).
@@ -56,7 +44,6 @@ function buildBow(ramp, half) {
   // bow (the pose is aiming); the NOCK STATION ring sits at the pull
   // point and is what the draw hand targets - an undrawn string put
   // the station out by the bow, outside the draw arm's reach.
-  const NOCK_CZ = 0.30;   // authoring-space + = the ARCHER side after the -pi/2 bake (rest-above-grip -> behind the fist at aim)
   loftPiece(faces, [
     { y: lo + 0.012, rx: 0.0035, rz: 0.0035, cz: -0.05 },
     { y: GRIP_Y - 0.02, rx: 0.0035, rz: 0.0035, cz: NOCK_CZ - 0.012 },
@@ -71,7 +58,7 @@ function buildBow(ramp, half) {
     { y: GRIP_Y - 0.012, rx: 0.007, rz: 0.007, cz: NOCK_CZ },
     { y: GRIP_Y + 0.012, rx: 0.007, rz: 0.007, cz: NOCK_CZ },
   ], { ...G, seg: 8, capTop: true, capBottom: true });
-  return compress(shadePiece(bakeGrip(faces), ramp));
+  return compress(shadePiece(pitchAbout(faces, GRIP_Y, GRIP_PITCH), ramp));
 }
 
 // THE NOCKED ARROW (template 131) - its OWN piece/target since the
@@ -81,35 +68,22 @@ function buildBow(ramp, half) {
 // DFU missile speed. One arrow serves both bows.
 export function buildNockedArrow(ramp) {
   const faces = [];
-  const G = { group: 'armL', cx: ARM_X, seg: 6 };
-  const NOCK_CZ = 0.30;
+  const G = { group: 'armL', cx: LEFT_FIST_X, seg: 6 };
   // loftPiece is Y-only: author the arrow along Y, then rotate it
   // locally onto the cz (aim) axis about the grip line before the
   // shared bake carries everything. Y +0.29 (tail) .. -0.24 (head)
   // maps to cz +0.29 .. -0.24.
-  const arrow = [];
-  loftPiece(arrow, [
+  loftPiece(faces, [
     { y: GRIP_Y - 0.24, rx: 0.002, rz: 0.002 },       // point
     { y: GRIP_Y - 0.20, rx: 0.013, rz: 0.013 },       // head base
     { y: GRIP_Y - 0.19, rx: 0.0045, rz: 0.0045 },     // shaft
     { y: GRIP_Y + 0.19, rx: 0.0045, rz: 0.0045 },
     { y: GRIP_Y + 0.20, rx: 0.012, rz: 0.012 },       // fletching
     { y: GRIP_Y + 0.27, rx: 0.012, rz: 0.012 },
-    { y: GRIP_Y + 0.29, rx: 0.004, rz: 0.004 },       // tail at the nock
+    { y: GRIP_Y + NOCK_CZ - 0.01, rx: 0.004, rz: 0.004 }, // tail at the nock
   ], { ...G, seg: 6 });
-  const AROT = Math.PI / 2;   // +y -> +cz (sign probed at the module)
-  const ac = Math.cos(AROT), as = Math.sin(AROT);
-  for (const f of arrow) {
-    for (let i = 0; i < 4; i++) {
-      const dy = f.p[i*3+1] - GRIP_Y, z = f.p[i*3+2];
-      f.p[i*3+1] = GRIP_Y + ac*dy - as*z;
-      f.p[i*3+2] = as*dy + ac*z;
-    }
-    const ny = f.n[1], nz = f.n[2];
-    f.n[1] = ac*ny - as*nz; f.n[2] = as*ny + ac*nz;
-    faces.push(f);
-  }
-  return compress(shadePiece(bakeGrip(faces), ramp));
+  pitchAbout(faces, GRIP_Y, Math.PI / 2);   // +y -> +cz (sign probed at the module)
+  return compress(shadePiece(pitchAbout(faces, GRIP_Y, GRIP_PITCH), ramp));
 }
 
 export function buildLongBow(ramp) { return buildBow(ramp, 0.62); }

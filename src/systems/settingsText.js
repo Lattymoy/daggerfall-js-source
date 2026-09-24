@@ -7,7 +7,6 @@
 // section heading - DFU keys all three out of one table.
 // SETTINGS_INFO: the one-line tooltip DFU shows for a setting.
 export const SETTINGS_LABELS = Object.freeze({
-  "schema: *key": "text",
   "gamePlay": "GamePlay",
   "interface": "Interface",
   "enhancements": "Enhancements",

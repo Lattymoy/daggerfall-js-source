@@ -121,18 +121,18 @@ export function bubbleLineOk(line) {
 }
 
 /**
- * AUDIT NAME1 F7: WHO GETS THIS FACE. The enhanced SKIN and a document - which is the CHAT panel's own gate
- * (scenes/world.js: `enhanced && typeof document !== 'undefined'`), and it has to be, because this layer and that
- * panel are two halves of one surface: the bubbles are the chat's lines standing over heads.
+ * AUDIT NAME1 F7: WHO GETS THIS FACE - the CHAT panel's own gate (scenes/world.js chatStart), and it has to be,
+ * because this layer and that panel are two halves of one surface: the bubbles are the chat's lines standing over
+ * heads. F7 found the two gates disagreeing (the layer on a classic page with no chat beside it) and tied the layer to
+ * the enhanced skin the chat then needed.
  *
- * It was gated on the document alone. Online FORCES the enhanced lane (OL1, systems/onlineLane.js) so the two
- * conditions almost always agree - but "almost" is the whole finding: the forcing can fail (MAC-N3 records how),
- * and a classic-skin online page then got the enhanced pixel face over a classic HUD, with no classic name pass
- * under it (the fallback is `if (!nameLayer)`) and no chat panel beside it. A predicate rather than an expression
- * in the host, because a host's `if` is a thing only a regex can read.
+ * OVH3 (2026-09-24, Mac: "Online specific UI's will need to remain"): the chat mounts on EITHER skin now - the online
+ * panels keep their own face over whatever UI Overhaul is worn - so the one gate both halves share is a document.
+ * A page with none (a node host) keeps the classic bitmap names (the host's `if (!nameLayer)` fallback). A predicate
+ * rather than an expression in the host, because a host's `if` is a thing only a regex can read.
  */
-export function nameLayerWanted(enhanced, doc = globalThis.document) {
-  return !!enhanced && !!doc;
+export function nameLayerWanted(doc = globalThis.document) {
+  return !!doc;
 }
 
 /** The layer's sheet. The enhanced face, unsmoothed, on bone - ui/enhancedStyle.js' own tokens where the skin's
@@ -325,7 +325,7 @@ export function createNameLayer({ doc = document, now = () => Date.now() } = {})
     /** AUDIT NAME1 F3: `viewport` is the world viewport's HEIGHT in CSS px and `hudScale` the player's own HUD
      *  scale (ui/enhancedHud.js enhancedHudScale). Both are taken by VALUE rather than through
      *  `scale(var(--hud-scale))`, because that variable is set on #enhanced-hud and this layer is a body sibling
-     *  of it - the damage numbers' own layer has the same problem and enhancedHud.js:726 solves it the same way,
+     *  of it - the damage numbers' own layer has the same problem and enhancedHud.js:806 solves it the same way,
      *  by writing the number where it is needed. Neither is passed on a probe host, and there the law is exactly
      *  the reference frame's: NAME_BASE_PX * the point's scale. */
     render({ points = [], log = null, covered = false, colorOf = null, viewport = null, hudScale = 1 } = {}) {

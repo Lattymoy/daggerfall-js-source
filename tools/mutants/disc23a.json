@@ -1,0 +1,146 @@
+[
+  {
+    "name": "D23A-automap-draws-no-party",
+    "file": "src/ui/automapSheet.js",
+    "old": "        party: partyHere(),   // DISC23-A\n",
+    "new": "        party: [],\n",
+    "tests": [
+      "test/disc23a_party_plans.test.js"
+    ]
+  },
+  {
+    "name": "D23A-every-storey",
+    "file": "src/ui/automapSheet.js",
+    "old": "      if (floorAt(f.floors, m.feet[1]) !== index) continue;\n",
+    "new": "",
+    "tests": [
+      "test/disc23a_party_plans.test.js"
+    ]
+  },
+  {
+    "name": "D23A-plan-y-with-z",
+    "file": "src/ui/automapSheet.js",
+    "old": "      const [x, z] = toPlan(m.feet[0], m.feet[2]);\n      out.push({ x, z, yaw: m.yaw, name: m.name });",
+    "new": "      const [x, z] = toPlan(m.feet[0], m.feet[2]);\n      out.push({ x, z: -z, yaw: m.yaw, name: m.name });",
+    "tests": [
+      "test/disc23a_party_plans.test.js"
+    ]
+  },
+  {
+    "name": "D23A-no-strip-dot",
+    "file": "src/ui/automapSheet.js",
+    "old": "      paintFloorStripParty(ctx, strip, partyStoreys(), PARTY_MARK_CSS);   // DISC23-A: and which storeys they are on\n",
+    "new": "",
+    "tests": [
+      "test/disc23a_party_plans.test.js"
+    ]
+  },
+  {
+    "name": "D23A-breathes-only-here",
+    "file": "src/ui/automapSheet.js",
+    "old": "    breathes() { return !!entranceHere() || readPartyBodies(deps.party).length > 0; },",
+    "new": "    breathes() { return !!entranceHere() || partyHere().length > 0; },",
+    "tests": [
+      "test/disc23a_party_plans.test.js"
+    ]
+  },
+  {
+    "name": "D23A-no-party-hover",
+    "file": "src/ui/automapSheet.js",
+    "old": "          if ((x - px) ** 2 + (y - py) ** 2 <= MARK_REACH * MARK_REACH) return { label: m.name, cursor: '' };\n",
+    "new": "",
+    "tests": [
+      "test/disc23a_party_plans.test.js"
+    ]
+  },
+  {
+    "name": "D23A-town-draws-no-party",
+    "file": "src/ui/townSheet.js",
+    "old": "        party: partyOnSheet(),   // DISC23-A\n",
+    "new": "        party: [],\n",
+    "tests": [
+      "test/disc23a_party_plans.test.js"
+    ]
+  },
+  {
+    "name": "D23A-town-z-down",
+    "file": "src/ui/townSheet.js",
+    "old": "x: m.feet[0] / WORLD_PER_PX, y: sheetY(h, m.feet[2] / WORLD_PER_PX)",
+    "new": "x: m.feet[0] / WORLD_PER_PX, y: m.feet[2] / WORLD_PER_PX",
+    "tests": [
+      "test/disc23a_party_plans.test.js"
+    ]
+  },
+  {
+    "name": "D23A-town-never-breathes",
+    "file": "src/ui/townSheet.js",
+    "old": "    breathes() { return readPartyBodies(deps.party).length > 0; },",
+    "new": "    breathes() { return false; },",
+    "tests": [
+      "test/disc23a_party_plans.test.js"
+    ]
+  },
+  {
+    "name": "D23A-caret-facing-lost",
+    "file": "src/ui/inkMap.js",
+    "old": "    paintCaret(ctx, m.x, m.y, m.yaw ?? 0, { fill: pen.fill, halo: pen.halo });",
+    "new": "    paintCaret(ctx, m.x, m.y, 0, { fill: pen.fill, halo: pen.halo });",
+    "tests": [
+      "test/disc23a_party_plans.test.js"
+    ]
+  },
+  {
+    "name": "D23A-no-name",
+    "file": "src/ui/inkMap.js",
+    "old": "    ctx.fillText(m.name, m.x, ly);\n",
+    "new": "",
+    "tests": [
+      "test/disc23a_party_plans.test.js"
+    ]
+  },
+  {
+    "name": "D23A-party-over-player-automap",
+    "file": "src/ui/inkAutomap.js",
+    "old": "  // DISC23-A: the party members on this storey, under the player's own caret\n  if (opts.party?.length && opts.partyFill) {",
+    "new": "  // DISC23-A: the party members on this storey, under the player's own caret\n  if (opts.party?.length && opts.partyFill && false) {",
+    "tests": [
+      "test/disc23a_party_plans.test.js"
+    ]
+  },
+  {
+    "name": "D23A-reader-keeps-nan",
+    "file": "src/ui/partyMapMarks.js",
+    "old": "    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/disc23a_party_plans.test.js"
+    ]
+  },
+  {
+    "name": "D23A-nameless-blank",
+    "file": "src/ui/partyMapMarks.js",
+    "old": "name: String(r.name ?? '').trim() || PARTY_LEGEND_TEXT, feet: [x, y, z]",
+    "new": "name: String(r.name ?? '').trim(), feet: [x, y, z]",
+    "tests": [
+      "test/disc23a_party_plans.test.js"
+    ]
+  },
+  {
+    "name": "D23A-door-drops-party",
+    "file": "src/ui/automapDoor.js",
+    "old": "        party: deps.party ?? null,   // DISC23-A: the party members whose bodies stand in this level (the classic 3D arm ignores it)\n",
+    "new": "",
+    "tests": [
+      "test/disc23a_party_plans.test.js"
+    ]
+  },
+  {
+    "name": "D23A-town-door-drops-party",
+    "file": "src/ui/townMapDoor.js",
+    "old": "        party: deps.townParty ?? null,   // DISC23-A: the party in these streets, feet in the location's frame (the classic window ignores it)\n",
+    "new": "",
+    "tests": [
+      "test/disc23a_party_plans.test.js"
+    ]
+  }
+]

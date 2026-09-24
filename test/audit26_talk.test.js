@@ -51,7 +51,10 @@ test('F016: the static NPC name bank is the REGION\'s, and the race path is gone
   // a person BEFORE the click, so it must read the same bank or the
   // hover and the click would call one person two things.
   const wm = src('scenes/worldModes.js');
-  assert.equal((wm.match(/nameBank: currentNameBank\(\)/g) ?? []).length, 6, 'every static-NPC name site');
+  // AUDIT 68 S23-npc-display-name-dup: the six sites call ONE helper,
+  // which holds the region's bank once.
+  assert.equal((wm.match(/nameBank: currentNameBank\(\)/g) ?? []).length, 1, 'the one static-NPC name derivation');
+  assert.equal((wm.match(/npcDisplayName\(/g) ?? []).length, 6, 'every static-NPC name site calls it');
   // (WORLD-HOVER added three: the dungeon plaque's, the interior
   // plaque's and the street's. Every hover arm reads the same bank as
   // the click beside it, or the two would call one person two things.)

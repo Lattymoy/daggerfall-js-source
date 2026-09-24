@@ -11,7 +11,7 @@ import {
   SHEET_GRID, FIRE_FRAMES, ALIGN, cellRect, keyBackground, contentBox,
   unionBox, unionDrawRect, placeSprite, createGunMachine, muzzleLight,
   createRecoil, createScreenShake, createWidgetRig, widgetRigStep, labWidgetSettings, labMotion, widgetDefaults,
-  SFX_CANDIDATES, createSfxPlayer,
+  SFX_CANDIDATES, createSfxPlayer, gunFrameRect,
 } from '../src/tools/gunLab.js';
 import { ALIGN as FPS_ALIGN } from '../src/combat/fpsWeapon.js';
 import { setModSetting, _resetModSettings } from '../src/systems/modSettings.js';   // DW-CLIP: the Diverse Weapons preset defaults on; the lab's subject is Weapon Widget's own numbers
@@ -69,7 +69,7 @@ test('Weapon Widget\u2019s Bob sways the gun while walking and barely breathes w
   const standing = span(labMotion({ walking: false }));
   assert.ok(walking > 10, `the walk sways the sprite (${walking.toFixed(1)}px)`);
   assert.ok(standing > 0 && standing < walking / 3, `BobWhileIdle is a tenth of a stride, not a stride (${standing.toFixed(1)}px)`);
-  // the motor's frame is the rig's own shape (weaponRig.js:1380-1387)
+  // the motor's frame is the rig's own shape (weaponRig.js:1400-1407)
   const m = labMotion({ walking: true, running: true });
   assert.ok(m.speedRatio > 1 && m.baseSpeed > 0 && m.localVel[2] > 0, 'running is faster than the walk base, and it is forward motion');
   assert.equal(labMotion({ walking: false }).standing, true);
@@ -161,10 +161,18 @@ test('placeSprite is FPSWeapon’s OnGUI rect: bottom-anchored, aligned, and Ali
   assert.equal(placeSprite({ ...base, widthPct: 0.5, align: ALIGN.Left, offset: 0.1, flip: true }).x, l.x);
   // the large-HUD style offset lifts the sprite, exactly as :388 does
   assert.equal(placeSprite({ ...base, widthPct: 0.5, align: ALIGN.Center, offsetHeight: 40 }).y, 400 - 160 - 40);
-  // recoil is in NATIVE units, so it reads the same at any window size
-  const kick = { x: 0, y: -10 };
-  assert.equal(placeSprite({ ...base, widthPct: 0.5, align: ALIGN.Center, kick }).y, 400 - 160 - 10 * 2);
-  assert.equal(placeSprite({ ...base, canvasH: 800, widthPct: 0.5, align: ALIGN.Center, kick }).y, 800 - 160 - 10 * 4);
+  // recoil is in NATIVE units, so it reads the same at any window size -
+  // added by gunFrameRect AFTER the widget transform (AUDIT 68 S08: the
+  // lab draws through it too, so placeSprite carries no kick of its own)
+  const box = { x: 0, y: 0, w: 100, h: 50 };
+  const at = (canvasH, flip, kick) => gunFrameRect({
+    canvasW: canvasH * 1.6, canvasH, anchor: box, union: box, rig: createWidgetRig(), kick, flip, align: ALIGN.Center,
+  }).anchorRect;
+  for (const [H, flip] of [[400, false], [800, false], [400, true]]) {
+    const still = at(H, flip), moved = at(H, flip, { x: 4, y: -10 });
+    assert.ok(Math.abs((moved.y - still.y) - -10 * (H / 200)) < 1e-9, `the rise scales with the surface (${H})`);
+    assert.ok(Math.abs((moved.x - still.x) - 4 * (H * 1.6 / 320) * (flip ? -1 : 1)) < 1e-9, `and the sideways kick mirrors with it (${H}, flip ${flip})`);
+  }
 });
 
 test('the screenshake is TRAUMA SQUARED, smooth, and dead silent at rest', () => {

@@ -288,5 +288,5 @@ test('QS2 tooltip: the stylesheet reaches both new classes, in both faces - the 
     'and the row WRAPS, so a narrow screen never cuts a button off');
   // The source says which module owns the law, so the next reader finds it.
   assert.match(rd('src/ui/enhancedInventory.js'),
-    /import \{ isQuickConsumable, canSwapTo, quickslotOf, assignQuickslot, clearQuickslot \} from '\.\.\/systems\/quickslots\.js';/);
+    /import \{ isQuickConsumable, canSwapTo, quickslotOf, assignQuickslot, clearQuickslot, hotbarSlotOf \} from '\.\.\/systems\/quickslots\.js';/);   // HB1: the hotbar's own slot law beside the diamond's
 });

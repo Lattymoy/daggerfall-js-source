@@ -73,7 +73,6 @@
 
 import { getInt, getBool } from './settings.js';   // SETT: LoiterLimitInHours, S40: IllegalRestWarning
 import { roomRemainingHours } from './tavern.js';   // S40: GetRemainingHours, CanRest's room arm
-import { interiorSceneName } from './sceneCache.js';   // S40: DaggerfallInterior.GetSceneName
 import { BUILDING_TYPES } from '../world/buildingNames.js';   // S40: the Ship and Tavern arms
 
 export const MINUTES_PER_TICK = 10;          // classic minutes per sub-tick
@@ -95,10 +94,10 @@ export const HAVE_NOT_RENTED_ROOM = 'You have not rented a room here.';
 export const ILLEGAL_REST_WARNING = 'It is illegal to camp in or near a city. Continue?';
 /** DFLocation.BuildingTypes.Tavern - the one type the guild-hall arm
  *  excludes, because the data marks EVERY tavern a Fighters Guild. */
-export const BUILDING_TAVERN = 15;
+export const BUILDING_TAVERN = BUILDING_TYPES.Tavern;   // AUDIT 68 S31-restsession-dup-remaining-hours: one home for the enum
 /** DFLocation.BuildingTypes.Ship / None - CanRest's ship arm (:580)
  *  and the bag's default when no door has been walked through. */
-export const BUILDING_SHIP = 24;
+export const BUILDING_SHIP = BUILDING_TYPES.Ship;
 export const BUILDING_NONE = -1;
 
 /** PlayerEntity.GetRemainingHours (:268-275): the hours a rental still
@@ -114,9 +113,9 @@ export const BUILDING_NONE = -1;
  *  RemoveExpiredRentedRooms (:257-266) drops a room whose hours are
  *  `< 1`, which under a ceiling is true exactly when no time at all
  *  is left. Under truncation the sweep would evict a room that still
- *  had 59 minutes on it. */
-export const remainingHoursRented = (room, nowMinutes) =>
-  (room ? Math.ceil((room.expiryMinutes - nowMinutes) / 60) : -1);
+ *  had 59 minutes on it.
+ *  AUDIT 68 S31-restsession-dup-remaining-hours: tavern.js's member, re-exported - one copy of the ceiling. */
+export { roomRemainingHours as remainingHoursRented };
 
 // ---- ROAD-B B5: THE PREVENT-REST REGISTRY (GameManager.cs:52,
 // :637-675) ----
@@ -317,7 +316,7 @@ export function canRest({
     if (permanentScene) {
       // A ship or a house you own needs no rental and no bed marker.
       if (isShip || houseOwned) return { allowed: true, hoursRented: -1, bedIndex: -1 };
-      hoursRented = remainingHoursRented(room, nowMinutes);
+      hoursRented = roomRemainingHours(room, nowMinutes);
       // The bed index is stored rather than a position because
       // "building positions are not stable" (DFU's own comment);
       // out of range falls to 0, as :582.

@@ -112,13 +112,6 @@
     "tests": ["test/rr1_realism.test.js"]
   },
   {
-    "name": "RR1-17-the-training-override-is-skipped",
-    "file": "src/systems/guildServices.js",
-    "old": "  return _trainingOverride?.(guild.name) ?? TRAINING_SKILLS[guild.name] ?? null;",
-    "new": "  return TRAINING_SKILLS[guild.name] ?? null;",
-    "tests": ["test/rr1_realism.test.js"]
-  },
-  {
     "name": "RR1-18-items-weapon-balance-does-not-shadow-weapon-speed",
     "file": "src/systems/rrInstall.js",
     "old": "    if (!rrModule('weaponSpeed') || rriModule('weaponBalance') || !ctx?.entity) return null;",

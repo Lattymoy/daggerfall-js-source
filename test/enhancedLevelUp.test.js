@@ -479,7 +479,7 @@ test('LV1: every attribute has the port\'s OWN sentence, and no ARENA2 is read t
   const v = src('src/ui/levelUpView.js');
   assert.match(v, /systems\/spellcast\.js:158/, 'willpower names the saving throw that consumes MagicResist');
   assert.match(v, /formulas\.js:306-307 statsToHit/, 'agility names the term inside the hit roll');
-  assert.match(v, /player\/motor\.js:470 walkSpeed/, 'speed names the motor that reads it');
+  assert.match(v, /player\/motor\.js:476 walkSpeed/, 'speed names the motor that reads it');
   assert.match(v, /unleveledLoot\.js:95/, 'luck names the rarity roll a player actually notices');
   assert.doesNotMatch(v, /toHitModifier = floor\(agility \/ 10\) - 5\.\n\s*agility:/,
     'and the sheet\'s display modifier is no longer offered as what rides a swing');
@@ -696,14 +696,14 @@ test('LV1b: the CHRONICLE answers the key it is named after, off the registry', 
   // the host consumed (the overlay is `isChoiceWindow`, so both key
   // seams hand it the raw code and return) and nobody answered.
   const cr = src('src/ui/enhancedChronicle.js');
-  assert.match(cr, /import \{ overlayAction, actionOf \} from '\.\/input\.js'/);
-  assert.match(cr, /if \(actionOf\(e\) === 'LogBook'\) \{/, 'off the REGISTRY, never the literal KeyL');
+  assert.match(cr, /import \{ overlayAction, eventAction \} from '\.\/input\.js'/);   // AUDIT KB1: the event's own read
+  assert.match(cr, /if \(eventAction\(e\) === 'LogBook'\) \{/, 'off the REGISTRY, never the literal KeyL (AUDIT KB1: eventAction - a combo closes what it opened)');
   assert.doesNotMatch(cr, /e\.code === 'KeyL'/, 'a rebound key that cannot close its own window is the same bug one layer down');
   // The arm sits BELOW the text-entry guard: the note composer is a
   // real <input> and 'l' belongs to it (CG2).
   const guard = cr.indexOf("t.tagName === 'INPUT'");
-  const arm = cr.indexOf("actionOf(e) === 'LogBook'");
+  const arm = cr.indexOf("eventAction(e) === 'LogBook'");
   assert.ok(guard > 0 && arm > guard, 'the composer keeps its own letters');
   // ...and it exits through the door's own close, not a second path.
-  assert.match(cr, /if \(actionOf\(e\) === 'LogBook'\) \{\n\s*e\.preventDefault\(\);\n\s*e\.stopPropagation\(\);\n\s*onExit\(\);/);
+  assert.match(cr, /if \(eventAction\(e\) === 'LogBook'\) \{\n\s*e\.preventDefault\(\);\n\s*e\.stopPropagation\(\);\n\s*if \(!e\.repeat\) onExit\(\);/, 'AUDIT KB1: the press exits, a held key\'s repeat is swallowed');
 });

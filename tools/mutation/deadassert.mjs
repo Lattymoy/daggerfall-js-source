@@ -11,10 +11,12 @@ fs.rmSync(DIR, { recursive: true, force: true });
 fs.mkdirSync(DIR, { recursive: true });
 
 const r = spawnSync(process.execPath, ['--test'], {
-  cwd: ROOT, encoding: 'utf8', timeout: 600000,
+  cwd: ROOT, encoding: 'utf8', timeout: 600000, maxBuffer: 1 << 28,   // AUDIT 68: a whole-suite TAP outgrows the 1 MiB default
   env: { ...process.env, NODE_V8_COVERAGE: DIR },
 });
 process.stderr.write('suite status=' + r.status + '\n');
+// A suite the harness lost part-way has coverage for part of the tree, and every assert past the cut would read as dead.
+if (r.error || r.status === null) { console.error(`HARNESS ERROR (${r.error?.code ?? r.signal}) - the coverage is partial, no verdict`); process.exit(2); }
 
 const ranges = {};
 for (const f of fs.readdirSync(DIR).filter(x => x.endsWith('.json'))) {

@@ -180,7 +180,7 @@ const SPENT_MAX = 4096;
 /** MOD1: the most accounts whose latest mute order one room remembers. */
 const ORDERS_MAX = 1024;
 
-import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, voiceGate, voiceInGate, voicePlaybackForLook } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate } from './relay.js';
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
 // welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
@@ -226,8 +226,9 @@ const questMeter = (at, now) => { const g = questShareGate(at, now); return { bu
 const RECS_MAX = 4096;
 /** AUDIT SOC A1/A8: the most (kind, from, to) cooldown stamps an awake object keeps; over it they are emptied. */
 const COOL_MAX = 4096;
-/** AUDIT SOC A3: an account nobody's list names - no friend, no request either way, no live invite, no party. */
-const unlisted = (r, now) => !!r && !(r.friends?.length) && !(r.in?.length) && !(r.out?.length) && !r.party && !(r.invites ?? []).some((i) => now - i.at < INVITE_TTL_MS);
+/** AUDIT SOC A3: an account nobody's list names - no friend, no request either way, no live invite. AUDIT 68
+ *  S01-stale-party-pointer-blocks-sweep: its party is judged by the sweep against the party's own record, not here. */
+const unlisted = (r, now) => !!r && !(r.friends?.length) && !(r.in?.length) && !(r.out?.length) && !(r.invites ?? []).some((i) => now - i.at < INVITE_TTL_MS);
 
 export class Room {
   constructor(state, env) {
@@ -265,8 +266,6 @@ export class Room {
     this._roomFoesIn = null;   // AUDIT WORLD6b A3: a cell's foes INGRESS budget, spent at the door before the parse
     // AUDIT WORLD6b A1/A2: the hit funnel (AUDIT WORLD2 A6) is the DESTINATION socket's own bucket (`hbucket` among its meters), not the room's
     this._roomActs = null;   // WORLD3: the room's action-frame budget (a door, a lever, a platform moved)
-    this._roomHits = null;   // AUDIT WORLD6b-iii(c) C3: the room's hit BYTES budget (a grant is a frame's worth of items)
-    this._roomTrade = null;   // TRADE1: the room's trade BYTES budget (a commit is a pack's worth of items)
     this._roomWho = null;    // AUDIT WORLD6b-iii(e) B1: the room's ask budget (WHO_ROOM_HZ_MAX) - the one arm past the hello that reads storage
     this._looks = new Map(); // AUDIT WORLD6b-iii(e) B1: the looks said hello with, kept on the instance while it is awake - a repeat ask reads no storage; after a hibernation the storage's copy is read once and kept again
     this._roomActBytes = null;   // AUDIT WORLD3 A1: and its BYTE budget - the frame times its listeners, as the foes fan has
@@ -604,6 +603,7 @@ export class Room {
       return json({ ok: true });
     }
     await this.state.storage.put('reg', { cell, at });
+    await this.state.storage.setAlarm(at + PARK_TTL_MS);   // AUDIT 68 X8-park-registry-unbounded: the word is forgotten when every record it could name has expired
     if (prev?.cell && prev.cell !== cell) await this._parkTellDrop(prev.cell, k, at);
     return json({ ok: true });
   }
@@ -659,6 +659,10 @@ export class Room {
    *  nobody plays would cost storage for ever, and the rooms a client can name are many. */
   async alarm() {
     if (await this.state.storage.get('hub')) { await this._sweepHub(Date.now()); return; }   // AUDIT SOC A3: the hub's alarm is its sweep, whoever is in the room
+    // AUDIT 68 X8-park-registry-unbounded: an owner's registry (HCC-PARK) is one object per account and character a
+    // client names - its word goes PARK_TTL_MS after it was said, as the cell's record it points at does
+    const reg = await this.state.storage.get('reg');
+    if (reg) { const due = reg.at + PARK_TTL_MS; if (Date.now() >= due) await this.state.storage.delete('reg'); else await this.state.storage.setAlarm(due); return; }
     for (const [, b] of this._all()) if (b.id) return;
     const m = await this.state.storage.list({ prefix: 'world:' });
     const dead = [...m.keys()];
@@ -674,8 +678,12 @@ export class Room {
     const cur = (await this.state.storage.get(['sweep:acct', 'sweep:party']));
     const acur = cur.get('sweep:acct') ?? null, pcur = cur.get('sweep:party') ?? null;
     const accts = await this.state.storage.list({ prefix: 'acct:', limit: SWEEP_PAGE, ...(acur ? { startAfter: acur } : {}) });
-    const dead = []; let alast = null;
-    for (const [k, r] of accts) { alast = k; const id = k.slice(5); if (unlisted(r, now) && now - (r.seen ?? 0) >= ACCOUNT_IDLE_MS && !this._socketsOf(id).length) { dead.push(k, acctSecretKey(id)); this._recs.delete(id); } }
+    const dead = [], idle = []; let alast = null;
+    for (const [k, r] of accts) { alast = k; const id = k.slice(5); if (unlisted(r, now) && now - (r.seen ?? 0) >= ACCOUNT_IDLE_MS && !this._socketsOf(id).length) idle.push([k, id, r.party]); }
+    // AUDIT 68 S01-stale-party-pointer-blocks-sweep: a pointer lists the account only while its party does - a deleted
+    // party leaves its members' pointers standing until their next hello, which an idle account never sends
+    const seats = await this._partiesOf(idle.filter(([, , pid]) => pid).map(([, , pid]) => pid));
+    for (const [k, id, pid] of idle) { const party = pid ? seats.get(pid) : null; if (party && party.members.includes(id)) continue; dead.push(k, acctSecretKey(id)); this._recs.delete(id); }
     const parties = await this.state.storage.list({ prefix: 'party:', limit: SWEEP_PAGE, ...(pcur ? { startAfter: pcur } : {}) });
     let plast = null;
     for (const [k, p] of parties) {
@@ -879,6 +887,11 @@ export class Room {
       const gate = tokenGate(await this.state.storage.get('hellos'), now, chat ? CHAT_HELLO_HZ_MAX : HELLO_HZ_MAX);
       await this.state.storage.put('hellos', gate.bucket);
       if (!gate.pass) { this._refuse(ws, 'busy', CLOSE_BUSY); return; }
+      // ACC1d: the name this socket will wear, and whether the relay vouches for it. AUDIT 68 S01-hello-writes-before-token:
+      // asked BEFORE anything is written or replaced (the id's secret, its look, a live holder of the id, the
+      // attachment), so a refused hello leaves nothing behind - a tokenless one planted a secret that refused the owner
+      const who = await this._named(m, now);
+      if (who.error) { this._refuse(ws, who.error); return; }
       // the id's secret (A3): the first hello mints it, a later one must match
       const held = await this.state.storage.get(secretKey(m.id));
       if (held && held !== m.secret) { this._refuse(ws, 'id taken'); return; }
@@ -901,11 +914,6 @@ export class Room {
       if (!others.length) { try { await this._sweep(); } catch (e) { console.warn('[room] sweep failed', e?.message ?? e); } await this.state.storage.put('hellos', gate.bucket); }   // an empty room forgets every look and secret an unclean close left behind - not its hello gate (AUDIT SOC A2: contained - a failed list here made every first hello into an empty hub throw before its welcome)
       await this.state.storage.put(secretKey(m.id), m.secret);
       if (!chat) { await this.state.storage.put(lookKey(m.id), m.look); this._looks.set(m.id, m.look); }   // a channel keeps no look: nobody is drawn from it
-      // ACC1d: the name this socket will wear, and whether the relay
-      // vouches for it. Asked BEFORE the attachment is written, so a
-      // refused token never reaches the roster at all.
-      const who = await this._named(m, now);
-      if (who.error) { this._refuse(ws, who.error); return; }
       if (!this._setAttach(ws, { ...a, id: m.id, name: who.name, title: who.title, glyphs: who.glyphs, sub: who.subject, mu: who.mu, pose: chat ? null : m.pose, since: replaced?.since ?? now })) { this._refuse(ws, 'hello too large'); return; }   // MOD1: `sub` the verified account (what a mute names), `mu` until when it may not talk
       // SRV-N: `v` rides EVERY welcome, a channel's included. A player in the enhanced skin holds a presence socket
       // and one chat socket per tab; whichever reconnects first after a hand deploy is the one that notices, and the
@@ -1087,11 +1095,15 @@ export class Room {
       tm.hbucket = funnel.bucket;
       if (!funnel.pass) return;
       const out = JSON.stringify({ t: 'hit', id: a.id, data: m.data });
-      // AUDIT WORLD6b-iii(c) C3: the room's hit bytes - a grant carries a corpse's pile, so the arm counts bytes as the
-      // foes and the acts do; over the budget the frame is dropped, nobody struck (three sockets pushed 720 KiB/s of
-      // grants into one destination through an arm that counted frames alone)
-      const bytes = byteGate(this._roomHits, now, out.length, HIT_ROOM_BYTES_PER_S);
-      this._roomHits = bytes.bucket;
+      // AUDIT WORLD6b-iii(c) C3: the hit bytes - a grant carries a corpse's pile, so the arm counts bytes as the foes
+      // and the acts do; over the budget the frame is dropped, nobody struck (three sockets pushed 720 KiB/s of grants
+      // into one destination through an arm that counted frames alone). AUDIT 68 X8-hit-byte-budget-room-wide-starves-grants:
+      // the DESTINATION's, as the frame funnel above is - one room-wide bucket let one socket's junk blows drop every
+      // honest grant in the room, whose items had already left their corpse; and (the pre-merge review) a per-SENDER
+      // bucket reopened C3 itself, N senders each their own 256 KiB/s into one socket. Aimed at a destination, a flood
+      // spends that destination's bytes and no one else's
+      const bytes = byteGate(tm.hbytes ?? null, now, out.length, HIT_ROOM_BYTES_PER_S);
+      tm.hbytes = bytes.bucket;
       if (!bytes.pass) return;
       this._send(tws, out);
       return;
@@ -1492,14 +1504,14 @@ export class Room {
       // those would be a second thing that can leak and a second thing
       // to revoke; this one is already audited, already signed, and
       // already expires.
-      if (!Array.isArray(a.glyphs) || !a.glyphs.includes('dev')) return;   // silently: a stranger probing this learns nothing from being ignored
       const now = Date.now();
       // ITS OWN BUCKET, well under chat's. A player's line reaches a
-      // room; this reaches every player in the game.
-      const meters = this._meterOf(ws);
-      const gate = redGate(meters.rbucket, now);
-      meters.rbucket = gate.bucket;
-      if (!gate.pass) return;
+      // room; this reaches every player in the game. AUDIT 68
+      // X8-v-say-mute-unstruck: spent BEFORE the authority is asked and
+      // struck as every arm is (`_spend`) - a stranger's say was metered
+      // by nothing, and a flood past the rate was never closed.
+      if (!this._spend(ws, now, redGate, 'rbucket', 'rdrops', 'too many lines')) return;
+      if (!Array.isArray(a.glyphs) || !a.glyphs.includes('dev')) return;   // silently: a stranger probing this learns nothing from being ignored
       // A LINE NOBODY IS SPEAKING: no id, no name. Its own frame type
       // rather than a flag on a chat line, because a flag on a chat
       // frame is a field, and net/chat.js' own note says why that
@@ -1507,6 +1519,25 @@ export class Room {
       // can send.
       const said = JSON.stringify({ t: 'red', text: m.text, at: now });
       for (const [other, b] of [...this._all()]) if (b.id) this._send(other, said);   // everyone in this room, the sender included - that is the receipt
+    }
+    if (m.t === 'narrate') {
+      // ═══ TITLE-N — THE DUNGEON MASTER SPEAKING ═════════════════════
+      //
+      // Mac (2026-09-24): "This title allows the user to use the /dm to
+      // message chat with orange text (similar to /red)." RED1's law,
+      // one glyph over: the right is the `dm` glyph `_named` wrote off
+      // the VERIFIED claims - granted by a handle in the account
+      // service's config, revoked by taking it off - and nothing else on
+      // this socket can write it.
+      if (!Array.isArray(a.glyphs) || !a.glyphs.includes('dm')) return;   // silently, as /red is
+      const now = Date.now();
+      const meters = this._meterOf(ws);
+      const gate = dmGate(meters.dbucket, now);   // its own bucket: narrating spends none of the server line's
+      meters.dbucket = gate.bucket;
+      if (!gate.pass) return;
+      // its own FRAME TYPE, for /red's reason: the client marks the line from the type, which no player can send
+      const said = JSON.stringify({ t: 'dm', text: m.text, at: now });
+      for (const [other, b] of [...this._all()]) if (b.id) this._send(other, said);   // everyone in this room, the sender included
     }
     if (m.t === 'mute') {
       // ═══ MOD1 — A MUTE ORDER, CARRIED IN ═══════════════════════════
@@ -1520,10 +1551,7 @@ export class Room {
       // name and the badge - one grant list in the service's config,
       // one signature - and this arm adds no second way to be trusted.
       const now = Date.now();
-      const meters = this._meterOf(ws);
-      const gate = muteGate(meters.mbucket, now);
-      meters.mbucket = gate.bucket;
-      if (!gate.pass) return;
+      if (!this._spend(ws, now, muteGate, 'mbucket', 'mdrops', 'too many mute orders')) return;   // AUDIT 68 X8-v-say-mute-unstruck: struck, as every arm is
       await this._loadKey();
       if (!this._verifyKey) return;
       const r = await verifyOrder(m.order, this._verifyKey, { subtle: crypto.subtle, nowS: Math.floor(now / 1000) });

@@ -46,8 +46,11 @@ const BY_KEY = Object.fromEntries(
 // so the answer is a distinct name rather than a shared home.
 export const eotbSpriteUrl = (key) => BY_KEY[key] ?? null;
 /** How many sprites the build actually carries - for the probes, and
- *  so "the art is wired" is a number rather than a hope. */
-export const spriteCount = () => Object.keys(BY_KEY).length;
+ *  so "the art is wired" is a number rather than a hope. AUDIT 68
+ *  S15-eotb-spritecount-hot: counted once - the table never changes, and
+ *  `eotbBody.ready()` asks about eleven times a frame. */
+const SPRITE_COUNT = Object.keys(BY_KEY).length;
+export const spriteCount = () => SPRITE_COUNT;
 
 /**
  * `get_sizeMod`: METRES PER TEXTURE PIXEL. The mod keeps two, and the

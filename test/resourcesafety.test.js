@@ -143,8 +143,12 @@ test('NT1 (F213): dungeonContext.destroy latches FIRST and marks piles dead befo
 
 test('NT1 (F054): the no-landing throw frees the interior build it abandons', () => {
   const wm = src('scenes/worldModes.js');
-  assert.ok(wm.includes("if (!landing) { ctx.destroy(); throw new Error('no interior landing'); }"),
+  // AUDIT 68: through the ONE abandon, which frees the people's bootstrap
+  // quest behaviours with the context (X3's world-moved arm and AUDIT 39
+  // #29's markerless dungeon share it).
+  assert.ok(wm.includes("if (!landing) { abandonContext(ctx); throw new Error('no interior landing'); }"),
     'the fully-built context is freed before the throw the hosts only log');
+  assert.match(wm, /function abandonContext\(ctx\) \{\s*destroyPeopleBehaviours\(ctx\.people\);\s*ctx\.destroy\(\);\s*\}/);
 });
 
 // ---------------------------------------------------------------
@@ -223,10 +227,10 @@ test('NT1 / AUDIT-WH R6: the world plaque has ONE owner per host, and every one 
   // holds its own: a name here per `let` there, and a new `let` with no
   // line in the reset fails the second half.
   const reset = ql.slice(ql.indexOf('export function resetQuickLoot() {'));
-  for (const slot of ['_sel = null;', '_nudge = 0;', '_pending = null;', '_actionIds = null;', '_lastKey = null;']) {   // ACT-MENU: the lit list's verbs
+  for (const slot of ['_sel = null;', '_nudge = 0;', '_pending = null;', '_actionIds = null;', '_lastKey = null;', '_tookSound = null;']) {   // ACT-MENU: the lit list's verbs; SND1: the press's pending sound
     assert.ok(reset.slice(0, reset.indexOf('}')).includes(slot), `resetQuickLoot leaves ${slot.split(' ')[0]} behind`);
   }
-  assert.doesNotMatch(ql, /^let (?!_sel|_nudge|_pending|_actionIds|_lastKey)/m,
+  assert.doesNotMatch(ql, /^let (?!_sel|_nudge|_pending|_actionIds|_lastKey|_tookSound)/m,
     'a new module-level slot needs an owner and a line in resetQuickLoot');
   assert.doesNotMatch(ql, /from '\.\.\/ui\//,
     'the feature owns its own state, so it never has to reach into a draw to read it');

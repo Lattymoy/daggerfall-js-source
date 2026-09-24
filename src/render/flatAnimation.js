@@ -100,18 +100,18 @@ export class FlatAnim {
     if (this.done || !(dt > 0)) return this.frame;
     this._acc += dt;
     const period = 1 / this.fps;
-    // A guard, not a law: a host that stalled for a minute would
-    // otherwise spin the whole gap one frame at a time. Landing on the
-    // right frame matters; replaying every frame of the gap does not.
-    if (this._acc > period * this.frameCount) {
-      this._acc %= period;
-      this._step();
-      return this.frame;
-    }
-    while (this._acc >= period && !this.done) {
-      this._acc -= period;
-      this._step();
-    }
+    const steps = Math.floor(this._acc / period);
+    if (steps < 1) return this.frame;
+    this._acc = Math.max(0, this._acc - steps * period);
+    // AUDIT 68 S16-flatanim-stall-guard: EVERY owed advance lands. A stall
+    // is not spun one frame at a time - the loop's cycle is frameCount
+    // steps, so a looping clock plays only the gap's remainder of it (the
+    // frame the whole gap lands on), and a one-shot at most its length
+    // plus the wrap that ends it. The old guard stepped ONCE past a whole
+    // cycle, which dropped advances at 10 Hz on a two-frame flame (the
+    // frame rate changed the speed) and left a hitched flash unfinished.
+    const n = this.oneShot ? Math.min(steps, this.frameCount + 1) : ((steps - 1) % this.frameCount) + 1;
+    for (let i = 0; i < n && !this.done; i++) this._step();
     return this.frame;
   }
 }

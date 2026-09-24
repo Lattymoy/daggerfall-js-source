@@ -10,43 +10,20 @@
 //     pose and the station-coupled 2H attack tracks hold for it BY
 //     CONSTRUCTION - the off-hand station location is the 2H contract.
 // Curved blades bow through per-row cz (saber/wakazashi/katana/dai).
-import { loftPiece, shadePiece, compress } from './pieceLoft.js';
-
-const ARM_X = -0.235;
-const GRIP_Y = 0.90;
-const GRIP_PITCH = -2.40 + Math.PI / 4;   // Mac: swd pitch +45 baked (2026-07-05)
-
-function bakeGrip(faces) {
-  const c = Math.cos(GRIP_PITCH), s = Math.sin(GRIP_PITCH);
-  for (const f of faces) {
-    for (let i = 0; i < 4; i++) {
-      const dy = f.p[i*3+1] - GRIP_Y, z = f.p[i*3+2];
-      f.p[i*3+1] = GRIP_Y + c*dy - s*z;
-      f.p[i*3+2] = s*dy + c*z;
-    }
-    const ny = f.n[1], nz = f.n[2];
-    f.n[1] = c*ny - s*nz; f.n[2] = s*ny + c*nz;
-  }
-  return faces;
-}
+import { loftPiece, shadePiece, compress, LEFT_FIST_X, GRIP_Y, SEAT_PITCH, TWO_HAND_GRIP_ROWS, pitchAbout } from './pieceLoft.js';
 
 // spec: { blade, wRoot, wTip, thick, curve, guardW, guardT, pommelR,
 //         gripLo, gripR, twoHand }
 function buildBlade(ramp, spec) {
   const faces = [];
-  const G = { group: 'armL', cx: ARM_X, seg: 8 };
+  const G = { group: 'armL', cx: LEFT_FIST_X, seg: 8 };
   const gripR = spec.gripR ?? 0.018;   // girth pass (Mac 2026-07-06): hilts read toothpick-thin against the 0.074 fist
   let gripLo;
   if (spec.twoHand) {
     // claymore-standard two-hand grip block: stations at 0.90 (grip)
     // + 0.74 (OFF-HAND - the 2H pose/attack contract)
-    gripLo = 0.720;
-    loftPiece(faces, [
-      { y: 0.720, rx: 0.026, rz: 0.027 },
-      { y: 0.740, rx: 0.028, rz: 0.029 },
-      { y: 0.900, rx: 0.028, rz: 0.029 },
-      { y: 1.058, rx: 0.026, rz: 0.027 },
-    ], { ...G, capTop: false, capBottom: false });
+    gripLo = TWO_HAND_GRIP_ROWS[0].y;
+    loftPiece(faces, TWO_HAND_GRIP_ROWS, { ...G, capTop: false, capBottom: false });
     loftPiece(faces, [   // pommel bulge above the grip
       { y: 1.058, rx: 0.014, rz: 0.014 },
       { y: 1.082, rx: 0.038, rz: 0.038 },
@@ -88,7 +65,7 @@ function buildBlade(ramp, spec) {
   }
   rows.push({ y: b0 - bl - 0.028, rx: 0.003, rz: 0.003, p: 0.55, cz: 0 });   // point
   loftPiece(faces, rows, G);
-  return compress(shadePiece(bakeGrip(faces), ramp));
+  return compress(shadePiece(pitchAbout(faces, GRIP_Y, SEAT_PITCH), ramp));
 }
 
 export const BLADE_SPECS = {

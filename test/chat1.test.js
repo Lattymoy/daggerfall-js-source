@@ -380,6 +380,11 @@ test('CHAT1 / AUDIT CHAT: the log - the World tab from CHAT_TABS (one today, eac
   const two = new ChatLog({ tabs: [CHAT_TABS[0], CHAT_TABS[2]], now: () => clock });   // CHAT-CHAN: the World and Party rows, the pair this block has always driven
   two.push('party', { id: 'a', name: 'A', text: 'psst' });
   assert.deepEqual(two.tabs.map((t) => t.unread), [0, 1]);
+  // CHAT-P: the Party row starts OFF the bar - the host puts it on while a party is (ChatLog.setShown)
+  assert.equal(two.select('party'), false, 'CHAT-P: a tab off the bar cannot be brought to the front');
+  assert.equal(two.unreadTotal(), 0, 'CHAT-P: and its count is on no badge');
+  assert.equal(two.setShown('party', true), true);
+  assert.equal(two.unreadTotal(), 1, 'on the bar, its line counts');
   assert.equal(two.select('party'), true); assert.equal(two.active, 'party');
   assert.equal(two.tab('party').unread, 1, 'closed: selecting does not read');
   two.setOpen(true); assert.equal(two.tab('party').unread, 0);
@@ -727,7 +732,7 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   assert.match(w, /import \{ ChatLog, CHAT_REJOIN_MS \} from '\.\.\/net\/chat\.js';/);
   assert.match(w, /import \{ createChatPanel \} from '\.\.\/ui\/chatPanel\.js';/);
   assert.match(w, /import \{ requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive, cursorActive \} from '\.\.\/player\/pointerLock\.js';/);   // AUDIT-TO1 I2: cursorActive joined the import
-  assert.match(w, /if \(enhanced && typeof document !== 'undefined'\) chatStart\(\);/, 'the enhanced skin\'s, with a document (node has none)');
+  assert.match(w, /if \(typeof document !== 'undefined'\) chatStart\(\);/, 'OVH3: on either skin, with a document (node has none)');
   assert.match(w, /const chatStart = \(\) => \{\s*if \(!online\.url\) return;/, 'AUDIT CHAT A9/B1: a relay the law refused is no relay for the chat either');
   // CHAT-CHAN: a channel session per tab that rides a room of its OWN (`link`: the World and the Region tabs) - the Party
   // tab's lines come down the hub's link by the relay's own routing word, and the Region tab's room waits for its region

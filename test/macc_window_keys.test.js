@@ -80,7 +80,7 @@ test('MAC-C: the enhanced pack reads the registry for BOTH keys', () => {
   // history nobody reads.
   const code = s.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
   assert.ok(!/e\.key !== 'F6'/.test(code), 'the literal is gone');
-  assert.match(s, /const act = actionOf\(e\);/, 'the registry answers');
+  assert.match(s, /const act = eventAction\(e\);/, 'the registry answers (AUDIT KB1: the event\'s own read)');
   assert.match(s, /act !== 'Inventory'\) return;/, 'the pack closes on ITS action');
   assert.match(s, /if \(act === 'CharacterSheet' && typeof deps\?\.openCharSheet === 'function'\)/, 'and crosses over on the other (JAN1: a function, asked for as one)');
   // the ORDER is the thing: the pack's own close law runs before the
@@ -92,7 +92,7 @@ test('MAC-C: the enhanced pack reads the registry for BOTH keys', () => {
 
 test('MAC-C: the enhanced sheet page has a key of its own, and gives it back', () => {
   const s = rd('src/ui/charSheetDoor.js');
-  assert.match(s, /const act = actionOf\(e\);/, 'the registry answers here too');
+  assert.match(s, /const act = eventAction\(e\);/, 'the registry answers here too (AUDIT KB1: the event\'s own read)');
   assert.match(s, /if \(act !== 'CharacterSheet' && !\(act === 'Inventory' && hooks\.inventory\)\) return;/,
     'the sheet closes on its own key and crosses over on the pack’s, and claims nothing else');
   assert.match(s, /globalThis\.addEventListener\?\.\('keydown', onSheetKey, true\)/,

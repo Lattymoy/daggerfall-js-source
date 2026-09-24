@@ -21,7 +21,7 @@ import {
   pcaaoModules, unityRound, pcaaoDamageModifier, pcaaoWeaponToHit, pcaaoArmorToHit, pcaaoAdrenalineRushToHit,
   pcaaoStatDiffsToHit, pcaaoSkillsToHit, pcaaoAdjustmentsToHit, pcaaoSuccessfulHit, PCAAO_BODY_PARTS, pcaaoStruckBodyPart,
   pcaaoCriticalStrike, pcaaoBonusOrPenaltyByEnemyType, pcaaoHandToHandAttackDamage, pcaaoWeaponAttackDamage,
-  pcaaoAdjustWeaponHitChanceMod, pcaaoAdjustWeaponAttackDamage, pcaaoAlterDamageBasedOnWepCondition,
+  pcaaoAlterDamageBasedOnWepCondition,
   pcaaoAlterArmorReducBasedOnItemCondition, pcaaoArmorMaterialIdentifier, pcaaoArmorMaterialModifierFinder,
   pcaaoEqualizeMaterialConditions, pcaaoSpecificWeaponConditionDamage, pcaaoMaterialDifferenceDamageCalculation,
   pcaaoDamageEquipment, pcaaoWarningMessagePlayerEquipmentCondition, pcaaoPercentageReductionCalculationWithUnarmed,
@@ -36,6 +36,7 @@ import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 import { makeEnemyEntity } from '../src/characters/enemyEntity.js';
 import { EQUIP_SLOTS, equipTableOf } from '../src/systems/equip.js';
 import { MOD_SETTINGS, setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
+import { RR_VENDOR, rrAdjustWeaponHitChanceMod, rrAdjustWeaponAttackDamage } from '../src/systems/rrRealism.js';
 import { CREDITS } from '../src/ui/credits.js';
 import { SKILLS } from '../src/systems/skills.js';
 
@@ -64,8 +65,9 @@ test('PCO1: InitMod\'s ladder - the dependent modules stand down with their pare
   assert.ok(Object.entries(off).every(([k, v]) => v === false), `nothing on: ${JSON.stringify(off)}`);
   // MM1: the two arms Awake derives from OTHER mods read those mods' own switches - no compatibility switch of this mod's
   assert.equal(modsOf({}, others({ 'meanerMonsters/Enabled': true })).meanerMonsters, true, 'Meaner Monsters on: the edit arm');
-  assert.equal(modsOf({}, others({ 'roleplayRealism/advancedArchery': true })).rolePlayRealismArchery, true, 'Roleplay Realism with advancedArchery: the archery arm');
-  assert.equal(modsOf({ Enabled: false }, others({ 'meanerMonsters/Enabled': true, 'roleplayRealism/advancedArchery': true })).meanerMonsters, false, 'the overhaul off: neither');
+  assert.equal(modsOf({}, others({ 'roleplay-realism/Enabled': true, 'roleplay-realism/advancedArchery': true })).rolePlayRealismArchery, true, 'Roleplay Realism with advancedArchery: the archery arm');
+  assert.equal(modsOf({}, others({ 'roleplay-realism/advancedArchery': true })).rolePlayRealismArchery, false, 'AUDIT 68: the switch of a mod that is not loaded is not read');
+  assert.equal(modsOf({ Enabled: false }, others({ 'meanerMonsters/Enabled': true, 'roleplay-realism/Enabled': true, 'roleplay-realism/advancedArchery': true })).meanerMonsters, false, 'the overhaul off: neither');
 });
 
 test('PCO1: Mathf.Round rounds half to EVEN, and a float32 half lands where the C#\'s lands', () => {
@@ -104,12 +106,33 @@ test('PCO1: the hit\'s helpers - armour, adrenaline, stat diffs, skills, adjustm
   assert.equal(pcaaoAdjustmentsToHit(cls), -50);
 });
 
-test('PCO1: CalculateSuccessfulHit is NOT clamped - the C# computes Mathf.Clamp(3, 97) and throws it away', () => {
+test('PCO1 + DISC19-D: CalculateSuccessfulHit IS clamped to 3..97 - the C# computes Mathf.Clamp(3, 97) and throws it away, and the port applies it (Mac\'s call, 2026-09-24: a Vampire no build could hit)', () => {
   const p = mkPlayer(); const mon = monster(0);
-  assert.equal(pcaaoSuccessfulHit(p, mon, 300, 3, fixed(0.999), M), true, 'a 300 lands on a 99 roll');
-  assert.equal(pcaaoSuccessfulHit(p, mon, -300, 3, fixed(0.0), M), false, 'a -300 misses on a 0 roll');
+  assert.equal(pcaaoSuccessfulHit(p, mon, 300, 3, fixed(0.96), M), true, 'a 300 lands on a 96 roll');
+  assert.equal(pcaaoSuccessfulHit(p, mon, 300, 3, fixed(0.97), M), false, '...and misses on 97: three in a hundred miss, however certain');
+  assert.equal(pcaaoSuccessfulHit(p, mon, -300, 3, fixed(0.02), M), true, 'a -300 lands on a 2 roll');
+  assert.equal(pcaaoSuccessfulHit(p, mon, -300, 3, fixed(0.03), M), false, '...and misses on 3: three in a hundred land, however hopeless');
+  // both directions ride the one function: a monster's certain blow on the player misses three in a hundred too
+  assert.equal(pcaaoSuccessfulHit(mon, p, 300, 3, fixed(0.97), M), false);
+  assert.equal(pcaaoSuccessfulHit(mon, p, -300, 3, fixed(0.02), M), true);
   assert.deepEqual([...PCAAO_BODY_PARTS], [0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 5, 5, 5, 5, 6, 6], 'feet likelier than the head, legs than the hands');
   assert.equal(pcaaoStruckBodyPart(0), 0); assert.equal(pcaaoStruckBodyPart(0.99), 6);
+});
+
+test('DISC19-D (Mac\'s call, 2026-09-24): whole blows - a skill-30 character with a steel sword lands about three in a hundred on a Vampire and a Lich, where the mod as shipped landed none in two thousand', () => {
+  for (const id of [28, 32]) {   // Vampire, Lich
+    const mon = monster(id);
+    const p = mkPlayer({ skills: skillsAll(30) });
+    let seed = 7; const lcg = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return (seed % 10000) / 10000; };
+    let hits = 0;
+    for (let i = 0; i < 2000; i++) {
+      const sword = { group: 'Weapons', templateIndex: 120, material: 1, flags: 0, maxCondition: 1e9, currentCondition: 1e9, name: 'Longsword' };
+      const notes = { hit: false };
+      pcaaoAttackDamage(p, mon, { weapon: sword, rolls: lcg, dfRand: fixed(0), notes, modules: M });
+      if (notes.hit) hits++;
+    }
+    assert.ok(hits >= 30 && hits <= 90, `monster ${id}: ${hits} of 2000 landed - the floor's three in a hundred`);
+  }
 });
 
 test('PCO1: CriticalStrikeHandler - luck bends the divisor, the clamp is discarded', () => {
@@ -153,11 +176,13 @@ test('PCO1: the damage - hand-to-hand, the weapon roll, the silver six, the two-
 });
 
 test('PCO1: Roleplay Realism\'s archery, as baked in - the draw time\'s hit and damage tables', () => {
+  // AUDIT 68 S08-pcaao-archery-duplicate: the overhaul bakes in RR's OWN two members - one export, rrRealism.js's
   const bow = { templateIndex: 130 };
-  assert.deepEqual([100, 300, 700, 1500, 6000, 9000].map((t) => pcaaoAdjustWeaponHitChanceMod(null, null, 50, t, bow)), [10, 40, 50, 60, 40, 40], 'the > 8000 arm sits behind > 5000 and never fires');
-  assert.equal(pcaaoAdjustWeaponHitChanceMod(null, null, 50, 100, { templateIndex: 120 }), 50, 'not a bow');
-  assert.equal(pcaaoAdjustWeaponHitChanceMod(null, null, 50, 0, bow), 50, 'no draw time');
-  assert.deepEqual([400, 2000, 5500, 7000, 8500, 9500].map((t) => pcaaoAdjustWeaponAttackDamage(null, null, 20, t, bow)), [10, 20, 17, 15, 10, 5]);
+  assert.deepEqual([100, 300, 700, 1500, 6000, 9000].map((t) => rrAdjustWeaponHitChanceMod(50, t, bow)), [10, 40, 50, 60, 40, 40], 'the > 8000 arm sits behind > 5000 and never fires');
+  assert.equal(rrAdjustWeaponHitChanceMod(50, 100, { templateIndex: 120 }), 50, 'not a bow');
+  assert.equal(rrAdjustWeaponHitChanceMod(50, 0, bow), 50, 'no draw time');
+  assert.deepEqual([400, 2000, 5500, 7000, 8500, 9500].map((t) => rrAdjustWeaponAttackDamage(20, t, bow)), [10, 20, 17, 15, 10, 5]);
+  assert.doesNotMatch(rd('src/combat/pcaao.js'), /export function pcaaoAdjustWeapon/, 'no second copy of the ladder');
 });
 
 test('PCO1: the condition bands - a weapon\'s damage and a piece\'s reduction factor', () => {
@@ -429,9 +454,9 @@ test('PCO1: the seams - the Mods pane entry, the credit, the vendor folder, worl
   assert.match(rd('vendor/pcaao/README.md'), /Kirk\.O/);
   assert.match(rd('src/systems/worldTick.js'), /installPcaao\(\);/, 'every host installs the overrides through worldTick');
   const pw = rd('src/combat/playerWeapon.js');
-  assert.match(pw, /this\._drawStartedAt = nowMs\(\); return 'StrikeUp';/, 'the draw starts the clock');
-  assert.match(pw, /this\.lastDrawMs = this\._drawStartedAt == null \? 0 : Math\.max\(0, Math\.round\(nowMs\(\) - this\._drawStartedAt\)\);/, 'the release reads it');
-  assert.match(pw, /this\.lastDrawMs = 0; return 'StrikeDown';/, 'the instant shot has no draw');
+  // AUDIT 68 S08-bow-draw-time-wallclock: the draw is the machine's held ticks (GetAnimTime), written at every
+  // release - the behaviour is pinned in audit68_combat_bf.test.js; here only that the three bow doors read it
+  assert.equal((pw.match(/this\.lastDrawMs = this\._bowAnimTimeMs\(\);/g) || []).length, 3, 'the drawn release, the instant shot and the touch button');
   assert.match(rd('src/combat/arrowFlight.js'), /weaponAnimTime: playerWeapon\?\.lastDrawMs \?\? 0,/, 'the arrow hands it to the formula');
   assert.match(rd('src/combat/formulas.js'), /const core = _overrides\.get\('calculateAttackDamage'\);/, 'the core is the registry\'s');
   assert.match(rd('src/systems/equip.js'), /if \(removeFrom\) \{ const i = removeFrom\.indexOf\(item\); if \(i >= 0\) removeFrom\.splice\(i, 1\); \}/, 'LowerCondition\'s removeFromCollectionWhenBreaks');
@@ -454,8 +479,8 @@ test('AUDIT PCO1: the archery arm registers on the STOCK path too - InitMod regi
   assert.equal(adjustWeaponAttackDamage(p, rat, 20, 100, bow), 20);
   // the mod on, its archery arm on, the REDONE FORMULA OFF: the stock core still bends the bow by its draw
   let read = { ...ALL_ON, armorHitFormulaRedone: false };
-  let rr = true;   // MM1: Roleplay Realism's own advancedArchery, as the port will read it once that mod is vendored
-  installPcaao({ read: (k) => read[k], other: (v, k) => (v === 'roleplayRealism' && k === 'advancedArchery' ? rr : undefined) });
+  let rr = true;   // MM1: Roleplay Realism's own advancedArchery, read off the vendored mod (AUDIT 68)
+  installPcaao({ read: (k) => read[k], other: (v, k) => (v === RR_VENDOR ? (k === 'Enabled' ? true : k === 'advancedArchery' ? rr : undefined) : undefined) });
   assert.equal(formulaOverride('calculateAttackDamage')(p, rat, {}), undefined, 'the redone core declines');
   assert.equal(adjustWeaponHitChanceMod(p, rat, 30, 100, bow), -10, 'a snap shot: -40');
   assert.equal(adjustWeaponAttackDamage(p, rat, 20, 100, bow), 2, '20 * 100/800, truncated');

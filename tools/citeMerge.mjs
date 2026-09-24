@@ -8,8 +8,9 @@
 // tables miss (the /:N and `:N` continuations, a hand-resolved cite).
 //
 // So each line is mapped from the side it came from: a line that exists
-// verbatim in their file is theirs (their numbers - map from their head),
-// else in ours is ours, else it is new (reported, never touched). The
+// verbatim in their file only is theirs (their numbers - map from their
+// head), in ours only is ours, in BOTH is mapped from both and moved only
+// where the two agree, else it is new (reported, never touched). The
 // map, the content check and the cite spellings are citeShift's own; the
 // bare continuations citeShift only reports (`:N`, /:N, /N, `, :N` after a
 // cite, up to the next cite of any file) are moved here with the same
@@ -24,17 +25,54 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join, basename, dirname } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { hunksFromDiff, lineMap, citeSpellings, regionStops, continuationsIn, SELF_DOCS } from './citeShift.mjs';   // RF3: one law for the continuations (CITE-SLASH: the chain a bare slash must touch; CITE-CS: where a region stops), and the tools' own fixtures skipped
+import { fileURLToPath } from 'node:url';
+import { hunksFromDiff, lineMap, planDoc, applyPlan, SELF_DOCS } from './citeShift.mjs';   // AUDIT 68: one law - the plan (spellings, continuations, struck, the path a cite names) is citeShift's, and the tools' own fixtures skipped
+import { isMain } from './lib/isMain.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 // ---- the pure half (pinned in test/citemerge.test.js) ---------------------
 
-/** Which side a merged line came from: 'theirs' if their file carries it
- *  verbatim, else 'ours' if ours does, else null - a line the merge wrote. */
+/** Which side a merged line came from: 'both' if both files carry it
+ *  verbatim, else 'theirs' or 'ours' for the one that does, else null - a
+ *  line the merge wrote.
+ *
+ *  THE SHARED LINE (the contributor drop's merge, 2026-09-23). This was
+ *  'theirs' first, and a line BOTH sides carry is one whose number was
+ *  written against only one of two different targets: the drop's 85 files
+ *  came off several bases, so an untouched comment citing `hostMagic.js:78`
+ *  sat beside a hostMagic.js whose lines had moved on their side, and the
+ *  theirs-first map walked nine such cites through the wrong side's diff
+ *  (`spellcost.js:182` -> :181, `rest.js:46-58` -> :60-75). Nothing in
+ *  the line says which target its number was read off - so it is mapped
+ *  from BOTH, and a cite moves only where the two maps agree; where they
+ *  part it is held for a person (main's AMBIGUOUS). */
 export function provenance(line, theirs, ours) {
-  return theirs?.has(line) ? 'theirs' : ours?.has(line) ? 'ours' : null;
+  const t = !!theirs?.has(line), o = !!ours?.has(line);
+  return t && o ? 'both' : t ? 'theirs' : o ? 'ours' : null;
+}
+
+/** The sides a provenance maps from. */
+export const sidesOf = (prov) => (prov === 'both' ? ['theirs', 'ours'] : [prov]);
+
+/** Map one line from the side(s) its provenance names. `targetsFor(side)`
+ *  gives that side's [target, mapLine options] pairs for the files the line
+ *  cites. A shared line whose two maps disagree comes back `ambiguous` with
+ *  both proposals and moves nothing.
+ *  @returns {{ out: string, n: number, hs: object[], ambiguous?: {theirs: string, ours: string} }} */
+export function mapSides(l, prov, targetsFor) {
+  const from = (side) => {
+    let out = l, n = 0; const hs = [];
+    for (const [t, opts] of targetsFor(side)) {
+      const r = mapLine(out, t, opts);
+      for (const h of r.held) hs.push({ ...h, t });
+      n += r.moved; out = r.out;
+    }
+    return { out, n, hs };
+  };
+  const [r, other] = sidesOf(prov).map(from);
+  if (other && other.out !== r.out) return { out: l, n: 0, hs: [], ambiguous: { theirs: r.out, ours: other.out } };
+  return r;
 }
 
 
@@ -58,53 +96,27 @@ export function provenance(line, theirs, ours) {
  *     seam FX1 deleted, citedrift.test.js quotes it in NO_LINE_LEFT, and
  *     each merge moved the quote away from the row it has to match.
  *
+ * AUDIT 68 X5-citemerge-struck-continuations-move: this was a second copy
+ * of citeShift's plan, and the copies had parted - the struck law held a
+ * struck line's head and moved its `/:N` tail, and every cite on a struck
+ * line was reported for a person even when it would not move. It is
+ * citeShift's planDoc and applyPlan now, seen through this tool's shape.
+ *
  * @param moveStruck   move them anyway (citeShift's --struck)
  * @param holdEscaped  numbers whose escaped literal must stay (see main)
+ * @param ambiguousBare  another target this side changed has the same basename
  * @returns {{ out: string, moved: number, held: {status, text, to}[],
  *   seen: {a: number, status: string, escaped: boolean}[] }}
  */
-export function mapLine(l, t, { map, oldLines, newLines, res = citeSpellings(t), moveStruck = false, holdEscaped = null }) {
-  const same1 = (x, y) => x != null && y != null && x.trim() === y.trim();
-  const verdict = (a, b) => {
-    const ma = map(a), mb = b != null ? map(b) : null;
-    if (ma === a && (b == null || mb === b)) return { status: 'same' };
-    if (ma == null || (b != null && mb == null)) return { status: 'inside' };
-    if (!same1(oldLines[a - 1], newLines[ma - 1]) || (b != null && !same1(oldLines[b - 1], newLines[mb - 1]))) return { status: 'mismatch', ma, mb };
-    return { status: 'move', ma, mb };
+export function mapLine(l, t, { map, oldLines, newLines, moveStruck = false, holdEscaped = null, ambiguousBare = false }) {
+  const plan = planDoc({ docText: l, target: t, oldLines, newLines, map, moveStruck, holdEscaped, ambiguousBare });
+  return {
+    out: applyPlan(l, plan),
+    moved: plan.filter((p) => p.status === 'move').length,
+    held: plan.filter((p) => p.status !== 'same' && p.status !== 'move')
+      .map((p) => ({ status: p.status, text: p.text, to: p.to[0] ?? null, ...(p.kind === 'cont' ? { continuation: true } : {}) })),
+    seen: plan.filter((p) => p.kind === 'cite').map((p) => ({ a: p.from[0], status: p.status, escaped: p.spelling === 'escaped' })),
   };
-  const spans = [], edits = [], held = [], seen = [];
-  for (const re of res) for (const m of l.matchAll(re)) {
-    // a path before the basename must be the target's own
-    const pre = m[0].slice(0, m[0].lastIndexOf(':')).replace('\\.', '.').replace(/^(\.\.?\/)+/, '');
-    if (pre.includes('/') && !t.endsWith(pre)) continue;
-    const a = +m[1], b = m[2] ? +m[2] : null;
-    const escaped = m[0].includes('\\.');
-    const v = /~~/.test(l) && !moveStruck ? { status: 'struck' }
-      : escaped && holdEscaped?.has(a) ? { status: 'pinned-struck' }
-        : verdict(a, b);
-    spans.push([m.index, m.index + m[0].length]);
-    seen.push({ a, status: v.status, escaped });
-    if (v.status === 'same') continue;
-    if (v.status !== 'move') { held.push({ status: v.status, text: m[0], to: v.ma ?? null }); continue; }
-    edits.push([m.index, m.index + m[0].length, m[0].replace(/(\d+)(-(\d+))?(`?)$/, (s, x, d, y, tick) => `${v.ma}${y != null ? '-' + v.mb : ''}${tick}`)]);
-  }
-  // a continuation belongs to the cite just before it: the region ends at
-  // the next cite of ANY file, not only this target's (CITE-CS: or at a C#
-  // member, or at a table cell's edge)
-  spans.sort((x, y) => x[0] - y[0]);
-  const stops = regionStops(l);
-  for (const [, from] of spans) {
-    const to = stops.find((x) => x >= from) ?? l.length;
-    for (const { m, at: abs } of continuationsIn(l, from, to)) {
-      const a = +m[2], b = m[3] ? +m[3] : null, v = verdict(a, b);
-      if (v.status === 'same') continue;
-      if (v.status !== 'move') { held.push({ status: v.status, text: m[0], to: v.ma ?? null, continuation: true }); continue; }
-      edits.push([abs, abs + m[0].length, `${m[1]}${v.ma}${b != null ? '-' + v.mb : ''}`]);
-    }
-  }
-  let out = l;
-  for (const [s, e, text] of edits.sort((x, y) => y[0] - x[0])) out = out.slice(0, s) + text + out.slice(e);
-  return { out, moved: edits.length, held, seen };
 }
 
 // ---- the CLI --------------------------------------------------------------
@@ -121,7 +133,7 @@ function main(argv) {
       const hunks = hunksFromDiff(git('diff', '-U0', base, '--', t)); if (!hunks.length) continue;
       let oldLines; try { oldLines = git('show', `${base}:${t}`).split('\n'); } catch { continue; }   // new on the other side: nothing cites it at this side's numbers
       if (!existsSync(join(ROOT, t))) continue;   // deleted by the other side (WATER4's merge of #96): no lines to land on, and its cites are the deleter's to strike
-      targetsOf[k].set(t, { map: lineMap(hunks), oldLines, newLines: readFileSync(join(ROOT, t), 'utf8').split('\n'), res: citeSpellings(t) });
+      targetsOf[k].set(t, { map: lineMap(hunks), oldLines, newLines: readFileSync(join(ROOT, t), 'utf8').split('\n') });
       const b = basename(t); (byBase[k].get(b) ?? byBase[k].set(b, []).get(b)).push(t);
     }
   }
@@ -146,9 +158,9 @@ function main(argv) {
         if (!/:\d/.test(l)) continue;
         const prov = provenance(l, theirs, ours);
         if (!prov) continue;
-        for (const [t, cfg] of targetsOf[prov]) {
+        for (const side of sidesOf(prov)) for (const [t, cfg] of targetsOf[side]) {
           if (t === doc) continue;
-          for (const { a, status, escaped } of mapLine(l, t, { ...cfg, moveStruck }).seen) {
+          for (const { a, status, escaped } of mapLine(l, t, { ...cfg, moveStruck, ambiguousBare: byBase[side].get(basename(t)).length > 1 }).seen) {
             if (escaped) continue;
             if (status === 'struck') add(struckNums, t, a);
             else if (status === 'move') add(movedNums, t, a);
@@ -172,14 +184,14 @@ function main(argv) {
       if (!prov) { if (/[\w-]\\?\.(?:js|mjs|md|sh):\d+|`:\d+/.test(l)) { news++; console.log(`  NEW      ${doc}:${i + 1}  (from neither side - read it)`); } return; }
       const names = new Set([...l.matchAll(/([\w.-]+?)(\\?)\.(js|mjs|md|sh):\d+/g)].map((m) => `${m[1]}.${m[3]}`));
       if (/Port-Ledger row|Ledger rows?|ledger rows?/.test(l)) names.add('Port-Ledger.md');
-      let out = l;
-      for (const name of names) for (const t of byBase[prov].get(name) ?? []) {
-        if (t === doc) continue;
-        const r = mapLine(out, t, { ...targetsOf[prov].get(t), moveStruck, holdEscaped: holdOf.get(t) ?? null });
-        for (const h of r.held) { held++; console.log(`  ${h.status.toUpperCase().padEnd(8)} ${doc}:${i + 1}  ${h.text}${h.continuation ? ' (continuation)' : ''}${h.to ? ' -> ' + h.to : ''}  [${t}]`); }
-        if (r.out !== out) { moved += r.moved; console.log(`  ${apply ? 'moved  ' : 'MOVE   '} ${doc}:${i + 1}  ${out.trim().slice(0, 100)}\n        -> ${r.out.trim().slice(0, 100)}`); out = r.out; }
+      const r = mapSides(l, prov, (side) => [...names].flatMap((name) => (byBase[side].get(name) ?? []).filter((t) => t !== doc)
+        .map((t) => [t, { ...targetsOf[side].get(t), moveStruck, holdEscaped: holdOf.get(t) ?? null, ambiguousBare: byBase[side].get(name).length > 1 }])));
+      if (r.ambiguous) {
+        held++; console.log(`  AMBIGUOUS ${doc}:${i + 1}  a line both sides carry, mapped two ways - resolve it by content\n        theirs -> ${r.ambiguous.theirs.trim().slice(0, 100)}\n        ours   -> ${r.ambiguous.ours.trim().slice(0, 100)}`);
+        return;
       }
-      if (out !== l) { lines[i] = out; changed = true; }
+      for (const h of r.hs) { held++; console.log(`  ${h.status.toUpperCase().padEnd(8)} ${doc}:${i + 1}  ${h.text}${h.continuation ? ' (continuation)' : ''}${h.to ? ' -> ' + h.to : ''}  [${h.t}]`); }
+      if (r.out !== l) { moved += r.n; console.log(`  ${apply ? 'moved  ' : 'MOVE   '} ${doc}:${i + 1}  ${l.trim().slice(0, 100)}\n        -> ${r.out.trim().slice(0, 100)}`); lines[i] = r.out; changed = true; }
     });
     if (changed && apply) writeFileSync(join(ROOT, doc), lines.join('\n'));
   }
@@ -187,4 +199,4 @@ function main(argv) {
   return moved && !apply ? 1 : 0;
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) process.exit(main(process.argv.slice(2)));
+if (isMain(import.meta.url)) process.exit(main(process.argv.slice(2)));

@@ -25,7 +25,9 @@ test('PX23 door: four hosts collapse to ONE seam, and the BUY window is not it',
   // ...and that one is the BUY window, with its own deps. It looks like
   // a duplicate from a distance and is a different question.
   const wm = read('src/scenes/worldModes.js');
-  const buy = wm.slice(wm.indexOf('new SpellbookWindow('), wm.indexOf('new SpellbookWindow(') + 700);
+  // the WHOLE call, to its `{ buyMode: true })` - a fixed character window lost a dep the day a line above it grew
+  // (RESURRECT1's shelf entry)
+  const buy = wm.slice(wm.indexOf('new SpellbookWindow('), wm.indexOf('{ buyMode: true });', wm.indexOf('new SpellbookWindow(')) + 19);
   assert.match(buy, /buyMode: true/);
   for (const dep of ['offered:', 'buildingQuality:', 'shopName:', 'skills:']) assert.ok(buy.includes(dep), dep);
   // Every host now hands the door only what THAT host knows - and the
@@ -197,7 +199,7 @@ test('PX23b: an effect carries magnitude, duration and chance - and the first dr
 });
 
 test('PX23b: the two icons the classic only shows on HOVER are printed as words', () => {
-  // spellbookWindow.js:388/391 pushes TARGET_DESCRIPTIONS and
+  // spellbookWindow.js:399/402 pushes TARGET_DESCRIPTIONS and
   // ELEMENT_DESCRIPTIONS into a tooltip. This window draws no icons -
   // it reads no ARENA2 - so it prints what they mean, which is more
   // than the classic tells you at a glance.
@@ -219,7 +221,9 @@ test('PX23b: RENAME comes back, and the book says when you cannot afford a spell
   // The classic asks "Enter spell name : " (:934); the first draft
   // dropped it - a prettier window that can do less.
   assert.match(src, /ENTER_SPELL_NAME/);
-  assert.match(src, /if \(name\) sel\.spell\.name = name;/);
+  // AUDIT 68 S31-enhanced-rename-mutates-shared-spell: MOVED, deliberately - this pinned
+  // `sel.spell.name = name`, a write into the shared (or frozen RRI) record; the edit is the classic's copy now.
+  assert.match(src, /if \(name\) editBookSpell\(deps\.spells\?\.\(\), sel\.i, \{ name \}\);/);
   assert.match(src, /^let renaming = null;/m, 'the edit survives a re-render');
   assert.match(src, /renaming = null;/, 'and a new pick abandons it');
   // AFFORDABILITY: the question a player opens the book with, which the

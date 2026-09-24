@@ -19,6 +19,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { deflateSync } from 'node:zlib';
 import { createHash } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 import { readUnityBundle } from '../src/formats/unityBundle.js';
 
 const CRC = (() => {
@@ -57,7 +58,7 @@ if (!bundlePath) {
   console.error('usage: node tools/travelOptionsAssets.mjs <traveloptions.dfmod> [outDir]');
   process.exit(2);
 }
-const outDir = process.argv[3] ?? new URL('../vendor/travel-options/Textures', import.meta.url).pathname;
+const outDir = process.argv[3] ?? fileURLToPath(new URL('../vendor/travel-options/Textures', import.meta.url));
 const bundle = readUnityBundle(new Uint8Array(readFileSync(bundlePath)));
 mkdirSync(outDir, { recursive: true });
 

@@ -6,19 +6,19 @@
 // equipment damage, the classic strength bonus, the bank loan), the
 // ship gate, the encumbrance penalty, the douse on leaving a dungeon,
 // the purification potion, the class enemies' appearance, the
-// underworld guilds' expulsion, the Fighters' hand-to-hand, the bed.
+// underworld guilds' expulsion, the bed (the Fighters' hand-to-hand is
+// RETIRED - FGH2H-R, below).
 // The variant NPC sprites, enhanced riding and the refined training
 // window are RR2; the Master Armorer quest line, its fort and its
 // factions are RR3.
 //
 // A leaf: modSettings (the switches), weapons (a material's modifier),
-// mobileTypes and skills (the tables' keys). Everything that reads an
+// mobileTypes (the tables' keys). Everything that reads an
 // entity or the scene is handed in by its caller, and rrInstall.js
 // registers the seams.
 import { modSetting } from './modSettings.js';
 import { WEAPONS, weaponMaterialModifier } from '../characters/weapons.js';
 import { MOBILE_TYPES } from '../characters/mobileTypes.js';
-import { SKILLS } from './skills.js';
 
 export const RR_VENDOR = 'roleplay-realism';
 export const RR_MOD = Object.freeze({ title: 'RoleplayRealism', version: '1.8', guid: 'd828b782-46e9-40e7-8ae6-19cde308032e' });
@@ -310,13 +310,11 @@ export const RR_UNDERWORLD = Object.freeze({
 });
 export const rrUnderworldRule = (guildName) => (rrModule('underworldExpulsion') ? RR_UNDERWORLD[guildName] ?? null : null);
 
-// ---- fightersTeachHandToHand (FightersGuildRR.cs) -------------------------------------
-/** FightersGuildRR: GuildSkills and TrainingSkills with HandToHand in
- *  Giantish's place, otherwise FightersGuild's own two lists. */
-export const RR_FIGHTERS_GUILD_SKILLS = Object.freeze([SKILLS.Archery, SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.HandToHand, SKILLS.LongBlade, SKILLS.Orcish, SKILLS.ShortBlade]);
-export const RR_FIGHTERS_TRAINING_SKILLS = Object.freeze([SKILLS.Archery, SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.CriticalStrike, SKILLS.HandToHand, SKILLS.Jumping, SKILLS.LongBlade, SKILLS.Orcish, SKILLS.Running, SKILLS.ShortBlade, SKILLS.Swimming]);
-export const rrFightersGuildSkills = (guildName) => (guildName === 'FightersGuild' && rrModule('fightersTeachHandToHand') ? RR_FIGHTERS_GUILD_SKILLS : null);
-export const rrFightersTrainingSkills = (guildName) => (guildName === 'FightersGuild' && rrModule('fightersTeachHandToHand') ? RR_FIGHTERS_TRAINING_SKILLS : null);
+// ---- fightersTeachHandToHand (FightersGuildRR.cs) - RETIRED -------------------------
+// FGH2H-R (2026-09-24, Mac: "retire it"): FGH2H put HandToHand in the Fighters Guild's
+// base lists beside Giantish, so this module's lists (HandToHand in Giantish's place)
+// only took Giantish away. The switch is off the pane (modSettings.js RETIRED_KEYS) and
+// the guild reads its own lists; the Port-Ledger's FGH2H row records the departure.
 
 // ---- bedSleeping (:126-128, :464-506) ------------------------------------------
 /** A bed is one of the three furniture models; clicking one runs

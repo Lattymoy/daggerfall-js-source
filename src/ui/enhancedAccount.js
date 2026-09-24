@@ -41,6 +41,10 @@ export const GLYPH_LABEL = Object.freeze({
   sprout: 'New account',
   dev: 'Developer',
   mod: 'Moderator',
+  dm: 'Dungeon Master',   // TITLE-N: the die beside the Dungeon Master's name
+  disciple: 'Disciple',   // TITLE-N: the Patreon tiers' marks, each its title's word
+  apostle: 'Apostle',
+  hierophant: 'Hierophant',
 });
 
 /** ACC4: THE TWO FACTS MAC ASKED FOR, as words. Pure, so node pins

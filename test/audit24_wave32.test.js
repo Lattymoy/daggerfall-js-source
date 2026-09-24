@@ -149,9 +149,9 @@ test('audit24 wave32: every foe pool in the port is a subscriber, and the dungeo
   // reason - it mounts two street pools now, and its interior mode has
   // live foes whose records must knock back and die against THAT
   // building's collider rather than the street's.
-  assert.ok(x.includes('\n    foeSinks: (f) => enchantFoeSinks(f),\n'),
+  assert.ok(x.includes('\n    foeSinks: (f, fromPlayer) => enchantFoeSinks(f, fromPlayer),'),   // AUDIT 68 X4: the provenance rides the door
     'exterior.js: the cast engine routes through the membership router');
-  assert.ok(x.includes('const enchantFoeSinks = (f) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks, _insidePool, (g) => modes?.insideFoeSinksFor(g));'),
+  assert.ok(x.includes('const enchantFoeSinks = (f, fromPlayer = true) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks, _insidePool, (g, fp) => modes?.insideFoeSinksFor(g, fp), fromPlayer);'),
     '...which is built over the host\'s ONE set of doors');
   // AUDIT 58 (review): the world host's cast engine takes it through
   // the POOL-MEMBERSHIP router instead, because its interior mode has
@@ -159,19 +159,19 @@ test('audit24 wave32: every foe pool in the port is a subscriber, and the dungeo
   // against THAT building's collider - `enchantFoeSinks` still answers
   // `foeSinks` for every exterior record, so it is the same one set of
   // doors, asked the one question that can tell them apart.
-  assert.ok(w.includes('\n    foeSinks: (f) => enchantFoeSinks(f),\n'),
+  assert.ok(w.includes('\n    foeSinks: (f, fromPlayer) => enchantFoeSinks(f, fromPlayer),'),   // AUDIT 68 X4
     'world.js: and its cast engine takes that same set through the router');
-  assert.ok(w.includes('const enchantFoeSinks = (f) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks, _insidePool,'),
+  assert.ok(w.includes('const enchantFoeSinks = (f, fromPlayer = true) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks, _insidePool,'),
     'and the router is the shared law over this host\'s own foeSinks');
-  assert.ok(m.includes('const insideFoeSinks = (foe) => ({'),
+  assert.ok(m.includes('const insideFoeSinks = (foe, fromPlayer = true) => ({'),
     'the interior host\'s doors are a module-local the ticker can reach, not a method on the frame-time literal');
-  assert.ok(m.includes('insideFoeSinksFor(foe) { return insideFoeSinks(foe); },'),
+  assert.ok(m.includes('insideFoeSinksFor(foe, fromPlayer) { return insideFoeSinks(foe, fromPlayer); },'),
     'and the enchant ctx asks that ONE definition rather than a second copy');
   // the dungeon host owns its foe list inside a closure the ticker never sees,
   // so it runs the fan-out inline - on the window the tick CLAIMED, not on
   // arithmetic of its own (which had neither catch-up nor the 2880 cap).
   const d = rd('src/scenes/dungeonContext.js');
-  assert.ok(d.includes('runMagicRoundsFor(f.entity, _tick.magicRoundWindow.from, _tick.magicRoundWindow.to, { sinks: foeSinks(f) });'),
+  assert.ok(d.includes('runMagicRoundsFor(f.entity, _tick.magicRoundWindow.from, _tick.magicRoundWindow.to, { sinks: foeSinks(f, false) });'),   // AUDIT 68 S19-round-ticks-player-provenance: a round is nobody's blow
     'the dungeon frame body rides the claimed window');
   assert.ok(!/for \(let r = _prevMinute;/.test(d), 'and its old private minute loop is gone');
 });
@@ -245,7 +245,7 @@ test('audit24 wave32: paralysis reaches the exterior pools', () => {
   const cg = rd('src/scenes/cityGuards.js');
   assert.ok(cg.includes('const _gParalyzed = entityIsParalyzed(g.entity);'), 'cityGuards reads it');
   assert.ok(cg.includes('g.ai.update(dt, playerFeet, _armed(g, senses), _gParalyzed);'), 'the motor is told');   // MT-ii: same wrap
-  assert.ok(cg.includes('const events = (_gParalyzed || !_tgt) ? [] : g.attack.update(dt, g.ai, _tgt);'), 'the attack machine holds');   // MT-ii: same
+  assert.ok(cg.includes('if (!_gParalyzed && _tgt) g.attack.update(dt, g.ai, _tgt);'), 'the attack machine holds');   // MT-ii: same (AUDIT 68: the voided `events` binding is gone)
   assert.ok(cg.includes('if (!_gParalyzed && g.mobile.doMeleeDamage && _tgt) {'), 'and no blow lands');   // MT-ii: target-gated
   assert.equal(cg.includes('senses, false)'), false, 'no literal false left behind');
 });

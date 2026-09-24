@@ -98,7 +98,7 @@ test('U53: encumbrance is the same expression the sheet and the classic window u
     'LIVE strength - a drained player must not be told they can carry the undrained amount');
   // ...and the OTHER half. PlayerEntity.CarriedWeight (:184) is the
   // items PLUS the gold counter's weight, and the pane composes it by
-  // hand (enhancedInventory.js:201-202) because it is handed the list
+  // hand (enhancedInventory.js:204-226) because it is handed the list
   // and not the entity - so it must still land on inventory
   // .carriedWeight's answer.
   assert.equal(m.encumbrance.now, Math.trunc(carriedWeight(e)));
@@ -1168,7 +1168,9 @@ test('PX21c / WORLD-HOVER: the plaque names a pile without opening it, on the ta
   // under a painted plaque stranded it. The `[\s\S]` window admits the
   // comment that says so and nothing else: a statement between the
   // brace and the gate would have to contain `{` or `;`.
-  assert.match(hov, /export function worldHoverFrame\(\{[\s\S]{0,200}\}\) \{\n(?:\s*\/\/[^\n]*\n)*  if \(!worldPlaqueOn\(\)\) \{ hideWorldPlaque\(\); return null; \}/,
+  // DISC22-C: the skin is asked through BOTH faces - the DOM plaque's gate, then the classic panel's - and a page
+  // with neither takes the plaque down, still before the ray and the list
+  assert.match(hov, /export function worldHoverFrame\(\{[\s\S]{0,200}\}\) \{\n(?:\s*\/\/[^\n]*\n)*  const dom = worldPlaqueOn\(\);\n  const classic = !dom && classicPlaqueOn\(\);\n  if \(!dom && !classic\) \{ hideWorldPlaque\(\); return null; \}/,
     'the seam asks the skin as its first act - before the ray, before the list - and takes the plaque down when the answer is no');
   const show = hov.slice(hov.indexOf('export function showWorldPlaque'));
   assert.ok(show.indexOf('if (!worldPlaqueOn()) return;') < show.indexOf('const n = ensure();'),
@@ -1521,7 +1523,7 @@ test('INV1: a drag equips through the one act, and never crosses a side', () => 
   // INV2 opened the set by exactly ONE - a release off the panel is the
   // TRANSFER THE SCREEN ALREADY OFFERS (`stow` is the function behind the
   // STOW_LABEL button beside the item) - and closed it again.
-  assert.deepEqual(acts, ['dropOnBody', 'reorderPack', 'stow'],
+  assert.deepEqual(acts, ['dropOnBody', 'reorderPack', 'slotOnHotbar', 'stow'],   // HB1: a slot on the hotbar is a target too - it moves nothing, it names the kind
     `a drop performs the body act, the reorder or the screen's own transfer and NOTHING else (read: ${acts.join(', ')})`);
   assert.match(release, /if \(want\?\.kind === 'body'\) dropOnBody\(d\.item\);/, 'the body is the equip target');
 

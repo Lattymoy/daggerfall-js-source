@@ -40,6 +40,7 @@ const bootWorld = (...a) => import('./scenes/world.js').then((m) => m.bootWorld(
 import { ensureArena2, getBytes } from './scenes/dataSource.js';
 import { installCursor } from './ui/cursor.js';
 import { mountFpsCounter } from './ui/fpsCounter.js';   // FPS1: the counter, over every host
+import { setScreenshotCanvas } from './ui/screenshot.js';   // KB1: the PrintScreen action's canvas - the key itself is routed by the hosts (AUDIT KB1)
 import { getPref } from './systems/uiPrefs.js';   // FPS1: its switch
 import { publishBootParams, BOOT_DOOR_KEYS } from './systems/onlineLane.js';   // MAC-N3: the boot's params are the URL, or the online lane reads nothing
 // The deployed site is redeployed several times a day and every deploy
@@ -51,6 +52,13 @@ async function boot() {
   const canvas = document.getElementById('c');
   const renderer = new Renderer(canvas);
   const params = new URLSearchParams(location.search);
+  setScreenshotCanvas(canvas);   // KB1: once, beside the counter - the hosts' routeAction arm shoots it (AUDIT KB1: a window's F8 stays the window's)
+  // AUDIT KB1 F3: the keybinding carry's report, told on the HUD the moment a scene can speak. Loaded OFF the entry's
+  // static graph (BOOT2): the notice door reaches the box's whole import ring, and the input readers load with the
+  // first scene anyway; the sink delivers whichever of it and the registry comes first (ui/input.js).
+  Promise.all([import('./ui/input.js'), import('./systems/controlsConfig.js'), import('./systems/notify.js')])
+    .then(([input, cfg, notify]) => input.setKeybindNoticeSink((report) => { for (const line of cfg.keybindCarryNotes(report)) notify.hudTextWhenShown(line, 12); }))
+    .catch((err) => console.warn('[keybinds] the carry notice could not load:', err?.message ?? err));
   mountFpsCounter({ enabled: () => params.has('fps') || !!getPref('showFps'), stats: () => renderer.stats });   // FPS1: over every host, on the pref or the probe door; PERF3: with the renderer's counts
   const status = (msg) => {
     document.title = `Daggerfall Enhanced - ${msg}`;
@@ -229,7 +237,6 @@ async function boot() {
   if (!params.has('novideo')) {
     try {
       const { playVideo } = await import('./ui/videoPlayer.js');
-      const { getBytes } = await import('./scenes/dataSource.js');
       const { ensureAudio } = await import('./scenes/shared.js');
       status('splash');
       // AUDIT 19 F2(vid): BOOT AUDIO FIRST. The player resolves its
@@ -346,7 +353,7 @@ const rememberReload = () => {
 // Crash observability: an uncaught exception in the frame loop kills
 // requestAnimationFrame silently - on the deployed site that reads as
 // "the game crashed" with no signal. Surface the stack on screen so
-// playtest reports pinpoint the throw.
+// playtest reports pinpoint the throw. Returns the report's element.
 function crashOverlay(msg) {
   const prior = document.getElementById('crash');
   if (prior) {
@@ -355,13 +362,14 @@ function crashOverlay(msg) {
     // that names the cause - keep a count and the newest text.
     prior._count = (prior._count ?? 1) + 1;
     prior.textContent = `CRASH (${prior._count})\n${msg}`;
-    return;
+    return prior;
   }
   const el = document.createElement('pre');
   el.id = 'crash';
   el.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;max-height:45%;overflow:auto;background:#300;color:#f88;font:12px monospace;padding:8px;border:1px solid #f66;z-index:20;white-space:pre-wrap;pointer-events:none';   // PL3: a report, not a wall - it sat over the bottom half of the canvas and ate every click that should have relocked the pointer
   el.textContent = `CRASH\n${msg}`;
   document.body.appendChild(el);
+  return el;
 }
 
 addEventListener('error', (e) => crashOverlay(crashText(e.error, e) || e.message));
@@ -374,6 +382,10 @@ addEventListener('unhandledrejection', (e) => crashOverlay(`unhandled rejection\
 // cause must read as signal, never as silent black).
 document.getElementById('c')?.addEventListener('webglcontextlost', (e) => {
   e.preventDefault();
-  crashOverlay('graphics context lost (usually memory pressure on phones)\n\ntap here to reload');
-  document.getElementById('crash')?.addEventListener('click', () => location.reload());
+  const el = crashOverlay('graphics context lost (usually memory pressure on phones)\n\ntap here to reload');
+  // AUDIT 68 S02-contextlost-tap-dead: PL3 made the report click-through,
+  // so the promised tap fell to the dead canvas. This one takes taps, and
+  // by onclick - a second loss must not stack a second listener.
+  el.style.pointerEvents = 'auto';
+  el.onclick = () => location.reload();
 });

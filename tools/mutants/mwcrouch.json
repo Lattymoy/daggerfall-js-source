@@ -76,8 +76,8 @@
   {
     "name": "MWCROUCH-pressedCode-reads-the-live-accumulator-rather-than-the-frame-s-half",
     "file": "src/ui/input.js",
-    "old": "export function pressedCode(edges, code) { return !!edges?.downFrame?.has(code); }",
-    "new": "export function pressedCode(edges, code) { return !!edges?.down?.has(code); }",
+    "old": "function edgeAction(ring, keys, action) {\n  if (!ring || !ring.size || !actionLive(action)) return false;",
+    "new": "function edgeAction(ring, keys, action) {\n  if (!ring || !actionLive(action)) return false;\n  if (!ring.size) ring = keys;",
     "tests": [
       "test/mwcrouch_edges.test.js"
     ]

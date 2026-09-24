@@ -1,0 +1,31 @@
+[
+  {
+    "name": "S24-rain-stamped-before-the-source",
+    "file": "src/systems/betterAmbience.js",
+    "old": "      rainWeather = rainLoop ? w : null;",
+    "new": "      rainWeather = w;",
+    "tests": [
+      "test/audit68_systems_a.test.js"
+    ]
+  },
+  {
+    "name": "S24-gate-delay-press-keeps-last-cast",
+    "file": "src/systems/activateGate.js",
+    "old": "    if (started) gate.pressCast = false;",
+    "new": "",
+    "tests": [
+      "test/audit68_systems_a.test.js",
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "S24-namira-copied-scan",
+    "file": "src/systems/artifactEffects.js",
+    "old": "  if (!isWearingArtifact(target, ARTIFACTS.RingOfNamira)) return;",
+    "new": "  if (!Object.values(equipTableOf(target)).some((item) => item && (item.enchantments ?? []).some((e) => e?.type === ENCHANTMENT_TYPES.SpecialArtifactEffect && e.param === ARTIFACTS.RingOfNamira))) return;",
+    "tests": [
+      "test/audit68_systems_a.test.js",
+      "test/artifacts.test.js"
+    ]
+  }
+]

@@ -28,14 +28,15 @@ test('OL1: the page is online when ?online is on the URL, and nowhere else', () 
   assert.equal(isOnlinePage(), false, 'node has no location: never online');
 });
 
-test('OL1: the skin is enhanced online, over the stored choice and over ?skin=classic alike; offline the skin law is what it was', () => {
+test('OVH3 (was OL1\'s forcing): the skin is the PLAYER\'S online - the UI Overhaul they chose, the stored choice and ?skin= alike, the same law online and off; the lane forces no skin (mutant: skin back in ONLINE_FORCED_PREFS)', () => {
   _resetForTests();
-  assert.equal(uiSkin('?online=1'), 'enhanced');
-  assert.equal(uiSkin('?online=1&skin=classic'), 'enhanced', 'a shared world has one lane - the probe door loses');
-  assert.equal(isEnhanced('?online=1&skin=classic'), true);
+  assert.equal(uiSkin('?online=1'), 'enhanced', 'the default, online as off');
+  assert.equal(uiSkin('?online=1&skin=classic'), 'classic', 'the probe door answers online too');
+  assert.equal(isEnhanced('?online=1&skin=classic'), false);
   setPref('skin', 'classic');
   assert.equal(uiSkin(''), 'classic', 'offline: the stored choice');
-  assert.equal(uiSkin('?online=1'), 'enhanced', 'online: the lane');
+  assert.equal(uiSkin('?online=1'), 'classic', 'online: the same stored choice - the online panels mount on either skin (scenes/world.js chatStart)');
+  assert.equal(Object.hasOwn(ONLINE_FORCED_PREFS, 'skin'), false, 'the lane forces no skin');
   _resetForTests();
 });
 
@@ -86,8 +87,15 @@ test('OL1 - THE FUTURE HALF: every boolean switch the port declares is either fo
   assert.deepEqual(unanswered, [], 'a new switch must say whether the online lane forces it (systems/onlineLane.js ONLINE_FORCED_PREFS) or leaves it to the player (ONLINE_PLAYERS_OWN_PREFS)');
   for (const k of Object.keys(ONLINE_FORCED_PREFS)) assert.ok(Object.hasOwn(PREF_DEFAULTS, k), `${k} is a uiPrefs key`);
   for (const k of ONLINE_PLAYERS_OWN_PREFS) assert.ok(Object.hasOwn(PREF_DEFAULTS, k), `${k} is a uiPrefs key`);
-  for (const k of booleans.filter((k) => /^enhanced/.test(k))) assert.equal(ONLINE_FORCED_PREFS[k], true, `${k} is an enhancement and the lane forces it`);
-  assert.equal(ONLINE_FORCED_PREFS.skin, 'enhanced');
+  // OL-LIGHT (2026-09-24, Mac: "Can we let people disable it online"): the one enhancement left to the player online -
+  // lighting is what this screen draws, and nothing the room agrees on reads it (features.js's row says why)
+  const PLAYERS_ENHANCEMENTS = ['enhancedLighting'];
+  for (const k of booleans.filter((k) => /^enhanced/.test(k) && !PLAYERS_ENHANCEMENTS.includes(k))) assert.equal(ONLINE_FORCED_PREFS[k], true, `${k} is an enhancement and the lane forces it`);
+  for (const k of PLAYERS_ENHANCEMENTS) {
+    assert.equal(Object.hasOwn(ONLINE_FORCED_PREFS, k), false, `${k} is not forced online`);
+    assert.ok(ONLINE_PLAYERS_OWN_PREFS.includes(k), `${k} is the player's, by name`);
+  }
+  assert.equal(Object.hasOwn(ONLINE_FORCED_PREFS, 'skin'), false, 'OVH3: the skin is the player\'s UI Overhaul online');
   // MODS-ONLINE-2: the MOD half of this pin is now total and lives in
   // test/modsonline.test.js (every vendor classified, every forced key
   // a declared key at the mod's own default). What is kept here is the
@@ -126,7 +134,7 @@ test('OL1 - THE FUTURE HALF: every boolean switch the port declares is either fo
 });
 
 test('OL1 by source: the three read paths ask the one home first, the menu locks a forced switch and says why, and the Online pane says the lane', () => {
-  assert.match(rd('src/systems/uiSkin.js'), /return onlineForcedPref\('skin', search\) \?\? skinOverride\(search\) \?\? clean\(getPref\('skin'\)\) \?\? DEFAULT_SKIN;/);
+  assert.match(rd('src/systems/uiSkin.js'), /return skinOverride\(search\) \?\? clean\(getPref\('skin'\)\) \?\? DEFAULT_SKIN;/, 'OVH3: the skin reads no lane');
   assert.match(rd('src/systems/uiPrefs.js'), /export function getPref\(k\) \{\s*const forced = onlineForcedPref\(k\);[^\n]*\n\s*if \(forced !== undefined\) return forced;/);
   assert.match(rd('src/systems/modSettings.js'), /const forced = onlineForcedModSetting\(vendor, key\);[^\n]*\n\s*if \(forced !== undefined\) return forced;\s*const v = load\(\)\[vendor\]\?\.\[key\];/);
   const menu = rd('src/ui/enhancedMenu.js');
@@ -134,6 +142,6 @@ test('OL1 by source: the three read paths ask the one home first, the menu locks
   assert.match(menu, /if \(ground !== undefined\) lockOnline\(b, null, \{ note: onlineLockNote\(vendor, key\), value: ground \}\);/, 'a forced mod row is locked, with the reason it is actually locked FOR');   // WOD1: the ground's words for both terrain-writing vendors
   assert.match(menu, /function lockOnline\(b, main, \{ note = ONLINE_LOCK_NOTE, value = true \} = \{\}\) \{\s*b\.textContent = value \? 'On \(online\)' : 'Off \(online\)';/, 'the lock says so and answers nothing');
   assert.match(menu, /if \(isOnlinePage\(\)\) body\.append\(el\('p', 'meta', ONLINE_MODS_NOTE\)\);/, 'the Mods pane says it once at the top');
-  assert.match(menu, /Online is the enhanced lane: every enhancement the port owns is on for everyone\./, 'the Online pane');
+  assert.match(menu, /The shared world is the enhanced lane: every enhancement the port owns in the world is on for everyone\. The screens you play through are your own - your UI Overhaul, with the chat, your friends, the party and trading in their own panels over it\./, 'the Online pane (OVH3: the world\'s lane, the player\'s screens)');
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /## OL1 \(2026-09-14\)/, 'the record');
 });

@@ -1,5 +1,5 @@
 [
- {"name": "WIND5-as-many-as-before", "file": "src/render/windWisps.js", "old": "export const WISP_MAX = 240;", "new": "export const WISP_MAX = 650;", "tests": ["test/wind5_swirls.test.js"]},
+ {"name": "WIND5-as-many-as-before", "file": "src/render/windWisps.js", "old": "export const WISP_MAX = 120;", "new": "export const WISP_MAX = 650;", "tests": ["test/wind5_swirls.test.js"]},
  {"name": "WIND5-no-curl", "file": "src/render/windWisps.js", "old": "vec2 swirl(float s, float seed) {\n  float sc = mix(1.0, ${glslF(WISP_STROKE)}, uCurl);", "new": "vec2 swirl(float s, float seed) {\n  float sc = 1.0;", "tests": ["test/wind5_swirls.test.js"]},
  {"name": "WIND5-curl-never-tightens", "file": "src/render/windWisps.js", "old": "  float r = R0 * (1.0 - ${glslF(1 - WISP_CURL_TIGHT)} * k * k);", "new": "  float r = R0;", "tests": ["test/wind5_swirls.test.js"]},
  {"name": "WIND5-curl-kinks-at-the-join", "file": "src/render/windWisps.js", "old": "${glslF(1 - WISP_CURL_TIGHT)} * k * k);", "new": "${glslF(1 - WISP_CURL_TIGHT)} * k);", "tests": ["test/wind5_swirls.test.js"]},

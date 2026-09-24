@@ -49,7 +49,6 @@ import { modSetting } from '../systems/modSettings.js';
 import { registerBillboardXml } from '../world/billboardXml.js';
 
 export const MEANER_MONSTERS_VENDOR = 'meanerMonsters';
-export const MEANER_MONSTERS_VERSION = '1.5.2';
 
 /** EnemyData(id, name, level, minHp, maxHp, armor, minDmg, maxDmg,
  *  minDmg2, maxDmg2, minDmg3, maxDmg3, moveSnd, barkSnd, attackSnd,

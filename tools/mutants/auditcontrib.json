@@ -1,0 +1,195 @@
+[
+  {
+    "name": "A1-the-touch-probe-eats-the-resurrect",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (sp.rangeType === 1 && !raising) {",
+    "new": "    if (sp.rangeType === 1) {",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "A2-every-socket-copy-is-a-death",
+    "file": "src/net/online.js",
+    "old": "        if (!this._fallen.has(m.id)) {",
+    "new": "        if (true) {",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "A2-a-rise-never-clears-the-death",
+    "file": "src/net/online.js",
+    "old": "      if (!pose.dd) this._fallen.delete(m.id);\n",
+    "new": "",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "A3-a-body-the-walls-took-never-returns",
+    "file": "src/net/remotePlayers.js",
+    "old": "    if (!here || this._now() >= e.until) return;",
+    "new": "    if (!here || this._now() >= e.until || e.cried) return;",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "A3-a-restood-body-cries-again",
+    "file": "src/net/remotePlayers.js",
+    "old": "{ until: e.until, quiet: e.cried });",
+    "new": "{ until: e.until, quiet: false });",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "A3-no-minute-on-a-restood-body",
+    "file": "src/net/remotePlayers.js",
+    "old": "    if (!here || this._now() >= e.until) return;",
+    "new": "    if (!here) return;",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "A5-the-classic-online-screen-ends-in-three-seconds",
+    "file": "src/ui/deathScreen.js",
+    "old": "    if (!this.fall && !this.online) { this.sequence.tick(dt); return; }",
+    "new": "    if (!this.fall) { this.sequence.tick(dt); return; }",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "A4-the-rise-keeps-the-sky",
+    "file": "src/ui/deathScreen.js",
+    "old": "    if (this._view) { this._view.cam.pitch = this._view.pitch; this._view = null; }\n    removeEnhancedDeath();",
+    "new": "    removeEnhancedDeath();",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "P1-every-survivor-adopts",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "  const heirIsMe = (r) => typeof r.e === 'string' && r.e !== '' && r.e === _net?.selfId?.();",
+    "new": "  const heirIsMe = (r) => typeof r.e === 'string' && r.e !== '';",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "P1-the-heir-never-rides",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": " const h = heirOf(f) ?? null; f._heir = h; if (h) r.e = h; }",
+    "new": " const h = heirOf(f) ?? null; f._heir = h; }",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "P1-the-wire-drops-the-heir",
+    "file": "src/net/wire.js",
+    "old": "return null; out.e = r.e; }",
+    "new": "return null; }",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "P3-the-owner-drops-what-nobody-took",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (!heir || f.puppet || f.dead) continue;",
+    "new": "      if (f.puppet || f.dead) continue;",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "U1-every-one-shot-stamps-the-click",
+    "file": "src/systems/audio.js",
+    "old": "    if (globalThis.event && typeof globalThis.event.type === 'string') this.lastOneShotAt",
+    "new": "    this.lastOneShotAt",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "H1-the-diamond-routes-under-the-hotbar",
+    "file": "src/ui/input.js",
+    "old": "    case 'QuickUse1': return !hotbarInForce() && ctx.quickUse?.(1) === true;",
+    "new": "    case 'QuickUse1': return ctx.quickUse?.(1) === true;",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "H1-the-diamond-holds-tap-under-the-hotbar",
+    "file": "src/systems/quickslots.js",
+    "old": " || hotbarInForce()) {   // AUDIT CONTRIB H1",
+    "new": ") {   // AUDIT CONTRIB H1",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "H1-a-switched-off-mod-holds-its-keys",
+    "file": "src/systems/inputActions.js",
+    "old": "  return !vendor || !!modSetting(vendor, 'Enabled');",
+    "new": "  return true;",
+    "tests": [
+      "test/auditcontrib.test.js",
+      "test/kb1_keybinds.test.js",
+      "test/eotb_audit2.test.js"
+    ]
+  },
+  {
+    "name": "H1-the-bar-eats-a-mods-hotkey",
+    "file": "src/ui/enhancedHotbar.js",
+    "old": "  const i = HOTBAR_SLOT_ACTIONS.indexOf(eventAction(e));   // AUDIT KB1: the event's own read - a listener writes no latch",
+    "new": "  const i = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0'].indexOf(e.code);",
+    "tests": [
+      "test/auditcontrib.test.js",
+      "test/pad1.test.js"
+    ]
+  },
+  {
+    "name": "H1-the-bar-eats-a-bound-digit",
+    "file": "src/systems/inputActions.js",
+    "old": "  ['Digit5', 'Hotbar5'],",
+    "new": "  ['Digit5', 'HorseMount'],",
+    "tests": [
+      "test/auditcontrib.test.js",
+      "test/kb1_keybinds.test.js"
+    ]
+  },
+  {
+    "name": "H2-the-other-light-of-the-kind",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (lit && quickslotKey(lit) === e.key) { item = lit; count = Math.max(count, 1); }\n",
+    "new": "",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "H3-every-press-is-done",
+    "file": "src/systems/quickslots.js",
+    "old": "    return r && !performedOk(r) ? { kind: 'refused', name: e.name, by: r.kind } : { kind: done, name: e.name };",
+    "new": "    return { kind: done, name: e.name };",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "H3-a-refused-ready-is-a-press",
+    "file": "src/systems/quickslots.js",
+    "old": "took === false ? 'refused' : 'pressed'",
+    "new": "'pressed'",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  }
+]

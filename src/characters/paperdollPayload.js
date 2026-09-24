@@ -27,7 +27,7 @@
 import { buildNeutralBody, WRIST_JUNCTION_Y, ARM_X, NECK_PIVOT_Y } from './neutralBody.js';
 import { ATTACKS_1H, ATTACKS_2H, ATTACKS_RANGED, ATTACKS_FP, REACTIONS, DIRECTION_TO_STRIKE, STRIKES } from './anims.js';
 import { STEEL_RAMP } from './pieces/cuirass.js';
-import { CLOTH_RAMP, MAIL_RAMP, LEATHER_RAMP } from './pieces/pieceLoft.js';
+import { CLOTH_RAMP } from './pieces/pieceLoft.js';
 // AUDIT 39: `buildCuirass`, `buildGreaves`, `clothingZones` and
 // `armorZones` were imported here and never called - the four
 // item-to-geometry modules (pieces/cuirass.js, pieces/greaves.js,
@@ -58,12 +58,11 @@ import { ATRONACH_DESIGNS, atronachOpts } from './atronachs.js';
 import { BEAST_DESIGNS, beastOpts, ALL_GROUPS } from './beasts.js';
 import { ENEMY_BASICS } from './enemyBasics.js';
 import { buildBeastBody, buildBeastTail } from './pieces/beastBody.js';
-import { buildBeastHead, WOLF_RAMP } from './pieces/beastHead.js';
+import { buildBeastHead, buildHorns } from './pieces/beastHead.js';
 import { buildArachnid, buildSting } from './pieces/arachnid.js';
 import { buildWings } from './pieces/wings.js';
 import { buildFishBody } from './pieces/fishBody.js';
 import { DAEDRA_DESIGNS, daedraOpts } from './daedra.js';
-import { buildHorns } from './pieces/beastHead.js';
 import { buildRibcage, buildPelvis, BONE_RAMP } from './pieces/skeletonBones.js';
 import { buildHorseBody, BAY_RAMP } from './pieces/centaurBody.js';
 import { buildTusks, buildBrow, IVORY_RAMP } from './pieces/orcHead.js';
@@ -166,31 +165,17 @@ export function buildPaperdollPayload(pal, img, cif) {
   const ramps = haveData
     ? { skin: rampOf(40, 60, (x) => Math.abs(x - 34) < 14), boot: rampOf(132, 144) }
     : { skin: PALETTES.human[1].ramp, boot: OUR_BOOT };
-  // Character FACE sprite (FACE00I0 record 0) projected onto the head front.
-  // The face is the one thing with no substitute of ours: it is a
-  // sprite, not a colour, so without ARENA2 the head simply has none.
-  // Everything else about the figure is unaffected.
-  let face = null;
-  if (cif) {
-    const fb = cif.getDFBitmap(0, 0);
-    const faceRgb = [];
-    for (let i2 = 0; i2 < fb.data.length; i2++) {
-      const idx = fb.data[i2];
-      if (idx) { const c = pal.get(idx); faceRgb.push([c.r, c.g, c.b]); } else faceRgb.push(null);
-    }
-    face = { w: fb.width, h: fb.height, rgb: faceRgb };
-  }
-
   // (The old `outfit`/`armor`/`mats` sample zones were built and never
   // passed to anything - the cloth path had no consumer until the
   // villager designs below became its first.)
-  // THE FACE WAS DECODED AND THROWN AWAY. This object has been built from
-  // FACE00I0 and handed to buildNeutralBody as `{ face }` since the race
-  // system landed, and buildNeutralBody reads opts.build / clothZones /
-  // armorZones / mats / cloth - never opts.face. So the head has never had
-  // one. It is shipped in the payload now and composited onto the head by
+  // THE FACE (FACE00I0) is the one thing with no substitute of ours: it
+  // is a sprite, not a colour, so without ARENA2 the head simply has
+  // none. It is shipped in the payload and composited onto the head by
   // the viewer, which is where a sprite belongs: it cannot be baked into
-  // public/skin/ because a render of game data IS game data.
+  // public/skin/ because a render of game data IS game data. AUDIT 68
+  // S05-payload-housekeeping: a record-0 decode was also handed to every
+  // buildNeutralBody here as `{ face }`, which reads opts.build /
+  // clothZones / armorZones / mats / cloth and never opts.face - gone.
   let faceSet = null;
   if (cif) {
     faceSet = [];
@@ -208,7 +193,7 @@ export function buildPaperdollPayload(pal, img, cif) {
     if (!faceSet.length) faceSet = null;
   }
 
-  const faces = buildNeutralBody(ramps, { face });
+  const faces = buildNeutralBody(ramps);
 
   // ═════════════════════════════════════════════════════════════════
   // HOW WIDE A GARMENT HAS TO BE, MEASURED RATHER THAN GUESSED
@@ -302,14 +287,11 @@ export function buildPaperdollPayload(pal, img, cif) {
   let minY = 1e9, maxY = -1e9;
   for (const f of faces) for (let i=0;i<4;i++){ const y=f.p[i*3+1]; if(y<minY)minY=y; if(y>maxY)maxY=y; }
   const GI = { body:0, head:1, armL:2, armR:3, legL:4, legR:5 };
-  const P=[], N=[], C=[], G=[], Ib=[];
-  for (const f of faces) {
-    for (let i=0;i<4;i++) P.push(Math.round(f.p[i*3]*1000), Math.round(f.p[i*3+1]*1000), Math.round(f.p[i*3+2]*1000));
-    N.push(Math.round(f.n[0]*127), Math.round(f.n[1]*127), Math.round(f.n[2]*127));
-    C.push(f.c[0], f.c[1], f.c[2]);
-    Ib.push(Math.round((f._i ?? 0.6) * 255));
-    G.push(GI[f.g] ?? 0);
-  }
+  // Every mesh the viewer draws - the base body and each piece - packs
+  // through this one encoder (AUDIT 68 S05-payload-housekeeping: the
+  // base body had its own copy of it).
+  const packPiece = (pf) => { const pP=[], pN=[], pC=[], pG=[], pI=[]; for (const f of pf) { for (let i=0;i<4;i++) pP.push(Math.round(f.p[i*3]*1000), Math.round(f.p[i*3+1]*1000), Math.round(f.p[i*3+2]*1000)); pN.push(Math.round(f.n[0]*127), Math.round(f.n[1]*127), Math.round(f.n[2]*127)); pC.push(f.c[0], f.c[1], f.c[2]); pI.push(Math.round((f._i ?? 0.6) * 255)); pG.push(GI[f.g] ?? 0); } return { P: pP, N: pN, C: pC, G: pG, I: pI }; };
+  const { P, N, C, G, I: Ib } = packPiece(faces);
   // ── the VILLAGER DESIGNS (editor only - nothing here touches a game
   // host). A design's zones DISPLACE the body's own faces and recolour
   // them; they never add geometry, so all 25 share the base body's face
@@ -319,7 +301,7 @@ export function buildPaperdollPayload(pal, img, cif) {
   // colour. Normals are untouched (displace moves corners radially and
   // leaves f.n alone), so the delta carries none.
   const villagerPacks = VILLAGER_DESIGNS.map((d) => {
-    const vf = buildNeutralBody(ramps, { face, ...designOpts(d, pal) });
+    const vf = buildNeutralBody(ramps, designOpts(d, pal));
     return {
       archive: d.archive, race: d.race, gender: d.gender, name: d.name, build: d.build,
       tone: RACE_TONE[d.race],
@@ -332,9 +314,6 @@ export function buildPaperdollPayload(pal, img, cif) {
       ...villagerDelta(faces, vf),
     };
   });
-
-  // armor pieces (separate meshes in the viewer, toggleable).
-  const packPiece = (pf) => { const pP=[], pN=[], pC=[], pG=[], pI=[]; for (const f of pf) { for (let i=0;i<4;i++) pP.push(Math.round(f.p[i*3]*1000), Math.round(f.p[i*3+1]*1000), Math.round(f.p[i*3+2]*1000)); pN.push(Math.round(f.n[0]*127), Math.round(f.n[1]*127), Math.round(f.n[2]*127)); pC.push(f.c[0], f.c[1], f.c[2]); pI.push(Math.round((f._i ?? 0.6) * 255)); pG.push(GI[f.g] ?? 0); } return { P: pP, N: pN, C: pC, G: pG, I: pI }; };
 
   // ── HAIR. AUDIT 39: pieces/hair.js built seven styles in three
   // colours and the viewer had the whole consumer written -
@@ -367,7 +346,7 @@ export function buildPaperdollPayload(pal, img, cif) {
   // shader, it is a different root anchor and a different length.
   const orcPacks = ORC_DESIGNS.map((d) => {
     const { ramps: oramps, opts, hide } = orcOpts(d, pal);
-    const of = buildNeutralBody(oramps, { face, ...opts });
+    const of = buildNeutralBody(oramps, opts);
     return {
       id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
       build: d.build, hide,
@@ -410,7 +389,7 @@ export function buildPaperdollPayload(pal, img, cif) {
 
   const undeadPacks = UNDEAD_DESIGNS.map((d) => {
     const { ramps: uramps, opts, hide, drape } = undeadOpts(d, pal);
-    let uf = buildNeutralBody(uramps, { face, ...opts });
+    let uf = buildNeutralBody(uramps, opts);
     // A design with a body of its own has no use for the rig's legs.
     if (d.collapse) uf = collapseGroups(uf, d.collapse, [0, 0.8, -0.2]);
     return {
@@ -442,7 +421,7 @@ export function buildPaperdollPayload(pal, img, cif) {
   // file, which is the return on all of it.
   const classPacks = CLASS_DESIGNS.map((d) => {
     const { ramps: cramps, opts, hide, drape } = classOpts(d, pal);
-    const cf = buildNeutralBody(cramps, { face, ...opts });
+    const cf = buildNeutralBody(cramps, opts);
     return {
       id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
       build: d.build, zones: d.zones, hide, drape: withFit(drape, cf),
@@ -458,7 +437,7 @@ export function buildPaperdollPayload(pal, img, cif) {
   // ice, solid for iron and flesh.
   const atronachPacks = ATRONACH_DESIGNS.map((d) => {
     const { ramps: aramps, opts, hide } = atronachOpts(d, pal);
-    const af = buildNeutralBody(aramps, { face, ...opts });
+    const af = buildNeutralBody(aramps, opts);
     return {
       id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
       build: d.build, zones: d.zones, hide, spectral: d.spectral || null,
@@ -478,7 +457,7 @@ export function buildPaperdollPayload(pal, img, cif) {
   // the same path a man does.
   const beastPacks = BEAST_DESIGNS.map((d) => {
     const { ramps: bramps, opts, hide, pelt, drape } = beastOpts(d, pal);
-    let bf = buildNeutralBody(bramps, { face, ...opts });
+    let bf = buildNeutralBody(bramps, opts);
     // TWO KINDS OF DESIGN IN ONE LINE. A full beast collapses ALL six
     // groups and its piece is the whole animal. A werebeast collapses
     // only the HEAD and keeps the man's body — it is a man with the
@@ -543,7 +522,7 @@ export function buildPaperdollPayload(pal, img, cif) {
   // twentieth enemy cost a file and the forty-sixth costs a line.
   const daedraPacks = DAEDRA_DESIGNS.map((d) => {
     const { ramps: dramps, opts, hide, drape } = daedraOpts(d, pal);
-    let df = buildNeutralBody(dramps, { face, ...opts });
+    let df = buildNeutralBody(dramps, opts);
     if (d.collapse) df = collapseGroups(df, d.collapse, [0, 1.5, 0]);
     return {
       id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
@@ -557,13 +536,12 @@ export function buildPaperdollPayload(pal, img, cif) {
 
   // Per-race body colours: same geometry, re-shaded with the race hide/fur.
   const colorsOf = (fs) => { const c=[]; for (const f of fs) c.push(f.c[0], f.c[1], f.c[2]); return c; };
-  const Ck = colorsOf(buildNeutralBody({ skin: KHAJIIT_FUR, boot: ramps.boot }, { face }));
-  const Ca = colorsOf(buildNeutralBody({ skin: ARGONIAN_HIDE, boot: ramps.boot }, { face }));
-  const CLOTH_D = [[58,48,38],[86,72,54],[118,100,74],[150,128,96],[180,158,122],[206,186,150]];
+  const Ck = colorsOf(buildNeutralBody({ skin: KHAJIIT_FUR, boot: ramps.boot }));
+  const Ca = colorsOf(buildNeutralBody({ skin: ARGONIAN_HIDE, boot: ramps.boot }));
   const drapeGridsOut = {}, drapedPacks = {};
   for (const nm of DRAPED_NAMES) { const g = drapedGrid(nm);
     if (g) drapeGridsOut[nm] = { rows: g.rows, cols: g.cols, wrap: g.wrap, pos: Array.from(g.pos), faces: g.faces };
-    else drapedPacks[nm] = packPiece(drapedPiece(nm, CLOTH_D)); }
+    else drapedPacks[nm] = packPiece(drapedPiece(nm, CLOTH_RAMP)); }
   const payload = ({ n: faces.length, Ck, Ca, Ib, PALETTES, draped: drapedPacks, drapeGrids: drapeGridsOut, drapeMaterials: DRAPE_MATERIAL, bodyCore: BODY_CORE, poses: POSES, wristY: WRIST_JUNCTION_Y * 0.9, armX: ARM_X, neckY: NECK_PIVOT_Y * 0.9, attacks: ATTACKS_1H, attacks2H: ATTACKS_2H, attacksRanged: ATTACKS_RANGED, attacksFP: ATTACKS_FP, reactions: REACTIONS, strikes: STRIKES, dirToStrike: DIRECTION_TO_STRIKE,
     // WEAPON REGISTRY: [{name, hands, pack, items}] - the viewer's
     // weapon list is data. Steel display mesh; per-material items.
@@ -573,7 +551,7 @@ export function buildPaperdollPayload(pal, img, cif) {
     // the Khajiit's BODY06I0.IMG (RaceTemplate.cs:315). DFU swaps the body
     // image per race precisely because one race's body never carries
     // another's colour, so the tails take the race hide/fur ramps - the
-    // same ones raceCharacter.js:48-49 shades the in-engine bake with.
+    // same ones raceCharacter.js:47-48 shades the in-engine bake with.
     faceSet,
     hair: hairPacks, hairRamps: HAIR_RAMPS,
     tail: packPiece(buildTail(ARGONIAN_HIDE, 'argonian')),
@@ -597,7 +575,7 @@ export function buildPaperdollPayload(pal, img, cif) {
       return list;
     })(),
     swordRamps: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, weaponMaterialRamp(v, (i) => pal.get(i))])),
-    swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, drapedNames: DRAPED_NAMES, villagers: villagerPacks, orcs: orcPacks, undead: undeadPacks, classes: classPacks, atronachs: atronachPacks, beasts: beastPacks, daedra: daedraPacks, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
+    swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_RAMP, drapedNames: DRAPED_NAMES, villagers: villagerPacks, orcs: orcPacks, undead: undeadPacks, classes: classPacks, atronachs: atronachPacks, beasts: beastPacks, daedra: daedraPacks, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
 
   return payload;
 }

@@ -26,7 +26,7 @@
 
 **Base:** *Configure Daggerfall — the Stone Hall* (category rail + list pane + permanent help + honest tiers).
 **Grafted:** the Deck's *value‑is‑a‑word* rule, ASCII‑33 glyph law, range‑equals‑clamp pin, drag‑suppresses‑tap, per‑row revert, save‑failure surfacing, INFO rows. The Five Pages' *unavailable readout* ("what you get instead"), permanent help panel, computed tally, reserved MODS panel, DFU's own words kept verbatim in a detail dialog.
-**Dropped as fatal:** `nativeMetrics` on this screen (halves phone text); hiding `unavailable` rows behind a filter (breaks `settings.js:84‑81`); reuse of `listPicker.js` / `messageBox.js` (own metric + un‑preloaded ARENA2 art pre‑game); reuse of `attachTouch` (drops the gameplay HUD over the screen); orientation gating; three‑state view filters; `stored` rows drawn identically to `live`; 1px low‑contrast focus ring; audio previews that are silent because `ensureAudio` never ran.
+**Dropped as fatal:** `nativeMetrics` on this screen (halves phone text); hiding `unavailable` rows behind a filter (breaks `settings.js:85‑81`); reuse of `listPicker.js` / `messageBox.js` (own metric + un‑preloaded ARENA2 art pre‑game); reuse of `attachTouch` (drops the gameplay HUD over the screen); orientation gating; three‑state view filters; `stored` rows drawn identically to `live`; 1px low‑contrast focus ring; audio previews that are silent because `ensureAudio` never ran.
 
 **The one structural change that replaces all the view filters: TIER IS A GROUP.** Every category's list is three collapsible groups — `WORKS NOW`, `SAVED FOR LATER`, `NOT AVAILABLE HERE` — each with a live count in its heading. Nothing is ever hidden (the count is always on screen), the beginner sees a short list (the last two groups ship collapsed), and the veteran opens them with one keypress. There is no `common` flag, no `Show:` control, no `All keys` view.
 
@@ -37,22 +37,22 @@
 | Fact | Where |
 |---|---|
 | 171 keys / 13 sections, all raw strings | `src/systems/settingsDefaults.js`, pinned `test/settings.test.js:35‑35` |
-| Tier counts today: **8 live, 18 unavailable, 145 stored** | `src/systems/settings.js:64‑101` |
-| `canvas.width = canvas.clientWidth` — CSS px, **DPR 1** | `src/render/renderer.js:1427‑1064` |
-| `nativeMetrics` floors to **s=1 on every phone in both orientations** | `src/ui/nativePanel.js:28‑31` |
+| Tier counts today: **8 live, 18 unavailable, 145 stored** | `src/systems/settings.js:65‑101` |
+| `canvas.width = canvas.clientWidth` — CSS px, **DPR 1** | `src/render/renderer.js:1397‑1064` |
+| `nativeMetrics` floors to **s=1 on every phone in both orientations** | `src/ui/nativePanel.js:29‑31` |
 | Today's launcher draws at a **hardcoded `s=2`** | `src/scenes/launcherScene.js:62`, `:82` | *(DELETED at FD1, 2026-09-11)*
 | FONT0003: `fixedWidth 5`, `fixedHeight 7`, space glyph 4 | pinned `test/audit18_ui_native.test.js:66‑70` |
-| `FNT_ASCII_START = 33`; codes < 33 draw as a space; **no arrow / ellipsis / degree / middle‑dot glyph exists** | `src/formats/fntFile.js:15`, `src/ui/text.js:80‑86` |
-| `measureText` takes `font.fnt`, returns virtual px at scale 1 | `src/ui/text.js:60‑67` |
-| `drawRect` / `shadowText` / `drawImg` consume `{s, ox, oy}` — **any** metric object works | `src/ui/nativePanel.js:68‑84` |
-| `layoutMessageBox` hard‑codes `(320‑w)/2, (200‑h)/2`; `drawMessageBox` returns `false` unless SPOP.RCI is preloaded — and nothing preloads it before the game | `src/ui/messageBox.js:144`, `:203` |
+| `FNT_ASCII_START = 33`; codes < 33 draw as a space; **no arrow / ellipsis / degree / middle‑dot glyph exists** | `src/formats/fntFile.js:15`, `src/ui/text.js:158‑86` |
+| `measureText` takes `font.fnt`, returns virtual px at scale 1 | `src/ui/text.js:134‑67` |
+| `drawRect` / `shadowText` / `drawImg` consume `{s, ox, oy}` — **any** metric object works | `src/ui/nativePanel.js:77‑84` |
+| `layoutMessageBox` hard‑codes `(320‑w)/2, (200‑h)/2`; `drawMessageBox` returns `false` unless SPOP.RCI is preloaded — and nothing preloads it before the game | `src/ui/messageBox.js:146`, `:218` |
 | `ListPickerWindow.draw` calls `nativeMetrics(canvas)` **itself** | `src/ui/listPicker.js:148` |
 | `attachTouch` is called only by world/interior/exterior/dungeon; it unconditionally builds F5/F6/☰/C/SV/LD + a movement stick claiming the left half of the viewport | `src/ui/touch.js:52‑190` |
-| `ensureAudio(fetch)` is exported from `src/scenes/shared.js:491`, is safe un‑awaited, and `audio.ensure` attaches its own gesture‑resume (`src/systems/audio.js:152`, `ensure`) | — |
+| `ensureAudio(fetch)` is exported from `src/scenes/shared.js:488`, is safe un‑awaited, and `audio.ensure` attaches its own gesture‑resume (`src/systems/audio.js:152`, `ensure`) | — |
 | `audio._out()` re‑reads `Controls/SoundVolume` on every connection (`audio.js:68`) — so a `DungeonDoorOpen` preview really demonstrates the slider | — |
 | `lookSettings.js:20` clamps `MouseLookSensitivity` to **0.1..4.0** while DFU's slider runs to 16.0 | — |
-| `saveSettings()`'s boolean is discarded at `launcher.js:100, :122, :193` **and inside `settings.js:240`** | — |
-| `SETTINGS_LABELS` (140 entries) / `SETTINGS_INFO` (78) are keyed by **DFU UI control names**, not ini keys; **no production file imports them** | `src/systems/settingsText.js:9`, `:152` |
+| `saveSettings()`'s boolean is discarded at `launcher.js:100, :122, :193` **and inside `settings.js:241`** | — |
+| `SETTINGS_LABELS` (139 entries) / `SETTINGS_INFO` (78) are keyed by **DFU UI control names**, not ini keys; **no production file imports them** | `src/systems/settingsText.js:9`, `:151` |
 | `wrapText(fnt, text, maxWidth)` exists | `src/ui/talkWindow.js:17` |
 | `SOUND.ButtonClick = 360`, `SOUND.DungeonDoorOpen = 25` | `src/systems/soundClips.js:32`, `:9` |
 | `index.html` sets `user-scalable=no`, `touch-action:none`, `viewport-fit=cover`, no safe‑area insets | — |
@@ -299,7 +299,7 @@ Daggerfall/MyDaggerfallUnityScreenshotsPath (NA) Screenshot Folder
 
 `helpOf(key)` resolves:
 1. `HELP[key]` — authored (the curated sentences).
-2. `SETTINGS_INFO[DFU_TEXT_KEY[key]]` — DFU's own tooltip (`settingsText.js:152`). `DFU_TEXT_KEY` is a hand‑built ini‑key → DFU‑UI‑key alias map in `settingsCopy.js` (~66 entries: `Video/FieldOfView→fovSlider`, `Controls/MouseLookSensitivity→mouseSensitivity`, `Enhancements/LypyL_ModSystem→modSystem`, `Spells/EnableSpellLighting→spellLighting`, `GUI/EnableToolTips→toolTips`, `Video/ResolutionWidth→resolution`, …). Every alias must resolve (T2).
+2. `SETTINGS_INFO[DFU_TEXT_KEY[key]]` — DFU's own tooltip (`settingsText.js:151`). `DFU_TEXT_KEY` is a hand‑built ini‑key → DFU‑UI‑key alias map in `settingsCopy.js` (~66 entries: `Video/FieldOfView→fovSlider`, `Controls/MouseLookSensitivity→mouseSensitivity`, `Enhancements/LypyL_ModSystem→modSystem`, `Spells/EnableSpellLighting→spellLighting`, `GUI/EnableToolTips→toolTips`, `Video/ResolutionWidth→resolution`, …). Every alias must resolve (T2).
 3. Otherwise `''` — the help panel then shows only the status line, and the detail dialog says *"Daggerfall Unity ships no description for this one."*
 
 **Copy pins (T2/T3):** authored labels ≤ 26 chars; authored help ≤ 100 chars; category blurbs ≤ 100 chars; every authored string matches `/^[\x20-\x7E]+$/` (ASCII 32..126 only — no `…`, `·`, `°`, `—`, `“”`, `–`). Truncation is never permitted anywhere on this screen: labels wrap (≤ 2 lines at 216px, ≤ 3 at 138px), help wraps into the panel's budget.
@@ -480,7 +480,7 @@ Rows with no control (`readout`, `blocked`, `unavailable`, `info`) have `ctrlRec
 
 Everything is `nativePanel.drawRect` + `nativePanel.shadowText`. **No ARENA2 art is loaded by this screen** (SPOP.RCI / BUTTONS.RCI / PICK00I0.IMG are only preloaded by scenes that run *after* the launcher). **No glyph outside ASCII 33..126 is ever passed to `drawText`** — `FNT_ASCII_START = 33` (`fntFile.js:15`) means every arrow, ellipsis, degree sign and middle dot silently becomes a space. Every triangle/chevron/lock/knob is built from `drawRect`. Separators are `" - "`, truncation markers are `"..."`, "65 deg" not "65°".
 
-Text inside a filled button (PLAY, a selected rail plate, a dialog button) is drawn with **no shadow** — DFU's `ShadowPosition = zero` case, precedent `guildServiceWindow.js:178‑177`. Everything else goes through `shadowText` (DFU's `AddDefaultShadowedTextLabel`, `nativePanel.js:24‑25`, `:78‑84`).
+Text inside a filled button (PLAY, a selected rail plate, a dialog button) is drawn with **no shadow** — DFU's `ShadowPosition = zero` case, precedent `guildServiceWindow.js:178‑177`. Everything else goes through `shadowText` (DFU's `AddDefaultShadowedTextLabel`, `nativePanel.js:25‑25`, `:78‑84`).
 
 ### 3.1 `widgetFor(key)` — total, decidable, no implementer judgement
 
@@ -530,7 +530,7 @@ Rule 8 is the honesty rule: **the port never invents a range or an option name.*
 | `Enhancements/PlayerTorchLightScale` | 0 | 1 | 0.05 | 0.2 | pct | LAW `:333-341` |
 | `Controls/MouseLookSmoothingFactor` | 0 | 1 | 0.05 | 0.2 | pct | **OURS** (flagged: the natural range of a stored 0..1 factor) |
 
-**Range‑equals‑clamp law (pinned, T5).** A slider must never offer travel its consumer ignores. `MouseLookSensitivity` runs to 4.0, not DFU's 16.0, and its help line says: *"Daggerfall Unity allows up to 16; this port applies up to 4."* Every getter call in this screen passes **both** `min` and `max` — `settings.js:164` clamps with `Math.min(max, …)`, so a min without a max yields `NaN`.
+**Range‑equals‑clamp law (pinned, T5).** A slider must never offer travel its consumer ignores. `MouseLookSensitivity` runs to 4.0, not DFU's 16.0, and its help line says: *"Daggerfall Unity allows up to 16; this port applies up to 4."* Every getter call in this screen passes **both** `min` and `max` — `settings.js:165` clamps with `Math.min(max, …)`, so a min without a max yields `NaN`.
 
 **`TEXT_LAW`** — `Controls/WeaponAttackThreshold`: `maxChars 5`, clamp `0.001..1.0` **on commit** (LAW `:444`).
 **`COLOUR_KEYS`** (8): `GUI/ToolTipTextColor`, `GUI/ToolTipBackgroundColor`, `Map/AutomapTempleColor`, `Map/AutomapShopColor`, `Map/AutomapTavernColor`, `Map/AutomapHouseColor`, `Map/DunMicMapInnerColor`, `Map/DunMicMapBorderColor`. Stored as **8‑hex `RRGGBBAA`** (alpha is load‑bearing: `ToolTipBackgroundColor` ships `404040D2`).
@@ -601,7 +601,7 @@ Coordinates below are relative to `ctrlRight = rx + rw - 3`, `ly = ry + rh - 9`.
 * Every commit calls `setValue` then `SOUND.ButtonClick` then schedules a save.
 * **Saves are debounced**: `saveSettings()` runs on `pointerup`, on `keyup`, after 250 ms idle, and unconditionally on leaving the screen. A drag never hammers `localStorage`.
 * **The boolean is consumed at every write site.** `saveSettings() === false` sets `win.saveFailed = true`, which paints `NOT SAVED` in the title bar (WARN) and raises a one‑per‑session dialog: *"Your settings could not be saved. This browser is blocking storage; private windows often do. Your changes will work until you close the tab."* This is new behaviour — all three current call sites discard the boolean.
-* **Per‑row revert**: `Backspace` on the focused row, and a `[ Reset ]` button inside the detail dialog, call `setValue(section, key, DEFAULTS[section][key])` — which `settings.js:216-220` turns into deleting the override. The help status line always names the default when the row differs from it.
+* **Per‑row revert**: `Backspace` on the focused row, and a `[ Reset ]` button inside the detail dialog, call `setValue(section, key, DEFAULTS[section][key])` — which `settings.js:217-221` turns into deleting the override. The help status line always names the default when the row differs from it.
 * **Global reset** goes through a Yes/No dialog (`R` never fires bare — today `launcher.js:132` wipes 171 keys on one keystroke). "Yes" calls `resetToDefaults()` **and reads its return value** (see §9 companion change) plus `resetPrefs()`.
 
 ### 3.6 Dialogs — `src/ui/settingsDialog.js` (OURS, no ARENA2 art)  <!-- DELETED from the plan: folded into settingsWindow.js -->
@@ -612,7 +612,7 @@ One chrome for all of them. Panel is centred **on the page**, not on 320×200:
 w = Math.min(pageW - 12, 240)
 h = 6 + titleH + bodyLines*LINE_H + 4 + btnH + 6
 x = Math.floor((pageW - w)/2), y = Math.max(4, Math.floor((pageH - h)/2))
-dim   = SCREEN_DIM over the whole CANVAS   (nativePanel.js:26)
+dim   = SCREEN_DIM over the whole CANVAS   (nativePanel.js:27)
 frame = 1px BORDER, fill PANEL_DEEP
 btnH  = Math.max(14, TAP);  buttons right-aligned, 6 apart, width = max(44, measure+12)
 ```
@@ -632,7 +632,7 @@ Five dialogs:
 
 ### 4.1 The group is the disclosure
 
-`WORKS NOW (n)` / `SAVED FOR LATER (n)` / `NOT AVAILABLE HERE (n)` — always present with a live count, never filtered away. This satisfies `settings.js:84-87` literally ("*a hidden setting is a setting the player cannot find out about*") while keeping the default view to one short group. No `stored` or `unavailable` row can ever be mistaken for a working one, because reaching it requires opening a group whose heading says what it holds.
+`WORKS NOW (n)` / `SAVED FOR LATER (n)` / `NOT AVAILABLE HERE (n)` — always present with a live count, never filtered away. This satisfies `settings.js:85-88` literally ("*a hidden setting is a setting the player cannot find out about*") while keeping the default view to one short group. No `stored` or `unavailable` row can ever be mistaken for a working one, because reaching it requires opening a group whose heading says what it holds.
 
 ### 4.2 Per‑row treatment
 
@@ -696,7 +696,7 @@ Category 7, `mods`, is a permanent rail plate. Its list, top to bottom:
 2. **`WORKS NOW (1)`** → the info row `Where Your Game Files Came From`, value from `deps.dataSourceLabel()` (§7.4): `bundled with the page` / `files you chose` / `saved in this browser`. `[ Read more ]` explains how a browser build reads ARENA2. **No `Change…` button** — re‑running `ensureArena2` requires `clearStoredData()`, which would wipe the player's ingested data with no rollback.
 3. **`NOT AVAILABLE HERE (7)` — open by default, only in this category.** The seven keys of §1.7, each with its readout, padlock and verbatim reason. Everywhere else hiding a dead switch behind a collapsed group is kindness; here an empty page would read as an unexplained blank, and the intro block has already told the truth at the threshold.
 
-**How it becomes real without redrawing the map.** When a mod system lands: the intro block's rect becomes the mod list (each row an ordinary `switch` with a load‑order number, using the row model unchanged and the list's existing scroll); the four `Enhancements/*` + `Experimental/CustomBooksImport` keys are deleted from `UNAVAILABLE` in `settings.js:91-94`; `tierOf` starts returning `stored`/`live`; the padlocks and readouts vanish; the group headings and the tally recompute themselves. **No new page, no new rail plate, no moved key, no relearned navigation, and no change to `settingsMap.js`.** That is the test of whether the home is real.
+**How it becomes real without redrawing the map.** When a mod system lands: the intro block's rect becomes the mod list (each row an ordinary `switch` with a load‑order number, using the row model unchanged and the list's existing scroll); the four `Enhancements/*` + `Experimental/CustomBooksImport` keys are deleted from `UNAVAILABLE` in `settings.js:92-95`; `tierOf` starts returning `stored`/`live`; the padlocks and readouts vanish; the group headings and the tally recompute themselves. **No new page, no new rail plate, no moved key, no relearned navigation, and no change to `settingsMap.js`.** That is the test of whether the home is real.
 
 ---
 
@@ -821,7 +821,7 @@ export async function runLauncher(canvas, renderer, status) {
   let font;
   try { font = makeFont(renderer, new FntFile().load(await getBytes('FONT0003.FNT')), 'FONT0003'); }
   catch (e) { console.warn('[settings] FONT0003.FNT unavailable; skipping the settings screen', e); return; }
-  // AUDIT: boot audio HERE. main.js:83 runs this scene before the splash's
+  // AUDIT: boot audio HERE. main.js:91 runs this scene before the splash's
   // ensureAudio, so audio.enabled was false and every playOneShot in the old
   // launcher was silently a no-op. Un-awaited: audio.ensure creates the
   // context in its synchronous prefix and attaches its own gesture resume
@@ -854,7 +854,7 @@ New file `test/settingsUI.test.js` unless noted. Real‑font assertions live beh
 
 **T4 — widget law is total.** `widgetFor` returns a known kind for all 171. Every `enum` has ≥ 2 values, a citation string and an `encode`; token enums' defaults are members of their own list; index enums' defaults parse to a valid index. Every `number` has `min < max`, `(max-min)` divisible by `step`, a `format`, and a `source`. Every colour key's default is `/^[0-9A-F]{8}$/i`. Every `blocked` key has a reason. No `unavailable` key resolves to an operable kind.
 
-**T5 — range equals consumer clamp.** For each `NUMBER_LAW` key that is also in `LIVE`, read the consumer file named in `LIVE`, regex its `get(Float|Int)('S','K', min, max)` literals, and assert they equal the row's `min`/`max`. Concretely pins `MouseLookSensitivity` at `0.1..4.0` against `lookSettings.js:20`. Also: sweep `settingsLaw.js`/`settingsWindow.js` for any getter call passing a `min` without a `max` (that returns `NaN`, `settings.js:164`).
+**T5 — range equals consumer clamp.** For each `NUMBER_LAW` key that is also in `LIVE`, read the consumer file named in `LIVE`, regex its `get(Float|Int)('S','K', min, max)` literals, and assert they equal the row's `min`/`max`. Concretely pins `MouseLookSensitivity` at `0.1..4.0` against `lookSettings.js:20`. Also: sweep `settingsLaw.js`/`settingsWindow.js` for any getter call passing a `min` without a `max` (that returns `NaN`, `settings.js:165`).
 
 **T6 — tier honesty.** For every category: the three groups partition its rows; group counts equal the `tierOf` counts; no `unavailable` or `blocked` item exposes a `ctrlRect`; `live` is open by default; `stored` and `na` are closed by default **except** `mods:na`, which is open.
 
@@ -894,40 +894,40 @@ This single test would have caught the phone text halving, the 8‑px picker row
 | Law | Citation |
 |---|---|
 | 171 keys, 13 sections, defaults | `SettingsManager` / vendored `defaults.ini.txt` → `settingsDefaults.js`, pinned `settings.test.js:29-42` |
-| Typed getters and their failure modes (unparseable bool → `False`; unparseable clamped int/float → `MIN`; `GetString` raw) | `SettingsManager.cs:911-996` → `settings.js:169-201` |
-| Booleans stringify capitalised `True`/`False` | C# `value.ToString()` → `settings.js:212-223` |
+| Typed getters and their failure modes (unparseable bool → `False`; unparseable clamped int/float → `MIN`; `GetString` raw) | `SettingsManager.cs:911-996` → `settings.js:170-202` |
+| Booleans stringify capitalised `True`/`False` | C# `value.ToString()` → `settings.js:213-224` |
 | Enum value **names and order** | `DaggerfallAdvancedSettingsWindow.cs:244-252, :277-282, :291-297, :298-305, :309-321, :327-341, :342-354, :360-379, :380-395` — table §3.2 |
 | Volume `DisplayUnits = 100`; MusicVolume live on scroll; SoundVolume plays `DungeonDoorOpen` on mouse‑up | `:268-274` |
 | `WeaponAttackThreshold` MaxCharacters 5, clamped `0.001..1.0` on save | `:444` |
 | `SoundFont` is ReadOnly and is never written back; shows `default` when empty | `:264-267` |
 | `MouseLookSensitivity` slider `0.1..16.0`, `GetValue() = Value/10` | `:253-263` (the port's range follows its consumer clamp — flagged in §3.2 and on the row's help line) |
-| `ButtonClick` on every button press | `DaggerfallMessageBox.ButtonClickHandler:487`, precedent `messageBox.js:267-276` |
+| `ButtonClick` on every button press | `DaggerfallMessageBox.ButtonClickHandler:487`, precedent `messageBox.js:282-291` |
 | Wheel = one row per notch | `ListBox`, precedent `listPicker.js:111-115` |
 | Clamp selection to the visible range | `ListBox`, precedent `listPicker.js:102-103` |
 | Scrollbar thumb = `DisplayUnits / TotalUnits` | `VerticalScrollBar.cs:187-198`, precedent `nativeTalk.js:94-95` |
 | Glyph advance, space width, trailing spacing | `DaggerfallFont.cs:377-383`, `:623-627` → `text.js` |
-| Default text colour + `+1,+1` shadow; `ShadowPosition = zero` inside filled buttons | `DaggerfallUI` → `nativePanel.js:24-25`; precedent `guildServiceWindow.js:178-180` |
-| `ScreenDimColor` behind modals | `DaggerfallUI` → `nativePanel.js:26` |
-| The launcher gate (wizard shown when unvalidated OR `ShowOptionsAtStart` OR a held key; skip straight to Options when the path is good) | `SceneControl.cs:46`, wizard `:154` → `main.js:83` |
+| Default text colour + `+1,+1` shadow; `ShadowPosition = zero` inside filled buttons | `DaggerfallUI` → `nativePanel.js:25-26`; precedent `guildServiceWindow.js:178-180` |
+| `ScreenDimColor` behind modals | `DaggerfallUI` → `nativePanel.js:27` |
+| The launcher gate (wizard shown when unvalidated OR `ShowOptionsAtStart` OR a held key; skip straight to Options when the path is good) | `SceneControl.cs:46`, wizard `:154` → `main.js:91` |
 
 ### 9.2 OURS — the presentation split (Ledger A), flagged in each file's header
 
 The **seven categories, their order, titles, blurbs and the whole key→category map**; every curated label and help sentence; the three tier **groups** and their headings, counts and collapse behaviour; `settingsMetrics` and every pixel rect on the screen; the colour palette and the focus treatment; the widget shapes (pill switch, ◄value►, track+knob, swatch, padlock) — all drawn from `drawRect`, because `FNT_ASCII_START = 33` means the classic fonts contain no arrow glyph; the dialog chrome; `window.prompt` for text and numeric entry; the READOUT words and the "what you get instead" lines; the Mods intro block; the port‑local `dagger.ui.v1` store; the Reset confirm, the `ShowOptionsAtStart` confirm and the save‑failure banner; the debounced save.
 
-**Explicitly noted as a departure from DFU's own IA:** DFU's five pages (`gamePlay / interface / enhancements / video / accessibility`) and thirteen section titles are *its* window's taxonomy, baked and test‑pinned in `settingsText.js:11-28`. This screen replaces them with seven categories because DFU's advanced window reaches only 78 of our 171 keys and leaves 93 with no home, and because "audio" and "mods" must be top‑level per the ask. **DFU's own words survive verbatim** — every row's detail dialog prints `SETTINGS_LABELS` and `SETTINGS_INFO`, giving those two exports their first production consumer. This is a Ledger‑A row and must be recorded as one.
+**Explicitly noted as a departure from DFU's own IA:** DFU's five pages (`gamePlay / interface / enhancements / video / accessibility`) and thirteen section titles are *its* window's taxonomy, baked and test‑pinned in `settingsText.js:10-27`. This screen replaces them with seven categories because DFU's advanced window reaches only 78 of our 171 keys and leaves 93 with no home, and because "audio" and "mods" must be top‑level per the ask. **DFU's own words survive verbatim** — every row's detail dialog prints `SETTINGS_LABELS` and `SETTINGS_INFO`, giving those two exports their first production consumer. This is a Ledger‑A row and must be recorded as one.
 
 ### 9.3 Required companion changes
 
-1. **`src/systems/settings.js:238-241`** — `resetToDefaults()` must `return saveSettings();`. Today it discards the boolean, so a reset that failed to persist reports success.
-2. **`src/systems/settings.js:64-107`** — move `'Video/Fullscreen'` out of `UNAVAILABLE` and into `LIVE` as `'src/ui/fullscreen.js'`. A settings toggle **is** the user gesture `canvas.requestFullscreen()` needs, so the reason "the browser owns fullscreen" is no longer true; `Video/ExclusiveFullscreen` stays unavailable. This gives the Video category a real `WORKS NOW` row. `src/ui/fullscreen.js` reads `getBool('Video','Fullscreen')`, calls `requestFullscreen`/`exitFullscreen` from the click handler, listens for `fullscreenchange` to write the value back, and reports `fullscreenSupported()` false (→ the row shows `not supported` as a readout) when the API is absent.  <!-- DELETED from this slice: Video/Fullscreen stays unavailable, browser-owned -->
+1. **`src/systems/settings.js:239-242`** — `resetToDefaults()` must `return saveSettings();`. Today it discards the boolean, so a reset that failed to persist reports success.
+2. **`src/systems/settings.js:65-108`** — move `'Video/Fullscreen'` out of `UNAVAILABLE` and into `LIVE` as `'src/ui/fullscreen.js'`. A settings toggle **is** the user gesture `canvas.requestFullscreen()` needs, so the reason "the browser owns fullscreen" is no longer true; `Video/ExclusiveFullscreen` stays unavailable. This gives the Video category a real `WORKS NOW` row. `src/ui/fullscreen.js` reads `getBool('Video','Fullscreen')`, calls `requestFullscreen`/`exitFullscreen` from the click handler, listens for `fullscreenchange` to write the value back, and reports `fullscreenSupported()` false (→ the row shows `not supported` as a readout) when the API is absent.  <!-- DELETED from this slice: Video/Fullscreen stays unavailable, browser-owned -->
 3. **`src/scenes/dataSource.js`** — add `export function dataSourceLabel()` returning one of the three short strings of §5, set at each `ensureArena2` branch.
 4. **`src/scenes/launcherScene.js`** — rewritten per §7.4. *(DELETED at FD1, 2026-09-11)*
 5. **Deletions/rewrites:** `src/ui/launcher.js` DELETED; `test/settings.test.js:167-204` and `:215-232` rewritten (T8, T11); `tools/launcherProbe.mjs` → `tools/settingsProbe.mjs` (T16).
 
 ### 9.4 Explicitly **out** of this slice (record as Ledger rows)
 
-* **The in‑game route.** `SettingsWindow` already satisfies the overlay contract (`isChoiceWindow` + `input(code,e)` + `click(vx,vy)` + `wheel(dir)` + `draw` + `done`), which is exactly the shape `dungeonContext.js:2920`, `worldModes.js:1484` and `townTalk.js:249` consume — but no pause window exists yet, so the only routes back in remain the `GUI/ShowOptionsAtStart` gate and `?launcher`. The confirm dialog names `?launcher` explicitly. Note the honest limit: the in‑game seam exposes `overlayClick`/`overlayWheel` but **no** `pointermove`/`pointerup`, so slider *drag* will not work in‑game until that seam grows — tapping the track will, so it is a convenience loss, not a trap. Say so in the Ledger row.
-* ~~**`Video/FieldOfView` as a live setting.** `Math.PI/3` is hardcoded at five hosts. Wiring it is worth doing and is a separate commit with its own pin; until then the row is `stored` and operable (its range is DFU law).~~ **STALE - STRUCK (ROAD-G G7 records sweep, 2026-09-04).** *Shipped by the SETT/MENU view-settings slice and never struck here, so this bullet went on naming five `Math.PI/3` sites that no longer exist - the whole reason the cites had rotted. `src/ui/viewSettings.js:23` is `fieldOfView()`, `GetInt(sectionVideo, "FieldOfView", 60, 120)` verbatim (SettingsManager.cs:418, clamp 60..120), READ AT THE POINT OF USE so a change lands on the next frame; the five projections that carried a copy each read it now - `worldModes.js:7033`, `world.js:13540`, `interior.js:351`, `exterior.js:4913`, `dungeon.js:1014`. Wiring it also corrected the shipped view: every copy sat at 60, which is DFU's MINIMUM and not its 65 default.*
+* **The in‑game route.** `SettingsWindow` already satisfies the overlay contract (`isChoiceWindow` + `input(code,e)` + `click(vx,vy)` + `wheel(dir)` + `draw` + `done`), which is exactly the shape `dungeonContext.js:2936`, `worldModes.js:1492` and `townTalk.js:249` consume — but no pause window exists yet, so the only routes back in remain the `GUI/ShowOptionsAtStart` gate and `?launcher`. The confirm dialog names `?launcher` explicitly. Note the honest limit: the in‑game seam exposes `overlayClick`/`overlayWheel` but **no** `pointermove`/`pointerup`, so slider *drag* will not work in‑game until that seam grows — tapping the track will, so it is a convenience loss, not a trap. Say so in the Ledger row.
+* ~~**`Video/FieldOfView` as a live setting.** `Math.PI/3` is hardcoded at five hosts. Wiring it is worth doing and is a separate commit with its own pin; until then the row is `stored` and operable (its range is DFU law).~~ **STALE - STRUCK (ROAD-G G7 records sweep, 2026-09-04).** *Shipped by the SETT/MENU view-settings slice and never struck here, so this bullet went on naming five `Math.PI/3` sites that no longer exist - the whole reason the cites had rotted. `src/ui/viewSettings.js:23` is `fieldOfView()`, `GetInt(sectionVideo, "FieldOfView", 60, 120)` verbatim (SettingsManager.cs:418, clamp 60..120), READ AT THE POINT OF USE so a change lands on the next frame; the five projections that carried a copy each read it now - `worldModes.js:7063`, `world.js:13717`, `interior.js:351`, `exterior.js:4929`, `dungeon.js:1027`. Wiring it also corrected the shipped view: every copy sat at 60, which is DFU's MINIMUM and not its 65 default.*
 * **`GUI/InteractionModeIcon` and the other un‑vendored enums.** Extend `scripts/bakeSettingsText.mjs` to emit a `SETTINGS_VALUES` table from `vendor/dfu-settings/GameSettings.txt` and, where that file is silent, vendor the lists from `DaggerfallAdvancedSettingsWindow.cs`. Until a list is vendored the key stays `blocked('novalues')`. **Never guess an option name.**
 * **`index.html`'s `user-scalable=no`.** It removes the only text‑size escape hatch a low‑vision player has on a WebGL canvas. Removing it is a one‑token change with whole‑port consequences (the game canvas wants it) and belongs in its own row; the in‑screen `Text Size` row is this slice's answer.
 * **Safe‑area insets.** `viewport-fit=cover` is set with no `env(safe-area-inset-*)` anywhere in the tree, so on a notched phone the footer sits under the home‑indicator strip. A whole‑port row; note that this screen's `oy` letterbox partly absorbs it in comfort mode but not in portrait, where `oy = 0`.

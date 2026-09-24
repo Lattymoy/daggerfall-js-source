@@ -214,7 +214,9 @@ test('B5: the LEVEL-UP screen keeps its slot test - it is the other half of PopT
   // arm's current spelling.
   const wm = src('src/scenes/worldModes.js');
   const guarded = wm.match(/if \(!interiorOverlay\) \{\n\s*interiorOverlay = host\.makeCharSheet\?\.\(\)/g) ?? [];
-  assert.equal(guarded.length, 2, 'both interior level-up arms fill only an EMPTY slot, and ask the host\'s builder first');
+  // AUDIT 68 S23-levelup-closure-dup: the two arms are ONE closure that
+  // both bags hand in (orl1_leveling.test.js pins the two hand-ins).
+  assert.equal(guarded.length, 1, 'the interior level-up arm fills only an EMPTY slot, and asks the host\'s builder first');
   assert.match(wm, /host\.makeCharSheet\?\.\(\) \?\? createCharSheetWindow\(\{ entity: playerEntity \}\)/,
     'and the last resort is the ONE seam, which knows whose law levels this character (ORL1) and which skin draws it (LV1)');
   assert.match(src('src/ui/restWindow.js'), /PopToHUD\(\); RaiseSkills\(\);/);

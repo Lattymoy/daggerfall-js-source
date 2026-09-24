@@ -148,8 +148,6 @@ const check = (name, ok, detail = '') => {
 /** A seeded walk, so two runs of this probe are the same two runs. */
 const rng = (seed) => () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
 
-await writeFile(join(ROOT, `tools/${PAGE_NAME}`), PAGE);
-await writeFile(join(ROOT, `tools/${BARE_NAME}`), BARE);
 const vite = await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });
 await vite.listen();
 const port = vite.httpServer.address().port;
@@ -164,6 +162,9 @@ const finger = (cdp) => (type, x, y) => cdp.send('Input.dispatchTouchEvent', {
 });
 
 try {
+  // AUDIT 68 X2-probe-tmp-page-leak: written inside the try, so the finally that unlinks it always runs.
+  await writeFile(join(ROOT, `tools/${PAGE_NAME}`), PAGE);
+  await writeFile(join(ROOT, `tools/${BARE_NAME}`), BARE);
   // ── WHAT THE BROWSER ITSELF ALLOWS ───────────────────────────────
   console.log('CHROMIUM\'S OWN SCROLL-START SLOP, off a bare pan-y tile');
   const ceiling = {};

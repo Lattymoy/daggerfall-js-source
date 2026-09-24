@@ -38,6 +38,7 @@
 // identity and this file reloads on identity change - AUDIT 23).
 
 import { ImgFile } from '../formats/imgFile.js';
+import { packImgTexture } from './packArt.js';   // OVH2: a worn UI pack's backdrop
 import { racialPaperDollBackground, racialOverrideHeadArt, racialSuppressPaperDollBodyAndItems } from '../systems/vampirism.js';   // V5: the curse art laws, both curses' one switch
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { getBool } from '../systems/settings.js';   // UI3: EnableGeographicBackgrounds; ChildGuard/PlayerNudity gates the welds
@@ -207,7 +208,7 @@ export const paperDollIdentityKey = ({ race = 'Breton', gender = 'male', faceInd
  *  only from the four hosts' boots (with the PRE-CHARGEN Breton/male/0
  *  stand-in) and from the three chargen completions, so a character
  *  who arrived by RESTORE - `systems/save.js` restorePlayer, which is
- *  every `?load` boot, and main.js:173 makes Continue, Load Game AND
+ *  every `?load` boot, and main.js:181 makes Continue, Load Game AND
  *  Online all `?load` - wore the stand-in's body, face and morphology
  *  for the rest of the session.
  *
@@ -240,7 +241,7 @@ async function loadArtSet(deps, { race = 'Breton', gender = 'male', faceIndex = 
   const loadImgBmp = async (name) => {
     const img = new ImgFile();
     img.load(await fetchBytes(name), name, palette);
-    return { bmp: img.getDFBitmap(), off: img.imageOffset };
+    return { bmp: img.getDFBitmap(), off: img.imageOffset, name };   // OVH2: the NAME rides it - a worn UI pack answers the backdrop by name
   };
   const face = new CifRciFile();
   face.load(await fetchBytes(art.heads), art.heads, palette);
@@ -509,7 +510,7 @@ async function composeDoll(art, deps, entity, { background = true } = {}) {
     blit(out, img, art.palette, { remap, under });   // HM1: the helm's mask erases the hair
     layout.push({ slot: it.equipSlot, img });
   }
-  return { out, layout };
+  return { out, layout, bgSize: [bg.width, bg.height] };
 }
 
 export async function refreshPaperDoll(entity) {
@@ -532,7 +533,14 @@ export async function refreshPaperDoll(entity) {
     // trap - to be tried again on the next refresh.
     const drift = paperDollIdentityDrift(entity);
     if (drift) await preloadPaperDollArt(_deps, drift);
-    const { out, layout } = await composeDoll(_art, _deps, entity);
+    // OVH2: A WORN UI PACK'S BACKDROP. The doll composes WITHOUT its SCBG and the pack's picture of that SCBG is
+    // drawn under it (drawPaperDoll) - its hi-res pixels would be lost in the 110x184 composite. The HM1 masks
+    // still hole through to "the background": composed on nothing, a masked pixel is clear, and the pack's
+    // backdrop shows through it exactly as DFU's SCBG panel shows through the mask shader.
+    const overrideName = racialPaperDollBackground(entity);
+    const bgName = overrideName && await loadOverrideArt(overrideName, 0, _deps, _art.palette) ? overrideName : _art.bg.name;   // composeDoll's own choice (an override that did not load falls to the racial art)
+    const packBg = bgName ? await packImgTexture(_deps.renderer, bgName) : null;
+    const { out, layout, bgSize } = await composeDoll(_art, _deps, entity, { background: !packBg });
     const key = `paperdoll_v${++_version}`;
     const prevKey = _live?.key ?? null;
     // U59: the composite is KEPT, not just uploaded. `out` is already
@@ -542,7 +550,7 @@ export async function refreshPaperDoll(entity) {
     // draw the same avatar the classic window draws, without a second
     // compositor reading the same laws again.
     _pixels = { width: PAPERDOLL_W, height: PAPERDOLL_H, rgba: out, version: _version };
-    _live = { key, tex: _deps.renderer.uploadTexture('img', key, { width: PAPERDOLL_W, height: PAPERDOLL_H, colors: new Uint32Array(out.buffer) }) };
+    _live = { key, tex: _deps.renderer.uploadTexture('img', key, { width: PAPERDOLL_W, height: PAPERDOLL_H, colors: new Uint32Array(out.buffer) }), packBg: packBg ? { tex: packBg, w: bgSize[0], h: bgSize[1] } : null };
     // AUDIT 17e F27 / EVERY ALLOCATION HAS AN OWNER: each refresh mints
     // a NEW versioned key, so the previous composite leaked (~81 KB per
     // equip click, unbounded across a session).
@@ -585,7 +593,13 @@ async function loadRecord(archive, record, getTexture, dye = null) {
 export function drawPaperDoll(renderer, m, entity, x, y) {
   if (!_art) return false;
   if (!_live) refreshPaperDoll(entity);   // first draw composes async
-  if (_live) renderer.drawScreenQuad(_live.tex, { x: m.ox + x * m.s, y: m.oy + y * m.s, w: PAPERDOLL_W * m.s, h: PAPERDOLL_H * m.s });
+  if (!_live) return true;
+  const dst = { x: m.ox + x * m.s, y: m.oy + y * m.s, w: PAPERDOLL_W * m.s, h: PAPERDOLL_H * m.s };
+  if (_live.packBg) {   // OVH2: the pack's backdrop under the doll - the same subrect of the same SCBG, in the pack's pixels
+    const { tex, w, h } = _live.packBg, [sx, sy] = BG_SUBRECT;
+    renderer.drawScreenQuad(tex, dst, { u0: sx / w, v0: sy / h, u1: (sx + PAPERDOLL_W) / w, v1: (sy + PAPERDOLL_H) / h });
+  }
+  renderer.drawScreenQuad(_live.tex, dst);
   return true;
 }
 
