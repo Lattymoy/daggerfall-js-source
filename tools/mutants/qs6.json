@@ -12,7 +12,7 @@
     "name": "QS6-the-release-of-a-hold-performs-the-slot-too",
     "file": "src/systems/quickslots.js",
     "old": "      if (!st.cycled) onTap?.(slot);",
-    "new": "      onTap?.(slot);",
+    "new": "      onTap?.(slot); if (!st.cycled) {}",
     "tests": [
       "test/qs6_spellslot.test.js"
     ]

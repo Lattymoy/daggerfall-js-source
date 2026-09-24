@@ -318,7 +318,7 @@
     "name": "WOD6-never-swept",
     "file": "src/scenes/world.js",
     "old": "    if (_wodLate.size && !building) sweepWodLate();   // WOD6",
-    "new": "",
+    "new": "    // WOD6",
     "tests": [
       "test/audit_wod_branch.test.js"
     ]

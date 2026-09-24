@@ -418,7 +418,7 @@ dungeon geometry. All are fixed and rooted; the durable record:
   input (active keys, live pitch). This is the instrument that
   finally cracked the real bugs; it stays.
 - **Per-commit build tag**: scripts/buildTag.mjs stamps
-  `git rev-parse --short HEAD` into src/buildTag.js on prebuild, so a
+  `git rev-parse --short=12 HEAD` into src/buildTag.js on prebuild, so a
   screenshot self-identifies its bundle and stale-cache ambiguity
   dies.
 - **`[spawn]` console line**: marker -> feet on every dungeon boot.

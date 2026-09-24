@@ -139,7 +139,7 @@
   "name": "HEARTH1-the-interior-collector-stops-carrying-it-so-no-tavern-has-a-hearth",
   "file": "src/world/interiorLights.js",
   "old": "      record: f.record,   // HEARTH1",
-  "new": "",
+  "new": "      // HEARTH1",
   "tests": [
    "test/hearth1_worldfires.test.js"
   ]

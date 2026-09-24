@@ -21,10 +21,11 @@ test('AUDIT 68 X5-citeshift-enobufs: a target past 1 MiB still has its cites mov
   try {
     const git = (...a) => execFileSync('git', a, { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
     git('init', '-q');
-    mkdirSync(join(dir, 'tools'));
+    mkdirSync(join(dir, 'tools/lib'), { recursive: true });
     mkdirSync(join(dir, 'src'));
     mkdirSync(join(dir, 'bible'));
     copyFileSync(join(ROOT, 'tools/citeShift.mjs'), join(dir, 'tools/citeShift.mjs'));
+    copyFileSync(join(ROOT, 'tools/lib/isMain.mjs'), join(dir, 'tools/lib/isMain.mjs'));
     // 1.2 MiB of target: line 5 is the one the doc cites.
     const body = Array.from({ length: 40000 }, (_, i) => `const line${i + 1} = ${'x'.repeat(20)};`);
     body[4] = 'export const cited = 1;';

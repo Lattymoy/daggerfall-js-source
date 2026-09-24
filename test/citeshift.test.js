@@ -121,8 +121,9 @@ test('RF3: bare continuations MOVE under the content check - every spelling, up 
   assert.deepEqual(continuations('see world.js:10, :12', t, map, { oldLines, newLines }).map((c) => [c.text, c.from, c.to, c.status]), [[', :12', 12, 13, 'move']]);
   // the two regexes are one law, shared with citeMerge
   assert.ok(ANY_CITE.source.includes('|cs)') && CONTINUATION.source.includes('\\(:'), 'the .cs stop and the (: opener');
-  assert.match(readFileSync(join(root, 'tools/citeMerge.mjs'), 'utf8'), /import \{ hunksFromDiff, lineMap, citeSpellings, regionStops, continuationsIn, SELF_DOCS \} from '.\/citeShift\.mjs';/, 'citeMerge imports them (CITE-SLASH, CITE-CS: through the two helpers that read ANY_CITE and CONTINUATION)');
-  assert.doesNotMatch(readFileSync(join(root, 'tools/citeMerge.mjs'), 'utf8'), /\b(ANY_CITE|CONTINUATION|CS_MEMBER)\b|function\*? *(continuationsIn|regionStops)/, 'and declares no copy, nor reads a regex past the helpers');
+  // AUDIT 68: citeMerge takes the whole plan (planDoc, applyPlan), not the helpers - its own copy of the verdict had parted from this one
+  assert.match(readFileSync(join(root, 'tools/citeMerge.mjs'), 'utf8'), /import \{ hunksFromDiff, lineMap, planDoc, applyPlan, SELF_DOCS \} from '.\/citeShift\.mjs';/, 'citeMerge imports the plan (CITE-SLASH, CITE-CS and the struck law come with it)');
+  assert.doesNotMatch(readFileSync(join(root, 'tools/citeMerge.mjs'), 'utf8'), /\b(ANY_CITE|CONTINUATION|CS_MEMBER|citeSpellings|continuationsIn|regionStops|same1)\b|const verdict\b/, 'and declares no copy, nor reads a regex or a helper past the plan');
 });
 
 test('CITE-SLASH: a bare slash continues only the chain it touches - "8076/8077" a sentence after a cite is two message ids, not world.js:8077 (mutant: the touch dropped)', () => {

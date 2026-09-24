@@ -54,13 +54,14 @@ document.title = 'ready';
 const fails = [];
 const check = (name, ok, detail = '') => { if (!ok) fails.push(`${name}${detail ? ` - ${detail}` : ''}`); console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`); };
 
-await writeFile(join(ROOT, 'play', PAGE_NAME), PAGE);
 await mkdir(OUT, { recursive: true });
 const vite = process.env.PROBE_PORT ? null : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
 if (vite) await vite.listen();
 const port = vite ? vite.httpServer.address().port : Number(process.env.PROBE_PORT);
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 try {
+  // AUDIT 68 X2-probe-tmp-page-leak: written inside the try, so the finally that unlinks it always runs.
+  await writeFile(join(ROOT, 'play', PAGE_NAME), PAGE);
   const ctx = await browser.newContext({ viewport: { width: 900, height: 500 }, deviceScaleFactor: 2 });
   const page = await ctx.newPage();
   const errors = [];

@@ -22,7 +22,9 @@ test('settingsText: the BAKE is the vendored table - a stale bake fails here', (
   assert.deepEqual(JSON.parse(JSON.stringify(SETTINGS_LABELS)), labels, 'run: node scripts/bakeSettingsText.mjs');
   assert.deepEqual(JSON.parse(JSON.stringify(SETTINGS_INFO)), info, 'run: node scripts/bakeSettingsText.mjs');
   // the parse must skip DFU's comment and schema lines, not swallow them
-  assert.ok(!('schema' in SETTINGS_LABELS), 'the schema line is not a label');
+  // AUDIT 68: the key the schema line leaked as was 'schema: *key' -
+  // checking 'schema' alone passed while it shipped.
+  assert.ok(!Object.keys(SETTINGS_LABELS).some((k) => /^schema:/i.test(k)), 'the schema line is not a label');
   for (const k of Object.keys(SETTINGS_LABELS)) assert.ok(!k.startsWith('-'), `comment leaked in: ${k}`);
 });
 

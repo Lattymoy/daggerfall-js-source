@@ -18,7 +18,7 @@
 //   - each entry reads `- \`src/path:LINE\` - <the source line, trimmed,
 //     with a leading "// " removed>`.
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
-import { join, dirname, relative, sep } from 'node:path';
+import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { flagLines } from './flagSites.mjs';   // IN1: the one definition of an open-flag site
 
@@ -59,13 +59,20 @@ const body = endRel < 0 ? after : after.slice(0, endRel);
 const tail = endRel < 0 ? '' : after.slice(endRel);
 
 const bodyLines = body.split('\n');
+// AUDIT 68 X5-regenopenflags-dies-at-zero: an EMPTY list is a list. This
+// tool writes one when src/ has no flags left, and finding the list by its
+// first entry then refused every later run - the gate's own remedy
+// included - so no new flag could ever be listed. Only a missing heading
+// is fatal; with no entry, the whole body is the preamble.
 const firstEntry = bodyLines.findIndex((l) => /^- `src\//.test(l));
-if (firstEntry < 0) { console.error('no open-flag entries found under the heading'); process.exit(2); }
-const preamble = bodyLines.slice(0, firstEntry);
-const trailing = bodyLines.slice(firstEntry).filter((l) => l.trim() && !/^- `src\//.test(l));
+const cut = firstEntry < 0 ? bodyLines.length : firstEntry;
+const preamble = bodyLines.slice(0, cut);
+while (preamble.length > 1 && !preamble[preamble.length - 1].trim()) preamble.pop();
+const trailing = bodyLines.slice(cut).filter((l) => l.trim() && !/^- `src\//.test(l));
+const list = entries.length ? ['', ...entries] : [];
 
 const rebuilt = home.slice(0, at) + HEADING
-  + [...preamble, ...entries, '', ...trailing].join('\n').replace(/\n{3,}/g, '\n\n')
+  + [...preamble, ...list, '', ...trailing].join('\n').replace(/\n{3,}/g, '\n\n')
   + (tail || '\n');
 
 if (process.argv.includes('--check')) {

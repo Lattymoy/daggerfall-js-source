@@ -22,6 +22,8 @@
     "file": "src/ui/hud.js",
     "old": "export const hudScale = (canvasWidth, canvasHeight) =>",
     "new": "export const bitmapToColor32 = () => null;\nexport const hudScale = (canvasWidth, canvasHeight) =>",
+    "syntax": true,
+    "why": "A second definition cannot sit beside the import without breaking the module; boot2.test.js reads source, never imports hud.js, so it still dies of the ONE HOME scan.",
     "tests": [
       "test/boot2.test.js"
     ]

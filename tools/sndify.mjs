@@ -21,6 +21,7 @@
 // every machine already has a tool for.
 
 import { readFileSync, writeFileSync } from 'node:fs';
+import { isMain } from './lib/isMain.mjs';
 
 export const DF_RATE = 11025;   // SndFile.cs / sndFile.js SAMPLE_RATE
 
@@ -185,7 +186,7 @@ export function bakeFile(inPath, outPath, opts = {}) {
   return { frames: pcm.length, seconds: pcm.length / DF_RATE, from: wav.rate, channels: wav.channels };
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
   const files = args.filter((a) => !a.startsWith('--'));
   const opt = (k, d) => {

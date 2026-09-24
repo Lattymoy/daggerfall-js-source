@@ -32,6 +32,7 @@ import { bakeTexture, mipChain, writeDds } from './meshTexture.mjs';
 import { meshToNif } from './nifWrite.mjs';
 import { previewSheet, uvSheet } from './meshSheets.mjs';
 import { writePng } from './pngIO.mjs';
+import { isMain } from './lib/isMain.mjs';
 
 /**
  * MORROWIND IS 69.99 UNITS TO THE METRE.
@@ -114,7 +115,7 @@ export function bakeThunderlock(fbxBytes, { sheets = null } = {}) {
   return out;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
   const opt = (k, d) => args.find((a) => a.startsWith(`--${k}=`))?.split('=')[1] ?? d;
   const fbx = opt('fbx', SOURCE_FBX);

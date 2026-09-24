@@ -149,7 +149,7 @@
     "name": "PERF-CROWD-the-whole-live-crowd-is-submitted-uncut-again",
     "file": "src/scenes/world.js",
     "old": "        if (!billboardOutside(b)) livePersonBatches[keep++] = b;",
-    "new": "        livePersonBatches[keep++] = b;",
+    "new": "        livePersonBatches[keep++] = b; if (!billboardOutside(b)) {}",
     "tests": [
       "test/perfon2_peercull.test.js"
     ]

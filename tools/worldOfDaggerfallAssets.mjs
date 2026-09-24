@@ -25,9 +25,11 @@
 // and sha256, which is what test/wod1_vendor.test.js pins.
 import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 import { readUnityBundle } from '../src/formats/unityBundle.js';
 import { loadLocationInstance, loadLocationPrefab, ntfsCompare } from '../src/world/wodLocationData.js';
 import { encodeRegionPack, decodeRegionPack, WOD_PACK_VERSION } from '../src/world/wodLocationPack.js';
+import { isMain } from './lib/isMain.mjs';
 
 /** The bundle's text assets, by the name they carry inside it, mapped
  *  to the path this tree keeps them at. */
@@ -74,10 +76,10 @@ export function readRegionFolder(entries) {
   return { files };
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isMain(import.meta.url)) {
   const root = process.argv[2];
   if (!root) { console.error('usage: node tools/worldOfDaggerfallAssets.mjs <extracted archive root> [outDir]'); process.exit(1); }
-  const outDir = (process.argv[3] ?? new URL('../vendor/world-of-daggerfall/', import.meta.url).pathname).replace(/\/$/, '');
+  const outDir = (process.argv[3] ?? fileURLToPath(new URL('../vendor/world-of-daggerfall/', import.meta.url))).replace(/\/$/, '');
   const write = (rel, body) => {
     const dest = `${outDir}/${rel}`;
     mkdirSync(dest.slice(0, dest.lastIndexOf('/')), { recursive: true });

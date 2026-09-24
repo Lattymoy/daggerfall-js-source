@@ -4,7 +4,9 @@
 // tolerates it exactly as Unity's deserializer does. Run:
 //   node scripts/bakeBooks.mjs
 // test/books.test.js pins baked === vendored, so a drifted bake fails.
+// Importing the parser does not bake (AUDIT 68 S01-bake-on-import-race).
 import { readFileSync, writeFileSync } from 'node:fs';
+import { isMain } from '../tools/lib/isMain.mjs';
 
 export function parseBookMapping(text) {
   // Unity's FullSerializer tolerates the trailing comma; JSON.parse
@@ -13,6 +15,7 @@ export function parseBookMapping(text) {
   return JSON.parse(text.replace(/,\s*\]/g, ']'));
 }
 
+if (isMain(import.meta.url)) {
 const entries = parseBookMapping(readFileSync(new URL('../vendor/dfu-books/books.txt', import.meta.url), 'utf8'));
 const rows = entries.map((e) => `  [${e.id}, ${JSON.stringify(e.title)}],`).join('\n');
 writeFileSync(new URL('../src/systems/booksData.js', import.meta.url),
@@ -24,3 +27,4 @@ ${rows}
 ]);
 `);
 console.log(`baked ${entries.length} book ids`);
+}

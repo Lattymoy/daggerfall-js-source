@@ -78,6 +78,7 @@
 // mistake and is not one.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { isMain } from './lib/isMain.mjs';
 
 export const MW_NIF_VERSION = 0x04000002;
 export const NIF_HEADER_LINE = 'NetImmerse File Format, Version 4.0.0.2\n';
@@ -273,7 +274,7 @@ export function meshToNif(mesh, { texture = null, node = null, keepV = false } =
   return writeNif(records, [0]);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
   const opt = (k, d = null) => args.find((a) => a.startsWith(`--${k}=`))?.split('=').slice(1).join('=') ?? d;
   const files = args.filter((a) => !a.startsWith('--'));
