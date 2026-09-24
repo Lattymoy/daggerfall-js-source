@@ -25,5 +25,23 @@
     "tests": [
       "test/fgh2h_fighters_handtohand.test.js"
     ]
+  },
+  {
+    "name": "FGH2H-R-the-retired-value-kept",
+    "file": "src/systems/modSettings.js",
+    "old": "    if (!held || !Object.hasOwn(held, key)) continue;\n    delete held[key];\n    changed = true;\n  }\n  for (const { vendor, key, was } of KEY_MIGRATIONS) {",
+    "new": "    if (!held || !Object.hasOwn(held, key)) continue;\n  }\n  for (const { vendor, key, was } of KEY_MIGRATIONS) {",
+    "tests": [
+      "test/fgh2h_fighters_handtohand.test.js"
+    ]
+  },
+  {
+    "name": "FGH2H-R-the-whole-mod-dropped",
+    "file": "src/systems/modSettings.js",
+    "old": "    if (!held || !Object.hasOwn(held, key)) continue;\n    delete held[key];\n    changed = true;\n  }\n  for (const { vendor, key, was } of KEY_MIGRATIONS) {",
+    "new": "    if (!held || !Object.hasOwn(held, key)) continue;\n    delete m[vendor];\n    changed = true;\n  }\n  for (const { vendor, key, was } of KEY_MIGRATIONS) {",
+    "tests": [
+      "test/fgh2h_fighters_handtohand.test.js"
+    ]
   }
 ]

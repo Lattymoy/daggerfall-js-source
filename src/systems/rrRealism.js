@@ -310,13 +310,11 @@ export const RR_UNDERWORLD = Object.freeze({
 });
 export const rrUnderworldRule = (guildName) => (rrModule('underworldExpulsion') ? RR_UNDERWORLD[guildName] ?? null : null);
 
-// ---- fightersTeachHandToHand (FightersGuildRR.cs) -------------------------------------
-/** FightersGuildRR: GuildSkills and TrainingSkills with HandToHand in
- *  Giantish's place, otherwise FightersGuild's own two lists. */
-export const RR_FIGHTERS_GUILD_SKILLS = Object.freeze([SKILLS.Archery, SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.HandToHand, SKILLS.LongBlade, SKILLS.Orcish, SKILLS.ShortBlade]);
-export const RR_FIGHTERS_TRAINING_SKILLS = Object.freeze([SKILLS.Archery, SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.CriticalStrike, SKILLS.HandToHand, SKILLS.Jumping, SKILLS.LongBlade, SKILLS.Orcish, SKILLS.Running, SKILLS.ShortBlade, SKILLS.Swimming]);
-export const rrFightersGuildSkills = (guildName) => (guildName === 'FightersGuild' && rrModule('fightersTeachHandToHand') ? RR_FIGHTERS_GUILD_SKILLS : null);
-export const rrFightersTrainingSkills = (guildName) => (guildName === 'FightersGuild' && rrModule('fightersTeachHandToHand') ? RR_FIGHTERS_TRAINING_SKILLS : null);
+// ---- fightersTeachHandToHand (FightersGuildRR.cs) - RETIRED -------------------------
+// FGH2H-R (2026-09-24, Mac: "retire it"): FGH2H put HandToHand in the Fighters Guild's
+// base lists beside Giantish, so this module's lists (HandToHand in Giantish's place)
+// only took Giantish away. The switch is off the pane (modSettings.js RETIRED_KEYS) and
+// the guild reads its own lists; the Port-Ledger's FGH2H row records the departure.
 
 // ---- bedSleeping (:126-128, :464-506) ------------------------------------------
 /** A bed is one of the three furniture models; clicking one runs

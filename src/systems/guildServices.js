@@ -123,7 +123,8 @@ export const npcServiceKind = (npcFactionId) => NPC_SERVICE[npcFactionId] ?? nul
 // flat and the price is the member/non-member split times LEVEL.
 export const TRAINING_SKILLS = Object.freeze({
   // FGH2H: the hall trains HandToHand too - the rank law's new skill is one
-  // a member can buy (a DEPARTURE, Port-Ledger row for guilds.js and this file).
+  // a member can buy (a DEPARTURE, Port-Ledger row for guilds.js and this file;
+  // R&R's fightersTeachHandToHand, which swapped Giantish out, is retired).
   FightersGuild: [SKILLS.Archery, SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.CriticalStrike,
     SKILLS.Giantish, SKILLS.HandToHand, SKILLS.Jumping, SKILLS.LongBlade, SKILLS.Orcish,
     SKILLS.Running, SKILLS.ShortBlade, SKILLS.Swimming],
@@ -174,10 +175,8 @@ export const DEITY_DESCRIPTIONS = Object.freeze({
 export function trainingSkills(guild) {
   if (guild.divine) return TEMPLE_TRAINING_SKILLS[guild.divine];
   if (guild.order) return null;
-  return _trainingOverride?.(guild.name) ?? TRAINING_SKILLS[guild.name] ?? null;   // RR1: TrainingSkills, the virtual (FightersGuildRR)
+  return TRAINING_SKILLS[guild.name] ?? null;   // FGH2H-R: FightersGuildRR's override retired
 }
-let _trainingOverride = null;
-export function setTrainingSkillsOverride(fn) { _trainingOverride = typeof fn === 'function' ? fn : null; }
 
 /** GetTrainingMax (:335-338): defaultTrainingMax, and no guild
  *  overrides it. Training cannot take a skill past 50. */
