@@ -1928,4 +1928,8 @@ own.
 
 `AUDIT 18 F2` holds the biography arrow's createWeapon shape, and
 `AUDIT 28 W2c` and QS2's host pins take the deferral and the rig. The
-mutants, `tools/mutants/disc21.json`, are all 20 dead.
+mutants, `tools/mutants/disc21.json`, are all 20 dead. Of the 450 older
+records the change reaches (most of them `blood1.json`'s, whose test file
+only had a cite renumbered), 445 died, 4 are equivalent as recorded, and
+one survived: `MAC-BUG-W5-13` in `combat/bloodMarks.js`, which DISC21 does
+not touch. It survives on main as well, so it is left for its own arc.
