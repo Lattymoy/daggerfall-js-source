@@ -1,4 +1,4 @@
-// DISC17 (2026-09-24, Discord through Mac: "I want to fix these issues + enhance guard interaction"), each report
+// DISC18 (2026-09-24, Discord through Mac: "I want to fix these issues + enhance guard interaction"), each report
 // reproduced in node before it was touched, fixed at its root and pinned BY EXECUTION where the seam is a function.
 //   A - "leaving the game undoes your lycanthropy/vampirism" and "Playing online makes my vampire character human
 //       again": the curse entry (and the infection before it) carried neither `permanent` nor a round count, so
@@ -65,7 +65,7 @@ const mortal = () => ({
 const reload = (p, minutes) => { const q = { isPlayer: true }; restorePlayer(q, JSON.parse(JSON.stringify(snapshotPlayer(p, { classicMinutes: minutes })))); return q; };
 const live = (e) => liveLycanthropy(e) ?? liveVampirism(e);
 
-test('DISC17-A: a werewolf and a vampire who have lived a round come back from a load still cursed - through the next rounds offline, and through the online arrival', () => {
+test('DISC18-A: a werewolf and a vampire who have lived a round come back from a load still cursed - through the next rounds offline, and through the online arrival', () => {
   for (const make of [(p) => createLycanthropyCurse(p, LYCANTHROPY_TYPES.Werewolf, { now: T0 }), (p) => createVampirismCurse(p, VAMPIRE_CLANS.Lyrezi, { now: T0 })]) {
     setWorldMinutes(T0); resetMagicRoundMarker(null);
     const p = mortal();
@@ -90,7 +90,7 @@ test('DISC17-A: a werewolf and a vampire who have lived a round come back from a
   }
 });
 
-test('DISC17-A: an infection that has ticked survives a load - the bite is not cured by reloading', () => {
+test('DISC18-A: an infection that has ticked survives a load - the bite is not cured by reloading', () => {
   setWorldMinutes(T0); resetMagicRoundMarker(null);
   const p = mortal();
   startInfection(p, INFECTION.Werewolf, { day: Math.floor(T0 / MINUTES_PER_DAY) });
@@ -101,7 +101,7 @@ test('DISC17-A: an infection that has ticked survives a load - the bite is not c
   resetMagicRoundMarker(null);
 });
 
-test('DISC17-A: a save written before the fix - the curse with a null round count and no flag - gives the player the curse back', () => {
+test('DISC18-A: a save written before the fix - the curse with a null round count and no flag - gives the player the curse back', () => {
   setWorldMinutes(T0); resetMagicRoundMarker(null);
   const p = mortal();
   createLycanthropyCurse(p, LYCANTHROPY_TYPES.Wereboar, { now: T0 });
@@ -116,7 +116,7 @@ test('DISC17-A: a save written before the fix - the curse with a null round coun
   resetMagicRoundMarker(null);
 });
 
-test('DISC17-A: in the session itself the round clock never touches a curse or an infection, and an ended one leaves the list at the next round (forcedRoundsRemaining = 0)', () => {
+test('DISC18-A: in the session itself the round clock never touches a curse or an infection, and an ended one leaves the list at the next round (forcedRoundsRemaining = 0)', () => {
   const lives = [
     ['werewolf', (p) => createLycanthropyCurse(p, LYCANTHROPY_TYPES.Werewolf, { now: T0 }), (p) => cureLycanthropy(p, { nowMinutes: T0 + 2 })],
     ['vampire', (p) => createVampirismCurse(p, VAMPIRE_CLANS.Lyrezi, { now: T0 }), (p) => cureVampirism(p)],
@@ -137,13 +137,13 @@ test('DISC17-A: in the session itself the round clock never touches a curse or a
 });
 
 // ═══ B: the Light spell underground ═══════════════════════════════════════════════════════════════════════════════
-test('DISC17-B: the world host\'s dungeon frame lights the DUNGEON engine\'s candle - the engine every cast down there goes through - and never its own', () => {
+test('DISC18-B: the world host\'s dungeon frame lights the DUNGEON engine\'s candle - the engine every cast down there goes through - and never its own', () => {
   const src = rd('src/scenes/worldModes.js');
   const at = src.indexOf("if (mode === 'dungeon') {\n      if (pendingDungeonExit)");   // the frame's own branch, not the one-line dispatches
   const branch = src.slice(at, src.indexOf('\n    }\n', at));
   assert.ok(at > 0 && branch.includes('dungeonCtx.drawFoes('), 'the branch was found whole');
   const lights = branch.slice(branch.indexOf('const _dgLit = withPlayerLights('));
-  assert.match(lights.slice(0, lights.indexOf('renderer.setClearColor')), /^const _dgLit = withPlayerLights\(\n(?:\s*\/\/[^\n]*\n)*\s*nearestLights\([^\n]*\n\s*dungeonCtx\.candleLight\(\), _dgTint\(playerTorchLight\(/);   // AUDIT DISC17: the pair channel, the candle untinted
+  assert.match(lights.slice(0, lights.indexOf('renderer.setClearColor')), /^const _dgLit = withPlayerLights\(\n(?:\s*\/\/[^\n]*\n)*\s*nearestLights\([^\n]*\n\s*dungeonCtx\.candleLight\(\), _dgTint\(playerTorchLight\(/);   // AUDIT DISC18: the pair channel, the candle untinted
   assert.ok(!branch.includes('magic?.candleLight()') && !branch.includes('magic.candleLight()'), 'this host\'s own engine is not updated underground');
   assert.ok(!/\bmagic\??\.update\(/.test(branch), 'and nothing here updates it - so its candle is never the dungeon\'s');
   assert.match(rd('src/scenes/dungeonContext.js'), /candleLight: \(\) => magic\.candleLight\(\),/, 'the context hands out its own engine\'s candle');
@@ -172,7 +172,7 @@ const corpse = () => {
   return p;
 };
 
-test('DISC17-C: an online load of a dead save revives the SAVE\'s player - its poison and its exposure ended - and it stays alive', () => {
+test('DISC18-C: an online load of a dead save revives the SAVE\'s player - its poison and its exposure ended - and it stays alive', () => {
   setWorldMinutes(T0); resetMagicRoundMarker(null);
   const snap = JSON.parse(JSON.stringify(snapshotPlayer(corpse(), { classicMinutes: T0 })));
   const q = { isPlayer: true };
@@ -187,7 +187,7 @@ test('DISC17-C: an online load of a dead save revives the SAVE\'s player - its p
   resetMagicRoundMarker(null);
 });
 
-test('DISC17-C: the online exit autosave writes every slot of a living player and NO slot of a dead one or under a death screen', () => {
+test('DISC18-C: the online exit autosave writes every slot of a living player and NO slot of a dead one or under a death screen', () => {
   const storage = memStorage();
   const p = mortal();
   for (const name of [QUICK_SAVE_NAME, 'Backup', 'Before online']) saveSlot(p.name, name, snapshotPlayer(p, { classicMinutes: T0 }), { storage });
@@ -203,11 +203,11 @@ test('DISC17-C: the online exit autosave writes every slot of a living player an
   assert.ok(!handler.includes('saveKeysOfCharacter('), 'no second list of slots beside the guarded one');
 });
 
-test('DISC17-C: an online page\'s death screen says its respawn; offline keeps the full hint', () => {
+test('DISC18-C: an online page\'s death screen says its respawn; offline keeps the full hint', () => {
   withSearch('?online=1&load=1', () => {
     const hint = new DeathScreen({ eyeHeight: 1.6, capsuleHeight: 1.8 }).hint;
     assert.equal(hint, ONLINE_DEATH_HINT);
-    assert.match(hint, /respawn/i, 'AUDIT DISC17: the words themselves - the constant set back to the old hint must fail here');
+    assert.match(hint, /respawn/i, 'AUDIT DISC18: the words themselves - the constant set back to the old hint must fail here');
     assert.doesNotMatch(hint, /F11/);
   });
   withSearch('?load=1', () => assert.equal(new DeathScreen({ eyeHeight: 1.6, capsuleHeight: 1.8 }).hint, 'ENTER end   F11 load'));
@@ -216,13 +216,13 @@ test('DISC17-C: an online page\'s death screen says its respawn; offline keeps t
 // ═══ F: the watch and the town ════════════════════════════════════════════════════════════════════════════════════
 const TOWN = { enabled: true, playerInTown: true, crime: false, threats: 1, defenders: 0, locationKey: '3,12' };
 
-test('DISC17-F: the watch comes to a monster hunting the player in town after the witnessed-crime countdown, not for a wanted player, not after the player left - and walks away when the town is quiet', () => {
+test('DISC18-F: the watch comes to a monster hunting the player in town after the witnessed-crime countdown, not for a wanted player, not after the player left - and walks away when the town is quiet', () => {
   const w = createTownWatch({ rand: () => 0.5 });   // Random.Range(5, 11) -> 8
   let t = 0, act = w.tick(0, TOWN);
   while (!act && t < 30) { act = w.tick(0.25, TOWN); t += 0.25; }
   assert.equal(act, 'summon');
   assert.equal(t, 8, 'the witnessed-crime arrival, to the second');
-  for (let i = 0; i < 80; i++) assert.notEqual(w.tick(0.25, { ...TOWN, defenders: 3 }), 'summon', 'standing defenders are not summoned twice - through a whole countdown (AUDIT DISC17: one tick could not tell)');
+  for (let i = 0; i < 80; i++) assert.notEqual(w.tick(0.25, { ...TOWN, defenders: 3 }), 'summon', 'standing defenders are not summoned twice - through a whole countdown (AUDIT DISC18: one tick could not tell)');
   const gone = createTownWatch({ rand: () => 0 });
   gone.tick(0, TOWN);
   assert.equal(gone.tick(6, { ...TOWN, locationKey: '4,12' }), null, 'the player left inside the window: nobody comes (PlayerEntity.cs:355-359)');
@@ -235,7 +235,7 @@ test('DISC17-F: the watch comes to a monster hunting the player in town after th
   assert.equal(createTownWatch().tick(0.1, { ...TOWN, playerInTown: false, defenders: 2 }), 'dismiss', 'so does leaving the town');
 });
 
-test('DISC17-F: a threat is a live hostile foe of this client HUNTING a player inside the town rect - never a puppet, a quest foe, a pacified or allied one, or one minding its own business', () => {
+test('DISC18-F: a threat is a live hostile foe of this client HUNTING a player inside the town rect - never a puppet, a quest foe, a pacified or allied one, or one minding its own business', () => {
   const hunter = () => ({ ai: { isHostile: true, target: PLAYER_TARGET, feet: [1, 0, 1] }, entity: { team: 'Centaurs' } });
   const inside = () => true;
   assert.equal(isTownThreat(hunter(), { inTownRect: inside }), true);
@@ -289,7 +289,7 @@ const rig = (playerEntity) => ({
 });
 const FEET0 = [0, 0, 0], EYE0 = [0, 1.6, 0], FWD0 = [0, 0, 1];
 
-test('DISC17-F: the defenders come as the player\'s allies, sent at the monster - DFU\'s own target chain never picks the player - outlive the crime-clear walk-away, are not saved, turn into the watch at a crime, and walk away with no body', async () => {
+test('DISC18-F: the defenders come as the player\'s allies, sent at the monster - DFU\'s own target chain never picks the player - outlive the crime-clear walk-away, are not saved, turn into the watch at a crime, and walk away with no body', async () => {
   const p = townsman();
   const guards = createCityGuards(rig(p));
   const monsters = createExteriorFoes(rig(p));
@@ -324,7 +324,7 @@ test('DISC17-F: the defenders come as the player\'s allies, sent at the monster 
   assert.ok(!d.corpse, 'walked away: no body, nothing to loot');
 });
 
-test('DISC17-F: the player\'s swing spares a defender while the monsters\' pool has not been offered it - and strikes him only when he is all that is in front', async () => {
+test('DISC18-F: the player\'s swing spares a defender while the monsters\' pool has not been offered it - and strikes him only when he is all that is in front', async () => {
   const p = townsman();
   const guards = createCityGuards(rig(p));
   const monsters = createExteriorFoes(rig(p));
@@ -339,10 +339,10 @@ test('DISC17-F: the player\'s swing spares a defender while the monsters\' pool 
   assert.equal(guards.resolvePlayerHit(swing, EYE0, FWD0, FEET0, () => true, null, { defendersOnly: true }), true, 'with nothing else in front, the swing reaches him (friendly protection\'s fallback)');
 });
 
-test('DISC17-F by source: the host runs the town watch after the pools move, resolves the swing watch -> monsters -> defenders -> townsfolk, and keeps camps out of every location\'s rect', () => {
+test('DISC18-F by source: the host runs the town watch after the pools move, resolves the swing watch -> monsters -> defenders -> townsfolk, and keeps camps out of every location\'s rect', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /exteriorFoes\.update\(dt, _pf, cam\.pos, _foeSenses\(\)\);[^\n]*\n\s*livePersonBatches\.push\(\.\.\.exteriorFoes\.batches\(\)\);\n\s*if \(playerSpawned\) _townWatchFrame\(dt\);/);
-  assert.match(w, /enabled: getPref\('townWatch'\) !== false && !isTransformedLycanthrope\(playerEntity\),\n\s*inTown: _isPlayerInTownStrict\(\), crime: !!playerEntity\.crimeCommitted,/);   // AUDIT DISC17: the whole frame is townWatch.runTownWatchFrame, pinned there
+  assert.match(w, /enabled: getPref\('townWatch'\) !== false && !isTransformedLycanthrope\(playerEntity\),\n\s*inTown: _isPlayerInTownStrict\(\), crime: !!playerEntity\.crimeCommitted,/);   // AUDIT DISC18: the whole frame is townWatch.runTownWatchFrame, pinned there
   const swingAt = w.indexOf("guardHitSound, { spareDefenders: true, swing })) {");
   const order = ['guardHitSound, { spareDefenders: true, swing })) {', 'if (exteriorFoes.resolvePlayerHit(', "guardHitSound, { defendersOnly: true, swing }))", 'cityGuards.resolveCivilianHit('].map((k) => w.indexOf(k, swingAt));
   assert.ok(swingAt > 0 && order.every((i, k) => i >= 0 && (k === 0 || i > order[k - 1])), `the four passes in order: ${order}`);
@@ -379,7 +379,7 @@ function scourgBarrow() {
 }
 const T_CORRIDOR = [-2, 14.425, 35.2], EAST = [1, 0, 0];
 
-test('DISC17-E: the press from the T-corridor reaches the King of Worms\' door - its lock speaks - not the corridor\'s walk-on record', () => {
+test('DISC18-E: the press from the T-corridor reaches the King of Worms\' door - its lock speaks - not the corridor\'s walk-on record', () => {
   const { actions, collider, door } = scourgBarrow();
   const hit = pickActivatableHit(T_CORRIDOR, EAST, activationTargets(actions.objects), collider);
   assert.equal(hit?.key, door.key);
@@ -389,7 +389,7 @@ test('DISC17-E: the press from the T-corridor reaches the King of Worms\' door -
   assert.deepEqual(locks, [2], 'lock 2: pickable, openable by spell, bashable');
 });
 
-test('DISC17-E: the swing reaches AttemptBash on that door, and its sound', () => {
+test('DISC18-E: the swing reaches AttemptBash on that door, and its sound', () => {
   const { actions, collider, door } = scourgBarrow();
   const bashed = [];
   actions.onDoorBash = (o) => bashed.push(o.key);
@@ -397,7 +397,7 @@ test('DISC17-E: the swing reaches AttemptBash on that door, and its sound', () =
   assert.deepEqual(bashed, [door.key]);
 });
 
-test('DISC17-E: the corridor piece still owns what its own geometry meets - a ray whose first surface is the static wall inside its box picks the record, as before', () => {
+test('DISC18-E: the corridor piece still owns what its own geometry meets - a ray whose first surface is the static wall inside its box picks the record, as before', () => {
   const { actions, collider, relay } = scourgBarrow();
   const hit = pickActivatableHit([3, 14, 38], [0, 0, -1], activationTargets(actions.objects), collider);
   assert.equal(hit?.key, relay.key, 'the static bucket names nobody - the box decides, as it always did');
@@ -405,7 +405,7 @@ test('DISC17-E: the corridor piece still owns what its own geometry meets - a ra
 
 // ═══ D: the enemies no blow could reach ═══════════════════════════════════════════════════════════════════════════
 const SRC_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../src');
-/** The STATIC closure of a host module - every module on the page once that host has loaded (AUDIT DISC17: the first cut
+/** The STATIC closure of a host module - every module on the page once that host has loaded (AUDIT DISC18: the first cut
  *  took "some file under src/ imports it", which is not "the page holds it" - the standalone ?dungeon host still loads
  *  five of the foe block's modules late). */
 function staticClosure(entry) {
@@ -422,7 +422,7 @@ function staticClosure(entry) {
   return seen;
 }
 
-test('DISC17-D: every module the dungeon\'s foe subsystem loads lazily is one the world host\'s page already holds - no chunk there is lazy-only, so no deploy can delete it under an open tab', () => {
+test('DISC18-D: every module the dungeon\'s foe subsystem loads lazily is one the world host\'s page already holds - no chunk there is lazy-only, so no deploy can delete it under an open tab', () => {
   const dc = rd('src/scenes/dungeonContext.js');
   const at = dc.indexOf('if (opts.foes && palette) {');
   const block = dc.slice(at, dc.indexOf('} catch (err) {', at));
@@ -434,11 +434,11 @@ test('DISC17-D: every module the dungeon\'s foe subsystem loads lazily is one th
   assert.ok(staticClosure('scenes/dungeonContext.js').has(resolve(SRC_ROOT, 'ai/enhancedMotor.js')), 'the enhanced motor is the context\'s own static import');
 });
 
-test('DISC17-D: a chunk gone mid-session is said on the screen, not swallowed - and the log names what really failed', () => {
+test('DISC18-D: a chunk gone mid-session is said on the screen, not swallowed - and the log names what really failed', () => {
   assert.equal(isStaleChunk(new TypeError('Failed to fetch dynamically imported module: https://daggerfalljs.dev/play/assets/enhancedMotor-CPTnjkkD.js')), true);
   assert.match(STALE_CHUNK_IN_PLAY_TEXT, /reload the page/i);
   const dc = rd('src/scenes/dungeonContext.js');
   const c = dc.slice(dc.indexOf('} catch (err) {', dc.indexOf('if (opts.foes && palette) {')));
-  assert.match(c.slice(0, 1200), /if \(isStaleChunk\(err\)\) _staleChunkNotice = true;/);   // AUDIT DISC17: said on the level's first frame (drawFoes), auditdisc17's pin
+  assert.match(c.slice(0, 1200), /if \(isStaleChunk\(err\)\) _staleChunkNotice = true;/);   // AUDIT DISC18: said on the level's first frame (drawFoes), auditdisc18's pin
   assert.match(c.slice(0, 1200), /the dungeon builds with no live enemies/);
 });

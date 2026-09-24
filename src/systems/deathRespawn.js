@@ -23,7 +23,7 @@
 // kinds to choose among instead of one.
 import { LOCATION_TYPES, DUNGEON_TYPES, longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
 import { cureAllOfKind } from './effects.js';   // DEATHLOOP1
-import { maxFatigue } from './statMods.js';   // AUDIT DISC17: the revival's fatigue floor
+import { maxFatigue } from './statMods.js';   // AUDIT DISC18: the revival's fatigue floor
 
 const SAFE_KINDS = Object.freeze([
   { kind: 'temple', match: (e) => e.locationType === LOCATION_TYPES.ReligionTemple },
@@ -247,7 +247,7 @@ export function reviveForPlay(entity, { force = false } = {}) {
   if (!entity) return { revived: false, cleared: [] };
   const dead = !(entity.health > 0);
   if (dead || force) entity.health = respawnHealth(entity.maxHealth);
-  // AUDIT DISC17: ...and the fatigue, when there is none - a player who
+  // AUDIT DISC18: ...and the fatigue, when there is none - a player who
   // died of exhaustion stood up at zero, and the next drain collapsed
   // them again beside the foes that had caught them. The same fraction
   // and the same floor as the health.

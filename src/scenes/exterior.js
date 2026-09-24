@@ -5438,7 +5438,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // arm (tallySwingSkills), so every connecting swing was
         // double-counted, keyed by the display-name rot AUDIT 18
         // removed elsewhere.
-        const swing = {};   // AUDIT DISC17: one swing, one attack grunt, however many pools it is offered to
+        const swing = {};   // AUDIT DISC18: one swing, one attack grunt, however many pools it is offered to
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound, { swing })) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
           // BEFORE civilians - world.js:14097's order, and the order

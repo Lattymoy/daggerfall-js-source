@@ -275,7 +275,7 @@ function main(argv) {
   const base = val('--base') ?? 'HEAD';
   const apply = opt('--apply'), moveStruck = opt('--struck');
   const only = argv.flatMap((a, i) => (a === '--target' ? [argv[i + 1]] : []));
-  // AUDIT DISC17: THE BUFFER. world.js passed git's default 1 MiB of output
+  // AUDIT DISC18: THE BUFFER. world.js passed git's default 1 MiB of output
   // at 244b1136; `git show` of it threw ENOBUFS, the catch below read that
   // as "a new file", and every cite into the port's largest file went
   // unmoved - "0 cites to move" - through a batch that shifted it 57 lines.

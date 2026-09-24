@@ -364,7 +364,7 @@ test('SURV3: by source - the three hosts stand the pool, feed the race, draw the
   assert.match(dc, /w\.camps = campMemory\(\);/); assert.match(dc, /applyCampMemory\(shared\.world\.camps\);/);
   assert.match(dc, /camps: camps\.snapshot\(\),/); assert.match(dc, /if \(truncate\) \{ camps\.dropOwn\(\); camps\.restore\(w\.camps\); \}/);
   assert.match(dc, /camps, campBatches: \(\) => camps\.batches\(\), campLights: \(\) => camps\.lights\(\),/);
-  assert.match(modes, /\.\.\.dungeonCtx\.campLights\(\)(?:\.map\(_dgTint\))?, \.\.\.dungeonCtx\.torchLights\(\)(?:\.map\(_dgTint\))?\)/);   // AUDIT DISC17: the dungeon's colour on each, the candle alone white assert.match(modes, /\.\.\.dungeonCtx\.campBatches\(\), \.\.\.dungeonCtx\.torchBatches\(\)/);
+  assert.match(modes, /\.\.\.dungeonCtx\.campLights\(\)(?:\.map\(_dgTint\))?, \.\.\.dungeonCtx\.torchLights\(\)(?:\.map\(_dgTint\))?\)/);   // AUDIT DISC18: the dungeon's colour on each, the candle alone white assert.match(modes, /\.\.\.dungeonCtx\.campBatches\(\), \.\.\.dungeonCtx\.torchBatches\(\)/);
   // AUDIT-WH2 L2-F1: ...and `hearth:` beside it. HEARTH1 says all FOUR
   // HOSTS stand a ray target on a world fire that opens the cooking
   // list; the dungeon collected the fires, stood them and named them

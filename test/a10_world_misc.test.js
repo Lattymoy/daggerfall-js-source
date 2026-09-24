@@ -98,7 +98,7 @@ test('A10: xzRange 0 is NO cut - every exterior and interior caller unchanged', 
 test('A10: both dungeon hosts pass the block range; the exterior/interior ones do not', () => {
   for (const host of ['src/scenes/dungeon.js', 'src/scenes/worldModes.js']) {
     const h = read(host);
-    assert.match(h, /nearestLights\([^)]*flicker\.ranges, (?:null|\(\) => _dgColor), DUNGEON_LIGHT_BLOCK_RANGE\)/,   // AUDIT DISC17: the world host's arm rides the per-light colour channel (the candle's own white)
+    assert.match(h, /nearestLights\([^)]*flicker\.ranges, (?:null|\(\) => _dgColor), DUNGEON_LIGHT_BLOCK_RANGE\)/,   // AUDIT DISC18: the world host's arm rides the per-light colour channel (the candle's own white)
       `${host} culls its dungeon lights by the block range`);
     assert.match(h, /DUNGEON_LIGHT_BLOCK_RANGE/, `${host} imports the constant rather than restating 2060`);
   }

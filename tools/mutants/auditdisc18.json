@@ -1,686 +1,686 @@
 [
   {
-    "name": "AUDIT-DISC17-W1-fight-with-defender-is-quiet",
+    "name": "AUDIT-DISC18-W1-fight-with-defender-is-quiet",
     "file": "src/systems/townWatch.js",
     "old": "  if (!isPlayerTarget(t) && !(t?.defender === true && !t.dead)) return false;",
     "new": "  if (!isPlayerTarget(t)) return false;",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W1-dead-defender-still-a-fight",
+    "name": "AUDIT-DISC18-W1-dead-defender-still-a-fight",
     "file": "src/systems/townWatch.js",
     "old": "!(t?.defender === true && !t.dead)",
     "new": "!(t?.defender === true)",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W3-no-wave-cap",
+    "name": "AUDIT-DISC18-W3-no-wave-cap",
     "file": "src/systems/townWatch.js",
     "old": "        if (waves >= TOWN_WATCH_MAX_WAVES) return null;   // the town has sent all it will this incident\n",
     "new": "",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W3-waves-never-counted",
+    "name": "AUDIT-DISC18-W3-waves-never-counted",
     "file": "src/systems/townWatch.js",
     "old": "          waves++;\n",
     "new": "",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W3-incident-never-ends",
+    "name": "AUDIT-DISC18-W3-incident-never-ends",
     "file": "src/systems/townWatch.js",
     "old": "      else if ((quiet += dt) >= TOWN_WATCH_STAND_DOWN_SECONDS) waves = 0;   // the incident is over",
     "new": "      else quiet += dt;",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W3-quiet-cumulative",
+    "name": "AUDIT-DISC18-W3-quiet-cumulative",
     "file": "src/systems/townWatch.js",
     "old": "      if (threats > 0) quiet = 0;\n",
     "new": "",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W3-cap-moved",
+    "name": "AUDIT-DISC18-W3-cap-moved",
     "file": "src/systems/townWatch.js",
     "old": "export const TOWN_WATCH_MAX_WAVES = 3;",
     "new": "export const TOWN_WATCH_MAX_WAVES = 4;",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-span-seven",
+    "name": "AUDIT-DISC18-span-seven",
     "file": "src/systems/townWatch.js",
     "old": "export const TOWN_WATCH_ARRIVAL_SPAN = 6;",
     "new": "export const TOWN_WATCH_ARRIVAL_SPAN = 7;",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-standing-squad-summoned-again",
+    "name": "AUDIT-DISC18-standing-squad-summoned-again",
     "file": "src/systems/townWatch.js",
     "old": "        if (defenders > 0) return null;\n",
     "new": "",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-calm-cumulative",
+    "name": "AUDIT-DISC18-calm-cumulative",
     "file": "src/systems/townWatch.js",
     "old": "      if (threats > 0) {\n        calm = 0;\n",
     "new": "      if (threats > 0) {\n",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W6-threats-outside-town",
+    "name": "AUDIT-DISC18-W6-threats-outside-town",
     "file": "src/systems/townWatch.js",
     "old": "  const threats = inTown ? foes.filter((f) => isTownThreat(f, { inTownRect })) : [];",
     "new": "  const threats = foes.filter((f) => isTownThreat(f, { inTownRect }));",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W6-defenders-unread",
+    "name": "AUDIT-DISC18-W6-defenders-unread",
     "file": "src/systems/townWatch.js",
     "old": "threats: threats.length, defenders: guards.defenderCount(), locationKey,",
     "new": "threats: threats.length, defenders: 0, locationKey,",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W6-summon-without-threats",
+    "name": "AUDIT-DISC18-W6-summon-without-threats",
     "file": "src/systems/townWatch.js",
     "old": "pool: pool(), threats })",
     "new": "pool: pool(), threats: [] })",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W6-dismissal-dropped",
+    "name": "AUDIT-DISC18-W6-dismissal-dropped",
     "file": "src/systems/townWatch.js",
     "old": "  else if (act === 'dismiss') guards.dismissDefenders();\n",
     "new": "",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W6-pool-read-every-frame",
+    "name": "AUDIT-DISC18-W6-pool-read-every-frame",
     "file": "src/systems/townWatch.js",
     "old": "  if (act === 'summon') guards.summonDefenders({ playerFeet, playerFwd, pool: pool(), threats })",
     "new": "  const _p = pool();\n  if (act === 'summon') guards.summonDefenders({ playerFeet, playerFwd, pool: _p, threats })",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W6-host-in-town-always",
+    "name": "AUDIT-DISC18-W6-host-in-town-always",
     "file": "src/scenes/world.js",
     "old": "      inTown: _isPlayerInTownStrict(), crime:",
     "new": "      inTown: true, crime:",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W6-host-location-null",
+    "name": "AUDIT-DISC18-W6-host-location-null",
     "file": "src/scenes/world.js",
     "old": "locationKey: `${px.x},${px.y}`,\n      foes: exteriorFoes.foes",
     "new": "locationKey: null,\n      foes: exteriorFoes.foes",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W6-host-rect-always",
+    "name": "AUDIT-DISC18-W6-host-rect-always",
     "file": "src/scenes/world.js",
     "old": "    if (!_musicLoc || !f?.ai?.feet) return false;\n    const px = playerTravelPixel();\n    const wc = state.worldCoords(f.ai.feet);",
     "new": "    if (!_musicLoc || !f?.ai?.feet) return true;\n    const px = playerTravelPixel();\n    const wc = state.worldCoords(f.ai.feet);",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W2-blow-on-defender-no-crime",
+    "name": "AUDIT-DISC18-W2-blow-on-defender-no-crime",
     "file": "src/scenes/cityGuards.js",
     "old": "    if (g.defender) {\n      if (!playerEntity.crimeCommitted)",
     "new": "    if (false) {\n      if (!playerEntity.crimeCommitted)",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W2-held-crime-lowered",
+    "name": "AUDIT-DISC18-W2-held-crime-lowered",
     "file": "src/scenes/cityGuards.js",
     "old": "      if (!playerEntity.crimeCommitted) setCrimeCommitted(playerEntity, CRIME_ASSAULT);   // V4: through the one setter (SuppressCrime)\n      for (const d of guards)",
     "new": "      setCrimeCommitted(playerEntity, CRIME_ASSAULT);\n      for (const d of guards)",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W2-only-the-struck-one",
+    "name": "AUDIT-DISC18-W2-only-the-struck-one",
     "file": "src/scenes/cityGuards.js",
     "old": "      for (const d of guards) if (!d.dead && d.defender) enlistDefender(d, playerFeet);\n    }",
     "new": "      enlistDefender(g, playerFeet);\n    }",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W2-defender-counts-as-watch",
+    "name": "AUDIT-DISC18-W2-defender-counts-as-watch",
     "file": "src/scenes/cityGuards.js",
     "old": "    !g.dead && !g.defender && g.ai?.isHostile && g.entity?.team !== 'PlayerAlly');",
     "new": "    !g.dead && g.ai?.isHostile && g.entity?.team !== 'PlayerAlly');",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-enlist-not-hostile",
+    "name": "AUDIT-DISC18-enlist-not-hostile",
     "file": "src/scenes/cityGuards.js",
     "old": "    g.ai.isHostile = true;\n    g.ai.makeHostileToPlayer(600, playerFeet ?? null);",
     "new": "    g.ai.makeHostileToPlayer(600, playerFeet ?? null);",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-enlist-no-pursuit",
+    "name": "AUDIT-DISC18-enlist-no-pursuit",
     "file": "src/scenes/cityGuards.js",
     "old": "    g.ai.isHostile = true;\n    g.ai.makeHostileToPlayer(600, playerFeet ?? null);",
     "new": "    g.ai.isHostile = true;",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W3-defender-kit-kept",
+    "name": "AUDIT-DISC18-W3-defender-kit-kept",
     "file": "src/scenes/cityGuards.js",
     "old": "      else if (g.defender && !fromPlayer) g.entity.items = [];",
     "new": "      else if (false) g.entity.items = [];",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W3-every-watch-kit-stripped",
+    "name": "AUDIT-DISC18-W3-every-watch-kit-stripped",
     "file": "src/scenes/cityGuards.js",
     "old": "      else if (g.defender && !fromPlayer) g.entity.items = [];",
     "new": "      else if (!fromPlayer) g.entity.items = [];",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W5-in-flight-uncounted",
+    "name": "AUDIT-DISC18-W5-in-flight-uncounted",
     "file": "src/scenes/cityGuards.js",
     "old": " + spawning.filter((p) => p.defender).length;",
     "new": ";",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W5-pending-not-marked",
+    "name": "AUDIT-DISC18-W5-pending-not-marked",
     "file": "src/scenes/cityGuards.js",
     "old": "pos[2]], defender: !!defender };",
     "new": "pos[2]], defender: false };",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-summon-converts-townsfolk",
+    "name": "AUDIT-DISC18-summon-converts-townsfolk",
     "file": "src/scenes/cityGuards.js",
     "old": "      if (!p.guard || room() <= 0) continue;",
     "new": "      if (room() <= 0) continue;",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-summon-no-range",
+    "name": "AUDIT-DISC18-summon-no-range",
     "file": "src/scenes/cityGuards.js",
     "old": "      if (Math.hypot(p.pos[0] - playerFeet[0], p.pos[1] - playerFeet[1], p.pos[2] - playerFeet[2]) > GUARD_NPC_SPAWN_RANGE) continue;\n      const g = await spawnGuardAt(p.pos, p.fwdYaw, null, { defender: true",
     "new": "      const g = await spawnGuardAt(p.pos, p.fwdYaw, null, { defender: true",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-summon-band-three",
+    "name": "AUDIT-DISC18-summon-band-three",
     "file": "src/scenes/cityGuards.js",
     "old": "    const count = Math.min(room(), 2 + Math.floor(rand() * 4));   // Random.Range(2, 6)",
     "new": "    const count = Math.min(room(), 3 + Math.floor(rand() * 4));   // Random.Range(2, 6)",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-summon-no-band",
+    "name": "AUDIT-DISC18-summon-no-band",
     "file": "src/scenes/cityGuards.js",
     "old": "    if (came > 0) return came;\n    const count = Math.min(room(), 2 +",
     "new": "    return came;\n    const count = Math.min(room(), 2 +",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W5-fallback-with-protection-off",
+    "name": "AUDIT-DISC18-W5-fallback-with-protection-off",
     "file": "src/scenes/cityGuards.js",
     "old": "    if (defendersOnly && !protect) return false;\n",
     "new": "",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W5-spare-ignores-setting",
+    "name": "AUDIT-DISC18-W5-spare-ignores-setting",
     "file": "src/scenes/cityGuards.js",
     "old": "!(spareDefenders && protect && g.defender)",
     "new": "!(spareDefenders && g.defender)",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W5-guards-grunt-every-pass",
+    "name": "AUDIT-DISC18-W5-guards-grunt-every-pass",
     "file": "src/scenes/cityGuards.js",
     "old": "    if (!swing?.voiced) {\n      if (swing) swing.voiced = true;\n      const grunt = playerAttackGrunt(playerEntity, false, rand);",
     "new": "    if (true) {\n      if (swing) swing.voiced = true;\n      const grunt = playerAttackGrunt(playerEntity, false, rand);",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W5-guards-token-unset",
+    "name": "AUDIT-DISC18-W5-guards-token-unset",
     "file": "src/scenes/cityGuards.js",
     "old": "      if (swing) swing.voiced = true;\n      const grunt = playerAttackGrunt(playerEntity, false, rand);",
     "new": "      const grunt = playerAttackGrunt(playerEntity, false, rand);",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W5-foes-grunt-every-pass",
+    "name": "AUDIT-DISC18-W5-foes-grunt-every-pass",
     "file": "src/scenes/exteriorFoes.js",
     "old": "    if (!swing?.voiced) {\n      if (swing) swing.voiced = true;",
     "new": "    if (true) {\n      if (swing) swing.voiced = true;",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W5-foes-token-unset",
+    "name": "AUDIT-DISC18-W5-foes-token-unset",
     "file": "src/scenes/exteriorFoes.js",
     "old": "      if (swing) swing.voiced = true;\n",
     "new": "",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W5-host-token-dropped",
+    "name": "AUDIT-DISC18-W5-host-token-dropped",
     "file": "src/scenes/world.js",
     "old": "guardHitSound, { defendersOnly: true, swing }))",
     "new": "guardHitSound, { defendersOnly: true }))",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W5-carried-hit-new-swing",
+    "name": "AUDIT-DISC18-W5-carried-hit-new-swing",
     "file": "src/scenes/cityGuards.js",
     "old": "inViewFn ?? _lastInView, onHitSound, { swing });",
     "new": "inViewFn ?? _lastInView, onHitSound);",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W4-shaft-strikes-defender",
+    "name": "AUDIT-DISC18-W4-shaft-strikes-defender",
     "file": "src/combat/arrowFlight.js",
     "old": "          if (m.fromPlayer && t.ref?.defender === true) continue;",
     "new": "          if (false) continue;",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W4-enemy-shaft-passes-too",
+    "name": "AUDIT-DISC18-W4-enemy-shaft-passes-too",
     "file": "src/combat/arrowFlight.js",
     "old": "          if (m.fromPlayer && t.ref?.defender === true) continue;",
     "new": "          if (t.ref?.defender === true) continue;",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W4-blast-strikes-defender",
+    "name": "AUDIT-DISC18-W4-blast-strikes-defender",
     "file": "src/scenes/hostMagic.js",
     "old": "      if (caster?.entity === playerEntity && sparedFromPlayer(t)) continue;",
     "new": "      if (false) continue;",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W4-touch-meets-defender",
+    "name": "AUDIT-DISC18-W4-touch-meets-defender",
     "file": "src/scenes/hostMagic.js",
     "old": "marks.length ? [...playerTargets(), ...marks] : playerTargets()",
     "new": "marks.length ? [...foes(), ...marks] : foes()",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W4-area-strikes-defender",
+    "name": "AUDIT-DISC18-W4-area-strikes-defender",
     "file": "src/scenes/hostMagic.js",
     "old": "sweepFoes(eye, EXPLOSION_RADIUS, playerTargets())",
     "new": "sweepFoes(eye, EXPLOSION_RADIUS, foes())",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W4-missile-strikes-defender",
+    "name": "AUDIT-DISC18-W4-missile-strikes-defender",
     "file": "src/scenes/hostMagic.js",
     "old": "      for (const f of playerTargets()) {",
     "new": "      for (const f of foes()) {",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W4-nobody-spared",
+    "name": "AUDIT-DISC18-W4-nobody-spared",
     "file": "src/scenes/hostMagic.js",
     "old": "  const sparedFromPlayer = (t) => t?.defender === true;",
     "new": "  const sparedFromPlayer = (t) => t?.defender === 'never';",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-W4-torch-strikes-defender",
+    "name": "AUDIT-DISC18-W4-torch-strikes-defender",
     "file": "src/scenes/world.js",
     "old": "foes: () => [...cityGuards.guards.filter((g) => !g.defender), ...exteriorFoes.foes], foeSinks",
     "new": "foes: () => [...cityGuards.guards, ...exteriorFoes.foes], foeSinks",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-S1-residue-kept",
+    "name": "AUDIT-DISC18-S1-residue-kept",
     "file": "src/systems/save.js",
     "old": "  if (!entity.racialOverride && !entity.racialOverridePending) {\n    entity.minMetalToHit = undefined;",
     "new": "  if (false) {\n    entity.minMetalToHit = undefined;",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-S1-silver-kept",
+    "name": "AUDIT-DISC18-S1-silver-kept",
     "file": "src/systems/save.js",
     "old": "  if (!entity.racialOverride && !entity.racialOverridePending) {\n    entity.minMetalToHit = undefined;\n",
     "new": "  if (!entity.racialOverride && !entity.racialOverridePending) {\n",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-S1-vampire-spells-kept",
+    "name": "AUDIT-DISC18-S1-vampire-spells-kept",
     "file": "src/systems/save.js",
     "old": "s?.tag !== LYCANTHROPY_SPELL_TAG && s?.tag !== VAMPIRE_SPELL_TAG",
     "new": "s?.tag !== LYCANTHROPY_SPELL_TAG",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-S1-pending-curse-cleared",
+    "name": "AUDIT-DISC18-S1-pending-curse-cleared",
     "file": "src/systems/save.js",
     "old": "  if (!entity.racialOverride && !entity.racialOverridePending) {",
     "new": "  if (!entity.racialOverride) {",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-S1-live-curse-cleared",
+    "name": "AUDIT-DISC18-S1-live-curse-cleared",
     "file": "src/systems/save.js",
     "old": "  if (!entity.racialOverride && !entity.racialOverridePending) {",
     "new": "  if (!entity.racialOverridePending) {",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-S2-death-video-stranded",
+    "name": "AUDIT-DISC18-S2-death-video-stranded",
     "file": "src/systems/save.js",
     "old": "  for (const a of entity.activeEffects) if (a.infection && !a.deployed) a.deathScheduled = false;\n",
     "new": "",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-old-infection-not-repaired",
+    "name": "AUDIT-DISC18-old-infection-not-repaired",
     "file": "src/systems/save.js",
     "old": "if (a.kind === 'racialOverride' || a.infection) a.permanent = true;",
     "new": "if (a.kind === 'racialOverride') a.permanent = true;",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-S3-namesake-slots",
+    "name": "AUDIT-DISC18-S3-namesake-slots",
     "file": "src/systems/saveSlots.js",
     "old": "(!id || info.characterId === id)",
     "new": "true",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-S3-legacy-names-nothing",
+    "name": "AUDIT-DISC18-S3-legacy-names-nothing",
     "file": "src/systems/saveSlots.js",
     "old": "(!id || info.characterId === id)",
     "new": "(info.characterId === id)",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-S3-no-quicksave",
+    "name": "AUDIT-DISC18-S3-no-quicksave",
     "file": "src/systems/saveSlots.js",
     "old": "[...new Set([QUICK_SAVE_NAME, ...own.map((info) => info.saveName)])]",
     "new": "[...new Set(own.map((info) => info.saveName))]",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-S4-fatigue-left-at-zero",
+    "name": "AUDIT-DISC18-S4-fatigue-left-at-zero",
     "file": "src/systems/deathRespawn.js",
     "old": "  if ((dead || force) && !(entity.fatigue > 0)) entity.fatigue = respawnHealth(maxFatigue(entity));\n",
     "new": "",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-S4-living-rested",
+    "name": "AUDIT-DISC18-S4-living-rested",
     "file": "src/systems/deathRespawn.js",
     "old": "  if ((dead || force) && !(entity.fatigue > 0))",
     "new": "  if (!(entity.fatigue > 0))",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-S4-respawn-not-rested",
+    "name": "AUDIT-DISC18-S4-respawn-not-rested",
     "file": "src/systems/deathRespawn.js",
     "old": "  if ((dead || force) && !(entity.fatigue > 0))",
     "new": "  if (dead && !(entity.fatigue > 0))",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-S4-fatigue-overwritten",
+    "name": "AUDIT-DISC18-S4-fatigue-overwritten",
     "file": "src/systems/deathRespawn.js",
     "old": "  if ((dead || force) && !(entity.fatigue > 0))",
     "new": "  if ((dead || force))",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-hint-back-to-old",
+    "name": "AUDIT-DISC18-hint-back-to-old",
     "file": "src/ui/deathScreen.js",
     "old": "export const ONLINE_DEATH_HINT = 'ENTER respawn';",
     "new": "export const ONLINE_DEATH_HINT = 'ENTER end   F11 load';",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-E1-cast-cut-at-reach",
+    "name": "AUDIT-DISC18-E1-cast-cut-at-reach",
     "file": "src/combat/weaponRig.js",
     "old": "      first ??= collider.raycastHit(eye, lookDir, RAY_DISTANCE);",
     "new": "      first ??= collider.raycastHit(eye, lookDir, WEAPON_REACH);",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-E2-press-skips-own-mesh",
+    "name": "AUDIT-DISC18-E2-press-skips-own-mesh",
     "file": "src/player/activate.js",
     "old": "      if (firstHit.key != null && firstHit.key !== target.key) {",
     "new": "      if (firstHit.key != null) {",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-E2-swing-skips-own-mesh",
+    "name": "AUDIT-DISC18-E2-swing-skips-own-mesh",
     "file": "src/combat/weaponRig.js",
     "old": "      if (first.key != null && first.key !== o.key && actions.objects.has(first.key)) continue;",
     "new": "      if (first.key != null && actions.objects.has(first.key)) continue;",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-E2-special-door-a-box",
+    "name": "AUDIT-DISC18-E2-special-door-a-box",
     "file": "src/player/activate.js",
     "old": "  || (o.kind === 'door' && o.special === true)\n",
     "new": "",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-E2-flats-are-mesh",
+    "name": "AUDIT-DISC18-E2-flats-are-mesh",
     "file": "src/player/activate.js",
     "old": "  || ((o.kind === 'relay' || o.kind === 'effect') && o.modelIdNum != null));",
     "new": "  || (o.kind === 'relay' || o.kind === 'effect'));",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-E2-movers-not-mesh",
+    "name": "AUDIT-DISC18-E2-movers-not-mesh",
     "file": "src/player/activate.js",
     "old": "export const hasMeshCollider = (o) => !!o && (o.kind === 'action'\n",
     "new": "export const hasMeshCollider = (o) => !!o && (o.kind === 'mover'\n",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-E2-effects-not-mesh",
+    "name": "AUDIT-DISC18-E2-effects-not-mesh",
     "file": "src/player/activate.js",
     "old": "((o.kind === 'relay' || o.kind === 'effect') && o.modelIdNum != null)",
     "new": "((o.kind === 'relay') && o.modelIdNum != null)",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-D1-notice-never-raised",
+    "name": "AUDIT-DISC18-D1-notice-never-raised",
     "file": "src/scenes/dungeonContext.js",
     "old": "     if (isStaleChunk(err)) _staleChunkNotice = true;",
     "new": "     if (isStaleChunk(err)) _staleChunkNotice = false;",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-D1-notice-never-said",
+    "name": "AUDIT-DISC18-D1-notice-never-said",
     "file": "src/scenes/dungeonContext.js",
     "old": "    if (_staleChunkNotice) { _staleChunkNotice = false; setMidScreenText(STALE_CHUNK_IN_PLAY_TEXT, STALE_CHUNK_IN_PLAY_SECONDS); }\n",
     "new": "",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-D1-notice-short",
+    "name": "AUDIT-DISC18-D1-notice-short",
     "file": "src/systems/staleChunk.js",
     "old": "export const STALE_CHUNK_IN_PLAY_SECONDS = 12;",
     "new": "export const STALE_CHUNK_IN_PLAY_SECONDS = 1.5;",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-D1-notice-long",
+    "name": "AUDIT-DISC18-D1-notice-long",
     "file": "src/systems/staleChunk.js",
     "old": "export const STALE_CHUNK_IN_PLAY_TEXT = 'Game updated - reload the page for enemies.';",
     "new": "export const STALE_CHUNK_IN_PLAY_TEXT = 'This page is from an older version of the game that has since been replaced, so the enemies here could not be built. Reload the page to fix it.';",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-B1-candle-tinted",
+    "name": "AUDIT-DISC18-B1-candle-tinted",
     "file": "src/scenes/worldModes.js",
     "old": "        dungeonCtx.candleLight(), _dgTint(playerTorchLight(",
     "new": "        _dgTint(dungeonCtx.candleLight()), _dgTint(playerTorchLight(",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   },
   {
-    "name": "AUDIT-DISC17-B1-shared-colour-back",
+    "name": "AUDIT-DISC18-B1-shared-colour-back",
     "file": "src/scenes/worldModes.js",
     "old": "      renderer.setPointLights(_dgLit.data, null, _dgLit.colors);",
     "new": "      renderer.setPointLights(_dgLit.data, _dgColor);",
     "tests": [
-      "test/auditdisc17.test.js"
+      "test/auditdisc18.test.js"
     ]
   }
 ]

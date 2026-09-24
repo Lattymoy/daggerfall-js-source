@@ -182,7 +182,7 @@ export class ArrowFlight {
       if (foeImpact && foeTargets) {
         for (const t of foeTargets) {
           if (!t?.feet || t.ref === m.shooterFoe || t.ref?.dead) continue;
-          if (m.fromPlayer && t.ref?.defender === true) continue;   // DISC17-F (AUDIT DISC17): the player's shaft flies through the town's defenders, as their spells do (hostMagic.js sparedFromPlayer)
+          if (m.fromPlayer && t.ref?.defender === true) continue;   // DISC18-F (AUDIT DISC18): the player's shaft flies through the town's defenders, as their spells do (hostMagic.js sparedFromPlayer)
           if (missileHitsCapsule(m.pos, t.feet, t.ref?.ai?.height)) {   // ROAD-H tail: the target's own CAPSULE (REVIEW 2026-09-05 had its centre as a point)
             // ROAD-H tail (review): an ENEMY shaft damages only the foe
             // it was loosed at (:669); any other foe it meets stops it

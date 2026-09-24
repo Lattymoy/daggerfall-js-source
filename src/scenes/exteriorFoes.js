@@ -1114,7 +1114,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     };
     let any = false;
     // C2-slice (combat-17): the player's 20% attack grunt, once per
-    // hit frame (this path is melee-only, never a bow). AUDIT DISC17:
+    // hit frame (this path is melee-only, never a bow). AUDIT DISC18:
     // once per SWING - `swing` is the host's token when it offers one
     // swing to more than one pool (cityGuards.resolvePlayerHit's note).
     if (!swing?.voiced) {

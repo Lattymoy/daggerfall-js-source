@@ -879,7 +879,7 @@ test('HT1: the five hosts - each owns a pool, feeds the rig its raw keys and the
   // TERRAIN-SCALE1: measured from the building, and placed on this visit's origin
   assert.match(wm, /const droppedTorches = interiorTorches\.snapshot\(\(p\) => \[p\[0\] - o\[0\], p\[1\] - o\[1\], p\[2\] - o\[2\]\]\);/); assert.match(wm, /interiorTorches\.restore\(data\.droppedTorches, place\);/);
   assert.match(wm, /key\.startsWith\('droppedTorch:'\)\) \{/, 'the dungeon arm\'s loot ladder takes the key');
-  assert.match(wm, /\.\.\.dungeonCtx\.torchLights\(\)(?:\.map\(_dgTint\))?\)/);   // AUDIT DISC17: the dungeon's colour on each, the candle alone white assert.match(wm, /\.\.\.dungeonCtx\.torchBatches\(\)/);
+  assert.match(wm, /\.\.\.dungeonCtx\.torchLights\(\)(?:\.map\(_dgTint\))?\)/);   // AUDIT DISC18: the dungeon's colour on each, the candle alone white assert.match(wm, /\.\.\.dungeonCtx\.torchBatches\(\)/);
   // the dungeon context and the standalone dungeon
   assert.match(dc, /droppedTorches, torchBatches: \(\) => droppedTorches\.batches\(\), torchLights: \(\) => droppedTorches\.lights\(\),/);
   assert.match(dc, /targets\.push\(\.\.\.droppedTorches\.targets\(\)\);/); assert.match(dc, /if \(kind === 'droppedTorch'\) return droppedTorches\.activate\(key, mode\) \? 1 : 0;/);

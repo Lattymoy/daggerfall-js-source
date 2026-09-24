@@ -331,7 +331,7 @@ export function createPlayerMagic({
   /** The caster wrapper a missile carries: the player's for the player's, the foe's (its entity and sinks) for an
    *  enemy's, none for an enemy missile whose caster is gone. */
   const missileCaster = (m) => (m.fromPlayer === false ? (m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null) : playerCaster());
-  /** DISC17-F (AUDIT DISC17): THE TOWN'S DEFENDERS TAKE NONE OF THE
+  /** DISC18-F (AUDIT DISC18): THE TOWN'S DEFENDERS TAKE NONE OF THE
    *  PLAYER'S SPELLS - not the blast, the area, the missile or the
    *  touch. The port's own rule, beside the swing's friendly protection
    *  (cityGuards.resolvePlayerHit): a Fireball at the centaur the watch
@@ -344,7 +344,7 @@ export function createPlayerMagic({
   function explodeAt(pos, spell, casterLevel, playerFeet, caster = null, { excludeFoe = null, playerHeight = CAPSULE_HEIGHT, allies = false } = {}) {
     for (const t of sweepFoes(pos, EXPLOSION_RADIUS, foes())) {
       if (excludeFoe && t === excludeFoe) continue;
-      if (caster?.entity === playerEntity && sparedFromPlayer(t)) continue;   // DISC17-F (AUDIT DISC17): my blast passes the defenders by
+      if (caster?.entity === playerEntity && sparedFromPlayer(t)) continue;   // DISC18-F (AUDIT DISC18): my blast passes the defenders by
       if (t.puppet && caster?.entity && caster.entity !== playerEntity) continue;   // AUDIT WORLD6b-iii(a) C15: a FOE's blast lands nothing on a PUPPET here - its owner's world resolves that foe (my own blast on a puppet still goes to its owner as my hit)
       applySpellToFoe(spell, casterLevel, t, caster);
     }
@@ -385,7 +385,7 @@ export function createPlayerMagic({
   function pickTouch(eye, dir, sp = null) {
     if (!eye || !dir) return null;
     const marks = allyMarksFor(sp);   // AID1 onto ALLY-CAST: a beneficial touch may land on a party mate - the nearest along the aim wins
-    return pickTouchTarget(eye, dir, marks.length ? [...playerTargets(), ...marks] : playerTargets(), (c, d) => {   // DISC17-F (AUDIT DISC17): my touch meets no defender
+    return pickTouchTarget(eye, dir, marks.length ? [...playerTargets(), ...marks] : playerTargets(), (c, d) => {   // DISC18-F (AUDIT DISC18): my touch meets no defender
       const l = d || 1, dx = (c[0] - eye[0]) / l, dy = (c[1] - eye[1]) / l, dz = (c[2] - eye[2]) / l;
       const hit = collider.raycast(eye, [dx, dy, dz], d);
       return !Number.isFinite(hit) || hit >= d - 1e-3;
@@ -496,7 +496,7 @@ export function createPlayerMagic({
       lastCastCost = cost;
       tallyCastSkills(sp);
       surfacePlayer();
-      for (const t of sweepFoes(eye, EXPLOSION_RADIUS, playerTargets())) {   // DISC17-F (AUDIT DISC17): nor my area
+      for (const t of sweepFoes(eye, EXPLOSION_RADIUS, playerTargets())) {   // DISC18-F (AUDIT DISC18): nor my area
         applySpellToFoe(sp, playerEntity.level, t, playerCaster());
       }
       for (const t of sweepFoes(eye, EXPLOSION_RADIUS, allyMarksFor(sp))) giveToAlly(t, sp);   // AID1 onto ALLY-CAST: the mates around me
@@ -735,7 +735,7 @@ export function createPlayerMagic({
           continue;
         }
       }
-      for (const f of playerTargets()) {   // DISC17-F (AUDIT DISC17): my missile flies through a defender
+      for (const f of playerTargets()) {   // DISC18-F (AUDIT DISC18): my missile flies through a defender
         if (f.dead) continue;
         if (missileHitsFoe(m.pos, f)) {   // ROAD-H tail: DaggerfallMissile.cs:339's SphereCast meets the foe's CAPSULE (REVIEW 2026-09-05 had its centre as a point)
           if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, playerEntity.level, playerFeet, playerCaster(), { playerHeight, allies: !!m.ally });   // ROAD-H H2

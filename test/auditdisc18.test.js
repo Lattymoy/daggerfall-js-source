@@ -1,7 +1,7 @@
-// AUDIT DISC17 (2026-09-24, Mac: "Do an audit on this") - four lenses over the DISC17 batch (the watch, the saves,
+// AUDIT DISC18 (2026-09-24, Mac: "Do an audit on this") - four lenses over the DISC18 batch (the watch, the saves,
 // the Light / chunk / door fixes, and the pins themselves). Every confirmed finding was reproduced in node first, fixed
 // at its root, and is pinned here BY EXECUTION where the seam is a function (bible/01-Overview/Field-Bugs-2026-09-24.md,
-// "AUDIT DISC17"):
+// "AUDIT DISC18"):
 //   W1 the defenders walked away mid-melee - a monster fighting one read as a quiet town (isTownThreat).
 //   W2 a blow on a defender levied no crime and made a rogue that turned the town's guards; now it is Assault and the
 //      whole squad is the crime's watch.
@@ -58,7 +58,7 @@ const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 const inside = () => true;
 const hunter = (target = PLAYER_TARGET) => ({ ai: { isHostile: true, target, feet: [1, 0, 1] }, entity: { team: 'Centaurs' } });
 
-test('AUDIT DISC17 W1: a monster fighting a standing defender is still the town\'s threat - a dead one\'s, or a crime watchman\'s, is not', () => {
+test('AUDIT DISC18 W1: a monster fighting a standing defender is still the town\'s threat - a dead one\'s, or a crime watchman\'s, is not', () => {
   const defender = { defender: true, dead: false };
   assert.equal(isTownThreat(hunter(defender), { inTownRect: inside }), true, 'the fight the watch came for');
   assert.equal(isTownThreat(hunter({ defender: true, dead: true }), { inTownRect: inside }), false, 'a fallen defender is no fight');
@@ -79,7 +79,7 @@ const fakeGuards = (n = 0) => {
 };
 const FRAME = { enabled: true, inTown: true, crime: false, locationKey: '3,12', inTownRect: inside, playerFeet: [0, 0, 0], playerFwd: [0, 0, 1] };
 
-test('AUDIT DISC17 W1, driven: the squad stays while the monster fights it, and leaves ten seconds after it falls', () => {
+test('AUDIT DISC18 W1, driven: the squad stays while the monster fights it, and leaves ten seconds after it falls', () => {
   const watch = createTownWatch({ rand: () => 0 });
   const guards = fakeGuards(0);
   const centaur = hunter();
@@ -97,7 +97,7 @@ test('AUDIT DISC17 W1, driven: the squad stays while the monster fights it, and 
   assert.equal(left, TOWN_WATCH_STAND_DOWN_SECONDS, 'the stand-down, to the tick');
 });
 
-test('AUDIT DISC17 W3: one incident brings at most TOWN_WATCH_MAX_WAVES squads - and the count starts over once the town has been quiet a stand-down\'s length', () => {
+test('AUDIT DISC18 W3: one incident brings at most TOWN_WATCH_MAX_WAVES squads - and the count starts over once the town has been quiet a stand-down\'s length', () => {
   const w = createTownWatch({ rand: () => 0 });   // Random.Range(5, 11) -> 5
   const T = { enabled: true, playerInTown: true, crime: false, threats: 1, defenders: 0, locationKey: '3,12' };
   let summons = 0;
@@ -114,7 +114,7 @@ test('AUDIT DISC17 W3: one incident brings at most TOWN_WATCH_MAX_WAVES squads -
   assert.equal(t, TOWN_WATCH_ARRIVAL_MIN_SECONDS + 0.25, 'after the countdown (armed on the first tick)');
 });
 
-test('AUDIT DISC17 W3, through the frame: a player out of town for a stand-down\'s length ends the incident even with the monster still after them - the frame counts no threat outside the town', () => {
+test('AUDIT DISC18 W3, through the frame: a player out of town for a stand-down\'s length ends the incident even with the monster still after them - the frame counts no threat outside the town', () => {
   const w = createTownWatch({ rand: () => 0 });
   const guards = fakeGuards(0);
   const centaur = hunter();
@@ -126,7 +126,7 @@ test('AUDIT DISC17 W3, through the frame: a player out of town for a stand-down\
   assert.equal(guards.log.summons.length, 4, 'back in town with it, the watch comes again');
 });
 
-test('AUDIT DISC17: the countdown\'s top is Random.Range(5, 11)\'s ten; standing defenders are never summoned again, through a whole countdown; one threat\'s moment resets the stand-down', () => {
+test('AUDIT DISC18: the countdown\'s top is Random.Range(5, 11)\'s ten; standing defenders are never summoned again, through a whole countdown; one threat\'s moment resets the stand-down', () => {
   const top = createTownWatch({ rand: () => 0.999 });
   const T = { enabled: true, playerInTown: true, crime: false, threats: 1, defenders: 0, locationKey: '3,12' };
   let t = 0, act = top.tick(0, T);
@@ -144,7 +144,7 @@ test('AUDIT DISC17: the countdown\'s top is Random.Range(5, 11)\'s ten; standing
   assert.equal(out, 'dismiss');
 });
 
-test('AUDIT DISC17 W6: the host\'s frame - the threats it hands the summon are the filtered ones, the defenders are the pool\'s count, the dismissal reaches the pool, and a player out of town has no threats', () => {
+test('AUDIT DISC18 W6: the host\'s frame - the threats it hands the summon are the filtered ones, the defenders are the pool\'s count, the dismissal reaches the pool, and a player out of town has no threats', () => {
   const w = createTownWatch({ rand: () => 0 });
   const guards = fakeGuards(0);
   const threat = hunter();
@@ -173,7 +173,7 @@ test('AUDIT DISC17 W6: the host\'s frame - the threats it hands the summon are t
   assert.equal(off.log.dismissals, 1);
 });
 
-test('AUDIT DISC17 W6 by source: the world host answers the frame with the strict town test, its own rect for the foes\' feet, the travel pixel and the whole guard pool - nothing more', () => {
+test('AUDIT DISC18 W6 by source: the world host answers the frame with the strict town test, its own rect for the foes\' feet, the travel pixel and the whole guard pool - nothing more', () => {
   const w = rd('src/scenes/world.js');
   const body = (head, end) => { const at = w.indexOf(head); assert.ok(at > 0, head); return w.slice(at, w.indexOf(end, at) + end.length); };
   assert.equal(body('  function _townWatchFrame(dt) {', '\n  }'), `  function _townWatchFrame(dt) {
@@ -195,7 +195,7 @@ test('AUDIT DISC17 W6 by source: the world host answers the frame with the stric
   assert.match(w, /const townWatch = createTownWatch\(\);/);
 });
 
-// the watch1 rig (disc17.test.js's): a synthetic CLASS18.CFG and MONSTER.BSA, a flat open world
+// the watch1 rig (disc18.test.js's): a synthetic CLASS18.CFG and MONSTER.BSA, a flat open world
 function craftCfg({ hpPerLevel = 4, speed = 90, str = 40, agi = 85, luck = 55, atkFlags = 0x08 } = {}) {
   const b = new Uint8Array(74); const v = new DataView(b.buffer);
   b[10] = atkFlags; v.setUint16(52, hpPerLevel, true);
@@ -244,7 +244,7 @@ async function town(p, { guardsOver = {}, foesOver = {}, at = [3, 0, 3], n = 1 }
   return { guards, monsters, centaur };
 }
 
-test('AUDIT DISC17 W2: a blow on a defender is Assault - the whole squad is the crime\'s watch at once (both teams, the pursuit), and no half-reset defender reads as a standing watch', async () => {
+test('AUDIT DISC18 W2: a blow on a defender is Assault - the whole squad is the crime\'s watch at once (both teams, the pursuit), and no half-reset defender reads as a standing watch', async () => {
   const p = townsman();
   const { guards } = await town(p, { n: 2 });
   const [a, b] = guards.guards;
@@ -271,7 +271,7 @@ test('AUDIT DISC17 W2: a blow on a defender is Assault - the whole squad is the 
   assert.equal(q.crimeCommitted, 5, 'a held crime is never lowered to Assault');
 });
 
-test('AUDIT DISC17 W3: a defender a monster kills carries nothing - a crime watchman it kills keeps his kit, and one the player kills is the player\'s', async () => {
+test('AUDIT DISC18 W3: a defender a monster kills carries nothing - a crime watchman it kills keeps his kit, and one the player kills is the player\'s', async () => {
   const p = townsman();
   const { guards } = await town(p);
   const d = guards.guards[0];
@@ -297,7 +297,7 @@ test('AUDIT DISC17 W3: a defender a monster kills carries nothing - a crime watc
   assert.equal(m.entity.items.length, 2, 'a body the player felled is theirs to strip, as any watchman\'s');
 });
 
-test('AUDIT DISC17 W5: a summon still loading counts - the watch reads a squad from the first mint', async () => {
+test('AUDIT DISC18 W5: a summon still loading counts - the watch reads a squad from the first mint', async () => {
   const p = townsman();
   const guards = createCityGuards(rig(p));
   const monsters = createExteriorFoes(rig(p));
@@ -308,7 +308,7 @@ test('AUDIT DISC17 W5: a summon still loading counts - the watch reads a squad f
   assert.equal(guards.defenderCount(), 1, 'landed, and counted once');
 });
 
-test('AUDIT DISC17: the summon converts the wandering GUARDS in range and nobody else - a townsperson is not one, and a guard past 77.5 is not in range - else 2-5 come at the spawner\'s band', async () => {
+test('AUDIT DISC18: the summon converts the wandering GUARDS in range and nobody else - a townsperson is not one, and a guard past 77.5 is not in range - else 2-5 come at the spawner\'s band', async () => {
   const p = townsman();
   const guards = createCityGuards(rig(p, { rand: () => 0.3 }));
   const monsters = createExteriorFoes(rig(p));
@@ -326,7 +326,7 @@ test('AUDIT DISC17: the summon converts the wandering GUARDS in range and nobody
   assert.equal(await g2.summonDefenders({ playerFeet: FEET0, playerFwd: FWD0, threats: [centaur], pool: [] }), 3, 'an empty street: the band');
 });
 
-test('AUDIT DISC17 W5: with MeleeAttackFriendlyProtection off the first pass strikes a defender in front like anything else, and the second has nothing to offer', async () => {
+test('AUDIT DISC18 W5: with MeleeAttackFriendlyProtection off the first pass strikes a defender in front like anything else, and the second has nothing to offer', async () => {
   const p = townsman();
   const guards = createCityGuards(rig(p));
   const monsters = createExteriorFoes(rig(p));
@@ -343,7 +343,7 @@ test('AUDIT DISC17 W5: with MeleeAttackFriendlyProtection off the first pass str
   } finally { setValue('MeleeAttacks', 'MeleeAttackFriendlyProtection', true); }
 });
 
-test('AUDIT DISC17 W5: one swing, one attack grunt - the host offers it to the watch, the monsters and the defenders, and only the first pool with anyone in it rolls', async () => {
+test('AUDIT DISC18 W5: one swing, one attack grunt - the host offers it to the watch, the monsters and the defenders, and only the first pool with anyone in it rolls', async () => {
   setValue('Enhancements', 'CombatVoices', true);
   try {
     const plays = [];
@@ -374,7 +374,7 @@ test('AUDIT DISC17 W5: one swing, one attack grunt - the host offers it to the w
   } finally { setValue('Enhancements', 'CombatVoices', false); }
 });
 
-test('AUDIT DISC17 W5 by source: every host that offers one swing to more than one pool hands them the one token', () => {
+test('AUDIT DISC18 W5 by source: every host that offers one swing to more than one pool hands them the one token', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /const swing = \{\};\n\s*if \(!cityGuards\.resolvePlayerHit\([^\n]*\{ spareDefenders: true, swing \}\)\) \{/);
   assert.match(w, /if \(exteriorFoes\.resolvePlayerHit\([^\n]*guardHitSound, \{ swing \}\)\) \{/);
@@ -388,7 +388,7 @@ test('AUDIT DISC17 W5 by source: every host that offers one swing to more than o
   assert.match(rd('src/scenes/cityGuards.js'), /const carriedHit = resolvePlayerHit\([^\n]*onHitSound, \{ swing \}\);/, 'and the Assault conversion\'s re-pointed swing is the same swing');
 });
 
-test('AUDIT DISC17 W4: the player\'s shaft flies through a defender to the monster behind him; an enemy\'s shaft still stops on one', () => {
+test('AUDIT DISC18 W4: the player\'s shaft flies through a defender to the monster behind him; an enemy\'s shaft still stops on one', () => {
   const f = new ArrowFlight({ getGpuMesh: () => null, collider: null });
   const defender = { id: 'defender', defender: true, dead: false, ai: { height: 1.8 } };
   const centaur = { id: 'centaur', dead: false, ai: { height: 1.8 } };
@@ -441,7 +441,7 @@ function spellRig(foes) {
 }
 const struck = (hurt) => [...new Set(hurt.map(([id]) => id))].sort();
 
-test('AUDIT DISC17 W4: the player\'s spells pass the town\'s defenders by - the area around the caster, the touch, the missile and the blast', () => {
+test('AUDIT DISC18 W4: the player\'s spells pass the town\'s defenders by - the area around the caster, the touch, the missile and the blast', () => {
   const near = () => [foeRec('defender', [0, 0, 1.2], { defender: true }), foeRec('centaur', [1.5, 0, 2.5])];
   const area = spellRig(near());
   area.magic.readySpell(spellOf(3, 'Aura'));
@@ -468,7 +468,7 @@ test('AUDIT DISC17 W4: the player\'s spells pass the town\'s defenders by - the 
   assert.deepEqual(struck(nearBlast.hurt), ['centaur'], 'a defender inside the radius of the blast is spared');
 });
 
-test('AUDIT DISC17 W4 by source: a thrown torch passes the defenders by (the world host\'s torch pool), and a monster\'s blast still lands on them', () => {
+test('AUDIT DISC18 W4 by source: a thrown torch passes the defenders by (the world host\'s torch pool), and a monster\'s blast still lands on them', () => {
   assert.match(rd('src/scenes/world.js'), /foes: \(\) => \[\.\.\.cityGuards\.guards\.filter\(\(g\) => !g\.defender\), \.\.\.exteriorFoes\.foes\], foeSinks: \(f\) => foeSinks\(f\), makeEnemiesHostile/);
   assert.match(rd('src/scenes/hostMagic.js'), /if \(caster\?\.entity === playerEntity && sparedFromPlayer\(t\)\) continue;/);
 });
@@ -484,7 +484,7 @@ const mortal = () => ({
 const reload = (p) => { const q = { isPlayer: true }; restorePlayer(q, JSON.parse(JSON.stringify(snapshotPlayer(p, { classicMinutes: T0 })))); return q; };
 const FIREBALL = { name: 'My Fireball', custom: true, rangeType: 4, element: 0, effects: [] };
 
-test('AUDIT DISC17 S1: a save the curse bug had already rewritten - no curse, but Silver-only hits and the curse\'s spells - loads a plain mortal', () => {
+test('AUDIT DISC18 S1: a save the curse bug had already rewritten - no curse, but Silver-only hits and the curse\'s spells - loads a plain mortal', () => {
   const p = mortal();
   p.minMetalToHit = WEAPON_MATERIALS.Silver;
   p.spells = [{ name: 'Lycanthropy', tag: LYCANTHROPY_SPELL_TAG, custom: true }, { name: 'Vampire Charm', tag: VAMPIRE_SPELL_TAG, custom: true }, FIREBALL];
@@ -493,7 +493,7 @@ test('AUDIT DISC17 S1: a save the curse bug had already rewritten - no curse, bu
   assert.deepEqual(q.spells.map((s) => s.name), ['My Fireball'], 'the curse\'s spells gone, the player\'s own kept');
 });
 
-test('AUDIT DISC17 S1: a living curse, or one pending its deploy, keeps both', () => {
+test('AUDIT DISC18 S1: a living curse, or one pending its deploy, keeps both', () => {
   setWorldMinutes(T0); resetMagicRoundMarker(null);
   const wolf = mortal();
   createLycanthropyCurse(wolf, LYCANTHROPY_TYPES.Werewolf, { now: T0 });
@@ -519,7 +519,7 @@ test('AUDIT DISC17 S1: a living curse, or one pending its deploy, keeps both', (
   resetMagicRoundMarker(null);
 });
 
-test('AUDIT DISC17 S2: a save taken under the vampire\'s death video brings the video back - the close it waited for never comes in the loaded game', () => {
+test('AUDIT DISC18 S2: a save taken under the vampire\'s death video brings the video back - the close it waited for never comes in the loaded game', () => {
   const p = mortal();
   startInfection(p, INFECTION.Vampirism, { day: Math.floor(T0 / MINUTES_PER_DAY) });
   const e = liveInfection(p);
@@ -531,7 +531,7 @@ test('AUDIT DISC17 S2: a save taken under the vampire\'s death video brings the 
   assert.equal(r.dreamPlayed, true, 'the dream it had is not had again');
 });
 
-test('AUDIT DISC17: an old save\'s INFECTION - no flag, the null round count - is repaired too, and lives on through the rounds', () => {
+test('AUDIT DISC18: an old save\'s INFECTION - no flag, the null round count - is repaired too, and lives on through the rounds', () => {
   setWorldMinutes(T0); resetMagicRoundMarker(null);
   const p = mortal();
   startInfection(p, INFECTION.Werewolf, { day: Math.floor(T0 / MINUTES_PER_DAY) });
@@ -554,7 +554,7 @@ const memStorage = () => {
   };
 };
 
-test('AUDIT DISC17 S3: the online exit autosave names this character\'s own slots - never a namesake\'s - and always the QuickSave', () => {
+test('AUDIT DISC18 S3: the online exit autosave names this character\'s own slots - never a namesake\'s - and always the QuickSave', () => {
   const storage = memStorage();
   const me = mortal();
   const namesake = mortal();
@@ -567,7 +567,7 @@ test('AUDIT DISC17 S3: the online exit autosave names this character\'s own slot
   assert.deepEqual(exitAutosaveNames(legacy, { storage }).sort(), ['Backup', 'Before the Mages', 'Dungeon run', QUICK_SAVE_NAME].sort(), 'no id to give: the name decides, as findSave does');
 });
 
-test('AUDIT DISC17 S4: the revival stands an exhausted corpse up with the same fraction of its fatigue - and never touches a living player\'s', () => {
+test('AUDIT DISC18 S4: the revival stands an exhausted corpse up with the same fraction of its fatigue - and never touches a living player\'s', () => {
   const dead = { health: 0, maxHealth: 80, fatigue: 0, stats: { strength: 50, endurance: 60 } };
   reviveForPlay(dead);
   assert.equal(dead.fatigue, respawnHealth(maxFatigue(dead)));
@@ -583,7 +583,7 @@ test('AUDIT DISC17 S4: the revival stands an exhausted corpse up with the same f
   assert.equal(respawn.fatigue, respawnHealth(maxFatigue(respawn)), 'the respawn pays it too');
 });
 
-test('AUDIT DISC17: the online death screen names its respawn and no key that does nothing', () => {
+test('AUDIT DISC18: the online death screen names its respawn and no key that does nothing', () => {
   const had = Object.getOwnPropertyDescriptor(globalThis, 'location');
   Object.defineProperty(globalThis, 'location', { value: { search: '?online=1&load=1', pathname: '/' }, configurable: true, writable: true });
   try {
@@ -615,7 +615,7 @@ const IDENTITY = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 
 const DOOR_TEXT = { actionFlag: ACTION_FLAGS.DoorText, triggerFlag: TRIGGER_FLAGS.None, index: 72, nextObject: -1, duration: 0, magnitude: 0, axisRaw: 5 };
 const EYE = [0, 1.2, 0], EAST = [1, 0, 0];
 
-test('AUDIT DISC17 E1: the swing finds a door whose box is inside the reach and whose mesh lies just past it - the relay in front does not keep the blow (Orsinium, 12631 behind 12080)', () => {
+test('AUDIT DISC18 E1: the swing finds a door whose box is inside the reach and whose mesh lies just past it - the relay in front does not keep the blow (Orsinium, 12631 behind 12080)', () => {
   const collider = new Collider(() => -Infinity);
   const actions = new ActionSystem(collider, { rolls: () => 0 });
   const door = actions.addDoor(turnedSlab([2.85, 0, 0]), IDENTITY, { ns: 0, positionKey: 12631, startingLockValue: 0, action: DOOR_TEXT });
@@ -639,7 +639,7 @@ function pickBox(actions, o) {
   return activationTargets(actions.objects).find((x) => x.key === o.key).aabb.min[0] - EYE[0];
 }
 
-test('AUDIT DISC17 E2: a mover met at its own mesh is the press\'s and the swing\'s - the first surface being its own never skips it', () => {
+test('AUDIT DISC18 E2: a mover met at its own mesh is the press\'s and the swing\'s - the first surface being its own never skips it', () => {
   const collider = new Collider(() => -Infinity);
   const actions = new ActionSystem(collider, { rolls: () => 0 });
   const lever = boxMesh([1.5, 0.8, -0.2], [1.7, 1.6, 0.2]);
@@ -653,7 +653,7 @@ test('AUDIT DISC17 E2: a mover met at its own mesh is the press\'s and the swing
   assert.deepEqual(received, [mover.key], 'the swing');
 });
 
-test('AUDIT DISC17 E2: a flat lever in front of a door is the press\'s - a flat is a BoxCollider, never skipped for the surface behind it', () => {
+test('AUDIT DISC18 E2: a flat lever in front of a door is the press\'s - a flat is a BoxCollider, never skipped for the surface behind it', () => {
   const collider = new Collider(() => -Infinity);
   const actions = new ActionSystem(collider, { rolls: () => 0 });
   const door = actions.addDoor(boxMesh([2.2, 0, -0.6], [2.3, 2.2, 0.6]), IDENTITY, { ns: 0, positionKey: 1, startingLockValue: 0, action: DOOR_TEXT });
@@ -665,7 +665,7 @@ test('AUDIT DISC17 E2: a flat lever in front of a door is the press\'s - a flat 
   assert.notEqual(hit?.key, door.key);
 });
 
-test('AUDIT DISC17 E2: the mesh colliders are DFU\'s placed models - movers, special doors, model relays and effects; action doors and flats are boxes', () => {
+test('AUDIT DISC18 E2: the mesh colliders are DFU\'s placed models - movers, special doors, model relays and effects; action doors and flats are boxes', () => {
   assert.equal(hasMeshCollider({ kind: 'action' }), true);
   assert.equal(hasMeshCollider({ kind: 'door', special: true }), true, 'a special door is a standalone model');
   assert.equal(hasMeshCollider({ kind: 'door' }), false, 'an action door is a BoxCollider');
@@ -678,7 +678,7 @@ test('AUDIT DISC17 E2: the mesh colliders are DFU\'s placed models - movers, spe
 });
 
 // ═══ D and B ══════════════════════════════════════════════════════════════════════════════════════════════════════
-test('AUDIT DISC17 D1: the stale-chunk notice fits one line of the classic panel and is said on the level\'s first frame, long enough to read', () => {
+test('AUDIT DISC18 D1: the stale-chunk notice fits one line of the classic panel and is said on the level\'s first frame, long enough to read', () => {
   assert.ok(STALE_CHUNK_IN_PLAY_TEXT.length <= 50, `${STALE_CHUNK_IN_PLAY_TEXT.length} characters`);
   assert.match(STALE_CHUNK_IN_PLAY_TEXT, /reload/i);
   assert.ok(STALE_CHUNK_IN_PLAY_SECONDS >= 10);
@@ -689,7 +689,7 @@ test('AUDIT DISC17 D1: the stale-chunk notice fits one line of the classic panel
   assert.match(dc, /function drawFoes\([^\n]*\) \{\n\s*if \(_staleChunkNotice\) \{ _staleChunkNotice = false; setMidScreenText\(STALE_CHUNK_IN_PLAY_TEXT, STALE_CHUNK_IN_PLAY_SECONDS\); \}/);
 });
 
-test('AUDIT DISC17 B1: underground the candle burns its own white - every other light keeps the dungeon\'s colour', () => {
+test('AUDIT DISC18 B1: underground the candle burns its own white - every other light keeps the dungeon\'s colour', () => {
   const src = rd('src/scenes/worldModes.js');
   const at = src.indexOf("if (mode === 'dungeon') {\n      if (pendingDungeonExit)");
   const branch = src.slice(at, src.indexOf('\n    }\n', at));

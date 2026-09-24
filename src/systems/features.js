@@ -814,7 +814,7 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'wildernessCamps', initial: true, online: 'player' }),
   }),
-  // DISC17-F (2026-09-24, Discord through Mac: "enhance guard
+  // DISC18-F (2026-09-24, Discord through Mac: "enhance guard
   // interaction"): THE WATCH DEFENDS THE TOWN (systems/townWatch.js) -
   // the port's own. DFU's combat watch exists only for a crime; this
   // brings it, as the player's ally, when a monster hunts the player
