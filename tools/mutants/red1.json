@@ -26,7 +26,7 @@
   {
     "name": "RED1-4-the-rate-gate-dropped",
     "file": "server/src/index.js",
-    "old": "      const gate = redGate(a.rbucket, now);\n      this._setAttach(ws, { ...a, rbucket: gate.bucket });\n      if (!gate.pass) return;",
+    "old": "      const meters = this._meterOf(ws);\n      const gate = redGate(meters.rbucket, now);\n      meters.rbucket = gate.bucket;\n      if (!gate.pass) return;",
     "new": "",
     "tests": ["test/red1_server_say.test.js"],
     "note": "A compromised or careless developer account can then paint every screen in the game as fast as a socket will carry frames. The grant says WHO may speak; the bucket says how often, and a broadcast needs both - an authority with no rate is a single account away from an outage."
@@ -34,8 +34,8 @@
   {
     "name": "RED1-5-the-red-bucket-is-the-chat-bucket",
     "file": "server/src/index.js",
-    "old": "      const gate = redGate(a.rbucket, now);\n      this._setAttach(ws, { ...a, rbucket: gate.bucket });",
-    "new": "      const gate = redGate(a.cbucket, now);\n      this._setAttach(ws, { ...a, cbucket: gate.bucket });",
+    "old": "      const gate = redGate(meters.rbucket, now);\n      meters.rbucket = gate.bucket;",
+    "new": "      const gate = redGate(meters.cbucket, now);\n      meters.cbucket = gate.bucket;",
     "tests": ["test/red1_server_say.test.js"],
     "note": "Two different allowances sharing one bucket means each silently spends the other: a developer who has just talked cannot broadcast, and one who has just broadcast cannot talk. Separate spends, separate buckets - which is also why CHAT1 gave chat its own rather than borrowing the pose one."
   },
@@ -74,16 +74,16 @@
   {
     "name": "RED1-10-the-client-decides-who-may-broadcast",
     "file": "src/scenes/world.js",
-    "old": "        if (red) return chatLinks.get(tabId)?.sendRed(red[1]) ?? false;",
-    "new": "        if (red) return online?.glyphs?.includes('dev') ? (chatLinks.get(tabId)?.sendRed(red[1]) ?? false) : false;",
+    "old": "        if (red) return chatLinks.get('world')?.sendRed(red[1]) ?? false;",
+    "new": "        if (red) return online?.glyphs?.includes('dev') ? (chatLinks.get('world')?.sendRed(red[1]) ?? false) : false;",
     "tests": ["test/red1_server_say.test.js"],
     "note": "A second copy of an authority this side does not hold. It is wrong the moment a grant lapses or arrives, it invites the next reader to trust it, and it protects nothing - the relay is the only thing that can check a signature, and it already does."
   },
   {
     "name": "RED1-11-the-red-line-is-not-a-system-line",
     "file": "src/net/chat.js",
-    "old": "system: !!system || !!red, red: !!red };",
-    "new": "system: !!system, red: !!red };",
+    "old": "    const sys = !!system || !!red;",
+    "new": "    const sys = !!system;",
     "tests": ["test/red1_server_say.test.js"],
     "note": "Nobody is speaking a red line, so every reader that already knows what a system line is has to be told about this one separately - starting with ui/nameLayer.js's `bubbleLineOk`, which would hang a chat bubble over the head of a peer whose id is the empty string."
   },

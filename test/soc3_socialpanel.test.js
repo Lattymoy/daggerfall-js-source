@@ -118,7 +118,7 @@ test('SOC3: the Social button stands in BOTH chat states with one badge law, is 
   assert.deepEqual(both.map((b) => b.textContent), ['Social', 'Social']);
   assert.equal(find(root, 'dfchat-social-out').length, 1);
   assert.equal(one(one(root, 'dfchat-box'), 'dfchat-social-tab')?.parent?.className, 'dfchat-tabs', 'the open state\'s sits IN the tab bar');
-  assert.equal(find(root, 'dfchat-tab').length, 1, 'and it is not a tab: the World tab is still the only row of the log');
+  assert.equal(find(root, 'dfchat-tab').length, log.tabs.length, 'and it is not a tab: every tab button is a row of the log');   // CHAT-CHAN: four rows now
   // AUDIT SOC C21: NO aria-label on the button. One overrode the whole of its content, so the badge - the only part
   // that ever changes - was never read out. The words are a title for the mouse, and the badge labels ITSELF.
   assert.equal(both[0].attrs['aria-label'], undefined, 'no label that swallows the badge');
@@ -638,7 +638,7 @@ test('SOC3: a roster row is a DOOR - the menu is the host\'s answers, a refused 
 test('SOC3: the host by source - world.js makes the panel in socialStart over the picture the hub filled, hands the chat the button, the colours and the roster\'s doors as LAZY closures, puts the panel on hudCtx for SOC5, and renders it on the chat frame under the chat\'s own covering rule (mutants: the panel made before the picture; the closures captured eagerly; the render outside the chat frame; the pointer doors dropped)', () => {
   const w = rd('src/scenes/world.js');
   const bare = w.replace(/^\s*\/\/.*$/gm, '');
-  assert.match(w, /import \{ createSocialPanel, TRY_AGAIN_TEXT \} from '\.\.\/ui\/socialPanel\.js';/, 'AUDIT SOC B17: the panel\'s own "try again" is the F-menu\'s too');
+  assert.match(w, /import \{ createSocialPanel, TRY_AGAIN_TEXT, NO_PARTY_TEXT, LETTERS_SIGNED_OUT_TEXT \} from '\.\.\/ui\/socialPanel\.js';/, 'AUDIT SOC B17: the panel\'s own "try again" is the F-menu\'s too (CHAT-CHAN: and its "not in a party" the Party tab\'s; JOURNAL1: and its signed-out word the chronicle\'s letter)');
   assert.match(w, /import \{ SocialState, accountId, accountSecret \} from '\.\.\/net\/social\.js';/,
     'the host imports no colour at all - the one module that knows what a party is answers cssColorOf (SOC7 integration: SOC4 holds world.js to naming no green)');
   assert.match(w, /\n  let socialPanel = null;/, 'beside `social`, in the host\'s own scope');
@@ -658,7 +658,7 @@ test('SOC3: the host by source - world.js makes the panel in socialStart over th
   const start = w.slice(w.indexOf('const socialStart = () => {'), w.indexOf('const composePartyPose'));
   assert.ok(start.includes('social = new SocialState({ acct: link.acct });'), 'the picture (AUDIT SOC B19: expecting the account this session sent)');
   assert.ok(start.indexOf('social = new SocialState({ acct: link.acct });') < start.indexOf('socialPanel = createSocialPanel({'), 'and the panel over it, never before it');
-  assert.match(start, /socialPanel = createSocialPanel\(\{\s*social,\s*send: \(act\) => socialLink\(\)\?\.sendSocial\(act\) \?\? false,/, 'one arrow out, the hub link\'s - and its false is the rate gate\'s answer');
+  assert.match(start, /socialPanel = createSocialPanel\(\{\s*social,\s*(?:mail,\s*)?send: \(act\) => socialLink\(\)\?\.sendSocial\(act\) \?\? false,/, 'one arrow out, the hub link\'s - and its false is the rate gate\'s answer (MAIL1: the letterbox beside the picture)');
   assert.match(start, /canOpen: \(\) => !gamePaused\(\) && !\(townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\)\),/, 'the chat\'s own door: no pointer surface under a window');
   assert.match(start, /onOpen: \(\) => surfaceOpen\('social'\),/, 'AUDIT SOC B6: the panel is a COUNTED pointer surface');
   assert.match(start, /onClose: \(\) => surfaceClose\('social'\),/);
@@ -819,6 +819,10 @@ test('AUDIT SOC C8/C13: the touch skin\'s 44px targets, and the panel BELOW the 
   assert.match(CHAT_CSS, /\.dfchat\.touch \.dfchat-who-row\.dfchat-act \{ min-height: 44px;/, 'a roster row is a door, so it is a 44px door');
   assert.doesNotMatch(CHAT_CSS, /\.dfchat-who-row\.act\b/, 'and never the unprefixed one again');
   assert.match(CHAT_CSS, /\.dfchat\.touch \.dfchat-rowbtn \{ min-height: 44px;/);
+  // tools/font1Probe.mjs's touch spill, older than the community arc: a row button is its label and a refused act's
+  // reason on one line, in a 148px column - "Invite to party" beside "already in a party" at the thumb's 13px was 94px
+  // of text in an 89px box. The button's line wraps: the reason drops under its label.
+  assert.match(CHAT_CSS, /\n\.dfchat-rowbtn \{ display: flex; flex-wrap: wrap;/);
   // ...and none of it on a desktop: the mouse's sizes are the mouse's
   assert.doesNotMatch(SOCIAL_CSS, /\n\.dfsocial-tab \{[^}]*min-height: 44px/);
   assert.doesNotMatch(CHAT_CSS, /\n\.dfchat-rowbtn \{[^}]*min-height: 44px/);
@@ -828,7 +832,7 @@ test('AUDIT SOC C8/C13: the touch skin\'s 44px targets, and the panel BELOW the 
   assert.match(SOCIAL_CSS, /@media \(min-width: 840px\) \{ \.dfsocial \{ left: calc\(466px \+ env\(safe-area-inset-left, 0px\)\); \} \}/, 'and beside it where there is room, as before');
   // the two numbers are a pair with the chat's own box: top 44 + tabs + list min(220px, 34vh) + form
   assert.match(CHAT_CSS, /\.dfchat \{[^}]*top: calc\(44px \+ env\(safe-area-inset-top, 0px\)\);/);
-  assert.match(CHAT_CSS, /\.dfchat-list \{ height: min\(220px, 34vh\);/);
+  assert.match(CHAT_CSS, /\.dfchat-list \{ height: var\(--dfchat-list-h, min\(220px, 34vh\)\);/, 'CHAT-SIZE: the dragged height when there is one, the sheet\'s own otherwise');
 });
 
 test('AUDIT SOC C11: a disabled control DRAWS its reason as well as titling it - on the panel\'s buttons and on a roster row\'s menu (mutants: the reason left on `title` alone, where a finger can never read it; the reason drawn on a live control too; the title dropped, which the mouse still wants)', () => {

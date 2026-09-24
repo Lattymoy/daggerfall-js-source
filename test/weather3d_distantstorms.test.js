@@ -7,11 +7,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   strikesIn, thunderOf, thunderSourceAt, createDistantStorms, SPEED_OF_SOUND, THUNDER_AUDIBLE_M, THUNDER_CRACK_M,
-  STRIKES_PER_MINUTE, BOLT_SECONDS, STRIKE_BACKLOG_MINUTES, THUNDER_SOURCE_M,
+  STRIKES_PER_MINUTE, BOLT_SECONDS, STRIKE_BACKLOG_MINUTES, THUNDER_SOURCE_M, strikeSeed, strikePlace, STRIKE_SPREAD,
 } from '../src/systems/distantStorms.js';
 import { boltOf, BOLT_HEIGHT, COMPOSITE_FS, COMPOSITE_UNIFORMS } from '../src/render/volumetricClouds.js';
 import { AMBIENT_SOUNDS } from '../src/systems/ambientEffects.js';
 import { envelope, SYSTEM_TYPES } from '../src/systems/weatherMap.js';
+import { strikeOf, flickerAt } from '../src/systems/lightning.js';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const full = () => 1;
@@ -65,17 +66,22 @@ test('WEATHER3d: THE SCHEDULER - a strike lights its cloud now and is heard late
   const lit = frames.filter((f) => f.bolt && f.s >= first && f.s < first + BOLT_SECONDS - 1 / 60);
   assert.ok(lit.length > 0, 'the cloud lights');
   const env0 = envelope(SYSTEM_TYPES.thunder, strikes[0] / 400);
+  // BOLT: the light is the strike's own train of strokes (lightning.js flickerAt), from the frame that sees it
+  const seed0 = strikeSeed('thunder:9:9:9:0', strikes[0]), strike0 = strikeOf(seed0);
   for (const f of lit) {
     const age = f.s - lit[0].s;   // the light starts on the frame that sees the strike
-    assert.ok(Math.abs(f.bolt.strength - env0 * (1 - age / BOLT_SECONDS)) < 0.02, `the light falls away over BOLT_SECONDS (${f.bolt.strength} at ${age.toFixed(3)} s)`);
+    assert.ok(Math.abs(f.bolt.strength - env0 * flickerAt(strike0, age)) < 1e-9, `the light is the strike's strokes (${f.bolt.strength} at ${age.toFixed(3)} s)`);
   }
   assert.ok(lit.at(-1).bolt.strength < lit[0].bolt.strength * 0.5, 'and fades');
   assert.equal(lit[0].bolt.x, 10000); assert.equal(lit[0].bolt.r, 5000, 'its heart');
-  // the thunder: 10 km away, heard 10000 / 343 seconds after the flash, no sooner
+  // the thunder: heard from where the strike LANDED (BOLT: within its storm's core), its distance / 343 seconds after the
+  // flash, no sooner
+  const [px, pz] = strikePlace(seed0, 10000, 0, 5000), dist = Math.hypot(px, pz);
+  assert.ok(Math.hypot(px - 10000, pz) <= 5000 * STRIKE_SPREAD + 1e-6, 'inside its storm\'s core');
   const heard = frames.filter((f) => f.sounds.length);
   const firstHeard = heard[0];
-  assert.ok(firstHeard.s >= first + 10000 / SPEED_OF_SOUND - 1 / 60 && firstHeard.s < first + 10000 / SPEED_OF_SOUND + 2 / 60, `heard at ${firstHeard.s}, the strike at ${first}`);
-  const th = thunderOf(10000);
+  assert.ok(firstHeard.s >= first + dist / SPEED_OF_SOUND - 1 / 60 && firstHeard.s < first + dist / SPEED_OF_SOUND + 2 / 60, `heard at ${firstHeard.s}, the strike at ${first}`);
+  const th = thunderOf(dist);
   assert.ok(Math.abs(firstHeard.sounds[0].volume - th.volume * envelope(SYSTEM_TYPES.thunder, strikes[0] / 400)) < 1e-9, 'as loud as its distance and its strength allow');
   assert.equal(firstHeard.sounds[0].clip, th.clip);
 });
@@ -125,7 +131,7 @@ test('WEATHER3d: the hosts - the scheduler on the map\'s systems, reset on a jum
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const h = rd(host);
     assert.match(h, /const distantStorms = createDistantStorms\(\);/, host);
-    assert.match(h, /if \(jump \|\| weatherArrivalStamp\(\) !== seenArrival\) distantStorms\.reset\(\);[^\n]*\n\s*seenArrival = weatherArrivalStamp\(\);\s*\n\s*if \(isEnhanced\(\) && !weatherOverride\) \{\s*\n\s*const ds = distantStorms\.tick\(\{ systems: currentMapSystems\(\), at: [^\n]*, minutes: playerTicker\.classicMinutes, seconds: now \/ 1000, ground: mapGroundHere \}\);/, `${host}: enhanced only, never under a pin, reset on any landing, the ground law passed`);
+    assert.match(h, /if \(jump \|\| weatherArrivalStamp\(\) !== seenArrival\) \{ distantStorms\.reset\(\); stormLights\.reset\(\); \}[^\n]*\n\s*seenArrival = weatherArrivalStamp\(\);\s*\n\s*const struckFar = \[\];[^\n]*\n\s*if \(isEnhanced\(\) && !weatherOverride\) \{\s*\n\s*const ds = distantStorms\.tick\(\{ systems: currentMapSystems\(\), at: [^\n]*, minutes: playerTicker\.classicMinutes, seconds: now \/ 1000, ground: mapGroundHere \}\);/, `${host}: enhanced only, never under a pin, reset on any landing, the ground law passed`);
     assert.match(h, /sky\.distantBolt\?\.\(bh \? \{ x: bh\[0\], z: bh\[1\], r: ds\.bolt\.r, strength: ds\.bolt\.strength \} : null\);/, `${host}: the bolt, in the host's metres`);
     assert.match(h, /audio\.play3d\(s\.clip, thunderSourceAt\([^)]*\), s\.volume, \{ refDistance: THUNDER_SOURCE_M, maxDistance: THUNDER_SOURCE_M \* 8 \}\);/, `${host}: the thunder at its own volume, from its side`);
   }

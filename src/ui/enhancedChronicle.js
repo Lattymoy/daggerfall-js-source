@@ -24,6 +24,8 @@ import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { overlayAction, actionOf } from './input.js';   // LV1's audit: `actionOf` is the REGISTRY's answer for the key this window is named after
 import { questRail, questTitleOf } from './questRail.js';   // MAC-K2: the ONE quest walk, shared with the pause window's Quests tab
+import { breakableNote } from '../systems/notebook.js';   // JOURNAL1: a note the notebook's wrap can take, whatever was typed
+import { pageOfNote, pageRefusalText } from '../net/journalPage.js';   // JOURNAL1: a note as the page it would be shown as, or why it cannot be
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -37,6 +39,10 @@ let deps = {};
 let onExit = () => {};
 let section = 'notes';
 let draft = '';   // PX24b: the note being written, kept across renders
+// JOURNAL1: WHICH NOTE'S SHARE IS OPEN (its notebook index, or null), and what the last share said - a reading
+// position like a fold: kept across renders, cleared on mount.
+let sharing = null;
+let shareWord = '';
 // MAC-F (Mac: "Quests and their tabs should be able to be minimized").
 // WHICH CARDS THE PLAYER HAS SHUT, as `section:index`. A quest's whole
 // trail is its body and twelve of them is a wall of text; the classic
@@ -74,7 +80,7 @@ export function chronicleLines(entry) {
  *
  * `PlayerNotebook._createNote` puts a HIGHLIGHT token first - the
  * dated header, `noteHeader` formatted with the host's own
- * dateTimeString and cityName (notebook.js:106) - and the finished-
+ * dateTimeString and cityName (notebook.js:108) - and the finished-
  * quest filing does the same (:179). Flattening every token to a
  * string turned that date into just another line, and the window
  * numbered its entries 1, 2, 3 instead, which tells a player nothing.
@@ -100,7 +106,7 @@ export function chronicleEntry(entry) {
  * PX24c: WHAT A MESSAGE IS, checked rather than assumed.
  *
  * `addMessage` builds `[{formatting:'center', text:''}, {text: str}]`
- * (notebook.js:123) - a CENTRE token and the words. It never writes a
+ * (notebook.js:125) - a CENTRE token and the words. It never writes a
  * highlight, so a message has NO dated head, ever. PX24b's fallback
  * printed "- continued -" on every one of them, which is a lie about
  * all fifty: a continuation is a note whose page split, and a message
@@ -114,7 +120,10 @@ export function chronicleEntry(entry) {
  */
 export function chronicleModel(d = {}) {
   const nb = d.notebook?.() ?? null;
-  const entries = (list) => (list ?? []).map(chronicleEntry).filter((e) => e.head || e.body.length);
+  // JOURNAL1: each entry keeps its INDEX IN THE NOTEBOOK. An empty entry is dropped from the drawing, so a card's
+  // place in the list is not the note's place in the notebook once one is - and the remove (and the share) must act
+  // on the note the card draws, not on the one that happens to sit at the card's position.
+  const entries = (list) => (list ?? []).map((t, index) => ({ ...chronicleEntry(t), index })).filter((e) => e.head || e.body.length);
   const notes = entries(nb?.getNotes?.());
   const messages = entries(nb?.getMessages?.());
   // MAC-K2: the quests, through the SAME walk the pause window's
@@ -166,6 +175,52 @@ export function setSectionFold(store, sec, count, shut) {
     if (shut) store.add(foldKey(sec, i)); else store.delete(foldKey(sec, i));
   }
   return store;
+}
+
+/**
+ * JOURNAL1: ONE NOTE'S SHARE - the note as the page it would be shown as (net/journalPage.js pageOfNote: the notebook's
+ * own lines through the wire's page law), or, when the law refuses it, why; then WHO it can be shown to - the players
+ * the host counts near enough to talk to, nearest first, one button each - or the host's word on why nobody can be; and
+ * the letter, which closes this window so the letters can open on the page. What the last press did is said under it.
+ */
+function shareStrip(share, index) {
+  const box = el('div', 'cr-sharebox');
+  const r = pageOfNote(deps.notebook?.()?.getNote?.(index));
+  if (!('page' in r)) {
+    box.append(el('div', 'cr-shareword', pageRefusalText(r.error)));
+    return box;
+  }
+  const row = el('div', 'cr-sharerow');
+  row.append(el('span', 'cr-sharelabel', 'Show to'));
+  const readers = Array.isArray(share.readers) ? share.readers : [];
+  if (readers.length) {
+    for (const p of readers) {
+      const b = el('button', 'act', p.name);
+      b.type = 'button';
+      b.title = `Hold this page out to ${p.name}`;
+      b.onclick = () => { shareWord = share.show?.(p.id, r.page) ?? ''; render(); };
+      row.append(b);
+    }
+  } else {
+    row.append(el('span', 'cr-sharewhy', share.why || 'No one is near enough to show it to.'));
+  }
+  box.append(row);
+  if (share.letter) {
+    const b = el('button', 'act', 'Send as a letter');
+    b.type = 'button';
+    b.title = 'Write this page into a letter, to anyone';
+    b.onclick = () => {
+      const w = share.letter(r.page);
+      if (w === true) { onExit(); return; }   // the letters open on the page once this window is down
+      shareWord = typeof w === 'string' ? w : '';
+      render();
+    };
+    const letterRow = el('div', 'cr-sharerow');
+    letterRow.append(b);
+    box.append(letterRow);
+  }
+  if (shareWord) box.append(el('div', 'cr-shareword', shareWord));
+  return box;
 }
 
 function render() {
@@ -234,8 +289,11 @@ function render() {
     }
   } else {
     const rows = model[section];
+    // JOURNAL1: THE HOST'S WORD ON SHARING A PAGE, once a render - a NOTE's alone (a message is what I was told, a quest
+    // shares through the party, the history is chargen's), and null offline, where nothing is drawn.
+    const share = section === 'notes' && deps.notebook?.() ? (deps.pageShare?.() ?? null) : null;
     // PX24b: THE PLAYER MAY WRITE. The classic notebook has AddNote and
-    // RemoveNote (notebook.js:78, :67); the first draft was read-only,
+    // RemoveNote (notebook.js:80, :69); the first draft was read-only,
     // which is a LOSS of function dressed as a nicer window. The
     // composer sits above the entries, where a new note lands.
     if (section === 'notes' && deps.notebook?.()) {
@@ -254,7 +312,11 @@ function render() {
         if (!text) return;
         // The notebook's own AddNote - it wraps the lines and stamps
         // the dated header itself, from the host's clock and city.
-        deps.notebook().addNote(text);
+        // JOURNAL1: through breakableNote first. This box takes 200
+        // characters and DFU's took 70, and the wrap THROWS on a run
+        // of 71 with no space (notebook.js) - a pasted address threw out
+        // of this handler and the note was lost.
+        deps.notebook().addNote(breakableNote(text));
         draft = '';
         render();
       };
@@ -268,7 +330,7 @@ function render() {
       // NEWEST FIRST for messages (the ring's own order is oldest
       // first and the last thing you were told is the thing you
       // opened this for); notes keep the player's OWN order, because
-      // they arranged them (MoveNote is a law, notebook.js:64-72).
+      // they arranged them (MoveNote is a law, notebook.js:66-74).
       const list = section === 'messages'
         ? rows.map((e, i) => ({ e, i })).reverse()
         : rows.map((e, i) => ({ e, i }));
@@ -292,7 +354,7 @@ function render() {
         const entry = el('div', `cr-entry${isFolded(folded, section, i) ? ' cr-shut' : ''}`);
         const top = el('div', 'cr-head');
         // THE DATE, which the notebook wrote and PX24 lost. A NOTE
-        // whose page split files with no header (notebook.js:97-107)
+        // whose page split files with no header (notebook.js:99-109)
         // and says so; a MESSAGE never has one at all, so it gets the
         // only true thing there is to say - which of them is newest.
         const head = e.head ?? (section === 'messages'
@@ -311,11 +373,22 @@ function render() {
         fold.onclick = () => { toggleFold(folded, section, i); render(); };
         top.append(fold);
         if (!head) top.classList.add('cr-headless');
+        // JOURNAL1 (Addison Knox: "Player journals ... shared in-world for storytelling"): a note's Share - never DFU's.
+        // It opens the note's own strip below its head (shareStrip): the players near enough to talk to, to hold the
+        // page out to, and the letter. Drawn only where the host can share at all (`pageShare`, online-only).
+        if (share) {
+          const sh = el('button', 'cr-rm cr-share', 'Share');
+          sh.title = 'Show this page to someone near you, or send it as a letter';
+          sh.setAttribute('aria-label', 'Share this page');
+          sh.setAttribute('aria-expanded', String(sharing === e.index));
+          sh.onclick = () => { sharing = sharing === e.index ? null : e.index; shareWord = ''; render(); };
+          top.append(sh);
+        }
         if (section === 'notes' && deps.notebook?.()) {
           const rm = el('button', 'cr-rm', '\u00d7');
           rm.title = 'Remove this note';
           rm.setAttribute('aria-label', 'Remove this note');
-          rm.onclick = () => { deps.notebook().removeNote(i); render(); };
+          rm.onclick = () => { deps.notebook().removeNote(e.index); sharing = null; render(); };
           top.append(rm);
         }
         // QUEST1: the share button - never DFU's. Lives in every quest's
@@ -336,6 +409,7 @@ function render() {
           top.append(share);
         }
         entry.append(top);
+        if (share && sharing === e.index) entry.append(shareStrip(share, e.index));
         if (!isFolded(folded, section, i)) {
           for (const line of e.body) entry.append(el('p', null, line));
         }
@@ -403,6 +477,7 @@ export function mountEnhancedChronicle(hostEl, d = {}) {
   onExit = d.onExit ?? (() => {});
   section = CHRONICLE_SECTIONS.some(([id]) => id === d.section) ? d.section : 'quests';
   draft = '';
+  sharing = null; shareWord = '';   // JOURNAL1: a fresh open shares nothing yet
   folded.clear();   // MAC-F: a fresh open reads whole, as it always has
   render();
   window.addEventListener('keydown', onKey, true);
@@ -410,7 +485,7 @@ export function mountEnhancedChronicle(hostEl, d = {}) {
     render,
     destroy() {
       window.removeEventListener('keydown', onKey, true);
-      host = null; deps = {}; section = 'notes'; draft = ''; folded.clear();
+      host = null; deps = {}; section = 'notes'; draft = ''; folded.clear(); sharing = null; shareWord = '';
     },
   };
 }

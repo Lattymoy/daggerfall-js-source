@@ -86,10 +86,14 @@ test('CHAT-R1: a session that is not open yet is a roster of ONE, and a nameless
   assert.deepEqual(alone.rows.map((x) => x.name), ['Medora']);
   assert.equal(alone.total, 1);
   assert.equal(rosterTitle(1), 'Online — 1', 'a roster of one is still a number');
+  // CHAT-CHAN: a composed list names what it is of - "Party - 2", "Nearby - 1" - and a source that says nothing is "Online"
+  assert.equal(alone.label, 'Online');
+  assert.equal(rosterRows({ ...session('me', 'Medora', []), label: 'Party' }).label, 'Party');
+  assert.equal(rosterTitle(2, 'Party'), 'Party — 2');
 
   // no session at all: not a crash, an empty list
-  assert.deepEqual(rosterRows(null), { rows: [], total: 0, shown: 0 });
-  assert.deepEqual(rosterRows({}), { rows: [], total: 0, shown: 0 });
+  assert.deepEqual(rosterRows(null), { rows: [], total: 0, shown: 0, label: 'Online' });
+  assert.deepEqual(rosterRows({}), { rows: [], total: 0, shown: 0, label: 'Online' });
 
   // a peer whose name never arrived takes sanitizeName's default rather
   // than drawing an empty row
@@ -616,7 +620,11 @@ test('CHAT-R2/ROSTER-G: the roster is the ACTIVE CHANNEL’s - everyone online, 
   // roster at the relay, and the panel reads the tab's own link; the
   // presence session stands in only until that link exists.
   const world = rd('src/scenes/world.js');
-  assert.match(world, /roster: \(\) => chatLinks\?\.get\(chatLog\?\.active\) \?\? online \?\? null,/);
+  // CHAT-CHAN: through the tab's own roster - a channel tab's link (the World's, the Region's), the presence session only
+  // as the stand-in, and the Party and Local tabs their composed lists (test/chatchan.test.js drives those)
+  assert.match(world, /roster: \(\) => chatRosterOf\(chatLog\?\.active\),/);
+  assert.match(world, /const chatSessionOf = \(tabId\) => \(tabId === 'local' \? online : tabId === 'party' \? chatLinks\?\.get\('world'\) : chatLinks\?\.get\(tabId\)\) \?\? online \?\? null;/);
+  assert.match(world, /const s = chatSessionOf\(tabId\);/, 'the World and Region tabs read the session of their own channel');
   assert.match(world, /new OnlineSession\(\{ url: online\.url[^)]*presence: false \}\)/,
     'the chat links really are presence-less, which is why the roster cannot come from them');
 

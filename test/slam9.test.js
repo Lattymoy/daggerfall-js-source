@@ -190,6 +190,6 @@ test('SLAM9: the room\'s who budget is the SUM of the socket gates - a room of c
     for (const w of askers) for (let k = 0; k < WHO_HZ_MAX; k++) await r.raw(w, JSON.stringify({ t: 'who', id: 'tttt-0000' }));
     for (const w of askers) answered += w.sent.filter((m) => m.t === 'join' && m.id === 'tttt-0000').length;   // the target hello'd before every asker, so the only joins naming it are answers
     assert.equal(answered, 40 * WHO_HZ_MAX, `200 asks in one instant, 200 answered (${answered}) - the old budget answered 60`);
-    for (const w of askers) assert.equal(w.att.wdrops ?? 0, 0, 'and nobody struck');
+    for (const w of askers) assert.equal(w.meters.wdrops ?? 0, 0, 'and nobody struck');
   } finally { Date.now = realNow; }
 });

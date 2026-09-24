@@ -39,7 +39,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no chat and no roster.
 // Ledger A row (ONLINE).
-import { tagOf } from './chat.js';
+import { tagOf, inEarshot } from './chat.js';
 import { sanitizeName, readBadge } from './wire.js';
 
 /** How many rows the panel will hold. The relay's own ROSTER_MAX
@@ -60,9 +60,13 @@ export const ROSTER_ROWS_MAX = 200;
  * the same three. Every field is optional because a session that has
  * not opened yet has none of them, and that is a roster of ONE rather
  * than an error.
- * @typedef {{ id?: string|null, name?: string|null,
+ * CHAT-CHAN: `label` is what the list is OF - the heading's word ("Online" when none is said: the World channel, whose
+ * members are everyone online). A channel tab that is not a room of its own hands a source composed for it (the
+ * Party tab its party, the Local tab those in earshot) and names it.
+ * `title` and `glyphs` are my own badge (ACC3c: the relay never sends me my own row), read by the wire's readBadge.
+ * @typedef {{ id?: string|null, name?: string|null, title?: any, glyphs?: any,
  *             peers?: Map<string, { id?: string|null, name?: string|null }>|null,
- *             roomCount?: number|null }} RosterSource
+ *             roomCount?: number|null, label?: string|null }} RosterSource
  */
 
 /**
@@ -73,7 +77,7 @@ export const ROSTER_ROWS_MAX = 200;
  * how busy it is.
  *
  * @param {RosterSource|null|undefined} session
- * @returns {{ rows: RosterRow[], total: number, shown: number }}
+ * @returns {{ rows: RosterRow[], total: number, shown: number, label: string }}
  */
 export function rosterRows(session) {
   /** @type {RosterRow[]} */
@@ -110,10 +114,51 @@ export function rosterRows(session) {
   // CHAT_ROSTER_MAX still says how many are online; a place's welcome says no `n`, and the rows are the count
   const n = Number(session?.roomCount);
   const total = Number.isFinite(n) && n > rows.length ? n : rows.length;
-  return { rows: rows.slice(0, ROSTER_ROWS_MAX), total, shown: Math.min(rows.length, ROSTER_ROWS_MAX) };
+  const label = typeof session?.label === 'string' && session.label ? session.label : 'Online';
+  return { rows: rows.slice(0, ROSTER_ROWS_MAX), total, shown: Math.min(rows.length, ROSTER_ROWS_MAX), label };
 }
 
 /** The heading the panel shows: "Online - 3". A roster of one is
  *  still a number, because "Online" alone reads like a label for a
- *  list that failed to load. */
-export const rosterTitle = (total) => `Online — ${total}`;
+ *  list that failed to load. CHAT-CHAN: the word is the list's own
+ *  (`label` - "Party - 2", "Nearby - 1", "Wayrest - 7"). */
+export const rosterTitle = (total, label = 'Online') => `${label} — ${total}`;
+
+/**
+ * CHAT-CHAN: THE PARTY TAB'S LIST - the party is not a room, so its roster is composed: my own row (the hub link's,
+ * wearing my badge), and each party mate who is online, by the first tab they stand as - the peer id the hub names
+ * them by, so the row's badge and its menu are the same peer the World roster offers. A mate the hub knows no badge
+ * for is drawn by name alone. Null party: a list of one (the strip under the chat says why).
+ * @param {{ members?: { acct: string, name?: string, online?: boolean, peers?: string[] }[] }|null|undefined} party
+ * @param {RosterSource|null|undefined} hub   the World tab's link
+ * @param {string|null} acct   my account
+ * @returns {RosterSource}
+ */
+export function partyRosterSource(party, hub, acct) {
+  const peers = new Map();
+  for (const m of party?.members ?? []) {
+    if (!m || m.acct === acct || !Array.isArray(m.peers) || !m.peers.length) continue;   // a mate with no tab standing is not online (the hub's row: `online` IS its tabs)
+    const id = m.peers[0];
+    const known = hub?.peers?.get?.(id) ?? null;
+    peers.set(id, { ...(known ?? {}), id, name: m.name ?? known?.name ?? '' });
+  }
+  return { id: hub?.id ?? null, name: hub?.name ?? '', title: hub?.title ?? null, glyphs: hub?.glyphs ?? null, peers, label: 'Party' };
+}
+
+/**
+ * CHAT-CHAN: THE LOCAL TAB'S LIST - who would hear a line said now: the presence session's peers this host can place
+ * (`near`, the host's peersNear) within earshot of `here` (net/chat.js inEarshot, the law a heard line is kept by).
+ * @param {RosterSource|null|undefined} session   the presence session
+ * @param {{ id: string, feet: number[] }[]|null|undefined} near
+ * @param {number[]|null|undefined} here
+ * @returns {RosterSource}
+ */
+export function localRosterSource(session, near, here) {
+  const peers = new Map();
+  for (const p of near ?? []) {
+    if (!p || !inEarshot(here, p.feet)) continue;
+    const known = session?.peers?.get?.(p.id);
+    if (known) peers.set(p.id, known);
+  }
+  return { id: session?.id ?? null, name: session?.name ?? '', title: session?.title ?? null, glyphs: session?.glyphs ?? null, peers, label: 'Nearby' };
+}

@@ -110,8 +110,8 @@
   {
     "name": "DISC10-D-H1-the-stamp-is-not-the-clock",
     "file": "src/systems/worldTick.js",
-    "old": "nowMinutes = Math.floor(worldMinutes()), isCivilian = false",
-    "new": "nowMinutes = 0, isCivilian = false",
+    "old": "export function playerWeaponHitEntity(player, target, { nowMinutes = Math.floor(worldMinutes()), isCivilian = false",
+    "new": "export function playerWeaponHitEntity(player, target, { nowMinutes = 0, isCivilian = false",
     "tests": [
       "test/disc10_vampire.test.js",
       "test/disc10_lycan.test.js",

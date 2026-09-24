@@ -798,8 +798,8 @@
   {
     "name": "AUDIT4-A8-the-next-pop-delay-assigned",
     "file": "src/ui/hudText.js",
-    "old": "    else this.nextPopDelay = Math.max(this.nextPopDelay, delayInSeconds);",
-    "new": "    else this.nextPopDelay = delayInSeconds;",
+    "old": "    else if (this.timer >= 0) this.timer = Math.max(this.timer, delayInSeconds);\n    else this.nextPopDelay = Math.max(this.nextPopDelay, delayInSeconds);",
+    "new": "    else if (this.timer >= 0) this.timer = Math.max(this.timer, delayInSeconds);\n    else this.nextPopDelay = delayInSeconds;",
     "tests": [
       "test/hudtext.test.js"
     ]

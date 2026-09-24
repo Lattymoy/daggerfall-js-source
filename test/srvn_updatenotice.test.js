@@ -244,10 +244,13 @@ test('SRV-N: the host wires BOTH arms and puts a notice on EVERY tab - the prese
   assert.match(w, /relayVersionSeen\(v\)\s*===\s*'changed'/, 'ONE detector behind both arms, or two sockets say it twice');
   assert.match(w, /chatNotice\(RELAY_RESTART_TEXT\)/);
   assert.match(w, /chatNotice\(BUILD_UPDATE_TEXT\)/);
-  // A NOTICE IS NOT A ROOM'S EVENT. It is iterated over the log's tabs
-  // rather than pushed to the active one, so a later row in CHAT_TABS
+  // A NOTICE IS NOT A ROOM'S EVENT. It is kept on every one of the log's
+  // tabs rather than pushed to the active one, so a later row in CHAT_TABS
   // gets it for free and a player reading one tab is never guessing.
-  assert.match(w, /for \(const tab of chatLog\.tabs\) chatLog\.push\(tab\.id, \{ text, system: true \}\)/, 'every tab, and marked as the game\'s');
+  // CHAT-CHAN: as ONE line (ChatLog.pushAll - marked as the game's there),
+  // so four tabs peek it once and count it once; test/chatchan.test.js
+  // drives what pushAll does.
+  assert.match(w, /chatLog\.pushAll\(\{ text \}\);/, 'every tab, one line, and marked as the game\'s');
   assert.match(w, /const chatFrame = \(\) => \{\s*if \(!chatLinks\) return;\s*buildPoll\(/, 'the poll rides the chat frame - there is no notice to give where there is no chat window');
   assert.match(w, /buildUpdateSeen\(tag, BUILD_TAG\)/, 'against THIS bundle\'s tag, which is the only thing that makes the compare need no baseline');
   // AUDIT-SRVN: the gate AND the stamp, adjacent and in that order. A

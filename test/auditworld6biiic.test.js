@@ -176,7 +176,7 @@ test('AUDIT WORLD6b-iii(c) C3: the Room - the hit arm counts BYTES (HIT_ROOM_BYT
   r.room._roomHits = { bytes: 0, at: Date.now() + 1000 };   // spent, stamped a second ahead: no refill under load
   await r.raw(a, grant);
   assert.equal(c.sent.filter((m) => m.t === 'hit').length, 1, 'C3: over the room\'s hit bytes - dropped');
-  assert.equal(a.closed, null); assert.equal(a.att.junk ?? 0, 0, 'and nobody struck');
+  assert.equal(a.closed, null); assert.equal(a.meters.junk ?? 0, 0, 'and nobody struck');
   r.room._roomHits = { bytes: 20000, at: Date.now() + 1000 };
   await r.raw(a, grant); await r.raw(a, grant);
   assert.equal(c.sent.filter((m) => m.t === 'hit').length, 2, 'a budget of one grant: one lands, the next is dropped');

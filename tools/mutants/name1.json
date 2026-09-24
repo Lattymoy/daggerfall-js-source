@@ -237,8 +237,8 @@
   {
     "name": "BUBBLE1-system-lines-speak",
     "file": "src/ui/nameLayer.js",
-    "old": "  if (line.system || line.mine) return false;",
-    "new": "  if (line.mine) return false;",
+    "old": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll' || line.kind === 'me') return false;",
+    "new": "  if (line.mine || line.kind === 'ooc' || line.kind === 'roll' || line.kind === 'me') return false;",
     "tests": [
       "test/name1_bubbles.test.js"
     ]
@@ -246,17 +246,8 @@
   {
     "name": "BUBBLE1-my-own-line-speaks",
     "file": "src/ui/nameLayer.js",
-    "old": "  if (line.system || line.mine) return false;",
-    "new": "  if (line.system) return false;",
-    "tests": [
-      "test/name1_bubbles.test.js"
-    ]
-  },
-  {
-    "name": "BUBBLE1-any-tab-speaks",
-    "file": "src/ui/nameLayer.js",
-    "old": "  if (tabId !== BUBBLE_TAB || !line || typeof line !== 'object') return false;",
-    "new": "  if (!line || typeof line !== 'object') return false;",
+    "old": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll' || line.kind === 'me') return false;",
+    "new": "  if (line.system || line.kind === 'ooc' || line.kind === 'roll' || line.kind === 'me') return false;",
     "tests": [
       "test/name1_bubbles.test.js"
     ]
@@ -327,8 +318,8 @@
   {
     "name": "BUBBLE1-cut-unmarked",
     "file": "src/ui/nameLayer.js",
-    "old": "  return s.slice(0, BUBBLE_CHARS).trimEnd() + BUBBLE_ELLIPSIS;",
-    "new": "  return s.slice(0, BUBBLE_CHARS).trimEnd();",
+    "old": "  return graphemeCut(s, BUBBLE_CHARS).trimEnd() + BUBBLE_ELLIPSIS;",
+    "new": "  return graphemeCut(s, BUBBLE_CHARS).trimEnd();",
     "tests": [
       "test/name1_bubbles.test.js"
     ]
@@ -346,9 +337,9 @@
     "name": "BUBBLE1-watermark-only-advanced-for-a-line-that-earns-a-bubble",
     "file": "src/ui/nameLayer.js",
     "old": "      seq = line.seq;\n",
-    "new": "      if (!bubbleLineOk(BUBBLE_TAB, line)) continue;\n      seq = line.seq;\n",
+    "new": "      if (!bubbleLineOk(line)) continue;\n      seq = line.seq;\n",
     "equivalent": true,
-    "why": "A refused line produces nothing either way - the watermark past it buys a walk, not a law. The only difference is that a session with one system notice in the log re-reads that one line every frame for the rest of its life, which is a cost no pin can see and none here pretends to. Kept as written because the cost is real and the shape ('read forward, once') is the one a later channel tab will inherit. AUDIT NAME1 re-aimed the record at the `seq = line.seq;` line alone, which the F6 fix moved the rest of.",
+    "why": "A refused line produces nothing either way - the watermark past it buys a walk, not a law. The only difference is that a session with one system notice in the log re-reads that one line every frame for the rest of its life, which is a cost no pin can see and none here pretends to. Kept as written because the cost is real and the shape ('read forward, once') is the one a later channel tab will inherit. AUDIT NAME1 re-aimed the record at the `seq = line.seq;` line alone, which the F6 fix moved the rest of. CHAT-CHAN read every tab through the same shape and re-aimed the mutant at the one-argument law: a refused line is gathered again by the walk back from each tab's end, refused again, and draws nothing.",
     "tests": [
       "test/name1_bubbles.test.js"
     ]
@@ -520,8 +511,8 @@
   {
     "name": "AUDIT-NAME1-F6-bubble-stamped-from-the-pump",
     "file": "src/ui/nameLayer.js",
-    "old": "      if (bubbleLineOk(BUBBLE_TAB, line)) say(line.id, line.text, Number.isFinite(line.t) ? line.t : line.at);",
-    "new": "      if (bubbleLineOk(BUBBLE_TAB, line)) say(line.id, line.text);",
+    "old": "      if (bubbleLineOk(line)) say(line.id, line.text, Number.isFinite(line.t) ? line.t : line.at);",
+    "new": "      if (bubbleLineOk(line)) say(line.id, line.text);",
     "tests": [
       "test/name1_bubbles.test.js"
     ]
@@ -529,8 +520,8 @@
   {
     "name": "AUDIT-NAME1-F6-the-relay-s-clock-preferred",
     "file": "src/ui/nameLayer.js",
-    "old": "      if (bubbleLineOk(BUBBLE_TAB, line)) say(line.id, line.text, Number.isFinite(line.t) ? line.t : line.at);",
-    "new": "      if (bubbleLineOk(BUBBLE_TAB, line)) say(line.id, line.text, Number.isFinite(line.at) ? line.at : line.t);",
+    "old": "      if (bubbleLineOk(line)) say(line.id, line.text, Number.isFinite(line.t) ? line.t : line.at);",
+    "new": "      if (bubbleLineOk(line)) say(line.id, line.text, Number.isFinite(line.at) ? line.at : line.t);",
     "tests": [
       "test/name1_bubbles.test.js"
     ]

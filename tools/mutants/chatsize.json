@@ -1,0 +1,93 @@
+[
+  {
+    "name": "CZ-scale-not-the-width",
+    "file": "src/ui/chatPanel.js",
+    "old": "export const chatScaleFor = (width) => Math.min(CHAT_SCALE_MAX, Math.max(CHAT_SCALE_MIN, width / CHAT_WIDTH_BASE));",
+    "new": "export const chatScaleFor = (width) => 1;",
+    "tests": ["test/chatsize.test.js"]
+  },
+  {
+    "name": "CZ-fit-off-the-old-constant",
+    "file": "src/ui/chatPanel.js",
+    "old": "  const box = Math.min(width ?? CHAT_WIDTH_BASE, vw - 28);",
+    "new": "  const box = Math.min(CHAT_WIDTH_BASE, vw - 28);",
+    "tests": ["test/chatsize.test.js"]
+  },
+  {
+    "name": "CZ-height-ignored",
+    "file": "src/ui/chatPanel.js",
+    "old": "    resizeTo(drag.w + ((Number(e.clientX) || 0) - drag.x), drag.h + ((Number(e.clientY) || 0) - drag.y), drag.follow);",
+    "new": "    resizeTo(drag.w + ((Number(e.clientX) || 0) - drag.x), drag.h, drag.follow);",
+    "tests": ["test/chatsize.test.js"]
+  },
+  {
+    "name": "CZ-size-not-kept",
+    "file": "src/ui/chatPanel.js",
+    "old": "  const keepSize = () => { setPref('chatWidth', sizeW); setPref('chatListHeight', sizeH); };",
+    "new": "  const keepSize = () => {};",
+    "tests": ["test/chatsize.test.js"]
+  },
+  {
+    "name": "CZ-capture-dropped",
+    "file": "src/ui/chatPanel.js",
+    "old": "    if (id != null) grip.releasePointerCapture?.(id);",
+    "new": "",
+    "tests": ["test/chatsize.test.js"]
+  },
+  {
+    "name": "CZ-other-pointer-drags",
+    "file": "src/ui/chatPanel.js",
+    "old": "    if (!drag || (drag.id != null && e.pointerId != null && e.pointerId !== drag.id)) return;",
+    "new": "    if (!drag) return;",
+    "tests": ["test/chatsize.test.js"]
+  },
+  {
+    "name": "CZ-right-button-drags",
+    "file": "src/ui/chatPanel.js",
+    "old": "    if (e.button != null && e.button !== 0) return;\n    e.preventDefault?.();\n    drag = {",
+    "new": "    e.preventDefault?.();\n    drag = {",
+    "tests": ["test/chatsize.test.js"]
+  },
+  {
+    "name": "CZ-key-reaches-host",
+    "file": "src/ui/chatPanel.js",
+    "old": "    e.preventDefault?.(); e.stopPropagation?.();\n    resizeTo(widthNow() + step[0], listNow() + step[1], unseen === 0 && atNewest());",
+    "new": "    e.preventDefault?.();\n    resizeTo(widthNow() + step[0], listNow() + step[1], unseen === 0 && atNewest());",
+    "tests": ["test/chatsize.test.js"]
+  },
+  {
+    "name": "CZ-reset-keeps-numbers",
+    "file": "src/ui/chatPanel.js",
+    "old": "  const resetSize = () => { sizeW = null; sizeH = null; applySize(); keepSize();",
+    "new": "  const resetSize = () => { applySize(); keepSize();",
+    "tests": ["test/chatsize.test.js"]
+  },
+  {
+    "name": "CZ-reader-dropped-on-drag",
+    "file": "src/ui/chatPanel.js",
+    "old": "    if (follow) list.scrollTop = list.scrollHeight ?? 0;\n  };\n  const resetSize",
+    "new": "  };\n  const resetSize",
+    "tests": ["test/chatsize.test.js"]
+  },
+  {
+    "name": "CZ-fit-said-once",
+    "file": "src/ui/chatPanel.js",
+    "old": "      publishFit();   // CHAT-SIZE: the screen can change under the chat",
+    "new": "      // CHAT-SIZE: the screen can change under the chat",
+    "tests": ["test/chatsize.test.js"]
+  },
+  {
+    "name": "CZ-destroy-leaves-footprint",
+    "file": "src/ui/chatPanel.js",
+    "old": "      for (const k of ['--dfchat-w', '--dfchat-scale', '--dfchat-list-h']) setVar(k, null);",
+    "new": "",
+    "tests": ["test/chatsize.test.js"]
+  },
+  {
+    "name": "CZ-list-bound-off",
+    "file": "src/ui/chatPanel.js",
+    "old": "  const clampH = (h) => Math.round(Math.max(CHAT_LIST_MIN, Math.min(h, vh() * CHAT_LIST_MAX_VH / 100)));",
+    "new": "  const clampH = (h) => Math.round(Math.max(CHAT_LIST_MIN, h));",
+    "tests": ["test/chatsize.test.js"]
+  }
+]

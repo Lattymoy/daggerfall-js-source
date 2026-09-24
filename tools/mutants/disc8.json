@@ -101,8 +101,8 @@
   {
     "name": "DISC9-heard-outlives-a-jump",
     "file": "src/systems/weatherSim.js",
-    "old": "(_heard != null && _heardAtJump === _jumps ? _heard",
-    "new": "(_heard != null ? _heard",
+    "old": "export const heardWeather = () => (_heard != null && _heardAtJump === _jumps ? _heard",
+    "new": "export const heardWeather = () => (_heard != null ? _heard",
     "tests": [
       "test/disc8.test.js"
     ]

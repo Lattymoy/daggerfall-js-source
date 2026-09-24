@@ -37,19 +37,19 @@ test('AUDIT WORLD2 A: the relay - the budgets are one home and the byte gate spe
   const a = r.connect(), b = r.connect();
   await r.hello(a, 'aaaa-0001', at(1, 1)); await r.hello(b, 'bbbb-0002', at(1, 1));
   const foes = { n: 1, f: [{ i: 0, f: [1, 2, 3], y: 0, h: 5, d: 0, a: 0, m: 0 }] };
-  const pose0 = JSON.stringify(a.att.bucket ?? null);
+  const pose0 = JSON.stringify(a.meters.bucket ?? null);
   await r.raw(a, '{"t":"world","pad":"' + 'x'.repeat(200) + '","t":"foes","data":' + JSON.stringify(foes) + '}');
   assert.deepEqual(ofType(b, 'foes').at(-1)?.data, foes, 'a foes frame under a world prefix still fans');
-  assert.ok(a.att.fbucket, 'A3: and spent the stream\'s bucket, not the pose bucket alone'); assert.notEqual(JSON.stringify(a.att.bucket ?? null), pose0, 'the door\'s own spend stands');
-  const fb = JSON.stringify(a.att.fbucket);
+  assert.ok(a.meters.fbucket, 'A3: and spent the stream\'s bucket, not the pose bucket alone'); assert.notEqual(JSON.stringify(a.meters.bucket ?? null), pose0, 'the door\'s own spend stands');
+  const fb = JSON.stringify(a.meters.fbucket);
   await r.raw(a, '{"t":"foes","pad":"' + 'x'.repeat(200) + '","t":"world","data":{"locationKey":"dungeon:1","world":{}}}');
   assert.ok(r.store.has('world:meta'), 'a world frame under a foes prefix is stored');
-  assert.notEqual(JSON.stringify(a.att.bucket ?? null), pose0, 'A3: and spent the pose bucket the world arm owns'); assert.notEqual(JSON.stringify(a.att.fbucket), fb, 'the door\'s spend on the stream\'s bucket stands');
+  assert.notEqual(JSON.stringify(a.meters.bucket ?? null), pose0, 'A3: and spent the pose bucket the world arm owns'); assert.notEqual(JSON.stringify(a.meters.fbucket), fb, 'the door\'s spend on the stream\'s bucket stands');
   // D5: a small unprefixed world frame comes in by the ordinary door and is metered on the pose bucket there
-  const pose1 = JSON.stringify(a.att.bucket);
+  const pose1 = JSON.stringify(a.meters.bucket);
   r.store.get('world:meta').at -= 10000;
   await r.raw(a, '{"data":{"locationKey":"dungeon:1","world":{"x":1}},"t":"world"}');
-  assert.notEqual(JSON.stringify(a.att.bucket), pose1, 'D5: metered'); assert.equal(r.store.get('world:0'), '{"locationKey":"dungeon:1","world":{"x":1}}', 'and taken');
+  assert.notEqual(JSON.stringify(a.meters.bucket), pose1, 'D5: metered'); assert.equal(r.store.get('world:0'), '{"locationKey":"dungeon:1","world":{"x":1}}', 'and taken');
   // A4: a non-host's stream of prefixed frames is struck out, not sunk for free
   let n = 0; while (!b.closed && n++ < DROP_STRIKES_MAX + FOES_HZ_MAX + 20) await r.raw(b, FOES_PREFIX + 'x'.repeat(100));
   assert.ok(b.closed && ['too many foes', 'too many frames'].includes(b.sent.at(-1)?.m), `A4: struck out after ${n} frames (${b.sent.at(-1)?.m})`);
@@ -68,7 +68,7 @@ test('AUDIT WORLD2 A: the relay - the budgets are one home and the byte gate spe
   assert.deepEqual(u.sent.at(-1), { t: 'error', m: 'frame too large' }, 'and a large unprefixed one');
   const v = town.connect(); await town.hello(v, 'town-0003', at(1, 1));
   await town.raw(v, JSON.stringify({ t: 'foes', data: foes }));
-  assert.equal(v.closed, null, 'a small prefixed frame in a town: ignored, the socket kept'); assert.equal(v.att.junk, 1, 'and counted');
+  assert.equal(v.closed, null, 'a small prefixed frame in a town: ignored, the socket kept'); assert.equal(v.meters.junk, 1, 'and counted');
   // A5: the room's byte budget on the fan - the frame times its listeners; over it the frame is dropped and nobody struck
   const r2 = fakeRoom('dungeon:m9');
   const h = r2.connect(), j1 = r2.connect(), j2 = r2.connect();
@@ -86,16 +86,25 @@ test('AUDIT WORLD2 A: the relay - the budgets are one home and the byte gate spe
   // A6: the hit funnel onto the host's one socket is the room's to budget
   const hit = JSON.stringify({ t: 'hit', data: { i: 0, dmg: 1, kind: 'melee' } });
   await r2.raw(j1, hit); assert.equal(ofType(h, 'hit').length, 1);
-  // AUDIT WORLD6b A1/A2: the funnel is the DESTINATION socket's own bucket (`hbucket` on its attachment), not the room's
-  r2.room._setAttach(h, { ...r2.room._attach(h), hbucket: { tokens: 0, at: Date.now() + 1000 } });   // through the relay's own door (the index caches the attachment); stamped ahead, no refill under load
+  // AUDIT WORLD6b A1/A2: the funnel is the DESTINATION socket's own bucket (`hbucket` among its meters - AUDIT ATTACH), not the room's
+  r2.room._meterOf(h).hbucket = { tokens: 0, at: Date.now() + 1000 };   // the relay's own record of it; stamped ahead, no refill under load
   await r2.raw(j2, hit); assert.equal(ofType(h, 'hit').length, 1, 'A6: over the host\'s hit budget - dropped'); assert.equal(j2.closed, null, 'and no strike');
-  r2.room._setAttach(h, { ...r2.room._attach(h), hbucket: { tokens: 0, at: Date.now() - 1000 } });
+  r2.room._meterOf(h).hbucket = { tokens: 0, at: Date.now() - 1000 };
   await r2.raw(j2, hit); assert.equal(ofType(h, 'hit').length, 2, 'refilled: forwarded');
   assert.equal(HIT_ROOM_HZ_MAX, 60);
   // the header says the truth (A8)
   const room = rd('server/src/index.js');
   assert.match(room, /WORLD2 \(2026-09-12\): THE LIVE FOES\./, 'the head has a WORLD2 paragraph'); assert.match(room, /metered on the pose bucket, or the\n\/\/ stream's own for a foes frame \(A1/, 'and the A1 sentence names both buckets');
-  assert.match(rd('src/net/wire.js'), /\{t:'hello'\|'pose'\|'ping'\|'chat'\|'world'\|'foes'\|'hit'\|'act'\|'who'\|'quest', \.\.\.\}/, 'parseClient\'s doc names the two frames (and WORLD3\'s third, WORLD6b-iii(e)\'s ask, and QUEST1\'s)');
+  // INSPECT1: the line had fallen SEVEN arms behind the parser (say, mute, social, party, trade, cast and INSPECT1's
+  // card were parsed and not named) - a list restated by hand in a pin is a list that drifts with nobody noticing. So it
+  // is DERIVED: every frame parseClient has an arm for, the doc names, and it names nothing else.
+  const wsrc = rd('src/net/wire.js');
+  const doc = /One client frame, parsed and checked: \{t:((?:'[a-z]+'\|?)+), \.\.\.\}/.exec(wsrc);
+  assert.ok(doc, 'parseClient\'s doc line names its frames');
+  const from = wsrc.indexOf('export function parseClient(');
+  const arms = [...new Set([...wsrc.slice(from, wsrc.indexOf('\n}\n', from)).matchAll(/m\.t === '([a-z]+)'/g)].map((m) => m[1]))].sort();
+  assert.ok(arms.length >= 18 && arms.includes('hit') && arms.includes('card'), 'the arms were read off the parser');
+  assert.deepEqual([...doc[1].matchAll(/'([a-z]+)'/g)].map((m) => m[1]).sort(), arms, 'parseClient\'s doc names every frame it parses (WORLD2\'s two, WORLD3\'s third, WORLD6b-iii(e)\'s ask, QUEST1\'s, DICE1\'s roll beside the chat line, INSPECT1\'s card...), and no other');
 });
 
 test('AUDIT WORLD2: the session - a dead socket and a leave clear the seat through the one door, so the world host hears the seat go (A2/C2); the hits\' own gate at home refuses an over-rate blow to its caller (A6); my own id as the host is not the world in (D11); FOES_STALE_MS is three full frames', () => {

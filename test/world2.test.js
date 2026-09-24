@@ -75,11 +75,11 @@ test('WORLD2: the Room - the host\'s foes frame reaches everyone hello\'d but th
   assert.equal(ofType(c, 'foes').length, 2, 'a non-host\'s stream reaches no one (the two above are the host\'s)'); assert.equal(ofType(a, 'foes').length, 0);
   assert.equal(b.closed, null, 'and its junk after the prefix was never parsed'); assert.equal(ofType(b, 'error').length, 0);
   // the stream's own bucket: the poses' stands untouched
-  const poseBucket = JSON.stringify(a.att.bucket);
+  const poseBucket = JSON.stringify(a.meters.bucket);
   let sent = 0; for (let i = 0; i < 40; i++) { await r.raw(a, JSON.stringify({ t: 'foes', data: { seq: 100 + i } })); sent++; }
   const got = ofType(b, 'foes').length - 2;
   assert.ok(got >= FOES_HZ_MAX - 2 && got < sent, `FOES_HZ_MAX a second on the stream's bucket (two spent above): ${got} of ${sent} relayed`);
-  assert.equal(JSON.stringify(a.att.bucket), poseBucket, 'the pose bucket spent nothing on the stream'); assert.ok(a.att.fbucket, 'the stream\'s own');
+  assert.equal(JSON.stringify(a.meters.bucket), poseBucket, 'the pose bucket spent nothing on the stream'); assert.ok(a.meters.fbucket, 'the stream\'s own');
   assert.equal(a.closed, null, 'over the rate: dropped, the host not struck out for a burst');
   // the hit: to the host alone
   const hit = { i: 2, dmg: 9, kind: 'melee' };
@@ -101,9 +101,9 @@ test('WORLD2: the Room - the host\'s foes frame reaches everyone hello\'d but th
   const bHad = ofType(b, 'foes').length;
   await r.raw(c, small);
   assert.equal(ofType(b, 'foes').length, bHad, 'a non-host\'s unprefixed frame reaches no one'); assert.equal(c.closed, null);
-  const fb = JSON.stringify(b.att.fbucket ?? null);
+  const fb = JSON.stringify(b.meters.fbucket ?? null);
   let got2 = 0; for (let i = 0; i < 40; i++) { const had = ofType(c, 'foes').length; await r.raw(b, small); if (ofType(c, 'foes').length > had) got2++; }
-  assert.ok(got2 >= FOES_HZ_MAX - 3 && got2 < 40, `the host\'s unprefixed burst is metered on the stream\'s bucket: ${got2} of 40`); assert.notEqual(JSON.stringify(b.att.fbucket ?? null), fb);
+  assert.ok(got2 >= FOES_HZ_MAX - 3 && got2 < 40, `the host\'s unprefixed burst is metered on the stream\'s bucket: ${got2} of 40`); assert.notEqual(JSON.stringify(b.meters.fbucket ?? null), fb);
   // a town keeps no simulation
   const town = fakeRoom('town:m9');
   const t = town.connect(), u = town.connect();

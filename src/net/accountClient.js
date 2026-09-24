@@ -38,6 +38,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { HANDLE_RE } from './handleShape.js';
+import { LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTER_LINES_MAX, LETTERS_SENT_MAX, LETTERS_PAIR_MAX } from './letterLaw.js';   // MAIL1: the letter's bounds, in the refusals' own sentences
 
 /** WHERE THE SERVICE IS. Its own constant beside the relay's
  *  DEFAULT_SERVER (net/online.js), because they are two Workers and
@@ -125,6 +126,20 @@ export const REFUSALS = Object.freeze({
   protected: 'Moderators cannot be muted.',
   'no-player': 'That player could not be found.',
   'bad-minutes': 'A mute is 1 to 10080 minutes (one week).',
+  // MAIL1, letters. The words are the service's (server-account/src/letters.js) and the letter's law's
+  // (net/letterLaw.js, which the service returns verbatim); every one says what to do next.
+  'mail-needs-account': 'Letters need a username and a password. Give this account one and you can send and receive them.',
+  muted: 'You are muted, so you cannot send letters until the mute ends.',
+  'no-reader': 'No registered player has that username.',
+  'to-self': 'A letter goes to another player.',
+  'inbox-full': 'Their letterbox is full. They have to throw letters away before another fits.',
+  'no-letter': 'That letter is not in your letterbox any more.',
+  'mail-rate': `You have sent a lot of letters. At most ${LETTERS_SENT_MAX} an hour, and ${LETTERS_PAIR_MAX} to one player.`,
+  'no-subject': 'A letter needs a subject.',
+  'subject-long': `A subject is at most ${LETTER_SUBJECT_MAX} characters.`,
+  'no-body': 'A letter needs some words.',
+  'body-long': `A letter is at most ${LETTER_BODY_MAX} characters.`,
+  'body-lines': `A letter is at most ${LETTER_LINES_MAX} lines.`,
   server: 'The account service had a problem. Try again.',
   offline: 'Could not reach the account service. Check your connection.',
 });
