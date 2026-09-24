@@ -1347,7 +1347,7 @@ one go.
 **Not verified here:** in the game. There is no game data in the
 container.
 
-The pins are `test/maplag.test.js` (8). WEATHER3e's and WEATHER3i's hover
+The pins were `test/maplag.test.js` (8, DELETED by DISC17-C). WEATHER3e's and WEATHER3i's hover
 pins now read the forecast at rest.
 
 ---
@@ -1487,8 +1487,8 @@ The sim keeps every law the map read (`forecastAt`, `mapGround`,
 `wornAmong`), and the three comments that named the map as a reader say
 it no longer is. Retired with it:
 
-- `test/weather3e_maplayer.test.js` and `test/maplag.test.js`, with their
-  mutant lists.
+- `test/weather3e_maplayer.test.js` and `test/maplag.test.js`, DELETED with
+  their mutant lists.
 - The map's tests in `weather3f` (R1's and R2's map halves, R2a),
   `weather3g` (the map, the sheet), `weather3h` (the field, the regions,
   the hand, the pen's sign) and `weather3i` (all but the law and the

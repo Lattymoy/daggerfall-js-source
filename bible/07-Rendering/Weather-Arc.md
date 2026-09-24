@@ -593,8 +593,8 @@ record of what shipped. See DISC17 at the end of this document.
 The enhanced travel map shows the picture Mac drew: sunny here, cloud
 there, a rainstorm over the hills. The law is `ui/weatherLayer.js`, and
 it is drawn on `ui/heldMap.js`'s world sheet. Pinned by
-`test/weather3e_maplayer.test.js` (`tools/mutants/weather3e.json` 15/15
-dead).
+`test/weather3e_maplayer.test.js` (`tools/mutants/weather3e.json` 15/15 dead; both DELETED
+by DISC17-C).
 
 - **The wash**: every system over the bay is a soft-rimmed radial wash
   per band, laid lowest priority first so a storm's heart is inked last.
