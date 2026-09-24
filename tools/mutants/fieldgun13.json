@@ -38,8 +38,8 @@
   {
     "name": "FIELD-GUN13-5-one-host-forgets-the-flash",
     "file": "src/scenes/exterior.js",
-    "old": "playerTorchLight(playerEntity, player.pos, cam.yaw), thunderlockMuzzleLight(playerEntity, player.pos, cam.yaw), ...camps.lights()",
-    "new": "playerTorchLight(playerEntity, player.pos, cam.yaw), ...camps.lights()",
+    "old": "playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...camps.lights()",
+    "new": "playerTorchLight(playerEntity, player.feetAt(), cam.yaw), ...camps.lights()",
     "tests": [
       "test/thunderlock.test.js"
     ]

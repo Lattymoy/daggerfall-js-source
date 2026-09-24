@@ -37,16 +37,17 @@ const ARTIFACT = (subtype) => ({ artifact: true, enchantments: [{ type: ENCHANTM
 
 // ── the flag ──────────────────────────────────────────────────────────
 
-test('DW1: the flag is the mod’s Enabled switch, on by default, and the preset on by default too (DW-CLIP)', () => {
+test('DW1: the flag is the mod’s Enabled switch, on by default; the preset is a switch, off by default (DISC14-B; DW-CLIP had it on)', () => {
   _resetModSettings();
   const v = MOD_SETTINGS['diverse-weapons'];
   assert.ok(v, 'the vendor is declared');
   assert.equal(v.title, 'Diverse Weapons'); assert.equal(v.author, 'RealAKP');
   assert.deepEqual(Object.keys(v.keys), ['Enabled', 'WeaponWidgetPreset'], 'the mod has no settings of its own: the flag, and the port’s reading of its readme');
   assert.equal(moddedWeaponHUDAnimsEnabled(), true, 'FPSWeapon.moddedWeaponHUDAnimsEnabled, as DiverseWeaponsMain.Start sets it');
-  assert.equal(diverseWeaponsPresetOn(), true, 'DW-CLIP (Mac: "mod should be defaulted on"): the look the readme asks for, without the hunt for the switch');
+  assert.equal(diverseWeaponsPresetOn(), false, 'DISC14-B (Mac: "these need to be the default values ingame for diverse weapons. The current defaults are wrong on the screen"): Weapon Widget\'s own settings, as its tile shows them');
+  setModSetting('diverse-weapons', 'WeaponWidgetPreset', true);
+  assert.equal(diverseWeaponsPresetOn(), true, 'and a player may still ask for the mod\'s preset');
   setModSetting('diverse-weapons', 'WeaponWidgetPreset', false);
-  assert.equal(diverseWeaponsPresetOn(), false, 'and a player may take Weapon Widget\'s own settings back');
   setModSetting('diverse-weapons', 'Enabled', false);
   assert.equal(moddedWeaponHUDAnimsEnabled(), false);
   setModSetting('diverse-weapons', 'Enabled', true); setModSetting('diverse-weapons', 'WeaponWidgetPreset', true);

@@ -1025,10 +1025,10 @@ test('FIELD-GUN13 #1 - the muzzle curve is one home, and it throws light', () =>
   for (const [file, n] of [['src/scenes/world.js', 2], ['src/scenes/worldModes.js', 2],
     ['src/scenes/dungeon.js', 1], ['src/scenes/exterior.js', 1]]) {
     const src = readFileSync(file, 'utf8');
-    const hits = src.split('thunderlockMuzzleLight(playerEntity, player.pos, cam.yaw)').length - 1;
+    const hits = src.split('thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw)').length - 1;   // DISC13-A: off the render feet
     assert.equal(hits, n, `${file} composes the muzzle light into all ${n} of its light arrays`);
     // beside the torch, every time - the same frame's carried lights
-    assert.equal(src.split('playerTorchLight(playerEntity, player.pos, cam.yaw)').length - 1, n,
+    assert.equal(src.split('playerTorchLight(playerEntity, player.feetAt(), cam.yaw)').length - 1, n,
       `${file}: the torch and the flash ride the same call sites`);
     sites += hits;
   }

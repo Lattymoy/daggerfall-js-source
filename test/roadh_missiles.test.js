@@ -192,10 +192,10 @@ test('ROAD-H H1b: all four hosts fill playerCrouching, and both archer sites rea
   }
   // The dungeon host takes it as a drawFoes argument (its senses
   // context is built inside the draw), and both of its mounts pass it.
-  assert.match(src('scenes/dungeonContext.js'), /playerBobY = 0, playerCrouching = false\) \{/);
+  assert.match(src('scenes/dungeonContext.js'), /playerBobY = 0, playerCrouching = false, playerRenderFeet = null\) \{/);   // DISC13-A: the render feet ride behind it
   assert.match(src('scenes/dungeonContext.js'), /\.\.\._activity, playerHeight, playerCrouching,/);
   for (const h of ['scenes/dungeon.js', 'scenes/worldModes.js']) {
-    assert.match(src(h), /drawFoes\(dt, canvas[^\n]*!!player\.crouching\)/, `${h} passes the latch into drawFoes`);
+    assert.match(src(h), /drawFoes\(dt, canvas[^\n]*!!player\.crouching, player\.feetAt\(\)\)/, `${h} passes the latch into drawFoes`);   // DISC13-A: then the render feet
   }
   assert.match(src('scenes/dungeonContext.js'), /playerCrouching: !!_senses\.playerCrouching/, 'the dungeon archer reads it');
   assert.match(src('scenes/exteriorFoes.js'), /playerCrouching: !!senses\.playerCrouching/, 'the exterior archer reads it');
