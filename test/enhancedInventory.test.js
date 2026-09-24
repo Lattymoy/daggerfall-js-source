@@ -709,9 +709,10 @@ test('U58: one item is not "1 items"', () => {
   assert.ok(!/\$\{[a-z.]*count\} items/.test(src), 'a raw count is still being pluralised by hope');
   assert.match(src, /const plural = \(n, word\) =>/);
   // the DEFINITION plus BOTH headers - the pack's own count was
-  // written the same wrong way in U53 and is fixed with it.
-  assert.equal((src.match(/plural\(/g) || []).length, 3,
-    'one of the two headers still does it by hand');
+  // written the same wrong way in U53 and is fixed with it - and
+  // LOOT-STACK's pile tab, which says what a body holds on hover.
+  assert.equal((src.match(/plural\(/g) || []).length, 4,
+    'one of the two headers, or the pile tab, still does it by hand');
   // THE MODULE'S OWN, imported. A copy of the helper re-derived in
   // this file would compare it to itself, which is the vacuous shape
   // U56 found in the wagon suite.
@@ -1167,20 +1168,8 @@ test('PX21c / WORLD-HOVER: the plaque names a pile without opening it, on the ta
   // under a painted plaque stranded it. The `[\s\S]` window admits the
   // comment that says so and nothing else: a statement between the
   // brace and the gate would have to contain `{` or `;`.
-  // LOOT-STACK amended the RAY half, deliberately and once: a turn of the pile of bodies is about the ray and not
-  // about drawing, so with the pile's key armed the seam casts the reticle's ray on a skin with no plaque too (the
-  // classic player turns a pile, and DFU's mid-screen line is their plaque). The skin is still asked FIRST and the
-  // plaque still taken down at once; with no turn armed nothing is pulled or cast; and a turned classic frame returns
-  // before it draws - so it never reaches ensure(), which is AUDIT 39's whole concern.
-  assert.match(hov, /export function worldHoverFrame\(\{[\s\S]{0,200}\}\) \{\n(?:\s*\/\/[^\n]*\n)*  const on = worldPlaqueOn\(\);\n  if \(!on\) hideWorldPlaque\(\);\n/,
-    'the seam asks the skin as its first act, and takes the plaque down when the answer is no');
-  const seam = hov.slice(hov.indexOf('export function worldHoverFrame('));
-  const noRay = seam.indexOf('  if (!on && !bodyTurnArmed()) return null;');
-  const ray = seam.indexOf('    const reticle = () =>');
-  const noDraw = seam.indexOf('    if (!on) return null;');
-  const draw = seam.indexOf('    const frame = markBodyStack(resolveHover(');
-  assert.ok(noRay > 0 && noRay < ray, 'no list and no ray on a skin with no plaque unless a turn of the pile is armed');
-  assert.ok(noDraw > ray && noDraw < draw, '...and a turned classic frame returns before it draws');
+  assert.match(hov, /export function worldHoverFrame\(\{[\s\S]{0,200}\}\) \{\n(?:\s*\/\/[^\n]*\n)*  if \(!worldPlaqueOn\(\)\) \{ hideWorldPlaque\(\); return null; \}/,
+    'the seam asks the skin as its first act - before the ray, before the list - and takes the plaque down when the answer is no');
   const show = hov.slice(hov.indexOf('export function showWorldPlaque'));
   assert.ok(show.indexOf('if (!worldPlaqueOn()) return;') < show.indexOf('const n = ensure();'),
     'the skin is asked BEFORE the node is built and the sheet injected');
@@ -1207,9 +1196,7 @@ test('PX21c / WORLD-HOVER: the plaque names a pile without opening it, on the ta
   assert.match(frame, /foe: pickActivatableHit\(eye, d, liveFoeTargets\(foes, 'mobileFoe'\), collider\),/,
     '...and the live foes beside it, through the one precedence both readers share');
   assert.match(frame, /contents: api\.lootContents,/);
-  // LOOT-STACK: the one pick is a NAMED closure now, because a turn of the pile picks again on its own frame so the
-  // plaque names the body the next press opens - the same pick, asked twice, never a second one
-  assert.match(hov, /const reticle = \(\) => \(pick \? pick\(\) : pickActivatableHit\(eye, dir, targets\?\.\(\) \?\? \[\], collider\)\);\n\s*let hit = reticle\(\);/,
+  assert.match(hov, /const hit = pick \? pick\(\) : pickActivatableHit\(eye, dir, targets\?\.\(\) \?\? \[\], collider\);/,
     'the take\'s own pick - or, where a host races seven sets rather than one, that host\'s own raced winner');
   // lootContents shares takeLoot's key vocabulary rather than a second one.
   assert.match(ctx, /lootContents\(key\) \{[\s\S]{0,400}const \[kind, iStr\] = key\.split\(':'\);/);

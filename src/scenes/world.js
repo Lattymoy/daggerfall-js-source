@@ -188,7 +188,7 @@ import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmo
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque, worldPlaqueOn } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, its hide door for the branches that return above it, and the teardown
 import { quickLootWheel, quickLootTake, quickLootArm, plaqueActionFor, plaqueActionSelection, plaqueLightFirst } from '../systems/quickLoot.js';   // QUICK-LOOT B4: the wheel, the take, and the two keys that arm what the next activate means
-import { armBodyTurn } from '../player/lootStack.js';   // LOOT-STACK: the pile's turn key arms what the frame spends
+import { lootPile } from '../player/lootStack.js';   // LOOT-STACK: the pile under the reticle, as the loot window's tabs
 import { composeContents } from '../systems/worldHover.js';   // WORLD-HOVER: the contents ladder's one law (AUDIT-WH H3)
 import { mobilePersonName, lootPileName } from '../systems/worldTooltips.js';   // WORLD-HOVER H2: MobilePersonNPC.NameNPC (.cs:299-302); M5: a dropped pile's word (.cs:534-548), outdoors too
 import { wagonHoverName } from '../player/eotbWagon.js';   // WORLD-HOVER M6: the cart's word, beside its producer
@@ -4295,10 +4295,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2444 mounts the same one, gated on
+  // and dungeonContext.js:2445 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:5645
+  // that context through modes.dungeonCtx - so worldModes.js:5646
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -4802,6 +4802,23 @@ export async function bootWorld(canvas, renderer, params, status) {
       items, containerDropPos(at, dropFeet()), `${playerTravelPixel().x},${playerTravelPixel().y}`, icon),
     ...extra,
   });
+  /** MAC-E's corpse door - the pool's own `takeLoot` (the empty body's
+   *  refusal, the arrows pickup, a puppet's ask), handed the window.
+   *  LOOT-STACK: the window carries the pile under the reticle as tabs
+   *  (player/lootStack.js lootPile), and a tab comes back through this
+   *  same door with the pile in hand. Quick loot takes on a PRESS only:
+   *  a tab is a request for that body's window. A pile may mix the two
+   *  pools, so each key answers to its own. */
+  const bodyPool = (lootKey) => (lootKey.startsWith('foeCorpse:') ? exteriorFoes : cityGuards);
+  const openBodyLoot = (lootKey, pileKeys = null) => {
+    bodyPool(lootKey).takeLoot(lootKey, (l) => townTalk.say(l),
+      inventoryDoorReady() ? (loot) => {
+        if (!pileKeys && quickLootTake(lootKey, loot, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) return;   // AUDIT QL-WEIGHT1: the window's own resolver
+        const pile = lootPile(lootKey, { keys: pileKeys, describe: (k) => bodyPool(k).pileBody(k), open: openBodyLoot });
+        const w = makeInventoryWindow({ loot: pile ? { ...loot, pile } : loot });
+        if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
+      } : null);
+  };
   // U42: the CLASSIC spellbook. PlayerEntity.GetSpells() is the
   // player's own array and the window WRITES to it (delete, swap,
   // sort, rename), so it is handed by reference - the save envelope
@@ -6362,7 +6379,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6248), so exterior mode and a
+    // composer, dungeonContext.js:6249), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -7754,13 +7771,6 @@ export async function bootWorld(canvas, renderer, params, status) {
     // is known here and only the FRAME has the ray, the pick and the
     // pools that own the container.
     if (!townTalk.overlayActive && socialMenuCanOpen() && quickLootArm(act)) { _tapArmed = 2; e.preventDefault(); return; }
-    // LOOT-STACK (Janome: "a toggle key to switch between the inventories
-    // of enemies stacked on top of each other"): the pile's turn, beside
-    // the pile's other two keys and under the same gates. It ARMS a turn
-    // and fires nothing - the frame that has the ray spends it
-    // (ui/worldPlaque.js worldHoverFrame, player/lootStack.js) - so no
-    // foe, townsperson or door in front of the pile is ever activated by it.
-    if (!townTalk.overlayActive && socialMenuCanOpen() && act === 'NextBody' && armBodyTurn()) { e.preventDefault(); return; }
     // QS2: THE SAME PLACE, FOR THE SAME REASON. A quickslot is worth more in a
     // dungeon than it is on a road, so these three answered above the mode gate
     // too - under the same overlay and pause gates (socialMenuCanOpen is
@@ -8095,7 +8105,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:232, "a right-click on a window is the window's...
+  // (dungeon.js:231, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -8345,7 +8355,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8780-8844 -
+  // worldModes answers it in BOTH modes (worldModes.js:8788-8852 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -12290,7 +12300,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:112, so the
+  // only reader of `load` in the whole tree is dungeon.js:111, so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a
@@ -13301,7 +13311,6 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
               // The pool still owns the empty-body refusal and the arrows
               // pickup; this hands it the door and nothing else.
             else if (lootKey) {
-              const pool = lootKey.startsWith('foeCorpse:') ? exteriorFoes : cityGuards;
               // QUICK-LOOT B4: the take goes THROUGH THE WINDOW'S OWN
               // DOOR. `loot` here is the container's loot hooks - the
               // very object this arm would hand the inventory window as
@@ -13318,12 +13327,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
               // its `openWindow` callback rather than ahead of it. A
               // null answer (switch off, no highlight, the crosshair
               // moved) opens the window exactly as before.
-              pool.takeLoot(lootKey, (l) => townTalk.say(l),
-                inventoryDoorReady() ? (loot) => {
-                  if (quickLootTake(lootKey, loot, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) return;   // AUDIT QL-WEIGHT1: the window's own resolver
-                  const w = makeInventoryWindow({ loot });
-                  if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
-                } : null);
+              openBodyLoot(lootKey);
               surfacePlayer();
             }
             // U58: THE DOOR AGAIN. U53 pinned this arm to the ART

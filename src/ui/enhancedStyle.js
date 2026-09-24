@@ -3692,6 +3692,20 @@ ${badgeCss()}
 .loot-win .remotehead { flex: 0 0 auto; }
 .loot-win .remotelist { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; }
 .loot-win .remotelist::-webkit-scrollbar { display: none; }
+/* LOOT-STACK: the pile's tabs, one per body, over the head - the lit
+   one is the body this window is open on. They wrap rather than scroll,
+   so a pile of five on a phone is two rows and never a hidden tab; each
+   is a finger's height, because a phone has no other way to the pile. */
+.piletabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
+  padding: 12px 12px 0; }
+.piletab { font: inherit; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  min-height: 32px; padding: 4px 10px; display: inline-flex; align-items: center; gap: 6px;
+  color: #7d7460; background: rgba(0,0,0,0.35); border: 1px solid rgba(125,116,96,0.45);
+  cursor: pointer; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); max-width: 100%; }
+.piletab:hover, .piletab:focus-visible { outline: none; color: #d8cfae; border-color: var(--brass); }
+.piletab.on { color: rgb(243,239,44); border-color: var(--brass); cursor: default; }
+.piletabname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.piletabn { color: #d8cfae; font-variant-numeric: tabular-nums; }
 /* NOT MULTICOL. column-count was the obvious answer and it is the
    wrong one: a multicol box that is also a SCROLL container fragments
    in the block direction, so the overflow columns went below the fold

@@ -1,25 +1,26 @@
 // LOOT-STACK (2026-09-23, the community arc - Janome on Discord: "a toggle key to switch between the inventories of
-// enemies stacked on top of each other"): THE PILE OF BODIES, DRIVEN. The stack along the real pick
-// (player/activate.js) over real ray geometry - its members, its reach, the world occluding one, a list with no body
-// untouched; the choice by key and its forgetting; the chosen body standing at the nearest's distance, so the race
-// against a pile of drops cannot steal the click; the turn, its wrap and its refusal when the pile did not win; the
-// plaque's mark and the turn's line through the one seam four hosts call, on both skins; the producers' mark; the
-// action, its key by elimination and its row; and the hosts by source.
+// enemies stacked on top of each other"; Mac, on the key it first shipped with: "that solution is better than a
+// keybind"): THE PILE OF BODIES, DRIVEN. The stack along the real pick (player/activate.js) over real ray geometry -
+// its members, its reach, the world occluding one; the pick answering the nearest and noting the pile; the pile as
+// the loot window's tabs (lootPile), each tab back through the host's own corpse door; the pools' word on a body;
+// both windows drawing and working the tabs; the plaque's count; the producers' mark; and the key, gone.
+import './modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { pickActivatableHit, RAY_DISTANCE, CORPSE_ACTIVATION_DISTANCE } from '../src/player/activate.js';
-import { bodyStack, chooseBody, armBodyTurn, bodyTurnArmed, dropBodyTurns, turnBodyStack, bodyTurnText, bodyStackMark, resetBodyStack, _bodyStackStateForTests } from '../src/player/lootStack.js';
+import { bodyStack, noteBodyStack, bodyPile, lootPile, bodyStackMark, resetBodyStack, _bodyStackStateForTests } from '../src/player/lootStack.js';
 import { raceActivation } from '../src/player/activationRace.js';
-import { corpseLootTargets } from '../src/scenes/corpseMarker.js';
-import { worldHoverFrame, destroyWorldPlaque, NEXT_BODY_ACTION } from '../src/ui/worldPlaque.js';
-import { midScreenText } from '../src/ui/midScreenText.js';
+import { corpseLootTargets, pileBody } from '../src/scenes/corpseMarker.js';
+import { worldHoverFrame, destroyWorldPlaque, bodyStackText } from '../src/ui/worldPlaque.js';
 import { setBindings } from '../src/ui/input.js';
-import { ACTIONS, PORT_ACTIONS, DEFAULT_BINDINGS, createBindings, resetDefaults, setBinding, getBinding } from '../src/systems/inputActions.js';
-import { PORT_GROUPS, LOOT_GROUP_TITLE } from '../src/ui/enhancedControls.js';
-import { MOD_SETTINGS } from '../src/systems/modSettings.js';
-import { domCodeForKeyCode } from '../src/systems/keyCodes.js';
+import { ACTIONS, DEFAULT_BINDINGS, createBindings, resetDefaults } from '../src/systems/inputActions.js';
+import { PORT_ROWS } from '../src/ui/enhancedControls.js';
+import { mountEnhancedInventory, remoteModel } from '../src/ui/enhancedInventory.js';
+import { NativeInventoryWindow, pileLabel } from '../src/ui/nativeInventory.js';
+import { REMOTE_TARGET_ICON_RECT } from '../src/ui/targetIconPanel.js';
+import { withDom } from './invdrag.mjs';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 
@@ -35,6 +36,7 @@ const open = { raycast: () => Infinity };
 const wallAt = (at) => ({ raycast: (_e, _d, max) => (max >= at ? at : Infinity) });
 const nearest = (targets, collider = open) => (rest) => pickActivatableHit(EYE, DIR, rest.map((t) => ({ ...t, body: false })), collider);
 const fresh = () => { resetBodyStack(); };
+const ICONS = { getTexture: async () => ({ recordCount: 0 }), uploadRecord: () => {}, textures: new Map() };
 
 // ─── THE STACK ──────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -52,93 +54,15 @@ test('LOOT-STACK the stack: the nearest body and every body behind it on the sam
   assert.deepEqual(walled.map((h) => h.key), ['foeCorpse:a', 'foeCorpse:b']);
   // ...and through the real pick, whose walk is handed the same collider as its front
   pickActivatableHit(EYE, DIR, targets, wallAt(1.3));
-  assert.deepEqual(bodyStackMark('foeCorpse:a'), { index: 0, count: 2 }, 'the walk behind the front body sees the world the front one was picked through');
+  assert.deepEqual(bodyStackMark('foeCorpse:a'), { count: 2 }, 'the walk behind the front body sees the world the front one was picked through');
   pickActivatableHit(EYE, DIR, targets, open);
-  assert.deepEqual(bodyStackMark('foeCorpse:a'), { index: 0, count: 3 });
+  assert.deepEqual(bodyStackMark('foeCorpse:a'), { count: 3 });
   // the nearest out of reach: the handler refuses it ("You are too far away"), and the bodies behind are further still
   assert.deepEqual(bodyStack({ key: 'foeCorpse:far', distance: 10, reach: CORPSE_ACTIVATION_DISTANCE }, [far, body('foeCorpse:far2', 10.2)], nearest([])).map((h) => h.key), ['foeCorpse:far']);
   assert.deepEqual(bodyStack(null, targets, nearest(targets)), []);
 });
 
-test('LOOT-STACK the pick: a list with no body is untouched and says nothing about bodies; a lone body is the pick as ever; the pile marks where each body stands, and a choice by KEY survives the two trading places (mutants: a list with no body clearing the choice; the choice held as a position)', () => {
-  fresh();
-  const a = body('corpse:0', 1), b = body('corpse:1', 1.2);
-  // a door-and-pile list: no body in it, so nothing about the pile is decided here
-  const drops = [pile('droppedLoot:1', 0.5)];
-  pickActivatableHit(EYE, DIR, [a, b], open);
-  armBodyTurn();
-  assert.deepEqual(turnBodyStack({ key: 'corpse:0' }), { index: 1, count: 2 });
-  assert.equal(pickActivatableHit(EYE, DIR, drops, open).key, 'droppedLoot:1');
-  assert.equal(_bodyStackStateForTests().chosen, 'corpse:1', 'a pick over a list with no body leaves the pile\'s choice alone - a host casts several picks a frame');
-  assert.equal(pickActivatableHit(EYE, DIR, [a, b], open).key, 'corpse:1', 'the turned-to body answers');
-  // the two sway past each other: the choice is the BODY, not "the second one"
-  const swapped = [body('corpse:0', 1.2), body('corpse:1', 1)];
-  assert.equal(pickActivatableHit(EYE, DIR, swapped, open).key, 'corpse:1', 'still the body the player chose, now in front');
-  assert.deepEqual(bodyStackMark('corpse:1'), { index: 0, count: 2 });
-  assert.equal(bodyStackMark('droppedLoot:1'), null);
-  // a lone body: the pick as it always was, and no mark
-  fresh();
-  assert.equal(pickActivatableHit(EYE, DIR, [a], open).key, 'corpse:0');
-  assert.equal(bodyStackMark('corpse:0'), null, 'a body alone is no pile');
-});
-
-test('LOOT-STACK the chosen body stands where the NEAREST stood: the race against a pile of drops lying between two bodies still gives the click to the pile of bodies, and the enemy arm and the reach gate read the front body\'s distance (mutant: the chosen body handed on at its own distance, so the drop between steals the click the player turned for)', () => {
-  fresh();
-  const a = body('foeCorpse:a', 1), b = body('foeCorpse:b', 1.2);
-  pickActivatableHit(EYE, DIR, [a, b], open);
-  armBodyTurn();
-  turnBodyStack({ key: 'foeCorpse:a' });
-  const chosen = pickActivatableHit(EYE, DIR, [a, b], open);
-  assert.deepEqual(chosen, { key: 'foeCorpse:b', distance: 1, reach: CORPSE_ACTIVATION_DISTANCE });
-  const drop = pickActivatableHit(EYE, DIR, [pile('droppedLoot:7', 1.1)], open);
-  assert.equal(drop.distance, 1.1, 'the drop lies between the two bodies');
-  const won = raceActivation({ corpse: chosen, pile: drop });
-  assert.equal(won.loot?.key, 'foeCorpse:b', 'the pile of bodies is one thing under the ray, at its front - and the body answering is the one the player turned to');
-  assert.equal(won.drop, null);
-});
-
-test('LOOT-STACK the choice forgotten: a pick over the bodies whose winner is none of them (the player looked away), and a chosen body gone from the pile (emptied and disabled), both hand the nearest back (mutants: a stale choice kept after looking away; a vanished body chosen)', () => {
-  fresh();
-  const a = body('foeCorpse:a', 1), b = body('foeCorpse:b', 1.2), c = body('foeCorpse:c', 1.4);
-  pickActivatableHit(EYE, DIR, [a, b, c], open);
-  armBodyTurn(); armBodyTurn();
-  assert.deepEqual(turnBodyStack({ key: 'foeCorpse:a' }), { index: 2, count: 3 }, 'two turns in one frame are two steps');
-  assert.equal(pickActivatableHit(EYE, DIR, [a, b, c], open).key, 'foeCorpse:c');
-  // the chosen body is emptied and disabled: it is no target now
-  assert.equal(pickActivatableHit(EYE, DIR, [a, b], open).key, 'foeCorpse:a', 'the pile shrank past the choice - the nearest answers');
-  assert.equal(_bodyStackStateForTests().chosen, null);
-  // turned again, then the player looks away: the same list, and the ray meets no body
-  pickActivatableHit(EYE, DIR, [a, b], open);
-  armBodyTurn();
-  turnBodyStack({ key: 'foeCorpse:a' });
-  assert.equal(pickActivatableHit([5, 0, 0], DIR, [a, b], open), null, 'looking at nothing');
-  assert.equal(_bodyStackStateForTests().chosen, null, 'looking away forgets the choice');
-  assert.equal(pickActivatableHit(EYE, DIR, [a, b], open).key, 'foeCorpse:a', 'and looking back starts at the front');
-});
-
-test('LOOT-STACK the turn: one step on the stack the reticle\'s winner stands in, wrapping at the back; a turn when a door or a foe won the race turns nothing and is spent; a window over the world drops an armed turn; it speaks DFU\'s mid-screen words (mutants: the turn applied to a pile that lost the race; no wrap; an armed turn kept past the frame)', () => {
-  fresh();
-  const a = body('corpse:0', 1), b = body('corpse:1', 1.2), c = body('corpse:2', 1.4);
-  pickActivatableHit(EYE, DIR, [a, b, c], open);
-  assert.equal(turnBodyStack({ key: 'corpse:0' }), null, 'nothing armed, nothing turned');
-  assert.equal(armBodyTurn(), true);
-  assert.equal(bodyTurnArmed(), true);
-  assert.deepEqual(turnBodyStack({ key: 'corpse:0' }), { index: 1, count: 3 });
-  assert.equal(bodyTurnArmed(), false, 'spent by the frame that turned it');
-  armBodyTurn(); turnBodyStack({ key: 'corpse:1' });
-  armBodyTurn();
-  assert.deepEqual(turnBodyStack({ key: 'corpse:2' }), { index: 0, count: 3 }, 'the back of the pile turns to its front');
-  // the reticle's winner is a door in front of the pile: the press would open the door, so nothing turns
-  armBodyTurn();
-  assert.equal(turnBodyStack({ key: 'door:3' }), null);
-  assert.equal(bodyTurnArmed(), false, 'and the turn is spent on it, never kept for later');
-  armBodyTurn();
-  dropBodyTurns();
-  assert.equal(bodyTurnArmed(), false);
-  assert.equal(bodyTurnText({ index: 1, count: 3 }), 'Body 2 of 3.');
-});
-
-// ─── THE PLAQUE AND THE LINE: the one seam four hosts call ─────────────────────────────────────────────────────────
+// ─── THE PLAQUE: the one seam four hosts call ─────────────────────────────────────────────────────────────────────
 
 function fakeEl(tag) {
   const classes = new Set();
@@ -163,7 +87,6 @@ function withSkin(skin, fn) {
   globalThis.window = { location: { search }, matchMedia: () => ({ matches: false }) };
   const store = createBindings(); resetDefaults(store); setBindings(store);
   destroyWorldPlaque();
-  midScreenText.text = '';
   try { return fn(store); } finally {
     destroyWorldPlaque();
     delete globalThis.document; delete globalThis.window; delete globalThis.location;
@@ -173,59 +96,210 @@ const PILE3 = () => [body('foeCorpse:a', 1), body('foeCorpse:b', 1.2), body('foe
 const NAMES = { 'foeCorpse:a': 'Dead Orc', 'foeCorpse:b': 'Dead Rat', 'foeCorpse:c': 'Dead Imp' };
 const hover = (extra = {}) => worldHoverFrame({ eye: EYE, dir: DIR, collider: open, targets: PILE3, name: (k) => (NAMES[k] ? { title: NAMES[k] } : null), contents: () => [], ...extra });
 
-test('LOOT-STACK the plaque: a body in a pile says where it stands in it and the key that turns it, off the LIVE bindings (a rebind renames it, an unbound action names no key); a turn is spent by the seam, speaks "Body 2 of 3." and the plaque names the body the next press opens; a window up drops it (mutants: the mark gone; the key named from a literal; the seam turning without the pick again; the turn kept under a window)', () => {
-  withSkin('enhanced', (store) => {
-    const f1 = hover();
-    assert.equal(f1.key, 'foeCorpse:a');
-    assert.equal(f1.title, 'Dead Orc');
-    assert.deepEqual(f1.subs, ['1 of 3 · ] for the next'], 'the pile, and the key that turns it - the classic short name, as the diamond names its keys');
-    armBodyTurn();
-    const f2 = hover();
-    assert.equal(f2.key, 'foeCorpse:b', 'the plaque names the body the next press will open');
-    assert.deepEqual(f2.subs, ['2 of 3 · ] for the next']);
-    assert.equal(midScreenText.text, 'Body 2 of 3.', 'the turn speaks in DFU\'s mid-screen voice');
-    assert.equal(hover().key, 'foeCorpse:b', 'and the choice holds from frame to frame');
-    // rebound to N: the plaque says N
-    setBinding(store, 'KeyN', NEXT_BODY_ACTION);
-    assert.equal(getBinding(store, NEXT_BODY_ACTION), 'KeyN');
-    assert.deepEqual(hover().subs, ['2 of 3 · N for the next']);
-    // bound to nothing: the mark stands, with no key to press named
-    setBinding(store, 'KeyN', 'NoteBook');
-    assert.equal(getBinding(store, NEXT_BODY_ACTION) ?? null, null);
-    assert.deepEqual(hover().subs, ['2 of 3']);
-    // a window over the world: the turn armed before it is dropped, not landed after it
-    armBodyTurn();
-    assert.equal(hover({ cursorActive: true }), null);
-    assert.equal(bodyTurnArmed(), false);
-    assert.equal(hover().key, 'foeCorpse:b', 'nothing turned');
-  });
-});
-
-test('LOOT-STACK the classic skin turns a pile too: no plaque is drawn, the seam still spends the turn on the reticle\'s own pick and says the line - DFU\'s mid-screen line is the plaque a classic player has; with no turn armed it does nothing at all, as before (mutants: the turn gated behind the plaque\'s skin gate; the classic frame picking every frame)', () => {
-  withSkin('classic', () => {
-    let picks = 0;
-    const counted = () => { picks += 1; return PILE3(); };
-    assert.equal(hover({ targets: counted }), null, 'nothing drawn');
-    assert.equal(picks, 0, 'and no turn armed: the classic frame casts no ray, as it never did');
-    armBodyTurn();
-    assert.equal(hover({ targets: counted }), null);
-    assert.ok(picks >= 1, 'a turn armed: the seam casts the reticle\'s ray');
-    assert.equal(midScreenText.text, 'Body 2 of 3.');
-    assert.equal(pickActivatableHit(EYE, DIR, PILE3(), open).key, 'foeCorpse:b', 'and the next press opens the second body');
-  });
-});
-
-test('LOOT-STACK the teardown frees it: destroyWorldPlaque - every host\'s door out - forgets the choice, the stack and an armed turn (mutant: the reset left out, so a choice made in a dungeon points the street\'s press at a body that is not there)', () => {
+test('LOOT-STACK the pick answers the NEAREST and notes its pile: every reader of the ray means the front body, as DFU\'s one ray does; a list with no body leaves the note alone (a host casts several picks a frame); a lone body, or a ray that met no body, clears it (mutants: the pick answering a body behind the front; a list with no body clearing the note; a stale note kept after looking away)', () => {
   fresh();
-  const a = body('corpse:0', 1), b = body('corpse:1', 1.2);
+  const a = body('corpse:0', 1), b = body('corpse:1', 1.2), c = body('corpse:2', 1.4);
+  assert.deepEqual(pickActivatableHit(EYE, DIR, [c, b, a], open), { key: 'corpse:0', distance: 1, reach: CORPSE_ACTIVATION_DISTANCE }, 'the front body, at its own distance');
+  assert.deepEqual(_bodyStackStateForTests().seen, ['corpse:0', 'corpse:1', 'corpse:2']);
+  assert.equal(pickActivatableHit(EYE, DIR, [pile('droppedLoot:1', 0.5)], open).key, 'droppedLoot:1');
+  assert.deepEqual(_bodyStackStateForTests().seen, ['corpse:0', 'corpse:1', 'corpse:2'], 'a pick over a list with no body is no question about bodies');
+  assert.equal(pickActivatableHit([5, 0, 0], DIR, [a, b, c], open), null, 'looking at nothing');
+  assert.equal(_bodyStackStateForTests().seen, null, 'looking away clears the note');
   pickActivatableHit(EYE, DIR, [a, b], open);
-  armBodyTurn(); turnBodyStack({ key: 'corpse:0' }); armBodyTurn();
-  assert.equal(_bodyStackStateForTests().chosen, 'corpse:1');
-  destroyWorldPlaque();
-  assert.deepEqual(_bodyStackStateForTests(), { chosen: null, seen: null, turns: 0 });
+  assert.equal(pickActivatableHit(EYE, DIR, [a], open).key, 'corpse:0');
+  assert.equal(_bodyStackStateForTests().seen, null, 'a body alone is no pile');
+  // noteBodyStack is the pick's last word and changes it never
+  pickActivatableHit(EYE, DIR, [a, b], open);
+  const hit = { key: 'corpse:0', distance: 1, reach: 2 };
+  assert.equal(noteBodyStack(hit, [a, b], () => null), hit, 'the very winner, handed back');
+  assert.equal(noteBodyStack(null, [pile('droppedLoot:1', 3)], () => null), null);
+  assert.equal(_bodyStackStateForTests().seen, null, 'a lone front (the walk found nothing behind) clears it');
 });
 
-// ─── THE PRODUCERS, THE ACTION, THE HOSTS ──────────────────────────────────────────────────────────────────────────
+test('LOOT-STACK the front body\'s race is the race it always was: a pile of drops lying between two bodies loses to the front body, and a drop in FRONT of the pile wins (mutant: none needed - the pick is the nearest; this pins that the pile changed no race)', () => {
+  fresh();
+  const a = body('foeCorpse:a', 1), b = body('foeCorpse:b', 1.2);
+  const front = pickActivatableHit(EYE, DIR, [a, b], open);
+  assert.equal(raceActivation({ corpse: front, pile: pickActivatableHit(EYE, DIR, [pile('droppedLoot:7', 1.1)], open) }).loot?.key, 'foeCorpse:a');
+  assert.equal(raceActivation({ corpse: front, pile: pickActivatableHit(EYE, DIR, [pile('droppedLoot:7', 0.5)], open) }).drop?.key, 'droppedLoot:7');
+});
+
+test('LOOT-STACK bodyPile: the pile the press\'s body stands at the FRONT of, nearest first - and a body alone, or one the note does not stand at the front of, is a pile of one (mutants: the front check dropped, so a press on the second body reads the first\'s pile; the note handed out by reference)', () => {
+  fresh();
+  pickActivatableHit(EYE, DIR, [body('corpse:0', 1), body('corpse:1', 1.2), body('corpse:2', 1.4)], open);
+  const p = bodyPile('corpse:0');
+  assert.deepEqual(p, ['corpse:0', 'corpse:1', 'corpse:2']);
+  p.push('x');
+  assert.deepEqual(bodyPile('corpse:0'), ['corpse:0', 'corpse:1', 'corpse:2'], 'a copy');
+  assert.deepEqual(bodyPile('corpse:1'), ['corpse:1'], 'not the front: its own pile of one');
+  assert.deepEqual(bodyPile('corpse:9'), ['corpse:9']);
+});
+
+test('LOOT-STACK lootPile - the tabs: one per body the pool can open, in the pile\'s order, the open body always among them; fewer than two is no tab row; a tab opens its body through the host\'s door with the pile in hand, and the open body\'s own tab, or a body not in the row, opens nothing (mutants: the open body dropped when it reads empty; a single body drawn a tab row; the pile not carried; a tab onto the open body re-opening it)', () => {
+  const words = { 'corpse:0': { name: 'Orc', count: 3 }, 'corpse:1': null, 'corpse:2': { name: 'Rat', count: 1 } };
+  const opened = [];
+  const keys = ['corpse:0', 'corpse:1', 'corpse:2'];
+  const p = lootPile('corpse:0', { keys, describe: (k) => words[k] ?? null, open: (k, ks) => opened.push([k, ks]) });
+  assert.deepEqual(p.bodies, [{ key: 'corpse:0', name: 'Orc', count: 3 }, { key: 'corpse:2', name: 'Rat', count: 1 }], 'the empty body is no tab');
+  assert.equal(p.current, 'corpse:0');
+  p.open('corpse:2');
+  assert.deepEqual(opened, [['corpse:2', keys]], 'the host\'s door, handed the whole pile again so the row does not move');
+  p.open('corpse:0'); p.open('corpse:1'); p.open('corpse:7');
+  assert.equal(opened.length, 1, 'the open body, an untabbed body and a stranger open nothing');
+  // the open body stands even when its word is null now (emptied under the player's hand)
+  const q = lootPile('corpse:1', { keys, describe: (k) => words[k] ?? null, open: () => {} });
+  assert.deepEqual(q.bodies.map((b) => b.key), ['corpse:0', 'corpse:1', 'corpse:2']);
+  assert.equal(lootPile('corpse:0', { keys: ['corpse:0', 'corpse:1'], describe: (k) => words[k] ?? null, open: () => {} }), null, 'one body left to show: no row');
+  // with no pile handed, the note is read - a press
+  fresh();
+  pickActivatableHit(EYE, DIR, [body('corpse:0', 1), body('corpse:2', 1.2)], open);
+  assert.deepEqual(lootPile('corpse:0', { describe: (k) => words[k] ?? null, open: () => {} }).bodies.map((b) => b.key), ['corpse:0', 'corpse:2']);
+});
+
+test('LOOT-STACK pileBody - the pools\' word on a body: its name and what it holds; a disabled body, an empty one and a PUPPET\'s (its owner\'s to empty, no window here) are no tab (mutants: each of the three refusals dropped; the count off the wrong list)', () => {
+  const orc = 7;   // ENEMY_NAMES[7]
+  assert.deepEqual(pileBody({ mobileType: orc, entity: { items: [{}, {}] } }), { name: 'Orc', count: 2 });
+  assert.equal(pileBody({ mobileType: orc, corpseDisabled: true, entity: { items: [{}] } }), null);
+  assert.equal(pileBody({ mobileType: orc, entity: { items: [] } }), null);
+  assert.equal(pileBody({ mobileType: orc, puppet: 'peer1', entity: { items: [{}] } }), null);
+  assert.equal(pileBody(null), null);
+});
+
+test('LOOT-STACK the plaque counts the pile - "3 bodies" under the front body\'s name - and a body alone carries no mark (mutants: the mark gone; the mark on a lone body)', () => {
+  withSkin('enhanced', () => {
+    const f = hover();
+    assert.equal(f.key, 'foeCorpse:a', 'the front body, as the press opens it');
+    assert.equal(f.title, 'Dead Orc');
+    assert.deepEqual(f.subs, [bodyStackText(3)]);
+    assert.equal(bodyStackText(3), '3 bodies');
+    assert.deepEqual(hover({ targets: () => [body('foeCorpse:a', 1)] }).subs, []);
+  });
+});
+
+test('LOOT-STACK the teardown frees the note: destroyWorldPlaque - every host\'s door out - forgets the pile (mutant: the reset left out, so a pile noted in a dungeon hands the street\'s press a pile that is not there)', () => {
+  fresh();
+  pickActivatableHit(EYE, DIR, [body('corpse:0', 1), body('corpse:1', 1.2)], open);
+  assert.ok(_bodyStackStateForTests().seen);
+  destroyWorldPlaque();
+  assert.deepEqual(_bodyStackStateForTests(), { seen: null });
+  const wp = rd('src/ui/worldPlaque.js');
+  assert.match(wp, /resetQuickLoot\(\);[\s\S]{0,200}resetBodyStack\(\);/, 'beside quick loot\'s state');
+});
+
+// ─── THE WINDOWS ───────────────────────────────────────────────────────────────────────────────────────────────────
+
+const PILE = (opened) => ({
+  bodies: [{ key: 'foeCorpse:1', name: 'Orc', count: 2 }, { key: 'foeCorpse:2', name: 'Rat', count: 1 }, { key: 'guardCorpse:3', name: 'Guard', count: 4 }],
+  current: 'foeCorpse:1',
+  open: (k) => opened.push(k),
+});
+
+test('LOOT-STACK the enhanced window: the pile is the BODY\'s frame\'s only - never the wagon\'s or a reward tray\'s; a tab per body with the open one lit and what each other holds; a tab click closes this window FIRST and then hands its body to the door (mutants: the pile on every frame; the lit tab clickable; the tab row dropped; the open before the close)', () => {
+  const opened = [];
+  const pile = PILE(opened);
+  assert.equal(remoteModel({ loot: { items: () => [], pile } }).pile, pile);
+  assert.equal(remoteModel({ loot: { items: () => [], pile } }, { usingWagon: true }).pile, null, 'the wagon');
+  assert.equal(remoteModel({ loot: { items: () => [], pile } }, { chooseOne: true }).pile, null, 'a reward tray');
+  assert.equal(remoteModel({}).pile, null);
+  withDom((dom) => {
+    const host = dom.mk('div'); dom.body.append(host);
+    const e = { name: 'Janome', stats: { strength: 50 }, items: [], goldPieces: 0 };
+    const order = [];
+    let view = null;
+    view = mountEnhancedInventory(host, {
+      entity: e, items: () => e.items,
+      loot: { items: () => [{ name: 'Ruby', templateIndex: 0, stackCount: 1 }], pile: { ...pile, open: (k) => { order.push(`open ${k}`); pile.open(k); } } },
+      onExit: () => { order.push('exit'); view.unmount(); },
+    });
+    const tabs = host.querySelectorAll('.piletab');
+    assert.equal(tabs.length, 3);
+    assert.deepEqual(tabs.map((t) => t.querySelector('.piletabname').textContent), ['Orc', 'Rat', 'Guard']);
+    assert.ok(tabs[0].classList.contains('on'));
+    assert.equal(tabs[0].getAttribute('aria-selected'), 'true');
+    assert.equal(tabs[0].onclick, null, 'the lit tab is the window already open');
+    assert.equal(tabs[0].querySelector('.piletabn'), null);
+    assert.equal(tabs[2].querySelector('.piletabn').textContent, '4');
+    assert.equal(tabs[1].title, 'Rat: 1 item');
+    assert.equal(host.querySelector('.piletabs').getAttribute('role'), 'tablist');
+    tabs[2].onclick();
+    assert.deepEqual(order, ['exit', 'open guardCorpse:3'], 'close, then hand over');
+    assert.deepEqual(opened, ['guardCorpse:3']);
+  });
+  withDom((dom) => {
+    const host = dom.mk('div'); dom.body.append(host);
+    const e = { name: 'Janome', stats: { strength: 50 }, items: [], goldPieces: 0 };
+    let view = null;
+    view = mountEnhancedInventory(host, { entity: e, items: () => e.items, loot: { items: () => [] }, onExit: () => view.unmount() });
+    assert.equal(host.querySelector('.piletabs'), null, 'a body alone: no row');
+  });
+});
+
+test('LOOT-STACK the classic window: the body\'s picture turns the pile - LEFT to the next body, RIGHT to the one before, wrapping - closing this window with the exit\'s own close and handing the body to the door; the label under the picture says where the open body stands; MIDDLE, the wagon, and a body alone keep the drop-icon panel\'s own law (mutants: no wrap; RIGHT stepping forward; the open before the close; the turn over the wagon)', () => {
+  const [rx, ry] = REMOTE_TARGET_ICON_RECT;
+  const at = [rx + 5, ry + 5];
+  const mk = (opened, extra = {}) => new NativeInventoryWindow({
+    items: () => [], entity: { items: [], activeEffects: [] }, icons: ICONS,
+    loot: { items: () => [], playerOwned: false, textureArchive: 380, textureRecord: 1, pile: PILE(opened) }, ...extra,
+  });
+  let opened = [];
+  let w = mk(opened);
+  assert.equal(w._remoteTargetIcon().label, '1 of 3');
+  w.click(...at);
+  assert.equal(w.done, true, 'this window closed');
+  assert.deepEqual(opened, ['foeCorpse:2'], 'the next body');
+  opened = []; w = mk(opened);
+  w.click(...at, true);
+  assert.deepEqual(opened, ['guardCorpse:3'], 'RIGHT: the one before, wrapping to the back');
+  opened = []; w = mk(opened);
+  w.click(...at, false, true);
+  assert.deepEqual(opened, [], 'MIDDLE is the archive step, which a body refuses');
+  assert.equal(w.done, false);
+  w.usingWagon = true;
+  w.click(...at);
+  assert.deepEqual(opened, [], 'the wagon has no pile');
+  assert.equal(pileLabel(null), '');
+  assert.equal(pileLabel({ bodies: [{ key: 'a' }, { key: 'b' }], current: 'b' }), '2 of 2');
+  const alone = new NativeInventoryWindow({ items: () => [], entity: { items: [], activeEffects: [] }, icons: ICONS, loot: { items: () => [], playerOwned: false, textureArchive: 380, textureRecord: 1 } });
+  assert.equal(alone._remoteTargetIcon().label, '');
+  alone.click(...at);
+  assert.equal(alone.done, false, 'a body alone: the click the panel always refused');
+  const src = rd('src/ui/nativeInventory.js');
+  assert.ok(src.includes('    this._close();\n    pile.open(next.key);'), 'by source: the window closed, then the body handed over');
+});
+
+// ─── THE HOSTS, AND THE KEY THAT IS GONE ───────────────────────────────────────────────────────────────────────────
+
+test('LOOT-STACK the hosts by source: all four corpse doors hand the window the pile - the pool\'s own takeLoot still first (its refusals, the arrows, a puppet\'s ask), quick loot on a PRESS only, a tab back through the same door with the pile in hand; a pile may mix the two pools, so each key answers to its own (mutants: quick loot taking on a tab; the pile dropped from a host; one pool asked for both)', () => {
+  const door = /const openBodyLoot = \(lootKey, pileKeys = null\) => \{\n\s*bodyPool\(lootKey\)\??\.takeLoot\(lootKey, [^\n]*\n(?:[^\n]*\n)?\s*if \(!pileKeys && quickLootTake\(lootKey, loot, [^\n]*\n\s*const pile = lootPile\(lootKey, \{ keys: pileKeys, describe: \(k\) => bodyPool\(k\)\??\.pileBody\(k\)(?: \?\? null)?, open: openBodyLoot \}\);\n/;
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
+    const s = rd(f);
+    assert.match(s, door, `${f}: the door`);
+    assert.match(s, /openBodyLoot\((?:lootKey|key)\);/, `${f}: the press goes through it`);
+    assert.match(s, /\{ loot: pile \? \{ \.\.\.loot, pile \} : loot \}/, `${f}: the window is handed the pile`);
+    assert.match(s, /const bodyPool = \((?:k|lootKey)\) => \((?:k|lootKey)\.startsWith\('foeCorpse:'\) \? (?:exteriorFoes|interiorFoes) : (?:cityGuards|interiorGuards)\);/, `${f}: each key to its own pool`);
+  }
+  const dc = rd('src/scenes/dungeonContext.js');
+  assert.match(dc, /takeLoot\(key, mode = 'grab', pileKeys = null\) \{/);
+  assert.match(dc, /if \(!pileKeys && quickLootTake\(key, /);
+  assert.match(dc, /const pile = kind === 'corpse' \? lootPile\(key, \{\n\s*keys: pileKeys,\n\s*describe: \(k\) => \{ const b = foes\[Number\(k\.split\(':'\)\[1\]\)\]; return b\?\.dead \? pileBody\(b\) : null; \},\n\s*open: \(k, keys\) => \{ this\.takeLoot\(k, 'grab', keys\); \},\n\s*\}\) : null;\n\s*if \(pile\) lootHooks = \{ \.\.\.\(lootHooks \?\? \{\}\), pile \};/);
+  // a tab closes its window and opens the next in one click, before the frame's drain empties the slot
+  assert.match(dc, /if \(activeOverlay && !activeOverlay\.done\) return source\.length;/);
+  for (const f of ['src/scenes/exteriorFoes.js', 'src/scenes/cityGuards.js']) assert.match(rd(f), /pileBody: \(key\) => pileBody\(corpseEntryFor\((?:foes|guards), key, '(?:foe|guard)Corpse', corpseLens\)\),/, `${f}: the pool's word on a body`);
+});
+
+test('LOOT-STACK the key is gone: no NextBody action, no default on ], no controls row, and no host arms a turn - the pile lives in the window (mutant: a host still arming one)', () => {
+  assert.ok(!ACTIONS.includes('NextBody'));
+  assert.ok(!DEFAULT_BINDINGS.some(([c, a]) => c === 'BracketRight' || a === 'NextBody'));
+  assert.ok(!PORT_ROWS.some((r) => r.action === 'NextBody'));
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js', 'src/ui/worldPlaque.js']) {
+    assert.doesNotMatch(rd(f), /NextBody|armBodyTurn|turnBodyStack/, f);
+  }
+  const act = rd('src/player/activate.js');
+  assert.match(act, /export function pickActivatableHit\(eye, dir, targets, collider\) \{\n {2}return noteBodyStack\(nearestActivatableHit\(eye, dir, targets, collider\), targets, \(rest\) => nearestActivatableHit\(eye, dir, rest, collider\)\);\n\}/);
+  assert.doesNotMatch(act, /export function nearestActivatableHit/, 'the raw pick stays private, so no reader asks the ray without the note');
+});
+
+// ─── THE PRODUCERS, AND THE PLAQUE'S DRESS ──────────────────────────────────────────────────────────────────────────
 
 test('LOOT-STACK the producers say which targets are bodies: the two surface pools\' corpses and the dungeon\'s own; a pile, a door or a live foe never is - and the pick reads the word, never a key\'s prefix (mutants: the mark dropped from a producer; the stack sniffing key prefixes)', () => {
   const t = corpseLootTargets([{ corpse: true }], 'foeCorpse', { isCorpse: () => true, feetOf: () => [0, 0, 0] });
@@ -240,59 +314,6 @@ test('LOOT-STACK the producers say which targets are bodies: the two surface poo
   const unmarked = [{ ...body('corpse:0', 1), body: false }, { ...body('corpse:1', 1.2), body: false }];
   assert.equal(pickActivatableHit(EYE, DIR, unmarked, open).key, 'corpse:0');
   assert.equal(bodyStackMark('corpse:0'), null);
-});
-
-test('LOOT-STACK the action: NextBody appended past every row a saved file resolves by position, a port row the classic windows yield, defaulted to ] - free of DFU\'s table, the port\'s own keys and every vendored mod\'s shipped and offered keys - and drawn in the enhanced pane under Loot (mutants: the default on a spent key; the row missing from the pane)', () => {
-  assert.equal(ACTIONS.at(-1), NEXT_BODY_ACTION);
-  assert.ok(PORT_ACTIONS.includes(NEXT_BODY_ACTION));
-  const row = DEFAULT_BINDINGS.find(([, a]) => a === NEXT_BODY_ACTION);
-  assert.deepEqual(row, ['BracketRight', 'NextBody']);
-  assert.equal(DEFAULT_BINDINGS.filter(([c]) => c === 'BracketRight').length, 1, 'nothing else defaults to ]');
-  const modKeys = new Set();
-  for (const mod of Object.values(MOD_SETTINGS)) {
-    for (const def of Object.values(mod.keys)) {
-      if (def.text && !def.axis && typeof def.default === 'string' && def.default) modKeys.add(domCodeForKeyCode(def.default));
-      if (def.keyChoice) for (const o of def.options) { const c = domCodeForKeyCode(o); if (c) modKeys.add(c); }
-    }
-  }
-  assert.ok(modKeys.size >= 5 && !modKeys.has('BracketRight'), 'no vendored mod ships ] or offers it');
-  assert.ok(!['Tab', 'Escape'].includes(row[0]), 'nor is it the port\'s dial or its door out');
-  assert.equal(LOOT_GROUP_TITLE, 'Loot');
-  const loot = PORT_GROUPS.find((g) => g.title === LOOT_GROUP_TITLE);
-  assert.deepEqual(loot.rows.map((r) => r.action), ['QuickLootAll', 'QuickLootOpen', 'NextBody']);
-});
-
-test('LOOT-STACK the hosts by source: each of the three key ladders ARMS a turn beside the pile\'s other two keys under the same gate, and fires nothing - no one-frame activate, so a foe, a townsperson or a door in front of the pile is never activated by it; the ray\'s raw pick is private to activate.js, so no reader can ask the ray without the pile\'s word (mutants: the turn firing the activate latch; a host reading a raw pick)', () => {
-  for (const [file, gate] of [
-    ['src/scenes/world.js', "if (!townTalk.overlayActive && socialMenuCanOpen() && act === 'NextBody' && armBodyTurn()) { e.preventDefault(); return; }"],
-    ['src/scenes/exterior.js', "if (!townTalk.overlayActive && act === 'NextBody' && armBodyTurn()) { e.preventDefault(); return; }"],
-    ['src/scenes/dungeon.js', "if (!ctx.uiOverlayActive && actionOf(e, keys) === 'NextBody' && armBodyTurn()) { e.preventDefault(); return; }"],
-  ]) {
-    const s = rd(file);
-    // the WHOLE statement, matched exactly: a turn that also set the one-frame activate latch (`_tapArmed`) - an
-    // activation the pile's key must never fire - is a different statement, and this goes red
-    const at = s.indexOf(gate);
-    assert.ok(at > 0, `${file} arms the turn, and fires nothing`);
-    const qa = s.lastIndexOf('quickLootArm(', at);
-    assert.ok(qa > 0 && at - qa < 1500, `${file}: just after quick loot's two keys, under the same gate`);
-  }
-  const act = rd('src/player/activate.js');
-  assert.match(act, /export function pickActivatableHit\(eye, dir, targets, collider\) \{\n {2}return chooseBody\(nearestActivatableHit\(eye, dir, targets, collider\), targets, \(rest\) => nearestActivatableHit\(eye, dir, rest, collider\)\);\n\}/);
-  assert.match(act, /\nfunction nearestActivatableHit\(/);
-  assert.doesNotMatch(act, /export function nearestActivatableHit/);
-  const wp = rd('src/ui/worldPlaque.js');
-  assert.match(wp, /resetQuickLoot\(\);[\s\S]{0,200}resetBodyStack\(\);/, 'the teardown frees it beside quick loot\'s state');
-});
-
-test('LOOT-STACK chooseBody is the pick\'s last word and nothing more: a null winner over a list with bodies forgets; over a list without, it is left alone (mutant: the early return for a list with no bodies removed)', () => {
-  fresh();
-  const a = body('corpse:0', 1), b = body('corpse:1', 1.2);
-  pickActivatableHit(EYE, DIR, [a, b], open);
-  armBodyTurn(); turnBodyStack({ key: 'corpse:0' });
-  assert.equal(chooseBody(null, [pile('droppedLoot:1', 3)], () => null), null);
-  assert.equal(_bodyStackStateForTests().chosen, 'corpse:1', 'a list with no body is no question about bodies');
-  assert.equal(chooseBody(null, [a, b], () => null), null);
-  assert.equal(_bodyStackStateForTests().chosen, null, 'a list with bodies whose ray met none of them');
 });
 
 test('LOOT-STACK the plaque\'s dress, which tools/lootStackProbe.mjs measures in Chromium: the divider is the LIST\'s top edge, under the whole label (a sub-line - a pile\'s mark, a chest\'s lock level - is the label\'s, never the list\'s first row); the lit band\'s margin is the plaque\'s own padding at every width and its padding matches it, so the lit name stands where every name stands; the list clips DOWNWARD only (mutants: the divider back at the title\'s foot; the band\'s margin a literal; the band\'s left padding 12; the narrow sheet\'s padding a literal; the clip across again)', () => {

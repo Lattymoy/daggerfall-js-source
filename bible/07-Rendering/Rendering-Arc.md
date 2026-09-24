@@ -2414,13 +2414,13 @@ beside them. Then the same shape turned up everywhere else:
 
 | host | list |
 |---|---|
-| `dungeonContext.js:5361` | the mobiles, the drops, the spells |
-| `worldModes.js:7194` | the dungeon's flats, camps, torches and peers |
-| `worldModes.js:7376` | the interior's flats and peers |
-| `worldModes.js:7382-7446` | blood, torches, drops, foes, guards - **five separate uncut calls** |
-| `exterior.js:5216`, `world.js:13969` | the spell missiles |
-| `exterior.js:5294` | the fixed city's townspeople |
-| `interior.js:373`, `dungeon.js:1061` | the flats, the camps, the torches |
+| `dungeonContext.js:5362` | the mobiles, the drops, the spells |
+| `worldModes.js:7202` | the dungeon's flats, camps, torches and peers |
+| `worldModes.js:7384` | the interior's flats and peers |
+| `worldModes.js:7390-7454` | blood, torches, drops, foes, guards - **five separate uncut calls** |
+| `exterior.js:5220`, `world.js:13973` | the spell missiles |
+| `exterior.js:5298` | the fixed city's townspeople |
+| `interior.js:373`, `dungeon.js:1056` | the flats, the camps, the torches |
 
 Seven call sites, and an eighth waiting to be written next year. **Fixing
 them one at a time is how this bug got to be in eight places.** The test

@@ -148,19 +148,11 @@ export const QUICKSLOT_GROUP_TITLE = 'Quickslots';
 /** QUICK-LOOT B4: ...and the plaque's two, under their own heading for
  *  the same reason the two above have theirs - the CLASSIC windows
  *  cannot draw a row DFU never had, so a clash against one of these is
- *  a clash a classic player can neither see nor clear.
- *
- *  LOOT-STACK renamed the heading 'Quick loot' -> 'Loot', and the rule
- *  that made FREEMOUSE a heading of its own is the reason: a heading
- *  must describe its rows, and the third row here turns a pile of bodies
- *  on either skin, with quick loot on or off - it is a LOOT key, not a
- *  quick-loot one. 'Loot' is still a true word for the two above it. */
-export const LOOT_GROUP_TITLE = 'Loot';
-const LOOT_ROWS = Object.freeze([
+ *  a clash a classic player can neither see nor clear. */
+export const QUICKLOOT_GROUP_TITLE = 'Quick loot';
+const QUICKLOOT_ROWS = Object.freeze([
   Object.freeze({ action: 'QuickLootAll', label: 'Take everything' }),
   Object.freeze({ action: 'QuickLootOpen', label: 'Open the container' }),
-  // LOOT-STACK: the player's words for it - what it does, and when
-  Object.freeze({ action: 'NextBody', label: 'Next body in a pile' }),
 ]);
 /** FREEMOUSE (2026-09-22, Mac: "an entirely new keybind. A mouse free
  *  that allows you to toggle the use of your mouse"): its own heading,
@@ -180,11 +172,11 @@ const MOUSE_ROWS = Object.freeze([
 export const PORT_GROUPS = Object.freeze([
   Object.freeze({ title: PORT_GROUP_TITLE, rows: ONLINE_ROWS }),
   Object.freeze({ title: QUICKSLOT_GROUP_TITLE, rows: QUICKSLOT_ROWS }),
-  Object.freeze({ title: LOOT_GROUP_TITLE, rows: LOOT_ROWS }),
+  Object.freeze({ title: QUICKLOOT_GROUP_TITLE, rows: QUICKLOOT_ROWS }),
   Object.freeze({ title: MOUSE_GROUP_TITLE, rows: MOUSE_ROWS }),
 ]);
 /** Every port row, flat: the coverage rule's half of the answer. */
-export const PORT_ROWS = Object.freeze([...ONLINE_ROWS, ...QUICKSLOT_ROWS, ...LOOT_ROWS, ...MOUSE_ROWS]);
+export const PORT_ROWS = Object.freeze([...ONLINE_ROWS, ...QUICKSLOT_ROWS, ...QUICKLOOT_ROWS, ...MOUSE_ROWS]);
 
 /** ShowMultipleAssignmentsMessage's line, the string the classic grid
  *  draws (ui/controlsWindow.js's `top === 'dupes'` row). The same

@@ -1274,7 +1274,10 @@ test('INTERIOR-BODIES: a body killed inside a building is stood, named, listed a
   // QUICK-LOOT B4: the window callback gained a DECLINE in front of it -
   // quick loot is handed the same `loot` hooks the window would get, and
   // a null answer falls through to exactly the call that was here.
-  assert.match(wm, /if \(key\.startsWith\('foeCorpse:'\) \|\| key\.startsWith\('guardCorpse:'\)\) \{\n\s*const pool = key\.startsWith\('foeCorpse:'\) \? interiorFoes : interiorGuards;\n(?:\s*\/\/[^\n]*\n)*\s*pool\?\.takeLoot\(key, \(l\) => say\(l\), \(loot\) => \{\n\s*if \(quickLootTake\(key, loot, playerEntity, \(l\) => say\(l\), \{ getQuest: [^}]*\}\)\) return;[^\n]*\n\s*mountInterior\(interiorInventory\(\{ loot \}\)\);\n\s*\}\);\n\s*return true;\n\s*\}/,
+  // LOOT-STACK: the door is a named closure now, because the loot
+  // window's pile tabs come back through it with the pile in hand - and
+  // quick loot declines on a tab, which is a request for that window.
+  assert.match(wm, /if \(key\.startsWith\('foeCorpse:'\) \|\| key\.startsWith\('guardCorpse:'\)\) \{\n\s*const bodyPool = \(k\) => \(k\.startsWith\('foeCorpse:'\) \? interiorFoes : interiorGuards\);\n(?:\s*\/\/[^\n]*\n)*\s*const openBodyLoot = \(lootKey, pileKeys = null\) => \{\n\s*bodyPool\(lootKey\)\?\.takeLoot\(lootKey, \(l\) => say\(l\), \(loot\) => \{\n\s*if \(!pileKeys && quickLootTake\(lootKey, loot, playerEntity, \(l\) => say\(l\), \{ getQuest: [^}]*\}\)\) return;[^\n]*\n\s*const pile = lootPile\(lootKey, \{ keys: pileKeys, describe: \(k\) => bodyPool\(k\)\?\.pileBody\(k\) \?\? null, open: openBodyLoot \}\);\n\s*mountInterior\(interiorInventory\(\{ loot: pile \? \{ \.\.\.loot, pile \} : loot \}\)\);\n\s*\}\);\n\s*\};\n\s*openBodyLoot\(key\);\n\s*return true;\n\s*\}/,
     'the press arm the bodies never had');
 
   // ...and it sits INSIDE the reach refusal, like every other family in
@@ -1313,15 +1316,16 @@ test('AUDIT-WH H3: both pools and both above-ground hosts are wired to that ladd
     // AUDIT-WH2 L5: A COUNT IS NOT A LAW. This was `=== 4`, and four
     // mentions of the word anywhere in the file satisfied that -
     // `const hoverContents = () => null;` plus any fourth mention
-    // passed it. The law is WHICH THREE READERS take the lens, so name
-    // them: the targets, the namer's entry lookup, and the contents'.
+    // passed it. The law is WHICH READERS take the lens, so name
+    // them: the targets, the namer's entry lookup, and the contents' -
+    // and LOOT-STACK's pile tab (corpseMarker.js pileBody), the fourth.
     // A reader that stops passing it now fails here.
-    assert.equal((src.match(/corpseLens\b/g) ?? []).length, 4,
-      `${f}: declared once, read by the targets, the namer and the contents`);
+    assert.equal((src.match(/corpseLens\b/g) ?? []).length, 5,
+      `${f}: declared once, read by the targets, the namer, the contents and the pile tab`);
     assert.match(src, /corpseLootTargets\((?:foes|guards), '(?:foe|guard)Corpse', corpseLens\)/,
       `${f}: the TARGETS walk the pool under the lens`);
-    assert.equal((src.match(/corpseEntryFor\((?:foes|guards), key, '(?:foe|guard)Corpse', corpseLens\)/g) ?? []).length, 2,
-      `${f}: and so do the namer and the contents - the same walk, twice, under the same identity`);
+    assert.equal((src.match(/corpseEntryFor\((?:foes|guards), key, '(?:foe|guard)Corpse', corpseLens\)/g) ?? []).length, 3,
+      `${f}: and so do the namer, the contents and the pile tab - the same walk, under the same identity`);
     assert.match(src, /hoverContents\b/, `${f}: and the contents arm exists`);
     assert.match(src, /hoverName, hoverContents,/, `${f}: ...and is published beside the namer`);
   }

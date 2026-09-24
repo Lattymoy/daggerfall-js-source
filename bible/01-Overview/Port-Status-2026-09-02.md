@@ -301,7 +301,7 @@ reference surface absent · **Departure** = deliberate, ledgered.
 | **formats-mw** | Departure lane, faithful within it | **Departure lane, now consumed** | `clipSweepTimes` has a production caller: `combat/fpArm.js:1784` runs the whole-clip reach sweep the superseded page said had never run in the game. 17 modules / 8,842 lines. |
 | **world-terrain** | Near-1:1 | **Near-1:1** | ROAD-A A1 moved the texture season onto `DaggerfallDateTime.SeasonValue` - climate swaps, the winter sunlight term and sky selection - and demoted `?season` to a debug override. The lightning flash stays a recorded enhanced-lane departure. |
 | **world-layout** | Near-1:1 | **Near-1:1** | `rmbLayout`'s shared-block mutation is gated: `attachWindmillRecord` runs only when `enhanced` is true, is idempotent by a `subs.findIndex(r => r?.windmill)` guard, and the header names `subRecords.length` as the count three subsystems bind on (`world/rmbLayout.js:139-150` the gated call, `:179` the guard). |
-| **scenes-world** | Law 1:1 / seams broken | **Near-1:1** | `currentWeatherKey` reads a live getter (`world.js:7476`). Region identity, the quest region/vampire faction seams and `CleanupUntrackedObjects` were the wave; `world.js:4627` carries the sweep and `hostMagic.js:711` its missile half. |
+| **scenes-world** | Law 1:1 / seams broken | **Near-1:1** | `currentWeatherKey` reads a live getter (`world.js:7493`). Region identity, the quest region/vampire faction seams and `CleanupUntrackedObjects` were the wave; `world.js:4627` carries the sweep and `hostMagic.js:711` its missile half. |
 | **scenes-modes** | Solid, pause parity broken | **Near-1:1** | ROAD-B B1 put `UserInterfaceManager`'s real stack under this host's slot (`ui/windowStack.js`, 295 lines, imported at `worldModes.js:79`). See "the pause primitive" below - the stack exists, its `paused()` member has no reader. |
 | **scenes-dungeon** | Deep, one lifecycle leak | **Near-1:1** | The three process-global seams return on destroy. ROAD-D D8 made this the fourth caller of `playerArrowHitFoe`, moved its action flats, mounted the enchant ctx off the shared `scenes/hostEnchant.js`, and routed its chargen through the one construction seam. |
 | **scenes-support** | Near-1:1 | **Near-1:1** | ROAD-D D9 stood the city-watch fallback through `FoeSpawner.PlaceFoeFreely` on its own collider. Court reads the live region. |
@@ -310,7 +310,7 @@ reference surface absent · **Departure** = deliberate, ledgered.
 | **player** | Near-1:1 / one lethal seam | **Near-1:1** | `cancelMovement` is a real motor field set on the mode edges (`player/motor.js:367,:439,:447`). ROAD-A A6 took the -0.28 doorway head-dip, `PlayerMoveScanner`'s three probes, `controllerSwimHeight` 0.30 with Do(Un)Sinking, and `FreezeMotor` on teleports. |
 | **combat** | Math exact / wiring broken | **Verbatim** | Four hosts resolve a player arrow. ROAD-A A12 shipped the left-hand weapon (ToggleHand/SwitchHand/`usingRightHand`, the classic import's `usingLeftHandWeapon`, the mirrored draw). |
 | **characters-ai** | Verbatim | **Verbatim** | `stopDistance` picks `CLASSIC_MELEE_DISTANCE_VS_AI` per pass (`enemyMotor.js:1271`, `enemyAttack.js:177`). ROAD-A A5 took enemy levitation, invisibility/Shade as live sources, foe fall damage and the Seducer transform pair. |
-| **characters-voxel** | Departure (deliberate) | **Departure, still editor-only** | 86 designs across seven tables - 42 of the 43 monster mobiles, 19 class, 25 villager. The rig is 1,791 lines across 7 modules and is still gated: `worldModes.js:5288` passes `voxelfolk`, `scenes/interiorContext.js:513` consumes it. |
+| **characters-voxel** | Departure (deliberate) | **Departure, still editor-only** | 86 designs across seven tables - 42 of the 43 monster mobiles, 19 class, 25 villager. The rig is 1,791 lines across 7 modules and is still gated: `worldModes.js:5289` passes `voxelfolk`, `scenes/interiorContext.js:513` consumes it. |
 | **sys-entity** | Law byte-exact / three dead seams | **Verbatim** | ROAD-A A11 took the "master of" box (TEXT.RSC 4020) with `ArenaFanfareLevelUp`, `skillsRecentlyRaised` and the sheet's own leveling arm. |
 | **sys-magic** | Near-complete | **Verbatim** | 91 keys, 0 inert; `minimumCastingCost` live; ROAD-D D9 took the held-bundle instant re-fire and the caster block's `BundleType == Spell` test on all three gates. |
 | **sys-quests** | Verbatim | **Verbatim** | 82/82 action templates, 265 quests. `playSound`'s busy-skip was the one recorded delta and the E-group closed it (`systems/audio.js`'s `QuestAudioSource`). |
@@ -324,7 +324,7 @@ reference surface absent · **Departure** = deliberate, ledgered.
 | **ui-hud** | Verbatim (classic) / Partial (enhanced default) | **Verbatim on both skins** | The skin fork moved BELOW the game-state seams: `ui/hud.js:501` runs `updateHudVitals` and `:556` `drawNearDeathFlicker`, both above the enhanced branch at `:609` and above the `!art` return, and the enhanced HUD takes the Detect markers at `:624`. `lastHealthLost()` is no longer pinned at 0, so `CameraRecoiler` lives in all three hosts. |
 | **ui-windows-a** | Rect parity excellent / two crash doors | **Verbatim** | ROAD-D D2 shipped both scroll thumbs (`chargenArt.js:777` over `RECTS.pickScroll`, `spellbookWindow.js:1015` over the 7-wide rail). |
 | **ui-windows-b** | Broadly ported | **Verbatim** | Both automaps are native windows. ROAD-D D6 built the ship purchase over the shared bank-market mount and gave `buildingIsUnlocked` the `ownsShip` key its last arm needed. |
-| **ui-enhanced** | Departure lane | **Departure lane, scoped** | `ui/worldPlaque.js:320` puts the skin gate above `ensure()`, so the unscoped `*`/`html`/`body`/`button`/`#app` rules never reach the classic page. 9 modules / 8,940 lines. |
+| **ui-enhanced** | Departure lane | **Departure lane, scoped** | `ui/worldPlaque.js:317` puts the skin gate above `ensure()`, so the unscoped `*`/`html`/`body`/`button`/`#app` rules never reach the classic page. 9 modules / 8,940 lines. |
 | **xcut-seams** | Clean, with one block | **Clean** | The quest machine's region-faction block was the wave. |
 | **xcut-async** | Disciplined / one missing sweep | **Disciplined** | `CleanupUntrackedObjects` has a counterpart in both halves. |
 | **xcut-tests-docs** | Gated half exact / ungated half rotting | **Gated half exact** | The flag list is byte-identical to `regenOpenFlags --check`; `Testing.md:4` is pinned to a live walk of `test/` by `test/manifest.test.js`. |
@@ -388,7 +388,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **Blocked - no 1:1 target.**
 
-- ~~**`src/scenes/dungeonContext.js:2125`** - the two window seams this
+- ~~**`src/scenes/dungeonContext.js:2126`** - the two window seams this
   host cannot mount (`onTeleport`'s INTERIM shape). *There is no
   standalone dungeon scene in DFU to port from; `?dungeon` is the
   port's own dev route. Closing it means porting the trade window and
@@ -456,7 +456,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   interior pause off the same one walk), and the pause window's
   Chronicle button. The EIGHTH - the exterior static-NPC pass - keeps
   C#'s empty-machine answer for the narrower reason written at its own
-  site. (The `src/scenes/worldModes.js:2276` row below is struck: ROAD-E
+  site. (The `src/scenes/worldModes.js:2277` row below is struck: ROAD-E
   E3 ran that pass above ground in the streaming host, and what the
   sentence names is this host's layout order alone.)*
 
@@ -500,7 +500,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   `%`), `talkMacros.js` carries none - it is the MCP: TalkManagerMCP's
   thirteen overrides over the one GameManager the host hands in - and
   all four sentinels are reachable and pinned.*
-- ~~**`src/systems/inputActions.js:898`** - STILL FLAGGED, NARROWED (GP1,
+- ~~**`src/systems/inputActions.js:876`** - STILL FLAGGED, NARROWED (GP1,
   2026-09-11)~~ **RETIRED (GP3, 2026-09-11): the pad plays, its window is built, its cursor works a window - the note stands where the flag stood.** ~~axes and joystick. *The port has no gamepad input
   layer, so `AxisActions` and `JoystickUIActions` have no source to
   bind and `loadKeyBinds` deliberately ignores those blocks in a
@@ -533,7 +533,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   into DFU's own order so `DoRangedAttack`'s band condition selects
   before the 1/40 roll fires, where the port rolled first and picked
   second.*
-- ~~**`src/scenes/worldModes.js:1956`** - above ground only:
+- ~~**`src/scenes/worldModes.js:1957`** - above ground only:
   `QuestMachine.SetupIndividualStaticNPC`. *Multi-host. The law is
   ported and idle at `systems/quest/machine.js:787` including the
   away arm's `setActive(false)`, but there is no moment to run it: both
@@ -625,7 +625,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **Added after this page's measurement, and counted here so the tally follows the tree.**
 
-- **`src/scenes/dungeonContext.js:1174`** - the dungeon's non-layout foe
+- **`src/scenes/dungeonContext.js:1175`** - the dungeon's non-layout foe
   run is private (ONLINE-DUNGEON-FOES, 2026-09-20). *Mac's two online
   reports - "non-reactive enemies in dungeons" and "the lysander ghost
   enemy isn't synced between players" - are one line. `_layoutFoes` is
@@ -673,7 +673,7 @@ regenerated onto the new sites: ~~`exterior.js:1595` -> `:1283`~~
 cannot take, `exterior.js:1959`), ~~`exterior.js:2009` -> `:1675`~~
 (**CLOSED at QX1**: this host took the quest bridge, so the pause window's
 Quests tab has a machine to read), ~~`world.js:4421` -> `:4414`~~
-(**CLOSED at the ship landing**), ~~`worldModes.js:1919` -> `:1796`~~
+(**CLOSED at the ship landing**), ~~`worldModes.js:1920` -> `:1797`~~
 (**CLOSED at ROAD-F GS1**, below), `pauseWindow.js:58` -> `:65`. The
 entries in the two lists above still quote the line numbers of the
 measurement, which is older still; `Home.md` is the live list.
@@ -686,7 +686,7 @@ re-resolved, which is why the `exterior.js` row above now reads
 only live inventory.
 
 **ROAD-F (2026-09-03) took the last two this page still owed.**
-- ~~**`src/scenes/worldModes.js:2026`** - above ground only: the GUILD
+- ~~**`src/scenes/worldModes.js:2027`** - above ground only: the GUILD
   SERVICE popup.~~ **SHIPPED (GS1).** *`StaticNPCClick` pushes the
   popup on `Services.HasGuildService` ALONE
   (`PlayerActivate.cs:1552-1568`) - the `BuildingDiscoveryData` beside
@@ -907,7 +907,7 @@ ships, which is the warning the section's own preamble opens with.
 9. **`:594` UseItem's unbuilt destinations.** Every arm the row names is
    built: `DrinkPotion` (`systems/useItem.js:200`, `:291-301`),
    `RecordLocationFromMap`/`DiscoverRandomLocation`
-   (`ui/nativeInventory.js:809-813`, `scenes/world.js:4681`), the
+   (`ui/nativeInventory.js:832-836`, `scenes/world.js:4681`), the
    quest-item click (`useItem.js:232`, `:245-246`) and
    `DoItemEnchantmentPayloads(Used)` (already struck at E2). D10 closed
    the last residue in the row's book-reader clause - the fixed 10px row
@@ -960,7 +960,7 @@ faithful to whatever reference it does have, and none of them is a gap.
 - **The voxel character engine** (Mac's system, Port-Doctrine). 86
   designs across seven tables - 42 of the 43 monster mobiles, 19 class,
   25 villager - and a 1,791-line rig across 7 modules. Still not shipped
-  by a game host: `worldModes.js:5288` passes `voxelfolk`,
+  by a game host: `worldModes.js:5289` passes `voxelfolk`,
   `scenes/interiorContext.js:513` gates on it, and no default route sets
   it. The departure is faithful and is not in the player's hands.
 - **The enhanced skin and visuals** - 9 `ui/enhanced*.js` modules, 8,940

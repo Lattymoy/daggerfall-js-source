@@ -122,8 +122,8 @@
   {
     "name": "WORLD-HOVER-skin-gate-removed-from-the-seam",
     "file": "src/ui/worldPlaque.js",
-    "old": "  const on = worldPlaqueOn();",
-    "new": "  const on = true;",
+    "old": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return null; }   // (the hide",
+    "new": "  if (false) { hideWorldPlaque(); return null; }   // (the hide",
     "tests": [
       "test/worldhover.test.js",
       "test/enhancedInventory.test.js"
@@ -151,8 +151,8 @@
   {
     "name": "WORLD-HOVER-cursorActive-ignored",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (cursorActive || !eye || !dir || !collider) { dropBodyTurns(); foldQuickLoot(null); if (on) showWorldPlaque(null); return null; }",
-    "new": "  if (!eye || !dir || !collider) { dropBodyTurns(); foldQuickLoot(null); if (on) showWorldPlaque(null); return null; }",
+    "old": "  if (cursorActive || !eye || !dir || !collider) { foldQuickLoot(null); showWorldPlaque(null); return null; }",
+    "new": "  if (!eye || !dir || !collider) { foldQuickLoot(null); showWorldPlaque(null); return null; }",
     "tests": [
       "test/worldhover.test.js",
       "test/enhancedInventory.test.js"
@@ -885,8 +885,8 @@
   {
     "name": "AUDIT-WH2-the-seam-gate-stops-hiding",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (!on) hideWorldPlaque();",
-    "new": "  if (false) hideWorldPlaque();",
+    "old": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return null; }   // (the hide",
+    "new": "  if (!worldPlaqueOn()) { return null; }   // (the hide",
     "tests": [
       "test/worldhover.test.js"
     ]

@@ -29,7 +29,7 @@ const stubCanvas = () => { const c = { calls: 0, requestPointerLock() { c.calls+
 
 test('FREEMOUSE: the action is APPENDED, parses, and displaces no index the classic grid draws by number', () => {
   assert.equal(FREE_MOUSE_ACTION, 'FreeMouse');
-  assert.equal(ACTIONS.indexOf('FreeMouse'), ACTIONS.indexOf('QuickLootOpen') + 1, 'appended straight past the plaque\'s two (LOOT-STACK\'s NextBody was appended past it in turn)');
+  assert.equal(ACTIONS.at(-1), 'FreeMouse', 'newest row, at the end');
   assert.equal(ACTIONS.filter((a) => a === 'FreeMouse').length, 1, 'once');
   assert.equal(parseActionName('FreeMouse'), 'FreeMouse');
   // The law an appended action exists to keep: a saved bindings file

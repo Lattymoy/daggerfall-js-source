@@ -13,7 +13,7 @@
 // duplicates do until they do not.
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { isActionDoorObject } from '../world/actionSystem.js';   // MC-2: ActionDoorCheck's own classifier (PlayerActivate.cs:374 vs :380)
-import { chooseBody } from './lootStack.js';   // LOOT-STACK: the ray's last word on a pile of bodies
+import { noteBodyStack } from './lootStack.js';   // LOOT-STACK: the ray notes the pile of bodies its winner stands at the front of
 
 export { GLOBAL_SCALE };
 
@@ -338,18 +338,17 @@ export function pickActivatable(eye, dir, targets, collider) {
  * `distance` is widened to RAY_DISTANCE so it can WIN the pick
  * therefore carries its real `reach` beside it, and the ladder speaks
  * the refusal when the winner came back out of reach. This is the
- * bulletin board's idiom (scenes/worldModes.js:5095-5105) given a
+ * bulletin board's idiom (scenes/worldModes.js:5096-5106) given a
  * field, not a second pick: one ray, one winner, the gate downstream.
  * Targets that were never widened answer `reach === distance`, which
  * the pre-gate has already enforced, so they can never refuse.
  *
  * LOOT-STACK (Janome: "a toggle key to switch between the inventories of
- * enemies stacked on top of each other"): and when the nearest hit is a
- * BODY with others behind it inside their reach, the body the player
- * turned to - handed on at the nearest's distance, so everything that
- * races the pile races it as before (player/lootStack.js holds the law).
- * Here, and not at the call sites, so every reader of the ray - the
- * presses, the plaque, quick loot's take - means the same body.
+ * enemies stacked on top of each other"): the winner is answered as it
+ * is, and when it is a BODY with others behind it inside their reach,
+ * the pile is noted for the loot window's tabs (player/lootStack.js
+ * holds the law). Here, and not at the call sites, so every reader of
+ * the ray - the presses, the plaque - reads the one pile.
  *
  * @returns {{key:string, distance:number, reach:number}|null}
  */
@@ -367,7 +366,7 @@ export function rayObb(origin, dir, m, box) {
 }
 
 export function pickActivatableHit(eye, dir, targets, collider) {
-  return chooseBody(nearestActivatableHit(eye, dir, targets, collider), targets, (rest) => nearestActivatableHit(eye, dir, rest, collider));
+  return noteBodyStack(nearestActivatableHit(eye, dir, targets, collider), targets, (rest) => nearestActivatableHit(eye, dir, rest, collider));
 }
 
 /** The ray's nearest hit - DFU's one raycast, as the port spells it (the

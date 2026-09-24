@@ -49,8 +49,6 @@ test('I1: the Actions enum, verbatim names and order (:324-384)', () => {
     'QuickLootAll', 'QuickLootOpen',
     // FREEMOUSE: appended past the plaque's two, like every port row.
     'FreeMouse',
-    // LOOT-STACK: the pile's turn, appended past FREEMOUSE's.
-    'NextBody',
   ]);
   // ActionNameToEnum's sentinel: unknown parses to Unknown, and
   // Unknown itself is NOT a bindable action.
@@ -89,7 +87,6 @@ test('I1: ResetDefaults\' table, every row (:979-1032)', () => {
     'KeyP=QuickLootAll',
     'KeyJ=QuickLootOpen',
     'KeyY=FreeMouse',   // FREEMOUSE: the one letter DFU, the port and every vendored mod all leave alone
-    'BracketRight=NextBody',   // LOOT-STACK: past the letters, the free key that already means "the next one" here (the automap's storey up)
     // QS2: the number row. Digit1-Digit3 are unspent by SetupDefaults, by the
     // port and by every vendored mod's TextKey defaults (the HT4 pin in
     // test/ht1_handheldtorches.test.js walks that whole set).
@@ -113,10 +110,9 @@ test('I1: ResetDefaults\' table, every row (:979-1032)', () => {
   // QUICK-LOOT B4 appended two more, each with a default (P and J),
   // so the table and the enum both grow by two and the one unbound
   // action below is still the only one.
-  // LOOT-STACK appended one more, with its default (]).
-  assert.equal(DEFAULT_BINDINGS.length, 53);
-  assert.equal(bound.size, 53, 'no action is defaulted twice');
-  assert.equal(ACTIONS.length, 54);
+  assert.equal(DEFAULT_BINDINGS.length, 52);
+  assert.equal(bound.size, 52, 'no action is defaulted twice');
+  assert.equal(ACTIONS.length, 53);
   assert.deepEqual(ACTIONS.filter((a) => !bound.has(a)), ['QuickSwap'], 'exactly one action ships unbound');
   const codes = DEFAULT_BINDINGS.map(([c]) => c);
   assert.equal(new Set(codes).size, codes.length, 'and no KEY is spent twice - the number row was free');
@@ -161,7 +157,7 @@ test('I1: the two clears - by action walks all its codes, by code takes one (:80
 test('I1: a FULL reset clears primary and the removed list but NOT secondary (:956-960)', () => {
   const s = createBindings();
   resetDefaults(s);
-  assert.equal(s.primary.size, 53);   // SOC5: DFU's 44 plus SocialInteract; QS2: plus the three quickslot rows; QS4: plus the off hand's; QUICK-LOOT B4: plus the plaque's two; FREEMOUSE: plus the mouse toggle's own key; LOOT-STACK: plus the pile's turn
+  assert.equal(s.primary.size, 52);   // SOC5: DFU's 44 plus SocialInteract; QS2: plus the three quickslot rows; QS4: plus the off hand's; QUICK-LOOT B4: plus the plaque's two; FREEMOUSE: plus the mouse toggle's own key
   // a secondary binding on a code no default uses SURVIVES the reset;
   // one on a default's code is stolen back by SetBinding's alt-removal.
   // QUICK-LOOT B4: this was KeyP, chosen because no default used it -

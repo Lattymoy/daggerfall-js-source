@@ -126,7 +126,7 @@ test('THE ART FOLLOWS THE ENTITY: a character restored by restorePlayer draws HE
   assert.equal(playerEntity.race, 'Redguard');
   assert.equal(playerEntity.faceIndex, 4);
 
-  // The inventory opens (nativeInventory.js:442 - refreshPaperDoll on
+  // The inventory opens (nativeInventory.js:449 - refreshPaperDoll on
   // every open) and the doll is HERS.
   await refreshPaperDoll(playerEntity);
   const drawn = indicesDrawn();
