@@ -221,7 +221,8 @@ test('PERF-BASIS: the shadow replay uploads the basis once, not once a flat - an
   // suite that could fail this, which is why it is stated here.
   assert.match(sp, /if \(perBatchRight\) \{[\s\S]{0,400}?this\._right\[0\] = dz \/ l; this\._right\[1\] = 0; this\._right\[2\] = -dx \/ l;\n\s*gl\.uniform3fv\(P\.bb\.right, this\._right\);/,
     'the lantern arm recomputes the basis per flat AND uploads it');
-  assert.equal((sp.match(/gl\.uniform3fv\(P\.bb\.right/g) ?? []).length, 2, 'two uploads in the file: the hoisted one and the lantern\u2019s');
+  assert.equal((sp.match(/gl\.uniform3fv\(P\.bb\.right/g) ?? []).length, 3, 'three uploads in the file: the hoisted one, the lantern\u2019s, and the player\u2019s own card\u2019s (DISC24-C: cast as drawn)');
+  assert.match(sp, /if \(perBatchRight && b\.selfCard\) \{\n\s*gl\.uniform3fv\(P\.bb\.right, r\.right\);/, 'DISC24-C: the self card takes its recorded basis, per flat, in the lantern replay');
   // and the bind skips its repeats, as the main pass's has since PERF3
   assert.match(sp, /if \(tex !== lastTex\) \{ gl\.bindTexture\(gl\.TEXTURE_2D, tex\); lastTex = tex; \}/, 'a run of flats sharing a record binds once');
   assert.match(sp, /let lastTex = null;/, 'reset per record, so a record cannot inherit the last one\u2019s texture');

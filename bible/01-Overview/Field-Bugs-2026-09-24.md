@@ -1097,7 +1097,7 @@ is folded off its positions. The fold's results are unchanged:
 pins stand.
 
 **The portrait.** `fpArm.figure()` draws the enhanced inventory's model
-figure (`enhancedInventory.js:1413`), which is shown in a 110:184 cell with
+figure (`enhancedInventory.js:1427`), which is shown in a 110:184 cell with
 object-fit: contain (`enhancedStyle.js:3557`). It framed `meshBounds` over
 EVERY piece, then hid the unlit torch, the arrow off the string and the
 empty holster twin, so gear it did not show still moved the frame. Its width
@@ -1139,3 +1139,194 @@ inside the picture.
 The pins are `test/prbow1b_followups.test.js`: eight tests, all failing on
 the unfixed code, each on its own assertion. The mutants are
 `tools/mutants/prbow1b.json`.
+
+---
+
+# DISC24 — four from Discord (2026-09-24)
+
+Mac, with four Discord screenshots and no text:
+
+1. Quest, "Class selection UI bug": *"When left clicking other classes the
+   description stays the same for the original class that was double
+   clicked previously but the `Play as a <insertClass>` changes and the
+   class name also change at the top. Double clicking works as intended
+   though"*.
+2. kurkku, "Horse and Wagon don't have sprites in GrimoireUI":
+   *"presumably applies to the normal vanilla UI as well"*.
+3. icebreyker, "Lights/shadows are still bugged": *"Sorry for being
+   annoying, but i am still getting this problem with Enhanced Lighting"*.
+   The screenshot is a lit interior with a ceiling lamp, and the player's
+   whole silhouette thrown up the wall. DISC13-A was this reporter's
+   earlier "The shadows seem to flicker when i move".
+4. Lynk, "Stuck in death loop": *"After leveling up to 5 online and putting
+   stats in my character had low health so I rested then when I woke up it
+   was stuck in a constant death loop"*.
+
+Each was traced to its cause, against the real modules, before it was
+touched.
+
+## DISC24-A: the description stayed on the class that was read
+
+**Cause.** DFU's class description is a MODAL message box over the list
+(CreateCharClassSelect.cs :70-96), so while it is up the list's selection
+cannot move. The classic port keeps that: with the box up, the hit test
+answers only Yes and No. The enhanced skin lays the list BESIDE the box,
+so a row stayed clickable. A single click moved `classListIndex`, which the
+header and "Play as a" read, while `classConfirm`, the text the box was
+opened with, stayed on the old row. Yes adopts `classListIndex`, so the
+player got the class on the button, not the one they had read.
+
+**Fix.** One door (`ChargenFlow._selectClassRow`) for the list's selection,
+which both the pointer path and the enhanced stage's hit go through. The
+box belongs to the row it was opened on: moving the selection off that row
+is DFU's No (:106-109, the box dismissed, back to the list). The new row is
+read the way any row is: a double click, Return or the Read button. A click
+on the same row leaves the box open.
+
+## DISC24-B: the Horse and the Small Cart drew nothing
+
+**Cause.** MAC-D2 answered the cart's tomato (its template's 213/1 is the
+Wine Rack's world sprite) by giving the WHOLE Transportation group no
+picture. That took the Horse with it. The Horse's 201/0 was never borrowed:
+it is the animal archive's own horse, the one the world draws. And the cart
+was left with nothing, because no TEXTURE archive carries a cart.
+
+**Fix.**
+
+- **The Horse draws its own record again.** `inventoryItemImage` refuses
+  only the templates whose columns are borrowed (the cart and the four
+  boats).
+- **The cart's picture is its model.** `inventoryItemModel` names classic
+  model 41214, the wagon Horse Cart and Cargo trails. `ui/modelIcon.js`
+  bakes it once on the CPU:
+  - textured, three-quarter on, lit from the upper left;
+  - cropped to what it drew;
+  - in color32 order;
+  - loaded through the same data seam and texture reader the DOM icons use
+    (a user's replacement of a record first, as the world's wagon wears it).
+  It is a CPU bake, not a GPU pass, for the reason `ui/meshStamp.js` gives:
+  a GPU bake would borrow the main program's state mid-frame.
+- **Every list draws it:**
+  - the classic list (vanilla and Grimoire alike, every native window
+    through `makeIconDrawer`) uploads it as UI art under `model-icon_41214`
+    and draws it through the same V-flipped quad;
+  - the enhanced lists (pack, detail card, shop, player trade) read it
+    through one new door, `linePictureUrl`, which replaced four copies of
+    the same ternary.
+- **The boats stay without a picture.** No shelf sells one.
+- The two transport template ids have one home now (`itemTemplates.js`).
+  `shopStock.js`, which imports it, re-exports them.
+
+## DISC24-C: the player's own shadow, indoors
+
+**Cause.** The player's own sprite body (`player/eotbBody.js`: "Shadows
+Only" in first person, the body in third) is the one caster that moves
+with the view. The lamps' shadow laws treated it as any flat, and three of
+them were wrong for it:
+
+- **Still when the player stopped.** `SHADOW_DYNAMIC_HOLD` frames after a
+  pause, the card joined the static cache of every lamp in reach. The next
+  step or turn threw it out again: every one of those caches rebuilt in one
+  frame, and its shadow jumped between the cache and the dynamic lane's
+  cadence.
+- **Late in a far lamp's map.** A lamp past the nearest
+  `SHADOW_NEAR_CASTERS` redraws every third frame. There the silhouette
+  trailed the player by up to two frames and caught up in a jerk. That is
+  the flicker.
+- **Turned to face each lamp.** The mod's card is never turned. Unity draws
+  a ShadowsOnly renderer's shadow in its own transform
+  (Eye_Of_The_Beholder.il IL_4e42 sets shadowCastingMode 2), so walking
+  round a lamp swung the silhouette through a half turn.
+
+**Fix.** The card carries `selfCard`, and `render/shadowPass.js` gives it
+its own law:
+
+- it is always a mover, never baked into a cache;
+- it casts only into maps redrawn every frame;
+- a lamp that falls out of the nearest two lets it go on that frame;
+- it casts in the basis it was drawn with.
+
+The cadence and its cost are EL8's, unchanged: the card adds no redraw
+that a lamp was not already making.
+
+## DISC24-D: the death loop after waking
+
+**Cause.** A live stat at 0 kills every 0.2 real seconds, whatever the
+health (`killIfAnyLiveStatZero`, DFU's UpdateEntityMods tail). A disease's
+daily roll accumulates unbounded negative stat mods (Plague: 3 to 30 a day
+off seven stats), and a rest runs no real seconds. So a disease day that
+lands in the night leaves a live 0 that kills on the first frame after
+waking.
+
+The one revival (`reviveForPlay`, used by all four online revivals)
+restored the health and kept the disease, rightly (DEATHLOOP1: dying is no
+cure). But it kept the disease's stat damage with it, so the player stood
+up and was killed again on the next frame, for ever. Offline, the first
+death ends the run, as DFU's does.
+
+The level-up is incidental: it only ever adds points. The cause was traced
+by a node reproduction (a Plague entry and two disease days at the maximum
+roll: STR 40 to 0, then kill, revive, kill). Lynk did not mention a
+disease; the fix covers any live 0 whatever put it there.
+
+**Fix.** `liftZeroedStats`, in the revival, after the drains end. Every
+stat found at a live 0 is stood back up at the respawn fraction of its
+permanent value (the health's own law). It does this by easing what holds
+the stat down: disease damage first, then a drain or a transfer. It lifts
+to the fraction and no further. The disease entry and its clock stay, and
+a stat not at zero is untouched. It applies on a living release too: a live
+0 kills within 0.2 seconds, so handing one over is handing over the death.
+The fatigue floor is measured after the lift, since its ceiling is built
+from live STR and END.
+
+## Pins
+
+- `test/disc24a_class_describe.test.js` (3):
+  - a single click on ANOTHER row closes the open description;
+  - Yes gives the class that was read;
+  - both paths through the one door.
+- `test/disc24b_transport_pictures.test.js` (6):
+  - the Horse's 201/0 back, and the cart and the boats still borrowing
+    nothing;
+  - the bake the right way up in color32 order and cropped;
+  - the depth test, the wood fallback and the empty model;
+  - the door loading once, waking every list, and caching a miss;
+  - the real classic drawer drawing the cart's upload through the
+    V-flipped quad, and the Horse from 201/0;
+  - the real enhanced line and door at the list's scale, the right way up.
+- `test/disc24c_self_shadow.test.js` (6), through the real Renderer and
+  shadow pass on the fake GL:
+  - never still;
+  - never in a third-frame map;
+  - a walker's far lamp drawing him and not the card;
+  - a rank change on that frame;
+  - a fall with a walker at every cadence phase;
+  - the drawn basis, with a townsman still facing the lamp.
+- `test/disc24d_stat_zero_loop.test.js` (4), through the real disease
+  course, the real kill and the real revival:
+  - Lynk's loop end to end;
+  - the respawn fraction and the fatigue after the lift;
+  - diseases eased before drains, two in turn;
+  - every revival path, including a living release caught between two
+    kill ticks.
+- The pins that follow:
+  - `audit63_items_loot.test.js` (MAC-D2: the Horse out of the refusal);
+  - `disc22d_flail_icon.test.js` (the trade screens through the one door,
+    and the door asking by the dye);
+  - `sc1_shadowcache.test.js` (the cadence read once off the rank);
+  - `eotb_body.test.js` (the card flagged);
+  - `deathloop1.test.js` (a disease is kept, and its stat hold eased);
+  - `dw3_icons.test.js` and `fparm.test.js` (the pack's tile and detail
+    through `linePictureUrl`, the dye and the Morrowind icon's precedence
+    kept);
+  - `auditdisc7.test.js`, `perfon2_peercull.test.js` and
+    `weeds1_flatcasters.test.js` (the rank read once, the self card's
+    basis upload, the replay's new last argument);
+  - `ledger.test.js` (the FAST TRAVEL row's evidence is the shelving, which
+    stays in `shopStock.js`, now that the constant's home is
+    `itemTemplates.js`).
+
+Mutants: `tools/mutants/disc24.json`, 30, all dead. Nine records re-aimed
+by content: `auditdisc7` C6, `auditlight` sc1-dyn-ignored, `deathloop1`'s
+two, `disc22` D22D (now the enhanced door's), `el8` cadence, `fieldgun16`,
+`perfon2` PERF-BASIS, `weeds1` the lantern replay, and `macd` MACD2.

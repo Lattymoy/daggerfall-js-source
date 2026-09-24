@@ -2690,8 +2690,8 @@ test('MW-D38: itemIcon is null without a build; the pack takes the model icon fi
   const arm = createFpArm();
   assert.equal(arm.itemIcon({ group: 'Weapons', templateIndex: 115, material: 0 }), null);
   const pack = readFileSync('src/ui/enhancedInventory.js', 'utf8');
-  assert.match(pack, /const src = modelIconUrl\(line\.item, 96\)\n    \|\| \(line\.image/, 'the tile does not try the model icon first');
-  assert.match(pack, /const big = modelIconUrl\(line\.item, 192\)\n    \|\| \(line\.image/, 'the detail does not try the model icon first');
+  assert.match(pack, /const src = modelIconUrl\(line\.item, 96\)\n    \|\| linePictureUrl\(line,/, 'the tile does not try the model icon first');   // DISC24-B: the classic second, through the pack's one door
+  assert.match(pack, /const big = modelIconUrl\(line\.item, 192\)\n    \|\| linePictureUrl\(line,/, 'the detail does not try the model icon first');
   assert.match(pack, /item,   \/\/ MW-D38/, 'the line no longer carries its item');
   const classic = readFileSync('src/ui/nativeInventory.js', 'utf8');
   assert.ok(!/itemIcon|modelIconUrl/.test(classic), 'the classic inventory must not know the model icons exist');

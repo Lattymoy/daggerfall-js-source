@@ -9,6 +9,7 @@
 import { clampArmorVariant } from './armorMaterials.js';   // AUDIT 23 (items-6)
 import { conditionMultipliersByMaterial, valueMultipliersByMaterial, WEAPONS } from '../characters/weapons.js';   // AUDIT 23 (items-5); AUDIT 68 S27-weightForMaterial-dup: ItemBuilder's value ladder and the Weapons enum, one home each
 import { GROUP_TEMPLATE_INDICES } from './itemTemplatesData.js';
+import { WAGON_MODEL_ID } from './horseCartLaw.js';   // DISC24-B: the cart's picture is the wagon's model
 import TEMPLATES_JSON from '../characters/itemTemplates.json' with { type: 'json' };
 import { playerArchiveFor, resolvePaperdollRecord } from '../characters/paperdollArt.js';   // AUDIT 17f: SetRace, one home; NT3 (F006): the record law too
 import { itemDyeColor } from './itemDye.js';
@@ -166,9 +167,20 @@ export const itemValueOf = (item) => (Number.isFinite(item?.value) ? item.value 
 // PLAYER texture for most items; only these groups keep the world
 // sprite. Ingredients are the isIngredient flag, not a group.
 const WORLD_TEXTURE_GROUPS = new Set(['UselessItems1', 'ReligiousItems', 'MiscItems']);
-/** MAC-D2: the six ItemGroups.Transportation rows - a cart, a horse and
- *  four boats. Read off the group table rather than spelled again. */
-const TRANSPORTATION_INDICES = new Set(GROUP_TEMPLATE_INDICES.Transportation ?? []);
+export const TRANSPORT_SMALL_CART = 93;   // Transportation.Small_cart (template)
+export const TRANSPORT_HORSE = 94;        // Transportation.Horse (template)
+/** MAC-D2 / DISC24-B: the ItemGroups.Transportation rows whose inventory
+ *  columns name ANOTHER item's art - the Small Cart and the four boats,
+ *  all pointing at 213/1, the Wine Rack. Read off the group table less
+ *  the one row whose columns are its own: the Horse's 201/0 is the
+ *  animal archive's horse (TEXTURE.201 records 0-1 are the horses the
+ *  world draws - systems/soundClips.js keys their neigh by it). */
+const BORROWED_ART_INDICES = new Set((GROUP_TEMPLATE_INDICES.Transportation ?? []).filter((i) => i !== TRANSPORT_HORSE));
+/** DISC24-B: the classic model a template's picture is baked from when it
+ *  has no art of its own - the Small Cart's is the wagon itself, model
+ *  41214 (systems/horseCartLaw.js WAGON_MODEL_ID, the one Horse Cart and
+ *  Cargo trails behind the player). */
+const ITEM_MODEL_PICTURES = new Map([[TRANSPORT_SMALL_CART, WAGON_MODEL_ID]]);
 
 /** UseWorldTexture verbatim. */
 export function usesWorldTexture(item, template = templateByIndex(item.templateIndex)) {
@@ -238,6 +250,14 @@ export function mintCondition(item) {
   return item;
 }
 
+/** DISC24-B: the classic model an item's picture is baked from, for a
+ *  template with no inventory art of its own (`inventoryItemImage`
+ *  answers null for it) - the Small Cart's wagon. Null for every other
+ *  item. */
+export function inventoryItemModel(item) {
+  return ITEM_MODEL_PICTURES.get(item?.templateIndex) ?? null;
+}
+
 export function inventoryItemImage(item, identity = undefined) {
   const t = templateByIndex(item.templateIndex);
   if (!t) return null;
@@ -254,15 +274,19 @@ export function inventoryItemImage(item, identity = undefined) {
   //
   // Where they point is the giveaway: Small Cart and all four boats name
   // player texture 213 record 1, which is the WORLD sprite of template
-  // 91, the Wine Rack. That is the red blob in the screenshot. The Horse
-  // names 201/0. None of it is a vehicle.
+  // 91, the Wine Rack. That is the red blob in the screenshot.
   //
   // So: no address rather than a wrong one. Every caller already takes
-  // null - it is what an unknown template answers one line above - and
-  // the enhanced list falls through to its own tile. A cart drawn as
-  // nothing reads as "no picture for this"; a cart drawn as a tomato
-  // reads as a broken game, which is how it was reported.
-  if (TRANSPORTATION_INDICES.has(item.templateIndex)) return null;
+  // null - it is what an unknown template answers one line above.
+  //
+  // DISC24-B (kurkku on Discord, 2026-09-24: "Horse and Wagon don't have
+  // sprites in GrimoireUI" - "presumably applies to the normal vanilla
+  // UI as well"): MAC-D2 took the HORSE with them, and its columns were
+  // never borrowed - 201/0 is the animal archive's own horse, the one the
+  // world draws. It draws again. The cart has no art anywhere, so its
+  // picture is its model's (`inventoryItemModel` below, baked by
+  // ui/modelIcon.js); the boats are sold by no shelf and stay null.
+  if (BORROWED_ART_INDICES.has(item.templateIndex)) return null;
   // RRI1: a custom class answers InventoryTextureArchive/Record itself
   // (DaggerfallUnityItem's virtuals, ItemHelper.cs:405-406) - the weapons
   // their own archive (513/514) at the template's record, the chain set

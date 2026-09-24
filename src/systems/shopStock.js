@@ -40,7 +40,7 @@
 import { dice100 } from '../combat/formulas.js';
 import { rand } from '../formats/dfRandom.js';   // F209: StockHouseContainer's one classic-stream draw
 import { randomMaterial, randomArmorMaterial, createWeapon } from '../combat/enemyEquipment.js';
-import { groupTemplates, GROUP_TEMPLATE_INDICES, itemBaseValue, ITEM_TEMPLATES, mintCondition, rollPaintingMessage, setItemFields, templateByIndex } from './itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
+import { groupTemplates, GROUP_TEMPLATE_INDICES, itemBaseValue, ITEM_TEMPLATES, mintCondition, rollPaintingMessage, setItemFields, templateByIndex, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from './itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
 import { customItemsForGroup } from './rriItems.js';   // AUDIT-RR F3: GetCustomItemsForGroup - the shelf's second loop (DaggerfallLoot.cs:255-287)
 import { createRandomBook } from './books.js';   // B1; A2: CreateRandomBook whole, priced off the book FILE
 import { isLeather, isPlate } from './armorMaterials.js';
@@ -117,8 +117,9 @@ export const CONTAINER_MODEL_OFFSET = 41000;
 export const SHOP_SHELF_MODEL_INDICES = Object.freeze(new Set([5, 6, 11, 12, 13, 14, 15, 16, 17, 18, 19, 26, 28, 29, 31, 35, 36, 37, 40, 41, 42, 44, 46, 47, 48, 49, 808]));
 export const isShopShelfModel = (modelId) => SHOP_SHELF_MODEL_INDICES.has(modelId - CONTAINER_MODEL_OFFSET);
 
-export const TRANSPORT_HORSE = 94;        // Transportation.Horse (template)
-export const TRANSPORT_SMALL_CART = 93;   // Transportation.Small_cart
+// DISC24-B: the two transport templates' one home is itemTemplates.js now (its item picture reads them, and it
+// cannot import this module, which imports it); re-exported here for the readers that have always asked here.
+export { TRANSPORT_HORSE, TRANSPORT_SMALL_CART };
 // F104: GetItemTemplate(MagicItems, 0). MagicItemSubTypes has ONE
 // name (ItemEnums.cs:233-236) and its value is 0, so the shelf's
 // rarity/chance gates read template 0 - the Ruby's row - for a magic

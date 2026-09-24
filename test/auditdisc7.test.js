@@ -116,7 +116,7 @@ test('AUDIT DISC7 C6: the every-frame redraw is for the casters truly nearest th
   assert.equal(nearestRank(casters, lights, [0, 0, 0], 1), 0);
   assert.equal(nearestRank(casters, lights, [0, 0, 0], 2), 1);
   assert.equal(nearestRank([0, 1], [3, 0, 0, 1, 3, 0, 0, 1], [0, 0, 0], 1), 1, 'a tie goes to the earlier rank');
-  assert.match(rd('src/render/shadowPass.js'), /const due = nearestRank\(casters, L, f\.eye, rank\) < SHADOW_NEAR_CASTERS/);
+  assert.match(rd('src/render/shadowPass.js'), /const near = nearestRank\(casters, L, f\.eye, rank\) < SHADOW_NEAR_CASTERS;/);   // DISC24-C: the rank read once, `due` off it
   assert.match(rd('src/render/airPass.js'), /if \(!\(w > 0 && h > 0\)\) \{ this\.f = null; this\.prevValid = false; return; \}/, 'C7: a bailed frame leaves no previous one');
 });
 

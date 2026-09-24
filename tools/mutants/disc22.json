@@ -190,12 +190,12 @@
   },
   {
     "name": "D22D-trade-drops-the-metal",
-    "file": "src/ui/enhancedTrade.js",
+    "file": "src/ui/enhancedInventory.js",
     "tests": [
       "test/disc22d_flail_icon.test.js"
     ],
-    "old": "{ scale: 2, dye: line.image.dye, onReady: render }",
-    "new": "{ scale: 2, onReady: render }"
+    "old": "{ scale, dye: line.image.dye, onReady }",
+    "new": "{ scale, onReady }"
   },
   {
     "name": "D22E-flag-gate-back",
