@@ -11860,8 +11860,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     peerCastVisuals(drawable);   // SPELLFX1: a peer's new cast, drawn once
     // RIDE (2026-09-23, Mac: "ensure over people see others riding on horses"): a peer in the saddle is drawn as the
     // rider FIRST, so the body and the doll below stand nothing for them and their name rides over the rider
+    // PR-WW1 (2026-09-24, player report: "Werewolf morrowind sprite not showing online"): and a peer in BEAST FORM the
+    // same way - Eye Of The Beholder's lycanthrope, the one the transformed player sees on themselves (net/peerRiders.js).
+    // `cam.pos` is the live eye in every mode: worldModes shares this `cam` and sets it each modal frame
     peerRiders.sync(drawable, onlineToScene, { eye: cam.pos, right: [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)], dt });
-    const afoot = drawable.filter((d) => !peerRiders.isRiding(d.id) && !d.shown?.wb);   // DISC12: a beast wears no Morrowind body - it stands as the beast's own sprite (remotePlayers)
+    const afoot = drawable.filter((d) => !peerRiders.isRiding(d.id) && !d.shown?.wb);   // DISC12: a beast wears no Morrowind body; PR-WW1: it stands as EOTB's lycanthrope (peerRiders), or - while that art is not up - as the beast's enemy sprite (remotePlayers)
     peerBodies.sync(afoot, onlineToScene, dt, player.pos, { priority: (id) => !!social?.isPartyPeer(id) });   // the nearest first, the far ones asleep; AUDIT PARTY8: a party mate before a stranger
     // PCORPSE1: a body heard in a room this scene has left for another KIND of space (a dungeon's local frame, the
     // street's world frame) is not this scene's to draw; one heard anywhere in the overworld's cells still is
@@ -11993,7 +11996,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // way onEnemyBreak already is - see checkCanceledByFollower's own doc comment.
     canceledByFollower: () => checkCanceledByFollower(),
     // ONLINE1: the peers in a modal mode - their billboards on the mode's own pass, their names after its HUD
-    extraBillboards: () => remotePlayers?.batches() ?? [],
+    // PR-WW1 (2026-09-24, player report: "Werewolf morrowind sprite not showing online"): AND the peerRiders layer's -
+    // a beast walks into a building or a dungeon (a rider never does: a door dismounts), and the modal passes
+    // (worldModes' dungeon and interior billboard runs) draw only this hook - without it the lycanthrope that layer
+    // now draws, which the enemy sprite gives way to, would be nothing at all indoors and underground
+    extraBillboards: () => [...(remotePlayers?.batches() ?? []), ...(peerRiders?.batches() ?? [])],
     drawPeerNames: ({ proj, view, eye }) => drawPeerNames(proj, view, eye),
     drawPeerBodies: ({ proj, view, eye }) => drawPeerBodies(proj, view, eye),   // MWBODY1: the others' bodies, after the player's own
     // PEER-PLAQUE1: the plaque names another player in a building and underground too - the SAME pick and the SAME

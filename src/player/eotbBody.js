@@ -409,13 +409,28 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       () => { tex.set(cacheKey(s), null); });
     return null;
   }
+  /** PR-WW1 (2026-09-24, player report: "Werewolf morrowind sprite not
+   *  showing online"): THE FORM IS NOT A SETTING. The lycan archive is
+   *  picked by the curse (lycanArchive: 112381 for the wereboar), and
+   *  `cfg` is the mod's settings, which never carry it - so every
+   *  spriteFor here asked for the werewolf, and a wereboar saw the wolf
+   *  on themselves while the others (net/peerRiders.js, off the pose's
+   *  `wb`) draw the boar. The look is the settings plus the live form. */
+  const lookNow = () => ({ ...cfg, lycanthropyType: last.lycanthropyType });
+  /** PR-WW1: the form the lycan tables were last fetched for */
+  let preloadedForm = null;
   /** [IL] `InitializeTextures`: every frame of every table of the
    *  archives the settings pick, fetched up front - the mod's whole
-   *  load, spread over the seconds a browser needs. */
-  function preload() {
+   *  load, spread over the seconds a browser needs. PR-WW1: the lycan
+   *  pair by the LIVE form (the mod builds it off the curse), and again,
+   *  lycan tables alone, when the form changes (`onlyLycan`). */
+  function preload(onlyLycan = false) {
+    const lk = lookNow();
+    preloadedForm = lk.lycanthropyType;
     for (const table of Object.keys(STATE_TABLES)) {
+      if (onlyLycan && !table.endsWith('Lycan')) continue;
       for (let f = 0; f < frameCount(table); f++) {
-        for (let o = 0; o < ORIENTATIONS; o++) ensure(spriteFor(table, o, f, cfg));
+        for (let o = 0; o < ORIENTATIONS; o++) ensure(spriteFor(table, o, f, lk));
       }
     }
   }
@@ -749,7 +764,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
    *  the answer is that centre less half the size (EOTB-FEET below). */
   function place() {
     if (!shown || !batchSize) return null;
-    const sp = spriteFor(shown.table, shown.orientation, shown.frame, cfg);
+    const sp = spriteFor(shown.table, shown.orientation, shown.frame, lookNow());   // PR-WW1: the live form's archive
     const xml = spriteOffset(sp.archive, sp.record);
     const size = batchSize;
     const h = last.height;
@@ -855,6 +870,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
      */
     tick(dt, state = {}) {
       last = bodyState(state);
+      if (renderer && last.lycanthropyType !== preloadedForm) preload(true);   // PR-WW1: a curse caught (or changed) fetches its own beast
       fell = false;
       if (state.feet) cam.feet = state.feet;
       if (state.cameraPos) cam.pos = state.cameraPos;
@@ -882,7 +898,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       // AWAY from the camera - a quad seen from its back, the picture
       // mirrored
       const flipView = FP && cfg.visibility === 2;
-      const s = spriteFor(shown.table, shown.orientation, shown.frame, cfg, { flip: shown.flip !== flipView });
+      const s = spriteFor(shown.table, shown.orientation, shown.frame, lookNow(), { flip: shown.flip !== flipView });   // PR-WW1: the live form's archive (112381 the wereboar)
       const up = ensure(s);
       if (up) {
         const xml = spriteOffset(s.archive, s.record);

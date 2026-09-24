@@ -491,3 +491,72 @@ cites it missed were moved. Six quotations it had rewritten are restored.
 flag, so a load drops them too: the survival needs' (`needs.js`), rewritten
 every minute, and the Mace of Molag Bal's bonus (`artifactEffects.js`),
 which decays within twelve minutes anyway.
+
+---
+
+## PR-WW1: the werewolf the others saw (player report)
+
+The report: *"Werewolf morrowind sprite not showing online"*.
+
+**What the player sees.** A transformed player with no Morrowind body is
+drawn in third person by Eye Of The Beholder's billboard (`mwView.js:79`
+`eotbLane`, `:334`). Its table rule puts the transformed form first, riding
+included (`eotbBillboard.js:329` `chooseTable`, `:335`), and it draws the
+mod's lycan archives: 112380 for the werewolf, 112381 for the wereboar
+(`eotbBillboard.js:75` `lycanArchive`, `:142` `tableArchive`). That art is a
+hunched, dark-furred, Bloodmoon-style beast, and it is the "Morrowind sprite"
+of the report. The Morrowind rig has no werewolf body (`fpArm.js:176`), so
+this is the only Morrowind-looking werewolf in the port.
+
+**Cause.** No other player ever saw it. The only layer that draws another
+player in EOTB's art is `net/peerRiders.js`, and it took a peer only when
+`rd` said a horse or a cart. A peer whose pose said `wb` alone fell through
+to DISC12's branch in `remotePlayers.js` (`:795`, `:800`). That branch draws
+MOBILE_TYPES.Werewolf / Wereboar, the classic enemy sprite (archive 264 /
+269). So the transformed player saw EOTB's beast on themselves, and everyone
+else saw Daggerfall's pixel werewolf. A transformed rider was worse: the
+rider layer ran first and drew a person on a horse (112382 + the rider's
+set), where the player saw their beast.
+
+The wire was never at fault. `wb` goes out on its edge (`wire.js:1003`),
+through the door (`:1051`) and the easing (`online.js:206`), from the sender
+at `world.js:11814`.
+
+**Fix.** `peerRiders.js` takes a peer whose pose says `wb`, as it takes a
+rider:
+- The loop table is EOTB's own `chooseTable`, transformed first
+  (`beastTable`). A beast in the saddle is the beast.
+- The form picks the archive (`spriteFor` gets `lycanthropyType: wb`), at
+  the transformed size (`sizeMod`).
+- The frame clock is the saddle's for a mounted beast and EOTB's `speedMod`
+  run halving on foot.
+- A new swing count plays `AttackMeleeLycan` once, forward, at LYCAN_TICK,
+  as the local body's `playLycanAttack` does (`eotbBody.js:395`). The count
+  first seen is no swing.
+
+The hand-off is RIDE's: `isRiding` is true only once the art is up, so while
+it loads or has failed, and in a build without it, DISC12's enemy sprite
+still stands for them. A beast is never nothing.
+
+The modal passes (`worldModes.js:7139` the dungeon, `:7331` the interior)
+draw only `host.extraBillboards`. That was `remotePlayers.batches()` alone,
+so a beast drawn by the rider layer would have been nothing indoors and
+underground. It hands over both layers' batches now (`world.js:12003`). A
+rider never reaches those passes: a door dismounts. The eye the layer turns
+its sprites to (`cam.pos`) is live in every mode, because worldModes shares
+world.js's `cam` and sets it each modal frame.
+
+**The local body, beside it.** `eotbBody.js` asked for every sprite with
+the mod's settings (`cfg`), which never carry the form. So a wereboar saw the
+werewolf on themselves, while the others now draw the boar. The draw and the
+placement take the live form now (`lookNow`, `eotbBody.js:262`). The preload
+fetches the live form's lycan set, and fetches it again when the form
+changes (`:270`, `:713`).
+
+**Hosts.** `OnlineSession` is built only in `world.js`. `exterior.js` and
+`dungeonContext.js` hold no peer drawing, and `worldModes.js` reaches peers
+only through the hook above. So the fix has one host. No relay change:
+`wb`, `mv`, `wd`, `an`, `yaw` and `rv` were already on the wire.
+
+The pins are `test/prww1_werewolf.test.js`: six tests, all failing on the
+unfixed code. The mutants are `tools/mutants/prww1.json`.

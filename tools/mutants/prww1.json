@@ -1,0 +1,119 @@
+[
+  {
+    "name": "PRWW1-beast-not-taken",
+    "file": "src/net/peerRiders.js",
+    "old": "      if (!beast && !riding) continue;\n",
+    "new": "      if (!riding) continue;\n",
+    "tests": [
+      "test/prww1_werewolf.test.js"
+    ]
+  },
+  {
+    "name": "PRWW1-form-not-handed-to-spriteFor",
+    "file": "src/net/peerRiders.js",
+    "old": "{ onHorse: pose.rv | 0, lycanthropyType: beast }",
+    "new": "{ onHorse: pose.rv | 0 }",
+    "tests": [
+      "test/prww1_werewolf.test.js"
+    ]
+  },
+  {
+    "name": "PRWW1-rider-table-wins-for-a-mounted-beast",
+    "file": "src/net/peerRiders.js",
+    "old": "const table = r.claw ? CLAW_TABLE : beast ? beastTable(pose) : rideTable(pose.mv | 0);",
+    "new": "const table = r.claw ? CLAW_TABLE : beast && !riding ? beastTable(pose) : rideTable(pose.mv | 0);",
+    "tests": [
+      "test/prww1_werewolf.test.js"
+    ]
+  },
+  {
+    "name": "PRWW1-beast-table-not-chooseTable",
+    "file": "src/net/peerRiders.js",
+    "old": "export const beastTable = (pose) => chooseTable({ transformed: true, riding: !!pose?.rd, stopped: !pose?.mv, sheathed: !pose?.wd });",
+    "new": "export const beastTable = (pose) => (pose?.mv ? 'MoveLycan' : 'IdleLycan');",
+    "tests": [
+      "test/prww1_werewolf.test.js"
+    ]
+  },
+  {
+    "name": "PRWW1-no-claw",
+    "file": "src/net/peerRiders.js",
+    "old": "      else if (r.an != null && an !== r.an) r.claw = { i: 0, t: 0 };\n",
+    "new": "      else if (false) r.claw = { i: 0, t: 0 };\n",
+    "tests": [
+      "test/prww1_werewolf.test.js"
+    ]
+  },
+  {
+    "name": "PRWW1-claw-on-first-sight",
+    "file": "src/net/peerRiders.js",
+    "old": "      else if (r.an != null && an !== r.an) r.claw = { i: 0, t: 0 };\n",
+    "new": "      else if (an !== r.an) r.claw = { i: 0, t: 0 };\n",
+    "tests": [
+      "test/prww1_werewolf.test.js"
+    ]
+  },
+  {
+    "name": "PRWW1-claw-off-the-lycan-tick",
+    "file": "src/net/peerRiders.js",
+    "old": "while (r.claw && r.claw.t >= LYCAN_TICK) { r.claw.t -= LYCAN_TICK;",
+    "new": "while (r.claw && r.claw.t >= LYCAN_TICK * 2) { r.claw.t -= LYCAN_TICK * 2;",
+    "tests": [
+      "test/prww1_werewolf.test.js"
+    ]
+  },
+  {
+    "name": "PRWW1-run-clock-unchanged",
+    "file": "src/net/peerRiders.js",
+    "old": "(beast && !riding ? speedMod({ running: pose.mv === 2 }) : 1)",
+    "new": "1",
+    "tests": [
+      "test/prww1_werewolf.test.js"
+    ]
+  },
+  {
+    "name": "PRWW1-mounted-beast-on-the-foot-clock",
+    "file": "src/net/peerRiders.js",
+    "old": "const ft = frameTime(riding) *",
+    "new": "const ft = frameTime(!beast && riding) *",
+    "tests": [
+      "test/prww1_werewolf.test.js"
+    ]
+  },
+  {
+    "name": "PRWW1-fallback-lost-while-the-art-loads",
+    "file": "src/net/peerRiders.js",
+    "old": "    isRiding: (id) => !!riders.get(id)?.batch,\n",
+    "new": "    isRiding: (id) => riders.has(id),\n",
+    "tests": [
+      "test/prww1_werewolf.test.js"
+    ]
+  },
+  {
+    "name": "PRWW1-modal-hook-narrowed-back",
+    "file": "src/scenes/world.js",
+    "old": "    extraBillboards: () => [...(remotePlayers?.batches() ?? []), ...(peerRiders?.batches() ?? [])],\n",
+    "new": "    extraBillboards: () => remotePlayers?.batches() ?? [],\n",
+    "tests": [
+      "test/prww1_werewolf.test.js"
+    ]
+  },
+  {
+    "name": "PRWW1-local-body-on-the-settings-alone",
+    "file": "src/player/eotbBody.js",
+    "old": "  const lookNow = () => ({ ...cfg, lycanthropyType: last.lycanthropyType });\n",
+    "new": "  const lookNow = () => cfg;\n",
+    "tests": [
+      "test/prww1_werewolf.test.js"
+    ]
+  },
+  {
+    "name": "PRWW1-local-form-change-fetches-nothing",
+    "file": "src/player/eotbBody.js",
+    "old": "      if (renderer && last.lycanthropyType !== preloadedForm) preload(true);",
+    "new": "      if (false) preload(true);",
+    "tests": [
+      "test/prww1_werewolf.test.js"
+    ]
+  }
+]
