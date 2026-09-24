@@ -898,10 +898,11 @@
   {
     "name": "i2-click-router-without-cursor",
     "file": "src/scenes/world.js",
-    "old": "    if (travelControlUI?.isShowing && !gamePaused() && cursorActive() && e.button === 0 && !(isEnhanced() && typeof document !== 'undefined')) {",
-    "new": "    if (travelControlUI?.isShowing && !gamePaused() && !(isEnhanced() && typeof document !== 'undefined')) {",
+    "old": "locked: document.pointerLockElement === canvas,\n      button: e.button,",
+    "new": "locked: false,\n      button: e.button,",
     "tests": [
-      "test/to1_travelOptions.test.js"
+      "test/to1_travelOptions.test.js",
+      "test/disc22e_travel_click.test.js"
     ]
   },
   {

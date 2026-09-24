@@ -119,6 +119,7 @@ import {
 } from './mapStrip.js';
 import { mapContextOf } from '../systems/mapTabs.js';
 import { createAutomapSheet } from './automapSheet.js';
+import { NOTE_MAX_CHARACTERS } from '../systems/automap.js';   // DISC22-G: DFU's note box's own cap (:1603)
 import { createTownSheet } from './townSheet.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { quadPlacement } from './quadMap.js';   // MAP3: the sheet over the held paper's corners
@@ -481,7 +482,8 @@ export class HeldMapWindow {
     // record, the reveal index, the player and the way in. A host that
     // hands none (the world host's travel key) simply has no automap
     // sheet, and the slot's narrowing keeps the tab off the paper.
-    if (deps.automap) this._sheets.set('automap', createAutomapSheet(deps.automap));
+    // DISC22-G: and the window's own box for a note's words - the sheet has no DOM
+    if (deps.automap) this._sheets.set('automap', createAutomapSheet({ ...deps.automap, askText: (initial, done) => this._askText(initial, done) }));
     // EM4: the two exterior hosts hand `town` - the block grids, the
     // building summaries and the discovery record.
     if (deps.town) this._sheets.set('town', createTownSheet(deps.town));
@@ -653,8 +655,11 @@ export class HeldMapWindow {
     // EM3: THE LIVE SHEET IS ASKED FIRST, once the window's own boxes
     // have had their say - they hold the whole sheet, so a floor key
     // under an open prompt would move a map the player cannot see.
-    if (!this._panel && !this._panelState?.confirm && this._sheet?.key?.(code, e)) {
+    const sheetKey = !this._panel && !this._panelState?.confirm ? this._sheet?.key?.(code, e) : false;
+    if (sheetKey) {
       e?.preventDefault?.();
+      // DISC22-G: a sheet's Home asks for its rest view back
+      if (sheetKey === 'home') this._setView(this._sheet?.homeView?.(this._limits()) ?? this._view);
       this._dirty = true;
       return;
     }
@@ -778,7 +783,7 @@ export class HeldMapWindow {
     }
     // the rings breathe, so the sheet is repainted while one is up - at
     // PULSE_HZ, not per frame: a paint is the whole bay's ink (AUDIT-MAP A2)
-    if (this._selected || this._party.length) {
+    if (this._selected || this._party.length || this._sheet?.breathes?.()) {   // DISC22-G: the dungeon's way in breathes too
       const beat = Math.floor(this._clock * PULSE_HZ);
       if (beat !== this._beat) { this._beat = beat; this._dirty = true; }
     }
@@ -963,9 +968,12 @@ export class HeldMapWindow {
       this._cornersKey = null;
     }
     if (firstLayout) {
-      // at rest the whole bay is on the sheet, centred
-      const scale = scaleMinOf(this._limits());
-      this._view = clampView({ ox: 0, oy: 0, scale }, this._limits());
+      // at rest the whole bay is on the sheet, centred - or, DISC22-G, the sheet's own rest view: the sheet the
+      // window OPENS on never passes through _selectSheet, so a dungeon plan opened as a whole-level fit (a
+      // corridor three pixels wide) and its homeView was only ever asked after a tab change
+      const limits = this._limits();
+      const home = this._sheet?.homeView?.(limits) ?? { ox: 0, oy: 0, scale: scaleMinOf(limits) };
+      this._view = clampView(home, limits);
       this._goal = { ...this._view };
     } else {
       this._view = clampView(this._view, this._limits());
@@ -1370,6 +1378,39 @@ export class HeldMapWindow {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     paintStrip(ctx, this._strip, { font: stripFont(paperW) });
     ctx.setTransform(1, 0, 0, 1, 0, 0);
+  }
+
+  /**
+   * DISC22-G: ASK FOR A NOTE'S WORDS. The box opens over the sheet with `initial` in it; Enter answers the text,
+   * Escape answers null (nothing changes), and the box owns its keys the way the search box does, so a typed letter
+   * never reaches the map's bindings. One question at a time: a second ask cancels the first.
+   */
+  _askText(initial, done) {
+    const c = this._chrome;
+    if (!c?.noteInput) { done(null); return; }
+    this._noteDone?.(null);
+    let settled = false;
+    const finish = (v) => {
+      if (settled) return;
+      settled = true;
+      this._noteDone = null;
+      c.note.style.display = 'none';
+      c.noteInput.onkeydown = null;
+      c.noteInput.onblur = null;
+      done(v);
+      this._staticKey = '';
+      this._dirty = true;
+    };
+    this._noteDone = finish;
+    c.note.style.display = '';
+    c.noteInput.value = initial ?? '';
+    c.noteInput.onkeydown = (e) => {
+      e.stopPropagation();
+      if (e.key === 'Enter') finish(c.noteInput.value);
+      else if (e.key === 'Escape') finish(null);
+    };
+    c.noteInput.onblur = () => finish(c.noteInput.value);
+    c.noteInput.focus?.();
   }
 
   _setView(v) {
@@ -2063,7 +2104,15 @@ export class HeldMapWindow {
     search.append(searchInput, results);
     const close = el('button', 'act hmclose', 'Close');
     close.onclick = () => { if (this._phase === 'map') this._beginClose(null); };
-    top.append(label, search, close);
+    // DISC22-G: the box a dungeon note's words are written in - hidden until the middle button asks (_askText)
+    const note = el('div', 'hmsearch hmnote');
+    const noteInput = el('input');
+    noteInput.type = 'text';
+    noteInput.placeholder = 'Write a note…';
+    noteInput.maxLength = NOTE_MAX_CHARACTERS;
+    note.append(noteInput);
+    note.style.display = 'none';
+    top.append(label, search, note, close);
 
     const card = el('div', 'hmcard');
     const foot = el('div', 'hmfoot');
@@ -2081,7 +2130,7 @@ export class HeldMapWindow {
 
     root.append(stage, top, card, foot, box);
     document.body.append(root);
-    this._chrome = { root, stage, sprite, sheet, ink, hands, label, search, searchInput, results, close, card, hint, band, legend, ports, box };
+    this._chrome = { root, stage, sprite, sheet, ink, hands, label, search, searchInput, note, noteInput, results, close, card, hint, band, legend, ports, box };
     // MAP-FIELD7: down and clear before the first tick, or the sheet
     // shows for one frame in its held place and then jumps to the floor
     // to start travelling.

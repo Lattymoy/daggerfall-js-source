@@ -42,6 +42,7 @@
 // arc was split to avoid: a take that lives in a draw, or a systems
 // module reaching into `ui/` to read a highlight. Moving the state to
 // the feature closes both.
+import { setClassicLootFrame } from './classicLootFrame.js';   // DISC22-C: a leaf - the classic panel's frame, cleared with the selection
 import { getPref } from './uiPrefs.js';
 import { itemNameParts, itemStatRows } from './itemInfo.js';   // RF6: the long name's name part, the same one the plaque's rows wear; QUICK-LOOT-STATS: and the rows the lit one says about itself
 import { nextSelection, selectedRow, hoverItemAt } from './worldHover.js';   // the fold's LAW and the row -> item walk, both driven there
@@ -258,7 +259,8 @@ export function quickLootStats(frame) {
 /** Freed with the host that raised it: a selection is ABOUT a key in a
  *  world a teardown is unmaking, and a nudge spent in a dungeon must
  *  not move the highlight in the street. */
-export function resetQuickLoot() { _sel = null; _nudge = 0; _pending = null; _actionIds = null; _lastKey = null; _tookSound = null; }   // SND1: and a press's sound, never carried across a teardown
+export function resetQuickLoot() { _sel = null; _nudge = 0; _pending = null; _actionIds = null; _lastKey = null; _tookSound = null; setClassicLootFrame(null); }   // DISC22-C: and the classic panel's frame
+   // SND1: and a press's sound, never carried across a teardown
 
 /**
  * ── THE TAKE, AND THE DOOR IT GOES THROUGH ──────────────────────

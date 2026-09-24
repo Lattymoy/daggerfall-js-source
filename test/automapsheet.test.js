@@ -23,7 +23,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { createAutomapSheet, FIT_MARGIN } from '../src/ui/automapSheet.js';
+import { createAutomapSheet, FIT_MARGIN, READABLE_SCALE } from '../src/ui/automapSheet.js';
 import { isSheet, SHEET_MEMBERS } from '../src/ui/mapStrip.js';
 import { deriveFloors, floorTriangles } from '../src/systems/automapFloors.js';
 import { scaleMinOf, toPaper } from '../src/ui/inkMap.js';
@@ -179,7 +179,8 @@ test('EM3: the caret, the beacon and every mark belong to a STOREY', () => {
   const ground = recordingCtx();
   s.paintOverlay(ground, env(s, { ox: 0, oy: 0, scale: 8 }));
   const texts = ground.calls.filter((c) => c.fn === 'fillText').map((c) => c.args[0]);
-  assert.deepEqual(texts, ['the lever'], 'the ground note only');
+  // DISC22-G: and the teleporter end down here names the storey its partner is on
+  assert.deepEqual(texts, ['the lever', 'to Floor 2'], 'the ground note only, and where the teleporter goes');
   const arcs = ground.calls.filter((c) => c.fn === 'arc');
   assert.ok(arcs.length >= 1, 'the beacon and the teleporter end down here');
   // the player is standing on this storey, so the caret is drawn
@@ -191,7 +192,7 @@ test('EM3: the caret, the beacon and every mark belong to a STOREY', () => {
   s.paintStatic(recordingCtx(), env(s, { ox: 0, oy: 0, scale: 8 }));
   const upper = recordingCtx();
   s.paintOverlay(upper, env(s, { ox: 0, oy: 0, scale: 8 }));
-  assert.deepEqual(upper.calls.filter((c) => c.fn === 'fillText').map((c) => c.args[0]), ['upstairs']);
+  assert.deepEqual(upper.calls.filter((c) => c.fn === 'fillText').map((c) => c.args[0]), ['upstairs', 'to Floor 1']);
   assert.equal(upper.calls.some((c) => c.fn === 'fill'), false,
     'the player is downstairs, so no caret is drawn up here');
   // the entrance is on the ground floor and stays there
@@ -269,16 +270,23 @@ test('EM3: at rest the storey is on the sheet, centred on the player where they 
   const limits = { mapW: s.size().width, mapH: s.size().height, paperW: 400, paperH: 300 };
   const home = s.homeView(limits);
   assert.ok(home.scale > scaleMinOf(limits), 'a little in from the fit, so the wall is off the torn edge');
-  assert.equal(home.scale, scaleMinOf(limits) / FIT_MARGIN);
+  // DISC22-G: the fit is the REVEALED floor's (20 x 10 m here), never under READABLE_SCALE - not the level's
+  const fit = FIT_MARGIN * Math.min(400 / 20, 300 / 10);
+  assert.equal(home.scale, Math.max(scaleMinOf(limits), READABLE_SCALE, fit));
   // the player is at world (105, 207) on floor 0, so the view centres
   // there - the plan's y measured SOUTH from the north edge (z1 = 211)
   const planX = 105 - (100 - 1), planZ = (210 + 1) - 207;
   assert.ok(Math.abs((home.ox + limits.paperW / (2 * home.scale)) - planX) < 1e-6);
   assert.ok(Math.abs((home.oy + limits.paperH / (2 * home.scale)) - planZ) < 1e-6);
-  // ...and on the whole storey where they are NOT on it (upstairs)
+  // ...and on what has been SEEN where they are NOT on it (upstairs: room c, plan 1..11 both ways)
   s.setFloor(1);
   const away = s.homeView(limits);
-  assert.deepEqual(away, { ox: 0, oy: 0, scale: scaleMinOf(limits) }, 'the fit, and the window clamps it to centre');
+  assert.ok(Math.abs((away.ox + limits.paperW / (2 * away.scale)) - 6) < 1e-6);
+  assert.ok(Math.abs((away.oy + limits.paperH / (2 * away.scale)) - 6) < 1e-6);
+  // ...and on the whole storey where nothing is seen and nobody stands
+  const blank = sheet({ record: () => rec(['a', 'b']), player: () => ({ feet: [105, 0, 207], yaw: 0 }) });
+  blank.setFloor(1);
+  assert.deepEqual(blank.homeView(limits), { ox: 0, oy: 0, scale: scaleMinOf(limits) }, 'the fit, and the window clamps it to centre');
 });
 
 test('EM3: a level with no geometry is a quiet nothing, not a throw', () => {

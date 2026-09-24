@@ -15,15 +15,16 @@
     "old": "  const voters = tris.filter((t) => t.flat !== false);",
     "new": "  const voters = tris;",
     "tests": [
-      "test/automapfloors.test.js"
+      "test/automapfloors.test.js",
+      "test/disc22g_automap.test.js"
     ],
     "note": "The other side of the same law: a storey is defined by its FLAT floor."
   },
   {
     "name": "EM2-3-a-ramp-is-walked-but-not-drawn",
     "file": "src/systems/automapFloors.js",
-    "old": "      if (up < FLOOR_NY) continue;",
-    "new": "      if (up < LEVEL_NY) continue;",
+    "old": "    if (!(up >= FLOOR_NY)) continue;",
+    "new": "    if (!(up >= LEVEL_NY)) continue;",
     "tests": [
       "test/automapfloors.test.js"
     ],
@@ -51,8 +52,8 @@
   {
     "name": "EM2-6-a-step-is-a-storey",
     "file": "src/systems/automapFloors.js",
-    "old": "    if (last && t.y - last.hi <= minGap) {",
-    "new": "    if (last && t.y - last.hi <= 0.01) {",
+    "old": "    if (last && l.lo - last[last.length - 1].hi <= minGap) last.push(l); else runs.push([l]);",
+    "new": "    if (last && l.lo - last[last.length - 1].hi <= 0.01) last.push(l); else runs.push([l]);",
     "tests": [
       "test/automapfloors.test.js"
     ],
@@ -61,8 +62,8 @@
   {
     "name": "EM2-7-a-run-is-measured-from-its-floor-rather-than-its-ceiling",
     "file": "src/systems/automapFloors.js",
-    "old": "    if (last && t.y - last.hi <= minGap) {",
-    "new": "    if (last && t.y - last.lo <= minGap) {",
+    "old": "    if (last && l.lo - last[last.length - 1].hi <= minGap) last.push(l); else runs.push([l]);",
+    "new": "    if (last && l.lo - last[0].lo <= minGap) last.push(l); else runs.push([l]);",
     "tests": [
       "test/automapfloors.test.js"
     ],
@@ -71,8 +72,8 @@
   {
     "name": "EM2-8-a-storey-s-height-is-the-plain-mean-not-the-area-weighted-one",
     "file": "src/systems/automapFloors.js",
-    "old": "    y: r.weight > 0 ? r.sum / r.weight : r.lo,",
-    "new": "    y: (r.lo + r.hi) / 2,",
+    "old": "      storeys.push({ y: area > 0 ? sum / area : a.y,",
+    "new": "      storeys.push({ y: near.length ? near.reduce((n, l) => n + l.y, 0) / near.length : a.y,",
     "tests": [
       "test/automapfloors.test.js"
     ],
@@ -81,8 +82,8 @@
   {
     "name": "EM2-9-the-triangles-are-not-sorted-before-the-runs-are-walked",
     "file": "src/systems/automapFloors.js",
-    "old": ".sort((a, b) => a.y - b.y);",
-    "new": ";",
+    "old": "  const sorted = [...(voters.length ? voters : tris)].sort((a, b) => a.y - b.y);",
+    "new": "  const sorted = [...(voters.length ? voters : tris)];",
     "tests": [
       "test/automapfloors.test.js"
     ]
@@ -90,8 +91,8 @@
   {
     "name": "EM2-10-the-storeys-come-back-top-first",
     "file": "src/systems/automapFloors.js",
-    "old": ".sort((a, b) => a.y - b.y);",
-    "new": ".sort((a, b) => b.y - a.y);",
+    "old": "  return storeys.map((st, index) => ({ index, y: st.y,",
+    "new": "  return storeys.reverse().map((st, index) => ({ index, y: st.y,",
     "tests": [
       "test/automapfloors.test.js"
     ]
@@ -109,8 +110,8 @@
   {
     "name": "EM2-12-the-placement-matrix-is-ignored",
     "file": "src/systems/automapFloors.js",
-    "old": "      tx(m, p[i0], p[i0 + 1], p[i0 + 2], A);",
-    "new": "      tx(null, p[i0], p[i0 + 1], p[i0 + 2], A);",
+    "old": "    tx(m, p[i0], p[i0 + 1], p[i0 + 2], A);",
+    "new": "    tx(null, p[i0], p[i0 + 1], p[i0 + 2], A);",
     "tests": [
       "test/automapfloors.test.js"
     ],
@@ -128,18 +129,18 @@
   {
     "name": "EM2-14-a-floor-wound-the-other-way-is-dropped",
     "file": "src/systems/automapFloors.js",
-    "old": "      const up = Math.abs(ny) / len;",
-    "new": "      const up = ny / len;",
+    "old": "    const up = normals ? fileUp(m, normals, i0, i1, i2) : Math.abs(ny) / len;",
+    "new": "    const up = normals ? fileUp(m, normals, i0, i1, i2) : ny / len;",
     "tests": [
       "test/automapfloors.test.js"
     ],
-    "note": "The port's meshes are not reliably wound for this and a one-sided test drops half the rooms."
+    "note": "A row with no file normals (DISC22-G: the fallback arm) reads either winding; a one-sided test there drops a fixture wound the other way."
   },
   {
     "name": "EM2-15-every-sliver-and-seam-votes-for-a-storey",
     "file": "src/systems/automapFloors.js",
-    "old": "      if (area < MIN_TRI_AREA) continue;",
-    "new": "      if (area < 0) continue;",
+    "old": "    if (area < MIN_TRI_AREA) continue;",
+    "new": "    if (area < 0) continue;",
     "tests": [
       "test/automapfloors.test.js"
     ]
@@ -147,18 +148,20 @@
   {
     "name": "EM2-16-a-degenerate-triangle-has-a-facing",
     "file": "src/systems/automapFloors.js",
-    "old": "      if (!(len > 0)) continue;",
-    "new": "      if (false) continue;",
+    "old": "    if (!(len > 0)) continue;",
+    "new": "    if (false) continue;",
     "tests": [
       "test/automapfloors.test.js"
     ],
-    "note": "This one survived the first campaign and taught the pin what the guard is really for. A zero-area triangle is dropped by MIN_TRI_AREA anyway - but a NaN vertex gives area NaN, and `NaN < MIN_TRI_AREA` is FALSE, so it lands in the list at y NaN and drags a storey to nowhere. Only `!(len > 0)` catches it."
+    "note": "This one survived the first campaign and taught the pin what the guard is really for. A zero-area triangle is dropped by MIN_TRI_AREA anyway - but a NaN vertex gives area NaN, and `NaN < MIN_TRI_AREA` is FALSE, so it lands in the list at y NaN and drags a storey to nowhere. Only `!(len > 0)` catches it.",
+    "equivalent": true,
+    "why": "DISC22-G wrote the facing test as `!(up >= FLOOR_NY)`, which rejects a NaN facing on its own - a NaN vertex's triangle is dropped there whether this guard stands or not, and a zero-area one is dropped by MIN_TRI_AREA. The guard stays as the statement of the rule; its pin (the NaN vertex) still holds through the facing test."
   },
   {
     "name": "EM2-17-a-triangle-sits-at-its-first-vertex-rather-than-its-centre",
     "file": "src/systems/automapFloors.js",
-    "old": "        y: (A[1] + B[1] + C[1]) / 3,",
-    "new": "        y: A[1],",
+    "old": "      y: (A[1] + B[1] + C[1]) / 3,",
+    "new": "      y: A[1],",
     "tests": [
       "test/automapfloors.test.js"
     ]
@@ -226,8 +229,8 @@
   {
     "name": "EM2-24-the-chains-come-back-in-CELLS-rather-than-world-units",
     "file": "src/systems/automapFloors.js",
-    "old": "    x: occ.x0 + p.x * cell,\n    y: occ.z0 + p.y * cell,",
-    "new": "    x: p.x,\n    y: p.y,",
+    "old": "  const toWorld = (chain) => chain.map((p) => ({ x: occ.x0 + p.x * cell, y: occ.z0 + p.y * cell }));",
+    "new": "  const toWorld = (chain) => chain.map((p) => ({ x: p.x, y: p.y }));",
     "tests": [
       "test/automapfloors.test.js"
     ],
@@ -256,7 +259,7 @@
   {
     "name": "EM2-27-an-empty-level-throws-rather-than-answering",
     "file": "src/systems/automapFloors.js",
-    "old": "  if (!floors.length) return { floors, index: -1, chains: [], occupancy: null, bounds: box };",
+    "old": "  if (!floors.length) return { floors, index: -1, chains: [], openChains: [], occupancy: null, bounds: box };",
     "new": "",
     "tests": [
       "test/automapfloors.test.js"
@@ -265,8 +268,8 @@
   {
     "name": "EM2-28-a-row-with-no-geometry-is-read-anyway",
     "file": "src/systems/automapFloors.js",
-    "old": "    if (!p || !idx) continue;",
-    "new": "    if (false) continue;",
+    "old": "  if (!p || !idx) return out;",
+    "new": "  if (false) return out;",
     "tests": [
       "test/automapfloors.test.js"
     ]
@@ -274,8 +277,8 @@
   {
     "name": "EM2-29-the-storeys-are-labelled-from-zero",
     "file": "src/systems/automapFloors.js",
-    "old": "    label: `Floor ${index + 1}`,",
-    "new": "    label: `Floor ${index}`,",
+    "old": "label: `Floor ${index + 1}` }));",
+    "new": "label: `Floor ${index}` }));",
     "tests": [
       "test/automapfloors.test.js"
     ],

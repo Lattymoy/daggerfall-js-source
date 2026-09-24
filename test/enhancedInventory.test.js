@@ -1168,7 +1168,9 @@ test('PX21c / WORLD-HOVER: the plaque names a pile without opening it, on the ta
   // under a painted plaque stranded it. The `[\s\S]` window admits the
   // comment that says so and nothing else: a statement between the
   // brace and the gate would have to contain `{` or `;`.
-  assert.match(hov, /export function worldHoverFrame\(\{[\s\S]{0,200}\}\) \{\n(?:\s*\/\/[^\n]*\n)*  if \(!worldPlaqueOn\(\)\) \{ hideWorldPlaque\(\); return null; \}/,
+  // DISC22-C: the skin is asked through BOTH faces - the DOM plaque's gate, then the classic panel's - and a page
+  // with neither takes the plaque down, still before the ray and the list
+  assert.match(hov, /export function worldHoverFrame\(\{[\s\S]{0,200}\}\) \{\n(?:\s*\/\/[^\n]*\n)*  const dom = worldPlaqueOn\(\);\n  const classic = !dom && classicPlaqueOn\(\);\n  if \(!dom && !classic\) \{ hideWorldPlaque\(\); return null; \}/,
     'the seam asks the skin as its first act - before the ray, before the list - and takes the plaque down when the answer is no');
   const show = hov.slice(hov.indexOf('export function showWorldPlaque'));
   assert.ok(show.indexOf('if (!worldPlaqueOn()) return;') < show.indexOf('const n = ensure();'),

@@ -137,7 +137,7 @@ import { SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { overlayAction } from './input.js';   // U51: Escape, through the shared table
 import { MOD_SETTINGS, modSetting, setModSetting, isIntKey, isFloatKey, isChoiceKey, isTextKey, isTupleKey } from '../systems/modSettings.js';
 import { keyCodeForDomCode, KEYCODE_NONE } from '../systems/keyCodes.js';   // HT1: a TextKey's capture spells the key as Unity would
-import { isOnlinePage, onlineForcedPref, onlineForcedModSetting } from '../systems/onlineLane.js';   // OL1: online is the enhanced lane, whole - a forced switch is shown locked   // ROADS 24; DS1: the integer keys; UL1: the choice keys
+import { isOnlinePage, onlineForcedPref, onlineForcedModSetting, onlineForcedSetting } from '../systems/onlineLane.js';   // OL1: online is the enhanced lane, whole - a forced switch is shown locked   // ROADS 24; DS1: the integer keys; UL1: the choice keys
 import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 // FIX-F (Mac: "changing keybinds in classic/enhanced do not work"): the
 // rebinding pane. The enhanced skin is the DEFAULT and had no door to
@@ -686,7 +686,7 @@ function paneContinue(body) {
 // settings, because they are questions about the game you are about to
 // start and nowhere else. StartInDungeon in particular is the answer
 // to "do I begin in Privateer's Hold" - a new-game question wearing a
-// settings key's clothes (systems/settings.js:89-94).
+// settings key's clothes (systems/settings.js:90-95).
 function paneNew(body) {
   const c = el('div', 'card');
   c.append(el('h3', null, 'A new character'));
@@ -1457,6 +1457,7 @@ function settingRow(key, { compact = false, home = false } = {}) {
     b.classList.add('rowact');   // AUDIT UI: sized by the sheet, not inline
     if (raw === 'True') b.classList.add('primary');
     b.onclick = () => write(key, stepValue(key, raw, 1));
+    if (onlineForcedSetting(_sec, _k) !== undefined) lockOnline(b, null, { note: ONLINE_SETTING_NOTE, value: raw === 'True' });   // DISC22-A: the room's rule, shown locked
     ctl.append(b);
   } else {
     ctl.append(val);
@@ -1506,7 +1507,7 @@ function write(key, next) {
 }
 
 // ── MODS ─────────────────────────────────────────────────────────
-// There is NO mod system (Ledger C, Not planned - and settings.js:165
+// There is NO mod system (Ledger C, Not planned - and settings.js:166
 // blocks four keys on exactly that ground). The section still exists,
 // because Mac's call was to set the menus up now, and because a rail
 // that quietly omits mods teaches the player they are impossible.
@@ -1546,6 +1547,8 @@ const ONLINE_SHARED_NOTE = 'On while online - a dungeon\u2019s monsters belong t
  *  intensive training with it. Not the ground's reason and not the host's foes', so its own words. */
 const ONLINE_RULESET_NOTE = 'Set while online - a room plays one ruleset, so a combat or training rule one player changes for their own blows would be two games in one dungeon. Your own choice returns when you play offline.';
 const ONLINE_RULESET_KEYS = Object.freeze({ 'roleplay-realism': Object.freeze(['advancedArchery', 'weaponSpeed', 'weaponMaterials', 'classicStrengthDamageBonus', 'equipDamage', 'encumbranceEffects', 'RefinedTraining.intensiveTraining']) });
+/** DISC22-A: a DFU setting the room plays by (onlineLane.js ONLINE_FORCED_SETTINGS) - its own reason. */
+const ONLINE_SETTING_NOTE = 'Set while online - every player in a room meets the same smiths, so a room plays one rule for mending enchanted items. Your own choice returns when you play offline.';
 const onlineLockNote = (vendor, key) => (ONLINE_GROUND_VENDORS.includes(vendor) ? ONLINE_GROUND_NOTE : ONLINE_RULESET_KEYS[vendor]?.includes(key) ? ONLINE_RULESET_NOTE : ONLINE_SHARED_NOTE);
 function lockOnline(b, main, { note = ONLINE_LOCK_NOTE, value = true } = {}) {
   b.textContent = value ? 'On (online)' : 'Off (online)';
@@ -3573,6 +3576,9 @@ export function mountEnhancedMenu(host, {
   // has to work around. The tabbed window IS the pause home face, so a
   // landing sets the TAB and leaves the section alone.
   if (['quests', 'stats', 'system'].includes(at)) pauseTab = at;
+  // DISC22-B: ...or a SECTION of the rail - the classic pause window's Controls button lands on Settings (the port's
+  // whole settings screen, Controls among its categories), not on the home face a press away from it.
+  else if (at && sections.some((l) => idOf(l) === at)) section = at;
   questSel = null;
   statsSec = 'character';
   statsAllSkills = false;

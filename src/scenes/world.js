@@ -19,7 +19,7 @@ import { PRIVATEERS_HOLD_BLOCK, HOLD_MODELS, HOLD_FLATS, holdModelMatrix, holdFi
 import { rollLootRarity, pileSource, dungeonRarityTier } from '../systems/lootRarity.js';   // WOD3: LR1 over the camps' piles
 import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05: one line, so the cites below it hold
 import { Arch3dFile } from '../formats/arch3dFile.js';
-import { requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive, cursorActive } from '../player/pointerLock.js';   // AUDIT-TO1 I2: the strip's click router wants the FREED cursor   // U45: bindCursorToggle is PlayerMouseLook.cursorActive; releaseLook: the chat's open (AUDIT CHAT C2)
+import { requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive, cursorActive } from '../player/pointerLock.js';   // U45: bindCursorToggle is PlayerMouseLook.cursorActive; releaseLook: the chat's open (AUDIT CHAT C2)
 import { attachTouch } from '../ui/touch.js';
 import { attachGamepad } from '../ui/gamepadInput.js';   // GP1: the pad speaks the same hooks
 import { BlocksFile } from '../formats/blocksFile.js';
@@ -115,7 +115,7 @@ import { shortcutBinding, sequenceString } from '../systems/dialogShortcuts.js';
 // journey the player WALKS, its control panel and its junction map,
 // plus the path following that rides the port's Basic Roads.
 import { createTravelOptions, readTravelOptionsSettings, locationTypeName as travelLocationTypeName, TRAVEL_OPTIONS_VENDOR } from '../systems/travelOptions.js';
-import { createTravelControlUI, preloadTravelControlArt } from '../ui/travelControlUI.js';
+import { createTravelControlUI, preloadTravelControlArt, stripTakesClick } from '../ui/travelControlUI.js';
 import { pointToNative, nativeMetrics } from '../ui/nativePanel.js';   // TO1: the travel panel's clicks land in the 320x200 panel's own coordinates
 import { createTravelJunctionMap } from '../ui/travelJunctionMap.js';
 import { drawEnhancedTravelControl, hideEnhancedTravelControl } from '../ui/enhancedTravelControl.js';
@@ -2136,7 +2136,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT 26 (F019): the pixel's street StaticNPCs - identity inputs
     // + the billboard extent the activation ray needs, resolved the
     // way the interior host resolves its people's
-    // (interiorContext.js:419-439). FLATS.CFG is awaited because
+    // (interiorContext.js:420-440). FLATS.CFG is awaited because
     // SetLayoutData's exterior overload reads it for the gender
     // (StaticNPC.cs:185-194); loadFlats never throws and is warmed with
     // the scene, so this is a coalesced wait. The list rides the pixel,
@@ -4315,7 +4315,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2460 mounts the same one, gated on
+  // and dungeonContext.js:2461 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:5664
@@ -6451,7 +6451,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6282), so exterior mode and a
+    // composer, dungeonContext.js:6283), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -8041,7 +8041,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // cursor had been parked over - the spinner (+5 acceleration) or EXIT
     // (journey aborted, destination cleared); and the strip is clicked
     // by OnMouseClick alone (TravelControlUI.cs:120-147), never a swing.
-    if (travelControlUI?.isShowing && !gamePaused() && cursorActive() && e.button === 0 && !(isEnhanced() && typeof document !== 'undefined')) {
+    // DISC22-E: ...gated on the LOCK, not the flag - the chat, Escape and a finger free the pointer with the flag down
+    if (stripTakesClick({ showing: travelControlUI?.isShowing, paused: gamePaused(), locked: document.pointerLockElement === canvas,
+      button: e.button, enhancedDom: isEnhanced() && typeof document !== 'undefined' })) {
       const v = pointToNative(nativeMetrics(canvas),
         (e.clientX - _r.left) * (canvas.width / _r.width),
         (e.clientY - _r.top) * (canvas.height / _r.height));
@@ -14705,7 +14707,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // layer, because a talk window is a modal above the vitals.
     // AUDIT 39: THE CALL IS UNCONDITIONAL. drawHud runs the damage
     // flash and the enhanced DOM HUD ABOVE its own `!art` return
-    // (hud.js:418-446) because neither reads ARENA2 - "a player whose
+    // (hud.js:421-449) because neither reads ARENA2 - "a player whose
     // HUD art failed to load still has vitals". Wrapping the whole
     // call in `if (hudArt)` inverted that: hudArt starts null and is
     // filled by a fire-and-forget load whose failure leaves it null
