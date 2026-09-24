@@ -74,10 +74,11 @@ export const STALE_CHUNK_TEXT =
  *  running page asks for (the dungeon's foe subsystem is the case that
  *  was reported) is gone. No automatic reload here: that would throw
  *  away whatever the player has not saved. The words say what happened
- *  and what fixes it. */
-export const STALE_CHUNK_IN_PLAY_TEXT =
-  'This page is from an older version of the game that has since been replaced, so the enemies here could not be built. '
-  + 'Reload the page to fix it.';
+ *  and what fixes it - on ONE line of the classic HUD's 320-pixel panel
+ *  (AUDIT DISC17: the first wording ran 143 characters and was cut off
+ *  at both ends), for long enough to be read once the level is up. */
+export const STALE_CHUNK_IN_PLAY_TEXT = 'Game updated - reload the page for enemies.';
+export const STALE_CHUNK_IN_PLAY_SECONDS = 12;
 
 /**
  * What to do about a boot failure. Pure, so the ladder is pinnable

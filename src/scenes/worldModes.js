@@ -1092,7 +1092,7 @@ export function createWorldModes(host) {
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
    *  (worldTick.js:389-390), and no killIfAnyLiveStatZero. Both pools
    *  READ the effect list every frame (exteriorFoes.js:892-896 and
-   *  cityGuards.js:914-920 each take `entityIsParalyzed` +
+   *  cityGuards.js:944-950 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
    *  a poison inflicted at this host's own onInflictPoison never
@@ -1420,10 +1420,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1831 states), so the same visual
+   *  the C11 law dungeonContext.js:1832 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1716, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1717, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -5629,7 +5629,7 @@ export function createWorldModes(host) {
     // (PlayerActivate.cs:325-339 - no return, skipped in Info mode):
     // the door/ladder/loot ladder below still runs. Over BOTH pools,
     // as the exterior arm runs over its own two; pickQuestFoe skips
-    // any foe without a questBehaviour (activate.js:180), so the
+    // any foe without a questBehaviour (activate.js:183), so the
     // watch costs nothing.
     if (getInteractionMode() !== 'info' && interiorCtx && !host.activateLockOnly?.()) {   // TS1: the stick's tap is no click
       const qf = pickQuestFoe(eye, dir, interiorFoePool(), interiorCtx.collider);
@@ -6156,7 +6156,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:6284), so the OUTER host's one rides in.
+          // (dungeonContext.js:6286), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:744 -> the
@@ -7081,13 +7081,21 @@ export function createWorldModes(host) {
       // BASE it hands the fog, which backs it up on the dry frames and
       // restores it on surfacing.
       { const _fog = dungeonFog(!!renderer.lightingLane, betterAmbience.dungeonFog() ?? DUNGEON_FOG); applyFog(renderer, dungeonCtx.underwaterFogSettings?.(cam.pos[1], player.pos, _fog) ?? _fog); }   // AUDIT-EL F6   // BA1: FoggyDungeons' linear fog is the base the water murk overrides
-      renderer.setPointLights(
+      // AUDIT DISC17: THE CANDLE BURNS WHITE UNDERGROUND TOO. One shared
+      // colour lit every light down here - the dungeon's 0.8, or the lane's
+      // flame - and the candle DISC17-B lit took it; MagicCandle.prefab is
+      // white at intensity 1, as the interior arm below keeps it. The pair
+      // channel gives the candle its own white and every other light the
+      // colour it always had.
+      const _dgColor = lanternColor(!!renderer.lightingLane, new Float32Array(DUNGEON_LIGHT_COLOR));   // EL1: the lane's flame at the dungeon's intensity
+      const _dgTint = (l) => (l ? { ...l, color: _dgColor } : l);
+      const _dgLit = withPlayerLights(
         // A10: DungeonLightHandler's XZ block range culls first, the
         // 16-slot shader cap picks from what survives (dungeonLights.js
         // carries the composition and why that order).
-        withPlayerLights(nearestLights(dungeonCtx.lights, cam.pos, renderer.maxPointLights, dungeonCtx.flicker.ranges, null, DUNGEON_LIGHT_BLOCK_RANGE),   // EL1: the installed set's cap
-          dungeonCtx.candleLight(), playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...dungeonCtx.campLights(), ...dungeonCtx.torchLights()),   // X11 the Light effect's candle; T1 the torch. DISC17-B: the DUNGEON's engine's candle - every cast down here is the context's engine's, and this host's own `magic` is not updated underground (its candle stood dark, or lit at the street it was cast on); HT1 the dropped lights; SURV3 the campfires; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
-        lanternColor(!!renderer.lightingLane, new Float32Array(DUNGEON_LIGHT_COLOR)));   // EL1: the lane's flame at the dungeon's intensity
+        nearestLights(dungeonCtx.lights, cam.pos, renderer.maxPointLights, dungeonCtx.flicker.ranges, () => _dgColor, DUNGEON_LIGHT_BLOCK_RANGE),   // EL1: the installed set's cap
+        dungeonCtx.candleLight(), _dgTint(playerTorchLight(playerEntity, player.feetAt(), cam.yaw)), _dgTint(thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw)), ...dungeonCtx.campLights().map(_dgTint), ...dungeonCtx.torchLights().map(_dgTint));   // X11 the Light effect's candle; T1 the torch. DISC17-B: the DUNGEON's engine's candle - every cast down here is the context's engine's, and this host's own `magic` is not updated underground (its candle stood dark, or lit at the street it was cast on); HT1 the dropped lights; SURV3 the campfires; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
+      renderer.setPointLights(_dgLit.data, null, _dgLit.colors);
       renderer.setClearColor(INTERIOR_CLEAR);   // REVIEW 2026-09-05 (PR #55 review): the world-hosted dungeon/interior frame is THIS one - the host's own setClearColor sits after its `modes.frame` return
       renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
       renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one
@@ -7235,7 +7243,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:9207's own wave-46 note); the interior
+          // a blow (world.js:9259's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -7247,7 +7255,7 @@ export function createWorldModes(host) {
       // AUDIT 58 (review): BOTH pools, through the one join. This read
       // `interiorFoes.foes` alone, so a shaft loosed at a watchman
       // `spawnCityGuardsInside` had stood in the room met nothing and
-      // died on geometry (arrowFlight.js:181-195 is a shaft's ONLY
+      // died on geometry (arrowFlight.js:181-196 is a shaft's ONLY
       // foe-contact path) - after the loose had already spent the
       // Arrow and tallied Archery, and while this host's MELEE ray hit
       // the same watchman. DFU makes no pool distinction: DoCollision
@@ -7270,10 +7278,10 @@ export function createWorldModes(host) {
         // AUDIT 58: WeaponManager.cs:630 after the damage fork - a
         // zero-damage shaft still enrages its mark and the room.
         // ROAD-G G1 (review): the interior WATCH carries the pair now
-        // (cityGuards.js:670-675), so this seam splits by pool exactly
+        // (cityGuards.js:694-699), so this seam splits by pool exactly
         // as `dealDamage` above it does rather than dropping the
         // non-encounter half - the zero-damage SWING already reaches
-        // that door (cityGuards.js:1172) and the shaft owes the same.
+        // that door (cityGuards.js:1212) and the shaft owes the same.
         onAttackFromPlayer: (f) => (f._encounter
           ? interiorFoes?.attackFromPlayer(f, player.pos, 'arrow')   // AUDIT WORLD6b-iii(e) A2: the pool's one door, the shaft's kind on it
           : interiorGuards?.handleAttackFromPlayer(f, player.pos)),
@@ -7408,13 +7416,14 @@ export function createWorldModes(host) {
       // is EnemySounds.PlayHitSound ON the struck enemy with the HAND's item (WeaponManager.cs:563-566) - null for a
       // bare hand and for the beast's claws.
       const interiorHitSound = (g) => audio.play3d(hitSoundFor(interiorWeapon.playerWeapon.strikingWeapon), g.ai.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 });
+      const swing = {};   // AUDIT DISC17: one swing, one attack grunt - the two pools rolled one each
       if (interiorGuards?.resolvePlayerHit(interiorWeapon.playerWeapon, cam.pos, eyeDir(), player.pos,
-        makeInView(proj, view, multiply), interiorHitSound)) {
+        makeInView(proj, view, multiply), interiorHitSound, { swing })) {
         continue;   // resolvePlayerHit runs DFU's tally arm itself (AUDIT 23 combat-4)
       }
       if (interiorFoes?.resolvePlayerHit(interiorWeapon.playerWeapon, cam.pos, eyeDir(), player.pos,
         // AUDIT 58: the PLAYER's blow landing on a foe - EnemySounds.cs:125's 1.1, not PlayerFootsteps' 1
-        makeInView(proj, view, multiply), interiorHitSound)) {
+        makeInView(proj, view, multiply), interiorHitSound, { swing })) {
         tallySwingSkills(playerEntity, interiorWeapon.playerWeapon.weapon);
         continue;
       }
@@ -9731,7 +9740,7 @@ export function createWorldModes(host) {
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
      *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3377-3399), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:6388). So an F9 pressed in a shop
+     *  unconditionally (world.js:6434). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -9765,7 +9774,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:6481)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:6527)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -9776,7 +9785,7 @@ export function createWorldModes(host) {
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
      *  HARD2c: this used to spell them out, and named `world.js:6642`
-     *  and `dungeonContext.js:6293` for its two sibling copies - lines
+     *  and `dungeonContext.js:6278` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

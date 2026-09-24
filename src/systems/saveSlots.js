@@ -370,8 +370,15 @@ export function quickLoadSlot(characterName, storage = store(), characterId = nu
  *  the player is dead or the death screen is up (DISC17-C). DFU never
  *  writes during a death (PlayerDeath pauses the game and ends in
  *  TitleMenuFromDeath); the exit autosave wrote the corpse, still
- *  poisoned, into every slot, and every load of every slot died again. */
+ *  poisoned, into every slot, and every load of every slot died again.
+ *  "Already has" is findSave's CHARID1 law (AUDIT DISC17): by the
+ *  character's id when it has one - the name list alone named a
+ *  namesake's slots too, and saveSlot, matching by id, minted a new
+ *  slot of this character's for every one of them. */
 export function exitAutosaveNames(entity, { deathUp = false, storage = store() } = {}) {
   if (deathUp || !(entity?.health > 0)) return [];
-  return [...new Set([QUICK_SAVE_NAME, ...saveKeysOfCharacter(entity.name, storage).map((key) => saveInfoOf(key, storage)?.saveName).filter(Boolean)])];
+  const id = typeof entity.characterId === 'string' && entity.characterId ? entity.characterId : null;
+  const own = saveKeysOfCharacter(entity.name, storage).map((key) => saveInfoOf(key, storage))
+    .filter((info) => info?.saveName && (!id || info.characterId === id));
+  return [...new Set([QUICK_SAVE_NAME, ...own.map((info) => info.saveName)])];
 }

@@ -163,7 +163,7 @@ import { createHunting } from './hunting.js';   // SURV6: hunting, foraging and 
 import { alignSurvival, shiftSurvival } from '../systems/survival/needs.js';   // SURV7: the needs' markers at an arrival; AUDIT SURV-TIERS (the third pass): and across a clock correction
 import { liveLycanthropy } from '../systems/lycanthropy.js';   // SURV7: the env's lycanthrope and beast-form flags
 import { elementalResistanceChance, ELEMENTS } from '../systems/spellcast.js';   // SURV7: the env's fire and frost resistances
-import { createTownWatch, isTownThreat } from '../systems/townWatch.js';   // DISC17-F: the watch defends the town
+import { createTownWatch, runTownWatchFrame } from '../systems/townWatch.js';   // DISC17-F: the watch defends the town
 import { rollCampEncounterOnChunkLoad, amGroupRollOwner } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
 import { WORLD_SALT, spawnsDungeon, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
 import { isMainStoryDungeon } from '../world/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
@@ -3414,7 +3414,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // pixel outdoors (TrackLooseObject), aged by the world clock.
   const droppedTorches = createDroppedTorches({
     renderer, audio, getTexture, uploadRecordFrame, collider: () => collider,
-    foes: () => [...cityGuards.guards, ...exteriorFoes.foes], foeSinks: (f) => foeSinks(f), makeEnemiesHostile: () => _makeEnemiesHostile(),
+    foes: () => [...cityGuards.guards.filter((g) => !g.defender), ...exteriorFoes.foes], foeSinks: (f) => foeSinks(f), makeEnemiesHostile: () => _makeEnemiesHostile(),   // DISC17-F (AUDIT DISC17): a thrown torch passes the town's defenders by, as the player's spells and shafts do
     entity: playerEntity, camera: () => ({ pos: player.eyeAt(), feet: player.pos, yaw: cam.yaw, pitch: cam.pitch,
       forward: [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)], right: [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)], up: [0, 1, 0] }),
     inside: () => false, waterLevel: () => null, pixelKeyAt: () => `${playerTravelPixel().x},${playerTravelPixel().y}`, say: (l) => townTalk.say(l),
@@ -4324,7 +4324,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2459 mounts the same one, gated on
+  // and dungeonContext.js:2460 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:5646
@@ -4414,9 +4414,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // encounter pool's remover for both. That was not a leak: removeFoe
     // (exteriorFoes.js:403-408) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1444-1462) gives it -
+    // got exactly what removeGuard (cityGuards.js:1484-1502) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
-    // (cityGuards.js:906) and spliced out at the end of it (:1095).
+    // (cityGuards.js:936) and spliced out at the end of it (:1125).
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
     // teardown of its own records so the two can diverge safely, and
     // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
@@ -5044,23 +5044,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     const wc = state.worldCoords(f.ai.feet);
     return isInLocationRect(wc.x, wc.z, locationWorldRect(_musicLoc, px.x, px.y));
   };
-  /** One frame of the town watch, after the pools moved. A transformed
-   *  lycanthrope is a monster to the town and gets no defenders (the
-   *  switch reads off, so any standing walk away). */
+  /** One frame of the town watch, after the pools moved (the frame
+   *  itself is townWatch.js's runTownWatchFrame; this answers where the
+   *  town is). A transformed lycanthrope is a monster to the town and
+   *  gets no defenders (the switch reads off, so any standing walk away). */
   function _townWatchFrame(dt) {
-    const inTown = _isPlayerInTownStrict();
-    const threats = inTown ? exteriorFoes.foes.filter((f) => isTownThreat(f, { inTownRect: _foeInTownRect })) : [];
     const px = playerTravelPixel();
-    const act = townWatch.tick(dt, {
+    const feet = walkMode && playerSpawned ? player.pos : cam.pos;
+    runTownWatchFrame(townWatch, dt, {
       enabled: getPref('townWatch') !== false && !isTransformedLycanthrope(playerEntity),
-      playerInTown: inTown, crime: !!playerEntity.crimeCommitted,
-      threats: threats.length, defenders: cityGuards.defenderCount(),
-      locationKey: `${px.x},${px.y}`,
+      inTown: _isPlayerInTownStrict(), crime: !!playerEntity.crimeCommitted, locationKey: `${px.x},${px.y}`,
+      foes: exteriorFoes.foes, inTownRect: _foeInTownRect, guards: cityGuards,
+      playerFeet: [...feet], playerFwd: [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)], pool: _guardPool,
     });
-    if (act === 'summon') {
-      const feet = walkMode && playerSpawned ? player.pos : cam.pos;
-      cityGuards.summonDefenders({ playerFeet: [...feet], playerFwd: [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)], pool: _guardPool(), threats }).catch((e) => console.error('[guards]', e));
-    } else if (act === 'dismiss') cityGuards.dismissDefenders();
   }
   let _cancelSeen = new Map();   // AUDIT PARTY-REST: each sender's restCancelAt as it stood when MY rest began (snapshotCancels), advanced as requests are honoured
   // PARTY-REST19 (2026-09-22, per-request: "An non initiator MUST cancel the rest for all if he cancels the
@@ -6438,7 +6434,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6264), so exterior mode and a
+    // composer, dungeonContext.js:6266), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -8423,7 +8419,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8792-8856 -
+  // worldModes answers it in BOTH modes (worldModes.js:8801-8865 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -14499,11 +14495,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:670-675), so this seam ROUTES by pool exactly
+        // (cityGuards.js:694-699), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:1172). DFU makes no pool distinction:
+        // (cityGuards.js:1212). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.
@@ -14572,14 +14568,17 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // DISC17-F: the town's defenders are spared on the watch's pass and
         // offered alone once the monsters' pool missed - friendly
         // protection across the two pools (cityGuards.resolvePlayerHit).
-        if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, makeInView(proj, view, multiply), guardHitSound, { spareDefenders: true })) {
+        // AUDIT DISC17: `swing` is the one swing's token - the attack
+        // grunt rolls in the first pool that has anyone, not in each.
+        const swing = {};
+        if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, makeInView(proj, view, multiply), guardHitSound, { spareDefenders: true, swing })) {
           // X-slice: encounter foes resolve after the watch, before civilians
-          if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
+          if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, makeInView(proj, view, multiply), guardHitSound, { swing })) {
             tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);
             surfacePlayer();
-          } else if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, makeInView(proj, view, multiply), guardHitSound, { defendersOnly: true }))
+          } else if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, makeInView(proj, view, multiply), guardHitSound, { defendersOnly: true, swing }))
           cityGuards.resolveCivilianHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, _guardPool(),
-            { onMurder: () => _crimeResponse(), onHitSound: guardHitSound }).then((r) => {
+            { onMurder: () => _crimeResponse(), onHitSound: guardHitSound, swing }).then((r) => {
             if (r?.carriedHit) tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);
             if (r) surfacePlayer();
             // ROAD-B: WeaponManager.WeaponEnvDamage (:474-477) - a

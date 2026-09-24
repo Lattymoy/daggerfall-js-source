@@ -169,10 +169,13 @@ export function activationTargets(objects, distance = DOOR_ACTIVATION_DISTANCE) 
  *  doesnt make a sound"): the action objects DFU gives a MeshCollider - a
  *  placed MODEL carrying a record (AddStandaloneModel ->
  *  CreateDaggerfallMeshGameObject, GameObjectHelper.cs:196-206): movers,
- *  and the relays/effects minted from a placement (modelIdNum set). A door
- *  is a BoxCollider sized to its bounds (RDBLayout.cs:1147-1155) and an
- *  acting flat a BoxCollider (RDBLayout.cs:977-987): their box IS the hit. */
+ *  special doors (a standalone model too - AUDIT DISC17), and the
+ *  relays/effects minted from a placement (modelIdNum set). An ACTION
+ *  door is a BoxCollider sized to its bounds (RDBLayout.cs:1147-1155) and
+ *  an acting flat a BoxCollider (RDBLayout.cs:977-987): their box IS the
+ *  hit. */
 export const hasMeshCollider = (o) => !!o && (o.kind === 'action'
+  || (o.kind === 'door' && o.special === true)
   || ((o.kind === 'relay' || o.kind === 'effect') && o.modelIdNum != null));
 
 /**

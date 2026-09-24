@@ -24,7 +24,9 @@ guard interaction"*.
 
 Every report was reproduced in node before it was touched, except where a
 section says it could not be. The pins are `test/disc17.test.js`, and the
-mutant set is `tools/mutants/disc17.json`.
+mutant set is `tools/mutants/disc17.json`. The batch's audit (AUDIT DISC17,
+the last section) has its own: `test/auditdisc17.test.js` and
+`tools/mutants/auditdisc17.json`.
 
 ---
 
@@ -63,8 +65,12 @@ shift.
   The cure's `ended` is its `forcedRoundsRemaining = 0`, and the entry
   leaves the list at the next round, as DFU's bundle does.
 - `restorePlayer` sets the flag on every racial-override and infection entry
-  it restores. The entries were saved whole, so a save written before this
-  fix (the reporters' own) gives the player the curse back.
+  it restores. A save written before the curse's first load still holds the
+  entry whole, and the flag gives that save its curse back. A save written
+  after that load holds no entry to mend: the old build had already dropped
+  it, and every later save (the exit autosave's overwrite of every slot
+  among them) was written without it. Those saves come back mortal, and the
+  audit clears what the dropped curse left behind (AUDIT DISC17, S1).
 
 This is a 1:1 correction; no departure.
 
@@ -189,10 +195,12 @@ what that player saw.
   elsewhere already, so the lazy gate never saved their bytes.
 - The failure log says what really fails.
 - A stale chunk found mid-session is said on screen
-  (`STALE_CHUNK_IN_PLAY_TEXT`, "Reload the page to fix it"). There is no
+  (`STALE_CHUNK_IN_PLAY_TEXT`, "Game updated - reload the page for
+  enemies.", on the level's first frame for 12 seconds). There is no
   automatic reload here, because that would throw away unsaved progress.
-- A pin holds the law: every module the foe block loads lazily must have a
-  static importer somewhere under `src/`.
+- A pin holds the law: every module the foe block loads lazily is in the
+  world host's static closure, so the page already holds it. The standalone
+  `?dungeon` host still loads five of them late (AUDIT DISC17, D2).
 
 **Not changed, and Mac's call: a hit chance with no floor.** Two mods ship on
 by default (MO1): Physical Combat And Armor Overhaul and Meaner Monsters.
@@ -248,9 +256,9 @@ In DFU the corridor's collider is its own mesh, open at the doorway
 (RDBLayout.cs:1147-1155). The ray and the sphere cast meet the door.
 
 **Fix.** CASTLE1's rule, extended to a box the ray merely enters.
-- `hasMeshCollider` names the targets DFU gives a MeshCollider: movers, and
-  relays and effects minted from a placed model. A door's and an acting
-  flat's box IS their collider.
+- `hasMeshCollider` names the targets DFU gives a MeshCollider: movers,
+  special doors, and relays and effects minted from a placed model. An
+  action door's and an acting flat's box IS their collider.
 - When such a box is entered but the first surface the ray meets is ANOTHER
   target's own bucket, the ray never struck this object. The press
   (`nearestActivatableHit`) and the swing (`envAttack`) both skip it.
@@ -261,16 +269,18 @@ In DFU the corridor's collider is its own mesh, open at the doorway
 in the repo, through the port's own layout, action system, collider, pick
 and swing:
 - From 3 m, 2 m, 1.2 m and 0.6 m out, before the fix the press picked the
-  relay and the swing made no sound. After it, the lock speaks and every
-  swing rings.
+  relay and the swing made no sound. After it, the lock speaks from all
+  four, and the swing rings from every one inside the weapon's 2.5 m reach
+  (at 3 m the door's box is 3.05 m off, and no swing reaches it in DFU
+  either).
 - A scan of all 187 dungeon blocks, every door head-on from both sides,
   found 22 presses and 101 swings stolen the same way. The Scourg block and
   the castle blocks of Daggerfall, Sentinel, Wayrest and Orsinium were among
   them. The fix leaves 0, with 0 regressions.
 
 The pins rebuild the Scourg geometry synthetically. This is a 1:1
-correction that narrows the port's recorded box-picking departure back
-toward DFU's single raycast. Not seen in a browser.
+correction that narrows the port's box picking back toward DFU's single
+raycast. Not seen in a browser.
 
 ## DISC17-F: the watch and the town (report 7, and Mac's "enhance guard interaction")
 
@@ -304,6 +314,13 @@ rect of every location in its pixel and the eight around it (a rect widened
 by a block can cross its own pixel's edge). The chunk roll asks it for the
 player, and the placement rejects an anchor or a member inside any rect.
 
+It covers cities, not hamlets (AUDIT DISC17). The roll fires on the frame
+the player crosses into a pixel, at its edge, and a town's widened rect
+reaches that edge only for a location six or more blocks wide on that axis:
+a 1x1 to 5x5 location starts 256 down to 51 units inside it. So a camp at a
+small town's pixel edge is still legal, as it always was, and can follow
+the player in. The town watch is the answer there.
+
 **Enhancement: the watch defends the town** (`systems/townWatch.js`,
 `scenes/cityGuards.js` `summonDefenders` / `dismissDefenders`, the Features
 row `town-watch`, on by default). DFU's combat watch exists only for a
@@ -315,24 +332,141 @@ The port's own rule:
   and a peer's puppets never count.
 - **After.** DFU's witnessed-crime arrival countdown, Random.Range(5, 11)
   seconds. A player who leaves the pixel inside the window is not followed.
-- **Where.** The crime response's own places: the wandering guards within
-  77.5 of the player first (converted where they stand), else 2-5 at the
-  spawner's band, out of view. They share the watch's cap of five.
+- **Where.** Two of the crime response's places: the wandering guards
+  within 77.5 of the player first (converted where they stand), else 2-5 at
+  the spawner's band, out of view. Not its third, the townsperson behind the
+  player (PlayerEntity.cs:675-680): a defender is a guard who came. They
+  share the watch's cap of five, and a summon still loading counts.
 - **As what.** The player's ALLIES: team PlayerAlly on both per-instance
   fields, the allied summon's shape, sent at the nearest threat. DFU's own
   target chain then picks the monster and never the player, and the watch's
   existing guard-vs-monster melee fights it.
 - **Until.** Ten quiet seconds, the player leaving town, or the switch going
-  off, and they walk away with no body. They are not saved; a load that
-  restores the monsters raises the answer again.
-- **A crime** (a blow on a defender is one) makes them the ordinary watch
-  on the spot, hunting the player.
+  off, and they walk away with no body. A monster fighting a defender is
+  not quiet. They are not saved; a load that restores the monsters raises
+  the answer again.
+- **How often.** At most three squads an incident; the count starts over
+  once the town has been quiet ten seconds. A defender a monster kills
+  carries nothing.
+- **A crime** makes them the ordinary watch on the spot, hunting the player.
+  A blow on a defender is Assault, the crime a blow on the wandering guard
+  he was would be, and it enlists the whole squad at once.
 - **The player's swing** spares them. The host resolves the watch's pool
   before the monsters', so a defender in reach beside the centaur took the
   swing meant for it. Friendly protection now runs across the two pools:
   the watch, then the monsters, then a defender alone, then the townsfolk.
+  With MeleeAttackFriendlyProtection off, the first pass strikes them like
+  anything else.
+- **The player's spells, shafts and thrown torches** pass them by: the
+  blast, the area, the missile and the touch, the arrow, the torch. A
+  monster's still land.
 
-Port-Ledger A records the departure: THE WATCH DEFENDS THE TOWN. Online,
-each player's own monsters bring that player's defenders, who ride the
-watch's stream as puppets. The wire's watch record carries no team, so a
-peer sees a watchman. Not seen in a browser.
+Port-Ledger A records the departure: THE WATCH DEFENDS THE TOWN. Only the
+world host runs it; the fixed-city host (`exterior.js`) has no watch.
+Online, each player's own monsters bring that player's defenders, who ride
+the watch's stream as puppets, and that has limits (AUDIT DISC17, recorded):
+- the wire's watch record carries no team, so a peer sees a hostile
+  watchman, with no ally protection: their swing at my monster can land on
+  my defender;
+- another player's monster hunting me brings no defenders unless its owner
+  is in the town too, and my defenders never engage it (a puppet is no
+  target).
+
+Not seen in a browser.
+
+---
+
+## AUDIT DISC17
+
+Mac: *"Do an audit on this"*. Four lenses read the batch: the watch, the
+saves, the Light / chunk / door fixes, and the pins themselves. Each
+confirmed finding was reproduced in node, fixed at its root and pinned in
+`test/auditdisc17.test.js`; the mutants are `tools/mutants/auditdisc17.json`.
+
+**The watch (F).**
+- **W1, HIGH: the squad walked away mid-melee.** `isTownThreat` counted a
+  monster only while it hunted the player. Once it turned on a defender
+  (the player loses the tie), the town read quiet and the squad was
+  dismissed ten seconds later, over and over. A monster fighting a live
+  defender is a threat now.
+- **W2, HIGH: a blow on a defender levied no crime and made a rogue.** The
+  player's door reset `team` alone: the struck defender hunted the player
+  for a second, then the other defenders, and read as a standing watch with
+  no crime, which turned every wandering guard in town. A blow on a
+  defender is Assault now (`handleAttackFromPlayer`), the whole squad is
+  enlisted at once, and `anyWatchStanding` never counts a defender.
+- **W3, HIGH: an armour farm.** A defender a monster killed kept the
+  watch's kit, and a monster the squad could not beat drew a fresh one
+  every countdown: 56 bodies and 70 items off one centaur in two minutes.
+  Such a body carries nothing now (the WATCH1 peer-kill law), and an
+  incident brings at most three squads (`TOWN_WATCH_MAX_WAVES`).
+- **W4: the player's own harm struck them.** A Fireball at the centaur the
+  squad was fighting hit the squad. The player's blast, area, missile,
+  touch, arrow and thrown torch pass defenders by now; a monster's still
+  land (`hostMagic.js` `sparedFromPlayer`, `arrowFlight.js`, the torch pool).
+- **W5, LOW.** The attack grunt rolled once per pool, up to three times a
+  swing; every host that offers one swing to several pools hands them one
+  token now. The cross-pool sparing ignored MeleeAttackFriendlyProtection;
+  it honours it. A summon still loading read as no defenders, so a cold
+  load could summon twice past the cap; the in-flight mints count.
+- **W6: the host wiring was unpinned.** Six one-token breaks of
+  `_townWatchFrame` survived the suite. The frame is
+  `townWatch.runTownWatchFrame` now, run by the pins, and the host's
+  remaining lines are pinned whole.
+- Doc corrections: the camp fix covers cities only; the online limits and
+  the unwired fixed-city host are written down (DISC17-F above).
+
+**The saves (A, C).**
+- **S1, HIGH: the repair missed the saves the bug had already rewritten.**
+  Those carry no curse but kept its residue: Silver as the lowest metal
+  that hurts the player (a mortal immune to iron and steel), and the
+  curse's spells, which cannot be deleted and refuse to cast. A save with
+  no live curse and none pending loads without both, the cure's own two
+  lines. The overclaims ("gives the player the curse back") are corrected.
+- **S2: an exit autosave under the vampire's death video stranded the
+  infection** for ever once DISC17-A kept it across loads: the close never
+  comes in the loaded game. A live, undeployed infection restores
+  `deathScheduled` false, and the video comes again.
+- **S3, LOW: the exit autosave named a namesake's slots** (by name, where
+  `saveSlot` matches by id) and minted them for this character. It names
+  this character's own now, by id, as `findSave` does.
+- **S4, LOW: the revival left fatigue at zero,** so a player who died of
+  exhaustion collapsed again beside the same foes. It restores the same
+  fraction of fatigue when there is none.
+
+**The Light, the chunk and the door (B, D, E).**
+- **E1, MED: the swing's first-surface cast stopped at the reach.** A door
+  whose box is inside the 2.5 m reach can have its mesh just past it
+  (Orsinium, door 12631 behind relay 12080: box 2.35 m, mesh 2.57 m), and
+  the relay kept the swing. The cast runs as far as the press's now.
+- **E2: pins for the clauses the batch left open** (a mover met at its own
+  mesh, a flat lever before a door), and special doors joined
+  `hasMeshCollider` (standalone models in DFU; no corpus case changes).
+- **D1, LOW: the stale-chunk notice was unlikely to be read.** Set mid-build
+  at 1.5 s, it expired before the level drew, and its 143 characters ran
+  off the classic panel. It is said on the level's first frame, for 12 s,
+  in 43 characters.
+- **D2, LOW: the pin's law was too loose.** "Some file under `src/` imports
+  it" is not "the page holds it". The pin now walks the world host's static
+  closure. The MT-iv comment that a static import would defeat the lazy
+  gate is corrected: the gate saved nothing.
+- **B1, LOW: the candle burned the dungeon's shared colour** (0.8 grey, or
+  the lane's flame). The dungeon arm rides the per-light colour channel now,
+  as the interior arm does: the candle burns MagicCandle.prefab's white and
+  every other light keeps the dungeon's colour. The standalone `?dungeon`
+  host keeps the shared colour.
+
+**The pins.** A pin that could not fail ("standing defenders are not
+summoned twice" ticked once, where a countdown needs many) and a
+tautological one (the hint compared with its own constant) are rewritten;
+the old-save infection repair, the action and effect arms of
+`hasMeshCollider`, the QuickSave in the exit list and the summon's fallback,
+townsperson and range arms are pinned. The cite shifter was blind to
+`world.js` (over git's default 1 MiB buffer; `tools/citeShift.mjs` now
+reads with a 256 MiB buffer and fails loud), and the cites it missed were
+moved. Four quotations it had rewritten are restored.
+
+**Recorded, not changed.** Two other entries still carry no `permanent`
+flag, so a load drops them too: the survival needs' (`needs.js`), rewritten
+every minute, and the Mace of Molag Bal's bonus (`artifactEffects.js`),
+which decays within twelve minutes anyway.

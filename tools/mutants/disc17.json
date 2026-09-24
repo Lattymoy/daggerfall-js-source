@@ -47,8 +47,8 @@
   {
     "name": "DISC17-B-dungeon-reads-world-candle",
     "file": "src/scenes/worldModes.js",
-    "old": "          dungeonCtx.candleLight(), playerTorchLight(",
-    "new": "          magic?.candleLight(), playerTorchLight(",
+    "old": "        dungeonCtx.candleLight(), _dgTint(playerTorchLight(",
+    "new": "        magic?.candleLight(), _dgTint(playerTorchLight(",
     "tests": [
       "test/disc17.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "DISC17-F-watch-follows-a-player-who-left",
     "file": "src/systems/townWatch.js",
-    "old": "return locationKey === countdownKey ? 'summon' : null;",
-    "new": "return 'summon';",
+    "old": "          if (locationKey !== countdownKey) return null;\n",
+    "new": "",
     "tests": [
       "test/disc17.test.js"
     ]
@@ -155,7 +155,7 @@
   {
     "name": "DISC17-F-threat-need-not-hunt",
     "file": "src/systems/townWatch.js",
-    "old": "  if (!isPlayerTarget(f.ai.target)) return false;\n",
+    "old": "  if (!isPlayerTarget(t) && !(t?.defender === true && !t.dead)) return false;\n",
     "new": "",
     "tests": [
       "test/disc17.test.js"
@@ -245,7 +245,7 @@
   {
     "name": "DISC17-F-swing-takes-the-defender-first",
     "file": "src/scenes/cityGuards.js",
-    "old": "(defendersOnly ? g.defender : !(spareDefenders && g.defender))",
+    "old": "(defendersOnly ? g.defender : !(spareDefenders && protect && g.defender))",
     "new": "(defendersOnly ? g.defender : true)",
     "tests": [
       "test/disc17.test.js"
@@ -272,8 +272,8 @@
   {
     "name": "DISC17-F-host-swing-order",
     "file": "src/scenes/world.js",
-    "old": "guardHitSound, { spareDefenders: true })) {",
-    "new": "guardHitSound)) {",
+    "old": "guardHitSound, { spareDefenders: true, swing })) {",
+    "new": "guardHitSound, { swing })) {",
     "tests": [
       "test/disc17.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "DISC17-D-stale-chunk-swallowed",
     "file": "src/scenes/dungeonContext.js",
-    "old": "     if (isStaleChunk(err)) setMidScreenText(STALE_CHUNK_IN_PLAY_TEXT);\n",
-    "new": "",
+    "old": "     if (isStaleChunk(err)) _staleChunkNotice = true;",
+    "new": "     if (isStaleChunk(err)) void 0;",
     "tests": [
       "test/disc17.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "DISC17-D-in-play-text-says-nothing-to-do",
     "file": "src/systems/staleChunk.js",
-    "old": "  + 'Reload the page to fix it.';",
-    "new": "  + '';",
+    "old": "export const STALE_CHUNK_IN_PLAY_TEXT = 'Game updated - reload the page for enemies.';",
+    "new": "export const STALE_CHUNK_IN_PLAY_TEXT = 'Game updated.';",
     "tests": [
       "test/disc17.test.js"
     ]

@@ -25,8 +25,8 @@
 import './modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, dirname, resolve } from 'node:path';
+import { readFileSync, existsSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createLycanthropyCurse, liveLycanthropy, cureLycanthropy } from '../src/systems/lycanthropy.js';
 import { createVampirismCurse, liveVampirism, cureVampirism } from '../src/systems/vampirism.js';
@@ -142,8 +142,8 @@ test('DISC17-B: the world host\'s dungeon frame lights the DUNGEON engine\'s can
   const at = src.indexOf("if (mode === 'dungeon') {\n      if (pendingDungeonExit)");   // the frame's own branch, not the one-line dispatches
   const branch = src.slice(at, src.indexOf('\n    }\n', at));
   assert.ok(at > 0 && branch.includes('dungeonCtx.drawFoes('), 'the branch was found whole');
-  const lights = branch.slice(branch.indexOf('withPlayerLights('));
-  assert.match(lights.slice(0, lights.indexOf('renderer.setClearColor')), /^withPlayerLights\(nearestLights\([^\n]*\n\s*dungeonCtx\.candleLight\(\), playerTorchLight\(/);
+  const lights = branch.slice(branch.indexOf('const _dgLit = withPlayerLights('));
+  assert.match(lights.slice(0, lights.indexOf('renderer.setClearColor')), /^const _dgLit = withPlayerLights\(\n(?:\s*\/\/[^\n]*\n)*\s*nearestLights\([^\n]*\n\s*dungeonCtx\.candleLight\(\), _dgTint\(playerTorchLight\(/);   // AUDIT DISC17: the pair channel, the candle untinted
   assert.ok(!branch.includes('magic?.candleLight()') && !branch.includes('magic.candleLight()'), 'this host\'s own engine is not updated underground');
   assert.ok(!/\bmagic\??\.update\(/.test(branch), 'and nothing here updates it - so its candle is never the dungeon\'s');
   assert.match(rd('src/scenes/dungeonContext.js'), /candleLight: \(\) => magic\.candleLight\(\),/, 'the context hands out its own engine\'s candle');
@@ -204,7 +204,12 @@ test('DISC17-C: the online exit autosave writes every slot of a living player an
 });
 
 test('DISC17-C: an online page\'s death screen says its respawn; offline keeps the full hint', () => {
-  withSearch('?online=1&load=1', () => assert.equal(new DeathScreen({ eyeHeight: 1.6, capsuleHeight: 1.8 }).hint, ONLINE_DEATH_HINT));
+  withSearch('?online=1&load=1', () => {
+    const hint = new DeathScreen({ eyeHeight: 1.6, capsuleHeight: 1.8 }).hint;
+    assert.equal(hint, ONLINE_DEATH_HINT);
+    assert.match(hint, /respawn/i, 'AUDIT DISC17: the words themselves - the constant set back to the old hint must fail here');
+    assert.doesNotMatch(hint, /F11/);
+  });
   withSearch('?load=1', () => assert.equal(new DeathScreen({ eyeHeight: 1.6, capsuleHeight: 1.8 }).hint, 'ENTER end   F11 load'));
 });
 
@@ -217,7 +222,7 @@ test('DISC17-F: the watch comes to a monster hunting the player in town after th
   while (!act && t < 30) { act = w.tick(0.25, TOWN); t += 0.25; }
   assert.equal(act, 'summon');
   assert.equal(t, 8, 'the witnessed-crime arrival, to the second');
-  assert.equal(w.tick(0.25, { ...TOWN, defenders: 3 }), null, 'standing defenders are not summoned twice');
+  for (let i = 0; i < 80; i++) assert.notEqual(w.tick(0.25, { ...TOWN, defenders: 3 }), 'summon', 'standing defenders are not summoned twice - through a whole countdown (AUDIT DISC17: one tick could not tell)');
   const gone = createTownWatch({ rand: () => 0 });
   gone.tick(0, TOWN);
   assert.equal(gone.tick(6, { ...TOWN, locationKey: '4,12' }), null, 'the player left inside the window: nobody comes (PlayerEntity.cs:355-359)');
@@ -337,9 +342,9 @@ test('DISC17-F: the player\'s swing spares a defender while the monsters\' pool 
 test('DISC17-F by source: the host runs the town watch after the pools move, resolves the swing watch -> monsters -> defenders -> townsfolk, and keeps camps out of every location\'s rect', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /exteriorFoes\.update\(dt, _pf, cam\.pos, _foeSenses\(\)\);[^\n]*\n\s*livePersonBatches\.push\(\.\.\.exteriorFoes\.batches\(\)\);\n\s*if \(playerSpawned\) _townWatchFrame\(dt\);/);
-  assert.match(w, /enabled: getPref\('townWatch'\) !== false && !isTransformedLycanthrope\(playerEntity\),\n\s*playerInTown: inTown, crime: !!playerEntity\.crimeCommitted,/);
-  const swingAt = w.indexOf("guardHitSound, { spareDefenders: true })) {");
-  const order = ['guardHitSound, { spareDefenders: true })) {', 'if (exteriorFoes.resolvePlayerHit(', "guardHitSound, { defendersOnly: true }))", 'cityGuards.resolveCivilianHit('].map((k) => w.indexOf(k, swingAt));
+  assert.match(w, /enabled: getPref\('townWatch'\) !== false && !isTransformedLycanthrope\(playerEntity\),\n\s*inTown: _isPlayerInTownStrict\(\), crime: !!playerEntity\.crimeCommitted,/);   // AUDIT DISC17: the whole frame is townWatch.runTownWatchFrame, pinned there
+  const swingAt = w.indexOf("guardHitSound, { spareDefenders: true, swing })) {");
+  const order = ['guardHitSound, { spareDefenders: true, swing })) {', 'if (exteriorFoes.resolvePlayerHit(', "guardHitSound, { defendersOnly: true, swing }))", 'cityGuards.resolveCivilianHit('].map((k) => w.indexOf(k, swingAt));
   assert.ok(swingAt > 0 && order.every((i, k) => i >= 0 && (k === 0 || i > order[k - 1])), `the four passes in order: ${order}`);
   assert.match(w, /inside: false, inLocationRect: _inAnyLocationRect\(walkMode \? player\.pos : cam\.pos\),/, 'the chunk roll asks the pixel just entered');
   assert.match(w, /anchor = placeFoeFreely\(anchorEnv, [^\n]*\n\s*if \(anchor && _inAnyLocationRect\(\[anchor\.x, anchor\.y, anchor\.z\]\)\) anchor = null;/, 'the camp is never pitched in a town');
@@ -400,38 +405,40 @@ test('DISC17-E: the corridor piece still owns what its own geometry meets - a ra
 
 // ═══ D: the enemies no blow could reach ═══════════════════════════════════════════════════════════════════════════
 const SRC_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../src');
-/** Every module some file under src/ imports STATICALLY - a chunk the page has already fetched when anything asks. */
-function staticallyImported() {
-  const out = new Set();
-  const walk = (dir) => {
-    for (const f of readdirSync(dir)) {
-      const p = join(dir, f);
-      if (statSync(p).isDirectory()) { walk(p); continue; }
-      if (!f.endsWith('.js')) continue;
-      for (const m of readFileSync(p, 'utf8').matchAll(/^(?:import|export)\s[^;]*?\sfrom\s'(\.[^']+)'/gm)) out.add(resolve(dirname(p), m[1]));
-    }
-  };
-  walk(SRC_ROOT);
-  return out;
+/** The STATIC closure of a host module - every module on the page once that host has loaded (AUDIT DISC17: the first cut
+ *  took "some file under src/ imports it", which is not "the page holds it" - the standalone ?dungeon host still loads
+ *  five of the foe block's modules late). */
+function staticClosure(entry) {
+  const seen = new Set();
+  const stack = [resolve(SRC_ROOT, entry)];
+  while (stack.length) {
+    const p = stack.pop();
+    if (seen.has(p) || !existsSync(p)) continue;
+    seen.add(p);
+    const text = readFileSync(p, 'utf8');
+    for (const m of text.matchAll(/^(?:import|export)\s[^;]*?\sfrom\s'(\.[^']+)'/gm)) stack.push(resolve(dirname(p), m[1]));
+    for (const m of text.matchAll(/^import\s'(\.[^']+)'/gm)) stack.push(resolve(dirname(p), m[1]));
+  }
+  return seen;
 }
 
-test('DISC17-D: every module the dungeon\'s foe subsystem loads lazily is one the page already holds - no chunk there is lazy-only, so no deploy can delete it under an open tab', () => {
+test('DISC17-D: every module the dungeon\'s foe subsystem loads lazily is one the world host\'s page already holds - no chunk there is lazy-only, so no deploy can delete it under an open tab', () => {
   const dc = rd('src/scenes/dungeonContext.js');
   const at = dc.indexOf('if (opts.foes && palette) {');
   const block = dc.slice(at, dc.indexOf('} catch (err) {', at));
   const lazy = [...block.matchAll(/import\('(\.[^']+)'\)/g)].map((m) => resolve(SRC_ROOT, 'scenes', m[1]));
   assert.ok(at > 0 && lazy.length >= 8, `the foe block's lazy imports were found (${lazy.length})`);
-  const held = staticallyImported();
+  const held = staticClosure('scenes/world.js');
   const lazyOnly = lazy.filter((p) => !held.has(p)).map((p) => p.slice(SRC_ROOT.length + 1));
   assert.deepEqual(lazyOnly, [], 'a lazy-only chunk in the foe block is a dungeon of flats after the next deploy');
-  assert.ok(held.has(resolve(SRC_ROOT, 'ai/enhancedMotor.js')), 'the enhanced motor is imported statically');
+  assert.ok(staticClosure('scenes/dungeonContext.js').has(resolve(SRC_ROOT, 'ai/enhancedMotor.js')), 'the enhanced motor is the context\'s own static import');
 });
 
 test('DISC17-D: a chunk gone mid-session is said on the screen, not swallowed - and the log names what really failed', () => {
   assert.equal(isStaleChunk(new TypeError('Failed to fetch dynamically imported module: https://daggerfalljs.dev/play/assets/enhancedMotor-CPTnjkkD.js')), true);
-  assert.match(STALE_CHUNK_IN_PLAY_TEXT, /Reload the page/);
+  assert.match(STALE_CHUNK_IN_PLAY_TEXT, /reload the page/i);
   const dc = rd('src/scenes/dungeonContext.js');
   const c = dc.slice(dc.indexOf('} catch (err) {', dc.indexOf('if (opts.foes && palette) {')));
-  assert.match(c.slice(0, 900), /if \(isStaleChunk\(err\)\) setMidScreenText\(STALE_CHUNK_IN_PLAY_TEXT\);/);
-  assert.match(c.slice(0, 900), /the dungeon builds with no live enemies/);
+  assert.match(c.slice(0, 1200), /if \(isStaleChunk\(err\)\) _staleChunkNotice = true;/);   // AUDIT DISC17: said on the level's first frame (drawFoes), auditdisc17's pin
+  assert.match(c.slice(0, 1200), /the dungeon builds with no live enemies/);
 });

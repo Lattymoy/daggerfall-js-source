@@ -9,7 +9,7 @@
 //
 // WHAT DFU DOES, AND WHY THIS IS NOT IT. DFU's combat watch exists
 // only during a crime: the Knight_CityWatch enemy is spawned by
-// SpawnCityGuards (PlayerEntity.cs:651-689) and destroyed the moment the
+// SpawnCityGuards (PlayerEntity.cs:621-745) and destroyed the moment the
 // crime clears (EnemyEntity.cs:184-191). A wandering guard NPC is
 // scenery, and enemy senses skip civilians (EnemySenses.cs:738-749). So
 // with no crime there is no watch at all, and nothing in DFU puts a
@@ -21,20 +21,29 @@
 // a town's widened rect (IsPlayerInTown's own rect, PlayerGPS.cs:504-527
 // and :671-691) and the player holds no crime, the watch comes - after
 // DFU's own arrival countdown for a witnessed crime, Random.Range(5, 11)
-// seconds (PlayerEntity.cs:739-741), and at the same place the crime
-// response would put them (the wandering guards near the player first,
-// else 2-5 at the spawner's band). They come as the player's ALLIES
-// (team PlayerAlly, the allied summon's shape, exteriorFoes.js), so
-// DFU's own target chain (EnemySenses.GetTargets, characters/
-// enemyTargets.js) sends them at the monster and never at the player,
-// and the existing guard-vs-monster melee resolves the fight. They walk
-// away once the town is quiet. A crime turns them into the ordinary
-// watch on the spot.
+// seconds (PlayerEntity.cs:739-741), and from two of the crime
+// response's places (the wandering guards near the player first, else
+// 2-5 at the spawner's band; not its third, the townsperson behind the
+// player, :675-680). They come as the player's ALLIES (team PlayerAlly,
+// the allied summon's shape, exteriorFoes.js), so DFU's own target chain
+// (EnemySenses.GetTargets, characters/enemyTargets.js) sends them at the
+// monster and never at the player, and the existing guard-vs-monster
+// melee resolves the fight. They walk away once the town is quiet. A
+// crime turns them into the ordinary watch on the spot - and a blow on
+// one is that crime (cityGuards.js handleAttackFromPlayer).
 //
-// THIS MODULE IS THE DECISION ONLY - pure, no scene, no clock of its
-// own - so the pins can drive it. The guard pool mints and dismisses
-// (scenes/cityGuards.js summonDefenders / dismissDefenders); the host
-// reads the town and the threats (scenes/world.js).
+// AUDIT DISC17 (the watch lens) closed four holes in the first cut: the
+// squad walked away mid-melee (a monster fighting a defender read as
+// quiet), a struck defender went rogue with no crime, the town sent a
+// fresh armoured squad for every one a monster killed (an armour farm),
+// and the player's own splash and shafts struck the defenders. See
+// isTownThreat, TOWN_WATCH_MAX_WAVES and cityGuards.js.
+//
+// THIS MODULE IS THE DECISION AND THE HOST'S FRAME - pure, no scene,
+// no clock of its own - so the pins can drive both. The guard pool mints
+// and dismisses (scenes/cityGuards.js summonDefenders / dismissDefenders);
+// the host answers where the town is (scenes/world.js, the one host that
+// runs it: the fixed-city host, exterior.js, has no watch).
 // ═══════════════════════════════════════════════════════════════════
 
 import { isPlayerTarget } from '../characters/enemyTargets.js';
@@ -48,22 +57,33 @@ export const TOWN_WATCH_ARRIVAL_SPAN = 6;
  *  port's own number: long enough that a monster stepping out of sight
  *  for a moment does not send them home. */
 export const TOWN_WATCH_STAND_DOWN_SECONDS = 10;
+/** How many defender waves one incident brings. The port's own number.
+ *  Without it a monster the defenders could not beat drew a fresh squad
+ *  every countdown for as long as it stood - sixteen waves in two
+ *  minutes against one centaur (AUDIT DISC17). The count starts over
+ *  once the town has been quiet a stand-down's length. */
+export const TOWN_WATCH_MAX_WAVES = 3;
 
 /**
- * A foe that brings the watch: alive and this client's own (a peer's
- * puppet is its owner's business, WORLD6b), hostile, not the player's
- * ally, not a quest's foe (a quest foe is kept out of every other
- * enemy's target list too, EnemySenses.cs:806-815), not a watchman, and
- * HUNTING a player - not a rat minding its own business at the edge of
- * town - inside the town's widened rect (`inTownRect`, the host's test).
+ * A foe that brings the watch, and keeps it: alive and this client's own
+ * (a peer's puppet is its owner's business, WORLD6b), hostile, not the
+ * player's ally, not a quest's foe (a quest foe is kept out of every
+ * other enemy's target list too, EnemySenses.cs:806-815), and HUNTING a
+ * player or a standing defender - not a rat minding its own business at
+ * the edge of town - inside the town's widened rect (`inTownRect`, the
+ * host's test). The defender half is the fight the watch came for: a
+ * monster that turns from the player onto a defender is still that
+ * fight, and counting the player's hunters alone read the town quiet
+ * the moment it turned - the squad walked away mid-melee, every ten
+ * seconds (AUDIT DISC17).
  */
-export function isTownThreat(f, { inTownRect, isWatchman = () => false } = {}) {
+export function isTownThreat(f, { inTownRect } = {}) {
   if (!f || f.dead || f.puppet || !f.ai || !f.entity) return false;
   if (f.isQuestFoe) return false;
   if (!f.ai.isHostile) return false;
   if (f.entity.team === 'PlayerAlly') return false;
-  if (isWatchman(f)) return false;
-  if (!isPlayerTarget(f.ai.target)) return false;
+  const t = f.ai.target;
+  if (!isPlayerTarget(t) && !(t?.defender === true && !t.dead)) return false;
   return !!inTownRect?.(f);
 }
 
@@ -81,14 +101,23 @@ export function isTownThreat(f, { inTownRect, isWatchman = () => false } = {}) {
  *   locationKey   the location the countdown was started in - a player
  *                 who leaves inside the window is not followed, the
  *                 countdown's own law (PlayerEntity.cs:355-359)
+ *
+ * An INCIDENT is the time a threat stands; it ends once the town has
+ * been quiet TOWN_WATCH_STAND_DOWN_SECONDS, in town or out, and brings
+ * at most TOWN_WATCH_MAX_WAVES waves.
  */
 export function createTownWatch({ rand = Math.random } = {}) {
   let countdown = 0;
   let countdownKey = null;
   let calm = 0;
+  let quiet = 0;
+  let waves = 0;
   return {
     get countdown() { return countdown; },
+    get waves() { return waves; },
     tick(dt, { enabled = true, playerInTown = false, crime = false, threats = 0, defenders = 0, locationKey = null } = {}) {
+      if (threats > 0) quiet = 0;
+      else if ((quiet += dt) >= TOWN_WATCH_STAND_DOWN_SECONDS) waves = 0;   // the incident is over
       if (crime) { countdown = 0; calm = 0; return null; }   // the pool enlists them; nothing to decide
       if (!enabled || !playerInTown) {
         countdown = 0; calm = 0;
@@ -101,8 +130,11 @@ export function createTownWatch({ rand = Math.random } = {}) {
           countdown -= dt;
           if (countdown > 0) return null;
           countdown = 0;
-          return locationKey === countdownKey ? 'summon' : null;
+          if (locationKey !== countdownKey) return null;
+          waves++;
+          return 'summon';
         }
+        if (waves >= TOWN_WATCH_MAX_WAVES) return null;   // the town has sent all it will this incident
         countdown = TOWN_WATCH_ARRIVAL_MIN_SECONDS + Math.floor(rand() * TOWN_WATCH_ARRIVAL_SPAN);
         countdownKey = locationKey;
         return null;
@@ -115,4 +147,31 @@ export function createTownWatch({ rand = Math.random } = {}) {
       return 'dismiss';
     },
   };
+}
+
+/**
+ * One frame of the town watch in a host, after its pools moved - all the
+ * host does with the decision, here so the pins run it rather than read
+ * it (AUDIT DISC17: six one-token breaks of the inline copy survived the
+ * whole suite). The host answers where the town is:
+ *
+ *   enabled, inTown, crime, locationKey   as createTownWatch's tick
+ *   foes          the host's monsters, read for isTownThreat
+ *   inTownRect    the host's rect test for a foe's feet
+ *   guards        the watch's pool (cityGuards.js): defenderCount,
+ *                 summonDefenders, dismissDefenders
+ *   playerFeet, playerFwd   where the arrival is placed from
+ *   pool          the host's wandering guard NPCs, read only on 'summon'
+ *
+ * Answers the act.
+ */
+export function runTownWatchFrame(watch, dt, { enabled, inTown, crime, locationKey, foes = [], inTownRect, guards, playerFeet, playerFwd, pool = () => [] }) {
+  const threats = inTown ? foes.filter((f) => isTownThreat(f, { inTownRect })) : [];
+  const act = watch.tick(dt, {
+    enabled, playerInTown: inTown, crime,
+    threats: threats.length, defenders: guards.defenderCount(), locationKey,
+  });
+  if (act === 'summon') guards.summonDefenders({ playerFeet, playerFwd, pool: pool(), threats }).catch((e) => console.error('[guards]', e));
+  else if (act === 'dismiss') guards.dismissDefenders();
+  return act;
 }
