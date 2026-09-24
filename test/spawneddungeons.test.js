@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { SPAWN_CHANCE, SALT_MAX, WORLD_SALT, hash32, spawnsDungeon, spawnedMapId, pickTemplate, synthesizeDungeonLocation, spawnTemplates } from '../src/world/spawnedDungeons.js';
+import { SPAWN_CHANCE, SALT_MAX, WORLD_SALT, hash32, spawnsDungeon, spawnedMapId, pickTemplate, synthesizeDungeonLocation, spawnTemplates, SPAWN_CLEARANCE_M, BLOCK_M, spawnClearance, spawnedLocationCentreLocal, dungeonSightLine } from '../src/world/spawnedDungeons.js';
+import { TERRAIN_SIZE } from '../src/world/terrainSampler.js';
 import { isWorldRoom } from '../src/net/wire.js';
 import { getMapPixelID, longitudeLatitudeToMapPixel } from '../src/formats/mapsFile.js';
 
@@ -72,8 +73,12 @@ test('SPAWNED-DUNGEONS: templates are real non-main-story dungeons, one-block ex
   const L = (mapId, w, h, over = {}) => ({ hasDungeon: true, mapTableData: { mapId }, exterior: { exteriorData: { width: w, height: h } }, dungeon: { blocks: [{}] }, ...over });
   const big = L(1, 2, 2), one = L(2, 1, 1), main = L(3, 1, 1), town = L(4, 1, 1, { hasDungeon: false }), empty = L(5, 1, 1, { dungeon: { blocks: [] } }), spawned = L(6, 1, 1, { spawned: true });
   assert.deepEqual(spawnTemplates([big, one, main, town, empty, spawned, null], (id) => id === 3), [one]);
-  assert.deepEqual(spawnTemplates([big], () => false), [big], 'no one-block exterior: any real dungeon');
+  assert.deepEqual(spawnTemplates([big], () => false), [big], 'no one-block exterior: a two-block one still clears 300 m');
   assert.deepEqual(spawnTemplates(null), []);
+  // SPAWNED-DUNGEONS3: the clearance is the gate, and there is no fallback past it
+  const wide = L(7, 3, 1), tall = L(8, 1, 3);
+  assert.deepEqual(spawnTemplates([wide, tall], () => false), [], 'three blocks on either axis leaves 256 m: never a template, even when nothing else is');
+  assert.deepEqual(spawnTemplates([wide, big, tall], () => false), [big], 'the two-block one alone');
 });
 
 test('SPAWNED-DUNGEONS by source: ONE choke point (buildPixelNow), online-only off the page params, wrapped, never a fresh roll per load', async () => {
@@ -92,28 +97,63 @@ test('SPAWNED-DUNGEONS by source: ONE choke point (buildPixelNow), online-only o
   assert.match(w, /const _spawnSalt = WORLD_SALT;/, 'one salt for every client: everyone sees the same dungeons');
 });
 
-test('SPAWNED-DUNGEONS2b by source: ONE line per crossing, the CLOSEST spawn, with a compass word', async () => {
+test('SPAWNED-DUNGEONS3 by source: the player\'s OWN pixel, once, with the distance and direction from their feet in metres', async () => {
   const { readFileSync } = await import('node:fs');
   const w = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(w, /queue\.push\(\.\.\.r\.load\);\s*\n\s*announceNearbySpawns\(r\.current\.x, r\.current\.y\);/);
-  // the whole point of the rewrite: a crossing can find several at once
-  // (the search is a 5x5 block), and the old code said a line per hit
-  assert.match(w, /for \(const f of found\) _announcedSpawnPixels\.add\(f\.key\);/, 'every hit this crossing is spent, even the ones left unsaid - never re-nags later');
-  assert.match(w, /found\.sort\(\(a, b\) => a\.d2 - b\.d2\);/, 'closest first');
-  const i = w.indexOf('function announceNearbySpawns(px, py) {');
+  assert.match(w, /queue\.push\(\.\.\.r\.load\);\s*\n\s*announceNearbySpawns\(r\.current\.x, r\.current\.y, walkMode \? player\.pos : cam\.pos\);/, 'said on the crossing, from where the player stands');
+  const i = w.indexOf('function announceNearbySpawns(px, py, feet) {');
+  assert.ok(i > 0, 'the announcer takes the feet');
   const fn = w.slice(i, w.indexOf('\n  }\n', i));
-  assert.equal((fn.match(/townTalk\.say\(/g) ?? []).length, 2, 'two spellings, one of them said: on the pixel, or with a direction');
-  assert.match(fn, /directionHintString\(nearest\.dx, -nearest\.dy\)/, 'py is south-positive, so north flips the sign');
-  assert.match(fn, /You see a Dungeon nearby, in the \$\{_capitalize\(directionHintString/, 'the phrasing');
+  assert.doesNotMatch(w, /SPAWN_NEARBY_RADIUS/, '2b\'s 5x5 search is gone: no radius');
+  assert.doesNotMatch(fn, /for \(let d[xy]/, 'no loop over the neighbours');
+  assert.match(fn, /const loc = locationIndex\.get\(key\);\s*\n\s*if \(!loc\?\.spawned \|\| _announcedSpawnPixels\.has\(key\)\) return;/, 'the entered pixel\'s own spawn, never announced twice');
+  assert.match(fn, /const t = state\.pixelTranslation\(px, py, _announceT\);\s*\n\s*const \[lx, lz\] = spawnedLocationCentreLocal\(loc\);\s*\n\s*const dx = t\[0\] \+ lx - feet\[0\], dz = t\[2\] \+ lz - feet\[2\];/, 'the pixel\'s frame plus the centred location, less the feet');
+  assert.equal((fn.match(/townTalk\.say\(/g) ?? []).length, 1, 'one spelling now: the distance and the direction');
+  assert.match(fn, /townTalk\.say\(dungeonSightLine\(Math\.hypot\(dx, dz\), _capitalize\(directionHintString\(dx, dz\)\)\)\);/, 'scene x is east and scene z is north - the pair directionHintString takes, no sign flipped');
+  assert.doesNotMatch(fn, /You see a Dungeon/, 'the words live in the pure law');
 });
 
-test('SPAWNED-DUNGEONS2b: the compass word - talk.js\'s own eight bands, off the map-pixel delta', async () => {
+test('SPAWNED-DUNGEONS3: a spawn stands CENTRED in its pixel, so a walk-in is always 300+ metres from it - the clearance gate on the template is what keeps it so', () => {
+  const near = (a, b, msg) => assert.ok(Math.abs(a - b) < 1e-9, `${msg ?? ''} ${a} ~ ${b}`);
+  assert.equal(SPAWN_CLEARANCE_M, 300);
+  near(TERRAIN_SIZE, 819.2, 'a pixel');
+  near(BLOCK_M, 102.4, 'a block');
+  // the clearance is metres from the pixel's edge to the exterior's nearest edge, on the tighter axis
+  near(spawnClearance(1, 1), 358.4);
+  near(spawnClearance(2, 2), 307.2);
+  near(spawnClearance(1, 2), 307.2, 'the taller axis decides');
+  near(spawnClearance(3, 1), 256, 'three blocks: under the rule');
+  near(spawnClearance(8, 8), 0);
+  assert.ok(spawnClearance(2, 2) >= SPAWN_CLEARANCE_M && spawnClearance(3, 3) < SPAWN_CLEARANCE_M, 'two blocks is the widest template the rule admits');
+  // the centre, in the pixel's local frame: a one-block exterior at tiles 56..72 is centred at 409.6 on both axes
+  const L = (w, h) => ({ exterior: { exteriorData: { width: w, height: h, blockNames: ['X'] } } });
+  for (const v of [...spawnedLocationCentreLocal(L(1, 1)), ...spawnedLocationCentreLocal(L(2, 2))]) near(v, 409.6, 'centred');
+  // A PIN THAT FAILS: the nearest a player can be to the exterior on entering the pixel is at the middle of an edge.
+  // For every admitted template that is >= 300 m to the exterior's edge and > 400 m to its centre; a 3x3 breaks it.
+  for (const [w, h] of [[1, 1], [2, 2], [1, 2], [2, 1]]) {
+    const [cx, cz] = spawnedLocationCentreLocal(L(w, h));
+    const fromSouth = Math.hypot(cx - TERRAIN_SIZE / 2, cz - 0);   // entering at the middle of the south edge
+    const fromWest = Math.hypot(cx - 0, cz - TERRAIN_SIZE / 2);    // ...or the west edge
+    const toEdge = Math.min(fromSouth - (h * BLOCK_M) / 2, fromWest - (w * BLOCK_M) / 2);   // to the exterior's nearest edge, the tighter way in
+    assert.ok(toEdge >= SPAWN_CLEARANCE_M, `${w}x${h}: ${toEdge} m to the exterior`);
+    assert.ok(Math.min(fromSouth, fromWest) >= TERRAIN_SIZE / 2, `${w}x${h}: ${Math.min(fromSouth, fromWest)} m to the centre`);
+    near(toEdge, spawnClearance(w, h), 'and that is exactly what the gate measures');
+  }
+  const [, cz3] = spawnedLocationCentreLocal(L(3, 3));
+  assert.ok(cz3 - (3 * BLOCK_M) / 2 < SPAWN_CLEARANCE_M, 'a three-block exterior would break the rule, which is why the gate refuses it');
+});
+
+test('SPAWNED-DUNGEONS3: the line names the distance to the nearest ten metres and the compass word - talk.js\'s own eight bands, off the scene delta (east, north)', async () => {
   const { directionHintString } = await import('../src/systems/talk.js');
-  // px east-positive, py south-positive, so the call flips dy:
-  assert.equal(directionHintString(1, -0), 'east', 'due east: +dx');
-  assert.equal(directionHintString(0, -1), 'south', 'due south: py larger, so -dy is negative');
+  assert.equal(dungeonSightLine(409.6, 'North'), 'You see a Dungeon 410 metres to the North!');
+  assert.equal(dungeonSightLine(354.9, 'Southwest'), 'You see a Dungeon 350 metres to the Southwest!');
+  assert.equal(dungeonSightLine(3, 'East'), 'You see a Dungeon 10 metres to the East!', 'never a zero');
+  // scene x east-positive, scene z north-positive: fed straight in
+  assert.equal(directionHintString(1, 0), 'east');
+  assert.equal(directionHintString(0, 1), 'north');
+  assert.equal(directionHintString(0, -1), 'south');
   assert.equal(directionHintString(-1, -1), 'southwest');
-  assert.equal(directionHintString(1, 1), 'northeast', 'py smaller is north');
+  assert.equal(directionHintString(300, 300), 'northeast');
 });
 
 // ── TTL1: THE TWO CLOCKS ──────────────────────────────────────────

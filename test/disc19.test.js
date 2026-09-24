@@ -351,7 +351,7 @@ test('DISC19-F by source: the host runs the town watch after the pools move, res
   const order = ['guardHitSound, { spareDefenders: true, swing })) {', 'if (exteriorFoes.resolvePlayerHit(', "guardHitSound, { defendersOnly: true, swing }))", 'cityGuards.resolveCivilianHit('].map((k) => w.indexOf(k, swingAt));
   assert.ok(swingAt > 0 && order.every((i, k) => i >= 0 && (k === 0 || i > order[k - 1])), `the four passes in order: ${order}`);
   assert.match(w, /inside: false, inLocationRect: _inAnyLocationRect\(walkMode \? player\.pos : cam\.pos\),/, 'the chunk roll asks the pixel just entered');
-  assert.match(w, /anchor = placeFoeFreely\(anchorEnv, [^\n]*\n\s*if \(anchor && _inAnyLocationRect\(\[anchor\.x, anchor\.y, anchor\.z\]\)\) anchor = null;/, 'the camp is never pitched in a town');
+  assert.match(w, /anchor = campAnchorSpot\(\{ feet, [^\n]*\n\s*if \(anchor && _inAnyLocationRect\(\[anchor\.x, anchor\.y, anchor\.z\]\)\) anchor = null;/, 'the camp is never pitched in a town');
   assert.match(w, /spot = placeFoeFreely\(memberEnv, [^\n]*\n\s*if \(spot && _inAnyLocationRect\(\[spot\.x, spot\.y, spot\.z\]\)\) spot = null;/, 'nor a member over its line');
   assert.match(w, /const loc = locationIndex\.get\(`\$\{px\.x \+ dx\},\$\{px\.y \+ dy\}`\);\n\s*if \(loc\?\.exterior\?\.exteriorData && isInLocationRect\(wc\.x, wc\.z, locationWorldRect\(loc, px\.x \+ dx, px\.y \+ dy\)\)\) return true;/, 'every location\'s widened rect, the pixel and its neighbours');
 });
