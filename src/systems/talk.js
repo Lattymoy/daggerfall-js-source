@@ -19,7 +19,7 @@
 // actions.js:2059 and guildServiceActions.js:206. The save arc carries
 // them: save.js:465 snapshotFactionRep writes and :379
 // restoreFactionRep reads back INTO the store the loader rebuilt from
-// FACTION.TXT (the AUDIT 20 note at save.js:684). The live FactionFile
+// FACTION.TXT (the AUDIT 20 note at save.js:686). The live FactionFile
 // dict is still the working state - what round-trips is the mutable
 // columns, a recorded departure from FactionData_v2's whole-dictionary
 // write.

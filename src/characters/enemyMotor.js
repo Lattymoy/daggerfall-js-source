@@ -1392,7 +1392,7 @@ export class EnemyAI {
     // "Classic AI moves only as close as melee range. It uses a
     // different range for the player and for other AI." The port held
     // the 2.25 literal at both sites, so two infighting foes each
-    // halted 0.75 outside the 1.5 swing gate enemyAttack.js:154-155
+    // halted 0.75 outside the 1.5 swing gate enemyAttack.js:165-166
     // already honours - a stand-off that never resolved.
     this.stopDistance = (this._armedTargeting && this.target && !this.target.isPlayer)
       ? CLASSIC_MELEE_DISTANCE_VS_AI : MELEE_DISTANCE;
