@@ -505,7 +505,7 @@ included (`eotbBillboard.js:329` `chooseTable`, `:335`), and it draws the
 mod's lycan archives: 112380 for the werewolf, 112381 for the wereboar
 (`eotbBillboard.js:75` `lycanArchive`, `:142` `tableArchive`). That art is a
 hunched, dark-furred, Bloodmoon-style beast, and it is the "Morrowind sprite"
-of the report. The Morrowind rig has no werewolf body (`fpArm.js:176`), so
+of the report. The Morrowind rig has no werewolf body (`fpArm.js:178`), so
 this is the only Morrowind-looking werewolf in the port.
 
 **Cause.** No other player ever saw it. The only layer that draws another
@@ -531,7 +531,7 @@ rider:
 - The frame clock is the saddle's for a mounted beast and EOTB's `speedMod`
   run halving on foot.
 - A new swing count plays `AttackMeleeLycan` once, forward, at LYCAN_TICK,
-  as the local body's `playLycanAttack` does (`eotbBody.js:395`). The count
+  as the local body's `playLycanAttack` does (`eotbBody.js:552`). The count
   first seen is no swing.
 
 The hand-off is RIDE's: `isRiding` is true only once the art is up, so while
@@ -541,7 +541,7 @@ still stands for them. A beast is never nothing.
 The modal passes (`worldModes.js:7139` the dungeon, `:7331` the interior)
 draw only `host.extraBillboards`. That was `remotePlayers.batches()` alone,
 so a beast drawn by the rider layer would have been nothing indoors and
-underground. It hands over both layers' batches now (`world.js:12003`). A
+underground. It hands over both layers' batches now (`world.js:12004`). A
 rider never reaches those passes: a door dismounts. The eye the layer turns
 its sprites to (`cam.pos`) is live in every mode, because worldModes shares
 world.js's `cam` and sets it each modal frame.
@@ -549,7 +549,7 @@ world.js's `cam` and sets it each modal frame.
 **The local body, beside it.** `eotbBody.js` asked for every sprite with
 the mod's settings (`cfg`), which never carry the form. So a wereboar saw the
 werewolf on themselves, while the others now draw the boar. The draw and the
-placement take the live form now (`lookNow`, `eotbBody.js:262`). The preload
+placement take the live form now (`lookNow`, `eotbBody.js:419`). The preload
 fetches the live form's lycan set, and fetches it again when the form
 changes (`:270`, `:713`).
 
@@ -597,7 +597,7 @@ the scene the picture takes in:
   (`characterSprite.js:90` `landAnchor`). Every point then draws at a place
   that does not depend on the box. The voxel rigs pass no anchor and draw as
   they did.
-- `drawThird` (`fpArm.js:4641`) anchors on the actor's own axis (MW x = y =
+- `drawThird` (`fpArm.js:4644`) anchors on the actor's own axis (MW x = y =
   0, where the root stands at `feet`), at the body's mid-height. That
   height is read off the drawn ranges less `CARRIED_SLOTS` (`fpArm.js:676`:
   the hand's weapon and round, the torch, the held sheet, Weapon Sheathing's
@@ -608,12 +608,12 @@ the scene the picture takes in:
 
 **Hosts.** Every Morrowind body in the port goes through `drawThird`. The
 local player's goes through `mwView.mwViewDrawBody` (`mwView.js:329`,
-`:339`), which four files call: `world.js:13911`, `exterior.js:5093`,
+`:339`), which four files call: `world.js:13912`, `exterior.js:5093`,
 `worldModes.js:7132` and `:7229` (the dungeon and the interior passes),
 and `dungeon.js:1064`. `dungeonContext.js`, the fourth motor host, builds
 the dungeon for those hosts and draws no body of its own. The other players'
-bodies go through `peerBodies.js:374` (`PeerBodies.draw`). The open world
-calls it at `world.js:13912`, and the modal passes reach it through
+bodies go through `peerBodies.js:380` (`PeerBodies.draw`). The open world
+calls it at `world.js:13913`, and the modal passes reach it through
 `host.drawPeerBodies` (`worldModes.js:7133`, `:7230`). The fix therefore
 sits in one place and reaches every host.
 
