@@ -519,7 +519,8 @@ test('D10: the narrowed flag\'s citation resolves to the activation ray it rests
     assert.match(declText, /const useFwd = _tapDir \?\? \[Math\.sin\(cam\.yaw\) \* Math\.cos\(cam\.pitch\)/,
       `${rel}'s useFwd is the camera angles, or the tap's ray`);
     assert.ok(declLine + 1 < n, `${rel}: useFwd is built ABOVE the ladder it feeds (:${declLine + 1} vs :${n})`);
-    assert.match(src(rel), /rayDirFromScreen\([^\n]*largeHudViewportRect\(canvas\.clientHeight\)\)/,
+    // RETRO1: through worldViewportRect - the docked rect, or retro's pillarbox, which needs the canvas width too
+    assert.match(src(rel), /rayDirFromScreen\([^\n]*worldViewportRect\(canvas\.clientWidth, canvas\.clientHeight\)\)/,
       `${rel}'s tap ray unprojects through the world-pass rect, not the canvas`);
   }
   // no third host carries the call and goes uncited
@@ -736,8 +737,8 @@ test('E5: every host that draws the bar shrinks its world pass AND its lens', ()
   // are the files that carry the law.
   for (const host of ['scenes/world.js', 'scenes/exterior.js', 'scenes/worldModes.js', 'scenes/dungeon.js']) {
     const body = src(host);
-    assert.match(body, /renderer\.setWorldViewport\(largeHudViewportRect\(canvas\.clientHeight\)\);/,
-      `${host} sets the world pass's rect`);
+    assert.match(body, /renderer\.setWorldViewport\(worldViewportRect\(canvas\.clientWidth, canvas\.clientHeight\)\);/,
+      `${host} sets the world pass's rect (RETRO1: the one that also pillarboxes a retro world)`);
     assert.match(body, /largeHudWorldAspect\(canvas\.clientWidth, canvas\.clientHeight\)/,
       `${host} takes the bar out of its aspect`);
     // ...and the plain ratio is GONE from every world LENS the host

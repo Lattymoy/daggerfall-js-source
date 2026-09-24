@@ -51,7 +51,7 @@ import {
 } from '../systems/inputActions.js';
 // AUDIT 64 F36/F37: DaggerfallHUD.Update's own shortcut arms. A leaf
 // on systems/ alone, so this module can take it without a cycle.
-import { hudShortcutKey } from './hudShortcuts.js';
+import { hudShortcutKey, retroToggleKey } from './hudShortcuts.js';
 import { hotbarInForce } from '../systems/uiSkin.js';   // AUDIT CONTRIB H1: the diamond's actions stand down while the hotbar is in force
 import { statusReadoutTakesAction, setStatusBindings } from '../systems/statusReadout.js';   // STATUS-LIVE: the readout yields to whatever wants the slot, and the panel names the live Status key. A LEAF - this module is in ui/actionText.js's own import ring (through ui/inputMessageBox.js), so reaching for the BOX from here put its class body in a temporal dead zone
 import { printScreen } from './screenshot.js';   // AUDIT KB1: PrintScreen is routed like every world action, so a window's F8 stays the window's
@@ -713,7 +713,7 @@ export function routeKey(e, ctx, setPlayerPos = null, keys = null) {
     if (a) { ctx.overlayInput(a); return true; }
     // Quickload works from ANY overlay (the death screen's F11 hint
     // must be true); everything else stays gated.
-    if (actionOf(e, keys) === 'QuickLoad') { ctx.quickLoad?.(setPlayerPos); return true; }   // AUDIT 58 (f3/input): the Set rides in here too, so a QuickLoad rebound to a COMBO still answers from under a window
+    if (actionOf(e, keys) === 'QuickLoad' && !retroToggleKey(e, keys)) { ctx.quickLoad?.(setPlayerPos); return true; }   // AUDIT 58 (f3/input): the Set rides in here too, so a QuickLoad rebound to a COMBO still answers from under a window; AUDIT RETRO1 C1: never Shift-F11, the retro toggle's chord on this key
     return false;
   }
   // AUDIT 64 F36/F37 - THE HUD'S OWN SHORTCUTS (DaggerfallHUD.cs

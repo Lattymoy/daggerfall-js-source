@@ -9384,7 +9384,7 @@ cited and ported somewhere in `src/`. FOUR were not:
 ### UI1 CLOSED: the use-magic-item window
 
 The port had the DOOR and not the room. `input.js:779` routed
-`Actions.UseMagicItem` to `ctx.openUseMagicItem`, `hudLarge.js:152`
+`Actions.UseMagicItem` to `ctx.openUseMagicItem`, `hudLarge.js:153`
 gave the large HUD's button its rect, `inputActions.js` bound KeyU -
 and no host implemented the method, so a live binding silently did
 nothing. That is the anti-lie law's other half: a deferred feature
@@ -10562,9 +10562,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:7880`,
+the other half went stale unnoticed. (The rest cite named `world.js:7881`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:7886` now.)
+deleted the second and the cite is `world.js:7887` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -11984,7 +11984,20 @@ cycle. `scenes/interior.js` draws no HUD and takes nothing.
 The other three arms of that block are named in the module header and
 NOT ported: `DebuggerToggle` (`:297-301`), `Pause` (`:303-306`, which
 this port reaches through the Escape action's pause door) and
-`ToggleRetroPP` (`:320-326`, there is no retro post-processing pass).
+~~`ToggleRetroPP` (`:320-326`, there is no retro post-processing pass)~~.
+**`ToggleRetroPP` PORTED (RETRO1, 2026-09-24): the retro pass exists
+now (`07-Rendering/Retro-Mode.md`), and Shift-F11 is the module's third
+arm, `RetroRenderer.TogglePostprocessing`. AUDIT RETRO1 C1: under an
+open window it does nothing, as the HUD's Update does nothing there -
+`retroToggleKey` keeps the two arms that let QuickLoad through a window
+(`routeKey`, the exterior ladder) from reading its F11 as a load.
+AUDIT RETRO1's second pass: during play DFU's press ALSO quick-loads
+(F11 is QuickLoad's, InputManager.cs:1032; a DialogShortcut chord is no
+combo that suppresses it, :1683-1685; GameManager prompts after the
+HUD, GameManager.cs:577-584) - the port's toggle consumes the key, a
+departure on Ledger A's RETRO1 row (H1). A held Alt or Ctrl whose keyup
+was lost counts only while the event reports it (G1), and both outdoor
+hosts' action read passes Shift-F11 by (G3).**
 
 ## AUDIT 64 F38 - THE ESCORT COLUMN WAS ANCHORED TO THE WRONG PANEL (2026-09-08)
 
@@ -13175,7 +13188,7 @@ pushed popup). Nine findings; four fixed, five recorded.
 classic window's header said "DFU has no keyboard here" and rolled
 its own keys - T cycled the tone, N/P paged, W where-is, digits. DFU
 HAS a keyboard here: DialogShortcuts.txt binds all twelve of the
-window's buttons (`systems/dialogShortcuts.js:331-336` - A Tell me
+window's buttons (`systems/dialogShortcuts.js:340-345` - A Tell me
 about, W Where is, L/P/T/J the four categories, O ask, G goodbye, C
 copy, F1/F2/F3 the tones), and the port's own T and P collided with
 two of them (T is Things, P is People). `NativeTalkWindow.input(code,

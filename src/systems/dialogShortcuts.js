@@ -136,13 +136,22 @@ export function getKeyModifiers(leftCtrl, rightCtrl, leftShift, rightShift, left
  * come from the host's held-keys Set when one is handed in, and the
  * virtual bits are set either way. That is enough for exact matching:
  * CheckSetModifiers masks with virtualKeys alone.
+ *
+ * AUDIT RETRO1 G1: a side the event itself does not report is STALE -
+ * its keyup went with the focus (an Alt-Tab, a click back in) - and
+ * counting it made Shift-F11 read as F11 (a quickload with no prompt)
+ * and F11 as Shift-F11. A KeyboardEvent always reports the virtuals, so
+ * a held side counts only while its virtual is down; an event that
+ * reports none (a pad's or a test's plain object) leaves the Set its say.
  */
 export function keyboardModifiers(e = null, keys = null) {
+  const live = (flag) => typeof flag !== 'boolean' || flag;
+  const ctrl = live(typeof e?.ctrlKey === 'boolean' ? e.ctrlKey || !!e.metaKey : undefined), shift = live(e?.shiftKey), alt = live(e?.altKey);
   const has = (c) => !!keys?.has?.(c);
   let m = getKeyModifiers(
-    has('ControlLeft'), has('ControlRight'),
-    has('ShiftLeft'), has('ShiftRight'),
-    has('AltLeft'), has('AltRight'),
+    ctrl && has('ControlLeft'), ctrl && has('ControlRight'),
+    shift && has('ShiftLeft'), shift && has('ShiftRight'),
+    alt && has('AltLeft'), alt && has('AltRight'),
   );
   if (e?.ctrlKey || e?.metaKey) m |= MOD.Ctrl;
   if (e?.shiftKey) m |= MOD.Shift;

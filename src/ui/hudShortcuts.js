@@ -2,11 +2,11 @@
 //
 // DaggerfallHUD.Update polls five DaggerfallShortcut bindings every
 // frame (DaggerfallHUD.cs:295-326). The port had the whole binding
-// TABLE (systems/dialogShortcuts.js:199 lists them, :317 gives the
+// TABLE (systems/dialogShortcuts.js:208 lists them, :326 gives the
 // defaults F10 and Shift-F10) and no consumer for any of them, so both
 // keys were free and did nothing.
 //
-// Two of the five are ported here:
+// Two of the five were ported here first (AUDIT 64):
 //
 //   LargeHUDToggle (:308-312) - `DaggerfallUnity.Settings.LargeHUD =
 //   !DaggerfallUnity.Settings.LargeHUD`. The setting is a LIVE-tier key
@@ -25,11 +25,16 @@
 //   lives here and is read by ui/hud.js's paint gate rather than by a
 //   host frame that would also stop the vitals detector.
 //
-// The three the port still has no destination for are named for the
+// RETRO1 ported a third: ToggleRetroPP (:320-326) -
+// RetroRenderer.TogglePostprocessing, the retro pass's posterize or
+// palettize switched off and on (systems/retroMode.js holds the flag, the
+// renderer reads it with the frame's config). Session state, as DFU's
+// is - a field on RetroRenderer, never written to settings.ini.
+//
+// The two the port still has no destination for are named for the
 // record and are NOT ported: DebuggerToggle (:297-301, the quest
-// debugger overlay), Pause (:303-306, reached in this port through the
-// Escape action's pause door) and ToggleRetroPP (:320-326, there is no
-// retro post-processing pass).
+// debugger overlay) and Pause (:303-306, reached in this port through
+// the Escape action's pause door).
 //
 // This module imports only systems leaves so that ui/input.js - the
 // one keydown door two of the four hosts route through - can take it
@@ -37,6 +42,7 @@
 
 import { getBool, setValue } from '../systems/settings.js';
 import { hotkeyHit } from '../systems/dialogShortcuts.js';
+import { toggleRetroPostprocessing } from '../systems/retroMode.js';   // RETRO1: a systems leaf, as the rule above asks
 
 // DaggerfallHUD.cs:47 `bool renderHUD = true;`
 let _renderHud = true;
@@ -55,7 +61,7 @@ export function toggleHudRender() {
 export function _resetHudRender() { _renderHud = true; }
 
 /**
- * The two shortcut arms of DaggerfallHUD.Update, for one keydown.
+ * The three shortcut arms of DaggerfallHUD.Update, for one keydown.
  * Returns true when the key was consumed.
  *
  * `IsDownWith` is Unity's GetKeyDown - ONE edge per press - so a
@@ -73,12 +79,31 @@ export function hudShortcutKey(e, keys = null) {
     setValue('GUI', 'LargeHUD', !getBool('GUI', 'LargeHUD'));
     return true;
   }
-  // :315-317 - renderHUD. CheckSetModifiers (dialogShortcuts.js:156-159)
+  // :315-317 - renderHUD. CheckSetModifiers (dialogShortcuts.js:165-168)
   // is what keeps Shift-F10 off F10 and F10 off Shift-F10, so the two
   // arms cannot both answer one press.
   if (hotkeyHit('HUDToggle', e.code, e, keys)) {
     toggleHudRender();
     return true;
   }
+  // :321-326 - RetroRenderer.TogglePostprocessing (Shift-F11). DFU flips
+  // the field whether or not retro mode is on; so does this. AUDIT RETRO1
+  // H1: in DFU the same press ALSO quick-loads - F11 is QuickLoad's, a
+  // DialogShortcut chord is no InputManager combo to suppress it
+  // (InputManager.cs:1683-1685), and GameManager's Update prompts after
+  // the HUD's (GameManager.cs:577-584), loading without asking unless
+  // mods conflict. The toggle here consumes the key (Ledger A, RETRO1).
+  if (hotkeyHit('ToggleRetroPP', e.code, e, keys)) {
+    toggleRetroPostprocessing();
+    return true;
+  }
   return false;
 }
+
+/** AUDIT RETRO1 C1: the ToggleRetroPP chord itself, toggling nothing. F11
+ *  is QuickLoad's key as well, and the two arms that let QuickLoad through
+ *  an open window (ui/input.js routeKey, world.js's exterior ladder) read
+ *  the key alone - so Shift-F11 under the settings screen loaded the
+ *  quicksave with no prompt. Under a window DFU does neither: the HUD's
+ *  Update is dead and QuickLoad answers only the death screen. */
+export const retroToggleKey = (e, keys = null) => !!e && hotkeyHit('ToggleRetroPP', e.code, e, keys);

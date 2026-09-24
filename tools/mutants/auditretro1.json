@@ -1,0 +1,468 @@
+[
+  {
+    "name": "AUDITRETRO1-A1-a-pillarbox-read-as-a-docked-strip",
+    "file": "src/render/renderer.js",
+    "old": "const view = this._worldViewportFrame, docked = !!view && view.y > 0;",
+    "new": "const view = this._worldViewportFrame, docked = !!view;",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-A1-no-hud-twin-in-the-config",
+    "file": "src/systems/retroMode.js",
+    "old": "hud = retroTargetSize(mode, true);",
+    "new": "hud = retroTargetSize(mode, false);",
+    "tests": [
+      "test/auditretro1.test.js",
+      "test/retro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-A7-the-bar-height-uncast",
+    "file": "src/ui/hudLarge.js",
+    "old": "  return Math.trunc(bar.h);   // AUDIT RETRO1 A7",
+    "new": "  return bar.h;   // AUDIT RETRO1 A7",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-A3-the-effect-on-display-bytes",
+    "file": "src/render/retroPass.js",
+    "old": "  vec3 g = unityLinearToGamma(srgbToLinear(c.rgb));",
+    "new": "  vec3 g = c.rgb;",
+    "tests": [
+      "test/auditretro1.test.js",
+      "test/retro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-A3-shown-without-dfus-gamma",
+    "file": "src/render/retroPass.js",
+    "old": "export const retroShownByte = (g) => Math.round(Math.min(1, Math.max(0, linearToSrgb(unityGammaToLinear(g)))) * 255);",
+    "new": "export const retroShownByte = (g) => Math.round(Math.min(1, Math.max(0, g)) * 255);",
+    "tests": [
+      "test/auditretro1.test.js",
+      "test/retro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-A3-exact-decode-for-unitys-approximate",
+    "file": "src/render/retroPass.js",
+    "old": "export const unityGammaToLinear = (s) => s * (s * (s * 0.305306011 + 0.682171111) + 0.012522878);",
+    "new": "export const unityGammaToLinear = (s) => srgbToLinear(s);",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-A4-a-replacement-capped-at-upload",
+    "file": "src/render/renderer.js",
+    "old": "    if (opts.replacement) { if (tex) this._replacements.add(tex); }   // AUDIT RETRO1 A4: TryImportTexture's - DFU's retro arm never reaches it (J7: a lost context's null is no key)\n    else if (mips",
+    "new": "    if (mips",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-A4-a-replacement-capped-by-the-sweep",
+    "file": "src/render/renderer.js",
+    "old": "if (this._replacements.has(tex)) continue; ",
+    "new": "",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-A4-the-pipeline-flags-nothing",
+    "file": "src/scenes/dataPipeline.js",
+    "old": "    const replacement = !!swap;",
+    "new": "    const replacement = false;",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-A8-the-interior-lens-the-canvas",
+    "file": "src/scenes/interior.js",
+    "old": "perspective(fieldOfView(), largeHudWorldAspect(canvas.clientWidth, canvas.clientHeight), 0.05, 500)",
+    "new": "perspective(fieldOfView(), canvas.clientWidth / canvas.clientHeight, 0.05, 500)",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-B1-the-image-left-on-its-units",
+    "file": "src/render/retroPass.js",
+    "old": "      gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, null);\n      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, null);\n",
+    "new": "      gl.activeTexture(gl.TEXTURE0);\n",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-B1-the-smooth-grass-reads-unit-0",
+    "file": "src/render/labGrass.js",
+    "old": "    } else gl.uniform1i(u.uPxSheet, 4);   // AUDIT RETRO1 B1",
+    "new": "    }   // AUDIT RETRO1 B1",
+    "tests": [
+      "test/auditretro1.test.js",
+      "test/grasspx.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-B2-a-panel-before-the-present",
+    "file": "src/render/renderer.js",
+    "old": "    if (this._retroOwed || this._air?.pending) { if (this._worldViewportPx) this.endWorldPass(); this._compositeAir(); }\n    const gl = this.gl;\n    // EVERY global",
+    "new": "    const gl = this.gl;\n    // EVERY global",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-B3-the-present-under-the-scissor",
+    "file": "src/render/retroPass.js",
+    "old": "    if (scissor) gl.disable(gl.SCISSOR_TEST);",
+    "new": "",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-B3-the-scissor-not-put-back",
+    "file": "src/render/retroPass.js",
+    "old": "      if (scissor) { gl.enable(gl.SCISSOR_TEST); gl.scissor(scissor[0], scissor[1], scissor[2], scissor[3]); }",
+    "new": "",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-B3-the-renderer-hands-no-scissor",
+    "file": "src/render/renderer.js",
+    "old": "clear: this._clearColor, scissor: this._scissor,",
+    "new": "clear: this._clearColor, scissor: null,",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-B4-a-menu-resolves-the-last-world-rect",
+    "file": "src/render/airPass.js",
+    "old": "    const rect = prepared ? this.rect : this._fullRect;",
+    "new": "    const rect = this.rect;",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-B5-the-depth-read-at-the-present",
+    "file": "src/render/renderer.js",
+    "old": "          depth: f.depth, rect:",
+    "new": "          depth: this._air?.frame?.depth ?? f.depth, rect:",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-C1-shift-f11-loads-under-a-window",
+    "file": "src/ui/input.js",
+    "old": "if (actionOf(e, keys) === 'QuickLoad' && !retroToggleKey(e, keys)) {",
+    "new": "if (actionOf(e, keys) === 'QuickLoad') {",
+    "tests": [
+      "test/auditretro1.test.js",
+      "test/fixe_deathMenu.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-C1-the-exterior-arm-loads-too",
+    "file": "src/scenes/world.js",
+    "old": "=== 'QuickLoad' && !retroToggleKey(e, keys)) {",
+    "new": "=== 'QuickLoad') {",
+    "tests": [
+      "test/auditretro1.test.js",
+      "test/fixe_deathMenu.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-C2-the-arm-into-the-image",
+    "file": "src/render/renderer.js",
+    "old": "    if (this._retroOwed) {\n      const v = this._worldViewportFrame;\n      if (this._worldViewportPx) this.endWorldPass();\n      this._compositeAir();",
+    "new": "    if (false) {\n      const v = this._worldViewportFrame;\n      if (this._worldViewportPx) this.endWorldPass();\n      this._compositeAir();",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-C2-the-lane-arm-left-in-the-image",
+    "file": "src/render/renderer.js",
+    "old": "    if (this._retroOwed) {\n      const v = this._worldViewportFrame;",
+    "new": "    if (this._retroOwed && !this._air) {\n      const v = this._worldViewportFrame;",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-C6-sprites-in-canvas-pixels",
+    "file": "src/render/characterSprite.js",
+    "old": "  const span = renderer.retroImageSpan ?? null;",
+    "new": "  const span = null;",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-C6-a-span-past-the-world-pass",
+    "file": "src/render/renderer.js",
+    "old": "return this._retroOwed && f ? [f.height,",
+    "new": "return f ? [f.height,",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-C7-the-black-shift-steppable",
+    "file": "src/ui/settingsLaw.js",
+    "old": "'Video/PalettizationLUTShift': { min: 0, max: 7,",
+    "new": "'Video/PalettizationLUTShift': { min: 0, max: 8,",
+    "tests": [
+      "test/auditretro1.test.js",
+      "test/retro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-C7-no-tip",
+    "file": "src/ui/settingsCopy.js",
+    "old": "  return SETTINGS_INFO[dfuTextKey(key)] ?? PAGE_TIPS[key] ?? '';",
+    "new": "  return SETTINGS_INFO[dfuTextKey(key)] ?? '';",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-C8-the-exterior-frame-shown-late",
+    "file": "src/scenes/exterior.js",
+    "old": "    renderer.resolveFrame();   // AUDIT RETRO1 E5/C8: a frame that drew no screen quad",
+    "new": "    // AUDIT RETRO1 E5/C8: a frame that drew no screen quad",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-D1-the-middle-rounds-down",
+    "file": "src/render/retroPass.js",
+    "old": "  const middle = (list.length + 1) >> 1;",
+    "new": "  const middle = list.length >> 1;",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-D1-a-palette-colour-moved",
+    "file": "src/render/retroPass.js",
+    "old": "93, 78, 14,",
+    "new": "93, 78, 41,",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-D2-the-image-filtered",
+    "file": "src/render/retroPass.js",
+    "old": "    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);   // m_FilterMode 0: Point\n    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);",
+    "new": "    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);   // m_FilterMode 0: Point\n    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-D2-a-16-bit-depth",
+    "file": "src/render/retroPass.js",
+    "old": "gl.texStorage2D(gl.TEXTURE_2D, 1, gl.DEPTH_COMPONENT24, W, H);",
+    "new": "gl.texStorage2D(gl.TEXTURE_2D, 1, gl.DEPTH_COMPONENT16, W, H);",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-D2-the-lut-incomplete",
+    "file": "src/render/retroPass.js",
+    "old": "      gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);   // lut.filterMode = Point (:336)\n",
+    "new": "",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-D2-the-lut-on-the-images-unit",
+    "file": "src/render/retroPass.js",
+    "old": "      gl.uniform1i(this.P.uLut, 2);",
+    "new": "      gl.uniform1i(this.P.uLut, 0);",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-D2-depth-writes-left-off",
+    "file": "src/render/retroPass.js",
+    "old": "      gl.depthMask(true);\n      gl.enable(gl.CULL_FACE);",
+    "new": "      gl.enable(gl.CULL_FACE);",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-D2-the-blit-reads-the-canvas",
+    "file": "src/render/retroPass.js",
+    "old": "        gl.bindFramebuffer(gl.READ_FRAMEBUFFER, t.fbo);\n",
+    "new": "",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-D3-the-world-through-the-canvas-viewport",
+    "file": "src/render/renderer.js",
+    "old": "    this._worldViewportPx = [0, 0, width, height];\n    this._restoreWorldViewport();",
+    "new": "    this._worldViewportPx = [0, 0, width, height];",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-D3-the-clear-colour-left-black",
+    "file": "src/render/renderer.js",
+    "old": "post: f.post, lutShift: f.lutShift, clear: this._clearColor,",
+    "new": "post: f.post, lutShift: f.lutShift, clear: null,",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-D3-a-pass-a-frame",
+    "file": "src/render/renderer.js",
+    "old": "_retroPass() { return (this._retro ??= new RetroPass(",
+    "new": "_retroPass() { return (this._retro = new RetroPass(",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-D4-the-emission-map-keeps-its-chain",
+    "file": "src/render/renderer.js",
+    "old": "    else if (!this._retroMips) gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 0);   // RETRO1: the albedo's cap",
+    "new": "    else if (false) gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 0);   // RETRO1: the albedo's cap",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-D4-the-tile-array-keeps-its-chain",
+    "file": "src/render/renderer.js",
+    "old": "    if (!this._retroMips) gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAX_LEVEL, 0);",
+    "new": "    if (false) gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAX_LEVEL, 0);",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-D5-a-menu-frees-the-retro-slot",
+    "file": "src/render/airPass.js",
+    "old": "    if (kept) { gl.deleteTexture(kept.tex); for (const d of kept.depths) gl.deleteTexture(d); for (const f of kept.depthFbos) gl.deleteFramebuffer(f); gl.deleteFramebuffer(kept.fbo); }",
+    "new": "    { const k = this.frame; if (k) { gl.deleteTexture(k.tex); for (const d of k.depths) gl.deleteTexture(d); for (const f of k.depthFbos) gl.deleteFramebuffer(f); gl.deleteFramebuffer(k.fbo); } }",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-D5-the-slot-swap-keeps-a-previous",
+    "file": "src/render/airPass.js",
+    "old": "      if (this.frame !== kept) { this.frame = kept; this.prevValid = false; }",
+    "new": "      if (this.frame !== kept) { this.frame = kept; }",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-D6-double-for-float",
+    "file": "src/systems/retroMode.js",
+    "old": "  const heightRatio = Math.fround(Math.fround(screenH / 6) / 200);\n  const viewWidth = Math.trunc(Math.fround(Math.fround(320 * (aspect === RETRO_ASPECT.FOUR_THREE ? 5 : 6)) * heightRatio));",
+    "new": "  const heightRatio = screenH / 6 / 200;\n  const viewWidth = Math.trunc(320 * (aspect === RETRO_ASPECT.FOUR_THREE ? 5 : 6) * heightRatio);",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-D6-the-pillar-floored",
+    "file": "src/systems/retroMode.js",
+    "old": "  const pillarWidth = Math.trunc((screenW - viewWidth) / 2);",
+    "new": "  const pillarWidth = (screenW - viewWidth) >> 1;",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-D7-mediump-ints",
+    "file": "src/render/retroPass.js",
+    "old": "precision highp int;\nprecision highp sampler3D;",
+    "new": "precision mediump int;\nprecision highp sampler3D;",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-E1-the-lut-built-in-one-frame",
+    "file": "src/render/retroPass.js",
+    "old": "      } while (!r.done && ++blocks < this._lutMaxBlocks && this._now() - t0 < this._lutBudgetMs);",
+    "new": "      } while (!r.done);",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-E2-the-lut-kept-with-retro-off",
+    "file": "src/render/renderer.js",
+    "old": "      this._retro?.dropLut();\n",
+    "new": "",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-E3-a-failed-lut-retried-a-frame",
+    "file": "src/render/retroPass.js",
+    "old": "      this._lutFailed = shift;\n",
+    "new": "",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-E3-a-throwing-present-strands-the-frame",
+    "file": "src/render/renderer.js",
+    "old": "    } finally {   // AUDIT RETRO1 E3: whatever the present did, the frame is the canvas's and the shadows are forgotten\n",
+    "new": "    } catch (e) { throw e; } {\n",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-E4-a-warning-a-read",
+    "file": "src/systems/settings.js",
+    "old": "  if (_warned.has(k)) return;\n",
+    "new": "",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO1-E7-no-warm-step",
+    "file": "src/render/renderer.js",
+    "old": "      ...(this._retroSource ? [() => this._warmRetro()] : []),   // AUDIT RETRO1 E7\n",
+    "new": "",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  }
+]
