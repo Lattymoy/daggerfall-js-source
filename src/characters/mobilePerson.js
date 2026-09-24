@@ -20,7 +20,6 @@
 // height comes from the scene's ground function (flat exterior
 // locations - DFU samples the terrain collider).
 
-import { NAV_CELL } from '../world/cityNavigation.js';
 import { mobileOrientation } from './mobileUnit.js';
 
 export const PERSON_MOVE_SPEED = 1.3;          // movementSpeed

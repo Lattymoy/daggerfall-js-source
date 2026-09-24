@@ -15,7 +15,7 @@
 // Built in FINAL (compressed) body space and tagged 'head', so it rides
 // headPitch with the skull it replaced.
 
-import { HSCALE } from './pieceLoft.js';
+import { HSCALE, quadder, boxer } from './pieceLoft.js';
 import { NECK_PIVOT_Y } from '../neutralBody.js';
 
 /** Grey wolf. Each design overrides it. */
@@ -28,31 +28,9 @@ export const WOLF_RAMP = [
   [170, 164, 157],
 ];
 
-function quadder(faces, ramp) {
-  return (a, b, c, d, shade) => {
-    const ux = b[0] - a[0],
-      uy = b[1] - a[1],
-      uz = b[2] - a[2];
-    const vx = d[0] - a[0],
-      vy = d[1] - a[1],
-      vz = d[2] - a[2];
-    let nx = uy * vz - uz * vy,
-      ny = uz * vx - ux * vz,
-      nz = ux * vy - uy * vx;
-    const L = Math.hypot(nx, ny, nz) || 1;
-    const c3 = ramp[Math.max(0, Math.min(ramp.length - 1, Math.round(shade * (ramp.length - 1))))];
-    faces.push({ p: [...a, ...b, ...c, ...d], n: [nx / L, ny / L, nz / L], c: [...c3], g: 'head', _i: shade });
-  };
-}
-
-function box(quad, x0, y0, z0, x1, y1, z1, top = 0.95, side = 0.66, under = 0.32) {
-  quad([x0, y1, z1], [x1, y1, z1], [x1, y0, z1], [x0, y0, z1], side);
-  quad([x1, y1, z0], [x0, y1, z0], [x0, y0, z0], [x1, y0, z0], side * 0.68);
-  quad([x1, y1, z1], [x1, y1, z0], [x1, y0, z0], [x1, y0, z1], side * 0.86);
-  quad([x0, y1, z0], [x0, y1, z1], [x0, y0, z1], [x0, y0, z0], side * 0.86);
-  quad([x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1], top);
-  quad([x0, y0, z1], [x1, y0, z1], [x1, y0, z0], [x0, y0, z0], under);
-}
+// Head boxes: a brighter underside, darker back and brighter flanks
+// than the body's.
+const box = boxer({ under: 0.32, back: 0.68, flank: 0.86 });
 
 /**
  * @param {number[][]} ramp coat colours, dark -> light
@@ -66,7 +44,7 @@ function box(quad, x0, y0, z0, x1, y1, z1, top = 0.95, side = 0.66, under = 0.32
 export function buildBeastHead(ramp = WOLF_RAMP, s = {}) {
   const { skull = 0.1, snout = 0.14, depth = 0.6, ears = 1, tusks = 0 } = s;
   const faces = [];
-  const quad = quadder(faces, ramp);
+  const quad = quadder(faces, ramp, 'head');
 
   // ANCHORED ON THE RIG'S OWN NECK PIVOT, not on a height that looks
   // right. Everything that animates a head derives from this constant.
@@ -155,7 +133,7 @@ export function buildBeastHead(ramp = WOLF_RAMP, s = {}) {
 export function buildHorns(ramp = WOLF_RAMP, s = {}) {
   const { len = 0.22, thick = 0.022, sweep = 0.7, skull = 0.1 } = s;
   const faces = [];
-  const quad = quadder(faces, ramp);
+  const quad = quadder(faces, ramp, 'head');
   const baseY = NECK_PIVOT_Y * HSCALE + skull * 0.55;
 
   const SEGS = 4;

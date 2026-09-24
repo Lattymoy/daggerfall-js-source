@@ -4134,9 +4134,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the same rewind SL2's un-kill arm below spells for death.
     if (sf.specialTransformationCompleted && f.mobile && !f.mobile.specialTransformationCompleted) {
       f.mobile.setSpecialTransformationCompleted();
+    } else if (sf.specialTransformationCompleted === false && f.seducer) {
+      // AUDIT 68 S05-seducer-rewind-incomplete: taken whether or not the live flag is up - a transform in
+      // progress, a spent clock and the infighting latch all predate the save too (SetupDemoEnemy.cs:191-195's
+      // fresh component on a rebuilt enemy).
+      f.seducer.rewind();
     } else if (sf.specialTransformationCompleted === false && f.mobile?.specialTransformationCompleted) {
       f.mobile.clearSpecialTransformationCompleted();
-      if (f.seducer) f.seducer = new SeducerTransformBehaviour(f.mobile, f.entity);   // SetupDemoEnemy.cs:191-195' fresh component
     }
     // CORPSE-FOOD: and a body the room's memory hands an arrival without its list (the memory writes none since AUDIT
     // WORLD4 D4) is this copy's own roll too - food and all, as the stream's death above. A save off disk carries its

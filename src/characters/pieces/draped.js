@@ -6,9 +6,7 @@
 // (BODY_CORE), the per-garment grids (drapedGrid), and materials
 // (DRAPE_MATERIAL). Two grid kinds: ring lofts (GRIDSPEC - skirts, robes,
 // capes, tunics) and centreline strips (stripGrid - the sash).
-import { shadePiece } from './pieceLoft.js';
-
-const B = 'body', P = 0.85;
+import { shadePiece, pushQuad } from './pieceLoft.js';
 
 // Body-core half-extents (torso+legs, NO arms), measured from the rig.
 // Drapes are clamped OUTSIDE this + a cloth standoff so they never clip.
@@ -127,21 +125,13 @@ export function drapedGrid(name) {
   }
   return { rows: R, cols, wrap, pos, faces };
 }
-// One grid quad -> a pieceLoft-convention face ({p: 12 floats, n, g})
-// with the face normal from the quad's edges. This was an UNBOUND
-// quadInto for the file's whole life - the tests exercise
-// drapedGrid/cloth, never this path, and the gate had no no-undef
-// leg until the trs crash added one.
-function quadInto(f, p0, p1, p2, p3) {
-  const ux = p1[0]-p0[0], uy = p1[1]-p0[1], uz = p1[2]-p0[2];
-  const vx = p3[0]-p0[0], vy = p3[1]-p0[1], vz = p3[2]-p0[2];
-  let nx = uy*vz-uz*vy, ny = uz*vx-ux*vz, nz = ux*vy-uy*vx;
-  const L = Math.hypot(nx, ny, nz) || 1;
-  f.push({ p: [...p0, ...p1, ...p2, ...p3], n: [nx/L, ny/L, nz/L], g: DRAPE_MATERIAL });
-}
+// One grid quad -> a pieceLoft-convention face ({p: 12 floats, n, g}).
+// AUDIT 68 S06-draped-group-tag: g is the RIG GROUP every packer and
+// animator keys on - a drape hangs off the torso, so 'body' (it carried
+// the DRAPE_MATERIAL table itself, and packed as body only by accident).
 function facesFromGrid(g) {
   const f = []; const P = (k) => [g.pos[k*3], g.pos[k*3+1], g.pos[k*3+2]];
-  for (const [a, b, c, d] of g.faces) quadInto(f, P(a), P(b), P(c), P(d));
+  for (const [a, b, c, d] of g.faces) pushQuad(f, P(a), P(b), P(c), P(d), 'body');
   return f;
 }
 

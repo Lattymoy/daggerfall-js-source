@@ -392,7 +392,10 @@ test('AUDIT 63 F27: both foe records carry the flag, and the dungeon applies it 
   assert.match(aw, /else if \(sf\.specialTransformationCompleted === false && f\.mobile\?\.specialTransformationCompleted\)/,
     'and the in-place host carries the rewind arm the rebuild gives DFU for free');
   assert.match(aw, /f\.mobile\.clearSpecialTransformationCompleted\(\);/);
-  assert.match(aw, /f\.seducer = new SeducerTransformBehaviour\(f\.mobile, f\.entity\);/,
+  // AUDIT 68 S05-seducer-rewind-incomplete: a Seducer's arm is its
+  // behaviour's whole rewind (clock, transform in progress, the
+  // infighting latch), no longer a re-mint that left the latch raised.
+  assert.match(aw, /f\.seducer\.rewind\(\);/,
     'with a fresh transform clock - SetupDemoEnemy.cs:191-195\'s component on a rebuilt enemy');
 });
 

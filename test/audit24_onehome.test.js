@@ -41,7 +41,8 @@ const HOMONYMS = new Map([
   ['templateFor', 'a visual-preset lookup vs the item-template lookup'],
   ['ARMOR_MATERIAL', 'enemyEquipment carries the three-member mint subset; armorMaterials the full ItemEnums enum'],
   ['armorArchive', 'the material->archive number vs the paperdoll art filename'],
-  ['ITEM_TEMPLATES', 'characters/paperdoll re-exports the RAW json; systems/itemTemplates adds the port aliases'],
+  // AUDIT 68 S05-paperdoll-template-copy: ITEM_TEMPLATES left this list -
+  // characters/paperdoll re-exports systems/itemTemplates' one table now.
   ['ITEM_GROUPS', 'equipRules carries the ItemGroups ENUM; loot carries the group->template-index lists'],
   ['firstName', 'a talk-session getter vs the name-bank generator'],
   ['_resetForTests', 'each settings store resets its own'],

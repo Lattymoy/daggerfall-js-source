@@ -44,6 +44,7 @@ export { CLASSIC_UPDATE_INTERVAL };
 export const GIVE_UP_TICKS = 200;   // EnemyMotor.GiveUpTimer refill (classic ticks; ~12.5s)
 import { GRAVITY, FIXED_DT, MAX_FRAME_DT, CLASSIC_TO_UNITY_RATIO, FALL_DAMAGE_THRESHOLD } from '../player/motor.js';   // the shared fall rule + the P16 fixed-timestep law; CH3: the fall threshold single-sources with the player's
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
+import { MOBILE_TYPES } from './mobileTypes.js';
 
 // C15 knockback (EnemyMotor.KnockbackMovement): classic units through
 // the speed ratio. Stored speed clamps at 40; motion caps at 25; the
@@ -285,7 +286,7 @@ export function isBackFacing(foeYaw, foeFeet, viewerPos) {
 }
 
 // C12: the behaviour motors (EnemyMotor.cs flies/swims).
-export const MOBILE_SLAUGHTERFISH_ID = 11;      // the one swimmer that aims for the face
+export const MOBILE_SLAUGHTERFISH_ID = MOBILE_TYPES.Slaughterfish;   // the one swimmer that aims for the face (AUDIT 68 S05-mobile-id-literals: the table's id)
 export const WATER_HEAD_MARGIN = 100 * GLOBAL_SCALE;   // WaterMove: keep 2.5 under the surface
 export const FLYER_FLOOR_CLEARANCE = 1;         // FindGroundPosition((height/2) + 1)
 export const FLYER_FLOOR_LIFT = 0.1;            // direction.y forced up when skimming
