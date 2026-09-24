@@ -35,7 +35,7 @@ import {
 } from '../loot.js';
 import { GROUP_TEMPLATE_INDICES, ITEM_TEMPLATES, mintCondition, rollPaintingMessage } from '../itemTemplates.js';
 import { createBook, createRandomBook } from '../books.js';   // A2: ItemBuilder.CreateBook / CreateRandomBook
-import { goldStack } from '../inventory.js';
+import { goldStack, isGoldPieces } from '../inventory.js';
 import { itemLongName } from '../itemInfo.js';   // MAC-D: ResolveItemLongName, which Item.cs:304-307 is a call to
 import { alterReward } from '../guilds.js';
 import { CLOTHING_DYES } from '../../characters/dyes.js';
@@ -115,8 +115,7 @@ export class Item extends QuestResource {
     const it = this.daggerfallUnityItem;
     if (!it) return false;
     if (this.artifact) return it.shortName ?? it.name ?? false;
-    const isGold = it.group === 'Currency' || (it.groupIndex === 7 && it.templateIndex === 230);
-    if (isGold) return String(it.stackCount ?? 0);
+    if (isGoldPieces(it)) return String(it.stackCount ?? 0);   // AUDIT 68 S29-item-gold-test: Item.cs:236's IsOfTemplate, one spelling
     const long = itemLongName(it, {
       differentiatePlantIngredients: false,
       getQuest: (uid) => (uid === this.parentQuest?.uid ? this.parentQuest : null),

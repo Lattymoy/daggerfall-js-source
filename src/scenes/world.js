@@ -150,7 +150,7 @@ import { LabGrassRenderer, createGrassField, grassRecordsOf, tileMeanColour, LAB
 import { windDrive, floraSwayOf, floraSwayOn } from '../systems/windDrive.js';   // WIND3: the one wind in every consumer's units; the flats' sway
 import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program
 import { createWindAudio, windSoundOn } from '../systems/windAudio.js';   // WIND3: the wind, heard
-import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
+import { placeFoeFreely, PLACE_FOE_DEFAULTS } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
 import { PLAYED_STEP_MAX_SECONDS } from '../systems/quest/clock.js';   // WORLD7: the quest clocks' played step online
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender, reviveQuestBehaviour } from './questFoeHost.js';   // B1   // AUDIT 63r F24: SerializableEnemy.cs:206-217's quest-link arm, the one home both hosts use
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
@@ -4902,7 +4902,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     _questSyncCheckAt = now;
     if (!partyMembersHere().length) return;
     for (const questName of machine.sharedQuestNames) {
-      const quest = [...machine.quests.values()].find((q) => q.questName === questName);
+      const quest = machine.sharedCandidateNamed(questName);   // AUDIT 68 S29-share-name-tombstoned: never a week-old tombstone of it
       if (!quest) { _questSyncSeen.delete(questName); continue; }
       const count = quest.getLogMessages()?.length ?? 0;
       const seen = _questSyncSeen.get(questName);
@@ -8683,7 +8683,8 @@ export async function bootWorld(canvas, renderer, params, status) {
         // a quest foe could be stood inside a standing watchman.
         isOccupied: entityOccupancy((f) => f.ai?.feet, () => exteriorFoePool(), feet),
       });
-      const spot = _musicInLocationRect() ? placeFoeFreely(env) : placeFoeFreely(env, { minDistance: 8, maxDistance: 25 });
+      const spot = _musicInLocationRect() ? placeFoeFreely(env)
+        : placeFoeFreely(env, { minDistance: PLACE_FOE_DEFAULTS.wildernessMinDistance, maxDistance: PLACE_FOE_DEFAULTS.wildernessMaxDistance });   // AUDIT 68 S30-placefoe-defaults-dup
       if (!spot) return false;
       const foe = handle.foe;
       // FinalizeFoe (CreateFoe.cs:341-359): a FLYING foe lifts 1.5
@@ -9146,6 +9147,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // own methods, 1:1; the machine's dialogLink/addDialog arg shapes
     // are already the C# ones)
     addQuestTopics: (quest) => topicTree.addQuestTopicsForQuest(quest),
+    relinkQuestTopics: (quest) => topicTree.relinkQuestResources(quest),   // AUDIT 68 S29-share-topics: a shared-quest resync rebuilt its resources
     dialogLink: (uid, name, type, name2, type2) => topicTree.dialogLinkForQuestInfoResource(uid, name, type, name2 ?? null, type2 ?? QUEST_INFO_RESOURCE_TYPE.NotSet),
     addDialog: (uid, name, type, instantRebuild) => topicTree.addDialogForQuestInfoResource(uid, name, type, instantRebuild),
     removeQuestInfoTopics: (uid) => topicTree.removeQuestInfoTopicsForSpecificQuest(uid),
@@ -9272,7 +9274,6 @@ export async function bootWorld(canvas, renderer, params, status) {
     getReputation: (fid) => { const s = _questStore(); return s ? getReputation(s, fid) : 0; },
     changeReputation: (fid, amount, propagate) => { const s = _questStore(); if (s) changeReputation(s, fid, amount, propagate); },
     changeLegalRep: (amount) => questWorld.changeLegalRep(amount),
-    getGold: () => goldAmount(playerEntity),
     // AUDIT 39: PayMoney's `money` arm gates on GetGoldAmount - coins
     // PLUS letters of credit - which is what deductGold then spends.
     getTotalGold: () => totalGoldAmount(playerEntity),
@@ -10152,7 +10153,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // questSyncTick read that as my own progress and shared the quest straight back - every receiver, once,
         // on its next tick: one log line became eight hub acts and fifty-six deliveries at eight seats, and the
         // room's whole quest burst (QUEST_ROOM_HZ_MAX) for one party. What I just received is what I have seen.
-        const q = [...(questBridge?.machine?.quests?.values() ?? [])].find((x) => x.questName === quest.questName);
+        const q = questBridge?.machine?.sharedCandidateNamed(quest.questName);
         if (q) _questSyncSeen.set(quest.questName, q.getLogMessages()?.length ?? 0);
         return;
       }

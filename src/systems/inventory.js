@@ -262,6 +262,13 @@ export function addItem(list, item, position = 'back') {
       return held;
     }
   }
+  // AUDIT 68 S30-click-dup-quest-item: the duplicate-UID refusal (:232-237) - an item the collection already holds
+  // is not added twice (the port's item IS its UID). A quest item's stand stays clickable until the next quest
+  // tick hides it, and a second click there handed the player the same item again.
+  if (list.includes(item)) {
+    console.warn(`[inventory] AddItem() encountered a duplicate item for ${item.name ?? item.templateIndex}`);
+    return item;
+  }
   if (position === 'front') list.unshift(item);
   else list.push(item);
   return item;

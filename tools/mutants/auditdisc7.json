@@ -11,7 +11,7 @@
   {
     "name": "C2-resync-finds-no-behaviour",
     "file": "src/systems/quest/machine.js",
-    "old": "      if (b.questUID === uid) out.push(b);",
+    "old": "      if (b?.questUID === uid) out.push(b);",
     "new": "      if (false) out.push(b);",
     "tests": [
       "test/auditdisc7.test.js"

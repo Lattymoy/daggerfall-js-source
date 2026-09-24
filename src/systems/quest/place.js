@@ -22,6 +22,7 @@
 
 import { QuestResource, matchFirst } from './questResource.js';
 import { Symbol as QuestSymbol } from './symbol.js';
+import { intParse } from './parseUtils.js';   // AUDIT 68 S30-tryparse-dup: the quest layer's one int.Parse
 import { placesTable } from './tables.js';
 import { mergeNamedBuildings, makeBuildingKey, blockBuildingCount } from '../talkTopics.js';
 import { generateBuildingName } from '../../world/buildingNames.js';
@@ -83,9 +84,9 @@ export function customParseInt(value) {
   }
   // int.Parse rejects trailing garbage outright; parseInt would
   // truncate '12abc' to 12 (Q3-i VERIFY - the comment claimed the
-  // both-arms throw law, the decimal arm now delivers it).
-  if (!/^\s*[+-]?\d+\s*$/.test(value)) throw new Error(`int.Parse failed on '${value}'`);
-  return parseInt(value, 10);
+  // both-arms throw law, the decimal arm now delivers it) - and, AUDIT
+  // 68 S30-tryparse-dup, throws past int32 as well.
+  return intParse(value);
 }
 
 /** RMBLayout.IsResidence (:753): only House1-House4. */

@@ -143,8 +143,9 @@ test('B1 seam gate: the trio is mounted on questWorld and the pools drive + tear
   for (const seam of ['createFoeGameObjects:', 'tryPlaceFoe:', 'raiseOnEncounterEvent:']) {
     assert.ok(world.includes(seam), `questWorld mounts ${seam}`);
   }
-  // the wilderness arm widens the ring (TryPlacement :252-257)
-  assert.match(world, /minDistance: 8, maxDistance: 25/);
+  // the wilderness arm widens the ring (TryPlacement :252-257) - AUDIT 68 S30-placefoe-defaults-dup: off the ring
+  // table (whose 8/25 questscene.test.js pins), not a second copy of its literals
+  assert.match(world, /minDistance: PLACE_FOE_DEFAULTS\.wildernessMinDistance, maxDistance: PLACE_FOE_DEFAULTS\.wildernessMaxDistance/);
   // MERGE (the S-A lane's catch): fieldOfView() answers RADIANS and
   // the law speaks DEGREES - both arms must convert, or every foe
   // places ~1 degree off the view axis, dead ahead of the player

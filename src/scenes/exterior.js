@@ -3642,7 +3642,6 @@ export async function bootExterior(canvas, renderer, params, status) {
     setPlayerCrime: (crime) => setCrimeCommitted(playerEntity, crime),
     getGoldPieces: () => goldAmount(playerEntity),
     deductGoldPieces: (n) => deductGoldPieces(playerEntity, n),
-    getGold: () => goldAmount(playerEntity),
     getTotalGold: () => totalGoldAmount(playerEntity),   // PayMoney's `money` arm - coins PLUS letters
     deductGold: (n) => deductGold(playerEntity, n),
     addGold: (n) => addGold(playerEntity, n),

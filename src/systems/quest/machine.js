@@ -47,6 +47,9 @@
 //                                fired between quest.start() and the
 //                                live table (Q4 wires; the tombstone's
 //                                removeQuestInfoTopics is its scrub)
+//   relinkQuestTopics(quest)   - TalkManager's load relink for ONE quest:
+//                                a shared-quest resync rebuilds the
+//                                resources in place (AUDIT 68 S29-share-topics)
 //
 // Q3-i, THE WORLD SEAM (deps.world - a running host wires it from its
 // MapsFile/BlocksFile instances and player state; absent = headless,
@@ -112,7 +115,9 @@
 //                                LegalRep += amount then the clamp
 //                                (the G2 court system owns both)
 //   playerLevel()              - PlayerEntity.Level (LevelCompleted)
-//   getGold() / deductGold(n)  - PlayerEntity.GoldPieces (ClickedNpc)
+//   getGoldPieces() / deductGoldPieces(n) - PlayerEntity.GoldPieces
+//                                (ClickedNpc, ClickedFoe, PayMoney's gold arm)
+//   deductGold(n)              - PlayerEntity.DeductGoldAmount
 //   getTotalGold()             - PlayerEntity.GetGoldAmount: coins
 //                                PLUS letters of credit, what
 //                                deductGold spends and what PayMoney's
@@ -303,6 +308,10 @@ const isProtectedQuest = (quest) => PROTECTED_QUESTS.some((n) => n.toLowerCase()
  *  verified) are both deliberately left OUT rather than guessed at. */
 const REPLAYABLE_ONE_TIME_ACTIONS = new Set(['TeleportPc', 'GivePc', 'TrainPc']);
 
+/** AUDIT 68 S29-behaviour-registry-leak: the behaviour registry's first prune size; each prune doubles what is
+ *  left, so the set stays within twice the live behaviours at an amortised O(1) per registration. */
+const BEHAVIOUR_SWEEP_MIN = 64;
+
 export class QuestMachine {
   constructor(deps = {}) {
     this.deps = deps;
@@ -310,6 +319,7 @@ export class QuestMachine {
     // AUDIT DISC7 C2: every QuestResourceBehaviour made over this machine, WEAKLY (a host dropped without a destroy
     // must not be kept alive here) - a shared-quest resync relinks the ones standing on the quest it rebuilds
     this._behaviourRefs = new Set();
+    this._behaviourSweepAt = BEHAVIOUR_SWEEP_MIN;   // AUDIT 68 S29-behaviour-registry-leak: the size that prunes it next
     this.questsToInvoke = [];
     // QUEST1: quest names currently kept in LIVE sync with a party -
     // set on both a fresh receive AND on a manual share (bidirectional:
@@ -376,7 +386,6 @@ export class QuestMachine {
       changeLegalRep: (amount) => this.deps.changeLegalRep?.(amount),
       playerLevel: () => this.deps.playerLevel?.() ?? 0,
       playerGender: () => this.deps.playerGender?.() ?? 'male',
-      getGold: () => this.deps.getGold?.() ?? 0,
       // PlayerEntity.GetGoldAmount - the quantity deductGold spends.
       getTotalGold: () => this.deps.getTotalGold?.() ?? 0,
       deductGold: (amount) => this.deps.deductGold?.(amount),
@@ -541,14 +550,6 @@ export class QuestMachine {
       console.warn(`[quest] Parsing quest ${questName} FAILED!\r\n${ex?.message ?? ex}`);
       return null;
     }
-  }
-
-  /** ScheduleQuest(quest) - the parsed-quest arm (QuestMachine.cs's
-   *  own ScheduleQuest signature): starts on the NEXT tick. The
-   *  offer-accept flow schedules here (Q4). */
-  scheduleParsedQuest(quest) {
-    this.questsToInvoke.push(quest);
-    return quest;
   }
 
   /** StartQuest(quest) (QuestMachine.cs:719-735) - the IMMEDIATE arm:
@@ -934,6 +935,7 @@ export class QuestMachine {
     this.siteLinks = [];
     this.questsToInvoke = [];
     this.lastNPCClicked = null;
+    this.lastNPCClickedHost = null;   // AUDIT 68 S29-behaviour-registry-leak: the click's scene half goes with it
   }
 
   restoreSaveData(data) {
@@ -982,9 +984,14 @@ export class QuestMachine {
    *  quest's questName (what a shared copy would carry), not identity,
    *  since a fresh local accept and an incoming share are never the
    *  same object. */
-  hasActiveQuestNamed(questName) {
-    for (const quest of this.quests.values()) if (quest.questName === questName) return true;
-    return false;
+  hasActiveQuestNamed(questName) { return this.sharedCandidateNamed(questName) !== null; }
+
+  /** AUDIT 68 S29-share-name-tombstoned: THE quest a share by this name speaks to - the one not yet tombstoned.
+   *  A tombstoned copy stays on the table for a week and a repeatable quest can be taken again inside it, so the
+   *  first by name was the dead one: every resync was refused as 'gone' and a fresh share as 'active'. */
+  sharedCandidateNamed(questName) {
+    for (const quest of this.quests.values()) if (quest.questName === questName && !quest.questTombstoned) return quest;
+    return null;
   }
 
   /** SENDER side: one quest's own envelope, in the exact shape
@@ -1068,6 +1075,10 @@ export class QuestMachine {
     const uid = nextUid();
     // AUDIT DROPS A3: an envelope the restore chokes on is REFUSED (null), never half a quest on the live table
     try { quest.restoreSaveData({ ...questData, uid }, this._saveResolvers()); } catch (e) { console.warn(`[quest] shared quest refused: ${e?.message ?? e}`); return null; }
+    this._relinkQuestItems(quest);
+    // AUDIT 68 S29-share-topics: StartQuest's talk registration, in its place (before the live table) - a received
+    // quest's people and places had no 'tell me about'/'where is', and its `dialog link` actions found no quest
+    this.deps.addQuestTopics?.(quest);
     this.quests.set(quest.uid, quest);
     for (const resource of quest.resources.values()) {
       if (resource.isPlace && resource.siteDetails) this.createSiteLink(quest, resource.symbol);
@@ -1093,17 +1104,44 @@ export class QuestMachine {
   markQuestShared(questName) { this.sharedQuestNames.add(questName); }
 
 
-  /** AUDIT DISC7 C2: a behaviour made over this machine (resourceBehaviour.js's constructor). */
-  _registerBehaviour(b) { if (typeof WeakRef === 'function') this._behaviourRefs.add(new WeakRef(b)); }
-  /** AUDIT DISC7 C2: the live behaviours standing on quest `uid` - the collected and the destroyed pruned as met. */
+  /** AUDIT DISC7 C2: a behaviour made over this machine (resourceBehaviour.js's constructor). AUDIT 68
+   *  S29-behaviour-registry-leak: only a resync pruned the set, so every foe of every wave stayed in it for the
+   *  session - it prunes itself as it grows now. */
+  _registerBehaviour(b) {
+    if (typeof WeakRef !== 'function') return;
+    if (this._behaviourRefs.size >= this._behaviourSweepAt) {
+      this._pruneBehaviours();
+      this._behaviourSweepAt = Math.max(BEHAVIOUR_SWEEP_MIN, this._behaviourRefs.size * 2);
+    }
+    this._behaviourRefs.add(new WeakRef(b));
+  }
+  /** The collected and the destroyed leave the registry. */
+  _pruneBehaviours() {
+    for (const ref of this._behaviourRefs) {
+      const b = ref.deref();
+      if (!b || b.isComponentDestroyed) this._behaviourRefs.delete(ref);
+    }
+  }
+  /** AUDIT DISC7 C2: the live behaviours standing on quest `uid`. */
   _liveBehaviours(uid) {
+    this._pruneBehaviours();
     const out = [];
     for (const ref of this._behaviourRefs) {
       const b = ref.deref();
-      if (!b || b.isComponentDestroyed) { this._behaviourRefs.delete(ref); continue; }
-      if (b.questUID === uid) out.push(b);
+      if (b?.questUID === uid) out.push(b);
     }
     return out;
+  }
+  /** AUDIT 68 S29-share-item-questuid: a shared quest's Item resources name THIS quest. The envelope's items are a
+   *  throwaway parse's (questShare takeLocalItems), stamped with that parse's uid - no quest here - so the item a
+   *  player was handed read as orphaned: the save sweep deleted it, `toting` never matched, dispose never removed it. */
+  _relinkQuestItems(quest) {
+    for (const r of quest.resources.values()) {
+      const it = r.isItem ? r.daggerfallUnityItem : null;
+      if (!it?.questItem) continue;
+      it.questUID = quest.uid;
+      it.questSymbol = r.symbol?.clone() ?? null;
+    }
   }
   /** RECEIVER side, the RESYNC arm: the SAME quest (by name, already in
    *  sharedQuestNames) getting a fresher copy of someone else's progress -
@@ -1124,7 +1162,7 @@ export class QuestMachine {
    *  action that JUST turned complete in THIS update fires again: one
    *  already complete from an earlier sync is left alone. */
   updateSharedQuest(questName, questData) {
-    const quest = [...this.quests.values()].find((q) => q.questName === questName);
+    const quest = this.sharedCandidateNamed(questName);
     if (!quest) return null;
     // AUDIT DROPS A2: a quest this player has FINISHED is never dragged back into play by a partner who is behind
     if (quest.questComplete || quest.questTombstoned) return null;
@@ -1143,10 +1181,16 @@ export class QuestMachine {
     // it (castSpellQueue / addItemQueue), and a partner's shorter queue under that cursor re-added the whole item
     // queue to the foe (or its corpse) and re-cast the spells past it. The longer queue is this world's superset.
     for (const r of quest.resources.values()) if (r.isFoe) foesBefore.set(r.symbol?.name ?? String(r.symbol), { killCount: r.killCount | 0, injured: !!r.injuredTrigger, dying: !!r.deathTrigger, spellQueue: r.spellQueue ?? null, itemQueue: r.itemQueue ?? null });
+    // AUDIT 68 S29-share-item-questuid: an Item's ITEM is this world's too - the receiver's own roll, the object the
+    // player may already hold. The envelope's is a fresh throwaway parse every time, so each resync re-rolled it.
+    const itemsBefore = new Map();
+    for (const r of quest.resources.values()) if (r.isItem && r.daggerfallUnityItem) itemsBefore.set(r.symbol?.name, r.daggerfallUnityItem);
     // AUDIT DISC7 C2: the behaviours standing on this quest - relinked below, at once, not on their next update
     // (a person's or an item's never ticks, and a Place mount may come first)
     const standing = this._liveBehaviours(uid);
     quest.restoreSaveData({ ...questData, uid }, this._saveResolvers());
+    for (const r of quest.resources.values()) if (r.isItem && itemsBefore.has(r.symbol?.name)) r.daggerfallUnityItem = itemsBefore.get(r.symbol?.name);
+    this._relinkQuestItems(quest);
     for (const r of quest.resources.values()) {
       const was = r.isFoe ? foesBefore.get(r.symbol?.name ?? String(r.symbol)) : null;
       if (!was) continue;
@@ -1173,6 +1217,8 @@ export class QuestMachine {
       if (resource.isPlace && resource.siteDetails) this.createSiteLink(quest, resource.symbol);
     }
     for (const b of standing) b.relinkToLiveQuest?.();   // AUDIT DISC7 C2: not on their next update - a Place mount may come first
+    // AUDIT 68 S29-share-topics: and the talk topics - 'where is' read the discarded Person, never a later `place npc`
+    this.deps.relinkQuestTopics?.(quest);
     this._rearmNewlyCompletedEffects(quest, before);
     return quest;
   }

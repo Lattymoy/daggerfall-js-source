@@ -23,7 +23,8 @@
 //   playerRaceName()            - the birth race name (%ra)
 //   getReputation(factionId)    - factionRep.getReputation over the
 //                                 player's store
-//   getGold()/deductGold(n)/addGold(n), giveItemToPlayer(dfItem),
+//   getGoldPieces()/deductGoldPieces(n)/deductGold(n)/addGold(n),
+//   giveItemToPlayer(dfItem),
 //   removeItemFromPlayer, playerHasItem, carriesQuestItem,
 //   releaseQuestItem, makeHeldQuestItemsPermanent, offerReward,
 //   isPlayerInTown()            - the item/click seams (Q2b)
@@ -178,7 +179,7 @@ export const QUEST_CTX_CONTRACT = Object.freeze([
   'classicSeconds', 'clearEnemies', 'cureDisease', 'data',
   'dateTimeString', 'deductGold', 'deductGoldPieces', 'dialogLink',
   'dropFace', 'endLycanthropy', 'endVampirism', 'forceTopicListsUpdate',
-  'getGold', 'getGoldPieces', 'getGuild', 'getGuildFactionId',
+  'getGoldPieces', 'getGuild', 'getGuildFactionId',
   'getReputation', 'getTotalGold', 'giveItemToPlayer',
   'isPlayerInTown', 'isPlayerInsideCastle', 'makeEnemiesHostile',
   'makeHeldQuestItemsPermanent', 'makePcDiseased', 'midDateTimeString',
@@ -186,8 +187,8 @@ export const QUEST_CTX_CONTRACT = Object.freeze([
   'playSound', 'playVideo', 'playerEntity', 'playerHasItem',
   'playerRaceName', 'questClockStepMax', 'questFoeInstances',
   'raiseTime', 'regionPriceAdjustment', 'releaseQuestItem',
-  'removeItemFromPlayer', 'removeNpcQuestor', 'removeProgressRumors',
-  'removeQuestInfoTopics', 'removeQuestRumors',
+  'relinkQuestTopics', 'removeItemFromPlayer', 'removeNpcQuestor',
+  'removeProgressRumors', 'removeQuestInfoTopics', 'removeQuestRumors',
   'removeQuestorPostMessage', 'setPlayerCrime', 'showPopup',
   'showPrompt', 'showPromptMulti', 'spawnCityGuards',
   'undiscoverBuilding', 'world',
@@ -247,7 +248,6 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     clearEnemies: () => ctx.clearEnemies?.(),
     questFoeInstances: (symbol) => ctx.questFoeInstances?.(symbol) ?? [],   // MT-iii
     getReputation: (fid) => ctx.getReputation?.(fid) ?? 0,
-    getGold: () => ctx.getGold?.() ?? 0,
     getTotalGold: () => ctx.getTotalGold?.() ?? 0,   // PayMoney's `money` arm - GetGoldAmount
     deductGold: (n) => ctx.deductGold?.(n),
     addGold: (n) => ctx.addGold?.(n),
@@ -286,6 +286,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     endLycanthropy: () => ctx.endLycanthropy?.(),
     // the talk seams (the talk arc's consumers; silent while absent)
     addQuestTopics: (q) => ctx.addQuestTopics?.(q),
+    relinkQuestTopics: (q) => ctx.relinkQuestTopics?.(q),   // AUDIT 68 S29-share-topics: a resync's rebuilt resources
     dialogLink: (...a) => ctx.dialogLink?.(...a),
     addDialog: (...a) => ctx.addDialog?.(...a),
     addQuestRumor: (uid, m) => ctx.addQuestRumor?.(uid, m),

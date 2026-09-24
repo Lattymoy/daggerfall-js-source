@@ -255,7 +255,7 @@ test('the bare bridge: absent ctx seams answer the headless charter values', () 
   assert.equal(d.playerName(), null);
   assert.equal(d.playerRaceName(), null);
   assert.equal(d.getReputation(1), 0);
-  assert.equal(d.getGold(), 0);
+  assert.equal(d.getGoldPieces(), 0);
   assert.equal(d.playerHasItem({}), false);
   assert.equal(d.carriesQuestItem({}), false);
   assert.equal(d.isPlayerInTown(), false);
