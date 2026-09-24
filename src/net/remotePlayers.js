@@ -665,7 +665,6 @@ export class RemotePlayers {
       if (live.has(id)) continue;
       this.renderer.destroyBillboardBatch?.(entry.batch);
       this._batches.delete(id);
-      this._mobiles.delete(id);   // 2026-09-17: a departed peer's mobile bundle (or its in-flight build) goes with its batch
       this._footsteps?.delete(id);   // PEER-FS1: a departed peer's stride machine goes with everything else
       this._attackAn?.delete(id);   // PEER-FS2: and their swing-edge tracker
     }
@@ -676,6 +675,10 @@ export class RemotePlayers {
     for (const id of this._attackAn.keys()) if (!seen.has(id)) this._attackAn.delete(id);
     for (const id of [...this._riding.keys()]) if (!seen.has(id)) this._stopRidingSound(id);   // RIDE-SOUND: a peer gone (or every peer, on the dead's empty sync) takes their hooves with them
     for (const id of [...this._onFoot]) if (!seen.has(id)) this._onFoot.delete(id);   // AUDIT DISC7 B4: and what they were last seen on
+    // 2026-09-17: a departed peer's mobile bundle (or its in-flight build) goes with it. AUDIT 68
+    // S14-remoteplayers-mobiles-unswept: swept against `live`, not inside the batch sweep - a peer gone before its build
+    // landed held no batch, and the build then stored a whole bundle for nobody (`_mobileFor`'s own race check drops it now)
+    for (const id of this._mobiles.keys()) if (!live.has(id)) this._mobiles.delete(id);
   }
 
   /** PEER-FS1 (Mac, 2026-09-18: "footstep sounds depending where they walk

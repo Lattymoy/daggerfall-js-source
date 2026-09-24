@@ -10135,6 +10135,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // done/tombstoned, the guild membership the quest assumes) all run inside receiveSharedQuest, never here; this
     // reads only the result and says it in a word, success or refusal, the same as sendQuest's own send-side note.
     link.onQuestShared = (acct, name, quest) => {
+      if (!social.inMyParty(acct)) return;   // AUDIT 68 S14-quest-inbound-ungated: a seat in my party alone, applyParty's own rule - the relay is the player's choice
       const who = name || 'A party member';
       const result = receiveSharedQuest(questBridge?.machine, questBridge?.questLists, quest.questName, quest.data, {
         memberships: activeMemberships(playerEntity),

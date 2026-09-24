@@ -67,7 +67,7 @@ export function emoteText(name, target = '') {
   const e = EMOTES[name];
   if (!e) return null;
   const t = String(target ?? '').replace(/\s+/g, ' ').trim().slice(0, 24);
-  return t ? e[1].replace('{t}', t) : e[0];
+  return t ? e[1].replace('{t}', () => t) : e[0];   // AUDIT 68 S14-emote-target-replacement-pattern: a function, so a typed `$&`/`$'`/`$$` is a name, not a pattern
 }
 /** EMOTE1: THE SHORTCODES - `:smile:` is its emoji in anything said (the pixel face has none of these glyphs; the
  *  browser's own emoji face draws them). A code the table does not know stays as typed. */

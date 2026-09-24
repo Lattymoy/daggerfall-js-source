@@ -39,6 +39,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { call, forgetSession, handleShapeOk } from './accountClient.js';
 import { letterWords, LETTER_ID_RE, LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTERS_INBOX_MAX } from './letterLaw.js';
+import { agoText } from './social.js';   // AUDIT 68 S14-ago-text-duplicated: the friends list's own ladder, not a copy of it
 
 /** How often the host looks at the box while the game runs. */
 export const MAIL_POLL_MS = 3 * 60 * 1000;
@@ -83,17 +84,9 @@ export function letterWhole(l) {
   return head && body ? { ...head, body, read: true } : null;
 }
 
-/** How long ago a letter was sent, in the friends list's own manner (net/social.js lastOnlineText). */
+/** How long ago a letter was sent, in the friends list's own manner (net/social.js agoText). */
 export function letterAgeText(sentAtS, nowMs) {
-  const ago = Math.max(0, nowMs - sentAtS * 1000);
-  const min = 60_000, hour = 60 * min, day = 24 * hour, week = 7 * day;
-  if (ago < min) return 'just now';
-  if (ago < hour) return `${Math.floor(ago / min)} min ago`;
-  if (ago < day) return `${Math.floor(ago / hour)} h ago`;
-  if (ago < 2 * day) return 'yesterday';
-  if (ago < week * 2) return `${Math.floor(ago / day)} days ago`;
-  if (ago < 365 * day) return `${Math.floor(ago / week)} weeks ago`;
-  return 'long ago';
+  return agoText(nowMs - sentAtS * 1000);
 }
 
 /** A reply's subject: "Re: " once, however many times the letter has gone back and forth, within the bound. */

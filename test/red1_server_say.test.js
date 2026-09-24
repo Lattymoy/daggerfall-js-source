@@ -213,7 +213,7 @@ test('RED1: the host parses /red and NEVER guards it - the authority is the rela
   const recv = online.slice(online.indexOf("} else if (m.t === 'red') {"), online.indexOf("} else if (m.t === 'social') {"));
   assert.match(recv, /this\.onRed\?\.\(\{ text, at:/, 'the session hands it on');
   assert.doesNotMatch(recv, /m\.id|m\.name/, 'a server line has neither, and reading one would invent a speaker');
-  assert.match(recv, /chatInGate/, 'CHAT-G: gated COMING IN too - the relay a client talks to is the player\'s own choice');
+  assert.match(recv, /if \(!this\._lineIn\(room, null, now\)\) return;/, 'CHAT-G: gated COMING IN too - the relay a client talks to is the player\'s own choice (AUDIT 68: through the chat line\'s own door)');
   // ...and DRIVEN, because the pattern above also matches the arm after this one: a flood of red lines from one relay
   // inside one instant reaches the log at the room's own rate and no faster (CHAT-CHAN found the gate's removal
   // surviving that pattern - RED1-12)

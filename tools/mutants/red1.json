@@ -90,7 +90,7 @@
   {
     "name": "RED1-12-the-inbound-gate-dropped",
     "file": "src/net/online.js",
-    "old": "      const g = chatInGate(this._inChat.get(room), now);\n      this._inChat.set(room, g.bucket);\n      if (!g.pass) { this.stats.chatsDropped++; return; }\n      this._deliver('chat', () => this.onRed?.({ text, at: Number.isFinite(m.at) ? m.at : now }));",
+    "old": "      if (!this._lineIn(room, null, now)) return;\n      this._deliver('chat', () => this.onRed?.({ text, at: Number.isFinite(m.at) ? m.at : now }));",
     "new": "      this._deliver('chat', () => this.onRed?.({ text, at: Number.isFinite(m.at) ? m.at : now }));",
     "tests": ["test/red1_server_say.test.js"],
     "note": "CHAT-G's whole finding, on the one line type a dishonest relay would most want to flood. The relay a client talks to is the PLAYER'S OWN CHOICE (`?server=`, the Relay field), so 'the relay already gated this' is a sentence about an honest relay only - and net/chat.js keeps CHAT_KEEP lines, so an ungated stream is a player's history deleted."
