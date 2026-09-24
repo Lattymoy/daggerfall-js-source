@@ -72,7 +72,7 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questShareGate, questInGate, validQuestFrame, QUEST_SEND_MS, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, parkGate, relaySupportsPark, PARK_CELL_MAX, PARK_KEY_RE, PARK_TTL_MS, relaySupportsChannels, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote, validCardData, cardGate, cardInGate, CARD_FRAME_MAX, CARD_IN_HZ_MAX, relaySupportsCard, validPageData, pageGate, pageInGate, PAGE_FRAME_MAX, PAGE_IN_HZ_MAX, relaySupportsPage } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
+import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questShareGate, questInGate, validQuestFrame, QUEST_SEND_MS, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, parkGate, relaySupportsPark, PARK_CELL_MAX, PARK_KEY_RE, PARK_TTL_MS, relaySupportsChannels, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote, validCardData, cardGate, cardInGate, CARD_FRAME_MAX, CARD_IN_HZ_MAX, relaySupportsCard, validPageData, pageGate, pageInGate, PAGE_FRAME_MAX, PAGE_IN_HZ_MAX, relaySupportsPage, validVoiceRequest, validVoicePlayback, voiceGate, voiceInGate, relaySupportsVoice } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -288,6 +288,9 @@ export class OnlineSession {
     this.chanOk = false;          // CHAT-CHAN: the relay that welcomed this socket routes a party's line and opens the region channels (relaySupportsChannels)
     this.rollOk = false;          // DICE1: ...and rolls dice (relaySupportsRoll) - an older one CLOSES the socket on a roll frame
     this.emoteOk = false;         // EMOTE1: ...and carries an action line (relaySupportsEmote) - an older one would say it as plain words
+    this.voiceOk = false;         // VOICE1: relay accepts the dedicated stock-voice request frame
+    this.onVoice = null;          // VOICE1: ({id, playback, at, mine}) => void - relay-authorized Daggerfall or Morrowind voice
+    this._vbucket = null;         // VOICE1: sender gate; one vocalisation a second
     this.onRoll = null;           // DICE1: ({id, name, at, mine, sub, ch, roll}) => void - a roll the RELAY made, checked by the dice's law
     this._rollBucket = null;      // DICE1: my own rolls out, rollGate's law
     this.castOk = false;          // AUDIT ALLY-CAST B1: the relay that welcomed this socket routes cast frames (relaySupportsCast) - an older one CLOSES the socket on one
@@ -358,6 +361,7 @@ export class OnlineSession {
     // that is the unit the relay spends by. Room -> bucket; a room let go
     // drops its bucket with the rest of what that room meant (_forgetRoom).
     this._inChat = new Map();
+    this._inVoice = new Map();   // VOICE1: room -> inbound fan bucket, same lifetime as the room
     this._inPartyChat = null;  // CHAT-CHAN: the party lines' own gate coming in (partyChatInGate) - the hub's, one room
     this._inChatSaid = false;  // the console says it ONCE - a flood must not become its own flood
     // AUDIT SOC B3: the same law for the hub's frames - the picture's (state, presence, party, invite) on one bucket per
@@ -568,6 +572,7 @@ export class OnlineSession {
     const s = this._rooms.get(room);
     this._rooms.delete(room);
     this._inChat.delete(room);   // CHAT-G: a room let go takes its bucket with it, or a long session accumulates one per cell it ever walked through
+    this._inVoice.delete(room);  // VOICE1: same room lifetime for the inbound voice fan bucket
     this._inSocial.delete(room); this._inNote.delete(room); this._inParty.delete(room);   // AUDIT SOC B3: and the hub's three
     for (const k of [...this._inQuest.keys()]) if (k.startsWith(`${room}|`)) this._inQuest.delete(k);   // AUDIT DROPS C2: keyed room|acct
     if (s) for (const id of s) if (!this._held(id)) this.peers.delete(id);
@@ -979,6 +984,21 @@ export class OnlineSession {
     return true;
   }
 
+  /** VOICE1: ask the relay to play one approved vocalisation from this body.
+   *  Daggerfall requests carry a closed type/variant; Morrowind requests a closed symbolic Sound/Vo key.
+   *  No arbitrary path or raw clip id is sent by the client. */
+  sendVoice(request) {
+    if (!this.presence || !this.voiceOk) return false;
+    const req = validVoiceRequest(request);
+    if (!req) return false;
+    const gate = voiceGate(this._vbucket, this._now());
+    if (!gate.pass) return false;
+    if (!this._send({ t: 'voice', ...req })) return false;
+    this._vbucket = gate.bucket;
+    this.stats.voices = (this.stats.voices ?? 0) + 1;
+    return true;
+  }
+
   /** DICE1: a roll ASKED of the relay (net/dice.js's spec) on the channel this socket's room is, or a party's (`ch`,
    *  the hub link, CHAT-CHAN's law). The relay rolls and says the result to the channel, this socket included - the
    *  receipt is the roll itself. False when nothing went: a spec the dice refuse, a relay that does not roll, the
@@ -1251,6 +1271,7 @@ export class OnlineSession {
       if (primary) this.chanOk = relaySupportsChannels(relayV);   // CHAT-CHAN
       if (primary) this.rollOk = relaySupportsRoll(relayV);   // DICE1
       if (primary) this.emoteOk = relaySupportsEmote(relayV);   // EMOTE1
+      if (primary) this.voiceOk = relaySupportsVoice(relayV);   // VOICE1
       if (primary) this.cardOk = relaySupportsCard(relayV);   // INSPECT1
       if (primary) this.pageOk = relaySupportsPage(relayV);   // JOURNAL1
       if (primary) this.parkOk = relaySupportsPark(relayV);   // HCC-PARK: the same law for the park frame
@@ -1445,6 +1466,13 @@ export class OnlineSession {
       // relay composed from its own routing, one of the wire's own, or none
       // EMOTE1: `me` - the relay says the line is an ACTION, and only `true` is one
       this._deliver('chat', () => this.onChat?.({ id: m.id, name: sanitizeName(m.name), text, at: Number.isFinite(m.at) ? m.at : now, mine: m.id === this.id, sub: subOf(m), ch, ...(m.me === true ? { me: true } : {}) }));
+    } else if (m.t === 'voice') {
+      const playback = validVoicePlayback(m);
+      if (typeof m.id !== 'string' || (m.id !== this.id && !this.peers.has(m.id)) || !playback) return;
+      const g = voiceInGate(this._inVoice.get(room), now);
+      this._inVoice.set(room, g.bucket);
+      if (!g.pass) { this.stats.voicesDropped = (this.stats.voicesDropped ?? 0) + 1; return; }
+      this._deliver('voice', () => this.onVoice?.({ id: m.id, playback, at: Number.isFinite(m.at) ? m.at : now, mine: m.id === this.id }));
     } else if (m.t === 'roll') {
       // DICE1: A ROLL THE RELAY MADE - checked by the dice's own law (n dice, each 1..m, the total their sum plus k):
       // an honest relay rolled it, and a dishonest one's numbers that do not add up are no roll. Gated in on the

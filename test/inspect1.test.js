@@ -70,7 +70,7 @@ test('INSPECT1 wire: a card frame is an ASK or an ANSWER, never both; the card w
   assert.deepEqual(parseClient(JSON.stringify({ t: 'card', data: { to: 'peer-0002', ask: true } })), { error: 'card before hello' });
   assert.deepEqual(parseClient(JSON.stringify({ t: 'card', data: { to: 'peer-0002' } }), { hasHello: true }), { error: 'bad card' });
   assert.deepEqual(parseClient(JSON.stringify({ t: 'card', data: { to: 'peer-0002', card: CARD, pad: 'x'.repeat(CARD_FRAME_MAX) } }), { hasHello: true }), { error: 'frame too large' });
-  assert.equal(RELAY_VERSION, 'world102');
+  assert.equal(RELAY_VERSION, 'world103');
   assert.equal(CARD_RELAY_MIN, 102);
   assert.equal(relaySupportsCard('world102'), true);
   assert.equal(relaySupportsCard('world101'), false);

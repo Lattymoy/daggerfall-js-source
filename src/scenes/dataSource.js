@@ -511,7 +511,7 @@ export function mwLoosePath(name) {
   }
   return p.slice(p.lastIndexOf('/') + 1);
 }
-const MW_LOOSE_EXT = /\.(nif|kf|dds|tga|wav)$/i;
+const MW_LOOSE_EXT = /\.(nif|kf|dds|tga|wav|mp3)$/i;
 
 /** MW-D40: the {has, get} duck the whole MW stack already speaks
  *  (fpArm resolves everything via `archives.find((a) => a.has(path))`),

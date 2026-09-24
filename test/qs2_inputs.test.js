@@ -60,9 +60,10 @@ test('QS2: the three actions are APPENDED - past DFU\'s forty-four and past SOC5
   // that names "the last seven" now has an eighth row behind it. It is
   // sliced from the END of the port's rows rather than widened to
   // include a row this pin is not about.
-  assert.deepEqual(ACTIONS.slice(-8, -1), [...QS, ...QL], 'the seven rows QS2 and QUICK-LOOT own, in this order');
-  assert.equal(ACTIONS.at(-1), 'FreeMouse', 'and FREEMOUSE\'s is the newest, appended past them');
-  assert.equal(ACTIONS.length, 53, 'DFU\'s 44 + SOC5\'s 1 + QS2\'s 3 + QS4\'s 1 + QS6\'s 1 + QUICK-LOOT\'s 2 + FREEMOUSE\'s 1');
+  assert.deepEqual(ACTIONS.slice(-9, -2), [...QS, ...QL], 'the seven rows QS2 and QUICK-LOOT own, in this order');
+  assert.equal(ACTIONS.at(-2), 'FreeMouse', 'FREEMOUSE remains appended past them');
+  assert.equal(ACTIONS.at(-1), 'Chat', 'CHAT-POLISH1 appends after every existing action');
+  assert.equal(ACTIONS.length, 54, 'DFU\'s 44 + existing port rows + FREEMOUSE + CHAT');
   // Every index DFU's own enum had, it still has. This is the whole reason the
   // list is appended to and never inserted into (ui/controlsWindow.js).
   assert.equal(ACTIONS[43], 'AutoRun', 'DFU\'s last row keeps index 43');
@@ -77,7 +78,7 @@ test('QS2: the three actions are APPENDED - past DFU\'s forty-four and past SOC5
 });
 
 test('QS2: the port\'s own actions YIELD in the classic windows - all four of them, because none of the four is on either classic face (mutant: the three left out of PORT_ACTIONS, so a classic player is told of a clash against a row they cannot see or clear)', () => {
-  assert.deepEqual([...PORT_ACTIONS], ['SocialInteract', ...QS, ...QL, 'FreeMouse']);   // FREEMOUSE: the classic windows cannot draw its row either
+  assert.deepEqual([...PORT_ACTIONS], ['SocialInteract', ...QS, ...QL, 'FreeMouse', 'Chat']);   // FREEMOUSE: the classic windows cannot draw its row either
   // The claim PORT_ACTIONS makes is "not drawable by a classic window", and it
   // is derived here rather than asserted: the classic grid is ACTIONS[2..40)
   // and the ADVANCED popup is its six.

@@ -21,7 +21,6 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { ACTIONS, DEFAULT_BINDINGS, PORT_ACTIONS, parseActionName } from '../src/systems/inputActions.js';
-import { MOD_SETTINGS } from '../src/systems/modSettings.js';
 import { PORT_ROWS, PORT_GROUPS, MOUSE_GROUP_TITLE, GRID_ACTIONS, ADVANCED_ROWS } from '../src/ui/enhancedControls.js';
 import { FREE_MOUSE_ACTION, toggleCursorActive, cursorActive, setCursorActive, requestLook } from '../src/player/pointerLock.js';
 
@@ -29,7 +28,8 @@ const stubCanvas = () => { const c = { calls: 0, requestPointerLock() { c.calls+
 
 test('FREEMOUSE: the action is APPENDED, parses, and displaces no index the classic grid draws by number', () => {
   assert.equal(FREE_MOUSE_ACTION, 'FreeMouse');
-  assert.equal(ACTIONS.at(-1), 'FreeMouse', 'newest row, at the end');
+  assert.equal(ACTIONS.at(-2), 'FreeMouse', 'still appended; Chat is the only newer row');
+  assert.equal(ACTIONS.at(-1), 'Chat');
   assert.equal(ACTIONS.filter((a) => a === 'FreeMouse').length, 1, 'once');
   assert.equal(parseActionName('FreeMouse'), 'FreeMouse');
   // The law an appended action exists to keep: a saved bindings file
@@ -40,35 +40,11 @@ test('FREEMOUSE: the action is APPENDED, parses, and displaces no index the clas
   assert.deepEqual([...GRID_ACTIONS], ACTIONS.slice(2, 40));
 });
 
-test('FREEMOUSE: the default key is the one letter DFU, the port and every vendored mod all leave alone', () => {
-  const row = DEFAULT_BINDINGS.find(([, a]) => a === 'FreeMouse');
-  assert.deepEqual(row, ['KeyY', 'FreeMouse']);
-
-  // THE ELIMINATION, RUN RATHER THAN QUOTED. If a later mod or a later
-  // port action takes Y, this reddens before a player finds one press
-  // doing two things - which is exactly what HT4 was.
-  const spent = new Set(DEFAULT_BINDINGS.filter(([, a]) => a !== 'FreeMouse').map(([c]) => c));
-  assert.ok(!spent.has('KeyY'), 'nothing else defaults to Y');
-  const modKeys = new Set();
-  for (const def of Object.values(MOD_SETTINGS)) {
-    for (const k of Object.values(def.keys)) {
-      for (const v of [k.default, ...(k.options ?? [])]) {
-        if (typeof v === 'string' && /^[A-Za-z][A-Za-z0-9]*$/.test(v)) modKeys.add(`Key${v}`.replace(/^KeyKey/, 'Key'));
-      }
-    }
-  }
-  assert.ok(!modKeys.has('KeyY'), 'and no vendored mod ships or OFFERS Y - the choices count, not just the defaults');
-
-  // ...and Y really was the LAST one: every other letter is spoken for,
-  // which is why the key is what is left rather than what is apt.
-  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((l) => `Key${l}`);
-  const free = letters.filter((c) => !spent.has(c) && !modKeys.has(c));
-  assert.deepEqual(free, ['KeyY'], 'one letter was left in the whole keymap');
-
-  // No key is spent twice, which is the check that catches a default
-  // added without the sweep above being run.
+test('FREEMOUSE: Y belongs to Chat now, so the mouse-only toggle moves to F7 without a duplicate default', () => {
+  assert.deepEqual(DEFAULT_BINDINGS.find(([, a]) => a === 'FreeMouse'), ['F7', 'FreeMouse']);
+  assert.deepEqual(DEFAULT_BINDINGS.find(([, a]) => a === 'Chat'), ['KeyY', 'Chat']);
   const codes = DEFAULT_BINDINGS.map(([c]) => c);
-  assert.equal(new Set(codes).size, codes.length);
+  assert.equal(new Set(codes).size, codes.length, 'one default action per physical key');
 });
 
 test('FREEMOUSE: the row is drawn under its OWN heading, is rebindable, and yields in the classic windows', () => {

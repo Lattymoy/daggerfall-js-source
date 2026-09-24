@@ -130,7 +130,7 @@ test('JOURNAL1 wire: a page is a player\'s words with their lines - the letter\'
   assert.ok(widest.length <= PAGE_FRAME_MAX, `and its frame fits: ${widest.length} of ${PAGE_FRAME_MAX}`);
   assert.ok(PAGE_FRAME_MAX < MAX_FRAME_BYTES);
   assert.ok(PAGE_LINE_MAX >= MAX_LINE_LENGTH + 1, 'a notebook line, with DFU\'s leading space, is a page line - the relay imports no game module, so this pin holds the two apart');
-  assert.equal(RELAY_VERSION, 'world102');
+  assert.equal(RELAY_VERSION, 'world103');
   assert.equal(PAGE_RELAY_MIN, 102);
   assert.equal(relaySupportsPage('world102'), true);
   assert.equal(relaySupportsPage('world101'), false);

@@ -437,7 +437,7 @@ test('CHAT-CHAN panel: each tab says who it reaches (and the region\'s name), th
   input.value = 'hello';
   answer = true;
   one(root, 'dfchat-form').fire('submit');
-  assert.equal(log.open, false, 'a line that went closes it, as it always has');
+  assert.equal(log.open, true, 'a successful line leaves the panel visible for fast history recall');
   panel.destroy?.();
 });
 
@@ -451,7 +451,7 @@ test('CHAT-CHAN host: the commands are tested in their order - the host\'s own f
   // shortcodes and it let a SECOND call live before the commands - which reads /unstuck, /red, /mute and /ready as the
   // host's and would have refused every one; so the pin names the parser's FIRST call, and says it is the only one
   const parser = onSend.indexOf('parseChatLine(');
-  assert.equal(parser, at('parseChatLine(expandShortcodes(text))'), 'the parser\'s first call is its one call, over the shortcodes\' emoji (EMOTE1)');
+  assert.equal(parser, at('parseChatLine(expandShortcodes(text), VOICE_CHAT_COMMANDS)'), 'the parser\'s first call is its one call, over the shortcodes\' emoji (EMOTE1)');
   assert.equal(onSend.split('parseChatLine(').length - 1, 1, 'and it is asked once');
   assert.ok(at('/^\\/unstuck$/i') < at('const red = ') && at('const red = ') < at('parseModCommand(text)') && at('parseModCommand(text)') < at("/^\\/ready$/i") && at("/^\\/ready$/i") < parser, 'the host\'s own commands by their own tests, then the parser');
   assert.match(onSend, /if \(cmd\.kind === 'help'\) \{ for \(const line of HELP_LINES\) note\(line\); return 'read'; \}/);

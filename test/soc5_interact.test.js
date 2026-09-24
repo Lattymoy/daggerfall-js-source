@@ -94,7 +94,10 @@ test('SOC5: a bindings file written BEFORE this slice gains KeyF on the next boo
 test('SOC5: the enhanced controls window offers the action in its own group, and the CLASSIC window cannot place it - which is the reason the group exists (mutants: the action dropped from the pane and so unrebindable; GRID_ACTIONS widened past DFU\'s slice; a seventh ADVANCED row the classic popup has never heard of)', () => {
   // QS2: PORT_ROWS is the flat union of the port's groups now, and SOC5's row
   // is the whole of the ONLINE one - which is the claim this pin makes.
-  assert.deepEqual(PORT_GROUPS[0], { title: 'Online', rows: [{ action: 'SocialInteract', label: 'Interact with player' }] });
+  assert.deepEqual(PORT_GROUPS[0], { title: 'Online', rows: [
+    { action: 'SocialInteract', label: 'Interact with player' },
+    { action: 'Chat', label: 'Open chat' },
+  ] });
   assert.ok(PORT_ROWS.some((r) => r.action === 'SocialInteract' && r.label === 'Interact with player'));
   assert.equal(PORT_GROUP_TITLE, 'Online');
   // the two existing lists keep their meaning exactly
@@ -395,7 +398,7 @@ test('SOC5: scenes/world.js - the door on hudCtx, the ray read as the activation
   // the menu is built beside the picture, over the LIVE link, and its acts write a line
   assert.match(w, /socialMenu = createSocialMenu\(\{/);
   assert.ok(w.indexOf('const socialStart = () => {') < w.indexOf('socialMenu = createSocialMenu({'), 'built inside socialStart - so it exists exactly when `social` does');
-  assert.match(w, /const hub = socialLink\(\);\n\s*const went = hub\?\.sendSocial\(act\) === true;/, 'the act leaves through the live session, never a captured one (AUDIT SOC B17: read once, so the word after can ask whether it was open)');
+  assert.match(w, /const hub = socialLink\(\);\r?\n\s*const went = hub\?\.sendSocial\(act\) === true;/, 'the act leaves through the live session, never a captured one (AUDIT SOC B17: read once, so the word after can ask whether it was open)');
   assert.match(w, /chatLog\.push\(tab\.id, \{ text: went \? socialActText\(act\.k, who\) : \(hub\?\.status === 'open' \? TRY_AGAIN_TEXT : NOT_CONNECTED_TEXT\), system: true \}\);/, 'a word either way, on the world tab, flagged as nobody\'s line - AUDIT SOC B17: the panel\'s "try again" when the gate refused, "not connected" when there is no link to try again on');
   assert.match(w, /const NOT_CONNECTED_TEXT = 'You are not connected';/);
   assert.match(w, /Friend request sent to \$\{who\}/); assert.match(w, /Party invite sent to \$\{who\}/);
@@ -489,7 +492,7 @@ test('AUDIT SOC D3: the port own action YIELDS in the classic windows - a grid a
   // same reason - the classic grid is Actions[2..40) on fixed art and the
   // ADVANCED popup is DFU's six, so none of the four is drawable there.
   assert.deepEqual([...PORT_ACTIONS], ['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell',
-    'QuickLootAll', 'QuickLootOpen', 'FreeMouse']);   // QUICK-LOOT B4: the two loot keys yield on the same rule - neither the grid's art nor DFU's six can draw them; QS6: the spell slot yields there too; FREEMOUSE: and the mouse toggle's own row, for the same reason
+    'QuickLootAll', 'QuickLootOpen', 'FreeMouse', 'Chat']);   // QUICK-LOOT B4: the two loot keys yield on the same rule - neither the grid's art nor DFU's six can draw them; QS6: the spell slot yields there too; FREEMOUSE: and the mouse toggle's own row, for the same reason
   const store = createBindings();
   resetDefaults(store);
   assert.equal(getBinding(store, 'SocialInteract'), 'KeyF');

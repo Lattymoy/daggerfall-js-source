@@ -226,10 +226,10 @@ test('FIX-F: the pane offers the classic grid’s 38 actions and the ADVANCED si
   // already paid for the lesson that a group whose title does not
   // describe its rows is worse than no group.
   assert.deepEqual(PORT_ROWS.map((r) => r.action),
-    ['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSpell', 'QuickSwap', 'QuickOffHand',
+    ['SocialInteract', 'Chat', 'QuickUse1', 'QuickUse2', 'QuickSpell', 'QuickSwap', 'QuickOffHand',
       'QuickLootAll', 'QuickLootOpen', 'FreeMouse']);   // QS6: the spell slot, above the swap it took the key from
   assert.deepEqual(PORT_GROUPS.map((g) => [g.title, ...g.rows.map((r) => r.action)]), [
-    ['Online', 'SocialInteract'],
+    ['Online', 'SocialInteract', 'Chat'],
     ['Quickslots', 'QuickUse1', 'QuickUse2', 'QuickSpell', 'QuickSwap', 'QuickOffHand'],
     ['Quick loot', 'QuickLootAll', 'QuickLootOpen'],
     ['Mouse', 'FreeMouse'],

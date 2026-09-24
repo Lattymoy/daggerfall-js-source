@@ -320,18 +320,36 @@ export class AudioEngine {
    *  shot and put it back (EnemySounds.cs:172-175, FPSWeapon.cs:316
    *  -319, PlayerFootsteps.cs:359-362); a WebAudio source is born per
    *  shot and dies with it, so setting it here IS the save/restore. */
-  playOneShot(index, volume = 1, pitch = 1) {
-    if (!this._ready()) return undefined;
+  _oneShotHandle(index, volume = 1, pitch = 1) {
+    if (!this._ready()) return null;
     const buf = this._buffer(index);
-    if (!buf) return undefined;
+    if (!buf) return null;
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     src.playbackRate.value = pitch;
     const gain = this.ctx.createGain();
     gain.gain.value = volume;
     src.connect(gain).connect(this._out());
+    let done = false;
+    const finish = (stop = false) => {
+      if (done) return;
+      done = true;
+      if (stop) { try { src.stop(); } catch { /* already ended */ } }
+      try { src.disconnect(); } catch { /* already disconnected */ }
+      try { gain.disconnect(); } catch { /* already disconnected */ }
+    };
+    src.onended = () => finish(false);
     src.start();
-    return buf.duration;
+    return { duration: buf.duration, stop: () => finish(true) };
+  }
+
+  playOneShot(index, volume = 1, pitch = 1) {
+    return this._oneShotHandle(index, volume, pitch)?.duration;
+  }
+
+  /** VOICE1: an interruptible flat one-shot. Ordinary callers keep the duration-only API above. */
+  playOneShotHandle(index, volume = 1, pitch = 1) {
+    return this._oneShotHandle(index, volume, pitch);
   }
 
   /** AUDIT 58 - THE ID DOOR. SoundReader.GetSoundIndex (SoundReader.cs
@@ -478,10 +496,10 @@ export class AudioEngine {
    *  playbackRate), because every 3D combat voice DFU plays is
    *  pitch-lifted - EnemySounds.cs:172-175 raises the SOURCE's pitch
    *  around PlayOneShot and restores it after. */
-  play3d(index, pos, volume = 1, { refDistance = 1, maxDistance = 500, distanceModel = 'inverse', pitch = 1 } = {}) {
-    if (!this._ready()) return undefined;
+  _play3dHandle(index, pos, volume = 1, { refDistance = 1, maxDistance = 500, distanceModel = 'inverse', pitch = 1 } = {}) {
+    if (!this._ready()) return null;
     const buf = this._buffer(index);
-    if (!buf) return undefined;
+    if (!buf) return null;
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     src.playbackRate.value = pitch;
@@ -489,8 +507,27 @@ export class AudioEngine {
     const gain = this.ctx.createGain();
     gain.gain.value = volume;
     src.connect(gain).connect(pan).connect(this._out());
+    let done = false;
+    const finish = (stop = false) => {
+      if (done) return;
+      done = true;
+      if (stop) { try { src.stop(); } catch { /* already ended */ } }
+      try { src.disconnect(); } catch { /* already disconnected */ }
+      try { gain.disconnect(); } catch { /* already disconnected */ }
+      try { pan.disconnect(); } catch { /* already disconnected */ }
+    };
+    src.onended = () => finish(false);
     src.start();
-    return buf.duration;   // A3: the ambient channel's busy clock
+    return { duration: buf.duration, stop: () => finish(true) };
+  }
+
+  play3d(index, pos, volume = 1, opts = {}) {
+    return this._play3dHandle(index, pos, volume, opts)?.duration;   // A3: the ambient channel's busy clock
+  }
+
+  /** VOICE1: an interruptible positional one-shot. */
+  play3dHandle(index, pos, volume = 1, opts = {}) {
+    return this._play3dHandle(index, pos, volume, opts);
   }
 
   /** Looping positional source (A2 torches: DFU AddTorchAudioSource -

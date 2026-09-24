@@ -116,11 +116,12 @@ export const ADVANCED_ROWS = Object.freeze([
  *  so a seventh entry here would be a claim the classic ADVANCED popup edits
  *  something it has never heard of.
  *
- *  So the port's own actions get their own heading. Today it is one row. The
+ *  So the port's own actions get their own heading. It now includes player interaction and chat. The
  *  pane's coverage rule - every bindable action has a row, none twice - is what
  *  makes this a requirement rather than a preference. */
 const ONLINE_ROWS = Object.freeze([
   Object.freeze({ action: 'SocialInteract', label: 'Interact with player' }),
+  Object.freeze({ action: 'Chat', label: 'Open chat' }),   // CHAT-POLISH1: Y by default, remappable like every port action
 ]);
 /** QS2 (2026-09-17, Mac's quickslot diamond): A FOURTH GROUP, and the reason is
  *  the heading rather than the list. 'Online' is a true word for the F-menu and

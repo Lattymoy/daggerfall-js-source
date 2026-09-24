@@ -406,6 +406,149 @@ export const CHAT_LINE_CHANNELS = Object.freeze(['party']);
  *  The client gates party lines coming in on this number too (partyChatInGate): an honest hub never delivers more. */
 export const PARTY_CHAT_ROOM_HZ_MAX = 40;
 
+/** VOICE1 (2026-09-23): server-authoritative player vocalisations.
+ *
+ * Two libraries are exposed through one wire request:
+ *   - df: stock DAGGER.SND race/gender combat voices.
+ *   - mw: Morrowind Data Files/Sound/Vo entries. The sender names only a
+ *     closed collection/type/id tuple; the relay stamps the speaker's validated
+ *     race/gender onto regular Morrowind requests. Receivers resolve that
+ *     symbolic key against their own attached Morrowind archives/loose files.
+ *
+ * No arbitrary sound path or arbitrary sound id crosses from one player to
+ * another. A client may ask for a stock key; the relay decides what that key
+ * means for the body that said hello. */
+export const DF_VOICE_TYPES = Object.freeze(['attack', 'pain', 'death']);
+export const MW_VOICE_TYPES = Object.freeze(['attack', 'crattack', 'flee', 'follower', 'hello', 'hit', 'idle', 'intruder', 'oppose', 'service', 'thief', 'uniform']);
+export const MW_VOICE_COLLECTIONS = Object.freeze(['default', 'tb', 'bm', 'ord', 'vampire']);
+export const MW_VOICE_GLOBAL_TYPES = Object.freeze(['misc', 'special', 'werewolf']);
+export const VOICE_SOURCES = Object.freeze(['df', 'mw']);
+const DAGGERFALL_VOICE_RACES = Object.freeze(['Breton', 'Redguard', 'Nord', 'DarkElf', 'HighElf', 'WoodElf', 'Khajiit', 'Argonian']);
+
+const VOICE_MALE_PAIN1 = Object.freeze({
+  Breton: 390, Redguard: 393, Nord: 396, DarkElf: 399,
+  HighElf: 402, WoodElf: 405, Khajiit: 408, Argonian: 411,
+});
+const VOICE_DEATH = Object.freeze({
+  male: Object.freeze({
+    Breton: 392, Redguard: 395, Nord: 398, DarkElf: 401,
+    HighElf: 404, WoodElf: 407, Khajiit: 410, Argonian: 42,
+  }),
+  female: Object.freeze({
+    Breton: 45, Redguard: 48, Nord: 51, DarkElf: 54,
+    HighElf: 57, WoodElf: 60, Khajiit: 424, Argonian: 427,
+  }),
+});
+const VOICE_FEMALE_ATTACK = Object.freeze({
+  Breton: Object.freeze([43, 44, 53]),
+  Redguard: Object.freeze([43, 44, 53]),
+  Nord: Object.freeze([43, 44, 53]),
+  DarkElf: Object.freeze([55, 56]),
+  HighElf: Object.freeze([55, 56]),
+  WoodElf: Object.freeze([55, 56]),
+  Khajiit: Object.freeze([61, 62]),
+  Argonian: Object.freeze([425, 426]),
+});
+const VOICE_FEMALE_PAIN = Object.freeze({
+  Breton: Object.freeze([46, 52, 50]),
+  Redguard: Object.freeze([46, 52, 50]),
+  Nord: Object.freeze([46, 52, 50]),
+  DarkElf: Object.freeze([46, 52, 50]),
+  HighElf: Object.freeze([46, 52, 50]),
+  WoodElf: Object.freeze([58, 59]),
+  Khajiit: Object.freeze([58, 59]),
+  Argonian: Object.freeze([46, 52, 50]),
+});
+const voiceRace = (race) => DAGGERFALL_VOICE_RACES.includes(race) ? race : null;
+
+/** The stock Daggerfall clips this look may request for one voice type. */
+export function voiceClipsForLook(look, type) {
+  const race = voiceRace(look?.race);
+  const gender = look?.gender === 'female' ? 'female' : 'male';
+  if (!race || !DF_VOICE_TYPES.includes(type)) return [];
+  if (type === 'death') return [VOICE_DEATH[gender][race]];
+  if (gender === 'male') {
+    const p1 = VOICE_MALE_PAIN1[race];
+    return [type === 'attack' ? p1 : p1 + 1];
+  }
+  return [...(type === 'attack' ? VOICE_FEMALE_ATTACK[race] : VOICE_FEMALE_PAIN[race])];
+}
+
+const voiceId = (v) => {
+  const s = String(v ?? '').trim().toLowerCase();
+  return /^[0-9]{1,4}[a-z]?$/.test(s) ? s : null;
+};
+/** Client request shape. source='mw' carries only a closed symbolic key. */
+export function validVoiceRequest(v) {
+  if (!v || typeof v !== 'object') return null;
+  if (v.source === 'df') {
+    if (!DF_VOICE_TYPES.includes(v.type)) return null;
+    const index = Number.isInteger(v.index) ? v.index : 1;
+    return index >= 1 && index <= 3 ? { source: 'df', type: v.type, index } : null;
+  }
+  if (v.source !== 'mw') return null;
+  const id = voiceId(v.voiceId ?? v.id);
+  if (!id) return null;
+  if (MW_VOICE_GLOBAL_TYPES.includes(v.type)) return { source: 'mw', collection: 'global', type: v.type, voiceId: id };
+  const collection = MW_VOICE_COLLECTIONS.includes(v.collection) ? v.collection : 'default';
+  if (!MW_VOICE_TYPES.includes(v.type)) return null;
+  return { source: 'mw', collection, type: v.type, voiceId: id };
+}
+
+/** Daggerfall resolution: a request to the clip allowed by the hello's race/gender, or null. */
+export function voiceClipForLook(look, type, index = 1) {
+  const req = validVoiceRequest({ source: 'df', type, index });
+  if (!req) return null;
+  const clips = voiceClipsForLook(look, req.type);
+  return clips[req.index - 1] ?? null;
+}
+const VOICE_CLIP_SET = new Set([
+  ...Object.values(VOICE_MALE_PAIN1),
+  ...Object.values(VOICE_MALE_PAIN1).map((n) => n + 1),
+  ...Object.values(VOICE_DEATH.male),
+  ...Object.values(VOICE_DEATH.female),
+  ...Object.values(VOICE_FEMALE_ATTACK).flat(),
+  ...Object.values(VOICE_FEMALE_PAIN).flat(),
+]);
+export const validVoiceClip = (clip) => Number.isInteger(clip) && VOICE_CLIP_SET.has(clip) ? clip : null;
+
+/** Relay output for a validated request. Regular Morrowind lines are stamped
+ * with the speaker's hello race/gender; globals deliberately are not. */
+export function voicePlaybackForLook(look, request) {
+  const req = validVoiceRequest(request);
+  if (!req) return null;
+  if (req.source === 'df') {
+    const clip = voiceClipForLook(look, req.type, req.index);
+    return clip == null ? null : { source: 'df', clip };
+  }
+  if (req.collection === 'global') return req;
+  const race = voiceRace(look?.race);
+  if (!race) return null;
+  return { ...req, race, gender: look?.gender === 'female' ? 'female' : 'male' };
+}
+/** Receiver-side projection of the relay's voice payload. */
+export function validVoicePlayback(v) {
+  if (!v || typeof v !== 'object') return null;
+  if (v.source === 'df') {
+    const clip = validVoiceClip(v.clip);
+    return clip == null ? null : { source: 'df', clip };
+  }
+  const req = validVoiceRequest(v);
+  if (!req || req.source !== 'mw') return null;
+  if (req.collection === 'global') return req;
+  const race = voiceRace(v.race);
+  if (!race || (v.gender !== 'male' && v.gender !== 'female')) return null;
+  return { ...req, race, gender: v.gender };
+}
+/** Human-facing Daggerfall variant counts for /speechhelp. */
+export const voiceVariantCounts = (look) => Object.fromEntries(DF_VOICE_TYPES.map((type) => [type, voiceClipsForLook(look, type).length]));
+/** VOICE1/POLISH: human recall should never hit this. 50/s with a three-event burst still cuts obvious macros/floods. */
+export const VOICE_HZ_MAX = 50;
+export const VOICE_BURST_MAX = 3;
+/** Enough for a busy room of humans; still a hard room-wide flood ceiling. */
+export const VOICE_ROOM_HZ_MAX = 256;
+
+
 // SOC1 (2026-09-16, Mac: "A social button next to the chat UI ... friend other users, see if they are online/last
 // online + be able to invite friends or other individuals to the new 4 person party system"): THE HUB'S LAW.
 //
@@ -915,7 +1058,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world102';   // THE SIXTH MERGE (2026-09-23): main's DISC12 is world101, so the arc's deploy is world102 - every frame below moves its RELAY_MIN gate to 102. JOURNAL1 (the same deploy): the `page` frame - a page of a player's journal shown to one player standing near them, directed like a card through the cast arm's per-sender funnel, on its own meter, never from a muted player; its words cleaned by the letter's line law, which moves here from net/letterLaw.js (`wordsLine`, `foldBlankLines`) so the letter and the page read one law. MAIL1 (the same deploy): no frame of its own - the letters are the account service's - but the characters' law left sanitizeChat as visibleText, which the letter reads too (one law, not a copy; a chat line comes out of it unchanged). THE MERGE (the same deploy): main's park meter's strikes its own (`parkDrops` - they were the party pose meter's `pdrops`, so either meter's pass forgave the other's flood). INSPECT1 (the same deploy): the `card` frame - a player's card asked for and answered, directed like a cast frame through the cast arm's own per-sender funnel onto the destination, the relay reading none of it. AUDIT ATTACH (the same deploy): every per-socket meter is the Room instance's, not its attachment's - the widest place attachment was past the runtime's 2 KiB and a write it refused froze a meter open; the attachment keeps what a wake must recompute. EMOTE1 (the same deploy): a chat line may be an ACTION (`me: true`, nothing else admitted), and the sanitizer keeps the one joiner that stands between two pictographs (a family, a profession, a flag - one emoji). DICE1 (2026-09-23, the community arc, the same deploy): the `roll` frame - a roll ASKED of the relay ({n, m, k}, net/dice.js), rolled from the relay's own CSPRNG and said to the channel it was asked on through the chat's own fan (`_sayLine`), one a second a socket. CHAT-CHAN (2026-09-23, the community arc): the region channels (`chat:region.<i>`, one room per politic region) join the whitelist, a chat line may name the `party` channel - fanned by the hub to the party's members alone on a budget of the parties' own (PARTY_CHAT_ROOM_HZ_MAX), and refused whole when it names anything else - and a cast's strikes are its own (`castDrops`, no longer the chat gate's `cdrops`) - world102. Before it: DISC12 (2026-09-23): the pose's hand-in-use bit (`lh`, the LEFT hand, omitted on the right) and beast form (`wb`, 1 werewolf 2 wereboar, omitted in human form); poseChanged sends each edge at once - world101. Before it: DISC7 (2026-09-23): the pose's half-speed bit (`hs`, mounted and moving slower than half, omitted at 0) - the peers' clop swaps as the rider's own does - world100. Before it: HCC-PARK + RIDE (2026-09-23): the `park` frame (a cell keeps a parked team past its owner's presence; the owner's registry drops the old cell's record), and the pose's mount (`rd`/`rv`, omitted on foot) - world99. Before it: SPELLFX1 (2026-09-23, the friendly-spells drop): the pose carries the cast's element (`ce`) and the arrows loosed (`ar`), so a peer's missile and shaft can be DRAWN - the Unity co-op's RpcPlayPlayerSpellCastVisual; visual only, it lands nothing, and a pose from before it reads Magic and no shafts; and the sender's cast meter a whole blast deep (CAST_BURST_MAX), since a beneficial blast is one cast and one frame per mate - world98. Before it: AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged target, the icon), the destination's funnel per sender - world97. Before it: ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
+export const RELAY_VERSION = 'world103';   // VOICE1: server-authoritative Daggerfall/Morrowind speech requests and playback - world103. Before it: THE SIXTH MERGE (2026-09-23): main's DISC12 is world101, so the arc's deploy is world102 - every frame below moves its RELAY_MIN gate to 102. JOURNAL1 (the same deploy): the `page` frame - a page of a player's journal shown to one player standing near them, directed like a card through the cast arm's per-sender funnel, on its own meter, never from a muted player; its words cleaned by the letter's line law, which moves here from net/letterLaw.js (`wordsLine`, `foldBlankLines`) so the letter and the page read one law. MAIL1 (the same deploy): no frame of its own - the letters are the account service's - but the characters' law left sanitizeChat as visibleText, which the letter reads too (one law, not a copy; a chat line comes out of it unchanged). THE MERGE (the same deploy): main's park meter's strikes its own (`parkDrops` - they were the party pose meter's `pdrops`, so either meter's pass forgave the other's flood). INSPECT1 (the same deploy): the `card` frame - a player's card asked for and answered, directed like a cast frame through the cast arm's own per-sender funnel onto the destination, the relay reading none of it. AUDIT ATTACH (the same deploy): every per-socket meter is the Room instance's, not its attachment's - the widest place attachment was past the runtime's 2 KiB and a write it refused froze a meter open; the attachment keeps what a wake must recompute. EMOTE1 (the same deploy): a chat line may be an ACTION (`me: true`, nothing else admitted), and the sanitizer keeps the one joiner that stands between two pictographs (a family, a profession, a flag - one emoji). DICE1 (2026-09-23, the community arc, the same deploy): the `roll` frame - a roll ASKED of the relay ({n, m, k}, net/dice.js), rolled from the relay's own CSPRNG and said to the channel it was asked on through the chat's own fan (`_sayLine`), one a second a socket. CHAT-CHAN (2026-09-23, the community arc): the region channels (`chat:region.<i>`, one room per politic region) join the whitelist, a chat line may name the `party` channel - fanned by the hub to the party's members alone on a budget of the parties' own (PARTY_CHAT_ROOM_HZ_MAX), and refused whole when it names anything else - and a cast's strikes are its own (`castDrops`, no longer the chat gate's `cdrops`) - world102. Before it: DISC12 (2026-09-23): the pose's hand-in-use bit (`lh`, the LEFT hand, omitted on the right) and beast form (`wb`, 1 werewolf 2 wereboar, omitted in human form); poseChanged sends each edge at once - world101. Before it: DISC7 (2026-09-23): the pose's half-speed bit (`hs`, mounted and moving slower than half, omitted at 0) - the peers' clop swaps as the rider's own does - world100. Before it: HCC-PARK + RIDE (2026-09-23): the `park` frame (a cell keeps a parked team past its owner's presence; the owner's registry drops the old cell's record), and the pose's mount (`rd`/`rv`, omitted on foot) - world99. Before it: SPELLFX1 (2026-09-23, the friendly-spells drop): the pose carries the cast's element (`ce`) and the arrows loosed (`ar`), so a peer's missile and shaft can be DRAWN - the Unity co-op's RpcPlayPlayerSpellCastVisual; visual only, it lands nothing, and a pose from before it reads Magic and no shafts; and the sender's cast meter a whole blast deep (CAST_BURST_MAX), since a beneficial blast is one cast and one frame per mate - world98. Before it: AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged target, the icon), the destination's funnel per sender - world97. Before it: ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -1259,6 +1402,11 @@ export function parseClient(text, { hasHello = false } = {}) {
     const p = validPose(m.p);
     return p ? { t: 'pose', p } : { error: 'bad pose' };
   }
+  if (m.t === 'voice') {
+    if (!hasHello) return { error: 'voice before hello' };
+    const req = validVoiceRequest(m);
+    return req ? { t: 'voice', ...req } : { error: 'bad voice' };
+  }
   if (m.t === 'chat') {
     if (!hasHello) return { error: 'chat before hello' };
     const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
@@ -1389,6 +1537,9 @@ export const actGate = (bucket, nowMs) => tokenGate(bucket, nowMs, ACT_HZ_MAX);
 export const actFrameFits = (data) => JSON.stringify({ t: 'act', data }).length <= MAX_FRAME_BYTES;
 /** The chat rate gate: CHAT_HZ_MAX a second (CHAT1). */
 export const chatGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_HZ_MAX);
+/** VOICE1: the speaker's outbound voice meter and the room/client inbound fan meter. */
+export const voiceGate = (bucket, nowMs) => tokenGate(bucket, nowMs, VOICE_HZ_MAX, VOICE_BURST_MAX);
+export const voiceInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, VOICE_ROOM_HZ_MAX);
 /** RED1: the server line's own bucket, well under chat's - see RED_HZ_MAX. */
 export const redGate = (bucket, nowMs) => tokenGate(bucket, nowMs, RED_HZ_MAX);
 /** DICE1: a socket's rolls a second - one: a roll is a line the whole channel reads, and a table where a player can
@@ -1918,6 +2069,9 @@ export const ROLL_RELAY_MIN = 102;   // MERGE: the arc's deploy is world102 - ma
  *  text}`, and "waves" would be said as a line nobody could read as a wave. The same deploy as the channels. */
 export const EMOTE_RELAY_MIN = 102;   // MERGE: world102, as ROLL_RELAY_MIN
 export const relaySupportsEmote = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= EMOTE_RELAY_MIN; };
+/** VOICE1: the first relay that accepts {t:'voice'} and resolves it against the hello's look. */
+export const VOICE_RELAY_MIN = 103;
+export const relaySupportsVoice = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= VOICE_RELAY_MIN; };
 export const relaySupportsRoll = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= ROLL_RELAY_MIN; };
 /** CHAT-CHAN: the relay that first routes a party's line and opens the region channels. An older one would take a
  *  `ch` it does not know as... nothing: its parse projects `{t:'chat', text}` and the party's line would be fanned to
