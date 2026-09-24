@@ -17,13 +17,15 @@
 // spell block included; the law is systems/activateGate.js and all
 // four hosts read that one copy.
 //
-// TWO RECORDED DEPARTURES STAND, both deliberate and neither a missing
-// slice: the port's E still activates beside Mouse0 (DFU binds E to
-// AbortSpell), and the SWING is still read off the raw right button.
-// Ledger A carries them as E ACTIVATES BESIDE MOUSE0, AND THE SWING IS
-// ROUTED OFF THE RAW BUTTON (AUDIT 58, seams lane) - by name, because a
-// line number rots, and because section A's only other mention of this
-// file is the STRUCK C2 hotkey-repeat row, which approves nothing.
+// TWO RECORDED DEPARTURES STOOD HERE: the port's E activating beside
+// Mouse0 as a raw `KeyE` read (DFU binds E to AbortSpell - so one press
+// did both), and the SWING read off the raw right button. KB1 closed the
+// first: E is the port's own Interact ACTION (systems/inputActions.js),
+// read with `pressed` like every other key, and AbortSpell's default
+// moved to Backquote (Mac's call, 2026-09-23). Ledger A's row E
+// ACTIVATES BESIDE MOUSE0, AND THE SWING IS ROUTED OFF THE RAW BUTTON
+// (AUDIT 58, seams lane) records both closures, and THE KEYBINDING
+// STANDARD row the standard itself.
 //
 // ROAD-Ar R10 rewrote that second sentence. It used to read "Mouse2
 // still swings (DFU's SwingWeapon is Mouse1)" and recorded a mismatch
@@ -41,16 +43,18 @@
 // 'SwingWeapon')` for a non-mouse binding and swingKeyHeld is the latch
 // the four hosts poll - a swing bound to a key or a pad button swings.
 //
-// AbortSpell and RecastSpell have no consumer here yet - the actions
-// are in the registry and the ladder simply does not answer them.
+// AbortSpell and RecastSpell are routeAction's (FIX-F); every other
+// world key is an action too since KB1 - the one registry, read live.
 import {
-  loadOrCreateBindings, actionForCode,
+  loadOrCreateBindings, actionForCode, actionLive,
   getCombo, comboCode, comboModifiers, isPairedCode, modifierHeldFirstDict,
 } from '../systems/inputActions.js';
 // AUDIT 64 F36/F37: DaggerfallHUD.Update's own shortcut arms. A leaf
 // on systems/ alone, so this module can take it without a cycle.
 import { hudShortcutKey } from './hudShortcuts.js';
+import { hotbarInForce } from '../systems/uiSkin.js';   // AUDIT CONTRIB H1: the diamond's actions stand down while the hotbar is in force
 import { statusReadoutTakesAction, setStatusBindings } from '../systems/statusReadout.js';   // STATUS-LIVE: the readout yields to whatever wants the slot, and the panel names the live Status key. A LEAF - this module is in ui/actionText.js's own import ring (through ui/inputMessageBox.js), so reaching for the BOX from here put its class body in a temporal dead zone
+import { printScreen } from './screenshot.js';   // AUDIT KB1: PrintScreen is routed like every world action, so a window's F8 stays the window's
 import { getInt, getFloat } from '../systems/settings.js';   // SWING-SAY: the swing mode and its threshold, for the boot readout
 
 // The registry singleton - built on first read, so the module can be
@@ -61,8 +65,23 @@ export function bindings() {
   _bindings = loadOrCreateBindings();
   setStatusBindings(_bindings);   // STATUS-LIVE: the readout's caption names the key that actually answers
   saySwingChain();   // SWING-SAY: once, at the moment the store is first real
+  deliverCarried();   // AUDIT KB1 F3: what the one-time carry could not bring forward, told to the player
   return _bindings;
 }
+
+// AUDIT KB1 F3: THE CARRY'S REPORT GOES TO THE PLAYER. systems/inputActions.js loadOrCreateBindings leaves on the
+// store what a v1 file's carry could not keep - an action whose new key the player's own file already spends, a
+// mod's old key another action holds - and this module cannot say it: the HUD door (systems/notify.js) reaches this
+// file through its own imports. So the composition root (main.js) hands the sink in, and the report is delivered
+// once, whichever of the two - the sink or the store - comes first.
+let _carriedSink = null;
+function deliverCarried() {
+  const r = _bindings?.carried;
+  if (!r || !_carriedSink) return;
+  _bindings.carried = null;
+  _carriedSink(r);
+}
+export function setKeybindNoticeSink(fn) { _carriedSink = fn; deliverCarried(); }
 /** Tests (and the I3 controls window) swap the live store. */
 export function setBindings(b) { _bindings = b; setStatusBindings(b); }   // STATUS-LIVE: a rebound Status key renames the readout's caption with it
 
@@ -310,6 +329,31 @@ function codeDown(store, keys, code, ring = keys) {
   return true;
 }
 
+/**
+ * AUDIT KB1: WHAT A KEY EVENT MEANS TO A LISTENER THAT HOLDS NO HOST RING - a window's own-key close (the book on
+ * CastSpell, the dial on QuickDial, the sheet on F5), the hotbar's slots, the screenshot. The event's own modifier
+ * flags pick the combo (the LEFT codes, DFU's combo keys - inputActions.js comboModifiers), both dicts answer (a pad
+ * button is a secondary), a switched-off mod's key means nothing, and NOTHING IS WRITTEN.
+ *
+ * Two bugs made this one door. `actionOf(e)` with no ring read the bare code, so a window opened by a combo (the
+ * dial on Shift+Q) could not be closed by it - Shift+Q read as Q, RecastSpell. And the first cut's answer for the
+ * hotbar and the screenshot, `actionOf(e, eventModifiers(e))`, handed the latch a made-up ring: DFU's held-first
+ * flags (modifierHeldFirstDict) are the HOST's frame state, polled over the host's own held keys, and a listener's
+ * guess of a ring must not write them. The latch exists to order a modifier against a key across frames; a
+ * listener has one event, and the event's flags are the whole truth about it.
+ */
+export function eventAction(e) {
+  if (!e?.code) return null;
+  const b = bindings();
+  for (const [flag, mod] of [['shiftKey', 'ShiftLeft'], ['ctrlKey', 'ControlLeft'], ['altKey', 'AltLeft']]) {
+    if (!e[flag] || e.code === mod) continue;
+    const a = actionForCode(b, comboCode(mod, e.code));
+    if (a) return actionLive(a) ? a : null;
+  }
+  const a = actionForCode(b, e.code);
+  return a && actionLive(a) ? a : null;
+}
+
 /** The action a key event means under the live bindings, or null.
  *  Hand in the host's held-keys Set and combos resolve too: a keydown
  *  on the combo'd key with its modifier already down answers the
@@ -338,11 +382,12 @@ export function actionOf(e, keys = null) {
       // K DISQUALIFIES the modifier - paired with it, i.e. the combo'd
       // action is double-bound, or a modifier itself; otherwise
       // nothing kept the flag down and the combo answers.
-      if (a && codeDown(b, down, cc)) return a;
+      if (a && codeDown(b, down, cc)) return actionLive(a) ? a : null;   // KB1: a switched-off mod's key means nothing
     }
     if (!codeDown(b, down, e.code)) return null;
   }
-  return actionForCode(b, e.code);
+  const a = actionForCode(b, e.code);
+  return a && actionLive(a) ? a : null;
 }
 
 /** Held-state read for the hosts' per-frame polls: is ANY key bound
@@ -358,6 +403,7 @@ export function actionOf(e, keys = null) {
  *  This is the seam the held-order remainder named, and it is the same
  *  one line for line in all four hosts. */
 export function held(keys, action) {
+  if (!actionLive(action)) return false;   // KB1: a switched-off mod's action is never down
   const b = bindings();
   pollLatch(b, keys);           // the frame's raise/lower, before any read (:1826-1832)
   for (const [code, a] of b.primary) if (a === action && codeDown(b, keys, code)) return true;
@@ -417,7 +463,7 @@ export function beginInputFrame(edges) {
   edges.down = d; edges.up = u;
 }
 function edgeAction(ring, keys, action) {
-  if (!ring || !ring.size) return false;
+  if (!ring || !ring.size || !actionLive(action)) return false;
   const b = bindings();
   pollLatch(b, keys);           // the same frame sweep every read takes (:1826-1832)
   for (const [code, a] of b.primary) if (a === action && codeDown(b, keys, code, ring)) return true;
@@ -428,9 +474,8 @@ function edgeAction(ring, keys, action) {
 export function pressed(edges, keys, action) { return edgeAction(edges?.downFrame, keys, action); }
 /** ...and GetKeyUp's, over the up ring - SwitchHand's ActionComplete edge. */
 export function released(edges, keys, action) { return edgeAction(edges?.upFrame, keys, action); }
-/** The RAW code, for the port's one recorded departure that is not a
- *  binding at all: E activates beside Mouse0 (`keys.has('KeyE')`). */
-export function pressedCode(edges, code) { return !!edges?.downFrame?.has(code); }
+// KB1: `pressedCode` - the raw E beside Mouse0 - is gone. E is the Interact action now (systems/inputActions.js), read
+// with `pressed` like every other key, so a rebind moves it and nothing else is ever read off a bare code.
 
 /** AUDIT 39r: the MOUSE half of the held-keys set. InputManager binds
  *  three actions to buttons and polls them through the same GetKey
@@ -468,7 +513,7 @@ export const isSwingButton = (button) => button === swingButton();
 const BUTTONS_BIT = Object.freeze([1, 4, 2]);
 export function swingHeld(buttons, keys = null) {
   const b = swingButton();
-  if (b >= 0) return (buttons & BUTTONS_BIT[b]) !== 0;
+  if (b >= 0 && (buttons & BUTTONS_BIT[b]) !== 0) return true;   // KB1: the mouse's answer, and - below - any other code's too
   // MAC-SWING1 (2026-09-21, a player on the desktop app: "can't swing
   // my weapon on the installed version, tried binding it to other
   // keys too"): a swing bound to a KEY or a pad code answered false
@@ -480,13 +525,28 @@ export function swingHeld(buttons, keys = null) {
   // registry's own read is the answer for any code: `keys` carries the
   // mouse codes too (every host adds mouseCode(e.button) to it), so
   // this is InputManager.HasAction(SwingWeapon) whatever it is bound to.
-  return keys ? held(keys, 'SwingWeapon') : false;
+  // KB1: the non-mouse codes, read whether or not a button holds the other slot (swingKeyHeld below).
+  return swingKeyHeld(keys);
 }
 /** MAC-SWING1: the rig's held latch for a swing bound to a KEY or pad
  *  code - the one no mousedown/mouseup ever raises. Each host polls it
  *  beside its other held reads and feeds attackInput on the change,
- *  exactly as its mouse handlers do for a mouse binding. */
-export function swingKeyHeld(keys) { return swingButton() < 0 && held(keys, 'SwingWeapon'); }
+ *  exactly as its mouse handlers do for a mouse binding.
+ *  KB1: EVERY non-mouse code bound to the swing, whether or not a mouse
+ *  button holds the other slot. It answered only when NO mouse button was
+ *  bound - so the shipped pad row (RT, the SECONDARY, beside Mouse1 in the
+ *  primary) never swung at all. The mouse codes are left out because the
+ *  mouse handlers already feed their own press; counting them here too
+ *  would feed one press twice. */
+export function swingKeyHeld(keys) {
+  if (!keys) return false;
+  const b = bindings();
+  pollLatch(b, keys);
+  for (const dict of [b.primary, b.secondary]) {
+    for (const [code, a] of dict) if (a === 'SwingWeapon' && !MOUSE_CODES.includes(code) && codeDown(b, keys, code)) return true;
+  }
+  return false;
+}
 
 /** FIX-F: THE KEYBOARD LOOK, InputManager.FindKeyboardActions'
  *  four arms (:1854-1865): x is +1 for TurnRight and -1 for TurnLeft,
@@ -638,8 +698,11 @@ export function installContextMenuGuard(doc = (typeof document !== 'undefined' ?
 }
 
 export function routeKey(e, ctx, setPlayerPos = null, keys = null) {
+  // CG2: the field's key - not routed, not swallowed (the host preventDefaults on true). KB1: with or without an
+  // overlay - a DOM field over the world (an enhanced prompt) is typed into with no overlay in the host's slot, and
+  // every letter was an action (M the map, R the rest).
+  if (isTextEntryTarget(e?.target)) return false;
   if (ctx.uiOverlayActive) {
-    if (isTextEntryTarget(e.target)) return false;   // CG2: the field's key - not routed, not swallowed (the host preventDefaults on true)
     // U26: a NATIVE window keys off raw codes, exactly as townTalk's
     // seam has since G2 - the action map ('back'/'confirm'/'up') is
     // the keyed windows' vocabulary and says nothing about F6, the
@@ -661,17 +724,16 @@ export function routeKey(e, ctx, setPlayerPos = null, keys = null) {
   // return above, because DaggerfallUI.cs:429-433 updates only the top
   // window and DaggerfallHUD.Update is dead while one is open.
   if (hudShortcutKey(e, keys)) return true;
-  // Diagnostics, not a DFU action: DFU's F8 is PrintScreen, which has
-  // no consumer here yet, and the debug HUD is the port's own. FIX-F:
-  // a BOUND F8 is the binding's - this arm sat above the registry read
-  // and ate whatever a player put on the key.
-  if (e.code === 'F8' && !actionOf(e, keys)) { ctx.toggleDebugHud?.(); return true; }
-  // PX15: THE DIAL, the port's own too - Tab raises the enhanced
-  // compass rose. `=== true` matters: a host without the arm, or the
-  // classic skin (the opener's own gate), answers false and Tab keeps
-  // its default, so classic behaviour is byte-for-byte untouched.
-  if (e.code === 'Tab') { return ctx.toggleDial?.() === true; }
+  // KB1: the diagnostics readout was a raw F8 here, answering only while F8 was unbound (FIX-F) - which, with DFU's
+  // PrintScreen on F8, was never. It is the registry's DebugOverlay now (routeAction below), shipped unbound; F8
+  // takes the screenshot (ui/screenshot.js).
   const act = actionOf(e, keys);
+  // PX15: THE DIAL, the port's own too - QuickDial (Tab) raises the enhanced
+  // compass rose. `=== true` matters: a host without the arm, or the
+  // classic skin (the opener's own gate), answers false and the key keeps
+  // its default, so classic behaviour is byte-for-byte untouched. KB1: the
+  // registry's action, not a literal Tab - a rebind moves it.
+  if (act === 'QuickDial') { return ctx.toggleDial?.() === true; }
   if (POLLED_ACTIONS.has(act)) return false;
   // MAC-R2 (2026-09-17, Mac: "The enhanced quickbar sometimes shows double
   // messages"): A HELD KEY AUTO-REPEATS ITS KEYDOWN, and the two quickslot
@@ -682,7 +744,11 @@ export function routeKey(e, ctx, setPlayerPos = null, keys = null) {
   // .cs:634-637), which is what `noteKeyDown` already gives the polled
   // three; the repeat is nothing here too, and it is SWALLOWED rather than
   // handed on, so no ladder below can act on it either.
-  if (e.repeat && QUICKSLOT_ACTIONS.has(act)) return true;
+  //
+  // AUDIT KB1: AND EVERY ROUTED ACTION, not the quickslots alone. The repeat reached routeAction for every arm that
+  // opens no window (a window, once up, takes the repeats through the overlay branch above): a held F8 took a
+  // screenshot per repeat, a held F9 quicksaved per repeat. DFU dispatches all of them on ActionStarted.
+  if (e.repeat && act) return true;
   return routeAction(act, ctx, setPlayerPos);
 }
 
@@ -810,7 +876,9 @@ export function routeAction(action, ctx, setPlayerPos = null) {
     // and read by nothing.
     case 'RecastSpell': return ctx.recastSpell ? (ctx.recastSpell(), true) : false;
     case 'AbortSpell': return ctx.abortSpell ? (ctx.abortSpell(), true) : false;
-    case 'Rest': ctx.toggleRest?.(); return true;
+    // KB1: an arm whose host has no door ANSWERS FALSE - `true` told the host the key was spent, so it swallowed a
+    // key that did nothing (and preventDefaulted it) instead of leaving it to the next ladder or the browser.
+    case 'Rest': return ctx.toggleRest ? (ctx.toggleRest(), true) : false;
     // U43: the two journal doors. GameManager's chain has had both
     // since the quest machine landed (:541-548) and the bindings have
     // been in the table since I1 - L and N - with NOTHING in src/
@@ -818,11 +886,13 @@ export function routeAction(action, ctx, setPlayerPos = null) {
     // all four of its pages. They are ONE window: LogBook pushes it as
     // it stands, NoteBook sets DisplayMode = Notebook first
     // (DaggerfallUI.cs:704-711).
-    case 'LogBook': ctx.toggleLogbook?.(); return true;
-    case 'NoteBook': ctx.toggleNotebook?.(); return true;
-    case 'AutoMap': ctx.toggleAutomap?.(); return true;   // A1; ROAD-C c2/S9 gave the INTERIOR ctx one too - the optional call is now for the exterior arm alone
-    case 'QuickSave': ctx.quickSave?.(); return true;
-    case 'QuickLoad': ctx.quickLoad?.(setPlayerPos); return true;
+    case 'LogBook': return ctx.toggleLogbook ? (ctx.toggleLogbook(), true) : false;
+    case 'NoteBook': return ctx.toggleNotebook ? (ctx.toggleNotebook(), true) : false;
+    case 'AutoMap': return ctx.toggleAutomap ? (ctx.toggleAutomap(), true) : false;   // A1; ROAD-C c2/S9 gave the INTERIOR ctx one too
+    case 'QuickSave': return ctx.quickSave ? (ctx.quickSave(), true) : false;
+    case 'QuickLoad': return ctx.quickLoad ? (ctx.quickLoad(setPlayerPos), true) : false;
+    case 'DebugOverlay': return ctx.toggleDebugHud ? (ctx.toggleDebugHud(), true) : false;   // KB1: the dungeon's readout, off its own action
+    case 'PrintScreen': return printScreen();   // KB1 + AUDIT KB1: the key's own door (ui/screenshot.js), reached only with no window up
     // U45: the four the large HUD reaches that no keybind in this
     // port has ever routed. Each is a real DFU destination and each
     // is optional here, so the panel is live the moment a host grows
@@ -863,17 +933,19 @@ export function routeAction(action, ctx, setPlayerPos = null) {
     // it. The performer itself is systems/quickslots.js - the window's own use
     // ladder and the one equipItem - so a hotkey is not a way round the
     // window's law.
-    case 'QuickUse1': return ctx.quickUse?.(1) === true;
-    case 'QuickUse2': return ctx.quickUse?.(2) === true;
-    case 'QuickSwap': return ctx.quickSwap?.() === true;
+    // AUDIT CONTRIB H1: with the hotbar in force the diamond is put AWAY - none of its five actions reaches a slot
+    // the player cannot see (a pad's d-pad, a key rebound onto one); the hotbar's own keys are its own reader's
+    case 'QuickUse1': return !hotbarInForce() && ctx.quickUse?.(1) === true;
+    case 'QuickUse2': return !hotbarInForce() && ctx.quickUse?.(2) === true;
+    case 'QuickSwap': return !hotbarInForce() && ctx.quickSwap?.() === true;
     // QS4: the off-hand cell's own press - light or douse, through the mod's
     // own guard. Same door law: a host without one answers false.
-    case 'QuickOffHand': return ctx.quickOffHand?.() === true;
+    case 'QuickOffHand': return !hotbarInForce() && ctx.quickOffHand?.() === true;
     // QS6: the spell slot's press - ready the slot's spell, or put it away
     // when it is the one already in hand. The performer is the model's
     // (spellQuickslotPress) over the host's ONE cast engine, so every law
     // about readying stays where DFU's are ported.
-    case 'QuickSpell': return ctx.quickSpell?.() === true;
+    case 'QuickSpell': return !hotbarInForce() && ctx.quickSpell?.() === true;
     default: return false;
   }
 }

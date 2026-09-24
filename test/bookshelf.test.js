@@ -144,7 +144,7 @@ test('F198: the health box decision, arm by arm - over the entries the PRODUCER 
   assert.deepEqual(healthStatusRows({ activeEffects: [plague] }, (id) => (id === 18 ? rows(18) : [])), rows(18), 'mutants: an empty append making `tokens` non-null');
 });
 
-test('F198: all four hosts hand the Status action a showStatus - the seam input.js:710 requires', () => {
+test('F198: all four hosts hand the Status action a showStatus - the seam input.js:776 requires', () => {
   for (const h of ['scenes/world.js', 'scenes/exterior.js', 'scenes/dungeonContext.js', 'scenes/worldModes.js']) {
     const src = code(h);
     assert.match(src, /showStatus/, `${h} provides showStatus`);

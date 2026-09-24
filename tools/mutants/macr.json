@@ -42,7 +42,7 @@
   {
     "name": "MACR2-routeKey-hands-the-repeat-on",
     "file": "src/ui/input.js",
-    "old": "  if (e.repeat && QUICKSLOT_ACTIONS.has(act)) return true;",
+    "old": "  if (e.repeat && act) return true;",
     "new": "",
     "tests": [
       "test/macr_fixes.test.js"

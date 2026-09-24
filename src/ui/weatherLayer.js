@@ -527,6 +527,7 @@ export function weatherStrokes(ctx, view, regions, { paperW, paperH, dpr = 1, st
     }
   };
   // the strokes, each whole in itself (its own clip), in the order the eye reads them drawn over
+  /** @type {{ loops: any[], within?: any[][], fill?: () => any, outline?: string }[]} a hatch fill, a strength step clipped within its region and the steps under it, or an outline */
   const strokes = [];
   const order = [...PRIORITY].reverse().filter((w) => regions[w]?.length);
   for (const w of order) {

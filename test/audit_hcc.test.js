@@ -8,7 +8,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { MOD_SETTINGS, isTextKey, modSetting, _resetModSettings, KEY_MIGRATIONS } from '../src/systems/modSettings.js';
-import { DEFAULT_BINDINGS } from '../src/systems/inputActions.js';
+import { DEFAULT_BINDINGS, MOD_ACTIONS } from '../src/systems/inputActions.js';
 import { shortcutBinding } from '../src/systems/dialogShortcuts.js';
 import { domCodeForKeyCode } from '../src/systems/keyCodes.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
@@ -22,27 +22,24 @@ import { nativeMetrics } from '../src/ui/nativePanel.js';
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const V = 'horse-cart-and-cargo';
 
-test('AUDIT HCC K1: every vendored mod ships its keys where nothing else answers - DFU\'s bindings, its WORLD shortcuts (F10 is LargeHUDToggle, Shift-F10 HUDToggle), the browser\'s, and every other mod\'s (mutant: HCC back on F10 or F7)', () => {
-  const bound = new Set(DEFAULT_BINDINGS.map(([code]) => code));
-  // the DaggerfallShortcut rows a HOST answers in the world, not a window's (ui/hudShortcuts.js)
+test('AUDIT HCC K1 (re-aimed by KB1): every vendored mod\'s keys ship where nothing else answers - DFU\'s bindings, its WORLD shortcuts (F10 is LargeHUDToggle, Shift-F10 HUDToggle), the browser\'s, and every other mod\'s (mutant: HCC back on F10 or F7)', () => {
+  // K1 walked the mods' TextKey defaults; KB1 made each mod key a registry action with its default a row of
+  // DEFAULT_BINDINGS, so the one table is judged - and HCC's two moved off 5 and 6, which the hotbar's slots own.
+  const codes = DEFAULT_BINDINGS.map(([code]) => code);
+  assert.equal(new Set(codes).size, codes.length, 'no code ships on two actions - DFU\'s, the port\'s or a mod\'s');
   const world = new Set(['LargeHUDToggle', 'HUDToggle', 'ToggleRetroPP', 'Pause'].map((b) => shortcutBinding(b).code));
   const browser = new Set(['F5', 'F6', 'F7', 'F11', 'F12']);   // reload, the address bar, caret browsing, full screen, the dev tools
-  const seen = new Map();
-  for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) {
-    for (const [key, def] of Object.entries(mod.keys)) {
-      if (!isTextKey(def) || def.default === 'None') continue;
-      const code = domCodeForKeyCode(def.default);
-      if (!code) continue;   // a mod-internal name the port does not bind (a scroll axis)
-      const who = `${vendor}/${key} (${def.default})`;
-      assert.ok(!bound.has(code), `${who} is a key DFU's own bindings answer`);
-      assert.ok(!world.has(code), `${who} is a key DFU's world shortcuts answer`);
-      assert.ok(!browser.has(code), `${who} is a key the browser takes`);
-      assert.ok(!seen.has(code), `${who} collides with ${seen.get(code)}`);
-      seen.set(code, who);
+  for (const rows of Object.values(MOD_ACTIONS)) {
+    for (const r of rows) {
+      const code = DEFAULT_BINDINGS.find(([, a]) => a === r.action)?.[0];
+      assert.ok(code, `${r.action} ships a key`);
+      assert.ok(!world.has(code), `${r.action} (${code}) is a key DFU's world shortcuts answer`);
+      assert.ok(!browser.has(code), `${r.action} (${code}) is a key the browser takes`);
     }
   }
-  assert.equal(MOD_SETTINGS[V].keys['Hotkeys.QuickMountDismount'].default, 'Alpha5');
-  assert.equal(MOD_SETTINGS[V].keys['Hotkeys.SummonTransport'].default, 'Alpha6');
+  const def = new Map(DEFAULT_BINDINGS.map(([code, action]) => [action, code]));
+  assert.equal(def.get('HorseMount'), 'Comma');
+  assert.equal(def.get('HorseSummon'), 'Period');
 });
 
 test('AUDIT HCC K1: a mod-settings file that SAVED the first departure\'s F7 / F10 loses exactly those, once, on load (mutants: the migration skipped, so F10 still flips the HUD; a key the player chose taken too)', () => {

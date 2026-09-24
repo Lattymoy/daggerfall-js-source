@@ -1661,7 +1661,7 @@ export class HeldMapWindow {
     // info on the panel it stays display:none and the ROOT keeps
     // `hmmodal` on its own: the words moved, the modality did not, and
     // an empty .hmbox would paint a bordered blank over the bay
-    // (ui/enhancedStyle.js:1536 - the frame is the box's, not its
+    // (ui/enhancedStyle.js:1537 - the frame is the box's, not its
     // children's).
     const open = modal && !(this._info && onPanel);
     box.classList.toggle('open', open);
@@ -2831,8 +2831,8 @@ export class HeldMapWindow {
       // mod's own F, which this skin spends on the social card, so the
       // one place it was named was the H help INSIDE a running journey -
       // which is no use to a player who has never started one.
-      const _fk = this._to?.settings?.followKey;
-      if (_fk && _fk !== 'None' && this._to?.settings?.roadsIntegration) {
+      const _fk = this._to?.followKeyText?.();   // KB1: the registry's FollowPaths, as Controls binds it
+      if (_fk && this._to?.settings?.roadsIntegration) {
         card.append(el('p', 'hmmeta', `On the road, press ${_fk} to follow it.`));
       }
       if (st.notice && !onPanel) card.append(el('p', 'hmnotice', st.notice));

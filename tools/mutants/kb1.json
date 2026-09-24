@@ -1,0 +1,161 @@
+[
+  {
+    "name": "KB1-the-E-carry-skipped",
+    "file": "src/systems/inputActions.js",
+    "old": "    if (store.primary.get(code) === was) { store.primary.delete(code); touched(store); report.moved.push(`${was} off ${code}`); }",
+    "new": "    if (false) { store.primary.delete(code); touched(store); report.moved.push(`${was} off ${code}`); }",
+    "tests": [
+      "test/kb1_keybinds.test.js"
+    ]
+  },
+  {
+    "name": "KB1-a-shipped-mod-value-carried-as-a-choice",
+    "file": "src/systems/inputActions.js",
+    "old": "      if (saved === undefined || row.shipped.includes(saved)) continue;",
+    "new": "      if (saved === undefined) continue;",
+    "tests": [
+      "test/kb1_keybinds.test.js",
+      "test/kb1_audit.test.js"
+    ]
+  },
+  {
+    "name": "KB1-a-cleared-mod-key-comes-back",
+    "file": "src/systems/inputActions.js",
+    "old": "      if (name === KEYCODE_NONE || name === 'None') { clearBinding(store, row.action, true); store.removedPrimary.add(row.action); report.moved.push(`${row.action} unbound`); continue; }",
+    "new": "      if (name === KEYCODE_NONE || name === 'None') { clearBinding(store, row.action, true); report.moved.push(`${row.action} unbound`); continue; }",
+    "tests": [
+      "test/kb1_keybinds.test.js"
+    ]
+  },
+  {
+    "name": "KB1-the-carry-runs-every-load",
+    "file": "src/systems/inputActions.js",
+    "old": "        saveKeyBinds(store);   // written as v2 at once, so the carry runs exactly once",
+    "new": "        ",
+    "tests": [
+      "test/kb1_keybinds.test.js"
+    ]
+  },
+  {
+    "name": "KB1-the-other-dict-is-not-asked",
+    "file": "src/systems/controlsConfig.js",
+    "old": "  for (const [a, c] of other) if (clashes(code, c)) out.push({ action: a, primary: !u.usingPrimary });",
+    "new": "  ",
+    "tests": [
+      "test/kb1_keybinds.test.js"
+    ]
+  },
+  {
+    "name": "KB1-yes-leaves-the-holder-bound",
+    "file": "src/systems/controlsConfig.js",
+    "old": "  for (const h of holders) (h.primary ? u.primary : u.secondary).set(h.action, null);",
+    "new": "  ",
+    "tests": [
+      "test/kb1_keybinds.test.js"
+    ]
+  },
+  {
+    "name": "KB1-enter-online-frees-the-mouse-too",
+    "file": "src/player/pointerLock.js",
+    "old": "    if (act !== FREE_MOUSE_ACTION && !(act === 'ActivateCursor' && !cursorKeyClaimed(e))) return;",
+    "new": "    if (act !== FREE_MOUSE_ACTION && act !== 'ActivateCursor') return;",
+    "tests": [
+      "test/kb1_keybinds.test.js"
+    ]
+  },
+  {
+    "name": "KB1-the-screenshot-arm-answers-nothing",
+    "file": "src/ui/input.js",
+    "old": "    case 'PrintScreen': return printScreen();",
+    "new": "    case 'PrintScreen': return false;",
+    "tests": [
+      "test/kb1_keybinds.test.js"
+    ]
+  },
+  {
+    "name": "KB1-centre-view-latched-as-a-look",
+    "file": "src/player/lookFilter.js",
+    "old": "    this.residualPitch = -(cam?.pitch ?? 0);",
+    "new": "    this.add(0, -(cam?.pitch ?? 0));",
+    "tests": [
+      "test/kb1_keybinds.test.js"
+    ]
+  },
+  {
+    "name": "KB1-the-pause-closes-on-a-literal-Escape",
+    "file": "src/ui/pauseWindow.js",
+    "old": "    return code === 'Escape' || (!!this.toggleClosedBinding && code === this.toggleClosedBinding)\n      || (!!this.toggleClosedSecondary && code === this.toggleClosedSecondary);",
+    "new": "    return code === 'Escape';",
+    "tests": [
+      "test/kb1_keybinds.test.js"
+    ]
+  },
+  {
+    "name": "KB1-the-pack-closes-on-a-literal-F6",
+    "file": "src/ui/nativeInventory.js",
+    "old": "    if (code === 'Escape' || code === 'Enter' || (!!this.toggleClosedBinding && code === this.toggleClosedBinding)\n      || (!!this.toggleClosedSecondary && code === this.toggleClosedSecondary)) { this._close(); return; }",
+    "new": "    if (code === 'Escape' || code === 'Enter' || code === 'F6') { this._close(); return; }",
+    "tests": [
+      "test/kb1_keybinds.test.js"
+    ]
+  },
+  {
+    "name": "KB1-RT-silent-beside-a-mouse-swing",
+    "file": "src/ui/input.js",
+    "old": "export function swingKeyHeld(keys) {\n  if (!keys) return false;",
+    "new": "export function swingKeyHeld(keys) {\n  if (!keys || swingButton() >= 0) return false;",
+    "tests": [
+      "test/kb1_keybinds.test.js"
+    ]
+  },
+  {
+    "name": "KB1-the-dial-reads-a-literal-Tab",
+    "file": "src/ui/input.js",
+    "old": "  if (act === 'QuickDial') { return ctx.toggleDial?.() === true; }",
+    "new": "  if (e.code === 'Tab') { return ctx.toggleDial?.() === true; }",
+    "tests": [
+      "test/kb1_keybinds.test.js",
+      "test/qs2_inputs.test.js"
+    ]
+  },
+  {
+    "name": "KB1-defaults-save-on-the-spot",
+    "file": "src/ui/enhancedControls.js",
+    "old": "    unsaved = stagedDefaults(bindings());",
+    "new": "    resetDefaults(bindings()); saveKeyBinds(bindings()); unsaved = stagedDefaults(bindings());",
+    "tests": [
+      "test/enhancedControls.test.js"
+    ]
+  },
+  {
+    "name": "KB1-a-doorless-arm-swallows-the-key",
+    "file": "src/ui/input.js",
+    "old": "    case 'Rest': return ctx.toggleRest ? (ctx.toggleRest(), true) : false;",
+    "new": "    case 'Rest': ctx.toggleRest?.(); return true;",
+    "tests": [
+      "test/kb1_keybinds.test.js",
+      "test/hudlarge.test.js",
+      "test/inputmap.test.js"
+    ]
+  },
+  {
+    "name": "KB1-a-typed-field-routes-with-no-overlay",
+    "file": "src/ui/input.js",
+    "old": "  if (isTextEntryTarget(e?.target)) return false;\n  if (ctx.uiOverlayActive) {",
+    "new": "  if (ctx.uiOverlayActive) {\n    if (isTextEntryTarget(e?.target)) return false;",
+    "tests": [
+      "test/overlayTyping.test.js"
+    ]
+  },
+  {
+    "name": "KB1-a-raw-E-back-in-a-host",
+    "file": "src/scenes/exterior.js",
+    "old": "pressed(latch.edge, keys, 'Interact')",
+    "new": "(e => false)(0) || keys.has('KeyE')",
+    "tests": [
+      "test/kb1_keybinds.test.js",
+      "test/mwcrouch_edges.test.js",
+      "test/a8_pointer.test.js"
+    ]
+  }
+]

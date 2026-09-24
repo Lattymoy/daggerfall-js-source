@@ -228,7 +228,7 @@ test('TI1 touch.js: the five buttons, the gate-by-hook dial, and the three route
   for (const gone of ["'\\u2694'", "'E'", "'F5'", "'F6'", "'SV'", "'LD'", "'\\u2630'", "'\\u2328'", "tap('F9')", "tap('F11')", "tap('Backspace')", "down('KeyE')"]) {
     assert.ok(!s.includes(gone), `${gone} is an unneeded button and must be gone`);
   }
-  assert.match(s, /if \(hooks\.dial\) button\('◆'[^\n]*tap\('Tab'\)/, 'the dial button exists only where a host routes Tab');
+  assert.match(s, /if \(hooks\.dial\) button\('◆'[^\n]*tapAction\('QuickDial'\)/, 'the dial button exists only where a host routes the dial, and presses the QuickDial ACTION (KB1 - it was a literal Tab)');
   // AUDIT 62 F8: the four gameplay buttons press ACTIONS, not letters -
   // the codes are the live registry's (InputManager.GetKey's dual-dict
   // read, :1084), so a rebind moves the button with it. The literals

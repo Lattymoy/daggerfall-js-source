@@ -237,11 +237,11 @@
   },
   {
     "name": "follow-key-custom-no-fallback",
-    "file": "src/systems/travelOptions.js",
-    "old": "      followKey = custom.length ? custom : 'F';",
-    "new": "      followKey = custom;",
+    "file": "src/systems/inputActions.js",
+    "old": "        name = i < row.options.length ? row.options[i] : (String(storedModSetting(vendor, row.choice) ?? '').trim() || null);",
+    "new": "        name = row.options[i] ?? null;",
     "tests": [
-      "test/to1_travelOptions.test.js"
+      "test/kb1_keybinds.test.js"
     ]
   },
   {
@@ -907,8 +907,8 @@
   {
     "name": "to-online-the-follow-key-stands-down-again",
     "file": "src/scenes/world.js",
-    "old": "    const code = key.length === 1 ? `Key${key.toUpperCase()}` : key;",
-    "new": "    if (sharedClockOn()) return false;\n    const code = key.length === 1 ? `Key${key.toUpperCase()}` : key;",
+    "old": "  function travelFollowPressed() { return pressed(latch.edge, keys, 'FollowPaths'); }",
+    "new": "  function travelFollowPressed() { if (sharedClockOn()) return false; return pressed(latch.edge, keys, 'FollowPaths'); }",
     "tests": [
       "test/to1_travelOptions.test.js"
     ]

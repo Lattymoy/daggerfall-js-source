@@ -73,7 +73,6 @@ import { createHandheldTorches, isHeldLight } from '../systems/handheldTorches.j
 import { isTransformedLycanthrope, liveLycanthropy } from '../systems/lycanthropy.js';   // WW1: Weapon Widget's FPSWeaponClone, beside the machine; AUDIT-EOTB2: the sprite's form
 import { concealmentFlags } from '../systems/effects.js';   // EOTB-IL: PlayerBillboard.UpdateMaterial reads the player's own IsInvisible / IsAShade / IsBlending
 import { getBool, getInt } from '../systems/settings.js';   // EOTB-IL: PlayerBillboard.LateUpdate reads DaggerfallUnity.Settings.BowDrawback
-import { domCodeForKeyCode } from '../systems/keyCodes.js';   // AUDIT-EOTB2: the mod's two keys, polled off the hosts' raw set as the torch mod's are
 import { modSetting } from '../systems/modSettings.js';   // WW1: its Enabled
 import { takeFrameLook } from '../player/lookFilter.js';   // WW1: the frame's look for the widget's inertia
 import { cursorActive } from '../player/pointerLock.js';   // WW1: PlayerMouseLook.cursorActive
@@ -195,9 +194,9 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:2852), townTalk.say
- *                     (exterior.js:2136, world.js:4151) and
- *                     worldModes' own interior sink (worldModes.js:426,
+ *                     (dungeonContext.js:2854), townTalk.say
+ *                     (exterior.js:2135, world.js:4151) and
+ *                     worldModes' own interior sink (worldModes.js:428,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
  *                     is unreached,
@@ -294,7 +293,7 @@ export function sheetHolderOf(rig) {
   };
 }
 
-export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, abortSpell = () => {}, bindWorn = true, activateHeld = () => false, envHit = null, missEffect = null, collider = null, keyDown = null, torches = () => null, sheetWindowUp = () => false }) {   // HT1: the hosts' raw key set and their dropped-torch pool   // MAP-WEAPON: whether the travel map window holds the screen   // AUDIT 28 W12: HasAction(ActivateCenterObject) - the drawn bow's un-draw; WW1: the widget's recoil doors
+export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, abortSpell = () => {}, bindWorn = true, activateHeld = () => false, envHit = null, missEffect = null, collider = null, actionDown = null, torches = () => null, sheetWindowUp = () => false }) {   // HT1 (KB1): whether a registry action is held, and the hosts' dropped-torch pool   // MAP-WEAPON: whether the travel map window holds the screen   // AUDIT 28 W12: HasAction(ActivateCenterObject) - the drawn bow's un-draw; WW1: the widget's recoil doors
   const playerWeapon = new PlayerWeapon({});
   playerWeapon.animCtx = () => ({ entity, weaponType: weaponTypeForItem(playerWeapon.weapon), usingRightHand: playerWeapon.usingRightHand });   // AUDIT-RR F1: GetMeleeWeaponAnimTime(player, weaponType, weaponHands) - the swing clock's own ask, so RR's weaponSpeed and RRI's weaponBalance time the blow that lands, not only the widget's clone
   setWeaponPoseProbe(() => ({ ...weaponPoseOf(playerWeapon), weaponType: weaponTypeForItem(playerWeapon.weapon) }));   // RR1: WeaponManager.Sheathed (the pair through its one law, HARD2c) + ScreenWeapon.WeaponType
@@ -692,20 +691,19 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
    * does, with nothing here to change.
    */
   /** [IL] The mod's two keys, `InputManager.GetKeyUp` - the RELEASE edge
-   *  (IL_14a5, IL_17f6) - off the same raw set the torch mod polls (HT1's
-   *  `keyDown`). The names are the mod's own KeyCode text, resolved
-   *  through the one converter the pane uses. */
-  const _eotbKeysLast = new Set();
+   *  (IL_14a5, IL_17f6). KB1: they are the registry's ShoulderSwitch and
+   *  AutoPerspective actions (systems/inputActions.js MOD_ACTIONS), read
+   *  through the host's `actionDown` - so a rebind in Controls moves them,
+   *  a combo resolves, and the mod switched off answers neither (the
+   *  readers' actionLive gate). The edge is taken here, off the held
+   *  state, as the mod takes GetKeyUp. */
+  const _eotbHeldLast = new Set();
   function pollEotbKeys() {
-    if (!keyDown) return;
-    const s = eotbCamera.settings();
-    const shoulder = domCodeForKeyCode(s.switchShoulderKey);
-    const arm = domCodeForKeyCode(s.autoToggleKey);
-    for (const [code, act] of [[shoulder, () => eotbCamera.switchShoulder()], [arm, () => eotbCamera.toggleAuto()]]) {
-      if (!code) continue;
-      const down = !!keyDown(code);
-      if (!down && _eotbKeysLast.has(code)) act();
-      if (down) _eotbKeysLast.add(code); else _eotbKeysLast.delete(code);
+    if (!actionDown) return;
+    for (const [action, act] of [['ShoulderSwitch', () => eotbCamera.switchShoulder()], ['AutoPerspective', () => eotbCamera.toggleAuto()]]) {
+      const down = !!actionDown(action);
+      if (!down && _eotbHeldLast.has(action)) act();
+      if (down) _eotbHeldLast.add(action); else _eotbHeldLast.delete(action);
     }
   }
   /** [IL] The camera's weapon hide (LateUpdate, IL_1c98-IL_1cb0) and the
@@ -1230,7 +1228,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *             "does not toggle / toggles twice / gets stuck", and
      *             it is why Handheld Torches misbehaved with it: the
      *             mod's UpdateFreeHand reads WeaponManager.Sheathed
-     *             LIVE (handheldTorches.js:302), so a flag flipped to
+     *             LIVE (handheldTorches.js:301), so a flag flipped to
      *             "drawn" with no weapon on screen stows the torch.
      *   :268      `!isAttacking` - the hand already had this gate
      *             (switchHand below); the sheath did not, so Z
@@ -1297,10 +1295,9 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       bindArm();    // AUDIT 39: the stepping rig owns the singleton (see above)
       bindBody();   // MAC-O3: and the sprite body, the same law
       syncWorn();   // AUDIT 17e F17: the rig owns the worn-weapon bind
-      // EOTB-IL: the mod's two keys are polled off the hosts' raw set on
-      // their RELEASE edge (GetKeyUp) - SwitchShoulder (the port binds
-      // B; the mod's Tab is spent) and AutoTogglePerspective's
-      // ToggleInput. The drawn string's release is the body's own
+      // EOTB-IL: the mod's two keys are polled on their RELEASE edge
+      // (GetKeyUp) - SwitchShoulder and AutoTogglePerspective's
+      // ToggleInput, the registry's ShoulderSwitch and AutoPerspective. The drawn string's release is the body's own
       // (PlayAnimationHoldCoroutine reads the swing held, IL_602e).
       pollEotbKeys();
       // FPSSpellCasting's AnimateSpellCast coroutine (:265-286). It is
@@ -1476,7 +1473,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
             climbing: !!cam?.climbing, swimming: !!mv.swimming, transformedLycanthrope: !!entity && isTransformedLycanthrope(entity),
             motion: { grounded: mv.grounded !== false, crouching: !!mv.crouching, riding: !!mv.riding, standing: !!mv.standing, speedRatio: ratio, baseSpeed: base, localVel },
             look, swingHeld: _held, cursorActive: cursorActive(), camera: camThunk, collider: () => collider?.() ?? null,
-            keyDown: (code) => !!keyDown?.(code), sheathWeapons: () => { if (!playerWeapon.sheathed) playerWeapon.toggleSheath(); },
+            actionDown: (action) => !!actionDown?.(action), sheathWeapons: () => { if (!playerWeapon.sheathed) playerWeapon.toggleSheath(); },
           };
           handheld.update(dt, tctx);
           handheld.lateUpdate(dt, tctx);

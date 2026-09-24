@@ -22,7 +22,7 @@
 // player opens this window with before they have clicked anything.
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
-import { overlayAction, actionOf } from './input.js';   // LV1's audit: `actionOf` is the REGISTRY's answer for the key this window is named after
+import { overlayAction, eventAction } from './input.js';   // LV1's audit: the REGISTRY's answer (AUDIT KB1: `eventAction`, the event's own read) for the key this window is named after
 import { questRail, questTitleOf } from './questRail.js';   // MAC-K2: the ONE quest walk, shared with the pause window's Quests tab
 import { breakableNote } from '../systems/notebook.js';   // JOURNAL1: a note the notebook's wrap can take, whatever was typed
 import { pageOfNote, pageRefusalText } from '../net/journalPage.js';   // JOURNAL1: a note as the page it would be shown as, or why it cannot be
@@ -457,10 +457,10 @@ function onKey(e) {
   // before it). A text field keeps its own keys - the note composer is
   // a real <input> and 'l' belongs to it (CG2) - which the guard at
   // the top of this handler already ensures.
-  if (actionOf(e) === 'LogBook') {
+  if (eventAction(e) === 'LogBook') {
     e.preventDefault();
     e.stopPropagation();
-    onExit();
+    if (!e.repeat) onExit();   // AUDIT KB1: the press closes; a held key's repeat is swallowed, not an open-shut flicker
     return;
   }
   if (overlayAction(e) !== 'back') return;
