@@ -267,7 +267,7 @@
   {
     "name": "SURVTIERS3-a-correction-moves-nothing",
     "file": "src/systems/survival/needs.js",
-    "old": "  for (const k of ['lastAte', 'awakeSince', 'lastMinute', 'stiffUntil']) if (Number.isFinite(s[k]) && s[k] !== 0) s[k] += delta;",
+    "old": "  for (const k of CLOCK_MARKERS) if (Number.isFinite(s[k]) && s[k] !== 0) s[k] += delta;",
     "new": "",
     "tests": [
       "test/survtiers3.test.js"

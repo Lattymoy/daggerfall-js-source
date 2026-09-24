@@ -19,7 +19,7 @@
   },
   {
     "name": "SURV2-a-mouldy-food-keeps-the-fresh-picture",
-    "file": "src/systems/survival/items.js",
+    "file": "src/systems/survival/food.js",
     "old": "    item.worldTextureArchive = item.templateIndex;\n    item.worldTextureRecord = s === FOOD_STAGE.Mouldy ? 0 : 1;",
     "new": "",
     "tests": [
@@ -56,7 +56,7 @@
   {
     "name": "SURV2-the-corpses-meat-is-never-turning",
     "file": "src/systems/survival/loot.js",
-    "old": "      if (item && rolls() < 0.5) spoilFood(item);   // half of it is already turning",
+    "old": "      if (item && rolls() < 0.5) rotOnce(item);   // half of it is already turning",
     "new": "",
     "tests": [
       "test/surv2_items.test.js"

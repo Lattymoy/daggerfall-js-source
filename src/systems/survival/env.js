@@ -23,7 +23,6 @@
 // only in a tier that refuses a sleep (`restGate` - Hard's alone).
 //
 // PURE: a leaf - racialLive.js is import-free, races.js a data leaf.
-import { survivalOf } from './needs.js';
 import { temperatureWord } from './temperature.js';
 import { installSurvivalRestGate } from './rest.js';
 import { survivalRules } from './switch.js';
@@ -90,6 +89,3 @@ export const survivalGateOn = () => !!survivalRules()?.restGate;
 export function uninstallSurvivalGate(pair, unregister) {
   for (const h of pair ?? []) unregister?.(h);
 }
-
-/** A load or an arrival: the record made if missing and aligned to now (needs.js alignSurvival's law). */
-export const survivalRecordAt = (entity, now) => survivalOf(entity, now);

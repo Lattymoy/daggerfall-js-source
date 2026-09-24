@@ -46,9 +46,9 @@ export const REST_COST = Object.freeze({
   camp: Object.freeze({ recovery: 1, encounters: 1, stiffHours: 0 }),
   rough: HARD_RULES.roughRest,
 });
-export const STIFF_HOURS = 4;
-/** Speed and agility down by this while stiff (needs.js's survival entry carries it). */
-export const STIFF_PENALTY = 5;
+export const STIFF_HOURS = HARD_RULES.roughRest.stiffHours;   // AUDIT 68 S33-stiff-constants-dup: the hours stiffen() charges, not a copy
+/** Speed and agility down by this while stiff (needs.js's survival entry carries it, and owns it). */
+export { STIFF_PENALTY } from './needs.js';
 export const REST_TEXT_SURVIVAL = Object.freeze({
   stiff: 'You rise stiff and sore from the hard ground.',
   // AUDIT SURV-TIERS (the third pass): the rough night's lesser sleep said in a tier with no stiff morning - a Casual

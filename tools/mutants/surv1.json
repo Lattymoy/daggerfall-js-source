@@ -110,7 +110,7 @@
   {
     "name": "SURV1-a-short-absence-is-aligned-too",
     "file": "src/systems/survival/needs.js",
-    "old": "  if (gap > ALIGN_GRACE_MINUTES || (s.lastAte ?? now) > now || (s.awakeSince ?? now) > now) {",
+    "old": "  if (gap > ALIGN_GRACE_MINUTES || SINCE_MARKERS.some((k) => (s[k] ?? now) > now)) {",
     "new": "  if (true) {",
     "tests": [
       "test/surv1_model.test.js"

@@ -138,7 +138,7 @@ test('SURV1: the felt temperature is the resisted world plus the resisted body, 
   assert.equal(fire.felt, -20 + (5 + 15 - 5), 'a campfire is worth fifteen of warmth');
   const storm = feltTemperature({ ...noon, weather: 'thunder' }, worn({}), ctx);
   assert.equal(storm.wetGain, 5, 'and the storm soaks a naked body five a minute');
-  assert.equal(feltTemperature({ ...noon, submerged: true }, worn({}), ctx).wetGain, 300);
+  assert.equal(feltTemperature({ ...noon, swimming: true }, worn({}), ctx).wetGain, 300, 'in the water: the feed\'s own word (AUDIT 68 S33-water-never-wets)');
   assert.deepEqual(['scorching', 'hot', 'warm', 'comfortable', 'cold', 'freezing', 'deadly cold'], [60, 40, 20, 0, -20, -40, -60].map(temperatureWord));
 });
 

@@ -66,7 +66,25 @@ export function foodName(item) {
 /** What the meal is worth at its stage. */
 export const foodSatiety = (item) => Math.trunc((foodOf(item)?.satiety ?? 0) / (foodStage(item) + 1));
 
-/** Spoil one stage. False when it was already putrid. */
+/** Dress a food for its stage: the name and, past stale, the mod's own
+ *  picture - archive = template, record 0 mouldy, 1 rotten and putrid
+ *  (items.js VENDOR_ICON_FILES: every food that spoils has both). */
+export function dressFood(item) {
+  if (!isFood(item)) return item;
+  item.name = foodName(item);
+  const s = foodStage(item);
+  if (s >= FOOD_STAGE.Mouldy && foodOf(item).keeps != null) {
+    item.worldTextureArchive = item.templateIndex;
+    item.worldTextureRecord = s === FOOD_STAGE.Mouldy ? 0 : 1;
+  } else {
+    delete item.worldTextureArchive; delete item.worldTextureRecord;
+  }
+  return item;
+}
+
+/** Spoil one stage, dressed. False when it was already putrid.
+ *  AUDIT 68 S33-rot-day-undressed: the dressing is the stage's, so it is
+ *  here - the day's rot (rotFoodDay) spoiled food under its fresh name. */
 export function rotOnce(item) {
   const f = foodOf(item);
   if (!f || f.keeps == null) return false;
@@ -74,6 +92,7 @@ export function rotOnce(item) {
   if (s >= FOOD_STAGE.Putrid) return false;
   item.foodStage = s + 1;
   item.value = 0;
+  dressFood(item);
   return true;
 }
 

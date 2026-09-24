@@ -66,7 +66,7 @@
   {
     "name": "AUDITSURV-the-temperature-note-has-its-own-bands",
     "file": "src/systems/survival/needs.js",
-    "old": "  const word = tw === 'scorching' ? 'scorching' : tw === 'hot' ? 'hot' : tw === 'warm' ? 'warm' : tw === 'deadly cold' ? 'deadly' : tw === 'freezing' ? 'freezing' : tw === 'cold' ? 'cold' : null;",
+    "old": "  const word = tw === 'comfortable' ? null : tw === 'deadly cold' ? 'deadly' : tw;",
     "new": "  const word = temp.felt > 50 ? 'burning' : temp.felt > 30 ? 'scorching' : temp.felt > 20 ? 'hot' : temp.felt > 10 ? 'warm' : temp.felt < -50 ? 'deadly' : temp.felt < -30 ? 'freezing' : temp.felt < -20 ? 'cold' : null;",
     "tests": [
       "test/auditsurv.test.js"

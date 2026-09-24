@@ -17,8 +17,8 @@ import { registerCustomTemplates, templateByIndex, mintCondition, setItemFields,
 import { addVendorTextures, vendorTextureCount } from '../textureReplacement.js';
 const dice100 = (chance, roll01) => Math.floor(roll01 * 100) < chance;   // Dice100's line; no combat import (the formulas -> equip cycle)
 import {
-  TEMPLATE, SURVIVAL_GROUP, FOOD, isFood, foodOf, foodStage, foodName, foodSatiety, eatLaw, sickenFromMeal, rotOnce,
-  isWaterskin, waterIn, waterskinName, drinkFrom, refillSkins, DRINK_RELIEF, WATERSKIN_CAPACITY_KG, FOOD_STAGE,
+  TEMPLATE, SURVIVAL_GROUP, FOOD, isFood, foodOf, foodName, foodSatiety, eatLaw, sickenFromMeal, rotOnce,
+  isWaterskin, waterIn, waterskinName, drinkFrom, refillSkins, DRINK_RELIEF, WATERSKIN_CAPACITY_KG,
 } from './food.js';
 import { survivalOf, NEED } from './needs.js';
 
@@ -91,29 +91,7 @@ export function createSurvivalItem(templateIndex, { stackCount = 1, water = null
   const item = mintCondition(setItemFields({ group: SURVIVAL_GROUP, templateIndex, material: 0, flags: 0, variant: 0, message: 0, stackCount: t.stackable ? Math.max(1, stackCount) : 1 }));
   if (condition != null) item.currentCondition = Math.max(0, Math.min(item.maxCondition ?? condition, condition));   // SURV3: the port's condition field (mintCondition), not a field of its own - the uses the pool reads
   if (isWaterskin(item)) item.water = water == null ? WATERSKIN_CAPACITY_KG : Math.max(0, Math.min(WATERSKIN_CAPACITY_KG, water));   // named by its template at the mint (the shelf's law); the name follows the water once it is drunk from or filled
-  if (isFood(item) && stage > 0) { for (let i = 0; i < stage; i++) spoilFood(item); }
-  return item;
-}
-
-/** Spoil a food one stage and dress it: the name and, past stale, the
- *  mod's own picture (record 0 mouldy, 1 rotten and putrid). */
-export function spoilFood(item) {
-  if (!rotOnce(item)) return false;
-  dressFood(item);
-  return true;
-}
-export function dressFood(item) {
-  if (!isFood(item)) return item;
-  item.name = foodName(item);
-  const s = foodStage(item);
-  const t = templateByIndex(item.templateIndex);
-  if (s >= FOOD_STAGE.Mouldy && VENDOR_ICON_FILES.includes(`${item.templateIndex}_${s === FOOD_STAGE.Mouldy ? 0 : 1}-0`)) {
-    item.worldTextureArchive = item.templateIndex;
-    item.worldTextureRecord = s === FOOD_STAGE.Mouldy ? 0 : 1;
-  } else {
-    delete item.worldTextureArchive; delete item.worldTextureRecord;
-    if (t) { item.worldTextureArchive = undefined; item.worldTextureRecord = undefined; }
-  }
+  if (isFood(item) && stage > 0) { for (let i = 0; i < stage; i++) rotOnce(item); }   // food.js rotOnce dresses each stage
   return item;
 }
 

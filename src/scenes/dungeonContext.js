@@ -2932,7 +2932,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // sweep here: in a world room a camp is the room's, as an opened chest is.
   // SURV7 - THE SURVIVAL ENV, underground: the outer host's reading
   // (the climate, the month, the resistances) with the flags this host
-  // owns - the floor, no sun or water, the fire on the floor; the
+  // owns - the floor, no sun, its own water, the fire on the floor; the
   // standalone scene has no outer host and reads the clock itself.
   const survivalEnvNow = () => {
     const outer = opts.survivalEnv?.() ?? null;
@@ -2940,7 +2940,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     return {
       climateIndex: 232, month: dateFromClassicMinutes(wm).month, hour: (((wm % 1440) + 1440) % 1440) / 60,
       ...(outer ?? {}),
-      insideBuilding: false, insideDungeon: true, inSunlight: false, swimming: false, transport: false,
+      insideBuilding: false, insideDungeon: true, inSunlight: false, swimming: !!_activity.swimming, transport: false,   // AUDIT 68 S33-water-never-wets: the pool soaks the swimmer
       byFire: !!(_fpFeet && camps.byFire(_fpFeet)),
       resting: !!playerEntity.isResting, sleeping: playerEntity.isResting && !playerEntity.isLoitering ? (playerEntity.restKind ?? 'rough') : null,
     };

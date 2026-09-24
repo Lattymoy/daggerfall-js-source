@@ -5,11 +5,11 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  SURVIVAL_TEMPLATES, createSurvivalItem, spoilFood, dressFood, useSurvivalItem, drinkAtSource, provisionsStock, startingProvisions,
+  SURVIVAL_TEMPLATES, createSurvivalItem, useSurvivalItem, drinkAtSource, provisionsStock, startingProvisions,
   isSurvivalItem, VENDOR_ICON_FILES, VENDOR_TENT_FILES, installSurvivalIcons, WATER_SOURCE_FLATS, WATER_SOURCE_MODELS, isWaterSourceFlat, isDrySourceFlat,
   CAMPFIRE_USES, CAMPING_USES, SURVIVAL_USE_TEXT,
 } from '../src/systems/survival/items.js';
-import { TEMPLATE, FOOD_STAGE, waterIn } from '../src/systems/survival/food.js';
+import { TEMPLATE, FOOD_STAGE, waterIn, rotOnce, dressFood } from '../src/systems/survival/food.js';
 import { corpseFood, humanoidFood, MEAT_BY_TYPE, isAnimal, isHumanoid } from '../src/systems/survival/loot.js';
 import { survivalOf, hungerStage } from '../src/systems/survival/needs.js';
 import { templateByIndex, customTemplateCount, inventoryItemImage, usesWorldTexture } from '../src/systems/itemTemplates.js';
@@ -78,7 +78,7 @@ test('SURV2: minting - condition as uses, a stack for rations only, a full skin 
   const bread = createSurvivalItem(TEMPLATE.Bread, { foodStage: 2 });
   assert.equal(bread.name, 'Mouldy Bread');
   assert.deepEqual([bread.worldTextureArchive, bread.worldTextureRecord], [TEMPLATE.Bread, 0], 'mouldy: the mod\'s own picture, record 0');
-  spoilFood(bread);
+  rotOnce(bread);
   assert.equal(bread.name, 'Rotten Bread');
   assert.equal(bread.worldTextureRecord, 1, 'rotten and worse: record 1');
   assert.equal(usesWorldTexture(bread), true);

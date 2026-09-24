@@ -35,7 +35,7 @@
 import { wrapAngle } from '../../world/mat4.js';
 import { POSE_BOUND, POSE_Y_BOUND } from '../../net/wire.js';
 import { TEMPLATE, foodOf, foodStage, isFood } from './food.js';
-import { createSurvivalItem, dressFood, isCampingEquipment, isCampfireKit, isSkillet, SURVIVAL_USE_TEXT } from './items.js';
+import { createSurvivalItem, isCampingEquipment, isCampfireKit, isSkillet, SURVIVAL_USE_TEXT } from './items.js';
 
 /** The mod's tent (Camping.DeployTent: CreateDaggerfallMeshGameObject(41606)). */
 export const TENT_MODEL = 41606;
@@ -198,7 +198,6 @@ export function cookFood(item, list, { skillet = false } = {}) {
   const rawName = item.name;   // AUDIT SURV E: the line names what went on the fire
   const cooked = createSurvivalItem(f.cooks, { foodStage: Math.max(0, foodStage(item) - 1) });
   if (!cooked) return null;
-  dressFood(cooked);
   if (Array.isArray(list)) {
     if ((item.stackCount ?? 1) > 1) item.stackCount -= 1;
     else { const i = list.indexOf(item); if (i >= 0) list.splice(i, 1); }

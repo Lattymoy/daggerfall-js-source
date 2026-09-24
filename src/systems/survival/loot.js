@@ -6,8 +6,8 @@
 // registry (scenes/corpseMarker.js raiseEnemyDeath, the UL1 seam).
 import { registerEnemyDeathHandler } from '../../scenes/corpseMarker.js';
 import { MOBILE_TYPES } from '../../characters/mobileTypes.js';
-import { TEMPLATE } from './food.js';
-import { createSurvivalItem, spoilFood } from './items.js';
+import { TEMPLATE, rotOnce } from './food.js';
+import { createSurvivalItem } from './items.js';
 
 export const SURVIVAL_LOOT_HANDLER = 'survival';
 /** [min, max] raw meat by mobile type; the max grows by the luck mod. */
@@ -75,7 +75,7 @@ export function corpseFood(entity, { luck = 50, rolls = Math.random } = {}) {
     const n = scaledCount(range(min, max + Math.max(0, lm - 5), rolls), ANIMAL_LOOT_SCALE, rolls);
     for (let i = 0; i < n; i++) {
       const item = createSurvivalItem(fish ? TEMPLATE.RawFish : TEMPLATE.RawMeat);
-      if (item && rolls() < 0.5) spoilFood(item);   // half of it is already turning
+      if (item && rolls() < 0.5) rotOnce(item);   // half of it is already turning
       if (item) out.push(item);
     }
     return out;

@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { ENV_DEFAULTS, survivalCtx, survivalFeed, restGateEnv, installSurvivalGate, survivalRecordAt } from '../src/systems/survival/env.js';
+import { ENV_DEFAULTS, survivalCtx, survivalFeed, restGateEnv, installSurvivalGate } from '../src/systems/survival/env.js';
 import { REST_TEXT_SURVIVAL } from '../src/systems/survival/rest.js';
 import { newSurvival, alignSurvival, ALIGN_GRACE_MINUTES, runSurvivalMinutes, survivalOf } from '../src/systems/survival/needs.js';
 import { raceById, RACES } from '../src/systems/races.js';
@@ -113,7 +113,7 @@ test('SURV7: composed - the ticker feeds the minute law from the host\'s env (th
   clearPreventRestConditions();
   // the alignment: a gap past a day resets, within it keeps, a record ahead of now resets
   const a = player(); const now = 10 * 1440;
-  survivalRecordAt(a, now - 2 * 1440).lastAte = now - 2 * 1440 - 10;
+  survivalOf(a, now - 2 * 1440).lastAte = now - 2 * 1440 - 10;
   assert.equal(alignSurvival(a, now, now - ALIGN_GRACE_MINUTES - 1), true); assert.equal(a.survival.lastAte, now - 10);
   a.survival.lastAte = now - 300;
   assert.equal(alignSurvival(a, now, now - 60), false); assert.equal(a.survival.lastAte, now - 300, 'an hour away keeps its hunger');
@@ -153,7 +153,7 @@ test('SURV7: by source - the four hosts feed their env (the roof, the floor, the
   // one thing in that line the room now answers for itself.
   assert.match(modes, /survivalEnv: \(\) => \(mode === 'interior' && host\.survivalEnv \? \{ \.\.\.host\.survivalEnv\(\), insideBuilding: true, insideDungeon: false, inSunlight: false, swimming: false, byFire: interiorCamps\.byFire\(player\.pos\) \} : null\),/, 'interior: the roof, and its own fire');
   assert.match(modes, /survivalEnv: \(\) => host\.survivalEnv\?\.\(\) \?\? null,/, 'the dungeon gets the outer reader');
-  assert.match(dc, /insideBuilding: false, insideDungeon: true, inSunlight: false, swimming: false, transport: false,/, 'dungeon: the floor');
+  assert.match(dc, /insideBuilding: false, insideDungeon: true, inSunlight: false, swimming: !!_activity\.swimming, transport: false,/, 'dungeon: the floor, and its own water (AUDIT 68 S33-water-never-wets)');
   assert.match(dc, /byFire: !!\(_fpFeet && camps\.byFire\(_fpFeet\)\),/, 'dungeon: its own fire');
   assert.match(dc, /survival: survivalFeed\(playerEntity, survivalEnvNow\(\), \{ say: \(msg\) => hudText\.add\(msg\) \}\),/, 'dungeon: its own tick feeds');
   assert.match(dc, /installSurvivalGate\(registerPreventRestCondition, \(\) => playerEntity, survivalEnvNow\);/, 'dungeon: its own gate');

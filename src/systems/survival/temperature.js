@@ -62,7 +62,6 @@ export const HOOD_SHADE = 10;
  *  and chills the body at a twentieth. */
 export const WET_MAX = 300;
 export const WET_SUBMERGED = 300;
-export const WET_WADING = 50;
 
 /** Clothing warmth by template. Chest clothes (slot 17), legs (24), feet
  *  (26). What is not listed warms nothing. */
@@ -143,10 +142,11 @@ export function weatherWetGain(weather, { cloak = false, hood = false, insideBui
   return cloak ? (hood ? row[2] : row[1]) : row[0];
 }
 
-/** The environment's wetness: under water you are soaked at once,
- *  wading soaks the legs. */
-export const environmentWet = ({ submerged = false, wading = false } = {}) =>
-  (submerged ? WET_SUBMERGED : 0) + (wading ? WET_WADING : 0);
+/** The environment's wetness: in the water you are soaked at once.
+ *  AUDIT 68 S33-water-never-wets: read off the feed's own word for it
+ *  (env.js ENV_DEFAULTS `swimming`) - `submerged` and `wading` were keys
+ *  no host fed, and a winter lake left its swimmer dry. */
+export const environmentWet = ({ swimming = false } = {}) => (swimming ? WET_SUBMERGED : 0);
 
 /** Resistance in degrees: the frost or fire resistance the character
  *  carries, from the race template's flags (resist 25, immune 50, low
@@ -236,7 +236,7 @@ export function dungeonTemperature(natTemp) {
 /**
  * The felt temperature - the one number the needs read.
  *
- * @param {object} env   { climateIndex, month, hour, weather, insideBuilding, insideDungeon, inSunlight, submerged, wading, byFire }
+ * @param {object} env   { climateIndex, month, hour, weather, insideBuilding, insideDungeon, inSunlight, swimming, byFire }
  * @param {object} worn  the equip table (slot -> item)
  * @param {object} ctx   { raceId, raceTemplate, frostResist, fireResist, vampire, lycanthrope, beastForm, hasWater, wet }
  */

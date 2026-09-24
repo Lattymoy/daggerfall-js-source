@@ -34,11 +34,11 @@
 // repays (Casual) keeps one more field, `borrowed`: the stamina each need
 // took, returned when that need is met.
 import { feltTemperature, temperatureWord } from './temperature.js';
-import { drinkFrom, findDrink, waterskinName, DRINK_RELIEF, TEMPLATE, isFood, foodStage, FOOD_STAGE, rotFoodDay, rotWeight, ROT_DAY_MINUTES } from './food.js';
+import { drinkFrom, findDrink, waterskinName, DRINK_RELIEF, TEMPLATE, isFood, rotFoodDay, rotWeight, ROT_DAY_MINUTES } from './food.js';
 import { STAT_KEYS_ORDER, maxFatigue, liveStat } from '../statMods.js';
 import { HARD_RULES } from './difficulty.js';
-/** SURV4: speed and agility down by this while stiff (survival/rest.js's STIFF_PENALTY, restated here so rest.js may import this module). */
-const STIFF_PENALTY = 5;
+/** SURV4: speed and agility down by this while stiff - charged here, so exported here (rest.js re-exports it). */
+export const STIFF_PENALTY = 5;
 import { MINUTES_PER_DAY } from '../gameDate.js';
 
 export const NEED = Object.freeze({
@@ -101,8 +101,6 @@ export const SURVIVAL_TEXT = Object.freeze({
   warm: 'You are a bit warm...',
   hot: 'You wipe the sweat from your brow...',
   scorching: 'You are getting dizzy from the heat...',
-  burning: 'You cannot go on much longer in this heat...',
-  chilly: 'You are a bit chilly...',
   cold: 'You shiver from the cold...',
   freezing: 'The cold is seeping into your bones...',
   deadly: 'Your teeth are chattering uncontrollably!',
@@ -118,6 +116,12 @@ export const SURVIVAL_TEXT = Object.freeze({
   ateRations: 'You eat some rations.',
   emptiedRations: 'You empty your sack of rations.',
 });
+
+/** The record's clocks, in classic minutes: the SINCE markers (the last meal, the waking, the last minute paid) never
+ *  stand ahead of the world; the UNTIL markers (the rough night's stiffness - rest.js; the hunt's cooldown -
+ *  hunting.js huntRoll) do, by their span. */
+const SINCE_MARKERS = Object.freeze(['lastAte', 'awakeSince', 'lastMinute']);
+const CLOCK_MARKERS = Object.freeze([...SINCE_MARKERS, 'stiffUntil', 'huntAt']);
 
 /** A fresh record at `now`: just fed, watered, dry and awake. */
 export function newSurvival(now = 0) {
@@ -291,6 +295,13 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   const resting = !!env.resting;
   const sleeping = env.sleeping ?? null;
   const vampire = !!ctx.vampire;
+  // AUDIT 68 S33-vampire-hunger-ages: a vampire's hunger and wakefulness are frozen, and they are TIMESTAMPS - carried
+  // forward by the minutes since the last one paid (pauseSurvival's law), or a cure woke Starving and sleepless
+  if (vampire) {
+    const step = Number.isFinite(s.lastMinute) ? Math.max(0, now - s.lastMinute) : 1;
+    if (Number.isFinite(s.lastAte)) s.lastAte += step;
+    if (Number.isFinite(s.awakeSince)) s.awakeSince += step;
+  }
   const endurance = entity.stats?.endurance ?? 50;
   // SURV-TIERS: THE ONE DOOR THE NEEDS' STAMINA LEAVES BY. A tier with no
   // floor (Hard) hands every charge to the sink as it always did; a tier
@@ -468,7 +479,7 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   // AUDIT SURV A/E: the strip's own words (temperature.js temperatureWord), one note a word said once - an escalation
   // speaks at once and a held reading never repeats (a cold afternoon said three lines every five minutes)
   const tw = temperatureWord(temp.felt);
-  const word = tw === 'scorching' ? 'scorching' : tw === 'hot' ? 'hot' : tw === 'warm' ? 'warm' : tw === 'deadly cold' ? 'deadly' : tw === 'freezing' ? 'freezing' : tw === 'cold' ? 'cold' : null;
+  const word = tw === 'comfortable' ? null : tw === 'deadly cold' ? 'deadly' : tw;
   stageNote(s, 'temp', word && !(env.insideDungeon && word === 'warm') ? word : null, say, SURVIVAL_TEXT[word], replay);
 
   // BARE SKIN: naked in the cold, bare feet, the sun on uncovered skin.
@@ -659,7 +670,7 @@ export function pauseSurvival(entity, from, to) {
 export function shiftSurvival(entity, delta) {
   const s = entity?.survival;
   if (!s || typeof s !== 'object' || !Number.isFinite(delta) || delta === 0) return false;
-  for (const k of ['lastAte', 'awakeSince', 'lastMinute', 'stiffUntil']) if (Number.isFinite(s[k]) && s[k] !== 0) s[k] += delta;
+  for (const k of CLOCK_MARKERS) if (Number.isFinite(s[k]) && s[k] !== 0) s[k] += delta;
   return true;
 }
 /** AUDIT SURV A: the feed stopped (the mod off, a host with no reader) - the drains the last minute wrote go with it. */
@@ -677,22 +688,13 @@ export const ALIGN_GRACE_MINUTES = MINUTES_PER_DAY;
 export function alignSurvival(entity, now, lastSeen = null) {
   const s = survivalOf(entity, now);
   const gap = lastSeen == null ? Infinity : now - lastSeen;
-  if (gap > ALIGN_GRACE_MINUTES || (s.lastAte ?? now) > now || (s.awakeSince ?? now) > now) {
-    Object.assign(s, { lastAte: now - 10, thirst: 0, wet: 0, sleepDebt: 0, awakeSince: now, exposure: 0, drunk: 0, fed: 0, lastMinute: now, notes: {} });
+  // AUDIT 68 S33-align-ahead-markers: "further along" is read off every SINCE marker - the record's own clock
+  // (lastMinute) too, which alone ahead stalled every minute until the world caught up - and the fresh start clears
+  // the UNTIL markers with the rest: a save from day 400 loaded at day 100 was Stiff, and could not hunt, for 300 days
+  if (gap > ALIGN_GRACE_MINUTES || SINCE_MARKERS.some((k) => (s[k] ?? now) > now)) {
+    Object.assign(s, { lastAte: now - 10, thirst: 0, wet: 0, sleepDebt: 0, awakeSince: now, exposure: 0, drunk: 0, fed: 0, lastMinute: now, stiffUntil: 0, notes: {} });
+    delete s.huntAt;
     return true;
   }
   return false;
-}
-
-/** Stage words for the HUD and the status page. */
-export function survivalSummary(entity, now, temp = null) {
-  const s = survivalOf(entity, now);
-  return {
-    hunger: hungerStage(hungerMinutes(s, now)), hungerMinutes: hungerMinutes(s, now),
-    thirst: thirstStage(s.thirst), thirstValue: s.thirst,
-    sleep: sleepStage(s.sleepDebt), sleepDebt: s.sleepDebt, awakeHours: awakeHours(s, now),
-    wet: wetStage(s.wet), wetValue: s.wet,
-    felt: temp?.felt ?? null, drunk: s.drunk,
-    stage: foodStage, FOOD_STAGE,
-  };
 }
