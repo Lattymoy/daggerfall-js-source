@@ -162,10 +162,11 @@ test('QREPAIR a Place that cannot take the placement (no markers at all) is coun
   w.add('npc', { isPerson: true });
   w.act({ typeName: 'PlaceNpc', npcSymbol: sym('npc'), placeSymbol: sym('pub'), marker: -1 });
   w.act({ typeName: 'RevealLocation', placeSymbol: sym('pub') });
-  let mounted = 0;
-  const r = repairActiveQuests(w.m, { discoverLocation: () => { throw new Error('Error finding location'); }, mountCurrentSite: () => { mounted++; } });
+  let mounted = 0, topics = 0;
+  const r = repairActiveQuests(w.m, { discoverLocation: () => { throw new Error('Error finding location'); }, mountCurrentSite: () => { mounted++; }, hasQuestTopics: () => false, addQuestTopics: () => { topics++; } });
   assert.equal(r.people, 0);
   assert.equal(r.failed, 2, 'the placement and the reveal, each counted');
+  assert.equal(topics, 1, 'the quest\'s own later step still ran - a failed reveal is that reveal, not the quest');
   assert.equal(mounted, 1, 'and the pass went on to the mount');
   assert.match(r.text, /2 parts could not be checked\./);
 });
