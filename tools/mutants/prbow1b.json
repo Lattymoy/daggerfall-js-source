@@ -61,13 +61,15 @@
     "new": "  const body = visibleRangeBounds(ranges, bodyBox);",
     "tests": [
       "test/prbow1b_followups.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "Since the review's rewrite the body's box sets only the window's DEPTH (cz), which moves the portrait's orthographic eye along its own line of sight - the picture is the same; the width and height come from every shown range."
   },
   {
-    "name": "portrait-reach-one-sided",
+    "name": "portrait-window-symmetric-about-the-axis",
     "file": "src/combat/fpArm.js",
-    "old": "      const w = Math.abs(model[0] * x + model[4] * y + model[8] * z + model[12] - cx);",
-    "new": "      const w = model[0] * x + model[4] * y + model[8] * z + model[12] - cx;",
+    "old": "  return { center: [(loX + hiX) / 2, (loY + hiY) / 2, cz], halfW: (hiX - loX) / 2, halfH: (hiY - loY) / 2 };",
+    "new": "  return { center: [0, (loY + hiY) / 2, cz], halfW: Math.max(-loX, hiX), halfH: (hiY - loY) / 2 };",
     "tests": [
       "test/prbow1b_followups.test.js"
     ]
@@ -75,8 +77,8 @@
   {
     "name": "portrait-height-ignores-reach",
     "file": "src/combat/fpArm.js",
-    "old": "      if (h > halfH) halfH = h;",
-    "new": "      if (h > halfH && !k) halfH = h;",
+    "old": "      if (wy > hiY) hiY = wy;",
+    "new": "      if (wy > hiY && r.slot !== 'weapon') hiY = wy;",
     "tests": [
       "test/prbow1b_followups.test.js"
     ]

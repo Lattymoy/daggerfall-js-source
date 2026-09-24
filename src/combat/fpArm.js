@@ -709,41 +709,44 @@ export function visibleRangeBounds(ranges, out, skip = null) {
  *  body in it (bare 0.943 of the cell, longsword 0.891, long bow 0.774
  *  on the pin's stand-in, test/prbow1b_followups.test.js).
  *
- *  THE BODY SETS THE SCALE; WHAT IS DRAWN SETS ONLY THE REACH. The window
- *  stands on the actor's own axis (MW x = y = 0) at the body's
- *  mid-height - the drawn ranges less CARRIED_SLOTS, drawThird's own
- *  anchor, so the body stays centred as the panel turns it - and its
- *  half-height is the body's half-span. Every range the portrait SHOWS
- *  (the held weapon, the lit torch, the quiver) is then held inside it
- *  at the yaw asked: a held item is drawn, never clipped, and widens the
- *  picture only by what it reaches at that yaw - so the body keeps its
- *  size in the cell while the picture stays inside the cell's aspect
- *  (every front view of the pin's longsword and bow). A hidden range is
- *  not in it at all. Read off the ranges' posed boxes (foldRangeBoxes -
- *  no vertex walk) through `model`, corner by corner: a box's corners
- *  bound its vertices, so the window holds every drawn one. The
- *  portrait's camera looks down world -Z (figure()), so its x is world x
- *  and its y world y. Answers { center, halfW, halfH } in world units,
- *  unpadded; null when nothing drawn has a box. `bodyBox`: the caller's
- *  scratch (owned). */
+ *  THE WINDOW IS WHAT IS DRAWN, AT THE YAW ASKED - the tight box of every
+ *  range the portrait SHOWS (the body, the held weapon, the lit torch,
+ *  the quiver), corner by corner through `model`: a held item is drawn,
+ *  never clipped, and widens the picture only by what it reaches at this
+ *  yaw, on its own side. A hidden range is not in it at all. The first
+ *  cut stood the window on the actor's axis and made it symmetric about
+ *  it, so a weapon reaching out to ONE side widened BOTH, and at a turned
+ *  yaw the contain fit shrank the body to 0.590 of the cell where the old
+ *  azimuth-safe frame held 0.891 (the review's sweep) - the tight box is
+ *  never wider than that frame, so no yaw draws the body smaller than it
+ *  stood (the pins sweep it), at the price of the body sitting off the
+ *  picture's centre when something reaches out beside it. Read off the
+ *  ranges' posed boxes (foldRangeBoxes - no vertex walk). The portrait's
+ *  camera looks down world -Z (figure()), so its x is world x and its y
+ *  world y; the depth is the body's own axis (the drawn ranges less
+ *  CARRIED_SLOTS, drawThird's anchor). Answers { center, halfW, halfH }
+ *  in world units, unpadded; null when nothing drawn has a box.
+ *  `bodyBox`: the caller's scratch (owned). */
 export function portraitWindow(ranges, model, bodyBox) {
   const body = visibleRangeBounds(ranges, bodyBox, CARRIED_SLOTS) || visibleRangeBounds(ranges, bodyBox);
   if (!body) return null;
   const midZ = (body.minZ + body.maxZ) / 2;
-  const cx = model[8] * midZ + model[12], cy = model[9] * midZ + model[13], cz = model[10] * midZ + model[14];
-  let halfW = 0, halfH = 0;
+  const cz = model[10] * midZ + model[14];
+  let loX = Infinity, hiX = -Infinity, loY = Infinity, hiY = -Infinity;
   for (const r of ranges) {
     const b = r.hidden ? null : r.box;
     if (!b || !(b.maxX >= b.minX)) continue;
     for (let k = 0; k < 8; k++) {
       const x = k & 1 ? b.maxX : b.minX, y = k & 2 ? b.maxY : b.minY, z = k & 4 ? b.maxZ : b.minZ;
-      const w = Math.abs(model[0] * x + model[4] * y + model[8] * z + model[12] - cx);
-      const h = Math.abs(model[1] * x + model[5] * y + model[9] * z + model[13] - cy);
-      if (w > halfW) halfW = w;
-      if (h > halfH) halfH = h;
+      const wx = model[0] * x + model[4] * y + model[8] * z + model[12];
+      const wy = model[1] * x + model[5] * y + model[9] * z + model[13];
+      if (wx < loX) loX = wx;
+      if (wx > hiX) hiX = wx;
+      if (wy < loY) loY = wy;
+      if (wy > hiY) hiY = wy;
     }
   }
-  return { center: [cx, cy, cz], halfW, halfH };
+  return { center: [(loX + hiX) / 2, (loY + hiY) / 2, cz], halfW: (hiX - loX) / 2, halfH: (hiY - loY) / 2 };
 }
 
 /**
@@ -4811,7 +4814,7 @@ export function createFpArm() {
       // piece, the hidden ones included (AUDIT 68 had moved it off
       // arm.bounds for a swap's sake; the ranges are the swap's too), at
       // the box's azimuth-safe width - so a held weapon shrank the body
-      // in its cell. The body sets the height; what is shown only reaches.
+      // in its cell. The window is what is drawn at this yaw, and no wider.
       const win = portraitWindow(thirdMesh.ranges, model, figureBodyBox);
       if (!(win && win.halfW > 0 && win.halfH > 0)) return null;
       const halfH = win.halfH * 1.06;

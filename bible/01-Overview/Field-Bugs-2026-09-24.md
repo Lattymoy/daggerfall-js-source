@@ -648,25 +648,29 @@ it. On the pin's stand-in the body filled 0.943 of the cell bare-handed,
 held longsword also pushed the body 0.61 of the half-width off-centre,
 because the frame was centred on the box and the box included the gear.
 
-The decision: **the body sets the scale, and what is drawn only widens the
-frame.** The frame (`fpArm.js:729` `portraitWindow`, used at `:4815` after
-the portrait's hidden flags are set) stands on the actor's axis at the
-body's mid-height, and its half-height is the body's own. Every range the
-portrait shows (the held weapon, the lit torch, the quiver) is kept inside
-the frame at the yaw asked, measured off the posed box corners. So a held
-item is always drawn in full, and a hidden one does not count at all. The
-held item stays in the portrait, as PX26 wanted, and the body keeps its
-size in the cell as long as the picture stays within the cell's
-proportions. That holds at the front view for the pin's longsword and bow.
+The decision: **the frame is the tight box of what the portrait shows, at
+the yaw asked** (`fpArm.js` `portraitWindow`, used in `figure()` after the
+portrait's hidden flags are set), measured off the posed range boxes'
+corners. A held item is always drawn in full, a hidden one does not count at
+all, and each side reaches only as far as something drawn on that side. The
+first cut stood the frame on the actor's axis and made it symmetric about
+it, so a weapon reaching out to one side widened both; the review's yaw
+sweep found that at a turned yaw it shrank the body to 0.590 of the cell,
+where the old azimuth-safe frame had held 0.891. The tight box is never wider
+than that frame, so no yaw draws the body smaller than it stood; the price is
+that the body sits off the picture's centre when something reaches out
+beside it. The pins sweep eleven yaws and hold the body at or above the old
+frame's share (longsword 0.891, long bow 0.773), with every held vertex
+inside the picture.
 
 **The record.** This section.
 
 **Still open.**
-- At a side yaw, a long weapon can reach past the cell's width. The
-  picture then widens past 110:184 and contain shrinks the body with it, by
-  gear it does show, while the player drags. A panel that let the gear
-  overflow the cell would keep the body its size. That is a layout change in
-  `enhancedInventory.js` and `enhancedStyle.js` that nobody has made yet.
+- At a side yaw a long weapon can still reach past the cell's width, and
+  contain then draws the body smaller than bare hands do (never smaller than
+  the old frame did). A panel that let the gear overflow the cell would keep
+  the body its size. That is a layout change in `enhancedInventory.js` and
+  `enhancedStyle.js` that nobody has made yet.
 - `figure()` clamps the picture's width to the render target
   (`CHAR_SPRITE_RT_SIZE`, 1024) without lowering its height, so a picture
   wider than 1024:384 is squashed rather than letterboxed. No human-sized

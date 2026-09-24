@@ -272,18 +272,18 @@ test('PR-BOW1b (2): THE PORTRAIT - bare-handed, holding a longsword and holding 
   assert.ok(Math.abs(bow.cell / sword.cell - 1) < 0.005, `THE REPORT, in the portrait: a bow does not draw the body bigger or smaller than a sword (x${(bow.cell / sword.cell).toFixed(4)})`);
 });
 
-test('PR-BOW1b (2): TURNED, the body stays where it stood - the actor\'s own axis at the body\'s mid-height is the picture\'s centre at every yaw, bare-handed or holding either - the body sets the picture\'s height, and the held item never leaves the picture: the window reaches for what it draws at the yaw asked (unfixed: the frame stood on the gear-inclusive box\'s centre, so a turned longsword pushed the body 0.61 of the half-width off-centre)', async () => {
+test('PR-BOW1b (2): TURNED, the body is never drawn smaller than the old frame drew it - at every yaw the portrait frames the tight box of what it shows, so a held longsword keeps the body at or above 0.891 of the cell and a held long bow at or above 0.773 (the azimuth-safe frame\'s constant shares), and the held item never leaves the picture (review: the symmetric window about the axis shrank a turned longsword\'s body to 0.590)', async () => {
   const bareRig = await buildRig();
   const swordRig = await buildRig({ weapon: LONGSWORD });
   const bowRig = await buildRig({ weapon: LONG_BOW });
-  for (const yaw of [0, 0.5, 1.0, 1.6, 2.4, 3.1, -1.2]) {
+  const FLOOR = { longsword: 0.891, 'long bow': 0.773 };
+  for (const yaw of [0, 0.5, 0.8, 1.0, 1.5, 1.6, 2.4, 3.1, -0.8, -1.2, -1.5]) {
     const bare = portrait(bareRig, yaw);
-    for (const [what, rig] of [['bare hands', bareRig], ['longsword', swordRig], ['long bow', bowRig]]) {
-      const got = rig === bareRig ? bare : portrait(rig, yaw);
-      assert.ok(Math.abs(got.axis[0]) < 1e-9 && Math.abs(got.axis[1]) < 1e-9, `${what} at yaw ${yaw}: the body's axis is the picture's centre (ndc ${got.axis.map((v) => v.toFixed(4))})`);
-      // ortho's [5] is 1 / halfH: the picture's height in world units
-      assert.ok(Math.abs(got.oproj[5] / bare.oproj[5] - 1) < 1e-9, `${what} at yaw ${yaw}: the picture's height is the body's (halfH x${(bare.oproj[5] / got.oproj[5]).toFixed(4)} of bare hands)`);
-      if (rig !== bareRig) assert.ok(got.heldWorst <= 1 + 1e-9, `${what} at yaw ${yaw}: the held item is inside the picture (worst |ndc| ${got.heldWorst.toFixed(4)})`);
+    assert.ok(bare.cell > 0.9, `bare hands at yaw ${yaw}: the body fills the cell (${bare.cell.toFixed(3)})`);
+    for (const [what, rig] of [['longsword', swordRig], ['long bow', bowRig]]) {
+      const got = portrait(rig, yaw);
+      assert.ok(got.cell >= FLOOR[what] - 1e-3, `${what} at yaw ${yaw}: the body is ${got.cell.toFixed(3)} of the cell, the old frame held ${FLOOR[what]}`);
+      assert.ok(got.heldWorst <= 1 + 1e-9, `${what} at yaw ${yaw}: the held item is inside the picture (worst |ndc| ${got.heldWorst.toFixed(4)})`);
     }
   }
 });
@@ -302,7 +302,7 @@ test('PR-BOW1b (2): gear the portrait does NOT show moves nothing - an unlit tor
   assert.ok(Math.abs(b.cell - a.cell) < 1e-12, 'so the body is exactly the size it was');
 });
 
-test('PR-BOW1b (2): portraitWindow - on the actor\'s axis at the body\'s mid-height (the shown ranges less CARRIED_SLOTS), the half-height the body\'s own unless something shown reaches further, the half-width the farthest shown corner at this yaw, hidden ranges nowhere; null when nothing shown has a box', () => {
+test('PR-BOW1b (2): portraitWindow - the tight box of the SHOWN ranges at this yaw (each side reaches only as far as something drawn on that side), the depth the body\'s own axis, hidden ranges nowhere; null when nothing shown has a box', () => {
   const box = (minX, minY, minZ, maxX, maxY, maxZ) => ({ minX, minY, minZ, maxX, maxY, maxZ });
   // the model as figure() builds it, less the yaw and the scale: MW z up. A body 2 wide and 10 tall on z 0..10.
   const zUp = [1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 1];   // column-major: MW (x, y, z) -> world (x, z, -y)
@@ -312,19 +312,18 @@ test('PR-BOW1b (2): portraitWindow - on the actor\'s axis at the body\'s mid-hei
     { slot: 'torch', hidden: true, box: box(40, 40, -30, 50, 50, 60) },
   ];
   const w = portraitWindow(ranges, zUp, {});
-  assert.deepEqual(w.center, [0, 5, 0], 'the axis at the body\'s mid-height');
+  assert.deepEqual(w.center, [0.25, 5, 0], 'x from -1 (the body) to 1.5 (the weapon): the middle of what is drawn');
   assert.equal(w.halfH, 5, 'the body\'s half-span');
-  assert.equal(w.halfW, 1.5, 'the held weapon\'s farthest corner reaches past the body');
+  assert.equal(w.halfW, 1.25, 'the weapon widens its own side only');
   ranges[1].box = box(-3, -0.2, -2, 0, 0.2, 14);   // a staff taller than the body, held low on the left
   const t = portraitWindow(ranges, zUp, {});
-  assert.deepEqual([t.center[1], t.halfH, t.halfW], [5, 9, 3], 'what is shown and reaches further, reaches: symmetric about the body, never clipped');
+  assert.deepEqual([t.center[0], t.center[1], t.halfW, t.halfH], [-1, 6, 2, 8], 'x -3..1, y -2..14: never clipped, never wider than drawn');
   ranges[1].hidden = true;
   assert.deepEqual(portraitWindow(ranges, zUp, {}), { center: [0, 5, 0], halfW: 1, halfH: 5 }, 'hidden: the bare body\'s window');
   ranges[0].hidden = true;
   assert.equal(portraitWindow(ranges, zUp, {}), null, 'nothing shown: null');
-  // no body range shown, only gear: the gear's own mid-height
-  ranges[1].hidden = false;
-  assert.deepEqual(portraitWindow(ranges, zUp, {}).center, [0, 6, 0]);
+  ranges[1].hidden = false;   // only gear shown: the gear's own box
+  assert.deepEqual(portraitWindow(ranges, zUp, {}).center, [-1.5, 6, 0]);
 });
 
 // ---------------------------------------------------------------------------------------------------------------
