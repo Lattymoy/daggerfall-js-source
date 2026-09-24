@@ -1955,10 +1955,29 @@ export class ChargenFlow {
    *  the selection to it by the time MouseDoubleClick reads it. */
   clickClassRow(idx, now) {
     const wasDouble = this._lastClassClick != null && (now - this._lastClassClick) < DOUBLE_CLICK_DELAY_MS;
-    this.classListIndex = idx;   // MouseClick moves the LIST's selection
+    this._selectClassRow(idx);   // MouseClick moves the LIST's selection
     this._lastClassClick = now;
     if (wasDouble) { this._lastClassClick = null; this.useClass(); }
     return true;
+  }
+
+  /**
+   * DISC24-A (2026-09-24, Quest on Discord: "When left clicking other classes the description stays the same for the
+   * original class that was double clicked previously but the `Play as a <insertClass>` changes and the class name also
+   * change at the top"): THE ONE DOOR THE LIST'S SELECTION MOVES THROUGH WHILE A DESCRIPTION CAN BE OPEN.
+   *
+   * DFU's description is a MODAL DaggerfallMessageBox pushed over the list (CreateCharClassSelect.cs :70-96), so while it
+   * is up the selection under it cannot move - the classic port keeps that (chargenArt's hit test answers only Yes/No
+   * with the box up). The enhanced skin lays the list BESIDE the box, so a row stayed clickable, and a single click moved
+   * `classListIndex` - which the header and "Play as a" read - while `classConfirm`, the text the box was opened with,
+   * stayed the old row's. Worse than a picture: Yes adopts `classListIndex`, so the player got the class on the button,
+   * not the one they had read. So the box BELONGS TO THE ROW IT WAS OPENED ON: moving the selection off that row is
+   * DFU's No (:106-109, the box dismissed, back to the list), and the new row is read the way any row is - a double click,
+   * Return or the Read button. A click on the same row leaves it open.
+   */
+  _selectClassRow(idx) {
+    if (this.classConfirm && idx !== this.classListIndex) this.classConfirm = null;
+    this.classListIndex = idx;
   }
 
   /** DaggerfallClassSelectWindow_OnItemPicked (:70-96): picking a class
@@ -2027,7 +2046,7 @@ export class ChargenFlow {
     // is a second instance.
     if (hit.setStatCursor != null) { this._setStatCursor(hit.setStatCursor); return true; }
     if (hit.setSkillCursor != null) { this.skillCursor = hit.setSkillCursor; this._syncSkillSel(); return true; }
-    if (hit.setClass != null) { this.classListIndex = hit.setClass; return true; }
+    if (hit.setClass != null) { this._selectClassRow(hit.setClass); return true; }   // DISC24-A: the one door
     if (hit.confirmClass) { this.classConfirm = null; this._acceptStandardClass(); return true; }
     if (hit.cancelClass) { this.classConfirm = null; return true; }
     // U18: the method screen's two buttons - the click sets AND closes,

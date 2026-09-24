@@ -72,8 +72,9 @@ import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { dfWornEquipment } from '../formats/mwItemMap.js';   // PX25
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // PX26
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';   // PX25
-import { inventoryItemImage, templateByIndex } from '../systems/itemTemplates.js';
+import { inventoryItemImage, inventoryItemModel, templateByIndex } from '../systems/itemTemplates.js';
 import { requestIcon, paperDollDataUrl } from './textureCanvas.js';
+import { requestModelIconUrl } from './modelIcon.js';   // DISC24-B
 import { modelIconUrl as modelIconUrlOf } from './itemIconUrl.js';   // MW-D38, shared with the HUD's quickslots (QS3)
 // U59: the AVATAR. The compositor is ui/paperDoll.js - the same one
 // the classic window draws - and this reads its finished pixels rather
@@ -396,7 +397,20 @@ export function itemLine(item, identity = undefined) {
     // The address only. Fetching is the view's business, because a
     // model has no repaint to schedule.
     image: img,
+    // DISC24-B: the model an item with no art of its own is pictured by
+    // (the Small Cart's wagon) - the classic lists' fallback, the same one.
+    model: img ? null : inventoryItemModel(item),
   };
+}
+
+/** DISC24-B: THE LINE'S CLASSIC PICTURE, as a data URL - its record through textureCanvas, or, for an item with no
+ *  art of its own, its model's bake (ui/modelIcon.js). One door for every enhanced list, so the pack, the detail card,
+ *  the shop and the player trade cannot disagree on which items have a picture. Null while it loads (`onReady` fires
+ *  when it lands) and for an item with neither. */
+export function linePictureUrl(line, { scale = 2, onReady = null } = {}) {
+  if (line.image) return requestIcon(line.image.archive, line.image.record, { scale, dye: line.image.dye, onReady });   // DW3: by the item's dye
+  if (line.model != null) return requestModelIconUrl(line.model, { scale, onReady });
+  return null;
 }
 
 /**
@@ -1768,9 +1782,7 @@ function itemTile(line) {
   // body is built and the item resolves through the one map; the
   // classic icon stands otherwise. Enhanced only, like everything here.
   const src = modelIconUrl(line.item, 96)
-    || (line.image
-      ? requestIcon(line.image.archive, line.image.record, { scale: 2, dye: line.image.dye, onReady: render })   // DW3: by the item's dye
-      : null);
+    || linePictureUrl(line, { scale: 2, onReady: render });
   if (src) {
     const tile = el('span', 'tile has-icon');
     const img = el('img');
@@ -2129,9 +2141,7 @@ function detailCol() {
   // The detail draws it BIGGER - this is the one place there is room
   // to see what the thing actually looks like.
   const big = modelIconUrl(line.item, 192)
-    || (line.image
-      ? requestIcon(line.image.archive, line.image.record, { scale: 4, dye: line.image.dye, onReady: render })   // DW3
-      : null);
+    || linePictureUrl(line, { scale: 4, onReady: render });
   if (big) {
     const fig = el('div', 'bigicon');
     const img = el('img');

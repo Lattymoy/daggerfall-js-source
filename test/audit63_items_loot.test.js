@@ -510,7 +510,7 @@ test('AUDIT 63 F23: a classic save\'s worn 0-condition piece imports EQUIPPED', 
 
 // ── MAC-D2 (Skibbster on Discord, 2026-09-21, with a screenshot of a
 // TOMATO on the "Small Cart" card) ───────────────────────────────────
-test('MAC-D2: transportation draws NO inventory icon - the columns that look like one are another template’s art', async () => {
+test('MAC-D2: transportation draws NO BORROWED icon - the columns that look like one are another template’s art', async () => {
   const { inventoryItemImage, GROUP_TEMPLATE_INDICES, templateByIndex } = await import('../src/systems/itemTemplates.js');
   const TRANSPORT = GROUP_TEMPLATE_INDICES.Transportation;
   assert.deepEqual(TRANSPORT, [93, 94, 95, 96, 97, 98], 'a cart, a horse and four boats');
@@ -532,12 +532,17 @@ test('MAC-D2: transportation draws NO inventory icon - the columns that look lik
     'the cart’s "icon" IS the wine rack’s world sprite - that is the red blob in the screenshot');
 
   // ...so no address at all, rather than a wrong one. Null is what an
-  // unknown template already answers, and every caller takes it: the
-  // enhanced list falls through to its own tile.
-  for (const i of TRANSPORT) {
+  // unknown template already answers, and every caller takes it.
+  for (const i of TRANSPORT.filter((t) => t !== 94)) {
     assert.equal(inventoryItemImage({ templateIndex: i, group: 'Transportation' }), null,
       `${templateByIndex(i).name}: no picture beats a wrong picture`);
   }
+  // DISC24-B (kurkku, 2026-09-24: "Horse and Wagon don't have sprites"):
+  // the HORSE's columns were never borrowed - 201/0 is the animal
+  // archive's own horse - so it keeps them. The cart's picture is its
+  // model's (test/disc24b_transport_pictures.test.js).
+  const horse = inventoryItemImage({ templateIndex: 94, group: 'Transportation' });
+  assert.equal(horse.archive, 201); assert.equal(horse.record, 0);
   // and NOTHING ELSE loses its icon to this rule - the wine rack still
   // draws the sprite that is genuinely its own
   const rack = inventoryItemImage({ templateIndex: 91, group: 'UselessItems1' });

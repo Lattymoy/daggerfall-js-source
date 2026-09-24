@@ -94,6 +94,10 @@ function getArchive(archive) {
   return p;
 }
 
+/** DISC24-B: the same archive, for a door that reads records as color32 rather than drawing them here - the item
+ *  picture a model bakes into (ui/modelIcon.js). One reader, one cache: `{file, palette}` or null, never throws. */
+export const textureArchive = (archive) => getArchive(archive);
+
 /**
  * The record as a data URL, or null while it is not here yet.
  *

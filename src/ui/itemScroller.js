@@ -12,7 +12,8 @@
 // makeSlotToolTip is the per-window ToolTip every item button shares.
 
 import { dyeToken } from '../characters/dyes.js';   // DW3
-import { inventoryItemImage } from '../systems/itemTemplates.js';
+import { inventoryItemImage, inventoryItemModel } from '../systems/itemTemplates.js';
+import { requestModelIcon } from './modelIcon.js';   // DISC24-B: the Small Cart's picture is its wagon
 import { drawText, measureText } from './text.js';
 import { loadImg, drawImgCrop, drawRect } from './nativePanel.js';
 import { audio } from '../systems/audio.js';
@@ -261,6 +262,23 @@ export function preloadIconRecord(icons, img) {
   return ask(img.archive, img.record, img.dye);
 }
 
+/** DISC24-B: the GL key space a baked model picture uploads under (`model-icon_<id>#ui`) - apart from every TEXTURE
+ *  archive's, which are numbers. */
+export const MODEL_ICON_ARCHIVE = 'model-icon';
+
+/** One picture centred in a list cell, fitted inside the button's margin (never enlarged), with the V-FLIPPED source
+ *  rect every color32 upload is drawn with. Answers false while the texture or its size is not here. */
+function drawInCell(renderer, m, glTex, size, rect, slot) {
+  if (!glTex || !size?.width) return false;
+  const fit = Math.min(1, (CELL_W - CELL_MARGIN * 2) / size.width, (SLOT_H - CELL_MARGIN * 2) / size.height);
+  const w = size.width * fit, h = size.height * fit;
+  const x = rect[0] + CELL_X + (CELL_W - w) / 2;
+  const y = rect[1] + slot * SLOT_H + (SLOT_H - h) / 2;
+  renderer.drawScreenQuad(glTex, { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s },
+    { u0: 0, v0: 1, u1: 1, v1: 0 });
+  return true;
+}
+
 /** A per-window icon drawer over the host texture pipeline
  *  ({ getTexture, uploadRecord, textures }): lazily warms each
  *  template's world-texture record + captures its native size, then
@@ -280,7 +298,7 @@ export function makeIconDrawer(icons, identityOf = null) {
     // TextureArchive reads that offset field back. Without it every
     // list drew the morphology-0 (Argonian) row.
     const img = inventoryItemImage(it, identityOf?.() ?? undefined);
-    if (!img || !img.archive) return false;
+    if (!img || !img.archive) return drawModelPicture(renderer, m, it, rect, slot);
     // DW3: the DYE is part of the ask (GetItemImage :458 imports by
     // item.dyeColor), so it is part of this key; the upload answers
     // which GL variant it went under - a dyed replacement its own, the
@@ -301,15 +319,16 @@ export function makeIconDrawer(icons, identityOf = null) {
       }).catch(() => {});
     }
     const glTex = icons.textures.get(glKeys.get(key) ?? `${img.archive}_${img.record}#ui`);   // the un-mipped variant (REVIEW 2026-09-05)
-    const size = sizes.get(key);
-    if (!glTex || !size?.width) return false;
-    const fit = Math.min(1, (CELL_W - CELL_MARGIN * 2) / size.width, (SLOT_H - CELL_MARGIN * 2) / size.height);
-    const w = size.width * fit, h = size.height * fit;
-    const x = rect[0] + CELL_X + (CELL_W - w) / 2;
-    const y = rect[1] + slot * SLOT_H + (SLOT_H - h) / 2;
-    renderer.drawScreenQuad(glTex, { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s },
-      { u0: 0, v0: 1, u1: 1, v1: 0 });
-    return true;
+    return drawInCell(renderer, m, glTex, sizes.get(key), rect, slot);
+  };
+  // DISC24-B: AN ITEM WITH NO ART OF ITS OWN DRAWS ITS MODEL - the Small Cart's wagon, baked once on the CPU
+  // (ui/modelIcon.js) and uploaded as UI art under its own key. Its picture is color32, the shape a record's is, so it
+  // is fitted and drawn through the same V-flipped quad.
+  const drawModelPicture = (renderer, m, it, rect, slot) => {
+    const id = inventoryItemModel(it);
+    const pic = id != null ? requestModelIcon(id) : null;
+    if (!pic) return false;
+    return drawInCell(renderer, m, renderer.uploadTexture(MODEL_ICON_ARCHIVE, id, pic, { mips: false }), pic, rect, slot);
   };
   drawer._warm = warm;       // test seams
   drawer._sizes = sizes;

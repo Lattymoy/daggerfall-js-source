@@ -730,6 +730,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
           if (batch) renderer.destroyBillboardBatch?.(batch);
           batch = renderer.createBillboardBatch(s.archive, s.rec, size, [[0, 0, 0]]);
           batch.origin = [0, 0, 0];
+          batch.selfCard = true;   // DISC24-C: the player's own body - it casts as drawn, into the maps redrawn every frame (render/shadowPass.js SELF CARD)
           batchRec = cacheKey(s);
         }
         batchSize = size;

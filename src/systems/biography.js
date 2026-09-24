@@ -80,7 +80,7 @@ const mintItem = (group, groupIndex, material, rolls) => {
     // ItemBuilder.CreateWeapon:353-368 - "Ignored for arrows": an
     // arrow takes NO material (nativeMaterialValue = 0), a stack of
     // Range(1, 20+1) and currentCondition 0. loot.js:111 and
-    // shopStock.js:128 already carry this branch; this was the third
+    // shopStock.js:129 already carry this branch; this was the third
     // site and it minted ONE arrow at the file's material, so two IT
     // lines of different material could not even stack.
     if (t.index === ARROW_TEMPLATE) {

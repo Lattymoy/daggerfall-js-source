@@ -76,7 +76,10 @@ test('DISC22-D: the enhanced door draws it too - this record, by its metal (a Da
 });
 
 test('DISC22-D: the two enhanced trade screens ask by the item\'s metal, as the pack does', () => {
+  // DISC24-B: every enhanced list asks through the pack's ONE picture door, and that door asks by the dye
   for (const f of ['src/ui/enhancedTrade.js', 'src/ui/enhancedPlayerTrade.js']) {
-    assert.match(readFileSync(join(ROOT, f), 'utf8'), /requestIcon\(line\.image\.archive, line\.image\.record, \{ scale: 2, dye: line\.image\.dye,/, f);
+    assert.match(readFileSync(join(ROOT, f), 'utf8'), /linePictureUrl\(line, \{ scale: 2, onReady:/, f);
   }
+  assert.match(readFileSync(join(ROOT, 'src/ui/enhancedInventory.js'), 'utf8'),
+    /if \(line\.image\) return requestIcon\(line\.image\.archive, line\.image\.record, \{ scale, dye: line\.image\.dye, onReady \}\);/);
 });
