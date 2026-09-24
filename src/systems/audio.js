@@ -478,7 +478,16 @@ export class AudioEngine {
    *  playbackRate), because every 3D combat voice DFU plays is
    *  pitch-lifted - EnemySounds.cs:172-175 raises the SOURCE's pitch
    *  around PlayOneShot and restores it after. */
-  play3d(index, pos, volume = 1, { refDistance = 1, maxDistance = 500, distanceModel = 'inverse', pitch = 1 } = {}) {
+  /** DISC17-B (2026-09-24, Mac: "Sometimes thunder ends abruptly"): `far` - A SOUND FROM FAR OFF KEEPS ITS PLACE
+   *  FROM THE EAR. A distant storm's thunder is kilometres away, and the hosts play it from a stand-in
+   *  THUNDER_SOURCE_M from the ear at that one-shot's reference distance (systems/distantStorms.js), so it comes from
+   *  the storm's side at the level its distance gave it. A panner stays where it was put and the ear does not: every
+   *  metre walked under a rolling clip was a metre off a 13 m reference, and a floating-origin recentre
+   *  (streamingWorld.js, 819.2 m at every map pixel crossed) moved the ear over 800 m from the stand-in in one
+   *  frame - the thunder fell 35 dB mid-roll, which is the abrupt end. A `far` shot keeps its offset from the listener
+   *  (setListener moves it) until its clip has run out, so its distance and its bearing hold, as they do for a
+   *  sound kilometres off. */
+  play3d(index, pos, volume = 1, { refDistance = 1, maxDistance = 500, distanceModel = 'inverse', pitch = 1, far = false } = {}) {
     if (!this._ready()) return undefined;
     const buf = this._buffer(index);
     if (!buf) return undefined;
@@ -490,6 +499,10 @@ export class AudioEngine {
     gain.gain.value = volume;
     src.connect(gain).connect(pan).connect(this._out());
     src.start();
+    if (far) {   // DISC17-B: its offset from the ear, held until the clip has run out
+      const L = this._listener;
+      (this._far ??= []).push({ pan, off: [pos[0] - L.x, pos[1] - L.y, pos[2] - L.z], until: this.ctx.currentTime + buf.duration / pitch });
+    }
     return buf.duration;   // A3: the ambient channel's busy clock
   }
 
@@ -543,6 +556,18 @@ export class AudioEngine {
     } else {
       l.setPosition(x, y, z);                    // Safari fallback
       l.setOrientation(fx, fy, fz, 0, 1, 0);
+    }
+    // DISC17-B: the far one-shots move with the ear, and a clip that has run out is let go
+    const far = this._far;
+    if (far?.length) {
+      const now = this.ctx.currentTime;
+      let n = 0;
+      for (const f of far) {
+        if (f.until <= now) continue;
+        placeAudio(f.pan, [pos[0] + f.off[0], pos[1] + f.off[1], pos[2] + f.off[2]]);
+        far[n++] = f;
+      }
+      far.length = n;
     }
   }
 

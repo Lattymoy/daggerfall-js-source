@@ -412,6 +412,7 @@ lifetimes that drifts the climate's weather fails the build.
   wind's approach.
 - **D - Storms at a distance**: the distant flash and the late thunder.
 - **E - The weather layer on the map**, and the forecast in the hover.
+  REMOVED by DISC17-C (2026-09-24), below.
 - **F - The records, the audit.**
 
 **Lane and doors.** The enhanced skin, Enhanced Environments and the
@@ -572,7 +573,9 @@ cells are cut in their own order on the worn word's row, as before.
   half a minute for a storm 10 km off. Its volume falls with distance
   (and with the storm's strength): a crack inside 4 km, the roll beyond,
   nothing past 25 km. It is played THUNDER_SOURCE_M out toward the
-  storm, so it comes from its side.
+  storm, so it comes from its side. DISC17-B (2026-09-24): it is held
+  there from the ear until its clip ends (`play3d`'s `far`), so a walk
+  or a recentre under a rolling clip no longer cuts it off.
 - **Whose storm**: under a thunderstorm's heart, DFU's LightningPlayer
   and the ambience own the lightning and thunder, as before. Only the
   others strike here. A jump (a load, a landing) plays no backlog and
@@ -580,7 +583,12 @@ cells are cut in their own order on the worn word's row, as before.
   changed; slice F made every landing count). Enhanced only, never under a
   `?weather` pin, and nothing off the map's lane.
 
-### Slice E shipped - the weather on the map (2026-09-22)
+### Slice E shipped - the weather on the map (2026-09-22) - REMOVED by DISC17-C
+
+**Removed 2026-09-24** (Mac: "Remove the enhanced map weather
+enhancements entirely"): `ui/weatherLayer.js`, its tests and its mutants
+are gone, and the travel map is the bay alone again. What follows is the
+record of what shipped. See DISC17 at the end of this document.
 
 The enhanced travel map shows the picture Mac drew: sunny here, cloud
 there, a rainstorm over the hills. The law is `ui/weatherLayer.js`, and
@@ -727,6 +735,10 @@ lightly toward the pen. A legend on the sheet.
 
 ### Slice G shipped - clarity (2026-09-23)
 
+(The map's part of this slice - the glyphs, the legend, the sheet - was
+removed by DISC17-C, 2026-09-24. The fronts, the cells and the sky's clip
+stand.)
+
 Pinned by `test/weather3g_fronts.test.js` (`tools/mutants/weather3g.json`
 22/22 dead). The pins slices A-F held on the old shapes were re-aimed at
 the new law, and their mutant records moved with it: 3a 14/14, 3b 17/17,
@@ -781,6 +793,10 @@ the margin past the map's edge. A legend in the sheet's top-right corner
 on the four that would otherwise read as the same pale.
 
 ### Slice H shipped - shapes, and the map drawn, not blotted (2026-09-23)
+
+(The map's part of this slice - the field, the regions, the hand - was
+removed by DISC17-C, 2026-09-24. The shapes and every reader of them in
+the world stand.)
 
 Mac, on slice G's render: "I just feel like they look too much like blobs
 and blots". Then, choosing the direction: "make them irregular", and on
@@ -862,6 +878,12 @@ keeps only a pattern it made.
   9-30 ms.
 
 ### Slice I shipped - the strength of what falls, and a lighter hand (2026-09-23)
+
+(The map's part of this slice - the steps' hatch, the painter, the
+hover, the key - was removed by DISC17-C, 2026-09-24. The law - the
+intensity tapering across the core, and the player wearing what falls
+after the ground law - stands, and `test/weather3i_strength.test.js`
+keeps its two tests.)
 
 Mac, on slice H's render: "Let's make this more subtle and push the
 detail further". The detail chosen: strength inside a region, so light
@@ -1005,7 +1027,10 @@ LightningPlayer) and a distant storm lit its own cloud (slice D). No channel was
 - Pinned by `test/bolt_lightning.test.js` (9 tests: the laws on the strike, the flicker, the channel, the column,
   the store, the storm overhead, the distant strikes, and both shaders run in JS).
 
-## MAP-LAG - the map's weather, kept (2026-09-23)
+## MAP-LAG - the map's weather, kept (2026-09-23) - REMOVED by DISC17-C
+
+(Removed 2026-09-24 with the weather it kept: the raster, the job, the
+resting forecast and the sheet contract's `paintUnder` are gone.)
 
 Mac: "the enhanced map now is very laggy after we introduced the weather
 changes". The travel map's regions were inked on every pan and zoom
@@ -1016,3 +1041,31 @@ hover reads the forecast only when the pointer rests. The last refresh's
 read is kept for the next open. AUDIT WEATHER3 R2a's law stands (a pan
 reads no weather), and a pan now draws none either. Measures and pins:
 `01-Overview/Field-Bugs-2026-09-23.md`, MAP-LAG.
+
+## DISC17 - the map's weather removed, the far thunder held (2026-09-24)
+
+Mac, in one message: "Remove the enhanced map weather enhancements
+entirely" and "Sometimes thunder ends abruptly".
+
+- **DISC17-C - the travel map is the bay again.** `ui/weatherLayer.js` is
+  deleted, and `ui/heldMap.js` is its pre-WEATHER3e self plus the
+  unrelated MAP-FIELD8 and MAP-FIT1 changes: no regions, glyphs, legend,
+  hover weather or forecast, and none of MAP-LAG's machinery. `world.js`
+  hands the map no `weather`, and its climate lookup is the plain
+  `maps.getClimateIndex` again. The sheet contract loses `paintUnder`.
+  The sim keeps every law the map read (`forecastAt`, `mapGround`,
+  `wornAmong`); only the map stopped reading them. Retired: the
+  `weather3e` and `maplag` test files and mutant lists, and the map's
+  tests and records in 3f, 3g, 3h and 3i.
+- **DISC17-B - the distant thunder rides with the ear.** Slice D plays a
+  storm's thunder from a stand-in 13 m from the ear at a 13 m reference
+  distance. A panner stays where it was put, and the ear did not. Every
+  metre walked under a rolling clip was a metre off that reference, and
+  at every map pixel crossed the floating origin's 819.2 m recentre moved
+  the ear over 800 m from the stand-in in one frame. The clip fell 35 dB
+  mid-roll. `play3d(..., { far: true })` keeps the shot's offset from the
+  listener (`setListener` moves it) until its clip has run out. The storm
+  overhead is DFU's ambience at a 3000 m reference, and neither a walk
+  nor a recentre changes its level, so it is left as DFU has it.
+- Pinned by `test/disc17.test.js`; mutants `tools/mutants/disc17.json`.
+  `01-Overview/Field-Bugs-2026-09-23.md`, DISC17.

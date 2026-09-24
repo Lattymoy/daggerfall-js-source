@@ -1201,7 +1201,7 @@ classic null against a live switch, the row, the fourth painting's numbers again
 `test/heldmap.test.js` U61 re-aimed to the gate. `tools/mutants/maptoggle.json`: 9 records, 9 dead. Not
 verified in a browser beyond the probe.
 
-## MAP-LAG - what lies under the ink is kept too (2026-09-23, Mac)
+## MAP-LAG - what lies under the ink is kept too (2026-09-23, Mac) - REMOVED by DISC17-C
 
 A sheet may have something under its ink that must not be inked with it.
 The world's weather regions were 85 ms and more a frame, because they
@@ -1214,3 +1214,14 @@ weather's own raster (`_drawWeatherUnder`): moved by a pan, stretched by
 a zoom, inked again crisp when the view has held still, and inked as a
 job a slice a frame. With no kept layer the sheet inks the regions as it
 always did. `01-Overview/Field-Bugs-2026-09-23.md`, MAP-LAG.
+
+## DISC17-C - the weather off the map (2026-09-24, Mac)
+
+"Remove the enhanced map weather enhancements entirely." The world sheet
+draws the bay alone again: WEATHER3e's regions, glyphs and legend, the
+hover's weather and forecast, and MAP-LAG's raster, job and resting
+forecast are gone, with `ui/weatherLayer.js`. The sheet contract loses
+`paintUnder` (the town's and the automap's were empty), and the hover is
+written inline in the pointer's move as EM1/EM3 had it. `heldMap.js` is
+its pre-weather self plus MAP-FIELD8 and MAP-FIT1. Pinned by
+`test/disc17.test.js`. `01-Overview/Field-Bugs-2026-09-23.md`, DISC17.

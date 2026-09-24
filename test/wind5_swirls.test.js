@@ -2,7 +2,7 @@
 // of wind streaks and change their design to be more swirly like the
 // image" - a sheet of calligraphic wind flourishes: a flowing stroke that
 // ends in a curl).
-//   - fewer: 240 at a gale (WIND4's 650), 19 in a calm;
+//   - fewer: 240 at a gale (WIND4's 650), 19 in a calm (DISC17-A: 120 and 10);
 //   - a ribbon of WISP_SEGMENTS segments along a path - an arched or S
 //     stroke down the wind, then a spiral tightening as it turns - each
 //     leaning its curl's plane its own way and curling up or down;
@@ -43,7 +43,7 @@ function corner(x, y, { seed = 0.37, time = 12.3, wind = [3, 4], eye = [0, 0, 0]
 }
 const sub = (a, b) => a.map((v, i) => v - b[i]), dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 
-test('WIND5: fewer - 240 at a gale, 19 in a calm; the sand untouched', () => {
+test('WIND5: fewer - 240 at a gale, 19 in a calm (DISC17-A: 120, 10); the sand untouched', () => {
   assert.ok(WISP_MAX < 650, 'fewer than WIND4\'s gale');
   assert.equal(wispCount(1), WISP_MAX); assert.equal(wispCount(0), Math.round(WISP_MAX * WISP_FLOOR));
   // the ramp: the floor to a breeze of 0.05, all of them from 0.9, a smoothstep between - half the rest at its middle

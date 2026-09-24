@@ -43,12 +43,12 @@ import { LAB_GRASS_FS, LAB_GRASS_VS, GRASS2_VS_EDITS } from '../src/render/labGr
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
-test('WIND4 (1) the wisps thinned, executed - and WIND5 thinned them again (240, Mac: "reduce the amount of wind streaks"): a gale in the 90 m box, a calm a couple of dozen', () => {
-  assert.equal(WISP_MAX, 240, 'WIND4 took 2400 to 650; WIND5 to 240, each wisp now a flourish');
+test('WIND4 (1) the wisps thinned, executed - and WIND5 thinned them again (240, Mac: "reduce the amount of wind streaks"), and DISC17-A again (120, "reduce the amount of wind wisps"): a gale in the 90 m box, a calm ten', () => {
+  assert.equal(WISP_MAX, 120, 'WIND4 took 2400 to 650; WIND5 to 240, each wisp now a flourish; DISC17-A to 120');
   assert.equal(WISP_FLOOR, 0.08);
   assert.equal(WISP_BOX, 90, 'the box is unchanged - this is density, not reach');
-  assert.equal(wispCount(1), 240, 'a gale');
-  assert.equal(wispCount(0), 19, 'a dead calm still shows the direction');
+  assert.equal(wispCount(1), 120, 'a gale');
+  assert.equal(wispCount(0), 10, 'a dead calm still shows the direction');
   // the shape of the curve is untouched: floor, smoothstep, clamped ends
   assert.equal(wispCount(2), WISP_MAX); assert.equal(wispCount(-1), wispCount(0));
   assert.ok(wispCount(0.35) > wispCount(0) && wispCount(0.35) < WISP_MAX);

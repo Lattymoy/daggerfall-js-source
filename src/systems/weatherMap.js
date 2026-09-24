@@ -715,8 +715,9 @@ export const insideClip = (s, x, z) => !s.clip || Math.hypot(s.clip[0] - x, s.cl
  * 'thunder' where the word is 'snow'). `ground(word, x, z)` (optional) is
  * the ground law a word goes through before priority (WEATHER2a: rain
  * over snow ground is snow). One resolution for every reader: `weatherAt`
- * below, the travel map's field, and the sim's sample, which finds its
- * systems once a minute and resolves every frame.
+ * below and the sim's sample, which finds its systems once a minute and
+ * resolves every frame (the travel map's field was a third, until
+ * DISC17-C took the weather off the map).
  */
 export function wornAmong(systems, x, z, ground = null) {
   let best = null;

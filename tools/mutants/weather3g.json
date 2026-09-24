@@ -27,20 +27,8 @@
   "old": "    if (k.z > 0.0) w *= 1.0 - smoothstep(k.z - k.w, k.z, dk);   // WEATHER3g: only inside its front\n", "new": "", "tests": ["test/weather3g_fronts.test.js"]},
  {"name": "WEATHER3g-pack-no-clip", "file": "src/render/volumetricClouds.js",
   "old": "    if (c.clip) { out.k[o] = c.clip[0];", "new": "    if (false) { out.k[o] = c.clip[0];", "tests": ["test/weather3g_fronts.test.js"]},
- {"name": "WEATHER3g-marks-drop-clip", "file": "src/ui/weatherLayer.js",
-  "old": "    const clip = s.clip ? [...mapOfField(s.clip[0], s.clip[1]), s.clip[2] / TERRAIN_SIZE, s.clip[3] ?? null] : null;", "new": "    const clip = null;", "tests": ["test/weather3g_fronts.test.js"]},
  {"name": "WEATHER3g-field-unclipped", "file": "src/systems/weatherMap.js",
   "old": " || !insideClip(s, x, z)) continue;   // beyond", "new": ") continue;   // beyond", "tests": ["test/weather3g_fronts.test.js"]},
  {"name": "WEATHER3g-cells-hard-rim", "file": "src/render/volumetricClouds.js",
-  "old": "float w = 1.0 - smoothstep(c.z - c.w, c.z, dc);", "new": "float w = 1.0 - smoothstep(c.z - 0.001, c.z, dc);", "tests": ["test/weather2c_cloudcells.test.js"]},
- {"name": "WEATHER3g-glyph-on-the-margin", "file": "src/ui/weatherLayer.js",
-  "old": "    if (bounds && !(m.x >= 0 && m.y >= 0 && m.x < bounds[0] && m.y < bounds[1])) continue;\n", "new": "", "tests": ["test/weather3g_fronts.test.js"]},
- {"name": "WEATHER3g-glyph-outside-front", "file": "src/ui/weatherLayer.js",
-  "old": "    if (m.clip && Math.hypot(m.x - m.clip[0], m.y - m.clip[1]) / shapeFactor(m.clip[3], m.x - m.clip[0], m.clip[1] - m.y) >= m.clip[2]) continue;\n", "new": "", "tests": ["test/weather3g_fronts.test.js"]},
- {"name": "WEATHER3g-pen-left-under", "file": "src/ui/heldMap.js",
-  "old": "    ctx.globalCompositeOperation = op ?? 'source-over';\n", "new": "", "tests": ["test/weather3g_fronts.test.js"]},
- {"name": "WEATHER3g-no-legend", "file": "src/ui/heldMap.js",
-  "old": "    paintWeatherLegend(ctx, opts);\n", "new": "", "tests": ["test/weather3g_fronts.test.js"]},
- {"name": "WEATHER3g-legend-short", "file": "src/ui/weatherLayer.js",
-  "old": "export const LEGEND_ROWS = Object.freeze(['thunder', 'rain', 'snow', 'sandstorm', 'fog', 'overcast', 'cloudy', 'sunny']);", "new": "export const LEGEND_ROWS = Object.freeze(['thunder', 'rain', 'snow', 'sandstorm', 'overcast', 'cloudy', 'sunny']);", "tests": ["test/weather3g_fronts.test.js"]}
+  "old": "float w = 1.0 - smoothstep(c.z - c.w, c.z, dc);", "new": "float w = 1.0 - smoothstep(c.z - 0.001, c.z, dc);", "tests": ["test/weather2c_cloudcells.test.js"]}
 ]
