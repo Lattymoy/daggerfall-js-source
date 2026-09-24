@@ -850,7 +850,7 @@ started, both sides are fully healed - health, fatigue, magicka - DUEL_HEAL_HOLD
 at 1 health first), and the opponent's spells on each are stripped. A wolf in the ring still kills: only the duel's
 own blows are floored.
 
-**The wire.** One directed frame, `duel` (world105, `net/wire.js validDuelData`): ask/yes/no, start with the ring's
+**The wire.** One directed frame, `duel` (world107 - world105 on its branch, renumbered past main's world105 and world106 at the merge; `net/wire.js validDuelData`): ask/yes/no, start with the ring's
 centre, cancel, strike, spell, result, end. Routed like a card to the one socket `to` names, from a place room, on its
 own meter (DUEL_HZ_MAX) and its own per-sender funnel onto the destination - a duellist's blows never wait on the casts
 or cards its sender spent there. The relay stamps the sender's VERIFIED ACCOUNT (`sub`, off the identity token) beside
@@ -878,8 +878,8 @@ by a ring and can walk through it.
 **Pins.** `test/duel_session.test.js` (7), `test/duel_wire.test.js` (6), `test/duel_combat.test.js` (7),
 `test/duel_wall.test.js` (6), `test/duel_record.test.js` (7). `tools/mutants/duel.json`: 51, all dead (three survived the
 first run - an exactly lethal blow, a weapon whose skill is not a long blade's, a faded ring under the draw's cap - and
-each found a test that did not look; the tests look now). The relay is world105's (`test/relayversion.test.js`'s row);
-the account service acct8's. Re-aimed: the version pins (world105, acct8), the foreign-pass counts (the wall is the
+each found a test that did not look; the tests look now). The relay is world107's (`test/relayversion.test.js`'s row);
+the account service acct8's. Re-aimed: the version pins (world107, acct8), the foreign-pass counts (the wall is the
 world host's seventh), the moved source pins (the melee ladder, the arrows' targets, the travel map's refusal, the one
 bag of acts, the card arm, the cast funnel), and seven older mutant records whose lines the change reached.
 

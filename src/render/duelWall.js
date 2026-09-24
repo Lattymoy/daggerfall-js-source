@@ -24,6 +24,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no other players. Ledger A (ONLINE).
 import { FOG_FACTOR_GLSL } from './labGrass.js';
+import { buildProgram } from './glProgram.js';
 
 /** Quads around the ring. */
 export const DUEL_WALL_SEGMENTS = 96;
@@ -96,14 +97,6 @@ void main() {
   o = vec4(uColor * light * uAlpha * fogFactorAt(vWorld), 1.0);
 }`;
 
-function compileShader(gl, type, src) {
-  const sh = gl.createShader(type);
-  gl.shaderSource(sh, src);
-  gl.compileShader(sh);
-  if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh));
-  return sh;
-}
-
 function mat4Multiply(out, a, b) {
   for (let c = 0; c < 4; c++) {
     for (let r = 0; r < 4; r++) {
@@ -130,11 +123,7 @@ const WHITE = new Float32Array([1, 1, 1]);
 export class DuelWallRenderer {
   constructor(gl) {
     this.gl = gl;
-    const prog = gl.createProgram();
-    gl.attachShader(prog, compileShader(gl, gl.VERTEX_SHADER, DUEL_WALL_VS));
-    gl.attachShader(prog, compileShader(gl, gl.FRAGMENT_SHADER, DUEL_WALL_FS));
-    gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+    const prog = buildProgram(gl, DUEL_WALL_VS, DUEL_WALL_FS);   // AUDIT 68 S17: the one compile and link
     this.program = prog;
     this.u = {};
     for (const n of ['uVP', 'uCentre', 'uRadius', 'uBase', 'uHeight', 'uTime', 'uColor', 'uAlpha', 'uBelow', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.u[n] = gl.getUniformLocation(prog, n);

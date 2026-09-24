@@ -77,15 +77,15 @@ test('DUEL1 the cast frame\'s spell law is SHARED, not copied - and the cast fra
   assert.deepEqual(a, b, 'one projection');
 });
 
-test('DUEL1 the parser and the version: `duel` is its own arm (after the hello, under its own door); world105 is the first relay that routes it (mutants: the frame parsed before the hello; an old relay trusted)', () => {
+test('DUEL1 the parser and the version: `duel` is its own arm (after the hello, under its own door); world107 is the first relay that routes it (mutants: the frame parsed before the hello; an old relay trusted)', () => {
   const d = { to: 'peer-0002', s: S, k: 'ask' };
   assert.deepEqual(parseClient(JSON.stringify({ t: 'duel', data: d }), { hasHello: true }), { t: 'duel', data: d });
   assert.deepEqual(parseClient(JSON.stringify({ t: 'duel', data: d })), { error: 'duel before hello' });
   assert.deepEqual(parseClient(JSON.stringify({ t: 'duel', data: { ...d, k: 'x' } }), { hasHello: true }), { error: 'bad duel' });
-  assert.equal(RELAY_VERSION, 'world105');
-  assert.equal(DUEL_RELAY_MIN, 105);
-  assert.equal(relaySupportsDuel('world105'), true);
-  assert.equal(relaySupportsDuel('world104'), false);
+  assert.equal(RELAY_VERSION, 'world107');   // DUEL1 was world105 on its branch; main's world105 (AUDIT 68) and world106 (DISC23-B) landed first
+  assert.equal(DUEL_RELAY_MIN, 107);
+  assert.equal(relaySupportsDuel('world107'), true);
+  assert.equal(relaySupportsDuel('world106'), false, 'main\'s world106 closes the socket on a duel frame');
   assert.equal(relaySupportsDuel(null), false);
   assert.equal(DUEL_IN_HZ_MAX, DUEL_HZ_MAX * 2);
 });

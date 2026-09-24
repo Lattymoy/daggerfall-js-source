@@ -200,8 +200,8 @@
   {
     "name": "DUEL1-link-stamp-lost",
     "file": "src/net/online.js",
-    "old": "          if (d && d.to === this.id) this._deliver('duel', () => this.onDuel?.(m.id, d, subOf(m)));",
-    "new": "          if (d && d.to === this.id) this._deliver('duel', () => this.onDuel?.(m.id, d, null));",
+    "old": "(id, d) => this.onDuel?.(id, d, subOf(m)));",
+    "new": "(id, d) => this.onDuel?.(id, d, null));",
     "tests": [
       "test/duel_wire.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "DUEL1-the-round-s-entry-not-handed-on",
     "file": "src/systems/effects.js",
-    "old": "    if (n > 0 && sinks.hurt) sinks.hurt(n, a);",
-    "new": "    if (n > 0 && sinks.hurt) sinks.hurt(n);",
+    "old": "sinks.hurt(n, { fromPlayer: !a.caster || !!a.caster.isPlayer, bundleDuel: !!a.bundleDuel });",
+    "new": "sinks.hurt(n, { fromPlayer: !a.caster || !!a.caster.isPlayer });",
     "tests": [
       "test/duel_combat.test.js"
     ]

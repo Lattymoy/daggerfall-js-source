@@ -692,7 +692,7 @@ const SOURCE_CITES = [
   ['test/roade_up_seam.test.js', /exterior\.js:\d+\/:(\d+)/,
     EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return; \}/],
   ['bible/01-Overview/Audit-58.md', /`src\/scenes\/exterior\.js:(\d+)` now/, EX, /setDefaultEnchantCtx/],
-  ['bible/6-Systems/Systems-Arc.md', /`exterior\.js:(\d+)`, `world\.js:1459`/, EX, /playerTicker\.advance\(60\);/],
+  ['bible/06-Systems/Systems-Arc.md', /`exterior\.js:(\d+)`, `world\.js:1459`/, EX, /playerTicker\.advance\(60\);/],
   ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:(\d+)-\d+\)/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
   ['bible/10-UI/UI-Arc.md', /exterior\.js:(\d+)\. It is the only window/, EX, /createSpellbookWindow\(\{/],
