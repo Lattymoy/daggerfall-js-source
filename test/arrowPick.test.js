@@ -108,5 +108,7 @@ test('MW-D50: a bow that resolves without its arrow says why on the console, onc
   const src = rd('src/combat/fpArm.js');
   // MW-D51: + the torch's six - both builds' preload and resolve (4), and
   // setTorch's own preload and its one resolve for both rigs (2).
-  assert.equal((src.match(/has: archiveHas\(archives\)/g) || []).length, 13, 'every preload and every resolve - two builds, the tp body, the swap\'s two, the torch\'s six - pass the one directory');
+  // HT-WAIST: + the lantern at the waist's four - the body build's preload
+  // and resolve, setHipLight's preload and its one resolve (the body alone).
+  assert.equal((src.match(/has: archiveHas\(archives\)/g) || []).length, 17, 'every preload and every resolve - two builds, the tp body, the swap\'s two, the torch\'s six, the hip lantern\'s four - pass the one directory');
 });

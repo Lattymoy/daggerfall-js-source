@@ -308,6 +308,11 @@ ForwardDepth/ForwardSpeed x0.2); a zero `TextureScaleFactor` is floored
 at 1 (it would divide the sprite by nothing). Every switch is read every
 frame - "Takes effect at once."
 
+The pane carries ONE key the mod does not ship: HT-WAIST's
+`Handling.LanternsAtWaist`, the port's own, directly under Relaxed
+Lanterns and off by default - so the pane is the 52 shipped keys, the
+port's `Enabled` and that one (HT-WAIST below).
+
 ## Hosts and seams
 
 - `combat/weaponRig.js`: `createHandheldTorches({ audio, say,
@@ -709,3 +714,100 @@ A torch stowed from inside an open inventory kept crackling until the window clo
 its loop in its update, and a host holds the rig's frame under a window. The light in hand has one door now
 (`systems/lightSource.js setLightSource`, every writer through it) and the component listens: a light that stops being
 a torch stops the loop on the change. Record: `01-Overview/Field-Bugs-2026-09-23.md` (DISC7).
+
+## HT-WAIST - THE LANTERN AT THE WAIST (2026-09-24, Mac: "Let the lantern item be able to be hung at the waist instead of having to be held")
+
+Asked how, Mac chose a switch on this pane, off by default; and the lantern must be SEEN at the hip: "Let it be a
+separate animated item on movement with eye of the Beholder sprites also".
+
+**The departure.** `Handling.LanternsAtWaist` is the port's own key on a vendored mod's pane - the first on this
+pane the mod does not ship at all (MODS-ON, HT4, SOC5, HT5, HT7 and 3ARMS each moved a SHIPPED default; ORL1's
+`primarySkillsImpact` is the one earlier port-own key on any vendored pane). It sits directly under the mod's own
+`RelaxedLanterns`, whose idea it takes the rest of the way: Relaxed keeps a lantern lit when both hands are busy;
+this hangs it at the waist. Its words are in the mod's voice and say it is the port's. The vendored
+`modsettings.json` is untouched; HT1's pane pin names the key beside `Enabled` as the only two the port adds (ORL1's
+shape). It is on the Handheld Torches tile (`MOD_CURATED`), because a key the drawer does not draw is a key nobody
+can reach (TORCH-BIND). Online it is the player's own, as the whole mod is (MODS-ONLINE-4 walks it). Ledger A row
+HT-WAIST.
+
+**No new state.** The lit lantern is still `PlayerEntity.LightSource`, burning through `tickPlayerTorch` (a lantern
+survives its own death there) and saved as it always was. "At the waist" is DERIVED -
+`systems/playerTorch.js lanternAtWaist(item)`: the Lantern template, the mod's `Enabled` on, the switch on - and
+everything below asks that one question (the component asks the same off its own settings frame, `atWaist`, so its
+pins drive it through a store). An UNLIT lantern is in the pack, as before; only the lit one hangs.
+
+**The hand law, under the switch** (`systems/handheldTorches.js`). A lantern at the waist is in no hand, so:
+- the stow arm passes it by (`handLaw`'s lantern branch gains `!atWaist(l)`) - a two-hander, a bow, a spell, a
+  climb, a swim, the beast form, and the equip moment (HT6's `applyHandLaw`, the same block) all leave it lit, and
+  no "You can't hold a light source right now" is said;
+- the ignite key with NO hand free reaches the waist and nothing else (`waistPress`): the lit lantern douses, or the
+  pack's lantern lights - forgetting a stowed torch, which the hand law's last arm would otherwise bring back and put
+  the lantern out with. The mod's ladder would take a stowed or remembered torch first and have the law stow it the
+  next frame, a press that visibly did nothing (Relaxed Lanterns has that quirk in the mod, and keeps it). The
+  ignite's closing lines are `igniteTail`, lifted out of `ToggleLightSourceAction` so both presses say them once;
+- the throw's wind-up leaves it lit (the mod's own relaxed-lantern exception, 0x18d9, widened to the waist);
+- the first-person hand never holds it: no lantern frames (`offsetFrame` -1, the hand slides off as for no light),
+  `refreshSprite` sheathes it, `draw()` answers false; and the weapon rig's TORCH-VIS gate does not open for it
+  (`!lanternAtWaist(...)`, the gate opens only where a hand paints).
+Torches and candles are held exactly as before, and with the switch off every line reads as it did. The drop key
+never dropped a lantern and still does not.
+
+**The light, from the hip.** `playerTorchLight` answers `LANTERN_HIP` (left -0.2 - the RIGHT hip, clear of the
+one-handed scabbard Weapon Sheathing hangs at the left - up 1.0, forward 0.1, off the feet in the yaw frame) for a
+lantern at the waist, ahead of BOTH writers of the torch's override (this mod's flip, which puts a HELD lantern low in
+the hand, and Eye Of The Beholder's TorchOffset). A body that draws the lantern somewhere else hands its point in
+(`setPlayerWaistLightOverride` - the EOTB sprite faces its walk, not the yaw) and clears it when it stops. No host
+changes: every host composes `playerTorchLight(...)` already.
+
+**The swing** (`systems/lanternSwing.js`, new). Nobody has one to port, so it is the port's own and stated once: two
+damped pendulums (fore-aft and side, about a second's period, a 0.25 m hang) on the hip's own acceleration - the hip
+follows the motor's velocity with a short lag (Daggerfall's motor reaches walking speed in a frame, which would kick
+the lantern to its stop every step), a share of that drives the lantern, a stride sways it (once a stride sideways,
+twice fore-aft, in proportion to the speed up to a walk), a turn on the spot pulls it outward, it settles plumb at
+rest and never passes 35 degrees. Fixed sub-steps, so 30 and 144 frames a second swing alike; allocation-free.
+
+**The Morrowind body** (`combat/fpArm.js`, `formats/mwFirstPerson.js`). A carriable LIGH record named lantern
+(`pickLanternRecord`, the torch picker's own shape; no retail id is assumed) bound as a rigid part - slot
+`hiplight` - at `Bip01 Pelvis` on the THIRD-PERSON rig alone (the first-person arms have no hip), resolved against
+the skeleton with its bone addons joined. It HANGS rather than rides: `hangAffine` places it by its top-centre
+(`hangAnchor`, measured once) at a hook fixed to the pelvis (`HIP_LANTERN_HOOK` = (14, 5, 9.5) off the pelvis in the
+actor's own Z-up, +Y-forward axes, measured on Weapon Sheathing's vendored copy of the retail Bip01 chain: the right
+hip at the scabbard's belt height, clear of the thigh), plumb whatever the pelvis does, times the swing matrix the
+rig steps each frame off the motor's bag, the heading's turn and the walk clip's phase. Its flame, if the record has
+one, hangs with it (`effectPlacement`). Hidden ONLY when not lit - never by the carried-left rule, since it is in no
+hand; the portrait shows it lit. `setHipLight` is `setTorch`'s shape with its audit's fixes: the fast path one
+compare, the slow path binding once on the body, a failed bind remembered (`hipLightTried`), the light in
+`lastBuildOpts` for the equip-follow rebuild, a light arriving mid-build queued, unload resetting it. The mesh is the
+body's one mesh, so it needs no owner of its own (`releaseThirdMesh` frees it with the rest). Morrowind-Rules.md
+HT-WAIST.
+
+**Eye Of The Beholder's sprite** (`player/eotbBody.js`). A second billboard, apart from the IL's machine: the Lantern
+template's own world texture (TEXTURE.200 record 10, read off the template, loaded from the player's ARENA2 - never
+vendored; the mod's hand-and-lantern frames are the author's art of a hand), hung by its top from the sprite's right
+hip in the sprite's facing frame, swung by the same law off the sprite's walk (the Move tables' speed, the facing's
+turn, the frame clock's stride phase), drawn as a tilt of the quad in the view plane and a foreshortening along the
+line of sight. Third person, on foot, alive, in your own form only. Its batch is created when it is first drawn and
+destroyed when it stops (EVERY ALLOCATION HAS AN OWNER); its picture sits in the renderer's cache under its own key
+(`htwaist-lantern`), as every sprite of this body does. mwView's Morrowind lane stands it down each frame, so its
+light point never outlives the lane. Eye-Of-The-Beholder.md HT-WAIST.
+
+**Online: NOT carried, and not faked.** Other players are drawn with the Morrowind body (MWBODY1), but they hold NO
+light today - a peer's look and pose carry none (`net/wire.js validPose`, `validLookItem`; Morrowind-Rules.md MW-D51
+"Recorded, not faked"; `test/mwtorch.test.js` pins that `peerBodies.js` passes no torch). A lantern at a peer's hip
+would be the first held light a peer shows, so it waits for that slice (a pose bit and a RELAY_VERSION bump) rather
+than arriving alone. The wire is untouched.
+
+**Decisions taken, for Mac's eye.** The RIGHT hip, not mirrored by Handedness (the left is the scabbard's). The beast
+form keeps the lantern lit (it takes both hands, and a lantern at the waist needs none - Relaxed does the same) but
+the sprite does not draw it on the beast or the rider. Switching the switch on while a lantern is stowed waits for a
+hand or the key, as Relaxed does. The off-hand quickslot cell and the inventory's Light row still read the light you
+carry. The flip's held-lantern offset measured from the feet (IL `up 0` - DFU's PlayerTorch frame starts at the
+capsule centre) is unchanged and recorded here for a later look.
+
+**Not verified in a browser** - there is no Morrowind data or ARENA2 in this container. The hook, the sprite's hip
+and the swing's constants are port-own tuning, set against the vendored skeleton and the law's own numbers.
+
+Pins: `test/htwaist_setting.test.js`, `test/htwaist_handlaw.test.js`, `test/htwaist_swing.test.js`,
+`test/htwaist_mwbody.test.js`, `test/htwaist_eotb.test.js` (34 tests, every one failing on the base); HT1's pane pin
+names the key. `tools/mutants/htwaist.json`: 50 records, 50 dead (and `torchvis.json`'s two gate records re-aimed by
+content at the gate's new last line).

@@ -58,6 +58,7 @@ import {
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
   gmstValue, GMST_SNEAK_DELTA, sneakOffset,
   lightRecords, pickTorchRecord, blendMaskBones, overlayTracks, overlaySampler, weaponFlags, MW_TWO_HANDED,   // MW-D51: the held torch
+  pickLanternRecord, hangAnchor, hookOnBone, hangAffine,   // HT-WAIST: the lantern at the waist, and the part that hangs
   tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, resolveBodyParts, ARM_PARTS, raceRecords, armorRecords, clothingRecords,
   facePools, meshBounds,
   movementAnimState, composeMovementGroup, MOVEMENT_FALLBACK_SPEED, MOVEMENT_SPEED_CAP, turnAnimSpeed,
@@ -84,6 +85,7 @@ import { injectSkeletonNodes } from '../formats/mwSkin.js';   // WS1: the dry in
 // the hands hold, and where its corners land on the composite
 import { deltaTracks, heldSampler, paperPiece, refreshPaperSource, projectPaperCorners, normaliseHeldPose, HELD_POSE_DEFAULT } from './heldPose.js';
 import { farthestVertexIndex, posedVertex, viewOffsetOf, worldPointOf } from './rigMuzzle.js';   // AUDIT FIELD-GUN-MW F2: where the barrel ends, off the posed piece
+import { createLanternSwing, stepLanternSwing, lanternSwingMatrix } from '../systems/lanternSwing.js';   // HT-WAIST: the one swing law both bodies feed
 
 // MW-LOAD (2026-09-08, Mac: "improve the load time when Morrowind assets
 // are enabled"): THE ARCHIVE IS OPENED, NOT READ, AND THIS FILE IS ITS
@@ -1147,6 +1149,70 @@ export function resolveTorchPart({ torch = false, allLights, find, skeletonBytes
   return { parts, torchInfo, notes };
 }
 
+/**
+ * HT-WAIST (2026-09-24, Mac: "Let the lantern item be able to be hung at the waist instead of having to be held"
+ * ... "Let it be a separate animated item on movement"): THE LANTERN AT THE WAIST, on the third-person body.
+ *
+ * Handheld Torches' port-own `Handling.LanternsAtWaist` hangs a lit lantern at the waist instead of the hand
+ * (systems/playerTorch.js lanternAtWaist is the one question). Morrowind has no lantern on a belt either - its
+ * carried lights ride Slot_CarriedLeft at the Shield Bone, which is MW-D51's torch - so every number here is the
+ * port's own and says so:
+ *
+ *   the RECORD - pickLanternRecord, pickTorchRecord's own shape for a carriable light named lantern;
+ *   the BONE   - `Bip01 Pelvis`, which the retail third-person skeleton carries (Weapon Sheathing's vendored
+ *                xbase_anim_sh.nif copies its Bip01 chain: the pelvis at (0, 1.8, 76.4) in the actor's Z-up,
+ *                +Y-forward, -X-left units - measured with this port's own buildSkeleton / poseSkeleton);
+ *   the HOOK   - HIP_LANTERN_HOOK, off the pelvis in those same axes: the RIGHT hip, clear of the one-handed
+ *                scabbard that hangs at the left (Bip01 LongBladeOneHand, (-10.8, 7.8, 86.5)) and of the thigh
+ *                (Bip01 R Thigh at x 6.6), a little forward, at belt height (the scabbard's own 86.5);
+ *   the HANG   - plumb from the hook, not the pelvis's rotation (mwFirstPerson.js hangAffine), times the swing
+ *                law (systems/lanternSwing.js) stepped off the body's motion every frame it is drawn;
+ *   the RIG    - the third-person body ALONE: the first-person arms have no hip to hang it on, and a lantern at
+ *                the waist is exactly the light the arm does NOT hold.
+ *
+ * It is never hidden by the carried-left rule (a lantern at the waist is in no hand, so a two-hander, a bow or a
+ * spell does not put it away) - only by not being lit.
+ */
+export const HIP_LIGHT_BONE = 'Bip01 Pelvis';
+export const HIP_LIGHT_SLOT = 'hiplight';
+export const HIP_LANTERN_HOOK = Object.freeze([14, 5, 9.5]);
+/** The hang's rest attitude - and the portrait's: the figure stands still, so its lantern hangs straight down
+ *  (the world frame writes the swing back into the hang before it next poses; the picture stays deterministic). */
+const PLUMB = Object.freeze([1, 0, 0, 0, 1, 0, 0, 0, 1]);
+export function hipLanternPartPaths({ hipLight = false, allLights, has = null }) {
+  if (!hipLight) return [];
+  const rec = pickLanternRecord(allLights, { has });
+  return rec ? [`meshes/${rec.model}`] : [];
+}
+export function resolveHipLanternPart({ hipLight = false, allLights, find, skeletonBytes, has = null, hasBone = null }) {
+  const notes = [];
+  const parts = [];
+  let hipInfo = null;
+  if (!hipLight) return { parts, hipInfo, notes };
+  const rec = pickLanternRecord(allLights, { has });
+  if (!rec) { notes.push('hiplight: your archives carry no carriable Morrowind lantern (a LIGH record named lantern, with its mesh)'); return { parts, hipInfo, notes }; }
+  const path = `meshes/${rec.model}`;
+  const arc = find(path);
+  if (!arc) { notes.push(`hiplight: ${path} (${rec.id}) is not in your archives`); return { parts, hipInfo, notes }; }
+  const carries = hasBone ? hasBone(HIP_LIGHT_BONE) : skeletonHasBone(skeletonBytes, HIP_LIGHT_BONE);
+  if (!carries) { notes.push(`hiplight: this skeleton has no "${HIP_LIGHT_BONE}" - nowhere to hang it`); return { parts, hipInfo, notes }; }
+  // The hang is the part's own: the swing writes `rot` each frame, the bind fills the hook and the anchor.
+  const hang = { rot: Float32Array.from(PLUMB), hookLocal: null, anchor: null };
+  parts.push({ slot: HIP_LIGHT_SLOT, bones: [HIP_LIGHT_BONE], bytes: arc.get(path).slice(), hang });
+  hipInfo = { id: rec.id, name: rec.name, model: rec.model, bone: HIP_LIGHT_BONE, fire: !!rec.fire };
+  return { parts, hipInfo, notes };
+}
+/** HT-WAIST: a bound hip lantern's hook and anchor, measured once on the assembly it hangs from. Answers the hang
+ *  (null when none is bound). */
+export function hangHipLight(arm) {
+  const piece = arm?.pieces?.find((p) => p.slot === HIP_LIGHT_SLOT && p.hang);
+  if (!piece) return null;
+  const hang = piece.hang;
+  hang.hookLocal = hookOnBone(arm, HIP_LIGHT_BONE, HIP_LANTERN_HOOK) ?? [...HIP_LANTERN_HOOK];
+  hangAnchor(arm.pieces, hang);
+  return hang;
+}
+
 /** MW-D50: the archives' DIRECTORY - "is this path in any attached
  *  .bsa" - the one question pickWeaponRecord asks of them. Not
  *  findLoaded: that one throws for a path known but not yet read
@@ -1308,6 +1374,7 @@ async function buildTpBody({
   race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find, gen = null,
   torch = false, allLights = [],   // MW-D51
   sheathing = true, ammoCount = null,   // WS1: the holster, and the quiver's count (null: a full quiver when there is ammunition)
+  hipLight = false,   // HT-WAIST: a lit lantern at the waist
 }) {
   const exists = (p) => archives.some((a) => a.has(p));
   const settingsSkeleton = tpSkeletonPath({ female, beast });
@@ -1341,6 +1408,7 @@ async function buildTpBody({
       ...[...skinRows, ...worn.adds].map((row) => `meshes/${row.model}`),
       ...weaponPartPaths({ weapon, hasAmmo, allWeapons, has: archiveHas(archives) }),   // MW-D50
       ...torchPartPaths({ torch, allLights, has: archiveHas(archives) }),   // MW-D51
+      ...hipLanternPartPaths({ hipLight, allLights, has: archiveHas(archives) }),   // HT-WAIST
     ]);
     const partBytes = [];
     for (const row of [...skinRows, ...worn.adds]) {
@@ -1380,11 +1448,16 @@ async function buildTpBody({
       })
       : { parts: [], info: null, notes: [] };
     partBytes.push(...resolvedHolster.parts);
+    // HT-WAIST: the lantern at the waist, at THIS rig's pelvis - the third-person body alone - asked of the
+    // skeleton AS IT WILL BE (the addons joined), as the holster is.
+    const resolvedHip = resolveHipLanternPart({ hipLight, allLights, find, skeletonBytes, has: archiveHas(archives), hasBone: boneProbe(skeletonBytes, boneSources) });
+    partBytes.push(...resolvedHip.parts);
 
     const arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes, boneSources });
     if (!arm.ok) {
       return { ok: false, stage: arm.stage || 'assembly', error: arm.error, notes: [...missing, ...(arm.notes || [])], rows };
     }
+    hangHipLight(arm);   // HT-WAIST: the hook and the anchor, once, on the assembled skeleton
     // MW-LOAD: covers collectArmTextures' synchronous reads - rule 36's
     // ladder over the names the assembled pieces carry, which are only
     // knowable now that the NIFs are parsed.
@@ -1444,12 +1517,14 @@ async function buildTpBody({
       weapon: resolvedWeapon.weaponInfo,
       arrow: resolvedWeapon.arrowInfo,
       torch: resolvedTorch.torchInfo,   // MW-D51
+      hipLight: resolvedHip.hipInfo,   // HT-WAIST
+      hipLightTried: !!hipLight,   // HT-WAIST: asked at the build - a refusal here is not asked again (MW-TORCH F3's law)
       holster: resolvedHolster.info,   // WS1
       boneSources: boneSourcePaths,   // WS1: the addons this skeleton took
       sheathing,
       leftArm: blendMaskBones(arm.skeleton),   // MW-D51: rule 25's LeftArm mask on THIS skeleton
       rows,
-      notes: [...missing, ...resolvedWeapon.notes, ...resolvedTorch.notes, ...resolvedHolster.notes, ...(arm.notes || [])],
+      notes: [...missing, ...resolvedWeapon.notes, ...resolvedTorch.notes, ...resolvedHip.notes, ...resolvedHolster.notes, ...(arm.notes || [])],
       pieces: armPieceRows(arm.pieces).length,
       // MW-D24: the live weapon swap re-resolves against THIS skeleton's
       // bones, exactly as the arm's swap does against its own.
@@ -1464,6 +1539,7 @@ export async function buildFpArm({
   race, female = false, beast = null, faceIndex = 0, weapon = null, hasAmmo = false, armor = null, deps = null,
   torch = false,   // MW-D51: a lit Daggerfall torch in hand at the build
   sheathing = true, ammoCount = null,   // WS1: the holster on the third-person body, and the quiver's count
+  hipLight = false,   // HT-WAIST: a lit lantern hung at the waist at the build (the third-person body's alone)
 } = {}) {
   const d = deps || await import('../scenes/dataSource.js');
   let settingsSkeleton = null;
@@ -1794,7 +1870,7 @@ export async function buildFpArm({
     // MW-D24: the THIRD-PERSON BODY, while the same archives are open.
     // Its refusal is a note on the card, never the arm's refusal.
     const third = arm.ok
-      ? await buildTpBody({ race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find, gen, torch, allLights, sheathing, ammoCount })   // MW-D51; WS1
+      ? await buildTpBody({ race, female, beast, faceIndex, faceMatch, weapon, hasAmmo, worn, archives, parts, allWeapons, find, gen, torch, allLights, sheathing, ammoCount, hipLight })   // MW-D51; WS1; HT-WAIST
       : null;
     stage('meshes');
     // IG2: the mapped archives are NO LONGER truncated here - they are
@@ -2149,7 +2225,8 @@ function readFollowCamera() {
  * torch it burns on.
  */
 export function effectPlacement(effect, mats, attachmentTransform) {
-  const at = attachmentTransform(mats, effect.attachRef);
+  const bone = attachmentTransform(mats, effect.attachRef);
+  const at = effect.hang ? hangAffine(bone, effect.hang) : bone;   // HT-WAIST: a hanging part's flame hangs with its shapes
   const mirror = {
     a: Float32Array.from([effect.mirrored ? -1 : 1, 0, 0, 0, 1, 0, 0, 0, 1]),
     t: effect.boneOffset ? [effect.boneOffset[0], effect.boneOffset[1], effect.boneOffset[2]] : [0, 0, 0],
@@ -2300,6 +2377,13 @@ export function createFpArm() {
   let torchSource = null;
   let torchGroup = null;
   let torchMissRig = null;       // the rig whose sources carry no "torch" group - asked once, not per frame
+  // HT-WAIST: THE LANTERN AT THE WAIST - `hipLit` is the game's word (weaponRig's setHipLight, per frame, off
+  // systems/playerTorch.js lanternAtWaist), the swing is the one law (systems/lanternSwing.js) stepped off the
+  // body's motion while it hangs there, and `hipYaw` is last frame's heading for the turn's pull.
+  let hipLit = false;
+  let pendingHipLight = null;    // the lantern that arrived mid-build (MAC-S1's law, MW-D51's queue)
+  const hipSwing = createLanternSwing();
+  let hipYaw = null;
   // AUDIT MW-TORCH F4: THE OVERLAY ALLOCATES ONCE PER CHANGE, NOT PER
   // FRAME. update()'s contract is "no allocation after the first pack";
   // the merged track map is rebuilt only when the base tracks, the torch
@@ -2732,6 +2816,32 @@ export function createFpArm() {
     if (!r || !r.torch) return false;
     return carriedLeftVisible(animWeaponType(built.mwType, sheathed, spellReady));
   }
+  /** HT-WAIST: the lantern at the waist shows while it is lit and bound on the body - and NOT by the carried-left
+   *  rule: it is in no hand, so no two-handed operation puts it away. */
+  function hipVisible() {
+    return hipLit && !!(thirdBuilt && thirdBuilt.ok && thirdBuilt.hipLight);
+  }
+  /** HT-WAIST: one frame of the swing, off the body's motion - the motor's bag the movement slot already reads
+   *  (`cam.move`: the input axes and the applied speed), the heading's turn, and the walk clip's phase while one
+   *  plays - written into the hang's attitude for the pose that follows. At rest it settles plumb. */
+  function stepHipSwing(cam, dt) {
+    const hang = thirdBuilt && thirdBuilt.hipHang;
+    if (!hang) return;
+    const mv = (cam && cam.move) || null;
+    const f = mv ? (mv.forward || 0) : 0, st = mv ? (mv.strafe || 0) : 0;
+    const len = Math.hypot(f, st);
+    const speed = len > 0 && mv ? (mv.speed || 0) : 0;
+    const yaw = cam ? (cam.yaw || 0) : 0;
+    const yawRate = hipYaw != null && dt > 0 ? wrapAngle(yaw - hipYaw) / dt : 0;
+    hipYaw = yaw;
+    stepLanternSwing(hipSwing, dt, {
+      forward: len > 0 ? speed * f / len : 0,
+      side: len > 0 ? speed * st / len : 0,
+      yawRate,
+      stride: movementState && speed > 0 ? clipCompletion(movementState) % 1 : null,
+    });
+    lanternSwingMatrix(hipSwing, hang.rot);
+  }
   /** MW-D51: the "torch" slot's refresh, the reference's own lines
    *  (character.cpp, update(): a Light in Slot_CarriedLeft and the
    *  carried-left visible -> play "torch" at Priority_Torch on
@@ -2744,6 +2854,7 @@ export function createFpArm() {
    *  the weapon. Anything else is always drawn. */
   function effectHidden(eff) {
     if (eff.slot === 'torch') return !torchVisible();
+    if (eff.slot === HIP_LIGHT_SLOT) return !hipVisible();   // HT-WAIST
     if (eff.slot === 'weapon') return !weaponShown;
     return false;
   }
@@ -3158,13 +3269,14 @@ export function createFpArm() {
    */
   function flushPending() {
     if (pendingBuild) {   // AUDIT MW-TORCH F6: a queued build supersedes what was queued for the rig it replaces
-      const o = pendingBuild; pendingBuild = null; pendingWorn = null; pendingWeapon = null; pendingTorch = null;
+      const o = pendingBuild; pendingBuild = null; pendingWorn = null; pendingWeapon = null; pendingTorch = null; pendingHipLight = null;
       api.build(o);
       return;
     }
     if (pendingWorn) { const p = pendingWorn; pendingWorn = null; api.setWorn(p); }
     if (pendingWeapon) { const w = pendingWeapon; pendingWeapon = null; api.setWeapon(w.item, { hasAmmo: w.hasAmmo, ammoCount: w.ammoCount }); }   // AUDIT 68 X7-pendingweapon-drops-ammocount: the quiver's count rides the queue
     if (pendingTorch !== null) { const l = pendingTorch; pendingTorch = null; api.setTorch(l); }   // MW-D51
+    if (pendingHipLight !== null) { const l = pendingHipLight; pendingHipLight = null; api.setHipLight(l); }   // HT-WAIST
   }
 
   const api = {
@@ -3230,6 +3342,10 @@ export function createFpArm() {
         // hand; the torch slot re-picks on the new rig's sources.
         torchLit = !!(opts && opts.torch);
         torchState = null; torchSource = null; torchGroup = null; torchMissRig = null;
+        // HT-WAIST: likewise the lantern at the waist; the new body's hang starts plumb and still.
+        hipLit = !!(opts && opts.hipLight);
+        if (thirdBuilt && thirdBuilt.ok) thirdBuilt.hipHang = thirdBuilt.arm.pieces.find((p) => p.slot === HIP_LIGHT_SLOT)?.hang ?? null;
+        Object.assign(hipSwing, createLanternSwing()); hipYaw = null;
         if (!res.ok) { reason = `${res.stage}: ${res.error}`; built = res; return res; }
         refreshWeaponGroup();
         refreshIdle(true);
@@ -3273,6 +3389,7 @@ export function createFpArm() {
       notes.length = 0; aimFactor = 0; sneaking = false;
       idleSource = null; actionSource = null; poseSource = null;
       torchLit = false; torchState = null; torchSource = null; torchGroup = null; torchMissRig = null;   // MW-D51
+      hipLit = false; pendingHipLight = null; Object.assign(hipSwing, createLanternSwing()); hipYaw = null;   // HT-WAIST
       reason = 'unloaded';
       for (const fn of listeners) { try { fn(); } catch { /* see build() */ } }
     },
@@ -3814,6 +3931,68 @@ export function createFpArm() {
       })();
     },
 
+    /**
+     * HT-WAIST: THE LANTERN AT THE WAIST FOLLOWS THE LIGHT, setTorch's shape and its audit's fixes with it. weaponRig
+     * hands over "is a lantern lit at the waist" every frame; the fast path is one boolean compare. A lantern lit
+     * for the first time on a body built without one binds the LIGH record's mesh at the third-person body's
+     * pelvis (the slow path, the archives reopened for the one fetch); put out, the mesh stays and hides. A bind
+     * that failed on this body (no lantern record, its mesh not attached, no pelvis) is remembered on it
+     * (`hipLightTried`, MW-TORCH F3); the light rides the opts an equip-follow rebuild spreads (F5); a light that
+     * arrives mid-build is queued, never dropped (S08). Returns the slow path's promise, true on the fast path,
+     * false when nothing changed or nothing stands.
+     */
+    setHipLight(lit) {
+      const want = !!lit;
+      if (!built || !built.ok) return false;
+      if (busy) { pendingHipLight = want; return false; }
+      if (hipLit === want) return false;
+      hipLit = want;
+      if (lastBuildOpts) lastBuildOpts.hipLight = want;
+      if (want) { Object.assign(hipSwing, createLanternSwing()); hipYaw = null; }   // lit afresh: it hangs still, then swings
+      const tRig = thirdBuilt && thirdBuilt.ok ? thirdBuilt : null;
+      if (!want || !tRig || tRig.hipLight || tRig.hipLightTried || !pickLanternRecord(built.allLights)) {
+        for (const fn of listeners) { try { fn(); } catch { /* see build() */ } }
+        return true;
+      }
+      busy = true;
+      const token = built;
+      return (async () => {
+        try {
+          const d = buildDeps || await import('../scenes/dataSource.js');
+          const archives = await d.loadMorrowindArchives();
+          if (built !== token || thirdBuilt !== tRig) return false;
+          const find = (p) => findLoaded(archives, p);
+          await loadFromArchives(archives, hipLanternPartPaths({ hipLight: true, allLights: token.allLights, has: archiveHas(archives) }));
+          const resolved = resolveHipLanternPart({ hipLight: true, allLights: token.allLights, find, skeletonBytes: tRig.skeletonBytes, has: archiveHas(archives), hasBone: (b) => tRig.arm.skeleton.byName.has(String(b).toLowerCase()) });   // the body's own skeleton, addons and all
+          const gen = token.catalog?.gen ?? null;
+          tRig.arm.pieces = tRig.arm.pieces.filter((p) => p.slot !== HIP_LIGHT_SLOT);
+          tRig.arm.effects = (tRig.arm.effects ?? []).filter((e) => e.slot !== HIP_LIGHT_SLOT);
+          bindPartsInto(tRig.arm, resolved.parts);
+          tRig.hipHang = hangHipLight(tRig.arm);
+          const fresh = [...tRig.arm.pieces.filter((p) => p.slot === HIP_LIGHT_SLOT), ...tRig.arm.effects.filter((e) => e.slot === HIP_LIGHT_SLOT)];
+          await preloadArmTextures(fresh, archives, gen);
+          for (const [file, tex] of collectArmTextures(fresh, archives, gen)) {
+            if (!tRig.textures.has(file)) tRig.textures.set(file, tex);
+          }
+          tRig.hipLight = tRig.hipHang ? resolved.hipInfo : null;
+          tRig.hipLightTried = true;
+          tRig.notes = [...(tRig.notes || []).filter((n) => !/^hiplight[ :]/.test(n)), ...resolved.notes];
+          tRig.pieces = armPieceRows(tRig.arm.pieces).length;
+          releaseThirdMesh(); thirdPacked = null;   // a new piece is a new list: the body repacks
+          return true;
+        } catch (err) {
+          const msg = err?.message ?? String(err);
+          tRig.notes = [...(tRig.notes || []).filter((n) => !/^hiplight: the lantern /.test(n)), `hiplight: the lantern could not be hung - ${msg}`];
+          console.warn(`[mw] hip lantern bind failed - ${msg}`);
+          return false;
+        } finally {
+          busy = false;
+          for (const fn of listeners) { try { fn(); } catch { /* see build() */ } }
+          flushPending();
+        }
+      })();
+    },
+
     readySpell(ready) {
       const want = !!ready;
       if (!built || !built.ok || spellReady === want) return false;
@@ -3992,6 +4171,8 @@ export function createFpArm() {
         const tBase = poseSource ? poseSource.trackMap : t.tracks;
         const tOverlay = torchState && torchSource && t.leftArm && t.leftArm.size;
         if (tOverlay) overlayClock = torchState.time;
+        // HT-WAIST: the lantern at the waist swings on the frame's motion before the body is posed around it.
+        if (hipVisible()) stepHipSwing(cam, dt);
         // PEER-CADENCE: a frame that does not pose keeps last frame's
         // skin, upload and bounds; the clips above advanced all the
         // same, so the next posing frame lands where the clock is.
@@ -4014,6 +4195,7 @@ export function createFpArm() {
           if (r.slot === 'weapon') r.hidden = !weaponShown;
           else if (r.slot === 'arrow') r.hidden = !arrowShown;
           else if (r.slot === 'torch') r.hidden = !torchVisible();   // MW-D51
+          else if (r.slot === HIP_LIGHT_SLOT) r.hidden = !hipVisible();   // HT-WAIST: lit, and never the carried-left rule
           else if (HOLSTER_SLOTS.includes(r.slot)) r.hidden = holsterHidden(r.slot, weaponShown, { arrowShown, tag: r.piece?.tag });   // WS1: the holster while the hand is empty, the scabbard always, the quiver less the round on the string
         }
         return;
@@ -4460,6 +4642,7 @@ export function createFpArm() {
       // one wardrobe are one picture.
       const pose = portraitPose(t);
       if (pose) {
+        if (t.hipHang) t.hipHang.rot.set(PLUMB);   // HT-WAIST: a still portrait, a plumb lantern (stepHipSwing re-swings it)
         poseAssembly(t.arm, {
           tracks: pose.source.trackMap,
           sampleTrack,
@@ -4480,6 +4663,7 @@ export function createFpArm() {
         if (r.slot === 'weapon') r.hidden = false;
         else if (r.slot === 'arrow') r.hidden = !arrowShown;
         else if (r.slot === 'torch') r.hidden = !torchLit;   // MW-D51: a portrait shows what you carry - the lit light, whatever the hand holds
+        else if (r.slot === HIP_LIGHT_SLOT) r.hidden = !hipLit;   // HT-WAIST: and the lantern at the waist, lit
         else if (HOLSTER_SLOTS.includes(r.slot)) r.hidden = holsterHidden(r.slot, true, { arrowShown, tag: r.piece?.tag });   // WS1: the weapon is in the hand here, so the holster is empty; the scabbard and quiver show
       }
       const u = 1 / MW_UNITS_PER_METER;
@@ -4544,6 +4728,11 @@ export function createFpArm() {
         torchShown: torchVisible(),
         torchGroup,
         torchSource: torchSource && torchSource.name,
+        // HT-WAIST: the lantern at the waist, on the card beside the torch.
+        hipLight: thirdBuilt && thirdBuilt.ok ? thirdBuilt.hipLight ?? null : null,
+        hipLit,
+        hipShown: hipVisible(),
+        hipSwing: { fore: hipSwing.fore, side: hipSwing.side },
         loopsLeft: idleState && Number.isFinite(idleState.loopCount) ? idleState.loopCount : null,
         groups: built && built.ok ? built.groups : null,
         sources: built && built.ok ? built.sourcePaths : null,
@@ -4580,6 +4769,9 @@ export function createFpArm() {
     /** The GPU mesh, for the pins that have to see the RANGES - which
      *  piece is hidden, and that the list never changes length. */
     mesh: () => mesh,
+    /** HT-WAIST: the third-person body's GPU mesh, mesh()'s twin - the pins that must see ITS ranges (the lantern
+     *  at the waist is on this body alone). */
+    thirdMesh: () => thirdMesh,
     /** The build result, for pins that must pose the REAL assembly
      *  rather than a re-implementation of it. A probe with its own copy
      *  measures the copy. */

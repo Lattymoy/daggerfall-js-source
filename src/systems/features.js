@@ -159,9 +159,10 @@ export const MOD_CURATED = Object.freeze({
   // KB1: a mod's KEYS are not dials. TORCH-BIND put the three TextKeys here because the hosts read them raw and
   // this was the only door left; they are the registry's actions now (systems/inputActions.js MOD_ACTIONS) and
   // are bound in Controls, under the mod's name, beside every other key - where a clash can be seen. The relaxed
-  // switch rides along: 3ARMS ships it off.
+  // switch rides along: 3ARMS ships it off. HT-WAIST: and the port's own lantern switch - a key the tile does not
+  // draw is a key nobody can reach (TORCH-BIND's lesson).
   'handheld-torches': Object.freeze([
-    'Handling.RelaxedTwoHandedWeapons', 'Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Bob.Length']),
+    'Handling.RelaxedTwoHandedWeapons', 'Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Handling.LanternsAtWaist', 'Bob.Length']),
   // HCC: the persistence switch and the distances a player reaches for (KB1: its two hotkeys are Controls').
   'horse-cart-and-cargo': Object.freeze(['Persistence.PhysicalPersistence',
     'Following.HorseFollowDistance', 'WagonAccess.InteriorAccessDistance', 'Following.AvoidCombat', 'Following.FollowFastTravel', 'Presentation.ShowTrailingWagon']),

@@ -53,7 +53,10 @@ import {
 import { spriteFor, eotbSpriteUrl, spriteCount, spriteSize, spriteOffset, flipRows, worldOrderColors } from './eotbSprite.js';
 import { decodePng } from '../systems/textureReplacement.js';   // EOTB-FLIP: the one PNG decoder the world's other PNG billboards take
 import { getMeleeWeaponAnimTime } from '../characters/weaponStates.js';   // [IL] GetMeleeAnimTickTime reads FormulaHelper's own
-import { setPlayerTorchOffsetOverride } from '../systems/playerTorch.js';   // [IL] TorchOffset writes PlayerTorch's position
+import { setPlayerTorchOffsetOverride, setPlayerWaistLightOverride, LANTERN_TEMPLATE } from '../systems/playerTorch.js';   // [IL] TorchOffset writes PlayerTorch's position; HT-WAIST: and the lantern at the waist lights from where it is drawn
+import { createLanternSwing, stepLanternSwing, lanternSwingDown } from '../systems/lanternSwing.js';   // HT-WAIST: the one swing law, the Morrowind body's too
+import { templateByIndex } from '../systems/itemTemplates.js';   // HT-WAIST: the lantern's own picture, off its template
+import { wrapAngle } from '../world/mat4.js';   // HT-WAIST: the turn's pull, off the one angle wrap
 
 /** PlayerHeightChanger's controllerStandingHeight, the capsule the
  *  billboard's parent sits at the centre of - the fallback when a
@@ -78,6 +81,50 @@ export const MATERIAL = Object.freeze({
  *  billboard plays its step at TWICE `FootstepVolumeScale`, the
  *  first-person one at once. */
 export const FOOTSTEP_VOLUME_SCALE = Object.freeze({ thirdPerson: 2, firstPerson: 1 });
+
+// ═══ HT-WAIST: THE LANTERN AT THE WAIST, ON THE SPRITE ═════════════
+//
+// NOT THE MOD'S. Eye Of The Beholder draws no light of any kind on its billboard - its TorchOffset (IL_47df, in
+// updateOrientation below) only MOVES PlayerTorch's light. Handheld Torches' port-own `Handling.LanternsAtWaist`
+// (Ledger A; systems/playerTorch.js lanternAtWaist) hangs a lit lantern at the waist, and Mac asked for it on this
+// body too: "Let it be a separate animated item on movement with eye of the Beholder sprites also". So a SECOND
+// billboard, apart from the IL's machine and never touching it: Daggerfall's own lantern picture (the Lantern
+// template's world texture, TEXTURE.200 record 10 - loaded from the player's ARENA2 at run time, never
+// vendored; the mod's hand-and-lantern frames are the author's art of a HAND, not of a lantern on a belt) hung
+// by its top from the sprite's right hip, in the sprite's own facing frame, and swung by the one swing law
+// (systems/lanternSwing.js) off the sprite's walk: the speed the Move tables step at, the facing's turn, and the
+// walk cycle's phase off the frame clock. The swing is drawn as a tilt of the quad in the view plane (the
+// billboard shader takes its right and up per call) and a shortening as it swings toward or away from the eye.
+// Third person, on foot, alive and in your own form only: the rider's sprite sits on a horse and the beast's is
+// another body. It lights you from where it hangs (`setPlayerWaistLightOverride`), cleared the moment it stops.
+
+/** The hook, off the sprite: a fraction of the quad's height above its base, the hip's side out along the
+ *  facing's right (scaled with the sprite), and a nudge toward the eye so it never shares the body's depth. */
+export const HIP_LANTERN_SPRITE = Object.freeze({ heightFraction: 0.5, side: 0.2, towardEye: 0.06, height: 0.3, minLength: 0.6 });
+/** The renderer's key for the picture: its own, so no world flat of the same record is ever replaced by it. */
+export const LANTERN_ART_KEY = 'htwaist-lantern';
+
+/** The default art door: the Lantern template's world texture from the player's own ARENA2, palette-mapped and
+ *  its 0xFF mask cut out (ItemHelper's GetInventoryImage), in the world billboards' row order - the shape
+ *  `renderer.uploadTexture` takes. Null when the data is not there; never throws. */
+export async function loadLanternArt() {
+  const t = templateByIndex(LANTERN_TEMPLATE);
+  const archive = t?.worldTextureArchive, record = t?.worldTextureRecord;
+  if (!Number.isInteger(archive) || !Number.isInteger(record)) return null;
+  try {
+    const [{ TextureFile, texName }, { DFPalette }, { changeMask }, { getBytes }] = await Promise.all([
+      import('../formats/textureFile.js'), import('../formats/dfPalette.js'), import('../formats/baseImageFile.js'), import('../scenes/dataSource.js'),
+    ]);
+    const pal = new DFPalette();
+    pal.load(await getBytes('ART_PAL.COL'), 'ART_PAL.COL');
+    const file = new TextureFile();
+    file.load(await getBytes(texName(archive)), texName(archive), pal);
+    return file.getColor32(changeMask(file.getDFBitmap(record, 0)), 0);
+  } catch (e) {
+    console.warn('[eotb] the lantern picture is unavailable; the lantern at the waist lights without being drawn', e);
+    return null;
+  }
+}
 
 /** The mod's own settings, resolved - read at attach and on `reload`,
  *  as `LoadSettings` hands them to `Initialize`, and again whenever the
@@ -149,6 +196,7 @@ export function bodyState(s = {}) {
     floating: !!m.levitating || !!m.swimming,
     onExteriorWater: !!m.onExteriorWater,
     height: Number.isFinite(m.height) && m.height > 0 ? m.height : STANDING_HEIGHT,
+    hipLantern: !!s.hipLantern,   // HT-WAIST: a lit lantern hangs at the waist (weaponRig's eotbState)
   };
 }
 
@@ -167,7 +215,7 @@ export async function decodeSprite(url) {
 
 const norm2 = (v) => { const l = Math.hypot(v[0], v[2]); return l > 0 ? [v[0] / l, 0, v[2] / l] : [0, 0, 0]; };
 
-export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, decode = decodeSprite } = {}) {
+export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, decode = decodeSprite, loadLantern = loadLanternArt } = {}) {
   let renderer = null;
   /** the per-frame state thunk of the rig that owns the body (see attach) */
   let attachedState = null;
@@ -216,6 +264,110 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   let batchSize = null;
   /** The one sprite that decides whether this lane may open at all. See `ready()`. */
   let firstUp = false;
+
+  // ── HT-WAIST: the lantern at the waist (see the head above) ───────
+  const lanternSwing = createLanternSwing();
+  let lanternArt;               // undefined: not asked; a Promise in flight; { w, h } uploaded; null: none
+  let lanternBatch = null;
+  let lanternBatchH = 0;        // the height it was minted at
+  let lanternYaw = null;        // last frame's facing, for the turn's pull
+  let waistWritten = false;
+  const lanternScratch = { d: [0, 0, -1], right: [0, 0, 0], up: [0, 0, 0] };
+  /** Is the lantern drawn this frame: lit at the waist, third person, on foot, alive, in your own form. */
+  const lanternShown = () => last.hipLantern && activeFlag && !FP && !died && !last.died && !last.riding && !last.transformed;
+  function ensureLanternArt() {
+    if (lanternArt !== undefined || !renderer) return lanternArt && !(lanternArt instanceof Promise) ? lanternArt : null;
+    const p = Promise.resolve().then(() => loadLantern()).then((img) => {
+      if (!img || !renderer) { lanternArt = null; return; }
+      renderer.uploadTexture(LANTERN_ART_KEY, 0, { width: img.width, height: img.height, colors: img.colors });
+      lanternArt = { w: img.width, h: img.height };
+    }, () => { lanternArt = null; });
+    lanternArt = p;
+    return null;
+  }
+  /** The frame the sprite faces: its walk's facing (UpdateOrientation's `lastMoveDirection`), else the yaw. */
+  function facingBasis() {
+    const f = lastMoveDirection && (lastMoveDirection[0] || lastMoveDirection[2]) ? lastMoveDirection : cam.forward;
+    const l = Math.hypot(f[0], f[2]) || 1;
+    const fx = f[0] / l, fz = f[2] / l;
+    return { fx, fz, rx: fz, rz: -fx };   // right = [cos y, 0, -sin y] for forward [sin y, 0, cos y]
+  }
+  /** One frame of the swing, off the sprite's own walk: the speed the Move tables step at along the facing, the
+   *  facing's turn, and the walk cycle's phase off the frame clock while a Move table plays. */
+  function stepLantern(dt) {
+    if (!lanternShown()) { lanternYaw = null; Object.assign(lanternSwing, createLanternSwing()); dropLantern(); return; }
+    const { fx, fz } = facingBasis();
+    const yaw = Math.atan2(fx, fz);
+    let yawRate = 0;
+    if (lanternYaw != null && dt > 0) yawRate = wrapAngle(yaw - lanternYaw) / dt;   // ONCRASH1: the one wrap
+    lanternYaw = yaw;
+    const n = frameCount(stateCurrent);
+    const tick = frameTime(last.riding, cfg.walkAnimSpeedMod) * speedMod(last);
+    const walking = !last.stopped && n > 1 && last.moveSpeed > 0;
+    const stride = walking ? (frameCurrent + Math.min(1, tick > 0 ? frameTimer / tick : 0)) / n : null;
+    stepLanternSwing(lanternSwing, dt, { forward: last.moveSpeed || 0, side: 0, yawRate, stride });
+  }
+  function waistDefault() {
+    if (waistWritten) { setPlayerWaistLightOverride(null); waistWritten = false; }
+  }
+  /** The lantern's batch goes when the lantern does (EVERY ALLOCATION HAS AN OWNER); its picture stays in the
+   *  renderer's cache under its own key, as every sprite of this body does. */
+  function dropLantern() {
+    if (lanternBatch) { renderer?.destroyBillboardBatch?.(lanternBatch); lanternBatch = null; }
+    waistDefault();
+  }
+  /** Draw the lantern hung from the sprite's hip, tilted by the swing. Answers whether it drew. */
+  function drawLantern() {
+    if (!lanternShown()) { dropLantern(); return false; }
+    const art = ensureLanternArt();
+    if (!art || !batchSize) return false;
+    const base = place();
+    if (!base) return false;
+    const L = HIP_LANTERN_SPRITE;
+    const scale = cfg.scale > 0 ? cfg.scale : 1;
+    const h = L.height * scale, w = h * art.w / art.h;
+    // minted at its full size (the renderer's cull sphere is the batch's own), again only when the scale moves it
+    if (lanternBatch && lanternBatchH !== h) { renderer.destroyBillboardBatch?.(lanternBatch); lanternBatch = null; }
+    if (!lanternBatch) {
+      lanternBatch = renderer.createBillboardBatch(LANTERN_ART_KEY, 0, { w, h }, [[0, 0, 0]]);
+      lanternBatch.origin = [0, 0, 0];
+      lanternBatchH = h;
+    }
+    // the hook: up the quad, out to the facing's right, a nudge toward the eye
+    const { fx, fz, rx, rz } = facingBasis();
+    const ex = cam.pos[0] - cam.feet[0], ez = cam.pos[2] - cam.feet[2];
+    const el = Math.hypot(ex, ez) || 1;
+    const side = L.side * scale;
+    const hook = [
+      base[0] + rx * side + ex / el * L.towardEye,
+      base[1] + batchSize.h * L.heightFraction,
+      base[2] + rz * side + ez / el * L.towardEye,
+    ];
+    // the swing, from the facing frame into the view plane: the tilt, and the shortening toward or away
+    const S = lanternScratch;
+    const d = lanternSwingDown(lanternSwing, S.d);
+    const wx = rx * d[0] + fx * d[1], wy = d[2], wz = rz * d[0] + fz * d[1];
+    const cr = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];
+    const dx = wx * cr[0] + wz * cr[2];
+    const len = Math.hypot(dx, wy);
+    const sin = len > 1e-6 ? dx / len : 0, cos = len > 1e-6 ? -wy / len : 1;
+    S.right[0] = cr[0] * cos; S.right[1] = sin; S.right[2] = cr[2] * cos;
+    S.up[0] = -cr[0] * sin; S.up[1] = cos; S.up[2] = -cr[2] * sin;
+    const drawnH = h * Math.max(L.minLength, Math.min(1, len));
+    lanternBatch.size.w = w; lanternBatch.size.h = drawnH;
+    lanternBatch.origin[0] = hook[0] - S.up[0] * drawnH;
+    lanternBatch.origin[1] = hook[1] - S.up[1] * drawnH;
+    lanternBatch.origin[2] = hook[2] - S.up[2] * drawnH;
+    lanternBatch.conceal = material();
+    renderer.drawBillboards([lanternBatch], S.right, S.up);
+    // the light, from the lantern's middle, in the offset words PlayerTorch's seam speaks (the yaw frame)
+    const mid = [hook[0] - S.up[0] * drawnH * 0.5, hook[1] - S.up[1] * drawnH * 0.5, hook[2] - S.up[2] * drawnH * 0.5];
+    const yaw = cam.yaw, sy = Math.sin(yaw), cy = Math.cos(yaw);
+    const px = mid[0] - cam.feet[0], pz = mid[2] - cam.feet[2];
+    setPlayerWaistLightOverride({ left: -(px * cy - pz * sy), up: mid[1] - cam.feet[1], forward: px * sy + pz * cy });
+    waistWritten = true;
+    return true;
+  }
 
   const cacheKey = (s) => `${s.archive}:${s.rec}`;
   async function pixels(key) {
@@ -661,13 +813,16 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     toggle(active, fp = false) {
       FP = !!fp;
       activeFlag = !!active;
-      if (!activeFlag) { torchDefault(); pending.length = 0; }
+      if (!activeFlag) { torchDefault(); pending.length = 0; dropLantern(); }   // HT-WAIST: the lantern and its light leave with the body
       if (activeFlag) initialize();
       return activeFlag;
     },
     /** The mod's own `torch.localPosition = torchPosLocalDefault` on
      *  leaving third person (IL_2307-IL_2313). */
     torchDefault,
+    /** HT-WAIST: another body has the frame (mwView's Morrowind lane) - the sprite's lantern, its batch and the
+     *  light point it wrote, stand down, so the Morrowind body's hip is lit from its own hook. */
+    standDown() { dropLantern(); },
 
     /**
      * EOTB4's gate. The lane may open when the mod is on, the build
@@ -708,12 +863,13 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       runDelayed();
       advanceClip(dt);
       lateUpdate(dt);
+      stepLantern(dt);   // HT-WAIST: not the IL's - the lantern at the waist, after the frame the mod ran
       return { table: stateCurrent, frame: frameCurrent, clip: isAnimating ? { table: isAnimating.table, i: isAnimating.i, phase: isAnimating.phase } : null };
     },
 
     draw(canvas, { eye, feet, yaw } = {}) {
       if (!renderer || !activeFlag || !shown) return false;
-      if (!cfg.graphic) return false;
+      if (!cfg.graphic) { dropLantern(); return false; }   // HT-WAIST: no body drawn, no lantern on it
       if (feet) cam.feet = feet;
       if (Number.isFinite(yaw)) cam.yaw = yaw;
       if (eye && !FP) cam.pos = eye;
@@ -741,6 +897,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       batch.conceal = material();
       const camRight = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];
       renderer.drawBillboards([batch], camRight, [0, 1, 0]);
+      drawLantern();   // HT-WAIST: the lantern at the waist, its own billboard, after the body
       return true;
     },
 
@@ -769,6 +926,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       mirrorCount, mirrorTimer, pingpongCount, died, animating, currentAngle, orientationTimer,
       lastMoveDirection: lastMoveDirection ? [...lastMoveDirection] : null, last: { ...last }, hasPlayedFootstep, footstepAlt, wasGrounded,
       material: material(), placed: place(),
+      lantern: { shown: lanternShown(), swing: { fore: lanternSwing.fore, side: lanternSwing.side }, batch: !!lanternBatch },   // HT-WAIST
     }),
     settings: () => cfg,
     reload,

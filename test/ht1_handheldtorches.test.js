@@ -177,7 +177,12 @@ test('HT1: the Mods pane entry is the shipped modsettings.json - every key, its 
     }
   }
   assert.equal(n, 52, 'the eight sections carry 52 keys');
-  assert.equal(Object.keys(m.keys).length, 53, 'plus the port\'s Enabled, and nothing else');
+  // HT-WAIST (2026-09-24, Mac: "Let the lantern item be able to be hung at the waist"): the port's OWN key on
+  // this pane, beside the port's Enabled - named here, as ORL1 names primarySkillsImpact, so a third arrives
+  // only with a decision behind it (test/htwaist_setting.test.js holds its default and its words).
+  const shippedNames = new Set(shipped.Sections.flatMap((sec) => sec.Keys.map((k) => `${sec.Name}.${k.Name}`)));
+  assert.deepEqual(Object.keys(m.keys).filter((k) => !shippedNames.has(k)).sort(), ['Enabled', 'Handling.LanternsAtWaist'], 'plus the port\'s Enabled and its lantern-at-the-waist switch, and nothing else');
+  assert.equal(Object.keys(m.keys).length, 54);
   assert.deepEqual([...kinds].sort(), ['MultipleChoiceKey', 'SliderFloatKey', 'SliderIntKey', 'TextKey', 'ToggleKey', 'TupleFloatKey', 'TupleIntKey']);
   assert.equal(m.keys.Enabled.default, true, 'MO1: every mod is on by default');
   // the choice tables the port switches on are the shipped Options, in order; the widget's two are the SAME tables (one home)
@@ -836,7 +841,7 @@ test('HT1: the rig runs the component beside the widget - one per rig, the pool 
   assert.match(rig, /dispose\(\) \{ handheld\.dispose\(\); _handheldWasOn = false; \}/, 'AUDIT 66 F8: and the host has a door to call');
   assert.match(rig, /handheld,\s*\/\/ HT1/);
   assert.match(rd('src/systems/lycanthropy.js'), /export const isTransformedLycanthrope = \(entity\) => isTransformedNow\(entity\);/);
-  assert.match(rd('src/systems/playerTorch.js'), /const o = _offsetOverride \?\? TORCH_OFFSET;/);
+  assert.match(rd('src/systems/playerTorch.js'), /const o = lanternAtWaist\(entity\?\.lightSource\) \? \(_waistOverride \?\? LANTERN_HIP\) : \(_offsetOverride \?\? TORCH_OFFSET\);/);   // HT-WAIST: a lantern at the waist lights from the hip
   assert.match(rd('src/systems/features.js'), /modFeature\('handheld-torches', 'Takes effect at once\.', '\w+'\)/);
   // GUARD1 (2026-09-15): this line USED to read `/160 modules/`. It was
   // a hand-written copy of a number `audit18_bible_docs.test.js` (U42)
@@ -1012,8 +1017,8 @@ test('TORCH-VIS (the ladder): a lit hand draws while merely sheathed, the weapon
   const rig = rd('src/combat/weaponRig.js');
   // the exception is computed from the OTHER legs of shown(), never from `sheathed` - so it can only ever widen
   // the sheathed case, and a readied spell, a cast in flight and an equip countdown all still hide the torch
-  assert.match(rig, /const torchOnly = !shown\(\) && !spellArmed\(\) && !fpsSpellCasting\.isPlayingAnim\s*\n\s*&& \(entity\?\.equipCountdown \?\? 0\) <= 0 && isHeldLight\(entity\?\.lightSource\)\s*\n\s*&& \(!fpArm\.active\(\) \|\| fpArm\.torchShown\(\)\);/,
-    'the exception names every leg of shown() it does NOT relax, asks the mod\'s own light test, and lets the Morrowind arm veto a light it has no art for');
+  assert.match(rig, /const torchOnly = !shown\(\) && !spellArmed\(\) && !fpsSpellCasting\.isPlayingAnim\s*\n\s*&& \(entity\?\.equipCountdown \?\? 0\) <= 0 && isHeldLight\(entity\?\.lightSource\)\s*\n\s*&& \(!fpArm\.active\(\) \|\| fpArm\.torchShown\(\)\)\s*\n\s*&& !lanternAtWaist\(entity\?\.lightSource\);/,
+    'the exception names every leg of shown() it does NOT relax, asks the mod\'s own light test, and lets the Morrowind arm veto a light it has no art for - HT-WAIST: and a lantern at the waist, which no hand holds');
   assert.match(rig, /if \(paralyzed \|\| \(!shown\(\) && !torchOnly && !sheetOnly && !shieldRect && !gunSliding\)\) return;/, 'the gate takes the exception, and paralysis still takes everything (MAP-FIELD put the held sheet\'s own leg beside the torch\'s, SW1b the shield\'s, FIELD-GUN13 the gun still sliding out of frame - the same law, four things that are not a drawn weapon)');
   // and the weapon stays hidden: the return sits AFTER the torch hand and BEFORE the clone and the sprite
   const draw = rig.slice(rig.indexOf('const torchOnly ='));

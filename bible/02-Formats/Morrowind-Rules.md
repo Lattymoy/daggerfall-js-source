@@ -6908,3 +6908,44 @@ now grows `built.reach` to its farthest corner and a quarter more
 composed (`drewLast()`, folded into `weaponRig.armsDrawn()`); `holdPaper`
 is refused in third person; a rebuild with no camera node lets the
 sheet go. Record: `bible/10-UI/Held-Map-Arc.md`, AUDIT-MAP2.
+
+## HT-WAIST (2026-09-24): the lantern at the waist - a part that HANGS
+
+Handheld Torches' port-own `Handling.LanternsAtWaist` (Handheld-Torches.md HT-WAIST) hangs a lit lantern at the
+waist, and the third-person body draws it there. Morrowind has no lantern on a belt - its carried lights ride
+Slot_CarriedLeft at the Shield Bone (MW-D51) - so every number is the port's own and says so.
+
+- **The record**: `pickLanternRecord` (mwFirstPerson.js), MW-D51's `pickTorchRecord` shape through one shared
+  helper - a CARRIABLE LIGH whose id names a lantern, its mesh attached (MW-D50), the shortest id first. No retail id
+  is assumed; a master with none is a note (`hiplight: ...`), never a torch in its place.
+- **The bone**: `Bip01 Pelvis` (`HIP_LIGHT_BONE`), which the retail third-person skeleton carries - Weapon
+  Sheathing's vendored `xbase_anim_sh.nif` copies its Bip01 chain, and this port's own `buildSkeleton` /
+  `poseSkeleton` put the pelvis at (0, 1.8, 76.4) in the actor's Z-up, +Y-forward, -X-left units. Resolved against
+  the skeleton with its bone addons joined (WS1's `boneProbe`), and against the live assembled skeleton on a later
+  bind. The THIRD-PERSON rig alone: the first-person arms have no hip.
+- **The hang** - a new kind of rigid part. Every other rigid part RIDES its bone (placeAtBone over the bone's
+  affine). A part carrying `hang` takes `hangAffine(at, hang)` instead: `v -> rot * (v - anchor) + hook`, where the
+  HOOK is a point fixed to the bone (`hookOnBone`: a rig-space offset from the bone's REST position, turned into the
+  bone's own frame once, so it follows the hip's walk), the ANCHOR is the part's top-centre (`hangAnchor`, over all
+  its shapes, after the mirror and rule 14's offset - the ring a lantern's handle ends in on any Z-up mesh, wherever
+  its author put the origin), and ROT is a rig-space 3x3 the owner writes each frame - plumb times the swing
+  (`systems/lanternSwing.js lanternSwingMatrix`). The rig space is the actor's own and the body only turns in yaw, so
+  plumb there is plumb in the world. `bindPartsInto` carries `hang` onto the part's pieces and effects;
+  `effectPlacement` places a hanging part's particle systems by the same affine.
+- **The hook**: `HIP_LANTERN_HOOK` = (14, 5, 9.5) off the pelvis - the RIGHT hip, clear of the one-handed scabbard
+  (`Bip01 LongBladeOneHand` at (-10.8, 7.8, 86.5), the left) and of the thigh (`Bip01 R Thigh` at x 6.6), a little
+  forward, at the scabbard's belt height.
+- **The hide**: only when not lit - NEVER the carried-left rule (it is in no hand, so a two-hander, a bow or a
+  readied spell does not put it away). The portrait shows it lit.
+- **The door**: `setHipLight` is `setTorch`'s shape with MW-TORCH's fixes (the fast compare, one bind per body,
+  `hipLightTried`, `lastBuildOpts.hipLight`, the mid-build queue, the unload reset); weaponRig hands it over per
+  frame beside the torch and in `armBuildOptsOf`.
+- **Peers**: unchanged - they hold no light (MW-D51's "Recorded, not faked"), and `peerBodies.js` never asks for this
+  one either.
+
+Pins: `test/htwaist_mwbody.test.js` - the pick and the resolve; the hang over the vendored retail-shaped skeleton (the
+top at the hook on the right hip, plumb under a twisted pelvis, the swing tipping it about the hook, a flame placed by
+the same hang); and a whole `createFpArm()` rig on the fixture body with a pelvis joined through the WS1 bone-addon
+door (a tiny addon NIF written by the pin): built with it, shown through a readied spell, hidden when put out, lit
+again on the fast path, swung back by a walk begun, the slow path once, a missing record or pelvis remembered, the
+mid-build queue.

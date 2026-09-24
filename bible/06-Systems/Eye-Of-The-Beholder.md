@@ -938,3 +938,34 @@ and every host's `riding` (generative). **Mutants**
 notch kept, the rule after the flush, the wheel blind to the saddle, the
 saddle never cleared, the saddle emptying the EOTB lane too.
 
+
+## HT-WAIST (2026-09-24): a lantern at the sprite's hip - NOT the mod's
+
+Handheld Torches' port-own `Handling.LanternsAtWaist` (Handheld-Torches.md HT-WAIST; Ledger A) hangs a lit lantern at
+the waist, and Mac asked for it on this body too: "Let it be a separate animated item on movement with eye of the
+Beholder sprites also". The mod draws no light on its billboard at all - TorchOffset (IL_47df) only moves
+PlayerTorch - so this is an ADDITION beside the IL's machine, never inside it: `stepLantern` runs after the three
+Unity phases in `tick`, `drawLantern` after the body's own draw, and nothing of `PlayerBillboard`'s state is read
+but its facing (`lastMoveDirection`), its frame clock and the placed base (`place()`).
+
+- **The picture** is the Lantern template's own world texture (`templateByIndex(LANTERN_TEMPLATE)`: TEXTURE.200
+  record 10), palette-mapped with its 0xFF mask cut out (GetInventoryImage's removeMask), loaded from the player's
+  ARENA2 by `loadLanternArt` - never vendored. Handheld Torches' own lantern frames are a gloved HAND holding the
+  lantern, and cutting the lantern out would be making new art from the author's.
+- **The hang**: by its top from the sprite's right hip - half the quad's height above its base, 0.2 m out along the
+  facing's right (both with `BillboardScale`), nudged 6 cm toward the eye so it never shares the body's depth; 0.3 m
+  tall at scale 1.
+- **The swing** is `systems/lanternSwing.js`, the Morrowind body's own law, fed the sprite's walk: the speed the Move
+  tables step at along the facing, the facing's turn, and the stride phase off the frame clock. It is drawn as the
+  quad TILTED in the view plane (the billboard shader takes its right and up per call; the base is set so the top
+  stays on the hook) and SHORTENED as it swings along the line of sight.
+- **Only** in third person, on foot, alive and in your own form - the rider's sprite sits on a horse and the beast's
+  is another body. It lights you from its middle (`setPlayerWaistLightOverride`); the point is cleared the moment it
+  is not drawn - put out, the body toggled off, the graphic off, and each frame the Morrowind lane has the view
+  (`standDown`, called from mwView's Morrowind branch).
+- **Owner**: its batch is created when first drawn (at its full size - the renderer's cull sphere is the batch's own -
+  and minted again when `BillboardScale` moves it) and destroyed when it stops; its picture stays in the renderer's
+  cache under `htwaist-lantern`, as the body's own sprites do. With no lantern at the waist nothing of it runs - no
+  batch, no draw (`eotb_body.test.js` reads the last batch as the body's).
+
+Pins: `test/htwaist_eotb.test.js`. Not verified in a browser (no ARENA2 here).

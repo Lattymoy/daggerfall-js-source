@@ -11,8 +11,8 @@
   {
     "name": "TORCHVIS-an-empty-hand-draws-as-if-it-held-a-light",
     "file": "src/combat/weaponRig.js",
-    "old": "        && (entity?.equipCountdown ?? 0) <= 0 && isHeldLight(entity?.lightSource)\n        && (!fpArm.active() || fpArm.torchShown());",
-    "new": "        && (entity?.equipCountdown ?? 0) <= 0\n        && (!fpArm.active() || fpArm.torchShown());",
+    "old": "        && (entity?.equipCountdown ?? 0) <= 0 && isHeldLight(entity?.lightSource)\n        && (!fpArm.active() || fpArm.torchShown())\n        && !lanternAtWaist(entity?.lightSource);",
+    "new": "        && (entity?.equipCountdown ?? 0) <= 0\n        && (!fpArm.active() || fpArm.torchShown())\n        && !lanternAtWaist(entity?.lightSource);",
     "tests": [
       "test/ht1_handheldtorches.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TORCHVIS-the-morrowind-arm-loses-its-veto",
     "file": "src/combat/weaponRig.js",
-    "old": "        && (!fpArm.active() || fpArm.torchShown());",
-    "new": "        && true;",
+    "old": "        && (!fpArm.active() || fpArm.torchShown())\n        && !lanternAtWaist(",
+    "new": "        && true\n        && !lanternAtWaist(",
     "tests": [
       "test/ht1_handheldtorches.test.js"
     ]

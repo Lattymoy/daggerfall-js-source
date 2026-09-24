@@ -1,0 +1,458 @@
+[
+  {
+    "name": "HT-WAIST-the-key-ships-on",
+    "file": "src/systems/modSettings.js",
+    "old": "'Handling.LanternsAtWaist': Object.freeze({ default: false,",
+    "new": "'Handling.LanternsAtWaist': Object.freeze({ default: true,",
+    "tests": [
+      "test/htwaist_setting.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-key-not-curated",
+    "file": "src/systems/features.js",
+    "old": "'Handling.StowWhenSpellcasting', 'Handling.LanternsAtWaist', 'Bob.Length'",
+    "new": "'Handling.StowWhenSpellcasting', 'Bob.Length'",
+    "tests": [
+      "test/htwaist_setting.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-loadsettings-never-reads-it",
+    "file": "src/systems/handheldTorches.js",
+    "old": "lanternsAtWaist: !!s['Handling.LanternsAtWaist'],",
+    "new": "lanternsAtWaist: false,",
+    "tests": [
+      "test/htwaist_setting.test.js",
+      "test/htwaist_handlaw.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-predicate-ignores-the-mod-switch",
+    "file": "src/systems/playerTorch.js",
+    "old": "return modSetting('handheld-torches', 'Enabled') === true && modSetting('handheld-torches', 'Handling.LanternsAtWaist') === true;",
+    "new": "return modSetting('handheld-torches', 'Handling.LanternsAtWaist') === true;",
+    "tests": [
+      "test/htwaist_setting.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-predicate-any-light",
+    "file": "src/systems/playerTorch.js",
+    "old": "if (!item || item.templateIndex !== LANTERN_TEMPLATE) return false;",
+    "new": "if (!item) return false;",
+    "tests": [
+      "test/htwaist_setting.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-stow-arm-takes-the-waist",
+    "file": "src/systems/handheldTorches.js",
+    "old": "&& !w.s.lanternRelaxed && !atWaist(l)) {",
+    "new": "&& !w.s.lanternRelaxed) {",
+    "tests": [
+      "test/htwaist_handlaw.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-torch-arm-spares-the-waist",
+    "file": "src/systems/handheldTorches.js",
+    "old": "    if (!hasFreeHand() && l && !isLantern(l)) {",
+    "new": "    if (!hasFreeHand() && l && !isLantern(l) && !w.s.lanternsAtWaist) {",
+    "tests": [
+      "test/htwaist_handlaw.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-no-waist-press",
+    "file": "src/systems/handheldTorches.js",
+    "old": "    if (w.s.lanternsAtWaist && !hasFreeHand() && waistPress()) return true;\n",
+    "new": "",
+    "tests": [
+      "test/htwaist_handlaw.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-waist-press-keeps-the-stowed-torch",
+    "file": "src/systems/handheldTorches.js",
+    "old": "    w.lastLightSource = null;\n    setLight(firstOf('UselessItems2', T.Lantern));",
+    "new": "    setLight(firstOf('UselessItems2', T.Lantern));",
+    "tests": [
+      "test/htwaist_handlaw.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-throw-douses-it",
+    "file": "src/systems/handheldTorches.js",
+    "old": "if (lit && !((w.s.lanternRelaxed || w.s.lanternsAtWaist) && isLantern(lit))) setLight(null);",
+    "new": "if (lit && !(w.s.lanternRelaxed && isLantern(lit))) setLight(null);",
+    "tests": [
+      "test/htwaist_handlaw.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-hand-frames-a-waist-lantern",
+    "file": "src/systems/handheldTorches.js",
+    "old": "w.offsetFrame = cur && !atWaist(cur) ? (isLantern(cur) ? 4 : isTorch(cur) ? 0 : -1) : -1;",
+    "new": "w.offsetFrame = cur ? (isLantern(cur) ? 4 : isTorch(cur) ? 0 : -1) : -1;",
+    "tests": [
+      "test/htwaist_handlaw.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-hand-draws-a-waist-lantern",
+    "file": "src/systems/handheldTorches.js",
+    "old": "    if (atWaist(held)) return false;",
+    "new": "",
+    "tests": [
+      "test/htwaist_handlaw.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-light-ignores-the-waist",
+    "file": "src/systems/playerTorch.js",
+    "old": "const o = lanternAtWaist(entity?.lightSource) ? (_waistOverride ?? LANTERN_HIP) : (_offsetOverride ?? TORCH_OFFSET);",
+    "new": "const o = _offsetOverride ?? TORCH_OFFSET;",
+    "tests": [
+      "test/htwaist_handlaw.test.js",
+      "test/ht1_handheldtorches.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-override-beats-the-hip",
+    "file": "src/systems/playerTorch.js",
+    "old": "const o = lanternAtWaist(entity?.lightSource) ? (_waistOverride ?? LANTERN_HIP) : (_offsetOverride ?? TORCH_OFFSET);",
+    "new": "const o = _offsetOverride ?? (lanternAtWaist(entity?.lightSource) ? (_waistOverride ?? LANTERN_HIP) : TORCH_OFFSET);",
+    "tests": [
+      "test/htwaist_handlaw.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-hip-on-the-left",
+    "file": "src/systems/playerTorch.js",
+    "old": "export const LANTERN_HIP = Object.freeze({ left: -0.2,",
+    "new": "export const LANTERN_HIP = Object.freeze({ left: 0.2,",
+    "tests": [
+      "test/htwaist_handlaw.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-build-never-asked",
+    "file": "src/combat/weaponRig.js",
+    "old": "    hipLight: lanternAtWaist(entity.lightSource),",
+    "new": "    hipLight: false,",
+    "tests": [
+      "test/htwaist_handlaw.test.js",
+      "test/htwaist_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-ladder-opens-for-the-waist",
+    "file": "src/combat/weaponRig.js",
+    "old": "        && (!fpArm.active() || fpArm.torchShown())\n        && !lanternAtWaist(entity?.lightSource);",
+    "new": "        && (!fpArm.active() || fpArm.torchShown());",
+    "tests": [
+      "test/ht1_handheldtorches.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-arm-never-told",
+    "file": "src/combat/weaponRig.js",
+    "old": "        fpArm.setHipLight(lanternAtWaist(entity?.lightSource));\n",
+    "new": "",
+    "tests": [
+      "test/htwaist_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-sprite-never-told",
+    "file": "src/combat/weaponRig.js",
+    "old": "    hipLantern: !!entity && lanternAtWaist(entity.lightSource),",
+    "new": "    hipLantern: false,",
+    "tests": [
+      "test/htwaist_mwbody.test.js",
+      "test/htwaist_eotb.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-swing-leads-the-hip",
+    "file": "src/systems/lanternSwing.js",
+    "old": "    const aF = P.drive * (s.vFore - pf) / step + swayF;",
+    "new": "    const aF = -P.drive * (s.vFore - pf) / step + swayF;",
+    "tests": [
+      "test/htwaist_swing.test.js",
+      "test/htwaist_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-swing-no-gravity",
+    "file": "src/systems/lanternSwing.js",
+    "old": "    s.foreVel += (-w2 * Math.sin(s.fore)",
+    "new": "    s.foreVel += (-0 * Math.sin(s.fore)",
+    "tests": [
+      "test/htwaist_swing.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-swing-no-damping",
+    "file": "src/systems/lanternSwing.js",
+    "old": " - P.damping * s.sideVel) * step;",
+    "new": ") * step;",
+    "tests": [
+      "test/htwaist_swing.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-swing-no-stride",
+    "file": "src/systems/lanternSwing.js",
+    "old": "  const swayS = strength * P.strideSide * Math.sin(phase);",
+    "new": "  const swayS = 0;",
+    "tests": [
+      "test/htwaist_swing.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-swing-stride-without-speed",
+    "file": "src/systems/lanternSwing.js",
+    "old": "  const strength = walking ? Math.min(1, Math.hypot(fw, sd) / P.strideSpeed) : 0;",
+    "new": "  const strength = walking ? 1 : 0;",
+    "tests": [
+      "test/htwaist_swing.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-swing-no-turn",
+    "file": "src/systems/lanternSwing.js",
+    "old": " - yr * yr * P.turnRadius)",
+    "new": ")",
+    "tests": [
+      "test/htwaist_swing.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-swing-no-clamp",
+    "file": "src/systems/lanternSwing.js",
+    "old": "    if (s.fore > P.maxAngle) { s.fore = P.maxAngle; if (s.foreVel > 0) s.foreVel = 0; }\n    else if (s.fore < -P.maxAngle) { s.fore = -P.maxAngle; if (s.foreVel < 0) s.foreVel = 0; }\n",
+    "new": "",
+    "tests": [
+      "test/htwaist_swing.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-swing-one-step-a-frame",
+    "file": "src/systems/lanternSwing.js",
+    "old": "  const n = Math.max(1, Math.ceil(h / P.maxStep));",
+    "new": "  const n = 1;",
+    "tests": [
+      "test/htwaist_swing.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-swing-a-hitch-integrated-whole",
+    "file": "src/systems/lanternSwing.js",
+    "old": "  const h = Math.min(dt, P.maxDt);",
+    "new": "  const h = dt;",
+    "tests": [
+      "test/htwaist_swing.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-swing-matrix-sign",
+    "file": "src/systems/lanternSwing.js",
+    "old": "out[5] = -sf * cs;",
+    "new": "out[5] = sf * cs;",
+    "tests": [
+      "test/htwaist_swing.test.js",
+      "test/htwaist_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-lantern-picker-takes-a-torch",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "  return pickCarriedLight(lights, /lantern/, null, has);",
+    "new": "  return pickCarriedLight(lights, /lantern|torch/, null, has);",
+    "tests": [
+      "test/htwaist_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-part-rides-the-bone",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "placeAtBone(p.source, p.hang ? hangAffine(at, p.hang) : at, p.mirrored, p.positions, p.boneOffset);",
+    "new": "placeAtBone(p.source, at, p.mirrored, p.positions, p.boneOffset);",
+    "tests": [
+      "test/htwaist_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-bind-drops-the-hang",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "            hang: part.hang ?? null,   // HT-WAIST: a part that HANGS",
+    "new": "            hang: null,   // HT-WAIST: a part that HANGS",
+    "tests": [
+      "test/htwaist_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-hung-by-its-foot",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "  hang.anchor = Number.isFinite(maxZ) ? [(minX + maxX) / 2, (minY + maxY) / 2, maxZ] : [0, 0, 0];",
+    "new": "  hang.anchor = Number.isFinite(maxZ) ? [(minX + maxX) / 2, (minY + maxY) / 2, 0] : [0, 0, 0];",
+    "tests": [
+      "test/htwaist_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-hook-in-the-wrong-frame",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "  const inv = invert33(rest.a);",
+    "new": "  const inv = [1, 0, 0, 0, 1, 0, 0, 0, 1];",
+    "tests": [
+      "test/htwaist_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-flame-rides-the-bone",
+    "file": "src/combat/fpArm.js",
+    "old": "  const at = effect.hang ? hangAffine(bone, effect.hang) : bone;",
+    "new": "  const at = bone;",
+    "tests": [
+      "test/htwaist_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-hidden-by-the-carried-left-rule",
+    "file": "src/combat/fpArm.js",
+    "old": "          else if (r.slot === HIP_LIGHT_SLOT) r.hidden = !hipVisible();",
+    "new": "          else if (r.slot === HIP_LIGHT_SLOT) r.hidden = !torchVisible();",
+    "tests": [
+      "test/htwaist_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-shown-unlit",
+    "file": "src/combat/fpArm.js",
+    "old": "    return hipLit && !!(thirdBuilt && thirdBuilt.ok && thirdBuilt.hipLight);",
+    "new": "    return !!(thirdBuilt && thirdBuilt.ok && thirdBuilt.hipLight);",
+    "tests": [
+      "test/htwaist_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-body-never-swings-it",
+    "file": "src/combat/fpArm.js",
+    "old": "        if (hipVisible()) stepHipSwing(cam, dt);\n",
+    "new": "",
+    "tests": [
+      "test/htwaist_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-body-built-without-it",
+    "file": "src/combat/fpArm.js",
+    "old": "    partBytes.push(...resolvedHip.parts);",
+    "new": "",
+    "tests": [
+      "test/htwaist_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-a-failed-bind-asked-again",
+    "file": "src/combat/fpArm.js",
+    "old": "if (!want || !tRig || tRig.hipLight || tRig.hipLightTried || !pickLanternRecord(built.allLights)) {",
+    "new": "if (!want || !tRig || tRig.hipLight || !pickLanternRecord(built.allLights)) {",
+    "tests": [
+      "test/htwaist_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-queued-light-dropped",
+    "file": "src/combat/fpArm.js",
+    "old": "    if (pendingHipLight !== null) { const l = pendingHipLight; pendingHipLight = null; api.setHipLight(l); }   // HT-WAIST\n",
+    "new": "",
+    "tests": [
+      "test/htwaist_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-sprite-never-draws-it",
+    "file": "src/player/eotbBody.js",
+    "old": "      drawLantern();   // HT-WAIST: the lantern at the waist, its own billboard, after the body\n",
+    "new": "",
+    "tests": [
+      "test/htwaist_eotb.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-sprite-never-swings-it",
+    "file": "src/player/eotbBody.js",
+    "old": "      stepLantern(dt);   // HT-WAIST: not the IL's - the lantern at the waist, after the frame the mod ran\n",
+    "new": "",
+    "tests": [
+      "test/htwaist_eotb.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-sprite-lantern-in-the-saddle",
+    "file": "src/player/eotbBody.js",
+    "old": " && !last.riding && !last.transformed;",
+    "new": " && !last.transformed;",
+    "tests": [
+      "test/htwaist_eotb.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-sprite-light-left-behind",
+    "file": "src/player/eotbBody.js",
+    "old": "      if (!activeFlag) { torchDefault(); pending.length = 0; dropLantern(); }",
+    "new": "      if (!activeFlag) { torchDefault(); pending.length = 0; }",
+    "tests": [
+      "test/htwaist_eotb.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-sprite-lights-nothing",
+    "file": "src/player/eotbBody.js",
+    "old": "    setPlayerWaistLightOverride({ left: -(px * cy - pz * sy), up: mid[1] - cam.feet[1], forward: px * sy + pz * cy });\n",
+    "new": "",
+    "tests": [
+      "test/htwaist_eotb.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-sprite-never-tilts",
+    "file": "src/player/eotbBody.js",
+    "old": "    renderer.drawBillboards([lanternBatch], S.right, S.up);",
+    "new": "    renderer.drawBillboards([lanternBatch], cr, [0, 1, 0]);",
+    "tests": [
+      "test/htwaist_eotb.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-lane-never-stands-it-down",
+    "file": "src/player/mwView.js",
+    "old": "  eotbBody.standDown();\n",
+    "new": "",
+    "tests": [
+      "test/htwaist_eotb.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-portrait-swings",
+    "file": "src/combat/fpArm.js",
+    "old": "        if (t.hipHang) t.hipHang.rot.set(PLUMB);   // HT-WAIST: a still portrait, a plumb lantern (stepHipSwing re-swings it)\n",
+    "new": "",
+    "tests": [
+      "test/htwaist_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-sprite-lantern-never-regrown",
+    "file": "src/player/eotbBody.js",
+    "old": "    if (lanternBatch && lanternBatchH !== h) { renderer.destroyBillboardBatch?.(lanternBatch); lanternBatch = null; }\n",
+    "new": "",
+    "tests": [
+      "test/htwaist_eotb.test.js"
+    ]
+  }
+]

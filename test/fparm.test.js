@@ -2859,8 +2859,9 @@ test('MAC-S1: ONE flush, called from every exit out of `busy`', () => {
   const takers = (src.match(/^\s*busy = true;$/gm) ?? []).length;
   const flushes = (src.match(/^\s*flushPending\(\);$/gm) ?? []).length;
   // MW-D51: the third arrived - setTorch's slow path binds the light's
-  // mesh on both rigs and takes `busy` for the fetch.
-  assert.equal(takers, 3, `a door that takes \`busy\` must flush on its way out (${takers} takers)`);
+  // mesh on both rigs and takes `busy` for the fetch. HT-WAIST: the fourth -
+  // setHipLight's slow path, the lantern at the waist on the body.
+  assert.equal(takers, 4, `a door that takes \`busy\` must flush on its way out (${takers} takers)`);
   assert.equal(flushes, takers, `every taker flushes (${flushes} flushes for ${takers} takers)`);
   // ...and setWeapon's own `finally` still does all three of its duties.
   // The file's own prose is not its wiring, so it is stripped first.
