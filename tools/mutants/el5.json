@@ -146,8 +146,8 @@
   {
     "name": "glsl-face-sign",
     "file": "src/render/shadowPass.js",
-    "old": "  if (a.x >= a.y && a.x >= a.z) { face = d.x > 0.0 ? 0 : 1; m = a.x; }",
-    "new": "  if (a.x >= a.y && a.x >= a.z) { face = d.x > 0.0 ? 1 : 0; m = a.x; }",
+    "old": "  vec3 d = (wp + n * 0.05) - P.xyz;\n  vec3 a = abs(d);\n  int face; float m;\n  if (a.x >= a.y && a.x >= a.z) { face = d.x > 0.0 ? 0 : 1; m = a.x; }",
+    "new": "  vec3 d = (wp + n * 0.05) - P.xyz;\n  vec3 a = abs(d);\n  int face; float m;\n  if (a.x >= a.y && a.x >= a.z) { face = d.x > 0.0 ? 1 : 0; m = a.x; }",
     "tests": [
       "test/audit_reach.test.js",
       "test/el5_field.test.js"
