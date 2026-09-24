@@ -1784,6 +1784,37 @@ export function meshBounds(shapes) {
   return { minX, minY, minZ, maxX, maxY, maxZ };
 }
 
+/** PR-BOW1b (2026-09-24): meshBounds' fold, PIECE BY PIECE - poseAssembly's
+ *  one walk of the posed vertices. Each piece's own box is written onto the
+ *  piece (`p.box`: one object the piece owns, living and dying with it and
+ *  rewritten every pose, so a frame mints nothing), and the union is
+ *  answered exactly as meshBounds answers it (null when nothing is finite).
+ *  The third-person pass folds what it draws off these boxes
+ *  (fpArm.js foldRangeBoxes) - it walked every posed vertex a SECOND time,
+ *  per body per frame, the repeated walk AUDIT MWBODY A4 removed once. */
+export function foldPieceBounds(pieces) {
+  let minX = Infinity; let minY = Infinity; let minZ = Infinity;
+  let maxX = -Infinity; let maxY = -Infinity; let maxZ = -Infinity;
+  for (const s of pieces) {
+    const p = s.positions;
+    let aX = Infinity; let aY = Infinity; let aZ = Infinity;
+    let bX = -Infinity; let bY = -Infinity; let bZ = -Infinity;
+    for (let i = 0; i < p.length; i += 3) {
+      const x = p[i]; const y = p[i + 1]; const z = p[i + 2];
+      if (x < aX) aX = x; if (x > bX) bX = x;
+      if (y < aY) aY = y; if (y > bY) bY = y;
+      if (z < aZ) aZ = z; if (z > bZ) bZ = z;
+    }
+    const b = s.box || (s.box = { minX: 0, minY: 0, minZ: 0, maxX: 0, maxY: 0, maxZ: 0 });
+    b.minX = aX; b.minY = aY; b.minZ = aZ; b.maxX = bX; b.maxY = bY; b.maxZ = bZ;
+    if (aX < minX) minX = aX; if (bX > maxX) maxX = bX;
+    if (aY < minY) minY = aY; if (bY > maxY) maxY = bY;
+    if (aZ < minZ) minZ = aZ; if (bZ > maxZ) maxZ = bZ;
+  }
+  if (!Number.isFinite(minX)) return null;
+  return { minX, minY, minZ, maxX, maxY, maxZ };
+}
+
 /** Fit the bounds into a w x h box, front view (x across, z up, z flipped
  *  because canvas y grows downward). Returns a point mapper. Uniform
  *  scale - a per-axis fit would make a hand look correct while hiding
@@ -2416,7 +2447,7 @@ export function poseAssembly(assembly, { tracks = null, sampleTrack = null,
   // camera node's translation without re-posing the skeleton.
   assembly.mats = mats;
   assembly.time = time;
-  assembly.bounds = pieces.length ? meshBounds(pieces) : null;
+  assembly.bounds = pieces.length ? foldPieceBounds(pieces) : null;   // PR-BOW1b: and each piece's own box, in the same walk
   return assembly;
 }
 

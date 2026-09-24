@@ -647,21 +647,25 @@ function sameRanges(out, pieces) {
  *  refolded at every upload and kept ON the range - its owner: a range
  *  lives and dies with the mesh it indexes, and the same range objects
  *  come back pack after pack (sameRanges), so a frame mints nothing.
- *  One walk of the vertices per upload, the cadence packFpArm already
- *  walks them at; a skipped peer frame (PEER-CADENCE) walks none. */
+ *
+ *  PR-BOW1b (2026-09-24): AND NO SECOND WALK. PR-BOW1 folded these by
+ *  walking every posed vertex again, per body per posed frame, right
+ *  after poseAssembly had walked every one of them for the assembly's
+ *  bounds - the repeated walk AUDIT MWBODY A4 removed once already. The
+ *  fold now happens INSIDE that walk (mwFirstPerson.js foldPieceBounds
+ *  writes each piece's `box`), and a range copies its piece's six
+ *  numbers. Only a piece no pose has touched yet - a part bound since
+ *  the last pose, a hand-built range - is folded here, off its
+ *  positions (meshBounds, the one fold). */
 export function foldRangeBoxes(ranges) {
   for (const r of ranges) {
-    const p = r.piece && r.piece.positions;
+    const piece = r.piece;
+    const p = piece && piece.positions;
     if (!p || p.length < 3) { r.box = null; continue; }
-    let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
-    for (let i = 0; i + 2 < p.length; i += 3) {
-      const x = p[i], y = p[i + 1], z = p[i + 2];
-      if (x < minX) minX = x; if (x > maxX) maxX = x;
-      if (y < minY) minY = y; if (y > maxY) maxY = y;
-      if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
-    }
+    const src = piece.box || meshBounds([piece]);   // PR-BOW1b: poseAssembly's own fold; the walk only for an unposed piece
+    if (!src) { r.box = null; continue; }
     const b = r.box || (r.box = { minX: 0, minY: 0, minZ: 0, maxX: 0, maxY: 0, maxZ: 0 });
-    b.minX = minX; b.minY = minY; b.minZ = minZ; b.maxX = maxX; b.maxY = maxY; b.maxZ = maxZ;
+    b.minX = src.minX; b.minY = src.minY; b.minZ = src.minZ; b.maxX = src.maxX; b.maxY = src.maxY; b.maxZ = src.maxZ;
   }
 }
 
@@ -674,10 +678,11 @@ export const CARRIED_SLOTS = Object.freeze(['weapon', 'arrow', 'torch', 'paper',
 /** PR-BOW1: the box over the ranges the pass will DRAW - rule 57 hides a
  *  sheathed weapon, the holster twin while the blade is out, an arrow off
  *  the string and an unlit torch by a per-range flag and keeps their
- *  vertices, so the assembly's own fold (poseAssembly's meshBounds) still
- *  counts them. Written into `out` (the caller's, owned); null when
+ *  vertices, so the assembly's own fold (poseAssembly's foldPieceBounds)
+ *  still counts them. Written into `out` (the caller's, owned); null when
  *  nothing drawn has a box. `skip`: slots left out of the fold (drawThird
- *  asks once more without CARRIED_SLOTS, for the body's own height). */
+ *  asks once more without CARRIED_SLOTS, for the body's own height; the
+ *  portrait too, for the scale it frames at - PR-BOW1b). */
 export function visibleRangeBounds(ranges, out, skip = null) {
   if (!ranges) return null;
   let any = false;
@@ -693,6 +698,52 @@ export function visibleRangeBounds(ranges, out, skip = null) {
   if (!any) return null;
   out.minX = minX; out.minY = minY; out.minZ = minZ; out.maxX = maxX; out.maxY = maxY; out.maxZ = maxZ;
   return out;
+}
+
+/** PR-BOW1b (2026-09-24): THE PORTRAIT'S WINDOW - what figure() frames.
+ *  It framed a box over EVERY piece and then hid the unlit torch, the
+ *  arrow off the string and the empty holster twin, so gear it does not
+ *  show still moved the frame; and its width was the box's azimuth-safe
+ *  diagonal, so a longsword pointing at the viewer, or a bow's stave,
+ *  widened the picture past its 110:184 cell, and object-fit shrank the
+ *  body in it (bare 0.943 of the cell, longsword 0.891, long bow 0.774
+ *  on the pin's stand-in, test/prbow1b_followups.test.js).
+ *
+ *  THE BODY SETS THE SCALE; WHAT IS DRAWN SETS ONLY THE REACH. The window
+ *  stands on the actor's own axis (MW x = y = 0) at the body's
+ *  mid-height - the drawn ranges less CARRIED_SLOTS, drawThird's own
+ *  anchor, so the body stays centred as the panel turns it - and its
+ *  half-height is the body's half-span. Every range the portrait SHOWS
+ *  (the held weapon, the lit torch, the quiver) is then held inside it
+ *  at the yaw asked: a held item is drawn, never clipped, and widens the
+ *  picture only by what it reaches at that yaw - so the body keeps its
+ *  size in the cell while the picture stays inside the cell's aspect
+ *  (every front view of the pin's longsword and bow). A hidden range is
+ *  not in it at all. Read off the ranges' posed boxes (foldRangeBoxes -
+ *  no vertex walk) through `model`, corner by corner: a box's corners
+ *  bound its vertices, so the window holds every drawn one. The
+ *  portrait's camera looks down world -Z (figure()), so its x is world x
+ *  and its y world y. Answers { center, halfW, halfH } in world units,
+ *  unpadded; null when nothing drawn has a box. `bodyBox`: the caller's
+ *  scratch (owned). */
+export function portraitWindow(ranges, model, bodyBox) {
+  const body = visibleRangeBounds(ranges, bodyBox, CARRIED_SLOTS) || visibleRangeBounds(ranges, bodyBox);
+  if (!body) return null;
+  const midZ = (body.minZ + body.maxZ) / 2;
+  const cx = model[8] * midZ + model[12], cy = model[9] * midZ + model[13], cz = model[10] * midZ + model[14];
+  let halfW = 0, halfH = 0;
+  for (const r of ranges) {
+    const b = r.hidden ? null : r.box;
+    if (!b || !(b.maxX >= b.minX)) continue;
+    for (let k = 0; k < 8; k++) {
+      const x = k & 1 ? b.maxX : b.minX, y = k & 2 ? b.maxY : b.minY, z = k & 4 ? b.maxZ : b.minZ;
+      const w = Math.abs(model[0] * x + model[4] * y + model[8] * z + model[12] - cx);
+      const h = Math.abs(model[1] * x + model[5] * y + model[9] * z + model[13] - cy);
+      if (w > halfW) halfW = w;
+      if (h > halfH) halfH = h;
+    }
+  }
+  return { center: [cx, cy, cz], halfW, halfH };
 }
 
 /**
@@ -2570,6 +2621,7 @@ export function createFpArm() {
   let thirdPacked = null;
   const thirdDrawBox = { minX: 0, minY: 0, minZ: 0, maxX: 0, maxY: 0, maxZ: 0 };   // PR-BOW1: drawThird's fold, owned by the rig - one object, rewritten per draw
   const thirdBodyBox = { minX: 0, minY: 0, minZ: 0, maxX: 0, maxY: 0, maxZ: 0 };   // PR-BOW1: the same fold less CARRIED_SLOTS - the body's own height
+  const figureBodyBox = { minX: 0, minY: 0, minZ: 0, maxX: 0, maxY: 0, maxZ: 0 };   // PR-BOW1b: the portrait's body fold, owned by the rig
   const rig = () => (viewMode === 'third' && thirdBuilt && thirdBuilt.ok ? thirdBuilt : built);
 
   const active = () => !!(built && built.ok && mesh && renderer && camera && (actionState || movementState || jumpState || idleState)
@@ -4749,18 +4801,22 @@ export function createFpArm() {
       }
       const u = 1 / MW_UNITS_PER_METER;
       const rs = (built && built.raceScale) || { weight: 1, height: 1 };
-      // AUDIT 68 S08-fparm-texture-hang-triplicate: the pieces' own fold
-      // (meshBounds, what poseAssembly sets) - off the pieces, because an
-      // unposed figure's arm.bounds may predate a weapon swap.
-      const { minX, minY, minZ, maxX, maxY, maxZ } = meshBounds(t.arm.pieces) ?? {};
-      if (!(maxX > minX)) return null;
       // feet at the origin, facing the viewer: drawThird's +180 makes yaw
       // 0 face -Z in pass space, and the eye below sits on +Z.
       const yawDeg = (yaw * 180 / Math.PI) + 180;
       const model = multiply(trs(0, 0, 0, 0, yawDeg, 0, -u * rs.weight, u * rs.height, u * rs.weight), NIF_TO_PASS);
-      const halfH = ((maxZ - minZ) * u * rs.height) / 2 * 1.06;
-      const halfW = (Math.hypot(maxX - minX, maxY - minY) * u * rs.weight) / 2 * 1.06;
-      const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
+      // PR-BOW1b (2026-09-24): FRAMED ON WHAT IT DRAWS, AT THE BODY'S
+      // SCALE - after the flags above, off the per-range boxes the upload
+      // just folded (portraitWindow). It framed meshBounds over EVERY
+      // piece, the hidden ones included (AUDIT 68 had moved it off
+      // arm.bounds for a swap's sake; the ranges are the swap's too), at
+      // the box's azimuth-safe width - so a held weapon shrank the body
+      // in its cell. The body sets the height; what is shown only reaches.
+      const win = portraitWindow(thirdMesh.ranges, model, figureBodyBox);
+      if (!(win && win.halfW > 0 && win.halfH > 0)) return null;
+      const halfH = win.halfH * 1.06;
+      const halfW = win.halfW * 1.06;
+      const center = win.center;
       const ph = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(height)));
       const pw = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(ph * halfW / halfH)));
       const eye = [center[0], center[1], center[2] + 4];
