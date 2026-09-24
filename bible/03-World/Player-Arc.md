@@ -1699,7 +1699,7 @@ at the shipped `Mouse2` default, and handed it to the input lane.
 `host` (`worldModes.js:409`), and its only two callers are `world.js`
 (`:6147`) and `exterior.js` (`:2769`), both of which pass their own Set
 and both of whose WINDOW-level handlers (`world.js:8092-8093`,
-`exterior.js:3258-3259`) call `mouseCode(e.button)` and add/delete
+`exterior.js:3255-3256`) call `mouseCode(e.button)` and add/delete
 unconditionally - outside every mode and overlay gate. `MOUSE_CODES`
 maps button 2 to `Mouse2` (`input.js:491`), which is the shipped
 binding (`InputManager.cs:995`). The latch is live in that host; there

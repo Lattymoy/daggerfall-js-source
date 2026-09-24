@@ -14,6 +14,8 @@
 
 import { mapPixelToLongitudeLatitude } from '../formats/mapsFile.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';   // TTL1: a day is the clock's own, never a second 1440
+import { TERRAIN_SIZE } from './terrainSampler.js';   // SPAWNED-DUNGEONS3: a pixel is 819.2 metres on a side
+import { getLocationTerrainTileOrigin, WORLD_MAP_TILE_DIM } from './terrainTiles.js';   // SPAWNED-DUNGEONS3: where a location stands in its pixel
 
 /** The chance a pixel holds a spawned dungeon. */
 export const SPAWN_CHANCE = 0.10;
@@ -86,9 +88,61 @@ export function synthesizeDungeonLocation(template, { salt, px, py, where = {} }
  */
 export function spawnTemplates(locations, isMain = () => false) {
   const dungeons = [...(locations ?? [])].filter((l) => l?.hasDungeon && l.dungeon?.blocks?.length
-    && l.exterior?.exteriorData && !isMain(l.mapTableData?.mapId) && !l.spawned);
+    && l.exterior?.exteriorData && !isMain(l.mapTableData?.mapId) && !l.spawned
+    && spawnClearance(l.exterior.exteriorData.width, l.exterior.exteriorData.height) >= SPAWN_CLEARANCE_M);   // SPAWNED-DUNGEONS3: never one the player could cross into inside 300 m
   const small = dungeons.filter((l) => l.exterior.exteriorData.width * l.exterior.exteriorData.height === 1);
   return small.length ? small : dungeons;
+}
+
+// ---------------------------------------------------------------- SPAWNED-DUNGEONS3
+//
+// THE PLAYER'S OWN PIXEL, AT A DISTANCE (2026-09-24, Mac: "Dungeons that
+// currently spawn on the player's exact pixel or up to 2 pixels away
+// should now always spawn directly on the player's pixel. Additionally,
+// the nearby direction message should display the distance/direction in
+// meters. The dungeon has to spawn 300+ meter away from the player in
+// the same pixel/chunk.")
+//
+// WHERE A SPAWN STANDS IN ITS PIXEL is the same place every location
+// stands: CENTRED (terrainTiles.js getLocationTerrainTileOrigin -
+// TerrainHelper.SetLocationTiles' own law), so the host's layout, its
+// doors and its Where-is directory need no second placement. A pixel is
+// 819.2 metres on a side and a block 102.4, so a one-block dungeon's
+// exterior runs 358.4..460.8 across the pixel on both axes, and a player
+// entering at the middle of an edge is 358 metres from its nearest
+// edge and 410 from its centre - the "300+ metres" rule holds by
+// construction for a walk-in. What COULD break it is the template: an
+// exterior three blocks wide leaves 256 metres of clearance, eight
+// leaves none. So the clearance is the template gate, and the old
+// "no one-block exterior: any real dungeon" fallback is gone - a
+// fallback that breaks the rule is not one.
+
+/** The least distance a player entering the pixel may be from the spawn's exterior. */
+export const SPAWN_CLEARANCE_M = 300;
+/** A block's side, metres: eight to a pixel. */
+export const BLOCK_M = TERRAIN_SIZE / 8;
+/** Metres from a pixel's edge to the nearest edge of a centred w x h block exterior (the tighter axis). */
+export const spawnClearance = (width, height) => (TERRAIN_SIZE - Math.max(width | 0, height | 0) * BLOCK_M) / 2;
+
+/**
+ * A location's centre in its pixel's LOCAL frame, metres: [x east, z
+ * north] from the pixel's south-west corner - the frame the streaming
+ * host's `pixelTranslation` puts at the pixel's origin (scene x runs
+ * east; scene z runs NORTH, because that translation negates py, and
+ * the layout stands a location at `tilePos * tileSide` on both axes).
+ * Tile 0 is the corner; a tile is 6.4 metres.
+ */
+export function spawnedLocationCentreLocal(loc) {
+  const tile = TERRAIN_SIZE / WORLD_MAP_TILE_DIM;
+  const o = getLocationTerrainTileOrigin(loc);
+  const w = loc.exterior.exteriorData.width, h = loc.exterior.exteriorData.height;
+  return [(o.x + w * 8) * tile, (o.y + h * 8) * tile];
+}
+
+/** The line, with the distance to the nearest ten metres and the compass word the host resolved. */
+export function dungeonSightLine(metres, direction) {
+  const m = Math.max(10, Math.round(metres / 10) * 10);
+  return `You see a Dungeon ${m} metres to the ${direction}!`;
 }
 
 // ---------------------------------------------------------------- TTL1
