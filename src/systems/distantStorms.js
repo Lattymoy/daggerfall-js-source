@@ -146,8 +146,8 @@ export function createDistantStorms() {
           // front's full-grown size can lie wholly or partly outside it. The strikes read the clip only for the "under
           // its heart" skip above, so four cells in ten that paint nothing struck on, and 61% of strikes landed where
           // no storm stands: bolts, the land's flash and thunder under a sunny or cloudy word, around the player. A
-          // strike lands where its storm is drawn, and not on a ground that turns it to snow (the centre's test above
-          // is the cheap first gate).
+          // strike lands where its storm is drawn, and not on a ground that turns it to snow where it lands (the
+          // centre's test above is the cloud's: a cell centred over snow is drawn a snow squall, whole).
           if (!insideClip(s, px, pz)) continue;
           if (ground && ground('thunder', px, pz, minutes) !== 'thunder') continue;
           bolt = { x: s.x, z: s.z, r: s.bands[0][0], strength: envAt(t), at: seconds, strike };

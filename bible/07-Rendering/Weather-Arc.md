@@ -1069,3 +1069,26 @@ entirely" and "Sometimes thunder ends abruptly".
   nor a recentre changes its level, so it is left as DFU has it.
 - Pinned by `test/disc17.test.js`; mutants `tools/mutants/disc17.json`.
   `01-Overview/Field-Bugs-2026-09-23.md`, DISC17.
+
+## DISC19-D - a storm strikes only where it is drawn (2026-09-24)
+
+Mac: *"Lightning can be seen even when its not storming."*
+
+- **The cause.** Since slice G a thunderstorm is a cell of a rain front,
+  and it paints (its word, its cloud) only inside its front's core as the
+  core is now (`clip`). Cells are born out in the front's full-grown size,
+  and many lie wholly or partly outside it. Slice D's strikes read the
+  clip only for the "under its heart" skip, so four cells in ten that
+  paint nothing went on striking, and 61% of strikes landed where no
+  storm stands. Since BOLT each drew a bolt, lit the land and thundered.
+  On the report's kind of afternoon (a swamp, the player's word sunny,
+  18 clipped cells in range) that was 248 strikes and 43 thunderclaps in
+  twenty real minutes.
+- **The fix.** `distantStorms.js`: a strike lands only inside its cell's
+  clip, and not on ground that turns it to snow where it lands. The
+  centre's test stays: it is the cloud's, since a cell centred over snow
+  is drawn a snow squall, whole (R1). A storm with no clip strikes as
+  before, every client still sees the same strikes, and a far storm's
+  lightning is still seen from afar.
+- Pinned by `test/disc19.test.js` (D); mutants `tools/mutants/disc19.json`.
+  `01-Overview/Field-Bugs-2026-09-23.md`, DISC19-D.

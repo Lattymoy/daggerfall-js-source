@@ -642,3 +642,42 @@ early returns), then a six-stride ride whose dismount frame plays, a
 fall into water whose first swimming frame plays with `lostGrounding`
 still up, and a standing-still frame that leaves the anchor where it was
 while `rebase()` still re-seeds.
+
+## DISC19-B (2026-09-24): a music switch fades - a recorded departure
+
+Mac: *"Sometimes when music tracks switch, its very abrupt instead of
+seamlessly fading in between tracks."*
+
+DFU cuts. `DaggerfallSongPlayer.Play` calls `Stop` first, and `Stop` is
+`audioSource.Stop()` or the sequencer's `NoteOffAll`: the old song goes
+mid-note and the next starts at full level. That happens at every switch
+SongManager makes: a weather ring crossed, dawn, a door, a new location,
+a quest's PlaySong. The port did the same. A song that ended on its own
+before the next one was the smooth case, hence "sometimes".
+
+The port departs, at Mac's word (Port-Ledger A, DISC19-B):
+
+- **The fader.** Each player (`SongPlayer`, `AudioSongPlayer`) runs its
+  song through a gain of its own, `_fader`, into its master. The synth's
+  channel gains and a pack's buffer source connect to it. The master
+  stays the VOLUME: MusicVolume's live resync and the video mute (AUDIT
+  64 F41) write it, and neither cancels a fade. `rampFader` holds the
+  fader where it stands (`cancelAndHoldAtTime`, or by hand where a
+  browser lacks it) and ramps from there, so a fade turned round half way
+  turns round where it is.
+- **The switch.** `MusicService.playSong`, asked for another song while
+  one sounds, fades the sounding one out over `MUSIC_FADE_OUT_S` (1.5 s),
+  stops it at silence, then starts the next at nothing and fades it in
+  over `MUSIC_FADE_IN_S` (1 s).
+  - One synth voices one song, so the two play in turn, never on top of
+    each other. A pack's decode gap sits between them, as before.
+  - The latest request during a fade is the one that plays. The song
+    fading out, asked for again, turns round without a stop or a restart.
+  - `playing` stays up through the fade, so the director reads no ended
+    song.
+  - A song that will not start leaves nothing claimed.
+  - `stop()` cancels a switch in flight.
+- **The start.** A first song, and a song after one that ended, rise in
+  at once, from the MIDI.BSA path and a music pack's alike.
+
+Pins: `test/disc19.test.js` (B), `tools/mutants/disc19.json`.

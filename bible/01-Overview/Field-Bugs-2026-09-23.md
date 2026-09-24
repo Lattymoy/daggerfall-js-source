@@ -1654,3 +1654,170 @@ The pins are `test/disc18.test.js` (3):
 AUDIT 65 XL-4's and MWBODY1's host pins are re-aimed. The mutants are
 `tools/mutants/disc18.json`, all seven dead.
 
+
+# DISC19 - five in one message
+
+Mac, 2026-09-24: *"1. Grass isnt affected by fog 2. Sometimes when music
+tracks switch, its very abrupt instead of seamlessly fading in between
+tracks 3. Horse and carts can be seen parked in the sky 4. Lightning can
+be seen even when its not storming. 5. The weapon widget default toggle
+unfer diverse weapons should be set to off by default"*
+
+## DISC19-A: the grass stood out of the fog
+
+**Cause.** The lab's grass program had no fog term, GR1 carried it byte
+for byte, and the renderer's fog only reaches its own programs. So under
+every fog row the ground takes (a clear day's linear 2400, the rain's exp
+0.003, the heavy fog's exp 0.05, the sandstorm's exp 0.09, Dynamic Skies'
+exp2 and colour) the field was drawn out to its 300 m fade, dimmed but
+never fogged. In heavy fog the ground is the fog's colour past 60 m while
+the grass stood out of it to 165 m.
+
+**Fix.** `labGrass.js` `GRASSFOG_VS_EDITS`/`GRASSFOG_FS_EDITS`, applied
+after the pixel style's, so the fog is not snapped to a ramp step:
+
+- the vertex hands down its world point;
+- the fragment blends to the fog colour by the terrain's own
+  `fogFactorAt` (`FOG_FACTOR_GLSL`, TERRAIN_FS's text verbatim);
+- the renderer uploads the five fog uniforms from `light.fog`, and mode 0
+  (the lab's unfogged picture) when a host hands none;
+- `world.js` hands the fog the ground took this frame, from the view's eye.
+
+## DISC19-B: a switch cut the song off
+
+**Cause.** DFU cuts: `DaggerfallSongPlayer.Play` calls `Stop` first, and
+`Stop` is `audioSource.Stop()` or the sequencer's `NoteOffAll`. The old
+song goes mid-note and the next starts at full level. The port did the
+same at every switch: a weather ring crossed, dawn, a door, a new
+location, a quest's PlaySong. A song that ended on its own and was
+followed by the next one was the smooth case, hence "sometimes".
+
+**Fix, a recorded departure (Port-Ledger A).** Each player runs its song
+through a fader of its own under the volume (`songPlayer.js`
+`rampFader`). The master stays the volume: the slider and the video mute
+write it, and neither cancels a fade. `music.js`:
+
+- a switch fades the sounding song out over `MUSIC_FADE_OUT_S` (1.5 s),
+  stops it at silence, then starts the next at nothing and fades it in
+  over `MUSIC_FADE_IN_S` (1 s);
+- one synth voices one song, so the two play in turn, never on top of
+  each other;
+- the latest request during a fade is the one that plays, and the song
+  fading out, asked for again, turns round from where its fade stands;
+- `playing` stays up through the fade, so the director never reads it as
+  a song that ended;
+- a first song, and a song after one that ended, rise in at once;
+- `stop()` cancels a switch in flight.
+
+## DISC19-C: parked teams in the sky
+
+**Cause.** A peer's HCC word carries the height the OWNER's client stood
+the team at, and nothing re-read it on the viewer's ground. The one place
+the two part by much is a word older than the ground:
+
+- the relay keeps a parked team for 72 hours (HCC-PARK), and an
+  identical word refreshes it;
+- TERRAIN-SCALE1 lowered every ground from the prefab's 1.5 to the game
+  scene's 1.25 four hours after HCC-PARK shipped (PRs #341 and #345). It
+  re-stood the heights a save, a scene cache and an anchor carry, not
+  this one.
+
+So every team kept from before it, and every word from a tab still on the
+old build, stood a fifth of the ground's height up: 20 m over 100 m of
+ground, 60 m over 300. World of Daggerfall's levelled sites and Basic
+Roads' smoothing, on for one player and off for the other, part them the
+same way, by less.
+
+Two smaller faults in the same code:
+
+- The mod grounds its parked wagon and waiting horse once, since its
+  terrain never changes under a scene. The port's can: a pixel rebuilt
+  under them (the road network landing, a late World of Daggerfall pack)
+  left the owner's own team on the old ground until they walked out of
+  the pixel and back. By metres, on a levelled site.
+- A crossing that left the parked wagon's pixel left its collider box
+  behind in the old frame, 819 m off in the pixel entered: a wall no one
+  could see.
+
+**Fix.**
+
+- `horseCartPool.js` `groundPeer` stands a peer's PARKED wagon and
+  STANDING horse on the viewer's ground by the mod's own law: the wagon
+  by its two-wheel solve (`DeployedWagonVisual`, the owner's heading),
+  the horse by the stationary probe.
+  - Once per word, with the owner's box and mine left out of the ray.
+  - Kept as a delta off the word, so the floating origin and a re-anchor
+    carry it.
+  - Where the viewer's ground is not built yet it stands as said and is
+    tried again each second (`GROUND_RETRY_SECONDS`).
+  - A moving team is its owner's live word and stands as said.
+- `world.js` calls the pool's `groundMoved` after every pixel is
+  published, over its bounds. That re-stands the owner's own team
+  (`horseCart.js` `regroundStanding`) and the peers' within the pixel. The
+  hook is bound after the pool, because the boot's first pixel builds
+  before it.
+- `offsetAll` takes the parked wagon's box down with the old frame.
+
+Old kept records need no purge: they stand on the ground now and expire
+on their own.
+
+## DISC19-D: lightning under a clear sky
+
+**Cause.** Since WEATHER3g a thunderstorm is a cell of a rain front, and
+it paints (its word, its cloud) only inside its front's core as the core
+is now (`clip`). Cells are born out in the front's full-grown size, and
+many lie wholly or partly outside it. The distant storms read the clip
+only for the "under its heart" skip. So four cells in ten that paint
+nothing went on striking, and 61% of strikes landed where no storm
+stands. Since BOLT each drew a bolt, lit the land and thundered.
+Measured on the report's kind of afternoon (a swamp, the player's word
+sunny, 18 clipped cells in range): 248 strikes and 43 thunderclaps in
+twenty real minutes.
+
+**Fix.** `distantStorms.js`: a strike lands only inside its cell's clip,
+and not on ground that turns it to snow where it lands. The centre's test
+stays too: it is the cloud's, since a cell centred over snow is drawn a
+snow squall, whole (AUDIT WEATHER3 R1). A storm with no clip strikes as
+before, every client still sees the same strikes, and a far storm's
+lightning is still seen from afar, as BOLT asked.
+
+## DISC19-E: the Weapon Widget preset back to off
+
+Diverse Weapons' Weapon Widget Preset has shipped off since DISC16-B. A
+default only answers for a player who never touched the switch, though:
+anyone who turned it on while DW-CLIP shipped it on, or tried it, holds a
+saved value and still saw it on.
+
+**Fix.** `modSettings.js` `SWITCH_RESETS`: on load, a stored Weapon
+Widget Preset without the entry's stamp is let go and the file written
+back, so the shipped off applies. `setModSetting` stamps the key when a
+player sets it from now on, so a choice made after the reset is kept
+across reloads, which `KEY_MIGRATIONS` (value matches) could not do. A
+file that never mentioned the mod is not grown one.
+
+## Pins
+
+`test/disc19.test.js` (13):
+
+- A: the grass stage run through `test/glsl.mjs` in both styles (no fog
+  is the old picture to the bit, 100 m into heavy fog is the fog colour,
+  each mode exactly the terrain's blend) and the fog's text and wiring.
+- B: the service on fake players and a manual clock (out, then in; the
+  latest request; the turn-round; the stop), a music pack's track, and
+  the fader.
+- C: a kept team from before TERRAIN-SCALE1 on the viewer's ground; the
+  retry, the delta, a same-ground word where it was said, a moving team
+  unprobed; the owner's own team re-stood; the orphaned box; the host's
+  hook.
+- D: a cell wholly outside its core strikes nothing, half outside only
+  inside, never onto snow where it lands, and a cell centred over snow
+  not even at its edge; the sunny swamp afternoon is dark.
+- E: the stamped reset.
+
+GRASS-PX's composition pin now composes both edit lists, and
+`test/hccWorld.mjs`'s ground can move. The mutants,
+`tools/mutants/disc19.json`, are all 34 dead. Of the 88 older records the
+change reaches, 87 died as they stood; `WEATHER3f-squall-strikes` (the
+centre's gate) survived, because R1's winter is snow everywhere and the
+new strike-point gate stood in for it. It runs `test/disc19.test.js` too
+now, which holds a squall's edge over thunder ground dark.

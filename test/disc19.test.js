@@ -138,6 +138,10 @@ test('DISC19-D: a storm cell strikes only where it is drawn - wholly outside its
   const east = run(cell(null), (type, x) => (x <= 20000 ? 'thunder' : 'snow'));
   assert.ok(east.strikes.length > 0 && east.strikes.length < free.strikes.length, `the west half's strikes (${east.strikes.length})`);
   for (const s of east.strikes) assert.ok(s.x <= 20000, 'none on the snow');
+  // and a cell centred over snow is drawn a snow squall, whole (AUDIT WEATHER3 R1): its edge over thunder ground
+  // strikes nothing either
+  const squall = run(cell(null), (type, x) => (x <= 20000 ? 'snow' : 'thunder'));
+  assert.deepEqual([squall.strikes.length, squall.sounds, squall.lit], [0, 0, 0], 'a squall\'s edge is no storm');
 
   // the report's own afternoon, measured: a swamp everywhere, the player's word sunny, 18 clipped cells in range
   const { systemsNear, weatherAt } = await import('../src/systems/weatherMap.js');

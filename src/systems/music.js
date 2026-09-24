@@ -26,7 +26,7 @@ import { onSettingChange } from './settings.js';   // 2026-08-27: MusicVolume ap
  *  between tracks"): A SWITCH FADES. DFU cuts - DaggerfallSongPlayer.Play calls Stop first, and Stop is
  *  audioSource.Stop() or midiSequencer.Stop() with NoteOffAll: the old song goes mid-note and the next starts at full
  *  level - and so did every switch the port makes (a weather ring crossed, dawn, a door, a new location, a quest's
- *  PlaySong). A recorded departure (Port-Ledger A), at the owner's word: the song sounding fades out over
+ *  PlaySong). A RECORDED DEPARTURE (Port-Ledger A), at the owner's word: the song sounding fades out over
  *  MUSIC_FADE_OUT_S under its fader (songPlayer.js rampFader), then the next starts with its fader at nothing and
  *  fades in over MUSIC_FADE_IN_S. One synth voices one song, so the two play in turn, never on top of one another (a
  *  pack's decode gap sits between them, as before). The latest request during a fade is the one that plays; the song
