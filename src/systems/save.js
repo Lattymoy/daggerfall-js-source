@@ -26,6 +26,7 @@ import { createSceneCache, snapshotSceneCache, restoreSceneCache } from './scene
 import { seedCustomSpellIndex } from './spellMaker.js';   // S1: made spells carry their own record
 import { seedBundleSeq } from './effects.js';   // X10: the live-bundle counter's restore half
 import { repairLostCurses } from './curseRepair.js';   // CURSE-REPAIR1: a curse the round clock pruned, given back
+import { repairUnmintedConditions } from './conditionRepair.js';   // DISC21-A: a wearable minted with no condition, minted
 import { SOCIAL_GROUPS } from '../formats/factionFile.js';   // AUDIT 24
 import { travelMapSaveData, restoreTravelMapSaveData } from './travelMapState.js';   // U41: TravelMapSaveData
 import { getEscortFacesSaveData, restoreEscortFacesSaveData } from '../ui/hudEscortFaces.js';   // FE1: SaveData_v1.escortingFaces
@@ -593,6 +594,12 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.items = snap.items.map((it) => setItemFields(it));   // JAN1: SetItem's two writes on every item in (a copy, as before)
   entity.wagonItems = (snap.wagonItems ?? []).map((it) => setItemFields(it));   // W-slice (pre-W saves restore empty); JAN1: set on the way in
   entity.otherItems = (snap.otherItems ?? []).map((it) => setItemFields(it));   // R1: the in-repair collection (pre-R1 saves restore empty); JAN1: set on the way in
+  // DISC21-A: a biography item was minted with no condition until DISC21, and Roleplay & Realism wore the questions'
+  // ebony dagger to 20% of nothing - broken, and undamaged to the repairer. Minted now, by the law it missed.
+  for (const list of [entity.items, entity.wagonItems, entity.otherItems]) {
+    const n = repairUnmintedConditions(list);
+    if (n) console.info(`[save] DISC21-A: ${n} item(s) given the condition they were never minted with`);
+  }
   entity.rentedRooms = (snap.rentedRooms ?? []).map((r) => ({ ...r }));   // U39: the rented rooms (pre-U39 saves restore empty)
   // JAN1 (2026-09-18, Janome: CRASH `region 17 is outside the 0 bank accounts`, a softlock at the bank): a pre-B1 save
   // restored an EMPTY table, which is truthy, so worldModes' `??= createBankAccounts` never minted one and every bank

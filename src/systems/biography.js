@@ -25,7 +25,8 @@
 // BiogFile.cs:339 does.
 
 import { addItem, addGoldPieces, goldPiecesOf } from './inventory.js';   // E4: the GP command writes the counter
-import { itemBaseValue, templateByIndex, templateFor } from './itemTemplates.js';
+import { itemBaseValue, templateByIndex, templateFor, mintCondition } from './itemTemplates.js';
+import { createWeapon } from '../combat/enemyEquipment.js';   // DISC21-A: ItemBuilder.CreateWeapon's one home - the condition mints with it
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { SKILL_COUNT } from './skills.js';
 import { ensureReactionState } from './talk.js';
@@ -66,7 +67,18 @@ const ARROW_TEMPLATE = 131;
 /** BiogFile.cs:305-324's IT arm: Weapons go through CreateWeapon,
  *  Armor through CreateArmor with the weapon->armor material map,
  *  Books through CreateRandomBook, everything else is the bare
- *  group/index record. */
+ *  group/index record.
+ *
+ *  DISC21-A (2026-09-24, Satranath on Discord: "Started a new character this morning with an ebony dagger. when I try
+ *  to equip it, it says it's broken and cannot be worn. tried to get an NPC to repair it and they say it isn't
+ *  damaged"): EVERY ONE OF THOSE MINTS ITS CONDITION. CreateWeapon and CreateArmor run SetItemPropertiesByMaterial -
+ *  `maxCondition = maxCondition * conditionMultipliersByMaterial[material] / 4; currentCondition = maxCondition`
+ *  (ItemBuilder.cs) - and the bare record is `new DaggerfallUnityItem(group, index)`, whose SetItem takes the
+ *  template's hitPoints for both. This arm built the record by hand and minted none of it, so a biography item had no
+ *  condition at all; Roleplay & Realism's skill-based kit then wore the questions' ebony dagger to 20% of a
+ *  maxCondition that was not there - 0 of 0: broken to the equip check (currentCondition < 1), undamaged to the
+ *  repairer (0 === 0). A weapon now leaves through createWeapon, the arrow arm included; everything else through
+ *  mintCondition, with the armor's material. */
 const mintItem = (group, groupIndex, material, rolls) => {
   const t = templateFor(group, groupIndex);
   if (!t) return null;
@@ -75,23 +87,16 @@ const mintItem = (group, groupIndex, material, rolls) => {
   // than through the generic template mint below. This closes the loud
   // interim that used to log here on every biography book.
   if (group === 'Books') return createRandomBook(rolls);
+  // ItemBuilder.CreateWeapon:353-368 - "Ignored for arrows": an arrow
+  // takes NO material (nativeMaterialValue = 0), a stack of Range(1,
+  // 20+1) and currentCondition 0; createWeapon carries that arm (X11b)
+  // with the material pass for every other weapon.
+  if (group === 'Weapons') return createWeapon(t.index, t.index === ARROW_TEMPLATE ? 0 : material, rolls);
   const item = { group, templateIndex: t.index };
-  if (group === 'Weapons') {
-    // ItemBuilder.CreateWeapon:353-368 - "Ignored for arrows": an
-    // arrow takes NO material (nativeMaterialValue = 0), a stack of
-    // Range(1, 20+1) and currentCondition 0. loot.js:111 and
-    // shopStock.js:128 already carry this branch; this was the third
-    // site and it minted ONE arrow at the file's material, so two IT
-    // lines of different material could not even stack.
-    if (t.index === ARROW_TEMPLATE) {
-      item.material = 0;
-      item.stackCount = 1 + Math.floor(rolls() * 20);
-      item.currentCondition = 0;
-    } else item.material = material;
-  } else if (group === 'Armor') item.material = weaponToArmorMaterial(material);
+  if (group === 'Armor') item.material = weaponToArmorMaterial(material);
   item.name = templateByIndex(t.index)?.name;
   item.value = itemBaseValue(item);
-  return item;
+  return mintCondition(item);
 };
 
 /** ApplyPlayerEffect verbatim for ONE effect string. Returns the
