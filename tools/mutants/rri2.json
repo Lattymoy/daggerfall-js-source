@@ -74,11 +74,12 @@
   {
     "name": "RRI2-9-the-alchemist-potion-is-not-doubled",
     "file": "src/systems/rriKits.js",
-    "old": "      item.value = (item.value ?? itemBaseValue(item)) * 2;",
-    "new": "      item.value = (item.value ?? itemBaseValue(item));",
+    "old": "      item.value = itemValueOf(item) * 2;",
+    "new": "      item.value = itemValueOf(item);",
     "tests": [
       "test/rri2_realism.test.js"
-    ]
+    ],
+    "why_reaimed": "AUDIT 68 S27-wth-nan: the value read goes through itemValueOf; re-aimed to the same doubling."
   },
   {
     "name": "RRI2-10-the-swing-time-forgets-the-speed-cap",

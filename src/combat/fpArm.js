@@ -1038,34 +1038,19 @@ export function weaponRestSide(arm, bone) {
   return x > 1e-4 ? 'right' : x < -1e-4 ? 'left' : 'centre';
 }
 
-/** Template 131 is Daggerfall's arrow. This test existed as THREE
+/** Daggerfall's arrows in the pack. This test existed as THREE
  *  literals (the rig's out-of-arrows auto-sheathe, the card's build
- *  button, and the swap seam wanted a fourth) - one export now. */
-export const DF_ARROW_TEMPLATE = 131;
-export function hasDaggerfallArrows(items) {
-  return !!items?.some((it) => it.templateIndex === DF_ARROW_TEMPLATE && (it.stackCount ?? 1) > 0);
-}
+ *  button, and the swap seam wanted a fourth) - one export now.
+ *  AUDIT 68 S27-ammoCount-dup: and the COUNT under it is inventory.js's
+ *  ammoCountFor, beside the spend law - this file carried a copy of it,
+ *  and the copy was the one the rig read. */
+export const hasDaggerfallArrows = (items) => ammoCountFor(items, null) > 0;
 /** THE SAME QUESTION, ASKED OF THE WEAPON. A bow is out of ammunition
  *  when there are no Arrows; the Dwarven Thunderlock when there are no
  *  Dwemer Pellets. Everything that is not a ranged weapon answers with
  *  the arrow test it always did, so no caller has to know which it is
  *  holding to keep behaving. */
-export function hasAmmoFor(items, weapon) {
-  const template = ammoTemplateFor(weapon) ?? DF_ARROW_TEMPLATE;
-  return !!items?.some((it) => it.templateIndex === template && (it.stackCount ?? 1) > 0);
-}
-export function ammoCountOf(items, weapon) {
-  const template = ammoTemplateFor(weapon) ?? DF_ARROW_TEMPLATE;
-  let n = 0;
-  for (const it of items ?? []) if (it.templateIndex === template) n += Math.max(0, it.stackCount ?? 1);
-  return n;
-}
-/** WS1: how many arrows the pack carries - the quiver shows min(count, its slots). */
-export function daggerfallArrowCount(items) {
-  let n = 0;
-  for (const it of items ?? []) if (it.templateIndex === DF_ARROW_TEMPLATE) n += Math.max(0, it.stackCount ?? 1);
-  return n;
-}
+export const hasAmmoFor = (items, weapon) => ammoCountFor(items, weapon) > 0;
 
 /**
  * MW-LOAD: THE ARCHIVE PATHS resolveWeaponParts WILL READ, before it
@@ -1173,7 +1158,7 @@ export const archiveHas = (archives) => (p) => (archives ?? []).some((a) => a.ha
  *  bow that resolves with ammunition in the pack and no arrow on it is
  *  a fault the player sees from the chair and could not name - the
  *  card's note is the same sentence, but the card is a menu away. */
-import { ammoTemplateFor } from '../characters/thunderlockIds.js';   // what a ranged weapon spends - a leaf (see the file)
+import { ammoCountFor } from '../systems/inventory.js';   // AUDIT 68 S27-ammoCount-dup: the ammunition count's one home, beside the spend law
 import { ownWeaponModelFor } from '../characters/ownWeaponModels.js';   // FIELD-GUN-MW2: the weapons Morrowind does not have - a leaf too
 
 const saidArrow = new Set();

@@ -18,10 +18,10 @@
 // (ApplyArmorMaterial's Chain arm touches value only).
 
 import templates from '../characters/itemTemplates.json' with { type: 'json' };
-import { weightMultipliersByMaterial } from '../characters/weapons.js';
+import { weightForMaterial, WEAPONS } from '../characters/weapons.js';   // AUDIT 68 S27-weightForMaterial-dup: CalculateWeightForMaterial and Weapons.Arrow, one home each
 // A2: SetItem's two draws-and-writes, one home each (itemTemplates.js
 // is a leaf of this module's import graph - it reads the same JSON).
-import { mintCondition, rollPaintingMessage, templateByIndex } from './itemTemplates.js';
+import { mintCondition, rollPaintingMessage, templateByIndex, isAmmunition } from './itemTemplates.js';
 import { ammoTemplateFor } from '../characters/thunderlockIds.js';   // what a ranged weapon spends - a leaf, so no cycle (see the file)
 import { isRriStackable } from './rriRealism.js';   // RRI2: the IsItemStackable override - an added yes (FormulaHelper.cs:2100-2102)
 
@@ -133,7 +133,7 @@ export const letterOfCredit = (value = 0) => ({
 
 /** Weapons.Arrow / UselessItems2.Oil (ItemEnums.cs) - the two
  *  IsOfTemplate arms of IsItemStackable. */
-export const ARROW_TEMPLATE = 131;
+export const ARROW_TEMPLATE = WEAPONS.Arrow;
 export const OIL_TEMPLATE = 252;
 /** UselessItems1.Glass_Bottle - IsPotion is that one template
  *  (DaggerfallUnityItem.cs:352-355). systems/useItem.js exports the
@@ -383,14 +383,11 @@ export function getItem(list, group, templateIndex, {
  *  the REAL one when the player has both. `opts` reopens DFU's own
  *  two-step - the pick and the removal - without every caller having
  *  to write it out. */
-export function removeOne(list, templateIndex, opts = null) {
-  let i;
-  if (opts) {
-    const picked = getItem(list, opts.group ?? 'Weapons', templateIndex, opts);
-    i = picked ? list.indexOf(picked) : -1;
-  } else {
-    i = list.findIndex((it) => it.templateIndex === templateIndex);
-  }
+export function removeOne(list, templateIndex, opts) {
+  // AUDIT 68 S27-dead-code: the group-blind findIndex arm had no production caller and would take the wrong group's
+  // item of that index; the pick is always GetItem's, by group
+  const picked = getItem(list, opts.group, templateIndex, opts);
+  const i = picked ? list.indexOf(picked) : -1;
   if (i < 0) return false;
   const it = list[i];
   if ((it.stackCount ?? 1) > 1) it.stackCount--;
@@ -489,14 +486,6 @@ export function takeOneInto(entity, fromList, item) {
   return item;
 }
 
-/** Unity Mathf.Round: half rounds to EVEN (2.5 -> 2, 3.5 -> 4). */
-const roundHalfEven = (x) => {
-  const f = Math.floor(x), d = x - f;
-  if (d > 0.5) return f + 1;
-  if (d < 0.5) return f;
-  return f % 2 === 0 ? f : f + 1;
-};
-
 /** Leather armor weight AS CODED in DFU (audit F13): the Erisceres
  *  COMMENT says Round, but the code int-divides - (int)(w*4)/2 -
  *  making Mathf.Round a no-op, so verbatim = truncate. Converges
@@ -505,16 +494,10 @@ const roundHalfEven = (x) => {
  *  scaled = 3 mod 4 (2.75 kg -> 1.25, where Round would give 1.5). */
 export const leatherWeight = (weightKg) => Math.trunc(Math.trunc(weightKg * 4) / 2) / 4;
 
-/** ItemBuilder.CalculateWeightForMaterial VERBATIM: quarter-kg
- *  quantized - Round(trunc(w*4) * multiplier / 4) / 4 with Unity's
- *  half-to-even Round. (The weapons.js comment 'baseWeight * value/4'
- *  is the shorthand; this is the exact function - an iron and a
- *  daedric dagger BOTH weigh 0.5 kg because Round(2.5) banks to 2.) */
-export function weightForMaterial(weightKg, weaponMaterial) {
-  const quarterKgs = Math.trunc(weightKg * 4);
-  const matQuarterKgs = (quarterKgs * (weightMultipliersByMaterial[weaponMaterial] ?? 4)) / 4;
-  return roundHalfEven(matQuarterKgs) / 4;
-}
+/** ItemBuilder.CalculateWeightForMaterial - characters/weapons.js is
+ *  its one home (an iron and a daedric dagger BOTH weigh 0.5 kg because
+ *  Round(2.5) banks to 2); re-exported for the weight law's readers. */
+export { weightForMaterial };
 
 /** Weight in kg: template baseWeight (x stack), zero when the
  *  template has hasNoEncumbrance; weapons + plate armor through the
@@ -533,7 +516,7 @@ export function unitWeightInKg(item) {
   if (Number.isFinite(item.weightInKg)) return item.weightInKg + (Number.isFinite(item.water) && item.water > 0 ? item.water : 0);
   let base = t ? t.baseWeight : 0;
   if (Number.isFinite(item.water) && item.water > 0) base += item.water;   // SURV2: a waterskin weighs its water
-  if (item.group === 'Weapons' && item.name !== 'Arrow' && item.material != null) {
+  if (item.group === 'Weapons' && !isAmmunition(item) && item.material != null) {   // AUDIT 68 S27-ammo-arrow-only: ammunition skips the ladder - the Arrow by index, not by name, and the Dwemer Pellet
     base = weightForMaterial(base, item.material);
   }
   if (item.group === 'Armor' && item.material != null) {

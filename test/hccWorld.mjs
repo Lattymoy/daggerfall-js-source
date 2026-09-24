@@ -34,7 +34,7 @@ export function makeWorld({ cart = true, horse = true, settings = {}, ground = 0
     worldCoordToMapPixel: () => ({ x: 0, y: 0 }),
     openInventoryWithWagon: () => { w.openedInv++; },
     openNamePrompt: (o) => { w.prompt = { ...o, open: true }; return { isOpen: () => !!w.prompt?.open }; },
-    phys, presentation: { wagonParts: () => PARTS, horseArt: { ensureStationary: () => true, ensureWalk: () => {}, hasWalk: () => true, failed: () => false }, onChanged: () => { w.changed++; } },
+    phys, presentation: { wagonParts: () => PARTS, horseArt: { ensureStationary: () => true, ensureWalk: () => {}, hasWalk: () => true }, onChanged: () => { w.changed++; } },
     log: { warn: (m) => w.log.push(m), error: (m) => w.log.push(m), info: () => {} },
   };
   const rt = createHorseCartRuntime(deps);

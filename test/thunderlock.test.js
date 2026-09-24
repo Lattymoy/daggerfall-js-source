@@ -279,12 +279,12 @@ test('F1: the weapon EXISTS when the game boots, not only when a test imports it
   // systems/thunderlock.js - if the wire is pulled, every assertion
   // here fails and the suite finally notices.
   await import('../src/systems/worldTick.js');
-  const { templateByIndex } = await import('../src/systems/itemTemplates.js');
+  const { templateByIndex, isAmmunition } = await import('../src/systems/itemTemplates.js');   // AUDIT 68 S27-ammo-arrow-only: the ammunition registry's home
   const lr = await import('../src/systems/lootRarity.js');
   assert.equal(templateByIndex(THUNDERLOCK_TEMPLATE)?.name, 'Dwarven Thunderlock', 'the template registered');
   assert.equal(templateByIndex(PELLET_TEMPLATE)?.name, 'Dwemer Pellet');
   assert.ok(lr.uniqueFinds().some((f) => f.id === 'dwarven-thunderlock'), 'the find registered');
-  assert.ok(lr.isAmmunition({ templateIndex: PELLET_TEMPLATE }), 'the pellet registered as ammunition');
+  assert.ok(isAmmunition({ templateIndex: PELLET_TEMPLATE }), 'the pellet registered as ammunition');
   assert.ok(lr.legendariesFor({ group: 'Weapons', templateIndex: THUNDERLOCK_TEMPLATE }).length, 'the legendary registered');
   // and the wire itself, named, so deleting it is a decision
   const tick = readFileSync('src/systems/worldTick.js', 'utf8');

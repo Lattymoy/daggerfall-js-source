@@ -43,7 +43,7 @@
 // stop - so the swap takes the same snapshot-and-bill the window
 // takes, around the one equip it makes.
 import { isPotion, isDrug, isLightSource, useItem, USE_PENDING } from './useItem.js';   // ...and the ladder's own stand-ins for a host that handed no hook
-import { equipItem, equipTableOf, EQUIP_SLOTS, isBrokenItem, isForbiddenEquip, isEquipped, unequipSlot,
+import { equipItem, equipTableOf, EQUIP_SLOTS, isBrokenItem, isForbiddenEquip, isEquipped, unequipSlot, oneEquipAct,
   getItemHands, ITEM_HANDS,
   equipDelaySnapshot, billEquipDelayOnClose, ITEM_BROKEN_TEXT_ID, FORBIDDEN_EQUIPMENT_TEXT_ID } from './equip.js';
 import { isShieldTemplate } from './armorMaterials.js';
@@ -397,12 +397,14 @@ export function swapQuickslot({ entity = null, say = null, rows = null, hand = n
   // nothing to swap to. So the main hand is emptied first when the swap weapon
   // would otherwise land beside it rather than in it; a left-only weapon keeps
   // its own hand, and `equipItem` evicts that hand's occupant itself.
-  const bumped = previous && !leftOnly ? unequipSlot(entity, target) : null;
-  const un = equipItem(entity, r.item);
-  if (un === null) {
-    if (bumped) equipItem(entity, bumped);   // the refusal changes nothing: the hand goes back as it was
-    return { kind: 'refused', name: r.name };
-  }
+  // AUDIT 68 S27-ht-equip-midswap: the bump and the arrival are ONE act - the listeners hear the settled hand, not the emptied one
+  const un = oneEquipAct(() => {
+    const bumped = previous && !leftOnly ? unequipSlot(entity, target) : null;
+    const got = equipItem(entity, r.item);
+    if (got === null && bumped) equipItem(entity, bumped);   // the refusal changes nothing: the hand goes back as it was
+    return got;
+  });
+  if (un === null) return { kind: 'refused', name: r.name };
   billEquipDelayOnClose(entity, snap);
   // LH1: the table's own law still places the item (GetEquipSlot: an
   // Either weapon takes the FIRST OPEN of right, left), so a left-handed
