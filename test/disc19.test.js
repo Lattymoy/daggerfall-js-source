@@ -151,3 +151,160 @@ test('DISC19-D: a storm cell strikes only where it is drawn - wholly outside its
   }
   assert.deepEqual([strikes, sounds], [0, 0], 'no lightning and no thunder under a sunny sky with no storm drawn (248 strikes and 43 claps before)');
 });
+
+// ── DISC19-B: "Sometimes when music tracks switch, its very abrupt instead of seamlessly fading in between tracks" ──
+/** A MusicService on fake players (SongPlayer's play/stop/playing/song contract, fades logged) and a manual clock. */
+async function fadingService() {
+  const { MusicService } = await import('../src/systems/music.js');
+  const log = [];
+  const songs = ['DAY', 'NIGHT', 'RAIN', 'TAVERN'].map((name) => ({ name, events: [1] }));
+  const player = (tag) => ({
+    playing: false, song: null,
+    play(song) { if (this.playing && this.song === song) return true; this.stop(); this.song = song; this.playing = true; log.push(`${tag} play ${song.name}`); return true; },
+    stop() { if (this.song) log.push(`${tag} stop`); this.playing = false; this.song = null; },   // a stop that silences something
+    fadeTo(level, s) { log.push(`${tag} fade ${level} ${s}`); },
+  });
+  const svc = new MusicService();
+  svc._unsubscribe();
+  svc.enabled = true;
+  svc.archive = { getSongIndex: (n) => songs.findIndex((s) => s.name === n), getSong: (i) => songs[i] };
+  svc.player = player('midi');
+  const timers = [];
+  svc._later = (fn, ms) => timers.push({ fn, ms, off: false });
+  svc._cancelLater = (id) => { timers[id - 1].off = true; };
+  const flush = () => { for (const t of timers.splice(0)) if (!t.off) t.fn(); };
+  return { svc, log, timers, flush, player };
+}
+
+test('DISC19-B: a song that follows another fades the first out, then rises in - the old song is not cut and the new one does not start at full; a first song and a song that ended rise in at once (mutants: the switch without its fade; the start without its rise)', async () => {
+  const { MUSIC_FADE_OUT_S, MUSIC_FADE_IN_S } = await import('../src/systems/music.js');
+  const { svc, log, timers, flush } = await fadingService();
+  assert.equal(svc.playSong('DAY'), true);
+  assert.deepEqual(log.splice(0), ['midi play DAY', 'midi fade 0 0', `midi fade 1 ${MUSIC_FADE_IN_S}`], 'the first song rises in, at once');
+  assert.equal(timers.length, 0);
+  assert.equal(svc.playSong('DAY'), true);
+  assert.deepEqual(log.splice(0), [], 'the song already sounding is left alone');
+  assert.equal(svc.playSong('NIGHT'), true);
+  assert.deepEqual(log.splice(0), [`midi fade 0 ${MUSIC_FADE_OUT_S}`], 'the old song fades - nothing stops, nothing starts');
+  assert.equal(timers.length, 1);
+  assert.equal(timers[0].ms, MUSIC_FADE_OUT_S * 1000, 'the next starts when the fade has reached nothing');
+  assert.ok(svc.playing, 'the fade is still a song playing - the director does not read it as one that ended');
+  assert.equal(svc.current, 'NIGHT', 'the service answers for the song it is going to');
+  flush();
+  assert.deepEqual(log.splice(0), ['midi stop', 'midi play NIGHT', 'midi fade 0 0', `midi fade 1 ${MUSIC_FADE_IN_S}`], 'cut at silence, then the next rises in');
+  assert.ok(MUSIC_FADE_OUT_S >= 1 && MUSIC_FADE_OUT_S <= 3 && MUSIC_FADE_IN_S >= 0.5 && MUSIC_FADE_IN_S <= 2, 'a fade, not a pause');
+  // a song that ended starts the next straight away, rising
+  svc.player.playing = false; svc.player.song = null;   // a song's end: SongPlayer's own stop
+  assert.equal(svc.playSong('RAIN'), true);
+  assert.deepEqual(log.splice(0), ['midi play RAIN', 'midi fade 0 0', `midi fade 1 ${MUSIC_FADE_IN_S}`]);
+  assert.equal(timers.length, 0);
+});
+
+test('DISC19-B: during a fade the latest request is the one that plays, the song fading out asked for again turns round without a restart, and a stop starts nothing after it (mutants: the flip-back dropped; the stop leaves the switch armed)', async () => {
+  const { MUSIC_FADE_IN_S, MUSIC_FADE_OUT_S } = await import('../src/systems/music.js');
+  const { svc, log, timers, flush } = await fadingService();
+  svc.playSong('DAY'); log.length = 0;
+  svc.playSong('NIGHT'); svc.playSong('RAIN');
+  assert.equal(timers.length, 1, 'one fade, however many requests');
+  flush();
+  assert.deepEqual(log.splice(0), [`midi fade 0 ${MUSIC_FADE_OUT_S}`, 'midi stop', 'midi play RAIN', 'midi fade 0 0', `midi fade 1 ${MUSIC_FADE_IN_S}`], 'the latest request plays, the one between never does');
+  // the flip-back: out of the town and straight back in
+  svc.playSong('TAVERN');
+  svc.playSong('RAIN');
+  assert.equal(svc.current, 'RAIN');
+  flush();
+  assert.deepEqual(log.splice(0), [`midi fade 0 ${MUSIC_FADE_OUT_S}`, `midi fade 1 ${MUSIC_FADE_IN_S}`], 'RAIN turns round where its fade stands - never stopped, never restarted');
+  assert.ok(svc.playing && svc.player.song.name === 'RAIN');
+  // a stop mid-fade
+  svc.playSong('DAY');
+  svc.stop();
+  flush();
+  assert.deepEqual(log.splice(0), [`midi fade 0 ${MUSIC_FADE_OUT_S}`, 'midi stop'], 'stopped, and nothing starts after the stop');
+  assert.equal(svc.current, null);
+  assert.equal(svc.playing, false);
+  // a song that will not start after its fade claims nothing
+  svc.playSong('DAY'); log.length = 0;
+  const warn = console.warn; console.warn = () => {};
+  try { svc.playSong('NO_SUCH_SONG'); flush(); } finally { console.warn = warn; }
+  assert.equal(svc.current, null, 'the director asks again rather than waiting on a song that never came');
+  assert.equal(svc.playing, false);
+});
+
+test('DISC19-B: a music pack\'s track rises in the same way, and a switch fades whichever player sounds (mutant: the pack\'s start without its rise)', async () => {
+  const { MUSIC_FADE_IN_S, MUSIC_FADE_OUT_S } = await import('../src/systems/music.js');
+  const { setMusicReplacements, clearMusicReplacements } = await import('../src/systems/musicReplacement.js');
+  const { setValue } = await import('../src/systems/settings.js');
+  const { audio } = await import('../src/systems/audio.js');
+  const { svc, log, timers, flush, player } = await fadingService();
+  svc._audio = player('pack');
+  svc._audio.play = function (buffer) { this.stop(); this.song = buffer; this.playing = true; log.push(`pack play ${buffer.name}`); return true; };
+  const prevCtx = audio.ctx;
+  setValue('Enhancements', 'AssetInjection', 'True');
+  setMusicReplacements(['NIGHT.ogg'], async () => new Uint8Array([1, 2, 3]));
+  audio.ctx = { decodeAudioData: async () => ({ name: 'NIGHT.ogg' }) };
+  try {
+    svc.playSong('DAY'); log.length = 0;
+    svc.playSong('NIGHT');
+    assert.deepEqual(log.splice(0), [`midi fade 0 ${MUSIC_FADE_OUT_S}`]);
+    flush();
+    for (let i = 0; i < 10; i++) await new Promise((r) => setImmediate(r));   // the pack's load and decode
+    assert.deepEqual(log.splice(0), ['midi stop', 'pack play NIGHT.ogg', 'pack fade 0 0', `pack fade 1 ${MUSIC_FADE_IN_S}`]);
+    svc.playSong('DAY');
+    assert.deepEqual(log.splice(0), [`pack fade 0 ${MUSIC_FADE_OUT_S}`], 'the pack\'s track is the one faded');
+    flush();
+    assert.deepEqual(log.splice(0), ['pack stop', 'midi play DAY', 'midi fade 0 0', `midi fade 1 ${MUSIC_FADE_IN_S}`]);
+    assert.equal(timers.length, 0);
+  } finally {
+    audio.ctx = prevCtx;
+    clearMusicReplacements();
+    setValue('Enhancements', 'AssetInjection', 'False');
+  }
+});
+
+test('DISC19-B: the fader - the song runs through a gain of its own under the volume, a fade ramps from wherever it stands, and the volume slider and the video mute write the master, never the fader (mutants: the song bypasses the fader; the ramp jumps from its old start)', async () => {
+  const { SongPlayer, AudioSongPlayer, rampFader } = await import('../src/systems/songPlayer.js');
+  const calls = [];
+  const param = (tag) => ({
+    value: 0,
+    setValueAtTime(v, t) { calls.push([tag, 'set', v, t]); this.value = v; },
+    linearRampToValueAtTime(v, t) { calls.push([tag, 'ramp', v, t]); },
+    cancelScheduledValues(t) { calls.push([tag, 'cancel', t]); },
+    cancelAndHoldAtTime(t) { calls.push([tag, 'hold', t]); },
+  });
+  let n = 0;
+  const ctx = {
+    currentTime: 20, destination: { tag: 'out' },
+    createGain() { const tag = `g${n++}`; return { tag, gain: param(tag), to: [], connect(x) { this.to.push(x); return x; } }; },
+    createBufferSource() { return { to: [], connect(x) { this.to.push(x); return x; }, start() {}, stop() {} }; },
+  };
+  for (const P of [SongPlayer, AudioSongPlayer]) {
+    const p = new P(ctx);
+    p._ensureMaster();
+    assert.ok(p._fader && p._fader !== p._master, `${P.name}: a fader of its own`);
+    assert.deepEqual(p._fader.to, [p._master], `${P.name}: the fader runs into the volume`);
+    assert.equal(p._fader.gain.value, 1, 'at full until a fade');
+    calls.length = 0;
+    p.fadeTo(0, 1.5);
+    assert.deepEqual(calls, [[p._fader.tag, 'hold', 20], [p._fader.tag, 'ramp', 0, 21.5]], `${P.name}: held where it stands, ramped from there`);
+    calls.length = 0;
+    p.resyncGain();
+    assert.ok(calls.length > 0 && calls.every((c) => c[0] === p._master.tag), `${P.name}: the volume writes the master alone - a fade under way is not cancelled`);
+  }
+  const sp = new SongPlayer(ctx); sp._ensureMaster(); sp._state = [];
+  assert.deepEqual(sp._channelGain(0).to, [sp._fader], 'every channel of the synth runs through the fader');
+  const ap = new AudioSongPlayer(ctx);
+  ap.play({ duration: 60 });
+  assert.deepEqual(ap._source.to, [ap._fader], 'a pack\'s track runs through the fader');
+  // a zero length sets at once; a browser without cancelAndHoldAtTime holds by hand
+  const g = { gain: param('z') };
+  calls.length = 0;
+  rampFader(ctx, g, 0, 0);
+  assert.deepEqual(calls, [['z', 'cancel', 20], ['z', 'set', 0, 20]]);
+  assert.equal(g.gain.value, 0);
+  const old = { gain: { ...param('ff'), value: 0.4 } };
+  delete old.gain.cancelAndHoldAtTime;
+  calls.length = 0;
+  rampFader(ctx, old, 1, 1);
+  assert.deepEqual(calls, [['ff', 'cancel', 20], ['ff', 'set', 0.4, 20], ['ff', 'ramp', 1, 21]], 'from where it stood, not from where the last ramp began');
+  rampFader(null, g, 1, 1); rampFader(ctx, null, 1, 1);   // no context, no fader: nothing, never a throw
+});

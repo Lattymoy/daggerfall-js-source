@@ -22,6 +22,19 @@ import { SongPlayer, AudioSongPlayer, setMusicMuted, isMusicMuted } from './song
 import { hasReplacement, replacementBytes } from './musicReplacement.js';   // M-EXT: SoundReplacement.TryImportSong
 import { onSettingChange } from './settings.js';   // 2026-08-27: MusicVolume applies live
 
+/** DISC19-B (2026-09-24, Mac: "Sometimes when music tracks switch, its very abrupt instead of seamlessly fading in
+ *  between tracks"): A SWITCH FADES. DFU cuts - DaggerfallSongPlayer.Play calls Stop first, and Stop is
+ *  audioSource.Stop() or midiSequencer.Stop() with NoteOffAll: the old song goes mid-note and the next starts at full
+ *  level - and so did every switch the port makes (a weather ring crossed, dawn, a door, a new location, a quest's
+ *  PlaySong). A recorded departure (Port-Ledger A), at the owner's word: the song sounding fades out over
+ *  MUSIC_FADE_OUT_S under its fader (songPlayer.js rampFader), then the next starts with its fader at nothing and
+ *  fades in over MUSIC_FADE_IN_S. One synth voices one song, so the two play in turn, never on top of one another (a
+ *  pack's decode gap sits between them, as before). The latest request during a fade is the one that plays; the song
+ *  fading out, asked for again, turns round from where its fade stands. `playing` stays up through the fade, so the
+ *  director never reads it as a song that ended. */
+export const MUSIC_FADE_OUT_S = 1.5;
+export const MUSIC_FADE_IN_S = 1.0;
+
 export class MusicService {
   constructor() {
     this.archive = null;
@@ -35,6 +48,9 @@ export class MusicService {
     // live boot probe, not by the suite (AUDIT 19).
     this._booted = null;
     this._current = null;
+    this._switch = null;   // DISC19-B: { from, to, timer } while a song fades out before the next
+    this._later = (fn, ms) => setTimeout(fn, ms);   // DISC19-B: the fade's clock, a seam for the tests
+    this._cancelLater = (id) => clearTimeout(id);
     // 2026-08-27: the MusicVolume setting is LIVE in fact, not just in
     // tier - both players this service owns re-level the moment it is
     // written, so the slider is heard mid-song, not at the next one.
@@ -153,18 +169,59 @@ export class MusicService {
       this._pending = name;
       return false;
     }
+    // DISC19-B: a switch under way lands on the latest request, and the song fading out, asked for again, comes back
+    // up from where its fade stands
+    if (this._switch) {
+      if (name === this._switch.from) { this._cancelSwitch(); this._current = name; this._fadeSounding(1, MUSIC_FADE_IN_S); return true; }
+      this._switch.to = name;
+      this._current = name;
+      return true;
+    }
     if (this._current === name && this.playing) return true;
-    // M-EXT: a user-supplied track OVERRIDES the built-in song
-    // (SoundReplacement.TryImportSong, and DFU asks before it reaches
-    // its own data too). The lookup is synchronous - a Map hit behind
-    // the AssetInjection gate - but loading and decoding are not, so
-    // the commit happens here and the sound arrives a beat later.
+    if (this.playing && this._current !== null) { this._beginSwitch(name); return true; }   // DISC19-B: out, then in
+    return this._start(name);
+  }
+
+  /** The start: a replacement or the built-in song, rising from nothing under its fader (DISC19-B).
+   *  M-EXT: a user-supplied track OVERRIDES the built-in song
+   *  (SoundReplacement.TryImportSong, and DFU asks before it reaches
+   *  its own data too). The lookup is synchronous - a Map hit behind
+   *  the AssetInjection gate - but loading and decoding are not, so
+   *  the commit happens here and the sound arrives a beat later. */
+  _start(name) {
     if (hasReplacement(name)) {
       this._current = name;
       this._startReplacement(name);
       return true;
     }
     return this._playBuiltIn(name);
+  }
+
+  /** DISC19-B: fade what sounds out, and start the next when the fade is done. */
+  _beginSwitch(name) {
+    const sw = { from: this._current, to: name, timer: null };
+    this._current = name;
+    this._switch = sw;
+    this._fadeSounding(0, MUSIC_FADE_OUT_S);
+    sw.timer = this._later(() => {
+      if (this._switch !== sw) return;
+      this._switch = null;
+      this.player?.stop();
+      this._audio?.stop();
+      if (!this._start(sw.to) && this._current === sw.to) this._current = null;   // a song that will not start leaves nothing claimed
+    }, MUSIC_FADE_OUT_S * 1000);
+  }
+
+  _cancelSwitch() {
+    if (!this._switch) return;
+    this._cancelLater(this._switch.timer);
+    this._switch = null;
+  }
+
+  /** DISC19-B: ramp whichever player sounds. */
+  _fadeSounding(level, seconds) {
+    if (this.player?.playing) this.player.fadeTo?.(level, seconds);
+    if (this._audio?.playing) this._audio.fadeTo?.(level, seconds);
   }
 
   /** The MIDI.BSA path - what playSong did before replacements existed,
@@ -188,7 +245,10 @@ export class MusicService {
       return false;
     }
     this._current = name;
-    return player.play(song);
+    const fresh = !(player.playing && player.song === song);
+    const ok = player.play(song);
+    if (ok && fresh) { player.fadeTo?.(0, 0); player.fadeTo?.(1, MUSIC_FADE_IN_S); }   // DISC19-B: it rises in
+    return ok;
   }
 
   _ensureAudioPlayer() {
@@ -229,7 +289,7 @@ export class MusicService {
     }
     if (this._current !== name) return;
     if (!buffer) { player.playing = false; this._playBuiltIn(name); return; }
-    player.play(buffer);
+    if (player.play(buffer)) { player.fadeTo?.(0, 0); player.fadeTo?.(1, MUSIC_FADE_IN_S); }   // DISC19-B: it rises in
   }
 
   /** Pick from one of songManager's verbatim playlists and play it. */
@@ -253,6 +313,7 @@ export class MusicService {
     this._pending = null;
     this.player?.stop();
     this._audio?.stop();   // M-EXT: both players, or a replacement outlives the stop
+    this._cancelSwitch();   // DISC19-B: a stop mid-fade starts nothing after it
   }
 
   get current() { return this._current; }

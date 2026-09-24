@@ -64,7 +64,7 @@ export class AudioEngine {
     this.buffers = new Map();   // index -> AudioBuffer
     this.enabled = false;
     // NT1 (F215): null, not false - the ??= boot latch below rejects a
-    // false (music.js:36 learned this at AUDIT 19).
+    // false (music.js:49 learned this at AUDIT 19).
     this._booted = null;
     this._listener = { x: 0, y: 0, z: 0, fx: 0, fy: 0, fz: -1 };
     this._master = null;   // SETT: the SoundVolume bus (see _out)
@@ -158,7 +158,7 @@ export class AudioEngine {
     setEquipSoundSink((clip) => this.playOneShot(clip));
     // NT1 (F215): the flag IS the promise - the sibling MusicService's
     // AUDIT 19 law ("a guard set before its own async work is not
-    // idempotence, it is a race with a flag on it", music.js:81-86).
+    // idempotence, it is a race with a flag on it", music.js:97-102).
     // The boolean version returned to a concurrent second caller BEFORE
     // init finished, so that caller's immediate one-shots dropped while
     // `enabled` was still false. Every caller now awaits the same boot.
