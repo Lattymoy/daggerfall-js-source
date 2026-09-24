@@ -1389,6 +1389,51 @@ cube map lit through the ceiling for a frame. `render/shadowPass.js` `CASTER_KEE
 casters (`holdCasters`, matched by position) are measured at 0.8 of their distance, so a newcomer must be clearly
 nearer to take a map. Record: `01-Overview/Field-Bugs-2026-09-23.md`. Pinned in `test/disc6.test.js`; `tools/mutants/disc6.json`.
 
+## DISC15 - EVERY LIGHT IN A ROOM CASTS (2026-09-24, Mac: "Constant reports of interior light flickering. Opus seemingly always considers it solved. Its not solved")
+
+DISC6-E was not the cause, and this time the cause was MEASURED before a line changed. A harness (the real renderer on
+SwiftShader, the real `buildInteriorContext` over ARENA2's TVRNGM03 - a tavern, twenty lamps of range 15-18 over a
+building 25 x 18 on two floors - the interior arm's own light composition, a scripted walk, every frame read back)
+found two things, both from the same root: only the eight lamps nearest the eye had a cube map.
+
+- **The swap.** A lamp without a map lit through walls, floors and ceilings at full strength. Every walk across the room
+  swapped lamps in and out of the eight - DISC6's keep margin only moved where the swap happened - and each swap lit or
+  unlit whole surfaces through the ceiling: 30-98% of the screen moved by 12+ levels in one frame, at each of the nine
+  caster changes of a 319-frame walk. 582 of the 4086 building interiors have more than eight lamps (the taverns, the
+  guilds, the big shops - the rooms the reports named); 170 have more than sixteen.
+- **The march.** A lamp without a map took EL8's contact march over the previous frame's depth, and on the first frame
+  the eye moved after standing or turning it shadowed 40% of the screen dark for one frame (a grazing wall marched
+  through a frame-old depth). `?contact=off` removed it; a stable light order did not (not an index bug).
+
+**The lo tier** (`render/shadowPass.js`, DISC15): in a room its host draws WHOLE, every light the caster table can name
+keeps its own cube map of the room's static casters at SHADOW_LO_SIZE (256), six layers of a second depth array on
+SHADOW_LO_UNIT (8) - sticky by position like SC1's slots, drawn when the light arrives or moves, redrawn for a changed
+static set SHADOW_LO_REBUILDS (2) a frame with the old map standing meanwhile. The eight keep their 512 maps with the
+movers on top; every other light reads its lo map (`uCasterOf` = SHADOW_POINT_CASTERS + j; the lo map's light and far
+are the light's own `uPointLights[i]` and `shadowFarFor` of its range, the same float arithmetic in JS and GLSL). A
+change of the eight now changes a shadow's resolution, never whether the ceiling is there, and no indoor lamp is left
+for the contact march. The same walk after: caster changes move at most 2% of the screen by 12+ levels (d1 <= 1.74),
+and the one-frame flash is gone.
+
+- **Who asks.** `renderer.everyLightCasts()`, each frame before beginFrame, from the two building hosts (the world's
+  interior arm and `?interior=`) - the hosts that draw everything, so every static caster is in the records. A host
+  that culls by view (the street, the dungeon) does not ask: its records miss what the view rejected, and a lo map of
+  them would change as the camera turned. Consumed per world frame, so a host that does not ask never has it.
+- **The door.** The records a frame replays are the last frame's, so the first frame through a door had the street's:
+  that frame drops them (nothing casts, once) and the tier runs from the next frame on the room's own. Before, the
+  eight 512 maps were drawn from the street's walls for that frame.
+- **The cost.** A tavern's twenty lo maps are 120 face replays on the second frame inside (about 3300 draws on
+  TVRNGM03), then none while the room is still; the array grows by SHADOW_LO_STEP (8) slots - 24 for a tavern, 1.5 MB
+  a slot (six 256 x 256 layers of 4 bytes), 38 MB - and is never shrunk. The lo maps hold no movers: a walker casts from the
+  eight alone.
+- **The look.** A corridor or a room with no lamp of its own is now lit by its ambient and what comes through its
+  doors - it was lit before by the lamps in the rooms around it, through the walls, and that light is exactly what
+  came and went as the eight changed.
+
+Pins: `test/disc15.test.js` (8); the source pins that quote the lit loop, `shadowOfLight` and the air's march re-aimed
+(el2, el5, el8, lightnear1, audit_reach, vol1, audit_lighting's array count). Mutants: `tools/mutants/disc15.json` 16,
+all dead; el3/el5/el8/vol1 records re-aimed by content, all still dead.
+
 ## DISC7 - THE CONTACT MARCH READS THROUGH ITS RECT (2026-09-23, Mac: "fix the known gaps")
 
 EL8's contact block sampled the previous frame's depth at the clip-space UV as if the world viewport were the whole

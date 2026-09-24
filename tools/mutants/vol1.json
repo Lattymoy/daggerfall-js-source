@@ -2,7 +2,7 @@
   {
     "name": "vol-shadow-tap-dropped",
     "file": "src/render/airPass.js",
-    "old": "      sum += pointShadowOne(k, uCamPos + dir * t) / (h2 + ds * ds);",
+    "old": "      sum += casterShadowOne(k, Lr, uCamPos + dir * t) / (h2 + ds * ds);",
     "new": "      sum += 1.0 / (h2 + ds * ds);",
     "tests": [
       "test/vol1_glow.test.js"

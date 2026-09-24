@@ -279,6 +279,40 @@ export const swayLean = (wl, sway, h) => wl * 1.3 * 0.0015 * sway * h;
 /** AUDIT SC1: a remembered placement matches to this - a floating-origin rebase adds the offset in a different order
  *  than the host did, and the last bit of a float is no motion. */
 export const SHADOW_STILL_EPS = 1e-3;
+/**
+ * DISC15 (2026-09-24, Mac: "Constant reports of interior light flickering ... Its not solved"): EVERY LIGHT IN A ROOM
+ * CASTS.
+ *
+ * DISC6 held the eight caster maps against ties, and the flicker stayed, because the tie was never the cause. A
+ * tavern has twenty lamps of range 15-18 over a building 25 x 18 - every lamp reaches nearly every surface, the
+ * upstairs lamps included - and eight maps. The other twelve had NO map: a lamp without one lights through walls,
+ * floors and ceilings at full strength, and the only shadow it had was EL8's contact march over last frame's depth.
+ * So every walk across a room swapped real lamps in and out of the eight (DISC6's margin only moved WHERE the swap
+ * happened), and each swap lit or unlit the ground floor through the ceiling: measured on the real TVRNGM03 on
+ * SwiftShader, a caster change moved 30-98% of the screen by 12+ levels in one frame. The contact march made the
+ * rest - a one-frame dark flash over 40% of the screen on the first frame the eye moved (a grazing wall marched
+ * through a frame-old depth), gone with `?contact=off`.
+ *
+ * THE LO TIER: in a room its host draws WHOLE (renderer.everyLightCasts - a building's interior, where nothing is
+ * view-culled, so every static caster is in the records), EVERY light the caster table can name keeps its own
+ * cube map of the room's STATIC casters at SHADOW_LO_SIZE: six layers of a second depth array, sticky by position
+ * like SC1's slots, drawn once when the light arrives and again only when its static set changes (SC1's signature,
+ * SHADOW_LO_REBUILDS a frame - the old map stands meanwhile, the same light's). The eight nearest keep their 512
+ * maps with the movers on top, as before; every other light reads its lo map, so a lamp is never unshadowed and a
+ * change of the eight changes a shadow's resolution, never whether the ceiling is there. The contact march has no
+ * light left to run for indoors. `uCasterOf[i]` carries the lo slot as SHADOW_POINT_CASTERS + j; the lo map's light
+ * and far are the light's own (uPointLights[i], shadowFarFor of its range, the same float arithmetic in JS and GLSL).
+ */
+export const SHADOW_LO_SIZE = 256;
+/** DISC15: the lo array's texture unit - below the grid's (9, 10); nothing else binds 8. */
+export const SHADOW_LO_UNIT = 8;
+/** DISC15: the lo array grows in this many slots (a shop's four lamps take eight, a tavern's twenty-one twenty-four). */
+export const SHADOW_LO_STEP = 8;
+/** DISC15: every light the caster table can name. */
+export const SHADOW_LO_MAX = SHADOW_CASTER_TABLE;
+/** DISC15: how many lo maps a frame redraws for a changed static set (a door that came to rest) - a new light's map
+ *  is drawn at once, whatever this says. */
+export const SHADOW_LO_REBUILDS = 2;
 /** SC1: the door - `?shadowcache=off` replays every caster at the cadence, as before. */
 export function shadowCacheOn(search = globalThis.location?.search ?? '') {
   return new URLSearchParams(search).get('shadowcache') !== 'off';
@@ -464,7 +498,8 @@ uniform vec4 uSunTexel;           // x y z the cascades' texel size (world)
 uniform sampler2DArrayShadow uPointShadow;   // EL5: six face layers per caster
 uniform vec4 uPointShadowParams[${SHADOW_POINT_CASTERS}];  // xyz the light, w its far plane (0 = off)
 uniform int uShadowIndex[${SHADOW_POINT_CASTERS}];         // the lantern each caster's layers belong to, -1 for none
-uniform int uCasterOf[${SHADOW_CASTER_TABLE}];              // EL8: light i's caster slot, -1 for none - one lookup
+uniform int uCasterOf[${SHADOW_CASTER_TABLE}];              // EL8: light i's caster slot, -1 for none - one lookup (DISC15: SHADOW_POINT_CASTERS + j for lo slot j)
+uniform sampler2DArrayShadow uPointShadowLo;                 // DISC15: the lo tier - six layers per slot, the room's static casters
 ${faceBasisGlsl()}
 float sunShadowTap(vec3 wp, vec3 n, bool soft) {
   if (uSunShadowParams.w <= 0.0) return 1.0;
@@ -556,10 +591,54 @@ float pointShadowOne(int k, vec3 wp) {
   vec2 uv = vec2(dot(FACE_X[face], d), dot(FACE_Y[face], d)) / max(m, 1e-4) * 0.5 + 0.5;
   return texture(uPointShadow, vec4(uv, float(k * 6 + face), cubeDepthOfM(m - ${SHADOW_POINT_BIAS}, far)));
 }
-// EL5: light i's shadow - its caster's, if it has one this frame (EL8: by the table, one lookup)
-float shadowOfLight(int i, vec3 wp, vec3 n) {
+// DISC15: the far a lo map is drawn to - shadowFarFor, term for term (a division by four is exact in binary, so the
+// JS and the GLSL round the same float to the same plane)
+float loFarOf(float range) { return ceil(range / ${SHADOW_FAR_QUANTUM}.0) * ${SHADOW_FAR_QUANTUM}.0; }
+// DISC15: light L's shadow from its lo map j - pointShadowAt's face and uv on the lo array, the normal offset and the
+// bias held to a texel of it (a 256 face's texel is twice a 512's)
+float pointShadowLoAt(int j, vec4 L, vec3 wp, vec3 n) {
+  float far = loFarOf(L.w);
+  vec3 d0 = wp - L.xyz;
+  float texel = 2.0 * max(max(abs(d0.x), abs(d0.y)), abs(d0.z)) / ${SHADOW_LO_SIZE}.0;
+  vec3 d = d0 + n * max(0.05, 1.5 * texel);
+  vec3 a = abs(d);
+  int face; float m;
+  if (a.x >= a.y && a.x >= a.z) { face = d.x > 0.0 ? 0 : 1; m = a.x; }
+  else if (a.y >= a.z) { face = d.y > 0.0 ? 2 : 3; m = a.y; }
+  else { face = d.z > 0.0 ? 4 : 5; m = a.z; }
+  vec2 uv = vec2(dot(FACE_X[face], d), dot(FACE_Y[face], d)) / max(m, 1e-4) * 0.5 + 0.5;
+  float layer = float(j * 6 + face);
+  float ref = cubeDepthOfM(m - max(${SHADOW_POINT_BIAS}, texel), far);
+  float t = 1.5 / ${SHADOW_LO_SIZE}.0;
+  float lit = texture(uPointShadowLo, vec4(uv, layer, ref));
+  lit += texture(uPointShadowLo, vec4(uv + vec2(t, 0.0), layer, ref)) + texture(uPointShadowLo, vec4(uv - vec2(t, 0.0), layer, ref))
+       + texture(uPointShadowLo, vec4(uv + vec2(0.0, t), layer, ref)) + texture(uPointShadowLo, vec4(uv - vec2(0.0, t), layer, ref));
+  return lit / 5.0;
+}
+// DISC15: the same IN THE AIR - one tap, no normal (pointShadowOne's shape)
+float pointShadowLoOne(int j, vec4 L, vec3 wp) {
+  float far = loFarOf(L.w);
+  vec3 d = wp - L.xyz;
+  vec3 a = abs(d);
+  int face; float m;
+  if (a.x >= a.y && a.x >= a.z) { face = d.x > 0.0 ? 0 : 1; m = a.x; }
+  else if (a.y >= a.z) { face = d.y > 0.0 ? 2 : 3; m = a.y; }
+  else { face = d.z > 0.0 ? 4 : 5; m = a.z; }
+  vec2 uv = vec2(dot(FACE_X[face], d), dot(FACE_Y[face], d)) / max(m, 1e-4) * 0.5 + 0.5;
+  float texel = 2.0 * m / ${SHADOW_LO_SIZE}.0;
+  return texture(uPointShadowLo, vec4(uv, float(j * 6 + face), cubeDepthOfM(m - max(${SHADOW_POINT_BIAS}, texel), far)));
+}
+// DISC15: caster k of the light at L (uCasterOf's word): a 512 slot below SHADOW_POINT_CASTERS, a lo slot past it
+float casterShadowAt(int k, vec4 L, vec3 wp, vec3 n) {
+  return k < ${SHADOW_POINT_CASTERS} ? pointShadowAt(k, wp, n) : pointShadowLoAt(k - ${SHADOW_POINT_CASTERS}, L, wp, n);
+}
+float casterShadowOne(int k, vec4 L, vec3 wp) {
+  return k < ${SHADOW_POINT_CASTERS} ? pointShadowOne(k, wp) : pointShadowLoOne(k - ${SHADOW_POINT_CASTERS}, L, wp);
+}
+// EL5: light i's shadow - its caster's, if it has one this frame (EL8: by the table, one lookup; DISC15: either tier)
+float shadowOfLight(int i, vec4 L, vec3 wp, vec3 n) {
   int k = uCasterOf[i];
-  return k >= 0 ? pointShadowAt(k, wp, n) : 1.0;
+  return k >= 0 ? casterShadowAt(k, L, wp, n) : 1.0;
 }
 `;
 
@@ -653,6 +732,17 @@ export class ShadowPass {
     this._slotSig = new Int32Array(2 * SHADOW_POINT_CASTERS);     // SC1: per slot, the static signature's (hash, count) the cache was drawn from
     this._slotCached = new Uint8Array(SHADOW_POINT_CASTERS);      // SC1: the cache holds this slot's light's statics
     this._slotLiveDyn = new Uint8Array(SHADOW_POINT_CASTERS);     // SC1: the live layers carry dynamics over the cache
+    // DISC15: THE LO TIER - allocated on the first room that asks (_ensureLo), grown by SHADOW_LO_STEP. Until then a
+    // one-texel array stands on SHADOW_LO_UNIT: every lane program declares the sampler, and a shadow sampler must
+    // always have a depth array with its compare mode under it (an empty unit is a sampler-type clash at draw)
+    this.loTex = this._depthArray(1, 6, gl.LINEAR);
+    this._loFbos = [];
+    this._loCap = 0;
+    this._loSlotLight = new Float32Array(0);   // per lo slot, the light (x, y, z, far) its map was drawn from
+    this._loSlotSig = new Int32Array(0);       // ...and the static signature's (hash, count) it was drawn with
+    this._loBuilt = new Uint8Array(0);
+    this._loSlotOf = new Int32Array(SHADOW_CASTER_TABLE);
+    this._loTaken = new Uint8Array(0);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
     // the pool: records are minted once and reused by index
@@ -674,7 +764,7 @@ export class ShadowPass {
     this._sunDrawn = new Uint8Array(SHADOW_CASCADES.length);
     this.kind = null;
     /** per-frame counts, for a probe */
-    this.stats = { records: 0, sunDraws: 0, pointDraws: 0, culled: 0, cascadesDrawn: 0, facesDrawn: 0, staticFaces: 0, dynFaces: 0, blits: 0, cachedSlots: 0 };   // SC1: the faces split, the blits, the slots served from the cache
+    this.stats = { records: 0, sunDraws: 0, pointDraws: 0, culled: 0, cascadesDrawn: 0, facesDrawn: 0, staticFaces: 0, dynFaces: 0, blits: 0, cachedSlots: 0, loSlots: 0, loFaces: 0 };   // SC1: the faces split, the blits, the slots served from the cache; DISC15: the lo tier's slots and faces
     this._planes = new Float32Array(24);   // EL5: the replay's frustum
     this._slotOfScratch = new Int32Array(SHADOW_POINT_CASTERS);   // SC1: rank -> slot
     this._heldCasters = new Float64Array(4 * SHADOW_POINT_CASTERS);   // DISC6: last frame's casters, by position (Float64: an exact copy of whatever the host sent, so the match by position holds)
@@ -692,6 +782,105 @@ export class ShadowPass {
     this._sunVPFlat = new Float32Array(16 * SHADOW_CASCADES.length);
   }
 
+  /** DISC15: a depth array of `layers` layers of `size` square, compared (a shadow sampler's), clamped. */
+  _depthArray(size, layers, filter) {
+    const gl = this.gl;
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
+    gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 1, gl.DEPTH_COMPONENT24, size, size, layers);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, filter);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, filter);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
+    return tex;
+  }
+  /** DISC15: room for `slots` lo maps - the array grown by SHADOW_LO_STEP (texStorage is immutable: a new array, and
+   *  every slot drawn afresh), never shrunk (the next room of the session reuses it). */
+  _ensureLo(slots) {
+    const want = Math.min(SHADOW_LO_MAX, Math.ceil(slots / SHADOW_LO_STEP) * SHADOW_LO_STEP);
+    if (want <= this._loCap) return;
+    const gl = this.gl;
+    gl.deleteTexture(this.loTex);
+    for (const fb of this._loFbos) gl.deleteFramebuffer(fb);
+    this.loTex = this._depthArray(SHADOW_LO_SIZE, 6 * want, gl.LINEAR);
+    this._loFbos = [];
+    for (let l = 0; l < 6 * want; l++) {
+      const fbo = gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+      gl.framebufferTextureLayer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, this.loTex, 0, l);
+      gl.drawBuffers([gl.NONE]);
+      gl.readBuffer(gl.NONE);
+      this._loFbos.push(fbo);
+    }
+    this._loCap = want;
+    this._loSlotLight = new Float32Array(4 * want).fill(NaN);
+    this._loSlotSig = new Int32Array(2 * want);
+    this._loBuilt = new Uint8Array(want);
+    this._loTaken = new Uint8Array(want);
+  }
+  /** DISC15: may light i of `L` take a map at all - F11's range cap and MAC-T1's hand, the pick's own two laws. */
+  static _castsAt(L, carried, i) {
+    const w = L[i * 4 + 3];
+    return !(carried && carried[i]) && w > 0 && w <= SHADOW_CASTER_MAX_RANGE;
+  }
+  /**
+   * DISC15: THE LO TIER'S FRAME - every light that may cast keeps a lo slot (sticky by position, as SC1's slots), its
+   * map of the room's static casters drawn when the light arrives or moves and redrawn for a changed static set
+   * SHADOW_LO_REBUILDS a frame; a light with no 512 map this frame reads its lo map (uCasterOf = SHADOW_POINT_CASTERS + j).
+   * The eight keep their lo maps too, so a light that leaves the eight has its map already.
+   */
+  _renderLo(f, L) {
+    const gl = this.gl, n = Math.min(L.length >> 2, SHADOW_CASTER_TABLE);
+    let want = 0;
+    for (let i = 0; i < n; i++) if (ShadowPass._castsAt(L, f.carried, i)) want++;
+    if (want === 0) return;
+    this._ensureLo(want);
+    const cap = this._loCap, sl = this._loSlotLight, slotOf = this._loSlotOf, taken = this._loTaken;
+    slotOf.fill(-1); taken.fill(0);
+    for (let i = 0; i < n; i++) {
+      if (!ShadowPass._castsAt(L, f.carried, i)) continue;
+      for (let j = 0; j < cap; j++) {
+        if (!taken[j] && sl[j * 4] === L[i * 4] && sl[j * 4 + 1] === L[i * 4 + 1] && sl[j * 4 + 2] === L[i * 4 + 2]) { slotOf[i] = j; taken[j] = 1; break; }
+      }
+    }
+    for (let i = 0; i < n; i++) {
+      if (slotOf[i] >= 0 || !ShadowPass._castsAt(L, f.carried, i)) continue;
+      for (let j = 0; j < cap; j++) if (!taken[j]) { slotOf[i] = j; taken[j] = 1; break; }
+    }
+    for (let j = 0; j < cap; j++) if (!taken[j]) { sl[j * 4] = NaN; this._loBuilt[j] = 0; }   // a light gone: its slot is drawn afresh for the next
+    let rebuilds = SHADOW_LO_REBUILDS;
+    for (let i = 0; i < n; i++) {
+      const j = slotOf[i];
+      if (j < 0) continue;
+      const o = j * 4, far = shadowFarFor(L[i * 4 + 3]);
+      const pos = [L[i * 4], L[i * 4 + 1], L[i * 4 + 2]];
+      const fresh = !this._loBuilt[j] || !(sl[o] === pos[0] && sl[o + 1] === pos[1] && sl[o + 2] === pos[2] && sl[o + 3] === far);
+      let sig = null, draw = fresh;
+      if (!fresh && rebuilds > 0) {
+        sig = this._staticSignature(pos, far);
+        if (this._loSlotSig[j * 2] !== sig.hash || this._loSlotSig[j * 2 + 1] !== sig.count) { draw = true; rebuilds--; }
+      }
+      if (draw) {
+        if (!sig) sig = this._staticSignature(pos, far);
+        this._loSlotSig[j * 2] = sig.hash; this._loSlotSig[j * 2 + 1] = sig.count;
+        pointFaceMatrices(pos, far, this.faceVP);
+        for (let face = 0; face < 6; face++) {
+          gl.bindFramebuffer(gl.FRAMEBUFFER, this._loFbos[j * 6 + face]);
+          gl.viewport(0, 0, SHADOW_LO_SIZE, SHADOW_LO_SIZE);
+          gl.clear(gl.DEPTH_BUFFER_BIT);
+          this.stats.pointDraws += this.replay(f, this.faceVP[face], pos, false, 0, 0, REPLAY_STATIC);
+        }
+        this.stats.loFaces += 6;
+        this._loBuilt[j] = 1;
+        sl[o] = pos[0]; sl[o + 1] = pos[1]; sl[o + 2] = pos[2]; sl[o + 3] = far;
+      }
+      this.stats.loSlots++;
+      if (this.casterOf[i] === -1) this.casterOf[i] = SHADOW_POINT_CASTERS + j;
+    }
+  }
   /** AUDIT SC1: the static cache's array and framebuffers, once, on the first frame the door is open. */
   _ensureCache() {
     if (this.cacheTex) return;
@@ -919,6 +1108,7 @@ export class ShadowPass {
     this.kind = shadowKind(f.sunScale, f.lightDir);
     this.frameNo++;
     this.stats.cascadesDrawn = 0; this.stats.facesDrawn = 0; this.stats.staticFaces = 0; this.stats.dynFaces = 0; this.stats.blits = 0; this.stats.cachedSlots = 0;   // SC1
+    this.stats.loSlots = 0; this.stats.loFaces = 0;   // DISC15
     this.sunParams[3] = 0; this.pointParams.fill(0); this.shadowIndex.fill(-1); this.casterOf.fill(-1); this.casters = 0;
     if (this.count === 0) { this.kind = null; this._slotLight.fill(NaN); return; }
     gl.disable(gl.CULL_FACE);   // the light's projection is not the mirrored one: winding is not the world's, and both faces of an open model must cast
@@ -1035,6 +1225,7 @@ export class ShadowPass {
       if (i < SHADOW_CASTER_TABLE) this.casterOf[i] = k;
     }
     for (let k = 0; k < SHADOW_POINT_CASTERS; k++) if (!taken[k]) { this._slotLight[k * 4] = NaN; this._slotCached[k] = 0; this._slotLiveDyn[k] = 0; }   // an emptied slot is drawn afresh when it is filled
+    if (f.everyLight) this._renderLo(f, L);   // DISC15: a room drawn whole - every other light reads its lo map
     this.casters = casters.length;
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.colorMask(true, true, true, true);
@@ -1226,9 +1417,12 @@ export class ShadowPass {
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.sunTex);
     gl.activeTexture(gl.TEXTURE0 + SHADOW_POINT_UNIT);
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.pointTex);   // EL5: the casters' layers
+    gl.activeTexture(gl.TEXTURE0 + SHADOW_LO_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.loTex);   // DISC15: the lo tier (the one-texel stand-in before a room asks)
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform1i(loc.sunShadow, SHADOW_SUN_UNIT);
     gl.uniform1i(loc.pointShadow, SHADOW_POINT_UNIT);
+    if (loc.pointShadowLo) gl.uniform1i(loc.pointShadowLo, SHADOW_LO_UNIT);   // DISC15
     gl.uniformMatrix4fv(loc.sunVP, false, this._sunVPFlat);
     gl.uniform4fv(loc.sunParams, this.sunParams);
     gl.uniform4fv(loc.sunTexel, this.sunTexel);   // EL7

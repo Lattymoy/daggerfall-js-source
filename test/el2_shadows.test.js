@@ -174,7 +174,7 @@ test('EL2: the receiver block and the depth shaders - six uniforms, no dynamic m
   assert.match(SHADOW_GLSL, /precision highp sampler2DArrayShadow;/, 'the shadow sampler has no default precision in ES 3.00');
   assert.ok(!SHADOW_GLSL.includes('samplerCubeShadow'), 'EL5: no cube sampler - the faces are layers, selected by hand');
   assert.match(SHADOW_GLSL, /float pointShadowAt\(int k, vec3 wp, vec3 n\)/); assert.match(SHADOW_GLSL, /float layer = float\(k \* 6 \+ face\);/);
-  assert.match(SHADOW_GLSL, /float shadowOfLight\(int i, vec3 wp, vec3 n\) \{\n  int k = uCasterOf\[i\];\n  return k >= 0 \? pointShadowAt\(k, wp, n\) : 1\.0;/, 'EL8: the caster by the table, one lookup');
+  assert.match(SHADOW_GLSL, /float shadowOfLight\(int i, vec4 L, vec3 wp, vec3 n\) \{\n  int k = uCasterOf\[i\];\n  return k >= 0 \? casterShadowAt\(k, L, wp, n\) : 1\.0;/, 'EL8: the caster by the table, one lookup (DISC15: either tier)');
   assert.match(SHADOW_GLSL, /uniform int uCasterOf\[48\];/);
   assert.match(SHADOW_GLSL, /mat4 vp = c == 0 \? uSunVP\[0\] : c == 1 \? uSunVP\[1\] : uSunVP\[2\];/, 'no dynamic index into the uniform array (EL7: three)');
   assert.match(SHADOW_GLSL, /int c = d < uSunShadowParams\.x \* 0\.9 \? 0 : d < uSunShadowParams\.y \* 0\.9 \? 1 : 2;/, 'the cascade by view distance');
@@ -186,7 +186,7 @@ test('EL2: the receiver block and the depth shaders - six uniforms, no dynamic m
   for (const [name, fs] of [['mesh', EL_MESH_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS]]) {
     assert.ok(fs.includes(SHADOW_GLSL), `${name} carries the block`);
     assert.match(fs, /cloudShadowAt\(vWorldPos\) \* sunShadowAt\(vWorldPos, n\)/, `${name}: the sun term wears both shadows`);
-    assert.match(fs, /if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    vec3 Ln = L \/ max\(d, 1e-4\);\n    int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? pointShadowAt\(k, wp, n\)\n      : \(k == -2 \|\| d > uPointLights\[i\]\.w \* 0\.7\) \? 1\.0[^\n]*\n      : contactShadow\(wp, n, Ln, d\);/, `${name}: EL5 - out of the window nothing is computed; EL8: a caster's map by the table, else a contact shadow`);
+    assert.match(fs, /if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    vec3 Ln = L \/ max\(d, 1e-4\);\n    int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? casterShadowAt\(k, uPointLights\[i\], wp, n\)[^\n]*\n      : \(k == -2 \|\| d > uPointLights\[i\]\.w \* 0\.7\) \? 1\.0[^\n]*\n      : contactShadow\(wp, n, Ln, d\);/, `${name}: EL5 - out of the window nothing is computed; EL8: a caster's map by the table (DISC15: of either tier), else a contact shadow`);
   }
   assert.ok(EL_BB_FS.includes(SHADOW_GLSL));
   assert.match(EL_BB_FS, /in vec3 vBBBase;/);
@@ -215,7 +215,7 @@ test('EL2: the renderer builds the pass with the lane, records the three draw ki
   assert.equal(SHADOW_POINT_CASTERS, 8, 'HQ1: eight casters (AUDIT LIGHTING: the number itself, since every count below derives from it)');
   assert.equal(count(calls, 'framebufferTextureLayer'), 3 + 6 * SHADOW_POINT_CASTERS, 'three cascade framebuffers (EL7), then six layers per caster (EL5; EL6: six casters); AUDIT SC1: the static cache\'s six per caster wait for the first frame that wants them (audit_lighting)');
   assert.equal(calls.filter((c) => c[0] === 'framebufferTexture2D' && c[3] >= 100 && c[3] < 106).length, 0, 'EL5: no cube faces - the faces are layers');
-  assert.equal(calls.filter((c) => c[0] === 'texStorage3D').length, 2, 'the sun array and the casters\' array (AUDIT SC1: the cache\'s, the casters\' shape again, on the first frame with a caster)'); assert.equal(calls.filter((c) => c[0] === 'texStorage2D').length, 0);
+  assert.equal(calls.filter((c) => c[0] === 'texStorage3D').length, 3, 'the sun array, the casters\' array and DISC15\'s one-texel lo stand-in (AUDIT SC1: the cache\'s, the casters\' shape again, on the first frame with a caster; DISC15: the lo tier\'s own, on the first room that asks)'); assert.equal(calls.filter((c) => c[0] === 'texStorage2D').length, 0);
   assert.ok(calls.some((c) => c[0] === 'texStorage3D' && c[4] === 512 && c[5] === 512 && c[6] === 6 * SHADOW_POINT_CASTERS), 'the casters\' six 512^2 layers each (HQ1: eight casters)');
   assert.ok(calls.some((c) => c[0] === 'texParameteri' && c[2] === 1 && c[3] === 1), 'compare mode set');
   // the kept pass across swaps
