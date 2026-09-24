@@ -48,6 +48,11 @@ import { dateFromSeconds, dateString, dayName, monthName, birthSignName, SEASON_
 import { REGION_TEMPLES, LOCATION_TYPES } from '../../formats/mapsFile.js';
 import { factionRaceFromRace } from '../../characters/staticNpc.js';
 
+/** The oath base both Oath members read - TEXT.RSC 201 + the FactionRaces
+ *  id (QuestMCP.Oath, TalkManagerMCP.Oath). AUDIT 68 S34-oath-static-race-vocab:
+ *  one home; talkMacros and talkSession each declared it again. */
+export const OATH_BASE_TEXT_ID = 201;
+
 export const MACRO_TYPES = Object.freeze({
   None: 0, NameMacro1: 1, NameMacro2: 2, NameMacro3: 3, NameMacro4: 4,
   DetailsMacro: 5, FactionMacro: 6, ContextMacro: 7, BindingMacro: 8,
@@ -377,7 +382,7 @@ export function questMacroSource(quest) {
         if (clicked) race = clicked.race ?? -1;
       }
       if (race === -1) race = world()?.currentRegionRace?.() ?? -1;
-      return world()?.getRandomText?.(201 + factionRaceFromRace(race)) ?? null;
+      return world()?.getRandomText?.(OATH_BASE_TEXT_ID + factionRaceFromRace(race)) ?? null;
     },
     homeRegion() {
       const last = quest.lastResourceReferenced;
