@@ -182,8 +182,8 @@
   {
     "name": "C21-last-online-negative",
     "file": "src/net/social.js",
-    "old": "const ago = Math.max(0, now - seen);",
-    "new": "const ago = now - seen;",
+    "old": "const ago = Math.max(0, ms);",
+    "new": "const ago = ms;",
     "tests": [
       "test/soc2_session.test.js"
     ],

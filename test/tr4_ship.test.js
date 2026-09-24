@@ -97,8 +97,8 @@ test('TR4: the picker\'s row is live for an owner, and Ship routes to the telepo
   assert.match(world, /const t = shipTransition\(playerEntity, \{/);
   // F-F1 (the parity audit): the host READS the reposition rather than
   // inferring it from `restore`, so the two encodings cannot drift.
-  assert.match(world, /const localPos = t\.reposition === REPOSITION\.None \? t\.restore\.pos : null;/);
-  assert.match(world, /await _teleportToPixel\(t\.go\.x, t\.go\.y, localPos, \{ reposition: t\.reposition \}\);/);
+  assert.match(world, /const localPos = t\.reposition === REPOSITION\.None \? \(shipRestorePos\(t\.restore, state\.compensation\[1\]\) \?\? t\.restore\.pos\) : null;/);   // AUDIT 68 S22: the memory's height in the arrival's frame
+  assert.match(world, /await _teleportToPixel\(t\.go\.x, t\.go\.y, localPos, \{ reposition: t\.reposition, grounded: legacy \}\);/);
   assert.match(world, /playerEntity\.boardShipPosition = t\.boardShipPosition;/);
   assert.match(world, /setTransportModeHere\(t\.mode\);/, 'and it lands on Foot through the one seam');
 });
@@ -161,7 +161,7 @@ test('TR4-SHIPLAND: the boarding arrival routes through the location arm, not th
   // landing - dropping the `reposition` argument, or nulling `landing`
   // in the core - turns this red.
   const world = read('src/scenes/world.js');
-  assert.match(world, /await _teleportToPixel\(t\.go\.x, t\.go\.y, localPos, \{ reposition: t\.reposition \}\);/,
+  assert.match(world, /await _teleportToPixel\(t\.go\.x, t\.go\.y, localPos, \{ reposition: t\.reposition, grounded: legacy \}\);/,
     'the boarding carries RandomStartMarker into the teleport');
   assert.match(world, /const wantsLanding = reposition === REPOSITION\.RandomStartMarker\s*\n\s*\|\| reposition === REPOSITION\.DirectionFromStartMarker;/,
     'BOTH marker methods take the arm - StreamingWorld.Update\'s two cases fall through to one PositionPlayerToLocation() (:279-282)');

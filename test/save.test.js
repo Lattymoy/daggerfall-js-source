@@ -1,7 +1,7 @@
 // S11: snapshot/restore round-trip, version gate, spell re-resolution.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { snapshotPlayer, restorePlayer, SAVE_VERSION, writeQuicksave, readQuicksave } from '../src/systems/save.js';
+import { snapshotPlayer, restorePlayer, SAVE_VERSION } from '../src/systems/save.js';
 import { routeKey } from '../src/ui/input.js';
 import { STREAMING_TERRAIN_SCALE } from '../src/world/terrainSampler.js';
 
@@ -39,18 +39,8 @@ test('save: round-trip restores everything; extras carried; deep copies', () => 
   assert.equal(snap.stats.luck, 60);
   // version gate
   assert.equal(restorePlayer({}, { ...snap, v: SAVE_VERSION + 1 }), null);
-  // storage round-trip through a fake localStorage
-  const store = new Map();
-  const fake = { setItem: (k, v) => store.set(k, v), getItem: (k) => store.get(k) ?? null };
-  assert.ok(writeQuicksave(snap, fake));
-  assert.equal(readQuicksave(fake).name, 'Mac');
-  assert.equal(readQuicksave({ getItem: () => '{corrupt', setItem: () => {} }), null);
-  // writeQuicksave must NOT throw when setItem throws (QuotaExceeded /
-  // private-mode SecurityError) - it returns false so the caller
-  // reports "save failed" instead of crashing the frame.
-  const throwing = { setItem: () => { throw new Error('QuotaExceededError'); }, getItem: () => null };
-  assert.equal(writeQuicksave(snap, throwing), false);
-  assert.doesNotThrow(() => writeQuicksave(snap, throwing));
+  // AUDIT 68 S31-save-dead-legacy-api: the legacy single-key round trip that stood here went with
+  // writeQuicksave/readQuicksave - SAV4's slot store is the save (saveslots.test.js pins its storage laws).
 });
 
 test('save: the Q4-v quest envelope rides the extras verbatim (opaque, like world)', () => {

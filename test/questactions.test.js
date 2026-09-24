@@ -43,8 +43,9 @@ function makeMachine(deps = {}) {
     addQuestTopics: capture('addQuestTopics'),
     changeLegalRep: capture('changeLegalRep'),
     playerLevel: () => deps.level ?? 0,
-    getGold: () => m.gold,
-    deductGold: (amount) => { m.gold -= amount; calls.push(['deductGold', amount]); },
+    // AUDIT 68 S29-gold-hook-dup: ClickedNpc's gold arm is PlayerEntity.GoldPieces, ClickedFoe's pair
+    getGoldPieces: () => m.gold,
+    deductGoldPieces: (amount) => { m.gold -= amount; calls.push(['deductGoldPieces', amount]); },
     playVideo: capture('playVideo'),
     playSound: (soundId) => { calls.push(['playSound', soundId]); return deps.playSoundResult ?? true; },
     playSong: capture('playSong'),
@@ -159,7 +160,7 @@ test('ClickedNpc gold gate: enough gold deducts and fires; short gold starts the
   person.setPlayerClicked();
   m.tick();
   assert.equal(q.getTask({ name: 't' }).getTriggerValue(), true);
-  assert.deepEqual(m.of('deductGold'), [['deductGold', 100]]);
+  assert.deepEqual(m.of('deductGoldPieces'), [['deductGoldPieces', 100]]);
   assert.equal(m.gold, 50);
 });
 

@@ -79,8 +79,9 @@ test('audit24 lifetimes: a city guard frees its batch on both death paths, and t
   // header grew its provenance flag.
   assert.match(bodyOf(src, 'function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false, peer = false } = {})'),
     /health <= 0[\s\S]{0,300}releaseGuardBatch\(g\)/, 'the killed path');
-  assert.match(src, /if \(!g\.dead\) \{ g\.dead = true; releaseGuardBatch\(g\); \}/,
+  assert.match(src, /if \(!g\.dead && !g\.defender\) \{ g\.dead = true; releaseGuardBatch\(g\); \}/,   // DISC19-F: the town's defenders are not the crime's
     'and the walk-away path when the crime clears');
+  assert.match(src, /if \(!g\.dead && g\.defender\) \{ g\.dead = true; releaseGuardBatch\(g\); n\+\+; \}/, 'and the defenders\' own walk-away');
   // AUDIT 39 MOVED THIS PIN. It read "the array must stay
   // index-stable, so nothing may splice guards" - which was true of
   // the keying, not of the law: the records themselves then
@@ -88,7 +89,7 @@ test('audit24 lifetimes: a city guard frees its batch on both death paths, and t
   // per-frame walk over `guards` paid for them. DFU destroys the
   // walk-away watch outright (EnemyEntity.cs:184-191) and keeps only
   // the killed body. So the key is the guard's own id now, and the
-  // prune is the encounter pool's (exteriorFoes.js:1001).
+  // prune is the encounter pool's (exteriorFoes.js:1009).
   // AUDIT-WH H2 moved the spelling, not the law: the id function is
   // one const now, read by the corpse lens AND by the live-foe
   // producer the plaque races, so a guard and the body it becomes
@@ -207,7 +208,7 @@ test('audit24: preventNormalizingReputations is set by the prison jump and clear
 test('audit24: the three quest settings are LIVE reads, not hardcoded falses', async () => {
   // Every one had a live consumer and a launcher toggle, so the player
   // could flip a switch that reached nothing: adult quests were
-  // filtered out whatever ChildGuard said (questLists.js:195), the
+  // filtered out whatever ChildGuard said (questLists.js:203), the
   // guild list-box arm was unreachable (offerFlow.js:144), and the
   // journal's clocks never counted down (clock.js:164). The settings
   // tier map's own both-ways gate now covers them; this pins the
@@ -257,11 +258,13 @@ test('AUDIT 39: a third race - two cold callers for one model id must not each b
   // held the in-flight map all along.
   const pipeline = read('src/scenes/dataPipeline.js');
   assert.match(pipeline, /const meshPromises = new Map\(\);/, 'the in-flight map exists');
-  const fn = pipeline.slice(pipeline.indexOf('async function getGpuMesh('), pipeline.indexOf('async function buildGpuMesh('));
-  assert.match(fn, /if \(gpuMeshes\.has\(modelIdNum\)\) return gpuMeshes\.get\(modelIdNum\);/, 'a finished mesh answers from the cache');
-  assert.match(fn, /if \(!meshPromises\.has\(modelIdNum\)\) \{\s*\n\s*meshPromises\.set\(modelIdNum, buildGpuMesh\(modelIdNum\)/,
+  // AUDIT 68 S18-uploadpart-no-inflight: the door is `cachedMesh` now, shared by getGpuMesh and the mill's parts.
+  const fn = pipeline.slice(pipeline.indexOf('async function cachedMesh('), pipeline.indexOf('async function buildGpuMesh('));
+  assert.match(fn, /if \(gpuMeshes\.has\(key\)\) return gpuMeshes\.get\(key\);/, 'a finished mesh answers from the cache');
+  assert.match(fn, /if \(!meshPromises\.has\(key\)\) \{\s*\n\s*meshPromises\.set\(key, build\(\)/,
     'and a flying one answers with the SAME promise, set before any await');
-  assert.match(fn, /\.finally\(\(\) => meshPromises\.delete\(modelIdNum\)\)/, 'a settled build leaves the map');
+  assert.match(fn, /\.finally\(\(\) => meshPromises\.delete\(key\)\)/, 'a settled build leaves the map');
+  assert.match(fn, /const getGpuMesh = \(modelIdNum\) => cachedMesh\(modelIdNum, \(\) => buildGpuMesh\(modelIdNum\)\);/, 'getGpuMesh is that door');
   // the build itself is the only createMesh, and it is unreachable
   // except through the door above
   assert.equal((pipeline.match(/buildGpuMesh\(/g) ?? []).length, 2, 'one definition, one caller');

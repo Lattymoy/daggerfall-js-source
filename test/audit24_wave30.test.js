@@ -154,7 +154,7 @@ test('audit24 wave30: the dungeon rest advance runs BOTH halves of the broker ev
   // OnNewMagicRound is a GLOBAL event - every EntityEffectManager in the scene
   // subscribes - and the frame body's foe loop anchors on the clock at the top
   // of the frame, so these minutes were lost rather than merely late.
-  assert.ok(arm.includes('runMagicRoundsFor(f.entity, _w.from, _w.to, { sinks: foeSinks(f) });'), 'the FOE half runs too');
+  assert.ok(arm.includes('runMagicRoundsFor(f.entity, _w.from, _w.to, { sinks: foeSinks(f, false) });'), 'the FOE half runs too');   // AUDIT 68 S19-round-ticks-player-provenance: a round is nobody's blow
   assert.ok(arm.indexOf('claimMagicRounds') < arm.indexOf('intermittentEnemySpawn'),
     'the broker before the spawn catch-up, as the two Updates run');
   // the comment that said the round loop would catch up is GONE - it described

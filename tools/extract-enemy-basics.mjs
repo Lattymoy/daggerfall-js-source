@@ -11,7 +11,6 @@
 // this file. A column the extraction never looked at used to be
 // invisible from both sides - see the library header.
 import { readFileSync, writeFileSync } from 'node:fs';
-import { pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
 import { extractEnemyBasics } from './extractEnemyBasics.lib.mjs';
 
@@ -21,7 +20,7 @@ const scPath = process.argv[3] || join(dirname(process.argv[2]), '..', 'SoundCli
 const out = extractEnemyBasics(src, readFileSync(scPath, 'utf8'));
 
 // Assert C3 parity before writing
-const cur = (await import(pathToFileURL(new URL('../src/characters/enemyBasics.js', import.meta.url).pathname))).ENEMY_BASICS;
+const cur = (await import(new URL('../src/characters/enemyBasics.js', import.meta.url).href)).ENEMY_BASICS;
 for (const [k, v] of Object.entries(cur)) {
   const n = out[k];
   if (!n) throw new Error(`ASSERT FAIL: key ${k} missing from re-extraction`);

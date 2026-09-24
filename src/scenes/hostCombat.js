@@ -52,12 +52,7 @@ import { comprehendLanguagesChance } from '../systems/effects.js';   // X11: the
 // to the melee arc in every host. One table now, re-exported here so
 // the callers that speak this file's name keep working.
 export { weaponSkillUsed } from '../characters/weapons.js';
-import { weaponSkillUsed, WEAPON_SKILL_USED } from '../characters/weapons.js';
-
-/** The same table in the shape THIS file's name has always had - an
- *  object keyed by template index. Derived, so it cannot drift from
- *  the Map it is derived from. */
-export const WEAPON_SKILL_BY_TEMPLATE = Object.freeze(Object.fromEntries(WEAPON_SKILL_USED));
+import { weaponSkillUsed } from '../characters/weapons.js';
 
 
 /** CalculateAttackDamage's skillID pick (FormulaHelper.cs:573-590):
@@ -171,7 +166,7 @@ export function equipEnemy(entity, mobileType, playerLevel, rolls = Math.random,
   // `Items.AddItem(item)` - a foe's table is genuinely worn, and
   // EnemyEntity.cs:414-421 walks it. The port wrote only the summary
   // arrays, so `equipTableOf(target)` handed back the lazy all-null
-  // table (equip.js:44-45) for every enemy in the game and
+  // table (equip.js:43-44) for every enemy in the game and
   // FormulaHelper.DamageEquipment's STRUCK side - the shield at
   // FormulaHelper.cs:1095 and the struck part's armour at :1113 -
   // could not fire once: only the attacker's own weapon ever took

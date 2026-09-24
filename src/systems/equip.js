@@ -27,14 +27,13 @@ import { customItemClass, rriNativeMaterialValue, rriEquipSound } from './rriIte
 import { SOUND } from './soundClips.js';   // AUDIT-RR F8: the class's equip sound, by name   // RRI1: a custom armor's slot, for the body part its value lands on; AUDIT-RR F7/F8: the class's two virtuals
 import { createEquipTable, getItemHands as handsOf, ITEM_HANDS } from '../characters/equipTable.js';
 import { BODY_PARTS, NUMBER_BODY_PARTS, materialArmorValue, itemArmorValue, SHIELD_VALUES, SHIELD_PARTS, isShieldTemplate } from './armorMaterials.js';
-import { weaponSkillUsed } from '../characters/weapons.js';   // wave 29: GetWeaponSkillUsed keys on the TEMPLATE
+import { weaponSkillUsed, WEAPONS } from '../characters/weapons.js';   // wave 29: GetWeaponSkillUsed keys on the TEMPLATE
 import { SKILLS, WEAPON_SKILL } from './skills.js';   // S23: the weapon partition, single-sourced
 import { EQUIP_DELAY_TIMES } from '../characters/weaponStates.js';   // CH3 (characters-13): the swap-pause table gains its consumer
 import { startingProvisions } from './survival/items.js';   // SURV2: the new character's kit
 import { survivalOn } from './survival/switch.js';   // SURV2: the one switch
 
 export { EQUIP_SLOTS, ITEM_HANDS };
-const ARROW = 131;
 
 /** The bag speaks string groups; C5c speaks the numeric enum. */
 const numeric = (item) => (typeof item.group === 'string' ? { ...item, group: ITEM_GROUPS[item.group] ?? ITEM_GROUPS.None } : item);
@@ -114,7 +113,7 @@ export function unequipSlot(entity, slot) {
   slots[slot] = null;
   delete item.equipSlot;
   updateEquippedArmorValues(entity, item, false);   // U8h: the armor table adds back
-  fireEquipChange(entity);   // E1: the fold follows the worn set (LR2: and every listener's)
+  equipChanged(entity);   // E1: the fold follows the worn set (LR2: and every listener's)
   _hooks.onItemUnequipped?.(entity, item);   // E2: StopEquippedItem - the Unequipped payloads (ItemEquipTable.cs:163/:202/:231)
   return item;
 }
@@ -241,7 +240,7 @@ export function equipItem(entity, item) {
   const slots = equipTableOf(entity);
   const slot = getEquipSlot(entity, item);   // computed ONCE up front (the DFU order)
   if (slot === EQUIP_SLOTS.None) return null;
-  if (item.group === 'Weapons' && item.templateIndex === ARROW) return null;   // cannot equip arrows
+  if (item.group === 'Weapons' && item.templateIndex === WEAPONS.Arrow) return null;   // cannot equip arrows
   // AUDIT 63 F23: NO condition gate here. ItemEquipTable.cs:94-154
   // has none; the refusal is the inventory WINDOW's (:1330-1341) and
   // lives at the two window callers - see isBrokenItem above.
@@ -252,19 +251,22 @@ export function equipItem(entity, item) {
     entity.items.push(item);
   }
   const unequipped = [];
-  const un = (s) => { const it = unequipSlot(entity, s); if (it) unequipped.push(it); };
-  if (item.group === 'Weapons' && getItemHands(item) === ITEM_HANDS.Both) {
-    un(EQUIP_SLOTS.LeftHand); un(EQUIP_SLOTS.RightHand);   // 2H clears both hands
-  }
-  if (getItemHands(item) === ITEM_HANDS.LeftOnly) {
-    const right = slots[EQUIP_SLOTS.RightHand];
-    if (right && getItemHands(right) === ITEM_HANDS.Both) un(EQUIP_SLOTS.RightHand);   // a shield bumps a held 2H
-  }
-  un(slot);   // swap the occupant out (alwaysEquip)
-  item.equipSlot = slot;
-  slots[slot] = item;
-  updateEquippedArmorValues(entity, item, true);   // U8h: the armor table subtracts
-  fireEquipChange(entity);   // E1: the fold follows the worn set (LR2: and every listener's)
+  // AUDIT 68 S27-ht-equip-midswap: the leavers and the arrival are ONE act, told once when the table has settled
+  oneEquipAct(() => {
+    const un = (s) => { const it = unequipSlot(entity, s); if (it) unequipped.push(it); };
+    if (item.group === 'Weapons' && getItemHands(item) === ITEM_HANDS.Both) {
+      un(EQUIP_SLOTS.LeftHand); un(EQUIP_SLOTS.RightHand);   // 2H clears both hands
+    }
+    if (getItemHands(item) === ITEM_HANDS.LeftOnly) {
+      const right = slots[EQUIP_SLOTS.RightHand];
+      if (right && getItemHands(right) === ITEM_HANDS.Both) un(EQUIP_SLOTS.RightHand);   // a shield bumps a held 2H
+    }
+    un(slot);   // swap the occupant out (alwaysEquip)
+    item.equipSlot = slot;
+    slots[slot] = item;
+    updateEquippedArmorValues(entity, item, true);   // U8h: the armor table subtracts
+    equipChanged(entity);   // E1: the fold follows the worn set (LR2: and every listener's)
+  });
   // ES2: "Play equip sound" (ItemEquipTable.cs:144-146) - BEFORE
   // StartEquippedItem, C#'s own order. SoundClips.None plays nothing.
   { const clip = getEquipSound(item); if (clip != null) _equipSoundSink?.(clip); }
@@ -315,7 +317,7 @@ export function rebuildEquipState(entity) {
  *  chargenSession.js:141 (?class= headless) and :233 (the wizard) -
  *  and the guard below (`entity.equip || items.length`) makes this a
  *  no-op for any character that went through either. What is left is
- *  residue at the two host calls (world.js:3072, exterior.js:1277):
+ *  residue at the two host calls (world.js:3083, exterior.js:1277):
  *  a chargenDone entity whose bag AND equip table are both empty
  *  still takes a free dagger here. Deleting the calls is a behaviour
  *  change, so it waits for a slice that owns one. */
@@ -523,5 +525,26 @@ export function addEquipChangeListener(fn) { if (typeof fn === 'function' && !_e
 function fireEquipChange(entity) {
   _hooks.onEquipChange?.(entity);
   for (const fn of _equipListeners) fn(entity);
+}
+/** AUDIT 68 S27-ht-equip-midswap: ONE ACT, ONE TELLING. A swap is
+ *  several table moves - the occupant out, a two-hander's other hand,
+ *  the arrival in - and a listener told between them read a table no
+ *  finished act leaves: Handheld Torches' hand law lit the stowed light
+ *  in the half-emptied hand, then stowed it again (or, under Drop, put
+ *  it on the floor) a statement later. Inside an act the tellings wait,
+ *  and each entity whose table moved is told once, settled, when the
+ *  outermost act ends. */
+let _heldTellings = null;
+function equipChanged(entity) {
+  if (_heldTellings) _heldTellings.add(entity);
+  else fireEquipChange(entity);
+}
+export function oneEquipAct(fn) {
+  if (_heldTellings) return fn();
+  const held = _heldTellings = new Set();
+  try { return fn(); } finally {
+    _heldTellings = null;
+    for (const entity of held) fireEquipChange(entity);
+  }
 }
 export const notifyEquipChange = (entity) => fireEquipChange(entity);

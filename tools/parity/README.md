@@ -42,7 +42,12 @@ DFU is MIT (Interkarma and contributors); see the repo's attribution.
 | `cs/shim/HarnessCorpus.cs` | records FaceUVTool's inputs so both sides consume one corpus |
 | `js/*.mjs` | the port-side dumpers, same format |
 | `patches/*.cs.patch` | five behaviour-neutral edits, plus `FaceUVTool.cs.patch` - the row-18 float→double widening that puts the faceuv corpus AT MATCHED PRECISION (not behaviour-neutral, and `prepare.sh` says so) |
-| `tables/*.mjs` | the **data-table** differential: extracts DFU's hardcoded C# tables and the port's JS literals and diffs them key-for-key. ~9,900 values across 30 tables at AUDIT 18 |
+
+The **data-table** differential (DFU's hardcoded C# tables against the port's
+literals) lives in the suite now: the PY1 pins regenerate each table from DFU's
+own C# through `test/dfuRoot.mjs` and compare it cell for cell. AUDIT 18's
+one-off `tables/*.mjs` extractors were deleted at AUDIT 68 - 26 of the 35 read a
+`'${DFU}'` path that was never interpolated, and none had run since.
 
 ## The format
 

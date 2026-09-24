@@ -51,7 +51,7 @@ test('TERRAIN-SCALE1: every height the streamed world draws, collides with or st
   assert.equal(ringHeight(0), SCALED_OCEAN_ELEVATION * 1.25, 'the far ring');
   near(overworldHeight(100), (100 * 8 * 1.25 / 819.2) * OVERWORLD_RELIEF, 1e-9);
   assert.match(WORLD, /const worldHeight = MAX_TERRAIN_HEIGHT \* STREAMING_TERRAIN_SCALE;/, 'the host\'s own worldHeight: locations, centreHeight, heightAt');
-  assert.match(WORLD, /const sea = SCALED_OCEAN_ELEVATION \* STREAMING_TERRAIN_SCALE \+ 0\.5;\n      const scale = MAX_TERRAIN_HEIGHT \* STREAMING_TERRAIN_SCALE;/, 'the grass\'s sea and its ground');
+  assert.match(WORLD, /const sea = SCALED_OCEAN_ELEVATION \* STREAMING_TERRAIN_SCALE \+ 0\.5;/, 'the grass\'s sea (AUDIT 68 S22: its ground is surfaceHeightAt\'s - the dead `scale` beside it is gone)');
   // DEFAULT_TERRAIN_SCALE survives in src only as the legacy saves' scale
   for (const f of ['src/scenes/world.js', 'src/scenes/worldModes.js']) {
     for (const line of rd(f).split('\n').filter((l) => l.includes('DEFAULT_TERRAIN_SCALE') && !l.startsWith('import'))) {
@@ -110,9 +110,9 @@ test('TERRAIN-SCALE1: the host stands every saved exterior height again as it la
   assert.match(WORLD, /return \[lx, restandHeight\(a\.y \?\? 2, lx, lz, scaleOf\(a\.terrainScale\)\) \+ state\.compensation\[1\], lz\];/, '...and stood again at the recall');
   // audit: the ship's remembered deck - stamped at boarding, stood again after the teleport built its pixel (the
   // teleport stands a deck verbatim, never grounded)
-  assert.match(WORLD, /position: \{ mapPixel: here, pos: \[\.\.\.player\.pos\], yaw: cam\.yaw, terrainScale: STREAMING_TERRAIN_SCALE \},/);
-  const ship = WORLD.slice(WORLD.indexOf('    await _teleportToPixel(t.go.x, t.go.y, localPos, { reposition: t.reposition });'));
-  assert.match(ship, /^    await _teleportToPixel[^\n]*\n(?:\s*\/\/[^\n]*\n)*    if \(localPos && scaleOf\(t\.restore\?\.terrainScale\) !== STREAMING_TERRAIN_SCALE\) \{\n      const c = state\.compensation\[1\];\n      const y = restandHeight\(localPos\[1\] - c, localPos\[0\], localPos\[2\], scaleOf\(t\.restore\.terrainScale\)\) \+ c;\n      if \(walkMode\) player\.spawn\(localPos\[0\], y, localPos\[2\]\);/);
+  assert.match(WORLD, /position: shipMemory\(\{ mapPixel: here, pos: \[\.\.\.player\.pos\], yaw: cam\.yaw, terrainScale: STREAMING_TERRAIN_SCALE \}, state\.compensation\[1\]\),/);   // AUDIT 68 S22: and compensation-free
+  const ship = WORLD.slice(WORLD.indexOf('    await _teleportToPixel(t.go.x, t.go.y, localPos, { reposition: t.reposition, grounded: legacy });'));
+  assert.match(ship, /^    await _teleportToPixel[^\n]*\n(?:\s*\/\/[^\n]*\n)*    if \(localPos && !legacy && scaleOf\(t\.restore\?\.terrainScale\) !== STREAMING_TERRAIN_SCALE\) \{\n      const c = state\.compensation\[1\];\n      const y = restandHeight\(localPos\[1\] - c, localPos\[0\], localPos\[2\], scaleOf\(t\.restore\.terrainScale\)\) \+ c;\n      if \(walkMode\) player\.spawn\(localPos\[0\], y, localPos\[2\]\);/);
 });
 
 /** The quickload's own re-stand helpers, sliced from world.js and run over a stub frame and ground. */

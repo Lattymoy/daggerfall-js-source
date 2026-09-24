@@ -20,7 +20,7 @@
 // enemyMelee.js htClose (the waypoint advance), at project-final
 // 8ba9100. The constants are his numbers with his comments; the two
 // functions are his bodies, re-homed on `this` instead of `e` because
-// the port's foe IS its motor. navWalkable is main.js:311 verbatim.
+// the port's foe IS its motor. navWalkable is main.js:310 verbatim.
 // Where the port's shape forced a change it is named below; there are
 // exactly two, and neither touches how a route is chosen or held.
 //
@@ -59,7 +59,8 @@
 // findPath's waypoints carry y = surfH(chf.colliders, ...) when the chf
 // has colliders, and y = 0 otherwise. AUDIT 59 F4 corrected the premise
 // this adaptation was written on: the live chf DOES carry colliders -
-// navClient's hydrateHere re-cuts the boxes and hands them to
+// navClient hydrates over the boxes the bake was cut into (the worker
+// ships them back; a cache hit asks it for them) and hands them to
 // hydrateBakedNav, and the 3b pin reads the hydrated floor through
 // them - so a waypoint's y is surfH's answer: the real floor where a
 // box top exists, and the PHANTOM floor (minY - 10) wherever none
@@ -82,7 +83,10 @@
 // a bat (capsule halved and floored at 1.6 under a 1.8 sprite) aimed
 // 0.9 m low and, at floor level, never climbed at all, because the
 // flyer's floor-lift clause only arms on a NEGATIVE heading.
-// The route bends x and z; nothing else changes.
+// The route bends x and z; nothing else changes. Its ENDPOINTS go in
+// with their real heights (the foe's feet, the predicted position) -
+// AUDIT 68: findPath's locate picks each end's level from them, and a
+// flat y = 0 routed a foe on a stacked floor along the wrong level.
 //
 // ── ADAPTATION 4: THE NUDGE RUNS THE FALL CHECK ─────────────────
 //
@@ -121,7 +125,7 @@ export const PATH_BUDGET_PER_FRAME = 3; // cap findPath (poly A* + funnel) calls
  *  number; the port's, not his. */
 export const PROJECT_MARGIN = 0.05;
 
-/** project-final main.js:311, verbatim: a cell is walkable iff it holds
+/** project-final main.js:310, verbatim: a cell is walkable iff it holds
  *  a walkable, regioned span (or its bit is set in a hydrated map's
  *  walkmask). */
 export function navWalkable(chf, x, z) {
@@ -164,23 +168,17 @@ export class EnhancedEnemyAI extends EnemyAI {
     this.navStats = { repaths: 0, fails: 0, stuckFires: 0 };
   }
 
-  /** Where the route is heading: the classic destination's own target
-   *  - the predicted position when the foe has one, else the target's
-   *  feet. The same point classic would walk a straight line at. */
-  _navGoal(targetFeet) {
-    return this.predictedTargetPos ?? targetFeet;
-  }
-
   /** project-final enemyShared.js:158-166 repathToward, on `this`.
    *  Returns true if a findPath was attempted this frame (budget
    *  consumed). Deliberately no `|| !this.path` catch: the timer alone
-   *  gates retries, so the fail back-off actually sticks. */
-  _repathToward(chf, gx, gz, dt) {
+   *  gates retries, so the fail back-off actually sticks. `goal` is
+   *  feet-space [x, y, z], like this.feet. */
+  _repathToward(chf, goal, dt) {
     const world = this.navWorld;
     if (this.path && world.navEpoch !== undefined && this.pathEpoch !== world.navEpoch) { this.path = null; this.repathT = 0; }
     if ((this.repathT -= dt) > 0) return false;
     if (world.pathBudget-- <= 0) return false;
-    const np = findPath(chf, [this.feet[0], 0, this.feet[2]], [gx, 0, gz]);
+    const np = findPath(chf, this.feet, goal);   // AUDIT 68 S02-motor-flat-y-locate: the real heights pick each endpoint's level (AUDIT 62 F1's locate); y = 0 routed a stacked floor's foe on the level nearest 0
     this.navStats.repaths++;
     if (np) { this.path = np; this.pathI = 1; this.repathT = REPATH_INT; this.pathEpoch = world.navEpoch; }
     else { this.path = null; this.repathT = REPATH_FAIL; this.navStats.fails++; }
@@ -231,12 +229,11 @@ export class EnhancedEnemyAI extends EnemyAI {
     try {
       // The route lives only while the classic tick would be
       // pursuing: CanAct, not given up, and a position to head for -
-      // the classic tick's own three gates, read after it ran.
-      const targetFeet = this.target == null || this.target.isPlayer ? playerFeet : this.target.ai.feet;
-      const pursuing = this.canAct && this.giveUpTimer > 0 && this.predictedTargetPos !== null && targetFeet != null;
+      // the classic tick's own three gates, read after it ran. The goal
+      // is the classic destination's own target, the predicted position.
+      const pursuing = this.canAct && this.giveUpTimer > 0 && this.predictedTargetPos !== null;
       if (!pursuing) { this.path = null; this.stuckT = 0; this.lastX = this.feet[0]; this.lastZ = this.feet[2]; return; }
-      const goal = this._navGoal(targetFeet);
-      this._repathToward(chf, goal[0], goal[2], dt);
+      this._repathToward(chf, this.predictedTargetPos, dt);
       if (this.path && this.moving) {
         this._stuckWatch(chf, Math.sin(this.yaw), Math.cos(this.yaw), dt);
       } else { this.stuckT = 0; this.lastX = this.feet[0]; this.lastZ = this.feet[2]; }
@@ -259,7 +256,7 @@ export class EnhancedEnemyAI extends EnemyAI {
     const last = this.pathI === this.path.length - 1;
     // adaptation 3: the goal's y is classic's own aim at the goal
     // (EnemyAI._aimY, the clear-path arm's vertical), a corner's is the foe's
-    const y = last ? this._aimY(this._navGoal(targetFeet)[1]) : this.feet[1];
+    const y = last ? this._aimY(this.predictedTargetPos[1]) : this.feet[1];
     const dx = wp[0] - this.feet[0], dz = wp[2] - this.feet[2];
     const d = Math.hypot(dx, dz);
     const reach = this.stopDistance + PROJECT_MARGIN;

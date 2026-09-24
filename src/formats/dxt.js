@@ -65,11 +65,13 @@ function alphaBlock(src, off, out, width, height, x0, y0) {
     pal[6] = 0;
     pal[7] = 255;
   }
-  // 48 selector bits, little-endian, 3 per texel in raster order.
-  let bits = 0n;
-  for (let i = 5; i >= 0; i--) bits = (bits << 8n) | BigInt(src[off + 2 + i]);
+  // 48 selector bits, little-endian, 3 per texel in raster order. AUDIT 68
+  // S10-dxt5-alpha-bigint: two 24-bit words (texels 0-7, then 8-15) hold
+  // them exactly - no field straddles - so no BigInt per block.
+  const lo = src[off + 2] | (src[off + 3] << 8) | (src[off + 4] << 16);
+  const hi = src[off + 5] | (src[off + 6] << 8) | (src[off + 7] << 16);
   for (let t = 0; t < 16; t++) {
-    const sel = Number((bits >> BigInt(t * 3)) & 7n);
+    const sel = t < 8 ? (lo >>> (t * 3)) & 7 : (hi >>> ((t - 8) * 3)) & 7;
     const px = x0 + (t & 3);
     const py = y0 + (t >>> 2);
     if (px >= width || py >= height) continue;
@@ -78,7 +80,7 @@ function alphaBlock(src, off, out, width, height, x0, y0) {
 }
 
 /**
- * Decode a DXT1 (`bpp8` false) or DXT5 image to RGBA8, top row first
+ * Decode a DXT1 (`dxt5` false) or DXT5 image to RGBA8, top row first
  * in the order the blocks are stored.
  * @param {Uint8Array} src block data
  * @param {number} width

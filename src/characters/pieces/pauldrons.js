@@ -1,7 +1,7 @@
 // Pauldrons (shoulder armour): standoff plate caps over each deltoid.
 // Separate mesh (they stand off the silhouette). Tagged armL/armR so
 // they swing with the shoulder. Left = 105, Right = 106.
-import { loftPiece, shadePiece, compress, STEEL_RAMP } from './pieceLoft.js';
+import { loftPiece, shadePiece, compress } from './pieceLoft.js';
 
 const SH_X = 0.235; // mirror neutralBody arm centre
 
@@ -18,4 +18,3 @@ export function buildPauldrons(ramp) {
   compress(faces);
   return shadePiece(faces, ramp);
 }
-export { STEEL_RAMP };

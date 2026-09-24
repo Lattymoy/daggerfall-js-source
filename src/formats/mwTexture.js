@@ -249,10 +249,12 @@ export function decodeTga(bytes) {
   const rle = (imageType & 8) !== 0;
   if (baseType < 1 || baseType > 3 || !width || !height) throw new Error('decodeTga: unsupported image type');
   let off = 18 + idLength;
-  const mapBpp = mapDepth >> 3;
+  // AUDIT 68 S11-tga-15bpp: bytes per entry ROUND UP - a 15-bit pixel or
+  // colour-map entry is two bytes (5-5-5), and `>> 3` read it as one.
+  const mapBpp = (mapDepth + 7) >> 3;
   const palette = colorMapType === 1 ? bytes.subarray(off, off + mapLength * mapBpp) : null;
   if (colorMapType === 1) off += mapLength * mapBpp;
-  const bpp = depth >> 3;
+  const bpp = (depth + 7) >> 3;
   const rgba = new Uint8Array(width * height * 4);
   const putBgr = (o, src, at, nb) => {
     if (nb === 1) { rgba[o] = rgba[o + 1] = rgba[o + 2] = src[at]; rgba[o + 3] = 255; return; }
@@ -275,6 +277,11 @@ export function decodeTga(bytes) {
     if (baseType === 1) {
       const idx = (bpp === 2 ? (src[at] | (src[at + 1] << 8)) : src[at]) - mapStart;
       putBgr(o, palette, idx * mapBpp, mapBpp);
+    } else if (baseType === 3) {
+      // AUDIT 68 S11-v-tga-grey16: greyscale is grey (+ its alpha byte at
+      // 16 bpp), never a 5-5-5 colour.
+      rgba[o] = rgba[o + 1] = rgba[o + 2] = src[at];
+      rgba[o + 3] = bpp >= 2 ? src[at + 1] : 255;
     } else putBgr(o, src, at, bpp);
   };
   const count = width * height;

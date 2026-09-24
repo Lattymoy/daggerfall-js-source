@@ -20,6 +20,7 @@ import { fileURLToPath } from 'node:url';
 import { readUnityBundle } from '../src/formats/unityBundle.js';
 import { readPng } from './pngIO.mjs';
 import { encodeSprite, sameOnScreen } from './diverseWeaponsExtract.mjs';
+import { isMain } from './lib/isMain.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const OUT_DIR = 'public/art/roleplay-realism-items';
@@ -48,7 +49,7 @@ ${rows.join('\n')}
 `;
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (isMain(import.meta.url)) {
   const src = process.argv[2];
   if (!src) { console.error('usage: node tools/rriExtract.mjs "<roleplayrealism-items.dfmod>"'); process.exit(2); }
   const t0 = Date.now();

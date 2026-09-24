@@ -339,7 +339,7 @@ test('MW-D15 rule 32(a): the GMST is READ, and a missing one is null not zero', 
 test('MW-D15 rule 32(a): the sink moves the arm, through the NECK', async () => {
   const { assembleFirstPersonArm, applyFirstPersonNeck } = await import('../src/formats/mwFirstPerson.js');
   const { parseNif } = await import('../src/formats/mwNifFile.js');
-  const { poseSkeleton, skeletonSpaceMatrices } = await import('../src/formats/mwSkin.js');
+  const { poseSkeleton, skeletonSpaceMatrices, GRAPH_ROOT } = await import('../src/formats/mwSkin.js');
   const arm = await assembleFirstPersonArm({
     skeletonBytes: f('armfp.nif'),
     parts: [{ slot: 'hand', bytes: f('armfphand.nif') }],
@@ -348,7 +348,7 @@ test('MW-D15 rule 32(a): the sink moves the arm, through the NECK', async () => 
   const skelMats = (sk, pose, root) => skeletonSpaceMatrices(sk, pose, root);
   const neckAt = (offset, pitch) => {
     const pose = poseSkeleton(arm.skeleton, null, null, 0, {});
-    applyFirstPersonNeck(arm.skeleton, pose, arm.rootRef, skelMats, pitch, 0, offset);
+    applyFirstPersonNeck(arm.skeleton, pose, GRAPH_ROOT, skelMats, pitch, 0, offset);   // AUDIT 68 S11-rootref-dead: the production frame (MW-D20)
     return pose.get(arm.skeleton.byName.get('bip01 neck')).translation;
   };
   const rest = neckAt(null, 0);

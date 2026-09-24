@@ -2,7 +2,9 @@
 // bake per level: the host hands in its Collider and the anchor; the
 // client fingerprints the soup, asks the cache, else asks the worker
 // (or bakes here when there is no Worker, in node), hydrates the compact
-// form on this thread, and restores the ground hydrate does not carry.
+// form on this thread over the boxes the bake was cut into (the worker
+// ships them back - AUDIT 68), and restores the ground hydrate does not
+// carry.
 //
 // THE GROUND AFTER HYDRATE. His hydrateBakedNav rebuilds a heightfield
 // without `ground` - its maps are arenas at zero. A dungeon's floor is
@@ -10,9 +12,9 @@
 // it rides the cache metadata and is put back on the hydrated chf, so a
 // cached dungeon answers the same heights as a fresh bake. No change to
 // his file for it.
-import { navInputFromCollider, regionAnchor } from './navBake.js';
-import { trianglesToColliders } from './triRaster.js';
-import { AGENT, coarsenAgent, hydrateBakedNav, buildNav, buildCompact, buildRegions, buildContours, buildPolyMesh, buildPolyMeshDetail, bakeNavData } from './navmesh.js';
+import { navInputFromCollider, bakeSoup } from './navBake.js';
+import { trianglesToColliders, unpackColliders } from './triRaster.js';
+import { AGENT, hydrateBakedNav, bakeNavData } from './navmesh.js';
 import { idbStore } from '../world/roadsCache.js';
 
 /** Bumped BY HAND whenever the bake's output for the same input changes
@@ -31,25 +33,17 @@ export function navCacheKey({ key, tris, minY, maxY, agent = AGENT, anchor = nul
   return `nav:v${NAV_BAKE_VERSION}:${key}:${tris}:${minY.toFixed(2)}:${maxY.toFixed(2)}:${agent.cs}:${agent.radius}:${agent.height}:${agent.maxStep}:${agent.maxSlope}${a}`;
 }
 
-/** Bake on this thread - the fallback, and node. Same steps as the worker. */
+/** Bake on this thread - the fallback, and node. The worker's core
+ *  (navBake's bakeSoup), and the same answer: the compact form, its cell
+ *  size, its stats and the boxes it was cut into. */
 export function bakeHere(input, anchor, agent = AGENT) {
-  let cols = trianglesToColliders(input.positions, input.indices, { cs: agent.cs, maxSlope: agent.maxSlope });
-  const coarser = coarsenAgent(cols, agent);
-  const ag = coarser ?? agent;
-  if (coarser) cols = trianglesToColliders(input.positions, input.indices, { cs: ag.cs, maxSlope: ag.maxSlope });
-  const floor = input.minY - 10;
-  const nav = buildNav(cols, ag, [], { at: () => floor, min: floor });
-  const chf = buildCompact(nav, ag);
-  buildRegions(chf, { anchor: regionAnchor(anchor) });   // WITH its y - see regionAnchor
-  buildContours(chf); buildPolyMesh(chf); buildPolyMeshDetail(chf, cols);
-  return { baked: bakeNavData(chf), cs: ag.cs, stats: { boxes: cols.length, cs: ag.cs, polys: chf.mesh?.polys?.length ?? 0 } };
+  const r = bakeSoup(input.positions, input.indices, { floor: input.minY - 10, anchor, agent });
+  return { baked: bakeNavData(r.chf), cs: r.agent.cs, stats: r.stats, cols: r.cols };
 }
 
-/** Hydrate the compact form on this thread: re-cut the boxes at the
- *  baked cell size (deterministic from the same soup) for the height
- *  layer, then put the ground back. */
-export function hydrateHere(baked, cs, input, agent = AGENT) {
-  const cols = trianglesToColliders(input.positions, input.indices, { cs, maxSlope: agent.maxSlope });
+/** Hydrate the compact form on this thread over `cols`, the boxes the
+ *  bake was cut into (the height layer), then put the ground back. */
+export function hydrateHere(baked, cols, input) {
   const chf = hydrateBakedNav(baked, cols);
   const floor = input.minY - 10;
   chf.ground = { at: () => floor, min: floor };
@@ -94,6 +88,24 @@ export class NavClient {
     }
   }
 
+  /** One job to the worker, the soup copied and transferred: resolves
+   *  its answer, rejects on its error. */
+  _ask(msg, input) {
+    const id = this._nextId++;
+    return new Promise((resolve, reject) => {
+      this._pending.set(id, { resolve, reject });
+      const positions = input.positions.slice(), indices = input.indices.slice();
+      this._worker.postMessage({ ...msg, id, positions, indices }, [positions.buffer, indices.buffer]);
+    });
+  }
+
+  /** A cached bake's boxes, cut at its cell size: by the worker, else
+   *  here (no Worker, or one that failed). */
+  async _cols(input, cs, agent) {
+    const m = this._worker ? await this._ask({ t: 'cols', cs, maxSlope: agent.maxSlope }, input).catch(() => null) : null;
+    return m ? unpackColliders(m.cols) : trianglesToColliders(input.positions, input.indices, { cs, maxSlope: agent.maxSlope });
+  }
+
   /** One bake: cache, else worker, else here. Resolves { chf, stats, cached }. */
   async bake({ collider, anchor, key, agent = AGENT }) {
     const input = navInputFromCollider(collider);
@@ -101,16 +113,12 @@ export class NavClient {
     const ck = navCacheKey({ key, tris: input.tris, minY: input.minY, maxY: input.maxY, agent, anchor });
     if (this._store) {
       const hit = await this._store.get(ck).catch(() => null);
-      if (hit && hit.baked) return { chf: hydrateHere(hit.baked, hit.cs, input, agent), stats: { ...(hit.stats ?? {}), cached: true }, cached: true };
+      if (hit && hit.baked) return { chf: hydrateHere(hit.baked, await this._cols(input, hit.cs, agent), input), stats: { ...(hit.stats ?? {}), cached: true }, cached: true };
     }
-    let result;
+    let result = null;
     if (this._worker) {
-      const id = this._nextId++;
-      result = await new Promise((resolve, reject) => {
-        this._pending.set(id, { resolve, reject });
-        const positions = input.positions.slice(), indices = input.indices.slice();
-        this._worker.postMessage({ t: 'bake', id, positions, indices, floor: input.minY - 10, anchor, agent }, [positions.buffer, indices.buffer]);
-      }).catch(() => null);
+      const m = await this._ask({ t: 'bake', floor: input.minY - 10, anchor, agent }, input).catch(() => null);
+      if (m) result = { ...m, cols: unpackColliders(m.cols) };
     }
     if (!result) result = bakeHere(input, anchor, agent);
     // DEGENERATE-BAKE GUARD (2026-09-20, Mac's patch - a report of foes
@@ -145,7 +153,7 @@ export class NavClient {
     } else if (this._store) {
       await this._store.set(ck, { baked: result.baked, cs: result.cs, stats: result.stats }).catch(() => null);
     }
-    return { chf: hydrateHere(result.baked, result.cs, input, agent), stats: { ...result.stats, cached: false }, cached: false };
+    return { chf: hydrateHere(result.baked, result.cols, input), stats: { ...result.stats, cached: false }, cached: false };
   }
 
   dispose() { try { this._worker?.terminate?.(); } catch { /* gone */ } this._worker = null; }

@@ -118,7 +118,7 @@ export const OVER_ENCUMBERED_LIMIT = 250;
 export const CAPSULE_HEIGHT = 1.8;
 export const CAPSULE_RADIUS = 0.35;
 export const STEP_OFFSET = 0.5;
-/** DISC19-C: the climb's side contact - radius + the 0.1 skin (M3) - and
+/** DISC21: the climb's side contact - radius + the 0.1 skin (M3) - and
  *  the lowest height above the feet at which the capsule's lower cap,
  *  its centre at feet + radius, still reaches a wall its side rests on:
  *  r - sqrt((r + skin)^2 - r^2), about 0.067. */
@@ -881,7 +881,7 @@ export class PlayerMotor {
       //
       // The pass condition is `!Number.isFinite(dist)`, not a
       // comparison against the distance: collider.sphereCast
-      // (collider.js:600) returns Infinity ONLY on a clear sweep and a
+      // (collider.js:608) returns Infinity ONLY on a clear sweep and a
       // finite dist (0 on a start-overlap) for any hit, which is
       // exactly Unity's boolean. One accepted deviation: Unity's
       // SphereCast ignores colliders overlapping the START sphere, so a
@@ -1120,7 +1120,7 @@ export class PlayerMotor {
    *  side collision flags; the probe asks the same physical question
    *  against our collider.
    *
-   *  DISC19-C (2026-09-24, "you can climb up walls a bit but you fall
+   *  DISC21 (2026-09-24, "you can climb up walls a bit but you fall
    *  right back down as you reach the top instead of getting over the
    *  edge"): THE SIDES FLAG IS THE WHOLE CAPSULE'S, DOWN TO ITS FEET.
    *  The probe sampled only 0.4h and 0.8h above the feet, so the wall

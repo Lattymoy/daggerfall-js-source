@@ -36,6 +36,7 @@ import { WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // MAC2: the
 import { WIND_ROW_CALM, WIND_ROW_SPAN } from '../systems/wind.js';
 import { getPref } from '../systems/uiPrefs.js';   // FT6: the switch, read here alone
 import { isEnhanced } from '../systems/uiSkin.js';
+import { FOG_GLSL } from './fogGlsl.js';   // AUDIT 68 S17-fog-glsl-dup: the fog every world pass takes, one home
 
 /** FT6 (2026-09-14, the Features arc): THE SWITCH, ONE HOME. Both
  *  exterior hosts composed "the enhanced skin, the pref, the kill door"
@@ -237,15 +238,7 @@ uniform vec2 uFogRange;
 uniform vec3 uCamPos;
 ${shadowGlsl}
 out vec4 outColor;
-float fogFactorAt(vec3 worldPos) {
-  if (uFogMode == 0) return 1.0;
-  float d = length(worldPos - uCamPos);
-  if (uFogMode == 1) {
-    return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
-  }
-  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }
-  return exp(-uFogDensity * d);
-}
+${FOG_GLSL}
 uint waterCorners(uint data) {
   // the component by comparison, not by a dynamic index: a dynamic
   // component index on a uvec4 answered zero on ANGLE/SwiftShader (the

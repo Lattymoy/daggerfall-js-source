@@ -68,7 +68,8 @@ a separate slice).
    arrows for a bow, bolts for a crossbow; the wrong round or none
    fills nothing; the LAST slot empties while a round is on the string
    (the parts carry `{ i, n }`, the hide law reads `arrowShown`). The
-   count is the Daggerfall arrow stack (`daggerfallArrowCount`; a
+   count is the weapon's ammunition in the pack (inventory.js
+   `ammoCountFor`, the spend law's own module; a
    peer's build carries none and asks a full quiver when the wire's
    ammo bit is up).
 

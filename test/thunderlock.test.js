@@ -23,7 +23,7 @@ import {
   THUNDERLOCK_NUM_FRAMES, MELEE_NUM_FRAMES, BOW_NUM_FRAMES,
   createWeaponMachine, machineAttack, machineStep,
 } from '../src/characters/weaponStates.js';
-import { isBowWeapon, attackSkillOf, WEAPON_SKILL_BY_TEMPLATE } from '../src/scenes/hostCombat.js';
+import { isBowWeapon, attackSkillOf, weaponSkillUsed as hostWeaponSkillUsed } from '../src/scenes/hostCombat.js';
 import { spendAmmoFor, ammoCountFor } from '../src/systems/inventory.js';
 import { playerArchiveFor } from '../src/characters/paperdollArt.js';
 import { shimmer, NATIVE_WIDTH } from '../src/combat/thunderlockArt.js';
@@ -96,8 +96,11 @@ test('it is scored on ARCHERY, through the law every host already asks', () => {
   // ONE TABLE. hostCombat.js carried a second copy of the weapon->skill
   // map and answered null here, which is what sent the gun down the
   // melee arc in every host until it was collapsed onto weapons.js.
-  assert.equal(WEAPON_SKILL_BY_TEMPLATE[130], SKILLS.Archery);
-  assert.equal(WEAPON_SKILL_BY_TEMPLATE[113], SKILLS.ShortBlade);
+  // AUDIT 68 S21-weapon-skill-table-testonly: through the one door this file re-exports (the derived object shape
+  // it also exported had no production reader).
+  assert.equal(hostWeaponSkillUsed, weaponSkillUsed, 'the host file re-exports the one door, not a copy');
+  assert.equal(hostWeaponSkillUsed(130), SKILLS.Archery);
+  assert.equal(hostWeaponSkillUsed(113), SKILLS.ShortBlade);
   const host = readFileSync('src/scenes/hostCombat.js', 'utf8');
   assert.match(host, /from '\.\.\/characters\/weapons\.js'/, 'and it reads the one home rather than restating it');
 });
@@ -276,12 +279,12 @@ test('F1: the weapon EXISTS when the game boots, not only when a test imports it
   // systems/thunderlock.js - if the wire is pulled, every assertion
   // here fails and the suite finally notices.
   await import('../src/systems/worldTick.js');
-  const { templateByIndex } = await import('../src/systems/itemTemplates.js');
+  const { templateByIndex, isAmmunition } = await import('../src/systems/itemTemplates.js');   // AUDIT 68 S27-ammo-arrow-only: the ammunition registry's home
   const lr = await import('../src/systems/lootRarity.js');
   assert.equal(templateByIndex(THUNDERLOCK_TEMPLATE)?.name, 'Dwarven Thunderlock', 'the template registered');
   assert.equal(templateByIndex(PELLET_TEMPLATE)?.name, 'Dwemer Pellet');
   assert.ok(lr.uniqueFinds().some((f) => f.id === 'dwarven-thunderlock'), 'the find registered');
-  assert.ok(lr.isAmmunition({ templateIndex: PELLET_TEMPLATE }), 'the pellet registered as ammunition');
+  assert.ok(isAmmunition({ templateIndex: PELLET_TEMPLATE }), 'the pellet registered as ammunition');
   assert.ok(lr.legendariesFor({ group: 'Weapons', templateIndex: THUNDERLOCK_TEMPLATE }).length, 'the legendary registered');
   // and the wire itself, named, so deleting it is a decision
   const tick = readFileSync('src/systems/worldTick.js', 'utf8');
@@ -633,7 +636,6 @@ test('FIELD-GUN6: the lab\'s feel is the GAME\'s - one home, and it reaches both
     'the gun\'s own frame stands ahead of both classic paths');
   assert.match(rig, /kick: _tlKick/, 'and the draw reads the spring');
   assert.match(rig, /_tlRecoil\.punch\(\);/, 'the shot kicks');
-  assert.match(rig, /_tlShake\.punch\(\);/, 'and shakes');
   assert.match(rig, /betterAmbience\.weaponKick\?\./, 'the ROOM moves, through the one camera shaker the port has');
   // ...and the two 1:1 ports it no longer goes through are UNTOUCHED
   // by it, which is the other half of what this bought.

@@ -46,7 +46,6 @@ import { SKILLS, skillValue, tallySkill } from '../skills.js';   // Q5: WhenSkil
 import { SKILL_ADVANCEMENT_MULTIPLIER } from '../advancement.js';   // Q5: TrainPc's tally scale
 import { liveStat, FATIGUE_LOSS } from '../statMods.js';   // Q5: WhenAttributeLevel/TrainPc
 import { CRIMES } from '../court.js';   // Q5: SetPlayerCrime's enum
-import { randomRangeInclusive } from '../../formats/dfRandom.js';   // Q5: TrainPc's Range(10,21)
 import { makeItemPermanent } from './item.js';
 import { isGoldPieces } from '../inventory.js';   // E4: GetItem's IsOfTemplate(Currency, Gold_pieces) test, one spelling
 import { QUEST_MESSAGES } from './quest.js';
@@ -449,8 +448,9 @@ export class ClickedNpc extends ActionTemplate {
     if (!person) return false;
     if (person.hasPlayerClicked) {
       if (this.goldAmount > 0 && this.taskSymbol && this.taskSymbol.name) {
-        if (this.parentQuest.hooks?.getGold?.() >= this.goldAmount) {
-          this.parentQuest.hooks?.deductGold?.(this.goldAmount);
+        // AUDIT 68 S29-gold-hook-dup: ClickedNpc.cs:91-94 reads and spends PlayerEntity.GoldPieces, as ClickedFoe does
+        if ((this.parentQuest.hooks?.getGoldPieces?.() ?? 0) >= this.goldAmount) {
+          this.parentQuest.hooks?.deductGoldPieces?.(this.goldAmount);
         } else {
           this.parentQuest.startTask(this.taskSymbol);
           return false;
@@ -500,10 +500,9 @@ export class ClickedItem extends ActionTemplate {
 
 /** ClickedFoe.cs: ClickedNpc "cut-and-pasted ... and made it work for
  *  foes" (the file's own header note), verbatim - QG1 retired the
- *  guard. The one LAW difference from the ported ClickedNpc above:
- *  the gold arm reads and spends `PlayerEntity.GoldPieces` (:91-94),
- *  the COINS alone - Q5's getGoldPieces/deductGoldPieces pair - where
- *  this port's ClickedNpc rides getGold. The click itself arrives
+ *  guard. The gold arm reads and spends `PlayerEntity.GoldPieces`
+ *  (:91-94), the COINS alone - Q5's getGoldPieces/deductGoldPieces
+ *  pair, ClickedNpc's too. The click itself arrives
  *  through the foe's QuestResourceBehaviour (the host activation
  *  ladder's PlayerActivate.cs:325-339 arm: any quest resource that is
  *  not a Person, in any mode but Info, within DefaultActivationDistance
@@ -3115,7 +3114,7 @@ export class SetPlayerCrimeAction extends ActionTemplate {
  *  accordingly and the amount is only taken when it covers. */
 export class PayMoney extends ActionTemplate {
   static typeName = 'PayMoney';
-  get saveShape() { return [['paidTaskSymbol'], ['notTaskSymbol'], ['amount'], ['goldOnly']]; }
+  get saveShape() { return [['paidTaskSymbol', 'sym'], ['notTaskSymbol', 'sym'], ['amount'], ['goldOnly']]; }   // AUDIT 68 S29-raw-symbol-saveshape
   constructor(parentQuest) {
     super(parentQuest);
     this.paidTaskSymbol = null;
@@ -3139,7 +3138,7 @@ export class PayMoney extends ActionTemplate {
     if (this.amount > 0) {
       // The `money` arm gates on PlayerEntity.GetGoldAmount() - coins
       // PLUS letters of credit - which is what deductGold then spends.
-      // getGold is the bare GoldPieces read the other actions use.
+      // getGoldPieces is the bare GoldPieces read the `gold` arm uses.
       const held = this.goldOnly ? (hooks?.getGoldPieces?.() ?? 0) : (hooks?.getTotalGold?.() ?? 0);
       if (held >= this.amount) {
         if (this.goldOnly) hooks?.deductGoldPieces?.(this.amount);
@@ -3174,7 +3173,7 @@ export class JournalNote extends ActionTemplate {
   }
   update(_caller) {
     const message = this.parentQuest.getMessage(this.id);
-    if (message) this.parentQuest.hooks?.world?.addNoteTokens?.(message.getTextTokens());
+    if (message) this.parentQuest.hooks?.world?.addNoteTokens?.(message.getTextTokens(-1, this.parentQuest.rolls));   // AUDIT 68 S29-trainpc-popup-rng: the variant on the quest's rolls
     this.setComplete();
   }
 }
@@ -3211,15 +3210,17 @@ export class TrainPc extends ActionTemplate {
     const q = this.parentQuest;
     const hooks = q.hooks;
     q.questSuccess = true;
-    const message = q.getMessage(QUEST_MESSAGES.QuestComplete);
-    if (message) hooks?.showPopup?.(q, message.getTextTokens(-1, q.rolls));
+    // AUDIT 68 S29-trainpc-popup-rng: TrainPc.cs:67 is ParentQuest.ShowMessagePopup, GivePc's door - the chunker
+    // and the empty-token bail with it
+    q.showMessagePopup(QUEST_MESSAGES.QuestComplete);
     const e = hooks?.playerEntity?.();
     if (e) {
       const sec = hooks?.nowSeconds?.() ?? 0;
       e.timeOfLastSkillTraining = Math.floor(sec / 60);   // ToClassicDaggerfallTime is classic MINUTES
       hooks?.raiseTime?.(3 * 3600);                       // SecondsPerHour * 3
       e.fatigue = Math.max(0, (e.fatigue ?? 0) - FATIGUE_LOSS.Default * 180);   // DefaultFatigueLoss * 180
-      const tally = randomRangeInclusive(10, 20) * (SKILL_ADVANCEMENT_MULTIPLIER[this.skill] ?? 1);
+      // UnityEngine.Random.Range(10, 20 + 1) - the engine PRNG, the quest's rolls (Ledger A), not DFRandom's stream
+      const tally = (10 + Math.floor((q.rolls ?? Math.random)() * 11)) * (SKILL_ADVANCEMENT_MULTIPLIER[this.skill] ?? 1);
       tallySkill(e, this.skill, tally);
     }
     this.setComplete();
@@ -3230,7 +3231,7 @@ export class TrainPc extends ActionTemplate {
  *  completes and THROWS, verbatim. */
 export class KillFoeAction extends ActionTemplate {
   static typeName = 'KillFoe';
-  get saveShape() { return [['foeSymbol']]; }
+  get saveShape() { return [['foeSymbol', 'sym']]; }
   constructor(parentQuest) {
     super(parentQuest);
     this.foeSymbol = null;
@@ -3258,7 +3259,7 @@ export class KillFoeAction extends ActionTemplate {
  *  waits (no throw, no complete - C# returns), verbatim. */
 export class UnrestrainFoe extends ActionTemplate {
   static typeName = 'UnrestrainFoe';
-  get saveShape() { return [['foeSymbol']]; }
+  get saveShape() { return [['foeSymbol', 'sym']]; }
   constructor(parentQuest) {
     super(parentQuest);
     this.foeSymbol = null;
@@ -3284,7 +3285,7 @@ export class UnrestrainFoe extends ActionTemplate {
  *  completion-without-success OR a quest the lists cannot serve. */
 export class RunQuest extends ActionTemplate {
   static typeName = 'RunQuest';
-  get saveShape() { return [['questName'], ['successSymbol'], ['failureSymbol'], ['questStarted'], ['questUId']]; }
+  get saveShape() { return [['questName'], ['successSymbol', 'sym'], ['failureSymbol', 'sym'], ['questStarted'], ['questUId']]; }
   constructor(parentQuest) {
     super(parentQuest);
     this.allowRearm = false;

@@ -634,7 +634,7 @@ test('WW1: the rig runs the clone beside the machine - the late update after the
 
 test('WW1: the bundle door - TryImportCifRci\'s spelling with the w_ prefix and the metal\'s name (none for bare hands), the pick\'s names filtered to the mod\'s bundle and its loose PNGs, nothing attached answering null without throwing, the DFMOD prefix with one home', async () => {
   assert.equal(widgetTextureName('WEAPON04.CIF', 0, 0, WEAPON_MATERIALS.Elven), 'w_WEAPON04.CIF_0-0_Elven');
-  assert.equal(widgetTextureName('WEAPON04.CIF', 1, 3, WEAPON_MATERIALS.Iron, ''), 'WEAPON04.CIF_1-3_Iron');
+  assert.equal(widgetTextureName('WEAPON04.CIF', 1, 3, WEAPON_MATERIALS.Iron, false), 'WEAPON04.CIF_1-3_Iron');   // AUDIT 68 S09-texname-dup: the plain name is doubleScale off
   assert.equal(widgetTextureName('WEAPON10.CIF', 0, 0, WEAPON_MATERIALS.None), 'w_WEAPON10.CIF_0-0', 'MetalTypes.None adds nothing');
   assert.equal(widgetTextureName('WEAPON11.CIF', 0, 0, null), 'w_WEAPON11.CIF_0-0');
   assert.equal(widgetTextureName('WEAPO104.CIF', 0, 0, WEAPON_MATERIALS.Daedric), 'w_WEAPO104.CIF_0-0_Daedric');

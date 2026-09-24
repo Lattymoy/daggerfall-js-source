@@ -59,7 +59,7 @@ FM-bank audit. Audio.md also still disowns `ActivateLockUnlock = 316`
 (`:158` "NOT OURS... neither of which is ported") - it sits in
 `soundClips.js:10` with three consumers (R1) - and still claims
 `deps.inCastle` stays false (`:105`), live since AUDIT 21
-(`dungeonContext.js:2640`). This is the one page whose live-queue
+(`dungeonContext.js:2652`). This is the one page whose live-queue
 claims actively contradict the code, the Ledger, and the rest of the
 bible at once.
 
@@ -106,7 +106,7 @@ direction). The real staleness is where the sweep cannot see:
   row's own title records the previous three.
 - `:340` residue "a static NPC currently answers with the
   no-response line" - contradicts the same row's own head and row
-  `:446` (B7); `worldModes.js:1372-1383` opens the real talk window.
+  `:446` (B7); `worldModes.js:1378-1389` opens the real talk window.
 - `:339` "house/ship PURCHASE popups... still out" - contradicts row
   `:441` ("this row is now CLOSED", H1-H3) and
   `ui/bankPurchaseWindow.js`.
@@ -127,11 +127,11 @@ per arc:
   (`mysticism.test.js:225-239`). The doc, the pin's design, and
   `mysticism.js:53`'s header are all wrong the same way. Also stale:
   S24 "the port has neither the [Spell Absorption] effect nor the
-  state" (`effects.js:1096-1119` + `absorption.js:70-79` land it
+  state" (`effects.js:1089-1112` + `absorption.js:70-79` land it
   first-arm); S40's "house ledger is unported" flag
   (`banking.js:172 isHouseOwned` feeds the rest seam); S16's
   "monsters 0-42 still spawn as billboards" (C11 pivoted them to real
-  foes, `dungeonContext.js:802-861`); the mid-file Queue
+  foes, `dungeonContext.js:811-862`); the mid-file Queue
   (`:742-748`) still carries FreeAction / Create Item / enchantment
   value / rest-UI / "Later: guilds, shops, dialog, calendar" - all
   shipped, list actively maintained (it struck its fatigue line).
@@ -142,7 +142,7 @@ per arc:
   factual error found in the whole bible: `:798-805` claims "only %G
   has a capitalized handler" in DFU / "%G2/%G3 uppercase DO NOT
   EXIST" - refuted by the doc's own Wave 25 (`:2908`) and
-  `questMacros.js:519-530` ("MacroHelper.cs:240-245 registers ALL SIX
+  `questMacros.js:513-524` ("MacroHelper.cs:240-245 registers ALL SIX
   capitalized forms"); the early section was never corrected.
 - *World-Arc / Player-Arc*: ~20 clauses closed by later slices still
   read "pends" - T3c's list (`:653`) has three clauses T3d/T3e/T3f
@@ -163,7 +163,7 @@ per arc:
   `:3368`); `:4722` is now flatly false ("the interior host's
   char-sheet and inventory panels swallow their click and do
   nothing") and contradicts U43 in the same file
-  (`worldModes.js:5276-5277` routes them). UI-Arc carries no records
+  (`worldModes.js:5270-5271` routes them). UI-Arc carries no records
   at all for H1-H3 - the banking windows exist only in the Ledger.
 - *Combat.md*: the status head (first 51 lines) is the stale part -
   DrainMagicka "INTERIM no-op" (`:19`, real since S4a and
@@ -216,7 +216,7 @@ own AUDIT-18 correction.
 Doc review only, nothing fixed - but four code comments assert the
 opposite of their own code and deserve a slice's attention:
 - `src/ui/deathScreen.js:87-88` claims "`drop` is read by each host's
-  frame" - no host reads it (the Ledger row `:457` is right, the
+  frame" - no host reads it (the Ledger row `:459` is right, the
   comment is wrong).
 - `src/systems/mysticism.js:53` header "OPEN AND LOCK ARE NOT WIRED" -
   they are (X1, `actionSystem.js:930-931`).
@@ -233,13 +233,13 @@ opposite of their own code and deserve a slice's attention:
 
 ## Line-citation drift (low, batched)
 
-`Port-Ledger.md:553` (save.js:31/:548/:557 → :28/:595/:625), `:582`
-(world.js:3082 → :2412); `Quest-Arc.md:719`/`:2906`
-(worldModes.js:571 → :903); `Player-Arc.md:955` (worldModes.js:799 →
+`Port-Ledger.md:555` (save.js:31/:548/:557 → :28/:600/:630), `:587`
+(world.js:3093 → :2412); `Quest-Arc.md:719`/`:2906`
+(worldModes.js:563 → :903); `Player-Arc.md:955` (worldModes.js:791 →
 :2764), `:304` (world.js "531 lines" → 3,564); `Characters-Arc.md:190`
-(CHAR_PIXEL "7" - `renderer.js:615` ships 9, and the doc missed two
+(CHAR_PIXEL "7" - `renderer.js:586` ships 9, and the doc missed two
 later revisions recorded in `paperdollViewer.js:138`), `:2114`
-(interiorContext.js:206 → :199); `Rendering.md:101`
+(interiorContext.js:206 → :199); `Rendering.md:120`
 (CHAR_SPRITE_RT_SIZE "256" → 512).
 
 ## What checked out clean

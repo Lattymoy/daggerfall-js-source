@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
-import { createReadStream, existsSync, readdirSync } from 'node:fs';
+import { createReadStream, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { landingHtml, readBuildSha } from './scripts/landingHtml.mjs';
 
@@ -30,6 +30,9 @@ function arena2DevServer() {
     }
     return byUpper.get(name.toUpperCase()) ?? name;
   };
+  // AUDIT 68 X2: a FILE, not merely a path that exists - the name rule
+  // admits `BOOKS`, `.` and `..`, and a directory's EISDIR killed the server.
+  const isFile = (p) => statSync(p, { throwIfNoEntry: false })?.isFile() === true;
   // MOUNTED TWICE (U60). dataSource fetches `./arena2/*` RELATIVE to its
   // document, so with the game at /play/ the browser asks for
   // /play/arena2/*; the probes' direct imports still fetch /arena2/*.
@@ -45,8 +48,8 @@ function arena2DevServer() {
         let path = join(root, onDisk(name));
         // B1: books live in ARENA2/BOOKS/ - a flat BOK*.TXT name falls
         // back to the subfolder (still no separators in the URL name).
-        if (!existsSync(path) && /^BOK\d+\.TXT$/i.test(name)) path = join(root, 'BOOKS', name);
-        if (!existsSync(path)) {
+        if (!isFile(path) && /^BOK\d+\.TXT$/i.test(name)) path = join(root, 'BOOKS', name);
+        if (!isFile(path)) {
           res.statusCode = 404;
           return res.end('not found');
         }
@@ -55,7 +58,15 @@ function arena2DevServer() {
         // header here or their fetch() dies while ESM imports work.
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Content-Type', 'application/octet-stream');
-        createReadStream(path).pipe(res);
+        // AUDIT 68 X2: a read failure ends THIS response, not the server;
+        // a client gone mid-file closes the descriptor.
+        const file = createReadStream(path);
+        file.on('error', () => {
+          if (!res.headersSent) res.statusCode = 500;
+          res.end();
+        });
+        res.on('close', () => file.destroy());
+        file.pipe(res);
       });
     },
   };
@@ -133,11 +144,11 @@ export default defineConfig({
     // that returned `true` would force-inline REGARDLESS of size, the
     // opposite mistake and just as quiet.
     assetsInlineLimit: (filePath) => (/[\\/]vendor[\\/]/.test(filePath) ? false : undefined),
-    // TWO PAGES. The game, and the voxel editor — which is a real route
-    // now rather than a standalone file you have to build yourself.
-    // Neither carries game data: the editor asks for the user's ARENA2
-    // through the same dataSource door the game uses. See
-    // src/tools/paperdollViewer.js.
+    // EVERY ROOT PAGE: the game, the voxel editor (viewer.html), the labs
+    // and the prototypes. None carries game data - a page that draws the
+    // game's art asks for the user's own ARENA2. AUDIT 68: a root page
+    // missing here works under `npm run dev` and silently never ships;
+    // test/audit68_repo.test.js holds every tracked root *.html to a key.
     rollupOptions: {
       input: {
         // THE SITE, THEN THE GAME (U60). The root document is the landing
@@ -194,6 +205,11 @@ export default defineConfig({
         // can be opened on demand, at any size, with no ARENA2 on disk.
         // tools/levelUpProbe.mjs drives this page.
         levelUp: 'levelup.html',
+        // The texture-archive contact sheet: every record of one
+        // TEXTURE.nnn laid out and numbered, to read off which record
+        // an item template points at. The player's own ARENA2 through
+        // a picker, like mw-inspect - nothing baked in.
+        archiveSheet: 'archive-sheet.html',
       },
     },
   },

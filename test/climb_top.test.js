@@ -1,4 +1,4 @@
-// DISC19-C (2026-09-24, the contributor's report: "You can climb up walls a bit but you fall right back down as you reach
+// DISC21 (2026-09-24, the contributor's report: "You can climb up walls a bit but you fall right back down as you reach
 // the top instead of getting over the edge (currently stuck in a pit)").
 //
 // THE BUG: the climb's wall probe sampled the body at 0.4h and 0.8h above the feet only, so with the lip 0.72 m over the
@@ -38,7 +38,7 @@ function climbTo(top) {
   return { onTop: false, climbed, falls, m };
 }
 
-test('DISC19-C: a climber holding forward goes over the lip and stands on the top - a pit wall, a tall wall, a lip just over a step - never released under the lip to fall back (mutants: the probe back to 0.4h/0.8h alone; the cap ray at the cylinder base)', () => {
+test('DISC21: a climber holding forward goes over the lip and stands on the top - a pit wall, a tall wall, a lip just over a step - never released under the lip to fall back (mutants: the probe back to 0.4h/0.8h alone; the cap ray at the cylinder base)', () => {
   for (const top of [3, 6, STEP_OFFSET + 0.4]) {
     const r = climbTo(top);
     assert.ok(r.climbed, `${top} m: the climb started`);
@@ -47,7 +47,7 @@ test('DISC19-C: a climber holding forward goes over the lip and stands on the to
   }
 });
 
-test('DISC19-C: the lowest ray is where the capsule\'s lower cap still meets the wall - its skin shell about the cap\'s centre, reaching a wall the side rests on (mutant: the height made up)', () => {
+test('DISC21: the lowest ray is where the capsule\'s lower cap still meets the wall - its skin shell about the cap\'s centre, reaching a wall the side rests on (mutant: the height made up)', () => {
   assert.equal(CLIMB_SIDE_REACH, CAPSULE_RADIUS + 0.1, 'M3\'s reach: radius and the skin');
   // the cap's centre is feet + r; a wall at standoff r is met by the shell r + skin at depth sqrt((r+skin)^2 - r^2)
   const depth = Math.hypot(CLIMB_SIDE_REACH, 0) ** 2 - CAPSULE_RADIUS ** 2;

@@ -158,7 +158,7 @@ test('DE1: each host call site takes the member it actually is', () => {
   // DFU tests the marker BEFORE EnableDungeonParent/MovePlayerToMarker
   // and Destroys the layout (PlayerEnterExit.cs:921-934), so the
   // refusal is a block now and the law it pins is the ORDER.
-  assert.match(modes, /if \(!spawn\) \{\n\s+console\.error\('\[dungeon\] no start marker; transition aborted'\);\n\s+ctx\.destroy\(\);\n\s+dungeonCtx = null;\n\s+return false;\n\s+\}/,
+  assert.match(modes, /if \(!spawn\) \{\n\s+console\.error\('\[dungeon\] no start marker; transition aborted'\);\n\s+abandonContext\(ctx\);\n\s+dungeonCtx = null;\n\s+return false;\n\s+\}/,   // AUDIT 68: the ONE abandon (the people's quest behaviours go with the layout)
     'the refusal is carried through: the player stays outside at the door, and the layout is destroyed');
   assert.ok(modes.indexOf("setMode('dungeon');") > modes.indexOf('const spawn = ctx.startSpawn({ preferEnterMarker });'),   // AUDIT-WH2 L1-F5: one writer of `mode`; the ORDER is the law
     'nothing commits the mode before the marker is known');

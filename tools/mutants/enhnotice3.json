@@ -291,7 +291,7 @@
     "name": "ENH-NOTICE3-P4-townTalk-registration-commented-out",
     "file": "src/scenes/townTalk.js",
     "old": "  registerPresenter({\n    mount: (win, { push })",
-    "new": "  // registerPresenter({\n  // mount: (win, { push })",
+    "new": "  void ({\n    mount: (win, { push })",
     "tests": [
       "test/notify.test.js"
     ]
@@ -309,7 +309,7 @@
     "name": "ENH-NOTICE3-P4-dungeon-registration-commented-out",
     "file": "src/scenes/dungeonContext.js",
     "old": "  const _unregisterPresenter = registerPresenter({",
-    "new": "  // const _unregisterPresenter = registerPresenter({",
+    "new": "  const _unregisterPresenter = () => {}; void ({",
     "tests": [
       "test/notify.test.js"
     ]

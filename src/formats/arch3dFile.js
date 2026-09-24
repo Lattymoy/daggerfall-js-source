@@ -5,7 +5,9 @@
 // {x,y,z,nx,ny,nz,u,v} with positions/normals divided by 256 and UVs by 16.
 //
 // Quirks kept verbatim:
-//   - Arch3dPatch byte fixes applied to the buffer before parsing.
+//   - Arch3dPatch byte fixes applied before parsing - to each record's
+//     private copy (DFU patches the whole file buffer; every entry is a
+//     model fix, so the parsed bytes are the same).
 //   - Bounding min/max start at 0, so Size always spans the origin.
 //   - UVunpack applies only to the first 3 points of a plane and only for
 //     record ids below 905.
@@ -15,6 +17,7 @@
 //     overflow exactly where C# would, failing that record's load.
 //   - Corner detection: angle(l0,l1) > 0.001 rad marks a corner; normalize
 //     of a zero-length edge throws, failing the record (caught upstream).
+// Not ported (no port consumer): DiscardAllRecords.
 // Numeric note: JS doubles replace C# float/double mix; (Int32) casts are
 // Math.trunc. The full-corpus gate pins observed output.
 
@@ -85,10 +88,45 @@ export function uvUnpack(u) {
   return u - mult;
 }
 
+/** Index of the record whose bytes hold file offset `pos`, or -1. Records
+ *  are packed back to back, so positions ascend with the index. */
+function recordAt(bsa, pos) {
+  let lo = 0;
+  let hi = bsa.count - 1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >>> 1;
+    const start = bsa.getRecordPosition(mid);
+    if (pos < start) hi = mid - 1;
+    else if (pos >= start + bsa.getRecordLength(mid)) lo = mid + 1;
+    else return mid;
+  }
+  return -1;
+}
+
+/** ARCH3D_PATCH re-keyed by record: Map<record, [recordOffset, bytes][]>.
+ *  An entry crossing a record edge is split at it; a byte no record holds
+ *  is dropped (no entry touches the header or the directory). */
+function indexPatch(bsa) {
+  const byRecord = new Map();
+  for (const [offset, data] of ARCH3D_PATCH) {
+    for (let i = 0; i < data.length;) {
+      const record = recordAt(bsa, offset + i);
+      if (record === -1) { i++; continue; }
+      const start = bsa.getRecordPosition(record);
+      const n = Math.min(data.length - i, start + bsa.getRecordLength(record) - (offset + i));
+      if (!byRecord.has(record)) byRecord.set(record, []);
+      byRecord.get(record).push([offset + i - start, data.slice(i, i + n)]);
+      i += n;
+    }
+  }
+  return byRecord;
+}
+
 export class Arch3dFile {
   constructor() {
     this._bsa = null;
     this._records = null;
+    this._patch = null;
     this._recordIndexLookup = new Map();
     this.autoDiscard = true;
     this._lastRecord = -1;
@@ -109,20 +147,19 @@ export class Arch3dFile {
   }
 
   /**
-   * Load ARCH3D.BSA contents. Applies the Arch3dPatch model fixes to a copy
-   * of the buffer before parsing (DFU patches its memory buffer in place).
+   * Load ARCH3D.BSA contents. The caller's buffer is wrapped, never
+   * written: the Arch3dPatch model fixes go onto each record's private
+   * copy in loadRecord (DFU patches its memory buffer in place).
    * @param {Uint8Array} bytes
    * @returns {boolean} true if successful.
    */
   load(bytes) {
-    const patched = bytes.slice();
-    for (const [offset, data] of ARCH3D_PATCH) {
-      for (let i = 0; i < data.length; i++) patched[offset + i] = data[i];
-    }
-
-    this._bsa = new BsaFile(patched);
+    // AUDIT 68 S10-arch3d-26mb-copy: copying the ~26 MB archive to patch
+    // 2 KB kept ARCH3D.BSA resident twice for the scene.
+    this._bsa = new BsaFile(bytes);
     if (this._bsa.directoryType !== DIRECTORY_TYPES.NumberRecord) return false;
     this._records = new Array(this._bsa.count).fill(null);
+    this._patch = indexPatch(this._bsa);
     return true;
   }
 
@@ -156,10 +193,15 @@ export class Arch3dFile {
     // Auto discard previous record.
     if (this.autoDiscard && this._lastRecord !== -1) this.discardRecord(this._lastRecord);
 
+    // A byte past a truncated record's end drops, as it did past the file's.
+    const bytes = this._bsa.getRecordBytes(record);
+    for (const [at, data] of this._patch.get(record) ?? []) {
+      for (let i = 0; i < data.length; i++) bytes[at + i] = data[i];
+    }
     const rec = {
       objectId: 0,
       version: MESH_VERSIONS.Unknown,
-      bytes: this._bsa.getRecordBytes(record),
+      bytes,
       header: null,
       pureMesh: null,
       dfMesh: emptyMesh(),
@@ -183,11 +225,6 @@ export class Arch3dFile {
   discardRecord(record) {
     if (record < 0 || record >= this.count) return;
     this._records[record] = null;
-  }
-
-  /** Discard all mesh records. */
-  discardAllRecords() {
-    for (let record = 0; record < this.count; record++) this.discardRecord(record);
   }
 
   /** DFMesh representation of a record (empty mesh on failure). */

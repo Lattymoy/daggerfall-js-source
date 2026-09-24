@@ -373,9 +373,11 @@ test('AUDIT 62 F9: nextMode refuses under a window, on the same predicate the F1
   const i = s.indexOf('function nextMode()');
   assert.ok(i > 0, 'nextMode exists');
   const body = s.slice(i, i + 1400);
-  assert.match(body, /if \(overlay \|\| otherOverlayActive\?\.\(\)\) return getInteractionMode\(\);/,
-    'both slots, exactly as the key ladder gates (:320 and otherOverlayActive)');
-  assert.ok(body.indexOf('if (overlay || otherOverlayActive?.())') < body.indexOf('setMode('),
+  // AUDIT 68 S21-readout-eats-activate: the key ladder asks this slot's PAUSE since STATUS-LIVE (a non-pausing
+  // readout is walked under), so the button asks the same - the old bare-slot test refused under the readout alone.
+  assert.match(body, /if \(\(overlay && talkPaused\(\)\) \|\| otherOverlayActive\?\.\(\)\) return getInteractionMode\(\);/,
+    'both slots, exactly as the key ladder gates (keydown\'s `overlay && talkPaused()` and otherOverlayActive)');
+  assert.ok(body.indexOf('if ((overlay && talkPaused()) || otherOverlayActive?.())') < body.indexOf('setMode('),
     'and the gate comes BEFORE the mode is set');
   // the touch button reads the returned mode as its label, so refusing
   // must answer the CURRENT mode rather than nothing.

@@ -512,7 +512,7 @@ test('MW-D12 rule 10: equip and unequip key names are the group\'s own, and are 
 test('MW-D12: weaponRig hands the strike to the arm instead of dropping it', () => {
   const rig = readFileSync(new URL('../src/combat/weaponRig.js', import.meta.url), 'utf8');
   // The two call sites that used to discard their return value.
-  assert.match(rig, /const strike = !paralyzed && c\s*\n\s*\? playerWeapon\.gesture\(/,
+  assert.match(rig, /const strike = !paralyzed && c && canAttack\s*\n\s*\? playerWeapon\.gesture\(/,   // AUDIT 68 S09-sheathed-swing: and Update's early returns gate it
     'the gesture result is kept');
   assert.match(rig, /const strike = playerWeapon\.clickAttack\(\);/, 'and so is the click\'s');
   assert.ok(rig.includes('fpArm.setSheathed(playerWeapon.sheathed)'),

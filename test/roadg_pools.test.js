@@ -23,7 +23,7 @@
 //      the refusal into the code instead. In the street the arm handed
 //      a struck watchman to the ENCOUNTER pool's `removeFoe` - which
 //      was not a leak: that remover never looks the record up in
-//      `foes` (exteriorFoes.js:414-419) and both pools share the host's
+//      `foes` (exteriorFoes.js:421-426) and both pools share the host's
 //      one renderer, so the watchman got exactly what `removeGuard`
 //      gives it. Routing by POOL MEMBERSHIP is an OWNERSHIP law: each
 //      pool owns the teardown of its own records, and `removeFoe`'s
@@ -155,7 +155,7 @@ test('ROAD-G G1(a): the door is gated on the PLAYER being the source (F035\'s la
   // it. The gate is DFU's `sourceEntityBehaviour ==
   // PlayerEntityBehaviour` (DaggerfallEntityBehaviour.cs:203) wrapping
   // the whole aggro block at :250-261: a watchman struck by a rat
-  // (the cross-pool `hurtFromFoe` minted at cityGuards.js:305) or
+  // (the cross-pool `hurtFromFoe` minted at cityGuards.js:313) or
   // killed by a fall (EnemyMotor.ApplyFallDamage calls DecreaseHealth
   // and nothing else, :1398-1401) must turn NOBODY.
   //
@@ -182,8 +182,8 @@ test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', (
   // ROAD-G G1 (review): the lane wired the aggro block for the MELEE
   // arms only. An arrow reaches a pool through TWO seams - `dealDamage`,
   // which arrowFlight calls inside its own `dmg > 0` fork
-  // (arrowFlight.js:306-312), and `onAttackFromPlayer`, which it calls
-  // unconditionally at :315 because that is where WeaponManager.cs:630
+  // (arrowFlight.js:307-313), and `onAttackFromPlayer`, which it calls
+  // unconditionally at :316 because that is where WeaponManager.cs:630
   // lives - and all three hosts that resolve a player shaft EXCLUDED the
   // guards from the second one, on a sentence this pool's own
   // `handleAttackFromPlayer` had already falsified. DFU makes no such
@@ -225,7 +225,7 @@ test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', (
 
 test('ROAD-G G1(a): all three arrow hosts ROUTE the hostility seam by pool', () => {
   // The door is PUBLIC now, as the encounter pool's has always been
-  // (exteriorFoes.js:1959), so every host can reach it.
+  // (exteriorFoes.js:1973), so every host can reach it.
   const cg = read('src/scenes/cityGuards.js');
   assert.match(cg, /restoreWorld, removeGuard, handleAttackFromPlayer,/,
     'the watch exports its hostility pair on the returned surface');
@@ -311,11 +311,11 @@ test('ROAD-G G1(b): both hosts route the transform by POOL MEMBERSHIP', () => {
 
   // ROAD-G G1 (review): the RATIONALE this lane first wrote was FALSE
   // and is struck in all seven places it reached. `removeFoe`
-  // (exteriorFoes.js:414-419) never looks a record up in `foes` and
+  // (exteriorFoes.js:421-426) never looks a record up in `foes` and
   // both pools share the host's one renderer, so the old arm tore a
   // watchman down exactly as `removeGuard` does - batch freed,
-  // `dead = true`, no corpse, skipped by cityGuards.js:823 and spliced
-  // at :1012 in that same pass. The router is an OWNERSHIP fix, not a
+  // `dead = true`, no corpse, skipped by cityGuards.js:937 and spliced
+  // at :1125 in that same pass. The router is an OWNERSHIP fix, not a
   // leak fix, and no page may say otherwise again.
   // (the halves are joined at runtime so this very file does not carry
   // the sentence it bans)
@@ -348,14 +348,14 @@ test('ROAD-G G1(c): the SPAWN arms stand a foe in the world the player IS in', (
   // written at worldModes.js's dungeon arm. Raw, the direction angle
   // placeFoeFreely reads is ~1 degree instead of ~75, so the Sanguine
   // Rose's allied Daedroth (lineOfSightCheck defaults TRUE,
-  // hostEnchant.js:61/:208) stands DEAD AHEAD inside the view instead
+  // hostEnchant.js:67/:216) stands DEAD AHEAD inside the view instead
   // of just outside the cone. MUTANT: `fieldOfView()` raw, or
   // `* 90 / Math.PI` - both red here, and the slice is scoped to this
   // arm so worldModes' three other spellings cannot mask it.
   assert.match(stand, /fovDegrees: fieldOfView\(\) \* 180 \/ Math\.PI,/,
     'the placement cone is DEGREES, not the radians fieldOfView() answers');
   assert.match(stand, /foes: interiorFoePool\(\),/, 'and the occupancy test walks both of its pools - the watch blocks a spot too');
-  assert.match(stand, /spawn: \(mt, pos, o\) => interiorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, allied: o\.allied \}\),/,
+  assert.match(stand, /spawn: \(mt, pos, o\) => interiorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, allied: o\.allied, loose: true \}\),/,
     'through the building\'s own chain, carrying allied for the Sanguine Rose');
   assert.match(wm, /insideStandLooseFoe\(mobileType, opts = \{\}\) \{ return standInteriorLooseFoe\(mobileType, opts\); \},/);
 

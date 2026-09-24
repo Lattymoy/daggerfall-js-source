@@ -27,11 +27,12 @@ import { fileURLToPath } from 'node:url';
 import {
   createBetterAmbience, createBetterFootsteps, readBetterAmbienceSettings, SoundList, hasArmor,
   CameraShakeInstance, CameraShaker, damageShake, rigidInverse, shakeView, DEFAULT_POS_INFLUENCE, DEFAULT_ROT_INFLUENCE,
-  SystemRandom, monoStringHash, dungeonGameObjectName, dungeonFogFor, REVERB_PRESETS, reverbPresetFor,
+  SystemRandom, dungeonGameObjectName, dungeonFogFor, REVERB_PRESETS, reverbPresetFor,
   CLIP_LISTS, CLASSIC_LISTS, LIST_VOLUME, CLASSIC_CLIPS_KEPT, MISSING_CLIPS, AMBIENT_RAIN_CLIP, AMBIENT_RAIN_LOWPASS_HZ,
   baClipNames, baClipName, baClipPath, baSoundKey, BA_SETTING_KEYS, BA_WALK_STEP_INTERVAL, BA_RUN_STEP_INTERVAL, BA_FOOTSTEP_VOLUME_SCALE, SHALLOW_ENTER, SHALLOW_LEAVE,
   TRANSITION_WAIT_FRAMES, BETTER_AMBIENCE_VENDOR, BETTER_AMBIENCE_MOD, classicFootstepAllowed, betterAmbience,
 } from '../src/systems/betterAmbience.js';
+import { stringHash } from '../src/formats/netRuntime.js';   // AUDIT 68: the fog seed's string.GetHashCode, one home
 import { REVERB_PRESET, reverbImpulseSamples, mbToGain } from '../src/systems/reverbPresets.js';
 import { modCompatibilityChecking, reportModCompatibilityIssues, COMPAT_WARNING_LINES, COMPAT_WARNING_LOG, BETTER_AMBIENCE_GUID, immersiveFootsteps } from '../src/systems/immersiveFootsteps.js';
 import { MOD_SETTINGS, isFloatKey, isChoiceKey, isIntKey, isTextKey, isTupleKey, setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
@@ -347,12 +348,12 @@ test('BA1: System.Random is the .NET reference (seed 42 opens 0.6681064659115423
   const r42 = new SystemRandom(42);
   near(r42.nextDouble(), 0.6681064659115423, 1e-15); near(r42.nextDouble(), 0.14090729837348093, 1e-15);
   assert.equal(new SystemRandom(0).nextDouble(), new SystemRandom(0).nextDouble(), 'deterministic');
-  assert.equal(monoStringHash('abc'), 96354); assert.equal(monoStringHash(''), 0);
+  assert.equal(stringHash('abc'), 96354); assert.equal(stringHash(''), 0);
   assert.equal(dungeonGameObjectName('Daggerfall', 'Privateer\'s Hold'), 'DaggerfallDungeon [Region=Daggerfall, Name=Privateer\'s Hold]');
   const s = { enableFog: true, maxFogStart: 10, minFogStart: 0, maxFogDistance: 100, minFogDistance: 80, enableAmbientLighting: true, dungeonDarkness: 1, ambientLerp: 0.2 };
   const name = dungeonGameObjectName('Daggerfall', 'Privateer\'s Hold');
   const f = dungeonFogFor(name, s);
-  const rnd = new SystemRandom(monoStringHash(name));
+  const rnd = new SystemRandom(stringHash(name));
   const c = [rnd.nextDouble(), rnd.nextDouble(), rnd.nextDouble()];
   assert.deepEqual(f.fogColor, c, 'the colour is the first three rolls');
   const start = rnd.nextDouble() * 10, end = rnd.nextDouble() * 20 + 80 + start;
@@ -506,7 +507,9 @@ test('BA1: the four hosts gate the classic stride through the one gate, drive th
     assert.match(src, /const _tri = dungeonTrilight\((?:lightingOn|_on), betterAmbience\.dungeonAmbient\(\)\); renderer\.setLighting\(new Float32Array\(_tri \? _tri\.equator : dungeonAmbient\((?:lightingOn|_on), [a-zA-Z]+\.ambient\)\), 0, undefined, _tri\);/, `${name}: the trilight (EL4: through the lane's dark, scaled once)`);
     assert.match(src, /betterAmbience\.onTransition\(\{ dungeon: \{ regionName: dfLocation\.regionName, name: dfLocation\.name, inCastle: \(\) => !!ctx\.insideDungeonCastle\?\.\(\), exitPos: ctx\.enterMarker \? \[ctx\.enterMarker\.x, ctx\.enterMarker\.y, ctx\.enterMarker\.z\] : null \} \}\);/, `${name}: the dungeon transition`);
   }
-  assert.equal((wm.match(/betterAmbience\.onTransition\(null\);/g) ?? []).length, 2, 'the two exits');
+  // AUDIT 68 X3-ba-forceexit-rain: and the forced exit (a Recall, a quest
+  // teleport, a load) - the Respawner raises the same exterior transition.
+  assert.equal((wm.match(/betterAmbience\.onTransition\(null\);/g) ?? []).length, 3, 'the two exits and the forced exit');
   assert.equal((wm.match(/betterAmbience\.onTransition\(\{ building: true \}\);/g) ?? []).length, 1);
   // ENH-NOTICE3: the compatibility box names its KIND and the seam
   // finds the live host's slot (systems/notify.js). Still a push -

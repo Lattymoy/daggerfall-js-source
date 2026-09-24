@@ -79,6 +79,7 @@ export class TerrainGenClient {
           // from `_switches` - the same object the worker is running, and
           // the shape terrainGenWorker.js and _roadsFallback() both use.
           if (m.net) this._roads = { roads: m.net.roads, tracks: m.net.tracks, ...(this._switches ?? {}), source: this._roadsSource ?? 'generated' };   // TO1: whose network this is
+          else if (!this._roads) this._settlements = null;   // AUDIT 68 S22: the build answered no network - it is not a known one (hasRoads)
           if (m.stats && this._roadsStats) this._roadsStats(m.stats);
           return;
         }
@@ -171,6 +172,7 @@ export class TerrainGenClient {
     if (this._roads || !this._settlements) return;
     const net = buildRoadsFromSettlements(this._settlements, this._woods);
     this._roads = net ? { roads: net.roads, tracks: net.tracks, ...(this._switches ?? {}), source: this._roadsSource ?? 'generated' } : null;   // TO1
+    if (!net) this._settlements = null;   // AUDIT 68 S22: a failed build is not a known network, and is not paid again on every job
     if (net && this._roadsStats) this._roadsStats(net.stats);
   }
 

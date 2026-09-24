@@ -760,7 +760,7 @@ test('MW-D33: TCB interior tangents weight by TIME SPAN, not a flat half', () =>
   // leaves the struct's zero-initialised tangents (nifkey.hpp:38-40).
   // No sorted key list can put that key at a sampled segment's edge, so
   // the guard is pinned at the source.
-  const src = readFileSync(new URL('../src/formats/mwAnim.js', import.meta.url), 'utf8');
+  const src = readFileSync(new URL('../src/formats/mwKeys.js', import.meta.url), 'utf8');   // AUDIT 68: the KeyGroup sampler's one home
   assert.ok(src.includes('if (timeSpan === 0) return [0, 0];'), 'zero span answers zero tangents');
 });
 

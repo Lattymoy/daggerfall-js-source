@@ -54,7 +54,9 @@ test('quest: symbol inner names net to Trim(_) alone - the C# dead-assignment qu
   const s = new QuestSymbol('_qtime_');
   assert.equal(s.name, 'qtime');
   assert.equal(s.original, '_qtime_');
-  assert.ok(s.equals(s.clone()));
+  const c = s.clone();
+  assert.notEqual(c, s, 'a clone is its own object');
+  assert.deepEqual([c.original, c.name], [s.original, s.name]);
 });
 
 test('quest: the data table reads schema/rows and answers as DFU Table does', () => {
@@ -63,7 +65,7 @@ test('quest: the data table reads schema/rows and answers as DFU Table does', ()
   assert.ok(t.hasValue('Apples'));
   assert.equal(t.getValue('id', 'Apples'), '0');
   assert.equal(t.getInt('id', 'Oranges'), 1);
-  assert.deepEqual(t.getRow('Oranges'), ['1', 'Oranges']);
+  assert.deepEqual([t.getValue('id', 'Oranges'), t.getValue('name', 'Oranges')], ['1', 'Oranges']);
   // GetInt's int.TryParse failure answer is -1
   const u = new Table(['schema: id,*name', 'x, Weird']);
   assert.equal(u.getInt('id', 'Weird'), -1);

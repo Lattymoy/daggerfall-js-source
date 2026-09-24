@@ -33,9 +33,9 @@ record was merged into the other; they are two different audits that
 briefly shared a name.
 
 **Why the findings are numbered from F3.** The tree cites `AUDIT 58 F3`,
-`F4` and `F5` by number **37 times across 14 files** - `src/world/terrainGenClient.js:143`,
+`F4` and `F5` by number **37 times across 14 files** - `src/world/terrainGenClient.js:144`,
 `src/world/terrainGenWorker.js:45`, `src/world/terrainHelper.js:2`,
-`src/world/roadsCache.js:17`, `src/scenes/world.js:133`,
+`src/world/roadsCache.js:17`, `src/scenes/world.js:132`,
 `src/formats/woodsFile.js:93`, `test/modsettings.test.js`,
 `test/audit58_terrainhelper.test.js`, `test/ledger.test.js:245`,
 `test/citedrift.test.js`, `Port-Ledger.md:82-83`, `Testing.md` - and
@@ -168,7 +168,7 @@ now has a name per host.
 readers asked one.** `interiorFoes` and `interiorGuards` are both live
 inside a building; the senses feed, the enchant pool and the rest refusal
 each walked only the first, so the indoor city watch was invisible to all
-three (`src/scenes/worldModes.js:1026-1094`). **The exterior host mounted no
+three (`src/scenes/worldModes.js:1012-1085`). **The exterior host mounted no
 enchant ctx at all** - the session has ONE, and that host set none, so
 every enchantment payload that needs a foe idled in the host a player
 spends most of their time in (`setDefaultEnchantCtx` is imported at
@@ -327,7 +327,7 @@ and cannot be seen to stop. Each was confirmed by running the mutant in
 an isolated mirror of the tree, not by reading the test.
 
 The two that matter most are in advancement. **The reflexes use-scale
-`>> 16`** (`src/systems/advancement.js:121`) was unpinned: change it and
+`>> 16`** (`src/systems/advancement.js:111`) was unpinned: change it and
 every skill in the game advances twice as fast, with the suite green.
 **`GetAdvancementMultiplier` is a 35-row DFU table pinned at four rows**,
 so Jumping and CriticalStrike floated free. Then `LootTables`' per-level
@@ -516,12 +516,12 @@ Left, deliberately, each recorded at its site or here:
   **G1's review closed the arm the lane missed**: an ARROW reaches a pool
   through two seams, and only `dealDamage` (inside `arrowFlight`'s own
   `dmg > 0` fork) had been wired - the unconditional `onAttackFromPlayer`
-  seam, which is where :630 actually lives (`arrowFlight.js:315`), still
+  seam, which is where :630 actually lives (`arrowFlight.js:316`), still
   excluded the guards in all three hosts that resolve a player shaft. So
   a zero-damage arrow into a pacified watchman turned nobody while the
   identical SWING turned the area. `handleAttackFromPlayer` is on the
   pool's public surface now (as the encounter pool's has always been,
-  `exteriorFoes.js:1959`) and all three seams route by pool membership.
+  `exteriorFoes.js:1973`) and all three seams route by pool membership.
 - ~~The indoor WATCH refuses the Wabbajack: DFU transforms any
   `EnemyEntity` and `Knight_CityWatch` is one, but the guard pool exposes
   no remove/spawn pair. The refusal and its reason are written into the

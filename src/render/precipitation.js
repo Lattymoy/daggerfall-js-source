@@ -23,6 +23,8 @@
 // cap alone - the lab's program and its 26,000 instances are built for
 // the lane that draws them, and for no other.
 
+import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
+
 const PRECIP_VS = `#version 300 es
 layout(location=0) in vec3 aSeed;   // 0..1 per particle
 layout(location=1) in vec2 aCorner; // -0.5..0.5
@@ -273,17 +275,6 @@ function mat4Multiply(out, a, b) {
   return out;
 }
 
-/** One compile, shared by the classic program and the lab's. */
-function compileShader(gl, type, src) {
-  const sh = gl.createShader(type);
-  gl.shaderSource(sh, src);
-  gl.compileShader(sh);
-  if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
-    throw new Error(gl.getShaderInfoLog(sh));
-  }
-  return sh;
-}
-
 export class PrecipitationRenderer {
   // HARD3: the classic lane's twelve uniform locations. They are
   // ASSIGNED through a string list in the constructor (`this[u] =
@@ -314,13 +305,7 @@ export class PrecipitationRenderer {
    *  26,000 instances. */
   constructor(gl, opts = {}) {
     this.gl = gl;
-    const prog = gl.createProgram();
-    gl.attachShader(prog, compileShader(gl, gl.VERTEX_SHADER, PRECIP_VS));
-    gl.attachShader(prog, compileShader(gl, gl.FRAGMENT_SHADER, PRECIP_FS));
-    gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-      throw new Error(gl.getProgramInfoLog(prog));
-    }
+    const prog = buildProgram(gl, PRECIP_VS, PRECIP_FS);
     this.program = prog;
     for (const u of ['uProj', 'uView', 'uCamPos', 'uCamRight', 'uTime', 'uBox', 'uFall', 'uDrift', 'uSlant', 'uSize', 'uSnow', 'uColor']) {
       this[u] = gl.getUniformLocation(prog, u);
@@ -425,11 +410,7 @@ export class PrecipitationRenderer {
    *  can never bind and uploaded 26,000 instances it can never draw. */
   _buildLab() {
     const gl = this.gl;
-    const lp = gl.createProgram();
-    gl.attachShader(lp, compileShader(gl, gl.VERTEX_SHADER, LAB_WX_VS));
-    gl.attachShader(lp, compileShader(gl, gl.FRAGMENT_SHADER, LAB_WX_FS));
-    gl.linkProgram(lp);
-    if (!gl.getProgramParameter(lp, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(lp));
+    const lp = buildProgram(gl, LAB_WX_VS, LAB_WX_FS);
     this.labProgram = lp;
     this.lab = {};
     for (const u of ['uVP', 'uEye', 'uRight', 'uUp', 'uTime', 'uKind', 'uBox', 'uFall', 'uWindV', 'uWindOff']) this.lab[u] = gl.getUniformLocation(lp, u);
@@ -479,11 +460,7 @@ export class PrecipitationRenderer {
   _buildPixelSnow() {
     const gl = this.gl;
     if (!this.labProgram) this._buildLab();   // the same instances and VAO
-    const pp = gl.createProgram();
-    gl.attachShader(pp, compileShader(gl, gl.VERTEX_SHADER, PIXEL_SNOW_VS));
-    gl.attachShader(pp, compileShader(gl, gl.FRAGMENT_SHADER, PIXEL_SNOW_FS));
-    gl.linkProgram(pp);
-    if (!gl.getProgramParameter(pp, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(pp));
+    const pp = buildProgram(gl, PIXEL_SNOW_VS, PIXEL_SNOW_FS);
     this.pixelProgram = pp;
     this.pixel = {};
     for (const u of ['uVP', 'uEye', 'uTime', 'uBox', 'uFall', 'uWindV', 'uWindOff', 'uProjY', 'uAspect', 'uMinSize', 'uMaxSize', 'uTex']) this.pixel[u] = gl.getUniformLocation(pp, u);

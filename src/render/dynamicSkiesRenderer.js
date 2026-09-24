@@ -59,6 +59,7 @@
 
 import { DITHER_GLSL, BAYER_MEAN } from './orderedDither.js';   // PS2: the port's retro pass, shared with the dome and the clouds
 import { MATERIAL_DEFAULTS, TEXTURE_SLOTS, TEXTURE_IMPORTS, SLOT_DEFAULT_TEXEL, srgbToLinear } from '../systems/dynamicSkies.js';
+import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 
 /** Which material properties are COLOURS (SetColor -> linearised at
  *  upload under linear colour space). Every other vec4 is SetVector. */
@@ -735,17 +736,7 @@ void main() {
 export class DynamicSkiesRenderer {
   constructor(gl) {
     this.gl = gl;
-    const compile = (type, src) => {
-      const sh = gl.createShader(type);
-      gl.shaderSource(sh, src); gl.compileShader(sh);
-      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh));
-      return sh;
-    };
-    const prog = gl.createProgram();
-    gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
-    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
-    gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+    const prog = buildProgram(gl, VS, FS);
     this.program = prog;
     this.u = {};
     for (const name of UNIFORM_NAMES) this.u[name] = gl.getUniformLocation(prog, name);

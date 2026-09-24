@@ -104,6 +104,9 @@ export function rayAabb(origin, dir, aabb) {
   return tMin;
 }
 
+/** objectAabb's measured boxes, per object (AUDIT 68 S15-objectaabb-vertex-walk). */
+const _liveBoxes = new WeakMap();
+
 /**
  * AUDIT 63 F37: the world box a RAY must test against one action
  * object - the collider DFU's Physics.Raycast actually meets.
@@ -128,7 +131,18 @@ export function rayAabb(origin, dir, aabb) {
  */
 export function objectAabb(o) {
   if (!o) return null;
-  if (o.cpu && o.matrix) return worldAabb(o.cpu.positions, o.matrix);
+  if (o.cpu && o.matrix) {
+    // AUDIT 68 S15-objectaabb-vertex-walk: a pose change REPLACES
+    // o.matrix (ActionSystem._applyMatrix), never writes into it, so the
+    // box keyed on the two identities it was measured from is exact -
+    // and a parked lever is walked once, not every frame. The box is
+    // shared: its readers never write it.
+    const memo = _liveBoxes.get(o);
+    if (memo && memo.matrix === o.matrix && memo.positions === o.cpu.positions) return memo.box;
+    const box = worldAabb(o.cpu.positions, o.matrix);
+    _liveBoxes.set(o, { matrix: o.matrix, positions: o.cpu.positions, box });
+    return box;
+  }
   return o.aabb ?? null;
 }
 
@@ -160,10 +174,23 @@ export function activationTargets(objects, distance = DOOR_ACTIVATION_DISTANCE) 
     const aabb = objectAabb(o);
     if (!aabb) continue;
     if (isActionDoorObject(o)) targets.push({ key: o.key, aabb, distance: RAY_DISTANCE, reach: distance });   // :686-689 speaks
-    else targets.push({ key: o.key, aabb, distance });   // :380-383 is silent
+    else targets.push({ key: o.key, aabb, distance, meshCollider: hasMeshCollider(o) });   // :380-383 is silent
   }
   return targets;
 }
+
+/** DISC19-E (Discord: "Cant enter Mannimarcos room ... even if i bash it
+ *  doesnt make a sound"): the action objects DFU gives a MeshCollider - a
+ *  placed MODEL carrying a record (AddStandaloneModel ->
+ *  CreateDaggerfallMeshGameObject, GameObjectHelper.cs:196-206): movers,
+ *  special doors (a standalone model too - AUDIT DISC19), and the
+ *  relays/effects minted from a placement (modelIdNum set). An ACTION
+ *  door is a BoxCollider sized to its bounds (RDBLayout.cs:1147-1155) and
+ *  an acting flat a BoxCollider (RDBLayout.cs:977-987): their box IS the
+ *  hit. */
+export const hasMeshCollider = (o) => !!o && (o.kind === 'action'
+  || (o.kind === 'door' && o.special === true)
+  || ((o.kind === 'relay' || o.kind === 'effect') && o.modelIdNum != null));
 
 /**
  * QG1 - the FOE half of PlayerActivate's quest-resource click arm
@@ -338,7 +365,7 @@ export function pickActivatable(eye, dir, targets, collider) {
  * `distance` is widened to RAY_DISTANCE so it can WIN the pick
  * therefore carries its real `reach` beside it, and the ladder speaks
  * the refusal when the winner came back out of reach. This is the
- * bulletin board's idiom (scenes/worldModes.js:5098-5108) given a
+ * bulletin board's idiom (scenes/worldModes.js:5092-5102) given a
  * field, not a second pick: one ray, one winner, the gate downstream.
  * Targets that were never widened answer `reach === distance`, which
  * the pre-gate has already enforced, so they can never refuse.
@@ -379,6 +406,7 @@ function nearestActivatableHit(eye, dir, targets, collider) {
   let bestReach = DEFAULT_ACTIVATION_DISTANCE;
   let bestNoSurface = false;
   let targetKeys = null;   // CASTLE1: the keys, minted only when a box holds the eye
+  let firstHit;            // DISC19-E: the one surface DFU's ray meets, cast lazily
   for (const target of targets) {
     let d = target.obb ? rayObb(eye, dir, target.obb.m, target.obb.box) : rayAabb(eye, dir, target.aabb);   // DISC10: a turned body's own box where it has one
     if (d === null) continue;
@@ -414,6 +442,17 @@ function nearestActivatableHit(eye, dir, targets, collider) {
       }
       if (!boxContains(target.aabb, [eye[0] + dir[0] * hit.dist, eye[1] + dir[1] * hit.dist, eye[2] + dir[2] * hit.dist], 0.15)) continue;
       d = hit.dist;
+    } else if (target.meshCollider === true && collider.raycastHit) {
+      // DISC19-E: CASTLE1's law for a box merely ENTERED. A mesh
+      // collider is met only at its triangles, so when the first surface
+      // the ray meets is ANOTHER target's own bucket (the King of Worms'
+      // door, standing 5 cm inside the corridor piece's box), the ray
+      // never struck this object.
+      firstHit ??= collider.raycastHit(eye, dir, RAY_DISTANCE);
+      if (firstHit.key != null && firstHit.key !== target.key) {
+        targetKeys ??= new Set(targets.map((t) => t.key));
+        if (targetKeys.has(firstHit.key)) continue;
+      }
     }
     if (d > bestDist) continue;
     // Two boxes struck at the same distance - the foyer piece and the

@@ -12,6 +12,12 @@
 
 import { frustumPlanes } from './frustum.js';   // EV3's plane extraction - one home
 
+/** A batch with no origin sits at the world's: createBillboardBatch mints
+ *  `origin: null` for every static flat. AUDIT 68 S16-v-replay-origin-alloc:
+ *  ONE shared, read-only zero for the draw and both replays, which minted
+ *  a fresh [0, 0, 0] per origin-less batch per replay. */
+export const ZERO_ORIGIN = Object.freeze([0, 0, 0]);
+
 /** The six planes of a view-projection for the sphere test: frustum.js's
  *  Gribb/Hartmann extraction (EV3's, unnormalised - the hosts' box test only
  *  wants the sign), normalised here so a plane distance is in world units
@@ -84,8 +90,9 @@ export function subMeshVisible(planes, r, i) {
   return rad < 0 || sphereInPlanes(planes, r.subSpheres[o], r.subSpheres[o + 1], r.subSpheres[o + 2], rad);
 }
 /**
- * A billboard batch about its origin, by the bounds createBillboardBatch
- * computed (none: always).
+ * A billboard batch's world sphere [x, y, z, r] into `out`, from the bounds
+ * createBillboardBatch computed and the batch's origin - or null when it
+ * carries no bounds.
  *
  * THE SPHERE IS LIFTED HALF A HEIGHT, and that is the whole correctness of
  * it. `createBillboardBatch` stores a sphere over the PLACEMENT points with
@@ -107,15 +114,25 @@ export function subMeshVisible(planes, r, i) {
  * two passes disagreed about the same sprite: the main pass dropped a flat
  * the emission replay kept, and what was left on screen was the bloom of a
  * sprite that never drew. A ghost campfire, exactly as reported. One home,
- * one answer, and every caller takes it.
+ * one answer, and every caller takes it. AUDIT 68 S16-batch-sphere-dup:
+ * SHADOW-REACH's shadowReachBatch and SC1's signature and dynamic scans had
+ * written the lift out three more times; they take this now.
+ * @param {{ bounds?: ArrayLike<number>|null, origin?: ArrayLike<number>|null, size?: { h: number }|null }} b
+ * @param {Float64Array|Float32Array|number[]} out
  */
-export function batchVisible(planes, b) {
+export function batchSphere(b, out) {
   const s = b.bounds;
-  if (!s) return true;
+  if (!s) return null;
   const o = b.origin;
-  return sphereInPlanes(planes,
-    s[0] + (o ? o[0] : 0),
-    s[1] + (o ? o[1] : 0) + (b.size?.h ?? 0) * 0.5,
-    s[2] + (o ? o[2] : 0),
-    s[3]);
+  out[0] = s[0] + (o ? o[0] : 0);
+  out[1] = s[1] + (o ? o[1] : 0) + (b.size?.h ?? 0) * 0.5;
+  out[2] = s[2] + (o ? o[2] : 0);
+  out[3] = s[3];
+  return out;
+}
+const _batchSphere = new Float64Array(4);   // batchVisible's scratch - the replays' hot path allocates nothing
+/** A billboard batch against the planes, on batchSphere's sphere (no bounds: always drawn). */
+export function batchVisible(planes, b) {
+  const c = batchSphere(b, _batchSphere);
+  return !c || sphereInPlanes(planes, c[0], c[1], c[2], c[3]);
 }

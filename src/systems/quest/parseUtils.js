@@ -25,12 +25,33 @@ export function splitField(text, expectedCount = 2, trim = true) {
 export const getFieldStringValue = (text) => splitField(text)[1].trim();
 export const getFieldIntValue = (text) => parseInt(splitField(text)[1].trim());
 
+// int.Parse / int.TryParse's decimal surface (NumberStyles.Integer):
+// surrounding whitespace, one leading sign, digits (AUDIT quest-P9/P10).
+const INT_SURFACE = /^\s*[+-]?\d+\s*$/;
+const inInt32 = (n) => n <= 2147483647 && n >= -2147483648;
+
+/** int.TryParse: the value, or null where C# answers false - off the
+ *  surface or past int32. AUDIT 68 S30-tryparse-dup: the quest layer's
+ *  ONE port; Table.GetInt, ParseQuestList and CustomParseInt each kept
+ *  their own, and two of them had no int32 bound. */
+export function intTryParse(text) {
+  if (typeof text !== 'string' || !INT_SURFACE.test(text)) return null;
+  const n = Number.parseInt(text, 10);
+  return inInt32(n) ? n : null;
+}
+
+/** int.Parse: intTryParse's surface, THROWING where TryParse answers
+ *  false. */
+export function intParse(text) {
+  const n = intTryParse(text);
+  if (n !== null) return n;
+  const onSurface = typeof text === 'string' && INT_SURFACE.test(text);
+  throw new Error(`int.Parse ${onSurface ? 'overflow' : 'failed'} on '${text}'`);
+}
+
 /** int.Parse with a 0 default for null/empty (Parser.ParseInt).
  *  AUDIT quest-P10: C# accepts a leading '+' and THROWS past int32. */
 export function parseInt(text) {
   if (text == null || text === '') return 0;
-  if (!/^[+-]?\d+$/.test(text.trim())) throw new Error(`int.Parse failed on '${text}'`);
-  const n = Number.parseInt(text, 10);
-  if (n > 2147483647 || n < -2147483648) throw new Error(`int.Parse overflow on '${text}'`);
-  return n;
+  return intParse(text);
 }

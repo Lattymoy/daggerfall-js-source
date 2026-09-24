@@ -27,7 +27,7 @@ test('FIX-C: the roads sweep RE-QUEUES what it tears down, nearest-first, and ho
   const pushAt = body.indexOf('queue.push(...again.sort(');
   const holdAt = body.indexOf('_seasonHoldKey = under;');
   assert.ok(holdAt > 0 && destroyAt > holdAt && pushAt > destroyAt, 'hold, then destroy, then re-queue');
-  assert.match(body, /const ca = Math\.max\(Math\.abs\(p\.px - state\.current\.x\), Math\.abs\(p\.py - state\.current\.y\)\);/, 'nearest-first: the load list\u2019s own order, the player\u2019s pixel back first');
+  assert.match(body, /queue\.push\(\.\.\.again\.sort\(nearestFirstFrom\(state\.current\)\)\);/, 'nearest-first: the load list\u2019s own order, the player\u2019s pixel back first');
   // and the sweep runs on the FRAME, between builds - a pixel in flight publishes before its key can be torn down
   assert.match(world, /function rebuildRoadless\(\) \{ roadsSweepDue = true; \}/, 'the network\u2019s arrival marks the sweep');
   assert.match(world, /tickSeason\(\);\s*\n\s*if \(roadsSweepDue && !building\) \{ roadsSweepDue = false; sweepRoadless\(\); \}/, 'the frame runs it beside the season tick, never over a build in flight');

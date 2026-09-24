@@ -958,11 +958,27 @@ export const KEY_MIGRATIONS = Object.freeze([
   Object.freeze({ vendor: 'horse-cart-and-cargo', key: 'Hotkeys.QuickMountDismount', was: 'F7' }),
   Object.freeze({ vendor: 'horse-cart-and-cargo', key: 'Hotkeys.SummonTransport', was: 'F10' }),
 ]);
+/** DISC20-E (2026-09-24, Mac: "The weapon widget default toggle under diverse weapons should be set to off by
+ *  default"): A SWITCH WHOSE DEFAULT MOVED, RESET ONCE. Diverse Weapons' Weapon Widget Preset has shipped off since
+ *  DISC16-B, but a default only answers for a player who never touched the switch, and every player who turned it on
+ *  while DW-CLIP shipped it on (or tried it) holds a SAVED value and still sees it on. So a stored value WITHOUT this
+ *  entry's stamp is let go on load and the file written back, and the shipped off applies. setModSetting stamps the
+ *  key when a player sets it from now on, so a choice made after the reset is kept across reloads - unlike
+ *  KEY_MIGRATIONS, which can only match a value. A file that never mentioned the mod is not grown one. */
+export const SWITCH_RESETS = Object.freeze([
+  Object.freeze({ vendor: 'diverse-weapons', key: 'WeaponWidgetPreset', stamp: 'WeaponWidgetPreset@DISC20' }),
+]);
 function migrate(m) {
   let changed = false;
   for (const { vendor, key, was } of KEY_MIGRATIONS) {
     const held = m?.[vendor];
     if (!held || held[key] !== was) continue;
+    delete held[key];
+    changed = true;
+  }
+  for (const { vendor, key, stamp } of SWITCH_RESETS) {
+    const held = m?.[vendor];
+    if (!held || !Object.hasOwn(held, key) || held[stamp] === true) continue;
     delete held[key];
     changed = true;
   }
@@ -1110,13 +1126,22 @@ export function modSettingsOf(vendor) {
   return out;
 }
 
+/** AUDIT 68 S15-eotb-settings-snapshot: DFU's ModSettingsChange, as a
+ *  number. Every write moves it, so a reader that holds a resolved copy
+ *  (the EOTB camera and body) re-reads when there is something new
+ *  rather than never - the same idiom as `morrowindDataGeneration`. */
+let _generation = 0;
+export const modSettingsGeneration = () => _generation;
+
 export function setModSetting(vendor, key, value) {
   const def = declaredKey(vendor, key);
   if (!def) throw new Error(`setModSetting: ${vendor}/${key} is not a declared switch`);
   const m = load();
   const v = coerce(def, value);
   (m[vendor] ??= {})[key] = v;
+  for (const r of SWITCH_RESETS) if (r.vendor === vendor && r.key === key) m[vendor][r.stamp] = true;   // DISC20-E: chosen after the reset - kept
   save();
+  _generation++;
   return v;
 }
 
@@ -1152,4 +1177,4 @@ export function flattenModPreset(vendor, values) {
 }
 
 /** For tests: forget everything. */
-export function _resetModSettings() { memory = null; try { appStorage()?.removeItem(STORE_KEY); } catch { /* none */ } }
+export function _resetModSettings() { memory = null; _generation++; try { appStorage()?.removeItem(STORE_KEY); } catch { /* none */ } }

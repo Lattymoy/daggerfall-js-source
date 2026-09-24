@@ -4,11 +4,10 @@
 // animated mesh. This is the in-engine counterpart to the viewer's
 // separate toggleable pieces.
 import { buildNeutralBody } from './neutralBody.js';
-import { buildHair } from './pieces/hair.js';
+import { buildHair, HAIR_RAMPS } from './pieces/hair.js';
 import { buildTail } from './pieces/tail.js';
 import { buildBodyScales, buildBodyFur } from './pieces/bodyScales.js';
 import { HUMAN_SKINS, ELF_TONES, KHAJIIT_FURS, ARGONIAN_HIDES } from './palettes.js';
-import { HAIR_RAMPS } from './pieces/hair.js';
 
 const MORPHS = ['Human', 'Elf', 'Khajiit', 'Argonian'];
 
@@ -50,5 +49,3 @@ export function buildRaceCharacter(race, spriteRamps, opts = {}) {
 
   return faces;
 }
-
-export { MORPHS };

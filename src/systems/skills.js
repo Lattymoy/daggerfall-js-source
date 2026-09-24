@@ -158,6 +158,23 @@ export function resetSkillsRecentlyRaised(entity) {
   raisedWords(entity).fill(0);
 }
 
+/** PlayerEntity.SetCurrentLevelUpSkillSum's sum: sum(primary) +
+ *  sum(major) - lowest major + highest minor. Its one home (AUDIT 68
+ *  S24-levelup-sum-duplicate): chargen's anchor took an inline copy
+ *  because chargen.js cannot import advancement.js, which re-exports
+ *  it from this leaf both read. */
+export function levelUpSkillSum(entity) {
+  const c = entity.career;
+  let sum = 0;
+  for (const id of c.primarySkills) sum += entity.skills[id];
+  let lowestMajor = Infinity;
+  for (const id of c.majorSkills) { const v = entity.skills[id]; sum += v; if (v < lowestMajor) lowestMajor = v; }
+  sum -= lowestMajor;
+  let highestMinor = -Infinity;
+  for (const id of c.minorSkills) { const v = entity.skills[id]; if (v > highestMinor) highestMinor = v; }
+  return sum + highestMinor;
+}
+
 /** Verbatim AcrobatMotor.jumpSpeedMultiplier (:88-105): 1 +
  *  JumpingSkill * 0.5 / 100 (skill adds up to +50% force), plus
  *  athleticismMultiplier 0.1 when the career carries Athleticism.
@@ -182,7 +199,7 @@ export function resetSkillsRecentlyRaised(entity) {
  *          if (ImprovedAthleticism) += improvedAthleticismMultiplier;
  *      }
  *
- *  - exactly the shape shared.js:1351 already uses for the same pair
+ *  - exactly the shape shared.js:1348 already uses for the same pair
  *  on the fatigue rate, so the item alone does nothing and the two
  *  together make +20%. X1 landed the Jump SPELL's term (+0.6,
  *  AcrobatMotor's own jumpSpellMultiplier :16, added when

@@ -70,7 +70,7 @@ test('M5: the exterior pages cast through MODE FACADES - collider, foes and abso
       // ...and the sinks follow the RECORD, so a foe handed out by the
       // interior arm knocks back and dies against that building's
       // collider and death chain rather than the street's.
-      assert.ok(s.includes('\n    foeSinks: (f) => enchantFoeSinks(f),\n'),
+      assert.ok(s.includes('\n    foeSinks: (f, fromPlayer) => enchantFoeSinks(f, fromPlayer),'),
         `${f}: the engine's sinks route by pool membership, the same law the enchant mount takes`);
     } else {
       // ROAD-G G2: THE TOWN PAGE TAKES THE SAME THREE-ARM SHAPE. This
@@ -88,7 +88,7 @@ test('M5: the exterior pages cast through MODE FACADES - collider, foes and abso
         `${f}: exterior answers both street pools, interior answers worldModes' own join, dungeon answers none`);
       assert.equal(/foes: \(\) => \(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? cityGuards\.guards : \[\]/.test(s), false,
         `${f}: the interior scene gate is gone, not merely widened around`);
-      assert.ok(s.includes('\n    foeSinks: (f) => enchantFoeSinks(f),\n'),
+      assert.ok(s.includes('\n    foeSinks: (f, fromPlayer) => enchantFoeSinks(f, fromPlayer),'),
         `${f}: and the engine's sinks route by pool membership, the same law the enchant mount takes`);
     }
     const i = s.indexOf('absorbCtx: () =>');
@@ -114,7 +114,7 @@ test('M5: spell damage reaches guards through the ONE damage door', () => {
   assert.ok(src('cityGuards.js').includes('hurtGuard: (g, dmg, playerFeet, knockDir = null, opts = undefined) => damageGuard(g, dmg, playerFeet, knockDir, opts)'),   // AUDIT WORLD6b-iii(a) B2: and the options bag (the provenance)
     'cityGuards exports the door');
   for (const f of HOSTS) {
-    assert.ok(/hurt: \(n\) => \{ if \(n > 0\) (cityGuards\.hurtGuard\(g, n, player\.pos\)|\(g\._encounter \? exteriorFoes\.damageFoe\(g, n, player\.pos, null, \{ fromPlayer, kind: 'spell' \}\) : cityGuards\.hurtGuard\(g, n, player\.pos, null, \{ fromPlayer \}\)\))/.test(src(f)),   // AUDIT WORLD6b-iii(a) B2: the world host's carries the engine's provenance
+    assert.ok(/hurt: \(n(?:, o)?\) => \{ (?:const fp = o\?\.fromPlayer \?\? fromPlayer; )?if \(n > 0\) (cityGuards\.hurtGuard\(g, n, player\.pos\)|\(g\._encounter \? exteriorFoes\.damageFoe\(g, n, player\.pos, null, \{ fromPlayer(?:: fp)?, kind: 'spell' \}\) : cityGuards\.hurtGuard\(g, n, player\.pos, null, \{ fromPlayer(?:: fp)? \}\)\))/.test(src(f)),   // AUDIT WORLD6b-iii(a) B2: the world host's carries the engine's provenance
       `${f}: the engine sink routes through the pool's own damage door`);
   }
 });

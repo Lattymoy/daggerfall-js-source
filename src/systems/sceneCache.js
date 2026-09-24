@@ -88,6 +88,24 @@ const copyPiles = (piles) => piles.map((p) => ({
   items: (p.items ?? []).map((it) => ({ ...it })),
 }));
 
+/** One scene entry, detached from its caller - AUDIT 68 S31-scenecache-triple-copy: the store, the save and the
+ *  load each wrote this copy by hand, and the save's drifted once (TERRAIN-SCALE1: torches and camps gone on load).
+ *  A field an older entry never carried reads empty. */
+const copySceneEntry = (d) => ({
+  lootContainers: (d.lootContainers ?? []).map((c) => ({ ...c })),
+  actionDoors: (d.actionDoors ?? []).map((x) => ({ ...x })),
+  droppedPiles: copyPiles(d.droppedPiles ?? []),
+  // SURV3: the port's own loose objects ride the same hand-off. HT1's torches were HANDED to this door and dropped
+  // on the floor - a torch left on a pixel never came back with it. The camps came with the fix.
+  droppedTorches: (d.droppedTorches ?? []).map((t) => ({ ...t, position: [...(t.position ?? [])] })),
+  camps: (d.camps ?? []).map((c) => ({ ...c, pos: [...(c.pos ?? [])] })),
+  // TERRAIN-SCALE1: `frame` names what the positions above are measured from ('building': the interior's own
+  // building, as DFU's SerializableLootContainer restores an interior container by its localPosition; null: the
+  // writer's own frame), and `terrainScale` the ground an exterior height stood on - absent on an entry written
+  // before either was carried, which the restoring host reads as the old raw frame on the prefab's 1.5.
+  frame: d.frame ?? null, terrainScale: d.terrainScale ?? null,
+});
+
 /** CacheScene (:84-98). DFU caches exactly TWO kinds of thing for a
  *  scene - loot containers and action doors - and explicitly writes
  *  empty arrays for the other two stateful types, which is its own
@@ -107,23 +125,8 @@ const copyPiles = (piles) => piles.map((p) => ({
  *  the first. Destructuring only two keys made the port's own
  *  LOOT_CONTAINER_TYPES.DroppedLoot unreachable and cleared the floor
  *  of every shop on the way out. */
-export function cacheScene(cache, sceneName, { lootContainers = [], actionDoors = [], droppedPiles = [], droppedTorches = [], camps = [], frame = null, terrainScale = null } = {}) {
-  cache.scenes.set(sceneName, {
-    // TERRAIN-SCALE1: `frame` names what the positions below are measured from ('building': the interior's own
-    // building, as DFU's SerializableLootContainer restores an interior container by its localPosition; null: the
-    // writer's own frame), and `terrainScale` the ground an exterior height stood on - absent on an entry written
-    // before either was carried, which the restoring host reads as the old raw frame on the prefab's 1.5.
-    frame, terrainScale,
-    lootContainers: lootContainers.map((c) => ({ ...c })),
-    actionDoors: actionDoors.map((d) => ({ ...d })),
-    droppedPiles: copyPiles(droppedPiles),
-    // SURV3: the port's own loose objects ride the same hand-off. HT1's
-    // torches were HANDED to this door and dropped on the floor - the
-    // three keys above were the whole store, so a torch left on a pixel
-    // never came back with it. The camps came with the fix.
-    droppedTorches: droppedTorches.map((t) => ({ ...t, position: [...(t.position ?? [])] })),
-    camps: camps.map((c) => ({ ...c, pos: [...(c.pos ?? [])] })),
-  });
+export function cacheScene(cache, sceneName, entry = {}) {
+  cache.scenes.set(sceneName, copySceneEntry(entry));
 }
 
 /** RestoreCachedScene (:100-113). Answers null for a scene never
@@ -175,31 +178,13 @@ export function clearSceneCache(cache, { start = true } = {}) {
 export function snapshotSceneCache(cache) {
   return {
     permanentScenes: [...cache.permanent],
-    scenes: [...cache.scenes.entries()].map(([sceneName, d]) => ({
-      sceneName,
-      lootContainers: d.lootContainers.map((c) => ({ ...c })),
-      actionDoors: d.actionDoors.map((x) => ({ ...x })),
-      // the same array GetSceneCache writes (:148-172) - the piles
-      // are loot containers on DFU's side, so they ride the envelope
-      droppedPiles: copyPiles(d.droppedPiles ?? []),
-      // TERRAIN-SCALE1: the torches and camps a scene holds rode the in-memory cache (SURV3) and were dropped here, so
-      // a torch left burning in your own house was gone after a load; and the frame and scale the positions need
-      droppedTorches: (d.droppedTorches ?? []).map((t) => ({ ...t, position: [...(t.position ?? [])] })),
-      camps: (d.camps ?? []).map((c) => ({ ...c, pos: [...(c.pos ?? [])] })),
-      frame: d.frame ?? null, terrainScale: d.terrainScale ?? null,
-    })),
+    // the same array GetSceneCache writes (:148-172) - the piles are loot containers on DFU's side, so they ride
+    // the envelope, and every other field an entry holds rides with them
+    scenes: [...cache.scenes.entries()].map(([sceneName, d]) => ({ sceneName, ...copySceneEntry(d) })),
   };
 }
 export function restoreSceneCache(cache, snap) {
-  cache.scenes = new Map((snap?.scenes ?? []).map((e) => [e.sceneName, {
-    lootContainers: (e.lootContainers ?? []).map((c) => ({ ...c })),
-    actionDoors: (e.actionDoors ?? []).map((d) => ({ ...d })),
-    // `?? []` keeps a save written before ID1's store shipped loadable
-    droppedPiles: copyPiles(e.droppedPiles ?? []),
-    droppedTorches: (e.droppedTorches ?? []).map((t) => ({ ...t, position: [...(t.position ?? [])] })),   // TERRAIN-SCALE1
-    camps: (e.camps ?? []).map((c) => ({ ...c, pos: [...(c.pos ?? [])] })),
-    frame: e.frame ?? null, terrainScale: e.terrainScale ?? null,
-  }]));
+  cache.scenes = new Map((snap?.scenes ?? []).map((e) => [e.sceneName, copySceneEntry(e)]));   // `?? []` inside keeps a pre-ID1 save loadable
   cache.permanent = new Set(snap?.permanentScenes ?? []);
   return cache;
 }
@@ -208,7 +193,7 @@ export function restoreSceneCache(cache, snap) {
 // HOUSE deed's AddPermanentScene, which needed the building directory
 // to know which building was bought: H1/H2 shipped both halves -
 // banking.js:201 calls the hook inside allocateHouseToPlayer with the
-// bought building's own mapId and key, and worldModes.js:2627 supplies
+// bought building's own mapId and key, and worldModes.js:2632 supplies
 // it as addPermanentScene(sceneCache(), interiorSceneName(mapId, key)),
 // reached from the bank's buy arm (:2144-2148), the knightly gift
 // (:2752) and :4933, with sellHouse dropping the scene again (:2184). The

@@ -11,37 +11,15 @@
 // round grip + pommel. Shading = the classic metal ramp for the item's
 // material (weapons.js weaponMaterialRamp over dyes METAL_TABLES +
 // ART_PAL).
-import { loftPiece, shadePiece, compress } from './pieceLoft.js';
+import { loftPiece, shadePiece, compress, LEFT_FIST_X, GRIP_Y, SEAT_PITCH, pitchAbout } from './pieceLoft.js';
 
-const ARM_X = -0.235; // left-fist column (mirrors neutralBody)
-
-// THE GRIP (Mac's reference photo, 2026-07-05): a sword is NOT held
-// collinear with the forearm - the handle crosses the palm, so with
-// the arm hanging the blade sweeps UP-FORWARD (~42deg off vertical)
-// and the pommel sits low behind the fist. Baked as a rotation of the
-// whole sword (verts + normals) about the GRIP POINT in the y-z
+// THE GRIP: the seat (pieceLoft's SEAT_PITCH) is baked as a rotation of
+// the whole sword (verts + normals) about the GRIP POINT in the y-z
 // plane; every arm/pose/gait transform then carries the correct grip
 // for free.
-const GRIP_Y = 0.90;          // grip point inside the fist (pre-HSCALE)
-const GRIP_PITCH = -2.40 + Math.PI / 4;   // Mac: swd pitch +45deg baked (2026-07-05) - near-horizontal point-forward carry
-
-function bakeGrip(faces) {
-  const c = Math.cos(GRIP_PITCH), s = Math.sin(GRIP_PITCH);
-  for (const f of faces) {
-    for (let i = 0; i < 4; i++) {
-      const dy = f.p[i*3+1] - GRIP_Y, z = f.p[i*3+2];
-      f.p[i*3+1] = GRIP_Y + c*dy - s*z;
-      f.p[i*3+2] = s*dy + c*z;
-    }
-    const ny = f.n[1], nz = f.n[2];
-    f.n[1] = c*ny - s*nz; f.n[2] = s*ny + c*nz;
-  }
-  return faces;
-}
-
 export function buildSword(ramp) {
   const faces = [];
-  const G = { group: 'armL', cx: ARM_X, seg: 10 };
+  const G = { group: 'armL', cx: LEFT_FIST_X, seg: 10 };
   // POMMEL: round counterweight above the fist.
   loftPiece(faces, [
     { y: 0.998, rx: 0.014, rz: 0.014 },
@@ -74,5 +52,5 @@ export function buildSword(ramp) {
     { y: 0.150, rx: 0.006, rz: 0.016, p: 0.55 },
     { y: 0.068, rx: 0.003, rz: 0.003, p: 0.55 }, // point
   ], { ...G, capTop: false });
-  return compress(shadePiece(bakeGrip(faces), ramp));
+  return compress(shadePiece(pitchAbout(faces, GRIP_Y, SEAT_PITCH), ramp));
 }

@@ -93,8 +93,8 @@
   {
     "name": "ACC1c-10-the-recovery-code-is-not-spent",
     "file": "server-account/src/accounts.js",
-    "old": "  await db.prepare('UPDATE players SET password = ?, recovery_hash = ? WHERE id = ?').bind(pw, rc, player.id).run();",
-    "new": "  await db.prepare('UPDATE players SET password = ? WHERE id = ?').bind(pw, player.id).run();",
+    "old": "UPDATE players SET password = ?, recovery_hash = ? WHERE id = ? AND recovery_hash = ?').bind(pw, rc, player.id, player.recovery_hash)",
+    "new": "UPDATE players SET password = ? WHERE id = ? AND recovery_hash = ?').bind(pw, player.id, player.recovery_hash)",
     "tests": [
       "test/accountworker.test.js"
     ],
@@ -153,10 +153,10 @@
   {
     "name": "ACC1c-16-registering-mints-a-new-account",
     "file": "server-account/src/accounts.js",
-    "old": "  if (player.handle) return { error: 'already-registered' };",
-    "new": "  if (false) return { error: 'already-registered' };",
+    "old": " WHERE id = ? AND handle IS NULL')",
+    "new": " WHERE id = ?')",
     "tests": [
-      "test/accountworker.test.js"
+      "test/audit68_backend.test.js"
     ],
     "note": "An upgrade in place is the property that keeps the friends and the saves."
   },

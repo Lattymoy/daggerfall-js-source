@@ -75,7 +75,12 @@ const COMPRESSION = Object.freeze({ NONE: 0, LZMA: 1, LZ4: 2, LZ4HC: 3 });
 
 function decompress(src, uncompressedSize, flags) {
   const mode = flags & COMPRESSION_MASK;
-  if (mode === COMPRESSION.NONE) return src.subarray(0, uncompressedSize);
+  if (mode === COMPRESSION.NONE) {
+    // AUDIT 68 S12-bundle-stored-block-short: a truncated stored block is
+    // corrupt, as a short LZ4 block is - never a zero-filled tail
+    if (src.length < uncompressedSize) throw new Error(`unity bundle: stored block holds ${src.length} of ${uncompressedSize} bytes`);
+    return src.subarray(0, uncompressedSize);
+  }
   if (mode === COMPRESSION.LZ4 || mode === COMPRESSION.LZ4HC) return lz4BlockDecompress(src, uncompressedSize);
   if (mode === COMPRESSION.LZMA) throw new Error('unity bundle: LZMA-compressed bundles are not supported (build the mod with ChunkBasedCompression, or unpack it once)');
   throw new Error(`unity bundle: unknown compression ${mode}`);

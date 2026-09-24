@@ -11,7 +11,6 @@ import { buildNeutralBody } from '../src/characters/neutralBody.js';
 import { VILLAGER_DESIGNS, designOpts, designDrape, RACE_TONE } from '../src/characters/villagerDesigns.js';
 import { PALETTES } from '../src/characters/palettes.js';
 import { drapedPiece } from '../src/characters/pieces/draped.js';
-import { compress } from '../src/characters/pieces/pieceLoft.js';
 
 const pal = new DFPalette();
 pal.load(readFileSync(process.env.ARENA2_PATH + '/ART_PAL.COL'), 'ART_PAL.COL');
@@ -58,13 +57,14 @@ const tri = (buf, zbuf, W, ax, ay, az, bx, by, bz, cx, cy, cz, col) => {
 // drawn at REST (drapedPiece is the unsimulated grid; clothSim only
 // runs in the live viewer), which is what a still life wants anyway.
 //
-// draped.js works in the rig's UNCOMPRESSED space - its BODY_CORE tops
-// out at y 1.55, the rig's own shoulder - while buildNeutralBody
-// returns faces already through pieceLoft's HSCALE. Compressing the
-// drape is what puts the two in the same space here.
+// AUDIT 68 S06-villagerrender-double-compress: draped.js authors in the
+// rig's FINAL (post-HSCALE) space - BODY_CORE was measured on the
+// compressed body buildNeutralBody returns, and the live viewer ships
+// the drape raw beside it - so the drape is drawn as it comes.
+// Compressing it again sat every garment 10% low.
 const drapeFaces = (d) => {
   const dr = designDrape(d, pal);
-  return dr ? compress(drapedPiece(dr.name, dr.ramp)) : [];
+  return dr ? drapedPiece(dr.name, dr.ramp) : [];
 };
 
 VILLAGER_DESIGNS.forEach((d, n) => {

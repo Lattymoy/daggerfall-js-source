@@ -111,10 +111,12 @@ test('HEARTH1: all four hosts answer with their own fires - THE FOUR HOSTS RULE'
   // (AUDIT 66 F6: its pool was the one that never joined the
   // quest-teleport / load list, and a room's torches burned on in the
   // ear after the player had gone), so the COUNT is pinned rather than
-  // the presence of one line - four teardown sites, each ending the
-  // pool and emptying the list in the same breath.
+  // the presence of one line - three teardown sites (the entry, the
+  // door out and the forced exit), each ending the pool and emptying
+  // the list in the same breath. AUDIT 68 S23-interior-teardown-twice:
+  // the door's exit said it twice, the second a no-op; four became three.
   const _tears = wm.match(/interiorCamps\.destroyAll\(\); interiorHearths\.length = 0;/g) ?? [];
-  assert.equal(_tears.length, 4, `the room's fires leave on every way out, not ${_tears.length} of them`);
+  assert.equal(_tears.length, 3, `the room's fires leave on every way out, not ${_tears.length} of them`);
   assert.equal((wm.match(/interiorCamps\.destroyAll\(\)/g) ?? []).length, _tears.length, 'and the pool is never ended without the list, or the next room inherits a hearth');
   assert.ok((wm.match(/interiorTorches\.destroyAll\(\)/g) ?? []).length <= _tears.length, 'no torch teardown path is missing its hearth twin');
   // the streaming host's are PIXEL-LOCAL and ride the floating origin,

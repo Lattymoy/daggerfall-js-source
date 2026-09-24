@@ -25,6 +25,7 @@
 // port loads those from the player's ARENA2 like any other model.
 
 import { readFileSync, writeFileSync } from 'node:fs';
+import { isMain } from '../tools/lib/isMain.mjs';
 
 /** The Z_UP node matrix a Blender export writes for these parts. Its
  *  composition with the Z-up-to-Y-up conversion is the identity, which
@@ -245,9 +246,10 @@ export function parseCollada(text, materialTextures = null, { nodeMatrix = 'asse
 //
 // The parser above is the part a test wants; everything below writes
 // the tree, and nothing that writes the tree should happen because
-// somebody imported a function.
-const RUN = import.meta.url === `file://${process.argv[1]}`;
-if (RUN) {
+// somebody imported a function. AUDIT 68 S01-bake-run-guard-fragile:
+// the guard is the shared real-path one - the URL string comparison
+// here was false under a space or a symlink, and the bake did nothing.
+if (isMain(import.meta.url)) {
 
 const BODY_MATERIALS = {
   'Walls-material': [364, 2],

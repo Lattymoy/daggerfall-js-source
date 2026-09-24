@@ -162,7 +162,7 @@ test('OVH2: the renderer carries a texture\'s alpha law to every draw of it - an
   const texs = [];
   const gl = new Proxy({}, { get: (_, k) => (k === 'createTexture' ? () => { const t = { id: texs.length }; texs.push(t); return t; } : typeof k === 'string' && /^[A-Z_0-9]+$/.test(k) ? k : () => {}) });
   const r = Object.create(Renderer.prototype);
-  Object.assign(r, { gl, textures: new Map(), _texGen: 0 });
+  Object.assign(r, { gl, textures: new Map(), _texKeysByBase: new Map(), _texGen: 0 });
   const px = { width: 1, height: 1, colors: new Uint8ClampedArray(4) };
   const a = Renderer.prototype.uploadTexture.call(r, 'pack', 'u', px, { smooth: true, alpha: true });
   const b = Renderer.prototype.uploadTexture.call(r, 'img', 'u', px);

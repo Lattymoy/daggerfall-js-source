@@ -47,12 +47,12 @@ its `modsettings.json`:
 | `CalculateSwingModifiers` | DFU's own table | the callers' `damageMod`/`toHitMod` (playerAttackOptions, SWING_MODS) - the same numbers |
 | `CalculateProficiencyModifiers` / `CalculateRacialModifiers` | stat-driven per weapon skill and race, on the C#'s else-if ladders | `pcaaoProficiencyModifiers`, `pcaaoRacialModifiers` |
 | `CalculateWeaponToHit` | material x2 + 2 ("+14, not +60") | `pcaaoWeaponToHit` |
-| `CalculateArmorToHit` / `AdrenalineRush` / `StatDiffs` / `Skills` / `Adjustments` / `SuccessfulHit` | the player 100 less the enchantment channels, a class enemy 60, a monster its part; a sixth of health and +8/+12; luck/10, agility/4, speed/8 less the target's luck rounded; dodging halved; +50 for a monster target, -50 always; the sum, its clamp DISCARDED, Dice100 | `pcaaoArmorToHit` ... `pcaaoSuccessfulHit` |
+| `CalculateArmorToHit` / `AdrenalineRush` / `StatDiffs` / `Skills` / `Adjustments` / `SuccessfulHit` | the player 100 less the enchantment channels, a class enemy 60, a monster its part; a sixth of health and +8/+12; luck/10, agility/4, speed/8 less the target's luck rounded; dodging halved; +50 for a monster target, -50 always; the sum, its 3..97 clamp (DISCARDED by the C#, APPLIED here - the one departure, below), Dice100 | `pcaaoArmorToHit` ... `pcaaoSuccessfulHit` |
 | `CalculateStruckBodyPart` | twenty slots, feet likelier than the head | `PCAAO_BODY_PARTS`, `pcaaoStruckBodyPart` |
 | `CriticalStrikeHandler` | luck's `Mathf.Floor((luck-50)/25f)` term (clamp discarded) bending the divisor | `pcaaoCriticalStrike` |
 | `GetBonusOrPenaltyByEnemyType` | willpower's `Random.Range(0, n)` bonus and the level penalty on the career's Bonus/Phobia bits, the Humanoid arm on GetEnemyGroup | `pcaaoBonusOrPenaltyByEnemyType` |
 | `CalculateHandToHandAttackDamage` / `CalculateWeaponAttackDamage` | the strength term, the Skeletal Warrior's halving and the silver six's doubling, a two-handed non-bow doubling the strength term | `pcaaoHandToHandAttackDamage`, `pcaaoWeaponAttackDamage`, `SILVER_DOUBLED_CAREERS` |
-| `AdjustWeaponHitChanceMod` / `AdjustWeaponAttackDamage` | Roleplay Realism's archery: the bow's draw time in ms bends hit and damage; registered on FormulaHelper whatever the armour module says (AUDIT PCO1) | `pcaaoAdjustWeaponHitChanceMod`, `pcaaoAdjustWeaponAttackDamage`, registered on `formulas.adjustWeaponHitChanceMod` / `adjustWeaponAttackDamage` - DFU's two no-op hooks, grown into the stock core at the C#'s two sites (AUDIT PCO1); the draw timer is `playerWeapon.lastDrawMs` (below) |
+| `AdjustWeaponHitChanceMod` / `AdjustWeaponAttackDamage` | Roleplay Realism's archery: the bow's draw time in ms bends hit and damage; registered on FormulaHelper whatever the armour module says (AUDIT PCO1) | Roleplay Realism's own `rrAdjustWeaponHitChanceMod`, `rrAdjustWeaponAttackDamage` (rrRealism.js - one export, AUDIT 68), registered on `formulas.adjustWeaponHitChanceMod` / `adjustWeaponAttackDamage` - DFU's two no-op hooks, grown into the stock core at the C#'s two sites (AUDIT PCO1); the draw timer is `playerWeapon.lastDrawMs` (below) |
 | `AlterDamageBasedOnWepCondition` / `AlterArmorReducBasedOnItemCondition` | the condition bands | `pcaaoAlterDamageBasedOnWepCondition`, `pcaaoAlterArmorReducBasedOnItemCondition` |
 | `ArmorMaterialIdentifier` / `ArmorMaterialModifierFinder` / `EqualizeMaterialConditions` / `SpecificWeaponConditionDamage` | the four material ladders | the four `pcaao*` of the same names |
 | `DamageEquipment` + `ApplyConditionDamageThrough*` + `MaterialDifferenceDamageCalculation` + `WarningMessagePlayerEquipmentCondition` | "Believable Equipment Characteristics And Durability": the weapon wears by its kind, the struck side by the material difference, a fist wears the piece; the fading module destroys the player's enchanted piece; the player is warned in the mod's words | `pcaaoDamageEquipment` and the helpers; `equip.lowerCondition` grew LowerCondition's `removeFromCollectionWhenBreaks`; registered on `formulas.damageEquipment` for DFU's own path |
@@ -64,16 +64,31 @@ its `modsettings.json`:
 | `MirrorVCEH` / `OnAttackDamageCalculated` / `OnSavingThrow` | the Vanilla Combat Event Handler's two events, mirrored to relay to OTHER mods | not carried - no consumer here (README) |
 | `Debug.LogFormat("matReqDamMulti")` | a Unity console line | not carried |
 
+## The one departure: the hit chance's floor (DISC19-D, Mac's call 2026-09-24)
+
+`CalculateSuccessfulHit` computes `Mathf.Clamp(num, 3, 97)` and never
+assigns it, so under the mod a sum below zero was a certain miss. With a
+monster's Dodging at 5 x level + 30 (halved) and the soft-material rule
+replacing DFU's "ineffective" refusal, a skill-30 character with steel
+landed 0 of 2000 blows on a Vampire or a Lich and was told nothing
+(Discord: "In a dungeon that I cant hurt enemy's"). Offered the clamp, the
+bug as shipped, or both mods off by default, Mac chose the clamp.
+`pcaaoSuccessfulHit` applies it - DFU's own FormulaHelper clamp, the one
+the stock core applies and the mod's author wrote - in both directions:
+every blow lands at least 3 in 100 (55 of 2000 on that Vampire, 51 on the
+Lich) and misses at least 3 in 100, a monster's on the player included.
+Ledger A's PCO1 row records it; `test/pcaao.test.js` pins it.
+
 ## What is kept bug for bug
 
 - `Mathf.Round` rounds half to EVEN (`unityRound`), and every float the
   C# computes is a float32 (`Math.fround` at each step), so `15 * 0.9f`
   is `13.5f` and rounds to 14 where a double would say 13.
-- Four `Mathf.Clamp` calls whose result the C# DISCARDS: the hit
-  chance's 3..97 (a 300 always hits, a -300 never), the natural
-  resistance's +-0.2 (moot - three stats of 100 reach exactly 0.2),
-  the critical strike's luck term, the shield chances. Not clamped here
-  either.
+- Three of the four `Mathf.Clamp` calls whose result the C# DISCARDS:
+  the natural resistance's +-0.2 (moot - three stats of 100 reach
+  exactly 0.2), the critical strike's luck term, the shield chances. Not
+  clamped here either. The fourth, the hit chance's 3..97, IS applied -
+  the one departure (below).
 - C# integer division truncates toward zero; where an operand can be
   negative (a stat below 50, a level difference) the port truncates.
 - The archery hit table's `> 8000` arm sits behind `> 5000` and never
@@ -106,15 +121,19 @@ its `modsettings.json`:
   switches of this mod's from PCO1 to MM1). `meanerMonsters` is
   `meanerMonsters/Enabled` - Ralzar's mod, vendored
   (`04-Characters/Meaner-Monsters.md`); `rolePlayRealismArchery` is
-  `roleplayRealism/advancedArchery`, undefined (not loaded) until that
-  mod is vendored. `modSettingIfDeclared` is the read. With both mods
+  `roleplay-realism/Enabled` and `roleplay-realism/advancedArchery` -
+  RR1 vendored the mod under that id (the placeholder `roleplayRealism`
+  key read undefined, so the arm was dead until AUDIT 68).
+  `modSettingIfDeclared` is the read. With both mods
   on, Ralzar's row lands first and this mod's edit over it, as DFU
   Awakes the dependency first.
 - **The bow's draw time.** DFU hands `weaponAnimTime` (FPSWeapon's
   animTime, ms) to CalculateAttackDamage. The port's classic bow now
-  times its draw: `playerWeapon.lastDrawMs` starts when the drawback
-  begins (StrikeUp) and reads at the release; the instant shot is 0
-  (the archery arms gate on `> 0`). Enemy archers pass 0, as DFU's
+  times its draw: `playerWeapon.lastDrawMs` is the machine's held
+  StrikeUp ticks x the bow's 0.0625 s tick (GetAnimTime - game time,
+  so a pause mid-draw does not count; AUDIT 68), written at every
+  release, the touch button's included; the instant shot is 0 (the
+  archery arms gate on `> 0`). Enemy archers pass 0, as DFU's
   EnemyAttack does.
 - **`item.customMagic`.** The warning's name picks the short name for a
   custom-enchanted item, the long name otherwise; the port's items

@@ -23,7 +23,7 @@
 // 1.2-torso one; passing the build through is what keeps the ribs on the
 // ribcage at every width in the clamp band.
 
-import { HSCALE } from './pieceLoft.js';
+import { HSCALE, quadder } from './pieceLoft.js';
 
 /** Bone: cold and grey-white, its own ramp. A rib shaded off a hide
  *  ramp reads as painted wood. */
@@ -51,20 +51,7 @@ const STERNUM_Z = 0.1;
  */
 export function buildRibcage(ramp = BONE_RAMP, { torso = 1, ribs = 6, gap = 0.42 } = {}) {
   const faces = [];
-  const quad = (a, b, c, d, shade) => {
-    const ux = b[0] - a[0],
-      uy = b[1] - a[1],
-      uz = b[2] - a[2];
-    const vx = d[0] - a[0],
-      vy = d[1] - a[1],
-      vz = d[2] - a[2];
-    let nx = uy * vz - uz * vy,
-      ny = uz * vx - ux * vz,
-      nz = ux * vy - uy * vx;
-    const L = Math.hypot(nx, ny, nz) || 1;
-    const c3 = ramp[Math.max(0, Math.min(ramp.length - 1, Math.round(shade * (ramp.length - 1))))];
-    faces.push({ p: [...a, ...b, ...c, ...d], n: [nx / L, ny / L, nz / L], c: [...c3], g: 'body', _i: shade });
-  };
+  const quad = quadder(faces, ramp);
 
   const rx = 0.15 * torso;
   const rz = 0.1 * torso;
@@ -140,20 +127,7 @@ export function buildRibcage(ramp = BONE_RAMP, { torso = 1, ribs = 6, gap = 0.42
  */
 export function buildPelvis(ramp = BONE_RAMP, { torso = 1 } = {}) {
   const faces = [];
-  const quad = (a, b, c, d, shade) => {
-    const ux = b[0] - a[0],
-      uy = b[1] - a[1],
-      uz = b[2] - a[2];
-    const vx = d[0] - a[0],
-      vy = d[1] - a[1],
-      vz = d[2] - a[2];
-    let nx = uy * vz - uz * vy,
-      ny = uz * vx - ux * vz,
-      nz = ux * vy - uy * vx;
-    const L = Math.hypot(nx, ny, nz) || 1;
-    const c3 = ramp[Math.max(0, Math.min(ramp.length - 1, Math.round(shade * (ramp.length - 1))))];
-    faces.push({ p: [...a, ...b, ...c, ...d], n: [nx / L, ny / L, nz / L], c: [...c3], g: 'body', _i: shade });
-  };
+  const quad = quadder(faces, ramp);
 
   const yTop = 1.02 * HSCALE;
   const yBot = 0.86 * HSCALE;

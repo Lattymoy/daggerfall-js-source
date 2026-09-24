@@ -4,8 +4,8 @@
 // spellcast <- effects would close one if liveStat lived in
 // effects.js).
 //
-// DFCareer.Stats order: 0 Strength .. 7 Luck - matches chargen's
-// STAT_KEYS_ORDER exactly. Fortify effects (classic type 9, subType =
+// DFCareer.Stats order: 0 Strength .. 7 Luck - STAT_KEYS_ORDER's one
+// home (chargen.js re-exports it). Fortify effects (classic type 9, subType =
 // the stat index) push a TEMPORARY additive modifier onto
 // entity.activeEffects for a duration (DFU ChangeStatMod:
 // statMods[stat] += magnitude); Drain/Transfer effects (types 7/11)
@@ -78,6 +78,17 @@ export function liveStat(entity, statName, skipKind = null) {   // AUDIT SURV-TI
   if (survival < 0) survival = -Math.min(-survival, Math.max(0, Math.min(base, Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE)) - 5));
   mod += survival;
   return Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE);
+}
+
+/** DrainEffect.IncreaseMagnitude, verbatim: the drain never reduces
+ *  the stat below 1 relative to its PERMANENT value ("no invisible
+ *  healing debt" - drain alone cannot zero a stat). One home (AUDIT 68
+ *  S24-drain-clamp-duplicate): effects.js's Drain/Transfer and the Mace
+ *  of Molag Bal's DrainTargetStrength both raise a drain through it. */
+export function increaseDrainMagnitude(target, entry, amount) {
+  const permanentValue = target.stats?.[entry.stat] ?? 0;
+  if (permanentValue - (entry.magnitude + amount) < 1) entry.magnitude = permanentValue - 1;
+  else entry.magnitude += amount;
 }
 
 /** EntityEffectManager.refreshModsDelay (:79) - UpdateEntityMods runs

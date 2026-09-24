@@ -12,40 +12,17 @@
 // ball along the haft line - same simplification class as the drawn
 // bow string); axe blades are flat plates hanging forward of the
 // shaft (single-bit) or both sides (double-bit war axe).
-import { loftPiece, shadePiece, compress } from './pieceLoft.js';
-
-const ARM_X = -0.235;
-const GRIP_Y = 0.90;
-const GRIP_PITCH = -2.40 + Math.PI / 4;   // Mac's +45 seat, family-wide
-
-function bakeGrip(faces) {
-  const c = Math.cos(GRIP_PITCH), s = Math.sin(GRIP_PITCH);
-  for (const f of faces) {
-    for (let i = 0; i < 4; i++) {
-      const dy = f.p[i*3+1] - GRIP_Y, z = f.p[i*3+2];
-      f.p[i*3+1] = GRIP_Y + c*dy - s*z;
-      f.p[i*3+2] = s*dy + c*z;
-    }
-    const ny = f.n[1], nz = f.n[2];
-    f.n[1] = c*ny - s*nz; f.n[2] = s*ny + c*nz;
-  }
-  return faces;
-}
+import { loftPiece, shadePiece, compress, LEFT_FIST_X, GRIP_Y, SEAT_PITCH, TWO_HAND_GRIP_ROWS, pitchAbout } from './pieceLoft.js';
 
 // spec: { twoHand, shaft, shaftR, head, staffUp }
 function buildHafted(ramp, spec) {
   const faces = [];
-  const G = { group: 'armL', cx: ARM_X, seg: 8 };
+  const G = { group: 'armL', cx: LEFT_FIST_X, seg: 8 };
   const sR = spec.shaftR ?? 0.020;   // girth pass (Mac 2026-07-06)
   let gripLo;
   if (spec.twoHand) {
-    gripLo = 0.720;
-    loftPiece(faces, [
-      { y: 0.720, rx: 0.026, rz: 0.027 },
-      { y: 0.740, rx: 0.028, rz: 0.029 },
-      { y: 0.900, rx: 0.028, rz: 0.029 },
-      { y: 1.058, rx: 0.026, rz: 0.027 },
-    ], { ...G, capTop: false, capBottom: false });
+    gripLo = TWO_HAND_GRIP_ROWS[0].y;
+    loftPiece(faces, TWO_HAND_GRIP_ROWS, { ...G, capTop: false, capBottom: false });
   } else {
     gripLo = 0.790;
     loftPiece(faces, [
@@ -110,7 +87,7 @@ function buildHafted(ramp, spec) {
       { y: headY - 0.02, rx: 0.007, rz: 0.007 },
     ], G);
   }
-  return compress(shadePiece(bakeGrip(faces), ramp));
+  return compress(shadePiece(pitchAbout(faces, GRIP_Y, SEAT_PITCH), ramp));
 }
 
 export const HAFTED_SPECS = {

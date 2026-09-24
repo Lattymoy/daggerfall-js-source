@@ -17,7 +17,7 @@
 //
 // Built in FINAL (compressed) body space and tagged 'body'.
 
-import { HSCALE } from './pieceLoft.js';
+import { HSCALE, quadder } from './pieceLoft.js';
 
 /** Cold scales: green-grey, and light enough to keep a silhouette. */
 export const SCALE_RAMP = [
@@ -28,23 +28,6 @@ export const SCALE_RAMP = [
   [158, 182, 166],
   [188, 208, 194],
 ];
-
-function quadder(faces, ramp) {
-  return (a, b, c, d, shade) => {
-    const ux = b[0] - a[0],
-      uy = b[1] - a[1],
-      uz = b[2] - a[2];
-    const vx = d[0] - a[0],
-      vy = d[1] - a[1],
-      vz = d[2] - a[2];
-    let nx = uy * vz - uz * vy,
-      ny = uz * vx - ux * vz,
-      nz = ux * vy - uy * vx;
-    const L = Math.hypot(nx, ny, nz) || 1;
-    const c3 = ramp[Math.max(0, Math.min(ramp.length - 1, Math.round(shade * (ramp.length - 1))))];
-    faces.push({ p: [...a, ...b, ...c, ...d], n: [nx / L, ny / L, nz / L], c: [...c3], g: 'body', _i: shade });
-  };
-}
 
 /**
  * @param {number[][]} ramp

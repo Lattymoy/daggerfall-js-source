@@ -176,7 +176,12 @@ const CONTEXTS = [
     // the list, and the list is freed. The proof is required below.
     handedOff: {
       impacts: ['the pool is built with `onSpawn: (b) => batches.push(b)`, so every batch it mints joins the list destroy() frees',
-        /onSpawn: \(b\) => batches\.push\(b\)/, /for \(const b of batches\) \{[^}]*destroyBillboardBatch\(b\)/],
+        /onSpawn: \(b\) => batches\.push\(b\)/, /for \(const b of batches\) \{[^}]*destroyBillboardBatch\(b\)/,
+        // AUDIT 68 S21-magic-destroy-impacts: ...AND DRAINED FIRST, the dungeon hitEffects' shape (BLOOD1 AUDIT 3). The
+        // pool hands each batch back on retire, and only its clear() marks a flash still warming its archive dead - a
+        // dungeon exit mid-warm otherwise published a batch into this dead engine's list that nothing freed.
+        { retires: /onRetire: \(b\) => \{ const i = batches\.indexOf\(b\); if \(i >= 0\) batches\.splice\(i, 1\); \}/,
+          drain: 'impacts.clear();', free: 'for (const b of batches) { flatAnims.remove(b); renderer.destroyBillboardBatch(b); }' }],
     },
   },
   {

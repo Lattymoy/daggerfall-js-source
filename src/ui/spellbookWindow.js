@@ -241,6 +241,17 @@ export function rawSpellPointCost(spell, castCost) {
   return castCost ? castCost(spell) : (spell?.cost ?? 0);
 }
 
+/** GetSpell/SetSpell (:940-951, :960-974): an edit lands on a COPY of the
+ *  book's entry, marked `custom` so the save keeps it whole - the entry
+ *  may be the shared SPELLS.STD record or a frozen RRI one.
+ *  AUDIT 68 S31-enhanced-rename-mutates-shared-spell: both skins edit here.
+ *  Answers the new entry, or null when the row is empty. */
+export function editBookSpell(list, index, fields) {
+  const spell = list?.[index];
+  if (!spell) return null;
+  return (list[index] = { ...spell, ...fields, custom: true });
+}
+
 let _art = null;
 /** SPBK00I0 (cast) and SPBK01I0 (buy), plus the icon sheets. */
 export async function preloadSpellbookArt(deps) {
@@ -660,10 +671,7 @@ export class SpellbookWindow {
     // port keeps it legal rather than quietly being stricter.
     this.top = null;
     if (this.selectedIndex === -1 || !input) return;   // "Must not be blank" (:943-944)
-    const list = this.deps.spells?.() ?? [];
-    const spell = list[this.selectedIndex];
-    if (!spell) return;
-    list[this.selectedIndex] = { ...spell, name: input, custom: true };
+    if (!editBookSpell(this.deps.spells?.(), this.selectedIndex, { name: input })) return;
     this.refreshSpellsList(true);
     this._edit();
   }
@@ -681,10 +689,7 @@ export class SpellbookWindow {
         this.top = null;
         this._iconPicker = null;
         if (!icon) return;
-        const list = this.deps.spells?.() ?? [];
-        const spell = list[this.selectedIndex];
-        if (!spell) return;   // GetSpell's false arm (:963-964)
-        list[this.selectedIndex] = { ...spell, icon: icon.index, custom: true };
+        if (!editBookSpell(this.deps.spells?.(), this.selectedIndex, { icon: icon.index })) return;   // GetSpell's false arm (:963-964)
         this._edit();   // editSpellBook (:972)
       },
     });
@@ -799,8 +804,8 @@ export class SpellbookWindow {
 
   /** AUDIT 65 UI-1: THE HOSTS OWN THE THIRD AND FOURTH SLOTS. Every
    *  host that holds an overlay slot dispatches
-   *  `click(vx, vy, right, middle)` - `scenes/townTalk.js:1236`,
-   *  `scenes/worldModes.js:8875`, `scenes/dungeonContext.js:6592` - so
+   *  `click(vx, vy, right, middle)` - `scenes/townTalk.js:1241`,
+   *  `scenes/worldModes.js:8877`, `scenes/dungeonContext.js:6622` - so
    *  a clock threaded positionally here arrived as `e.button === 2`, a
    *  BOOLEAN. `false ?? Date.now()` keeps the `false`, `false != null`
    *  is true and `false - false === 0 < 300`, which made EVERY second

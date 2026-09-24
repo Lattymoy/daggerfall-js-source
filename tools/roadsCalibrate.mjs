@@ -20,6 +20,7 @@ import { MAP_WIDTH, MAP_HEIGHT, WoodsFile } from '../src/formats/woodsFile.js';
 import { MapsFile } from '../src/formats/mapsFile.js';
 import { buildRoadNetwork, ROAD_DIALS, DIR } from '../src/world/roadNetwork.js';
 import { settlementsOf, WATER_BYTE } from '../src/world/roadsProducer.js';
+import { isMain } from './lib/isMain.mjs';
 
 const args = process.argv.slice(2);
 const opt = (k, dflt = null) => { const i = args.indexOf(`--${k}`); return i >= 0 ? args[i + 1] : dflt; };
@@ -58,7 +59,7 @@ export function measure(mask) {
 
 const fmt = (m) => `${String(m.pixels).padStart(6)} px | bend ${(m.bendRate * 100).toFixed(0).padStart(3)}% | right-angle ${(m.rightAngleShare * 100).toFixed(1).padStart(4)}% | hairpin ${(m.hairpinShare * 100).toFixed(1)}% | diagonal ${(m.diagonalShare * 100).toFixed(0)}% | dead-end ${(m.deadEndRate * 100).toFixed(1)}% | junction ${(m.junctionRate * 100).toFixed(1)}%`;
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isMain(import.meta.url)) {
   if (bytesDir) {
     for (const [name, file] of [['his roads ', 'roadData.bytes'], ['his tracks', 'trackData.bytes']]) {
       const p = join(bytesDir, file);

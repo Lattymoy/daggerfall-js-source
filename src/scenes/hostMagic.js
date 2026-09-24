@@ -53,7 +53,7 @@ import { morphSelf } from '../systems/lycanthropy.js';   // V2a: the MorphSelf a
 import { allyCastable, allyReachFor, allyCastFrame, allyCastCasterLine, ALLY_TOUCH_REACH } from '../systems/allyCast.js';
 import { hasResurrect, RESURRECT_REACH, RESURRECT_TEXT, pickFallenBody } from '../systems/resurrect.js';   // RESURRECT1: a fallen party member's body is the target   // ALLY-CAST: a beneficial spell at the party mate under the crosshair
 import { billboardSize, centredBase } from '../world/rmbFlats.js';
-import { createMagicCandle, CANDLE } from './magicCandle.js';   // X11: the Light effect's candle
+import { createMagicCandle } from './magicCandle.js';   // X11: the Light effect's candle
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // PlayerController.height, the candle's y term
 import { createHitEffects } from './hitEffects.js';   // AUDIT 26 F033: DaggerfallMissile's impact flash
 
@@ -228,8 +228,11 @@ export function createPlayerMagic({
   // call, so it reaches the player even though the effect lives on the
   // monster. The foe's own sinks carry no `say` and should not: the
   // line belongs to the caster, not the target.
-  function applySpellToFoe(spell, casterLevel, foe, caster = null, ctx = undefined) {
-    const r = applySpell(spell, casterLevel, foe.entity, foeSinks(foe, !caster || caster.entity === playerEntity), rolls, caster, ctx);   // AUDIT WORLD2 B7: a foe's spell is not the player's blow (the dungeon's sink reads the second arg; the exterior's ignores it)
+  // AUDIT 68 S21-strike-landing-dup: `sinks` is the one override - the enchantment door (hostEnchant's
+  // applySpellToTarget) lands through HERE with its own membership-routed sinks, where it kept a copy of this
+  // landing that dropped the Soul Trap line and the Calm/Charm flag.
+  function applySpellToFoe(spell, casterLevel, foe, caster = null, ctx = undefined, sinks = foeSinks(foe, !caster || caster.entity === playerEntity)) {   // AUDIT WORLD2 B7: a foe's spell is not the player's blow (AUDIT 68 X4: every host's sinks read the second arg)
+    const r = applySpell(spell, casterLevel, foe.entity, sinks, rolls, caster, ctx);
     if (r.trapAlert) say(SOUL_TRAP_TEXT[r.trapAlert]);
     // X8: PACIFY / CHARM. The effect answers whether the target was
     // pacified; the AI flag lives on the foe RECORD rather than the
@@ -336,9 +339,20 @@ export function createPlayerMagic({
   /** The caster wrapper a missile carries: the player's for the player's, the foe's (its entity and sinks) for an
    *  enemy's, none for an enemy missile whose caster is gone. */
   const missileCaster = (m) => (m.fromPlayer === false ? (m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null) : playerCaster());
+  /** DISC19-F (AUDIT DISC19): THE TOWN'S DEFENDERS TAKE NONE OF THE
+   *  PLAYER'S SPELLS - not the blast, the area, the missile or the
+   *  touch. The port's own rule, beside the swing's friendly protection
+   *  (cityGuards.resolvePlayerHit): a Fireball at the centaur the watch
+   *  is fighting struck the watch too, and a blow on a defender is
+   *  Assault - the mage who meant to help was made the criminal. A
+   *  defender is a watch record's own flag (cityGuards.js); a monster's
+   *  spell still lands on one. */
+  const sparedFromPlayer = (t) => t?.defender === true;
+  const playerTargets = () => foes().filter((t) => !sparedFromPlayer(t));
   function explodeAt(pos, spell, casterLevel, playerFeet, caster = null, { excludeFoe = null, playerHeight = CAPSULE_HEIGHT, allies = false } = {}) {
     for (const t of sweepFoes(pos, EXPLOSION_RADIUS, foes())) {
       if (excludeFoe && t === excludeFoe) continue;
+      if (caster?.entity === playerEntity && sparedFromPlayer(t)) continue;   // DISC19-F (AUDIT DISC19): my blast passes the defenders by
       if (t.puppet && caster?.entity && caster.entity !== playerEntity) continue;   // AUDIT WORLD6b-iii(a) C15: a FOE's blast lands nothing on a PUPPET here - its owner's world resolves that foe (my own blast on a puppet still goes to its owner as my hit)
       applySpellToFoe(spell, casterLevel, t, caster);
     }
@@ -379,7 +393,7 @@ export function createPlayerMagic({
   function pickTouch(eye, dir, sp = null) {
     if (!eye || !dir) return null;
     const marks = allyMarksFor(sp);   // AID1 onto ALLY-CAST: a beneficial touch may land on a party mate - the nearest along the aim wins
-    return pickTouchTarget(eye, dir, marks.length ? [...foes(), ...marks] : foes(), (c, d) => {
+    return pickTouchTarget(eye, dir, marks.length ? [...playerTargets(), ...marks] : playerTargets(), (c, d) => {   // DISC19-F (AUDIT DISC19): my touch meets no defender
       const l = d || 1, dx = (c[0] - eye[0]) / l, dy = (c[1] - eye[1]) / l, dz = (c[2] - eye[2]) / l;
       const hit = collider.raycast(eye, [dx, dy, dz], d);
       return !Number.isFinite(hit) || hit >= d - 1e-3;
@@ -516,7 +530,7 @@ export function createPlayerMagic({
       lastCastCost = cost;
       tallyCastSkills(sp);
       surfacePlayer();
-      for (const t of sweepFoes(eye, EXPLOSION_RADIUS, foes())) {
+      for (const t of sweepFoes(eye, EXPLOSION_RADIUS, playerTargets())) {   // DISC19-F (AUDIT DISC19): nor my area
         applySpellToFoe(sp, playerEntity.level, t, playerCaster());
       }
       for (const t of sweepFoes(eye, EXPLOSION_RADIUS, allyMarksFor(sp))) giveToAlly(t, sp);   // AID1 onto ALLY-CAST: the mates around me
@@ -764,7 +778,7 @@ export function createPlayerMagic({
           continue;
         }
       }
-      for (const f of foes()) {
+      for (const f of playerTargets()) {   // DISC19-F (AUDIT DISC19): my missile flies through a defender
         if (f.dead) continue;
         if (missileHitsFoe(m.pos, f)) {   // ROAD-H tail: DaggerfallMissile.cs:339's SphereCast meets the foe's CAPSULE (REVIEW 2026-09-05 had its centre as a point)
           if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, playerEntity.level, playerFeet, playerCaster(), { playerHeight, allies: !!m.ally });   // ROAD-H H2
@@ -909,6 +923,7 @@ export function createPlayerMagic({
       for (const m of missiles) retireMissile(m);
       missiles.length = 0;
       candle.clear();
+      impacts.clear();   // AUDIT 68 S21-magic-destroy-impacts: a flash still warming its archive is marked dead, so it publishes nothing into this dead engine
       for (const b of batches) { flatAnims.remove(b); renderer.destroyBillboardBatch(b); }
       batches.length = 0;
     },
@@ -926,7 +941,6 @@ export function createPlayerMagic({
      *  renderer - the candle is 1.4 units away, so it is always the
      *  nearest light there is and the sort would put it first anyway. */
     candleLight: () => candle.light(),
-    candleRange: CANDLE.range,
     missileCount: () => missiles.length,   // M5 probe surface
     readied: () => readiedSpell,
     readiedIndex: () => readiedSpell?.index ?? null,
