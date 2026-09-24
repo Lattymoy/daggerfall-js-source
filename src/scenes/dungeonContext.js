@@ -512,6 +512,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         waterLevel: amapWater,
         positions: cpu?.positions ?? null,
         indices: cpu?.indices ?? null,
+        normals: cpu?.normals ?? null,   // DISC22-G: the file's facing - the enhanced map tells a floor from a ceiling by it
         matrix,
       };
     };

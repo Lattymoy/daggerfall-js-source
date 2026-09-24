@@ -597,6 +597,60 @@ person. (The "already have" refusal Skibbster saw for a quest finished
 before, and still standing as a week's tombstone, was AUDIT 68's
 S29-share-name-tombstoned, already on main.)
 
+## DISC22-G: the enhanced dungeon map, mended and made the better map
+
+Mac: *"enhanced dungeon automap is broken and doesn't work properly. This
+needs to be a better enhancement compared to the 3d automap"*. Six defects,
+each reproduced with closed rooms. EM2's pins were all bare floor quads,
+with no ceiling and no stair, which is how they passed over every one:
+
+- **D1, a ceiling was a floor.** `floorTriangles` took the geometric
+  normal's `Math.abs`, recorded as "the port's meshes are not reliably
+  wound". One ceilinged room came out as two storeys, and a two-storey level
+  as four ("Floor 2" was Floor 1's ceiling, drawn again). The world pass
+  back-face culls, so the winding is reliable, but the ARCH3D file's own
+  plane normal is better than either. It is what the face is lit by, and
+  meshReader flips its y with the positions'. The reveal rows now carry
+  `normals` (dungeon and interior hosts), and a face counts as a floor by
+  its file normal turned by the placement. A row with no normals keeps the
+  old reading.
+- **D2, a stair joined two storeys.** The voters were chained, and a
+  flight of stairs is a chain of flat steps, each well inside the headroom
+  of the one below. Two floors twelve metres apart came back as one storey
+  at the steps' mean height. `deriveFloors` now works in three steps:
+  - It gathers the voters into levels (`LEVEL_TOL`).
+  - It chains the levels into runs by the old rule.
+  - Inside a run, each level carrying a room's floor (`STOREY_MIN_AREA`,
+    12 m²) at least a headroom from a bigger one anchors a storey, biggest
+    first. A run with no anchor is still one storey, so EM2's "stair of
+    ledges" pin stands unchanged.
+- **D3, the map opened on Floor 1** whatever storey the player stood on.
+  A new frame now sets the storey from the player's feet.
+- **D4, it opened on the whole level fitted to the sheet**, a corridor
+  three pixels wide. The window's first layout never asked the sheet it
+  opened on. It asks now. The sheet's rest view fits the revealed floor of
+  the storey, never zoomed out past `READABLE_SCALE` (4 px a metre), and
+  centres on the player or on what has been seen.
+- **D5, a doorway into a room not yet seen was inked as wall.**
+  `splitEdges` partitions the outline by what lies across each edge. Real
+  floor on the storey, revealed or not (`storeyOccupancy`, once per level
+  and storey), makes an opening, drawn light and broken.
+- **D6, every open re-derived the level.** A row's triangles are cached on
+  the row, and a level's storeys on its row list, so every sheet shares
+  them.
+
+**What the 3D map had and this lacked, now drawn.**
+
+- The middle button writes a note on revealed floor through DFU's own law
+  (`tryAddOrEditUserNote`, the metre rule, AddNext ids). On a note it
+  edits that note, and an empty answer removes it. The words go in the
+  window's box (`_askText`).
+- Teleporter ends on one storey are joined by a broken line. An end whose
+  partner is on another storey names that storey ("to Floor 2").
+- The way in breathes: the window repaints on its beat while the beacon
+  is on the sheet.
+- Home brings the storey and the view back to the player.
+
 ## Pins
 
 - `test/disc22a_magic_repairs.test.js` (4), through the real store and the
@@ -631,7 +685,26 @@ S29-share-name-tombstoned, already on main.)
   - the second-person refusal.
 - `test/auditdw.test.js` and `test/to1_travelOptions.test.js` follow the
   new shapes.
+- `test/disc22g_automap.test.js` (8):
+  - D1 to D6, each on closed rooms: a ceilinged room is one storey, and
+    stacked rooms are two; a placement turns the normal; a flight of
+    stairs leaves two storeys, a landing is a third, and a dais is none;
+    the sheet opens on the player's storey; the rest view is readable on
+    a 400 m level; the opening is the shared edge and not wall, and is
+    dashed; triangles and storeys are shared;
+  - notes written, edited, removed, cancelled and refused off revealed
+    floor;
+  - teleporter links and names, the breathing beacon and Home.
+- `test/automapsheet.test.js`'s rest-view and mark pins follow the new
+  laws (they held the whole-level fit and a teleporter end with no name).
 
-Mutants: `tools/mutants/disc22.json`, 25, all dead.
+
+Mutants: `tools/mutants/disc22.json`, 25, and `tools/mutants/disc22g.json`, 20, all dead.
+EM2's floor records (`em2.json`) are aimed at the new model. They
+still die, 26 of them, except EM2-16 (the `len > 0` guard). The facing
+test is now written `!(up >= FLOOR_NY)` and rejects a NaN facing on its
+own, so EM2-16 is recorded as equivalent. EM2-2 (a ramp votes) is pinned
+by a 40 m ramp between floors 20 m apart. EM3-17 follows the openings
+into plan units.
 `AUDITDW-F1-the-list-drawer-uploads-before-the-record-is-decoded`
 (`dw1.json`) follows the call's new form.
