@@ -323,7 +323,7 @@ test('ONLINE1: the compositor\'s door is PURE - composePaperDollPixels composes 
   const names = (text, list, what) => { for (const name of list) assert.ok(!new RegExp(`\\b${name}\\b`).test(text), `${what} ${name}`); };
   names(body, ['_art', '_deps', '_live', '_pixels', '_layout', '_identity', '_refreshing', '_pending'], 'the compose reads no');
   assert.match(body, /for \(let y = 0; background && y < PAPERDOLL_H; y\+\+\) \{/, 'the background loop is skipped for a peer, the panel stays clear');
-  assert.match(pd, /export async function refreshPaperDoll\(entity\) \{[\s\S]*?const \{ out, layout \} = await composeDoll\(_art, _deps, entity\);/, 'the inventory\'s doll rides the same compose');
+  assert.match(pd, /export async function refreshPaperDoll\(entity\) \{[\s\S]*?const \{ out, layout, bgSize \} = await composeDoll\(_art, _deps, entity, \{ background: !packBg \}\);/, 'the inventory\'s doll rides the same compose (OVH2: on nothing, when a worn UI pack draws its backdrop under it)');
   const door = pd.slice(pd.indexOf('export async function composePaperDollPixels('), pd.indexOf('/** Test seam. */'));
   names(door, ['_art', '_deps', '_live', '_pixels', '_layout', '_identity', 'refreshPaperDoll', 'preloadPaperDollArt'], 'the door touches no');
   assert.match(door, /_artSets\.set\(key, art\)/, 'an art set per identity');

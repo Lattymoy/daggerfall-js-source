@@ -69,12 +69,14 @@ test('BLACK-ARMS, driven: an RGB triple through drawScreenQuad uploads a FINITE 
   assert.equal(screenQuadBlends(null, [1, 1, 1, 0.5]), true);
   assert.equal(screenQuadBlends({}, [1, 1, 1]), false, 'a textured cutout blends only when asked');
   assert.equal(screenQuadBlends({}, [1, 1, 1], { blend: true }), true);
+  assert.equal(screenQuadBlends({}, [1, 1, 1], {}, true), true, 'OVH2: a UI pack\'s alpha art blends without being asked at the call');
+  assert.equal(screenQuadBlends(null, [1, 1, 1], {}, true), false, '...and the flag means nothing on a solid quad');
 });
 
 test('BLACK-ARMS by source: the rig hands the triple through as it is (the fix is at the one seam every classic sprite ends in, not at four callers), the renderer defaults the fourth, and the browser probe draws the TRIPLE and reads the alpha back', () => {
   const rr = rd('src/render/renderer.js');
   assert.match(rr, /const a = color\[3\] \?\? 1;\s*if \(q\.r !== color\[0\] \|\| q\.g !== color\[1\] \|\| q\.b !== color\[2\] \|\| q\.a !== a\) \{\s*gl\.uniform4f\(this\._screenQuad\.color, color\[0\], color\[1\], color\[2\], a\);\s*q\.r = color\[0\]; q\.g = color\[1\]; q\.b = color\[2\]; q\.a = a;/);
-  assert.match(rr, /return \(!tex && \(color\[3\] \?\? 1\) < 1\) \|\| Boolean\(tex && opts\.blend\);/);
+  assert.match(rr, /return \(!tex && \(color\[3\] \?\? 1\) < 1\) \|\| Boolean\(tex && \(opts\.blend \|\| alphaArt\)\);/, 'OVH2: a texture uploaded as alpha art blends too - the solid arm is unchanged');
   assert.match(rd('src/combat/weaponRig.js'), /const fpTint = fpLightingOn\(\) \? \(renderer\?\.flatLightAt\?\.\(\) \?\? null\) : null;/, 'the triple, unchanged - MAC-I\'s own shape');
   assert.match(rr, /for \(let i = 0; i < 3; i\+\+\) out\[i\] = Math\.max\(floor, Math\.min\(1, out\[i\]\)\);\s*return out;/, 'flatLightAt answers THREE');
   const probe = rd('tools/macfpLightProbe.mjs');

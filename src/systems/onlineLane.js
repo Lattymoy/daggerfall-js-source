@@ -99,7 +99,12 @@ export function publishBootParams(params, { history = globalThis.history, locati
  *  declareOnlinePrefs at the registry's load - this table holds only
  *  the two the registry has no row for. */
 export const ONLINE_FORCED_PREFS = {
-  skin: 'enhanced',
+  // OVH3 (2026-09-24, Mac: "These overhauls need to adapt to online with ease. Online specific UI's will need to
+  // remain"): THE SKIN IS THE PLAYER'S, ONLINE TOO. It was forced to 'enhanced' because the online panels - the chat,
+  // the friends and party, the F-menu, the names over heads, player trade - were built only under that skin. They
+  // mount on either skin now (scenes/world.js chatStart; ui/playerTradeDoor.js) and keep their own face over the
+  // classic screens, so the UI Overhaul a player chose (systems/overhauls.js) is the one they play online. Nothing
+  // the room agrees on reads the skin: it is what THIS screen draws.
   mwArms: true,   // the Morrowind arms build at boot where the archives are attached (weaponRig.js autoBuildArms guards the data); without them the doll stands, as offline
 };
 /** RF4: the registry's door - `true`/`false` forces the key online,

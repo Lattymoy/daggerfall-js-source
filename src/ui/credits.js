@@ -106,6 +106,16 @@ export const CREDITS = Object.freeze({
       link: 'https://www.nexusmods.com/daggerfallunity/mods/242',
     }),
     Object.freeze({
+      title: 'GrimoireUI',
+      version: '1.2',
+      author: 'LordSquacquerone',
+      what: 'Daggerfall\u2019s own screens redrawn at three times the detail - parchment and wood in place of the rock, a spellbook that is a book, new lettering and its two fonts - worn over the classic screens as the first UI Overhaul (OVH2).',
+      terms: 'The pack\u2019s pictures and fonts are the author\u2019s own art, carried byte for byte under public/art/grimoire-ui/. See vendor/grimoire-ui/README.md for the permission record.',
+      contact: 'LordSquacquerone, through the Nexus page (daggerfallunity mod 1222)',
+      vendor: Object.freeze(['grimoire-ui']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/1222',
+    }),
+    Object.freeze({
       title: 'Roleplay & Realism: Items',
       version: '1.3',
       author: 'Hazelnut & Ralzar',

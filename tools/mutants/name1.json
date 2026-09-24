@@ -183,7 +183,7 @@
   {
     "name": "NAME1-host-layer-built-without-a-document",
     "file": "src/scenes/world.js",
-    "old": "    if (nameLayerWanted(enhanced)) nameLayer = createNameLayer({});",
+    "old": "    if (nameLayerWanted()) nameLayer = createNameLayer({});   // OVH3: on either skin, beside the chat it belongs to",
     "new": "    nameLayer = createNameLayer({});",
     "tests": [
       "test/name1_bubbles.test.js"
@@ -527,10 +527,10 @@
     ]
   },
   {
-    "name": "AUDIT-NAME1-F7-the-dom-face-gated-on-the-document-alone",
+    "name": "AUDIT-NAME1-F7-OVH3-the-layer-wanted-with-no-document",
     "file": "src/ui/nameLayer.js",
-    "old": "  return !!enhanced && !!doc;",
-    "new": "  return !!doc;",
+    "old": "  return !!doc;",
+    "new": "  return true;",
     "tests": [
       "test/name1_bubbles.test.js"
     ]

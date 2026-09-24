@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url';
 
 import { CREDITS } from '../src/ui/credits.js';
 import { FEATURES, WINDMILLS_KEY } from '../src/systems/features.js';   // WM3: the Features home, and the Windmills switch's declaration
+import { OVERHAUL_PANELS } from '../src/systems/overhauls.js';
+import { UI_PACKS } from '../src/systems/uiPack.js';
 
 // CR1 - THE CREDITS (Mac, 2026-08-30: "as we integrate these I really
 // want to give credit to the mod developer who created it").
@@ -107,6 +109,8 @@ test('WM3: every mod on the credits screen has a row on the Features home', () =
     const m = /^mod-(.+)$/.exec(f.id ?? '');
     if (m) named.add(m[1]);
   }
+  // OVH2: ...or a look on the Overhauls screen is the pack (a UI pack is worn and put away there, not on Features)
+  for (const p of OVERHAUL_PANELS) for (const o of p.options) if (o.pack && UI_PACKS[o.pack]?.vendor) named.add(UI_PACKS[o.pack].vendor);
   const missing = CREDITS.mods
     .flatMap((r) => (r.vendor ?? []).map((v) => [r.title, v]))
     .filter(([, v]) => !named.has(v) && !named.has(v.toLowerCase()));

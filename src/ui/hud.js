@@ -46,6 +46,7 @@ import { getBool } from '../systems/settings.js';   // AUDIT 28 W2: EnableArrowC
 import { getItem, isSummoned, ARROW_TEMPLATE } from '../systems/inventory.js';   // AUDIT 28 W2: GetItem(Arrow, priorityToConjured)
 import { EQUIP_SLOTS } from '../systems/equip.js';   // AUDIT 28 W2: the bow hand
 import { nativeMetrics } from './nativePanel.js';
+import { packImgTexture } from './packArt.js';   // OVH2: the worn UI pack's picture
 import { ToolTip } from './toolTip.js';
 
 export const COMPASS_BOX_OUTLINE = 2;
@@ -193,7 +194,8 @@ export async function loadHud({ fetchBytes, ImgFile, palette, renderer }) {
     const img = new ImgFile();
     img.load(await fetchBytes(name), name, palette);
     const bmp = img.getDFBitmap();
-    return { tex: renderer.uploadTexture('img', name, bitmapToColor32(bmp, palette)), w: bmp.width, h: bmp.height };
+    const packed = await packImgTexture(renderer, name);   // OVH2: the worn UI pack's bars and compass, at the classic size (nativePanel.loadImg's law)
+    return { tex: packed ?? renderer.uploadTexture('img', name, bitmapToColor32(bmp, palette)), w: bmp.width, h: bmp.height };
   };
   try {
     const [health, fatigue, magicka, compass, compassBox] = await Promise.all([

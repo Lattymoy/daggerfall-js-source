@@ -49,6 +49,7 @@ import { SKILL_NAMES } from '../systems/skills.js';
 import { daggerY, tickDaggerTrails, REP_GREEN, REP_RED, REP_EXIT, REP_BAR_TOP, REP_BAR_BOTTOM, REP_GROUPS, HELP_TOPICS } from '../systems/customClass.js';   // U20a; CG1 the trail machine
 import { labelRows, labelFor, LABEL_ORIGIN, LABEL_HIT_HEIGHT } from '../systems/specialAdvantages.js';   // U20b
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
+import { packImgTexture } from './packArt.js';   // OVH2: the worn UI pack's picture
 
 // DaggerfallUI.cs:52-62 - the colours these windows actually use.
 /** CreateCharNameSelect.cs:79-81 - the RANDOM button's own colours. */
@@ -342,7 +343,10 @@ async function loadOne(deps, name) {
   const img = new ImgFile();
   img.load(await deps.fetchBytes(name), name, deps.palette);
   const bmp = img.getDFBitmap();
-  return { tex: deps.renderer.uploadTexture('img', `chargen:${name}`, bitmapToColor32(bmp, deps.palette)), w: bmp.width, h: bmp.height, bmp };
+  // OVH2: the worn UI pack's picture, at the classic size - the raw `bmp` stays the classic file's, so TAMRIEL2's
+  // click mask and CHGN00I0's palette cycle (neither of which the pack carries) read the indices they always did.
+  const packed = await packImgTexture(deps.renderer, name);
+  return { tex: packed ?? deps.renderer.uploadTexture('img', `chargen:${name}`, bitmapToColor32(bmp, deps.palette)), w: bmp.width, h: bmp.height, bmp };
 }
 
 export async function preloadChargenArt(deps) {

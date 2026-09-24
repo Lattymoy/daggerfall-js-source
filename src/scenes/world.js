@@ -1471,12 +1471,12 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  AUDIT-FIELD F7: A FLOOR, NOT THE WHOLE DISTANCE. The first cut
    *  called 64 "more than the fastest accelerated step", which is true
    *  of a fixed physics STEP and false of a FRAME: the motor moves
-   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:1038),
+   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:1044),
    *  and the frame that hitches is exactly the frame in which the
    *  streamer is behind. A horse at the shipped default limit of sixty
    *  covers ~65 units in a 10 fps frame and ~120 at the mod's ceiling of
    *  a hundred - past a 64-unit probe, off the built world, and once the
-   *  motor is airborne `airControl` is false (motor.js:1579) so zeroing
+   *  motor is airborne `airControl` is false (motor.js:1601) so zeroing
    *  the drive on the NEXT frame no longer steers: the fall is already
    *  paid for. `travelLookahead` measures the frame that is about to
    *  run instead, and keeps 64 as its floor. */
@@ -4315,7 +4315,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2459 mounts the same one, gated on
+  // and dungeonContext.js:2460 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:5664
@@ -5073,6 +5073,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
   const outdoorRestDeps = createRestDeps(playerEntity, {
     onClosedUnrested: () => cancelPartyRestStart(),   // PARTY-REST29: the window closed with no rest chosen - the leader may vote again at once (restDoor.js)
+    partyRest: () => partyRestHere(),   // OVH4: a party's rest opens the party card on either skin (restDoor.js)
     // ROAD-B B5: `uiManager.TopWindow` for TickRest's two top-window
     // tests (:364, :399). B1 made this host's slot the MIRROR OF THE
     // TOP of its window stack, so the slot IS the answer - and the
@@ -6450,7 +6451,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6281), so exterior mode and a
+    // composer, dungeonContext.js:6282), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -8415,7 +8416,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8801-8865 -
+  // worldModes answers it in BOTH modes (worldModes.js:8803-8867 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -9979,16 +9980,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     peerRiders = createPeerRiders({ renderer });   // RIDE: the others in the saddle
     // NAME1 + BUBBLE1: the names are the enhanced skin's DOM now (ui/nameLayer.js) - online forces that skin
     // (OL1), so this is normally the face a player sees. Made ONCE, here, beside the peers it labels.
-    // AUDIT NAME1 F7: gated on the SKIN as well as the document, exactly as the chat below is. Online's forcing of
-    // the enhanced lane can fail (MAC-N3 records how), and a classic-skin online page was getting this layer: the
-    // enhanced pixel face over a classic HUD, no classic name pass under it (the fallback is `if (!nameLayer)`)
-    // and no chat panel to put the bubbles beside. One gate, one answer - the skin either owns this screen or it
-    // does not, and a classic page keeps the bitmap names it always had.
-    if (nameLayerWanted(enhanced)) nameLayer = createNameLayer({});
+    // AUDIT NAME1 F7: the layer's gate is the CHAT's (ui/nameLayer.js nameLayerWanted) - one gate, one answer, so the
+    // bubbles never stand over heads with no chat beside them. OVH3: that gate is a document now, on either skin.
+    if (nameLayerWanted()) nameLayer = createNameLayer({});   // OVH3: on either skin, beside the chat it belongs to
     // AUDIT NAME1 F2/F5: the sight cache is the SESSION'S, not a frame's - it is keyed by peer id and it remembers
     // both the last ray and how long it has been saying "blocked". Made beside the layer and kept with it.
     nameSight = createSightCache();
-    if (enhanced && typeof document !== 'undefined') chatStart();   // CHAT1: the live chat is the enhanced skin's (a DOM panel); classic has no place for it yet   // the player's own arms switch (MWA1) turns the layer on; new data, new bodies
+    if (typeof document !== 'undefined') chatStart();   // OVH3: the online panels mount on EITHER skin - they keep their own face over the classic screens (the UI Overhaul is the player's online); CHAT1: the live chat is a DOM panel   // the player's own arms switch (MWA1) turns the layer on; new data, new bodies
     // AUDIT ONLINE D12: a clean goodbye - the room's leave, not a silence; the rigs and the dolls released. The panel
     // stays: a page restored from the cache gets its chat back through chatFrame's rejoin (AUDIT CHAT B4).
     // NAME1: and the NAME LAYER stays with it, for exactly that reason - a layer torn down at the farewell would
@@ -10449,8 +10447,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // already excludes those; this host's own outdoor overlay excludes
     // itself the same way, one line down, so a follower here never
     // reads back as somebody else's leader).
-    const restWin = !isEnhanced() ? null   // AUDIT PARTY-REST: ONLINE-REST1 - a classic-skin rest is nobody's to mirror
-      : mode === 'interior' ? modes?.restState
+    // OVH4: on either skin - a party's rest is the party card wherever it opens (restDoor.js), so there is no
+    // classic-skin rest that nobody can mirror any more (ONLINE-REST1's classic arm, retired).
+    const restWin = mode === 'interior' ? modes?.restState
       : mode === 'dungeon' ? modes?.dungeonCtx?.restState
         // PARTY-REST6: `state === 'resting'`, the same guard added to worldModes.js's/dungeonContext.js's own
         // restState getters - session truthy alone does not mean this window is still actually ticking; it
@@ -10572,6 +10571,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     outdoorRestDeps.overrideRestKind(restKind ? () => restKind : null);
     return {
     ...outdoorRestDeps,
+    partyRest: () => true,   // OVH4: a mirror IS a party's rest - the party card on either skin (restDoor.js)
     // PARTY-REST1: only the leader's own real session is allowed to say enemies are near or roll an encounter - a
     // follower's mirror answers false unconditionally and, below, never calls runEncounterTick at all. A room of
     // four followers independently rolling the SAME slept hours would spawn four rooms' worth of monsters for one
@@ -10700,17 +10700,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     const now = social.now();
     return now - latestStamp(nearHere, 'voteAt', _partyRestGateRefusedAt, now) < PARTY_REST_VOTE_COOLDOWN_MS;
   };
+  /** OVH4: whether a rest here is the PARTY'S - online, in a party, and not in a tavern, temple or guild hall
+   *  (TAVERN-REST1/GUILD-REST1, every member sleeps for themselves there). The same two questions partyRestGate asks
+   *  before it asks the party anything; ui/restDoor.js reads it (the rest deps' `partyRest`) to open the party card
+   *  on either skin. */
+  const partyRestHere = () => !!social?.party && !modes?.insidePartyRestExempt;
   const partyRestGate = () => {
     if (!social?.party) return null;
     // ONLINE-REST1 (2026-09-21, per-request: "what we are working with here is online mode only. the
     // partyrest feature should not be used in classic and offline enhanced"): the whole consensus/mirror
-    // mechanic is an ENHANCED-skin, ONLINE-only feature by design - `social?.party` above already excludes
-    // offline (both skins: `social` is only ever built by socialStart, which never runs without a connected
-    // online account), but does nothing to exclude a classic-skin player who nonetheless has an online party.
-    // Classic never shows a party HUD, never sends /ready, and its RestWindow (ui/restWindow.js) carries none
-    // of this machinery's hooks - so a classic player must fall through to a plain, solo, unrestricted rest,
-    // exactly as if they had no party at all.
-    if (!isEnhanced()) return null;
+    // mechanic is an ONLINE-only feature - `social?.party` above already excludes offline (both skins: `social`
+    // is only ever built by socialStart, which never runs without a connected online account).
+    // OVH4 (2026-09-24, Mac chose "A": "How do we make it where it's not solo rest for other UI's") RETIRES ITS
+    // CLASSIC ARM: this gate answered null on the classic skin because classic's RestWindow carried none of the
+    // party's arms, so a classic player in a party rested alone. Since OVH3 the online panels mount on either skin,
+    // and a party's rest is one of them - ui/restDoor.js opens the party card for it on either skin (partyRestHere
+    // below), so every member votes, mirrors and wakes together whichever UI they wear.
     // TAVERN-REST1/GUILD-REST1 (2026-09-21, per-request: "we stripped the tavern partyresting mechanic out
     // same needs to be done for temples and guilds since its not needed in there every member can rest there
     // as they want"): a tavern's rented rooms, a guild hall's own beds, and a temple's own beds are all slept
@@ -10872,9 +10877,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // Extracted here so all three hosts share the identical reset (forwarded the same way onEnemyBreak/
   // canceledByFollower already are), rather than three copies that can drift out of sync with each other again.
   const markPartyRestSpent = () => {
-    // AUDIT PARTY-REST: ONLINE-REST1's own exclusion, here too - a classic-skin rest never ran the gate, and its
-    // `restStartedAt` held every enhanced party mate at "A rest just happened" for each R it pressed.
-    if (!isEnhanced()) return;
+    // AUDIT PARTY-REST's classic-skin exclusion here (a classic rest never ran the gate, so its `restStartedAt` held
+    // every enhanced mate at "A rest just happened") is gone with ONLINE-REST1's classic arm (OVH4): every skin's
+    // granted rest ran the gate now.
     // REST-OFFLINE1 (Discord, 2026-09-22, a crash report: "TypeError: Cannot
     // read properties of null (reading 'now') at markPartyRestSpent <-
     // toggleRest <- travel"): OFFLINE THERE IS NO PARTY AND NO SOCIAL
@@ -11007,7 +11012,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // now the ONE place the tally ever reaches chat at all, so it has to announce every transition, the first
   // included, or nobody but the presser would ever see "someone wants to rest" show up.
   const _partyRestVoteTrackTick = () => {
-    if (!isEnhanced() || !social?.party || modes?.insidePartyRestExempt) { _partyRestVoteLastReady = null; _partyRestVoteOrigin = null; return; }
+    if (!social?.party || modes?.insidePartyRestExempt) { _partyRestVoteLastReady = null; _partyRestVoteOrigin = null; return; }
     const now = performance.now();
     if (now - _partyRestVoteTrackAt < 1000) return;
     _partyRestVoteTrackAt = now;
@@ -11171,9 +11176,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       return;
     }
-    // ONLINE-REST1: see partyRestGate's own doc comment - classic never opens a mirror, so a classic player
-    // simply falls through here every frame, exactly as if they had no party at all.
-    if (!isEnhanced()) return;
+    // OVH4: a mirror opens on either skin - the party card (ui/restDoor.js); see partyRestGate's own doc comment.
     // TAVERN-REST1/GUILD-REST1: never start mirroring while I myself am standing in a tavern, temple or guild
     // hall - see partyRestGate's own doc comment. (Two members can only ever be "near" each other in the same
     // building at all, so my own insidePartyRestExempt is sufficient - the person I'd be mirroring is
@@ -11980,6 +11983,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // way partyRestGate itself already is - see markPartyRestSpent's own doc comment for the bug this closes.
     markPartyRestSpent: () => markPartyRestSpent(),
     cancelPartyRestStart: () => cancelPartyRestStart(),   // PARTY-REST29: a rest window closed unrested, indoors or underground
+    partyRestHere: () => partyRestHere(),   // OVH4: whether a rest here is the party's - the party card on either skin (restDoor.js)
     // STRANGER-REST1: shared with this host's own outdoor toggleRest and dungeonContext.js's - see strangerRestGate's doc comment.
     strangerRestGate: () => strangerRestGate(),
     // PARTY-REST5: shared with this host's own outdoor rest deps and dungeonContext.js's, forwarded the same way
@@ -14701,7 +14705,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // layer, because a talk window is a modal above the vitals.
     // AUDIT 39: THE CALL IS UNCONDITIONAL. drawHud runs the damage
     // flash and the enhanced DOM HUD ABOVE its own `!art` return
-    // (hud.js:416-444) because neither reads ARENA2 - "a player whose
+    // (hud.js:418-446) because neither reads ARENA2 - "a player whose
     // HUD art failed to load still has vitals". Wrapping the whole
     // call in `if (hudArt)` inverted that: hudArt starts null and is
     // filled by a fire-and-forget load whose failure leaves it null
