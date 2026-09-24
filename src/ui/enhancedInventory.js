@@ -63,7 +63,11 @@ import { useItem, isLightSource, usableItem } from '../systems/useItem.js';   //
 // place a slot is filled - Mac's own words, "in the enhanced menu through the
 // tooltip to slot 1/2" - and it fills one by naming the item's KIND, which is
 // all a slot ever holds.
-import { isQuickConsumable, canSwapTo, quickslotOf, assignQuickslot, clearQuickslot } from '../systems/quickslots.js';
+import { isQuickConsumable, canSwapTo, quickslotOf, assignQuickslot, clearQuickslot, hotbarSlotOf } from '../systems/quickslots.js';
+// HB1: the hotbar - one more drop target for the drag this pane already
+// owns, and the click path beside it. The bar is up under this window
+// only while the player has chosen it over the diamond.
+import { setHotbarDropMode, hotbarSlotNode, hotbarTakesItem, hotbarDropItem, hotbarMode, toggleHotbarItem, hotbarKeyOf } from './enhancedHotbar.js';
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { dfWornEquipment } from '../formats/mwItemMap.js';   // PX25
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // PX26
@@ -106,9 +110,8 @@ import { rarityAttr, rarityLines } from '../systems/lootRarity.js';   // LR1: th
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { repaintKeepingScroll } from './domRepaint.js';
-import { overlayAction, actionOf } from './input.js';   // MAC-C: and the REGISTRY's answer for the two window keys
+import { overlayAction, eventAction } from './input.js';   // MAC-C: and the REGISTRY's answer for the two window keys
 import { audio } from '../systems/audio.js';   // MAC-O6: the pack's own transfer cue - this window carried none at all
-import { enhancedSoundsOn } from '../systems/enhancedSounds.js';   // ES1: both cues ride the Enhanced sounds switch
 import { SOUND } from '../systems/soundClips.js';
 
 import { expandRowValues } from '../systems/quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
@@ -777,6 +780,8 @@ function dropIntent(item, over, fromItem, source = 'local') {
   // that can reach one: a worn cuirass released over the ground or over
   // an open chest would lie there AND stay in the equip table. Off the
   // dock the answer is the same "never mind" the pack's chrome gives.
+  const hot = hotbarIntent(item, over);   // HB1: the hotbar, before either side's law
+  if (hot) return hot;
   if (source === 'worn') {
     const act = localPrimaryAct(item, deps.entity);
     return over?.closest?.('.pack-dock') && act
@@ -833,7 +838,24 @@ function dragTo(x, y) {
   // target the way the map is one, not a grid of twelve tiles.
   else if (want?.kind === 'offbody') document.elementFromPoint?.(x, y)?.closest?.('.pack-dock')?.classList.add('dragover');
   else if (want?.kind === 'reorder') { for (const n of document.querySelectorAll('.itemrow')) if (rowItems.get(n) === want.item) n.classList.add('dragover'); }
+  else if (want?.kind === 'hotbar') hotbarSlotNode(document.elementFromPoint?.(x, y))?.classList.add('dragover');   // HB1
 }
+/** HB1: THE HOTBAR AS A TARGET, asked before either side's law - a weapon
+ *  carried off the body or out of the pack onto a slot puts its KIND on the
+ *  bar and moves nothing. The bar's chrome between the sockets is "never
+ *  mind", never the open ground past the window: a release a pixel off a
+ *  socket must not throw the item on the floor. Null off the bar. */
+function hotbarIntent(item, over) {
+  const hot = hotbarSlotNode(over);
+  if (hot) {
+    const n = Number(hot.dataset.slot);
+    return hotbarTakesItem(item) ? { kind: 'hotbar', label: `Hotbar ${n + 1}`, slot: n } : { kind: 'nope', label: null };
+  }
+  return over?.closest?.('.hb') ? { kind: 'none', label: '' } : null;
+}
+/** HB1: a release on a hotbar slot - the KIND goes on the bar and the
+ *  item stays where it was; the repaint puts the key chip on its row. */
+function slotOnHotbar(item, slot) { hotbarDropItem(slot, item); render(); }
 /** THE ONE DOOR OUT. `commit` false is an abort - a cancel, a lost
  *  capture, Escape, the pane going away; nothing moves and nothing is
  *  said. */
@@ -851,6 +873,7 @@ function dragStop(commit) {
     globalThis.removeEventListener?.('scroll', onDragScroll, true);
     globalThis.removeEventListener?.('contextmenu', onDragMenu, true);
     globalThis.removeEventListener?.('touchmove', onDragHold, true);
+    globalThis.removeEventListener?.('dragstart', onNativeDrag, true);
   }
   if (!d?.moved) return;
   _dragged = true;   // the click that follows a real drag is not a pick
@@ -868,6 +891,7 @@ function dragStop(commit) {
   // set INV1 wrote is still three.
   else if (want?.kind === 'offbody') dropOnBody(d.item);
   else if (want?.kind === 'reorder') reorderPack(d.item, want.item);
+  else if (want?.kind === 'hotbar') slotOnHotbar(d.item, want.slot);   // HB1: the kind on the bar, the item where it was
   else if (want?.kind === 'stow') stow(d.item);
 }
 /** AUDIT INV2 A1: A FINGER THAT MEANT TO SCROLL MUST NOT DROP THE ITEM.
@@ -989,6 +1013,8 @@ const onDragMove = (e) => {
  *  the class. */
 const onDragHold = (e) => { if (drag?.moved && drag.touch && e.cancelable) e.preventDefault(); };
 const onDragUp = (e) => { if (drag && e.pointerId === drag.id) dragStop(true); };
+/** HB1b: no native drag (an <img> under the press) while a session is live. */
+const onNativeDrag = (e) => { if (drag && e.cancelable) e.preventDefault(); };
 /** MAC-R4: the long-press menu never opens over a live session (see dragFrom). */
 const onDragMenu = (e) => { if (drag && e.cancelable) e.preventDefault(); };
 const onDragAbort = (e) => { if (drag && (e.pointerId === undefined || e.pointerId === drag.id)) dragStop(false); };
@@ -1045,6 +1071,13 @@ function dragFrom(row, item, source = 'local') {
     // INV3: passive FALSE, or the preventDefault above is ignored - a
     // window `touchmove` listener is passive by default in Chromium.
     globalThis.addEventListener?.('touchmove', onDragHold, { passive: false, capture: true });
+    // HB1b (Discord, 2026-09-23: "sometimes you have to hold the left mouse
+    // button longer to drag"): A PRESS ON THE ICON WAS THE BROWSER'S. The
+    // tile is an <img>, and a mouse that moved on it began Chromium's own
+    // image drag, which raises `pointercancel` - the session ended before
+    // it armed, and only a press on the row's text or padding carried.
+    // The session refuses the native drag for its whole life.
+    globalThis.addEventListener?.('dragstart', onNativeDrag, true);
   };
   rowItems.set(row, item);
 }
@@ -1218,7 +1251,7 @@ function stow(item) {
   // 26 F156: planStore answers `{ ok: true, map: true }` for a
   // MiscItems.Map - the reveal runs, the paper is consumed, nothing
   // lands in the destination. The classic window routes it
-  // (nativeInventory.js:883) and this one did not, so dragging a
+  // (nativeInventory.js:892) and this one did not, so dragging a
   // treasure map out of the pack dropped the paper on the floor and
   // revealed nothing.
   if (plan.map) { use(item, deps.items?.() ?? []); return; }
@@ -1226,14 +1259,14 @@ function stow(item) {
   // banking, dropping into a wagon or a pile) is a transfer too, and
   // planStore already hands back the sound (itemTransfer.js:221), unread
   // until now.
-  if (enhancedSoundsOn()) audio.playOneShot(plan.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);   // ES1: the row's switch
+  audio.playOneShot(plan.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);   // SND1: a take always sounds - the click, or the gold
   // PX24 (Mac: an action taken closes the tooltip): the transfer
   // happens and the tip goes. The earlier law kept the ARRIVING item
   // picked so it could be put straight back; the player can pick it
   // again on the other side, and a tip that stays open after every
   // press is the quirk being fixed.
   // AUDIT INV2 B-F1: THE ENTITY AND THE PROVENANCE RIDE, as they do at
-  // the classic window's own call (nativeInventory.js:889). Without them
+  // the classic window's own call (nativeInventory.js:898). Without them
   // `clearLightSourceOnLeave` - AUDIT 26 F157's first statement inside
   // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
   // went on lighting the player from where it lay. INV2 made that a
@@ -1267,12 +1300,12 @@ function take(item) {
   if (plan.map) { use(item, remoteTarget(deps, sessionState())); return; }
   // MAC-O6 (report: "looting gold/items makes no sound"): DoTransferItem's
   // own cue (:1569 gold's clink, :1583 everything else), which the classic
-  // window plays (nativeInventory.js:909) and this one never did - the ONLY
+  // window plays (nativeInventory.js:918) and this one never did - the ONLY
   // difference between the two windows' calls to planTake/applyTransfer was
   // that this one dropped `plan.sound` on the floor. Played here, ahead of
   // the gold interception below, exactly as DFU's own PlayOneShot sits
   // ahead of that arm's `return` in DoTransferItem.
-  if (enhancedSoundsOn()) audio.playOneShot(plan.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);   // ES1: the row's switch
+  audio.playOneShot(plan.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);   // SND1: a take always sounds - the click, or the gold
   // E4: the pack IS the destination here, so DoTransferItem's gold
   // interception (:1562-1571) fires and answers null - its `return`
   // skips the choose-one close below, and there is no arriving record
@@ -1743,6 +1776,7 @@ function itemTile(line) {
     const img = el('img');
     img.src = src;
     img.alt = '';
+    img.draggable = false;   // HB1b: the browser's own image drag must never start under the pane's drag
     // NO WIDTH ATTRIBUTE. These sprites are not square - a dagger is
     // tall and narrow, a cuirass wide - and forcing 30 across squashes
     // every one of them. The CSS caps both axes instead, which scales
@@ -1795,8 +1829,14 @@ function itemRow(item, from = 'local') {
   // open every tooltip in the pack. LOCAL rows only: a slot resolves against
   // the pack, and a loot row is not in it.
   if (from === 'local') {
-    const slot = quickslotOf(item);
-    if (slot) row.append(el('span', 'qs-mark', slot === 'swap' ? 'SWAP' : (slot === 'c1' ? '1' : '2')));
+    if (hotbarMode()) {
+      // HB1: the row on the hotbar says which key, the diamond's chip's law
+      const at = hotbarSlotOf(item);
+      if (at >= 0) row.append(el('span', 'qs-mark', hotbarKeyOf(at) ?? String(at + 1)));
+    } else {
+      const slot = quickslotOf(item);
+      if (slot) row.append(el('span', 'qs-mark', slot === 'swap' ? 'SWAP' : (slot === 'c1' ? '1' : '2')));
+    }
   }
   // INV1: a LOCAL row drags. A loot row does not - taking from a pile
   // is a click, and a drag that could also transfer would make a slip
@@ -2046,6 +2086,16 @@ function listCol() {
  * keeps its place.
  */
 function quickslotActs(item) {
+  // HB1: with the hotbar up, the tooltip's slot buttons are the HOTBAR's -
+  // the diamond is put away, so its slots are not what a player is filling.
+  // The drag is the main path; this is the click beside it.
+  if (hotbarMode()) {
+    if (!hotbarTakesItem(item)) return [];
+    const at = hotbarSlotOf(item);
+    const b = el('button', `act qs-act${at >= 0 ? ' on' : ''}`, at >= 0 ? `Off hotbar ${at + 1}` : 'Add to hotbar');
+    b.onclick = () => { notice = toggleHotbarItem(item); refresh(); render(); };
+    return [b];
+  }
   const inSlot = quickslotOf(item);
   const button = (slot, set, unset) => {
     const on = inSlot === slot;
@@ -2452,8 +2502,9 @@ function render() {
 // This line used to read `e.key !== 'F6'` - the DFU DEFAULT spelled as
 // a literal, which is I2's and FIX-F's bug twice over: a player who
 // rebinds Inventory in the controls window gets a pack that opens on
-// their key and closes on nobody's. It reads the REGISTRY now, the same
-// `actionOf` the hosts' own ladders read.
+// their key and closes on nobody's. It reads the REGISTRY now - AUDIT
+// KB1: through `eventAction`, the event's own read, so a combo'd key
+// closes what it opened and a pad button (a secondary) does too.
 //
 // And the other window key CROSSES OVER rather than doing nothing: the
 // pack closes and the sheet opens, in that order, because `showOverlay`
@@ -2473,10 +2524,11 @@ function onKey(e) {
   // world (A-F4). Escape ends the drag and keeps the window; a second
   // one closes it, as it always did.
   if (overlayAction(e) === 'back' && drag) { e.preventDefault(); e.stopPropagation(); dragStop(false); return; }
-  const act = actionOf(e);
+  const act = eventAction(e);   // AUDIT KB1: the event's own read - a pack opened by a combo closes on it
   if (act === 'CharacterSheet' && typeof deps?.openCharSheet === 'function') {
     e.preventDefault();
     e.stopPropagation();
+    if (e.repeat) return;   // AUDIT KB1: a held key's repeat is swallowed, not an open-shut flicker
     // JAN1 (2026-09-18, Janome: "got this while toggling between F5 and F6 menus" - CRASH `openCharSheet is not a
     // function`): THE HOOK IS READ BEFORE ANYTHING CLOSES - the file's own law at the close arm above - because
     // `onExit` unmounts, and the unmount clears `deps` to `{}` before this line ran on it.
@@ -2488,7 +2540,7 @@ function onKey(e) {
   if (overlayAction(e) !== 'back' && act !== 'Inventory') return;
   e.preventDefault();
   e.stopPropagation();
-  onExit();
+  if (!e.repeat) onExit();
 }
 
 function releaseLock() {
@@ -2558,6 +2610,9 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   if (open.refusal?.text) notice = open.refusal.text;
   refresh();
   render();
+  // HB1: the hotbar comes up under the pack as a drop target (a no-op
+  // while the player wears the diamond instead).
+  setHotbarDropMode('pack', true, d.entity ?? null);
   // The classic window composes on construction; so does this. Without
   // it the panel shows the schematic until the first equip.
   refreshFigure();
@@ -2602,6 +2657,7 @@ export function mountEnhancedInventory(hostEl, d = {}) {
       // pack closed mid-drag and left an item icon glued over the world,
       // which re-opening the pack did not clear either.
       dragAbort();
+      setHotbarDropMode('pack', false);   // HB1: and the bar goes back over the vitals
       // ENH-NOTICE3 / EVERY ALLOCATION HAS AN OWNER: a HELD panel arms
       // no watchdog, so nothing but this releases it. The pane is
       // unmounted from paths that never touch `notice` (F6 again, the

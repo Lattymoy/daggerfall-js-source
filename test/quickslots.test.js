@@ -369,7 +369,7 @@ test('QS1 save: the slots ride the one session composer, and a save without the 
   assignQuickslot('c1', potion(HEAL_KEY));
   assignQuickslot('swap', dagger());
   const data = quickslotSaveData();
-  assert.deepEqual(Object.keys(data), ['c1', 'c2', 'swap', 'spell']);   // QS6: the spell slot rides the same block
+  assert.deepEqual(Object.keys(data), ['c1', 'c2', 'swap', 'spell', 'hotbar']);   // QS6: the spell slot rides the same block; HB1: and the hotbar
   assert.equal(data.c2, null);
   assert.equal(data.swap.name, 'Elven Dagger');
   assert.equal(JSON.parse(JSON.stringify(data)).c1.key, data.c1.key, 'plain data, JSON-safe');
@@ -382,7 +382,7 @@ test('QS1 save: the slots ride the one session composer, and a save without the 
   assert.deepEqual(quickslotSaveData(), data);
   // A pre-QS save, or another character's: cleared, never stale.
   restoreSessionState({ quest: null }, {});
-  assert.deepEqual(quickslotSaveData(), { c1: null, c2: null, swap: null, spell: null });
+  assert.deepEqual(quickslotSaveData(), { c1: null, c2: null, swap: null, spell: null, hotbar: Array(10).fill(null) });   // HB1: the hotbar clears with them
   // A malformed block is refused entry by entry.
   restoreQuickslotSaveData({ c1: { key: 5, name: 'x' }, c2: { key: 'k', name: 'Potion' }, swap: 'no' });
   assert.equal(quickslotEntry('c1'), null);
@@ -392,4 +392,53 @@ test('QS1 save: the slots ride the one session composer, and a save without the 
   const save = read('src/systems/save.js');
   assert.match(save, /quickslots: quickslotSaveData\(\)/);
   assert.match(save, /restoreQuickslotSaveData\(extras\?\.quickslots \?\? null\)/);
+});
+
+// ── HB1: THE HOTBAR ────────────────────────────────────────────────
+import * as HB from '../src/systems/quickslots.js';
+
+test('HB1: one kind per slot, a press goes through the diamond\'s door and leaves the diamond as it was', () => {
+  const p = potion(HEAL_KEY, 3);
+  const d = dagger();
+  const me = player([p, d]);
+  me.spells = [{ index: 7, name: 'Heal', element: 4, rangeType: 0 }];
+  assert.equal(HB.hotbarKindOf(p), 'consumable');
+  assert.equal(HB.hotbarKindOf(d), 'weapon');
+  assert.equal(HB.hotbarKindOf(torch()), 'light');
+  assert.equal(HB.hotbarKindOf(shield()), null);
+  HB.setHotbarSlot(0, HB.hotbarEntryForItem(p));
+  HB.setHotbarSlot(4, HB.hotbarEntryForItem(p));   // a MOVE, not a copy
+  assert.equal(HB.hotbarEntry(0), null);
+  assert.equal(HB.hotbarView(me)[4].count, 3);
+  assignQuickslot('c1', potion(FIRE_KEY));
+  const seen = [];
+  HB.hotbarPress(4, { entity: me, doors: { quickUse: (n) => { seen.push([n, quickslotEntry('c1').key]); return true; } } });
+  assert.deepEqual(seen, [[1, quickslotKey(p)]]);
+  assert.equal(quickslotEntry('c1').key, quickslotKey(potion(FIRE_KEY)), 'the diamond keeps its own slot');
+  assert.equal(HB.hotbarPress(9, { entity: me }).kind, 'empty');
+});
+
+test('HB1: a spell on the hotbar CASTS - readied and fired through the attack door', () => {
+  const me = player([]);
+  me.spells = [{ index: 7, name: 'Heal', element: 4, rangeType: 2 }];
+  HB.setHotbarSlot(2, HB.hotbarEntryForSpell(me.spells[0]));
+  let r = null; let fired = false;
+  const magic = { readiedIndex: () => r, readySpell: (sp) => { r = sp.index; }, interceptAttack: (h) => (fired = h) };
+  HB.hotbarPress(2, { entity: me, doors: { quickSpell: () => HB.spellQuickslotPress({ entity: me, magic }) } });
+  assert.equal(r, 7);
+  assert.equal(fired, true);
+  assert.equal(HB.spellQuickslot(), null, 'the spell slot is left as it was');
+});
+
+test('HB1 save: the hotbar rides the quickslot block and restores', () => {
+  HB.setHotbarSlot(1, HB.hotbarEntryForItem(dagger()));
+  HB.setHotbarSlot(0, { type: 'spell', index: 3, name: 'Light' });
+  const data = quickslotSaveData();
+  clearQuickslots();
+  assert.equal(HB.hotbarEntry(1), null);
+  restoreQuickslotSaveData(JSON.parse(JSON.stringify(data)));
+  assert.equal(HB.hotbarEntry(1).kind, 'weapon');
+  assert.equal(HB.hotbarEntry(0).index, 3);
+  restoreQuickslotSaveData({ c1: null });
+  assert.equal(HB.hotbarEntry(0), null, 'a save without the block clears the bar');
 });

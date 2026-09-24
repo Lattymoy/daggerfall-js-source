@@ -782,6 +782,112 @@ lead handed to the newest seat when nobody is online): no pin held the
 all-away arm. `test/auditparty8.test.js` now holds it (every remaining seat
 away - the longest-standing leads), and S23 names that suite.
 
+# CONTRIB - the contributor's drop, integrated and read
+
+Mac: *"Integrate these please. My contributer made these for the codebase"* -
+two zips: the hotbar, player corpses, Resurrect, the death screen, UI sounds
+(85 whole files), and a sprite-fix patch.
+
+## The integration
+
+The drop's files came off several bases; scored against every commit, the
+nearest was 2b42cadb3, and the drop was committed there verbatim (branch
+`contrib-hotbar`) and merged. Its relay steps world100-102 never ran on a
+relay; ours had deployed world100 and world101 (DISC7, DISC12). The merged
+graph is **world102**: DISC12's pose plus the drop's death flag `dd`, the
+party pose's Resurrect call `rz` and fallen body `dd`, and the look's
+widened `class`. Resurrect is registered (effect 45) but not craftable, as
+MorphSelf is not, and carries its own spellbook description.
+
+**The cites.** `citeMerge` read a line both sides carry verbatim as
+THEIRS and moved its numbers through their diff - and the drop's
+untouched comments sat beside targets that had moved on their side
+(nine cites, `spellcost.js:182` -> :181 among them). A shared line's
+number was read off one side's target and the line cannot say which;
+the tool now maps it from both and moves it only where the two agree,
+else prints it AMBIGUOUS for a person (`test/citemerge.test.js`).
+
+## The read: three lenses, every finding verified in the code
+
+- **A1 - Resurrect could not be cast at a body with no foe beside it.**
+  The ready-made spell is ByTouch, and CastReadySpell's touch probe sees
+  foes and standing mates only - a fallen mate is neither - so the click
+  was eaten silently. The body the Resurrect gate already found is the
+  touch.
+- **A2 - one death, several bodies.** `sendDeath` speaks down the cell's
+  socket and every halo's; the first copy took the peer off the list, so
+  each later copy was a fresh death (a body and a cry per copy - a
+  Thief's and a Breton's, the look gone). The session delivers one death
+  per life; a living pose after it is a new life.
+- **A3 - a party-told body met after the death never stood.** The memo of
+  "seen" was written before the room check, so a body in a dungeon walked
+  into later, or one a building's walls took from the scene, never stood
+  again. `remotePlayers.partyBody` keeps each death's minute from its
+  first word and stands the body whenever the scene is its own, crying
+  once.
+- **A4 - risen, and still looking at the sky.** The dungeon's clear and
+  F11's online respawn skipped the view hand-back. Every close restores
+  it (and the enhanced veil goes with the screen); F11 goes through
+  Enter's reset.
+- **A5 - three seconds to raise a mate on the classic skin.** The online
+  hold was the enhanced face's alone; the classic reset respawned the
+  player and cleared the body at DFU's three seconds. Online, the hold is
+  the screen's on either skin, and the classic face says the count.
+- **A6 - the Resurrect snapshot outlived a respawn.** Taken through the
+  teleport's await with the player already healed, it made an old call
+  raise the next death at once. It is taken only while dead and dropped
+  on the first living frame.
+- **P1-P3 - the dying player's foes, doubled or lost.** Every survivor
+  judged "nearest" against its own lagging view, so two could take one foe
+  (two owners streaming it) or none. The dying owner - the one true view -
+  names each foe's heir on its last frame (`e`), and the survivor named
+  adopts it on that frame's arrival. The watch is never handed; the owner
+  lets go of exactly what it handed and keeps the rest.
+- **S1 - a Thief before the introduction.** A peer heard by pose before
+  its look arrived was drawn as a Thief, then nothing, then its class.
+  No look keeps the doll until the look lands.
+- **U1/U2 - the UI click.** Any one-shot in the 150 ms before a click
+  (a hit, the ambience) swallowed it, and a touch held on a hotbar slot
+  past 150 ms sounded twice. Only a sound chosen inside an input event
+  counts as the click's own, and the window opens at the press.
+
+Also: `OnlineSession` declares `onPeerDeath` (the type check), and the
+drop's trailing comments moved back onto the lines they describe.
+
+## The hotbar (the third lens)
+
+- **H1 - the digits were taken from everyone.** The bar read 1-0 at the
+  window's capture phase and swallowed them, so a digit the player bound
+  to an action in the controls pane, and Horse Cart and Cargo's mount and
+  summon (shipped on 5 and 6), never reached the host. And the diamond it
+  replaces was only hidden: a pad's d-pad and a rebound key still drank,
+  readied and lit from slots nobody could see, and with the HUD toggled
+  off the digits fell through to them. Now the diamond is put away while
+  the hotbar is in force (`hotbarInForce`: its five actions route nothing,
+  its hold machine taps nothing), the bar steps aside for any digit bound
+  to another action and for every enabled mod's hotkey
+  (`modHotkeyCodes`), and its keys follow the game's pause, not the HUD's
+  visibility. **Decision for Mac:** HCC's defaults (5, 6) and the hotbar's
+  slots 5 and 6 still share keys - HCC wins, as a binding should; moving
+  HCC's defaults is a KEY_MIGRATIONS row if the hotbar should have them.
+- **H2 - the light slot lit whatever the mod picked.** It went to the off
+  hand's toggle (the last light used, else a lantern, a torch, a candle):
+  a Candle slot lit the Lantern, a Lantern slot put out a lit candle, a
+  slot whose light was gone lit another. It is the pack's own Use on the
+  slot's kind now - that light lit, the lit one of the kind doused, none
+  left refused.
+- **H3 - a refused press flashed gold.** The doors answer the route
+  `true` whatever the performer decided. The four performers leave their
+  own answer for the bar, and `readySpell` answers as DFU's SetReadySpell
+  does (false on silence, no spell points, the hands mid-cast).
+- **H4 - the bar keyed the whole pack once per slot every frame.** One
+  pass now.
+- **H5 - the bar's icons skipped DW3's dye.** Asked with it, as the
+  diamond and the pack do.
+
+Pinned by execution in `test/auditcontrib.test.js`; mutants:
+`tools/mutants/auditcontrib.json` (21, all killed).
+
 # ARROW2 - the double arrows (DISC8-F), found
 
 DISC8-F counted shafts and found one. The second arrow was never a shaft:

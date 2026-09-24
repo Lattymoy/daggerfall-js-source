@@ -162,7 +162,7 @@ test('FS1: the melee/arrow clauses are retired, and the tree contradicts them', 
   // alone, and the fixed-city host took the same three-pool swing
   // verbatim; replacing its encounter arm with four comment lines (so
   // no cite could move) left the swing as watch -> civilians with the
-  // shipped comment still claiming world.js:14274's order, green.
+  // shipped comment still claiming world.js:14368's order, green.
   for (const [file, foeTargets] of [
     ['src/scenes/world.js', /foeTargets: \[\.\.\.exteriorFoes\.foes, \.\.\.cityGuards\.guards\]/],
     ['src/scenes/exterior.js', /foeTargets: exteriorFoePool\(\)\.filter\(\(t\) => !t\.dead && t\.ai\)/],
@@ -235,7 +235,7 @@ test('FS1: the enchant ctx is MOUNTED by every host that owes it', () => {
     'the E2 header states the one-caller claim as HISTORY, not as present fact');
   assert.equal(/The flag now exists where the\n\s*\/\/ work does/.test(world), false,
     'the flag it pointed at was retired at the mount');
-  assert.match(world, /WAVE D closed it: the body is scenes\/hostEnchant\.js\n\s*\/\/ and dungeonContext\.js:2445 mounts the same one/,
+  assert.match(world, /WAVE D closed it: the body is scenes\/hostEnchant\.js\n\s*\/\/ and dungeonContext\.js:2447 mounts the same one/,
     'and the header names the shipped shape instead');
 });
 

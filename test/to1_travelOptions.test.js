@@ -31,9 +31,10 @@ import {
 import {
   readTravelOptionsSettings, createTravelOptions, travelSpeedMultiplier, avoidEncounterChance,
   locationTypeString, locationTypeName, locationRectsOf, locBorderCornerRects, circumnavigateTarget,
-  START_ACCEL_VALUES, FOLLOW_KEYS, IGNORE_ENCOUNTERS_SECONDS, AVOID_ENCOUNTER_OFFSET, CLIMATE_OCEAN,
+  START_ACCEL_VALUES, IGNORE_ENCOUNTERS_SECONDS, AVOID_ENCOUNTER_OFFSET, CLIMATE_OCEAN,
   TRAVEL_OPTIONS_VENDOR,
 } from '../src/systems/travelOptions.js';
+import { MOD_ACTIONS } from '../src/systems/inputActions.js';   // KB1: the follow key's six are the carry's now
 import { TRAVEL_OPTIONS_TEXT, format, localize, directionText } from '../src/systems/travelOptionsText.js';
 // AUDIT-TO1: the two classes the port did not carry, pinned at the foot
 import { registerCustomGuild, canAccessService } from '../src/systems/guildServices.js';
@@ -238,15 +239,13 @@ test('TO1: LoadSettings - the speed penalty is a multiplier, the fatigue floor i
   assert.equal(s.defaultStartingAccel, START_ACCEL_VALUES[4], ':221 - the CHOICE indexes the eleven values');
   assert.equal(s.defaultStartingAccel, 10);
   assert.equal(s.locationPause, LOC_PAUSE_NEAR);
-  assert.equal(s.followKey, 'F', ':225-226 - index 1 of the six');
+  // KB1: the follow key is the registry's FollowPaths action, not a setting - :224-232's six and the custom bind are
+  // read once, by the carry into the registry (systems/inputActions.js migrateKeyBinds, test/kb1_keybinds.test.js).
+  assert.equal(s.followKey, undefined, 'no key field');
   assert.deepEqual(s.markLocationColor, [255, 235, 5, 255]);
   assert.deepEqual(s.locationColors[11], [1, 2, 3, 255], 'the fourteen ride GetPixelColorIndex\'s own order: 11 is City');
   assert.equal(s.locationColors.length, 14);
 
-  // the custom bind, and its fallback
-  assert.equal(readTravelOptionsSettings(reader({ 'RoadsIntegration.FollowPathsKey': 6, 'RoadsIntegration.FollowPathsCustomKeyBind': 'Slash' })).followKey, 'Slash');
-  assert.equal(readTravelOptionsSettings(reader({ 'RoadsIntegration.FollowPathsKey': 6 })).followKey, 'F', ':297-300 - an unparseable custom bind is F');
-  assert.equal(readTravelOptionsSettings(reader({ 'RoadsIntegration.FollowPathsKey': 0 })).followKey, 'None');
 
   // BASIC ROADS OFF: every roads arm falls, and so does the follow key
   const off = readTravelOptionsSettings(reader({}, { Enabled: false, RiversAndStreams: true }));
@@ -254,7 +253,7 @@ test('TO1: LoadSettings - the speed penalty is a multiplier, the fatigue floor i
   assert.equal(off.roadsJunctionMap, false);
   assert.equal(off.waterwaysEnabled, false);
   assert.equal(off.variableSizeDots, false);
-  assert.equal(off.followKey, 'None', 'nothing to follow, so no key follows it');
+  // (nothing to follow, so the follow arm stands down: the update's gates read `roadsIntegration`)
   // ...and the waterways need the OTHER mod's own rivers switch too (:307, :321)
   assert.equal(readTravelOptionsSettings(reader({}, { Enabled: true, RiversAndStreams: false })).waterwaysEnabled, false);
   assert.equal(readTravelOptionsSettings(reader({}, { Enabled: true, RiversAndStreams: false })).streamsToggle, false);
@@ -308,7 +307,7 @@ test('TO1: the compass is Basic Roads\' own, and the port\'s road network uses t
   assert.equal(AVOID_ENCOUNTER_OFFSET, 50, ':1200 - the CODE says 50 where the readme says 20');
   assert.equal(IGNORE_ENCOUNTERS_SECONDS, 15);
   assert.equal(CLIMATE_OCEAN, 223);
-  assert.deepEqual([...FOLLOW_KEYS], ['None', 'F', 'G', 'K', 'O', 'X']);
+  assert.deepEqual([...MOD_ACTIONS['travel-options'][0].options], ['None', 'F', 'G', 'K', 'O', 'X'], ':132 - the six, kept for the carry');
 });
 
 test('TO1: mapPixelWorldOrigin is streamingWorld\'s own mapping, over the whole map', () => {
@@ -1064,10 +1063,10 @@ test('TO1: the eight mod messages other mods send this one', () => {
 });
 
 test('TO1: the help text names the follow key and the two bindings', () => {
-  const { to } = rig({ deps: { binding: (a) => (a === 'TravelExit' ? 'V' : 'M') } });
+  const { to } = rig({ deps: { binding: (a) => (a === 'TravelExit' ? 'V' : a === 'FollowPaths' ? 'K' : 'M') } });
   const help = to.helpText();
   assert.match(help, /^Travel Options Help/);
-  assert.match(help, /K - Follow road or track/, 'the follow key is the setting\'s - K since AUDIT-TO1 I1');
+  assert.match(help, /K - Follow road or track/, 'the follow key is the registry\'s FollowPaths binding (KB1) - K by default, since AUDIT-TO1 I1');
   assert.match(help, /V - Exit travel/);
   assert.match(help, /M - Open travel map when stopped/);
   assert.ok(!help.includes('{0}'), 'every placeholder is filled');
@@ -1200,7 +1199,8 @@ test('TO1: the wiring - one construction, the fork on the popup\'s word, the pan
     'the host expression that killed every journey on its first frame, corrected');
   assert.ok(!/showOverlay\(travelControlUI\)/.test(w), 'the panel is NEVER in the overlay slot - an overlay holds the motor and the clock');
   // its keys and its clicks
-  assert.match(w, /if \(travelControlUI\?\.isShowing && travelControlUI\.input\(e\.code, e\)\) \{ e\.preventDefault\(\); return; \}/);
+  // KB1: taken ABOVE the key ring - a key the panel answers joins no ring, so C (camp) is not also a Crouch press
+  assert.match(w, /if \(travelControlUI\?\.isShowing && !townTalk\.overlayActive && \(modes\?\.mode \?\? 'exterior'\) === 'exterior'\) \{\s*if \(travelControlUI\.input\(e\.code, e\)\) \{ e\.preventDefault\(\); return; \}[^\n]*\n[^\n]*\n\s*\}\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!modes\?\.overlayHeld\) \{\n\s*keys\.add\(e\.code\);/);   // AUDIT KB1: the ring's fill, under the mode window's gate now
   assert.match(w, /if \(v && travelControlUI\.click\(v\[0\], v\[1\]\)\) return;/);
   // the frame's two scaled things, and only those two
   assert.match(w, /const travelScale = worldTimeScale\(\);/);
@@ -1587,7 +1587,7 @@ test('AUDIT-TO1 G1/G2/G3/I2/I3/I4/I6/J1/K2/H1/H2: the host seams the sweep found
   // there now, so there is none here - the two must agree or the key and the
   // map disagree about whether a journey may start.
   const follow = w.slice(w.indexOf('function travelFollowPressed() {'));
-  assert.doesNotMatch(follow.slice(0, follow.indexOf('\n  }')), /sharedClockOn\(\)/,
+  assert.doesNotMatch(follow.slice(0, follow.indexOf('\n')), /sharedClockOn\(\)/,   // KB1: one line now - the registry's press
     'the follow key does not stand down on the shared clock either');
   // I4: the coordinates door acts on its refusal, and the popup opens only where it is honoured
   assert.match(w, /if \(!beginAcceleratedTravel\(pick, opts, \{ coords: true \}\)\) townTalk\.say\('You cannot travel there now\.'\);/);
@@ -1806,7 +1806,7 @@ test('TO-FIELD: the accelerated journey waits for the ground; TO-FIELD3 took the
   assert.doesNotMatch(w, /worldTimeScale\(\) <= 1\) hunting\.tick\(\)/, 'no clock gate survives on the roll');
 
   const m = read('src/ui/heldMap.js');
-  assert.match(m, /const _fk = this\._to\?\.settings\?\.followKey;/);
+  assert.match(m, /const _fk = this\._to\?\.followKeyText\?\.\(\);/, 'KB1: the registry\'s FollowPaths, as Controls binds it');
   assert.match(m, /On the road, press \$\{_fk\} to follow it\./);
 });
 

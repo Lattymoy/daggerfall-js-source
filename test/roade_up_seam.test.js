@@ -102,14 +102,14 @@ const HOSTS = [
   // hold townTalk's slot, so BOTH slots have to hear the release.
   {
     file: 'src/scenes/world.js',
-    keyDown: /townTalk\.keydown\(e\)/,
+    keyDown: /townTalk\.keydown\(e, keys\)/,   // KB1: the held Set rides in
     keyUp: /townTalk\.keyup\(e\); modes\?\.keyup\?\.\(e\);/,
     pointerDown: /modes\?\.pointerdown\?\.\(e\)/,
     pointerUp: /townTalk\.pointer\('up', e\); modes\?\.pointerup\?\.\(e\);/,
   },
   {
     file: 'src/scenes/exterior.js',
-    keyDown: /townTalk\.keydown\(e\)/,
+    keyDown: /townTalk\.keydown\(e, keys\)/,   // KB1: the held Set rides in
     keyUp: /townTalk\.keyup\(e\); modes\?\.keyup\?\.\(e\);/,
     pointerDown: /modes\?\.pointerdown\?\.\(e\)/,
     pointerUp: /townTalk\.pointer\('up', e\); modes\?\.pointerup\?\.\(e\);/,
@@ -513,9 +513,9 @@ test('E1: the retired DEPARTURES are gone from both automap windows, and the Led
 // runs, and DaggerfallRestWindow.cs:187-196 / DaggerfallPauseOptions-
 // Window.cs:183-188 can read a bare `GetKeyUp` and be safe.
 //
-// THIS PORT OPENS ON THE PRESS in all four hosts (world.js:7466/:7468,
-// exterior.js:3081/:3089, ui/input.js:519/:525) and then routes that
-// same key's release into the window it just mounted (world.js:7502 ->
+// THIS PORT OPENS ON THE PRESS in all four hosts (world.js:7471/:7473,
+// exterior.js:3088/:3096, ui/input.js:579/:585) and then routes that
+// same key's release into the window it just mounted (world.js:7507 ->
 // townTalk.keyup). The bare `GetKeyUp` therefore is NOT safe here, and
 // the shape DFU uses for exactly this case - a window whose open edge
 // is the key DOWN - is DaggerfallAutomapWindow.cs:703-713's
@@ -534,7 +534,7 @@ const sleeper = () => ({
   career: {}, skillUses: { [SKILLS.Medical]: 0 },
 });
 
-/** world.js:7438's keydown arm, verbatim in shape: the host consumes
+/** world.js:7443's keydown arm, verbatim in shape: the host consumes
  *  the press itself and hands the slot a brand-new window. */
 const openOnKeydown = (tt, win) => { tt.showOverlay(win); return win; };
 
@@ -549,7 +549,7 @@ test('E-FIX LIVE (townTalk): the R that OPENS the rest window does not close it 
     })));
     assert.equal(w.done, false, 'the window stands the instant the host mounts it');
 
-    // world.js:7489 delivers THAT SAME KEY'S release into the slot.
+    // world.js:7494 delivers THAT SAME KEY'S release into the slot.
     tt.keyup({ code: 'KeyR', key: 'r' });
     assert.equal(w.done, false,
       'the opening release closes nothing: its press was the HOST\'s, not this window\'s '

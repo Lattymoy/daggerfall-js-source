@@ -50,7 +50,8 @@ import { potionBundle } from '../systems/potions.js';   // U44: DrinkPotion's bu
 import { SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { tallySkill } from '../systems/skills.js';
 import { morphSelf } from '../systems/lycanthropy.js';   // V2a: the MorphSelf arm the ONE cast engine wires
-import { allyCastable, allyReachFor, allyCastFrame, allyCastCasterLine, ALLY_TOUCH_REACH } from '../systems/allyCast.js';   // ALLY-CAST: a beneficial spell at the party mate under the crosshair
+import { allyCastable, allyReachFor, allyCastFrame, allyCastCasterLine, ALLY_TOUCH_REACH } from '../systems/allyCast.js';
+import { hasResurrect, RESURRECT_REACH, RESURRECT_TEXT, pickFallenBody } from '../systems/resurrect.js';   // RESURRECT1: a fallen party member's body is the target   // ALLY-CAST: a beneficial spell at the party mate under the crosshair
 import { billboardSize, centredBase } from '../world/rmbFlats.js';
 import { createMagicCandle, CANDLE } from './magicCandle.js';   // X11: the Light effect's candle
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // PlayerController.height, the candle's y term
@@ -99,6 +100,10 @@ export function createPlayerMagic({
   // the cast leaves through (online.sendCast), answering whether it went. A host with neither casts as before.
   allyTarget = null,
   castAtAlly = null,
+  // RESURRECT1: the fallen party member's body under the crosshair ({id, acct, name, distance} or null), and the door
+  // the call leaves through (the caster's party pose), answering whether it went
+  fallenTarget = null,
+  raiseFallen = null,
   // ALLY-CAST + AID1 (2026-09-23, the friendly-spells drop, integrated onto ALLY-CAST): THE PARTY MATES AS BODIES.
   // `allyMarks()` answers the party mates standing in this scene - [{id, name, feet, height}] in this host's own frame,
   // or null offline / on a relay that cannot carry the cast frame. The crosshair pick above still decides a cast at
@@ -387,6 +392,20 @@ export function createPlayerMagic({
    *  never crosses. Null with no aim, no pick, a wall short of them, or a pick that throws (the host's seam, not the
    *  cast's law - the spell then goes the ordinary way). The plaque asks the same question (A5), so it never promises
    *  a cast the click would not make. */
+  /** RESURRECT1: the fallen party member's body the cast would raise - the host's pick behind the touch's own
+   *  line-of-sight rule, exactly as allyInReach. */
+  function fallenInReach(eye, dir) {
+    if (!eye || !dir || !fallenTarget) return null;
+    // RESURRECT2: the host hands the fallen party members' bodies in reach; the pick is a LYING body's - where the
+    // crosshair meets the floor, or a crosshair passing over the body - through this engine's own collider, so the
+    // floor the aim lands on is the target's, never a wall in front of it
+    let bodies = null;
+    try { bodies = fallenTarget(eye, dir, RESURRECT_REACH) ?? null; } catch { return null; }
+    if (!Array.isArray(bodies) || !bodies.length) return null;
+    const l = Math.hypot(dir[0], dir[1], dir[2]) || 1;
+    const ground = collider.raycast(eye, [dir[0] / l, dir[1] / l, dir[2] / l], RESURRECT_REACH * 2);
+    return pickFallenBody(eye, dir, bodies, Number.isFinite(ground) ? ground : Infinity);
+  }
   function allyInReach(eye, dir, reach) {
     if (!eye || !dir || !allyTarget) return null;
     let ally = null;
@@ -442,6 +461,18 @@ export function createPlayerMagic({
     // through to the ordinary arm: the spell still does what it always did. AUDIT ALLY-CAST A7: a FREE ready (a
     // trap's payload, readySpellDoesNotCostSpellPoints) is never redirected - it is the trap's spell on the player who
     // sprang it, not a gift they chose to give.
+    // RESURRECT1: a Resurrect goes to the fallen body it was cast at (the gate below the cast refused one with no body
+    // before a point was spent), whatever its range type; the fallen player's own client does the rising
+    if (hasResurrect(sp) && !readiedFree) {
+      const f = fallenInReach(eye, dir);
+      lastCastCost = cost;
+      tallyCastSkills(sp);
+      surfacePlayer();
+      let sent = false;
+      try { sent = !!(f && raiseFallen?.(f)); } catch { sent = false; }
+      say(sent ? RESURRECT_TEXT.cast(f.name) : RESURRECT_TEXT.noBody);
+      return done(true);
+    }
     const allyReach = allyReachFor(sp.rangeType);
     const ally = !readiedFree && allyReach !== null && allyCastable(sp) ? allyInReach(eye, dir, allyReach) : null;
     if (ally && castAtAlly?.(ally.id, allyCastFrame(sp, playerEntity.level, ally.id))) {
@@ -535,7 +566,12 @@ export function createPlayerMagic({
     // fourth gate here that silently ate the click when magicka fell
     // between the ready and the click; DFU fires and clamps instead.
     const cost = readiedFree ? 0 : readiedCost;   // S10: the per-effect skill-scaled cost; free readies spend nothing
-    if (sp.rangeType === 1) {
+    // RESURRECT1: nothing is spent on a Resurrect with no fallen party member under the crosshair
+    const raising = hasResurrect(sp) && !readiedFree;
+    if (raising && !fallenInReach(eye, dir)) { say(RESURRECT_TEXT.noBody); return false; }
+    // AUDIT CONTRIB A1: a Resurrect's touch IS the body - the gate above found one in reach, and the probe below sees
+    // only foes and standing mates, so a Resurrect at a body with no foe beside it was eaten silently here
+    if (sp.rangeType === 1 && !raising) {
       // ByTouch: CastReadySpell aborts BEFORE spending when no target
       // sits in touch range (verbatim - the S9 'spends on a whiff'
       // rule was wrong and died at its audit).
@@ -565,14 +601,16 @@ export function createPlayerMagic({
    *  CasterOnly cast (:350-351). L2-slice (AUDIT 23 magic-8): `free`
    *  is SetReadySpell's noSpellPointCost - a trap's CasterOnly spell
    *  readies ON THE PLAYER for free, BYPASSING the silence gate
-   *  (:315 gates SilenceCheck on !noSpellPointCost) and the cost. */
+   *  (:315 gates SilenceCheck on !noSpellPointCost) and the cost.
+   *  Answers as SetReadySpell does (AUDIT CONTRIB H3): true when the spell
+   *  is in hand or cast, false when a gate refused it. */
   function readySpell(sp, { free = false } = {}) {
-    if (!free && silenceBlocksCast(playerEntity)) { readiedSpell = null; readiedCost = 0; say(SILENCED_TEXT); return; }
+    if (!free && silenceBlocksCast(playerEntity)) { readiedSpell = null; readiedCost = 0; say(SILENCED_TEXT); return false; }
     // ROAD-E6: :315's second term - "Do nothing if silenced OR CAST
     // ALREADY IN PROGRESS". Nothing can be readied while the hands are
     // in motion, and unlike the silence arm this one does NOT clear the
     // spell already readied: DFU returns false before touching a field.
-    if (castInProgress) return;
+    if (castInProgress) return false;
     // :326-328 - CalculateTotalEffectCosts runs ONCE, here, and the
     // number is STORED in readySpellCastingCost. Every later reader
     // (the :337 gate, the :423-425 spend) reads the stored number.
@@ -581,7 +619,7 @@ export function createPlayerMagic({
       readiedSpell = null;
       readiedCost = 0;   // :341-342
       say("You don't have the spell points.");   // youDontHaveTheSpellPoints
-      return;
+      return false;
     }
     readiedSpell = sp;
     readiedFree = free;
@@ -595,13 +633,15 @@ export function createPlayerMagic({
       // the mate says "Cast Heal on Bran", and the next click resolves through releaseFrame's ally arm, or through
       // the CasterOnly arm as ever if they moved. A free ready (A7) fires on the spot as DFU's does; so does one
       // with nobody there.
-      if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH)) { say(PRESS_BUTTON_TO_FIRE_SPELL); return; }
-      castInput(null, null); return;
+      if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH)) { say(PRESS_BUTTON_TO_FIRE_SPELL); return true; }
+      if (!free && hasResurrect(sp)) { say(fallenInReach(lastAim?.eye ?? null, lastAim?.dir ?? null) ? PRESS_BUTTON_TO_FIRE_SPELL : RESURRECT_TEXT.aim); return true; }   // RESURRECT1: a caster-only Resurrect waits for the click, aimed at the body
+      return castInput(null, null) !== false;
     }
     // AUDIT 24 scenes: SetReadySpell's own line, verbatim -
     // GetLocalizedText("pressButtonToFireSpell") = "Press button to
     // fire spell." (Internal_Strings_en, EntityEffectManager.cs:355).
     say(PRESS_BUTTON_TO_FIRE_SPELL);   // classic: the next attack-click CASTS
+    return true;
   }
 
   async function ensureMissileBatch(m) {

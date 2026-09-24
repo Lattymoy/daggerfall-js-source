@@ -86,7 +86,8 @@ test('ROAD-H H5: no host\'s keydown ladder carries the same action arm twice (mu
   // outdoor host (the two ladders; the interior and dungeon hosts
   // reach the action through routeAction's `case 'Rest'`)
   assert.equal((read('src/scenes/exterior.js').match(/if \(act === 'Rest'\)/g) ?? []).length, 1);
-  assert.match(read('src/ui/input.js'), /case 'Rest': ctx\.toggleRest\?\.\(\); return true;/);
+  // KB1: the arm answers FALSE with no door - `true` swallowed a key that did nothing (hudlarge.test.js has the law)
+  assert.match(read('src/ui/input.js'), /case 'Rest': return ctx\.toggleRest \? \(ctx\.toggleRest\(\), true\) : false;/);
 });
 
 test('ROAD-H H5: the reference the folded comment names - R is Rest, and the dispatch tests it once, with no scene gate', {
@@ -228,7 +229,8 @@ function defaultStore() {
   const b = createBindings();
   for (const [c, a] of [['Escape', 'Escape'], ['KeyW', 'MoveForwards'], ['KeyS', 'MoveBackwards'],
     ['KeyA', 'MoveLeft'], ['KeyD', 'MoveRight'], ['Space', 'Jump'], ['ShiftLeft', 'Run'],
-    ['KeyZ', 'ReadyWeapon'], ['Mouse0', 'ActivateCenterObject']]) setBinding(b, c, a);
+    ['KeyZ', 'ReadyWeapon'], ['Mouse0', 'ActivateCenterObject'],
+    ['Tab', 'QuickDial']]) setBinding(b, c, a);   // KB1: the dial's default row
   return b;
 }
 const btn = (h, label) => h.el.children.find((c) => c.textContent === label);
@@ -274,28 +276,30 @@ test('ROAD-H H8: a TAP button never lifts a key the stick is still holding - the
   });
 });
 
-test('ROAD-H H8: the DIAL\'s literal Tab is the same law - `setBinding` cannot steal a code that is in no binding table (mutant: as above)', () => {
-  // Tab is not an InputManager action (inputActions ACTIONS), so the
-  // dial speaks it raw and NOTHING stops a player binding a move axis
-  // to Tab: `setBinding` only steals codes out of the two dicts, and
-  // Tab is in neither. This is the plain, non-combo shape of the same
-  // collision.
+test('ROAD-H H8: the DIAL is an action since KB1, so moving another action onto its key takes the key, and the button presses what the dial holds (mutant: tap the literal Tab)', () => {
+  // H8 was written when Tab was no action (the dial spoke it raw), so a
+  // move axis bound to Tab and the dial SHARED the code and the fixture
+  // pinned that nothing tore the walk out. KB1 made the dial the
+  // registry's QuickDial: the one-key-one-action law now holds here too.
+  // Tab moved to MoveForwards takes it off QuickDial (setBinding steals),
+  // so the dial holds nothing and its button presses NOTHING (AUDIT 62
+  // F8: an unbound action never falls back to a default code); rebind the
+  // dial and the button presses the new key.
   withTouchDom((keys, attach) => {
     const store = defaultStore();
+    assert.equal(getBinding(store, 'QuickDial'), 'Tab');
     setBinding(store, 'Tab', 'MoveForwards');
     setBindings(store);
+    assert.equal(getBinding(store, 'QuickDial'), null, 'the dial gave its key up - one key, one action');
     const canvas = stubEl();
     const h = attach(canvas, { look() {}, attack() {}, tap() {}, dial: true });
-    canvas.fire('touchstart', tev('touchstart', [[1, 200, 300]], 0));
-    canvas.fire('touchmove', tev('touchmove', [[1, 200, 260]], 20));   // forward, under the run throw
-    assert.deepEqual(log(keys, 'keydown'), ['Tab'], 'forward is Tab now');
+    btn(h, '◆').fire('touchstart', tev('touchstart', [], 0));
+    assert.deepEqual(log(keys, 'keydown'), [], 'an unbound dial presses nothing - not a frozen Tab');
     keys.length = 0;
-    btn(h, '◆').fire('touchstart', tev('touchstart', [], 40));
-    assert.deepEqual(log(keys, 'keydown'), ['Tab'], 'the dial still gets its down edge - the button is not made dead');
-    assert.deepEqual(log(keys, 'keyup'), [], 'and the walk is not cancelled under the finger');
-    keys.length = 0;
-    canvas.fire('touchend', tev('touchend', [[1, 200, 260]], 60));
-    assert.deepEqual(log(keys, 'keyup'), ['Tab'], 'the holder is still the one that lets go');
+    setBinding(store, 'KeyG', 'QuickDial');
+    setBindings(store);
+    btn(h, '◆').fire('touchstart', tev('touchstart', [], 20));
+    assert.deepEqual(log(keys, 'keydown'), ['KeyG'], 'the button presses whatever QuickDial holds');
   });
 });
 
@@ -312,7 +316,7 @@ test('ROAD-H H8: a HELD button and a stick axis on the SAME resolved code do not
   // code out of the OTHER dict FIRST - `var alt = primary ?
   // secondaryActionKeyDict : actionKeyDict; if (alt.ContainsKey(code))
   // alt.Remove(code);` (InputManager.cs:730-734), ported at
-  // inputActions.js:576-577 - so EITHER order collapses it.
+  // inputActions.js:744-745 - so EITHER order collapses it.
   const collapse = defaultStore();
   setBinding(collapse, 'ShiftLeft', 'Jump', false);
   assert.equal(collapse.primary.get('ShiftLeft'), undefined,
@@ -328,7 +332,7 @@ test('ROAD-H H8: a HELD button and a stick axis on the SAME resolved code do not
   // map-set with only a SAME-dict check: `if (!dict.ContainsKey(key)
   // && actionVal != Actions.Unknown) dict.Add(key, actionVal);`
   // (LoadActionKeybinds, InputManager.cs:1950-1969; loadActionKeybinds,
-  // inputActions.js:756-766, whose own comment says "Raw map-set, NOT
+  // inputActions.js:925-935, whose own comment says "Raw map-set, NOT
   // setBinding"). A hand-edited KeyBindings.txt that puts Jump on the
   // run key as a SECONDARY - with the primary Space spent on something
   // else - loads exactly as written, and SURVIVES the startup autofill

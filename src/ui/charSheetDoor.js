@@ -37,7 +37,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
-import { actionOf } from './input.js';   // MAC-C: the REGISTRY's answer for the two window keys
+import { eventAction } from './input.js';   // MAC-C: the REGISTRY's answer for the two window keys
 import { mountEnhancedChunk, paintChunkNotice } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door, and the notice it paints when a chunk is gone
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
 import { CharSheet, LevelUpScreen, charSheetArtLoaded } from './charsheet.js';
@@ -250,10 +250,10 @@ function enhancedSheetPageOverlay(hooks, entity = null) {
   // from the other side - a const here would be in its own temporal
   // dead zone for any caller that fired early.
   function onSheetKey(e) {
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.metaKey) return;
     const t = e.target;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
-    const act = actionOf(e);
+    const act = eventAction(e);   // AUDIT KB1: the event's own read - a sheet opened by a combo closes on it
     if (act !== 'CharacterSheet' && !(act === 'Inventory' && hooks.inventory)) return;
     // A MODAL OVERLAY OWNS ITS INPUT (U50's law, the same one
     // enhancedMenu's handler states): on CAPTURE and stopped, so the
@@ -261,6 +261,7 @@ function enhancedSheetPageOverlay(hooks, entity = null) {
     // press is closing - never sees a key this screen used.
     e.preventDefault();
     e.stopPropagation();
+    if (e.repeat) return;   // AUDIT KB1: a held key's repeat is swallowed, not an open-shut flicker
     const toPack = act === 'Inventory';
     close();                              // the sheet's own close law runs FIRST...
     if (toPack) hooks.inventory();        // ...and this replaces the slot it just freed

@@ -613,6 +613,7 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
       // it stays painted unless told otherwise - so a hidden HUD must
       // reach its hide door rather than be skipped by an early return.
       hidden: cursorActive || !hudRenderEnabled(),
+      paused: !!cursorActive,   // AUDIT CONTRIB H1: the hotbar's keys follow the game's pause, not the HUD's visibility
       // PX30b: the two things the reference's ability bar would hold.
       // drawHud already takes an options bag; a host that knows
       // neither passes neither, and the plaque never draws.

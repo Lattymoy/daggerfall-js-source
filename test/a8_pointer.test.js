@@ -126,9 +126,11 @@ test('A8: every host reads the one gate, and its FLAG is retired', () => {
     // and E survives beside it - "Mouse2 + E preserved"
     // MWCROUCH: the port's own E is an EDGE now (`pressedCode`), not a
     // held read - the derivation it replaced dropped any tap shorter
-    // than a frame. The departure it states is untouched: E activates,
-    // beside Mouse0, on the raw code rather than a binding.
-    assert.match(s, /pressedCode\((keyEdge|latch\.edge), 'KeyE'\)/, `${h} keeps the port's own E`);
+    // than a frame. KB1: and the departure is a BINDING now - E is the
+    // port's Interact action, activating beside Mouse0, read on the edge
+    // like every press, so a rebind moves it.
+    assert.match(s, /pressed\((keyEdge|latch\.edge), keys, 'Interact'\)/, `${h} keeps the port's own E, as the Interact action`);
+    assert.ok(!/pressedCode\(/.test(s), `${h}: no raw code read is left`);
   }
   // the flag in the input map's header too
   const input = readFileSync(join(root, 'src/ui/input.js'), 'utf8');

@@ -327,7 +327,7 @@ let last = '';
 
 /**
  * WHERE IT HANGS - AUDIT LV2 F4, and QS3's rule read the right way
- * round (ui/enhancedHud.js:374-377): `.hud-bottom` is a CENTRED column
+ * round (ui/enhancedHud.js:430-433): `.hud-bottom` is a CENTRED column
  * anchored to the foot of the screen, so a centred thing that belongs
  * above the vitals goes IN it and rides it; only a CORNER block is
  * anchored to the HUD root and does the arithmetic itself, "because a
@@ -390,7 +390,7 @@ function rowNode(doc, r) {
   // THE LEVEL'S ROW NAMES THE WAY IN, and only the level's: a skill
   // line with a key on it would read as an instruction.
   // AUDIT LV2 F5: ...and only when there IS one. `buttonText(null)` is
-  // KeyCode.None's own string, "NONE" (systems/controlsConfig.js:267),
+  // KeyCode.None's own string, "NONE" (systems/controlsConfig.js:294),
   // so a player who cleared the sheet binding was shown a plate reading
   // A LEVEL AWAITS / NONE - an instruction to press a key called None.
   // The row still says a level is waiting; it just stops naming a way

@@ -60,11 +60,9 @@ export const TRAVEL_OPTIONS_VENDOR = 'travel-options';
  *  DefaultStartingAcceleration choice indexes. */
 export const START_ACCEL_VALUES = Object.freeze([1, 2, 3, 5, 10, 15, 20, 25, 30, 40, 50]);
 
-/** :132 - the six keys the FollowPathsKey choice indexes, by their
- *  Unity KeyCode names. Index 6 in the setting ("Custom Key Bind")
- *  is past the end of this list, which is exactly how the mod tells
- *  the custom arm apart (:224-227). */
-export const FOLLOW_KEYS = Object.freeze(['None', 'F', 'G', 'K', 'O', 'X']);
+/* KB1: :132's six follow keys, and the custom bind past them, are the registry's FollowPaths action now
+ * (systems/inputActions.js MOD_ACTIONS carries the six, for the one-time carry of a player's old choice) - the
+ * key is bound in Controls, beside every other key, and read with `pressed` like them. */
 
 /** :1214, AttemptAvoidEncounter - the seconds encounters are ignored
  *  for after a successful avoidance. Unscaled real time, so the
@@ -112,19 +110,6 @@ export function readTravelOptionsSettings(read = modSetting) {
   const waterwaysEnabled = roadsIntegration ? (!!get('RoadsIntegration.EnableWaterways') && riversStreams) : false;
   const streamsToggle = roadsIntegration ? (!!get('RoadsIntegration.EnableStreamsToggle') && riversStreams) : false;
 
-  // :224-232 - the follow key: one of the six by index, else the
-  // custom bind, which falls back to F when it cannot be parsed
-  // (:293-300, GetFollowKeyFromText).
-  let followKey = 'None';
-  if (roadsIntegration) {
-    const idx = get('RoadsIntegration.FollowPathsKey') | 0;
-    if (idx < FOLLOW_KEYS.length) followKey = FOLLOW_KEYS[idx];
-    else {
-      const custom = String(get('RoadsIntegration.FollowPathsCustomKeyBind') ?? '').trim();
-      followKey = custom.length ? custom : 'F';
-    }
-  }
-
   const speedPenalty = get('CautiousTravel.SpeedPenalty') | 0;
   return Object.freeze({
     // :203-207
@@ -152,8 +137,8 @@ export function readTravelOptionsSettings(read = modSetting) {
     // :325-329
     teleportCost: !!get('Teleportation.EnablePaidTeleportation'),
     // :316-323 and :234
+    // KB1: the follow arm stands wherever the roads do (:224-232's `None` is an unbound FollowPaths now)
     roadsIntegration, variableSizeDots, roadsJunctionMap, waterwaysEnabled, streamsToggle,
-    followKey,
     markLocationColor: colorKeyRgba(get('RoadsIntegration.MarkLocationColor')),
     // :236-246 - only read while the junction map is on
     persistentJunctionMap: roadsJunctionMap ? !!get('RoadsJunctionMap.PersistentMap') : false,
@@ -722,10 +707,10 @@ export function createTravelOptions(deps = {}) {
   }
 
   /** :1246-1256, DisplayHelpInfo - the H key's message box. The three
-   *  placeholders are the follow key, the TravelExit binding and the
-   *  TravelMap binding. */
+   *  placeholders are the follow key (KB1: the FollowPaths binding), the
+   *  TravelExit binding and the TravelMap binding. */
   function helpText() {
-    return format(localize('HelpInfoSDF'), st.settings.followKey,
+    return format(localize('HelpInfoSDF'), deps.binding?.('FollowPaths') || 'None',
       deps.binding?.('TravelExit') ?? 'V', deps.binding?.('TravelMap') ?? 'M');
   }
 
@@ -777,7 +762,7 @@ export function createTravelOptions(deps = {}) {
         return { drive, handled: true, interrupted: true };
       }
       // :1358-1362 - the follow key stops a followed journey.
-      if (st.destinationName == null && st.settings.followKey !== 'None' && !frame.inputPaused && frame.followKeyDown) {
+      if (st.destinationName == null && st.settings.roadsIntegration && !frame.inputPaused && frame.followKeyDown) {
         if (ui?.isShowing) ui.closeWindow();
       }
       // :1364-1375 - crossing another path while walking a town's ring
@@ -824,7 +809,7 @@ export function createTravelOptions(deps = {}) {
         if (dc > st.diseaseCount) { interruptTravel(); deps.showHealthStatus?.(); }
         st.diseaseCount = dc;
       }
-    } else if (st.settings.followKey !== 'None' && !frame.inputPaused && frame.followKeyDown && frame.isPlayerOnHUD) {
+    } else if (st.settings.roadsIntegration && !frame.inputPaused && frame.followKeyDown && frame.isPlayerOnHUD) {
       // :1438-1446 - the follow key, with no journey running
       if (frame.isPlayerInside) return { handled: true };
       if (deps.enemiesNearby?.()) messageBox(deps.text?.('cannotTravelWithEnemiesNearby') ?? 'You cannot travel with enemies nearby.');
@@ -897,6 +882,7 @@ export function createTravelOptions(deps = {}) {
     beginTravel, resumeTravel, beginTravelToCoords, clearTravelDestination,
     followPath, beginPathTravel, selectNextPath, circumnavigateLocation,
     interruptTravel, update, helpText, messages,
+    followKeyText: () => deps.binding?.('FollowPaths') || null,   // KB1: the FollowPaths key's name, or null unbound
     initLocationRects, setLocationRects,
     onEncounter, onEnterLocationRect, onMapPixelChanged, onRegionIndexChanged,
     drawJunctionMap, updateJunctionMap, disableJunctionMap,

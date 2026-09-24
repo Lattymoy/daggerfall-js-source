@@ -28,7 +28,7 @@ import {
   PAD_GLYPHS, PAD_FAMILIES, GLYPH_SIZE, GLYPH_AXIS_KEYS, padFamilyOf, padFamily, setPadFamily,
   unityButtonGlyph, glyphSvg, _clearGlyphCache,
 } from '../src/ui/padGlyphs.js';
-import { quickslotTag, quickslotOffTag, torchTag, tagKey, CELL_ACTIONS, tagText } from '../src/ui/quickslotTags.js';
+import { quickslotTag, quickslotOffTag, tagKey, CELL_ACTIONS, tagText } from '../src/ui/quickslotTags.js';
 import { createBindings, setBinding } from '../src/systems/inputActions.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -183,15 +183,13 @@ test('QS3 the tag law: the pad while the pad is live, the key otherwise, and NOT
     assert.deepEqual(quickslotOffTag(kind, key), { kind: 'key', text: '4' }, `the ${kind} cell names its key`);
   }
   assert.deepEqual(quickslotOffTag('swap', key), { kind: 'glyph', family: 'xbox', code: 'JoystickButton3' });
-  // The mod's own key is still a tag a caller can ask for - HT4 kept the
-  // mod's keys, and this one still presses the same act.
-  assert.deepEqual(torchTag(() => 'O'), { kind: 'key', text: 'O' });
-  // Handheld Torches binds a KeyCode name in its own settings, not an
-  // InputManager action - so the torch cell is keyboard only and reads
-  // the mod's store (HT4 moved its default to O).
-  assert.equal(torchTag(() => 'None'), null, 'an unbound mod key is no tag either');
-  assert.deepEqual(torchTag(() => 'Alpha4'), { kind: 'key', text: '4' });
-  assert.equal(torchTag(() => { throw new Error('no store'); }), null, 'a store that is not there is not a key');
+  // KB1: the torch mod's key is the registry's TorchToggleLight action now (it was a KeyCode name in the mod's own
+  // store, read by `torchTag` - keyboard only, and read by no caller since QS4). The ONE tag function names it, so
+  // it follows a rebind and can wear a pad glyph like every other chip.
+  setBinding(store, 'KeyO', 'TorchToggleLight');
+  assert.deepEqual(quickslotTag('TorchToggleLight', key), { kind: 'key', text: 'O' });
+  setBinding(store, 'Numpad4', 'TorchToggleLight');
+  assert.deepEqual(quickslotTag('TorchToggleLight', key), { kind: 'key', text: 'KP4' }, 'a rebind moves the chip');
   // The tag's string, which is what the HUD writes on.
   assert.equal(tagKey({ kind: 'key', text: '1' }), 'k:1');
   assert.equal(tagKey({ kind: 'glyph', family: 'ps', code: 'JoystickButton0' }), 'g:ps:JoystickButton0');
@@ -562,7 +560,7 @@ test('QS the switch: the features row hides the DIAMOND alone - the caption and 
   // The read is the prefs shelf's, each frame, guarded on change like every other write here.
   assert.match(HUD, /const off = getPref\('quickslots'\) === false;/);
   assert.match(HUD, /parts\.quick\.classList\.toggle\('nodiamond', off\);/);
-  assert.match(HUD, /if \(off\) return;/, 'off skips the cells and the tags, nothing else');
+  assert.match(HUD, /if \(off \|\| hb\) return;/, 'off skips the cells and the tags, nothing else - and so does HB1\'s hotbar, which puts the diamond away');
   // ...and the rule hides the diamond, not the block: the mode word lives in the caption.
   assert.match(CSS, /\.hud-quick\.nodiamond \.hud-qdiamond \{ display: none; \}/);
   assert.doesNotMatch(CSS, /\.hud-quick\.nodiamond \{ display: none/);
