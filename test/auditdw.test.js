@@ -81,10 +81,11 @@ test('AUDIT-DW F1: the list drawer decodes THE RECORD it draws before the upload
   for (let i = 0; i < 6; i++) await Promise.resolve();
   assert.ok(d2(renderer, { s: 1, ox: 0, oy: 0 }, { group: 'Books', templateIndex: 277 }, [0, 0, 100, 100], 0));
   // the same seam in the other three doors, by source
-  for (const f of ['src/ui/itemScroller.js', 'src/ui/nativeInventory.js']) assert.match(rd(f), /await icons\.preloadRecord\?\.\(img\.archive, img\.record, img\.dye\);/, f);
+  // DISC22-D: the drawer's own decode - the hook is a spy's seam, and a host without it decodes through the module
+  for (const f of ['src/ui/itemScroller.js', 'src/ui/nativeInventory.js']) assert.match(rd(f), /await preloadIconRecord\(icons, img\);/, f);
+  assert.match(rd('src/ui/itemScroller.js'), /const ask = icons\?\.preloadRecord \?\? \(\(archive, record, dye\) => preloadTextureRecord\(archive, record, 0, 'Albedo', dye\)\.catch\(\(\) => null\)\);/);
   assert.match(rd('src/ui/textureCanvas.js'), /\? preloadTextureRecord\(archive, record, 0, 'Albedo', dye\)\.catch\(\(\) => null\)/, 'the DOM door');
   assert.match(rd('src/ui/paperDoll.js'), /await preloadTextureRecord\(archive, record, 0, 'Albedo', dye\);[^\n]*\n\s+const swap = decodedTextureTopDown/, 'the doll');
-  assert.match(rd('src/scenes/dataPipeline.js'), /const preloadRecord = \(archive, record, dye = null\) => preloadTextureRecord\(archive, record, 0, 'Albedo', dye\)\.catch\(\(\) => null\);/, 'the pipeline hands it out');
   assert.match(rd('src/combat/diverseWeaponsIcons.js'), /gate: moddedWeaponHUDAnimsEnabled, lazy: true/, 'the mod\'s icons are lazy');
   assert.match(rd('src/systems/textureReplacement.js'), /entry\.archive === Number\(archive\) && !entry\.lazy && !_decoded\.has\(key\)/, 'and the archive preload skips them');
 });

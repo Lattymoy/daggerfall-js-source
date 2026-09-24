@@ -491,3 +491,147 @@ cites it missed were moved. Six quotations it had rewritten are restored.
 flag, so a load drops them too: the survival needs' (`needs.js`), rewritten
 every minute, and the Mace of Molag Bal's bonus (`artifactEffects.js`),
 which decays within twelve minutes anyway.
+
+---
+
+# DISC22 — five from Discord and one of Mac's (2026-09-24)
+
+Mac: *"repair magical items should be enabled by default and required
+online"*, with the screenshots: kurkku (*"could replace the controls button
+here with the full settings menu"*, over the classic pause window; *"Steel
+light flail sprite doesn't show up"*), Tony H. (*"When using Classic UI or
+GrimoirUI I'm not able to increase the speed from 10x in accelerated travel
+... online"*) and Skibbster (*"Unable to share quests with players if
+you've previously completed the same quest"*). Satranath's hotbar and quick
+loot on the classic skins, GrimoireUI's parchment loot sheet (DISC22-C) and
+the enhanced dungeon map (DISC22-G) are their own slices.
+
+## DISC22-A: enchanted items mended, and online the room's rule
+
+DFU ships `Controls/AllowMagicRepairs` False: a smith turns an enchanted
+item away (`repairService.js` `repairRefusal`, the magic arm). The port's
+default is True now (`settings.js` `PORT_DEFAULTS.Controls`, over the
+generated DFU table, which stays exactly as DFU ships it). Online it is
+forced: `onlineLane.js` `ONLINE_FORCED_SETTINGS` is the lane's fourth read
+path beside `uiSkin`, `getPref` and `modSetting`. `settings.js` `getData`
+asks it first, so the store is neither read nor written online and a
+player's own False returns offline. `effectiveSettings` overlays it, so the
+settings screen draws what the game reads, and the row is locked with its
+reason (`enhancedMenu.js` `ONLINE_SETTING_NOTE`), as every forced row is.
+
+## DISC22-B: the classic pause window's Controls button opens Settings
+
+DFU's CONTROLS button opens its controls grid alone, and on the classic
+skin that grid was the only settings screen a game in progress could reach.
+`pauseDoor.js` `classicPauseWithSettings` hands the classic window an
+`openSettings` hook. `pauseWindow.js` wires it to CONTROLS, falling back to
+the grid on a node host with no document. It opens the port's whole
+settings screen on its Settings page (`enhancedMenu.js`: a landing may name
+a rail section now; Controls is one of its categories, FT16). That screen's
+Resume comes back to the classic pause window with its button live again,
+as DFU's controls window pops back to the window it was opened from.
+
+## DISC22-D: the Steel Light Flail drew nothing
+
+**Cause.** The Light Flail is Roleplay Realism Items' template 514, an
+archive that exists only as the mod's PNGs, one per metal
+(`514_0-0_Steel.png`), registered **lazy**: decoded when drawn, as DFU's
+`GetItemImage` imports it (ItemHelper.cs:458). AUDIT-DW F1 made that decode
+an *optional* hook on the host's icons object (`icons.preloadRecord?.`),
+and none of the seven scenes that build that object passed it. Nothing was
+decoded, the mod-only archive's upload threw on an empty image, the list
+drawer's `.catch(() => {})` swallowed it, and its warm set never asked
+again. Every RRI weapon and armour icon failed the same way on the classic
+and Grimoire skins, and Diverse Weapons' fell back to the classic art. The
+enhanced door failed separately. It preloaded the whole archive, which
+skips a lazy entry, and read the record with no dye, which asks for the
+bare name (`514_0-0.png`, not the metal's file).
+
+**Fix.** The door that draws owns the decode (`itemScroller.js`
+`preloadIconRecord`, used by both list drawers), as the paper doll's
+already did. `icons.preloadRecord` is kept only as a test's spy, and the
+pipeline's handout, which no scene took, is gone. `textureCanvas.js`'s
+vendor arm decodes this record by its dye (`preloadTextureRecord`), and the
+two enhanced trade screens pass the dye as the pack does.
+
+## DISC22-E: accelerated travel stuck at 10x on the classic skins
+
+**Cause.** 10x is not a cap. It is the spinner's start value, and the
+spinner never heard the click. AUDIT-TO1 I2 gated the classic strip's
+clicks on DFU's `cursorActive` flag, but the port frees the pointer without
+that flag:
+
+- the chat and the social panels release it with the flag down
+  (`world.js` `surfaceOpen`);
+- online, Enter opens the chat instead of toggling the flag (KB1);
+- Escape releases it;
+- a finger never holds it.
+
+The gate refused, and the click relocked the pointer. Map, Camp and Exit
+have keys, but the spinner is mouse-only, so only it looked broken. The
+enhanced strip is DOM and was never affected.
+
+**Fix.** `travelControlUI.js` `stripTakesClick` gates on the lock itself
+(`document.pointerLockElement === canvas`). What I2 guarded against, a
+locked click whose frozen coordinates land on a parked control, is still
+refused. A click with the pointer free reaches the strip.
+
+## DISC22-F: a quest finished once could never be shared again
+
+**Cause.** AUDIT DROPS A2 remembers a quest finished under a share, so a
+partner who is behind cannot re-send it and pay its rewards twice. It
+remembered the quest's *name*. So once a repeatable quest (every guild and
+faction quest) had been finished with the party, every later share of that
+name was refused as "done" for the rest of the session, and the memory
+outlived even a load. The refusal also read *"... but you already has this
+quest"*: the fragments were third person under world.js's "but you".
+
+**Fix.** The copy carries an identity. `Quest.shareId` is minted the first
+time a quest is shared (`machine.js` `getShareableQuestData`), carried in
+its envelope and its save, and restored on receipt, so both ends of a share
+hold the same id. The finished memory is keyed on it
+(`finishedShareIds`, `hasFinishedSharedCopy`). An envelope from a client
+that stamps no id falls back to A2's name. `clearState` empties the share
+memory with the game it belonged to. The refusal fragments are second
+person. (The "already have" refusal Skibbster saw for a quest finished
+before, and still standing as a week's tombstone, was AUDIT 68's
+S29-share-name-tombstoned, already on main.)
+
+## Pins
+
+- `test/disc22a_magic_repairs.test.js` (4), through the real store and the
+  real repair law:
+  - the port's default, with DFU's table untouched;
+  - a stored Off standing offline;
+  - online, forced over a stored Off, with the screen's value and the
+    store untouched;
+  - the locked row.
+- `test/disc22b_pause_settings.test.js` (3):
+  - the classic window's CONTROLS opens the enhanced screen;
+  - the grid stands with no document;
+  - the landing and the Resume back, by source.
+- `test/disc22d_flail_icon.test.js` (3), over the real pipeline, the real
+  drawer with the icons object exactly as the scenes build it, the
+  renderer's real colour gate and the mod's real PNGs:
+  - the Steel file fetched, uploaded as `514_0#ui_Steel` at 48x76, and
+    drawn;
+  - the enhanced door drawing a Daedric one from its own file;
+  - the trade screens' dye.
+- `test/disc22e_travel_click.test.js` (4):
+  - the predicate's arms;
+  - the real strip stepping 10 to 25 and back;
+  - the host asking the lock.
+- `test/disc22f_share_copy.test.js` (4), through the real machine and share
+  path:
+  - the finished copy refused;
+  - the next copy and a third player's received;
+  - the id stamped once and saved;
+  - an id-less envelope answered by name;
+  - a load forgetting the memory;
+  - the second-person refusal.
+- `test/auditdw.test.js` and `test/to1_travelOptions.test.js` follow the
+  new shapes.
+
+Mutants: `tools/mutants/disc22.json`, 25, all dead.
+`AUDITDW-F1-the-list-drawer-uploads-before-the-record-is-decoded`
+(`dw1.json`) follows the call's new form.

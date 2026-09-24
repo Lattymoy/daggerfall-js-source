@@ -287,6 +287,12 @@ export const TICKS_PER_SECOND = 10;
 export { SECONDS_PER_WEEK };
 /** QuestMachine.IsProtectedQuest: the main-quest spine never
  *  error-terminates (case-insensitive, as C#). */
+/** DISC22-F: a shared copy's identity - unique across every machine in a room, so a receiver can tell the copy it
+ *  already finished from a new one of the same quest. */
+export function mintShareId() {
+  const r = globalThis.crypto?.randomUUID?.();
+  return r ?? `s${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+}
 export const PROTECTED_QUESTS = Object.freeze(['S0000999', 'S0000977', '_BRISIEN']);
 const isProtectedQuest = (quest) => PROTECTED_QUESTS.some((n) => n.toLowerCase() === (quest.questName ?? '').toLowerCase());
 
@@ -331,6 +337,13 @@ export class QuestMachine {
     // resync or a fresh receipt of the same name is refused, so a partner who is behind can neither drag a
     // finished quest back into play nor pay its rewards a second time.
     this.finishedSharedQuestNames = new Set();
+    // DISC22-F (2026-09-24, Skibbster: "Unable to share quests with players if you've previously completed the same
+    // quest"): the finished shared COPIES, by their share identity (Quest.shareId, stamped the first time a quest is
+    // shared and carried in its envelope). A2's guard is against one copy paying twice - a partner who is behind
+    // re-sending THAT quest - and a name cannot tell that copy from a new one: a repeatable quest done under a share
+    // refused every later share of the same name as "done". The name set stays for an envelope from a client that
+    // stamps no identity.
+    this.finishedShareIds = new Set();
     // AUDIT DROPS A2: uid -> the `task:action` keys already re-armed once - a reward fires at most once per
     // action for the life of the quest, whatever order the resyncs arrive in.
     this._rearmed = new Map();
@@ -939,6 +952,12 @@ export class QuestMachine {
     // replaced wholesale by the player restore that follows.
     this.quests.clear();
     this.siteLinks = [];
+    // DISC22-F: the share memory is this session's game's - a load starts another, so it goes with the quests it
+    // spoke of (none of it is saved; carried over, a name finished in one game refused the next game's share)
+    this.sharedQuestNames.clear();
+    this.finishedSharedQuestNames.clear();
+    this.finishedShareIds.clear();
+    this._rearmed.clear();
     this.questsToInvoke = [];
     this.lastNPCClicked = null;
     this.lastNPCClickedHost = null;   // AUDIT 68 S29-behaviour-registry-leak: the click's scene half goes with it
@@ -1012,7 +1031,9 @@ export class QuestMachine {
    *  would otherwise miss every time, silently. */
   getShareableQuestData(uid) {
     const quest = this.quests.get(Number(uid));
-    return quest ? quest.getSaveData() : null;
+    if (!quest) return null;
+    quest.shareId ??= mintShareId();   // DISC22-F: the copy's identity, stamped the first time it is shared out, then carried
+    return quest.getSaveData();
   }
 
   /** A questName:index -> isComplete snapshot of every action this
@@ -1247,6 +1268,11 @@ export class QuestMachine {
 
   /** AUDIT DROPS A2: was a quest by this name finished (tombstoned) while kept in sync with the party? */
   hasFinishedSharedQuestNamed(questName) { return this.finishedSharedQuestNames.has(questName); }
+  /** DISC22-F: was THIS shared copy (its envelope's shareId) finished here? A copy with no identity (an older
+   *  client's envelope) is answered by name, A2's original reading. */
+  hasFinishedSharedCopy(questName, shareId) {
+    return typeof shareId === 'string' && shareId ? this.finishedShareIds.has(shareId) : this.finishedSharedQuestNames.has(questName);
+  }
 
   /** The reflection stand-in: the resource registry and the ACTION
    *  registry keyed by each template's explicit typeName (built
@@ -1319,6 +1345,7 @@ export class QuestMachine {
     // AUDIT DROPS A2: a finished shared quest leaves the live-sync set and is remembered as finished - see the
     // constructor's own note on the two sets
     if (this.sharedQuestNames.has(quest.questName)) { this.sharedQuestNames.delete(quest.questName); this.finishedSharedQuestNames.add(quest.questName); this._rearmed.delete(quest.uid); }
+    if (quest.shareId) this.finishedShareIds.add(quest.shareId);   // DISC22-F: this copy, whatever its name
     for (const resource of quest.resources.values()) resource.dispose();
     for (const task of quest.tasks.values()) task.disposeActions();
     // RemoveAllQuestSiteLinks (QuestMachine.cs:1042-1048): a

@@ -47,6 +47,7 @@
 
 import { SETTINGS_DEFAULTS } from './settingsDefaults.js';
 import { appStorage } from './appStorage.js';   // DA1: the storage seam
+import { onlineForcedSetting, ONLINE_FORCED_SETTINGS } from './onlineLane.js';   // DISC22-A: the room's settings, read first online
 
 const STORAGE_KEY = 'dagger.settings.v1';
 
@@ -333,9 +334,15 @@ export function tierOf(key) {
 // swinging, and the drag mode is one row away in the controls screen
 // for whoever wants it. The stored file carries overrides alone, so a
 // player who never touched the row takes this default too.
+//
+// DISC22-A (Mac, 2026-09-24: "repair magical items should be enabled by
+// default and required online"): AllowMagicRepairs. DFU ships False - a
+// smith turns an enchanted item away (RepairsObjects' magic arm). The
+// port's default mends it; online the lane forces it (onlineLane.js
+// ONLINE_FORCED_SETTINGS), so a player's own False stands offline only.
 export const PORT_DEFAULTS = Object.freeze({
   Enhancements: Object.freeze({ PlayerTorchFromItems: 'True' }),
-  Controls: Object.freeze({ WeaponSwingMode: '2' }),
+  Controls: Object.freeze({ WeaponSwingMode: '2', AllowMagicRepairs: 'True' }),
 });
 
 /** The default in effect: the port's, else the vendored ini's. Every
@@ -389,6 +396,8 @@ export function saveSettings() {
  *  else undefined (an unknown key - DFU throws; we return undefined
  *  and let the typed getter's own fallback speak). */
 function getData(section, key) {
+  const forced = onlineForcedSetting(section, key);   // DISC22-A: online, the room's value - the store is neither read nor written
+  if (forced !== undefined) return forced;
   if (_values === null) loadSettings();
   return _values?.[section]?.[key] ?? defaultOf(section, key);
 }
@@ -482,6 +491,10 @@ export function effectiveSettings() {
   const out = {};
   for (const [s, keys] of Object.entries(DEFAULTS)) {
     out[s] = { ...keys, ...(PORT_DEFAULTS[s] ?? {}), ...(_values[s] ?? {}) };
+    for (const k of Object.keys(ONLINE_FORCED_SETTINGS[s] ?? {})) {   // DISC22-A: what the screen shows is what the game reads
+      const forced = onlineForcedSetting(s, k);
+      if (forced !== undefined) out[s][k] = forced;
+    }
   }
   return out;
 }

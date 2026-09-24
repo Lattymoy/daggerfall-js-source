@@ -8,7 +8,7 @@
 // `pauseWhileOpened = false` and a clear background (:83-84), which is
 // a window that does not stop the game - the player keeps walking
 // underneath it. The port's overlay slot is the opposite: a townTalk
-// overlay HOLDS the motor and the world clock (scenes/world.js:12603,
+// overlay HOLDS the motor and the world clock (scenes/world.js:12605,
 // `_overlayHeld`), which is exactly what a journey must not do. So this
 // panel lives on the HUD layer, drawn by the host's `drawHud` pass and
 // clicked through the host's pointer ladder beside the large HUD's own
@@ -106,6 +106,20 @@ export async function preloadTravelControlArt(deps = {}) {
 }
 export const travelControlArtLoaded = () => !!_art;
 export function _setTravelControlArtForTests(art) { _art = art; }
+
+/** DISC22-E (2026-09-24, Tony H.: "When using Classic UI or GrimoireUI I'm not able to increase the speed from 10x in
+ *  accelerated travel ... online"): DOES THE CLASSIC STRIP TAKE THIS CLICK? AUDIT-TO1 I2 gated it on DFU's
+ *  `cursorActive` flag, for the right reason - with the pointer LOCKED, clientX/clientY are frozen at the last free
+ *  position, so a world click landed on whatever control the cursor had been parked over. But the port frees the
+ *  pointer without that flag: the chat, the friends panel and the F-menu release it with the flag DOWN (world.js
+ *  surfaceOpen), online Enter opens the chat rather than toggling it (KB1), Escape releases it, and a finger never
+ *  holds it. A player looking at a free cursor over the spinner clicked, the gate refused, and the click relocked
+ *  the pointer instead - Map, Camp and Exit have keys, so only the mouse-only spinner looked broken, stuck at its
+ *  start value of 10. The gate is the LOCK itself now: a locked click (frozen coordinates) is still refused, a click
+ *  with the pointer free reaches the strip. The enhanced strip is DOM and takes its own clicks. */
+export function stripTakesClick({ showing = false, paused = false, locked = false, button = 0, enhancedDom = false } = {}) {
+  return !!showing && !paused && !locked && button === 0 && !enhancedDom;
+}
 
 /** The panel. `deps`: { onClose, onCancel, onTimeAccelerationChanged,
  *  binding } - the mod's three events (:245-252, :77-79) and the host's

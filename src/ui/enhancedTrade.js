@@ -540,7 +540,7 @@ function setTab(t) { tab = t; render(); }
 // ── ROWS ──────────────────────────────────────────────────────────
 
 function itemTile(line) {
-  const src = line.image ? requestIcon(line.image.archive, line.image.record, { scale: 2, onReady: render }) : null;
+  const src = line.image ? requestIcon(line.image.archive, line.image.record, { scale: 2, dye: line.image.dye, onReady: render }) : null;   // DISC22-D: by the item's dye, as the pack asks (DW3)
   if (src) {
     const tile = el('span', 'tile has-icon');
     const img = el('img');

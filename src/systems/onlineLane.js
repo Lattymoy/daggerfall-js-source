@@ -130,6 +130,19 @@ export const ONLINE_PLAYERS_OWN_PREFS = [
   'proceduralSky',    // EE1's legacy key, read only by the migration
 ];   // (RF4: grown by declareOnlinePrefs with the registry's 'player' answers - the dials)
 
+/** DISC22-A (2026-09-24, Mac: "repair magical items should be enabled by default and required online"): THE DFU
+ *  SETTINGS THE ROOM PLAYS BY - the fourth read path (settings.js getData asks here first, as getPref and
+ *  modSetting do). AllowMagicRepairs is a rule of the economy every player meets at the same smith: one player able
+ *  to mend an enchanted blade and another turned away at the same counter is two games in one town. Its OFFLINE
+ *  default is the port's too (settings.js PORT_DEFAULTS); online it is not a choice. Values are DFU's own strings. */
+export const ONLINE_FORCED_SETTINGS = Object.freeze({
+  Controls: Object.freeze({ AllowMagicRepairs: 'True' }),
+});
+/** The forced raw value of a DFU `section/key` on an online page, else undefined. */
+export function onlineForcedSetting(section, key, search) {
+  return isOnlinePage(search) && Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key) ? ONLINE_FORCED_SETTINGS[section][key] : undefined;
+}
+
 /** The forced value of a uiPrefs key on an online page, else undefined. */
 export function onlineForcedPref(key, search) {
   return isOnlinePage(search) && Object.hasOwn(ONLINE_FORCED_PREFS, key) ? ONLINE_FORCED_PREFS[key] : undefined;
