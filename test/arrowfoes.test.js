@@ -130,7 +130,7 @@ test('AR1: exteriorFoes lands the hit on BowDamage\'s own payload', () => {
 
 test('AR1: the world wires both pools in, shooter exclusion left to the flight module', () => {
   const world = read('src/scenes/world.js');
-  assert.match(world, /foeTargets: \[\.\.\.exteriorFoes\.foes, \.\.\.cityGuards\.guards\]\s*\n\s*\.filter\(\(t\) => !t\.dead && t\.ai\)\.map\(\(t\) => \(\{ feet: t\.ai\.feet, ref: t \}\)\),/,
+  assert.match(world, /foeTargets: \[\.\.\.\[\.\.\.exteriorFoes\.foes, \.\.\.cityGuards\.guards\]\s*\n\s*\.filter\(\(t\) => !t\.dead && t\.ai\)\.map\(\(t\) => \(\{ feet: t\.ai\.feet, ref: t \}\)\), \.\.\.duelArrowTargets\(\)\],/,   // DUEL1: and my duel opponent's body, while we fight
     'encounter foes AND the watch are candidates');
-  assert.match(world, /onFoeHit: \(m, t\) => exteriorFoes\.arrowHitFoe\(m, t\),/);
+  assert.match(world, /onFoeHit: \(m, t\) => \(t\?\.duel \? undefined : exteriorFoes\.arrowHitFoe\(m, t\)\),/);
 });

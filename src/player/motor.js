@@ -381,6 +381,11 @@ export class PlayerMotor {
     // disjunct still pends, and that one is Ledger A (AdvancedClimbing).
     this._airVelX = 0;
     this._airVelZ = 0;
+    // DUEL1: THE DUEL'S RING - { centre: [x, y, z] in THIS scene's frame, radius } while a duel holds the player in it,
+    // null otherwise. The host sets it every frame from the live duel (net/duelSession.js); the motor keeps the body
+    // inside it after every step (_keepInArena), shifts it with the world (offsetOrigin) and drops it on any placement
+    // (spawn) - a teleport is not a walk, and the duel's own law ends a duel whose duellist was carried off.
+    this.arena = null;
     // P11 modes (the scene owns the toggles): swimming rides the
     // block water level; levitating rides the Levitate effect;
     // waterWalking (S8) restores normal speed in water.
@@ -610,6 +615,7 @@ export class PlayerMotor {
       this.pos[i] += offset[i];
       this._prevPos[i] += offset[i];
     }
+    if (this.arena) this.arena = { ...this.arena, centre: [this.arena.centre[0] + offset[0], this.arena.centre[1] + offset[1], this.arena.centre[2] + offset[2]] };   // DUEL1: the ring is in the world, which moved
     if (this._eyeFeetY != null) this._eyeFeetY += offset[1];   // MAC1: the smoothed height shifts with the world too
   }
 
@@ -697,8 +703,30 @@ export class PlayerMotor {
     this._airVelX = 0;
     this._airVelZ = 0;
     this._acc = 0;   // the fixed-step accumulator restarts clean
+    this.arena = null;   // DUEL1: a placement is never a walk out of the ring - the host's duel law decides what it meant
     this._heightReset();   // a pending height action does not ride a teleport/load
     this.holdFrame();   // DISC8-G: a landing reported before the warp is not the arrival's
+  }
+
+  /** DUEL1: THE RING'S WALL, as the body meets it. Mac: "a surrounding transparent holographic wall that keeps them
+   *  from going outside of the duel space". Not a mesh in the collider - the collider is shared, and a wall there would
+   *  stop arrows, foes, the camera and the activation rays, and could be climbed or levitated over - but a clamp on the
+   *  ground: the feet kept within the radius less the capsule's own, and whatever of the airborne momentum points out
+   *  of the ring taken away (a jump at the wall stops at it; along it, it carries on). Height is never touched, so a
+   *  levitating or swimming duellist is held the same. */
+  _keepInArena() {
+    const a = this.arena;
+    const c = a?.centre;
+    if (!c || !(a.radius > 0)) return;
+    const lim = Math.max(0, a.radius - CAPSULE_RADIUS);
+    const dx = this.pos[0] - c[0], dz = this.pos[2] - c[2];
+    const d = Math.hypot(dx, dz);
+    if (!(d > lim)) return;
+    const nx = d > 1e-9 ? dx / d : 1, nz = d > 1e-9 ? dz / d : 0;
+    this.pos[0] = c[0] + nx * lim;
+    this.pos[2] = c[2] + nz * lim;
+    const out = this._airVelX * nx + this._airVelZ * nz;
+    if (out > 0) { this._airVelX -= out * nx; this._airVelZ -= out * nz; }
   }
 
   /** DISC8-G: a render frame the host HOLDS the motor on (a pausing
@@ -1075,6 +1103,7 @@ export class PlayerMotor {
       // previous span and just advances alpha.
       this._prevPos[0] = this.pos[0]; this._prevPos[1] = this.pos[1]; this._prevPos[2] = this.pos[2];
       this._step(step, input, yaw, pitch);
+      if (this.arena) this._keepInArena();   // DUEL1: after the collider's move, so both ends of the span stand inside
     }
     this._alpha = Math.min(1, this._acc / step);
     this._smoothEyeFeet(frameDt);   // MAC1: once per RENDER frame, like the bob and the look

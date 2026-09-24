@@ -106,7 +106,7 @@ direction). The real staleness is where the sweep cannot see:
   row's own title records the previous three.
 - `:340` residue "a static NPC currently answers with the
   no-response line" - contradicts the same row's own head and row
-  `:446` (B7); `worldModes.js:1372-1383` opens the real talk window.
+  `:446` (B7); `worldModes.js:1374-1385` opens the real talk window.
 - `:339` "house/ship PURCHASE popups... still out" - contradicts row
   `:441` ("this row is now CLOSED", H1-H3) and
   `ui/bankPurchaseWindow.js`.
@@ -127,7 +127,7 @@ per arc:
   (`mysticism.test.js:225-239`). The doc, the pin's design, and
   `mysticism.js:53`'s header are all wrong the same way. Also stale:
   S24 "the port has neither the [Spell Absorption] effect nor the
-  state" (`effects.js:1096-1119` + `absorption.js:70-79` land it
+  state" (`effects.js:1099-1122` + `absorption.js:70-79` land it
   first-arm); S40's "house ledger is unported" flag
   (`banking.js:172 isHouseOwned` feeds the rest seam); S16's
   "monsters 0-42 still spawn as billboards" (C11 pivoted them to real
@@ -163,7 +163,7 @@ per arc:
   `:3368`); `:4722` is now flatly false ("the interior host's
   char-sheet and inventory panels swallow their click and do
   nothing") and contradicts U43 in the same file
-  (`worldModes.js:5276-5277` routes them). UI-Arc carries no records
+  (`worldModes.js:5281-5282` routes them). UI-Arc carries no records
   at all for H1-H3 - the banking windows exist only in the Ledger.
 - *Combat.md*: the status head (first 51 lines) is the stale part -
   DrainMagicka "INTERIM no-op" (`:19`, real since S4a and
@@ -234,12 +234,12 @@ opposite of their own code and deserve a slice's attention:
 ## Line-citation drift (low, batched)
 
 `Port-Ledger.md:555` (save.js:32/:549/:558 → :28/:607/:637), `:588`
-(world.js:3111 → :2412); `Quest-Arc.md:719`/`:2906`
-(worldModes.js:571 → :903); `Player-Arc.md:955` (worldModes.js:799 →
+(world.js:3123 → :2412); `Quest-Arc.md:719`/`:2906`
+(worldModes.js:573 → :903); `Player-Arc.md:955` (worldModes.js:801 →
 :2764), `:304` (world.js "531 lines" → 3,564); `Characters-Arc.md:190`
 (CHAR_PIXEL "7" - `renderer.js:615` ships 9, and the doc missed two
 later revisions recorded in `paperdollViewer.js:138`), `:2114`
-(interiorContext.js:206 → :199); `Rendering.md:101`
+(interiorContext.js:206 → :199); `Rendering.md:102`
 (CHAR_SPRITE_RT_SIZE "256" → 512).
 
 ## What checked out clean

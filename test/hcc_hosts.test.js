@@ -205,6 +205,6 @@ test('HCC-ONLINE hosts: the foe pool carries the `hv` field past its room test a
   assert.match(f, /if \(data\.hv !== undefined\) _onHcc[^\n]*\n\s+if \(Array\.isArray\(data\.c\)\) _onCamps/, 'past the room test the camps pass, beside them');
   assert.match(f, /function setOnHcc\(fn, onClear = null\)/);
   assert.match(f, /_pupPending\.clear\(\);\n\s+_onHccClear\?\.\(\);/, 'the peers\' teams go with the puppets');
-  assert.match(f, /setOnCamps, setOnHcc \};/);
+  assert.match(f, /setOnCamps, setOnHcc, setOnDuel \};/);   // DUEL1: and the ring a peer duels in, the same way
   assert.doesNotMatch(rd('server/src/index.js'), /\bhv\b/, 'the relay reads nothing inside a foes frame - no relay change, no version bump');
 });

@@ -848,7 +848,8 @@ test('BLOOD1b: EVERY splash site hands its blow over, so the rate ladder actuall
   // RR2 wrote the twelfth: Roleplay & Realism's trample (world.js's
   // rrRidingContacts) - the civilian's own rung, LETHAL_HIT.
   // AUDIT-RR F15 moved the trample's site into both outdoor hosts' deps (world.js, exterior.js): thirteen.
-  assert.equal(sites.length, 13, `thirteen splash sites across six files (found ${sites.length})`);
+  // DUEL1: the fourteenth - a strike of mine that landed on my duel opponent (world.js duelResultIn), the striker's blood.
+  assert.equal(sites.length, 14, `fourteen splash sites across six files (found ${sites.length})`);
   for (const [f, args] of sites) {
     assert.ok(/bloodHit\(|LETHAL_HIT/.test(args),
       `${f}: a splash site that hands over no blow - the ladder would read it as a graze`);

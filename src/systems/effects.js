@@ -629,7 +629,7 @@ function increaseDrainMagnitude(target, entry, amount) {
 function runEffectRound(a, target, sinks, rolls) {
   if (a.kind === 'continuousDamage') {
     const n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls);
-    if (n > 0 && sinks.hurt) sinks.hurt(n);
+    if (n > 0 && sinks.hurt) sinks.hurt(n, a);   // DUEL1: the entry rides along - a duel's damage over time (bundleDuel) stops at the duel's floor
     handleAttackFromSource(a.caster);   // DamageHealthFromSource's tail, wave 31
   } else if (a.kind === 'continuousDamageSpellPoints') {
     const n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls);
@@ -770,7 +770,10 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
   // Shield capped the target's own 60-point Shield at one for forty rounds, and a mate's Regenerate kept its
   // caster level over the target's own stronger cast. An ally's bundle stands beside mine, never over it.
   const allyCast = ctx.allyCast === true;
-  const findInc = (pred) => (heldItem ? undefined : target.activeEffects?.find((a) => !a.heldItem && !!a.bundleAlly === allyCast && pred(a)));
+  // DUEL1: a duel opponent's spell (ctx.duelCast, tagged bundleDuel below) - never merged with the target's own either,
+  // its damage over time stops at the duel's floor, and the duel's end strips it
+  const duelCast = ctx.duelCast === true;
+  const findInc = (pred) => (heldItem ? undefined : target.activeEffects?.find((a) => !a.heldItem && !!a.bundleAlly === allyCast && !!a.bundleDuel === duelCast && pred(a)));
   // S24: absorption is tested PER EFFECT, before any of them lands
   // (EntityEffectManager :507-518), and an absorbed effect is skipped
   // entirely - `continue`, not a reduced magnitude.
@@ -1699,6 +1702,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
         list[i].bundleIcon = icon;
         list[i].bundleSelfCast = selfCast;
         list[i].bundleAlly = allyCast;   // AUDIT ALLY-CAST C2/C4: a party mate's gift - never merged with my own, and mine to dispel without a roll
+        if (duelCast) list[i].bundleDuel = true;   // DUEL1: the duel opponent's - floored, and stripped when the duel ends
       }
     }
   }

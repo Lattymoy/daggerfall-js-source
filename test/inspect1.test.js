@@ -70,7 +70,7 @@ test('INSPECT1 wire: a card frame is an ASK or an ANSWER, never both; the card w
   assert.deepEqual(parseClient(JSON.stringify({ t: 'card', data: { to: 'peer-0002', ask: true } })), { error: 'card before hello' });
   assert.deepEqual(parseClient(JSON.stringify({ t: 'card', data: { to: 'peer-0002' } }), { hasHello: true }), { error: 'bad card' });
   assert.deepEqual(parseClient(JSON.stringify({ t: 'card', data: { to: 'peer-0002', card: CARD, pad: 'x'.repeat(CARD_FRAME_MAX) } }), { hasHello: true }), { error: 'frame too large' });
-  assert.equal(RELAY_VERSION, 'world104');   // TITLE-N's dm frame (world104); the contributor's dd/rz moved it past the arc's world102; the card frame stays gated at 102
+  assert.equal(RELAY_VERSION, 'world105');   // DUEL1's duel frame and this card's account stamp (world105); TITLE-N's dm frame (world104); the contributor's dd/rz moved it past the arc's world102; the card frame stays gated at 102
   assert.equal(CARD_RELAY_MIN, 102);
   assert.equal(relaySupportsCard('world102'), true);
   assert.equal(relaySupportsCard('world101'), false);
@@ -97,10 +97,10 @@ test('INSPECT1 relay: an ask reaches the one player it names, stamped with the a
   const c = r.connect(); await r.hello(c, 'peer-0003');
   for (const ws of [a, b, c]) ws.sent.length = 0;
   await r.raw(a, JSON.stringify({ t: 'card', data: { to: 'peer-0002', ask: true } }));
-  assert.deepEqual(cards(b), [{ t: 'card', id: 'peer-0001', data: { to: 'peer-0002', ask: true } }]);
+  assert.deepEqual(cards(b), [{ t: 'card', id: 'peer-0001', sub: 'acct-peer-0001', data: { to: 'peer-0002', ask: true } }]);   // DUEL1: and the asker's verified account beside its id
   assert.equal(cards(a).length + cards(c).length, 0, 'the asker and a bystander hear nothing');
   await r.raw(b, JSON.stringify({ t: 'card', data: { to: 'peer-0001', card: CARD } }));
-  assert.deepEqual(cards(a), [{ t: 'card', id: 'peer-0002', data: { to: 'peer-0001', card: validCard(CARD) } }]);
+  assert.deepEqual(cards(a), [{ t: 'card', id: 'peer-0002', sub: 'acct-peer-0002', data: { to: 'peer-0001', card: validCard(CARD) } }]);
   assert.equal(cards(c).length, 0);
   // a frame at myself: junk, counted (AUDIT WORLD2 A4's instrument - a stream of them is struck out)
   assert.equal(a.meters.junk ?? 0, 0);
@@ -398,7 +398,7 @@ test('INSPECT1 the F-menu\'s Inspect row: first, when the host offers it, acting
 
 test('INSPECT1 host by source: the Inspect row is offered on every body the F key finds; its act opens the profile at once from the room\'s half and asks for the card only of a relay that routes it, retried by the frame and timed at CARD_WAIT_MS; an ask is answered through the gate with my own card, an answer drawn only on the card that asked; F again closes the profile; the other surfaces yield their Escape to it (mutants: an ask sent to an old relay; the answer drawn for anyone; the wait never said)', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /const peerActsFor = \(peerId\) => \(\{ \.\.\.social\.actionsFor\(peerId\), \.\.\.tradeActionsFor\(peerId\), canInspect: true, canReadPage: !!pageOffers\.get\(peerId\) \}\);/, 'one bag: the hub\'s acts, the trade\'s, and the look (JOURNAL1: and a page they hold out to me)');
+  assert.match(w, /const peerActsFor = \(peerId\) => \(\{ \.\.\.social\.actionsFor\(peerId\), \.\.\.tradeActionsFor\(peerId\), canInspect: true, canReadPage: !!pageOffers\.get\(peerId\), \.\.\.duelActionsFor\(peerId\) \}\);/, 'one bag: the hub\'s acts, the trade\'s, and the look (JOURNAL1: and a page they hold out to me)');
   assert.match(w, /peerId: hit\.peer\.id, actions: peerActsFor\(hit\.peer\.id\) \}\) === true;/, 'the F-card reads it');
   assert.match(w, /const acts = social \? peerActsFor\(id\) : null;/, 'the plaque\'s rows read it (ACT-MENU)');
   assert.match(w, /const row = plaqueRowFor\(sel\.id, id, peerActsFor\(id\)\);/, 'and the plaque\'s press');
@@ -408,18 +408,18 @@ test('INSPECT1 host by source: the Inspect row is offered on every body the F ke
   assert.match(inspect, /state: can \? 'asking' : 'unsupported'/);
   assert.match(inspect, /if \(!_profileAsk\.sent\) _profileAsk\.sent = online\?\.sendCard\(\{ to: _profileAsk\.peerId, ask: true \}\) === true;\s*\n\s*if \(performance\.now\(\) - _profileAsk\.at < CARD_WAIT_MS\) return;/);
   assert.match(inspect, /state: 'silent'/);
-  const onCard = w.slice(w.indexOf('online.onCard = (id, d) => {'), w.indexOf('online.onAct = '));
+  const onCard = w.slice(w.indexOf('online.onCard = (id, d, sub = null) => {'), w.indexOf('online.onAct = '));   // DUEL1: the answerer's account stamp rides in
   assert.match(onCard, /if \(!cardAnswers\.pass\(id, performance\.now\(\)\)\) return;\s*\n\s*const card = composeCard\(playerEntity\);\s*\n\s*if \(card\) online\.sendCard\(\{ to: id, card \}\);/);
   assert.match(onCard, /if \(!d\?\.card \|\| _profileAsk\?\.peerId !== id\) return;/);
-  assert.match(onCard, /profileWin\?\.update\(id, profileView\(\{ name: peerName\(id\), peer: p, look: p\?\.look \?\? null, card: d\.card, state: 'answered' \}\)\);/);
+  assert.match(onCard, /profileWin\?\.update\(id, withDuel\(id, profileView\(\{ name: peerName\(id\), peer: p, look: p\?\.look \?\? null, card: d\.card, state: 'answered' \}\)\)\);/);   // DUEL1: with the duel's word on it (the Challenge button, their record)
   assert.match(w, /if \(profileWin\?\.isOpen\(\)\) \{ profileWin\.hide\(\); return true; \}/, 'F again closes the profile');
   // JOURNAL1: and each yields it to a page read from the F-menu too (the page window stands where the profile does)
   assert.match(w, /above: \(\) => !!\(socialPanel\?\.isOpen\?\.\(\) \|\| socialMenu\?\.isOpen\?\.\(\) \|\| profileWin\?\.isOpen\?\.\(\) \|\| pageWin\?\.isOpen\?\.\(\)\),/, 'the chat yields its Escape');
   assert.match(w, /above: \(\) => !!\(socialMenu\?\.isOpen\?\.\(\) \|\| profileWin\?\.isOpen\?\.\(\) \|\| pageWin\?\.isOpen\?\.\(\)\),/, 'the friends panel yields its Escape');
-  assert.match(w, /onOpen: \(\) => surfaceOpen\('profile'\),\s*\n\s*onClose: \(\) => \{ surfaceClose\('profile'\); _profileAsk = null; \},/, 'a pointer surface, and a card closed is no longer waited on');
+  assert.match(w, /onOpen: \(\) => surfaceOpen\('profile'\),\s*\n\s*onClose: \(\) => \{ surfaceClose\('profile'\); _profileAsk = null; _profileSub = null; _profileView = null; \},/, 'a pointer surface, and a card closed is no longer waited on (DUEL1: nor its stamp and its view kept)');
   assert.match(w, /profileWin\?\.render\(\{ covered: townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\) \|\| gamePaused\(\) \}\);/, 'drawn under the F-menu\'s own covering word');
-  assert.match(w, /tradeFrame\(\);[^\n]*\n\s*profileFrame\(\);/, 'its ask retried and its wait timed in the online frame, beside the trade\'s own - before the dead return');
+  assert.match(w, /tradeFrame\(\);[^\n]*\n(?:\s*duelFrame\(\);[^\n]*\n)?\s*profileFrame\(\);/, 'its ask retried and its wait timed in the online frame, beside the trade\'s own (DUEL1: and the duel\'s) - before the dead return');
   const relay = rd('server/src/index.js');
   assert.match(relay, /if \(m\.t === 'card'\) \{[\s\S]{0,1200}?a = this\._meterCard\(ws, a, now\); if \(!a\) return;\s*\n\s*if \(isChatRoom\(a\.key\) \|\| isSocialRoom\(a\.key\)\) return;/);
-  assert.match(relay, /if \(!this\._senderFunnel\(tws, a\.id, now\)\) return;\s*\n\s*this\._send\(tws, JSON\.stringify\(\{ t: 'card', id: a\.id, data: m\.data \}\)\);/, 'the cast arm\'s funnel, shared');
+  assert.match(relay, /if \(!this\._senderFunnel\(tws, a\.id, now\)\) return;\s*\n(?:\s*\/\/[^\n]*\n)*\s*this\._send\(tws, JSON\.stringify\(\{ t: 'card', id: a\.id, \.\.\.\(typeof a\.sub === 'string' && a\.sub \? \{ sub: a\.sub \} : \{\}\), data: m\.data \}\)\);/, 'the cast arm\'s funnel, shared (DUEL1: and the answerer\'s verified account beside its id)');
 });

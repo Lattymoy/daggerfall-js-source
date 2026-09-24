@@ -27,6 +27,7 @@ import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { itemLongName } from '../systems/itemInfo.js';
 import { raceDisplayName } from '../systems/talkSession.js';
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
+import { duelRecordText } from '../net/duelRecord.js';   // DUEL1: the duelling record's words, the account card's own
 
 export const PROFILE_STYLE_ID = 'dagger-profile-style';
 
@@ -87,7 +88,14 @@ export function profileNote(state, who = 'They') {
  * their token), `look` the room's copy of their look, `card` their answer or null, `state` one of PROFILE_STATES.
  * The card's look wins over the room's: it is the one they wear now.
  */
-export function profileView({ name = null, peer = null, look = null, card = null, state = 'asking' } = {}) {
+/** DUEL1: the record line's words while the account service is being asked, and when it could not say. */
+export const DUEL_RECORD_ASKING = 'Duels: asking...';
+export function profileDuelLine(record) {
+  if (record === 'asking') return DUEL_RECORD_ASKING;
+  const t = duelRecordText(record);
+  return t ? `Duels: ${t}` : null;
+}
+export function profileView({ name = null, peer = null, look = null, card = null, state = 'asking', duel = null, record = null } = {}) {
   const who = (typeof name === 'string' && name) ? name : 'Someone';
   const worn = card?.look ?? look ?? null;
   const race = typeof worn?.race === 'string' ? raceDisplayName(worn.race) : null;
@@ -102,6 +110,12 @@ export function profileView({ name = null, peer = null, look = null, card = null
     gear: gearRows(worn),
     note: profileNote(PROFILE_STATES.includes(state) ? state : 'silent', who),
     state,
+    // DUEL1 (Mac: "When inspecting a player, they should be able to send an invite to duel"; "Add a dueling K/D to the
+    // ... player inspect profile"): the Challenge button's state as the host's duel law says it ({ label, enabled, why }
+    // - null: no button, offline or on a relay that cannot carry a duel), and their record's line - the account
+    // service's count, read by the account the relay stamped on their card (net/duelRecord.js), never the card's word
+    duel: duel && typeof duel.label === 'string' ? { label: duel.label, enabled: !!duel.enabled, why: duel.enabled ? null : (duel.why ?? null) } : null,
+    duels: profileDuelLine(record),
   };
 }
 
@@ -137,6 +151,12 @@ ${PIXELIFY_FIVE_FACE}
 .dfprofile-close { align-self: center; min-width: 120px; min-height: 44px; background: var(--iron, #2b323b); color: var(--bone, #e9e4d9);
   border: 0; border-radius: 3px; font: inherit; font-size: 14px; padding: 6px 12px; cursor: pointer; text-align: center; }
 .dfprofile-close:hover { background: var(--brass, #c08a3e); color: var(--ink, #0e1013); }
+.dfprofile-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.dfprofile-duel { min-width: 120px; min-height: 44px; background: #3a2226; color: var(--bone, #e9e4d9); border: 1px solid #7a3b3b;
+  border-radius: 3px; font: inherit; font-size: 14px; padding: 6px 12px; cursor: pointer; text-align: center; }
+.dfprofile-duel:hover:not([disabled]) { background: #b8483f; color: var(--ink, #0e1013); }
+.dfprofile-duel[disabled] { opacity: .55; cursor: default; }
+.dfprofile-why { font-size: 12px; color: var(--dim, #8b8578); text-align: center; }
 /* a phone's width: the sheet above what they wear, not beside it - and the name a size down, so the widest a name can
    be (NAME_MAX of the face's widest letter) stands on one line with its glyphs; breaking inside it is the last resort */
 @container (max-width: 400px) { .dfprofile-body { grid-template-columns: minmax(0, 1fr); } .dfprofile-name { font-size: 16px; } }
@@ -154,7 +174,7 @@ export function injectProfileStyle(doc = document) {
  * The card over the document. `canOpen()` is the host's word on whether a surface may stand (the F-menu's gate),
  * `onOpen`/`onClose` its pointer door, `above()` whether a surface stands over this one (then Escape is not ours).
  */
-export function createProfileWindow({ canOpen = () => true, onOpen = null, onClose = null, above = () => false, doc = document, win = globalThis } = {}) {
+export function createProfileWindow({ canOpen = () => true, onOpen = null, onClose = null, above = () => false, onDuel = null, doc = document, win = globalThis } = {}) {
   injectProfileStyle(doc);
   const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
   const root = el('div', 'dfprofile');
@@ -180,6 +200,7 @@ export function createProfileWindow({ canOpen = () => true, onOpen = null, onClo
     for (const g of v.glyphs) { const svg = glyphSvgNode(doc, g, 'dfprofile-glyph'); if (!svg) break; nm.append(svg); }
     head.append(nm);
     if (v.line) head.append(el('div', 'dfprofile-line', v.line));
+    if (v.duels) head.append(el('div', 'dfprofile-line dfprofile-duels', v.duels));   // DUEL1: their duelling record
     card.append(head);
     const body = el('div', 'dfprofile-body');
     const sheet = el('div', 'dfprofile-sheet');
@@ -207,7 +228,18 @@ export function createProfileWindow({ canOpen = () => true, onOpen = null, onClo
     const close = el('button', 'dfprofile-close', 'Close');
     close.type = 'button';
     close.addEventListener('click', () => { hide(); });
-    card.append(close);
+    // DUEL1: the challenge beside Close - the host's word on whether one can go now (v.duel), its reason under a
+    // disabled one; the press is the host's (`onDuel`), which re-asks the duel law before anything is sent
+    if (v.duel && onDuel) {
+      const actions = el('div', 'dfprofile-actions');
+      const duel = el('button', 'dfprofile-duel', v.duel.label);
+      duel.type = 'button';
+      if (!v.duel.enabled) duel.disabled = true;
+      duel.addEventListener('click', () => { if (v.duel.enabled && shownPeer) onDuel(shownPeer); });
+      actions.append(duel, close);
+      card.append(actions);
+      if (v.duel.why) card.append(el('div', 'dfprofile-why', v.duel.why));
+    } else card.append(close);
   };
 
   const hide = () => {

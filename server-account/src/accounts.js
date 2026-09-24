@@ -548,3 +548,61 @@ export async function setEmail({ db }, playerId, email) {
   await db.prepare('UPDATE players SET email = ? WHERE id = ?').bind(e, playerId).run();
   return { email: e };
 }
+
+// ═══ DUEL1 (2026-09-24) - THE DUELLING RECORD ════════════════════════
+//
+// Mac: "Add a dueling K/D to the profile menu and player inspect
+// profile", per account. A duel is fought between two clients over the
+// relay (src/net/duelSession.js); THE LOSER'S OWN CLIENT reports it,
+// naming the winner by the account the relay verified off the winner's
+// token and stamped on the winner's frames. So this service is told a
+// loss by the account that took it - never a win by the account that
+// claims it - and the one thing a lying client can do to the record is
+// hand somebody else wins at the cost of its own losses. Two bounds
+// keep even that honest: a loser reports at most once a
+// DUEL_REPORT_GAP_S (a duel has a count and a fight in it before it
+// can end), and one pair's results are capped at DUEL_PAIR_DAY_MAX a
+// day, so two friends cannot mint a hundred wins an evening.
+//
+// ONE STATEMENT IS THE WRITE, AND THE BOUNDS ARE IN IT. The INSERT
+// lands only when the winner exists, the gap has passed and the pair is
+// under its bound - measured inside the same statement, so two tabs
+// reporting at once cannot both slip under a bound that a read-then-
+// write would have checked twice against the same state.
+export const DUEL_REPORT_GAP_S = 15;
+export const DUEL_PAIR_DAY_MAX = 10;
+const DAY_S = 24 * 3600;
+
+/** An account's record: `{ wins, losses }`, counted off the results. */
+export async function duelRecordOf({ db }, playerId) {
+  const w = await db.prepare('SELECT COUNT(*) AS n FROM duel_results WHERE winner = ?1').bind(playerId).first();
+  const l = await db.prepare('SELECT COUNT(*) AS n FROM duel_results WHERE loser = ?1').bind(playerId).first();
+  const n = (r) => (Number.isSafeInteger(Number(r?.n)) ? Number(r.n) : 0);
+  return { wins: n(w), losses: n(l) };
+}
+
+/**
+ * The loser's report: `winner` the account the relay stamped on the
+ * winner's frames. `{ recorded, wins, losses }` - the loser's own record
+ * after it - or `{ error }` for a winner that is no account's shape or
+ * is the loser themselves. A report the gap or the pair bound refuses is
+ * `recorded: false`, not an error: the duel was fought, it simply does
+ * not count again.
+ */
+export async function reportDuelLoss({ db, nowS }, loser, winner) {
+  if (typeof winner !== 'string' || !ID_RE.test(winner)) return { error: 'no-player' };
+  if (winner === loser.id) return { error: 'self' };
+  const r = await db.prepare(
+    `INSERT INTO duel_results (loser, winner, at)
+     SELECT ?1, ?2, ?3
+     WHERE EXISTS (SELECT 1 FROM players WHERE id = ?2)
+       AND NOT EXISTS (SELECT 1 FROM duel_results WHERE loser = ?1 AND at > ?3 - ?4)
+       AND (SELECT COUNT(*) FROM duel_results WHERE loser = ?1 AND winner = ?2 AND at > ?3 - ?5) < ?6`,
+  ).bind(loser.id, winner, nowS, DUEL_REPORT_GAP_S, DAY_S, DUEL_PAIR_DAY_MAX).run();
+  const recorded = Number(r?.meta?.changes ?? 0) > 0;
+  if (!recorded) {
+    const w = await db.prepare('SELECT 1 AS x FROM players WHERE id = ?1').bind(winner).first();
+    if (!w) return { error: 'no-player' };
+  }
+  return { recorded, ...(await duelRecordOf({ db }, loser.id)) };
+}

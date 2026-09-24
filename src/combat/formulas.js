@@ -564,7 +564,10 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // at the tail is past the block the roll is made in.
   let struckPart = -1;
   const report = (damage) => {
-    if (_playerAttackHook && attacker.isPlayer) {
+    // DUEL1: a duel opponent's blow is resolved on the DEFENDER's machine with a stub of the striker's sheet
+    // (combat/duelCombat.js duelStub - `isPlayer`, and `peer`): its numbers are the striker's HUD's, never the
+    // defender's, which would pop them as if the defender had struck
+    if (_playerAttackHook && attacker.isPlayer && !attacker.peer) {
       try { _playerAttackHook({ ...notes, damage, attacker, target, weapon }); } catch { /* a HUD is not the formula's problem */ }
     }
     return damage;
@@ -776,6 +779,13 @@ let _playerAttackHook = null;
  *  backstab). Reporting only - registered by the enhanced HUD, never by
  *  the classic skin, and no formula reads it. */
 export function setPlayerAttackHook(fn) { _playerAttackHook = fn ?? null; }
+/** DUEL1: a duel blow's resolution, reported through the same seam on the STRIKER's machine. The formula ran on the
+ *  DEFENDER's (net/duelSession.js - the defender resolves every blow), whose report stays quiet there (`peer`); the
+ *  answer it sent back ({ hit, damage }) is this one's to show. */
+export function reportPlayerAttack(r) {
+  if (!_playerAttackHook || !r) return;
+  try { _playerAttackHook({ critical: false, backstab: false, ineffective: false, ...r }); } catch { /* a HUD is not the duel's problem */ }
+}
 let _playerStruckHook = null;
 /** worldTick's registration seam for the enemy-damages-player tail
  *  (V3: the Ring of Namira's reflection). */

@@ -92,7 +92,9 @@ test('ACC1b: the migration is the real schema, and applying it twice changes not
   // own migration rather than as a column somebody added here later").
   // A provider link is still not here. MAIL1 added `letters` the same
   // way (0007): its own table beside the row, never a column on it.
-  assert.deepEqual(tables, ['letters', 'players', 'rate_limits', 'saves', 'sessions']);
+  // DUEL1 added `duel_results` the same way (0008): one row a duel that
+  // named a loser - the record is COUNTED off it, no column on the row.
+  assert.deepEqual(tables, ['duel_results', 'letters', 'players', 'rate_limits', 'saves', 'sessions']);
   // ACC1b IS IDENTITY ALONE, and the PLAYERS row still is: the save
   // arrived beside it, never inside it.
   const cols = db._raw.prepare('PRAGMA table_info(players)').all().map((c) => c.name);

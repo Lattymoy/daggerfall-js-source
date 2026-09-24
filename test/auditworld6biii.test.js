@@ -227,7 +227,7 @@ test('AUDIT WORLD6b-iii(a) by source: the sinks say whose blow it is (B2, the th
   assert.match(x, /const sp = recipientIsMe\(f, pc\.at\) \? \(f\.entity\.spells\?\.find\(\(x\) => \(x\.index \| 0\) === pc\.s\) \?\? null\) : null;/, 'B1: out of the puppet\'s OWN list');
   assert.match(x, /if \(sbi\) assignEnemySpells\(entity, sbi\);\s*\n\s*const caster = entity\.spells\?\.length && !puppet \? new EnemyCaster\(entity, rolls\) : null;/, 'B1: the list for a puppet too, no caster');
   const hm = rd('src/scenes/hostMagic.js');
-  assert.match(hm, /explodeAt\(impact, m\.spell, m\.fromPlayer === false \? \(m\.casterLevel \?\? 1\) : playerEntity\.level, playerFeet, missileCaster\(m\), \{ playerHeight, allies: !!m\.ally \}\);/, 'A1: the wall arm (AID1 onto ALLY-CAST: a friendly blast also gives to the party mates it meets)');
+  assert.match(hm, /explodeAt\(impact, m\.spell, m\.fromPlayer === false \? \(m\.casterLevel \?\? 1\) : playerEntity\.level, playerFeet, missileCaster\(m\), \{ playerHeight, allies: !!m\.ally, duel: !!m\.duel \}\);/, 'A1: the wall arm (AID1 onto ALLY-CAST: a friendly blast also gives to the party mates it meets)');
   assert.match(hm, /if \(t\.puppet && caster\?\.entity && caster\.entity !== playerEntity\) continue;/, 'C15');
   const d = rd('src/scenes/dungeonContext.js');
   assert.match(d, /playerFeet: lastPlayerFeet, playerHeight: lastPlayerHeight,\s+\/\/ ROAD-H H2/, 'C2: the dungeon\'s probe is mine');

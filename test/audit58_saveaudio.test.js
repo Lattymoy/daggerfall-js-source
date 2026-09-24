@@ -162,7 +162,7 @@ test('AUDIT 58: the blow that lands ON the player is PlayerFootsteps\' 1, not En
   // arrow through the same ApplyDamageToPlayer, so it owes the same
   // volume). It had one because it had one pool and no enemy archer.
   const players = [
-    ['src/scenes/world.js', 3], ['src/scenes/exterior.js', 3],
+    ['src/scenes/world.js', 4], ['src/scenes/exterior.js', 3],   // DUEL1: world.js's fourth - a duel opponent's blow that landed on me
     ['src/scenes/worldModes.js', 3], ['src/scenes/dungeonContext.js', 2],
   ];
   for (const [f, n] of players) {
