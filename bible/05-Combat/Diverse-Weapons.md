@@ -149,16 +149,17 @@ own underneath, so turning it off gives them back; Weapon Widget's
 turned on": "mod should be defaulted on"). It was off at DW1, because a
 preset nobody selected is not selected.
 
-**Off by default again since DISC14-B** (the same day). Mac sent a
-screenshot of Weapon Widget's tile: *"these need to be the default
-values ingame for diverse weapons. The current defaults are wrong on the
-screen."* The preset's true texture size, inertia, step, recoil and 142
-bob were what drew wrong. And because it lay OVER the player's settings,
-the tile went on showing their own values underneath: what the tile
-showed was not what drew. The defaults are now Weapon Widget's own, with
-DoubleScaleTextures on and Inertia.Scale 0 (Weapon-Widget.md, the
-settings), so the tile shows exactly what draws. The preset stays a
-switch for anyone who wants the mod's recommendation. `flattenModPreset` is the general reader for DFU's
+**On by default again since DISC16-B (2026-09-24).** DISC14-B (the
+day before) had turned it off at Mac's word, from a screenshot of Weapon
+Widget's tile: *"these need to be the default values ingame for diverse
+weapons."* It gave Weapon Widget its own defaults plus DoubleScaleTextures
+on and Inertia.Scale 0, so the tile showed what drew. Mac, the next day:
+*"Weapon widget preset needs to be defaulted on with diverse weapons and
+the changes we made to the values for the weapon widget reverted. Its no
+longer smooth like how it was before diverse weapons."* The preset is on
+again, with its inertia, and Weapon Widget's defaults are the mod's own.
+While it is on, the tile shows the player's own values underneath, which
+come back when it is turned off: DW1's design, as before. `flattenModPreset` is the general reader for DFU's
 `{ Values: { Section: { Key: "string" } } }` shape, coercing by the
 declared key's kind ("False" is `false`, not a non-empty string).
 
@@ -308,9 +309,8 @@ fall-through and the classic frame were never doubled and are not
 shifted either. Pinned on the clone's bench: the three cases' offsets,
 and the war axe's full painting drawn whole under the preset.
 
-The preset itself defaulted **on** from here until DISC14-B (above),
-which turned it off and made DoubleScaleTextures Weapon Widget's own
-default instead. The shift law above is unchanged: without
+The preset itself defaults **on** from here. DISC14-B turned it off for
+a day, and DISC16-B turned it on again (above). The shift law above is unchanged: without
 TrueTextureSize, a `w_` hit takes the doubled box and its shift.
 
 ## Record

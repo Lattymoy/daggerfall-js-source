@@ -1180,7 +1180,7 @@ lights the weapon, the shield and the torch with MAC-I's flat light
 (`fpTint`) but draws the horse untinted, so at night the horse is
 brighter than the hand on it.
 
-## DISC14-B: Diverse Weapons' defaults are Mac's
+## DISC14-B: Diverse Weapons' defaults are Mac's (REVERTED by DISC16-B, below)
 
 **What Mac asked for** (the tile's chips and dials in the screenshot):
 Swings, Ambidexterity, Offset, Bob and DoubleScaleTextures on; Inertia,
@@ -1347,3 +1347,68 @@ container.
 
 The pins are `test/maplag.test.js` (8). WEATHER3e's and WEATHER3i's hover
 pins now read the forecast at rest.
+
+---
+
+# DISC16 - sunk on hills, and Diverse Weapons' preset back
+
+Mac, 2026-09-24: *"I notice my character is sunken into the ground on
+hills"* and *"Weapon widget preset needs to be defaulted on with diverse
+weapons and the changes we made to the values for the weapon widget
+reverted. Its no longer smooth like how it was before diverse
+weapons."*
+
+## DISC16-A: the body sunk into a slope
+
+**Cause.** DFU's body is Unity's CharacterController, a capsule of radius
+0.35. A capsule on a slope rests on its rounded bottom: the sphere's
+centre stands r / cos(grade) over the ground beneath it, so its lowest
+point, the feet, stands r (1 / cos - 1) over that ground. That is 5 cm
+at 30 degrees, 15 at 45 and 35 at 60. The collider's terrain floor
+(`collider.js` `move`) took the ground beneath the centre as the feet.
+So on a hill every body stood that much lower than DFU's, and the
+third-person body, placed at the feet (the Morrowind body in
+`fpArm.drawThird`, the Eye Of The Beholder sprite), had its uphill foot
+in the slope.
+
+Ruled out on the way:
+
+- The drawn ground and the floor agree: the same samples at the same
+  terrain scale, 1.25 (TERRAIN-SCALE1), and the triangles differ from the
+  bilinear floor by at most 0.08 (BLOOD1 AUDIT 3).
+- The swim sink (DoSinking) arms only on a water tile.
+
+**Fix.** The floor is the capsule's rest, `restFloor`: the ground beneath
+the centre plus r (sec - 1), the grade taken from the heightfield across
+the capsule's own width. The snap onto the floor and the clamp under it
+read the same height, so MAC3's downhill walk stays glued: no hop, no
+landing, no rise. Flat ground is unchanged. So is the edge of a built
+pixel, where there is no ground to one side to read a grade from.
+
+**Not verified here:** what Mac saw. There is no game data in the
+container, so which body and which view are not known. The rest is DFU's
+capsule, measured; a body with no foot IK still has an uphill foot, as in
+DFU. If the report was the third-person camera looking across a slope at
+a low angle, the ground between hides the feet, and that is the camera's
+to answer.
+
+## DISC16-B: DISC14-B reverted
+
+Diverse Weapons' preset defaults on again (DW-CLIP), with its inertia,
+step, recoil, true texture size and 142 bob. Weapon Widget ships the
+mod's own defaults again: DoubleScaleTextures off, Inertia.Scale 1.0.
+The Thunderlock's forced inertia runs at the player's own scale again
+(DISC14-B's `GUN_INERTIA_SCALE` is gone). DISC14-C stays: the doubled
+idle's bob rides a doubled `w_` hit, and the Morrowind arms keep the
+plain bob.
+
+**One consequence, measured before (DISC14-C):** with the preset on, the
+Morrowind arms take its Step. That is Step's snap on each footfall (5 of
+120 walking frames at the top, a worst jerk of 33.75), which is the
+jitter Mac reported on the Morrowind model under DW-CLIP. Whether the
+arms should take Step is Mac's call.
+
+The pins are `test/disc16.test.js` (3); MAC3's downhill pin reads the
+rest. DW1, WW1 and AUDIT-DW are back to DW-CLIP's defaults; DISC14's
+three B pins went with it. The mutants are `tools/mutants/disc16.json`,
+all seven dead; DISC14-B's five records are retired.

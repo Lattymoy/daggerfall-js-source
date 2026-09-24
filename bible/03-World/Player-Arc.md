@@ -2115,3 +2115,15 @@ standing mount band below `STEP_OFFSET` is still PH1's one-way floor
 setting the body on a surface it is under, by design and since before
 COL1. The F8 pin's band deliberately starts **above** the lower sphere's
 own reach (feet + 2R = 0.70) so it holds the middles' law and not PH1's.
+
+## DISC16-A - the capsule rests on a slope (2026-09-24, Mac)
+
+"I notice my character is sunken into the ground on hills". The terrain
+floor (`collider.js`) took the ground beneath the capsule's centre as its
+feet. DFU's CharacterController, a capsule, rests on a slope by its
+rounded bottom, with its feet r (1 / cos - 1) over that ground: 5 cm at
+30 degrees, 15 at 45, 35 at 60. The floor is the capsule's rest now
+(`restFloor`), the grade taken from the heightfield across the capsule's
+own width. It is read by both the floor snap and the clamp, so MAC3's
+downhill adhesion holds, and flat ground is unchanged.
+`01-Overview/Field-Bugs-2026-09-23.md` DISC16-A.

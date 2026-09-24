@@ -1,0 +1,70 @@
+[
+  {
+    "name": "DISC16-A-the-point-floor",
+    "file": "src/player/collider.js",
+    "old": "    const floor = this.restFloor(feet[0], feet[2]);",
+    "new": "    const floor = this.heightAt(feet[0], feet[2]);",
+    "tests": [
+      "test/disc16.test.js",
+      "test/mac3_downhill.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-A-the-rest-as-one-less-cos",
+    "file": "src/player/collider.js",
+    "old": "    return h + r * (Math.sqrt(1 + gx * gx + gz * gz) - 1);",
+    "new": "    return h + r * (1 - 1 / Math.sqrt(1 + gx * gx + gz * gz));",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-A-one-axis-of-the-grade",
+    "file": "src/player/collider.js",
+    "old": "    const gx = (hx1 - hx0) / (2 * r), gz = (hz1 - hz0) / (2 * r);",
+    "new": "    const gx = 0, gz = (hz1 - hz0) / (2 * r);",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-A-the-edge-lifts",
+    "file": "src/player/collider.js",
+    "old": "    if (!(Number.isFinite(hx0) && Number.isFinite(hx1) && Number.isFinite(hz0) && Number.isFinite(hz1))) return h;",
+    "new": "",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-B-the-preset-left-off",
+    "file": "src/systems/modSettings.js",
+    "old": "        default: true,   // DW-CLIP (2026-09-23, Mac: \"mod should be defaulted on\")",
+    "new": "        default: false,   // DW-CLIP (2026-09-23, Mac: \"mod should be defaulted on\")",
+    "tests": [
+      "test/disc16.test.js",
+      "test/dw1_diverseweapons.test.js",
+      "test/auditdw.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-B-DoubleScaleTextures-at-DISC14-B",
+    "file": "src/systems/modSettings.js",
+    "old": "'Modules.DoubleScaleTextures': Object.freeze({ default: false,",
+    "new": "'Modules.DoubleScaleTextures': Object.freeze({ default: true,",
+    "tests": [
+      "test/disc16.test.js",
+      "test/ww1_weaponwidget.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-B-Inertia-Scale-at-DISC14-B",
+    "file": "src/systems/modSettings.js",
+    "old": "'Inertia.Scale': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The maximum distance that the sprite will be offset' }),   // DISC16-B",
+    "new": "'Inertia.Scale': Object.freeze({ default: 0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The maximum distance that the sprite will be offset' }),   // DISC16-B",
+    "tests": [
+      "test/disc16.test.js",
+      "test/ww1_weaponwidget.test.js"
+    ]
+  }
+]
