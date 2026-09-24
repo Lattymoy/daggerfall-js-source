@@ -94,7 +94,7 @@ const GOOD = { to: 'peer-0002', level: 5, spell: { name: 'Heal', element: 4, ran
 const GOOD_OUT = { ...GOOD, spell: { ...GOOD.spell, icon: 0 } };
 
 test('ALLY-CAST wire (world97): validCastData projects a bounded spell record and refuses the whole frame otherwise; parseClient carries the `cast` frame after a hello and inside the cap', () => {
-  assert.equal(RELAY_VERSION, 'world101');   // DISC12's pose hand and beast bits moved it (world101); DISC7's hs (world100); SPELLFX1's pose fields moved it once more (world98), HCC-PARK + RIDE again (world99); the cast frame is world97's
+  assert.equal(RELAY_VERSION, 'world102');   // the community arc's frames (CHAT-CHAN, DICE1, EMOTE1, INSPECT1, JOURNAL1) and AUDIT ATTACH's meters moved it (world102); DISC12's pose hand and beast bits (world101); DISC7's hs (world100); SPELLFX1's pose fields moved it once more (world98), HCC-PARK + RIDE again (world99); the cast frame is world97's
   const d = validCastData(GOOD);
   assert.deepEqual(d, GOOD_OUT, 'a whole frame, every component an integer in bounds, the icon defaulted');
   assert.equal(validCastData({ ...GOOD, to: 'x' }), null, 'an id is an id');
@@ -148,18 +148,19 @@ test('ALLY-CAST relay: the cast arm routes a frame to the one socket `to` names,
   await r.raw(a, JSON.stringify({ t: 'cast', data: GOOD }));
   assert.deepEqual(sentTo(b), [{ t: 'cast', id: 'peer-0001', data: GOOD_OUT }], 'b, and b alone, with a\'s id on it');
   assert.equal(sentTo(c).length, 0); assert.equal(sentTo(a).length, 0);
-  const junkBefore = a.att.junk ?? 0;
+  const junkBefore = a.meters.junk ?? 0;
   await r.raw(a, JSON.stringify({ t: 'cast', data: { ...GOOD, to: 'peer-0001' } }));
   assert.equal(sentTo(a).length, 0, 'a cast at myself delivers nothing');
-  assert.equal(a.att.junk ?? 0, junkBefore + 1, 'AUDIT ALLY-CAST B5: and is counted as JUNK (the strike the pin used to read was the pose meter\'s)');
+  assert.equal(a.meters.junk ?? 0, junkBefore + 1, 'AUDIT ALLY-CAST B5: and is counted as JUNK (the strike the pin used to read was the pose meter\'s)');
   await r.raw(a, JSON.stringify({ t: 'cast', data: { ...GOOD, to: 'peer-9999' } }));
   assert.equal(sentTo(b).length, 1, 'a peer that is gone: nothing sent, nothing struck');
-  assert.equal(a.att.junk, junkBefore + 1);
+  assert.equal(a.meters.junk, junkBefore + 1);
   // the sender's own meter: a whole blast (CAST_BURST_MAX) at once, the rest dropped on the sender's strikes - and b
   // still takes only CAST_HZ_MAX of them, its per-sender funnel
   for (let i = 0; i < CAST_BURST_MAX + 2; i++) await r.raw(c, JSON.stringify({ t: 'cast', data: GOOD }));
   assert.equal(sentTo(b).filter((m) => m.id === 'peer-0003').length, CAST_HZ_MAX, 'c\'s frames onto b, through b\'s funnel');
-  assert.ok((c.att.cdrops ?? 0) >= 2, '...its drops on c, never on b');
+  assert.ok((c.meters.castDrops ?? 0) >= 2, '...its drops on c, never on b');
+  assert.equal(c.meters.cdrops, undefined, 'CHAT-CHAN: a cast\'s strikes are its own - never the chat gate\'s field');
   // outside a place room the arm is closed
   const hub = fakeRoom('chat:world');
   const h1 = hub.connect(), h2 = hub.connect();
@@ -168,7 +169,7 @@ test('ALLY-CAST relay: the cast arm routes a frame to the one socket `to` names,
   assert.equal(sentTo(h2).length, 0, 'the hub is no place to stand and cast');
 });
 
-test('AUDIT ALLY-CAST B2 relay: the funnel onto a destination is PER SENDER - three strangers flooding me leave my party mate\'s Heal a fresh bucket; the slots are bounded and the attachment stays under the runtime\'s 2 KiB', async () => {
+test('AUDIT ALLY-CAST B2 relay: the funnel onto a destination is PER SENDER - three strangers flooding me leave my party mate\'s Heal a fresh bucket; the slots are bounded, and among the destination\'s meters, never on its 2 KiB attachment', async () => {
   const r = fakeRoom('world:3,12');
   const me = r.connect(); await r.hello(me, 'peer-0002');
   const sentTo = (ws) => ws.sent.filter((m) => m.t === 'cast');
@@ -181,16 +182,16 @@ test('AUDIT ALLY-CAST B2 relay: the funnel onto a destination is PER SENDER - th
   assert.equal(sentTo(me).at(-1)?.id, 'peer-0001', 'the mate\'s frame arrives: one bucket for everyone let the strangers starve it');
   for (let k = 0; k < CAST_HZ_MAX + 3; k++) await r.raw(mate, JSON.stringify({ t: 'cast', data: GOOD }));
   assert.equal(sentTo(me).filter((m) => m.id === 'peer-0001').length, CAST_HZ_MAX, '...and the mate\'s own funnel holds them to CAST_HZ_MAX a second');
-  // the slots: CAST_DEST_SENDERS_MAX senders at most on the destination's attachment; the stalest goes to a newcomer
+  // the slots: CAST_DEST_SENDERS_MAX senders at most among the destination's meters; the stalest goes to a newcomer
   // (a room of its own: a room admits HELLO_HZ_MAX hellos a second, and this one takes nine of them)
   const r2 = fakeRoom('world:4,12');
   const me2 = r2.connect(); await r2.hello(me2, 'peer-0002');
   for (let i = 0; i < CAST_DEST_SENDERS_MAX + 1; i++) { const ws = r2.connect(); await r2.hello(ws, `peer-02${String(i).padStart(2, '0')}`); await r2.raw(ws, JSON.stringify({ t: 'cast', data: GOOD })); }
   assert.equal(me2.sent.filter((m) => m.t === 'cast').length, CAST_DEST_SENDERS_MAX + 1, 'every one of them arrived: a slot is a bucket, not a seat');
-  assert.equal(me2.att.cin.length, CAST_DEST_SENDERS_MAX, 'bounded');
-  assert.ok(JSON.stringify(me2.att).length < 2048, 'the fake room throws past the runtime\'s attachment limit; it did not');
-  assert.ok(me2.att.cin.some((c) => c.id === `peer-02${String(CAST_DEST_SENDERS_MAX).padStart(2, '0')}`), 'the newest sender holds a slot');
-  assert.ok(!me2.att.cin.some((c) => c.id === 'peer-0200'), '...the stalest gave it up');
+  assert.equal(me2.meters.cin.length, CAST_DEST_SENDERS_MAX, 'bounded');
+  assert.equal(me2.att.cin, undefined, 'AUDIT ATTACH: the slots are the destination\'s meters - on its attachment they were eight ids of forty characters the destination never chose');
+  assert.ok(me2.meters.cin.some((c) => c.id === `peer-02${String(CAST_DEST_SENDERS_MAX).padStart(2, '0')}`), 'the newest sender holds a slot');
+  assert.ok(!me2.meters.cin.some((c) => c.id === 'peer-0200'), '...the stalest gave it up');
 });
 
 // ─── THE LINK ───────────────────────────────────────────────────────────────────────────────────────────────────
@@ -449,5 +450,8 @@ test('ALLY-CAST by source: world.js picks the party mate with the F key\'s own r
   assert.match(h, /function allyInReach\(eye, dir, reach\) \{\s*\n\s*if \(!eye \|\| !dir \|\| !allyTarget\) return null;\s*\n\s*let ally = null;\s*\n\s*try \{ ally = allyTarget\(eye, dir, reach\) \?\? null; \} catch \{ return null; \}\s*\n\s*if \(!ally\) return null;\s*\n\s*const d = ally\.distance;\s*\n\s*if \(Number\.isFinite\(d\) && d > 0\) \{\s*\n\s*const l = Math\.hypot\(dir\[0\], dir\[1\], dir\[2\]\) \|\| 1;\s*\n\s*const hit = collider\.raycast\(eye, \[dir\[0\] \/ l, dir\[1\] \/ l, dir\[2\] \/ l\], d\);\s*\n\s*if \(Number\.isFinite\(hit\) && hit < d - 1e-3\) return null;/, 'A2/A6: the line of sight and the guard');
   const relay = rd('server/src/index.js');
   assert.match(relay, /if \(m\.t === 'cast'\) \{[\s\S]{0,900}?a = this\._meterCast\(ws, a, now\); if \(!a\) return;\s*\n\s*if \(isChatRoom\(a\.key\) \|\| isSocialRoom\(a\.key\)\) return;/, 'its own meter, a place room alone');
-  assert.match(relay, /const cin = Array\.isArray\(tb\.cin\) \? tb\.cin\.map\(\(c\) => \(\{ \.\.\.c \}\)\) : \[\];\s*\n\s*let slot = cin\.find\(\(c\) => c\.id === a\.id\) \?\? null;\s*\n\s*if \(!slot\) \{\s*\n\s*if \(cin\.length >= CAST_DEST_SENDERS_MAX\) \{ cin\.sort\(\(x, y\) => \(x\.b\?\.at \?\? 0\) - \(y\.b\?\.at \?\? 0\)\); cin\.shift\(\); \}\s*\n\s*slot = \{ id: a\.id, b: null \}; cin\.push\(slot\);\s*\n\s*\}\s*\n\s*const funnel = tokenGate\(slot\.b, now, CAST_HZ_MAX\);/, 'B2: the funnel per sender, the stalest slot to a newcomer');
+  // INSPECT1: the funnel is ONE helper now (`_senderFunnel`), the cast arm's and the card arm's - pinned where it lives
+  // (among the destination's meters, AUDIT ATTACH), and the cast arm pinned to go through it
+  assert.match(relay, /_senderFunnel\(tws, senderId, now\) \{\s*\n\s*const slots = this\._meterOf\(tws\)\.cin \?\?= \[\];\s*\n\s*let slot = slots\.find\(\(c\) => c\.id === senderId\) \?\? null;\s*\n\s*if \(!slot\) \{\s*\n\s*if \(slots\.length >= CAST_DEST_SENDERS_MAX\) \{ slots\.sort\(\(x, y\) => \(x\.b\?\.at \?\? 0\) - \(y\.b\?\.at \?\? 0\)\); slots\.shift\(\); \}\s*\n\s*slot = \{ id: senderId, b: null \}; slots\.push\(slot\);\s*\n\s*\}\s*\n\s*const funnel = tokenGate\(slot\.b, now, CAST_HZ_MAX\);/, 'B2: the funnel per sender, the stalest slot to a newcomer');
+  assert.match(relay, /if \(!this\._senderFunnel\(tws, a\.id, now\)\) return;\s*\n\s*this\._send\(tws, JSON\.stringify\(\{ t: 'cast', id: a\.id, data: m\.data \}\)\);/, '...the cast arm through it');
 });

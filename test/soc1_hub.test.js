@@ -59,7 +59,7 @@ test('SOC1 wire: the hub is the world channel, the bounds are what Mac asked for
   assert.ok(INVITE_TTL_MS >= 60_000 && INVITE_TTL_MS <= 10 * 60_000, 'an invite stands for minutes, not for ever');
   assert.ok(PARTY_OFFLINE_MS >= 60_000, 'a refresh keeps a seat');
   assert.ok(PARTY_SEND_MS * PARTY_HZ_MAX >= 1000, 'the client\'s floor never trips the relay\'s gate');
-  assert.equal(RELAY_VERSION, 'world101', 'DISC12 (the pose\'s hand lh and beast form wb - world101); DISC7 (hs - world100); HCC-PARK + RIDE (the park frame and the pose\'s riding fields - world99); SPELLFX1 (the pose\'s cast element and arrows loosed - world98); PARTY-REST DROP (the pose\'s rest kind, the vote and cancel stamps, the 32-bit building key - world96); AUDIT DROPS (the trade bytes per sender, the hub\'s quest cooldown, the quest budget\'s order - world92); QUEST1 + TRADE1 + PEER-FS1 (three drops, one deploy: the quest frame, the trade frame, the pose\'s fk - world91); SOC1 changed the relay: bumped; AUDIT SOC again; RESPAWN1 again (the foe door\'s team pair); AUDIT WATCH1 again (wire.js gained CELL_WATCH_PUPPETS_MAX); the main merge again (a comment line in wire.js moved - the bytes are the law)');
+  assert.equal(RELAY_VERSION, 'world102', 'CHAT-CHAN + DICE1 + EMOTE1 + INSPECT1 + JOURNAL1 + AUDIT ATTACH (the chat\'s channel, roll and emote frames, the card, the page, the meters off the attachment - world102); DISC12 (the pose\'s hand lh and beast form wb - world101); DISC7 (hs - world100); HCC-PARK + RIDE (the park frame and the pose\'s riding fields - world99); SPELLFX1 (the pose\'s cast element and arrows loosed - world98); PARTY-REST DROP (the pose\'s rest kind, the vote and cancel stamps, the 32-bit building key - world96); AUDIT DROPS (the trade bytes per sender, the hub\'s quest cooldown, the quest budget\'s order - world92); QUEST1 + TRADE1 + PEER-FS1 (three drops, one deploy: the quest frame, the trade frame, the pose\'s fk - world91); SOC1 changed the relay: bumped; AUDIT SOC again; RESPAWN1 again (the foe door\'s team pair); AUDIT WATCH1 again (wire.js gained CELL_WATCH_PUPPETS_MAX); the main merge again (a comment line in wire.js moved - the bytes are the law)');
   assert.deepEqual(Object.keys(SOCIAL_ACTS), ['friend.request', 'friend.accept', 'friend.decline', 'friend.cancel', 'friend.remove', 'party.invite', 'party.accept', 'party.decline', 'party.leave', 'party.kick']);
   assert.deepEqual(SOCIAL_KINDS, ['state', 'presence', 'party', 'invite', 'note', 'error']);
   assert.ok(NOTE_CODES.includes('party.joined') && NOTE_CODES.includes('friend.requested') && NOTE_CODES.includes('party.leader') && NOTE_CODES.includes('party.lapsed'));
@@ -528,7 +528,7 @@ test('SOC1 hub: the gates - SOCIAL_HZ_MAX a socket (over it dropped, a strike co
   const a = await join('a'), b = await join('b');
   for (let i = 0; i < SOCIAL_HZ_MAX + 3; i++) await act(a, { k: 'party.leave' });
   assert.equal(errors(a).length, SOCIAL_HZ_MAX, 'a burst is the rate; the rest are dropped without a word');
-  assert.equal(a.att.sdrops, 3); assert.equal(a.closed, null);
+  assert.equal(a.meters.sdrops, 3); assert.equal(a.closed, null);
   for (let i = 0; i < DROP_STRIKES_MAX; i++) await act(a, { k: 'party.leave' });
   assert.deepEqual(a.closed, { code: CLOSE_POLICY, reason: 'too many social acts' }, 'a socket that keeps sending is closed');
   // the room's budget: every socket together, a fresh bucket's worth after the clock has run
@@ -542,14 +542,14 @@ test('SOC1 hub: the gates - SOCIAL_HZ_MAX a socket (over it dropped, a strike co
   // party poses: their own gate
   tick(2000);
   for (let i = 0; i < PARTY_HZ_MAX + 2; i++) await pose(b);
-  assert.equal(b.att.pdrops, 2); assert.equal(b.closed, null);
+  assert.equal(b.meters.pdrops, 2); assert.equal(b.closed, null);
   // outside the hub: junk, counted, closed past the strikes
   await withHub(async (cell) => {
     const w = cell.r.connect(); await cell.r.hello(w, 'peer-w', { x: 0, y: 0, z: 0, yaw: 0, pitch: 0 }, { acct: 'acct-w', asecret: 'secret-of-acct-w' }); cell.tick();
     assert.deepEqual(w.sent.map((m) => m.t), ['welcome', 'parks'], 'a cell keeps no account and says no social word (HCC-PARK: its welcome is followed by the cell\'s parked teams, an empty list included - not a social word)');
     assert.equal(w.att.acct, undefined);
     await cell.act(w, { k: 'party.leave' }); cell.tick(); await cell.pose(w); cell.tick();
-    assert.equal(w.att.junk, 2, 'junk, counted'); assert.equal(errors(w).length, 0);
+    assert.equal(w.meters.junk, 2, 'junk, counted'); assert.equal(errors(w).length, 0);
     for (let i = 0; i < DROP_STRIKES_MAX; i++) { await cell.pose(w); cell.tick(); }
     assert.deepEqual(w.closed, { code: CLOSE_POLICY, reason: 'too many frames' });
   }, 'world:1,1');
@@ -621,12 +621,12 @@ test('SOC1 hub: the source - the account is handled after the channel\'s welcome
   const drain = s.slice(s.indexOf('async _sweep() {'), s.indexOf('async _keysOf('));
   assert.match(drain, /for \(const prefix of \['look:', 'secret:'\]\)/, 'the drain\'s prefixes'); assert.doesNotMatch(drain, /acctKey|acctSecretKey|'acct:'|'asecret:'/, 'the drain never sweeps an account or its secret (AUDIT SOC A3: the hub\'s alarm does, one page of the idle and unlisted at a time)');
   assert.match(drain, /_keysOf\('party:'\)/, 'party: goes with the drain, in pages');
-  assert.match(s, /if \(!isSocialRoom\(a\.key\)\) \{ this\._junk\(ws, a\); return; \}/, 'a social act outside the hub is junk');
+  assert.match(s, /if \(!isSocialRoom\(a\.key\)\) \{ this\._junk\(ws\); return; \}/, 'a social act outside the hub is junk');
   const partyArm = s.slice(s.indexOf("if (m.t === 'party') {"), s.indexOf("if (m.t === 'quest') {", s.indexOf("if (m.t === 'party') {")));   // AUDIT DROPS: the PARTY arm's own line - QUEST1's arm carries the same law, and a whole-file match let a mutant on this one hide behind it
-  assert.match(partyArm, /if \(!isSocialRoom\(a\.key\) \|\| !a\.acct\) \{ this\._junk\(ws, a\); return; \}/, 'a party pose outside the hub, or without an account, is junk');
+  assert.match(partyArm, /if \(!isSocialRoom\(a\.key\) \|\| !a\.acct\) \{ this\._junk\(ws\); return; \}/, 'a party pose outside the hub, or without an account, is junk');
   const w = rd('src/net/wire.js');
   assert.match(w, /export const SOCIAL_ROOM = CHAT_WORLD_ROOM;/);
-  assert.match(w, /export const RELAY_VERSION = 'world101';/, 'DISC12 moved it last (world101), DISC7 before (world100); HCC-PARK + RIDE moved it last (world99); AUDIT SOC moved it, RESPAWN1 moved it again, AUDIT WATCH1 again, the main merge again, RELAY-H1 again, ACC1d again, the three drops again (world91), AUDIT DROPS again (world92), the party-rest drop again (world96), ALLY-CAST and its audit (world97), SPELLFX1 pose fields (world98)');
+  assert.match(w, /export const RELAY_VERSION = 'world102';/, 'the community arc\'s frames and AUDIT ATTACH\'s meters moved it last (world102), DISC12 before them (world101), DISC7 before (world100); HCC-PARK + RIDE moved it last (world99); AUDIT SOC moved it, RESPAWN1 moved it again, AUDIT WATCH1 again, the main merge again, RELAY-H1 again, ACC1d again, the three drops again (world91), AUDIT DROPS again (world92), the party-rest drop again (world96), ALLY-CAST and its audit (world97), SPELLFX1 pose fields (world98)');
 });
 
 test('PARTY-REST2e wire: `voteAt` is a plain, bounded timestamp or null - never negative, never a fraction, refusing nothing (it is not part of the refuse-whole `rest`/`restPending` objects, just its own field, same law as `ready`) (mutants: a negative or fractional value admitted; absent reading as 0 instead of null; the whole pose refused for a bad voteAt instead of the field alone landing as null)', () => {

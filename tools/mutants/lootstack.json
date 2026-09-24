@@ -1,0 +1,406 @@
+[
+  {
+    "name": "LS-reach-gate-dropped",
+    "file": "src/player/lootStack.js",
+    "old": "    if (!hit || !(hit.distance <= hit.reach)) break;",
+    "new": "    if (!hit) break;",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "A body across the room joins the pile, and its tab earns 'You are too far away'."
+  },
+  {
+    "name": "LS-members-out-of-order",
+    "file": "src/player/lootStack.js",
+    "old": "    out.push(hit);",
+    "new": "    out.unshift(hit);",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "The pile's front is no longer the nearest body."
+  },
+  {
+    "name": "LS-no-body-list-clears",
+    "file": "src/player/lootStack.js",
+    "old": "  if (!Array.isArray(targets) || !targets.some(isBody)) return first;",
+    "new": "  if (!Array.isArray(targets)) return first;",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "The pile-of-drops pick a host casts in the same frame forgets the pile."
+  },
+  {
+    "name": "LS-stale-note-kept",
+    "file": "src/player/lootStack.js",
+    "old": "  _seen = stack.length < 2 ? null : stack.map((h) => h.key);",
+    "new": "  _seen = stack.length < 2 ? _seen : stack.map((h) => h.key);",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "Looking away keeps the last pile, and a lone body's window shows the tabs of a pile it is not in."
+  },
+  {
+    "name": "LS-pick-changed",
+    "file": "src/player/lootStack.js",
+    "old": "  _seen = stack.length < 2 ? null : stack.map((h) => h.key);\n  return first;",
+    "new": "  _seen = stack.length < 2 ? null : stack.map((h) => h.key);\n  return stack.length > 1 ? stack[1] : first;",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "The ray answers a body behind the front one - every race the pile is in changes."
+  },
+  {
+    "name": "LS-pile-front-check-dropped",
+    "file": "src/player/lootStack.js",
+    "old": "  return _seen && _seen[0] === key ? [..._seen] : [key];",
+    "new": "  return _seen && _seen.includes(key) ? [..._seen] : [key];",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "A press on a body that is not the pile's front reads the front's pile."
+  },
+  {
+    "name": "LS-pile-by-reference",
+    "file": "src/player/lootStack.js",
+    "old": "  return _seen && _seen[0] === key ? [..._seen] : [key];",
+    "new": "  return _seen && _seen[0] === key ? _seen : [key];",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "A caller's edit to the pile writes the note."
+  },
+  {
+    "name": "LS-open-body-dropped",
+    "file": "src/player/lootStack.js",
+    "old": "    if (d || k === key) bodies.push(",
+    "new": "    if (d) bodies.push(",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "The body the window is open on loses its own tab once it reads empty."
+  },
+  {
+    "name": "LS-single-body-row",
+    "file": "src/player/lootStack.js",
+    "old": "  if (bodies.length < 2) return null;",
+    "new": "  if (bodies.length < 1) return null;",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "A body alone draws a tab row of one."
+  },
+  {
+    "name": "LS-pile-not-carried",
+    "file": "src/player/lootStack.js",
+    "old": "open(k, all); } };",
+    "new": "open(k, null); } };",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "A tab re-reads the pile off the note, so the row moves under the player's hand (or vanishes once they look away)."
+  },
+  {
+    "name": "LS-tab-onto-open-body",
+    "file": "src/player/lootStack.js",
+    "old": "{ if (k !== key && bodies.some((b) => b.key === k)) open(k, all); }",
+    "new": "{ if (bodies.some((b) => b.key === k)) open(k, all); }",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "The open body's own tab closes and re-opens it."
+  },
+  {
+    "name": "LS-mark-on-a-lone-body",
+    "file": "src/player/lootStack.js",
+    "old": "  return _seen && _seen.includes(key) ? { count: _seen.length } : null;",
+    "new": "  return { count: _seen?.length ?? 1 };",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "Every body's plaque reads as a pile."
+  },
+  {
+    "name": "LS-reset-dropped",
+    "file": "src/player/lootStack.js",
+    "old": "export function resetBodyStack() { _seen = null; }",
+    "new": "export function resetBodyStack() { }",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "A pile noted in one world is handed to the next world's press."
+  },
+  {
+    "name": "LS-disabled-body-tabbed",
+    "file": "src/scenes/corpseMarker.js",
+    "old": "  if (!entry || entry.corpseDisabled || entry.puppet) return null;",
+    "new": "  if (!entry || entry.puppet) return null;",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "A disabled body gets a tab."
+  },
+  {
+    "name": "LS-puppet-body-tabbed",
+    "file": "src/scenes/corpseMarker.js",
+    "old": "  if (!entry || entry.corpseDisabled || entry.puppet) return null;",
+    "new": "  if (!entry || entry.corpseDisabled) return null;",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "A peer's body - its owner's to empty, no window here - gets a tab that closes the window and opens nothing."
+  },
+  {
+    "name": "LS-empty-body-tabbed",
+    "file": "src/scenes/corpseMarker.js",
+    "old": "  return count > 0 ? { name: enemyDisplayName(entry.mobileType) ?? 'Body', count } : null;",
+    "new": "  return { name: enemyDisplayName(entry.mobileType) ?? 'Body', count };",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "An empty body gets a tab whose press only says 'The body has no treasure.'"
+  },
+  {
+    "name": "LS-plaque-mark-gone",
+    "file": "src/ui/worldPlaque.js",
+    "old": "    const frame = markBodyStack(resolveHover(hit, { name, contents }));",
+    "new": "    const frame = resolveHover(hit, { name, contents });",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "The plaque stops saying a pile is there."
+  },
+  {
+    "name": "LS-teardown-keeps-note",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  resetBodyStack();",
+    "new": "",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "destroyWorldPlaque, every host's door out, keeps the note."
+  },
+  {
+    "name": "LS-pick-bypasses-note",
+    "file": "src/player/activate.js",
+    "old": "  return noteBodyStack(nearestActivatableHit(eye, dir, targets, collider), targets, (rest) => nearestActivatableHit(eye, dir, rest, collider));",
+    "new": "  return nearestActivatableHit(eye, dir, targets, collider);",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "No pick notes the pile, and every window opens without tabs."
+  },
+  {
+    "name": "LS-pile-on-every-frame",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    pile: kind === 'container' ? deps.loot?.pile ?? null : null,",
+    "new": "    pile: deps.loot?.pile ?? null,",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "The wagon and a reward tray draw the pile's tabs."
+  },
+  {
+    "name": "LS-lit-tab-lost",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    const on = b.key === pile.current;",
+    "new": "    const on = false;",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "No tab is lit, and the open body's own tab re-opens it."
+  },
+  {
+    "name": "LS-tab-row-dropped",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (remote.pile) col.append(pileTabs(remote.pile));",
+    "new": "",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "The enhanced loot window draws no tabs."
+  },
+  {
+    "name": "LS-open-before-close",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "        onExit();\n        pile.open(b.key);",
+    "new": "        pile.open(b.key);\n        onExit();",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "The next body's window opens under the old one, and the old one's close then frees the slot the new one holds."
+  },
+  {
+    "name": "LS-classic-no-wrap",
+    "file": "src/ui/nativeInventory.js",
+    "old": "    const next = pile.bodies[(at + by + n) % n];",
+    "new": "    const next = pile.bodies[Math.max(0, Math.min(n - 1, at + by))];",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "The picture's click stops at either end of the pile."
+  },
+  {
+    "name": "LS-classic-right-forward",
+    "file": "src/ui/nativeInventory.js",
+    "old": "      if (!middle && this._turnPile(right ? -1 : 1)) return true;",
+    "new": "      if (!middle && this._turnPile(1)) return true;",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "RIGHT steps forward like LEFT."
+  },
+  {
+    "name": "LS-classic-open-before-close",
+    "file": "src/ui/nativeInventory.js",
+    "old": "    this._close();\n    pile.open(next.key);",
+    "new": "    pile.open(next.key);\n    this._close();",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "The next body's window opens under the old one."
+  },
+  {
+    "name": "LS-classic-turn-over-wagon",
+    "file": "src/ui/nativeInventory.js",
+    "old": "    const pile = this.usingWagon ? null : this.hooks.loot?.pile;",
+    "new": "    const pile = this.hooks.loot?.pile;",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "The wagon's picture opens the next body."
+  },
+  {
+    "name": "LS-classic-label-off-by-one",
+    "file": "src/ui/nativeInventory.js",
+    "old": "  return at < 0 ? '' : `${at + 1} of ${pile.bodies.length}`;",
+    "new": "  return at < 0 ? '' : `${at} of ${pile.bodies.length}`;",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "The first body reads '0 of 3'."
+  },
+  {
+    "name": "LS-world-quick-take-on-tab",
+    "file": "src/scenes/world.js",
+    "old": "        if (!pileKeys && quickLootTake(lootKey,",
+    "new": "        if (quickLootTake(lootKey,",
+    "tests": [
+      "test/lootstack.test.js",
+      "test/mace_corpse_window.test.js",
+      "test/nativeinventory.test.js"
+    ],
+    "note": "A tab with quick loot armed takes instead of opening the body's window."
+  },
+  {
+    "name": "LS-world-pile-dropped",
+    "file": "src/scenes/world.js",
+    "old": "        const w = makeInventoryWindow({ loot: pile ? { ...loot, pile } : loot });",
+    "new": "        const w = makeInventoryWindow({ loot });",
+    "tests": [
+      "test/lootstack.test.js",
+      "test/mace_corpse_window.test.js",
+      "test/nativeinventory.test.js"
+    ],
+    "note": "The street and the town draw no tabs."
+  },
+  {
+    "name": "LS-world-one-pool",
+    "file": "src/scenes/world.js",
+    "old": "  const bodyPool = (lootKey) => (lootKey.startsWith('foeCorpse:') ? exteriorFoes : cityGuards);",
+    "new": "  const bodyPool = (lootKey) => exteriorFoes;",
+    "tests": [
+      "test/lootstack.test.js",
+      "test/audit24_wave38.test.js"
+    ],
+    "note": "A watchman's body in a mixed pile is asked of the encounter pool."
+  },
+  {
+    "name": "LS-exterior-pile-dropped",
+    "file": "src/scenes/exterior.js",
+    "old": "        const w = makeInventoryWindow({ loot: pile ? { ...loot, pile } : loot });",
+    "new": "        const w = makeInventoryWindow({ loot });",
+    "tests": [
+      "test/lootstack.test.js",
+      "test/mace_corpse_window.test.js",
+      "test/nativeinventory.test.js"
+    ],
+    "note": "The fixed city draws no tabs."
+  },
+  {
+    "name": "LS-exterior-quick-take-on-tab",
+    "file": "src/scenes/exterior.js",
+    "old": "        if (!pileKeys && quickLootTake(lootKey,",
+    "new": "        if (quickLootTake(lootKey,",
+    "tests": [
+      "test/lootstack.test.js",
+      "test/mace_corpse_window.test.js",
+      "test/nativeinventory.test.js"
+    ],
+    "note": "A tab with quick loot armed takes instead of opening."
+  },
+  {
+    "name": "LS-interior-pile-dropped",
+    "file": "src/scenes/worldModes.js",
+    "old": "            mountInterior(interiorInventory({ loot: pile ? { ...loot, pile } : loot }));",
+    "new": "            mountInterior(interiorInventory({ loot }));",
+    "tests": [
+      "test/lootstack.test.js",
+      "test/worldhover.test.js"
+    ],
+    "note": "A building's bodies draw no tabs."
+  },
+  {
+    "name": "LS-dungeon-pile-dropped",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (pile) lootHooks = { ...(lootHooks ?? {}), pile };",
+    "new": "",
+    "tests": [
+      "test/lootstack.test.js",
+      "test/discord5.test.js"
+    ],
+    "note": "A dungeon's bodies draw no tabs."
+  },
+  {
+    "name": "LS-dungeon-done-window-blocks",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (activeOverlay && !activeOverlay.done) return source.length;",
+    "new": "      if (activeOverlay) return source.length;",
+    "tests": [
+      "test/lootstack.test.js"
+    ],
+    "note": "A dungeon tab closes its window and the next body never opens - the closed window still holds the slot until the frame's drain."
+  },
+  {
+    "name": "LS-dungeon-quick-take-on-tab",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (!pileKeys && quickLootTake(key,",
+    "new": "      if (quickLootTake(key,",
+    "tests": [
+      "test/lootstack.test.js",
+      "test/discord5.test.js"
+    ],
+    "note": "A dungeon tab with quick loot armed takes instead of opening."
+  },
+  {
+    "name": "LS-encounter-pool-no-word",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "pileBody: (key) => pileBody(corpseEntryFor(foes, key, 'foeCorpse', corpseLens)),",
+    "new": "pileBody: () => null,",
+    "tests": [
+      "test/lootstack.test.js",
+      "test/worldhover.test.js"
+    ],
+    "note": "The encounter pool's bodies are never tabs."
+  },
+  {
+    "name": "LS-watch-pool-no-word",
+    "file": "src/scenes/cityGuards.js",
+    "old": "pileBody: (key) => pileBody(corpseEntryFor(guards, key, 'guardCorpse', corpseLens)),",
+    "new": "pileBody: () => null,",
+    "tests": [
+      "test/lootstack.test.js",
+      "test/worldhover.test.js"
+    ],
+    "note": "The watch's bodies are never tabs."
+  }
+]

@@ -194,7 +194,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // (ui/input.js:652-653) is "every host that registers a keydown
     // calls this FIRST", and it is NOT conditional on the host having
     // a destination for the key. First, because every arm below
-    // returns before its own preventDefault - worldModes.js:8500 sits
+    // returns before its own preventDefault - worldModes.js:8508 sits
     // ahead of its arms for the same reason.
     swallowBrowserKey(e);
     // The open map owns the keyboard, exactly as it does in the three
@@ -382,7 +382,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // scan, for the reason DFU states on the gate (SetActive(false) on
     // the geometry would mess with the open map's rendering). Update's
     // own call at :1001 is the one-shot lazy init, not a per-frame
-    // driver. dungeon.js:774 and worldModes.js:6419/:6447 gate the same
+    // driver. dungeon.js:774 and worldModes.js:6428/:6456 gate the same
     // way; this is that gate for this host.
     lookGate(!!overlay);   // AUDIT-AMAP H8
     if (!gamePaused()) ctx.automapTick?.(dt, cam.pos, fwd);

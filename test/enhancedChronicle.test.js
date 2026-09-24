@@ -125,13 +125,13 @@ test('PX24: the window is the family\'s, not a fourth dialect', () => {
 // Mac: "you can do better than this." He was right on both counts.
 test('PX24b: an entry keeps its DATED HEAD - the notebook wrote one and the first draft dropped it', () => {
   // PlayerNotebook._createNote puts a HIGHLIGHT token first: the
-  // dated header, from the host's own clock and city (notebook.js:106).
+  // dated header, from the host's own clock and city (notebook.js:108).
   // Flattening every token to a string turned that into just another
   // line, and the window numbered entries 1, 2, 3 instead.
   const H = (text) => ({ formatting: 'highlight', text });
   const e = chronicleEntry([H('11 Frostfall, 3E 405 in Daggerfall:'), T('The smith owes me a favour.')]);
   assert.deepEqual(e, { head: '11 Frostfall, 3E 405 in Daggerfall:', body: ['The smith owes me a favour.'] });
-  // A CONTINUATION page files with NO header (notebook.js:97-107) and
+  // A CONTINUATION page files with NO header (notebook.js:99-109) and
   // comes back headless rather than borrowing the previous one.
   assert.deepEqual(chronicleEntry([T('...and the rest of it.')]), { head: null, body: ['...and the rest of it.'] });
   assert.deepEqual(chronicleEntry(null), { head: null, body: [] });
@@ -147,8 +147,10 @@ test('PX24b: the player may WRITE - the first draft was read-only, which is a lo
   // The classic notebook has AddNote and RemoveNote. A prettier window
   // that can do less is not an improvement.
   const cr = read('src/ui/enhancedChronicle.js');
-  assert.match(cr, /deps\.notebook\(\)\.addNote\(text\);/, 'the notebook\'s own AddNote - it stamps the date itself');
-  assert.match(cr, /deps\.notebook\(\)\.removeNote\(i\);/);
+  // JOURNAL1: through breakableNote - this box takes 200 and the notebook's wrap throws on 71 with no space
+  assert.match(cr, /deps\.notebook\(\)\.addNote\(breakableNote\(text\)\);/, 'the notebook\'s own AddNote - it stamps the date itself');
+  // JOURNAL1: the note the CARD draws - its index in the notebook, which an empty entry dropped from the list moves
+  assert.match(cr, /deps\.notebook\(\)\.removeNote\(e\.index\);/);
   const nb = read('src/systems/notebook.js');
   assert.match(nb, /addNote\(str, index = -1\) \{/);
   assert.match(nb, /removeNote\(index\) \{ this\.notes\.splice\(index, 1\); \}/);
@@ -168,7 +170,7 @@ test('PX24b: the player may WRITE - the first draft was read-only, which is a lo
 // ── PX24c: MESSAGES AND HISTORY GET THE SAME LOOK ─────────────────
 test('PX24c: a message has NO head, and PX24b printed a lie on every one', () => {
   // addMessage builds [{formatting:'center', text:''}, {text: str}]
-  // (notebook.js:123). It never writes a highlight, so a message has no
+  // (notebook.js:125). It never writes a highlight, so a message has no
   // dated head, ever - and PX24b's fallback printed "- continued -" on
   // all fifty. A continuation is a NOTE whose page split; a message
   // simply has no header to begin with.

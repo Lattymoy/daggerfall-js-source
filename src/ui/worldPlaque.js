@@ -48,6 +48,7 @@ import { pickActivatableHit } from '../player/activate.js';
 import { frameMark } from '../systems/frameClock.js';   // AUDIT-WH P3: the frame in flight, so the gate's two terms are computed once in it
 import { resolveHover, frameSignature } from '../systems/worldHover.js';
 import { foldQuickLoot, quickLootRow, quickLootStats, resetQuickLoot } from '../systems/quickLoot.js';   // QUICK-LOOT B3: the highlight is the FEATURE's - this draws it and frees it, it does not own it; QUICK-LOOT-STATS: and the lit row's own numbers
+import { bodyStackMark, resetBodyStack } from '../player/lootStack.js';   // LOOT-STACK: the plaque counts the pile the pick noted
 
 /** The gap in CSS pixels between the cross's lower arm tip and the
  *  plaque's top edge. Large enough that the two never read as one
@@ -469,7 +470,7 @@ export function worldHoverFrame({
   // last answer: a readout that cannot answer shows nothing.
   try {
     const hit = pick ? pick() : pickActivatableHit(eye, dir, targets?.() ?? [], collider);
-    const frame = resolveHover(hit, { name, contents });
+    const frame = markBodyStack(resolveHover(hit, { name, contents }));
     // QUICK-LOOT B3: the highlight is folded HERE, inside the
     // containment, because `nextSelection` reads the frame a host
     // closure just produced - and the whole reason this try/catch
@@ -490,6 +491,20 @@ export function worldHoverFrame({
     return null;
   }
 }
+
+/**
+ * LOOT-STACK: A BODY IN A PILE SAYS THE PILE IS THERE - "3 bodies" - so the
+ * player knows the window they are about to open has a tab for each. The
+ * mark is a sub-line, so the repaint guard sees it change (frameSignature
+ * reads the subs).
+ */
+function markBodyStack(f) {
+  if (!f) return f;
+  const m = bodyStackMark(f.key);
+  return m ? { ...f, subs: [...f.subs, bodyStackText(m.count)] } : f;
+}
+/** The plaque's mark for a pile of `count` bodies. */
+export const bodyStackText = (count) => `${count} bodies`;
 
 /** For tests and the console: how many frames the seam has contained. */
 export const worldHoverFaults = () => _faults;
@@ -520,6 +535,9 @@ export function destroyWorldPlaque() {
   // that frees it is still this module's, because this is what the
   // hosts call.
   resetQuickLoot();
+  // LOOT-STACK: and the pile's note with it, for the same reason - it
+  // names bodies in the world this teardown is unmaking.
+  resetBodyStack();
 }
 
 /** For tests. */

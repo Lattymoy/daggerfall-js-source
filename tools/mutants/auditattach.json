@@ -1,0 +1,66 @@
+[
+  {
+    "name": "AT-meters-kept-nowhere",
+    "file": "server/src/index.js",
+    "old": "  _meterOf(ws) { let m = this._meters.get(ws); if (!m) this._meters.set(ws, m = {}); return m; }",
+    "new": "  _meterOf(ws) { return {}; }",
+    "tests": ["test/auditattach.test.js", "test/chat1.test.js", "test/allycast.test.js"],
+    "note": "A2 verbatim: a meter that is stored nowhere never advances, so every gate passes every frame and nothing is struck."
+  },
+  {
+    "name": "AT-strikes-never-forgiven",
+    "file": "server/src/index.js",
+    "old": "    m[strikesKey] = g.pass ? 0 : (m[strikesKey] ?? 0) + 1;",
+    "new": "    m[strikesKey] = (m[strikesKey] ?? 0) + (g.pass ? 0 : 1);",
+    "tests": ["test/auditattach.test.js"],
+    "note": "Strikes accumulate for the life of the socket, so an honest player's rare drops add up to a close."
+  },
+  {
+    "name": "AT-strike-bound-off-by-one",
+    "file": "server/src/index.js",
+    "old": "    if (!g.pass && m[strikesKey] > max) this._refuse(ws, why);",
+    "new": "    if (!g.pass && m[strikesKey] > max + 1) this._refuse(ws, why);",
+    "tests": ["test/auditattach.test.js"],
+    "note": "One frame past every arm's strike bound."
+  },
+  {
+    "name": "AT-junk-never-counts-up",
+    "file": "server/src/index.js",
+    "old": "    m.junk = (m.junk ?? 0) + 1;",
+    "new": "    m.junk = 1;",
+    "tests": ["test/auditattach.test.js"],
+    "note": "A stream of junk is never struck out."
+  },
+  {
+    "name": "AT-pose-write-skipped",
+    "file": "server/src/index.js",
+    "old": "    if (next !== a) this._setAttach(ws, next);",
+    "new": "",
+    "tests": ["test/auditattach.test.js"],
+    "note": "The pose, its turn and its keepalive stamp are never written: a wake (and the range gate) reads a stale pose."
+  },
+  {
+    "name": "AT-a-meter-back-on-the-attachment",
+    "file": "server/src/index.js",
+    "old": "    m[bucketKey] = g.bucket;",
+    "new": "    m[bucketKey] = g.bucket; this._setAttach(ws, { ...this._attach(ws), [bucketKey]: g.bucket });",
+    "tests": ["test/auditattach.test.js"],
+    "note": "A1 verbatim: a meter written onto the 2 KiB attachment again - the closed field list refuses it."
+  },
+  {
+    "name": "AT-meters-outlive-a-wake",
+    "file": "server/src/index.js",
+    "old": "    this._meters = new WeakMap();   // ws -> its meters (_meterOf)",
+    "new": "    this._meters = (globalThis.__roomMeters ??= new WeakMap());   // ws -> its meters (_meterOf)",
+    "tests": ["test/auditattach.test.js"],
+    "note": "Meters kept across a wake: the design says a wake forgets them, and the pin says so."
+  },
+  {
+    "name": "AT-park-strikes-on-the-party-meter",
+    "file": "server/src/index.js",
+    "old": "'parkBucket', 'parkDrops', 'too many park frames'",
+    "new": "'parkBucket', 'pdrops', 'too many park frames'",
+    "tests": ["test/auditattach.test.js"],
+    "note": "Main's HCC-PARK meter as it merged: the park frame's strikes on the party pose meter's `pdrops`, so either meter's pass forgave the other's flood."
+  }
+]

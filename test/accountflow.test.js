@@ -111,7 +111,9 @@ test('ACC1e: every refusal word the SERVICE can emit has a sentence here - walke
   const files = readdirSync(new URL('../server-account/src', import.meta.url))
     .filter((f) => f.endsWith('.js')).sort();
   assert.ok(files.length >= 4, `the walk found only ${files.length} service files - it has stopped seeing its subject`);
-  const text = files.map((f) => src(`server-account/src/${f}`)).join('\n');
+  // MAIL1: and the letter's law, whose refusals the service returns VERBATIM (letters.js `return words`) - a word
+  // spelled in src/net/letterLaw.js reaches a player exactly as one spelled here does.
+  const text = [...files.map((f) => src(`server-account/src/${f}`)), src('src/net/letterLaw.js')].join('\n');
   const words = new Set();
   for (const m of text.matchAll(/error:\s*'([a-z-]+)'/g)) words.add(m[1]);
   for (const m of text.matchAll(/no\('([a-z-]+)'/g)) words.add(m[1]);

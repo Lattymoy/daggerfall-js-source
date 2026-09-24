@@ -208,5 +208,5 @@ test('AUDIT WEATHER3 R5: every landing is an arrival, the word moved or not; and
   const after = ds.tick({ systems: [], at: [0, 0], minutes: min, seconds: sec + 120 });   // two real minutes indoors
   assert.deepEqual(after.sounds, [], `thunder more than ${THUNDER_LATE_SECONDS} s late is not played`);
   assert.equal(ds.pending(), 0);
-  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(rd(host), /if \(jump \|\| weatherArrivalStamp\(\) !== seenArrival\) distantStorms\.reset\(\);/, host);
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(rd(host), /if \(jump \|\| weatherArrivalStamp\(\) !== seenArrival\) \{ distantStorms\.reset\(\); stormLights\.reset\(\); \}/, host);
 });

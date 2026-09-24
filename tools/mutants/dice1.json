@@ -1,0 +1,221 @@
+[
+  {
+    "name": "DC-default-not-d20",
+    "file": "src/net/dice.js",
+    "old": "export const ROLL_DEFAULT = Object.freeze({ n: 1, m: 20, k: 0 });",
+    "new": "export const ROLL_DEFAULT = Object.freeze({ n: 1, m: 6, k: 0 });",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-percent-unread",
+    "file": "src/net/dice.js",
+    "old": "m: dice[2] === '%' ? 100 : Number(dice[2])",
+    "new": "m: Number(dice[2])",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-bare-number-a-count",
+    "file": "src/net/dice.js",
+    "old": "if (bare) spec = { n: 1, m: Number(bare[1]), k: 0 };",
+    "new": "if (bare) spec = { n: Number(bare[1]), m: 20, k: 0 };",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-dice-bound-off-by-one",
+    "file": "src/net/dice.js",
+    "old": "n >= 1 && n <= ROLL_DICE_MAX",
+    "new": "n >= 1 && n < ROLL_DICE_MAX",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-rejection-dropped",
+    "file": "src/net/dice.js",
+    "old": "    do { x = rand32() >>> 0; } while (x >= limit);",
+    "new": "    x = rand32() >>> 0;",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-face-off-by-one",
+    "file": "src/net/dice.js",
+    "old": "    dice.push(1 + (x % m));",
+    "new": "    dice.push(x % m);",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-modifier-not-added",
+    "file": "src/net/dice.js",
+    "old": "total: dice.reduce((a, b) => a + b, 0) + k };",
+    "new": "total: dice.reduce((a, b) => a + b, 0) };",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-sum-unchecked",
+    "file": "src/net/dice.js",
+    "old": "  return r.total === r.dice.reduce((a, b) => a + b, 0) + r.k;",
+    "new": "  return true;",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-face-past-the-sides",
+    "file": "src/net/dice.js",
+    "old": "d >= 1 && d <= r.m)",
+    "new": "d >= 1)",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-count-unchecked",
+    "file": "src/net/dice.js",
+    "old": "!Array.isArray(r.dice) || r.dice.length !== r.n)",
+    "new": "!Array.isArray(r.dice))",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-ask-carries-a-result",
+    "file": "src/net/wire.js",
+    "old": "    const spec = { n: m.n, m: m.m, k: m.k };\n    if (!validRollSpec(spec)) return { error: 'bad roll' };",
+    "new": "    const spec = { ...m };\n    delete spec.t; delete spec.ch;\n    if (!validRollSpec(spec)) return { error: 'bad roll' };",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-relay-bounds-unchecked",
+    "file": "src/net/wire.js",
+    "old": "    if (!validRollSpec(spec)) return { error: 'bad roll' };\n",
+    "new": "",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-unknown-channel-roll",
+    "file": "src/net/wire.js",
+    "old": "{ t: 'roll', ...spec, ch: m.ch } : { error: 'bad roll' };",
+    "new": "{ t: 'roll', ...spec, ch: m.ch } : { t: 'roll', ...spec };",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-version-gate-one-high",
+    "file": "src/net/wire.js",
+    "old": "return !!m && Number(m[1]) >= ROLL_RELAY_MIN; };",
+    "new": "return !!m && Number(m[1]) > ROLL_RELAY_MIN; };",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-roll-says-no-id",
+    "file": "server/src/index.js",
+    "old": "{ t: 'roll', id: a.id, name: a.name, at: now, sub: a.sub, ...r }",
+    "new": "{ t: 'roll', name: a.name, at: now, sub: a.sub, ...r }",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-dice-unrolled",
+    "file": "server/src/index.js",
+    "old": "      const r = rollDice({ n: m.n, m: m.m, k: m.k }, rand32);",
+    "new": "      const r = { n: m.n, m: m.m, k: m.k, dice: Array(m.n).fill(1), total: m.n + m.k };",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-roll-gate-removed",
+    "file": "server/src/index.js",
+    "old": "      if (!this._spend(ws, now, rollGate, 'rollBucket', 'rollDrops', 'too many rolls', CHAT_STRIKES_MAX)) return;\n",
+    "new": "",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-muted-rolls",
+    "file": "server/src/index.js",
+    "old": "'too many rolls', CHAT_STRIKES_MAX)) return;\n      if (a.mu && a.mu > Math.floor(now / 1000)) { this._send(ws, JSON.stringify({ t: 'muted', until: a.mu })); return; }",
+    "new": "'too many rolls', CHAT_STRIKES_MAX)) return;",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-party-roll-to-the-room",
+    "file": "server/src/index.js",
+    "old": "      await this._sayLine(ws, a, m.ch, { t: 'roll'",
+    "new": "      await this._sayLine(ws, a, null, { t: 'roll'",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-session-version-door",
+    "file": "src/net/online.js",
+    "old": "    if (!validRollSpec(spec) || !this.rollOk) return false;",
+    "new": "    if (!validRollSpec(spec)) return false;",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-session-channel-door-gone",
+    "file": "src/net/online.js",
+    "old": "    if (!validRollSpec(spec) || !this.rollOk) return false;\n    if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !this.chanOk)) return false;\n",
+    "new": "    if (!validRollSpec(spec) || !this.rollOk) return false;\n",
+    "tests": ["test/dice1.test.js"],
+    "note": "sendRoll's channel door, anchored on its own version door: the same line stands in sendChat above it, and CHAT-CHAN's records name that one."
+  },
+  {
+    "name": "DC-session-any-channel",
+    "file": "src/net/online.js",
+    "old": "    if (!validRollSpec(spec) || !this.rollOk) return false;\n    if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !this.chanOk)) return false;\n",
+    "new": "    if (!validRollSpec(spec) || !this.rollOk) return false;\n    if (ch != null && !this.chanOk) return false;\n",
+    "tests": ["test/dice1.test.js"],
+    "note": "A roll asked on a channel no relay routes leaves. The door's version half (chanOk) is not recorded: the welcome opens it and rollOk from one relay version, and ROLL_RELAY_MIN is CHAN_RELAY_MIN, so no session rolls without channels."
+  },
+  {
+    "name": "DC-session-gate",
+    "file": "src/net/online.js",
+    "old": "    if (!gate.pass) return false;\n    const frame = { t: 'roll'",
+    "new": "    const frame = { t: 'roll'",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-forged-total-believed",
+    "file": "src/net/online.js",
+    "old": "      if (typeof m.id !== 'string' || !validRoll(roll)) return;",
+    "new": "      if (typeof m.id !== 'string') return;",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-bad-roll-kept",
+    "file": "src/net/chat.js",
+    "old": "    if (roll && !rolled) return null;\n",
+    "new": "",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-roll-kind-lost",
+    "file": "src/net/chat.js",
+    "old": "    const kind = rolled ? 'roll' : sys ? '' : me === true ? 'me' : isOocText(text) ? 'ooc' : '';",
+    "new": "    const kind = sys ? '' : me === true ? 'me' : isOocText(text) ? 'ooc' : '';",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-roll-bubbled",
+    "file": "src/ui/nameLayer.js",
+    "old": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll' || line.kind === 'me') return false;",
+    "new": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'me') return false;",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-dice-alias-missing",
+    "file": "src/net/chatCommands.js",
+    "old": "if (name === 'roll' || name === 'dice') {",
+    "new": "if (name === 'roll') {",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-bad-spec-said",
+    "file": "src/net/chatCommands.js",
+    "old": "return spec ? { kind: 'roll', spec } : { kind: 'badroll', name };",
+    "new": "return spec ? { kind: 'roll', spec } : { kind: 'say', text: raw };",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-roll-on-the-wrong-tab",
+    "file": "src/scenes/world.js",
+    "old": "      link.onRoll = (line) => chatLog.push(tab.room === SOCIAL_ROOM && line.ch === 'party' ? 'party' : tab.id, line);",
+    "new": "      link.onRoll = (line) => chatLog.push(tab.id, line);",
+    "tests": ["test/dice1.test.js"]
+  },
+  {
+    "name": "DC-local-rolls-from-anywhere",
+    "file": "src/scenes/world.js",
+    "old": "    online.onRoll = (line) => { if (localLineHeard(line, peersNear(), player.feetAt())) chatLog.push('local', line); };",
+    "new": "    online.onRoll = (line) => { chatLog.push('local', line); };",
+    "tests": ["test/dice1.test.js"]
+  }
+]

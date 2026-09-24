@@ -36,7 +36,10 @@
 //     "`dungeonContext.js:5339/:5345`", "(cityGuards.js:757) ... (:939)",
 //     "`world.js:1898`, `:1667`" - a `:N`, `/:N`, `/N`, `, :N` or `(:N`
 //     after a cite into the target, up to the next cite of ANY file
-//     (a `.cs:N` included), belongs to that cite. citeMerge moved them
+//     (a `.cs:N` included), belongs to that cite (CITE-SLASH: a bare
+//     `/N` only where it touches the cite or the continuation before it;
+//     CITE-CS: a C# member or a table cell's edge ends the region too -
+//     see continuationsIn and regionStops). citeMerge moved them
 //     under the content check since CS2; citeShift only reported them,
 //     and every slice paid for the difference. One law now, exported
 //     from here (ANY_CITE, CONTINUATION) and imported there.
@@ -100,6 +103,46 @@ export const ANY_CITE = /(?<![\w/])(?:[\w./-]*\/)?[\w.-]+\\?\.(?:js|mjs|md|sh|cs
  *  rather than by a general "a word, then :N" rule, which would swallow
  *  ordinary prose; `against` is the one this repo writes. */
 export const CONTINUATION = /(`:|\/ *:|\/|, *:|\(:|against +:)(\d+)(?:-(\d+))?(?=[`'\s,;:)./-]|$)/g;
+
+/** Where a cite's continuations stop on line `l`, in order. RF3 stops them
+ *  at the next cite of any file, a `.cs:N` included. CITE-CS (2026-09-23,
+ *  the same merge) adds two stops for C# lines that name no `.cs` file:
+ *  - a C# member, PascalCase.PascalCase, just before its `(:N`, as in
+ *    "DaggerfallRestWindow.CanRest (:762-831)";
+ *  - in a table row, each cell's edge. The Ledger's DFU column is a cell
+ *    of its own ("| TalkManager reaction seed (:744-748) |").
+ *  Without them, a JS cite earlier in the row took all of those for its own
+ *  lines, and 42 of the Ledger's DFU ranges moved at every shift
+ *  (TalkManager.GetReactionToPlayer_0_1_2 went from :689 to :874). Both
+ *  rules were run against the whole tree before they were written, and
+ *  everything they exclude is C#. */
+export const CS_MEMBER = /(?<![\w.])[A-Z][A-Za-z0-9]*\.[A-Z][A-Za-z0-9_]*(?=`?\s*\(:)/g;
+export function regionStops(l) {
+  const stops = [...l.matchAll(ANY_CITE)].map((m) => m.index);
+  for (const m of l.matchAll(CS_MEMBER)) stops.push(m.index);
+  if (/^\s*\|/.test(l)) for (const m of l.matchAll(/(?<!\\)\|/g)) stops.push(m.index);   // a table row: an unescaped pipe is a cell's edge
+  return stops.sort((a, b) => a - b);
+}
+
+/** The continuations of the cite that ends at `from`, in `l` up to `to`.
+ *  CITE-SLASH (2026-09-23, the community arc's sixth merge): A BARE SLASH
+ *  CONTINUES ONLY THE CHAIN IT TOUCHES. "`world.js:6548/6549`" is a cite
+ *  and its tail. In a Ledger row reading "(`world.js:3714`) ... Work bands
+ *  to 8076/8077", the second is a message id a sentence later, and the
+ *  bare `/N` arm took "/8077" for world.js:8077. It moved at every shift:
+ *  8076/11995, then 8076/12009 on main, and 8076/12322 here. The colon
+ *  forms say what they are wherever they stand. A bare `/N` has no colon,
+ *  so it is a continuation only where it abuts the cite, or the
+ *  continuation before it. One law for both tools, as RF3's regexes are. */
+export function* continuationsIn(l, from, to) {
+  let end = from;   // where the chain so far stops
+  for (const m of l.slice(from, to).matchAll(CONTINUATION)) {
+    const at = from + m.index;
+    if (m[1] === '/' && at !== end) continue;   // a slash after a number of the prose's own
+    end = at + m[0].length;
+    yield { m, at };
+  }
+}
 
 // ---- the pure half (pinned in test/citeshift.test.js) ---------------------
 
@@ -183,14 +226,14 @@ export function planDoc({ docText, target, oldLines, newLines, map, moveStruck =
       }
     }
     if (!spans.length) return;
-    // RF3: a continuation belongs to the cite just before it, up to the next cite of ANY file
-    const stops = [...l.matchAll(ANY_CITE)].map((m) => m.index);
+    // RF3: a continuation belongs to the cite just before it, up to the next cite of ANY file (CITE-CS: or C# member, or cell edge)
+    const stops = regionStops(l);
     for (const from of spans.sort((x, y) => x - y)) {
       const to = stops.find((x) => x >= from) ?? l.length;
-      for (const m of l.slice(from, to).matchAll(CONTINUATION)) {
+      for (const { m, at } of continuationsIn(l, from, to)) {
         const a = +m[2], b = m[3] ? +m[3] : null;
         const v = verdict(l, a, b, 'path');
-        plan.push({ line: i + 1, col: from + m.index, text: m[0], from: [a, b], to: [v.ma, v.mb], status: v.status, spelling: 'path', kind: 'cont' });
+        plan.push({ line: i + 1, col: at, text: m[0], from: [a, b], to: [v.ma, v.mb], status: v.status, spelling: 'path', kind: 'cont' });
       }
     }
   });

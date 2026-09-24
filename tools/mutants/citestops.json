@@ -1,0 +1,42 @@
+[
+  {
+    "name": "CITE-SLASH-the-touch-dropped",
+    "file": "tools/citeShift.mjs",
+    "old": "    if (m[1] === '/' && at !== end) continue;   // a slash after a number of the prose's own\n",
+    "new": "",
+    "tests": ["test/citeshift.test.js", "test/citemerge.test.js"],
+    "note": "Every bare /N after a cite is its continuation again: 8076/8077 moves as world.js:8077."
+  },
+  {
+    "name": "CITE-SLASH-the-chain-never-advances",
+    "file": "tools/citeShift.mjs",
+    "old": "    end = at + m[0].length;\n    yield { m, at };",
+    "new": "    yield { m, at };",
+    "tests": ["test/citeshift.test.js", "test/citemerge.test.js"],
+    "note": "A slash against a continuation (:12/14) no longer continues it."
+  },
+  {
+    "name": "CITE-CS-the-member-stop-dropped",
+    "file": "tools/citeShift.mjs",
+    "old": "  for (const m of l.matchAll(CS_MEMBER)) stops.push(m.index);\n",
+    "new": "",
+    "tests": ["test/citeshift.test.js", "test/citemerge.test.js"],
+    "note": "DaggerfallRestWindow.CanRest (:762-831) in prose moves as the JS cite's lines."
+  },
+  {
+    "name": "CITE-CS-the-cell-stop-dropped",
+    "file": "tools/citeShift.mjs",
+    "old": "  if (/^\\s*\\|/.test(l)) for (const m of l.matchAll(/(?<!\\\\)\\|/g)) stops.push(m.index);",
+    "new": "",
+    "tests": ["test/citeshift.test.js", "test/citemerge.test.js"],
+    "note": "The Ledger's DFU column moves with the row's JS cite."
+  },
+  {
+    "name": "CITE-CS-every-line-is-a-table-row",
+    "file": "tools/citeShift.mjs",
+    "old": "  if (/^\\s*\\|/.test(l)) for (const m of l.matchAll(/(?<!\\\\)\\|/g)) stops.push(m.index);",
+    "new": "  for (const m of l.matchAll(/(?<!\\\\)\\|/g)) stops.push(m.index);",
+    "tests": ["test/citeshift.test.js", "test/citemerge.test.js"],
+    "note": "A pipe in prose or code ends a region it does not end."
+  }
+]

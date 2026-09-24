@@ -137,10 +137,10 @@ test('EV6: the skies neither query CURRENT_PROGRAM nor restore - the hosts mark 
     const s = readFileSync(host, 'utf8');
     // GR1: the world host has a third seam, the lab's grass; WIND3: both
     // hosts one more, the wisps (drawn after the rain, on their own program)
-    // WEATHER2d: and the sand, one more in both
-    const want = host === 'src/scenes/world.js' ? 5 : 4;
+    // WEATHER2d: and the sand, one more in both; BOLT: and the lightning's channels, one more in both
+    const want = host === 'src/scenes/world.js' ? 6 : 5;
     assert.equal((s.match(/renderer\.markForeignPass\(\);/g) || []).length, want,
-      `${host} marks its foreign seams (the sky, the rain, the sand, the wisps${want === 5 ? ', and the grass' : ''})`);
+      `${host} marks its foreign seams (the sky, the rain, the sand, the wisps, the bolts${want === 6 ? ', and the grass' : ''})`);
   }
 });
 

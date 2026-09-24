@@ -304,6 +304,10 @@ export function remoteModel(deps = {}, state = {}) {
     // ItemHelper.WagonKgLimit is the ONLY capacity a remote list has -
     // the ground and a corpse hold anything.
     capacity: kind === 'wagon' ? WAGON_KG_LIMIT : null,
+    // LOOT-STACK: the bodies piled with this one, as tabs
+    // (player/lootStack.js lootPile) - on the body's own frame only, never
+    // over the wagon or a reward tray the same session can show.
+    pile: kind === 'container' ? deps.loot?.pile ?? null : null,
   };
 }
 
@@ -1214,7 +1218,7 @@ function stow(item) {
   // 26 F156: planStore answers `{ ok: true, map: true }` for a
   // MiscItems.Map - the reveal runs, the paper is consumed, nothing
   // lands in the destination. The classic window routes it
-  // (nativeInventory.js:860) and this one did not, so dragging a
+  // (nativeInventory.js:883) and this one did not, so dragging a
   // treasure map out of the pack dropped the paper on the floor and
   // revealed nothing.
   if (plan.map) { use(item, deps.items?.() ?? []); return; }
@@ -1229,7 +1233,7 @@ function stow(item) {
   // again on the other side, and a tip that stays open after every
   // press is the quirk being fixed.
   // AUDIT INV2 B-F1: THE ENTITY AND THE PROVENANCE RIDE, as they do at
-  // the classic window's own call (nativeInventory.js:866). Without them
+  // the classic window's own call (nativeInventory.js:889). Without them
   // `clearLightSourceOnLeave` - AUDIT 26 F157's first statement inside
   // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
   // went on lighting the player from where it lay. INV2 made that a
@@ -1263,7 +1267,7 @@ function take(item) {
   if (plan.map) { use(item, remoteTarget(deps, sessionState())); return; }
   // MAC-O6 (report: "looting gold/items makes no sound"): DoTransferItem's
   // own cue (:1569 gold's clink, :1583 everything else), which the classic
-  // window plays (nativeInventory.js:886) and this one never did - the ONLY
+  // window plays (nativeInventory.js:909) and this one never did - the ONLY
   // difference between the two windows' calls to planTake/applyTransfer was
   // that this one dropped `plan.sound` on the floor. Played here, ahead of
   // the gold interception below, exactly as DFU's own PlayOneShot sits
@@ -1846,8 +1850,40 @@ function itemRow(item, from = 'local') {
  *  glance, and a title that scrolls away is the part that reads broken. */
 export const LOOT_ONE_COLUMN = 8;
 
+/**
+ * LOOT-STACK: ONE TAB PER BODY IN THE PILE, the open one lit. A tab closes
+ * this window and hands its body to the host's corpse door, which opens
+ * that body's window in its place - every body opens and closes as itself
+ * (the room's claim and word, the emptied flat). The door is the `pile`
+ * handed in here, never re-read off `remote` - `onExit` unmounts, and the
+ * unmount clears `remote` (the file's own law at the close arm).
+ */
+function pileTabs(pile) {
+  const bar = el('div', 'piletabs');
+  bar.setAttribute('role', 'tablist');
+  bar.setAttribute('aria-label', 'Bodies here');
+  for (const b of pile.bodies) {
+    const on = b.key === pile.current;
+    const t = el('button', `piletab${on ? ' on' : ''}`);
+    t.setAttribute('role', 'tab');
+    t.setAttribute('aria-selected', on ? 'true' : 'false');
+    t.append(el('span', 'piletabname', b.name));
+    if (!on) {
+      t.append(el('span', 'piletabn', String(b.count)));   // what the body holds; the open one's count is the meta line's
+      t.title = `${b.name}: ${plural(b.count, 'item')}`;
+      t.onclick = () => {
+        onExit();
+        pile.open(b.key);
+      };
+    }
+    bar.append(t);
+  }
+  return bar;
+}
+
 function remoteCol() {
   const col = el('section', 'packcol packremote');
+  if (remote.pile) col.append(pileTabs(remote.pile));
   const head = el('div', 'remotehead');
   const who = el('div', 'remotewho');
   who.append(el('h3', null, remote.title));

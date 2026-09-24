@@ -180,3 +180,39 @@ export const badgeCss = () => [
 /** The classic face's whole suffix: the marks, run together, or ''.
  *  One string, because that face draws a run and measures it. */
 export const glyphMarks = (peer) => glyphBadges(peer).map((g) => g.mark).join('');
+
+/** ═══ INSPECT1: ONE GLYPH AS AN SVG NODE - one drawing, every DOM face ═
+ *
+ * The name over a head (ui/nameLayer.js), the chat's roster and lines
+ * (ui/chatPanel.js) and the profile card (ui/profileWindow.js) all
+ * draw a glyph, and the first two each wrote the SVG out by hand - so
+ * this is the one drawing, and a face only says how thick it draws a
+ * stroke at its own size. The path and the colour are the tables
+ * above; filled or stroked is GLYPH_STROKE's word. Null where the
+ * document has no SVG door (an old WebView): such a document draws NO
+ * glyph rather than throwing under somebody's name.
+ * @param {any} doc
+ * @param {{ key: string, rgba: any, path: string }} g - one of glyphBadges' records
+ * @param {string} cls
+ * @param {number} [strokeWidth]
+ */
+export function glyphSvgNode(doc, g, cls, strokeWidth = 1.8) {
+  const svg = doc?.createElementNS?.('http://www.w3.org/2000/svg', 'svg');
+  if (!svg) return null;
+  svg.setAttribute('class', cls);
+  svg.setAttribute('viewBox', '0 0 16 16');
+  svg.setAttribute('aria-hidden', 'true');
+  if (g.rgba) svg.style.color = cssRgba(g.rgba) ?? '';
+  const path = doc.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', g.path);
+  // `currentColor` on both, so the colour above is the one decision
+  if (GLYPH_STROKE[g.key]) {
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', 'currentColor');
+    path.setAttribute('stroke-width', String(strokeWidth));
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('stroke-linejoin', 'round');
+  } else path.setAttribute('fill', 'currentColor');
+  svg.append(path);
+  return svg;
+}

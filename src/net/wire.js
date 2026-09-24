@@ -148,6 +148,8 @@
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap. The relay re-exports this module (server/src/relay.js), so this reaches the worker too - mat4.js imports nothing itself.
 import { TITLES, GLYPHS, GLYPHS_MAX } from './identityToken.js';   // ACC3: the badge vocabulary, closed - `badged` writes it and `readBadge` checks it back
 import { nameAllowed } from './nameFilter.js';   // NAME-F2: the filter runs INSIDE sanitizeName, so the relay carries it - nameFilter.js imports nothing, same as mat4.js above, so the worker's graph stays flat
+import { validRollSpec, validRoll, rollDice, ROLL_DICE_MAX, ROLL_SIDES_MAX, ROLL_MOD_MAX } from './dice.js';   // DICE1: the dice's law - one home for both ends (dice.js imports nothing, so the worker's graph stays flat)
+export { validRollSpec, validRoll, rollDice, ROLL_DICE_MAX, ROLL_SIDES_MAX, ROLL_MOD_MAX };
 
 /** WORLD5: the instant the online world stood at the classic game start - 2026-09-14T00:00:00Z. */
 export const ONLINE_EPOCH_MS = Date.UTC(2026, 8, 14, 0, 0, 0);
@@ -379,8 +381,30 @@ export function byteGate(bucket, nowMs, cost, rate, borrow = false) {
   if (borrow ? bytes < 0 : bytes < cost) return { bucket: { bytes, at: nowMs }, pass: false };
   return { bucket: { bytes: bytes - cost, at: nowMs }, pass: true };
 }
-/** Every channel the relay will open (AUDIT CHAT A1: a whitelist - a later tab is a later entry, and nothing else is a channel). */
-export const CHAT_ROOMS = Object.freeze(new Set([CHAT_WORLD_ROOM]));
+/** CHAT-CHAN (2026-09-23, kurkku: "regional chat that everyone in the region can see (so players in Wayrest see
+ *  messages from other players in Wayrest and so on)"): A REGION IS A CHANNEL of its own, one room per Daggerfall region
+ *  - the politic map's 62 (formats/mapsFile.js REGION_NAMES; the region a pixel belongs to is the POLITIC map's word,
+ *  PlayerGPS.CurrentRegionIndex's). The client joins the room of the region it stands in and moves with it. A room per
+ *  region rather than a region field on the hub's lines: the relay's whole machinery for a channel - the roster (who is
+ *  in Wayrest), the badges, the mute, the rate, the room's budget - is a room's, and a region room is that machinery
+ *  with nothing new in it. */
+export const CHAT_REGION_PREFIX = 'chat:region.';
+export const CHAT_REGION_COUNT = 62;
+/** The region's channel key, or null for an index the politic map does not have. */
+export const chatRegionRoom = (index) => (Number.isInteger(index) && index >= 0 && index < CHAT_REGION_COUNT ? `${CHAT_REGION_PREFIX}${index}` : null);
+/** Every channel the relay will open (AUDIT CHAT A1: a whitelist - a later tab is a later entry, and nothing else is a
+ *  channel). CHAT-CHAN: the world channel and the 62 region channels, enumerated, so the whitelist stays a list. */
+export const CHAT_ROOMS = Object.freeze(new Set([CHAT_WORLD_ROOM, ...Array.from({ length: CHAT_REGION_COUNT }, (_, i) => chatRegionRoom(i))]));
+/** CHAT-CHAN: the channels a LINE may name inside a room (`{t:'chat', text, ch}`). A party's line is said on the hub
+ *  link and heard by the party's members alone; a line naming anything else is refused whole - it is never allowed to
+ *  fall through to the room's own fan, where a party line said to an old or a confused relay would reach everyone. */
+export const CHAT_LINE_CHANNELS = Object.freeze(['party']);
+/** CHAT-CHAN: the hub's budget for PARTY lines, lines a second across every party - apart from CHAT_ROOM_HZ_MAX,
+ *  which AUDIT CHAT A2 priced for a line whose fan is EVERYONE online. A party line's fan is its party (PARTY_MAX seats,
+ *  their tabs), so priced out of the World's budget one talkative party would silence the World channel, and a busy
+ *  World channel every party. The sender's own gate (chatGate) bounds each party line's socket as it bounds any line.
+ *  The client gates party lines coming in on this number too (partyChatInGate): an honest hub never delivers more. */
+export const PARTY_CHAT_ROOM_HZ_MAX = 40;
 
 // SOC1 (2026-09-16, Mac: "A social button next to the chat UI ... friend other users, see if they are online/last
 // online + be able to invite friends or other individuals to the new 4 person party system"): THE HUB'S LAW.
@@ -566,28 +590,73 @@ export function sanitizeName(name) {
  *  the bidi controls, the zero widths, the joiners, the soft hyphen, the
  *  tag block, the BOM: AUDIT CHAT A4 - five hand-written ranges missed
  *  U+061C and the tags) and the variation selectors bar U+FE0F, which
- *  emoji presentation needs. */
+ *  emoji presentation needs. EMOTE1: bar the one joiner sanitizeChat
+ *  keeps between two pictographs, which is how an emoji is joined. */
 const INVISIBLE = /[\p{Cf}\uFE00-\uFE0E\u{E0100}-\u{E01EF}]/u;
+/** EMOTE1: a pictograph - an emoji's base (Unicode Extended_Pictographic: the faces, the people, the hearts, the
+ *  signs a joiner makes a profession of) - and what may follow one inside an emoji: its presentation selector, a skin
+ *  tone, the keycap's enclosing mark. */
+const EMOJI_PICTO = /\p{Extended_Pictographic}/u;
+const EMOJI_TAIL = /[\uFE0F\u20E3\u{1F3FB}-\u{1F3FF}]/u;
 
-/** A chat line the room will relay: control and format characters
- *  gone (a line cannot rewrite the line before it, or hide in zero
- *  width), a lone surrogate gone (B3: half a character is not a
- *  character, and the one guard on the cut was not idempotent with two
- *  of them), a stack of combining marks cut to three (A4: two hundred
- *  on one letter paint over the game), whitespace collapsed, trimmed,
- *  bounded - or '' when nothing is left to say. Idempotent, so what the
- *  client sends the relay takes. Every other character is a person's
- *  own (the panel is DOM text: nothing here is markup). */
-export function sanitizeChat(text) {
+/** WHAT A PLAYER'S WORDS MAY CARRY, whatever surface draws them: control and format characters gone (a line cannot
+ *  rewrite the line before it, or hide in zero width), a lone surrogate gone (B3: half a character is not a character),
+ *  a stack of combining marks cut to three (A4: two hundred on one letter paint over the game), and the one joiner
+ *  EMOTE1 keeps between two pictographs. Every other character is a person's own. No whitespace is collapsed and
+ *  nothing is bounded here: those are the surface's (a chat line is one line of CHAT_MAX; MAIL1's letter keeps its
+ *  lines - net/letterLaw.js), which is why MAIL1 took this loop out of sanitizeChat rather than copying it - one law
+ *  for the characters, not two that drift. A newline is a control character and goes, so a caller that keeps lines
+ *  splits on them first. Idempotent. */
+export function visibleText(text) {
   let s = '';
-  for (const ch of String(text ?? '')) {
+  const cps = [...String(text ?? '')];
+  let inEmoji = false;   // EMOTE1: the last thing kept was a pictograph, or its selector or skin tone
+  for (let i = 0; i < cps.length; i++) {
+    const ch = cps[i];
     const c = ch.codePointAt(0);
+    // EMOTE1 (2026-09-23, Addison Knox: "Emotes, be it emojis or additional animations"): THE ONE JOINER KEPT. A zero
+    // width joiner BETWEEN TWO PICTOGRAPHS is what makes a family, a profession, a rainbow flag - one emoji, drawn as
+    // one glyph - and it hides nothing there: a pictograph stands on each side of it, in plain sight. Anywhere else it
+    // is the invisible it always was (between letters it splits a word a filter reads), and it goes.
+    if (c === 0x200d) {
+      if (inEmoji && i + 1 < cps.length && EMOJI_PICTO.test(cps[i + 1])) s += ch;
+      continue;
+    }
     if (c < 32 || (c >= 0x7f && c <= 0x9f) || (c >= 0xd800 && c <= 0xdfff) || INVISIBLE.test(ch)) continue;
     s += ch;
+    inEmoji = EMOJI_PICTO.test(ch) || (inEmoji && EMOJI_TAIL.test(ch));
   }
-  s = s.replace(/\s+/g, ' ').replace(/(\p{M}{3})\p{M}+/gu, '$1').trim().slice(0, CHAT_MAX);
-  if (/[\uD800-\uDBFF]$/.test(s)) s = s.slice(0, -1);   // the bound fell inside a pair: no half of a character
+  return s.replace(/(\p{M}{3})\p{M}+/gu, '$1');
+}
+
+/** A chat line the room will relay: the characters a player's words may carry (visibleText), whitespace collapsed,
+ *  trimmed, bounded - or '' when nothing is left to say. Idempotent, so what the client sends the relay takes (the
+ *  panel is DOM text: nothing here is markup). */
+export function sanitizeChat(text) {
+  let s = visibleText(text).replace(/\s+/g, ' ').trim().slice(0, CHAT_MAX);
+  // the bound can fall inside a pair (no half of a character) or just past a joiner, whose pictograph it cut away
+  // (EMOTE1: a joiner with nothing after it joins nothing) - either leaves a tail a second pass would take; it goes now
+  while (/[\uD800-\uDBFF]$/.test(s) || s.endsWith('\u200d')) s = s.slice(0, -1);
   return s.trim();
+}
+
+/** MAIL1 + JOURNAL1: ONE LINE OF A PLAYER'S WORDS WHERE THE WORDS KEEP THEIR LINES - a letter's (net/letterLaw.js) and a
+ *  journal page's (the page law below): the characters a player's words may carry (visibleText), a tab one space, every
+ *  run of whitespace one space (the two Unicode line separators with it: a line is one line), trimmed; '' for a line
+ *  with nothing on it, which is the blank line between two paragraphs. MAIL1 wrote it for the letter; JOURNAL1 moved it
+ *  here when a page needed the same law, so a letter kept in a journal and a page sent as a letter are cleaned by one
+ *  law, not two that drift. Idempotent. */
+export const wordsLine = (line) => visibleText(String(line ?? '').replace(/\t/g, ' ')).replace(/\s+/g, ' ').trim();
+
+/** ...and those lines laid out: a run of blank lines one blank line, none at either end. A new array; idempotent. */
+export function foldBlankLines(lines) {
+  const out = [];
+  for (const line of lines) {
+    if (!line && (!out.length || out[out.length - 1] === '')) continue;
+    out.push(line);
+  }
+  while (out.length && out[out.length - 1] === '') out.pop();
+  return out;
 }
 
 /** Is this key a channel's: one of CHAT_ROOMS - no poses relayed, no roster, every line to everyone. */
@@ -846,7 +915,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world101';   // DISC12 (2026-09-23): the pose's hand-in-use bit (`lh`, the LEFT hand, omitted on the right) and beast form (`wb`, 1 werewolf 2 wereboar, omitted in human form); poseChanged sends each edge at once - world101. Before it: DISC7 (2026-09-23): the pose's half-speed bit (`hs`, mounted and moving slower than half, omitted at 0) - the peers' clop swaps as the rider's own does - world100. Before it: HCC-PARK + RIDE (2026-09-23): the `park` frame (a cell keeps a parked team past its owner's presence; the owner's registry drops the old cell's record), and the pose's mount (`rd`/`rv`, omitted on foot) - world99. Before it: SPELLFX1 (2026-09-23, the friendly-spells drop): the pose carries the cast's element (`ce`) and the arrows loosed (`ar`), so a peer's missile and shaft can be DRAWN - the Unity co-op's RpcPlayPlayerSpellCastVisual; visual only, it lands nothing, and a pose from before it reads Magic and no shafts; and the sender's cast meter a whole blast deep (CAST_BURST_MAX), since a beneficial blast is one cast and one frame per mate - world98. Before it: AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged target, the icon), the destination's funnel per sender - world97. Before it: ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
+export const RELAY_VERSION = 'world102';   // THE SIXTH MERGE (2026-09-23): main's DISC12 is world101, so the arc's deploy is world102 - every frame below moves its RELAY_MIN gate to 102. JOURNAL1 (the same deploy): the `page` frame - a page of a player's journal shown to one player standing near them, directed like a card through the cast arm's per-sender funnel, on its own meter, never from a muted player; its words cleaned by the letter's line law, which moves here from net/letterLaw.js (`wordsLine`, `foldBlankLines`) so the letter and the page read one law. MAIL1 (the same deploy): no frame of its own - the letters are the account service's - but the characters' law left sanitizeChat as visibleText, which the letter reads too (one law, not a copy; a chat line comes out of it unchanged). THE MERGE (the same deploy): main's park meter's strikes its own (`parkDrops` - they were the party pose meter's `pdrops`, so either meter's pass forgave the other's flood). INSPECT1 (the same deploy): the `card` frame - a player's card asked for and answered, directed like a cast frame through the cast arm's own per-sender funnel onto the destination, the relay reading none of it. AUDIT ATTACH (the same deploy): every per-socket meter is the Room instance's, not its attachment's - the widest place attachment was past the runtime's 2 KiB and a write it refused froze a meter open; the attachment keeps what a wake must recompute. EMOTE1 (the same deploy): a chat line may be an ACTION (`me: true`, nothing else admitted), and the sanitizer keeps the one joiner that stands between two pictographs (a family, a profession, a flag - one emoji). DICE1 (2026-09-23, the community arc, the same deploy): the `roll` frame - a roll ASKED of the relay ({n, m, k}, net/dice.js), rolled from the relay's own CSPRNG and said to the channel it was asked on through the chat's own fan (`_sayLine`), one a second a socket. CHAT-CHAN (2026-09-23, the community arc): the region channels (`chat:region.<i>`, one room per politic region) join the whitelist, a chat line may name the `party` channel - fanned by the hub to the party's members alone on a budget of the parties' own (PARTY_CHAT_ROOM_HZ_MAX), and refused whole when it names anything else - and a cast's strikes are its own (`castDrops`, no longer the chat gate's `cdrops`) - world102. Before it: DISC12 (2026-09-23): the pose's hand-in-use bit (`lh`, the LEFT hand, omitted on the right) and beast form (`wb`, 1 werewolf 2 wereboar, omitted in human form); poseChanged sends each edge at once - world101. Before it: DISC7 (2026-09-23): the pose's half-speed bit (`hs`, mounted and moving slower than half, omitted at 0) - the peers' clop swaps as the rider's own does - world100. Before it: HCC-PARK + RIDE (2026-09-23): the `park` frame (a cell keeps a parked team past its owner's presence; the owner's registry drops the old cell's record), and the pose's mount (`rd`/`rv`, omitted on foot) - world99. Before it: SPELLFX1 (2026-09-23, the friendly-spells drop): the pose carries the cast's element (`ce`) and the arrows loosed (`ar`), so a peer's missile and shaft can be DRAWN - the Unity co-op's RpcPlayPlayerSpellCastVisual; visual only, it lands nothing, and a pose from before it reads Magic and no shafts; and the sender's cast meter a whole blast deep (CAST_BURST_MAX), since a beneficial blast is one cast and one frame per mate - world98. Before it: AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged target, the icon), the destination's funnel per sender - world97. Before it: ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -1081,8 +1150,10 @@ export function inRange(roomKey, from, to) {
   return pixelDistance(from, to) <= RANGE_PIXELS;
 }
 
-/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'world'|'foes'|'hit'|'act'|'who'|'quest', ...}
- *  or {error} - the caller closes on an error. */
+/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'mute'|'world'|'foes'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'park', ...}
+ *  or {error} - the caller closes on an error. INSPECT1: every arm below, named - this line had fallen seven behind
+ *  (test/auditworld2.test.js derives the list from the arms now, so it cannot fall behind again - the merge with
+ *  main's HCC-PARK was its first catch: the park arm, unnamed). */
 export function parseClient(text, { hasHello = false } = {}) {
   if (typeof text !== 'string') return { error: 'text frames only' };
   // WORLD1/WORLD2: the frames past MAX_FRAME_BYTES are the world frame and the foes frame, told by their prefix
@@ -1118,6 +1189,18 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (text.length > CAST_FRAME_MAX) return { error: 'frame too large' };
     const data = validCastData(m.data);
     return data ? { t: 'cast', data } : { error: 'bad cast' };
+  }
+  if (m.t === 'card') {   // INSPECT1: a player's card, asked for or answered - one directed frame, projected by validCardData; the relay reads none of it
+    if (!hasHello) return { error: 'card before hello' };
+    if (text.length > CARD_FRAME_MAX) return { error: 'frame too large' };
+    const data = validCardData(m.data);
+    return data ? { t: 'card', data } : { error: 'bad card' };
+  }
+  if (m.t === 'page') {   // JOURNAL1: a page of a player's journal, shown to one player - one directed frame, projected by validPageData (its words cleaned, refused past its bound)
+    if (!hasHello) return { error: 'page before hello' };
+    if (text.length > PAGE_FRAME_MAX) return { error: 'frame too large' };
+    const data = validPageData(m.data);
+    return data ? { t: 'page', data } : { error: 'bad page' };
   }
   if (m.t === 'park') {   // HCC-PARK: my character's parked team - nothing (no anchor), or its anchor and, when shown, its record
     if (!hasHello) return { error: 'park before hello' };
@@ -1179,7 +1262,24 @@ export function parseClient(text, { hasHello = false } = {}) {
   if (m.t === 'chat') {
     if (!hasHello) return { error: 'chat before hello' };
     const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
-    return text ? { t: 'chat', text } : { error: 'bad chat' };   // the client sanitizes before it sends, so an empty line here is not the port's client
+    if (!text) return { error: 'bad chat' };   // the client sanitizes before it sends, so an empty line here is not the port's client
+    // CHAT-CHAN: a channel named on the line must be one the relay routes - anything else is refused whole, never
+    // quietly dropped into the room's own fan
+    // EMOTE1: an ACTION - `/me waves` - is a line said as what the speaker DOES ("Bran waves"): `me: true`, and
+    // nothing else is admitted in its place (a truthy junk value is refused, never read as an action)
+    if (m.me !== undefined && m.me !== true) return { error: 'bad chat' };
+    const me = m.me === true ? { me: true } : {};
+    if (m.ch === undefined) return { t: 'chat', text, ...me };
+    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch, ...me } : { error: 'bad chat' };
+  }
+  if (m.t === 'roll') {
+    // DICE1: A ROLL ASKED OF THE RELAY - how many dice, how many sides, what to add, inside the dice's own bounds
+    // (net/dice.js). The relay rolls them; nothing on this frame is a result. A channel is the chat line's law.
+    if (!hasHello) return { error: 'roll before hello' };
+    const spec = { n: m.n, m: m.m, k: m.k };
+    if (!validRollSpec(spec)) return { error: 'bad roll' };
+    if (m.ch === undefined) return { t: 'roll', ...spec };
+    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'roll', ...spec, ch: m.ch } : { error: 'bad roll' };
   }
   if (m.t === 'say') {
     // RED1: THE SERVER'S LINE, ASKED FOR. This checks the SHAPE and
@@ -1291,6 +1391,11 @@ export const actFrameFits = (data) => JSON.stringify({ t: 'act', data }).length 
 export const chatGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_HZ_MAX);
 /** RED1: the server line's own bucket, well under chat's - see RED_HZ_MAX. */
 export const redGate = (bucket, nowMs) => tokenGate(bucket, nowMs, RED_HZ_MAX);
+/** DICE1: a socket's rolls a second - one: a roll is a line the whole channel reads, and a table where a player can
+ *  roll ten times a second until the number suits is a table nobody trusts (every roll is SAID, so the table sees each
+ *  try; the gate keeps the tries readable). */
+export const ROLL_HZ_MAX = 1;
+export const rollGate = (bucket, nowMs) => tokenGate(bucket, nowMs, ROLL_HZ_MAX);
 /** MOD1: the mute order's own bucket - see MUTE_HZ_MAX. */
 export const muteGate = (bucket, nowMs) => tokenGate(bucket, nowMs, MUTE_HZ_MAX);
 /** SOC1: the social acts' gate - SOCIAL_HZ_MAX a second, at the hub and at home (an act the hub would refuse is never sent). */
@@ -1342,6 +1447,8 @@ export const questShareGate = (at, nowMs) => (at != null && nowMs - at < QUEST_H
  *  CHAT_ROOM_HZ_MAX from each of them, and one bucket across all of them
  *  would have made a busy neighbour silence the room you are standing in. */
 export const chatInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_ROOM_HZ_MAX);
+/** CHAT-CHAN: the gate on PARTY lines coming in - the hub's own party budget, apart from the room's (PARTY_CHAT_ROOM_HZ_MAX). */
+export const partyChatInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, PARTY_CHAT_ROOM_HZ_MAX);
 
 /** The longest a relay may name its deploy, in UTF-16 units (SRV-N).
  *
@@ -1804,6 +1911,19 @@ export const CAST_RELAY_MIN = 97;
 export const PARK_RELAY_MIN = 99;
 export const relaySupportsPark = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= PARK_RELAY_MIN; };
 export const relaySupportsCast = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= CAST_RELAY_MIN; };
+/** DICE1: the relay that first rolls (`{t:'roll'}` - an older one answers the frame with 'unknown message' and CLOSES the
+ *  socket), the same deploy as the channels (CHAN_RELAY_MIN). A roll is asked only of a relay that says it rolls. */
+export const ROLL_RELAY_MIN = 102;   // MERGE: the arc's deploy is world102 - main's world99 (HCC-PARK), world100 (DISC7) and world101 (DISC12) roll nothing
+/** EMOTE1: the relay that first carries an ACTION line (`me: true`) - an older one projects the line to `{t:'chat',
+ *  text}`, and "waves" would be said as a line nobody could read as a wave. The same deploy as the channels. */
+export const EMOTE_RELAY_MIN = 102;   // MERGE: world102, as ROLL_RELAY_MIN
+export const relaySupportsEmote = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= EMOTE_RELAY_MIN; };
+export const relaySupportsRoll = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= ROLL_RELAY_MIN; };
+/** CHAT-CHAN: the relay that first routes a party's line and opens the region channels. An older one would take a
+ *  `ch` it does not know as... nothing: its parse projects `{t:'chat', text}` and the party's line would be fanned to
+ *  EVERYONE online - so the client says a party line only to a relay that routes it, and opens no region room before. */
+export const CHAN_RELAY_MIN = 102;   // MERGE: world102 - main's world99, world100 and world101 route no channel of the arc's
+export const relaySupportsChannels = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= CHAN_RELAY_MIN; };
 /** FRIENDLY-SPELLS: THE SENDER'S METER HOLDS ONE WHOLE BLAST. The meter was sized when one cast was one frame; a
  *  beneficial blast is ONE cast and one frame for each party mate inside it, so a bucket CAST_HZ_MAX deep gave a
  *  full party's blast to four mates and silently none to the rest. The depth is a party's mates, the refill stays
@@ -1850,6 +1970,129 @@ export function validCastData(d) {
   }
   const name = typeof sp.name === 'string' ? sanitizeLabel(sp.name).slice(0, CAST_NAME_MAX) : '';
   return { to, level, spell: { name, element, rangeType, icon, effects } };
+}
+
+// INSPECT1 (2026-09-23, the community arc - kurkku: "a profile page that you can bring up when you're near them"; Mac:
+// "a new enhanced UI element for the player inspect interaction. Showing their glyph, name, title, stats and worn
+// gear"): A PLAYER'S CARD, ASKED FOR AND ANSWERED, as ONE DIRECTED FRAME with the cast frame's own routing -
+// `{t:'card', data:{to, ask: true}}` asks the player `to` names for their card and `{t:'card', data:{to, card}}` is
+// the answer, each from a hello'd socket in a place room to the socket `to` names, the sender's id stamped on it by
+// the relay. The relay reads the SHAPE alone (validCardData). The card is the ANSWERING player's own word - their
+// sheet's level, attributes and vitals, and the look they wear NOW (a look rides the hello alone, so the room's copy
+// can be a room behind) - and the asker draws it as theirs. The glyphs, the title and the name are NOT on the card:
+// they are the relay's word, read off the signed identity token (badged), so no card can claim a title.
+export const CARD_FRAME_MAX = 4 * 1024;
+/** A socket's asks and answers together, a second - the cast frame's rate: a card is asked by a hand on a menu. On the
+ *  way in, a card rides the cast arm's own funnel onto its destination - per sender (AUDIT ALLY-CAST B2), so strangers
+ *  asking over and over cannot starve a friend's ask - and ONE bucket for one sender whatever the directed frame: what a
+ *  destination is made to take from one sender, a spell or a card to answer, is bounded once. */
+export const CARD_HZ_MAX = 4;
+export const CARD_IN_HZ_MAX = CARD_HZ_MAX * 2;
+/** The card's ceilings - what a bound refuses is a number no sheet draws. An attribute is the sheet's LIVE value, which
+ *  the port clamps at systems/statMods.js MAX_STAT_VALUE whatever effect is on it (a pin holds the two equal - this
+ *  file is the relay's and imports no game module). The port caps no level and no vital's maximum (both climb with the
+ *  level), so theirs are sanity bounds. */
+export const CARD_LEVEL_MAX = 999;
+export const CARD_STAT_MAX = 100;
+export const CARD_VITAL_MAX = 99999;
+/** The eight attributes in the sheet's own order (systems/chargen.js STAT_KEYS_ORDER - a pin holds the two equal), and
+ *  the three vitals' maxima: health, fatigue (the sheet's /64 display figure), magicka. */
+export const CARD_ATTRS = 8;
+export const CARD_VITALS = 3;
+/** The relay that first routes a card - an older one answers the frame with 'unknown message' and CLOSES the socket,
+ *  so no card is asked of it (the profile draws what the room already knows). The same deploy as the channels. */
+export const CARD_RELAY_MIN = 102;   // MERGE: world102, as CHAN_RELAY_MIN
+export const relaySupportsCard = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= CARD_RELAY_MIN; };
+export const cardGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CARD_HZ_MAX);
+export const cardInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CARD_IN_HZ_MAX);
+/** A card, projected: `{ level, attrs[8], vitals[3], look }` or null - every number an integer inside its bound, the
+ *  look through validLook (the paperdoll's recipe, the room's own law). A card short of anything is no card: half a
+ *  sheet drawn as a whole one would be a lie about a player. */
+export function validCard(c) {
+  if (!c || typeof c !== 'object' || Array.isArray(c)) return null;
+  const n = (v, max) => (Number.isInteger(v) && v >= 0 && v <= max ? v : null);
+  const level = Number.isInteger(c.level) && c.level >= 1 && c.level <= CARD_LEVEL_MAX ? c.level : null;
+  if (level === null) return null;
+  if (!Array.isArray(c.attrs) || c.attrs.length !== CARD_ATTRS) return null;
+  const attrs = c.attrs.map((v) => n(v, CARD_STAT_MAX));
+  if (attrs.includes(null)) return null;
+  if (!Array.isArray(c.vitals) || c.vitals.length !== CARD_VITALS) return null;
+  const vitals = c.vitals.map((v) => n(v, CARD_VITAL_MAX));
+  if (vitals.includes(null)) return null;
+  if (!c.look || typeof c.look !== 'object' || Array.isArray(c.look)) return null;
+  return { level, attrs, vitals, look: validLook(c.look) };
+}
+/** A card frame's data, projected: `{ to, ask: true }` or `{ to, card }` - exactly one of the two - or null. */
+export function validCardData(d) {
+  if (!d || typeof d !== 'object' || Array.isArray(d)) return null;
+  const to = typeof d.to === 'string' && ID_RE.test(d.to) ? d.to : null;
+  if (!to) return null;
+  if (d.ask === true && d.card === undefined) return { to, ask: true };
+  if (d.ask !== undefined || d.card === undefined) return null;
+  const card = validCard(d.card);
+  return card ? { to, card } : null;
+}
+
+// JOURNAL1 (2026-09-23, the community arc - Addison Knox: "Player journals ... shared in-world for storytelling"): A
+// PAGE OF A PLAYER'S JOURNAL, SHOWN TO ONE PLAYER STANDING NEAR THEM, as one directed frame with the card's routing -
+// `{t:'page', data:{to, page:{head, lines}}}` from a hello'd socket in a place room to the socket `to` names, the
+// sender's id stamped on it by the relay, on a meter of its own, and never from a muted player: a page is words, and a
+// mute that stopped a line and let a page through would be no mute (MOD1). The page is the SENDER's journal as their
+// game keeps it (systems/notebook.js): `head` the date and place the entry was written (the notebook's dated header;
+// '' on a page with none, which is how the notebook files an entry's continuation), `lines` the entry as the notebook
+// laid it out, '' for the blank line between two paragraphs. Its words are cleaned by the letter's law (wordsLine,
+// foldBlankLines above), and a page past its bound is REFUSED, never cut - a page shown is the page as written, and the
+// sender's journal says why before anything is sent (net/journalPage.js reads pageLaw's words).
+/** A page's head, lines and line count, at most. A notebook line is MAX_LINE_LENGTH (70, systems/notebook.js - a pin
+ *  holds this above it; this file is the relay's and imports no game module) and an entry the notebook files from a
+ *  talk or a kept letter runs to about fifty lines before its split law starts the next, so the bounds are sanity
+ *  bounds over what a journal holds: no page a journal can hold is refused by them. */
+export const PAGE_HEAD_MAX = 120;
+export const PAGE_LINE_MAX = 80;
+export const PAGE_LINES_MAX = 60;
+/** The relay's door on a page frame. The widest page the law admits, every character one JSON escapes, fits under it
+ *  (a pin builds it), so a page the law takes is never a frame the relay refuses; and it stands under MAX_FRAME_BYTES. */
+export const PAGE_FRAME_MAX = 12 * 1024;
+/** A socket's pages, a second - a page is held out by a hand on a button, once. On the way in it rides the cast arm's
+ *  per-sender funnel onto its destination (with the card and the spell: what one sender makes one player take is
+ *  bounded once), and the reader's own gate takes twice this from any one sender. */
+export const PAGE_HZ_MAX = 1;
+export const PAGE_IN_HZ_MAX = PAGE_HZ_MAX * 2;
+/** The relay that first routes a page - an older one answers the frame with 'unknown message' and CLOSES the socket, so
+ *  no page is shown through it (the journal says the server cannot carry one yet). The same deploy as the card. */
+export const PAGE_RELAY_MIN = 102;   // MERGE: world102, as CARD_RELAY_MIN
+export const relaySupportsPage = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= PAGE_RELAY_MIN; };
+export const pageGate = (bucket, nowMs) => tokenGate(bucket, nowMs, PAGE_HZ_MAX);
+export const pageInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, PAGE_IN_HZ_MAX);
+/**
+ * A page, checked: `{ page: { head, lines } }` cleaned and laid out, or the ONE word that refuses it - the relay's
+ * projection (validPage) and the sender's reason (the journal's Share says it) from one reading.
+ * @param {unknown} p
+ * @returns {{ page: { head: string, lines: string[] } } | { error: 'no-page' | 'head-long' | 'line-long' | 'no-words' | 'page-long' }}
+ */
+export function pageLaw(p) {
+  if (!p || typeof p !== 'object' || Array.isArray(p)) return { error: 'no-page' };
+  const { head: rawHead, lines: rawLines } = /** @type {{ head?: unknown, lines?: unknown }} */ (p);
+  if (typeof rawHead !== 'string' || !Array.isArray(rawLines) || rawLines.some((l) => typeof l !== 'string')) return { error: 'no-page' };
+  const head = wordsLine(rawHead);
+  if (head.length > PAGE_HEAD_MAX) return { error: 'head-long' };
+  const cleaned = rawLines.map(wordsLine);
+  if (cleaned.some((l) => l.length > PAGE_LINE_MAX)) return { error: 'line-long' };
+  const lines = foldBlankLines(cleaned);
+  if (!lines.length) return { error: 'no-words' };
+  if (lines.length > PAGE_LINES_MAX) return { error: 'page-long' };
+  return { page: { head, lines } };
+}
+/** A page, projected - pageLaw's page, or null. */
+export const validPage = (p) => { const r = pageLaw(p); return 'page' in r ? r.page : null; };
+/** A page frame's data, projected: `{ to, page }` or null. One home: the relay's parser, the sender's sendPage and the
+ *  reader's receive run it. */
+export function validPageData(d) {
+  if (!d || typeof d !== 'object' || Array.isArray(d)) return null;
+  const to = typeof d.to === 'string' && ID_RE.test(d.to) ? d.to : null;
+  if (!to) return null;
+  const page = validPage(d.page);
+  return page ? { to, page } : null;
 }
 
 /** One trade frame's data, PROJECTED: `{to, k, s, ...exactly what its kind carries}` or null. Items are checked for
