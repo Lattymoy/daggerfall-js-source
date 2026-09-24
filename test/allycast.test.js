@@ -94,7 +94,7 @@ const GOOD = { to: 'peer-0002', level: 5, spell: { name: 'Heal', element: 4, ran
 const GOOD_OUT = { ...GOOD, spell: { ...GOOD.spell, icon: 0 } };
 
 test('ALLY-CAST wire (world97): validCastData projects a bounded spell record and refuses the whole frame otherwise; parseClient carries the `cast` frame after a hello and inside the cap', () => {
-  assert.equal(RELAY_VERSION, 'world107');   // AUDIT 68's relay law (world105); TITLE-N's dm frame and badge vocabulary moved it again (world104); the contributor's death pose, Resurrect call and fallen body moved it (world103); the community arc's frames (CHAT-CHAN, DICE1, EMOTE1, INSPECT1, JOURNAL1) and AUDIT ATTACH's meters moved it (world102); DISC12's pose hand and beast bits (world101); DISC7's hs (world100); SPELLFX1's pose fields moved it once more (world98), HCC-PARK + RIDE again (world99); the cast frame is world97's
+  assert.equal(RELAY_VERSION, 'world108');   // DUEL1's duel frame and the card's account stamp (world107); DISC23-B's look (world106); AUDIT 68's relay law (world105); TITLE-N's dm frame and badge vocabulary moved it again (world104); the contributor's death pose, Resurrect call and fallen body moved it (world103); the community arc's frames (CHAT-CHAN, DICE1, EMOTE1, INSPECT1, JOURNAL1) and AUDIT ATTACH's meters moved it (world102); DISC12's pose hand and beast bits (world101); DISC7's hs (world100); SPELLFX1's pose fields moved it once more (world98), HCC-PARK + RIDE again (world99); the cast frame is world97's
   const d = validCastData(GOOD);
   assert.deepEqual(d, GOOD_OUT, 'a whole frame, every component an integer in bounds, the icon defaulted');
   assert.equal(validCastData({ ...GOOD, to: 'x' }), null, 'an id is an id');
@@ -437,7 +437,7 @@ test('ALLY-CAST by source: world.js picks the party mate with the F key\'s own r
   assert.match(wm, /selfCast: b\.bundleType === 'Spell' && \(b\.selfCast !== false \|\| b\.ally === true\),/, 'C4: the surface\'s');
   assert.match(rd('src/systems/mysticism.js'), /ally: !!a\.bundleAlly,/);
   const fxs = rd('src/systems/effects.js');
-  assert.match(fxs, /const allyCast = ctx\.allyCast === true;\s*\n\s*const findInc = \(pred\) => \(heldItem \? undefined : target\.activeEffects\?\.find\(\(a\) => !a\.heldItem && !!a\.bundleAlly === allyCast && pred\(a\)\)\);/, 'C2: the incumbent law reads the tag');
+  assert.match(fxs, /const allyCast = ctx\.allyCast === true;\s*\n(?:\s*\/\/[^\n]*\n)*\s*const duelCast = ctx\.duelCast === true;\s*\n\s*const findInc = \(pred\) => \(heldItem \? undefined : target\.activeEffects\?\.find\(\(a\) => !a\.heldItem && !!a\.bundleAlly === allyCast && !!a\.bundleDuel === duelCast && pred\(a\)\)\);/, 'C2: the incumbent law reads the tag (DUEL1: and the duel\'s, the same way)');
   assert.match(fxs, /list\[i\]\.bundleAlly = allyCast;/);
   const o = rd('src/net/online.js');
   assert.match(o, /sendCast\(data\) \{\s*\n\s*const d = validCastData\(data\);\s*\n\s*if \(!d \|\| d\.to === this\.id \|\| !this\.castOk\) return false;/, 'the link projects its own frame first, and never sends one at a relay that would close the socket');
@@ -454,6 +454,6 @@ test('ALLY-CAST by source: world.js picks the party mate with the F key\'s own r
   assert.match(relay, /if \(m\.t === 'cast'\) \{[\s\S]{0,900}?a = this\._meterCast\(ws, a, now\); if \(!a\) return;\s*\n\s*if \(isChatRoom\(a\.key\) \|\| isSocialRoom\(a\.key\)\) return;/, 'its own meter, a place room alone');
   // INSPECT1: the funnel is ONE helper now (`_senderFunnel`), the cast arm's and the card arm's - pinned where it lives
   // (among the destination's meters, AUDIT ATTACH), and the cast arm pinned to go through it
-  assert.match(relay, /_senderFunnel\(tws, senderId, now\) \{\s*\n\s*const slots = this\._meterOf\(tws\)\.cin \?\?= \[\];\s*\n\s*let slot = slots\.find\(\(c\) => c\.id === senderId\) \?\? null;\s*\n\s*if \(!slot\) \{\s*\n\s*if \(slots\.length >= CAST_DEST_SENDERS_MAX\) \{ slots\.sort\(\(x, y\) => \(x\.b\?\.at \?\? 0\) - \(y\.b\?\.at \?\? 0\)\); slots\.shift\(\); \}\s*\n\s*slot = \{ id: senderId, b: null \}; slots\.push\(slot\);\s*\n\s*\}\s*\n\s*const funnel = tokenGate\(slot\.b, now, CAST_HZ_MAX\);/, 'B2: the funnel per sender, the stalest slot to a newcomer');
+  assert.match(relay, /_senderFunnel\(tws, senderId, now, field = 'cin', hz = CAST_HZ_MAX\) \{[^\n]*\n\s*const meters = this\._meterOf\(tws\);\s*\n\s*const slots = meters\[field\] \?\?= \[\];\s*\n\s*let slot = slots\.find\(\(c\) => c\.id === senderId\) \?\? null;\s*\n\s*if \(!slot\) \{\s*\n\s*if \(slots\.length >= CAST_DEST_SENDERS_MAX\) \{ slots\.sort\(\(x, y\) => \(x\.b\?\.at \?\? 0\) - \(y\.b\?\.at \?\? 0\)\); slots\.shift\(\); \}\s*\n\s*slot = \{ id: senderId, b: null \}; slots\.push\(slot\);\s*\n\s*\}\s*\n\s*const funnel = tokenGate\(slot\.b, now, hz\);/, 'B2: the funnel per sender, the stalest slot to a newcomer (DUEL1: at the rate the arm names - the cast\'s by default)');
   assert.match(relay, /if \(!this\._senderFunnel\(tws, a\.id, now\)\) return;\s*\n\s*this\._send\(tws, JSON\.stringify\(\{ t: 'cast', id: a\.id, data: m\.data \}\)\);/, '...the cast arm through it');
 });

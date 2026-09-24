@@ -57,7 +57,7 @@ enabled = true
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct8"
+ACCOUNT_VERSION = "acct9"
 # The site that may call this. "*" while nothing is live; it is narrowed
 # to the real origin before a single account exists.
 ALLOWED_ORIGIN = "*"
@@ -74,7 +74,10 @@ ALLOWED_ORIGIN = "*"
 # EMPTY IS A VALID ANSWER and is what this ships as: nobody holds it
 # until a handle is written here. It is not a secret - a title is a
 # thing other players are meant to see.
-DEVELOPER_HANDLES = "Lattymoy"
+# DEV2 (2026-09-24, Mac: "Give trashBattery, LostMyLeg the developer
+# title/glyph"): the list grants the whole developer set - the title,
+# the glyph, /red, and /mute and /unmute (titles.js canModerate).
+DEVELOPER_HANDLES = "Lattymoy,trashBattery,LostMyLeg"
 # MOD1: THE MODERATORS - the blue shield beside the name, and /mute and
 # /unmute in chat. Comma-separated handles, case-insensitive, the same
 # as the line above; a developer may already moderate without being

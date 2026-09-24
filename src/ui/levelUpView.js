@@ -147,9 +147,9 @@ export const ATTRIBUTE_BLURB = Object.freeze({
   agility: 'Rides every swing: a tenth of the gap between your agility and your foe\'s.',
   // systems/chargen.js hitPointsPerLevelUp reads hitPointsModifier = floor(endurance / 10) - 5.
   endurance: 'Rolls into the health you gain at every level from here on.',
-  // combat/formulas.js:814 - merchant reaction takes personality / 5; systems/court.js:435 takes it again.
+  // combat/formulas.js:824 - merchant reaction takes personality / 5; systems/court.js:435 takes it again.
   personality: 'Warms merchants, judges and anyone else weighing what you are worth.',
-  // player/motor.js:476 walkSpeed(stats.speed) is how fast you move;
+  // player/motor.js:482 walkSpeed(stats.speed) is how fast you move;
   // combat/weaponRig.js:416 reads liveStat speed for the swing.
   speed: 'Quickens your weapon and closes the ground between you and a fight.',
   // combat/formulas.js:306-307 again - the same term agility rides -

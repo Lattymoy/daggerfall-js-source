@@ -922,7 +922,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world107';   // HT-WAIST-NET (2026-09-24: Mac asked for the lantern at the waist to be seen on the character, and the others draw you in the Morrowind body): the pose's waist-lantern bit (`hl` 1 while the sender's lit light is a lantern hung at the waist - systems/playerTorch.js waistLanternPoseBit, lanternAtWaist's answer - omitted otherwise; poseChanged sends its edge at once; lerpPose carries it), so a peer's Morrowind body hangs the lantern at its hip (net/peerBodies.js `_arm`, the rig's own setHipLight) - world107 (it was world106 on its branch; main's DISC23-B took world106 first). No RELAY_MIN: a pose field is never gated (DISC12's lh/wb and PCORPSE1's dd were not) - an older relay's validPose drops it and the others see no lantern, nothing closes. Before it: DISC23-B (2026-09-24, Gryphoth on Discord): the look's `eo` - the Eye Of The Beholder on-foot set the player chose, so a peer without a Morrowind body stands as the sprite they picked, not their class's; a look without it keeps its bytes - world106. Before it: AUDIT 68 (2026-09-24, the whole-tree sweep): no frame changes shape - the relay's own law moved (a hello is asked for its token before anything is written; a destination's own hit-byte meter; say and mute metered; idle unlisted accounts, stale party pointers and a registry's expired word swept) - world105 (it was world103 on the branch; main's world103 and world104 landed first). Before it: TITLE-N (2026-09-24, Mac): the Dungeon Master's line - `{t:'narrate', text}` in, from a socket whose token carried the `dm` glyph alone, on its own bucket (DM_HZ_MAX); `{t:'dm', text, at}` out to everyone in the room, no id and no name - and the badge vocabulary grows by four titles (Dungeon Master, Disciple, Apostle, Hierophant) and four glyphs (dm, disciple, apostle, hierophant), which the token verifier reads - world104. Before it: PCORPSE1 + RESURRECT1 + PCORPSE3 (2026-09-23, the contributor's drop, merged over DISC12): the pose's death flag (`dd` 1 on a dying player's last pose, omitted alive), and the party pose's Resurrect call (`rz` {to, at}) and fallen body (`dd` {k, x, y, z, at}), each omitted when absent; and the look's `class` widened to what a custom class may be called (letters, digits, spaces, apostrophes and hyphens, 32 long - the contributor's sprite fix) - world103 (the drop numbered them world100-102 off world99; none of those ever ran on the relay, and main's community arc deployed world102 first, so the merged graph is the one version past the deployed world102). Before it: THE SIXTH MERGE (2026-09-23): main's DISC12 is world101, so the arc's deploy is world102 - every frame below moves its RELAY_MIN gate to 102. JOURNAL1 (the same deploy): the `page` frame - a page of a player's journal shown to one player standing near them, directed like a card through the cast arm's per-sender funnel, on its own meter, never from a muted player; its words cleaned by the letter's line law, which moves here from net/letterLaw.js (`wordsLine`, `foldBlankLines`) so the letter and the page read one law. MAIL1 (the same deploy): no frame of its own - the letters are the account service's - but the characters' law left sanitizeChat as visibleText, which the letter reads too (one law, not a copy; a chat line comes out of it unchanged). THE MERGE (the same deploy): main's park meter's strikes its own (`parkDrops` - they were the party pose meter's `pdrops`, so either meter's pass forgave the other's flood). INSPECT1 (the same deploy): the `card` frame - a player's card asked for and answered, directed like a cast frame through the cast arm's own per-sender funnel onto the destination, the relay reading none of it. AUDIT ATTACH (the same deploy): every per-socket meter is the Room instance's, not its attachment's - the widest place attachment was past the runtime's 2 KiB and a write it refused froze a meter open; the attachment keeps what a wake must recompute. EMOTE1 (the same deploy): a chat line may be an ACTION (`me: true`, nothing else admitted), and the sanitizer keeps the one joiner that stands between two pictographs (a family, a profession, a flag - one emoji). DICE1 (2026-09-23, the community arc, the same deploy): the `roll` frame - a roll ASKED of the relay ({n, m, k}, net/dice.js), rolled from the relay's own CSPRNG and said to the channel it was asked on through the chat's own fan (`_sayLine`), one a second a socket. CHAT-CHAN (2026-09-23, the community arc): the region channels (`chat:region.<i>`, one room per politic region) join the whitelist, a chat line may name the `party` channel - fanned by the hub to the party's members alone on a budget of the parties' own (PARTY_CHAT_ROOM_HZ_MAX), and refused whole when it names anything else - and a cast's strikes are its own (`castDrops`, no longer the chat gate's `cdrops`) - world102. Before it: DISC12 (2026-09-23): the pose's hand-in-use bit (`lh`, the LEFT hand, omitted on the right) and beast form (`wb`, 1 werewolf 2 wereboar, omitted in human form); poseChanged sends each edge at once - world101. Before it: DISC7 (2026-09-23): the pose's half-speed bit (`hs`, mounted and moving slower than half, omitted at 0) - the peers' clop swaps as the rider's own does - world100. Before it: HCC-PARK + RIDE (2026-09-23): the `park` frame (a cell keeps a parked team past its owner's presence; the owner's registry drops the old cell's record), and the pose's mount (`rd`/`rv`, omitted on foot) - world99. Before it: SPELLFX1 (2026-09-23, the friendly-spells drop): the pose carries the cast's element (`ce`) and the arrows loosed (`ar`), so a peer's missile and shaft can be DRAWN - the Unity co-op's RpcPlayPlayerSpellCastVisual; visual only, it lands nothing, and a pose from before it reads Magic and no shafts; and the sender's cast meter a whole blast deep (CAST_BURST_MAX), since a beneficial blast is one cast and one frame per mate - world98. Before it: AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged target, the icon), the destination's funnel per sender - world97. Before it: ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
+export const RELAY_VERSION = 'world108';   // HT-WAIST-NET (2026-09-24: Mac asked for the lantern at the waist to be seen on the character, and the others draw you in the Morrowind body): the pose's waist-lantern bit (`hl` 1 while the sender's lit light is a lantern hung at the waist - systems/playerTorch.js waistLanternPoseBit, lanternAtWaist's answer - omitted otherwise; poseChanged sends its edge at once; lerpPose carries it), so a peer's Morrowind body hangs the lantern at its hip (net/peerBodies.js `_arm`, the rig's own setHipLight) - world108 (it was world106 on its branch; main's DISC23-B took world106 and DUEL1 world107 first). No RELAY_MIN: a pose field is never gated (DISC12's lh/wb and PCORPSE1's dd were not) - an older relay's validPose drops it and the others see no lantern, nothing closes. Before it: DUEL1 (2026-09-24, Mac: "When inspecting a player, they should be able to send an invite to duel"): the `duel` frame - one directed frame between two players (the invite, its answer, the start and the ring's centre, a blow, a spell, the defender's result, the end), routed like a card through a per-sender funnel of its own on its own meter, the sender's VERIFIED ACCOUNT stamped beside its id (`sub`, off the token - the loser names the winner's account by it); and the card frame carries the answerer's `sub` the same way, so a profile can read the duelling record the account service keeps for it - world107 (it was world105 on the branch; main's world105, AUDIT 68, and world106, DISC23-B, landed first). Before it: DISC23-B (2026-09-24, Gryphoth on Discord): the look's `eo` - the Eye Of The Beholder on-foot set the player chose, so a peer without a Morrowind body stands as the sprite they picked, not their class's; a look without it keeps its bytes - world106. Before it: AUDIT 68 (2026-09-24, the whole-tree sweep): no frame changes shape - the relay's own law moved (a hello is asked for its token before anything is written; a destination's own hit-byte meter; say and mute metered; idle unlisted accounts, stale party pointers and a registry's expired word swept) - world105 (it was world103 on the branch; main's world103 and world104 landed first). Before it: TITLE-N (2026-09-24, Mac): the Dungeon Master's line - `{t:'narrate', text}` in, from a socket whose token carried the `dm` glyph alone, on its own bucket (DM_HZ_MAX); `{t:'dm', text, at}` out to everyone in the room, no id and no name - and the badge vocabulary grows by four titles (Dungeon Master, Disciple, Apostle, Hierophant) and four glyphs (dm, disciple, apostle, hierophant), which the token verifier reads - world104. Before it: PCORPSE1 + RESURRECT1 + PCORPSE3 (2026-09-23, the contributor's drop, merged over DISC12): the pose's death flag (`dd` 1 on a dying player's last pose, omitted alive), and the party pose's Resurrect call (`rz` {to, at}) and fallen body (`dd` {k, x, y, z, at}), each omitted when absent; and the look's `class` widened to what a custom class may be called (letters, digits, spaces, apostrophes and hyphens, 32 long - the contributor's sprite fix) - world103 (the drop numbered them world100-102 off world99; none of those ever ran on the relay, and main's community arc deployed world102 first, so the merged graph is the one version past the deployed world102). Before it: THE SIXTH MERGE (2026-09-23): main's DISC12 is world101, so the arc's deploy is world102 - every frame below moves its RELAY_MIN gate to 102. JOURNAL1 (the same deploy): the `page` frame - a page of a player's journal shown to one player standing near them, directed like a card through the cast arm's per-sender funnel, on its own meter, never from a muted player; its words cleaned by the letter's line law, which moves here from net/letterLaw.js (`wordsLine`, `foldBlankLines`) so the letter and the page read one law. MAIL1 (the same deploy): no frame of its own - the letters are the account service's - but the characters' law left sanitizeChat as visibleText, which the letter reads too (one law, not a copy; a chat line comes out of it unchanged). THE MERGE (the same deploy): main's park meter's strikes its own (`parkDrops` - they were the party pose meter's `pdrops`, so either meter's pass forgave the other's flood). INSPECT1 (the same deploy): the `card` frame - a player's card asked for and answered, directed like a cast frame through the cast arm's own per-sender funnel onto the destination, the relay reading none of it. AUDIT ATTACH (the same deploy): every per-socket meter is the Room instance's, not its attachment's - the widest place attachment was past the runtime's 2 KiB and a write it refused froze a meter open; the attachment keeps what a wake must recompute. EMOTE1 (the same deploy): a chat line may be an ACTION (`me: true`, nothing else admitted), and the sanitizer keeps the one joiner that stands between two pictographs (a family, a profession, a flag - one emoji). DICE1 (2026-09-23, the community arc, the same deploy): the `roll` frame - a roll ASKED of the relay ({n, m, k}, net/dice.js), rolled from the relay's own CSPRNG and said to the channel it was asked on through the chat's own fan (`_sayLine`), one a second a socket. CHAT-CHAN (2026-09-23, the community arc): the region channels (`chat:region.<i>`, one room per politic region) join the whitelist, a chat line may name the `party` channel - fanned by the hub to the party's members alone on a budget of the parties' own (PARTY_CHAT_ROOM_HZ_MAX), and refused whole when it names anything else - and a cast's strikes are its own (`castDrops`, no longer the chat gate's `cdrops`) - world102. Before it: DISC12 (2026-09-23): the pose's hand-in-use bit (`lh`, the LEFT hand, omitted on the right) and beast form (`wb`, 1 werewolf 2 wereboar, omitted in human form); poseChanged sends each edge at once - world101. Before it: DISC7 (2026-09-23): the pose's half-speed bit (`hs`, mounted and moving slower than half, omitted at 0) - the peers' clop swaps as the rider's own does - world100. Before it: HCC-PARK + RIDE (2026-09-23): the `park` frame (a cell keeps a parked team past its owner's presence; the owner's registry drops the old cell's record), and the pose's mount (`rd`/`rv`, omitted on foot) - world99. Before it: SPELLFX1 (2026-09-23, the friendly-spells drop): the pose carries the cast's element (`ce`) and the arrows loosed (`ar`), so a peer's missile and shaft can be DRAWN - the Unity co-op's RpcPlayPlayerSpellCastVisual; visual only, it lands nothing, and a pose from before it reads Magic and no shafts; and the sender's cast meter a whole blast deep (CAST_BURST_MAX), since a beneficial blast is one cast and one frame per mate - world98. Before it: AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged target, the icon), the destination's funnel per sender - world97. Before it: ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -1186,7 +1186,7 @@ export function inRange(roomKey, from, to) {
   return pixelDistance(from, to) <= RANGE_PIXELS;
 }
 
-/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'mute'|'world'|'foes'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'park', ...}
+/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'narrate'|'mute'|'world'|'foes'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'duel'|'park', ...}
  *  or {error} - the caller closes on an error. INSPECT1: every arm below, named - this line had fallen seven behind
  *  (test/auditworld2.test.js derives the list from the arms now, so it cannot fall behind again - the merge with
  *  main's HCC-PARK was its first catch: the park arm, unnamed). */
@@ -1237,6 +1237,12 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (text.length > PAGE_FRAME_MAX) return { error: 'frame too large' };
     const data = validPageData(m.data);
     return data ? { t: 'page', data } : { error: 'bad page' };
+  }
+  if (m.t === 'duel') {   // DUEL1: a duel's invite, answer, start, blow, spell, result or end - one directed frame, projected by validDuelData; the relay reads none of it
+    if (!hasHello) return { error: 'duel before hello' };
+    if (text.length > DUEL_FRAME_MAX) return { error: 'frame too large' };
+    const data = validDuelData(m.data);
+    return data ? { t: 'duel', data } : { error: 'bad duel' };
   }
   if (m.t === 'park') {   // HCC-PARK: my character's parked team - nothing (no anchor), or its anchor and, when shown, its record
     if (!hasHello) return { error: 'park before hello' };
@@ -2005,12 +2011,21 @@ export function validCastData(d) {
   if (!to) return null;
   const level = Number.isInteger(d.level) && d.level >= 1 && d.level <= CAST_LEVEL_MAX ? d.level : null;
   if (level === null) return null;
-  const sp = d.spell;
-  if (!sp || typeof sp !== 'object' || Array.isArray(sp)) return null;
-  const element = Number.isInteger(sp.element) && sp.element >= 0 && sp.element <= 4 ? sp.element : null;
   // AUDIT ALLY-CAST B4: a touch or a ranged single target - the two an honest frame carries (an area is never
   // redirected, a CasterOnly leaves as a touch); the receiver applies the gift as a self-cast whatever this says
-  const rangeType = sp.rangeType === 1 || sp.rangeType === 2 ? sp.rangeType : null;
+  const spell = castSpellOf(d.spell, CAST_RANGE_TYPES);
+  return spell ? { to, level, spell } : null;
+}
+/** The range types a cast frame's spell may name (AUDIT ALLY-CAST B4, above). */
+const CAST_RANGE_TYPES = Object.freeze([1, 2]);
+/** A spell record through the cast frame's law - the classic five elements, a range type out of `rangeTypes`, the
+ *  icon, and at most three effect entries of a classic type with the eleven integer components bounded - or null.
+ *  DUEL1: ONE home for the cast frame's spell and the duel's (which may name any range a spell reaches another body
+ *  by), so the two cannot drift. Anything outside refuses the whole record. */
+function castSpellOf(sp, rangeTypes) {
+  if (!sp || typeof sp !== 'object' || Array.isArray(sp)) return null;
+  const element = Number.isInteger(sp.element) && sp.element >= 0 && sp.element <= 4 ? sp.element : null;
+  const rangeType = rangeTypes.includes(sp.rangeType) ? sp.rangeType : null;
   if (element === null || rangeType === null) return null;
   const icon = sp.icon == null ? 0 : (Number.isInteger(sp.icon) && sp.icon >= 0 && sp.icon <= CAST_ICON_MAX ? sp.icon : null);
   if (icon === null) return null;
@@ -2030,7 +2045,7 @@ export function validCastData(d) {
     effects.push(out);
   }
   const name = typeof sp.name === 'string' ? sanitizeLabel(sp.name).slice(0, CAST_NAME_MAX) : '';
-  return { to, level, spell: { name, element, rangeType, icon, effects } };
+  return { name, element, rangeType, icon, effects };
 }
 
 // INSPECT1 (2026-09-23, the community arc - kurkku: "a profile page that you can bring up when you're near them"; Mac:
@@ -2327,5 +2342,158 @@ export function validParkData(d) {
   }
   if (!rec.w && !rec.h) return null;
   out.r = rec;
+  return out;
+}
+
+// ═══ DUEL1 (2026-09-24, Mac: "When inspecting a player, they should be able to send an invite to duel which then traps
+// both players in a surrounding transparent holographic wall that keeps them from going outside of the duel space") ═══
+//
+// THE FIRST FRAME ONE PLAYER'S BLOW RIDES AT ANOTHER. Co-op was never PvP (bible Multiplayer.md): no peer stands in any
+// melee, arrow or spell target list, a `hit` names foes alone and a `cast` lands a party mate's gift alone. A duel is
+// the one door through that, and it is CONSENSUAL and BOUNDED - two players who both said yes, inside one ring, until
+// one of them falls to 1 health (never 0: a duel kills nobody), yields, or it is called off.
+//
+// ONE DIRECTED FRAME, the card's routing - `{t:'duel', data:{to, k, s, ...}}` from a hello'd socket in a PLACE room to
+// the socket `to` names, the sender's id AND its verified account stamped on it by the relay (`sub`, off the identity
+// token - the loser's client names the winner's account to the account service by it, so no client's own word says
+// whose win it was). The relay reads the SHAPE alone (validDuelData); everything that decides anything is the two
+// clients' law (net/duelSession.js):
+//   ask / yes / no  the invite (the Inspect card's Challenge) and the answer (the asked player's prompt)
+//   start           the asker's word that the duel is ON, and where the ring stands (`c`: the world frame's point -
+//                   natives on x and z, metres on y, the pose's own frame). Three steps, so nobody is shut in a ring
+//                   the other side never confirmed.
+//   cancel          an ask, an answer or a start taken back, with its reason
+//   strike          my blow reached my opponent's body: my weapon and what my sheet brings to it (`a`), NEVER a number
+//                   of damage. THE DEFENDER RESOLVES IT - to-hit and damage against their own armour, on their own
+//                   machine, through the game's one formula (combat/formulas.js calculateAttackDamage) - because every
+//                   target-side input lives there alone, and a damage number from the striker would be one the striker
+//                   chose.
+//   spell           my spell reached my opponent: the record (the cast frame's law, any range that reaches another
+//                   body) and my level; the defender applies it as any caster's spell at them
+//   result          the defender's answer to a strike or a spell: landed or not, the damage done, their health
+//   end             the duel is over, and why: `fell` (the SENDER dropped to 1 health - they lost), `yield` (the sender
+//                   gave up - they lost), or a reason that records nothing (left, dead, draw, cancelled)
+// Every number an attacker's sheet brings is bounded here at what an honest sheet can hold (a level at the cast frame's
+// CAST_LEVEL_MAX, an attribute and a skill at 100 - the sender clamps, so an honest frame is never refused), so a
+// crafted frame can make a blow no stronger than the strongest honest character's.
+/** Every kind a duel frame may carry. */
+export const DUEL_KINDS = Object.freeze(['ask', 'yes', 'no', 'start', 'cancel', 'strike', 'spell', 'result', 'end']);
+/** Why a duel (or the ask for one) ended, as a code the client puts words to (net/duelSession.js duelWhyText). `fell`
+ *  and `yield` are the two that name a loser: the side that says them. */
+export const DUEL_WHY = Object.freeze(['declined', 'cancelled', 'busy', 'timeout', 'range', 'outdoors', 'left', 'dead', 'draw', 'fell', 'yield']);
+/** How a strike reached the body: a swing, or a shaft off a bow. */
+export const DUEL_BLOWS = Object.freeze(['melee', 'arrow']);
+/** The swing a melee strike was (combat/playerWeapon.js SWING_MODS - the defender reads the mods off its own table). */
+export const DUEL_SWINGS = Object.freeze(['StrikeUp', 'StrikeDownRight', 'StrikeDownLeft', 'StrikeDown', 'StrikeLeft', 'StrikeRight']);
+/** The range types a duel's spell may name - every range that reaches ANOTHER body: a touch, a missile, a missile's
+ *  blast, a blast around the caster. CasterOnly (0) lands on its caster and never rides the wire. */
+export const DUEL_RANGE_TYPES = Object.freeze([1, 2, 3, 4]);
+/** The widest duel frame: a spell record is the widest thing it carries (the cast frame's 2 KiB and a wrapper). */
+export const DUEL_FRAME_MAX = 4 * 1024;
+export const DUEL_DATA_MAX = DUEL_FRAME_MAX - 96;
+/** A socket's duel frames a second. An honest duellist sends a swing or two, a shaft, a spell and the answers to the
+ *  other's - under ten; the destination's funnel is its own per sender (the relay's duel arm), the cast's shape. */
+export const DUEL_HZ_MAX = 10;
+export const DUEL_IN_HZ_MAX = DUEL_HZ_MAX * 2;
+/** The attacker's sheet, at most: a level (the cast frame's honest ceiling), an attribute, a skill; a race index
+ *  (the eight playable races, 1..8 - 0 read as none); a strike's weapon template (the look's own bound on an item's
+ *  template - a mod's weapon is a template too) and material, and its condition as a percentage; a bow's draw; the
+ *  damage and the health a result may say. */
+export const DUEL_LEVEL_MAX = CAST_LEVEL_MAX;
+export const DUEL_STAT_MAX = 100;
+export const DUEL_SKILL_MAX = 100;
+export const DUEL_RACE_MAX = 8;
+export const DUEL_TEMPLATE_MAX = 65535;
+export const DUEL_MATERIAL_MAX = 15;
+export const DUEL_DRAW_MS_MAX = 60_000;
+export const DUEL_DMG_MAX = CARD_VITAL_MAX;
+/** A strike's and a spell's sequence number, per duel per sender - the defender takes each once. */
+export const DUEL_SEQ_MAX = 1_000_000;
+const DUEL_SID_RE = /^[A-Za-z0-9]{6,16}$/;
+const DUEL_U32 = 0xFFFFFFFF;
+/** The relay that first routes a duel frame - an older one answers it with 'unknown message' and CLOSES the socket, so
+ *  no challenge is sent through it (the Inspect card says the server cannot carry one yet). */
+export const DUEL_RELAY_MIN = 107;
+export const relaySupportsDuel = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= DUEL_RELAY_MIN; };
+export const duelGate = (bucket, nowMs) => tokenGate(bucket, nowMs, DUEL_HZ_MAX);
+export const duelInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, DUEL_IN_HZ_MAX);
+const intIn = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi;
+/** A world-frame point, as the pose carries one: natives on x and z inside the world, metres on y. */
+function duelPoint(p) {
+  if (!Array.isArray(p) || p.length !== 3 || !p.every(finite)) return null;
+  if (p[0] < 0 || p[0] > POSE_BOUND || p[2] < 0 || p[2] > POSE_BOUND || Math.abs(p[1]) > POSE_Y_BOUND) return null;
+  return [p[0], p[1], p[2]];
+}
+/** Health and its maximum, as a result says them. */
+function duelVitals(h) {
+  if (!Array.isArray(h) || h.length !== 2 || !intIn(h[0], 0, CARD_VITAL_MAX) || !intIn(h[1], 1, CARD_VITAL_MAX)) return null;
+  return [Math.min(h[0], h[1]), h[1]];
+}
+/** What the striker's sheet brings to a blow: `lv` level, `r` race, `st` the eight live attributes in the sheet's order
+ *  (CARD_ATTRS), `sk` the four skills a blow reads (the weapon's own, HandToHand, CriticalStrike, Backstabbing), `cf`
+ *  the career's three bitfields a blow reads (attack modifiers, weapon/armour/shield expertise, special abilities), `h`
+ *  health and its maximum (the adrenaline rush reads them). */
+function duelAttacker(a) {
+  if (!a || typeof a !== 'object' || Array.isArray(a)) return null;
+  if (!intIn(a.lv, 1, DUEL_LEVEL_MAX) || !intIn(a.r, 0, DUEL_RACE_MAX)) return null;
+  if (!Array.isArray(a.st) || a.st.length !== CARD_ATTRS || !a.st.every((v) => intIn(v, 0, DUEL_STAT_MAX))) return null;
+  if (!Array.isArray(a.sk) || a.sk.length !== 4 || !a.sk.every((v) => intIn(v, 0, DUEL_SKILL_MAX))) return null;
+  if (!Array.isArray(a.cf) || a.cf.length !== 3 || !intIn(a.cf[0], 0, 255) || !intIn(a.cf[1], 0, DUEL_U32) || !intIn(a.cf[2], 0, DUEL_U32)) return null;
+  const h = duelVitals(a.h);
+  if (!h) return null;
+  return { lv: a.lv, r: a.r, st: [...a.st], sk: [...a.sk], cf: [...a.cf], h };
+}
+/** The weapon a blow was struck with: `t` template, `m` material, `c` condition as a percentage of its maximum. */
+function duelWeapon(w) {
+  if (!w || typeof w !== 'object' || Array.isArray(w)) return null;
+  if (!intIn(w.t, 0, DUEL_TEMPLATE_MAX) || !intIn(w.m, 0, DUEL_MATERIAL_MAX) || !intIn(w.c, 0, 100)) return null;
+  return { t: w.t, m: w.m, c: w.c };
+}
+/**
+ * One duel frame's data, PROJECTED: `{to, k, s, ...exactly what its kind carries}` or null - anything outside refuses
+ * the whole frame (half a blow is nobody's to guess). One home: the relay's parser, the sender's sendDuel and the
+ * receiver's arm run this same function.
+ */
+export function validDuelData(d) {
+  if (!d || typeof d !== 'object' || Array.isArray(d)) return null;
+  if (typeof d.k !== 'string' || !DUEL_KINDS.includes(d.k)) return null;
+  const to = typeof d.to === 'string' && ID_RE.test(d.to) ? d.to : null;
+  const s = typeof d.s === 'string' && DUEL_SID_RE.test(d.s) ? d.s : null;
+  if (!to || !s) return null;
+  const out = { to, k: d.k, s };
+  switch (d.k) {
+    case 'ask': case 'yes': case 'no': break;
+    case 'start': {
+      const c = duelPoint(d.c);
+      if (!c) return null;
+      out.c = c; break;
+    }
+    case 'cancel': case 'end': {
+      if (d.why === undefined) { if (d.k === 'end') return null; break; }
+      if (typeof d.why !== 'string' || !DUEL_WHY.includes(d.why)) return null;
+      out.why = d.why; break;
+    }
+    case 'strike': {
+      const p = duelPoint(d.p), a = duelAttacker(d.a);
+      if (!intIn(d.n, 1, DUEL_SEQ_MAX) || !DUEL_BLOWS.includes(d.by) || !p || !a) return null;
+      out.n = d.n; out.by = d.by; out.p = p; out.a = a;
+      if (d.w !== undefined && d.w !== null) { const w = duelWeapon(d.w); if (!w) return null; out.w = w; }
+      if (d.sw !== undefined) { if (!DUEL_SWINGS.includes(d.sw)) return null; out.sw = d.sw; }
+      if (d.at !== undefined) { if (!intIn(d.at, 0, DUEL_DRAW_MS_MAX)) return null; out.at = d.at; }
+      break;
+    }
+    case 'spell': {
+      const p = duelPoint(d.p), spell = castSpellOf(d.spell, DUEL_RANGE_TYPES);
+      if (!intIn(d.n, 1, DUEL_SEQ_MAX) || !intIn(d.level, 1, DUEL_LEVEL_MAX) || !p || !spell) return null;
+      out.n = d.n; out.p = p; out.level = d.level; out.spell = spell; break;
+    }
+    case 'result': {
+      const h = duelVitals(d.h);
+      if (!intIn(d.n, 1, DUEL_SEQ_MAX) || (d.hit !== 0 && d.hit !== 1) || !intIn(d.dmg, 0, DUEL_DMG_MAX) || !h) return null;
+      out.n = d.n; out.hit = d.hit; out.dmg = d.dmg; out.h = h; break;
+    }
+    default: return null;
+  }
+  if (JSON.stringify(out).length > DUEL_DATA_MAX) return null;
   return out;
 }

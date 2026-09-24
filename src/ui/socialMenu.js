@@ -87,7 +87,7 @@ export function injectSocialMenuStyle(doc = document) {
  *  friendship is. `relation` and `acct` are no longer read at all - callers still hand the WHOLE of `actionsFor`
  *  in (they should not have to strip it), and the extra keys are simply ignored, which is what an object argument
  *  is for. */
-export function socialMenuRows({ peerId, canFriend = false, canInvite = false, whyNotFriend = null, whyNotInvite = null, canTrade, whyNotTrade = null, tradeLabel = null, canInspect, canReadPage } = {}) {
+export function socialMenuRows({ peerId, canFriend = false, canInvite = false, whyNotFriend = null, whyNotInvite = null, canTrade, whyNotTrade = null, tradeLabel = null, canInspect, canReadPage, duelRow = null, canDeclineDuel = false } = {}) {
   const rows = [
     { key: 'friend', label: 'Add friend', enabled: !!canFriend, why: canFriend ? null : (whyNotFriend ?? null), act: { k: 'friend.request', peer: peerId } },
     { key: 'invite', label: 'Invite to party', enabled: !!canInvite, why: canInvite ? null : (whyNotInvite ?? null), act: { k: 'party.invite', peer: peerId } },
@@ -106,6 +106,12 @@ export function socialMenuRows({ peerId, canFriend = false, canInvite = false, w
   // standing in one room, so the host routes `trade.request` to net/tradeSession.js, not to the hub link. When a peer has
   // already asked, the same row reads 'Accept trade' (`tradeLabel`): there is no separate panel to stand under a window.
   if (canTrade !== undefined) rows.push({ key: 'trade', label: tradeLabel || 'Trade', enabled: !!canTrade, why: canTrade ? null : (whyNotTrade ?? null), act: { k: 'trade.request', peer: peerId } });
+  // DUEL1: the duel's rows are present ONLY while there is something to answer - the challenge itself is the Inspect
+  // card's (Mac: "When inspecting a player, they should be able to send an invite to duel"). A challenge from them
+  // waiting reads 'Accept duel' (`duelRow` { label, k, enabled, why }, the host's duel law) with 'Decline duel' beside it
+  // (`canDeclineDuel`); a duel with them live reads 'Yield the duel'. Not hub acts: the host routes them to the duel.
+  if (duelRow && typeof duelRow.label === 'string' && typeof duelRow.k === 'string') rows.push({ key: 'duel', label: duelRow.label, enabled: !!duelRow.enabled, why: duelRow.enabled ? null : (duelRow.why ?? null), act: { k: duelRow.k, peer: peerId } });
+  if (canDeclineDuel) rows.push({ key: 'duel-decline', label: 'Decline duel', enabled: true, why: null, act: { k: 'duel.decline', peer: peerId } });
   rows.push({ key: 'cancel', label: 'Cancel', enabled: true, why: null, act: null });
   return rows;
 }

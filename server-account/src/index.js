@@ -50,6 +50,9 @@
 //   POST /v1/account/played {}            -> { playedS }
 // MOD1, moderation. The caller must be a moderator or a developer:
 //   POST /v1/mod/mute { target, minutes } -> { ok, target, name, until, order }
+// DUEL1, the duelling record. The caller of `loss` is the loser:
+//   POST /v1/duel/loss   { winner }       -> { recorded, wins, losses }
+//   POST /v1/duel/record { id }           -> { id, wins, losses }
 //
 // ACC2, and every one of them needs a REGISTERED account (the wall):
 //   GET    /v1/saves                                   -> { saves[] }
@@ -91,9 +94,10 @@ import {
   devicesOf, accountView, displayName, accountKind,
   register, login, recover, changePassword, setEmail, overRate,
   accountWardrobe, equipTitle, creditPlay, muteAccount, isMuted, mutedUntil,
+  duelRecordOf, reportDuelLoss,
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
-import { mintToken, mintOrder, MAX_TTL_S, TOKEN_V } from '../../src/net/identityToken.js';
+import { mintToken, mintOrder, MAX_TTL_S, TOKEN_V, ID_RE } from '../../src/net/identityToken.js';
 import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, savePathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES } from './service.js';
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
 import { signingKey } from './signing.js';
@@ -340,10 +344,32 @@ export default {
         // view is the row; a wardrobe is the row read against this
         // service's config and clock, which is why it alone takes env.
         return json({
-          account: accountView(who.player, nowS),
+          // DUEL1: and the duelling record, counted off the results (the profile card's K/D)
+          account: { ...accountView(who.player, nowS), duels: await duelRecordOf(ctx, who.player.id) },
           wardrobe: accountWardrobe(who.player, env, nowS),
           devices: await devicesOf(ctx, who.player.id),
         }, 200, origin);
+      }
+
+      if (path === '/v1/duel/loss' && request.method === 'POST') {
+        // DUEL1: THE LOSER'S OWN REPORT. The caller is the loser - the
+        // session says so, never the body - and `winner` is the account
+        // the relay stamped on the winner's frames. accounts.js
+        // `reportDuelLoss` holds the bounds inside its one INSERT.
+        const r = await reportDuelLoss(ctx, who.player, body.winner);
+        return r.error ? no(r.error, r.error === 'no-player' ? 404 : 400, origin) : json(r, 200, origin);
+      }
+
+      if (path === '/v1/duel/record' && request.method === 'POST') {
+        // DUEL1: ANY account's record, for the Inspect card - asked by
+        // a signed-in player of the account the relay stamped on the
+        // card they were answered with. A record is two counts and is
+        // no secret; the id rides the body, never the path (MAIL1's
+        // law: an id is not a URL a log keeps).
+        if (typeof body.id !== 'string' || !ID_RE.test(body.id)) return no('no-player', 404, origin);
+        const known = await db.prepare('SELECT 1 AS x FROM players WHERE id = ?1').bind(body.id).first();
+        if (!known) return no('no-player', 404, origin);
+        return json({ id: body.id, ...(await duelRecordOf(ctx, body.id)) }, 200, origin);
       }
 
       if (path === '/v1/account/title' && request.method === 'POST') {

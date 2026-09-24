@@ -1825,3 +1825,111 @@ change reaches, 87 died as they stood; `WEATHER3f-squall-strikes` (the
 centre's gate) survived, because R1's winter is snow everywhere and the
 new strike-point gate stood in for it. It runs `test/disc20.test.js` too
 now, which holds a squall's edge over thunder ground dark.
+
+# DISC21 - three Discord reports
+
+Relayed by Mac on 2026-09-24, as screenshots of the bug-reports channel.
+
+## DISC21-A: a new character's dagger, broken and "not damaged"
+
+Satranath: *"Started a new character this morning with an ebony dagger.
+when I try to equip it, it says it's broken and cannot be worn. tried to
+get an NPC to repair it and they say it isn't damaged."*
+
+**Cause.** The ebony dagger is a biography answer's IT line. DFU builds
+that item with `ItemBuilder.CreateWeapon` (armor with `CreateArmor`, and
+any other group with `new DaggerfallUnityItem`), and each of those mints
+a condition. `biography.js` built the record by hand and minted none, so
+the dagger had no condition at all. Roleplay & Realism's skill-based
+starting kit, on by default, then wears the questions' dagger to 20% of
+its maxCondition: 20% of nothing is 0. The equip check reads
+currentCondition below 1 as broken, and the repairer reads 0 against a
+missing 0 as undamaged. Nothing could fix it in play.
+
+**Fix.**
+
+- `biography.js`: a weapon line leaves through `createWeapon`, the
+  arrow's arm included, and every other line through `mintCondition` with
+  its material.
+- `rriKits.js`: the kit mints the dagger's condition before it wears it.
+- `conditionRepair.js`, run on every load over the pack, the wagon and
+  the repairer's shelf: a wearable with no maxCondition is minted by the
+  law it missed.
+  - The questions' dagger at 0 gets the kit's 20%.
+  - An arrow keeps CreateWeapon's 0.
+  - Anything else is minted whole.
+  - A minted item is never touched again.
+
+## DISC21-B: the wagon prompt's Yes did nothing
+
+kurkku: *"Can't access wagon from dungeon entrance - Clicking 'yes' on
+the prompt only closes it while my wagon is right at the entrance"*
+
+**Cause.** Not the Horse Cart And Cargo entrance match, which passes for a
+wagon parked at the door the player came in by. The exit door's prompt
+ran its Yes handler inside its own click, while the prompt still held the
+dungeon context's one overlay slot. `openInventoryWithWagon` refuses a
+held slot, so nothing opened and nothing was said, and then the prompt
+closed. That happened with every wagon at every exit. HCC's players are
+the ones who noticed, because the mod turns off the other road to a wagon
+underground: the inventory key by the exit door.
+
+**Fix.** `worldModes.js`: Yes sets `pendingDungeonWagonOpen`, and the
+dungeon frame takes it right after No's deferred exit (F-A5's shape), once
+the prompt has left the slot. That is DFU's own order: close the box, then
+post dfuiOpenInventoryWindow. `exitDungeonNow` and the load and teleport
+teardown clear it, so a pending Yes never opens the next dungeon's
+inventory.
+
+## DISC21-C: the weapon "in slot 2"
+
+Scratchie: *"Just started the game, equipped a weapon, it shows up in the
+'2' slot, but when I press it the game says 'nothing is in that slot' and
+I can't attack anything."*
+
+**Cause.** Two true things met:
+
+- The weapon sits in the diamond's MAIN cell. That cell's chip is
+  ReadyWeapon's key, Z by default, and in the skin's pixel face a Z reads
+  as a 2. The 2 key is QuickUse2, the bottom consumable slot, which is
+  empty on a new character: "Nothing is in that slot."
+- A new character's weapon starts sheathed, as classic's does
+  (`WeaponManager.Sheathed`), and the swing is dropped while sheathed. Z
+  readies it.
+
+Neither is wrong on its own, so neither changes. A glyph swap would not
+help either: in any pixel face at chip size, a Z and a 2 are nearly the
+same shape.
+
+**Fix.** The press that went wrong now teaches the one that goes right.
+`quickslots.js` `emptySlotLine`: an empty consumable press still says
+"Nothing is in that slot.", and when the hand holds a weapon that is still
+sheathed it adds "Press Z to ready your weapon.". The key named is the main
+cell's own chip under the player's binding (`ui/quickslotTags.js`
+`quickslotHand`), so a rebind names the rebound key. With the weapon out,
+with bare hands, or with nothing bound, the line stays alone. The three
+hosts read the rig in the player's hands, and the interior mode hands its
+own.
+
+## Pins
+
+`test/disc21.test.js` (4):
+
+- A: the questions' dagger minted and worn to the kit's 20%, not broken,
+  repairable and equipped; the kit minting a dagger that came without a
+  condition; a save's stuck dagger, arrows, armor and a minted sword
+  through the real save and load.
+- B: the real ServiceFlowWindow runs Yes before it closes; over the slot,
+  the report's shape refused and the deferral opening; the source's flag,
+  frame line and clears.
+- C: the premise (the main cell's key, the sheathed start), the report's
+  press and its line, the player's own binding, the four cases that stay
+  silent, and the hosts' rigs.
+
+`AUDIT 18 F2` holds the biography arrow's createWeapon shape, and
+`AUDIT 28 W2c` and QS2's host pins take the deferral and the rig. The
+mutants, `tools/mutants/disc21.json`, are all 20 dead. Of the 450 older
+records the change reaches (most of them `blood1.json`'s, whose test file
+only had a cite renumbered), 445 died, 4 are equivalent as recorded, and
+one survived: `MAC-BUG-W5-13` in `combat/bloodMarks.js`, which DISC21 does
+not touch. It survives on main as well, so it is left for its own arc.

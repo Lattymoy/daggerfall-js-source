@@ -6941,7 +6941,7 @@ Slot_CarriedLeft at the Shield Bone (MW-D51) - so every number is the port's own
 - **The door**: `setHipLight` is `setTorch`'s shape with MW-TORCH's fixes (the fast compare, one bind per body,
   `hipLightTried`, `lastBuildOpts.hipLight`, the mid-build queue, the unload reset); weaponRig hands it over per
   frame beside the torch and in `armBuildOptsOf`.
-- **Peers** (HT-WAIST-NET, 2026-09-24): a peer's body hangs it too, off the pose's `hl` bit (world107) through the
+- **Peers** (HT-WAIST-NET, 2026-09-24): a peer's body hangs it too, off the pose's `hl` bit (world108) through the
   same door - `PeerBodies._arm` hands the rig `!!shown.hl` each frame - and swings it off that body's own stub camera.
   They still HOLD no light (MW-D51's "Recorded, not faked"): this one is in no hand. Handheld-Torches.md HT-WAIST.
 

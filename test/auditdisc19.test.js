@@ -371,7 +371,7 @@ test('AUDIT DISC19 W5: one swing, one attack grunt - the host offers it to the w
 
 test('AUDIT DISC19 W5 by source: every host that offers one swing to more than one pool hands them the one token', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /const swing = \{\};\n\s*if \(!cityGuards\.resolvePlayerHit\([^\n]*\{ spareDefenders: true, swing \}\)\) \{/);
+  assert.match(w, /const swing = \{\};\n(?:\s*\/\/[^\n]*\n)*\s*if \(duelMeleeHit\([^\n]*\n[^\n]*\n[^\n]*\n\s*\} else if \(!cityGuards\.resolvePlayerHit\([^\n]*\{ spareDefenders: true, swing \}\)\) \{/);   // DUEL1: my duel opponent is offered the swing first
   assert.match(w, /if \(exteriorFoes\.resolvePlayerHit\([^\n]*guardHitSound, \{ swing \}\)\) \{/);
   assert.match(w, /\{ defendersOnly: true, swing \}\)\)/);
   assert.match(w, /\{ onMurder: \(\) => _crimeResponse\(\), onHitSound: guardHitSound, swing \}\)\.then/);

@@ -25,6 +25,7 @@ import { LOOT_CONTAINER_TYPES } from './sceneCache.js';
 import { rriModule } from './rriItems.js';
 import { liveStat } from './statMods.js';
 import { equipTableOf, equipItem } from './equip.js';
+import { isQuestionsDagger, QUESTIONS_DAGGER_WEAR } from './conditionRepair.js';   // DISC21-A: the questions' dagger, one home
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import {
@@ -172,9 +173,12 @@ export function assignSkillEquipment(entity, { rolls = Math.random, torchesFromI
   const career = entity.career ?? {};
   const female = entity.gender === 'female';
   // "Set condition of ebony dagger if player has one from char creation questions"
+  // DISC21-A: its maxCondition is minted first - the questions' dagger came without one until DISC21 (biography.js),
+  // and 20% of nothing was a dagger broken to the equip check and undamaged to the repairer
   for (const dagger of entity.items) {
-    if (dagger?.group === 'Weapons' && dagger.templateIndex === WEAPONS.Dagger && (dagger.material ?? 0) > WEAPON_MATERIALS.Steel) {
-      dagger.currentCondition = Math.trunc((dagger.maxCondition ?? 0) * 0.2);
+    if (isQuestionsDagger(dagger)) {
+      mintCondition(dagger);
+      dagger.currentCondition = Math.trunc(dagger.maxCondition * QUESTIONS_DAGGER_WEAR);
     }
   }
   for (const skill of career.primarySkills ?? []) assignSkillItems(entity, skill, rolls);

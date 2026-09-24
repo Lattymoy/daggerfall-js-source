@@ -809,7 +809,7 @@ eased yaw, the walk clip's phase) exactly as yours swings off the motor's bag; t
 travel, so a peer backing away swings as its legs walk, forward. It is the body's own mesh, released with the body
 (EVERY ALLOCATION HAS AN OWNER). The HELD torch still rides nothing (Morrowind-Rules.md MW-D51 "Recorded, not faked";
 `test/mwtorch.test.js` still pins that `peerBodies.js` passes no torch) - this light is in no hand. RELAY_VERSION
-world107 (world106 on its branch; main's DISC23-B took world106 first), its LAW row recorded (the `net/wire.js` RELAY_VERSION chain is the record). No RELAY_MIN gate: a pose field
+world108 (world106 on its branch; main's DISC23-B took world106 and DUEL1 world107 first), its LAW row recorded (the `net/wire.js` RELAY_VERSION chain is the record). No RELAY_MIN gate: a pose field
 has never had one (DISC12's `lh`/`wb`, PCORPSE1's `dd`) - an older relay's `validPose` drops `hl`, the others see no
 lantern, and nothing closes. Not carried: the lantern's LIGHT (a peer casts none - the light is the player torch's own),
 and the lantern on a peer drawn without a Morrowind body (the paperdoll, the class sprite, Eye Of The Beholder's rider

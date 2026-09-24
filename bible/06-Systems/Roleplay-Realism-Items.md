@@ -326,6 +326,17 @@ hook. The paid findings, numbered as the code comments carry them:
 Suite `test/auditrr2.test.js` (shared with the RR page): G7-G10 by
 execution, G11/G12 by source.
 
+## DISC21-A (2026-09-24) - the questions' dagger, worn to 20% of nothing
+
+Satranath on Discord: a new character's ebony dagger "is broken and cannot be worn", and a repairer said "it isn't
+damaged". `AssignSkillEquipment`'s first act wears the dagger a biography answer gave to 20% of its maxCondition,
+"Set condition of ebony dagger if player has one from char creation questions" - and the biography's IT line
+(`systems/biography.js`) built that dagger by hand with no condition at all, where DFU's `CreateWeapon` mints one. 20%
+of nothing is 0: broken to the equip check, undamaged to the repairer. The biography mints through `createWeapon` and
+`mintCondition` now, the kit mints the dagger before it wears it (`isQuestionsDagger`, `QUESTIONS_DAGGER_WEAR`, one
+home in `systems/conditionRepair.js`), and a load mints a never-minted wearable by the law it missed - the kit's 20%
+for this dagger at 0. `test/disc21.test.js` (A). `01-Overview/Field-Bugs-2026-09-23.md`, DISC21-A.
+
 ## Record
 
 `vendor/roleplay-realism-items/`. Suites `test/rri1_items.test.js` (9),

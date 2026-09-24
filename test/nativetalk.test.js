@@ -150,7 +150,7 @@ test('AUDIT 65 UI-1: the talk window takes the HOST\'s four-argument click - the
   // townTalk.js:855 mounts NativeTalkWindow into the same overlay slot
   // every other window uses, and every slot dispatches
   // `click(vx, vy, right, middle)` - townTalk.js:1241,
-  // worldModes.js:8880, dungeonContext.js:6625. The double-click clock
+  // worldModes.js:8899, dungeonContext.js:6627. The double-click clock
   // used to occupy that fourth positional, so `e.button === 1` arrived
   // as `now`, `false ?? Date.now()` kept the `false`, and
   // `false - false === 0 < 300` made EVERY second click in the topic
