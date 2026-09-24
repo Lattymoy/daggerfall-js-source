@@ -32,8 +32,8 @@ export const CREDITS = Object.freeze({
     Object.freeze({
       title: 'Daggerfall Unity',
       author: 'Gavin Clayton (Interkarma) and contributors',
-      what: 'The source this port is a 1:1 translation of. Its quest scripts, book index, settings tables and TEXT.RSC string table are vendored verbatim (MIT License).',
-      vendor: Object.freeze(['dfu-quests', 'dfu-books', 'dfu-settings', 'dfu-text']),
+      what: 'The source this port is a 1:1 translation of. Its quest scripts, book index, settings tables, TEXT.RSC string table and interaction-mode icons are vendored verbatim (MIT License).',
+      vendor: Object.freeze(['dfu-quests', 'dfu-books', 'dfu-settings', 'dfu-text', 'dfu-icons']),
       link: 'https://github.com/Interkarma/daggerfall-unity',
     }),
     Object.freeze({
@@ -104,6 +104,16 @@ export const CREDITS = Object.freeze({
       contact: 'RealAKP, through the Nexus page (daggerfallunity mod 242)',
       vendor: Object.freeze(['diverse-weapons']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/242',
+    }),
+    Object.freeze({
+      title: 'GrimoireUI',
+      version: '1.2',
+      author: 'LordSquacquerone',
+      what: 'Daggerfall\u2019s own screens redrawn at three times the detail - parchment and wood in place of the rock, a spellbook that is a book, new lettering and its two fonts - worn over the classic screens as the first UI Overhaul (OVH2).',
+      terms: 'The pack\u2019s pictures and fonts are the author\u2019s own art, carried byte for byte under public/art/grimoire-ui/. See vendor/grimoire-ui/README.md for the permission record.',
+      contact: 'LordSquacquerone, through the Nexus page (daggerfallunity mod 1222)',
+      vendor: Object.freeze(['grimoire-ui']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/1222',
     }),
     Object.freeze({
       title: 'Roleplay & Realism: Items',

@@ -1,0 +1,47 @@
+[
+  {
+    "name": "QU1-set-replaces-silently",
+    "file": "src/systems/quest/machine.js",
+    "tests": [
+      "test/quest_uid1.test.js"
+    ],
+    "old": "    if (this.quests.has(quest.uid)) throw new Error('An item with the same key has already been added.');\n    this.quests.set(quest.uid, quest);\n    this.deps.onQuestStarted",
+    "new": "    this.quests.set(quest.uid, quest);\n    this.deps.onQuestStarted"
+  },
+  {
+    "name": "QU1-load-keeps-the-offer",
+    "file": "src/scenes/questBridge.js",
+    "tests": [
+      "test/quest_uid1.test.js"
+    ],
+    "old": "      offerFlow.reset();   // QUEST-UID1",
+    "new": "      // QUEST-UID1"
+  },
+  {
+    "name": "QU1-answer-without-an-offer",
+    "file": "src/systems/quest/offerFlow.js",
+    "tests": [
+      "test/quest_uid1.test.js"
+    ],
+    "old": "    if (!this.offeredQuest) return { kind: 'close' };   // QUEST-UID1",
+    "new": "    // QUEST-UID1"
+  },
+  {
+    "name": "QU1-reset-keeps-the-pool",
+    "file": "src/systems/quest/offerFlow.js",
+    "tests": [
+      "test/quest_uid1.test.js"
+    ],
+    "old": "  reset() {\n    this.offeredQuest = null;\n    this.questPool = null;",
+    "new": "  reset() {\n    this.offeredQuest = null;"
+  },
+  {
+    "name": "QU1-pick-without-a-pool",
+    "file": "src/systems/quest/offerFlow.js",
+    "tests": [
+      "test/quest_uid1.test.js"
+    ],
+    "old": "    if (!this.questPool) return null;   // QUEST-UID1",
+    "new": "    // QUEST-UID1"
+  }
+]

@@ -27,9 +27,18 @@ import { openEnhancedRest } from './enhancedRest.js';
 
 export { preloadRestArt };
 
-/** The rest window for this skin over `deps` (scenes/shared.js createRestDeps's bag, or a follower's mirror deps). */
+/** The rest window for this skin over `deps` (scenes/shared.js createRestDeps's bag, or a follower's mirror deps).
+ *
+ *  OVH4 (2026-09-24, Mac chose "A": a party rest is not solo on the classic skin or under GrimoireUI): A PARTY REST
+ *  IS AN ONLINE WINDOW, like the chat, the party panel and the player trade (OVH3) - it opens the party card on
+ *  either skin. The vote, the mirror, a follower's Stop that stops the rester (onManualStop), the leader's unrested
+ *  close that frees the next vote (onClosedUnrested) and the stack's Tab close (stopOrClose) are the card's arms;
+ *  classic's RestWindow is Daggerfall's own solo window and carries none of them, so a party rest in it was a solo
+ *  rest (ONLINE-REST1's classic arm, retired). `deps.partyRest()` is the host's word that this rest is a party's -
+ *  online, in a party, outside a tavern, temple or guild hall (world.js partyRestHere); a mirror's deps say yes. A
+ *  solo or offline rest on the classic skin keeps RestWindow, byte for byte. */
 export function createRestWindow(deps, ignoreAllocatedBed = false) {
-  if (isEnhanced() && typeof document !== 'undefined') return enhancedRestOverlay(deps, ignoreAllocatedBed);
+  if (typeof document !== 'undefined' && (isEnhanced() || deps?.partyRest?.() === true)) return enhancedRestOverlay(deps, ignoreAllocatedBed);
   return new RestWindow(deps, ignoreAllocatedBed);
 }
 

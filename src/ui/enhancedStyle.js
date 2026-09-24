@@ -4136,6 +4136,58 @@ ${badgeCss()}
 .shell .ft-tile-drawer { border-top: 2px solid rgba(125,116,96,0.3); }
 .shell .ft-rail { background: rgba(10,12,17,0.55); border: 2px solid rgba(125,116,96,0.35); }
 .shell .ft-rail-kv { border-top: 2px solid rgba(125,116,96,0.3); }
+
+/* ── OVH1: THE OVERHAULS (2026-09-24, Mac: "3 large panels ... directional arrows allowing you to switch being
+   different feature sets") ─────────────────────────────────────────────────────────────────────────────────────
+   Three tall cards side by side - a look for the world, one for its sounds, one for its screens - each a carousel of
+   whole choices. The picture is the choice's own where it has one (a UI pack's art); otherwise an emblem in the
+   display face. The left edge keeps the Features law: verdigris for the look in use, iron for one being browsed,
+   brass for a mix of the player's own (Custom). Two columns, then one, as the screen narrows. */
+.look-emptyline { font-family: var(--data); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); }
+.look-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+.look-panel { position: relative; background: var(--slate); border: 1px solid var(--iron); padding: 14px 14px 14px 17px;
+  display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.look-panel::before { content: ''; position: absolute; left: 0; top: -1px; bottom: -1px; width: 3px; background: var(--iron); }
+.look-panel[data-state="on"]::before { background: var(--verdigris); }
+.look-panel[data-state="custom"]::before { background: var(--brass); }
+.look-panel:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+.look-title { font-family: var(--data); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--bone); margin: 0; font-weight: 600; }
+.look-pic { position: relative; aspect-ratio: 16 / 10; background: var(--ink); border: 1px solid var(--iron);
+  display: grid; place-items: center; overflow: hidden; }
+.look-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.look-emblem { font-family: var(--brand); font-size: clamp(34px, 4.2vw, 56px); color: var(--bone); opacity: 0.9;
+  line-height: 1; text-align: center; padding: 0 10px; }
+.look-emblem small { display: block; font-family: var(--data); font-size: 10px; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--dim); margin-top: 10px; }
+.look-pic[data-look="enhanced"] .look-emblem { color: var(--verdigris); }
+.look-badge { position: absolute; top: 8px; left: 8px; font-family: var(--data); font-size: 9.5px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--ink); background: var(--verdigris); padding: 2px 6px; }
+.look-nav { display: grid; grid-template-columns: 40px minmax(0, 1fr) 40px; align-items: center; gap: 8px; }
+.look-arrow { font-family: var(--display); font-size: 28px; line-height: 1; color: var(--bone); background: var(--ink);
+  border: 1px solid var(--iron); height: 40px; cursor: pointer; }
+.look-arrow:hover { border-color: var(--dim); }
+.look-arrow:focus-visible { outline: 2px solid var(--brass); outline-offset: 1px; }
+.look-arrow:disabled { opacity: 0.3; cursor: default; }
+.look-name { font-family: var(--display); font-size: 22px; color: var(--bone); text-align: center; line-height: 1.1;
+  overflow-wrap: anywhere; }
+.look-by { font-family: var(--data); font-size: 11px; color: var(--dim); text-align: center; margin-top: 3px; }
+.look-dots { display: flex; justify-content: center; gap: 5px; margin-top: 6px; }
+.look-dot { width: 6px; height: 6px; background: var(--iron); }
+.look-dot.at { background: var(--bone); }
+.look-dot.on { outline: 1px solid var(--verdigris); outline-offset: 1px; }
+.look-blurb { font-size: 13px; line-height: 1.5; color: var(--bone); opacity: 0.85; margin: 0; flex: 1; }
+.look-use { align-self: stretch; }
+.look-use:disabled { opacity: 0.6; cursor: default; }
+.look-note { font-size: 12px; line-height: 1.45; color: var(--dim); margin: 0; border-left: 2px solid var(--brass); padding-left: 8px; }
+@media (max-width: 1100px) { .look-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 720px) { .look-grid { grid-template-columns: minmax(0, 1fr); } .look-pic { aspect-ratio: 16 / 7; } }
+@media (pointer: coarse) { .look-arrow { height: 44px; } .look-nav { grid-template-columns: 44px minmax(0, 1fr) 44px; } }
+.shell .look-panel { background: none; border: 2px solid rgba(125,116,96,0.3); }
+.shell .look-panel::before { left: -2px; top: -2px; bottom: -2px; }
+.shell .look-pic { background: rgba(0,0,0,0.35); border: 2px solid rgba(125,116,96,0.35); }
+.shell .look-arrow { background: rgba(0,0,0,0.3); border: 2px solid rgba(125,116,96,0.35); }
+.px-sys .look-grid { grid-template-columns: minmax(0, 1fr); }
 /* ── LV2: THE RISING ── the enhanced level-up notification. Mac:
    "Next up, I want to implement a new element. The enhanced level up
    notification", with the window deferred - "Notify, then you choose".

@@ -217,8 +217,10 @@ test('I4: the window wiring - one flow factory, the right-click seam, both panel
   assert.match(code('ui/pauseWindow.js'), /new ControlsWindow\(\{ onBack: \(\) => openClassicPauseFlow\(show, hooks\) \}\)/);
   // ...and the door in front of it reaches the classic flow on the
   // classic skin, or the fork is a wall.
-  assert.match(code('ui/pauseDoor.js'), /return openClassicPauseFlow\(show, hooks\);/,
+  // DISC22-B: through classicPauseWithSettings, which hands the classic window the settings screen for CONTROLS
+  assert.match(code('ui/pauseDoor.js'), /return classicPauseWithSettings\(show, hooks\);/,
     'the classic skin must still get the classic window');
+  assert.match(code('ui/pauseDoor.js'), /return openClassicPauseFlow\(show, \{ \.\.\.hooks, openSettings \}\);/);
   for (const rel of ['scenes/world.js', 'scenes/exterior.js', 'scenes/worldModes.js', 'scenes/dungeonContext.js']) {
     assert.match(code(rel), /openPauseFlow\(/, `${rel} mounts through the factory`);
     assert.match(code(rel), /preloadPauseFlowArt\(/, `${rel} warms BOTH panels`);

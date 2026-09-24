@@ -83,6 +83,18 @@ export class QuestOfferFlow {
     this._guildCtx = null;
   }
 
+  /** QUEST-UID1: a LOAD discards the offer in hand. DFU cannot load under an open offer (the load window and the
+   *  quickload key both stand on the HUD), so a pending offer never outlives the game it was parsed in; the port
+   *  quickloads from under any window (FIX-E, the death screen's F11), so the bridge's restore calls this - the
+   *  offered quest was parsed in the game being replaced, and answering Yes must not start it in the loaded one. */
+  reset() {
+    this.offeredQuest = null;
+    this.questPool = null;
+    this.menu = false;
+    this._guild = null;
+    this._guildCtx = null;
+  }
+
   // ---- the social door (DaggerfallQuestOfferWindow.cs) ----
 
   /** The ctor (:27-40) + GetQuest (:56-92). npcData is the clicked
@@ -284,6 +296,7 @@ export class QuestOfferFlow {
    *  the pin here recorded that. An index past the pool answers
    *  nothing. */
   _questPicked(index) {
+    if (!this.questPool) return null;   // QUEST-UID1: a load took the pool away under its picker
     if (index < this.questPool.length) {
       this.offeredQuest = this.questLists.loadQuest(this.questPool[index], this._getFactionIdForGuild());
       return this._offerQuest();
@@ -300,6 +313,7 @@ export class QuestOfferFlow {
    *  TalkManager scrubs in C#'s order - info topics, quest rumors,
    *  progress rumors - then RefuseQuest with exitOnClose false. */
   _offerResponse(yes) {
+    if (!this.offeredQuest) return { kind: 'close' };   // QUEST-UID1: a load took the offer away under its popup
     if (yes) {
       // C#'s accept call rides the exitOnClose DEFAULT (two args)
       const popup = this._showQuestPopupMessage(this.offeredQuest, QUEST_MESSAGES.AcceptQuest);

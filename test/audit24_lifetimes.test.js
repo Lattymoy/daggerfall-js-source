@@ -209,7 +209,7 @@ test('audit24: the three quest settings are LIVE reads, not hardcoded falses', a
   // Every one had a live consumer and a launcher toggle, so the player
   // could flip a switch that reached nothing: adult quests were
   // filtered out whatever ChildGuard said (questLists.js:203), the
-  // guild list-box arm was unreachable (offerFlow.js:144), and the
+  // guild list-box arm was unreachable (offerFlow.js:156), and the
   // journal's clocks never counted down (clock.js:164). The settings
   // tier map's own both-ways gate now covers them; this pins the
   // BEHAVIOUR the tier map cannot see.

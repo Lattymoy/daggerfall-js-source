@@ -82,7 +82,7 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
   const unstage = (item) => { if (session.phase === 'open' && !session.myConfirm) applyOffer(entries().filter((e) => e.item !== item)); };   // AUDIT DROPS B1
 
   const itemTile = (line) => {
-    const src = line.image ? requestIcon(line.image.archive, line.image.record, { scale: 2, onReady: () => alive && render() }) : null;
+    const src = line.image ? requestIcon(line.image.archive, line.image.record, { scale: 2, dye: line.image.dye, onReady: () => alive && render() }) : null;   // DISC22-D: by the item's dye (DW3)
     if (src) {
       const tile = el('span', 'tile has-icon'); const img = el('img'); img.src = src; img.alt = ''; tile.append(img); tile.title = line.name; return tile;
     }

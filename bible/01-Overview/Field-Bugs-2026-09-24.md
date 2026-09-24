@@ -491,3 +491,273 @@ cites it missed were moved. Six quotations it had rewritten are restored.
 flag, so a load drops them too: the survival needs' (`needs.js`), rewritten
 every minute, and the Mace of Molag Bal's bonus (`artifactEffects.js`),
 which decays within twelve minutes anyway.
+
+---
+
+# DISC22 — five from Discord and one of Mac's (2026-09-24)
+
+Mac: *"repair magical items should be enabled by default and required
+online"*, with the screenshots: kurkku (*"could replace the controls button
+here with the full settings menu"*, over the classic pause window; *"Steel
+light flail sprite doesn't show up"*), Tony H. (*"When using Classic UI or
+GrimoirUI I'm not able to increase the speed from 10x in accelerated travel
+... online"*) and Skibbster (*"Unable to share quests with players if
+you've previously completed the same quest"*). Satranath's hotbar and quick
+loot on the classic skins, GrimoireUI's parchment loot sheet (DISC22-C) and
+the enhanced dungeon map (DISC22-G) are their own slices.
+
+## DISC22-A: enchanted items mended, and online the room's rule
+
+DFU ships `Controls/AllowMagicRepairs` False: a smith turns an enchanted
+item away (`repairService.js` `repairRefusal`, the magic arm). The port's
+default is True now (`settings.js` `PORT_DEFAULTS.Controls`, over the
+generated DFU table, which stays exactly as DFU ships it). Online it is
+forced: `onlineLane.js` `ONLINE_FORCED_SETTINGS` is the lane's fourth read
+path beside `uiSkin`, `getPref` and `modSetting`. `settings.js` `getData`
+asks it first, so the store is neither read nor written online and a
+player's own False returns offline. `effectiveSettings` overlays it, so the
+settings screen draws what the game reads, and the row is locked with its
+reason (`enhancedMenu.js` `ONLINE_SETTING_NOTE`), as every forced row is.
+
+## DISC22-B: the classic pause window's Controls button opens Settings
+
+DFU's CONTROLS button opens its controls grid alone, and on the classic
+skin that grid was the only settings screen a game in progress could reach.
+`pauseDoor.js` `classicPauseWithSettings` hands the classic window an
+`openSettings` hook. `pauseWindow.js` wires it to CONTROLS, falling back to
+the grid on a node host with no document. It opens the port's whole
+settings screen on its Settings page (`enhancedMenu.js`: a landing may name
+a rail section now; Controls is one of its categories, FT16). That screen's
+Resume comes back to the classic pause window with its button live again,
+as DFU's controls window pops back to the window it was opened from.
+
+## DISC22-D: the Steel Light Flail drew nothing
+
+**Cause.** The Light Flail is Roleplay Realism Items' template 514, an
+archive that exists only as the mod's PNGs, one per metal
+(`514_0-0_Steel.png`), registered **lazy**: decoded when drawn, as DFU's
+`GetItemImage` imports it (ItemHelper.cs:458). AUDIT-DW F1 made that decode
+an *optional* hook on the host's icons object (`icons.preloadRecord?.`),
+and none of the seven scenes that build that object passed it. Nothing was
+decoded, the mod-only archive's upload threw on an empty image, the list
+drawer's `.catch(() => {})` swallowed it, and its warm set never asked
+again. Every RRI weapon and armour icon failed the same way on the classic
+and Grimoire skins, and Diverse Weapons' fell back to the classic art. The
+enhanced door failed separately. It preloaded the whole archive, which
+skips a lazy entry, and read the record with no dye, which asks for the
+bare name (`514_0-0.png`, not the metal's file).
+
+**Fix.** The door that draws owns the decode (`itemScroller.js`
+`preloadIconRecord`, used by both list drawers), as the paper doll's
+already did. `icons.preloadRecord` is kept only as a test's spy, and the
+pipeline's handout, which no scene took, is gone. `textureCanvas.js`'s
+vendor arm decodes this record by its dye (`preloadTextureRecord`), and the
+two enhanced trade screens pass the dye as the pack does.
+
+## DISC22-E: accelerated travel stuck at 10x on the classic skins
+
+**Cause.** 10x is not a cap. It is the spinner's start value, and the
+spinner never heard the click. AUDIT-TO1 I2 gated the classic strip's
+clicks on DFU's `cursorActive` flag, but the port frees the pointer without
+that flag:
+
+- the chat and the social panels release it with the flag down
+  (`world.js` `surfaceOpen`);
+- online, Enter opens the chat instead of toggling the flag (KB1);
+- Escape releases it;
+- a finger never holds it.
+
+The gate refused, and the click relocked the pointer. Map, Camp and Exit
+have keys, but the spinner is mouse-only, so only it looked broken. The
+enhanced strip is DOM and was never affected.
+
+**Fix.** `travelControlUI.js` `stripTakesClick` gates on the lock itself
+(`document.pointerLockElement === canvas`). What I2 guarded against, a
+locked click whose frozen coordinates land on a parked control, is still
+refused. A click with the pointer free reaches the strip.
+
+## DISC22-F: a quest finished once could never be shared again
+
+**Cause.** AUDIT DROPS A2 remembers a quest finished under a share, so a
+partner who is behind cannot re-send it and pay its rewards twice. It
+remembered the quest's *name*. So once a repeatable quest (every guild and
+faction quest) had been finished with the party, every later share of that
+name was refused as "done" for the rest of the session, and the memory
+outlived even a load. The refusal also read *"... but you already has this
+quest"*: the fragments were third person under world.js's "but you".
+
+**Fix.** The copy carries an identity. `Quest.shareId` is minted the first
+time a quest is shared (`machine.js` `getShareableQuestData`), carried in
+its envelope and its save, and restored on receipt, so both ends of a share
+hold the same id. The finished memory is keyed on it
+(`finishedShareIds`, `hasFinishedSharedCopy`). An envelope from a client
+that stamps no id falls back to A2's name. `clearState` empties the share
+memory with the game it belonged to. The refusal fragments are second
+person. (The "already have" refusal Skibbster saw for a quest finished
+before, and still standing as a week's tombstone, was AUDIT 68's
+S29-share-name-tombstoned, already on main.)
+
+## DISC22-C: quick loot on the classic skins, on Mac's parchment
+
+Satranath (*"no hotbar or quickloot on grimoire either, i think i will
+stick with the enhanced ui"*) and Mac, with a parchment image (*"a
+spritesheet to be used for the loot menu (grimoire UI)"*).
+
+**Cause.** Quick loot's law has no DOM in it
+(`systems/quickLoot.js`, `systems/worldHover.js`). But the one gate over
+the whole hover resolve, `worldPlaqueOn` (enhanced and not touch), was
+the DOM plaque's own. So on the classic skins no frame was resolved and no
+row was ever lit, and the wheel, P, J and the take all fell through to the
+inventory window.
+
+**Fix.** `worldHoverFrame` resolves and folds on the classic skins too,
+while quick loot is on (`classicPlaqueOn`). The DOM plaque stays
+enhanced-only (AUDIT 39's law: a classic page never injects the enhanced
+style). The frame is left in `quickLoot.js` (`classicLootFrame`), held
+with the frame mark it was resolved in so a stale one is never drawn. It lives in a leaf module (`systems/classicLootFrame.js`, no imports), because the first cut read it from `quickLoot.js`: that closed an import ring from `hud.js` into the item graph, which initialised `itemTransfer.js` before its own constants, and four test files failed to load.
+`drawHud` draws it on both classic branches through
+`ui/classicLootPanel.js`, beside the crosshair, with the lit row banded.
+
+The panel has two faces:
+
+- **Under the GrimoireUI pack, Mac's parchment**
+  (`public/art/grimoire-loot-parchment.png`, 106 x 180, a
+  PUBLIC_ALLOWLIST row). The two gold rules at rows 38 and 141 cut it
+  into three:
+  - the top piece, with the title band and the first rule;
+  - the body, stretched to the rows;
+  - the bottom piece, with the second rule, "and N more" and the curl.
+  The scroll grows and shrinks with the pile.
+- **Without the pack, DFU's tooltip box** (ToolTip.cs's two colours,
+  a bare DrawText).
+
+It appears for a loot list only. The classic HUD still names nothing else
+in the world, which is DFU's.
+
+The classic HOTBAR is not in this slice. See the open question in the
+report.
+
+## DISC22-G: the enhanced dungeon map, mended and made the better map
+
+Mac: *"enhanced dungeon automap is broken and doesn't work properly. This
+needs to be a better enhancement compared to the 3d automap"*. Six defects,
+each reproduced with closed rooms. EM2's pins were all bare floor quads,
+with no ceiling and no stair, which is how they passed over every one:
+
+- **D1, a ceiling was a floor.** `floorTriangles` took the geometric
+  normal's `Math.abs`, recorded as "the port's meshes are not reliably
+  wound". One ceilinged room came out as two storeys, and a two-storey level
+  as four ("Floor 2" was Floor 1's ceiling, drawn again). The world pass
+  back-face culls, so the winding is reliable, but the ARCH3D file's own
+  plane normal is better than either. It is what the face is lit by, and
+  meshReader flips its y with the positions'. The reveal rows now carry
+  `normals` (dungeon and interior hosts), and a face counts as a floor by
+  its file normal turned by the placement. A row with no normals keeps the
+  old reading.
+- **D2, a stair joined two storeys.** The voters were chained, and a
+  flight of stairs is a chain of flat steps, each well inside the headroom
+  of the one below. Two floors twelve metres apart came back as one storey
+  at the steps' mean height. `deriveFloors` now works in three steps:
+  - It gathers the voters into levels (`LEVEL_TOL`).
+  - It chains the levels into runs by the old rule.
+  - Inside a run, each level carrying a room's floor (`STOREY_MIN_AREA`,
+    12 m²) at least a headroom from a bigger one anchors a storey, biggest
+    first. A run with no anchor is still one storey, so EM2's "stair of
+    ledges" pin stands unchanged.
+- **D3, the map opened on Floor 1** whatever storey the player stood on.
+  A new frame now sets the storey from the player's feet.
+- **D4, it opened on the whole level fitted to the sheet**, a corridor
+  three pixels wide. The window's first layout never asked the sheet it
+  opened on. It asks now. The sheet's rest view fits the revealed floor of
+  the storey, never zoomed out past `READABLE_SCALE` (4 px a metre), and
+  centres on the player or on what has been seen.
+- **D5, a doorway into a room not yet seen was inked as wall.**
+  `splitEdges` partitions the outline by what lies across each edge. Real
+  floor on the storey, revealed or not (`storeyOccupancy`, once per level
+  and storey), makes an opening, drawn light and broken.
+- **D6, every open re-derived the level.** A row's triangles are cached on
+  the row, and a level's storeys on its row list, so every sheet shares
+  them.
+
+**What the 3D map had and this lacked, now drawn.**
+
+- The middle button writes a note on revealed floor through DFU's own law
+  (`tryAddOrEditUserNote`, the metre rule, AddNext ids). On a note it
+  edits that note, and an empty answer removes it. The words go in the
+  window's box (`_askText`).
+- Teleporter ends on one storey are joined by a broken line. An end whose
+  partner is on another storey names that storey ("to Floor 2").
+- The way in breathes: the window repaints on its beat while the beacon
+  is on the sheet.
+- Home brings the storey and the view back to the player.
+
+## Pins
+
+- `test/disc22a_magic_repairs.test.js` (4), through the real store and the
+  real repair law:
+  - the port's default, with DFU's table untouched;
+  - a stored Off standing offline;
+  - online, forced over a stored Off, with the screen's value and the
+    store untouched;
+  - the locked row.
+- `test/disc22b_pause_settings.test.js` (3):
+  - the classic window's CONTROLS opens the enhanced screen;
+  - the grid stands with no document;
+  - the landing and the Resume back, by source.
+- `test/disc22d_flail_icon.test.js` (3), over the real pipeline, the real
+  drawer with the icons object exactly as the scenes build it, the
+  renderer's real colour gate and the mod's real PNGs:
+  - the Steel file fetched, uploaded as `514_0#ui_Steel` at 48x76, and
+    drawn;
+  - the enhanced door drawing a Daedric one from its own file;
+  - the trade screens' dye.
+- `test/disc22e_travel_click.test.js` (4):
+  - the predicate's arms;
+  - the real strip stepping 10 to 25 and back;
+  - the host asking the lock.
+- `test/disc22f_share_copy.test.js` (4), through the real machine and share
+  path:
+  - the finished copy refused;
+  - the next copy and a third player's received;
+  - the id stamped once and saved;
+  - an id-less envelope answered by name;
+  - a load forgetting the memory;
+  - the second-person refusal.
+- `test/auditdw.test.js` and `test/to1_travelOptions.test.js` follow the
+  new shapes.
+- `test/disc22g_automap.test.js` (8):
+  - D1 to D6, each on closed rooms: a ceilinged room is one storey, and
+    stacked rooms are two; a placement turns the normal; a flight of
+    stairs leaves two storeys, a landing is a third, and a dais is none;
+    the sheet opens on the player's storey; the rest view is readable on
+    a 400 m level; the opening is the shared edge and not wall, and is
+    dashed; triangles and storeys are shared;
+  - notes written, edited, removed, cancelled and refused off revealed
+    floor;
+  - teleporter links and names, the breathing beacon and Home.
+- `test/automapsheet.test.js`'s rest-view and mark pins follow the new
+  laws (they held the whole-level fit and a teleporter end with no name).
+
+
+- `test/disc22c_classic_loot.test.js` (5), through the real hover seam,
+  selection and panel, with Mac's PNG decoded off disk:
+  - the classic skin resolves a loot frame with no DOM, lights a row,
+    and the wheel moves it;
+  - quick loot off resolves nothing;
+  - a later frame draws nothing stale;
+  - under GrimoireUI, three pieces cut at rows 40 and 140, the body as
+    tall as the rows, the lit row banded, and the body growing with the
+    pile;
+  - without the pack, the tooltip box even with the sheet loaded, and
+    nothing for a name frame;
+  - drawHud draws it on both classic branches.
+
+Mutants: `tools/mutants/disc22.json`, 25, `tools/mutants/disc22g.json`, 20, and `tools/mutants/disc22c.json`, 11, all dead.
+EM2's floor records (`em2.json`) are aimed at the new model. They
+still die, 26 of them, except EM2-16 (the `len > 0` guard). The facing
+test is now written `!(up >= FLOOR_NY)` and rejects a NaN facing on its
+own, so EM2-16 is recorded as equivalent. EM2-2 (a ramp votes) is pinned
+by a 40 m ramp between floors 20 m apart. EM3-17 follows the openings
+into plan units.
+`AUDITDW-F1-the-list-drawer-uploads-before-the-record-is-decoded`
+(`dw1.json`) follows the call's new form.

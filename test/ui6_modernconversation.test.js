@@ -55,7 +55,8 @@ test('UI6: shadowText grew a REAL scale - the option existed nowhere before, so 
   // ONE the default of a `shadowOffset` option rather than a literal,
   // so the offset is still unscaled - it just has a name now.
   assert.match(panel, /shadowOffset = 1 \} = \{\}\)/);
-  assert.match(panel, /m\.ox \+ \(ax \+ shadowOffset\) \* m\.s, m\.oy \+ \(y \+ shadowOffset\) \* m\.s, m\.s \* scale, shadow\);/);
+  assert.match(panel, /const so = sdfOf\(font\.fnt\) \? shadowOffset \* SDF_SHADOW_SCALE : shadowOffset;/, 'OVH2: an SDF face\'s shadow stands 0.4 away (DaggerfallFont :221); a classic font\'s is the offset itself');
+  assert.match(panel, /m\.ox \+ \(ax \+ so\) \* m\.s, m\.oy \+ \(y \+ so\) \* m\.s, m\.s \* scale, shadow\);/);
 });
 
 test('UI6: the classic path is untouched and the key is LIVE', () => {

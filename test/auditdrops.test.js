@@ -271,9 +271,9 @@ test('AUDIT DROPS D1 (as the party-rest drop now keeps it): the building and the
   assert.match(d, /const strangerRefusal = opts\.strangerRestGate\?\.\(\);\s*if \(strangerRefusal\) \{ activeOverlay = new ActionTextBox\(\[strangerRefusal\]\); return; \}[\s\S]{0,600}?const partyRefusal = opts\.partyRestGate\?\.\(\);\s*if \(partyRefusal\) \{ activeOverlay = new ActionTextBox\(\[partyRefusal\]\); return; \}[\s\S]{0,600}?opts\.markPartyRestSpent\?\.\(\);\s*activeOverlay = createRestWindow\(_restDeps\);/, 'the dungeon: the same four, through the outer host\'s doors');
   assert.match(m, /partyRestGate: \(\) => host\.partyRestGate\?\.\(\),/, 'handed down to the dungeon');
   assert.match(m, /markPartyRestSpent: \(\) => host\.markPartyRestSpent\?\.\(\),/);
-  assert.match(w, /const restWin = !isEnhanced\(\) \? null[^\n]*\n\s*: mode === 'interior' \? modes\?\.restState\s*: mode === 'dungeon' \? modes\?\.dungeonCtx\?\.restState/, 'world.js reads the two getters (AUDIT PARTY-REST: under the enhanced skin alone - ONLINE-REST1)');
+  assert.match(w, /const restWin = mode === 'interior' \? modes\?\.restState\s*: mode === 'dungeon' \? modes\?\.dungeonCtx\?\.restState/, 'world.js reads the two getters (OVH4: on either skin)');
   assert.match(w, /townTalk\.overlay\.session && townTalk\.overlay\.state === 'resting'/, 'D2: outdoors too, RESTING - not the wake box');
-  assert.match(w, /const markPartyRestSpent = \(\) => \{\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!isEnhanced\(\)\) return;\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!social\) return;\s*\n\s*_partyRestReady = false;/, 'PARTY-REST28: the one shared reset every host runs on a granted rest (REST-OFFLINE1: a no-op with no social clock)');
+  assert.match(w, /const markPartyRestSpent = \(\) => \{\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!social\) return;\s*\n\s*_partyRestReady = false;/, 'PARTY-REST28: the one shared reset every host runs on a granted rest (REST-OFFLINE1: a no-op with no social clock)');
   assert.match(w, /const partyRefusal = modes \? partyRestGate\(\) : null;/, 'D5: no TDZ before the mode machine stands');
   assert.match(w, /const strangerRefusal = modes \? strangerRestGate\(\) : null;/, 'D5: the stranger gate the same');
   assert.match(w, /if \(modes\) markPartyRestSpent\(\);/, 'D5: and the spend');

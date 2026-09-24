@@ -118,6 +118,12 @@ export const OVER_ENCUMBERED_LIMIT = 250;
 export const CAPSULE_HEIGHT = 1.8;
 export const CAPSULE_RADIUS = 0.35;
 export const STEP_OFFSET = 0.5;
+/** DISC21: the climb's side contact - radius + the 0.1 skin (M3) - and
+ *  the lowest height above the feet at which the capsule's lower cap,
+ *  its centre at feet + radius, still reaches a wall its side rests on:
+ *  r - sqrt((r + skin)^2 - r^2), about 0.067. */
+export const CLIMB_SIDE_REACH = CAPSULE_RADIUS + 0.1;
+export const CLIMB_CAP_LOW = CAPSULE_RADIUS - Math.sqrt(CLIMB_SIDE_REACH ** 2 - CAPSULE_RADIUS ** 2);
 /** MAC1: the render eye pays a grounded step out over this many seconds
  *  (see PlayerMotor._noteVerticalStep). */
 export const STEP_SMOOTH_TAU = 0.06;
@@ -1106,21 +1112,37 @@ export class PlayerMotor {
   }
 
   /** M3: the wall probe - CollisionFlags.Sides + GetClimbedWallInfo's
-   *  capsule cast (:591), as two rays at 0.4h/0.8h along the wall
-   *  direction (the latched ledge direction, else the facing), reach
-   *  radius + 0.1. A hit latches myLedgeDirection = the horizontal
-   *  -normal (:608), so turning the camera mid-climb keeps the hug on
-   *  the WALL's plane, not the look. Documented departure: DFU reads
-   *  the controller's side collision flags; the probe asks the same
-   *  physical question against our collider. */
+   *  capsule cast (:591), as rays along the wall direction (the
+   *  latched ledge direction, else the facing), reach radius + 0.1. A
+   *  hit latches myLedgeDirection = the horizontal -normal (:608), so
+   *  turning the camera mid-climb keeps the hug on the WALL's plane,
+   *  not the look. Documented departure: DFU reads the controller's
+   *  side collision flags; the probe asks the same physical question
+   *  against our collider.
+   *
+   *  DISC21 (2026-09-24, "you can climb up walls a bit but you fall
+   *  right back down as you reach the top instead of getting over the
+   *  edge"): THE SIDES FLAG IS THE WHOLE CAPSULE'S, DOWN TO ITS FEET.
+   *  The probe sampled only 0.4h and 0.8h above the feet, so the wall
+   *  went "untouched" while the bottom 0.72 m of the body still hugged
+   *  it: :396 (`!touchingSides`) stopped the climb with the feet 0.72 m
+   *  under the lip, and the player fell back down - the lip is above
+   *  the step offset, and a falling body takes no step. DFU's capsule
+   *  keeps its Sides contact until its lower cap clears the lip: the
+   *  cap's skin shell (radius + 0.1 about the cap's centre, feet + r)
+   *  meets a wall its side rests against at CLIMB_CAP_LOW above the
+   *  feet, so the lowest ray sits there and reads the wall face exactly
+   *  as long as the cap can still touch the lip's corner. Then the hug
+   *  - up and into the wall - carries the feet over the lip onto the
+   *  top, as ClimbingMotor's own move does (:756-767). */
   _climbWallProbe(yaw) {
     // a facade collider without the ray API disables climbing rather
     // than crashing the step
     if (!this.collider.raycastHit) return { touching: false, wallDir: null };
     const dir = this._climbWallDir ?? [Math.sin(yaw), 0, Math.cos(yaw)];
-    const reach = CAPSULE_RADIUS + 0.1;
-    for (const frac of [0.4, 0.8]) {
-      const o = [this.pos[0], this.pos[1] + this.height * frac, this.pos[2]];
+    const reach = CLIMB_SIDE_REACH;
+    for (const y of [this.height * 0.4, this.height * 0.8, CAPSULE_RADIUS, CLIMB_CAP_LOW]) {
+      const o = [this.pos[0], this.pos[1] + y, this.pos[2]];
       const h = this.collider.raycastHit(o, dir, reach);
       if (Number.isFinite(h.dist)) {
         if (h.normal) {
@@ -1216,7 +1238,7 @@ export class PlayerMotor {
     // next FixedUpdate (PlayerMotor.cs:278) out of the collisionFlags
     // ClimbingMotor.cs:767 writes after its own controller.Move, so the
     // collider's LIVE grounded written above IS DFU's answer, one step
-    // lagged on both sides (the SWIM branch is the one that latches: Player-Arc.md:1862).
+    // lagged on both sides (the SWIM branch is the one that latches: Player-Arc.md:1866).
     this.standing = this.grounded;   // PlayerMotor.cs:325 - moveDirection zeroed, so :113-125 collapses to grounded
     this.movingLessThanHalfSpeed = this.grounded
       ? true

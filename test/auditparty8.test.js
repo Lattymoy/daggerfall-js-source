@@ -386,7 +386,7 @@ test('AUDIT PARTY8 + PARTY-REST by source: world.js\'s seams - the mirror\'s key
   assert.match(w, /if \(q\) _questSyncSeen\.set\(quest\.questName, q\.getLogMessages\(\)\?\.length \?\? 0\);/, 'what I just received is what I have seen: no echo');
   assert.match(w, /peerBodies\.sync\(afoot, onlineToScene, dt, player\.pos, \{ priority: \(id\) => !!social\?\.isPartyPeer\(id\) \}\);/);   // RIDE: the bodies stand the peers afoot - a rider is peerRiders' (hcc_park.test.js)
   assert.match(w, /inside: \(\) => \(modes\?\.mode \?\? 'exterior'\) !== 'exterior',/, 'the mirror\'s deps say where the follower stands');
-  assert.match(w, /const restWin = !isEnhanced\(\) \? null/, 'ONLINE-REST1: a classic-skin rest is nobody\'s to mirror');
+  assert.match(w, /const restWin = mode === 'interior' \? modes\?\.restState/, 'OVH4: a party\'s rest is the party card on either skin - every skin\'s rest is mirrored (ONLINE-REST1\'s classic arm retired)');
   assert.match(rd('src/scenes/worldModes.js'), /restEnemiesNearby: \(\) => interiorEnemiesNearby\(\{ resting: true \}\),/);
   assert.match(rd('src/scenes/dungeonContext.js'), /restEnemiesNearby: \(\) => _restDeps\.enemiesNearby\(\),/);
   assert.match(rd('src/ui/restDoor.js'), /unregister = registerOverlay\(\(\) => \{ if \(!overlay\.stopOrClose\?\.\(\)\) overlay\.dispose\(\); \}\);/);
