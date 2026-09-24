@@ -951,6 +951,195 @@ into plan units.
 `AUDITDW-F1-the-list-drawer-uploads-before-the-record-is-decoded`
 (`dw1.json`) follows the call's new form.
 
+
+---
+
+## PR-WW1: the werewolf the others saw (player report)
+
+The report: *"Werewolf morrowind sprite not showing online"*.
+
+**What the player sees.** A transformed player with no Morrowind body is
+drawn in third person by Eye Of The Beholder's billboard (`mwView.js:79`
+`eotbLane`, `:334`). Its table rule puts the transformed form first, riding
+included (`eotbBillboard.js:329` `chooseTable`, `:335`), and it draws the
+mod's lycan archives: 112380 for the werewolf, 112381 for the wereboar
+(`eotbBillboard.js:75` `lycanArchive`, `:142` `tableArchive`). That art is a
+hunched, dark-furred, Bloodmoon-style beast, and it is the "Morrowind sprite"
+of the report. The Morrowind rig has no werewolf body (`fpArm.js:178`), so
+this is the only Morrowind-looking werewolf in the port.
+
+**Cause.** No other player ever saw it. The only layer that draws another
+player in EOTB's art is `net/peerRiders.js`, and it took a peer only when
+`rd` said a horse or a cart. A peer whose pose said `wb` alone fell through
+to DISC12's branch in `remotePlayers.js` (`:795`, `:800`). That branch draws
+MOBILE_TYPES.Werewolf / Wereboar, the classic enemy sprite (archive 264 /
+269). So the transformed player saw EOTB's beast on themselves, and everyone
+else saw Daggerfall's pixel werewolf. A transformed rider was worse: the
+rider layer ran first and drew a person on a horse (112382 + the rider's
+set), where the player saw their beast.
+
+The wire was never at fault. `wb` goes out on its edge (`wire.js:1003`),
+through the door (`:1051`) and the easing (`online.js:206`), from the sender
+at `world.js:12167`.
+
+**Fix.** `peerRiders.js` takes a peer whose pose says `wb`, as it takes a
+rider:
+- The loop table is EOTB's own `chooseTable`, transformed first
+  (`beastTable`). A beast in the saddle is the beast.
+- The form picks the archive (`spriteFor` gets `lycanthropyType: wb`), at
+  the transformed size (`sizeMod`).
+- The frame clock is the saddle's for a mounted beast and EOTB's `speedMod`
+  run halving on foot.
+- A new swing count plays `AttackMeleeLycan` once, forward, at LYCAN_TICK,
+  as the local body's `playLycanAttack` does (`eotbBody.js:489`). The count
+  first seen is no swing.
+
+The hand-off is RIDE's: `isRiding` is true only once the art is up, so while
+it loads or has failed, and in a build without it, DISC12's enemy sprite
+still stands for them. A beast is never nothing.
+
+The modal passes (`worldModes.js:7157` the dungeon, `:7349` the interior)
+draw only `host.extraBillboards`. That was `remotePlayers.batches()` alone,
+so a beast drawn by the rider layer would have been nothing indoors and
+underground. It hands over both layers' batches now (`world.js:12332`). A
+rider never reaches those passes: a door dismounts. The eye the layer turns
+its sprites to (`cam.pos`) is live in every mode, because worldModes shares
+world.js's `cam` and sets it each modal frame.
+
+**The local body, beside it.** `eotbBody.js` asked for every sprite with
+the mod's settings (`cfg`), which never carry the form. So a wereboar saw the
+werewolf on themselves, while the others now draw the boar. The draw and the
+placement take the live form now (`lookNow`, `eotbBody.js:356`). The preload
+fetches the live form's lycan set, and fetches it again when the form
+changes (`:270`, `:713`).
+
+**Hosts.** `OnlineSession` is built only in `world.js`. `exterior.js` and
+`dungeonContext.js` hold no peer drawing, and `worldModes.js` reaches peers
+only through the hook above. So the fix has one host. No relay change:
+`wb`, `mv`, `wd`, `an`, `yaw` and `rv` were already on the wire.
+
+The pins are `test/prww1_werewolf.test.js`: six tests, all failing on the
+unfixed code. The mutants are `tools/mutants/prww1.json`.
+
+---
+
+## PR-BOW1: the bow that made the body bigger (player report)
+
+The report: *"Equipping a bow enlarges your character"*.
+
+**What the player sees.** In third person the Morrowind body is not drawn
+into the world directly. It is rendered as a true-size ortho picture, which
+is then drawn on an upright quad facing the camera
+(`characterSprite.js:61` `drawRigSpriteBox`). Because the picture is true
+size, where the quad stands decides how big the body looks on screen: a
+quad set back from the camera draws the body smaller. So the same body
+looked a different size depending on what was in its hand. With a longsword
+drawn it was about 12% smaller than bare-handed (x0.88 at mwCamera's
+default reach, level). With a long bow drawn it was about 11% bigger than
+with the sword (x1.11). Going from the sword to the bow is the "enlarges"
+of the report.
+
+**Cause.** The quad stood at the centre of a box over every piece the rig
+carried, hidden pieces included. Weapon Sheathing's iron longsword runs
+y 2.9..59.5 out from its grip. On the weapon bone that moved the box's
+centre about a third of a metre off the body, away from a camera standing
+behind it, and the body drew small. The long bow is gripped mid-stave
+(-38.5..46), so it moved the centre only a few centimetres. The box also
+counted what rule 57 hides but keeps the vertices of: a sheathed blade,
+the holster twin while the blade is out, an arrow off the string and an
+unlit torch.
+
+**Fix.** The picture is now of the BODY, and the box only sets how much of
+the scene the picture takes in:
+- `drawRigSpriteBox` takes an optional `anchor`. The picture is taken along
+  the eye's ray to the anchor, still centred on the box so the gear stays in
+  it. The quad stands where the anchor's own image lands on the anchor
+  (`characterSprite.js:95` `landAnchor`). Every point then draws at a place
+  that does not depend on the box. The voxel rigs pass no anchor and draw as
+  they did.
+- `drawThird` (`fpArm.js:4644`) anchors on the actor's own axis (MW x = y =
+  0, where the root stands at `feet`), at the body's mid-height. That
+  height is read off the drawn ranges less `CARRIED_SLOTS` (`fpArm.js:676`:
+  the hand's weapon and round, the torch, the held sheet, Weapon Sheathing's
+  three), so gear moves neither coordinate.
+- The box is folded only over the ranges the pass draws (`fpArm.js:686`
+  `visibleRangeBounds`), off a box kept per range (`fpArm.js:660`
+  `foldRangeBoxes`, refolded at every upload, `:2808`).
+
+**Hosts.** Every Morrowind body in the port goes through `drawThird`. The
+local player's goes through `mwView.mwViewDrawBody` (`mwView.js:329`,
+`:339`), which four files call: `world.js:14275`, `exterior.js:5094`,
+`worldModes.js:7150` and `:7247` (the dungeon and the interior passes),
+and `dungeon.js:1064`. `dungeonContext.js`, the fourth motor host, builds
+the dungeon for those hosts and draws no body of its own. The other players'
+bodies go through `peerBodies.js:377` (`PeerBodies.draw`). The open world
+calls it at `world.js:14276`, and the modal passes reach it through
+`host.drawPeerBodies` (`worldModes.js:7151`, `:7248`). The fix therefore
+sits in one place and reaches every host.
+
+The pins are `test/prbow1_bow.test.js`: seven tests, all failing on the
+unfixed code. The mutants are `tools/mutants/prbow1.json`.
+
+### PR-BOW1b: the review's three follow-ups
+
+The review that shipped PR-BOW1 raised three follow-ups, done the same day.
+
+**The second walk.** `foldRangeBoxes` walked every posed vertex again, on
+every posed frame, for every body (the local player's and each peer's). It
+ran straight after `poseAssembly` had already walked every one of them for
+`assembly.bounds`. That is the same kind of repeated walk AUDIT MWBODY A4
+removed. The per-piece boxes are now folded inside `poseAssembly`'s own walk
+(`mwFirstPerson.js:1795` `foldPieceBounds`, called at `:2450`). Each piece
+keeps one box, rewritten each pose. A range copies its piece's six numbers,
+and only a piece no pose has touched yet (a part bound since the last pose)
+is folded off its positions. The fold's results are unchanged:
+`assembly.bounds` is still exactly what `meshBounds` answers, and PR-BOW1's
+pins stand.
+
+**The portrait.** `fpArm.figure()` draws the enhanced inventory's model
+figure (`enhancedInventory.js:1427`), which is shown in a 110:184 cell with
+object-fit: contain (`enhancedStyle.js:3557`). It framed `meshBounds` over
+EVERY piece, then hid the unlit torch, the arrow off the string and the
+empty holster twin, so gear it did not show still moved the frame. Its width
+was the box's azimuth-safe diagonal, so a longsword pointing at the viewer,
+or a bow's stave, widened the picture past the cell and shrank the body in
+it. On the pin's stand-in the body filled 0.943 of the cell bare-handed,
+0.891 with the longsword and 0.774 with the long bow. Turned side-on, the
+held longsword also pushed the body 0.61 of the half-width off-centre,
+because the frame was centred on the box and the box included the gear.
+
+The decision: **the frame is the tight box of what the portrait shows, at
+the yaw asked** (`fpArm.js` `portraitWindow`, used in `figure()` after the
+portrait's hidden flags are set), measured off the posed range boxes'
+corners. A held item is always drawn in full, a hidden one does not count at
+all, and each side reaches only as far as something drawn on that side. The
+first cut stood the frame on the actor's axis and made it symmetric about
+it, so a weapon reaching out to one side widened both; the review's yaw
+sweep found that at a turned yaw it shrank the body to 0.590 of the cell,
+where the old azimuth-safe frame had held 0.891. The tight box is never wider
+than that frame, so no yaw draws the body smaller than it stood; the price is
+that the body sits off the picture's centre when something reaches out
+beside it. The pins sweep eleven yaws and hold the body at or above the old
+frame's share (longsword 0.891, long bow 0.773), with every held vertex
+inside the picture.
+
+**The record.** This section.
+
+**Still open.**
+- At a side yaw a long weapon can still reach past the cell's width, and
+  contain then draws the body smaller than bare hands do (never smaller than
+  the old frame did). A panel that let the gear overflow the cell would keep
+  the body its size. That is a layout change in `enhancedInventory.js` and
+  `enhancedStyle.js` that nobody has made yet.
+- `figure()` clamps the picture's width to the render target
+  (`CHAR_SPRITE_RT_SIZE`, 1024) without lowering its height, so a picture
+  wider than 1024:384 is squashed rather than letterboxed. No human-sized
+  body reaches that.
+
+The pins are `test/prbow1b_followups.test.js`: eight tests, all failing on
+the unfixed code, each on its own assertion. The mutants are
+`tools/mutants/prbow1b.json`.
+
 ---
 
 # DISC24 — four from Discord (2026-09-24)

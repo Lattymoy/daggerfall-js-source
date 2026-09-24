@@ -38,7 +38,9 @@ import { quickslotView, clearQuickslots } from '../src/systems/quickslots.js';
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const V = HANDHELD_TORCHES_VENDOR;
 const T = TEMPLATES;
-const defaults = () => Object.fromEntries(Object.entries(MOD_SETTINGS[V].keys).map(([k, d]) => [k, d.default]));
+// the MOD's own law: the port's HT-WAIST switch (on by default since HT-WAIST-ON) off, so a lantern is held as the
+// mod holds it - the switch's own law is htwaist_*.test.js's
+const defaults = () => ({ ...Object.fromEntries(Object.entries(MOD_SETTINGS[V].keys).map(([k, d]) => [k, d.default])), 'Handling.LanternsAtWaist': false });
 
 const torch = (cond = 50) => ({ group: 'UselessItems2', templateIndex: T.Torch, name: 'Torch', currentCondition: cond, maxCondition: 50 });
 const lantern = () => ({ group: 'UselessItems2', templateIndex: T.Lantern, name: 'Lantern', currentCondition: 100, maxCondition: 100 });

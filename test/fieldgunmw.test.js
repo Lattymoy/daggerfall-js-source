@@ -328,7 +328,7 @@ test('FIELD-GUN-MW2: the gun is MORROWIND-SIZED, and pivoted on the grip', () =>
 
 test('FIELD-GUN-MW2: it ANIMATES as a crossbow, or the arms punch while holding it', () => {
   // The gap that "it attaches to the right bone" hides. `animWeaponType`
-  // turns MW_WEAPON_TYPE.None into HandToHand (fpArm.js:286) - right
+  // turns MW_WEAPON_TYPE.None into HandToHand (fpArm.js:288) - right
   // for empty hands, absurd for a man holding a dwemer firearm - so
   // returning None from the resolve left the rig playing unarmed
   // stances with a gun along for the ride.

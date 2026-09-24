@@ -66,7 +66,8 @@ const drawnAt = (b) => { const o = b.origin ?? [0, 0, 0]; return b.centers.map((
 const near = (a, b, eps = 1e-9, msg) => assert.ok(Math.abs(a - b) <= eps, msg ?? `${a} ~ ${b}`);
 const settle = () => new Promise((r) => setTimeout(r, 5));
 const T = TEMPLATES;
-const defaults = () => Object.fromEntries(Object.entries(MOD_SETTINGS[HANDHELD_TORCHES_VENDOR].keys).map(([k, d]) => [k, d.default]));
+// the MOD's own law: the port's HT-WAIST switch (on by default since HT-WAIST-ON) off, so a lantern is held as the mod holds it
+const defaults = () => ({ ...Object.fromEntries(Object.entries(MOD_SETTINGS[HANDHELD_TORCHES_VENDOR].keys).map(([k, d]) => [k, d.default])), 'Handling.LanternsAtWaist': false });
 const torch = (cond = 50) => ({ group: 'UselessItems2', templateIndex: T.Torch, currentCondition: cond, maxCondition: 50 });
 const candle = () => ({ group: 'UselessItems2', templateIndex: T.Candle, currentCondition: 16, maxCondition: 16 });
 const holy = () => ({ group: 'ReligiousItems', templateIndex: T.Holy_candle, currentCondition: 20, maxCondition: 20 });

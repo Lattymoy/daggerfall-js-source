@@ -472,6 +472,22 @@ export const MOD_SETTINGS = Object.freeze({
       'Handling.StowWhenSwimming': Object.freeze({ default: true, description: 'Swimming stows the light: no free hand.' }),
       'Handling.RelaxedTwoHandedWeapons': Object.freeze({ default: false, description: 'Two-handed weapons will only occupy your off-hand when attacking' }),   // 3ARMS: the mod ships true; the port ships false - see the departure in Handheld-Torches.md
       'Handling.RelaxedLanterns': Object.freeze({ default: false, description: 'If enabled, will not stow lanterns when both hands are occupied' }),
+      // HT-WAIST (2026-09-24, Mac: "Let the lantern item be able to be hung
+      // at the waist instead of having to be held" - and, asked how, a
+      // switch on THIS pane, off by default; HT-WAIST-ON, the same day: "Have
+      // the lantern change on by default" - it ships ON): A DEPARTURE ON THIS PANE, AND
+      // THE FIRST KEY THE MOD DOES NOT SHIP AT ALL. Every earlier one
+      // (MODS-ON Sprite, HT4 Tab, SOC5 F, HT5 Bob, HT7 OnStow, 3ARMS) moves
+      // a shipped default; this one is the port's own switch, sitting beside the
+      // mod's RelaxedLanterns because it is that switch taken the rest of
+      // the way. Relaxed keeps a lantern lit when both hands are busy; ON,
+      // this hangs it at the waist - it never needs a free hand, is never
+      // stowed for a two-hander, a bow, a spell, a climb or a swim, the
+      // first-person hand never holds it, and the light shines from the hip
+      // (systems/playerTorch.js lanternAtWaist). Torches and candles are
+      // still held. The vendored modsettings.json is untouched; the pane's
+      // pin names this key as the port's (test/ht1_handheldtorches.test.js).
+      'Handling.LanternsAtWaist': Object.freeze({ default: true, description: 'If enabled, lanterns hang at your waist instead of being held: they never need a free hand, are never stowed, and light you from the hip. Torches and candles are still held. (This port’s own switch - the mod has none.)' }),
       'Throwing.ThrowTorchInput': Object.freeze({ default: "X", text: true, description: 'Hold to wind up a throw, release to throw a torch.' }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'Throwing.ThrowStrength': Object.freeze({ default: 1.0, min: 0.0, max: 10.0, float: true, step: 0.25, description: 'Multiplier on the throw\u2019s speed (25 at full Strength).' }),
       'Throwing.GravityStrength': Object.freeze({ default: 1.0, min: 0.0, max: 10.0, float: true, step: 0.25, description: 'Multiplier on the thrown torch\u2019s fall.' }),

@@ -316,6 +316,7 @@ test('MW-LOAD: every synchronous archive read in fpArm.js is covered, in its own
     ['resolveWeaponParts', 'its `find` is the caller\'s; all four call sites preload through weaponPartPaths'],
     ['collectArmTextures', 'synchronous by contract; every call site preloads through preloadArmTextures'],
     ['resolveTorchPart', 'MW-D51: resolveWeaponParts\' twin for the carried light; all three call sites preload through torchPartPaths'],
+    ['resolveHipLanternPart', 'HT-WAIST: resolveTorchPart\'s twin for the lantern at the waist; both call sites preload through hipLanternPartPaths'],
   ]);
   const nameOf = (line) => (line.match(/(?:function\s+)?([A-Za-z][\w$]*)\s*\(/) || [])[1] ?? '?';
 
@@ -356,6 +357,8 @@ test('MW-LOAD: every synchronous archive read in fpArm.js is covered, in its own
   // MW-D51 resolveTorchPart: buildTpBody, buildFpArm, and setTorch's
   // slow path (one load, one resolve per rig inside it).
   assert.equal(callsCovered('resolveTorchPart({', 'loadFromArchives\\([\\s\\S]*torchPartPaths\\(|torchPartPaths\\('), 3);
+  // HT-WAIST resolveHipLanternPart: buildTpBody and setHipLight's slow path.
+  assert.equal(callsCovered('resolveHipLanternPart({', 'loadFromArchives\\([\\s\\S]*hipLanternPartPaths\\(|hipLanternPartPaths\\('), 2);
   // collectArmTextures: the two builds and the swap's two rigs.
   // renderGroundMesh's own call is the ICON's, and the icon opens its
   // door in preloadIcon before the synchronous getter is ever reached -
