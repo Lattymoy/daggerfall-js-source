@@ -104,6 +104,9 @@ export function rayAabb(origin, dir, aabb) {
   return tMin;
 }
 
+/** objectAabb's measured boxes, per object (AUDIT 68 S15-objectaabb-vertex-walk). */
+const _liveBoxes = new WeakMap();
+
 /**
  * AUDIT 63 F37: the world box a RAY must test against one action
  * object - the collider DFU's Physics.Raycast actually meets.
@@ -128,7 +131,18 @@ export function rayAabb(origin, dir, aabb) {
  */
 export function objectAabb(o) {
   if (!o) return null;
-  if (o.cpu && o.matrix) return worldAabb(o.cpu.positions, o.matrix);
+  if (o.cpu && o.matrix) {
+    // AUDIT 68 S15-objectaabb-vertex-walk: a pose change REPLACES
+    // o.matrix (ActionSystem._applyMatrix), never writes into it, so the
+    // box keyed on the two identities it was measured from is exact -
+    // and a parked lever is walked once, not every frame. The box is
+    // shared: its readers never write it.
+    const memo = _liveBoxes.get(o);
+    if (memo && memo.matrix === o.matrix && memo.positions === o.cpu.positions) return memo.box;
+    const box = worldAabb(o.cpu.positions, o.matrix);
+    _liveBoxes.set(o, { matrix: o.matrix, positions: o.cpu.positions, box });
+    return box;
+  }
   return o.aabb ?? null;
 }
 

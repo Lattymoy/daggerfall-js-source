@@ -4813,7 +4813,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // before it swung). A justification resting on a number the next
     // statement invalidates is worse than none.
     //
-    // MEASURED, normalized: 0.068 ms for 62 objects at ~78 verts, and
+    // MEASURED before the cache below, normalized: 0.068 ms for 62 objects at ~78 verts, and
     // 0.582 ms for 150 at ~300 - so a busy RDB level costs about 3.5%
     // of a 16.7 ms frame here, not 0.0005%. It is still worth paying,
     // and the reason is the one this seam exists for: this is the
@@ -4823,13 +4823,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // that is dominated by the list, not the ray, and paid for it in a
     // readout that lagged the reticle.
     //
-    // THE CACHE THIS DOES NOT HAVE, and why: the exterior host's door
-    // cache keys on a GENERATION the host bumps at three discrete
-    // events. An action object has no such event - it moves whenever
-    // its animation does - so the only correct cache here would key on
-    // every object's matrix, which is the walk it would be replacing.
-    // The exterior hosts hand over a list they hold anyway; this one
-    // is built, and that is the honest cost of the law above.
+    // THE CACHE, and where it lives (AUDIT 68 S15-objectaabb-vertex-walk).
+    // This used to say the only correct cache would key on every
+    // object's matrix, "which is the walk it would be replacing" - but a
+    // pose change REPLACES an action object's matrix, so `objectAabb`
+    // keys each box on the matrix it was measured from (an identity
+    // test, not the walk) and only an object that moved is walked
+    // again. The list itself is still built, which is the cost left.
     //
     // (The expensive half of a hover in this port is BUILDING the
     // target list, not casting the ray - which is why the seam takes a
