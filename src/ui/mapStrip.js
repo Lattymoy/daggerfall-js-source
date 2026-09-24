@@ -297,6 +297,13 @@ export { MAP_SHEETS };
 // with the bay, so they belong where they are. RECORDED, so a later
 // reader does not mistake that for an oversight.
 //
+// `paintUnder` (MAP-LAG, 2026-09-23) is what lies under the kept ink and
+// must not be inked with it: the world's weather regions, 90 ms and more
+// a frame, which a pan or a zoom must not pay again. The window calls it
+// every frame under the kept layer, with `env.underlay` set on the
+// static paint so the sheet knows to leave it out of the ink; a sheet
+// with nothing under its ink draws nothing.
+//
 // `mount`/`unmount` are how a sheet claims the shared chrome it needs
 // (the world map's search box, ports button and legend) and gives it
 // back on a tab switch, so the window itself never learns which sheet
@@ -316,6 +323,7 @@ export const SHEET_MEMBERS = Object.freeze([
   'mount',         // () => void - claim the shared chrome
   'unmount',       // () => void - give it back
   'homeView',      // (limits) => view|null - where this sheet rests; null = fit
+  'paintUnder',    // (ctx, env) => void - MAP-LAG: what lies UNDER the kept ink, from the sheet's own keep, per frame
 ]);
 
 /** Does this object answer the whole contract? Used by the window's own

@@ -972,3 +972,15 @@ paid.
   dying front's. A hover's pixel and its 2-pixel field cell can differ in
   step at a region's edge.
 
+
+## MAP-LAG - the map's weather, kept (2026-09-23)
+
+Mac: "the enhanced map now is very laggy after we introduced the weather
+changes". The travel map's regions were inked on every pan and zoom
+frame, its hover read a forecast on every move, and every open read the
+bay again. The regions are now a kept raster under the ink, inked as a
+job a slice a frame and again only when the view comes to rest. The
+hover reads the forecast only when the pointer rests. The last refresh's
+read is kept for the next open. AUDIT WEATHER3 R2a's law stands (a pan
+reads no weather), and a pan now draws none either. Measures and pins:
+`01-Overview/Field-Bugs-2026-09-23.md`, MAP-LAG.

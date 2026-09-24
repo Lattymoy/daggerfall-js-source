@@ -132,9 +132,9 @@ import { smoothstep } from '../systems/mathf.js';   // MAP-FIELD7: the ONE easin
 // this module to get it). Re-exported here, where MAP-FIELD put it.
 export { appRootFrom, APP_ROOT } from '../systems/appRoot.js';
 import { APP_ROOT } from '../systems/appRoot.js';
-import { systemsNear, forecastAt } from '../systems/weatherMap.js';   // WEATHER3e: the world weather map, read over the bay
-import { weatherMarks, paintWeatherGlyphs, paintWeatherLegend, paintWeatherRegions, weatherField, fieldRegions, fieldStrength, forecastText, fieldOfMapPixel, WEATHER_LAYER_REFRESH_MINUTES, WEATHER_FORECAST_HOURS } from './weatherLayer.js';
-import { mapGround } from '../systems/weatherSim.js';   // AUDIT WEATHER3 R1: the ground law the player's own sky goes through
+import { systemsNear, forecastAt, weatherAt } from '../systems/weatherMap.js';   // WEATHER3e: the world weather map, read over the bay
+import { weatherMarks, paintWeatherGlyphs, paintWeatherLegend, paintWeatherRegions, weatherField, weatherFieldJob, fieldRegions, fieldRegionOf, fieldStrength, fieldStepOf, fallsAt, weatherStrokes, FIELD_WORDS, forecastText, weatherPhrase, fieldOfMapPixel, WEATHER_LAYER_REFRESH_MINUTES, WEATHER_FORECAST_HOURS } from './weatherLayer.js';
+import { mapGround, snowGroundLawOn } from '../systems/weatherSim.js';   // AUDIT WEATHER3 R1: the ground law the player's own sky goes through
 import { TERRAIN_SIZE } from '../world/terrainSampler.js';
 
 export const HELD_MAP_URL = new URL('art/held-map.png', APP_ROOT ?? globalThis.document?.baseURI ?? 'https://invalid.invalid/').href;
@@ -379,6 +379,28 @@ const PARTY_POLL_S = 0.25;
 const FOCUS_SCALE = 6;
 /** How often the breathing rings repaint the sheet while one is up. */
 const PULSE_HZ = 10;
+// MAP-LAG (2026-09-23, Mac: "the enhanced map now is very laggy after we introduced the weather changes"). The weather's
+// regions were inked again on every pan and zoom frame: 90 ms a frame over the whole bay at one device pixel to a CSS
+// pixel, 230 at two, in Chromium. They have a kept raster of their own now (_drawWeatherUnder):
+/** ...drawn again, crisp at the new scale, once the view has held still this long (seconds); until then a zoom or a
+ *  glide shows the last one stretched, and a pan moves it. */
+const WX_SETTLE_S = 0.2;
+/** ...reaching this far past the paper on every side, as a share of the view, so a pan of up to a quarter of the sheet
+ *  is a move of the picture already drawn. */
+const WX_MARGIN = 0.25;
+/** The hover's forecast reads the law 25 times over, 3-11 ms a pixel: it waits for the pointer to rest on a pixel
+ *  this long (seconds). The weather there is named at once. */
+const HOVER_FORECAST_S = 0.15;
+/** MAP-LAG: the last refresh read of the bay's weather, per host lookup - a sheet is a new window at every open. */
+const SHARED_WX = new WeakMap();
+/** MAP-LAG: how long the weather's work - the field, its regions, the raster's strokes - may hold a frame before the
+ *  rest waits for the next (ms). The first read of a refresh is 250 to 450 ms of it; a slice at a time, the sheet
+ *  opens at once and the weather is laid on it when it is read. */
+const WX_SLICE_MS = 6;
+/** ...and the field's rows read between looks at the clock. */
+const WX_FIELD_ROWS = 4;
+/** A sheet's first weather, read after it opened, comes up over this long (seconds) rather than all at once. */
+const WX_FADE_S = 0.3;
 const HANDS_LOST_TICKS = 45;   // AUDIT-MAP2: ticks without corners before the hands lane gives the sheet back to the sprite
 /** MAP-FIT1: how far past the screen's edges the arm's sheet may hang, as
  *  a fraction of each dimension, before the window gives it back to the
@@ -522,6 +544,14 @@ export class HeldMapWindow {
     this._marksVersion = 0;
     this._layer = null;         // the kept static ink (a canvas), and its key
     this._staticKey = '';
+    this._wxr = null;           // MAP-LAG: the weather's kept raster - { canvas, key, dpr, ox, oy, scale, x1, y1, stale }
+    this._wxCanvases = null;    // ...its two canvases: the one laid, and the one the next is inked into
+    this._wxJob = null;         // MAP-LAG: the weather's work under way, a slice a frame (_stepWeather)
+    this._viewKey = '';         // MAP-LAG: the view as it was last tick, and how long it has held still
+    this._viewStill = 0;
+    this._settled = true;       // MAP-LAG: the settle's one repaint is spent
+    this._forecastWanted = null;   // MAP-LAG: { key, px, py, since } - the pixel under a resting pointer, its forecast unread
+    this._hoverPt = null;       // the pointer's last paper point, so a forecast read at rest can be written in
     this._dirty = true;     // the canvas wants a repaint
     this._layoutKey = '';
     this._paper = { w: 1, h: 1, dpr: 1 };
@@ -786,6 +816,14 @@ export class HeldMapWindow {
       const beat = Math.floor(this._clock * PULSE_HZ);
       if (beat !== this._beat) { this._beat = beat; this._dirty = true; }
     }
+    // MAP-LAG: the view held still long enough - the weather's raster, stretched or moved past what it covers, is
+    // drawn again crisp; and a pointer at rest on a pixel gets that pixel's forecast
+    const vk = `${this._view.ox}|${this._view.oy}|${this._view.scale}`;
+    if (vk !== this._viewKey) { this._viewKey = vk; this._viewStill = 0; this._settled = false; } else this._viewStill += dt;
+    if (!this._settled && this._viewStill >= WX_SETTLE_S) { this._settled = true; if (this._wxr?.stale) this._dirty = true; }
+    if (this._wxr?.fadeFrom != null && this._clock - this._wxr.fadeFrom <= WX_FADE_S + dt) this._dirty = true;
+    this._readRestingForecast();
+    this._stepWeather();
     if (this._dirty) this._paint();
   }
 
@@ -1031,9 +1069,11 @@ export class HeldMapWindow {
           markedMapId: this.markedMapId,
           markColor: rgbaCss(this._to?.settings?.markLocationColor),
         });
-        // WEATHER3e: the world weather map's systems, washed over the bay in the sheet's own hand
+        // WEATHER3e: the world weather map's systems, washed over the bay in the sheet's own hand. MAP-LAG: the
+        // regions only where the window keeps no raster of them under the pen (env.underlay); the glyphs and the
+        // legend always, over it
         const wx = this._weatherLayer();
-        if (wx) this._paintWeather(ctx, env, wx);
+        if (wx) this._paintWeather(ctx, env, wx, { regions: !env.underlay });
       },
       paintOverlay: (ctx, env) => {
         paintInkOverlay(ctx, env.view, {
@@ -1080,6 +1120,8 @@ export class HeldMapWindow {
       },
       // at rest the whole bay is on the sheet, centred
       homeView: () => null,
+      // MAP-LAG: the weather's regions, under the pen, from their own kept raster
+      paintUnder: (ctx, env) => this._drawWeatherUnder(ctx, env),
     };
   }
 
@@ -1331,6 +1373,10 @@ export class HeldMapWindow {
       this._slot.live, sheet.staticKey()].join('|');
     const layer = this._layer ?? (this._layer = document.createElement('canvas'));
     const lctx = layer.getContext?.('2d');
+    // MAP-LAG: with a kept layer the weather's regions are not the static ink's - they are laid under it from their
+    // own raster below, which a pan or a zoom does not paint again. With none, the sheet inks them as it always did.
+    const wxc = this._wxCanvases ?? (this._wxCanvases = [document.createElement('canvas'), document.createElement('canvas')]);
+    env.underlay = !!(lctx && wxc.every((c) => c.getContext?.('2d')));
     if (key !== this._staticKey || !lctx) {
       this._staticKey = key;
       const target = lctx ?? ctx;
@@ -1347,6 +1393,7 @@ export class HeldMapWindow {
     if (lctx) {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (env.underlay) sheet.paintUnder(ctx, env);   // MAP-LAG: what lies under the ink first, so the pen lies over it as it did
       ctx.drawImage(layer, 0, 0);
     }
     env.pulse = 0.5 + 0.5 * Math.sin(this._clock * 3);
@@ -2154,6 +2201,7 @@ export class HeldMapWindow {
     };
     stage.addEventListener('pointerdown', (e) => {
       if (this._phase !== 'map') return;
+      this._forecastWanted = null; this._hoverPt = null;   // MAP-LAG: a press is not a rest
       if (this._top) return;   // the resume prompt holds the sheet
       // MAP2 (:532-550): the MIDDLE button marks the place under the cursor
       if (e.button === 1) { e.preventDefault?.(); this._sheet?.mark?.(...this._paperPoint(e.clientX, e.clientY)); return; }
@@ -2202,19 +2250,7 @@ export class HeldMapWindow {
         this._setView({ ox: downAt.ox - (B[0] - A[0]) / this._view.scale, oy: downAt.oy - (B[1] - A[1]) / this._view.scale, scale: this._view.scale });
       } else {
         const [hx, hy] = this._paperPoint(e.clientX, e.clientY);
-        // EM1: a tab under the pointer names itself and shows a hand -
-        // the sheet is never asked about a point that is on the strip
-        const tab = stripHit(this._strip, hx, hy);
-        // EM3: ONE writer for the label and the cursor, whichever sheet
-        // is up. A tab under the pointer names itself and shows a hand,
-        // and the sheet is never asked about a point that is on the
-        // strip; anywhere else the live sheet ANSWERS and the window
-        // writes, so no sheet has to reach into this window's chrome.
-        const hit = tab
-          ? { label: this._strip.tabs.find((t) => t.sheet === tab)?.title ?? '', cursor: 'pointer' }
-          : (this._sheet?.hoverLabel?.(hx, hy) ?? null);
-        this._chrome.label.textContent = hit?.label ?? '';
-        this._chrome.stage.style.cursor = hit?.cursor ?? '';
+        this._writeHover(hx, hy);
       }
     });
     const lift = (e) => {
@@ -2240,7 +2276,11 @@ export class HeldMapWindow {
         // also pick the place under it.
         const tab = stripHit(this._strip, px, py);
         if (tab) this._selectSheet(tab);
-        else this._sheet?.pickAt?.(px, py);
+        else {
+          this._sheet?.pickAt?.(px, py);
+          // MAP-LAG: the press put the pointer's rest aside; a click that did not drag leaves it where it rests
+          if (this._chrome && !this.done) this._writeHover(px, py);
+        }
       }
       downAt = null;
     });
@@ -2323,6 +2363,27 @@ export class HeldMapWindow {
     }
   }
 
+  /** The label and the cursor for the paper point under the pointer.
+   *  EM1: a tab under the pointer names itself and shows a hand - the
+   *  sheet is never asked about a point that is on the strip. EM3: ONE
+   *  writer for the label and the cursor, whichever sheet is up; anywhere
+   *  off the strip the live sheet ANSWERS and the window writes, so no
+   *  sheet has to reach into this window's chrome. MAP-LAG: the point is
+   *  kept, so a forecast read once the pointer rests is written in here
+   *  too, and a pixel's rest outlives a move that stays on it. */
+  _writeHover(hx, hy) {
+    this._hoverPt = [hx, hy];
+    const wanted = this._forecastWanted;
+    this._forecastWanted = null;
+    const tab = stripHit(this._strip, hx, hy);
+    const hit = tab
+      ? { label: this._strip.tabs.find((t) => t.sheet === tab)?.title ?? '', cursor: 'pointer' }
+      : (this._sheet?.hoverLabel?.(hx, hy) ?? null);
+    if (wanted && this._forecastWanted?.key === wanted.key) this._forecastWanted.since = wanted.since;
+    this._chrome.label.textContent = hit?.label ?? '';
+    this._chrome.stage.style.cursor = hit?.cursor ?? '';
+  }
+
   /**
    * The WORLD sheet's label under the pointer. EM3: it ANSWERS rather
    * than writes - `{label, cursor}` - because the sheet contract's
@@ -2376,18 +2437,35 @@ export class HeldMapWindow {
     if (!wx?.on?.() || !climateAt) return null;
     const bucket = Math.floor(wx.minutes() / WEATHER_LAYER_REFRESH_MINUTES);
     if (this._wx?.bucket !== bucket) {
-      // the sheet's middle through the field's own frame (its y runs up from the bay's south edge, whatever this
-      // sheet's height), and a reach to its corners
-      const [cx, cz] = fieldOfMapPixel(this._size.width / 2 - 0.5, this._size.height / 2 - 0.5);
-      const reach = Math.hypot(this._size.width, this._size.height) * TERRAIN_SIZE / 2;
-      const minutes = bucket * WEATHER_LAYER_REFRESH_MINUTES;
-      // the host's own lookup, not a wrapper made here: the map's births are cached per lookup, and a window built at
-      // every open would read the whole bay cold each time (AUDIT WEATHER3 R2b) - the host's is the sim's, warm
-      const systems = systemsNear(cx, cz, minutes, climateAt, reach);
-      const ground = mapGround(climateAt);
-      this._wx = { bucket, key: `wx${bucket}`, minutes, ground, systems, marks: weatherMarks(systems, (w, x, z) => ground(w, x, z, minutes)), forecasts: new Map(), regions: null, strength: null };
+      // MAP-LAG: every open is a new window, and each read the bay's field and regions again - 130 to 250 ms before
+      // its first frame. The last read is kept with the host's lookup, so an open inside the same refresh (the
+      // classic clock stands while the sheet is up) finds it read, its regions traced and its forecasts with it
+      const shareKey = `${bucket}|${this._size.width}x${this._size.height}|${snowGroundLawOn() ? 1 : 0}`;
+      const kept = SHARED_WX.get(climateAt);
+      if (kept?.shareKey === shareKey) this._wx = kept;
+      else {
+        // the sheet's middle through the field's own frame (its y runs up from the bay's south edge, whatever this
+        // sheet's height), and a reach to its corners
+        const [cx, cz] = fieldOfMapPixel(this._size.width / 2 - 0.5, this._size.height / 2 - 0.5);
+        const reach = Math.hypot(this._size.width, this._size.height) * TERRAIN_SIZE / 2;
+        const minutes = bucket * WEATHER_LAYER_REFRESH_MINUTES;
+        // the host's own lookup, not a wrapper made here: the map's births are cached per lookup, and a window built at
+        // every open would read the whole bay cold each time (AUDIT WEATHER3 R2b) - the host's is the sim's, warm
+        const systems = systemsNear(cx, cz, minutes, climateAt, reach);
+        const ground = mapGround(climateAt);
+        this._wx = { bucket, key: `wx${bucket}`, minutes, ground, systems, marks: weatherMarks(systems, (w, x, z) => ground(w, x, z, minutes)), forecasts: new Map(), nows: new Map(), regions: null, strength: null, shareKey };
+        SHARED_WX.set(climateAt, this._wx);
+      }
     }
     return this._wx;
+  }
+
+  /** One read of the law for the refresh: the words' regions and, where something falls, how hard (WEATHER3i). */
+  _ensureWeatherRegions(wx) {
+    if (wx.regions) return;
+    const field = weatherField(wx.systems, { width: this._size.width, height: this._size.height, ground: (w, x, z) => wx.ground(w, x, z, wx.minutes) });
+    wx.regions = fieldRegions(field);
+    wx.strength = fieldStrength(field);
   }
 
   /** The weather on the sheet (WEATHER3h): the REGIONS - the worn word
@@ -2396,40 +2474,184 @@ export class HeldMapWindow {
    *  weather again - AUDIT WEATHER3 R2a's law) - filled with each word's
    *  hatch and outlined in its ink, UNDER the pen already on the sheet
    *  (destination-over, so the coast and the borders stay the pen's);
-   *  then the glyphs, a handful, and the legend over. */
-  _paintWeather(ctx, env, wx) {
+   *  then the glyphs, a handful, and the legend over. `regions: false`
+   *  (MAP-LAG): the window lays the regions from its own raster instead
+   *  (_drawWeatherUnder), and the static ink carries the glyphs and the
+   *  legend alone. */
+  _paintWeather(ctx, env, wx, { regions = true } = {}) {
     const opts = { paperW: env.paperW, paperH: env.paperH, dpr: env.dpr, bounds: [this._size.width, this._size.height] };
-    if (!wx.regions) {
-      // one read of the law for the refresh: the words' regions and, where something falls, how hard (WEATHER3i)
-      const field = weatherField(wx.systems, { width: this._size.width, height: this._size.height, ground: (w, x, z) => wx.ground(w, x, z, wx.minutes) });
-      wx.regions = fieldRegions(field);
-      wx.strength = fieldStrength(field);
+    if (regions) {
+      this._ensureWeatherRegions(wx);
+      const op = ctx.globalCompositeOperation;
+      ctx.globalCompositeOperation = 'destination-over';
+      paintWeatherRegions(ctx, env.view, wx.regions, { ...opts, strength: wx.strength, under: true });
+      ctx.globalCompositeOperation = op ?? 'source-over';
     }
-    const op = ctx.globalCompositeOperation;
-    ctx.globalCompositeOperation = 'destination-over';
-    paintWeatherRegions(ctx, env.view, wx.regions, { ...opts, strength: wx.strength, under: true });
-    ctx.globalCompositeOperation = op ?? 'source-over';
     paintWeatherGlyphs(ctx, env.view, wx.marks, opts);
     paintWeatherLegend(ctx, opts);
+  }
+
+  /**
+   * MAP-LAG: THE WEATHER UNDER THE PEN, from its own kept raster. Inked
+   * every pan and zoom frame, the regions cost 90 ms a frame over the whole
+   * bay at one device pixel to a CSS pixel and 230 at two (Chromium; the
+   * JavaScript tracing alone 28, then the hatch fills, the clips and the
+   * outlines) - the sheet moved at four to ten frames a second. They are
+   * inked now into a raster at a view: the view's map widened by
+   * WX_MARGIN on every side, within the bay. Every frame lays it where
+   * this view puts it: a pan inside the margin moves it by whole device
+   * pixels, so the hairlines stay sharp; a zoom or a glide stretches it;
+   * and once the view has held still WX_SETTLE_S, a raster that does not
+   * show this view crisp is inked again. A refresh with no raster yet
+   * (an open, the clock's next ten minutes) lays none until its own is
+   * inked. The inking is a job, a slice a frame (_stepWeather), into the
+   * canvas that is not being laid, so no frame holds for it. The kept ink
+   * layer is drawn over the raster, so the coast and the borders stay the
+   * pen's, as destination-over kept them - the same picture, stroke for
+   * stroke.
+   */
+  _drawWeatherUnder(ctx, env) {
+    const wx = this._weatherLayer();
+    if (!wx) return;
+    const { view, paperW, paperH, dpr } = env;
+    // the last refresh's raster stands until this one's is inked (the clock's next ten minutes, online, where it does not
+    // stand still under the sheet): the weather drifts a quarter of a map pixel in that time, and a sheet whose weather
+    // went out while the new was read would blink
+    const r = this._wxr;
+    if (!r || r.key !== wx.key || (r.stale && this._viewStill >= WX_SETTLE_S)) this._wantWeather(wx);
+    if (!r) return;
+    const k = (view.scale * dpr) / (r.scale * r.dpr);
+    let dx = (r.ox - view.ox) * view.scale * dpr, dy = (r.oy - view.oy) * view.scale * dpr;
+    if (k === 1) { dx = Math.round(dx); dy = Math.round(dy); }
+    const fade = r.fadeFrom == null ? 1 : Math.min(1, (this._clock - r.fadeFrom) / WX_FADE_S);
+    if (r.x1 > r.ox && r.y1 > r.oy) {
+      ctx.globalAlpha = fade;
+      ctx.drawImage(r.canvas, dx, dy, r.canvas.width * k, r.canvas.height * k);
+      ctx.globalAlpha = 1;
+    }
+    // the part of the bay this view shows, and whether the raster holds it crisp
+    const { width: W, height: H } = this._size;
+    const vx0 = Math.max(0, view.ox), vy0 = Math.max(0, view.oy);
+    const vx1 = Math.min(W, view.ox + paperW / view.scale), vy1 = Math.min(H, view.oy + paperH / view.scale);
+    const e = 1e-6;
+    r.stale = k !== 1 || vx0 < r.ox - e || vy0 < r.oy - e || vx1 > r.x1 + e || vy1 > r.y1 + e;
+  }
+
+  /** Start the weather's job for this refresh, unless one is under way for it: its raster is then inked at the view
+   *  the sheet holds when the job reaches the inking, and a view that moved on after that asks again at its settle. */
+  _wantWeather(wx) {
+    if (this._wxJob?.key === wx.key) return;
+    this._wxJob = { key: wx.key, stage: wx.regions ? 'render' : 'field' };
+  }
+
+  /**
+   * MAP-LAG: the weather's job, for WX_SLICE_MS of this frame (at least
+   * one step): the field a few rows at a time; the regions a word or a
+   * strength step at a time; then the raster, its canvas sized for the
+   * sheet's view as it is now, a stroke at a time. The regions are kept
+   * with the refresh when the last is traced, so the next open's job is
+   * the inking alone; the raster is laid when its last stroke is made. A
+   * job for a refresh the clock has left is dropped - the next paint asks
+   * for the new one. Row for row, word for word and stroke for stroke the
+   * same work as weatherField, fieldRegions, fieldStrength and
+   * paintWeatherRegions.
+   */
+  _stepWeather(budget = WX_SLICE_MS) {
+    const j = this._wxJob;
+    if (!j) return;
+    const wx = this._weatherLayer();
+    if (!wx || wx.key !== j.key) { this._wxJob = null; return; }
+    const t0 = performance.now();
+    do {
+      if (j.stage === 'field') {
+        j.field ??= weatherFieldJob(wx.systems, { width: this._size.width, height: this._size.height, ground: (w, x, z) => wx.ground(w, x, z, wx.minutes) });
+        if (j.field.step(WX_FIELD_ROWS)) {
+          const field = j.field.field, words = new Set(field.words);
+          const regions = {}, strength = {};
+          j.tasks = [];
+          for (const i of words) if (i !== 0) j.tasks.push(() => { regions[FIELD_WORDS[i]] = fieldRegionOf(field, i); });
+          for (const i of words) {
+            if (!fallsAt(i)) continue;
+            const steps = strength[FIELD_WORDS[i]] = [];
+            for (const k of [1, 2]) j.tasks.push(() => { steps[k - 1] = fieldStepOf(field, i, k); });
+          }
+          j.tasks.push(() => { wx.regions = regions; wx.strength = strength; });
+          j.stage = 'regions';
+        }
+      } else if (j.stage === 'regions') {
+        j.tasks.shift()();
+        if (!j.tasks.length) j.stage = 'render';
+      } else {
+        if (!j.strokes) {
+          const view = this._view, { w: paperW, h: paperH, dpr } = this._paper;
+          const { width: W, height: H } = this._size;
+          const vw = paperW / view.scale, vh = paperH / view.scale;
+          const x0 = Math.max(0, view.ox - vw * WX_MARGIN), y0 = Math.max(0, view.oy - vh * WX_MARGIN);
+          const x1 = Math.min(W, view.ox + vw * (1 + WX_MARGIN)), y1 = Math.min(H, view.oy + vh * (1 + WX_MARGIN));
+          const canvas = this._wxCanvases.find((c) => c !== this._wxr?.canvas);
+          const pw = Math.max(0, x1 - x0) * view.scale, ph = Math.max(0, y1 - y0) * view.scale;
+          // assigning the size resets the bitmap, even to the same size: a clean sheet for the new picture
+          canvas.width = Math.max(1, Math.ceil(pw * dpr));
+          canvas.height = Math.max(1, Math.ceil(ph * dpr));
+          j.strokes = weatherStrokes(canvas.getContext('2d'), { ox: x0, oy: y0, scale: view.scale }, wx.regions, { paperW: pw, paperH: ph, dpr, strength: wx.strength });
+          j.raster = { canvas, key: wx.key, dpr, ox: x0, oy: y0, scale: view.scale, x1, y1, stale: false };
+        }
+        j.strokes.shift()();
+        if (!j.strokes.length) {
+          // the sheet's first weather comes up; a raster that replaces one already laid is the same picture, and swaps
+          j.raster.fadeFrom = this._wxr ? null : this._clock;
+          this._wxr = j.raster; this._wxJob = null; this._dirty = true;
+          return;
+        }
+      }
+    } while (performance.now() - t0 < budget);
   }
 
   /** A hover's label with the weather at its pixel and the forecast -
    *  "Daggerfall : Daggerfall · Rain, heavy - clearing in about 3 hours".
    *  The forecast is the same pure law read ahead, once per pixel per
-   *  refresh; the label alone where there is no weather to read. */
+   *  refresh; the label alone where there is no weather to read.
+   *  MAP-LAG: the forecast is 25 reads of the law, 3 to 11 ms a pixel, and
+   *  a pointer crossing the bay asked for one on every move. The weather
+   *  there is named at once - one read, the forecast's own first - and
+   *  the forecast is read once the pointer has rested on the pixel
+   *  HOVER_FORECAST_S (_readRestingForecast), then written in. */
   _withWeather(label, px, py) {
     const wx = this._weatherLayer();
     if (!wx) return label;
     const key = `${px},${py}`;
     let text = wx.forecasts.get(key);
     if (text == null) {
-      const [fx, fz] = fieldOfMapPixel(px, py);
-      // read at the refresh's minute, the one the sheet's hatch was read at, so the hover names what is drawn under it
-      // (AUDIT-3i: read at the live minute, a hover nine minutes into a refresh named another strength than the hatch)
-      text = forecastText(forecastAt(fx, fz, wx.minutes, this.deps.getClimateIndex, { hours: WEATHER_FORECAST_HOURS, step: 30, ground: wx.ground }), WEATHER_FORECAST_HOURS);
-      wx.forecasts.set(key, text);
+      text = wx.nows.get(key);
+      if (text == null) {
+        const [fx, fz] = fieldOfMapPixel(px, py);
+        const now = weatherAt(fx, fz, wx.minutes, this.deps.getClimateIndex, { ground: wx.ground });
+        text = weatherPhrase(now.word, now.intensity);
+        wx.nows.set(key, text);
+      }
+      if (this._forecastWanted?.key !== key) this._forecastWanted = { key, px, py, since: this._clock };
     }
-    return label ? `${label} \u00b7 ${text}` : text;
+    return label ? `${label} · ${text}` : text;
+  }
+
+  /** The forecast at a map pixel: read at the refresh's minute, the one the sheet's hatch was read at, so the hover
+   *  names what is drawn under it (AUDIT-3i: read at the live minute, a hover nine minutes into a refresh named another
+   *  strength than the hatch). */
+  _forecastOf(wx, px, py) {
+    const [fx, fz] = fieldOfMapPixel(px, py);
+    return forecastText(forecastAt(fx, fz, wx.minutes, this.deps.getClimateIndex, { hours: WEATHER_FORECAST_HOURS, step: 30, ground: wx.ground }), WEATHER_FORECAST_HOURS);
+  }
+
+  /** MAP-LAG: the pointer has rested on a pixel HOVER_FORECAST_S - its forecast is read, kept for the refresh, and the
+   *  label under the pointer written again with it. */
+  _readRestingForecast() {
+    const fw = this._forecastWanted;
+    if (!fw || this._clock - fw.since < HOVER_FORECAST_S) return;
+    this._forecastWanted = null;
+    const wx = this._weatherLayer();
+    if (!wx || wx.forecasts.has(fw.key)) return;
+    wx.forecasts.set(fw.key, this._forecastOf(wx, fw.px, fw.py));
+    if (this._hoverPt) this._writeHover(this._hoverPt[0], this._hoverPt[1]);
   }
 
   _pickAt(sx, sy) {

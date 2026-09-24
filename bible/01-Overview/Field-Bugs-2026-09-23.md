@@ -1276,3 +1276,74 @@ Morrowind clips. Whether the arms should take Weapon Widget's movement
 at all is Mac's call (WW1 added it at Mac's asking), and is left open
 here.
 
+
+---
+
+# MAP-LAG - the enhanced map after the weather
+
+Mac: *"One bug is the enhanced map now is very laggy after we
+introduced the weather changes."*
+
+**Cause, measured** in headless Chromium on the real window, over a
+synthetic 1000 x 500 bay (a stand-in climate, not CLIMATE.PAK; software
+raster, so a GPU canvas is faster), paper 791 x 482. WEATHER3e/h/i put the
+bay's weather on the held map, and three of its costs landed on the frame:
+
+- **The regions were inked on every pan and zoom frame.** They rode the
+  kept static ink, whose key is the view. Alone, the regions over the
+  whole bay were 85-90 ms a paint at one device pixel to a CSS pixel and
+  205-249 at two: the JavaScript tracing 28 (183,000 points), then the
+  hatch fills, the clips and the outlines. A zoom frame was 30 ms at the
+  median and 74 at worst (76 and 171 at two), a pan zoomed in 11 (48).
+- **The hover read a forecast on every move:** 25 reads of the law, 3-11
+  ms a pixel, 17 ms a pointer move.
+- **Every open read the bay again:** the sheet is a new window each time,
+  and each read the field and traced the regions (130-250 ms) before its
+  first frame. An open's worst frame was 620-880 ms against 265-290 with
+  the weather off.
+
+**Fix.** Three parts, all in `ui/heldMap.js` with slices in
+`ui/weatherLayer.js`:
+
+- **The regions have a kept raster of their own**, laid under the kept
+  ink by a new sheet member, `paintUnder` (`mapStrip.js`; the town and
+  the automap draw nothing). It is inked at a view, the visible map
+  widened by a quarter each side within the bay. A pan inside that moves
+  it by whole device pixels, a zoom or a glide stretches it, and once the
+  view has held still 0.2 s a raster that is not crisp for it is inked
+  again. The hatch is now laid from the map's corner on a whole device
+  pixel, so a moved raster and a fresh one agree.
+- **The weather's work is a job, 6 ms a frame:** the field a few rows at
+  a time (`weatherFieldJob`), the regions a word or a step at a time
+  (`fieldRegionOf`, `fieldStepOf`), the raster a stroke at a time
+  (`weatherStrokes`), into the canvas that is not being laid. A sheet's
+  first weather fades in over 0.3 s. A refresh while the sheet is up
+  (online, where the clock does not stand) keeps the last raster until
+  the new one is laid.
+- **The hover names the weather at once** (one read, the forecast's own
+  first) and reads the forecast once the pointer has rested on the pixel
+  0.15 s. A press puts the rest aside; a click that did not drag keeps it.
+- **The last read is kept with the host's lookup** (refresh, sheet size
+  and the snow-ground switch in its key), so an open inside the same ten
+  minutes finds the regions traced.
+
+**After, the same measure:** a zoom frame 4.1 ms (9.8 at worst; 9.6 and
+16.7 at two), a pan zoomed in 1.3 (2.9), a pointer move 0.7. An open's
+worst frame 44-50 ms the first time in a refresh and 12-21 after, the
+weather laid about a second after the sheet opens. The picture is the
+same: the old and new renders at three views have the same mean colour
+to within 1%, the pixels that differ are the hatch's new phase, and the
+crops look alike to the eye.
+
+**Named, not changed:** when a zoom settles, the crisp raster's largest
+stroke still holds one frame, 21 ms at one device pixel and 69 at two in
+software. One region's fill cannot be split without changing its holes. The
+first read in a session is cold for the far bay (the births the sim has
+not warmed): `systemsNear` over the whole bay, 85-170 ms, is still read in
+one go.
+
+**Not verified here:** in the game. There is no game data in the
+container.
+
+The pins are `test/maplag.test.js` (8). WEATHER3e's and WEATHER3i's hover
+pins now read the forecast at rest.

@@ -158,8 +158,13 @@ test('WEATHER3e: THE HOVER - the place\'s label and the weather there with its f
   withDocument(() => {
     const win = new HeldMapWindow(winDeps());
     const [fx, fz] = fieldOfMapPixel(40, 30);
-    const want = forecastText(forecastAt(fx, fz, clock.m, () => CLIMATES.Swamp, { hours: WEATHER_FORECAST_HOURS, step: 30 }));
-    assert.equal(win._withWeather('Wrothgarian Mountains', 40, 30), `Wrothgarian Mountains · ${want}`);
+    const f = forecastAt(fx, fz, clock.m, () => CLIMATES.Swamp, { hours: WEATHER_FORECAST_HOURS, step: 30 });
+    const want = forecastText(f), now = weatherPhrase(f.now.word, f.now.intensity);
+    // MAP-LAG: the weather there is named at once; the forecast, 24 reads more, once the pointer rests on the pixel
+    assert.equal(win._withWeather('Wrothgarian Mountains', 40, 30), `Wrothgarian Mountains · ${now}`);
+    assert.equal(win._weatherLayer().forecasts.get('40,30'), undefined, 'no forecast read on the move');
+    win._clock += 1; win._readRestingForecast();
+    assert.equal(win._withWeather('Wrothgarian Mountains', 40, 30), `Wrothgarian Mountains · ${want}`, 'and at rest, the forecast');
     assert.equal(win._withWeather('', 40, 30), want, 'the sea or a nameless pixel: the weather alone');
     assert.equal(win._weatherLayer().forecasts.get('40,30'), want, 'read once a pixel a refresh');
     const off = new HeldMapWindow(winDeps({ weather: { on: () => false, minutes: () => clock.m } }));

@@ -241,7 +241,20 @@ const BUCKET = 16;   // cells a side of the search buckets
  * `ground(word, x, z)` is the ground law (weatherSim mapGround at the
  * minute). Pure.
  */
-export function weatherField(systems, { width, height, cell = FIELD_CELL, ground = null }) {
+export function weatherField(systems, opts) {
+  const job = weatherFieldJob(systems, opts);
+  job.step();
+  return job.field;
+}
+
+/**
+ * MAP-LAG: THE FIELD A FEW ROWS AT A TIME - `{ field, step(rows) }`, the
+ * field whole once `step` answers true. The whole bay's field is 73 to
+ * 157 ms of reads, and the sheet reads it without holding a frame that
+ * long (ui/heldMap.js _stepWeather). Row for row the same reads as
+ * `weatherField`, which is this run to the end.
+ */
+export function weatherFieldJob(systems, { width, height, cell = FIELD_CELL, ground = null }) {
   const cols = Math.ceil(width / cell), rows = Math.ceil(height / cell);
   const bc = Math.ceil(cols / BUCKET), br = Math.ceil(rows / BUCKET);
   const buckets = Array.from({ length: bc * br }, () => []);
@@ -253,18 +266,27 @@ export function weatherField(systems, { width, height, cell = FIELD_CELL, ground
     for (let by = y0; by <= y1; by++) for (let bx = x0; bx <= x1; bx++) buckets[by * bc + bx].push(s);
   }
   const words = new Uint8Array(cols * rows), strength = new Uint8Array(cols * rows);
-  for (let gy = 0; gy < rows; gy++) {
-    for (let gx = 0; gx < cols; gx++) {
-      const list = buckets[Math.floor(gy / BUCKET) * bc + Math.floor(gx / BUCKET)];
-      if (!list.length) continue;
-      const mx = (gx + 0.5) * cell, my = (gy + 0.5) * cell;
-      const x = mx * TERRAIN_SIZE, z = (MAX_MAP_PIXEL_Y - my) * TERRAIN_SIZE;   // mapOfField's inverse, continuous
-      const worn = wornAmong(list, x, z, ground);
-      words[gy * cols + gx] = WORD_AT[worn.word] ?? 0;
-      strength[gy * cols + gx] = strengthOf(worn.word, worn.intensity);
-    }
-  }
-  return { cols, rows, cell, words, strength };
+  const field = { cols, rows, cell, words, strength };
+  let row = 0;
+  return {
+    field,
+    step(n = Infinity) {
+      const end = Math.min(rows, row + n);
+      for (let gy = row; gy < end; gy++) {
+        for (let gx = 0; gx < cols; gx++) {
+          const list = buckets[Math.floor(gy / BUCKET) * bc + Math.floor(gx / BUCKET)];
+          if (!list.length) continue;
+          const mx = (gx + 0.5) * cell, my = (gy + 0.5) * cell;
+          const x = mx * TERRAIN_SIZE, z = (MAX_MAP_PIXEL_Y - my) * TERRAIN_SIZE;   // mapOfField's inverse, continuous
+          const worn = wornAmong(list, x, z, ground);
+          words[gy * cols + gx] = WORD_AT[worn.word] ?? 0;
+          strength[gy * cols + gx] = strengthOf(worn.word, worn.intensity);
+        }
+      }
+      row = end;
+      return row >= rows;
+    },
+  };
 }
 
 /**
@@ -343,14 +365,13 @@ export const REGION_CUT = FIELD_CELL * 1.5;
  * clear air none. Pure.
  */
 export function fieldRegions(field) {
-  const { words } = field;
   const regions = {};
-  for (const i of new Set(words)) {
-    if (i === 0) continue;
-    regions[FIELD_WORDS[i]] = loopsWhere(field, (c) => words[c] === i);
-  }
+  for (const i of new Set(field.words)) if (i !== 0) regions[FIELD_WORDS[i]] = fieldRegionOf(field, i);
   return regions;
 }
+/** One word's region: its loops (the word by its FIELD_WORDS index). MAP-LAG: a word at a time, so the sheet traces
+ *  the bay's regions without holding a frame for all of them. */
+export const fieldRegionOf = (field, i) => loopsWhere(field, (c) => field.words[c] === i);
 
 /**
  * THE STRENGTH INSIDE A REGION (WEATHER3i): for every word that falls,
@@ -359,15 +380,14 @@ export function fieldRegions(field) {
  * cells are, and both inside the word's own region. Pure.
  */
 export function fieldStrength(field) {
-  const { words, strength } = field;
   const out = {};
-  for (const i of new Set(words)) {
-    const word = FIELD_WORDS[i];
-    if (!PRECIPITATING.has(word)) continue;
-    out[word] = [1, 2].map((k) => loopsWhere(field, (c) => words[c] === i && strength[c] >= k));
-  }
+  for (const i of new Set(field.words)) if (fallsAt(i)) out[FIELD_WORDS[i]] = [1, 2].map((k) => fieldStepOf(field, i, k));
   return out;
 }
+/** Whether the word at this FIELD_WORDS index falls - the words fieldStrength traces steps for. */
+export const fallsAt = (i) => PRECIPITATING.has(FIELD_WORDS[i]);
+/** One word's strength step `k` (1 moderate, 2 heavy): the loops of its cells at least that strong. */
+export const fieldStepOf = (field, i, k) => loopsWhere(field, (c) => field.words[c] === i && field.strength[c] >= k);
 
 /** The loops of the field's cells where `inside(cellIndex)` holds, rounded in the coast's hand, each with its box. */
 function loopsWhere(field, inside) {
@@ -476,10 +496,28 @@ function tilePattern(ctx, word, step) {
  * drawn over, stroke for stroke (AUDIT-3i: drawn forward under the pen,
  * each step's hatch went beneath its own light hatch's tint).
  */
-export function paintWeatherRegions(ctx, view, regions, { paperW, paperH, dpr = 1, strength = null, under = false }) {
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+export function paintWeatherRegions(ctx, view, regions, opts) {
+  for (const stroke of weatherStrokes(ctx, view, regions, opts)) stroke();
+}
+
+/**
+ * MAP-LAG: paintWeatherRegions as a list of calls - the first sets the
+ * context up, each after it makes one stroke, clip and all - so the
+ * sheet inks its kept raster a few strokes a frame rather than the whole
+ * bay's in one (ui/heldMap.js _stepWeather). Run in order on the same
+ * context, they are paintWeatherRegions.
+ */
+export function weatherStrokes(ctx, view, regions, { paperW, paperH, dpr = 1, strength = null, under = false }) {
   const s = view.scale;
   const shown = (box) => !((box[2] - view.ox) * s < 0 || (box[0] - view.ox) * s > paperW || (box[3] - view.oy) * s < 0 || (box[1] - view.oy) * s > paperH);
+  // MAP-LAG: the hatch is laid from the MAP's corner, not the paper's, so a pan carries it with the land - and the
+  // sheet's kept raster of the weather (ui/heldMap.js _drawWeatherUnder), moved by a pan, agrees with one drawn fresh.
+  // The corner is taken to the nearest device pixel: a tile laid between pixels is resampled, and its hairlines blur.
+  const ax = Math.round(-view.ox * s * dpr) / dpr, ay = Math.round(-view.oy * s * dpr) / dpr;
+  const onMap = (pat) => {
+    if (pat && typeof pat.setTransform === 'function' && typeof globalThis.DOMMatrix === 'function') pat.setTransform(new globalThis.DOMMatrix([1, 0, 0, 1, ax, ay]));
+    return pat;
+  };
   const trace = (loops) => {
     ctx.beginPath();
     for (const { pts, box } of loops) {
@@ -492,21 +530,21 @@ export function paintWeatherRegions(ctx, view, regions, { paperW, paperH, dpr = 
   const strokes = [];
   const order = [...PRIORITY].reverse().filter((w) => regions[w]?.length);
   for (const w of order) {
-    strokes.push({ loops: regions[w], fill: () => hatchPattern(ctx, w) ?? rgba(WEATHER_INK[w], HATCH[w].tint) });
+    strokes.push({ loops: regions[w], fill: () => onMap(hatchPattern(ctx, w)) ?? rgba(WEATHER_INK[w], HATCH[w].tint) });
     const steps = strength?.[w] ?? [];
     steps.forEach((loops, i) => {
       if (!loops.length) return;
       // no canvas: each step a half tint more
-      strokes.push({ loops, within: [regions[w], ...steps.slice(0, i)], fill: () => strengthPattern(ctx, w, i + 1) ?? rgba(WEATHER_INK[w], HATCH[w].tint / 2) });
+      strokes.push({ loops, within: [regions[w], ...steps.slice(0, i)], fill: () => onMap(strengthPattern(ctx, w, i + 1)) ?? rgba(WEATHER_INK[w], HATCH[w].tint / 2) });
     });
   }
   for (const w of order) if (HATCH[w].outline > 0) strokes.push({ loops: regions[w], outline: w });
   if (under) strokes.reverse();
-  ctx.lineWidth = OUTLINE_PX; ctx.lineJoin = 'round';
-  for (const st of strokes) {
+  const setUp = () => { ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.lineWidth = OUTLINE_PX; ctx.lineJoin = 'round'; };
+  return [setUp, ...strokes.map((st) => () => {
     if (st.within) { ctx.save(); for (const outer of st.within) { trace(outer); ctx.clip('nonzero'); } }
     trace(st.loops);
     if (st.outline) { ctx.strokeStyle = outlineInk(st.outline); ctx.stroke(); } else { ctx.fillStyle = st.fill(); ctx.fill('nonzero'); }
     if (st.within) ctx.restore();
-  }
+  })];
 }
