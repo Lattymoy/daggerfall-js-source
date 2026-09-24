@@ -6556,8 +6556,9 @@ the torch's clock through a variable - update()'s "no allocation
 after the first pack" holds with the torch lit.
 
 **Recorded, not faked.** A peer's look carries no light on the wire
-(MWBODY1's `lk`), so the peers' bodies hold none; a lantern or candle
-is the classic lane's still; the torch's own LIGHT (the LIGH radius
+(MWBODY1's `lk`), so the peers' bodies hold none (a lantern at the
+WAIST is in no hand: the pose's `hl` hangs it on them since
+HT-WAIST-NET); a lantern or candle is the classic lane's still; the torch's own LIGHT (the LIGH radius
 and colour) is not the rig's - the player torch's light already moves
 with the hand law.
 
@@ -6940,8 +6941,9 @@ Slot_CarriedLeft at the Shield Bone (MW-D51) - so every number is the port's own
 - **The door**: `setHipLight` is `setTorch`'s shape with MW-TORCH's fixes (the fast compare, one bind per body,
   `hipLightTried`, `lastBuildOpts.hipLight`, the mid-build queue, the unload reset); weaponRig hands it over per
   frame beside the torch and in `armBuildOptsOf`.
-- **Peers**: unchanged - they hold no light (MW-D51's "Recorded, not faked"), and `peerBodies.js` never asks for this
-  one either.
+- **Peers** (HT-WAIST-NET, 2026-09-24): a peer's body hangs it too, off the pose's `hl` bit (world106) through the
+  same door - `PeerBodies._arm` hands the rig `!!shown.hl` each frame - and swings it off that body's own stub camera.
+  They still HOLD no light (MW-D51's "Recorded, not faked"): this one is in no hand. Handheld-Torches.md HT-WAIST.
 
 Pins: `test/htwaist_mwbody.test.js` - the pick and the resolve; the hang over the vendored retail-shaped skeleton (the
 top at the hook on the right hip, plumb under a twisted pelvis, the swing tipping it about the hook, a flame placed by

@@ -22,10 +22,10 @@ import { readFileSync } from 'node:fs';
 
 import { pickLanternRecord, pickTorchRecord, assembleFirstPersonArm, poseAssembly, hangAffine, MW_LIGHT_CARRY } from '../src/formats/mwFirstPerson.js';
 import {
-  createFpArm, fpSkeletonPath, FP_CLIP_PATH, resolveHipLanternPart, hipLanternPartPaths, hangHipLight, effectPlacement,
+  createFpArm, resolveHipLanternPart, hipLanternPartPaths, hangHipLight, effectPlacement,
   HIP_LIGHT_BONE, HIP_LIGHT_SLOT, HIP_LANTERN_HOOK,
 } from '../src/combat/fpArm.js';
-import { bodyRec, fixtureFile, countingRenderer } from './fixtures/mw/bodyRig.mjs';
+import { fixtureFile, countingRenderer, hipLanternBodyDeps } from './fixtures/mw/bodyRig.mjs';   // HT-WAIST-NET: the lantern body lives there once - the peers' pin builds the same rig
 import { createLanternSwing, lanternSwingMatrix } from '../src/systems/lanternSwing.js';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -163,75 +163,9 @@ test('HT-WAIST the hang: a hanging part\'s particle system (a lantern\'s flame) 
 // ---------------------------------------------------------------
 // the live rig
 // ---------------------------------------------------------------
-/** A NIF (4.0.0.2) of NiNodes and NiStringExtraData, written the way mwNifFile.js reads it. */
-function nifBytes(records, roots) {
-  const out = [];
-  const u32 = (n) => { const b = new Uint8Array(4); new DataView(b.buffer).setUint32(0, n >>> 0, true); out.push(...b); };
-  const i32 = (n) => { const b = new Uint8Array(4); new DataView(b.buffer).setInt32(0, n, true); out.push(...b); };
-  const f32 = (n) => { const b = new Uint8Array(4); new DataView(b.buffer).setFloat32(0, n, true); out.push(...b); };
-  const u16 = (n) => { out.push(n & 255, (n >> 8) & 255); };
-  const str = (s) => { u32(s.length); for (const c of s) out.push(c.charCodeAt(0)); };
-  for (const c of 'NetImmerse File Format, Version 4.0.0.2\n') out.push(c.charCodeAt(0));
-  u32(0x04000002); u32(records.length);
-  for (const r of records) {
-    str(r.type);
-    if (r.type === 'NiNode') {
-      str(r.name); i32(r.extra ?? -1); i32(-1); u16(0);
-      for (const v of r.translation ?? [0, 0, 0]) f32(v);
-      for (const v of [1, 0, 0, 0, 1, 0, 0, 0, 1]) f32(v);
-      f32(1); f32(0); f32(0); f32(0);
-      u32(0); u32(0);   // no properties, no bounding volume
-      u32(r.children?.length ?? 0); for (const c of r.children ?? []) i32(c);
-      u32(0);   // no effects
-    } else if (r.type === 'NiStringExtraData') {
-      i32(-1); u32(r.string.length + 4); str(r.string);
-    }
-  }
-  u32(roots.length); for (const r of roots) i32(r);
-  return Uint8Array.from(out);
-}
-/** The WS1 addon that joins a pelvis to the fixture's Bip01: a BONE-marked node under a node named Bip01. */
-const PELVIS_ADDON = nifBytes([
-  { type: 'NiNode', name: 'pelvisaddon', children: [1] },
-  { type: 'NiNode', name: 'Bip01', children: [2] },
-  { type: 'NiNode', name: 'Bip01 Pelvis', extra: 3, translation: [0, 0, 10] },
-  { type: 'NiStringExtraData', string: 'BONE' },
-], [0]);
-
-const enc = (s) => Array.from(s, (c) => c.charCodeAt(0));
-const u32b = (n) => [n & 255, (n >> 8) & 255, (n >> 16) & 255, (n >>> 24) & 255];
-const sub = (name, payload) => [...enc(name), ...u32b(payload.length), ...payload];
-const rec = (type, subs) => { const body = subs.flat(); return [...enc(type), ...u32b(body.length), 0, 0, 0, 0, 0, 0, 0, 0, ...body]; };
-const z = (s) => [...enc(s), 0];
-const lhdt = (flags) => { const b = new Uint8Array(24); new DataView(b.buffer).setInt32(20, flags, true); return Array.from(b); };
-const LANTERN_LIGH = rec('LIGH', [sub('NAME', z('lantern_01')), sub('MODL', [...enc('l'), 0x5c, ...z('lantern_01.nif')]), sub('FNAM', z('Lantern')), sub('LHDT', lhdt(1 | 2))]);
-
-/** The fixture body rig (bodyRig.mjs's), with the pelvis addon under the body's animations folder and the lantern's record and mesh. */
-function bodyDeps({ lanternRecord = true, pelvis = true } = {}) {
-  const f = fixtureFile;
-  const files = new Map([
-    [fpSkeletonPath({}), f('armfp.nif')], [FP_CLIP_PATH, f('armfpidle.kf')],
-    ['meshes/fixture/armfphand.nif', f('armfphand.nif')], ['meshes/fixture/armfparm.nif', f('armfparm.nif')],
-    ['meshes/xbase_anim.nif', f('armfp.nif')], ['meshes/xbase_anim.kf', f('armfpidle.kf')],
-    ['meshes/l/lantern_01.nif', f('weapon.nif')],
-  ]);
-  if (pelvis) files.set('animations/xbase_anim/pelvisaddon.nif', PELVIS_ADDON);
-  const esm = f('armfp.esm');
-  const extra = [bodyRec('b_fprace_m_hand', 'fixture\\armfphand.nif', 'fprace', 5), bodyRec('b_fprace_m_upperarm', 'fixture\\armfparm.nif', 'fprace', 8)];
-  if (lanternRecord) extra.push(Uint8Array.from(LANTERN_LIGH));
-  const all = new Uint8Array(esm.length + extra.reduce((a, r) => a + r.length, 0));
-  all.set(esm, 0); let o = esm.length; for (const r of extra) { all.set(r, o); o += r.length; }
-  const counters = { opened: 0 };
-  return {
-    counters,
-    loadMorrowindArchives: async () => { counters.opened++; return [{ has: (p) => files.has(p), get: (p) => files.get(p), list: () => [...files.keys()] }]; },
-    storedMorrowindNames: async () => ['armfp.esm'],
-    loadMorrowindFile: async () => all,
-  };
-}
 const flush = () => new Promise((r) => setTimeout(r, 0));
 async function liveBody(opts = {}, depsOpts = {}) {
-  const deps = bodyDeps(depsOpts);
+  const deps = hipLanternBodyDeps(depsOpts);
   const renderer = countingRenderer();
   renderer.updateParticleEffect = () => {};
   renderer.renderCharacterSpriteImage = () => ({});   // the portrait's one render
@@ -332,7 +266,7 @@ test('HT-WAIST the live rig: lit AFTER the build binds it on the body (the slow 
   // mid-build: the latest light waits for the build and runs
   const q = createFpArm();
   q.attach(countingRenderer(), () => ({ pos: [0, 1.6, 0], yaw: 0 }));
-  const d = bodyDeps();
+  const d = hipLanternBodyDeps();
   await q.build({ race: 'fprace', deps: d, hipLight: false });
   const rebuilding = q.build({ race: 'fprace', deps: d, hipLight: false, faceIndex: 1 });
   assert.equal(q.setHipLight(true), false, 'busy: queued');
@@ -353,5 +287,5 @@ test('HT-WAIST the wiring: the weapon rig hands the lantern at the waist over pe
   assert.match(fp, /else if \(r\.slot === HIP_LIGHT_SLOT\) r\.hidden = !hipVisible\(\);/, 'the world body hides it only unlit');
   assert.match(fp, /if \(eff\.slot === HIP_LIGHT_SLOT\) return !hipVisible\(\);/, 'its flame with it');
   const peers = rd('src/net/peerBodies.js');
-  assert.doesNotMatch(peers, /setHipLight|hipLight/, 'peers hold no light on the wire (Morrowind-Rules.md) - not faked here either');
+  assert.match(peers, /b\.rig\.setHipLight\?\.\(!!shown\.hl\);/, 'HT-WAIST-NET: a peer\'s body takes it through the same door, off the pose\'s `hl` (test/htwaistnet_peers.test.js drives it)');
 });

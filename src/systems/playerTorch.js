@@ -228,6 +228,12 @@ export function lanternAtWaist(item) {
   return modSetting('handheld-torches', 'Enabled') === true && modSetting('handheld-torches', 'Handling.LanternsAtWaist') === true;
 }
 
+/** HT-WAIST-NET (2026-09-24): the pose's `hl` bit (net/wire.js validPose) - 1 while the lit light is a lantern hung
+ *  at the waist (the one question above, asked of PlayerEntity.LightSource), ABSENT otherwise (the wire's omission
+ *  law: a pose without one keeps the bytes it always had). The others' Morrowind bodies hang it at the hip off it
+ *  (net/peerBodies.js); world.js puts it on every pose it sends. */
+export const waistLanternPoseBit = (light) => (lanternAtWaist(light) ? 1 : undefined);
+
 /** Where a body that DRAWS the hanging lantern puts it, when that is not the yaw-frame hip above: Eye Of The
  *  Beholder's sprite faces the way it walks, not the camera's yaw, so it hands the drawn lantern's point in
  *  here (player/eotbBody.js) and clears it when it stops drawing. `null`: LANTERN_HIP. */

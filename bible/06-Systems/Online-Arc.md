@@ -8138,3 +8138,19 @@ place socket's frames. Main's RIDE and DISC7 put the mount on the pose (`rd`, `r
 them at their bounds and the widest place attachment measures 566 bytes. `tools/mutants/auditattach.json`: 8, 8 dead
 (the new one puts the park strikes back on `pdrops`). Main's HCC-PARK tests refilled the park bucket by writing the
 attachment, which no longer holds it; they refill the instance's meter (`_meterOf`), as every other re-aimed pin does.
+
+## HT-WAIST-NET (2026-09-24) - the others see your lantern at the waist, world106
+
+HT-WAIST hung a lit lantern at the waist (Handheld Torches' port-own `Handling.LanternsAtWaist`) and drew it swinging
+at the hip of your own Morrowind body and Eye Of The Beholder sprite; Mac asked for it to be seen on the character, and
+the others draw you in the Morrowind body (MWBODY1), so it rides the pose now. `hl` 1 while your lit light is a lantern
+hung at the waist (`systems/playerTorch.js waistLanternPoseBit`, `lanternAtWaist`'s answer), OMITTED otherwise - a pose
+without one keeps its bytes (`validPose`, validLook's `class` law); `poseChanged` sends its edge at once (a lantern lit
+or put out is never a keepalive for the relay to tier); `lerpPose` carries it. The sender is `scenes/world.js`'s pose
+arm, the one pose sender (the interiors and dungeons are its modes; `exterior.js` holds no session). A peer's body takes
+it in `PeerBodies._arm` through the rig's own `setHipLight` - bound once at the pelvis, hidden when put out, the fast
+path after, queued mid-build - and swings it off that body's stub camera. No RELAY_MIN: a pose field has never been
+gated (DISC12's `lh`/`wb`, PCORPSE1's `dd`); an older relay's `validPose` drops it and nothing closes. The HELD torch
+still rides nothing (MW-D51). Record: Handheld-Torches.md HT-WAIST ("Online: the others see it"). Pins:
+`test/htwaistnet_peers.test.js` - the door, the producer and its sender, a session through the real relay Room to the
+watcher's drawn pose, a peer's whole `createFpArm()` body hanging and hiding it, and its swing off the stub camera.

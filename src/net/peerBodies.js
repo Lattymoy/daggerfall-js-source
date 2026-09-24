@@ -319,6 +319,12 @@ export class PeerBodies {
     const am = shown.am ? 1 : 0;
     if (b.weapon && b.ammo !== am && (b.rig.upperBodyReady?.() ?? true) && b.rig.setWeapon?.(b.weapon, { hasAmmo: !!am }) !== false) b.ammo = am;
     b.rig.readySpell?.(!!shown.sr);
+    // HT-WAIST-NET (2026-09-24): THE LANTERN AT THE WAIST, off the pose's `hl` - the rig's own door, the local body's
+    // (weaponRig hands the player's the same boolean every frame): the fast path one compare, the first lit binds the
+    // lantern at this body's pelvis once, a light arriving mid-build is queued. It swings off this body's own camera
+    // (peerCamera's `move` and eased yaw, the walk clip's phase), as the local one swings off the motor's. No held
+    // light rides the wire (MW-D51) - this one is in no hand.
+    b.rig.setHipLight?.(!!shown.hl);
     const an = shown.an | 0, cn = shown.cn | 0;
     if (b.swing == null) { b.swing = an; b.cast = cn; }
     else {

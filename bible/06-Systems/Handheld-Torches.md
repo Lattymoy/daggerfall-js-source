@@ -791,11 +791,30 @@ destroyed when it stops (EVERY ALLOCATION HAS AN OWNER); its picture sits in the
 (`htwaist-lantern`), as every sprite of this body does. mwView's Morrowind lane stands it down each frame, so its
 light point never outlives the lane. Eye-Of-The-Beholder.md HT-WAIST.
 
-**Online: NOT carried, and not faked.** Other players are drawn with the Morrowind body (MWBODY1), but they hold NO
-light today - a peer's look and pose carry none (`net/wire.js validPose`, `validLookItem`; Morrowind-Rules.md MW-D51
-"Recorded, not faked"; `test/mwtorch.test.js` pins that `peerBodies.js` passes no torch). A lantern at a peer's hip
-would be the first held light a peer shows, so it waits for that slice (a pose bit and a RELAY_VERSION bump) rather
-than arriving alone. The wire is untouched.
+**Online: the others see it (HT-WAIST-NET, 2026-09-24).** Other players are drawn with the Morrowind body
+(MWBODY1), so a lantern at the waist its owner alone could see was half of what Mac asked for. The pose carries it:
+`hl` 1 while your lit light is a lantern hung at the waist (`systems/playerTorch.js waistLanternPoseBit` -
+`lanternAtWaist` asked of `PlayerEntity.LightSource`, the one question, so the bit and your own body cannot disagree),
+OMITTED otherwise, so a pose without one keeps the bytes it always had (`net/wire.js validPose`); `poseChanged` sends
+its edge at once, as a draw does, and `lerpPose` carries it onto the drawn pose. `scenes/world.js` puts it on the arm
+it spreads into every pose and the hello. THE FOUR HOSTS: world.js is the one pose sender, wired; `worldModes.js`
+(interiors) and `dungeonContext.js` send no pose of their own - they are world.js's modes, its pose reads their live
+rig and its hook draws the peers' bodies in them - and `exterior.js` (the fixed city) holds no online session at all.
+A peer's body takes it through the rig's own door, in `PeerBodies._arm`: `b.rig.setHipLight(!!shown.hl)`, the same
+boolean weaponRig hands your own body every frame - the first lit binds the LIGH lantern at that body's pelvis (the
+slow path, once, from the WATCHER's archives; no lantern record there is a note on the body's card, as for your own),
+put out it hides, lit again it shows on the fast path, one arriving mid-build is queued (ASYNC NEVER DROPS). It swings
+off that body's own stub camera (`peerCamera`: `mv` as the forward move, the pace measured off the drawn pose, the
+eased yaw, the walk clip's phase) exactly as yours swings off the motor's bag; the pose carries no direction of
+travel, so a peer backing away swings as its legs walk, forward. It is the body's own mesh, released with the body
+(EVERY ALLOCATION HAS AN OWNER). The HELD torch still rides nothing (Morrowind-Rules.md MW-D51 "Recorded, not faked";
+`test/mwtorch.test.js` still pins that `peerBodies.js` passes no torch) - this light is in no hand. RELAY_VERSION
+world106, its LAW row recorded (the `net/wire.js` RELAY_VERSION chain is the record). No RELAY_MIN gate: a pose field
+has never had one (DISC12's `lh`/`wb`, PCORPSE1's `dd`) - an older relay's `validPose` drops `hl`, the others see no
+lantern, and nothing closes. Not carried: the lantern's LIGHT (a peer casts none - the light is the player torch's own),
+and the lantern on a peer drawn without a Morrowind body (the paperdoll, the class sprite, Eye Of The Beholder's rider
+and lycanthrope - your own sprite draws none on the beast or the rider either). Online-Arc.md HT-WAIST-NET. Pins:
+`test/htwaistnet_peers.test.js` (6, every one failing on the base).
 
 **Decisions taken, for Mac's eye.** The RIGHT hip, not mirrored by Handedness (the left is the scabbard's). The beast
 form keeps the lantern lit (it takes both hands, and a lantern at the waist needs none - Relaxed does the same) but
