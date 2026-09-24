@@ -13,13 +13,17 @@ import { templateByIndex } from '../src/systems/itemTemplates.js';
 import { conditionMultipliersByMaterial, WEAPONS, WEAPON_MATERIALS } from '../src/characters/weapons.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 import { ServiceFlowWindow } from '../src/ui/guildServiceWindows.js';
+import { useQuickslot, emptySlotLine, QUICKSLOT_TEXT, clearQuickslots } from '../src/systems/quickslots.js';
+import { quickslotHand, quickslotTag, CELL_ACTIONS } from '../src/ui/quickslotTags.js';
+import { createBindings, setBinding, resetDefaults } from '../src/systems/inputActions.js';
+import { PlayerWeapon } from '../src/combat/playerWeapon.js';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const P = () => ({ isPlayer: true, level: 1, gender: 'male', activeEffects: [], health: 30, maxHealth: 30, items: [], spells: [], stats: {}, skills: {}, career: { primarySkills: [], majorSkills: [], luck: 50 } });
 const EBONY_DAGGER_MAX = Math.trunc(templateByIndex(WEAPONS.Dagger).hitPoints * conditionMultipliersByMaterial[WEAPON_MATERIALS.Ebony] / 4);
 
 // ── DISC21-A: "Starting ebony dagger says 'broken and cannot be worn,' repair says it isn't damaged" ──
-test('DISC21-A: the questions\' ebony dagger is minted as CreateWeapon mints it, and Roleplay & Realism\'s skill-based kit wears it to 20% of a real condition - worn, not broken; equipped; a repairer takes it (mutants: the biography\'s hand-built record; the kit\'s 20% of nothing)', () => {
+test('DISC21-A: the questions\' ebony dagger is minted as CreateWeapon mints it, and Roleplay & Realism\'s skill-based kit wears it to 20% of a real condition - worn, not broken; equipped; a repairer takes it (mutants: the biography\'s hand-built record; the kit\'s 20% of nothing; the kit\'s mint dropped)', () => {
   const e = P();
   assert.equal(applyBiographyEffect(e, 'IT 3 0 7', { rolls: () => 0.5 }), 'item');   // Weapons, Dagger, Ebony
   const dagger = e.items.find(isQuestionsDagger);
@@ -34,6 +38,11 @@ test('DISC21-A: the questions\' ebony dagger is minted as CreateWeapon mints it,
   assert.equal(isBrokenItem(dagger), false, 'not "broken and cannot be worn"');
   assert.equal(repairRefusal(dagger), null, 'a repairer takes it - it is damaged');
   assert.notEqual(equipItem(e, dagger), null, 'it goes on');
+  // the kit mints a dagger that came without a condition before it wears it - never 20% of nothing
+  const k = P();
+  k.items.push({ group: 'Weapons', templateIndex: WEAPONS.Dagger, material: WEAPON_MATERIALS.Ebony, name: 'Dagger', value: 1 });
+  assignSkillEquipment(k, { rolls: () => 0.5, torchesFromItems: false });
+  assert.deepEqual([k.items[0].maxCondition, k.items[0].currentCondition], [EBONY_DAGGER_MAX, Math.trunc(EBONY_DAGGER_MAX * 0.2)], 'minted, then worn');
   // a biography armor piece and a bare record mint too (CreateArmor, `new DaggerfallUnityItem`)
   const a = P();
   applyBiographyEffect(a, 'IT 2 0 1', { rolls: () => 0.5 });   // Armor, steel's plate
@@ -115,4 +124,40 @@ test('DISC21-B: the exit door\'s wagon prompt - Yes is taken a frame later, once
   const at = ctx.indexOf('    overlayInput(action, e = null) {');
   assert.ok(at > 0, 'the context\'s key door');
   assert.match(ctx.slice(at, at + 900), /activeOverlay\.input\(action, e\);[\s\S]*?if \(activeOverlay\?\.done\) \{\s+surfacePlayer\(\);\s+activeOverlay = null;/, 'input goes to the slot\'s window, which leaves the slot after its handler returns');
+});
+
+// ── DISC21-C: "Equipped weapon: 'Nothing is in that slot'" ──
+test('DISC21-C: the weapon a new character equips sits sheathed in the main cell, whose chip is the ready key - and pressing the empty slot the player took for it now says that key: "Nothing is in that slot. Press Z to ready your weapon." (mutants: the line never names the key; it names it with the weapon out; it reads the wrong rig indoors)', () => {
+  // the premise: the main cell announces ReadyWeapon, Z by default, and a new character starts sheathed as classic does
+  assert.equal(CELL_ACTIONS.main, 'ReadyWeapon');
+  const store = createBindings(); resetDefaults(store);
+  assert.deepEqual(quickslotTag(CELL_ACTIONS.main, { bindings: store }), { kind: 'key', text: 'Z' });
+  assert.deepEqual(quickslotTag(CELL_ACTIONS.c2, { bindings: store }), { kind: 'key', text: '2' }, 'the slot the player pressed');
+  const pw = new PlayerWeapon();
+  assert.equal(pw.sheathed, true, 'WeaponManager.Sheathed: classic starts sheathed');
+  // the report's press: a weapon in hand, sheathed, and nothing in the consumable slot
+  clearQuickslots();
+  const said = [];
+  const entity = { items: [], equip: null };
+  const rig = { playerWeapon: { weapon: { name: 'Longsword', templateIndex: 120 }, sheathed: true } };
+  const r = useQuickslot('c2', { entity, items: [], hooks: { hand: () => quickslotHand(rig, store) }, say: (l) => said.push(l) });
+  assert.equal(r.kind, 'empty');
+  assert.deepEqual(said, ['Nothing is in that slot. Press Z to ready your weapon.']);
+  // the player's own binding, whatever it is
+  const rebound = createBindings(); resetDefaults(rebound); setBinding(rebound, 'KeyR', 'ReadyWeapon');
+  assert.equal(quickslotHand(rig, rebound).readyKey, 'R');
+  // and only when it helps: the weapon out, bare hands, nothing bound - the line alone
+  assert.equal(emptySlotLine({ weapon: rig.playerWeapon.weapon, sheathed: false, readyKey: 'Z' }), QUICKSLOT_TEXT.emptySlot, 'readied: the line alone');
+  assert.equal(emptySlotLine({ weapon: null, sheathed: true, readyKey: 'Z' }), QUICKSLOT_TEXT.emptySlot, 'bare hands: the line alone');
+  assert.equal(emptySlotLine({ weapon: rig.playerWeapon.weapon, sheathed: true, readyKey: null }), QUICKSLOT_TEXT.emptySlot, 'no key to name: the line alone');
+  assert.equal(emptySlotLine(), QUICKSLOT_TEXT.emptySlot, 'a host that hands no hand: the line alone');
+  const unbound = createBindings();
+  assert.equal(quickslotHand(rig, unbound).readyKey, null, 'unbound: nothing named');
+  // every host reads the rig in the player's hands - the interior mode hands its own
+  for (const [path, hand] of [['src/scenes/world.js', /hand: \(\) => quickslotHand\(rig\),/], ['src/scenes/exterior.js', /hand: \(\) => quickslotHand\(rig\) \}/], ['src/scenes/dungeonContext.js', /hand: \(\) => quickslotHand\(weaponRig\) \}/]]) {
+    assert.match(rd(path), hand, `${path}: the empty press reads the hand`);
+  }
+  assert.match(rd('src/scenes/world.js'), /const quickUse = \(n, rig = weaponRig\) => \{/);
+  assert.match(rd('src/scenes/exterior.js'), /const quickUse = \(n, rig = weaponRig\) => \{/);
+  assert.match(rd('src/scenes/worldModes.js'), /quickUse\(n\) \{ return host\.quickUse\?\.\(n, interiorWeapon\) === true; \},/, 'indoors, the interior rig');
 });

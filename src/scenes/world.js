@@ -332,7 +332,7 @@ import { createSocialMenu, socialPlaqueRows, plaqueRowFor } from '../ui/socialMe
 import { createProfileWindow, profileView } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
 import { createPageWindow, pageView } from '../ui/pageWindow.js';   // JOURNAL1: a page another player holds out, read and kept
 import { PageOffers, pageOfferText, pageShownText, pageTooFarText, keptPageTokens, keptLetterTokens, letterOfPage, PAGE_UNSUPPORTED_TEXT, PAGE_NO_READERS_TEXT, PAGE_GONE_TEXT } from '../net/journalPage.js';   // JOURNAL1: a page of the journal shown, and one shown to me kept
-import { quickslotTag } from '../ui/quickslotTags.js';   // JOURNAL1: the F-menu's own key, named off the live bindings
+import { quickslotTag, quickslotHand } from '../ui/quickslotTags.js';   // JOURNAL1: the F-menu's own key, named off the live bindings
 import { isTouchDevice } from '../ui/touchDevice.js';   // JOURNAL1: ...or a tap, where a finger points
 import { composeCard, createCardAnswerGate, CARD_WAIT_MS } from '../net/profileCard.js';   // INSPECT1: my card when asked, and how often one asker is answered
 import { relayVersionSeen, buildUpdateSeen, fetchLiveBuildTag, RELAY_RESTART_TEXT, BUILD_UPDATE_TEXT, BUILD_POLL_MS } from '../net/updateNotice.js';   // SRV-N: the relay moved, or the build did
@@ -4336,7 +4336,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2462 mounts the same one, gated on
+  // and dungeonContext.js:2463 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:5648
@@ -4748,15 +4748,16 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  which writes the equip table; the rig reads that table on its own frame
    *  (weaponRig syncWorn) and the ladder answers ahead of the frame, so the
    *  refresh is asked for here rather than waited for. */
-  const quickslotHooks = () => ({
+  const quickslotHooks = (rig = weaponRig) => ({
     ...useHooks,
     isEnchanted,
     nowMinute: () => Math.floor(playerTicker.classicMinutes ?? 0),
     rows: (id, pick) => townTalk.lines(id, pick),
+    hand: () => quickslotHand(rig),   // DISC21-C: an empty press names the key that readies a sheathed weapon
   });
-  const quickUse = (n) => {
+  const quickUse = (n, rig = weaponRig) => {   // DISC21-C: the rig in the player's hands - worldModes hands its own indoors, as LH1's swap does
     useQuickslot(n === 1 ? 'c1' : 'c2', {
-      entity: playerEntity, items: playerEntity.items ?? [], hooks: quickslotHooks(), say: (l) => townTalk.say(l),
+      entity: playerEntity, items: playerEntity.items ?? [], hooks: quickslotHooks(rig), say: (l) => townTalk.say(l),
     });
     return true;
   };
@@ -6462,7 +6463,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6268), so exterior mode and a
+    // composer, dungeonContext.js:6269), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -7611,7 +7612,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // QS2: the diamond's three presses, beside the sheath panel's door and for
     // the same reason - one object is this host's whole routeAction contract,
     // and a door that is not on it is a key that does nothing.
-    quickUse: (n) => quickUse(n),
+    quickUse: (n, rig) => quickUse(n, rig),   // DISC21-C: the mode's own rig, when it hands one
     quickSwap: (rig) => quickSwap(rig),   // LH1: the mode's own rig, when it hands one
     quickOffHand: () => quickOffHand(),
     quickSpell: () => quickSpell(),   // QS6
@@ -12231,7 +12232,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // channel, so the interior mode borrows the door rather than building a
     // second one. (Its own weapon rig takes the swap's refresh; see
     // worldModes' interiorKeyCtx.)
-    quickUse: (n) => quickUse(n),
+    quickUse: (n, rig) => quickUse(n, rig),   // DISC21-C: the mode's own rig, when it hands one
     quickSwap: (rig) => quickSwap(rig),   // LH1: the mode's own rig, when it hands one
     quickOffHand: () => quickOffHand(),
     quickSpell: () => quickSpell(),   // QS6

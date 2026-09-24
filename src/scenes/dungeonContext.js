@@ -9,7 +9,8 @@
 // which is exactly the dungeon convention already on record.
 
 import { FlatAnimator, armFlatAnim, MISSILE_FPS } from '../render/flatAnimation.js';   // FA1: the flats that move
-import { markFoeStruck } from '../ui/hudFoeTarget.js';   // PX30
+import { markFoeStruck } from '../ui/hudFoeTarget.js';
+import { quickslotHand } from '../ui/quickslotTags.js';   // DISC21-C: an empty quickslot press reads the hand   // PX30
 import { lycanthropeAttackVoice, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V4: the beast's attack voice; LM1: the 4-20s move-sound loop; DISC10-E L3: the inventory refusal moved INTO the window door
 import { layoutDungeon } from '../world/dungeonLayout.js';
 import { expandMacros } from '../systems/talkSession.js';   // MACRO1: the global symbols every TEXT.RSC box passes through (MacroHelper)
@@ -1544,7 +1545,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  and the dropped torches already speak through. */
   const quickUse = (n) => {
     useQuickslot(n === 1 ? 'c1' : 'c2', {
-      entity: playerEntity, items: playerEntity.items ?? [], hooks: { ...useHooks, isEnchanted }, say: (l) => hudText.add(l),
+      entity: playerEntity, items: playerEntity.items ?? [], hooks: { ...useHooks, isEnchanted, hand: () => quickslotHand(weaponRig) }, say: (l) => hudText.add(l),   // DISC21-C
     });
     return true;
   };
@@ -1678,7 +1679,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:9487 / exterior.js:3666), set
+  // host's own townTalk sink (world.js:9488 / exterior.js:3667), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -3306,8 +3307,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:14608,
-              // exterior.js:5233 and worldModes.js:7284 already ran;
+              // playerArrowHitFoe is the one copy world.js:14609,
+              // exterior.js:5234 and worldModes.js:7284 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
