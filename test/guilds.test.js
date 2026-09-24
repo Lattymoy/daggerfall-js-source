@@ -702,8 +702,9 @@ test('AUDIT 21 F12/F14/F15: the four fixed guilds pinned to literals', () => {
   // WHICH skills (FightersGuild.cs:32-40, MagesGuild.cs:37-44,
   // ThievesGuild.cs:42-50, DarkBrotherhood.cs:42-52) - the rank law's only
   // skill input, previously checked only for being valid skill ids.
+  // FGH2H (a DEPARTURE, Port-Ledger): HandToHand added to DFU's seven, Giantish kept
   assert.deepEqual([...GUILDS.FightersGuild.skills], [SKILLS.Archery, SKILLS.Axe,
-    SKILLS.BluntWeapon, SKILLS.Giantish, SKILLS.LongBlade, SKILLS.Orcish, SKILLS.ShortBlade]);
+    SKILLS.BluntWeapon, SKILLS.Giantish, SKILLS.HandToHand, SKILLS.LongBlade, SKILLS.Orcish, SKILLS.ShortBlade]);
   assert.deepEqual([...GUILDS.MagesGuild.skills], [SKILLS.Alteration, SKILLS.Destruction,
     SKILLS.Illusion, SKILLS.Mysticism, SKILLS.Restoration, SKILLS.Thaumaturgy]);
   assert.deepEqual([...GUILDS.ThievesGuild.skills], [SKILLS.Backstabbing, SKILLS.Climbing,
