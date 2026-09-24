@@ -52,6 +52,7 @@
 // billboard indices ride along for the questor flat-pick (Q4-iii).
 
 import { QuestMachine, TICKS_PER_SECOND } from '../systems/quest/machine.js';
+import { repairActiveQuests } from '../systems/quest/questRepair.js';   // QREPAIR: the Settings' repair
 import { QuestListsManager } from '../systems/quest/questLists.js';
 import { QuestOfferFlow } from '../systems/quest/offerFlow.js';
 import { PlayerNotebook } from '../systems/notebook.js';
@@ -179,7 +180,7 @@ export const QUEST_CTX_CONTRACT = Object.freeze([
   'dateTimeString', 'deductGold', 'deductGoldPieces', 'dialogLink',
   'dropFace', 'endLycanthropy', 'endVampirism', 'forceTopicListsUpdate',
   'getGold', 'getGoldPieces', 'getGuild', 'getGuildFactionId',
-  'getReputation', 'getTotalGold', 'giveItemToPlayer', 'isHouseOwned',
+  'getReputation', 'getTotalGold', 'giveItemToPlayer', 'hasQuestTopics', 'isHouseOwned',
   'isPlayerInTown', 'isPlayerInsideCastle', 'makeEnemiesHostile',
   'makeHeldQuestItemsPermanent', 'makePcDiseased', 'midDateTimeString',
   'offerReward', 'onQuestEnded', 'onQuestStarted', 'playSong',
@@ -198,7 +199,7 @@ export const QUEST_CTX_REQUIRED = Object.freeze(['data']);
 /** Members a host may decline on purpose. `onQuestStarted` is an EXTRA
  *  listener beside the bridge's own one-time recording, and the shipping
  *  host declines it - so its absence is not worth a word. */
-export const QUEST_CTX_OPTIONAL_BY_DESIGN = Object.freeze(['onQuestStarted']);
+export const QUEST_CTX_OPTIONAL_BY_DESIGN = Object.freeze(['onQuestStarted', 'hasQuestTopics']);   // QREPAIR: only a host with a topic tree can say whether a quest has its topics
 
 /**
  * What this host did not wire. Returned as well as logged, so a caller
@@ -492,6 +493,20 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     /** The scene mount (Q4-iii's walk) over the host's adapter. */
     mountScene(adapter, siteType, buildingKey = 0) {
       addQuestResourceObjects(machine, adapter, siteType, buildingKey);
+    },
+
+    /** QREPAIR (Mac: "Add a quest refresh option to settings" - "Repair active quests"): the one pass
+     *  (systems/quest/questRepair.js) over this machine and this host's seams. Answers the report; `text` is the line
+     *  the Settings row shows. */
+    repair() {
+      const world = ctx.world ?? null;
+      return repairActiveQuests(machine, {
+        discoverLocation: (region, location) => world?.discoverLocation?.(region, location),
+        hasQuestTopics: ctx.hasQuestTopics ? (q) => ctx.hasQuestTopics(q) : null,
+        addQuestTopics: ctx.addQuestTopics ? (q) => ctx.addQuestTopics(q) : null,
+        carriesQuestItem: (item) => ctx.carriesQuestItem?.(item) ?? false,
+        mountCurrentSite: () => world?.mountCurrentSiteQuestResources?.(),
+      });
     },
 
     /** The NEW-GAME quest start, whole (StartGameBehaviour.cs:444-456).

@@ -685,8 +685,8 @@ The sixth merge's conflicts showed a Ledger row whose DFU message ids read "8076
 The struck row above it still reads "8076/8077", and DFU's TalkManager.cs answers with records 8075, 8076 and 8077
 (:2029-2035). `tools/citeShift.mjs` and `tools/citeMerge.mjs` had been moving it for as far back as the history goes.
 - **CITE-SLASH.** RF3's grammar read a bare `/N` after a cite, anywhere up to the next cite, as that cite's line. So
-  "8076/8077", a sentence after `world.js:3771`, was world.js:8224 to both tools, and it moved whenever that line did.
-  A bare `/N` now continues only the chain it touches: `world.js:6696/6697`, `:13/15`. The colon forms keep RF3's
+  "8076/8077", a sentence after `world.js:3771`, was world.js:8230 to both tools, and it moved whenever that line did.
+  A bare `/N` now continues only the chain it touches: `world.js:6698/6699`, `:13/15`. The colon forms keep RF3's
   reach, because the colon says what they are.
 - **CITE-CS.** RF3 ends a cite's region at a `.cs:N` cite, but DFU's members are mostly written without their file:
   "| TalkManager.GetReactionToPlayer_0_1_2 (:689-693) |" in the Ledger's DFU column, and
@@ -882,3 +882,61 @@ each found a test that did not look; the tests look now). The relay is world105'
 the account service acct8's. Re-aimed: the version pins (world105, acct8), the foreign-pass counts (the wall is the
 world host's seventh), the moved source pins (the melee ladder, the arrows' targets, the travel map's refusal, the one
 bag of acts, the card arm, the cast funnel), and seven older mutant records whose lines the change reached.
+
+## AUDIT DUEL1 - four reviews before the merge (2026-09-24, Mac: "Do an audit on everyrhing")
+
+Four independent reviews read DUEL1 and DISC21 end to end: the duel's trust boundaries (the wire, the relay, the
+account service), its rules and combat, regressions outside it, and DISC21 with the tests and the records. Every
+finding below was verified against its code path before it was fixed. `test/auditduel1.test.js` (4) pins them, with
+`test/duel_record.test.js` (8) for the record's SQL; `tools/mutants/auditduel1.json` has 28 mutants, all dead.
+
+**Blocker.**
+- **A1: a record minted without a duel.** Any session could report a loss naming any account as the winner. Guest
+  accounts cost a POST, so five guests posting every sixteen seconds gave an account fifty wins in a quarter of an
+  hour, with no relay involved. A duel now counts only between two REGISTERED accounts (the loser's session and the
+  winner's row both carry a handle), and one winner counts at most `DUEL_WINNER_DAY_MAX` (20) a rolling day, from
+  anyone - inside the same one INSERT, over its own index `(winner, at)`. A guest's duel is fought, and not counted.
+
+**Major.**
+- **A2: a forged result broke the striker's weapon.** The defender's `dmg` wore the striker's own weapon uncapped (a
+  99999 broke a Daedric blade with one answer). The wear now reads `duelWearDamage`: at most six times the weapon's own
+  top roll with its material and the striker's strength (a backstab's three, the overhaul's critical strike's two).
+- **A3: a stranger spent a duellist's budget.** Every ask, yes or start from anyone was answered, from the same 10
+  frames a second a duellist's blows go on. A duellist now answers no stranger at all, and outside a duel each peer
+  gets at most one refusal a `DUEL_REASK_MS`.
+- **A4 + B1: a duel's drain killed.** The duel's drain is its own entry, so DFU's permanent-less-one cap counted it
+  alone; over an old drain, a disease or a poison it took the live stat to 0, and a stat at 0 kills through no duel's
+  floor. A duel's drain now leaves the LIVE stat at 1.
+- **B2: a swing bashed out of the ring.** A swing that met no body fell through to the door bash, which the ring's
+  refusal did not cover: an open door walked through, a dungeon entered, a locked door opened on the roll (and the
+  watch told). The bash is refused while a duel holds.
+- **B3: a duel's fatigue damage killed.** At 0 fatigue the exhaustion collapse can kill a swimmer or a player a foe
+  can see. A duel's fatigue damage - instant (marked), or a round (its entry) - leaves 1, in the world host's spell
+  sink and the shared ticker alike.
+- **B5: a double knockout was two losses.** Each side's own fall ends its own duel, so both reported. The account
+  service now takes two losses in opposite directions within `DUEL_MUTUAL_S` (4 s) as a draw: the second report
+  removes the first row and counts nothing, and the one row a report can remove names its own sender the winner. The
+  duel says "X fell too - the duel is a draw." when the other fall lands in the heal's hold.
+- **B6: the swing's reach.** The defender measured a swing against where it stands NOW, which dropped real connects on
+  a player running away; and a swing's claimed position could stand four metres from where it was seen. A swing now
+  reaches if it reached any of the defender's own feet over the last `DUEL_TRAIL_MS` (500 ms, world.js `_duelTrail`),
+  and its claim may stand at most `DUEL_MELEE_POS_SLACK_M` (3 m) from where it is seen (a spell keeps 4).
+- **D1: a test that tested nothing.** The "yes to a lapsed ask" case lapsed the ask's own quiet with it, so no yes was
+  ever sent and its mutant survived; the record's "51, all dead" was wrong. The test now waits the quiet out and pins
+  the yes and the challenger's answer.
+
+**Minor.**
+- **A5:** an ask taken back and asked again at once skipped the re-ask quiet; a cancel now sets it.
+- **B4 + C2:** a duel's spells were saved (F9, the exit autosave) and restored; save and load now drop them.
+- **C1:** a duel ended away from a cell room (a Recall into a dungeon) forced every later foes frame full; only a cell
+  room forces it now.
+- **D2:** Mac's "both are fully healed" had no pin; the heal's strip and its health, fatigue and magicka are pinned.
+- **D3 (DISC21-C):** a pad player's empty-quickslot line named the keyboard's key; with the pad live it names none, as
+  the chip shows a glyph.
+- **D4:** the clamp the tests drove (`clampToRing`) was not the one the motor ran; the motor runs it now.
+- **D5:** `peerGone` and `reset` had no caller. The law's own tick now drops the asks of a peer it can no longer reach,
+  and leaving the page ends a duel as `left` and heals, before the exit autosave writes.
+
+**The limits that stand.** Still no server authority over a blow: a modified client can refuse to fall. A quick yield
+is still a free full heal (Mac's rule). A pair can still count `DUEL_PAIR_DAY_MAX` a day between two registered
+accounts, and a winner 20. Mounted duels, a reflected duel spell, and onlookers walking through a ring are as above.

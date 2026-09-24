@@ -3143,3 +3143,19 @@ Mac: "Give trashBattery, LostMyLeg the developer title/glyph".
 - It reaches each player on their next token, after the account worker deploys. Nothing else changes, and no
   migration runs.
 - Pinned in `test/titlen.test.js`: the list's value, and that both handles hold the title and the glyph in any case.
+
+## AUDIT DUEL1 — the record, between registered accounts (2026-09-24)
+
+The audit found that any session could post a loss naming any account the winner, and guests are free to make:
+five guests gave one account fifty wins in a quarter of an hour, with no duel.
+
+- `reportDuelLoss` (`server-account/src/accounts.js`) now counts a duel only when the loser's session and the winner's
+  row both have a handle. A guest's report, or a report naming a guest, answers `{ recorded: false, why: 'guest' }`.
+- One winner counts at most `DUEL_WINNER_DAY_MAX` (20) results a rolling day, from anyone, inside the same INSERT;
+  migration 0008's winner index is `(winner, at)` for it (0008 is unreleased, so it is edited in place).
+- A DOUBLE KNOCKOUT is a draw: a report whose winner reported a loss to this loser within `DUEL_MUTUAL_S` (4 s)
+  removes that row and counts nothing (`why: 'draw'`). The DELETE is keyed on the caller as the WINNER, so a report can
+  only ever remove a win of its own.
+- A refused report says which bound: `why` is 'guest', 'draw', 'gap', 'pair' or 'winner', and the client's line says
+  it (`net/duelRecord.js duelUncountedText`; a draw says nothing more, the duel said it).
+- Pinned in `test/duel_record.test.js` over the real migrations; `tools/mutants/auditduel1.json` A1/B5.

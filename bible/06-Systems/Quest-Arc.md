@@ -1422,10 +1422,10 @@ triage: 25 kills at fails=5+ (one at fails=7 - the `| 0` int32 rail
 broke three pins at once), 2 survivors at the baseline 4, both
 PROVEN equivalents:
 
-- questBridge.js:65 `rawZ ?? 0 -> ?? 1`: the hash's only read of
+- questBridge.js:66 `rawZ ?? 0 -> ?? 1`: the hash's only read of
   rawZ is `z >> 2`, and `1 >> 2 === 0 === 0 >> 2` - for any record
   LACKING rawZ the mutated default is arithmetically invisible.
-- questBridge.js:72 `(pn.flags ?? 0) -> (?? 1)` in the gender arm:
+- questBridge.js:73 `(pn.flags ?? 0) -> (?? 1)` in the gender arm:
   gender reads bit 5 alone, and `1 & 32 === 0 === 0 & 32` - Male
   either way, every path.
 
@@ -5491,13 +5491,13 @@ instance* for the interior mode, so it covers the shops entered from
 `?exterior` too. It passed neither of `EntityEffectManager`'s two
 ready-spell events (`hostMagic.js:79-80`), and those two doors are the
 *only* route into the machine's `CastSpellDo` / `CastEffectDo` latches
-(`machine.js:847`/`:830`; C# subscribes them in the action's
+(`machine.js:848`/`:831`; C# subscribes them in the action's
 constructor). Every `cast X spell do` and `cast X effect do` on this
 whole route could therefore never latch and never fire. The pair the
 other two engine-owning hosts wire (`world.js:4131-4132`,
 `dungeonContext.js:2249-2250`) is wired here now, and with it
 `CastSpellDo`'s two world reads — `getClassicSpellEffects` and the
-byte-folded `spellHasMatchForClassicEffect` (`world.js:8468-8471`),
+byte-folded `spellHasMatchForClassicEffect` (`world.js:8474-8477`),
 absent which the action self-completes at *parse*
 (`actions.js:2757`/`:2764`) and the task can never arm at all.
 
@@ -6286,3 +6286,40 @@ every death went to the orphan, the `killed N` trigger read the new one, and the
 behaviour now lets go of a target the quest no longer holds (by UID and by symbol) and resolves it again, and the
 resync keeps this world's Foe counters (the larger kill count; the injury and a pending kill this world's own events set - AUDIT DISC7 D7 dropped the restraint, which is the quest's word on both sides; C2 relinks every standing behaviour at the resync, symbol included, and C3 keeps this world's longer spell and item queues). Record: `01-Overview/Field-Bugs-2026-09-23.md`. Pinned in
 `test/disc6.test.js`; `tools/mutants/disc6.json`.
+
+## QREPAIR - REPAIR ACTIVE QUESTS (2026-09-24, Mac: "Add a quest refresh option to settings")
+
+Asked what a refresh should do, Mac chose "Repair active quests": put back the people, items, foes and map marks an
+active quest is missing, keep its progress. `systems/quest/questRepair.js` is one pass over every quest still running
+(neither complete nor tombstoned); the pause's Settings runs it from the Game category's "Repair active quests" row,
+confirmed first, and the row's note becomes the pass's own line. On the front door the row is drawn greyed with where
+it lives. DFU has no such pass; this is the port's own (Port-Ledger section A, QREPAIR).
+
+**What it puts back, and the fault each answers.**
+1. **A placement a marker lost.** Every completed `place npc|item|foe` action names where its resource belongs; a
+   resource no marker of any of the quest's Places holds is assigned there again through the action's own call,
+   `Place.assignQuestResource`, without the action's unhide and without its cull. The fault: a party's shared-quest
+   resync replaces each Place's siteDetails with the partner's copy, and the `place` action, complete, never runs
+   again. A Person's last-assigned Place settles two placements; two Places and nothing to settle them leave it alone.
+2. **A site link the quest never got.** `hasSiteLink` asks the SITE, not the quest (QuestMachine.cs:1739, kept), so a
+   second quest placing where a first already had leaned on the first's link, and when the first ended the second's
+   resources stood nowhere. One link per (quest, Place) that holds targets.
+3. **The map.** Every `reveal` that ran is filed again (the hosts' `discoverLocation` now answers whether it was new, for
+   the count). A quest the talk never heard of gets its topics (a received shared quest: receiveSharedQuest adds none);
+   a quest that has them is not re-added, since adding them again un-discovers residences the player already found.
+4. **Where the player stands, now.** The current interior or dungeon mounts again with `machine.mountByName` set for the
+   pass: a standing resource is matched by quest and symbol NAME (`sceneMount.js isAlreadyInjected`), because after a
+   load a standing foe holds a restored symbol DFU's identity match misses and the plain mount would stand it twice.
+   DFU's own mounts keep the identity match.
+
+**What it never touches.** A destroyed person or an individual at home; an item picked up, carried, dropped, made the
+player's own, or given to a foe; a foe all of whose spawns are dead, or one the quest removed. A hidden person placed
+again stays hidden. No task, action, clock or timer is written.
+
+**The line.** "Quests repaired: put back 1 person; reconnected 1 place; marked 1 location on your map." - or "Nothing
+was missing from your active quest(s).", or "You have no active quests to repair."; a part that could not be checked
+(a Place with no markers, a reveal naming no location) is counted, never fatal.
+
+Every host's pause hands `repairQuests` off its own bridge (`questBridge.repair`): the world, the fixed city, the
+dungeon, and the interior pause through its host. Pinned: `test/qrepair.test.js` (6) over a real machine, Place and
+mount; `tools/mutants/qrepair.json`.

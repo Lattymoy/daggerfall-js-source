@@ -307,6 +307,7 @@ export class QuestMachine {
   constructor(deps = {}) {
     this.deps = deps;
     this.quests = new Map();          // uid -> Quest
+    this.mountByName = false;         // QREPAIR: set only for the repair's own pass (quest/questRepair.js) - its mounts match a standing resource by quest and name (sceneMount.js)
     // AUDIT DISC7 C2: every QuestResourceBehaviour made over this machine, WEAKLY (a host dropped without a destroy
     // must not be kept alive here) - a shared-quest resync relinks the ones standing on the quest it rebuilds
     this._behaviourRefs = new Set();

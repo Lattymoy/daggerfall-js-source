@@ -146,7 +146,7 @@ These are the items where the port is not merely incomplete but
 
 **1. Quest foes never spawn.** `createFoeGameObjects`, `tryPlaceFoe`
 and `standFoe` are consumed by `systems/quest/actions.js` (CreateFoe,
-:2024-2101) and `systems/quest/sceneMount.js:177`, and **no host
+:2024-2101) and `systems/quest/sceneMount.js:182`, and **no host
 supplies any of them**. Every hit in `src/` is a consumer or a
 documented absence - `worldModes.js:297` "standFoe is absent",
 `machine.js:162` "ABSENT createFoeGameObjects = the spawn law idles".
@@ -331,7 +331,7 @@ guard was doing the row's job for it.
 **The classic effect library: 60 of 82 keys land.** DFU carries 82
 classic-keyed effect classes (153 effect classes in total; the other
 71 are the diseases, the enchantment payloads and the Special folder,
-which have no classic key). `applySpell` (`effects.js:469-825`) lands
+which have no classic key). `applySpell` (`effects.js:471-827`) lands
 60 and falls to `out.skipped++` for 22: ~~CreateItem (2,255),
 Disintegrate (5,255), the three Dispels (6,0-2), SoulTrap (12,255),
 Light (15,255), Lock (16,255), Open (17,255), SpellAbsorption

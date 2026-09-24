@@ -127,7 +127,7 @@ per arc:
   (`mysticism.test.js:225-239`). The doc, the pin's design, and
   `mysticism.js:53`'s header are all wrong the same way. Also stale:
   S24 "the port has neither the [Spell Absorption] effect nor the
-  state" (`effects.js:1099-1122` + `absorption.js:70-79` land it
+  state" (`effects.js:1105-1128` + `absorption.js:70-79` land it
   first-arm); S40's "house ledger is unported" flag
   (`banking.js:172 isHouseOwned` feeds the rest seam); S16's
   "monsters 0-42 still spawn as billboards" (C11 pivoted them to real
@@ -216,7 +216,7 @@ own AUDIT-18 correction.
 Doc review only, nothing fixed - but four code comments assert the
 opposite of their own code and deserve a slice's attention:
 - `src/ui/deathScreen.js:87-88` claims "`drop` is read by each host's
-  frame" - no host reads it (the Ledger row `:460` is right, the
+  frame" - no host reads it (the Ledger row `:461` is right, the
   comment is wrong).
 - `src/systems/mysticism.js:53` header "OPEN AND LOCK ARE NOT WIRED" -
   they are (X1, `actionSystem.js:930-931`).
@@ -233,7 +233,7 @@ opposite of their own code and deserve a slice's attention:
 
 ## Line-citation drift (low, batched)
 
-`Port-Ledger.md:556` (save.js:32/:549/:558 → :28/:607/:637), `:588`
+`Port-Ledger.md:557` (save.js:32/:549/:558 → :28/:607/:637), `:588`
 (world.js:3123 → :2412); `Quest-Arc.md:719`/`:2906`
 (worldModes.js:573 → :903); `Player-Arc.md:955` (worldModes.js:801 →
 :2764), `:304` (world.js "531 lines" → 3,564); `Characters-Arc.md:190`

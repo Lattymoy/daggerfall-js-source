@@ -1496,12 +1496,12 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  AUDIT-FIELD F7: A FLOOR, NOT THE WHOLE DISTANCE. The first cut
    *  called 64 "more than the fastest accelerated step", which is true
    *  of a fixed physics STEP and false of a FRAME: the motor moves
-   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:1066),
+   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:1068),
    *  and the frame that hitches is exactly the frame in which the
    *  streamer is behind. A horse at the shipped default limit of sixty
    *  covers ~65 units in a 10 fps frame and ~120 at the mod's ceiling of
    *  a hundred - past a 64-unit probe, off the built world, and once the
-   *  motor is airborne `airControl` is false (motor.js:1608) so zeroing
+   *  motor is airborne `airControl` is false (motor.js:1610) so zeroing
    *  the drive on the NEXT frame no longer steers: the fall is already
    *  paid for. `travelLookahead` measures the frame that is about to
    *  run instead, and keeps 64 as its floor. */
@@ -4356,7 +4356,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2463 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:5653
+  // that context through modes.dungeonCtx - so worldModes.js:5657
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -6480,7 +6480,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6269), so exterior mode and a
+    // composer, dungeonContext.js:6270), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -7753,6 +7753,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // Quests section needed a fourth reader, which is one more
         // than a copied walk survives.
         questLog: () => questBridge?.questLog() ?? { active: [], finished: [] },
+        repairQuests: () => questBridge?.repair?.() ?? null,   // QREPAIR: the Settings' Repair active quests
       });
     },
     cycleMode: (dir) => townTalk.setMode(dir > 0 ? hudLargeNextMode(getInteractionMode()) : hudLargePrevMode(getInteractionMode())),
@@ -8464,7 +8465,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8822-8886 -
+  // worldModes answers it in BOTH modes (worldModes.js:8827-8891 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -8671,7 +8672,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     discoverLocation: (regionName, locationName) => {
       const loc = maps.getLocationByName(regionName, locationName);
       if (!loc?.loaded) throw new Error(`Error finding location ${regionName} : ${locationName}`);
-      discoverLocation(loc.mapTableData.mapId, { regionName: loc.regionName, locationName: loc.name });
+      return discoverLocation(loc.mapTableData.mapId, { regionName: loc.regionName, locationName: loc.name });   // QREPAIR: whether it was new, for the repair's count (RevealLocation reads nothing back)
     },
     /** RevealLocation's readmap note - PlayerNotebook.AddNote(string). */
     addNote: (text) => questBridge?.notebook?.addNote(text),
@@ -9277,6 +9278,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // own methods, 1:1; the machine's dialogLink/addDialog arg shapes
     // are already the C# ones)
     addQuestTopics: (quest) => topicTree.addQuestTopicsForQuest(quest),
+    hasQuestTopics: (quest) => topicTree.dictQuestInfo.has(quest.uid),   // QREPAIR: a quest the talk never heard of (a received shared quest) gets its topics; one that has them is not re-added (that un-discovers residences)
     dialogLink: (uid, name, type, name2, type2) => topicTree.dialogLinkForQuestInfoResource(uid, name, type, name2 ?? null, type2 ?? QUEST_INFO_RESOURCE_TYPE.NotSet),
     addDialog: (uid, name, type, instantRebuild) => topicTree.addDialogForQuestInfoResource(uid, name, type, instantRebuild),
     removeQuestInfoTopics: (uid) => topicTree.removeQuestInfoTopicsForSpecificQuest(uid),
@@ -12597,6 +12599,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // in test/questbridge.test.js caught - exterior.js's comment had
     // said "world.js keeps two copies of this walk" and it was right.
     pauseQuestLog: () => questBridge?.questLog() ?? { active: [], finished: [] },
+    repairQuests: () => questBridge?.repair?.() ?? null,   // QREPAIR: the interior pause's Settings row, off this host's bridge
     revealLocation,
     magic, spellsByIndex: () => spellsByIndex,   // M2: the one cast engine + SPELLS.STD ride into the interior arm
     townTalk,   // U23: the interior host borrows FACTION.TXT/TEXT.RSC + the talk seam
