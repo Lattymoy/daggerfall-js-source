@@ -40,7 +40,7 @@
 import { HANDLE_RE } from './handleShape.js';
 import { LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTER_LINES_MAX, LETTERS_SENT_MAX, LETTERS_PAIR_MAX } from './letterLaw.js';   // MAIL1: the letter's bounds, in the refusals' own sentences
 import { MUTE_RANGE_TEXT } from './moderation.js';   // AUDIT 68 S14-mute-range-text-duplicated: the mute's bound in the refusal's sentence, from its home
-import { ADV_TRACKS_MAX } from './advLevel.js';   // ADV1: the tracks' bound, in its refusal's own sentence
+import { RENOWN_TRACKS_MAX } from './renown.js';   // RENOWN1: the tracks' bound, in its refusal's own sentence
 
 /** WHERE THE SERVICE IS. Its own constant beside the relay's
  *  DEFAULT_SERVER (net/online.js), because they are two Workers and
@@ -144,11 +144,11 @@ export const REFUSALS = Object.freeze({
   'no-body': 'A letter needs some words.',
   'body-long': `A letter is at most ${LETTER_BODY_MAX} characters.`,
   'body-lines': `A letter is at most ${LETTER_LINES_MAX} lines.`,
-  // ADV1, the Adventuring Level. Each is a build or a device the service does not believe, never a player's mistake:
+  // RENOWN1, Renown. Each is a build or a device the service does not believe, never a player's mistake:
   // the words say what happened, since there is nothing to retype.
-  'adv-character': 'The account service could not tell which character earned that.',
-  'adv-xp': 'The account service refused that experience report.',
-  'adv-full': `This account already has an Adventuring Level for ${ADV_TRACKS_MAX} characters, the most it keeps.`,
+  'renown-character': 'The account service could not tell which character earned that.',
+  'renown-xp': 'The account service refused that experience report.',
+  'renown-full': `This account already has Renown for ${RENOWN_TRACKS_MAX} characters, the most it keeps.`,
   server: 'The account service had a problem. Try again.',
   offline: 'Could not reach the account service. Check your connection.',
 });
@@ -275,7 +275,7 @@ export const muteAccount = (io, target, minutes) => call(io, '/v1/mod/mute', { t
  *  holds - this side does not get to say what goes in it, which is the
  *  whole point of the seam. A service with no signing pair answers
  *  `no-signing-key` rather than minting something the relay refuses. */
-export const mintIdentity = (io, character = null) => call(io, '/v1/auth/token', character ? { character } : {});   // ADV1: naming the character brought online signs its Adventuring Level in
+export const mintIdentity = (io, character = null) => call(io, '/v1/auth/token', character ? { character } : {});   // RENOWN1: naming the character brought online signs its Renown in
 
 // ── THE SESSION ON THIS DEVICE ──────────────────────────────────────
 
@@ -382,9 +382,9 @@ export function forgetSession(storage) {
  * The return stays the token alone: the session's contract with this
  * function is a string, and a pin holds it.
  *
- * ADV1: `character` answers the id of the character being brought
+ * RENOWN1: `character` answers the id of the character being brought
  * online (systems/characterId.js), read at EACH mint - the service signs
- * that character's Adventuring Level into the token, and `who.level`
+ * that character's Renown into the token, and `who.level`
  * carries it back. A getter that answers nothing mints as before.
  *
  * @param {object} io
@@ -465,20 +465,20 @@ export function accountDuels({ fetch, storage }) {
   };
 }
 
-/** ADV1: what one of this account's characters earned online - `{ character, xp, level, credited, rose, order }`. */
-export const reportAdvXp = (io, character, xp, name = null) => call(io, '/v1/adv/xp', { character, xp, name });
+/** RENOWN1: what one of this account's characters earned online - `{ character, xp, level, credited, rose, order }`. */
+export const reportRenownXp = (io, character, xp, name = null) => call(io, '/v1/renown/xp', { character, xp, name });
 
 /**
- * ADV1: THE ADVENTURING LEVEL'S REPORT, bound to this device's stored
+ * RENOWN1: THE RENOWN'S REPORT, bound to this device's stored
  * session (read at each call, as the beat reads it). With no session
  * there is no account to earn for: `{ ok: false, error: 'no-session' }`,
  * never a knock.
  */
-export function accountAdv({ fetch, storage }) {
+export function accountRenown({ fetch, storage }) {
   return {
     report: async (character, xp, name = null) => {
       const s = storedSession(storage);
-      return s ? reportAdvXp({ fetch, base: serviceBase(storage), secret: s.secret }, character, xp, name) : { ok: false, error: 'no-session' };
+      return s ? reportRenownXp({ fetch, base: serviceBase(storage), secret: s.secret }, character, xp, name) : { ok: false, error: 'no-session' };
     },
   };
 }

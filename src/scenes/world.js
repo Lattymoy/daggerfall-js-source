@@ -298,12 +298,12 @@ import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';   // AT2: Ambient Text's one component - this host claims it and feeds it the frame
 import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory
-import { accountTokenMinter, storedSession, accountPlayBeat, muteAccount, serviceBase, accountRefusalText, accountDuels, accountAdv } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4: and the beat that counts time played
+import { accountTokenMinter, storedSession, accountPlayBeat, muteAccount, serviceBase, accountRefusalText, accountDuels, accountRenown } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4: and the beat that counts time played
 import { parseModCommand, runModCommand, mutedText, mutedNotices } from '../net/moderation.js';   // MOD1: /mute and /unmute, and the line a muted player reads
 import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, knocked from here and measured by the account service's clock
-import { advKillXp, advQuestXp, advPartyXp, advLevelText } from '../net/advLevel.js';   // ADV1: what a kill and a quest are worth, the party's bonus, and the level's words
-import { createAdvTracker, setAdvKillHandler, advFoeLevel } from '../net/advTrack.js';   // ADV1: what this character earns online, carried to the account service
-import { setAdvLayer } from '../systems/advLayer.js';   // ADV1: the level's health and magicka, on top of Daggerfall's while online
+import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/renown.js';   // RENOWN1: what a kill and a quest are worth, the party's bonus, and the level's words
+import { createRenownTracker, setRenownKillHandler, renownFoeLevel } from '../net/renownTracker.js';   // RENOWN1: what this character earns online, carried to the account service
+import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the level's health and magicka, on top of Daggerfall's while online
 import { appStorage } from '../systems/appStorage.js';   // ACC1d: where that session lives - the app's store, not the tab's (a second tab is the same player)
 import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
@@ -9230,9 +9230,9 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  the symbol name, which for a quest item is exactly what DFU's UID
    *  lookup resolves. Object identity is still tried first, so a
    *  non-quest item (and the same-session case) behaves as before. */
-  // ADV1: a quest that ENDED IN SUCCESS pays its Adventuring XP online - the tracker is built with the online session
+  // RENOWN1: a quest that ENDED IN SUCCESS pays its Renown XP online - the tracker is built with the online session
   // below, so the bridge's hook reaches it through this door (null until then, and offline for good)
-  let advQuestEnded = null;
+  let renownQuestEnded = null;
   const _heldItemIndex = (dfItem) => {
     const items = playerEntity.items ?? [];
     const direct = items.indexOf(dfItem);
@@ -9295,7 +9295,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // moments, and the only one that does not wait for a location.
       if (initiated.length) revealMemberGuildHalls();
       escortQuestEnded(q);
-      advQuestEnded?.(q);   // ADV1: a quest done online pays its Adventuring XP
+      renownQuestEnded?.(q);   // RENOWN1: a quest done online pays its Renown XP
     },
     // TK-i: the six rumor seams land in the mill (TalkManager's own
     // methods, 1:1)
@@ -9865,62 +9865,62 @@ export async function bootWorld(canvas, renderer, params, status) {
   // because the chat roster draws my own row from whichever link its
   // tab holds. `chatLinks` is read at the moment of the answer, not
   // captured here: the links are built after this and rebuilt on rejoin.
-  // ═══ ADV1 — THE ADVENTURING LEVEL (Mac: "What if the leveling system was something seperate unique to online but
+  // ═══ RENOWN1 — THE RENOWN (Mac: "What if the leveling system was something seperate unique to online but
   // compatible"; the health and magicka "On top", a "Grind", offline earning "No") ═══════════════════════════════════
   // The level this page knows for its character: the token's word at each mint (the minter names the character, and
   // the service signs its level in) and the service's after each report - ONLY EVER UPWARD, because a total never
   // falls and a token minted a moment before a rise must not take it back. Each rise puts the layer on at the new
-  // level (systems/advLayer.js: on top of Daggerfall's own maximums, never saved). Offline, none of this runs.
-  let advLevelNow = null;
-  const advAdopt = (level) => {
-    if (!onlineOn || !Number.isSafeInteger(level) || level < 1) return advLevelNow;
-    if (advLevelNow !== null && level <= advLevelNow) return advLevelNow;
-    advLevelNow = level;
-    setAdvLayer(playerEntity, level);
-    return advLevelNow;
+  // level (systems/renownLayer.js: on top of Daggerfall's own maximums, never saved). Offline, none of this runs.
+  let renownNow = null;
+  const renownAdopt = (level) => {
+    if (!onlineOn || !Number.isSafeInteger(level) || level < 1) return renownNow;
+    if (renownNow !== null && level <= renownNow) return renownNow;
+    renownNow = level;
+    setRenownLayer(playerEntity, level);
+    return renownNow;
   };
   const adoptIssued = (who) => {
-    who = { ...who, level: advAdopt(who?.level) };   // ADV1: the highest level this page has known, never a stale token's lower one
+    who = { ...who, level: renownAdopt(who?.level) };   // RENOWN1: the highest level this page has known, never a stale token's lower one
     online?.adoptIdentity?.(who);
     for (const link of chatLinks?.values?.() ?? []) link.adoptIdentity?.(who);
   };
   const identityMinter = accountTokenMinter({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage(), onIssued: adoptIssued,
-    character: () => (onlineOn ? characterIdOf(playerEntity) : null) });   // ADV1: the character coming online, whose level the token carries
-  // ADV1: WHAT THIS CHARACTER EARNS - online only (the tracker is never built offline, and earns only while a session
-  // exists). A foe pays when it dies within ADV_ASSIST_MS of my own blow, whoever struck last (net/advTrack.js - the
-  // one rule every kill door agrees on), with the party in my room counted (advPartyXp); a quest pays on success, once.
-  // The report goes every ADV_REPORT_MS; the service's answer is the truth, and a rise is carried to my rooms.
-  const advAccount = accountAdv({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
-  let _advCapHour = null;
-  const advTracker = onlineOn ? createAdvTracker({
-    report: (c, xp, name) => advAccount.report(c, xp, name),
+    character: () => (onlineOn ? characterIdOf(playerEntity) : null) });   // RENOWN1: the character coming online, whose level the token carries
+  // RENOWN1: WHAT THIS CHARACTER EARNS - online only (the tracker is never built offline, and earns only while a session
+  // exists). A foe pays when it dies within RENOWN_ASSIST_MS of my own blow, whoever struck last (net/renownTracker.js - the
+  // one rule every kill door agrees on), with the party in my room counted (renownPartyXp); a quest pays on success, once.
+  // The report goes every RENOWN_REPORT_MS; the service's answer is the truth, and a rise is carried to my rooms.
+  const renownAccount = accountRenown({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
+  let _renownCapHour = null;
+  const renownTracker = onlineOn ? createRenownTracker({
+    report: (c, xp, name) => renownAccount.report(c, xp, name),
     character: () => characterIdOf(playerEntity),
     name: () => (typeof playerEntity?.name === 'string' ? playerEntity.name : null),
     earning: () => !!online,
     onAnswer: (data, sent) => {
       const level = Number.isSafeInteger(data?.level) ? data.level : null;
-      const was = advLevelNow;
-      advAdopt(level);
+      const was = renownNow;
+      renownAdopt(level);
       if (level !== null && (was === null || level > was)) {
-        online?.sendLevelOrder?.(typeof data?.order === 'string' ? data.order : null, level);   // the rooms I am in hear it now
-        if (data?.rose) townTalk.say(`Your Adventuring Level is now ${level}.`);
+        online?.sendRenownOrder?.(typeof data?.order === 'string' ? data.order : null, level);   // the rooms I am in hear it now
+        if (data?.rose) townTalk.say(`Your Renown is now ${level}.`);
       }
       if (Number.isSafeInteger(data?.credited) && data.credited < sent && !data?.max) {   // at the cap there is no hour to speak of
         const hour = Math.floor(Date.now() / 3_600_000);
-        if (_advCapHour !== hour) { _advCapHour = hour; tradeSay('You have earned all the Adventuring XP one hour allows. Your fighting still counts toward your skills.'); }
+        if (_renownCapHour !== hour) { _renownCapHour = hour; tradeSay('You have earned all the Renown XP one hour allows. Your fighting still counts toward your skills.'); }
       }
     },
   }) : null;
-  if (advTracker) {
-    globalThis.addEventListener?.('pagehide', () => { advTracker.flush(); });   // ADV1: what was earned since the last report goes as the page does (best effort)
-    setAdvKillHandler((foe) => { advTracker.earn(advPartyXp(advKillXp(advFoeLevel(foe)), 1 + (partyNear()?.length ?? 0))); });
+  if (renownTracker) {
+    globalThis.addEventListener?.('pagehide', () => { renownTracker.flush(); });   // RENOWN1: what was earned since the last report goes as the page does (best effort)
+    setRenownKillHandler((foe) => { renownTracker.earn(renownPartyXp(renownKillXp(renownFoeLevel(foe)), 1 + (partyNear()?.length ?? 0))); });
     const paid = new Set();
-    advQuestEnded = (q) => {
+    renownQuestEnded = (q) => {
       if (!q?.questSuccess) return;
       const key = String(q.uid ?? q.questName ?? '');
       if (!key || paid.has(key)) return;   // a quest pays once, however its end is heard again
       paid.add(key);
-      advTracker.earn(advQuestXp(playerEntity.level));
+      renownTracker.earn(renownQuestXp(playerEntity.level));
     };
   }
   // ACC4 (Mac: "time played to the icon profile"): THE WORLD IS WHERE
@@ -11899,7 +11899,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const reach = sp && social?.isPartyPeer(id) && allyCastable(sp) ? allyReachFor(sp.rangeType) : null;
     const pick = reach !== null ? (underground ? modes?.dungeonCtx?.allyInReach?.(cam.pos, socialFwd(), reach) : magic?.allyInReach?.(cam.pos, socialFwd(), reach)) ?? null : null;
     const cast = pick?.id === id ? allyCastPlaqueLine(sp.name, name) : null;
-    const lead = advLevelText(online?.levelOf?.(id) ?? null);   // ADV1: their Adventuring Level, left of the name as over their head
+    const lead = renownText(online?.renownOf?.(id) ?? null);   // RENOWN1: their Renown, left of the name as over their head
     return { title: `${lead ? `${lead} ` : ''}${marks ? `${name} ${marks}` : name}`, subs: [cast, peerRelationText(acts)].filter(Boolean), actions: acts ? socialPlaqueRows(id, acts) : [], actionsUnlit: true };
   };
   /** ALLY-CAST: THE PARTY MATE UNDER THE CROSSHAIR - the F key's own pick (player/socialPick.js pickPeerInFront over
@@ -12111,7 +12111,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     profileFrame();   // INSPECT1: the card's ask retried and its wait timed - the trade's own kind of work, beside it
     pageFrame();   // JOURNAL1: a page whose writer left the room goes with them
     mail?.poll();   // MAIL1: a look at the letterbox when one is due - before the dead return, as the chat's heartbeat is
-    advTracker?.tick();   // ADV1: what this character earned, to the account service when a report is due
+    renownTracker?.tick();   // RENOWN1: what this character earned, to the account service when a report is due
     // AUDIT ONLINE D12: the dead broadcast nothing and see no one
     if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.()) {
       if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room

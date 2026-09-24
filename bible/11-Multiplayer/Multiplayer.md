@@ -30,9 +30,9 @@ fighting beside each other against NPCs.
 **It is not** PvP, an MMO, or a shared campaign - with ONE door through the first: a DUEL (DUEL1, 2026-09-24, Mac:
 "I want to be the foundation of pvp"), consensual and bounded - two players who both said yes, in a ring of light,
 until one falls to 1 health, and both are healed after (`06-Systems/Community-Arc.md` DUEL1). Nobody's save changes
-shape because they played with a friend - and the one online progression, the ADVENTURING LEVEL (ADV1, 2026-09-24,
-Mac: "seperate unique to online but compatible"), is a second level per character kept by the account service, never
-in the save, adding health and magicka only while online (`06-Systems/Accounts-And-Cloud-Saves-Arc.md` ADV1). It IS, since WORLD1
+shape because they played with a friend - and the one online progression, RENOWN (RENOWN1, 2026-09-24,
+Mac: "seperate unique to online but compatible"; named: "Lets officially call this Renown"), is a second level per character kept by the account service, never
+in the save, adding health and magicka only while online (`06-Systems/Accounts-And-Cloud-Saves-Arc.md` RENOWN1). It IS, since WORLD1
 (2026-09-12, Mac: "The world is the server and every player should
 inhabit that world while also being able to continue their progress
 ... True persistance"), a persistent shared world one room at a time:

@@ -254,9 +254,9 @@ test('ACC3b: the DOM layer puts the title above and the glyphs right of the name
   // INSIDE it, after the name.
   assert.ok(node.children.indexOf(title) < node.children.indexOf(find(node, 'dfname-tag')), 'the title stands above the name row');
   const tag = find(node, 'dfname-tag');
-  // ADV1: the Adventuring Level's plate stands FIRST in the row, left of the name - empty (and so taking no room,
-  // `.dfname-lv:empty`) for a point that carries no level, which is this one
-  assert.equal(tag.children[0].className, 'dfname-lv');
+  // RENOWN1: Renown's plate stands FIRST in the row, left of the name - empty (and so taking no room,
+  // `.dfname-renown:empty`) for a point that carries no level, which is this one
+  assert.equal(tag.children[0].className, 'dfname-renown');
   assert.equal(tag.children[0].textContent, '', 'no level on the point, no words on the plate');
   assert.equal(tag.children[1].className, 'dfname-who');
   assert.equal(tag.children[2].className, 'dfname-glyphs');

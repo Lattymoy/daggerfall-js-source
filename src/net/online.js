@@ -72,7 +72,7 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, dmGate, relaySupportsDm, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questInGate, validQuestFrame, QUEST_SEND_MS, QUEST_HUB_MIN_MS, PARTY_MAX, tokenGate, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, parkGate, relaySupportsPark, PARK_CELL_MAX, PARK_KEY_RE, PARK_TTL_MS, relaySupportsChannels, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote, validCardData, cardGate, cardInGate, CARD_FRAME_MAX, CARD_IN_HZ_MAX, relaySupportsCard, validPageData, pageGate, pageInGate, PAGE_FRAME_MAX, PAGE_IN_HZ_MAX, relaySupportsPage, validDuelData, duelGate, duelInGate, DUEL_FRAME_MAX, DUEL_IN_HZ_MAX, relaySupportsDuel, readLevel, levelGate, relaySupportsLevel } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
+import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, dmGate, relaySupportsDm, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questInGate, validQuestFrame, QUEST_SEND_MS, QUEST_HUB_MIN_MS, PARTY_MAX, tokenGate, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, parkGate, relaySupportsPark, PARK_CELL_MAX, PARK_KEY_RE, PARK_TTL_MS, relaySupportsChannels, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote, validCardData, cardGate, cardInGate, CARD_FRAME_MAX, CARD_IN_HZ_MAX, relaySupportsCard, validPageData, pageGate, pageInGate, PAGE_FRAME_MAX, PAGE_IN_HZ_MAX, relaySupportsPage, validDuelData, duelGate, duelInGate, DUEL_FRAME_MAX, DUEL_IN_HZ_MAX, relaySupportsDuel, readRenown, renownGate, relaySupportsRenown } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -270,9 +270,9 @@ export class OnlineSession {
     this.name = name;
     this.title = null;         // NAME-ADOPT: my own badge, as the service issued it - never asserted by this side
     this.glyphs = [];
-    this.lv = null;            // ADV1: my own Adventuring Level, as the service signed it (the token's `lv`, or a level order since)
-    this.levelOk = false;      // ADV1: whether this relay knows the level frame (LEVEL_RELAY_MIN)
-    this._lvbucket = null;     // ADV1: the level order's own gate at home (LEVEL_HZ_MAX)
+    this.lv = null;            // RENOWN1: my own Renown, as the service signed it (the token's `lv`, or a renown order since)
+    this.renownOk = false;      // RENOWN1: whether this relay knows the renown frame (RENOWN_RELAY_MIN)
+    this._rnbucket = null;     // RENOWN1: the renown order's own gate at home (RENOWN_HZ_MAX)
     // ═══ ACC1d: THE IDENTITY TOKEN ═════════════════════════════════
     //
     // `mintToken` is an async () => string|null the HOST supplies - the
@@ -516,7 +516,7 @@ export class OnlineSession {
    *  forgets by staleness, not by first sight. */
   _remember(id, p) {
     this._known.delete(id);
-    this._known.set(id, { name: p.name, title: p.title, glyphs: p.glyphs, lv: p.lv ?? null, sub: p.sub, look: p.look });   // MOD1: the account too, so a re-stood peer can still be named by /mute   // ADV1: and the level
+    this._known.set(id, { name: p.name, title: p.title, glyphs: p.glyphs, lv: p.lv ?? null, sub: p.sub, look: p.look });   // MOD1: the account too, so a re-stood peer can still be named by /mute   // RENOWN1: and the level
     if (this._known.size > KNOWN_MAX) this._known.delete(this._known.keys().next().value);
   }
   _held(id) { for (const s of this._rooms.values()) if (s.has(id)) return true; return false; }
@@ -1053,7 +1053,7 @@ export class OnlineSession {
    *  is the service's word, and the service is trusted, but a name this
    *  side would refuse to draw for a stranger should not be drawn for
    *  me either. Answers whether anything changed.
-   *  ADV1: and the Adventuring Level the token was signed with (`level`), read through the wire's own bound.
+   *  RENOWN1: and the Renown level the token was signed with (`level`), read through the wire's own bound.
    *  @param {{ name?: string, title?: string|null, glyphs?: string[], level?: number|null }} [who] */
   adoptIdentity({ name, title, glyphs, level } = {}) {
     let changed = false;
@@ -1064,35 +1064,35 @@ export class OnlineSession {
     const b = readBadge({ title, glyphs });
     if (b.title !== (this.title ?? null)) { this.title = b.title; changed = true; }
     if (b.glyphs.join('+') !== (this.glyphs ?? []).join('+')) { this.glyphs = b.glyphs; changed = true; }
-    const lv = readLevel({ lv: level });
+    const lv = readRenown({ lv: level });
     if (lv !== (this.lv ?? null)) { this.lv = lv; changed = true; }
     return changed;
   }
 
-  /** ADV1: THE ADVENTURING LEVEL A NAME WEARS, BY ID - mine, a peer's in a room, or one this session was introduced
+  /** RENOWN1: THE RENOWN A NAME WEARS, BY ID - mine, a peer's in a room, or one this session was introduced
    *  to - or null for none (a peer whose token named no character, an older build, a stranger). Beside `badgeOf`
    *  rather than inside it, so the chat's badge, which has no level, reads exactly what it always read. */
-  levelOf(id) {
+  renownOf(id) {
     if (id == null) return null;
     if (id === this.id) return this.lv ?? null;
     return (this.peers.get(id) ?? this._known.get(id))?.lv ?? null;
   }
 
-  /** ADV1: carry a level order the account service signed when my own level rose into EVERY room I am in - the cell
+  /** RENOWN1: carry a renown order the account service signed when my own level rose into EVERY room I am in - the cell
    *  and the halo alike, since whoever can see me reads the level beside my name - and take the level as mine. Only to
    *  a relay that knows the frame (an older one closes the socket on it), at the relay's own rate. False when nothing
    *  went; the next room's token carries the level either way. */
-  sendLevelOrder(order, lv = null) {
-    const level = readLevel({ lv });
+  sendRenownOrder(order, lv = null) {
+    const level = readRenown({ lv });
     if (level !== null) this.lv = level;
-    if (typeof order !== 'string' || !order || order.length > 1024 || !this.levelOk) return false;
-    const gate = levelGate(this._lvbucket, this._now());
+    if (typeof order !== 'string' || !order || order.length > 1024 || !this.renownOk) return false;
+    const gate = renownGate(this._rnbucket, this._now());
     if (!gate.pass) return false;
-    const s = JSON.stringify({ t: 'level', order });
+    const s = JSON.stringify({ t: 'renown', order });
     let went = false;
     if (this._ws && this.status === 'open') { try { this._ws.send(s); this.stats.sent++; went = true; } catch { /* the close will say */ } }
     for (const [, h] of this._halo) if (h.status === 'open' && h.ws) { try { h.ws.send(s); this.stats.sent++; went = true; } catch { /* the close will say */ } }
-    if (went) this._lvbucket = gate.bucket;
+    if (went) this._rnbucket = gate.bucket;
     return went;
   }
 
@@ -1362,7 +1362,7 @@ export class OnlineSession {
       if (primary) this.cardOk = relaySupportsCard(relayV);   // INSPECT1
       if (primary) this.pageOk = relaySupportsPage(relayV);   // JOURNAL1
       if (primary) this.duelOk = relaySupportsDuel(relayV);   // DUEL1
-      if (primary) this.levelOk = relaySupportsLevel(relayV);   // ADV1
+      if (primary) this.renownOk = relaySupportsRenown(relayV);   // RENOWN1
       if (primary) this.parkOk = relaySupportsPark(relayV);   // HCC-PARK: the same law for the park frame
       // merged, not wiped: a peer already known keeps where it is drawn
       const keep = new Set();
@@ -1468,10 +1468,10 @@ export class OnlineSession {
       if (typeof m.id === 'string' && m.id !== this.id) { if (this.roomCount != null && !this.peers.has(m.id)) this.roomCount++; this._member(room, m.id, m, now); }   // ROSTER-G: a cut count follows the joins
     } else if (m.t === 'leave') {
       if (typeof m.id === 'string') { if (this.roomCount != null && this._rooms.get(room)?.has(m.id)) this.roomCount = Math.max(0, this.roomCount - 1); this._unmember(room, m.id); }   // WORLD6b-iii(b): gone from THIS room - kept while another holds it; ROSTER-G: and a cut count follows the leaves
-    } else if (m.t === 'level') {
-      // ADV1: A PLAYER'S LEVEL ROSE - a signed order the relay checked against that player's own account. Only a number
+    } else if (m.t === 'renown') {
+      // RENOWN1: A PLAYER'S LEVEL ROSE - a signed order the relay checked against that player's own account. Only a number
       // changes (the name layer reads it each frame), so there is nothing to gate: a peer I do not hold is ignored.
-      const lv = readLevel(m);
+      const lv = readRenown(m);
       if (lv === null || typeof m.id !== 'string') return;
       if (m.id === this.id) { this.lv = lv; return; }
       const p = this.peers.get(m.id);
@@ -1653,7 +1653,7 @@ export class OnlineSession {
     // answers a title or null and a list or empty, so nothing below
     // ever has to tell "absent" from "none".
     const { title, glyphs } = readBadge(p);
-    return { id: p.id, name: sanitizeName(p.name), title, glyphs, lv: readLevel(p), sub: subOf(p), look: validLook(p.look), told: true, pose, from: pose, at: now, seenAt: now, shown: pose ? { ...pose } : null };   // MOD1: `sub` the relay-verified account, what /mute names   // ADV1: `lv` the level the relay stamped
+    return { id: p.id, name: sanitizeName(p.name), title, glyphs, lv: readRenown(p), sub: subOf(p), look: validLook(p.look), told: true, pose, from: pose, at: now, seenAt: now, shown: pose ? { ...pose } : null };   // MOD1: `sub` the relay-verified account, what /mute names   // RENOWN1: `lv` the level the relay stamped
   }
 
   /** A known peer said hello again: its name and look are the new ones, its pose arrives as any other. */
@@ -1664,7 +1664,7 @@ export class OnlineSession {
     // too, and a peer that kept the FIRST badge it was ever seen with
     // would be wearing a grant the relay has stopped vouching for.
     ({ title: p.title, glyphs: p.glyphs } = readBadge(m));
-    p.lv = readLevel(m);   // ADV1: the newest hello's level, whatever it is - including none
+    p.lv = readRenown(m);   // RENOWN1: the newest hello's level, whatever it is - including none
     if (subOf(m)) p.sub = subOf(m);   // MOD1: a place room's hello names no account; a channel's does - keep the one we were told
     this._remember(p.id, p);   // SLAM9: and it is kept, so a blip cannot un-introduce it
     const pose = validPose(m.pose);

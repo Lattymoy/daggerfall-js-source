@@ -28,7 +28,7 @@ import { StreamingWorldState } from '../src/world/streamingWorld.js';
 import { TERRAIN_SIZE } from '../src/world/terrainSampler.js';
 import { CLIMATES } from '../src/formats/mapsFile.js';
 import { RACES } from '../src/systems/races.js';
-import { advFoeStruck, advFoeDied } from '../src/net/advTrack.js';   // ADV1: the kill door's stamps, in the harness's scope
+import { renownFoeStruck, renownFoeDied } from '../src/net/renownTracker.js';   // RENOWN1: the kill door's stamps, in the harness's scope
 
 // ═══ AUDIT SURV-TIERS, THE THIRD PASS (2026-09-23) ═══════════════════
 //
@@ -489,7 +489,7 @@ test('CORPSE-FOOD, mounted: the dungeon\'s own `applyFoeRecord` rolls a joiner\'
     for (const k of Object.keys(n)) { const v = n[k]; if (Array.isArray(v)) v.forEach(walk); else if (v && typeof v.type === 'string') walk(v); }
   })(ast);
   assert.ok(fn, 'dungeonContext.js has applyFoeRecord');
-  const state = { validFoeRecord, addCorpseFood, liveStat: () => 50, playerEntity: {}, foes: [], _layoutFoes: 1, _retyping: new Set(), retypeFoe: async () => false, console, advFoeDied };   // ADV1: the stream's death asks whether I fought it
+  const state = { validFoeRecord, addCorpseFood, liveStat: () => 50, playerEntity: {}, foes: [], _layoutFoes: 1, _retyping: new Set(), retypeFoe: async () => false, console, renownFoeDied };   // RENOWN1: the stream's death asks whether I fought it
   const scope = new Proxy(state, { has: (t, k) => k !== '__s', get: (t, k) => (k === Symbol.unscopables ? undefined : (k in t ? t[k] : globalThis[k])) });
   const { applyFoeRecord } = new Function('__s', `with (__s) { const setFoeDead = (f, d) => { f.dead = !!d; }; ${fn} return { applyFoeRecord }; }`)(scope);
   const bear = { mobileType: MOBILE_TYPES.GrizzlyBear, dead: false, entity: { mobileType: MOBILE_TYPES.GrizzlyBear, basics: { affinity: 'Animal' }, health: 5, items: [] }, ai: { feet: [0, 0, 0], yaw: 0, moving: false, isHostile: true } };

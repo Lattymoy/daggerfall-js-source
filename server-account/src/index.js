@@ -53,9 +53,9 @@
 // DUEL1, the duelling record. The caller of `loss` is the loser:
 //   POST /v1/duel/loss   { winner }       -> { recorded, wins, losses }
 //   POST /v1/duel/record { id }           -> { id, wins, losses }
-// ADV1, the Adventuring Level. The caller's own character, by the id its
+// RENOWN1, Renown. The caller's own character, by the id its
 // save carries; the level rides the token when the mint names one:
-//   POST /v1/adv/xp { character, xp, name? } -> { character, xp, level, credited, rose, order }
+//   POST /v1/renown/xp { character, xp, name? } -> { character, xp, level, credited, rose, order }
 //   POST /v1/auth/token { character? }    -> { ..., level }
 //
 // ACC2, and every one of them needs a REGISTERED account (the wall):
@@ -101,13 +101,13 @@ import {
   duelRecordOf, reportDuelLoss,
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
-import { mintToken, mintOrder, mintLevelOrder, MAX_TTL_S, TOKEN_V, ID_RE } from '../../src/net/identityToken.js';
+import { mintToken, mintOrder, mintRenownOrder, MAX_TTL_S, TOKEN_V, ID_RE } from '../../src/net/identityToken.js';
 import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, savePathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES } from './service.js';
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
 import { signingKey } from './signing.js';
 import { titleWorn, glyphsOf } from './titles.js';
 import { sendLetter, inboxOf, readLetter, deleteLetter } from './letters.js';   // MAIL1: the letters' routes
-import { reportAdvXp, advTrackOf, advTracksOf, advCharacterOk } from './adventuring.js';   // ADV1: the Adventuring Level's track
+import { reportRenownXp, renownTrackOf, renownTracksOf, renownCharacterOk } from './renownTracks.js';   // RENOWN1: Renown's track
 
 // THIS MODULE EXPORTS `default` AND NOTHING ELSE, and that is a
 // runtime requirement rather than a preference: in a module Worker
@@ -320,12 +320,12 @@ export default {
         // every room reads it off the signature at the hello. Only while
         // it runs: a mute that has ended is simply absent.
         const mu = isMuted(who.player, nowS) ? mutedUntil(who.player) : undefined;
-        // ADV1: AND THE LEVEL, when the client names the character it is
+        // RENOWN1: AND THE LEVEL, when the client names the character it is
         // bringing online - that character's, derived from its track now
         // (1 for a character that has earned nothing yet). The client's
         // word is only WHICH of its own characters; the number is this
         // service's. A mint naming none (an older build) carries none.
-        const lv = advCharacterOk(body.character) ? ((await advTrackOf(ctx, who.player.id, body.character))?.level ?? 1) : undefined;
+        const lv = renownCharacterOk(body.character) ? ((await renownTrackOf(ctx, who.player.id, body.character))?.level ?? 1) : undefined;
         const token = await mintToken(
           { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe, mu, lv },
           key, { subtle, nowS },
@@ -357,8 +357,8 @@ export default {
         // service's config and clock, which is why it alone takes env.
         return json({
           // DUEL1: and the duelling record, counted off the results (the profile card's K/D)
-          // ADV1: and the Adventuring Level's tracks, the most recently earned first (the card's level and its row)
-          account: { ...accountView(who.player, nowS), duels: await duelRecordOf(ctx, who.player.id), adv: await advTracksOf(ctx, who.player.id) },
+          // RENOWN1: and Renown's tracks, the most recently earned first (the card's level and its row)
+          account: { ...accountView(who.player, nowS), duels: await duelRecordOf(ctx, who.player.id), renown: await renownTracksOf(ctx, who.player.id) },
           wardrobe: accountWardrobe(who.player, env, nowS),
           devices: await devicesOf(ctx, who.player.id),
         }, 200, origin);
@@ -385,20 +385,20 @@ export default {
         return json({ id: body.id, ...(await duelRecordOf(ctx, body.id)) }, 200, origin);
       }
 
-      if (path === '/v1/adv/xp' && request.method === 'POST') {
-        // ADV1: WHAT ONE OF THE CALLER'S CHARACTERS EARNED ONLINE. The
+      if (path === '/v1/renown/xp' && request.method === 'POST') {
+        // RENOWN1: WHAT ONE OF THE CALLER'S CHARACTERS EARNED ONLINE. The
         // account is the session's, never the body's; the bounds are all
-        // in adventuring.js `reportAdvXp`. A level that ROSE comes back
+        // in renownTracks.js `reportRenownXp`. A level that ROSE comes back
         // with a signed order the client carries to the rooms it is in,
         // so the level beside its name moves there now rather than at its
         // next connection - and a service with no key still credits, it
         // just cannot vouch for the new level until then.
-        const r = await reportAdvXp(ctx, who.player, { character: body.character, xp: body.xp, name: body.name ?? null });
-        if (r.error) return no(r.error, r.error === 'adv-full' ? 409 : 400, origin);
+        const r = await reportRenownXp(ctx, who.player, { character: body.character, xp: body.xp, name: body.name ?? null });
+        if (r.error) return no(r.error, r.error === 'renown-full' ? 409 : 400, origin);
         let order = null;
         if (r.rose) {
           const key = await signingKey(env, subtle);
-          if (key) order = await mintLevelOrder({ s: who.player.id, lv: r.level }, key, { subtle, nowS });
+          if (key) order = await mintRenownOrder({ s: who.player.id, lv: r.level }, key, { subtle, nowS });
         }
         return json({ ...r, order }, 200, origin);
       }

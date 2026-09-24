@@ -49,7 +49,7 @@ on:
       - "src/net/nameFilter.js"
       - "src/net/moderation.js"
       - "src/net/playClock.js"
-      - "src/net/advLevel.js"
+      - "src/net/renown.js"
       - "src/net/wire.js"
       - "src/net/dice.js"
       - "src/world/mat4.js"

@@ -19,7 +19,7 @@ import { PLAYER_TARGET, resetAllyTeamOnPlayerAttack, isLocalPlayerTarget } from 
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 import { RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../src/player/activate.js';
 import { CORPSE_ACTIVATION_DISTANCE } from '../src/scenes/hostCombat.js';
-import { advFoeStruck, advFoeDied } from '../src/net/advTrack.js';   // ADV1: the kill door's stamps, in the harness's scope
+import { renownFoeStruck, renownFoeDied } from '../src/net/renownTracker.js';   // RENOWN1: the kill door's stamps, in the harness's scope
 
 const D = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
 const AST = acorn.parse(D, { ecmaVersion: 'latest', sourceType: 'module' });
@@ -87,7 +87,7 @@ function killHarness({ foes, foeDeps = null, getTexture = async () => ({ recordC
   const state = {
     foes, foeDeps, _authority: true, _layoutFoes: foes.length, opts: {}, lastPlayerFeet: [0, 0, 0], _ecvT: 0, _ctxDead: false,
     playerEntity: { isPlayer: true, items: [], luck: 50 },
-    markFoeStruck: () => {}, markConcealedHit: () => {}, makeEnemiesHostile: () => {}, peerCandidate: () => null, advFoeStruck, advFoeDied,   // ADV1: the kill door's two stamps, the real ones (no handler: nothing paid)
+    markFoeStruck: () => {}, markConcealedHit: () => {}, makeEnemiesHostile: () => {}, peerCandidate: () => null, renownFoeStruck, renownFoeDied,   // RENOWN1: the kill door's two stamps, the real ones (no handler: nothing paid)
     damageShieldPool: (e, n) => n, attemptSoulTrap, fillEmptyTrap, isAzurasStarEquipped: () => false,
     hudText: { add: (l) => log.hud.push(l) }, SOUL_TRAP_TEXT: { trapSuccess: 'ok', trapFail: 'fail', trapNoneEmpty: 'none' },
     setEnemyAlert, playRareDrop: () => { log.chimes++; }, raiseEnemyDeath: () => { log.deaths++; }, liveStat: () => 50,

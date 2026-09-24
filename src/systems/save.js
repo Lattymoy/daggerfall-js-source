@@ -45,7 +45,7 @@ import { isOnlinePage } from './onlineLane.js';   // ONLINE-DEATH-FIX: the page 
 import { STREAMING_TERRAIN_SCALE } from '../world/terrainSampler.js';   // TERRAIN-SCALE1: the scale every saved exterior height stands on
 import { reviveForPlay } from './deathRespawn.js';   // ONLINE-DEATH-FIX: the SAME half-health an online respawn leaves
 import { setLightSource } from './lightSource.js';   // DISC7: the light in hand's one door
-import { advHpOf, advMpOf, offlineVitals } from './advLayer.js';   // ADV1: the online layer never reaches a save
+import { renownHpOf, renownMpOf, offlineVitals } from './renownLayer.js';   // RENOWN1: the online layer never reaches a save
 
 /** One membership book, rows copied (GuildMembership_v1's shape). */
 const copyMembershipBook = (book) => Object.fromEntries(
@@ -270,10 +270,10 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // unsated urge, rebuilt by the next magic round; saving it would make the
   // ceiling permanent.
   if ('rawMaxHealth' in entity) snap.maxHealth = entity.rawMaxHealth;
-  // ADV1: AND NOTHING OF THE ONLINE LAYER. The Adventuring Level's health and magicka sit on top of the live maximums
-  // while online (systems/advLayer.js); a save keeps the vitals as they would stand without it, each at the same
+  // RENOWN1: AND NOTHING OF THE ONLINE LAYER. Renown's health and magicka sit on top of the live maximums
+  // while online (systems/renownLayer.js); a save keeps the vitals as they would stand without it, each at the same
   // fraction of its maximum, so a save written online is the one the character would have written offline.
-  if (advHpOf(entity) || advMpOf(entity)) Object.assign(snap, offlineVitals(entity));
+  if (renownHpOf(entity) || renownMpOf(entity)) Object.assign(snap, offlineVitals(entity));
   snap.stats = { ...entity.stats };
   // SURV1: the needs record (survival/needs.js) - its markers are classic
   // minutes and its counters plain numbers; the note throttles are not
