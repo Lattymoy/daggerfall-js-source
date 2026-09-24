@@ -165,7 +165,7 @@ test('MODS-ONLINE-2 by source: the port resolves each freed mod where the actor 
     '...and the host does not re-roll it under its own formulas');
   assert.match(dc, /const healthDamage = bypassShield \? damage : damageShieldPool\(foe\.entity, damage\);/, 'Shield Widget: a foe\'s block is the foe owner\'s');
   const pe = rd('src/characters/playerEntity.js');
-  assert.match(pe, /export function hurtPlayer\(entity, dmg, \{ bypassShield = false \} = \{\}\) \{/, 'Shield Widget: and my block is mine');
+  assert.match(pe, /export function hurtPlayer\(entity, dmg, \{ bypassShield = false, spare = null \} = \{\}\) \{/, 'Shield Widget: and my block is mine');   // DUEL1: `spare`, the duel's floor
   assert.match(pe, /if \(!bypassShield\) \{/, '...mitigated here, where the blow lands');
   assert.match(rd('src/characters/meanerMonsters.js'), /export const meanerMonstersEnabled = /, 'Meaner Monsters: read where an entity is MADE');
   assert.match(rd('src/systems/oblivionLeveling.js'), /export const ORL_VENDOR = 'oblivion-remaster-leveling';/, 'Oblivion leveling: a character\'s own system');

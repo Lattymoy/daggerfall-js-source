@@ -126,6 +126,8 @@ export const REFUSALS = Object.freeze({
   'not-moderator': 'Only moderators can do that.',
   protected: 'Moderators cannot be muted.',
   'no-player': 'That player could not be found.',
+  // DUEL1: the duelling record - a loss named against oneself (two tabs of one account duelling)
+  self: 'A duel against your own account does not count.',
   'bad-minutes': MUTE_RANGE_TEXT,
   // MAIL1, letters. The words are the service's (server-account/src/letters.js) and the letter's law's
   // (net/letterLaw.js, which the service returns verbatim); every one says what to do next.
@@ -426,6 +428,26 @@ export function accountPlayBeat({ fetch, storage }) {
     const session = storedSession(storage);
     if (!session) return null;
     return beatPlay({ fetch, base: serviceBase(storage), secret: session.secret });
+  };
+}
+
+/** DUEL1: the LOSER's own report of a duel - `winner` the account the
+ *  relay stamped on the winner's frames. `{ recorded, wins, losses }`. */
+export const reportDuelLoss = (io, winner) => call(io, '/v1/duel/loss', { winner });
+/** DUEL1: any account's duelling record, `{ id, wins, losses }`. */
+export const readDuelRecord = (io, id) => call(io, '/v1/duel/record', { id });
+
+/**
+ * DUEL1: THE DUELLING RECORD'S TWO CALLS, bound to this device's stored
+ * session (read at each call, as the beat reads it). With no session
+ * there is no account to lose with or to ask as: `{ ok: false, error:
+ * 'no-session' }`, never a knock.
+ */
+export function accountDuels({ fetch, storage }) {
+  const io = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
+  return {
+    lost: async (winner) => { const i = io(); return i ? reportDuelLoss(i, winner) : { ok: false, error: 'no-session' }; },
+    record: async (id) => { const i = io(); return i ? readDuelRecord(i, id) : { ok: false, error: 'no-session' }; },
   };
 }
 

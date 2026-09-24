@@ -685,8 +685,8 @@ The sixth merge's conflicts showed a Ledger row whose DFU message ids read "8076
 The struck row above it still reads "8076/8077", and DFU's TalkManager.cs answers with records 8075, 8076 and 8077
 (:2029-2035). `tools/citeShift.mjs` and `tools/citeMerge.mjs` had been moving it for as far back as the history goes.
 - **CITE-SLASH.** RF3's grammar read a bare `/N` after a cite, anywhere up to the next cite, as that cite's line. So
-  "8076/8077", a sentence after `world.js:3739`, was world.js:8186 to both tools, and it moved whenever that line did.
-  A bare `/N` now continues only the chain it touches: `world.js:6682/6683`, `:13/15`. The colon forms keep RF3's
+  "8076/8077", a sentence after `world.js:3751`, was world.js:8210 to both tools, and it moved whenever that line did.
+  A bare `/N` now continues only the chain it touches: `world.js:6700/6701`, `:13/15`. The colon forms keep RF3's
   reach, because the colon says what they are.
 - **CITE-CS.** RF3 ends a cite's region at a `.cs:N` cite, but DFU's members are mostly written without their file:
   "| TalkManager.GetReactionToPlayer_0_1_2 (:689-693) |" in the Ledger's DFU column, and
@@ -743,7 +743,7 @@ Main moved thirty commits while the arc was in review. Merged, not rebased; 106 
 - **Six of main's mutant records, re-aimed by content.** Each is aimed at the site its name gives, and each dies
   against a green baseline.
   - Four SURV-TIERS records mutate line cites in source comments, and the merge had moved those cites
-    (`world.js:3072` is `:3083` now).
+    (`world.js:3084` is `:3095` now).
   - MUT-AIM found two that name two sites each:
     - DISC10-D-H1's stamp, which the hit's defaults and the kill's share;
     - DISC9's heard word, which DISC11's rain gain repeats below it.
@@ -781,3 +781,162 @@ Mac: "Party chat should only show if in a party", and "Messages sent in world ch
     reading, whatever order it and the party frame arrive in (`net/chat.js partyNoteTab`).
 - Pinned in `test/chatchan.test.js`, with re-aimed pins in `test/chat1.test.js`. Mutants: `tools/mutants/chatchan.json`
   `CHAT-W-*` and `CHAT-P-*`, all dead.
+
+## DUEL1 - a duel between two players, in a ring of light (2026-09-24, Mac)
+
+Mac: "So before we merge this. I want to be the foundation of pvp. When inspecting a player, they should be able to send
+an invite to duel which then traps both players in a surrounding transparent hographic wall that keeps them from going
+outside of the duel space." Asked, Mac chose: weapons, bows and spells all count; "Loser drops to 1HP and both are fully
+healed on duel end. Add a dueling K/D to the profile menu and player inspect profile"; outdoors only; the record per
+account, on the main menu's account card.
+
+**The one door through co-op's rule.** Co-op was never PvP (`11-Multiplayer/Multiplayer.md`): no peer stands in any
+melee, arrow or spell target list, a `hit` names foes alone and a `cast` lands a party mate's gift alone. The duel is the
+one way through that, and it is consensual and bounded - two players who both said yes, inside one ring, until one of
+them falls to 1 health (never 0: a duel kills nobody), yields, or it is called off.
+
+**The challenge.** The Inspect card (INSPECT1) carries a Challenge button beside Close, its state the duel law's word
+(`duelButtonFor`: the relay cannot carry one yet, indoors, too far, busy, sent, duelling - each says so under a disabled
+button). The challenged player hears it in the chat ("... challenges you to a duel - answer on the prompt, or press F on
+them") and sees a strip at the top of the screen (`ui/duelPrompt.js`, the party invitation's shape) with Accept and
+Decline and the seconds left; the F-menu on the challenger reads Accept duel and Decline duel. A challenge stands
+DUEL_ASK_TTL_MS (30 s); one declined (or lapsed) is answered no, unsaid and unprompted, if the same player asks again
+within DUEL_REASK_MS (15 s) - a prompt over someone's game is not a thing to send again and again. THREE STEPS: ask, yes, and the challenger's START, which carries where the ring stands - so
+nobody is shut in a ring the other side never confirmed (a yes that gets no start in DUEL_START_WAIT_MS lapses and says
+so). Crossed challenges become one duel, as crossed trades do. Outdoors only - the streaming world's exterior - and
+within DUEL_RANGE_M (10 m) of each other, measured from both ends at the ask, the answer and the start.
+
+**The ring.** DUEL_RADIUS_M (12 m) around the midpoint of the two bodies, in the WORLD frame (natives on x and z, metres
+on y - the pose's own), so it stands still under either machine's floating origin. Each client keeps ITS OWN body in it:
+the motor clamps the feet after every physics step to the radius less the capsule and takes away the outward half of a
+jump (`player/motor.js _keepInArena`; the host sets the ring every frame from the world frame, the motor shifts it with a
+recenter and drops it on any placement). Not a mesh in the collider - that would stop arrows, foes, the camera and the
+activation rays and could be climbed or levitated over. The doors a map or a bed would open out of it are shut too: a
+live duel's opponent is an enemy nearby to the travel map, a Travel Options journey and rest, and a building or dungeon
+door says "You cannot leave the ring while you duel." A duellist carried far past the edge anyway (a teleport) ends the
+duel; so does an opponent SEEN past it for DUEL_OUT_MS, whatever their own client says.
+
+**The wall.** `render/duelWall.js`: a cylinder of light added onto the frame (ONE, ONE - it only brightens, so it is
+see-through by construction), no depth written, cut by the ground wherever the ground stands (it reaches four metres
+below the centre), a grid of thin lines around it, bands rising up it and one bright sweep climbing it, gone toward its
+top, fogged as the ground is, both faces drawn. Its geometry never changes; each ring is placed by uniforms. Every rate
+is whole cycles over DUEL_CLOCK_PERIOD and the clock is handed wrapped (the wisps' law). Built in every skin - the
+players must see the ring whatever they play in - and a shader that will not build costs the wall, never the game.
+ONLOOKERS see it too: a duellist's own foes frame carries the ring (`du`, validRingRecord - the HCC's `hv` law: said on
+every full frame while it stands, null once when it falls), and every client draws each duel once.
+
+**The fight.** A DUEL_COUNTDOWN_MS count ("fight in 3 seconds!", then "Fight!"), then every blow at the opponent is a
+numbered `strike` or `spell` frame and THE DEFENDER RESOLVES IT - the port's law for any blow at a body ("the host
+decided the swing; I decide the hit"). The attacker sends what its sheet brings (`combat/duelCombat.js duelAttackerOf`:
+level, race, the eight live attributes, the four skills a blow reads, the career's bitfields, health; the weapon's
+template, material and condition) and never a damage; the defender stands that sheet up as a stub attacker (`duelStub`,
+a FRESH weapon at the striker's condition) and runs the game's one formula - DFU's, or the physical-combat overhaul's -
+against its own armour, dodging and luck, and a pin holds the stub equal to the striker's own entity roll for roll. The
+swing reaches the opponent before any pool (the foes' own reach, view and sight test); a shaft on them is a strike off
+the bow; a spell - touch, missile, blast or area - meets them as a mark in the cast engine and sends its HARMFUL families
+alone (Paralyze, Continuous Damage, Damage, Disintegrate, Drain, Silence), which the defender applies as any caster's
+spell at them, save and all, tagged the duel's. The defender answers each blow with a `result` (landed, the damage, its
+health): the striker's HUD shows the number through the one seam, the opponent's health on the target bar, the blood and
+the sound, and the striker's own weapon wears. Only the live opponent's blows are taken, this duel's, each number once,
+DUEL_BLOWS_PER_S a second, and only from where the striker is seen to stand (`duelBlowPlausible`).
+
+**The end.** A duel's blow that would take a player to zero leaves them at ONE (`characters/playerEntity.js` `spare`,
+passed by the duel's doors alone - the strike, the spell's instant damage, and its damage over time off the one ticker
+every host shares); that side says `end fell` and has lost. A side may yield (the F-menu's Yield the duel on the
+opponent). The loser's own signed-in client reports the loss to the account service naming the winner by the account
+the relay stamped on the winner's frames - nobody credits themselves a win. A duel that reaches DUEL_MAX_MS is a draw;
+one called off (a player leaving, dying to something else, carried off) records nothing. Whatever ended a duel that
+started, both sides are fully healed - health, fatigue, magicka - DUEL_HEAL_HOLD_MS later (the loser is seen to stand
+at 1 health first), and the opponent's spells on each are stripped. A wolf in the ring still kills: only the duel's
+own blows are floored.
+
+**The wire.** One directed frame, `duel` (world107 - world105 on its branch, renumbered past main's world105 and world106 at the merge; `net/wire.js validDuelData`): ask/yes/no, start with the ring's
+centre, cancel, strike, spell, result, end. Routed like a card to the one socket `to` names, from a place room, on its
+own meter (DUEL_HZ_MAX) and its own per-sender funnel onto the destination - a duellist's blows never wait on the casts
+or cards its sender spent there. The relay stamps the sender's VERIFIED ACCOUNT (`sub`, off the identity token) beside
+its id, and stamps the card frame's answer the same way, so the Inspect card can read the record the account service
+keeps for that account - never a record the card claims. That names the sender's account to the ONE socket the frame
+reaches, as a chat line already names it to everyone in its channel (MOD1); a place room's roster still names none. The cast frame's spell law is shared with the duel's (one
+projection, `castSpellOf`), and the cast frame is exactly what it was.
+
+**The record.** `server-account` migration 0008: one `duel_results` row a duel that named a loser, and no counter
+columns - a player's wins are the rows naming them the winner, their losses the rows naming them the loser, so the ONE
+INSERT is the whole write. The loser reports at most once a DUEL_REPORT_GAP_S and one pair counts at most
+DUEL_PAIR_DAY_MAX a day, both measured inside that INSERT (`reportDuelLoss`); a self-duel (two tabs of one account) and a
+winner who is no account are refused. `POST /v1/duel/loss { winner }` (the session is the loser) and `POST /v1/duel/record
+{ id }` sit behind a session; `/v1/account` carries the caller's own. The main menu's account card shows "Duels: 3 won,
+1 lost (K/D 3.00)" (the K/D is wins over losses, and no losses reads the wins); the Inspect card shows the same line
+for the player it stands for, asked by the relay's stamp and kept a minute. acct8.
+
+**Recorded, not built.** A full heal on any duel's end is Mac's rule and it is a free heal: two players can start a duel
+and yield to top themselves up - nothing here stops it. Nothing server-side sees a blow, so a modified client can refuse
+to fall or to report its loss (the duel then runs to its draw), and two accounts can trade wins up to the pair's daily
+bound. Mounted duellists fight as they stand (the pose carries no crouch, and a rider's capsule is the rider's). A
+duel spell's reflection lands on nobody (the defender has no caster entity to send it back at). Onlookers are not held
+by a ring and can walk through it.
+
+**Pins.** `test/duel_session.test.js` (7), `test/duel_wire.test.js` (6), `test/duel_combat.test.js` (7),
+`test/duel_wall.test.js` (6), `test/duel_record.test.js` (7). `tools/mutants/duel.json`: 51, all dead (three survived the
+first run - an exactly lethal blow, a weapon whose skill is not a long blade's, a faded ring under the draw's cap - and
+each found a test that did not look; the tests look now). The relay is world107's (`test/relayversion.test.js`'s row);
+the account service acct8's. Re-aimed: the version pins (world107, acct8), the foreign-pass counts (the wall is the
+world host's seventh), the moved source pins (the melee ladder, the arrows' targets, the travel map's refusal, the one
+bag of acts, the card arm, the cast funnel), and seven older mutant records whose lines the change reached.
+
+## AUDIT DUEL1 - four reviews before the merge (2026-09-24, Mac: "Do an audit on everyrhing")
+
+Four independent reviews read DUEL1 and DISC21 end to end: the duel's trust boundaries (the wire, the relay, the
+account service), its rules and combat, regressions outside it, and DISC21 with the tests and the records. Every
+finding below was verified against its code path before it was fixed. `test/auditduel1.test.js` (4) pins them, with
+`test/duel_record.test.js` (8) for the record's SQL; `tools/mutants/auditduel1.json` has 28 mutants, all dead.
+
+**Blocker.**
+- **A1: a record minted without a duel.** Any session could report a loss naming any account as the winner. Guest
+  accounts cost a POST, so five guests posting every sixteen seconds gave an account fifty wins in a quarter of an
+  hour, with no relay involved. A duel now counts only between two REGISTERED accounts (the loser's session and the
+  winner's row both carry a handle), and one winner counts at most `DUEL_WINNER_DAY_MAX` (20) a rolling day, from
+  anyone - inside the same one INSERT, over its own index `(winner, at)`. A guest's duel is fought, and not counted.
+
+**Major.**
+- **A2: a forged result broke the striker's weapon.** The defender's `dmg` wore the striker's own weapon uncapped (a
+  99999 broke a Daedric blade with one answer). The wear now reads `duelWearDamage`: at most six times the weapon's own
+  top roll with its material and the striker's strength (a backstab's three, the overhaul's critical strike's two).
+- **A3: a stranger spent a duellist's budget.** Every ask, yes or start from anyone was answered, from the same 10
+  frames a second a duellist's blows go on. A duellist now answers no stranger at all, and outside a duel each peer
+  gets at most one refusal a `DUEL_REASK_MS`.
+- **A4 + B1: a duel's drain killed.** The duel's drain is its own entry, so DFU's permanent-less-one cap counted it
+  alone; over an old drain, a disease or a poison it took the live stat to 0, and a stat at 0 kills through no duel's
+  floor. A duel's drain now leaves the LIVE stat at 1.
+- **B2: a swing bashed out of the ring.** A swing that met no body fell through to the door bash, which the ring's
+  refusal did not cover: an open door walked through, a dungeon entered, a locked door opened on the roll (and the
+  watch told). The bash is refused while a duel holds.
+- **B3: a duel's fatigue damage killed.** At 0 fatigue the exhaustion collapse can kill a swimmer or a player a foe
+  can see. A duel's fatigue damage - instant (marked), or a round (its entry) - leaves 1, in the world host's spell
+  sink and the shared ticker alike.
+- **B5: a double knockout was two losses.** Each side's own fall ends its own duel, so both reported. The account
+  service now takes two losses in opposite directions within `DUEL_MUTUAL_S` (4 s) as a draw: the second report
+  removes the first row and counts nothing, and the one row a report can remove names its own sender the winner. The
+  duel says "X fell too - the duel is a draw." when the other fall lands in the heal's hold.
+- **B6: the swing's reach.** The defender measured a swing against where it stands NOW, which dropped real connects on
+  a player running away; and a swing's claimed position could stand four metres from where it was seen. A swing now
+  reaches if it reached any of the defender's own feet over the last `DUEL_TRAIL_MS` (500 ms, world.js `_duelTrail`),
+  and its claim may stand at most `DUEL_MELEE_POS_SLACK_M` (3 m) from where it is seen (a spell keeps 4).
+- **D1: a test that tested nothing.** The "yes to a lapsed ask" case lapsed the ask's own quiet with it, so no yes was
+  ever sent and its mutant survived; the record's "51, all dead" was wrong. The test now waits the quiet out and pins
+  the yes and the challenger's answer.
+
+**Minor.**
+- **A5:** an ask taken back and asked again at once skipped the re-ask quiet; a cancel now sets it.
+- **B4 + C2:** a duel's spells were saved (F9, the exit autosave) and restored; save and load now drop them.
+- **C1:** a duel ended away from a cell room (a Recall into a dungeon) forced every later foes frame full; only a cell
+  room forces it now.
+- **D2:** Mac's "both are fully healed" had no pin; the heal's strip and its health, fatigue and magicka are pinned.
+- **D3 (DISC21-C):** a pad player's empty-quickslot line named the keyboard's key; with the pad live it names none, as
+  the chip shows a glyph.
+- **D4:** the clamp the tests drove (`clampToRing`) was not the one the motor ran; the motor runs it now.
+- **D5:** `peerGone` and `reset` had no caller. The law's own tick now drops the asks of a peer it can no longer reach,
+  and leaving the page ends a duel as `left` and heals, before the exit autosave writes.
+
+**The limits that stand.** Still no server authority over a blow: a modified client can refuse to fall. A quick yield
+is still a free full heal (Mac's rule). A pair can still count `DUEL_PAIR_DAY_MAX` a day between two registered
+accounts, and a winner 20. Mounted duels, a reflected duel spell, and onlookers walking through a ring are as above.

@@ -64,6 +64,8 @@ const ARROW = 131;
  *  resolve; the rest are the port's own words. */
 export const QUICKSLOT_TEXT = Object.freeze({
   emptySlot: 'Nothing is in that slot.',
+  // DISC21-C: and, with a weapon in hand still sheathed, the key that readies it - see emptySlotLine
+  readyWeapon: (key) => `Press ${key} to ready your weapon.`,
   noneLeft: (name) => `You have no ${name} left.`,
   noSwap: 'No weapon is set to swap to.',
   swapGone: (name) => `Your ${name} is not in your pack.`,
@@ -100,7 +102,7 @@ const state = { c1: null, c2: null, swap: null };
  *  INDEX - a SPELLS.STD record number, or the negative one a made spell
  *  mints (systems/spellMaker.js:212-230) - and that index is already
  *  this port's name for "which spell": it is what the save writes
- *  (systems/save.js:320), what a restore reads back, and what
+ *  (systems/save.js:321), what a restore reads back, and what
  *  `setReadiedByIndex` resolves a readied spell by. So the slot keeps
  *  the same key the rest of the port keeps, and a book that changed
  *  under it (a spell sold, a made spell deleted) leaves a GHOST that
@@ -300,6 +302,21 @@ export { hotbarInForce };
  * nowMinute, rows) - and `say` its popup channel. Answers what
  * happened; the HUD's count says the rest.
  */
+/**
+ * DISC21-C (2026-09-24, Scratchie on Discord: "Just started the game, equipped a weapon, it shows up in the '2' slot,
+ * but when I press it the game says 'nothing is in that slot' and I can't attack anything"): WHAT AN EMPTY PRESS SAYS
+ * TO A PLAYER WHO WANTS THEIR WEAPON. The weapon was in the diamond's MAIN cell, whose chip is ReadyWeapon's key - Z,
+ * which in the skin's pixel face reads as a 2 - and a new character's weapon starts sheathed, as classic's does
+ * (WeaponManager.Sheathed). So the player pressed 2, the bottom consumable slot, empty on a new character, and was told
+ * so; and the swing, dropped while sheathed (weaponRig attackInput), did nothing either. The line still says the slot is
+ * empty, and when the hand holds a weapon still sheathed it names the key that readies it - the main cell's own chip,
+ * the player's binding - so the press that went wrong teaches the one that goes right. `hand` is the host's read of
+ * its rig (ui/quickslotTags.js quickslotHand); no key named (unbound, or a pad), no second sentence.
+ */
+export function emptySlotLine({ weapon = null, sheathed = false, readyKey = null } = {}) {
+  return weapon && sheathed && readyKey ? `${QUICKSLOT_TEXT.emptySlot} ${QUICKSLOT_TEXT.readyWeapon(readyKey)}` : QUICKSLOT_TEXT.emptySlot;
+}
+
 export function useQuickslot(slot, opts = {}) { return (_performed = useQuickslotNow(slot, opts)); }   // AUDIT CONTRIB H3: what the press did, for the hotbar's flash
 function useQuickslotNow(slot, { entity = null, items = null, hooks = {}, say = null } = {}) {
   if (!CONSUMABLE_SLOTS.includes(slot)) throw new Error(`quickslots: ${slot} is not a consumable slot`);
@@ -310,7 +327,7 @@ function useQuickslotNow(slot, { entity = null, items = null, hooks = {}, say = 
   const sup = racialSuppressInventory(entity);
   if (sup) { say?.(sup.text); return { kind: 'refused' }; }
   const r = resolveConsumable(entity, slot);
-  if (!r) { say?.(QUICKSLOT_TEXT.emptySlot); return { kind: 'empty' }; }
+  if (!r) { say?.(emptySlotLine(hooks.hand?.() ?? undefined)); return { kind: 'empty' }; }
   if (!r.item) { say?.(QUICKSLOT_TEXT.noneLeft(r.name)); return { kind: 'none', name: r.name }; }
   const pack = items ?? packOf(entity);
   const res = useItem(r.item, pack, {
@@ -811,7 +828,7 @@ export function quickslotSaveData() {
   const out = {};
   for (const s of QUICKSLOTS) out[s] = state[s] ? { key: state[s].key, name: state[s].name } : null;
   // QS6: the spell slot rides the same block, keyed the way save.js
-  // already keys a spell - by index (systems/save.js:320).
+  // already keys a spell - by index (systems/save.js:321).
   out.spell = spellState ? { index: spellState.index, name: spellState.name } : null;
   // HB1: and the hotbar, on the same block - ten entries, each an item
   // kind or a spell index, exactly as the slots above key them.

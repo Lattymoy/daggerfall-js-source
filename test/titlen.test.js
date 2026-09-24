@@ -67,6 +67,13 @@ test('TITLE-N grants: the Dungeon Master is SquidKamer\'s alone and Disciple is 
   assert.equal(v('DUNGEON_MASTER_HANDLES'), 'SquidKamer', 'Mac: "This goes strictly to the account SquidKamer"');
   assert.equal(v('DISCIPLE_HANDLES'), 'Dutchess,Satranath,Skibbster', 'Mac: "The account Dutchess will recieve the Disciple title/glyph", then "Satranath please add this account as a disciple also", then "Skibbster needs to be a disciple ingame"');
   assert.equal(v('APOSTLE_HANDLES'), '', 'nobody yet');
+  assert.equal(v('DEVELOPER_HANDLES'), 'Lattymoy,trashBattery,LostMyLeg', 'DEV2, Mac: "Give trashBattery, LostMyLeg the developer title/glyph"');
+  for (const h of ['trashbattery', 'LOSTMYLEG']) {
+    const dev = { handle: h, created_at: 0, registered_at: 1_900_000_000 };
+    const denv = { DEVELOPER_HANDLES: v('DEVELOPER_HANDLES') };
+    assert.deepEqual(titlesHeld(dev, denv), ['developer'], `${h}: the Developer title, case-folded`);
+    assert.deepEqual(glyphsOf(dev, denv, 1_900_000_000), ['dev'], `${h}: the dev glyph`);
+  }
   assert.equal(v('HIEROPHANT_HANDLES'), '', 'nobody yet');
   assert.deepEqual(Object.keys(TIER_LISTS), NEW_TITLES);
   assert.deepEqual(Object.values(TIER_GLYPH), NEW_GLYPHS);

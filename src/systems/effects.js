@@ -31,7 +31,7 @@
 
 import { savingThrow, rollMagnitude, EFFECT_FLAGS, careerTolerance } from './spellcast.js';
 import { raceById, raceByKey } from './races.js';   // L2-slice (magic-10): the racial immunity arm
-import { STAT_KEYS_ORDER, FATIGUE_MULTIPLIER, maxFatigue, increaseDrainMagnitude } from './statMods.js';
+import { STAT_KEYS_ORDER, FATIGUE_MULTIPLIER, maxFatigue, increaseDrainMagnitude, liveStat } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
 import { tryAbsorption, effectCastingCost } from './absorption.js';
 import { enemyGroupOf, NEARBY } from './nearbyObjects.js';   // X8: Pacify matches on DFU's EnemyGroups, the same table X4 ported   // S24; X7: the Identify refund reads the same per-effect cost
@@ -402,6 +402,8 @@ export const isContinuousDamage = (e) => e.type === 1 && e.subType === 0;
 // Fortify{Attribute} (classic type 9, subType = the stat index 0..7).
 // The stat-mod layer (STAT_KEYS_ORDER, liveStat) lives standalone in
 // statMods.js to avoid a formulas<-spellcast<-effects import cycle.
+/** AUDIT DUEL1 B3: what an instant duel effect hands a sink in the place a lingering one hands its entry. */
+const DUEL_SOURCE = Object.freeze({ bundleDuel: true });
 export const isFortifyAttribute = (e) => e.type === 9 && e.subType >= 0 && e.subType <= 7;
 
 export const isDamageSpellPoints = (e) => e.type === 4 && e.subType === 2;
@@ -622,7 +624,8 @@ function runEffectRound(a, target, sinks, rolls) {
     const n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls);
     // AUDIT 68 S19-round-ticks-player-provenance: the tick is DamageHealthFromSource(caster) - the player's blow only
     // when the player cast it (no caster is the player, hostMagic's `!caster` law). A round sink bills nobody else.
-    if (n > 0 && sinks.hurt) sinks.hurt(n, { fromPlayer: !a.caster || !!a.caster.isPlayer });
+    // DUEL1: and the entry's duel tag rides along - a duel's damage over time (bundleDuel) stops at the duel's floor
+    if (n > 0 && sinks.hurt) sinks.hurt(n, { fromPlayer: !a.caster || !!a.caster.isPlayer, bundleDuel: !!a.bundleDuel });
     handleAttackFromSource(a.caster);   // DamageHealthFromSource's tail, wave 31
   } else if (a.kind === 'continuousDamageSpellPoints') {
     const n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls);
@@ -631,7 +634,7 @@ function runEffectRound(a, target, sinks, rolls) {
   } else if (a.kind === 'continuousDamageFatigue') {
     // DamageFatigueFromSource(..., assignMultiplier: true) - x64
     const n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls);
-    if (n > 0 && sinks.drainFatigue) sinks.drainFatigue(n * FATIGUE_MULTIPLIER);
+    if (n > 0 && sinks.drainFatigue) sinks.drainFatigue(n * FATIGUE_MULTIPLIER, a);   // AUDIT DUEL1 B3: the entry rides along - a duel's fatigue damage never empties the bar (the exhaustion collapse can kill)
     handleAttackFromSource(a.caster);
   } else if (a.kind === 'regenerate') {
     // Regenerate.MagicRound: IncreaseHealth(GetMagnitude) every round
@@ -763,7 +766,10 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
   // Shield capped the target's own 60-point Shield at one for forty rounds, and a mate's Regenerate kept its
   // caster level over the target's own stronger cast. An ally's bundle stands beside mine, never over it.
   const allyCast = ctx.allyCast === true;
-  const findInc = (pred) => (heldItem ? undefined : target.activeEffects?.find((a) => !a.heldItem && !!a.bundleAlly === allyCast && pred(a)));
+  // DUEL1: a duel opponent's spell (ctx.duelCast, tagged bundleDuel below) - never merged with the target's own either,
+  // its damage over time stops at the duel's floor, and the duel's end strips it
+  const duelCast = ctx.duelCast === true;
+  const findInc = (pred) => (heldItem ? undefined : target.activeEffects?.find((a) => !a.heldItem && !!a.bundleAlly === allyCast && !!a.bundleDuel === duelCast && pred(a)));
   // S24: absorption is tested PER EFFECT, before any of them lands
   // (EntityEffectManager :507-518), and an absorbed effect is skipped
   // entirely - `continue`, not a reduced magnitude.
@@ -996,7 +1002,11 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       handleAttackFromSource(caster?.entity ?? null);
       const kind = isDrainAttribute(e) ? 'drainAttribute' : 'transferAttribute';
       const stat = STAT_KEYS_ORDER[e.subType];
-      const amt = magnitude(e);
+      let amt = magnitude(e);
+      // AUDIT DUEL1 A4: a duel's drain is its own entry (never merged with the target's own), so DrainEffect's
+      // permanent-less-one cap counted it alone - over an old drain, a disease or a poison on the same stat it took the
+      // LIVE stat to 0, and a stat at 0 kills (statMods.js) through no duel's floor. A duel's drain leaves the live stat 1.
+      if (duelCast && amt > 0) amt = Math.min(amt, Math.max(0, liveStat(target, stat) - 1));
       if (amt > 0) {
         let entry = findInc((a) => !a.ended && a.stat === stat &&
           (kind === 'transferAttribute'
@@ -1085,7 +1095,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     if (isDamageFatigue(e)) {
       // DamageFatigue (4, 1): instant DamageFatigueFromSource(mag, x64).
       const n = magnitude(e);
-      if (n > 0 && sinks.drainFatigue) sinks.drainFatigue(n * FATIGUE_MULTIPLIER);
+      if (n > 0 && sinks.drainFatigue) sinks.drainFatigue(n * FATIGUE_MULTIPLIER, duelCast ? DUEL_SOURCE : undefined);   // AUDIT DUEL1 B3: a duel's, marked as its rounds are
       handleAttackFromSource(caster?.entity ?? null);
       pushInstantMarker(target, 'damageFatigue', e);
       out.fatigueDrained = (out.fatigueDrained ?? 0) + 1;
@@ -1692,6 +1702,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
         list[i].bundleIcon = icon;
         list[i].bundleSelfCast = selfCast;
         list[i].bundleAlly = allyCast;   // AUDIT ALLY-CAST C2/C4: a party mate's gift - never merged with my own, and mine to dispel without a roll
+        if (duelCast) list[i].bundleDuel = true;   // DUEL1: the duel opponent's - floored, and stripped when the duel ends
       }
     }
   }

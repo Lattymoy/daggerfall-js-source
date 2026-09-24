@@ -3106,3 +3106,56 @@ patreon titles. These also recieve their own unique glyphs. The account Dutchess
   account registered since then could obtain it, and every account that holds it keeps it, both held and worn. A pin
   now holds both halves.
 - `test/titlen.test.js` has 8 pins. `tools/mutants/titlen.json` has 17 mutants, all dead. The relay is world104.
+
+## DUEL1 — the duelling record (2026-09-24)
+
+Mac: "Add a dueling K/D to the profile menu and player inspect profile", kept per account. The full record is
+`06-Systems/Community-Arc.md` (DUEL1). This is the service's part of it.
+
+- **Whose word it is.** The LOSER's. A duel is fought between two clients over the relay; the side whose health a duel
+  blow took to the floor, or who yielded, reports the loss from its own signed-in client, naming the winner by the
+  account the relay stamped on the winner's frames (`sub`, off the identity token - never a client's own word). So the
+  service is told a loss by the account that took it and never a win by the account that claims one; the most a lying
+  client can do is hand somebody else wins at the cost of its own losses.
+- **One statement is the write.** Migration 0008 adds `duel_results` (loser, winner, at - both ends cascade) and no
+  counter columns: an account's wins are the rows naming it the winner and its losses the rows naming it the loser.
+  `server-account/src/accounts.js reportDuelLoss` is ONE INSERT that lands only when the winner exists, the loser's last
+  report is DUEL_REPORT_GAP_S (15 s) behind, and the pair has fewer than DUEL_PAIR_DAY_MAX (10) results in the last day -
+  all measured inside the statement, so two tabs cannot both slip under a bound. A refused report is `recorded: false`,
+  not an error (the duel was fought; it does not count again). A self-duel is `self` (400), a winner who is no account
+  `no-player` (404).
+- **The routes.** `POST /v1/duel/loss { winner }` (the session is the loser, whatever the body says) and `POST
+  /v1/duel/record { id }` (any account's two counts, the id in the body), both behind a session; `GET /v1/account`
+  carries the caller's own as `account.duels`. The service is `acct8`.
+- **The client** (`src/net/accountClient.js accountDuels`): the loss and the ask go only with a stored session, the
+  bearer in the header. `src/net/duelRecord.js` says a record ("3 won, 1 lost (K/D 3.00)"; no losses reads the wins)
+  and keeps the Inspect card's reads a minute. The main menu's account card has a Duels row.
+
+## DEV2 — two more developers (2026-09-24)
+
+Mac: "Give trashBattery, LostMyLeg the developer title/glyph".
+
+- `server-account/wrangler.toml` now reads `DEVELOPER_HANDLES = "Lattymoy,trashBattery,LostMyLeg"`. The list is
+  case-folded (`titles.js handleList`), so either spelling of a handle matches.
+- The list grants the whole developer set, not the badge alone: the Developer title (held, and wearable), the red `dev`
+  glyph, RED1's /red (the relay reads the glyph off the signed token), MOD1's /mute and /unmute (`canModerate` is a
+  moderator OR a developer), and protection from being muted.
+- It reaches each player on their next token, after the account worker deploys. Nothing else changes, and no
+  migration runs.
+- Pinned in `test/titlen.test.js`: the list's value, and that both handles hold the title and the glyph in any case.
+
+## AUDIT DUEL1 — the record, between registered accounts (2026-09-24)
+
+The audit found that any session could post a loss naming any account the winner, and guests are free to make:
+five guests gave one account fifty wins in a quarter of an hour, with no duel.
+
+- `reportDuelLoss` (`server-account/src/accounts.js`) now counts a duel only when the loser's session and the winner's
+  row both have a handle. A guest's report, or a report naming a guest, answers `{ recorded: false, why: 'guest' }`.
+- One winner counts at most `DUEL_WINNER_DAY_MAX` (20) results a rolling day, from anyone, inside the same INSERT;
+  migration 0008's winner index is `(winner, at)` for it (0008 is unreleased, so it is edited in place).
+- A DOUBLE KNOCKOUT is a draw: a report whose winner reported a loss to this loser within `DUEL_MUTUAL_S` (4 s)
+  removes that row and counts nothing (`why: 'draw'`). The DELETE is keyed on the caller as the WINNER, so a report can
+  only ever remove a win of its own.
+- A refused report says which bound: `why` is 'guest', 'draw', 'gap', 'pair' or 'winner', and the client's line says
+  it (`net/duelRecord.js duelUncountedText`; a draw says nothing more, the duel said it).
+- Pinned in `test/duel_record.test.js` over the real migrations; `tools/mutants/auditduel1.json` A1/B5.
