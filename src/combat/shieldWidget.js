@@ -33,9 +33,10 @@
 // lateUpdate(); draw() is OnGUI's repaint. The two coroutines are
 // GENERATORS driven on the sibling's clock: `yield seconds` is
 // WaitForSeconds, `yield FRAME` is WaitForEndOfFrame. The channels the
-// mod publishes - Position, Offset, Scale - are read by the sprite draw
-// AND by the Morrowind arms, the same way WW1's are, which is what
-// makes the shield move with that view rather than against it.
+// mod publishes - Position, Offset, Scale - feed the sprite draw alone:
+// under the Morrowind arms the shield sprite does not draw (the rig's
+// arm branch returns first), and the arms' composite already takes the
+// WEAPON widget's transform (AUDIT 68 S09-shield-dead-exports).
 //
 // CARRIED, because the port has the mods: Eye of the Beholder's
 // `onToggleOffset` (the third-person toggle - `isInThirdPerson` hides
@@ -53,7 +54,7 @@
 import { modSettingsOf } from '../systems/modSettings.js';
 import { getInt } from '../systems/settings.js';
 import { liveStat } from '../systems/statMods.js';
-import { moveTowards, moveTowards2, snap, STEP_CONDITION } from './weaponWidget.js';
+import { moveTowards, moveTowards2, snap, STEP_CONDITION } from './weaponWidgetMotion.js';   // AUDIT 68 S09-unused-and-heavy-imports: the leaf built for these, not the component
 export { STEP_CONDITION };   // the same enum, one home (the sibling's)
 import { shieldProtectedBodyParts } from './enemyEquipment.js';
 // the classic 320x200 the sprite's scale is measured against (SetGuard
@@ -290,7 +291,11 @@ export function createShieldWidget({
   // ---- PlayImpactSound (IL 0x00) ----
   function playImpactSound() {
     const clip = PARRY_CLIP_FIRST + Math.floor(rolls() * PARRY_CLIP_COUNT);
-    audio?.playOneShot?.(clip, 0, 1.1);
+    // AUDIT 68 S09-shield-impact-silent: the IL's (clip, 0, 1.1f) is
+    // DaggerfallAudioSource.PlayOneShot(sound, spatialBlend, volumeScale)
+    // - 2D at volume 1.1, FPSWeapon.PlaySwingSound's own shape - and this
+    // port's playOneShot is (clip, volume, pitch), non-positional already.
+    audio?.playOneShot?.(clip, 1.1, 1);
   }
 
   // ---- the two coroutines ----
@@ -605,11 +610,12 @@ export function createShieldWidget({
     w.screenRectLast = { ...w.screenRect };
     w.weaponOffsetHeightLast = w.weaponOffsetHeight;
 
-    // the template KEY is template + material added together (IL 0x1a0) -
-    // the author's own shorthand, so two shields that happen to sum the
-    // same never re-read. Kept: nothing in the four templates and the
-    // twelve materials collides.
-    const template = (item.templateIndex | 0) + (item.nativeMaterialValue | 0);
+    // the template KEY: the mod adds template + material (IL 0x1a0), and
+    // that sum COLLIDES - 109..112 + 512..521 give eleven shared sums, so
+    // an Iron Tower swapped straight for a Steel Kite (624) never re-read.
+    // AUDIT 68 S09-shield-template-key-collision, a named departure: the
+    // port keys on the PAIR (materials stay below 1024).
+    const template = (item.templateIndex | 0) * 1024 + (item.nativeMaterialValue | 0);
     if (w.lastTemplate !== template) {
       updateShieldTextures(item);
       refreshShield();
@@ -781,25 +787,10 @@ export function createShieldWidget({
     return true;
   }
 
-  /** The channels for the Morrowind arms, as WW1 publishes its own: the
-   *  frame's Position and Scale ride the arms' composite so the shield
-   *  bobs, leans and recoils WITH that view instead of against it. */
-  function armsTransform(base) {
-    if (!base) return base;
-    const out = { ...base };
-    out.x += w.position[0];
-    out.y += w.position[1];
-    out.width += out.width * w.scale[0];
-    out.height += out.height * w.scale[1];
-    return out;
-  }
-
   return {
-    lateUpdate, draw, drawRect, endOfFrame, onAttackDamageCalculated, armsTransform,
+    lateUpdate, draw, drawRect, endOfFrame, onAttackDamageCalculated,
     /** Eye of the Beholder's `onToggleOffset` (ModCompatibilityChecking IL 0x00). */
     setThirdPerson(v) { w.isInThirdPerson = !!v; },
-    /** Awake (IL 0xb3): the stance the shield opens on. */
-    refresh: refreshShield,
     get position() { return [w.position[0], w.position[1]]; },
     get scale() { return [w.scale[0], w.scale[1]]; },
     get offset() { return [w.offset[0], w.offset[1]]; },

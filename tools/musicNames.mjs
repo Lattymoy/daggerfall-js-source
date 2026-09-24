@@ -14,9 +14,9 @@
 // typed here, so this cannot drift from what the game actually plays.
 
 import { readdirSync } from 'node:fs';
-import { pathToFileURL } from 'node:url';
 import * as SM from '../src/systems/songManager.js';
 import { replacementEntry, replacementKey } from '../src/systems/musicReplacement.js';
+import { isMain } from './lib/isMain.mjs';
 
 // Playlist export name -> the words a player would use. Only the
 // SHAPE is named here; the membership comes from the module.
@@ -136,4 +136,4 @@ function main() {
   if (!missing.length && !strays.length) console.log('every song covered, nothing stray.');
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();
+if (isMain(import.meta.url)) main();

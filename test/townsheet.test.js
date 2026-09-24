@@ -95,7 +95,7 @@ test('EM4: the town is drawn in the BAY\'s pen - not one colour is invented here
     assert.ok(Object.values(PEN).includes(value), `TOWN_PEN.${name} is a colour inkMap does not have`);
   }
   const text = src('src/ui/inkTown.js');
-  assert.match(text, /PEN, HALO_PEN, NAME_FACE, toPaper, paintCaret, CARET_R, quarterWash, quarterInk,\n\} from '\.\/inkMap\.js';/);
+  assert.match(text, /PEN, HALO_PEN, NAME_FACE, toPaper, paintCaret, paintPartyCarets, CARET_R, quarterWash, quarterInk,\n\} from '\.\/inkMap\.js';/);
   assert.doesNotMatch(text, /rgba?\(/, 'a colour written out here is a colour that drifts');
   assert.doesNotMatch(text, /#[0-9a-fA-F]{3,8}\b/);
   // and the three sheets share the pen by VALUE, not by coincidence
@@ -141,7 +141,7 @@ test('EM-BUG3: the field is laid in SHEET space, and a grid row runs AGAINST +Z,
   //
   //   1. `autoMapData` is an FLD grid and its rows run AGAINST +Z, the
   //      same way `buildGroundTilemap` reads `groundTiles[x][15 - y]`
-  //      (world/rmbLayout.js:268). Source row `y` is z-row 63 - y.
+  //      (world/rmbLayout.js:270). Source row `y` is z-row 63 - y.
   //   2. The sheet draws +Z UPWARD, as the shipped window does once its
   //      two flips are composed, so an anchor row crosses over by
   //      `sheetY`.

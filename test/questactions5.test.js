@@ -53,9 +53,8 @@ function makeMachine(overrides = {}) {
     setPlayerCrime: capture('setPlayerCrime'),
     getGoldPieces: () => (m.pieces ?? 0),
     deductGoldPieces: (n) => { m.pieces -= n; calls.push(['deductGoldPieces', n]); },
-    getGold: () => (m.money ?? 0),
     // AUDIT 39 #92: PayMoney's `money` arm gates on GetGoldAmount, a
-    // seam of its own - getGold stays the bare GoldPieces read.
+    // seam of its own - getGoldPieces stays the bare GoldPieces read.
     getTotalGold: () => (m.money ?? 0),
     deductGold: (n) => { m.money -= n; calls.push(['deductGold', n]); },
     raiseTime: capture('raiseTime'),
@@ -164,7 +163,7 @@ test('Q5: PayMoney - `gold` counts COINS alone, `money` the purse; paid or not, 
   // read the other actions use. The pin had been vacuous because one
   // host wired both quantities to the same coins-only function, so a
   // solvent player carrying paper took the `otherwise` task.
-  const m4 = makeMachine({ deps: { getGold: () => 10, getTotalGold: () => 5010 } });
+  const m4 = makeMachine({ deps: { getGoldPieces: () => 10, getTotalGold: () => 5010 } });
   const q4 = schedule(m4, [' pay 100 money do _paid_ otherwise do _broke_', '', ...PAY_TASKS]);
   m4.tick();
   assert.equal(trig(q4, 'paid'), true, '10 coins and a 5000-gold letter covers 100');

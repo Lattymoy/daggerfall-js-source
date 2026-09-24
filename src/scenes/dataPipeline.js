@@ -10,7 +10,7 @@ import { isExteriorWindow } from '../world/climateSwaps.js';
 import { isEmissive, FIRE_WALLS_ARCHIVE } from '../world/emissiveTextures.js';   // TextureReader's auto-emissive table (lit lanterns, fireplaces, fire daedra)
 import { dfMeshToModel } from '../world/meshReader.js';
 import { fetchBytes, texName } from './shared.js';
-import { decodedTexture, preloadTextureArchive, preloadTextureRecord, isVendorArchive, vendorTextureStandIn } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones; AUDIT-DW F1: an icon's replacement is decoded when it is drawn
+import { decodedTexture, preloadTextureArchive, isVendorArchive, vendorTextureStandIn } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones
 import { dyeToken } from '../characters/dyes.js';   // DW3: the per-dye UI variant
 import { ROTOR, MACHINERY, MACHINERY_MODEL_ID, MACHINERY_CHILDREN, PLANK_GEAR, ROLLER } from '../world/windmillMesh.js';   // WM2b/WM2d/WM4b: the vendored mill and its machinery, uploaded like any other model
 import { skinnedBody } from '../world/windmills.js';   // WM2e: its walls and roof follow the climate
@@ -180,14 +180,19 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
    *  sharing a building - each ran createMesh and the second `set`
    *  overwrote the first, leaking a VAO and its buffers for the
    *  session (nothing destroys a gpuMeshes entry). The in-flight map is
-   *  the law getTexture above and buildPixel already carry. */
-  async function getGpuMesh(modelIdNum) {
-    if (gpuMeshes.has(modelIdNum)) return gpuMeshes.get(modelIdNum);
-    if (!meshPromises.has(modelIdNum)) {
-      meshPromises.set(modelIdNum, buildGpuMesh(modelIdNum).finally(() => meshPromises.delete(modelIdNum)));
+   *  the law getTexture above and buildPixel already carry.
+   *  AUDIT 68 S18-uploadpart-no-inflight: ONE door for every mesh key -
+   *  the mill's body, sail and machinery parts (uploadPart) kept a
+   *  completed-only copy of this cache, and two cold mill builds each
+   *  minted the mesh. */
+  async function cachedMesh(key, build) {
+    if (gpuMeshes.has(key)) return gpuMeshes.get(key);
+    if (!meshPromises.has(key)) {
+      meshPromises.set(key, build().finally(() => meshPromises.delete(key)));
     }
-    return meshPromises.get(modelIdNum);
+    return meshPromises.get(key);
   }
+  const getGpuMesh = (modelIdNum) => cachedMesh(modelIdNum, () => buildGpuMesh(modelIdNum));
   async function buildGpuMesh(modelIdNum) {
     // WM4b: MESH REPLACEMENT, the way DFU's MeshReplacement.TryImport-
     // GameObject runs BEFORE the classic mesh is read (MeshAssetImporter
@@ -198,7 +203,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     // id, textures out of the player's ARENA2, a CPU copy for the
     // collider, no doors of its own.
     if (modelIdNum === MACHINERY_MODEL_ID) {
-      const gpu = await uploadPart(modelIdNum, MACHINERY);
+      const gpu = await uploadModel(modelIdNum, MACHINERY);   // already inside getGpuMesh's in-flight entry
       cpuModels.set(modelIdNum, { modelIdNum, positions: MACHINERY.positions, indices: MACHINERY.indices, subMeshes: MACHINERY.subMeshes, doors: [] });
       return gpu;
     }
@@ -241,8 +246,8 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
   // climates - one mesh per skin, however many mills wear it.
   const ROTOR_KEY = -41600;
   const bodyKey = (climateBase, isWinter) => -(50000 + climateBase * 2 + (isWinter ? 1 : 0));
-  async function uploadPart(key, model) {
-    if (gpuMeshes.has(key)) return gpuMeshes.get(key);
+  const uploadPart = (key, model) => cachedMesh(key, () => uploadModel(key, model));
+  async function uploadModel(key, model) {
     for (const sm of model.subMeshes) {
       await getTexture(sm.textureArchive);
       uploadRecord(sm.textureArchive, sm.textureRecord, { opaque: true });
@@ -288,8 +293,8 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
   }
 
   loadFlats();   // warm it with the scene; the getters answer null until it lands
-  /** AUDIT-DW F1: the icon doors' per-record ask - decode THIS record's replacement (by the item's dye) before it is uploaded. Resolves once it is decoded or known absent; never throws. */
-  const preloadRecord = (archive, record, dye = null) => preloadTextureRecord(archive, record, 0, 'Albedo', dye).catch(() => null);
-  return { textureFiles, getTexture, getTextureSize, uploadRecord, uploadRecordFrame, preloadRecord, getGpuMesh, getWindmillMeshes, getMachineryParts, gpuMeshes, cpuModels, palette,
+  // DISC22-D: the icon doors' per-record decode is the drawer's own (ui/itemScroller.js preloadIconRecord) - the
+  // handout this bag once carried was taken by no scene, which is how the Steel Light Flail drew nothing.
+  return { textureFiles, getTexture, getTextureSize, uploadRecord, uploadRecordFrame, getGpuMesh, getWindmillMeshes, getMachineryParts, gpuMeshes, cpuModels, palette,
     loadFlats, flatCaption, flatFaceIndex, flatsFile: () => flats };
 }

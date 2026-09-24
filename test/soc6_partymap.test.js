@@ -548,7 +548,10 @@ test('SOC6: world.js hands the ONE dep bag a party function, and a seatless pose
   // the composer: the members OTHER than me (my own seat is the
   // player's own mark on both maps), and only those whose pose has
   // arrived
-  const fn = src.slice(src.indexOf('const partyMarkers = ()'), src.indexOf('const partyFrame = '));
+  // AUDIT 68 X2: anchored on the composer's own first line, and there is ONE - a same-named closure (MAP-PARTY1's
+  // dead one stood in toggleExteriorAutomap) captured the first indexOf and widened this slice by 3,800 lines
+  assert.equal((src.match(/const partyMarkers = /g) ?? []).length, 1, 'one party composer in world.js');
+  const fn = src.slice(src.indexOf('const partyMarkers = () => (social?.others() ?? [])'), src.indexOf('const partyFrame = '));
   assert.match(fn, /social\?\.others\(\) \?\? \[\]/, 'the party\'s OTHER members - never my own seat twice');
   assert.match(fn, /\.filter\(\(m\) => !!m\.p\)/, 'a seat with no pose yet is omitted');
   assert.match(fn, /px: m\.p\.px, py: m\.p\.py, in: m\.p\.in \?\? 0, loc: m\.p\.loc \?\? ''/,

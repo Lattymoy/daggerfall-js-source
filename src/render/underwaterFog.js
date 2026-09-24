@@ -122,8 +122,11 @@ export class UnderwaterFog {
     // ctor :30-35 - "get initial (backup) values - will be overwritten
     // (this is just a safety net mechanism so we start out with some
     // values)". The port's safety net is the dungeon's own fog
-    // (DungeonFogSettings: exponential 0.005, black).
-    this.original = { mode: 'exp', density: 0.005, start: 0, end: 0, color: [0, 0, 0] };
+    // (DungeonFogSettings: exponential 0.005, black). AUDIT 68
+    // S17-underwaterfog-default-dup: DUNGEON_FOG's own record, its
+    // colour copied - the backup is a plain record, not the frozen one.
+    /** @type {{mode: string, density: number, start: number, end: number, color: number[]}} */
+    this.original = { ...DUNGEON_FOG, color: [...DUNGEON_FOG.color] };
     this.waterFogColor = WATER_FOG_COLOR;
     this.waterMapColor = WATER_MAP_COLOR;
     this.fogDensityMin = FOG_DENSITY_MIN;

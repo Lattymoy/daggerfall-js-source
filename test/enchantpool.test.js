@@ -119,7 +119,7 @@ test('EC1: sinks route by POOL MEMBERSHIP, and the mode is not consulted', () =>
   // question. (It took one until the campaign showed no record is ever
   // in both pools, so the term could not change an answer.)
   assert.equal(liveEnchantFoeSinks.length, 5,
-    'foe, dungeonCtx, exteriorSinks, insidePool, insideSinks - and nothing else');
+    'foe, dungeonCtx, exteriorSinks, insidePool, insideSinks - and nothing else (AUDIT 68 X4: the provenance is a defaulted sixth)');
 });
 
 test('AUDIT 58: WHOSE RECORD IS THIS - one membership answer, and the sinks are not its only reader', () => {
@@ -173,7 +173,7 @@ test('AUDIT 58: the WABBAJACK re-stands a foe in the pool that owns it', () => {
   // is two pools. `exteriorFoePool` is the watch AND the encounter
   // foes, and this arm handed both to the encounter pool's remover.
   // That was not a leak - removeFoe never looks the record up in `foes`
-  // (exteriorFoes.js:412-417) and both pools share the host's one
+  // (exteriorFoes.js:419-424) and both pools share the host's one
   // renderer - but the teardown of a watchman is the WATCH's to own,
   // and `removeFoe`'s `questBehaviour?.notifyDestroyed()` is an
   // encounter-pool term a guard has no business reaching, so the
@@ -237,7 +237,7 @@ test('EC1: the world host consumes the shared law rather than a second copy of i
   assert.match(world, /const _insidePool = \(\) => modes\?\.insideFoes\?\.\(\) \?\? \[\];/,
     'AUDIT 58: the interior pool is the host\'s own join, not a third spelling of it');
   assert.match(world, /const enchantFoes = \(\) => liveEnchantFoes\(_mode\(\), modes\?\.dungeonCtx \?\? null, \(\) => \[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\], _insidePool\);/);
-  assert.match(world, /const enchantFoeSinks = \(f\) => liveEnchantFoeSinks\(f, modes\?\.dungeonCtx \?\? null, foeSinks, _insidePool, \(g\) => modes\?\.insideFoeSinksFor\(g\)\);/);
+  assert.match(world, /const enchantFoeSinks = \(f, fromPlayer = true\) => liveEnchantFoeSinks\(f, modes\?\.dungeonCtx \?\? null, foeSinks, _insidePool, \(g, fp\) => modes\?\.insideFoeSinksFor\(g, fp\), fromPlayer\);/);
   // AUDIT 58 (review): and the MOUNT'S OWN HEADER no longer states the
   // opposite of what the mount does. The parenthetical forty lines
   // above it said the interior mode's foes list is empty "so the scan
@@ -255,8 +255,8 @@ test('EC1: the world host consumes the shared law rather than a second copy of i
   // and the interior host really answers that sinks door, over its own
   // two pools, with world.js's own _encounter split
   const wm = read('src/scenes/worldModes.js');
-  assert.match(wm, /insideFoeSinksFor\(foe\) \{/, 'the interior host has a foeSinksFor of its own');
-  assert.match(wm, /if \(foe\._encounter\) interiorFoes\?\.damageFoe\(foe, n, player\.pos\);\n\s+else interiorGuards\?\.hurtGuard\(foe, n, player\.pos\);/,
+  assert.match(wm, /insideFoeSinksFor\(foe, fromPlayer\) \{/, 'the interior host has a foeSinksFor of its own');   // AUDIT 68 X4: + the engine's provenance
+  assert.match(wm, /if \(foe\._encounter\) interiorFoes\?\.damageFoe\(foe, n, player\.pos, null, \{ fromPlayer: fp, kind: 'spell' \}\);\n\s+else interiorGuards\?\.hurtGuard\(foe, n, player\.pos, null, \{ fromPlayer: fp \}\);/,
     'routed by pool, so the billboard dies in the pool that owns it');
   // every enchant-ctx site that reaches a foe's vitals goes through the
   // router - a bare foeSinks() there is the exterior assumption again.
@@ -323,7 +323,7 @@ test('AUDIT 58 (f2/hosts): the EXTERIOR host mounts the same body over its own p
   // named join, not a second spread - two spreads is two laws.
   assert.match(ext, /const _insidePool = \(\) => modes\?\.insideFoes\?\.\(\) \?\? \[\];/);
   assert.match(ext, /const enchantFoes = \(\) => liveEnchantFoes\(_mode\(\), modes\?\.dungeonCtx \?\? null, exteriorFoePool, _insidePool\);/);
-  assert.match(ext, /const enchantFoeSinks = \(f\) => liveEnchantFoeSinks\(f, modes\?\.dungeonCtx \?\? null, foeSinks, _insidePool, \(g\) => modes\?\.insideFoeSinksFor\(g\)\);/);
+  assert.match(ext, /const enchantFoeSinks = \(f, fromPlayer = true\) => liveEnchantFoeSinks\(f, modes\?\.dungeonCtx \?\? null, foeSinks, _insidePool, \(g, fp\) => modes\?\.insideFoeSinksFor\(g, fp\), fromPlayer\);/);
   // the same law the world host's mount is held to: NO site inside the
   // ctx literal names a host pool - every foe door is a thunk over
   // something that routes by membership. This is the exact shape the
@@ -335,7 +335,7 @@ test('AUDIT 58 (f2/hosts): the EXTERIOR host mounts the same body over its own p
     'no site inside the mount names a host pool directly');
   // and the reflection path travels with the player's OWN sinks, which
   // is why they are hoisted here rather than inlined into the cast
-  // engine (effects.js:892/:906 heals the caster through them).
+  // engine (effects.js:885/:899 heals the caster through them).
   assert.match(ext, /const playerSpellSinks = \{/);
   assert.match(ext, /^\s*playerSinks: playerSpellSinks,$/m, 'one object, both readers');
   assert.match(mount, /^\s*playerSpellSinks,$/m);
@@ -354,7 +354,7 @@ test('AUDIT 58 (f2/hosts): the EXTERIOR host mounts the same body over its own p
   assert.match(rf, /if \(cityGuards\.guards\.includes\(f\)\) cityGuards\.removeGuard\(f\);\n\s*else exteriorFoes\.removeFoe\(f\);/, 'the watch is named by MEMBERSHIP, not by pool identity');
   assert.match(rf, /exteriorFoes\.spawnFoe\(mobileType, feet, \{ replacing: true \}\)/, 'AUDIT 62 F12: the re-stand cannot be refused by the cap');
   // ROAD-G TAIL: the arm names the watch pool ONLY for the membership route
-  // (world.js:4411's shape) - the removal, never the re-stand
+  // (world.js:4390's shape) - the removal, never the re-stand
   assert.equal((rf.match(/cityGuards\./g) || []).length, 2, 'guards.includes + removeGuard, nothing else');
   assert.equal(/cityGuards\.spawn/.test(rf), false, 'the re-stand is the encounter pool\'s');
   // (PR #59 review) pin the ARM: after the inside arm nothing returns before
@@ -372,7 +372,7 @@ test('AUDIT 58 (f2/hosts): the EXTERIOR host mounts the same body over its own p
   // while leaving every other assertion in this pin green.
   assert.match(sf, /const d = mode === 'dungeon' \? \(modes\?\.dungeonCtx \?\? null\) : null;\n\s*return standLooseFoe\(\{/);
   assert.match(sf, /collider: d \? d\.collider : collider,/, 'and it rays through the world it is standing in');
-  assert.match(sf, /\? d\.spawnLooseFoe\(mt, pos, \{ yawRad: so\.yawRad, allied: so\.allied \}\)\n\s*: exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: so\.yawRad, allied: so\.allied \}\)/);
+  assert.match(sf, /\? d\.spawnLooseFoe\(mt, pos, \{ yawRad: so\.yawRad, allied: so\.allied \}\)\n\s*: exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: so\.yawRad, allied: so\.allied, loose: true \}\)/);
 });
 
 test('EC1: the DETECT feed keeps its own exterior pool - one change, two consumers', () => {
@@ -417,7 +417,7 @@ test('EC1/ROAD-G G1: the two SPAWN arms stand a foe in the world the player IS i
   assert.match(body, /if \(mode === 'interior'\) return modes\?\.insideStandLooseFoe\?\.\(mobileType, opts\) \?\? null;/,
     'a building stands its foe through the INTERIOR host - never this host\'s street pool, which is what enchantFoeHost routes for the sinks');
   assert.match(body, /d\n\s*\? d\.spawnLooseFoe\(/, 'a dungeon stands its foe through the DUNGEON\'s chain');
-  assert.match(body, /: exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, allied: o\.allied \}\)/,
+  assert.match(body, /: exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, allied: o\.allied, loose: true \}\)/,
     'and the street through its own encounter pool');
   // The gate that remains is not a mode gate but a POOL gate, and it
   // still refuses: a mode this host does not know is not a world with

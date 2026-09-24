@@ -5,19 +5,15 @@
 // legL/legR) - it moves with the rig and never floats. Built in FINAL
 // (compressed) body space; shown for Argonian.
 
-// Catlike fur tones - a warm tabby coat + a lighter cream underbelly
-// (cats are counter-shaded: dark back/top, pale belly/chest/inner legs).
-export const KHAJIIT_FUR   = [[34, 26, 18], [58, 44, 30], [88, 66, 44], [120, 92, 62], [154, 122, 86], [188, 156, 116]];
-export const KHAJIIT_BELLY = [[70, 60, 46], [104, 90, 70], [138, 122, 96], [170, 154, 124], [200, 186, 156], [226, 214, 188]];
-// Argonian hide - mottled swamp green, dark to light.
-export const ARGONIAN_HIDE  = [[16, 26, 16], [28, 44, 26], [44, 64, 38], [64, 90, 52], [90, 118, 70], [118, 148, 92]];
+import { shadePiece, pushQuad } from './pieceLoft.js';
+import { KHAJIIT_FURS, ARGONIAN_HIDES } from '../palettes.js';
 
-function shadeScales(faces, ramp) {
-  const Lx = 0.5, Ly = 0.55, Lz = 0.67, Ln = Math.hypot(Lx, Ly, Lz);
-  const snap = (t) => ramp[Math.max(0, Math.min(ramp.length - 1, Math.round(t * (ramp.length - 1))))];
-  for (const f of faces) { const it = Math.min(1, Math.max(0.08, (f.n[0]*Lx + f.n[1]*Ly + f.n[2]*Lz) / Ln * 0.9 + 0.18)); f._i = it; f.c = snap(it); }
-  return faces;
-}
+// AUDIT 68 S06-race-ramp-table-dup: the defaults are the palette
+// table's FIRST swatch (Tabby coat/belly - cats are counter-shaded: dark
+// back/top, pale belly/chest/inner legs - and Swamp hide), not copies.
+export const KHAJIIT_FUR   = KHAJIIT_FURS[0].coat;
+export const KHAJIIT_BELLY = KHAJIIT_FURS[0].belly;
+export const ARGONIAN_HIDE = ARGONIAN_HIDES[0].ramp;
 
 // small raised pyramid scale at point P with outward normal n, tagged g.
 function scaleBump(out, P, n, size, lift, g) {
@@ -34,11 +30,7 @@ function scaleBump(out, P, n, size, lift, g) {
   const B = [base[0]+t1[0]*s, base[1]+t1[1]*s, base[2]+t1[2]*s];
   const C = [base[0]-t2[0]*s, base[1]-t2[1]*s, base[2]-t2[2]*s];
   const D = [base[0]-t1[0]*s, base[1]-t1[1]*s, base[2]-t1[2]*s];
-  const tri = (a, b, c) => {
-    const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2], vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];
-    let nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx; const L=Math.hypot(nx,ny,nz)||1;
-    out.push({ p:[...a,...b,...c,...c], n:[nx/L,ny/L,nz/L], g });
-  };
+  const tri = (a, b, c) => pushQuad(out, a, b, c, c, g);
   tri(A, B, apex); tri(B, C, apex); tri(C, D, apex); tri(D, A, apex);
 }
 
@@ -75,10 +67,10 @@ export function buildBodyScales(bodyFaces, skin) {
     const tl=[-w, py+0.026, z], tr=[w, py+0.026, z];
     const ml=[-w*0.9, py, z+0.010], mr=[w*0.9, py, z+0.010];
     const bot=[0, py-0.034, z];
-    const q = (a,b,c,d) => { const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=d[0]-a[0],vy=d[1]-a[1],vz=d[2]-a[2]; let nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx; const L=Math.hypot(nx,ny,nz)||1; faces.push({p:[...a,...b,...c,...d],n:[nx/L,ny/L,nz/L],g:'body'}); };
+    const q = (a, b, c, d) => pushQuad(faces, a, b, c, d, 'body');
     q(tl, tr, mr, ml); q(ml, mr, bot, bot);
   }
-  return shadeScales(faces, skin);
+  return shadePiece(faces, skin, 0.08, 0.18);
 }
 
 // short fur tuft at P: a thin blade angled outward then swept DOWN (fur
@@ -117,6 +109,6 @@ export function buildBodyFur(bodyFaces, coat = KHAJIIT_FUR, belly = KHAJIIT_BELL
     if (region === 'belly' && !ventral) continue;
     furTuft(ventral ? bellyF : coatF, [cx, cy, cz], n, len, f.g);
   }
-  shadeScales(coatF, coat); shadeScales(bellyF, belly);
+  shadePiece(coatF, coat, 0.08, 0.18); shadePiece(bellyF, belly, 0.08, 0.18);
   return coatF.concat(bellyF);
 }

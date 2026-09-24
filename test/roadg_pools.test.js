@@ -23,7 +23,7 @@
 //      the refusal into the code instead. In the street the arm handed
 //      a struck watchman to the ENCOUNTER pool's `removeFoe` - which
 //      was not a leak: that remover never looks the record up in
-//      `foes` (exteriorFoes.js:416-421) and both pools share the host's
+//      `foes` (exteriorFoes.js:423-428) and both pools share the host's
 //      one renderer, so the watchman got exactly what `removeGuard`
 //      gives it. Routing by POOL MEMBERSHIP is an OWNERSHIP law: each
 //      pool owns the teardown of its own records, and `removeFoe`'s
@@ -198,10 +198,14 @@ test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', (
   const walks = [];
   const { g } = pool({ makeAreaHostile: () => walks.push('walk') });
   const w = watchman({ hostile: false, team: 'PlayerAlly' });
-  // FormulaHelper.cs:576-583: a weapon material the target refuses
-  // returns 0 - a shaft that CONNECTED and dealt nothing, DFU's way
-  // (formulas.js:583-591).
-  w.entity.minMetalToHit = 1;
+  // A shaft that CONNECTED and MISSED - the to-hit roll failed, `rolls`
+  // pinned high - returns 0 under the stock formula and PCAAO's alike.
+  // A refused material is NOT that zero while PCAAO ships on: its
+  // softMaterialRequirements scale the blow instead of refusing it
+  // (pcaao.js pcaaoAttackDamage), so this test's old premise - material
+  // 0 against minMetalToHit 1, the roll left to Math.random - dealt
+  // damage whenever the ~2% hit roll landed (release-desktop's gate on
+  // #365's merge: "10 !== 0").
   g.guards.push(w);
   const hits = [];
   const dmg = playerArrowHitFoe({ pos: [1, 0, 4], dir: [0, 0, -1], weapon: { material: 0, templateIndex: 121 } }, w, {
@@ -214,8 +218,9 @@ test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', (
     onAttackFromPlayer: (f) => (g.guards.includes(f)
       ? g.handleAttackFromPlayer(f, [1, 0, 4])
       : assert.fail('the watchman must take the WATCH pool\'s door')),
+    rolls: () => 0.999,   // every roll high: the crit fails, the to-hit roll (100) misses
   });
-  assert.equal(dmg, 0, 'the material was refused: the shaft connected and dealt nothing');
+  assert.equal(dmg, 0, 'the shaft connected and missed: it dealt nothing');
   assert.deepEqual(hits, [], 'so the damage door never ran');
   assert.deepEqual(walks, ['walk'], 'and the pacified watchman still turned the whole active database');
   assert.equal(w.ai.calls.length, 1, 'and learned where the shaft came from');
@@ -225,7 +230,7 @@ test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', (
 
 test('ROAD-G G1(a): all three arrow hosts ROUTE the hostility seam by pool', () => {
   // The door is PUBLIC now, as the encounter pool's has always been
-  // (exteriorFoes.js:1969), so every host can reach it.
+  // (exteriorFoes.js:1978), so every host can reach it.
   const cg = read('src/scenes/cityGuards.js');
   assert.match(cg, /restoreWorld, removeGuard, handleAttackFromPlayer,/,
     'the watch exports its hostility pair on the returned surface');
@@ -311,10 +316,10 @@ test('ROAD-G G1(b): both hosts route the transform by POOL MEMBERSHIP', () => {
 
   // ROAD-G G1 (review): the RATIONALE this lane first wrote was FALSE
   // and is struck in all seven places it reached. `removeFoe`
-  // (exteriorFoes.js:416-421) never looks a record up in `foes` and
+  // (exteriorFoes.js:423-428) never looks a record up in `foes` and
   // both pools share the host's one renderer, so the old arm tore a
   // watchman down exactly as `removeGuard` does - batch freed,
-  // `dead = true`, no corpse, skipped by cityGuards.js:936 and spliced
+  // `dead = true`, no corpse, skipped by cityGuards.js:937 and spliced
   // at :1125 in that same pass. The router is an OWNERSHIP fix, not a
   // leak fix, and no page may say otherwise again.
   // (the halves are joined at runtime so this very file does not carry
@@ -348,14 +353,14 @@ test('ROAD-G G1(c): the SPAWN arms stand a foe in the world the player IS in', (
   // written at worldModes.js's dungeon arm. Raw, the direction angle
   // placeFoeFreely reads is ~1 degree instead of ~75, so the Sanguine
   // Rose's allied Daedroth (lineOfSightCheck defaults TRUE,
-  // hostEnchant.js:61/:208) stands DEAD AHEAD inside the view instead
+  // hostEnchant.js:67/:216) stands DEAD AHEAD inside the view instead
   // of just outside the cone. MUTANT: `fieldOfView()` raw, or
   // `* 90 / Math.PI` - both red here, and the slice is scoped to this
   // arm so worldModes' three other spellings cannot mask it.
   assert.match(stand, /fovDegrees: fieldOfView\(\) \* 180 \/ Math\.PI,/,
     'the placement cone is DEGREES, not the radians fieldOfView() answers');
   assert.match(stand, /foes: interiorFoePool\(\),/, 'and the occupancy test walks both of its pools - the watch blocks a spot too');
-  assert.match(stand, /spawn: \(mt, pos, o\) => interiorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, allied: o\.allied \}\),/,
+  assert.match(stand, /spawn: \(mt, pos, o\) => interiorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, allied: o\.allied, loose: true \}\),/,
     'through the building\'s own chain, carrying allied for the Sanguine Rose');
   assert.match(wm, /insideStandLooseFoe\(mobileType, opts = \{\}\) \{ return standInteriorLooseFoe\(mobileType, opts\); \},/);
 

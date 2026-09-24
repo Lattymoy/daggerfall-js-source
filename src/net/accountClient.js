@@ -39,6 +39,7 @@
 
 import { HANDLE_RE } from './handleShape.js';
 import { LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTER_LINES_MAX, LETTERS_SENT_MAX, LETTERS_PAIR_MAX } from './letterLaw.js';   // MAIL1: the letter's bounds, in the refusals' own sentences
+import { MUTE_RANGE_TEXT } from './moderation.js';   // AUDIT 68 S14-mute-range-text-duplicated: the mute's bound in the refusal's sentence, from its home
 
 /** WHERE THE SERVICE IS. Its own constant beside the relay's
  *  DEFAULT_SERVER (net/online.js), because they are two Workers and
@@ -127,7 +128,7 @@ export const REFUSALS = Object.freeze({
   'no-player': 'That player could not be found.',
   // DUEL1: the duelling record - a loss named against oneself (two tabs of one account duelling)
   self: 'A duel against your own account does not count.',
-  'bad-minutes': 'A mute is 1 to 10080 minutes (one week).',
+  'bad-minutes': MUTE_RANGE_TEXT,
   // MAIL1, letters. The words are the service's (server-account/src/letters.js) and the letter's law's
   // (net/letterLaw.js, which the service returns verbatim); every one says what to do next.
   'mail-needs-account': 'Letters need a username and a password. Give this account one and you can send and receive them.',

@@ -143,8 +143,12 @@ test('NT1 (F213): dungeonContext.destroy latches FIRST and marks piles dead befo
 
 test('NT1 (F054): the no-landing throw frees the interior build it abandons', () => {
   const wm = src('scenes/worldModes.js');
-  assert.ok(wm.includes("if (!landing) { ctx.destroy(); throw new Error('no interior landing'); }"),
+  // AUDIT 68: through the ONE abandon, which frees the people's bootstrap
+  // quest behaviours with the context (X3's world-moved arm and AUDIT 39
+  // #29's markerless dungeon share it).
+  assert.ok(wm.includes("if (!landing) { abandonContext(ctx); throw new Error('no interior landing'); }"),
     'the fully-built context is freed before the throw the hosts only log');
+  assert.match(wm, /function abandonContext\(ctx\) \{\s*destroyPeopleBehaviours\(ctx\.people\);\s*ctx\.destroy\(\);\s*\}/);
 });
 
 // ---------------------------------------------------------------

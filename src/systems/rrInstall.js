@@ -18,8 +18,8 @@ import { syntheticTimeIncrease } from './effectBroker.js';   // AUDIT-RR2 G20: t
 import { registerEntityFold } from './entityMods.js';
 import { overridePotionRecipes } from './potions.js';
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
-import { setUnderworldRule, setGuildExpelledHook, setGuildSkillsOverride } from './guilds.js';
-import { setTrainingSkillsOverride, registerMerchantService } from './guildServices.js';
+import { setUnderworldRule, setGuildExpelledHook } from './guilds.js';
+import { registerMerchantService } from './guildServices.js';
 import { carriedWeight } from './inventory.js';
 import { liveStat, maxFatigue } from './statMods.js';
 import { equipTableOf, EQUIP_SLOTS, lowerCondition } from './equip.js';
@@ -36,7 +36,7 @@ import { RR_QUEST_LIST, RR_CUSTOM_FACTIONS, RR_PLACES_TABLE, RR_FACTIONS_TABLE, 
 import {
   rrEnabled, rrModule, rrAdjustWeaponHitChanceMod, rrAdjustWeaponAttackDamage, rrClimbingChance, rrMeleeWeaponAnimTime,
   rrWeaponToHit, rrConditionDamageThroughPhysicalHit, rrDamageModifierClassic, rrMaxBankLoan, rrShipAvailable,
-  rrEncumbranceEffect, RR_POTION_RECIPES, applyEnemyAppearance, rrUnderworldRule, rrFightersGuildSkills, rrFightersTrainingSkills,
+  rrEncumbranceEffect, RR_POTION_RECIPES, applyEnemyAppearance, rrUnderworldRule,
   rrRidingOn, rrRidingSetting, rrCanRunRiding, rrRidingInputLimits,
 } from './rrRealism.js';
 
@@ -87,7 +87,7 @@ export function installRoleplayRealism() {
   // shipPorts (:158-161): TransportManager.ShipAvailiable
   setShipAvailable((q) => rrShipAvailable(q));
 
-  // underworldExpulsion (:162-169) + fightersTeachHandToHand (:214-219): the guild classes
+  // underworldExpulsion (:162-169): the guild classes (fightersTeachHandToHand, :214-219, RETIRED - FGH2H-R, rrRealism.js)
   setUnderworldRule((guildName) => rrUnderworldRule(guildName));
   setGuildExpelledHook((guild, entity) => {
     const rule = rrUnderworldRule(guild?.name);
@@ -100,8 +100,6 @@ export function installRoleplayRealism() {
       for (let i = 0; i < wave.count; i++) _host.spawnFoe(wave.mobileType, { minDistance: wave.minDistance, maxDistance: wave.maxDistance, lineOfSightCheck: false, attempts: RR_SQUAD_PLACE_ATTEMPTS });
     }
   });
-  setGuildSkillsOverride((guildName) => rrFightersGuildSkills(guildName));
-  setTrainingSkillsOverride((guildName) => rrFightersTrainingSkills(guildName));
 
   // climbingRestriction (:170-173): CalculateClimbingChance
   registerClimbingChanceOverride((base, inputs) => {
@@ -189,7 +187,5 @@ function encumbranceOf(entity) {
   });
 }
 
-/** Test seam. */
-export function _resetRoleplayRealism() { _installed = false; }
 export const roleplayRealismInstalled = () => _installed;
 export { rrEnabled };

@@ -43,7 +43,7 @@
 // this lane is.
 // ═══════════════════════════════════════════════════════════════════
 
-import { PEN, HALO_PEN, NAME_FACE, toPaper, paintCaret, CARET_R } from './inkMap.js';
+import { PEN, HALO_PEN, NAME_FACE, toPaper, paintCaret, paintPartyCarets, CARET_R } from './inkMap.js';
 import { STRIP, stripScale, grabHit } from './mapStrip.js';
 
 /** What each thing on a dungeon plan is drawn in. Every one of these is
@@ -55,6 +55,7 @@ export const PLAN_PEN = Object.freeze({
   caret: PEN.player,   // the player, and which way they face
   beacon: PEN.select,  // the way in
   mark: PEN.soft,      // a door, a teleporter
+  open: PEN.soft,      // DISC22-G: an edge onto floor not yet seen - a way on, not a wall
   note: PEN.name,      // what the player wrote down
   halo: PEN.halo,
 });
@@ -106,7 +107,7 @@ export const FLOOR_STRIP_MAX = 12;
  * plan and nothing to tint.
  *
  * @param {*} ctx - a 2D context
- * @param {{chains?: Array<Array<{x:number,y:number}>>}} plan
+ * @param {{chains?: Array<Array<{x:number,y:number}>>, openChains?: Array<Array<{x:number,y:number}>>}} plan
  * @param {{ox:number, oy:number, scale:number}} view
  * @param {{paperW:number, paperH:number, dpr?:number, walked?:{occupancy?:*}|null, clear?:boolean}} opts
  */
@@ -155,6 +156,26 @@ export function paintPlanStatic(ctx, plan, view, opts) {
     }
   }
   ctx.stroke();
+
+  // DISC22-G: THE WAYS ON - an edge of what has been revealed that opens onto real floor not yet seen, drawn light
+  // and broken, so a doorway into a room still to be found reads as a doorway (the 3D map shows the open mouth)
+  const open = plan?.openChains ?? [];
+  if (open.length) {
+    ctx.strokeStyle = PLAN_PEN.open;
+    ctx.lineWidth = Math.max(1, ctx.lineWidth * 0.6);
+    ctx.setLineDash?.([3, 4]);
+    ctx.beginPath();
+    for (const chain of open) {
+      if (chain.length < 2) continue;
+      let first = true;
+      for (const p of chain) {
+        const [x, y] = toPaper(view, p.x, p.y);
+        if (first) { ctx.moveTo(x, y); first = false; } else { ctx.lineTo(x, y); }
+      }
+    }
+    ctx.stroke();
+    ctx.setLineDash?.([]);
+  }
 }
 
 /**
@@ -173,7 +194,9 @@ export function paintPlanStatic(ctx, plan, view, opts) {
  * @param {{paperW:number, paperH:number, dpr?:number, clear?:boolean, pulse?:number,
  *          player?:{x:number,z:number,yaw?:number}|null,
  *          entrance?:{x:number,z:number}|null,
- *          marks?:Array<{x:number,z:number,kind?:string,name?:string}>}} opts
+ *          marks?:Array<{x:number,z:number,kind?:string,name?:string}>,
+ *          links?:Array<{x0:number,z0:number,x1:number,z1:number}>,
+ *          party?:Array<{x:number,z:number,yaw?:number,name?:string}>, partyFill?:string}} opts
  */
 export function paintPlanOverlay(ctx, view, opts) {
   if (!ctx?.setTransform) return;
@@ -183,6 +206,23 @@ export function paintPlanOverlay(ctx, view, opts) {
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   const pulse = opts.pulse ?? 0;
+
+  // DISC22-G: A TELEPORTER'S TWO ENDS, JOINED - both ends on this storey are one broken line between two rings, so a
+  // pair reads as a pair (DFU's 3D map draws the connection); an end whose partner is on another storey carries
+  // that storey's name instead (the mark's own `name`)
+  if (opts.links?.length) {
+    ctx.strokeStyle = PLAN_PEN.mark;
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash?.([2, 3]);
+    ctx.beginPath();
+    for (const l of opts.links) {
+      const [x0, y0] = toPaper(view, l.x0, l.z0);
+      const [x1, y1] = toPaper(view, l.x1, l.z1);
+      ctx.moveTo(x0, y0); ctx.lineTo(x1, y1);
+    }
+    ctx.stroke();
+    ctx.setLineDash?.([]);
+  }
 
   for (const m of opts.marks ?? []) {
     const [x, y] = toPaper(view, m.x, m.z);
@@ -207,6 +247,19 @@ export function paintPlanOverlay(ctx, view, opts) {
       ctx.arc(x, y, MARK_R, 0, Math.PI * 2);
       ctx.moveTo(x + MARK_R * 0.5, y);
       ctx.arc(x, y, MARK_R * 0.5, 0, Math.PI * 2);
+      if (m.name) {
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.font = `11px ${NAME_FACE}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.lineWidth = 2 * HALO_PEN;
+        ctx.strokeStyle = PLAN_PEN.halo;
+        ctx.strokeText(m.name, x, y + MARK_R + 2);
+        ctx.fillStyle = PLAN_PEN.mark;
+        ctx.fillText(m.name, x, y + MARK_R + 2);
+        continue;
+      }
     } else {
       // a door: a stroke across the opening
       ctx.moveTo(x - MARK_R, y); ctx.lineTo(x + MARK_R, y);
@@ -229,6 +282,14 @@ export function paintPlanOverlay(ctx, view, opts) {
     ctx.lineTo(x, y - BEACON_R * 0.55);
     ctx.lineTo(x + BEACON_R * 0.4, y - BEACON_R * 0.15);
     ctx.stroke();
+  }
+
+  // DISC23-A: the party members on this storey, under the player's own caret
+  if (opts.party?.length && opts.partyFill) {
+    paintPartyCarets(ctx, opts.party.map((m) => {
+      const [x, y] = toPaper(view, m.x, m.z);
+      return { x, y, yaw: m.yaw, name: m.name };
+    }), { fill: opts.partyFill, halo: PLAN_PEN.halo });
   }
 
   if (opts.player) {
@@ -325,4 +386,33 @@ export function paintFloorStrip(ctx, layout, { font = null } = {}) {
     }
   }
   ctx.restore();
+}
+
+/** DISC23-A: the dot a storey wears on the strip while a party member stands on it, in strip units. */
+export const FLOOR_PARTY_DOT = Object.freeze({ r: 3, gap: 5 });
+
+/**
+ * DISC23-A: WHICH FLOOR YOUR FRIEND IS ON. A member is drawn only on their own storey (the player caret's law), so a
+ * member one floor down is on no plan the player is looking at - and "find each other" is exactly that question. The
+ * strip answers it: a dot in the party's green beside every storey a member stands on, so the next press is the right
+ * one. On the overlay, not the kept layer, because members change storeys while the plan under them does not.
+ * @param {*} ctx
+ * @param {{scale:number, rows:Array<{index:number, x:number, y:number, h:number}>}|null} layout
+ * @param {Set<number>} storeys
+ * @param {string} fill
+ */
+export function paintFloorStripParty(ctx, layout, storeys, fill) {
+  if (!ctx?.beginPath || !layout?.rows?.length || !storeys?.size) return;
+  const r = FLOOR_PARTY_DOT.r * layout.scale, gap = FLOOR_PARTY_DOT.gap * layout.scale;
+  for (const row of layout.rows) {
+    if (!storeys.has(row.index)) continue;
+    const x = row.x - gap - r, y = row.y + row.h / 2;
+    ctx.lineWidth = 2 * HALO_PEN;
+    ctx.strokeStyle = PLAN_PEN.halo;
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fill();
+  }
 }

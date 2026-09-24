@@ -23,6 +23,7 @@ import { rarityTint, rarityLines } from '../systems/lootRarity.js';   // LR1: th
 import { bookTitle } from '../systems/books.js';         // D7: GetBookTitle, the Books arm
 import { ToolTip } from './toolTip.js';                  // D7: itemButtons[i].ToolTip = toolTip (:340)
 import { isSummoned } from '../systems/inventory.js';    // AUDIT 64 F53: IsSummoned, the handler's third arm
+import { preloadTextureRecord } from '../systems/textureReplacement.js';   // DISC22-D: the record's decode, owned by the door that draws it
 
 export const LIST_SLOTS = 4;
 export const CELL_X = 9;         // itemListPanelRect.x - the buttons' column
@@ -248,6 +249,18 @@ export function drawCellBackground(renderer, m, rect, slot, colour) {
   return true;
 }
 
+/** DISC22-D (2026-09-24, kurkku: "Steel light flail sprite doesn't show up"): THE RECORD'S DECODE, BEFORE ITS UPLOAD -
+ *  GetItemImage's TryImportTexture(archive, record, 0, item.dyeColor) (ItemHelper.cs:458), which DFU makes at the
+ *  moment it draws. AUDIT-DW F1 made it an OPTIONAL hook on the host's icons object, and none of the seven scenes that
+ *  build that object ever passed it: a lazy replacement (Roleplay Realism Items' 514-526, Diverse Weapons' 233/234)
+ *  was never decoded, a mod-only archive's upload then threw on an empty image, the catch swallowed it, and the
+ *  warm set never asked again - the cell drew no flail. The door that draws the icon owns its decode now, as the paper
+ *  doll's does (paperDoll.js); `icons.preloadRecord` stays only as a test's spy. Never throws. */
+export function preloadIconRecord(icons, img) {
+  const ask = icons?.preloadRecord ?? ((archive, record, dye) => preloadTextureRecord(archive, record, 0, 'Albedo', dye).catch(() => null));
+  return ask(img.archive, img.record, img.dye);
+}
+
 /** A per-window icon drawer over the host texture pipeline
  *  ({ getTexture, uploadRecord, textures }): lazily warms each
  *  template's world-texture record + captures its native size, then
@@ -280,7 +293,7 @@ export function makeIconDrawer(icons, identityOf = null) {
       warm.add(key);
       icons.getTexture(img.archive).then(async (tex) => {
         if (img.record < tex.recordCount) {
-          await icons.preloadRecord?.(img.archive, img.record, img.dye);   // AUDIT-DW F1: this record's replacement, decoded when it is drawn - not the archive's 280 before the first classic icon
+          await preloadIconRecord(icons, img);   // AUDIT-DW F1: this record's replacement, decoded when it is drawn - not the archive's 280 before the first classic icon
           const variant = icons.uploadRecord(img.archive, img.record, { mips: false, removeMask: true, dye: img.dye });   // REVIEW 2026-09-05: item art is UI art - ImageReader.cs:59, no mip chain; HM1: GetInventoryImage strips the 0xFF mask (the helm's halo)
           glKeys.set(key, `${img.archive}_${img.record}${variant ?? '#ui'}`);
           sizes.set(key, tex.getSize(img.record));

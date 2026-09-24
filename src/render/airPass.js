@@ -84,7 +84,8 @@ import { multiply } from '../world/mat4.js';
 import { setFrameTarget } from './renderTarget.js';
 import { CLOUD_SHADOW_GLSL } from './cloudShadow.js';   // VC6c: a covered sun throws no shafts - the same field the ground's shadow reads
 import { BAYER_GLSL, BAYER_MEAN } from './orderedDither.js';   // EL6: the port's one Bayer - the dither at the byte, the AO's rotation
-import { spherePlanes, recordVisible, subMeshVisible, batchVisible } from './bounds.js';   // EL5: the emission replay culls by the records' spheres too (a leaf's import: bounds.js touches no GL)
+import { spherePlanes, recordVisible, subMeshVisible, batchVisible, ZERO_ORIGIN } from './bounds.js';   // EL5: the emission replay culls by the records' spheres too (a leaf's import: bounds.js touches no GL)
+import { billboardKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-shadow-reach: re-keyed here, however the batch reached the records
 
 /** The kill door: `?air=off` keeps EL1 and EL2 and drops the three effects. */
 export function airOn(search = globalThis.location?.search ?? '') {
@@ -1080,9 +1081,7 @@ export class AirPass {
     this.stats = { emitDraws: 0, glares: 0, shafts: false, haze: false, vol: false };   // VC7b: whether the haze was marched   // VOL1: whether the glow was marched this frame
     this._identityView = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
     this._planes = new Float32Array(24);   // EL5: the emission replay's frustum
-    this._black = new Float32Array(3);
     this._white = new Float32Array([1, 1, 1]);
-    this._zeroWind = new Float32Array(4);
     this._vp = new Float32Array(16);
   }
 
@@ -1370,7 +1369,7 @@ export class AirPass {
   }
 
   /** AUDIT VOL1: the images a frame the pass was not prepared for gets - black, so the resolve adds nothing of a
-   *  frame gone by (and the AO's mix is 0 for it already). */
+   *  frame gone by (and composite() uploads the AO's mix as 0 for it). */
   _blank(quad) {
     const gl = this.gl, T = this.targets;
     this.stats.emitDraws = 0; this.stats.glares = 0; this.stats.shafts = false; this.stats.haze = false; this.stats.vol = false;   // nothing drawn for it
@@ -1450,7 +1449,7 @@ export class AirPass {
         for (const b of r.batches) {
           if (!b?.vao || b._dead || b.conceal) continue;
           if (!batchVisible(planes, b)) continue;   // EL5
-          const key = b._bbKey ?? (b.frame == null ? `${b.archive}_${b.record}` : `${b.archive}_${b.record}#${b.frame}`);
+          const key = billboardKey(b);
           const emis = f.emissionTextures.get(key);
           const tex = f.textures.get(key);
           if (!emis || !tex) continue;
@@ -1462,7 +1461,7 @@ export class AirPass {
             this._emitDepth(bound, depthOn, T);
           }
           gl.uniform3fv(P.emitBb.uRight, r.right); gl.uniform3fv(P.emitBb.uUp, r.up);   // the camera basis the batch was drawn with
-          const o = b.origin || [0, 0, 0];
+          const o = b.origin || ZERO_ORIGIN;   // AUDIT 68 S16-v-replay-origin-alloc
           gl.uniform3f(P.emitBb.uOrigin, o[0], o[1], o[2]);
           gl.uniform2f(P.emitBb.uSize, b.size.w, b.size.h);
           gl.uniform1f(P.emitBb.uSway, b.sway || 0);
@@ -1483,7 +1482,7 @@ export class AirPass {
     const gl = this.gl;
     const live = on && this.prevValid && this.frame;
     gl.activeTexture(gl.TEXTURE0 + AIR_CONTACT_UNIT);
-    gl.bindTexture(gl.TEXTURE_2D, live ? this.frame.prevDepth : (this.frame ? this.frame.prevDepth : null));
+    gl.bindTexture(gl.TEXTURE_2D, this.frame ? this.frame.prevDepth : null);   // AUDIT 68 S16-air-dead-fields: bound on or off - `live` only flags the march (both arms of the old ternary bound this)
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform1i(loc.prevDepth, AIR_CONTACT_UNIT);
     gl.uniformMatrix4fv(loc.prevVP, false, this.prevVP);
@@ -1553,7 +1552,10 @@ export class AirPass {
     // for - a world frame - and not otherwise: a menu's or a video's frame binds the frame target too, and its resolve
     // used to paint the last world frame's glares, shafts and glow over it (the glow was the first to show); such a
     // frame gets black images and no measure
-    if (this.f && this.fresh) this._images();
+    // AUDIT 68 S16-air-stale-ao-unprepared: and the AO's mix with them - `this.f` outlives the world frame it was set
+    // for, and an unprepared frame multiplied in the last world frame's crevices
+    const prepared = !!this.f && this.fresh;
+    if (prepared) this._images();
     else { this._blank(quad); this.measured = false; }
     this.fresh = false;
     gl.disable(gl.BLEND);
@@ -1618,7 +1620,7 @@ export class AirPass {
     gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, T.shaft.tex); gl.uniform1i(P.resolve.uShaft, 2);
     gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, T.aoBlur.tex); gl.uniform1i(P.resolve.uAO, 3);   // EL6
     gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, T.volOut.tex); gl.uniform1i(P.resolve.uVol, 4);   // VOL1: the blurred, tonemapped glow
-    gl.uniform1f(P.resolve.uAOMix, this.f ? AIR_AO_RESOLVE : 0);
+    gl.uniform1f(P.resolve.uAOMix, prepared ? AIR_AO_RESOLVE : 0);
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform4fv(P.resolve.uRect, this.rect);
     gl.uniform2fv(P.resolve.uCanvas, this.canvas);
@@ -1634,5 +1636,6 @@ export class AirPass {
   release() {
     if (this.frame) setFrameTarget(null);
     this.pending = false;
+    this.fresh = false;   // AUDIT 68 S16-air-stale-ao-unprepared: a prepare the resolve never took is no frame's when the door reopens
   }
 }

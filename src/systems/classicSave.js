@@ -530,7 +530,7 @@ export function classicGuildMemberships(saveTree, factionDict, vampire = false) 
       // Temple(Arkay) / KnightlyOrder(Horn) instance and IsMember
       // answers true. The port's slot carries the guild's NAME to say
       // which temple or order fills the shared group slot
-      // (guilds.js:575-578 `membershipOf`), and that name has to be the
+      // (guilds.js:578-581 `membershipOf`), and that name has to be the
       // PORT's guild-record name - the one joinGuild writes - not the
       // FACTION.TXT record name ("The Fighters Guild", "Arkay"), which
       // no consumer matches. `createGuildForGroup` is CreateGuildObj,

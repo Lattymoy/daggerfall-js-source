@@ -7,6 +7,7 @@
 //     exactly as in DFU).
 //   - readEmbedded ports DFU's Read(ref BinaryReader): 768 palette bytes embedded in
 //     another stream (TextureFile uses this later in the arc).
+// Not ported (no port consumer): MakeRandom.
 
 export class DFPalette {
   constructor() {
@@ -83,16 +84,6 @@ export class DFPalette {
       this._buffer[offset++] = i;
       this._buffer[offset++] = i;
       this._buffer[offset++] = i;
-    }
-  }
-
-  /** Fills entire palette with random values (dev utility, non-deterministic). */
-  makeRandom() {
-    let offset = this._headerLength;
-    for (let i = 0; i < 256; i++) {
-      this._buffer[offset++] = (Math.random() * 256) % 255 | 0;
-      this._buffer[offset++] = (Math.random() * 256) % 255 | 0;
-      this._buffer[offset++] = (Math.random() * 256) % 255 | 0;
     }
   }
 

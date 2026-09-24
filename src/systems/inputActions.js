@@ -663,15 +663,11 @@ export function clearAxisBinding(store, action) {
   touched(store);
   for (const [axis, a] of [...store.axisActions]) if (a === action) store.axisActions.delete(axis);
 }
-/** ClearAxisBinding(code) (:816-822): by axis name. */
-export function clearAxisBindingByAxis(store, axis) { touched(store); store.axisActions.delete(axis); }
 /** ClearJoystickUIBinding(action) (:862-867). */
 export function clearJoystickUIBinding(store, action) {
   touched(store);
   for (const [code, a] of [...store.joystickUI]) if (a === action) store.joystickUI.delete(code);
 }
-/** ClearJoystickUIBinding(code) (:851-856). */
-export function clearJoystickUIBindingByCode(store, code) { touched(store); store.joystickUI.delete(code); }
 /** SetAxisBinding (:763-776): "Not allowing multi-bind" - the action's
  *  old axis is cleared first, then the axis takes the action (stealing
  *  it from whatever the axis held). */
@@ -962,7 +958,7 @@ export function loadKeyBinds(store, data) {
 // DFU keeps KeyBindings.txt BESIDE settings.ini, its own file with its
 // own serializer (GetKeyBindsSavePath) - so the port keeps its own
 // localStorage key beside the settings store's, same try/catch shield
-// as systems/settings.js:156.
+// as systems/settings.js:157.
 const STORAGE_KEY = 'dagger.keybinds';
 
 // DA1: the storage seam - localStorage in a browser, the desktop

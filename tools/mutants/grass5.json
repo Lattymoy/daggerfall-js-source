@@ -16,15 +16,15 @@
  {
   "name": "GRASS5-the-pointer-forgets-the-type-so-a-slot-is-read-as-floats",
   "file": "src/render/labGrass.js",
-  "old": "      gl.vertexAttribPointer(loc, 4, type, true, 0, slot * p * bytes);",
-  "new": "      gl.vertexAttribPointer(loc, 4, gl.FLOAT, false, 0, slot * p * bytes);",
+  "old": "      gl.vertexAttribPointer(L.loc, 4, L.type, true, 0, slot * p * L.bytes);",
+  "new": "      gl.vertexAttribPointer(L.loc, 4, gl.FLOAT, false, 0, slot * p * L.bytes);",
   "tests": ["test/labGrass.test.js"]
  },
  {
   "name": "GRASS5-the-attributes-are-not-normalized-so-every-lane-is-a-raw-integer",
   "file": "src/render/labGrass.js",
-  "old": "        gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 4, type, true, 0, 0);",
-  "new": "        gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 4, type, false, 0, 0);",
+  "old": "        gl.enableVertexAttribArray(L.loc); gl.vertexAttribPointer(L.loc, 4, L.type, true, 0, 0);",
+  "new": "        gl.enableVertexAttribArray(L.loc); gl.vertexAttribPointer(L.loc, 4, L.type, false, 0, 0);",
   "tests": ["test/labGrass.test.js"]
  },
  {

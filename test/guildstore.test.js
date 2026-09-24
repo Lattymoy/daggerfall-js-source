@@ -19,7 +19,7 @@ import { GUILDS } from '../src/systems/guilds.js';
 import { SKILLS } from '../src/systems/skills.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 import { readMagicDef } from '../src/formats/magicDef.js';
-import { readSpellsStd } from '../src/formats/spellsStd.js';
+import { readSpellsStd, spellsByIndexMap } from '../src/formats/spellsStd.js';
 import { createRandomPotion } from '../src/systems/loot.js';
 import { classicCastingCost } from '../src/systems/spellcost.js';
 import { SPELLBOOK_TEMPLATE_INDEX } from '../src/systems/spellMaker.js';
@@ -228,10 +228,7 @@ test('G4: the four destinations, and the guild id that makes Tales and Tallow re
 test('G4: over the REAL MAGIC.DEF - every regular item prices, and the SoulBound arm is INERT',
   { skip: !arena2 && 'ARENA2_PATH unset' }, () => {
     const templates = readMagicDef(readArena2('MAGIC.DEF'));
-    const byIndex = new Map();
-    for (const sp of readSpellsStd(readArena2('SPELLS.STD'))) {
-      if (!byIndex.has(sp.index)) byIndex.set(sp.index, sp);   // first wins, per AUDIT 18
-    }
+    const byIndex = spellsByIndexMap(readSpellsStd(readArena2('SPELLS.STD')));   // first wins, per AUDIT 18
     const spellOfIndex = (i) => byIndex.get(i) ?? null;
     const regular = templates.filter((t) => t.type === 0);
     assert.equal(templates.length, 59);

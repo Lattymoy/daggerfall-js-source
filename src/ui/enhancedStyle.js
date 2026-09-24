@@ -61,6 +61,8 @@ export const ENHANCED_TOKENS = `:root {
   --blood: #8c3a32;
   --ruby: #b91309;
   --verdigris: #4e7f72;
+  --emerald: #2c7341;
+  --cinnabar: #bf2a1f;
 
   --display: 'Cormorant', Georgia, serif;
   --data: 'Barlow Semi Condensed', system-ui, sans-serif;
@@ -1998,6 +2000,28 @@ ${badgeCss()}
 /* The card inside brings its own frame, and a box inside a box reads
    as a mistake - the window IS the frame here. */
 .px-win.px-acctwin .card.acct { border: 0; background: none; padding: 0; margin: 0; }
+
+/* DISC23-B2 (Mac: "a choosable skin system in the menu player profile
+   system itself"): THE SKIN, under the account on the same axis. No box
+   of its own (the window is the frame, as above), a rule between the
+   two so they read as two things. A tile is the SPRITE, front on and
+   standing, point-sampled as every sprite in the world is, with its
+   name under it; the worn one takes the doubled brass edge the worn
+   title does, so "on" reads the same way on both halves of the card. */
+.px-win.px-acctwin .card.skincard { border: 0; background: none; padding: 18px 0 0; margin: 18px 0 0;
+  border-top: 1px solid var(--iron); text-align: center; }
+.card.skincard .fieldlabel { display: block; margin: 12px 0 6px; }
+.card.skincard .skinhint { color: var(--brass); }
+.card.skincard .acts { justify-content: center; }
+.card .skingrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 6px; }
+.card button.skintile { display: flex; flex-direction: column; align-items: center; gap: 4px;
+  font: inherit; font-size: 11px; line-height: 1.2; color: var(--dim);
+  padding: 6px 4px; background: rgba(0,0,0,0.25); border: 1px solid var(--iron); border-radius: 2px; cursor: pointer; }
+.card button.skintile:hover { color: var(--bone); border-color: var(--dim); }
+.card button.skintile.worn { color: var(--bone); border: 2px solid var(--brass); padding: 5px 3px;
+  background: rgba(192,138,62,0.12); }
+.card button.skintile:focus-visible { outline: 2px solid var(--brass); outline-offset: 1px; }
+.card .skinart { height: 72px; width: auto; image-rendering: pixelated; pointer-events: none; }
 .px-winfoot { display: flex; justify-content: center; padding: 6px 0 18px; }
 .px-winclose {
   font: inherit; font-size: 16px; letter-spacing: 0.14em; text-indent: 0.14em;
@@ -4031,9 +4055,21 @@ ${badgeCss()}
    the thing fits a card.
 
    The colours are the skin's own: brass for what the online lane
-   forces, verdigris for what is on, iron for what is not. The
+   forces, emerald for what is on, iron for what is not. The
    left edge carries that, so the grid can be read for state
-   without reading a word of it. */
+   without reading a word of it.
+
+   DISC23-C (Skeptikali: "if a feature would be enabled, the ON
+   button would turn Green, and if a feature would be disabled, the
+   OFF button would turn Red, it would help a lot for people with
+   darker screens or smaller resolutions"): a SWITCH's pressed
+   segment is FILLED - emerald when the feature is on, cinnabar on
+   its Off - where it was a grey block with coloured letters. Both
+   fills carry the bone label at 4.5:1 or better and stand off the
+   bar's ink at 3:1 or better, so the state reads from the colour
+   alone. A CHOICE (no Off segment) keeps the grey block: it has no
+   off to be red about. A forced switch keeps its fill - the brass
+   edge and the "online" tag say it is forced. */
 .ft-panes { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 22px; align-items: start; }
 .ft-main { min-width: 0; }
 .ft-grouphead { display: flex; align-items: baseline; gap: 10px; margin: 18px 0 8px; }
@@ -4049,7 +4085,7 @@ ${badgeCss()}
   padding: 9px 10px 9px 13px; display: flex; flex-direction: column; gap: 7px; cursor: pointer; }
 .ft-tile::before { content: ''; position: absolute; left: 0; top: -1px; bottom: -1px; width: 3px;
   background: var(--iron); }
-.ft-tile[data-on="1"]::before { background: var(--verdigris); }
+.ft-tile[data-on="1"]::before { background: var(--emerald); }
 .ft-tile[data-locked="1"]::before { background: var(--brass); }
 .ft-tile:hover, .ft-tile.sel { border-color: var(--dim); }
 .ft-tile.sel { background: var(--iron); }
@@ -4064,9 +4100,9 @@ ${badgeCss()}
   background: none; border: 0; padding: 3px 8px; cursor: pointer; flex: 1 1 auto; white-space: nowrap; }
 .ft-segb:hover:not(:disabled) { color: var(--bone); }
 .ft-segb[aria-pressed="true"] { background: var(--iron); color: var(--bone); }
-.ft-seg.is-on .ft-segb[aria-pressed="true"] { color: var(--verdigris); }
-.ft-segb.off[aria-pressed="true"] { color: var(--dim); }
 .ft-seg.locked .ft-segb[aria-pressed="true"] { color: var(--brass); }
+.ft-seg.ft-seg-switch .ft-segb[aria-pressed="true"] { background: var(--emerald); color: var(--bone); }
+.ft-seg.ft-seg-switch .ft-segb.off[aria-pressed="true"] { background: var(--cinnabar); color: var(--bone); }
 .ft-segb:disabled { cursor: default; }
 .ft-segb:focus-visible { outline: 2px solid var(--brass); outline-offset: -2px; }
 
@@ -4123,8 +4159,10 @@ ${badgeCss()}
    base paint above is already right there. That is why this is scoped
    to .shell rather than written into the tokens.
 
-   The left edge keeps its state stripe (verdigris on, brass forced,
-   iron off) and moves out over the 2px border so it still reads flush. */
+   The left edge keeps its state stripe (emerald on, brass forced,
+   iron off) and moves out over the 2px border so it still reads flush.
+   A switch's filled segment (DISC23-C) outranks the translucent press
+   below, so it reads the same on the shell as on the pause window. */
 .shell .ft-tile { background: none; border: 2px solid rgba(125,116,96,0.3); }
 .shell .ft-tile:hover, .shell .ft-tile.sel { background: rgba(0,0,0,0.25); border-color: rgba(125,116,96,0.55); }
 .shell .ft-tile::before { left: -2px; top: -2px; bottom: -2px; }
@@ -4136,6 +4174,58 @@ ${badgeCss()}
 .shell .ft-tile-drawer { border-top: 2px solid rgba(125,116,96,0.3); }
 .shell .ft-rail { background: rgba(10,12,17,0.55); border: 2px solid rgba(125,116,96,0.35); }
 .shell .ft-rail-kv { border-top: 2px solid rgba(125,116,96,0.3); }
+
+/* ── OVH1: THE OVERHAULS (2026-09-24, Mac: "3 large panels ... directional arrows allowing you to switch being
+   different feature sets") ─────────────────────────────────────────────────────────────────────────────────────
+   Three tall cards side by side - a look for the world, one for its sounds, one for its screens - each a carousel of
+   whole choices. The picture is the choice's own where it has one (a UI pack's art); otherwise an emblem in the
+   display face. The left edge keeps the Features law: verdigris for the look in use, iron for one being browsed,
+   brass for a mix of the player's own (Custom). Two columns, then one, as the screen narrows. */
+.look-emptyline { font-family: var(--data); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); }
+.look-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+.look-panel { position: relative; background: var(--slate); border: 1px solid var(--iron); padding: 14px 14px 14px 17px;
+  display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.look-panel::before { content: ''; position: absolute; left: 0; top: -1px; bottom: -1px; width: 3px; background: var(--iron); }
+.look-panel[data-state="on"]::before { background: var(--verdigris); }
+.look-panel[data-state="custom"]::before { background: var(--brass); }
+.look-panel:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+.look-title { font-family: var(--data); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--bone); margin: 0; font-weight: 600; }
+.look-pic { position: relative; aspect-ratio: 16 / 10; background: var(--ink); border: 1px solid var(--iron);
+  display: grid; place-items: center; overflow: hidden; }
+.look-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.look-emblem { font-family: var(--brand); font-size: clamp(34px, 4.2vw, 56px); color: var(--bone); opacity: 0.9;
+  line-height: 1; text-align: center; padding: 0 10px; }
+.look-emblem small { display: block; font-family: var(--data); font-size: 10px; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--dim); margin-top: 10px; }
+.look-pic[data-look="enhanced"] .look-emblem { color: var(--verdigris); }
+.look-badge { position: absolute; top: 8px; left: 8px; font-family: var(--data); font-size: 9.5px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--ink); background: var(--verdigris); padding: 2px 6px; }
+.look-nav { display: grid; grid-template-columns: 40px minmax(0, 1fr) 40px; align-items: center; gap: 8px; }
+.look-arrow { font-family: var(--display); font-size: 28px; line-height: 1; color: var(--bone); background: var(--ink);
+  border: 1px solid var(--iron); height: 40px; cursor: pointer; }
+.look-arrow:hover { border-color: var(--dim); }
+.look-arrow:focus-visible { outline: 2px solid var(--brass); outline-offset: 1px; }
+.look-arrow:disabled { opacity: 0.3; cursor: default; }
+.look-name { font-family: var(--display); font-size: 22px; color: var(--bone); text-align: center; line-height: 1.1;
+  overflow-wrap: anywhere; }
+.look-by { font-family: var(--data); font-size: 11px; color: var(--dim); text-align: center; margin-top: 3px; }
+.look-dots { display: flex; justify-content: center; gap: 5px; margin-top: 6px; }
+.look-dot { width: 6px; height: 6px; background: var(--iron); }
+.look-dot.at { background: var(--bone); }
+.look-dot.on { outline: 1px solid var(--verdigris); outline-offset: 1px; }
+.look-blurb { font-size: 13px; line-height: 1.5; color: var(--bone); opacity: 0.85; margin: 0; flex: 1; }
+.look-use { align-self: stretch; }
+.look-use:disabled { opacity: 0.6; cursor: default; }
+.look-note { font-size: 12px; line-height: 1.45; color: var(--dim); margin: 0; border-left: 2px solid var(--brass); padding-left: 8px; }
+@media (max-width: 1100px) { .look-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 720px) { .look-grid { grid-template-columns: minmax(0, 1fr); } .look-pic { aspect-ratio: 16 / 7; } }
+@media (pointer: coarse) { .look-arrow { height: 44px; } .look-nav { grid-template-columns: 44px minmax(0, 1fr) 44px; } }
+.shell .look-panel { background: none; border: 2px solid rgba(125,116,96,0.3); }
+.shell .look-panel::before { left: -2px; top: -2px; bottom: -2px; }
+.shell .look-pic { background: rgba(0,0,0,0.35); border: 2px solid rgba(125,116,96,0.35); }
+.shell .look-arrow { background: rgba(0,0,0,0.3); border: 2px solid rgba(125,116,96,0.35); }
+.px-sys .look-grid { grid-template-columns: minmax(0, 1fr); }
 /* ── LV2: THE RISING ── the enhanced level-up notification. Mac:
    "Next up, I want to implement a new element. The enhanced level up
    notification", with the window deferred - "Notify, then you choose".

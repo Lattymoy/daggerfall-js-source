@@ -20,9 +20,10 @@ test('ENHANCED AI 1: the navmesh body is project-final\u2019s, byte for byte fro
   // file from '// Agent params' on, re-recorded DELIBERATELY with the project-final commit the
   // change was made in (decision #3: a change is made in both repos and said in both).
   // Provenance: project-final navmesh.js (ENHANCED AI 1/2, 9f5e323 mergeHoles) + AUDIT 62 F1's
-  // stacked-floor changes, made HERE FIRST and owed to project-final.
+  // stacked-floor changes + AUDIT 68's collider index under surfH/surfHNear (S02-surfh-linear-scan),
+  // made HERE FIRST and owed to project-final.
   const sum = createHash('sha256').update(ours.slice(bodyStart)).digest('hex');
-  assert.equal(sum, '7033c4d66c7c317f6ceb0ed58ee56c1e9349fca074cf39b96b1b3ef3bf608c4f',
+  assert.equal(sum, 'c9f9cf0f107f22c6f6aec4f2790dd565f76cfe4509aac2eb9c318fdba8710c94',
     'THE BODY CHANGED: make the change in project-final too, say it in both repos, then re-pin this digest with the commit');
 });
 
@@ -30,7 +31,7 @@ test('ENHANCED AI 1: a floor becomes walkable spans, a wall becomes a column wit
   // a 4x4 m floor quad at y=0 and a 4 m wall along x=2 from y=0 to 3
   const P = [0, 0, 0, 4, 0, 0, 4, 0, 4, 0, 0, 4,   2, 0, 0, 2, 3, 0, 2, 3, 4, 2, 0, 4];
   const I = [0, 1, 2, 0, 2, 3,   4, 5, 6, 4, 6, 7];
-  const cols = trianglesToColliders(P, I, { cs: 1, xmin: 0, zmin: 0 });
+  const cols = trianglesToColliders(P, I, { cs: 1 });
   const floor = cols.filter((c) => c.top === 0 && !c.noNavTop);
   // Recast-faithful: a vertex ON a cell boundary spills into that cell (conservative, so thin walls never leak) - 5x4
   assert.equal(floor.length, 20, 'the 4 m floor covers cells 0..4 on the axis its edge lands on');
@@ -60,7 +61,7 @@ test('ENHANCED AI 1: a room of triangles bakes, and a path bends around a wall',
   const cols = trianglesToColliders(P, I, { cs: AGENT.cs });
   const nav = buildNav(cols, AGENT);
   const chf = buildCompact(nav, AGENT);
-  // ANCHORED, as project-final bakes it (main.js:308): the component that
+  // ANCHORED, as project-final bakes it (main.js:307): the component that
   // holds the agents' home survives, everything else is dropped. The
   // anchor is an {x, z}; findPath's points are [x, y, z].
   buildRegions(chf, { anchor: { x: 1, z: 5 } }); buildContours(chf); buildPolyMesh(chf); buildPolyMeshDetail(chf, cols);
@@ -167,7 +168,7 @@ test('ENHANCED AI 3: the bake reads the Collider\u2019s own triangles, needs an 
 // What the body owes when the archives land: load the dungeon block
 // meshes through dungeonContext's own loader, feed them with
 // `collider.addMesh('dungeon', cpu.positions, cpu.indices, matrix)`
-// (src/scenes/dungeonContext.js:592), `bakeNavFromCollider(collider,
+// (src/scenes/dungeonContext.js:591), `bakeNavFromCollider(collider,
 // { anchor: <the entry marker's xyz> })` (src/ai/navBake.js), then assert
 // `bake.stats.polys > 0`, that the entry and every waypoint of
 // `navPath(bake, entry, firstHall)` locates via `__locatePolyIndexed`,
@@ -217,7 +218,7 @@ test('ENHANCED AI 3b: the client bakes without a worker, caches, and a hydrated 
   assert.notEqual(k, navCacheKey({ key: 'dungeon:other', tris: 10, minY: -5, maxY: -2 }), 'a different dungeon');
   const src = readFileSync('src/scenes/dungeonContext.js', 'utf8');
   assert.match(src, /if \(playerFeet && !enhancedNav\.requested && getPref\('enhancedAI'\)\) \{/, 'the host asks once, with the switch on, once the feet are known');
-  assert.match(src, /api\.enhancedNav = enhancedNav;/, 'and exposes the bake for the motor');
+  assert.match(src, /nav: \(\) => enhancedNav\.chf,/, 'and hands the bake to the motor through a thunk');   // AUDIT 68 S19-dead-api-exports: `api.enhancedNav` had no reader - the motor reads this
 });
 
 // DEGENERATE-BAKE GUARD (2026-09-20, Mac's patch): a report of foes

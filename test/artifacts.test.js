@@ -198,7 +198,7 @@ test('V3/MT-ii: the two summons - the range gate, the fail line, the PlayerAlly 
   assert.ok(/standLooseFoe: _standLooseFoe,/.test(w), 'world.js hands in its own stander');
   const stander = w.slice(w.indexOf('const _standLooseFoe ='), w.indexOf('const _standLooseFoe =') + 2400);
   assert.ok(/\? d\.spawnLooseFoe\(mt, pos, \{ yawRad: o\.yawRad, allied: o\.allied \}\)/.test(stander)
-    && /: exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, allied: o\.allied \}\)/.test(stander),
+    && /: exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, allied: o\.allied, loose: true \}\)/.test(stander),
     'through a live pool either way, carrying allied to it');
   // ROAD-G G1: and a THIRD live pool - a Sanguine Rose broken in a shop
   // stands its Daedroth through the interior host's own chain.

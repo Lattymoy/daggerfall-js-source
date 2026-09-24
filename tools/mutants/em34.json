@@ -158,7 +158,7 @@
   {
     "name": "EM3-17-the-sheet-draws-in-WORLD-units-rather-than-plan-units",
     "file": "src/ui/automapSheet.js",
-    "old": "    for (const chain of plan.chains) for (const p of chain) [p.x, p.y] = toPlan(p.x, p.y);",
+    "old": "    for (const chain of [...plan.chains, ...(plan.openChains ?? [])]) for (const p of chain) [p.x, p.y] = toPlan(p.x, p.y);",
     "new": "",
     "tests": [
       "test/automapsheet.test.js"

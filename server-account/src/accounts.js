@@ -451,8 +451,13 @@ export async function register({ db, subtle, rand, nowS }, playerId, { handle, p
     hashPassword(password, { subtle, rand }),
     hashPassword(codeForHashing(code), { subtle, rand }),
   ]);
+  let wrote;
   try {
-    await db.prepare('UPDATE players SET handle = ?, handle_lc = ?, password = ?, recovery_hash = ?, registered_at = ? WHERE id = ?')
+    // AUDIT 68 S01-register-recover-lost-update: and the WRITE is the
+    // authority on whether this row is still a guest's, by the same law
+    // - two registrations of one guest (two devices) both passed the
+    // SELECT above, both answered a recovery code, and the first's was dead.
+    wrote = await db.prepare('UPDATE players SET handle = ?, handle_lc = ?, password = ?, recovery_hash = ?, registered_at = ? WHERE id = ? AND handle IS NULL')
       .bind(handle, handle.toLowerCase(), pw, rc, nowS, playerId).run();
   } catch (e) {
     // THE UNIQUE INDEX IS THE AUTHORITY ON WHETHER A NAME IS TAKEN, not
@@ -461,6 +466,7 @@ export async function register({ db, subtle, rand, nowS }, playerId, { handle, p
     if (/UNIQUE|constraint/i.test(String(e?.message ?? e))) return { error: 'handle-taken' };
     throw e;
   }
+  if (!wrote.meta.changes) return { error: 'already-registered' };
   return { recoveryCode: code, handle };
 }
 
@@ -519,7 +525,10 @@ export async function recover({ db, subtle, rand, nowS }, { handle, code, passwo
     hashPassword(password, { subtle, rand }),
     hashPassword(codeForHashing(next), { subtle, rand }),
   ]);
-  await db.prepare('UPDATE players SET password = ?, recovery_hash = ? WHERE id = ?').bind(pw, rc, player.id).run();
+  // AUDIT 68 S01-register-recover-lost-update: the code is SPENT by the write that replaces it - two recoveries racing
+  // on one code both verified it, and the first one's new code and session were dead on arrival
+  const spent = await db.prepare('UPDATE players SET password = ?, recovery_hash = ? WHERE id = ? AND recovery_hash = ?').bind(pw, rc, player.id, player.recovery_hash).run();
+  if (!spent.meta.changes) return { error: 'bad-code' };
   await closeAllSessions({ db }, player.id);
   await clearRate({ db }, `recover:${lc}`);
   const session = await openSession({ db, subtle, rand, nowS }, player.id, null);
@@ -529,11 +538,17 @@ export async function recover({ db, subtle, rand, nowS }, { handle, code, passwo
 /** Change a password from inside a session, which needs the OLD one -
  *  a stolen device should not be able to lock its owner out. Every
  *  OTHER device is signed out; this one stays. */
-export async function changePassword({ db, subtle, rand }, player, session, { oldPassword, password }) {
+export async function changePassword({ db, subtle, rand, nowS }, player, session, { oldPassword, password }) {
   const pRefusal = passwordRefusal(password);
   if (pRefusal) return { error: `password-${pRefusal}` };
   if (!player.password) return { error: 'not-registered' };
+  // AUDIT 68 S01-changepw-unthrottled-oracle: a guess at the old password
+  // is a guess at the password, so it spends LOGIN's bucket - one password,
+  // one allowance, whichever door; this route had only the account's 240 a
+  // minute, and a stolen session could grind the password that locks the owner out
+  if (await overRate({ db, nowS }, `login:${player.handle_lc}`)) return { error: 'rate' };
   if (!await verifyPassword(oldPassword, player.password, { subtle })) return { error: 'bad-login' };
+  await clearRate({ db }, `login:${player.handle_lc}`);
   const pw = await hashPassword(password, { subtle, rand });
   await db.prepare('UPDATE players SET password = ? WHERE id = ?').bind(pw, player.id).run();
   await db.prepare('DELETE FROM sessions WHERE player_id = ? AND id != ?').bind(player.id, session.id).run();

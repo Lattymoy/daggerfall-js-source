@@ -128,7 +128,7 @@ test('RE1: both hosts bound the retry, and neither invented a second law', () =>
   assert.match(world, /for \(let i = 0; i < LOOSE_FOE_PLACE_ATTEMPTS && !spot; i\+\+\)/);
   // both import the shared ring rather than reimplementing it
   for (const [name, src] of [['world.js', world], ['dungeonContext.js', dc]]) {
-    assert.match(src, /import \{ placeFoeFreely \} from '\.\.\/systems\/quest\/sceneMount\.js'/, `${name} imports the law`);
+    assert.match(src, /import \{ placeFoeFreely\b[^}]*\} from '\.\.\/systems\/quest\/sceneMount\.js'/, `${name} imports the law`);
     assert.match(src, /placeFoeEnv/, `${name} uses the shared env adapter`);
   }
 });

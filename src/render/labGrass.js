@@ -28,6 +28,8 @@
 import { frustumPlanes, aabbOutside } from './frustum.js';   // PERF2: the field draws only the cells in view
 import { smoothstep } from '../systems/mathf.js';   // GRASS2: the host's blade budget is a bound on the shader's fade, so the two must be the SAME curve
 import { buildTuftMips, buildTuftSheet, pixelGrass, PX_RAMP_STEPS, PX_TINT_BANDS, PX_BLADES_PER_TUFT } from './grassPixelArt.js';   // GRASS-PX: the tuft sheet and the pixel style's numbers
+import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
+import { FOG_GLSL } from './fogGlsl.js';   // AUDIT 68 S17-fog-glsl-dup: fogFactorAt's one home - the terrain's own text, not a tenth copy
 
 /**
  * GRASS2: THE DEPARTURES FROM THE LAB, AS DATA.
@@ -440,18 +442,9 @@ export function applyGrassEdits(text, edits) {
  *  sandstorm's exp 0.09, Dynamic Skies' exp2 and colour) left the field drawn to its 300 m fade, dimmed by LAB_DIM
  *  and never fogged: in heavy fog the ground is the fog's colour past 60 m and the grass stood out of it to 165. These
  *  edits hand the fragment its world point and blend it to the fog colour by the terrain's own fogFactorAt
- *  (renderer.js TERRAIN_FS, verbatim), over the fog the renderer set for the frame (LabGrassRenderer.draw's
+ *  (render/fogGlsl.js, the text TERRAIN_FS interpolates), over the fog the renderer set for the frame (LabGrassRenderer.draw's
  *  `light.fog`). They land AFTER the pixel style's, so the fog is not snapped to a ramp rung (the style's default). */
-export const FOG_FACTOR_GLSL = `float fogFactorAt(vec3 worldPos) {
-  if (uFogMode == 0) return 1.0;
-  float d = length(worldPos - uCamPos);
-  if (uFogMode == 1) {
-    return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
-  }
-  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }   // DS1: FogMode.ExponentialSquared
-  return exp(-uFogDensity * d);
-}
-`;
+export const FOG_FACTOR_GLSL = FOG_GLSL + '\n';   // AUDIT 68 (the merge): fogGlsl.js's text, which every renderer.js program interpolates
 export const GRASSFOG_VS_EDITS = Object.freeze([
   Object.freeze({
     why: 'the blade hands the fragment its world point, which the fog measures its distance from',
@@ -1064,6 +1057,26 @@ export const GRASS_FAR_SEGMENTS = 1;
  *  first - and it was never the argument anyway.) */
 export const GRASS_FAR_AT = 0.5;
 
+/** A color32 tile's (`BaseImageFile.getColor32`'s `{colors, width,
+ *  height}`) mean RGB, 0..255 - the one average the grass reads: the
+ *  bases grassRecordsOf classifies against, and the root's colour. */
+function meanRgb(l) {
+  let r = 0, g = 0, b = 0;
+  const n = l.width * l.height;
+  for (let k = 0; k < n; k++) { r += l.colors[k * 4]; g += l.colors[k * 4 + 1]; b += l.colors[k * 4 + 2]; }
+  return [r / n, g / n, b / n];
+}
+
+/** GR4: the colour a blade's root takes off the tile it stands on - the
+ *  tile's mean, 0..1. AUDIT 68 S17: the host averaged the color32 as if
+ *  it were its byte array (`.length` of an object), so every tile of
+ *  every climate answered the olive an EMPTY tile falls back to. */
+export function tileMeanColour(l) {
+  if (!(l.width * l.height)) return [0.10, 0.145, 0.065];
+  const m = meanRgb(l);
+  return [m[0] / 255, m[1] / 255, m[2] / 255];
+}
+
 /**
  * Which records of a ground archive are GRASS, from the archive's own
  * texels: the four bases are identified by their mean colour (base 0 is
@@ -1074,8 +1087,7 @@ export const GRASS_FAR_AT = 0.5;
  */
 export function grassRecordsOf(layers, { roadRecords = new Set([46, 47, 55]) } = {}) {
   if (!layers || layers.length < 4) return new Set();
-  const meanOf = (l) => { let r = 0, g = 0, b = 0; const n = l.width * l.height; for (let k = 0; k < n; k++) { r += l.colors[k * 4]; g += l.colors[k * 4 + 1]; b += l.colors[k * 4 + 2]; } return [r / n, g / n, b / n]; };
-  const means = [0, 1, 2, 3].map((i) => meanOf(layers[i]));
+  const means = [0, 1, 2, 3].map((i) => meanRgb(layers[i]));
   const isGrass = (m) => m[1] >= m[0] && m[1] > m[2] * 1.1 && !(m[2] > m[0] * 1.25 && m[2] > m[1] * 1.1);
   const grassBase = means.map(isGrass);
   if (!grassBase.some(Boolean)) return new Set();
@@ -1098,8 +1110,9 @@ export function grassRecordsOf(layers, { roadRecords = new Set([46, 47, 55]) } =
  * GR1: the lab's grass pass, as a renderer of its own beside the world
  * renderer - the same shape as PrecipitationRenderer. Owns its program,
  * its blade quad, its instance buffers and a 1x1 zero field texture.
- * `set(placed)` uploads a scatter; `draw()` is the lab's draw, term for
- * term, with the game's light and wind in the lab's uniforms.
+ * `allocSlots` sizes the field's slots and `writeSlot` packs a cell into
+ * one (createGrassField drives both); `draw()` is the lab's draw, term
+ * for term, with the game's light and wind in the lab's uniforms.
  */
 export class LabGrassRenderer {
   /** `stages` (GRASS AUDIT 1): the two stage bodies to compile, the
@@ -1109,18 +1122,7 @@ export class LabGrassRenderer {
    *  zero the arithmetic is the lab's". */
   constructor(gl, { stages = { vs: GAME_GRASS_VS, fs: GAME_GRASS_FS }, tuft = null } = {}) {   // GRASS-PX4: `tuft` ({ w, h }) lays the sheet at another size - the probe photographs the old 16x32 beside the shipped 8x16 through it
     this.gl = gl;
-    const compile = (type, src) => {
-      const sh = gl.createShader(type);
-      gl.shaderSource(sh, src);
-      gl.compileShader(sh);
-      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh));
-      return sh;
-    };
-    const prog = gl.createProgram();
-    gl.attachShader(prog, compile(gl.VERTEX_SHADER, LAB_GRASS_HEAD + GAME_GRASS_FIELD + stages.vs));   // GRASS-PX: the lab's text under the declared edits
-    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, LAB_GRASS_HEAD + stages.fs));
-    gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+    const prog = buildProgram(gl, LAB_GRASS_HEAD + GAME_GRASS_FIELD + stages.vs, LAB_GRASS_HEAD + stages.fs);   // GRASS-PX: the lab's text under the declared edits
     this.program = prog;
     this.u = {};
     for (const n of ['uVP', 'uTime', 'uWind', 'uRange', 'uEye', 'uSunDir', 'uWindDir', 'uSnowFull', 'uSlotN', 'uCellFrame', 'uBladeScale', 'uCellSize', 'uGField', 'uGFieldOrigin', 'uGFieldM', 'uSnowGlobal', 'uWindV', 'uAmb', 'uSunCol', 'uDim', 'uSunScale', 'uMoonDir', 'uMoonScale', 'uMoonCol',
@@ -1135,6 +1137,14 @@ export class LabGrassRenderer {
     // first one's spare lane now, so there is no attribute of its own.
     this.bufs = [1, 2, 4].map(() => gl.createBuffer());
     for (const b of this.bufs) { gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, 4, gl.DYNAMIC_DRAW); }
+    // AUDIT 68 S16-grass-point-alloc: THE LANES, once - buffer k feeds attribute `loc` as `type`, `bytes` a blade. The
+    // VAOs, writeSlot and _point read this one table; _point runs per drawn slot per frame and built four arrays a
+    // call from a literal of it.
+    this._lanes = Object.freeze([
+      Object.freeze({ loc: 1, type: gl.UNSIGNED_SHORT, bytes: 8 }),
+      Object.freeze({ loc: 2, type: gl.UNSIGNED_BYTE, bytes: 4 }),
+      Object.freeze({ loc: 4, type: gl.UNSIGNED_BYTE, bytes: 4 }),
+    ]);
     /** one vertex array over a corner buffer of `segments` quads */
     const buildVao = (segments) => {
       const vao = gl.createVertexArray();
@@ -1146,10 +1156,11 @@ export class LabGrassRenderer {
       // GRASS5: NORMALIZED integer attributes - the GPU does the unpack,
       // so the shader reads floats in 0..1 and the decode is two
       // multiply-adds rather than a fetch per field.
-      for (const [i, loc, type] of [[0, 1, gl.UNSIGNED_SHORT], [1, 2, gl.UNSIGNED_BYTE], [2, 4, gl.UNSIGNED_BYTE]]) {
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[i]);
-        gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 4, type, true, 0, 0);
-        gl.vertexAttribDivisor(loc, 1);
+      for (let k = 0; k < this._lanes.length; k++) {
+        const L = this._lanes[k];
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[k]);
+        gl.enableVertexAttribArray(L.loc); gl.vertexAttribPointer(L.loc, 4, L.type, true, 0, 0);
+        gl.vertexAttribDivisor(L.loc, 1);
       }
       gl.bindVertexArray(null);
       return { vao, verts: corners.length / 2, cb };
@@ -1219,6 +1230,7 @@ export class LabGrassRenderer {
     this._packA = new Uint16Array(perCell * 4);   // the scratch a cell is packed through, reused
     this._packB = new Uint8Array(perCell * 4);
     this._packC = new Uint8Array(perCell * 4);
+    this._packs = [this._packA, this._packB, this._packC];   // AUDIT 68 S16-grass-point-alloc: lane k's scratch
   }
 
   /** GR5: one cell into its slot - one bufferSubData per buffer, no repack. */
@@ -1277,12 +1289,9 @@ export class LabGrassRenderer {
       C[i * 4 + 2] = u8(placed.ground[i * 3 + 2]);
       C[i * 4 + 3] = u8(ph / 6.283185307179586);
     }
-    // HARD3's lesson again: a mixed [number, TypedArray, number] literal
-    // widens to (number | Uint16Array | Uint8Array)[], and then `i` is
-    // not an index and `bytes` is not a number. A named shape keeps both.
-    for (const w of [{ i: 0, data: A, bytes: 8 }, { i: 1, data: B, bytes: 4 }, { i: 2, data: C, bytes: 4 }]) {
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[w.i]);
-      gl.bufferSubData(gl.ARRAY_BUFFER, slot * p * w.bytes, w.data);
+    for (let k = 0; k < this._lanes.length; k++) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[k]);
+      gl.bufferSubData(gl.ARRAY_BUFFER, slot * p * this._lanes[k].bytes, this._packs[k]);
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
   }
@@ -1301,23 +1310,11 @@ export class LabGrassRenderer {
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
   }
 
-  /** upload a scatter from placeLabGrass. Creates nothing, draws nothing. */
-  set(placed) {
-    const gl = this.gl;
-    for (const [i, data] of [[0, placed.inst], [1, placed.inst2], [2, placed.rootY], [3, placed.ground]]) {
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[i]);
-      gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
-    }
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    this.count = placed.count;
-    this.slotBox = null;   // PERF2: a scatter is one run, drawn whole
-  }
-
   /** the lab's draw. `light` = {sunDir, amb, sunCol, dim}; `wind` = {dir, speed, windV};
    *  `style` (GRASS-PX) is the grass-style row's word - 'smooth' is the
    *  lab's blade, anything else the tuft sprite. */
   draw(proj, view, eye, timeSeconds, light, wind, range = LAB_GRASS.range, style = 'smooth') {
-    if (!this.count) return;
+    if (!this.count || !this.slotBox) return;   // AUDIT 68 S16-grass-set-broken-dead: the field's slots are the one thing it draws
     const gl = this.gl; const u = this.u;
     // out = proj * view, column-major
     const o = this._vp;
@@ -1392,26 +1389,15 @@ export class LabGrassRenderer {
     gl.uniform3fv(u.uFogColor, fog?.color ?? WHITE);
     gl.uniform3fv(u.uCamPos, fog?.camPos ?? eye);
     gl.bindVertexArray(this.vao);
-    if (this.slotBox) this._drawVisibleSlots(o, eye, range);   // PERF2: the field, culled by cell
-    else {
-      // the lab's one scatter. GRASS AUDIT 1: this path takes the pixel
-      // style's one-quad blade and its half too - it is the probe's and
-      // the lab's path, not the game's, but it draws the same tuft.
-      const one = this._oneQuad, verts = one ? this.vertsFar : this.verts;
-      const n = one ? Math.ceil(this.count / PX_BLADES_PER_TUFT) : this.count;
-      if (one) gl.bindVertexArray(this.vaoFar);
-      gl.uniform1f(u.uSlotN, n); this._point(0); gl.drawArraysInstanced(gl.TRIANGLES, 0, verts, n); this.drawn.slots = 1; this.drawn.blades = n; this.drawn.kept = this.count;
-      // GRASS2: every field of `drawn` is written on EVERY path, or a
-      // reader gets the last cell-drawn frame's numbers for this one.
-      this.drawn.verts = n * verts; this.drawn.farSlots = one ? 1 : 0; this.drawn.slotCapacity = this.count; }
+    this._drawVisibleSlots(o, eye, range);   // PERF2: the field, culled by cell
     gl.bindVertexArray(null);
     gl.disable(gl.BLEND);
     if (culled) gl.enable(gl.CULL_FACE);
   }
 
-  /** PERF2: point the four instance attributes at one slot's run. WebGL2
+  /** PERF2: point the instance attributes at one slot's run. WebGL2
    *  has no base instance, so a slot is drawn by moving the pointers -
-   *  four calls, no upload. */
+   *  one call a lane, no upload. */
   _point(slot) {
     const gl = this.gl; const p = this.perCell ?? 0;
     // GRASS5: the TYPE has to be re-stated here, not just the offset.
@@ -1421,9 +1407,10 @@ export class LabGrassRenderer {
     // attribute and the draw took INVALID_OPERATION with an empty
     // frame. The probe caught it; no pin could, because the pins run on
     // a fake GL that draws nothing.
-    for (const [i, loc, type, bytes] of [[0, 1, gl.UNSIGNED_SHORT, 8], [1, 2, gl.UNSIGNED_BYTE, 4], [2, 4, gl.UNSIGNED_BYTE, 4]]) {
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[i]);
-      gl.vertexAttribPointer(loc, 4, type, true, 0, slot * p * bytes);
+    for (let k = 0; k < this._lanes.length; k++) {   // AUDIT 68 S16-grass-point-alloc: the constructor's table, no literal per call
+      const L = this._lanes[k];
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.bufs[k]);
+      gl.vertexAttribPointer(L.loc, 4, L.type, true, 0, slot * p * L.bytes);
     }
   }
 

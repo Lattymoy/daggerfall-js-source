@@ -526,11 +526,10 @@ function close() {
   // OnPop's ClearSelectedItems (nativeTrade.js's own `_close`): every
   // exit from this screen puts back whatever is still staged. `onExit`
   // is ui/tradeDoor.js's own teardown - the host's `hooks.onClose` is
-  // left untouched here, the same standing note nativeTrade.js's
-  // `openMerchantSell` leaves at its own `win.hooks.onClose` line: it
-  // is inert by design, and a window that needs cleanup on close hangs
-  // it off the host's `done` sweep instead (ui/tradeDoor.js's overlay
-  // wrapper answers `done` the same way NativeTradeWindow does).
+  // left untouched here, as NativeTradeWindow leaves it: a window that
+  // needs cleanup on close hangs it off the host's `done` sweep instead
+  // (ui/tradeDoor.js's overlay wrapper answers `done` the same way
+  // NativeTradeWindow does).
   clear();
   unregisterOutside();
   onExit();
@@ -541,7 +540,7 @@ function setTab(t) { tab = t; render(); }
 // ── ROWS ──────────────────────────────────────────────────────────
 
 function itemTile(line) {
-  const src = line.image ? requestIcon(line.image.archive, line.image.record, { scale: 2, onReady: render }) : null;
+  const src = line.image ? requestIcon(line.image.archive, line.image.record, { scale: 2, dye: line.image.dye, onReady: render }) : null;   // DISC22-D: by the item's dye, as the pack asks (DW3)
   if (src) {
     const tile = el('span', 'tile has-icon');
     const img = el('img');

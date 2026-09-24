@@ -41,11 +41,13 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import {
-  floorTriangles, deriveFloors, floorAt, planBounds, floorPlan, PLAN_CELL,
+  floorTriangles, deriveFloors, floorAt, planBounds, floorPlan, storeyOccupancy, PLAN_CELL,
 } from '../systems/automapFloors.js';
-import { boundarySegments, linkSegments, fitView, toPaper } from './inkMap.js';
+import { boundarySegments, linkSegments, fitView, toPaper, toMap, viewCentredOn, scaleMinOf, FIT_MARGIN as INK_FIT_MARGIN } from './inkMap.js';
+import { tryAddOrEditUserNote, setUserNote } from '../systems/automap.js';
+import { readPartyBodies, PARTY_MARK_CSS } from './partyMapMarks.js';   // DISC23-A: the party's bodies, in this frame
 import {
-  paintPlanStatic, paintPlanOverlay, floorStripLayout, floorStripHit, paintFloorStrip,
+  paintPlanStatic, paintPlanOverlay, floorStripLayout, floorStripHit, paintFloorStrip, paintFloorStripParty,
 } from './inkAutomap.js';
 import { stripFont } from './mapStrip.js';
 
@@ -56,6 +58,16 @@ export { FIT_MARGIN } from './inkMap.js';
 /** A level with no geometry at all still answers a space, so the
  *  window's clamp has something finite to work in. */
 const EMPTY_SIZE = Object.freeze({ width: 1, height: 1 });
+
+/** DISC22-G: the least zoom the map opens at, in paper pixels per metre - a corridor several pixels wide and a
+ *  room the size of a thumbnail. The rest view used to fit the WHOLE LEVEL, revealed or not: on an eight-by-eight
+ *  block dungeon that was 1.1 px a metre, a corridor 3 px wide and the first room 12 px across. */
+export const READABLE_SCALE = 4;
+
+/** DISC22-G: THE LEVEL'S FRAME, SHARED BY EVERY OPEN. The held window builds a fresh sheet each time M is pressed,
+ *  and each sheet re-derived every triangle in the level - so the cost of the floor model was paid on every open.
+ *  The rows array is the reveal index's own, built once per level, so it keys the frame. */
+const _frames = new WeakMap();   // rows -> { bounds, floors, full: Map<storey, occupancy> }
 
 /**
  * @typedef {{revealed?: Set<string>, visitedThisRun?: Set<string>, entranceDiscovered?: boolean,
@@ -69,6 +81,8 @@ const EMPTY_SIZE = Object.freeze({ width: 1, height: 1 });
  *   startMarker?: {x:number,y:number,z:number}|null,
  *   insideBuilding?: boolean,
  *   title?: string,
+ *   askText?: (initial: string, done: (text: string|null) => void) => void,
+ *   party?: () => Array<{acct?: string|null, name?: string, feet?: number[], yaw?: number}>,
  * }} deps
  */
 export function createAutomapSheet(deps = {}) {
@@ -120,19 +134,38 @@ export function createAutomapSheet(deps = {}) {
     const model = idx();
     const rows = model?.rows ?? [];
     if (frame && frame.rows === rows) return frame;
-    const tris = floorTriangles(rows);
-    const bounds = planBounds(tris, PLAN_CELL);
+    let base = _frames.get(rows);
+    if (!base) {
+      const tris = floorTriangles(rows);
+      base = { bounds: planBounds(tris, PLAN_CELL), floors: deriveFloors(tris), full: new Map() };
+      if (rows.length) _frames.set(rows, base);
+    }
     frame = {
       model,
       rows,
-      bounds,
-      floors: deriveFloors(tris),
-      origin: bounds ? [bounds.x0, bounds.z1] : [0, 0],   // the west and NORTH edges: see toPlan
+      bounds: base.bounds,
+      floors: base.floors,
+      full: base.full,
+      origin: base.bounds ? [base.bounds.x0, base.bounds.z1] : [0, 0],   // the west and NORTH edges: see toPlan
     };
     cut = null;
-    index = Math.max(0, Math.min(frame.floors.length - 1, index));
+    // DISC22-G: A NEW LEVEL OPENS ON THE PLAYER'S STOREY. `index` started at 0 and nothing set it, so a player on
+    // Floor 3 opened the map on Floor 1 - no caret, and a plan of somewhere else.
+    const feet = deps.player?.()?.feet;
+    const here = feet && frame.floors.length ? floorAt(frame.floors, feet[1]) : -1;
+    index = here >= 0 ? here : Math.max(0, Math.min(frame.floors.length - 1, index));
     return frame;
   }
+
+  /** DISC22-G: the storey's whole floor on the frame's grid, revealed or not - once per level and storey. */
+  function fullFloor(f, i) {
+    if (!f.bounds) return null;
+    if (!f.full.has(i)) f.full.set(i, storeyOccupancy(f.rows, f.floors, i, f.bounds));
+    return f.full.get(i);
+  }
+
+  /** World (x, z) from the sheet's own space - toPlan's inverse. */
+  const fromPlan = (px, py) => [px + (frame?.origin[0] ?? 0), (frame?.origin[1] ?? 0) - py];
 
   /** The rows of the index whose keys are in `keys`. */
   function rowsIn(model, keys) {
@@ -171,6 +204,7 @@ export function createAutomapSheet(deps = {}) {
     if (cut?.key === key) return cut;
     const plan = floorPlan(rowsIn(model, seen), index, {
       segments: boundarySegments, link: linkSegments, floors: f.floors, bounds: f.bounds,
+      full: fullFloor(f, index),   // DISC22-G: the ways on - an edge onto floor not yet seen is not a wall
     });
     const tint = walked?.size
       ? floorPlan(rowsIn(model, walked), index, {
@@ -179,7 +213,7 @@ export function createAutomapSheet(deps = {}) {
       : null;
     // the chains and both grids arrive in WORLD units; the sheet's space
     // is plan units, north up - through the one seam
-    for (const chain of plan.chains) for (const p of chain) [p.x, p.y] = toPlan(p.x, p.y);
+    for (const chain of [...plan.chains, ...(plan.openChains ?? [])]) for (const p of chain) [p.x, p.y] = toPlan(p.x, p.y);
     plan.occupancy = occToPlan(plan.occupancy, f.bounds);
     if (tint) tint.occupancy = occToPlan(tint.occupancy, f.bounds);
     cut = { key, plan, walked: tint };
@@ -197,21 +231,64 @@ export function createAutomapSheet(deps = {}) {
     const out = [];
     if (!f.floors.length || !r) return out;
     const mine = (y) => floorAt(f.floors, y) === index;
-    for (const [, n] of r.notes ?? []) {
+    for (const [id, n] of r.notes ?? []) {
       const p = n?.position;
       if (!p || !mine(p[1])) continue;
       const [x, z] = toPlan(p[0], p[2]);
-      out.push({ x, z, kind: 'note', name: n.note ?? '' });
+      out.push({ x, z, kind: 'note', name: n.note ?? '', id });
     }
     for (const [, t] of r.teleporters ?? []) {
-      for (const end of [t?.entrance, t?.exit]) {
-        const p = end?.pos;
-        if (!p || !mine(p[1])) continue;
+      const ends = [t?.entrance?.pos, t?.exit?.pos];
+      ends.forEach((p, i) => {
+        if (!p || !mine(p[1])) return;
         const [x, z] = toPlan(p[0], p[2]);
-        out.push({ x, z, kind: 'teleporter', name: '' });
-      }
+        // DISC22-G: an end whose partner is on ANOTHER storey says which
+        const other = ends[1 - i];
+        const there = other ? floorAt(f.floors, other[1]) : -1;
+        out.push({ x, z, kind: 'teleporter', name: there >= 0 && there !== index ? `to ${f.floors[there].label}` : '' });
+      });
     }
     return out;
+  }
+
+  /** DISC22-G: the teleporter pairs with BOTH ends on this storey, as lines in plan units. */
+  function linksHere() {
+    const f = ensureFrame();
+    const r = rec();
+    const out = [];
+    if (!f.floors.length || !r) return out;
+    for (const [, t] of r.teleporters ?? []) {
+      const a = t?.entrance?.pos, b = t?.exit?.pos;
+      if (!a || !b || floorAt(f.floors, a[1]) !== index || floorAt(f.floors, b[1]) !== index) continue;
+      const [x0, z0] = toPlan(a[0], a[2]);
+      const [x1, z1] = toPlan(b[0], b[2]);
+      out.push({ x0, z0, x1, z1 });
+    }
+    return out;
+  }
+
+  /** DISC22-G: the revealed floor's extent on this storey, in plan units, or null. */
+  function revealedExtent() {
+    const occ = ensure()?.plan?.occupancy;
+    if (!occ) return null;
+    let gx0 = Infinity, gy0 = Infinity, gx1 = -Infinity, gy1 = -Infinity;
+    for (let gy = 0; gy < occ.h; gy++) {
+      for (let gx = 0; gx < occ.w; gx++) {
+        if (!occ.at(gx, gy)) continue;
+        if (gx < gx0) gx0 = gx; if (gx > gx1) gx1 = gx;
+        if (gy < gy0) gy0 = gy; if (gy > gy1) gy1 = gy;
+      }
+    }
+    if (!(gx1 >= gx0)) return null;
+    return { x0: occ.x0 + gx0 * occ.cell, y0: occ.z0 + gy0 * occ.cell, x1: occ.x0 + (gx1 + 1) * occ.cell, y1: occ.z0 + (gy1 + 1) * occ.cell };
+  }
+
+  /** DISC22-G: is paper point (px, py) on floor this storey has revealed? A note is stuck to something seen, as
+   *  DFU's is stuck to what its ray hit. */
+  function onRevealedFloor(mx, my) {
+    const occ = ensure()?.plan?.occupancy;
+    if (!occ) return false;
+    return occ.at(Math.floor((mx - occ.x0) / occ.cell), Math.floor((my - occ.z0) / occ.cell));
   }
 
   /** The player, in plan units, and only while they are ON this storey
@@ -225,6 +302,27 @@ export function createAutomapSheet(deps = {}) {
     if (floorAt(f.floors, feet[1]) !== index) return null;
     const [x, z] = toPlan(feet[0], feet[2]);
     return { x, z, yaw: p?.yaw ?? 0 };
+  }
+
+  /** DISC23-A: the party members standing on THIS storey, in plan units - the player caret's own law (a member on
+   *  another storey is not drawn on this one), read fresh on every paint because they walk while the map is up. */
+  function partyHere() {
+    const f = ensureFrame();
+    if (!f.floors.length) return [];
+    const out = [];
+    for (const m of readPartyBodies(deps.party)) {
+      if (floorAt(f.floors, m.feet[1]) !== index) continue;
+      const [x, z] = toPlan(m.feet[0], m.feet[2]);
+      out.push({ x, z, yaw: m.yaw, name: m.name });
+    }
+    return out;
+  }
+
+  /** DISC23-A: the storeys the party stands on, as the strip's own indices. */
+  function partyStoreys() {
+    const f = ensureFrame();
+    if (!f.floors.length) return new Set();
+    return new Set(readPartyBodies(deps.party).map((m) => floorAt(f.floors, m.feet[1])));
   }
 
   /** The way in, while it has been found, and only on its own storey. */
@@ -314,7 +412,11 @@ export function createAutomapSheet(deps = {}) {
         player: playerHere(),
         entrance: entranceHere(),
         marks: marksHere(),
+        links: linksHere(),
+        party: partyHere(),   // DISC23-A
+        partyFill: PARTY_MARK_CSS,
       });
+      paintFloorStripParty(ctx, strip, partyStoreys(), PARTY_MARK_CSS);   // DISC23-A: and which storeys they are on
     },
 
     pickAt(px, py) {
@@ -334,12 +436,54 @@ export function createAutomapSheet(deps = {}) {
     // pixels and the marks are in plan units, so the reach is measured
     // through the view the sheet was last painted with - which is the
     // view the player is pointing at.
+      // DISC23-A: a party member under the pointer answers their name, as a note answers its words
+      if (lastView) {
+        for (const m of partyHere()) {
+          const [x, y] = toPaper(lastView, m.x, m.z);
+          if ((x - px) ** 2 + (y - py) ** 2 <= MARK_REACH * MARK_REACH) return { label: m.name, cursor: '' };
+        }
+      }
       const mark = nearestMark(px, py);
       if (mark) return { label: mark.name || (deps.title ?? ''), cursor: 'pointer' };
       return { label: deps.title ?? '', cursor: '' };
     },
 
-    mark() { /* the middle button marks a PLACE; a dungeon plan has none */ },
+    /**
+     * DISC22-G: THE MIDDLE BUTTON WRITES A NOTE, as it does on DFU's 3D map (TryToAddOrEditUserNoteMarker..., the
+     * one law in systems/automap.js): on a note, it edits that note; on revealed floor with no note within a metre,
+     * it pins a new one at the storey's height and asks for its words. An empty answer takes the note away (the 3D
+     * map's right double-click); a cancelled one leaves an edited note as it was and a new one unmade. The words
+     * are asked through the window's own box (`deps.askText`), because a sheet has no DOM.
+     */
+    mark(px, py) {
+      const f = ensureFrame();
+      const r = rec();
+      if (!lastView || !r?.notes || !f.floors.length || typeof deps.askText !== 'function') return false;
+      const near = nearestMark(px, py);
+      let id, fresh = false;
+      if (near?.kind === 'note') id = near.id;
+      else {
+        const [mx, my] = toMap(lastView, px, py);
+        if (!onRevealedFloor(mx, my)) return false;
+        const [wx, wz] = fromPlan(mx, my);
+        const res = tryAddOrEditUserNote(r, { point: [wx, f.floors[index].y, wz], normal: [0, 1, 0], name: '' });
+        if (res.action !== 'add') return false;
+        id = res.id; fresh = true;
+      }
+      deps.askText(r.notes.get(id)?.note ?? '', (text) => {
+        if (text == null) { if (fresh) r.notes.delete(id); }
+        else if (!String(text).trim()) r.notes.delete(id);
+        else setUserNote(r, id, text);
+        cut = null;
+      });
+      cut = null;
+      return true;
+    },
+
+    /** DISC22-G: the way in breathes while it is on the sheet, so the window repaints on its beat. DISC23-A: and so
+     *  does a party with anyone in this level - on ANY storey, so a member who climbs onto this one appears within a
+     *  beat rather than when something else next repaints. */
+    breathes() { return !!entranceHere() || readPartyBodies(deps.party).length > 0; },
 
     /**
      * THE FLOOR KEYS. A storey up and a storey down, on the two pairs a
@@ -353,6 +497,14 @@ export function createAutomapSheet(deps = {}) {
     key(code) {
       if (code === 'PageUp' || code === 'BracketRight') return step(1);
       if (code === 'PageDown' || code === 'BracketLeft') return step(-1);
+      // DISC22-G: HOME BRINGS YOU BACK - to your own storey and the view the map opened at (DFU's 3D map has its
+      // focus-on-player key); the window reads 'home' and resets its view
+      if (code === 'Home') {
+        const feet = deps.player?.()?.feet;
+        const f = ensureFrame();
+        if (feet && f.floors.length) setFloor(floorAt(f.floors, feet[1]));
+        return 'home';
+      }
       return false;
     },
 
@@ -366,18 +518,28 @@ export function createAutomapSheet(deps = {}) {
      *  not. A dungeon map that opens on the far corner is a map the
      *  player has to pan before it says anything. */
     homeView(limits) {
-      // inkMap's own fit: the whole storey on the sheet, centred on the
-      // player where they are ON it and left to the window's clamp
-      // where they are not
+      // DISC22-G: WHAT HAS BEEN SEEN, AT A SIZE A PLAYER CAN READ. The fit was the whole LEVEL's - revealed or not -
+      // which on a big dungeon is a corridor three pixels wide. It is the revealed floor of this storey now, never
+      // zoomed out past READABLE_SCALE, centred on the player where they are on it and on what has been seen where
+      // they are not; a storey with nothing seen falls back to inkMap's own fit.
       // the plan's second axis IS world z, which is the sheet's y
       const p = playerHere();
-      return fitView(limits, p ? { x: p.x, y: p.z } : null);
+      const ext = revealedExtent();
+      if (!ext && !p) return fitView(limits, null);
+      const min = scaleMinOf(limits);
+      const fit = ext ? INK_FIT_MARGIN * Math.min(limits.paperW / Math.max(1, ext.x1 - ext.x0), limits.paperH / Math.max(1, ext.y1 - ext.y0)) : min;
+      const scale = Math.max(min, READABLE_SCALE, fit);   // the window's clamp holds the ceiling (inkMap SCALE_MAX)
+      const c = p ? { x: p.x, y: p.z } : { x: (ext.x0 + ext.x1) / 2, y: (ext.y0 + ext.y1) / 2 };
+      return viewCentredOn(c.x, c.y, scale, limits);
     },
 
     // ── the sheet's own handles, for the window's keys and its pins ──
     /** Which storey is up, and the list it came from. */
-    get floor() { return index; },
+    get floor() { ensureFrame(); return index; },   // DISC22-G: the frame first - it is what sets the player's storey
     floors() { return ensureFrame().floors; },
+    /** DISC23-A: the party on this storey (plan units), and the storeys the party stands on. */
+    partyHere,
+    partyStoreys,
     setFloor,
     /** Up and down a storey - what the floor keys ask for. */
     step,

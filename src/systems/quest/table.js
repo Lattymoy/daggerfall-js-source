@@ -1,4 +1,6 @@
-// THE DATA TABLE (Q1) - DFU Utility/Table.cs ported whole. The quest
+// THE DATA TABLE (Q1) - DFU Utility/Table.cs, the members the quest
+// layer reads (AUDIT 68 S30-dead-table-api: GetRow/GetRowIndex/
+// GetColumnIndex/GetColumnName had no reader and went). The quest
 // machine's tables (Quests-StaticMessages, Quests-GlobalVars, the
 // QuestLists, Quests-Places/Items/Foes/...) all ride this one reader:
 // '-' starts a comment, '//' starts an inline comment, 'schema:'
@@ -9,16 +11,12 @@
 // which is load-bearing for Quests-StaticMessages, whose case-variant
 // alias rows (RumorsPostfailure/RumorsPostFailure) share one id.
 
+import { intTryParse } from './parseUtils.js';   // AUDIT 68 S30-tryparse-dup: the quest layer's one int.TryParse
+
 const INLINE_COMMENT = '//';
 const LITERAL = '"';
 const SEPARATOR = ',';
 
-// int.TryParse's surface: optional sign, int32 range (AUDIT quest-P9)
-const isIntString = (s) => {
-  if (!/^[+-]?\d+$/.test(s?.trim() ?? '')) return false;
-  const n = Number.parseInt(s, 10);
-  return n <= 2147483647 && n >= -2147483648;
-};
 
 export class Table {
   /** @param {string[]|string} source lines array, or whole text. */
@@ -85,19 +83,7 @@ export class Table {
 
   /** int.TryParse fail -> -1 (Table.cs GetInt). */
   getInt(columnName, key) {
-    const value = this.getValue(columnName, key);
-    return isIntString(value) ? parseInt(value, 10) : -1;
-  }
-
-  getRowIndex(key) {
-    if (this.columnCount < 1 || this.rowCount < 1) return -1;
-    return this.columns[this.primaryColumnIndex].keyIndexDict.get(key) ?? -1;
-  }
-
-  getRow(keyOrIndex) {
-    const index = typeof keyOrIndex === 'number' ? keyOrIndex : this.getRowIndex(keyOrIndex);
-    if (index === -1 || this.columnCount < 1 || this.rowCount < 1 || index >= this.rowCount) return [];
-    return this.columns.map((c) => c.values[index]);
+    return intTryParse(this.getValue(columnName, key)) ?? -1;
   }
 
   /** GetKeyForValue (Table.cs:285-297): the primary key of the FIRST
@@ -110,9 +96,6 @@ export class Table {
     }
     return null;
   }
-
-  getColumnIndex(name) { return this.hasColumn(name) ? this.columnIndexDict.get(name) : -1; }
-  getColumnName(index) { return (this.columnCount < 1 || index >= this.columnCount) ? '' : this.columns[index].name; }
 
   _loadSchema(text) {
     const columnNames = text.split(':')[1].split(',');

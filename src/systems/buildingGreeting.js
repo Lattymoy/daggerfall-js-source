@@ -54,18 +54,16 @@ import { getInt } from './settings.js';
  *  record's variants. */
 export const HOUSE_GREETING_TEXT_ID = 256;
 
-/** PresentShopQuality's five records (:1334-1338), best to worst. */
-export const SHOP_QUALITY_TEXT_IDS = Object.freeze([266, 267, 268, 269, 270]);
-
 /** FactionFile.FactionIDs - the two guilds whose "houses" are not
  *  homes (:600-601). Named here rather than imported from
  *  crimeGuilds.js so this module stays a leaf. */
 export const GREETING_EXCLUDED_FACTION_IDS = Object.freeze([42, 108]);
 
-/** The quality bands (:1355-1366). DFU's own note: "UESP states this
- *  is building quality / 4 but Daggerfall uses manual thresholds" -
- *  and the thresholds are NOT four apart (3/7/13/17), which is
- *  exactly why the division would be wrong. */
+/** PresentShopQuality's five records (:1334-1338, 266 best to 270
+ *  worst) over its quality bands (:1355-1366). DFU's own note: "UESP
+ *  states this is building quality / 4 but Daggerfall uses manual
+ *  thresholds" - and the thresholds are NOT four apart (3/7/13/17),
+ *  which is exactly why the division would be wrong. */
 export function shopQualityTextId(quality) {
   if (quality <= 3) return 270;    // 01-03
   if (quality <= 7) return 269;    // 04-07

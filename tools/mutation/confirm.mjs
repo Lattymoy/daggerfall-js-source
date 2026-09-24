@@ -1,6 +1,6 @@
 // Re-apply a specific mutant and run the ENTIRE 688-test suite, to prove a
 // SURVIVED verdict is not an artefact of the coverage-derived test subset.
-//   node .mutaudit/confirm.mjs <spec-file.json>
+//   node tools/mutation/confirm.mjs <spec-file.json>
 // spec-file: [ {file, line, from, to, nth?} , ... ]  (nth = which occurrence of
 // `from` on that line, default 1)
 import fs from 'node:fs';
@@ -23,13 +23,20 @@ for (const s of specs) {
   fs.writeFileSync(abs, lines.join('\n'));
   const chk = spawnSync(process.execPath, ['--check', abs], { encoding: 'utf8' });
   if (chk.status !== 0) { fs.writeFileSync(abs, orig); results.push({ ...s, verdict: 'SYNTAX' }); continue; }
-  const r = spawnSync(process.execPath, ['--test'], { cwd: ROOT, encoding: 'utf8', timeout: 600000 });
+  // AUDIT 68 X5-mutation-harness-enobufs-orphaned: a whole-suite TAP outgrows the default 1 MiB maxBuffer, and the
+  // child killed by ENOBUFS exits non-zero - which read as CAUGHT, so every real survivor sent here was dismissed.
+  const r = spawnSync(process.execPath, ['--test'], { cwd: ROOT, encoding: 'utf8', timeout: 600000, maxBuffer: 1 << 28 });
   fs.writeFileSync(abs, orig);
+  if (r.error || r.status === null) {
+    results.push({ ...s, verdict: 'HARNESS_ERROR', error: r.error?.code ?? r.signal });
+    process.stderr.write(`HARNESS_ERROR ${s.file}:${s.line} ${r.error?.code ?? r.signal} - not a verdict\n`);
+    continue;
+  }
   const m = (r.stdout || '').match(/# fail (\d+)/);
   const verdict = r.status === 0 ? 'SURVIVED_FULL_SUITE' : 'CAUGHT_BY_FULL_SUITE';
   results.push({ ...s, verdict, fails: m ? Number(m[1]) : null });
   process.stderr.write(`${verdict} ${s.file}:${s.line} ${s.from}->${s.to} fails=${m ? m[1] : '?'}\n`);
 }
 fs.writeFileSync(path.join(ROOT, '.mutaudit', 'confirm-' + path.basename(process.argv[2])), JSON.stringify(results, null, 1));
-const surv = results.filter(r => r.verdict === 'SURVIVED_FULL_SUITE').length;
-console.log(JSON.stringify({ total: results.length, survivedFullSuite: surv, caught: results.length - surv }));
+const count = (v) => results.filter(r => r.verdict === v).length;
+console.log(JSON.stringify({ total: results.length, survivedFullSuite: count('SURVIVED_FULL_SUITE'), caught: count('CAUGHT_BY_FULL_SUITE'), harnessErrors: count('HARNESS_ERROR') }));

@@ -82,7 +82,7 @@ fight*, not only when it is re-equipped.
 | `<BlockCoroutine>d__110` | `blockCoroutine` | Raise into the block, wait for the ease to arrive, take the kick and ring, hold half a second, fall back to the frame's stance. |
 | `<AnimateShield>d__111` | `animateShield` | Step `frameCurrent` from start to end a fifth of `animationTimeLive` at a time, repointing the sprite each step. The DLL reads `Time.unscaledTime` here and **discards it** - a leftover with no effect, not carried. |
 | `HitShield` (0x00-0x293) | `hitShield` | The kick (by the six conditions: a hit needs `damage > 0`, a miss `damage < 1`, an attack neither), through `BlockCoroutine` when Recoil.Offset is on and the player is not mid-swing, else straight onto `recoilCurrent` with the parry ring. Then the condition watch: a DOWNWARD crossing of either threshold repoints the sheet. |
-| `PlayImpactSound` (0x00) | `playImpactSound` | `SoundClips.Parry1 + Random.Range(0, 9)` - 428..436 - at volume 0, pitch 1.1. The volume really is 0 in the IL. |
+| `PlayImpactSound` (0x00) | `playImpactSound` | `SoundClips.Parry1 + Random.Range(0, 9)` - 428..436 - through `DaggerfallAudioSource.PlayOneShot(sound, spatialBlend, volumeScale)`: the IL's `(clip, 0, 1.1f)` is 2D at volume 1.1, the shape of `FPSWeapon.PlaySwingSound`. The port's `playOneShot` is `(clip, volume, pitch)` and non-positional, so it plays at volume 1.1, pitch 1 (AUDIT 68 S09-shield-impact-silent: the first cut read the 0 as the volume and rang in silence). |
 | `IsPartShielded` (0x00) | `isPartShielded` | The mod's loop over `GetShieldProtectedBodyParts`, which is already the port's (`combat/enemyEquipment.js`). |
 | `GetShieldAnimationGroup` (0x00) | `shieldAnimationGroup` | `ShieldHand_` for the Buckler, `ShieldArm_` for the other three, `Unarmed_` for nothing. Only the FPS-models seam calls it, so nothing calls it here - kept because the day that mod lands, this is the row it needs. |
 | `OnAttackDamageCalculated` (0x00-0x68) | `onAttackDamageCalculated` | PCAAO's message. The player's left-hand item must be a shield; conditions 0-2 additionally ask whether the shield covers the part that was struck, 3-5 do not. |
@@ -99,12 +99,17 @@ fight*, not only when it is re-equipped.
   falls straight through its wait. That is the mod's behaviour.
 - **Silver draws leather.** `NativeMaterialValue` 514 lands on group 0
   with Leather and Chain (IL 0x5c).
-- **The template key is a SUM.** `LateUpdate` (0x1a0) keys the
-  sheet-reload on `TemplateIndex + NativeMaterialValue` added together.
-  Nothing in four templates and twelve materials collides, so it is
-  correct in practice; it is kept as written.
-- **`PlayImpactSound` at volume 0.** The IL passes 0 for volume and 1.1
-  for pitch. Carried as written.
+
+## Departures
+
+- **The template key is the PAIR, not the SUM.** `LateUpdate` (0x1a0)
+  keys the sheet-reload on `TemplateIndex + NativeMaterialValue` added
+  together, and the sum collides: templates 109-112 plus plate
+  materials 512-521 share eleven sums (624 is Buckler/Elven, Round/Silver,
+  Kite/Steel and Tower/Iron), so a shield equipped straight over one of
+  the same sum kept the old art. The port keys on
+  `templateIndex * 1024 + nativeMaterialValue` (AUDIT 68
+  S09-shield-template-key-collision).
 
 ## What is not carried, and why
 
@@ -145,9 +150,11 @@ sheathed player who is casting is casting.
 ## The Morrowind first-person view
 
 The mod publishes three channels - `Position`, `Offset`, `Scale` - and
-`armsTransform` hands the first and third to the arms' composite, as
-WW1's does. The shield bobs, leans and recoils WITH that view rather
-than against it.
+they feed the sprite draw alone. Under the Morrowind arms the shield
+sprite does not draw (the rig's arm branch returns first), and the arms'
+composite takes the WEAPON widget's transform. The shield's own
+`armsTransform` had no caller and was removed (AUDIT 68
+S09-shield-dead-exports).
 
 ## The sprites, and the doctrine - the first cut got this WRONG
 

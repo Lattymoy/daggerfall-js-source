@@ -47,8 +47,9 @@
 //                      a pre-sweep ledger out of git)
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const argv = process.argv.slice(2);
 const ALL = argv.includes('--all');
 const LEDGER = argv.includes('--ledger')
@@ -57,7 +58,15 @@ const LEDGER = argv.includes('--ledger')
 
 // ---- section C's rows -------------------------------------------------
 const ledger = readFileSync(LEDGER, 'utf8');
-const secC = ledger.slice(ledger.indexOf('## C. DFU features not yet ported'));
+// AUDIT 68 X5-ledgersweep-section-c-runs-to-eof: section C ends at the next
+// `## ` heading - unbounded, D's board, AUDIT 27 and Ledger A (continued)
+// were swept as unported features - and a heading that is gone is an error,
+// never slice(-1)'s "0 unstruck rows".
+const HEAD_C = '## C. DFU features not yet ported';
+const startC = ledger.indexOf(HEAD_C);
+if (startC < 0) { console.error(`"${HEAD_C}" is not in ${LEDGER}`); process.exit(2); }
+const endC = ledger.indexOf('\n## ', startC + HEAD_C.length);
+const secC = ledger.slice(startC, endC < 0 ? undefined : endC);
 const rows = secC.split('\n')
   .filter((l) => l.startsWith('|') && !l.startsWith('|---') && !l.startsWith('| Feature'))
   .map((l) => {

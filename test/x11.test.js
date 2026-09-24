@@ -234,7 +234,9 @@ test('X11 Spell Reflection: the host seam re-targets - the effect module never d
   // WAVE D: the enchantment door is scenes/hostEnchant.js's, one body
   // for both mounting hosts - so the bounce cannot be re-targeted in
   // one host and dropped in the other.
-  assert.ok(src('src/scenes/hostEnchant.js').includes('r.reflected'), 'the enchantment door re-targets too');
+  // AUDIT 68 S21-strike-landing-dup: and it re-targets through the foe arm above, not a copy of it.
+  assert.ok(src('src/scenes/hostEnchant.js').includes('magic.applySpellToFoe(record,'), 'the enchantment door re-targets too - through the one foe landing');
+  assert.ok(!src('src/scenes/hostEnchant.js').includes('r.reflected'), 'with no second copy of the re-target');
 });
 
 // ── Light (15,255) and its candle ─────────────────────────────────

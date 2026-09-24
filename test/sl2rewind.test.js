@@ -36,9 +36,10 @@ test('SL2 save-load-2: a foe killed after the save RESURRECTS on a backward load
   // WORLD8: the corpse's freeing is one helper (freeCorpse), shared with the hour's respawn - the arm calls it
   assert.ok(arm.includes('freeCorpse(f);'), 'the corpse freed through the one helper');
   const helper = dc.slice(dc.indexOf('function freeCorpse(f) {'), dc.indexOf('\n  }\n', dc.indexOf('function freeCorpse(f) {')));
-  // the corpse flat leaves with the rewind - freed from BOTH owner
-  // lists and destroyed, the foe key cleared
-  assert.ok(helper.includes('corpses.indexOf(f.corpseBatch)'), 'spliced from corpses');
+  // the corpse flat leaves with the rewind - freed from its owner
+  // list and destroyed, the foe key cleared (AUDIT 68 S19-corpses-array-dead:
+  // billboardBatches is the ONE owner list; the write-only `corpses` is gone)
+  assert.ok(!/\bcorpses\.(?:push|indexOf|splice)\b/.test(dc), 'no second corpse list to fall out of step');
   assert.ok(helper.includes('billboardBatches.indexOf(f.corpseBatch)'), 'spliced from the draw list');
   assert.ok(helper.includes('renderer.destroyBillboardBatch(f.corpseBatch)'), 'GL freed (EVERY ALLOCATION HAS AN OWNER)');
   assert.ok(helper.includes('f.corpseBatch = null'), 'the key clears for a later re-kill');

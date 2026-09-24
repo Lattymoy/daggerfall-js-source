@@ -131,8 +131,11 @@ const latin1 = (buf, start, count) => {
 };
 
 /** A record's variant byte ranges, operand bytes skipped so a 0xFF
- *  payload cannot masquerade as a separator (variantCount's own law).
- *  These are TextProvider's tokenStreams before ReadTokens runs. */
+ *  payload cannot masquerade as a separator (AUDIT 39). These are
+ *  TextProvider's tokenStreams before ReadTokens runs. AUDIT 68
+ *  S12-textrsc-variant-walks: THE one variant-boundary walk - every
+ *  variant reader below rides it rather than a copy of it. Always at
+ *  least one range. */
 function variantRanges(raw) {
   const ranges = [];
   let start = 0;
@@ -192,26 +195,24 @@ export class TextRsc {
   plainText(id) {
     const raw = this.bytesById(id);
     if (!raw) return null;
-    const variants = [];
-    let cur = '';
-    for (let i = 0; i < raw.length; i++) {
-      const b = raw[i];
-      if (b === RSC.EndOfRecord) break;
-      if (b === RSC.SubrecordSeparator) { variants.push(cur); cur = ''; continue; }
-      // U11: JustifyLeft (0xFC) and JustifyCenter (0xFD) each BREAK
-      // THE LINE - MultiFormatTextLabel.cs:333-345 calls NewLine() for
-      // all three, JustifyCenter additionally centring the row it just
-      // closed. The port dropped both as "every other control byte",
-      // so every record that lays its text out with them (the race
-      // descriptions, most centred popups) came back as ONE run-on
-      // line with words fused across the break: "Hammerfell.You are".
-      if (b === RSC.NewLine || b === RSC.JustifyLeft || b === RSC.JustifyCenter) { cur += '\n'; continue; }
-      if (b === RSC.FontPrefix || b === RSC.PositionPrefix) { i++; continue; }   // one operand each, never leaks
-      if (b >= RSC.FirstCharacter && b <= RSC.LastCharacter) { cur += String.fromCharCode(b); continue; }
-      // every remaining control byte (page, cursor) drops here
-    }
-    variants.push(cur);
-    return variants;
+    return variantRanges(raw).map(([start, end]) => {
+      let cur = '';
+      for (let i = start; i < end; i++) {
+        const b = raw[i];
+        // U11: JustifyLeft (0xFC) and JustifyCenter (0xFD) each BREAK
+        // THE LINE - MultiFormatTextLabel.cs:333-345 calls NewLine() for
+        // all three, JustifyCenter additionally centring the row it just
+        // closed. The port dropped both as "every other control byte",
+        // so every record that lays its text out with them (the race
+        // descriptions, most centred popups) came back as ONE run-on
+        // line with words fused across the break: "Hammerfell.You are".
+        if (b === RSC.NewLine || b === RSC.JustifyLeft || b === RSC.JustifyCenter) { cur += '\n'; continue; }
+        if (b === RSC.FontPrefix || b === RSC.PositionPrefix) { i++; continue; }   // one operand each, never leaks
+        if (b >= RSC.FirstCharacter && b <= RSC.LastCharacter) { cur += String.fromCharCode(b); continue; }
+        // every remaining control byte (page, cursor) drops here
+      }
+      return cur;
+    });
   }
 
   /** TextProvider.GetRandomText (TextProvider.cs:250-268), which is a
@@ -244,18 +245,14 @@ export class TextRsc {
    *  established matters, so neither existing reader could do it. */
   variantLinesById(id, pick = Math.random) {
     const n = this.variantCount(id);
-    if (n <= 1) {
-      // ROAD-Ar R13: TextProvider.cs:225 completes the final stream
-      // unconditionally, so Count is at least 1 and :228's draw has NO
-      // Count guard - a single-subrecord record still burns one value.
-      // Short-circuiting before `pick` was free while `pick` was
-      // Math.random; with a7's stream-consuming dfRandPick it left the
-      // port's DFRandom one draw BEHIND classic, which is the desync
-      // the painting reads exist to close. The row content still comes
-      // from variant 0; only the draw is restored.
-      if (n === 1) variantIndex(pick, 1);
-      return this.linesById(id);
-    }
+    if (n === 0) return [];
+    // ROAD-Ar R13: TextProvider.cs:225 completes the final stream
+    // unconditionally, so Count is at least 1 and :228's draw has NO
+    // Count guard - a single-subrecord record still burns one value.
+    // Short-circuiting before `pick` was free while `pick` was
+    // Math.random; with a7's stream-consuming dfRandPick it left the
+    // port's DFRandom one draw BEHIND classic, which is the desync
+    // the painting reads exist to close. One variant draws index 0.
     const want = variantIndex(pick, n);
     // AUDIT 23 (FTD-1) - TextProvider.cs:231: a record ending 0xFF 0xFE
     // mints an empty trailing stream; DFU steps back one variant when
@@ -273,14 +270,7 @@ export class TextRsc {
   /** How many SubrecordSeparator-delimited variants a record has. */
   variantCount(id) {
     const raw = this.bytesById(id);
-    if (!raw) return 0;
-    let n = 1;
-    for (let i = 0; i < raw.length; i++) {
-      if (raw[i] === RSC.EndOfRecord) break;
-      if (raw[i] === RSC.SubrecordSeparator) n++;
-      if (raw[i] === RSC.FontPrefix || raw[i] === RSC.PositionPrefix) i++;
-    }
-    return n;
+    return raw ? variantRanges(raw).length : 0;
   }
 
   /** TextProvider.GetRandomTokens' law over one record: a random
@@ -292,12 +282,9 @@ export class TextRsc {
     const raw = this.bytesById(id);
     if (!raw) return [];
     const ranges = variantRanges(raw);
-    const n = ranges.length;
     // ROAD-Ar R13, same law as variantLinesById: :228 draws whatever
     // Count is, so a one-stream record consumes its LCG value too.
-    let want = 0;
-    if (n > 1) want = variantIndex(pick, n);
-    else if (n === 1) variantIndex(pick, 1);
+    const want = variantIndex(pick, ranges.length);
     // readTokens answers NULL on an empty stream (the 0xFF 0xFE tail
     // variant) - exactly the case the FTD-1 step-back exists for
     let tokens = readTokens(raw.slice(ranges[want][0], ranges[want][1]), 0, RSC.EndOfRecord) ?? [];
@@ -329,31 +316,20 @@ export class TextRsc {
     return readTokens(raw.slice(r[0], r[1]), 0, RSC.EndOfRecord) ?? [];
   }
 
-  /** The first variant as ROWS, with the per-row alignment the record
-   *  asks for: a row closed by JustifyCenter is centred, one closed by
-   *  JustifyLeft or a bare NewLine is left (MultiFormatTextLabel.cs
-   *  :333-345). Trailing empties drop - a record almost always ends
-   *  with a break. */
+  /** One variant (the first by default) as ROWS, with the per-row
+   *  alignment the record asks for: a row closed by JustifyCenter is
+   *  centred, one closed by JustifyLeft or a bare NewLine is left
+   *  (MultiFormatTextLabel.cs :333-345). Trailing empties drop - a
+   *  record almost always ends with a break. */
   linesById(id, variant = 0) {
     const raw = this.bytesById(id);
     if (!raw) return [];
+    const r = variantRanges(raw)[variant];
+    if (!r) return [];
     const rows = [];
     let cur = '';
-    let v = 0;
-    for (let i = 0; i < raw.length; i++) {
+    for (let i = r[0]; i < r[1]; i++) {
       const b = raw[i];
-      if (b === RSC.EndOfRecord) break;
-      if (b === RSC.SubrecordSeparator) {
-        if (v === variant) break;
-        v++; cur = ''; rows.length = 0;   // start the next variant clean
-        continue;
-      }
-      if (v !== variant) {
-        // still skipping to the wanted variant - consume operands so a
-        // 0xFF inside one cannot be read as a separator
-        if (b === RSC.FontPrefix || b === RSC.PositionPrefix) i++;
-        continue;
-      }
       if (b === RSC.NewLine || b === RSC.JustifyLeft || b === RSC.JustifyCenter) {
         rows.push({ text: cur, center: b === RSC.JustifyCenter });
         cur = '';

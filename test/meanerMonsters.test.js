@@ -66,7 +66,8 @@ test('MM1: the row at mint - the edit over the base row under the mod\'s Enabled
   setModSetting('meanerMonsters', 'Enabled', false);
   assert.equal(makeEnemyEntity(0, ENEMY_BASICS[0], career(), 5, () => 0.5).basics.maxHealth, ENEMY_BASICS[0].maxHealth, 'the overhaul on ALONE: DFU\'s "Meaner Monsters is loaded" arm is off, the base row stands');
   _resetModSettings();
-  assert.equal(modSettingIfDeclared('roleplayRealism', 'advancedArchery'), undefined, 'a mod the port has not vendored reads as not loaded');
+  assert.equal(modSettingIfDeclared('noSuchMod', 'Enabled'), undefined, 'a mod the port has not vendored reads as not loaded');
+  assert.equal(modSettingIfDeclared('roleplay-realism', 'advancedArchery'), true, 'AUDIT 68: Roleplay & Realism IS vendored, under its own id');
   assert.equal(modSettingIfDeclared('meanerMonsters', 'Enabled'), true, 'MO1: on by default');
 });
 

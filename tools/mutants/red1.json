@@ -32,7 +32,7 @@
   {
     "name": "RED1-4-the-rate-gate-dropped",
     "file": "server/src/index.js",
-    "old": "      const meters = this._meterOf(ws);\n      const gate = redGate(meters.rbucket, now);\n      meters.rbucket = gate.bucket;\n      if (!gate.pass) return;",
+    "old": "      if (!this._spend(ws, now, redGate, 'rbucket', 'rdrops', 'too many lines')) return;",
     "new": "",
     "tests": [
       "test/red1_server_say.test.js"
@@ -42,11 +42,9 @@
   {
     "name": "RED1-5-the-red-bucket-is-the-chat-bucket",
     "file": "server/src/index.js",
-    "old": "      const gate = redGate(meters.rbucket, now);\n      meters.rbucket = gate.bucket;",
-    "new": "      const gate = redGate(meters.cbucket, now);\n      meters.cbucket = gate.bucket;",
-    "tests": [
-      "test/red1_server_say.test.js"
-    ],
+    "old": "redGate, 'rbucket', 'rdrops'",
+    "new": "redGate, 'cbucket', 'cdrops'",
+    "tests": ["test/red1_server_say.test.js"],
     "note": "Two different allowances sharing one bucket means each silently spends the other: a developer who has just talked cannot broadcast, and one who has just broadcast cannot talk. Separate spends, separate buckets - which is also why CHAT1 gave chat its own rather than borrowing the pose one."
   },
   {
@@ -112,7 +110,7 @@
   {
     "name": "RED1-12-the-inbound-gate-dropped",
     "file": "src/net/online.js",
-    "old": "      const g = chatInGate(this._inChat.get(room), now);\n      this._inChat.set(room, g.bucket);\n      if (!g.pass) { this.stats.chatsDropped++; return; }\n      this._deliver('chat', () => this.onRed?.({ text, at: Number.isFinite(m.at) ? m.at : now }));",
+    "old": "      if (!this._lineIn(room, null, now)) return;\n      this._deliver('chat', () => this.onRed?.({ text, at: Number.isFinite(m.at) ? m.at : now }));",
     "new": "      this._deliver('chat', () => this.onRed?.({ text, at: Number.isFinite(m.at) ? m.at : now }));",
     "tests": [
       "test/red1_server_say.test.js"

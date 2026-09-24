@@ -145,9 +145,16 @@ test('HCC pool: the horse billboard - the five standing views then the forty wal
   pool.attach(fakeRuntime());
   pool.frame(1 / 30, [0, 0, 0]);
   assert.equal(pool.batches().length, 0); assert.equal(renderer.destroyed, 1);
-  const failing = createHorseCartPool({ renderer: fakeRenderer(), meshes: fakeMeshes(), collider: () => fakeCollider(), fetchFn: async () => ({ ok: false, status: 404 }), decode, log: { error() {}, warn() {} } });
+  // AUDIT 68 S27-hcc-walk-fetch-storm: the failure is the POOL's to latch and to say - the runtime's own log of it was
+  // unreachable, and `failed()` went with it
+  let asked = 0;
+  const errors = [];
+  const failing = createHorseCartPool({ renderer: fakeRenderer(), meshes: fakeMeshes(), collider: () => fakeCollider(), fetchFn: async () => { asked++; return { ok: false, status: 404 }; }, decode, log: { error: (m) => errors.push(m), warn() {} } });
   failing.presentation.horseArt.ensureStationary(); await flush();
-  assert.equal(failing.presentation.horseArt.ensureStationary(), false); assert.equal(failing.presentation.horseArt.failed(), true, 'a missing file is a failure the runtime logs once');
+  const once = asked;
+  assert.equal(failing.presentation.horseArt.ensureStationary(), false); await flush();
+  assert.equal(asked, once, 'a missing file is a failure: TryLoad fails once, nothing is fetched again');
+  assert.equal(errors.length, 1, 'and the pool says so once');
 });
 
 test('HCC pool: the targets, the names and the press - the parked wagon\'s box, the following team\'s, the horse\'s 1.1 x 2.2 x 2.6 turned with its forward', async () => {

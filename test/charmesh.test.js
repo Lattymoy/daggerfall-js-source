@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { packCharacterFaces, facesBounds } from '../src/render/characterMesh.js';
+import { packCharacterFaces } from '../src/render/characterMesh.js';
+import { boundsOf } from '../src/render/bounds.js';
 import { buildBody, BARE_PLUGS } from '../src/characters/rewrite/body.js';
 
 test('charmesh: fan triangulation, color normalization, normals', () => {
@@ -28,7 +29,11 @@ test('charmesh: bare humanoid packs whole + bounds sane', () => {
   for (const f of faces) tris += f.p.length / 3 - 2;
   const out = packCharacterFaces(faces);
   assert.equal(out.length, tris * 3 * 9);
-  const b = facesBounds(faces);
-  assert.ok(b.maxY > b.minY, 'has height');
-  assert.ok(b.maxX > b.minX && b.maxZ > b.minZ);
+  // AUDIT 68 S16-facesbounds-dead: facesBounds (read by nothing but this test) is gone - the rigs bound the PACKED
+  // vertices, nine floats apiece, and so does this
+  const s = boundsOf(out, null, 0, -1, 9);
+  assert.ok(s[3] > 0.5, `has extent: ${s[3]}`);
+  let minY = Infinity, maxY = -Infinity;
+  for (let i = 1; i < out.length; i += 9) { minY = Math.min(minY, out[i]); maxY = Math.max(maxY, out[i]); }
+  assert.ok(maxY - minY > 1, `has height: ${maxY - minY}`);
 });

@@ -30,9 +30,9 @@
 // registerCustomTemplates takes them and the frozen DFU table stays
 // what it is. Nothing here writes to itemTemplates.json.
 
-import { registerCustomTemplates, templateByIndex, mintCondition, setItemFields } from './itemTemplates.js';
+import { registerCustomTemplates, templateByIndex, mintCondition, setItemFields, registerAmmunition } from './itemTemplates.js';
 import { addVendorTextures, vendorTextureCount } from './textureReplacement.js';
-import { registerUniqueFind, registerLegendary, registerAmmunition } from './lootRarity.js';
+import { registerUniqueFind, registerLegendary } from './lootRarity.js';
 import { SKILLS } from './skills.js';
 import { APP_ROOT } from './appRoot.js';   // AUDIT-THUNDERLOCK F7
 import { GUN_FEEL } from '../combat/gunFeel.js';   // FIELD-GUN13: the flash's reach, from the one home the feel lives in (a leaf - no imports of its own)

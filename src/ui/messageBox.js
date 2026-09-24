@@ -76,6 +76,8 @@ import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { clampScrollIndex, thumbSpan, drawScrollThumb } from './verticalScrollBar.js';
 import { decodePng } from '../systems/textureReplacement.js';   // RR2: a mod's button PNGs
+import { packTexture } from './packArt.js';   // OVH2: the worn UI pack's buttons
+import { packCifRciUrl } from '../systems/uiPack.js';
 
 /** MessageBoxButtons (DaggerfallMessageBox.cs:67-90) - the value IS
  *  the BUTTONS.RCI record. */
@@ -158,6 +160,18 @@ function buttonTex(record) {
   if (!_art) return null;
   let t = _art.buttons.get(record);
   if (t === undefined) {
+    // OVH2: a worn UI pack's button first (GrimoireUI ships BUTTONS.RCI 0-37 - its own 21-37 are Roleplay &
+    // Realism's labels redrawn, so the pack's face wins those too). The slot draws nothing until the PNG lands; a
+    // pack file that does not load hands the slot to the arms below on the next draw.
+    const packUrl = _packFailed.has(record) ? null : packCifRciUrl('BUTTONS.RCI', record, 0);
+    if (packUrl) {
+      _art.buttons.set(record, null);
+      packTexture(_art.renderer, packUrl).then((tex) => {
+        if (tex) { _art.buttons.set(record, tex); return; }
+        _packFailed.add(record); _art.buttons.delete(record);
+      });
+      return null;
+    }
     // RR2: a mod's own button art (Roleplay & Realism ships BUTTONS.RCI
     // records 21-37 as PNGs - the classic file ends at 20). Registered
     // loaders decode on first use; until the bytes land the slot draws
@@ -181,6 +195,7 @@ function buttonTex(record) {
 /** RR2: `registerButtonArt(record, load, isOn)` - `load()` answers the PNG
  *  bytes (a Promise), `isOn` the mod's switch. */
 const _buttonArt = new Map();
+const _packFailed = new Set();   // OVH2: the pack buttons that did not load - the classic arms answer them
 export function registerButtonArt(record, load, isOn = null) { if (typeof load === 'function') _buttonArt.set(record, { load, isOn }); else _buttonArt.delete(record); }
 export const buttonArtRegistered = (record) => _buttonArt.has(record);
 

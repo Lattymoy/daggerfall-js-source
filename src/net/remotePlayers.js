@@ -36,6 +36,7 @@ import { MobileUnit } from '../characters/mobileUnit.js';
 import { ENEMY_BASICS, ENEMY_NAMES } from '../characters/enemyBasics.js';
 import { MOBILE_TYPES } from '../characters/mobileTypes.js';   // DISC12: the beast a peer in beast form stands as
 import { mobileBillboardSize } from '../world/rmbFlats.js';
+import { modSetting, storedModSetting } from '../systems/modSettings.js';   // DISC23-B: the Eye Of The Beholder set the look carries
 import { getPref } from '../systems/uiPrefs.js';   // 2026-09-17: the 'peerClassSprites' on/off, read once a sync (Other players, enhancedMenu.js peerSpritesCard)
 import { CLASS_CAREERS } from '../systems/chargen.js';   // 2026-09-17 (bugfix): a stock class's CFG-loaded career carries no `.name` of its own - chargenSession.js's own class list already falls back to this array by careerIndex (`cf.career.name || CLASS_CAREERS[i]`), and composeLook needs the same fallback or every stock-class peer sends class:null
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';   // AUDIT DROPS E6: the hand a swing sound is read off
@@ -344,8 +345,20 @@ export const DOLL_RETRY_MS = 5000;
  *  only peers CURRENTLY on the paperdoll retry at all, never the whole roster. */
 export const MOBILE_RETRY_MS = 1000;
 
-/** The player's look, as the hello carries it. */
-export function composeLook(entity) {
+/** DISC23-B: the Eye Of The Beholder on-foot set this player CHOSE, or null - what the look's `eo` says (wire.js
+ *  validLook). Null while their mod is off, and null while they have never chosen one: the mod ships on, so a set read
+ *  off its default would dress every player who never opened the dial as its first set - a whole room of the same
+ *  woman in green where each stood as their own class. The store knows a choice from a default (storedModSetting). */
+export function ownEotbSet() {
+  try {
+    if (!modSetting('eye-of-the-beholder', 'Enabled')) return null;
+    if (storedModSetting('eye-of-the-beholder', 'Graphics.OnFoot') === undefined) return null;
+    return modSetting('eye-of-the-beholder', 'Graphics.OnFoot');
+  } catch { return null; }   // not vendored: no set
+}
+
+/** The player's look, as the hello carries it. DISC23-B: `eotbSet` the chosen sprite set (ownEotbSet, the host's read). */
+export function composeLook(entity, { eotbSet = ownEotbSet() } = {}) {
   const items = [];
   const table = entity ? equipTableOf(entity) : [];
   for (let slot = 0; slot < table.length; slot++) {
@@ -364,7 +377,8 @@ export function composeLook(entity) {
   // hello's own bytes, so a stray `class: null` would miss every look already cached, and a class-less peer must still
   // serialize to the bytes it always did.
   const klass = careerName(entity);
-  return { race: entity?.race ?? 'Breton', gender: entity?.gender ?? 'male', faceIndex: entity?.faceIndex ?? 0, ...(klass ? { class: klass } : {}), items };
+  // DISC23-B: `eo` OMITTED while the mod is off, `class`'s law - a look without it keeps the bytes it always had
+  return { race: entity?.race ?? 'Breton', gender: entity?.gender ?? 'male', faceIndex: entity?.faceIndex ?? 0, ...(klass ? { class: klass } : {}), ...(Number.isInteger(eotbSet) ? { eo: eotbSet } : {}), items };
 }
 
 /** One string per distinct look: the doll cache's key.
@@ -802,7 +816,6 @@ export class RemotePlayers {
       if (live.has(id)) continue;
       this.renderer.destroyBillboardBatch?.(entry.batch);
       this._batches.delete(id);
-      this._mobiles.delete(id);   // 2026-09-17: a departed peer's mobile bundle (or its in-flight build) goes with its batch
       this._footsteps?.delete(id);   // PEER-FS1: a departed peer's stride machine goes with everything else
       this._attackAn?.delete(id);   // PEER-FS2: and their swing-edge tracker
     }
@@ -825,6 +838,10 @@ export class RemotePlayers {
     for (const id of this._attackAn.keys()) if (!seen.has(id)) this._attackAn.delete(id);
     for (const id of [...this._riding.keys()]) if (!seen.has(id)) this._stopRidingSound(id);   // RIDE-SOUND: a peer gone (or every peer, on the dead's empty sync) takes their hooves with them
     for (const id of [...this._onFoot]) if (!seen.has(id)) this._onFoot.delete(id);   // AUDIT DISC7 B4: and what they were last seen on
+    // 2026-09-17: a departed peer's mobile bundle (or its in-flight build) goes with it. AUDIT 68
+    // S14-remoteplayers-mobiles-unswept: swept against `live`, not inside the batch sweep - a peer gone before its build
+    // landed held no batch, and the build then stored a whole bundle for nobody (`_mobileFor`'s own race check drops it now)
+    for (const id of this._mobiles.keys()) if (!live.has(id)) this._mobiles.delete(id);
   }
 
   /** PEER-FS1 (Mac, 2026-09-18: "footstep sounds depending where they walk

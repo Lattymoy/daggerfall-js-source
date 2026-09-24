@@ -29,6 +29,7 @@ import { readdirSync, readFileSync, writeFileSync, statSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import { chromium } from 'playwright';
 import { bake, writeWav8, DF_RATE } from './sndify.mjs';
+import { isMain } from './lib/isMain.mjs';
 
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 
@@ -145,7 +146,7 @@ export const measureLine = (name, m) => [
   `${m.bright.toFixed(0)}Hz`.padStart(8),
 ].join(' ');
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isMain(import.meta.url)) {
   const root = process.argv[2] ?? 'scratch/gun-sounds';
   // sources only - the .wav beside them is this tool's own output
   const files = findAudio(root).filter((f) => extname(f).toLowerCase() !== '.wav');

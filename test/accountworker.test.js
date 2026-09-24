@@ -202,12 +202,20 @@ test('AUDIT-ACC F13: a credential is never accepted from a URL', async () => {
     'the CORS preflight does not allow the header the credential now rides in');
 });
 
-test('AUDIT-ACC F12: a credential is not a licence to hammer, and the refusal is 429', async () => {
+test('AUDIT-ACC F12: a credential is not a licence to hammer, and the refusal is 429', async (t) => {
   // Only the OPEN routes were bounded, per address, on the door.
   // Everything behind a session was unbounded, so one valid secret
   // could mint Ed25519 signatures and spend D1 as fast as the network
   // allowed. A limit that stops strangers and not members is a limit on
   // the wrong axis.
+  // THE WINDOW IS THE WALL CLOCK'S (overRate: `floor(nowS / 60) * 60`), and ACCOUNT_MAX + 5 real Ed25519 mints take
+  // seconds under a loaded suite - a run that straddled a minute boundary started a fresh window mid-loop and never
+  // met the ceiling ("245 authenticated calls went through unbounded", on a full `npm run check`). The clock is held
+  // one second into a window for the whole test, so every call is judged in the one window the bound speaks of.
+  const realNow = Date.now;
+  const held = (Math.floor(realNow() / 60_000) * 60 + 1) * 1000;
+  Date.now = () => held;
+  t.after(() => { Date.now = realNow; });
   const { call } = await stand();
   const guest = (await call('POST', '/v1/auth/guest', {})).body;
 

@@ -94,7 +94,7 @@ const GOOD = { to: 'peer-0002', level: 5, spell: { name: 'Heal', element: 4, ran
 const GOOD_OUT = { ...GOOD, spell: { ...GOOD.spell, icon: 0 } };
 
 test('ALLY-CAST wire (world97): validCastData projects a bounded spell record and refuses the whole frame otherwise; parseClient carries the `cast` frame after a hello and inside the cap', () => {
-  assert.equal(RELAY_VERSION, 'world105');   // DUEL1's duel frame and the card's account stamp (world105); TITLE-N's dm frame and badge vocabulary moved it again (world104); the contributor's death pose, Resurrect call and fallen body moved it (world103); the community arc's frames (CHAT-CHAN, DICE1, EMOTE1, INSPECT1, JOURNAL1) and AUDIT ATTACH's meters moved it (world102); DISC12's pose hand and beast bits (world101); DISC7's hs (world100); SPELLFX1's pose fields moved it once more (world98), HCC-PARK + RIDE again (world99); the cast frame is world97's
+  assert.equal(RELAY_VERSION, 'world107');   // DUEL1's duel frame and the card's account stamp (world107); DISC23-B's look (world106); AUDIT 68's relay law (world105); TITLE-N's dm frame and badge vocabulary moved it again (world104); the contributor's death pose, Resurrect call and fallen body moved it (world103); the community arc's frames (CHAT-CHAN, DICE1, EMOTE1, INSPECT1, JOURNAL1) and AUDIT ATTACH's meters moved it (world102); DISC12's pose hand and beast bits (world101); DISC7's hs (world100); SPELLFX1's pose fields moved it once more (world98), HCC-PARK + RIDE again (world99); the cast frame is world97's
   const d = validCastData(GOOD);
   assert.deepEqual(d, GOOD_OUT, 'a whole frame, every component an integer in bounds, the icon defaulted');
   assert.equal(validCastData({ ...GOOD, to: 'x' }), null, 'an id is an id');
@@ -442,7 +442,9 @@ test('ALLY-CAST by source: world.js picks the party mate with the F key\'s own r
   const o = rd('src/net/online.js');
   assert.match(o, /sendCast\(data\) \{\s*\n\s*const d = validCastData\(data\);\s*\n\s*if \(!d \|\| d\.to === this\.id \|\| !this\.castOk\) return false;/, 'the link projects its own frame first, and never sends one at a relay that would close the socket');
   assert.match(o, /if \(primary\) this\.castOk = relaySupportsCast\(relayV\);/);
-  assert.match(o, /const d = validCastData\(m\.data\);\s*\n\s*if \(d && d\.to === this\.id\) this\._deliver\('cast', \(\) => this\.onCast\?\.\(m\.id, d\)\);/, '...and delivers only what is addressed to me');
+  // AUDIT 68 S14-inbound-directed-gate-dup: the cast arm goes through the directed frames' one door, which projects and addresses
+  assert.match(o, /this\._directedIn\(m, now, 'cast', this\._inCastBuckets, castInGate, CAST_IN_HZ_MAX, validCastData, \(id, d\) => this\.onCast\?\.\(id, d\)\);/, 'the cast arm through the directed door');
+  assert.match(o, /const d = valid\(m\.data\);\s*\n\s*if \(d && d\.to === this\.id\) this\._deliver\(kind, \(\) => deliver\(m\.id, d\)\);/, '...and delivers only what is addressed to me');
   const h = rd('src/scenes/hostMagic.js');
   assert.match(h, /const ally = !readiedFree && allyReach !== null && allyCastable\(sp\) \? allyInReach\(eye, dir, allyReach\) : null;\s*\n\s*if \(ally && castAtAlly\?\.\(ally\.id, allyCastFrame\(sp, playerEntity\.level, ally\.id\)\)\) \{/, 'the release frame asks before the four range arms, never for a free ready');
   assert.match(h, /if \(!pickTouch\(eye, dir, sp\) && !\(!readiedFree && allyCastable\(sp\) && allyInReach\(eye, dir, ALLY_TOUCH_REACH\)\)\) return false;/, 'the touch gate');

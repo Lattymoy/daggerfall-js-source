@@ -288,7 +288,7 @@ export const MOD_SETTINGS = Object.freeze({
       classicStrengthDamageBonus: Object.freeze({ default: false, description: 'Display the strength damage bonus like classic Daggerfall (half) rather than the value used internally that DFU displays' }),
       variantNpcs: Object.freeze({ default: true, description: 'Enable variant NPC sprites in shops & taverns' }),
       variantResidents: Object.freeze({ default: true, description: 'This populates 80% of houses with the townsfolk you see walking around insteam of random adventurer flats' }),
-      fightersTeachHandToHand: Object.freeze({ default: false, description: 'Enable this module to replace Giantish with Hand 2 Hand for training and guild ranks. (Not compatible with other mods that change Fighters Guild)' }),
+      // fightersTeachHandToHand RETIRED (FGH2H-R, 2026-09-24, Mac: "retire it") - see RETIRED_KEYS below
       loanAmountPerLevel: Object.freeze({ default: 4, options: Object.freeze(['2000', '4000', '6000', '8000', '10000', '20000', '30000', '40000', '50000']), description: 'Sets the maximum amount per level that can be borrowed from banks' }),
       // EnhancedRiding (RR2)
       'EnhancedRiding.enhancedRiding': Object.freeze({ default: true, description: 'Enable enhanced horse riding module, improving presentation and allowing galloping.' }),
@@ -639,8 +639,21 @@ export const MOD_SETTINGS = Object.freeze({
       'AutoTogglePerspective.OnTransitionInterior': Object.freeze({ default: 0, options: Object.freeze(['Don\'tChange', 'FirstPerson', 'ThirdPerson']), description: 'Which view to take on stepping indoors.' }),
       'AutoTogglePerspective.OnTransitionExterior': Object.freeze({ default: 0, options: Object.freeze(['Don\'tChange', 'FirstPerson', 'ThirdPerson']), description: 'Which view to take on stepping back outside.' }),
       'Graphics.Enable': Object.freeze({ default: true, description: 'Toggle the player graphic' }),
-      'Graphics.OnFoot': Object.freeze({ default: 0, min: 0, max: 15, description: 'Sprite when on foot' }),
-      'Graphics.OnHorse': Object.freeze({ default: 0, min: 0, max: 4, description: 'Sprite when riding a horse' }),
+      // DISC23-B (2026-09-24, Gryphoth and Scratchie on Discord: "EOTB comes with 16 ground models and different
+      // mounted models, it would be nice to be able to change our models like in the original mod" / "the game is not
+      // allowing us to choose between the different index slots"): the mod's two SLIDERS, kept sliders (0-15, 0-4, as
+      // modsettings.json declares them), each index NAMED - the pane drew a bare number, and "7" is not a sprite anyone
+      // can choose by. The names are the mod's own preset titles (modpresets.json: Light Fighters 0, Medium Fighters 2,
+      // Heavy Fighter F 4 and M 5, Mage F 6 and M 7, Thief Mage 8/9, Fighter Mage 10/11, Thief 12/13, Fighter Thief
+      // 14/15), and the art says the rest: every even set is a woman and every odd set a man, and the five riders are
+      // the fighters by their helms and boots (green-booted women, cyan-booted men - the on-foot sets' own colours).
+      'Graphics.OnFoot': Object.freeze({ default: 0, min: 0, max: 15, description: 'Sprite when on foot',
+        labels: Object.freeze(['Light Fighter (female)', 'Light Fighter (male)', 'Medium Fighter (female)', 'Medium Fighter (male)',
+          'Heavy Fighter (female)', 'Heavy Fighter (male)', 'Mage (female)', 'Mage (male)',
+          'Thief Mage (female)', 'Thief Mage (male)', 'Fighter Mage (female)', 'Fighter Mage (male)',
+          'Thief (female)', 'Thief (male)', 'Fighter Thief (female)', 'Fighter Thief (male)']) }),
+      'Graphics.OnHorse': Object.freeze({ default: 0, min: 0, max: 4, description: 'Sprite when riding a horse',
+        labels: Object.freeze(['Light Fighter (female)', 'Medium Fighter (male)', 'Medium Fighter (female)', 'Heavy Fighter (male)', 'Heavy Fighter (female)']) }),
       'Graphics.ReadyStance': Object.freeze({ default: 2, options: Object.freeze(['Never', 'When Idle', 'When Idle or Moving']), description: 'Whether the sprite will change states when readying a weapon or spell' }),
       'Graphics.TurnToView': Object.freeze({ default: 2, options: Object.freeze(['Never', 'Only When Animating', 'When Weapon Readied', 'Always']), description: 'Configure when the sprite turns to face the view' }),
       'Graphics.AttackStrings': Object.freeze({ default: 3, options: Object.freeze(['None', 'Mirror', 'PingPong', 'Mixed']), description: 'Optional attack animations' }),
@@ -968,8 +981,22 @@ export const KEY_MIGRATIONS = Object.freeze([
 export const SWITCH_RESETS = Object.freeze([
   Object.freeze({ vendor: 'diverse-weapons', key: 'WeaponWidgetPreset', stamp: 'WeaponWidgetPreset@DISC20' }),
 ]);
+/** FGH2H-R (2026-09-24, Mac: "retire it"): A SWITCH TAKEN OFF THE PANE. Roleplay & Realism's
+ *  fightersTeachHandToHand swapped Giantish for HandToHand in the Fighters Guild's lists; FGH2H put HandToHand in the
+ *  base lists beside Giantish, which left the switch one effect - taking Giantish away - so it is retired whole (the
+ *  Port-Ledger's FGH2H row). A player who turned it on holds a SAVED true for a key nothing declares, so the stored
+ *  value is let go on load, once, and the file written back; a file that never mentioned the key is not touched. */
+export const RETIRED_KEYS = Object.freeze([
+  Object.freeze({ vendor: 'roleplay-realism', key: 'fightersTeachHandToHand' }),
+]);
 function migrate(m) {
   let changed = false;
+  for (const { vendor, key } of RETIRED_KEYS) {
+    const held = m?.[vendor];
+    if (!held || !Object.hasOwn(held, key)) continue;
+    delete held[key];
+    changed = true;
+  }
   for (const { vendor, key, was } of KEY_MIGRATIONS) {
     const held = m?.[vendor];
     if (!held || held[key] !== was) continue;
@@ -1126,6 +1153,13 @@ export function modSettingsOf(vendor) {
   return out;
 }
 
+/** AUDIT 68 S15-eotb-settings-snapshot: DFU's ModSettingsChange, as a
+ *  number. Every write moves it, so a reader that holds a resolved copy
+ *  (the EOTB camera and body) re-reads when there is something new
+ *  rather than never - the same idiom as `morrowindDataGeneration`. */
+let _generation = 0;
+export const modSettingsGeneration = () => _generation;
+
 export function setModSetting(vendor, key, value) {
   const def = declaredKey(vendor, key);
   if (!def) throw new Error(`setModSetting: ${vendor}/${key} is not a declared switch`);
@@ -1134,6 +1168,7 @@ export function setModSetting(vendor, key, value) {
   (m[vendor] ??= {})[key] = v;
   for (const r of SWITCH_RESETS) if (r.vendor === vendor && r.key === key) m[vendor][r.stamp] = true;   // DISC20-E: chosen after the reset - kept
   save();
+  _generation++;
   return v;
 }
 
@@ -1169,4 +1204,4 @@ export function flattenModPreset(vendor, values) {
 }
 
 /** For tests: forget everything. */
-export function _resetModSettings() { memory = null; try { appStorage()?.removeItem(STORE_KEY); } catch { /* none */ } }
+export function _resetModSettings() { memory = null; _generation++; try { appStorage()?.removeItem(STORE_KEY); } catch { /* none */ } }

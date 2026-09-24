@@ -53,7 +53,7 @@ import { morphSelf } from '../systems/lycanthropy.js';   // V2a: the MorphSelf a
 import { allyCastable, allyReachFor, allyCastFrame, allyCastCasterLine, ALLY_TOUCH_REACH } from '../systems/allyCast.js';
 import { hasResurrect, RESURRECT_REACH, RESURRECT_TEXT, pickFallenBody } from '../systems/resurrect.js';   // RESURRECT1: a fallen party member's body is the target   // ALLY-CAST: a beneficial spell at the party mate under the crosshair
 import { billboardSize, centredBase } from '../world/rmbFlats.js';
-import { createMagicCandle, CANDLE } from './magicCandle.js';   // X11: the Light effect's candle
+import { createMagicCandle } from './magicCandle.js';   // X11: the Light effect's candle
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // PlayerController.height, the candle's y term
 import { createHitEffects } from './hitEffects.js';   // AUDIT 26 F033: DaggerfallMissile's impact flash
 import { duelSpellOf } from '../combat/duelCombat.js';   // DUEL1: the harmful half of a spell, which alone may reach a duel opponent
@@ -251,8 +251,11 @@ export function createPlayerMagic({
   // call, so it reaches the player even though the effect lives on the
   // monster. The foe's own sinks carry no `say` and should not: the
   // line belongs to the caster, not the target.
-  function applySpellToFoe(spell, casterLevel, foe, caster = null, ctx = undefined) {
-    const r = applySpell(spell, casterLevel, foe.entity, foeSinks(foe, !caster || caster.entity === playerEntity), rolls, caster, ctx);   // AUDIT WORLD2 B7: a foe's spell is not the player's blow (the dungeon's sink reads the second arg; the exterior's ignores it)
+  // AUDIT 68 S21-strike-landing-dup: `sinks` is the one override - the enchantment door (hostEnchant's
+  // applySpellToTarget) lands through HERE with its own membership-routed sinks, where it kept a copy of this
+  // landing that dropped the Soul Trap line and the Calm/Charm flag.
+  function applySpellToFoe(spell, casterLevel, foe, caster = null, ctx = undefined, sinks = foeSinks(foe, !caster || caster.entity === playerEntity)) {   // AUDIT WORLD2 B7: a foe's spell is not the player's blow (AUDIT 68 X4: every host's sinks read the second arg)
+    const r = applySpell(spell, casterLevel, foe.entity, sinks, rolls, caster, ctx);
     if (r.trapAlert) say(SOUL_TRAP_TEXT[r.trapAlert]);
     // X8: PACIFY / CHARM. The effect answers whether the target was
     // pacified; the AI flag lives on the foe RECORD rather than the
@@ -960,6 +963,7 @@ export function createPlayerMagic({
       for (const m of missiles) retireMissile(m);
       missiles.length = 0;
       candle.clear();
+      impacts.clear();   // AUDIT 68 S21-magic-destroy-impacts: a flash still warming its archive is marked dead, so it publishes nothing into this dead engine
       for (const b of batches) { flatAnims.remove(b); renderer.destroyBillboardBatch(b); }
       batches.length = 0;
     },
@@ -977,7 +981,6 @@ export function createPlayerMagic({
      *  renderer - the candle is 1.4 units away, so it is always the
      *  nearest light there is and the sort would put it first anyway. */
     candleLight: () => candle.light(),
-    candleRange: CANDLE.range,
     missileCount: () => missiles.length,   // M5 probe surface
     readied: () => readiedSpell,
     readiedIndex: () => readiedSpell?.index ?? null,

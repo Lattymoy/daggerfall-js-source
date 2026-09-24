@@ -1,0 +1,110 @@
+{
+  "Title": "Daggerfall Unity's interaction-mode icons",
+  "Author": "Daggerfall Workshop (Interkarma and contributors)",
+  "License": "MIT",
+  "Source": "https://github.com/Interkarma/daggerfall-unity",
+  "Commit": "2343305d1d83ccc0de57a81e3b1e61188a997e34",
+  "Note": "Byte for byte from Assets/Resources/Icons at the commit above - the four sets HUDInteractionModeIcon.LoadAssets loads through DaggerfallUI.GetTextureFromResources. DFU-authored art, not ARENA2 data. This listing is the authority test/doctrine.test.js reads for what may stand under public/art/dfu-icons/.",
+  "Files": [
+    "Assets/Resources/Icons/icon-steal.png",
+    "Assets/Resources/Icons/icon-grab.png",
+    "Assets/Resources/Icons/icon-info.png",
+    "Assets/Resources/Icons/icon-talk.png",
+    "Assets/Resources/Icons/classic-steal.png",
+    "Assets/Resources/Icons/classic-grab.png",
+    "Assets/Resources/Icons/classic-info.png",
+    "Assets/Resources/Icons/classic-talk.png",
+    "Assets/Resources/Icons/colour-steal.png",
+    "Assets/Resources/Icons/colour-grab.png",
+    "Assets/Resources/Icons/colour-info.png",
+    "Assets/Resources/Icons/colour-talk.png",
+    "Assets/Resources/Icons/mono-steal.png",
+    "Assets/Resources/Icons/mono-grab.png",
+    "Assets/Resources/Icons/mono-info.png",
+    "Assets/Resources/Icons/mono-talk.png"
+  ],
+  "Sha256": {
+    "icon-steal.png": "c14d1611f6cea0e859c74e90bbf318d1b042f09808fa163f1eb13529cd7aa9ff",
+    "icon-grab.png": "538e58cf76e906f0e5a80d660d881a978b746aa40f1d00478b3ec05004c1373f",
+    "icon-info.png": "0da9fb99d17295adc81f610fb7216417db5b724ad63ec6c0c2be8ffc0f7defbc",
+    "icon-talk.png": "3bf72ac10d9c632ef1b78f62dbbb3091626e397c5af1e3d7e498ad518a48c04c",
+    "classic-steal.png": "b5693163c0360cdbcb4f8de1cb5b0baa668b6117ea1336be01b2dd407e8e2583",
+    "classic-grab.png": "e3ddca76977ad6bb7e86fc2300d0b5045386b546379369df45877a4c28257dc9",
+    "classic-info.png": "be7d695d4bee3db794218054e006c98c40697c147f52164f013e5344a9a746db",
+    "classic-talk.png": "a3d475a045196e79675b1d3901276afd37c4caf54fb0a6f13ce99b7345011012",
+    "colour-steal.png": "a717d0ef4166d22d20b88e83b15dbb0caef51bd5d7b059ca084aa0a96bad63e4",
+    "colour-grab.png": "001ba0e2c5e9bdd7d3faf7ae945a9cd62278a795b0e78ed8c90ba35b05b39ced",
+    "colour-info.png": "eb4bdde2e10c83b094b64c230baa8928c437a299af18f122d603f958f9ffbb37",
+    "colour-talk.png": "9fcd33f3d236f7edc180fcd464d77573bc09b519599b02095303f24bfb226158",
+    "mono-steal.png": "5302d6be8d82b964a7ca8e15e64c9b2b212dcab2dba9ab582f1f0df53bc43658",
+    "mono-grab.png": "b28f5539c0e6e310ebac015e67685a4a6f4170fcb20f9366b786953e039801b5",
+    "mono-info.png": "9f398192dd38b6c5a0ba58cbf040abefcb0f8c37ea6be6e4d8f14e5c90fa8594",
+    "mono-talk.png": "f0be5bde0fdf52252152b2d7fc96cbf9d58e81e7cc7751c96fb124bc2170c194"
+  },
+  "Size": {
+    "icon-steal.png": [
+      64,
+      64
+    ],
+    "icon-grab.png": [
+      64,
+      64
+    ],
+    "icon-info.png": [
+      64,
+      64
+    ],
+    "icon-talk.png": [
+      64,
+      64
+    ],
+    "classic-steal.png": [
+      22,
+      17
+    ],
+    "classic-grab.png": [
+      18,
+      19
+    ],
+    "classic-info.png": [
+      30,
+      12
+    ],
+    "classic-talk.png": [
+      21,
+      13
+    ],
+    "colour-steal.png": [
+      64,
+      64
+    ],
+    "colour-grab.png": [
+      64,
+      64
+    ],
+    "colour-info.png": [
+      64,
+      64
+    ],
+    "colour-talk.png": [
+      64,
+      64
+    ],
+    "mono-steal.png": [
+      64,
+      64
+    ],
+    "mono-grab.png": [
+      64,
+      64
+    ],
+    "mono-info.png": [
+      64,
+      64
+    ],
+    "mono-talk.png": [
+      64,
+      64
+    ]
+  }
+}

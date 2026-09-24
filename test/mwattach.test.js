@@ -238,7 +238,7 @@ test('MW-D9g: LEARNING the archive count is not a data change - the boot must no
 test('MW-D40: the attach generation answers for the WHOLE STORED SET, not the .bsa count', () => {
   // THE DEFECT (AUDIT 39, #43): the generation was the number of
   // stored .bsa files, and this line is the ONLY writer of it and the
-  // only place `_mwEsm`, `_mwArchiveCache` and `_mwFileCache` are
+  // only place `_mwArchiveCache` and `_mwFileCache` are
   // dropped. So a player who attached Data Files (one .bsa) and THEN
   // attached a loose mod folder (Pegas Horse Ranch: .nif/.dds, no
   // .bsa) or a .esm bumped nothing: loadMorrowindArchives returned
@@ -292,7 +292,7 @@ test('MW-D19: the rig hands the worn item to the arm every frame, in machine ord
   // the reference's updateWeaponState reads stance before weapon), the
   // swap next, the tick last so a swapped arm poses its OWN clip.
   assert.match(rig,
-    /fpArm\.setWeapon\(playerWeapon\.weapon, \{ hasAmmo: hasAmmoFor\(entity\?\.items, playerWeapon\.weapon\), ammoCount: ammoCountOf\(entity\?\.items, playerWeapon\.weapon\) \}\);/,   // WS1: the quiver's count rides the same read; THUNDERLOCK: asked OF THE WEAPON, since a gun spends pellets
+    /fpArm\.setWeapon\(playerWeapon\.weapon, \{ hasAmmo: hasAmmoFor\(entity\?\.items, playerWeapon\.weapon\), ammoCount: ammoCountFor\(entity\?\.items, playerWeapon\.weapon\) \}\);/,   // WS1: the quiver's count rides the same read; THUNDERLOCK: asked OF THE WEAPON, since a gun spends pellets
     'the swap seam reads the same worn item the sprite does, ammo included');
   const sheatheAt = rig.indexOf('fpArm.setSheathed(');
   const swapAt = rig.indexOf('fpArm.setWeapon(');

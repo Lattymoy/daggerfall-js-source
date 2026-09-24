@@ -454,8 +454,8 @@ test('B5: the interior build uses that host, and its late half touches the live 
   const ic = src('src/scenes/interiorContext.js');
   assert.match(ic, /pn\.host = makeInteriorPersonHost\(pn, \{/, 'the build wires the routed host');
   assert.match(ic, /built: \(\) => peopleBuilt/, 'with the build-time/after-the-build seam');
-  assert.match(ic, /billboardBatches\.push\(pn\.lateBatch\)/,
-    'a late stand pushes its own batch into the LIVE array the host draws from');
+  assert.match(ic, /billboardBatches\.push\(pn\.standBatch\)/,
+    'a stand pushes its own batch into the LIVE array the host draws from (AUDIT 68: the build\'s stand and the late one are one)');
   assert.match(ic, /pn\.width = size\.w;[\s\S]{0,60}pn\.height = size\.h;[\s\S]{0,400}uploadRecord\(/,
     'and resolves the extent U23\'s activation ray refuses to aim without');
 });
@@ -475,7 +475,7 @@ test('B5: the key that OPENED the rest window closes it - and ENDS a running res
     // ROAD-E E1: :193 is GetKeyUp(toggleClosedBinding), so the PRESS
     // arms nothing and the RELEASE closes. A BARE release is inert,
     // though, and that is not a detail: the press that OPENS this
-    // window is the host's (world.js:7519 opens on the key down, where
+    // window is the host's (world.js:7497 opens on the key down, where
     // GameManager.cs:534-537 opens on `ActionComplete` - the release -
     // so DFU's opening release is already spent), so the door carries
     // DaggerfallAutomapWindow.cs:703-713's deferral and closes only on

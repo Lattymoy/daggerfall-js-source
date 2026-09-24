@@ -99,7 +99,12 @@ export function publishBootParams(params, { history = globalThis.history, locati
  *  declareOnlinePrefs at the registry's load - this table holds only
  *  the two the registry has no row for. */
 export const ONLINE_FORCED_PREFS = {
-  skin: 'enhanced',
+  // OVH3 (2026-09-24, Mac: "These overhauls need to adapt to online with ease. Online specific UI's will need to
+  // remain"): THE SKIN IS THE PLAYER'S, ONLINE TOO. It was forced to 'enhanced' because the online panels - the chat,
+  // the friends and party, the F-menu, the names over heads, player trade - were built only under that skin. They
+  // mount on either skin now (scenes/world.js chatStart; ui/playerTradeDoor.js) and keep their own face over the
+  // classic screens, so the UI Overhaul a player chose (systems/overhauls.js) is the one they play online. Nothing
+  // the room agrees on reads the skin: it is what THIS screen draws.
   mwArms: true,   // the Morrowind arms build at boot where the archives are attached (weaponRig.js autoBuildArms guards the data); without them the doll stands, as offline
 };
 /** RF4: the registry's door - `true`/`false` forces the key online,
@@ -124,6 +129,19 @@ export const ONLINE_PLAYERS_OWN_PREFS = [
   'heldMap',          // MAP-TOGGLE: whether THIS player's maps are the held sheet or DFU's windows - a look, nothing the room agrees on
   'proceduralSky',    // EE1's legacy key, read only by the migration
 ];   // (RF4: grown by declareOnlinePrefs with the registry's 'player' answers - the dials)
+
+/** DISC22-A (2026-09-24, Mac: "repair magical items should be enabled by default and required online"): THE DFU
+ *  SETTINGS THE ROOM PLAYS BY - the fourth read path (settings.js getData asks here first, as getPref and
+ *  modSetting do). AllowMagicRepairs is a rule of the economy every player meets at the same smith: one player able
+ *  to mend an enchanted blade and another turned away at the same counter is two games in one town. Its OFFLINE
+ *  default is the port's too (settings.js PORT_DEFAULTS); online it is not a choice. Values are DFU's own strings. */
+export const ONLINE_FORCED_SETTINGS = Object.freeze({
+  Controls: Object.freeze({ AllowMagicRepairs: 'True' }),
+});
+/** The forced raw value of a DFU `section/key` on an online page, else undefined. */
+export function onlineForcedSetting(section, key, search) {
+  return isOnlinePage(search) && Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key) ? ONLINE_FORCED_SETTINGS[section][key] : undefined;
+}
 
 /** The forced value of a uiPrefs key on an online page, else undefined. */
 export function onlineForcedPref(key, search) {

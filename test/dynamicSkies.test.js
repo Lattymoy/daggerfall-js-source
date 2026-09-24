@@ -709,7 +709,11 @@ test('DS1 renderer: exp2 fog in every world pass, and the flash composes first u
   // SEVEN since BLOOD1a: the decal pass is a world pass too - a mark on
   // a floor a hundred units off has to fade into the same fog the floor
   // does, or it hangs in the murk brighter than the ground it is on.
-  assert.equal((r.match(/if \(uFogMode == 3\) \{ float f = uFogDensity \* d; return exp\(-f \* f\); \}/g) || []).length, 7, 'every fogFactorAt');
+  // AUDIT 68 S17-fog-glsl-dup: ONE fogFactorAt (fogGlsl.js), which all seven interpolate
+  const fog = read('src/render/fogGlsl.js');
+  assert.equal((fog.match(/if \(uFogMode == 3\) \{ float f = uFogDensity \* d; return exp\(-f \* f\); \}/g) || []).length, 1, 'the exp2 line, once');
+  assert.equal((r.match(/^\$\{FOG_GLSL\}$/gm) || []).length, 7, 'every world program takes it');
+  assert.ok(!/float fogFactorAt\(/.test(r), 'and none keeps a copy');
   assert.match(r, /mode === 'exp2' \? 3 : 0/);
   assert.match(r, /const FOG_MODE_NAMES = \['off', 'linear', 'exp', 'exp2'\];/);
   // the composition, on a state object with the renderer's fields

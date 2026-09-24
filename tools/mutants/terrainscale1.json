@@ -72,15 +72,6 @@
     ]
   },
   {
-    "name": "TS1-grass-ground-on-the-prefab",
-    "file": "src/scenes/world.js",
-    "old": "      const scale = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;",
-    "new": "      const scale = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;",
-    "tests": [
-      "test/terrainscale1.test.js"
-    ]
-  },
-  {
     "name": "TS1-restand-inverted",
     "file": "src/scenes/world.js",
     "old": "(was / STREAMING_TERRAIN_SCALE - 1)",
@@ -254,8 +245,8 @@
   {
     "name": "TS1-cache-drops-frame",
     "file": "src/systems/sceneCache.js",
-    "old": "    frame, terrainScale,\n",
-    "new": "",
+    "old": "  cache.scenes.set(sceneName, copySceneEntry(entry));",
+    "new": "  cache.scenes.set(sceneName, { ...copySceneEntry(entry), frame: undefined, terrainScale: undefined });",
     "tests": [
       "test/terrainscale1.test.js"
     ]
@@ -263,8 +254,8 @@
   {
     "name": "TS1-cache-save-drops-torches",
     "file": "src/systems/sceneCache.js",
-    "old": "      droppedTorches: (d.droppedTorches ?? []).map((t) => ({ ...t, position: [...(t.position ?? [])] })),\n",
-    "new": "",
+    "old": "    scenes: [...cache.scenes.entries()].map(([sceneName, d]) => ({ sceneName, ...copySceneEntry(d) })),",
+    "new": "    scenes: [...cache.scenes.entries()].map(([sceneName, d]) => ({ sceneName, ...copySceneEntry(d), droppedTorches: undefined })),",
     "tests": [
       "test/terrainscale1.test.js"
     ]
@@ -272,8 +263,8 @@
   {
     "name": "TS1-cache-save-drops-camps",
     "file": "src/systems/sceneCache.js",
-    "old": "      camps: (d.camps ?? []).map((c) => ({ ...c, pos: [...(c.pos ?? [])] })),\n",
-    "new": "",
+    "old": "    scenes: [...cache.scenes.entries()].map(([sceneName, d]) => ({ sceneName, ...copySceneEntry(d) })),",
+    "new": "    scenes: [...cache.scenes.entries()].map(([sceneName, d]) => ({ sceneName, ...copySceneEntry(d), camps: undefined })),",
     "tests": [
       "test/terrainscale1.test.js"
     ]
@@ -281,8 +272,8 @@
   {
     "name": "TS1-cache-save-drops-frame",
     "file": "src/systems/sceneCache.js",
-    "old": "      frame: d.frame ?? null, terrainScale: d.terrainScale ?? null,\n",
-    "new": "",
+    "old": "    scenes: [...cache.scenes.entries()].map(([sceneName, d]) => ({ sceneName, ...copySceneEntry(d) })),",
+    "new": "    scenes: [...cache.scenes.entries()].map(([sceneName, d]) => ({ sceneName, ...copySceneEntry(d), frame: undefined, terrainScale: undefined })),",
     "tests": [
       "test/terrainscale1.test.js"
     ]
@@ -290,8 +281,8 @@
   {
     "name": "TS1-cache-load-drops-frame",
     "file": "src/systems/sceneCache.js",
-    "old": "    frame: e.frame ?? null, terrainScale: e.terrainScale ?? null,\n",
-    "new": "",
+    "old": "  cache.scenes = new Map((snap?.scenes ?? []).map((e) => [e.sceneName, copySceneEntry(e)]));",
+    "new": "  cache.scenes = new Map((snap?.scenes ?? []).map((e) => [e.sceneName, { ...copySceneEntry(e), frame: undefined, terrainScale: undefined }]));",
     "tests": [
       "test/terrainscale1.test.js"
     ]
@@ -299,8 +290,8 @@
   {
     "name": "TS1-cache-load-drops-torches",
     "file": "src/systems/sceneCache.js",
-    "old": "    droppedTorches: (e.droppedTorches ?? []).map((t) => ({ ...t, position: [...(t.position ?? [])] })),   // TERRAIN-SCALE1\n",
-    "new": "",
+    "old": "  cache.scenes = new Map((snap?.scenes ?? []).map((e) => [e.sceneName, copySceneEntry(e)]));",
+    "new": "  cache.scenes = new Map((snap?.scenes ?? []).map((e) => [e.sceneName, { ...copySceneEntry(e), droppedTorches: undefined }]));",
     "tests": [
       "test/terrainscale1.test.js"
     ]

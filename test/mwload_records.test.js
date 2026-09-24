@@ -151,9 +151,9 @@ test('MW-LOAD: dataSource keeps the record sets in the derived store, keyed to t
   assert.match(door, /const bytes = new Uint8Array\(await blob\.arrayBuffer\(\)\);\s*\n\s*const t1 = performance\.now\(\);\s*\n\s*records = extractArmRecords\(bytes\);/,
     'a miss reads the file once and extracts in one pass');
   assert.match(door, /await storeDerivedJson\(key, records\);/, 'and keeps it');
-  assert.match(door, /_mwRecordsCache\.files\.set\(fileName, records\);/, 'and memoises for the session');
+  assert.match(door, /const cache = _mwRecordsCache;[\s\S]*cache\.files\.set\(fileName, records\);/, 'and memoises for the session - in the generation the read began under (AUDIT 68)');
   // the memo drops with the attach generation, like every swap cache
-  assert.match(src, /_mwGeneration\+\+; _mwEsm = undefined; _mwArchiveCache = null; _mwFileCache = null; _mwRecordsCache = null; \}/,
+  assert.match(src, /_mwGeneration\+\+; _mwArchiveCache = null; _mwFileCache = null; _mwRecordsCache = null; \}/,   // AUDIT 68: the dead ESM door's reset is gone with it
     'a new attach drops the record memo with the other swap caches');
   const clear = src.slice(src.indexOf('export const clearStoredMorrowind = async () =>'));
   assert.match(clear.slice(0, clear.indexOf('\n};')), /await clearDerivedPrefix\(ARM_RECORDS_PREFIX\);/,

@@ -168,9 +168,10 @@ test('V-DEPLOY: importing the tool does not run it', () => {
   // eleven because importing it hit a top-level process.exit and killed
   // the runner. Reaching this line at all is the proof for this file;
   // the guard itself is pinned so it cannot be deleted quietly.
+  // AUDIT 68: the guard is the shared real-path one (tools/lib/isMain.mjs).
   const src = readFileSync('tools/verify-deploy.mjs', 'utf8');
-  assert.ok(src.includes('import.meta.url === pathToFileURL(process.argv[1]).href'),
+  assert.ok(src.includes("import { isMain } from './lib/isMain.mjs';"),
     'verify-deploy.mjs must only run main() when it IS the program');
-  assert.ok(/if \(process\.argv\[1\] && import\.meta\.url === pathToFileURL\(process\.argv\[1\]\)\.href\) main\(\);/.test(src),
+  assert.ok(/^if \(isMain\(import\.meta\.url\)\) main\(\);$/m.test(src),
     'the guard must gate the main() call itself, not merely appear in the file');
 });

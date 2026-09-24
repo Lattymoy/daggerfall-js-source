@@ -282,7 +282,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         entity.team = 'PlayerAlly'; entity.mobileTeam = 'PlayerAlly';
         if (threat?.ai) ai.makeEnemyHostileToAttacker(threat, threat.ai.feet, 600);
       } else ai.makeHostileToPlayer(600, attackerFeet);   // wave 36: MakeEnemyHostileToAttacker seeds the remembered position too
-      const attack = new EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: playerEntity.level, reflexes: playerEntity.reflexes });   // AUDIT 39: EnemyAttack.cs:69-72, ditto
+      const attack = new EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: () => playerEntity.level, reflexes: playerEntity.reflexes });   // AUDIT 39: EnemyAttack.cs:69-72, ditto
       // EnemyMotor.cs:131-137 computes hasBowAttack from the MobileEnemy
       // FLAGS, and EnemyBasics.cs:2197-2212 gives Knight_CityWatch
       // HasRangedAttack1 = false / CastsMagic = false - so DFU's
@@ -292,7 +292,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       attack.rangedAttack = false;
       const mobile = new MobileUnit(GUARD_MOBILE_TYPE, basics, (rec) => tex.getFrameCount(rec), Math.random, 'male');
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-      const g = { id: _nextGuardId++, mobile, ai, attack, entity, batch, tex, archive, mobileType: GUARD_MOBILE_TYPE, idleH, dead: false, _prevMState: 'Idle', _mout: null, defender: !!defender,   // DISC19-F
+      const g = { id: _nextGuardId++, mobile, ai, attack, entity, batch, tex, archive, mobileType: GUARD_MOBILE_TYPE, idleH, dead: false, _swingSeq: 0, _mout: null, defender: !!defender,   // DISC19-F
         // WATCH1: THE WATCH RIDES THE CELL'S STREAM. `seq` is this watchman's number on the wire, minted by the
         // encounter pool's own counter the first time he rides a frame (one number space with the foes, so a
         // peer's blow names one thing); `_atkA`/`_atkB` the attack count and its recipient in the pool's spelling
@@ -671,7 +671,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  which arrowFlight.js calls unconditionally (arrowFlight.js:316)
    *  because `dealDamage` is inside its own `dmg > 0` fork - so the
    *  door is PUBLIC (the returned surface below), exactly as the
-   *  encounter pool's is (exteriorFoes.js:2020). */
+   *  encounter pool's is (exteriorFoes.js:2029). */
   function handleAttackFromPlayer(g, playerFeet = null) {
     if (!g?.ai) return;
     // DISC19-F (AUDIT DISC19): A BLOW ON A DEFENDER IS ASSAULT. The
@@ -709,6 +709,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  did not commit, and the watch responds to that crime, so the
    *  town turns on them for a rat's work. */
   function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false, peer = false } = {}) {
+    if (g.dead) return;   // AUDIT 68 S20-foe-dies-twice: a corpse takes no blow - a magic round after the killing one tallied a second Murder and minted a second body
     // AUDIT WATCH1 A4: a PEER's blow (WATCH1's net seam) is the encounter pool's peer law (AUDIT WORLD6b B2): no
     // reveal of this player's and no kill notice of this player's - the striker's own rang at the striker.
     if (damage > 0 && !peer) markConcealedHit(g, _ecvT);   // ECV1: a hit on an unseen watchman flashes him
@@ -1004,11 +1005,10 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // brigand.
       tickEnemySound(g.sounds, g.ai.feet, playerFeet, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity) });
       g.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((g.entity.stats?.speed ?? 50) / Math.max(8, liveStat(g.entity, 'speed'))));   // AUDIT 23 (characters-11)
-      const events = (_gParalyzed || !_tgt) ? [] : g.attack.update(dt, g.ai, _tgt);   // MT-ii: at the SELECTED target
-      void events;
-      const mstate = g.attack.machine.state;
-      const strikeEdge = mstate !== 'Idle' && (g._prevMState ?? 'Idle') === 'Idle';
-      g._prevMState = mstate;
+      if (!_gParalyzed && _tgt) g.attack.update(dt, g.ai, _tgt);   // MT-ii: at the SELECTED target
+      const seq = g.attack.swingSeq;   // AUDIT 68 S04-strike-edge-cut: EnemyAttack's own start count, the foes' one edge law
+      const strikeEdge = seq !== g._swingSeq;
+      g._swingSeq = seq;
       if (strikeEdge) playEnemyClip(audio, g.sounds.attack(), g.ai.feet, acuteHearingMultiplier(playerEntity));   // AUDIT 24 (wave 41); CF1: acute hearing
       // WATCH1: the attack count on the wire, the ranged bit low (the watch never shoots - `rangedAttack = false`
       // above, AUDIT 18), and whom the swing was at: '.' me, '' a foe of mine (a watchman brawling a rat, MT-ii). A
@@ -1413,10 +1413,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  only ever manifested in ?world. */
   function offsetAll(offset) {
     const [dx, dy, dz] = offset;
-    for (const g of guards) {
-      if (g.ai?.feet) { g.ai.feet[0] += dx; g.ai.feet[1] += dy; g.ai.feet[2] += dz; }
-      if (g.ai?.knockbackDir) continue;   // a direction, not a position
-    }
+    for (const g of guards) g.ai.offsetOrigin(offset);   // AUDIT 68 S20-offset-ai-memory: the pursuit memory and the fall anchor with the feet
     // AUDIT-39r: the spawns still crossing their awaits move too - the
     // encounter pool's law, and this pool is recentred from the same
     // host frame (world.js's cityGuards/exteriorFoes offsetAll pair).

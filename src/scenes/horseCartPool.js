@@ -116,9 +116,8 @@ export function createHorseCartPool({
   const _cargoLoading = new Map();
   let _bucketKey = null;     // the pose the parked wagon's collider stands at
   // the horse art
-  const _still = new Array(HORSE_VIEWS).fill(null);   // view -> true once uploaded
   let _stillLoading = null, _stillReady = false, _stillFailed = false;
-  let _walkLoading = null, _walkReady = false;
+  let _walkLoading = null, _walkReady = false, _walkFailed = false;
   // the billboards: mine and the peers'
   const _horseBatches = new Map();   // owner ('' mine) -> batch
   // the peers: owner -> { wire: { w, h } (the validated record, WIRE frame), toScene, wagon, horse (this frame's targets,
@@ -163,17 +162,16 @@ export function createHorseCartPool({
     if (_stillFailed || _stillLoading || !renderer?.uploadTexture) return false;
     _stillLoading = Promise.all(Array.from({ length: HORSE_VIEWS }, (_, v) => fetchPng(horseStillFile(v)).then((px) => {
       renderer.uploadTexture(HORSE_ARCHIVE, horseStillRecord(v), px);
-      _still[v] = true;
     }))).then(() => { _stillReady = true; onChanged?.(); }).catch((e) => { _stillFailed = true; log?.error?.(`[TrailingWagon] the horse art would not load: ${e?.message ?? e}`); }).finally(() => { _stillLoading = null; });
     return false;
   }
   function ensureWalk() {
-    if (_walkReady || _walkLoading || !renderer?.uploadTexture) return;
+    if (_walkReady || _walkFailed || _walkLoading || !renderer?.uploadTexture) return;   // AUDIT 68 S27-hcc-walk-fetch-storm: a failed set is not fetched again every frame - TryLoad fails once, as the stills do
     const jobs = [];
     for (let v = 0; v < HORSE_VIEWS; v++) for (let f = 0; f < HORSE_WALK_FRAMES; f++) jobs.push(fetchPng(horseWalkFile(v, f)).then((px) => renderer.uploadTexture(HORSE_ARCHIVE, horseWalkRecord(v, f), px)));
-    _walkLoading = Promise.all(jobs).then(() => { _walkReady = true; }).catch((e) => { log?.warn?.(`[TrailingWagon] the horse walk frames would not load; the standing views stay: ${e?.message ?? e}`); }).finally(() => { _walkLoading = null; });
+    _walkLoading = Promise.all(jobs).then(() => { _walkReady = true; }).catch((e) => { _walkFailed = true; log?.warn?.(`[TrailingWagon] the horse walk frames would not load; the standing views stay: ${e?.message ?? e}`); }).finally(() => { _walkLoading = null; });
   }
-  const horseArt = { ensureStationary, ensureWalk, hasWalk: () => _walkReady, failed: () => _stillFailed };
+  const horseArt = { ensureStationary, ensureWalk, hasWalk: () => _walkReady };
 
   // ── the runtime's physics
   const phys = {

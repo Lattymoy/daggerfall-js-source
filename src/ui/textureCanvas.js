@@ -38,7 +38,7 @@ import { bitmapCanvas, color32Canvas } from './bitmapCanvas.js';
 // (scenes/dataPipeline.js getTexture). A vendored archive has no
 // TEXTURE.### to fetch, so `getArchive` below cached it as a miss and
 // every DOM screen drew initials where the mod's art should be.
-import { isVendorArchive, preloadTextureArchive, decodedTexture, vendorRecordCount, hasTextureReplacement, preloadTextureRecord } from '../systems/textureReplacement.js';
+import { isVendorArchive, vendorRecordCount, hasTextureReplacement, preloadTextureRecord } from '../systems/textureReplacement.js';
 import { dyeToken } from '../characters/dyes.js';   // DW3: the dye is part of the ask, so it is part of the key
 // The name rule lives with the READER (U54 moved it there): both this
 // module and scenes/shared.js need it, and neither can import the
@@ -126,9 +126,11 @@ export function requestIcon(archive, record, { scale = 2, onReady = null, dye = 
   // canvas rather than through the palette, because a PNG has no index.
   if (isVendorArchive(archive)) {
     if (record >= vendorRecordCount(archive)) { console.warn(`[icons] vendored archive ${archive} has no record ${record}`); return null; }
-    preloadTextureArchive(archive).then(() => {
-      const img = decodedTexture(archive, record, 0);
-      if (!img) { console.warn(`[icons] vendored ${archive}_${record}-0 would not decode`); return; }
+    // DISC22-D: THIS record, by the item's dye - the ask GetItemImage makes (ItemHelper.cs:458). The whole-archive
+    // preload skips a LAZY entry (Roleplay Realism Items' 514-526), and the bare read asked for the undyed name no
+    // metal file answers, so the Steel Light Flail cached a miss and drew its initials.
+    preloadTextureRecord(archive, record, 0, 'Albedo', dye).then((img) => {
+      if (!img) { console.warn(`[icons] vendored ${archive}_${record}-0${token ? `_${token}` : ''} would not decode`); return; }
       const canvas = color32Canvas(img, { scale });
       if (!canvas) return;
       icons.set(key, canvas.toDataURL('image/png'));

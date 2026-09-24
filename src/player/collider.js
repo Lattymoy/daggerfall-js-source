@@ -73,6 +73,9 @@ export function sphereTouchesBox(lx, ly, lz, r, min, max) {
  *  bucket per sample, which at nine samples a capsule and up to five capsules a step was hundreds of Sets a frame
  *  per body, most of them for buckets nowhere near it. */
 const VISITED = new Set();
+/** AUDIT 68 S15-collider-closestpoint-alloc: and the ray's own, cleared per bucket - raycastHit minted one per
+ *  bucket per ray. Its own because it is walked by a different query than VISITED; neither re-enters. */
+const RAY_VISITED = new Set();
 
 /** AUDIT BRANCH (WoD) B1: file a WIDE triangle - over FINE_CELLS_MAX fine cells - on the coarse grid, or on the
  *  short list when it spans more than COARSE_CELLS_MAX coarse cells too. A vertex that is not finite files nothing,
@@ -167,32 +170,36 @@ export function segmentHitsBox(ox, oy, oz, dir, min, max, limit) {
   return true;
 }
 
-function closestPointOnTriangle(p, a, b, c, out) {
+/** AUDIT 68 S15-collider-closestpoint-alloc: the point and the edges are
+ *  SCALARS - this is the narrow phase of every sphere walk, and the point
+ *  and five edge arrays it minted per triangle were garbage in every
+ *  move(). Same arithmetic, same order, same answers. */
+function closestPointOnTriangle(px, py, pz, a, b, c, out) {
   // Ericson, Real-Time Collision Detection 5.1.5.
-  const ab = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
-  const ac = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
-  const ap = [p[0] - a[0], p[1] - a[1], p[2] - a[2]];
-  const d1 = ab[0] * ap[0] + ab[1] * ap[1] + ab[2] * ap[2];
-  const d2 = ac[0] * ap[0] + ac[1] * ap[1] + ac[2] * ap[2];
+  const abx = b[0] - a[0], aby = b[1] - a[1], abz = b[2] - a[2];
+  const acx = c[0] - a[0], acy = c[1] - a[1], acz = c[2] - a[2];
+  const apx = px - a[0], apy = py - a[1], apz = pz - a[2];
+  const d1 = abx * apx + aby * apy + abz * apz;
+  const d2 = acx * apx + acy * apy + acz * apz;
   if (d1 <= 0 && d2 <= 0) { out[0] = a[0]; out[1] = a[1]; out[2] = a[2]; return; }
-  const bp = [p[0] - b[0], p[1] - b[1], p[2] - b[2]];
-  const d3 = ab[0] * bp[0] + ab[1] * bp[1] + ab[2] * bp[2];
-  const d4 = ac[0] * bp[0] + ac[1] * bp[1] + ac[2] * bp[2];
+  const bpx = px - b[0], bpy = py - b[1], bpz = pz - b[2];
+  const d3 = abx * bpx + aby * bpy + abz * bpz;
+  const d4 = acx * bpx + acy * bpy + acz * bpz;
   if (d3 >= 0 && d4 <= d3) { out[0] = b[0]; out[1] = b[1]; out[2] = b[2]; return; }
   const vc = d1 * d4 - d3 * d2;
   if (vc <= 0 && d1 >= 0 && d3 <= 0) {
     const v = d1 / (d1 - d3);
-    out[0] = a[0] + ab[0] * v; out[1] = a[1] + ab[1] * v; out[2] = a[2] + ab[2] * v;
+    out[0] = a[0] + abx * v; out[1] = a[1] + aby * v; out[2] = a[2] + abz * v;
     return;
   }
-  const cp = [p[0] - c[0], p[1] - c[1], p[2] - c[2]];
-  const d5 = ab[0] * cp[0] + ab[1] * cp[1] + ab[2] * cp[2];
-  const d6 = ac[0] * cp[0] + ac[1] * cp[1] + ac[2] * cp[2];
+  const cpx = px - c[0], cpy = py - c[1], cpz = pz - c[2];
+  const d5 = abx * cpx + aby * cpy + abz * cpz;
+  const d6 = acx * cpx + acy * cpy + acz * cpz;
   if (d6 >= 0 && d5 <= d6) { out[0] = c[0]; out[1] = c[1]; out[2] = c[2]; return; }
   const vb = d5 * d2 - d1 * d6;
   if (vb <= 0 && d2 >= 0 && d6 <= 0) {
     const w = d2 / (d2 - d6);
-    out[0] = a[0] + ac[0] * w; out[1] = a[1] + ac[1] * w; out[2] = a[2] + ac[2] * w;
+    out[0] = a[0] + acx * w; out[1] = a[1] + acy * w; out[2] = a[2] + acz * w;
     return;
   }
   const va = d3 * d6 - d5 * d4;
@@ -206,9 +213,9 @@ function closestPointOnTriangle(p, a, b, c, out) {
   const denom = 1 / (va + vb + vc);
   const v = vb * denom;
   const w = vc * denom;
-  out[0] = a[0] + ab[0] * v + ac[0] * w;
-  out[1] = a[1] + ab[1] * v + ac[1] * w;
-  out[2] = a[2] + ab[2] * v + ac[2] * w;
+  out[0] = a[0] + abx * v + acx * w;
+  out[1] = a[1] + aby * v + acy * w;
+  out[2] = a[2] + abz * v + acz * w;
 }
 
 /** MAC-BUG W5: how far apart the two samples of a central difference
@@ -377,7 +384,8 @@ export class Collider {
       let tMaxZ = dir[2] !== 0 ? ((cz + (stepZ > 0 ? 1 : 0)) * CELL - oz) * invZ : Infinity;
       const tDeltaX = Math.abs(CELL * invX);
       const tDeltaZ = Math.abs(CELL * invZ);
-      const visited = new Set();
+      const visited = RAY_VISITED;
+      visited.clear();
       let walked = 0;
       while (walked <= Math.min(maxDist, best)) {
         const cell = bucket.grid.get(`${cx},${cz}`);
@@ -506,7 +514,7 @@ export class Collider {
           if (visited.has(ti)) continue;
           visited.add(ti);
           const tri = bucket.tris[ti];
-          closestPointOnTriangle([lx, ly, lz], tri[0], tri[1], tri[2], TMP);
+          closestPointOnTriangle(lx, ly, lz, tri[0], tri[1], tri[2], TMP);
           const dx = lx - TMP[0];
           const dy = ly - TMP[1];
           const dz = lz - TMP[2];
@@ -657,7 +665,7 @@ export class Collider {
           const lx = center[0] - t[0];
           const ly = center[1] - t[1];
           const lz = center[2] - t[2];
-          closestPointOnTriangle([lx, ly, lz], tri[0], tri[1], tri[2], TMP);
+          closestPointOnTriangle(lx, ly, lz, tri[0], tri[1], tri[2], TMP);
           const dx = lx - TMP[0];
           const dy = ly - TMP[1];
           const dz = lz - TMP[2];
@@ -746,10 +754,6 @@ export class Collider {
             }
           }
           const ny = dy / d;
-          if (globalThis.__logContacts) {
-            globalThis.__contacts = globalThis.__contacts || [];
-            globalThis.__contacts.push({ tri: tri.map((v) => v.map((n) => Number(n.toFixed(2)))), ny: Number(ny.toFixed(2)) });
-          }
           // GROUNDING may extend into the SKIN shell (radius..radius+SKIN)
           // so a resting floor a hair away still holds the player up -
           // that was the g:0 fix. But CEILING and PUSHED-DOWN are

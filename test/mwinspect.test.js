@@ -579,7 +579,7 @@ test('MW-D7: the assembly carries what a re-pose needs, and nothing aliases', as
   const { arm } = await posedArm();
   assert.equal(arm.ok, true);
   assert.ok(arm.skeleton && arm.fns, 'the skeleton and the resolved readers ride along');
-  assert.ok(Number.isInteger(arm.rootRef), 'and the skeleton root, so the per-frame call is synchronous');
+  assert.equal(arm.rootRef, undefined, 'AUDIT 68: no root-relative frame rides along - MW-D20 poses in GRAPH_ROOT');
   for (const p of arm.pieces) {
     if (p.kind === 'skinned') {
       assert.ok(p.batch && p.batch.skin, 'a skinned piece keeps its batch - skinBatch needs it every frame');

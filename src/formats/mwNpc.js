@@ -11,7 +11,7 @@
 // name both sides - the mirror-attach render lands with the clothing
 // slice, the DATA is complete here.
 
-import { MW_BODY_PARTS, BODY_TYPE } from './mwEsmFile.js';
+import { MW_BODY_PARTS, BODY_TYPE, isFirstPersonId } from './mwEsmFile.js';
 
 /** Attach bone(s) per slot for unskinned parts, retail bone names. */
 export const PART_BONES = Object.freeze({
@@ -47,7 +47,11 @@ export function indexSkins(bodies) {
     // vampire test there (vampire heads ride the actor's own record
     // path), and the port had it backwards: vampire filtered, playable
     // not.
-    if (body.kind !== BODY_TYPE.skin || !body.playable || body.part < 0) continue;
+    // AUDIT 68 S11-indexskins-1st: and the OTHER VIEW's records are
+    // skipped, as getBodyParts and resolveBodyParts skip them - a hand's
+    // .1st twin competed for its slot and dressed the NPC in first-person
+    // arms.
+    if (body.kind !== BODY_TYPE.skin || !body.playable || body.part < 0 || isFirstPersonId(body.id)) continue;
     let race = byRace.get(body.race);
     if (!race) byRace.set(body.race, (race = new Map()));
     let slot = race.get(body.part);
@@ -152,8 +156,8 @@ export function assembleNpc(esm, npcId, skinIndex = null) {
  * built from the singular slot stem finds nothing at all, and
  * `b_n_nord_m_upper arm` contains a SPACE.
  *
- * The correct lookup lives in src/formats/mwFirstPerson.js (isFirstPersonId,
- * armReport, armMeshPaths), pinned against hand-built records and proven
+ * The correct lookup lives in src/formats/mwEsmFile.js (isFirstPersonId) and
+ * src/formats/mwFirstPerson.js (armReport, armMeshPaths), pinned against hand-built records and proven
  * against real archives.
  *
  * See bible/02-Formats/Morrowind-Rules.md rules 1 and 3, and Part VI.

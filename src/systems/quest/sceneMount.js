@@ -220,7 +220,7 @@ export const PLACE_FOE_DEFAULTS = Object.freeze({
  *  Answers the spawn position {x,y,z} (the host stands the foe there,
  *  faces it at the player, and FinalizeFoe aligns ground units /
  *  raises flying ones 1.5 - geometry), or null = retry next tick. */
-export function placeFoeFreely(env, { minDistance = 5, maxDistance = 20, lineOfSightCheck = true } = {}) {
+export function placeFoeFreely(env, { minDistance = PLACE_FOE_DEFAULTS.minDistance, maxDistance = PLACE_FOE_DEFAULTS.maxDistance, lineOfSightCheck = true } = {}) {   // AUDIT 68 S30-placefoe-defaults-dup: the table, not a second copy of it
   const C = PLACE_FOE_DEFAULTS;
   const rolls = env.rolls ?? Math.random;
 

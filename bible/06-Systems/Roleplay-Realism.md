@@ -53,7 +53,7 @@ after Items'), and the seams they hang on.
 | purificationPotion: `CureDiseasePotionRR` | `RegisterEffectTemplate(..., true)` - the recipes replaced | `potions.overridePotionRecipes` |
 | enemyAppearance: `UpdateEnemyClassAppearances` (:697-773) | `EnemyBasics.Enemies[...]` written at Awake | `applyEnemyAppearance(ENEMY_BASICS)` at install (`revertEnemyAppearance` for the test and the next load) |
 | underworldExpulsion: `ThievesGuildRR` / `DarkBrotherhoodRR` | `GuildManager.RegisterCustomGuild` - AllowGuildExpulsion, Join, Leave, TokensExpulsion | `guilds.setUnderworldRule` (the clamp bypassed, the join floor), `setGuildExpelledHook` (the squad through the host's foe spawner), `updateRank`'s `lines` (the box's rows, `%pcn` expanded) |
-| fightersTeachHandToHand: `FightersGuildRR` | GuildSkills / TrainingSkills, the virtuals | `guilds.setGuildSkillsOverride`, `guildServices.setTrainingSkillsOverride` |
+| ~~fightersTeachHandToHand: `FightersGuildRR`~~ **RETIRED (FGH2H-R, 2026-09-24, Mac: "retire it")** | GuildSkills / TrainingSkills, the virtuals - FGH2H put HandToHand in the base lists beside Giantish, so the module's lists (HandToHand in Giantish's place) only took Giantish away | none: the switch is off the pane (`modSettings.js RETIRED_KEYS` lets a saved value go once), FightersGuildRR's lists and both override seams deleted; the Port-Ledger's FGH2H row |
 | bedSleeping: `RegisterCustomActivation(41000..41002, BedActivation)` (:126-128, :464-506) | PlayerActivate's custom activations | `interiorContext` lists the beds; `worldModes` targets them while the switch is on and runs `toggleRest` - which IS DaggerfallUI's rest gate (:651-687) BedActivation restates |
 
 Read against the C#:
@@ -622,6 +622,6 @@ rr3b 24, rri1 11, rri2 18).
 `vendor/roleplay-realism/`. Suites `test/rr1_realism.test.js` (11),
 `test/rr2_realism.test.js` (12), `test/rr3_questline.test.js` (11),
 `test/rr3b_worlddata.test.js` (9), `test/auditrr.test.js` (15), `test/auditrr2.test.js` (17). Campaigns `tools/mutants/rr1.json`
-(19: 18 dead, 1 equivalent), `tools/mutants/rr2.json` (28 dead),
+(18: 17 dead, 1 equivalent - RR1-17 went with the seam it aimed at, FGH2H-R), `tools/mutants/rr2.json` (28 dead),
 `tools/mutants/rr3.json` (33: 31 dead, 2 equivalent),
 `tools/mutants/rr3b.json` (24 dead).

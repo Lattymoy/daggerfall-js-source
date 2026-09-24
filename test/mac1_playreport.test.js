@@ -213,10 +213,9 @@ test('MAC1 D: the far rings draw the trees and the flats that move, and nothing 
 
 // ── H ────────────────────────────────────────────────────────────
 test('MAC1 H: the politeness gate reads PlayerMotor.IsStandingStill, not the camera', () => {
-  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    const s = src(host);
-    assert.match(s, /_playerStill = walkMode(?: && playerSpawned)? \? !!player\.standing : \(_lastPlayerPos/, `${host}: the walker's gate is the motor's standing`);
-  }
+  assert.match(src('src/scenes/world.js'), /_playerStill = walkMode && playerSpawned \? !!player\.standing : \(_lastPlayerPos/, 'world.js: the walker\'s gate is the motor\'s standing');
+  // AUDIT 68 S20-dead-lastPlayerPos: the fixed-city host reads it inside `if (walkMode)`, where the camera arm could never run
+  assert.match(src('src/scenes/exterior.js'), /if \(walkMode\) \{\n(?:\s*\/\/[^\n]*\n)*\s*const _playerStill = !!player\.standing;/, 'exterior.js: the walker\'s gate is the motor\'s standing');
   // and standing IS DFU's IsStandingStill: grounded over a zero move
   const m = new PlayerMotor(new Collider(() => 0));
   m.pos = [0, 0, 0]; m.grounded = true;
@@ -496,7 +495,7 @@ test('MAC1 J: the pause door relocks the pointer inside the resume gesture, and 
   for (const [file, text] of OUT) {
     const s = spy();
     const hooks = mountLiteral(text, 'openPauseFlow((w) => townTalk.showOverlay(w), ', { opts: {}, requestLook: s.requestLook, canvas: `CANVAS-${file}` });
-    assert.equal(typeof hooks.relock, 'function', `${file}: its own pause door hands pauseDoor.js:282 a relock`);
+    assert.equal(typeof hooks.relock, 'function', `${file}: its own pause door hands pauseDoor.js:301 a relock`);
     hooks.relock();
     assert.deepEqual(s.seen, [`CANVAS-${file}`], `${file}: ...and it relocks THIS host's canvas`);
   }

@@ -18,7 +18,7 @@ import { CELL_WORDS, SAND_FROM, sandCountry, cellSeats, cellCandidate, fieldAt, 
 import {
   resetWeatherSim, setWeatherFieldLaw, setSnowGroundLaw, sampleWeatherField, importClimateWeathers, currentWeather, currentWeatherRaw, WEATHER_ENUM, overGround, setWeatherMapLaw,
 } from '../src/systems/weatherSim.js';
-import { WindWispsRenderer, wispCount, SAND_LOOK, WISP_LOOK, WISP_MAX, WISP_FLOOR, WISP_FS, WISP_VS } from '../src/render/windWisps.js';
+import { WindWispsRenderer, wispCount, SAND_LOOK, WISP_LOOK, WISP_MAX, WISP_FLOOR, WISP_FS, WISP_VS, WISP_GUST_DIV } from '../src/render/windWisps.js';
 import { CLIMATES } from '../src/formats/mapsFile.js';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
@@ -154,7 +154,8 @@ test('WEATHER2d the sand: the wisps\' program in the sand\'s look - tan, dense, 
   assert.deepEqual(calls.find((c) => c[0] === 'uniform2f' && c[1] === 'uLen')?.slice(2), [0.8, 1.2]);
   assert.deepEqual(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uBox')?.slice(2), [70]);
   for (let i = 0; i < 1000; i++) sand.advance([9, -9]);
-  assert.ok(sand.windOff[0] >= 0 && sand.windOff[0] < 70 && sand.windOff[1] >= 0 && sand.windOff[1] < 70, 'wrapped to the sand\'s own box');
+  const span = 70 * WISP_GUST_DIV;   // AUDIT 68 S17-wisp-wrap-gust: the gusts' common period over the sand's own box
+  assert.ok(sand.windOff[0] >= 0 && sand.windOff[0] < span && sand.windOff[1] >= 0 && sand.windOff[1] < span, 'wrapped to the sand\'s own box');
   sand.draw({ on: true, strength01: 0, windV: [0, 0], step: [0, 0], gust: 1 }, proj, proj, new Float32Array([0, 0, 0]), 4);
   assert.equal(sand.drawn, 0, 'a storm at nothing draws nothing');
 });

@@ -1,16 +1,18 @@
 // U38: HUDCrosshair + HUDInteractionModeIcon (MIT, Daggerfall
 // Workshop) - the two HUD components the audit found missing outright.
 //
-// THE ART DEPARTURE, first, because it shapes everything below
-// (Ledger A). Both components load DFU-AUTHORED PNGs out of Unity's
-// Resources folder: "Crosshair", and four icon sets of four files each
-// ("icon-steal", "classic-steal", "colour-steal", "mono-steal" ...).
-// None of that is ARENA2 data - it is DFU's own artwork, outside the
-// C# this project translates and absent from the sparse clone. So the
-// port DRAWS both:
-//   - the crosshair is a centred cross of the port's own geometry;
-//   - the mode indicator is the mode's NAME in the HUD font, at DFU's
-//     own position and in its own slot.
+// THE ART, first, because it shapes everything below. Both components
+// load DFU-AUTHORED PNGs out of Unity's Resources folder: "Crosshair",
+// and four icon sets of four files each ("icon-steal", "classic-steal",
+// "colour-steal", "mono-steal" ...). None of that is ARENA2 data - it is
+// DFU's own artwork, MIT like the C# this project translates.
+//   - the crosshair is a centred cross of the port's own geometry
+//     (Ledger A, still);
+//   - HUD-ICON1: the mode indicator is DFU's OWN PICTURE now, vendored
+//     (ui/modeIcons.js) - U38 drew the mode's NAME in the HUD font, which
+//     under the default "classic" style (displayScale 3) read as large
+//     text where DFU shows a small sprite (Mac, 2026-09-24). The word
+//     stays only as the arm a picture that did not load falls back to.
 // Every LAW around them is DFU's, verbatim, because that is the half
 // the source actually carries: where they sit, when they are hidden,
 // and the xhair-suffix mode where the icon REPLACES the crosshair
@@ -41,6 +43,7 @@
 import { drawText, measureText } from './text.js';
 import { getBool, getString } from '../systems/settings.js';
 import { getInteractionMode } from '../player/interactionMode.js';
+import { modeIcon } from './modeIcons.js';   // HUD-ICON1: DFU's own pictures
 
 /** iconScale / minimalScale / classicScale / colourScale / monoScale
  *  (:24-44), keyed by the setting's own words. */
@@ -148,7 +151,14 @@ export function drawCrosshairAndModeIcon(renderer, canvas, font,
     if (asCrosshair && mode !== 'grab') {
       // the icon IS the crosshair (:76-91); Grab alone keeps the plain
       // one, which is why it is the mode you aim in.
-      if (font) {
+      // HUD-ICON1: `crosshairSize = size * displayScale` (:87-97) and
+      // HUDCrosshair centres it (:29-30, CrosshairScale 1) - no resScale
+      // on this arm, DFU's own asymmetry.
+      const icon = modeIcon(renderer, style, mode);
+      if (icon) {
+        const ds = iconStyleScale(style), w = icon.w * ds, h = icon.h * ds;
+        renderer.drawScreenQuad(icon.tex, { x: cx - w / 2, y: cy - h / 2, w, h });
+      } else if (font) {
         const label = MODE_LABEL[mode] ?? '';
         const w = measureText(font.fnt, label) * scale;
         drawText(renderer, font, label, cx - w / 2, cy - 4 * scale, scale, CROSSHAIR_COLOR);
@@ -168,7 +178,19 @@ export function drawCrosshairAndModeIcon(renderer, canvas, font,
   // second copy of something already on screen.
   // AUDIT 39 F136: ...and not at all when the style is "none", the one
   // value whose whole purpose is to switch the indicator off.
-  if (asCrosshair || !font || !showModeIcon || !modeIconEnabled(style)) return;
+  if (asCrosshair || !showModeIcon || !modeIconEnabled(style)) return;
+  // HUD-ICON1: the picture, `Size = size * displayScale / resScale` in
+  // screen pixels (:110-125) at the same corner (:129) - no plate, the
+  // picture carries its own pixels.
+  const icon = modeIcon(renderer, style, mode);
+  if (icon) {
+    const k = iconStyleScale(style) / iconResScale(scale);
+    const w = icon.w * k, h = icon.h * k;
+    const [x, y] = modeIconPosition(canvas.height, scale, h, border, barWidth);
+    renderer.drawScreenQuad(icon.tex, { x, y, w, h });
+    return;
+  }
+  if (!font) return;
   const label = MODE_LABEL[mode] ?? '';
   if (!label) return;
   const iconScale = Math.max(1, (iconStyleScale(style) / iconResScale(scale)) * scale);

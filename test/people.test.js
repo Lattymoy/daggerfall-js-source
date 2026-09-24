@@ -166,7 +166,7 @@ test('P1 hosts: the gate is evaluated at the DOOR and the quest hook is its ELSE
   // and only then transitions (PlayerActivate.cs:1119-1121). The port
   // used to resolve the identity AFTER buildInteriorContext, so the
   // gate would have had nothing to read - the order is the fix.
-  const idAt = wm.indexOf('interiorBuilding = buildingDataForDoor?.(hit)');
+  const idAt = wm.indexOf('building = buildingDataForDoor?.(hit)');   // AUDIT 68 S23-failed-entry-stale-building: a local, committed with the context
   const ctxAt = wm.indexOf('const ctx = await buildInteriorContext(');
   assert.ok(idAt > 0 && ctxAt > 0, 'the transition changed shape');
   assert.ok(idAt < ctxAt, 'the building identity is resolved AFTER the interior stands - the people gate cannot read it');

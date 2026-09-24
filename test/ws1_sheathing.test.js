@@ -377,7 +377,7 @@ test('WS1: the wiring, by source - the third-person build takes the addons and t
   assert.match(rd('src/systems/weaponSheathingAssets.js'), /\{ eager: true, query: '\?url', import: 'default' \}/, 'AUDIT-WS: the table is eager - no chunk per file');
   assert.match(fp, /sheathing = true, ammoCount = null,/);
   const rig = rd('src/combat/weaponRig.js');
-  assert.match(rig, /sheathing: getPref\('mwSheathing'\),/); assert.match(rig, /ammoCount: ammoCountOf\(entity\.items, worn\),/);
+  assert.match(rig, /sheathing: getPref\('mwSheathing'\),/); assert.match(rig, /ammoCount: ammoCountFor\(entity\.items, worn\),/);
   const feat = rd('src/systems/features.js');
   assert.match(feat, /id: 'mod-weapon-sheathing',/);
   // MODS-ONLINE-3 (2026-09-22, Mac): the online answer is the PLAYER's

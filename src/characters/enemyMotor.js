@@ -44,6 +44,7 @@ export { CLASSIC_UPDATE_INTERVAL };
 export const GIVE_UP_TICKS = 200;   // EnemyMotor.GiveUpTimer refill (classic ticks; ~12.5s)
 import { GRAVITY, FIXED_DT, MAX_FRAME_DT, CLASSIC_TO_UNITY_RATIO, FALL_DAMAGE_THRESHOLD } from '../player/motor.js';   // the shared fall rule + the P16 fixed-timestep law; CH3: the fall threshold single-sources with the player's
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
+import { MOBILE_TYPES } from './mobileTypes.js';
 
 // C15 knockback (EnemyMotor.KnockbackMovement): classic units through
 // the speed ratio. Stored speed clamps at 40; motion caps at 25; the
@@ -285,7 +286,7 @@ export function isBackFacing(foeYaw, foeFeet, viewerPos) {
 }
 
 // C12: the behaviour motors (EnemyMotor.cs flies/swims).
-export const MOBILE_SLAUGHTERFISH_ID = 11;      // the one swimmer that aims for the face
+export const MOBILE_SLAUGHTERFISH_ID = MOBILE_TYPES.Slaughterfish;   // the one swimmer that aims for the face (AUDIT 68 S05-mobile-id-literals: the table's id)
 export const WATER_HEAD_MARGIN = 100 * GLOBAL_SCALE;   // WaterMove: keep 2.5 under the surface
 export const FLYER_FLOOR_CLEARANCE = 1;         // FindGroundPosition((height/2) + 1)
 export const FLYER_FLOOR_LIFT = 0.1;            // direction.y forced up when skimming
@@ -378,6 +379,7 @@ export class EnemyAI {
     this.lastGroundedY = feet[1];
     this.landedFall = 0;   // > 0 for ONE host frame after a damaging landing
     this._airborne = false;
+    this._restGrounded = false;   // C11's rest latch: true only while the grounded branch last left this foe resting on ground
     // AUDIT 39: TakeAction re-derives `moveSpeed` from
     // `entity.Stats.LiveSpeed` EVERY FixedUpdate (:432), so a Drain or
     // Fortify Speed on a foe moves it. A number captured at spawn
@@ -1391,7 +1393,7 @@ export class EnemyAI {
     // "Classic AI moves only as close as melee range. It uses a
     // different range for the player and for other AI." The port held
     // the 2.25 literal at both sites, so two infighting foes each
-    // halted 0.75 outside the 1.5 swing gate enemyAttack.js:154-155
+    // halted 0.75 outside the 1.5 swing gate enemyAttack.js:165-166
     // already honours - a stand-off that never resolved.
     this.stopDistance = (this._armedTargeting && this.target && !this.target.isPlayer)
       ? CLASSIC_MELEE_DISTANCE_VS_AI : MELEE_DISTANCE;
@@ -1685,6 +1687,7 @@ export class EnemyAI {
     // pursuit. Rising motion caps 2.5 under the surface. Paralyzed
     // swimmers "just freeze in place".
     if (this.swims) {
+      this._restGrounded = false;   // AUDIT 68 S04-rest-grounded-stale: only the grounded branch may vouch for the rest
       if (paralyzed || !this.moving) return;
       const waterY = this.waterSurfaceY ? this.waterSurfaceY(this.feet[0], this.feet[2]) : null;
       const center = this.feet[1] + this.centreOffset;   // EnemyMotor.cs:1333 controller.transform.position.y
@@ -1717,6 +1720,7 @@ export class EnemyAI {
     // names IsLevitating in its own right).
     if ((this.flies && !paralyzed) || this.levitating) {
       this.velY = 0;
+      this._restGrounded = false;   // AUDIT 68 S04-rest-grounded-stale: a latch kept through flight froze the next paralysis (or Levitate's end) mid-air
       // CH3 (AUDIT 24 characters-1): ApplyFallDamage's SECOND arm -
       // `else if ((flies && !flyerFalls) || IsLevitating ||
       // IsSlowFalling) LastGroundedY = transform.position.y`
@@ -1769,7 +1773,6 @@ export class EnemyAI {
     const dy = this.velY * dt;
     let dxm = 0;
     let dzm = 0;
-    let blocked = false;
     if (this.moving) {
       // AttemptMove's probe (wave 34). direction2d is the horizontal
       // heading the foe is about to walk (:977-979 flattens y for a
@@ -1784,7 +1787,6 @@ export class EnemyAI {
         // does not move this step at all, it picks a way round. Gravity
         // is separate (ApplyGravity, :167) and still applies.
         this._findDetour(dir2d);
-        blocked = true;
       } else {
         dxm = dir2d[0] * this.speed * dt;
         dzm = dir2d[2] * this.speed * dt;
@@ -1794,7 +1796,6 @@ export class EnemyAI {
     if (r.grounded) this.velY = 0;
     this._trackFall(r.grounded);   // CH3 (characters-8): walkers and falling paralyzed flyers
     this._restGrounded = !this.moving && r.grounded;
-    void blocked;   // the probe's outcome is the detour state; the rest path keys on `moving`
   }
 
   /** ApplyFallDamage's tracking (EnemyMotor.cs:1383-1414): grounded
@@ -1852,5 +1853,20 @@ export class EnemyAI {
     this.avoidObstaclesTimer = 0; this.checkingClockwiseTimer = 0; this.didClockwiseCheck = false; this.lastTimeWasStuck = -Infinity;
     this._acc = 0; this.knockbackSpeed = 0; this.hurtKnock = false; this.moving = false;
     this._restGrounded = false;   // AUDIT WORLD2 B12: a foe that takes the seat standing still re-grounds on its first step, not its first move
+  }
+
+  /** AUDIT 68 S20-offset-ai-memory: the floating-origin recenter moves every WORLD position the motor holds, not the
+   *  feet alone. The fall anchor is DFU's own (FloatingOrigin.cs:128-130 -> EnemyMotor.AdjustLastGrounded, :235-238);
+   *  the pursuit memory is a departure (EnemySenses hears no OnPositionUpdate), else a foe hunting out of sight walks
+   *  819.2 m the wrong way. Aliases (predictedTargetPos IS lastKnownTargetPos, destination may BE detourDestination)
+   *  move once. */
+  offsetOrigin(offset) {
+    const moved = new Set();
+    for (const p of [this.feet, this.destination, this.detourDestination, this.lastKnownTargetPos, this.oldLastKnownTargetPos, this.predictedTargetPos, this._predictedTargetPosWithoutLead]) {
+      if (!p || moved.has(p)) continue;
+      moved.add(p);
+      p[0] += offset[0]; p[1] += offset[1]; p[2] += offset[2];
+    }
+    this.lastGroundedY += offset[1];
   }
 }

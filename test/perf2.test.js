@@ -134,19 +134,8 @@ test('PERF2 grass: only the cells in the frustum and inside the range are drawn 
   assert.equal(r.drawn.kept, 9, 'and the cell is recorded as holding nine');
   assert.equal(calls.filter((c) => c[0] === 'uniform1f' && c[1] === r.u.uSlotN).pop()[2], 9, 'the shader is told nine too, or it would thin over the slot');
   r.clearSlot(slotOf.ahead);
-  // the lab's whole scatter still draws whole, at offset 0
-  r.set({ inst: new Float32Array(8), inst2: new Float32Array(8), rootY: new Float32Array(2), ground: new Float32Array(6), count: 2 });
-  calls.length = 0;
-  r.draw(proj, view, new Float32Array(eye), 0, { sunDir: [0, 1, 0], amb: [0.2, 0.2, 0.2], sunCol: [1, 1, 1], dim: 1 }, { dir: [1, 0], speed: 0, windV: [0, 0] }, 200);
-  const lab = calls.filter((c) => c[0] === 'drawArraysInstanced');
-  assert.equal(lab.length, 1); assert.equal(lab[0][4], 2);
-  // GRASS2: the scatter path writes EVERY field of `drawn` too - a
-  // reader that got `verts` or `farSlots` from the last cell-drawn frame
-  // would be reading a number about a different picture.
-  assert.deepEqual(r.drawn, { slots: 1, blades: 2, kept: 2, verts: 2 * r.verts, farSlots: 0, slotCapacity: 2 });
-  assert.equal(calls.filter((c) => c[0] === 'uniform1f' && c[1] === r.u.uSlotN).pop()[2], 2,
-    'and uSlotN is the whole scatter, so the index thins over the run it is an index into');
-  assert.equal(calls.filter((c) => c[0] === 'vertexAttribPointer' && c[1] === 1).pop()[6], 0, 'the lab draws from the start');
+  // AUDIT 68 S16-grass-set-broken-dead: the lab's whole-scatter `set()` and its draw branch are gone - the field's
+  // slots are the one path (they uploaded float scatter into the packed lanes, and a fourth buffer that no longer exists)
 });
 
 test('PERF2 grass: the field hands the renderer cells through the same doors, so the world host needs no change (mutant: the box not recorded on write, or not cleared)', () => {

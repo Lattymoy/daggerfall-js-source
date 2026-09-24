@@ -101,7 +101,7 @@
   {
     "name": "vol-stale-frame-imaged",
     "file": "src/render/airPass.js",
-    "old": "    if (this.f && this.fresh) this._images();\n    else { this._blank(quad); this.measured = false; }",
+    "old": "    if (prepared) this._images();\n    else { this._blank(quad); this.measured = false; }",
     "new": "    if (this.f) this._images();",
     "tests": [
       "test/vol1_glow.test.js"

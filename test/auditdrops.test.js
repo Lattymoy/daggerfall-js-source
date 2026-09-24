@@ -246,7 +246,9 @@ test('AUDIT DROPS C1/C2: the hub\'s and the receiver\'s cooldowns sit at HALF th
   const arm = s.slice(start, s.indexOf("for (const member of party.members)", start));
   assert.ok(arm.indexOf('if (!a.party) return;') < arm.indexOf('tokenGate(this._roomQuest'), 'C3: no party, no budget spent');
   assert.ok(arm.indexOf('this._speaker(a.acct) !== ws') < arm.indexOf('tokenGate(this._roomQuest'), 'C3: another tab speaks, no budget spent');
-  assert.match(o, /if \(this\._inTradeBuckets\.size > TRADE_IN_SENDERS_MAX\) this\._inTradeBuckets\.clear\(\);\s*\n\s*const g = tradeInGate\(this\._inTradeBuckets\.get\(m\.id\) \?\? null, now\);/, 'B3 at home: the inbound trade gate is per sender');
+  // AUDIT 68 S14-inbound-directed-gate-dup: the per-sender gate is the directed frames' one door now (`_directedIn`)
+  assert.match(o, /if \(buckets\.size > TRADE_IN_SENDERS_MAX\) buckets\.clear\(\);\s*\n\s*const g = gate\(buckets\.get\(m\.id\) \?\? null, now\);/, 'B3 at home: the inbound directed gate is per sender');
+  assert.match(o, /this\._directedIn\(m, now, 'trade', this\._inTradeBuckets, tradeInGate, /, 'B3 at home: and the trade arm goes through it');
 });
 
 // ── D. party rest in the modal hosts ────────────────────────────────
@@ -269,9 +271,9 @@ test('AUDIT DROPS D1 (as the party-rest drop now keeps it): the building and the
   assert.match(d, /const strangerRefusal = opts\.strangerRestGate\?\.\(\);\s*if \(strangerRefusal\) \{ activeOverlay = new ActionTextBox\(\[strangerRefusal\]\); return; \}[\s\S]{0,600}?const partyRefusal = opts\.partyRestGate\?\.\(\);\s*if \(partyRefusal\) \{ activeOverlay = new ActionTextBox\(\[partyRefusal\]\); return; \}[\s\S]{0,600}?opts\.markPartyRestSpent\?\.\(\);\s*activeOverlay = createRestWindow\(_restDeps\);/, 'the dungeon: the same four, through the outer host\'s doors');
   assert.match(m, /partyRestGate: \(\) => host\.partyRestGate\?\.\(\),/, 'handed down to the dungeon');
   assert.match(m, /markPartyRestSpent: \(\) => host\.markPartyRestSpent\?\.\(\),/);
-  assert.match(w, /const restWin = !isEnhanced\(\) \? null[^\n]*\n\s*: mode === 'interior' \? modes\?\.restState\s*: mode === 'dungeon' \? modes\?\.dungeonCtx\?\.restState/, 'world.js reads the two getters (AUDIT PARTY-REST: under the enhanced skin alone - ONLINE-REST1)');
+  assert.match(w, /const restWin = mode === 'interior' \? modes\?\.restState\s*: mode === 'dungeon' \? modes\?\.dungeonCtx\?\.restState/, 'world.js reads the two getters (OVH4: on either skin)');
   assert.match(w, /townTalk\.overlay\.session && townTalk\.overlay\.state === 'resting'/, 'D2: outdoors too, RESTING - not the wake box');
-  assert.match(w, /const markPartyRestSpent = \(\) => \{\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!isEnhanced\(\)\) return;\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!social\) return;\s*\n\s*_partyRestReady = false;/, 'PARTY-REST28: the one shared reset every host runs on a granted rest (REST-OFFLINE1: a no-op with no social clock)');
+  assert.match(w, /const markPartyRestSpent = \(\) => \{\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!social\) return;\s*\n\s*_partyRestReady = false;/, 'PARTY-REST28: the one shared reset every host runs on a granted rest (REST-OFFLINE1: a no-op with no social clock)');
   assert.match(w, /const partyRefusal = modes \? partyRestGate\(\) : null;/, 'D5: no TDZ before the mode machine stands');
   assert.match(w, /const strangerRefusal = modes \? strangerRestGate\(\) : null;/, 'D5: the stranger gate the same');
   assert.match(w, /if \(modes\) markPartyRestSpent\(\);/, 'D5: and the spend');

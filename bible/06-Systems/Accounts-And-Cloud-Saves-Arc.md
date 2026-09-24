@@ -3090,7 +3090,7 @@ patreon titles. These also recieve their own unique glyphs. The account Dutchess
   has its own shape (a d20, a flame, an open book, a crown) and a classic mark. `src/ui/enhancedAccount.js` names each
   one on the card.
 - **The grants** (`server-account/src/titles.js`, `TIER_LISTS`): each title is a handle list in `wrangler.toml`, which
-  is the developers' own law. `DUNGEON_MASTER_HANDLES = "SquidKamer"` and `DISCIPLE_HANDLES = "Dutchess,Satranath"` (Mac added Satranath the same day); Apostle
+  is the developers' own law. `DUNGEON_MASTER_HANDLES = "SquidKamer"` and `DISCIPLE_HANDLES = "Dutchess,Satranath,Skibbster"` (Mac added Satranath the same day, and Skibbster after it: "Skibbster needs to be a disciple ingame"); Apostle
   and Hierophant are empty. A list grants its title and its glyph, and never to a guest. A lapsed Patreon tier is a
   handle taken off the list, and it disappears from that player's next token. The service is `acct7`.
 - **/dm** is RED1's law, one glyph over. The client sends `{t:'narrate', text}` on the World link, and only from a

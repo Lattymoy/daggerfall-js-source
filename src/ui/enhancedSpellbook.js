@@ -34,7 +34,7 @@ import { overlayAction, eventAction } from './input.js';   // KB1: and the regis
 import {
   spellEffects, spellPointCost, EFFECT_NOT_FOUND, ENTER_SPELL_NAME,
   CANNOT_DELETE_VAMP, CANNOT_DELETE_WERE, DELETE_SPELL_PROMPT,
-  VAMPIRE_SPELL_TAG, LYCANTHROPY_SPELL_TAG,
+  VAMPIRE_SPELL_TAG, LYCANTHROPY_SPELL_TAG, editBookSpell,
 } from './spellbookWindow.js';
 import { effectByKey } from '../systems/spellEffects.js';   // the classic book's own source (spellbookWindow.js:120)
 import { spellQuickslot, setSpellQuickslot, clearSpellQuickslot } from '../systems/quickslots.js';   // HOTSLOT: the book is where a spell is slotted
@@ -105,7 +105,7 @@ export function effectWords(effect) {
 }
 
 /** The two words the classic shows as TOOLTIPS on the target and
- *  element icons (spellbookWindow.js:388/391). This window draws no
+ *  element icons (spellbookWindow.js:399/402). This window draws no
  *  icons - it reads no ARENA2 - so it prints what those icons mean,
  *  which is strictly more than the classic tells you at a glance. */
 export function spellFrame(spell) {
@@ -306,7 +306,7 @@ function render() {
     form.onsubmit = (e) => {
       e.preventDefault();
       const name = renaming.trim();
-      if (name) sel.spell.name = name;
+      if (name) editBookSpell(deps.spells?.(), sel.i, { name });   // AUDIT 68 S31-enhanced-rename-mutates-shared-spell: never the shared record
       renaming = null;
       render();
     };

@@ -122,9 +122,12 @@ export const npcServiceKind = (npcFactionId) => NPC_SERVICE[npcFactionId] ?? nul
 // Guild.cs :335-346. No guild overrides either method, so the cap is
 // flat and the price is the member/non-member split times LEVEL.
 export const TRAINING_SKILLS = Object.freeze({
+  // FGH2H: the hall trains HandToHand too - the rank law's new skill is one
+  // a member can buy (a DEPARTURE, Port-Ledger row for guilds.js and this file;
+  // R&R's fightersTeachHandToHand, which swapped Giantish out, is retired).
   FightersGuild: [SKILLS.Archery, SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.CriticalStrike,
-    SKILLS.Giantish, SKILLS.Jumping, SKILLS.LongBlade, SKILLS.Orcish, SKILLS.Running,
-    SKILLS.ShortBlade, SKILLS.Swimming],
+    SKILLS.Giantish, SKILLS.HandToHand, SKILLS.Jumping, SKILLS.LongBlade, SKILLS.Orcish,
+    SKILLS.Running, SKILLS.ShortBlade, SKILLS.Swimming],
   MagesGuild: [SKILLS.Alteration, SKILLS.Daedric, SKILLS.Destruction, SKILLS.Dragonish,
     SKILLS.Harpy, SKILLS.Illusion, SKILLS.Impish, SKILLS.Mysticism, SKILLS.Orcish,
     SKILLS.Restoration, SKILLS.Spriggan, SKILLS.Thaumaturgy],
@@ -172,10 +175,8 @@ export const DEITY_DESCRIPTIONS = Object.freeze({
 export function trainingSkills(guild) {
   if (guild.divine) return TEMPLE_TRAINING_SKILLS[guild.divine];
   if (guild.order) return null;
-  return _trainingOverride?.(guild.name) ?? TRAINING_SKILLS[guild.name] ?? null;   // RR1: TrainingSkills, the virtual (FightersGuildRR)
+  return TRAINING_SKILLS[guild.name] ?? null;   // FGH2H-R: FightersGuildRR's override retired
 }
-let _trainingOverride = null;
-export function setTrainingSkillsOverride(fn) { _trainingOverride = typeof fn === 'function' ? fn : null; }
 
 /** GetTrainingMax (:335-338): defaultTrainingMax, and no guild
  *  overrides it. Training cannot take a skill past 50. */
@@ -301,7 +302,6 @@ const _customGuilds = new Map();
  *  name, e.g. 'MagesGuild'. The arm is (membership, service) and
  *  returns true, false, or undefined to decline. */
 export function registerCustomGuild(name, fn) { if (fn) _customGuilds.set(name, fn); else _customGuilds.delete(name); }
-export const customGuild = (name) => _customGuilds.get(name) ?? null;
 
 export function canAccessService(guild, membership, service) {
   // AUDIT 26 F115: a NON-MEMBER never reaches the subclass switch.

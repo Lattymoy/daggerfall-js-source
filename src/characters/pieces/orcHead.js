@@ -14,7 +14,7 @@
 // off a 0.9-jaw one; passing the build through is what keeps the root
 // buried in the lip at every jaw width in the clamp band.
 
-import { HSCALE } from './pieceLoft.js';
+import { HSCALE, shadePiece, pushQuad } from './pieceLoft.js';
 
 // Ivory: warm bone, its own ramp - a tusk shaded off the hide ramp
 // reads as a green growth rather than a tooth.
@@ -26,16 +26,6 @@ const CHIN_Y = 1.70, JAW_Y = 1.74, CHEEK_Y = 1.79, TEMPLE_Y = 1.85;
 const JAW_RX = 0.082, JAW_RZ = 0.105;      // jaw row half-extents
 const CHEEK_RX = 0.102, CHEEK_RZ = 0.130;  // cheek row half-extents
 
-function shadeOrc(faces, ramp) {
-  const Lx = 0.5, Ly = 0.55, Lz = 0.67, Ln = Math.hypot(Lx, Ly, Lz);
-  const snap = (t) => ramp[Math.max(0, Math.min(ramp.length - 1, Math.round(t * (ramp.length - 1))))];
-  for (const f of faces) {
-    const it = Math.min(1, Math.max(0.08, (f.n[0] * Lx + f.n[1] * Ly + f.n[2] * Lz) / Ln * 0.9 + 0.18));
-    f._i = it; f.c = snap(it);
-  }
-  return faces;
-}
-
 /** Tusks: a pair of lower canines rooted in the jaw and curving UP and
  *  slightly OUT past the upper lip. Tapered square prisms, not cones -
  *  the rig's whole language is faceted, and a smooth cone reads as a
@@ -46,13 +36,7 @@ function shadeOrc(faces, ramp) {
  *  out of the same socket rather than sliding down the chin. */
 export function buildTusks(ramp = IVORY_RAMP, { jaw = 1, size = 1 } = {}) {
   const faces = [];
-  const quad = (a, b, c, d) => {
-    const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
-    const vx = d[0] - a[0], vy = d[1] - a[1], vz = d[2] - a[2];
-    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
-    const L = Math.hypot(nx, ny, nz) || 1;
-    faces.push({ p: [...a, ...b, ...c, ...d], n: [nx / L, ny / L, nz / L], g: 'head' });
-  };
+  const quad = (a, b, c, d) => pushQuad(faces, a, b, c, d, 'head');
 
   // Root: on the jaw ring, off to each side of the chin and forward.
   // Both offsets ride `jaw`, which is what keeps the socket in the lip.
@@ -89,7 +73,7 @@ export function buildTusks(ramp = IVORY_RAMP, { jaw = 1, size = 1 } = {}) {
     const r0 = rings[0];
     quad(r0[3], r0[2], r0[1], r0[0]);
   }
-  return shadeOrc(faces, ramp);
+  return shadePiece(faces, ramp, 0.08, 0.18);
 }
 
 /** Brow: a heavy shelf across the forehead, above the eye line and
@@ -97,13 +81,7 @@ export function buildTusks(ramp = IVORY_RAMP, { jaw = 1, size = 1 } = {}) {
  *  jaw) so it tracks the head it sits on. */
 export function buildBrow(ramp, { skull = 1, jut = 1 } = {}) {
   const faces = [];
-  const quad = (a, b, c, d) => {
-    const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
-    const vx = d[0] - a[0], vy = d[1] - a[1], vz = d[2] - a[2];
-    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
-    const L = Math.hypot(nx, ny, nz) || 1;
-    faces.push({ p: [...a, ...b, ...c, ...d], n: [nx / L, ny / L, nz / L], g: 'head' });
-  };
+  const quad = (a, b, c, d) => pushQuad(faces, a, b, c, d, 'head');
 
   const yLo = ((CHEEK_Y + TEMPLE_Y) / 2) * HSCALE;   // eye line
   const yHi = (TEMPLE_Y + 0.020) * HSCALE;           // just under the crown curve
@@ -133,5 +111,5 @@ export function buildBrow(ramp, { skull = 1, jut = 1 } = {}) {
     const x = sgn * halfW, z = arcZ(x);
     quad([x, yLo, zFace], [x, yLo, z], [x, yHi, z], [x, yHi, zFace]);
   }
-  return shadeOrc(faces, ramp);
+  return shadePiece(faces, ramp, 0.08, 0.18);
 }

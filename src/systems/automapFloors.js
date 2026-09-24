@@ -84,6 +84,19 @@ export const PLAN_CELL = 1;
  *  seams and slivers a mesh is full of would each vote for a storey. */
 export const MIN_TRI_AREA = 0.05;
 
+/** DISC22-G: flat triangles within this of one another are ONE LEVEL - a floor laid across several models sits
+ *  at one height give or take the file's 1/40 unit, and a stair's next step does not (its rise is several times
+ *  this). The levels, not the triangles, are what the storeys are chosen from. */
+export const LEVEL_TOL = 0.1;
+
+/** DISC22-G: the least floor a level must carry to ANCHOR a storey of its own - a small room's floor (3 x 4 m).
+ *  A stair step, a ledge, a dais is smaller and belongs to the storey nearest it; see deriveFloors. */
+export const STOREY_MIN_AREA = 12;
+
+/** DISC22-G: the levels this near a storey's anchor are its floor, and set its height (a floor laid a hair off
+ *  square, a dais) - a stair's upper steps, further off, are assigned to it but do not lift it. */
+export const STOREY_NEAR = 1;
+
 /** `matrix` is the row's placement (a column-major 4x4, the port's own
  *  convention); a row with none is already in world space. */
 function tx(m, x, y, z, out) {
@@ -96,86 +109,150 @@ function tx(m, x, y, z, out) {
 
 const A = [0, 0, 0], B = [0, 0, 0], C = [0, 0, 0];
 
+/** DISC22-G: every row's floor triangles, computed ONCE. The rows are the reveal index's own objects, built once
+ *  per level, so a row's triangles are a pure function of it; before this every open of the map (and every
+ *  storey change and every reveal) re-transformed the whole level - 2.8 s for a ten-by-ten-block dungeon. */
+const _rowTris = new WeakMap();
+
+/** The facing a triangle's own vertices carry, turned by the placement: the ARCH3D file's plane normal (meshReader
+ *  flips its y with the positions', :135/:139), which is what DFU lights the face by. The upper 3x3 is a rotation
+ *  (a placement never shears), so it turns a normal as it turns a point. */
+function fileUp(m, n, i0, i1, i2) {
+  let x = n[i0] + n[i1] + n[i2], y = n[i0 + 1] + n[i1 + 1] + n[i2 + 1], z = n[i0 + 2] + n[i1 + 2] + n[i2 + 2];
+  if (m) {
+    const ny = m[1] * x + m[5] * y + m[9] * z;
+    const nx = m[0] * x + m[4] * y + m[8] * z;
+    const nz = m[2] * x + m[6] * y + m[10] * z;
+    x = nx; y = ny; z = nz;
+  }
+  const len = Math.hypot(x, y, z);
+  return len > 0 ? y / len : NaN;
+}
+
+/** One row's floor triangles (uncached - see floorTriangles). */
+function rowFloorTriangles(r, out) {
+  const p = r?.positions, idx = r?.indices;
+  if (!p || !idx) return out;
+  const m = r.matrix ?? null;
+  const normals = r.normals ?? null;
+  for (let i = 0; i + 2 < idx.length; i += 3) {
+    const i0 = idx[i] * 3, i1 = idx[i + 1] * 3, i2 = idx[i + 2] * 3;
+    tx(m, p[i0], p[i0 + 1], p[i0 + 2], A);
+    tx(m, p[i1], p[i1 + 1], p[i1 + 2], B);
+    tx(m, p[i2], p[i2 + 1], p[i2 + 2], C);
+    // the cross product's own length IS twice the area, and its y
+    // over that length is the normal's y - one square root, and the
+    // facing and the weight both fall out of it
+    const ux = B[0] - A[0], uy = B[1] - A[1], uz = B[2] - A[2];
+    const vx = C[0] - A[0], vy = C[1] - A[1], vz = C[2] - A[2];
+    const nx = uy * vz - uz * vy;
+    const ny = uz * vx - ux * vz;
+    const nz = ux * vy - uy * vx;
+    const len = Math.hypot(nx, ny, nz);
+    if (!(len > 0)) continue;              // degenerate: no facing to read
+    const area = len / 2;
+    if (area < MIN_TRI_AREA) continue;
+    // DISC22-G: THE FILE SAYS WHICH WAY A FACE LOOKS. EM2 took the geometric normal's ABS on the premise that the
+    // port's meshes are "not reliably wound" - and abs() is exactly what made every CEILING a floor: one ceilinged
+    // room was two storeys and a two-storey level four ("Floor 2" was Floor 1's ceiling, drawn again). The world
+    // pass culls back faces (renderer.js CULL_FACE), so the winding is reliable after all - but the file's own
+    // plane normal is better than either, because it is what the face was authored to be lit by. A ceiling looks
+    // down, so it is not a floor. A row with no normals (a hand-built fixture, a machinery part) keeps EM2's abs.
+    const up = normals ? fileUp(m, normals, i0, i1, i2) : Math.abs(ny) / len;
+    if (!(up >= FLOOR_NY)) continue;
+    out.push({
+      y: (A[1] + B[1] + C[1]) / 3,
+      area,
+      flat: up >= LEVEL_NY,   // may it vote for a storey? (the header's ramp note)
+      ax: A[0], az: A[2], bx: B[0], bz: B[2], cx: C[0], cz: C[2],
+    });
+  }
+  return out;
+}
+
 /**
  * Every up-facing triangle of these rows, in world space, as
  * `{ y, area, ax, az, bx, bz, cx, cz }` - the height it sits at, the
  * weight it carries and its XZ footprint. Rows with no CPU triangles
  * (a row the layout never kept geometry for) contribute nothing.
- * @param {Array<{positions?: Float32Array|number[]|null, indices?: Uint16Array|Uint32Array|number[]|null, matrix?: number[]|Float32Array|null}>} rows
+ * @param {Array<{positions?: Float32Array|number[]|null, indices?: Uint16Array|Uint32Array|number[]|null, normals?: Float32Array|number[]|null, matrix?: number[]|Float32Array|null}>} rows
  * @returns {Array<{y:number, area:number, ax:number, az:number, bx:number, bz:number, cx:number, cz:number}>}
  */
 export function floorTriangles(rows) {
   const out = [];
   for (const r of rows ?? []) {
-    const p = r?.positions, idx = r?.indices;
-    if (!p || !idx) continue;
-    const m = r.matrix ?? null;
-    for (let i = 0; i + 2 < idx.length; i += 3) {
-      const i0 = idx[i] * 3, i1 = idx[i + 1] * 3, i2 = idx[i + 2] * 3;
-      tx(m, p[i0], p[i0 + 1], p[i0 + 2], A);
-      tx(m, p[i1], p[i1 + 1], p[i1 + 2], B);
-      tx(m, p[i2], p[i2 + 1], p[i2 + 2], C);
-      // the cross product's own length IS twice the area, and its y
-      // over that length is the normal's y - one square root, and the
-      // facing and the weight both fall out of it
-      const ux = B[0] - A[0], uy = B[1] - A[1], uz = B[2] - A[2];
-      const vx = C[0] - A[0], vy = C[1] - A[1], vz = C[2] - A[2];
-      const nx = uy * vz - uz * vy;
-      const ny = uz * vx - ux * vz;
-      const nz = ux * vy - uy * vx;
-      const len = Math.hypot(nx, ny, nz);
-      if (!(len > 0)) continue;              // degenerate: no facing to read
-      const area = len / 2;
-      if (area < MIN_TRI_AREA) continue;
-      // ABS: a floor drawn with its winding the other way is still a
-      // floor - the port's meshes are not reliably wound for this and
-      // a one-sided test drops half the rooms.
-      const up = Math.abs(ny) / len;
-      if (up < FLOOR_NY) continue;
-      out.push({
-        y: (A[1] + B[1] + C[1]) / 3,
-        area,
-        flat: up >= LEVEL_NY,   // may it vote for a storey? (the header's ramp note)
-        ax: A[0], az: A[2], bx: B[0], bz: B[2], cx: C[0], cz: C[2],
-      });
-    }
+    if (!r || typeof r !== 'object') continue;
+    let mine = _rowTris.get(r);
+    if (!mine) { mine = rowFloorTriangles(r, []); _rowTris.set(r, mine); }
+    for (const t of mine) out.push(t);
   }
   return out;
 }
 
 /**
  * The storeys these triangles stand on, bottom first. Only the FLAT
- * ones vote (the header's ramp note); among them a run of heights
- * closer together than `minGap` is one storey, whose height is the
- * area-weighted mean of the run. A level with no flat surface at all -
- * a cave of nothing but slopes - falls back to the whole walkable set
- * rather than answering "no floors", because a map with no storey on
- * the strip is a map that draws nothing.
+ * ones vote (the header's ramp note). A level with no flat surface at
+ * all - a cave of nothing but slopes - falls back to the whole walkable
+ * set rather than answering "no floors", because a map with no storey
+ * on the strip is a map that draws nothing.
+ *
+ * DISC22-G: A STAIR IS NOT A STOREY, AND IT DOES NOT JOIN TWO. EM2 chained the voters - each within `minGap` of the
+ * last run's top joined it - and a flight of stairs is a chain of flat steps, each well inside the gap of the one
+ * below: two floors twelve metres apart came back as ONE storey at the steps' mean height (5.35), the player's
+ * caret on neither. So the voters are gathered into LEVELS (flat surfaces at one height, LEVEL_TOL), the levels are
+ * chained into RUNS as before, and inside a run each level carrying a real floor (STOREY_MIN_AREA) at least `minGap`
+ * from a bigger one ANCHORS a storey of its own - biggest first, so the great hall is a storey and the landing
+ * beside it is not. A run with no anchor at all (a stairwell's ledges alone, a terraced cave) is still one storey,
+ * as EM2 had it. Every level then belongs to the nearest anchor of its run.
  * @param {Array<{y:number, area:number, flat?: boolean}>} tris
- * @param {{minGap?: number}} [opts]
+ * @param {{minGap?: number, minArea?: number}} [opts]
  * @returns {Array<{index:number, y:number, y0:number, y1:number, label:string}>}
  */
-export function deriveFloors(tris, { minGap = FLOOR_MIN_GAP } = {}) {
+export function deriveFloors(tris, { minGap = FLOOR_MIN_GAP, minArea = STOREY_MIN_AREA } = {}) {
   if (!tris?.length) return [];
   const voters = tris.filter((t) => t.flat !== false);
   const sorted = [...(voters.length ? voters : tris)].sort((a, b) => a.y - b.y);
-  /** @type {Array<{sum:number, weight:number, lo:number, hi:number}>} */
-  const runs = [];
+  /** the levels: flat surfaces at one height */
+  /** @type {Array<{sum:number, area:number, lo:number, hi:number, y:number}>} */
+  const levels = [];
   for (const t of sorted) {
+    const last = levels[levels.length - 1];
+    if (last && t.y - last.hi <= LEVEL_TOL) { last.sum += t.y * t.area; last.area += t.area; last.hi = t.y; }
+    else levels.push({ sum: t.y * t.area, area: t.area, lo: t.y, hi: t.y, y: 0 });
+  }
+  for (const l of levels) l.y = l.area > 0 ? l.sum / l.area : l.lo;
+  /** the runs: levels chained by the headroom rule, EM2's own */
+  const runs = [];
+  for (const l of levels) {
     const last = runs[runs.length - 1];
-    if (last && t.y - last.hi <= minGap) {
-      last.sum += t.y * t.area; last.weight += t.area; last.hi = t.y;
-    } else {
-      runs.push({ sum: t.y * t.area, weight: t.area, lo: t.y, hi: t.y });
+    if (last && l.lo - last[last.length - 1].hi <= minGap) last.push(l); else runs.push([l]);
+  }
+  const storeys = [];
+  for (const run of runs) {
+    const anchors = [];
+    for (const l of [...run].filter((v) => v.area >= minArea).sort((a, b) => b.area - a.area)) {
+      if (anchors.every((a) => Math.abs(a.y - l.y) >= minGap)) anchors.push(l);
+    }
+    if (!anchors.length) {
+      // a run with no floor of its own is one storey, meaned by area (EM2's reading)
+      const sum = run.reduce((n, l) => n + l.sum, 0), area = run.reduce((n, l) => n + l.area, 0);
+      storeys.push({ y: area > 0 ? sum / area : run[0].lo, y0: run[0].lo, y1: run[run.length - 1].hi });
+      continue;
+    }
+    anchors.sort((a, b) => a.y - b.y);
+    const mine = anchors.map((a) => ({ a, levels: [] }));
+    for (const l of run) {
+      let best = mine[0], bestD = Infinity;
+      for (const m of mine) { const d = Math.abs(m.a.y - l.y); if (d < bestD) { bestD = d; best = m; } }
+      best.levels.push(l);
+    }
+    for (const { a, levels: ls } of mine) {
+      const near = ls.filter((l) => Math.abs(l.y - a.y) <= STOREY_NEAR);
+      const sum = near.reduce((n, l) => n + l.sum, 0), area = near.reduce((n, l) => n + l.area, 0);
+      storeys.push({ y: area > 0 ? sum / area : a.y, y0: Math.min(...ls.map((l) => l.lo)), y1: Math.max(...ls.map((l) => l.hi)) });
     }
   }
-  return runs.map((r, index) => ({
-    index,
-    y: r.weight > 0 ? r.sum / r.weight : r.lo,
-    y0: r.lo,
-    y1: r.hi,
-    label: `Floor ${index + 1}`,
-  }));
+  return storeys.map((st, index) => ({ index, y: st.y, y0: st.y0, y1: st.y1, label: `Floor ${index + 1}` }));
 }
 
 /** Which storey this height belongs to: the nearest one. A ramp's
@@ -251,6 +328,41 @@ export function floorOccupancy(tris, { cell = PLAN_CELL, bounds = null } = {}) {
 }
 
 /**
+ * DISC22-G: THE OUTLINE, SPLIT INTO WALL AND OPENING. `boundarySegments` inks every edge between a covered cell and
+ * an empty one as wall - and a doorway into a room not yet seen is exactly such an edge, so an unexplored exit was
+ * drawn as solid wall and the map could not say where to go next (DFU's 3D map shows the open mouth of a corridor
+ * you have not walked). `open(x, y)` says whether a cell is REAL floor on this storey, revealed or not; an edge whose
+ * far cell is real floor is an OPENING, every other edge a WALL. Unit segments in grid cells, the shape
+ * boundarySegments answers, so the same `link` joins both.
+ * @param {(x:number, y:number) => boolean} inside - the revealed cells
+ * @param {(x:number, y:number) => boolean} open - the storey's real floor, revealed or not
+ * @returns {{walls: number[][], openings: number[][]}}
+ */
+export function splitEdges(inside, open, width, height) {
+  const walls = [], openings = [];
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const here = inside(x, y);
+      if (x + 1 < width && here !== inside(x + 1, y)) {
+        const [ox, oy] = here ? [x + 1, y] : [x, y];
+        (open(ox, oy) ? openings : walls).push([x + 1, y, x + 1, y + 1]);
+      }
+      if (y + 1 < height && here !== inside(x, y + 1)) {
+        const [ox, oy] = here ? [x, y + 1] : [x, y];
+        (open(ox, oy) ? openings : walls).push([x, y + 1, x + 1, y + 1]);
+      }
+    }
+  }
+  return { walls, openings };
+}
+
+/** DISC22-G: one storey's whole floor - revealed or not - on a given grid, for splitEdges. */
+export function storeyOccupancy(rows, floors, index, bounds, cell = PLAN_CELL) {
+  const mine = floorTriangles(rows).filter((t) => floorAt(floors, t.y) === index);
+  return floorOccupancy(mine, { cell, bounds });
+}
+
+/**
  * THE WHOLE PLAN, for one storey: the rows in, the storey list and the
  * chosen storey's chains out. `chains` are in WORLD units (x, z), so
  * the player's caret and the beacons land in the same space with no
@@ -272,25 +384,31 @@ export function floorOccupancy(tris, { cell = PLAN_CELL, bounds = null } = {}) {
  *
  * @param {Array<object>} rows - the REVEALED rows (the caller filters; the map draws what has been seen)
  * @param {number|null} wanted - the storey to cut, clamped into range
- * @param {{cell?: number, minGap?: number, segments?: Function|null, link?: Function|null, floors?: Array<object>|null, bounds?: {x0:number,z0:number,x1:number,z1:number}|null}} [opts]
- * @returns {{floors: Array<object>, index: number, chains: Array<Array<{x:number,y:number}>>, occupancy: object|null, bounds: object|null}}
+ * @param {{cell?: number, minGap?: number, segments?: Function|null, link?: Function|null, floors?: Array<object>|null, bounds?: {x0:number,z0:number,x1:number,z1:number}|null, full?: object|null}} [opts]
+ * @returns {{floors: Array<object>, index: number, chains: Array<Array<{x:number,y:number}>>, openChains: Array<Array<{x:number,y:number}>>, occupancy: object|null, bounds: object|null}}
  */
+/** The plain outline, for a caller that hands `full` without `segments`: every edge a wall. */
+function boundarySegmentsLocal(inside, w, h) { return splitEdges(inside, () => false, w, h).walls; }
+
 export function floorPlan(rows, wanted, {
   cell = PLAN_CELL, minGap = FLOOR_MIN_GAP, segments = null, link = null,
-  floors: given = null, bounds: box = null,
+  floors: given = null, bounds: box = null, full = null,
 } = {}) {
   const tris = floorTriangles(rows);
   const floors = given?.length ? given : deriveFloors(tris, { minGap });
-  if (!floors.length) return { floors, index: -1, chains: [], occupancy: null, bounds: box };
+  if (!floors.length) return { floors, index: -1, chains: [], openChains: [], occupancy: null, bounds: box };
   const index = Math.max(0, Math.min(floors.length - 1, wanted ?? 0));
   const mine = tris.filter((t) => floorAt(floors, t.y) === index);
   const bounds = box ?? planBounds(mine, cell);
   const occ = floorOccupancy(mine, { cell, bounds });
-  if (!occ || !segments || !link) return { floors, index, chains: [], occupancy: occ, bounds };
-  const segs = segments((x, y) => occ.at(x, y), occ.w, occ.h);
-  const chains = link(segs).map((chain) => chain.map((p) => ({
-    x: occ.x0 + p.x * cell,
-    y: occ.z0 + p.y * cell,
-  })));
-  return { floors, index, chains, occupancy: occ, bounds };
+  if (!occ || !link || (!segments && !full)) return { floors, index, chains: [], openChains: [], occupancy: occ, bounds };
+  const toWorld = (chain) => chain.map((p) => ({ x: occ.x0 + p.x * cell, y: occ.z0 + p.y * cell }));
+  // DISC22-G: with the storey's whole floor on the same grid, an edge onto real floor not yet seen is an opening
+  const sameGrid = full && full.w === occ.w && full.h === occ.h && full.x0 === occ.x0 && full.z0 === occ.z0;
+  if (sameGrid) {
+    const { walls, openings } = splitEdges((x, y) => occ.at(x, y), (x, y) => full.at(x, y), occ.w, occ.h);
+    return { floors, index, chains: link(walls).map(toWorld), openChains: link(openings).map(toWorld), occupancy: occ, bounds };
+  }
+  const segs = (segments ?? boundarySegmentsLocal)((x, y) => occ.at(x, y), occ.w, occ.h);
+  return { floors, index, chains: link(segs).map(toWorld), openChains: [], occupancy: occ, bounds };
 }

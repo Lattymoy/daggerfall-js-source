@@ -156,6 +156,7 @@ import { typedChar } from './input.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { dateFromClassicMinutes, midDateTimeString } from '../systems/gameDate.js';
+import { packColourTexture } from './packArt.js';   // OVH2: a worn UI pack's panel and button textures
 import {
   enumerateSaves, findSave, findMostRecentSave, saveInfoOf, screenshotOf,
   deleteSave, renameSave, characterNames,
@@ -393,7 +394,7 @@ export class SaveWindow {
    *
    *  RECORDED (structural): DFU routes the wheel to the component under
    *  the pointer; the hosts carry the point on the overlay wheel seam
-   *  now (AUDIT 65 UI-5: townTalk.js:1302-1309, worldModes.js:8986-9002,
+   *  now (AUDIT 65 UI-5: townTalk.js:1307-1314, worldModes.js:8982-8998,
    *  dungeonContext's overlayWheel), and this window has one scrolling
    *  list, so it still ignores the point and forwards the sign to it. */
   wheel(dir) {
@@ -600,15 +601,27 @@ export class SaveWindow {
     return true;   // the window is modal - a stray click never falls through
   }
 
+  /** OVH2: a worn UI pack's texture by DFU's name, warmed on first ask - null until it lands, and for good when the
+   *  pack does not carry it (the colour alone, as DFU draws a panel whose import found nothing). */
+  _packTexture(renderer, name) {
+    const k = (this._packTex ??= new Map());
+    if (!k.has(name)) { k.set(name, null); packColourTexture(renderer, name).then((t) => { if (t) k.set(name, t); }); }
+    return k.get(name);
+  }
+
   draw(renderer, canvas, font) {
     this.update();                       // Update() runs before Draw()
     const m = nativeMetrics(canvas);
     const M = MAIN_PANEL;
     const R = SW_RECTS;
     const at = ([x, y, w, h]) => [M[0] + x, M[1] + y, w, h];
-    const panel = (rect, color, outline = true) => {
+    // OVH2: TryImportTexture(textureName) (DaggerfallUnitySaveGameWindow.cs:455-473) - a worn UI pack's picture
+    // for a panel or a button is its BackgroundTexture, drawn over the BackgroundColor as Panel draws the two.
+    const panel = (rect, color, outline = true, texName = null) => {
       const [x, y, w, h] = at(rect);
       drawRect(renderer, m, x, y, w, h, color);
+      const tex = texName ? this._packTexture(renderer, texName) : null;
+      if (tex) renderer.drawScreenQuad(tex, { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s });
       if (outline) {
         drawRect(renderer, m, x - 1, y - 1, w + 2, 1, [1, 1, 1, 0.35]);
         drawRect(renderer, m, x - 1, y + h, w + 2, 1, [1, 1, 1, 0.35]);
@@ -617,7 +630,7 @@ export class SaveWindow {
       }
     };
 
-    panel([0, 0, M[2], M[3]], SW_COLORS.main);
+    panel([0, 0, M[2], M[3]], SW_COLORS.main, true, 'mainPanelBackgroundColor');
     // Prompt (savePrompt/loadPrompt + the character name, :363-369).
     const prompt = this.noSaves
       ? SW_TEXT.noSavesFound
@@ -635,7 +648,7 @@ export class SaveWindow {
     // that only ReadOnly disables (:236-239), so it draws over the
     // default text in save mode and never in load mode; the caret is
     // the port's plain underscore, drawn at the text's own width.
-    panel(R.namePanel, SW_COLORS.namePanel);
+    panel(R.namePanel, SW_COLORS.namePanel, true, 'namePanelBackgroundColor');
     const nameShown = this.nameText.length ? this.nameText
       : (this.mode === 'save' ? SW_TEXT.enterSaveName : SW_TEXT.selectSaveName);
     const nameX = M[0] + R.namePanel[0] + 2, nameY = M[1] + R.namePanel[1] + 1;
@@ -647,7 +660,7 @@ export class SaveWindow {
 
     // Saves panel, list, scroller.
     panel(R.savesPanel, SW_COLORS.main);
-    panel(R.savesList, SW_COLORS.list, false);
+    panel(R.savesList, SW_COLORS.list, false, 'savesListBackgroundColor');
     // ListBox.Draw (ListBox.cs:301-330) draws the row LABELS and
     // nothing else - there is no per-row background anywhere in it, so
     // the selection is a COLOUR: DecideTextColor (:360-372) hands the
@@ -677,7 +690,7 @@ export class SaveWindow {
     // bare, both time labels and both corner labels blank. C1 - SAV4
     // asked only whether the name resolved to a slot, so a window whose
     // list selection had been dropped still drew a live info panel.
-    panel(R.screenshot, SW_COLORS.list);
+    panel(R.screenshot, SW_COLORS.list, true, 'screenshotPanelBackgroundColor');
     const key = this._infoShown() ? this._selectedKey() : -1;
     if (key === -1) this._dropShot();    // the destroyed BackgroundTexture (:393-397)
     if (key !== -1) {
@@ -714,29 +727,29 @@ export class SaveWindow {
     // constructor leaves OFF (Panel.cs:91) - so only go/classic/cancel
     // carry one (:168, :179, :190); rename and delete turn theirs off
     // outright (:241, :259) and switchChar never asks for one.
-    const button = (rect, label, color, { dim = false, outline = true } = {}) => {
-      panel(rect, color, outline);
+    const button = (rect, label, color, { dim = false, outline = true, tex = null } = {}) => {
+      panel(rect, color, outline, tex);
       const [x, y, w, h] = at(rect);
       shadowText(renderer, font, label, m, x, y + Math.floor((h - 7) / 2),
         { align: 'center', w, color: dim ? SW_COLORS.folder : undefined });
     };
     const hasInfo = this._infoShown();   // UpdateSelectedSaveInfo's two colour arms (:382-383, :415-416)
-    button(R.go, this.mode === 'save' ? SW_TEXT.saveButton : SW_TEXT.loadButton, SW_COLORS.save);
+    button(R.go, this.mode === 'save' ? SW_TEXT.saveButton : SW_TEXT.loadButton, SW_COLORS.save, { tex: 'saveButtonBackgroundColor' });
     // SetMode disables the classic switch in save mode (:437) and an
     // Enabled=false component is NOT DRAWN. The dim arm below is the
     // port's own (a host that handed over no mount).
     if (this.mode === 'load') {
       button(R.switchClassic, SW_TEXT.classicSave, SW_COLORS.classic,
-        { dim: !this.hooks.onSwitchClassic });
+        { dim: !this.hooks.onSwitchClassic, tex: 'switchClassicButtonBackgroundColor' });
     }
-    button(R.cancel, SW_TEXT.cancel, SW_COLORS.cancel);
+    button(R.cancel, SW_TEXT.cancel, SW_COLORS.cancel, { tex: 'cancelButtonBackgroundColor' });
     button(R.rename, SW_TEXT.renameSave, hasInfo ? SW_COLORS.save : SW_COLORS.namePanel,
-      { dim: !hasInfo, outline: false });
+      { dim: !hasInfo, outline: false, tex: 'renameSaveButtonBackgroundColor' });
     button(R.del, SW_TEXT.deleteSave, hasInfo ? SW_COLORS.cancel : SW_COLORS.namePanel,
-      { dim: !hasInfo, outline: false });
+      { dim: !hasInfo, outline: false, tex: 'deleteSaveButtonBackgroundColor' });
     // switchChar: load mode AND at least one character (:436, :449-452).
     if (this.mode === 'load' && this.characterCount >= 1) {
-      button(R.switchChar, SW_TEXT.switchChar, SW_COLORS.save, { outline: false });
+      button(R.switchChar, SW_TEXT.switchChar, SW_COLORS.save, { outline: false, tex: 'switchCharButtonBackgroundColor' });
     }
 
     // The loading label (:246-251, :518): gray ground, white text,

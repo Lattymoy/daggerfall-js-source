@@ -5,11 +5,10 @@
 # builds the same installers as run artifacts, for trying a build
 # without cutting a release.
 #
-# The house gate rides in front: the ubuntu job runs `npm run check`
-# whole (a red suite never ships an installer any more than it ships
-# the site); the windows/macos jobs build only - the suite's own
-# lawful home is ubuntu (deploy.yml), and what the other two runners
-# contribute is packaging, not verification.
+# The house gate rides in front: the `gate` job runs `npm run check`
+# whole, and every OS leg `needs` it (a red suite never ships an
+# installer any more than it ships the site). AUDIT 68: it was a step
+# inside the ubuntu leg, and the windows/macos legs never waited for it.
 #
 # Doctrine unchanged: the installers carry the built site and the
 # shell, NO game data - the app asks for the player's own ARENA2
@@ -50,7 +49,22 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  gate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read   # the suite reads; only the legs write the release
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install site dependencies
+        run: npm ci
+      - name: Gate (the whole suite, before any leg packages)
+        run: npm run check
+
   build:
+    needs: gate
     strategy:
       fail-fast: false
       matrix:
@@ -74,13 +88,17 @@ jobs:
       # base, PATCH from `git rev-list --count HEAD`. A dispatch with no
       # tag is artifacts-only, as before. Both the release tag and the
       # version electron-builder stamps come from this one VERSION.
+      # AUDIT 68: the dispatch input is READ from the environment, never
+      # pasted into the script - a quote in it is text, not bash.
       - name: Resolve release version
         id: reltag
         shell: bash
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
-          TAG='${{ inputs.release_tag }}'
-          if [ -z "$TAG" ] && [[ '${{ github.ref }}' == refs/tags/app-v* ]]; then TAG='${{ github.ref_name }}'; fi
-          if [ -z "$TAG" ] && [ '${{ github.event_name }}' = push ] && [ '${{ github.ref }}' = refs/heads/main ]; then
+          TAG="$RELEASE_TAG"
+          if [ -z "$TAG" ] && [[ "$GITHUB_REF" == refs/tags/app-v* ]]; then TAG="$GITHUB_REF_NAME"; fi
+          if [ -z "$TAG" ] && [ "$GITHUB_EVENT_NAME" = push ] && [ "$GITHUB_REF" = refs/heads/main ]; then
             BASE=$(node -p "require('./app/package.json').version.split('.').slice(0,2).join('.')")
             TAG="app-v${BASE}.$(git rev-list --count HEAD)"
           fi
@@ -92,12 +110,7 @@ jobs:
       - name: Install site dependencies
         run: npm ci
 
-      - name: Gate (ubuntu carries the suite)
-        if: matrix.os == 'ubuntu-latest'
-        run: npm run check
-
       - name: Build the site
-        if: matrix.os != 'ubuntu-latest'
         run: npm run build
 
       - name: Install shell dependencies
@@ -125,11 +138,16 @@ jobs:
         run: npx electron-builder --publish never
         working-directory: app
 
+      # AUDIT 68: target_commitish cuts a NEW tag at the commit these
+      # installers were built from. Without it GitHub cuts it at the
+      # default branch's head at upload time - main has moved on by
+      # then, and a dispatched hotfix branch's tag lands on main.
       - name: Attach installers to the release
         if: steps.reltag.outputs.tag != ''
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.reltag.outputs.tag }}
+          target_commitish: ${{ github.sha }}
           files: |
             app/release/*.AppImage
             app/release/*.exe

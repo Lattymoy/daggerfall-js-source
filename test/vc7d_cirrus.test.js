@@ -86,7 +86,7 @@ test('VC7d: THE JET - westerly on the game\'s clock at five times the fair surfa
   assert.ok(c.includes('vec2 q = cam.xz + dir.xz * t + uShift;') && c.includes('q.x -= uCirrus.z;'), 'the point in the world, carried east');
   assert.ok(c.includes(`float patchField = textureLod(uShape, vec3(q.x, 0.61 * SHAPE_M, q.y) / (SHAPE_M * ${lit(CIRRUS_PATCH)}), 0.0).g;`), 'where the high air holds ice: a slow round field');
   assert.ok(c.includes(`float bend = (textureLod(uShape, vec3(q.x, 0.47 * SHAPE_M, q.y) / (SHAPE_M * ${lit(CIRRUS_BEND)}), 0.0).b - 0.5) * ${lit(CIRRUS_BEND_M)};`), 'the streaks bent across the jet');
-  assert.ok(c.includes(`vec4 sk = textureLod(uShape, vec3(q.x / (SHAPE_M * ${lit(CIRRUS_ALONG)}), 0.83 + uEvolve.x / SHAPE_M * 0.5, (q.y + bend) / (SHAPE_M * ${lit(CIRRUS_ACROSS)})), mip + 1.0);`), 'the streaks lie east-west, bent, boil with the field, and read a mip soft');
+  assert.ok(c.includes(`vec4 sk = textureLod(uShape, vec3(q.x / (SHAPE_M * ${lit(CIRRUS_ALONG)}), 0.83 + uCirrus.w, (q.y + bend) / (SHAPE_M * ${lit(CIRRUS_ACROSS)})), mip + 1.0);`), 'the streaks lie east-west, bent, boil on their own clock (AUDIT 68 S17-cirrus-boil-wrap), and read a mip soft');
   assert.ok(c.includes(`float fib = textureLod(uDetail, vec3(q.x / (DETAIL_M * ${lit(CIRRUS_FIBRE_ALONG)}), 0.29, (q.y + bend) / (DETAIL_M * ${lit(CIRRUS_FIBRE_ACROSS)})), mip + 1.0).g;`), 'the striations too, a mip softer - the first cut aliased them to a dotted grain');
   // a streak is at least a few texels of its own volume across, so its edge cannot jag (the volume is 32 texels a tile
   // at mip 0, 16 at the mip it is read at): the across tile is at least a whole shape tile
@@ -177,7 +177,7 @@ test('VC7d: BEHIND THE SLAB - the march lays it under what it found, and uploads
   for (const n of ['uCirrus', 'uCirrusLight', 'uCirrusDir']) { assert.ok(MARCH_UNIFORMS.includes(n)); assert.ok(MARCH_FS.includes(`uniform ${n === 'uCirrus' ? 'vec4' : 'vec3'} ${n};`)); }
   const upd = fnBody(VolumetricClouds.toString(), 'update(viewport)');
   assert.ok(upd.includes('const ice = cirrusLight(s);'));
-  assert.ok(upd.includes('gl.uniform4f(u.uCirrus, this.cirrusCover ?? 0, CIRRUS_TAU, this.clocks?.cirrus ?? 0, 0);'));
+  assert.ok(upd.includes('gl.uniform4f(u.uCirrus, this.cirrusCover ?? 0, CIRRUS_TAU, this.clocks?.cirrus ?? 0, this.clocks?.cirrusBoil ?? 0);'), 'AUDIT 68 S17-cirrus-boil-wrap: .w the boil');
   assert.ok(upd.includes('gl.uniform3fv(u.uCirrusLight, ice.color); gl.uniform3fv(u.uCirrusDir, ice.dir);'));
   assert.doesNotMatch(fnBody(MARCH_FS, 'vec4 cirrus(vec3 cam, vec3 dir)').replace(/\/\/[^\n]*/g, ''), /\bhalf\b|\bflat\b|\bsample\b|\binput\b|\boutput\b/, 'no word GLSL ES 3.00 reserves');
 });

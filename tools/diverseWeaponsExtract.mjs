@@ -25,6 +25,7 @@ import { fileURLToPath } from 'node:url';
 import { readUnityBundle } from '../src/formats/unityBundle.js';
 import { readPng, writePng, writeIndexedPng } from './pngIO.mjs';
 import { MANIFEST, manifestSpriteNames } from './diverseWeaponsIndex.mjs';
+import { isMain } from './lib/isMain.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const OUT_DIR = 'public/art/diverse-weapons';
@@ -47,7 +48,7 @@ export function sameOnScreen(a, b) {
   return true;
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (isMain(import.meta.url)) {
   const src = process.argv[2];
   if (!src) { console.error('usage: node tools/diverseWeaponsExtract.mjs "<diverse weapons.dfmod>"'); process.exit(2); }
   const t0 = Date.now();

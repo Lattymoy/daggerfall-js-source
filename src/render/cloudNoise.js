@@ -121,21 +121,7 @@ void main() {
 }`;
 
 import { createVolume, withVolumeLayer, finishVolume } from './renderTarget.js';
-
-function link(gl, vs, fs) {
-  const compile = (type, src) => {
-    const sh = gl.createShader(type);
-    gl.shaderSource(sh, src); gl.compileShader(sh);
-    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh));
-    return sh;
-  };
-  const prog = gl.createProgram();
-  gl.attachShader(prog, compile(gl.VERTEX_SHADER, vs));
-  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fs));
-  gl.linkProgram(prog);
-  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
-  return prog;
-}
+import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 
 export class CloudNoise {
   /** Builds both volumes at once - a DRAW path. `viewport` is the
@@ -151,9 +137,9 @@ export class CloudNoise {
     gl.enableVertexAttribArray(0);
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
     gl.bindVertexArray(null);
-    this.shapeProgram = link(gl, NOISE_VS, SHAPE_FS);
-    this.detailProgram = link(gl, NOISE_VS, DETAIL_FS);
-    this.sliceProgram = link(gl, NOISE_VS, SLICE_FS);
+    this.shapeProgram = buildProgram(gl, NOISE_VS, SHAPE_FS);
+    this.detailProgram = buildProgram(gl, NOISE_VS, DETAIL_FS);
+    this.sliceProgram = buildProgram(gl, NOISE_VS, SLICE_FS);
     this.su = { uZ: gl.getUniformLocation(this.shapeProgram, 'uZ'), uSize: gl.getUniformLocation(this.shapeProgram, 'uSize') };
     this.du = { uZ: gl.getUniformLocation(this.detailProgram, 'uZ'), uSize: gl.getUniformLocation(this.detailProgram, 'uSize') };
     this.lu = {};

@@ -149,7 +149,7 @@
     "name": "PERF-CROWD-the-whole-live-crowd-is-submitted-uncut-again",
     "file": "src/scenes/world.js",
     "old": "        if (!billboardOutside(b)) livePersonBatches[keep++] = b;",
-    "new": "        livePersonBatches[keep++] = b;",
+    "new": "        livePersonBatches[keep++] = b; if (!billboardOutside(b)) {}",
     "tests": [
       "test/perfon2_peercull.test.js"
     ]
@@ -228,12 +228,13 @@
     ]
   },
   {
-    "name": "AUDIT-F1-the-cull-runs-before-keyOf-so-an-off-screen-mobile-casts-a-stale-silhouette",
-    "file": "src/render/renderer.js",
-    "old": "      keyOf(b);\n      if (bbCull && !this._bbVisible(b)) { this.stats.bbCulled++; continue; }   // PERF-CROWD2\n      opaque.push(b);",
-    "new": "      if (bbCull && !this._bbVisible(b)) { this.stats.bbCulled++; continue; }   // PERF-CROWD2\n      keyOf(b);\n      opaque.push(b);",
+    "name": "AUDIT-F1-the-shadow-replay-trusts-a-stamped-key-so-an-off-screen-mobile-casts-a-stale-silhouette",
+    "file": "src/render/shadowPass.js",
+    "old": "          const key = billboardKey(b);\n          const tex = f.textures.get(key);",
+    "new": "          const key = b._bbKey ?? billboardKey(b);\n          const tex = f.textures.get(key);",
     "tests": [
-      "test/perfon2_peercull.test.js"
+      "test/perfon2_peercull.test.js",
+      "test/audit68_render_a.test.js"
     ]
   },
   {

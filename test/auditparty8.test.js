@@ -89,7 +89,7 @@ test('AUDIT PARTY-REST wire (world95, then world96 under ALLY-CAST, world97 unde
   assert.equal(validPartyPose({ ...P, readyAt: -5 }).readyAt, 0);
   assert.equal(validPartyPose({ ...P }).readyAt, null, 'a world94 client sends none');
   assert.equal(validPartyPose({ ...P, readyAt: 'now' }).readyAt, null, '...and a bad one lands as none, never refusing the pose');
-  assert.equal(RELAY_VERSION, 'world105', 'DUEL1 (the duel frame, the card\'s account stamp) last; TITLE-N (the dm frame, the badge vocabulary) before it; ALLY-CAST moved it again, AUDIT ALLY-CAST once more, SPELLFX1\'s pose fields a third time, HCC-PARK + RIDE (the park frame, the pose\'s riding fields) a fourth, DISC7\'s hs and DISC12\'s lh/wb after, and the community arc\'s frames and AUDIT ATTACH\'s meters after them (world102)');
+  assert.equal(RELAY_VERSION, 'world107', 'DUEL1 (the duel frame, the card\'s account stamp, world107) last; DISC23-B (the look\'s eo, world106) and AUDIT 68 (the relay\'s own law, world105) before it; TITLE-N (the dm frame, the badge vocabulary) before it; ALLY-CAST moved it again, AUDIT ALLY-CAST once more, SPELLFX1\'s pose fields a third time, HCC-PARK + RIDE (the park frame, the pose\'s riding fields) a fourth, DISC7\'s hs and DISC12\'s lh/wb after, and the community arc\'s frames and AUDIT ATTACH\'s meters after them (world102)');
   assert.equal(QUEST_ROOM_BYTES_PER_S, 4 * 1024 * 1024);
   // the quest fan's byte budget, as the hub charges it: a share times the tabs it reaches, borrowing, so one
   // full party's largest share lands whole and the flood behind it waits
@@ -386,7 +386,7 @@ test('AUDIT PARTY8 + PARTY-REST by source: world.js\'s seams - the mirror\'s key
   assert.match(w, /if \(q\) _questSyncSeen\.set\(quest\.questName, q\.getLogMessages\(\)\?\.length \?\? 0\);/, 'what I just received is what I have seen: no echo');
   assert.match(w, /peerBodies\.sync\(afoot, onlineToScene, dt, player\.pos, \{ priority: \(id\) => !!social\?\.isPartyPeer\(id\) \}\);/);   // RIDE: the bodies stand the peers afoot - a rider is peerRiders' (hcc_park.test.js)
   assert.match(w, /inside: \(\) => \(modes\?\.mode \?\? 'exterior'\) !== 'exterior',/, 'the mirror\'s deps say where the follower stands');
-  assert.match(w, /const restWin = !isEnhanced\(\) \? null/, 'ONLINE-REST1: a classic-skin rest is nobody\'s to mirror');
+  assert.match(w, /const restWin = mode === 'interior' \? modes\?\.restState/, 'OVH4: a party\'s rest is the party card on either skin - every skin\'s rest is mirrored (ONLINE-REST1\'s classic arm retired)');
   assert.match(rd('src/scenes/worldModes.js'), /restEnemiesNearby: \(\) => interiorEnemiesNearby\(\{ resting: true \}\),/);
   assert.match(rd('src/scenes/dungeonContext.js'), /restEnemiesNearby: \(\) => _restDeps\.enemiesNearby\(\),/);
   assert.match(rd('src/ui/restDoor.js'), /unregister = registerOverlay\(\(\) => \{ if \(!overlay\.stopOrClose\?\.\(\)\) overlay\.dispose\(\); \}\);/);

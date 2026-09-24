@@ -57,7 +57,7 @@ import { FOOTSTEP_VOLUME } from '../systems/footsteps.js';   // AUDIT 58: Player
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { SOUND } from '../systems/soundClips.js';
 import { surfacePlayer, hurtPlayer, duelSpare } from '../characters/playerEntity.js';   // DUEL1: the duel's floor, for its damage over time
-import { readSpellsStd } from '../formats/spellsStd.js';   // G4: the two magic registries, one home
+import { readSpellsStd, spellsByIndexMap } from '../formats/spellsStd.js';   // G4: the two magic registries, one home
 import { readMagicDef } from '../formats/magicDef.js';
 import { setMagicItemTemplates, setSpellRecordsByIndex } from '../systems/loot.js';
 import { PaintFile } from '../formats/paintFile.js';   // F156: PAINT.DAT, the painting descriptions' file
@@ -121,10 +121,7 @@ export async function loadMagicRegistries(fetch = fetchBytes) {
   let spellsByIndex = null;
   let magicItemTemplates = null;
   try {
-    const byIndex = new Map();
-    for (const sp of readSpellsStd(await fetch('SPELLS.STD'))) {
-      if (!byIndex.has(sp.index)) byIndex.set(sp.index, sp);
-    }
+    const byIndex = spellsByIndexMap(readSpellsStd(await fetch('SPELLS.STD')));   // AUDIT 68 S12-spellsstd-dup: the one first-wins fold
     spellsByIndex = byIndex;
     setSpellRecordsByIndex(byIndex);
   } catch { /* data absent: casts no-op, and a CastWhen* slot prices at 0 - DFU's own answer */ }
@@ -1331,7 +1328,7 @@ export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, ro
  * host happens to have.
  */
 export const plainLines = (rows) => (rows?.length
-  ? rows.map((r) => (typeof r === 'string' ? r : (r?.text ?? ''))).filter((l) => l !== null)
+  ? rows.map((r) => (typeof r === 'string' ? r : (r?.text ?? '')))   // AUDIT 68 S21-plainLines-dead-filter: every row maps to a string - the `!== null` filter after it removed nothing
   : null);
 
 /**
@@ -1476,7 +1473,7 @@ export function subscribeFoePools(ticker, pools, sinksFor) {
     for (const pool of pools) {
       for (const f of pool() ?? []) {
         if (!f || f.dead || !f.entity || f.puppet) continue;   // AUDIT WORLD6b B1: a PUPPET's entity is its owner's simulation - no round of mine ticks it (a poison put on it locally reached the divert as my blow)
-        const sinks = sinksFor(f);
+        const sinks = sinksFor(f, false);   // AUDIT 68 review (R-scenes-round-tick-provenance-three-hosts): a round is nobody's blow unless its tick says so - the dungeon's law (foeSinks(f, false)), all four hosts
         runMagicRoundsFor(f.entity, from, to, { sinks });
         killIfAnyLiveStatZero(f.entity, sinks, dt);
       }
@@ -2252,12 +2249,17 @@ export function liveEnchantFoes(mode, dungeonCtx, exteriorPool, insidePool) {
  *  paragraph above describes for the dungeon. Asked SECOND, after the
  *  dungeon: `insideFoes()` answers the dungeon's own pool when a
  *  dungeon is mounted, and that record belongs to the dungeon's
- *  sinks. */
-export function liveEnchantFoeSinks(foe, dungeonCtx, exteriorSinks, insidePool, insideSinks) {
+ *  sinks.
+ *
+ *  AUDIT 68 X4: `fromPlayer` is the cast engine's provenance
+ *  (hostMagic.applySpellToFoe), handed on to whichever host's sinks
+ *  own the record - dropped here, an enemy's blast on a guard was the
+ *  player's attack. */
+export function liveEnchantFoeSinks(foe, dungeonCtx, exteriorSinks, insidePool, insideSinks, fromPlayer = true) {
   const host = enchantFoeHost(foe, dungeonCtx, insidePool);
-  if (host === 'dungeon') return dungeonCtx.foeSinksFor(foe);
-  if (host === 'inside') return insideSinks(foe);
-  return exteriorSinks(foe);
+  if (host === 'dungeon') return dungeonCtx.foeSinksFor(foe, fromPlayer);
+  if (host === 'inside') return insideSinks(foe, fromPlayer);
+  return exteriorSinks(foe, fromPlayer);
 }
 
 /** WHOSE RECORD IS THIS - the membership question by itself, because

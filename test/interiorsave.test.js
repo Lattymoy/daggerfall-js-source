@@ -100,12 +100,12 @@ test('IS1: ONE transition core - the click and the restore share TransitionInter
   // The restore takes the SAVED record whole - identity AND latch
   // (SerializablePlayer.cs:394-400 restores BuildingDiscoveryData +
   // IsPlayerInsideOpenShop rather than recomputing at the load hour).
-  const body = src.slice(src.indexOf('async function enterInteriorCore'), src.indexOf('function rayAabbProbe'));
-  assert.match(body, /interiorBuilding = restore\.building \?\? null;\n(?:\s*\/\/[^\n]*\n)*\s*insideOpenShop = !!interiorBuilding\?\.insideOpenShop\n\s*\|\| \(interiorBuilding\?\.buildingType != null && isShop\(interiorBuilding\.buildingType\) && isBuildingOpen\(interiorBuilding\.buildingType, _hour\)\);/,   // OL4 / AUDIT ALL O2: the saved latch is never taken away, only added to by the effective hours
+  const body = src.slice(src.indexOf('async function enterInteriorCore'), src.indexOf('function tryExit('));
+  assert.match(body, /building = restore\.building \?\? null;\n(?:\s*\/\/[^\n]*\n)*\s*insideOpenShop = !!building\?\.insideOpenShop\n\s*\|\| \(building\?\.buildingType != null && isShop\(building\.buildingType\) && isBuildingOpen\(building\.buildingType, _hour\)\);/,   // AUDIT 68 S23-failed-entry-stale-building: a local, committed with the context   // OL4 / AUDIT ALL O2: the saved latch is never taken away, only added to by the effective hours
     'a shop saved open loads open, whatever hour the load happens at');
   assert.match(body, /const spot = restore\?\.pos \?\? floored;/,
     "RestorePosition's interior arm: the saved position lands raw over the door landing");
-  assert.match(body, /if \(!landing\) \{ ctx\.destroy\(\); throw new Error\('no interior landing'\); \}/,
+  assert.match(body, /if \(!landing\) \{ abandonContext\(ctx\); throw new Error\('no interior landing'\); \}/,
     'the doorless-interior guard still runs on a restore - it must refuse exactly as it refuses a click (and NT1 frees the build it abandons)');
 });
 

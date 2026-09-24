@@ -1580,8 +1580,9 @@ test('AUDIT-TO1 G1/G2/G3/I2/I3/I4/I6/J1/K2/H1/H2: the host seams the sweep found
   assert.match(w, /async function worldQuickLoad\(\{ mostRecent = false, key = null \} = \{\}\) \{\s*\n\s*if \(_loading\) return;[\s\S]{0,2400}?travelOptions\?\.clearTravelDestination\(\);\s*\n\s*if \(worldTimeScale\(\) !== 1\) resetTimeScale\(\);/);
   // G2: the scale's net above every gate, and an indoor mode ends the journey
   assert.match(w, /if \(travelControlUI\?\.isShowing && \(modes\?\.mode \?\? 'exterior'\) !== 'exterior'\) travelControlUI\.closeWindow\(\);\s*\n\s*if \(!travelControlUI\?\.isShowing && worldTimeScale\(\) !== 1\) resetTimeScale\(\);/);
-  // I2: the strip's click router wants the freed cursor and the primary button
-  assert.match(w, /if \(travelControlUI\?\.isShowing && !gamePaused\(\) && cursorActive\(\) && e\.button === 0 && !\(isEnhanced\(\) && typeof document !== 'undefined'\)\) \{/);
+  // I2: the strip's click router wants a FREE pointer and the primary button (DISC22-E: the lock, not the flag -
+  // test/disc22e_travel_click.test.js drives the predicate)
+  assert.match(w, /if \(stripTakesClick\(\{ showing: travelControlUI\?\.isShowing, paused: gamePaused\(\), locked: document\.pointerLockElement === canvas,\s*button: e\.button, enhancedDom: isEnhanced\(\) && typeof document !== 'undefined' \}\)\) \{/);
   // I3 / TO-ONLINE: the follow key answers the MAP'S DOOR, whatever that door
   // says. I3 put a stand-down here because there was one there; there is none
   // there now, so there is none here - the two must agree or the key and the

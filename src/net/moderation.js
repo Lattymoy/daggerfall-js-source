@@ -35,6 +35,8 @@ export const MUTE_MAX_MIN = 7 * 24 * 60;
 /** A mute with no minutes given. Half an hour: long enough to end an
  *  argument, short enough that forgetting to lift it costs little. */
 export const MUTE_DEFAULT_MIN = 30;
+/** The command's refusal and the service's (net/accountClient.js REFUSALS 'bad-minutes') in one sentence, from the bound. */
+export const MUTE_RANGE_TEXT = `A mute is 1 to ${MUTE_MAX_MIN} minutes (one week).`;
 
 export const MUTE_USAGE = 'Usage: /mute <name> [minutes], or /unmute <name>.';
 
@@ -59,7 +61,7 @@ export function parseModCommand(text) {
   if (!name) return { error: MUTE_USAGE };
   const minutes = tail ? Number(tail[2]) : MUTE_DEFAULT_MIN;
   if (!Number.isSafeInteger(minutes) || minutes < 1 || minutes > MUTE_MAX_MIN) {
-    return { error: `A mute is 1 to ${MUTE_MAX_MIN} minutes (one week).` };
+    return { error: MUTE_RANGE_TEXT };
   }
   return { op, name, minutes };
 }

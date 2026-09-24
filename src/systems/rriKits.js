@@ -6,7 +6,7 @@
 // (rriRealism.js) and the enemy kit (combat/rriEnemyEquipment.js) are
 // beside it; this module is the one that mints and equips, so it
 // imports the port's factories and is itself a leaf of nothing.
-import { mintCondition, setItemFields, templateByIndex, itemBaseValue } from './itemTemplates.js';
+import { mintCondition, setItemFields, templateByIndex, itemValueOf } from './itemTemplates.js';
 import { addItem, addGoldPieces } from './inventory.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
 import { createRandomPotion, ITEM_GROUPS } from './loot.js';
@@ -305,7 +305,7 @@ export function onShopShelfStocked(items, { buildingType, quality = 0, container
     let numPotions = alchemistPotionCount(quality, rolls);
     while (numPotions > 0) {
       const item = randomPotion(rolls);
-      item.value = (item.value ?? itemBaseValue(item)) * 2;
+      item.value = itemValueOf(item) * 2;   // AUDIT 68 S27-wth-nan: JAN1's one value read - `??` let a NaN value through to be doubled
       items.push(item);
       numPotions--;
     }

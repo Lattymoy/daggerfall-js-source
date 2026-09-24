@@ -280,7 +280,7 @@ test('LOOT-STACK the hosts by source: all four corpse doors hand the window the 
   const dc = rd('src/scenes/dungeonContext.js');
   assert.match(dc, /takeLoot\(key, mode = 'grab', pileKeys = null\) \{/);
   assert.match(dc, /if \(!pileKeys && quickLootTake\(key, /);
-  assert.match(dc, /const pile = kind === 'corpse' \? lootPile\(key, \{\n\s*keys: pileKeys,\n\s*describe: \(k\) => \{ const b = foes\[Number\(k\.split\(':'\)\[1\]\)\]; return b\?\.dead \? pileBody\(b\) : null; \},\n\s*open: \(k, keys\) => \{ this\.takeLoot\(k, 'grab', keys\); \},\n\s*\}\) : null;\n\s*if \(pile\) lootHooks = \{ \.\.\.\(lootHooks \?\? \{\}\), pile \};/);
+  assert.match(dc, /const pile = kind === 'corpse' \? lootPile\(key, \{\n\s*keys: pileKeys,\n\s*describe: \(k\) => \{ const b = foes\[Number\(k\.split\(':'\)\[1\]\)\]; return lootableBody\(b\) \? pileBody\(b\) : null; \},[^\n]*\n\s*open: \(k, keys\) => \{ this\.takeLoot\(k, 'grab', keys\); \},\n\s*\}\) : null;\n\s*if \(pile\) lootHooks = \{ \.\.\.\(lootHooks \?\? \{\}\), pile \};/);
   // a tab closes its window and opens the next in one click, before the frame's drain empties the slot
   assert.match(dc, /if \(activeOverlay && !activeOverlay\.done\) return source\.length;/);
   for (const f of ['src/scenes/exteriorFoes.js', 'src/scenes/cityGuards.js']) assert.match(rd(f), /pileBody: \(key\) => pileBody\(corpseEntryFor\((?:foes|guards), key, '(?:foe|guard)Corpse', corpseLens\)\),/, `${f}: the pool's word on a body`);

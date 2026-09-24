@@ -133,7 +133,9 @@ test('AUDIT 39 #41: worldModes hands the dungeon the LIVE eye and capsule', () =
 
 test('AUDIT 39 #76: interior people are grounded on the live foot, re-seated every frame', () => {
   const IC = read('src/scenes/interiorContext.js');
-  assert.match(IC, /charDraws\.push\(\{ mesh: rg\.mesh, rig: rg, at: \[pn\.x, pn\.y, pn\.z\], matrix: trs\(pn\.x, pn\.y - rg\.liveFootY \* rg\.scale,/);
+  // AUDIT 68 S21-person-hide-noop: the draw is minted by the one person stand now, and pushed from there
+  assert.match(IC, /pn\.standDraw = \{ mesh: rg\.mesh, rig: rg, at: \[pn\.x, pn\.y, pn\.z\], matrix: trs\(pn\.x, pn\.y - rg\.liveFootY \* rg\.scale,/);
+  assert.match(IC, /charDraws\.push\(pn\.standDraw\);/);
   assert.ok(!/rg\.footY/.test(IC), 'the rest value grounds nobody here any more');
   const anim = IC.slice(IC.indexOf('animateChars = (t, mode ='));
   const body = anim.slice(0, anim.indexOf('\n    };'));

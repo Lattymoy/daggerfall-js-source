@@ -126,11 +126,35 @@ const json = (body, status = 200, origin = '*') => new Response(JSON.stringify(b
  *  it failed and not why somebody else's secret is wrong. */
 const no = (why, status, origin) => json({ error: why }, status, origin);
 
-async function readBody(request) {
+/** A body's bytes, or null past `max` - refused on the length it
+ *  ANNOUNCES before a byte is read, and on the bytes that ARRIVE as
+ *  they arrive. AUDIT 68 X8-account-body-cap-not-enforced-without-content-length:
+ *  a chunked body announces nothing, and `request.text()` buffered all
+ *  of it - pre-auth, before any limiter - to refuse it afterwards. */
+async function readCapped(request, max) {
   const len = Number(request.headers.get('content-length') ?? '0');
-  if (Number.isFinite(len) && len > MAX_BODY_BYTES) return null;
-  const text = await request.text();
-  if (text.length > MAX_BODY_BYTES) return null;
+  if (Number.isFinite(len) && len > max) return null;
+  if (!request.body) return new ArrayBuffer(0);
+  const reader = request.body.getReader();
+  const parts = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > max) { await reader.cancel(); return null; }
+    parts.push(value);
+  }
+  const out = new Uint8Array(size);
+  let at = 0;
+  for (const p of parts) { out.set(p, at); at += p.byteLength; }
+  return out.buffer;
+}
+
+async function readBody(request) {
+  const bytes = await readCapped(request, MAX_BODY_BYTES);
+  if (!bytes) return null;
+  const text = new TextDecoder().decode(bytes);
   if (!text) return {};
   try { const v = JSON.parse(text); return v && typeof v === 'object' && !Array.isArray(v) ? v : null; } catch { return null; }
 }
@@ -393,7 +417,7 @@ export default {
 
       if (path === '/v1/account/password' && request.method === 'POST') {
         const r = await changePassword(ctx, who.player, who.session, { oldPassword: body.oldPassword, password: body.password });
-        return r.error ? no(r.error, r.error === 'bad-login' ? 401 : 400, origin) : json(r, 200, origin);
+        return r.error ? no(r.error, r.error === 'rate' ? 429 : r.error === 'bad-login' ? 401 : 400, origin) : json(r, 200, origin);
       }
 
       if (path === '/v1/account/email' && request.method === 'POST') {
@@ -487,12 +511,11 @@ export default {
           // this service has and would refuse every real save - so the
           // blob routes never touch it and carry the bound that fits
           // them instead. The length is checked BEFORE the body is
-          // read, so a caller announcing a gigabyte costs nothing.
+          // read, so a caller announcing a gigabyte costs nothing, and
+          // as it arrives, so one announcing nothing costs the bound.
           const max = slot.part === 'shot' ? SHOT_MAX_BYTES : SAVE_MAX_BYTES;
-          const len = Number(request.headers.get('content-length') ?? '0');
-          if (Number.isFinite(len) && len > max) return no('too-large', 413, origin);
-          const body = await request.arrayBuffer();
-          if (body.byteLength > max) return no('too-large', 413, origin);
+          const body = await readCapped(request, max);
+          if (!body) return no('too-large', 413, origin);
           if (!body.byteLength) return no('body', 400, origin);
           const r = await putBlob(sctx, me, slot, slot.part, body, body.byteLength);
           return r.error ? no(r.error, r.error === 'no-slot' ? 404 : 503, origin) : json(r, 200, origin);

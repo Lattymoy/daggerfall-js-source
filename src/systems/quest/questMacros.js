@@ -47,6 +47,7 @@ const FACTION_RACE_KEYS = Object.freeze({
 import { dateFromSeconds, dateString, dayName, monthName, birthSignName, SEASON_NAMES, seasonValue, CLASSIC_EPOCH_IN_SECONDS } from '../gameDate.js';
 import { REGION_TEMPLES, LOCATION_TYPES } from '../../formats/mapsFile.js';
 import { factionRaceFromRace } from '../../characters/staticNpc.js';
+import { rulerTitle } from '../../world/buildingNames.js';   // AUDIT 68 S30-ruler-divine-tables-dup: GetRulerTitle's one home
 
 export const MACRO_TYPES = Object.freeze({
   None: 0, NameMacro1: 1, NameMacro2: 2, NameMacro3: 3, NameMacro4: 4,
@@ -67,13 +68,6 @@ const EN = Object.freeze({
   resolvingError: '...never mind...',
   letterPrefix: 'Letter: ',
 });
-
-// GetRulerTitle (MacroHelper.cs): ruler 1..12, default Lord.
-const RULER_TITLES = Object.freeze([
-  null, 'King', 'Queen', 'Duke', 'Duchess', 'Marquis', 'Marquise',
-  'Count', 'Countess', 'Baron', 'Baroness', 'Lord', 'Lady',
-]);
-const rulerTitle = (ruler) => RULER_TITLES[ruler] ?? 'Lord';
 
 // GetRandomDivine (QuestMCP.cs): Range(0,9) over the enum NAMES.
 const DIVINES = Object.freeze([
@@ -778,7 +772,9 @@ const HANDLERS = {
     return rulerTitle(w.getFactionData?.(idFaction1)?.ruler ?? 0);
   },
   '%ol1': (mcp, hooks) => hooks?.world?.lordNameForFaction?.(idFaction1, true) ?? null,
-  '%olf': (mcp, hooks) => hooks?.world?.oldLeaderFate?.(randomRangeInclusive(0, 4)) ?? null,
+  // AUDIT 68 S30-olf-wrong-prng: OldLeaderFate (MacroHelper.cs:1014-1018) is UnityEngine.Random.Range(0, 5) - the
+  // engine PRNG, not the DFRandom stream %ol1 has just seeded with the faction's own rulerNameSeed
+  '%olf': (mcp, hooks) => hooks?.world?.oldLeaderFate?.(Math.floor((mcp?.quest?.rolls ?? Math.random)() * 5)) ?? null,
 
   // the mcp-sourced singles
   '%gdd': (mcp) => call(mcp, 'godDesc'),
@@ -1092,6 +1088,11 @@ export function sourceValues(source) {
 
 // ---- ExpandQuestMessage (QuestMacroHelper.cs:91-160) ----
 
+/** C#'s string.Replace(oldValue, newValue): EVERY occurrence, LITERALLY, a null newValue removing it. AUDIT 68
+ *  S30-macro-replace-dollar: JS's replace(string, string) reads `$&`/`$'` in the value as patterns and stops at the
+ *  first match - a player named "Jo$'hn" spliced the rest of the word in, and "%pcn/%pcn" kept its second token. */
+const csReplace = (text, oldValue, newValue) => text.split(oldValue).join(newValue ?? '');
+
 /** Expands macros inside message tokens IN PLACE. revealDialogLinks
  *  feeds the talk window's dialog table on NameMacro1 expansions
  *  (true only for talk answers and quest popups, as C# documents).
@@ -1104,7 +1105,7 @@ export function expandQuestMessage(parentQuest, tokens, revealDialogLinks = fals
       const macro = getMacro(words[w]);
       if (macro.type === MACRO_TYPES.None) continue;
       if (macro.type === MACRO_TYPES.ContextMacro) {
-        words[w] = words[w].replace(macro.token, getContextValue(macro.token, parentQuest, parentQuest?.hooks));
+        words[w] = csReplace(words[w], macro.token, getContextValue(macro.token, parentQuest, parentQuest?.hooks));
         continue;
       }
       // the parentQuest-null bail (a DFU forum-bug fix, kept)
@@ -1121,7 +1122,7 @@ export function expandQuestMessage(parentQuest, tokens, revealDialogLinks = fals
       // site builders leave null). String.Replace treats a null
       // newValue as String.Empty, so the token is REMOVED, not left
       // standing. `false` alone is C#'s "did not expand".
-      if (typeof result === 'string' || result === null) words[w] = words[w].replace(macro.token, result ?? '');
+      if (typeof result === 'string' || result === null) words[w] = csReplace(words[w], macro.token, result);
       if (revealDialogLinks && macro.type === MACRO_TYPES.NameMacro1) {
         const hooks = parentQuest.hooks;
         // AUDIT 24 systems: the reveal arms take the THREE-argument
@@ -1167,14 +1168,14 @@ export function expandLetterSignoff(parentQuest, tokens) {
         case MACRO_TYPES.ContextMacro:
         case MACRO_TYPES.BindingMacro: {
           if (macro.type === MACRO_TYPES.ContextMacro) {
-            words[w] = words[w].replace(macro.token, getContextValue(macro.token, parentQuest, parentQuest.hooks));
+            words[w] = csReplace(words[w], macro.token, getContextValue(macro.token, parentQuest, parentQuest.hooks));
           } else {
             const resource = parentQuest.getResource({ name: macro.symbol });
             if (resource) {
               const result = resource.expandMacro?.(macro.type);
               // AUDIT 63 F0: the sibling seam, QuestMacroHelper.cs
               // :207-209 - a true/null pair removes the token too.
-              if (typeof result === 'string' || result === null) words[w] = words[w].replace(macro.token, result ?? '');
+              if (typeof result === 'string' || result === null) words[w] = csReplace(words[w], macro.token, result);
               if (macro.type === MACRO_TYPES.NameMacro1) {
                 const hooks = parentQuest.hooks;
                 if (resource.isPlace) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Location');
@@ -1207,7 +1208,7 @@ export function expandLetterSignoff(parentQuest, tokens) {
 export function expandQuestString(parentQuest, questString) {
   const macro = getMacro(questString);
   if (macro.type !== MACRO_TYPES.ContextMacro) return questString;
-  return questString.replace(macro.token, getContextValue(macro.token, parentQuest, parentQuest?.hooks));
+  return csReplace(questString, macro.token, getContextValue(macro.token, parentQuest, parentQuest?.hooks));
 }
 
 /** GetMessageResources (QuestMacroHelper.cs:61-83): every resource a

@@ -716,7 +716,7 @@ Ignoring') - permanent by parity, recorded in the coverage pin.
   faction-listener slot (addFactionListener first-claim-wins /
   removeFactionListener at dispose; PlayerActivate.StaticNPCClick
   reads the map - :1534, the only consumer in the DFU tree, and
-  wired at src/scenes/worldModes.js:581). activeFactionPersons walks NON-COMPLETE quests only -
+  wired at src/scenes/worldModes.js:573). activeFactionPersons walks NON-COMPLETE quests only -
   completed quests must not lock an NPC out (QuestMachine.cs:1085).
   The non-individual parse throw carries the TEMPLATE-SetComplete
   quirk; its sibling's does not.
@@ -1453,7 +1453,7 @@ spamming the same questor does not re-pulse the task. DFU makes you go
 click someone else and come back.
 
 The port carries `lastNPCClicked` as an NPCData-shaped OBJECT LITERAL,
-and both hosts mint a fresh one at every click - worldModes.js:1206's
+and both hosts mint a fresh one at every click - worldModes.js:1212's
 quest-flat arm builds `{ hash, flags, factionID, nameSeed, gender,
 buildingKey, mapID }` inline, and questBridge.clickNpc runs
 `staticNpcData(pn, sceneCtx)`. So `lastClicked === this.clickMemory`
@@ -2894,7 +2894,7 @@ correct than the game it is a port of, which is the one thing this arc
 has never allowed. Expanding in place now. (The caller-side
 `if (quest)` went too - C# calls `ExpandQuestMessage` whether or not
 `GetQuest` found anything, and the null-parent bail is a forum-bug fix
-*inside* the helper, which `questMacros.js:550` already carries.)
+*inside* the helper, which `questMacros.js:544` already carries.)
 
 **Three nits with teeth.**
 
@@ -2902,7 +2902,7 @@ has never allowed. Expanding in place now. (The caller-side
 `PlayerActivate.StaticNPCClick:1534`. `TalkManager.cs` does not
 contain the word `Listener`. Three port comments named TalkManager as
 the reader and marked the wiring `(Q4 wires)` - over a reader the port
-already ships, at `worldModes.js:581`. A pending marker over shipped
+already ships, at `worldModes.js:573`. A pending marker over shipped
 work is worse than no marker at all: it sends the next reader looking
 for work that is done, in a file that never had it. Four sites
 corrected, the bible's copy included.
@@ -3060,7 +3060,7 @@ That is the ninth catch of *a pin that restates the port instead of the
 source* - except this one restated a misreading of the source, which is
 a worse failure and one only a second reader was ever going to find.
 The port carries `mapNameLookup` already, built first-wins at
-`mapsFile.js:523`, so the fix is to use it. Two names differing only in
+`mapsFile.js:520`, so the fix is to use it. Two names differing only in
 CASE still take the last, because the `ToLower` compare matches both
 while the dictionary keys stay exact-case - so the lookup is
 per-iteration, not hoisted.
@@ -5470,7 +5470,7 @@ lesson one host over.
 **What did NOT ship:** PlayerEntity.Update's per-minute *intermittent
 spawn* roll (:486-492) still has no caller on this route. It is not
 this pool's dependency — it is a loop that carries the passive-guard
-spawns and the NPC-guard conversion with it (world.js:3756-3848) — and
+spawns and the NPC-guard conversion with it (world.js:3736-3828) — and
 it is named at the mount so the absence reads as a fact.
 
 **(c) The find-place seam's absence, narrowed to one sentence.**
@@ -5491,15 +5491,15 @@ instance* for the interior mode, so it covers the shops entered from
 `?exterior` too. It passed neither of `EntityEffectManager`'s two
 ready-spell events (`hostMagic.js:79-80`), and those two doors are the
 *only* route into the machine's `CastSpellDo` / `CastEffectDo` latches
-(`machine.js:848`/`:831`; C# subscribes them in the action's
+(`machine.js:868`/`:851`; C# subscribes them in the action's
 constructor). Every `cast X spell do` and `cast X effect do` on this
 whole route could therefore never latch and never fire. The pair the
-other two engine-owning hosts wire (`world.js:4131-4132`,
-`dungeonContext.js:2249-2250`) is wired here now, and with it
+other two engine-owning hosts wire (`world.js:4110-4111`,
+`dungeonContext.js:2248-2249`) is wired here now, and with it
 `CastSpellDo`'s two world reads — `getClassicSpellEffects` and the
-byte-folded `spellHasMatchForClassicEffect` (`world.js:8474-8477`),
+byte-folded `spellHasMatchForClassicEffect` (`world.js:8454-8457`),
 absent which the action self-completes at *parse*
-(`actions.js:2757`/`:2764`) and the task can never arm at all.
+(`actions.js:2756`/`:2763`) and the task can never arm at all.
 
 Pins: 5 in `test/qx1_exterior_host.test.js` (the placement law RUN over
 the real `placeFoeFreely` with a stubbed world — the FOV cone bounded on
@@ -5798,7 +5798,7 @@ MAP - and the three findings it produced, all paid in the same commit.
 
 ### F1 - "LOUDLY" was written over an operation that is silent
 
-`machine.js:52` stated the headless charter: *"absent = headless, every
+`machine.js:55` stated the headless charter: *"absent = headless, every
 Place pends its site **LOUDLY** and the corpus gate stands."* The same
 word sat in `place.js` three times, in `person.js`, and twice in
 `foe.js`, and the bridge's header compressed it to *"absent members idle
@@ -6286,6 +6286,31 @@ every death went to the orphan, the `killed N` trigger read the new one, and the
 behaviour now lets go of a target the quest no longer holds (by UID and by symbol) and resolves it again, and the
 resync keeps this world's Foe counters (the larger kill count; the injury and a pending kill this world's own events set - AUDIT DISC7 D7 dropped the restraint, which is the quest's word on both sides; C2 relinks every standing behaviour at the resync, symbol included, and C3 keeps this world's longer spell and item queues). Record: `01-Overview/Field-Bugs-2026-09-23.md`. Pinned in
 `test/disc6.test.js`; `tools/mutants/disc6.json`.
+
+## QUEST-UID1 - a quest offered before a load is not the loaded game's (2026-09-24)
+
+Found tracing the "two letters from the queen" report (Mac: "Go ahead and tackle your reported weaknesses").
+The report itself was DFU's own `_BRISIEN` timeline: the invitation, the reminder 30 days on under the same item
+name, the last letter, then the quest's end removing its letters and topics. No path delivers the letter twice. The
+trace found a real weakness beside it:
+
+- **The refusal DFU makes and the port did not.** `StartQuest` ends in `quests.Add(quest.UID, quest)`
+  (QuestMachine.cs:725), a Dictionary.Add that throws on a UID already live. `startQuestImmediate` used `set` and
+  replaced the live quest in silence. It now throws the same words restoreSaveData already threw, after `start()` and
+  the topic registration, in C#'s order, and the quest on the table stands.
+- **The door the duplicate came through.** A quickload runs from under any window (FIX-E, for the death screen's F11),
+  a quest offer popup among them, and the offer flow kept the quest it had parsed in the game being replaced. Yes
+  after the load started it in the loaded game, and a restored quest drawing the same UID was overwritten. DFU cannot
+  reach this: its load window and quickload key both stand on the HUD. The bridge's `restore` now calls
+  `offerFlow.reset()` beside `machine.clearState()`, so the offer (and a guild picker's pool) goes with the game it was
+  parsed in, and an answer to its popup closes.
+- **Left as DFU has it:** a throw inside a quest's tick. A protected quest (`_BRISIEN`, `S0000999`, `S0000977`) is
+  logged and its later tasks wait for the next tick; any other quest ends (QuestMachine.cs:466-480). The trace's
+  harness had no world, so its `place npc` threw on every tick. Whether a real tavern ever does is the question put to
+  the reporter (did they reach the inn, and was Brisienna there).
+
+Pins: `test/quest_uid1.test.js` (3) through the real bridge over the vendored quests; mutants
+`tools/mutants/questuid1.json` (5, all dead).
 
 ## QREPAIR - REPAIR ACTIVE QUESTS (2026-09-24, Mac: "Add a quest refresh option to settings")
 
