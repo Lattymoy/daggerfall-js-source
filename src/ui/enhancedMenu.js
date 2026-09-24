@@ -156,6 +156,7 @@ import '../world/outdoors.js';   // RF4: the outdoors lane too
 // thinks (ui/accountFlow.js, node-drivable), this draws it
 import { AccountFlow } from './accountFlow.js';
 import { accountCard } from './enhancedAccount.js';
+import { skinCard } from './skinCard.js';   // DISC23-B2: the skin, on the profile
 import { saveTile, cloudStateOf, saveFromCard } from './saveTile.js';   // TILE1 (Mac: "a detailed tile based design for your saves... showing your portrait and character information"), and ACC2c's card-shaped save
 import { loadFace } from './facePortrait.js';   // TILE1: the character's face, the one home chargen also reads
 import { cloudIo, cloudList, pushSlot, pullSlot, removeCloudSlot, cloudOnly, slotKeyOf, cloudRefusalText } from '../systems/cloudSaves.js';   // ACC2: the backup a tile can offer, AUDIT-312 F1's delete, and ACC2c's download of a save that is only up there
@@ -826,6 +827,7 @@ function accountWindow() {
   for (const c of ['tl', 'tr', 'bl', 'br']) win.append(el('span', `px-gem px-corner px-${c}`));
   const body = el('div', 'px-body');
   body.append(accountBody());
+  body.append(skinCard(document).root);   // DISC23-B2 (Mac: "a choosable skin system in the menu player profile system itself"): who you are drawn as, beside who you are
   win.append(body);
   return win;
 }
@@ -2192,12 +2194,10 @@ function modRow(vendor, key, def, { name = null, note = null, home = false } = {
     // DS1: a SliderIntKey (Dynamic Skies' fog density and snow
     // sizes) - the HUD-scale stepper's shape, over the key's own
     // range, the value beside it.
-    // DISC23-B: a slider whose indices the mod NAMES (EOTB's sprite sets) says the name, not the number
-    const say = (v) => def.labels?.[v] ?? String(v);
-    const val = el('span', 'val', say(modSetting(vendor, key)));
+    const val = el('span', 'val', String(modSetting(vendor, key)));
     const step = (delta, label) => {
       const b = el('button', 'step', label);
-      b.onclick = () => { val.textContent = say(setModSetting(vendor, key, modSetting(vendor, key) + delta)); };
+      b.onclick = () => { val.textContent = String(setModSetting(vendor, key, modSetting(vendor, key) + delta)); };
       return b;
     };
     ctl.append(step(-1, '\u2039'), val, step(1, '\u203a'));

@@ -2000,6 +2000,28 @@ ${badgeCss()}
 /* The card inside brings its own frame, and a box inside a box reads
    as a mistake - the window IS the frame here. */
 .px-win.px-acctwin .card.acct { border: 0; background: none; padding: 0; margin: 0; }
+
+/* DISC23-B2 (Mac: "a choosable skin system in the menu player profile
+   system itself"): THE SKIN, under the account on the same axis. No box
+   of its own (the window is the frame, as above), a rule between the
+   two so they read as two things. A tile is the SPRITE, front on and
+   standing, point-sampled as every sprite in the world is, with its
+   name under it; the worn one takes the doubled brass edge the worn
+   title does, so "on" reads the same way on both halves of the card. */
+.px-win.px-acctwin .card.skincard { border: 0; background: none; padding: 18px 0 0; margin: 18px 0 0;
+  border-top: 1px solid var(--iron); text-align: center; }
+.card.skincard .fieldlabel { display: block; margin: 12px 0 6px; }
+.card.skincard .skinhint { color: var(--brass); }
+.card.skincard .acts { justify-content: center; }
+.card .skingrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 6px; }
+.card button.skintile { display: flex; flex-direction: column; align-items: center; gap: 4px;
+  font: inherit; font-size: 11px; line-height: 1.2; color: var(--dim);
+  padding: 6px 4px; background: rgba(0,0,0,0.25); border: 1px solid var(--iron); border-radius: 2px; cursor: pointer; }
+.card button.skintile:hover { color: var(--bone); border-color: var(--dim); }
+.card button.skintile.worn { color: var(--bone); border: 2px solid var(--brass); padding: 5px 3px;
+  background: rgba(192,138,62,0.12); }
+.card button.skintile:focus-visible { outline: 2px solid var(--brass); outline-offset: 1px; }
+.card .skinart { height: 72px; width: auto; image-rendering: pixelated; pointer-events: none; }
 .px-winfoot { display: flex; justify-content: center; padding: 6px 0 18px; }
 .px-winclose {
   font: inherit; font-size: 16px; letter-spacing: 0.14em; text-indent: 0.14em;

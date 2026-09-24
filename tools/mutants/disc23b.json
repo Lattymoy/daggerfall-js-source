@@ -1,23 +1,5 @@
 [
   {
-    "name": "D23B-not-curated",
-    "file": "src/systems/features.js",
-    "old": "  'eye-of-the-beholder': Object.freeze(['Graphics.OnFoot', 'Graphics.OnHorse', 'Camera.LongitudinalDistance',",
-    "new": "  'eye-of-the-beholder': Object.freeze(['Camera.LongitudinalDistance',",
-    "tests": [
-      "test/disc23b_eotb_sprites.test.js"
-    ]
-  },
-  {
-    "name": "D23B-number-not-name",
-    "file": "src/ui/enhancedMenu.js",
-    "old": "    const say = (v) => def.labels?.[v] ?? String(v);",
-    "new": "    const say = (v) => String(v);",
-    "tests": [
-      "test/disc23b_eotb_sprites.test.js"
-    ]
-  },
-  {
     "name": "D23B-default-sent",
     "file": "src/net/remotePlayers.js",
     "old": "    if (storedModSetting('eye-of-the-beholder', 'Graphics.OnFoot') === undefined) return null;\n",
@@ -148,6 +130,87 @@
     "file": "src/scenes/world.js",
     "old": "peerBodies.heightOf(id) || peerWalkers.heightOf(id), dt,",
     "new": "peerBodies.heightOf(id), dt,",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B2-back-on-the-tile",
+    "file": "src/systems/features.js",
+    "old": "  'eye-of-the-beholder': Object.freeze(['Camera.LongitudinalDistance', 'Camera.FrontalPlaneOffset',",
+    "new": "  'eye-of-the-beholder': Object.freeze(['Graphics.OnFoot', 'Camera.LongitudinalDistance', 'Camera.FrontalPlaneOffset',",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B2-not-on-profile",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  body.append(skinCard(document).root);",
+    "new": "  void skinCard;",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B2-side-on-picture",
+    "file": "src/ui/skinCard.js",
+    "old": "const FRONT = 0;",
+    "new": "const FRONT = 2;",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B2-horse-shows-foot",
+    "file": "src/ui/skinCard.js",
+    "old": "horse: of(HORSE, 'IdleHorse', (i) => ({ onHorse: i }))",
+    "new": "horse: of(HORSE, 'Idle', (i) => ({ onFoot: i }))",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B2-press-writes-nothing",
+    "file": "src/ui/skinCard.js",
+    "old": "      b.onclick = () => { setModSetting(VENDOR, key, s.index); paint(); };",
+    "new": "      b.onclick = () => { paint(); };",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B2-press-not-shown",
+    "file": "src/ui/skinCard.js",
+    "old": "      b.onclick = () => { setModSetting(VENDOR, key, s.index); paint(); };",
+    "new": "      b.onclick = () => { setModSetting(VENDOR, key, s.index); };",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B2-worn-unmarked",
+    "file": "src/ui/skinCard.js",
+    "old": "      const on = s.index === worn;",
+    "new": "      const on = false;",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B2-grid-while-off",
+    "file": "src/ui/skinCard.js",
+    "old": "    if (!w.on) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B2-no-hint",
+    "file": "src/ui/skinCard.js",
+    "old": "    if (!w.chosen) root.append(",
+    "new": "    if (false) root.append(",
     "tests": [
       "test/disc23b_eotb_sprites.test.js"
     ]

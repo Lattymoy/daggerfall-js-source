@@ -14,8 +14,8 @@
 // over the EOTB billboard tables; the host's wiring by source.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { featureTile } from '../src/ui/enhancedMenu.js';
+import { readFileSync, existsSync } from 'node:fs';
+import { skinCard, skinSets } from '../src/ui/skinCard.js';
 import { FEATURES, MOD_CURATED } from '../src/systems/features.js';
 import { MOD_SETTINGS, modSetting, setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
 import { composeLook } from '../src/net/remotePlayers.js';
@@ -27,8 +27,12 @@ const V = 'eye-of-the-beholder';
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
 function fakeEl(tag) {
+  let text = '';
   const n = {
-    tag, children: [], className: '', textContent: '', title: '', style: {}, dataset: {}, attrs: {},
+    tag, children: [], className: '', title: '', style: {}, dataset: {}, attrs: {},
+    // the DOM's own law: setting textContent replaces the children (the card repaints through it)
+    get textContent() { return text; },
+    set textContent(v) { text = v; n.children.length = 0; },
     append(...cs) { for (const c of cs) { n.children.push(c); c.parent = n; } },
     setAttribute(k, v) { n.attrs[k] = v; },
     addEventListener() {}, removeEventListener() {},
@@ -46,7 +50,7 @@ const withDoc = (fn) => {
   try { return fn(); } finally { delete globalThis.document; }
 };
 
-test('DISC23-B: the sets are NAMED, on the Eye of the Beholder tile - sixteen on foot, five in the saddle, the art\'s own', () => {
+test('DISC23-B: the sets are NAMED - sixteen on foot, five in the saddle, the art\'s own - and they are NOT a Features dial', () => {
   const foot = MOD_SETTINGS[V].keys['Graphics.OnFoot'], horse = MOD_SETTINGS[V].keys['Graphics.OnHorse'];
   assert.equal(foot.labels.length, foot.max + 1, 'one name a set, and still the mod\'s own slider (0-15)');
   assert.equal(horse.labels.length, horse.max + 1);
@@ -60,30 +64,49 @@ test('DISC23-B: the sets are NAMED, on the Eye of the Beholder tile - sixteen on
     assert.ok(foot.labels[i].startsWith(kind), `${p.Title} is set ${i}: ${foot.labels[i]}`);
   }
   foot.labels.forEach((l, i) => assert.match(l, i % 2 ? /\(male\)$/ : /\(female\)$/));
-  // curated: the drawer shows them first, and they were on no screen at all
-  assert.deepEqual(MOD_CURATED[V].slice(0, 2), ['Graphics.OnFoot', 'Graphics.OnHorse']);
+  // Mac: "make it a choosable skin system in the menu player profile system itself instead of it being hidden in the
+  // feature menu"
+  assert.ok(!MOD_CURATED[V].includes('Graphics.OnFoot') && !MOD_CURATED[V].includes('Graphics.OnHorse'), 'not a tile\'s dial');
 });
 
-test('DISC23-B: the tile\'s drawer steps the set by NAME, and the body reads what it writes', () => {
+test('DISC23-B2: the PROFILE carries the skin - every set as its own picture, the worn one marked, a press worn at once', () => {
   _resetModSettings();
-  const f = FEATURES.find((x) => x.id === `mod-${V}`);
-  const rowOf = (tile, key) => find(tile, hasClass('row')).find((r) => find(r, (n) => n.textContent === MOD_SETTINGS[V].keys[key].description).length);
+  const sets = skinSets();
+  assert.equal(sets.foot.length, 16); assert.equal(sets.horse.length, 5);
+  assert.deepEqual(sets.foot.map((s) => s.name), MOD_SETTINGS[V].keys['Graphics.OnFoot'].labels);
+  // each tile is the set's own front-on standing sprite, out of the bundle the body draws from
+  // (the URL is the build's - node has no bundle - so the pin reads the key the build indexes by, against the file)
+  for (const s of [...sets.foot, ...sets.horse]) {
+    const [arch] = s.key.split('_');
+    assert.ok(existsSync(new URL(`../vendor/eye-of-the-beholder/Textures/${arch}/${s.key}.png`, import.meta.url)), `${s.name}: ${s.key}`);
+  }
+  assert.equal(sets.foot[7].key, `${ARCHIVE_FOOT + 7}_0-0`, 'Mage (male)\'s own archive, front on and standing');
+  assert.equal(sets.horse[3].key, '112385_0-0', 'the fourth rider, front on');
   withDoc(() => {
-    const closed = featureTile(f);
-    find(closed, hasClass('ft-tile-more'))[0].onclick({ stopPropagation() {} });   // open the drawer
-    const open = featureTile(f);
-    const row = rowOf(open, 'Graphics.OnFoot');
-    assert.ok(row, 'the on-foot dial is in the drawer');
-    const val = find(row, hasClass('val'))[0];
-    assert.equal(val.textContent, 'Light Fighter (female)', 'a name, where the pane said "0"');
-    const [, next] = find(row, hasClass('step'));
-    next.onclick(); next.onclick(); next.onclick();
-    assert.equal(val.textContent, 'Medium Fighter (male)');
-    assert.equal(modSetting(V, 'Graphics.OnFoot'), 3, 'the store the body reads (eotbBody look()) holds the index');
-    const horse = find(rowOf(open, 'Graphics.OnHorse'), hasClass('val'))[0];
-    assert.equal(horse.textContent, 'Light Fighter (female)');
-    find(open, hasClass('ft-tile-more'))[0].onclick({ stopPropagation() {} });   // and shut it again for the next pin
+    const card = skinCard(document);
+    const tiles = () => find(card.root, hasClass('skintile'));
+    assert.equal(tiles().length, 21);
+    const worn = () => tiles().filter((t) => t.attrs['aria-pressed'] === 'true').map((t) => find(t, hasClass('skinname'))[0].textContent);
+    assert.deepEqual(worn(), ['Light Fighter (female)', 'Light Fighter (female)'], 'the first set on foot and in the saddle');
+    assert.equal(find(card.root, hasClass('skinhint')).length, 1, 'until one is chosen, the others see the class - and the card says so');
+    tiles()[11].onclick();   // Fighter Mage (male)
+    assert.equal(modSetting(V, 'Graphics.OnFoot'), 11, 'the store the body reads and the look sends');
+    assert.deepEqual(worn(), ['Fighter Mage (male)', 'Light Fighter (female)']);
+    assert.equal(find(card.root, hasClass('skinhint')).length, 0, 'chosen');
+    assert.equal(composeLook({ race: 'Nord', gender: 'male' }).eo, 11, 'and the look carries it');
+    tiles()[16 + 4].onclick();
+    assert.equal(modSetting(V, 'Graphics.OnHorse'), 4);
+    // the mod off: no grid to change nothing - the switch instead
+    setModSetting(V, 'Enabled', false);
+    card.paint();
+    assert.equal(tiles().length, 0);
+    const on = find(card.root, (n) => n.textContent === 'Turn it on')[0];
+    on.onclick();
+    assert.equal(modSetting(V, 'Enabled'), true);
+    assert.equal(tiles().length, 21);
   });
+  // the profile window draws it, under the account card
+  assert.match(src('src/ui/enhancedMenu.js'), /body\.append\(accountBody\(\)\);\s*\n\s*body\.append\(skinCard\(document\)\.root\);/);
   _resetModSettings();
 });
 

@@ -761,8 +761,21 @@ slots"*.
   contact sheet: every even set is a woman and every odd set a man, and the
   five riders are the fighters by helm and boots (green-booted women,
   cyan-booted men, as on foot).
-- **They are on the tile.** Both keys are curated first on the Eye of the
-  Beholder tile. `modRow`'s int stepper says a labelled value's name.
+- **They are a SKIN, on the player's profile** (DISC23-B2, Mac: *"I want to
+  utilize it and make it a choosable skin system in the menu player profile
+  system itself instead of it being hidden in the feature menu"*). The
+  profile window the door's profile mark opens carries a Skin card under the
+  account card (`ui/skinCard.js`):
+  - every set is its own picture, the front-on standing frame out of the
+    bundle the body draws from, with its name under it;
+  - the worn one takes the worn title's doubled brass edge;
+  - a press writes the mod's own key, so there is one choice that the body,
+    the look and the card all read;
+  - until one is chosen the card says the others see the class;
+  - with the mod off it offers the switch instead of a grid that would
+    change nothing.
+  Who you are drawn as is a fact about the player, so it is not a Features
+  dial: the two keys are not curated on the tile.
 - **The look carries the chosen set.** The field is `eo`, 0-15, and it is
   sent only for a set the player CHOSE (`storedModSetting`). The mod ships
   on, so a set read off its default would have dressed every player who never
@@ -891,8 +904,12 @@ off, and at Off it read on.
   - the reader's drops;
   - the hosts and both doors, by source.
 - `test/disc23b_eotb_sprites.test.js` (7):
-  - the names against the mod's presets and the art's rule, curated first;
-  - the real drawer stepping by name into the store the body reads;
+  - the names against the mod's presets and the art's rule, and not on the
+    Features tile;
+  - the real Skin card: 21 pictures, each key a file in the bundle, the
+    front view, the worn marked, a press worn and carried by the look, the
+    hint until chosen, the switch while the mod is off, and the profile
+    window drawing it;
   - the look sending a chosen set only, nothing while the mod is off, and
     the relay's clamp;
   - the walker standing the set at the peer's feet with its stances;
@@ -911,7 +928,7 @@ off, and at Off it read on.
   and the page-hide's sweep), the RELAY_VERSION pins in ten files (world106), and
   `relayversion.test.js`'s world106 row for the relay's new bytes.
 
-Mutants: `tools/mutants/disc22.json`, 25, `tools/mutants/disc22g.json`, 20, and `tools/mutants/disc22c.json`, 11, all dead. `tools/mutants/disc23a.json`, 16, `tools/mutants/disc23b.json`, 17, and `tools/mutants/disc23c.json`, 11, all dead.
+Mutants: `tools/mutants/disc22.json`, 25, `tools/mutants/disc22g.json`, 20, and `tools/mutants/disc22c.json`, 11, all dead. `tools/mutants/disc23a.json`, 16, `tools/mutants/disc23b.json`, 24, and `tools/mutants/disc23c.json`, 11, all dead.
 EM2's floor records (`em2.json`) are aimed at the new model. They
 still die, 26 of them, except EM2-16 (the `len > 0` guard). The facing
 test is now written `!(up >= FLOOR_NY)` and rejects a NaN facing on its
