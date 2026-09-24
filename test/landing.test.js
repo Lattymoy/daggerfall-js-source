@@ -413,7 +413,7 @@ test('U63: the page is the pixel face\'s own idioms, not the shell it replaced',
   assert.deepEqual(doorPlaques, [
     ['Play', './play/'],
     ['Install', 'https://github.com/Lattymoy/daggerfall-js-source/releases/latest'],
-    ['Discord', 'https://discord.gg/kbctcC6GU3'],
+    ['Discord', 'https://discord.gg/dfenhanced'],
   ], 'the door carries Play, Install and Discord, and nothing else wears the plaque');
   assert.match(skin, /\.px-about \{[\s\S]{0,400}border: 2px solid #7d7460/, '...which is the About plaque\'s own shape');
   // The foot is the home face's three zones.
@@ -477,14 +477,14 @@ test('DISC1: the Discord is front and centre - a plaque in the door\u2019s own r
   // than inventing a third shape or a second corner.
   const css = landing.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? '';
   const invites = [...landing.matchAll(/href="(https:\/\/discord\.gg\/[\w-]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(invites, ['https://discord.gg/kbctcC6GU3'],
+  assert.deepEqual(invites, ['https://discord.gg/dfenhanced'],
     'ONE home for the invite - HK1\u2019s own law, and a link repeated in four places is how this page got to 973 words once');
   // It is IN the door - above the fold, in the row with Play - and not
   // in a section, the nav or the foot.
   const door = landing.slice(landing.indexOf('<header class="door">'), landing.indexOf('<main id="main">'));
-  assert.ok(door.includes('https://discord.gg/kbctcC6GU3'), 'the invite is not in the door at all');
+  assert.ok(door.includes('https://discord.gg/dfenhanced'), 'the invite is not in the door at all');
   const row = door.slice(door.indexOf('<div class="doorplaques">'), door.indexOf('</div>', door.indexOf('<div class="doorplaques">')));
-  assert.ok(row.includes('https://discord.gg/kbctcC6GU3'), 'the invite is in the door but not in the plaque row');
+  assert.ok(row.includes('https://discord.gg/dfenhanced'), 'the invite is in the door but not in the plaque row');
   assert.ok(row.indexOf('./play/') < row.indexOf('discord.gg'), 'Play is still first and still leftmost');
   // NO NEW SHAPE, NO NEW COLOUR, NO RASTER. The U63 pin above counts
   // the page's box rules and this is why the count did not move: the
@@ -494,7 +494,7 @@ test('DISC1: the Discord is front and centre - a plaque in the door\u2019s own r
   assert.doesNotMatch(css, /\.discord \{|\.dsc \{/, 'the invite grew its own rule');
   assert.doesNotMatch(landing, /<img[^>]*discord/i, 'no badge image - this page carries no raster');
   // An external link opened from a page that is not ours to trust.
-  assert.match(landing, /href="https:\/\/discord\.gg\/kbctcC6GU3" rel="noopener"/, 'the invite carries rel=noopener, as the Ko-fi mark does');
+  assert.match(landing, /href="https:\/\/discord\.gg\/dfenhanced" rel="noopener"/, 'the invite carries rel=noopener, as the Ko-fi mark does');
 });
 
 test('U64: the live site is the custom domain, and the build does not care which', () => {
