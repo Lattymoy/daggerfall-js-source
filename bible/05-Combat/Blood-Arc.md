@@ -1552,7 +1552,7 @@ Slices, each behind its own `features.js` row:
    `1 - BLOOD_F0`, `EL_WET_STRENGTH`, both absorption triplets - so any
    of them set to a round number was a runtime landmine under exactly
    the dials the record invites a reader to tune. The house already had
-   the answer: `glslFloat` (airPass.js:206), which the lantern loop has
+   the answer: `glslFloat` (airPass.js:207), which the lantern loop has
    used since EL5. Eleven interpolations routed through it, both lanes.
    Pinned by driving the shader build at an integral value, which is the
    only way to catch this - a text pin on the built string reads whatever

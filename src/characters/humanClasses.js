@@ -1,5 +1,4 @@
 import { MOBILE_TYPES } from './mobileTypes.js';
-import { UNDEAD_RAMPS } from './undeadBody.js';
 
 // ═══════════════════════════════════════════════════════════════════
 // THE HUMAN CLASS ENEMIES
@@ -460,7 +459,7 @@ export function classOpts(design, pal) {
   const drape = design.drape ? { name: design.drape.name, ramp: mats[design.drape.mat] } : null;
   return {
     drape,
-    ramps: { skin: hide, boot: ramp(CLASS_RAMPS[design.bootRamp] || UNDEAD_RAMPS.gravecloth) },
+    ramps: { skin: hide, boot: ramp(CLASS_RAMPS[design.bootRamp]) },
     opts: { build: design.build, clothZones: design.zones, armorZones: [], mats },
     hide,
   };

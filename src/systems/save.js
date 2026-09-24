@@ -42,7 +42,7 @@ import { appStorage } from './appStorage.js';   // DA1: localStorage in a browse
 import { characterIdOf, adoptLegacyCards, mintCharacterId } from './characterId.js';   // CHARID1: a character is an id, not a name
 import { isOnlinePage } from './onlineLane.js';   // ONLINE-DEATH-FIX: the page is online
 import { STREAMING_TERRAIN_SCALE } from '../world/terrainSampler.js';   // TERRAIN-SCALE1: the scale every saved exterior height stands on
-import { respawnHealth, reviveForPlay } from './deathRespawn.js';   // ONLINE-DEATH-FIX: the SAME half-health an online respawn leaves
+import { reviveForPlay } from './deathRespawn.js';   // ONLINE-DEATH-FIX: the SAME half-health an online respawn leaves
 import { setLightSource } from './lightSource.js';   // DISC7: the light in hand's one door
 
 /** One membership book, rows copied (GuildMembership_v1's shape). */
@@ -64,7 +64,7 @@ const restoreMembershipBook = (book) => {
 };
 
 export const SAVE_VERSION = 1;
-export const QUICKSAVE_KEY = 'dagger.quicksave';
+export const QUICKSAVE_KEY = 'dagger.quicksave';   // the retired single-key quicksave - AUDIT 68 S31-save-dead-legacy-api: read only by saveSlots.migrateLegacyQuicksave
 
 const ENTITY_FIELDS = [
   'name', 'gender', 'race', 'raceId', 'faceIndex',   // S3c/U9: the identity rides the save
@@ -1101,51 +1101,4 @@ export function restoreSessionState(extras, { questBridge = null, talk = null, e
     removeAllOrphanedItems(entity, (uid) => questBridge.machine.getQuest?.(uid) ?? null);
   }
   return !!extras?.quest;
-}
-
-/** Storage backend (absent in headless - callers gate): the DA1 seam,
- *  so the desktop shell's file store answers where a browser answers
- *  localStorage.
- *  setItem THROWS on real browsers - QuotaExceededError when storage
- *  is full, or a SecurityError under private-browsing modes that
- *  disable storage. An unguarded throw here propagates through the F9
- *  handler and kills the frame (the same unguarded-browser-API class
- *  as the bare requestPointerLock crash). Return false on failure so
- *  the caller reports "save failed" instead of crashing. */
-export function writeQuicksave(snap, storage = appStorage()) {
-  if (!storage) return false;
-  try {
-    storage.setItem(QUICKSAVE_KEY, JSON.stringify(snap));
-    return true;
-  } catch (err) {
-    console.warn('[save] quicksave write failed:', err?.name ?? err);
-    return false;
-  }
-}
-/**
- * IS THERE A GAME THIS BUILD CAN ACTUALLY RESTORE?
- *
- * AUDIT (2026-08-25) F2. Both menus asked `readQuicksave()` and treated
- * any parsed blob as a game - but restorePlayer REFUSES anything whose
- * `v` is not SAVE_VERSION, and it refuses AFTER the world has booted.
- * So an envelope from an older build drew a full Continue card, and
- * pressing it printed "Save version mismatch." into a HUD nobody is
- * looking at yet and came up on the chargen wizard instead: LOAD
- * SILENTLY STARTING A NEW GAME, which is AUDIT 19 F3 exactly, one
- * layer down and past the guard F3 installed.
- *
- * The test is HERE, beside the restorer whose law it is, and both
- * front doors call it. A predicate that lives anywhere else is a
- * predicate that drifts from the thing it predicts.
- */
-export function restorableQuicksave(storage = appStorage()) {
-  const snap = readQuicksave(storage);
-  return snap && snap.v === SAVE_VERSION ? snap : null;
-}
-
-export function readQuicksave(storage = appStorage()) {
-  if (!storage) return null;
-  const raw = storage.getItem(QUICKSAVE_KEY);
-  if (!raw) return null;
-  try { return JSON.parse(raw); } catch { console.warn('[save] corrupt quicksave'); return null; }
 }

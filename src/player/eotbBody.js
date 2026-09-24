@@ -43,7 +43,7 @@
 
 import { eotbCamera } from './eotbCamera.js';
 import { setEotbBodyReady, setEotbDrawBody, setEotbPlayerState } from './mwView.js';
-import { modSettingIfDeclared, modSettingsOf } from '../systems/modSettings.js';
+import { modSettingIfDeclared, modSettingsOf, modSettingsGeneration } from '../systems/modSettings.js';
 import {
   chooseTable, deathTable, ORIENTATIONS, orientationFor, facingFor, frameTime, speedMod, frameCount, isFootstepFrame,
   stateFor, STATE_TABLES, STRING, meleeAnimTickTime, RANGED_TICK, SPELL_TICK, LYCAN_TICK, DEATH_TICK,
@@ -79,8 +79,9 @@ export const MATERIAL = Object.freeze({
  *  first-person one at once. */
 export const FOOTSTEP_VOLUME_SCALE = Object.freeze({ thirdPerson: 2, firstPerson: 1 });
 
-/** The mod's own settings, resolved - read once per attach and on
- *  `reload`, as `LoadSettings` hands them to `Initialize`. */
+/** The mod's own settings, resolved - read at attach and on `reload`,
+ *  as `LoadSettings` hands them to `Initialize`, and again whenever the
+ *  store has moved (AUDIT 68 S15-eotb-settings-snapshot). */
 function look() {
   let s = {};
   try { s = modSettingsOf('eye-of-the-beholder'); } catch { s = {}; }
@@ -171,6 +172,8 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   /** the per-frame state thunk of the rig that owns the body (see attach) */
   let attachedState = null;
   let cfg = look();
+  let cfgGeneration = modSettingsGeneration();
+  function reload() { cfg = look(); cfgGeneration = modSettingsGeneration(); return cfg; }
   /** the frame's state, as bodyState shapes it */
   let last = bodyState();
   /** the frame's camera, handed in by the view seam */
@@ -638,7 +641,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       if (r && r === renderer && playerState === attachedState) return this;
       attachedState = playerState ?? null;
       renderer = r || null;
-      cfg = look();
+      reload();
       if (renderer) {
         preload();
         setEotbBodyReady(() => this.ready());
@@ -678,6 +681,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
      * is still decoding.
      */
     ready() {
+      if (cfgGeneration !== modSettingsGeneration()) reload();   // AUDIT 68 S15-eotb-settings-snapshot: every lane frame asks here first
       if (!renderer || !cfg.enabled) return false;
       if (modSettingIfDeclared('eye-of-the-beholder', 'Enabled') === false) return false;
       return count() > 0 && firstUp;
@@ -753,7 +757,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
      *  = !offset` unless Don'tHideHorse (IL_2365-IL_237a), and
      *  `spellCasting.enabled = !offset` with no key (IL_22f9, IL_2358). */
     hides() {
-      const tp = this.ready() && eotbCamera.thirdPerson();
+      const tp = eotbCamera.thirdPerson() && this.ready();   // AUDIT 68 S15-eotb-spritecount-hot: the cheap test first
       return { weapon: tp && !cfg.dontHideWeapon, horse: tp && !cfg.dontHideHorse, spellHands: tp };
     },
 
@@ -767,7 +771,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       material: material(), placed: place(),
     }),
     settings: () => cfg,
-    reload() { cfg = look(); return cfg; },
+    reload,
     orientations: ORIENTATIONS,
   };
 }

@@ -179,9 +179,11 @@ export function layoutRmbBlock(dfBlock, { enhanced = false, windmills = true } =
  * recordIndex a live door refers to.
  *
  * The port's stand-in for that locationCache is locationLayout, which
- * retains one parse PER GRID CELL of the location it lays out; dfBlock
- * object identity is therefore per-cell, which worldModes' `e.dfBlock
- * === hit.dfBlock` test silently depends on.
+ * retains the parse each grid cell was laid out from. That is NOT one
+ * object per cell (AUDIT 68 S22): consecutive cells naming one block,
+ * and every repeat of a world-data-replaced block, share a parse - so
+ * dfBlock identity names the BLOCK, and the cell is told apart by
+ * position (talkTopics' blockInstanceOf).
  *
  * ENHANCED SKIN ONLY - see the call site: this widens subRecords, and
  * subRecords.length is the building count three subsystems bound on.

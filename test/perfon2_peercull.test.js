@@ -69,7 +69,8 @@ test('PERF-ON2 / PERF-CROWD: the host culls the peers AND the live crowd, by the
   assert.doesNotMatch(w, /sphereInPlanes\(_planes/, 'no second copy of the test in the host');
   const bounds = read('src/render/bounds.js');
   assert.match(bounds, /s\[1\] \+ \(o \? o\[1\] : 0\) \+ \(b\.size\?\.h \?\? 0\) \* 0\.5/, 'the sphere centre is lifted half a height, in batchVisible');
-  assert.match(bounds, /const s = b\.bounds;\n\s*if \(!s\) return true;/, 'a batch with no bounds is always drawn');
+  assert.match(bounds, /const s = b\.bounds;\n\s*if \(!s\) return null;/, 'a batch with no bounds has no sphere');
+  assert.match(bounds, /return !c \|\| sphereInPlanes\(planes, c\[0\], c\[1\], c\[2\], c\[3\]\);/, '...and is always drawn');
   const r = read('src/render/renderer.js');
   assert.match(r, /\+ uUp \* \(\(aCorner\.y \+ 0\.5\) \* uSize\.y\)/, 'the VS stands the quad from the placement point UP - which is why the lift exists');
   assert.match(r, /bounds\[3\] \+= Math\.hypot\(size\.w, size\.h\) \* 0\.5;/, 'and the stored radius already covers hypot(w, h) / 2, which is what the lifted centre needs');
@@ -235,16 +236,18 @@ test('PERF-CROWD2: the billboard PASS culls, so no host can forget to - and it c
   assert.match(r, /const bbCull = !this\._bbCullOff && !!this\._proj && !!this\._view;/, 'the pass decides, once a call');
   assert.match(r, /if \(this\._casting\) this\._shadows\.recordBillboards\([\s\S]*?if \(bbCull\) spherePlanes\(/,
     'the planes are taken AFTER the shadow record - everything still casts, only the drawing is culled');
-  // AUDIT PERF-CROWD2 F1: keyOf runs BEFORE the cull. The shadow replay
-  // and the air pass both read `b._bbKey` and both take it as it stands -
-  // `?? recompute` fires only when it is ABSENT, never when it is STALE -
-  // so a culled batch that never re-keyed would cast the silhouette of
-  // whatever frame it was on when it left the view. A mobile animates by
-  // writing its RECORD (MAC4), and the cascades reach 240 units.
-  assert.match(r, /keyOf\(b\);\n\s*if \(bbCull && !this\._bbVisible\(b\)\) \{ this\.stats\.bbCulled\+\+; continue; \}[\s\S]{0,40}?opaque\.push\(b\);/,
-    'the opaque partition keys every batch, THEN culls');
+  // AUDIT PERF-CROWD2 F1: a culled batch that never re-keyed would cast
+  // the silhouette of whatever frame it was on when it left the view. A
+  // mobile animates by writing its RECORD (MAC4), and the cascades reach
+  // 240 units. AUDIT 68 S16-bbkey-stale-shadow-reach: the replays re-key
+  // through billboardKey themselves - recordShadowBillboards records
+  // batches this pass never saw - and the opaque sort still wants every
+  // batch keyed before it.
+  assert.match(r, /if \(bbCull && !this\._bbVisible\(b\)\) \{ this\.stats\.bbCulled\+\+; continue; \}[^\n]*\n\s*billboardKey\(b\);\n\s*opaque\.push\(b\);/,
+    'the opaque partition culls, then keys what it sorts');
   for (const other of ['src/render/shadowPass.js', 'src/render/airPass.js']) {
-    assert.match(read(other), /const key = b\._bbKey \?\? \(b\.frame == null/, `${other} reads the key this pass maintains`);
+    assert.match(read(other), /const key = billboardKey\(b\);/, `${other} keys through the one home`);
+    assert.doesNotMatch(read(other), /b\._bbKey \?\?/, `${other} never takes a stamped key as it stands`);
   }
   assert.match(r, /if \(bbCull && !this\._bbVisible\(b\)\) \{ this\.stats\.bbCulled\+\+; continue; \}[\s\S]{0,60}?\(blended \?\?= \[\]\)\.push\(b\);/, 'and the blended one - the ghosts and the concealed are billboards too');
   // GHOST1: the same test as the host's and the two replays' - the one home

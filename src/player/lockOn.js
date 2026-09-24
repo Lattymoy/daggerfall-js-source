@@ -85,8 +85,13 @@ export function createLockOn({
       const dx = chest[0] - eye[0], dy = chest[1] - eye[1], dz = chest[2] - eye[2];
       const horiz = Math.hypot(dx, dz);
       if (Math.hypot(horiz, dy) > breakDistance) { target = null; return null; }
-      const yawErr = wrapAngle(Math.atan2(dx, dz) - cam.yaw);
-      const pitchErr = Math.atan2(dy, horiz) - cam.pitch;
+      // AUDIT 68 S15-lockon-owed-residual: the error to the look TARGET -
+      // the camera plus what the filter still owes it, which is what a
+      // drag adds to. Against the camera alone the owed look was asked
+      // for again every frame, and under heavy smoothing the lock swung
+      // past the foe (19 degrees at SmoothingMax 0.9).
+      const yawErr = wrapAngle(Math.atan2(dx, dz) - (cam.yaw + lookFilter.residualYaw));
+      const pitchErr = Math.atan2(dy, horiz) - (cam.pitch + lookFilter.residualPitch);
       const k = Math.min(1, gain * dt);
       lookFilter.add(yawErr * k, pitchErr * k);
       return chest;

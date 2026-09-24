@@ -52,6 +52,7 @@ import { heardWeather, heardRainGain } from './weatherSim.js';   // DISC9: the w
 import { INDOOR_RAIN_GAIN, AMBIENT_RAIN_LOOP } from './ambientEffects.js';   // DISC11: the street's rain and its through-the-walls law
 import { immersiveFootsteps } from './immersiveFootsteps.js';
 import { isSnowFreeClimate } from '../world/weather.js';
+import { stringHash } from '../formats/netRuntime.js';   // string.GetHashCode's one home
 import { perlinNoise } from '../world/perlin.js';   // Mathf.PerlinNoise's one home   // WeatherManager.IsSnowFreeClimate
 import { setRemoveHealthListener } from '../ui/damageFlash.js';   // the SendMessage("RemoveHealth", amount) edge
 import { playerEntity } from '../characters/playerEntity.js';
@@ -463,15 +464,6 @@ export class SystemRandom {
   nextDouble() { return this.internalSample() * (1.0 / 2147483647); }
 }
 
-/** string.GetHashCode as Mono's corlib computes it (h = (h << 5) - h + c over
- *  the chars, two at a time, int32). Unity's runtime hash is not something the
- *  port can verify from outside; the colours are DETERMINISTIC per dungeon
- *  here as there, and may differ from a DFU player's for the same dungeon. */
-export function monoStringHash(s) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
-  return h;
-}
 /** DaggerfallDungeon's GameObject name (GameObjectHelper.CreateDaggerfallDungeonGameObject). */
 export const dungeonGameObjectName = (regionName, name) => `DaggerfallDungeon [Region=${regionName}, Name=${name}]`;
 const GREY = Object.freeze({ sky: [0.433, 0.433, 0.433], equator: [0.396, 0.396, 0.396], ground: [0.254, 0.254, 0.254] });   // :107-109
@@ -482,7 +474,7 @@ const scale3 = (a, k) => [a[0] * k, a[1] * k, a[2] * k];
 /** EnableDungeonFog (:86-114) as a pure function of the seed and the settings:
  *  { fog: {mode:'linear', density:0, start, end, color} | null, ambient: {sky, equator, ground} | null }. */
 export function dungeonFogFor(dungeonName, s, { totalRandom = false, now = 0 } = {}) {
-  const rnd = new SystemRandom(totalRandom ? monoStringHash(String(now)) : monoStringHash(dungeonName));
+  const rnd = new SystemRandom(totalRandom ? stringHash(String(now)) : stringHash(dungeonName));
   const fogColor = [rnd.nextDouble(), rnd.nextDouble(), rnd.nextDouble()];
   let fog = null, ambient = null;
   if (s.enableFog) {
@@ -523,7 +515,7 @@ export function createBetterAmbience({ audio = defaultAudio, settings = readBett
   let s = null;
   const footsteps = createBetterFootsteps({ audio, random, snowFree });
   const shaker = new CameraShaker(random);
-  let clipsLoaded = false, loading = null, loadGen = 0;
+  let clipsLoaded = false, loading = null;
   const present = new Set();
   let place = { dungeon: null, building: false };
   let fogState = null;            // FoggyDungeons' { fog, ambient } while inside a dungeon that is not a castle
@@ -533,8 +525,7 @@ export function createBetterAmbience({ audio = defaultAudio, settings = readBett
   let rainWeather = null;         // currentWeatherType - UpdateSource on a change
   let waitFrames = -1;            // the coroutines' four-frame wait after a start, a load or a transition; -1 is nothing owed
 
-  async function loadAudio() {
-    const gen = ++loadGen;
+  async function loadAudio() {   // one in flight at most: syncSettings starts it only while `loading` is empty
     await Promise.all(baClipNames().map(async (name) => {
       if (present.has(name)) return;
       try {
@@ -542,7 +533,6 @@ export function createBetterAmbience({ audio = defaultAudio, settings = readBett
         if (bytes && await audio.registerSound(baSoundKey(name), bytes)) present.add(name);
       } catch { /* TryImportAudioClip answers false */ }
     }));
-    if (gen !== loadGen) return;
     footsteps.applyFootsteps(present);   // Start: DisableBuiltInFootsteps, AddComponent, ApplyFootsteps
     clipsLoaded = true;
   }
@@ -589,7 +579,6 @@ export function createBetterAmbience({ audio = defaultAudio, settings = readBett
   }
   function updateSource() {
     const w = weather();
-    rainWeather = w;
     if (w === 'rain' || w === 'thunder') {   // WeatherType.Rain / Rain_Normal / Thunder
       if (!rainLoop && present.has(AMBIENT_RAIN_CLIP)) {
         // (a kind of 'exit' means settle4 read a dungeon with an exit, and BA-CRASH1 makes onTransition drop the kind with
@@ -599,7 +588,10 @@ export function createBetterAmbience({ audio = defaultAudio, settings = readBett
           ? audio.loop(baSoundKey(AMBIENT_RAIN_CLIP), rainTarget(), { lowpass: AMBIENT_RAIN_LOWPASS_HZ })   // DISC11: the street's level, not 1
           : audio.loop3d(baSoundKey(AMBIENT_RAIN_CLIP), place.dungeon.exitPos, rainTarget(), { refDistance: 1, maxDistance: 500, distanceModel: 'inverse', lowpass: AMBIENT_RAIN_LOWPASS_HZ });
       }
-    } else stopRain();
+      // AUDIT 68 S24-ba-rain-never-retried: the weather is handled only once the source plays - a clip still decoding
+      // or a context not yet running (loop answers null) is asked again next frame, not forgotten until the next door
+      rainWeather = rainLoop ? w : null;
+    } else { stopRain(); rainWeather = w; }   // after stopRain, which forgets the weather
   }
   // FoggyDungeonsMod.UpdateDungeonFog: the settings re-read, then Enable or Disable
   function updateDungeonFog() {
@@ -660,9 +652,6 @@ export function createBetterAmbience({ audio = defaultAudio, settings = readBett
     classicClipKept(clip) { return CLASSIC_CLIPS_KEPT.has(clip); },
     settle,
     footsteps, shaker,
-    /** DISC6: whether the mod's muffled indoor rain is what the player hears in a building - the street's own loop
-     *  then stands down (systems/ambientEffects.js INDOOR_RAIN_GAIN). Read every indoor frame: no object built. */
-    indoorRainPlaying() { return !!rainLoop && rainKind === 'interior'; },
     /** DISC11: whether the mod's rain - in a building OR at a dungeon's exit - is what the player hears inside; the
      *  street's carried loop stands down for either, so the two never stack. */
     rainPlaying() { return !!rainLoop; },

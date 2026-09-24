@@ -215,7 +215,7 @@ test('EL8: the perf readout - the door, the line, the meter without the extensio
   assert.equal(m.frame({ draws: 1 }), null);
   const r = read('src/render/renderer.js');
   assert.match(r, /this\._perf = perfOn\(\) \? setMeter\(gl, new PerfMeter\(gl, perfZones\(\), perfCpu\(\)\)\) : null;/);
-  assert.match(r, /if \(world && this\._perf\) \{ this\._perf\.begin\(\); this\._perf\.mark\('shadow'\); this\.stats\.draws = 0; \}/, 'the clock starts with a world frame');
+  assert.match(r, /if \(world && this\._perf\) \{ this\._perf\.begin\(\); this\._perf\.mark\('shadow'\); this\.stats\.draws = 0; this\._perfOpen = true; \}/, 'the clock starts with a world frame (AUDIT 68 S16-perf-no-resolve-leak: and is owed its close)');
   assert.match(r, /this\._perf\.end\(\);\n\s+this\._perf\.stop\(\);/, 'and stops at the resolve');
 });
 

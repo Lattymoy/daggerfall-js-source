@@ -531,8 +531,7 @@
     "tests": [
       "test/orl1_leveling.test.js"
     ],
-    "firstOfTwo": true,
-    "why": "LV1 re-aimed BY CONTENT. The arm no longer answers the mod's question itself - it asks the door, which answers lane AND skin - so the law to kill is that it asks at all: without the door a host that hands no builder levels a player with NOTHING on screen. mutate.mjs replaces the FIRST match and the two interior arms are identical, so this one names the first; the second carries trailing context below."
+    "why": "LV1 re-aimed BY CONTENT. The arm no longer answers the mod's question itself - it asks the door, which answers lane AND skin - so the law to kill is that it asks at all: without the door a host that hands no builder levels a player with NOTHING on screen. AUDIT 68 S23-levelup-closure-dup: the two identical interior arms are ONE (onInteriorLevelUp), so this record names the one site."
   },
   {
     "name": "the-dungeons-font-less-virtue-escape-is-dropped",
@@ -664,12 +663,12 @@
   {
     "name": "the-interior-hosts-SECOND-last-resort-skips-the-door",
     "file": "src/scenes/worldModes.js",
-    "old": "          interiorOverlay = host.makeCharSheet?.() ?? createCharSheetWindow({ entity: playerEntity });\n        }\n      } });\n    },\n    day: () => false, inside: () => true,",
-    "new": "          interiorOverlay = host.makeCharSheet?.();\n        }\n      } });\n    },\n    day: () => false, inside: () => true,",
+    "old": "    onLevelUp: onInteriorLevelUp,   // AUDIT 68 S23-levelup-closure-dup: the walk and the rest level up through ONE arm\n    day: () => false, inside: () => true,",
+    "new": "    day: () => false, inside: () => true,",
     "tests": [
       "test/orl1_leveling.test.js"
     ],
-    "why": "LV2 re-aimed BY CONTENT: the arm is inside announceLevelUp's `open` thunk now (the enhanced skin does not call it until the player asks), and the trailing context still names the SECOND of the two."
+    "why": "LV2 re-aimed BY CONTENT: the arm is inside announceLevelUp's `open` thunk now (the enhanced skin does not call it until the player asks), and the trailing context still names the SECOND of the two. AUDIT 68 S23-levelup-closure-dup re-aimed it BY CONTENT again: the two copies are one arm, so the rest bag's law is that it hands that arm at all - without it the rest session's level-up takes the headless auto-spend."
   },
   {
     "name": "the-plan-takes-the-fewest-rows-instead-of-the-most-points",

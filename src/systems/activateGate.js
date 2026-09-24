@@ -135,6 +135,7 @@ export function activateFrame(gate, {
 
   // Fact 6. The window's own click cannot become a world click.
   if (gate.clickDelay > 0 && now < gate.clickDelayStart + gate.clickDelay) {
+    if (started) gate.pressCast = false;   // AUDIT 68 S24-gate-stale-presscast: a press begun here cast nothing - its release must not report the last press's cast
     return { cast: false, activate: false };
   }
   gate.clickDelay = 0;

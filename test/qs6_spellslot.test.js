@@ -158,8 +158,8 @@ test('QS6: the slot is keyed by the spell INDEX - the same key the save and the 
   assert.equal(setSpellQuickslot(null), false);
   assert.deepEqual(spellQuickslot(), { index: -3, name: 'My Own Bolt' }, 'and a refusal changes nothing');
   // A RENAME in the book is the case a name key loses: the spellbook lets a
-  // player rename a made spell (ui/enhancedSpellbook.js `sel.spell.name =
-  // name`), and the slot must follow the SPELL, not the word.
+  // player rename a made spell (ui/spellbookWindow.js editBookSpell, from
+  // either skin), and the slot must follow the SPELL, not the word.
   made.name = 'Bolt The Second';
   assert.equal(resolveSpellQuickslot(r.player).spell, made, 'still the same spell');
   assert.equal(resolveSpellQuickslot(r.player).name, 'Bolt The Second', 'and the chip reads the book\'s live name');

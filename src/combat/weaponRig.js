@@ -32,10 +32,9 @@ import { dfWornEquipment } from '../formats/mwItemMap.js';   // MW-D32
 import { ARMOR_ENUM } from './enemyEquipment.js';   // MW-D32
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES, fpLightingOn, WEAPON_FILE } from './fpsWeapon.js';
 import { loadThunderlockArt } from './thunderlockArt.js';
-import { createRecoil, createScreenShake, GUN_FEEL, gunPitch, muzzleGlow, GUN_TICK_SECONDS } from './gunFeel.js';   // AUDIT FIELD-GUN-MW F1: the flash's own clock under the arm
+import { createRecoil, GUN_FEEL, gunPitch, muzzleGlow, GUN_TICK_SECONDS } from './gunFeel.js';   // AUDIT FIELD-GUN-MW F1: the flash's own clock under the arm
 import { createGunRig, gunRigStep, gunWidgetSettings, gunMotion, gunFrameRect } from './gunViewmodel.js';   // FIELD-GUN12: the PROTOTYPE's frame, run rather than resembled
 import { readWidgetSettings } from './weaponWidgetMotion.js';   // FIELD-GUN8: the mod's own reader, so the Thunderlock's Inertia rides its multipliers   // FIELD-GUN6: the lab's own feel, in the game at last
-import { weaponOffsetHeight } from '../ui/hudLarge.js';   // FIELD-GUN7: the lab's raise rides the bar's offset rather than replacing it
 import { betterAmbience } from '../systems/betterAmbience.js';   // FIELD-GUN6: the ONE camera shaker in the port, already wired through all four hosts
 import { orbColour, MUZZLE_FORWARD, orbArchiveFor } from '../characters/thunderlockIds.js';   // FIELD-GUN17: the flash wears the orb's own colour, sampled rather than named
 import { worldRectPx } from '../player/tapRay.js';   // FIELD-GUN19: the docked HUD's world strip, in canvas pixels - ROAD-E E5's one home for that flip
@@ -49,7 +48,8 @@ import { fpsSpellCasting, loadSpellCastArt, drawSpellCastHands, magicAnimFilenam
 // and runs untouched otherwise. The Morrowind arm below is an opt-in
 // layer that either draws whole or does not draw at all - there is no
 // state in which both reach the screen, and none in which neither does.
-import { fpArm, hasAmmoFor, ammoCountOf } from './fpArm.js';
+import { fpArm, hasAmmoFor } from './fpArm.js';
+import { ammoCountFor } from '../systems/inventory.js';   // AUDIT 68 S27-ammoCount-dup: the quiver's count, from the spend law's own module
 import { getPref } from '../systems/uiPrefs.js';   // MWA1: the arms switch
 import { morrowindDataCount, morrowindDataFingerprint, registerMorrowindData } from '../scenes/dataSource.js';   // MWA1: are the archives attached; AUDIT 65 XL-6: and measured
 import { mwRaceId } from '../formats/mwNpc.js';   // TR2: the one race-id spelling
@@ -69,6 +69,7 @@ import { shieldWidgetTextures, shieldWidgetImage } from './shieldWidgetAssets.js
 import { setAttackOnPlayerHook } from './formulas.js';   // SW1: PCAAO's onAttackDamageCalculated, for the Recoil module
 import { conditionPercentage } from '../systems/itemInfo.js';   // SW1: the condition tier
 import { isShieldTemplate } from '../systems/armorMaterials.js';   // SW1: GetShieldProtectedBodyParts' own test
+import { rriNativeMaterialValue } from '../systems/rriItems.js';   // AUDIT 68 S09-v-shield-material-ignored: the port's one NativeMaterialValue
 import { createHandheldTorches, isHeldLight } from '../systems/handheldTorches.js';   // HT1: Handheld Torches' component, one per rig beside the widget; TORCH-VIS: and its own light test
 import { isTransformedLycanthrope, liveLycanthropy } from '../systems/lycanthropy.js';   // WW1: Weapon Widget's FPSWeaponClone, beside the machine; AUDIT-EOTB2: the sprite's form
 import { concealmentFlags } from '../systems/effects.js';   // EOTB-IL: PlayerBillboard.UpdateMaterial reads the player's own IsInvisible / IsAShade / IsBlending
@@ -106,7 +107,7 @@ export function armBuildOptsOf(entity) {
     armor: dfWornEquipment(equipTableOf(entity), EQUIP_SLOTS, ARMOR_ENUM),
     weapon: worn,
     hasAmmo: hasAmmoFor(entity.items, worn),
-    ammoCount: ammoCountOf(entity.items, worn),   // WS1: the quiver
+    ammoCount: ammoCountFor(entity.items, worn),   // WS1: the quiver
     torch: isLitTorch(entity.lightSource),   // MW-D51: the lit light, in the left hand
     sheathing: getPref('mwSheathing'),   // WS1: the holster on the third-person body
   };
@@ -194,9 +195,9 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:2869), townTalk.say
- *                     (exterior.js:2135, world.js:4171) and
- *                     worldModes' own interior sink (worldModes.js:428,
+ *                     (dungeonContext.js:2866), townTalk.say
+ *                     (exterior.js:2135, world.js:4160) and
+ *                     worldModes' own interior sink (worldModes.js:425,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
  *                     is unreached,
@@ -299,7 +300,7 @@ export function sheetHolderOf(rig) {
 export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, abortSpell = () => {}, bindWorn = true, activateHeld = () => false, envHit = null, missEffect = null, collider = null, actionDown = null, torches = () => null, sheetWindowUp = () => false }) {   // HT1 (KB1): whether a registry action is held, and the hosts' dropped-torch pool   // MAP-WEAPON: whether the travel map window holds the screen   // AUDIT 28 W12: HasAction(ActivateCenterObject) - the drawn bow's un-draw; WW1: the widget's recoil doors
   const playerWeapon = new PlayerWeapon({});
   playerWeapon.animCtx = () => ({ entity, weaponType: weaponTypeForItem(playerWeapon.weapon), usingRightHand: playerWeapon.usingRightHand });   // AUDIT-RR F1: GetMeleeWeaponAnimTime(player, weaponType, weaponHands) - the swing clock's own ask, so RR's weaponSpeed and RRI's weaponBalance time the blow that lands, not only the widget's clone
-  setWeaponPoseProbe(() => ({ ...weaponPoseOf(playerWeapon), weaponType: weaponTypeForItem(playerWeapon.weapon) }));   // RR1: WeaponManager.Sheathed (the pair through its one law, HARD2c) + ScreenWeapon.WeaponType
+  const poseProbe = () => ({ ...weaponPoseOf(playerWeapon), weaponType: weaponTypeForItem(playerWeapon.weapon) });   // RR1: WeaponManager.Sheathed (the pair through its one law, HARD2c) + ScreenWeapon.WeaponType
   // WW1: WEAPON WIDGET. One clone per rig, as DFU has one FPSWeaponClone
   // beside its one FPSWeapon; it reads the machine every frame and draws
   // in the sprite's place while its Enabled is on. The recoil's word on
@@ -397,16 +398,17 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     const item = entity?.equip?.slots?.[EQUIP_SLOTS.LeftHand] ?? null;
     if (!item) return null;
     return {
-      templateIndex: item.templateIndex, nativeMaterialValue: item.nativeMaterialValue ?? 0,
+      // AUDIT 68 S09-v-shield-material-ignored: minted armor carries NativeMaterialValue in `material`, not `nativeMaterialValue`
+      templateIndex: item.templateIndex, nativeMaterialValue: rriNativeMaterialValue(item),
       conditionPercentage: conditionPercentage(item), isShield: isShieldTemplate(item.templateIndex),
     };
   };
   // SW1: the Recoil module's whole trigger, at the tail of every
   // resolution of an enemy's attack on the player (formulas.js).
-  setAttackOnPlayerHook((attacker, target, damage, struckBodyPart) => {
+  const attackOnPlayer = (attacker, target, damage, struckBodyPart) => {
     if (!shieldOn()) return;
     shield.onAttackDamageCalculated({ targetIsPlayer: true, bodyPart: struckBodyPart, damage, item: shieldItem() });
-  });
+  };
   // HT1: HANDHELD TORCHES. The mod's HandheldTorches runs beside DFU's
   // WeaponManager reading it every frame (Sheathed, UsingRightHand,
   // ScreenWeapon.IsAttacking, the spell anim); here it reads the same
@@ -508,7 +510,15 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   });
   const bindBody = () => eotbBody.attach(renderer, eotbState);
   bindBody();
-  eotbCamera.setPopup(say);   // EOTB-IL: DaggerfallUI.PopupMessage, for the two Debug.ShowMessages lines
+  // AUDIT 68 S09-rig-globals-last-built: the pose probe, PCAAO's hook and
+  // the popup sink are module singletons too - re-claimed each frame
+  // beside bindArm/bindBody, so the stepping rig owns them (AUDIT 39's law).
+  const bindGlobals = () => {
+    setWeaponPoseProbe(poseProbe);
+    setAttackOnPlayerHook(attackOnPlayer);
+    eotbCamera.setPopup(say);   // EOTB-IL: DaggerfallUI.PopupMessage, for the two Debug.ShowMessages lines
+  };
+  bindGlobals();
   eotbCamera.loadSettings(modSetting);
   // [IL] `Start` (IL_0668-IL_067b): the settings, then
   // ToggleOffset(StartInThirdPerson). The mod's OnNewGame and OnLoad
@@ -787,11 +797,10 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   // prototype"). It was not. The lab drove a recoil spring, a trauma
   // shake and a reload lower, and NONE of the three was ever carried
   // across - the sprite arrived, the sounds arrived, and the weapon
-  // sat dead still while it fired. These are the lab's own two
-  // machines, from the one home they both read (combat/gunFeel.js),
-  // on Mac's own numbers.
+  // sat dead still while it fired. The spring is the lab's own
+  // machine, from the one home both read (combat/gunFeel.js), on Mac's
+  // own numbers; the shake is the room's (betterAmbience, below).
   const _tlRecoil = createRecoil();
-  const _tlShake = createScreenShake();
   /** FIELD-GUN12: the prototype's own module state, carried between
    *  frames exactly as the lab's page carries it. */
   const _tlRig = createGunRig();
@@ -800,9 +809,6 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
    *  muzzle. Null until it has been drawn once, which is also the
    *  honest answer for "where is the barrel" before there is one. */
   let _tlDrawn = null;
-  /** The frame's rect delta for the weapon, in native (320x200)
-   *  units: the spring, plus the reload lower under it. */
-  let _tlAdjust = null;
   /** The close lands this long before the weapon is ready, so the
    *  lock-up is finishing as the sprite comes back up rather than
    *  after it.
@@ -854,15 +860,14 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // hears a sample repeating.
       audio.playOneShot(TL_SFX.fire, GUN_FEEL.sfxVolume, gunPitch());
       _tlRecoil.punch();
-      _tlShake.punch();
       // THE SHAKE MOVES THE ROOM, NOT THE WEAPON, because the camera
       // carries the weapon - the lab's own finding, in its probe's
       // words. The port has exactly one camera shaker (Better
       // Ambience's, CameraShaker.cs), already wired through all four
       // hosts by `betterAmbience.view`, so the gun borrows it rather
-      // than threading a second one through four scenes. Its own
-      // trauma curve above still drives the WEAPON's rattle; this is
-      // the room's half.
+      // than threading a second one through four scenes. AUDIT 68
+      // S09-tl-dead-state: it is the ONLY shake - the weapon's own
+      // movement is the recoil spring above.
       betterAmbience.weaponKick?.(GUN_FEEL.roomShake);
       _tlFlashClock = 0;
     }
@@ -968,13 +973,12 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
    */
   function thunderlockSliding() {
     if (!playerWeapon.sheathed) return false;
+    if (!gunWidgetSettings().offset) return false;   // AUDIT 68 S09-gun-sliding-offset-off: no Offset module, no slide - offsetCurrent never moves, so the gun pops as weaponWidget.draw's does
     return Math.abs(_tlRig.offsetCurrent[1]) < Math.abs(GUN_FEEL.sheathTarget[1]) - 1e-3;
   }
 
-  /** FIELD-GUN6: the frame's rect delta, stepped once and read by
-   *  whichever draw path is live - the mod's clone or the classic
-   *  sprite. Null for every weapon that is not this one, which is what
-   *  both draws take to mean "nothing of mine".
+  /** FIELD-GUN6: the frame's recoil kick, stepped once and read by
+   *  drawThunderlock; nothing for every weapon that is not this one.
    *
    *  THE RELOAD LOWER is the other half. There is no reload ANIMATION
    *  to play - the art is six fire frames and an idle - so the weapon
@@ -985,9 +989,8 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
    *  weapon becomes ready. */
   function thunderlockFeel(dt, frame = null) {
     const type = weaponTypeForItem(playerWeapon.weapon);
-    if (type !== WEAPON_TYPES.Thunderlock && type !== WEAPON_TYPES.Thunderlock_Magic) { _tlAdjust = null; return; }
+    if (type !== WEAPON_TYPES.Thunderlock && type !== WEAPON_TYPES.Thunderlock_Magic) return;
     _tlKick = _tlRecoil.step(dt);
-    _tlAdjust = _tlKick;   // the arm below still reads it as "this weapon is live"
     // FIELD-GUN12: THE RELOAD LOWER IS THE MOD'S OFFSET MODULE, driven
     // the way the lab drives it - `shown: false` while the pump runs -
     // rather than a second easing curve of my own next to it. The lab
@@ -1050,7 +1053,18 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     if (!armShoots) {
         // The classic sprite path is untouched, and so is every melee
         // weapon on every path.
-        if (_heldHit) _heldHit = false;
+        // AUDIT 68 S09-held-hit-dropped: a shot already held when the arm
+        // stops driving (unloaded, a view with no body) is FLUSHED, as
+        // NEVER-TRAPS below says - unless the hand no longer holds a
+        // shooter, whose hit the hosts would resolve as a melee blow.
+        if (_heldHit && playerWeapon.machine.ranged) {
+          const out = [...evs];
+          if (_heldSound) out.push('bowSound');
+          out.push('hit');
+          _heldHit = false; _heldSound = false;
+          return { evs: out, fired: true };
+        }
+        _heldHit = false;
         _heldSound = false;
         return { evs, fired: false };
       }
@@ -1185,8 +1199,9 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *  the same way (WeaponManager.cs:276-278 returns before the
      *  swing while the used hand's countdown runs). */
     attackInput(dx, dy, held) {
+      _held = held;   // AUDIT 68 S09-sheathed-swing: the latch mirrors the live button (HasAction) - a release while sheathed is still a release
       if (playerWeapon.sheathed || (entity?.equipCountdown ?? 0) > 0) return;
-      _dx += dx; _dy += dy; _held = held;
+      _dx += dx; _dy += dy;
     },
     /** ClickToAttack for the touch button. */
     clickAttack() {
@@ -1249,7 +1264,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       syncWorn();   // UpdateHands (:212-213) runs first, as it does for switchHand
       const m = playerWeapon.machine;
       if (m.isBow && m.now < m.cooldownUntil) return false;   // :230-233, the bow's cooldown
-      if (m.state !== 'Idle') return false;                   // :268's `!isAttacking`
+      if (m.state !== 'Idle' || _heldHit) return false;       // :268's `!isAttacking` (AUDIT 68 S09-held-hit-dropped: a shot held for the arm's release is one)
       if (spellArmed() || fpsSpellCasting.isPlayingAnim) {
         abortSpell();                                          // :251 AbortReadySpell
         if (!playerWeapon.sheathed) playerWeapon.toggleSheath();   // :254-255, silently - sheathing plays nothing
@@ -1279,7 +1294,9 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      * @returns true when the hand actually changed.
      */
     switchHand() {
-      if (playerWeapon.machine.state !== 'Idle') return false;   // isAttacking
+      const m = playerWeapon.machine;
+      if (m.isBow && m.now < m.cooldownUntil) return false;   // AUDIT 68 S09-held-hit-dropped: Update's cooldown return (:230-233) comes before ToggleHand, as readyWeapon has it
+      if (m.state !== 'Idle' || _heldHit) return false;       // isAttacking - and a shot held for the arm's release is one
       syncWorn();
       // bindWorn:false rigs drive their own weapon (the dungeon's
       // scripted bow) - flip the hand, but do not let ApplyWeapon
@@ -1297,6 +1314,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     frame(dt, { paralyzed = false } = {}) {
       bindArm();    // AUDIT 39: the stepping rig owns the singleton (see above)
       bindBody();   // MAC-O3: and the sprite body, the same law
+      bindGlobals();   // AUDIT 68 S09-rig-globals-last-built: and the pose probe, the shield hook, the popup
       syncWorn();   // AUDIT 17e F17: the rig owns the worn-weapon bind
       // EOTB-IL: the mod's two keys are polled on their RELEASE edge
       // (GetKeyUp) - SwitchShoulder and AutoTogglePerspective's
@@ -1325,7 +1343,12 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // strike the drag resolved to (playerWeapon.js:234-237) and
       // clickAttack() with the one the click rolled - the Morrowind arm
       // needs exactly that to pick rule 11's attack type.
-      const strike = !paralyzed && c
+      // AUDIT 68 S09-sheathed-swing: and no attack STARTS where Update
+      // returns first - a readied spell or its cast (:246-262), the equip
+      // countdown (:276-281), the sheathe (:283-288). The input buffer's
+      // refusal alone let a held button swing a hidden weapon.
+      const canAttack = !playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0 && !spellArmed() && !fpsSpellCasting.isPlayingAnim;
+      const strike = !paralyzed && c && canAttack
         ? playerWeapon.gesture(_dx, _dy, _held, dt, Math.max(c.clientWidth, c.clientHeight), { cancelHeld: activateHeld() })   // AUDIT 28 W12
         : null;
       if (strike) fpAttack(strike);
@@ -1362,7 +1385,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // Morrowind arm now rides the same read. setWeapon's fast path
         // is one key compare - the swap itself runs only when the item
         // in the hand actually changed.
-        fpArm.setWeapon(playerWeapon.weapon, { hasAmmo: hasAmmoFor(entity?.items, playerWeapon.weapon), ammoCount: ammoCountOf(entity?.items, playerWeapon.weapon) });   // WS1: the quiver's count rides the swap
+        fpArm.setWeapon(playerWeapon.weapon, { hasAmmo: hasAmmoFor(entity?.items, playerWeapon.weapon), ammoCount: ammoCountFor(entity?.items, playerWeapon.weapon) });   // WS1: the quiver's count rides the swap
         // MW-D51: THE LIGHT FOLLOWS THE HAND. The same per-frame read
         // Handheld Torches' hand law writes (PlayerEntity.LightSource -
         // lit by use, stowed when no hand is free) hands the Morrowind
@@ -1474,7 +1497,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
             renderer, canvas: c, entity, machine: playerWeapon.machine, sheathed: playerWeapon.sheathed, usingRightHand: playerWeapon.usingRightHand,
             castPlaying: fpsSpellCasting.isPlayingAnim, spellArmed: spellArmed(), thirdPerson: fpArm.thirdActive() || eotbHidesWeapon(),   // AUDIT-EOTB2: either body on screen hides the FPV hand
             climbing: !!cam?.climbing, swimming: !!mv.swimming, transformedLycanthrope: !!entity && isTransformedLycanthrope(entity),
-            motion: { grounded: mv.grounded !== false, crouching: !!mv.crouching, riding: !!mv.riding, standing: !!mv.standing, speedRatio: ratio, baseSpeed: base, localVel },
+            motion: frameMotion,   // AUDIT 68 S09-frame-motion-triplicated: FIELD-GUN12's one bag, not a restatement of it
             look, swingHeld: _held, cursorActive: cursorActive(), camera: camThunk, collider: () => collider?.() ?? null,
             actionDown: (action) => !!actionDown?.(action), sheathWeapons: () => { if (!playerWeapon.sheathed) playerWeapon.toggleSheath(); },
           };
@@ -1503,7 +1526,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
           equipCountdownLeftHand: entity?.equipCountdown ?? 0,
           isClimbing: !!cam?.climbing, isPaused: false, loadInProgress: false,
           motor: {
-            speed: (mv.speedRatio ?? ratio) * base, baseSpeed: base,
+            speed: ratio * base, baseSpeed: base,   // AUDIT 68 S09-frame-motion-triplicated: `ratio` is the filtered read - a raw NaN speedRatio no longer reaches the motor
             isGrounded: mv.grounded !== false, isCrouching: !!mv.crouching, isRiding: !!mv.riding,
             isStandingStill: !!mv.standing, moveDirectionLocal: localVel,
           },
@@ -1520,8 +1543,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
           machine: playerWeapon.machine, sheathed: playerWeapon.sheathed, usingRightHand: playerWeapon.usingRightHand,
           equipCountdown: entity?.equipCountdown ?? 0, shown: spriteShown(), castPlaying: fpsSpellCasting.isPlayingAnim, spellArmed: spellArmed(),
           thirdPerson: fpArm.thirdActive() || eotbHidesWeapon(), reach: WEAPON_REACH,   // AUDIT-EOTB2: the widget's third-person gate asked the Morrowind arm alone
-          motion: { grounded: mv.grounded !== false, crouching: !!mv.crouching, riding: !!mv.riding, standing: !!mv.standing,
-            speedRatio: ratio, baseSpeed: base, localVel },
+          motion: frameMotion,
           look, swingHeld: _held, cursorActive: cursorActive(), camera: camThunk,
           activateStarted: () => _activateStarted,
         });
@@ -1572,7 +1594,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     {
       bindArm();    // AUDIT 39: the DRAWING rig owns it too - the arm renders through it
       bowArrowGuard();
-      const c = eotbHidesSpellHands() ? null : (cv());
+      const c = cv();   // AUDIT 68 S09-eotb-canvas-null: the spell-hands hide is the HANDS' alone (below) - nulling the canvas took Don'tHideWeapon's weapon with it
       // MW-D24: in THIRD PERSON nothing first-person draws at all - not
       // the arm (its predicate is view-gated) and not the classic
       // sprite either, or the player would wear a floating weapon
@@ -1607,7 +1629,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // already, so this is the classic lane's alone; the switch is the
       // player's (Features -> First-person lighting).
       const fpTint = fpLightingOn() ? (renderer?.flatLightAt?.() ?? null) : null;
-      if (c && !fpArm.active()) {
+      if (c && !fpArm.active() && !eotbHidesSpellHands()) {
         drawSpellCastHands(renderer, c, spellArtFor(fpsSpellCasting.element), fpsSpellCasting.frameIndex, { tint: fpTint });
       }
       // TORCH-VIS (2026-09-18, Mac: "if you only have the torch equipped and no weapon, it doesn't show you

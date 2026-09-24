@@ -426,6 +426,63 @@ the handler runs in it, so the mod's refusals and lines are unchanged;
 F1-F4 decide as before where the plaque does not stand. A recorded
 departure: Port-Ledger A, THE HORSE'S VERBS ON THE PLAQUE.
 
+## DISC20-C - a parked team stands on the viewer's ground (2026-09-24)
+
+Mac: *"Horse and carts can be seen parked in the sky."*
+
+**The cause.** A peer's word (`hv`, and HCC-PARK's kept record) carries
+the height the OWNER's client stood the team at, and nothing re-read it
+on the viewer's ground. The relay keeps a parked team for 72 hours, and
+an identical word refreshes it. TERRAIN-SCALE1 lowered every ground from
+the prefab's 1.5 to the game scene's 1.25 four hours after HCC-PARK
+shipped. It re-stood the heights a save, a scene cache and an anchor
+carry, but not this one. So every team kept from before it, and every
+word from a tab still on the old build, stood a fifth of the ground's
+height up: 20 m over 100 m of ground. World of Daggerfall's levelled
+sites and Basic Roads' smoothing, on for one player and off for the
+other, part the two grounds the same way, by less.
+
+Two faults beside it:
+
+- The mod grounds its parked wagon and waiting horse ONCE
+  (`DeployedWagonVisual.Tick`'s `grounded` return, the stationary horse's
+  pose tolerance), because its terrain never changes under a scene. The
+  port's can: a pixel rebuilt under them (the road network landing, a
+  late World of Daggerfall pack) left the owner's own team on the old
+  ground until they left the pixel.
+- `offsetAll` forgot the parked wagon's box without taking it down. A
+  crossing that also left the wagon's pixel shows no wagon to stand it
+  again, so it stayed in the old frame, 819 m off in the pixel entered:
+  an invisible wall.
+
+**The fix.**
+
+- `horseCartPool.js` `groundPeer` stands a peer's PARKED wagon and
+  STANDING horse on the viewer's ground by the mod's own law, once per
+  word:
+  - the wagon by the two-wheel solve (`DeployedWagonVisual` over the
+    pool's parts, the owner's heading);
+  - the horse by the stationary probe;
+  - from 1000 m over to 3000 m down, the surface nearest the word's
+    height kept, with the owner's box and mine left out of the ray (a
+    re-stand must not land on the box it stood).
+- The stand is a delta off the word, so the floating origin and a
+  re-anchor carry it. Where the viewer's ground is not built yet the word
+  stands as said and is tried again each second (`GROUND_RETRY_SECONDS`).
+  A moving team (a trailing or following wagon, a walking horse) is its
+  owner's live word and stands as said.
+- `world.js` calls the pool's `groundMoved` after every pixel is
+  published, over its bounds with a wagon's length of margin. It
+  re-stands the owner's own team (`horseCart.js` `regroundStanding`) and
+  the peers' within it. The hook is bound after the pool, because the
+  boot's first pixel builds before it.
+- `offsetAll` takes the parked wagon's box down with the old frame.
+
+The kept records from before TERRAIN-SCALE1 need no purge: they stand on
+the ground now and expire on their own. Pinned by `test/disc20.test.js`
+(C); mutants `tools/mutants/disc20.json`.
+`01-Overview/Field-Bugs-2026-09-23.md`, DISC20-C.
+
 ## What is and is not ported
 
 The assembly's dump carries 444 method bodies; 46 are compiler-generated

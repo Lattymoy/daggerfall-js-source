@@ -221,8 +221,10 @@ test('AUDIT 63 F0: the three site builders C# never assigns a buildingName leave
 
 test('AUDIT 63 F0: a resource that expands a macro to NULL removes the token, as String.Replace does (QuestMacroHelper.cs:120-122, :207-209)', () => {
   const m = src('systems/quest/questMacros.js');
-  assert.equal((m.match(/if \(typeof result === 'string' \|\| result === null\) words\[w\] = words\[w\]\.replace\(macro\.token, result \?\? ''\);/g) ?? []).length, 2,
+  // AUDIT 68 S30-macro-replace-dollar: both seams ride csReplace, C#'s literal replace-all, whose null is ''
+  assert.equal((m.match(/if \(typeof result === 'string' \|\| result === null\) words\[w\] = csReplace\(words\[w\], macro\.token, result\);/g) ?? []).length, 2,
     'both replace seams treat a true/null pair as an EMPTY expansion, not as "did not expand"');
+  assert.match(m, /const csReplace = \(text, oldValue, newValue\) => text\.split\(oldValue\)\.join\(newValue \?\? ''\);/);
 });
 
 test('AUDIT 63 F0: the hook is wired end to end, and the two quest-side callers share ONE closure', () => {

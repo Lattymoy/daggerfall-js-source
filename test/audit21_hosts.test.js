@@ -66,7 +66,9 @@ test('AUDIT 21 hosts F3: every ticker host passes onLevelUp', () => {
   // window classic actually opens. The door behind it still hands the
   // enhanced skin a LevelUpScreen; that fork is charSheetDoor's.
   for (const h of TICKER_HOSTS) {
-    const arms = [...code(h).matchAll(/onLevelUp: \(\) => \{(.*?)\n\s*\},/gs)].map((m) => m[1]);
+    // AUDIT 68 S23-levelup-closure-dup: worldModes hands both of its bags
+    // ONE named arm (`const onInteriorLevelUp = () => {...};`).
+    const arms = [...code(h).matchAll(/(?:onLevelUp: |const on\w*LevelUp = )\(\) => \{(.*?)\n\s*\}[,;]/gs)].map((m) => m[1]);
     assert.ok(arms.length > 0, `${h} has no multi-line onLevelUp arm to check`);
     for (const arm of arms) {
       assert.match(arm, /makeCharSheet/,

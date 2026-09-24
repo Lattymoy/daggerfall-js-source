@@ -462,7 +462,7 @@
   {
     "name": "SURVTIERS3-the-kit-cite-world-seed-rots",
     "file": "src/systems/equip.js",
-    "old": "(world.js:3092, exterior.js:1277)",
+    "old": "(world.js:3083, exterior.js:1277)",
     "new": "(world.js:2460, exterior.js:1277)",
     "tests": [
       "test/citedrift.test.js"
@@ -471,7 +471,7 @@
   {
     "name": "SURVTIERS3-the-gear-cite-equip-seed-rots",
     "file": "src/systems/startingGear.js",
-    "old": "// (equip.js:322), which survives",
+    "old": "// (equip.js:324), which survives",
     "new": "// (equip.js:307), which survives",
     "tests": [
       "test/citedrift.test.js"
@@ -480,7 +480,7 @@
   {
     "name": "SURVTIERS3-the-gear-cite-world-seed-rots",
     "file": "src/systems/startingGear.js",
-    "old": "world.js:3092 and exterior.js:1277 seed it",
+    "old": "world.js:3083 and exterior.js:1277 seed it",
     "new": "world.js:2460 and exterior.js:1277 seed it",
     "tests": [
       "test/citedrift.test.js"
@@ -489,7 +489,7 @@
   {
     "name": "SURVTIERS3-the-exterior-cite-equip-guard-rots",
     "file": "src/scenes/exterior.js",
-    "old": "early-returns (equip.js:323).",
+    "old": "early-returns (equip.js:325).",
     "new": "early-returns (equip.js:306).",
     "tests": [
       "test/citedrift.test.js"

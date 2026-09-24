@@ -51,6 +51,14 @@ directory by `test/audit18_bible_docs.test.js`:
   (`transformSphere`), the frustum's normalised planes (`spherePlanes`,
   over frustum.js's extraction) and the sphere test the shadow and air
   replays cull by. A leaf: no GL. See `07-Rendering/Enhanced-Lighting-Arc.md`.
+  AUDIT 68: `batchSphere` is a billboard batch's lifted sphere, the one home
+  batchVisible, shadowReachBatch and the shadow cache's scans all take.
+- `billboardKey.js` - AUDIT 68: a billboard batch's texture key
+  (`archive_record`, `#frame` for an animated flat), re-minted whenever the
+  archive, record or frame moved. The billboard pass, the shadow replay and
+  the air pass's emission replay all key through it, so a batch recorded for
+  the maps without being drawn (SHADOW-REACH) casts its current frame. A
+  leaf: no GL, no imports.
 - `cloudShadow.js` - EE5 / VC4 THE CLOUD SHADOW BLOCK: the uniforms and
   the reader (`cloudShadowAt`) that answer how much sun reaches a point
   on the ground, off the map `volumetricClouds.js` writes. Its own leaf
@@ -59,6 +67,17 @@ directory by `test/audit18_bible_docs.test.js`:
   program that lights by the sun, and the air pass's shafts, which
   cannot import from the renderer that imports them. No GL, no imports.
   See `07-Rendering/Volumetric-Clouds-Arc.md`.
+- `fogGlsl.js` - AUDIT 68 THE FOG BLOCK: `FOG_GLSL`, the one `fogFactorAt`
+  every world pass interpolates - renderer.js's seven programs, the water
+  surface and the lighting lane's five (DS1's exp2 had been added to nine
+  copies). Each shader declares its own fog uniforms; `setFog` feeds them.
+  No GL, no imports.
+- `glProgram.js` - AUDIT 68 ONE COMPILE AND LINK: `buildProgram(gl, vs, fs,
+  label)`, which the renderer's `_buildProgram` and every foreign pass's
+  program go through (the sky, the rain, the wisps, the clouds and their
+  noise, the far ring, the bolts, Dynamic Skies, the grass, the enhanced
+  sky); a fault throws the driver's log, a constructor fault the boot probe
+  sees. No imports.
 - `shadowPass.js` - EL2 THE SHADOW PASS: records what the world pass draws and
   replays it depth-only from the light at the top of the next frame - a
   two-cascade sun map outdoors, a cube map from the nearest lantern indoors -
@@ -504,6 +523,23 @@ directory by `test/audit18_bible_docs.test.js`:
   draws. Two of the three worst findings (the black ramp, the wall) were
   lines the pins held exactly, and the one bug the fixes introduced was
   invisible to every pin and loud on the first readback.**
+  **DISC20-A (2026-09-24, Mac: "Grass isnt affected by fog"): THE BLADES
+  TAKE THE GROUND'S FOG.** The lab's program had no fog term, GR1 carried
+  it byte for byte, and the renderer's fog reaches only its own programs,
+  so under every fog row the ground takes the field was drawn out to its
+  300 m fade, dimmed but never fogged: in heavy fog the ground is the
+  fog's colour past 60 m and the grass stood out of it to 165. A THIRD
+  EDIT LIST, `GRASSFOG_VS_EDITS`/`GRASSFOG_FS_EDITS`, laid after the pixel
+  style's (so the fog is not snapped to a ramp step): the vertex hands
+  down its world point, the fragment blends to the fog colour by the
+  terrain's own `fogFactorAt` (`FOG_FACTOR_GLSL`, TERRAIN_FS's text
+  verbatim, pinned equal to it), the renderer uploads the five fog
+  uniforms from `light.fog` (mode 0 - the lab's picture - when a host
+  hands none), and `world.js` hands the fog the ground took this frame
+  from the view's own eye. The fragment stage is the lab's under
+  `GRASSPX_FS_EDITS` then `GRASSFOG_FS_EDITS`; run through `test/glsl.mjs`
+  in both styles, no fog is the old picture to the bit and each fog mode
+  is exactly the terrain's blend (`test/disc20.test.js`).
 - `grassPixelArt.js` - GRASS-PX THE TUFT SHEET: eight 8x16 tufts (GRASS-PX4; 16x32 until 2026-09-22, and the laws are written as fractions of the tuft so the old size still builds through `buildTuftSheet({ w, h })`) built at boot from a seed (one-texel stalks bending as height squared, four tones with one highlight texel, alpha 0 or 255), their coverage mip chain (max alpha per block, never an average, down to 1x1), the pixel style's numbers (8 Hz sway, 24 lean steps, 3x tuft width, 8-step ramp, 4 tint bands) and `pixelGrass()`, the row's word; the shader edits themselves are `GRASSPX_VS_EDITS` / `GRASSPX_FS_EDITS` in labGrass.js.
 - `systems/wind.js` - **WIND1 (2026-09-02) THE WIND IS ITS OWN THING.**
   Mac: "wind should be something different from the weather. Imagine a

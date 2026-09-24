@@ -54,6 +54,8 @@ import { templateByIndex } from '../src/systems/itemTemplates.js';
 const DEFAULT_CODE = Object.fromEntries(DEFAULT_BINDINGS.map(([code, action]) => [action, code]));
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
+/** AUDIT 68 S18-torch-batch-churn: where a batch's quads draw - its centres plus the per-frame origin the moving ones ride. */
+const drawnAt = (b) => { const o = b.origin ?? [0, 0, 0]; return b.centers.map((c) => [c[0] + o[0], c[1] + o[1], c[2] + o[2]]); };
 const near = (a, b, eps = 1e-6, msg) => assert.ok(Math.abs(a - b) <= eps, msg ?? `${a} ~ ${b}`);
 const V = HANDHELD_TORCHES_VENDOR;
 const T = TEMPLATES;
@@ -788,10 +790,10 @@ test('HT1: a foe struck - hostile, the to-hit roll with Accuracy, ContinuousDama
   const flame = q.p.batches().find((b) => b.archive === PUFF.archive);
   assert.ok(flame, 'the flame rides the foe'); assert.equal(flame.record, PUFF.record);
   near(flame.size.w, 32 * GLOBAL_SCALE); near(flame.size.h, -64 * GLOBAL_SCALE, 1e-9, 'localScale.y negated: drawn upside down');
-  assert.deepEqual(flame.centers, [[0.35, ENEMY_LIGHT_LOCAL.up, 1 - ENEMY_LIGHT_LOCAL.back]]); assert.deepEqual([ENEMY_LIGHT_LOCAL.back, ENEMY_LIGHT_LOCAL.up], [0.4, 0.6]); assert.equal(PUFF.fps, 15);
+  assert.deepEqual(drawnAt(flame), [[0.35, ENEMY_LIGHT_LOCAL.up, 1 - ENEMY_LIGHT_LOCAL.back]]); assert.deepEqual([ENEMY_LIGHT_LOCAL.back, ENEMY_LIGHT_LOCAL.up], [0.4, 0.6]); assert.equal(PUFF.fps, 15);
   const lights = q.p.lights();
   assert.equal(lights.length, 1); assert.deepEqual([lights[0].x, lights[0].y, lights[0].z], [0.35, 0.6, 0.6]); assert.equal(lights[0].range, 14, 'the player torch\'s range - a torch\'s 14 with none lit');
-  foe.ai.feet = [2, 0, 3]; q.p.tick(0.016); assert.deepEqual(q.p.batches().find((b) => b.archive === PUFF.archive).centers, [[2, 0.6, 2.6]], 'it follows');
+  foe.ai.feet = [2, 0, 3]; q.p.tick(0.016); assert.deepEqual(drawnAt(q.p.batches().find((b) => b.archive === PUFF.archive)), [[2, 0.6, 2.6]], 'it follows');
   fire.roundsRemaining = 0; q.p.tick(0.016);
   assert.equal(q.p.foeBurning(foe), false); assert.equal(q.p.batches().some((b) => b.archive === PUFF.archive), false, 'the rounds spent: the flame goes'); assert.equal(q.p.lights().length, 0);
   // Emission off: the fire without the light; Combustion off: no fire at all

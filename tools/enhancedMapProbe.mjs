@@ -25,6 +25,7 @@
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const PORT = 5231;
@@ -37,7 +38,7 @@ const check = (name, ok, detail = '') => {
 };
 
 const server = await createServer({
-  root: new URL('..', import.meta.url).pathname,
+  root: fileURLToPath(new URL('..', import.meta.url)),
   server: { port: PORT, strictPort: true, hmr: false },
 });
 await server.listen();

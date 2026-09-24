@@ -10,29 +10,11 @@
 // broad quillons, a LONG two-hand grip (0.34 units - two fists and a
 // gap, pommel-ward of the guard) and a heavy wheel pommel. Blade wide
 // axis in Z (swing plane) per the reference convention.
-import { loftPiece, shadePiece, compress } from './pieceLoft.js';
-
-const ARM_X = -0.235;
-const GRIP_Y = 0.90;
-const GRIP_PITCH = -2.40 + Math.PI / 4;
-
-function bakeGrip(faces) {
-  const c = Math.cos(GRIP_PITCH), s = Math.sin(GRIP_PITCH);
-  for (const f of faces) {
-    for (let i = 0; i < 4; i++) {
-      const dy = f.p[i*3+1] - GRIP_Y, z = f.p[i*3+2];
-      f.p[i*3+1] = GRIP_Y + c*dy - s*z;
-      f.p[i*3+2] = s*dy + c*z;
-    }
-    const ny = f.n[1], nz = f.n[2];
-    f.n[1] = c*ny - s*nz; f.n[2] = s*ny + c*nz;
-  }
-  return faces;
-}
+import { loftPiece, shadePiece, compress, LEFT_FIST_X, GRIP_Y, SEAT_PITCH, TWO_HAND_GRIP_ROWS, pitchAbout } from './pieceLoft.js';
 
 export function buildClaymore(ramp) {
   const faces = [];
-  const G = { group: 'armL', cx: ARM_X, seg: 10 };
+  const G = { group: 'armL', cx: LEFT_FIST_X, seg: 10 };
   // WHEEL POMMEL: heavy counterweight at the hilt's top.
   loftPiece(faces, [
     { y: 1.058, rx: 0.016, rz: 0.016 },
@@ -46,12 +28,7 @@ export function buildClaymore(ramp) {
   // OFF-HAND STATION - real on-axis rings so the true hilt anchor and
   // axis read as ring centroids (the phantom-axis bug: end-only tubes
   // put "nearest vert to the grip" 0.1+ off axis).
-  loftPiece(faces, [
-    { y: 0.720, rx: 0.026, rz: 0.027 },
-    { y: 0.740, rx: 0.028, rz: 0.029 },
-    { y: 0.900, rx: 0.028, rz: 0.029 },
-    { y: 1.058, rx: 0.026, rz: 0.027 },
-  ], { ...G, capTop: false, capBottom: false });
+  loftPiece(faces, TWO_HAND_GRIP_ROWS, { ...G, capTop: false, capBottom: false });
   // BROAD CRUCIFORM GUARD: quillons in the flat plane (wide z).
   loftPiece(faces, [
     { y: 0.694, rx: 0.018, rz: 0.118, p: 0.45 },
@@ -65,5 +42,5 @@ export function buildClaymore(ramp) {
     { y: -0.150, rx: 0.007, rz: 0.020, p: 0.55 },
     { y: -0.256, rx: 0.003, rz: 0.003, p: 0.55 }, // point
   ], { ...G, capTop: false });
-  return compress(shadePiece(bakeGrip(faces), ramp));
+  return compress(shadePiece(pitchAbout(faces, GRIP_Y, SEAT_PITCH), ramp));
 }

@@ -14,10 +14,11 @@
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import { existsSync, renameSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const out = process.argv[2] || '/tmp/title';
-const LOGO = new URL('../public/logo.png', import.meta.url).pathname;
+const LOGO = fileURLToPath(new URL('../public/logo.png', import.meta.url));
 const HIDDEN = `${LOGO}.hidden`;
 
 const server = await createServer({ server: { port: 5203, strictPort: true } });

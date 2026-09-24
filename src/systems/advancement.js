@@ -22,7 +22,7 @@
 //   is mounted.
 
 import { OGHMA_BONUS_POOL } from './artifactEffects.js';   // V3: the sheet's oghmaBonusPool (:44)
-import { SKILLS, setSkillRecentlyIncreased } from './skills.js';
+import { SKILLS, setSkillRecentlyIncreased, levelUpSkillSum } from './skills.js';
 import { hitPointsPerLevelUp, spendPoolLowest } from './chargen.js';
 // ORL1: the ONE question this file asks the vendored mod - whose law
 // levels this character. Everything DFU below is untouched by the
@@ -72,18 +72,8 @@ export const LEVELUP_SKILL_SUM_PER_LEVEL = 15;
 export const calculatePlayerLevel = (startingSum, currentSum) =>
   Math.floor((currentSum - startingSum + 28) / LEVELUP_SKILL_SUM_PER_LEVEL);
 
-/** sum(primary) + sum(major) - lowest major + highest minor. */
-export function levelUpSkillSum(entity) {
-  const c = entity.career;
-  let sum = 0;
-  for (const id of c.primarySkills) sum += entity.skills[id];
-  let lowestMajor = Infinity;
-  for (const id of c.majorSkills) { const v = entity.skills[id]; sum += v; if (v < lowestMajor) lowestMajor = v; }
-  sum -= lowestMajor;
-  let highestMinor = -Infinity;
-  for (const id of c.minorSkills) { const v = entity.skills[id]; if (v > highestMinor) highestMinor = v; }
-  return sum + highestMinor;
-}
+/** sum(primary) + sum(major) - lowest major + highest minor - one home in skills.js, re-exported for this file's importers. */
+export { levelUpSkillSum };
 
 export function alreadyMasteredASkill(entity) {
   return entity.career.primarySkills.some((id) => entity.skills[id] === 100);
@@ -104,9 +94,9 @@ export { getSkillRecentlyIncreased as skillRecentlyIncreased, setSkillRecentlyIn
  * NOT A GAP (closeout): `onLevelUp` IS DFU's char-sheet route.
  * RaiseSkills' tail is `if (CheckForLevelUp()) DaggerfallUI.PostMessage(
  * dfuiOpenCharacterSheetWindow)` (PlayerEntity.cs:1413-1414), and every
- * live host supplies that message as the hook - world.js:2843/:5137,
- * exterior.js:1115/:2044, worldModes.js:464/:8436,
- * dungeonContext.js:1848. The immediate arm below is taken only when
+ * live host supplies that message as the hook - world.js:2834/:5126,
+ * exterior.js:1115/:2044, worldModes.js:486/:8429,
+ * dungeonContext.js:1837. The immediate arm below is taken only when
  * onLevelUp is null: a headless/test path (and the ?class= skip) that
  * DFU has no counterpart for, so there is nothing to diverge from.
  *

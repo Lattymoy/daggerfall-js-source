@@ -93,6 +93,19 @@ export function isInLocationRect(worldX, worldZ, rect) {
     && worldZ >= rect.minZ - extraRect && worldZ <= rect.maxZ + extraRect;
 }
 
+/** The load list's order, nearest-first around `current` (a map pixel):
+ *  Chebyshev ring first - the player's pixel, then each ring out - and
+ *  Euclid within a ring. A comparator over `{px, py}` entries. AUDIT 68
+ *  S22: ONE copy - the host's three rebuild sweeps (roads, WoD, the
+ *  season) re-queue in this same order, and said so while keeping
+ *  literals of their own. */
+export const nearestFirstFrom = (current) => (a, b) => {
+  const ca = Math.max(Math.abs(a.px - current.x), Math.abs(a.py - current.y));
+  const cb = Math.max(Math.abs(b.px - current.x), Math.abs(b.py - current.y));
+  if (ca !== cb) return ca - cb;
+  return ((a.px - current.x) ** 2 + (a.py - current.y) ** 2) - ((b.px - current.x) ** 2 + (b.py - current.y) ** 2);
+};
+
 export class StreamingWorldState {
   constructor(terrainDistance = TERRAIN_DISTANCE) {
     this.terrainDistance = terrainDistance;
@@ -178,14 +191,7 @@ export class StreamingWorldState {
         list.push({ px, py });
       }
     }
-    list.sort((a, b) => {
-      const ca = Math.max(Math.abs(a.px - this.current.x), Math.abs(a.py - this.current.y));
-      const cb = Math.max(Math.abs(b.px - this.current.x), Math.abs(b.py - this.current.y));
-      if (ca !== cb) return ca - cb;
-      const ea = (a.px - this.current.x) ** 2 + (a.py - this.current.y) ** 2;
-      const eb = (b.px - this.current.x) ** 2 + (b.py - this.current.y) ** 2;
-      return ea - eb;
-    });
+    list.sort(nearestFirstFrom(this.current));
     for (const p of list) this.loaded.set(StreamingWorldState.key(p.px, p.py), p);
     return list;
   }

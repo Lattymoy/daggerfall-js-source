@@ -116,7 +116,11 @@ test('IF: the summoning refusal\'s punishment is real, through one door both cal
   // call with different numbers, so one port door takes both.
   assert.match(WM, /function spawnDaedricPunishment\(\{ count, minDistance, maxDistance/);
   assert.match(WM, /DAEDRIC_FOES\[Math\.floor\(rolls\(\) \* DAEDRIC_FOES\.length\)\]/, 'daedricFoes[Range(0,5)]');
-  assert.match(WM, /placeFoeFreely\(env, \{ minDistance, maxDistance \}\)/, 'the spawner ends in the placement ring');
+  // AUDIT 68 S23-coven-punishment-interior-only: the ring is the host's
+  // mode-routed stand (hostEnchant.js standLooseFoe ends in placeFoeFreely
+  // with the spawner's own min/max), so the wave stands wherever the
+  // player is - a coven's popup is never in a building.
+  assert.match(WM, /if \(stand\(type, \{ minDistance, maxDistance \}\)\) stood\+\+;/, 'the spawner ends in the placement ring');
   assert.match(WM, /minDistance: 8, maxDistance: 64,/, 'the refusal\'s own band (:125)');
   assert.match(WM, /spawnRefusalFoes: \(\) => spawnDaedricPunishment\(\{/, 'and the window\'s door is mounted');
   assert.ok(!WM.includes('the interior has no foe pool (FLAGGED)'), 'the flag sentence is gone');
@@ -184,8 +188,13 @@ test('IF: the pool is ARMED for targeting like every other pool, over its own da
   // summoned daedra be stood overlapping a watchman, and the interior
   // arrow's target list (pinned in audit39_worldmodes). Both call the
   // join now, so the message is true.
-  assert.equal((WM.match(/isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet, \(\) => interiorFoePool\(\), feet\)/g) ?? []).length, 2,
-    'both placements - the quest foe and the daedric punishment wave - test the WHOLE database for occupancy');
+  // AUDIT 68 S23-coven-punishment-interior-only: the punishment wave
+  // stands through the loose-foe door now, which indoors is
+  // standInteriorLooseFoe over the same join.
+  assert.equal((WM.match(/isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet, \(\) => interiorFoePool\(\), feet\)/g) ?? []).length, 1,
+    'the quest foe\'s placement tests the WHOLE database for occupancy');
+  assert.match(WM, /function standInteriorLooseFoe\(mobileType, opts = \{\}\) \{[\s\S]{0,400}?foes: interiorFoePool\(\),/,
+    '...and so does the loose-foe stand the daedric punishment wave takes indoors');
   assert.equal(/\(\) => interiorFoes\.foes, feet\)/.test(WM), false,
     'and neither is still asking the encounter pool alone');
   // the only two surviving reaches for a RAW pool list are the join

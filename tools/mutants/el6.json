@@ -74,7 +74,7 @@
   {
     "name": "resolve-ao-mix-zero",
     "file": "src/render/airPass.js",
-    "old": "    gl.uniform1f(P.resolve.uAOMix, this.f ? AIR_AO_RESOLVE : 0);",
+    "old": "    gl.uniform1f(P.resolve.uAOMix, prepared ? AIR_AO_RESOLVE : 0);",
     "new": "    gl.uniform1f(P.resolve.uAOMix, 0);",
     "tests": [
       "test/el3_air.test.js"
@@ -101,7 +101,7 @@
   {
     "name": "images-before-resolve",
     "file": "src/render/airPass.js",
-    "old": "    if (this.f && this.fresh) this._images();\n    else { this._blank(quad); this.measured = false; }\n    this.fresh = false;\n    gl.disable(gl.BLEND);",
+    "old": "    if (prepared) this._images();\n    else { this._blank(quad); this.measured = false; }\n    this.fresh = false;\n    gl.disable(gl.BLEND);",
     "new": "    this._blank(quad); this.measured = false;\n    this.fresh = false;\n    gl.disable(gl.BLEND);",
     "tests": [
       "test/el3_air.test.js"

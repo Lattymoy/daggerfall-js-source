@@ -51,6 +51,12 @@ firsthour-shots/
 castle-shots/
 # MAP-LANE: the map lane probe's shots (tools/mapLaneProbe.mjs default SHOTS dir).
 maplane-shots/
+# AUDIT 68: tools/dumpMidi.mjs's default outDir - Standard MIDI renders of the
+# player's MIDI.BSA, which is ARENA2 music. Never commit.
+midi-out/
+# AUDIT 68: the probes' generated pages (<name>.tmp.html beside the page they
+# drive); a probe killed before its finally can leave one behind.
+*.tmp.html
 
 # THE ONE ALLOWED .BSA: the MW fixture archive is OURS - written by
 # test/fixtures/mw/generate.py from pyffi-authored meshes and a hand-

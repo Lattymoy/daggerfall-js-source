@@ -414,7 +414,7 @@ test('NAME1 + BUBBLE1: the wiring in scenes/world.js - the layer is made ONCE be
   const w = rd('src/scenes/world.js');
   const bare = w.replace(/\/\/[^\n]*/g, ' ');
   assert.match(w, /import \{ createNameLayer, nameLayerWanted \} from '\.\.\/ui\/nameLayer\.js';/);
-  assert.match(w, /import \{ RemotePlayers, composeLook, sightBlockedBy, createSightCache \} from '\.\.\/net\/remotePlayers\.js';/);
+  assert.match(w, /import \{ RemotePlayers, composeLook, createSightCache \} from '\.\.\/net\/remotePlayers\.js';/);   // AUDIT 68 S22: sightBlockedBy is the cache's to call, never the host's
   assert.match(bare, /let online = null, remotePlayers = null, peerBodies = null, nameLayer = null, nameSight = null,/, 'one handle each, held for the session');
   // AUDIT NAME1 F7: the SKIN gates the DOM face, exactly as it gates the chat panel the bubbles belong to.
   assert.match(bare, /if \(nameLayerWanted\(enhanced\)\) nameLayer = createNameLayer\(\{\}\);/, 'made for the skin that owns this screen, and where there is a document to put it in');

@@ -15,52 +15,50 @@
 // merged here first so the object count stays a few per cell rather
 // than one per triangle-cell pair.
 //
-// Units are the port's: metres, the Collider's own frame. `matrix` and
-// `translation` are the bucket's, as Collider.addMesh takes them.
+// Units are the port's: metres, the Collider's own frame - navBake's
+// soup is already in world space (each bucket's translation applied), so
+// the vertices are read as they are and cells are indexed from 0.
 
-export const DEFAULT_MAX_SLOPE = 0.7;   // rise/run, the navmesh AGENT's maxSlope
+import { AGENT } from './navmesh.js';
 
-/** Transform a vertex by a 4x4 column-major matrix (mat4 as Collider uses). */
-function xform(m, x, y, z, out) {
-  if (!m) { out[0] = x; out[1] = y; out[2] = z; return out; }
-  out[0] = m[0] * x + m[4] * y + m[8] * z + m[12];
-  out[1] = m[1] * x + m[5] * y + m[9] * z + m[13];
-  out[2] = m[2] * x + m[6] * y + m[10] * z + m[14];
-  return out;
+/** Triangle t of the soup into a, b, c; answers its face normal's |y| over
+ *  its length (sign-free: a floor seen from below is still a floor), or
+ *  -1 for a zero-area triangle. The ONE degenerate test the voxeliser and
+ *  soupExtent share (AUDIT 68 S02-coarsen-sizing-pass). */
+function readTri(positions, indices, t, a, b, c) {
+  const i = indices[t] * 3, j = indices[t + 1] * 3, k = indices[t + 2] * 3;
+  a[0] = positions[i]; a[1] = positions[i + 1]; a[2] = positions[i + 2];
+  b[0] = positions[j]; b[1] = positions[j + 1]; b[2] = positions[j + 2];
+  c[0] = positions[k]; c[1] = positions[k + 1]; c[2] = positions[k + 2];
+  const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
+  const vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+  const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+  const nl = Math.hypot(nx, ny, nz);
+  return nl ? Math.abs(ny) / nl : -1;
 }
 
 /**
- * @param {Float32Array|number[]} positions - xyz triples
+ * @param {Float32Array|number[]} positions - xyz triples, world space
  * @param {Uint16Array|Uint32Array|number[]} indices - triangles
- * @param {object} opts - { matrix, translation:[x,y,z], cs, maxSlope, xmin, zmin }
- *   cs: the cell size the bake will use (buildNav's agent.cs, or the coarsened one)
- *   xmin/zmin: the bake's origin; cells are indexed from it so the boxes land on the grid
+ * @param {object} opts - { cs, maxSlope }: the cell size the bake will use
+ *   (the agent's, or the coarsened one) and its walkable rise/run
  * @returns {Array<{x0,x1,z0,z1,top,bottom,noNavTop}>} colliders for buildNav
  */
-export function trianglesToColliders(positions, indices, { matrix = null, translation = null, cs = 0.25, maxSlope = DEFAULT_MAX_SLOPE, xmin = 0, zmin = 0 } = {}) {
+export function trianglesToColliders(positions, indices, { cs = AGENT.cs, maxSlope = AGENT.maxSlope } = {}) {
   const cosMax = 1 / Math.sqrt(1 + maxSlope * maxSlope);   // normal.y at the slope limit
   const cells = new Map();   // "ix,iz" -> [{y0, y1, walk}]
   const a = [0, 0, 0], b = [0, 0, 0], c = [0, 0, 0];
-  const tx = translation ? translation[0] : 0, ty = translation ? translation[1] : 0, tz = translation ? translation[2] : 0;
   for (let t = 0; t + 2 < indices.length; t += 3) {
-    xform(matrix, positions[indices[t] * 3], positions[indices[t] * 3 + 1], positions[indices[t] * 3 + 2], a);
-    xform(matrix, positions[indices[t + 1] * 3], positions[indices[t + 1] * 3 + 1], positions[indices[t + 1] * 3 + 2], b);
-    xform(matrix, positions[indices[t + 2] * 3], positions[indices[t + 2] * 3 + 1], positions[indices[t + 2] * 3 + 2], c);
-    a[0] += tx; a[1] += ty; a[2] += tz; b[0] += tx; b[1] += ty; b[2] += tz; c[0] += tx; c[1] += ty; c[2] += tz;
-    // the face normal's y, sign-free: a floor seen from below is still a floor
-    const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
-    const vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
-    const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
-    const nl = Math.hypot(nx, ny, nz);
-    if (!nl) continue;   // degenerate
-    const walk = Math.abs(ny) / nl >= cosMax;
+    const cosN = readTri(positions, indices, t, a, b, c);
+    if (cosN < 0) continue;   // degenerate
+    const walk = cosN >= cosMax;
     // the cells the triangle's xz footprint touches
-    const ix0 = Math.floor((Math.min(a[0], b[0], c[0]) - xmin) / cs), ix1 = Math.floor((Math.max(a[0], b[0], c[0]) - xmin) / cs);
-    const iz0 = Math.floor((Math.min(a[2], b[2], c[2]) - zmin) / cs), iz1 = Math.floor((Math.max(a[2], b[2], c[2]) - zmin) / cs);
+    const ix0 = Math.floor(Math.min(a[0], b[0], c[0]) / cs), ix1 = Math.floor(Math.max(a[0], b[0], c[0]) / cs);
+    const iz0 = Math.floor(Math.min(a[2], b[2], c[2]) / cs), iz1 = Math.floor(Math.max(a[2], b[2], c[2]) / cs);
     for (let iz = iz0; iz <= iz1; iz++) {
       for (let ix = ix0; ix <= ix1; ix++) {
         // clip the triangle to the cell in xz and take the y-range of what is left
-        const range = clipRangeY(a, b, c, xmin + ix * cs, xmin + (ix + 1) * cs, zmin + iz * cs, zmin + (iz + 1) * cs);
+        const range = clipRangeY(a, b, c, ix * cs, (ix + 1) * cs, iz * cs, (iz + 1) * cs);
         if (!range) continue;
         const key = ix + ',' + iz;
         let list = cells.get(key);
@@ -80,8 +78,49 @@ export function trianglesToColliders(positions, indices, { matrix = null, transl
       else merged.push({ ...r });
     }
     const [ix, iz] = key.split(',').map(Number);
-    const x0 = xmin + ix * cs, z0 = zmin + iz * cs;
+    const x0 = ix * cs, z0 = iz * cs;
     for (const r of merged) out.push({ x0, x1: x0 + cs, z0, z1: z0 + cs, top: r.y1, bottom: r.y0, noNavTop: !r.walk });
+  }
+  return out;
+}
+
+/** AUDIT 68 S02-coarsen-sizing-pass: the xz extent trianglesToColliders
+ *  would give the soup at cell size `cs`, without voxelising it - the
+ *  cell-snapped bounds of its non-degenerate triangles, as one box (none
+ *  for an empty soup). The cell holding each extreme vertex always gets a
+ *  box, so this IS the voxeliser's extent - all that coarsenAgent reads. */
+export function soupExtent(positions, indices, cs = AGENT.cs) {
+  let xmn = Infinity, xmx = -Infinity, zmn = Infinity, zmx = -Infinity;
+  const a = [0, 0, 0], b = [0, 0, 0], c = [0, 0, 0];
+  for (let t = 0; t + 2 < indices.length; t += 3) {
+    if (readTri(positions, indices, t, a, b, c) < 0) continue;
+    xmn = Math.min(xmn, a[0], b[0], c[0]); xmx = Math.max(xmx, a[0], b[0], c[0]);
+    zmn = Math.min(zmn, a[2], b[2], c[2]); zmx = Math.max(zmx, a[2], b[2], c[2]);
+  }
+  if (xmn === Infinity) return [];
+  const x0 = Math.floor(xmn / cs) * cs, z0 = Math.floor(zmn / cs) * cs;
+  const x1 = Math.floor(xmx / cs) * cs + cs, z1 = Math.floor(zmx / cs) * cs + cs;   // spelled as the voxeliser's `x0 + cs`
+  return [{ x0, x1, z0, z1 }];
+}
+
+/** A collider set packed for a thread hop (AUDIT 68 S02-hydrate-main-
+ *  thread-revoxelize): six doubles a box and its noNavTop, transferable. */
+export function packColliders(cols) {
+  const box = new Float64Array(cols.length * 6), noNavTop = new Uint8Array(cols.length);
+  for (let i = 0; i < cols.length; i++) {
+    const c = cols[i], o = i * 6;
+    box[o] = c.x0; box[o + 1] = c.x1; box[o + 2] = c.z0; box[o + 3] = c.z1; box[o + 4] = c.top; box[o + 5] = c.bottom;
+    noNavTop[i] = c.noNavTop ? 1 : 0;
+  }
+  return { box, noNavTop };
+}
+
+/** packColliders' inverse: the boxes trianglesToColliders minted. */
+export function unpackColliders({ box, noNavTop }) {
+  const out = new Array(noNavTop.length);
+  for (let i = 0; i < out.length; i++) {
+    const o = i * 6;
+    out[i] = { x0: box[o], x1: box[o + 1], z0: box[o + 2], z1: box[o + 3], top: box[o + 4], bottom: box[o + 5], noNavTop: noNavTop[i] === 1 };
   }
   return out;
 }

@@ -83,7 +83,6 @@ const check = (name, ok, detail = '') => {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`);
 };
 
-await writeFile(join(ROOT, `tools/${PAGE_NAME}`), PAGE);
 // PROBE_PORT=<n> reuses a dev server already listening there (a container's
 // file-watcher budget can refuse a second vite); otherwise one is made here,
 // with its watcher off - the probe changes nothing it would need to see.
@@ -92,6 +91,8 @@ if (vite) await vite.listen();
 const port = vite ? vite.httpServer.address().port : Number(process.env.PROBE_PORT);
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 try {
+  // AUDIT 68 X2-probe-tmp-page-leak: written inside the try, so the finally that unlinks it always runs.
+  await writeFile(join(ROOT, `tools/${PAGE_NAME}`), PAGE);
   const ctx = await browser.newContext({ viewport: { width: 430, height: 860 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 });
   const page = await ctx.newPage();
   const errors = [];

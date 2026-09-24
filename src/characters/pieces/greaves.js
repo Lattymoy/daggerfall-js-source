@@ -2,7 +2,7 @@
 // the classic. Hip fauld over the pelvis + per-leg plate (thigh ->
 // knee poleyn -> shin), sitting just outside the leg. Thinner than the
 // first pass. Sprites kept for the inventory icon.
-import { loftPiece, shadePiece, compress, STEEL_RAMP } from './pieceLoft.js';
+import { loftPiece, shadePiece, compress } from './pieceLoft.js';
 
 const LEG_X = 0.082; // mirror neutralBody.js
 

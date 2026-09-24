@@ -1,0 +1,308 @@
+[
+  {
+    "name": "DISC20-A-the-blend-dropped",
+    "file": "src/render/labGrass.js",
+    "old": "  c = mix(uFogColor, c, fogFactorAt(vWorld));   // DISC20-A\\n  o = vec4(",
+    "new": "  c = c;   // DISC20-A\\n  o = vec4(",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-A-the-fog-factor-inverted",
+    "file": "src/render/labGrass.js",
+    "old": "  c = mix(uFogColor, c, fogFactorAt(vWorld));   // DISC20-A\\n  o = vec4(",
+    "new": "  c = mix(c, uFogColor, fogFactorAt(vWorld));   // DISC20-A\\n  o = vec4(",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-A-the-world-point-not-handed-down",
+    "file": "src/render/labGrass.js",
+    "old": "  vWorld = p;   // DISC20-A\\n",
+    "new": "  vWorld = vec3(0.0);   // DISC20-A\\n",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-A-no-fog-handed-reads-a-fog",
+    "file": "src/render/labGrass.js",
+    "old": "gl.uniform1i(u.uFogMode, fog ? fog.mode : 0);",
+    "new": "gl.uniform1i(u.uFogMode, fog ? fog.mode : 2);",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-A-the-host-hands-no-fog",
+    "file": "src/scenes/world.js",
+    "old": "{ fog: { mode: renderer._fogMode, density:",
+    "new": "{ fog: null, _f: { mode: renderer._fogMode, density:",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-B-the-switch-without-its-fade",
+    "file": "src/systems/music.js",
+    "old": "if (this.playing && this._current !== null) { this._beginSwitch(name); return true; }",
+    "new": "if (false && this.playing && this._current !== null) { this._beginSwitch(name); return true; }",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-B-the-start-without-its-rise",
+    "file": "src/systems/music.js",
+    "old": "if (ok && fresh) { player.fadeTo?.(0, 0); player.fadeTo?.(1, MUSIC_FADE_IN_S); }",
+    "new": "if (ok && fresh) { player.fadeTo?.(1, 0); }",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-B-the-pack-s-start-without-its-rise",
+    "file": "src/systems/music.js",
+    "old": "if (player.play(buffer)) { player.fadeTo?.(0, 0); player.fadeTo?.(1, MUSIC_FADE_IN_S); }",
+    "new": "player.play(buffer);",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-B-the-flip-back-dropped",
+    "file": "src/systems/music.js",
+    "old": "if (name === this._switch.from) { this._cancelSwitch();",
+    "new": "if (false) { this._cancelSwitch();",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-B-the-stop-leaves-the-switch-armed",
+    "file": "src/systems/music.js",
+    "old": "    this._cancelSwitch();   // DISC20-B: a stop mid-fade starts nothing after it\n",
+    "new": "",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-B-a-song-that-will-not-start-claims-it",
+    "file": "src/systems/music.js",
+    "old": "if (!this._start(sw.to) && this._current === sw.to) this._current = null;",
+    "new": "this._start(sw.to);",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-B-the-latest-request-lost",
+    "file": "src/systems/music.js",
+    "old": "      this._switch.to = name;\n",
+    "new": "",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-B-the-synth-bypasses-the-fader",
+    "file": "src/systems/songPlayer.js",
+    "old": "g.connect(this._fader ?? this._master);   // DISC20-B: through the fader",
+    "new": "g.connect(this._master);   // DISC20-B: through the fader",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-B-the-pack-bypasses-the-fader",
+    "file": "src/systems/songPlayer.js",
+    "old": "src.connect(this._fader ?? this._master);   // DISC20-B: through the fader",
+    "new": "src.connect(this._master);   // DISC20-B: through the fader",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-B-the-ramp-jumps-from-its-old-start",
+    "file": "src/systems/songPlayer.js",
+    "old": "  if (typeof g.cancelAndHoldAtTime === 'function') g.cancelAndHoldAtTime(now);\n  else { const v = g.value; g.cancelScheduledValues(now); g.setValueAtTime(v, now); }\n",
+    "new": "  g.cancelScheduledValues(now);\n",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-B-the-fade-rides-the-volume",
+    "file": "src/systems/songPlayer.js",
+    "old": "  fadeTo(level, seconds) { rampFader(this.ctx, this._fader, level, seconds); }\n\n  /** The MusicVolume setting moved",
+    "new": "  fadeTo(level, seconds) { rampFader(this.ctx, this._master, level, seconds); }\n\n  /** The MusicVolume setting moved",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-no-grounding",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "      groundPeer(owner, p);   // DISC20-C: a parked wagon and a standing horse, on MY ground\n",
+    "new": "",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-the-owner-s-box-not-left-out-of-the-ray",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "const skip = [WAGON_BUCKET, peerWagonBucket(owner)];",
+    "new": "const skip = [WAGON_BUCKET];",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-no-retry",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "g.due = missing ? now() + GROUND_RETRY_SECONDS : null;",
+    "new": "g.due = null;",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-a-walking-horse-grounded",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "if (h && !h.walking && g.dh === null) {",
+    "new": "if (h && g.dh === null) {",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-a-moving-wagon-grounded",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "if (w?.kind === HCC_WIRE_KIND.Deployed && !g.dw) {",
+    "new": "if (w && !g.dw) {",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-the-stand-not-applied-to-the-horse",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "if (p.horse && g.dh !== null) { const q = p.horse.position; p.horse.position = [q[0], q[1] + g.dh, q[2]]; }",
+    "new": "",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-the-re-stand-never-reaches-the-runtime",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    runtime?.regroundStanding?.(within);\n",
+    "new": "",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-the-peers-not-re-stood",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    for (const p of _peers.values()) if (p.ground && (within(p.wagon?.position) || within(p.horse?.position))) p.ground = null;\n",
+    "new": "",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-the-margin-dropped",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    const M = 6;\n",
+    "new": "    const M = 0;\n",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-the-orphaned-box",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    if (_bucketKey) collider()?.removeBucket?.(WAGON_BUCKET);\n",
+    "new": "",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-the-runtime-re-stand-leaves-the-wagon",
+    "file": "src/systems/horseCart.js",
+    "old": "if (deployedVisual?.isAlive && within(deployedVisual.position)) { deployedVisual.grounded = false; deployedVisual.nextGroundRetryTime = 0; }",
+    "new": "if (deployedVisual?.isAlive && within(deployedVisual.position)) { deployedVisual.nextGroundRetryTime = 0; }",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-the-runtime-re-stand-leaves-the-horse",
+    "file": "src/systems/horseCart.js",
+    "old": "stationaryHorseVisual.hasRequestedPose = false;\n  }",
+    "new": "stationaryHorseVisual.hasRequestedPose = true;\n  }",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-C-the-host-never-binds-the-hook",
+    "file": "src/scenes/world.js",
+    "old": "  hccGroundMoved = hcc.groundMoved;   // DISC20-C\n",
+    "new": "  hccGroundMoved = null;   // DISC20-C\n",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-D-the-clip-gate-dropped",
+    "file": "src/systems/distantStorms.js",
+    "old": "          if (!insideClip(s, px, pz)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-D-the-strike-point-s-ground-unread",
+    "file": "src/systems/distantStorms.js",
+    "old": "          if (ground && ground('thunder', px, pz, minutes) !== 'thunder') continue;\n",
+    "new": "",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-E-no-reset",
+    "file": "src/systems/modSettings.js",
+    "old": "    if (!held || !Object.hasOwn(held, key) || held[stamp] === true) continue;\n    delete held[key];\n",
+    "new": "    if (!held || !Object.hasOwn(held, key) || held[stamp] === true) continue;\n",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-E-the-reset-every-load",
+    "file": "src/systems/modSettings.js",
+    "old": "held[stamp] === true) continue;",
+    "new": "held[stamp] === 'never') continue;",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  },
+  {
+    "name": "DISC20-E-the-stamp-never-written",
+    "file": "src/systems/modSettings.js",
+    "old": "  for (const r of SWITCH_RESETS) if (r.vendor === vendor && r.key === key) m[vendor][r.stamp] = true;   // DISC20-E: chosen after the reset - kept\n",
+    "new": "",
+    "tests": [
+      "test/disc20.test.js"
+    ]
+  }
+]

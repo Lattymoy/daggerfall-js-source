@@ -317,8 +317,8 @@
   {
     "name": "RETRO1-classic-lane-never-presents",
     "file": "src/render/renderer.js",
-    "old": "    if (this._retroOwed && !this._air?.pending) { this._presentRetroFrame(); return; }",
-    "new": "    if (false) { this._presentRetroFrame(); return; }",
+    "old": "    if (this._retroOwed && !this._air?.pending) return this._presentRetroFrame();",
+    "new": "    if (false) return this._presentRetroFrame();",
     "tests": [
       "test/retro1.test.js"
     ]

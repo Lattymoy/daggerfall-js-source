@@ -4,6 +4,7 @@
 // passed in; the browser passes ramps from the loaded ART_PAL.
 // Usage: ARENA2_PATH=... node tools/neutral/build-viewer.mjs out.html
 import { readFileSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { ImgFile } from '../../src/formats/imgFile.js';
 import { DFPalette } from '../../src/formats/dfPalette.js';
 import { CifRciFile } from '../../src/formats/cifRciFile.js';
@@ -23,7 +24,7 @@ const cif = new CifRciFile(); cif.load(readFileSync(A + '/FACE00I0.CIF'), 'FACE0
 const payloadObj = buildPaperdollPayload(pal, img, cif);
 const payload = JSON.stringify(payloadObj);
 
-const dir = new URL('.', import.meta.url).pathname;
+const dir = fileURLToPath(new URL('.', import.meta.url));
 let clothSrc = readFileSync(dir + '../../src/characters/clothSim.js', 'utf8').replace(/^export /gm, '');
 let animsSrc = readFileSync(dir + '../../src/characters/anims.js', 'utf8').replace(/^export /gm, '');
 let statesSrc = readFileSync(dir + '../../src/characters/weaponStates.js', 'utf8').replace(/^export /gm, '');

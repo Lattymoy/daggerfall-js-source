@@ -17,8 +17,8 @@
 
   What it BORROWS it RUNS rather than imitates:
 
-    - FPSWeapon's placement (:378-388) through src/tools/gunLab.js
-      placeSprite: the 320x200 design surface, bottom-anchored and
+    - FPSWeapon's placement (:378-388) through the game's own
+      gunFrameRect: the 320x200 design surface, bottom-anchored and
       stretched to the window, aligned with a fractional offset. The
       gun sits on the RIGHT, which is where the classic weapons sit.
 
@@ -155,9 +155,9 @@
 <script type="module">
 import {
   SHEET_GRID, FIRE_FRAMES, ALIGN, cellRect, keyBackground, contentBox,
-  unionBox, unionDrawRect, placeSprite, createGunMachine, muzzleLight,
+  unionBox, gunFrameRect, createGunMachine, muzzleLight,
   createRecoil, createScreenShake, createWidgetRig, widgetRigStep, labWidgetSettings, labMotion,
-  widgetTransformRect, SFX_CANDIDATES, createSfxPlayer,
+  SFX_CANDIDATES, createSfxPlayer,
 } from '/src/tools/gunLab.js';
 
 const canvas = document.getElementById('c');
@@ -470,30 +470,14 @@ function frame(now) {
     const src = useIdleArt ? art.idle.cv : art.frames[showFrame];
     const union = useIdleArt ? art.idle.box : art.union;
     const anchor = useIdleArt ? art.idle.box : art.anchor;
-    // Under the mirror the whole composite flips, so the gun's box
-    // flips with it inside the union box - otherwise the flash would
-    // swap sides and drag the weapon off its alignment.
-    const anc = state.flip
-      ? { ...anchor, x: 2 * union.x + union.w - anchor.x - anchor.w }
-      : anchor;
-    // FPSWeapon's rect, then the mod's three channels over it, then the
-    // gun's own kick - which has to come AFTER, because the mod's
-    // transform ends in a floor the rect may never rise above.
-    const base = placeSprite({
-      canvasW: canvas.width, canvasH: canvas.height,
-      frameW: anchor.w, frameH: anchor.h,
-      widthPct: state.size / 100, align: state.align, offset: state.offset,
-      flip: state.flip, offsetHeight: state.raise * (canvas.height / 200),
-    });
-    anchorRect = widgetTransformRect(base, {
-      position: rig.position, scale: rig.scale, offset: rig.offset,
-      flip: state.flip, screenHeight: canvas.height,
-      weaponOffsetHeight: state.raise * (canvas.height / 200),
-    });
-    const sx = canvas.width / 320, sy = canvas.height / 200;
-    anchorRect.x += kick.x * sx * (state.flip ? -1 : 1);
-    anchorRect.y += kick.y * sy;
-    r = unionDrawRect(anchorRect, anc, union);
+    // AUDIT 68 S08: the GAME's frame (combat/gunViewmodel.js) - anchor
+    // mirror, FPSWeapon's rect, the mod's three channels, the kick after
+    // the floor, the union - called, not restated beside it.
+    ({ rect: r, anchorRect } = gunFrameRect({
+      canvasW: canvas.width, canvasH: canvas.height, anchor, union, rig, kick,
+      flip: state.flip, widthPct: state.size / 100, align: state.align,
+      offset: state.offset, raise: state.raise,
+    }));
     ctx.save();
     if (state.flip) { ctx.translate(r.x + r.w / 2, 0); ctx.scale(-1, 1); ctx.translate(-(r.x + r.w / 2), 0); }
     ctx.drawImage(src, r.x, r.y, r.w, r.h);

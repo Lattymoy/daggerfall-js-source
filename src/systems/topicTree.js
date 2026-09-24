@@ -864,17 +864,25 @@ export class TopicTree {
         this.dictQuestInfo.delete(questID);
       }
     }
-    // the relink (:2467-2513): every Person/Place/Item resource whose
-    // symbol matches re-couples to the live object
-    for (const [questID, questInfo] of this.dictQuestInfo) {
+    for (const questID of this.dictQuestInfo.keys()) {
       const quest = this.deps.getQuest?.(questID);
-      if (!quest) continue;
-      for (const resource of quest.resources.values()) {
-        if (!resource.isPerson && !resource.isPlace && !resource.isItem) continue;
-        const info = questInfo.resourceInfo.get(resource.symbol?.name);
-        if (info) info.questResource = resource;
-      }
+      if (quest) this.relinkQuestResources(quest);
     }
     this.assembleTopiclistTellMeAbout();
+  }
+
+  /** The relink (:2467-2513) for one quest: every Person/Place/Item
+   *  resource whose symbol matches re-couples to the live object. The
+   *  load runs it over every quest; AUDIT 68 S29-share-topics: a
+   *  shared-quest resync, which rebuilds one quest's resources in place,
+   *  runs it over that one (the machine's relinkQuestTopics seam). */
+  relinkQuestResources(quest) {
+    const questInfo = this.dictQuestInfo.get(quest.uid);
+    if (!questInfo) return;
+    for (const resource of quest.resources.values()) {
+      if (!resource.isPerson && !resource.isPlace && !resource.isItem) continue;
+      const info = questInfo.resourceInfo.get(resource.symbol?.name);
+      if (info) info.questResource = resource;
+    }
   }
 }

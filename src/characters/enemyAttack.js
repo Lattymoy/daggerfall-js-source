@@ -77,16 +77,27 @@ export class EnemyAttack {
     // expects a live drain on a foe to bite. A number captured at
     // spawn cannot drain; callers that own the entity pass a THUNK.
     this._liveSpeed = typeof liveSpeed === 'function' ? liveSpeed : () => liveSpeed;
-    this.playerLevel = playerLevel;
+    // AUDIT 68 S04-melee-timer-stale-level: ResetMeleeTimer reads
+    // PlayerEntity.Level live (EnemyAttack.cs:117) - the same class of
+    // capture AUDIT 39 fixed for LiveSpeed. Reflexes is set at chargen
+    // only, so it stays a plain field.
+    this._playerLevel = typeof playerLevel === 'function' ? playerLevel : () => playerLevel;
     this.reflexes = reflexes;
     this.rolls = rolls;   // ENGINE-PRNG: DoRangedAttack's Random.value + the strike/timer picks
     this.meleeTimer = 0;
     this._classicTimer = 0;
     this.firedRanged = false;   // C-slice: WHICH decision started the running swing
+    // AUDIT 68 S04-strike-edge-cut: one per started swing - the hosts'
+    // strike edge. A cut that restarts the machine inside one update()
+    // never shows the hosts an Idle frame, so a state edge missed it.
+    this.swingSeq = 0;
   }
 
   /** EnemyAttack.cs:70 - a READ, not a field, so nothing can freeze it. */
   get liveSpeed() { return this._liveSpeed(); }
+
+  /** EnemyAttack.cs:117 - PlayerEntity.Level, read at every reset. */
+  get playerLevel() { return this._playerLevel(); }
 
   /**
    * @param ai the foe's EnemyAI (senses + yaw + feet)
@@ -158,7 +169,7 @@ export class EnemyAttack {
         // (:587), so a swing in flight DOES hold the bow roll.
         if (!oneShot && withinYaw(ai.yaw, dx, dz, ATTACK_YAW_DEG) && this.rolls() < BOW_SHOT_CHANCE) {
           const strike = STRIKES[Math.floor(this.rolls() * STRIKES.length)];
-          if (machineAttack(this.machine, strike)) this.firedRanged = true;
+          if (machineAttack(this.machine, strike)) { this.firedRanged = true; this.swingSeq++; }
         }
         continue;
       }
@@ -187,7 +198,7 @@ export class EnemyAttack {
       if (!oneShot || this.firedRanged) {
         if (oneShot) { this.machine.state = 'Idle'; this.machine.acc = 0; }
         const strike = STRIKES[Math.floor(this.rolls() * STRIKES.length)];
-        if (machineAttack(this.machine, strike)) this.firedRanged = false;
+        if (machineAttack(this.machine, strike)) { this.firedRanged = false; this.swingSeq++; }
       }
       this.meleeTimer = resetMeleeTimer(this.playerLevel, this.reflexes, this.rolls());
     }

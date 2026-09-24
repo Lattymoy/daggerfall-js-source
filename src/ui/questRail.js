@@ -25,6 +25,8 @@
 // it from the chronicle would pull the pause menu into the chronicle's
 // chunk for four functions.
 
+import { isMainQuestName as isMainQuest } from '../systems/quest/questLists.js';   // AUDIT 68 S31-questshare-mainquest-dup: the share gates' own predicate, one home
+
 /** The token formattings that carry a printable line - questJournal's
  *  own counted set (`LINE_FORMATTINGS`). */
 export const JOURNAL_LINE_FORMATTINGS = new Set(['text', 'newline', 'highlight', 'question', 'answer']);
@@ -48,10 +50,6 @@ export function questTitleOf(name) {
   const cut = raw.replace(QUEST_KIND_LABEL, '').trim();
   return cut || raw;
 }
-
-/** The main quest is S0000* plus _BRISIEN, by its QUEST NAME - never
- *  by its display name, which a quest may spell however it likes. */
-export const isMainQuest = (questName) => /^S0000/.test(questName ?? '') || questName === '_BRISIEN';
 
 /** One filed (finished) notebook entry, parsed back into its parts.
  *  The notebook keeps only a header line and the log it filed, so the

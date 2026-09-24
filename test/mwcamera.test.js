@@ -226,10 +226,13 @@ test('MW-D30: the pitch clamp is the reference\'s own, and every host rides it',
   // camera.cpp:323-331 - +/-(PI/2 - 0.000001f). The hand-rolled +/-1.5
   // stopped the look ~4 degrees short of vertical.
   assert.equal(PITCH_LIMIT, Math.PI / 2 - 0.000001);
+  // AUDIT 68 S22: the clamp is the look filter's (lookFilter.js), and a host rides it by driving its camera through
+  // one - an import of PITCH_LIMIT the host never read satisfied this pin while proving nothing.
+  assert.match(readFileSync(new URL('../src/player/lookFilter.js', import.meta.url), 'utf8'), /Math\.min\(PITCH_LIMIT, cam\.pitch \+ this\.residualPitch\)/);
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js', 'src/scenes/interior.js']) {
     const src = readFileSync(new URL(`../${host}`, import.meta.url), 'utf8');
     assert.ok(!/Math\.max\(-1\.5, Math\.min\(1\.5,/.test(src), `${host} clamps at PITCH_LIMIT, not 1.5`);
-    assert.ok(/PITCH_LIMIT/.test(src), `${host} imports the one clamp`);
+    assert.ok(/const lookFilter = new LookFilter\(\);/.test(src), `${host} rides the one clamp`);
   }
 });
 

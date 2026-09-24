@@ -52,8 +52,8 @@
   {
     "name": "ACC2-6-the-oldest-slot-is-taken-to-make-room",
     "file": "server-account/src/saves.js",
-    "old": "    if ((n?.n ?? 0) >= SAVES_MAX) return { error: 'too-many-saves' };",
-    "new": "    if (false) return { error: 'too-many-saves' };",
+    "old": " OR (SELECT COUNT(*) FROM saves WHERE player_id = ?) < ?'",
+    "new": " OR (SELECT COUNT(*) FROM saves WHERE player_id = ?) <= ?'",
     "tests": [
       "test/cloudsaves.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "ACC2-8-the-announced-length-is-believed-and-nothing-else-is",
     "file": "server-account/src/index.js",
-    "old": "          if (body.byteLength > max) return no('too-large', 413, origin);",
-    "new": "          if (false) return no('too-large', 413, origin);",
+    "old": "    if (size > max) { await reader.cancel(); return null; }",
+    "new": "    if (false) { await reader.cancel(); return null; }",
     "tests": [
       "test/cloudsaves.test.js"
     ],

@@ -189,7 +189,5 @@ function encumbranceOf(entity) {
   });
 }
 
-/** Test seam. */
-export function _resetRoleplayRealism() { _installed = false; }
 export const roleplayRealismInstalled = () => _installed;
 export { rrEnabled };

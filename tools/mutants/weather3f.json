@@ -2,7 +2,7 @@
  {"name": "WEATHER3f-ground-skips-thunder", "file": "src/systems/weatherSim.js",
   "old": "    if (word !== 'rain' && word !== 'thunder') return word;", "new": "    if (word !== 'rain') return word;", "tests": ["test/weather3f_audit.test.js"]},
  {"name": "WEATHER3f-squall-strikes", "file": "src/systems/distantStorms.js",
-  "old": "        if (ground && ground('thunder', s.x, s.z, minutes) !== 'thunder') continue;", "new": "", "tests": ["test/weather3f_audit.test.js"]},
+  "old": "        if (ground && ground('thunder', s.x, s.z, minutes) !== 'thunder') continue;", "new": "", "tests": ["test/weather3f_audit.test.js", "test/disc20.test.js"]},
  {"name": "WEATHER3f-memo-wiped-whole", "file": "src/systems/weatherMap.js",
   "old": "  if (memo.size >= BIRTHS_MEMO) { let drop = BIRTHS_MEMO >> 2; for (const k of memo.keys()) { memo.delete(k); if (--drop <= 0) break; } }", "new": "  if (memo.size >= BIRTHS_MEMO) memo.clear();", "tests": ["test/weather3f_audit.test.js"]},
  {"name": "WEATHER3f-flag-spent-first", "file": "src/systems/weatherSim.js",

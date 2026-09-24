@@ -17,12 +17,13 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
-  WEAPON_SKILL_BY_TEMPLATE, weaponSkillUsed, attackSkillOf, isBowWeapon,
+  weaponSkillUsed, attackSkillOf, isBowWeapon,
   hasBowAttack, equipEnemy, SWING_WEAPON_FATIGUE_LOSS, tallySwingSkills,
   backstabChanceOf, zeroDamageHitSound,
   PARRY_1, CORPSE_ACTIVATION_DISTANCE,
 } from '../src/scenes/hostCombat.js';
 import { SKILLS, WEAPON_SKILL } from '../src/systems/skills.js';
+import { WEAPON_SKILL_USED } from '../src/characters/weapons.js';
 import { ENEMY_GROUPS, bonusOrPenaltyByEnemyType } from '../src/combat/formulas.js';
 import { tickPlayerMinutes } from '../src/systems/worldTick.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
@@ -50,7 +51,9 @@ const allHosts = () => HOSTS.map((n) => [n, hostSrc(n)]);
 
 test('audit18: weaponSkillUsed is GetWeaponSkillUsed/GetWeaponSkillIDAsShort, verbatim by template', () => {
   // ItemEnums.cs Weapons 113..130, mapped through ProficiencyFlags.
-  assert.deepEqual(WEAPON_SKILL_BY_TEMPLATE, {
+  // AUDIT 68 S21-weapon-skill-table-testonly: the ONE table, read at its home (hostCombat's derived object copy had
+  // no production reader and is gone).
+  assert.deepEqual(Object.fromEntries(WEAPON_SKILL_USED), {
     113: SKILLS.ShortBlade, 114: SKILLS.ShortBlade, 115: SKILLS.BluntWeapon,
     116: SKILLS.ShortBlade, 117: SKILLS.ShortBlade, 118: SKILLS.LongBlade,
     119: SKILLS.LongBlade, 120: SKILLS.LongBlade, 121: SKILLS.LongBlade,
@@ -481,7 +484,8 @@ test('audit18: the dungeon spell map keeps the FIRST duplicate, as DFU does', { 
   // The LOADER must build the first-wins map. G4 moved it out of
   // dungeonContext into the shared one, so the pin follows the law
   // rather than the file it used to sit in.
-  assert.ok(/if \(!byIndex\.has\(sp\.index\)\) byIndex\.set\(sp\.index, sp\);/.test(hostSrc('shared.js')));
+  // AUDIT 68 S12-spellsstd-dup: through spellsStd.js's one fold, not a copy of it
+  assert.ok(/spellsByIndexMap\(readSpellsStd\(await fetch\('SPELLS\.STD'\)\)\)/.test(hostSrc('shared.js')));
   assert.equal(/new Map\(readSpellsStd\(/.test(hostSrc('shared.js')), false, 'the last-wins fold is gone');
 });
 

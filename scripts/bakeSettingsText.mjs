@@ -12,14 +12,19 @@
 // `-` starts a comment, blank lines ignored. A key ending `Info` is
 // the TOOLTIP for the key without that suffix.
 // Run:  node scripts/bakeSettingsText.mjs
-// test/settingsText.test.js pins baked === vendored.
+// test/settingsText.test.js pins baked === vendored. Importing the
+// parser does not bake (AUDIT 68 S01-bake-on-import-race).
 import { readFileSync, writeFileSync } from 'node:fs';
+import { isMain } from '../tools/lib/isMain.mjs';
 
 export function parseSettingsText(text) {
   const out = {};
   for (const raw of String(text).split(/\r?\n/)) {
     const line = raw.trim();
     if (!line) continue;
+    // AUDIT 68 S01-settingstext-labels-dead: DFU's Table.cs skips `-`
+    // comment lines and reads `schema:` as the schema, never as a row.
+    if (line.startsWith('-') || /^schema:/i.test(line)) continue;
     const c = line.indexOf(',');
     if (c < 0) continue;
     const key = line.slice(0, c).trim();
@@ -41,6 +46,7 @@ export function splitLabels(table) {
   return { labels, info };
 }
 
+if (isMain(import.meta.url)) {
 const table = parseSettingsText(readFileSync(new URL('../vendor/dfu-settings/GameSettings.txt', import.meta.url), 'utf8'));
 const { labels, info } = splitLabels(table);
 const obj = (o) => Object.entries(o).map(([k, v]) => `  ${JSON.stringify(k)}: ${JSON.stringify(v)},`).join('\n');
@@ -62,3 +68,4 @@ ${obj(info)}
 });
 `);
 console.log(`baked ${Object.keys(labels).length} labels + ${Object.keys(info).length} tooltips`);
+}

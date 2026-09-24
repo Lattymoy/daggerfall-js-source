@@ -12,7 +12,7 @@
     "name": "QS6-the-release-of-a-hold-performs-the-slot-too",
     "file": "src/systems/quickslots.js",
     "old": "      if (!st.cycled) onTap?.(slot);",
-    "new": "      onTap?.(slot);",
+    "new": "      onTap?.(slot); if (!st.cycled) {}",
     "tests": [
       "test/qs6_spellslot.test.js"
     ]
@@ -295,8 +295,8 @@
   {
     "name": "QS6-F2-a-disarmed-hold-still-performs-on-release",
     "file": "src/systems/quickslots.js",
-    "old": "const disarm = () => ({ down: true, ms: 0, next: Infinity, cycled: true });",
-    "new": "const disarm = () => ({ down: true, ms: 0, next: Infinity, cycled: false });",
+    "old": "const disarm = () => ({ down: true, ms: 0, next: Infinity, cycled: true, disarmed: true });",
+    "new": "const disarm = () => ({ down: true, ms: 0, next: Infinity, cycled: false, disarmed: true });",
     "tests": [
       "test/qs6_spellslot.test.js"
     ]
@@ -304,8 +304,8 @@
   {
     "name": "QS6-F2-a-disarmed-hold-walks-the-book-under-the-window",
     "file": "src/systems/quickslots.js",
-    "old": "const disarm = () => ({ down: true, ms: 0, next: Infinity, cycled: true });",
-    "new": "const disarm = () => ({ down: true, ms: 0, next: 0, cycled: true });",
+    "old": "const disarm = () => ({ down: true, ms: 0, next: Infinity, cycled: true, disarmed: true });",
+    "new": "const disarm = () => ({ down: true, ms: 0, next: 0, cycled: true, disarmed: true });",
     "tests": [
       "test/qs6_spellslot.test.js"
     ]

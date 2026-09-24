@@ -174,8 +174,8 @@
   {
     "name": "AD-B3-inbound-trade-gate-shared",
     "file": "src/net/online.js",
-    "old": "        const g = tradeInGate(this._inTradeBuckets.get(m.id) ?? null, now);\n        this._inTradeBuckets.set(m.id, g.bucket);",
-    "new": "        const g = tradeInGate(this._inTradeBuckets.get('*') ?? null, now);\n        this._inTradeBuckets.set('*', g.bucket);",
+    "old": "    const g = gate(buckets.get(m.id) ?? null, now);\n    buckets.set(m.id, g.bucket);",
+    "new": "    const g = gate(buckets.get('*') ?? null, now);\n    buckets.set('*', g.bucket);",
     "tests": [
       "test/auditdrops.test.js"
     ]

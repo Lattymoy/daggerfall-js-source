@@ -76,7 +76,7 @@ test('audit24 formats: MapsFile.getRegionIndex is PlayerGPS\'s politic derivatio
 
 test('audit24 formats: the by-NAME region lookup still exists - the -At suffix is load-bearing', () => {
   // AUDIT 24's own bug. This derivation shipped as `getRegionIndex`,
-  // colliding with the getRegionIndex(NAME) at mapsFile.js:298 - and a
+  // colliding with the getRegionIndex(NAME) at mapsFile.js:300 - and a
   // JS class body keeps the LAST definition, so the by-name lookup
   // simply vanished and getRegionByName / getLocationByName began
   // handing a region NAME in as a map pixel x. Nothing failed, because

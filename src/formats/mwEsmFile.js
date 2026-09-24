@@ -79,6 +79,12 @@ export const MW_BODY_PARTS = Object.freeze([
 ]);
 export const BODY_TYPE = Object.freeze({ skin: 0, clothing: 1, armor: 2 });
 
+/** Rule 1: a first-person body part is a RECORD whose id ends in "1st"
+ *  (loadbody.cpp:85-88) - NOT a mesh filename with .1st spliced in, which
+ *  is the transform the reverted arc applied to the MODL path. Here, with
+ *  the BODY reader, so both BODY sweeps ask one question (AUDIT 68). */
+export const isFirstPersonId = (id) => String(id).toLowerCase().endsWith('1st');
+
 function decodeBody(rec) {
   const out = { id: null, model: null, race: null, part: -1, vampire: 0, female: false, playable: true, kind: -1 };
   for (const sub of subrecords(rec.data)) {

@@ -85,8 +85,10 @@ not vendored - DFU's "not loaded"). So:
   numbers) is on when **this mod's** `Enabled` is on and the overhaul's
   is - the `pcaao.meanerMonsters` switch is gone.
 - The overhaul's Roleplay Realism archery arm reads
-  `roleplayRealism/advancedArchery` - undefined until that mod is
-  vendored - and the `pcaao.rolePlayRealismArchery` switch is gone.
+  `roleplay-realism/Enabled` and `roleplay-realism/advancedArchery` -
+  the vendored mod's own switches (AUDIT 68: the placeholder
+  `roleplayRealism` key was never declared) - and the
+  `pcaao.rolePlayRealismArchery` switch is gone.
 - **Order.** PCAAO's manifest lists Meaner Monsters as a dependency, so
   DFU Awakes Meaner Monsters first and the overhaul's InitMod writes
   over it: with both on, the overhaul's values win wherever both write

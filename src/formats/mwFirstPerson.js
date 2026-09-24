@@ -163,22 +163,18 @@ const zstr = (bytes, s, n) => {
  *  copy is exactly the duplicate-declaration the one-home audit exists to
  *  catch - and it caught it. Re-exported so this module's own API is
  *  unchanged for its page and its pins. */
-export { MW_BODY_PARTS } from './mwEsmFile.js';
-import { MW_BODY_PARTS } from './mwEsmFile.js';
+export { MW_BODY_PARTS, isFirstPersonId } from './mwEsmFile.js';
+import { MW_BODY_PARTS, isFirstPersonId } from './mwEsmFile.js';
 import FACE_TABLE from './mwFaceTable.json' with { type: 'json' };
 import { GRAPH_ROOT, ACCUM_ROOT_NAMES } from './mwSkin.js';
 import { getTextKeyTime, animVelocity } from './mwAnim.js';
+import { mat33Mul } from './mwNifMesh.js';   // AUDIT 68 S11-affine-dup: the one row-major 3x3 product
 
 /** The four parts allowed to fall back to a third-person mesh when the
  *  first-person record is missing (rule 3 / npcanimation.cpp:1217-1253).
  *  NOT the list of what gets shown - the reverted arc inverted exactly
  *  this and so rendered nothing else. */
 export const ARM_PARTS = Object.freeze(['hand', 'wrist', 'forearm', 'upperarm']);
-
-/** Rule 1: a first-person body part is a RECORD whose id ends in "1st"
- *  (loadbody.cpp:85-88) - NOT a mesh filename with .1st spliced in, which
- *  is the transform the reverted arc applied to the MODL path. */
-export const isFirstPersonId = (id) => String(id).toLowerCase().endsWith('1st');
 
 // MW-LOAD: every record reader below is ONE record off the walk, so the
 // per-kind extractors and extractArmRecords (one pass, every kind)
@@ -1052,6 +1048,26 @@ export function overlaySampler(sampleTrack, clock) {
   return (track, time) => (track && track.__overlay ? sampleTrack(track.__overlay, at()) : sampleTrack(track, time));
 }
 
+/** MW-D29: THE WORN HALF, loadarmo.hpp's PartReferenceList - ONE
+ *  structure on ARMO and CLOT, so one reader (AUDIT 68
+ *  S11-armo-clot-parts-dup). An ARMO/CLOT MODL is the GROUND mesh - the
+ *  thing a dropped cuirass looks like - and the worn shape is a list of
+ *  PART REFERENCES: INDX (one byte, the sided PartReferenceType enum)
+ *  opens a reference, then BNAM names the male BODY record and CNAM the
+ *  female one, either optional. Reading MODL as the worn mesh would
+ *  dress the player in ground clutter, which is this format's byte-eight
+ *  trap. Any other subrecord is not this reader's. */
+function readPartRef(bytes, sub, e, kind) {
+  if (sub.name === 'INDX') {
+    if (sub.len !== 1) throw new Error(`${kind} ${e.id}: INDX is ${sub.len} bytes`);
+    e.parts.push({ part: bytes[sub.start], male: null, female: null });
+  } else if (sub.name === 'BNAM' && e.parts.length) {
+    e.parts[e.parts.length - 1].male = zstr(bytes, sub.start, sub.len).toLowerCase();
+  } else if (sub.name === 'CNAM' && e.parts.length) {
+    e.parts[e.parts.length - 1].female = zstr(bytes, sub.start, sub.len).toLowerCase();
+  }
+}
+
 /** MW-D30: the CLOT records - the ARMO reader's twin, plus CTDT's
  *  TYPE, which the composer needs twice over: DF garments resolve to
  *  MW clothing BY TYPE (a shirt is any CLOT of type 2, id-sorted),
@@ -1070,14 +1086,7 @@ function readClothing(bytes, rec) {
     else if (sub.name === 'CTDT') {
       if (sub.len !== 12) throw new Error(`CLOT ${e.id}: CTDT is ${sub.len} bytes`);
       e.type = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 4).getUint32(0, true);
-    } else if (sub.name === 'INDX') {
-      if (sub.len !== 1) throw new Error(`CLOT ${e.id}: INDX is ${sub.len} bytes`);
-      e.parts.push({ part: bytes[sub.start], male: null, female: null });
-    } else if (sub.name === 'BNAM' && e.parts.length) {
-      e.parts[e.parts.length - 1].male = zstr(bytes, sub.start, sub.len).toLowerCase();
-    } else if (sub.name === 'CNAM' && e.parts.length) {
-      e.parts[e.parts.length - 1].female = zstr(bytes, sub.start, sub.len).toLowerCase();
-    }
+    } else readPartRef(bytes, sub, e, 'CLOT');
   }
   return e.id && e.model ? e : null;
 }
@@ -1124,22 +1133,7 @@ function readArmor(bytes, rec) {
     else if (sub.name === 'MODL') e.model = zstr(bytes, sub.start, sub.len).replace(/\\/g, '/').toLowerCase();
     else if (sub.name === 'FNAM') e.name = zstr(bytes, sub.start, sub.len);
     else if (sub.name === 'ENAM') e.enchanted = true;
-    // MW-D29: THE WORN HALF. An ARMO's MODL is the GROUND mesh - the
-    // thing a dropped cuirass looks like - and the worn shape is a
-    // list of PART REFERENCES: INDX (one byte, the sided
-    // PartReferenceType enum) opens a reference, then BNAM names the
-    // male BODY record and CNAM the female one, either optional
-    // (loadarmo.hpp's PartReferenceList; same layout on CLOT).
-    // Reading MODL as the worn mesh would dress the player in
-    // ground clutter, which is this format's byte-eight trap.
-    else if (sub.name === 'INDX') {
-      if (sub.len !== 1) throw new Error(`ARMO ${e.id}: INDX is ${sub.len} bytes`);
-      e.parts.push({ part: bytes[sub.start], male: null, female: null });
-    } else if (sub.name === 'BNAM' && e.parts.length) {
-      e.parts[e.parts.length - 1].male = zstr(bytes, sub.start, sub.len).toLowerCase();
-    } else if (sub.name === 'CNAM' && e.parts.length) {
-      e.parts[e.parts.length - 1].female = zstr(bytes, sub.start, sub.len).toLowerCase();
-    }
+    else readPartRef(bytes, sub, e, 'ARMO');   // MW-D29: the worn half
   }
   return e.id && e.model ? e : null;
 }
@@ -1578,31 +1572,37 @@ export function playerBodyRows(parts, race, female, { beast = false, faceIndex =
   // the archives do not carry falls back to the walk (never traps),
   // and the row's verdict says which happened.
   const curated = faceTable?.[want]?.[female ? 'female' : 'male']?.[String(faceIndex | 0)] ?? null;
+  // The sex law, list-shaped: the matching sex's pool, else the male
+  // pool retail relies on - never a mix, or the index would walk across
+  // sexes. AUDIT MW-A F2: the sort and the index are the FACE'S law and
+  // no one else's. Head and hair sort by id so a save's face survives
+  // any archive arrangement; the sweep slots above ride
+  // resolveBodyParts, the reference's own LAST-wins walk, untouched.
+  // AUDIT 68 S11-facepools-dup: facePools IS that law - the pools the
+  // matcher measured are the pools walked here, by construction.
+  const pools = facePools(parts, race, female);
+  // AUDIT 68 S11-faceid-case: a BODY id keeps its raw case (the walk's
+  // sort order is the save-stable law), so a wanted id - the curated
+  // table's, or the matcher's raw-case verdict - is compared without it.
+  const byId = (pool, id) => {
+    const w = String(id || '').toLowerCase();
+    return w ? pool.find((p) => String(p.id).toLowerCase() === w) ?? null : null;
+  };
   for (const slot of ['head', 'hair']) {
     const forSlot = parts.filter((p) => p.race === want && p.slot === slot
       && p.skin && p.playable && !p.firstPerson);
-    // The sex law, list-shaped: the matching sex's pool, else the male
-    // pool retail relies on - never a mix, or the index would walk
-    // across sexes.
-    const sexed = forSlot.filter((p) => p.female === !!female);
-    const pool = sexed.length ? sexed : forSlot.filter((p) => !p.female);
-    // AUDIT MW-A F2: the sort and the index are the FACE'S law and no
-    // one else's. Head and hair sort by id so a save's face survives
-    // any archive arrangement; the sweep slots above ride
-    // resolveBodyParts, the reference's own LAST-wins walk, untouched.
+    const sorted = slot === 'head' ? pools.heads : pools.hairs;
     let chosen = null;
     let how = null;
-    if (pool.length) {
-      const sorted = pool.slice().sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    if (sorted.length) {
       const wantId = curated ? String(curated[slot] || '').toLowerCase() : '';
-      chosen = wantId ? sorted.find((p) => p.id === wantId) ?? null : null;
+      chosen = byId(sorted, wantId);
       how = chosen ? 'curated' : null;
       // MW-D35 (parallel arc): the MEASURED match sits between the
       // hand-curated table and the walk - a likeness computed from the
       // player's own data, named as such on the row.
       if (!chosen && faceMatch?.[slot]) {
-        const mid = String(faceMatch[slot]).toLowerCase();
-        chosen = sorted.find((p) => p.id === mid) ?? null;
+        chosen = byId(sorted, faceMatch[slot]);
         how = chosen ? 'matched to the portrait' : null;
       }
       if (!chosen) {
@@ -1899,8 +1899,6 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts, boneSources
   } catch (err) {
     return { ok: false, stage: 'skeleton', error: err.message };
   }
-  const rootRef = [...skeleton.nodes.entries()].find(([, n]) => n.parent < 0)?.[0] ?? -1;
-
   const pieces = [];
   const notes = [];
   const effects = [];   // MAC-Q
@@ -1924,7 +1922,6 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts, boneSources
     effects,   // MAC-Q: the parts' particle systems, placed like their rigid shapes
     notes,
     skeleton,
-    rootRef,
     // The resolved readers ride along so the per-frame call is SYNCHRONOUS.
     // A dynamic import inside a requestAnimationFrame body is a promise per
     // frame; this function already paid for them once.
@@ -2306,15 +2303,6 @@ export function neckRotateFactor(aim = 0) {
   return FP_NECK_ROTATE_FACTOR + FP_AIM_SPAN * aim;
 }
 
-const mul33 = (p, l) => {
-  const a = new Float32Array(9);
-  for (let r = 0; r < 3; r++) {
-    for (let c = 0; c < 3; c++) {
-      a[r * 3 + c] = p[r * 3] * l[c] + p[r * 3 + 1] * l[3 + c] + p[r * 3 + 2] * l[6 + c];
-    }
-  }
-  return a;
-};
 const transpose33 = (m) => Float32Array.from([m[0], m[3], m[6], m[1], m[4], m[7], m[2], m[5], m[8]]);
 
 /**
@@ -2366,7 +2354,7 @@ export function applyFirstPersonNeck(skeleton, pose, rootRef, skelMats, pitch, a
   const local = pose.get(ref) ?? skeleton.nodes.get(ref).rest;
   const w = rotationOf(world.a);
   const rotate = rotNegX(pitch * neckRotateFactor(aim));
-  const rotation = mul33(mul33(mul33(w, rotate), transpose33(w)), local.rotation);
+  const rotation = mat33Mul(mat33Mul(mat33Mul(w, rotate), transpose33(w)), local.rotation);
   // RULE 32(a), and it rides the SAME controller as the pitch because it
   // is the same line of the same function:
   //   matrix.setTrans(matrix.getTrans() + worldOrientInverse * mOffset);
@@ -2647,10 +2635,7 @@ export function sourceVelocityOf(source, group) {
 
 export function sourcesVelocity(sources, group) {
   const list = sources || [];
-  const velOf = (so) => {
-    const acc = ACCUM_ROOT_NAMES.find((n) => so.trackMap && so.trackMap.has && so.trackMap.has(n));
-    return acc ? animVelocity(so.keys, so.trackMap.get(acc), group) : 0;
-  };
+  const velOf = (so) => sourceVelocityOf(so, group);   // AUDIT 68 S11-velof-dup: one source's velocity, one home
   let i = list.length - 1;
   for (; i >= 0; i--) {
     if (getTextKeyTime(list[i].keys, `${group}: start`) >= 0
@@ -2753,7 +2738,7 @@ export function clipSweepTimes(sources, idleState, { perClip = 9 } = {}) {
   const spans = [];
   for (const so of sources ?? []) {
     // A source's keys are normalizeTextKeys' ARRAY of {time,text} - the
-    // port's one text-key shape (mwAnim.js:411), handed over by clipReport.
+    // port's one text-key shape (mwAnim.js:312), handed over by clipReport.
     const keys = so?.keys;
     if (!Array.isArray(keys)) continue;
     const starts = new Map();

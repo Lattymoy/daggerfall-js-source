@@ -119,8 +119,10 @@ marker file and REL1's gate are retired: ONE shell variable names the
 number and both the release tag and the `npm version` stamp read it,
 which is the whole of REL1's lesson with the second number removed. The
 tag-push and dispatch doors stay as manual overrides and take their
-version from the tag they name. Runs queue in one concurrency group
-rather than cancel - a release half uploaded is worse than one late.
+version from the tag they name. A new tag is cut at the commit the
+installers were built from (`target_commitish`, AUDIT 68), never at
+wherever main's head has moved to by upload time. Runs queue in one
+concurrency group rather than cancel - a release half uploaded is worse than one late.
 The cost is what it is: three OS builds per merge, and the desktop
 update notice fires per merge, exactly as the site's own new-build
 notice (SRV-N2) does. Pinned in `test/updatecheck.test.js`. The
@@ -139,8 +141,10 @@ collided with electron-builder's `app/release` OUTPUT directory on
 case-insensitive filesystems - the windows and macos legs of the
 first release died on mkdir EEXIST while ubuntu sailed; the same
 finding class Audit DA recorded for pref keys, biting the infra.
-Whichever door, the ubuntu job carries the whole `npm run check`
-gate, all three OS runners package installers (AppImage, NSIS +
+Whichever door, a `gate` job runs the whole `npm run check` and
+every OS leg `needs` it (AUDIT 68: it had been a step in the ubuntu
+leg alone, which the other two never waited for), all three OS
+runners package installers (AppImage, NSIS +
 portable exe, dmg - unsigned; macOS players right-click-Open the
 first time), and the artifacts attach to a GitHub Release at that
 tag. **REL2 (2026-09-21): "NSIS + portable exe" was a claim, not a

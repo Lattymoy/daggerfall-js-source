@@ -96,6 +96,7 @@ test('MAC4: the five mobile producers write the record as `record#frame` and nev
     const m = shape.exec(src);
     assert.doesNotMatch(m[0], /batch\.frame\s*=/, `${file}: ...and the frame field is never written (the key must follow the record)`);
   }
-  const r = rd('src/render/renderer.js');
+  // AUDIT 68 S16-bbkey-stale-shadow-reach: the key's one home is billboardKey.js - the pass and both replays call it
+  const r = rd('src/render/billboardKey.js');
   assert.match(r, /if \(b\._bbKey == null \|\| b\._bbKeyRecord !== b\.record \|\| b\._bbKeyFrame !== b\.frame \|\| b\._bbKeyArchive !== b\.archive\) \{\s*\n\s*b\._bbKeyRecord = b\.record; b\._bbKeyFrame = b\.frame; b\._bbKeyArchive = b\.archive;/, 'the key follows every field it is made of');
 });

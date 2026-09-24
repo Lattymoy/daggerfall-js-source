@@ -263,15 +263,6 @@
   ]
  },
  {
-  "name": "AUDIT-GRASSPX-the-scatter-path-keeps-the-five-quad-blade",
-  "file": "src/render/labGrass.js",
-  "old": "      const one = this._oneQuad, verts = one ? this.vertsFar : this.verts;",
-  "new": "      const one = false, verts = this.verts;",
-  "tests": [
-   "test/grasspx.test.js"
-  ]
- },
- {
   "name": "AUDIT-GRASSPX-the-cell-submits-every-blade-in-pixel",
   "file": "src/render/labGrass.js",
   "old": "      const m = this._oneQuad ? Math.ceil(n / PX_BLADES_PER_TUFT) : n;",
@@ -337,8 +328,8 @@
  {
   "name": "AUDIT-GRASSPX-the-renderer-ignores-the-stages-it-is-handed",
   "file": "src/render/labGrass.js",
-  "old": "    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, LAB_GRASS_HEAD + stages.fs));",
-  "new": "    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, LAB_GRASS_HEAD + GAME_GRASS_FS));",
+  "old": ", LAB_GRASS_HEAD + stages.fs);   // GRASS-PX: the lab's text under the declared edits",
+  "new": ", LAB_GRASS_HEAD + GAME_GRASS_FS);   // GRASS-PX: the lab's text under the declared edits",
   "tests": [
    "test/grasspx.test.js"
   ]

@@ -5,8 +5,10 @@
 // caught in the item templates, so the bake reads the real bytes.
 // Run:  node scripts/bakeSettings.mjs
 // test/settings.test.js pins baked === vendored, so a drifted bake
-// fails rather than silently shipping stale defaults.
+// fails rather than silently shipping stale defaults. Importing the
+// parser does not bake (AUDIT 68 S01-bake-on-import-race).
 import { readFileSync, writeFileSync } from 'node:fs';
+import { isMain } from '../tools/lib/isMain.mjs';
 
 /** DFU's ini shape: [Section] headers, key=value lines, ';' comments.
  *  The shipped file mixes `Key=Value` and `Key = Value`, so both
@@ -27,6 +29,7 @@ export function parseIni(text) {
   return out;
 }
 
+if (isMain(import.meta.url)) {
 const ini = parseIni(readFileSync(new URL('../vendor/dfu-settings/defaults.ini.txt', import.meta.url), 'utf8'));
 const body = Object.entries(ini).map(([section, keys]) => {
   const rows = Object.entries(keys).map(([k, v]) => `    ${JSON.stringify(k)}: ${JSON.stringify(v)},`).join('\n');
@@ -47,3 +50,4 @@ ${body}
 `);
 const n = Object.values(ini).reduce((a, k) => a + Object.keys(k).length, 0);
 console.log(`baked ${n} settings across ${Object.keys(ini).length} sections`);
+}

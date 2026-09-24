@@ -56,7 +56,8 @@
 //     the culling above is what makes 24 face replays cheap.
 
 import { lookAt, multiply, ortho, perspective } from '../world/mat4.js';
-import { spherePlanes, transformSphere, recordVisible, subMeshVisible, batchVisible, sphereInPlanes } from './bounds.js';   // EL5: the cull
+import { spherePlanes, transformSphere, recordVisible, subMeshVisible, batchVisible, sphereInPlanes, batchSphere, ZERO_ORIGIN } from './bounds.js';   // EL5: the cull
+import { billboardKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-shadow-reach: re-keyed here, however the batch reached the records
 import { aabbOutside } from './frustum.js';   // SHADOW-REACH: a host's box against the cascades
 
 /** The sun map: two cascades of this size, as a depth texture array. */
@@ -501,6 +502,15 @@ uniform int uShadowIndex[${SHADOW_POINT_CASTERS}];         // the lantern each c
 uniform int uCasterOf[${SHADOW_CASTER_TABLE}];              // EL8: light i's caster slot, -1 for none - one lookup (DISC15: SHADOW_POINT_CASTERS + j for lo slot j)
 uniform sampler2DArrayShadow uPointShadowLo;                 // DISC15: the lo tier - six layers per slot, the room's static casters
 ${faceBasisGlsl()}
+// EL5: the cube's face of direction d by its major axis (m, the distance along it), and d's uv on that face by the
+// face's basis (pointFaceMatrices' own lookAt axes). AUDIT 68 S17-shadowpass-layer-dup: the four readers' one pick.
+vec2 cubeFaceUv(vec3 d, out int face, out float m) {
+  vec3 a = abs(d);
+  if (a.x >= a.y && a.x >= a.z) { face = d.x > 0.0 ? 0 : 1; m = a.x; }
+  else if (a.y >= a.z) { face = d.y > 0.0 ? 2 : 3; m = a.y; }
+  else { face = d.z > 0.0 ? 4 : 5; m = a.z; }
+  return vec2(dot(FACE_X[face], d), dot(FACE_Y[face], d)) / max(m, 1e-4) * 0.5 + 0.5;
+}
 float sunShadowTap(vec3 wp, vec3 n, bool soft) {
   if (uSunShadowParams.w <= 0.0) return 1.0;
   float d = length(wp - uCamPos);
@@ -559,12 +569,8 @@ float pointShadowAt(int k, vec3 wp, vec3 n) {
   float far = P.w;
   if (far <= 0.0) return 1.0;
   vec3 d = (wp + n * 0.05) - P.xyz;
-  vec3 a = abs(d);
   int face; float m;
-  if (a.x >= a.y && a.x >= a.z) { face = d.x > 0.0 ? 0 : 1; m = a.x; }
-  else if (a.y >= a.z) { face = d.y > 0.0 ? 2 : 3; m = a.y; }
-  else { face = d.z > 0.0 ? 4 : 5; m = a.z; }
-  vec2 uv = vec2(dot(FACE_X[face], d), dot(FACE_Y[face], d)) / max(m, 1e-4) * 0.5 + 0.5;
+  vec2 uv = cubeFaceUv(d, face, m);
   float layer = float(k * 6 + face);
   // AUDIT-EL F15: THE BIAS IS IN WORLD UNITS - the depth is hyperbolic, and a
   // constant 0.002 off it was half a unit at five units and four at fifteen:
@@ -583,12 +589,8 @@ float pointShadowOne(int k, vec3 wp) {
   float far = P.w;
   if (far <= 0.0) return 1.0;
   vec3 d = wp - P.xyz;
-  vec3 a = abs(d);
   int face; float m;
-  if (a.x >= a.y && a.x >= a.z) { face = d.x > 0.0 ? 0 : 1; m = a.x; }
-  else if (a.y >= a.z) { face = d.y > 0.0 ? 2 : 3; m = a.y; }
-  else { face = d.z > 0.0 ? 4 : 5; m = a.z; }
-  vec2 uv = vec2(dot(FACE_X[face], d), dot(FACE_Y[face], d)) / max(m, 1e-4) * 0.5 + 0.5;
+  vec2 uv = cubeFaceUv(d, face, m);
   return texture(uPointShadow, vec4(uv, float(k * 6 + face), cubeDepthOfM(m - ${SHADOW_POINT_BIAS}, far)));
 }
 // DISC15: the far a lo map is drawn to - shadowFarFor, term for term (a division by four is exact in binary, so the
@@ -601,12 +603,8 @@ float pointShadowLoAt(int j, vec4 L, vec3 wp, vec3 n) {
   vec3 d0 = wp - L.xyz;
   float texel = 2.0 * max(max(abs(d0.x), abs(d0.y)), abs(d0.z)) / ${SHADOW_LO_SIZE}.0;
   vec3 d = d0 + n * max(0.05, 1.5 * texel);
-  vec3 a = abs(d);
   int face; float m;
-  if (a.x >= a.y && a.x >= a.z) { face = d.x > 0.0 ? 0 : 1; m = a.x; }
-  else if (a.y >= a.z) { face = d.y > 0.0 ? 2 : 3; m = a.y; }
-  else { face = d.z > 0.0 ? 4 : 5; m = a.z; }
-  vec2 uv = vec2(dot(FACE_X[face], d), dot(FACE_Y[face], d)) / max(m, 1e-4) * 0.5 + 0.5;
+  vec2 uv = cubeFaceUv(d, face, m);
   float layer = float(j * 6 + face);
   float ref = cubeDepthOfM(m - max(${SHADOW_POINT_BIAS}, texel), far);
   float t = 1.5 / ${SHADOW_LO_SIZE}.0;
@@ -619,12 +617,8 @@ float pointShadowLoAt(int j, vec4 L, vec3 wp, vec3 n) {
 float pointShadowLoOne(int j, vec4 L, vec3 wp) {
   float far = loFarOf(L.w);
   vec3 d = wp - L.xyz;
-  vec3 a = abs(d);
   int face; float m;
-  if (a.x >= a.y && a.x >= a.z) { face = d.x > 0.0 ? 0 : 1; m = a.x; }
-  else if (a.y >= a.z) { face = d.y > 0.0 ? 2 : 3; m = a.y; }
-  else { face = d.z > 0.0 ? 4 : 5; m = a.z; }
-  vec2 uv = vec2(dot(FACE_X[face], d), dot(FACE_Y[face], d)) / max(m, 1e-4) * 0.5 + 0.5;
+  vec2 uv = cubeFaceUv(d, face, m);
   float texel = 2.0 * m / ${SHADOW_LO_SIZE}.0;
   return texture(uPointShadowLo, vec4(uv, float(j * 6 + face), cubeDepthOfM(m - max(${SHADOW_POINT_BIAS}, texel), far)));
 }
@@ -682,47 +676,13 @@ export class ShadowPass {
         size: u(bb, 'uSize'), tex: u(bb, 'uTex'), flatWind: u(bb, 'uFlatWind'), sway: u(bb, 'uSway'),
       },
     };
-    // the sun map: a depth array of two layers, one framebuffer per layer
-    const sun = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D_ARRAY, sun);
-    gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 1, gl.DEPTH_COMPONENT24, SHADOW_SUN_SIZE, SHADOW_SUN_SIZE, SHADOW_CASCADES.length);
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE);
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);
-    this.sunTex = sun;
-    this.sunFbos = [];
-    for (let c = 0; c < SHADOW_CASCADES.length; c++) {
-      const fbo = gl.createFramebuffer();
-      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-      gl.framebufferTextureLayer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, sun, 0, c);
-      gl.drawBuffers([gl.NONE]);
-      gl.readBuffer(gl.NONE);
-      this.sunFbos.push(fbo);
-    }
-    // the cube map: six depth faces, one framebuffer per face
-    // EL5: the point maps - six layers per caster in ONE depth array
-    const point = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D_ARRAY, point);
-    gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 1, gl.DEPTH_COMPONENT24, SHADOW_POINT_SIZE, SHADOW_POINT_SIZE, 6 * SHADOW_POINT_CASTERS);
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE);
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);
-    this.pointTex = point;
-    this.pointFbos = [];
-    for (let l = 0; l < 6 * SHADOW_POINT_CASTERS; l++) {
-      const fbo = gl.createFramebuffer();
-      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-      gl.framebufferTextureLayer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, point, 0, l);
-      gl.drawBuffers([gl.NONE]);
-      gl.readBuffer(gl.NONE);
-      this.pointFbos.push(fbo);
-    }
+    // the sun map: a depth array of one layer per cascade, one framebuffer per layer
+    // (AUDIT 68 S17-shadowpass-layer-dup: the sun, the point and the lo tier are each a _depthArray, and all four arrays take _layerFbos)
+    this.sunTex = this._depthArray(SHADOW_SUN_SIZE, SHADOW_CASCADES.length, gl.LINEAR);
+    this.sunFbos = this._layerFbos(this.sunTex, SHADOW_CASCADES.length);
+    // EL5: the point maps - six layers per caster in ONE depth array, one framebuffer per face
+    this.pointTex = this._depthArray(SHADOW_POINT_SIZE, 6 * SHADOW_POINT_CASTERS, gl.LINEAR);
+    this.pointFbos = this._layerFbos(this.pointTex, 6 * SHADOW_POINT_CASTERS);
     // SC1: THE STATIC CACHE - the same shape again, one set of six layers per slot, blitted into the live array;
     // AUDIT SC1: made on the first frame that wants it (_ensureCache), not here - fifty megabytes of depth that
     // `?shadowcache=off` never reads were allocated all the same
@@ -766,6 +726,7 @@ export class ShadowPass {
     /** per-frame counts, for a probe */
     this.stats = { records: 0, sunDraws: 0, pointDraws: 0, culled: 0, cascadesDrawn: 0, facesDrawn: 0, staticFaces: 0, dynFaces: 0, blits: 0, cachedSlots: 0, loSlots: 0, loFaces: 0 };   // SC1: the faces split, the blits, the slots served from the cache; DISC15: the lo tier's slots and faces
     this._planes = new Float32Array(24);   // EL5: the replay's frustum
+    this._bSphere = new Float64Array(4);   // AUDIT 68 S16-batch-sphere-dup: batchSphere's scratch for the SC1 scans
     this._slotOfScratch = new Int32Array(SHADOW_POINT_CASTERS);   // SC1: rank -> slot
     this._heldCasters = new Float64Array(4 * SHADOW_POINT_CASTERS);   // DISC6: last frame's casters, by position (Float64: an exact copy of whatever the host sent, so the match by position holds)
     this._heldCasterN = 0;
@@ -797,6 +758,19 @@ export class ShadowPass {
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
     return tex;
   }
+  /** One depth-only framebuffer per layer of the array `tex` - the sun's, the point's, the lo tier's and the cache's. */
+  _layerFbos(tex, layers) {
+    const gl = this.gl, fbos = [];
+    for (let l = 0; l < layers; l++) {
+      const fbo = gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+      gl.framebufferTextureLayer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, tex, 0, l);
+      gl.drawBuffers([gl.NONE]);
+      gl.readBuffer(gl.NONE);
+      fbos.push(fbo);
+    }
+    return fbos;
+  }
   /** DISC15: room for `slots` lo maps - the array grown by SHADOW_LO_STEP (texStorage is immutable: a new array, and
    *  every slot drawn afresh), never shrunk (the next room of the session reuses it). */
   _ensureLo(slots) {
@@ -806,15 +780,7 @@ export class ShadowPass {
     gl.deleteTexture(this.loTex);
     for (const fb of this._loFbos) gl.deleteFramebuffer(fb);
     this.loTex = this._depthArray(SHADOW_LO_SIZE, 6 * want, gl.LINEAR);
-    this._loFbos = [];
-    for (let l = 0; l < 6 * want; l++) {
-      const fbo = gl.createFramebuffer();
-      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-      gl.framebufferTextureLayer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, this.loTex, 0, l);
-      gl.drawBuffers([gl.NONE]);
-      gl.readBuffer(gl.NONE);
-      this._loFbos.push(fbo);
-    }
+    this._loFbos = this._layerFbos(this.loTex, 6 * want);
     this._loCap = want;
     this._loSlotLight = new Float32Array(4 * want).fill(NaN);
     this._loSlotSig = new Int32Array(2 * want);
@@ -891,14 +857,7 @@ export class ShadowPass {
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     this.cacheTex = cache;
-    for (let l = 0; l < 6 * SHADOW_POINT_CASTERS; l++) {
-      const fbo = gl.createFramebuffer();
-      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-      gl.framebufferTextureLayer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, cache, 0, l);
-      gl.drawBuffers([gl.NONE]);
-      gl.readBuffer(gl.NONE);
-      this.cacheFbos.push(fbo);
-    }
+    this.cacheFbos = this._layerFbos(cache, 6 * SHADOW_POINT_CASTERS);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
   }
@@ -963,6 +922,7 @@ export class ShadowPass {
     const a = this._shiftAcc[this._shiftGen];
     this._shiftAcc.push([a[0] + offset[0], a[1] + offset[1], a[2] + offset[2]]);
     this._shiftGen++;
+    this._sunDrawn.fill(0);   // AUDIT 68 S17-far-cascade-shift: the held far map and its matrix are the old origin's - drawn afresh next frame (EL8's never-drawn rule)
     // AUDIT REACH: and the records IN HAND follow too - the frame's records are replayed at the next beginFrame
     // against the next frame's lights and eye (EL2), which the host has already moved; left behind, the crossing's
     // frame had no shadow at all and every cache was built twice (once empty). A batch's origin is the host's own
@@ -1110,7 +1070,7 @@ export class ShadowPass {
     this.stats.cascadesDrawn = 0; this.stats.facesDrawn = 0; this.stats.staticFaces = 0; this.stats.dynFaces = 0; this.stats.blits = 0; this.stats.cachedSlots = 0;   // SC1
     this.stats.loSlots = 0; this.stats.loFaces = 0;   // DISC15
     this.sunParams[3] = 0; this.pointParams.fill(0); this.shadowIndex.fill(-1); this.casterOf.fill(-1); this.casters = 0;
-    if (this.count === 0) { this.kind = null; this._slotLight.fill(NaN); return; }
+    if (this.count === 0) { this.kind = null; this._slotLight.fill(NaN); this._sunDrawn.fill(0); return; }   // AUDIT 68 S17-far-cascade-shift: no sun map is held past a frame that drew none
     gl.disable(gl.CULL_FACE);   // the light's projection is not the mirrored one: winding is not the world's, and both faces of an open model must cast
     gl.enable(gl.DEPTH_TEST);
     gl.depthMask(true);
@@ -1133,7 +1093,7 @@ export class ShadowPass {
       }
       for (let c = 0; c < SHADOW_CASCADES.length; c++) { this.sunParams[c] = SHADOW_CASCADES[c]; this.sunTexel[c] = sunTexelWorld(c); this._sunVPFlat.set(this.sunVP[c], c * 16); }
       this.sunParams[3] = 1;
-    }
+    } else this._sunDrawn.fill(0);   // AUDIT 68 S17-far-cascade-shift: a returning sun never reuses a map drawn at another place and time
     // EL5: THE LANTERNS CAST TOO, sun or no sun - the nearest SHADOW_POINT_CASTERS
     // of them, each into its six layers; the replays are culled to the
     // lantern's range and the face's frustum, so a caster costs what it lights
@@ -1241,8 +1201,8 @@ export class ShadowPass {
       if (r.kind === REC_BB) {
         for (const b of r.batches) {
           if (!b?.vao || b._dead || b._shDyn || b.noShadow || b.conceal || b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive)) continue;
-          const o = b.origin;
-          if (b.bounds && !spheresTouch(b.bounds[0] + (o ? o[0] : 0), b.bounds[1] + (o ? o[1] : 0) + (b.size?.h ?? 0) * 0.5, b.bounds[2] + (o ? o[2] : 0), b.bounds[3], pos[0], pos[1], pos[2], far)) continue;
+          const c = batchSphere(b, this._bSphere);   // AUDIT 68 S16-batch-sphere-dup: the replays' own sphere
+          if (c && !spheresTouch(c[0], c[1], c[2], c[3], pos[0], pos[1], pos[2], far)) continue;
           h = foldSignature(h, shId(b)); h = foldSignature(h, Math.round(b._shOx * 64) + Math.round(b._shOz * 64) * 7919); n++;
         }
         continue;
@@ -1270,8 +1230,8 @@ export class ShadowPass {
           if (!b?._shDyn || !b.vao || b._dead || b.noShadow || b.conceal) continue;
           if (b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < SHADOW_FLAT_MIN_HEIGHT) || isSpectral(b.archive)) continue;
           if (b._shSway && near === DYN_SWAY) continue;
-          const o = b.origin;
-          if (!b.bounds || spheresTouch(b.bounds[0] + (o ? o[0] : 0), b.bounds[1] + (o ? o[1] : 0) + (b.size?.h ?? 0) * 0.5, b.bounds[2] + (o ? o[2] : 0), b.bounds[3], pos[0], pos[1], pos[2], far)) { if (!b._shSway) return DYN_MOVER; near = DYN_SWAY; }
+          const c = batchSphere(b, this._bSphere);   // AUDIT 68 S16-batch-sphere-dup
+          if (!c || spheresTouch(c[0], c[1], c[2], c[3], pos[0], pos[1], pos[2], far)) { if (!b._shSway) return DYN_MOVER; near = DYN_SWAY; }
         }
         continue;
       }
@@ -1378,10 +1338,10 @@ export class ShadowPass {
           // culled) and its mutant survived, which is what said so. F5's
           // test over MESHES and terrain, at the top of this loop, is
           // untouched and still live.
-          const key = b._bbKey ?? (b.frame == null ? `${b.archive}_${b.record}` : `${b.archive}_${b.record}#${b.frame}`);
+          const key = billboardKey(b);
           const tex = f.textures.get(key);
           if (!tex) continue;
-          const o = b.origin || [0, 0, 0];
+          const o = b.origin || ZERO_ORIGIN;   // AUDIT 68 S16-v-replay-origin-alloc
           // AUDIT-EL F13: the CAMERA's depth image (the air pass) draws a flat
           // with the basis it was drawn with, off the record - the sun's basis
           // drew every tree edge-on, a sliver the AO and the glares saw through.

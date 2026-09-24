@@ -14,7 +14,7 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  EL_LANE, EL_MAX_LIGHTS, EL_CLASSIC_MAX_LIGHTS, EL_EXPOSURE, EL_WHITE, EL_LIGHT_GAIN, EL_FLAME_COLOR, EL_SCATTER,
+  EL_LANE, EL_MAX_LIGHTS, EL_EXPOSURE, EL_WHITE, EL_LIGHT_GAIN, EL_FLAME_COLOR, EL_SCATTER,
   EL_DECAL_FS,   // MAC-BUG W6
   EL_MESH_FS, EL_BB_FS, EL_TERRAIN_FS, EL_CHAR_FS, EL_FAR_RING_FS, EL_GLSL,
   enhancedLightingOn, exposureFor, elDecode, elEncode, elDecode3, elDecodeN, elAttenuation, elTonemap, elScatter,
@@ -70,7 +70,7 @@ test('EL1: the switch - the enhanced skin, the pref, and ?lighting=classic as th
   assert.equal(exposureFor('?exposure=1.2'), 1.2);
   assert.equal(exposureFor('?exposure=0'), EL_EXPOSURE, 'a non-positive exposure is the default');
   assert.equal(exposureFor('?exposure=bright'), EL_EXPOSURE, 'a non-number is the default');
-  assert.equal(EL_EXPOSURE, 1.4); assert.equal(EL_WHITE, 4); assert.equal(EL_MAX_LIGHTS, 48); assert.equal(EL_CLASSIC_MAX_LIGHTS, 16);
+  assert.equal(EL_EXPOSURE, 1.4); assert.equal(EL_WHITE, 4); assert.equal(EL_MAX_LIGHTS, 48);   // AUDIT 68 S16-classic-max-lights-dup: EL_CLASSIC_MAX_LIGHTS, read by nothing but this line, is gone - the renderer's CLASSIC_MAX_LIGHTS is the cap
 });
 
 test('EL1: the row is the Features home\'s, on by default, forced on online', () => {
@@ -147,10 +147,12 @@ test('EL1: the in-scatter integral matches a numeric integration of the point li
   // a torch two units off the ray, six units along it, the wall at 20
   const a = elScatter([2, 0, 6], 30, dir, 20, 0.05);
   assert.ok(near(a, numeric([2, 0, 6], 30, dir, 20, 0.05), 2e-3), `analytic ${a} vs numeric`);
-  // the window: a light of range 4 lights only the ray from t=2 to t=10
+  // the window: a light of range 4, two units off the ray, lights only its chord through the sphere - t0 -+ sqrt(12)
+  // (AUDIT 68 S16-elscatter-twin-drift: the GLSL's window since AUDIT VOL1; this pinned the superseded slab t0 -+ range)
   const b = elScatter([2, 0, 6], 4, dir, 20, 0.05);
+  assert.ok(near(b, numeric([2, 0, 6], 4, dir, 20, 0.05), 2e-3), `analytic ${b} vs numeric, inside the sphere alone`);
   assert.ok(b < a, 'a shorter range gives back less');
-  assert.ok(near(b, 0.05 * (Math.atan(4 / 2) - Math.atan(-4 / 2)) / 2, 1e-9), 'the closed form over [t0 - range, t0 + range]');
+  assert.ok(near(b, 0.05 * (Math.atan(Math.sqrt(12) / 2) - Math.atan(-Math.sqrt(12) / 2)) / 2, 1e-9), 'the closed form over the chord [t0 - sqrt(r^2 - h^2), t0 + sqrt(r^2 - h^2)]');
   assert.equal(elScatter([2, 0, 30], 4, dir, 20, 0.05), 0, 'a light wholly beyond the wall\'s range window contributes nothing');
   assert.equal(elScatter([2, 0, 6], 30, dir, 20, 0), 0, 'no density, no glow');
   assert.equal(elScatter([2, 0, 6], 0, dir, 20, 0.05), 0, 'no range, no glow');

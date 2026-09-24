@@ -476,14 +476,14 @@ export function createCamps({
     // save's fire stood twice (once unpackable)
     const ownIds = new Set(own().map((rec) => rec.id));
     const theirs = Array.isArray(records) ? records.filter((r) => !ownIds.has(r?.i)) : records;
-    const merged = mergeOwnerCamps(camps.filter((c) => c.owner === owner).map((c) => c.rec), owner, theirs, toScene);
-    const fresh = merged.filter((r) => r.owner === owner);
+    // AUDIT 68 S18-camps-applyowner-dead: the owner's word, parsed - every camp handed in beside it was that owner's,
+    // so the merge kept none of them, and the `before` map was written and never read
+    const fresh = mergeOwnerCamps([], owner, theirs, toScene);
     // keep a batch whose record is unchanged in place; re-stand the rest
-    const before = new Map(camps.filter((c) => c.owner === owner).map((c) => [c.rec.id, c]));
-    for (const c of [...before.values()]) {
+    for (const c of camps.filter((x) => x.owner === owner)) {
       const r = fresh.find((x) => x.id === c.rec.id);
       if (!r || r.kind !== c.rec.kind || r.pos.some((v, i) => Math.abs(v - c.rec.pos[i]) > 0.01)) drop(c);
-      else { c.rec.litUntil = r.litUntil; c.rec.wear = r.wear; c.rec.yaw = r.yaw; before.delete(c.rec.id); fresh.splice(fresh.indexOf(r), 1); }
+      else { c.rec.litUntil = r.litUntil; c.rec.wear = r.wear; c.rec.yaw = r.yaw; fresh.splice(fresh.indexOf(r), 1); }
     }
     for (const r of fresh) stand(r, { owner });
     _owners.set(owner, { at: nowMs });

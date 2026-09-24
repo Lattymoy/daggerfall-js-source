@@ -621,7 +621,7 @@ test('IF1: the four stride hosts ask ownsStride before the classic play and driv
   assert.match(dj, /inside: true, inDungeon: true,\s*centreY: player\.pos\[1\] \+ player\.height \/ 2, waterSurfaceY: surf \?\? null,/);
   // the transitions
   assert.match(wm, /immersiveFootsteps\.onTransitionInterior\(\{ buildingType: interiorBuilding\?\.buildingType \?\? null, materials: ctx\.floorMaterials \}\);/);
-  assert.equal((wm.match(/immersiveFootsteps\.onTransitionExterior\(\);/g) ?? []).length, 2, 'the building exit and the dungeon exit');
+  assert.equal((wm.match(/immersiveFootsteps\.onTransitionExterior\(\);/g) ?? []).length, 3, 'the building exit, the dungeon exit and (AUDIT 68 X3-ba-forceexit-rain) the forced exit');
   assert.equal((wm.match(/immersiveFootsteps\.onTransitionDungeonInterior\(\);/g) ?? []).length, 1);
   assert.equal((dj.match(/immersiveFootsteps\.onTransitionDungeonInterior\(\);/g) ?? []).length, 1, 'the standalone boot is the dungeon transition');
   // the landings

@@ -64,7 +64,7 @@
 import { getPref } from './uiPrefs.js';
 import { armorBodyParts, equipTableOf } from './equip.js';   // LR4: the parts a piece covers, the foe's worn table
 import { registerEntityFold, registerWeaponDamageMod, newMods, EMPTY_MODS } from './entityMods.js';   // RF1: the fold is one of the entity's, read once per channel
-import { templateByIndex, itemBaseValue } from './itemTemplates.js';
+import { templateByIndex, itemBaseValue, isAmmunition } from './itemTemplates.js';   // AUDIT 68 S27-ammo-arrow-only: the ammunition registry's home
 import { STAT_KEYS_ORDER } from './statMods.js';
 import { SKILL_NAMES, SKILL_COUNT } from './skills.js';
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';
@@ -103,7 +103,6 @@ export function rarityOf(item) {
 }
 export const rarityRank = (item) => RARITIES[rarityOf(item)].rank;
 
-const ARROW_TEMPLATE = 131;
 /** What may roll a tier: a weapon that is not an arrow, a piece of
  *  armour, a piece of jewellery. Never a quest item, an artifact, a
  *  DFU magic item (it is already Magic and keeps DFU's name), an item
@@ -112,19 +111,11 @@ const ARROW_TEMPLATE = 131;
  *  stack is not an item you compare, and promoting one ENCHANTS it,
  *  which makes it unstackable (isStackable refuses an enchanted item)
  *  - so a quiver of twenty becomes twenty rows the player has to
- *  carry one at a time. The Arrow was named by its index here; a mod
- *  that adds ammunition registers it, since this file has no business
- *  knowing what a Dwemer Pellet is.
+ *  carry one at a time. What is ammunition is itemTemplates.js's
+ *  registry (isAmmunition), where a mod's own registers.
  *
  *  AUDIT-THUNDERLOCK F4: the Pellet was eligible. A found stack could
  *  roll Magic and shatter itself. */
-const _ammunition = new Set([ARROW_TEMPLATE]);
-export function registerAmmunition(templateIndex) {
-  if (Number.isFinite(templateIndex)) _ammunition.add(templateIndex);
-  return _ammunition.size;
-}
-export const isAmmunition = (item) => _ammunition.has(item?.templateIndex);
-
 export function rarityEligible(item) {
   if (!item || item.questItem || item.artifact || item.magic || item.rarity || enchanted(item) || item.equipSlot != null) return false;
   if (item.group === 'Weapons') return !isAmmunition(item);

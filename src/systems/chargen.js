@@ -1,8 +1,8 @@
-import { SKILLS, SKILL_COUNT, SKILLS_RECENTLY_RAISED_WORDS } from './skills.js';
+import { SKILLS, SKILL_COUNT, SKILLS_RECENTLY_RAISED_WORDS, levelUpSkillSum } from './skills.js';
 import { spellPointsFor } from '../combat/formulas.js';   // U10
 import { mintCharacterId } from './characterId.js';   // CHARID1
 import { CLASSIC_GAME_START_TIME } from './gameDate.js';   // AUDIT 23: the skill-check anchor
-import { liveStat } from './statMods.js';   // wave 28: MaxMagicka reads LiveIntelligence
+import { liveStat, STAT_KEYS_ORDER, FATIGUE_MULTIPLIER } from './statMods.js';   // wave 28: MaxMagicka reads LiveIntelligence
 
 // Character creation (Systems S3). Verbatim ports from DFU
 // StatsRollout.cs / SkillsRollout.cs / DaggerfallSkills.cs /
@@ -51,7 +51,7 @@ export const STAT_MIN_BONUS_ROLL = 0;
 export const STAT_MAX_BONUS_ROLL = 10;
 export const STAT_MIN_BONUS_POOL = 6;
 export const STAT_MAX_BONUS_POOL = 14;
-export const STAT_KEYS_ORDER = Object.freeze(['strength', 'intelligence', 'willpower', 'agility', 'endurance', 'personality', 'speed', 'luck']);
+export { STAT_KEYS_ORDER };   // AUDIT 68 S24-stat-keys-duplicate: statMods.js owns DFCareer.Stats order; the UI imports it here
 const STAT_KEYS = STAT_KEYS_ORDER;
 
 export function rollStats(career, rolls = Math.random) {
@@ -244,7 +244,7 @@ export function applyCharacter(playerEntity, career, careerIndex, { name = caree
   Object.assign(playerEntity, {
     maxMagicka,
     magicka: maxMagicka,
-    fatigue: (stats.strength + stats.endurance) * 64,   // SetEntityDefaults: currentFatigue = MaxFatigue (S15)
+    fatigue: (stats.strength + stats.endurance) * FATIGUE_MULTIPLIER,   // SetEntityDefaults: currentFatigue = MaxFatigue (S15)
     name,
     gender: gender ?? playerEntity.gender ?? 'male',
     // S3c/U9: the IDENTITY the paperdoll and the race tables read
@@ -279,11 +279,7 @@ export function applyCharacter(playerEntity, career, careerIndex, { name = caree
   });
   // S3b: the level-up sums anchor at creation (SetCurrentLevelUpSkillSum
   // over the starting skills = the starting sum, verbatim).
-  let sum = 0, lowMaj = Infinity, hiMin = -Infinity;
-  for (const id of career.primarySkills) sum += skills[id];
-  for (const id of career.majorSkills) { sum += skills[id]; if (skills[id] < lowMaj) lowMaj = skills[id]; }
-  for (const id of career.minorSkills) if (skills[id] > hiMin) hiMin = skills[id];
-  playerEntity.startingLevelUpSkillSum = sum - lowMaj + hiMin;
+  playerEntity.startingLevelUpSkillSum = levelUpSkillSum(playerEntity);   // AUDIT 68 S24-levelup-sum-duplicate: the one home, not an inline copy
   playerEntity.currentLevelUpSkillSum = playerEntity.startingLevelUpSkillSum;
   defineLiveMaxMagicka(playerEntity);
   defineLiveMaxHealth(playerEntity);   // DISC10-E L4: DaggerfallEntity.MaxHealth, the limiter applied

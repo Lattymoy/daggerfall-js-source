@@ -301,7 +301,6 @@ const _customGuilds = new Map();
  *  name, e.g. 'MagesGuild'. The arm is (membership, service) and
  *  returns true, false, or undefined to decline. */
 export function registerCustomGuild(name, fn) { if (fn) _customGuilds.set(name, fn); else _customGuilds.delete(name); }
-export const customGuild = (name) => _customGuilds.get(name) ?? null;
 
 export function canAccessService(guild, membership, service) {
   // AUDIT 26 F115: a NON-MEMBER never reaches the subclass switch.

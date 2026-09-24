@@ -65,7 +65,7 @@ export function sampleClip(clip, t) {
     const v = sampleTrack(keys, u);
     const dot = path.indexOf('.');
     if (dot < 0) out[path] = v;
-    else { const limb = path.slice(0, dot), ch = path.slice(dot + 1); (out[limb] ||= {})[limb ? ch : ch] = v; }
+    else { const limb = path.slice(0, dot), ch = path.slice(dot + 1); (out[limb] ||= {})[ch] = v; }
   }
   return out;
 }

@@ -41,6 +41,7 @@
 
 import { dayFraction, daylightScale, isNight } from '../world/worldClock.js';
 import { lunarPhaseFractionsFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';   // CLK3: the dome takes the phase as a number on the clock
+import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 
 const hex = (h) => [parseInt(h.slice(1, 3), 16) / 255, parseInt(h.slice(3, 5), 16) / 255, parseInt(h.slice(5, 7), 16) / 255];
 const mix3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
@@ -458,9 +459,8 @@ uniform float uSunRadius, uSunVis, uGlowAmount, uStars;
 uniform vec4 uMoonA, uMoonB;          // xyz direction, w radius
 uniform vec3 uMoonAColor, uMoonBColor;
 uniform float uMoonAVis, uMoonBVis;
-uniform float uCloudCover, uCloudSoft, uTime;
-uniform vec2 uWind;
-uniform vec2 uDrift;   // WIND2: the integrated cloud offset
+uniform float uCloudCover, uCloudSoft;
+uniform vec2 uDrift;   // WIND2: the integrated cloud offset (AUDIT 68 S16-sky-dead-uniforms: the time and wind pair it replaced, read by nothing, are gone)
 uniform float uFogMix;
 uniform vec3 uStarPole;
 uniform float uStarAngle;
@@ -666,22 +666,12 @@ void main() {
 export class EnhancedSkyRenderer {
   constructor(gl) {
     this.gl = gl;
-    const compile = (type, src) => {
-      const sh = gl.createShader(type);
-      gl.shaderSource(sh, src); gl.compileShader(sh);
-      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh));
-      return sh;
-    };
-    const prog = gl.createProgram();
-    gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
-    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
-    gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+    const prog = buildProgram(gl, VS, FS);
     this.program = prog;
     this.u = {};
     for (const name of ['uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uZenith', 'uHorizon', 'uSunColor', 'uGlowColor', 'uCloudLit', 'uCloudShade',
       'uFogColor', 'uSunDir', 'uSunRadius', 'uSunVis', 'uGlowAmount', 'uStars', 'uMoonA', 'uMoonB', 'uMoonAColor', 'uMoonBColor',
-      'uMoonAVis', 'uMoonBVis', 'uCloudCover', 'uCloudSoft', 'uTime', 'uWind', 'uDrift', 'uFogMix', 'uStarPole', 'uStarAngle']) {
+      'uMoonAVis', 'uMoonBVis', 'uCloudCover', 'uCloudSoft', 'uDrift', 'uFogMix', 'uStarPole', 'uStarAngle']) {
       this.u[name] = gl.getUniformLocation(prog, name);
     }
     this.vao = gl.createVertexArray();
@@ -748,7 +738,6 @@ export class EnhancedSkyRenderer {
     gl.uniform3fv(u.uMoonAColor, s.masser.color); gl.uniform3fv(u.uMoonBColor, s.secunda.color);
     gl.uniform1f(u.uMoonAVis, s.masser.vis); gl.uniform1f(u.uMoonBVis, s.secunda.vis);
     gl.uniform1f(u.uCloudCover, this.cloudsExternal ? 0 : s.cloudCover); gl.uniform1f(u.uCloudSoft, s.cloudSoft);   // VC3: the decks stand down under the volumetric clouds
-    gl.uniform1f(u.uTime, s.seconds); gl.uniform2f(u.uWind, s.wind[0], s.wind[1]);
     gl.uniform2f(u.uDrift, s.drift?.[0] ?? s.wind[0] * s.seconds, s.drift?.[1] ?? s.wind[1] * s.seconds);   // WIND2
     gl.uniform1f(u.uFogMix, this.fogMix);
     gl.uniform3fv(u.uStarPole, s.starPole);

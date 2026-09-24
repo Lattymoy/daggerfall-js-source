@@ -21,7 +21,7 @@
 // ancestor of it.
 import { readFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
-import { pathToFileURL } from 'node:url';
+import { isMain } from './lib/isMain.mjs';
 
 /** The ENTRY script as a page actually names it. This used to match
  *  /assets\/index-[\w-]+\.js/ - a hardcoded chunk NAME - and when the
@@ -67,8 +67,10 @@ export function deployVerdict({ localHtml, liveHtml, contains = () => null }) {
   // Same commit, different chunk hash: the deploy is fine and the
   // LOCAL artifact is the odd one out - almost always a dist/ built
   // from a dirty tree. Say that rather than polling for a hash CI
-  // will never produce.
-  if (localTag === liveTag) {
+  // will never produce. AUDIT 68: by PREFIX - a page stamped before
+  // scripts/buildTag.mjs fixed the length carries git's own choice (9
+  // here, 7 on CI), and the same commit then read as two.
+  if (localTag.startsWith(liveTag) || liveTag.startsWith(localTag)) {
     return {
       kind: 'dirty', bundle, theirs, localTag, liveTag,
       message: `live is your commit ${liveTag} but serves ${theirs} - rebuild from a clean tree`,
@@ -137,4 +139,4 @@ async function main() {
 // THE FILE IS A LIBRARY UNLESS IT IS THE PROGRAM. tools/musicNames.mjs
 // taught this the expensive way: top-level work plus process.exit
 // killed the test runner mid-file and reported a green suite.
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();
+if (isMain(import.meta.url)) main();

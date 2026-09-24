@@ -51,10 +51,11 @@ import { triggerExteriorOpen, DOOR_SPELL_TEXT } from '../systems/mysticism.js'; 
 import { buildInteriorContext, seedInteriorTreasure } from './interiorContext.js';   // AUDIT 63 F22: AddFlats' RandomTreasure arm lives with the walk that finds its markers
 import { advanceMachinery, mountMachineryChild, machineryChildPos, MILL_SOUND } from '../world/windmills.js';   // WM4b: the machinery's moving parts; WM4c: its hum
 import { buildDungeonContext } from './dungeonContext.js';
+import { createTransitionGate } from './transitionGate.js';   // AUDIT 68 X3-transition-build-race: the door builds, serial and cancellable
 import { bowDamageArrow } from '../combat/enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all
 import { DOOR_TYPE } from '../world/meshReader.js';
 import { getGroundArchive } from '../world/climateSwaps.js';
-import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR, DUNGEON_LIGHT_BLOCK_RANGE } from '../world/dungeonLights.js';   // A10: the block-range cut
+import { DUNGEON_LIGHT_COLOR, DUNGEON_LIGHT_BLOCK_RANGE } from '../world/dungeonLights.js';   // A10: the block-range cut
 import { createCamps } from './camps.js';   // HEARTH1: not to STAND a camp indoors - nothing may be - but to answer the room's own fires
 import { collectHearths } from '../systems/survival/hearth.js';   // AUDIT HEARTH1 F4: the law's own collection, rather than a fourth hand-written copy of its test
 import { lanternColor, dungeonAmbient, dungeonTrilight, dungeonFog } from '../render/enhancedLighting.js';   // EL1: the world host installed the lane; this reads it; EL4: the dark; AUDIT-EL F6: the fog with it
@@ -105,7 +106,6 @@ import { makeInView } from '../player/cameraView.js';   // IF: the swing's in-vi
 import { mwViewFrame, mwViewDrawBody, mwViewFootstep, mwViewTransition, mwViewFirstPerson } from '../player/mwView.js';   // MW-D25: the Morrowind camera; AUDIT-EOTB2: the sprite's stride and the door's auto-toggle
 import { MOBILE_TYPES } from '../characters/mobileTypes.js';   // IF: the daedric punishment's name->id door
 import { areEnemiesNearby, setEnemyAlert } from '../systems/encounters.js';   // IF: GameManager.AreEnemiesNearby, one method over this host's database; AUDIT 58: the 354 refusal's other term
-import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { audio } from '../systems/audio.js';
 import { lycanthropeMoveSound } from '../systems/lycanthropy.js';   // LM1: the 4-20s transformed move-sound loop
 import { inventoryDoorReady } from '../ui/inventoryDoor.js';   // DISC10-E: the door's own readiness gate - a ready door that built nothing REFUSED
@@ -190,8 +190,7 @@ import { guildOfFaction, isMember } from '../systems/guilds.js';
 // one, and CanRest's whole town half.
 import { preloadRestArt } from '../ui/restWindow.js';   // D3: REST00I0/01I0/02I0
 import { createRestWindow } from '../ui/restDoor.js';   // the enhanced/native fork, same law as ui/tradeDoor.js
-import { canRest, HAVE_NOT_RENTED_ROOM, REST_TEXT } from '../systems/restSession.js';
-import { isPlayerInTown } from '../systems/nearbyObjects.js';
+import { canRest } from '../systems/restSession.js';
 import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI.GiveOffer, the rung in front of the rest press
 import { plainLines } from './shared.js';   // V5b: TEXT.RSC answers ROWS, and these windows iterate strings
 import { expandGuildRows } from '../systems/guildServiceActions.js';   // MACROS1: a guild window's records through the guild's context (MH1's one walk)
@@ -199,7 +198,7 @@ import { hallAccessAnytime } from '../systems/guildServices.js';
 import { resolveVariantGuild } from '../systems/guildVariants.js';
 import { getBool, getInt } from '../systems/settings.js';   // R1: InstantRepairs / AllowMagicRepairs go LIVE
 import { longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';   // PH1: Privateer's Hold identity check, the classic start's own pixel math
-import { respawnHealth, reviveForPlay } from '../systems/deathRespawn.js';   // PH1: the in-place respawn's own heal, the SAME fraction world.js's own online respawn uses
+import { reviveForPlay } from '../systems/deathRespawn.js';   // PH1: the in-place respawn's own heal, the SAME fraction world.js's own online respawn uses
 import { reducedRepairCost } from '../systems/guildServices.js';   // R1: FightersGuild.ReducedRepairCost finds its caller
 import {
   calculateItemRepairCost, updateRepairTimes, repairJobsAt, repairRefusal, repairStatusLabel,
@@ -284,10 +283,8 @@ import { positionHash, staticNpcData } from './questBridge.js';   // B7: the gui
 import { staticBuildingsHasHit } from '../world/staticBuildings.js';   // AUDIT 64 F11: DaggerfallStaticBuildings.HasHit
 import { staticNpcName, getNameBankOfRegion, isChildNPCData } from '../characters/staticNpc.js';   // wave 24: StaticNPC.DisplayName
 import { portraitIndexFromStaticNPCBillboard } from '../systems/npcSession.js';   // ROAD-D D10: GetPortraitIndexFromStaticNPCBillboard
-import { GENDERS } from '../characters/nameHelper.js';
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
-import { WATER_SCROLL_TILES_PER_SEC } from '../render/waterSurface.js';   // AUDIT 65 CV-3: the classic texel's flow, one home (this host's DUNGEON_WATER_SCROLL was a third literal)
 import { onShopShelfStocked } from '../systems/rriKits.js';   // RRI2: the mod's PlayerActivate.OnLootSpawned subscribers (bandage stacks, store-quality wear, the alchemist's potions)
 import { bedSleepingOn, rrDouseOnDungeonExit, rrRefinedTrainingOn, rrSetting } from '../systems/rrRealism.js';   // RR1: the bed's activation gate, the douse on leaving a dungeon; RR2: the refined training window's switches
 import { rrVariantPerson } from '../systems/rrVariants.js';   // RR2: the variant keepers and residents
@@ -432,7 +429,7 @@ export function createWorldModes(host) {
    *
    * AUDIT-WH H5. Three hover arms wrote `.Name` - the C# property, as
    * the mod's own source spells it (.cs:764, :725, :777) - and the
-   * record these hosts mint spells it `name` (exterior.js:3742 hands
+   * record these hosts mint spells it `name` (exterior.js:3741 hands
    * `dfLocation`, world.js hands `_questLoc()`; both are the port's
    * location record). `.Name` on it is `undefined`, so all three arms
    * fell to `''`, and `staticDoorName` answers NULL on an empty
@@ -446,6 +443,31 @@ export function createWorldModes(host) {
    * hand. This is the one place it is dug out.
    */
   const currentLocationName = () => host.currentLocation?.()?.name ?? '';
+  // LV2 - THE RISING: the classic skin says its line and fills the
+  // slot below; the enhanced one announces on the HUD strip and
+  // leaves the level owed, so this host's ONE overlay slot is not
+  // taken from a player mid-anything. AUDIT 68 S23-levelup-closure-dup:
+  // ONE arm for the ticker and the rest session, which LV1 found had
+  // drifted apart as two copies.
+  const onInteriorLevelUp = () => {
+    announceLevelUp(playerEntity, { say, open: () => {
+      // dfuiOpenCharacterSheetWindow (RaiseSkills :1414): the SHEET
+      // levels the player in classic. This host builds no windows -
+      // host.makeCharSheet is the outer host's own builder, the same
+      // one toggleCharSheet mounts.
+      // ORL1: ...and the LAST-RESORT screen, for a host that hands no
+      // builder, must obey this character's law too.
+      // LV1: WHICH IS THE DOOR'S QUESTION, SO IT IS ASKED THERE. The
+      // door takes `entity` alone and answers the whole fork - skin,
+      // lane and book - so a face added to it is a face every host
+      // wears.
+      // LV2: ...and the ENHANCED skin does not call this thunk at
+      // all until the player asks the sheet for it.
+      if (!interiorOverlay) {
+        interiorOverlay = host.makeCharSheet?.() ?? createCharSheetWindow({ entity: playerEntity });
+      }
+    } });
+  };
   // V5's interiorRestDeps retired into the fuller one below (search
   // `place: interiorRestPlaceHere`), which carries the same two
   // host-only halves plus the place bag, MoveToBed, the quest tick and
@@ -462,37 +484,7 @@ export function createWorldModes(host) {
     isInside: () => true,
     onExhausted: onExhaustedInterior,   // AUDIT 23 (C5)
     say,
-    onLevelUp: () => {
-      // LV2 - THE RISING: the classic skin says its line and fills the
-      // slot below; the enhanced one announces on the HUD strip and
-      // leaves the level owed, so this host's ONE overlay slot is not
-      // taken from a player mid-anything.
-      announceLevelUp(playerEntity, { say, open: () => {
-        // dfuiOpenCharacterSheetWindow (RaiseSkills :1414): the SHEET
-        // levels the player in classic. This host builds no windows -
-        // host.makeCharSheet is the outer host's own builder, the same
-        // one toggleCharSheet mounts.
-        // ORL1: ...and the LAST-RESORT screen, for a host that hands no
-        // builder, must obey this character's law too.
-        // LV1: WHICH IS THE DOOR'S QUESTION, SO IT IS ASKED THERE. This
-        // arm used to re-answer it inline - the mod's window when the
-        // mod levels this character, the classic rollout otherwise -
-        // and its own comment said it was "the only place in the tree
-        // that reaches for a level-up screen without" the door. That
-        // was true and it is exactly what THE FOUR HOSTS rule is
-        // about: when the enhanced skin grew a level-up face, three
-        // hosts got it through ui/charSheetDoor.js and this one, in
-        // both of its copies, kept handing out canvas rollouts. The
-        // door takes `entity` alone and answers the whole fork - skin,
-        // lane and book - so a face added to it is a face every host
-        // wears.
-        // LV2: ...and the ENHANCED skin does not call this thunk at
-        // all until the player asks the sheet for it.
-        if (!interiorOverlay) {
-          interiorOverlay = host.makeCharSheet?.() ?? createCharSheetWindow({ entity: playerEntity });
-        }
-      } });
-    },
+    onLevelUp: onInteriorLevelUp,   // AUDIT 68 S23-levelup-closure-dup: the walk and the rest level up through ONE arm
     // SURV7: the outer host's env with the roof this host owns - sheltered, no sun, no water, no fire
     // HEARTH1: `byFire` was a hard FALSE here - right while the only
     // fire the law knew was a camp, and camps are refused indoors, and
@@ -805,27 +797,21 @@ export function createWorldModes(host) {
    *   coven:   daedricFoes[Range(0,5)], Range(1,4) foes, 4..64
    * so one door takes them both. Placement is PlaceFoeFreely's ring,
    * which is what CreateFoeSpawner ends in.
+   *
+   * AUDIT 68 S23-coven-punishment-interior-only: through the HOST's
+   * mode-routed loose-foe stand (the one the enchantments use), because
+   * CreateFoeSpawner stands its foes wherever the player is. This door
+   * answered 0 unless a building was mounted, and a coven's popup opens
+   * outdoors or underground - so the coven failure's daedra, and a
+   * coven-summoned prince's refusal, stood nowhere.
    */
   function spawnDaedricPunishment({ count, minDistance, maxDistance, rolls = Math.random }) {
-    if (!interiorCtx || !interiorFoes) return 0;
+    const stand = host.standLooseFoe;
+    if (!stand) return 0;
     const type = MOBILE_TYPES[DAEDRIC_FOES[Math.floor(rolls() * DAEDRIC_FOES.length)]];
-    const feet = player.pos;
     let stood = 0;
     for (let i = 0; i < count; i++) {
-      const env = placeFoeEnv({
-        collider: interiorCtx.collider,
-        playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
-        playerYawRad: cam.yaw,
-        fovDegrees: fieldOfView() * 180 / Math.PI,
-        isOccupied: entityOccupancy((f) => f.ai?.feet, () => interiorFoePool(), feet),   // AUDIT 58 (review): DFU's gate is `Physics.OverlapSphere(testPoint, 0.65f)` (CreateFoe.cs:317-321) - ANY collider, so the watch is in the test too
-        rolls,
-      });
-      const spot = placeFoeFreely(env, { minDistance, maxDistance });
-      if (!spot) continue;   // no room: this one simply does not stand, as DFU's spawner gives up
-      interiorFoes.spawnFoe(type, [spot.x, spot.y, spot.z], {
-        yaw: Math.atan2(feet[0] - spot.x, feet[2] - spot.z),
-      }).catch((e) => console.error('[summon] daedra stand failed:', e?.message ?? e));
-      stood++;
+      if (stand(type, { minDistance, maxDistance })) stood++;   // null: no room found, this one does not stand
     }
     return stood;
   }
@@ -906,7 +892,7 @@ export function createWorldModes(host) {
       yawRad: cam.yaw,
       fovDegrees: fieldOfView() * 180 / Math.PI,   // fieldOfView() answers RADIANS
       foes: interiorFoePool(),
-      spawn: (mt, pos, o) => interiorFoes.spawnFoe(mt, pos, { yaw: o.yawRad, allied: o.allied }),
+      spawn: (mt, pos, o) => interiorFoes.spawnFoe(mt, pos, { yaw: o.yawRad, allied: o.allied, loose: true }),
     }, mobileType, opts);
   }
 
@@ -1071,12 +1057,17 @@ export function createWorldModes(host) {
    *  createExteriorFoes record; a watchman carries no such field), so
    *  the damage lands in the pool that owns the billboard - a record
    *  from a building must knock back and die against THAT building's
-   *  collider and death chain, never the street's. */
-  const insideFoeSinks = (foe) => ({
-    hurt: (n) => {
+   *  collider and death chain, never the street's.
+   *
+   *  AUDIT 68 X4: and the cast engine's provenance rides both doors,
+   *  as world.js's `foeSinks` takes it - a foe's spell on a watchman
+   *  in a shop is not the player's attack. */
+  const insideFoeSinks = (foe, fromPlayer = true) => ({
+    hurt: (n, o) => {
       if (n <= 0) return;
-      if (foe._encounter) interiorFoes?.damageFoe(foe, n, player.pos);
-      else interiorGuards?.hurtGuard(foe, n, player.pos);
+      const fp = o?.fromPlayer ?? fromPlayer;   // AUDIT 68 review: a round's tick says whose it is (effects.js runEffectRound)
+      if (foe._encounter) interiorFoes?.damageFoe(foe, n, player.pos, null, { fromPlayer: fp, kind: 'spell' });
+      else interiorGuards?.hurtGuard(foe, n, player.pos, null, { fromPlayer: fp });
     },
     heal: (n) => { if (n > 0) foe.entity.health = Math.min(foe.entity.maxHealth ?? Infinity, foe.entity.health + n); },
     drainMagicka: (n) => { if (n > 0) foe.entity.magicka = Math.max(0, (foe.entity.magicka ?? 0) - n); },
@@ -1093,8 +1084,8 @@ export function createWorldModes(host) {
    *  This host owned two pools and ran NO fan-out at all - no
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
    *  (worldTick.js:389-390), and no killIfAnyLiveStatZero. Both pools
-   *  READ the effect list every frame (exteriorFoes.js:892-896 and
-   *  cityGuards.js:944-950 each take `entityIsParalyzed` +
+   *  READ the effect list every frame (exteriorFoes.js:900-904 and
+   *  cityGuards.js:945-951 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
    *  a poison inflicted at this host's own onInflictPoison never
@@ -1199,6 +1190,21 @@ export function createWorldModes(host) {
    *  unknown region answers Breton, which is DFU's own fallback. */
   const currentNameBank = () => getNameBankOfRegion(
     interiorBuilding?.regionIndex ?? buildingDirectory?.()?.regionIndex ?? -1);
+  /** StaticNPC.SetLayoutData's scene context for one person - the
+   *  entered building's key (0 outside a building, where the street and
+   *  dungeon people stand) and the record's own context override - and
+   *  StaticNPC.DisplayName over the record it derives. AUDIT 68
+   *  S23-npc-display-name-dup: ONE derivation for the three plaques, the
+   *  Info click and both talk doors, so the plaque and the click cannot
+   *  call one person two things by construction rather than by copy. */
+  const staticNpcSceneCtx = (pn) => ({
+    ...(questSceneCtx?.() ?? {}), buildingKey: interiorBuilding?.buildingKey ?? 0,
+    ...(pn?.context != null ? { context: pn.context } : {}),
+  });
+  const npcDisplayName = (npcData) => {
+    const dict = townTalk?.factionDict ?? null;
+    return staticNpcName(npcData, { getFaction: (id) => dict?.get(id) ?? null, nameBank: currentNameBank() });
+  };
 
   let interiorOverlay = null;
   /** ROAD-B B1: ...and the DEPTH under it. `interiorOverlay` stays the
@@ -1422,10 +1428,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1832 states), so the same visual
+   *  the C11 law dungeonContext.js:1821 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1717, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1706, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -1736,33 +1742,31 @@ export function createWorldModes(host) {
       return null;   // the async build binds the host; addQuestFoe's start() runs either way
     },
   };
-  function teardownDungeonQuestFlats() {
-    for (const s of [...dungeonQuestFlats]) s.behaviour?.notifyDestroyed?.();
-    for (const s of dungeonQuestFlats) {
-      s.dead = true;
-      if (!s.batch) continue;
-      const i = s.ctx.billboardBatches.indexOf(s.batch);
-      if (i >= 0) s.ctx.billboardBatches.splice(i, 1);
-      renderer.destroyBatch(s.batch);
-      s.batch = null;
-    }
-    dungeonQuestFlats = [];
-    dungeonFoeStands = [];
-  }
-  function teardownQuestFlats() {
-    // Unity's OnDestroy on scene transition: notify each behaviour (the
-    // resource-side handler decouples), then free the batches - pulled
-    // out of the context's list FIRST so ctx.destroy() cannot free them
-    // a second time.
-    for (const s of [...questFlats]) s.behaviour?.notifyDestroyed?.();
-    // the bootstrap behaviours ride their StaticNPC's GameObject, so
-    // the scene transition destroys them on the same frame
-    for (const pn of interiorCtx?.people ?? []) {
+  /** The bootstrap behaviours ride their StaticNPC's GameObject, so the
+   *  scene that stood the people destroys them on the same frame (the
+   *  resource-side handler decouples). AUDIT 68
+   *  S23-dungeon-npc-behaviours-not-destroyed: ONE walk for every
+   *  scene's people - the dungeon's carry the same bootstrap behaviours
+   *  since AUDIT 64 F13 - and for a built context abandoned before it
+   *  went live. */
+  function destroyPeopleBehaviours(people) {
+    for (const pn of people ?? []) {
       if (!pn.questBehaviour) continue;
       pn.questBehaviour.notifyDestroyed?.();
       pn.questBehaviour = null;
     }
-    for (const s of questFlats) {
+  }
+  /** AUDIT 68 S23-dungeon-npc-behaviours-not-destroyed: one body for the
+   *  interior's stands and the dungeon's, which were line-for-line
+   *  copies apart from the people walk the dungeon's lacked. */
+  function teardownStands(stands, people) {
+    // Unity's OnDestroy on scene transition: notify each behaviour (the
+    // resource-side handler decouples), then free the batches - pulled
+    // out of the context's list FIRST so ctx.destroy() cannot free them
+    // a second time.
+    for (const s of [...stands]) s.behaviour?.notifyDestroyed?.();
+    destroyPeopleBehaviours(people);
+    for (const s of stands) {
       s.dead = true;
       if (!s.batch) continue;
       const i = s.ctx.billboardBatches.indexOf(s.batch);
@@ -1770,6 +1774,14 @@ export function createWorldModes(host) {
       renderer.destroyBatch(s.batch);
       s.batch = null;
     }
+  }
+  function teardownDungeonQuestFlats() {
+    teardownStands(dungeonQuestFlats, dungeonCtx?.people);
+    dungeonQuestFlats = [];
+    dungeonFoeStands = [];
+  }
+  function teardownQuestFlats() {
+    teardownStands(questFlats, interiorCtx?.people);
     questFlats = [];
     interiorFoeStands = [];   // IF
   }
@@ -1965,11 +1977,7 @@ export function createWorldModes(host) {
       if (key.startsWith('person:')) {
         const pn = interiorCtx.people[Number(key.split(':')[1])];
         if (!pn) return null;
-        const dict = townTalk?.factionDict ?? null;
-        const display = staticNpcName(staticNpcData(pn, { ...(questSceneCtx?.() ?? {}),
-          buildingKey: interiorBuilding?.buildingKey ?? 0,
-          ...(pn?.context != null ? { context: pn.context } : {}) }),
-        { getFaction: (id) => dict?.get(id) ?? null, nameBank: currentNameBank() });
+        const display = npcDisplayName(staticNpcData(pn, staticNpcSceneCtx(pn)));
         const t = npcHoverName(display, { archive: pn.archive ?? -1, record: pn.record ?? -1 });
         return t ? { title: t } : null;
       }
@@ -2090,11 +2098,6 @@ export function createWorldModes(host) {
     showShelfList(shelf, 0, fresh);   // AUDIT WORLD6a A4: the keyed fallback claims too
   }
 
-  /** U40: the merchant's own Sell screen. DFU's merchant popup sells
-   *  into the SHOP rather than into a shelf, so the goods land on the
-   *  building's own collection - the same place the shelf flow puts
-   *  them, which is what makes a sold item buyable back. A building
-   *  with no shelf yet gets one lazily, exactly as openShelf does. */
   /** RR3: the custom service's door - `DaggerfallUI.MessageBox(text)` and
    *  the Buy trade window over the items it built (:481-484: a Trade
    *  window in Buy mode with MerchantItems set). */
@@ -2105,12 +2108,18 @@ export function createWorldModes(host) {
       openBuy: (items) => {
         if (!tradeDoorReady() || (!isEnhanced() && !_shopFont)) return false;   // the one gate both skins answer to (openMerchantSell's)
         const win = openTradeWindow({ items }, b, 'Buy');
-        win.hooks.onClose = () => { if (interiorOverlay === win) interiorOverlay = null; };
+        if (!win) return true;   // AUDIT 68 S23-custom-merchant-null-trade: DISC10-E L3 - the trade door refused the beast (and said so); handled, nothing to mount
         interiorOverlay = win;
         return true;
       },
     }, playerEntity);
   }
+  /** U40: the merchant's own Sell screen. DFU's merchant popup sells
+   *  into the SHOP rather than into a shelf, so the goods land on the
+   *  building's first shelf - the same place the shelf flow puts
+   *  them, which is what makes a sold item buyable back. AUDIT 68
+   *  S23-merchant-sell-shelf-dead-expr: a building with NO shelf sells
+   *  into a throwaway basket, and nothing sold there is kept. */
   function openMerchantSell() {
     const b = interiorBuilding;
     // `_shopFont` is the CLASSIC window's own draw-time font (its
@@ -2118,7 +2127,7 @@ export function createWorldModes(host) {
     // counter draws no canvas at all, so it is a native-only condition;
     // `tradeDoorReady` is the one gate both skins answer to.
     if (!b || !tradeDoorReady() || (!isEnhanced() && !_shopFont)) return false;
-    const shelf = (interiorCtx?.shelves ?? [])[0] ?? (interiorCtx ? (interiorCtx.shelves ??= [])[0] : null);
+    const shelf = interiorCtx?.shelves?.[0] ?? null;
     const target = shelf ?? { items: null };
     // A2: the same stockedDate gate the shelf arm takes - this IS that
     // shelf, and a merchant screen opened on a new day must find the
@@ -2135,13 +2144,9 @@ export function createWorldModes(host) {
     win = openTradeWindow(target, b, 'Sell');
     if (!win) return true;   // DISC10-E L3: refused at the trade door, which said so - handled, never the keyed fallback
     if (shelf) interiorLootOpened('shelf:0', win, { fresh });   // WORLD6a: what is sold lands on the room's shelf
-    // NOTE (found wiring X6): this assignment is INERT. NativeTradeWindow
-    // never calls hooks.onClose - it sets `done` on Escape/E and the
-    // frame's sweep at :2450/:2517 frees the slot. Left in place because
-    // it is harmless and the sweep already does the job, but do not copy
-    // it expecting a callback: a trade window that needs cleanup on
-    // close has to hang it off the sweep, not off this hook.
-    win.hooks.onClose = () => { if (interiorOverlay === win) interiorOverlay = null; };
+    // Found wiring X6: neither trade skin calls hooks.onClose - they set
+    // `done` and the frame's own sweep frees the slot, so a trade window
+    // that needs cleanup on close hangs it off that sweep.
     interiorOverlay = win;
     return true;
   }
@@ -2657,13 +2662,8 @@ export function createWorldModes(host) {
    *  `QuestDebugger.State != Nothing`, which is that debugger's
    *  default-off state. */
   function presentNpcInfo(pn) {
-    const npcSceneCtx = {
-      ...(questSceneCtx?.() ?? {}), buildingKey: interiorBuilding?.buildingKey ?? 0,
-      ...(pn?.context != null ? { context: pn.context } : {}),
-    };
-    const dict = townTalk?.factionDict ?? null;
-    const displayName = staticNpcName(staticNpcData(pn, npcSceneCtx),
-      { getFaction: (id) => dict?.get(id) ?? null, nameBank: currentNameBank() });
+    const npcSceneCtx = staticNpcSceneCtx(pn);
+    const displayName = npcDisplayName(staticNpcData(pn, npcSceneCtx));
     townTalk?.say?.(presentNpcInfoText(displayName));
   }
 
@@ -2684,10 +2684,7 @@ export function createWorldModes(host) {
     // entered building, so the key below is already 0. The record the
     // exterior host stood carries its own context; a building person
     // has none and takes staticNpcData's Building default.
-    const npcSceneCtx = {
-      ...(questSceneCtx?.() ?? {}), buildingKey: interiorBuilding?.buildingKey ?? 0,
-      ...(pn?.context != null ? { context: pn.context } : {}),
-    };
+    const npcSceneCtx = staticNpcSceneCtx(pn);
     const npcData = questBridge?.clickNpc(pn, npcSceneCtx) ?? staticNpcData(pn, npcSceneCtx);
     // AUDIT 24 (wave 20): PlayerActivate.cs:1523-1528, the return the
     // port never had. A clicked NPC whose GameObject carries a
@@ -2823,7 +2820,7 @@ export function createWorldModes(host) {
     // F016: the bank is the CURRENT REGION's (SetRuntimeData :309),
     // never the NPC's race - the mobile pools have passed it since
     // AUDIT 23 and this seam re-exports the same reader.
-    const displayName = staticNpcName(npcData, { getFaction: (id) => dict?.get(id) ?? null, nameBank: currentNameBank() });
+    const displayName = npcDisplayName(npcData);
     const talk = npcSession?.talkToStaticNPC(
       // TalkToStaticNPC reads targetNPC.Data (TalkManager.cs:752-770):
       // the nameSeed the work pool and castleNPCsSpokenTo are keyed by,
@@ -3532,8 +3529,7 @@ export function createWorldModes(host) {
    *  exit is CloseWindow (DaggerfallTalkWindow.cs:1598, :1611), so the
    *  popup comes back when the conversation ends. */
   function popupTalkToStaticNpc(npcData, { isSpyMaster = false, returnTo = null } = {}) {
-    const dict2 = townTalk?.factionDict ?? null;
-    const displayName2 = staticNpcName(npcData, { getFaction: (id) => dict2?.get(id) ?? null, nameBank: currentNameBank() });   // F016
+    const displayName2 = npcDisplayName(npcData);   // F016
     const talk2 = npcSession?.talkToStaticNPC(
       { data: npcData, isChildNPC: isChildNPCData(npcData), displayName: displayName2 },   // F020
       { menu: true, isSpyMaster });
@@ -4066,7 +4062,7 @@ export function createWorldModes(host) {
               sw = new DaedraSummonedWindow({
                 flcBytes: bytes, flcName: r.daedra.video, offerStep: offered,
                 // IF: the refusal's punishment is REAL now - 3-5 daedra
-                // at 8..64 units (:125), through the interior pool.
+                // at 8..64 units (:125), wherever the player stands.
                 spawnRefusalFoes: () => spawnDaedricPunishment({
                   count: REFUSAL_FOE_COUNT[0] + Math.floor(Math.random() * (REFUSAL_FOE_COUNT[1] + 1 - REFUSAL_FOE_COUNT[0])),
                   minDistance: 8, maxDistance: 64,
@@ -4590,6 +4586,7 @@ export function createWorldModes(host) {
   let dungeonLoc = null;    // B2: the mounted dungeon's dfLocation (playerInside's dungeon arm)
   let dungeonReturn = null; // entrance-door candidates of the group
   let transitioning = false;
+  const transitionGate = createTransitionGate();   // AUDIT 68 X3-transition-build-race: one door build at a time, and one the world moved under is never published
 
   const eyeDir = () => host.activateDir?.() ??   // TI1: the tap's ray for the modal ladders, else the centre
     [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
@@ -4979,10 +4976,7 @@ export function createWorldModes(host) {
     if (key.startsWith('person:')) {                                       // .cs:325-393
       const pn = npcs[Number(key.split(':')[1])];
       if (!pn) return null;
-      const dict = townTalk?.factionDict ?? null;
-      const display = staticNpcName(staticNpcData(pn, { ...(questSceneCtx?.() ?? {}), buildingKey: 0,
-        ...(pn?.context != null ? { context: pn.context } : {}) }),
-      { getFaction: (id) => dict?.get(id) ?? null, nameBank: currentNameBank() });
+      const display = npcDisplayName(staticNpcData(pn, staticNpcSceneCtx(pn)));
       const t = npcHoverName(display, { archive: pn.archive ?? -1, record: pn.record ?? -1 });
       return t ? { title: t } : null;
     }
@@ -5369,7 +5363,32 @@ export function createWorldModes(host) {
    *  doorless entry (CRUX1: the quest teleport and the dungeon start carry no door, and the entry never reads one). */
   const hccDoorOf = (h) => (h && h.door ? doorWorldPosition(h.door) : null);
 
+  /** AUDIT 68 X3-transition-build-race: EVERY door build runs through
+   *  here. The builds await for seconds with the host's frame, keys, a
+   *  load and a teleport all still running outdoors, and one that
+   *  finished after the world moved published itself anyway - or two in
+   *  flight wrote the one context slot, orphaning the other whole. The
+   *  gate runs them one at a time (a second request waits its turn
+   *  rather than overlapping), and `live()` goes false the moment
+   *  anything moves the world (abortTransition, forceExitToExterior) -
+   *  a request the world moved under, built or still waiting, publishes
+   *  nothing. */
+  async function gatedTransition(build) {
+    return transitionGate.run(build);   // a build that publishes stales the requests queued behind it
+  }
+  /** A built context the host never adopts - the doorless interior
+   *  (NT1), the dungeon with no start marker (AUDIT 39 #29), a build the
+   *  world moved under (AUDIT 68 X3) - is freed WHOLE: its people's
+   *  bootstrap behaviours first (setupStaticNpc coupled them to their
+   *  Persons during the build), then the context's own resources. */
+  function abandonContext(ctx) {
+    destroyPeopleBehaviours(ctx.people);
+    ctx.destroy();
+  }
   async function enterInteriorCore(hit, entries, restore = null) {
+    return gatedTransition((live) => interiorTransition(hit, entries, restore, live));
+  }
+  async function interiorTransition(hit, entries, restore, live) {
     // TR5: TransportManager.HandleTransition (:196-202) - a BUILDING
     // interior puts you back on foot. The law shipped in TR1 with no
     // caller; this is it.
@@ -5398,30 +5417,38 @@ export function createWorldModes(host) {
       // a `buildingData` already in hand. The port used to resolve the
       // identity AFTER buildInteriorContext, which is why the people
       // gate had nothing to read.
+      // AUDIT 68 S23-failed-entry-stale-building: resolved into LOCALS.
+      // The host's identity and its three latches commit WITH the
+      // context, below the landing test - an entry that fails (a
+      // doorless interior, a failed build, the world moved) left the
+      // player in the street with every latch naming a building they
+      // never entered, which the party-rest vote, the talk layer and
+      // the static-NPC routing all read outdoors.
       const _hour = Math.floor((Math.floor(worldMinutes()) % 1440) / 60);
       let insideOpenShop;
+      let building;
       if (restore) {
         // The SAVED record stands whole - identity, latch and all.
-        interiorBuilding = restore.building ?? null;
+        building = restore.building ?? null;
         // OL4 (AUDIT ALL O2): a save taken inside a shop entered while classically closed carries `false`, and Play
         // Online always begins on a restore - so the online shift never reached a restored interior: the door opened,
         // the shelf opened in STEALING mode and no clerk stood. The saved latch is never taken away (DFU's own law,
         // SerializablePlayer.cs:394-400), only added to by the effective hours at the restore - the same
         // "SetActive(true) and nothing else" shape as updateNpcPresence.
-        insideOpenShop = !!interiorBuilding?.insideOpenShop
-          || (interiorBuilding?.buildingType != null && isShop(interiorBuilding.buildingType) && isBuildingOpen(interiorBuilding.buildingType, _hour));
+        insideOpenShop = !!building?.insideOpenShop
+          || (building?.buildingType != null && isShop(building.buildingType) && isBuildingOpen(building.buildingType, _hour));
       } else {
-        interiorBuilding = buildingDataForDoor?.(hit) ?? null;
+        building = buildingDataForDoor?.(hit) ?? null;
         // PlayerActivate.cs:1120 verbatim - computed once, at the door,
         // and then left alone. A shop entered while open keeps its
         // people even if the player is still inside at closing time.
-        const _bt = interiorBuilding?.buildingType;
+        const _bt = building?.buildingType;
         insideOpenShop = _bt != null && isShop(_bt) && isBuildingOpen(_bt, _hour);
         // AUDIT 26 F066: the latch RIDES the building record, because
         // PlayerActivate reads it again at shelf time (:887-899) - the
         // port computed it here for the people gate and then dropped it,
         // so a shop broken into after hours still sold at full price.
-        if (interiorBuilding) interiorBuilding.insideOpenShop = insideOpenShop;
+        if (building) building.insideOpenShop = insideOpenShop;
       }
       // ROAD-B B4: the OTHER TWO latches PlayerActivate.TransitionInterior
       // sets in the same breath as insideOpenShop -
@@ -5441,25 +5468,25 @@ export function createWorldModes(host) {
       // function of the HOUR at entry, IsTavern and IsResidence are pure
       // functions of buildingType, and the restored record carries that
       // buildingType. Same value either way.
-      _insideTavern = isTavern(interiorBuilding?.buildingType ?? BUILDING_TYPES.None);
+      const insideTavern = isTavern(building?.buildingType ?? BUILDING_TYPES.None);
       // TAVERN-REST1/GUILD-REST1 (2026-09-21, per-request: "we stripped the tavern partyresting mechanic out
       // same needs to be done for temples and guilds since its not needed in there every member can rest
       // there as they want"): a rented tavern room, a guild hall's own beds, and a temple's own beds are all
       // slept in individually - unlike a dungeon or the open road, there is no single shared "camp" the whole
       // party either agrees to or interrupts together, so the party-rest consensus/mirror mechanic (world.js's
       // partyRestGate/partyRestFollowTick) does not apply inside any of the three at all. A pure function of
-      // buildingType, exactly like _insideTavern above; recomputed the same way on restore.
-      _insidePartyRestExempt = interiorBuilding != null && [BUILDING_TYPES.Tavern, BUILDING_TYPES.Temple, BUILDING_TYPES.GuildHall].includes(interiorBuilding.buildingType);
-      _insideResidence = isResidence(interiorBuilding?.buildingType ?? BUILDING_TYPES.None);
-      if (interiorBuilding) {
-        interiorBuilding.insideTavern = _insideTavern;
-        interiorBuilding.insideResidence = _insideResidence;
+      // buildingType, exactly like insideTavern above; recomputed the same way on restore.
+      const partyRestExempt = building != null && [BUILDING_TYPES.Tavern, BUILDING_TYPES.Temple, BUILDING_TYPES.GuildHall].includes(building.buildingType);
+      const insideResidence = isResidence(building?.buildingType ?? BUILDING_TYPES.None);
+      if (building) {
+        building.insideTavern = insideTavern;
+        building.insideResidence = insideResidence;
       }
       const _dict = townTalk?.factionDict ?? null;
-      const peopleVisible = !interiorBuilding ? true : peopleAreVisible(interiorBuilding, {
+      const peopleVisible = !building ? true : peopleAreVisible(building, {
         hour: _hour,
         insideOpenShop,
-        isHouseOwned: (key) => isHouseOwned(playerEntity.houses ?? [], interiorBuilding?.regionIndex ?? 0, key),
+        isHouseOwned: (key) => isHouseOwned(playerEntity.houses ?? [], building?.regionIndex ?? 0, key),
         guildForBuilding: (factionId) => {
           const g = guildOfFaction(factionId, resolveVariantGuild(_dict), _dict);
           if (!g) return null;
@@ -5471,7 +5498,7 @@ export function createWorldModes(host) {
       // evaluated at build like DFU's (:816) - the bank registry is the
       // host's, the peopleVisible idiom. Ships route at ACTIVATION
       // only, as DFU does.
-      const houseOwned = !!interiorBuilding && isHouseOwned(playerEntity.houses ?? [], interiorBuilding.regionIndex ?? 0, interiorBuilding.buildingKey);
+      const houseOwned = !!building && isHouseOwned(playerEntity.houses ?? [], building.regionIndex ?? 0, building.buildingKey);
       // P8: parent the interior at the entered building's world matrix
       // (verbatim ownerPosition + buildingMatrix) - context coordinates
       // come back world-frame, landings run in one frame, and the walk
@@ -5489,8 +5516,8 @@ export function createWorldModes(host) {
           voxelfolk, piece, paint, setupStaticNpc, houseOwned, peopleVisible,
           // RR2: Roleplay & Realism's variant keepers and residents (RoleplayRealism.cs:775-932) - the decision per person, with StaticNPC's own name seed and the location's climate
           variantPerson: (pn) => rrVariantPerson(pn, {
-            buildingType: interiorBuilding?.buildingType ?? -1, quality: interiorBuilding?.quality ?? 0,
-            nameSeed: staticNpcData(pn, { ...(questSceneCtx?.() ?? {}), buildingKey: interiorBuilding?.buildingKey ?? 0 }).nameSeed,
+            buildingType: building?.buildingType ?? -1, quality: building?.quality ?? 0,
+            nameSeed: staticNpcData(pn, { ...(questSceneCtx?.() ?? {}), buildingKey: building?.buildingKey ?? 0 }).nameSeed,
             worldClimate: hit.dfLocation?.climate?.worldClimate ?? null,   // AUDIT-RR F13: `climate` IS the settings object; its worldClimate (223-232) is what GetWorldClimateSettings takes - climateType (0-3) fell to the Breton arm everywhere
           }),
           // ROAD-C c2/S9: SetupBeacons(door)'s building arm - the
@@ -5507,6 +5534,7 @@ export function createWorldModes(host) {
           dungeonEntranceDiscovered: !!getDungeonAutomap(
             automapDungeonKey(hit.dfLocation?.regionIndex ?? -1, hit.dfLocation?.name ?? ''))?.entranceDiscovered,
         });
+      if (!live()) { abandonContext(ctx); return false; }   // AUDIT 68 X3-transition-build-race: the world moved under the build (a load, a teleport) - nothing is published
       const siblings = entries.filter((e) =>
         e.dfBlock === hit.dfBlock && e.recordIndex === hit.recordIndex);
       const landing = interiorLanding(
@@ -5515,10 +5543,17 @@ export function createWorldModes(host) {
       // voxelfolk meshes - and `interiorCtx` is not yet assigned, so a
       // throw here used to leak the whole build on EVERY E-press at
       // such a door (the callers only log it). Free it first.
-      if (!landing) { ctx.destroy(); throw new Error('no interior landing'); }
+      if (!landing) { abandonContext(ctx); throw new Error('no interior landing'); }
       exitReturn = { siblings };
       exteriorDoor = hit.door;   // IS1: SetExteriorDoors - the save's way back in
       interiorCtx = ctx;
+      // AUDIT 68 S23-failed-entry-stale-building: the identity and the
+      // three PlayerActivate.cs:1120-1122 latches, committed with the
+      // context and not before it.
+      interiorBuilding = building;
+      _insideTavern = insideTavern;
+      _insideResidence = insideResidence;
+      _insidePartyRestExempt = partyRestExempt;
       // HEARTH1: the room's own fires, off the light list this context
       // already built - a tavern's hearth, a brazier in a hall. The
       // parent frame, which is what the lights carry and what the
@@ -5543,7 +5578,7 @@ export function createWorldModes(host) {
       // X1: an armed Open/Lock spell fires on this interior's doors
       // too - the same law the dungeon context wires for its own.
       wireDoorSpells(ctx.actions, playerEntity, (t) => townTalk?.say?.(t));
-      // (interiorBuilding was resolved above, before the context was
+      // (the building was resolved above, before the context was
       // built - P1 needs it to gate the people.)
       ensureInteriorWindowArt();   // U23: every interior can open a window now
       // ROAD-C c2/S9: InitWhenInInteriorOrDungeon's building arm raises
@@ -5599,25 +5634,6 @@ export function createWorldModes(host) {
     return true;
   }
 
-  function rayAabbProbe(eye, dir, aabb) {
-    let tMin = 0;
-    let tMax = Infinity;
-    for (let a = 0; a < 3; a++) {
-      if (Math.abs(dir[a]) < 1e-9) {
-        if (eye[a] < aabb.min[a] || eye[a] > aabb.max[a]) return null;
-        continue;
-      }
-      const inv = 1 / dir[a];
-      let t0 = (aabb.min[a] - eye[a]) * inv;
-      let t1 = (aabb.max[a] - eye[a]) * inv;
-      if (t0 > t1) { const sw = t0; t0 = t1; t1 = sw; }
-      if (t0 > tMin) tMin = t0;
-      if (t1 < tMax) tMax = t1;
-      if (tMin > tMax) return null;
-    }
-    return +tMin.toFixed(2);
-  }
-
   function tryExit({ pressCast = false } = {}) {
     const eye = player.eye;
     const dir = eyeDir();
@@ -5631,7 +5647,7 @@ export function createWorldModes(host) {
     // (PlayerActivate.cs:325-339 - no return, skipped in Info mode):
     // the door/ladder/loot ladder below still runs. Over BOTH pools,
     // as the exterior arm runs over its own two; pickQuestFoe skips
-    // any foe without a questBehaviour (activate.js:183), so the
+    // any foe without a questBehaviour (activate.js:197), so the
     // watch costs nothing.
     if (getInteractionMode() !== 'info' && interiorCtx && !host.activateLockOnly?.()) {   // TS1: the stick's tap is no click
       const qf = pickQuestFoe(eye, dir, interiorFoePool(), interiorCtx.collider);
@@ -5806,6 +5822,7 @@ export function createWorldModes(host) {
           const _hooks = droppedLootHooks(pile);   // G5
           // QUICK-LOOT B4: the same door, on the player's own pile.
           if (!quickLootTake(key, _hooks, playerEntity, (l) => say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) mountInterior(interiorInventory({ loot: _hooks }));   // AUDIT QL-WEIGHT1
+          else interiorDropped.releaseEmptied();   // AUDIT 68 S20-frame-return-kills-loop: the take is its own window close (the world hosts' law)
         }
         return true;
       }
@@ -5969,7 +5986,6 @@ export function createWorldModes(host) {
     immersiveFootsteps.onTransitionExterior();   // IF1: UpdateFootsteps_OnTransitionExterior
     betterAmbience.onTransition(null);   // BA1: OnTransitionExterior
     interiorTorches.destroyAll();   // HT1: DestroyLightSources_OnTransition
-    interiorCamps.destroyAll(); interiorHearths.length = 0;   // HEARTH1
     questBridge?.onExteriorTransition();   // Q4-v: CreateFoe's pending-wave invalidation
     npcSession?.onWorldChanged();          // TK-v: OnTransitionToExterior (:3599-3603)
     unleveledLootExteriorTransition();     // UL1: OnTransitionExterior - the BUILDING exit alone clears the mod's dungeon
@@ -5983,6 +5999,9 @@ export function createWorldModes(host) {
    *  TransitionDungeonInterior - and that member takes the START
    *  marker. startInDungeon passes true for StartDungeonInterior. */
   async function tryEnterDungeon(hit, entries, { preferEnterMarker = false } = {}) {
+    return gatedTransition((live) => dungeonTransition(hit, entries, preferEnterMarker, live));   // AUDIT 68 X3-transition-build-race
+  }
+  async function dungeonTransition(hit, entries, preferEnterMarker, live) {
     // AUDIT 28 W4: SMALLER DUNGEONS - the location that gets BUILT is
     // sized by MapsFile's law (setting, main-story gate, and a live
     // quest's frozen state through its SiteLink), on a clone; the
@@ -5995,6 +6014,16 @@ export function createWorldModes(host) {
     unleveledLootPreTransition();   // UL1: OnPreTransition (TransitionDungeonInterior)
     transitioning = true;
     try {
+      // Classic water tile: the location climate's ground archive,
+      // record 0 (R11) - uploaded below since the exterior ground path
+      // never routes single records through uploadRecord. AUDIT 68
+      // S23-dungeon-commit-before-await: fetched BEFORE the build, so no
+      // fallible await stands between `dungeonCtx = ctx` and the start
+      // marker test - a failed fetch there left the built context
+      // published, never destroyed, and holding the process seams it
+      // borrows at construction.
+      const waterArchive = getGroundArchive(hit.climateBase, hit.season);
+      await getTexture(waterArchive);
       const ctx = await buildDungeonContext(
         { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette },
         dfLocation, blocks, dfLocation.climate.climateType, {
@@ -6160,7 +6189,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:6288), so the OUTER host's one rides in.
+          // (dungeonContext.js:6301), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:810 -> the
@@ -6193,6 +6222,7 @@ export function createWorldModes(host) {
             },
           },
         });
+      if (!live()) { abandonContext(ctx); return false; }   // AUDIT 68 X3-transition-build-race: the world moved under the build - it hands its seams back and publishes nothing
       dungeonCtx = ctx;
       // WORLD-HOVER: THE THREE FAMILIES THIS HOST STANDS, registered
       // once rather than composed inline on every press - and read by
@@ -6246,10 +6276,7 @@ export function createWorldModes(host) {
         // The DISPLAY NAME is resolved by the port's own StaticNPC
         // member - the same one the Info click speaks through - so the
         // plaque and the click can never call one person two things.
-        const dict = townTalk?.factionDict ?? null;
-        const display = staticNpcName(staticNpcData(pn, { ...(questSceneCtx?.() ?? {}), buildingKey: 0,
-          ...(pn?.context != null ? { context: pn.context } : {}) }),
-        { getFaction: (id) => dict?.get(id) ?? null, nameBank: currentNameBank() });
+        const display = npcDisplayName(staticNpcData(pn, staticNpcSceneCtx(pn)));
         const t = npcHoverName(display, { archive: pn.archive ?? -1, record: pn.record ?? -1 });
         return t ? { title: t } : null;
       });
@@ -6279,11 +6306,6 @@ export function createWorldModes(host) {
         player.spawn(pos[0], pos[1], pos[2]);
         cam.pos = [...player.eye];
       };
-      // Classic water tile: the location climate's ground archive,
-      // record 0 (R11) - uploaded here since the exterior ground path
-      // never routes single records through uploadRecord.
-      const waterArchive = getGroundArchive(hit.climateBase, hit.season);
-      await getTexture(waterArchive);
       uploadRecord(waterArchive, 0);
       ctx.setWaterArchive(waterArchive);   // WATER-D1: drawFoes draws the plane with it, inside the world pass
       dungeonReturn = {
@@ -6314,7 +6336,7 @@ export function createWorldModes(host) {
       // refusal unwinds the context it just built.
       if (!spawn) {
         console.error('[dungeon] no start marker; transition aborted');
-        ctx.destroy();
+        abandonContext(ctx);
         dungeonCtx = null;
         return false;
       }
@@ -7250,7 +7272,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:9271's own wave-46 note); the interior
+          // a blow (world.js:9256's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -8006,7 +8028,8 @@ export function createWorldModes(host) {
       const rows = [];
       interiorCtx.ladders.forEach((l, i) => {
         const aabb = objAabb(l);
-        rows.push({ key: `ladder:${i}`, aabb: aabb.min.map((v) => +v.toFixed(2)).concat(aabb.max.map((v) => +v.toFixed(2))), hit: rayAabbProbe(player.eye, dir, aabb) });
+        const t = rayAabb(player.eye, dir, aabb);   // AUDIT 68 S23-rayAabbProbe-copy: the activation pick's own slab test, not a copy of it
+        rows.push({ key: `ladder:${i}`, aabb: aabb.min.map((v) => +v.toFixed(2)).concat(aabb.max.map((v) => +v.toFixed(2))), hit: t == null ? null : +t.toFixed(2) });
       });
       return JSON.stringify({ eye: player.eye.map((v) => +v.toFixed(2)), dir: dir.map((v) => +v.toFixed(2)), occluder: +interiorCtx.collider.raycast(player.eye, dir, 50).toFixed(2), rows });
     };
@@ -8148,7 +8171,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:3804`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:3803`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -8349,37 +8372,7 @@ export function createWorldModes(host) {
     // another must not be nulled by its OWN onClose.
     onClose: () => { if (interiorOverlay?.isRestWindow) interiorOverlay = null; },
     say,
-    onLevelUp: () => {
-      // LV2 - THE RISING: the classic skin says its line and fills the
-      // slot below; the enhanced one announces on the HUD strip and
-      // leaves the level owed, so this host's ONE overlay slot is not
-      // taken from a player mid-anything.
-      announceLevelUp(playerEntity, { say, open: () => {
-        // dfuiOpenCharacterSheetWindow (RaiseSkills :1414): the SHEET
-        // levels the player in classic. This host builds no windows -
-        // host.makeCharSheet is the outer host's own builder, the same
-        // one toggleCharSheet mounts.
-        // ORL1: ...and the LAST-RESORT screen, for a host that hands no
-        // builder, must obey this character's law too.
-        // LV1: WHICH IS THE DOOR'S QUESTION, SO IT IS ASKED THERE. This
-        // arm used to re-answer it inline - the mod's window when the
-        // mod levels this character, the classic rollout otherwise -
-        // and its own comment said it was "the only place in the tree
-        // that reaches for a level-up screen without" the door. That
-        // was true and it is exactly what THE FOUR HOSTS rule is
-        // about: when the enhanced skin grew a level-up face, three
-        // hosts got it through ui/charSheetDoor.js and this one, in
-        // both of its copies, kept handing out canvas rollouts. The
-        // door takes `entity` alone and answers the whole fork - skin,
-        // lane and book - so a face added to it is a face every host
-        // wears.
-        // LV2: ...and the ENHANCED skin does not call this thunk at
-        // all until the player asks the sheet for it.
-        if (!interiorOverlay) {
-          interiorOverlay = host.makeCharSheet?.() ?? createCharSheetWindow({ entity: playerEntity });
-        }
-      } });
-    },
+    onLevelUp: onInteriorLevelUp,   // AUDIT 68 S23-levelup-closure-dup: the walk and the rest level up through ONE arm
     day: () => false, inside: () => true,   // a building interior, always
     restKind: () => { const p = interiorRestPlaceHere(); return p.houseOwned || p.isShip || !!p.room ? 'bed' : interiorCamps.fireNear(player.pos) ? 'camp' : 'rough'; },   // SURV4: a rented room, your house or your ship is a bed; a guild hall's boards are rough - AUDIT SURV-TIERS: and its hearth a camp's rest, as a brazier is outdoors (HEARTH1 warmed the room and forgot the sleep)
   });
@@ -9238,11 +9231,13 @@ export function createWorldModes(host) {
      *  reaches a quest foe standing in a dungeon - before this the
      *  action never found an instance, and since SetComplete sits
      *  inside the instance walk it re-ran every machine tick for
-     *  ever. The INTERIOR arm stays empty: that host has no enemy
-     *  pool (the Q4-v flag above). */
+     *  ever. AUDIT 68 S23-liveQuestFoes-interior-empty: the INTERIOR
+     *  arm is the same walk - IF stands quest foes into the building's
+     *  pool (tryPlaceInteriorQuestFoe, the marker stands). */
     liveQuestFoes() {
-      if (mode !== 'dungeon' || !dungeonCtx) return [];
-      return dungeonCtx.foes.filter((f) => !f.dead && f.questBehaviour);
+      if (mode === 'dungeon' && dungeonCtx) return dungeonCtx.foes.filter((f) => !f.dead && f.questBehaviour);
+      if (mode === 'interior') return interiorEnemyDatabase().filter((f) => f.questBehaviour);
+      return [];
     },
     /** ROAD-B: PlayerEntity.SpawnCityGuards' INDOOR arm
      *  (:628-642). Answers TRUE when it took the call, which is what
@@ -9323,7 +9318,7 @@ export function createWorldModes(host) {
      *  here, and two spellings of one pool's damage doors is exactly
      *  the drift the join above was written to end. This is the door
      *  onto that one definition. */
-    insideFoeSinksFor(foe) { return insideFoeSinks(foe); },
+    insideFoeSinksFor(foe, fromPlayer) { return insideFoeSinks(foe, fromPlayer); },
     /** AUDIT 58 (review): THE WABBAJACK'S TRANSFORM over this host's
      *  pools - dungeonContext.js's twin, for the host that had none.
      *  world.js's `replaceFoe` deletes the struck record and stands
@@ -9466,6 +9461,7 @@ export function createWorldModes(host) {
      *  double-freed them - and every quest behaviour missed its
      *  OnDestroy, so the resource side never decoupled. */
     forceExitToExterior({ cacheScene = true } = {}) {
+      transitionGate.abort();   // AUDIT 68 X3-transition-build-race: a door build still in flight is abandoned, never published over this exit
       const wasInside = mode !== 'exterior';
       // JAN1: the pair the live rig holds, read before either teardown (a load overwrites it a moment later with the save's own)
       const pose = mode === 'dungeon' ? dungeonPose() : mode === 'interior' ? weaponPoseOf(interiorWeapon.playerWeapon) : null;
@@ -9545,6 +9541,17 @@ export function createWorldModes(host) {
       // Recalled into a dungeon and is then quest-teleported into
       // another keeps it, as the C# does.
       if (wasInside) questBridge?.onExteriorTransition();   // CreateFoe's pending-wave invalidation, as both real doors do
+      // AUDIT 68 X3-ba-forceexit-rain: the Respawner's outside arm raises
+      // OnTransitionExterior / OnTransitionDungeonExterior
+      // (PlayerEnterExit.cs:524-528) - the listeners both real doors
+      // notify. Without them a Recall, a quest teleport or a load out of
+      // a building left Better Ambience's indoor rain loop playing in the
+      // street (and re-minted it from the stale place on the load's
+      // settle), and the footsteps on the interior's floor.
+      if (wasInside) {
+        immersiveFootsteps.onTransitionExterior();
+        betterAmbience.onTransition(null);
+      }
     },
     // M2: the cast engine's mode-aware raycast reads the INTERIOR's
     // collider while a building is mounted.
@@ -9643,6 +9650,13 @@ export function createWorldModes(host) {
      *  (PlayerMouseLook.cs:190-198); see modalWindowUp's note above. */
     modalWindowUp,
     get transitioning() { return transitioning; },
+    /** AUDIT 68 X3-transition-build-race: the host moved the world (a
+     *  teleport, a load) - a door build still in flight frees what it
+     *  made instead of publishing it. */
+    abortTransition() { transitionGate.abort(); },
+    /** ...and resolves once no build holds the gate, so a load can wait
+     *  for an abandoned one to hand its seams back before it reads. */
+    transitionSettled() { return transitionGate.settled(); },
     /** ROAD-B B4: PlayerEnterExit.IsPlayerInsideDungeonCastle (:136-139),
      *  which GameManager.IsPlayerInsideCastle (GameManager.cs:420-423) is
      *  a bare pass-through of. The flag is written in exactly one place -
@@ -9747,7 +9761,7 @@ export function createWorldModes(host) {
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
      *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3385-3407), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:6452). So an F9 pressed in a shop
+     *  unconditionally (world.js:6450). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -9786,7 +9800,7 @@ export function createWorldModes(host) {
       if (interiorOverlay instanceof DeathScreen) { interiorOverlay.restoreView(); interiorOverlay = null; }
     },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:6545)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:6550)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -9796,8 +9810,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:6706`
-     *  and `dungeonContext.js:6297` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:6717`
+     *  and `dungeonContext.js:6310` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

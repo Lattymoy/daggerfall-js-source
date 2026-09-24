@@ -2,7 +2,7 @@
 // Sits just outside the head, front left open (the face). Race-keyed;
 // this is the human base + hooks for elf ears etc. Separate mesh,
 // tagged 'head' so it bobs with the head.
-import { loftPiece, compress } from './pieceLoft.js';
+import { loftPiece, compress, shadePiece, pushQuad } from './pieceLoft.js';
 
 // Hair ramps by broad colour; race/character will pick one later.
 export const HAIR_RAMPS = {
@@ -11,20 +11,13 @@ export const HAIR_RAMPS = {
   blonde:[[70, 54, 28], [104, 82, 44], [140, 114, 66], [178, 150, 96]],
 };
 
-function shadeHair(faces, ramp) {
-  const Lx = 0.5, Ly = 0.55, Lz = 0.67, Ln = Math.hypot(Lx, Ly, Lz);
-  const snap = (t) => ramp[Math.max(0, Math.min(ramp.length - 1, Math.round(t * (ramp.length - 1))))];
-  for (const f of faces) { const it = Math.min(1, Math.max(0.1, (f.n[0]*Lx + f.n[1]*Ly + f.n[2]*Lz) / Ln * 0.9 + 0.2)); f._i = it; f.c = snap(it); }
-  return faces;
-}
-
 // race: 'Human' | 'Elf' | 'Khajiit' | 'Argonian' (morphology groups).
 export function buildHair(ramp = HAIR_RAMPS.brown, race = 'Human', skin = null, style = 'short') {
   const faces = [];
   const P = 0.8;
   const hasHair = race === 'Human' || race === 'Elf'; // Khajiit=fur, Argonian=scales/crest
   if (hasHair && style !== 'bald') {
-    const cap = (yLo, dropTo, backThick) => {
+    const cap = (dropTo, backThick) => {
       // crown cap down to the hairline band
       loftPiece(faces, [
         { y: 2.055, rx: 0.058, rz: 0.064, p: P, cz: -0.012 },
@@ -43,23 +36,23 @@ export function buildHair(ramp = HAIR_RAMPS.brown, race = 'Human', skin = null, 
       const GAP = 1.0;
       loftPiece(faces, rows, { group: 'head', seg: 22, arc: [Math.PI/2 + GAP, Math.PI/2 - GAP + Math.PI*2] });
     };
-    const strand = (spine, r0) => { // a rounded tube (ponytail/braid), tangent frames
-      const T = spine.map((pp,i)=>{const a=spine[Math.max(0,i-1)],b=spine[Math.min(spine.length-1,i+1)];let t=[b.x-a.x,b.y-a.y,b.z-a.z];const l=Math.hypot(...t)||1;return[t[0]/l,t[1]/l,t[2]/l];});
+    const strand = (spine) => { // a rounded tube (ponytail/braid), tangent frames
+      const T = spine.map((_,i)=>{const a=spine[Math.max(0,i-1)],b=spine[Math.min(spine.length-1,i+1)];let t=[b.x-a.x,b.y-a.y,b.z-a.z];const l=Math.hypot(...t)||1;return[t[0]/l,t[1]/l,t[2]/l];});
       const side=[1,0,0];
       const rings=spine.map((pp,i)=>{const t=T[i];let d=[t[1]*side[2]-t[2]*side[1],t[2]*side[0]-t[0]*side[2],t[0]*side[1]-t[1]*side[0]];const dl=Math.hypot(...d)||1;d=[d[0]/dl,d[1]/dl,d[2]/dl];const N=8,ring=[];for(let k=0;k<N;k++){const a=k/N*2*Math.PI,c=Math.cos(a)*pp.r,sn=Math.sin(a)*pp.r;ring.push([pp.x+c*side[0]+sn*d[0],pp.y+c*side[1]+sn*d[1],pp.z+c*side[2]+sn*d[2]]);}return ring;});
       for(let i=0;i+1<rings.length;i++)for(let k=0;k<8;k++){const j=(k+1)%8;quad(rings[i][k],rings[i][j],rings[i+1][j],rings[i+1][k]);}
     };
-    const quad = (a,b,c,d) => { const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=d[0]-a[0],vy=d[1]-a[1],vz=d[2]-a[2];let nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;const L=Math.hypot(nx,ny,nz)||1;faces.push({p:[...a,...b,...c,...d],n:[nx/L,ny/L,nz/L],g:'head'}); };
+    const quad = (a, b, c, d) => pushQuad(faces, a, b, c, d, 'head');
 
-    if (style === 'short')    cap(1.910, 1.740, 0.0);
-    else if (style === 'buzz') cap(1.910, 1.800, -0.02);
-    else if (style === 'medium') cap(1.910, 1.640, 0.006);
-    else if (style === 'long') cap(1.910, 1.470, 0.012);
-    else if (style === 'ponytail') { cap(1.910, 1.760, 0.0); strand([
+    if (style === 'short')    cap(1.740, 0.0);
+    else if (style === 'buzz') cap(1.800, -0.02);
+    else if (style === 'medium') cap(1.640, 0.006);
+    else if (style === 'long') cap(1.470, 0.012);
+    else if (style === 'ponytail') { cap(1.760, 0.0); strand([
         {x:0,y:1.860,z:-0.150,r:0.030},{x:0,y:1.800,z:-0.210,r:0.032},{x:0,y:1.700,z:-0.250,r:0.030},
-        {x:0,y:1.580,z:-0.256,r:0.026},{x:0,y:1.470,z:-0.236,r:0.020},{x:0,y:1.390,z:-0.200,r:0.010}], 0.03); }
-    else if (style === 'topknot') { cap(1.910, 1.780, 0.0); strand([
-        {x:0,y:2.055,z:-0.010,r:0.030},{x:0,y:2.110,z:-0.010,r:0.044},{x:0,y:2.150,z:-0.012,r:0.036},{x:0,y:2.168,z:-0.014,r:0.014}], 0.03); }
+        {x:0,y:1.580,z:-0.256,r:0.026},{x:0,y:1.470,z:-0.236,r:0.020},{x:0,y:1.390,z:-0.200,r:0.010}]); }
+    else if (style === 'topknot') { cap(1.780, 0.0); strand([
+        {x:0,y:2.055,z:-0.010,r:0.030},{x:0,y:2.110,z:-0.010,r:0.044},{x:0,y:2.150,z:-0.012,r:0.036},{x:0,y:2.168,z:-0.014,r:0.014}]); }
     else if (style === 'mohawk') {
       // central sagittal crest, no full cap: a tall fin front->back
       const cr = [[1.905,0.150],[1.995,0.090],[2.055,0.000],[2.045,-0.090],[1.965,-0.165]]; // [y,z] base along the scalp
@@ -69,19 +62,15 @@ export function buildHair(ramp = HAIR_RAMPS.brown, race = 'Human', skin = null, 
         quad([w,y0,z0],[w,y1,z1],[w,y1+h1,z1],[w,y0+h0,z0]);
         quad([-w,y0+h0,z0],[w,y0+h0,z0],[w,y1+h1,z1],[-w,y1+h1,z1]); }
     }
-    else cap(1.910, 1.740, 0.0); // fallback
+    else cap(1.740, 0.0); // fallback
   }
 
-  shadeHair(faces, ramp);
+  shadePiece(faces, ramp, 0.1, 0.2);
 
   // ── RACE FEATURES ── flesh-coloured geometry (own ramp), shaded like
   // the hair bands. skin ramp passed so ears/muzzle match the head.
   const flesh = [];
-  const quad = (a, b, c, d) => {
-    const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2], vx=d[0]-a[0],vy=d[1]-a[1],vz=d[2]-a[2];
-    let nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx; const L=Math.hypot(nx,ny,nz)||1;
-    flesh.push({ p:[...a,...b,...c,...d], n:[nx/L,ny/L,nz/L], g:'head' });
-  };
+  const quad = (a, b, c, d) => pushQuad(flesh, a, b, c, d, 'head');
   // curved tube along a 3D spine [{x,y,z,r}] - shared by horns/muzzle.
   const tube = (spine, N = 6) => {
     const rings = spine.map((pp, i) => {
@@ -140,7 +129,7 @@ export function buildHair(ramp = HAIR_RAMPS.brown, race = 'Human', skin = null, 
     // embedded in the face, tapering forward+down to a small nose. Each
     // ring is an ellipse (wider than tall) so it reads as a cat snout.
     const fZ = 0.176;
-    const mring = (y, z, rx, ry, embedFix) => {
+    const mring = (y, z, rx, ry) => {
       const r = []; const N = 10;
       for (let k = 0; k < N; k++) { const a = k/N*2*Math.PI; r.push([Math.cos(a)*rx, y + Math.sin(a)*ry, z]); }
       return r;
@@ -268,13 +257,7 @@ export function buildHair(ramp = HAIR_RAMPS.brown, race = 'Human', skin = null, 
     };
     frill(-1); frill(1);
   }
-  if (flesh.length) {
-    const Lx=0.5,Ly=0.55,Lz=0.67,Ln=Math.hypot(Lx,Ly,Lz);
-    const sr = skin || ramp;
-    const snap=(t)=>sr[Math.max(0,Math.min(sr.length-1,Math.round(t*(sr.length-1))))];
-    for (const f of flesh) { const it=Math.min(1,Math.max(0.1,(f.n[0]*Lx+f.n[1]*Ly+f.n[2]*Lz)/Ln*0.9+0.2)); f._i=it; f.c=snap(it); }
-    faces.push(...flesh);
-  }
+  if (flesh.length) faces.push(...shadePiece(flesh, skin || ramp, 0.1, 0.2));
 
   compress(faces);
   return faces;

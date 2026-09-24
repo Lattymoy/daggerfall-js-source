@@ -24,7 +24,7 @@
 import { unitWeightInKg } from './inventory.js';   // AUDIT 23 (items-8)
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // X5: %hs, the trapped soul's name
 import { itemIsIdentified } from './tradeModes.js';   // X7: the DERIVED identified state
-import { templateByIndex, itemBaseValue, conditionPercentage } from './itemTemplates.js';
+import { templateByIndex, itemValueOf, conditionPercentage, isAmmunition } from './itemTemplates.js';   // AUDIT 68 S27-wth-nan: JAN1's one value read; S27-ammo-arrow-only: ammunition, not "the Arrow"
 import { isPotion, isPotionRecipe, isParchment, TEMPLATES } from './useItem.js';
 import { expandLetterSignoff } from './quest/questMacros.js';   // ResolveItemLongName's quest-letter arm (ItemHelper.cs:335-348)
 import { itemArmorValue, isShieldTemplate } from './armorMaterials.js';
@@ -87,7 +87,7 @@ export const potionRecipeTokens = () => [
  *  W3: this read the constant 0 with a "the port has no settings
  *  layer" note that U29 made stale - it reads the setting now, at the
  *  point of use as DFU does. `item.material` IS DFU's raw
- *  nativeMaterialValue (equip.js:145), so the `>=` compares hold. */
+ *  nativeMaterialValue (equip.js:144), so the `>=` compares hold. */
 export function armorShouldShowMaterial(item, setting = getInt('GUI', 'HelmAndShieldMaterialDisplay', 0, 3)) {
   // `artifact` is the classic FLAGS word's artifact bit: minted by
   // loot.js's createArtifact (SetArtifact's :617) and read straight
@@ -113,7 +113,7 @@ export function itemInfoTextId(item) {
     case 'Armor':
       return armorShouldShowMaterial(item) ? INFO_TEXT.armor : INFO_TEXT.armorNoMaterial;
     case 'Weapons':
-      if (item.templateIndex === TEMPLATES.Arrow) return INFO_TEXT.arrow;
+      if (isAmmunition(item)) return INFO_TEXT.arrow;
       if (item.artifact) return INFO_TEXT.weaponNoMaterial;
       return INFO_TEXT.weapon;
     case 'Books':
@@ -233,7 +233,7 @@ export function armourModString(item) {
  * @returns {string|null} the line to show, or null if this item has none
  */
 export const itemDamageLine = (item) => (
-  item?.group === 'Weapons' && item.templateIndex !== TEMPLATES.Arrow
+  item?.group === 'Weapons' && !isAmmunition(item)
     ? weaponDamageString(item) : null);
 
 /**
@@ -265,7 +265,7 @@ export const itemDamageLine = (item) => (
  * @returns {string|null} the line to show, or null if this item has none
  */
 export const itemHandsLine = (item) => (
-  item?.group === 'Weapons' && item.templateIndex !== TEMPLATES.Arrow
+  item?.group === 'Weapons' && !isAmmunition(item)
     ? (getItemHands(item) === ITEM_HANDS.Both ? 'Two-handed' : 'One-handed')
     : null);
 
@@ -545,7 +545,7 @@ export function itemNameParts(item, { getQuest = null, differentiatePlantIngredi
     if (item?.group === 'PlantIngredients2' && item.templateIndex < 18) return { name: `${base} (southern)`, material: '' };
   }
   let material = '';
-  if (item?.group === 'Weapons' && item.templateIndex !== TEMPLATES.Arrow) material = materialName(item);
+  if (item?.group === 'Weapons' && !isAmmunition(item)) material = materialName(item);
   if (item?.group === 'Armor' && armorShouldShowMaterial(item)) material = materialName(item);
   if (isPotion(item)) return { name: potionMacroName(item) ?? base, material };
   const signoff = questLetterName(item, getQuest);
@@ -619,7 +619,7 @@ export function expandItemInfo(text, item, { name = null, soul = null, potion = 
     .replaceAll('%mat', identified && !item?.artifact ? materialName(item) : '')
     .replaceAll('%qua', conditionWord(item))
     .replaceAll('%kg', weightString(item))
-    .replaceAll('%wth', String((item?.value ?? itemBaseValue(item)) * (item?.stackCount ?? 1)))   // AUDIT 23 (items-7): Worth() = value x stackCount
+    .replaceAll('%wth', String(itemValueOf(item) * (item?.stackCount ?? 1)))   // AUDIT 23 (items-7): Worth() = value x stackCount
     .replaceAll('%wdm', item?.group === 'Weapons' ? weaponDamageString(item) : '')
     .replaceAll('%mod', item?.group === 'Armor' ? armourModString(item) : '');
 }
@@ -809,9 +809,12 @@ export function itemStatRows(item) {
   push('Hands', itemHandsLine(item));
   // The material PREFIX is the name's (itemNameParts), so a Daedric
   // Dagger does not read "Daedric Dagger / Material Daedric"; this row
-  // is for the groups whose name does not carry it. `materialName`
-  // answers '' outside Weapons and Armor, and push drops an empty.
-  if (item.group === 'Weapons' || item.group === 'Armor') push('Material', materialName(item));
+  // is for the groups whose name does not carry it. AUDIT 68
+  // S27-statrows-material-leak: and it is THE SAME material the card's
+  // sub-line reads - '' for an unidentified or artifact piece, an
+  // arrow, a helm or shield under HelmAndShieldMaterialDisplay - so the
+  // panel never names a metal the pack withholds; push drops an empty.
+  push('Material', itemNameParts(item).material);
   const survival = isSurvivalItem(item);
   if (survival) for (const t of survivalInfoTokens(item).slice(2)) push('', t.text);
   else if ((item.maxCondition ?? 0) > 0) push('Condition', `${conditionWord(item)} (${conditionPercentage(item)}%)`);

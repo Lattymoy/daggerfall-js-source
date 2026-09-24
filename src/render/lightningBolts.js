@@ -24,6 +24,8 @@
 // Built by the enhanced lane at boot (the wisps' law): a shader fault is a
 // constructor fault the boot probe sees.
 
+import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
+
 /** The channel's hot core, metres across (its halo is BOLT_HALO times it). */
 export const BOLT_CORE_M = 2.5;
 export const BOLT_HALO = 4;
@@ -89,14 +91,6 @@ void main() {
   o = vec4(uColor * light, 1.0);
 }`;
 
-function compileShader(gl, type, src) {
-  const sh = gl.createShader(type);
-  gl.shaderSource(sh, src);
-  gl.compileShader(sh);
-  if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh));
-  return sh;
-}
-
 function mat4Multiply(out, a, b) {
   for (let c = 0; c < 4; c++) {
     for (let r = 0; r < 4; r++) {
@@ -143,11 +137,7 @@ export function boltVertices(bolts, out) {
 export class LightningBoltsRenderer {
   constructor(gl) {
     this.gl = gl;
-    const prog = gl.createProgram();
-    gl.attachShader(prog, compileShader(gl, gl.VERTEX_SHADER, BOLT_VS));
-    gl.attachShader(prog, compileShader(gl, gl.FRAGMENT_SHADER, BOLT_FS));
-    gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+    const prog = buildProgram(gl, BOLT_VS, BOLT_FS);
     this.program = prog;
     this.u = {};
     for (const n of ['uVP', 'uEye', 'uPx', 'uCore', 'uHalo', 'uMinPx', 'uFar', 'uColor', 'uSeen']) this.u[n] = gl.getUniformLocation(prog, n);

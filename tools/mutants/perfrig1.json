@@ -195,8 +195,8 @@
  {
   "name": "PERF-READ1-the-owed-resolve-prints-draws-0-again",
   "file": "src/render/renderer.js",
-  "old": "    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n    const retro = world && !this._panelSaved ? this._retroBegin() : null;   // RETRO1: after the owed present, which reads the frame it presents\n    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; }",
-  "new": "    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; }\n    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n    const retro = world && !this._panelSaved ? this._retroBegin() : null;   // RETRO1: after the owed present, which reads the frame it presents",
+  "old": "    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n    const retro = world && !this._panelSaved ? this._retroBegin() : null;   // RETRO1: after the owed present, which reads the frame it presents\n    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; this._perfOpen = true; }",
+  "new": "    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; this._perfOpen = true; }\n    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n    const retro = world && !this._panelSaved ? this._retroBegin() : null;   // RETRO1: after the owed present, which reads the frame it presents",
   "tests": [
    "test/perfrig1.test.js"
   ],

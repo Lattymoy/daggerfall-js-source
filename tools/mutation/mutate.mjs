@@ -1,6 +1,6 @@
 // Mutation driver for project-dagger AUDIT 18.
 //
-//   node .mutaudit/mutate.mjs --files <glob-ish substr,...> [--ops REL,NUM,...]
+//   node tools/mutation/mutate.mjs --files <glob-ish substr,...> [--ops REL,NUM,...]
 //                             [--per-file N] [--seed N] [--out log.jsonl] [--full]
 //
 // For each mutant: patch file -> node --check -> run the minimal test subset that
@@ -169,10 +169,12 @@ function testsForLine(rel, line) {
 function runTests(list) {
   const argsList = list.length ? list.map(t => path.join('test', t)) : [];
   const r = spawnSync(process.execPath, ['--test', ...argsList], {
-    cwd: ROOT, encoding: 'utf8', timeout: 300000,
+    cwd: ROOT, encoding: 'utf8', timeout: 300000, maxBuffer: 1 << 28,   // AUDIT 68: a whole-suite TAP outgrows the 1 MiB default
     env: { ...process.env, ARENA2_PATH: process.env.ARENA2_PATH },
   });
   if (r.error && r.error.code === 'ETIMEDOUT') return { status: 'TIMEOUT' };
+  // AUDIT 68 X5-mutation-harness-enobufs-orphaned: a child the harness lost (ENOBUFS, a signal) is not a failing test
+  if (r.error || r.status === null) return { status: 'ERROR', error: r.error?.code ?? r.signal };
   return { status: r.status === 0 ? 'PASS' : 'FAIL', out: (r.stdout || '') + (r.stderr || '') };
 }
 
@@ -187,7 +189,7 @@ const allSrc = [];
 
 const targets = allSrc.filter(f => !filesSel.length || filesSel.some(s => f.includes(s))).sort();
 const log = { write: (s) => fs.appendFileSync(OUTLOG, s), end: () => {} };  // sync: spawnSync starves the event loop
-let nRun = 0, nCaught = 0, nSurv = 0, nDead = 0, nSkip = 0;
+let nRun = 0, nCaught = 0, nSurv = 0, nDead = 0, nSkip = 0, nErr = 0;
 
 for (const rel of targets) {
   const abs = path.join(ROOT, rel);
@@ -228,8 +230,8 @@ for (const rel of targets) {
     }
     fs.writeFileSync(abs, orig);
     nRun++;
-    const verdict = res.status === 'PASS' ? 'SURVIVED' : (res.status === 'TIMEOUT' ? 'TIMEOUT' : 'CAUGHT');
-    if (verdict === 'SURVIVED') nSurv++; else nCaught++;
+    const verdict = res.status === 'PASS' ? 'SURVIVED' : res.status === 'TIMEOUT' ? 'TIMEOUT' : res.status === 'ERROR' ? 'HARNESS_ERROR' : 'CAUGHT';
+    if (verdict === 'SURVIVED') nSurv++; else if (verdict === 'HARNESS_ERROR') nErr++; else nCaught++;
     log.write(JSON.stringify({
       file: rel, line: s.line, op: s.op, from: s.from, to: s.to,
       verdict, escalated, tests: subset.length, subset: subset.length <= 12 ? subset : undefined,
@@ -241,4 +243,4 @@ for (const rel of targets) {
   fs.writeFileSync(abs, orig);
 }
 log.end();
-console.log(JSON.stringify({ run: nRun, caught: nCaught, survived: nSurv, noTestExecutesLine: nDead, skippedInvalid: nSkip }));
+console.log(JSON.stringify({ run: nRun, caught: nCaught, survived: nSurv, harnessErrors: nErr, noTestExecutesLine: nDead, skippedInvalid: nSkip }));

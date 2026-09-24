@@ -147,8 +147,8 @@ test('SD1: the stander uses the ONE placement law, the live world, and the live 
   const he = read('src/scenes/hostEnchant.js');
   const body = he.slice(he.indexOf('export function standLooseFoe'));
   assert.match(body, /playerFeet: \[feet\[0\], feet\[1\] \+ 0\.9, feet\[2\]\],/, 'the cast origin is the controller centre, as tryPlaceFoe has it');
-  assert.match(body, /isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet, \(\) => foes, feet\)/,
-    'the occupancy term reads the pool it was handed, so a dungeon foe blocks a dungeon spawn');
+  assert.match(body, /isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet, \(\) => \[\.\.\.foes, \.\.\.pending\], feet\)/,
+    'the occupancy term reads the pool it was handed, so a dungeon foe blocks a dungeon spawn (AUDIT 68: and the spots still spawning)');
   assert.match(body, /spot = placeFoeFreely\(env, \{ minDistance, maxDistance, lineOfSightCheck \}\);/);   // AUDIT-RR F4: CreateFoeSpawner's own distances ride in, 4..20 the defaults
   // FinalizeFoe's fork, and the LookAt
   assert.match(body, /const fly = \(ENEMY_BASICS\[mobileType\]\?\.behaviour \?\? 'General'\) === 'Flying';/);

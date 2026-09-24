@@ -2,7 +2,7 @@
 // its own deploy").
 //
 // The house config builds the whole site - the game, the labs, the
-// menus - and the gun lab is one entry point among fifteen. This one
+// menus - and the gun lab is one entry point among many. This one
 // builds THE LAB AND NOTHING ELSE, into `dist-gun/`, with a RELATIVE
 // base so the output runs from any directory: the site's
 // /preview/gun-lab/, a static host, a phone opening a folder, or a

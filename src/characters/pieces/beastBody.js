@@ -23,7 +23,7 @@
 // animal rides the rig's torso through a swing rather than staying put
 // while it turns.
 
-import { HSCALE } from './pieceLoft.js';
+import { HSCALE, quadder, boxer } from './pieceLoft.js';
 
 /** A brown coat. Each design overrides it; this is the fallback. */
 export const PELT_RAMP = [
@@ -35,32 +35,8 @@ export const PELT_RAMP = [
   [176, 150, 116],
 ];
 
-function quadder(faces, ramp) {
-  return (a, b, c, d, shade) => {
-    const ux = b[0] - a[0],
-      uy = b[1] - a[1],
-      uz = b[2] - a[2];
-    const vx = d[0] - a[0],
-      vy = d[1] - a[1],
-      vz = d[2] - a[2];
-    let nx = uy * vz - uz * vy,
-      ny = uz * vx - ux * vz,
-      nz = ux * vy - uy * vx;
-    const L = Math.hypot(nx, ny, nz) || 1;
-    const c3 = ramp[Math.max(0, Math.min(ramp.length - 1, Math.round(shade * (ramp.length - 1))))];
-    faces.push({ p: [...a, ...b, ...c, ...d], n: [nx / L, ny / L, nz / L], c: [...c3], g: 'body', _i: shade });
-  };
-}
-
 /** A box between two corners: six faces, lit brightest on top. */
-function box(quad, x0, y0, z0, x1, y1, z1, top = 0.95, side = 0.66, under = 0.3) {
-  quad([x0, y1, z1], [x1, y1, z1], [x1, y0, z1], [x0, y0, z1], side);
-  quad([x1, y1, z0], [x0, y1, z0], [x0, y0, z0], [x1, y0, z0], side * 0.7);
-  quad([x1, y1, z1], [x1, y1, z0], [x1, y0, z0], [x1, y0, z1], side * 0.85);
-  quad([x0, y1, z0], [x0, y1, z1], [x0, y0, z1], [x0, y0, z0], side * 0.85);
-  quad([x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1], top);
-  quad([x0, y0, z1], [x1, y0, z1], [x1, y0, z0], [x0, y0, z0], under);
-}
+const box = boxer();
 
 /**
  * @param {number[][]} ramp coat colours, dark -> light

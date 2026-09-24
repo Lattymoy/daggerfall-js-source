@@ -42,7 +42,7 @@ const building = (buildingType, { factionId = 0, nameSeed = 777 } = {}) =>
 const FACTIONS = new Map([
   [364, { id: 364, type: 4, name: 'King Gothryd', race: 3, flat1: (177 << 7) + 1, flat2: (177 << 7) + 2 }],
   [510, { id: 510, type: 2, name: 'The Merchants', race: -1, flat1: (182 << 7) + 5, flat2: (182 << 7) + 6 }],
-  [201, { id: 201, type: 15, name: 'People of Testshire', race: -1, ruler: 2, rulerNameSeed: 0x12345678, race: 3, children: [] }],
+  [201, { id: 201, type: 15, name: 'People of Testshire', ruler: 2, rulerNameSeed: 0x12345678, race: 3, children: [] }],
   [867, { id: 867, type: 14, name: 'Court of Testshire', race: -1 }],
   [40, { id: 40, type: 2, name: 'The Mages Guild', race: -1 }],
   // the two templar ORDERS the %god arms resolve through: Temple

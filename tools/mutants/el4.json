@@ -184,8 +184,8 @@
   {
     "name": "release-keeps-target",
     "file": "src/render/airPass.js",
-    "old": "  release() {\n    if (this.frame) setFrameTarget(null);\n    this.pending = false;\n  }",
-    "new": "  release() {\n    this.pending = false;\n  }",
+    "old": "  release() {\n    if (this.frame) setFrameTarget(null);\n    this.pending = false;\n",
+    "new": "  release() {\n    this.pending = false;\n",
     "tests": [
       "test/el4_frame.test.js"
     ]

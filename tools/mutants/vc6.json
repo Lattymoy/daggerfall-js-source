@@ -300,8 +300,8 @@
   {
     "name": "VC6d-the-frames-first-span-is-never-opened",
     "file": "src/render/renderer.js",
-    "old": "{ this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; }",
-    "new": "{ this._perf.begin(); this.stats.draws = 0; }",
+    "old": "{ this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; this._perfOpen = true; }",
+    "new": "{ this._perf.begin(); this.stats.draws = 0; this._perfOpen = true; }",
     "tests": [
       "test/el8_contact.test.js"
     ]

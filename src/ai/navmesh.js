@@ -777,8 +777,7 @@ export function hydrateBakedNav(baked, colliders) {
   const mesh = { verts, polys, nvp: baked.nvp };
   buildLocateIndex(mesh); // the uniform-grid locate index (a query accelerator; a linear scan is the fallback)
   // NB: vertex heights (v.y) are left at 0 - findPath samples surfH(colliders) at the final path points, so
-  // it never reads v.y. Only the nav DEBUG overlay uses v.y, and snapping all ~18k verts here costs ~3s
-  // (surfH is O(colliders) each). The overlay snaps them lazily instead (navMeshNeedsHeights).
+  // it never reads v.y. Only the nav DEBUG overlay uses v.y, so it snaps them lazily (navMeshNeedsHeights).
   return { mesh, cs: baked.cs, xmin: baked.xmin, zmin: baked.zmin, nx: baked.nx, nz: baked.nz, colliders, obstacles: new Map(), navEpoch: 0, walkmask: _b64ToU8(baked.walk), _flatHeights: true };
 }
 
@@ -870,12 +869,43 @@ function polyRefY(mesh, pi) {
   return py[pi];
 }
 
+// AUDIT 68 (2026-09-24): the height layer's collider index, made HERE FIRST and owed to project-final. surfH
+// and surfHNear scanned EVERY collider per query - a triangle-soup bake holds 66k-400k boxes, so each findPath
+// waypoint cost O(colliders) and buildPolyMeshDetail O(verts x colliders), ~70% of a bake. A uniform grid over
+// the footprints, built once per collider array (the set is fixed once the nav holds it; a changed length
+// rebuilds): each bucket lists, ASCENDING, every box whose closed footprint touches it, so every box that can
+// cover (wx,wz) is in that point's bucket and the scan order - hence every tie-break - is the linear scan's.
+const _colIdx = new WeakMap();
+const NO_COLS = [];
+function collidersAt(colliders, wx, wz) {
+  let idx = _colIdx.get(colliders);
+  if (!idx || idx.n !== colliders.length) { idx = buildColliderIndex(colliders); _colIdx.set(colliders, idx); }
+  if (!idx.buckets) return NO_COLS;
+  const i = Math.floor((wx - idx.x0) / idx.b), k = Math.floor((wz - idx.z0) / idx.b);
+  if (!(i >= 0 && i < idx.bx && k >= 0 && k < idx.bz)) return NO_COLS; // off the grid (or NaN): no footprint holds it
+  return idx.buckets[k * idx.bx + i] ?? NO_COLS;
+}
+function buildColliderIndex(colliders) {
+  let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+  for (const c of colliders) { if (c.rayOnly) continue; if (c.x0 < x0) x0 = c.x0; if (c.x1 > x1) x1 = c.x1; if (c.z0 < z0) z0 = c.z0; if (c.z1 > z1) z1 = c.z1; }
+  if (x0 > x1 || z0 > z1) return { n: colliders.length, buckets: null };
+  const b = Math.max(1, (x1 - x0) / 256, (z1 - z0) / 256); // >= 1m buckets, at most ~256 a side
+  const bx = Math.floor((x1 - x0) / b) + 1, bz = Math.floor((z1 - z0) / b) + 1; // + 1: the far edge itself has a bucket
+  const buckets = new Array(bx * bz);
+  for (let ci = 0; ci < colliders.length; ci++) {
+    const c = colliders[ci]; if (c.rayOnly) continue; // overhead cover is never a standable surface
+    const i0 = Math.floor((c.x0 - x0) / b), i1 = Math.floor((c.x1 - x0) / b), k0 = Math.floor((c.z0 - z0) / b), k1 = Math.floor((c.z1 - z0) / b);
+    for (let k = k0; k <= k1; k++) for (let i = i0; i <= i1; i++) (buckets[k * bx + i] ??= []).push(c);
+  }
+  return { n: colliders.length, x0, z0, b, bx, bz, buckets };
+}
+
 // surfH with a preference: among the collider tops covering (wx,wz), the one nearest `nearY`; null = the
 // tallest (surfH's law, byte-identical). The ground floor stands in only when no top covers the point.
 function surfHNear(colliders, wx, wz, ground = null, nearY = null) {
   if (nearY === null || nearY === undefined) return surfH(colliders, wx, wz, ground);
   let y = null, best = Infinity;
-  for (const c of colliders) {
+  for (const c of collidersAt(colliders, wx, wz)) {
     if (c.rayOnly) continue;
     if (wx < c.x0 || wx > c.x1 || wz < c.z0 || wz > c.z1) continue;
     const sy = surfaceY(c, wx, wz), d = Math.abs(sy - nearY);
@@ -891,7 +921,7 @@ function surfHNear(colliders, wx, wz, ground = null, nearY = null) {
 // byte-identically; only a top below zero, which used to be floored to 0, is now itself.
 function surfH(colliders, wx, wz, ground = null) {
   let y = -Infinity;
-  for (const c of colliders) {
+  for (const c of collidersAt(colliders, wx, wz)) {
     if (c.rayOnly) continue; // overhead cover is not a standable surface
     if (wx < c.x0 || wx > c.x1 || wz < c.z0 || wz > c.z1) continue;
     const sy = surfaceY(c, wx, wz);

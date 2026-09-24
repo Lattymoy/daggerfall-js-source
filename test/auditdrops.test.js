@@ -246,7 +246,9 @@ test('AUDIT DROPS C1/C2: the hub\'s and the receiver\'s cooldowns sit at HALF th
   const arm = s.slice(start, s.indexOf("for (const member of party.members)", start));
   assert.ok(arm.indexOf('if (!a.party) return;') < arm.indexOf('tokenGate(this._roomQuest'), 'C3: no party, no budget spent');
   assert.ok(arm.indexOf('this._speaker(a.acct) !== ws') < arm.indexOf('tokenGate(this._roomQuest'), 'C3: another tab speaks, no budget spent');
-  assert.match(o, /if \(this\._inTradeBuckets\.size > TRADE_IN_SENDERS_MAX\) this\._inTradeBuckets\.clear\(\);\s*\n\s*const g = tradeInGate\(this\._inTradeBuckets\.get\(m\.id\) \?\? null, now\);/, 'B3 at home: the inbound trade gate is per sender');
+  // AUDIT 68 S14-inbound-directed-gate-dup: the per-sender gate is the directed frames' one door now (`_directedIn`)
+  assert.match(o, /if \(buckets\.size > TRADE_IN_SENDERS_MAX\) buckets\.clear\(\);\s*\n\s*const g = gate\(buckets\.get\(m\.id\) \?\? null, now\);/, 'B3 at home: the inbound directed gate is per sender');
+  assert.match(o, /this\._directedIn\(m, now, 'trade', this\._inTradeBuckets, tradeInGate, /, 'B3 at home: and the trade arm goes through it');
 });
 
 // ── D. party rest in the modal hosts ────────────────────────────────

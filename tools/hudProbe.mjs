@@ -111,31 +111,20 @@ const shot = async (url, label) => {
   // Measure the SCREENSHOT, not the live GL buffer. The first draft of this
   // probe called readPixels on a context re-got from the canvas, which reads a
   // swapped/blank buffer and reported 0% while the screenshot plainly showed
-  // the bars - a measurement failure, not a missing HUD.
-  //
-  // A blank strip is one flat colour and compresses to almost nothing; the
-  // vitals bars are three saturated columns and do not. So the clipped PNG's
-  // own byte length is the signal, and it is compared against the SAME strip
-  // taken from the top of the screen, which is sky or ceiling and always flat.
-  // AGAINST A CONTROL, not a threshold. A bare threshold is not
-  // discriminating: with the draw removed the exterior strip still measured
-  // 7.3% saturated, because the grass and the plaster wall BEHIND the bars are
-  // themselves colourful. So sample the same band a little to the right, where
-  // the same world shows through and no bar does, and require the bars to
-  // stand out from it.
+  // the bars - a measurement failure, not a missing HUD. The count is held to
+  // the floor `saturated` documents (calibrated by mutation).
   const vp = page.viewportSize();
   const strip = decodePng(await page.screenshot({ clip: { x: 0, y: vp.height - 100, width: 60, height: 100 } }));
   const lit = saturated(strip);
   console.log(`${label}: ${lit} saturated px in the vitals strip `
     + `(floor ${HUD_LIT_FLOOR}, no-HUD baseline ~438)  -> ${png}`);
   return lit >= HUD_LIT_FLOOR ? lit : 0;
-  return probe.lit;
 };
 
 const world = await shot('http://localhost:5202/play/?shot&play&class=0&time=12:00', 'world');
 const ext = await shot('http://localhost:5202/play/?shot&play&exterior&class=0&time=12:00', 'exterior');
 
-const ok = world > 0 && ext > 0;   // shot() returns 0 unless the bars beat the control 2:1
+const ok = world > 0 && ext > 0;   // shot() returns 0 unless the strip clears HUD_LIT_FLOOR
 console.log(ok ? 'HUD OK - both exterior hosts draw a status bar'
   : 'NO HUD - the bottom-left strip is as flat as the sky in at least one host');
 await browser.close(); await server.close();

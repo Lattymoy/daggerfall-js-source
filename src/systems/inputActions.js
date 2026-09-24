@@ -663,15 +663,11 @@ export function clearAxisBinding(store, action) {
   touched(store);
   for (const [axis, a] of [...store.axisActions]) if (a === action) store.axisActions.delete(axis);
 }
-/** ClearAxisBinding(code) (:816-822): by axis name. */
-export function clearAxisBindingByAxis(store, axis) { touched(store); store.axisActions.delete(axis); }
 /** ClearJoystickUIBinding(action) (:862-867). */
 export function clearJoystickUIBinding(store, action) {
   touched(store);
   for (const [code, a] of [...store.joystickUI]) if (a === action) store.joystickUI.delete(code);
 }
-/** ClearJoystickUIBinding(code) (:851-856). */
-export function clearJoystickUIBindingByCode(store, code) { touched(store); store.joystickUI.delete(code); }
 /** SetAxisBinding (:763-776): "Not allowing multi-bind" - the action's
  *  old axis is cleared first, then the axis takes the action (stealing
  *  it from whatever the axis held). */

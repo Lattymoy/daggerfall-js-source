@@ -122,16 +122,17 @@ export async function putCard({ db, nowS }, playerId, { characterId, saveName, c
   if (!card) return { error: 'body' };
   const have = await db.prepare('SELECT 1 AS one FROM saves WHERE player_id = ? AND character_id = ? AND save_name = ?')
     .bind(playerId, characterId, saveName).first();
-  if (!have) {
-    const n = await db.prepare('SELECT COUNT(*) AS n FROM saves WHERE player_id = ?').bind(playerId).first();
-    // AT THE BOUND, THE ANSWER IS NO. The oldest slot is never taken to
-    // make room: this is a backup, and a backup that deletes things to
-    // make room is not one.
-    if ((n?.n ?? 0) >= SAVES_MAX) return { error: 'too-many-saves' };
-  }
-  await db.prepare(
+  // AT THE BOUND, THE ANSWER IS NO. The oldest slot is never taken to
+  // make room: this is a backup, and a backup that deletes things to
+  // make room is not one. AUDIT 68 X7-putcard-count-toctou: the bound is
+  // asked IN the write, as a letter's is - a count read before it let two
+  // new slots racing for the last place both land, and the oldest backup
+  // fell off listSaves' LIMIT where nothing could reach it.
+  const wrote = await db.prepare(
     'INSERT INTO saves (player_id, character_id, save_name, character_name, game_time, real_time, dfu_version, save_version, bytes, shot_bytes, created_at, updated_at)'
-    + ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?)'
+    + ' SELECT ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?'
+    + ' WHERE EXISTS (SELECT 1 FROM saves WHERE player_id = ? AND character_id = ? AND save_name = ?)'
+    + ' OR (SELECT COUNT(*) FROM saves WHERE player_id = ?) < ?'
     + ' ON CONFLICT (player_id, character_id, save_name) DO UPDATE SET'
     // THE BLOB COUNTS ARE NOT TOUCHED HERE. A re-written card over a
     // slot whose data is already up would otherwise reset `bytes` to 0
@@ -141,7 +142,9 @@ export async function putCard({ db, nowS }, playerId, { characterId, saveName, c
   ).bind(
     playerId, characterId, saveName, card.characterName, card.gameTime, card.realTime,
     card.dfuVersion, card.saveVersion, nowS, nowS,
+    playerId, characterId, saveName, playerId, SAVES_MAX,
   ).run();
+  if (!wrote.meta.changes) return { error: 'too-many-saves' };
   return { ok: true, created: !have };
 }
 

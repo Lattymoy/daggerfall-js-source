@@ -74,6 +74,7 @@ import {
 } from './talkTopics.js';
 import { QUESTION_TYPE, NPC_KNOWLEDGE, BUILDING_HINT_TYPE, FACTIONS_AND_BUILDINGS } from './topicTree.js';
 import { randomRangeInclusive, srand } from '../formats/dfRandom.js';
+import { stringHash } from '../formats/netRuntime.js';   // the knowledge seed's string.GetHashCode (Ledger A)
 
 /** The question records (:1298-1353). */
 export const QUESTION_RECORDS = Object.freeze({
@@ -720,14 +721,4 @@ export class AnswerPipeline {
 /** string.Format's {0}/{1} over the localized literals. */
 function format(template, ...args) {
   return String(template ?? '').replace(/\{(\d+)\}/g, (m, i) => (args[Number(i)] ?? m));
-}
-
-/** A stand-in for C#'s string.GetHashCode() in the knowledge seed
- *  (Ledger A - the .NET hash is runtime-specific and explicitly NOT
- *  stable across processes, so any deterministic hash is as faithful;
- *  this is the classic FNV-ish walk the port uses elsewhere). */
-export function stringHash(s) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
-  return h;
 }

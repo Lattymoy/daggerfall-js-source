@@ -124,8 +124,8 @@
   {
     "name": "ACC1b-13-the-body-is-parsed-before-it-is-bounded",
     "file": "server-account/src/index.js",
-    "old": "  if (text.length > MAX_BODY_BYTES) return null;",
-    "new": "  if (false) return null;",
+    "old": "  const bytes = await readCapped(request, MAX_BODY_BYTES);",
+    "new": "  const bytes = await readCapped(request, Infinity);",
     "tests": [
       "test/accountworker.test.js"
     ],

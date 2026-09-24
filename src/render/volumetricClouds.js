@@ -56,6 +56,7 @@
 
 import { createRenderTarget, withTarget, frameTarget } from './renderTarget.js';
 import { CloudNoise } from './cloudNoise.js';
+import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 import { WEATHER_EASE_MINUTES, WEATHER_SKY, WIND_SECONDS_PER_MINUTE, sunSkyDirection, paletteAt } from './enhancedSky.js';   // WEATHER2c: a cell's cover and grey are its weather's row; VC7a: the sun that drives the day's convection
 
 /** VC7e: a JS number as a GLSL float literal (airPass.js glslFloat's law: `${1}` is an int to the compiler). */
@@ -397,6 +398,9 @@ export function cloudClocks(minutes, driftWorld) {
     evolve: [wrap(minutes * EVOLVE_M_PER_MINUTE, SHAPE_METRES), wrap(minutes * DETAIL_EVOLVE_M_PER_MINUTE, DETAIL_METRES), wrap(minutes * COVER_EVOLVE_PER_MINUTE, 1)],
     coverDrift: [wrapField(driftWorld[0] * COVER_DRIFT_SHARE), wrapField(driftWorld[1] * COVER_DRIFT_SHARE)],
     cirrus: wrapField(minutes * CIRRUS_JET_M_PER_MINUTE),   // VC7d: the jet's offset east, wrapped to the field's period - every tile the ice reads divides it
+    // AUDIT 68 S17-cirrus-boil-wrap: the ice boils at half the slab's rate on its OWN clock, a share (0..1) of the
+    // shape volume wrapped to a whole volume - half of evolve[0] jumped half a volume at each of its wraps
+    cirrusBoil: wrap(minutes * EVOLVE_M_PER_MINUTE * 0.5, SHAPE_METRES) / SHAPE_METRES,
   };
 }
 
@@ -914,7 +918,7 @@ uniform float uDusk;      // VC6b: how much of the low-sun look this frame takes
 uniform int uSteps;
 uniform int uLightSteps;
 uniform vec4 uCellF[8];   // VC7c: the fall under each cell - its amount (0 none), its kind (0 rain, 1 snow)
-uniform vec4 uCirrus;     // VC7d: the ice layer's cover (0 none), peak optical depth, the jet's offset east (metres)
+uniform vec4 uCirrus;     // VC7d: the ice layer's cover (0 none), peak optical depth, the jet's offset east (metres); AUDIT 68: .w its boil (cloudClocks cirrusBoil)
 uniform vec3 uCirrusLight;   // VC7d: the light on it (cirrusLight) - the sun at the ice's own elevation, else the moon
 uniform vec3 uCirrusDir;     // ...and where that light comes from
 out vec4 outColor;
@@ -1085,7 +1089,7 @@ vec4 cirrus(vec3 cam, vec3 dir) {
   if (patchIn <= 0.0) return vec4(0.0, 0.0, 0.0, 1.0);
   // the wisps, bent gently across the jet by the slow field (mare's tails)
   float bend = (textureLod(uShape, vec3(q.x, 0.47 * SHAPE_M, q.y) / (SHAPE_M * ${glslF(CIRRUS_BEND)}), 0.0).b - 0.5) * ${glslF(CIRRUS_BEND_M)};
-  vec4 sk = textureLod(uShape, vec3(q.x / (SHAPE_M * ${glslF(CIRRUS_ALONG)}), 0.83 + uEvolve.x / SHAPE_M * 0.5, (q.y + bend) / (SHAPE_M * ${glslF(CIRRUS_ACROSS)})), mip + 1.0);   // a mip soft: the volume's texels, stretched this far, jag a wisp's edge
+  vec4 sk = textureLod(uShape, vec3(q.x / (SHAPE_M * ${glslF(CIRRUS_ALONG)}), 0.83 + uCirrus.w, (q.y + bend) / (SHAPE_M * ${glslF(CIRRUS_ACROSS)})), mip + 1.0);   // a mip soft: the volume's texels, stretched this far, jag a wisp's edge
   float wispAt = ${glslF(CIRRUS_WISP_TOP)} - ${glslF(CIRRUS_WISP_COVER)} * uCirrus.x;
   float streak = smoothstep(wispAt, wispAt + ${glslF(CIRRUS_WISP_SOFT)}, sk.g * 0.6 + sk.b * 0.4);
   if (streak <= 0.0) return vec4(0.0, 0.0, 0.0, 1.0);
@@ -1328,21 +1332,6 @@ uniform sampler2D uMap;
 out vec4 outColor;
 void main() { outColor = vec4(texture(uMap, vNdc * 0.5 + 0.5).rrr, 1.0); }`;
 
-function link(gl, vs, fs) {
-  const compile = (type, src) => {
-    const sh = gl.createShader(type);
-    gl.shaderSource(sh, src); gl.compileShader(sh);
-    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh));
-    return sh;
-  };
-  const prog = gl.createProgram();
-  gl.attachShader(prog, compile(gl.VERTEX_SHADER, vs));
-  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fs));
-  gl.linkProgram(prog);
-  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
-  return prog;
-}
-
 /** The field's uniforms, shared by both marches. */
 export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDark', 'uVary', 'uCellCount', 'uCell', 'uCellA', 'uCellB', 'uCellC', 'uCellK', 'uCellS', 'uCellU', 'uCellKS', 'uCellKU', 'uDrift', 'uShift', 'uCamXZ', 'uEvolve', 'uCoverDrift'];   // WEATHER2c: uDark moved in (a cell has its own), the slab and the cells added; VC6a: uVary
 export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uSkyTint', 'uDusk', 'uSteps', 'uLightSteps', 'uCellF', 'uCirrus', 'uCirrusLight', 'uCirrusDir'];   // VC6b: uSkyTint, uDusk; VC7c: the falls
@@ -1371,10 +1360,10 @@ export class VolumetricClouds {
     gl.enableVertexAttribArray(0);
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
     gl.bindVertexArray(null);
-    this.marchProgram = link(gl, VS, MARCH_FS);
-    this.shadowProgram = link(gl, VS, SHADOW_FS);
-    this.compositeProgram = link(gl, VS, COMPOSITE_FS);
-    this.viewProgram = link(gl, VS, SHADOW_VIEW_FS);
+    this.marchProgram = buildProgram(gl, VS, MARCH_FS);
+    this.shadowProgram = buildProgram(gl, VS, SHADOW_FS);
+    this.compositeProgram = buildProgram(gl, VS, COMPOSITE_FS);
+    this.viewProgram = buildProgram(gl, VS, SHADOW_VIEW_FS);
     this.mu = {}; for (const n of MARCH_UNIFORMS) this.mu[n] = gl.getUniformLocation(this.marchProgram, n);
     this.su = {}; for (const n of SHADOW_UNIFORMS) this.su[n] = gl.getUniformLocation(this.shadowProgram, n);
     this.cu = {}; for (const n of COMPOSITE_UNIFORMS) this.cu[n] = gl.getUniformLocation(this.compositeProgram, n);
@@ -1546,7 +1535,7 @@ export class VolumetricClouds {
       gl.uniform1i(u.uSteps, q.steps); gl.uniform1i(u.uLightSteps, q.light);
       if (this._packed?.count > 0) gl.uniform4fv(u.uCellF, this._packed.f);
       const ice = cirrusLight(s);   // VC7d
-      gl.uniform4f(u.uCirrus, this.cirrusCover ?? 0, CIRRUS_TAU, this.clocks?.cirrus ?? 0, 0);
+      gl.uniform4f(u.uCirrus, this.cirrusCover ?? 0, CIRRUS_TAU, this.clocks?.cirrus ?? 0, this.clocks?.cirrusBoil ?? 0);
       gl.uniform3fv(u.uCirrusLight, ice.color); gl.uniform3fv(u.uCirrusDir, ice.dir);   // VC7c: the curtains' falls, packed with the cells this frame
       withTarget(gl, this.map, viewport, () => {
         gl.viewport(0, y0, q.width, Math.min(rows, q.height - y0));

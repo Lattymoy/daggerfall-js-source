@@ -171,8 +171,8 @@
   {
     "name": "FIELD-GUN17-19-a-throwing-onTexture-costs-the-flat-its-flight",
     "file": "src/scenes/hitEffects.js",
-    "old": "  if (onTexture) { try { onTexture(t, archive, record); } catch",
-    "new": "  if (onTexture) { if (true) { onTexture(t, archive, record); } catch",
+    "old": "  if (onTexture) { try { onTexture(t, archive, record); } catch { /* the flat still flies */ } }",
+    "new": "  if (onTexture) { onTexture(t, archive, record); }",
     "tests": [
       "test/thunderlock.test.js"
     ]

@@ -91,6 +91,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { readFbx, nodeAt, childNamed, childrenNamed, property70, objectName } from './fbxRead.mjs';
+import { isMain } from './lib/isMain.mjs';
 
 /** Euler degrees -> a 3x3, in FBX's default eOrderXYZ, which composes
  *  R = Rz * Ry * Rx (the X rotation is applied to the vector first). */
@@ -405,7 +406,7 @@ function assertConvex(poly, base, positions, place) {
 }
 
 // ── the CLI ───────────────────────────────────────────────────────────
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
   const flag = (k) => args.includes(`--${k}`);
   const opt = (k, d = null) => args.find((a) => a.startsWith(`--${k}=`))?.split('=').slice(1).join('=') ?? d;

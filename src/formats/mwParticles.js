@@ -48,7 +48,9 @@
 //     feature of the reference's own.
 
 import { deref } from './mwNifFile.js';
-import { resolveMaterial, composeTransform, mat33Apply, mat33Mul, flattenNif, VERTEX_COLOR_MODE } from './mwNifMesh.js';
+import { resolveMaterial, composeTransform, mat33Apply, flattenNif, VERTEX_COLOR_MODE } from './mwNifMesh.js';
+import { affineOfTransform, AFFINE_IDENTITY, affineMul, affineApply, affineRotate } from './mwAffine.js';
+import { sampleKeyGroup } from './mwKeys.js';
 
 /** NiNode::BSParticleFlags (nif/node.hpp:111-115). */
 export const PARTICLE_FLAG_AUTOPLAY = 0x0020;
@@ -71,26 +73,9 @@ const IDENTITY_T = Object.freeze({ rotation: Float32Array.from([1, 0, 0, 0, 1, 0
 // ---- affine helpers: {a: row-major 3x3, t: [3]} is the shape the rig's
 // own placement uses (mwFirstPerson.js placeAtBone, applyPre) ----------------
 
-/** A NIF transform ({rotation, translation, scale}) as an affine. */
-export function affineOfTransform(tr) {
-  const a = new Float32Array(9);
-  for (let i = 0; i < 9; i++) a[i] = tr.rotation[i] * tr.scale;
-  return { a, t: [tr.translation[0], tr.translation[1], tr.translation[2]] };
-}
-export const AFFINE_IDENTITY = Object.freeze({ a: Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]), t: [0, 0, 0] });
-/** out = p ∘ q  (apply q first, then p). */
-export function affineMul(p, q) {
-  const a = mat33Mul(p.a, q.a);
-  const [tx, ty, tz] = mat33Apply(p.a, q.t[0], q.t[1], q.t[2]);
-  return { a, t: [p.t[0] + tx, p.t[1] + ty, p.t[2] + tz] };
-}
-export function affineApply(m, x, y, z) {
-  const [px, py, pz] = mat33Apply(m.a, x, y, z);
-  return [px + m.t[0], py + m.t[1], pz + m.t[2]];
-}
-export function affineRotate(m, x, y, z) {
-  return mat33Apply(m.a, x, y, z);
-}
+// AUDIT 68 S11-affine-dup: the product and the transform's affine live in
+// mwAffine.js (mwSkin composes the same ones); re-exported for the rig.
+export { affineOfTransform, AFFINE_IDENTITY, affineMul, affineApply, affineRotate };
 /** The inverse of an affine whose 3x3 is a rotation times a uniform scale. */
 export function affineInverse(m) {
   const a = m.a;
@@ -201,7 +186,7 @@ export function particleSystemOf(nif, bundle) {
         break;
       case 'NiParticleColorModifier': {
         const cd = m.colorData >= 0 ? deref(nif, m.colorData) : null;
-        if (cd && cd.data && cd.data.keys && cd.data.keys.length) modifiers.push({ type: 'color', keys: cd.data.keys.map((k) => ({ time: k.time, value: [...k.value], inTan: k.inTan ? [...k.inTan] : null, outTan: k.outTan ? [...k.outTan] : null })), interpolation: cd.data.type });
+        if (cd && cd.data && cd.data.keys && cd.data.keys.length) modifiers.push({ type: 'color', keys: cd.data.keys.map((k) => ({ time: k.time, value: [...k.value], inTan: k.inTan ? [...k.inTan] : null, outTan: k.outTan ? [...k.outTan] : null, tbc: k.tbc ? [...k.tbc] : null })), interpolation: cd.data.type });   // AUDIT 68 S11-colorkey-tbc: a TCB key's tension/continuity/bias ride along
         break;
       }
       case 'NiParticleRotation': break;   // "unused" (nifloader.cpp:1283-1286)
@@ -298,29 +283,14 @@ export function controllerTime(c, value) {
 
 /** ValueInterpolator::interpKey over a colour key list (nifosg/controller.hpp
  *  :99-129, :135-166): first key at or before the range, last past it,
- *  linear between - Constant snaps at the half, Quadratic/TCB take the
- *  cubic Hermite with the file's tangents. Default (1,1,1,1) is
- *  ParticleColorAffector's own (particle.cpp:257). */
+ *  linear between - Constant snaps at the half, Quadratic takes the cubic
+ *  Hermite with the file's tangents and TCB with the generated ones. The
+ *  KeyGroup sampler is mwKeys.js's, the bones' own (AUDIT 68
+ *  S11-colorkey-tbc). Default (1,1,1,1) is ParticleColorAffector's own
+ *  (particle.cpp:257). */
 export function interpColorKey(keys, time, interpolation = 1) {
   if (!keys || !keys.length) return [1, 1, 1, 1];
-  if (time <= keys[0].time) return [...keys[0].value];
-  let hi = keys.findIndex((k) => k.time >= time);   // lower_bound
-  if (hi < 0) return [...keys[keys.length - 1].value];
-  const lo = hi - 1;
-  if (lo < 0) return [...keys[0].value];
-  const a = keys[lo], b = keys[hi];
-  if (b.time === a.time) return [...a.value];
-  const f = (time - a.time) / (b.time - a.time);
-  const out = [0, 0, 0, 0];
-  for (let i = 0; i < 4; i++) {
-    if (interpolation === 5) out[i] = f > 0.5 ? b.value[i] : a.value[i];   // Constant
-    else if ((interpolation === 2 || interpolation === 3) && a.outTan && b.inTan) {
-      const t2 = f * f, t3 = t2 * f;
-      const b1 = 2 * t3 - 3 * t2 + 1, b2 = -2 * t3 + 3 * t2, b3 = t3 - 2 * t2 + f, b4 = t3 - t2;
-      out[i] = a.value[i] * b1 + b.value[i] * b2 + a.outTan[i] * b3 + b.inTan[i] * b4;
-    } else out[i] = a.value[i] + (b.value[i] - a.value[i]) * f;
-  }
-  return out;
+  return sampleKeyGroup({ keys, type: interpolation }, 4, time);
 }
 
 /** `(osg::Quat(vdir, Y) * osg::Quat(hdir, Z)) * (0, 0, 1)` (particle.cpp:
