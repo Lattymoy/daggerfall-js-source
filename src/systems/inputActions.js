@@ -98,6 +98,8 @@ export const ACTIONS = Object.freeze([
   // Both mouse actions still OR at the one reader (player/pointerLock.js),
   // so there is only one cursor state to keep in step.
   'FreeMouse',
+  // CHAT-POLISH1: dedicated chat action, appended so saved/classic action indices keep their meaning.
+  'Chat',
   // KB1 (2026-09-23, Mac: "We have a lot of mods, a lot of keybinds. I really want to formalize a solid solution"):
   // EVERY KEY THAT DOES SOMETHING IN THE WORLD IS AN ACTION HERE. Appended, like every port action before them.
   //  - 'Interact': the E activate, a raw `KeyE` read in four hosts beside DFU's E-AbortSpell - one press did both.
@@ -128,7 +130,7 @@ export const ACTIONS = Object.freeze([
  *  because it draws the row (ui/enhancedControls.js over ACTION_GROUPS, the 'Online' group) and can rebind it.
  *  QS2: the three quickslot actions join it for the same reason, off the same face - the enhanced pane draws them
  *  under their own 'Quickslots' heading and the classic windows cannot draw them at all. */
-export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen', 'FreeMouse',
+export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen', 'FreeMouse', 'Chat',
   'Interact', 'QuickDial', 'Hotbar5', 'Hotbar6', 'Hotbar7', 'Hotbar8', 'Hotbar9', 'Hotbar10',
   'TorchToggleLight', 'TorchDrop', 'TorchThrow', 'ShoulderSwitch', 'AutoPerspective', 'FollowPaths', 'HorseMount', 'HorseSummon', 'DebugOverlay']);   // KB1   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
 
@@ -367,10 +369,11 @@ export const ACTION_GROUPS = Object.freeze([
     ['Hotbar9', 'Hotbar slot 9'], ['Hotbar10', 'Hotbar slot 10'],
   ]),
   g('Mouse', [
-    ['ActivateCursor', 'Free the mouse (offline) / open chat (online)'], ['FreeMouse', 'Free the mouse (press again to look)'],
+    ['ActivateCursor', 'Free the mouse'], ['FreeMouse', 'Free the mouse (press again to look)'],
   ]),
   g('Online', [
     ['SocialInteract', 'Interact with player'],
+    ['Chat', 'Open chat'],
   ]),
   g('Game', [
     ['QuickSave', 'Quick save'], ['QuickLoad', 'Quick load'], ['PrintScreen', 'Screenshot'], ['DebugOverlay', 'Diagnostics readout'],
@@ -1079,6 +1082,15 @@ export function migrateKeyBinds(store, fromVersion) {
   return report;
 }
 
+/** CHAT-POLISH1: migrate the exact legacy default that used Y for FreeMouse before Chat had its own action.
+ * Custom bindings are untouched; the later autofill can place FreeMouse on F7 when it is free. */
+export function migrateLegacyChatDefault(store) {
+  if (getBinding(store, 'Chat', true) != null || getBinding(store, 'Chat', false) != null) return false;
+  if (store.primary.get('KeyY') !== 'FreeMouse') return false;
+  setBinding(store, 'KeyY', 'Chat', true);
+  return true;
+}
+
 export function loadOrCreateBindings() {
   const store = createBindings();
   const ls = storage();
@@ -1087,6 +1099,7 @@ export function loadOrCreateBindings() {
     try {
       const data = JSON.parse(raw);
       loadKeyBinds(store, data);
+      const chatMigrated = migrateLegacyChatDefault(store);
       const from = Number(data?.version) || 1;
       const report = migrateKeyBinds(store, from);   // KB1: runs the autofill inside it, between its steps
       resetDefaults(store, true);

@@ -308,7 +308,7 @@ import { makeHitPend } from '../net/hitPend.js';   // AUDIT FOES FOE2: a blow th
 import { PeerBodies } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body
 import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs and their lines
 import { oocText, localLineHeard, nextRegionRoom, regionJoinedText, CHAN_OLD_RELAY_TEXT, ROLL_OLD_RELAY_TEXT, EMOTE_OLD_RELAY_TEXT, partyNoteTab } from '../net/chat.js';   // CHAT-CHAN: the channels' own laws (a second chat import: CHAT1's pin holds the first as it stands)
-import { parseChatLine, HELP_LINES, CHAT_GREETING_TEXT, unknownCommandText, emptyCommandText, hostMisuseText, badRollText, expandShortcodes, EMOTE_LINES } from '../net/chatCommands.js';   // CHAT-CHAN: what a typed line IS; DICE1: and a roll; EMOTE1: an action, a gesture, a shortcode
+import { parseChatLine, HELP_LINES, CHAT_GREETING_TEXT, unknownCommandText, emptyCommandText, hostMisuseText, badRollText, badVoiceText, expandShortcodes, EMOTE_LINES, VOICE_CHAT_COMMANDS } from '../net/chatCommands.js';   // CHAT-CHAN: what a typed line IS; DICE1: and a roll; EMOTE1: an action, a gesture, a shortcode
 import { partyRosterSource, localRosterSource } from '../net/roster.js';   // CHAT-CHAN: the Party and Local tabs' composed lists
 import { SocialState, accountId, accountSecret } from '../net/social.js';   // SOC2: the friends and the party, as the hub says them; the account the hub's hello carries; SOC3: and the two colours a name wears in the DOM - my party's green, a friend's blue
 import { SOCIAL_ROOM, PARTY_SEND_MS, chatRegionRoom } from '../net/wire.js';   // CHAT-CHAN: a region's channel

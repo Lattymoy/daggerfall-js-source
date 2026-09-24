@@ -1047,7 +1047,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     }
     if (!takesKey(e)) return;
     e.preventDefault(); e.stopPropagation();
-    if (log.open) input.focus?.();   // open but the caret wandered (a tap on the canvas): the open key brings it back rather than reaching the game
+    if (log.open) { markUse(); input.focus?.(); }   // open but the caret wandered: the open key brings it back and resets the idle clock
     else open();
   };
   /** Whether a key outside the field is this panel's: the open key while it is closed (and not put away), or the

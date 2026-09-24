@@ -101,7 +101,10 @@ test('SOC5: the enhanced controls window offers the action in its own group, and
   // KB1: the pane's groups are the registry's ACTION_GROUPS, and SOC5's row is the whole of the Online one -
   // which is the claim this pin makes.
   const online = ACTION_GROUPS.find((g) => g.title === 'Online');
-  assert.deepEqual(online.rows.map((r) => ({ ...r })), [{ action: 'SocialInteract', label: 'Interact with player' }]);
+  assert.deepEqual(online.rows.map((r) => ({ ...r })), [
+    { action: 'SocialInteract', label: 'Interact with player' },
+    { action: 'Chat', label: 'Open chat' },
+  ]);
   // the classic faces keep their meaning exactly, read off the windows that draw them
   const grid = gridButtons().map((b) => b.action);
   assert.deepEqual(grid, ACTIONS.slice(2, 40), 'the grid is still DFU\'s SetupKeybindButtons slice');
