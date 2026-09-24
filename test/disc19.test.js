@@ -110,3 +110,44 @@ test('DISC19-E: Diverse Weapons\' Weapon Widget Preset ships off, and a value sa
     if (prevLs === undefined) delete globalThis.localStorage; else globalThis.localStorage = prevLs;
   }
 });
+
+// ── DISC19-D: "Lightning can be seen even when its not storming" ──
+test('DISC19-D: a storm cell strikes only where it is drawn - wholly outside its front\'s core it strikes nothing, half outside it strikes only inside, unclipped it strikes as ever; and a sunny afternoon in the swamp that 248 strikes lit is dark (mutant: the clip gate dropped)', async () => {
+  const { createDistantStorms } = await import('../src/systems/distantStorms.js');
+  const { insideClip } = await import('../src/systems/weatherMap.js');
+  const CIRCLE = Object.freeze([1, 0, 0, 0, 0, 0, 0]);
+  const cell = (clip) => ({ type: 'thunder', id: 'thunder:9:9:9:0', x: 20000, z: 0, r: 5000, reach: 5000, env: 1, bornAt: 300, life: 2000, bands: [[5000, 'thunder']], clip, shape: CIRCLE });
+  const run = (s) => {
+    const ds = createDistantStorms();
+    const out = { strikes: [], sounds: 0, lit: 0 };
+    for (let f = 0; f <= 600 * 5; f++) {   // 600 game minutes, a frame a real second
+      const r = ds.tick({ systems: [s], at: [0, 0], minutes: 1000 + f / 5, seconds: f });
+      out.strikes.push(...r.strikes); out.sounds += r.sounds.length; if (r.bolt) out.lit++;
+    }
+    return out;
+  };
+  const free = run(cell(null));
+  assert.ok(free.strikes.length > 20 && free.sounds > 0 && free.lit > 0, `an unclipped storm strikes as it always did (${free.strikes.length})`);
+  const gone = run(cell([80000, 0, 8000, CIRCLE]));   // its front's core far from it: the cell paints nothing
+  assert.deepEqual([gone.strikes.length, gone.sounds, gone.lit], [0, 0, 0], 'a cell that paints nothing strikes nothing - no bolt, no light, no thunder');
+  const half = cell([15000, 0, 5000, CIRCLE]);   // the core covers the cell's west half
+  const h = run(half);
+  assert.ok(h.strikes.length > 0 && h.strikes.length < free.strikes.length, `half its strikes (${h.strikes.length} of ${free.strikes.length})`);
+  for (const s of h.strikes) assert.ok(insideClip(half, s.x, s.z), 'every one where the cell is drawn');
+
+  // the report's own afternoon, measured: a swamp everywhere, the player's word sunny, 18 clipped cells in range
+  const { systemsNear, weatherAt } = await import('../src/systems/weatherMap.js');
+  const { mapGround } = await import('../src/systems/weatherSim.js');
+  const { FIELD_RANGE_M } = await import('../src/systems/weatherField.js');
+  const { CLIMATES } = await import('../src/formats/mapsFile.js');
+  const swamp = () => CLIMATES.Swamp, ground = mapGround(swamp), at = [522000, 618000], m0 = 210181980;
+  assert.equal(weatherAt(at[0], at[1], m0, swamp).word, 'sunny');
+  const ds = createDistantStorms();
+  let strikes = 0, sounds = 0;
+  for (let f = 0; f <= 20 * 60; f++) {   // twenty real minutes
+    const minutes = m0 + f / 5;
+    const r = ds.tick({ systems: systemsNear(at[0], at[1], Math.floor(minutes), swamp, FIELD_RANGE_M + 250), at, minutes, seconds: f, ground });
+    strikes += r.strikes.length; sounds += r.sounds.length;
+  }
+  assert.deepEqual([strikes, sounds], [0, 0], 'no lightning and no thunder under a sunny sky with no storm drawn (248 strikes and 43 claps before)');
+});

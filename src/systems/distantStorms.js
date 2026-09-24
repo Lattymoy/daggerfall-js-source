@@ -141,6 +141,15 @@ export function createDistantStorms() {
         for (const t of strikesIn(s.id, last, minutes, envAt)) {
           const seed = strikeSeed(s.id, t), strike = strikeOf(seed);
           const [px, pz] = strikePlace(seed, s.x, s.z, s.bands[0][0]);
+          // DISC19-D (2026-09-24, Mac: "Lightning can be seen even when its not storming"): a storm CELL paints - its
+          // word, its cloud - only inside its front's core as it is now (`clip`, WEATHER3g), and a cell born out in the
+          // front's full-grown size can lie wholly or partly outside it. The strikes read the clip only for the "under
+          // its heart" skip above, so four cells in ten that paint nothing struck on, and 61% of strikes landed where
+          // no storm stands: bolts, the land's flash and thunder under a sunny or cloudy word, around the player. A
+          // strike lands where its storm is drawn, and not on a ground that turns it to snow (the centre's test above
+          // is the cheap first gate).
+          if (!insideClip(s, px, pz)) continue;
+          if (ground && ground('thunder', px, pz, minutes) !== 'thunder') continue;
           bolt = { x: s.x, z: s.z, r: s.bands[0][0], strength: envAt(t), at: seconds, strike };
           fired.push({ x: px, z: pz, seed, kind: strike.kind, strength: envAt(t) });
           const th = thunderOf(Math.hypot(px - at[0], pz - at[1]));   // BOLT: heard from where it struck
