@@ -1043,7 +1043,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         canCastRangedSpell: () => rec?.caster?.canCastRangedSpell() ?? false,   // D9: SelectedSpell, from the caster that owns the pick
         hasMagickaToCast: () => foeDeps.hasMagickaToCast(entity),   // GetDestination's own term (:539-540) - CurrentMagicka > 0, not the band gate
       });
-      const attack = new D.EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });   // AUDIT 39: EnemyAttack.cs:69-72 re-reads LiveSpeed per FixedUpdate
+      const attack = new D.EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: () => D.playerEntity.level, reflexes: D.playerEntity.reflexes });   // AUDIT 39: EnemyAttack.cs:69-72 re-reads LiveSpeed per FixedUpdate
       // Combat bows: EnemyMotor.cs:131-137 reads the MobileEnemy
       // FLAGS, with zero inventory involvement (AUDIT 18 - minting
       // this from an equipped bow meant no enemy could ever fire one,
@@ -1114,7 +1114,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         canCastRangedSpell: () => rec?.caster?.canCastRangedSpell() ?? false,   // D9: SelectedSpell, from the caster that owns the pick
         hasMagickaToCast: () => foeDeps.hasMagickaToCast(entity),   // GetDestination's own term (:539-540) - CurrentMagicka > 0, not the band gate
       });
-      const attack = new D.EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });   // AUDIT 39: EnemyAttack.cs:69-72 re-reads LiveSpeed per FixedUpdate
+      const attack = new D.EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: () => D.playerEntity.level, reflexes: D.playerEntity.reflexes });   // AUDIT 39: EnemyAttack.cs:69-72 re-reads LiveSpeed per FixedUpdate
       // The same EnemyMotor.cs:131-137 flag test the class branch
       // runs - false for all 43 monsters today, but it must not stay
       // undefined (the archer draw/loose path reads it every frame).
@@ -3720,7 +3720,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         f.ai.resumeLive?.();
         if (f.attack?.machine) { f.attack.machine.state = 'Idle'; if ('acc' in f.attack.machine) f.attack.machine.acc = 0; }
         if (f.attack) f.attack.firedRanged = false;
-        f._prevMState = 'Idle';
+        f._swingSeq = f.attack?.swingSeq ?? 0;
         if (f.mobile) { f.mobile.doMeleeDamage = false; f.mobile.shootArrow = false; }   // WORLD2 dropped unconsumed: no blow from a puppet's last frame on the first live one
         f._castPending = false;
       }
@@ -5214,9 +5214,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // attack sound ONCE at the start, not at the hit frame, and not
       // gated on the hit later connecting. A LEVEL signal replayed the
       // sprite sequence inside one swing (the machine outlasts it).
-      const _mstate = f.attack.machine.state;
-      _strikeEdge = _mstate !== 'Idle' && (f._prevMState ?? 'Idle') === 'Idle';
-      f._prevMState = _mstate;
+      const _seq = f.attack.swingSeq;   // AUDIT 68 S04-strike-edge-cut: EnemyAttack's own start count - a mid-release cut restarts the machine inside one update(), which an Idle->strike state edge never saw
+      _strikeEdge = _seq !== (f._swingSeq ?? 0);
+      f._swingSeq = _seq;
       if (_strikeEdge) f._atkA = foeDeps.bumpAtkCount(f._atkA, f.attack.firedRanged);   // WORLD2: the attack count out, the ranged bit in its low bit (AUDIT WATCH1: one home, enemyTargets.bumpAtkCount)
       // PlayAttackSound (:100-113) - half the time, humans silent
       // except the watch, at whatever volumeScale the last attract

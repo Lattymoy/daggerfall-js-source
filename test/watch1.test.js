@@ -98,8 +98,9 @@ const summon = (c, at = [5, 0, 5]) => c.guards.spawnCityGuards(true, { playerFee
 const puppets = (pool) => pool.foes.filter((f) => !!f.puppet);
 const watchPuppets = (pool) => puppets(pool).filter((f) => f.mobileType === GUARD_MOBILE_TYPE);
 const step = (c) => { c.pool.update(0.016, [0, 0, 0], [0, 1.6, 0]); };   // the roster is re-read once a frame
-/** A watchman's attack machine leaves Idle this frame with the player selected (MT-ii) - the strike edge. */
-const strikeAt = (c, g, target) => { g.ai.target = target; g.attack.update = () => { g.attack.machine.state = 'Strike'; return []; }; c.guards.update(0.016, [0, 0, 1], [0, 1.7, 1]); };
+/** A watchman's attack machine starts a swing this frame with the player selected (MT-ii) - the strike edge
+ *  (AUDIT 68: EnemyAttack counts the start in swingSeq, the edge the hosts read, as machineAttack's success does). */
+const strikeAt = (c, g, target) => { g.ai.target = target; g.attack.update = () => { g.attack.machine.state = 'Strike'; g.attack.swingSeq++; return []; }; c.guards.update(0.016, [0, 0, 1], [0, 1.7, 1]); };
 
 test('WATCH1: the criminal STREAMS its watch - a watchman rides the cell frame behind the foes as a `t: 146` record in the foes\' own shape, numbered off the one counter the first time he rides, the wire\'s own projection admitting it; his swing rides with its count and its recipient read off his TARGET; nothing rides twice unchanged; a killed watchman rides dead with NO pile, a walk-away or a removed one rides no more; a net without a watch streams the foes alone', async () => {
   const mac = await client('mac-0001');

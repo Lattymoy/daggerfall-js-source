@@ -252,13 +252,13 @@ test('ENHANCED AI 4: repath rides his cadence, his budget, and his fail back-off
   // it thinks you are. (The first draft of this pin expected a null
   // route from an off-map target and was asserting the wrong thing.)
   ai.repathT = 0; world.pathBudget = 3;
-  ai._repathToward(bake.chf, -50, -50, 1 / 60);
+  ai._repathToward(bake.chf, [-50, 0, -50], 1 / 60);
   assert.equal(ai.path, null, 'an unreachable goal yields no route');
   assert.equal(ai.repathT, REPATH_FAIL, 'and backs off REPATH_FAIL');
   assert.equal(ai.navStats.fails, 1);
   // ...and while backing off, a due-looking frame does NOT solve.
   world.pathBudget = 3;
-  ai._repathToward(bake.chf, TARGET[0], TARGET[2], 1 / 60);
+  ai._repathToward(bake.chf, TARGET, 1 / 60);
   assert.equal(ai.path, null, 'the back-off holds even though the goal is reachable now');
 });
 
@@ -406,11 +406,17 @@ test('ENHANCED AI 4a: the bake is height-invariant - the anchor carries its y', 
   const xz = (r) => r.p.map((q) => `${q[0].toFixed(2)},${q[2].toFixed(2)}`).join('|');
   assert.equal(xz(at25), xz(at0));
   assert.equal(xz(atNeg), xz(at0));
-  // ONE HOME: all three bake paths build the anchor through regionAnchor.
+  // ONE HOME: the anchor is built through regionAnchor, in the one bake
+  // core (AUDIT 68: navBake's bakeSoup) - the worker and the main-thread
+  // fallback call it and spell no pipeline of their own.
+  const core = rd('src/ai/navBake.js');
+  assert.equal((core.match(/buildRegions\(chf, \{ anchor: regionAnchor\(/g) ?? []).length, 1, 'navBake builds the anchor, once');
   for (const f of ['src/ai/navBake.js', 'src/ai/navWorker.js', 'src/ai/navClient.js']) {
     const src = rd(f);
-    assert.ok(/buildRegions\(chf, \{ anchor: regionAnchor\(/.test(src), `${f} builds its own anchor`);
     assert.ok(!/anchor: \{ x: [a-z.]*anchor\[0\], z:/.test(src), `${f} still builds an anchor without y`);
+    if (f === 'src/ai/navBake.js') continue;
+    assert.ok(/bakeSoup\(/.test(src), `${f} bakes through the core`);
+    assert.ok(!/buildRegions\(|coarsenAgent\(|buildNav\(/.test(src), `${f} spells a pipeline of its own`);
   }
 });
 

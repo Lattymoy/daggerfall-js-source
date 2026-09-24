@@ -307,7 +307,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         hasMagickaToCast: () => hasMagickaToCast(entity),   // GetDestination's own term (:539-540)
       });
       pending.feet = ai.feet;   // AUDIT 39: the AI's copy is the live array from here
-      const attack = new EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: playerEntity.level, reflexes: playerEntity.reflexes, rolls });   // AUDIT 39: EnemyAttack.cs:69-72, ditto
+      const attack = new EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: () => playerEntity.level, reflexes: playerEntity.reflexes, rolls });   // AUDIT 39: EnemyAttack.cs:69-72, ditto
       // X2-slice: the arrow seam exists (the host's onArrow) - bow
       // foes read the SAME ranged-flags law the dungeon build does,
       // and the C-slice 6..51.2 band drives them above ground.
@@ -324,7 +324,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const caster = entity.spells?.length && !puppet ? new EnemyCaster(entity, rolls) : null;   // a puppet decides nothing (its owner's foe does)
       const mobile = new MobileUnit(mobileType, basics, (rec) => tex.getFrameCount(rec), Math.random, gender);
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-      const f = { mobile, ai, attack, entity, caster, batch, tex, archive, mobileType, gender, idleH, dead: false, _encounter: true, _prevMState: 'Idle', _mout: null, placed, site,   // WOD3; WOD7: the World of Daggerfall marker it stood for (shared online)
+      const f = { mobile, ai, attack, entity, caster, batch, tex, archive, mobileType, gender, idleH, dead: false, _encounter: true, _swingSeq: 0, _mout: null, placed, site,   // WOD3; WOD7: the World of Daggerfall marker it stood for (shared online)
         sounds: new EnemySoundSource(mobileType, rolls) };   // AUDIT 24 (wave 41): this pool made no sound at all
       // MT-ii: THE RECORD IS THE CANDIDATE. getTargets reads `ai` and
       // `entity` off it, and its identity IS the target handle (the
@@ -995,9 +995,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // cadence this pool never had. The counter steps every frame and
       // the sound fires only inside the 16m radius.
       tickEnemySound(f.sounds, f.ai.feet, playerFeet, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity) });
-      const mstate = f.attack.machine.state;
-      const strikeEdge = mstate !== 'Idle' && (f._prevMState ?? 'Idle') === 'Idle';
-      f._prevMState = mstate;
+      const seq = f.attack.swingSeq;   // AUDIT 68 S04-strike-edge-cut: EnemyAttack's own start count, not an Idle->strike state edge
+      const strikeEdge = seq !== f._swingSeq;
+      f._swingSeq = seq;
       if (strikeEdge) { f._atkA = bumpAtkCount(f._atkA, f.attack.firedRanged); f._atkB = wireRecipient(f.ai.target); }   // WORLD6b: the attack count on the wire, the ranged bit low (WORLD2's spelling); AUDIT WORLD6b-iii(a) A3: and whom the swing is at, latched with it
       // PlayAttackSound at the START of the swing, as the dungeon does
       // (MeleeAnimation fires it once on the edge, not at the hit).

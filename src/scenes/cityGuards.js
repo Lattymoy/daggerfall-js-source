@@ -274,7 +274,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // MakeEnemyHostileToAttacker + GiveUpTimer *= 3, verbatim: a
       // crime-responding guard pursues without having seen the player.
       ai.makeHostileToPlayer(600, attackerFeet);   // wave 36: MakeEnemyHostileToAttacker seeds the remembered position too
-      const attack = new EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: playerEntity.level, reflexes: playerEntity.reflexes });   // AUDIT 39: EnemyAttack.cs:69-72, ditto
+      const attack = new EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: () => playerEntity.level, reflexes: playerEntity.reflexes });   // AUDIT 39: EnemyAttack.cs:69-72, ditto
       // EnemyMotor.cs:131-137 computes hasBowAttack from the MobileEnemy
       // FLAGS, and EnemyBasics.cs:2197-2212 gives Knight_CityWatch
       // HasRangedAttack1 = false / CastsMagic = false - so DFU's
@@ -284,7 +284,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       attack.rangedAttack = false;
       const mobile = new MobileUnit(GUARD_MOBILE_TYPE, basics, (rec) => tex.getFrameCount(rec), Math.random, 'male');
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-      const g = { id: _nextGuardId++, mobile, ai, attack, entity, batch, tex, archive, mobileType: GUARD_MOBILE_TYPE, idleH, dead: false, _prevMState: 'Idle', _mout: null,
+      const g = { id: _nextGuardId++, mobile, ai, attack, entity, batch, tex, archive, mobileType: GUARD_MOBILE_TYPE, idleH, dead: false, _swingSeq: 0, _mout: null,
         // WATCH1: THE WATCH RIDES THE CELL'S STREAM. `seq` is this watchman's number on the wire, minted by the
         // encounter pool's own counter the first time he rides a frame (one number space with the foes, so a
         // peer's blow names one thing); `_atkA`/`_atkB` the attack count and its recipient in the pool's spelling
@@ -894,9 +894,9 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       g.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((g.entity.stats?.speed ?? 50) / Math.max(8, liveStat(g.entity, 'speed'))));   // AUDIT 23 (characters-11)
       const events = (_gParalyzed || !_tgt) ? [] : g.attack.update(dt, g.ai, _tgt);   // MT-ii: at the SELECTED target
       void events;
-      const mstate = g.attack.machine.state;
-      const strikeEdge = mstate !== 'Idle' && (g._prevMState ?? 'Idle') === 'Idle';
-      g._prevMState = mstate;
+      const seq = g.attack.swingSeq;   // AUDIT 68 S04-strike-edge-cut: EnemyAttack's own start count, the foes' one edge law
+      const strikeEdge = seq !== g._swingSeq;
+      g._swingSeq = seq;
       if (strikeEdge) playEnemyClip(audio, g.sounds.attack(), g.ai.feet, acuteHearingMultiplier(playerEntity));   // AUDIT 24 (wave 41); CF1: acute hearing
       // WATCH1: the attack count on the wire, the ranged bit low (the watch never shoots - `rangedAttack = false`
       // above, AUDIT 18), and whom the swing was at: '.' me, '' a foe of mine (a watchman brawling a rat, MT-ii). A

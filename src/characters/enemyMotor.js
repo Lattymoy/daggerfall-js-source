@@ -378,6 +378,7 @@ export class EnemyAI {
     this.lastGroundedY = feet[1];
     this.landedFall = 0;   // > 0 for ONE host frame after a damaging landing
     this._airborne = false;
+    this._restGrounded = false;   // C11's rest latch: true only while the grounded branch last left this foe resting on ground
     // AUDIT 39: TakeAction re-derives `moveSpeed` from
     // `entity.Stats.LiveSpeed` EVERY FixedUpdate (:432), so a Drain or
     // Fortify Speed on a foe moves it. A number captured at spawn
@@ -1685,6 +1686,7 @@ export class EnemyAI {
     // pursuit. Rising motion caps 2.5 under the surface. Paralyzed
     // swimmers "just freeze in place".
     if (this.swims) {
+      this._restGrounded = false;   // AUDIT 68 S04-rest-grounded-stale: only the grounded branch may vouch for the rest
       if (paralyzed || !this.moving) return;
       const waterY = this.waterSurfaceY ? this.waterSurfaceY(this.feet[0], this.feet[2]) : null;
       const center = this.feet[1] + this.centreOffset;   // EnemyMotor.cs:1333 controller.transform.position.y
@@ -1717,6 +1719,7 @@ export class EnemyAI {
     // names IsLevitating in its own right).
     if ((this.flies && !paralyzed) || this.levitating) {
       this.velY = 0;
+      this._restGrounded = false;   // AUDIT 68 S04-rest-grounded-stale: a latch kept through flight froze the next paralysis (or Levitate's end) mid-air
       // CH3 (AUDIT 24 characters-1): ApplyFallDamage's SECOND arm -
       // `else if ((flies && !flyerFalls) || IsLevitating ||
       // IsSlowFalling) LastGroundedY = transform.position.y`
@@ -1769,7 +1772,6 @@ export class EnemyAI {
     const dy = this.velY * dt;
     let dxm = 0;
     let dzm = 0;
-    let blocked = false;
     if (this.moving) {
       // AttemptMove's probe (wave 34). direction2d is the horizontal
       // heading the foe is about to walk (:977-979 flattens y for a
@@ -1784,7 +1786,6 @@ export class EnemyAI {
         // does not move this step at all, it picks a way round. Gravity
         // is separate (ApplyGravity, :167) and still applies.
         this._findDetour(dir2d);
-        blocked = true;
       } else {
         dxm = dir2d[0] * this.speed * dt;
         dzm = dir2d[2] * this.speed * dt;
@@ -1794,7 +1795,6 @@ export class EnemyAI {
     if (r.grounded) this.velY = 0;
     this._trackFall(r.grounded);   // CH3 (characters-8): walkers and falling paralyzed flyers
     this._restGrounded = !this.moving && r.grounded;
-    void blocked;   // the probe's outcome is the detour state; the rest path keys on `moving`
   }
 
   /** ApplyFallDamage's tracking (EnemyMotor.cs:1383-1414): grounded

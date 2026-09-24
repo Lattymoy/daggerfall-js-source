@@ -20,9 +20,10 @@ test('ENHANCED AI 1: the navmesh body is project-final\u2019s, byte for byte fro
   // file from '// Agent params' on, re-recorded DELIBERATELY with the project-final commit the
   // change was made in (decision #3: a change is made in both repos and said in both).
   // Provenance: project-final navmesh.js (ENHANCED AI 1/2, 9f5e323 mergeHoles) + AUDIT 62 F1's
-  // stacked-floor changes, made HERE FIRST and owed to project-final.
+  // stacked-floor changes + AUDIT 68's collider index under surfH/surfHNear (S02-surfh-linear-scan),
+  // made HERE FIRST and owed to project-final.
   const sum = createHash('sha256').update(ours.slice(bodyStart)).digest('hex');
-  assert.equal(sum, '7033c4d66c7c317f6ceb0ed58ee56c1e9349fca074cf39b96b1b3ef3bf608c4f',
+  assert.equal(sum, 'c9f9cf0f107f22c6f6aec4f2790dd565f76cfe4509aac2eb9c318fdba8710c94',
     'THE BODY CHANGED: make the change in project-final too, say it in both repos, then re-pin this digest with the commit');
 });
 
@@ -30,7 +31,7 @@ test('ENHANCED AI 1: a floor becomes walkable spans, a wall becomes a column wit
   // a 4x4 m floor quad at y=0 and a 4 m wall along x=2 from y=0 to 3
   const P = [0, 0, 0, 4, 0, 0, 4, 0, 4, 0, 0, 4,   2, 0, 0, 2, 3, 0, 2, 3, 4, 2, 0, 4];
   const I = [0, 1, 2, 0, 2, 3,   4, 5, 6, 4, 6, 7];
-  const cols = trianglesToColliders(P, I, { cs: 1, xmin: 0, zmin: 0 });
+  const cols = trianglesToColliders(P, I, { cs: 1 });
   const floor = cols.filter((c) => c.top === 0 && !c.noNavTop);
   // Recast-faithful: a vertex ON a cell boundary spills into that cell (conservative, so thin walls never leak) - 5x4
   assert.equal(floor.length, 20, 'the 4 m floor covers cells 0..4 on the axis its edge lands on');
