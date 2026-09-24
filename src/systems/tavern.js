@@ -60,15 +60,6 @@ export function calculateRoomCost(daysToRent, date) {
   return { cost, freeForHeartsDay: cost === 0 };
 }
 
-/** The room's price at this inn (:200-201). NOT CalculateCost -
- *  DFU calls CalculateTradePrice(cost, quality, false), which reads
- *  the player's MERCANTILE and PERSONALITY, so a silver-tongued
- *  character sleeps cheaper. The first draft here reached for
- *  calculateCost (the item-shop formula) and would have charged every
- *  character the same. */
-export const roomPrice = (daysToRent, date, quality, skills) =>
-  calculateTradePrice(calculateRoomCost(daysToRent, date).cost, quality, skills, false);
-
 /** PlayerEntity.GetRemainingHours (:268-275) - the `%dwr` macro's
  *  source, and the sweep's own test. A null room answers -1, which is
  *  DFU's own "no room" sentinel rather than 0. The CEILING is load
@@ -126,6 +117,11 @@ export function rentalDecision(input, { room = null, nowMinutes = 0, date, quali
   return {
     kind: 'offer',
     days,
+    // The room's price at this inn (:200-201). NOT CalculateCost - DFU
+    // calls CalculateTradePrice(cost, quality, false), which reads the
+    // player's MERCANTILE and PERSONALITY, so a silver-tongued character
+    // sleeps cheaper; calculateCost (the item-shop formula) would charge
+    // every character the same.
     price: calculateTradePrice(cost, quality, skills, false),
     heartsDay: freeForHeartsDay,
   };

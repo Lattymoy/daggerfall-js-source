@@ -7,11 +7,12 @@
 // own `${type},${subType}` classic law, so a picked row drops
 // straight into a SPELLS.STD-shaped record.
 //
-// The COST components live elsewhere (EFFECT_COST_TABLE in
-// spellcost.js) and are not the same question: support flags decide
-// what the player may SET, cost components decide what is CHARGED.
-// DFU keeps them apart too, and they do not always agree (an effect
-// can support a component the cost table prices at nothing).
+// The support flags are READ from EFFECT_COST_TABLE (spellcost.js),
+// not written here: DFU has one member per flag (IEntityEffect
+// .Properties.SupportX) and CalculateEffectCosts prices a component
+// exactly when the effect supports it (FormulaHelper.cs:2280-2325), so
+// the cost row's components ARE the flags. AUDIT 68
+// S32-support-flags-dup: this file kept a second, hand-typed copy.
 //
 // EXCLUSIONS, each verified rather than assumed:
 //  - MorphSelf (29,255) carries a classic key but AllowedCraftingStations
@@ -34,54 +35,55 @@
 // window says so. DFU has no such marking; it is the port telling
 // the truth about its own residue rather than taking the money quietly.
 
+import { EFFECT_COST_TABLE } from './spellcost.js';
+
 /** The 8 attributes in DFCareer.Stats order - note PERSONALITY is 5,
  *  ahead of Speed, which is the order the classic subType uses. */
 export const STAT_SUBGROUPS = Object.freeze(
   ['Strength', 'Intelligence', 'Willpower', 'Agility', 'Endurance', 'Personality', 'Speed', 'Luck']);
 
-const D = 'duration', C = 'chance', M = 'magnitude';
-// [type, subType, group, subgroup, supports]
+// [type, subType, group, subgroup] - the three support flags are the cost row's (see the header)
 const ROWS = [
-  [0, 255, 'Paralyze', '', [D, C]],
-  [1, 0, 'Continuous Damage', 'Health', [D, M]],
-  [1, 1, 'Continuous Damage', 'Fatigue', [D, M]],
-  [1, 2, 'Continuous Damage', 'Spell Points', [D, M]],
-  [2, 255, 'Create Item', '', [D]],
-  [3, 0, 'Cure', 'Disease', [C]],
-  [3, 1, 'Cure', 'Poison', [C]],
-  [3, 2, 'Cure', 'Paralyzation', [C]],
-  [4, 0, 'Damage', 'Health', [M]],
-  [4, 1, 'Damage', 'Fatigue', [M]],
-  [4, 2, 'Damage', 'Spell Points', [M]],
-  [5, 255, 'Disintegrate', '', [C]],
-  [6, 0, 'Dispel', 'Magic', [C]],
-  [6, 1, 'Dispel', 'Undead', [C]],
-  [6, 2, 'Dispel', 'Daedra', [C]],
-  [8, 0, 'Elemental Resistance', 'Fire', [D, C]],
-  [8, 1, 'Elemental Resistance', 'Frost', [D, C]],
-  [8, 2, 'Elemental Resistance', 'Poison', [D, C]],
-  [8, 3, 'Elemental Resistance', 'Shock', [D, C]],
-  [8, 4, 'Elemental Resistance', 'Magicka', [D, C]],
-  [12, 255, 'Soul Trap', '', [D, C]],
-  [13, 0, 'Invisibility', 'Normal', [D]],
-  [13, 1, 'Invisibility', 'True', [D]],
-  [14, 255, 'Levitate', '', [D]],
-  [15, 255, 'Light', '', [D]],
-  [16, 255, 'Lock', '', [C]],
-  [17, 255, 'Open', '', [C]],
-  [18, 255, 'Regenerate', '', [D, M]],
-  [19, 255, 'Silence', '', [D, C]],
-  [20, 255, 'Spell Absorption', '', [D, C]],
-  [21, 255, 'Spell Reflection', '', [D, C]],
-  [22, 255, 'Spell Resistance', '', [D, C]],
-  [23, 0, 'Chameleon', 'Normal', [D]],
-  [23, 1, 'Chameleon', 'True', [D]],
-  [24, 0, 'Shadow', 'Normal', [D]],
-  [24, 1, 'Shadow', 'True', [D]],
-  [25, 255, 'Slowfall', '', [D]],
-  [26, 255, 'Free Action', '', [D]],
-  [27, 255, 'Jumping', '', [D]],
-  [28, 255, 'Climbing', '', [D]],
+  [0, 255, 'Paralyze', ''],
+  [1, 0, 'Continuous Damage', 'Health'],
+  [1, 1, 'Continuous Damage', 'Fatigue'],
+  [1, 2, 'Continuous Damage', 'Spell Points'],
+  [2, 255, 'Create Item', ''],
+  [3, 0, 'Cure', 'Disease'],
+  [3, 1, 'Cure', 'Poison'],
+  [3, 2, 'Cure', 'Paralyzation'],
+  [4, 0, 'Damage', 'Health'],
+  [4, 1, 'Damage', 'Fatigue'],
+  [4, 2, 'Damage', 'Spell Points'],
+  [5, 255, 'Disintegrate', ''],
+  [6, 0, 'Dispel', 'Magic'],
+  [6, 1, 'Dispel', 'Undead'],
+  [6, 2, 'Dispel', 'Daedra'],
+  [8, 0, 'Elemental Resistance', 'Fire'],
+  [8, 1, 'Elemental Resistance', 'Frost'],
+  [8, 2, 'Elemental Resistance', 'Poison'],
+  [8, 3, 'Elemental Resistance', 'Shock'],
+  [8, 4, 'Elemental Resistance', 'Magicka'],
+  [12, 255, 'Soul Trap', ''],
+  [13, 0, 'Invisibility', 'Normal'],
+  [13, 1, 'Invisibility', 'True'],
+  [14, 255, 'Levitate', ''],
+  [15, 255, 'Light', ''],
+  [16, 255, 'Lock', ''],
+  [17, 255, 'Open', ''],
+  [18, 255, 'Regenerate', ''],
+  [19, 255, 'Silence', ''],
+  [20, 255, 'Spell Absorption', ''],
+  [21, 255, 'Spell Reflection', ''],
+  [22, 255, 'Spell Resistance', ''],
+  [23, 0, 'Chameleon', 'Normal'],
+  [23, 1, 'Chameleon', 'True'],
+  [24, 0, 'Shadow', 'Normal'],
+  [24, 1, 'Shadow', 'True'],
+  [25, 255, 'Slowfall', ''],
+  [26, 255, 'Free Action', ''],
+  [27, 255, 'Jumping', ''],
+  [28, 255, 'Climbing', ''],
   // U42: MorphSelf is a REGISTRY row that the maker never offers -
   // see the exclusions note above. It is here because
   // SetEffectLabels reads EntityEffectBroker.GetEffectTemplate
@@ -101,28 +103,28 @@ const ROWS = [
   // roundsRemaining at 0 (EntityEffect.cs:920-932). The port's own
   // cost row agrees (spellcost.js, `'29,255': row(SKILLS.Illusion, {})`),
   // as does the identically shaped Teleport row below.
-  [29, 255, 'Morph Self', '', [], false],
-  [30, 255, 'Water Breathing', '', [D]],
-  [31, 255, 'Water Walking', '', [D]],
-  [33, 0, 'Pacify', 'Animal', [C]],
-  [33, 1, 'Pacify', 'Undead', [C]],
-  [33, 2, 'Pacify', 'Humanoid', [C]],
-  [33, 3, 'Pacify', 'Daedra', [C]],
-  [34, 255, 'Charm', '', [C]],
-  [35, 255, 'Shield', '', [D, M]],
-  [39, 0, 'Detect', 'Magic', [D]],
-  [39, 1, 'Detect', 'Enemy', [D]],
-  [39, 2, 'Detect', 'Treasure', [D]],
-  [40, 255, 'Identify', '', [C]],
-  [43, 255, 'Teleport', '', []],
-  [44, 255, 'Comprehend Languages', '', [D, C]],
+  [29, 255, 'Morph Self', '', false],
+  [30, 255, 'Water Breathing', ''],
+  [31, 255, 'Water Walking', ''],
+  [33, 0, 'Pacify', 'Animal'],
+  [33, 1, 'Pacify', 'Undead'],
+  [33, 2, 'Pacify', 'Humanoid'],
+  [33, 3, 'Pacify', 'Daedra'],
+  [34, 255, 'Charm', ''],
+  [35, 255, 'Shield', ''],
+  [39, 0, 'Detect', 'Magic'],
+  [39, 1, 'Detect', 'Enemy'],
+  [39, 2, 'Detect', 'Treasure'],
+  [40, 255, 'Identify', ''],
+  [43, 255, 'Teleport', ''],
+  [44, 255, 'Comprehend Languages', ''],
 ];
 // the stat/vital families, expanded exactly as DFU's per-stat classes are
 const FAMILIES = [
-  [7, 'Drain', STAT_SUBGROUPS, [M]],                                  // Drain{Attribute}, 0..7
-  [9, 'Fortify Attribute', STAT_SUBGROUPS, [D, M]],                   // Fortify{Attribute}, 0..7
-  [10, 'Heal', [...STAT_SUBGROUPS, 'Health', 'Fatigue'], [M]],        // Heal{Attribute} + Health 8 / Fatigue 9
-  [11, 'Transfer', [...STAT_SUBGROUPS, 'Health', 'Fatigue'], [M]],    // Transfer{...}, same 0..9
+  [7, 'Drain', STAT_SUBGROUPS],                                       // Drain{Attribute}, 0..7
+  [9, 'Fortify Attribute', STAT_SUBGROUPS],                           // Fortify{Attribute}, 0..7
+  [10, 'Heal', [...STAT_SUBGROUPS, 'Health', 'Fatigue']],             // Heal{Attribute} + Health 8 / Fatigue 9
+  [11, 'Transfer', [...STAT_SUBGROUPS, 'Health', 'Fatigue']],         // Transfer{...}, same 0..9
 ];
 
 /** The keys systems/effects.js really acts on (its predicate arms +
@@ -193,26 +195,30 @@ const PAREN_DISPLAY_NAME = new Set([
   '24,0', '24,1',   // ShadowNormal / ShadowTrue
 ]);
 
+/** An effect's three support flags, off its cost row (no row, no component). */
+const supportsOf = (row) => ({ duration: !!row?.duration, chance: !!row?.chance, magnitude: !!row?.magnitude });
+
 /** Every effect the Spell Maker offers: { key, type, subType, group,
  *  subgroup, name, duration, chance, magnitude, ported }. */
 export const SPELL_MAKER_EFFECTS = Object.freeze((() => {
   const out = [];
-  const push = (type, subType, group, subgroup, supports, craftable = true) => out.push(Object.freeze({
+  const push = (type, subType, group, subgroup, craftable = true) => out.push(Object.freeze({
     key: `${type},${subType}`, type, subType, group, subgroup,
     // DisplayName: GetDisplayName's default arm, or the six
     // concealment classes' `"{0} ({1})"` override (see above).
     name: subgroup
       ? (PAREN_DISPLAY_NAME.has(`${type},${subType}`) ? `${group} (${subgroup})` : `${group} ${subgroup}`)
       : group,
-    duration: supports.includes(D), chance: supports.includes(C), magnitude: supports.includes(M),
+    // SupportDuration/SupportChance/SupportMagnitude: the components the cost row prices (AUDIT 68 S32-support-flags-dup)
+    ...supportsOf(EFFECT_COST_TABLE[`${type},${subType}`]),
     ported: PORTED_KEYS.has(`${type},${subType}`),
     // AllowedCraftingStations != None. A false row is in the REGISTRY
     // (so the spellbook can name the effect) and out of the maker's
     // two picker lists.
     craftable,
   }));
-  for (const [t, s, g, sub, sup, craft] of ROWS) push(t, s, g, sub, sup, craft);
-  for (const [t, g, subs, sup] of FAMILIES) subs.forEach((sub, i) => push(t, i, g, sub, sup));
+  for (const [t, s, g, sub, craft] of ROWS) push(t, s, g, sub, craft);
+  for (const [t, g, subs] of FAMILIES) subs.forEach((sub, i) => push(t, i, g, sub));
   return out.sort((a, b) => (a.group === b.group ? a.subType - b.subType : a.group.localeCompare(b.group)));
 })());
 

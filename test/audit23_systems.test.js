@@ -174,7 +174,8 @@ test('AUDIT 23 audio-4: channel gains resync at play() and the loop seam', () =>
   const sp = src('src/systems/songPlayer.js');
   assert.ok(/_resyncChannelGains\(\)\s*\{/.test(sp));
   const calls = (sp.match(/this\._resyncChannelGains\(\);/g) ?? []).length;
-  assert.equal(calls, 2, 'one at play(), one at the loop rewind');
+  // AUDIT 68 S32-songplayer-stall-cc7: and a third, after the stall skip's fold (pinned by behaviour in audit68_systems_misc)
+  assert.equal(calls, 3, 'one at play(), one at the stall skip, one at the loop rewind');
 });
 
 test('AUDIT 23 wa-1: ACTION_FLAGS carries every defined RdbActionFlags member', () => {

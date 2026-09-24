@@ -275,9 +275,13 @@ export class SongPlayer {
     if (nowTick - this._cursorTick > aheadTicks) {
       this._cursorTick = nowTick;
       // Fold the skipped control events forward so the instruments and
-      // volumes on the far side of the gap are still right.
+      // volumes on the far side of the gap are still right - and hand the
+      // folded volumes to the channel nodes, which own CC7 since AUDIT 19:
+      // folded into state alone, a CC7 in the gap never reached its node
+      // (AUDIT 68 S32-songplayer-stall-cc7).
       applyChannelEvents(this._state, eventsInWindow(events, 0, nowTick)
         .filter((e) => e.type !== 'noteOn'));
+      this._resyncChannelGains();
     }
 
     if (this._cursorTick < toTick) {

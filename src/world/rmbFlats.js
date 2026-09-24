@@ -41,7 +41,6 @@ import { textureReplacementEnabled, hasTextureReplacement } from '../systems/tex
 const BLOCK_FLATS_OFFSET_Y = -6;
 const NATURE_FLATS_OFFSET_Y = -2;
 export const EDITOR_FLATS_ARCHIVE = 199;
-export const LIGHTS_ARCHIVE = 210;
 const NATURE_ARCHIVE_MIN = 500; // ClimateTextureSet.Nature_RainForest
 const NATURE_ARCHIVE_MAX = 511; // ClimateTextureSet.Nature_Mountains_Snow
 

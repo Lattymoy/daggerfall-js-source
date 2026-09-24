@@ -175,7 +175,7 @@ export function selectSong(playlist, {
     // gameDays yields a NEGATIVE index and playlist[-1] is undefined - a
     // song name of `undefined` that resolves to no record and plays
     // nothing. The other two arms already coerce; this one did not.
-    index = Number(BigInt(Math.trunc(gameDays) >>> 0) % BigInt(playlist.length));
+    index = (Math.trunc(gameDays) >>> 0) % playlist.length;   // a uint32 is exact in a double - no BigInt (AUDIT 68 S32-tavern-bigint)
   } else if (dungeonKey !== null) {
     srand(dungeonKey >>> 0);
     index = rand() % playlist.length;

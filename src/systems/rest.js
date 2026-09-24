@@ -16,6 +16,7 @@ import { skillValue, SKILLS } from './skills.js';
 import { healingRateModifier } from '../combat/formulas.js';   // U10
 import { sharedClockOn, worldMinutes } from './worldTick.js';   // AUDIT WORLD5 C6: the collapse's hour, paid once a world hour online
 import { isOnlinePage } from './onlineLane.js';   // REST-MANA1: online, every career's magicka comes back with rest
+import { hasSpecialAbility } from './specialAdvantages.js';
 
 // ---- DFCareer.SpecialAbilityFlags (the low byte of
 // AbilityFlagsAndSpellPointsBitfield) + RapidHealingFlags ----
@@ -25,10 +26,10 @@ export const SPECIAL_ABILITY = Object.freeze({
 });
 export const RAPID_HEALING = Object.freeze({ None: 0, InLight: 1, InDarkness: 2, Always: 4 });
 
-/** DFCareer.HasSpecialAbility: the flag masked against the bitfield's
- *  LOW BYTE (the C# (byte)flags cast), verbatim. */
-export const hasSpecialAbility = (career, flag) =>
-  ((career?.abilityFlagsAndSpellPointsBitfield ?? 0) & flag) === flag;
+/** DFCareer.HasSpecialAbility - its home is specialAdvantages.js, the
+ *  import-free leaf beside SPECIAL_ABILITY_BITS (AUDIT 68
+ *  X4-mg-recharge-career-field: guildServices reads it from there). */
+export { hasSpecialAbility };
 
 // U10: HealingRateModifier moved to the FormulaHelper home beside
 // the other six derived stats; re-exported so existing importers of

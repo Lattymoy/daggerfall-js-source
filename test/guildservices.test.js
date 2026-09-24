@@ -13,6 +13,9 @@ import {
 import { GUILDS, MEMBER_TRAINING_COST, NON_MEMBER_TRAINING_COST, DEFAULT_TRAINING_MAX } from '../src/systems/guilds.js';
 import { templeOf, orderOf, TEMPLE_DATA } from '../src/systems/guildVariants.js';
 import { SKILLS } from '../src/systems/skills.js';
+import { parseCareerData } from '../src/systems/specialAdvantages.js';
+import { buildCustomCareer, HP_DEFAULT } from '../src/systems/customClass.js';
+import { STAT_KEYS_ORDER } from '../src/systems/statMods.js';
 
 const at = (rank) => ({ guild: 'x', rank, lastRankChange: 0 });
 
@@ -171,9 +174,19 @@ test('services: the Mages Guild recharge exists FOR the Sorcerer', () => {
   // FreeMagickaRecharge is gated on Career.NoRegenSpellPoints - the
   // very career flag U20b writes and S23-era work found live. The perk
   // is for the one career that cannot regenerate at all.
+  // AUDIT 68 X4-mg-recharge-career-field: the careers are the PRODUCER'S
+  // (U20b's parseCareerData over the custom-class builder), which write
+  // bit 8 of the ability bitfield - this pin used to hand-build a
+  // `noRegenSpellPoints` property no producer writes, and passed while
+  // the recharge never fired in the game.
   const mg = GUILDS.MagesGuild;
-  const sorcerer = { career: { noRegenSpellPoints: true } };
-  const mage = { career: { noRegenSpellPoints: false } };
+  const career = () => buildCustomCareer({
+    name: 'X', hp: HP_DEFAULT, skills: [SKILLS.Destruction, SKILLS.Alteration, SKILLS.Mysticism, 0, 1, 2, 3, 4, 5, 6, 7, 8],
+    stats: Object.fromEntries(STAT_KEYS_ORDER.map((k) => [k, 50])),
+  });
+  const sorcerer = { career: career() };
+  parseCareerData(sorcerer.career, [{ primary: 'inabilityToRegen', secondary: '' }]);
+  const mage = { career: career() };
   assert.equal(freeMagickaRecharge(mg, at(0), sorcerer), true);
   assert.equal(freeMagickaRecharge(mg, at(9), mage), false, 'a career that regenerates gets nothing');
   assert.equal(freeMagickaRecharge(mg, null, sorcerer), false, 'and it needs membership');

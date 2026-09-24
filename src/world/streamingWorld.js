@@ -25,12 +25,13 @@
 import { TERRAIN_SIZE } from './terrainSampler.js';
 import { GLOBAL_SCALE } from './meshReader.js';
 import { WORLD_MAP_TILE_DIM, getLocationTerrainTileOrigin } from './terrainTiles.js';
+import { worldCoordToMapPixel } from '../formats/mapsFile.js';
 
 export const TERRAIN_DISTANCE = 3;   // DFU's default (StreamingWorld.cs:56); D1: the world host passes the LIVE Experimental/TerrainDistance (1..4) into the constructor
 const VERTICAL_THRESHOLD = 500;
 // MapsFile.MinMapPixelX/Y and MaxMapPixelX/Y - max EXCLUSIVE, so the
-// world map is 0..999 by 0..499 (terrainSampler keeps its own copy of
-// the Y bound for the same reason: no reader dependency here).
+// world map is 0..999 by 0..499 (formats/mapsFile.js does not port
+// them; terrainSampler keeps its own copy of the Y bound).
 const MIN_MAP_PIXEL_X = 0;
 const MIN_MAP_PIXEL_Y = 0;
 const MAX_MAP_PIXEL_X = 1000;
@@ -38,16 +39,12 @@ const MAX_MAP_PIXEL_Y = 500;
 export const SCENE_MAP_RATIO = 1 / GLOBAL_SCALE;   // HCC: StreamingWorld.SceneMapRatio, the mod's scene<->world conversions read it by name
 const NATIVE_PIXEL = 32768; // MapsFile world units per map pixel
 
-/** Verbatim MapsFile.WorldCoordToMapPixel (truncating division). DFU
- * casts the accumulated float to int first; trunc(trunc(w) / k) equals
- * trunc(w / k) for positive integer k, so the single trunc here is the
- * same mapping. */
-export function worldCoordToMapPixel(worldX, worldZ) {
-  return {
-    x: Math.trunc(worldX / NATIVE_PIXEL),
-    y: 499 - Math.trunc(worldZ / NATIVE_PIXEL),
-  };
-}
+/** MapsFile.WorldCoordToMapPixel (truncating division), from its one
+ * home in formats/mapsFile.js (AUDIT 68 X1-v-onehome-worldcoord-statkeys:
+ * this file kept a verbatim second copy). DFU casts the accumulated
+ * float to int first; trunc(trunc(w) / k) equals trunc(w / k) for
+ * positive integer k, so the single trunc there is the same mapping. */
+export { worldCoordToMapPixel };
 
 /** Verbatim MapsFile.MapPixelToWorldCoords (pixel corner). */
 export function mapPixelToWorldCoords(mapPixelX, mapPixelY) {

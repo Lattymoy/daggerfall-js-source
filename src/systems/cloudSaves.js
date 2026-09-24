@@ -157,7 +157,8 @@ async function ask(io, path, { method = 'GET', json = null, raw = null } = {}) {
   if (type.includes('json')) {
     try { return { ok: true, data: await res.json() }; } catch { return { ok: false, error: 'server' }; }
   }
-  return { ok: true, text: await res.text() };
+  // AUDIT 68 X7-cloudsaves-text-unguarded: a body cut off mid-read is the network failing too - the one arm that threw
+  try { return { ok: true, text: await res.text() }; } catch { return { ok: false, error: 'offline' }; }
 }
 
 /** Every slot the cloud holds for this account, newest first. */

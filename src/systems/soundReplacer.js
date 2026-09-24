@@ -37,14 +37,21 @@ export function soundEntry(fileName) {
 
 let _files = new Map();   // clip name -> stored file name
 let _load = null;         // stored file name -> Promise<Uint8Array|null>
-let _gen = 0;             // bumps on every registration, so the engine re-reads a re-attached pack
+let _gen = 0;             // bumps when the pack CHANGES, so the engine re-reads a new or re-attached pack
+let _sig = '';            // the registered pack's clip -> file pairs, for telling a change from a repeat
 
-/** The attached pack: the stored names and their loader. Answers how many clips it covers. */
-export function setSoundReplacements(fileNames, load) {
-  _files = new Map();
-  for (const f of fileNames ?? []) { const n = soundEntry(f); if (n) _files.set(n, f); }
+/** The attached pack: the stored names and their loader. Answers how many clips it covers.
+ *  AUDIT 68 S20-v-soundrep-regen: every host boot and dungeon entry re-registers the SAME pack (ensureAudio), and
+ *  a bump per call re-decoded both clips each time. The generation moves only when the pack does - other names,
+ *  another loader, or `reattach` (the player picked a folder again: the same names may hold new bytes). */
+export function setSoundReplacements(fileNames, load, { reattach = false } = {}) {
+  const files = new Map();
+  for (const f of fileNames ?? []) { const n = soundEntry(f); if (n) files.set(n, f); }
+  const sig = [...files].map(([n, f]) => `${n}=${f}`).sort().join('|');
+  if (reattach || sig !== _sig || (load ?? null) !== _load) _gen++;
+  _files = files;
+  _sig = sig;
   _load = load ?? null;
-  _gen++;
   return _files.size;
 }
 export const soundReplacementCount = () => _files.size;

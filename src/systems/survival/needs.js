@@ -34,7 +34,7 @@
 // repays (Casual) keeps one more field, `borrowed`: the stamina each need
 // took, returned when that need is met.
 import { feltTemperature, temperatureWord } from './temperature.js';
-import { drinkFrom, findDrink, waterskinName, DRINK_RELIEF, TEMPLATE, isFood, foodStage, FOOD_STAGE, rotFoodDay, rotWeight, ROT_DAY_MINUTES } from './food.js';
+import { drinkFrom, findDrink, waterskinName, DRINK_RELIEF, TEMPLATE, isFood, rotFoodDay, rotWeight, ROT_DAY_MINUTES } from './food.js';
 import { STAT_KEYS_ORDER, maxFatigue, liveStat } from '../statMods.js';
 import { HARD_RULES } from './difficulty.js';
 /** SURV4: speed and agility down by this while stiff (survival/rest.js's STIFF_PENALTY, restated here so rest.js may import this module). */
@@ -684,15 +684,3 @@ export function alignSurvival(entity, now, lastSeen = null) {
   return false;
 }
 
-/** Stage words for the HUD and the status page. */
-export function survivalSummary(entity, now, temp = null) {
-  const s = survivalOf(entity, now);
-  return {
-    hunger: hungerStage(hungerMinutes(s, now)), hungerMinutes: hungerMinutes(s, now),
-    thirst: thirstStage(s.thirst), thirstValue: s.thirst,
-    sleep: sleepStage(s.sleepDebt), sleepDebt: s.sleepDebt, awakeHours: awakeHours(s, now),
-    wet: wetStage(s.wet), wetValue: s.wet,
-    felt: temp?.felt ?? null, drunk: s.drunk,
-    stage: foodStage, FOOD_STAGE,
-  };
-}

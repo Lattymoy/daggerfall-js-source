@@ -30,6 +30,8 @@
 // InteriorAmbientLight (0.18); the night variant (0.20, 0.18, 0.20) is
 // exposed for the clock.
 
+import { LIGHTS_ARCHIVE } from './cityLights.js';   // AUDIT 68 X1-lights-archive-4-homes: the lights archive's one home
+
 // Directional light for interior and dungeon frames (presentation
 // choice; classic has no sun indoors - a fixed oblique direction keeps
 // face shading legible). Normalized once here; single-sourced at the
@@ -50,8 +52,6 @@ export const INTERIOR_NIGHT_AMBIENT = Object.freeze([0.20, 0.18, 0.20]);
 export const INTERIOR_LIGHT_RANGE = 15;
 export const INTERIOR_LIGHT_INTENSITY = 1;
 export const INTERIOR_LIGHT_COLOR = Object.freeze([1, 1, 1]);
-
-const LIGHTS_ARCHIVE = 210;
 
 // Verbatim per-record light offsets (world units); absent records add 0.
 const RECORD_OFFSETS = new Map([

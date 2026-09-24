@@ -25,7 +25,7 @@ import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { ITEM_GROUPS, SLOT_RULES } from '../characters/equipRules.js';
 import { customItemClass, rriNativeMaterialValue, rriEquipSound } from './rriItems.js';
 import { SOUND } from './soundClips.js';   // AUDIT-RR F8: the class's equip sound, by name   // RRI1: a custom armor's slot, for the body part its value lands on; AUDIT-RR F7/F8: the class's two virtuals
-import { createEquipTable, getItemHands as handsOf, ITEM_HANDS } from '../characters/equipTable.js';
+import { createEquipTable, getItemHands, ITEM_HANDS } from '../characters/equipTable.js';
 import { BODY_PARTS, NUMBER_BODY_PARTS, materialArmorValue, itemArmorValue, SHIELD_VALUES, SHIELD_PARTS, isShieldTemplate } from './armorMaterials.js';
 import { weaponSkillUsed } from '../characters/weapons.js';   // wave 29: GetWeaponSkillUsed keys on the TEMPLATE
 import { SKILLS, WEAPON_SKILL } from './skills.js';   // S23: the weapon partition, single-sourced
@@ -38,7 +38,7 @@ const ARROW = 131;
 
 /** The bag speaks string groups; C5c speaks the numeric enum. */
 const numeric = (item) => (typeof item.group === 'string' ? { ...item, group: ITEM_GROUPS[item.group] ?? ITEM_GROUPS.None } : item);
-export const getItemHands = (item) => handsOf(numeric(item));
+export { getItemHands };   // AUDIT 68 X4-getitemhands-wrapper: GetItemHands' one home already reads a string group - the wrapper copied the item per call
 
 /** The entity's live equip table (lazy; C5c's shape). */
 export const equipOf = (entity) => (entity.equip ??= createEquipTable());

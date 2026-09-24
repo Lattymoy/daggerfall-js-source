@@ -13,6 +13,7 @@
 // .bsa: a scabbard the player attached (a replacer, a newer version of
 // the mod) wins, and retail carries none of these names.
 import { makeVendoredArchive, vendoredDataPath } from './weaponSheathing.js';
+import { fetchUrlBytes } from './urlArchive.js';
 
 const IN_BROWSER = typeof window !== 'undefined';
 // AUDIT-WS: EAGER. A lazy glob emitted one chunk per file (seventy-four
@@ -23,10 +24,8 @@ const FILES = IN_BROWSER ? import.meta.glob('../../vendor/weapon-sheathing/Data 
 /** Canonical data-files path -> its URL, for the vendored tree. */
 export const WEAPON_SHEATHING_URLS = Object.freeze(Object.fromEntries(Object.entries(FILES).map(([p, url]) => [vendoredDataPath(p), url])));
 
-const fetchBytes = async (url) => new Uint8Array(await (await fetch(url)).arrayBuffer());
-
 let _archive = null;
 /** The vendored archive, one per page. Empty (has() false for all) in node. */
 export function weaponSheathingArchive() {
-  return (_archive ??= makeVendoredArchive(WEAPON_SHEATHING_URLS, fetchBytes));
+  return (_archive ??= makeVendoredArchive(WEAPON_SHEATHING_URLS, fetchUrlBytes));
 }

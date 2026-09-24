@@ -708,11 +708,20 @@ export function calculateTradePrice(cost, shopQuality, { mercantile = 0, persona
 // port injects `rolls` rather than seeding a global stream, so
 // dailyStockRolls below is the equivalent - xorshift32 over the day,
 // the same substitution dungeonEnemies.makeSlotRng already makes for
-// Unity's seeded stream (a recorded Ledger A departure).
+// Unity's seeded stream (a recorded Ledger A departure). The day is
+// SCRAMBLED first (murmur3's fmix32), as Unity's InitState expands its
+// seed: xorshift is linear and read off its high bits, so a bare day
+// number (~11 bits) made the first draws of neighbouring days nearly
+// equal - AUDIT 68 S32-daily-stock-rng-first-draw: the first gem on the
+// Buy Soulgems shelf was filled on every day of the first game year.
 
 /** A deterministic [0,1) stream for one game day. */
 export function dailyStockRolls(dayIndex) {
-  let s = ((dayIndex >>> 0) || 1) >>> 0;
+  let h = dayIndex >>> 0;
+  h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b);
+  h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35);
+  h ^= h >>> 16;
+  let s = (h >>> 0) || 1;   // fmix32(0) is 0: day 0 keeps the old seed of 1
   return () => {
     s ^= s << 13; s >>>= 0;
     s ^= s >>> 17;

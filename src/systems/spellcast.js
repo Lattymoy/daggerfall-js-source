@@ -384,12 +384,7 @@ export const PLAYER_ARROW_SIDE = 0.15;
  * from the bare eye at every host, which put the shaft 0.11 high and
  * 0.15 off-hand of DFU's - a fifth of the missile's own contact radius,
  * and the whole of the reason DFU's arrow lines up with the drawn bow.
- *
- * The basis is rebuilt from the look direction the host already
- * carries, which for a yaw/pitch camera with no roll IS the camera's:
- * right = Cross(worldUp, forward), up = Cross(forward, right) - the
- * same vectors `cam.yaw`/`cam.pitch` build, and the same the view
- * matrix's first two columns hold.
+ * The camera's axes are cameraBasis's, below.
  *
  * `flipHorizontal` is FPSWeapon.FlipHorizontal (Controls/Handedness ==
  * 1, StartGameBehaviour :269), read live at the loose. It is the
@@ -399,7 +394,14 @@ export const PLAYER_ARROW_SIDE = 0.15;
  */
 const bowHandFlipped = () => getInt('Controls', 'Handedness', 0, 3) === 1;
 
-export function playerArrowOrigin(eye, lookDir, flipHorizontal = bowHandFlipped()) {
+/** The camera's axes, rebuilt from the look direction the host already
+ *  carries, which for a yaw/pitch camera with no roll IS the camera's:
+ *  right = Cross(worldUp, forward), up = Cross(forward, right) - the
+ *  same vectors `cam.yaw`/`cam.pitch` build, and the same the view
+ *  matrix's first two columns hold. ONE copy for the bow's arm and the
+ *  muzzle's (AUDIT 68 S32-arrow-origin-dup): two copies of a basis is
+ *  how one of them ends up flipped. */
+function cameraBasis(lookDir) {
   const fl = Math.hypot(lookDir[0], lookDir[1], lookDir[2]) || 1;
   const f = [lookDir[0] / fl, lookDir[1] / fl, lookDir[2] / fl];
   // right = Cross(worldUp, forward) = (f.z, 0, -f.x), renormalised
@@ -410,6 +412,11 @@ export function playerArrowOrigin(eye, lookDir, flipHorizontal = bowHandFlipped(
   if (rl < 1e-6) { rx = 1; rz = 0; } else { rx /= rl; rz /= rl; }
   // up = Cross(forward, right)
   const ux = f[1] * rz, uy = f[2] * rx - f[0] * rz, uz = -f[1] * rx;
+  return { f, rx, rz, ux, uy, uz };
+}
+
+export function playerArrowOrigin(eye, lookDir, flipHorizontal = bowHandFlipped()) {
+  const { rx, rz, ux, uy, uz } = cameraBasis(lookDir);
   const side = flipHorizontal ? -PLAYER_ARROW_SIDE : PLAYER_ARROW_SIDE;   // :546-549
   return [
     eye[0] - ux * PLAYER_ARROW_DOWN + rx * side,
@@ -433,8 +440,8 @@ export function playerArrowOrigin(eye, lookDir, flipHorizontal = bowHandFlipped(
  *
  * `muzzle` is a CAMERA-SPACE offset - {right, up, forward}, already
  * measured off the drawn frame by weaponRig.thunderlockMuzzle - so
- * this only has to turn it into world axes on the same basis the arm
- * above rebuilds. No handedness term: the mirror is a fact about the
+ * this only has to turn it into world axes on the arm's own basis
+ * (cameraBasis). No handedness term: the mirror is a fact about the
  * DRAWN RECT and thunderlockMuzzle has already applied it, where
  * PLAYER_ARROW_SIDE is a bare number that has to be flipped here.
  */
@@ -449,12 +456,7 @@ export function playerShotOrigin(eye, lookDir, muzzle) {
 }
 
 export function playerMuzzleOrigin(eye, lookDir, muzzle) {
-  const fl = Math.hypot(lookDir[0], lookDir[1], lookDir[2]) || 1;
-  const f = [lookDir[0] / fl, lookDir[1] / fl, lookDir[2] / fl];
-  let rx = f[2], rz = -f[0];
-  const rl = Math.hypot(rx, rz);
-  if (rl < 1e-6) { rx = 1; rz = 0; } else { rx /= rl; rz /= rl; }
-  const ux = f[1] * rz, uy = f[2] * rx - f[0] * rz, uz = -f[1] * rx;
+  const { f, rx, rz, ux, uy, uz } = cameraBasis(lookDir);
   const r = muzzle?.right ?? 0, u = muzzle?.up ?? 0, d = muzzle?.forward ?? 0;
   return [
     eye[0] + rx * r + ux * u + f[0] * d,

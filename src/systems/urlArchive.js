@@ -34,16 +34,27 @@ export function makeVendoredArchive(urls, fetchBytes) {
       if (bytes.has(key)) return bytes.get(key);
       if (!table.has(key)) return null;
       if (!inflight.has(key)) {
+        // AUDIT 68 X7-urlarchive-poisoned-inflight: the slot empties on EITHER outcome - kept on a rejection, one
+        // network blip answered every later load of that path with the same failure for the life of the page
         inflight.set(key, (async () => {
           const entry = table.get(key);
           const url = typeof entry === 'function' ? await entry() : entry;   // AUDIT-WS: the eager table hands URLs, a lazy one loaders
           const b = await fetchBytes(url);
           bytes.set(key, b);
-          inflight.delete(key);
           return b;
-        })());
+        })().finally(() => inflight.delete(key)));
       }
       return inflight.get(key);
     },
   };
+}
+
+/** The `fetchBytes` the shipped archives hand `makeVendoredArchive`: a
+ *  URL's bytes, and a refusal for an HTTP error. AUDIT 68
+ *  X7-urlarchive-poisoned-inflight: both archives kept a copy that read
+ *  any body, so a 404 page was cached as the mesh. */
+export async function fetchUrlBytes(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
+  return new Uint8Array(await res.arrayBuffer());
 }

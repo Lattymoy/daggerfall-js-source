@@ -35,7 +35,7 @@
 // same shape `weaponSheathingAssets.js` has carried since WS1. The
 // PURE half (`makeVendoredArchive`, `ownMwDataPath`) is what the suite
 // drives, with paths it supplies itself.
-import { makeVendoredArchive } from './urlArchive.js';
+import { makeVendoredArchive, fetchUrlBytes } from './urlArchive.js';
 
 const IN_BROWSER = typeof window !== 'undefined';
 
@@ -66,10 +66,8 @@ export const OWN_MW_URLS = Object.freeze(
   Object.fromEntries(Object.entries(FILES).map(([p, url]) => [ownMwDataPath(p), url])),
 );
 
-const fetchBytes = async (url) => new Uint8Array(await (await fetch(url)).arrayBuffer());
-
 let _archive = null;
 /** The port's own archive, one per page. Empty (has() false for all) in node. */
 export function ownMwArchive() {
-  return (_archive ??= makeVendoredArchive(OWN_MW_URLS, fetchBytes));
+  return (_archive ??= makeVendoredArchive(OWN_MW_URLS, fetchUrlBytes));
 }

@@ -33,9 +33,6 @@
 // DaggerfallBillboard.Start. A LEAF: no imports.
 // ═══════════════════════════════════════════════════════════════════
 
-export const WOD_LIGHTS_ARCHIVE = 210;
-export const WOD_ANIMALS_ARCHIVE = 201;
-export const WOD_TREASURE_ARCHIVE = 216;
 export const WOD_EDITOR_ARCHIVE = 199;   // FlatTypes.Editor - DaggerfallBillboard.Start disables the renderer
 
 /** LocationEnemySpawner.SpawnType (LocationEnemySpawner.cs:28-35). */

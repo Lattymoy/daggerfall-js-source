@@ -195,7 +195,7 @@ export function calculateCastCost(spell, casterEntity) {
 // own casting cost in item condition, :~175).
 //
 // The tables are verbatim, hex for hex. effectIndices maps
-// 12*type+subType (subType -1 reads slot 0) into COEFFICIENTS' rows of
+// 12*type+subType (subType -1, or its byte 255, reads slot 0) into COEFFICIENTS' rows of
 // four; SETTINGS_TYPES picks which of the seven duration/chance/
 // magnitude folds spends them.
 
@@ -363,7 +363,10 @@ export function classicCastingCost(spell, skillOf = null) {
   for (let i = 0; i < 3; i++) {
     const e = spell.effects?.[i];
     if (!e || e.type === -1 || e.type == null) continue;
-    const sub = e.subType === -1 || e.subType == null ? 0 : e.subType;
+    // AUDIT 68 S32-classic-cost-subtype-255: byte-folded like effectCost - the registry spells "no subtype" 255
+    // where SPELLS.STD reads -1, and a bare 255 indexed past the row into Paralysis' coefficients
+    const s8 = (e.subType ?? -1) & 0xff;
+    const sub = s8 === 0xff ? 0 : s8;
     const coef = CLASSIC_COEFFICIENTS[CLASSIC_EFFECT_INDICES[e.type]?.[sub] ?? 0] ?? CLASSIC_COEFFICIENTS[0];
     const skill = skillOf ? skillOf(CLASSIC_MAGIC_SKILLS[CLASSIC_MAGIC_SCHOOLS[e.type] ?? 0]) : 50;
     cost += Math.trunc(classicCostFromSettings(CLASSIC_SETTINGS_TYPES[e.type] ?? 0, e, coef) * (110 - skill) / 100);

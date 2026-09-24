@@ -36,6 +36,7 @@
 // fits - the same range C# int holds.
 import { SKILLS } from './skills.js';
 import { isMember } from './guilds.js';
+import { hasSpecialAbility, SPECIAL_ABILITY_BITS } from './specialAdvantages.js';   // DFCareer's flags, from the import-free leaf
 
 /** Services.GuildServices - the service kinds. */
 export const GUILD_SERVICES = Object.freeze([
@@ -374,9 +375,11 @@ export const freeHealing = (guild, m) =>
 /** MagesGuild.FreeMagickaRecharge - and note WHO it is for: a member
  *  whose career cannot regenerate spell points at all. The guild's
  *  perk exists for the Sorcerer, and reads the same career flag U20b
- *  writes. */
+ *  writes: DFCareer.NoRegenSpellPoints, bit 8 of the ability bitfield.
+ *  AUDIT 68 X4-mg-recharge-career-field: it read a `noRegenSpellPoints`
+ *  property no producer writes, so the recharge never fired. */
 export const freeMagickaRecharge = (guild, m, entity) =>
-  guild.name === 'MagesGuild' && isMember(m) && !!entity?.career?.noRegenSpellPoints;
+  guild.name === 'MagesGuild' && isMember(m) && hasSpecialAbility(entity?.career, SPECIAL_ABILITY_BITS.noRegenSpellPoints);
 
 /** KnightlyOrder.FreeTavernRooms: rank 4, OR anywhere in the order's
  *  OWN REGION at any rank - a knight is a local somebody at home. */

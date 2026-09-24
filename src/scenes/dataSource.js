@@ -1071,7 +1071,7 @@ export async function pickSoundFolder() {
       <b>AmbientDistantHowl.wav</b> (the distant howl).</p>`,
     store: storeSoundFiles,
     register: async () => {
-      const n = setSoundReplacements(await storedMusicNames(), loadMusicFile);
+      const n = setSoundReplacements(await storedMusicNames(), loadMusicFile, { reattach: true });   // AUDIT 68 S20-v-soundrep-regen: a new pick is new bytes, whatever the names
       if (n) (await import('../systems/audio.js')).audio.preloadReplacements?.();   // the next night's crickets are the pack's
       return n;
     },

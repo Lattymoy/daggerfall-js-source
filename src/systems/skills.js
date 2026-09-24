@@ -76,8 +76,8 @@ export function permanentSkillValue(entity, skillId) {
 /** DaggerfallSkills.GetLiveSkillValue (:135-143): the permanent value
  *  PLUS the effect mod. */
 export function skillValue(entity, skillId) {
-  const o = entity.skillOverrides;
-  if (o && o[skillId] != null) return o[skillId];
+  // AUDIT 68 S32-skillvalue-override-skips-mods: no early return for a skillOverrides pin - it is a PERMANENT
+  // value, which permanentSkillValue below already answers, and returning it here dropped every mod on top
   // E1: SetSkillMod's channel (EnhancesSkill +15) - DFU's
   // Skills.GetLiveSkillValue adds the mod to every read, cleared and
   // re-applied per round by the constant-effect pass. The fold is

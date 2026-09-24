@@ -236,9 +236,19 @@ export class AudioEngine {
     const b = this.buffers.get(key);
     if (b) return b;
     this._repLoads ??= new Set();
+    // AUDIT 68 S20-v-soundrep-regen: a new generation's first ask retires the old one's decode - kept, every
+    // re-attach left another copy of the clip in the buffer map for the session
+    this._repKeys ??= new Map();
+    const old = this._repKeys.get(name);
+    if (old !== key) {
+      if (old) { this.buffers.delete(old); this._repLoads.delete(old); }
+      this._repKeys.set(name, key);
+    }
     if (!this._repLoads.has(key)) {
       this._repLoads.add(key);
-      fetchReplacement(name).then((bytes) => (bytes ? this.registerSound(key, bytes) : false)).catch(() => false);
+      fetchReplacement(name).then((bytes) => (bytes ? this.registerSound(key, bytes) : false))
+        .then(() => { if (this._repKeys.get(name) !== key) this.buffers.delete(key); })   // landed after its generation retired
+        .catch(() => false);
     }
     return null;
   }

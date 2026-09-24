@@ -47,9 +47,7 @@ const isPng = (name) => /\.png$/i.test(name);
  *  whose name says "season" is stored and read; the manifest decides.
  *  The name test stays only because a player's whole Mods folder runs
  *  to gigabytes and a bundle is decompressed whole to be read - this
- *  registry has no use for another mod's. `SEASONS_DFMOD` is the name
- *  the record expects, for the docs and the tests. */
-export const SEASONS_DFMOD = 'seasons of the iliac bay.dfmod';
+ *  registry has no use for another mod's. */
 const isSeasonsDfmod = (name) => /\.dfmod$/i.test(name) && /season/i.test(name);
 
 /**

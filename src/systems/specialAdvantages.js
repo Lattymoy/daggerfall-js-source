@@ -208,6 +208,12 @@ export const SPECIAL_ABILITY_BITS = Object.freeze({
   acuteHearing: 1, athleticism: 2, adrenalineRush: 4,
   noRegenSpellPoints: 8, sunDamage: 16, holyDamage: 32,
 });
+/** DFCareer.HasSpecialAbility: the flag masked against the bitfield's
+ *  LOW BYTE (the C# (byte)flags cast), verbatim. Here beside its bits,
+ *  in this import-free leaf, so a reader needs no heavier module
+ *  (rest.js re-exports it). */
+export const hasSpecialAbility = (career, flag) =>
+  ((career?.abilityFlagsAndSpellPointsBitfield ?? 0) & flag) === flag;
 /** SpellAbsorptionFlags (:361-368) and RegenerationFlags (:373-381)
  *  and RapidHealingFlags (:386-393) - whole bytes of their own. */
 export const ABSORPTION_FLAGS = Object.freeze({ general: 4, inDarkness: 2, inLight: 1 });
