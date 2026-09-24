@@ -280,7 +280,7 @@ function main(argv) {
   // CITE-BUF (2026-09-24): execFileSync's default maxBuffer is 1 MiB, and scenes/world.js passed it (1,057,642 bytes):
   // `git show base:world.js` threw, the new-file `catch` below took it for a file with no past, and every cite of the
   // port's largest host was skipped in silence - 0 moved, 0 held, a clean-looking run. citeMerge's own helper already
-  // carried the wide buffer; this one is the same helper now.
+  // carried the wide buffer; this one is the same helper now. DISC17 (main, the same day) found it too, from the world.js side.
   const git = (...args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', maxBuffer: GIT_MAX_BUFFER });
   const changed = git('diff', '--name-only', base, '--', 'src', 'bible', 'test', 'tools').split('\n').filter(Boolean);
   const targets = (only.length ? only : changed).filter((f) => /\.(js|mjs|md)$/.test(f));
