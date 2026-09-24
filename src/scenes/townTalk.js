@@ -367,7 +367,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  every Text TOKEN of a record and picks among them, where
    *  randomVariant above picks a whole SUBRECORD variant. The two
    *  diverge exactly where a record holds several one-line entries -
-   *  which is the shape of the oath records (textRsc.js:168-171) and
+   *  which is the shape of the oath records (textRsc.js:171-174) and
    *  of 8999 - so a multi-line variant printed all its lines fused. */
   const randomPooledText = (id, fallback) => {
     const t = textRsc?.randomTextById(id, rolls);
