@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import {
   createDuelManager, clampToRing, ringCentre, groundDistance, validRingRecord, duelWhyText, worldGroundMetres,
   DUEL_RADIUS_M, DUEL_RANGE_M, DUEL_ASK_TTL_MS, DUEL_START_WAIT_MS, DUEL_COUNTDOWN_MS, DUEL_MAX_MS, DUEL_GONE_MS,
-  DUEL_OUT_SLACK_M, DUEL_OUT_MS, DUEL_HEAL_HOLD_MS, DUEL_BLOWS_PER_S, NATIVES_PER_M,
+  DUEL_OUT_SLACK_M, DUEL_OUT_MS, DUEL_HEAL_HOLD_MS, DUEL_BLOWS_PER_S, NATIVES_PER_M, DUEL_REASK_MS,
 } from '../src/net/duelSession.js';
 import { validDuelData, DUEL_WHY } from '../src/net/wire.js';
 
@@ -113,6 +113,14 @@ test('DUEL1 refusals, said: a decline tells the challenger; a challenge lapses i
   r.pump();
   assert.equal(r.m.a.stateFor('peer-bbbb'), 'none', 'the decline ended the challenge');
   assert.equal(r.m.b.stateFor('peer-aaaa'), 'none');
+  // a declined challenger asking again at once is answered no - no line, no prompt over my game - until DUEL_REASK_MS
+  r.m.a.request('peer-bbbb'); r.pump();
+  assert.equal(r.P.b.prompts, 1, 'no second prompt');
+  assert.equal(r.m.a.stateFor('peer-bbbb'), 'none', 'the challenger is told no');
+  r.tick(DUEL_REASK_MS + 1);
+  r.m.a.request('peer-bbbb'); r.pump();
+  assert.equal(r.P.b.prompts, 2, 'after the quiet, heard again');
+  r.m.b.decline('peer-aaaa'); r.pump();
   r = rig();
   r.m.a.request('peer-bbbb'); r.pump();
   r.tick(DUEL_ASK_TTL_MS + 1);

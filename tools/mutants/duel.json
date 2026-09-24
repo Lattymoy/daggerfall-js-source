@@ -448,5 +448,14 @@
     "tests": [
       "test/duel_record.test.js"
     ]
+  },
+  {
+    "name": "DUEL1-a-declined-challenger-prompts-again-at-once",
+    "file": "src/net/duelSession.js",
+    "old": "          if (!incoming.has(from) && now() - (quiet.get(from) ?? -Infinity) < DUEL_REASK_MS) { once({ k: 'no', to: from, s: d.s }); return; }",
+    "new": "",
+    "tests": [
+      "test/duel_session.test.js"
+    ]
   }
 ]

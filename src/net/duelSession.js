@@ -60,6 +60,9 @@ export const DUEL_HEAL_HOLD_MS = 2000;
 export const DUEL_BLOWS_PER_S = 5;
 /** How long a frame of the handshake or the end may wait for the socket before it is dropped, ms. */
 export const DUEL_OUTBOX_TTL_MS = 6000;
+/** After I decline a player's challenge, or it lapses on me, their next one is answered no, unsaid and unprompted, for
+ *  this long - a challenge is a prompt over my game, and a declined one sent again at once would be a way to fill it. */
+export const DUEL_REASK_MS = 15_000;
 
 /** Is this a position - an Array or a typed array of at least three finite numbers? */
 /** @param {any} v */
@@ -184,6 +187,8 @@ export function createDuelManager({
   let outgoing = null;                 // my ask
   /** @type {Map<string, { s: string, at: number, sub: string|null }>} */
   const incoming = new Map();          // asks at me, by peer
+  /** @type {Map<string, number>} */
+  const quiet = new Map();             // peer -> when I last declined them (or their ask lapsed on me): DUEL_REASK_MS of quiet
   /** @type {{ peer: string, s: string, at: number, sub: string|null } | null} */
   let waiting = null;                  // I said yes; the challenger's start is owed
   /** @type {{ peer: string, s: string, at: number, c: number[], sub: string|null } | null} */
@@ -297,6 +302,7 @@ export function createDuelManager({
       const a = incoming.get(peer);
       if (!a) return { ok: false };
       incoming.delete(peer);
+      quiet.set(peer, now());
       once({ k: 'no', to: peer, s: a.s });
       mgr.onChange?.();
       return { ok: true };
@@ -343,6 +349,8 @@ export function createDuelManager({
             return;
           }
           if (incoming.size >= 4 && !incoming.has(from)) return;
+          if (!incoming.has(from) && now() - (quiet.get(from) ?? -Infinity) < DUEL_REASK_MS) { once({ k: 'no', to: from, s: d.s }); return; }   // declined a moment ago: no, and nothing over my game
+          if (quiet.size > 64) for (const [p, at] of quiet) if (now() - at >= DUEL_REASK_MS) quiet.delete(p);
           const fresh = !incoming.has(from);
           incoming.set(from, { s: d.s, at: now(), sub });
           if (fresh) { say(`${nameOf(from)} challenges you to a duel - answer on the prompt, or press F on them.`); onPrompt(from); }
@@ -428,7 +436,7 @@ export function createDuelManager({
         say(`${nameOf(o.peer)} did not answer your challenge.`);
         mgr.onChange?.();
       }
-      for (const [p, a] of incoming) if (t - a.at > DUEL_ASK_TTL_MS) { incoming.delete(p); say(`${nameOf(p)}'s challenge lapsed.`); mgr.onChange?.(); }
+      for (const [p, a] of incoming) if (t - a.at > DUEL_ASK_TTL_MS) { incoming.delete(p); quiet.set(p, t); say(`${nameOf(p)}'s challenge lapsed.`); mgr.onChange?.(); }
       if (waiting && t - waiting.at > DUEL_START_WAIT_MS) {
         const w = waiting; waiting = null;
         once({ k: 'cancel', to: w.peer, s: w.s, why: 'timeout' });

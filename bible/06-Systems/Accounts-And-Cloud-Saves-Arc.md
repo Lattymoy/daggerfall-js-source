@@ -3106,3 +3106,27 @@ patreon titles. These also recieve their own unique glyphs. The account Dutchess
   account registered since then could obtain it, and every account that holds it keeps it, both held and worn. A pin
   now holds both halves.
 - `test/titlen.test.js` has 8 pins. `tools/mutants/titlen.json` has 17 mutants, all dead. The relay is world104.
+
+## DUEL1 — the duelling record (2026-09-24)
+
+Mac: "Add a dueling K/D to the profile menu and player inspect profile", kept per account. The full record is
+`06-Systems/Community-Arc.md` (DUEL1). This is the service's part of it.
+
+- **Whose word it is.** The LOSER's. A duel is fought between two clients over the relay; the side whose health a duel
+  blow took to the floor, or who yielded, reports the loss from its own signed-in client, naming the winner by the
+  account the relay stamped on the winner's frames (`sub`, off the identity token - never a client's own word). So the
+  service is told a loss by the account that took it and never a win by the account that claims one; the most a lying
+  client can do is hand somebody else wins at the cost of its own losses.
+- **One statement is the write.** Migration 0008 adds `duel_results` (loser, winner, at - both ends cascade) and no
+  counter columns: an account's wins are the rows naming it the winner and its losses the rows naming it the loser.
+  `server-account/src/accounts.js reportDuelLoss` is ONE INSERT that lands only when the winner exists, the loser's last
+  report is DUEL_REPORT_GAP_S (15 s) behind, and the pair has fewer than DUEL_PAIR_DAY_MAX (10) results in the last day -
+  all measured inside the statement, so two tabs cannot both slip under a bound. A refused report is `recorded: false`,
+  not an error (the duel was fought; it does not count again). A self-duel is `self` (400), a winner who is no account
+  `no-player` (404).
+- **The routes.** `POST /v1/duel/loss { winner }` (the session is the loser, whatever the body says) and `POST
+  /v1/duel/record { id }` (any account's two counts, the id in the body), both behind a session; `GET /v1/account`
+  carries the caller's own as `account.duels`. The service is `acct8`.
+- **The client** (`src/net/accountClient.js accountDuels`): the loss and the ask go only with a stored session, the
+  bearer in the header. `src/net/duelRecord.js` says a record ("3 won, 1 lost (K/D 3.00)"; no losses reads the wins)
+  and keeps the Inspect card's reads a minute. The main menu's account card has a Duels row.

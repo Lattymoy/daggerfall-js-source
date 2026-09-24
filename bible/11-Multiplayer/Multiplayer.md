@@ -27,7 +27,9 @@ with their own character from their own save, seeing each other, sharing
 the host's world - its time, its weather, its enemies, its doors - and
 fighting beside each other against NPCs.
 
-**It is not** PvP, an MMO, or a shared campaign. Nobody's save changes
+**It is not** PvP, an MMO, or a shared campaign - with ONE door through the first: a DUEL (DUEL1, 2026-09-24, Mac:
+"I want to be the foundation of pvp"), consensual and bounded - two players who both said yes, in a ring of light,
+until one falls to 1 health, and both are healed after (`06-Systems/Community-Arc.md` DUEL1). Nobody's save changes
 shape because they played with a friend. It IS, since WORLD1
 (2026-09-12, Mac: "The world is the server and every player should
 inhabit that world while also being able to continue their progress
