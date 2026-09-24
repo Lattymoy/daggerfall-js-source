@@ -1385,7 +1385,9 @@ here.
 
 ---
 
-# MAP-LAG - the enhanced map after the weather
+# MAP-LAG - the enhanced map after the weather (REMOVED by DISC17-C, below)
+
+The weather this kept is gone from the map, and this machinery with it (DISC17-C). The record stands.
 
 Mac: *"One bug is the enhanced map now is very laggy after we
 introduced the weather changes."*
@@ -1451,7 +1453,7 @@ one go.
 **Not verified here:** in the game. There is no game data in the
 container.
 
-The pins are `test/maplag.test.js` (8). WEATHER3e's and WEATHER3i's hover
+The pins were `test/maplag.test.js` (8, DELETED by DISC17-C). WEATHER3e's and WEATHER3i's hover
 pins now read the forecast at rest.
 
 ---
@@ -1526,3 +1528,78 @@ The pins are `test/disc16.test.js` (3), and MAC3's downhill pin reads
 the rest. DW1 and AUDIT-DW pin the preset's default off. DISC14's three B
 pins went with it. The mutants are `tools/mutants/disc16.json`, all
 seven dead; DISC14-B's five records are retired.
+
+# DISC17 - the wisps, the thunder, and the map's weather removed
+
+Mac, 2026-09-24, in one message: *"1. I really want to give the wisps
+more opacity and reduce the amount of wind wisps 2. Sometimes thunder
+ends abruptly 3. Remove the enhanced map weather enhancements
+entirely"*
+
+## DISC17-A: fewer wisps, each darker
+
+Half as many and twice as dark:
+
+- `WISP_MAX` goes from 240 to 120. A calm keeps the same floor share,
+  10 wisps where it was 19.
+- `WISP_LOOK`'s alpha goes from 0.10/0.12 to 0.20/0.24. The heart of a
+  flourish's ink peaks at 0.70 in a gale (0.35 before) and 0.32 in a calm.
+
+The sandstorm's look is not the wind's mark and is unchanged. Not seen
+on a screen here, since the container has no game data. The two numbers
+are the dials if it wants another step either way.
+
+## DISC17-B: thunder cut off mid-roll
+
+**Cause.** WEATHER3d plays a distant storm's thunder from a stand-in
+`THUNDER_SOURCE_M` (13 m) from the ear, toward the storm, at a 13 m
+reference distance. The stand-in is a WebAudio panner, and a panner stays
+where it was put. The ear moved on under a rolling clip:
+
+- Walking, every metre was a metre off the 13 m reference.
+- At every map pixel crossed, the floating origin's recentre
+  (`streamingWorld.js`, 819.2 m) moved the ear over 800 m from the
+  stand-in in one frame. The clip fell 35 dB (38 on a diagonal crossing)
+  mid-roll, which is the abrupt end.
+
+The storm overhead is DFU's ambience, placed at PlaySomewhereOnHorizon's
+3000 m minimum distance. Neither a walk nor a recentre changes its level,
+so it is left as DFU has it.
+
+**Fix.** `play3d(..., { far: true })` keeps the shot's offset from the
+listener: `setListener` moves it with the ear until its clip has run out,
+then lets it go. Both exterior hosts play the distant thunder `far`.
+Every other one-shot still stays where it was put.
+
+**Also found.** `tools/citeShift.mjs` read HEAD's `world.js` with
+`execFileSync`'s default 1 MiB buffer. The file passed that size, and the
+throw landed in the tool's new-file catch, so its largest target was
+skipped without a word. It takes `citeMerge.mjs`'s buffer now.
+
+## DISC17-C: the map's weather removed
+
+The travel map is the bay again:
+
+- `ui/weatherLayer.js` is deleted.
+- `ui/heldMap.js` is its pre-WEATHER3e self plus the unrelated MAP-FIELD8
+  and MAP-FIT1 changes: no regions, glyphs, legend, hover weather or
+  forecast, and none of MAP-LAG's raster, job or resting forecast.
+- `world.js` hands it no `weather`, and its climate lookup is the plain
+  `maps.getClimateIndex` again.
+- The sheet contract loses MAP-LAG's `paintUnder`, and the town and
+  automap sheets their empty ones.
+
+The sim keeps every law the map read (`forecastAt`, `mapGround`,
+`wornAmong`), and the three comments that named the map as a reader say
+it no longer is. Retired with it:
+
+- `test/weather3e_maplayer.test.js` and `test/maplag.test.js`, DELETED with
+  their mutant lists.
+- The map's tests in `weather3f` (R1's and R2's map halves, R2a),
+  `weather3g` (the map, the sheet), `weather3h` (the field, the regions,
+  the hand, the pen's sign) and `weather3i` (all but the law and the
+  player's strength), and their 57 mutant records.
+- EM1-25/26 go back to the click arm as it stands.
+
+The pins are `test/disc17.test.js` (5). Its mutants,
+`tools/mutants/disc17.json`, are all ten dead.
