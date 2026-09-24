@@ -1,0 +1,155 @@
+[
+  {
+    "name": "D23B-not-curated",
+    "file": "src/systems/features.js",
+    "old": "  'eye-of-the-beholder': Object.freeze(['Graphics.OnFoot', 'Graphics.OnHorse', 'Camera.LongitudinalDistance',",
+    "new": "  'eye-of-the-beholder': Object.freeze(['Camera.LongitudinalDistance',",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B-number-not-name",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "    const say = (v) => def.labels?.[v] ?? String(v);",
+    "new": "    const say = (v) => String(v);",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B-default-sent",
+    "file": "src/net/remotePlayers.js",
+    "old": "    if (storedModSetting('eye-of-the-beholder', 'Graphics.OnFoot') === undefined) return null;\n",
+    "new": "",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B-sent-while-off",
+    "file": "src/net/remotePlayers.js",
+    "old": "    if (!modSetting('eye-of-the-beholder', 'Enabled')) return null;\n    if (storedModSetting",
+    "new": "    if (storedModSetting",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B-look-drops-set",
+    "file": "src/net/remotePlayers.js",
+    "old": "...(Number.isInteger(eotbSet) ? { eo: eotbSet } : {}), items };",
+    "new": "items };",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B-relay-drops-set",
+    "file": "src/net/wire.js",
+    "old": "...(eo != null ? { eo } : {}), items };",
+    "new": "items };",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B-null-on-wire",
+    "file": "src/net/wire.js",
+    "old": "...(eo != null ? { eo } : {}), items };",
+    "new": "eo, items };",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B-walker-other-set",
+    "file": "src/net/peerRiders.js",
+    "old": "const s = spriteFor(r.table, viewOf(pose.yaw, feet, eye), r.frame, { onFoot: set });",
+    "new": "const s = spriteFor(r.table, viewOf(pose.yaw, feet, eye), r.frame, { onFoot: 0 });",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B-walker-under-body",
+    "file": "src/net/peerRiders.js",
+    "old": "if (!pose || !Number.isInteger(set) || pose.rd || pose.wb || pose.dd || skip(peer.id)) continue;",
+    "new": "if (!pose || !Number.isInteger(set) || pose.rd || pose.wb || pose.dd) continue;",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B-walker-rides",
+    "file": "src/net/peerRiders.js",
+    "old": "if (!pose || !Number.isInteger(set) || pose.rd || pose.wb || pose.dd || skip(peer.id)) continue;",
+    "new": "if (!pose || !Number.isInteger(set) || pose.wb || pose.dd || skip(peer.id)) continue;",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B-walker-beast",
+    "file": "src/net/peerRiders.js",
+    "old": "if (!pose || !Number.isInteger(set) || pose.rd || pose.wb || pose.dd || skip(peer.id)) continue;",
+    "new": "if (!pose || !Number.isInteger(set) || pose.rd || pose.dd || skip(peer.id)) continue;",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B-walker-dying",
+    "file": "src/net/peerRiders.js",
+    "old": "if (!pose || !Number.isInteger(set) || pose.rd || pose.wb || pose.dd || skip(peer.id)) continue;",
+    "new": "if (!pose || !Number.isInteger(set) || pose.rd || pose.wb || skip(peer.id)) continue;",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B-first-sight-swings",
+    "file": "src/net/peerRiders.js",
+    "old": "      if (r.last) {\n        for (const o of WALK_ONE_SHOTS) {",
+    "new": "      {\n        for (const o of WALK_ONE_SHOTS) {",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B-clip-never-ends",
+    "file": "src/net/peerRiders.js",
+    "old": "if (++r.frame >= frameCount(r.shot.table)) { r.shot = null; r.table = null; r.frame = 0; r.clock = 0; }",
+    "new": "if (++r.frame >= frameCount(r.shot.table)) { r.frame = 0; }",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B-no-stance",
+    "file": "src/net/peerRiders.js",
+    "old": "const standing = (pose) => chooseTable({ stopped: !pose.mv, sheathed: !pose.wd, spellcasting: !!pose.sr, usingBow: pose.wd === 2 });",
+    "new": "const standing = (pose) => chooseTable({ stopped: !pose.mv });",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B-card-ignored",
+    "file": "src/scenes/world.js",
+    "old": "peerWalkers = createPeerWalkers({ renderer, art: eotbArt, enabled: () => getPref('peerClassSprites') !== false });",
+    "new": "peerWalkers = createPeerWalkers({ renderer, art: eotbArt });",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "D23B-no-name-height",
+    "file": "src/scenes/world.js",
+    "old": "peerBodies.heightOf(id) || peerWalkers.heightOf(id), dt,",
+    "new": "peerBodies.heightOf(id), dt,",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  }
+]

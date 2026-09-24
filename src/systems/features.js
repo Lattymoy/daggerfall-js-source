@@ -189,7 +189,11 @@ export const MOD_CURATED = Object.freeze({
   // how fast it follows, and how big you are drawn. Everything else
   // stays in the mod's own pane.
   // KB1: its two keys (SwitchShoulder, ToggleInput) are Controls' ShoulderSwitch and AutoPerspective.
-  'eye-of-the-beholder': Object.freeze(['Camera.LongitudinalDistance', 'Camera.FrontalPlaneOffset',
+  // DISC23-B (Scratchie on Discord: "the game is not allowing us to choose between the different index slots"): AND WHO
+  // YOU ARE DRAWN AS. "The mod's own pane" went with FT14's Mods pane, so the two sprite sliders - the mod's whole
+  // reason for shipping sixteen on-foot sets and five riders - were on no screen at all, and every player was the first
+  // set. They are curated now, named (modSettings.js OnFoot / OnHorse `labels`).
+  'eye-of-the-beholder': Object.freeze(['Graphics.OnFoot', 'Graphics.OnHorse', 'Camera.LongitudinalDistance', 'Camera.FrontalPlaneOffset',
     'Camera.Speed', 'Animation.BillboardScale']),
   // IF1: the clip quality and the two volumes are what a player reaches for.
   'immersive-footsteps': Object.freeze(['AudioQualitySettings.SoundClipQuality', 'FootstepSettings.FootstepVolumeMulti', 'ArmorSwaySettings.ArmorSwayVolumeMulti']),

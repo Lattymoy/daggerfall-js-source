@@ -2054,10 +2054,11 @@ function peerSpritesCard() {
   const c = el('div', 'card');
   c.append(el('h3', null, 'Other players'));
   c.append(el('p', 'meta',
-    'How a player without a Morrowind body (the card above) is drawn: as their character\u2019s class - a Warrior '
-    + 'looks like a Warrior, a Mage like a Mage - animated and puppeted by what they\u2019re actually doing, the '
-    + 'same sprite a hostile one of them already is. Off: the flat paperdoll portrait instead, standing still.'));
-  c.append(prefRow('peerClassSprites', 'Animated class sprite', 'On: the sprite above. Off: the paperdoll.', { home: true }));
+    'How a player without a Morrowind body (the card above) is drawn: as the Eye of the Beholder sprite they chose '
+    + 'for themselves, or - if they play without it - as their character\u2019s class (a Warrior looks like a Warrior, '
+    + 'a Mage like a Mage), animated and puppeted by what they\u2019re actually doing. Off: the flat paperdoll portrait '
+    + 'instead, standing still.'));   // DISC23-B: the chosen set first, the class only for a player without one
+  c.append(prefRow('peerClassSprites', 'Animated sprite', 'On: the sprite above. Off: the paperdoll.', { home: true }));
   c.append(prefRow('peerAttackSounds', 'Attack sounds', 'On: hear other players\u2019 weapon swings. Off: silent, no matter how close.', { home: true }));   // PEER-FS1: the two peer-sound switches, beside the sprite one
   c.append(prefRow('peerFootsteps', 'Footstep sounds', 'On: hear other players\u2019 footsteps as they walk. Off: silent, no matter how close.', { home: true }));
   return c;
@@ -2191,10 +2192,12 @@ function modRow(vendor, key, def, { name = null, note = null, home = false } = {
     // DS1: a SliderIntKey (Dynamic Skies' fog density and snow
     // sizes) - the HUD-scale stepper's shape, over the key's own
     // range, the value beside it.
-    const val = el('span', 'val', String(modSetting(vendor, key)));
+    // DISC23-B: a slider whose indices the mod NAMES (EOTB's sprite sets) says the name, not the number
+    const say = (v) => def.labels?.[v] ?? String(v);
+    const val = el('span', 'val', say(modSetting(vendor, key)));
     const step = (delta, label) => {
       const b = el('button', 'step', label);
-      b.onclick = () => { val.textContent = String(setModSetting(vendor, key, modSetting(vendor, key) + delta)); };
+      b.onclick = () => { val.textContent = say(setModSetting(vendor, key, modSetting(vendor, key) + delta)); };
       return b;
     };
     ctl.append(step(-1, '\u2039'), val, step(1, '\u203a'));
@@ -2290,13 +2293,34 @@ function tileStates(f) {
     set: (i) => setModSetting(c.vendor, c.key, i === 1) };
 }
 
+/** DISC23-C: the segment that turns a feature off is the one that SAYS so. */
+export const OFF_LABEL = 'Off';
+
+/**
+ * DISC23-C (Skeptikali on Discord: "if a feature would be enabled, the ON button would turn Green, and if a feature
+ * would be disabled, the OFF button would turn Red"): what a bar says about its feature. A bar with an Off segment
+ * is a SWITCH - on whenever any other segment is pressed; a bar with none (Pixel / Smooth, a DFU filter mode) is a
+ * CHOICE, and its feature is never off.
+ *
+ * FT14 read "off" by POSITION - the first segment - and that was wrong wherever the Off is not first: Grass Density
+ * runs Full, Half, Quarter, Off, so at Full its tile read off and at Off it read on. The label is what the player
+ * reads, the same across all three stores (a pref's tiers, a DFU enum's values, a boolean's Off / On).
+ * @param {{labels: string[], at: number}} st
+ * @returns {{off: number, switch: boolean, on: boolean}}
+ */
+export function barReading(st) {
+  const off = st.labels.indexOf(OFF_LABEL);
+  return { off, switch: off >= 0, on: off < 0 || st.at !== off };
+}
+
 /** FT14: the bar. One object for two states or five. */
 function segBar(st, label) {
-  const seg = el('div', `ft-seg${st.at > 0 ? ' is-on' : ''}${st.locked ? ' locked' : ''}`);
+  const r = barReading(st);
+  const seg = el('div', `ft-seg${r.switch ? ' ft-seg-switch' : ''}${st.locked ? ' locked' : ''}`);
   seg.setAttribute('role', 'group');
   seg.setAttribute('aria-label', label);
   st.labels.forEach((L, i) => {
-    const b = el('button', `ft-segb${i === 0 ? ' off' : ''}`, L);
+    const b = el('button', `ft-segb${i === r.off ? ' off' : ''}`, L);
     b.type = 'button';
     b.setAttribute('aria-pressed', String(i === st.at));
     if (st.locked) {
@@ -2317,12 +2341,12 @@ function segBar(st, label) {
 let featureSel = null;
 let featureOpen = null;
 
-/** FT14: one feature, as a tile. */
-function featureTile(f) {
+/** FT14: one feature, as a tile. (Exported for DISC23-C's pins, which press its bar against a fake document.) */
+export function featureTile(f) {
   const c = resolveControl(f);
   const st = tileStates(f);
   const t = el('div', `ft-tile${featureSel === f.id ? ' sel' : ''}`);
-  t.dataset.on = st && st.at > 0 ? '1' : '0';
+  t.dataset.on = st && barReading(st).on ? '1' : '0';
   if (st?.locked) t.dataset.locked = '1';
   t.tabIndex = 0;
   const show = () => { featureSel = f.id; paintRail(); for (const n of document.querySelectorAll('.ft-tile')) n.classList.toggle('sel', n === t); };

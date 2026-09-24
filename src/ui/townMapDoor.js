@@ -65,6 +65,7 @@ export function createTownMapWindow(deps = {}) {
         discovered: deps.discovered,
         revealAll: deps.revealAll ?? null,
         player: deps.townPlayer ?? null,
+        party: deps.townParty ?? null,   // DISC23-A: the party in these streets, feet in the location's frame (the classic window ignores it)
         title: deps.locationName ?? '',
       },
     });

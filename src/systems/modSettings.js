@@ -639,8 +639,21 @@ export const MOD_SETTINGS = Object.freeze({
       'AutoTogglePerspective.OnTransitionInterior': Object.freeze({ default: 0, options: Object.freeze(['Don\'tChange', 'FirstPerson', 'ThirdPerson']), description: 'Which view to take on stepping indoors.' }),
       'AutoTogglePerspective.OnTransitionExterior': Object.freeze({ default: 0, options: Object.freeze(['Don\'tChange', 'FirstPerson', 'ThirdPerson']), description: 'Which view to take on stepping back outside.' }),
       'Graphics.Enable': Object.freeze({ default: true, description: 'Toggle the player graphic' }),
-      'Graphics.OnFoot': Object.freeze({ default: 0, min: 0, max: 15, description: 'Sprite when on foot' }),
-      'Graphics.OnHorse': Object.freeze({ default: 0, min: 0, max: 4, description: 'Sprite when riding a horse' }),
+      // DISC23-B (2026-09-24, Gryphoth and Scratchie on Discord: "EOTB comes with 16 ground models and different
+      // mounted models, it would be nice to be able to change our models like in the original mod" / "the game is not
+      // allowing us to choose between the different index slots"): the mod's two SLIDERS, kept sliders (0-15, 0-4, as
+      // modsettings.json declares them), each index NAMED - the pane drew a bare number, and "7" is not a sprite anyone
+      // can choose by. The names are the mod's own preset titles (modpresets.json: Light Fighters 0, Medium Fighters 2,
+      // Heavy Fighter F 4 and M 5, Mage F 6 and M 7, Thief Mage 8/9, Fighter Mage 10/11, Thief 12/13, Fighter Thief
+      // 14/15), and the art says the rest: every even set is a woman and every odd set a man, and the five riders are
+      // the fighters by their helms and boots (green-booted women, cyan-booted men - the on-foot sets' own colours).
+      'Graphics.OnFoot': Object.freeze({ default: 0, min: 0, max: 15, description: 'Sprite when on foot',
+        labels: Object.freeze(['Light Fighter (female)', 'Light Fighter (male)', 'Medium Fighter (female)', 'Medium Fighter (male)',
+          'Heavy Fighter (female)', 'Heavy Fighter (male)', 'Mage (female)', 'Mage (male)',
+          'Thief Mage (female)', 'Thief Mage (male)', 'Fighter Mage (female)', 'Fighter Mage (male)',
+          'Thief (female)', 'Thief (male)', 'Fighter Thief (female)', 'Fighter Thief (male)']) }),
+      'Graphics.OnHorse': Object.freeze({ default: 0, min: 0, max: 4, description: 'Sprite when riding a horse',
+        labels: Object.freeze(['Light Fighter (female)', 'Medium Fighter (male)', 'Medium Fighter (female)', 'Heavy Fighter (male)', 'Heavy Fighter (female)']) }),
       'Graphics.ReadyStance': Object.freeze({ default: 2, options: Object.freeze(['Never', 'When Idle', 'When Idle or Moving']), description: 'Whether the sprite will change states when readying a weapon or spell' }),
       'Graphics.TurnToView': Object.freeze({ default: 2, options: Object.freeze(['Never', 'Only When Animating', 'When Weapon Readied', 'Always']), description: 'Configure when the sprite turns to face the view' }),
       'Graphics.AttackStrings': Object.freeze({ default: 3, options: Object.freeze(['None', 'Mirror', 'PingPong', 'Mixed']), description: 'Optional attack animations' }),

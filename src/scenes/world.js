@@ -246,7 +246,7 @@ import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.j
 import { StreamingWorldState, TerrainSlots, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords, SCENE_MAP_RATIO, nearestFirstFrom } from '../world/streamingWorld.js';   // HCC: StreamingWorld.SceneMapRatio; AUDIT BRANCH (WoD) L1-3: DFU's terrain array; AUDIT 68 S22: the load list's one order
 import { horseNameTooltip } from '../ui/horseNameTooltip.js';   // AUDIT HCC U6: the mod's HUD label, both skins
 import { createHorseCartPool } from './horseCartPool.js';
-import { createPeerRiders } from '../net/peerRiders.js';   // RIDE: another player in the saddle   // HCC: Horse Cart and Cargo's presentation - the wagon's five pieces, the horse's eight views, the peers' teams
+import { createPeerRiders, createPeerWalkers, createEotbArt } from '../net/peerRiders.js';   // RIDE: another player in the saddle   // HCC: Horse Cart and Cargo's presentation - the wagon's five pieces, the horse's eight views, the peers' teams
 import { createHorseCartRuntime } from '../systems/horseCart.js';   // HCC: TrailingWagonRuntime over this host's seams
 import { isQualifyingThreatState } from '../systems/horseFollow.js';   // HCC: CollectThreats' qualification, the mod's own five-term test
 import { totalWeight } from '../systems/inventory.js';   // HCC: PlayerEntity.WagonWeight
@@ -6451,7 +6451,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6283), so exterior mode and a
+    // composer, dungeonContext.js:6284), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -7441,6 +7441,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       // is the way to the bay and it keeps its ladder.
       where: () => ({ inLocation: true }),
       townPlayer: () => ({ x: local[0] / WORLD_PER_PX, y: local[2] / WORLD_PER_PX, yaw: cam.yaw }),
+      // DISC23-A: the party in these streets, their feet taken into the location's frame by the SAME subtraction the
+      // player's `local` is (the translation and the origin read at open, which the held motor keeps true)
+      townParty: () => partyNear().map((m) => ({ ...m, feet: [m.feet[0] - t[0] - b.locOrigin[0], m.feet[1] - t[1] - b.locOrigin[1], m.feet[2] - t[2] - b.locOrigin[2]] })),
     }));
   };
   /** SetCustomBuildingName (ExteriorAutomap.cs:867-899): the plate's
@@ -8418,7 +8421,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8803-8867 -
+  // worldModes answers it in BOTH modes (worldModes.js:8804-8868 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -9603,6 +9606,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // shared economy (recorded). Offline nothing is installed and the player's own tilted walk runs.
   if (onlineOn) townTalk.ensureFactions?.().then(() => { if (townTalk.factionDict) setWorldPriceTilt(worldPriceTiltOf(townTalk.factionDict)); }).catch(() => {});
   let peerRiders = null;   // RIDE: another player in the saddle, drawn as Eye Of The Beholder's mounted sprite (net/peerRiders.js)
+  let peerWalkers = null;   // DISC23-B: another player on foot, drawn as the Eye Of The Beholder set they chose (net/peerRiders.js)
   let online = null, remotePlayers = null, peerBodies = null, nameLayer = null, nameSight = null, _onlineLast = null, _onlineKey = null, _onlineKeySince = 0, _onlineMovingUntil = 0;
   let _hsLatch = false;   // AUDIT DISC7 B2: the motor's half-speed flag off the last frame that MOVED - a stop reads it true (standing), and the move hold must not send that as a slow trot
   // D-ONLINE1 (2026-09-17, a player: "still see you have died then main menu"): `onlineFrame` LEAVES the room the
@@ -9979,7 +9983,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // MWBODY1: the enhanced skin with Morrowind data attached puts every peer in a body of its own; otherwise the doll
     const enhanced = isEnhanced();   // the skin cannot change without a reload (switchSkin), so it is read once, not per frame
     peerBodies = new PeerBodies({ renderer, enabled: () => enhanced && !!getPref('mwArms') && morrowindDataCount() > 0, generation: morrowindDataGeneration });
-    peerRiders = createPeerRiders({ renderer });   // RIDE: the others in the saddle
+    const eotbArt = createEotbArt({ renderer });   // DISC23-B: one store for the riders' and the walkers' art
+    peerRiders = createPeerRiders({ renderer, art: eotbArt });   // RIDE: the others in the saddle
+    peerWalkers = createPeerWalkers({ renderer, art: eotbArt, enabled: () => getPref('peerClassSprites') !== false });   // DISC23-B: the others on foot, as the set they chose - the 'Other players' card's sprite side
     // NAME1 + BUBBLE1: the names are the enhanced skin's DOM now (ui/nameLayer.js) - online forces that skin
     // (OL1), so this is normally the face a player sees. Made ONCE, here, beside the peers it labels.
     // AUDIT NAME1 F7: the layer's gate is the CHAT's (ui/nameLayer.js nameLayerWanted) - one gate, one answer, so the
@@ -10006,6 +10012,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       peerBodies?.destroy();
       remotePlayers?.destroy();
       peerRiders?.destroy();   // RIDE
+      peerWalkers?.destroy();   // DISC23-B
     });
   };
   // CHAT1 (Mac: "the live chat in enhanced format ... one world tab with
@@ -10637,6 +10644,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     const mine = from;
     const dx = peer.feet[0] - mine[0], dy = peer.feet[1] - mine[1], dz = peer.feet[2] - mine[2];
     return Math.sqrt(dx * dx + dy * dy + dz * dz);
+  };
+  /** DISC23-A (2026-09-24, Starempire42 on Discord: "It would be really nice to be able to see your party members on
+   *  the town and dungeon maps"): the party members whose BODIES this client draws in the room I am in - their feet in
+   *  this scene's frame (peersNear, the frame my own feet are in), their facing (the peer's eased yaw, the caret's own
+   *  convention) and their name. The town and dungeon plans draw from this; a member with no tracked body here is
+   *  omitted, not guessed at - they are on the bay, which reads the hub's pixel. Composed on every read: they walk. */
+  const partyNear = () => {
+    const near = peersNear();
+    if (!near?.length || !social?.party) return [];
+    const out = [];
+    for (const m of social.others()) {
+      const peer = near.find((p) => m.peers?.includes(p.id));
+      if (!peer?.feet) continue;
+      out.push({ acct: m.acct, name: m.name, feet: [peer.feet[0], peer.feet[1], peer.feet[2]], yaw: online?.peers.get(peer.id)?.shown?.yaw ?? 0 });
+    }
+    return out;
   };
   /** PARTY-REST2/3: true when `pose` (a party member's last broadcast pose) puts them in the SAME place as me
    *  (samePlace) AND within PARTY_REST_RADIUS meters for real (distanceToPartyAccount) - the one law both
@@ -11728,7 +11751,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         const rez = social?.acct ? rezFor(social.others(), social.acct, _rezSeen) : null;
         if (rez) { resurrectInPlace(rez); return; }
       }
-      peerBodies.destroy(); remotePlayers.sync([], onlineToScene); peerRiders?.destroy(); return;   // AUDIT RIDE: and no rider stands frozen over it either
+      peerBodies.destroy(); remotePlayers.sync([], onlineToScene); peerRiders?.destroy(); peerWalkers?.destroy(); return;   // AUDIT RIDE: and no rider stands frozen over it either
     }   // AUDIT WORLD B6: the dungeon's and the building's death screens stand in the mode's slot   // AUDIT MWBODY B7: and no body stands frozen over the death screen
     _rezSeen = null;   // AUDIT CONTRIB A6: alive - the next death takes its own snapshot of what the party's poses say
     const mode = modes?.mode ?? 'exterior';   // audit24_wave37: guarded on the OBJECT above its own declaration (the frame runs after it)
@@ -11865,6 +11888,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     peerRiders.sync(drawable, onlineToScene, { eye: cam.pos, right: [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)], dt });
     const afoot = drawable.filter((d) => !peerRiders.isRiding(d.id) && !d.shown?.wb);   // DISC12: a beast wears no Morrowind body - it stands as the beast's own sprite (remotePlayers)
     peerBodies.sync(afoot, onlineToScene, dt, player.pos, { priority: (id) => !!social?.isPartyPeer(id) });   // the nearest first, the far ones asleep; AUDIT PARTY8: a party mate before a stranger
+    // DISC23-B: a peer on foot who stands in no Morrowind body here stands as the Eye Of The Beholder set they chose -
+    // after the bodies (a Morrowind player's own choice for everyone they meet), before the class sprite and the doll
+    peerWalkers.sync(drawable, onlineToScene, { eye: cam.pos, right: [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)], dt, skip: (id) => peerBodies.heightOf(id) > 0 });
     // PCORPSE1: a body heard in a room this scene has left for another KIND of space (a dungeon's local frame, the
     // street's world frame) is not this scene's to draw; one heard anywhere in the overworld's cells still is
     // PCORPSE3: a party member's body their party pose tells of, that the death pose never brought me (I was between
@@ -11882,7 +11908,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (const acct of [..._partyBodies]) if (!others.some((m) => m.acct === acct)) { _partyBodies.delete(acct); remotePlayers.partyForget(acct); }
     }
     if (online.room) remotePlayers.keepCorpses((r) => r === online.room || ((isWorldRoom(r) || isCellRoom(r)) && (isWorldRoom(online.room) || isCellRoom(online.room))));   // PCORPSE2: never judged while between rooms (a cell crossing's gap) - no room is not another space
-    remotePlayers.sync(drawable, onlineToScene, { bodyHeight: (id) => peerRiders.heightOf(id) || peerBodies.heightOf(id), dt, eye: player.pos, poseAgeMs: (p) => online.poseAgeMs(p) });   // 2026-09-17: dt drives the class-enemy billboard path's own animation clock; eye is the local player's own position, needed for mobileOrientation's facing calculation (see remotePlayers.js _syncMobilePeer)
+    remotePlayers.sync(drawable, onlineToScene, { bodyHeight: (id) => peerRiders.heightOf(id) || peerBodies.heightOf(id) || peerWalkers.heightOf(id), dt, eye: player.pos, poseAgeMs: (p) => online.poseAgeMs(p) });   // 2026-09-17: dt drives the class-enemy billboard path's own animation clock; eye is the local player's own position, needed for mobileOrientation's facing calculation (see remotePlayers.js _syncMobilePeer)
   };
   /** SPELLFX1 (the Unity co-op's RpcPlayPlayerSpellCastVisual): EVERY PEER'S CAST, DRAWN. The pose already carries the
    *  cast count, its range and now its element; a count that moves on a peer I could see last frame is one cast, and
@@ -12022,6 +12048,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // publish clock is reset, not the publish forced: the frame's own worldPublish sends it this same frame.
     onLootClaimed: () => { _worldPublishedAt = -Infinity; },
     peers: peersNear,
+    partyNear: () => partyNear(),   // DISC23-A: the party's bodies, for the dungeon's and the building's plans
     allyMarks: () => allyMarksNear(),   // AID1 onto ALLY-CAST: the dungeon's own cast engine gives to the same mates
     selfId: () => online?.id ?? null,
     dungeonAuthority,   // WORLD2: a dungeon built while another hosts starts as puppets
@@ -13598,6 +13625,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // ONLINE1 (AUDIT ONLINE D5): the others' billboards were placed before this step from the old origin - they follow it, or every peer jumps a tile for one frame at each crossing
       if (remotePlayers) for (const b of remotePlayers.batches()) { b.origin[0] += r.offset[0]; b.origin[1] += r.offset[1]; b.origin[2] += r.offset[2]; }
       peerRiders?.offsetAll(r.offset);   // RIDE: the riders' sprites follow the origin as the dolls do
+      peerWalkers?.offsetAll(r.offset);   // DISC23-B: and the walkers'
       if (_onlineLast) { _onlineLast[0] += r.offset[0]; _onlineLast[1] += r.offset[1]; _onlineLast[2] += r.offset[2]; }
       if (peerBodies) peerBodies.offsetAll(r.offset);   // MWBODY1 (AUDIT MWBODY B2): the bodies' feet follow the origin as the dolls do
     }
@@ -13968,6 +13996,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       allBatches.push(b);
     }
     if (peerRiders) for (const b of peerRiders.batches()) { if (!(cullOn && billboardOutside(b))) allBatches.push(b); }   // RIDE: the others in the saddle
+    if (peerWalkers) for (const b of peerWalkers.batches()) { if (!(cullOn && billboardOutside(b))) allBatches.push(b); }   // DISC23-B: and on foot, as they chose
     // NEAR-FIRST (2026-09-21): THE PIXELS ARE WALKED NEAREST FIRST. The
     // map's insertion order is the order the pixels streamed in, which
     // is nothing to do with where the eye is - so a far town's walls
