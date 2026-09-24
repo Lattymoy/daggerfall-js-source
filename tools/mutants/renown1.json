@@ -313,5 +313,50 @@
     "tests": [
       "test/renown1.test.js"
     ]
+  },
+  {
+    "name": "RENOWN2-the-plaque-frame-drops-the-renown",
+    "file": "src/systems/worldHover.js",
+    "old": "  const renowned = (f) => { if (Number.isSafeInteger(named.renown) && named.renown > 0) f.renown = named.renown; return f; };",
+    "new": "  const renowned = (f) => f;",
+    "tests": [
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN2-the-signature-blind-to-the-renown",
+    "file": "src/systems/worldHover.js",
+    "old": "|${f.renown ?? ''}|${f.title}|",
+    "new": "|${f.title}|",
+    "tests": [
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN2-the-plaque-box-after-the-name",
+    "file": "src/ui/worldPlaque.js",
+    "old": "      l.append(r, t);",
+    "new": "      l.append(t, r);",
+    "tests": [
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN2-the-number-said-as-a-word",
+    "file": "src/net/renown.js",
+    "old": "  return String(level);",
+    "new": "  return `Lv ${level}`;",
+    "tests": [
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN2-the-bitmap-box-dropped",
+    "file": "src/net/remotePlayers.js",
+    "old": "const run = `${lead ? `[${lead}] ` : ''}",
+    "new": "const run = `${lead ? `${lead} ` : ''}",
+    "tests": [
+      "test/renown1.test.js"
+    ]
   }
 ]

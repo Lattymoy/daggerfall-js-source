@@ -3168,7 +3168,8 @@ but compatible". Asked three things, Mac answered: the online health and magicka
 is a long "Grind", and offline play earns "No" XP - "Plus having their level appear on the left side of character name
 and profile main menu + ingame profile". Built as the Adventuring Level, then named: "Lets officially call this
 Renown" - every name in the code, on the wire and on screen says Renown now. A character's Renown is a level: "Renown
-12" in words, and "Lv 12" on the plate left of the name, where it always stood.
+12" in words, and beside a name the number alone in a box, left of the name where it always stood (Mac: "Just have it
+read 12 inside a box").
 
 - **What it is.** A second level PER CHARACTER that exists only online. The Daggerfall character - its level, skills,
   health, magicka and the save file - is untouched offline and online, so a character goes back and forth freely. The
@@ -3217,9 +3218,12 @@ Renown" - every name in the code, on the wire and on screen says Renown now. A c
   FRACTION as the layer goes on or rises. A save written online keeps the vitals as they would stand without the layer,
   each at its fraction (`save.js snapshotPlayer` through `offlineVitals`); neither field is on the save's whitelist.
   The layer is only ever put on on the online page, by the level the token or the service answered, and only upward.
-- **The level left of the name.** Over a head, a small amber plate ahead of the name in the name row
-  (`ui/nameLayer.js .dfname-renown`, empty and taking no room for a peer with no level) and the same words leading the
-  bitmap face's run; the plaque over a player leads with it; the Inspect card puts it left of the name with
+- **The level left of the name, the number in a box.** Over a head, "12" in a small square amber box ahead of the
+  name in the name row (`ui/nameLayer.js .dfname-renown`, empty and taking no room for a peer with no level), and "[12]"
+  leading the bitmap face's run, the one box a bitmap line can draw. The plaque over a player boxes it the same way on
+  its title's first line: the namer hands the Renown BESIDE the name (`renown`), the hover frame carries it
+  (`systems/worldHover.js`, and the repaint guard signs it) and `ui/worldPlaque.js` draws the box, so it is never text in
+  a title. The Inspect card puts the box left of the name with
   "Renown N" on hover (the card's own "Level N" line is still their Daggerfall level); the main menu's
   account card puts the level of the character that most recently earned Renown XP left of the account name and adds a
   Renown row per character with how far into its level it is ("Mara Venn - Renown 10, 490 / 2,150 XP to Renown 11").
@@ -3232,4 +3236,4 @@ Renown" - every name in the code, on the wire and on screen says Renown now. A c
   (`RENOWN_MAX`, `lv`, the renown order, `verifyOrder`'s kind), `net/wire.js` (`badged`'s `lv`, `readRenown`, the
   renown frame, world108), `server/src/index.js` (the stamp and the renown arm), `net/online.js` (`renownOf`,
   `sendRenownOrder`), `net/accountClient.js` (the minter names the character; `accountRenown`), `scenes/world.js` (the
-  tracker, the layer, the plaque). Pinned: `test/renown1.test.js` (17). `tools/mutants/renown1.json` (35, all dead).
+  tracker, the layer, the plaque). Pinned: `test/renown1.test.js` (18). `tools/mutants/renown1.json` (40, all dead).

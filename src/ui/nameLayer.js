@@ -182,12 +182,15 @@ export const NAME_CSS = `${PIXELIFY_FIVE_FACE}
    level appear on the left side of character name"). A small plate in
    the row the name and glyphs already are, so the whole run stays
    centred on the skull; amber, so it reads as a number about the player
-   and never as a title's colour or the party's green. Empty takes no
-   room: a peer whose token carried no level (an older build) wears
-   exactly the label it wore before. */
-.dfname-renown { font-size: .78em; line-height: 1; padding: .12em .32em .1em; border-radius: .3em;
-  color: #f2c46b; background: rgba(14, 16, 19, .72); border: 1px solid rgba(242, 196, 107, .45);
-  letter-spacing: .03em; }
+   and never as a title's colour or the party's green. The number
+   alone, IN A BOX (Mac: "Just have it read 12 inside a box") - square
+   corners, a full border, at least as wide as it is tall so a 1 and a
+   50 are the same kind of box. Empty takes no room: a peer whose token
+   carried no level (an older build) wears exactly the label it wore
+   before. */
+.dfname-renown { font-size: .78em; line-height: 1; padding: .14em .3em .1em; border-radius: .12em;
+  min-width: 1.2em; text-align: center; font-variant-numeric: tabular-nums;
+  color: #f2c46b; background: rgba(14, 16, 19, .78); border: 1px solid rgba(242, 196, 107, .8); }
 .dfname-renown:empty { display: none; }
 .dfname-glyph { width: .95em; height: .95em; display: block;
   filter: drop-shadow(0 1px 0 #000) drop-shadow(0 0 2px #000); }
@@ -371,7 +374,7 @@ export function createNameLayer({ doc = document, now = () => Date.now() } = {})
         // edge lands the gap above it.
         setStyle(tag.node, 'top', `${Math.round(p.y - NAME_GAP_PX)}px`);
         setStyle(tag.node, 'fontSize', `${namePixelSize(p.scale ?? 1, vp, hudScale).toFixed(1)}px`);
-        setText(tag.lv, renownText(p.lv) ?? '');   // RENOWN1: "Lv 12", or nothing
+        setText(tag.lv, renownText(p.lv) ?? '');   // RENOWN1: "12" in its box, or nothing
         setText(tag.name, p.name ?? '');
         setStyle(tag.name, 'color', cssRgba(colorOf?.(p.id)) ?? '');
         // ACC3: the title above, in ITS colour, and the glyphs beside.

@@ -130,8 +130,8 @@
   {
     "name": "PEER-PLAQUE1-title-without-the-marks",
     "file": "src/scenes/world.js",
-    "old": "    return { title: `${lead ? `${lead} ` : ''}${marks ? `${name} ${marks}` : name}`, subs: [cast, peerRelationText(acts)].filter(Boolean), actions: acts ? socialPlaqueRows(id, acts) : [], actionsUnlit: true };",
-    "new": "    return { title: `${lead ? `${lead} ` : ''}${name}`, subs: [cast, peerRelationText(acts)].filter(Boolean), actions: acts ? socialPlaqueRows(id, acts) : [], actionsUnlit: true };",
+    "old": "    return { title: marks ? `${name} ${marks}` : name, renown, subs: [cast, peerRelationText(acts)].filter(Boolean), actions: acts ? socialPlaqueRows(id, acts) : [], actionsUnlit: true };",
+    "new": "    return { title: name, renown, subs: [cast, peerRelationText(acts)].filter(Boolean), actions: acts ? socialPlaqueRows(id, acts) : [], actionsUnlit: true };",
     "tests": [
       "test/peerplaque.test.js"
     ]

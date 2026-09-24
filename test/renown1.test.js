@@ -96,7 +96,7 @@ test('RENOWN1 the curve: EverQuest\'s shape in integers - level 2 at 100, 10 at 
   assert.equal(renownProgressText(150), '50 / 130 XP to Renown 3');
   assert.equal(renownProgressText(6000), '490 / 2,150 XP to Renown 11', 'thousands grouped');
   assert.equal(renownProgressText(RENOWN_XP_MAX), 'Renown 50 - the highest');
-  assert.equal(renownText(12), 'Lv 12');
+  assert.equal(renownText(12), '12', 'the number alone - every face puts it in a box (Mac: "Just have it read 12 inside a box")');
   for (const bad of [0, 51, 1.5, '12', null, undefined]) assert.equal(renownText(bad), null, `${bad} is no level`);
 });
 
@@ -524,13 +524,14 @@ function fakeDocument() {
 }
 const find = (n, cls) => { if ((n.className ?? '').split(' ').includes(cls)) return n; for (const c of n.children ?? []) { const f = find(c, cls); if (f) return f; } return null; };
 
-test('RENOWN1 over a head: the plate stands FIRST in the name row - "Lv 12", left of the name - and a point with no level leaves it empty; the bitmap face leads its run with the same words, so the whole label stays centred (mutants: the plate after the name; a level-less label with an empty plate taking a word)', () => {
+test('RENOWN1 over a head: the box stands FIRST in the name row - "12" in its box, left of the name - and a point with no level leaves it empty; the bitmap face leads its run with the number in brackets, so the whole label stays centred (mutants: the plate after the name; a level-less label with an empty plate taking a word)', () => {
   const doc = fakeDocument();
   const layer = createNameLayer({ doc, now: () => 1000 });
   layer.render({ points: [{ id: 'peer-0001', name: 'Mack', x: 400, y: 300, scale: 1, title: null, glyphs: [], lv: 12 }, { id: 'peer-0002', name: 'Eve', x: 300, y: 300, scale: 1, title: null, glyphs: [] }] });
   const tag = find(layer.tagFor('peer-0001').node, 'dfname-tag');
   assert.deepEqual(tag.children.map((c) => c.className), ['dfname-renown', 'dfname-who', 'dfname-glyphs']);
-  assert.equal(tag.children[0].textContent, 'Lv 12');
+  assert.equal(tag.children[0].textContent, '12');
+  assert.match(src('src/ui/nameLayer.js'), /\.dfname-renown \{[^}]*border: 1px solid rgba\(242, 196, 107, \.8\);/, 'a box: a full border round the number');
   assert.equal(tag.children[1].textContent, 'Mack');
   assert.equal(find(layer.tagFor('peer-0002').node, 'dfname-renown').textContent, '', 'no level, no words: the plate takes no room (:empty)');
   assert.match(src('src/ui/nameLayer.js'), /\.dfname-renown:empty \{ display: none; \}/);
@@ -541,13 +542,13 @@ test('RENOWN1 over a head: the plate stands FIRST in the name row - "Lv 12", lef
   try {
     rp.drawNamePoints({ draw: (...a) => drawn.push(a) }, font, [{ id: 'p', name: 'Mack', x: 100, y: 100, scale: 1, title: null, glyphs: [], lv: 12 }], 1);
   } catch { /* a stub font may not draw - the source pin below holds the run */ }
-  assert.match(src('src/net/remotePlayers.js'), /const lead = renownText\(n\.lv\);\n\s+const run = `\$\{lead \? `\$\{lead\} ` : ''\}\$\{marks \? `\$\{n\.name\} \$\{marks\}` : n\.name\}`;/, 'the run the label is centred on starts with the level');
+  assert.match(src('src/net/remotePlayers.js'), /const lead = renownText\(n\.lv\);\n\s+const run = `\$\{lead \? `\[\$\{lead\}\] ` : ''\}\$\{marks \? `\$\{n\.name\} \$\{marks\}` : n\.name\}`;/, 'the run the label is centred on starts with the level, boxed in brackets');
   assert.match(src('src/net/remotePlayers.js'), /lv: e\.peer\.lv \?\? null,/, 'the point carries the peer\'s level to both faces');
 });
 
 test('RENOWN1 the Inspect card and the plaque: the level the relay stamped stands left of the name ("Renown N" on hover), never the card\'s own Daggerfall level; none for a peer with none (mutants: the plate after the name; the card\'s level read)', () => {
   const v = profileView({ name: 'Bran', peer: { lv: 12, title: null, glyphs: [] }, card: { level: 30, attrs: Array(8).fill(50), vitals: [1, 2, 3], look: null }, state: 'answered' });
-  assert.equal(v.level, 'Lv 12');
+  assert.equal(v.level, '12');
   assert.equal(v.levelTitle, 'Renown 12');
   assert.match(v.line, /^Level 30/, 'the Daggerfall level stays where it was, on its own line');
   assert.equal(profileView({ name: 'Bran', peer: {} }).level, null);
@@ -556,9 +557,9 @@ test('RENOWN1 the Inspect card and the plaque: the level the relay stamped stand
   w.show('peer-0002', v);
   const nm = find(w.root, 'dfprofile-name');
   assert.deepEqual(nm.children.map((c) => c.className).slice(0, 2), ['dfprofile-renown', 'dfprofile-nametext']);
-  assert.equal(nm.children[0].textContent, 'Lv 12');
+  assert.equal(nm.children[0].textContent, '12');
   assert.equal(nm.children[0].title, 'Renown 12');
-  assert.match(src('src/scenes/world.js'), /const lead = renownText\(online\?\.renownOf\?\.\(id\) \?\? null\);/, 'the plaque over a player leads with it too');
+  assert.match(src('src/scenes/world.js'), /const renown = online\?\.renownOf\?\.\(id\) \?\? null;[^\n]*\n\s+return \{ title: marks \? `\$\{name\} \$\{marks\}` : name, renown, subs:/, 'the plaque over a player is handed it BESIDE the name, never in its text');
 });
 
 test('RENOWN1 the main menu\'s account card: the level of the character that most recently earned, left of the name, and a row per character with how far into its level it is; an account with no track draws the heading it always drew (mutants: the oldest track\'s level; the heading changed for everyone)', () => {
@@ -581,7 +582,7 @@ test('RENOWN1 the main menu\'s account card: the level of the character that mos
   ] };
   card.paint();
   const h3 = card.root.all.find((n) => n.tag === 'h3');
-  assert.deepEqual(h3.children.map((c) => [c.className, c.textContent]), [['acctrenown', 'Lv 10'], ['acctname', 'Lattymoy']], 'the level of the character that most recently earned, left of the name');
+  assert.deepEqual(h3.children.map((c) => [c.className, c.textContent]), [['acctrenown', '10'], ['acctname', 'Lattymoy']], 'the level of the character that most recently earned, left of the name');
   assert.equal(h3.children[0].title, 'Renown 10');
   const rows = card.root.all.filter((n) => n.className === 'acctval').map((n) => n.textContent);
   assert.ok(rows.includes('Mara Venn - Renown 10, 490 / 2,150 XP to Renown 11'), rows.join(' | '));
@@ -591,4 +592,62 @@ test('RENOWN1 the main menu\'s account card: the level of the character that mos
   const plain = card.root.all.find((n) => n.tag === 'h3');
   assert.deepEqual([plain.textContent, plain.children.length], ['Lattymoy', 0], 'no track: the heading it always drew');
   assert.match(src('src/ui/enhancedStyle.js'), /\.card h3 \.acctrenown \{/, 'the chip\'s colour is the skin\'s sheet, never the card\'s');
+});
+
+// ── THE PLAQUE (RENOWN2) ────────────────────────────────────────────
+
+function plaqueEl(tag, body) {
+  const classes = new Set();
+  const n = {
+    tag, children: [], dataset: {}, attrs: {}, props: {}, title: '',
+    style: { setProperty(k, v) { n.props[k] = v; } },
+    classList: { add: (...c) => c.forEach((x) => classes.add(x)), remove: (...c) => c.forEach((x) => classes.delete(x)), toggle: (c, on) => (on ? classes.add(c) : classes.delete(c)), contains: (c) => classes.has(c) },
+    get className() { return [...classes].join(' '); },
+    set className(v) { classes.clear(); String(v).split(/\s+/).filter(Boolean).forEach((x) => classes.add(x)); },
+    get textContent() { return n.children.map((c) => c.textContent ?? '').join(''); },
+    set textContent(v) { n.children.length = 0; if (v) n.children.push({ textContent: v, children: [] }); },
+    append(...cs) { for (const c of cs) n.children.push(c); },
+    setAttribute(k, v) { n.attrs[k] = v; },
+    remove() { n.removed = true; const i = body.indexOf(n); if (i >= 0) body.splice(i, 1); },
+  };
+  return n;
+}
+const plaqueFind = (n, cls, out = []) => { if (n?.classList?.contains?.(cls)) out.push(n); for (const c of n?.children ?? []) plaqueFind(c, cls, out); return out; };
+
+test('RENOWN2 the plaque: a player\'s Renown rides the hover frame BESIDE the title and is drawn as the number in a box on the title\'s first line, left of the name; the repaint guard sees it change; no Renown, no box (mutants: the Renown dropped from the frame; the signature blind to it; the box after the name)', async () => {
+  const { resolveHover, frameSignature } = await import('../src/systems/worldHover.js');
+  const { showWorldPlaque, destroyWorldPlaque } = await import('../src/ui/worldPlaque.js');
+  const hit = { key: 'peer:mara-0001', distance: 1, reach: 3 };
+  const named = (renown) => () => ({ title: 'Mara', renown, subs: [], actions: [{ id: 'inspect', label: 'Inspect' }], actionsUnlit: true });
+  const f = resolveHover(hit, { name: named(12) });
+  assert.equal(f.renown, 12);
+  assert.equal(f.title, 'Mara', 'never in the title\'s text');
+  assert.notEqual(frameSignature(f), frameSignature(resolveHover(hit, { name: named(13) })), 'a Renown that rose repaints');
+  assert.equal(resolveHover(hit, { name: named(null) }).renown, undefined);
+  assert.equal(resolveHover(hit, { name: named(0) }).renown, undefined, 'no level is no box');
+  const body = [];
+  globalThis.document = {
+    createElement: (t) => plaqueEl(t, body),
+    body: { append: (...cs) => { for (const c of cs) body.push(c); } },
+    head: { append() {}, appendChild() {}, querySelector: () => null },
+    querySelector: () => null, getElementById: () => null,
+  };
+  globalThis.location = { search: '?skin=enhanced&touch=off' };
+  globalThis.window = { location: globalThis.location, matchMedia: () => ({ matches: false }) };
+  destroyWorldPlaque();
+  try {
+    showWorldPlaque(f);
+    const root = body.find((e) => e.classList?.contains?.('wplaque'));
+    const line = plaqueFind(root, 'wplaque-titleline')[0];
+    assert.equal(line.children[0].className, 'wplaque-renown', 'the box first');
+    assert.equal(line.children[0].textContent, '12');
+    assert.equal(line.children[1].textContent, 'Mara', 'then the name');
+    showWorldPlaque(resolveHover(hit, { name: named(null) }));
+    assert.equal(plaqueFind(root, 'wplaque-renown').length, 0, 'no Renown, no box');
+    assert.equal(plaqueFind(root, 'wplaque-titleline')[0].textContent, 'Mara');
+  } finally {
+    destroyWorldPlaque();
+    delete globalThis.document; delete globalThis.window; delete globalThis.location;
+  }
+  assert.match(src('src/ui/enhancedStyle.js'), /\.wplaque-renown \{[^}]*border: 1px solid rgba\(242, 196, 107, 0\.8\);/, 'the plaque\'s box is the one over their head');
 });

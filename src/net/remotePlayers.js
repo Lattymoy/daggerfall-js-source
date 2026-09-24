@@ -1133,9 +1133,10 @@ export class RemotePlayers {
       // rather than after it, or a badged peer's name drifts left off
       // their own skull by half the badge.
       const marks = glyphMarks(n);
-      // RENOWN1: and the level LEFT of the name, in the same run for the same reason
+      // RENOWN1: and the level LEFT of the name, in the same run for the same reason - boxed in brackets, the one box a
+      // bitmap line can draw ("[12] Mack"; the DOM face draws a real one)
       const lead = renownText(n.lv);
-      const run = `${lead ? `${lead} ` : ''}${marks ? `${n.name} ${marks}` : n.name}`;
+      const run = `${lead ? `[${lead}] ` : ''}${marks ? `${n.name} ${marks}` : n.name}`;
       const tw = measureText(font.fnt, run) * s;
       // AUDIT NAME1 F13: the gap takes the HOST's scale, and only that one. NAME_GAP_PX is a clearance in SCREEN
       // pixels and this face draws in the drawing buffer's, where `scale` (ui/hud.js hudScale, the 320x200 fit) is

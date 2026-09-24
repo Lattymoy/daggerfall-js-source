@@ -13,8 +13,9 @@
 // profile main menu + ingame profile". Then Mac named it: "Lets
 // officially call this Renown" - it was built as the Adventuring Level,
 // and every name in the code, on the wire and on screen says Renown.
-// A character's Renown is a level ("Renown 12"), and the plate beside a
-// name says it the way a level is said: "Lv 12".
+// A character's Renown is a level ("Renown 12" in words), and beside a
+// name it is the number alone, in a box (Mac: "Just have it read 12
+// inside a box").
 //
 // ═══ WHAT IT IS, AND WHAT IT NEVER TOUCHES ═════════════════════════
 //
@@ -185,10 +186,11 @@ export const RENOWN_NAME_MAX = 32;
 
 /* ═══ THE WORDS ═══════════════════════════════════════════════════════ */
 
-/** The level as it sits left of a name: "Lv 12". Null for none. */
+/** The level as it sits left of a name - the number alone, which every face puts in a box (Mac: "Just have it read
+ *  12 inside a box"): "12". Null for none. */
 export function renownText(level) {
   if (!Number.isSafeInteger(level) || level < 1 || level > RENOWN_MAX) return null;
-  return `Lv ${level}`;
+  return String(level);
 }
 
 const grouped = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');

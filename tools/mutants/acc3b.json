@@ -2,8 +2,8 @@
   {
     "name": "ACC3b-1-the-glyphs-measured-out-of-the-run",
     "file": "src/net/remotePlayers.js",
-    "old": "      const run = `${lead ? `${lead} ` : ''}${marks ? `${n.name} ${marks}` : n.name}`;\n      const tw = measureText(font.fnt, run) * s;",
-    "new": "      const run = `${lead ? `${lead} ` : ''}${marks ? `${n.name} ${marks}` : n.name}`;\n      const tw = measureText(font.fnt, n.name) * s;",
+    "old": "      const run = `${lead ? `[${lead}] ` : ''}${marks ? `${n.name} ${marks}` : n.name}`;\n      const tw = measureText(font.fnt, run) * s;",
+    "new": "      const run = `${lead ? `[${lead}] ` : ''}${marks ? `${n.name} ${marks}` : n.name}`;\n      const tw = measureText(font.fnt, n.name) * s;",
     "tests": [
       "test/acc3badge.test.js"
     ],

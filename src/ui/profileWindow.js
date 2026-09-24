@@ -141,8 +141,9 @@ ${PIXELIFY_FIVE_FACE}
 .dfprofile-title { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; line-height: 1.4; }
 .dfprofile-name { display: inline-flex; align-items: center; gap: 6px; font-size: 19px; line-height: 1.3; overflow-wrap: anywhere; }
 .dfprofile-glyph { width: 16px; height: 16px; flex: none; }
-.dfprofile-renown { flex: none; font-size: 13px; line-height: 1.3; padding: 1px 6px; border-radius: 4px; color: #f2c46b;
-  background: rgba(242, 196, 107, .1); border: 1px solid rgba(242, 196, 107, .45); }
+.dfprofile-renown { flex: none; font-size: 13px; line-height: 1.3; padding: 1px 5px; border-radius: 2px; min-width: 1.4em;
+  text-align: center; font-variant-numeric: tabular-nums; color: #f2c46b;
+  background: rgba(242, 196, 107, .1); border: 1px solid rgba(242, 196, 107, .8); }
 .dfprofile-line { font-size: 13px; color: var(--dim, #8b8578); line-height: 1.4; }
 .dfprofile-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 14px; }
 .dfprofile-h { font-size: 11px; color: var(--dim, #8b8578); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }

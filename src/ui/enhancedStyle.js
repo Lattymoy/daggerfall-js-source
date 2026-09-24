@@ -1103,8 +1103,8 @@ ${badgeCss()}
    plate the name over a head wears (ui/nameLayer.js .dfname-renown), at the
    heading's scale. */
 .card h3 .acctrenown { display: inline-block; vertical-align: middle; font-size: 0.6em; line-height: 1.2;
-  padding: 1px 6px; border-radius: 4px; color: #f2c46b; background: rgba(242, 196, 107, 0.1);
-  border: 1px solid rgba(242, 196, 107, 0.45); letter-spacing: 0.04em; margin-right: 0.35em; }
+  padding: 1px 5px; border-radius: 2px; min-width: 1.4em; text-align: center; font-variant-numeric: tabular-nums;
+  color: #f2c46b; background: rgba(242, 196, 107, 0.1); border: 1px solid rgba(242, 196, 107, 0.8); margin-right: 0.35em; }
 
 /* ═══ THE RECOVERY CODE ═══════════════════════════════════════════
    THE ONE MOMENT THIS STRING EXISTS. Email is completely optional
@@ -3791,6 +3791,11 @@ ${badgeCss()}
 .wplaque.on { display: block; }
 .wplaque-title { font-size: 15px; line-height: 1.4; text-align: center; color: #d8cfae; }
 .wplaque-titleline { display: block; }
+/* RENOWN1 - a player's Renown on the plaque: the number in the box it wears over their head (ui/nameLayer.js
+   .dfname-renown), left of the name on the title's first line. */
+.wplaque-renown { display: inline-block; margin-right: 0.4em; padding: 0 0.3em; min-width: 1.2em; text-align: center;
+  font-size: 0.85em; line-height: 1.3; vertical-align: 1px; font-variant-numeric: tabular-nums;
+  color: #f2c46b; background: rgba(14, 16, 19, 0.6); border: 1px solid rgba(242, 196, 107, 0.8); border-radius: 2px; }
 .wplaque-sub { font-size: 12px; line-height: 1.4; text-align: center; color: #7d7460; }
 /* PX21c's head rule, re-homed. Its TYPOGRAPHY retires with it - 11px
    uppercase letterspaced was a KIND label ("LOOT", "REMAINS"), and the
