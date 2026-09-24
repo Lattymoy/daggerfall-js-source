@@ -62,4 +62,22 @@ export default [
       'no-unsafe-negation': 'error',
     },
   },
+  {
+    // AUDIT 68 X2: tests, tools, scripts, the desktop shell and these
+    // configs, held to the STRUCTURAL rules (no globals list needed) - a
+    // dropped fixture key, a reassigned const, dead code after a return.
+    files: ['test/**/*.{js,mjs}', 'tools/**/*.{js,mjs}', 'scripts/**/*.{js,mjs}', 'app/**/*.cjs', '*.config.js'],
+    languageOptions: { ecmaVersion: 'latest' },
+    // these files carry disable comments for rules only the src block runs
+    linterOptions: { reportUnusedDisableDirectives: 'off' },
+    rules: {
+      'no-dupe-keys': 'error',
+      'no-dupe-class-members': 'error',
+      'no-unsafe-negation': 'error',
+      'no-const-assign': 'error',
+      'no-unreachable': 'error',
+    },
+  },
+  // generated and gitignored trees the lint paths above reach into
+  { ignores: ['app/release/**', 'tools/parity/dfu/**', 'tools/parity/cs/api/**', 'tools/parity/out/**'] },
 ];
