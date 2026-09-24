@@ -812,7 +812,7 @@ proven equivalents:
 - `:150` (`index > 0x27` -> `> 0x28`): no switch case exists above
   0x27, so index 0x28 reaches the same `default: return 0` either way.
 - `:350`, `:351`, `:352` (`>>> 0` -> `>> 0`, five mutants): `srand`
-  does `BigInt(seed >>> 0)` internally, so the normalisation is
+  does `seed >>> 0` internally, so the normalisation is
   applied again downstream regardless.
 - `:502` (`count <= 0` -> `< 0`): the count is a sum of 0-or-positive
   bit reads, and at count 0 the walk subtracts 0 from a
@@ -1610,8 +1610,9 @@ were read, not remembered).
   on the common arm and the DEFAULT separator on the quest arm),
   `RefreshRumorMill` (one caller in DFU, same position in the port),
   `_resolveRegionID`'s four-step chain: all faithful.
-- **`DFRandom`.** C#'s state is a `ulong`; the port's is a BigInt masked
-  to 64 bits, and `Seed`/`srand` really are the same assignment in DFU,
+- **`DFRandom`.** C#'s state is a `ulong`; the port keeps its low 32
+  bits, the only ones any output reads (AUDIT 68 - it was a BigInt masked
+  to 64 bits), and `Seed`/`srand` really are the same assignment in DFU,
   so the port's accessor pair and its `bumpSeed` wrap are exact.
 
 ### The mutation campaign: 20 mutations, 18 caught, 2 survivors

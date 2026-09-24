@@ -77,8 +77,17 @@ export function segment(keys, time) {
   if (time <= keys[0].time) return [0, 0, 0];
   const last = keys.length - 1;
   if (time >= keys[last].time) return [last, last, 0];
-  let i = 0;
-  while (keys[i + 1].time < time) i++;
+  // AUDIT 68 S10-mwanim-linear-segment: binary search for the first key at
+  // or after `time` (keys are time-sorted). The linear walk from 0 cost
+  // every channel of every bone the whole .kf timeline per frame.
+  let lo = 1;
+  let hi = last;
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1;
+    if (keys[mid].time < time) lo = mid + 1;
+    else hi = mid;
+  }
+  const i = lo - 1;
   const span = keys[i + 1].time - keys[i].time;
   return [i, i + 1, span > 0 ? (time - keys[i].time) / span : 0];
 }

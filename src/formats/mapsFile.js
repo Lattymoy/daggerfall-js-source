@@ -41,9 +41,10 @@
 //     is exported and getWorldClimateSettings takes it), the
 //     ResolveRmbBlockName(dfLocation, x, y) overload (:1136-1147 - the port
 //     keeps getRmbBlockName plus the raw-components resolveRmbBlockName),
-//     LoadRegion(string) (:630-636 - loadRegion(getRegionIndex(name))), and
-//     the MinWorldCoordX/Z, MaxWorldCoordX/Z, MinWorldTileCoordX/Z and
-//     MinMapPixelX/Y constants. No port consumer reads any of them.
+//     LoadRegion(string) (:630-636 - loadRegion(getRegionIndex(name))),
+//     DiscardAllRegions, and the MinWorldCoordX/Z, MaxWorldCoordX/Z,
+//     MinWorldTileCoordX/Z and MinMapPixelX/Y constants. No port consumer
+//     reads any of them.
 //
 // Recorded DEPARTURES from the C# (each measured against the real
 // MAPS.BSA on road/maps-record):
@@ -68,6 +69,7 @@
 import { BsaFile, DIRECTORY_TYPES } from './bsaFile.js';
 import { worldDataDoor } from './worldDataDoor.js';   // RR3b: WorldDataReplacement's three asks (MapsFile.cs:984, :999, :1027)
 import { PakFile } from './pakFile.js';
+import { readBuildingData, BUILDING_DATA_SIZE } from './blocksFile.js';
 
 // World metrics.
 export const WORLD_MAP_TERRAIN_DIM = 32768;
@@ -422,11 +424,6 @@ export class MapsFile {
     this._regions[region] = null;
   }
 
-  /** Discard all regions. */
-  discardAllRegions() {
-    for (let index = 0; index < this.regionCount; index++) this.discardRegion(index);
-  }
-
   /** DFRegion by index (null on failure). */
   getRegion(region) {
     if (!this.loadRegion(region)) return null;
@@ -732,23 +729,11 @@ export class MapsFile {
     dfLocation.exterior.unknown1 = bytes.slice(r.pos + 2, r.pos + 7);
     r.pos += 7;
 
-    // BuildingData (26 bytes each, same shape as the RMB FLD entries).
+    // BuildingData, the same shape as the RMB FLD entries.
     const buildings = new Array(dfLocation.exterior.buildingCount);
     for (let b = 0; b < buildings.length; b++) {
-      buildings[b] = {
-        nameSeed: v.getUint16(r.pos, true),
-        serviceTimeLimit: v.getUint32(r.pos + 2, true),
-        unknown: v.getUint16(r.pos + 6, true),
-        unknown2: v.getUint16(r.pos + 8, true),
-        unknown3: v.getUint32(r.pos + 10, true),
-        unknown4: v.getUint32(r.pos + 14, true),
-        factionId: v.getUint16(r.pos + 18, true),
-        sector: v.getInt16(r.pos + 20, true),
-        locationId: v.getUint16(r.pos + 22, true),
-        buildingType: bytes[r.pos + 24],
-        quality: bytes[r.pos + 25],
-      };
-      r.pos += 26;
+      buildings[b] = readBuildingData(v, r.pos);
+      r.pos += BUILDING_DATA_SIZE;
     }
     dfLocation.exterior.buildings = buildings;
 
