@@ -193,5 +193,5 @@ test('DW-CLIP: under the Diverse Weapons preset (DoubleScaleTextures + TrueTextu
   assert.match(rd('src/combat/weaponWidget.js'), /return record != null && !!customTexture\(record, Math\.max\(0, w\.currentFrame\)\)\?\.doubled;/);
   assert.match(rd('src/combat/weaponWidget.js'), /if \(\(w\.weaponState === S\.Idle \|\| \(w\.currentWeaponType === T\.Bow && w\.currentFrame === 0\)\) && doubledIdleNow\(\)\) \{\s*\n\s*w\.offset = /);
   _resetModSettings();
-  assert.equal(modSettingsOf('diverse-weapons').WeaponWidgetPreset, true, 'DW-CLIP: the preset defaults on (DISC14-B turned it off; DISC16-B, on again)');
+  assert.equal(modSettingsOf('diverse-weapons').WeaponWidgetPreset, false, 'DISC16-B: the preset defaults off, as at DW1 (DW-CLIP had it on)');
 });

@@ -227,7 +227,7 @@ export const MOD_SETTINGS = Object.freeze({
           + 'sprite. The sprites ship with the port; a newer version\u2019s .dfmod attached through the textures pick wins over them.',
       }),
       WeaponWidgetPreset: Object.freeze({
-        default: true,   // DW-CLIP (2026-09-23, Mac: "mod should be defaulted on"): the look the readme asks for, without the hunt for the switch. DISC14-B turned it off for Mac's tile values; DISC16-B (2026-09-24, Mac: "Weapon widget preset needs to be defaulted on with diverse weapons and the changes we made to the values for the weapon widget reverted. Its no longer smooth like how it was before diverse weapons") turns it on again
+        default: false,   // DISC16-B (2026-09-24, Mac: "I just want it how it was before diverse weapons"): OFF, as at DW1 - the mod's sprites move with Weapon Widget's own defaults, as every weapon did before the mod; the preset (its step, inertia, true size and 142 bob) is the player's to choose. DW-CLIP ("mod should be defaulted on") had it on, DISC14-B off with two departures of its own
         description: 'Use the mod\u2019s own Weapon Widget preset while this is on - double-scale idles, true texture size, inertia, '
           + 'recoil and its bob - the settings its readme asks Weapon Widget users to select. Your own Weapon Widget '
           + 'settings are kept underneath and come back when this is off.',

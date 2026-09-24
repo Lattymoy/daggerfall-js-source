@@ -186,7 +186,9 @@ shipped two departures at Mac's word: DoubleScaleTextures on and
 Inertia.Scale 0, with Diverse Weapons' preset off. DISC16-B reverted all
 of it at Mac's word (*"the changes we made to the values for the weapon
 widget reverted. Its no longer smooth like how it was before diverse
-weapons"*), and the preset is on by default again. WW1's
+weapons"*, then *"I just want it how it was before diverse weapons"*),
+and Diverse Weapons' preset is off by default (the mod itself stays on,
+MO1). WW1's
 shipped-defaults pin holds every key to the mod's once more, and the
 Thunderlock's forced inertia runs at the player's own scale, as it did
 before DISC14-B.

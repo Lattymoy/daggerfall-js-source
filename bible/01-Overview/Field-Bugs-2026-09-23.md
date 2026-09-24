@@ -1392,23 +1392,31 @@ DFU. If the report was the third-person camera looking across a slope at
 a low angle, the ground between hides the feet, and that is the camera's
 to answer.
 
-## DISC16-B: DISC14-B reverted
+## DISC16-B: the weapons as they were before Diverse Weapons
 
-Diverse Weapons' preset defaults on again (DW-CLIP), with its inertia,
-step, recoil, true texture size and 142 bob. Weapon Widget ships the
-mod's own defaults again: DoubleScaleTextures off, Inertia.Scale 1.0.
-The Thunderlock's forced inertia runs at the player's own scale again
-(DISC14-B's `GUN_INERTIA_SCALE` is gone). DISC14-C stays: the doubled
-idle's bob rides a doubled `w_` hit, and the Morrowind arms keep the
-plain bob.
+The first cut reverted DISC14-B as asked: the preset on again (DW-CLIP)
+and Weapon Widget's own defaults. With the preset on, the Morrowind arms
+take its Step again, the footfall snap Mac had reported as jitter under
+DW-CLIP. Mac, to that: *"Im so confused man. I just want it how it was
+before diverse weapons."*
 
-**One consequence, measured before (DISC14-C):** with the preset on, the
-Morrowind arms take its Step. That is Step's snap on each footfall (5 of
-120 walking frames at the top, a worst jerk of 33.75), which is the
-jitter Mac reported on the Morrowind model under DW-CLIP. Whether the
-arms should take Step is Mac's call.
+So the weapons move as they did before DW1:
 
-The pins are `test/disc16.test.js` (3); MAC3's downhill pin reads the
-rest. DW1, WW1 and AUDIT-DW are back to DW-CLIP's defaults; DISC14's
-three B pins went with it. The mutants are `tools/mutants/disc16.json`,
-all seven dead; DISC14-B's five records are retired.
+- Diverse Weapons' preset defaults off, as at DW1.
+- Weapon Widget ships the mod's own defaults: DoubleScaleTextures off,
+  Inertia.Scale 1.0, Step and Inertia off, the 100 bob.
+- The Thunderlock's forced inertia runs at the player's own scale
+  (DISC14-B's `GUN_INERTIA_SCALE` is gone).
+- DISC14-C stays: it only acts on a doubled `w_` texture, which the
+  defaults never draw.
+
+The mod itself stays on. MO1 has every mod ship on, a rule pinned with no
+exemptions left, and the mod picks WHICH sprite is drawn, never how it
+moves. The first reading of "before diverse weapons" turned the mod off
+and broke MO1's pin, so it was not taken. The preset is the player's to
+choose.
+
+The pins are `test/disc16.test.js` (3), and MAC3's downhill pin reads
+the rest. DW1 and AUDIT-DW pin the preset's default off. DISC14's three B
+pins went with it. The mutants are `tools/mutants/disc16.json`, all
+seven dead; DISC14-B's five records are retired.

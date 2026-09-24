@@ -8,17 +8,19 @@
 // 60) and the body's uphill foot went into the slope.
 //
 // ── DISC16-B: "Weapon widget preset needs to be defaulted on with diverse weapons and the changes we made to the
-// values for the weapon widget reverted. Its no longer smooth like how it was before diverse weapons" ──
-// DISC14-B, reverted: Diverse Weapons' preset defaults on again (DW-CLIP), and Weapon Widget ships its own defaults.
+// values for the weapon widget reverted", then "I just want it how it was before diverse weapons" ──
+// The weapons move as they did before the mod: its preset off by default, as at DW1, and Weapon Widget at the mod's own
+// shipped defaults (DISC14-B's two departures reverted). The mod itself stays on (MO1: every mod ships on) - it picks
+// the sprite, never the motion. A player may still turn the preset on.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { PlayerMotor, CAPSULE_RADIUS } from '../src/player/motor.js';
 import { Collider } from '../src/player/collider.js';
-import { modSettingsOf, _resetModSettings } from '../src/systems/modSettings.js';
+import { modSettingsOf, setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
 import { readWidgetSettings, WEAPON_WIDGET_VENDOR } from '../src/combat/weaponWidget.js';
-import { diverseWeaponsPresetOn, moddedWeaponHUDAnimsEnabled, diverseWeaponsWidgetPreset } from '../src/combat/diverseWeapons.js';
+import { diverseWeaponsPresetOn, moddedWeaponHUDAnimsEnabled } from '../src/combat/diverseWeapons.js';
 import { gunWidgetSettings } from '../src/combat/gunViewmodel.js';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -78,21 +80,28 @@ test('DISC16-A: the rest is the floor\'s own - the snap onto it and the clamp un
   assert.equal((src.match(/this\.heightAt\(feet\[0\], feet\[2\]\)/g) || []).length, 0, 'and nothing in move() reads the point floor');
 });
 
-test('DISC16-B: Diverse Weapons\' preset is on by default again, over Weapon Widget\'s own shipped defaults - DoubleScaleTextures off and Inertia.Scale 1 in the store, the preset\'s inertia, step, recoil and true size in what draws (mutants: the preset left off; either store value left at DISC14-B\'s)', () => {
+test('DISC16-B: the weapons move as they did before Diverse Weapons - the mod on (MO1) with its preset off (DW1), Weapon Widget at its shipped defaults, and what draws is Weapon Widget\'s own store (mutants: the preset left on; either store value at DISC14-B\'s)', () => {
   _resetModSettings();
-  assert.equal(moddedWeaponHUDAnimsEnabled(), true, 'Diverse Weapons is on');
-  assert.equal(diverseWeaponsPresetOn(), true, 'and its preset with it (DW-CLIP, again)');
+  assert.equal(moddedWeaponHUDAnimsEnabled(), true, 'Diverse Weapons on: its sprites (MO1 - every mod ships on)');
+  assert.equal(diverseWeaponsPresetOn(), false, 'and no preset laid over Weapon Widget');
   const shipped = {};
   for (const sec of JSON.parse(rd('vendor/weapon-widget/modsettings.json')).Sections) for (const k of sec.Keys) shipped[`${sec.Name}.${k.Name}`] = k.Value;
   const store = modSettingsOf(WEAPON_WIDGET_VENDOR);
-  assert.equal(store['Modules.DoubleScaleTextures'], shipped['Modules.DoubleScaleTextures'] === 'True', 'DoubleScaleTextures: the mod\'s own');
+  const on = (v) => v === true || v === 'True';   // the vendored file's booleans
+  assert.equal(store['Modules.DoubleScaleTextures'], on(shipped['Modules.DoubleScaleTextures']), 'DoubleScaleTextures: the mod\'s own');
   assert.equal(store['Inertia.Scale'], Number(shipped['Inertia.Scale']), 'Inertia.Scale: the mod\'s own');
-  // what draws is the preset over them
+  // what draws is the store, module for module, as the mod ships it
   const s = readWidgetSettings();
-  const p = diverseWeaponsWidgetPreset();
-  assert.deepEqual([s.inertia, s.stepTransforms, s.recoil, s.trueSize, s.doubleScale], [p['Modules.Inertia'], p['Modules.Step'], p['Modules.Recoil'], p['Modules.TrueTextureSize'], p['Modules.DoubleScaleTextures']]);
-  assert.deepEqual([s.inertia, s.inertiaScale, s.bobLength], [true, 500, 1.42], 'the inertia on at the mod\'s scale, the preset\'s 142 bob');
-  // the Thunderlock's inertia is the player's own again - no scale of its own (DISC14-B's GUN_INERTIA_SCALE is gone)
-  assert.equal(gunWidgetSettings().inertiaScale, s.inertiaScale);
+  const mod = (k) => on(shipped[`Modules.${k}`]);
+  assert.deepEqual([s.swing, s.ambidexterity, s.offset, s.bob, s.inertia, s.stepTransforms, s.doubleScale, s.trueSize, s.recoil],
+    ['Swings', 'Ambidexterity', 'Offset', 'Bob', 'Inertia', 'Step', 'DoubleScaleTextures', 'TrueTextureSize', 'Recoil'].map(mod));
+  assert.equal(s.bobLength, Number(shipped['Bob.Length']) / 100, 'the mod\'s bob, not the preset\'s 142');
+  // the Thunderlock's own departure stands: its inertia on, at the player's scale (the shipped 1.0, x500)
+  assert.deepEqual([gunWidgetSettings().inertia, gunWidgetSettings().inertiaScale], [true, 500]);
   assert.doesNotMatch(rd('src/combat/gunViewmodel.js'), /GUN_INERTIA_SCALE/);
+  // the mod decides WHICH sprite, never how it moves: with it off, the same motion
+  setModSetting('diverse-weapons', 'Enabled', false);
+  const without = readWidgetSettings();
+  assert.deepEqual([without.inertia, without.stepTransforms, without.trueSize, without.bobLength], [s.inertia, s.stepTransforms, s.trueSize, s.bobLength]);
+  _resetModSettings();
 });
