@@ -1101,7 +1101,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (f.puppet) { f._divertPt = pt; return null; }
     return inflictPoison(f.entity, pt, false, { rolls, currentMinute: Math.floor(currentMinute()) });   // ENGINE-PRNG RULE: the pool's uniform seam
   }
-  function resolvePlayerHit(playerWeapon, eye, lookDir, playerFeet, inViewFn, onHitSound) {
+  function resolvePlayerHit(playerWeapon, eye, lookDir, playerFeet, inViewFn, onHitSound, { swing = null } = {}) {
     const live = foes.filter((f) => !f.dead);
     if (!live.length) return false;
     const canSee = (f) => {
@@ -1114,10 +1114,15 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     };
     let any = false;
     // C2-slice (combat-17): the player's 20% attack grunt, once per
-    // hit frame (this path is melee-only, never a bow).
-    const grunt = playerAttackGrunt(playerEntity, false, rolls);   // ENGINE-PRNG RULE: the pool's uniform seam
-    if (grunt && grunt.clip >= 0) audio?.playOneShot?.(grunt.clip, 1, 1 + grunt.pitchLift);   // AUDIT 58: FPSWeapon.cs:316-319's lift
-    { const v = lycanthropeAttackVoice(playerEntity, rolls); if (v != null) audio?.playOneShot?.(v, 1); }   // V4: OnWeaponHitEntity's transformed voice (10% attack / 20% bark)
+    // hit frame (this path is melee-only, never a bow). AUDIT DISC19:
+    // once per SWING - `swing` is the host's token when it offers one
+    // swing to more than one pool (cityGuards.resolvePlayerHit's note).
+    if (!swing?.voiced) {
+      if (swing) swing.voiced = true;
+      const grunt = playerAttackGrunt(playerEntity, false, rolls);   // ENGINE-PRNG RULE: the pool's uniform seam
+      if (grunt && grunt.clip >= 0) audio?.playOneShot?.(grunt.clip, 1, 1 + grunt.pitchLift);   // AUDIT 58: FPSWeapon.cs:316-319's lift
+      { const v = lycanthropeAttackVoice(playerEntity, rolls); if (v != null) audio?.playOneShot?.(v, 1); }   // V4: OnWeaponHitEntity's transformed voice (10% attack / 20% bark)
+    }
     for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, rolls,
       (f) => backstabChanceOf(playerEntity, isBackFacing(f.ai.yaw, f.ai.feet, eye)), say,
       (f, pt) => poisonFoe(f, pt))) {   // C2-slice (combat-11); WORLD6b-iii(e): through the one poison door (a puppet's rides the hit)

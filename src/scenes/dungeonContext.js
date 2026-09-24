@@ -72,6 +72,16 @@ import { largeHudOptions } from '../ui/hudLarge.js';   // U45: the classic botto
 import { drawText, makeFont } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
 import { setMidScreenText, midScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's second text surface
+// DISC19-D: STATIC. This was the one module of the foe subsystem's lazy
+// block that nothing else imports, so the build gave it a lazy-only
+// chunk - and a tab opened before a deploy asked for a chunk the deploy
+// had deleted, the whole subsystem failed, and every enemy in the
+// dungeon stood as a flat no blow could reach (Discord: "In a dungeon
+// that I cant hurt enemy's"). Its own imports (enemyMotor, navmesh)
+// were static elsewhere already, so the lazy block's gate never saved
+// their bytes; this one module is ~16 KB of source.
+import { EnhancedEnemyAI, makeNavWorld } from '../ai/enhancedMotor.js';
+import { isStaleChunk, STALE_CHUNK_IN_PLAY_TEXT, STALE_CHUNK_IN_PLAY_SECONDS } from '../systems/staleChunk.js';   // DISC19-D: a chunk gone mid-session is said, not swallowed
 import { hudRenderEnabled } from '../ui/hudShortcuts.js';   // AUDIT 64 F37: the Draw override covers popupText too
 import { FntFile } from '../formats/fntFile.js';
 import { ImgFile } from '../formats/imgFile.js';
@@ -238,7 +248,7 @@ const q3 = (v) => Math.round(v * 1000) / 1000; const GENDER_BIT = ['male', 'fema
 const HIT_POS_MAX = 1e6;
 // AUDIT FOES FOE5: the most damage one peer's blow may claim. The host TRUSTS the number (it never recomputes - the
 // striker's own calc is the game's), so without a bound any joiner could one-shot every foe in the room and empty it
-// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1959); the dungeon
+// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1964); the dungeon
 // had none. Past anything a legal swing, shaft or blast can roll.
 const HIT_DMG_MAX = 10000;
 /** AUDIT WORLD3 E3: can the ONE build chain actually stand this species? Both of buildFoeAt's branches need a truthy
@@ -790,6 +800,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // verbatim, untouched.
   const foes = [];
   let foeDeps = null;
+  let _staleChunkNotice = false;   // DISC19-D (AUDIT DISC19): the foe subsystem's chunk was gone - said on the first frame
   // ENHANCED AI 3b + 4. Declared HERE, above every foe mint, because
   // buildFoeAt runs in this function's top-level flow and reads
   // `enhancedNav.world` at construction - not through a thunk. The
@@ -816,19 +827,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // caught in review, hoisted).
     const [shared, engineRig, { buildRaceCharacter },
       { EnemyAI, withinYaw, isBackFacing, openDoorsStep }, { EnemyAttack }, { makeEnemyEntity, loadMonsterCareer }, { EnemyCaster, castEnemySpell: castShared, hasMagickaToCast },
-      { runTargetMachine, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, PEER_CAST_TARGET, resetAllyTeamOnPlayerAttack, targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection, bumpAtkCount },
-      { EnhancedEnemyAI, makeNavWorld }] = await Promise.all([
+      { runTargetMachine, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, PEER_CAST_TARGET, resetAllyTeamOnPlayerAttack, targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection, bumpAtkCount }] = await Promise.all([
       import('./shared.js'), import('../characters/engineRig.js'),
       import('../characters/raceCharacter.js'),
       import('../characters/enemyMotor.js'), import('../characters/enemyAttack.js'),
       import('../characters/enemyEntity.js'), import('../characters/enemyCasting.js'),
-      // MT-iv: DYNAMIC, unlike exteriorFoes' static import - this host
-      // gates the whole foe subsystem behind `opts.foes && palette`
-      // precisely so a foe-less dungeon never pays for enemyMotor, and
-      // enemyTargets imports enemyMotor. A static import here would
-      // defeat that gate.
+      // MT-iv: dynamic, as the rest of this block. (AUDIT DISC19: the
+      // gate saves nothing for these any more - enemyMotor, enemyTargets
+      // and the rest were in this module's static graph already, and the
+      // world host's bundle holds every one of them; only the standalone
+      // ?dungeon host still loads five of them late.)
       import('../characters/enemyTargets.js'),
-      import('../ai/enhancedMotor.js'),
     ]);
     const bodyImg = new ImgFile();
     bodyImg.load(await fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
@@ -869,7 +878,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      // BODY00I0 fetch, the ramp derive) must not black-screen the
      // level: degrade to a foe-less dungeon, loudly. foeDeps stays
      // null; the class branch is skipped, monsters still billboard.
-     console.error('[foes] subsystem init failed; dungeon builds without class enemies:', err?.message ?? err);
+     // DISC19-D: WITHOUT ANY LIVE ENEMY - buildFoeAt falls back to a flat
+     // for every marker, class or monster (the old line said "without
+     // class enemies", which sent a reader to the wrong half). A chunk
+     // the build no longer has is said on the screen: the page is from
+     // an older deploy, and a reload is the whole fix (systems/staleChunk.js).
+     console.error('[foes] subsystem init failed; the dungeon builds with no live enemies (every marker a flat):', err?.message ?? err);
+     if (isStaleChunk(err)) _staleChunkNotice = true;   // said once the level is up - drawFoes below (AUDIT DISC19: set here, mid-build, it had timed out before the first frame)
      foeDeps = null;
    }
   }
@@ -1663,7 +1678,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:9425 / exterior.js:3666), set
+  // host's own townTalk sink (world.js:9477 / exterior.js:3666), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -3291,8 +3306,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:14544,
-              // exterior.js:5233 and worldModes.js:7267 already ran;
+              // playerArrowHitFoe is the one copy world.js:14597,
+              // exterior.js:5233 and worldModes.js:7275 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3669,7 +3684,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!_authority || !data || typeof data !== 'object') return false;
     const i = data.i | 0, dmg = Number(data.dmg);
     const f = foes[i];
-    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1959). The number is a peer's
+    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1964). The number is a peer's
     // word and the host trusts it without recomputing, so an unbounded one let any joiner one-shot every foe in the
     // room - and, through the kill door, empty it. 10000 is past anything a legal swing, shaft or blast can roll.
     if (!f || i >= _layoutFoes || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > HIT_DMG_MAX) return false;
@@ -4152,7 +4167,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:1536's restoreWorld goes through
+    // construction (exteriorFoes.js:1541's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
@@ -4745,6 +4760,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const sceneAmbience = new AmbientEffects(DUNGEON_AMBIENT_WAITS);
   sceneAmbience.setPreset('dungeon');
   function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false, playerHeight = CAPSULE_HEIGHT, playerSneaking = false, playerMove = null, playerBobY = 0, playerCrouching = false, playerRenderFeet = null) {
+    if (_staleChunkNotice) { _staleChunkNotice = false; setMidScreenText(STALE_CHUNK_IN_PLAY_TEXT, STALE_CHUNK_IN_PLAY_SECONDS); }
     _ecvT += dt;
     respawnSweep(_ecvT);   // WORLD8: the hour's respawn, once a second
     const ecvOn = combatVisualsOn();   // ECV1: once per frame
@@ -5809,9 +5825,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     /** X11: the Light effect's candle. The engine owns the candle (it
      *  is the player's, and every casting host builds one engine); the
      *  LIGHT has to be handed out because each host builds its own
-     *  point-light array. ?world reads magic.candleLight() directly
-     *  off its own engine; the standalone ?dungeon host only ever
-     *  holds this context, so it reads it here. */
+     *  point-light array. BOTH hosts read it here (DISC19-B): the
+     *  dungeon's casts are this context's engine's, and ?world's own
+     *  engine is not updated underground - reading that one lit
+     *  nothing, or a candle left at the street it was cast on. */
     candleLight: () => magic.candleLight(),
     /** X11 probe seams: the FOE cast door and the per-foe sinks. Both
      *  halves of a reflection live here - the spell going out and the

@@ -290,7 +290,7 @@ function main(argv) {
     const hunks = hunksFromDiff(git('diff', '-U0', base, '--', target));
     if (!hunks.length) continue;
     const map = lineMap(hunks);
-    let oldLines; try { oldLines = git('show', `${base}:${target}`).split('\n'); } catch { continue; }   // a new file cites nothing yet
+    let oldLines; try { oldLines = git('show', `${base}:${target}`).split('\n'); } catch (err) { if (err?.status !== 128) throw err; continue; }   // a new file cites nothing yet (git's own 128); anything else - ENOBUFS above all - is loud
     if (!existsSync(join(ROOT, target))) continue;   // MAC5 (the water revert): a target the change DELETED has no lines to land on; its cites are the record's to strike
     const newLines = readFileSync(join(ROOT, target), 'utf8').split('\n');
     // RF3, pass one: plan every doc, and learn which numbers the docs

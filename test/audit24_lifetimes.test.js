@@ -79,8 +79,9 @@ test('audit24 lifetimes: a city guard frees its batch on both death paths, and t
   // header grew its provenance flag.
   assert.match(bodyOf(src, 'function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false, peer = false } = {})'),
     /health <= 0[\s\S]{0,300}releaseGuardBatch\(g\)/, 'the killed path');
-  assert.match(src, /if \(!g\.dead\) \{ g\.dead = true; releaseGuardBatch\(g\); \}/,
+  assert.match(src, /if \(!g\.dead && !g\.defender\) \{ g\.dead = true; releaseGuardBatch\(g\); \}/,   // DISC19-F: the town's defenders are not the crime's
     'and the walk-away path when the crime clears');
+  assert.match(src, /if \(!g\.dead && g\.defender\) \{ g\.dead = true; releaseGuardBatch\(g\); n\+\+; \}/, 'and the defenders\' own walk-away');
   // AUDIT 39 MOVED THIS PIN. It read "the array must stay
   // index-stable, so nothing may splice guards" - which was true of
   // the keying, not of the law: the records themselves then

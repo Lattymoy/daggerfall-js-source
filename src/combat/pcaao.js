@@ -62,10 +62,13 @@
 // Unity's Mathf.Round rounds half to EVEN (unityRound), and every
 // float the C# computes is a float32 (Math.fround at each step), so a
 // .5 lands where the mod's lands. Four Mathf.Clamp calls whose result
-// the C# DISCARDS (the hit chance's 3..97, the natural resistance's
-// +-0.2, the critical strike's luck term, the shield chances) are
-// discarded here too: the mod does not clamp them, and the port does
-// not either. C# integer division truncates toward zero, and where an
+// the C# DISCARDS: three of them (the natural resistance's +-0.2, the
+// critical strike's luck term, the shield chances) are discarded here
+// too. The fourth, the hit chance's 3..97, is APPLIED - a RECORDED
+// DEPARTURE (Ledger A, the PCO1 row; DISC19-D, Mac's call 2026-09-24):
+// unclamped, a mid-skill character landed 0 blows in 2000 on a Vampire
+// or a Lich, with no word said (pcaaoSuccessfulHit below). C# integer
+// division truncates toward zero, and where an
 // operand can be negative (a stat below 50, a level difference) the
 // port truncates too. Random.Range(a, b) is b-exclusive; DFRandom.rand
 // % 100 is the monster attack gate's own generator.
@@ -367,8 +370,22 @@ export function pcaaoAdjustmentsToHit(target) {
 }
 
 /** CalculateSuccessfulHit: the seven terms summed, `Mathf.Clamp(num,
- *  3, 97)` COMPUTED AND DISCARDED (the C# never assigns it), then
- *  Dice100. A 200 is a certain hit and a -10 a certain miss. */
+ *  3, 97)`, then Dice100.
+ *
+ *  DISC19-D (Discord, "In a dungeon that I cant hurt enemy's"; Mac's
+ *  call 2026-09-24, option 1): THE CLAMP IS APPLIED. The mod's C#
+ *  computes it and never assigns it, so a -10 was a certain miss - and
+ *  with a monster's Dodging at 5 x level + 30 (halved), a skill-30
+ *  character with steel landed 0 blows in 2000 on a Vampire or a Lich
+ *  and was never told why: the mod's soft-material rule replaces
+ *  DFU's "ineffective" refusal. Every blow now lands 3 in 100 at worst
+ *  and misses 3 in 100 at best - DFU's own FormulaHelper clamp, which
+ *  the stock core applies (formulas.js calculateSuccessfulHit), and the
+ *  one the mod's author wrote. A RECORDED DEPARTURE from the mod
+ *  (Ledger A, the PCO1 row); both directions ride this function, so a
+ *  monster's certain hit on the player misses 3 in 100 too. */
+export const PCAAO_HIT_CHANCE_MIN = 3;
+export const PCAAO_HIT_CHANCE_MAX = 97;
 export function pcaaoSuccessfulHit(attacker, target, chanceToHitMod, struckBodyPart, rolls, modules, notes = null) {
   if (!attacker || !target) return false;
   const chance = chanceToHitMod
@@ -378,7 +395,7 @@ export function pcaaoSuccessfulHit(attacker, target, chanceToHitMod, struckBodyP
     + pcaaoStatDiffsToHit(attacker, target)
     + pcaaoSkillsToHit(attacker, target, rolls, modules, notes)
     + pcaaoAdjustmentsToHit(target);
-  return dice100(chance, rolls());
+  return dice100(Math.max(PCAAO_HIT_CHANCE_MIN, Math.min(PCAAO_HIT_CHANCE_MAX, chance)), rolls());
 }
 
 /** CalculateStruckBodyPart: the mod's twenty-slot table - feet likelier
