@@ -6520,7 +6520,13 @@ export function createWorldModes(host) {
         // the exit to the top of the next dungeon frame, outside any
         // dispatch, which is also what the comment on exitDungeonNow
         // promised.
-        onYes: () => { dungeonCtx.openInventoryWithWagon(); return null; },
+        // DISC21-B (kurkku on Discord: "Clicking 'yes' on the prompt only closes it while my wagon is right at the
+        // entrance"): Yes defers too. DFU closes the box, then posts dfuiOpenInventoryWindow (PlayerActivate.cs
+        // :1139-1142) - the open runs after the close. Here the handler ran INSIDE the box's own click, with the box
+        // still holding the ctx's one overlay slot, and openInventoryWithWagon refuses an occupied slot: nothing
+        // opened, nothing said, and the box closed. Every wagon at every exit; Horse Cart And Cargo's players noticed
+        // because the mod turns off the other road to a wagon underground (the inventory key by the exit door).
+        onYes: () => { pendingDungeonWagonOpen = true; return null; },
         onNo: () => { pendingDungeonExit = true; return null; },
         onEscape: () => null,
       }]);
@@ -6529,6 +6535,7 @@ export function createWorldModes(host) {
     return exitDungeonNow();
   }
   let pendingDungeonExit = false;   // F-A5: the wagon prompt's No, taken a frame later
+  let pendingDungeonWagonOpen = false;   // DISC21-B: its Yes, taken a frame later, once the box has left the slot
   let pendingInteriorExit = false;   // UNSTUCK1: exitInteriorNow's own deferral, F-A5's twin - see unstuck() below
   /** TransitionDungeonExterior(true): the exit itself, split from the
    *  activation so the wagon prompt's No can take it a frame later. */
@@ -6538,6 +6545,7 @@ export function createWorldModes(host) {
    *  rig after the mode (HARD2c's one home). One line at the read: WORLD1's pin windows the exit's head. */
   const dungeonPose = () => weaponPoseOf(dungeonCtx?.weaponRig?.()?.playerWeapon ?? null);
   function exitDungeonNow() {
+    pendingDungeonWagonOpen = false;   // DISC21-B: a Yes pending is this dungeon's, never the next one's
     unleveledLootPreTransition();   // UL1: OnPreTransition (TransitionDungeonExterior) - and NO OnTransitionExterior here, bug for bug
     // Verbatim PositionPlayerToDungeonExit; the camera faces the normal.
     const landing = dungeonEntranceLanding(dungeonReturn.candidates.map((e) => e.door));
@@ -7052,6 +7060,7 @@ export function createWorldModes(host) {
 
     if (mode === 'dungeon') {
       if (pendingDungeonExit) { pendingDungeonExit = false; exitDungeonNow(); return true; }   // F-A5: outside any overlay dispatch
+      if (pendingDungeonWagonOpen) { pendingDungeonWagonOpen = false; dungeonCtx.openInventoryWithWagon(); }   // DISC21-B: the box is off the slot now
       if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:335's `if (!held)` - a paused game advances no movers
       if (!overlayHeld) dungeonCtx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes ride the same gate
       dungeonCtx.flicker.tick(dt);
@@ -9516,6 +9525,7 @@ export function createWorldModes(host) {
         _insidePartyRestExempt = false;   // TAVERN-REST1/GUILD-REST1: cleared on the same teleport/load arm as the tavern latch above
       }
       if (dungeonCtx) {
+        pendingDungeonWagonOpen = false;   // DISC21-B: nor a loaded or teleported player's next dungeon's
         host.onDungeonLeave?.();   // WORLD1: a load or a teleport out is a leave too
         teardownDungeonQuestFlats();
         dungeonCtx.overlayWindow?.()?.dispose?.();   // the same OnPop, for the dungeon context's own slot

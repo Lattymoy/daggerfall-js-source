@@ -12,6 +12,7 @@ import { repairRefusal } from '../src/systems/repairService.js';
 import { templateByIndex } from '../src/systems/itemTemplates.js';
 import { conditionMultipliersByMaterial, WEAPONS, WEAPON_MATERIALS } from '../src/characters/weapons.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
+import { ServiceFlowWindow } from '../src/ui/guildServiceWindows.js';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const P = () => ({ isPlayer: true, level: 1, gender: 'male', activeEffects: [], health: 30, maxHealth: 30, items: [], spells: [], stats: {}, skills: {}, career: { primarySkills: [], majorSkills: [], luck: 50 } });
@@ -66,4 +67,52 @@ test('DISC21-A: a save made since - the questions\' dagger at 0 with no maxCondi
   assert.deepEqual(WEARABLE_GROUPS, ['Weapons', 'Armor', 'MensClothing', 'WomensClothing', 'Jewellery']);
   // the load door runs it over the pack, the wagon and the repairer's shelf
   assert.match(rd('src/systems/save.js'), /for \(const list of \[entity\.items, entity\.wagonItems, entity\.otherItems\]\) \{\s+const n = repairUnmintedConditions\(list\);/);
+});
+
+// ── DISC21-B: "Can't access wagon from dungeon entrance - Clicking 'yes' on the prompt only closes it" ──
+/** The dungeon context's one overlay slot, as dungeonContext.js keeps it (the source pin below holds the three lines):
+ *  input goes to the slot's window and a window that is done leaves the slot AFTER its handler returns
+ *  (overlayInput); openInventoryWithWagon refuses a slot that is held. */
+function dungeonSlot() {
+  const s = { slot: null, opened: 0 };
+  s.openInventoryWithWagon = () => { if (s.slot) return false; s.slot = { inventory: true, done: false }; s.opened++; return true; };
+  s.input = (code) => { s.slot.input(code); if (s.slot?.done) s.slot = null; };
+  return s;
+}
+
+test('DISC21-B: the exit door\'s wagon prompt - Yes is taken a frame later, once the box has left the dungeon\'s one slot, and the inventory opens with the wagon; inside the box\'s own click the slot is still the box\'s and the open is refused (mutant: Yes opens inside the click)', () => {
+  // the premise, on the real box: its Yes handler runs BEFORE it closes
+  let doneInYes = null;
+  const probe = new ServiceFlowWindow([{ rows: [{ text: 'wagon?' }], buttons: 'YesNo', onYes: () => { doneInYes = probe.done; return null; }, onNo: () => null, onEscape: () => null }]);
+  probe.input('KeyY');
+  assert.equal(doneInYes, false, 'the handler runs while the box still stands');
+  assert.equal(probe.done, true, 'and the box closes after it');
+  // the report: Yes calling the open from inside its click - refused, silently, and the box closes
+  const before = dungeonSlot();
+  before.slot = new ServiceFlowWindow([{ rows: [{ text: 'wagon?' }], buttons: 'YesNo', onYes: () => { before.openInventoryWithWagon(); return null; }, onNo: () => null, onEscape: () => null }]);
+  before.input('KeyY');
+  assert.deepEqual([before.opened, before.slot], [0, null], 'the report: nothing opened, the box gone');
+  // the fix: Yes sets the flag, the next dungeon frame takes it with the slot drained
+  const now = dungeonSlot();
+  let pending = false;
+  now.slot = new ServiceFlowWindow([{ rows: [{ text: 'wagon?' }], buttons: 'YesNo', onYes: () => { pending = true; return null; }, onNo: () => null, onEscape: () => null }]);
+  now.input('KeyY');
+  if (pending) { pending = false; now.openInventoryWithWagon(); }   // the frame's line
+  assert.equal(now.opened, 1, 'the inventory opens');
+  assert.equal(now.slot?.inventory, true, 'and holds the slot');
+
+  // the source: the prompt's Yes sets the flag, the frame takes it right after No's exit, both teardowns clear it
+  const wm = rd('src/scenes/worldModes.js');
+  const fn = wm.slice(wm.indexOf('function tryExitDungeon('), wm.indexOf('function exitDungeonNow()'));
+  assert.match(fn, /onYes: \(\) => \{ pendingDungeonWagonOpen = true; return null; \}/);
+  assert.doesNotMatch(fn, /onYes: \(\) => \{ dungeonCtx\.openInventoryWithWagon\(\)/, 'never inside the box\'s click');
+  assert.match(wm, /if \(pendingDungeonExit\) \{ pendingDungeonExit = false; exitDungeonNow\(\); return true; \}[^\n]*\n\s+if \(pendingDungeonWagonOpen\) \{ pendingDungeonWagonOpen = false; dungeonCtx\.openInventoryWithWagon\(\); \}/);
+  assert.match(wm, /function exitDungeonNow\(\) \{\s+pendingDungeonWagonOpen = false;/, 'a Yes pending is this dungeon\'s alone');
+  assert.match(wm, /if \(dungeonCtx\) \{\s+pendingDungeonWagonOpen = false;\s+[^\n]*\n\s+host\.onDungeonLeave\?\.\(\);   \/\/ WORLD1: a load or a teleport out is a leave too/, 'nor a load\'s or a teleport\'s next dungeon\'s');
+  // ...and the three lines the slot model above stands for are the context's own
+  const ctx = rd('src/scenes/dungeonContext.js');
+  assert.match(ctx, /openInventoryWithWagon\(\) \{\s+if \(activeOverlay\) return false;/, 'the open refuses a held slot');
+  const at = ctx.indexOf('    overlayInput(action, e = null) {');
+  assert.ok(at > 0, 'the context\'s key door');
+  assert.match(ctx.slice(at, at + 900), /activeOverlay\.input\(action, e\);[\s\S]*?if \(activeOverlay\?\.done\) \{\s+surfacePlayer\(\);\s+activeOverlay = null;/, 'input goes to the slot\'s window, which leaves the slot after its handler returns');
 });
