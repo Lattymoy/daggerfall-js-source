@@ -146,10 +146,15 @@ test('DUEL1 refusals, said: a decline tells the challenger; a challenge lapses i
   r.P.b.sock = false;   // the answer cannot leave yet
   r.tick(DUEL_ASK_TTL_MS + 1);
   r.P.b.sock = true;
+  // AUDIT DUEL1 D1: past the lapse's own quiet, so B takes the ask up (inside it B answers no, and no yes ever goes)
+  r.tick(DUEL_REASK_MS + 1);
   r.m.b.onFrame('peer-aaaa', { k: 'ask', s: 'fresh12345', to: 'peer-bbbb' }, 'acct-aaaa');
-  r.m.b.accept('peer-aaaa'); r.pump();
+  assert.equal(r.m.b.stateFor('peer-aaaa'), 'incoming');
+  assert.equal(r.m.b.accept('peer-aaaa').ok, true);
+  r.pump();
+  assert.deepEqual(r.log.b.at(-1), { k: 'yes', to: 'peer-aaaa', s: 'fresh12345' }, 'the yes went');
   assert.equal(r.m.a.live, null, 'the challenger never began on a yes to nothing');
-  assert.equal(r.log.a.at(-1).k, 'cancel');
+  assert.deepEqual(r.log.a.at(-1), { k: 'cancel', to: 'peer-bbbb', s: 'fresh12345', why: 'timeout' }, 'the challenger answered it: off');
   assert.equal(r.m.b.stateFor('peer-aaaa'), 'none', 'and the accepter was told - no waiting on a start that never comes');
   for (const why of DUEL_WHY) assert.equal(typeof duelWhyText(why, 'Bran'), 'string');
 });

@@ -235,6 +235,20 @@ export function createDuelManager({
 
   /** The duel is over, here: `why` as the wire says it, `lost` when I am the one who fell or yielded, `won` when the
    *  opponent was. Said, the ring down, and the heal DUEL_HEAL_HOLD_MS later (tick). */
+  /** AUDIT DUEL1 A3: AN ANSWER I OWE NOBODY'S DUEL - a refusal to an ask, a yes or a start that is not part of a duel
+   *  of mine - goes out at most once a peer each DUEL_REASK_MS. Every answer spends the same outgoing budget as my
+   *  blows (net/online.js sendDuel), so a stranger's flood of asks must not be able to spend it for me. */
+  const answered = new Map();
+  const answer = (peer, frame) => {
+    const t = now();
+    if (t - (answered.get(peer) ?? -Infinity) < DUEL_REASK_MS) return false;
+    if (answered.size > 64) for (const [p, at] of answered) if (t - at >= DUEL_REASK_MS) answered.delete(p);
+    answered.set(peer, t);
+    return once(frame);
+  };
+  /** ...and while a duel of mine stands or is being set up, a stranger's ask, yes or start is not answered at all. */
+  const engagedElsewhere = (peer) => (duel?.peer ?? waiting?.peer ?? starting?.peer ?? peer) !== peer;
+
   const finish = (why, { won = false, lost = false, by = 'me', text = null } = {}) => {
     const d = liveDuel();
     if (!d) return;
@@ -340,16 +354,16 @@ export function createDuelManager({
       switch (d.k) {
         case 'ask': {
           const busy = duel || waiting || starting;
-          if (busy) { once({ k: 'no', to: from, s: d.s }); return; }
-          if (can()) { once({ k: 'cancel', to: from, s: d.s, why: can() === 'outdoors' ? 'outdoors' : 'busy' }); return; }
-          if (near(from) !== true) { once({ k: 'cancel', to: from, s: d.s, why: 'range' }); return; }
+          if (busy) { if (!engagedElsewhere(from)) answer(from, { k: 'no', to: from, s: d.s }); return; }
+          if (can()) { answer(from, { k: 'cancel', to: from, s: d.s, why: can() === 'outdoors' ? 'outdoors' : 'busy' }); return; }
+          if (near(from) !== true) { answer(from, { k: 'cancel', to: from, s: d.s, why: 'range' }); return; }
           if (outgoing?.peer === from) {
             // crossed challenges: the smaller id keeps its own ask, the other takes it up - one duel, not two
             if (from < selfId()) { outgoing = null; incoming.set(from, { s: d.s, at: now(), sub }); mgr.accept(from); }
             return;
           }
           if (incoming.size >= 4 && !incoming.has(from)) return;
-          if (!incoming.has(from) && now() - (quiet.get(from) ?? -Infinity) < DUEL_REASK_MS) { once({ k: 'no', to: from, s: d.s }); return; }   // declined a moment ago: no, and nothing over my game
+          if (!incoming.has(from) && now() - (quiet.get(from) ?? -Infinity) < DUEL_REASK_MS) { answer(from, { k: 'no', to: from, s: d.s }); return; }   // declined a moment ago: no, and nothing over my game
           if (quiet.size > 64) for (const [p, at] of quiet) if (now() - at >= DUEL_REASK_MS) quiet.delete(p);
           const fresh = !incoming.has(from);
           incoming.set(from, { s: d.s, at: now(), sub });
@@ -360,7 +374,7 @@ export function createDuelManager({
         case 'yes': {
           if (!outgoing || outgoing.peer !== from || outgoing.s !== d.s || duel || starting) {
             // a yes to an ask that is no longer mine: the accepter is waiting on a start - tell them it is off
-            if (!(duel && duel.peer === from && duel.s === d.s)) once({ k: 'cancel', to: from, s: d.s, why: duel ? 'busy' : 'timeout' });
+            if (!(duel && duel.peer === from && duel.s === d.s) && !engagedElsewhere(from)) answer(from, { k: 'cancel', to: from, s: d.s, why: duel ? 'busy' : 'timeout' });
             return;
           }
           const s = outgoing.s;
@@ -378,7 +392,7 @@ export function createDuelManager({
           return;
         case 'start': {
           if (duel && duel.peer === from && duel.s === d.s) return;   // this duel's own start, twice
-          if (!waiting || waiting.peer !== from || waiting.s !== d.s) { once({ k: 'cancel', to: from, s: d.s, why: duel ? 'busy' : 'timeout' }); return; }
+          if (!waiting || waiting.peer !== from || waiting.s !== d.s) { if (!engagedElsewhere(from)) answer(from, { k: 'cancel', to: from, s: d.s, why: duel ? 'busy' : 'timeout' }); return; }
           const no = can();
           if (no) { once({ k: 'cancel', to: from, s: d.s, why: no === 'outdoors' ? 'outdoors' : 'busy' }); waiting = null; say(duelWhyText(no === 'outdoors' ? 'outdoors' : 'busy', 'You')); mgr.onChange?.(); return; }
           begin(from, d.s, d.c, sub ?? waiting.sub);
@@ -390,11 +404,21 @@ export function createDuelManager({
           if (outgoing && outgoing.peer === from && outgoing.s === d.s) { outgoing = null; say(duelWhyText(d.why ?? 'cancelled', nameOf(from))); mgr.onChange?.(); return; }
           if (waiting && waiting.peer === from && waiting.s === d.s) { waiting = null; say(duelWhyText(d.why ?? 'cancelled', nameOf(from))); mgr.onChange?.(); return; }
           if (starting && starting.peer === from && starting.s === d.s) { starting = null; mgr.onChange?.(); return; }
-          if (incoming.get(from)?.s === d.s) { incoming.delete(from); if (d.why === 'timeout') say(`${nameOf(from)}'s challenge lapsed.`); mgr.onChange?.(); }
+          if (incoming.get(from)?.s === d.s) { incoming.delete(from); quiet.set(from, now()); if (d.why === 'timeout') say(`${nameOf(from)}'s challenge lapsed.`); mgr.onChange?.(); }   // AUDIT DUEL1 A5: taken back, then asked again at once, is the re-ask DUEL_REASK_MS keeps quiet
           return;
         }
         case 'end': {
           const dl = liveDuel();
+          // AUDIT DUEL1 B5: THE DOUBLE KNOCKOUT. My own fall ended my duel as lost; their fall, in the same exchange,
+          // lands in the heal's hold. Both fell: a draw - said here, and the account service counts neither loss
+          // (server-account/src/accounts.js DUEL_MUTUAL_S)
+          if (!dl && duel && duel.phase === 'over' && duel.peer === from && duel.s === d.s && duel.end?.lost && !duel.end.draw
+            && (d.why === 'fell' || d.why === 'yield')) {
+            duel.end.draw = true;
+            say(`${nameOf(from)} fell too - the duel is a draw.`);
+            mgr.onChange?.();
+            return;
+          }
           if (!dl || dl.peer !== from || dl.s !== d.s) return;
           if (sub && !dl.sub) dl.sub = sub;
           const theyLost = d.why === 'fell' || d.why === 'yield';
@@ -430,6 +454,11 @@ export function createDuelManager({
     tick() {
       const t = now();
       flush();
+      // AUDIT DUEL1 D5: a peer I can no longer reach takes their asks at me, and my ask, answer or start to them, with
+      // them - the strip and the F-menu row go at once, not when the ask lapses. A LIVE duel is not this: it waits
+      // DUEL_GONE_MS below, since a moment's reconnect is no forfeit.
+      for (const p of [...incoming.keys()]) if (!reaches(p)) mgr.peerGone(p);
+      for (const x of [outgoing, waiting, starting]) if (x && !reaches(x.peer)) mgr.peerGone(x.peer);
       if (outgoing && t - outgoing.at > DUEL_ASK_TTL_MS) {
         const o = outgoing; outgoing = null;
         once({ k: 'cancel', to: o.peer, s: o.s, why: 'timeout' });

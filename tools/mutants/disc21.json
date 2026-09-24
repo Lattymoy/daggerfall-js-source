@@ -155,8 +155,8 @@
   {
     "name": "DISC21-C-the-wrong-action-s-key",
     "file": "src/ui/quickslotTags.js",
-    "old": "  const tag = quickslotTag(CELL_ACTIONS.main, { bindings: store });\n  return { weapon",
-    "new": "  const tag = quickslotTag(CELL_ACTIONS.c2, { bindings: store });\n  return { weapon",
+    "old": "  const tag = quickslotTag(CELL_ACTIONS.main, { bindings: store, controller",
+    "new": "  const tag = quickslotTag(CELL_ACTIONS.c2, { bindings: store, controller",
     "tests": [
       "test/disc21.test.js"
     ]

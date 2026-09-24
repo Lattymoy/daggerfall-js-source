@@ -217,6 +217,7 @@ import { PlayerMoveScanner } from './moveScanner.js';
 import { getBool } from '../systems/settings.js';   // AUDIT 28 W5: Controls/ToggleSneak (StartGameBehaviour :277)
 import { TRANSPORT_MODES, isRiding, rideBaseFor, canRunUnlessRiding } from '../systems/transport.js';   // TR1: the mount's speed, run and climb laws
 import { timeScale } from '../systems/timeScale.js';   // TO1: Unity's Time.fixedDeltaTime rides Time.timeScale (see update())
+import { clampToRing } from '../net/duelSession.js';   // AUDIT DUEL1 D4: the ring's one clamp
 
 /** PlayerSpeedChanger.GetWalkSpeed, verbatim (audit 2026-08-16e F1):
  *  drag = 0.5 x (100 - max(30, LiveSpeed)) rides the WALK base only -
@@ -718,13 +719,14 @@ export class PlayerMotor {
     const a = this.arena;
     const c = a?.centre;
     if (!c || !(a.radius > 0)) return;
-    const lim = Math.max(0, a.radius - CAPSULE_RADIUS);
+    // AUDIT DUEL1 D4: THE ONE CLAMP (net/duelSession.js clampToRing), the geometry the duel's own pins drive
+    const to = clampToRing(this.pos, c, a.radius, CAPSULE_RADIUS);
+    if (!to) return;
     const dx = this.pos[0] - c[0], dz = this.pos[2] - c[2];
     const d = Math.hypot(dx, dz);
-    if (!(d > lim)) return;
     const nx = d > 1e-9 ? dx / d : 1, nz = d > 1e-9 ? dz / d : 0;
-    this.pos[0] = c[0] + nx * lim;
-    this.pos[2] = c[2] + nz * lim;
+    this.pos[0] = to[0];
+    this.pos[2] = to[1];
     const out = this._airVelX * nx + this._airVelZ * nz;
     if (out > 0) { this._airVelX -= out * nx; this._airVelZ -= out * nz; }
   }

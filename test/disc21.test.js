@@ -154,6 +154,11 @@ test('DISC21-C: the weapon a new character equips sits sheathed in the main cell
   assert.equal(emptySlotLine(), QUICKSLOT_TEXT.emptySlot, 'a host that hands no hand: the line alone');
   const unbound = createBindings();
   assert.equal(quickslotHand(rig, unbound).readyKey, null, 'unbound: nothing named');
+  // AUDIT DUEL1 D3: a PAD player's chip is a glyph (the default ReadyWeapon carries R3), and a glyph is no word a line
+  // can say - naming the keyboard's Z to them named a key they were not holding
+  assert.equal(quickslotHand(rig, store, { controller: true, family: 'xbox' }).readyKey, null, 'the pad live: nothing named');
+  assert.equal(quickslotHand(rig, store, { controller: false, family: 'xbox' }).readyKey, 'Z', 'the keyboard: its key');
+  assert.match(rd('src/ui/quickslotTags.js'), /pad = \{ controller: controllerLook\(\) && !!padFamily\(\), family: padFamily\(\) \?\? 'xbox' \}/, 'the default reads GP1\'s latch, as the chip does');
   // every host reads the rig in the player's hands - the interior mode hands its own
   for (const [path, hand] of [['src/scenes/world.js', /hand: \(\) => quickslotHand\(rig\),/], ['src/scenes/exterior.js', /hand: \(\) => quickslotHand\(rig\) \}/], ['src/scenes/dungeonContext.js', /hand: \(\) => quickslotHand\(weaponRig\) \}/]]) {
     assert.match(rd(path), hand, `${path}: the empty press reads the hand`);

@@ -11,7 +11,7 @@ import { DatabaseSync } from 'node:sqlite';
 
 import worker from '../server-account/src/index.js';
 import { _resetKeyForTests } from '../server-account/src/signing.js';
-import { createGuest, reportDuelLoss, duelRecordOf, DUEL_REPORT_GAP_S, DUEL_PAIR_DAY_MAX } from '../server-account/src/accounts.js';
+import { createGuest, reportDuelLoss, duelRecordOf, DUEL_REPORT_GAP_S, DUEL_PAIR_DAY_MAX, DUEL_WINNER_DAY_MAX, DUEL_MUTUAL_S } from '../server-account/src/accounts.js';
 import { ROUTES, OPEN_ROUTES, ACCOUNT_VERSION } from '../server-account/src/service.js';
 import { accountDuels, SESSION_KEY, REFUSALS } from '../src/net/accountClient.js';
 import { duelKd, duelRecordText, createDuelRecords, DUEL_RECORD_TTL_MS } from '../src/net/duelRecord.js';
@@ -45,33 +45,77 @@ function d1() {
 }
 const T0 = 1_800_000_000;
 const guest = async (db) => (await createGuest({ db, subtle, rand, nowS: T0 }, { deviceLabel: null })).id;
+/** AUDIT DUEL1 A1: a REGISTERED account - a guest with a handle written on its row, as register() writes it. */
+let _handles = 0;
+const member = async (db) => {
+  const id = await guest(db);
+  const h = `Duellist${++_handles}`;
+  db._raw.prepare('UPDATE players SET handle = ?, handle_lc = ? WHERE id = ?').run(h, h.toLowerCase(), id);
+  return { id, handle: h };
+};
 
-test('DUEL1 the record: the LOSER\'s report is one row naming the winner - the loser\'s loss and the winner\'s win, both COUNTED off it; a report inside DUEL_REPORT_GAP_S of the loser\'s last does not count again, nor one past DUEL_PAIR_DAY_MAX a day for one pair; a winner who is no account, or the loser themselves, is refused (mutants: the winner credited a loss; the gap measured from the winner; the pair bound off by one; a self-duel counted)', async () => {
+test('DUEL1 the record: the LOSER\'s report is one row naming the winner - the loser\'s loss and the winner\'s win, both COUNTED off it; a report inside DUEL_REPORT_GAP_S of the loser\'s last does not count again, nor one past DUEL_PAIR_DAY_MAX a day; the loser is never the winner; a winner that is no account is refused (mutants: the gap unread; the pair bound unread; a self-report counted)', async () => {
   const db = d1();
-  const a = await guest(db), b = await guest(db), c = await guest(db);
-  const loser = { id: a };
-  let r = await reportDuelLoss({ db, nowS: T0 }, loser, b);
+  const A = await member(db), B = await member(db), C = await member(db);
+  let r = await reportDuelLoss({ db, nowS: T0 }, A, B.id);
   assert.deepEqual(r, { recorded: true, wins: 0, losses: 1 });
-  assert.deepEqual(await duelRecordOf({ db }, b), { wins: 1, losses: 0 }, 'the winner\'s win, counted');
-  r = await reportDuelLoss({ db, nowS: T0 + DUEL_REPORT_GAP_S - 1 }, loser, c);
-  assert.deepEqual(r, { recorded: false, wins: 0, losses: 1 }, 'inside the gap: fought, not counted again');
-  r = await reportDuelLoss({ db, nowS: T0 + DUEL_REPORT_GAP_S + 1 }, loser, c);
+  assert.deepEqual(await duelRecordOf({ db }, B.id), { wins: 1, losses: 0 }, 'the winner\'s win, counted');
+  r = await reportDuelLoss({ db, nowS: T0 + DUEL_REPORT_GAP_S - 1 }, A, C.id);
+  assert.deepEqual(r, { recorded: false, why: 'gap', wins: 0, losses: 1 }, 'inside the gap: fought, not counted again');
+  r = await reportDuelLoss({ db, nowS: T0 + DUEL_REPORT_GAP_S + 1 }, A, C.id);
   assert.equal(r.recorded, true, 'the gap is the loser\'s own');
   // the pair bound
-  const d = await guest(db), e = await guest(db);
+  const D = await member(db), E = await member(db);
   let t = T0;
-  let counted = 0;
-  for (let i = 0; i < DUEL_PAIR_DAY_MAX + 3; i++) { t += DUEL_REPORT_GAP_S + 1; if ((await reportDuelLoss({ db, nowS: t }, { id: d }, e)).recorded) counted++; }
+  let counted = 0, last = null;
+  for (let i = 0; i < DUEL_PAIR_DAY_MAX + 3; i++) { t += DUEL_REPORT_GAP_S + 1; last = await reportDuelLoss({ db, nowS: t }, D, E.id); if (last.recorded) counted++; }
   assert.equal(counted, DUEL_PAIR_DAY_MAX, 'one pair counts DUEL_PAIR_DAY_MAX a day');
+  assert.equal(last.why, 'pair');
   t += 24 * 3600;
-  assert.equal((await reportDuelLoss({ db, nowS: t }, { id: d }, e)).recorded, true, 'and again the next day');
-  assert.deepEqual(await reportDuelLoss({ db, nowS: t + 99 }, { id: d }, d), { error: 'self' });
-  assert.deepEqual(await reportDuelLoss({ db, nowS: t + 99 }, { id: d }, 'nobody-at-all'), { error: 'no-player' });
-  assert.deepEqual(await reportDuelLoss({ db, nowS: t + 99 }, { id: d }, 'x y'), { error: 'no-player' }, 'no account\'s shape');
+  assert.equal((await reportDuelLoss({ db, nowS: t }, D, E.id)).recorded, true, 'and again the next day');
+  assert.deepEqual(await reportDuelLoss({ db, nowS: t + 99 }, D, D.id), { error: 'self' });
+  assert.deepEqual(await reportDuelLoss({ db, nowS: t + 99 }, D, 'nobody-at-all'), { error: 'no-player' });
+  assert.deepEqual(await reportDuelLoss({ db, nowS: t + 99 }, D, 'x y'), { error: 'no-player' }, 'no account\'s shape');
   // an account that is gone takes its duels with it (both ends cascade)
-  db._raw.prepare('DELETE FROM players WHERE id = ?').run(e);
-  assert.deepEqual(await duelRecordOf({ db }, d), { wins: 0, losses: 0 });
+  db._raw.prepare('DELETE FROM players WHERE id = ?').run(E.id);
+  assert.deepEqual(await duelRecordOf({ db }, D.id), { wins: 0, losses: 0 });
   assert.match(src('server-account/migrations/0008_duels.sql'), /THERE ARE NO COUNTER COLUMNS/);
+});
+
+test('AUDIT DUEL1 A1 + B5: a record is between two REGISTERED accounts - a guest\'s loss and a loss to a guest are fought, not counted; one winner counts DUEL_WINNER_DAY_MAX a day from anyone; a double knockout (two losses in opposite directions DUEL_MUTUAL_S apart) is a draw, and the one row a report can take away names its own sender the winner (mutants: guests counted; the winner bound unread; the draw unread; the draw taking a stranger\'s row)', async () => {
+  const db = d1();
+  const M = await member(db), N = await member(db);
+  const g = { id: await guest(db), handle: null };
+  // guests: the five-guest mint the audit ran is gone at the first row
+  assert.deepEqual(await reportDuelLoss({ db, nowS: T0 }, g, M.id), { recorded: false, why: 'guest', wins: 0, losses: 0 }, 'a guest\'s loss is not counted');
+  assert.deepEqual(await reportDuelLoss({ db, nowS: T0 }, M, g.id), { recorded: false, why: 'guest', wins: 0, losses: 0 }, 'nor a loss to a guest');
+  assert.deepEqual(await duelRecordOf({ db }, M.id), { wins: 0, losses: 0 });
+  assert.deepEqual(await reportDuelLoss({ db, nowS: T0 }, g, 'nobody-at-all'), { error: 'no-player' }, 'a guest naming nobody is still refused as nobody');
+  // the winner bound: registered losers, each once, all naming N
+  let t = T0, counted = 0, last = null;
+  for (let i = 0; i < DUEL_WINNER_DAY_MAX + 3; i++) { t += 1; last = await reportDuelLoss({ db, nowS: t }, await member(db), N.id); if (last.recorded) counted++; }
+  assert.equal(counted, DUEL_WINNER_DAY_MAX, 'one winner counts DUEL_WINNER_DAY_MAX a day, from anyone');
+  assert.equal(last.why, 'winner');
+  assert.deepEqual(await duelRecordOf({ db }, N.id), { wins: DUEL_WINNER_DAY_MAX, losses: 0 });
+  t += 24 * 3600;
+  assert.equal((await reportDuelLoss({ db, nowS: t }, await member(db), N.id)).recorded, true, 'and again the next day');
+  // the double knockout: P's loss to Q, then Q's to P inside DUEL_MUTUAL_S - neither counts
+  const P = await member(db), Q = await member(db);
+  assert.equal((await reportDuelLoss({ db, nowS: t }, P, Q.id)).recorded, true);
+  assert.deepEqual(await reportDuelLoss({ db, nowS: t + DUEL_MUTUAL_S }, Q, P.id), { recorded: false, why: 'draw', wins: 0, losses: 0 }, 'the second report is a draw');
+  assert.deepEqual(await duelRecordOf({ db }, P.id), { wins: 0, losses: 0 }, 'and the first row is gone with it');
+  // past the window it is a second duel, and counts
+  const R = await member(db), S = await member(db);
+  assert.equal((await reportDuelLoss({ db, nowS: t }, R, S.id)).recorded, true);
+  assert.equal((await reportDuelLoss({ db, nowS: t + DUEL_MUTUAL_S + 1 }, S, R.id)).recorded, true, 'a second duel, not a double knockout');
+  assert.deepEqual(await duelRecordOf({ db }, R.id), { wins: 1, losses: 1 });
+  // a report takes away only a row naming its own sender the winner: U lost to V; W's report naming U touches nothing
+  const U = await member(db), V = await member(db), W = await member(db);
+  t += 3600;
+  assert.equal((await reportDuelLoss({ db, nowS: t }, U, V.id)).recorded, true);
+  assert.equal((await reportDuelLoss({ db, nowS: t + 1 }, W, U.id)).recorded, true, 'W lost to U: a result of its own');
+  assert.deepEqual(await duelRecordOf({ db }, V.id), { wins: 1, losses: 0 }, 'V\'s win stands');
+  assert.match(src('server-account/migrations/0008_duels.sql'), /idx_duel_winner ON duel_results \(winner, at\)/, 'the winner bound reads its own index');
 });
 
 async function stand() {
@@ -100,6 +144,11 @@ test('DUEL1 the worker: /v1/duel/loss and /v1/duel/record behind a session, neit
   assert.match(src('server-account/wrangler.toml'), /ACCOUNT_VERSION = "acct8"/);
   const me = (await call('POST', '/v1/auth/guest', {})).body;
   const them = (await call('POST', '/v1/auth/guest', {})).body;
+  // AUDIT DUEL1 A1: a guest's loss is fought, not counted - the record is between registered accounts
+  assert.deepEqual((await call('POST', '/v1/duel/loss', { winner: them.id }, me.secret)).body, { recorded: false, why: 'guest', wins: 0, losses: 0 });
+  for (const [who, h] of [[me, 'DuelMe'], [them, 'DuelThem']]) {
+    assert.equal((await call('POST', '/v1/auth/register', { handle: h, password: 'correct horse battery' }, who.secret)).status, 200);
+  }
   assert.equal((await call('POST', '/v1/duel/loss', { winner: them.id })).status, 401, 'a stranger reports nothing');
   assert.equal((await call('POST', '/v1/duel/record', { id: them.id })).status, 401);
   const r = await call('POST', '/v1/duel/loss', { winner: them.id, loser: them.id }, me.secret);

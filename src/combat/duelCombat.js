@@ -20,7 +20,8 @@
 // bundleDuel), so a duel's damage over time stops at the floor too, and the duel's end strips it.
 //
 // Not a DFU member: Daggerfall Unity has no other players. Ledger A (ONLINE).
-import { calculateAttackDamage } from './formulas.js';
+import { calculateAttackDamage, baseDamageMax, damageModifier, WEAPON_MATERIAL_MODIFIER } from './formulas.js';
+import { weaponDamageMods } from '../systems/entityMods.js';
 import { SWING_MODS, WEAPON_REACH } from './playerWeapon.js';
 import { createWeapon } from './enemyEquipment.js';
 import { SKILLS, skillValue } from '../systems/skills.js';
@@ -38,6 +39,19 @@ export const DUEL_SKILL_SLOTS = Object.freeze(['weapon', SKILLS.HandToHand, SKIL
 export const DUEL_MELEE_SLACK_M = 2;
 /** How far the striker's own claim of where it stood may be from where this machine sees it, metres. */
 export const DUEL_POS_SLACK_M = 4;
+/** AUDIT DUEL1 B6: ...and for a SWING, less - a claim four metres off plus the reach and its slack let a crafted swing
+ *  land from eight and a half metres. Three still covers a charging striker's pose trailing its body (a run's 8 m/s
+ *  over the pose's age and a relay leg). */
+export const DUEL_MELEE_POS_SLACK_M = 3;
+/** AUDIT DUEL1 B6: how far back MY OWN recent feet count for a swing's reach, ms - the striker measured its reach
+ *  against where it saw me, which is where I was a pose's age and a relay leg or two ago; a defender running away
+ *  measured only where it stands NOW dropped real connects. The host hands the trail (world.js _duelTrail). */
+export const DUEL_TRAIL_MS = 500;
+/** AUDIT DUEL1 A2: a result's damage wears the striker's own weapon ((10 dmg + 50) / 100, DFU's wear), and the
+ *  damage is the DEFENDER's word - a forged 99999 broke a Daedric blade with one answer. The most a weapon can
+ *  honestly deal is its own top roll with its material and the striker's strength, trebled by a backstab and at
+ *  most doubled by the combat overhaul's critical strike: six of that bounds the wear. */
+export const DUEL_WEAR_MULT = 6;
 /** The spell families a duel's spell may carry, by classic type: Paralyze (0), Continuous Damage (1), Damage (4),
  *  Disintegrate (5), Drain (7), Silence (19). Everything else stays home: a beneficial spell is ALLY-CAST's, and the
  *  rest (Dispel, Soul Trap, Charm, Transfer's caster heal, Teleport ...) is nothing one player may do to another. */
@@ -129,12 +143,26 @@ const worldApart = (a, b) => ({ ground: Math.hypot(a[0] - b[0], a[2] - b[2]) / N
  * decides whether a blow could have reached it - a crafted frame from across the ring lands nothing.
  */
 export function duelBlowPlausible(d, mine, seen, ringRadius) {
-  if (!Array.isArray(d?.p) || !Array.isArray(mine) || !Array.isArray(seen)) return false;
+  // `mine`: my feet now, or AUDIT DUEL1 B6's trail - my feet over the last DUEL_TRAIL_MS, now last; a swing reaches if it
+  // reached any of them
+  const mines = Array.isArray(mine?.[0]) ? mine.filter((m) => Array.isArray(m)) : [mine];
+  if (!Array.isArray(d?.p) || !Array.isArray(mines.at(-1)) || !Array.isArray(seen)) return false;
+  const melee = d.k === 'strike' && d.by === 'melee';
   const claim = worldApart(d.p, seen);
-  if (claim.ground > DUEL_POS_SLACK_M || claim.up > DUEL_POS_SLACK_M) return false;
-  const me = worldApart(d.p, mine);
-  if (d.k === 'strike' && d.by === 'melee') return me.ground <= WEAPON_REACH + DUEL_MELEE_SLACK_M && me.up <= 3;
-  return me.ground <= 2 * ringRadius + DUEL_POS_SLACK_M;
+  const slack = melee ? DUEL_MELEE_POS_SLACK_M : DUEL_POS_SLACK_M;
+  if (claim.ground > slack || claim.up > DUEL_POS_SLACK_M) return false;
+  if (melee) return mines.some((m) => { const me = worldApart(d.p, m); return me.ground <= WEAPON_REACH + DUEL_MELEE_SLACK_M && me.up <= 3; });
+  return worldApart(d.p, mines.at(-1)).ground <= 2 * ringRadius + DUEL_POS_SLACK_M;
+}
+
+/** AUDIT DUEL1 A2: the damage a result may wear MY weapon by - the defender's word, never past what this weapon could
+ *  honestly have dealt (DUEL_WEAR_MULT). */
+export function duelWearDamage(dmg, weapon, attacker) {
+  const d = Number.isFinite(dmg) && dmg > 0 ? Math.trunc(dmg) : 0;
+  if (!weapon || !d) return 0;
+  const top = weaponDamageMods(weapon, baseDamageMax(weapon)) + damageModifier(liveStat(attacker, 'strength'))
+    + (WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0);
+  return Math.min(d, Math.max(1, top) * DUEL_WEAR_MULT);
 }
 
 /** A spell's duel half: its effects of the DUEL_SPELL_TYPES families, or null when it has none (then it is no blow -

@@ -10,7 +10,7 @@
 -- loser, written by the LOSER's own signed-in client naming the winner
 -- by the account the relay verified (net/wire.js DUEL1): nobody credits
 -- themselves a win, and a client can only ever add a loss to its own
--- account.
+-- account. Both accounts must be registered (AUDIT DUEL1 A1).
 --
 -- THERE ARE NO COUNTER COLUMNS. A player's wins are the rows that name
 -- them the winner and their losses the rows that name them the loser,
@@ -30,5 +30,6 @@ CREATE TABLE IF NOT EXISTS duel_results (
 -- A loser's results, newest last - the gap and the pair bound read it
 -- before every result lands, and the losses count it.
 CREATE INDEX IF NOT EXISTS idx_duel_loser ON duel_results (loser, at);
--- The wins count.
-CREATE INDEX IF NOT EXISTS idx_duel_winner ON duel_results (winner);
+-- The wins count, and a winner's results in the last day (AUDIT DUEL1 A1:
+-- DUEL_WINNER_DAY_MAX reads it before every result lands).
+CREATE INDEX IF NOT EXISTS idx_duel_winner ON duel_results (winner, at);

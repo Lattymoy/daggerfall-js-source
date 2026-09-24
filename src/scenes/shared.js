@@ -1372,7 +1372,8 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
     heal: (n) => { if (n > 0) entity.health = Math.min(entity.maxHealth ?? Infinity, (entity.health ?? 0) + n); },
     drainMagicka: (n) => { if (n > 0) entity.magicka = Math.max(0, (entity.magicka ?? 0) - n); },
     restoreMagicka: (n) => { if (n > 0) entity.magicka = Math.min(entity.maxMagicka ?? Infinity, (entity.magicka ?? 0) + n); },
-    drainFatigue: (n) => {
+    drainFatigue: (n, a = null) => {
+      if (a?.bundleDuel) n = Math.min(n, Math.max(0, (entity.fatigue ?? 0) - 1));   // AUDIT DUEL1 B3: a duel opponent's fatigue damage over time leaves 1 - the collapse at 0 can kill
       if (n <= 0) return;
       entity.fatigue = Math.max(0, (entity.fatigue ?? 0) - n);
       // AUDIT 23 (C5: hosts-5 = entity-3) - DaggerfallEntity.cs:360-366:

@@ -28,6 +28,19 @@ export function duelRecordText(rec) {
   return `${w} won, ${l} lost (K/D ${duelKd(w, l).toFixed(2)})`;
 }
 
+/** AUDIT DUEL1: the line a loss the account service did not count says, by the service's `why`
+ *  (server-account/src/accounts.js reportDuelLoss) - null for nothing to add: a draw was said by the duel itself. */
+export function duelUncountedText(why) {
+  switch (why) {
+    case 'draw': return null;
+    case 'guest': return 'This duel did not count toward your record: only duels between registered accounts count.';
+    case 'gap': return 'This duel did not count toward your record (too soon after your last).';
+    case 'pair': return 'This duel did not count toward your record: you have fought them enough times today.';
+    case 'winner': return 'This duel did not count toward your record: they have won enough duels today.';
+    default: return 'This duel did not count toward your record.';
+  }
+}
+
 /** How long a record read for the Inspect card is kept before it is asked again, ms - a card opened twice in a minute
  *  asks once, and a result the player just saw lands in the next (DUEL_RECORD_TTL_MS is the most it can be behind). */
 export const DUEL_RECORD_TTL_MS = 60_000;

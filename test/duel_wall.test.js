@@ -162,7 +162,7 @@ test('DUEL1 the world host by source: the wall built in every skin (a shader tha
   assert.match(w, /if \(seen\.has\(e\.rec\.s\)\) continue;\s*\n\s*seen\.add\(e\.rec\.s\);\s*\n\s*out\.push\(\{ centre: campToScene\(e\.rec\.c\), radius: DUEL_RADIUS_M, alpha: 0\.85 \}\);/, 'each duel once');
   assert.match(w, /exteriorFoes\.setOnDuel\(\(from, r, at\) => \{ const rec = r === null \? null : validRingRecord\(r\); if \(rec\) _duelRings\.set\(from, \{ rec, at \}\); else _duelRings\.delete\(from\); \}, \(\) => _duelRings\.clear\(\)\);/);
   assert.match(w, /_hccDirty = false; \} if \(cell\) duelRingWord\(frame, full\);/, 'my ring rides my own foes frame');
-  assert.match(w, /if \(\(duelMgr\.live\?\.s \?\? null\) !== _duelRingSaid\) _foesFullAt = -Infinity;/, 'a change goes out at once');
+  assert.match(w, /if \(online && isCellRoom\(online\.room\) && \(duelMgr\.live\?\.s \?\? null\) !== _duelRingSaid\) _foesFullAt = -Infinity;/, 'a change goes out at once - in a cell room, the only one whose frame carries it (AUDIT DUEL1 C1)');
   const x = rd('src/scenes/exteriorFoes.js');
   assert.match(x, /if \(data\.du !== undefined\) _onDuel\?\.\(from, data\.du, _now\(\)\);/, 'past the owner\'s room test');
   assert.match(x, /_onHccClear\?\.\(\);[^\n]*\n\s*_onDuelClear\?\.\(\);/, 'and cleared with the puppets');

@@ -343,7 +343,7 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // the bundle with its item's UID and discards one that cannot
   // resolve (:2240/:2312); the port re-instantiates from the worn set
   // at restore (restartHeldEnchantments), the same outcome.
-  snap.activeEffects = (entity.activeEffects ?? []).filter((a) => !a.heldItem).map(copyEffectEntry);
+  snap.activeEffects = (entity.activeEffects ?? []).filter((a) => !a.heldItem && !a.bundleDuel).map(copyEffectEntry);   // AUDIT DUEL1 B4: a duel opponent's spell is the duel's, and the duel ends with the page - never saved
   for (const k of REP_ARRAYS) snap[k] = entity[k] ? [...entity[k]] : null;
   // AUDIT 18 F3: the CRIME/LEGAL state DFU writes out one field at a
   // time - crimeCommitted and haveShownSurrenderToGuardsDialogue
@@ -670,7 +670,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
       entity.items.splice(i, 1);
     }
   }
-  entity.activeEffects = (snap.activeEffects ?? []).filter((a) => !a.heldItem).map(copyEffectEntry);   // E2: a stale pin in an old snapshot cannot re-link - drop it (DFU :2312)
+  entity.activeEffects = (snap.activeEffects ?? []).filter((a) => !a.heldItem && !a.bundleDuel).map(copyEffectEntry);   // E2: a stale pin in an old snapshot cannot re-link - drop it (DFU :2312); AUDIT DUEL1 B4: nor a duel's spell a save from before the filter kept
   // DISC10-D/E V11: THE DREAM'S PUSH IS NOT SAVED. CustomSaveData_v1 keeps
   // the two PLAYED flags and the day (VampirismInfection.cs:221-251,
   // LycanthropyInfection.cs:143-149); warningDreamVideoScheduled restores

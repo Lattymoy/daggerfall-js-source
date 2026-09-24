@@ -335,10 +335,10 @@ import { createPlayerTradeWindow, playerTradeReady } from '../ui/playerTradeDoor
 import { createSocialMenu, socialPlaqueRows, plaqueRowFor } from '../ui/socialMenu.js';   // SOC5: the F-menu over that body - Add friend, Invite to party
 import { createProfileWindow, profileView, profileDuelLine } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
 import { createDuelManager, DUEL_RADIUS_M, DUEL_RANGE_M, DUEL_COUNTDOWN_MS, ringCentre, validRingRecord } from '../net/duelSession.js';   // DUEL1: the duel's state machine (pure)
-import { createDuelRecords } from '../net/duelRecord.js';   // DUEL1: the Inspect card's duelling record, asked and kept
+import { createDuelRecords, duelUncountedText } from '../net/duelRecord.js';   // DUEL1: the Inspect card's duelling record, asked and kept
 import { createDuelPrompt } from '../ui/duelPrompt.js';   // DUEL1: the challenge, as the challenged player sees it
 import { DuelWallRenderer } from '../render/duelWall.js';   // DUEL1: the ring's holographic wall
-import { duelAttackerOf, duelWeaponOf, duelSwingOf, resolveDuelStrike, duelBlowPlausible, duelSpellOf, duelSpellFromWire } from '../combat/duelCombat.js';   // DUEL1: the blow between two duellists, both halves
+import { duelAttackerOf, duelWeaponOf, duelSwingOf, resolveDuelStrike, duelBlowPlausible, duelSpellOf, duelSpellFromWire, duelWearDamage, DUEL_TRAIL_MS } from '../combat/duelCombat.js';   // DUEL1: the blow between two duellists, both halves
 import { createPageWindow, pageView } from '../ui/pageWindow.js';   // JOURNAL1: a page another player holds out, read and kept
 import { PageOffers, pageOfferText, pageShownText, pageTooFarText, keptPageTokens, keptLetterTokens, letterOfPage, PAGE_UNSUPPORTED_TEXT, PAGE_NO_READERS_TEXT, PAGE_GONE_TEXT } from '../net/journalPage.js';   // JOURNAL1: a page of the journal shown, and one shown to me kept
 import { quickslotTag, quickslotHand } from '../ui/quickslotTags.js';   // JOURNAL1: the F-menu's own key, named off the live bindings
@@ -4218,7 +4218,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     heal: (n) => { if (n > 0) { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); surfacePlayer(); } },
     drainMagicka: (n) => { if (n > 0) { playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - n); surfacePlayer(); } },
     restoreMagicka: (n) => { if (n > 0) { playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity, (playerEntity.magicka ?? 0) + n); surfacePlayer(); } },
-    drainFatigue: (n) => drainExteriorFatigue(n),
+    // AUDIT DUEL1 B3: a duel opponent's fatigue damage (landing now, or a round of theirs) leaves 1 - at 0 the exhaustion
+    // collapse (onExhaustedExterior) can kill a swimmer or a player a foe can see, through no duel's floor
+    drainFatigue: (n, a = null) => drainExteriorFatigue(_duelScope || a?.bundleDuel ? Math.min(n, Math.max(0, (playerEntity.fatigue ?? 0) - 1)) : n),
     restoreFatigue: (n) => { if (n > 0) { playerEntity.fatigue = Math.min(maxFatigue(playerEntity), (playerEntity.fatigue ?? 0) + n); surfacePlayer(); } },
     say: (l) => townTalk.say(l),
   };
@@ -8178,6 +8180,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // up - DFU never saves during a death.
   addEventListener('beforeunload', () => {
     if (!online || !playerSpawned) return;
+    // AUDIT DUEL1 D5 + B4: a duel in play ends here as `left` (the opponent is told now, not after DUEL_GONE_MS) and its
+    // heal runs now - the exit autosave below must not keep a duel's 1 health or its opponent's spells
+    try { duelLeaveNow(); } catch { /* no duel was built: nothing to end */ }
     const save = (saveName) => (modes ? modes?.quickSaveNow(saveName) : worldQuickSave(saveName));   // `?.` even inside the ternary: audit24 wave37's gate above the declaration is all-or-nothing
     for (const saveName of exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() })) save(saveName);
   });
@@ -10512,6 +10517,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** DUEL_RANGE_M between two BODIES, the trade's own measure (metres, never a pixel or a room). */
   const duelNear = (peerId) => { const b = duelBody(peerId); return !!b && tradeDistance(player.feetAt(), b.feet) <= DUEL_RANGE_M; };
   const duelAccount = accountDuels({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
+  /** AUDIT DUEL1 B6: my own feet (world frame) over the last DUEL_TRAIL_MS of a live duel, oldest first - a swing reached
+   *  me if it reached where I was when its striker saw me (duelCombat.js duelBlowPlausible). */
+  const _duelTrail = [];
   let _duelScope = false;   // the opponent's spell is landing: its instant damage stops at the duel's floor (playerSpellSinks)
   const _duelSent = new Map();   // my blow's number -> { kind, weapon } - what its result is about
   let _duelFoe = null;      // my opponent as the HUD's target bar reads a foe ({ entity: { name, health, maxHealth }, dead })
@@ -10550,7 +10558,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  sheet, landed through the one door with the duel's floor. `{ hit, dmg }`, or null for a blow that could not be. */
   const duelBlowIn = (d, duel) => {
     if (playerEntity.health <= 0 || modes?.deathUp?.() || (modes?.mode ?? 'exterior') !== 'exterior') return null;
-    if (!duelBlowPlausible(d, campToWire(player.feetAt()), duelWorldOf(duel.peer), DUEL_RADIUS_M)) return null;
+    if (!duelBlowPlausible(d, [..._duelTrail.map((e) => e.p), campToWire(player.feetAt())], duelWorldOf(duel.peer), DUEL_RADIUS_M)) return null;
     const who = peerName(duel.peer) ?? 'Your opponent';
     if (d.k === 'spell') {
       const spell = duelSpellFromWire(d.spell);
@@ -10626,7 +10634,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         hitEffects.showBloodSplash(0, [b.feet[0], b.feet[1] + (b.height ?? CAPSULE_HEIGHT) / 2, b.feet[2]], null, bloodHit(d.dmg, { maxHealth: d.h[1] }, { fromPlayer: true, weapon: sent.weapon ?? null }));
       }
       if (sent.weapon) {
-        let amount = Math.trunc((10 * d.dmg + 50) / 100);
+        let amount = Math.trunc((10 * duelWearDamage(d.dmg, sent.weapon, playerEntity) + 50) / 100);   // AUDIT DUEL1 A2: the defender's damage, never past what this weapon could deal
         if (amount === 0 && Math.random() < 0.2) amount = 1;
         if (amount > 0) lowerCondition(sent.weapon, amount, playerEntity, (l) => townTalk.say(l));
       }
@@ -10640,7 +10648,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (_duelFoe) { _duelFoe.dead = true; _duelFoe = null; }
     if (end.lost && duel.sub) {
       duelAccount.lost(duel.sub).then((r) => {
-        if (r?.ok && r.data?.recorded === false) tradeSay('This duel did not count toward your record (too soon after your last).');
+        if (r?.ok && r.data?.recorded === false) { const line = duelUncountedText(r.data.why); if (line) tradeSay(line); }   // AUDIT DUEL1: the service says which bound, and the line says it too
         duelRecords.forget(duel.sub); repaintDuelProfile();
       }).catch(() => {});
     } else if (end.won && duel.sub) duelRecords.forget(duel.sub);
@@ -10648,6 +10656,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** DUEL_HEAL_HOLD_MS after the end: "both are fully healed on duel end" - health, fatigue and magicka in full, and the
    *  opponent's spells on me stripped (a duel's poison does not outlive the duel). A player who fell to something else in
    *  the meantime is not raised by it. */
+  /** AUDIT DUEL1 D5: the player is leaving the game - every duel state ends here (duelSession.js reset: a live duel as
+   *  `left`, my asks taken back, the asks at me refused), and a duel in play or in its hold heals at once. */
+  const duelLeaveNow = () => {
+    const had = !!duelMgr.duel;
+    duelMgr.reset();
+    if (had) duelHeal();
+  };
   const duelHeal = () => {
     if (Array.isArray(playerEntity.activeEffects)) playerEntity.activeEffects = playerEntity.activeEffects.filter((a) => !a?.bundleDuel);
     if (playerEntity.health > 0 && !modes?.deathUp?.()) {
@@ -10715,8 +10730,15 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  the ring) - and the prompt's countdown. Runs before the death return, so a dead duellist's duel ends. */
   const duelFrame = () => {
     duelMgr.tick();
-    if ((duelMgr.live?.s ?? null) !== _duelRingSaid) _foesFullAt = -Infinity;   // my ring rose or fell: the onlookers hear it on the next frame
+    // my ring rose or fell: the onlookers hear it on the next frame - in a CELL room, the only one whose foes frame carries
+    // it (AUDIT DUEL1 C1: a duel ended in a dungeon left every one of that room's frames forced full)
+    if (online && isCellRoom(online.room) && (duelMgr.live?.s ?? null) !== _duelRingSaid) _foesFullAt = -Infinity;
     const live = duelMgr.live;
+    const tNow = performance.now();
+    if (live && (modes?.mode ?? 'exterior') === 'exterior') {
+      _duelTrail.push({ t: tNow, p: campToWire(player.feetAt()) });
+      while (_duelTrail.length && tNow - _duelTrail[0].t > DUEL_TRAIL_MS) _duelTrail.shift();
+    } else if (_duelTrail.length) _duelTrail.length = 0;
     player.arena = live && (modes?.mode ?? 'exterior') === 'exterior' ? { centre: campToScene(live.c), radius: DUEL_RADIUS_M } : null;
     duelPrompt?.render();
   };

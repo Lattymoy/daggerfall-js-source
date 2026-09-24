@@ -20,7 +20,7 @@
   {
     "name": "DUEL1-a-yes-to-nothing-unanswered",
     "file": "src/net/duelSession.js",
-    "old": "            if (!(duel && duel.peer === from && duel.s === d.s)) once({ k: 'cancel', to: from, s: d.s, why: duel ? 'busy' : 'timeout' });\n",
+    "old": "            if (!(duel && duel.peer === from && duel.s === d.s) && !engagedElsewhere(from)) answer(from, { k: 'cancel', to: from, s: d.s, why: duel ? 'busy' : 'timeout' });\n",
     "new": "",
     "tests": [
       "test/duel_session.test.js"
@@ -38,7 +38,7 @@
   {
     "name": "DUEL1-an-indoor-player-prompted",
     "file": "src/net/duelSession.js",
-    "old": "          if (can()) { once({ k: 'cancel', to: from, s: d.s, why: can() === 'outdoors' ? 'outdoors' : 'busy' }); return; }\n",
+    "old": "          if (can()) { answer(from, { k: 'cancel', to: from, s: d.s, why: can() === 'outdoors' ? 'outdoors' : 'busy' }); return; }\n",
     "new": "",
     "tests": [
       "test/duel_session.test.js"
@@ -47,7 +47,7 @@
   {
     "name": "DUEL1-the-challenged-side-measures-nothing",
     "file": "src/net/duelSession.js",
-    "old": "          if (near(from) !== true) { once({ k: 'cancel', to: from, s: d.s, why: 'range' }); return; }\n",
+    "old": "          if (near(from) !== true) { answer(from, { k: 'cancel', to: from, s: d.s, why: 'range' }); return; }\n",
     "new": "",
     "tests": [
       "test/duel_session.test.js"
@@ -290,8 +290,8 @@
   {
     "name": "DUEL1-a-swing-from-across-the-ring",
     "file": "src/combat/duelCombat.js",
-    "old": "  if (d.k === 'strike' && d.by === 'melee') return me.ground <= WEAPON_REACH + DUEL_MELEE_SLACK_M && me.up <= 3;",
-    "new": "  if (d.k === 'strike' && d.by === 'melee') return me.ground <= 2 * ringRadius;",
+    "old": "  if (melee) return mines.some((m) => { const me = worldApart(d.p, m); return me.ground <= WEAPON_REACH + DUEL_MELEE_SLACK_M && me.up <= 3; });",
+    "new": "  if (melee) return mines.some((m) => { const me = worldApart(d.p, m); return me.ground <= 2 * ringRadius; });",
     "tests": [
       "test/duel_combat.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "DUEL1-motor-capsule-not-taken-off",
     "file": "src/player/motor.js",
-    "old": "    const lim = Math.max(0, a.radius - CAPSULE_RADIUS);",
-    "new": "    const lim = Math.max(0, a.radius);",
+    "old": "    const to = clampToRing(this.pos, c, a.radius, CAPSULE_RADIUS);",
+    "new": "    const to = clampToRing(this.pos, c, a.radius, 0);",
     "tests": [
       "test/duel_wall.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "DUEL1-record-pair-bound-off-by-one",
     "file": "server-account/src/accounts.js",
-    "old": "       AND (SELECT COUNT(*) FROM duel_results WHERE loser = ?1 AND winner = ?2 AND at > ?3 - ?5) < ?6`,",
-    "new": "       AND (SELECT COUNT(*) FROM duel_results WHERE loser = ?1 AND winner = ?2 AND at > ?3 - ?5) <= ?6`,",
+    "old": "AND winner = ?2 AND at > ?3 - ?5) < ?6\n",
+    "new": "AND winner = ?2 AND at > ?3 - ?5) <= ?6\n",
     "tests": [
       "test/duel_record.test.js"
     ]
@@ -452,7 +452,7 @@
   {
     "name": "DUEL1-a-declined-challenger-prompts-again-at-once",
     "file": "src/net/duelSession.js",
-    "old": "          if (!incoming.has(from) && now() - (quiet.get(from) ?? -Infinity) < DUEL_REASK_MS) { once({ k: 'no', to: from, s: d.s }); return; }",
+    "old": "          if (!incoming.has(from) && now() - (quiet.get(from) ?? -Infinity) < DUEL_REASK_MS) { answer(from, { k: 'no', to: from, s: d.s }); return; }",
     "new": "",
     "tests": [
       "test/duel_session.test.js"

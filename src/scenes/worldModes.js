@@ -5341,6 +5341,10 @@ export function createWorldModes(host) {
    *  @returns {boolean} true when the swing hit a door */
   function attemptExteriorDoorBash(eye, dir) {
     if (mode !== 'exterior') return false;
+    // AUDIT DUEL1 B2: a swing that meets no body must not bash a duellist out of the ring - an open door is walked
+    // through, a dungeon's is entered, and the bash roll can open a locked one (and the watch hears the crime). The
+    // activate path's refusal (DUEL_DOOR_TEXT) is the word; a swing just misses.
+    if (host.duelHolds?.()) return false;
     const entries = doorTargets();
     const key = pickActivatable(eye, dir,
       entries.map((entry, i) => ({ key: i, aabb: doorWorldAabb(entry.door), distance: WEAPON_REACH })),
