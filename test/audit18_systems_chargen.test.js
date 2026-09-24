@@ -132,9 +132,11 @@ test('AUDIT 18 F2: a biography Arrow is an iron STACK, and two IT lines merge', 
   const e = freshEntity();
   const rolls = () => 0.999;   // Range(1, 21) -> 20
   assert.equal(applyBiographyEffect(e, 'IT 3 18 2', { rolls }), 'item');
+  // DISC21-A: through createWeapon's arrow arm (ItemBuilder.CreateWeapon's one home) - flags 0, and maxCondition the
+  // template's hitPoints beside the arm's currentCondition 0, where the hand-built record carried no maxCondition
   assert.deepEqual(e.items, [{
-    group: 'Weapons', templateIndex: 131, material: 0, stackCount: 20,
-    currentCondition: 0, name: 'Arrow', value: 2,
+    group: 'Weapons', templateIndex: 131, material: 0, flags: 0, stackCount: 20,
+    maxCondition: 1, currentCondition: 0, name: 'Arrow', value: 2,
   }]);
 
   // the material is forced to iron, so a second line of a DIFFERENT

@@ -26,7 +26,9 @@
 // corner would be a lie of a different kind.
 import { getBinding, isCombo, getCombo } from '../systems/inputActions.js';
 import { buttonText } from '../systems/controlsConfig.js';
-import { unityButtonGlyph } from './padGlyphs.js';
+import { unityButtonGlyph, padFamily } from './padGlyphs.js';
+import { controllerLook } from '../player/lookFilter.js';   // AUDIT DUEL1 D3: GP1's latch - the chip a pad player sees is a glyph
+import { bindings } from './input.js';   // DISC21-C: the live store, for quickslotHand's default
 
 /** Which action each cell of the diamond announces. The off hand's is
  *  decided by what is IN it, so it is a function of the kind rather
@@ -114,3 +116,14 @@ export const quickslotSpellTag = (opts = {}) => quickslotTag(SPELL_ACTION, opts)
 /** The tag as ONE STRING, for the HUD's changed-only write. Two tags
  *  that read the same are the same tag. */
 export const tagKey = (t) => (t ? (t.kind === 'glyph' ? `g:${t.family}:${t.code}` : `k:${t.text}`) : '');
+
+/** DISC21-C: what an empty quickslot press reads of the hand (systems/quickslots.js emptySlotLine) - the weapon the
+ *  rig holds, whether it is still sheathed, and the key that readies it, named exactly as the main cell's chip names
+ *  it. A pad glyph is not a word a line can say, so a pad-only binding names nothing. */
+export function quickslotHand(rig, store = bindings(), pad = { controller: controllerLook() && !!padFamily(), family: padFamily() ?? 'xbox' }) {
+  const pw = rig?.playerWeapon ?? null;
+  // AUDIT DUEL1 D3: the chip's own options (enhancedHud.js) - with the pad live the main cell shows a GLYPH, and naming
+  // the keyboard's key to a pad player told them a key they were not holding
+  const tag = quickslotTag(CELL_ACTIONS.main, { bindings: store, controller: !!pad?.controller, family: pad?.family ?? 'xbox' });
+  return { weapon: pw?.weapon ?? null, sheathed: !!pw?.sheathed, readyKey: tag?.kind === 'key' ? tag.text : null };
+}

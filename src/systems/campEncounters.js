@@ -58,8 +58,49 @@ import { CLASSIC_MINUTES_PER_SECOND } from './worldTick.js';   // real-seconds -
 // always was.
 const MAX_SEED_ATTEMPTS = 4;
 
-export const MIN_CAMP_SPAWN_DISTANCE = 14;   // a cluster wants more clearance than one foe
-export const MAX_CAMP_SPAWN_DISTANCE = 26;
+// CAMP-FAR (2026-09-24, Mac: "when stepping into a new chunk, enemy camps
+// spawn immediately behind the player, which is far too sudden and
+// overwhelming ... enemies should spawn at a distance of 100-150 meters
+// away"). The band WAS 14-26 - a lone wanderer's own reach, doubled -
+// and a group of five stood there on the frame of a pixel crossing is
+// on top of the player before they have turned round. A camp is a
+// thing you come across, so it is stood well out: a hundred to a
+// hundred and fifty metres (world units are metres, this port's scale).
+export const MIN_CAMP_SPAWN_DISTANCE = 100;   // a camp is come across, never landed on
+export const MAX_CAMP_SPAWN_DISTANCE = 150;
+
+/**
+ * CAMP-FAR: WHERE THE ANCHOR STANDS, a pure law. DFU's ring
+ * (`placeFoeFreely`, CreateFoe.cs) was built for a foe five to twenty
+ * units off: it walks out from the player's own height and probes FOUR
+ * units down for a floor, so at a hundred metres any real grade puts
+ * the ground outside the probe and the group never stands. The far
+ * anchor keeps the ring's bearing law - just outside the field of view
+ * (FOV plus 0..4 degrees, a coin for the side), so the group does not
+ * pop in on screen - takes one distance roll across the band, and asks
+ * the TERRAIN for its floor: `groundAt(x, z)` is the host's own height
+ * sampler (the exterior collider's `heightAt`), which answers -Infinity
+ * off the built ground, and that answers null here. The members are
+ * still stood around the anchor by the ring law, at the group's own
+ * spacing, where the four-unit probe is the right size.
+ *
+ * Unity's forward is (sin yaw, 0, cos yaw), the same as the ring's.
+ * @param {{feet:number[], yawRad:number, fovDegrees:number, groundAt:(x:number,z:number)=>number,
+ *          minDistance?:number, maxDistance?:number, rolls?:() => number}} o
+ * @returns {{x:number,y:number,z:number}|null}
+ */
+export function campAnchorSpot({ feet, yawRad, fovDegrees, groundAt, minDistance = MIN_CAMP_SPAWN_DISTANCE, maxDistance = MAX_CAMP_SPAWN_DISTANCE, rolls = Math.random }) {
+  if (!feet || typeof groundAt !== 'function') return null;
+  const side = fovDegrees + rolls() * 4;
+  const yawDegrees = rolls() > 0.5 ? -side : side;
+  const yaw = yawRad + yawDegrees * Math.PI / 180;
+  const dist = minDistance + rolls() * (maxDistance - minDistance);
+  const x = feet[0] + Math.sin(yaw) * dist;
+  const z = feet[2] + Math.cos(yaw) * dist;
+  const y = groundAt(x, z);
+  if (!Number.isFinite(y)) return null;   // off the built ground: no spot this try
+  return { x, y, z };
+}
 
 export const CAMP_SIZE = Object.freeze([3, 5]);   // inclusive
 export const PACK_SIZE = Object.freeze([2, 4]);

@@ -45,7 +45,7 @@
 // reload. Classic works that way because classic is a DOS program with
 // a fixed 320x200 screen. Neither reason survives here.
 //
-// This is ONE screen, under BOTH skins (main.js:114-222, FD1: the
+// This is ONE screen, under BOTH skins (main.js:116-224, FD1: the
 // launcher and its settings window are deleted; the classic rail is
 // Begin, which leads into the splash and PICK03I0 exactly as before).
 // Every destination is a press away from every other, settings
@@ -1785,8 +1785,43 @@ function portRowsInterface({ pause = false } = {}) {
   return out.filter(Boolean);   // FT13
 }
 
+/** QREPAIR (2026-09-24, Mac: "Add a quest refresh option to settings" - "Repair active quests"): THE GAME CATEGORY'S
+ *  PORT ROW. The repair runs over a game in play, so its door is the PAUSE's settings (the host hands
+ *  `hooks.repairQuests`, scenes/questBridge.js repair); on the front door the row is drawn, greyed, and says where it
+ *  lives - nothing hidden. The confirm is the one sheet every destructive-looking press here takes (`ask`), and the
+ *  repair's own line replaces the row's note until the menu is mounted again. */
+let questRepairSaid = null;
+export const QUEST_REPAIR_NOTE = 'Puts back the people, items, foes and map marks your active quests are missing. Your progress is kept.';
+export const QUEST_REPAIR_AWAY = 'In a game: open Settings from the pause menu.';
+export const QUEST_REPAIR_ASK = 'Puts back the people, items, foes and map marks your active quests are missing. '
+  + 'Nothing a quest did on purpose is undone, and your progress is kept.';
+function portRowsGame({ pause = false } = {}) {
+  const can = pause && typeof hooks?.repairQuests === 'function';
+  const row = el('div', 'row');
+  if (!can) row.dataset.live = '0';
+  const main = el('div', 'row-main');
+  main.append(el('div', 'row-name', 'Repair active quests'));
+  main.append(el('div', 'row-note', can ? (questRepairSaid ?? QUEST_REPAIR_NOTE) : QUEST_REPAIR_AWAY));
+  row.append(main);
+  const ctl = el('div', 'ctl');
+  const b = el('button', 'act rowact', 'Repair');
+  if (!can) b.disabled = true;
+  b.onclick = () => {
+    if (!can) return;
+    ask('Repair Active Quests', QUEST_REPAIR_ASK, 'Repair', () => {
+      let r = null;
+      try { r = hooks.repairQuests(); } catch { r = null; }
+      questRepairSaid = r?.text ?? 'The repair could not run here.';
+    });
+  };
+  ctl.append(b, el('span', `tier ${can ? 'live' : 'unavailable'}`));
+  row.append(ctl);
+  return [row];
+}
+
 /** Every port-own row of a category, or none. */
 function portRows(catId, opts = {}) {
+  if (catId === 'game') return portRowsGame(opts);   // QREPAIR
   if (catId === 'controls') return portRowsControls(opts);   // FT12: the Enhanced category is gone - its switches are the Features home's, its test door the Test Room's
   if (catId === 'interface') return portRowsInterface(opts);
   return [];
@@ -1835,7 +1870,7 @@ function categoryRows(catId) {
 }
 
 /** What the sub-rail counts: the rows that DO something here. */
-const liveCount = (catId) => portRows(catId).length + paneKeys(catId).filter((k) => tierOf(k) === 'live').length;   // FT13: what is drawn
+const liveCount = (catId) => portRows(catId).filter((r) => r.dataset?.live !== '0').length + paneKeys(catId).filter((k) => tierOf(k) === 'live').length;   // FT13: what is drawn; QREPAIR: a row greyed here does nothing here
 
 /** The Morrowind assets card, on the Mods page (MW-IMPORT, MW-D8, MWA1). */
 function morrowindCard() {
@@ -3556,6 +3591,7 @@ export function mountEnhancedMenu(host, {
   onAction = handler;
   mode = m === 'pause' ? 'pause' : 'boot';
   hooks = h ?? {};
+  questRepairSaid = null;   // QREPAIR: a repair's line is that visit's
   // MAC1 (Mac, 2026-09-10: "after exiting game and then going back to
   // enhanced settings, the Build and Switch Arms options are gone and
   // require me to reattach the files"). The Morrowind store is COUNTED

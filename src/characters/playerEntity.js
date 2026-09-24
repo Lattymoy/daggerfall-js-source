@@ -2,8 +2,8 @@
 // place). These initial values are the PRE-CHARGEN state only:
 // createCharacter (systems/chargen) rolls the real career the first
 // time a chargen-running context boots, and every host runs it
-// through systems/chargenSession.js - dungeonContext.js:2129,
-// world.js:3258, exterior.js:1383 and applyHeadlessChargen for the
+// through systems/chargenSession.js - dungeonContext.js:2130,
+// world.js:3272, exterior.js:1384 and applyHeadlessChargen for the
 // test room (AUDIT 23).
 //
 // NOT A GAP (recorded): the stand-ins below - flat skills 30,
@@ -182,7 +182,22 @@ export function registerPlayerDamageVeto(fn) { _damageVeto = typeof fn === 'func
  *  spends anything on delivering one. */
 export const playerDamageWithheld = () => { try { return !!_damageVeto?.(); } catch { return false; } };
 
-export function hurtPlayer(entity, dmg, { bypassShield = false } = {}) {
+/** DUEL1: THE DUEL'S WORD THAT ITS PLAYER FELL, registered by the host that runs the duel (scenes/world.js - the duel
+ *  law's `fell`) and reached through `duelSpare`, the `spare` every duel-sourced blow passes (the opponent's strike, the
+ *  instant half of their spell, and its damage over time off the one ticker every host shares). One registration, as
+ *  the damage veto's: a second copy of "am I in a duel" is a second chance to disagree. */
+let _duelFell = null;
+export function registerDuelFell(fn) { _duelFell = typeof fn === 'function' ? fn : null; }
+export const duelSpare = (entity) => { _duelFell?.(entity); };
+
+/**
+ * DUEL1: `spare` - A DUEL'S BLOW NEVER KILLS. Mac: "Loser drops to 1HP". A blow that would take a live player to zero
+ * leaves them at ONE instead, and `spare(entity)` is told (the duel's law: the side that falls says so and has lost);
+ * the avoid-death hook and the death presenter are never reached, because nobody died. Only the duel's own doors pass
+ * it (a strike resolved from the opponent, the opponent's spell and its damage over time); anything else - a wolf in
+ * the ring - kills as it always has.
+ */
+export function hurtPlayer(entity, dmg, { bypassShield = false, spare = null } = {}) {
   if (playerDamageWithheld()) return false;   // ARREST-SHIELD: before the shield pool AND before the SetHealth(0) door
   if (!(dmg > 0)) return false;
   // X1: THE SHIELD POOL (Shield.cs DamageShield :78-98) sits in front
@@ -202,6 +217,12 @@ export function hurtPlayer(entity, dmg, { bypassShield = false } = {}) {
     if (!(dmg > 0)) return false;
   }
   const wasAlive = (entity.health ?? 0) > 0;
+  if (spare && wasAlive && entity.health - dmg < 1) {
+    entity.health = 1;
+    surfacePlayer();
+    try { spare(entity); } catch { /* the duel's word is not the blow's problem */ }
+    return false;
+  }
   entity.health = Math.max(0, entity.health - dmg);
   surfacePlayer();
   // The TRANSITION, not the state. Firing on every call that finds health at

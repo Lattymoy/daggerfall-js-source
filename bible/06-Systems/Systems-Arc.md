@@ -3043,7 +3043,7 @@ ladders became `hudCtx` while this slice was in flight - one object
 the ladder AND the large HUD's eleven panels both read, so a click on
 the bar and a press of the bound key reach the same door. The Rest
 arm moved into it, which means the large HUD's rest panel
-(`hudLarge.js:153`, `action: 'Rest'`) now has a destination in every
+(`hudLarge.js:154`, `action: 'Rest'`) now has a destination in every
 host: it had been posting an action nothing above ground answered.
 `routeAction`'s own `case 'Rest': ctx.toggleRest?.()` already carried
 the interior host.
@@ -3196,7 +3196,7 @@ collapse is a bare `RaiseTime(1 * SecondsPerHour)` (`:2429`) that
 returns; `Update` is not re-entered.
 
 The port's hosts implement that same RaiseTime as
-`playerTicker.advance(60)` (`exterior.js:1064`, `world.js:1447`), fired
+`playerTicker.advance(60)` (`exterior.js:1065`, `world.js:1461`), fired
 from inside `sinks.drainFatigue` - so it re-enters `tickPlayerMinutes`
 from inside that function's own fatigue band. The nested tick wrote the
 marker an hour ahead, the outer frame's own `setWorldMinutes` then
@@ -3354,7 +3354,7 @@ PNG through the DOM and cached `{ width, height, data }` - the shape
 pass that object straight on as a colour32
 (`const color32 = swap ?? t.getColor32(bitmap, ...)`), and
 `renderer.uploadTexture` reads `color32.colors` and calls `asBytes` on
-it (`renderer.js:2810`). `colors` was `undefined`, `asBytes` reads
+it (`renderer.js:2951`). `colors` was `undefined`, `asBytes` reads
 `.buffer` off it, and the upload threw. Every pin on this door held:
 they asserted the cache stored the object the decoder returned, by
 IDENTITY, which is precisely the assertion that cannot see a wrong
@@ -3365,7 +3365,7 @@ orientation is not its only problem".
 **And orientation was the other half.** The port's texel convention is
 bottom-up: `getColor32` writes `dstRow = (dstHeight - 1 - border - y) *
 dstWidth` (`baseImageFile.js:143`, `BaseImageFile.cs:250`), the upload
-leaves `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:2800`), and `BB_VS`
+leaves `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:2941`), and `BB_VS`
 samples the quad's top at v=1 (`renderer.js:368-392`). A browser decode
 is TOP row first. So a swap named correctly would still have drawn
 mirrored beside the classic art in the same batch loop - the exact
@@ -4572,7 +4572,7 @@ the true clause along with the false ones is in the campaign, because
 over-retiring is the equal and opposite failure.
 
 **And one delegation pointed at a flag nobody had ever written.**
-`world.js:2657` said the dungeon-mode enchant ctx was "FLAGGED there
+`world.js:2671` said the dungeon-mode enchant ctx was "FLAGGED there
 with the rest of its enchant wiring" in `dungeonContext.js`. It was
 not. `setDefaultEnchantCtx` had exactly **one** caller in the tree, so
 the standalone `?dungeon` host ran every arm that needs a host
@@ -5322,7 +5322,7 @@ blocked.
 Mac: "let's work on the horses and carts". The port has carried the CART
 as an inventory fact since the W-slice - the wagon's 750kg, the
 dungeon-exit prompt, the transfer guards - and the HORSE as an item
-nobody could sit on. `motor.js:633` passed `riding: false` into the
+nobody could sit on. `motor.js:640` passed `riding: false` into the
 climbing gate with the note "the transport arc pends", and
 `DaggerfallTransportWindow` is the last of DFU's 60 real windows the
 port does not have (UI-Arc.md's table).
@@ -5550,7 +5550,7 @@ to that cite and moves under the same content check; citeMerge had
 done this since CS2 and citeShift only reported them, so the two
 regexes are one law now, exported from citeShift (`ANY_CITE`,
 `CONTINUATION`) and imported by citeMerge. (2) A TEST'S ESCAPED
-LITERAL FOLLOWS THE ROW IT PINS: `world\.js:5885` in citedrift.test.js
+LITERAL FOLLOWS THE ROW IT PINS: `world\.js:5903` in citedrift.test.js
 is a quote of a Ledger row's text; the row is STRUCK and its number
 held, and the literal used to move anyway, parting the pin from its
 row at every shift. The CLI plans every doc first, learns which
@@ -7880,6 +7880,87 @@ its tests name a `SPAWNABLE_DUNGEON_TYPES` and an async `spawnedDungeonAt`
 that are in neither this tree nor the zip. Taken as files they would have
 reverted the first and failed to import the second. Only the three
 changes its own CHANGES.md describes are here.
+
+### CAMP-FAR - A CAMP IS COME ACROSS, NOT LANDED ON (2026-09-24)
+
+Mac: "when stepping into a new chunk, enemy camps spawn immediately
+behind the player, which is far too sudden and overwhelming. Instead,
+when the spawn chance triggers, enemies should spawn at a distance of
+100-150 meters away from the player."
+
+The band `MIN_CAMP_SPAWN_DISTANCE`/`MAX_CAMP_SPAWN_DISTANCE` moves from
+14-26 to 100-150 (world units are metres). The trigger, the chance, the
+gate, the ownership guard and the composition are untouched.
+
+**The anchor needed its own law.** `placeFoeFreely` is DFU's ring for a
+foe five to twenty units off: it walks out at the PLAYER'S height and
+probes four units down for a floor, so a hundred metres out any real
+grade puts the ground outside the probe and the group never stands.
+`campAnchorSpot` (campEncounters.js, pure) keeps the ring's bearing law
+- just outside the field of view, FOV plus 0..4 degrees with a coin for
+the side, so the group does not pop in on screen - takes one distance
+roll across the band, and asks the host's TERRAIN sampler for its floor
+(`collider.heightAt`, which answers -Infinity off the built ground; the
+law answers null and the host tries again, up to
+`LOOSE_FOE_PLACE_ATTEMPTS`). Both exterior hosts stand the anchor
+through it; the members still stand around the anchor by the ring law
+at the group's spacing, where the four-unit probe is the right size.
+DISC19-F's rect rejection on the anchor stays where it was.
+
+At 150 m every spot is on built ground on a crossing: the entered pixel
+and its lateral neighbours were in range of the pixel just left, at any
+terrain distance.
+
+`test/camp1_groups.test.js` - the band, the bearing (never inside the
+view, never past the slack), both ends of the distance roll, the floor
+from the sampler, null off the ground; the two hosts pinned by source
+on the new call and the absence of the ring on the anchor.
+`tools/mutants/camp1rest.json`'s band mutant re-aimed at the new line.
+
+### SPAWNED-DUNGEONS3 - THE PLAYER'S OWN PIXEL, IN METRES (2026-09-24)
+
+Mac: "Dungeons that currently spawn on the player's exact pixel or up to
+2 pixels away should now always spawn directly on the player's pixel.
+Additionally, the nearby direction message should display the
+distance/direction in meters. The dungeon has to spawn 300+ meter away
+from the player in the same pixel/chunk."
+
+**The line is the entered pixel's alone.** 2b searched a 5x5 block and
+named the closest, so the player heard of dungeons two pixels off.
+`announceNearbySpawns(px, py, feet)` now asks one thing - does the pixel
+just entered hold a spawn - and says once: `You see a Dungeon 410 metres
+to the North!`. The distance is the scene's own: the pixel's translation
+plus the location's centre in the pixel (`spawnedLocationCentreLocal`),
+less the player's feet on the frame of the crossing. Scene x runs east
+and scene z runs NORTH (`pixelTranslation` negates py), the (east,
+north) pair `directionHintString` takes - no sign flipped, unlike the
+map-pixel delta 2b fed it. `dungeonSightLine` rounds to the nearest ten
+metres, never zero. A spawn on a neighbouring pixel is announced when
+that pixel is entered.
+
+**300+ metres holds by construction, and the template gate keeps it.**
+A spawn stands where every location stands - CENTRED in its pixel
+(`getLocationTerrainTileOrigin`, SetLocationTiles' law) - and a pixel is
+819.2 m on a side, a block 102.4. A one-block exterior runs
+358.4..460.8 on both axes; a player entering at the middle of an edge is
+358 m from its nearest edge and 410 from its centre. What could break
+the rule is the template's size: three blocks leaves 256 m. So
+`spawnTemplates` admits only exteriors whose `spawnClearance(w, h)`
+(pixel edge to the exterior's nearest edge, the tighter axis) is at
+least `SPAWN_CLEARANCE_M` 300 - one and two blocks - and the old "no
+one-block exterior: any real dungeon" fallback is gone, because a
+fallback that breaks the rule is not one. One-block exteriors are still
+preferred when any exist.
+
+The roll, the salt, the id, the clone and the TTL are untouched: a
+dungeon is on a pixel or it is not, for every client alike.
+
+`test/spawneddungeons.test.js` - the clearance table, the centre, the
+edge-midpoint proof for every admitted shape (and that a 3x3 breaks
+it), the gate refusing three blocks with nothing else on offer, the
+line's rounding, the compass pair; the host pinned by source on the
+one-pixel test, the frame arithmetic and the single say.
+
 
 
 ## WINFOE1 - THE ENEMY POOLS KEEP THEIR CLOCK UNDER A WINDOW (2026-09-17)

@@ -8,7 +8,7 @@ import {
   rollCampEncounter, rollCampEncounterOnChunkLoad, amGroupRollOwner, campWindowOpen, rollCampKind, rollCampChance,
   rollCampChanceOnChunkLoad, CAMP_WINDOW_MINUTES, CAMP_WINDOW_REAL_MINUTES, CAMP_SIZE, PACK_SIZE, CAMP_SPACING,
   PACK_SPACING, CAMP_ALERT_RADIUS, PACK_ALERT_RADIUS, MIN_CAMP_SPAWN_DISTANCE, MAX_CAMP_SPAWN_DISTANCE,
-  CAMP_CHANCE, CAMP_CHANCE_ON_CHUNK_LOAD, GROUP_ROLL_RADIUS,
+  CAMP_CHANCE, CAMP_CHANCE_ON_CHUNK_LOAD, GROUP_ROLL_RADIUS, campAnchorSpot,
 } from '../src/systems/campEncounters.js';
 import { CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
 import { areEnemiesNearby, RESTING_DISTANCE, MIN_WILDERNESS_SPAWN_DISTANCE } from '../src/systems/encounters.js';   // CAMP1-REST: the interrupt, its reach, and the band the classic roll mints inside it
@@ -127,7 +127,7 @@ test('CAMP1 by source: both exterior hosts roll it after the single roll comes b
     assert.doesNotMatch(fn, /const campHit = rollCampEncounter\(/, 'world.js: no live timer roll left in the per-minute tick');
   }
   assert.doesNotMatch(w, /import \{ rollCampEncounter,/, 'world.js: the unused timer entry point is dropped from the import');
-  assert.match(w, /import \{ rollCampEncounterOnChunkLoad, amGroupRollOwner \} from '\.\.\/systems\/campEncounters\.js';/, 'world.js: only the chunk-load twin and the ownership guard are imported now');
+  assert.match(w, /import \{ rollCampEncounterOnChunkLoad, amGroupRollOwner, campAnchorSpot \} from '\.\.\/systems\/campEncounters\.js';/, 'world.js: only the chunk-load twin, the ownership guard and the far anchor are imported now');
   for (const [name, h] of [['exterior.js', e]]) {
     const i = h.indexOf('function runEncounterTick(');
     const fn = h.slice(i, h.indexOf('\n  }\n', i));
@@ -139,7 +139,11 @@ test('CAMP1 by source: both exterior hosts roll it after the single roll comes b
   for (const [name, h] of [['world.js', w], ['exterior.js', e]]) {
     const si = h.indexOf('const _standCampEncounter = (hit, feet) => {');
     const stand = h.slice(si, h.indexOf('\n  };', si));
-    assert.match(stand, /anchor = placeFoeFreely\(anchorEnv, \{ minDistance: hit\.minDistance, maxDistance: hit\.maxDistance, lineOfSightCheck: true \}\);/, `${name}: the anchor is placed as a single encounter is - the group's band, out of view`);
+    // CAMP-FAR (2026-09-24): the anchor is no longer the ring law's - that law probes four units down from the
+    // player's own height and cannot find ground a hundred metres out on any real grade. The far law takes the
+    // group's band, the player's yaw and view, and the collider's own terrain sampler for its floor.
+    assert.match(stand, /anchor = campAnchorSpot\(\{ feet, yawRad: cam\.yaw, fovDegrees: fieldOfView\(\) \* 180 \/ Math\.PI, groundAt: collider\.heightAt, minDistance: hit\.minDistance, maxDistance: hit\.maxDistance \}\);/, `${name}: the anchor stands by the far law - the group's band, out of view, on the terrain's floor`);
+    assert.doesNotMatch(stand, /placeFoeFreely\(anchorEnv/, `${name}: the ring law no longer places the anchor`);
     assert.match(stand, /playerFeet: \[anchorFeet\[0\], anchorFeet\[1\] \+ 0\.9, anchorFeet\[2\]\],\s*\n\s*playerYawRad: Math\.random\(\) \* Math\.PI \* 2,\s*\n\s*fovDegrees: 0,/, `${name}: each member's env is centred on the ANCHOR, any bearing`);
     assert.match(stand, /spot = placeFoeFreely\(memberEnv, \{ minDistance: 1, maxDistance: hit\.spacing, lineOfSightCheck: false \}\);/, `${name}: within the group's spacing, no player-relative view test`);
     assert.match(stand, /if \(!spot\) continue;/, `${name}: a member with no ground is skipped, not the group`);
@@ -226,7 +230,7 @@ test('CAMP1 by source: the group roll is skipped while resting - camps/packs onl
 //
 //     SEEN me          -> reported at ANY range        (a foe minted "LookAt player" trips this at once)
 //     not seen, <= 12  -> reported if it would spawn   (RESTING_DISTANCE, the fallback)
-//     not seen,  > 12  -> dropped before anything else (the whole camp band, 14..26, lives here)
+//     not seen,  > 12  -> dropped before anything else (the whole camp band, 100..150 since CAMP-FAR, lives here)
 //
 // So a lone wanderer wakes the sleeper because it is minted FACING them, not because of where it stands (its own
 // band, 10..20, is mostly outside the fallback too). A camp is minted facing its ANCHOR and out past the
@@ -276,4 +280,50 @@ test('CAMP-REST by source: every time skip is spent through the tick as a rest, 
   assert.match(e, /advanceMinutes: \(n\) => \{ playerTicker\.advance\(n\); runEncounterTick\(walkMode \? player\.pos : cam\.pos, null, true\); \}/, 'exterior.js: the camp meal');
   assert.match(ef, /const campAsleep = f\.campId != null && !!senses\.playerEntity\?\.isResting && !isLocalPlayerTarget\(ai\.target\);/, 'a campmate, not already on the player, while the player rests');
   assert.match(ef, /noTargetMode: campAsleep,/, 'the target machine leaves the player off its list for it');
+});
+
+// ═══ CAMP-FAR (2026-09-24) ══════════════════════════════════════════
+//
+// Mac: "when stepping into a new chunk, enemy camps spawn immediately
+// behind the player, which is far too sudden and overwhelming. Instead,
+// when the spawn chance triggers, enemies should spawn at a distance of
+// 100-150 meters away from the player." The band moves out, and the
+// anchor gets its own placement law, because DFU's ring cannot reach:
+// it walks out at the player's height and probes FOUR units down.
+test('CAMP-FAR: the band is 100..150 metres, and the anchor law stands it there - just outside the view, on the terrain\'s own floor, or nowhere off the built ground', () => {
+  assert.deepEqual([MIN_CAMP_SPAWN_DISTANCE, MAX_CAMP_SPAWN_DISTANCE], [100, 150]);
+  const feet = [1000, 37, -2000];
+  const fov = 65;
+  const flat = () => 12.5;
+  // scripted rolls: the FOV slack (0..4 deg), the side coin, the distance across the band
+  let a = campAnchorSpot({ feet, yawRad: 0, fovDegrees: fov, groundAt: flat, rolls: rollsOf([0, 0.9, 0]) });
+  assert.ok(a, 'a spot');
+  assert.equal(a.y, 12.5, 'the floor is the terrain sampler\'s answer, not the player\'s height');
+  let d = Math.hypot(a.x - feet[0], a.z - feet[2]);
+  assert.ok(Math.abs(d - MIN_CAMP_SPAWN_DISTANCE) < 1e-6, `distance roll 0: the bottom of the band (${d})`);
+  // yaw 0 faces +z; the coin > 0.5 takes the NEGATIVE side, so the spot is 65 degrees LEFT of forward: x = -sin(65) * 100
+  assert.ok(Math.abs(a.x - (feet[0] - Math.sin(fov * Math.PI / 180) * 100)) < 1e-6, 'just outside the left edge of the view');
+  assert.ok(Math.abs(a.z - (feet[2] + Math.cos(fov * Math.PI / 180) * 100)) < 1e-6);
+  a = campAnchorSpot({ feet, yawRad: 0, fovDegrees: fov, groundAt: flat, rolls: rollsOf([1, 0.1, 1]) });
+  d = Math.hypot(a.x - feet[0], a.z - feet[2]);
+  assert.ok(Math.abs(d - MAX_CAMP_SPAWN_DISTANCE) < 1e-6, `distance roll 1: the top of the band (${d})`);
+  // FOV + 4 degrees, on the RIGHT: the bearing is 69 degrees off forward, never inside the view
+  const bearing = Math.atan2(a.x - feet[0], a.z - feet[2]) * 180 / Math.PI;
+  assert.ok(Math.abs(bearing - (fov + 4)) < 1e-6, `bearing ${bearing}: FOV plus the full slack, to the right`);
+  // the band, over many random rolls, never lands inside MIN or beyond MAX, and never inside the view
+  for (let i = 0; i < 500; i++) {
+    const yaw = Math.random() * Math.PI * 2;
+    const s = campAnchorSpot({ feet, yawRad: yaw, fovDegrees: fov, groundAt: flat });
+    const dist = Math.hypot(s.x - feet[0], s.z - feet[2]);
+    assert.ok(dist >= MIN_CAMP_SPAWN_DISTANCE - 1e-6 && dist <= MAX_CAMP_SPAWN_DISTANCE + 1e-6, `in the band: ${dist}`);
+    let off = ((Math.atan2(s.x - feet[0], s.z - feet[2]) - yaw) * 180 / Math.PI) % 360;
+    if (off > 180) off -= 360; if (off < -180) off += 360;
+    assert.ok(Math.abs(off) >= fov - 1e-6 && Math.abs(off) <= fov + 4 + 1e-6, `outside the view, inside the slack: ${off}`);
+  }
+  // off the built ground the sampler answers -Infinity (world.js heightAt), and the law answers null: the host tries again
+  assert.equal(campAnchorSpot({ feet, yawRad: 0, fovDegrees: fov, groundAt: () => -Infinity }), null);
+  assert.equal(campAnchorSpot({ feet, yawRad: 0, fovDegrees: fov, groundAt: () => NaN }), null);
+  assert.equal(campAnchorSpot({ feet: null, yawRad: 0, fovDegrees: fov, groundAt: flat }), null, 'no feet, no spot');
+  // the far anchor is outside the rest interrupt's unseen reach by a wide margin - CAMP1-REST's gate above still holds
+  assert.ok(MIN_CAMP_SPAWN_DISTANCE > RESTING_DISTANCE * 8);
 });

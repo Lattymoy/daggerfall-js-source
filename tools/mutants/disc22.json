@@ -32,7 +32,7 @@
     "tests": [
       "test/disc22a_magic_repairs.test.js"
     ],
-    "old": "  return isOnlinePage(search) && Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key)",
+    "old": "  return Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key) && isOnlinePage(search)",
     "new": "  return Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key)"
   },
   {

@@ -56,7 +56,7 @@ import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../pla
 import { FOOTSTEP_VOLUME } from '../systems/footsteps.js';   // AUDIT 58: PlayerFootsteps.FootstepVolumeScale (:30), which its one-shots carry too
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { SOUND } from '../systems/soundClips.js';
-import { surfacePlayer, hurtPlayer } from '../characters/playerEntity.js';
+import { surfacePlayer, hurtPlayer, duelSpare } from '../characters/playerEntity.js';   // DUEL1: the duel's floor, for its damage over time
 import { readSpellsStd, spellsByIndexMap } from '../formats/spellsStd.js';   // G4: the two magic registries, one home
 import { readMagicDef } from '../formats/magicDef.js';
 import { setMagicItemTemplates, setSpellRecordsByIndex } from '../systems/loot.js';
@@ -1365,11 +1365,12 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
     // AUDIT 21 (hosts lane, F6): through the one damage door - disease,
     // poison and continuous-damage effects can kill you, and above ground
     // they used to do it silently.
-    hurt: (n) => hurtPlayer(entity, n),
+    hurt: (n, a = null) => hurtPlayer(entity, n, a?.bundleDuel ? { spare: duelSpare } : undefined),   // DUEL1: a duel opponent's damage over time stops at 1 health (characters/playerEntity.js spare)
     heal: (n) => { if (n > 0) entity.health = Math.min(entity.maxHealth ?? Infinity, (entity.health ?? 0) + n); },
     drainMagicka: (n) => { if (n > 0) entity.magicka = Math.max(0, (entity.magicka ?? 0) - n); },
     restoreMagicka: (n) => { if (n > 0) entity.magicka = Math.min(entity.maxMagicka ?? Infinity, (entity.magicka ?? 0) + n); },
-    drainFatigue: (n) => {
+    drainFatigue: (n, a = null) => {
+      if (a?.bundleDuel) n = Math.min(n, Math.max(0, (entity.fatigue ?? 0) - 1));   // AUDIT DUEL1 B3: a duel opponent's fatigue damage over time leaves 1 - the collapse at 0 can kill
       if (n <= 0) return;
       entity.fatigue = Math.max(0, (entity.fatigue ?? 0) - n);
       // AUDIT 23 (C5: hosts-5 = entity-3) - DaggerfallEntity.cs:360-366:

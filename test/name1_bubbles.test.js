@@ -427,7 +427,7 @@ test('NAME1 + BUBBLE1: the wiring in scenes/world.js - the layer is made ONCE be
   assert.match(bare, /remotePlayers\.nameFrame\(\{/, 'the whole pass in one call');
   assert.match(bare, /w: nameLayer \? canvas\.clientWidth : canvas\.width,/, 'CSS pixels for a style attribute, the buffer\'s for the bitmap pass');
   assert.match(bare, /h: nameLayer \? canvas\.clientHeight : canvas\.height,/);
-  assert.match(bare, /rect: largeHudViewportRect\(canvas\.clientHeight\),/, 'the docked HUD\'s own viewport (E5)');
+  assert.match(bare, /rect: worldViewportRect\(canvas\.clientWidth, canvas\.clientHeight\),/, 'the docked HUD\'s own viewport (E5; RETRO1: and retro\'s pillarbox)');
   assert.match(bare, /layer: nameLayer, log: chatLog, colorOf: \(id\) => social\?\.colorOf\(id\) \?\? null, blocked,/,
     'the layer, the log the bubbles come from and the picture\'s colour');
   assert.match(bare, /renderer, font: townTalk\.font, scale, hudScale: enhancedHudScale\(\),/, 'AUDIT NAME1 F3: and the player\'s own HUD scale');

@@ -1,0 +1,256 @@
+[
+  {
+    "name": "AUDIT-DUEL1-A1-guests-counted",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (!loser.handle) {\n",
+    "new": "  if (false) {\n",
+    "tests": [
+      "test/duel_record.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-A1-a-guest-winner-counted",
+    "file": "server-account/src/accounts.js",
+    "old": "WHERE EXISTS (SELECT 1 FROM players WHERE id = ?2 AND handle IS NOT NULL)",
+    "new": "WHERE EXISTS (SELECT 1 FROM players WHERE id = ?2)",
+    "tests": [
+      "test/duel_record.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-A1-the-winner-bound-unread",
+    "file": "server-account/src/accounts.js",
+    "old": "AND at > ?3 - ?5) < ?7`,",
+    "new": "AND at > ?3 - ?5) < ?7 + 1000`,",
+    "tests": [
+      "test/duel_record.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-B5-the-draw-unread",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (Number(mutual?.meta?.changes ?? 0) > 0) return { recorded: false, why: 'draw'",
+    "new": "  if (false) return { recorded: false, why: 'draw'",
+    "tests": [
+      "test/duel_record.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-B5-the-draw-takes-a-strangers-row",
+    "file": "server-account/src/accounts.js",
+    "old": "'DELETE FROM duel_results WHERE loser = ?1 AND winner = ?2 AND at >= ?3 - ?4'",
+    "new": "'DELETE FROM duel_results WHERE loser = ?1 AND at >= ?3 - ?4'",
+    "tests": [
+      "test/duel_record.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-A2-the-wear-uncapped",
+    "file": "src/combat/duelCombat.js",
+    "old": "  return Math.min(d, Math.max(1, top) * DUEL_WEAR_MULT);",
+    "new": "  return d;",
+    "tests": [
+      "test/auditduel1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-A2-the-cap-below-an-honest-blow",
+    "file": "src/combat/duelCombat.js",
+    "old": "  return Math.min(d, Math.max(1, top) * DUEL_WEAR_MULT);",
+    "new": "  return Math.min(d, Math.max(1, top));",
+    "tests": [
+      "test/auditduel1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-A3-every-stranger-answered",
+    "file": "src/net/duelSession.js",
+    "old": "          if (busy) { if (!engagedElsewhere(from)) answer(",
+    "new": "          if (busy) { if (true) answer(",
+    "tests": [
+      "test/auditduel1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-A3-the-limiter-per-frame",
+    "file": "src/net/duelSession.js",
+    "old": "    if (t - (answered.get(peer) ?? -Infinity) < DUEL_REASK_MS) return false;\n",
+    "new": "",
+    "tests": [
+      "test/auditduel1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-A5-the-cancel-without-its-quiet",
+    "file": "src/net/duelSession.js",
+    "old": "incoming.delete(from); quiet.set(from, now()); if (d.why",
+    "new": "incoming.delete(from); if (d.why",
+    "tests": [
+      "test/auditduel1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-B5-the-draw-unsaid",
+    "file": "src/net/duelSession.js",
+    "old": "          if (!dl && duel && duel.phase === 'over' && duel.peer === from",
+    "new": "          if (false && !dl && duel && duel.phase === 'over' && duel.peer === from",
+    "tests": [
+      "test/auditduel1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-D5-a-gone-peers-ask-kept",
+    "file": "src/net/duelSession.js",
+    "old": "      for (const p of [...incoming.keys()]) if (!reaches(p)) mgr.peerGone(p);\n",
+    "new": "",
+    "tests": [
+      "test/auditduel1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-A4-the-cap-on-the-wrong-casts",
+    "file": "src/systems/effects.js",
+    "old": "      if (duelCast && amt > 0) amt = Math.min(amt, Math.max(0, liveStat(target, stat) - 1));",
+    "new": "      if (!duelCast && amt > 0) amt = Math.min(amt, Math.max(0, liveStat(target, stat) - 1));",
+    "tests": [
+      "test/auditduel1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-A4-the-duel-drain-uncapped",
+    "file": "src/systems/effects.js",
+    "old": "      if (duelCast && amt > 0) amt = Math.min(amt, Math.max(0, liveStat(target, stat) - 1));",
+    "new": "",
+    "tests": [
+      "test/auditduel1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-B3-the-round-without-its-entry",
+    "file": "src/systems/effects.js",
+    "old": "sinks.drainFatigue(n * FATIGUE_MULTIPLIER, a);",
+    "new": "sinks.drainFatigue(n * FATIGUE_MULTIPLIER);",
+    "tests": [
+      "test/auditduel1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-B3-the-instant-without-its-mark",
+    "file": "src/systems/effects.js",
+    "old": "sinks.drainFatigue(n * FATIGUE_MULTIPLIER, duelCast ? DUEL_SOURCE : undefined);",
+    "new": "sinks.drainFatigue(n * FATIGUE_MULTIPLIER);",
+    "tests": [
+      "test/auditduel1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-B3-the-shared-sink-unfloored",
+    "file": "src/scenes/shared.js",
+    "old": "      if (a?.bundleDuel) n = Math.min(n, Math.max(0, (entity.fatigue ?? 0) - 1));",
+    "new": "",
+    "tests": [
+      "test/auditduel1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-B3-the-world-sink-unfloored",
+    "file": "src/scenes/world.js",
+    "old": "drainExteriorFatigue(_duelScope || a?.bundleDuel ? Math.min(n, Math.max(0, (playerEntity.fatigue ?? 0) - 1)) : n)",
+    "new": "drainExteriorFatigue(n)",
+    "tests": [
+      "test/auditduel1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-B6-the-trail-unread",
+    "file": "src/combat/duelCombat.js",
+    "old": "  if (melee) return mines.some((m) => {",
+    "new": "  if (melee) return [mines.at(-1)].some((m) => {",
+    "tests": [
+      "test/auditduel1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-B6-the-melee-slack-the-spells",
+    "file": "src/combat/duelCombat.js",
+    "old": "  const slack = melee ? DUEL_MELEE_POS_SLACK_M : DUEL_POS_SLACK_M;",
+    "new": "  const slack = DUEL_POS_SLACK_M;",
+    "tests": [
+      "test/auditduel1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-D4-the-motor-clamps-wide",
+    "file": "src/player/motor.js",
+    "old": "    const to = clampToRing(this.pos, c, a.radius, CAPSULE_RADIUS);",
+    "new": "    const to = clampToRing(this.pos, c, a.radius * 2, CAPSULE_RADIUS);",
+    "tests": [
+      "test/auditduel1.test.js",
+      "test/duel_wall.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-B2-the-bash-unrefused",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (host.duelHolds?.()) return false;\n",
+    "new": "",
+    "tests": [
+      "test/auditduel1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-B4-the-save-keeps-the-duels",
+    "file": "src/systems/save.js",
+    "old": "  snap.activeEffects = (entity.activeEffects ?? []).filter((a) => !a.heldItem && !a.bundleDuel)",
+    "new": "  snap.activeEffects = (entity.activeEffects ?? []).filter((a) => !a.heldItem)",
+    "tests": [
+      "test/auditduel1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-C1-forced-full-in-a-dungeon",
+    "file": "src/scenes/world.js",
+    "old": "    if (online && isCellRoom(online.room) && (duelMgr.live?.s ?? null) !== _duelRingSaid) _foesFullAt = -Infinity;",
+    "new": "    if ((duelMgr.live?.s ?? null) !== _duelRingSaid) _foesFullAt = -Infinity;",
+    "tests": [
+      "test/auditduel1.test.js",
+      "test/duel_wall.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-D2-the-heal-without-its-strip",
+    "file": "src/scenes/world.js",
+    "old": "    if (Array.isArray(playerEntity.activeEffects)) playerEntity.activeEffects = playerEntity.activeEffects.filter((a) => !a?.bundleDuel);\n",
+    "new": "",
+    "tests": [
+      "test/auditduel1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-D2-the-heal-without-health",
+    "file": "src/scenes/world.js",
+    "old": "    if (playerEntity.health > 0 && !modes?.deathUp?.()) {\n      playerEntity.health = playerEntity.maxHealth;\n",
+    "new": "    if (playerEntity.health > 0 && !modes?.deathUp?.()) {\n",
+    "tests": [
+      "test/auditduel1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-D5-the-leave-never-runs",
+    "file": "src/scenes/world.js",
+    "old": "    try { duelLeaveNow(); } catch { /* no duel was built: nothing to end */ }\n",
+    "new": "",
+    "tests": [
+      "test/auditduel1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DUEL1-D3-the-pad-ignored",
+    "file": "src/ui/quickslotTags.js",
+    "old": "controller: !!pad?.controller",
+    "new": "controller: false",
+    "tests": [
+      "test/disc21.test.js"
+    ]
+  }
+]

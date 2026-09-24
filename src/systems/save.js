@@ -26,6 +26,7 @@ import { createSceneCache, snapshotSceneCache, restoreSceneCache } from './scene
 import { seedCustomSpellIndex } from './spellMaker.js';   // S1: made spells carry their own record
 import { seedBundleSeq } from './effects.js';   // X10: the live-bundle counter's restore half
 import { repairLostCurses } from './curseRepair.js';   // CURSE-REPAIR1: a curse the round clock pruned, given back
+import { repairUnmintedConditions } from './conditionRepair.js';   // DISC21-A: a wearable minted with no condition, minted
 import { SOCIAL_GROUPS } from '../formats/factionFile.js';   // AUDIT 24
 import { travelMapSaveData, restoreTravelMapSaveData } from './travelMapState.js';   // U41: TravelMapSaveData
 import { getEscortFacesSaveData, restoreEscortFacesSaveData } from '../ui/hudEscortFaces.js';   // FE1: SaveData_v1.escortingFaces
@@ -342,7 +343,7 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // the bundle with its item's UID and discards one that cannot
   // resolve (:2240/:2312); the port re-instantiates from the worn set
   // at restore (restartHeldEnchantments), the same outcome.
-  snap.activeEffects = (entity.activeEffects ?? []).filter((a) => !a.heldItem).map(copyEffectEntry);
+  snap.activeEffects = (entity.activeEffects ?? []).filter((a) => !a.heldItem && !a.bundleDuel).map(copyEffectEntry);   // AUDIT DUEL1 B4: a duel opponent's spell is the duel's, and the duel ends with the page - never saved
   for (const k of REP_ARRAYS) snap[k] = entity[k] ? [...entity[k]] : null;
   // AUDIT 18 F3: the CRIME/LEGAL state DFU writes out one field at a
   // time - crimeCommitted and haveShownSurrenderToGuardsDialogue
@@ -593,6 +594,12 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.items = snap.items.map((it) => setItemFields(it));   // JAN1: SetItem's two writes on every item in (a copy, as before)
   entity.wagonItems = (snap.wagonItems ?? []).map((it) => setItemFields(it));   // W-slice (pre-W saves restore empty); JAN1: set on the way in
   entity.otherItems = (snap.otherItems ?? []).map((it) => setItemFields(it));   // R1: the in-repair collection (pre-R1 saves restore empty); JAN1: set on the way in
+  // DISC21-A: a biography item was minted with no condition until DISC21, and Roleplay & Realism wore the questions'
+  // ebony dagger to 20% of nothing - broken, and undamaged to the repairer. Minted now, by the law it missed.
+  for (const list of [entity.items, entity.wagonItems, entity.otherItems]) {
+    const n = repairUnmintedConditions(list);
+    if (n) console.info(`[save] DISC21-A: ${n} item(s) given the condition they were never minted with`);
+  }
   entity.rentedRooms = (snap.rentedRooms ?? []).map((r) => ({ ...r }));   // U39: the rented rooms (pre-U39 saves restore empty)
   // JAN1 (2026-09-18, Janome: CRASH `region 17 is outside the 0 bank accounts`, a softlock at the bank): a pre-B1 save
   // restored an EMPTY table, which is truthy, so worldModes' `??= createBankAccounts` never minted one and every bank
@@ -663,7 +670,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
       entity.items.splice(i, 1);
     }
   }
-  entity.activeEffects = (snap.activeEffects ?? []).filter((a) => !a.heldItem).map(copyEffectEntry);   // E2: a stale pin in an old snapshot cannot re-link - drop it (DFU :2312)
+  entity.activeEffects = (snap.activeEffects ?? []).filter((a) => !a.heldItem && !a.bundleDuel).map(copyEffectEntry);   // E2: a stale pin in an old snapshot cannot re-link - drop it (DFU :2312); AUDIT DUEL1 B4: nor a duel's spell a save from before the filter kept
   // DISC10-D/E V11: THE DREAM'S PUSH IS NOT SAVED. CustomSaveData_v1 keeps
   // the two PLAYED flags and the day (VampirismInfection.cs:221-251,
   // LycanthropyInfection.cs:143-149); warningDreamVideoScheduled restores

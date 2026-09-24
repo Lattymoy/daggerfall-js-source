@@ -1566,7 +1566,7 @@ export class ChargenFlow {
         // two things and the port had conflated them. Every AddButton
         // binds a HOTKEY unconditionally (DaggerfallMessageBox.cs:377,
         // `DaggerfallShortcut.GetBinding(ToShortcutButton(...))` -
-        // Yes 'Y', No 'N', dialogShortcuts.js:300), and RETURN clicks
+        // Yes 'Y', No 'N', dialogShortcuts.js:309), and RETURN clicks
         // the DEFAULT button, if there is one (:318-324 through
         // GetDefaultButton :394-403). This box is built with two bare
         // `AddButton(Yes)`/`AddButton(No)` calls
@@ -1611,7 +1611,7 @@ export class ChargenFlow {
       // here, exactly as on the race and class-list boxes. What DOES
       // act is the hotkey every AddButton binds unconditionally
       // (:377): M and F (DialogShortcuts.txt Male/Female,
-      // dialogShortcuts.js:302). Each button's handler sets the gender
+      // dialogShortcuts.js:311). Each button's handler sets the gender
       // AND closes the window (:59-71), which is what { setGender }
       // already does - so the two keys take the same door the mouse
       // does, and the bare 'confirm' that used to advance is gone.
@@ -1793,7 +1793,7 @@ export class ChargenFlow {
       // (CreateCharCustomClass.cs:257-259) - a Rect(0,0,0,0) Button
       // whose only reason to exist is its Hotkey, Ctrl-U by default
       // (StreamingAssets/Text/DialogShortcuts.txt, carried at
-      // systems/dialogShortcuts.js:311). It is a control of THIS
+      // systems/dialogShortcuts.js:320). It is a control of THIS
       // window, so it answers only while the window itself is on top:
       // the two returns above have already taken every key while a
       // ClickAnywhereToClose box or one of the pushed sub-windows

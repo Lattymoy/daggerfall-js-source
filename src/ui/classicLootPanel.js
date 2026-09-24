@@ -37,7 +37,7 @@ export const PARCHMENT = Object.freeze({
 /** The ink on the parchment, and the band behind the lit row. */
 export const PARCHMENT_INK = Object.freeze([0.23, 0.13, 0.05, 1]);
 export const PARCHMENT_LIT = Object.freeze([0.42, 0.24, 0.08, 0.35]);
-/** Where the panel stands: this far right of the screen's middle, on the native 320 x 200. */
+/** Where the panel stands: this far right of the screen's middle, on the native 320 x 200 (its row: lootPanelBounds). */
 export const PANEL_OFFSET_X = 24;
 
 export const lootPanelUrl = (root = APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/') =>
@@ -81,18 +81,35 @@ export function lootPanelLines(frame) {
 }
 
 /**
- * The layout, in native pixels - pure, so the pins can read it without a renderer. `parchment` picks the face.
+ * AUDIT RETRO1 G5: WHERE THE PANEL STANDS, in the native frame `m` draws in - the reticle's row and the floor it
+ * stands above, handed over in canvas pixels (ui/hud.js). Over a docked large HUD the crosshair is re-centred into the
+ * strip the bar leaves (ROAD-E E5) and the bar is drawn before the panel: centred on the screen's own middle, the panel
+ * stood 138 px below the crosshair at 1920x1080 and a four-row parchment reached 31 px over the bar. Neither given,
+ * the native screen's middle and foot - the plain HUD's, unchanged.
+ */
+export function lootPanelBounds(m, reticleY = null, floorY = null) {
+  return {
+    centreY: reticleY == null ? NATIVE_H / 2 : (reticleY - m.oy) / m.s,
+    bottom: floorY == null ? NATIVE_H : Math.min(NATIVE_H, (floorY - m.oy) / m.s),
+  };
+}
+
+/**
+ * The layout, in native pixels - pure, so the pins can read it without a renderer. `parchment` picks the face;
+ * `centreY` and `bottom` are lootPanelBounds' (the panel centred on the one, clear of the other, and never above the
+ * screen's top - that clamp wins where a strip is shorter than the panel).
  * @returns {{x:number, y:number, w:number, h:number, parchment:boolean, rowH:number, rowsY:number, middle:number, titleY:number, footY:number}}
  */
-export function lootPanelLayout(frame, glyphH, { parchment = false } = {}) {
+export function lootPanelLayout(frame, glyphH, { parchment = false, centreY = NATIVE_H / 2, bottom = NATIVE_H } = {}) {
   const { rows, more } = lootPanelLines(frame);
   const rowH = glyphH + 1;
   const n = rows.length;
+  const top = (h) => Math.max(2, Math.min(Math.floor(bottom) - h - 2, Math.round(centreY - h / 2)));
   if (parchment) {
     const middle = Math.max(rowH, n * rowH) + 6;   // the body, cut at the rules and stretched to the rows
     const h = PARCHMENT.cutTop + middle + (PARCHMENT.h - PARCHMENT.cutBottom);
     const x = Math.min(NATIVE_W - PARCHMENT.w - 2, NATIVE_W / 2 + PANEL_OFFSET_X);
-    const y = Math.max(2, Math.min(NATIVE_H - h - 2, Math.round(NATIVE_H / 2 - h / 2)));
+    const y = top(h);
     return { x, y, w: PARCHMENT.w, h, parchment: true, rowH, rowsY: y + PARCHMENT.cutTop + 3, middle,
       titleY: y + PARCHMENT.titleY, footY: y + PARCHMENT.cutTop + middle + (PARCHMENT.footY - PARCHMENT.cutBottom) };
   }
@@ -100,20 +117,21 @@ export function lootPanelLayout(frame, glyphH, { parchment = false } = {}) {
   const w = 120;
   const h = lines * glyphH + 2 * TOOLTIP_MARGIN + 2;
   const x = Math.min(NATIVE_W - w - 2, NATIVE_W / 2 + PANEL_OFFSET_X);
-  const y = Math.max(2, Math.min(NATIVE_H - h - 2, Math.round(NATIVE_H / 2 - h / 2)));
+  const y = top(h);
   return { x, y, w, h, parchment: false, rowH: glyphH, rowsY: y + TOOLTIP_MARGIN + glyphH + 2, middle: 0,
     titleY: y + TOOLTIP_MARGIN, footY: y + TOOLTIP_MARGIN + (1 + n) * glyphH + 2 };
 }
 
 /**
- * Draw the classic panel for `frame` with row `lit` banded, through the native metrics `m`. Draws nothing for a frame
- * with no loot list. Answers whether it drew.
+ * Draw the classic panel for `frame` with row `lit` banded, through the native metrics `m`, beside the reticle's row
+ * and above the floor (canvas pixels - lootPanelBounds). Draws nothing for a frame with no loot list. Answers whether
+ * it drew.
  */
-export function drawLootPanel(renderer, m, font, frame, lit = -1) {
+export function drawLootPanel(renderer, m, font, frame, lit = -1, { reticleY = null, floorY = null } = {}) {
   if (!frame || frame.kind !== 'items' || !frame.rows?.length || !font?.fnt) return false;
   const glyph = font.fnt.fixedHeight ?? 7;
   const sheet = activeUiPack()?.id === 'grimoire' ? parchmentImage(renderer) : null;
-  const L = lootPanelLayout(frame, glyph, { parchment: !!sheet });
+  const L = lootPanelLayout(frame, glyph, { parchment: !!sheet, ...lootPanelBounds(m, reticleY, floorY) });
   const { title, rows, more } = lootPanelLines(frame);
   const text = (s, x, y, color) => drawText(renderer, font, s, m.ox + x * m.s, m.oy + y * m.s, m.s, color);
   if (sheet) {

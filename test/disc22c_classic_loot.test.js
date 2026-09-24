@@ -114,7 +114,7 @@ test('DISC22-C: drawHud draws it on both classic branches, and the DOM plaque st
   const hud = readFileSync(join(ROOT, 'src/ui/hud.js'), 'utf8');
   assert.equal((hud.match(/drawClassicLoot\(renderer, canvas, font\);/g) ?? []).length, 2, 'the large-HUD branch and the plain one');
   assert.match(hud, /const loot = classicLootFrame\(frameMark\(\)\);/);
-  assert.match(hud, /if \(loot\) drawLootPanel\(renderer, nativeMetrics\(canvas\), font, loot\.frame, loot\.lit\);/);
+  assert.match(hud, /if \(loot\) drawLootPanel\(renderer, nativeMetrics\(canvas\), font, loot\.frame, loot\.lit, at\);/);   // AUDIT RETRO1 G5: `at` - beside the reticle where it is, above the bar
   // hud.js reads a LEAF: reaching for systems/quickLoot.js from here closed an import ring (itemTransfer.js initialised
   // before its own constants), so the frame module imports nothing at all
   assert.doesNotMatch(hud, /from '\.\.\/systems\/quickLoot\.js'/);

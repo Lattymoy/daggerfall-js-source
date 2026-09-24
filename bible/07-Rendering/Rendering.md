@@ -5,6 +5,7 @@ this section owns renderer specifics.
 
 Current (`src/render/`) - one bullet per module, pinned against the real
 directory by `test/audit18_bible_docs.test.js`:
+- `duelWall.js` - DUEL1: the duel ring's holographic wall - a cylinder of light added onto the frame (see-through, no depth written, cut by the ground), a grid and rising bands on the cylinder's own coordinates, fogged as the ground is; drawn for the duellists and every onlooker (net/duelSession.js the ring)
 - `lightningBolts.js` - BOLT: a ground strike's channel drawn as ribbons of light, never thinner than a line far away, past the far plane along its own sight line (systems/lightning.js the strike)
 - `renderer.js` - WebGL2, two programs: lit solid geometry (MVP, directional
   light 0.45 + 0.55*diffuse, alpha < 0.5 discard) and Y-locked billboards
@@ -788,6 +789,23 @@ directory by `test/audit18_bible_docs.test.js`:
   used now only to name a world-fixed cell a third of a degree across) and
   `bayer4`, read by PS3's dither over Dynamic Skies' own colour reduction.
   It was `retroPixel.js`, the pass's shared GLSL, until the pass went.
+- `retroPass.js` - RETRO1 DFU'S RETRO MODE, THE PASS (2026-09-24, Mac: "Can
+  we get retro mode from DFU ported over?"): a WORLD frame drawn into a
+  320x200 or 640x400 image (320x154 / 640x308 over a docked large HUD) with
+  its own depth texture, presented point-sampled through DFU's 640x400
+  presentation target, posterized or palettized on the way (art_pal's 258
+  colours through InitLut's LUT, FastColorPalette's k-d tree answers), the
+  "-sky" pair leaving the far plane alone; under the lane the lane's frame
+  is made that small and resolves into the image. A leaf - the settings
+  and the sizes are `systems/retroMode.js`'s, handed to the renderer by
+  main.js (`setRetroSource`); the pillarbox reaches it through each host's
+  `setWorldViewport(worldViewportRect(...))`. AUDIT RETRO1: DFU's own
+  gamma round trip, the LUT built a slice a frame, nothing of the image
+  left bound; its second pass: the LUT stepped a block at a time (at most
+  `RETRO_LUT_MAX_BLOCKS` a frame) and streamed into a texture allocated
+  up front, a z-slab at a time (`texStorage3D` + `texSubImage3D`), a
+  failed allocation caught through getError and retried when the shift
+  or retro mode changes. See `07-Rendering/Retro-Mode.md`.
 - `volumetricClouds.js` - VC3 THE VOLUMETRIC CLOUDS: a raymarched slab between
   two altitudes, shaped by the VC2 volumes, lit by the sun (the moon at night)
   with a short light march, driven by the eased weather row, a per-weather

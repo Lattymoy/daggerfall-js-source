@@ -483,6 +483,17 @@ the ground now and expire on their own. Pinned by `test/disc20.test.js`
 (C); mutants `tools/mutants/disc20.json`.
 `01-Overview/Field-Bugs-2026-09-23.md`, DISC20-C.
 
+## DISC21-B - the exit door's Yes opens the wagon (2026-09-24)
+
+kurkku on Discord: "Clicking 'yes' on the prompt only closes it while my wagon is right at the entrance". Not the
+mod's entrance match (`canAccessWagonFromDungeonExit` passes for a team parked at the door the player came in by): the
+exit door's prompt (AUDIT 28 W2c, `scenes/worldModes.js`) ran Yes inside its own click, with the prompt still in the
+dungeon context's one overlay slot, and `openInventoryWithWagon` refuses a held slot - nothing opened, nothing said.
+Every wagon at every exit; the mod's players noticed because it turns off the other road to a wagon underground (the
+inventory key by the exit door, "Access your wagon by activating the dungeon exit with your wagon parked nearby").
+Yes is taken on the next dungeon frame now, once the prompt has left the slot - DFU's close-then-open order.
+`test/disc21.test.js` (B). `01-Overview/Field-Bugs-2026-09-23.md`, DISC21-B.
+
 ## What is and is not ported
 
 The assembly's dump carries 444 method bodies; 46 are compiler-generated

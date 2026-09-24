@@ -173,10 +173,10 @@ test('texture: the pipeline decodes AHEAD and overrides SYNCHRONOUSLY', () => {
   // INCIDENT 2026-09-04: the record door carries the caller's alphaIndex
   // choice - a mesh material is opaque (-1), a flat cuts index 0.
   assert.match(p, /const color32 = swap \?\? t\.getColor32\(removeMask \? changeMask\(bitmap\) : bitmap, opaque \? -1 : 0\);/);
-  assert.match(p, /renderer\.uploadTexture\(archive, record, color32, variant !== undefined \? \{ opaque, mips, variant \} : \{ opaque, mips \}\);/);
+  assert.match(p, /renderer\.uploadTexture\(archive, record, color32, variant !== undefined \? \{ opaque, mips, variant, replacement \} : \{ opaque, mips, replacement \}\);/);
   assert.match(p, /const swapFrame = decodedTexture\(archive, record, frame\);/);
   assert.match(p, /const color32 = swapFrame \?\? t\.getColor32\(bitmap, 0\);/);
-  assert.match(p, /renderer\.uploadTexture\(archive, key, color32\);/);
+  assert.match(p, /renderer\.uploadTexture\(archive, key, color32, \{ replacement \}\);/);   // AUDIT RETRO1 F2: a pack's frame flagged as its record is
   // BELOW the spectral arm: that path builds albedo AND an emission
   // mask from one remap, and replacing half would light a ghost by a
   // texture it no longer wears

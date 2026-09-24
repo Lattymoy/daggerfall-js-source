@@ -199,13 +199,14 @@ test('BOLT wired: both exterior hosts feed their distant strikes and the storm o
     assert.match(s, /boltFrame = isEnhanced\(\)[^\n]*\n\s*\? stormLights\.frame\(\{ seconds: now \/ 1000, eye[^,]*, distant: struckFar, player: lightning, shown: !!lightningShown, test: Number\(params\.get\('bolttest'\)\) \|\| 0 \}\)/);
     assert.match(s, /renderer\.setFlashLight\(sky\.lightningLight\(\) \?\? boltFrame\.flash\);/);
     assert.match(s, /\{ distantStorms\.reset\(\); stormLights\.reset\(\); \}/);
-    assert.match(s, /if \(boltsGl && boltFrame\.bolts\.length\) \{[^\n]*\n\s*boltsGl\.draw\(boltFrame\.bolts, proj, view, new Float32Array\([^)]+\)\);\s*\n\s*renderer\.markForeignPass\(\);/);
+    // RETRO1: with the world image's height, so a retro frame's minimum width is its own pixels
+    assert.match(s, /if \(boltsGl && boltFrame\.bolts\.length\) \{[^\n]*\n\s*boltsGl\.draw\(boltFrame\.bolts, proj, view, new Float32Array\([^)]+\), undefined, renderer\.worldViewportPx\?\.\[3\]\);[^\n]*\n\s*renderer\.markForeignPass\(\);/);
     // the strikes stand round, and the ribbons face, THE EYE THE VIEW IS BUILT FROM - world.js's third-person camera
     // stands metres off the head (cam.pos), and a probe's unspawned body put it a kilometre off
     const viewEye = s.match(/const view = betterAmbience\.view\(lookAt\(([\w.]+),/)[1];
     const esc = viewEye.replace(/\./g, '\\.');
     assert.match(s, new RegExp(`stormLights\\.frame\\(\\{ seconds: now / 1000, eye${viewEye === 'eye' ? '' : `: ${esc}`}, distant`), host);
-    assert.match(s, new RegExp(`boltsGl\\.draw\\(boltFrame\\.bolts, proj, view, new Float32Array\\(${esc}\\)\\);`), host);
+    assert.match(s, new RegExp(`boltsGl\\.draw\\(boltFrame\\.bolts, proj, view, new Float32Array\\(${esc}\\)[,)]`), host);
   }
   assert.equal(STORM_BASE_M, 500, 'the thunder profile\'s base');
   assert.match(rd('src/render/volumetricClouds.js'), /thunder: {2}Object\.freeze\(\{ base: 500,/);

@@ -272,7 +272,8 @@ test('QS2: every host ctx that carries toggleSheath carries quickUse, quickSwap 
     // U53's one-builder law, which is what makes a potion drunk from the key
     // and a potion drunk from the Use button the same potion. The bag is named
     // `useHooks` in every host and the inventory builder spreads the same one.
-    assert.match(src, /hooks: (\{ \.\.\.useHooks[^}]*\}|quickslotHooks\(\))/, `${path}: the quickslot use takes the host's own bag`);
+    // DISC21-C: the world host's bag takes the rig in the player's hands (an empty press reads it)
+    assert.match(src, /hooks: (\{ \.\.\.useHooks[^}]*\}|quickslotHooks\((?:rig)?\))/, `${path}: the quickslot use takes the host's own bag`);
     assert.match(src, /const useHooks = \{/, `${path}: and there is exactly one of it`);
     assert.equal((src.match(/const useHooks = \{/g) ?? []).length, 1, `${path}: exactly one bag, not two`);
     assert.match(src, /\.\.\.useHooks,/, `${path}: which the inventory builder takes too`);
@@ -280,7 +281,8 @@ test('QS2: every host ctx that carries toggleSheath carries quickUse, quickSwap 
   // The INTERIOR mode borrows the outer host's performer and refreshes its OWN
   // rig - the one place the two halves differ, and the reason it is written out.
   const wm = rd('src/scenes/worldModes.js');
-  assert.match(wm, /quickUse\(n\) \{ return host\.quickUse\?\.\(n\) === true; \},/);
+  // DISC21-C: with THIS mode's rig, which is the hand an empty press reads
+  assert.match(wm, /quickUse\(n\) \{ return host\.quickUse\?\.\(n, interiorWeapon\) === true; \},/);
   assert.match(wm, /const ok = host\.quickSwap\?\.\(interiorWeapon\) === true;[^\n]*\n\s*if \(ok\) interiorWeapon\.refreshWorn\(\);/,
     'the interior rig is the one this mode draws, so it is the one told');
   // QS4: and its light is that rig's too - the outer host's door would toggle
@@ -297,10 +299,11 @@ test('QS2: every host ctx that carries toggleSheath carries quickUse, quickSwap 
   assert.match(rd('src/scenes/dungeon.js'), /ctx\.tickQuickHold\?\.\(dt, \{ isHeld: \(a\) => held\(keys, a\), blocked: overlayHeld \|\| !walkMode \}\);/,
     'the standalone ?dungeon page drives the same machine with its own keys');
   for (const path of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(rd(path), /quickUse: \(n\) => quickUse\(n\),\s*\n\s*quickSwap: \(rig\) => quickSwap\(rig\),/g,
+    // DISC21-C: the use takes the mode's rig as the swap does (an empty press reads the hand it is in)
+    assert.match(rd(path), /quickUse: \(n, rig\) => quickUse\(n, rig\),[^\n]*\n\s*quickSwap: \(rig\) => quickSwap\(rig\),/g,
       `${path} hands the performers down to the mode machine as well as onto its own ctx`);
     assert.match(rd(path), /quickSpell: \(\) => quickSpell\(\),/, `${path} hands the spell door down too`);
-    assert.equal((rd(path).match(/quickUse: \(n\) => quickUse\(n\),/g) ?? []).length, 3,
+    assert.equal((rd(path).match(/quickUse: \((?:n|n, rig)\) => quickUse\((?:n|n, rig)\),/g) ?? []).length, 3,   // DISC21-C: two take the rig
       `${path}: on hudCtx (the key ladder), on the host bag (the interior mode), and on drawHud (QS4: the phone's tap)`);
   }
 });

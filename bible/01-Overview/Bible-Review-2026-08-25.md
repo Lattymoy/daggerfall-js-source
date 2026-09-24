@@ -59,7 +59,7 @@ FM-bank audit. Audio.md also still disowns `ActivateLockUnlock = 316`
 (`:158` "NOT OURS... neither of which is ported") - it sits in
 `soundClips.js:10` with three consumers (R1) - and still claims
 `deps.inCastle` stays false (`:105`), live since AUDIT 21
-(`dungeonContext.js:2654`). This is the one page whose live-queue
+(`dungeonContext.js:2655`). This is the one page whose live-queue
 claims actively contradict the code, the Ledger, and the rest of the
 bible at once.
 
@@ -106,7 +106,7 @@ direction). The real staleness is where the sweep cannot see:
   row's own title records the previous three.
 - `:340` residue "a static NPC currently answers with the
   no-response line" - contradicts the same row's own head and row
-  `:446` (B7); `worldModes.js:1378-1389` opens the real talk window.
+  `:446` (B7); `worldModes.js:1380-1391` opens the real talk window.
 - `:339` "house/ship PURCHASE popups... still out" - contradicts row
   `:441` ("this row is now CLOSED", H1-H3) and
   `ui/bankPurchaseWindow.js`.
@@ -127,11 +127,11 @@ per arc:
   (`mysticism.test.js:225-239`). The doc, the pin's design, and
   `mysticism.js:53`'s header are all wrong the same way. Also stale:
   S24 "the port has neither the [Spell Absorption] effect nor the
-  state" (`effects.js:1089-1112` + `absorption.js:70-79` land it
+  state" (`effects.js:1098-1121` + `absorption.js:70-79` land it
   first-arm); S40's "house ledger is unported" flag
   (`banking.js:172 isHouseOwned` feeds the rest seam); S16's
   "monsters 0-42 still spawn as billboards" (C11 pivoted them to real
-  foes, `dungeonContext.js:812-863`); the mid-file Queue
+  foes, `dungeonContext.js:813-864`); the mid-file Queue
   (`:742-748`) still carries FreeAction / Create Item / enchantment
   value / rest-UI / "Later: guilds, shops, dialog, calendar" - all
   shipped, list actively maintained (it struck its fatigue line).
@@ -163,7 +163,7 @@ per arc:
   `:3368`); `:4722` is now flatly false ("the interior host's
   char-sheet and inventory panels swallow their click and do
   nothing") and contradicts U43 in the same file
-  (`worldModes.js:5270-5271` routes them). UI-Arc carries no records
+  (`worldModes.js:5275-5276` routes them). UI-Arc carries no records
   at all for H1-H3 - the banking windows exist only in the Ledger.
 - *Combat.md*: the status head (first 51 lines) is the stale part -
   DrainMagicka "INTERIM no-op" (`:19`, real since S4a and
@@ -193,7 +193,7 @@ live, 18 unavailable, 145 stored"; the tree says 46 / 17 / 108 - off
 nearly 6x on live. ~38 keys the spec lists unmarked are now live;
 AssetInjection moved from NA to LIVE. The built control also diverges
 from the spec's interaction contract beyond the three deviations its
-as-built header admits: enums WRAP (`settingsLaw.js:128-134`), there
+as-built header admits: enums WRAP (`settingsLaw.js:134-140`), there
 is no TEXT_LAW / prompt / colour editor / Backspace-reset / digit
 jumps / focus zones, and the two "required companion changes"
 (`resetToDefaults` returning saveSettings; `dataSourceLabel`) were
@@ -216,7 +216,7 @@ own AUDIT-18 correction.
 Doc review only, nothing fixed - but four code comments assert the
 opposite of their own code and deserve a slice's attention:
 - `src/ui/deathScreen.js:87-88` claims "`drop` is read by each host's
-  frame" - no host reads it (the Ledger row `:463` is right, the
+  frame" - no host reads it (the Ledger row `:466` is right, the
   comment is wrong).
 - `src/systems/mysticism.js:53` header "OPEN AND LOCK ARE NOT WIRED" -
   they are (X1, `actionSystem.js:930-931`).
@@ -233,13 +233,13 @@ opposite of their own code and deserve a slice's attention:
 
 ## Line-citation drift (low, batched)
 
-`Port-Ledger.md:559` (save.js:31/:548/:557 → :28/:600/:630), `:587`
-(world.js:3093 → :2412); `Quest-Arc.md:719`/`:2906`
-(worldModes.js:563 → :903); `Player-Arc.md:955` (worldModes.js:791 →
+`Port-Ledger.md:562` (save.js:32/:549/:558 → :28/:607/:637), `:589`
+(world.js:3107 → :2412); `Quest-Arc.md:719`/`:2906`
+(worldModes.js:565 → :903); `Player-Arc.md:955` (worldModes.js:793 →
 :2764), `:304` (world.js "531 lines" → 3,564); `Characters-Arc.md:190`
-(CHAR_PIXEL "7" - `renderer.js:586` ships 9, and the doc missed two
+(CHAR_PIXEL "7" - `renderer.js:587` ships 9, and the doc missed two
 later revisions recorded in `paperdollViewer.js:138`), `:2114`
-(interiorContext.js:206 → :199); `Rendering.md:120`
+(interiorContext.js:206 → :199); `Rendering.md:121`
 (CHAR_SPRITE_RT_SIZE "256" → 512).
 
 ## What checked out clean

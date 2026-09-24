@@ -138,9 +138,11 @@ export const ONLINE_PLAYERS_OWN_PREFS = [
 export const ONLINE_FORCED_SETTINGS = Object.freeze({
   Controls: Object.freeze({ AllowMagicRepairs: 'True' }),
 });
-/** The forced raw value of a DFU `section/key` on an online page, else undefined. */
+/** The forced raw value of a DFU `section/key` on an online page, else undefined. The table first (AUDIT RETRO1
+ *  G2): every settings read comes through here - retro mode's, a dozen a frame - and the page test builds a
+ *  URLSearchParams each time, for the one key in the table. */
 export function onlineForcedSetting(section, key, search) {
-  return isOnlinePage(search) && Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key) ? ONLINE_FORCED_SETTINGS[section][key] : undefined;
+  return Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key) && isOnlinePage(search) ? ONLINE_FORCED_SETTINGS[section][key] : undefined;
 }
 
 /** The forced value of a uiPrefs key on an online page, else undefined. */

@@ -56,6 +56,7 @@ import { billboardSize, centredBase } from '../world/rmbFlats.js';
 import { createMagicCandle } from './magicCandle.js';   // X11: the Light effect's candle
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // PlayerController.height, the candle's y term
 import { createHitEffects } from './hitEffects.js';   // AUDIT 26 F033: DaggerfallMissile's impact flash
+import { duelSpellOf } from '../combat/duelCombat.js';   // DUEL1: the harmful half of a spell, which alone may reach a duel opponent
 
 export function createPlayerMagic({
   renderer, audio, getTexture, uploadRecord, uploadRecordFrame = null, collider,
@@ -115,6 +116,14 @@ export function createPlayerMagic({
   // SPELLFX1: every player standing in this scene ([{id, feet, height}], the host's own frame) - for a peer's DRAWN
   // missile alone, which stops on any body it meets; nothing is ever given or dealt through this
   peerBodies = null,
+  // DUEL1 (2026-09-24, Mac: duels - "Yes: weapons, bows, spells"): MY DUEL OPPONENT AS A BODY. `duelMark()` answers the
+  // one player my harmful spells may reach - {id, name, feet, height} in this host's frame while a duel is fighting, null
+  // otherwise - and `castAtDuel(id, spell)` is the door the blow leaves through (the duel's `spell` frame), answering
+  // whether it went. A touch, a missile, a blast or an area that meets the opponent's body sends the spell's HARMFUL
+  // families to them (combat/duelCombat.js duelSpellOf); their client applies it. Nobody else is ever a mark: a
+  // Fireball still passes through every other player.
+  duelMark = null,
+  castAtDuel = null,
 }) {
   const playerCaster = () => ({ entity: playerEntity, sinks: playerSinks });
   /** The party mates as foe-shaped marks ({ally, id, name, ai:{feet, height}}) - the shape every target helper in
@@ -131,6 +140,20 @@ export function createPlayerMagic({
       out.push({ ally: true, id: q.id, name: q.name ?? 'a party member', dead: false, ai: { feet: q.feet, height: Number.isFinite(q.height) && q.height > 0 ? q.height : CAPSULE_HEIGHT } });
     }
     return out;
+  }
+  /** DUEL1: the duel opponent as a foe-shaped mark ({duel, id, name, ai:{feet, height}}) for a spell with a harmful
+   *  family in it (duelSpellOf), a free ready's included (an enchanted item's strike is a duellist's too); [] for
+   *  anything else, outside a fighting duel, or with no seam. */
+  function duelMarksFor(sp) {
+    if (!duelMark || !castAtDuel || !sp || !duelSpellOf(sp)) return [];
+    let q = null;
+    try { q = duelMark() ?? null; } catch { return []; }
+    if (!q || typeof q.id !== 'string' || !Array.isArray(q.feet) || q.feet.length !== 3 || !q.feet.every(Number.isFinite)) return [];
+    return [{ duel: true, id: q.id, name: q.name ?? 'your opponent', dead: false, ai: { feet: q.feet, height: Number.isFinite(q.height) && q.height > 0 ? q.height : CAPSULE_HEIGHT } }];
+  }
+  /** DUEL1: a blow landed on the opponent: out through the duel's door. Nothing lands here - their client resolves it. */
+  function giveToDuel(mark, sp) {
+    try { return !!castAtDuel?.(mark.id, sp); } catch { return false; }
   }
   /** A gift landed on a mate: out through ALLY-CAST's door, the caster's line on success. Nothing lands here - the
    *  mate's own client applies it (ALLY-CAST's receiver). */
@@ -349,7 +372,7 @@ export function createPlayerMagic({
    *  spell still lands on one. */
   const sparedFromPlayer = (t) => t?.defender === true;
   const playerTargets = () => foes().filter((t) => !sparedFromPlayer(t));
-  function explodeAt(pos, spell, casterLevel, playerFeet, caster = null, { excludeFoe = null, playerHeight = CAPSULE_HEIGHT, allies = false } = {}) {
+  function explodeAt(pos, spell, casterLevel, playerFeet, caster = null, { excludeFoe = null, playerHeight = CAPSULE_HEIGHT, allies = false, duel = false } = {}) {
     for (const t of sweepFoes(pos, EXPLOSION_RADIUS, foes())) {
       if (excludeFoe && t === excludeFoe) continue;
       if (caster?.entity === playerEntity && sparedFromPlayer(t)) continue;   // DISC19-F (AUDIT DISC19): my blast passes the defenders by
@@ -359,6 +382,8 @@ export function createPlayerMagic({
     // AID1 onto ALLY-CAST: MY OWN beneficial blast reaches the party mates in it too (DoAreaOfEffect's OverlapSphere meets
     // their colliders) - `allies` is the missile's own word that it may be given (not a free ready)
     if (allies && caster?.entity === playerEntity) for (const t of sweepFoes(pos, EXPLOSION_RADIUS, allyMarksFor(spell, false))) giveToAlly(t, spell);
+    // DUEL1: and MY blast reaches my duel opponent standing in it (`duel`: the missile's own word it is mine)
+    if (duel && caster?.entity === playerEntity) for (const t of sweepFoes(pos, EXPLOSION_RADIUS, duelMarksFor(spell))) giveToDuel(t, spell);
     // ROAD-H H2: the player is a COLLIDER in DFU's OverlapSphere like every foe (DaggerfallMissile.cs:481) - its CharacterController capsule, at the LIVE height PlayerHeightChanger keeps (:54-57/:475-478). This measured ONE POINT at the STANDING half-capsule, feet + 0.9: a metre and a half wrong on a mount, half a metre wrong crouched, and short of DFU's catch by a whole body radius in every stance. AUDIT 65 CV-2: and that body is the PLAYER's 0.35 (PlayerAdvanced.prefab:82), not the foe's 0.45 - the rim is 4.35.
     if (playerFeet && sphereOverlapsCapsule(pos, EXPLOSION_RADIUS, playerFeet, playerHeight, PLAYER_BODY_RADIUS)) {
       applySpellToPlayer(spell, casterLevel, caster);
@@ -392,7 +417,7 @@ export function createPlayerMagic({
    *  (DaggerfallMissile.cs:273-275). Both reads live here. */
   function pickTouch(eye, dir, sp = null) {
     if (!eye || !dir) return null;
-    const marks = allyMarksFor(sp);   // AID1 onto ALLY-CAST: a beneficial touch may land on a party mate - the nearest along the aim wins
+    const marks = [...allyMarksFor(sp), ...duelMarksFor(sp)];   // AID1 onto ALLY-CAST: a beneficial touch may land on a party mate - the nearest along the aim wins; DUEL1: a harmful one on my duel opponent
     return pickTouchTarget(eye, dir, marks.length ? [...playerTargets(), ...marks] : playerTargets(), (c, d) => {   // DISC19-F (AUDIT DISC19): my touch meets no defender
       const l = d || 1, dx = (c[0] - eye[0]) / l, dy = (c[1] - eye[1]) / l, dz = (c[2] - eye[2]) / l;
       const hit = collider.raycast(eye, [dx, dy, dz], d);
@@ -522,6 +547,7 @@ export function createPlayerMagic({
       // Nothing in reach when the hands open: the spell is spent and
       // gone, exactly as DFU's touch missile that finds no entity.
       if (t?.ally) giveToAlly(t, sp);   // AID1 onto ALLY-CAST: the touch met a mate the crosshair pick did not name
+      else if (t?.duel) giveToDuel(t, sp);   // DUEL1: the touch met my duel opponent
       else if (t) applySpellToFoe(sp, playerEntity.level, t, playerCaster());
       return done(true);
     }
@@ -534,13 +560,14 @@ export function createPlayerMagic({
         applySpellToFoe(sp, playerEntity.level, t, playerCaster());
       }
       for (const t of sweepFoes(eye, EXPLOSION_RADIUS, allyMarksFor(sp))) giveToAlly(t, sp);   // AID1 onto ALLY-CAST: the mates around me
+      for (const t of sweepFoes(eye, EXPLOSION_RADIUS, duelMarksFor(sp))) giveToDuel(t, sp);   // DUEL1: and my duel opponent, if they stand in it
       return done(true);
     }
     if (sp.rangeType !== 2 && sp.rangeType !== 4) return done(false);
     lastCastCost = cost;
     tallyCastSkills(sp);
     surfacePlayer();
-    missiles.push({ spell: sp, pos: [eye[0], eye[1], eye[2]], dir: [...dir], age: 0, batch: null, fromPlayer: true, ally: !readiedFree && allyCastable(sp) });   // AID1 onto ALLY-CAST: may be given to a party mate it strikes (never a free ready's)
+    missiles.push({ spell: sp, pos: [eye[0], eye[1], eye[2]], dir: [...dir], age: 0, batch: null, fromPlayer: true, ally: !readiedFree && allyCastable(sp), duel: !!duelSpellOf(sp) });   // AID1 onto ALLY-CAST: may be given to a party mate it strikes (never a free ready's); DUEL1: may strike my duel opponent
     return done(true);
   }
 
@@ -727,7 +754,7 @@ export function createPlayerMagic({
           // AUDIT WORLD6b-iii(a) A1: an ENEMY missile's blast on a wall is the ENEMY's - its caster's level and sinks
           // (the flight's own arm below had them); this arm credited every enemy blast to ME at MY level, with the
           // reflect chain and the skill tallies mine to pay
-          explodeAt(impact, m.spell, m.fromPlayer === false ? (m.casterLevel ?? 1) : playerEntity.level, playerFeet, missileCaster(m), { playerHeight, allies: !!m.ally });   // ROAD-H H2: the blast's OverlapSphere meets the player's LIVE capsule
+          explodeAt(impact, m.spell, m.fromPlayer === false ? (m.casterLevel ?? 1) : playerEntity.level, playerFeet, missileCaster(m), { playerHeight, allies: !!m.ally, duel: !!m.duel });   // ROAD-H H2: the blast's OverlapSphere meets the player's LIVE capsule
         }
         showImpactFlash(m, impact);   // F033: DFU flashes on ANY wall hit, AoE or not
         retireMissile(m);
@@ -771,8 +798,21 @@ export function createPlayerMagic({
         const hitMate = allyMarksFor(m.spell, false).find((p) => missileHitsCapsule(m.pos, p.ai.feet, p.ai.height, PLAYER_BODY_RADIUS));
         if (hitMate) {
           const at = [m.pos[0], m.pos[1], m.pos[2]];
-          if (m.spell.rangeType === 4) explodeAt(at, m.spell, playerEntity.level, playerFeet, playerCaster(), { playerHeight, allies: true });
+          if (m.spell.rangeType === 4) explodeAt(at, m.spell, playerEntity.level, playerFeet, playerCaster(), { playerHeight, allies: true, duel: !!m.duel });
           else giveToAlly(hitMate, m.spell);
+          showImpactFlash(m, at);
+          retireMissile(m);
+          continue;
+        }
+      }
+      // DUEL1: a harmful missile of mine meets my duel opponent's capsule the way it meets a foe's - an AreaAtRange one
+      // bursts (reaching whatever else stands in it, the opponent by the duel's door), the rest go to them alone
+      if (m.duel) {
+        const hitFoe = duelMarksFor(m.spell).find((p) => missileHitsCapsule(m.pos, p.ai.feet, p.ai.height, PLAYER_BODY_RADIUS));
+        if (hitFoe) {
+          const at = [m.pos[0], m.pos[1], m.pos[2]];
+          if (m.spell.rangeType === 4) explodeAt(at, m.spell, playerEntity.level, playerFeet, playerCaster(), { playerHeight, allies: !!m.ally, duel: true });
+          else giveToDuel(hitFoe, m.spell);
           showImpactFlash(m, at);
           retireMissile(m);
           continue;
@@ -781,7 +821,7 @@ export function createPlayerMagic({
       for (const f of playerTargets()) {   // DISC19-F (AUDIT DISC19): my missile flies through a defender
         if (f.dead) continue;
         if (missileHitsFoe(m.pos, f)) {   // ROAD-H tail: DaggerfallMissile.cs:339's SphereCast meets the foe's CAPSULE (REVIEW 2026-09-05 had its centre as a point)
-          if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, playerEntity.level, playerFeet, playerCaster(), { playerHeight, allies: !!m.ally });   // ROAD-H H2
+          if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, playerEntity.level, playerFeet, playerCaster(), { playerHeight, allies: !!m.ally, duel: !!m.duel });   // ROAD-H H2
           else applySpellToFoe(m.spell, playerEntity.level, f, playerCaster());
           showImpactFlash(m, [m.pos[0], m.pos[1], m.pos[2]]);   // F033
           retireMissile(m);

@@ -848,7 +848,8 @@ test('BLOOD1b: EVERY splash site hands its blow over, so the rate ladder actuall
   // RR2 wrote the twelfth: Roleplay & Realism's trample (world.js's
   // rrRidingContacts) - the civilian's own rung, LETHAL_HIT.
   // AUDIT-RR F15 moved the trample's site into both outdoor hosts' deps (world.js, exterior.js): thirteen.
-  assert.equal(sites.length, 13, `thirteen splash sites across six files (found ${sites.length})`);
+  // DUEL1: the fourteenth - a strike of mine that landed on my duel opponent (world.js duelResultIn), the striker's blood.
+  assert.equal(sites.length, 14, `fourteen splash sites across six files (found ${sites.length})`);
   for (const [f, args] of sites) {
     assert.ok(/bloodHit\(|LETHAL_HIT/.test(args),
       `${f}: a splash site that hands over no blow - the ladder would read it as a graze`);
@@ -3015,7 +3016,7 @@ import { Collider } from '../src/player/collider.js';
 const IDENTITY = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 
 test('MAC-BUG W5: the ground outside is heightAt, and surfaceHit is the ray that knows it', () => {
-  // exterior.js:567 - `new Collider(() => GROUND_OFFSET * 0.025)`,
+  // exterior.js:568 - `new Collider(() => GROUND_OFFSET * 0.025)`,
   // and not one triangle under the player's feet.
   const outside = new Collider(() => 0);
   assert.equal(outside.raycastHit([0, 2, 0], [0, -1, 0], 8).dist, Infinity,
@@ -3039,7 +3040,7 @@ test('MAC-BUG W5: the ground outside is heightAt, and surfaceHit is the ray that
     'no surface overhead when the "surface" is the ground you are under');
   assert.equal(outside.surfaceHit([0, -3, 0], [0, 1, 0], 8).normal, null);
 
-  // A DUNGEON IS UNCHANGED. dungeonContext.js:301 hands `-Infinity`,
+  // A DUNGEON IS UNCHANGED. dungeonContext.js:302 hands `-Infinity`,
   // so there is no floor to find and the answer is the bucket ray's,
   // byte for byte - which is what keeps this a second door rather
   // than a change to the first.
