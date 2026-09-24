@@ -481,7 +481,8 @@ test('audit18: the dungeon spell map keeps the FIRST duplicate, as DFU does', { 
   // The LOADER must build the first-wins map. G4 moved it out of
   // dungeonContext into the shared one, so the pin follows the law
   // rather than the file it used to sit in.
-  assert.ok(/if \(!byIndex\.has\(sp\.index\)\) byIndex\.set\(sp\.index, sp\);/.test(hostSrc('shared.js')));
+  // AUDIT 68 S12-spellsstd-dup: through spellsStd.js's one fold, not a copy of it
+  assert.ok(/spellsByIndexMap\(readSpellsStd\(await fetch\('SPELLS\.STD'\)\)\)/.test(hostSrc('shared.js')));
   assert.equal(/new Map\(readSpellsStd\(/.test(hostSrc('shared.js')), false, 'the last-wins fold is gone');
 });
 

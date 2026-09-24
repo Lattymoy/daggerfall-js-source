@@ -28,7 +28,7 @@ export const SPELL_RECORD_SIZE = 0x59;
 // The one per-record field walk (DaggerfallSpellReader.ReadSpellData's
 // body: SetSpellTypes' reads + element/range/cost + SetSpellDurations +
 // SetSpellChances + SetSpellMagnitudes + name/icon/index). No gate, no
-// patch - the callers own those.
+// patch - readSpellRecord owns the gate, readSpellsStd the patch.
 function parseSpellRecordAt(v, o) {
   const effects = [];
   for (let i = 0; i < 3; i++) {
@@ -74,25 +74,23 @@ export function readSpellRecord(bytes, offset = 0) {
   return rec;
 }
 
+/** DaggerfallSpellReader.ReadSpellsFile: every record through
+ *  readSpellRecord's gate (AUDIT 68 S12-spellsstd-dup: one gate, not two),
+ *  then EntityEffectBroker's Free Action patch - DFU's own order. */
 export function readSpellsStd(bytes) {
-  const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const spells = [];
-  let o = 0;
-  while (o + SPELL_RECORD_SIZE <= bytes.byteLength) {
-    const start = o;
-    const { effects, element, rangeType, cost, name, icon, index } = parseSpellRecordAt(v, o);
-    o = start + SPELL_RECORD_SIZE;
+  for (let o = 0; o + SPELL_RECORD_SIZE <= bytes.byteLength; o += SPELL_RECORD_SIZE) {
+    const rec = readSpellRecord(bytes, o);
+    if (!rec) continue;
     // AUDIT 23 (magic-1) - EntityEffectBroker.cs:892-900: "Fix bad Free
     // Action spell data from SPELLS.STD at runtime". Spell index 10
     // effect 0 says Cure Paralyzation (3,2) where classic intends Free
     // Action; DFU patches type=26/subType=-1 and so do we.
-    if (index === 10 && effects[0].type === 3 && effects[0].subType === 2) {
-      effects[0].type = 26;
-      effects[0].subType = -1;
+    if (rec.index === 10 && rec.effects[0].type === 3 && rec.effects[0].subType === 2) {
+      rec.effects[0].type = 26;
+      rec.effects[0].subType = -1;
     }
-    if (effects[0].type > -1 || effects[1].type > -1 || effects[2].type > -1) {
-      spells.push({ effects, element, rangeType, cost, name, icon, index });
-    }
+    spells.push(rec);
   }
   return spells;
 }

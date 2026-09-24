@@ -57,7 +57,7 @@ import { FOOTSTEP_VOLUME } from '../systems/footsteps.js';   // AUDIT 58: Player
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { SOUND } from '../systems/soundClips.js';
 import { surfacePlayer, hurtPlayer } from '../characters/playerEntity.js';
-import { readSpellsStd } from '../formats/spellsStd.js';   // G4: the two magic registries, one home
+import { readSpellsStd, spellsByIndexMap } from '../formats/spellsStd.js';   // G4: the two magic registries, one home
 import { readMagicDef } from '../formats/magicDef.js';
 import { setMagicItemTemplates, setSpellRecordsByIndex } from '../systems/loot.js';
 import { PaintFile } from '../formats/paintFile.js';   // F156: PAINT.DAT, the painting descriptions' file
@@ -121,10 +121,7 @@ export async function loadMagicRegistries(fetch = fetchBytes) {
   let spellsByIndex = null;
   let magicItemTemplates = null;
   try {
-    const byIndex = new Map();
-    for (const sp of readSpellsStd(await fetch('SPELLS.STD'))) {
-      if (!byIndex.has(sp.index)) byIndex.set(sp.index, sp);
-    }
+    const byIndex = spellsByIndexMap(readSpellsStd(await fetch('SPELLS.STD')));   // AUDIT 68 S12-spellsstd-dup: the one first-wins fold
     spellsByIndex = byIndex;
     setSpellRecordsByIndex(byIndex);
   } catch { /* data absent: casts no-op, and a CastWhen* slot prices at 0 - DFU's own answer */ }

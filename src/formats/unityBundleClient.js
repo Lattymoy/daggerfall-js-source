@@ -25,6 +25,9 @@
 //    stall and nothing else. A worker that dies AFTER the index landed
 //    rejects the asks in flight and every ask after; the door treats a
 //    rejected ask as that name missing, which is the classic frame.
+//  - A READER ERROR IS NOT A DEAD WORKER: the worker answered, the
+//    reader is pure, and the same bytes would fail here too - the
+//    error is the answer, and the bundle is not parsed twice.
 // ═══════════════════════════════════════════════════════════════════
 
 import { readUnityBundle } from './unityBundle.js';
@@ -65,8 +68,8 @@ export function openBundleHere(bytes) {
  * height, data } | null>, close() }` - `data` is the decoder's own
  * RGBA (Unity's bottom-up rows; the caller flips, as the door does).
  * Never rejects on the worker's account: a worker that cannot open
- * the bundle falls back to this thread, and only the reader's own
- * error on this thread is thrown.
+ * the bundle falls back to this thread. Only the reader's own error is
+ * thrown, whichever thread ran it.
  */
 export async function openUnityBundle(bytes, { workerFactory = null } = {}) {
   const factory = workerFactory
@@ -98,7 +101,9 @@ export async function openUnityBundle(bytes, { workerFactory = null } = {}) {
       const p = pending.get(m.id);
       if (!p) return;
       pending.delete(m.id);
-      if (m.t === 'error') p.reject(new Error(m.message)); else p.resolve(m);
+      // AUDIT 68 S12-bundle-client-reader-error-reparse: the worker ANSWERED -
+      // marked so the open's catch does not mistake it for a dead worker
+      if (m.t === 'error') p.reject(Object.assign(new Error(m.message), { readerError: true })); else p.resolve(m);
     };
     // a COPY: the caller's bytes are the fallback's if this never answers
     const copy = bytes.slice();
@@ -111,8 +116,9 @@ export async function openUnityBundle(bytes, { workerFactory = null } = {}) {
       close() { try { w.postMessage({ t: 'close' }); } catch { /* gone */ } down('unity bundle worker closed'); },
     };
   } catch (e) {
-    console.warn('[unity bundle] worker unavailable; opening on the main thread', e?.message ?? e);
     down(e?.message ?? 'unity bundle worker failed');
+    if (e?.readerError) throw e;   // the same bytes, the same pure reader: no second parse here
+    console.warn('[unity bundle] worker unavailable; opening on the main thread', e?.message ?? e);
     return openBundleHere(bytes);
   }
 }
