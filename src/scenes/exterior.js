@@ -2411,7 +2411,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // out by the interior arm must knock back and die against THAT
     // building's collider and death chain, so this is the same
     // pool-membership router the enchant mount takes.
-    foeSinks: (f) => enchantFoeSinks(f),
+    foeSinks: (f, fromPlayer) => enchantFoeSinks(f, fromPlayer),   // AUDIT 68 X4: the engine's provenance rides through (world.js's line)
     absorbCtx: () => ((modes?.mode ?? 'exterior') === 'exterior'
       ? { inside: false, day: !isNight(minuteNow()) }
       : { inside: true, day: false }),
@@ -2451,7 +2451,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const _insidePool = () => modes?.insideFoes?.() ?? [];
   const enchantFeet = () => (walkMode ? player.pos : cam.pos);
   const enchantFoes = () => liveEnchantFoes(_mode(), modes?.dungeonCtx ?? null, exteriorFoePool, _insidePool);
-  const enchantFoeSinks = (f) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks, _insidePool, (g) => modes?.insideFoeSinksFor(g));
+  const enchantFoeSinks = (f, fromPlayer = true) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks, _insidePool, (g, fp) => modes?.insideFoeSinksFor(g, fp), fromPlayer);
   const _foeSenses = () => sensesContext(playerEntity, playerTicker.classicMinutes, {
     movingLessThanHalfSpeed: player.movingLessThanHalfSpeed ?? true, playerHeight: player.height, playerCrouching: !!player.crouching,   // AUDIT 62 F23: playerHeight is the LIVE capsule (crouch 0.9, ride 2.6, swim), not the standing constant   // ROAD-H H1b: PlayerMotor.IsCrouching, the LATCHED state an enemy archer's dip reads (DaggerfallMissile.cs:584) - a swimming player is 0.9 tall too and takes none
     // MT-ii/ROAD-G G2: the target-machine seam - EnemySenses reads ONE

@@ -72,15 +72,6 @@
     ]
   },
   {
-    "name": "TS1-grass-ground-on-the-prefab",
-    "file": "src/scenes/world.js",
-    "old": "      const scale = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;",
-    "new": "      const scale = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;",
-    "tests": [
-      "test/terrainscale1.test.js"
-    ]
-  },
-  {
     "name": "TS1-restand-inverted",
     "file": "src/scenes/world.js",
     "old": "(was / STREAMING_TERRAIN_SCALE - 1)",

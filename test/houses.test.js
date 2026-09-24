@@ -208,7 +208,9 @@ test('H1: the four consumers are wired, and each goes through the law', () => {
   assert.match(modes, /ownsHouse: \(\) => ownsHouse\(/, 'the bank window asks the registry');
   assert.match(code('scenes/world.js'), /isHouseOwned: \(buildingKey\) => isHouseOwned\(/,
     'the quest machine skips a house you own when choosing a site');
-  assert.match(code('scenes/questBridge.js'), /isHouseOwned: \(buildingKey\)/, 'and the bridge forwards it');
+  // AUDIT 68 S22: ...and ONLY there - place.js reads `world.isHouseOwned`; the bridge's ctx forward reached a
+  // QuestMachine dep nothing reads, keyed by a different region, so an edit to it changed nothing
+  assert.doesNotMatch(code('scenes/questBridge.js'), /isHouseOwned/, 'the bridge forwards no second, dead door');
   // the registry has to be MINTED, or every one of them reads an
   // undefined array - createHouses had no caller at all before H1,
   // while the save has round-tripped entity.houses all along.

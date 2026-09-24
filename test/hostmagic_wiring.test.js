@@ -70,7 +70,7 @@ test('M5: the exterior pages cast through MODE FACADES - collider, foes and abso
       // ...and the sinks follow the RECORD, so a foe handed out by the
       // interior arm knocks back and dies against that building's
       // collider and death chain rather than the street's.
-      assert.ok(s.includes('\n    foeSinks: (f) => enchantFoeSinks(f),\n'),
+      assert.ok(s.includes('\n    foeSinks: (f, fromPlayer) => enchantFoeSinks(f, fromPlayer),'),
         `${f}: the engine's sinks route by pool membership, the same law the enchant mount takes`);
     } else {
       // ROAD-G G2: THE TOWN PAGE TAKES THE SAME THREE-ARM SHAPE. This
@@ -88,7 +88,7 @@ test('M5: the exterior pages cast through MODE FACADES - collider, foes and abso
         `${f}: exterior answers both street pools, interior answers worldModes' own join, dungeon answers none`);
       assert.equal(/foes: \(\) => \(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? cityGuards\.guards : \[\]/.test(s), false,
         `${f}: the interior scene gate is gone, not merely widened around`);
-      assert.ok(s.includes('\n    foeSinks: (f) => enchantFoeSinks(f),\n'),
+      assert.ok(s.includes('\n    foeSinks: (f, fromPlayer) => enchantFoeSinks(f, fromPlayer),'),
         `${f}: and the engine's sinks route by pool membership, the same law the enchant mount takes`);
     }
     const i = s.indexOf('absorbCtx: () =>');

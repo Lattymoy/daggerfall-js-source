@@ -149,9 +149,9 @@ test('audit24 wave32: every foe pool in the port is a subscriber, and the dungeo
   // reason - it mounts two street pools now, and its interior mode has
   // live foes whose records must knock back and die against THAT
   // building's collider rather than the street's.
-  assert.ok(x.includes('\n    foeSinks: (f) => enchantFoeSinks(f),\n'),
+  assert.ok(x.includes('\n    foeSinks: (f, fromPlayer) => enchantFoeSinks(f, fromPlayer),'),   // AUDIT 68 X4: the provenance rides the door
     'exterior.js: the cast engine routes through the membership router');
-  assert.ok(x.includes('const enchantFoeSinks = (f) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks, _insidePool, (g) => modes?.insideFoeSinksFor(g));'),
+  assert.ok(x.includes('const enchantFoeSinks = (f, fromPlayer = true) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks, _insidePool, (g, fp) => modes?.insideFoeSinksFor(g, fp), fromPlayer);'),
     '...which is built over the host\'s ONE set of doors');
   // AUDIT 58 (review): the world host's cast engine takes it through
   // the POOL-MEMBERSHIP router instead, because its interior mode has
@@ -159,13 +159,13 @@ test('audit24 wave32: every foe pool in the port is a subscriber, and the dungeo
   // against THAT building's collider - `enchantFoeSinks` still answers
   // `foeSinks` for every exterior record, so it is the same one set of
   // doors, asked the one question that can tell them apart.
-  assert.ok(w.includes('\n    foeSinks: (f) => enchantFoeSinks(f),\n'),
+  assert.ok(w.includes('\n    foeSinks: (f, fromPlayer) => enchantFoeSinks(f, fromPlayer),'),   // AUDIT 68 X4
     'world.js: and its cast engine takes that same set through the router');
-  assert.ok(w.includes('const enchantFoeSinks = (f) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks, _insidePool,'),
+  assert.ok(w.includes('const enchantFoeSinks = (f, fromPlayer = true) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks, _insidePool,'),
     'and the router is the shared law over this host\'s own foeSinks');
-  assert.ok(m.includes('const insideFoeSinks = (foe) => ({'),
+  assert.ok(m.includes('const insideFoeSinks = (foe, fromPlayer = true) => ({'),
     'the interior host\'s doors are a module-local the ticker can reach, not a method on the frame-time literal');
-  assert.ok(m.includes('insideFoeSinksFor(foe) { return insideFoeSinks(foe); },'),
+  assert.ok(m.includes('insideFoeSinksFor(foe, fromPlayer) { return insideFoeSinks(foe, fromPlayer); },'),
     'and the enchant ctx asks that ONE definition rather than a second copy');
   // the dungeon host owns its foe list inside a closure the ticker never sees,
   // so it runs the fan-out inline - on the window the tick CLAIMED, not on

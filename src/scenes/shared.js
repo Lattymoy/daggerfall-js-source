@@ -2248,12 +2248,17 @@ export function liveEnchantFoes(mode, dungeonCtx, exteriorPool, insidePool) {
  *  paragraph above describes for the dungeon. Asked SECOND, after the
  *  dungeon: `insideFoes()` answers the dungeon's own pool when a
  *  dungeon is mounted, and that record belongs to the dungeon's
- *  sinks. */
-export function liveEnchantFoeSinks(foe, dungeonCtx, exteriorSinks, insidePool, insideSinks) {
+ *  sinks.
+ *
+ *  AUDIT 68 X4: `fromPlayer` is the cast engine's provenance
+ *  (hostMagic.applySpellToFoe), handed on to whichever host's sinks
+ *  own the record - dropped here, an enemy's blast on a guard was the
+ *  player's attack. */
+export function liveEnchantFoeSinks(foe, dungeonCtx, exteriorSinks, insidePool, insideSinks, fromPlayer = true) {
   const host = enchantFoeHost(foe, dungeonCtx, insidePool);
-  if (host === 'dungeon') return dungeonCtx.foeSinksFor(foe);
-  if (host === 'inside') return insideSinks(foe);
-  return exteriorSinks(foe);
+  if (host === 'dungeon') return dungeonCtx.foeSinksFor(foe, fromPlayer);
+  if (host === 'inside') return insideSinks(foe, fromPlayer);
+  return exteriorSinks(foe, fromPlayer);
 }
 
 /** WHOSE RECORD IS THIS - the membership question by itself, because

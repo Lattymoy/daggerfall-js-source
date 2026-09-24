@@ -1069,12 +1069,16 @@ export function createWorldModes(host) {
    *  createExteriorFoes record; a watchman carries no such field), so
    *  the damage lands in the pool that owns the billboard - a record
    *  from a building must knock back and die against THAT building's
-   *  collider and death chain, never the street's. */
-  const insideFoeSinks = (foe) => ({
+   *  collider and death chain, never the street's.
+   *
+   *  AUDIT 68 X4: and the cast engine's provenance rides both doors,
+   *  as world.js's `foeSinks` takes it - a foe's spell on a watchman
+   *  in a shop is not the player's attack. */
+  const insideFoeSinks = (foe, fromPlayer = true) => ({
     hurt: (n) => {
       if (n <= 0) return;
-      if (foe._encounter) interiorFoes?.damageFoe(foe, n, player.pos);
-      else interiorGuards?.hurtGuard(foe, n, player.pos);
+      if (foe._encounter) interiorFoes?.damageFoe(foe, n, player.pos, null, { fromPlayer, kind: 'spell' });
+      else interiorGuards?.hurtGuard(foe, n, player.pos, null, { fromPlayer });
     },
     heal: (n) => { if (n > 0) foe.entity.health = Math.min(foe.entity.maxHealth ?? Infinity, foe.entity.health + n); },
     drainMagicka: (n) => { if (n > 0) foe.entity.magicka = Math.max(0, (foe.entity.magicka ?? 0) - n); },
@@ -9308,7 +9312,7 @@ export function createWorldModes(host) {
      *  here, and two spellings of one pool's damage doors is exactly
      *  the drift the join above was written to end. This is the door
      *  onto that one definition. */
-    insideFoeSinksFor(foe) { return insideFoeSinks(foe); },
+    insideFoeSinksFor(foe, fromPlayer) { return insideFoeSinks(foe, fromPlayer); },
     /** AUDIT 58 (review): THE WABBAJACK'S TRANSFORM over this host's
      *  pools - dungeonContext.js's twin, for the host that had none.
      *  world.js's `replaceFoe` deletes the struck record and stands

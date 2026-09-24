@@ -179,7 +179,7 @@ export const QUEST_CTX_CONTRACT = Object.freeze([
   'dateTimeString', 'deductGold', 'deductGoldPieces', 'dialogLink',
   'dropFace', 'endLycanthropy', 'endVampirism', 'forceTopicListsUpdate',
   'getGold', 'getGoldPieces', 'getGuild', 'getGuildFactionId',
-  'getReputation', 'getTotalGold', 'giveItemToPlayer', 'isHouseOwned',
+  'getReputation', 'getTotalGold', 'giveItemToPlayer',
   'isPlayerInTown', 'isPlayerInsideCastle', 'makeEnemiesHostile',
   'makeHeldQuestItemsPermanent', 'makePcDiseased', 'midDateTimeString',
   'offerReward', 'onQuestEnded', 'onQuestStarted', 'playSong',
@@ -276,11 +276,6 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     // That is the WHOLE of the subscription - no host fan-out to
     // forget to mount, because DFU has no second subscriber.
     onOfferPending: (givePc) => noteOfferPending(givePc),
-    // H1: DaggerfallBankManager.IsHouseOwned. place.js has read this
-    // since the quest arc landed (:439 - a house you own is never
-    // handed out as a quest site) and nothing could answer it, so it
-    // defaulted false and your own home stayed eligible.
-    isHouseOwned: (buildingKey) => ctx.isHouseOwned?.(buildingKey) ?? false,
     getGuild: (fid) => ctx.getGuild?.(fid) ?? null,
     regionPriceAdjustment: () => ctx.regionPriceAdjustment?.() ?? 0,
     changeReputation: (fid, amount, propagate) => ctx.changeReputation?.(fid, amount, propagate),

@@ -5822,7 +5822,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  halves of a reflection live here - the spell going out and the
      *  caster's own vitals doors it comes back through. */
     castAtFoe: (spell, foe, caster = null) => magic.applySpellToFoe(spell, playerEntity.level, foe, caster),
-    foeSinksFor: (foe) => foeSinks(foe),
+    foeSinksFor: (foe, fromPlayer) => foeSinks(foe, fromPlayer),   // AUDIT 68 X4: the router hands the cast engine's provenance on
     flicker,
     waterQuads,
     /** WATER-D1: the host names the climate ground archive whose record 0

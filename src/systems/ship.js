@@ -100,3 +100,22 @@ export function shipTransition(player, { boardShipPosition = null, mapPixel = nu
     mode: TRANSPORT_MODES.Foot,
   };
 }
+
+/** AUDIT 68 S22: the boarding memory's height, COMPENSATION-FREE - a raw
+ *  scene y carried the streamer's vertical compensation, so a recenter or
+ *  a reload put the disembark hundreds of units off. DFU restores with
+ *  the difference (RestorePosition's diffY, SerializablePlayer.cs:486-491);
+ *  the port sheds it, as for every other height it stores. */
+export function shipMemory(position, compensationY) {
+  const p = position.pos;
+  return { ...position, pos: [p[0], p[1] - compensationY, p[2]], compensationFree: true };
+}
+
+/** The remembered spot in the CURRENT scene frame, or null for a memory
+ *  written raw (before the flag) - its height cannot be recovered, so the
+ *  host grounds that arrival instead. */
+export function shipRestorePos(restore, compensationY) {
+  if (!restore?.compensationFree) return null;
+  const p = restore.pos;
+  return [p[0], p[1] + compensationY, p[2]];
+}

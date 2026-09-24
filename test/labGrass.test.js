@@ -200,15 +200,17 @@ test('GR4: the root takes the colour of the tile it stands on, and the base fade
 
 test('GR4: the game feeds each tile\'s MEAN colour, averaged once where the texels already are', () => {
   const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
-  // Averaged where the layers are decoded for the tile array - the
-  // texels are on the CPU there already, once per archive - rather
-  // than sampled per blade.
-  assert.match(world, /groundMeanColour\.set\(groundArchive, layers\.map\(\(rgba\) => \{/);
-  assert.match(world, /return n \? \[r \/ n \/ 255, g \/ n \/ 255, b \/ n \/ 255\] : \[0\.10, 0\.145, 0\.065\];/);
+  // Averaged where the layers are decoded - the texels are on the CPU
+  // there already, once per archive - rather than sampled per blade.
+  // AUDIT 68 S17: through the one law (tileMeanColour, pinned on a real
+  // color32 in audit68_worldjs), learned beside grassRecords whenever the
+  // SCENE's map lacks the archive, not on the renderer's cache miss.
+  const learn = world.slice(world.indexOf('if (!grassRecords.has(groundArchive)) {'), world.indexOf('const terrain = renderer.createTerrainSurface('));
+  assert.match(learn, /groundMeanColour\.set\(groundArchive, layers\.map\(tileMeanColour\)\);/);
   // ground(x, z) is keep's OWN lookup - same pieces, same tile maths -
   // answering with the colour instead of the height, so the root under
   // a blade takes the colour of the very tile keep let it stand on.
-  const g = world.slice(world.indexOf('const ground = (x, z) => {'), world.indexOf('if (!labGrassField) labGrassField = createGrassFields('));
+  const g = world.slice(world.indexOf('const ground = (x, z) => {'), world.indexOf('if (!labGrassField) labGrassField = createGrassField('));   // AUDIT 68: `createGrassFields(` was never there - the slice ran to -1
   assert.match(g, /const tx = Math\.floor\(lx \/ 6\.4\); const tz = Math\.floor\(lz \/ 6\.4\);/);
   assert.match(g, /const rec = p\.tilemapBytes\[tz \* TERRAIN_TILE_DIM \+ tx\] >> 2;/);
   assert.match(g, /return groundMeanColour\.get\(p\.groundArchive\)\?\.\[rec\] \?\? null;/);

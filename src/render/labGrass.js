@@ -1020,6 +1020,26 @@ export const GRASS_FAR_SEGMENTS = 1;
  *  first - and it was never the argument anyway.) */
 export const GRASS_FAR_AT = 0.5;
 
+/** A color32 tile's (`BaseImageFile.getColor32`'s `{colors, width,
+ *  height}`) mean RGB, 0..255 - the one average the grass reads: the
+ *  bases grassRecordsOf classifies against, and the root's colour. */
+function meanRgb(l) {
+  let r = 0, g = 0, b = 0;
+  const n = l.width * l.height;
+  for (let k = 0; k < n; k++) { r += l.colors[k * 4]; g += l.colors[k * 4 + 1]; b += l.colors[k * 4 + 2]; }
+  return [r / n, g / n, b / n];
+}
+
+/** GR4: the colour a blade's root takes off the tile it stands on - the
+ *  tile's mean, 0..1. AUDIT 68 S17: the host averaged the color32 as if
+ *  it were its byte array (`.length` of an object), so every tile of
+ *  every climate answered the olive an EMPTY tile falls back to. */
+export function tileMeanColour(l) {
+  if (!(l.width * l.height)) return [0.10, 0.145, 0.065];
+  const m = meanRgb(l);
+  return [m[0] / 255, m[1] / 255, m[2] / 255];
+}
+
 /**
  * Which records of a ground archive are GRASS, from the archive's own
  * texels: the four bases are identified by their mean colour (base 0 is
@@ -1030,8 +1050,7 @@ export const GRASS_FAR_AT = 0.5;
  */
 export function grassRecordsOf(layers, { roadRecords = new Set([46, 47, 55]) } = {}) {
   if (!layers || layers.length < 4) return new Set();
-  const meanOf = (l) => { let r = 0, g = 0, b = 0; const n = l.width * l.height; for (let k = 0; k < n; k++) { r += l.colors[k * 4]; g += l.colors[k * 4 + 1]; b += l.colors[k * 4 + 2]; } return [r / n, g / n, b / n]; };
-  const means = [0, 1, 2, 3].map((i) => meanOf(layers[i]));
+  const means = [0, 1, 2, 3].map((i) => meanRgb(layers[i]));
   const isGrass = (m) => m[1] >= m[0] && m[1] > m[2] * 1.1 && !(m[2] > m[0] * 1.25 && m[2] > m[1] * 1.1);
   const grassBase = means.map(isGrass);
   if (!grassBase.some(Boolean)) return new Set();

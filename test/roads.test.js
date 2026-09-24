@@ -865,7 +865,8 @@ test('ROADS 25: a pixel says whether a network was present, and the host rebuild
   // entry returned - a caller awaiting the player's pixel (the boot's
   // camera, the teleport landing) never receives undefined. Once: the
   // worker's message order guarantees the second paint has the network.
-  assert.match(world, /if \(!withRoads && terrainGen\.hasRoads\) \{\s*\n\s*destroyPixel\(px, py, \{ collectLoose: false \}\);\s*\n\s*if \(roadsRetry\) console\.warn\([^\n]*\);\s*\n\s*else return buildPixelNow\(px, py, \{ roadsRetry: true \}\);\s*\n\s*\}/);
+  // AUDIT 68 S22: the teardown is the FIRST paint's alone - the second is kept as painted, not torn down and then read
+  assert.match(world, /if \(!withRoads && terrainGen\.hasRoads\) \{\s*\n\s*if \(!roadsRetry\) \{\s*\n\s*destroyPixel\(px, py, \{ collectLoose: false \}\);\s*\n\s*return buildPixelNow\(px, py, \{ roadsRetry: true \}\);\s*\n\s*\}\s*\n\s*console\.warn\([^\n]*kept as painted[^\n]*\);\s*\n\s*\}/);
   assert.match(world, /async function buildPixelNow\(px, py, \{ roadsRetry = false \} = \{\}\) \{/);
   assert.doesNotMatch(world, /terrainGen\.hasRoads\) \{ destroyPixel\(px, py, \{ collectLoose: false \}\); return; \}/, 'no path in the builder resolves the player\u2019s pixel to nothing');
   assert.match(read('src/world/terrainGenClient.js'), /get hasRoads\(\) \{ return !!this\._roads \|\| !!this\._settlements; \}/);
