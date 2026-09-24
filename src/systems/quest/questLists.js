@@ -38,6 +38,13 @@ export const MEMBERSHIP_STATUS = Object.freeze({
   Kynareth: 'K', Mara: 'R', Stendarr: 'S', Zenithar: 'Z',
 });
 
+/** The MAIN QUEST, by the pack's own naming - DFU ships the story as
+ *  S0000*.txt and _BRISIEN is its opener - read off the QUEST NAME,
+ *  never the display name. AUDIT 68 S31-questshare-mainquest-dup: one
+ *  home for the chronicle's rail (ui/questRail.js) and the share gates
+ *  (systems/questShare.js), which kept two copies "in step". */
+export const isMainQuestName = (questName) => /^S0000/.test(questName ?? '') || questName === '_BRISIEN';
+
 const INIT_AT_GAME_START = 'InitAtGameStart';
 const isInt = (s) => /^\s*[+-]?\d+\s*$/.test(s);   // int.TryParse's accepting surface
 

@@ -34,7 +34,7 @@ import { overlayAction } from './input.js';
 import {
   spellEffects, spellPointCost, EFFECT_NOT_FOUND, ENTER_SPELL_NAME,
   CANNOT_DELETE_VAMP, CANNOT_DELETE_WERE, DELETE_SPELL_PROMPT,
-  VAMPIRE_SPELL_TAG, LYCANTHROPY_SPELL_TAG,
+  VAMPIRE_SPELL_TAG, LYCANTHROPY_SPELL_TAG, editBookSpell,
 } from './spellbookWindow.js';
 import { effectByKey } from '../systems/spellEffects.js';   // the classic book's own source (spellbookWindow.js:120)
 import { spellQuickslot, setSpellQuickslot, clearSpellQuickslot } from '../systems/quickslots.js';   // HOTSLOT: the book is where a spell is slotted
@@ -282,7 +282,7 @@ function render() {
     form.onsubmit = (e) => {
       e.preventDefault();
       const name = renaming.trim();
-      if (name) sel.spell.name = name;
+      if (name) editBookSpell(deps.spells?.(), sel.i, { name });   // AUDIT 68 S31-enhanced-rename-mutates-shared-spell: never the shared record
       renaming = null;
       render();
     };

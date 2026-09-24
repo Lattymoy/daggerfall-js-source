@@ -41,7 +41,7 @@ import { appStorage } from './appStorage.js';   // DA1: localStorage in a browse
 import { characterIdOf, adoptLegacyCards, mintCharacterId } from './characterId.js';   // CHARID1: a character is an id, not a name
 import { isOnlinePage } from './onlineLane.js';   // ONLINE-DEATH-FIX: the page is online
 import { STREAMING_TERRAIN_SCALE } from '../world/terrainSampler.js';   // TERRAIN-SCALE1: the scale every saved exterior height stands on
-import { respawnHealth, reviveForPlay } from './deathRespawn.js';   // ONLINE-DEATH-FIX: the SAME half-health an online respawn leaves
+import { reviveForPlay } from './deathRespawn.js';   // ONLINE-DEATH-FIX: the SAME half-health an online respawn leaves
 import { setLightSource } from './lightSource.js';   // DISC7: the light in hand's one door
 
 /** One membership book, rows copied (GuildMembership_v1's shape). */
@@ -63,7 +63,7 @@ const restoreMembershipBook = (book) => {
 };
 
 export const SAVE_VERSION = 1;
-export const QUICKSAVE_KEY = 'dagger.quicksave';
+export const QUICKSAVE_KEY = 'dagger.quicksave';   // the retired single-key quicksave - AUDIT 68 S31-save-dead-legacy-api: read only by saveSlots.migrateLegacyQuicksave
 
 const ENTITY_FIELDS = [
   'name', 'gender', 'race', 'raceId', 'faceIndex',   // S3c/U9: the identity rides the save
@@ -567,14 +567,6 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
     entity.characterId = mintCharacterId();
     adoptLegacyCards(appStorage(), entity.name, entity.characterId);
   }
-  // ONLINE-DEATH-FIX: NEVER LOAD DEAD ONLINE. hurtPlayer fires the death only on the alive->0 TRANSITION, so a
-  // character restored at 0 HP can never die again and is stuck at 0% (unkillable). Online, a death is a respawn, so a
-  // dead save (the exit autosave can write one) comes back at the respawn's own half health. Offline is untouched.
-  // DEATHLOOP1: ...and the drains that killed them are ended with it.
-  // A save written by the exit autosave carries the poison that did it;
-  // restoring the health alone loads the player straight back into the
-  // same death, which is the loop from the other end.
-  if (isOnlinePage() && !((entity.health ?? 0) > 0)) reviveForPlay(entity);
   entity.stats = { ...snap.stats };
   entity.survival = snap.survival && typeof snap.survival === 'object' ? { ...snap.survival, notes: {} } : null;   // SURV1: a pre-SURV save starts fresh at the host's first tick
   // Pre-S15 saves carry no fatigue: default to rested (MaxFatigue =
@@ -672,6 +664,16 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // marker and the entry can never disagree (the gates - a second
   // infection, the disease immunity - read the marker).
   entity.racialOverride = entity.activeEffects.find((a) => a.kind === 'racialOverride' && !a.ended) ?? null;
+  // ONLINE-DEATH-FIX: NEVER LOAD DEAD ONLINE. hurtPlayer fires the death only on the alive->0 TRANSITION, so a
+  // character restored at 0 HP can never die again and is stuck at 0% (unkillable). Online, a death is a respawn, so a
+  // dead save (the exit autosave can write one) comes back at the respawn's own half health. Offline is untouched.
+  // DEATHLOOP1: ...and the drains that killed them are ended with it.
+  // A save written by the exit autosave carries the poison that did it;
+  // restoring the health alone loads the player straight back into the
+  // same death, which is the loop from the other end.
+  // AUDIT 68 S31-online-dead-load-revive-before-restore: HERE, below the survival and effects restores - above them
+  // the drain and exposure resets hit the outgoing session's records and the save's own poison and wet came back.
+  if (isOnlinePage() && !((entity.health ?? 0) > 0)) reviveForPlay(entity);
   // X10: bundleId is a MODULE-scope monotonic counter, not saved
   // state - DFU has no counter to collide because its bundles are
   // object references re-instanced on load. A fresh process starts
@@ -1079,51 +1081,4 @@ export function restoreSessionState(extras, { questBridge = null, talk = null, e
     removeAllOrphanedItems(entity, (uid) => questBridge.machine.getQuest?.(uid) ?? null);
   }
   return !!extras?.quest;
-}
-
-/** Storage backend (absent in headless - callers gate): the DA1 seam,
- *  so the desktop shell's file store answers where a browser answers
- *  localStorage.
- *  setItem THROWS on real browsers - QuotaExceededError when storage
- *  is full, or a SecurityError under private-browsing modes that
- *  disable storage. An unguarded throw here propagates through the F9
- *  handler and kills the frame (the same unguarded-browser-API class
- *  as the bare requestPointerLock crash). Return false on failure so
- *  the caller reports "save failed" instead of crashing. */
-export function writeQuicksave(snap, storage = appStorage()) {
-  if (!storage) return false;
-  try {
-    storage.setItem(QUICKSAVE_KEY, JSON.stringify(snap));
-    return true;
-  } catch (err) {
-    console.warn('[save] quicksave write failed:', err?.name ?? err);
-    return false;
-  }
-}
-/**
- * IS THERE A GAME THIS BUILD CAN ACTUALLY RESTORE?
- *
- * AUDIT (2026-08-25) F2. Both menus asked `readQuicksave()` and treated
- * any parsed blob as a game - but restorePlayer REFUSES anything whose
- * `v` is not SAVE_VERSION, and it refuses AFTER the world has booted.
- * So an envelope from an older build drew a full Continue card, and
- * pressing it printed "Save version mismatch." into a HUD nobody is
- * looking at yet and came up on the chargen wizard instead: LOAD
- * SILENTLY STARTING A NEW GAME, which is AUDIT 19 F3 exactly, one
- * layer down and past the guard F3 installed.
- *
- * The test is HERE, beside the restorer whose law it is, and both
- * front doors call it. A predicate that lives anywhere else is a
- * predicate that drifts from the thing it predicts.
- */
-export function restorableQuicksave(storage = appStorage()) {
-  const snap = readQuicksave(storage);
-  return snap && snap.v === SAVE_VERSION ? snap : null;
-}
-
-export function readQuicksave(storage = appStorage()) {
-  if (!storage) return null;
-  const raw = storage.getItem(QUICKSAVE_KEY);
-  if (!raw) return null;
-  try { return JSON.parse(raw); } catch { console.warn('[save] corrupt quicksave'); return null; }
 }

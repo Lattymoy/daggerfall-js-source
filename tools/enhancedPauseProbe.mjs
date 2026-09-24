@@ -68,7 +68,7 @@ async function bootSettled(page) {
 // with none in storage they all draw their "nothing here yet" arm and
 // every claim about what a player is shown before overwriting a game
 // is vacuously true. save.js validates the envelope version, so this
-// is what restorableQuicksave will actually accept (v === 1).
+// is what restorableSlot will actually accept (v === 1).
 const SAVE = {
   v: 1, name: 'Aelwyn', chargenDone: true,
   career: { name: 'Spellsword' }, level: 4,

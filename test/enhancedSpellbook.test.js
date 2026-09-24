@@ -219,7 +219,9 @@ test('PX23b: RENAME comes back, and the book says when you cannot afford a spell
   // The classic asks "Enter spell name : " (:934); the first draft
   // dropped it - a prettier window that can do less.
   assert.match(src, /ENTER_SPELL_NAME/);
-  assert.match(src, /if \(name\) sel\.spell\.name = name;/);
+  // AUDIT 68 S31-enhanced-rename-mutates-shared-spell: MOVED, deliberately - this pinned
+  // `sel.spell.name = name`, a write into the shared (or frozen RRI) record; the edit is the classic's copy now.
+  assert.match(src, /if \(name\) editBookSpell\(deps\.spells\?\.\(\), sel\.i, \{ name \}\);/);
   assert.match(src, /^let renaming = null;/m, 'the edit survives a re-render');
   assert.match(src, /renaming = null;/, 'and a new pick abandons it');
   // AFFORDABILITY: the question a player opens the book with, which the

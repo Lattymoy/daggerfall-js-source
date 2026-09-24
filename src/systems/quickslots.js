@@ -717,8 +717,10 @@ export function resetQuickslotHolds() { holds.clear(); cycling = null; lastTickA
  *  So a blocked frame DISARMS rather than forgets: every slot is held
  *  down, already cycled (so its release performs nothing) and stepping
  *  never (so it does not quietly walk the book under the window). The
- *  key has to come up and go down again to mean anything. */
-const disarm = () => ({ down: true, ms: 0, next: Infinity, cycled: true });
+ *  key has to come up and go down again to mean anything.
+ *  AUDIT 68 S31-quickslot-disarm-raises-lamp: and `disarmed`, so that
+ *  release lights no cycle lamp either - nothing was chosen. */
+const disarm = () => ({ down: true, ms: 0, next: Infinity, cycled: true, disarmed: true });
 
 /**
  * ONE FRAME of the hold machine.
@@ -743,7 +745,7 @@ export function tickQuickslotHold(dt, { isHeld = null, entity = null, onTap = nu
   for (const slot of CYCLE_SLOTS) {
     const st = holds.get(slot) ?? { down: false, ms: 0, next: QUICK_HOLD_MS, cycled: false };
     const down = isHeld(CYCLE_ACTIONS[slot]) === true;
-    if (down && !st.down) { st.down = true; st.ms = 0; st.next = QUICK_HOLD_MS; st.cycled = false; }
+    if (down && !st.down) { st.down = true; st.ms = 0; st.next = QUICK_HOLD_MS; st.cycled = false; st.disarmed = false; }
     else if (down) {
       st.ms += ms;
       while (st.ms >= st.next) {
@@ -756,7 +758,7 @@ export function tickQuickslotHold(dt, { isHeld = null, entity = null, onTap = nu
       // A HOLD IS NOT A PRESS. The release of a hold performs nothing -
       // it has already done its work, which was choosing.
       if (!st.cycled) onTap?.(slot);
-      else cycling = { slot, ms: QUICK_CYCLE_LINGER_MS };
+      else if (!st.disarmed) cycling = { slot, ms: QUICK_CYCLE_LINGER_MS };
     }
     holds.set(slot, st);
   }
