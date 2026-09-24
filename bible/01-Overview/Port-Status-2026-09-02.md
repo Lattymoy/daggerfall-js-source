@@ -535,7 +535,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   second.*
 - ~~**`src/scenes/worldModes.js:1959`** - above ground only:
   `QuestMachine.SetupIndividualStaticNPC`. *Multi-host. The law is
-  ported and idle at `systems/quest/machine.js:788` including the
+  ported and idle at `systems/quest/machine.js:794` including the
   away arm's `setActive(false)`, but there is no moment to run it: both
   exterior hosts lay their RMB blocks out before the quest bridge
   exists.*~~ **SHIPPED (ROAD-E E3, 2026-09-02).** *The law is not idle:

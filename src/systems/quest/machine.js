@@ -576,6 +576,12 @@ export class QuestMachine {
   startQuestImmediate(quest) {
     quest.start();
     this.deps.addQuestTopics?.(quest);
+    // QUEST-UID1 (2026-09-24, found tracing "two letters from the queen"): `quests.Add(quest.UID, quest)` (:725) is a
+    // Dictionary.Add - a UID already on the live table THROWS, and the quest standing there stays. `set` replaced it
+    // in silence, so a quest minted before a load and started after it (the offer popup a quickload runs under - see
+    // the bridge's restore) overwrote whatever restored quest had drawn the same number: a quest that vanished with
+    // no word. The same refusal restoreSaveData already makes, in the same words.
+    if (this.quests.has(quest.uid)) throw new Error('An item with the same key has already been added.');
     this.quests.set(quest.uid, quest);
     this.deps.onQuestStarted?.(quest);
     if (this.lastNPCClicked != null) {
