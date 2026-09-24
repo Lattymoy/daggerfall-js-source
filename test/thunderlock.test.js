@@ -23,7 +23,7 @@ import {
   THUNDERLOCK_NUM_FRAMES, MELEE_NUM_FRAMES, BOW_NUM_FRAMES,
   createWeaponMachine, machineAttack, machineStep,
 } from '../src/characters/weaponStates.js';
-import { isBowWeapon, attackSkillOf, WEAPON_SKILL_BY_TEMPLATE } from '../src/scenes/hostCombat.js';
+import { isBowWeapon, attackSkillOf, weaponSkillUsed as hostWeaponSkillUsed } from '../src/scenes/hostCombat.js';
 import { spendAmmoFor, ammoCountFor } from '../src/systems/inventory.js';
 import { playerArchiveFor } from '../src/characters/paperdollArt.js';
 import { shimmer, NATIVE_WIDTH } from '../src/combat/thunderlockArt.js';
@@ -96,8 +96,11 @@ test('it is scored on ARCHERY, through the law every host already asks', () => {
   // ONE TABLE. hostCombat.js carried a second copy of the weapon->skill
   // map and answered null here, which is what sent the gun down the
   // melee arc in every host until it was collapsed onto weapons.js.
-  assert.equal(WEAPON_SKILL_BY_TEMPLATE[130], SKILLS.Archery);
-  assert.equal(WEAPON_SKILL_BY_TEMPLATE[113], SKILLS.ShortBlade);
+  // AUDIT 68 S21-weapon-skill-table-testonly: through the one door this file re-exports (the derived object shape
+  // it also exported had no production reader).
+  assert.equal(hostWeaponSkillUsed, weaponSkillUsed, 'the host file re-exports the one door, not a copy');
+  assert.equal(hostWeaponSkillUsed(130), SKILLS.Archery);
+  assert.equal(hostWeaponSkillUsed(113), SKILLS.ShortBlade);
   const host = readFileSync('src/scenes/hostCombat.js', 'utf8');
   assert.match(host, /from '\.\.\/characters\/weapons\.js'/, 'and it reads the one home rather than restating it');
 });

@@ -180,14 +180,19 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
    *  sharing a building - each ran createMesh and the second `set`
    *  overwrote the first, leaking a VAO and its buffers for the
    *  session (nothing destroys a gpuMeshes entry). The in-flight map is
-   *  the law getTexture above and buildPixel already carry. */
-  async function getGpuMesh(modelIdNum) {
-    if (gpuMeshes.has(modelIdNum)) return gpuMeshes.get(modelIdNum);
-    if (!meshPromises.has(modelIdNum)) {
-      meshPromises.set(modelIdNum, buildGpuMesh(modelIdNum).finally(() => meshPromises.delete(modelIdNum)));
+   *  the law getTexture above and buildPixel already carry.
+   *  AUDIT 68 S18-uploadpart-no-inflight: ONE door for every mesh key -
+   *  the mill's body, sail and machinery parts (uploadPart) kept a
+   *  completed-only copy of this cache, and two cold mill builds each
+   *  minted the mesh. */
+  async function cachedMesh(key, build) {
+    if (gpuMeshes.has(key)) return gpuMeshes.get(key);
+    if (!meshPromises.has(key)) {
+      meshPromises.set(key, build().finally(() => meshPromises.delete(key)));
     }
-    return meshPromises.get(modelIdNum);
+    return meshPromises.get(key);
   }
+  const getGpuMesh = (modelIdNum) => cachedMesh(modelIdNum, () => buildGpuMesh(modelIdNum));
   async function buildGpuMesh(modelIdNum) {
     // WM4b: MESH REPLACEMENT, the way DFU's MeshReplacement.TryImport-
     // GameObject runs BEFORE the classic mesh is read (MeshAssetImporter
@@ -198,7 +203,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     // id, textures out of the player's ARENA2, a CPU copy for the
     // collider, no doors of its own.
     if (modelIdNum === MACHINERY_MODEL_ID) {
-      const gpu = await uploadPart(modelIdNum, MACHINERY);
+      const gpu = await uploadModel(modelIdNum, MACHINERY);   // already inside getGpuMesh's in-flight entry
       cpuModels.set(modelIdNum, { modelIdNum, positions: MACHINERY.positions, indices: MACHINERY.indices, subMeshes: MACHINERY.subMeshes, doors: [] });
       return gpu;
     }
@@ -241,8 +246,8 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
   // climates - one mesh per skin, however many mills wear it.
   const ROTOR_KEY = -41600;
   const bodyKey = (climateBase, isWinter) => -(50000 + climateBase * 2 + (isWinter ? 1 : 0));
-  async function uploadPart(key, model) {
-    if (gpuMeshes.has(key)) return gpuMeshes.get(key);
+  const uploadPart = (key, model) => cachedMesh(key, () => uploadModel(key, model));
+  async function uploadModel(key, model) {
     for (const sm of model.subMeshes) {
       await getTexture(sm.textureArchive);
       uploadRecord(sm.textureArchive, sm.textureRecord, { opaque: true });

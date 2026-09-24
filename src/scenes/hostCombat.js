@@ -52,12 +52,7 @@ import { comprehendLanguagesChance } from '../systems/effects.js';   // X11: the
 // to the melee arc in every host. One table now, re-exported here so
 // the callers that speak this file's name keep working.
 export { weaponSkillUsed } from '../characters/weapons.js';
-import { weaponSkillUsed, WEAPON_SKILL_USED } from '../characters/weapons.js';
-
-/** The same table in the shape THIS file's name has always had - an
- *  object keyed by template index. Derived, so it cannot drift from
- *  the Map it is derived from. */
-export const WEAPON_SKILL_BY_TEMPLATE = Object.freeze(Object.fromEntries(WEAPON_SKILL_USED));
+import { weaponSkillUsed } from '../characters/weapons.js';
 
 
 /** CalculateAttackDamage's skillID pick (FormulaHelper.cs:573-590):

@@ -505,11 +505,73 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // slice. Flag off = the C1 classic billboards, untouched.
   const charDraws = [];
   let _raceMeshes = null;   // AUDIT 23 (hosts-16)
-  let _rigFor = null;   // ROAD review-p: the late stand needs the same rig cache
+  let _rigFor = null;   // ROAD review-p: the person stand needs the same rig cache
   let animateChars = null; // set when the voxel body builds
   const flatAnims = new FlatAnimator();   // FA1
   const billboardBatches = [];
   const flatGroups = new Map();
+  // ROAD review-p: THE LIVE HALF of SetActive, and (AUDIT 68
+  // S21-person-hide-noop) THE ONE STAND. Every person is stood here -
+  // the build's and the one DaggerfallInterior.UpdateNpcPresence stands
+  // later (the rest window's OnPop) - each with a draw of their own and
+  // an extent, so SetActive(false) can take any of them back out. The
+  // build used to seat people in the shared (archive, record) batches,
+  // whose centres are baked in: a quest's SetActive(false) after the
+  // build (QuestResource.Tick's hide, a destroyed Person) left the
+  // person drawn, and the SetActive(true) after it stood a second copy.
+  // DFU's SetActive takes the renderer with the collider.
+  //
+  // U23: the extent is the STATIC NPC's own billboard, which the
+  // activation ray needs. DFU gives each StaticNPC a BoxCollider sized
+  // to its billboard (DaggerfallBillboard/Billboard.cs SetMaterial ->
+  // `collider.size = new Vector3(size.x, size.y, 0.1f)`), and the
+  // billboard turns to face the player every frame, so the volume it
+  // actually occupies over a turn is the SWEPT box - square in x/z
+  // (Ledger A, and only for the ray). worldModes' picker refuses
+  // `!pn.width`; a voxelfolk body reads it off the archive too.
+  // Answers the stand's promise.
+  const standPerson = (pn) => {
+    if (pn.stood) return null;
+    pn.stood = true;
+    if (_rigFor) {
+      const rg = _rigFor(raceOfArchive(pn.textureArchive));
+      // AUDIT 39 (#76): the person's FLOOR position rides with the draw
+      // - the matrix is re-seated every frame, off the live foot.
+      pn.standDraw = { mesh: rg.mesh, rig: rg, at: [pn.x, pn.y, pn.z], matrix: trs(pn.x, pn.y - rg.liveFootY * rg.scale, pn.z, 0, 0, 0, rg.scale, rg.scale, rg.scale) };
+      charDraws.push(pn.standDraw);
+    }
+    return (async () => {
+      const t = await getTexture(pn.drawArchive ?? pn.textureArchive);   // RR2: the re-materialised billboard, where a mod set one
+      if (!t || (pn.drawRecord ?? pn.textureRecord) >= t.recordCount) return;
+      const size = billboardSize(t, pn.drawRecord ?? pn.textureRecord);
+      pn.width = size.w;
+      pn.height = size.h;
+      // Flipped back or torn down (AUDIT 68 S21-late-stand-after-destroy:
+      // destroy() ends `peopleBuilt`) while the archive was loading, or
+      // drawn as a voxel body already: no billboard.
+      if (!peopleBuilt || _rigFor || !pn.stood || pn.standBatch) return;
+      uploadRecord(pn.drawArchive ?? pn.textureArchive, pn.drawRecord ?? pn.textureRecord);   // RR2: the re-materialised billboard   // REVIEW 2026-09-05: a FLAT - alphaIndex 0 (DaggerfallBillboard.cs:289-293), the cutout key drawBillboards reads; PR #55 had sent it through the mesh door and the person never drew
+      pn.standBatch = renderer.createBillboardBatch(pn.drawArchive ?? pn.textureArchive, pn.drawRecord ?? pn.textureRecord, size, [[pn.x, pn.y, pn.z]]);
+      armFlatAnim(pn.standBatch, t, pn.drawArchive ?? pn.textureArchive, pn.drawRecord ?? pn.textureRecord, flatAnims, uploadRecordFrame);
+      billboardBatches.push(pn.standBatch);
+    })().catch((e) => console.error('[interior] person stand failed:', e));
+  };
+  // The mirror: any stood person can be taken back out.
+  const unstandPerson = (pn) => {
+    if (!pn.stood) return;
+    pn.stood = false;
+    if (pn.standBatch) {
+      const i = billboardBatches.indexOf(pn.standBatch);
+      if (i >= 0) billboardBatches.splice(i, 1);
+      renderer.destroyBatch(pn.standBatch);
+      pn.standBatch = null;
+    }
+    if (pn.standDraw) {
+      const i = charDraws.indexOf(pn.standDraw);
+      if (i >= 0) charDraws.splice(i, 1);
+      pn.standDraw = null;
+    }
+  };
   if (opts.voxelfolk && people.length) {
     // Neutral paperdoll (C8): a redesigned standing figure from
     // buildNeutralBody() - NOT sprite-constrained (arms at the sides,
@@ -533,14 +595,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     const raceMeshes = new Map();
     _raceMeshes = raceMeshes;   // AUDIT 23 (hosts-16): destroy() frees these
     const rigFor = (race) => { let rg = raceMeshes.get(race); if (!rg) { rg = createCharacterRig(renderer, buildRaceCharacter(race, ramps)); raceMeshes.set(race, rg); } return rg; };
-    _rigFor = rigFor;
-    for (const pn of people) {
-      if (!pn.active) continue;   // SetActive(false): the away copy does not draw
-      const rg = rigFor(raceOfArchive(pn.textureArchive));
-      // AUDIT 39 (#76): the person's FLOOR position rides with the draw
-      // - the matrix is re-seated every frame below, off the live foot.
-      charDraws.push({ mesh: rg.mesh, rig: rg, at: [pn.x, pn.y, pn.z], matrix: trs(pn.x, pn.y - rg.liveFootY * rg.scale, pn.z, 0, 0, 0, rg.scale, rg.scale, rg.scale) });
-    }
+    _rigFor = rigFor;   // the people stand below, through standPerson
     animateChars = (t, mode = 'idle') => {
       const L = mode === 'walk' ? WALK : IDLE;
       for (const rg of raceMeshes.values()) {
@@ -559,13 +614,6 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
         d.matrix = trs(d.at[0], d.at[1] - d.rig.liveFootY * s, d.at[2], 0, 0, 0, s, s, s);
       }
     };
-  } else {
-    for (const pn of people) {
-      if (!pn.active) continue;   // SetActive(false): the away copy does not draw
-      const key = `${pn.drawArchive ?? pn.textureArchive}_${pn.drawRecord ?? pn.textureRecord}`;   // RR2: the re-materialised billboard
-      if (!flatGroups.has(key)) flatGroups.set(key, []);
-      flatGroups.get(key).push([pn.x, pn.y, pn.z]);
-    }
   }
   for (const flat of interior.flats) {
     const key = `${flat.archive}_${flat.record}`;
@@ -583,81 +631,10 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     billboardBatches.push(batch);
   }
 
-  // U23: the STATIC NPC's own billboard extent, which the activation
-  // ray needs. DFU gives each StaticNPC a BoxCollider sized to its
-  // billboard (DaggerfallBillboard/Billboard.cs SetMaterial ->
-  // `collider.size = new Vector3(size.x, size.y, 0.1f)`), and the
-  // billboard turns to face the player every frame, so the volume it
-  // actually occupies over a turn is the SWEPT box - square in x/z.
-  // That is what the AABB below is; a fixed 0.1 depth would miss from
-  // the side. Ledger A, and only for the ray: nothing draws from it.
-  //
-  // The voxelfolk branch never fills flatGroups for people, so the
-  // size is read here, off the archive, either way.
-  for (const pn of people) {
-    if (!pn.active) continue;   // SetActive(false) takes the BoxCollider with it
-    const t = await getTexture(pn.drawArchive ?? pn.textureArchive);   // RR2: the re-materialised billboard, where a mod set one
-    if (!t || (pn.drawRecord ?? pn.textureRecord) >= t.recordCount) continue;
-    const size = billboardSize(t, pn.drawRecord ?? pn.textureRecord);
-    pn.width = size.w;
-    pn.height = size.h;
-  }
-
-  // ROAD review-p: THE LATE HALF of SetActive. Everything above reads
-  // `pn.active` once and never again - the voxel draw list, the flat
-  // groups whose batches are frozen into billboardBatches, and the
-  // extent loop right here. A person stood AFTER this point (the
-  // OnPop re-roll of DaggerfallInterior.UpdateNpcPresence, above all)
-  // therefore has to be given what those loops would have given them:
-  // an extent, so the activation ray has a target at all
-  // (worldModes' picker refuses `!pn.width`), and a draw of their own.
-  // It is a per-person batch rather than a seat in the shared
-  // (archive, record) batch because those are built with their centers
-  // baked in; the quest-flat host does the same thing for the same
-  // reason.
-  const standPerson = (pn) => {
-    if (pn.lateStood) return;
-    pn.lateStood = true;
-    if (_rigFor) {
-      const rg = _rigFor(raceOfArchive(pn.textureArchive));
-      pn.lateDraw = { mesh: rg.mesh, rig: rg, at: [pn.x, pn.y, pn.z], matrix: trs(pn.x, pn.y - rg.liveFootY * rg.scale, pn.z, 0, 0, 0, rg.scale, rg.scale, rg.scale) };
-      charDraws.push(pn.lateDraw);
-    }
-    (async () => {
-      const t = await getTexture(pn.drawArchive ?? pn.textureArchive);   // RR2
-      if (!t || (pn.drawRecord ?? pn.textureRecord) >= t.recordCount) return;
-      const size = billboardSize(t, pn.drawRecord ?? pn.textureRecord);
-      pn.width = size.w;
-      pn.height = size.h;
-      // Flipped back (or destroyed) while the archive was loading, or
-      // drawn as a voxel body already: no billboard.
-      if (_rigFor || !pn.lateStood || pn.lateBatch) return;
-      uploadRecord(pn.drawArchive ?? pn.textureArchive, pn.drawRecord ?? pn.textureRecord);   // RR2: the re-materialised billboard   // REVIEW 2026-09-05: a FLAT - alphaIndex 0 (DaggerfallBillboard.cs:289-293), the cutout key drawBillboards reads; PR #55 had sent it through the mesh door and the person never drew
-      pn.lateBatch = renderer.createBillboardBatch(pn.drawArchive ?? pn.textureArchive, pn.drawRecord ?? pn.textureRecord, size, [[pn.x, pn.y, pn.z]]);
-      armFlatAnim(pn.lateBatch, t, pn.drawArchive ?? pn.textureArchive, pn.drawRecord ?? pn.textureRecord, flatAnims, uploadRecordFrame);
-      billboardBatches.push(pn.lateBatch);
-    })().catch((e) => console.error('[interior] late stand failed:', e));
-  };
-  // The mirror. Only a LATE stand can be taken back: a person the
-  // build stood shares an (archive, record) batch with everyone else
-  // on that record, and DFU never removes one either - its
-  // UpdateNpcPresence walk is SetActive(true) and nothing else.
-  const unstandPerson = (pn) => {
-    if (!pn.lateStood) return;
-    pn.lateStood = false;
-    if (pn.lateBatch) {
-      const i = billboardBatches.indexOf(pn.lateBatch);
-      if (i >= 0) billboardBatches.splice(i, 1);
-      renderer.destroyBatch(pn.lateBatch);
-      pn.lateBatch = null;
-    }
-    if (pn.lateDraw) {
-      const i = charDraws.indexOf(pn.lateDraw);
-      if (i >= 0) charDraws.splice(i, 1);
-      pn.lateDraw = null;
-    }
-  };
+  // The build's stand: from this line SetActive is live (makeInteriorPersonHost), so a flip that lands while these
+  // stands load routes to the pair above rather than being lost.
   peopleBuilt = true;
+  await Promise.all(people.filter((pn) => pn.active).map(standPerson));   // SetActive(false): the away copy does not draw
 
   const t210 = await getTexture(210);
   const lights = (t210 ? collectInteriorLights(interior.flats, (record) =>
@@ -816,6 +793,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     doors: interior.doors.map((d) => ({ ...d, matrix: parent(d.matrix) })),
     collider,
     destroy() {
+      peopleBuilt = false;   // AUDIT 68 S21-late-stand-after-destroy: a stand still loading publishes nothing, and SetActive is the flag alone
       // ROAD-C c2/S9: OnTransitionToExterior's automap half
       // (Automap.cs:2525-2528) - the beacons go and the interior state
       // is written to a field NOTHING EVER READS

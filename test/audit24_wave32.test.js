@@ -245,7 +245,7 @@ test('audit24 wave32: paralysis reaches the exterior pools', () => {
   const cg = rd('src/scenes/cityGuards.js');
   assert.ok(cg.includes('const _gParalyzed = entityIsParalyzed(g.entity);'), 'cityGuards reads it');
   assert.ok(cg.includes('g.ai.update(dt, playerFeet, _armed(g, senses), _gParalyzed);'), 'the motor is told');   // MT-ii: same wrap
-  assert.ok(cg.includes('const events = (_gParalyzed || !_tgt) ? [] : g.attack.update(dt, g.ai, _tgt);'), 'the attack machine holds');   // MT-ii: same
+  assert.ok(cg.includes('if (!_gParalyzed && _tgt) g.attack.update(dt, g.ai, _tgt);'), 'the attack machine holds');   // MT-ii: same (AUDIT 68: the voided `events` binding is gone)
   assert.ok(cg.includes('if (!_gParalyzed && g.mobile.doMeleeDamage && _tgt) {'), 'and no blow lands');   // MT-ii: target-gated
   assert.equal(cg.includes('senses, false)'), false, 'no literal false left behind');
 });

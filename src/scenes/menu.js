@@ -29,7 +29,7 @@ import { StartWindow, loadStartArt } from '../ui/startWindow.js';
 import { TitleScreen, loadTitleArt } from '../ui/titleScreen.js';
 import { LoadClassicWindow, LOAD_CLASSIC_IMG } from '../ui/loadClassicWindow.js';
 import { fetchBytes } from './shared.js';
-import { readZipEntries } from './dataSource.js';   // OT1: the saves picker's phone path rides the ARENA2 door's zip walk
+import { readZipEntries, droppedEntries, walkDroppedEntries } from './dataSource.js';   // OT1: the saves picker's phone path rides the ARENA2 door's zip walk (AUDIT 68: and its drop walk)
 import { music } from '../systems/music.js';
 import { mostRecentRestorable } from '../systems/saveSlots.js';   // SAV4: the F2 question, now over the slot store
 import { SaveGames, SAVENAME_TXT, MAPSAVE_FILENAME, RUMOR_FILENAME, BIO_FILENAME } from '../formats/saveGames.js';
@@ -289,25 +289,20 @@ function pickClassicSaveFiles() {
     ui.addEventListener('dragover', (e) => e.preventDefault());
     ui.addEventListener('drop', async (e) => {
       e.preventDefault();
+      const roots = droppedEntries(e.dataTransfer);   // AUDIT 68 S18-drop-items-after-await: before the first await
       const files = [];
-      // Directory entries carry no webkitRelativePath - rebuild it
-      // from the walk so the SAVE# segment survives.
-      const walk = async (entry, prefix) => {
-        if (entry.isFile) {
-          const f = await new Promise((r) => entry.file(r));
+      // Directory entries carry no webkitRelativePath - the walk's
+      // path stands in for it, so the SAVE# segment survives.
+      try {
+        await walkDroppedEntries(roots, async (f, path) => {
           // OT1: a dropped archive is the phone path by another gesture
-          if (/\.zip$/i.test(entry.name)) { files.push(...await classicSaveFilesFromZip(f)); return; }
-          files.push({ webkitRelativePath: prefix + entry.name, arrayBuffer: () => f.arrayBuffer() });
-        } else if (entry.isDirectory) {
-          const reader = entry.createReader();
-          let batch;
-          do {
-            batch = await new Promise((r) => reader.readEntries(r));
-            for (const en of batch) await walk(en, prefix + entry.name + '/');
-          } while (batch.length);
-        }
-      };
-      for (const item of e.dataTransfer.items) { const en = item.webkitGetAsEntry?.(); if (en) await walk(en, ''); }
+          if (/\.zip$/i.test(f.name)) { files.push(...await classicSaveFilesFromZip(f)); return; }
+          files.push({ webkitRelativePath: path, arrayBuffer: () => f.arrayBuffer() });
+        });
+      } catch (err) {
+        msg.textContent = `drop failed: ${err?.message ?? err}`;
+        return;
+      }
       ingest(files);
     });
   });

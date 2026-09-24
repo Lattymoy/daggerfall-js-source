@@ -58,6 +58,8 @@ import { playerTorchOffsetOverride, setPlayerTorchOffsetOverride } from '../src/
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
+/** AUDIT 68 S18-torch-batch-churn: where a batch's quads draw - its centres plus the per-frame origin the moving ones ride. */
+const drawnAt = (b) => { const o = b.origin ?? [0, 0, 0]; return b.centers.map((c) => [c[0] + o[0], c[1] + o[1], c[2] + o[2]]); };
 const near = (a, b, eps = 1e-9, msg) => assert.ok(Math.abs(a - b) <= eps, msg ?? `${a} ~ ${b}`);
 const settle = () => new Promise((r) => setTimeout(r, 5));
 const T = TEMPLATES;
@@ -182,13 +184,13 @@ test('AUDIT 66 F3: the thrown torch\'s quad is CENTRED on the flight point (the 
   const p = q.p.spawnLightSourceProjectile(T.Torch, 1000, [0, 5, 0], [0, 0, 1], 1);
   await settle();
   const half = 34 * GLOBAL_SCALE / 2;
-  near(p.batch.centers[0][1], p.pos[1] - half, 1e-9, 'at the throw');
+  near(drawnAt(p.batch)[0][1], p.pos[1] - half, 1e-9, 'at the throw');
   q.p.tick(PROJECTILE_FIXED_DT);
-  near(p.batch.centers[0][1], p.pos[1] - half, 1e-9, 'and after a step, the sprite follows the flight');
-  near(p.batch.centers[0][2], p.pos[2], 1e-9);
+  near(drawnAt(p.batch)[0][1], p.pos[1] - half, 1e-9, 'and after a step, the sprite follows the flight');
+  near(drawnAt(p.batch)[0][2], p.pos[2], 1e-9);
   q.p.offsetAll([10, 0, 0]);
-  near(p.batch.centers[0][0], p.pos[0], 1e-9, 'a recenter moves the flight\'s quad');
-  near(p.batch.centers[0][1], p.pos[1] - half, 1e-9);
+  near(drawnAt(p.batch)[0][0], p.pos[0], 1e-9, 'a recenter moves the flight\'s quad');
+  near(drawnAt(p.batch)[0][1], p.pos[1] - half, 1e-9);
   assert.deepEqual(q.loops[0].moves.at(-1), p.pos, 'and its 3D loop');
 });
 
@@ -385,7 +387,7 @@ test('AUDIT 66 F12 + pins: the burning foe\'s flame follows a floating-origin re
   assert.ok(q.p.batches().some((b) => b.archive === PUFF.archive), 'the flame stands');
   q.p.offsetAll([100, 0, 0]);
   const moved = q.p.batches().find((b) => b.archive === PUFF.archive);
-  near(moved.centers[0][0], 100.35, 1e-9, 'and a floating-origin recenter carries it');
+  near(drawnAt(moved)[0][0], 100.35, 1e-9, 'and a floating-origin recenter carries it');
   live.length = 0;                       // the foe leaves the pool (a cell eviction, a teardown)
   q.p.tick(0.016);
   assert.equal(q.p.batches().some((b) => b.archive === PUFF.archive), false, 'the flame goes with it - no orphan batch');

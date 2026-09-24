@@ -238,7 +238,7 @@ test('MW-D9g: LEARNING the archive count is not a data change - the boot must no
 test('MW-D40: the attach generation answers for the WHOLE STORED SET, not the .bsa count', () => {
   // THE DEFECT (AUDIT 39, #43): the generation was the number of
   // stored .bsa files, and this line is the ONLY writer of it and the
-  // only place `_mwEsm`, `_mwArchiveCache` and `_mwFileCache` are
+  // only place `_mwArchiveCache` and `_mwFileCache` are
   // dropped. So a player who attached Data Files (one .bsa) and THEN
   // attached a loose mod folder (Pegas Horse Ranch: .nif/.dds, no
   // .bsa) or a .esm bumped nothing: loadMorrowindArchives returned

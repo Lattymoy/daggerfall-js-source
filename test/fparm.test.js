@@ -2522,8 +2522,8 @@ test('IG2: the swap caches - archives resident per generation, the memos gated o
   const ds = readFileSync('src/scenes/dataSource.js', 'utf8');
   assert.match(ds, /if \(_mwArchiveCache && _mwArchiveCache\.gen === _mwGeneration\) return _mwArchiveCache\.archives;/,
     'the mapped archives are the generation cache');
-  assert.match(ds, /_mwArchiveCache = \{ gen: _mwGeneration, archives \};/);
-  assert.match(ds, /_mwGeneration\+\+; _mwEsm = undefined; _mwArchiveCache = null; _mwFileCache = null;/,
+  assert.match(ds, /if \(gen === _mwGeneration\) _mwArchiveCache = \{ gen, archives \};/);   // AUDIT 68: stamped with the open's own generation
+  assert.match(ds, /_mwGeneration\+\+; _mwArchiveCache = null; _mwFileCache = null;/,
     'a new attach drops the old set');
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
   assert.ok(!/archives\.length = 0;/.test(arm),

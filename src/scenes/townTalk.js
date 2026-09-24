@@ -664,7 +664,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // UserInterfaceManager.cs:180-185), so no mode change happens under
     // a pausing window. Returning the CURRENT mode keeps the button's
     // label truthful.
-    if (overlay || otherOverlayActive?.()) return getInteractionMode();
+    // AUDIT 68 S21-readout-eats-activate: the PAUSE, not the slot - the
+    // F1-F4 rung's own question (keydown); the non-pausing Status
+    // readout refused the touch cycle while the keys changed the mode.
+    if ((overlay && talkPaused()) || otherOverlayActive?.()) return getInteractionMode();
     setMode(nextInteractionMode(getInteractionMode()));
     return getInteractionMode();
   }
@@ -673,7 +676,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  if a person consumed the activation. AUDIT 65 MC-2: `nearerThan` is the REST of the ladder's winning distance and
    *  this arm consumes strictly below it alone - :412 is reached for the ONE ray's own hit (activate.js has the law). */
   function tryActivate(camPos, fwd, persons, nearerThan = Infinity) {
-    if (overlay) return true;
+    // AUDIT 68 S21-readout-eats-activate: the pause, not the slot (STATUS-LIVE's law for every other door here). The
+    // non-pausing readout answered "consumed" with nobody under the ray, so no door, pile or townsperson opened
+    // while it stood; a person's window now takes its slot, and the rest of the ladder runs as it does without one.
+    if (overlay && talkPaused()) return true;
     const near = nearestPerson(camPos, fwd, persons);
     const best = near?.entry ?? null, bestDist = near?.distance ?? Infinity;
     // AUDIT 23 (ui-native-3) - PlayerActivate.cs:76/:771-798: the ray
@@ -945,11 +951,14 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  and set its questionType to QuestionType.Work". */
   const workListItem = () => ({ type: LIST_ITEM_TYPE.Item, questionType: QUESTION_TYPE.Work, caption: '' });
 
+  /** AUDIT 68 S21-talk-category-dup: the location's buildings grouped by TOPIC_CATEGORIES, empty groups dropped -
+   *  one pipeline for the native window's rows and the keyed Where-is chain. */
+  const directoryByCategory = () => TOPIC_CATEGORIES
+    .map((c) => ({ label: c.caption, buildings: directory.filter((b) => b.buildingType === c.type) }))
+    .filter((c) => c.buildings.length);
   /** The pre-engine fallback: T3c's flat category directory. */
   function localCategories() {
-    return TOPIC_CATEGORIES
-      .map((c) => ({ label: c.caption, buildings: directory.filter((b) => b.buildingType === c.type) }))
-      .filter((c) => c.buildings.length)
+    return directoryByCategory()
       .map((c) => ({ label: c.label, buildings: c.buildings.map((b) => ({ label: b.name, ...b })) }));
   }
 
@@ -1056,11 +1065,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   }
 
   function openCategories(onClosed = null) {
-    const cats = TOPIC_CATEGORIES
-      .map((c) => ({ ...c, buildings: directory.filter((b) => b.buildingType === c.type) }))
-      .filter((c) => c.buildings.length)
-      .map((c) => ({ label: c.caption, buildings: c.buildings }));
-    pagedList(['Where is...'], cats, (cat) => {
+    pagedList(['Where is...'], directoryByCategory(), (cat) => {
       pagedList([cat.label], cat.buildings.map((b) => ({ label: b.name, building: b })), (it) => answerWhereIs(it.building, onClosed), 0, onClosed);
     }, 0, onClosed);
   }

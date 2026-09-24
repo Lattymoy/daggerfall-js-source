@@ -1328,7 +1328,7 @@ export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, ro
  * host happens to have.
  */
 export const plainLines = (rows) => (rows?.length
-  ? rows.map((r) => (typeof r === 'string' ? r : (r?.text ?? ''))).filter((l) => l !== null)
+  ? rows.map((r) => (typeof r === 'string' ? r : (r?.text ?? '')))   // AUDIT 68 S21-plainLines-dead-filter: every row maps to a string - the `!== null` filter after it removed nothing
   : null);
 
 /**

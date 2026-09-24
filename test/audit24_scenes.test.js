@@ -140,11 +140,12 @@ test('audit24 wave20: SetupIndividualStaticNPC is wired at AddPeople, not merely
     'and it is still the person\'s own flag that moves');
   // SetActive(false) on a GameObject takes the renderer AND the
   // collider: the away copy must not draw and must not be clickable.
-  // BOTH draw paths - the classic billboard batch and ?voxelfolk's rig -
-  // or the away copy still stands in one of them.
-  assert.equal(ic.match(/if \(!pn\.active\) continue;\s*\/\/ SetActive\(false\): the away copy does not draw/g)?.length, 2,
-    'the flat batch AND the voxelfolk rig both skip an inactive person');
-  assert.match(ic, /if \(!pn\.active\) continue;\s*\/\/ SetActive\(false\) takes the BoxCollider with it/);
+  // AUDIT 68 S21-person-hide-noop: BOTH draw paths - the classic
+  // billboard and ?voxelfolk's rig - and the extent are one stand now,
+  // and the build stands only the active.
+  assert.match(ic, /await Promise\.all\(people\.filter\(\(pn\) => pn\.active\)\.map\(standPerson\)\);\s*\/\/ SetActive\(false\): the away copy does not draw/,
+    'the build stands an active person only - the billboard, the voxelfolk rig and the extent alike');
+  assert.equal(/flatGroups\.get\(key\)\.push\(\[pn\.x, pn\.y, pn\.z\]\)/.test(ic), false, 'and no person seats in a shared batch it cannot be taken out of');
   assert.match(wm, /if \(!pn\.width \|\| pn\.active === false\) return;/,
     'and the activation ray skips it');
 });

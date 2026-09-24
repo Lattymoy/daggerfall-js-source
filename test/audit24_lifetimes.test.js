@@ -257,11 +257,13 @@ test('AUDIT 39: a third race - two cold callers for one model id must not each b
   // held the in-flight map all along.
   const pipeline = read('src/scenes/dataPipeline.js');
   assert.match(pipeline, /const meshPromises = new Map\(\);/, 'the in-flight map exists');
-  const fn = pipeline.slice(pipeline.indexOf('async function getGpuMesh('), pipeline.indexOf('async function buildGpuMesh('));
-  assert.match(fn, /if \(gpuMeshes\.has\(modelIdNum\)\) return gpuMeshes\.get\(modelIdNum\);/, 'a finished mesh answers from the cache');
-  assert.match(fn, /if \(!meshPromises\.has\(modelIdNum\)\) \{\s*\n\s*meshPromises\.set\(modelIdNum, buildGpuMesh\(modelIdNum\)/,
+  // AUDIT 68 S18-uploadpart-no-inflight: the door is `cachedMesh` now, shared by getGpuMesh and the mill's parts.
+  const fn = pipeline.slice(pipeline.indexOf('async function cachedMesh('), pipeline.indexOf('async function buildGpuMesh('));
+  assert.match(fn, /if \(gpuMeshes\.has\(key\)\) return gpuMeshes\.get\(key\);/, 'a finished mesh answers from the cache');
+  assert.match(fn, /if \(!meshPromises\.has\(key\)\) \{\s*\n\s*meshPromises\.set\(key, build\(\)/,
     'and a flying one answers with the SAME promise, set before any await');
-  assert.match(fn, /\.finally\(\(\) => meshPromises\.delete\(modelIdNum\)\)/, 'a settled build leaves the map');
+  assert.match(fn, /\.finally\(\(\) => meshPromises\.delete\(key\)\)/, 'a settled build leaves the map');
+  assert.match(fn, /const getGpuMesh = \(modelIdNum\) => cachedMesh\(modelIdNum, \(\) => buildGpuMesh\(modelIdNum\)\);/, 'getGpuMesh is that door');
   // the build itself is the only createMesh, and it is unreachable
   // except through the door above
   assert.equal((pipeline.match(/buildGpuMesh\(/g) ?? []).length, 2, 'one definition, one caller');

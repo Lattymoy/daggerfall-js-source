@@ -141,7 +141,9 @@ test('RR2 the decision per person: the two switches, the face override for the b
   const ic = rd('src/scenes/interiorContext.js');
   assert.match(ic, /const v = opts\.variantPerson\?\.\(pn\) \?\? null;/);
   assert.match(ic, /\.\.\.\(v \? \{ drawArchive: v\.textureArchive, drawRecord: v\.textureRecord \} : \{\}\)/);
-  assert.ok((ic.match(/pn\.drawArchive \?\? pn\.textureArchive/g) ?? []).length >= 5, 'every draw read');
+  // AUDIT 68 S21-person-hide-noop: the build's stand and the late one are one stand now - four reads, every one a draw
+  assert.ok((ic.match(/pn\.drawArchive \?\? pn\.textureArchive/g) ?? []).length >= 4, 'every draw read');
+  assert.doesNotMatch(ic, /(?:getTexture|uploadRecord|createBillboardBatch)\(pn\.textureArchive/, 'and none reads the born flat');
   assert.match(rd('src/scenes/dataPipeline.js'), /flatFaceOverride\(archive, record\) \?\? flats\?\.faceIndex\(archive, record\) \?\? -1/, 'the face lookup reads the override first');
   const wm = rd('src/scenes/worldModes.js');
   assert.match(wm, /variantPerson: \(pn\) => rrVariantPerson\(pn, \{\s*buildingType: interiorBuilding\?\.buildingType \?\? -1, quality: interiorBuilding\?\.quality \?\? 0,/);

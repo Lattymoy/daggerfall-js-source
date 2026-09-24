@@ -29,8 +29,8 @@
   {
     "name": "MAC-E-the-empty-body-is-disabled-on-the-take-so-the-line-is-never-heard",
     "file": "src/scenes/corpseMarker.js",
-    "old": "  if (!items?.length) {\n    entry.corpseDisabled = true;\n    say('The body has no treasure.');   // theBodyHasNoTreasure\n    return 0;\n  }\n  if (items.length === 1 && items[0]?.templateIndex === ARROW_TEMPLATE_INDEX) {\n    playerEntity.items = playerEntity.items || [];\n    addItem(playerEntity.items, items[0]);\n    items.length = 0;\n    say('You collect the arrows.');   // youCollectArrows\n    return 1;\n  }\n  if (typeof openWindow !== 'function') {",
-    "new": "  if (!items?.length) {\n    entry.corpseDisabled = true;\n    return 0;\n  }\n  if (items.length === 1 && items[0]?.templateIndex === ARROW_TEMPLATE_INDEX) {\n    playerEntity.items = playerEntity.items || [];\n    addItem(playerEntity.items, items[0]);\n    items.length = 0;\n    say('You collect the arrows.');   // youCollectArrows\n    return 1;\n  }\n  if (typeof openWindow !== 'function') {",
+    "old": "  if (!items?.length) {\n    entry.corpseDisabled = true;\n    say('The body has no treasure.');   // theBodyHasNoTreasure\n    return 0;\n  }\n  // :948-952 - one item and it is arrows: taken whole, no window.\n  if (items.length === 1 && items[0]?.templateIndex === ARROW_TEMPLATE_INDEX) {",
+    "new": "  if (!items?.length) {\n    entry.corpseDisabled = true;\n    return 0;\n  }\n  // :948-952 - one item and it is arrows: taken whole, no window.\n  if (items.length === 1 && items[0]?.templateIndex === ARROW_TEMPLATE_INDEX) {",
     "tests": [
       "test/mace_corpse_window.test.js",
       "test/cityguards.test.js"
