@@ -297,10 +297,12 @@ the picker's round trip, the edge (the smallest box a drag makes keeps the butto
 action's face, and a joined family drawn as ONE glyph after the wire - 75 checks. Relay world102 - the same deploy, its
 LAW row restated.
 
-## LOOT-STACK - a key turns which body the reticle means
+## LOOT-STACK - the loot window holds the pile, a tab per body
 
 Janome on Discord, 2026-09-23: "a toggle key to switch between the inventories of enemies stacked on top of each
-other".
+other". The first slice answered with a key (`]`, "NextBody") that turned which body the reticle meant. Mac, on seeing
+it: "that solution is better than a keybind" - of a loot window with a tab for each body. The key is gone; the window
+holds the pile.
 
 **Why a pile hid its bodies.** DFU fires ONE ray on an activation (PlayerActivate.cs:314) and the nearest thing it
 strikes is the hit. Three foes cut down in one doorway leave three bodies in one place, and the ray always strikes the
@@ -310,39 +312,36 @@ carries one, so this is the port's own (Port-Ledger A, LOOT-STACK).
 
 **The pile.** The bodies the one ray passes through that the player can open from where they stand: the nearest body
 and, behind it on the same ray, each body inside its own reach (CorpseActivationDistance, the corpse handler's own
-gate, :936-941). A body across the room is no member - a turn to it would earn only "You are too far away" - and one
-behind a wall is none either: the walk behind the front body is the same pick the front was found by, occlusion and
-all. A body is a body because its PRODUCER says so (`body: true` on `scenes/corpseMarker.js corpseLootTargets`, the two
+gate, :936-941). A body across the room is no member - its tab would earn only "You are too far away" - and one behind
+a wall is none either: the walk behind the front body is the same pick the front was found by, occlusion and all. A
+body is a body because its PRODUCER says so (`body: true` on `scenes/corpseMarker.js corpseLootTargets`, the two
 surface pools' mint, and on the dungeon context's own), so the law reads no key's prefix.
 
-**The choice, and where it lives.** The player's choice is a body's KEY, not a position - two bodies at one distance
-trade places as the player sways, and "the second one" would flicker between them - and a choice the pile no longer
-holds (the player looked away, the body was emptied and disabled) is forgotten, so the front answers again. It lives in
-`player/activate.js pickActivatableHit`, the one pick every reader of the ray calls: the four hosts' presses, the
-plaque that names what a press would open and quick loot's take all mean the same body, and none of them can disagree.
-The raw nearest-hit pick is private to that module, so nothing can ask the ray without the pile's word.
+**The pick is the nearest, always.** `player/activate.js pickActivatableHit` answers the front body exactly as DFU's
+ray does, so every race the pile is in (the player's own drops, a torch, a door, a person, a foe) comes out as it
+always did. The pick only NOTES the pile it stood (`player/lootStack.js noteBodyStack`); a pick over a list with no
+body leaves the note alone (a host casts several picks a frame), and a lone body or a ray that met no body clears it.
 
-**The chosen body stands where the nearest stood.** It is handed on at the FRONT body's distance, because the pile is
-one thing under the ray: everything that races it - the player's own drops, a torch, a door, a person, a foe - races
-it exactly as before, and only WHICH body answers is the player's. A dropped sword lying between two stacked bodies
-cannot steal the click the player turned to the second one for.
+**The tabs.** A press on the front body opens its loot window as before, and the window carries the pile
+(`lootPile`): a tab for each body the pool can open - its name and how much it holds (`corpseMarker.js pileBody`),
+never a disabled body, an empty one (its press would only say "The body has no treasure.") or a peer's (its owner's to
+empty, no window here) - with the open body always among them and lit. A body alone draws no tabs. A tab CLOSES the
+window and hands its body back to the host's own corpse door with the pile in hand, so the row does not move under the
+player's hand and each body opens and closes as itself: the pool's refusals and the arrows pickup, the dungeon's claim
+and word to the room (WORLD4), the emptied flat. Quick loot takes on a press only; a tab asks for that body's window.
 
-**The key.** `NextBody` (appended to the actions, a port row the classic windows yield, drawn in the enhanced pane
-under the heading once called "Quick loot" and now "Loot", because a heading must describe its rows and this one turns
-a pile with quick loot on or off). It defaults to `]`: FREEMOUSE spent the last free letter, and past the letters DFU,
-the port (Tab's dial, Escape, the diamond's digits) and every vendored mod's shipped and offered keys spend the rest
-of what a hand reaches; of what is still free, `]` already means "the next one" here (the automap's storey up) and is
-two keys from P, where the pile's other two keys already send the hand. The HT4 gate holds it free. A press ARMS a turn
-and fires nothing - the frame turns it, where the ray is - so a foe, a townsperson or a door in front of the pile is
-never activated by it (a pickpocket in Steal mode, had it ridden the activate as quick loot's two keys do).
+**Where it lives.** One door per host - `openBodyLoot` in `world.js` and `exterior.js`, the interior arm in
+`worldModes.js`, `takeLoot(key, mode, pileKeys)` in `dungeonContext.js` - which the press and the tabs both go through.
+A pile may mix the encounter pool's bodies with the watch's, so each key answers to its own pool. The dungeon's
+`takeLoot` no longer lets a window that has just CLOSED hold the slot against the next open: a tab closes and opens in
+one click, before the frame's drain empties the slot (the reader door's own law, `openBookHook`).
 
-**What the player sees.** The frame spends a turn in `ui/worldPlaque.js worldHoverFrame`, the one seam every host
-already calls each frame with the reticle's own pick, raced as its press races it - so a turn with a door or a foe in
-front of the pile turns nothing. On the enhanced skin the plaque marks the pile under the body's name - "1 of 3 · ] for
-the next", the key named off the live bindings as the quickslot diamond names its keys (a rebind renames it; an action
-bound to nothing names no key) - and a turn lands the next frame with the next body's name and list. A turn speaks
-DFU's own mid-screen line on both skins - "Body 2 of 3." - the voice a mode change speaks (PlayerActivate.cs:1424),
-which on the classic skin is the plaque the player has. A window coming up drops a turn armed before it.
+**What the player sees.** The enhanced window draws a row of tabs over the loot head; it wraps rather than scrolls,
+so a pile of five on a phone is two rows and never a hidden tab, and each tab is a finger's height - a phone, which
+never had a key to turn with, has the pile too. The classic window has no room for a row: its body picture (the remote
+target icon, which a body could never cycle - playerOwned false, :833) turns the pile instead - LEFT to the next body,
+RIGHT to the one before, wrapping - with "2 of 3" drawn under it. Under the reticle the plaque says "3 bodies" below
+the front body's name.
 
 **Two defects in the plaque, found by its probe.** `tools/lootStackProbe.mjs` photographed the pile's mark drawn UNDER
 the plaque's divider, as the list's first row: the divider was the title's foot, so every sub-line of a plaque with a
@@ -356,24 +355,17 @@ plaque's own padding (`--wp-pad-x`) at every width. Still imprecise and left as 
 below the plaque's TOP edge and does not count the label above the list, so on a very short window a long list can
 still run the plaque's foot past the screen.
 
-**Not here: touch.** A tap's ray is the finger's, not the reticle's (the plaque is off on touch for that reason), and a
-phone has no key to turn with; the answer there is a turn inside the loot window, which is a later slice's.
-
-**Pins.** `test/lootstack.test.js` (13): the pile over real ray geometry (its members, their reach, the world occluding
-one, the order), the choice by key and its forgetting, a list with no body untouched, the chosen body at the front's
-distance against a pile of drops between (the race driven), the turn (a step, the wrap, two in a frame, nothing when
-the pile lost the race, a window dropping it), the plaque's mark off the live bindings and the turn's line through the
-seam on both skins, the teardown freeing it, the producers' word, the action and its key by elimination, the hosts by
-source, and the plaque's dress. `tools/mutants/lootstack.json`: 33, 33 dead. `tools/lootStackProbe.mjs` in Chromium
-at 1440 and 480: the mark one line inside the plaque, a turn landing with the next body's name and list, the back of
-the pile turning to its front, the lit band edge to edge with its name whole and unmoved, and the cap still clipping a
-six-row pile downward at a 360px window - 18 checks. Re-aimed: the action table's pins (I1's enum and defaults, QS2's
-slices, FREEMOUSE's "appended" as an order, SOC D3's and the enhanced pane's rows, the 'Loot' heading), WORLD-HOVER's
-seam gates and R7's clip, PX21c's two seam pins (the skin still asked first, the plaque still taken down at once, no
-list or ray cast with no turn armed and a turned classic frame returning before it draws - so never reaching AUDIT
-39's `ensure()`; the one pick a named closure asked twice), and their mutant records (`freemouse1`, `qs2`,
-`worldhover`). Port-Status's section A tally is 173 rows with the pile's the 170th, and section 2's `:NNN` row
-identifiers were re-resolved past it.
+**Pins.** `test/lootstack.test.js` (14): the pile over real ray geometry (its members, their reach, the world occluding
+one, the order), the pick answering the nearest and noting the pile (a list with no body untouched, looking away
+clearing it), the race unchanged against a pile of drops, `bodyPile` (the front's pile only, a copy), `lootPile` (the
+tabs, the open body always among them, none for one body, the pile carried back, the open body's own tab inert),
+`pileBody`'s three refusals, the plaque's "3 bodies", the teardown, both windows driven (the enhanced tabs on a fake
+document - lit, counted, closing before the open; the classic picture's left, right and wrap, the label, the wagon and
+MIDDLE untouched), the four hosts' doors by source, the key gone, the producers' word and the plaque's dress.
+`tools/mutants/lootstack.json`: 39 records; with the other lists this touched, 254 dead and 0 survived. Old pins
+re-aimed to the one door by content (MAC-E, U25, AUDIT 24 wave 38 and AUDIT 65 MC-2, whose harnesses now run the door's
+own source; INTERIOR-BODIES, AUDIT-WH H3, WORLD4 C6, LOOT-REGEN); the action-table pins and their mutant records are
+main's again. `tools/lootStackProbe.mjs` is the first slice's browser probe and was NOT carried over to the tabs.
 
 ## INSPECT1 - the profile of a player standing in front of you
 
