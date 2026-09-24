@@ -3138,7 +3138,7 @@ test('PX27: the arm\u2019s REACH is swept over every clip, not the idle alone', 
   // back, and either can leave a box measured on a resting hand; the
   // far plane then cuts the swing off mid-arm.
   // AUDIT 39 moved this fixture off a Map. A source's `keys` is
-  // normalizeTextKeys' ARRAY of {time,text} (mwAnim.js:411), which is what
+  // normalizeTextKeys' ARRAY of {time,text} (mwAnim.js:312), which is what
   // clipReport hands fpArm; read with Map semantics the callback took
   // (element, index), no key ever carried ": ", and every sweep fell back
   // to the idle span - the very failure PX27 landed to fix.

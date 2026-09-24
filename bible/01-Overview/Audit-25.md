@@ -331,7 +331,7 @@ guard was doing the row's job for it.
 **The classic effect library: 60 of 82 keys land.** DFU carries 82
 classic-keyed effect classes (153 effect classes in total; the other
 71 are the diseases, the enchantment payloads and the Special folder,
-which have no classic key). `applySpell` (`effects.js:469-822`) lands
+which have no classic key). `applySpell` (`effects.js:469-824`) lands
 60 and falls to `out.skipped++` for 22: ~~CreateItem (2,255),
 Disintegrate (5,255), the three Dispels (6,0-2), SoulTrap (12,255),
 Light (15,255), Lock (16,255), Open (17,255), SpellAbsorption

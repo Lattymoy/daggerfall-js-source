@@ -7,7 +7,7 @@
 // batch shape `flattenNif` emits, and then stopped, because a batch is
 // not where the Morrowind lane takes a part:
 //
-//   bindPartsInto (mwFirstPerson.js:1966-1976) does `parseNif(part.bytes)`
+//   bindPartsInto (mwFirstPerson.js:1963-1973) does `parseNif(part.bytes)`
 //   and hands the result to `bindPart`. A part IS NIF BYTES.
 //
 // ═══ SO THE MESH BECOMES A NIF, AND NOT A SECOND DOOR ═════════════

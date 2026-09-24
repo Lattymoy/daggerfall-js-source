@@ -2738,7 +2738,7 @@ export function clipSweepTimes(sources, idleState, { perClip = 9 } = {}) {
   const spans = [];
   for (const so of sources ?? []) {
     // A source's keys are normalizeTextKeys' ARRAY of {time,text} - the
-    // port's one text-key shape (mwAnim.js:411), handed over by clipReport.
+    // port's one text-key shape (mwAnim.js:312), handed over by clipReport.
     const keys = so?.keys;
     if (!Array.isArray(keys)) continue;
     const starts = new Map();

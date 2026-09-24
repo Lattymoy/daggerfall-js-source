@@ -1453,7 +1453,7 @@ spamming the same questor does not re-pulse the task. DFU makes you go
 click someone else and come back.
 
 The port carries `lastNPCClicked` as an NPCData-shaped OBJECT LITERAL,
-and both hosts mint a fresh one at every click - worldModes.js:1202's
+and both hosts mint a fresh one at every click - worldModes.js:1206's
 quest-flat arm builds `{ hash, flags, factionID, nameSeed, gender,
 buildingKey, mapID }` inline, and questBridge.clickNpc runs
 `staticNpcData(pn, sceneCtx)`. So `lastClicked === this.clickMemory`
@@ -5470,7 +5470,7 @@ lesson one host over.
 **What did NOT ship:** PlayerEntity.Update's per-minute *intermittent
 spawn* roll (:486-492) still has no caller on this route. It is not
 this pool's dependency — it is a loop that carries the passive-guard
-spawns and the NPC-guard conversion with it (world.js:3714-3806) — and
+spawns and the NPC-guard conversion with it (world.js:3694-3786) — and
 it is named at the mount so the absence reads as a fact.
 
 **(c) The find-place seam's absence, narrowed to one sentence.**
@@ -5494,10 +5494,10 @@ ready-spell events (`hostMagic.js:77-78`), and those two doors are the
 (`machine.js:847`/`:830`; C# subscribes them in the action's
 constructor). Every `cast X spell do` and `cast X effect do` on this
 whole route could therefore never latch and never fire. The pair the
-other two engine-owning hosts wire (`world.js:4089-4090`,
-`dungeonContext.js:2233-2234`) is wired here now, and with it
+other two engine-owning hosts wire (`world.js:4068-4069`,
+`dungeonContext.js:2230-2231`) is wired here now, and with it
 `CastSpellDo`'s two world reads — `getClassicSpellEffects` and the
-byte-folded `spellHasMatchForClassicEffect` (`world.js:8376-8379`),
+byte-folded `spellHasMatchForClassicEffect` (`world.js:8343-8346`),
 absent which the action self-completes at *parse*
 (`actions.js:2757`/`:2764`) and the task can never arm at all.
 
