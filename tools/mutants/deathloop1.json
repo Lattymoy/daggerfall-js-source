@@ -87,7 +87,7 @@
     "new": "  if (loadDeadOnline) entity.health = respawnHealth(entity.maxHealth);",
     "tests": [
       "test/deathloop1.test.js",
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {

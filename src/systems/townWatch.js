@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// DISC16-F — THE WATCH DEFENDS THE TOWN. The port's own; a departure
+// DISC17-F — THE WATCH DEFENDS THE TOWN. The port's own; a departure
 // (Port-Ledger A), behind the Features row `town-watch`.
 //
 // Discord, relayed by Mac ("I want to fix these issues + enhance guard

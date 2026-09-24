@@ -72,7 +72,7 @@ import { largeHudOptions } from '../ui/hudLarge.js';   // U45: the classic botto
 import { drawText, makeFont } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
 import { setMidScreenText, midScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's second text surface
-// DISC16-D: STATIC. This was the one module of the foe subsystem's lazy
+// DISC17-D: STATIC. This was the one module of the foe subsystem's lazy
 // block that nothing else imports, so the build gave it a lazy-only
 // chunk - and a tab opened before a deploy asked for a chunk the deploy
 // had deleted, the whole subsystem failed, and every enemy in the
@@ -81,7 +81,7 @@ import { setMidScreenText, midScreenText } from '../ui/midScreenText.js';   // A
 // were static elsewhere already, so the lazy block's gate never saved
 // their bytes; this one module is ~16 KB of source.
 import { EnhancedEnemyAI, makeNavWorld } from '../ai/enhancedMotor.js';
-import { isStaleChunk, STALE_CHUNK_IN_PLAY_TEXT } from '../systems/staleChunk.js';   // DISC16-D: a chunk gone mid-session is said, not swallowed
+import { isStaleChunk, STALE_CHUNK_IN_PLAY_TEXT } from '../systems/staleChunk.js';   // DISC17-D: a chunk gone mid-session is said, not swallowed
 import { hudRenderEnabled } from '../ui/hudShortcuts.js';   // AUDIT 64 F37: the Draw override covers popupText too
 import { FntFile } from '../formats/fntFile.js';
 import { ImgFile } from '../formats/imgFile.js';
@@ -877,7 +877,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      // BODY00I0 fetch, the ramp derive) must not black-screen the
      // level: degrade to a foe-less dungeon, loudly. foeDeps stays
      // null; the class branch is skipped, monsters still billboard.
-     // DISC16-D: WITHOUT ANY LIVE ENEMY - buildFoeAt falls back to a flat
+     // DISC17-D: WITHOUT ANY LIVE ENEMY - buildFoeAt falls back to a flat
      // for every marker, class or monster (the old line said "without
      // class enemies", which sent a reader to the wrong half). A chunk
      // the build no longer has is said on the screen: the page is from
@@ -5821,7 +5821,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     /** X11: the Light effect's candle. The engine owns the candle (it
      *  is the player's, and every casting host builds one engine); the
      *  LIGHT has to be handed out because each host builds its own
-     *  point-light array. BOTH hosts read it here (DISC16-B): the
+     *  point-light array. BOTH hosts read it here (DISC17-B): the
      *  dungeon's casts are this context's engine's, and ?world's own
      *  engine is not updated underground - reading that one lit
      *  nothing, or a candle left at the street it was cast on. */

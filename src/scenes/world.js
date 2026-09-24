@@ -163,7 +163,7 @@ import { createHunting } from './hunting.js';   // SURV6: hunting, foraging and 
 import { alignSurvival, shiftSurvival } from '../systems/survival/needs.js';   // SURV7: the needs' markers at an arrival; AUDIT SURV-TIERS (the third pass): and across a clock correction
 import { liveLycanthropy } from '../systems/lycanthropy.js';   // SURV7: the env's lycanthrope and beast-form flags
 import { elementalResistanceChance, ELEMENTS } from '../systems/spellcast.js';   // SURV7: the env's fire and frost resistances
-import { createTownWatch, isTownThreat } from '../systems/townWatch.js';   // DISC16-F: the watch defends the town
+import { createTownWatch, isTownThreat } from '../systems/townWatch.js';   // DISC17-F: the watch defends the town
 import { rollCampEncounterOnChunkLoad, amGroupRollOwner } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
 import { WORLD_SALT, spawnsDungeon, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
 import { isMainStoryDungeon } from '../world/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
@@ -2897,7 +2897,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const wc = state.worldCoords(walkMode ? player.pos : cam.pos);
     return isInLocationRect(wc.x, wc.z, locationWorldRect(_musicLoc, px.x, px.y));
   };
-  /** DISC16-F: a scene point inside ANY location's widened rect - the
+  /** DISC17-F: a scene point inside ANY location's widened rect - the
    *  pixel it stands in and its eight neighbours, since a rect widened
    *  by a block can cross its own pixel's edge. The camp gate's
    *  question (campEncounters.js: "camps are a wilderness thing"):
@@ -4512,7 +4512,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     let anchor = null;
     for (let i = 0; i < LOOSE_FOE_PLACE_ATTEMPTS && !anchor; i++) {
       anchor = placeFoeFreely(anchorEnv, { minDistance: hit.minDistance, maxDistance: hit.maxDistance, lineOfSightCheck: true });
-      if (anchor && _inAnyLocationRect([anchor.x, anchor.y, anchor.z])) anchor = null;   // DISC16-F: a camp is a wilderness thing - never pitched in a town's rect from a player standing at its edge
+      if (anchor && _inAnyLocationRect([anchor.x, anchor.y, anchor.z])) anchor = null;   // DISC17-F: a camp is a wilderness thing - never pitched in a town's rect from a player standing at its edge
     }
     if (!anchor) return;
     const campId = _nextCampId++;
@@ -4532,7 +4532,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // view - there is no player-relative "outside view" for a
         // point that is not the player.
         spot = placeFoeFreely(memberEnv, { minDistance: 1, maxDistance: hit.spacing, lineOfSightCheck: false });
-        if (spot && _inAnyLocationRect([spot.x, spot.y, spot.z])) spot = null;   // DISC16-F: nor a member over its line
+        if (spot && _inAnyLocationRect([spot.x, spot.y, spot.z])) spot = null;   // DISC17-F: nor a member over its line
       }
       if (!spot) continue;
       const fly = (ENEMY_BASICS[mobileType]?.behaviour ?? 'General') === 'Flying';
@@ -5034,7 +5034,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       mustBeInLocationRect: true, mustBeOutside: true,
       inLocationRect: true, inside: (modes?.mode ?? 'exterior') !== 'exterior',
     });
-  // DISC16-F: THE WATCH DEFENDS THE TOWN (systems/townWatch.js). A foe
+  // DISC17-F: THE WATCH DEFENDS THE TOWN (systems/townWatch.js). A foe
   // counts inside the town when it stands in the rect IsPlayerInTown
   // reads - the current location's, widened a block - at its own feet.
   const townWatch = createTownWatch();
@@ -8134,7 +8134,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // character has played online: leaving online overwrites it too, same
   // as QuickSave/AutoSave always did.
   //
-  // DISC16-C: AND NEVER A CORPSE. Closing the tab on the death screen
+  // DISC17-C: AND NEVER A CORPSE. Closing the tab on the death screen
   // wrote the dead, still-poisoned player into every one of those slots
   // (Discord: "it overwrote all my saves"), and each of them loaded
   // straight back into the same death. exitAutosaveNames answers no
@@ -13576,7 +13576,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // is not a chunk the player walked into.
       if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {   // CAMP-REST: never while the player is resting or waiting
         const chunkCampHit = rollCampEncounterOnChunkLoad({
-          inside: false, inLocationRect: _inAnyLocationRect(walkMode ? player.pos : cam.pos),   // DISC16-F: the pixel just entered, not the one syncTopics last resolved
+          inside: false, inLocationRect: _inAnyLocationRect(walkMode ? player.pos : cam.pos),   // DISC17-F: the pixel just entered, not the one syncTopics last resolved
           climateIndex: maps.getClimateIndex(r.current.x, r.current.y),
           playerLevel: playerEntity.level,
           preventEnemySpawns: playerEntity.preventEnemySpawns,
@@ -14203,7 +14203,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if ((modes?.mode ?? 'exterior') === 'exterior') {
       exteriorFoes.update(dt, _pf, cam.pos, _foeSenses());   // WINFOE1: a window no longer zeroes the foes' clock
       livePersonBatches.push(...exteriorFoes.batches());
-      if (playerSpawned) _townWatchFrame(dt);   // DISC16-F: the town's answer to what the pools just did
+      if (playerSpawned) _townWatchFrame(dt);   // DISC17-F: the town's answer to what the pools just did
     }
     droppedLoot.tickFlats(dt);   // FA1 slice 3
     livePersonBatches.push(...droppedLoot.batches());   // U8e: the ground piles
@@ -14569,7 +14569,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         const guardHitSound = (g) => audio.play3d(hitSoundFor(weaponRig.playerWeapon.strikingWeapon), g.ai.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 });   // DISC10-E: PlayHitSound(currentRightHandWeapon) (WeaponManager.cs:563-566) - the hand's item, never the claws marker
         // AUDIT 23 (combat-4): the host-side double tallies are gone -
         // resolvePlayerHit runs DFU's tally arm itself.
-        // DISC16-F: the town's defenders are spared on the watch's pass and
+        // DISC17-F: the town's defenders are spared on the watch's pass and
         // offered alone once the monsters' pool missed - friendly
         // protection across the two pools (cityGuards.resolvePlayerHit).
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, makeInView(proj, view, multiply), guardHitSound, { spareDefenders: true })) {

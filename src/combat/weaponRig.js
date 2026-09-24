@@ -1818,7 +1818,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
  */
 export function envAttack(actions, collider, eye, lookDir, rolls = Math.random) {
   let best = null, bestD = Infinity;
-  let first;   // DISC16-E: the one surface the swing's ray meets, cast lazily
+  let first;   // DISC17-E: the one surface the swing's ray meets, cast lazily
   for (const o of actions.objects.values()) {
     // AUDIT 63 F37: WeaponEnvDamage reads a LIVE Physics.Raycast hit
     // (WeaponManager.cs:459-464), so a mover is struck where it is,
@@ -1827,7 +1827,7 @@ export function envAttack(actions, collider, eye, lookDir, rolls = Math.random) 
     if (!box) continue;
     const d = rayAabb(eye, lookDir, box);
     if (d === null || d > WEAPON_REACH || d >= bestD) continue;
-    // DISC16-E: the activate ray's law - a mesh collider whose box is
+    // DISC17-E: the activate ray's law - a mesh collider whose box is
     // entered while the first surface is ANOTHER action object's own bucket
     // was never struck (the door stands inside the corridor piece's box).
     if (hasMeshCollider(o) && collider.raycastHit) {

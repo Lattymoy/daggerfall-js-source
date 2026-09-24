@@ -30,9 +30,9 @@ import { drawText, measureText } from './text.js';
 import { PlayerDeathSequence, DEATH_TIME_BEFORE_RESET } from '../systems/playerDeath.js';   // D1
 import { playerEntity } from '../characters/playerEntity.js';   // D1: the death clip's race/gender
 import { audio } from '../systems/audio.js';
-import { isOnlinePage } from '../systems/onlineLane.js';   // DISC16-C: the hint an online page's death tells the truth with
+import { isOnlinePage } from '../systems/onlineLane.js';   // DISC17-C: the hint an online page's death tells the truth with
 
-/** DISC16-C: an online page's death is a RESPAWN (ONLINE-DEATH-FIX) and
+/** DISC17-C: an online page's death is a RESPAWN (ONLINE-DEATH-FIX) and
  *  loading is refused there, so "ENTER end   F11 load" named two keys
  *  that do neither - and sent players to quit from the death screen,
  *  which is exactly when the exit autosave wrote the corpse. */

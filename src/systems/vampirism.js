@@ -129,7 +129,7 @@ export function createVampirismCurse(entity, clan, { now = 0 } = {}) {
     kind: 'racialOverride',
     racial: 'vampirism',
     key: VAMPIRISM_CURSE_KEY,
-    permanent: true,   // DISC16-A: RacialOverrideEffect.cs:28, :71-80 - the werewolf's own line (lycanthropy.js)
+    permanent: true,   // DISC17-A: RacialOverrideEffect.cs:28, :71-80 - the werewolf's own line (lycanthropy.js)
     clan: clan || VAMPIRE_CLANS.Lyrezi,
     lastTimeFed: now,                     // UpdateSatiation runs in Start
     hasStartedInitialVampireQuest: false,

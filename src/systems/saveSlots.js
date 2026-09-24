@@ -367,7 +367,7 @@ export function quickLoadSlot(characterName, storage = store(), characterId = nu
 
 /** ONLINE-AUTOSAVE1's slots (scenes/world.js's `beforeunload`): the
  *  QuickSave and every slot this character already has - OR NONE while
- *  the player is dead or the death screen is up (DISC16-C). DFU never
+ *  the player is dead or the death screen is up (DISC17-C). DFU never
  *  writes during a death (PlayerDeath pauses the game and ends in
  *  TitleMenuFromDeath); the exit autosave wrote the corpse, still
  *  poisoned, into every slot, and every load of every slot died again. */

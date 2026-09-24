@@ -1,4 +1,4 @@
-# FIELD BUGS 2026-09-24 — DISC16, six from Discord and the city watch
+# FIELD BUGS 2026-09-24 — DISC17, six from Discord and the city watch
 
 Mac, with the Discord screenshots: *"I want to fix these issues + enhance
 guard interaction"*.
@@ -23,12 +23,12 @@ guard interaction"*.
    invaders who wanna beat me to death in town?"
 
 Every report was reproduced in node before it was touched, except where a
-section says it could not be. The pins are `test/disc16.test.js`, and the
-mutant set is `tools/mutants/disc16.json`.
+section says it could not be. The pins are `test/disc17.test.js`, and the
+mutant set is `tools/mutants/disc17.json`.
 
 ---
 
-## DISC16-A: the curse that a load took away (reports 1 and 2)
+## DISC17-A: the curse that a load took away (reports 1 and 2)
 
 **Cause.** DFU keeps a racial override alive with
 `forcedRoundsRemaining = 1`: `RoundsRemaining` always answers it and
@@ -68,7 +68,7 @@ shift.
 
 This is a 1:1 correction; no departure.
 
-## DISC16-B: the Light spell underground (report 4)
+## DISC17-B: the Light spell underground (report 4)
 
 **Cause.** DFU's `LightNormal.StartLight` hangs a MagicCandle 1.4 units in
 front of the player (LightNormal.cs:80-103, with DFU's own comment that the
@@ -97,7 +97,7 @@ This is a 1:1 correction. Not seen on a GPU. The node repro (two real
 engines, a Light cast through the dungeon's, the branch's light list
 replayed) put the candle in slot 0 after the fix and nowhere before it.
 
-## DISC16-C: the death loop that wrote itself into every slot (report 3)
+## DISC17-C: the death loop that wrote itself into every slot (report 3)
 
 **Not the rest.** A poison that kills a sleeping player is DFU's own law.
 - Effects run through a rest (EntityEffectBroker.cs:204-236, "e.g. rest").
@@ -132,7 +132,7 @@ players to quit from the death screen, which is exactly when (1) fired.
 
 The same player's report 1 ("on both save files (new and old) i had my
 old stats") is (1) as well. Leaving online wrote the curse-less player of
-DISC16-A over the backup save made beforehand.
+DISC17-A over the backup save made beforehand.
 
 **Fix.**
 - `saveSlots.exitAutosaveNames` answers the handler's slots and returns
@@ -152,7 +152,7 @@ DISC16-A over the backup save made beforehand.
   minutes. So online a poisoned rest kills only underground. It is not
   this loop, and it is left for the online arc.
 
-## DISC16-D: the enemies no blow could reach (report 5)
+## DISC17-D: the enemies no blow could reach (report 5)
 
 "Ruins of Yeomham Tower" is a small DungeonRuin, map pixel (532,123)
 (`Internal_Locations.csv:1974`, MapId 750903948). Its dungeon type and its
@@ -212,7 +212,7 @@ Applying the mod author's intended clamp would be a Ledger A departure, and
 it also caps monster hits on the player at 97%. Leaving both mods off by
 default would reverse MO1. Either is a decision, not a fix.
 
-## DISC16-E: the King of Worms' door (report 6)
+## DISC17-E: the King of Worms' door (report 6)
 
 **Not the door.** The throne room's entrance is S0000205 object 20251, model
 55000.
@@ -272,7 +272,7 @@ The pins rebuild the Scourg geometry synthetically. This is a 1:1
 correction that narrows the port's recorded box-picking departure back
 toward DFU's single raycast. Not seen in a browser.
 
-## DISC16-F: the watch and the town (report 7, and Mac's "enhance guard interaction")
+## DISC17-F: the watch and the town (report 7, and Mac's "enhance guard interaction")
 
 **The arrest for resting is DFU's law, and it stays.**
 - `CanRest` asks `IsPlayerInTown(true, true)` (DaggerfallRestWindow.cs:549).

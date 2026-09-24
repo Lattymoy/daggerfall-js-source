@@ -574,7 +574,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // A save written by the exit autosave carries the poison that did it;
   // restoring the health alone loads the player straight back into the
   // same death, which is the loop from the other end.
-  // DISC16-C: DECIDED HERE, on the save's own health - and RUN below,
+  // DISC17-C: DECIDED HERE, on the save's own health - and RUN below,
   // once the save's effects and survival record are the entity's. Run
   // here it ended the drains of the entity being REPLACED, and the lines
   // below then restored the save's poison and exposure over the revival:
@@ -672,7 +672,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // no turn. `deathScheduled` IS fakeDeathVideoPlayed, which DFU saves, and
   // stays.
   for (const a of entity.activeEffects) if (a.infection && !a.dreamPlayed) a.dreamScheduled = false;
-  // DISC16-A: THE CURSES AND INFECTIONS ALREADY ON DISK. Both were minted
+  // DISC17-A: THE CURSES AND INFECTIONS ALREADY ON DISK. Both were minted
   // without the `permanent` flag their DFU classes' forcedRoundsRemaining
   // stands for (RacialOverrideEffect.cs:28, :71-80; DiseaseEffect.cs:32,
   // :67-77), so every live round decremented an absent roundsRemaining to
@@ -687,7 +687,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // marker and the entry can never disagree (the gates - a second
   // infection, the disease immunity - read the marker).
   entity.racialOverride = entity.activeEffects.find((a) => a.kind === 'racialOverride' && !a.ended) ?? null;
-  // DISC16-C: the revival decided above, now that the poison, the
+  // DISC17-C: the revival decided above, now that the poison, the
   // continuous damage and the exposure it ends are the save's own.
   if (loadDeadOnline) reviveForPlay(entity);
   // X10: bundleId is a MODULE-scope monotonic counter, not saved

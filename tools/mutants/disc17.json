@@ -1,362 +1,362 @@
 [
   {
-    "name": "DISC16-A-werewolf-curse-rounds-out",
+    "name": "DISC17-A-werewolf-curse-rounds-out",
     "file": "src/systems/lycanthropy.js",
     "old": "    permanent: true,\n    infectionType,",
     "new": "    infectionType,",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-A-vampire-curse-rounds-out",
+    "name": "DISC17-A-vampire-curse-rounds-out",
     "file": "src/systems/vampirism.js",
-    "old": "    permanent: true,   // DISC16-A",
-    "new": "    // DISC16-A",
+    "old": "    permanent: true,   // DISC17-A",
+    "new": "    // DISC17-A",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-A-infection-rounds-out",
+    "name": "DISC17-A-infection-rounds-out",
     "file": "src/systems/infection.js",
     "old": "    permanent: true,\n    disease: null,",
     "new": "    disease: null,",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-A-old-saves-not-repaired",
+    "name": "DISC17-A-old-saves-not-repaired",
     "file": "src/systems/save.js",
     "old": "if (a.kind === 'racialOverride' || a.infection) a.permanent = true;",
     "new": "if (a.kind === 'racialOverride' && a.infection) a.permanent = true;",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-A-cured-curse-kept",
+    "name": "DISC17-A-cured-curse-kept",
     "file": "src/systems/effects.js",
     "old": "    if (a.permanent) return !a.ended;",
     "new": "    if (a.permanent) return true;",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-B-dungeon-reads-world-candle",
+    "name": "DISC17-B-dungeon-reads-world-candle",
     "file": "src/scenes/worldModes.js",
     "old": "          dungeonCtx.candleLight(), playerTorchLight(",
     "new": "          magic?.candleLight(), playerTorchLight(",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-C-revival-before-the-effects",
+    "name": "DISC17-C-revival-before-the-effects",
     "file": "src/systems/save.js",
     "old": "  const loadDeadOnline = isOnlinePage() && !((entity.health ?? 0) > 0);\n",
     "new": "  const loadDeadOnline = false; if (isOnlinePage() && !((entity.health ?? 0) > 0)) reviveForPlay(entity);\n",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-C-no-revival",
+    "name": "DISC17-C-no-revival",
     "file": "src/systems/save.js",
     "old": "  if (loadDeadOnline) reviveForPlay(entity);\n",
     "new": "\n",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-C-exit-save-writes-the-dead",
+    "name": "DISC17-C-exit-save-writes-the-dead",
     "file": "src/systems/saveSlots.js",
     "old": "  if (deathUp || !(entity?.health > 0)) return [];",
     "new": "  if (deathUp) return [];",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-C-exit-save-ignores-the-death-screen",
+    "name": "DISC17-C-exit-save-ignores-the-death-screen",
     "file": "src/systems/saveSlots.js",
     "old": "  if (deathUp || !(entity?.health > 0)) return [];",
     "new": "  if (!(entity?.health > 0)) return [];",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-C-handler-reads-no-death",
+    "name": "DISC17-C-handler-reads-no-death",
     "file": "src/scenes/world.js",
     "old": "exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() })",
     "new": "exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen })",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-C-online-hint-lies",
+    "name": "DISC17-C-online-hint-lies",
     "file": "src/ui/deathScreen.js",
     "old": "hint = isOnlinePage() ? ONLINE_DEATH_HINT : 'ENTER end   F11 load'",
     "new": "hint = 'ENTER end   F11 load'",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-F-watch-comes-for-the-wanted",
+    "name": "DISC17-F-watch-comes-for-the-wanted",
     "file": "src/systems/townWatch.js",
     "old": "      if (crime) { countdown = 0; calm = 0; return null; }",
     "new": "      if (false) { countdown = 0; calm = 0; return null; }",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-F-watch-follows-a-player-who-left",
+    "name": "DISC17-F-watch-follows-a-player-who-left",
     "file": "src/systems/townWatch.js",
     "old": "return locationKey === countdownKey ? 'summon' : null;",
     "new": "return 'summon';",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-F-watch-arrives-at-once",
+    "name": "DISC17-F-watch-arrives-at-once",
     "file": "src/systems/townWatch.js",
     "old": "        countdown = TOWN_WATCH_ARRIVAL_MIN_SECONDS + Math.floor(rand() * TOWN_WATCH_ARRIVAL_SPAN);",
     "new": "        countdown = 0.001;",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-F-watch-leaves-while-fighting",
+    "name": "DISC17-F-watch-leaves-while-fighting",
     "file": "src/systems/townWatch.js",
     "old": "      if (calm < TOWN_WATCH_STAND_DOWN_SECONDS) return null;",
     "new": "      if (calm < 0) return null;",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-F-watch-stays-when-switched-off",
+    "name": "DISC17-F-watch-stays-when-switched-off",
     "file": "src/systems/townWatch.js",
     "old": "        return defenders > 0 ? 'dismiss' : null;",
     "new": "        return null;",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-F-threat-need-not-hunt",
+    "name": "DISC17-F-threat-need-not-hunt",
     "file": "src/systems/townWatch.js",
     "old": "  if (!isPlayerTarget(f.ai.target)) return false;\n",
     "new": "",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-F-threat-puppets-count",
+    "name": "DISC17-F-threat-puppets-count",
     "file": "src/systems/townWatch.js",
     "old": "  if (!f || f.dead || f.puppet || !f.ai || !f.entity) return false;",
     "new": "  if (!f || f.dead || !f.ai || !f.entity) return false;",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-F-threat-allies-count",
+    "name": "DISC17-F-threat-allies-count",
     "file": "src/systems/townWatch.js",
     "old": "  if (f.entity.team === 'PlayerAlly') return false;\n",
     "new": "",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-F-defender-mobile-team-not-allied",
+    "name": "DISC17-F-defender-mobile-team-not-allied",
     "file": "src/scenes/cityGuards.js",
     "old": "        entity.team = 'PlayerAlly'; entity.mobileTeam = 'PlayerAlly';",
     "new": "        entity.team = 'PlayerAlly';",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-F-defender-not-sent-at-threat",
+    "name": "DISC17-F-defender-not-sent-at-threat",
     "file": "src/scenes/cityGuards.js",
     "old": "        if (threat?.ai) ai.makeEnemyHostileToAttacker(threat, threat.ai.feet, 600);",
     "new": "",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-F-defender-walks-with-crime-watch",
+    "name": "DISC17-F-defender-walks-with-crime-watch",
     "file": "src/scenes/cityGuards.js",
     "old": "      for (const g of guards) if (!g.dead && !g.defender) { g.dead = true; releaseGuardBatch(g); }",
     "new": "      for (const g of guards) if (!g.dead) { g.dead = true; releaseGuardBatch(g); }",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-F-crime-leaves-defenders-allied",
+    "name": "DISC17-F-crime-leaves-defenders-allied",
     "file": "src/scenes/cityGuards.js",
     "old": "    if (playerEntity.crimeCommitted) for (const g of guards) if (!g.dead && g.defender) enlistDefender(g, playerFeet);",
     "new": "",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-F-enlist-keeps-allied-mobile-team",
+    "name": "DISC17-F-enlist-keeps-allied-mobile-team",
     "file": "src/scenes/cityGuards.js",
     "old": "    g.entity.team = g.entity.mobileTeam = staticTeamOf(GUARD_MOBILE_TYPE);",
     "new": "    g.entity.team = staticTeamOf(GUARD_MOBILE_TYPE);",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-F-defenders-saved",
+    "name": "DISC17-F-defenders-saved",
     "file": "src/scenes/cityGuards.js",
     "old": "    return guards.filter((g) => !g.dead && !g.defender).map((g) => {",
     "new": "    return guards.filter((g) => !g.dead).map((g) => {",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-F-dismiss-leaves-a-body",
+    "name": "DISC17-F-dismiss-leaves-a-body",
     "file": "src/scenes/cityGuards.js",
     "old": "    for (const g of guards) if (!g.dead && g.defender) { g.dead = true; releaseGuardBatch(g); n++; }",
     "new": "    for (const g of guards) if (!g.dead && g.defender) { g.dead = true; g.corpse = true; releaseGuardBatch(g); n++; }",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-F-swing-takes-the-defender-first",
+    "name": "DISC17-F-swing-takes-the-defender-first",
     "file": "src/scenes/cityGuards.js",
     "old": "(defendersOnly ? g.defender : !(spareDefenders && g.defender))",
     "new": "(defendersOnly ? g.defender : true)",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-F-no-npc-guard-conversion",
+    "name": "DISC17-F-no-npc-guard-conversion",
     "file": "src/scenes/cityGuards.js",
     "old": "      if (!p.guard || room() <= 0) continue;\n      if (Math.hypot(p.pos[0] - playerFeet[0]",
     "new": "      if (true) continue;\n      if (Math.hypot(p.pos[0] - playerFeet[0]",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-F-host-never-runs-the-watch",
+    "name": "DISC17-F-host-never-runs-the-watch",
     "file": "src/scenes/world.js",
     "old": "      if (playerSpawned) _townWatchFrame(dt);",
     "new": "",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-F-host-swing-order",
+    "name": "DISC17-F-host-swing-order",
     "file": "src/scenes/world.js",
     "old": "guardHitSound, { spareDefenders: true })) {",
     "new": "guardHitSound)) {",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-F-camp-reads-stale-pixel",
+    "name": "DISC17-F-camp-reads-stale-pixel",
     "file": "src/scenes/world.js",
     "old": "inside: false, inLocationRect: _inAnyLocationRect(walkMode ? player.pos : cam.pos),",
     "new": "inside: false, inLocationRect: _musicInLocationRect(),",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-F-camp-pitched-in-town",
+    "name": "DISC17-F-camp-pitched-in-town",
     "file": "src/scenes/world.js",
     "old": "      if (anchor && _inAnyLocationRect([anchor.x, anchor.y, anchor.z])) anchor = null;",
     "new": "",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-E-press-takes-the-nearest-box",
+    "name": "DISC17-E-press-takes-the-nearest-box",
     "file": "src/player/activate.js",
     "old": "    } else if (target.meshCollider === true && collider.raycastHit) {",
     "new": "    } else if (false) {",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-E-no-mesh-colliders",
+    "name": "DISC17-E-no-mesh-colliders",
     "file": "src/player/activate.js",
     "old": "export const hasMeshCollider = (o) => !!o && (o.kind === 'action'",
     "new": "export const hasMeshCollider = (o) => false && (o.kind === 'action'",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-E-swing-takes-the-nearest-box",
+    "name": "DISC17-E-swing-takes-the-nearest-box",
     "file": "src/combat/weaponRig.js",
     "old": "      if (first.key != null && first.key !== o.key && actions.objects.has(first.key)) continue;",
     "new": "",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-E-every-entered-model-skipped",
+    "name": "DISC17-E-every-entered-model-skipped",
     "file": "src/player/activate.js",
     "old": "      firstHit ??= collider.raycastHit(eye, dir, RAY_DISTANCE);\n",
     "new": "      firstHit ??= collider.raycastHit(eye, dir, RAY_DISTANCE); continue;\n",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-D-enhanced-motor-lazy-only-again",
+    "name": "DISC17-D-enhanced-motor-lazy-only-again",
     "file": "src/scenes/dungeonContext.js",
     "old": "import { EnhancedEnemyAI, makeNavWorld } from '../ai/enhancedMotor.js';\n",
     "new": "",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-D-stale-chunk-swallowed",
+    "name": "DISC17-D-stale-chunk-swallowed",
     "file": "src/scenes/dungeonContext.js",
     "old": "     if (isStaleChunk(err)) setMidScreenText(STALE_CHUNK_IN_PLAY_TEXT);\n",
     "new": "",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   },
   {
-    "name": "DISC16-D-in-play-text-says-nothing-to-do",
+    "name": "DISC17-D-in-play-text-says-nothing-to-do",
     "file": "src/systems/staleChunk.js",
     "old": "  + 'Reload the page to fix it.';",
     "new": "  + '';",
     "tests": [
-      "test/disc16.test.js"
+      "test/disc17.test.js"
     ]
   }
 ]

@@ -224,7 +224,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   const activeCount = () => guards.filter((g) => !g.dead).length;
 
   /** SpawnCityGuard: the C17 class-foe recipe at a position/facing. */
-  async function spawnGuardAt(pos, yaw, attackerFeet = null, { level = null, defender = false, threat = null } = {}) {   // AUDIT ALL A6: a restore hands the saved level in as final; DISC16-F: a DEFENDER comes for the threat, as the player's ally
+  async function spawnGuardAt(pos, yaw, attackerFeet = null, { level = null, defender = false, threat = null } = {}) {   // AUDIT ALL A6: a restore hands the saved level in as final; DISC17-F: a DEFENDER comes for the threat, as the player's ally
     const basics = ENEMY_BASICS[GUARD_MOBILE_TYPE];
     const pending = { feet: [pos[0], pos[1] + 0.1, pos[2]] };   // AUDIT-39r: shifted by offsetAll until the record lands
     spawning.push(pending);
@@ -273,7 +273,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       pending.feet = ai.feet;   // AUDIT-39r: the AI's copy is the live array from here
       // MakeEnemyHostileToAttacker + GiveUpTimer *= 3, verbatim: a
       // crime-responding guard pursues without having seen the player.
-      // DISC16-F: a DEFENDER is the player's ally instead - the allied
+      // DISC17-F: a DEFENDER is the player's ally instead - the allied
       // summon's shape (both per-instance teams, exteriorFoes.js), so
       // DFU's own target chain never picks the player - and it is sent
       // at the THREAT with the same tripled give-up timer.
@@ -291,7 +291,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       attack.rangedAttack = false;
       const mobile = new MobileUnit(GUARD_MOBILE_TYPE, basics, (rec) => tex.getFrameCount(rec), Math.random, 'male');
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-      const g = { id: _nextGuardId++, mobile, ai, attack, entity, batch, tex, archive, mobileType: GUARD_MOBILE_TYPE, idleH, dead: false, _prevMState: 'Idle', _mout: null, defender: !!defender,   // DISC16-F
+      const g = { id: _nextGuardId++, mobile, ai, attack, entity, batch, tex, archive, mobileType: GUARD_MOBILE_TYPE, idleH, dead: false, _prevMState: 'Idle', _mout: null, defender: !!defender,   // DISC17-F
         // WATCH1: THE WATCH RIDES THE CELL'S STREAM. `seq` is this watchman's number on the wire, minted by the
         // encounter pool's own counter the first time he rides a frame (one number space with the foes, so a
         // peer's blow names one thing); `_atkA`/`_atkB` the attack count and its recipient in the pool's spelling
@@ -548,7 +548,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     return Math.acos(Math.max(-1, Math.min(1, cos))) * 180 / Math.PI;
   }
 
-  /** DISC16-F: THE WATCH DEFENDS THE TOWN (systems/townWatch.js
+  /** DISC17-F: THE WATCH DEFENDS THE TOWN (systems/townWatch.js
    *  decides when; this is the arrival). The crime response's own two
    *  arms, with the defenders minted as the player's allies and sent at
    *  the threat nearest them:
@@ -601,7 +601,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     }
     return came;
   }
-  /** DISC16-F: the town is quiet, the player left it, or the switch went
+  /** DISC17-F: the town is quiet, the player left it, or the switch went
    *  off - the defenders walk away, as the crime watch walks away when
    *  its crime clears: no corpse and nothing to loot. */
   function dismissDefenders() {
@@ -610,7 +610,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     return n;
   }
   const defenderCount = () => guards.filter((g) => !g.dead && g.defender).length;
-  /** DISC16-F: a crime turns a defender into the ordinary watch on the
+  /** DISC17-F: a crime turns a defender into the ordinary watch on the
    *  spot - its species' team back on both per-instance fields (the
    *  allied copy would otherwise keep the player out of its target list,
    *  EnemySenses.cs:776) and the crime watch's own pursuit seeded. */
@@ -867,11 +867,11 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // despawns for its length rather than only at the door. Offline is
     // untouched - vanilla's own crime-clear law already stands alone
     // there, the same way arrestFlow's fix leaves offline alone.
-    // DISC16-F: a CRIME turns the town's defenders into that watch
+    // DISC17-F: a CRIME turns the town's defenders into that watch
     // first - they are guards, and the law below is theirs from here on.
     if (playerEntity.crimeCommitted) for (const g of guards) if (!g.dead && g.defender) enlistDefender(g, playerFeet);
     if ((!playerEntity.crimeCommitted || (sharedClockOn() && playerEntity.arrested)) && !isTransformedLycanthrope(playerEntity)) {
-      for (const g of guards) if (!g.dead && !g.defender) { g.dead = true; releaseGuardBatch(g); }   // no corpse - they walk away; DISC16-F: a defender is not the crime's and leaves on the town watch's word
+      for (const g of guards) if (!g.dead && !g.defender) { g.dead = true; releaseGuardBatch(g); }   // no corpse - they walk away; DISC17-F: a defender is not the crime's and leaves on the town watch's word
     }
     // AUDIT 17e F7 - PlayerEntity.cs:533-537 verbatim: the surrender
     // dialogue flag resets once no city watch is alive. It only ever
@@ -1101,7 +1101,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   function resolvePlayerHit(playerWeapon, eye, lookDir, playerFeet, inViewFn, onHitSound, { spareDefenders = false, defendersOnly = false } = {}) {
     if (inViewFn) _lastInView = inViewFn;   // the assault-carry swing below reaches here without one
     const view = inViewFn ?? _lastInView;
-    // DISC16-F: THE DEFENDERS ARE PROTECTED ACROSS POOLS. MeleeDamage's
+    // DISC17-F: THE DEFENDERS ARE PROTECTED ACROSS POOLS. MeleeDamage's
     // friendly protection strikes a PlayerAlly only when nothing else is
     // in front of the player (WeaponManager.cs:930-944, :1057-1064), but
     // the host resolves this pool BEFORE the monsters' - so a defender in
@@ -1398,7 +1398,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  natives in, dead guards out. A quickload during a pursuit
    *  despawned the whole watch - a free escape from any crime. */
   function snapshotWorld(toNative) {
-    // DISC16-F: a DEFENDER is not saved - it is the town's answer to the
+    // DISC17-F: a DEFENDER is not saved - it is the town's answer to the
     // monsters standing, and a load that restores those monsters raises
     // the answer again through the town watch's own countdown.
     return guards.filter((g) => !g.dead && !g.defender).map((g) => {
