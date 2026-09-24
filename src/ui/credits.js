@@ -32,8 +32,8 @@ export const CREDITS = Object.freeze({
     Object.freeze({
       title: 'Daggerfall Unity',
       author: 'Gavin Clayton (Interkarma) and contributors',
-      what: 'The source this port is a 1:1 translation of. Its quest scripts, book index, settings tables and TEXT.RSC string table are vendored verbatim (MIT License).',
-      vendor: Object.freeze(['dfu-quests', 'dfu-books', 'dfu-settings', 'dfu-text']),
+      what: 'The source this port is a 1:1 translation of. Its quest scripts, book index, settings tables, TEXT.RSC string table and interaction-mode icons are vendored verbatim (MIT License).',
+      vendor: Object.freeze(['dfu-quests', 'dfu-books', 'dfu-settings', 'dfu-text', 'dfu-icons']),
       link: 'https://github.com/Interkarma/daggerfall-unity',
     }),
     Object.freeze({
