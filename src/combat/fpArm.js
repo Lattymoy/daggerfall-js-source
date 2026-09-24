@@ -642,6 +642,59 @@ function sameRanges(out, pieces) {
   return k === r.length;
 }
 
+/** PR-BOW1 (2026-09-24, player report: "Equipping a bow enlarges your
+ *  character"): each range's own box over its piece's POSED positions,
+ *  refolded at every upload and kept ON the range - its owner: a range
+ *  lives and dies with the mesh it indexes, and the same range objects
+ *  come back pack after pack (sameRanges), so a frame mints nothing.
+ *  One walk of the vertices per upload, the cadence packFpArm already
+ *  walks them at; a skipped peer frame (PEER-CADENCE) walks none. */
+export function foldRangeBoxes(ranges) {
+  for (const r of ranges) {
+    const p = r.piece && r.piece.positions;
+    if (!p || p.length < 3) { r.box = null; continue; }
+    let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+    for (let i = 0; i + 2 < p.length; i += 3) {
+      const x = p[i], y = p[i + 1], z = p[i + 2];
+      if (x < minX) minX = x; if (x > maxX) maxX = x;
+      if (y < minY) minY = y; if (y > maxY) maxY = y;
+      if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+    }
+    const b = r.box || (r.box = { minX: 0, minY: 0, minZ: 0, maxX: 0, maxY: 0, maxZ: 0 });
+    b.minX = minX; b.minY = minY; b.minZ = minZ; b.maxX = maxX; b.maxY = maxY; b.maxZ = maxZ;
+  }
+}
+
+/** PR-BOW1: the slots that are things the actor CARRIES rather than the
+ *  actor - the hand's weapon and round, the torch, the held sheet, and
+ *  Weapon Sheathing's three. The body's height is read without them, so a
+ *  blade raised overhead does not move the point the sprite stands on. */
+export const CARRIED_SLOTS = Object.freeze(['weapon', 'arrow', 'torch', 'paper', ...HOLSTER_SLOTS]);
+
+/** PR-BOW1: the box over the ranges the pass will DRAW - rule 57 hides a
+ *  sheathed weapon, the holster twin while the blade is out, an arrow off
+ *  the string and an unlit torch by a per-range flag and keeps their
+ *  vertices, so the assembly's own fold (poseAssembly's meshBounds) still
+ *  counts them. Written into `out` (the caller's, owned); null when
+ *  nothing drawn has a box. `skip`: slots left out of the fold (drawThird
+ *  asks once more without CARRIED_SLOTS, for the body's own height). */
+export function visibleRangeBounds(ranges, out, skip = null) {
+  if (!ranges) return null;
+  let any = false;
+  let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+  for (const r of ranges) {
+    const b = r.hidden || (skip && skip.includes(r.slot)) ? null : r.box;
+    if (!b || !(b.maxX >= b.minX)) continue;
+    any = true;
+    if (b.minX < minX) minX = b.minX; if (b.maxX > maxX) maxX = b.maxX;
+    if (b.minY < minY) minY = b.minY; if (b.maxY > maxY) maxY = b.maxY;
+    if (b.minZ < minZ) minZ = b.minZ; if (b.maxZ > maxZ) maxZ = b.maxZ;
+  }
+  if (!any) return null;
+  out.minX = minX; out.minY = minY; out.minZ = minZ; out.maxX = maxX; out.maxY = maxY; out.maxZ = maxZ;
+  return out;
+}
+
 /**
  * BUILD. Async, expensive, explicitly triggered, and NEVER in a frame.
  *
@@ -2515,6 +2568,8 @@ export function createFpArm() {
   let thirdBuilt = null;
   let thirdMesh = null;
   let thirdPacked = null;
+  const thirdDrawBox = { minX: 0, minY: 0, minZ: 0, maxX: 0, maxY: 0, maxZ: 0 };   // PR-BOW1: drawThird's fold, owned by the rig - one object, rewritten per draw
+  const thirdBodyBox = { minX: 0, minY: 0, minZ: 0, maxX: 0, maxY: 0, maxZ: 0 };   // PR-BOW1: the same fold less CARRIED_SLOTS - the body's own height
   const rig = () => (viewMode === 'third' && thirdBuilt && thirdBuilt.ok ? thirdBuilt : built);
 
   const active = () => !!(built && built.ok && mesh && renderer && camera && (actionState || movementState || jumpState || idleState)
@@ -2698,6 +2753,7 @@ export function createFpArm() {
     } else {
       renderer.updateCharacterMesh(thirdMesh, thirdPacked.packed);
     }
+    foldRangeBoxes(thirdMesh.ranges);   // PR-BOW1: the per-range boxes drawThird folds over what it draws
     return thirdMesh;
   }
 
@@ -4552,16 +4608,41 @@ export function createFpArm() {
       // AUDIT MWBODY A4: the POSED assembly's own bounds (poseAssembly sets
       // them every step) - the per-piece table walked every vertex again
       // per frame, and per body once the peers stood in the same pass.
-      let { minX, minY, minZ, maxX, maxY, maxZ } = t.arm.bounds ?? {};
-      if (!(maxX > minX)) ({ minX, minY, minZ, maxX, maxY, maxZ } = meshBounds(t.arm.pieces) ?? {});   // AUDIT 68: poseAssembly's own fold, over the pieces
-      if (!(maxX > minX)) return false;
+      // PR-BOW1 (2026-09-24, player report: "Equipping a bow enlarges
+      // your character"): and only over what the pass DRAWS - the ranges
+      // rule 57 left shown, off the per-range boxes the upload folded
+      // (visibleRangeBounds). A sheathed blade, the holster twin, an
+      // arrow off the string and an unlit torch are hidden, not removed,
+      // and the assembly's fold still counted them. The assembly's fold
+      // stands in when nothing drawn has a box.
+      let box = visibleRangeBounds(thirdMesh.ranges, thirdDrawBox);
+      if (!(box && box.maxX > box.minX)) box = t.arm.bounds;
+      if (!(box && box.maxX > box.minX)) box = meshBounds(t.arm.pieces);   // AUDIT 68: poseAssembly's own fold, over the pieces
+      if (!(box && box.maxX > box.minX)) return false;
+      const { minX, minY, minZ, maxX, maxY, maxZ } = box;
       const halfH = ((maxZ - minZ) * u * rs.height) / 2;
       const halfW = (Math.hypot(maxX - minX, maxY - minY) * u * rs.weight) / 2;
       const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
+      // PR-BOW1: THE PICTURE IS OF THE BODY. The sprite is true world
+      // size, so its size on screen is set by where its quad stands -
+      // and that was the box centre, which is not the body: a longsword
+      // on the weapon bone moved it a third of a metre off the actor,
+      // away from a camera behind him, and drew him ~10% small; a bow,
+      // gripped mid-stave, a few centimetres - so a bow "enlarged" the
+      // character. The picture is now taken along the eye's ray to the
+      // actor's own axis (MW x = y = 0, the root trs puts at `feet`) at
+      // the BODY's mid-height - the drawn ranges less CARRIED_SLOTS, so
+      // gear moves neither coordinate; the whole box when no body range
+      // is drawn - and stood so that point lands on itself
+      // (characterSprite.js drawRigSpriteBox's `anchor`): the box is the
+      // window, never the size. Every host's body and every peer's draws
+      // through here.
+      const body = visibleRangeBounds(thirdMesh.ranges, thirdBodyBox, CARRIED_SLOTS);
+      const anchor = transformPoint(model, 0, 0, body ? (body.minZ + body.maxZ) / 2 : (minZ + maxZ) / 2);
       // MW-D43b: the body is a Morrowind MESH, so it takes the arm's
       // dial, not the sprite standard - the same fix MW-D43 made for
       // the first-person pass and missed here.
-      drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH }, proj, view, eye, MW_ARM_PIXEL);
+      drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH, anchor }, proj, view, eye, MW_ARM_PIXEL);
       return true;
     },
 

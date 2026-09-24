@@ -1,0 +1,110 @@
+[
+  {
+    "name": "quad-at-box-centre",
+    "file": "src/render/characterSprite.js",
+    "old": "  const at = aim === center ? center : landAnchor(center, anchor, camDir, right);   // PR-BOW1: where the quad stands",
+    "new": "  const at = center;",
+    "tests": [
+      "test/prbow1_bow.test.js"
+    ]
+  },
+  {
+    "name": "picture-aims-at-box",
+    "file": "src/render/characterSprite.js",
+    "old": "  const dx = aim[0] - eye[0], dy = aim[1] - eye[1], dz = aim[2] - eye[2];",
+    "new": "  const dx = center[0] - eye[0], dy = center[1] - eye[1], dz = center[2] - eye[2];",
+    "tests": [
+      "test/prbow1_bow.test.js"
+    ]
+  },
+  {
+    "name": "anchor-at-eye-not-refused",
+    "file": "src/render/characterSprite.js",
+    "old": "anchor[2] - eye[2]) > 1e-6 ? anchor : center;",
+    "new": "anchor[2] - eye[2]) >= 0 ? anchor : center;",
+    "tests": [
+      "test/prbow1_bow.test.js"
+    ]
+  },
+  {
+    "name": "land-picture-up-is-world-up",
+    "file": "src/render/characterSprite.js",
+    "old": "  const up = [-nx * ny / hl, hl, -nz * ny / hl];",
+    "new": "  const up = [0, 1, 0];",
+    "tests": [
+      "test/prbow1_bow.test.js"
+    ]
+  },
+  {
+    "name": "resolution-read-at-box",
+    "file": "src/render/characterSprite.js",
+    "old": "  const screenPxH = Math.abs(prjY(at[0], at[1] + halfH, at[2]) - prjY(at[0], at[1] - halfH, at[2])) * canvas.clientHeight / 2;",
+    "new": "  const screenPxH = Math.abs(prjY(center[0], center[1] + halfH, center[2]) - prjY(center[0], center[1] - halfH, center[2])) * canvas.clientHeight / 2;",
+    "tests": [
+      "test/prbow1_bow.test.js"
+    ]
+  },
+  {
+    "name": "drawthird-no-anchor",
+    "file": "src/combat/fpArm.js",
+    "old": "      drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH, anchor }, proj, view, eye, MW_ARM_PIXEL);",
+    "new": "      drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH }, proj, view, eye, MW_ARM_PIXEL);",
+    "tests": [
+      "test/prbow1_bow.test.js"
+    ]
+  },
+  {
+    "name": "anchor-height-takes-gear",
+    "file": "src/combat/fpArm.js",
+    "old": "      const body = visibleRangeBounds(thirdMesh.ranges, thirdBodyBox, CARRIED_SLOTS);",
+    "new": "      const body = visibleRangeBounds(thirdMesh.ranges, thirdBodyBox);",
+    "tests": [
+      "test/prbow1_bow.test.js"
+    ]
+  },
+  {
+    "name": "anchor-off-axis",
+    "file": "src/combat/fpArm.js",
+    "old": "      const anchor = transformPoint(model, 0, 0, body ? (body.minZ + body.maxZ) / 2 : (minZ + maxZ) / 2);",
+    "new": "      const anchor = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, body ? (body.minZ + body.maxZ) / 2 : (minZ + maxZ) / 2);",
+    "tests": [
+      "test/prbow1_bow.test.js"
+    ]
+  },
+  {
+    "name": "fold-counts-hidden",
+    "file": "src/combat/fpArm.js",
+    "old": "    const b = r.hidden || (skip && skip.includes(r.slot)) ? null : r.box;",
+    "new": "    const b = (skip && skip.includes(r.slot)) ? null : r.box;",
+    "tests": [
+      "test/prbow1_bow.test.js"
+    ]
+  },
+  {
+    "name": "upload-folds-no-boxes",
+    "file": "src/combat/fpArm.js",
+    "old": "    foldRangeBoxes(thirdMesh.ranges);   // PR-BOW1: the per-range boxes drawThird folds over what it draws",
+    "new": "",
+    "tests": [
+      "test/prbow1_bow.test.js"
+    ]
+  },
+  {
+    "name": "range-box-minted-per-fold",
+    "file": "src/combat/fpArm.js",
+    "old": "    const b = r.box || (r.box = { minX: 0, minY: 0, minZ: 0, maxX: 0, maxY: 0, maxZ: 0 });",
+    "new": "    const b = (r.box = { minX: 0, minY: 0, minZ: 0, maxX: 0, maxY: 0, maxZ: 0 });",
+    "tests": [
+      "test/prbow1_bow.test.js"
+    ]
+  },
+  {
+    "name": "carried-slots-miss-holster",
+    "file": "src/combat/fpArm.js",
+    "old": "export const CARRIED_SLOTS = Object.freeze(['weapon', 'arrow', 'torch', 'paper', ...HOLSTER_SLOTS]);",
+    "new": "export const CARRIED_SLOTS = Object.freeze(['weapon', 'arrow', 'torch', 'paper']);",
+    "tests": [
+      "test/prbow1_bow.test.js"
+    ]
+  }
+]
