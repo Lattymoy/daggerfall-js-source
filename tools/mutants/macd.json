@@ -35,7 +35,7 @@
   {
     "name": "MACD2-transportation-draws-its-junk-icon-address-again",
     "file": "src/systems/itemTemplates.js",
-    "old": "  if (TRANSPORTATION_INDICES.has(item.templateIndex)) return null;\n",
+    "old": "  if (BORROWED_ART_INDICES.has(item.templateIndex)) return null;\n",
     "new": "",
     "tests": [
       "test/inputactions.test.js",

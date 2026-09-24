@@ -3,7 +3,7 @@
 // `.px-home` / `.px-win` frame ui/enhancedTrade.js (the shop counter) wears - but it is NOT the shop counter: there is
 // no price, no haggle, no steal and no repair here, only two offers and two locks. So it does not extend that module
 // (which keeps its state in module variables and is built around ui/nativeTrade.js's hooks bag); it borrows the SAME
-// row and icon builders (`itemLine`, `requestIcon`) and the same stylesheet, so an item reads the same everywhere.
+// row and icon builders (`itemLine`, `linePictureUrl`) and the same stylesheet, so an item reads the same everywhere.
 //
 // THREE COLUMNS: your pack (tabbed, worn gear hidden) | your offer (items + a gold box) | their offer (read only, live).
 // THE LAW IS net/tradeSession.js's: this file draws a session and calls its four verbs (setOffer, lock/unlock, confirm,
@@ -11,8 +11,7 @@
 //
 // CLOSING: Escape / Close cancels a trade that is still being negotiated. Once the goods are in flight (`committing`) the
 // window cannot be cancelled and says so; when the session ends it shows the outcome a moment and closes itself.
-import { itemLine } from './enhancedInventory.js';
-import { requestIcon } from './textureCanvas.js';
+import { itemLine, linePictureUrl } from './enhancedInventory.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { overlayAction, isTextEntryTarget } from './input.js';
 import { TABS, tabAccepts } from './nativeInventory.js';
@@ -82,7 +81,7 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
   const unstage = (item) => { if (session.phase === 'open' && !session.myConfirm) applyOffer(entries().filter((e) => e.item !== item)); };   // AUDIT DROPS B1
 
   const itemTile = (line) => {
-    const src = line.image ? requestIcon(line.image.archive, line.image.record, { scale: 2, dye: line.image.dye, onReady: () => alive && render() }) : null;   // DISC22-D: by the item's dye (DW3)
+    const src = linePictureUrl(line, { scale: 2, onReady: () => alive && render() });   // DISC22-D / DISC24-B: the pack's own door
     if (src) {
       const tile = el('span', 'tile has-icon'); const img = el('img'); img.src = src; img.alt = ''; tile.append(img); tile.title = line.name; return tile;
     }

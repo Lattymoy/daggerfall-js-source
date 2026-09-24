@@ -203,7 +203,7 @@ test('TC1 ledger: the six re-measured section-C rows are struck, and each names 
       file: 'src/systems/regionPower.js', built: /rumorMill\?\.addNonQuestRumor\?\./ },
     // Fast travel: transport ownership, the mint the row said nothing had.
     { head: /~~FAST TRAVEL residue~~/, slice: /TC1 2026-09-02/,
-      file: 'src/systems/shopStock.js', built: /export const TRANSPORT_SMALL_CART = 93;/ },
+      file: 'src/systems/shopStock.js', built: /add\(\{ group: 'Transportation', templateIndex: TRANSPORT_SMALL_CART \}\);/ },   // DISC24-B: the constant's home is itemTemplates.js now; the SHELVING the row names is here
     { head: /~~PatchRegionIndex legacy-save fix~~/, slice: /U32 \+ U41/,
       file: 'src/formats/mapsFile.js', built: /export function patchRegionIndex\(regionIndex, canonicalRegionName\)/ },
     { head: /~~Biography GP arm ledger note/, slice: /TC1 2026-09-02/,

@@ -66,8 +66,8 @@
   {
     "name": "sc1-dyn-ignored",
     "file": "src/render/shadowPass.js",
-    "old": "      const moving = b._dyn === true || (b._shMovedAt != null",
-    "new": "      const moving = (b._shMovedAt != null",
+    "old": "      const moving = b._dyn === true || b.selfCard === true || (b._shMovedAt != null",
+    "new": "      const moving = b.selfCard === true || (b._shMovedAt != null",
     "tests": [
       "test/audit_lighting.test.js"
     ]

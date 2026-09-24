@@ -32,12 +32,11 @@
 // enhancedSpellbook.js ("this window reads no ARENA2"), a trade
 // counter reachable from a fresh install with no classic assets must
 // stand on its own - so this reads item icons the same OPTIONAL way
-// enhancedInventory's own item tile does (requestIcon over the item's
-// texture record), falling back to two letters when that record is
-// unavailable, and never blocks on it.
+// enhancedInventory's own item tile does (its linePictureUrl door over
+// the item's texture record, or the cart's model), falling back to two
+// letters when that picture is unavailable, and never blocks on it.
 
-import { itemLine } from './enhancedInventory.js';   // RF6/MW-D38: one item model, read by both packs
-import { requestIcon } from './textureCanvas.js';
+import { itemLine, linePictureUrl } from './enhancedInventory.js';   // RF6/MW-D38: one item model, read by both packs
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';
 import { overlayAction } from './input.js';
@@ -540,7 +539,7 @@ function setTab(t) { tab = t; render(); }
 // ── ROWS ──────────────────────────────────────────────────────────
 
 function itemTile(line) {
-  const src = line.image ? requestIcon(line.image.archive, line.image.record, { scale: 2, dye: line.image.dye, onReady: render }) : null;   // DISC22-D: by the item's dye, as the pack asks (DW3)
+  const src = linePictureUrl(line, { scale: 2, onReady: render });   // DISC22-D / DISC24-B: the pack's own door - the item's dye, the cart's model
   if (src) {
     const tile = el('span', 'tile has-icon');
     const img = el('img');

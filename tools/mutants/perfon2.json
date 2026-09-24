@@ -169,8 +169,8 @@
   {
     "name": "PERF-BASIS-the-lanterns-flats-stop-turning-to-face-it",
     "file": "src/render/shadowPass.js",
-    "old": "          if (perBatchRight) {",
-    "new": "          if (false) {",
+    "old": "          } else if (perBatchRight) {",
+    "new": "          } else if (false) {",
     "tests": [
       "test/perfon2_peercull.test.js",
       "test/el5_field.test.js",

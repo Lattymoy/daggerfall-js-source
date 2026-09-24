@@ -236,7 +236,7 @@
   {
     "name": "cadence-casters-every-frame",
     "file": "src/render/shadowPass.js",
-    "old": "      const due = nearestRank(casters, L, f.eye, rank) < SHADOW_NEAR_CASTERS || (this.frameNo + k) % SHADOW_FAR_CASTER_EVERY === 0;",
+    "old": "      const due = near || (this.frameNo + k) % SHADOW_FAR_CASTER_EVERY === 0;",
     "new": "      const due = true;",
     "tests": [
       "test/el8_contact.test.js"

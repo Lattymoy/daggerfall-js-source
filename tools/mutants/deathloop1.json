@@ -2,8 +2,8 @@
   {
     "name": "revival-forgets-the-drains",
     "file": "src/systems/deathRespawn.js",
-    "old": "  return { revived: dead || force, cleared: endLethalDrains(entity), exposure: endLethalExposure(entity) };",
-    "new": "  return { revived: dead || force, cleared: [], exposure: endLethalExposure(entity) };",
+    "old": "  const cleared = endLethalDrains(entity), exposure = endLethalExposure(entity);",
+    "new": "  const cleared = [], exposure = endLethalExposure(entity);",
     "tests": [
       "test/deathloop1.test.js"
     ]
@@ -150,8 +150,8 @@
   {
     "name": "revival-leaves-the-exposure",
     "file": "src/systems/deathRespawn.js",
-    "old": "  return { revived: dead || force, cleared: endLethalDrains(entity), exposure: endLethalExposure(entity) };",
-    "new": "  return { revived: dead || force, cleared: endLethalDrains(entity), exposure: [] };",
+    "old": "  const cleared = endLethalDrains(entity), exposure = endLethalExposure(entity);",
+    "new": "  const cleared = endLethalDrains(entity), exposure = [];",
     "tests": [
       "test/deathloop1.test.js"
     ]

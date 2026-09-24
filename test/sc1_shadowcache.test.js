@@ -175,7 +175,8 @@ test('SC1: STICKY SLOTS - a light keeps its slot, matched by position, when the 
   assert.deepEqual([...sp.shadowIndex.slice(0, 3)], [0, -1, 1]);
   assert.equal(st.staticFaces, 0);
   assert.equal(SHADOW_NEAR_CASTERS, 2);
-  assert.match(rd('src/render/shadowPass.js'), /const due = nearestRank\(casters, L, f\.eye, rank\) < SHADOW_NEAR_CASTERS \|\| \(this\.frameNo \+ k\) % SHADOW_FAR_CASTER_EVERY === 0;/, 'the cadence by rank');
+  // DISC24-C: the rank is read once (the player's own card rides it too) and the cadence off it
+  assert.match(rd('src/render/shadowPass.js'), /const near = nearestRank\(casters, L, f\.eye, rank\) < SHADOW_NEAR_CASTERS;[^\n]*\n(?:\s*\/\/[^\n]*\n)*[^\n]*\n[^\n]*\n\s*const due = near \|\| \(this\.frameNo \+ k\) % SHADOW_FAR_CASTER_EVERY === 0;/, 'the cadence by rank');
 });
 
 test('SC1: a flat whose origin moves is a dynamic (per batch, on the batch), a still one is in the cache; the door restores the old path whole - every caster in range at the cadence into the live layers, no cache, no blit (mutants: the batch\'s word ignored; the door ignored)', () => {
