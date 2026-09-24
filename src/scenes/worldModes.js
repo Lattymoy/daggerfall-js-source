@@ -6140,7 +6140,7 @@ export function createWorldModes(host) {
           // reads this object with the COMMENTS STRIPPED, because a text
           // match over the raw line is exactly what failed to catch it.
           onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
-          onActions: (data) => host.onActions?.(data), peers: () => host.peers?.() ?? null, selfId: () => host.selfId?.() ?? null,   // WORLD3: a door moved goes out; the peers the foes see; whose blow a puppet's is
+          onActions: (data) => host.onActions?.(data), peers: () => host.peers?.() ?? null, selfId: () => host.selfId?.() ?? null, party: () => host.partyNear?.() ?? [],   // WORLD3: a door moved goes out; the peers the foes see; whose blow a puppet's is
           allyMarks: () => host.allyMarks?.() ?? null,   // AID1 onto ALLY-CAST: the party mates' bodies, in the dungeon's frame
           onLootClaimed: () => host.onLootClaimed?.(),   // AUDIT WORLD4 C2/D5: a claimed container makes the room's memory due this frame
           // A10: the Recall prompt (Teleport.cs:81-98). The outer host
@@ -6190,7 +6190,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:6303), so the OUTER host's one rides in.
+          // (dungeonContext.js:6304), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:810 -> the
@@ -7273,7 +7273,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:9259's own wave-46 note); the interior
+          // a blow (world.js:9262's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -8506,6 +8506,7 @@ export function createWorldModes(host) {
         // the plan alone and calls it an Interior rather than a Dungeon.
         where: () => ({ insideBuilding: true }),
         title: interiorBuilding?.name ?? 'Interior',
+        party: () => host.partyNear?.() ?? [],   // DISC23-A: the party members standing in this building
       });
     },
     // PX15b: THE DIAL - four arms now that the interior ctx has four
@@ -9813,7 +9814,7 @@ export function createWorldModes(host) {
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
      *  HARD2c: this used to spell them out, and named `world.js:6718`
-     *  and `dungeonContext.js:6312` for its two sibling copies - lines
+     *  and `dungeonContext.js:6313` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

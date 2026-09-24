@@ -691,6 +691,146 @@ with no ceiling and no stair, which is how they passed over every one:
   is on the sheet.
 - Home brings the storey and the view back to the player.
 
+## DISC23-A: party members on the town and dungeon maps
+
+Starempire42, *"Being able to see players on your town/dungeon map"*: *"It
+would be really nice to be able to see your party members on the town and
+dungeon maps. This would make it much easier to figure out where everyone is
+and find each other."*
+
+**Cause.** The party was on the bay only (SOC6), read off the hub's travel
+pixel, and a pixel is the whole town or the whole dungeon. The town and
+dungeon plans took no party at all. Both doors (`ui/automapDoor.js`,
+`ui/townMapDoor.js`) build their sheet's bag key by key, so nothing a host
+handed could reach them, and neither sheet had anywhere to draw a member.
+
+**Fix.** A plan needs metres. The only metres this client has for another
+player are their body's (`scenes/world.js peersNear`, the reading trade's 5 m
+and party rest's 15 m already measure by).
+
+- **The host.** `partyNear()` lists the party members whose peer bodies stand
+  in my room, each with their feet in this scene's frame, their eased facing
+  and their name. A member with no tracked body here is left out, not guessed
+  at: they are still on the bay.
+- **The dungeon and the building.** It reaches their plans through
+  `worldModes` and the automap door.
+- **The town.** It reaches the street plan through the town door. There,
+  each member's feet go through the player's own subtraction (the pixel's
+  translation and the location's origin, read at open, which the held motor
+  keeps true).
+- **One reading.** `ui/partyMapMarks.js readPartyBodies` validates each row.
+  It drops a body with no finite feet and names a nameless one.
+- **The dungeon sheet** draws a member only on their own storey (the player
+  caret's law). The floor strip puts a party-green dot beside every storey a
+  member stands on, so a friend on Floor 2 is one press away.
+- **The street plan** draws members through EM-BUG3's one seam (`sheetY`).
+- **The mark.** Both plans draw a member as the player's own caret in the
+  party's green, facing where they face, with the name under it, and before
+  the player's caret. A member under the pointer answers their name.
+- **Repainting.** A plan breathes while any member is in the level, on any
+  storey, so a member climbing onto the shown storey appears within a beat.
+
+The fixed-city host (`scenes/exterior.js`) has no online, and owned houses
+and ships have no room, so no member is drawn there.
+
+## DISC23-B: Eye of the Beholder's sprites, chosen and seen
+
+Gryphoth and Scratchie, *"Eye of the Beholder third person sprites"*: *"EOTB
+comes with 16 ground models and different mounted models, it would be nice to
+be able to change our models like in the original mod ... Also just a way to
+change our sprite in general instead of it defaulting depending on the
+class"* / *"the game is not allowing us to choose between the different index
+slots"*.
+
+**Causes.**
+
+1. **The choice was on no screen.** The mod's two sprite sliders,
+   `Graphics.OnFoot` (0-15) and `Graphics.OnHorse` (0-4), were declared, and
+   the body read them. But the curated list's comment sent everything else to
+   "the mod's own pane", and FT14 removed that pane. Every player was the
+   first set.
+2. **Online, a peer was their class.** A peer with no Morrowind body on my
+   screen stood as their class's enemy sprite (`classMobileType`). The set
+   they chose was on nobody's screen but their own.
+
+**Fix.**
+
+- **The sets are named.** They are still the mod's sliders, with each index
+  labelled (`labels` on the two keys). The names are the mod's own preset
+  titles (modpresets.json). The art gives the rest, checked by eye on a
+  contact sheet: every even set is a woman and every odd set a man, and the
+  five riders are the fighters by helm and boots (green-booted women,
+  cyan-booted men, as on foot).
+- **They are a SKIN, on the player's profile** (DISC23-B2, Mac: *"I want to
+  utilize it and make it a choosable skin system in the menu player profile
+  system itself instead of it being hidden in the feature menu"*). The
+  profile window the door's profile mark opens carries a Skin card under the
+  account card (`ui/skinCard.js`):
+  - every set is its own picture, the front-on standing frame out of the
+    bundle the body draws from, with its name under it;
+  - the worn one takes the worn title's doubled brass edge;
+  - a press writes the mod's own key, so there is one choice that the body,
+    the look and the card all read;
+  - until one is chosen the card says the others see the class;
+  - with the mod off it offers the switch instead of a grid that would
+    change nothing.
+  Who you are drawn as is a fact about the player, so it is not a Features
+  dial: the two keys are not curated on the tile.
+- **The look carries the chosen set.** The field is `eo`, 0-15, and it is
+  sent only for a set the player CHOSE (`storedModSetting`). The mod ships
+  on, so a set read off its default would have dressed every player who never
+  opened the dial as the first set. It is omitted while the mod is off, and
+  omitted means the old bytes.
+- **The relay.** It projects `eo` through `validLook`, clamped as every field
+  is. RELAY_VERSION goes to world106, which the relay deploy workflow ships on
+  merge.
+- **Others draw it** (`net/peerRiders.js createPeerWalkers`, beside the
+  riders and sharing one art store, `createEotbArt`):
+  - The set is drawn off the shown pose, with the same eight views and tables
+    as the player's own body. The move bit walks it, a drawn weapon or
+    readied spell stands it ready, and each new swing, loosed shaft or cast
+    plays its clip once. First sight of a peer is not a swing.
+  - Precedence: the rider, then the viewer's own Morrowind body (skipped),
+    then the chosen set, then the class sprite, then the doll. A beast and
+    the fallen keep their own layers.
+  - The walker hands the name pass its height. It follows the Other players
+    card: on the paperdoll side, the doll.
+  - A peer's swing is timed at Speed 50 (DFU's line), because a peer's Speed
+    is not on the wire.
+- **Not done.** A player who wants no Morrowind models already has that:
+  Morrowind arms ship off, and EOTB is the body without them.
+- **Known limit.** The look is sent with a room's hello, so a set changed
+  mid-room reaches the others at the next room change, as a change of gear
+  does.
+
+## DISC23-C: the Features switches, green on and red off
+
+Skeptikali, over an ENHANCED tile's Off | On bar: *"if a feature would be
+enabled, the ON button would turn Green, and if a feature would be disabled,
+the OFF button would turn Red, it would help a lot for people with darker
+screens or smaller resolutions"*.
+
+**Cause.** A pressed segment was a grey block with only its letters tinted,
+so On and Off read alike on a dark or small screen. Underneath that, FT14
+read "off" by position, the first segment. That is wrong wherever Off is not
+first: Grass Density runs Full, Half, Quarter, Off, so at Full its tile read
+off, and at Off it read on.
+
+**Fix.**
+
+- **The Off is the segment labelled Off** (`barReading`). The rule is the
+  same across a boolean, a pref's tiers and a DFU enum.
+- **A bar with an Off is a switch.** Its pressed segment is filled:
+  - emerald (`#2c7341`) while the feature is on;
+  - cinnabar (`#bf2a1f`) on its Off.
+  Both keep the bone label at 4.5:1 or better and stand off the bar's ink at
+  3:1 or better. They read the same on the shell as on the pause window, and
+  on a forced switch (the brass edge and the tag say it is forced).
+- **A bar with no Off is a choice** (Pixel / Smooth, a filter mode). It keeps
+  the plain press, and its feature is never "off".
+- **The tile's state stripe** follows the same reading, and its on colour is
+  the same emerald.
+
 ## Pins
 
 - `test/disc22a_magic_repairs.test.js` (4), through the real store and the
@@ -752,7 +892,43 @@ with no ceiling and no stair, which is how they passed over every one:
     nothing for a name frame;
   - drawHud draws it on both classic branches.
 
-Mutants: `tools/mutants/disc22.json`, 25, `tools/mutants/disc22g.json`, 20, and `tools/mutants/disc22c.json`, 11, all dead.
+- `test/disc23a_party_plans.test.js` (6), through the real sheets and ink:
+  - a member where the player stands drawn on the player, three metres east
+    twelve pixels east and facing east, named, hovered, under the player's
+    caret;
+  - a member upstairs absent from Floor 1, the strip dotted beside Floor 2,
+    drawn there;
+  - the beat kept while anyone is in the level, and a party-less sheet
+    unchanged;
+  - the street plan through the host's conversion;
+  - the reader's drops;
+  - the hosts and both doors, by source.
+- `test/disc23b_eotb_sprites.test.js` (7):
+  - the names against the mod's presets and the art's rule, and not on the
+    Features tile;
+  - the real Skin card: 21 pictures, each key a file in the bundle, the
+    front view, the worn marked, a press worn and carried by the look, the
+    hint until chosen, the switch while the mod is off, and the profile
+    window drawing it;
+  - the look sending a chosen set only, nothing while the mod is off, and
+    the relay's clamp;
+  - the walker standing the set at the peer's feet with its stances;
+  - each one-shot played once, with first sight no swing;
+  - who is not a walker;
+  - the host's order, by source.
+- `test/disc23c_features_colour.test.js` (5), through the real tile builder
+  and the real ENHANCED_CSS cascade:
+  - an Off / On switch;
+  - Grass Density's last-segment Off;
+  - a choice;
+  - both fills on both paints and forced;
+  - the contrast of both tokens.
+- The pins that follow: `townsheet.test.js` and `inkautomap.test.js` (the ink's
+  import line), `mwbody1.test.js` (the peer layers' order, the dead's
+  and the page-hide's sweep), the RELAY_VERSION pins in ten files (world106), and
+  `relayversion.test.js`'s world106 row for the relay's new bytes.
+
+Mutants: `tools/mutants/disc22.json`, 25, `tools/mutants/disc22g.json`, 20, and `tools/mutants/disc22c.json`, 11, all dead. `tools/mutants/disc23a.json`, 16, `tools/mutants/disc23b.json`, 24, and `tools/mutants/disc23c.json`, 11, all dead.
 EM2's floor records (`em2.json`) are aimed at the new model. They
 still die, 26 of them, except EM2-16 (the `len > 0` guard). The facing
 test is now written `!(up >= FLOOR_NY)` and rejects a NaN facing on its

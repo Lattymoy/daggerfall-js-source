@@ -1668,7 +1668,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:9464 / exterior.js:3665), set
+  // host's own townTalk sink (world.js:9467 / exterior.js:3665), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -3317,7 +3317,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:14584,
+              // playerArrowHitFoe is the one copy world.js:14613,
               // exterior.js:5234 and worldModes.js:7298 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
@@ -6051,6 +6051,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // from) and what the strip calls this place.
         where: () => ({ insideDungeon: true }),
         title: dfLocation?.name ?? 'Dungeon',
+        party: opts.party ?? null,   // DISC23-A: the party members standing in this dungeon, at their feet in its frame
         // ROAD-C c2/S8: the Ctrl+Shift debug-teleport click
         // (TryTeleportPlayerToDungeonSegmentAtScreenPosition, :858-870).
         // It goes through the SAME `onTeleport` door the Teleport action

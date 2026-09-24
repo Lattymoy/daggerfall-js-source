@@ -61,6 +61,8 @@ export const ENHANCED_TOKENS = `:root {
   --blood: #8c3a32;
   --ruby: #b91309;
   --verdigris: #4e7f72;
+  --emerald: #2c7341;
+  --cinnabar: #bf2a1f;
 
   --display: 'Cormorant', Georgia, serif;
   --data: 'Barlow Semi Condensed', system-ui, sans-serif;
@@ -1998,6 +2000,28 @@ ${badgeCss()}
 /* The card inside brings its own frame, and a box inside a box reads
    as a mistake - the window IS the frame here. */
 .px-win.px-acctwin .card.acct { border: 0; background: none; padding: 0; margin: 0; }
+
+/* DISC23-B2 (Mac: "a choosable skin system in the menu player profile
+   system itself"): THE SKIN, under the account on the same axis. No box
+   of its own (the window is the frame, as above), a rule between the
+   two so they read as two things. A tile is the SPRITE, front on and
+   standing, point-sampled as every sprite in the world is, with its
+   name under it; the worn one takes the doubled brass edge the worn
+   title does, so "on" reads the same way on both halves of the card. */
+.px-win.px-acctwin .card.skincard { border: 0; background: none; padding: 18px 0 0; margin: 18px 0 0;
+  border-top: 1px solid var(--iron); text-align: center; }
+.card.skincard .fieldlabel { display: block; margin: 12px 0 6px; }
+.card.skincard .skinhint { color: var(--brass); }
+.card.skincard .acts { justify-content: center; }
+.card .skingrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 6px; }
+.card button.skintile { display: flex; flex-direction: column; align-items: center; gap: 4px;
+  font: inherit; font-size: 11px; line-height: 1.2; color: var(--dim);
+  padding: 6px 4px; background: rgba(0,0,0,0.25); border: 1px solid var(--iron); border-radius: 2px; cursor: pointer; }
+.card button.skintile:hover { color: var(--bone); border-color: var(--dim); }
+.card button.skintile.worn { color: var(--bone); border: 2px solid var(--brass); padding: 5px 3px;
+  background: rgba(192,138,62,0.12); }
+.card button.skintile:focus-visible { outline: 2px solid var(--brass); outline-offset: 1px; }
+.card .skinart { height: 72px; width: auto; image-rendering: pixelated; pointer-events: none; }
 .px-winfoot { display: flex; justify-content: center; padding: 6px 0 18px; }
 .px-winclose {
   font: inherit; font-size: 16px; letter-spacing: 0.14em; text-indent: 0.14em;
@@ -4031,9 +4055,21 @@ ${badgeCss()}
    the thing fits a card.
 
    The colours are the skin's own: brass for what the online lane
-   forces, verdigris for what is on, iron for what is not. The
+   forces, emerald for what is on, iron for what is not. The
    left edge carries that, so the grid can be read for state
-   without reading a word of it. */
+   without reading a word of it.
+
+   DISC23-C (Skeptikali: "if a feature would be enabled, the ON
+   button would turn Green, and if a feature would be disabled, the
+   OFF button would turn Red, it would help a lot for people with
+   darker screens or smaller resolutions"): a SWITCH's pressed
+   segment is FILLED - emerald when the feature is on, cinnabar on
+   its Off - where it was a grey block with coloured letters. Both
+   fills carry the bone label at 4.5:1 or better and stand off the
+   bar's ink at 3:1 or better, so the state reads from the colour
+   alone. A CHOICE (no Off segment) keeps the grey block: it has no
+   off to be red about. A forced switch keeps its fill - the brass
+   edge and the "online" tag say it is forced. */
 .ft-panes { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 22px; align-items: start; }
 .ft-main { min-width: 0; }
 .ft-grouphead { display: flex; align-items: baseline; gap: 10px; margin: 18px 0 8px; }
@@ -4049,7 +4085,7 @@ ${badgeCss()}
   padding: 9px 10px 9px 13px; display: flex; flex-direction: column; gap: 7px; cursor: pointer; }
 .ft-tile::before { content: ''; position: absolute; left: 0; top: -1px; bottom: -1px; width: 3px;
   background: var(--iron); }
-.ft-tile[data-on="1"]::before { background: var(--verdigris); }
+.ft-tile[data-on="1"]::before { background: var(--emerald); }
 .ft-tile[data-locked="1"]::before { background: var(--brass); }
 .ft-tile:hover, .ft-tile.sel { border-color: var(--dim); }
 .ft-tile.sel { background: var(--iron); }
@@ -4064,9 +4100,9 @@ ${badgeCss()}
   background: none; border: 0; padding: 3px 8px; cursor: pointer; flex: 1 1 auto; white-space: nowrap; }
 .ft-segb:hover:not(:disabled) { color: var(--bone); }
 .ft-segb[aria-pressed="true"] { background: var(--iron); color: var(--bone); }
-.ft-seg.is-on .ft-segb[aria-pressed="true"] { color: var(--verdigris); }
-.ft-segb.off[aria-pressed="true"] { color: var(--dim); }
 .ft-seg.locked .ft-segb[aria-pressed="true"] { color: var(--brass); }
+.ft-seg.ft-seg-switch .ft-segb[aria-pressed="true"] { background: var(--emerald); color: var(--bone); }
+.ft-seg.ft-seg-switch .ft-segb.off[aria-pressed="true"] { background: var(--cinnabar); color: var(--bone); }
 .ft-segb:disabled { cursor: default; }
 .ft-segb:focus-visible { outline: 2px solid var(--brass); outline-offset: -2px; }
 
@@ -4123,8 +4159,10 @@ ${badgeCss()}
    base paint above is already right there. That is why this is scoped
    to .shell rather than written into the tokens.
 
-   The left edge keeps its state stripe (verdigris on, brass forced,
-   iron off) and moves out over the 2px border so it still reads flush. */
+   The left edge keeps its state stripe (emerald on, brass forced,
+   iron off) and moves out over the 2px border so it still reads flush.
+   A switch's filled segment (DISC23-C) outranks the translucent press
+   below, so it reads the same on the shell as on the pause window. */
 .shell .ft-tile { background: none; border: 2px solid rgba(125,116,96,0.3); }
 .shell .ft-tile:hover, .shell .ft-tile.sel { background: rgba(0,0,0,0.25); border-color: rgba(125,116,96,0.55); }
 .shell .ft-tile::before { left: -2px; top: -2px; bottom: -2px; }

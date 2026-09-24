@@ -1,0 +1,101 @@
+[
+  {
+    "name": "D23C-off-by-position",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  const off = st.labels.indexOf(OFF_LABEL);",
+    "new": "  const off = 0;",
+    "tests": [
+      "test/disc23c_features_colour.test.js"
+    ]
+  },
+  {
+    "name": "D23C-choice-reads-off",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  return { off, switch: off >= 0, on: off < 0 || st.at !== off };",
+    "new": "  return { off, switch: off >= 0, on: off >= 0 && st.at !== off };",
+    "tests": [
+      "test/disc23c_features_colour.test.js"
+    ]
+  },
+  {
+    "name": "D23C-every-bar-a-switch",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "${r.switch ? ' ft-seg-switch' : ''}",
+    "new": "${' ft-seg-switch'}",
+    "tests": [
+      "test/disc23c_features_colour.test.js"
+    ]
+  },
+  {
+    "name": "D23C-off-class-first-segment",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "const b = el('button', `ft-segb${i === r.off ? ' off' : ''}`, L);",
+    "new": "const b = el('button', `ft-segb${i === 0 ? ' off' : ''}`, L);",
+    "tests": [
+      "test/disc23c_features_colour.test.js"
+    ]
+  },
+  {
+    "name": "D23C-stripe-by-position",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  t.dataset.on = st && barReading(st).on ? '1' : '0';",
+    "new": "  t.dataset.on = st && st.at > 0 ? '1' : '0';",
+    "tests": [
+      "test/disc23c_features_colour.test.js"
+    ]
+  },
+  {
+    "name": "D23C-no-on-fill",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".ft-seg.ft-seg-switch .ft-segb[aria-pressed=\"true\"] { background: var(--emerald); color: var(--bone); }\n",
+    "new": "",
+    "tests": [
+      "test/disc23c_features_colour.test.js"
+    ]
+  },
+  {
+    "name": "D23C-no-off-fill",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".ft-seg.ft-seg-switch .ft-segb.off[aria-pressed=\"true\"] { background: var(--cinnabar); color: var(--bone); }\n",
+    "new": "",
+    "tests": [
+      "test/disc23c_features_colour.test.js"
+    ]
+  },
+  {
+    "name": "D23C-shell-outranks-fill",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".ft-seg.ft-seg-switch .ft-segb[aria-pressed=\"true\"] { background: var(--emerald);",
+    "new": ".ft-seg-switch .ft-segb[aria-pressed=\"true\"] { background: var(--emerald);",
+    "tests": [
+      "test/disc23c_features_colour.test.js"
+    ]
+  },
+  {
+    "name": "D23C-brass-on-emerald",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "{ background: var(--emerald); color: var(--bone); }",
+    "new": "{ background: var(--emerald); }",
+    "tests": [
+      "test/disc23c_features_colour.test.js"
+    ]
+  },
+  {
+    "name": "D23C-dim-green",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  --emerald: #2c7341;",
+    "new": "  --emerald: #3a8a4f;",
+    "tests": [
+      "test/disc23c_features_colour.test.js"
+    ]
+  },
+  {
+    "name": "D23C-muddy-red",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  --cinnabar: #bf2a1f;",
+    "new": "  --cinnabar: #8c3a32;",
+    "tests": [
+      "test/disc23c_features_colour.test.js"
+    ]
+  }
+]

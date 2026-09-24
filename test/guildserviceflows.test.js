@@ -140,11 +140,11 @@ test('U24 (ROAD-A7 CORRECTED): a click SELECTS the scrolled row; the DOUBLE clic
 
 test('AUDIT 65 UI-1: a BARE picker takes the HOST\'s four-argument click, and the 4th slot is not its clock', () => {
   // The mounts that hand a ListPickerWindow straight to an overlay slot
-  // - the U key's useMagicItemWindow (world.js:7557,
-  // dungeonContext.js:6825, worldModes.js:8650) and the bookshelf
+  // - the U key's useMagicItemWindow (world.js:7560,
+  // dungeonContext.js:6826, worldModes.js:8651) and the bookshelf
   // picker (worldModes.js:1793-1978) - are dispatched by the hosts'
   // ONE shape: `click(vx, vy, right, middle)` (townTalk.js:1210,
-  // worldModes.js:8868, dungeonContext.js:6559). The window's header
+  // worldModes.js:8869, dungeonContext.js:6560). The window's header
   // already defended the THIRD slot by content; the fourth was left
   // open, so `middle` arrived as `now`, `false ?? this._now()` kept the
   // `false`, and `false - false === 0 < 300` made every second click a

@@ -67,7 +67,7 @@ test('EM3: the dungeon is drawn in the BAY\'s pen - not one colour is invented h
   // halo and the face all come from inkMap, and the strip's scale from
   // the tab strip, so nothing here can drift away from the world map
   const text = src('src/ui/inkAutomap.js');
-  assert.match(text, /import \{ PEN, HALO_PEN, NAME_FACE, toPaper, paintCaret, CARET_R \} from '\.\/inkMap\.js';/);
+  assert.match(text, /import \{ PEN, HALO_PEN, NAME_FACE, toPaper, paintCaret, paintPartyCarets, CARET_R \} from '\.\/inkMap\.js';/);
   assert.match(text, /import \{ STRIP, stripScale, grabHit \} from '\.\/mapStrip\.js';/);
   assert.doesNotMatch(text, /rgba?\(/, 'a colour written out here is a colour that drifts');
   assert.doesNotMatch(text, /#[0-9a-fA-F]{3,8}\b/);
