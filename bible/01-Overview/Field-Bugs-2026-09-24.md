@@ -1,4 +1,4 @@
-# FIELD BUGS 2026-09-24 — DISC18, six from Discord and the city watch
+# FIELD BUGS 2026-09-24 — DISC19, six from Discord and the city watch
 
 Mac, with the Discord screenshots: *"I want to fix these issues + enhance
 guard interaction"*.
@@ -23,14 +23,14 @@ guard interaction"*.
    invaders who wanna beat me to death in town?"
 
 Every report was reproduced in node before it was touched, except where a
-section says it could not be. The pins are `test/disc18.test.js`, and the
-mutant set is `tools/mutants/disc18.json`. The batch's audit (AUDIT DISC18,
-the last section) has its own: `test/auditdisc18.test.js` and
-`tools/mutants/auditdisc18.json`.
+section says it could not be. The pins are `test/disc19.test.js`, and the
+mutant set is `tools/mutants/disc19.json`. The batch's audit (AUDIT DISC19,
+the last section) has its own: `test/auditdisc19.test.js` and
+`tools/mutants/auditdisc19.json`.
 
 ---
 
-## DISC18-A: the curse that a load took away (reports 1 and 2)
+## DISC19-A: the curse that a load took away (reports 1 and 2)
 
 **Cause.** DFU keeps a racial override alive with
 `forcedRoundsRemaining = 1`: `RoundsRemaining` always answers it and
@@ -70,11 +70,11 @@ shift.
   after that load holds no entry to mend: the old build had already dropped
   it, and every later save (the exit autosave's overwrite of every slot
   among them) was written without it. Those saves come back mortal, and the
-  audit clears what the dropped curse left behind (AUDIT DISC18, S1).
+  audit clears what the dropped curse left behind (AUDIT DISC19, S1).
 
 This is a 1:1 correction; no departure.
 
-## DISC18-B: the Light spell underground (report 4)
+## DISC19-B: the Light spell underground (report 4)
 
 **Cause.** DFU's `LightNormal.StartLight` hangs a MagicCandle 1.4 units in
 front of the player (LightNormal.cs:80-103, with DFU's own comment that the
@@ -103,7 +103,7 @@ This is a 1:1 correction. Not seen on a GPU. The node repro (two real
 engines, a Light cast through the dungeon's, the branch's light list
 replayed) put the candle in slot 0 after the fix and nowhere before it.
 
-## DISC18-C: the death loop that wrote itself into every slot (report 3)
+## DISC19-C: the death loop that wrote itself into every slot (report 3)
 
 **Not the rest.** A poison that kills a sleeping player is DFU's own law.
 - Effects run through a rest (EntityEffectBroker.cs:204-236, "e.g. rest").
@@ -138,7 +138,7 @@ players to quit from the death screen, which is exactly when (1) fired.
 
 The same player's report 1 ("on both save files (new and old) i had my
 old stats") is (1) as well. Leaving online wrote the curse-less player of
-DISC18-A over the backup save made beforehand.
+DISC19-A over the backup save made beforehand.
 
 **Fix.**
 - `saveSlots.exitAutosaveNames` answers the handler's slots and returns
@@ -162,7 +162,7 @@ DISC18-A over the backup save made beforehand.
   minutes. So online a poisoned rest kills only underground. It is not
   this loop, and it is left for the online arc.
 
-## DISC18-D: the enemies no blow could reach (report 5)
+## DISC19-D: the enemies no blow could reach (report 5)
 
 "Ruins of Yeomham Tower" is a small DungeonRuin, map pixel (532,123)
 (`Internal_Locations.csv:1974`, MapId 750903948). Its dungeon type and its
@@ -204,7 +204,7 @@ what that player saw.
   automatic reload here, because that would throw away unsaved progress.
 - A pin holds the law: every module the foe block loads lazily is in the
   world host's static closure, so the page already holds it. The standalone
-  `?dungeon` host still loads five of them late (AUDIT DISC18, D2).
+  `?dungeon` host still loads five of them late (AUDIT DISC19, D2).
 
 **Mac's call: a hit chance with no floor, now clamped.** Two mods ship on
 by default (MO1): Physical Combat And Armor Overhaul and Meaner Monsters.
@@ -230,7 +230,7 @@ a Lich; a monster's certain blow on the player misses 3 in 100. The other
 three clamps the mod discards stay discarded. Recorded on Ledger A's PCO1
 row; pinned in `test/pcaao.test.js`.
 
-## DISC18-E: the King of Worms' door (report 6)
+## DISC19-E: the King of Worms' door (report 6)
 
 **Not the door.** The throne room's entrance is S0000205 object 20251, model
 55000.
@@ -292,7 +292,7 @@ The pins rebuild the Scourg geometry synthetically. This is a 1:1
 correction that narrows the port's box picking back toward DFU's single
 raycast. Not seen in a browser.
 
-## DISC18-F: the watch and the town (report 7, and Mac's "enhance guard interaction")
+## DISC19-F: the watch and the town (report 7, and Mac's "enhance guard interaction")
 
 **The arrest for resting is DFU's law, and it stays.**
 - `CanRest` asks `IsPlayerInTown(true, true)` (DaggerfallRestWindow.cs:549).
@@ -324,7 +324,7 @@ rect of every location in its pixel and the eight around it (a rect widened
 by a block can cross its own pixel's edge). The chunk roll asks it for the
 player, and the placement rejects an anchor or a member inside any rect.
 
-It covers cities, not hamlets (AUDIT DISC18). The roll fires on the frame
+It covers cities, not hamlets (AUDIT DISC19). The roll fires on the frame
 the player crosses into a pixel, at its edge, and a town's widened rect
 reaches that edge only for a location six or more blocks wide on that axis:
 a 1x1 to 5x5 location starts 256 down to 51 units inside it. So a camp at a
@@ -374,7 +374,7 @@ The port's own rule:
 Port-Ledger A records the departure: THE WATCH DEFENDS THE TOWN. Only the
 world host runs it; the fixed-city host (`exterior.js`) has no watch.
 Online, each player's own monsters bring that player's defenders, who ride
-the watch's stream as puppets, and that has limits (AUDIT DISC18, recorded):
+the watch's stream as puppets, and that has limits (AUDIT DISC19, recorded):
 - the wire's watch record carries no team, so a peer sees a hostile
   watchman, with no ally protection: their swing at my monster can land on
   my defender;
@@ -386,12 +386,12 @@ Not seen in a browser.
 
 ---
 
-## AUDIT DISC18
+## AUDIT DISC19
 
 Mac: *"Do an audit on this"*. Four lenses read the batch: the watch, the
 saves, the Light / chunk / door fixes, and the pins themselves. Each
 confirmed finding was reproduced in node, fixed at its root and pinned in
-`test/auditdisc18.test.js`; the mutants are `tools/mutants/auditdisc18.json`.
+`test/auditdisc19.test.js`; the mutants are `tools/mutants/auditdisc19.json`.
 
 **The watch (F).**
 - **W1, HIGH: the squad walked away mid-melee.** `isTownThreat` counted a
@@ -424,7 +424,7 @@ confirmed finding was reproduced in node, fixed at its root and pinned in
   `townWatch.runTownWatchFrame` now, run by the pins, and the host's
   remaining lines are pinned whole.
 - Doc corrections: the camp fix covers cities only; the online limits and
-  the unwired fixed-city host are written down (DISC18-F above).
+  the unwired fixed-city host are written down (DISC19-F above).
 
 **The saves (A, C).**
 - **S1, HIGH: the repair missed the saves the bug had already rewritten.**
@@ -434,7 +434,7 @@ confirmed finding was reproduced in node, fixed at its root and pinned in
   no live curse and none pending loads without both, the cure's own two
   lines. The overclaims ("gives the player the curse back") are corrected.
 - **S2: an exit autosave under the vampire's death video stranded the
-  infection** for ever once DISC18-A kept it across loads: the close never
+  infection** for ever once DISC19-A kept it across loads: the close never
   comes in the loaded game. A live, undeployed infection restores
   `deathScheduled` false, and the video comes again.
 - **S3, LOW: the exit autosave named a namesake's slots** (by name, where

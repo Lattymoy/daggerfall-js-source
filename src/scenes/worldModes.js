@@ -7088,9 +7088,9 @@ export function createWorldModes(host) {
       // BASE it hands the fog, which backs it up on the dry frames and
       // restores it on surfacing.
       { const _fog = dungeonFog(!!renderer.lightingLane, betterAmbience.dungeonFog() ?? DUNGEON_FOG); applyFog(renderer, dungeonCtx.underwaterFogSettings?.(cam.pos[1], player.pos, _fog) ?? _fog); }   // AUDIT-EL F6   // BA1: FoggyDungeons' linear fog is the base the water murk overrides
-      // AUDIT DISC18: THE CANDLE BURNS WHITE UNDERGROUND TOO. One shared
+      // AUDIT DISC19: THE CANDLE BURNS WHITE UNDERGROUND TOO. One shared
       // colour lit every light down here - the dungeon's 0.8, or the lane's
-      // flame - and the candle DISC18-B lit took it; MagicCandle.prefab is
+      // flame - and the candle DISC19-B lit took it; MagicCandle.prefab is
       // white at intensity 1, as the interior arm below keeps it. The pair
       // channel gives the candle its own white and every other light the
       // colour it always had.
@@ -7101,7 +7101,7 @@ export function createWorldModes(host) {
         // 16-slot shader cap picks from what survives (dungeonLights.js
         // carries the composition and why that order).
         nearestLights(dungeonCtx.lights, cam.pos, renderer.maxPointLights, dungeonCtx.flicker.ranges, () => _dgColor, DUNGEON_LIGHT_BLOCK_RANGE),   // EL1: the installed set's cap
-        dungeonCtx.candleLight(), _dgTint(playerTorchLight(playerEntity, player.feetAt(), cam.yaw)), _dgTint(thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw)), ...dungeonCtx.campLights().map(_dgTint), ...dungeonCtx.torchLights().map(_dgTint));   // X11 the Light effect's candle; T1 the torch. DISC18-B: the DUNGEON's engine's candle - every cast down here is the context's engine's, and this host's own `magic` is not updated underground (its candle stood dark, or lit at the street it was cast on); HT1 the dropped lights; SURV3 the campfires; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
+        dungeonCtx.candleLight(), _dgTint(playerTorchLight(playerEntity, player.feetAt(), cam.yaw)), _dgTint(thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw)), ...dungeonCtx.campLights().map(_dgTint), ...dungeonCtx.torchLights().map(_dgTint));   // X11 the Light effect's candle; T1 the torch. DISC19-B: the DUNGEON's engine's candle - every cast down here is the context's engine's, and this host's own `magic` is not updated underground (its candle stood dark, or lit at the street it was cast on); HT1 the dropped lights; SURV3 the campfires; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
       renderer.setPointLights(_dgLit.data, null, _dgLit.colors);
       renderer.setClearColor(INTERIOR_CLEAR);   // REVIEW 2026-09-05 (PR #55 review): the world-hosted dungeon/interior frame is THIS one - the host's own setClearColor sits after its `modes.frame` return
       renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
@@ -7423,7 +7423,7 @@ export function createWorldModes(host) {
       // is EnemySounds.PlayHitSound ON the struck enemy with the HAND's item (WeaponManager.cs:563-566) - null for a
       // bare hand and for the beast's claws.
       const interiorHitSound = (g) => audio.play3d(hitSoundFor(interiorWeapon.playerWeapon.strikingWeapon), g.ai.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 });
-      const swing = {};   // AUDIT DISC18: one swing, one attack grunt - the two pools rolled one each
+      const swing = {};   // AUDIT DISC19: one swing, one attack grunt - the two pools rolled one each
       if (interiorGuards?.resolvePlayerHit(interiorWeapon.playerWeapon, cam.pos, eyeDir(), player.pos,
         makeInView(proj, view, multiply), interiorHitSound, { swing })) {
         continue;   // resolvePlayerHit runs DFU's tally arm itself (AUDIT 23 combat-4)

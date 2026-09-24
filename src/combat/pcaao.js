@@ -65,7 +65,7 @@
 // the C# DISCARDS: three of them (the natural resistance's +-0.2, the
 // critical strike's luck term, the shield chances) are discarded here
 // too. The fourth, the hit chance's 3..97, is APPLIED - a RECORDED
-// DEPARTURE (Ledger A, the PCO1 row; DISC18-D, Mac's call 2026-09-24):
+// DEPARTURE (Ledger A, the PCO1 row; DISC19-D, Mac's call 2026-09-24):
 // unclamped, a mid-skill character landed 0 blows in 2000 on a Vampire
 // or a Lich, with no word said (pcaaoSuccessfulHit below). C# integer
 // division truncates toward zero, and where an
@@ -372,7 +372,7 @@ export function pcaaoAdjustmentsToHit(target) {
 /** CalculateSuccessfulHit: the seven terms summed, `Mathf.Clamp(num,
  *  3, 97)`, then Dice100.
  *
- *  DISC18-D (Discord, "In a dungeon that I cant hurt enemy's"; Mac's
+ *  DISC19-D (Discord, "In a dungeon that I cant hurt enemy's"; Mac's
  *  call 2026-09-24, option 1): THE CLAMP IS APPLIED. The mod's C#
  *  computes it and never assigns it, so a -10 was a certain miss - and
  *  with a monster's Dodging at 5 x level + 30 (halved), a skill-30

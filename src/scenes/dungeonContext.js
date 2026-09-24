@@ -72,7 +72,7 @@ import { largeHudOptions } from '../ui/hudLarge.js';   // U45: the classic botto
 import { drawText, makeFont } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
 import { setMidScreenText, midScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's second text surface
-// DISC18-D: STATIC. This was the one module of the foe subsystem's lazy
+// DISC19-D: STATIC. This was the one module of the foe subsystem's lazy
 // block that nothing else imports, so the build gave it a lazy-only
 // chunk - and a tab opened before a deploy asked for a chunk the deploy
 // had deleted, the whole subsystem failed, and every enemy in the
@@ -81,7 +81,7 @@ import { setMidScreenText, midScreenText } from '../ui/midScreenText.js';   // A
 // were static elsewhere already, so the lazy block's gate never saved
 // their bytes; this one module is ~16 KB of source.
 import { EnhancedEnemyAI, makeNavWorld } from '../ai/enhancedMotor.js';
-import { isStaleChunk, STALE_CHUNK_IN_PLAY_TEXT, STALE_CHUNK_IN_PLAY_SECONDS } from '../systems/staleChunk.js';   // DISC18-D: a chunk gone mid-session is said, not swallowed
+import { isStaleChunk, STALE_CHUNK_IN_PLAY_TEXT, STALE_CHUNK_IN_PLAY_SECONDS } from '../systems/staleChunk.js';   // DISC19-D: a chunk gone mid-session is said, not swallowed
 import { hudRenderEnabled } from '../ui/hudShortcuts.js';   // AUDIT 64 F37: the Draw override covers popupText too
 import { FntFile } from '../formats/fntFile.js';
 import { ImgFile } from '../formats/imgFile.js';
@@ -800,7 +800,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // verbatim, untouched.
   const foes = [];
   let foeDeps = null;
-  let _staleChunkNotice = false;   // DISC18-D (AUDIT DISC18): the foe subsystem's chunk was gone - said on the first frame
+  let _staleChunkNotice = false;   // DISC19-D (AUDIT DISC19): the foe subsystem's chunk was gone - said on the first frame
   // ENHANCED AI 3b + 4. Declared HERE, above every foe mint, because
   // buildFoeAt runs in this function's top-level flow and reads
   // `enhancedNav.world` at construction - not through a thunk. The
@@ -832,7 +832,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       import('../characters/raceCharacter.js'),
       import('../characters/enemyMotor.js'), import('../characters/enemyAttack.js'),
       import('../characters/enemyEntity.js'), import('../characters/enemyCasting.js'),
-      // MT-iv: dynamic, as the rest of this block. (AUDIT DISC18: the
+      // MT-iv: dynamic, as the rest of this block. (AUDIT DISC19: the
       // gate saves nothing for these any more - enemyMotor, enemyTargets
       // and the rest were in this module's static graph already, and the
       // world host's bundle holds every one of them; only the standalone
@@ -878,13 +878,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      // BODY00I0 fetch, the ramp derive) must not black-screen the
      // level: degrade to a foe-less dungeon, loudly. foeDeps stays
      // null; the class branch is skipped, monsters still billboard.
-     // DISC18-D: WITHOUT ANY LIVE ENEMY - buildFoeAt falls back to a flat
+     // DISC19-D: WITHOUT ANY LIVE ENEMY - buildFoeAt falls back to a flat
      // for every marker, class or monster (the old line said "without
      // class enemies", which sent a reader to the wrong half). A chunk
      // the build no longer has is said on the screen: the page is from
      // an older deploy, and a reload is the whole fix (systems/staleChunk.js).
      console.error('[foes] subsystem init failed; the dungeon builds with no live enemies (every marker a flat):', err?.message ?? err);
-     if (isStaleChunk(err)) _staleChunkNotice = true;   // said once the level is up - drawFoes below (AUDIT DISC18: set here, mid-build, it had timed out before the first frame)
+     if (isStaleChunk(err)) _staleChunkNotice = true;   // said once the level is up - drawFoes below (AUDIT DISC19: set here, mid-build, it had timed out before the first frame)
      foeDeps = null;
    }
   }
@@ -5825,7 +5825,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     /** X11: the Light effect's candle. The engine owns the candle (it
      *  is the player's, and every casting host builds one engine); the
      *  LIGHT has to be handed out because each host builds its own
-     *  point-light array. BOTH hosts read it here (DISC18-B): the
+     *  point-light array. BOTH hosts read it here (DISC19-B): the
      *  dungeon's casts are this context's engine's, and ?world's own
      *  engine is not updated underground - reading that one lit
      *  nothing, or a candle left at the street it was cast on. */

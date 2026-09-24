@@ -156,7 +156,7 @@ export function createLycanthropyCurse(entity, infectionType, { now = 0, rolls =
     kind: 'racialOverride',
     racial: 'lycanthropy',
     key: LYCANTHROPY_CURSE_KEY,
-    // DISC18-A: "permanent until removed" - RacialOverrideEffect's
+    // DISC19-A: "permanent until removed" - RacialOverrideEffect's
     // forcedRoundsRemaining (RacialOverrideEffect.cs:28, :71-80); the
     // cure's `ended` is its `forcedRoundsRemaining = 0` (:485). Without
     // it the round clock counted the absent rounds to NaN, the save

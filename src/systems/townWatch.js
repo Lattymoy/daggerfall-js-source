@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// DISC18-F — THE WATCH DEFENDS THE TOWN. The port's own; a departure
+// DISC19-F — THE WATCH DEFENDS THE TOWN. The port's own; a departure
 // (Port-Ledger A), behind the Features row `town-watch`.
 //
 // Discord, relayed by Mac ("I want to fix these issues + enhance guard
@@ -32,7 +32,7 @@
 // crime turns them into the ordinary watch on the spot - and a blow on
 // one is that crime (cityGuards.js handleAttackFromPlayer).
 //
-// AUDIT DISC18 (the watch lens) closed four holes in the first cut: the
+// AUDIT DISC19 (the watch lens) closed four holes in the first cut: the
 // squad walked away mid-melee (a monster fighting a defender read as
 // quiet), a struck defender went rogue with no crime, the town sent a
 // fresh armoured squad for every one a monster killed (an armour farm),
@@ -60,7 +60,7 @@ export const TOWN_WATCH_STAND_DOWN_SECONDS = 10;
 /** How many defender waves one incident brings. The port's own number.
  *  Without it a monster the defenders could not beat drew a fresh squad
  *  every countdown for as long as it stood - sixteen waves in two
- *  minutes against one centaur (AUDIT DISC18). The count starts over
+ *  minutes against one centaur (AUDIT DISC19). The count starts over
  *  once the town has been quiet a stand-down's length. */
 export const TOWN_WATCH_MAX_WAVES = 3;
 
@@ -75,7 +75,7 @@ export const TOWN_WATCH_MAX_WAVES = 3;
  * monster that turns from the player onto a defender is still that
  * fight, and counting the player's hunters alone read the town quiet
  * the moment it turned - the squad walked away mid-melee, every ten
- * seconds (AUDIT DISC18).
+ * seconds (AUDIT DISC19).
  */
 export function isTownThreat(f, { inTownRect } = {}) {
   if (!f || f.dead || f.puppet || !f.ai || !f.entity) return false;
@@ -152,7 +152,7 @@ export function createTownWatch({ rand = Math.random } = {}) {
 /**
  * One frame of the town watch in a host, after its pools moved - all the
  * host does with the decision, here so the pins run it rather than read
- * it (AUDIT DISC18: six one-token breaks of the inline copy survived the
+ * it (AUDIT DISC19: six one-token breaks of the inline copy survived the
  * whole suite). The host answers where the town is:
  *
  *   enabled, inTown, crime, locationKey   as createTownWatch's tick

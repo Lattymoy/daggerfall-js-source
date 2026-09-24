@@ -64,7 +64,7 @@ its `modsettings.json`:
 | `MirrorVCEH` / `OnAttackDamageCalculated` / `OnSavingThrow` | the Vanilla Combat Event Handler's two events, mirrored to relay to OTHER mods | not carried - no consumer here (README) |
 | `Debug.LogFormat("matReqDamMulti")` | a Unity console line | not carried |
 
-## The one departure: the hit chance's floor (DISC18-D, Mac's call 2026-09-24)
+## The one departure: the hit chance's floor (DISC19-D, Mac's call 2026-09-24)
 
 `CalculateSuccessfulHit` computes `Mathf.Clamp(num, 3, 97)` and never
 assigns it, so under the mod a sum below zero was a certain miss. With a

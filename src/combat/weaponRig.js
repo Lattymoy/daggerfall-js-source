@@ -1815,7 +1815,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
  */
 export function envAttack(actions, collider, eye, lookDir, rolls = Math.random) {
   let best = null, bestD = Infinity;
-  let first;   // DISC18-E: the one surface the swing's ray meets, cast lazily
+  let first;   // DISC19-E: the one surface the swing's ray meets, cast lazily
   for (const o of actions.objects.values()) {
     // AUDIT 63 F37: WeaponEnvDamage reads a LIVE Physics.Raycast hit
     // (WeaponManager.cs:459-464), so a mover is struck where it is,
@@ -1824,10 +1824,10 @@ export function envAttack(actions, collider, eye, lookDir, rolls = Math.random) 
     if (!box) continue;
     const d = rayAabb(eye, lookDir, box);
     if (d === null || d > WEAPON_REACH || d >= bestD) continue;
-    // DISC18-E: the activate ray's law - a mesh collider whose box is
+    // DISC19-E: the activate ray's law - a mesh collider whose box is
     // entered while the first surface is ANOTHER action object's own bucket
     // was never struck (the door stands inside the corridor piece's box).
-    // AUDIT DISC18: the cast runs as far as the press's, not the reach: a
+    // AUDIT DISC19: the cast runs as far as the press's, not the reach: a
     // door whose BOX is inside the reach may have its mesh just past it
     // (DFU's door is a BoxCollider, met at the box), and a cast cut at the
     // reach met nothing - the relay in front kept the swing (Orsinium's

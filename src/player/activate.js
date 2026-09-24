@@ -165,11 +165,11 @@ export function activationTargets(objects, distance = DOOR_ACTIVATION_DISTANCE) 
   return targets;
 }
 
-/** DISC18-E (Discord: "Cant enter Mannimarcos room ... even if i bash it
+/** DISC19-E (Discord: "Cant enter Mannimarcos room ... even if i bash it
  *  doesnt make a sound"): the action objects DFU gives a MeshCollider - a
  *  placed MODEL carrying a record (AddStandaloneModel ->
  *  CreateDaggerfallMeshGameObject, GameObjectHelper.cs:196-206): movers,
- *  special doors (a standalone model too - AUDIT DISC18), and the
+ *  special doors (a standalone model too - AUDIT DISC19), and the
  *  relays/effects minted from a placement (modelIdNum set). An ACTION
  *  door is a BoxCollider sized to its bounds (RDBLayout.cs:1147-1155) and
  *  an acting flat a BoxCollider (RDBLayout.cs:977-987): their box IS the
@@ -392,7 +392,7 @@ function nearestActivatableHit(eye, dir, targets, collider) {
   let bestReach = DEFAULT_ACTIVATION_DISTANCE;
   let bestNoSurface = false;
   let targetKeys = null;   // CASTLE1: the keys, minted only when a box holds the eye
-  let firstHit;            // DISC18-E: the one surface DFU's ray meets, cast lazily
+  let firstHit;            // DISC19-E: the one surface DFU's ray meets, cast lazily
   for (const target of targets) {
     let d = target.obb ? rayObb(eye, dir, target.obb.m, target.obb.box) : rayAabb(eye, dir, target.aabb);   // DISC10: a turned body's own box where it has one
     if (d === null) continue;
@@ -429,7 +429,7 @@ function nearestActivatableHit(eye, dir, targets, collider) {
       if (!boxContains(target.aabb, [eye[0] + dir[0] * hit.dist, eye[1] + dir[1] * hit.dist, eye[2] + dir[2] * hit.dist], 0.15)) continue;
       d = hit.dist;
     } else if (target.meshCollider === true && collider.raycastHit) {
-      // DISC18-E: CASTLE1's law for a box merely ENTERED. A mesh
+      // DISC19-E: CASTLE1's law for a box merely ENTERED. A mesh
       // collider is met only at its triangles, so when the first surface
       // the ray meets is ANOTHER target's own bucket (the King of Worms'
       // door, standing 5 cm inside the corridor piece's box), the ray

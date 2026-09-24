@@ -1,357 +1,357 @@
 [
   {
-    "name": "DISC18-A-werewolf-curse-rounds-out",
+    "name": "DISC19-A-werewolf-curse-rounds-out",
     "file": "src/systems/lycanthropy.js",
     "old": "    permanent: true,\n    infectionType,",
     "new": "    infectionType,",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-A-vampire-curse-rounds-out",
+    "name": "DISC19-A-vampire-curse-rounds-out",
     "file": "src/systems/vampirism.js",
-    "old": "    permanent: true,   // DISC18-A",
-    "new": "    // DISC18-A",
+    "old": "    permanent: true,   // DISC19-A",
+    "new": "    // DISC19-A",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-A-infection-rounds-out",
+    "name": "DISC19-A-infection-rounds-out",
     "file": "src/systems/infection.js",
     "old": "    permanent: true,\n    disease: null,",
     "new": "    disease: null,",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-A-old-saves-not-repaired",
+    "name": "DISC19-A-old-saves-not-repaired",
     "file": "src/systems/save.js",
     "old": "if (a.kind === 'racialOverride' || a.infection) a.permanent = true;",
     "new": "if (a.kind === 'racialOverride' && a.infection) a.permanent = true;",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-A-cured-curse-kept",
+    "name": "DISC19-A-cured-curse-kept",
     "file": "src/systems/effects.js",
     "old": "    if (a.permanent) return !a.ended;",
     "new": "    if (a.permanent) return true;",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-B-dungeon-reads-world-candle",
+    "name": "DISC19-B-dungeon-reads-world-candle",
     "file": "src/scenes/worldModes.js",
     "old": "        dungeonCtx.candleLight(), _dgTint(playerTorchLight(",
     "new": "        magic?.candleLight(), _dgTint(playerTorchLight(",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-C-revival-before-the-effects",
+    "name": "DISC19-C-revival-before-the-effects",
     "file": "src/systems/save.js",
     "old": "  const loadDeadOnline = isOnlinePage() && !((entity.health ?? 0) > 0);\n",
     "new": "  const loadDeadOnline = false; if (isOnlinePage() && !((entity.health ?? 0) > 0)) reviveForPlay(entity);\n",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-C-no-revival",
+    "name": "DISC19-C-no-revival",
     "file": "src/systems/save.js",
     "old": "  if (loadDeadOnline) reviveForPlay(entity);\n",
     "new": "\n",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-C-exit-save-writes-the-dead",
+    "name": "DISC19-C-exit-save-writes-the-dead",
     "file": "src/systems/saveSlots.js",
     "old": "  if (deathUp || !(entity?.health > 0)) return [];",
     "new": "  if (deathUp) return [];",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-C-exit-save-ignores-the-death-screen",
+    "name": "DISC19-C-exit-save-ignores-the-death-screen",
     "file": "src/systems/saveSlots.js",
     "old": "  if (deathUp || !(entity?.health > 0)) return [];",
     "new": "  if (!(entity?.health > 0)) return [];",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-C-handler-reads-no-death",
+    "name": "DISC19-C-handler-reads-no-death",
     "file": "src/scenes/world.js",
     "old": "exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() })",
     "new": "exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen })",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-F-watch-comes-for-the-wanted",
+    "name": "DISC19-F-watch-comes-for-the-wanted",
     "file": "src/systems/townWatch.js",
     "old": "      if (crime) { countdown = 0; calm = 0; return null; }",
     "new": "      if (false) { countdown = 0; calm = 0; return null; }",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-F-watch-follows-a-player-who-left",
+    "name": "DISC19-F-watch-follows-a-player-who-left",
     "file": "src/systems/townWatch.js",
     "old": "          if (locationKey !== countdownKey) return null;\n",
     "new": "",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-F-watch-arrives-at-once",
+    "name": "DISC19-F-watch-arrives-at-once",
     "file": "src/systems/townWatch.js",
     "old": "        countdown = TOWN_WATCH_ARRIVAL_MIN_SECONDS + Math.floor(rand() * TOWN_WATCH_ARRIVAL_SPAN);",
     "new": "        countdown = 0.001;",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-F-watch-leaves-while-fighting",
+    "name": "DISC19-F-watch-leaves-while-fighting",
     "file": "src/systems/townWatch.js",
     "old": "      if (calm < TOWN_WATCH_STAND_DOWN_SECONDS) return null;",
     "new": "      if (calm < 0) return null;",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-F-watch-stays-when-switched-off",
+    "name": "DISC19-F-watch-stays-when-switched-off",
     "file": "src/systems/townWatch.js",
     "old": "        return defenders > 0 ? 'dismiss' : null;",
     "new": "        return null;",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-F-threat-need-not-hunt",
+    "name": "DISC19-F-threat-need-not-hunt",
     "file": "src/systems/townWatch.js",
     "old": "  if (!isPlayerTarget(t) && !(t?.defender === true && !t.dead)) return false;\n",
     "new": "",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-F-threat-puppets-count",
+    "name": "DISC19-F-threat-puppets-count",
     "file": "src/systems/townWatch.js",
     "old": "  if (!f || f.dead || f.puppet || !f.ai || !f.entity) return false;",
     "new": "  if (!f || f.dead || !f.ai || !f.entity) return false;",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-F-threat-allies-count",
+    "name": "DISC19-F-threat-allies-count",
     "file": "src/systems/townWatch.js",
     "old": "  if (f.entity.team === 'PlayerAlly') return false;\n",
     "new": "",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-F-defender-mobile-team-not-allied",
+    "name": "DISC19-F-defender-mobile-team-not-allied",
     "file": "src/scenes/cityGuards.js",
     "old": "        entity.team = 'PlayerAlly'; entity.mobileTeam = 'PlayerAlly';",
     "new": "        entity.team = 'PlayerAlly';",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-F-defender-not-sent-at-threat",
+    "name": "DISC19-F-defender-not-sent-at-threat",
     "file": "src/scenes/cityGuards.js",
     "old": "        if (threat?.ai) ai.makeEnemyHostileToAttacker(threat, threat.ai.feet, 600);",
     "new": "",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-F-defender-walks-with-crime-watch",
+    "name": "DISC19-F-defender-walks-with-crime-watch",
     "file": "src/scenes/cityGuards.js",
     "old": "      for (const g of guards) if (!g.dead && !g.defender) { g.dead = true; releaseGuardBatch(g); }",
     "new": "      for (const g of guards) if (!g.dead) { g.dead = true; releaseGuardBatch(g); }",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-F-crime-leaves-defenders-allied",
+    "name": "DISC19-F-crime-leaves-defenders-allied",
     "file": "src/scenes/cityGuards.js",
     "old": "    if (playerEntity.crimeCommitted) for (const g of guards) if (!g.dead && g.defender) enlistDefender(g, playerFeet);",
     "new": "",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-F-enlist-keeps-allied-mobile-team",
+    "name": "DISC19-F-enlist-keeps-allied-mobile-team",
     "file": "src/scenes/cityGuards.js",
     "old": "    g.entity.team = g.entity.mobileTeam = staticTeamOf(GUARD_MOBILE_TYPE);",
     "new": "    g.entity.team = staticTeamOf(GUARD_MOBILE_TYPE);",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-F-defenders-saved",
+    "name": "DISC19-F-defenders-saved",
     "file": "src/scenes/cityGuards.js",
     "old": "    return guards.filter((g) => !g.dead && !g.defender).map((g) => {",
     "new": "    return guards.filter((g) => !g.dead).map((g) => {",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-F-dismiss-leaves-a-body",
+    "name": "DISC19-F-dismiss-leaves-a-body",
     "file": "src/scenes/cityGuards.js",
     "old": "    for (const g of guards) if (!g.dead && g.defender) { g.dead = true; releaseGuardBatch(g); n++; }",
     "new": "    for (const g of guards) if (!g.dead && g.defender) { g.dead = true; g.corpse = true; releaseGuardBatch(g); n++; }",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-F-swing-takes-the-defender-first",
+    "name": "DISC19-F-swing-takes-the-defender-first",
     "file": "src/scenes/cityGuards.js",
     "old": "(defendersOnly ? g.defender : !(spareDefenders && protect && g.defender))",
     "new": "(defendersOnly ? g.defender : true)",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-F-no-npc-guard-conversion",
+    "name": "DISC19-F-no-npc-guard-conversion",
     "file": "src/scenes/cityGuards.js",
     "old": "      if (!p.guard || room() <= 0) continue;\n      if (Math.hypot(p.pos[0] - playerFeet[0]",
     "new": "      if (true) continue;\n      if (Math.hypot(p.pos[0] - playerFeet[0]",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-F-host-never-runs-the-watch",
+    "name": "DISC19-F-host-never-runs-the-watch",
     "file": "src/scenes/world.js",
     "old": "      if (playerSpawned) _townWatchFrame(dt);",
     "new": "",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-F-host-swing-order",
+    "name": "DISC19-F-host-swing-order",
     "file": "src/scenes/world.js",
     "old": "guardHitSound, { spareDefenders: true, swing })) {",
     "new": "guardHitSound, { swing })) {",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-F-camp-reads-stale-pixel",
+    "name": "DISC19-F-camp-reads-stale-pixel",
     "file": "src/scenes/world.js",
     "old": "inside: false, inLocationRect: _inAnyLocationRect(walkMode ? player.pos : cam.pos),",
     "new": "inside: false, inLocationRect: _musicInLocationRect(),",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-F-camp-pitched-in-town",
+    "name": "DISC19-F-camp-pitched-in-town",
     "file": "src/scenes/world.js",
     "old": "      if (anchor && _inAnyLocationRect([anchor.x, anchor.y, anchor.z])) anchor = null;",
     "new": "",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-E-press-takes-the-nearest-box",
+    "name": "DISC19-E-press-takes-the-nearest-box",
     "file": "src/player/activate.js",
     "old": "    } else if (target.meshCollider === true && collider.raycastHit) {",
     "new": "    } else if (false) {",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-E-no-mesh-colliders",
+    "name": "DISC19-E-no-mesh-colliders",
     "file": "src/player/activate.js",
     "old": "export const hasMeshCollider = (o) => !!o && (o.kind === 'action'",
     "new": "export const hasMeshCollider = (o) => false && (o.kind === 'action'",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-E-swing-takes-the-nearest-box",
+    "name": "DISC19-E-swing-takes-the-nearest-box",
     "file": "src/combat/weaponRig.js",
     "old": "      if (first.key != null && first.key !== o.key && actions.objects.has(first.key)) continue;",
     "new": "",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-E-every-entered-model-skipped",
+    "name": "DISC19-E-every-entered-model-skipped",
     "file": "src/player/activate.js",
     "old": "      firstHit ??= collider.raycastHit(eye, dir, RAY_DISTANCE);\n",
     "new": "      firstHit ??= collider.raycastHit(eye, dir, RAY_DISTANCE); continue;\n",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-D-enhanced-motor-lazy-only-again",
+    "name": "DISC19-D-enhanced-motor-lazy-only-again",
     "file": "src/scenes/dungeonContext.js",
     "old": "import { EnhancedEnemyAI, makeNavWorld } from '../ai/enhancedMotor.js';\n",
     "new": "",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-D-stale-chunk-swallowed",
+    "name": "DISC19-D-stale-chunk-swallowed",
     "file": "src/scenes/dungeonContext.js",
     "old": "     if (isStaleChunk(err)) _staleChunkNotice = true;",
     "new": "     if (isStaleChunk(err)) void 0;",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-D-in-play-text-says-nothing-to-do",
+    "name": "DISC19-D-in-play-text-says-nothing-to-do",
     "file": "src/systems/staleChunk.js",
     "old": "export const STALE_CHUNK_IN_PLAY_TEXT = 'Game updated - reload the page for enemies.';",
     "new": "export const STALE_CHUNK_IN_PLAY_TEXT = 'Game updated.';",
     "tests": [
-      "test/disc18.test.js"
+      "test/disc19.test.js"
     ]
   },
   {
-    "name": "DISC18-D-hit-chance-unclamped",
+    "name": "DISC19-D-hit-chance-unclamped",
     "file": "src/combat/pcaao.js",
     "old": "  return dice100(Math.max(PCAAO_HIT_CHANCE_MIN, Math.min(PCAAO_HIT_CHANCE_MAX, chance)), rolls());",
     "new": "  return dice100(chance, rolls());",
@@ -360,7 +360,7 @@
     ]
   },
   {
-    "name": "DISC18-D-hit-chance-no-floor",
+    "name": "DISC19-D-hit-chance-no-floor",
     "file": "src/combat/pcaao.js",
     "old": "  return dice100(Math.max(PCAAO_HIT_CHANCE_MIN, Math.min(PCAAO_HIT_CHANCE_MAX, chance)), rolls());",
     "new": "  return dice100(Math.min(PCAAO_HIT_CHANCE_MAX, chance), rolls());",
@@ -369,7 +369,7 @@
     ]
   },
   {
-    "name": "DISC18-D-hit-chance-no-ceiling",
+    "name": "DISC19-D-hit-chance-no-ceiling",
     "file": "src/combat/pcaao.js",
     "old": "  return dice100(Math.max(PCAAO_HIT_CHANCE_MIN, Math.min(PCAAO_HIT_CHANCE_MAX, chance)), rolls());",
     "new": "  return dice100(Math.max(PCAAO_HIT_CHANCE_MIN, chance), rolls());",
@@ -378,7 +378,7 @@
     ]
   },
   {
-    "name": "DISC18-D-floor-moved",
+    "name": "DISC19-D-floor-moved",
     "file": "src/combat/pcaao.js",
     "old": "export const PCAAO_HIT_CHANCE_MIN = 3;",
     "new": "export const PCAAO_HIT_CHANCE_MIN = 2;",
@@ -387,7 +387,7 @@
     ]
   },
   {
-    "name": "DISC18-D-ceiling-moved",
+    "name": "DISC19-D-ceiling-moved",
     "file": "src/combat/pcaao.js",
     "old": "export const PCAAO_HIT_CHANCE_MAX = 97;",
     "new": "export const PCAAO_HIT_CHANCE_MAX = 98;",

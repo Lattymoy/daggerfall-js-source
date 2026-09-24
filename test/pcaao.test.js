@@ -104,7 +104,7 @@ test('PCO1: the hit\'s helpers - armour, adrenaline, stat diffs, skills, adjustm
   assert.equal(pcaaoAdjustmentsToHit(cls), -50);
 });
 
-test('PCO1 + DISC18-D: CalculateSuccessfulHit IS clamped to 3..97 - the C# computes Mathf.Clamp(3, 97) and throws it away, and the port applies it (Mac\'s call, 2026-09-24: a Vampire no build could hit)', () => {
+test('PCO1 + DISC19-D: CalculateSuccessfulHit IS clamped to 3..97 - the C# computes Mathf.Clamp(3, 97) and throws it away, and the port applies it (Mac\'s call, 2026-09-24: a Vampire no build could hit)', () => {
   const p = mkPlayer(); const mon = monster(0);
   assert.equal(pcaaoSuccessfulHit(p, mon, 300, 3, fixed(0.96), M), true, 'a 300 lands on a 96 roll');
   assert.equal(pcaaoSuccessfulHit(p, mon, 300, 3, fixed(0.97), M), false, '...and misses on 97: three in a hundred miss, however certain');
@@ -117,7 +117,7 @@ test('PCO1 + DISC18-D: CalculateSuccessfulHit IS clamped to 3..97 - the C# compu
   assert.equal(pcaaoStruckBodyPart(0), 0); assert.equal(pcaaoStruckBodyPart(0.99), 6);
 });
 
-test('DISC18-D (Mac\'s call, 2026-09-24): whole blows - a skill-30 character with a steel sword lands about three in a hundred on a Vampire and a Lich, where the mod as shipped landed none in two thousand', () => {
+test('DISC19-D (Mac\'s call, 2026-09-24): whole blows - a skill-30 character with a steel sword lands about three in a hundred on a Vampire and a Lich, where the mod as shipped landed none in two thousand', () => {
   for (const id of [28, 32]) {   // Vampire, Lich
     const mon = monster(id);
     const p = mkPlayer({ skills: skillsAll(30) });

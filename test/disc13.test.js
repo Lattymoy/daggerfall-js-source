@@ -119,7 +119,7 @@ test('DISC13-A: every host builds the hand lights off the render feet - both bui
   for (const [file, n] of [['src/scenes/world.js', 2], ['src/scenes/worldModes.js', 2], ['src/scenes/exterior.js', 1], ['src/scenes/dungeon.js', 1]]) {
     const src = rd(file);
     for (const b of ['playerTorchLight(playerEntity, player.feetAt(), cam.yaw)', 'thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw)']) {
-      assert.equal(src.split(b).length - 1, n, `${file}: ${b.slice(0, b.indexOf('('))} in all ${n} arrays`);   // AUDIT DISC18: counted apart - the world host's dungeon arm tints each with the dungeon's colour
+      assert.equal(src.split(b).length - 1, n, `${file}: ${b.slice(0, b.indexOf('('))} in all ${n} arrays`);   // AUDIT DISC19: counted apart - the world host's dungeon arm tints each with the dungeon's colour
     }
     assert.doesNotMatch(src, /(?:playerTorchLight|thunderlockMuzzleLight)\(playerEntity, player\.pos,/, `${file} hands no builder the stepped feet`);
     sites += n;
