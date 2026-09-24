@@ -162,9 +162,12 @@ test('MAP-LAG: the clock\'s next ten minutes - the last raster stands until the 
     const old = win._wxr;
     assert.ok(old);
     clock.m += WEATHER_LAYER_REFRESH_MINUTES;
-    win._dirty = true; win.tick(1 / 60);
     const frame = win._chrome.ink.getContext('2d');
-    assert.equal(frame.calls.filter((c) => c.fn === 'drawImage' && c.args[0] === old.canvas).at(-1)?.alpha, 1, 'the old raster is laid while the new is read');
+    const before = frame.calls.length;
+    win._dirty = true; win.tick(1 / 60);
+    const drawn = frame.calls.slice(before).filter((c) => c.fn === 'drawImage' && c.args[0] === old.canvas);
+    assert.equal(drawn.length, 1, 'the old raster is laid on the refresh\'s own frame, while the new is read');
+    assert.equal(drawn[0].alpha, 1);
     assert.equal(win._wxJob?.key, win._weatherLayer().key, 'and the new refresh\'s job is under way');
     settle(win, 2);
     assert.equal(win._wxr.key, win._weatherLayer().key, 'then the new one is laid');
