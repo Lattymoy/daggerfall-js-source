@@ -1091,8 +1091,8 @@ export function createWorldModes(host) {
    *  This host owned two pools and ran NO fan-out at all - no
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
    *  (worldTick.js:389-390), and no killIfAnyLiveStatZero. Both pools
-   *  READ the effect list every frame (exteriorFoes.js:892-896 and
-   *  cityGuards.js:831-837 each take `entityIsParalyzed` +
+   *  READ the effect list every frame (exteriorFoes.js:897-901 and
+   *  cityGuards.js:832-838 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
    *  a poison inflicted at this host's own onInflictPoison never
@@ -6157,7 +6157,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:6269), so the OUTER host's one rides in.
+          // (dungeonContext.js:6268), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:744 -> the
@@ -7274,7 +7274,7 @@ export function createWorldModes(host) {
         // (cityGuards.js:590-595), so this seam splits by pool exactly
         // as `dealDamage` above it does rather than dropping the
         // non-encounter half - the zero-damage SWING already reaches
-        // that door (cityGuards.js:1082) and the shaft owes the same.
+        // that door (cityGuards.js:1083) and the shaft owes the same.
         onAttackFromPlayer: (f) => (f._encounter
           ? interiorFoes?.attackFromPlayer(f, player.pos, 'arrow')   // AUDIT WORLD6b-iii(e) A2: the pool's one door, the shaft's kind on it
           : interiorGuards?.handleAttackFromPlayer(f, player.pos)),
@@ -9777,7 +9777,7 @@ export function createWorldModes(host) {
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
      *  HARD2c: this used to spell them out, and named `world.js:6642`
-     *  and `dungeonContext.js:6278` for its two sibling copies - lines
+     *  and `dungeonContext.js:6277` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

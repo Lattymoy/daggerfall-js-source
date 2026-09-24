@@ -521,7 +521,7 @@ Left, deliberately, each recorded at its site or here:
   a zero-damage arrow into a pacified watchman turned nobody while the
   identical SWING turned the area. `handleAttackFromPlayer` is on the
   pool's public surface now (as the encounter pool's has always been,
-  `exteriorFoes.js:1954`) and all three seams route by pool membership.
+  `exteriorFoes.js:1960`) and all three seams route by pool membership.
 - ~~The indoor WATCH refuses the Wabbajack: DFU transforms any
   `EnemyEntity` and `Knight_CityWatch` is one, but the guard pool exposes
   no remove/spawn pair. The refusal and its reason are written into the
