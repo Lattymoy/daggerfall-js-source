@@ -198,10 +198,14 @@ test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', (
   const walks = [];
   const { g } = pool({ makeAreaHostile: () => walks.push('walk') });
   const w = watchman({ hostile: false, team: 'PlayerAlly' });
-  // FormulaHelper.cs:576-583: a weapon material the target refuses
-  // returns 0 - a shaft that CONNECTED and dealt nothing, DFU's way
-  // (formulas.js:580-588).
-  w.entity.minMetalToHit = 1;
+  // A shaft that CONNECTED and MISSED - the to-hit roll failed, `rolls`
+  // pinned high - returns 0 under the stock formula and PCAAO's alike.
+  // A refused material is NOT that zero while PCAAO ships on: its
+  // softMaterialRequirements scale the blow instead of refusing it
+  // (pcaao.js pcaaoAttackDamage), so this test's old premise - material
+  // 0 against minMetalToHit 1, the roll left to Math.random - dealt
+  // damage whenever the ~2% hit roll landed (release-desktop's gate on
+  // #365's merge: "10 !== 0").
   g.guards.push(w);
   const hits = [];
   const dmg = playerArrowHitFoe({ pos: [1, 0, 4], dir: [0, 0, -1], weapon: { material: 0, templateIndex: 121 } }, w, {
@@ -214,8 +218,9 @@ test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', (
     onAttackFromPlayer: (f) => (g.guards.includes(f)
       ? g.handleAttackFromPlayer(f, [1, 0, 4])
       : assert.fail('the watchman must take the WATCH pool\'s door')),
+    rolls: () => 0.999,   // every roll high: the crit fails, the to-hit roll (100) misses
   });
-  assert.equal(dmg, 0, 'the material was refused: the shaft connected and dealt nothing');
+  assert.equal(dmg, 0, 'the shaft connected and missed: it dealt nothing');
   assert.deepEqual(hits, [], 'so the damage door never ran');
   assert.deepEqual(walks, ['walk'], 'and the pacified watchman still turned the whole active database');
   assert.equal(w.ai.calls.length, 1, 'and learned where the shaft came from');
