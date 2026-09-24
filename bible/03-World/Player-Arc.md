@@ -1713,7 +1713,7 @@ not gate on `HasAction`; it gates on `playerMotor.IsStandingStill`
 that `GroundedMovement` writes straight into `moveDirection`, so DFU
 plays the stride. The port walked the autorunner forward in silence in
 every host. All four now pass `standingStill: player.standing`, the
-motor's own mirror of that getter (`world.js:14682` already did at its
+motor's own mirror of that getter (`world.js:14701` already did at its
 other footstep site) - which is also still the paralysis answer,
 because the hosts zero both axes for a frozen player.
 
@@ -2127,3 +2127,14 @@ rounded bottom, with its feet r (1 / cos - 1) over that ground: 5 cm at
 own width. It is read by both the floor snap and the clamp, so MAC3's
 downhill adhesion holds, and flat ground is unchanged.
 `01-Overview/Field-Bugs-2026-09-23.md` DISC16-A.
+
+## DISC18 - the body stands on the capsule's feet, not the camera's (2026-09-24, Mac)
+
+"My characterless [character's legs] are in the ground." The hosts drew the third-person
+body (the Morrowind body and the EOTB sprite) at `feetAt()`, the camera's
+low-passed feet (MAC1's `STEP_SMOOTH_TAU`, AUDIT 65 XL-4), which trail a
+climb by the climb's vertical speed times the time constant. Walking up
+a 30-degree hill the body sat 13 cm under the ground, and 23 cm running.
+`bodyFeetAt()` is EV1's interpolation alone. The five body draws take it,
+and the cameras keep the smoothing. `01-Overview/Field-Bugs-2026-09-23.md`
+DISC18.

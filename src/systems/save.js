@@ -25,6 +25,7 @@ import { snapshotAutomap, restoreAutomap } from './automap.js';   // A1: dictAut
 import { createSceneCache, snapshotSceneCache, restoreSceneCache } from './sceneCache.js';   // P1
 import { seedCustomSpellIndex } from './spellMaker.js';   // S1: made spells carry their own record
 import { seedBundleSeq } from './effects.js';   // X10: the live-bundle counter's restore half
+import { repairLostCurses } from './curseRepair.js';   // CURSE-REPAIR1: a curse the round clock pruned, given back
 import { SOCIAL_GROUPS } from '../formats/factionFile.js';   // AUDIT 24
 import { travelMapSaveData, restoreTravelMapSaveData } from './travelMapState.js';   // U41: TravelMapSaveData
 import { getEscortFacesSaveData, restoreEscortFacesSaveData } from '../ui/hudEscortFaces.js';   // FE1: SaveData_v1.escortingFaces
@@ -42,7 +43,6 @@ import { characterIdOf, adoptLegacyCards, mintCharacterId } from './characterId.
 import { isOnlinePage } from './onlineLane.js';   // ONLINE-DEATH-FIX: the page is online
 import { STREAMING_TERRAIN_SCALE } from '../world/terrainSampler.js';   // TERRAIN-SCALE1: the scale every saved exterior height stands on
 import { respawnHealth, reviveForPlay } from './deathRespawn.js';   // ONLINE-DEATH-FIX: the SAME half-health an online respawn leaves
-import { LYCANTHROPY_SPELL_TAG, VAMPIRE_SPELL_TAG } from './lycanthropy.js';   // AUDIT DISC19: a cured-by-the-bug save keeps no curse spell
 import { setLightSource } from './lightSource.js';   // DISC7: the light in hand's one door
 
 /** One membership book, rows copied (GuildMembership_v1's shape). */
@@ -679,19 +679,10 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // loaded game, so the flag restores false and the video comes again.
   for (const a of entity.activeEffects) if (a.infection && !a.dreamPlayed) a.dreamScheduled = false;
   for (const a of entity.activeEffects) if (a.infection && !a.deployed) a.deathScheduled = false;
-  // DISC19-A: THE CURSES AND INFECTIONS ALREADY ON DISK. Both were minted
-  // without the `permanent` flag their DFU classes' forcedRoundsRemaining
-  // stands for (RacialOverrideEffect.cs:28, :71-80; DiseaseEffect.cs:32,
-  // :67-77), so every live round decremented an absent roundsRemaining to
-  // NaN and the envelope's JSON wrote it as null - and the first round
-  // after the load read `null <= 0` and dropped the entry: a werewolf or a
-  // vampire came back human after any load, the spell still in the book.
-  // A save written before that first load still holds the entry whole,
-  // and the flag gives that save its curse back. One written after it -
-  // every later save, the exit autosave's overwrite of every slot among
-  // them - holds no entry to mend (AUDIT DISC19); it keeps only what the
-  // curse left behind, cleared once the spells are restored below.
-  for (const a of entity.activeEffects) if (a.kind === 'racialOverride' || a.infection) a.permanent = true;
+  // CURSE-PERSIST1: a save written before the curse and the infection carried `permanent` holds them with a null round
+  // budget (NaN, as JSON writes it), which the next tick read as spent and pruned - the flag is given at the one door old
+  // data comes in by, so tickActiveEffects keeps its one law and never learns these kinds by name.
+  for (const a of entity.activeEffects) if ((a.kind === 'racialOverride' || a.infection) && !a.permanent) a.permanent = true;
   // V2a: the racial override MARKER is a live reference into the list
   // just restored - rebuilt here, never serialized on its own, so the
   // marker and the entry can never disagree (the gates - a second
@@ -836,18 +827,9 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
       + `${spellsByIndex ? '' : ' (SPELLS.STD not loaded yet)'} - HELD, not dropped:`, _pending);
   }
   seedCustomSpellIndex(entity.spells);
-  // DISC19-A (AUDIT DISC19): WHAT A DROPPED CURSE LEFT BEHIND. A save the
-  // bug had already rewritten carries no curse but kept its residue: Silver
-  // as the lowest metal that hurts the player (vampirism.js/lycanthropy.js
-  // set it and only a cure cleared it - DFU's VampirismEffect.End sets it
-  // back, :274), so a mortal shrugged off every iron and steel blade; and
-  // the curse's tagged spells, which the book will not delete and which
-  // refuse to cast. With no live curse and none pending, both go - the
-  // cure's own two lines.
-  if (!entity.racialOverride && !entity.racialOverridePending) {
-    entity.minMetalToHit = undefined;
-    entity.spells = entity.spells.filter((s) => s?.tag !== LYCANTHROPY_SPELL_TAG && s?.tag !== VAMPIRE_SPELL_TAG);
-  }
+  // CURSE-REPAIR1: after the spellbook AND the effect list (and the racial marker) are back - a tagged curse spell with no
+  // curse behind it is a curse the round clock pruned before CURSE-PERSIST1, given back at the save's own clock.
+  repairLostCurses(entity, { now: Math.floor(snap.classicMinutes ?? 0) });
   // T4: a load replaces the discovery store; a pre-T4 save carries no
   // field and restores an empty one (nothing was discoverable then).
   restoreDiscovery(snap.discovery);

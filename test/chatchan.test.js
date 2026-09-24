@@ -16,7 +16,7 @@ import {
 } from '../src/net/wire.js';
 import {
   ChatLog, CHAT_TABS, CHAT_SAY_RANGE, CHAT_PEEK, CHAT_REGION_HOLD_MS, isOocText, oocText, inEarshot, localLineHeard, nextRegionRoom,
-  regionJoinedText, CHAN_OLD_RELAY_TEXT,
+  regionJoinedText, CHAN_OLD_RELAY_TEXT, partyNoteTab,
 } from '../src/net/chat.js';
 import { parseChatLine, CHANNEL_COMMANDS, HOST_COMMANDS, HELP_LINES, unknownCommandText, emptyCommandText, hostMisuseText } from '../src/net/chatCommands.js';
 import { rosterRows, rosterTitle, partyRosterSource, localRosterSource } from '../src/net/roster.js';
@@ -252,16 +252,58 @@ test('CHAT-CHAN log: a line the game says goes on EVERY tab as ONE line - peeked
   assert.equal(oocText('  brb  '), '((brb))');
 });
 
-test('CHAT-CHAN log: the peek is every tab\'s, in the order the lines were heard, the last CHAT_PEEK of them - a party\'s "help" is the line that cannot wait on a badge (mutants: the peek the active tab alone; sorted by tab; the count per tab)', () => {
+test('CHAT-W log: the peek is the open tab\'s and the party\'s - a World line never stands over a player reading Region (Mac: "Messages sent in world chat shouldnt carry over to region chat"), a party\'s "help" still cannot wait on a badge while the Party tab is on the bar, the game\'s notice is every tab\'s, in the order heard, the last CHAT_PEEK of them (mutants: every tab peeked; the party dropped from the peek; a tab off the bar peeked)', () => {
   let clock = 10_000;
   const log = new ChatLog({ now: () => clock });
+  const texts = () => log.peek().map((p) => p.line.text);
   log.push('world', { id: 'a', name: 'A', text: 'w1' });
   log.push('party', { id: 'b', name: 'B', text: 'help!' });
   log.push('local', { id: 'c', name: 'C', text: 'l1' });
+  log.push('region', { id: 'd', name: 'D', text: 'r1' });
   log.push('world', { id: 'a', name: 'A', text: 'w2' });
-  assert.deepEqual(log.peek().map((p) => p.line.text), ['w1', 'help!', 'l1', 'w2']);
-  for (let i = 0; i < CHAT_PEEK; i++) log.push('region', { id: 'd', name: 'D', text: `r${i}` });
-  assert.deepEqual(log.peek().map((p) => p.line.text), Array.from({ length: CHAT_PEEK }, (_, i) => `r${i}`), 'the newest CHAT_PEEK across every tab');
+  assert.deepEqual(texts(), ['w1', 'w2'], 'the World tab\'s own - the Party tab is off the bar outside a party (CHAT-P)');
+  log.setShown('party', true);
+  assert.deepEqual(texts(), ['w1', 'help!', 'w2'], 'a party\'s line is said to the player, whatever tab they read');
+  log.select('region');
+  assert.deepEqual(texts(), ['help!', 'r1'], 'reading Region: no World line and no Local line stands over the world');
+  log.pushAll({ text: 'The server is restarting.' });
+  assert.deepEqual(texts(), ['help!', 'r1', 'The server is restarting.'], 'the game\'s notice is every tab\'s');
+  for (let i = 0; i < CHAT_PEEK; i++) log.push('region', { id: 'd', name: 'D', text: `r${i + 2}` });
+  assert.deepEqual(texts(), Array.from({ length: CHAT_PEEK }, (_, i) => `r${i + 2}`), 'the newest CHAT_PEEK of what it draws');
+});
+
+test('CHAT-P log: the Party tab starts off the bar, is put on and taken off by the host, cannot be selected while off, counts no unread while off, and taking it off the front hands the front to the first tab on the bar - read at once when the chat is open (mutants: the Party tab shown from the start; select into a hidden tab; the front left on a hidden tab; the hidden count on the badge)', () => {
+  const log = new ChatLog({ now: () => 1 });
+  assert.deepEqual(log.tabs.map((t) => [t.id, t.shown]), [['world', true], ['region', true], ['party', false], ['local', true]]);
+  assert.equal(log.select('party'), false, 'off the bar: not to the front');
+  log.push('party', { id: 'b', name: 'B', text: 'early' });
+  assert.equal(log.unreadTotal(), 0, 'a count on a tab nobody can see is on no badge');
+  const v = log.version;
+  assert.equal(log.setShown('party', true), true);
+  assert.ok(log.version > v, 'the panel repaints the bar');
+  assert.equal(log.setShown('party', true), false, 'the same answer again changes nothing');
+  assert.equal(log.unreadTotal(), 1);
+  assert.equal(log.select('party'), true);
+  log.setOpen(true);
+  log.push('world', { id: 'a', name: 'A', text: 'meanwhile' });
+  assert.equal(log.setShown('party', false), true);
+  assert.equal(log.active, 'world', 'the front goes to the first tab on the bar');
+  assert.equal(log.tab('world').unread, 0, 'and the open chat reads it');
+  assert.equal(log.tab('party').unread, 0);
+  assert.equal(log.tab('party').messages.length, 1, 'the history stays');
+});
+
+test('CHAT-P notes: a party\'s news lands on the Party tab only while the player sits in one; outside a party, and the note that ends their own seat, land on the tab the host names (mutants: every party note on the Party tab; the removal on the Party tab; a friend note on the Party tab)', () => {
+  const inParty = { party: { id: 'p1' }, acct: 'me' };
+  const alone = { party: null, acct: 'me' };
+  assert.equal(partyNoteTab({ code: 'party.joined', acct: 'b' }, inParty, 'world'), 'party');
+  assert.equal(partyNoteTab({ code: 'party.kicked', acct: 'b' }, inParty, 'world'), 'party', 'another member removed: the party\'s news');
+  assert.equal(partyNoteTab({ code: 'party.kicked', acct: 'me' }, inParty, 'world'), 'world', 'my own removal: wherever I read, whatever order the frames came in');
+  assert.equal(partyNoteTab({ code: 'party.declined', acct: 'b' }, alone, 'world'), 'world', 'no party: no Party tab to land on');
+  assert.equal(partyNoteTab({ code: 'friend.added', acct: 'b' }, inParty, 'world'), 'world');
+  const w = rd('src/scenes/world.js');
+  assert.match(w, /social\.onNote = \(note, text\) => \{ if \(text\) chatLog\.push\(partyNoteTab\(note, social, tab\.id\), \{ text, system: true \}\); \};/);
+  assert.match(w, /const chatFrame = \(\) => \{\s*if \(!chatLinks\) return;\s*buildPoll\(performance\.now\(\)\);\s*chatLog\.setShown\('party', !!social\?\.party\);/, 'the bar follows the party every frame');
 });
 
 test('CHAT-CHAN log: setRoom moves a tab\'s channel and names its PLACE, keeping the short label and the history; the same room again changes nothing (mutants: the label overwritten by the place; the history cleared; the version bumped on a no-op)', () => {
@@ -413,6 +455,10 @@ test('CHAT-CHAN panel: each tab says who it reaches (and the region\'s name), th
   assert.equal(tabs[1].title, `Wayrest - ${CHAT_TABS[1].hint}`);
   assert.equal(input.placeholder, 'Say something - Wayrest', 'the place a moving channel is');
   log.select('world');
+  assert.equal(tabs[2].style.display, 'none', 'CHAT-P: the Party tab is off the bar outside a party');
+  log.setShown('party', true);
+  panel.render({});
+  assert.equal(tabs[2].style.display, '', 'and on it inside one');
 
   log.push('world', { id: 'a', name: 'A', text: 'on the World' });
   log.push('party', { id: 'b', name: 'B', text: 'to the party' });
@@ -423,10 +469,15 @@ test('CHAT-CHAN panel: each tab says who it reaches (and the region\'s name), th
   assert.deepEqual(tabs.map((b) => b.attrs['aria-label']), ['World, 2 unread', 'Region', 'Party, 1 unread', 'Local, 1 unread'], 'the World line and the game\'s notice (unread on the active tab), a line each on Party and Local');
   assert.ok(tabs.every((b) => one(b, 'dfchat-badge').attrs['aria-hidden'] === 'true'), 'the dot says nothing a second time');
   const peek = one(root, 'dfchat-peek').children;
-  assert.deepEqual(peek.map((n) => one(n, 'dfchat-chan')?.textContent ?? null), [null, 'Party', 'Local', null], 'the open tab\'s own line and the game\'s wear no mark');
-  assert.deepEqual(peek.map((n) => one(n, 'dfchat-chan')?.dataset.tab ?? null), [null, 'party', 'local', null]);
-  assert.ok(String(peek[2].className).split(/\s+/).includes('ooc'), 'the aside drawn as one');
+  // CHAT-W: the open tab's line, the party's, the game's - the Local aside is Local's alone (it waits on its dot)
+  assert.deepEqual(peek.map((n) => one(n, 'dfchat-chan')?.textContent ?? null), [null, 'Party', null], 'the open tab\'s own line and the game\'s wear no mark');
+  assert.deepEqual(peek.map((n) => one(n, 'dfchat-chan')?.dataset.tab ?? null), [null, 'party', null]);
   assert.ok(!String(peek[1].className).split(/\s+/).includes('ooc'));
+  log.select('local');
+  panel.render({});
+  const aside = one(root, 'dfchat-peek').children[1];   // on Local: the party's line, the aside, the game's notice
+  assert.ok(String(aside.className).split(/\s+/).includes('ooc'), 'the aside drawn as one');
+  log.select('world');
 
   panel.open();
   input.value = '/help';
@@ -466,6 +517,6 @@ test('CHAT-CHAN host: the commands are tested in their order - the host\'s own f
   assert.match(w, /const room = nextRegionRoom\(_regionHold, chatRegionRoom\(index\), chatLog\.tab\('region'\)\.room, now\);/);
   assert.match(w, /chatLog\.setRoom\('region', room, place\);\s*link\.join\(room\);\s*chatLog\.push\('region', \{ text: regionJoinedText\(place\), system: true \}\);/);
   assert.match(w, /const index = _questRegionIndex\(\);/, 'PlayerGPS.CurrentRegionIndex - the politic map\'s word, the quests\' own');
-  assert.match(w, /social\.onNote = \(note, text\) => \{ if \(text\) chatLog\.push\(String\(note\?\.code \?\? ''\)\.startsWith\('party\.'\) \? 'party' : tab\.id, \{ text, system: true \}\); \};/);
+  assert.match(w, /social\.onNote = \(note, text\) => \{ if \(text\) chatLog\.push\(partyNoteTab\(note, social, tab\.id\), \{ text, system: true \}\); \};/);   // CHAT-P: net/chat.js partyNoteTab - the Party tab while a party is
   assert.match(w, /if \(\(tabId === 'party' \|\| tabId === 'region'\) && chanOld\(\)\) return CHAN_OLD_RELAY_TEXT;\s*if \(tabId === 'party' && !social\?\.party\) return NO_PARTY_TEXT;/, 'the strip says why a tab cannot talk');
 });

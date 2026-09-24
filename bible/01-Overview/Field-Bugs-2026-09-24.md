@@ -69,8 +69,15 @@ shift.
   entry whole, and the flag gives that save its curse back. A save written
   after that load holds no entry to mend: the old build had already dropped
   it, and every later save (the exit autosave's overwrite of every slot
-  among them) was written without it. Those saves come back mortal, and the
-  audit clears what the dropped curse left behind (AUDIT DISC19, S1).
+  among them) was written without it.
+- **At the merge:** main landed the same fix the same day as CURSE-PERSIST1
+  (the contributor's, ported), and the merge keeps main's lines. Main's
+  CURSE-REPAIR1 (`systems/curseRepair.js`) also answers the saves above: a
+  curse spell left in the book with no curse behind it gives the curse
+  back, the vampire's clan read off its spells, without replaying its
+  onset. That is what the reporters lost, so the audit's own answer (S1,
+  which loaded those saves as mortals and cleared the residue) is
+  withdrawn.
 
 This is a 1:1 correction; no departure.
 
@@ -430,9 +437,12 @@ confirmed finding was reproduced in node, fixed at its root and pinned in
 - **S1, HIGH: the repair missed the saves the bug had already rewritten.**
   Those carry no curse but kept its residue: Silver as the lowest metal
   that hurts the player (a mortal immune to iron and steel), and the
-  curse's spells, which cannot be deleted and refuse to cast. A save with
-  no live curse and none pending loads without both, the cure's own two
-  lines. The overclaims ("gives the player the curse back") are corrected.
+  curse's spells, which cannot be deleted and refuse to cast. The audit
+  loaded them as mortals and cleared both; at the merge, main's
+  CURSE-REPAIR1 gives them their curse back from those spells instead,
+  which is what the reporters lost, and the audit's strip is withdrawn
+  with its two pins. The overclaims ("gives the player the curse back")
+  were corrected.
 - **S2: an exit autosave under the vampire's death video stranded the
   infection** for ever once DISC19-A kept it across loads: the close never
   comes in the loaded game. A live, undeployed infection restores

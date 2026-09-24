@@ -10,7 +10,9 @@
 //   W5 the attack grunt rolled once per pool, up to three for one swing; the cross-pool sparing ignored the
 //      MeleeAttackFriendlyProtection setting; a summon still loading read as no defenders and summoned twice.
 //   W6 the host's frame is townWatch.js's runTownWatchFrame now, run here, not read.
-//   S1 a save the curse bug had already rewritten kept Silver-only hits and the curse's undeletable spells.
+//   S1 a save the curse bug had already rewritten kept Silver-only hits and the curse's spells - at the merge, main's
+//      CURSE-REPAIR1 gives that save its curse back (systems/curseRepair.js, test/curse_persist.test.js), which is what
+//      the reporters lost; the audit's strip is withdrawn with its two pins.
 //   S2 an exit autosave under the vampire's death video stranded the infection for ever.
 //   S3 the exit autosave named a namesake's slots and minted them for this character.
 //   S4 the online revival stood an exhausted corpse up at zero fatigue.
@@ -22,10 +24,7 @@ import './modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import {
-  createTownWatch, isTownThreat, runTownWatchFrame,
-  TOWN_WATCH_MAX_WAVES, TOWN_WATCH_STAND_DOWN_SECONDS, TOWN_WATCH_ARRIVAL_MIN_SECONDS,
-} from '../src/systems/townWatch.js';
+import { createTownWatch, isTownThreat, runTownWatchFrame, TOWN_WATCH_MAX_WAVES, TOWN_WATCH_STAND_DOWN_SECONDS, TOWN_WATCH_ARRIVAL_MIN_SECONDS } from '../src/systems/townWatch.js';
 import { createCityGuards } from '../src/scenes/cityGuards.js';
 import { createExteriorFoes } from '../src/scenes/exteriorFoes.js';
 import { PLAYER_TARGET } from '../src/characters/enemyTargets.js';
@@ -33,16 +32,13 @@ import { PlayerWeapon } from '../src/combat/playerWeapon.js';
 import { ArrowFlight } from '../src/combat/arrowFlight.js';
 import { createPlayerMagic } from '../src/scenes/hostMagic.js';
 import { setValue } from '../src/systems/settings.js';
-import { createLycanthropyCurse, liveLycanthropy, LYCANTHROPY_SPELL_TAG, VAMPIRE_SPELL_TAG } from '../src/systems/lycanthropy.js';
-import { createVampirismCurse } from '../src/systems/vampirism.js';
-import { LYCANTHROPY_TYPES, VAMPIRE_CLANS, INFECTION, startInfection, liveInfection } from '../src/systems/infection.js';
+import { INFECTION, startInfection, liveInfection } from '../src/systems/infection.js';
 import { runMagicRoundsFor, resetMagicRoundMarker, setWorldMinutes } from '../src/systems/worldTick.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 import { MINUTES_PER_DAY } from '../src/systems/gameDate.js';
 import { reviveForPlay, respawnHealth } from '../src/systems/deathRespawn.js';
 import { maxFatigue } from '../src/systems/statMods.js';
 import { saveSlot, exitAutosaveNames, QUICK_SAVE_NAME } from '../src/systems/saveSlots.js';
-import { WEAPON_MATERIALS } from '../src/characters/weapons.js';
 import { ActionSystem } from '../src/world/actionSystem.js';
 import { ACTION_FLAGS, TRIGGER_FLAGS } from '../src/world/rdbLayout.js';
 import { Collider } from '../src/player/collider.js';
@@ -481,42 +477,6 @@ const mortal = () => ({
   items: [], activeEffects: [], spells: [], health: 100, maxHealth: 100, crimeCommitted: 0, lastGameMinutes: T0,
 });
 const reload = (p) => { const q = { isPlayer: true }; restorePlayer(q, JSON.parse(JSON.stringify(snapshotPlayer(p, { classicMinutes: T0 })))); return q; };
-const FIREBALL = { name: 'My Fireball', custom: true, rangeType: 4, element: 0, effects: [] };
-
-test('AUDIT DISC19 S1: a save the curse bug had already rewritten - no curse, but Silver-only hits and the curse\'s spells - loads a plain mortal', () => {
-  const p = mortal();
-  p.minMetalToHit = WEAPON_MATERIALS.Silver;
-  p.spells = [{ name: 'Lycanthropy', tag: LYCANTHROPY_SPELL_TAG, custom: true }, { name: 'Vampire Charm', tag: VAMPIRE_SPELL_TAG, custom: true }, FIREBALL];
-  const q = reload(p);
-  assert.equal(q.minMetalToHit, undefined, 'iron and steel hurt them again');
-  assert.deepEqual(q.spells.map((s) => s.name), ['My Fireball'], 'the curse\'s spells gone, the player\'s own kept');
-});
-
-test('AUDIT DISC19 S1: a living curse, or one pending its deploy, keeps both', () => {
-  setWorldMinutes(T0); resetMagicRoundMarker(null);
-  const wolf = mortal();
-  createLycanthropyCurse(wolf, LYCANTHROPY_TYPES.Werewolf, { now: T0 });
-  wolf.minMetalToHit = WEAPON_MATERIALS.Silver;   // transformed
-  wolf.spells.push(FIREBALL);
-  const tagged = wolf.spells.filter((s) => s.tag === LYCANTHROPY_SPELL_TAG).length;
-  const w = reload(wolf);
-  assert.ok(liveLycanthropy(w));
-  assert.equal(w.minMetalToHit, WEAPON_MATERIALS.Silver);
-  assert.equal(w.spells.filter((s) => s.tag === LYCANTHROPY_SPELL_TAG).length, tagged);
-  const vamp = mortal();
-  createVampirismCurse(vamp, VAMPIRE_CLANS.Lyrezi, { now: T0 });
-  runMagicRoundsFor(vamp, T0, T0 + 1, {});   // the round puts the silver on
-  assert.equal(vamp.minMetalToHit, WEAPON_MATERIALS.Silver);
-  assert.equal(reload(vamp).minMetalToHit, WEAPON_MATERIALS.Silver, 'a vampire is still hurt by silver alone');
-  const pending = mortal();
-  pending.racialOverridePending = { infectionType: LYCANTHROPY_TYPES.Werewolf };
-  pending.minMetalToHit = WEAPON_MATERIALS.Iron;
-  pending.spells = [{ name: 'Lycanthropy', tag: LYCANTHROPY_SPELL_TAG, custom: true }];
-  const pq = reload(pending);
-  assert.equal(pq.minMetalToHit, WEAPON_MATERIALS.Iron);
-  assert.equal(pq.spells.length, 1, 'the curse is on its way: nothing is cleared');
-  resetMagicRoundMarker(null);
-});
 
 test('AUDIT DISC19 S2: a save taken under the vampire\'s death video brings the video back - the close it waited for never comes in the loaded game', () => {
   const p = mortal();

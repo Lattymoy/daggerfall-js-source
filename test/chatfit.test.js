@@ -62,13 +62,13 @@ test('CHAT-FIT: the sheet - the column is absolute inside a relative column of f
   const list = rule('.dfchat-wholist'); assert.equal(list['overflow-y'], 'auto'); assert.equal(list['min-height'], '0');
   const line = rule('.dfchat-who-line'); assert.equal(line.display, 'flex'); assert.equal(line['white-space'], 'nowrap'); assert.equal(line['min-width'], '0');
   const name = rule('.dfchat-who-name'); assert.equal(name['text-overflow'], 'ellipsis'); assert.equal(name.overflow, 'hidden'); assert.equal(name['min-width'], '0'); assert.equal(name.flex, '0 1 auto');
-  assert.equal(rule('.dfchat-who-title, .dfchat-who-glyph, .dfchat-who-tag').flex, 'none', 'the title, the glyphs and the tag never give');
+  assert.equal(rule('.dfchat-who-glyph, .dfchat-who-tag').flex, 'none', 'the glyphs and the tag never give (TITLE-R: the roster wears no title)');
   const row = rule('.dfchat-who-row'); assert.equal(row['overflow-wrap'], undefined, 'no more folding a name under its title'); assert.equal(row.display, undefined, 'the row is a block, so the menu opens under the line');
   assert.equal(rule('.dfchat-line-glyph').width, rule('.dfchat-who-glyph').width, 'a line glyph is the roster glyph\'s size');
   assert.equal(rule('.dfchat-line-title')['text-transform'], 'uppercase');
 });
 
-test('CHAT-FIT: the roster column\'s DOM - head, list and more sit in the absolute inner; a row is a block holding ONE line of title, name (its full text in the title attribute), glyphs and tag; the action menu opens under the line', () => {
+test('CHAT-FIT / TITLE-R: the roster column\'s DOM - head, list and more sit in the absolute inner; a row is a block holding ONE line of name (its full text in the title attribute), glyphs and tag - no title (Mac: "Titles shouldnt show in the online panel. Only glyphs"); the action menu opens under the line', () => {
   const session = { id: 'me', name: 'Me', title: null, glyphs: [], peers: new Map([
     ['p1', { id: 'p1', name: 'Palidriel Oakthorn', title: 'founder', glyphs: ['sprout'] }],
     ['p2', { id: 'p2', name: 'Me', title: null, glyphs: [] }],
@@ -83,8 +83,8 @@ test('CHAT-FIT: the roster column\'s DOM - head, list and more sit in the absolu
   const long = rows.find((r) => one(r, 'dfchat-who-name')?.textContent === 'Palidriel Oakthorn');
   assert.ok(long, 'the long name has a row');
   assert.equal(shape(long), 'dfchat-who-line', 'the row is a block with one line in it');
-  assert.equal(shape(long.children[0]), 'dfchat-who-title dfchat-who-name dfchat-who-glyph', 'title, name, glyph in the line');
-  assert.equal(one(long, 'dfchat-who-title').textContent, TITLE_TEXT.founder);
+  assert.equal(shape(long.children[0]), 'dfchat-who-name dfchat-who-glyph', 'name, glyph in the line - the Founder wears no title here');
+  assert.equal(one(long, 'dfchat-who-title'), undefined, 'TITLE-R: no title on the roster');
   assert.equal(one(long, 'dfchat-who-name').title, 'Palidriel Oakthorn', 'the whole name is a hover away');
   const dup = rows.filter((r) => one(r, 'dfchat-who-name')?.textContent === 'Me');
   assert.equal(dup.length, 2); for (const r of dup) assert.ok(one(r, 'dfchat-who-tag'), 'a shared name carries its tag in the line');

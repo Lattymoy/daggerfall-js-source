@@ -308,7 +308,7 @@ import { enhancedHudScale } from '../ui/enhancedHud.js';   // AUDIT NAME1 F3: th
 import { makeHitPend } from '../net/hitPend.js';   // AUDIT FOES FOE2: a blow the wire refused waits and goes
 import { PeerBodies } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body
 import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs and their lines
-import { oocText, localLineHeard, nextRegionRoom, regionJoinedText, CHAN_OLD_RELAY_TEXT, ROLL_OLD_RELAY_TEXT, EMOTE_OLD_RELAY_TEXT } from '../net/chat.js';   // CHAT-CHAN: the channels' own laws (a second chat import: CHAT1's pin holds the first as it stands)
+import { oocText, localLineHeard, nextRegionRoom, regionJoinedText, CHAN_OLD_RELAY_TEXT, ROLL_OLD_RELAY_TEXT, EMOTE_OLD_RELAY_TEXT, partyNoteTab } from '../net/chat.js';   // CHAT-CHAN: the channels' own laws (a second chat import: CHAT1's pin holds the first as it stands)
 import { parseChatLine, HELP_LINES, CHAT_GREETING_TEXT, unknownCommandText, emptyCommandText, hostMisuseText, badRollText, expandShortcodes, EMOTE_LINES } from '../net/chatCommands.js';   // CHAT-CHAN: what a typed line IS; DICE1: and a roll; EMOTE1: an action, a gesture, a shortcode
 import { partyRosterSource, localRosterSource } from '../net/roster.js';   // CHAT-CHAN: the Party and Local tabs' composed lists
 import { SocialState, accountId, accountSecret } from '../net/social.js';   // SOC2: the friends and the party, as the hub says them; the account the hub's hello carries; SOC3: and the two colours a name wears in the DOM - my party's green, a friend's blue
@@ -1483,12 +1483,12 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  AUDIT-FIELD F7: A FLOOR, NOT THE WHOLE DISTANCE. The first cut
    *  called 64 "more than the fastest accelerated step", which is true
    *  of a fixed physics STEP and false of a FRAME: the motor moves
-   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:1023),
+   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:1038),
    *  and the frame that hitches is exactly the frame in which the
    *  streamer is behind. A horse at the shipped default limit of sixty
    *  covers ~65 units in a 10 fps frame and ~120 at the mod's ceiling of
    *  a hundred - past a 64-unit probe, off the built world, and once the
-   *  motor is airborne `airControl` is false (motor.js:1564) so zeroing
+   *  motor is airborne `airControl` is false (motor.js:1579) so zeroing
    *  the drive on the NEXT frame no longer steers: the fall is already
    *  paid for. `travelLookahead` measures the frame that is about to
    *  run instead, and keeps 64 as its floor. */
@@ -10079,6 +10079,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // below is: CHAT1's pin holds those five lines as they stand, and
       // the hello is built when the socket opens, a turn later.
       link.mintToken = identityMinter;
+      link.onDm = (line) => chatLog.pushAll({ text: line.text, at: line.at, dm: true });   // TITLE-N: the Dungeon Master's line, on every tab as /red's is
       // SOC2: the HUB tab's link carries the account (net/social.js accountId - the profile's, not the tab's); the
       // presence session never does, and a later channel tab would not either: the hub is the one room that checks
       // it. Set after the join, which is safe because a socket opens on a later turn and the hello is built when it
@@ -10110,6 +10111,12 @@ export async function bootWorld(canvas, renderer, params, status) {
           });
           return true;
         }
+        // TITLE-N (Mac: "Dungeon Master ... allows the user to use the /dm to message chat with orange text (similar to
+        // /red)"): /red's law below, one frame over - parsed here and never guarded: whether this player may is the
+        // RELAY's question, asked of their signed token, and it ignores anyone else in silence. From any tab, on the
+        // World channel, the one room every player online is in.
+        const dm = /^\/dm\s+([\s\S]+)$/i.exec(text.trim());
+        if (dm) return chatLinks.get('world')?.sendDm(dm[1]) ?? false;
         // RED1 (Mac: "a red text system (kind of like warframe) where I
         // can message chat as the server"). THE COMMAND IS ALWAYS
         // PARSED AND NEVER GUARDED HERE: whether this player may speak
@@ -10267,7 +10274,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const why = SHARE_REFUSAL_TEXT[result.reason];
       setMidScreenText(why ? `${who} tried to share "${label}", but you ${why}` : `Could not receive the quest "${label}" from ${who}.`);
     };
-    social.onNote = (note, text) => { if (text) chatLog.push(String(note?.code ?? '').startsWith('party.') ? 'party' : tab.id, { text, system: true }); };   // CHAT-CHAN: a party's own news on the Party tab, beside its conversation
+    social.onNote = (note, text) => { if (text) chatLog.push(partyNoteTab(note, social, tab.id), { text, system: true }); };   // CHAT-CHAN: a party's own news on the Party tab, beside its conversation
     social.onError = (text) => { chatLog.push(tab.id, { text: `Social: ${text}`, system: true }); };
     // SOC3: the social button and the friends + party panel are made here, over `social`, `link` and `chatPanel`
     // (Mac: "A social button next to the chat UI, that when tapped opens the new friends list + party interface").
@@ -11393,6 +11400,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const chatFrame = () => {
     if (!chatLinks) return;
     buildPoll(performance.now());
+    chatLog.setShown('party', !!social?.party);   // CHAT-P (Mac: "Party chat should only show if in a party"): the tab is on the bar while a party is
     chatRegionFrame(performance.now());   // CHAT-CHAN: before the rejoin - a region crossed moves the link, a rejoin takes it back to where it is
     for (const [tabId, link] of chatLinks) {
       const room = chatLog.tab(tabId).room;   // CHAT-CHAN: a tab whose channel is not known yet (the Region tab, before its first region) has nothing to rejoin
@@ -13504,19 +13512,30 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
               // U8e: a pile under the ray opens the inventory WITH the
               // pile as the remote target (Remove defaults - the OnPush law)
               const pile = droppedLoot.pileFor(dropKey);
-              const _hooks = droppedLootHooks(pile);
-              // QUICK-LOOT B4: the same door, on the player's own pile -
-              // the hooks this arm was already building for the window.
-              if (quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) return;   // AUDIT QL-WEIGHT1
-              const w = makeInventoryWindow({
-                // U53: THE HOST'S OWN FACTORY, not a twelfth copy of it.
-                // This arm hand-rolled the window with the SAME eleven hooks
-                // makeInventoryWindow already passes, plus the two below -
-                // which is precisely what its `extra` parameter is for.
-                onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
-                loot: _hooks,   // G5: DaggerfallLoot's own identity
-              });
-              if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
+              // LOOT-GONE1 (2026-09-24, the contributor's report): pileFor answers null for a pile that went between the
+              // hover and the press (a peer took it, a rebuild emptied it), and droppedLootHooks(null) threw inside this
+              // frame - an uncaught throw in a rAF callback ends the loop as surely as a return. A pile that is gone
+              // opens nothing: worldModes' own twin's shape (its `if (pile)`).
+              // QL-FRAME1 (the soft-lock report): the quick-loot take below ended in `return`, and this arm runs INSIDE
+              // frame() - the return left before requestAnimationFrame(frame) at its foot, so a take or its refusal ("You
+              // cannot carry any more stuff.") stopped the game loop: no look, no walk, no foes. A handled press opens no
+              // window and the frame runs on (worldModes' own negated take). test/ql_frame.test.js holds every return.
+              if (pile) {
+                const _hooks = droppedLootHooks(pile);
+                // QUICK-LOOT B4: the same door, on the player's own pile -
+                // the hooks this arm was already building for the window.
+                if (!quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) {   // AUDIT QL-WEIGHT1
+                  const w = makeInventoryWindow({
+                    // U53: THE HOST'S OWN FACTORY, not a twelfth copy of it.
+                    // This arm hand-rolled the window with the SAME eleven hooks
+                    // makeInventoryWindow already passes, plus the two below -
+                    // which is precisely what its `extra` parameter is for.
+                    onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
+                    loot: _hooks,   // G5: DaggerfallLoot's own identity
+                  });
+                  if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
+                }
+              }
             }
             else modes.tryEnter().then((opened) => {
               // GRAVE1: an activation that hit NOTHING - no door either -
@@ -13897,7 +13916,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     meterFor(renderer.gl)?.markCpu('bodies');   // PERF-ZONE2: the Morrowind bodies - the player's, every peer's - the wagon and the camps, which the renderer's own 'world' mark used to swallow
     // MW-D24: the player's own body, in third person only.
     renderer.setCloudShadow(sky?.cloudShadow ?? null);   // VC4: the frame's deck, for the body and everything before the pixel loop
-    mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.feetAt(), yaw: cam.yaw });
+    mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: cam.yaw });   // DISC18: the body at the capsule's own feet, not the camera's smoothed ones
     drawPeerBodies(proj, view, mwv.eye);   // MWBODY1: the others' bodies, the same pass
     mwViewDrawWagon(renderer);   // EOTB-IL: the cart, when the transport is the cart
     camps.draw(renderer);   // SURV3: the tents, the cart's own pass

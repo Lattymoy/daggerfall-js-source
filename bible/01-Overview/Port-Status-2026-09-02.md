@@ -217,7 +217,7 @@ destination** (`systems/guildServiceFlow.js`, gated by
 The superseded page's two magic gaps are closed and verified here:
 `minimumCastingCost` is live at `systems/spellcost.js:182` and is
 written by both curses (`systems/vampirism.js:165`,
-`systems/lycanthropy.js:207`), so vampire clan spells price at the
+`systems/lycanthropy.js:204`), so vampire clan spells price at the
 floor; and the 24-effect enchantment catalogue reads
 `ENCHANTMENT_COSTS` **24** with `ITEM_MAKER_EFFECT_FLAGS` 24 beside it.
 

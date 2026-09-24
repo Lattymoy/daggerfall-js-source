@@ -34,8 +34,6 @@ import {
 } from '../src/systems/loot.js';
 import { calculateAttackDamage, MATERIAL_INEFFECTIVE_TEXT } from '../src/combat/formulas.js';
 import { WEAPON_MATERIALS } from '../src/characters/weapons.js';
-import { createLycanthropyCurse } from '../src/systems/lycanthropy.js';   // AUDIT DISC19: the fixture's werewolf is a real one
-import { LYCANTHROPY_TYPES } from '../src/systems/infection.js';
 import { itemInfoTextId, INFO_TEXT } from '../src/systems/itemInfo.js';
 import { isBook } from '../src/systems/useItem.js';
 import { itemIsIdentified } from '../src/systems/tradeModes.js';
@@ -81,12 +79,7 @@ test('a4 envelope: minMetalToHit survives a load, so a loaded werewolf still nee
   // TARGET (FormulaHelper.cs:576-583). Between them the port had no
   // envelope, so the first swing after a load - before the curse's
   // next constant round re-armed it - landed with plain steel.
-  // AUDIT DISC19: a werewolf is the CURSE ENTRY - a floor with no curse
-  // behind it is what a dropped curse left, and a load clears it (save.js,
-  // the residue repair) - so the fixture carries a real one.
-  const werewolf = makeEntity();
-  createLycanthropyCurse(werewolf, LYCANTHROPY_TYPES.Werewolf, { now: 0 });
-  werewolf.minMetalToHit = WEAPON_MATERIALS.Silver;   // transformed
+  const werewolf = makeEntity({ minMetalToHit: WEAPON_MATERIALS.Silver });
   const snap = snapshotPlayer(werewolf, {});
   assert.equal(snap.minMetalToHit, WEAPON_MATERIALS.Silver, 'it rides out');
 

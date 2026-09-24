@@ -155,7 +155,7 @@ import { claimCursorKey } from '../player/pointerLock.js';   // KB1: while the p
 import { isTouchDevice } from './touch.js';
 import { CHAT_MAX } from '../net/wire.js';
 import { tagOf } from '../net/chat.js';
-import { titleBadge, glyphBadges, glyphSvgNode, cssRgba } from './playerBadge.js';   // ACC3c: the same table the name over a head reads - a name wears one title everywhere it is drawn; cssRgba comes from HERE and not ui/nameLayer.js, which would pull the whole remote-player pass into this panel
+import { titleBadge, glyphBadges, glyphSvgNode, cssRgba, TITLE_RGBA } from './playerBadge.js';   // ACC3c: the same table the name over a head reads - a name wears one title everywhere it is drawn; cssRgba comes from HERE and not ui/nameLayer.js, which would pull the whole remote-player pass into this panel
 import { rosterRows, rosterTitle } from '../net/roster.js';   // CHAT-R1: who is online, in order (the cap is the model's own - AUDIT-CHATR F4: this file imported it and never used it, and lint could not see that: no-unused-vars is on for server/src and not for src)
 import { PARTY_GREEN_CSS } from '../net/social.js';   // CHAT-CHAN: the Party tab's mark wears the party's one green
 import { SHORTCODE_LIST } from '../net/chatCommands.js';   // EMOTE1: the picker offers the shortcodes' own emoji, in their order, so a pick and a :code: say the same thing
@@ -259,6 +259,10 @@ ${PIXELIFY_FIVE_FACE}
    colour, the one a refusal already wears. */
 .dfchat-line.red .dfchat-text { color: #e2453a; font-style: normal; font-weight: 600;
   letter-spacing: .01em; }
+/* TITLE-N (Mac: "/dm to message chat with orange text (similar to /red)"): the Dungeon Master's line - /red's weight,
+   in the Dungeon Master title's own orange (ui/playerBadge.js TITLE_RGBA.dungeonmaster). */
+.dfchat-line.dm .dfchat-text { color: ${cssRgba(TITLE_RGBA.dungeonmaster)}; font-style: normal; font-weight: 600;
+  letter-spacing: .01em; }
 .dfchat-time { color: var(--dim, #8b8578); font-size: calc(10px * var(--dfchat-scale, 1)); margin-right: 6px; }
 .dfchat-hint { margin-top: 4px; font-size: calc(11px * var(--dfchat-scale, 1)); color: var(--dim, #8b8578); opacity: .75; text-shadow: ${PIXEL_TEXT_SHADOW}; }
 .dfchat-status { margin-top: 4px; font-size: calc(11px * var(--dfchat-scale, 1)); color: #e0b070; text-shadow: ${PIXEL_TEXT_SHADOW}; }
@@ -345,14 +349,9 @@ ${PIXELIFY_FIVE_FACE}
 .dfchat-who-line { display: flex; align-items: baseline; white-space: nowrap; min-width: 0; }
 .dfchat-who-row.me .dfchat-who-name { color: #dcc27c; }
 .dfchat-who-name { font-weight: 600; flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.dfchat-who-title, .dfchat-who-glyph, .dfchat-who-tag { flex: none; }
+.dfchat-who-glyph, .dfchat-who-tag { flex: none; }
 .dfchat-who-tag { color: var(--dim, #8b8578); font-size: calc(10px * var(--dfchat-scale, 1)); margin-left: 4px; }
-/* ACC3c: the title BEFORE the name and the glyphs AFTER it, which is
-   the world label read left to right. A roster column is narrow, so
-   the title is small and may not push the name off the row - it
-   shrinks first, and the name is what has to survive. */
-.dfchat-who-title { font-size: calc(10px * var(--dfchat-scale, 1)); letter-spacing: .05em; margin-right: 4px;
-  text-transform: uppercase; }
+/* ACC3c: the glyphs AFTER the name, the world label read left to right (TITLE-R: the roster wears no title). */
 .dfchat-who-glyph { width: calc(11px * var(--dfchat-scale, 1)); height: calc(11px * var(--dfchat-scale, 1)); display: inline-block; vertical-align: -1px;
   margin-left: 3px; }
 /* CHAT-FIT: the same badge on a chat LINE - the title before the name
@@ -705,7 +704,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     return c;
   };
   const lineNode = (line, withTime, withChan = false) => {
-    const n = el('div', `dfchat-line${line.mine ? ' mine' : ''}${line.system ? ' system' : ''}${line.red ? ' red' : ''}${line.kind === 'ooc' ? ' ooc' : ''}${line.kind === 'roll' ? ' roll' : ''}${line.kind === 'me' ? ' me' : ''}`);
+    const n = el('div', `dfchat-line${line.mine ? ' mine' : ''}${line.system ? ' system' : ''}${line.red ? ' red' : ''}${line.dm ? ' dm' : ''}${line.kind === 'ooc' ? ' ooc' : ''}${line.kind === 'roll' ? ' roll' : ''}${line.kind === 'me' ? ' me' : ''}`);
     const chan = withChan ? chanOf(line) : null;
     if (chan) n.append(chan);
     const time = withTime ? el('span', 'dfchat-time', clockOf(line.at)) : null;
@@ -867,11 +866,12 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     // SOC3: the open menu is part of what is DRAWN, so it joins the key - a roster that did not change still has to
     // repaint when a row is opened or closed, and nothing else about this law moved.
     // ACC3c: THE BADGE JOINS THE KEY. This list repaints only when the
-    // key moves, so a title equipped or a sprout that aged out would
-    // otherwise sit on screen, stale, until somebody else joined the
-    // room - the same reason SOC3 put the open menu in here.
+    // key moves, so a sprout that aged out would otherwise sit on
+    // screen, stale, until somebody else joined the room - the same
+    // reason SOC3 put the open menu in here. TITLE-R: the glyphs alone,
+    // as the row draws them.
     // CHAT-CHAN: and the list's own word - a tab change can bring the same people under another heading
-    const key = label + '|' + total + '|' + (menuFor ?? '') + '|' + rows.map((r) => r.id + ':' + r.name + ':' + (r.me ? 1 : 0) + ':' + (r.title ?? '') + ':' + (r.glyphs ?? []).join('+')).join(',');
+    const key = label + '|' + total + '|' + (menuFor ?? '') + '|' + rows.map((r) => r.id + ':' + r.name + ':' + (r.me ? 1 : 0) + ':' + (r.glyphs ?? []).join('+')).join(',');
     if (key === whoKey) return;
     whoKey = key;
     whoHead.textContent = rosterTitle(total, label);
@@ -890,15 +890,12 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
       const nameEl = el('span', 'dfchat-who-name', r.name);
       nameEl.title = r.name;   // CHAT-FIT: the row is one line and a long name is cut with an ellipsis; the whole of it is a hover away
       whoNames.push({ id: r.id, nameEl, css: null });
-      // CHAT-FIT: the row's ONE LINE - title, name, glyphs, tag in a nowrap flex line the name gives way in; the
-      // row itself stays a block so SOC3's menu opens under it.
+      // CHAT-FIT: the row's ONE LINE - name, glyphs, tag in a nowrap flex line the name gives way in; the row itself
+      // stays a block so SOC3's menu opens under it.
       const line = el('div', 'dfchat-who-line');
-      // ACC3c: THE TITLE GOES BEFORE THE NAME and the glyphs after it,
-      // which is the world label's own order read left to right - a
-      // roster is a narrow column and cannot stack, so the one thing
-      // that must not move is which side of the name each sits on.
-      const badge = titleBadge(r);
-      if (badge) line.append(titleSpan(badge, 'dfchat-who-title'));
+      // TITLE-R (2026-09-24, Mac: "Titles shouldnt show in the online panel. Only glyphs. Titles should remain over
+      // names and within chat itself"): the roster is a list of who is here - the glyphs AFTER the name are what is
+      // true of each; the title a player chose to wear is theirs to show over their head and beside their lines.
       line.append(nameEl);
       for (const g of glyphBadges(r)) {
         const svg = glyphSvg(g, 'dfchat-who-glyph');
@@ -926,6 +923,8 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     root.dataset.hidden = hidden ? '1' : '0';
     for (const tab of log.tabs) {
       const t = tabButtons.get(tab.id);
+      const display = tab.shown ? '' : 'none';   // CHAT-P: a tab off the bar (the Party tab outside a party) is not drawn
+      if (t.b.style.display !== display) t.b.style.display = display;
       t.b.className = `dfchat-tab${tab.id === log.active ? ' active' : ''}`;
       t.badge.textContent = tab.unread ? String(tab.unread) : '';
       // CHAT-CHAN: who a tab reaches, a hover away - and the place a moving channel is (the Region tab's region)

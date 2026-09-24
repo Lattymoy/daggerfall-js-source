@@ -69,15 +69,26 @@ export function cssRgba(rgba) {
 export const TITLE_TEXT = Object.freeze({
   founder: 'Founder',
   developer: 'Developer',
+  dungeonmaster: 'Dungeon Master',   // TITLE-N (2026-09-24, Mac)
+  disciple: 'Disciple',              // TITLE-N: the Patreon tiers, lowest first
+  apostle: 'Apostle',
+  hierophant: 'Hierophant',
 });
 
 /** A title's colour, RGBA 0..1 - the same shape SOC4's PARTY_GREEN is
  *  in, so `nameLayer.cssRgba` turns it into CSS and `drawText` takes it
  *  as a tint, and neither face writes a colour down a second time.
- *  Mac: Founder gold, Developer red. */
+ *  Mac: Founder gold, Developer red, Dungeon Master orange (TITLE-N). The
+ *  three Patreon tiers had no colour named: a colour each, none near
+ *  another title's, rising from teal to violet to rose - this table is
+ *  the one place to change them, and costs no relay. */
 export const TITLE_RGBA = Object.freeze({
   founder: Object.freeze([1, 0.784, 0.29, 1]),      // #ffc84a
   developer: Object.freeze([0.886, 0.271, 0.227, 1]), // #e2453a
+  dungeonmaster: Object.freeze([1, 0.549, 0.102, 1]), // #ff8c1a
+  disciple: Object.freeze([0.369, 0.784, 0.722, 1]),  // #5ec8b8
+  apostle: Object.freeze([0.616, 0.486, 0.941, 1]),   // #9d7cf0
+  hierophant: Object.freeze([0.910, 0.451, 0.749, 1]), // #e873bf
 });
 
 /** A glyph's colour. The sprout is green because Mac said green; the
@@ -89,6 +100,11 @@ export const GLYPH_RGBA = Object.freeze({
   sprout: Object.freeze([0.42, 0.82, 0.36, 1]),   // #6bd15c
   dev: TITLE_RGBA.developer,
   mod: Object.freeze([0.29, 0.565, 0.886, 1]),   // #4a90e2
+  // TITLE-N: each new glyph wears its own title's colour, read from it - the two halves of one grant cannot drift
+  dm: TITLE_RGBA.dungeonmaster,
+  disciple: TITLE_RGBA.disciple,
+  apostle: TITLE_RGBA.apostle,
+  hierophant: TITLE_RGBA.hierophant,
 });
 
 /** THE CLASSIC FACE'S STAND-IN: one character, and it must be one the
@@ -98,6 +114,10 @@ export const GLYPH_MARK = Object.freeze({
   sprout: '+',
   dev: '*',
   mod: '#',   // MOD1: the classic face has no shield; a hash reads as a badge at that size
+  dm: '&',            // TITLE-N: one character each, inside the font's range and none another glyph's
+  disciple: '~',
+  apostle: '^',
+  hierophant: '!',
 });
 
 /** The printable range the classic font covers. ACC1d-MARK's own bound,
@@ -117,12 +137,20 @@ export const GLYPH_PATH = Object.freeze({
   dev: 'M5.5 4L1.5 8l4 4M10.5 4l4 4-4 4',
   // MOD1: a moderator's shield - a flat top, straight sides, a point below
   mod: 'M8 1.5L2.5 3.5v4c0 3.5 2.4 6 5.5 7 3.1-1 5.5-3.5 5.5-7v-4z',
+  // TITLE-N: the Dungeon Master's twenty-sided die - the hexagon's outline, the face turned to the eye, its edges out
+  dm: 'M8 1.5l5.6 3.25v6.5L8 14.5l-5.6-3.25v-6.5zM8 4.5L4.5 10.5h7zM8 1.5v3M2.4 11.25l2.1-.75M13.6 11.25l-2.1-.75',
+  // the Disciple's candle flame
+  disciple: 'M8 1.5c1.6 2.6 3.5 4.1 3.5 6.8a3.5 3.5 0 0 1-7 0C4.5 5.6 6.4 4.1 8 1.5zM8 9.2c.7.9 1.2 1.6 1.2 2.4a1.2 1.2 0 0 1-2.4 0c0-.8.5-1.5 1.2-2.4z',
+  // the Apostle's open book
+  apostle: 'M8 4.5C6.5 3.5 4.5 3 1.5 3v9.5c3 0 5 .5 6.5 1.5 1.5-1 3.5-1.5 6.5-1.5V3c-3 0-5 .5-6.5 1.5zM8 4.5V14',
+  // the Hierophant's crown
+  hierophant: 'M2 13h12M2.5 13L1.8 5l3.6 3L8 2.5 10.6 8l3.6-3-.7 8',
 });
 
 /** Is this glyph DRAWN as an outline rather than filled? The sprout is
  *  a shape and the brackets are strokes; said here so the layer does
  *  not have to know which is which by name. */
-export const GLYPH_STROKE = Object.freeze({ sprout: true, dev: true, mod: true });
+export const GLYPH_STROKE = Object.freeze({ sprout: true, dev: true, mod: true, dm: true, disciple: true, apostle: true, hierophant: true });
 
 /**
  * The title a peer wears, ready to draw: `{ key, text, rgba }`, or

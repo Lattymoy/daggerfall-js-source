@@ -432,51 +432,6 @@
     ]
   },
   {
-    "name": "AUDIT-DISC19-S1-residue-kept",
-    "file": "src/systems/save.js",
-    "old": "  if (!entity.racialOverride && !entity.racialOverridePending) {\n    entity.minMetalToHit = undefined;",
-    "new": "  if (false) {\n    entity.minMetalToHit = undefined;",
-    "tests": [
-      "test/auditdisc19.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-DISC19-S1-silver-kept",
-    "file": "src/systems/save.js",
-    "old": "  if (!entity.racialOverride && !entity.racialOverridePending) {\n    entity.minMetalToHit = undefined;\n",
-    "new": "  if (!entity.racialOverride && !entity.racialOverridePending) {\n",
-    "tests": [
-      "test/auditdisc19.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-DISC19-S1-vampire-spells-kept",
-    "file": "src/systems/save.js",
-    "old": "s?.tag !== LYCANTHROPY_SPELL_TAG && s?.tag !== VAMPIRE_SPELL_TAG",
-    "new": "s?.tag !== LYCANTHROPY_SPELL_TAG",
-    "tests": [
-      "test/auditdisc19.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-DISC19-S1-pending-curse-cleared",
-    "file": "src/systems/save.js",
-    "old": "  if (!entity.racialOverride && !entity.racialOverridePending) {",
-    "new": "  if (!entity.racialOverride) {",
-    "tests": [
-      "test/auditdisc19.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-DISC19-S1-live-curse-cleared",
-    "file": "src/systems/save.js",
-    "old": "  if (!entity.racialOverride && !entity.racialOverridePending) {",
-    "new": "  if (!entity.racialOverridePending) {",
-    "tests": [
-      "test/auditdisc19.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-DISC19-S2-death-video-stranded",
     "file": "src/systems/save.js",
     "old": "  for (const a of entity.activeEffects) if (a.infection && !a.deployed) a.deathScheduled = false;\n",
@@ -488,8 +443,8 @@
   {
     "name": "AUDIT-DISC19-old-infection-not-repaired",
     "file": "src/systems/save.js",
-    "old": "if (a.kind === 'racialOverride' || a.infection) a.permanent = true;",
-    "new": "if (a.kind === 'racialOverride') a.permanent = true;",
+    "old": "if ((a.kind === 'racialOverride' || a.infection) && !a.permanent) a.permanent = true;",
+    "new": "if ((a.kind === 'racialOverride') && !a.permanent) a.permanent = true;",
     "tests": [
       "test/auditdisc19.test.js"
     ]

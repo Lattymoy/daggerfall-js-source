@@ -2,8 +2,8 @@
   {
     "name": "DISC19-A-werewolf-curse-rounds-out",
     "file": "src/systems/lycanthropy.js",
-    "old": "    permanent: true,\n    infectionType,",
-    "new": "    infectionType,",
+    "old": "    permanent: true,   // CURSE-PERSIST1: lifelong - ended by its cure, never by the magic-round clock (diseases' and poisons' own flag)\n    racial: 'lycanthropy',",
+    "new": "    racial: 'lycanthropy',",
     "tests": [
       "test/disc19.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DISC19-A-vampire-curse-rounds-out",
     "file": "src/systems/vampirism.js",
-    "old": "    permanent: true,   // DISC19-A",
-    "new": "    // DISC19-A",
+    "old": "    permanent: true,   // CURSE-PERSIST1: lifelong - ended by its cure, never by the magic-round clock (diseases' and poisons' own flag)\n    racial: 'vampirism',",
+    "new": "    racial: 'vampirism',",
     "tests": [
       "test/disc19.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DISC19-A-infection-rounds-out",
     "file": "src/systems/infection.js",
-    "old": "    permanent: true,\n    disease: null,",
-    "new": "    disease: null,",
+    "old": "    permanent: true,   // CURSE-PERSIST1: lifelong until it turns or is cured - never the magic-round clock's (a plain disease's own flag, diseases.js)\n",
+    "new": "",
     "tests": [
       "test/disc19.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DISC19-A-old-saves-not-repaired",
     "file": "src/systems/save.js",
-    "old": "if (a.kind === 'racialOverride' || a.infection) a.permanent = true;",
-    "new": "if (a.kind === 'racialOverride' && a.infection) a.permanent = true;",
+    "old": "if ((a.kind === 'racialOverride' || a.infection) && !a.permanent) a.permanent = true;",
+    "new": "if ((a.kind === 'racialOverride' && a.infection) && !a.permanent) a.permanent = true;",
     "tests": [
       "test/disc19.test.js"
     ]

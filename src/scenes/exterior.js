@@ -3923,7 +3923,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // search; an empty list means an owned house never resolves even
       // in its OWN town, so this host sold every deed for nothing
       // before F26's guard and would refuse every sale after it. Same
-      // two inputs the world host uses (world.js:12056).
+      // two inputs the world host uses (world.js:12064).
       buildings: locationBuildings(dfLocation.exterior?.buildings ?? [], loc.blocks, { locationIndex: dfLocation.locationIndex ?? 0 }),
       mapId: dfLocation?.mapTableData?.mapId ?? 0,
       regionIndex: dfLocation.regionIndex ?? 0,
@@ -4854,18 +4854,23 @@ export async function bootExterior(canvas, renderer, params, status) {
             // U8e: a pile under the ray opens the inventory WITH the
             // pile as the remote target (Remove defaults - the OnPush law)
             const pile = droppedLoot.pileFor(dropKey);
-            const _hooks = droppedLootHooks(pile);
-            // QUICK-LOOT B4: the same door, on the player's own pile.
-            if (quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine?.getQuest?.(uid) ?? null })) return;   // AUDIT QL-WEIGHT1
-            const w = makeInventoryWindow({
-              // U53: THE HOST'S OWN FACTORY, not a twelfth copy of it.
-              // This arm hand-rolled the window with the SAME eleven hooks
-              // makeInventoryWindow already passes, plus the two below -
-              // which is precisely what its `extra` parameter is for.
-              onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
-              loot: _hooks,   // G5: DaggerfallLoot's own identity
-            });
-            if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
+            // LOOT-GONE1 + QL-FRAME1: world.js's twin, the same two laws - a pile gone since the hover opens nothing, and a
+            // handled quick-loot press opens no window and never leaves frame() before its requestAnimationFrame.
+            if (pile) {
+              const _hooks = droppedLootHooks(pile);
+              // QUICK-LOOT B4: the same door, on the player's own pile.
+              if (!quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine?.getQuest?.(uid) ?? null })) {   // AUDIT QL-WEIGHT1
+                const w = makeInventoryWindow({
+                  // U53: THE HOST'S OWN FACTORY, not a twelfth copy of it.
+                  // This arm hand-rolled the window with the SAME eleven hooks
+                  // makeInventoryWindow already passes, plus the two below -
+                  // which is precisely what its `extra` parameter is for.
+                  onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
+                  loot: _hooks,   // G5: DaggerfallLoot's own identity
+                });
+                if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
+              }
+            }
           }
           else modes.tryEnter().then((opened) => {
             // GRAVE1: same law as world.js's twin - an activation that
@@ -5084,7 +5089,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute), WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one
     renderer.setCloudShadow(sky?.cloudShadow ?? null);   // VC4: the frame's deck, for the body and everything before the terrain
-    mwViewDrawBody(canvas, { proj, view, eye, feet: player.feetAt(), yaw: cam.yaw });   // MW-D24
+    mwViewDrawBody(canvas, { proj, view, eye, feet: player.bodyFeetAt(), yaw: cam.yaw });   // MW-D24; DISC18: the body at the capsule's own feet, not the camera's smoothed ones
     mwViewDrawWagon(renderer, texRemap);   // EOTB-IL: the cart, when the transport is the cart
     camps.draw(renderer, texRemap);   // SURV3: the tents
     hcc.draw(renderer, texRemap);   // HCC: the wagon and its cargo
@@ -5193,7 +5198,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ROAD-G G2: THE ENEMY ARM EXISTS NOW - the note here said "this
     // host mounts no bow-armed pool", which stopped being true with the
     // encounter mount above, and an archer's shaft would have flown
-    // through the player for ever. world.js:13839-14078 is the shape.
+    // through the player for ever. world.js:13858-14097 is the shape.
     arrows.update(dt, {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit
@@ -5451,7 +5456,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         const swing = {};   // AUDIT DISC19: one swing, one attack grunt, however many pools it is offered to
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound, { swing })) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
-          // BEFORE civilians - world.js:14188's order, and the order
+          // BEFORE civilians - world.js:14207's order, and the order
           // matters because a watchman standing over a quest foe must
           // still be the one the swing finds.
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound, { swing })) {
