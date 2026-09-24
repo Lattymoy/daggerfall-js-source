@@ -335,7 +335,7 @@ test('AUDIT 58 (f2/hosts): the EXTERIOR host mounts the same body over its own p
     'no site inside the mount names a host pool directly');
   // and the reflection path travels with the player's OWN sinks, which
   // is why they are hoisted here rather than inlined into the cast
-  // engine (effects.js:889/:903 heals the caster through them).
+  // engine (effects.js:880/:894 heals the caster through them).
   assert.match(ext, /const playerSpellSinks = \{/);
   assert.match(ext, /^\s*playerSinks: playerSpellSinks,$/m, 'one object, both readers');
   assert.match(mount, /^\s*playerSpellSinks,$/m);

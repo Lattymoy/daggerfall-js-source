@@ -315,7 +315,7 @@ test('ROAD-G G1(b): both hosts route the transform by POOL MEMBERSHIP', () => {
   // both pools share the host's one renderer, so the old arm tore a
   // watchman down exactly as `removeGuard` does - batch freed,
   // `dead = true`, no corpse, skipped by cityGuards.js:824 and spliced
-  // at :1013 in that same pass. The router is an OWNERSHIP fix, not a
+  // at :1012 in that same pass. The router is an OWNERSHIP fix, not a
   // leak fix, and no page may say otherwise again.
   // (the halves are joined at runtime so this very file does not carry
   // the sentence it bans)
@@ -348,7 +348,7 @@ test('ROAD-G G1(c): the SPAWN arms stand a foe in the world the player IS in', (
   // written at worldModes.js's dungeon arm. Raw, the direction angle
   // placeFoeFreely reads is ~1 degree instead of ~75, so the Sanguine
   // Rose's allied Daedroth (lineOfSightCheck defaults TRUE,
-  // hostEnchant.js:61/:208) stands DEAD AHEAD inside the view instead
+  // hostEnchant.js:67/:216) stands DEAD AHEAD inside the view instead
   // of just outside the cone. MUTANT: `fieldOfView()` raw, or
   // `* 90 / Math.PI` - both red here, and the slice is scoped to this
   // arm so worldModes' three other spellings cannot mask it.

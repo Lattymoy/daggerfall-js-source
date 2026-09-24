@@ -490,7 +490,7 @@ export class NativeTalkWindow {
   /** SetListboxTopics' tail (:893-905): a freshly filled list SELECTS
    *  its first row - index 1 when row 0 is the NavigationBack
    *  "previous" row, which this port's flattened lists never carry
-   *  (treeCategories drops them, townTalk.js:775) - and SelectIndex
+   *  (treeCategories drops them, townTalk.js:781) - and SelectIndex
    *  (ListBox.cs:761-770) raises OnSelectItem, so the player-says
    *  label is filled before the player clicks anything.
    *
@@ -868,7 +868,7 @@ export class NativeTalkWindow {
       case 'whereIs': audio.playOneShot(SOUND.ButtonClick, 1); this._talkOption = 'whereIs'; this._reopenCategory(); return true;
       // B5-6: the four pages are live at :313-327 - tellMeAbout, then
       // people/things/work behind the whereIs gate - with three of the
-      // hooks supplied at scenes/townTalk.js:719-721 and Work's OKAY
+      // hooks supplied at scenes/townTalk.js:725-727 and Work's OKAY
       // question shipped alongside them (_askWork :293, ButtonOkay's
       // fake Work ListItem at DaggerfallTalkWindow.cs:1534-1543). Each
       // still falls back to consuming the press when its hook is absent
@@ -919,8 +919,8 @@ export class NativeTalkWindow {
   /** Pointer path (phone taps + mouse): virtual-space hit rects.
    *  AUDIT 65 UI-1: the third and fourth slots are the HOST's, not
    *  this window's. Every overlay slot dispatches
-   *  `click(vx, vy, right, middle)` - townTalk.js:1236,
-   *  worldModes.js:8873, dungeonContext.js:6595 - so the clock that
+   *  `click(vx, vy, right, middle)` - townTalk.js:1241,
+   *  worldModes.js:8866, dungeonContext.js:6599 - so the clock that
    *  used to sit in the fourth arrived as `e.button === 1`, a boolean,
    *  and `false ?? Date.now()` kept the `false`: every second click in
    *  the topic list picked. The THIRD slot is really read - it is the

@@ -87,7 +87,7 @@ export const potionRecipeTokens = () => [
  *  W3: this read the constant 0 with a "the port has no settings
  *  layer" note that U29 made stale - it reads the setting now, at the
  *  point of use as DFU does. `item.material` IS DFU's raw
- *  nativeMaterialValue (equip.js:145), so the `>=` compares hold. */
+ *  nativeMaterialValue (equip.js:144), so the `>=` compares hold. */
 export function armorShouldShowMaterial(item, setting = getInt('GUI', 'HelmAndShieldMaterialDisplay', 0, 3)) {
   // `artifact` is the classic FLAGS word's artifact bit: minted by
   // loot.js's createArtifact (SetArtifact's :617) and read straight

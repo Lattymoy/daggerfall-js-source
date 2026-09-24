@@ -321,7 +321,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     // AUDIT 24 (the seven-slice sweep): a LIVE read, not a hardcoded
     // false. DaggerfallUnity.Settings.PlayerNudity is a real setting
     // the port already stores and the launcher already renders as a
-    // toggle - and questLists.js:202 gates adult quests on it, so
+    // toggle - and questLists.js:203 gates adult quests on it, so
     // flipping it did nothing at all. A GETTER because C# reads the
     // setting at the point of use, and the consumer reads
     // `deps.playerNudity` as a value.

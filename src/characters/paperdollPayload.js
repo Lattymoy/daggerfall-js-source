@@ -551,7 +551,7 @@ export function buildPaperdollPayload(pal, img, cif) {
     // the Khajiit's BODY06I0.IMG (RaceTemplate.cs:315). DFU swaps the body
     // image per race precisely because one race's body never carries
     // another's colour, so the tails take the race hide/fur ramps - the
-    // same ones raceCharacter.js:48-49 shades the in-engine bake with.
+    // same ones raceCharacter.js:47-48 shades the in-engine bake with.
     faceSet,
     hair: hairPacks, hairRamps: HAIR_RAMPS,
     tail: packPiece(buildTail(ARGONIAN_HIDE, 'argonian')),

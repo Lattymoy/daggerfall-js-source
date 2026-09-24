@@ -341,7 +341,7 @@ test('AUDIT LV2 F2: an unspent level is announced ONCE, not once per rest', () =
   // DFU RE-OFFERS the sheet on every later pass while the level is
   // unspent - RaiseSkills' tail is outside the skill loop (:1413) and
   // `checkForLevelUp` stays true while `level` is behind the
-  // calculated one (systems/advancement.js:184, and its own comment
+  // calculated one (systems/advancement.js:174, and its own comment
   // says so). Re-opening a window is that law. Re-ANNOUNCING is not:
   // measured before the fix, three rest passes on ONE unspent level
   // played three fanfares and knocked the standing reminder back into

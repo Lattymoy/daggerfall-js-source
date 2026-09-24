@@ -892,8 +892,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // brigand.
       tickEnemySound(g.sounds, g.ai.feet, playerFeet, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity) });
       g.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((g.entity.stats?.speed ?? 50) / Math.max(8, liveStat(g.entity, 'speed'))));   // AUDIT 23 (characters-11)
-      const events = (_gParalyzed || !_tgt) ? [] : g.attack.update(dt, g.ai, _tgt);   // MT-ii: at the SELECTED target
-      void events;
+      if (!_gParalyzed && _tgt) g.attack.update(dt, g.ai, _tgt);   // MT-ii: at the SELECTED target
       const seq = g.attack.swingSeq;   // AUDIT 68 S04-strike-edge-cut: EnemyAttack's own start count, the foes' one edge law
       const strikeEdge = seq !== g._swingSeq;
       g._swingSeq = seq;

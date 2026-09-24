@@ -18,7 +18,7 @@
 //   (RaceTemplate.cs:336) and the Khajiit's BODY06I0.IMG
 //   (RaceTemplate.cs:315). DFU swaps the paper-doll body image per race
 //   precisely because one race's body never carries another's colour, so
-//   the tail takes the race hide ramp - which is what raceCharacter.js:48-49
+//   the tail takes the race hide ramp - which is what raceCharacter.js:47-48
 //   shades the in-engine bake with.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

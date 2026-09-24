@@ -222,13 +222,13 @@ narrowed while E3 closed the two console verbs
 (`ui/exteriorAutomapWindow.js:96` - the site id the flag list was
 measured on; the closure narrates at `:100` today) by building the
 console host they were waiting on. The SHIP LANDING then took a seventh
-(`scenes/world.js:5632`, the two ship pixels): the owner supplied the
+(`scenes/world.js:5633`, the two ship pixels): the owner supplied the
 real MAPS.BSA, the pixels turned out to carry the two "Your Ship"
 locations rather than open sea, and the boarding became an ordinary
 location arrival. **ROAD-F then took three more**: GS1 closed the
 guild-service popup above ground (`scenes/worldModes.js:2337`) with the
 replace-mode mount door plus the sweep of the subtree under it, and GS2
-reworded `systems/skills.js:165` - a RETIREMENT RECORD whose only claim
+reworded `systems/skills.js:182` - a RETIREMENT RECORD whose only claim
 on the list was that it wrote the marker down in the past tense.
 DR1 (2026-09-03) took another
 (`scenes/dungeonContext.js:2244`, the standalone dungeon host's two

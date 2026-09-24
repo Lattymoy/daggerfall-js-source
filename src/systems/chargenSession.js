@@ -129,7 +129,7 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   // DFU character carries the array from the first frame.
   //
   // The null was a lazy-rebuild trick that never fired:
-  // updateEquippedArmorValues (equip.js:269) early-returns for a
+  // updateEquippedArmorValues (equip.js:271) early-returns for a
   // non-Armor, non-footwear item BEFORE it reaches armorValuesOf, and
   // the starting kit is a shirt and pants. So the array stayed null
   // until the first armour equip or a save-and-reload, and
@@ -196,7 +196,7 @@ export function applyCreationExtras(playerEntity, result, spellsByIndex = null, 
   // DFU character carries the array from the first frame.
   //
   // The null was a lazy-rebuild trick that never fired:
-  // updateEquippedArmorValues (equip.js:269) early-returns for a
+  // updateEquippedArmorValues (equip.js:271) early-returns for a
   // non-Armor, non-footwear item BEFORE it reaches armorValuesOf, and
   // the starting kit is a shirt and pants. So the array stayed null
   // until the first armour equip or a save-and-reload, and
@@ -520,9 +520,9 @@ function classicChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {}) {
     // the port's only reading of it - without this the thumb could
     // latch on the press and then never move. Every host that runs
     // the wizard already routes a mousemove here: world.js and
-    // exterior.js through `townTalk.hover` (townTalk.js:1280-1291,
-    // the route itself :1289), dungeonContext.js through `overlayHover`
-    // (:6766), which dungeon.js:528 and worldModes.js:8909 both feed.
+    // exterior.js through `townTalk.hover` (townTalk.js:1285-1296,
+    // the route itself :1294), dungeonContext.js through `overlayHover`
+    // (:6770), which dungeon.js:528 and worldModes.js:8902 both feed.
     // (ROAD-G G4 review: all four were stale - re-resolved by content,
     // against the same six routes G4-11 sweeps.) Hovering never
     // advances the flow, so no done check.

@@ -318,7 +318,7 @@ nothing.
 
 ### Not changed, but noticed
 
-`droppedTorches.js:245` casts the same bucket ray to find what a
+`droppedTorches.js:247` casts the same bucket ray to find what a
 thrown torch hit, with a `raycast` fallback that has the same blind
 spot outdoors. It is not what was reported and it is not blood, so it
 is left alone and written down here instead.

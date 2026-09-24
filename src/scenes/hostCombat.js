@@ -166,7 +166,7 @@ export function equipEnemy(entity, mobileType, playerLevel, rolls = Math.random,
   // `Items.AddItem(item)` - a foe's table is genuinely worn, and
   // EnemyEntity.cs:414-421 walks it. The port wrote only the summary
   // arrays, so `equipTableOf(target)` handed back the lazy all-null
-  // table (equip.js:44-45) for every enemy in the game and
+  // table (equip.js:43-44) for every enemy in the game and
   // FormulaHelper.DamageEquipment's STRUCK side - the shield at
   // FormulaHelper.cs:1095 and the struck part's armour at :1113 -
   // could not fire once: only the attacker's own weapon ever took
