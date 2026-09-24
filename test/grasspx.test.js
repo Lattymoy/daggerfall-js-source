@@ -290,7 +290,7 @@ test('GRASS-PX: the renderer compiles the game\'s stages, uploads the sheet with
   const sm = uploads('smooth');
   assert.deepEqual([sm.uPxVariants, sm.uPxSteps, sm.uPxTintBands], [PX_VARIANTS, PX_RAMP_STEPS, PX_TINT_BANDS], 'the smooth draw still uploads every count');
   assert.equal(sm.uPxStepHz, undefined, 'GRASS-PX3: no sway clock exists to upload');
-  assert.equal(sm.uPxSheet, undefined, '...but never binds the sheet');
+  assert.equal(sm.uPxSheet, 4, '...but never binds the sheet - AUDIT RETRO1 B1: its sampler names unit 4 all the same (on unit 0 it read a frame image still bound there: a feedback loop)');
   calls.length = 0; r.draw(new Float32Array(16), new Float32Array(16), new Float32Array(3), 0, light, wind, 300, 'smooth');
   assert.ok(!calls.some((c) => c[0] === 'bindTexture' && c[2] === r.pxSheet) && !calls.some((c) => c[0] === 'activeTexture' && c[1] === C.TEXTURE4), 'the smooth style never touches unit 4');
   calls.length = 0; r.draw(new Float32Array(16), new Float32Array(16), new Float32Array(3), 0, light, wind);

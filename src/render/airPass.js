@@ -1080,6 +1080,7 @@ export class AirPass {
     this.adaptRates = new Float32Array([AIR_ADAPT_OPEN, AIR_ADAPT_CLOSE]);
     this.canvas = new Float32Array(2);
     this.rect = new Float32Array(4);
+    this._fullRect = new Float32Array(4);   // AUDIT RETRO1 B4: an unprepared frame's rect - its whole image
     this._lastResolve = 0;
     this.measured = false;   // AUDIT-EL F10
     this._now = opts.now ?? (() => (globalThis.performance?.now?.() ?? Date.now()));
@@ -1571,6 +1572,10 @@ export class AirPass {
     this.fresh = false;
     gl.disable(gl.BLEND);
     gl.bindVertexArray(this.quadVao);
+    // AUDIT RETRO1 B4: and an unprepared frame is its WHOLE image - `this.rect` is the last world frame's, which under
+    // retro mode is 320x200 of a 1280x720 menu frame, and the bright pass and the resolve's vignette read it
+    if (!prepared) { this._fullRect[2] = F.w; this._fullRect[3] = F.h; }
+    const rect = prepared ? this.rect : this._fullRect;
     // 1. the luminance image and its mean - AUDIT-EL F10: not off a frame the
     // world never drew (the passes saw no records): the eye would adapt to
     // the clear colour behind a video or a menu and swing back on return
@@ -1581,7 +1586,7 @@ export class AirPass {
     gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, T.volOut.tex); gl.uniform1i(P.lum.uVol, 2); gl.activeTexture(gl.TEXTURE0);   // AUDIT VOL1: the eye adapts to the glow it will see
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, this.adapt[this.adaptIndex].tex); gl.uniform1i(P.lum.uPrev, 1);   // AUDIT-EL F16
     gl.activeTexture(gl.TEXTURE0);
-    gl.uniform4fv(P.lum.uRect, this.rect);
+    gl.uniform4fv(P.lum.uRect, rect);
     gl.uniform2fv(P.lum.uCanvas, this.canvas);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.bindTexture(gl.TEXTURE_2D, this.lum.tex);
@@ -1605,7 +1610,7 @@ export class AirPass {
     gl.bindTexture(gl.TEXTURE_2D, F.tex);
     gl.uniform1i(P.bright.uFrame, 0);
     gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, T.volOut.tex); gl.uniform1i(P.bright.uVol, 2); gl.activeTexture(gl.TEXTURE0);   // AUDIT VOL1: a halo's core blooms
-    gl.uniform4fv(P.bright.uRect, this.rect);
+    gl.uniform4fv(P.bright.uRect, rect);
     gl.uniform2fv(P.bright.uCanvas, this.canvas);
     gl.uniform1f(P.bright.uThreshold, AIR_BRIGHT_THRESHOLD);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -1633,7 +1638,7 @@ export class AirPass {
     gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, T.volOut.tex); gl.uniform1i(P.resolve.uVol, 4);   // VOL1: the blurred, tonemapped glow
     gl.uniform1f(P.resolve.uAOMix, prepared ? AIR_AO_RESOLVE : 0);
     gl.activeTexture(gl.TEXTURE0);
-    gl.uniform4fv(P.resolve.uRect, this.rect);
+    gl.uniform4fv(P.resolve.uRect, rect);
     gl.uniform2fv(P.resolve.uCanvas, this.canvas);
     gl.uniform4fv(P.resolve.uGrade, this.grade);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);

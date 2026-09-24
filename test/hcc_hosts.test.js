@@ -127,7 +127,7 @@ test('HCC hosts: world.js - the frame, the draw, the origin, the ray, the plaque
     /isQualifyingThreatState\(true, !!f\.ai\.isHostile, f\.entity\?\.team === 'PlayerAlly', isLocalPlayerTarget\(f\.ai\.target\), !!f\.ai\.detected\)/,
     // AUDIT HCC H1: LateUpdate ONCE a frame, in every mode - the modal branch, and the exterior frame before the world pass
     /hcc\.setEnabled\(hccOn\(\)\); if \(hcc\.enabled\) hccPollSettings\(nowMs\); hcc\.frame\(dt, cam\.pos, gamePaused\(\) \? 0 : dt \* (?:worldTimeScale|hccTimeScale)\(\)\);/,   // AUDIT HCC (branch audit): the runtime's Time.deltaTime - held by the pause, scaled with the world
-    /hccTick\(dt, now\);[^\n]*\n\s+townTalk\.frame\(dt\);\n\s+capturePendingScreenshot\(canvas\);/,
+    /hccTick\(dt, now\);[^\n]*\n\s+townTalk\.frame\(dt\);\n\s+renderer\.resolveFrame\(\);[^\n]*\n\s+capturePendingScreenshot\(canvas\);/,   // AUDIT RETRO1 E5: the frame shown before its shot
     /hccTick\(dt, now\);[^\n]*\n\s+renderer\.setClearColor\(SKY_CLEAR\);/,
     /if \(hcc\.enabled && _mode\(\) === 'exterior'\) livePersonBatches\.push\(\.\.\.hcc\.batches\(\)\);/,
     // AUDIT HCC K2/K3: GetKeyDown is the frame's edge ring, behind HandleConfiguredHotkeys' IsPlayingGame / LoadInProgress gate

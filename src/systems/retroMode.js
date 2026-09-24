@@ -7,7 +7,7 @@
 // Utility/RetroPresentation.cs), optionally posterized or palettized on
 // the way (Shaders/DaggerfallRetroPosterization.shader,
 // DaggerfallRetroPalettization.shader), optionally pillarboxed to 4:3 or
-// 16:10 (Utility/ViewportChanger.cs SetRetroAspectViewport :96-147).
+// 16:10 (Utility/ViewportChanger.cs SetRetroAspectViewport :96-149).
 // Five [Video] keys drive it (SettingsManager.cs:408-412). This module
 // is the half that reads them and does arithmetic; render/retroPass.js
 // is the half that draws, and the renderer takes this module's
@@ -23,6 +23,15 @@
 // textures", so the world's strip above the bar gets a shorter texture
 // instead of a smaller rect. The presentation target is always 640x400
 // (RetroPresentation.renderTexture), point-filtered like the rest.
+// AUDIT RETRO1 A1/C3: DFU asks the SETTINGS there, and in DFU a docked
+// bar is always drawn when they say so (DaggerfallHUD.cs:213-216). Here
+// it is not - the enhanced skin never draws the classic bar, and the
+// classic skin draws none while its art loads - and the world RECT
+// already reads the drawn bar (ui/hudLarge.js dockedLargeHudHeight). So
+// the twin is chosen by that same bar: the lens (largeHudWorldAspect)
+// asks it directly, the renderer by the rect the host set (a docked
+// strip starts above y = 0), and the texture, the lens and the rect can
+// never disagree.
 //
 // THE CAMERA TAKES THE TEXTURE'S ASPECT. A Unity camera rendering into
 // a RenderTexture derives its aspect from the texture, and RetroPresentation
@@ -41,13 +50,21 @@
 //     no range in DFU (:409, :412). An out-of-range post mode leaves
 //     RetroRenderer with no material and `retroMode = 0` while the
 //     camera still renders into the texture (:388-411) - a blank world;
-//     a shift past 8 sizes a 0-texel LUT. Both are clamped here
-//     (0..4, 0..8) instead.
+//     a shift past 8 sizes a 0-texel LUT, and 8 itself a 1-texel one
+//     that paints the world black. Both are clamped here (0..4, 0..7:
+//     the settings screen steps this one, and DFU puts it on none).
 //   - DFU's aspect-corrected rect also becomes DaggerfallUI's
 //     CustomScreenRect (:138-140): every HUD element, window (freely
-//     scaled, DaggerfallBaseWindow.cs:85), the weapon and the horse lay
-//     out inside the pillarbox. The port's 2D pass keeps the whole
-//     canvas; only the WORLD is pillarboxed.
+//     scaled, DaggerfallBaseWindow.cs:85), the weapon, the horse, the
+//     casting hands (FPSSpellCasting.cs:88-89) and the automap's windows
+//     lay out inside the pillarbox. The port's 2D pass keeps the whole
+//     canvas; only the WORLD is pillarboxed. AUDIT RETRO1 A2: so a
+//     docked bar is the CANVAS's width here, taller than DFU's (which is
+//     the pillarbox's width * 46/320), and the world strip above it is
+//     wider for its height than DFU's - at 1920x1080 in 4:3 the bar is
+//     276 px against 207 and the strip 1.791 wide a unit of height
+//     against 1.649; in 16:10 the 320x154 image is stretched 3.5% where
+//     DFU shows it at its own shape.
 import { getInt, getBool } from './settings.js';
 
 /** RetroTarget320x200 / RetroTarget640x400 (.renderTexture sizes). */
@@ -64,11 +81,7 @@ export const retroRenderingMode = () => getInt('Video', 'RetroRenderingMode', 0,
 export const retroPostProcessing = () => getInt('Video', 'PostProcessingInRetroMode', 0, 4);   // RETRO1 departure: DFU reads it unclamped
 export const retroUseMipMaps = () => getBool('Video', 'UseMipMapsInRetroMode');
 export const retroAspectCorrection = () => getInt('Video', 'RetroModeAspectCorrection', 0, 2);
-export const palettizationLutShift = () => getInt('Video', 'PalettizationLUTShift', 0, 8);   // RETRO1 departure: DFU reads it unclamped
-
-/** UpdateRenderTarget's own test (:425): the SETTINGS, not the bar - a
- *  docked bar still loading its art already has the short texture. */
-const retroHudDocked = () => getBool('GUI', 'LargeHUD') && getBool('GUI', 'LargeHUDDocked');
+export const palettizationLutShift = () => getInt('Video', 'PalettizationLUTShift', 0, 7);   // RETRO1 departure: DFU reads it unclamped (AUDIT RETRO1 C7: 8 is a black world)
 
 /** The world's texture for a mode, [w, h], or null when retro is off. */
 export function retroTargetSize(mode, docked) {
@@ -77,14 +90,15 @@ export function retroTargetSize(mode, docked) {
 }
 
 /** The projection's aspect under retro mode - the texture's, not the
- *  window's - or null when retro is off. */
-export function retroWorldAspect(mode = retroRenderingMode(), docked = retroHudDocked()) {
+ *  window's - or null when retro is off. `docked`: a docked bar is DRAWN
+ *  (AUDIT RETRO1 A1/C3 - the caller holds the bar). */
+export function retroWorldAspect(mode, docked) {
   const t = retroTargetSize(mode, docked);
   return t ? t[0] / t[1] : null;
 }
 
 /**
- * SetRetroAspectViewport (:96-147), in Unity's normalized BOTTOM-LEFT
+ * SetRetroAspectViewport (:96-149), in Unity's normalized BOTTOM-LEFT
  * rect space - gl.viewport's own, as ui/hudLarge.js's world rect is.
  * The arithmetic is DFU's to the cast: a 6x-classic height ratio, a
  * 5x (4:3) or 6x (16:10) classic width truncated to whole pixels, an
@@ -120,6 +134,8 @@ export function _resetRetroPostprocessing() { _postprocessing = true; }
  * function; it is asked once per WORLD frame). Null when retro is off.
  *
  *   width, height  the world's texture (retroTargetSize)
+ *   hudWidth, hudHeight  its _HUD twin - the renderer takes it when the
+ *                  host's world rect is a docked strip (AUDIT RETRO1 C3)
  *   post           the material OnPostRender blits with (:502-505):
  *                  0 when the toggle is off - a plain blit - else the
  *                  setting's 0..4
@@ -131,10 +147,10 @@ export function _resetRetroPostprocessing() { _postprocessing = true; }
 export function retroFrameConfig() {
   const mode = retroRenderingMode();
   if (mode === 0) return null;
-  const size = retroTargetSize(mode, retroHudDocked());
-  if (!size) return null;
+  const size = retroTargetSize(mode, false), hud = retroTargetSize(mode, true);
+  if (!size || !hud) return null;
   return {
-    width: size[0], height: size[1],
+    width: size[0], height: size[1], hudWidth: hud[0], hudHeight: hud[1],
     post: _postprocessing ? retroPostProcessing() : RETRO_POST.OFF,
     lutShift: palettizationLutShift(),
     mipmaps: retroUseMipMaps(),

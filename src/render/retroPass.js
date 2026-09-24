@@ -1,6 +1,8 @@
 // @ts-check
 // RETRO1 (2026-09-24, Mac: "Can we get retro mode from DFU ported
-// over?") - DFU'S RETRO MODE: THE PASS.
+// over?") - DFU'S RETRO MODE: THE PASS. AUDIT RETRO1 (the same day,
+// Mac: "Audit this") - the colour DFU's screen shows, the LUT off the
+// frame, and nothing of the image left bound after it is shown.
 //
 // systems/retroMode.js reads the settings and does the arithmetic; this
 // is the GL half, a leaf the renderer builds on the first retro frame
@@ -13,33 +15,36 @@
 // the Enhanced Lighting lane on, the lane's own frame image is simply
 // made that small (its passes run at the retro size, as Unity's post
 // stack did on DFU's retro camera) and its resolve writes into this
-// texture rather than to the canvas. Either way the frame's first
-// screen quad then PRESENTS it: the canvas is cleared black (DFU's
-// retroClearerCamera, ViewportChanger.cs:142-146, which only the
-// pillarbox needs - the port clears always, since nothing else clears
-// the canvas on a retro frame), and one quad over the world rect
-// samples the texture point-filtered through DFU's 640x400
-// presentation target - OnPostRender's Blit into RetroPresentation
-// (:495-506) and RetroPresentation's Blit to the screen, both Point,
-// folded into one fetch by snapping the coordinate to the presentation
-// texel first. The effect runs in that same fetch: the first Blit is
-// the one that carries the material.
+// texture rather than to the canvas. Either way the image is PRESENTED
+// once the world pass is done (the frame's first screen quad, a
+// first-person overlay, a panel, or the host's resolveFrame at the foot
+// of its frame): the canvas is cleared black - DFU's retroClearerCamera,
+// a child of the presenter at depth -1, clears the whole screen every
+// retro frame (ViewportChanger.cs:142-146 only makes sure it is on) -
+// and one quad over the world rect samples the texture point-filtered
+// through DFU's 640x400 presentation target: OnPostRender's Blit into
+// RetroPresentation (:495-506) and RetroPresentation's Blit to the
+// screen, both Point, folded into one fetch by snapping the coordinate
+// to the presentation texel first. The effect runs in that same fetch:
+// the first Blit is the one that carries the material.
 //
 // THE EFFECTS (Shaders/DaggerfallRetroPosterization.shader,
-// DaggerfallRetroPalettization.shader). DFU's target holds LINEAR
-// colour and both shaders work in gamma space (LinearToGammaSpace in,
-// GammaToLinearSpace out); the port's frame is already display-encoded
-// bytes, so the gamma-space arithmetic is applied as it stands:
-//   posterize   round(c * 15) / 15 per channel ("4 bits per
-//               component"); c is a byte over 255 and a byte never
-//               lands on a half, so the rounding cannot tie
+// DaggerfallRetroPalettization.shader), AS DFU'S SCREEN SHOWS THEM
+// (AUDIT RETRO1 A3). DFU renders in linear space into a 16-bit linear
+// target, and both shaders work between UnityCG's APPROXIMATE
+// LinearToGammaSpace (1.055 x^(1/2.4) - 0.055, with no linear toe) and
+// GammaToLinearSpace (a cubic), before the backbuffer's exact sRGB
+// encode - so a posterized level or a palette colour does not reach the
+// screen as its own byte (posterize's 1/15 shows as 13, not 17; palette
+// grey 4 shows as 1). The port's frame holds display bytes, so the
+// present decodes them (exact sRGB), runs the effect between DFU's
+// approximate pair, and encodes again:
+//   posterize   round(g * 15) / 15 per channel ("4 bits per component")
 //   palettize   the LUT: `size = 256 >> PalettizationLUTShift` texels a
 //               side, texel (r,g,b) holding the palette colour nearest
 //               to (r,g,b) << shift (InitLut :324-366), looked up at
-//               floor(c * size) - Point filtering, clamped - which is
-//               exactly (byte * size) / 255 in integers, so the shader
-//               fetches the texel by index and no sampler rounding can
-//               move a colour across a cell
+//               floor(g * size), clamped - Point filtering's own texel,
+//               fetched by index
 //   -sky        EXCLUDE_SKY: a pixel whose depth is the far plane is
 //               left as it is - "Sky untouched"
 //
@@ -51,24 +56,42 @@
 // distances and a split keeping its own side's answer on a tie. Where
 // the nearest colour is unique any exact search agrees with that tree,
 // so the LUT is filled by a faster exact search (a candidate list per
-// 8x8x8 block of texels) and asks the TREE only where two colours tie -
-// the same bytes DFU writes, in about a quarter of DFU's time (DFU: "1 - 8MB,
-// 850ms init"). The one thing not reproduced is the order .NET's
-// unstable Array.Sort leaves equal channel values in, which can only
-// decide between two colours at exactly equal distance inside one leaf.
-// DFU builds the LUT once a session whatever the shift later says
-// (`if (lut) return;`); the port rebuilds it when the shift changes.
+// 8x8x8 block of texels) and asks the TREE only where two colours tie.
+// .NET's Array.Sort is unstable and leaves some leaves in another order
+// than this stable sort does; AUDIT RETRO1 modelled .NET's introsort and
+// found no texel moved at any shift - the LUT is DFU's, byte for byte.
 //
-// THE MIP CHAINS are the renderer's (Renderer.setRetro): TextureReader
-// builds no mip chain in retro mode unless UseMipMapsInRetroMode. The
-// albedo's retro mip bias (-0.75, TextureReader.cs:271-274) is NOT
-// ported - WebGL2 has no sampler LOD bias, and a bias in every world
-// shader is a change this pass is not worth (Ledger A, RETRO1).
+// THE LUT'S COST (AUDIT RETRO1 E1-E3). DFU builds it in one go (850 ms
+// at the shipped shift, 7 s at shift 0 - its own comments). Here it is
+// built a TIME SLICE A FRAME (RETRO_LUT_BUDGET_MS) and the effect stays
+// off until the table is whole, so choosing palettization costs no
+// hitch; a build or an upload that throws is remembered for that shift
+// and said once, and the image is shown without the effect; the table is
+// freed when retro mode goes off (dropLut). DFU builds it once a session
+// whatever the shift later says (`if (lut) return;`); the port rebuilds
+// it when the shift changes.
+//
+// THE STATE THE PRESENT LEAVES (AUDIT RETRO1 B1, B3). The image and its
+// depth are unbound from units 0 and 1 and the LUT from unit 2 after the
+// draw: the next retro frame draws INTO that image, and a unit still
+// holding it is a WebGL feedback loop for any program whose sampler
+// reads that unit. A live screen scissor is lifted for the clear and
+// the quad and put back.
+//
+// THE MIP CHAINS are the renderer's (Renderer._applyRetroMips):
+// TextureReader builds no mip chain in retro mode unless
+// UseMipMapsInRetroMode. The albedo's retro mip bias (-0.75 whenever
+// retro mode is on, TextureReader.cs:271-274) is NOT ported - WebGL2
+// has no sampler LOD bias, and a bias in every world shader is a change
+// this pass is not worth (Ledger A, RETRO1).
 
 import { setFrameTarget } from './renderTarget.js';
 
 /** RetroPresentation.renderTexture's size - every mode is shown through it. */
 export const RETRO_PRESENTATION = Object.freeze([640, 400]);
+
+/** AUDIT RETRO1 E1: the LUT build's time a frame, in milliseconds. */
+export const RETRO_LUT_BUDGET_MS = 4;
 
 /** art_pal (RetroRenderer.cs:53-314), r, g, b per colour, in DFU's order. */
 export const ART_PAL = Object.freeze([
@@ -116,7 +139,7 @@ export const ART_PAL = Object.freeze([
   130, 22, 0,   111, 34, 0,   102, 33, 1,   92, 33, 3,   83, 32, 10,   74, 39, 27,
   65, 41, 33,   57, 43, 39,   0, 0, 0,   4, 4, 4,   8, 8, 8,   12, 12, 12,
 ]);
-/** 258 - ART_PAL.COL's 255 opaque colours and DFU's three greys. */
+/** 258 - ART_PAL.COL's 255 opaque colours, black, and DFU's three greys. */
 export const ART_PAL_COUNT = ART_PAL.length / 3;
 
 /** FastColorPalette's PaletteCutoff (:106): a list this short is a leaf. */
@@ -125,12 +148,24 @@ export const PALETTE_CUTOFF = 10;
 /** InitLut's size (:470). */
 export const retroLutSize = (shift) => 256 >> shift;
 
-/** Point sampling's texel for a byte: floor(byte / 255 * size), clamped. */
-export const retroLutTexel = (byte, size) => Math.min(size - 1, Math.floor((byte * size) / 255));
+// AUDIT RETRO1 A3: the colour pair either side of DFU's effect.
+/** The exact sRGB decode and encode - the port's display bytes, and the backbuffer's own conversion in DFU. */
+export const srgbToLinear = (c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+export const linearToSrgb = (l) => (l <= 0.0031308 ? l * 12.92 : 1.055 * l ** (1 / 2.4) - 0.055);
+/** UnityCG.cginc's LinearToGammaSpace and GammaToLinearSpace - the APPROXIMATE pair both retro shaders call. */
+export const unityLinearToGamma = (l) => Math.max(1.055 * Math.max(l, 0) ** 0.416666667 - 0.055, 0);
+export const unityGammaToLinear = (s) => s * (s * (s * 0.305306011 + 0.682171111) + 0.012522878);
+/** A display byte in DFU's shader space (its approximate gamma), and a shader value back to the byte DFU's screen shows. */
+export const retroGammaOf = (byte) => unityLinearToGamma(srgbToLinear(byte / 255));
+export const retroShownByte = (g) => Math.round(Math.min(1, Math.max(0, linearToSrgb(unityGammaToLinear(g)))) * 255);
 
-/** The posterize shader's arithmetic on one byte (the shader's own
- *  floor(x * 15 + 0.5) / 15, back to a byte). */
-export const posterizeByte = (byte) => Math.round((Math.floor((byte / 255) * 15 + 0.5) / 15) * 255);
+/** The LUT texel a display byte reads: floor(g * size) - Point sampling in DFU's gamma space. No clamp: a byte's g
+ *  is below 1 (255's is 1 - 2^-53), so the last texel is the last one reached; the shader keeps its clamp for a
+ *  GPU's pow that lands on 1.0 exactly. */
+export const retroLutTexel = (byte, size) => Math.floor(retroGammaOf(byte) * size);
+
+/** The posterize shader's arithmetic on one display byte - the byte DFU's screen shows. */
+export const posterizeByte = (byte) => retroShownByte(Math.floor(retroGammaOf(byte) * 15 + 0.5) / 15);
 
 /**
  * BuildPalette (:108-135) over palette INDICES. A node is a leaf
@@ -177,14 +212,16 @@ let _tree = null;
 const artPalTree = () => (_tree ??= buildPaletteTree());
 
 /**
- * InitLut's texels (:338-360): RGBA8, r fastest then g then b, each the
- * palette colour nearest to (r, g, b) << shift - as FastColorPalette
- * answers it (see the header: a candidate search per block, the tree
- * wherever two colours tie).
+ * InitLut's texels (:338-360) AS WORK (AUDIT RETRO1 E1): RGBA8, r fastest
+ * then g then b, each the palette colour nearest to (r, g, b) << shift -
+ * as FastColorPalette answers it (see the header: a candidate search per
+ * block, the tree wherever two colours tie). A generator that yields
+ * after every row of 8x8x8 blocks and returns { size, data }:
+ * buildRetroLut drives it whole, the pass a time slice a frame.
  */
-export function buildRetroLut(shift) {
+export function* retroLutSteps(shift) {
   const size = retroLutSize(shift);
-  const out = new Uint8Array(size * size * size * 4);
+  const out = new Uint8Array(Math.max(0, size) ** 3 * 4);
   if (!(size > 0)) return { size: 0, data: out };
   const pal = Int32Array.from(ART_PAL), n = ART_PAL_COUNT, tree = artPalTree();   // typed: the frozen array's elements are the slow kind
   const B = Math.min(8, size);
@@ -228,9 +265,19 @@ export function buildRetroLut(shift) {
           }
         }
       }
+      yield;
     }
   }
   return { size, data: out };
+}
+
+/** InitLut whole: the steps driven to the end. */
+export function buildRetroLut(shift) {
+  const it = retroLutSteps(shift);
+  for (;;) {
+    const r = it.next();
+    if (r.done) return r.value;
+  }
 }
 
 /** The present pass's kind for a PostProcessingInRetroMode value. */
@@ -259,6 +306,12 @@ uniform int uKind;          // 0 plain Blit, 1 posterize, 2 palettize
 uniform int uNoSky;         // EXCLUDE_SKY
 uniform int uLutSize;
 out vec4 outColor;
+// the display byte to DFU's linear and back: the exact sRGB pair
+vec3 srgbToLinear(vec3 c) { return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }
+vec3 linearToSrgb(vec3 l) { return mix(l * 12.92, 1.055 * pow(l, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, l)); }
+// UnityCG's LinearToGammaSpace and GammaToLinearSpace: the approximate pair DFU's two shaders call
+vec3 unityLinearToGamma(vec3 l) { return max(1.055 * pow(max(l, vec3(0.0)), vec3(0.416666667)) - 0.055, vec3(0.0)); }
+vec3 unityGammaToLinear(vec3 s) { return s * (s * (s * 0.305306011 + 0.682171111) + 0.012522878); }
 void main() {
   // the screen pixel's presentation texel, and that texel's centre - two
   // Point blits (source -> 640x400 -> screen) in one fetch
@@ -267,9 +320,11 @@ void main() {
   outColor = c;
   if (uKind == 0) return;
   if (uNoSky == 1 && texture(uDepth, uv).r >= 1.0) return;   // "Sky untouched"
-  if (uKind == 1) { outColor = vec4(floor(c.rgb * 15.0 + 0.5) / 15.0, c.a); return; }
-  ivec3 v = ivec3(floor(c.rgb * 255.0 + 0.5));
-  outColor = vec4(texelFetch(uLut, min(v * uLutSize / 255, ivec3(uLutSize - 1)), 0).rgb, c.a);
+  vec3 g = unityLinearToGamma(srgbToLinear(c.rgb));
+  vec3 q;
+  if (uKind == 1) q = floor(g * 15.0 + 0.5) / 15.0;
+  else q = texelFetch(uLut, min(ivec3(floor(g * float(uLutSize))), ivec3(uLutSize - 1)), 0).rgb;
+  outColor = vec4(clamp(linearToSrgb(unityGammaToLinear(q)), 0.0, 1.0), c.a);
 }
 `;
 
@@ -277,15 +332,20 @@ void main() {
  * THE PASS. `build(vs, fs)` is the renderer's program builder (it
  * throws on a compile or link failure - the pass then presents with a
  * plain NEAREST blitFramebuffer, which needs no program, and says so
- * once: a retro world without its effect, never a black one).
+ * once: a retro world without its effect, never a black one). `now` and
+ * `lutBudgetMs` are the LUT's clock and its slice (tests hand their own).
  */
 export class RetroPass {
-  constructor(gl, { build }) {
+  constructor(gl, { build, now = () => globalThis.performance?.now?.() ?? Date.now(), lutBudgetMs = RETRO_LUT_BUDGET_MS }) {
     this.gl = gl;
     this._build = build;
+    this._now = now;
+    this._lutBudgetMs = lutBudgetMs;
     this.target = null;    // { fbo, tex, depth, w, h } - the world's retro image and its depth
     this.pending = false;  // a retro frame is bound and not yet presented
     this.lut = null;       // { tex, shift, size }
+    this._lutJob = null;   // { shift, it } - a LUT being built a slice a frame
+    this._lutFailed = new Set();   // shifts whose build or upload threw
     this.failed = false;   // the program would not build: blit instead
     this.P = null;
   }
@@ -341,6 +401,7 @@ export class RetroPass {
     return { fbo: t.fbo, w: W, h: H };
   }
 
+  /** The present's program, built once (PERF-WARM's step reaches it too). */
   _program() {
     if (this.P || this.failed) return this.P;
     const gl = this.gl;
@@ -372,24 +433,53 @@ export class RetroPass {
     return this.P;
   }
 
-  /** The palette's LUT for a shift, built on the CPU and uploaded once
-   *  per shift (an upload inside the present's draw path). */
+  /** The palette's LUT for a shift, or null while it is still being built
+   *  (a slice a frame, AUDIT RETRO1 E1) or if building it failed (E3,
+   *  said once a shift). Uploaded on unit 2 and unbound after. */
   _lut(shift) {
     if (this.lut && this.lut.shift === shift) return this.lut;
+    if (this._lutFailed.has(shift)) return null;
+    if (!this._lutJob || this._lutJob.shift !== shift) this._lutJob = { shift, it: retroLutSteps(shift) };
     const gl = this.gl;
-    const { size, data } = buildRetroLut(shift);
-    if (this.lut) gl.deleteTexture(this.lut.tex);
-    const tex = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_3D, tex);
-    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-    gl.texImage3D(gl.TEXTURE_3D, 0, gl.RGBA8, size, size, size, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
-    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
-    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);   // lut.filterMode = Point (:336)
-    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);   // lut.wrapMode = Clamp
-    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE);
-    return (this.lut = { tex, shift, size });
+    let tex = null;
+    try {
+      const t0 = this._now();
+      let r;
+      do { r = this._lutJob.it.next(); } while (!r.done && this._now() - t0 < this._lutBudgetMs);
+      if (!r.done) return null;   // not whole yet: this frame shows the image without the effect
+      this._lutJob = null;
+      const { size, data } = r.value;
+      if (this.lut) gl.deleteTexture(this.lut.tex);
+      this.lut = null;
+      tex = gl.createTexture();
+      gl.activeTexture(gl.TEXTURE2);
+      gl.bindTexture(gl.TEXTURE_3D, tex);
+      gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+      gl.texImage3D(gl.TEXTURE_3D, 0, gl.RGBA8, size, size, size, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+      gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
+      gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);   // lut.filterMode = Point (:336)
+      gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);   // lut.wrapMode = Clamp
+      gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE);
+      gl.bindTexture(gl.TEXTURE_3D, null);
+      gl.activeTexture(gl.TEXTURE0);
+      return (this.lut = { tex, shift, size });
+    } catch (e) {
+      this._lutJob = null;
+      this._lutFailed.add(shift);
+      if (tex) { gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4); gl.bindTexture(gl.TEXTURE_3D, null); gl.deleteTexture(tex); }   // the half-made table, not cached (an incomplete texture reads black), and the unpack state back
+      gl.activeTexture(gl.TEXTURE0);
+      console.warn(`[retro] the palette LUT (shift ${shift}) could not be built - presenting without the effect:`, e?.message ?? e);
+      return null;
+    }
+  }
+
+  /** AUDIT RETRO1 E2: free the LUT (and any build in flight) - retro mode went off. */
+  dropLut() {
+    if (this.lut) this.gl.deleteTexture(this.lut.tex);
+    this.lut = null;
+    this._lutJob = null;
   }
 
   /**
@@ -397,52 +487,62 @@ export class RetroPass {
    * pixels, bottom-left ([x, y, w, h]); `depth` the depth texture the
    * frame wrote (this image's own, or the lane's frame's); `post`
    * PostProcessingInRetroMode after the toggle; `clear` the renderer's
-   * clear-colour shadow, put back after the black clear. Leaves the
-   * canvas bound, the viewport at the full canvas and the draw-state
-   * baseline (depth test, depth writes and culling on, blending off).
+   * clear-colour shadow, put back after the black clear; `scissor` the
+   * renderer's live screen scissor ([x, y, w, h] as gl.scissor takes it)
+   * or null - lifted for the clear and the quad, and put back. Leaves the
+   * canvas bound, the viewport at the full canvas, units 0-2 empty and
+   * TEXTURE0 active, and the draw-state baseline (depth test, depth
+   * writes and culling on, blending off).
    */
-  present({ depth, rect, canvasW, canvasH, post = 0, lutShift = 1, clear = null }) {
+  present({ depth, rect, canvasW, canvasH, post = 0, lutShift = 1, clear = null, scissor = null }) {
     this.pending = false;
     const gl = this.gl, t = this.target;
     setFrameTarget(null);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.viewport(0, 0, canvasW, canvasH);
-    gl.clearColor(0, 0, 0, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    if (clear) gl.clearColor(clear[0], clear[1], clear[2], clear[3]);
-    if (!t || !(rect[2] > 0) || !(rect[3] > 0)) return;
-    const P = this._program();
-    if (!P) {
-      gl.bindFramebuffer(gl.READ_FRAMEBUFFER, t.fbo);
-      gl.blitFramebuffer(0, 0, t.w, t.h, rect[0], rect[1], rect[0] + rect[2], rect[1] + rect[3], gl.COLOR_BUFFER_BIT, gl.NEAREST);
-      gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
-      return;
+    if (scissor) gl.disable(gl.SCISSOR_TEST);
+    try {
+      gl.viewport(0, 0, canvasW, canvasH);
+      gl.clearColor(0, 0, 0, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      if (clear) gl.clearColor(clear[0], clear[1], clear[2], clear[3]);
+      if (!t || !(rect[2] > 0) || !(rect[3] > 0)) return;
+      const P = this._program();
+      if (!P) {
+        gl.bindFramebuffer(gl.READ_FRAMEBUFFER, t.fbo);
+        gl.blitFramebuffer(0, 0, t.w, t.h, rect[0], rect[1], rect[0] + rect[2], rect[1] + rect[3], gl.COLOR_BUFFER_BIT, gl.NEAREST);
+        gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
+        return;
+      }
+      const { kind: want, noSky } = retroPostKind(post);
+      const lut = want === 2 ? this._lut(lutShift) : null;
+      const kind = want === 2 && !lut ? 0 : want;   // E1/E3: no LUT yet (or none to be had) - the plain image
+      gl.viewport(rect[0], rect[1], rect[2], rect[3]);
+      gl.disable(gl.DEPTH_TEST);
+      gl.depthMask(false);
+      gl.disable(gl.CULL_FACE);
+      gl.disable(gl.BLEND);
+      gl.useProgram(P.p);
+      gl.bindVertexArray(P.vao);
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, t.tex);
+      gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, depth ?? t.depth);
+      gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_3D, lut ? lut.tex : null);
+      gl.uniform4f(P.uRect, rect[0], rect[1], rect[2], rect[3]);
+      gl.uniform1i(P.uKind, kind);
+      gl.uniform1i(P.uNoSky, noSky ? 1 : 0);
+      gl.uniform1i(P.uLutSize, lut ? lut.size : 1);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      gl.bindVertexArray(null);
+      // B1: nothing of the image stays on a unit - the next retro frame draws into it
+      gl.bindTexture(gl.TEXTURE_3D, null);
+      gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, null);
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, null);
+      gl.viewport(0, 0, canvasW, canvasH);
+      gl.depthMask(true);
+      gl.enable(gl.CULL_FACE);
+      gl.enable(gl.DEPTH_TEST);
+    } finally {
+      if (scissor) { gl.enable(gl.SCISSOR_TEST); gl.scissor(scissor[0], scissor[1], scissor[2], scissor[3]); }
     }
-    const { kind, noSky } = retroPostKind(post);
-    const lut = kind === 2 ? this._lut(lutShift) : null;
-    gl.viewport(rect[0], rect[1], rect[2], rect[3]);
-    gl.disable(gl.DEPTH_TEST);
-    gl.depthMask(false);
-    gl.disable(gl.CULL_FACE);
-    gl.disable(gl.BLEND);
-    gl.useProgram(P.p);
-    gl.bindVertexArray(P.vao);
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, t.tex);
-    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, depth ?? t.depth);
-    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_3D, lut ? lut.tex : null);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.uniform4f(P.uRect, rect[0], rect[1], rect[2], rect[3]);
-    gl.uniform1i(P.uKind, kind);
-    gl.uniform1i(P.uNoSky, noSky ? 1 : 0);
-    gl.uniform1i(P.uLutSize, lut ? lut.size : 1);
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    gl.bindVertexArray(null);
-    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_3D, null);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.viewport(0, 0, canvasW, canvasH);
-    gl.depthMask(true);
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
   }
 
   /** Drop the frame target without presenting (retro switched off mid-frame). */

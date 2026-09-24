@@ -79,7 +79,7 @@ test('RETRO1: the five settings are DFU\'s reads - mode and aspect clamped 0..2 
   setValue('Video', 'RetroModeAspectCorrection', 9); assert.equal(retroAspectCorrection(), 2);
   setValue('Video', 'PostProcessingInRetroMode', 5); assert.equal(retroPostProcessing(), 4, 'an unknown material is a blank world in DFU; the last one here');
   setValue('Video', 'PostProcessingInRetroMode', -1); assert.equal(retroPostProcessing(), 0);
-  setValue('Video', 'PalettizationLUTShift', 9); assert.equal(palettizationLutShift(), 8, '256 >> 9 is a LUT of no texels');
+  setValue('Video', 'PalettizationLUTShift', 9); assert.equal(palettizationLutShift(), 7, '256 >> 9 is a LUT of no texels, and (AUDIT RETRO1 C7) 256 >> 8 a one-texel LUT - a black world');
   setValue('Video', 'PalettizationLUTShift', -2); assert.equal(palettizationLutShift(), 0);
   setValue('Video', 'UseMipMapsInRetroMode', true); assert.equal(retroUseMipMaps(), true);
   resetToDefaults();
@@ -121,21 +121,19 @@ test('RETRO1: SetRetroAspectViewport to the cast - a 6x-classic height ratio, a 
   assert.ok(near(narrow.x, -320 / 800) && near(narrow.w, 1 + 2 * 320 / 800), JSON.stringify(narrow));
 });
 
-test('RETRO1: the frame\'s config - null when off, the docked twin by the SETTINGS, the post mode through the Shift-F11 toggle, the shift and the mip switch', () => {
+test('RETRO1: the frame\'s config - null when off, BOTH twins (AUDIT RETRO1 C3: the renderer picks by the drawn bar\'s rect, not the settings), the post mode through the Shift-F11 toggle, the shift and the mip switch', () => {
   resetToDefaults();
   _resetRetroPostprocessing();
   assert.equal(retroFrameConfig(), null, 'off: the renderer draws as it always did');
   setValue('Video', 'RetroRenderingMode', 1);
   setValue('Video', 'PostProcessingInRetroMode', 4);
   setValue('Video', 'PalettizationLUTShift', 2);
-  assert.deepEqual(retroFrameConfig(), { width: 320, height: 200, post: 4, lutShift: 2, mipmaps: false });
+  assert.deepEqual(retroFrameConfig(), { width: 320, height: 200, hudWidth: 320, hudHeight: 154, post: 4, lutShift: 2, mipmaps: false });
   setValue('GUI', 'LargeHUD', true);   // LargeHUDDocked ships True
-  assert.deepEqual([retroFrameConfig().width, retroFrameConfig().height], [320, 154], 'LargeHUD && LargeHUDDocked: the _HUD texture (UpdateRenderTarget :425)');
-  setValue('GUI', 'LargeHUDDocked', false);
-  assert.equal(retroFrameConfig().height, 200, 'an undocked bar is an overlay - the full texture');
+  assert.deepEqual(retroFrameConfig(), { width: 320, height: 200, hudWidth: 320, hudHeight: 154, post: 4, lutShift: 2, mipmaps: false }, 'the settings alone choose no twin - the enhanced skin draws no bar for them to be right about');
   setValue('Video', 'RetroRenderingMode', 2);
   setValue('Video', 'UseMipMapsInRetroMode', true);
-  assert.deepEqual(retroFrameConfig(), { width: 640, height: 400, post: 4, lutShift: 2, mipmaps: true });
+  assert.deepEqual(retroFrameConfig(), { width: 640, height: 400, hudWidth: 640, hudHeight: 308, post: 4, lutShift: 2, mipmaps: true });
   // TogglePostprocessing: a plain Blit, not the material - and back
   assert.equal(retroPostprocessingEnabled(), true);
   assert.equal(toggleRetroPostprocessing(), false);
@@ -245,16 +243,17 @@ test('RETRO1: the LUT is InitLut\'s bytes - (r,g,b) << shift\'s nearest colour, 
   assert.ok(ties > 0, 'the sample reaches texels where two colours tie - the tree\'s own answer is what decides them');
 });
 
-test('RETRO1: the lookup and the posterize are Point sampling and "4 bits per component" on a display byte', () => {
+test('RETRO1: the lookup and the posterize are Point sampling and "4 bits per component" - AUDIT RETRO1 A3: in DFU\'s approximate gamma, shown through its exact sRGB encode', () => {
   assert.equal(retroLutTexel(0, 128), 0);
-  assert.equal(retroLutTexel(1, 128), 0, 'floor(1/255 * 128)');
-  assert.equal(retroLutTexel(2, 128), 1);
+  assert.equal(retroLutTexel(2, 128), 0, 'DFU\'s approximate gamma puts a dark byte a cell lower than floor(2/255 * 128) = 1');
+  assert.equal(retroLutTexel(4, 128), 1);
   assert.equal(retroLutTexel(253, 128), 126);
-  assert.equal(retroLutTexel(255, 128), 127, 'clamped to the last texel');
+  assert.equal(retroLutTexel(255, 128), 127, 'the last texel - DFU\'s gamma of 255 is just under 1');
   assert.equal(retroLutTexel(255, 1), 0);
   assert.equal(posterizeByte(0), 0); assert.equal(posterizeByte(255), 255);
-  assert.equal(posterizeByte(8), 0, '8/255*15 = 0.47 rounds down');
-  assert.equal(posterizeByte(9), 17, '9/255*15 = 0.53 rounds up to the first of sixteen levels');
+  assert.equal(posterizeByte(8), 0, 'rounds down');
+  assert.equal(posterizeByte(9), 13, 'the first of sixteen levels, 1/15 - which DFU\'s screen shows as 13, not 17');
+  assert.deepEqual([26, 43].map(posterizeByte), [32, 50], 'and 2/15, 3/15 as 32 and 50');
   assert.equal(new Set(Array.from({ length: 256 }, (_, v) => posterizeByte(v))).size, 16, 'sixteen levels a channel');
   assert.deepEqual([0, 1, 2, 3, 4].map(retroPostKind), [
     { kind: 0, noSky: false }, { kind: 1, noSky: false }, { kind: 1, noSky: true }, { kind: 2, noSky: false }, { kind: 2, noSky: true },
@@ -267,9 +266,10 @@ test('RETRO1: the present shader - the presentation texel snapped, "Sky untouche
   assert.match(RETRO_FS, /vec2 uv = \(floor\(\(gl_FragCoord\.xy - uRect\.xy\) \/ uRect\.zw \* uPresent\) \+ 0\.5\) \/ uPresent;/, 'two Point blits folded into one fetch');
   assert.match(RETRO_FS, /if \(uKind == 0\) return;/);
   assert.match(RETRO_FS, /if \(uNoSky == 1 && texture\(uDepth, uv\)\.r >= 1\.0\) return;/);
-  assert.match(RETRO_FS, /outColor = vec4\(floor\(c\.rgb \* 15\.0 \+ 0\.5\) \/ 15\.0, c\.a\);/);
-  assert.match(RETRO_FS, /ivec3 v = ivec3\(floor\(c\.rgb \* 255\.0 \+ 0\.5\)\);/);
-  assert.match(RETRO_FS, /texelFetch\(uLut, min\(v \* uLutSize \/ 255, ivec3\(uLutSize - 1\)\), 0\)\.rgb/);
+  assert.match(RETRO_FS, /vec3 g = unityLinearToGamma\(srgbToLinear\(c\.rgb\)\);/, 'AUDIT RETRO1 A3: DFU\'s shader space');
+  assert.match(RETRO_FS, /if \(uKind == 1\) q = floor\(g \* 15\.0 \+ 0\.5\) \/ 15\.0;/);
+  assert.match(RETRO_FS, /else q = texelFetch\(uLut, min\(ivec3\(floor\(g \* float\(uLutSize\)\)\), ivec3\(uLutSize - 1\)\), 0\)\.rgb;/);
+  assert.match(RETRO_FS, /outColor = vec4\(clamp\(linearToSrgb\(unityGammaToLinear\(q\)\), 0\.0, 1\.0\), c\.a\);/, 'and back through DFU\'s GammaToLinearSpace and the screen\'s exact encode');
   const i1 = RETRO_FS.indexOf('uNoSky == 1'), i2 = RETRO_FS.indexOf('uKind == 1)');
   assert.ok(i1 > 0 && i1 < i2, 'the sky test comes before either effect');
 });
@@ -321,6 +321,7 @@ test('RETRO1: RetroPass - the image and its depth texture at the target\'s size,
     pass.present({ rect: [0, 0, 1280, 720], canvasW: 1280, canvasH: 720, post: 1, lutShift: 2 });
     assert.deepEqual(calls.filter((c) => c[1] === 'uKind').at(-1).slice(2), [1], 'posterize');
     assert.ok(!calls.some((c) => c[0] === 'texImage3D'), 'posterize builds no LUT, even at a shift it has never seen');
+    assert.equal(pass._lutJob, null, 'nor starts one (AUDIT RETRO1 E1: a build runs a slice a frame, so an upload is not the only sign of one)');
     assert.equal(pass.lut.shift, 6, 'the palette\'s LUT is left as it was');
     assert.deepEqual(calls.filter((c) => c[1] === 'uLutSize').at(-1).slice(2), [1], 'and the shader is told there is none');
     // a new size is a new image, the old one freed
@@ -354,13 +355,13 @@ test('RETRO1: a program that will not build presents with a NEAREST blit - a ret
 test('RETRO1: the renderer\'s classic lane - a WORLD frame draws into the image at its size, the host\'s rect kept for the present, the first screen quad presents it, a menu and a panel keep the canvas', () => {
   const { calls, canvas } = recordingGl();
   const r = new Renderer(canvas);
-  let cfg = { width: 320, height: 200, post: 3, lutShift: 5, mipmaps: true };
+  let cfg = { width: 320, height: 200, hudWidth: 320, hudHeight: 154, post: 3, lutShift: 5, mipmaps: true };
   r.setRetroSource(() => cfg);
   r.setWorldViewport({ x: 0.125, y: 0.1, w: 0.75, h: 0.9 });
   r.beginFrame(I, I, L, WORLD_FRAME);
   try {
-    assert.deepEqual(r.worldViewportPx, [0, 0, 320, 200], 'the world pass fills the image');
-    assert.deepEqual(r.retroFrame.rect, [160, 72, 960, 648], 'the host\'s rect is where it lands');
+    assert.deepEqual(r.worldViewportPx, [0, 0, 320, 154], 'the world pass fills the image - the _HUD twin, the rect being a docked strip (AUDIT RETRO1 C3)');
+    assert.deepEqual(r.retroFrame.view, { x: 0.125, y: 0.1, w: 0.75, h: 0.9 }, 'the host\'s rect is where it lands (AUDIT RETRO1 B6: normalized, placed on the canvas as it is at the present)');
     assert.deepEqual(r.worldViewportRect, { x: 0.125, y: 0.1, w: 0.75, h: 0.9 }, 'the 2D pass\'s record is still the canvas rect');
     assert.equal(frameTarget(), r.retro.target.fbo); assert.equal(r._frameFbo, r.retro.target.fbo);
     const clear = calls.findIndex((c) => c[0] === 'clear' && c[1] === 16384 + 256);
@@ -380,13 +381,14 @@ test('RETRO1: the renderer\'s classic lane - a WORLD frame draws into the image 
     // a frame that draws no screen quad is presented at the next beginFrame, under ITS config
     r.beginFrame(I, I, L, WORLD_FRAME);
     const owed = r.retroFrame;
-    cfg = { width: 640, height: 400, post: 1, lutShift: 5, mipmaps: true };
+    cfg = { width: 640, height: 400, hudWidth: 640, hudHeight: 308, post: 1, lutShift: 5, mipmaps: true };
     calls.length = 0;
     r.beginFrame(I, I, L, WORLD_FRAME);
     const present = calls.findIndex((c) => c[0] === 'drawArrays');
     assert.ok(present >= 0, 'the owed image presented first');
     assert.deepEqual(calls.slice(0, present).filter((c) => c[1] === 'uKind').at(-1).slice(2), [2], 'with the owed frame\'s effect, not the new one\'s');
-    assert.deepEqual(owed.rect, [0, 0, 1280, 720], 'no rect set: the whole canvas');
+    assert.equal(owed.view, null, 'no rect set: the whole canvas');
+    assert.deepEqual(calls.slice(0, present).filter((c) => c[0] === 'viewport').at(-1).slice(1), [0, 0, 1280, 720]);
     assert.deepEqual(r.worldViewportPx, [0, 0, 640, 400], 'and the new frame at its own size');
     r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 });
     // a menu's frame is not a world frame
@@ -503,7 +505,7 @@ test('RETRO1: the five are LIVE, read by systems/retroMode.js, and the screen sp
   assert.equal(formatValue('Video/UseMipMapsInRetroMode', 'False'), 'Off');
   assert.equal(stepValue('Video/RetroRenderingMode', '2', +1), '0', 'the slider wraps');
   assert.deepEqual(ENUM_LAW['Video/PostProcessingInRetroMode'].values, ['Off', 'Posterization (full)', 'Posterization (-sky)', 'Palettization (full)', 'Palettization (-sky)']);
-  assert.deepEqual([NUMBER_LAW['Video/PalettizationLUTShift'].min, NUMBER_LAW['Video/PalettizationLUTShift'].max], [0, 8], 'the consumer\'s clamp');
+  assert.deepEqual([NUMBER_LAW['Video/PalettizationLUTShift'].min, NUMBER_LAW['Video/PalettizationLUTShift'].max], [0, 7], 'the consumer\'s clamp (AUDIT RETRO1 C7: 8 is a black world)');
   assert.match(src('main.js'), /renderer\.setRetroSource\(retroFrameConfig\);/, 'the renderer asks the settings through main.js');
   assert.doesNotMatch(src('render/renderer.js'), /^import[^\n]*from '\.\.\/systems\/(?:settings|retroMode)\.js'/m, 'render/ imports no settings');
   assert.doesNotMatch(src('render/retroPass.js'), /^import[^\n]*from '\.\.\/systems\//m, 'the pass is a leaf');

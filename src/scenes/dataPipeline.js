@@ -121,11 +121,13 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     // index-0 mortar run in a wall texture became a slit the model
     // shader discarded, and the room behind it showed through.
     const color32 = swap ?? t.getColor32(removeMask ? changeMask(bitmap) : bitmap, opaque ? -1 : 0);   // HM1: a clone - the cached record keeps its mask for the doll
-    renderer.uploadTexture(archive, record, color32, variant !== undefined ? { opaque, mips, variant } : { opaque, mips });
+    // AUDIT RETRO1 A4: a replacement is flagged - TextureReader's retro arm (no mip chain) never reaches TryImportTexture's
+    const replacement = !!swap;
+    renderer.uploadTexture(archive, record, color32, variant !== undefined ? { opaque, mips, variant, replacement } : { opaque, mips, replacement });
     // Exterior windows also get their emission mask (R2, MaterialReader
     // semantics: glass texels glow with the active window style).
     if (isExteriorWindow(archive, record)) {
-      renderer.uploadEmissionTexture(archive, record, t.getWindowColors32(bitmap));
+      renderer.uploadEmissionTexture(archive, record, t.getWindowColors32(bitmap), { replacement });
     } else if (isEmissive(archive, record) && archive !== FIRE_WALLS_ARCHIVE) {
       // AUDIT 39 F49: THE AUTO-EMISSIVE ARM (MaterialReader.cs:419-423
       // -> TextureReader.cs:301-308 "Just reuse albedo map for basic
@@ -133,7 +135,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
       // `!isWindow` is the C#'s own; the white flag keeps the window
       // style off it, so a lit lantern draws its own texels instead of
       // sitting at scene ambient beside the light it casts.
-      renderer.uploadEmissionTexture(archive, record, color32, { white: true });
+      renderer.uploadEmissionTexture(archive, record, color32, { white: true, replacement });
     }
     return variant;   // DW3: the icon drawers read the GL texture by `${archive}_${record}${variant}`
   };

@@ -10559,9 +10559,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:7855`,
+the other half went stale unnoticed. (The rest cite named `world.js:7856`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:7861` now.)
+deleted the second and the cite is `world.js:7862` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -11981,7 +11981,13 @@ cycle. `scenes/interior.js` draws no HUD and takes nothing.
 The other three arms of that block are named in the module header and
 NOT ported: `DebuggerToggle` (`:297-301`), `Pause` (`:303-306`, which
 this port reaches through the Escape action's pause door) and
-`ToggleRetroPP` (`:320-326`, there is no retro post-processing pass).
+~~`ToggleRetroPP` (`:320-326`, there is no retro post-processing pass)~~.
+**`ToggleRetroPP` PORTED (RETRO1, 2026-09-24): the retro pass exists
+now (`07-Rendering/Retro-Mode.md`), and Shift-F11 is the module's third
+arm, `RetroRenderer.TogglePostprocessing`. AUDIT RETRO1 C1: under an
+open window it does nothing, as the HUD's Update does nothing there -
+`retroToggleKey` keeps the two arms that let QuickLoad through a window
+(`routeKey`, the exterior ladder) from reading its F11 as a load.**
 
 ## AUDIT 64 F38 - THE ESCORT COLUMN WAS ANCHORED TO THE WRONG PANEL (2026-09-08)
 

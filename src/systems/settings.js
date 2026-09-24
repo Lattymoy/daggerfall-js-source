@@ -405,6 +405,18 @@ function getData(section, key) {
 
 const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
 
+// AUDIT RETRO1 E4: a stored value that will not parse is said ONCE a key
+// and value - the getters are read every frame (retro mode's five, three
+// to five times a frame), and one hand-edited value printed a warning per
+// read, hundreds a second. A NEW bad value is said again.
+const _warned = new Set();
+function warnOnce(fn, section, key, raw, fallback) {
+  const k = `${fn}|${section}|${key}|${raw}`;
+  if (_warned.has(k)) return;
+  _warned.add(k);
+  console.warn(`[settings] ${fn}() could not read value [${section}]${key}. Returning ${fallback}.`);
+}
+
 /** GetBool (:921-936): bool.Parse, and a value that will not parse
  *  reads FALSE - not the default. C# bool.Parse accepts "True"/"true"
  *  with surrounding whitespace and nothing else. */
@@ -413,7 +425,7 @@ export function getBool(section, key) {
   const s = String(raw ?? '').trim().toLowerCase();
   if (s === 'true') return true;
   if (s === 'false') return false;
-  console.warn(`[settings] GetBool() could not read value [${section}]${key}. Returning False.`);
+  warnOnce('GetBool', section, key, raw, 'False');
   return false;
 }
 
@@ -424,7 +436,7 @@ export function getInt(section, key, min = null, max = null) {
   const n = /^[+-]?\d+$/.test(String(raw ?? '').trim()) ? parseInt(raw, 10) : NaN;
   if (Number.isNaN(n)) {
     const fallback = min === null ? 0 : min;
-    console.warn(`[settings] GetInt() could not read value [${section}]${key}. Returning ${fallback}.`);
+    warnOnce('GetInt', section, key, raw, fallback);
     return fallback;
   }
   return min === null ? n : clamp(n, min, max);
@@ -436,7 +448,7 @@ export function getFloat(section, key, min = null, max = null) {
   const n = Number(String(raw ?? '').trim());
   if (!Number.isFinite(n) || String(raw ?? '').trim() === '') {
     const fallback = min === null ? 0 : min;
-    console.warn(`[settings] GetFloat() could not read value [${section}]${key}. Returning ${fallback}.`);
+    warnOnce('GetFloat', section, key, raw, fallback);
     return fallback;
   }
   return min === null ? n : clamp(n, min, max);
@@ -514,4 +526,4 @@ export function resetToDefaults() {
 }
 
 /** Test seam: forget the loaded state so the next read re-loads. */
-export function _resetForTests() { _values = null; }
+export function _resetForTests() { _values = null; _warned.clear(); }

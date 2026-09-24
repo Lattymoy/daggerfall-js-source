@@ -112,7 +112,7 @@
 // original note is STALE and is withdrawn: there are no screen-to-ray
 // conversions to fix. The port's activation ray is the CAMERA's own
 // forward vector (`townTalk.tryActivate(cam.pos, useFwd, ...)` -
-// scenes/world.js:13429 and scenes/exterior.js:4812, the only two
+// scenes/world.js:13431 and scenes/exterior.js:4812, the only two
 // hosts that carry the call, each over a useFwd that is the camera's
 // own forward from cam.yaw and cam.pitch - or, since TI1, the touch
 // tap's ray, which IS a pixel unprojected, but through the frame's
@@ -520,7 +520,7 @@ export function horseOffsetHeight(bar = largeHudBar()) {
  */
 export function dockedLargeHudHeight(bar = largeHudBar()) {
   if (!bar || !largeHudEnabled() || !largeHudDocked()) return 0;
-  return bar.h;
+  return Math.trunc(bar.h);   // AUDIT RETRO1 A7: `ScreenHeight = (int)Rectangle.height` (HUDLarge.cs:251)
 }
 
 /** ViewportChanger's `standardViewportRect` (:26), verbatim. */
@@ -568,7 +568,8 @@ export function largeHudWorldAspect(width, height, bar = largeHudBar()) {
   // aspect (320/200, or 320/154 over a docked bar - the _HUD twin exists
   // for exactly this), and RetroPresentation stretches the result over
   // the rect below. So under retro mode the lens is the texture's shape.
-  const retro = retroWorldAspect();
+  // AUDIT RETRO1 C3: the twin by the DRAWN bar, the one the rect takes off
+  const retro = retroWorldAspect(retroRenderingMode(), dockedLargeHudHeight(bar) > 0);
   if (retro) return retro;
   return width / Math.max(1, height - dockedLargeHudHeight(bar));
 }
@@ -577,7 +578,7 @@ export function largeHudWorldAspect(width, height, bar = largeHudBar()) {
  * RETRO1 - THE WORLD RECT EVERY HOST SETS AND MAPS THROUGH:
  * largeHudViewportRect, or - with retro mode on and its aspect
  * correction set - SetRetroAspectViewport's pillarbox (ViewportChanger.cs
- * :41-45, :96-147; the arithmetic is systems/retroMode.js's), which takes
+ * :41-45, :96-149; the arithmetic is systems/retroMode.js's), which takes
  * the SAME docked-bar height off the bottom. The hosts hand it to
  * setWorldViewport, and the tap ray, the lock's screen point and the name
  * labels map through it, so a pillarboxed world moves no pick. It needs

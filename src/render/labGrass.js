@@ -1363,7 +1363,7 @@ export class LabGrassRenderer {
       gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, this.pxSheet);
       gl.uniform1i(u.uPxSheet, 4);
       gl.activeTexture(gl.TEXTURE0);
-    }
+    } else gl.uniform1i(u.uPxSheet, 4);   // AUDIT RETRO1 B1: the smooth style reads the sampler too (the mix at 0) - left on unit 0 it read whatever was bound there, and a frame image still bound there is a WebGL feedback loop; unit 4, which this style never binds
     // GRASS5: the pack's decode frame. The blade scale and the cell size
     // are the same for every slot, so they go once a draw; the cell's own
     // origin and ground span go per slot, below.

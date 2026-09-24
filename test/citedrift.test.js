@@ -707,7 +707,7 @@ const SOURCE_CITES = [
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:\d+`, `dungeon\.js:(\d+)`/, 'src/scenes/dungeon.js', /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\), largeHudWorldAspect/],
   ['bible/10-UI/Settings-Screen-Spec.md', /`worldModes\.js:(\d+)`, `world\.js:\d+`, `interior\.js:\d+`, `exterior\.js/, WM, /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\), largeHudWorldAspect/],
   ['bible/10-UI/Settings-Screen-Spec.md', /`worldModes\.js:\d+`, `world\.js:(\d+)`, `interior\.js:\d+`, `exterior\.js/, WO, /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\), worldAspect/],
-  ['bible/10-UI/Settings-Screen-Spec.md', /`worldModes\.js:\d+`, `world\.js:\d+`, `interior\.js:(\d+)`, `exterior\.js/, 'src/scenes/interior.js', /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\), canvas\.clientWidth/],
+  ['bible/10-UI/Settings-Screen-Spec.md', /`worldModes\.js:\d+`, `world\.js:\d+`, `interior\.js:(\d+)`, `exterior\.js/, 'src/scenes/interior.js', /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\), largeHudWorldAspect/],   // AUDIT RETRO1 A8: the hosts' one denominator here too
   // ROAD-G G7 (review): the entry above reads the exterior number out of
   // that sentence and nothing else, so the sentence's ANCHOR cite - the
   // function the other five read - was the one cite in it no pin

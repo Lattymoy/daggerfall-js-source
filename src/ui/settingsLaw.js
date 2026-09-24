@@ -62,7 +62,7 @@ export const NUMBER_LAW = Object.freeze({
   'Enhancements/DungeonAmbientLightScale': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU (:333-341)' },
   'Enhancements/NightAmbientLightScale': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU (:333-341)' },
   'Enhancements/PlayerTorchLightScale': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU (:333-341)' },
-  'Video/PalettizationLUTShift': { min: 0, max: 8, step: 1, coarse: 1, source: 'DFU GetInt, no range (SettingsManager:412) - RETRO1 clamps 0..8, the last shift whose LUT (256 >> 8) has a texel' },
+  'Video/PalettizationLUTShift': { min: 0, max: 7, step: 1, coarse: 1, source: 'DFU GetInt, no range (SettingsManager:412) - RETRO1 clamps it; AUDIT RETRO1 C7: 0..7, since 8 is a one-texel LUT (256 >> 8) that paints the world black' },
 });
 
 /** RRGGBBAA - the alpha is load-bearing (ToolTipBackgroundColor ships 404040D2). */

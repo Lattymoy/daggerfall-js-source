@@ -107,7 +107,7 @@ below was therefore opened by hand, and most of them close that way.
 | `Game/Utility` | **12/12** | - |
 | `Game/Weather` | **1/1** | - |
 | `Terrain` | **8/11** | `SimpleTerrainSampler`, `NoiseTerrainSampler` (alternate samplers DFU does not ship as default), `JobHelpers` |
-| `Utility` | **24/35** | Unity presentation and text infrastructure: `ModelCombiner`, `TextureAtlasBuilder`, `TerrainAtlasBuilder`, `RetroRenderer`, `RetroPresentation`, `CameraClearManager`, `FastColorPalette`, `DefaultTextProvider`, `FallbackTextProvider`, `EnhancedKeyedCollection`, `Tuple` |
+| `Utility` | **24/35** | Unity presentation and text infrastructure: `ModelCombiner`, `TextureAtlasBuilder`, `TerrainAtlasBuilder`, ~~`RetroRenderer`, `RetroPresentation`~~, `CameraClearManager`, ~~`FastColorPalette`~~, `DefaultTextProvider`, `FallbackTextProvider`, `EnhancedKeyedCollection`, `Tuple`. **PORTED SINCE (RETRO1, 2026-09-24, and AUDIT RETRO1): DFU's retro mode - `RetroRenderer`, `RetroPresentation` and `FastColorPalette` are `render/retroPass.js` and `systems/retroMode.js` now, 27/35 by the same sweep (`07-Rendering/Retro-Mode.md`).** |
 | `Utility/AssetInjection` | **5/9** | `BookReplacement`, `TextAssetReader`, `VideoReplacement`, `XMLManager` - the mod system, a departure |
 | `Localization` | **3/4** | `LocalizationEnums` |
 | `Assets/Scripts` root | **11/15** | `DaggerfallUnityApplication`, `DaggerfallUnityInterfaces`, `DaggerfallUnityStructs`, `GenerateDiagLog` |
@@ -594,7 +594,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   `Utility/ViewportChanger.cs:52-61` and `HUDCrosshair.cs:43-52` are a dozen
   lines each; the cost is the seam. `gl.viewport` is set full-canvas at
   four sites inside the renderer's own frame brackets
-  (`render/renderer.js:2196, :2028, :2924, :3247`) and the 2D passes
+  (`render/renderer.js:2227, :2030, :2964, :3288`) and the 2D passes
   need the full canvas back. D10 withdrew one clause as stale with
   evidence: there are no screen-to-ray conversions to fix, because the
   port's activation ray is the camera's forward vector, not a pixel
@@ -1000,9 +1000,11 @@ faithful to whatever reference it does have, and none of them is a gap.
   (archive, record), bytes-in/objects-out data access with no
   FileProxy. This is what the `Utility` 24/35 and `Game/UserInterface`
   45/55 misses are: `ModelCombiner`, `TextureAtlasBuilder`,
-  `TerrainAtlasBuilder`, `RetroRenderer`, `CameraClearManager`,
+  `TerrainAtlasBuilder`, ~~`RetroRenderer`~~, `CameraClearManager`,
   `UserInterfaceRenderTarget`, `VideoPlayerDrawer` are Unity's problems
-  and not the port's.
+  and not the port's. **`RetroRenderer` STRUCK (RETRO1, 2026-09-24): it
+  was a player-facing mode behind five settings the port already stored,
+  not Unity plumbing, and it is ported (`07-Rendering/Retro-Mode.md`).**
 - **The engine-PRNG rule and its substitutions** - a `UnityEngine.Random`
   draw rides an injectable uniform roll, a `DFRandom` or
   `System.Random` draw does not; Ken Perlin's reference noise in place

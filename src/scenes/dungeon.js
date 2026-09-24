@@ -1099,6 +1099,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // dungeon inventory probe hit it on its first press of F6.
       frames++;
       if (shotMode) window.__frame = frames;
+      renderer.resolveFrame();   // AUDIT RETRO1 E5/C8: a frame that drew no screen quad (the enhanced skin, a sheathed weapon) is shown NOW, not at the next beginFrame
       capturePendingScreenshot(canvas);   // SS1: a save armed under an overlay still lands its shot
       frameAbort();   // AUDIT-WH2 L1-F4: the frame never reached frameEnd - close the token, take no sample
       requestAnimationFrame(frame);
@@ -1120,6 +1121,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     frames++;
     if (shotMode) window.__frame = frames;
     if (shotMode && frames === 5) window.__shotReady = true;
+    renderer.resolveFrame();   // AUDIT RETRO1 E5/C8: a frame that drew no screen quad (the enhanced skin, a sheathed weapon) is shown NOW, not at the next beginFrame
     // SS1: deliver a pending save screenshot after the frame's last
     // draw (preserveDrawingBuffer false - the buffer is only this
     // task's to read).

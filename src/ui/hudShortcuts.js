@@ -94,3 +94,11 @@ export function hudShortcutKey(e, keys = null) {
   }
   return false;
 }
+
+/** AUDIT RETRO1 C1: the ToggleRetroPP chord itself, toggling nothing. F11
+ *  is QuickLoad's key as well, and the two arms that let QuickLoad through
+ *  an open window (ui/input.js routeKey, world.js's exterior ladder) read
+ *  the key alone - so Shift-F11 under the settings screen loaded the
+ *  quicksave with no prompt. Under a window DFU does neither: the HUD's
+ *  Update is dead and QuickLoad answers only the death screen. */
+export const retroToggleKey = (e, keys = null) => !!e && hotkeyHit('ToggleRetroPP', e.code, e, keys);
