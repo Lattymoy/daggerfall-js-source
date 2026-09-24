@@ -72,6 +72,16 @@ import { largeHudOptions } from '../ui/hudLarge.js';   // U45: the classic botto
 import { drawText, makeFont } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
 import { setMidScreenText, midScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's second text surface
+// DISC16-D: STATIC. This was the one module of the foe subsystem's lazy
+// block that nothing else imports, so the build gave it a lazy-only
+// chunk - and a tab opened before a deploy asked for a chunk the deploy
+// had deleted, the whole subsystem failed, and every enemy in the
+// dungeon stood as a flat no blow could reach (Discord: "In a dungeon
+// that I cant hurt enemy's"). Its own imports (enemyMotor, navmesh)
+// were static elsewhere already, so the lazy block's gate never saved
+// their bytes; this one module is ~16 KB of source.
+import { EnhancedEnemyAI, makeNavWorld } from '../ai/enhancedMotor.js';
+import { isStaleChunk, STALE_CHUNK_IN_PLAY_TEXT } from '../systems/staleChunk.js';   // DISC16-D: a chunk gone mid-session is said, not swallowed
 import { hudRenderEnabled } from '../ui/hudShortcuts.js';   // AUDIT 64 F37: the Draw override covers popupText too
 import { FntFile } from '../formats/fntFile.js';
 import { ImgFile } from '../formats/imgFile.js';
@@ -816,8 +826,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // caught in review, hoisted).
     const [shared, engineRig, { buildRaceCharacter },
       { EnemyAI, withinYaw, isBackFacing, openDoorsStep }, { EnemyAttack }, { makeEnemyEntity, loadMonsterCareer }, { EnemyCaster, castEnemySpell: castShared, hasMagickaToCast },
-      { runTargetMachine, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, PEER_CAST_TARGET, resetAllyTeamOnPlayerAttack, targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection, bumpAtkCount },
-      { EnhancedEnemyAI, makeNavWorld }] = await Promise.all([
+      { runTargetMachine, isPlayerTarget, isLocalPlayerTarget, PLAYER_TARGET, PEER_CAST_TARGET, resetAllyTeamOnPlayerAttack, targetAimPoint, enemyArrowOrigin, enemyTransformPoint, arrowAimDirection, bumpAtkCount }] = await Promise.all([
       import('./shared.js'), import('../characters/engineRig.js'),
       import('../characters/raceCharacter.js'),
       import('../characters/enemyMotor.js'), import('../characters/enemyAttack.js'),
@@ -828,7 +837,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // enemyTargets imports enemyMotor. A static import here would
       // defeat that gate.
       import('../characters/enemyTargets.js'),
-      import('../ai/enhancedMotor.js'),
     ]);
     const bodyImg = new ImgFile();
     bodyImg.load(await fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
@@ -869,7 +877,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      // BODY00I0 fetch, the ramp derive) must not black-screen the
      // level: degrade to a foe-less dungeon, loudly. foeDeps stays
      // null; the class branch is skipped, monsters still billboard.
-     console.error('[foes] subsystem init failed; dungeon builds without class enemies:', err?.message ?? err);
+     // DISC16-D: WITHOUT ANY LIVE ENEMY - buildFoeAt falls back to a flat
+     // for every marker, class or monster (the old line said "without
+     // class enemies", which sent a reader to the wrong half). A chunk
+     // the build no longer has is said on the screen: the page is from
+     // an older deploy, and a reload is the whole fix (systems/staleChunk.js).
+     console.error('[foes] subsystem init failed; the dungeon builds with no live enemies (every marker a flat):', err?.message ?? err);
+     if (isStaleChunk(err)) setMidScreenText(STALE_CHUNK_IN_PLAY_TEXT);
      foeDeps = null;
    }
   }

@@ -70,6 +70,15 @@ export const STALE_CHUNK_TEXT =
   'This page was loaded from an older version of the game that has since been replaced. '
   + 'Reloading did not pick up the new one - try a hard refresh (Ctrl-Shift-R, or Cmd-Shift-R on a Mac).';
 
+/** DISC16-D: the same event in the middle of a session - a chunk a
+ *  running page asks for (the dungeon's foe subsystem is the case that
+ *  was reported) is gone. No automatic reload here: that would throw
+ *  away whatever the player has not saved. The words say what happened
+ *  and what fixes it. */
+export const STALE_CHUNK_IN_PLAY_TEXT =
+  'This page is from an older version of the game that has since been replaced, so the enemies here could not be built. '
+  + 'Reload the page to fix it.';
+
 /**
  * What to do about a boot failure. Pure, so the ladder is pinnable
  * without a browser.

@@ -55,7 +55,7 @@ import { morrowindDataCount, morrowindDataFingerprint, registerMorrowindData } f
 import { mwRaceId } from '../formats/mwNpc.js';   // TR2: the one race-id spelling
 import { TEMPLATES } from '../systems/useItem.js';   // MW-D51: the Torch template - the lit light the Morrowind hand holds
 import { morrowindDataGeneration } from '../scenes/dataSource.js';
-import { objectAabb, rayAabb } from '../player/activate.js';   // AUDIT 63 F37: one live box for both rays
+import { objectAabb, rayAabb, hasMeshCollider } from '../player/activate.js';   // AUDIT 63 F37: one live box for both rays
 import { SOUND } from '../systems/soundClips.js';
 import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSound
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: FPSWeapon.cs:365's mid-screen line
@@ -195,7 +195,7 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:2852), townTalk.say
+ *                     (dungeonContext.js:2866), townTalk.say
  *                     (exterior.js:2136, world.js:4151) and
  *                     worldModes' own interior sink (worldModes.js:426,
  *                     which warns to console only where a host mounts
@@ -1818,6 +1818,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
  */
 export function envAttack(actions, collider, eye, lookDir, rolls = Math.random) {
   let best = null, bestD = Infinity;
+  let first;   // DISC16-E: the one surface the swing's ray meets, cast lazily
   for (const o of actions.objects.values()) {
     // AUDIT 63 F37: WeaponEnvDamage reads a LIVE Physics.Raycast hit
     // (WeaponManager.cs:459-464), so a mover is struck where it is,
@@ -1826,6 +1827,13 @@ export function envAttack(actions, collider, eye, lookDir, rolls = Math.random) 
     if (!box) continue;
     const d = rayAabb(eye, lookDir, box);
     if (d === null || d > WEAPON_REACH || d >= bestD) continue;
+    // DISC16-E: the activate ray's law - a mesh collider whose box is
+    // entered while the first surface is ANOTHER action object's own bucket
+    // was never struck (the door stands inside the corridor piece's box).
+    if (hasMeshCollider(o) && collider.raycastHit) {
+      first ??= collider.raycastHit(eye, lookDir, WEAPON_REACH);
+      if (first.key != null && first.key !== o.key && actions.objects.has(first.key)) continue;
+    }
     const wall = collider.raycast(eye, lookDir, d - 0.05);
     if (Number.isFinite(wall) && wall < d - 0.05) continue;   // occluded
     best = o; bestD = d;

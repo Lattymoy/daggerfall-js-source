@@ -15,10 +15,19 @@
 //       invaders ... in town?": the resting arrest is DFU's law and stays; the five centaurs were a wilderness camp
 //       pitched inside a town (its gate read the PREVIOUS pixel's location on the frame a new one is entered, and never
 //       where the group lands); and, Mac's ask, THE WATCH DEFENDS THE TOWN - the port's own, behind its Features row.
+//   E - "Cant enter Mannimarcos room ... even if i bash it doesnt make a sound": the throne-room door (S0000205 object
+//       20251, lock 2) stands 5 cm inside the placement box of the corridor piece in front of it, which carries a
+//       Collision01 DoorText record. The press and the swing both picked the nearest BOX, the relay, which refuses a
+//       Direct or an Attack - so nothing answered, not even the bash sound DFU plays before any lock check.
+//   D - "In a dungeon that I cant hurt enemy's": one cause found in code - the dungeon's foe subsystem lazily imported
+//       the one module nothing else imports (ai/enhancedMotor.js), a lazy-only chunk a deploy deletes under an open
+//       tab; the import failed, the subsystem was skipped, and every enemy stood as a flat no blow could reach.
 import './modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { join, dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createLycanthropyCurse, liveLycanthropy, cureLycanthropy } from '../src/systems/lycanthropy.js';
 import { createVampirismCurse, liveVampirism, cureVampirism } from '../src/systems/vampirism.js';
 import { endDisease } from '../src/systems/diseases.js';
@@ -35,6 +44,12 @@ import { createCityGuards, GUARD_MOBILE_TYPE } from '../src/scenes/cityGuards.js
 import { createExteriorFoes } from '../src/scenes/exteriorFoes.js';
 import { getTargets, PLAYER_TARGET, staticTeamOf } from '../src/characters/enemyTargets.js';
 import { PlayerWeapon } from '../src/combat/playerWeapon.js';
+import { ActionSystem } from '../src/world/actionSystem.js';
+import { ACTION_FLAGS, TRIGGER_FLAGS } from '../src/world/rdbLayout.js';
+import { Collider } from '../src/player/collider.js';
+import { activationTargets, pickActivatableHit } from '../src/player/activate.js';
+import { envAttack } from '../src/combat/weaponRig.js';
+import { isStaleChunk, STALE_CHUNK_IN_PLAY_TEXT } from '../src/systems/staleChunk.js';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 
@@ -330,4 +345,93 @@ test('DISC16-F by source: the host runs the town watch after the pools move, res
   assert.match(w, /anchor = placeFoeFreely\(anchorEnv, [^\n]*\n\s*if \(anchor && _inAnyLocationRect\(\[anchor\.x, anchor\.y, anchor\.z\]\)\) anchor = null;/, 'the camp is never pitched in a town');
   assert.match(w, /spot = placeFoeFreely\(memberEnv, [^\n]*\n\s*if \(spot && _inAnyLocationRect\(\[spot\.x, spot\.y, spot\.z\]\)\) spot = null;/, 'nor a member over its line');
   assert.match(w, /const loc = locationIndex\.get\(`\$\{px\.x \+ dx\},\$\{px\.y \+ dy\}`\);\n\s*if \(loc\?\.exterior\?\.exteriorData && isInLocationRect\(wc\.x, wc\.z, locationWorldRect\(loc, px\.x \+ dx, px\.y \+ dy\)\)\) return true;/, 'every location\'s widened rect, the pixel and its neighbours');
+});
+
+// ═══ E: the King of Worms' door ═══════════════════════════════════════════════════════════════════════════════════
+/** An axis-aligned box as twelve triangles. */
+function boxMesh(min, max) {
+  const [x0, y0, z0] = min, [x1, y1, z1] = max;
+  const p = [x0, y0, z0, x1, y0, z0, x1, y1, z0, x0, y1, z0, x0, y0, z1, x1, y0, z1, x1, y1, z1, x0, y1, z1];
+  const f = [0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6, 0, 4, 5, 0, 5, 1, 3, 2, 6, 3, 6, 7, 0, 3, 7, 0, 7, 4, 1, 5, 6, 1, 6, 2];
+  return { positions: new Float32Array(p), indices: new Uint32Array(f) };
+}
+const IDENTITY = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+/** S0000205 as the data has it: the door (object 20251, model 55000, lock 2, DoorText idx 72, trigger None) at
+ *  x 0.05..0.20, 5 cm inside the placement box (x 0..6.4) of the corridor piece in front (object 15785, model
+ *  63107, DoorText on Collision01), whose walls ride the static bucket - here one side wall, off the doorway. */
+function scourgBarrow() {
+  const collider = new Collider(() => -Infinity);
+  const actions = new ActionSystem(collider, { rolls: () => 0 });
+  const door = actions.addDoor(boxMesh([0.05, 12.825, 34.6], [0.2, 15.025, 35.8]), IDENTITY, {
+    ns: 0, positionKey: 20251, startingLockValue: 2,
+    action: { actionFlag: ACTION_FLAGS.DoorText, triggerFlag: TRIGGER_FLAGS.None, index: 72, nextObject: -1, duration: 0, magnitude: 0, axisRaw: 5 },
+  });
+  const wall = boxMesh([0, 12.8, 33.0], [6.4, 15.95, 33.2]);
+  collider.addMesh('dungeon', wall.positions, wall.indices, IDENTITY);
+  const relay = actions.addRelay(0, 15785, { actionFlag: ACTION_FLAGS.DoorText, triggerFlag: TRIGGER_FLAGS.Collision01, index: 0, nextObject: -1, axisRaw: 5 },
+    { min: [0, 12.8, 33.0], max: [6.4, 15.95, 37.4] }, [4.8, 12.8, 33.6], 63107);
+  return { actions, collider, door, relay };
+}
+const T_CORRIDOR = [-2, 14.425, 35.2], EAST = [1, 0, 0];
+
+test('DISC16-E: the press from the T-corridor reaches the King of Worms\' door - its lock speaks - not the corridor\'s walk-on record', () => {
+  const { actions, collider, door } = scourgBarrow();
+  const hit = pickActivatableHit(T_CORRIDOR, EAST, activationTargets(actions.objects), collider);
+  assert.equal(hit?.key, door.key);
+  const locks = [];
+  actions.onLockedDoor = (o) => locks.push(o.currentLockValue);
+  actions.activate(hit.key);
+  assert.deepEqual(locks, [2], 'lock 2: pickable, openable by spell, bashable');
+});
+
+test('DISC16-E: the swing reaches AttemptBash on that door, and its sound', () => {
+  const { actions, collider, door } = scourgBarrow();
+  const bashed = [];
+  actions.onDoorBash = (o) => bashed.push(o.key);
+  assert.equal(envAttack(actions, collider, T_CORRIDOR, EAST, () => 0.5), true);
+  assert.deepEqual(bashed, [door.key]);
+});
+
+test('DISC16-E: the corridor piece still owns what its own geometry meets - a ray whose first surface is the static wall inside its box picks the record, as before', () => {
+  const { actions, collider, relay } = scourgBarrow();
+  const hit = pickActivatableHit([3, 14, 38], [0, 0, -1], activationTargets(actions.objects), collider);
+  assert.equal(hit?.key, relay.key, 'the static bucket names nobody - the box decides, as it always did');
+});
+
+// ═══ D: the enemies no blow could reach ═══════════════════════════════════════════════════════════════════════════
+const SRC_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../src');
+/** Every module some file under src/ imports STATICALLY - a chunk the page has already fetched when anything asks. */
+function staticallyImported() {
+  const out = new Set();
+  const walk = (dir) => {
+    for (const f of readdirSync(dir)) {
+      const p = join(dir, f);
+      if (statSync(p).isDirectory()) { walk(p); continue; }
+      if (!f.endsWith('.js')) continue;
+      for (const m of readFileSync(p, 'utf8').matchAll(/^(?:import|export)\s[^;]*?\sfrom\s'(\.[^']+)'/gm)) out.add(resolve(dirname(p), m[1]));
+    }
+  };
+  walk(SRC_ROOT);
+  return out;
+}
+
+test('DISC16-D: every module the dungeon\'s foe subsystem loads lazily is one the page already holds - no chunk there is lazy-only, so no deploy can delete it under an open tab', () => {
+  const dc = rd('src/scenes/dungeonContext.js');
+  const at = dc.indexOf('if (opts.foes && palette) {');
+  const block = dc.slice(at, dc.indexOf('} catch (err) {', at));
+  const lazy = [...block.matchAll(/import\('(\.[^']+)'\)/g)].map((m) => resolve(SRC_ROOT, 'scenes', m[1]));
+  assert.ok(at > 0 && lazy.length >= 8, `the foe block's lazy imports were found (${lazy.length})`);
+  const held = staticallyImported();
+  const lazyOnly = lazy.filter((p) => !held.has(p)).map((p) => p.slice(SRC_ROOT.length + 1));
+  assert.deepEqual(lazyOnly, [], 'a lazy-only chunk in the foe block is a dungeon of flats after the next deploy');
+  assert.ok(held.has(resolve(SRC_ROOT, 'ai/enhancedMotor.js')), 'the enhanced motor is imported statically');
+});
+
+test('DISC16-D: a chunk gone mid-session is said on the screen, not swallowed - and the log names what really failed', () => {
+  assert.equal(isStaleChunk(new TypeError('Failed to fetch dynamically imported module: https://daggerfalljs.dev/play/assets/enhancedMotor-CPTnjkkD.js')), true);
+  assert.match(STALE_CHUNK_IN_PLAY_TEXT, /Reload the page/);
+  const dc = rd('src/scenes/dungeonContext.js');
+  const c = dc.slice(dc.indexOf('} catch (err) {', dc.indexOf('if (opts.foes && palette) {')));
+  assert.match(c.slice(0, 900), /if \(isStaleChunk\(err\)\) setMidScreenText\(STALE_CHUNK_IN_PLAY_TEXT\);/);
+  assert.match(c.slice(0, 900), /the dungeon builds with no live enemies/);
 });

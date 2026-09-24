@@ -295,5 +295,68 @@
     "tests": [
       "test/disc16.test.js"
     ]
+  },
+  {
+    "name": "DISC16-E-press-takes-the-nearest-box",
+    "file": "src/player/activate.js",
+    "old": "    } else if (target.meshCollider === true && collider.raycastHit) {",
+    "new": "    } else if (false) {",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-E-no-mesh-colliders",
+    "file": "src/player/activate.js",
+    "old": "export const hasMeshCollider = (o) => !!o && (o.kind === 'action'",
+    "new": "export const hasMeshCollider = (o) => false && (o.kind === 'action'",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-E-swing-takes-the-nearest-box",
+    "file": "src/combat/weaponRig.js",
+    "old": "      if (first.key != null && first.key !== o.key && actions.objects.has(first.key)) continue;",
+    "new": "",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-E-every-entered-model-skipped",
+    "file": "src/player/activate.js",
+    "old": "      firstHit ??= collider.raycastHit(eye, dir, RAY_DISTANCE);\n",
+    "new": "      firstHit ??= collider.raycastHit(eye, dir, RAY_DISTANCE); continue;\n",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-D-enhanced-motor-lazy-only-again",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "import { EnhancedEnemyAI, makeNavWorld } from '../ai/enhancedMotor.js';\n",
+    "new": "",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-D-stale-chunk-swallowed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "     if (isStaleChunk(err)) setMidScreenText(STALE_CHUNK_IN_PLAY_TEXT);\n",
+    "new": "",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-D-in-play-text-says-nothing-to-do",
+    "file": "src/systems/staleChunk.js",
+    "old": "  + 'Reload the page to fix it.';",
+    "new": "  + '';",
+    "tests": [
+      "test/disc16.test.js"
+    ]
   }
 ]

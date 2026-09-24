@@ -152,6 +152,126 @@ DISC16-A over the backup save made beforehand.
   minutes. So online a poisoned rest kills only underground. It is not
   this loop, and it is left for the online arc.
 
+## DISC16-D: the enemies no blow could reach (report 5)
+
+"Ruins of Yeomham Tower" is a small DungeonRuin, map pixel (532,123)
+(`Internal_Locations.csv:1974`, MapId 750903948). Its dungeon type and its
+fixed monsters are in MAPS.BSA. No combat rule in DFU or the port keys on
+the location type, and the report says nothing about the character, the
+weapon or the switches. So this section names what the code can do, not
+what that player saw.
+
+**Found and fixed: a deploy turned every enemy of a dungeon into a picture.**
+- The dungeon's foe subsystem loads its modules through one lazy
+  `Promise.all`. Every module in it had a static importer elsewhere, so it
+  was already on the page, except `ai/enhancedMotor.js`, which nothing else
+  imports. The build gave it a lazy-only chunk (checked on the live site: a
+  hashed `enhancedMotor-*.js` fetched by `import()`).
+- Every deploy renames chunks, and GitHub Pages deletes the old ones
+  (`systems/staleChunk.js`). A tab opened before a deploy asked for a file
+  that was gone when it first entered a dungeon.
+- The import failed and the whole subsystem was skipped. `buildFoeAt` fell
+  back to a static flat for every marker. `resolvePlayerHit` found no foe,
+  and spells and arrows walked the same empty list. The log said "without
+  class enemies", which was every enemy, and nothing was shown on screen.
+  The stale-chunk reload covers only the boot.
+- **The symptoms:** enemies stand still, never attack, and cannot be hurt;
+  a page reload fixes it. Seven merges reached main between 17:32 and
+  21:11 EDT on 09-23, and the report came at 20:44.
+- Reproduced in node (the investigator's harness): the real dungeon context
+  over a one-block dungeon with a Giant Bat marker, the weapon rig swinging,
+  and only that one import failed with Chrome's own words. Normally, 40
+  swings landed 10 blows. With the import failed, `foes` was empty, the bat
+  was a flat, and no swing touched anything.
+
+**Fix.**
+- `enhancedMotor.js` is a static import. Its own imports were static
+  elsewhere already, so the lazy gate never saved their bytes.
+- The failure log says what really fails.
+- A stale chunk found mid-session is said on screen
+  (`STALE_CHUNK_IN_PLAY_TEXT`, "Reload the page to fix it"). There is no
+  automatic reload here, because that would throw away unsaved progress.
+- A pin holds the law: every module the foe block loads lazily must have a
+  static importer somewhere under `src/`.
+
+**Not changed, and Mac's call: a hit chance with no floor.** Two mods ship on
+by default (MO1): Physical Combat And Armor Overhaul and Meaner Monsters.
+- PCAAO's hit chance has no 3..97 clamp. The mod computes
+  `Mathf.Clamp(chanceToHit, 3, 97)` and throws the result away, and the port
+  keeps that bug for bug (`05-Combat/Physical-Combat-Overhaul.md`).
+- Dodging counts half, and a monster's Dodging is 5 x level + 30.
+- Its soft-material rule means DFU's "ineffective" refusal never fires.
+  The mod's own warning appears only when the damage multiplier is 0.45 or
+  below.
+- Measured for a skill-30 character with steel: 0 of 2000 blows land on a
+  Vampire or a Lich, 30 of 2000 on a Wraith, and nothing is said.
+- Stock DFU refuses those blows with a message on every swing. Quests of
+  the first rank send players at these monsters.
+
+Applying the mod author's intended clamp would be a Ledger A departure, and
+it also caps monster hits on the player at 97%. Leaving both mods off by
+default would reverse MO1. Either is a decision, not a fix.
+
+## DISC16-E: the King of Worms' door (report 6)
+
+**Not the door.** The throne room's entrance is S0000205 object 20251, model
+55000.
+- Its raw TriggerFlag_StartingLock byte is 0x1a, which decodes to lock 2
+  with trigger None, plus a DoorText record that never holds the door
+  (RDBLayout.cs:878, :1175-1176; DaggerfallActionDoor.cs:259-265).
+- Lock 2 can be picked, opened with Open, or bashed at 18% a swing
+  (DaggerfallActionDoor.cs:91-94, :208-217).
+- The matching door of the neighbouring block, 1.2 m away, is removed as an
+  overlap by DFU and by the port alike.
+- Nothing in DFU special-cases Scourg Barrow. The King of Worms is placed
+  from the block data, and no quest opens a door.
+
+A silent bash also rules out every lock case. DFU and the port both play the
+bash sound BEFORE any lock check, so no sound means no door was ever struck.
+
+**Cause.** The corridor piece in front of the door (object 15785, model
+63107) carries a DoorText record on Collision01, a walk-on trigger. The
+port registers it by its placement AABB, and the door's face stands 5 cm
+inside that box.
+- **The press.** `nearestActivatableHit` takes the nearest box entry, which
+  is the relay's. CASTLE1's surface rule ("a surface another target owns is
+  that target's") ran only when the eye stood INSIDE a box, and the player
+  stands outside this one. The relay refuses a Direct, so nothing answered
+  and nothing was said. Lockpicking and an armed Open spell ride the same
+  pick, so they failed too.
+- **The swing.** `envAttack` is a plain nearest-box pick. The relay refuses
+  an Attack, the pick was not a door, and so `attemptBash`, where the sound
+  plays, never ran.
+
+In DFU the corridor's collider is its own mesh, open at the doorway
+(GameObjectHelper.cs:196-206), and the door's is a box sized to its bounds
+(RDBLayout.cs:1147-1155). The ray and the sphere cast meet the door.
+
+**Fix.** CASTLE1's rule, extended to a box the ray merely enters.
+- `hasMeshCollider` names the targets DFU gives a MeshCollider: movers, and
+  relays and effects minted from a placed model. A door's and an acting
+  flat's box IS their collider.
+- When such a box is entered but the first surface the ray meets is ANOTHER
+  target's own bucket, the ray never struck this object. The press
+  (`nearestActivatableHit`) and the swing (`envAttack`) both skip it.
+- A surface in the static bucket names nobody, so there the box decides, as
+  before.
+
+**Evidence.** It was checked on the game's own data, in scratch and never
+in the repo, through the port's own layout, action system, collider, pick
+and swing:
+- From 3 m, 2 m, 1.2 m and 0.6 m out, before the fix the press picked the
+  relay and the swing made no sound. After it, the lock speaks and every
+  swing rings.
+- A scan of all 187 dungeon blocks, every door head-on from both sides,
+  found 22 presses and 101 swings stolen the same way. The Scourg block and
+  the castle blocks of Daggerfall, Sentinel, Wayrest and Orsinium were among
+  them. The fix leaves 0, with 0 regressions.
+
+The pins rebuild the Scourg geometry synthetically. This is a 1:1
+correction that narrows the port's recorded box-picking departure back
+toward DFU's single raycast. Not seen in a browser.
+
 ## DISC16-F: the watch and the town (report 7, and Mac's "enhance guard interaction")
 
 **The arrest for resting is DFU's law, and it stays.**
