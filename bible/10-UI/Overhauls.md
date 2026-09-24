@@ -80,8 +80,30 @@ classic screens, so the UI Overhaul a player chose is the one they play online.
 The world's enhanced lane is unchanged: the outdoors, water, combat visuals,
 loot rarity and the room's mod switches stay the room's.
 
-KNOWN LIMIT: a classic-skin rest in a party is a solo rest (ONLINE-REST1): the
-party rest's vote and mirror are the enhanced rest window's.
+## OVH4 - the party rest on any UI
+
+Mac: "How do we make it where it's not solo rest for other UI's" - and chose
+"A". Until OVH4 a classic-skin rest in a party was a solo rest (ONLINE-REST1's
+classic arm): world.js gated the vote, the reset, the tally, the mirror and the
+broadcast rest on the enhanced skin, because classic's `RestWindow` carries none
+of the party's arms - a follower's Stop that stops the rester (`onManualStop`),
+the unrested close that frees the next vote (`onClosedUnrested`, PARTY-REST29)
+and the stack's Tab close (`stopOrClose`). With OVH3 letting a player wear
+Classic or GrimoireUI online, that player's party slept apart.
+
+A party's rest is an ONLINE window now, like the chat and the player trade: the
+rest door (`ui/restDoor.js createRestWindow`) opens the party card on either
+skin when the host says the rest is the party's (`deps.partyRest()`). The host's
+one question is world.js `partyRestHere` - online, in a party, and not in a
+tavern, temple or guild hall (TAVERN-REST1/GUILD-REST1) - the gate's own two;
+the outdoor rest, the building's (`worldModes.js interiorRestDeps`), the
+dungeon's (`dungeonContext.js _restDeps`, through the mode machine) and every
+mirror ask it. The five skin gates are gone. A solo or offline rest on the
+classic skin keeps Daggerfall's own window, byte for byte.
+
+Pins: `test/ovh4_partyrest.test.js` (the real door under a fake document and a
+real skin choice; the hosts' wiring by source). Mutants:
+`tools/mutants/ovh4.json` (15, all dead).
 
 Pins: `test/overhauls.test.js`; the browser probe `tools/overhaulsProbe.mjs`
 (20 checks: the three cards at a desktop and a phone, browse vs wear, Custom,
