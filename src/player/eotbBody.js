@@ -101,9 +101,9 @@ export const FOOTSTEP_VOLUME_SCALE = Object.freeze({ thirdPerson: 2, firstPerson
 // it stops hanging.
 //
 // HT-WAIST-BACK (2026-09-24, Mac: "Just have it show on the back of the sprite, not all angles. Make sure all the
-// eye of the Beholder sprites get this change"): the picture is DRAWN only while the sprite is seen from behind -
-// the painted orientation 3, 4 or 5 of EOTB's wheel, the three views that draw its back - and never from the front
-// or the side. It still hangs there, lit, whatever the view: the swing runs on and the light stays at the hip, so
+// eye of the Beholder sprites get this change"; then, of the back diagonals: "It still shows on the back side
+// angle"): the picture is DRAWN only while the sprite is seen from straight behind - the painted orientation 4 of
+// EOTB's wheel, the one view that draws its back - and never from the back diagonals, the front or the side. It still hangs there, lit, whatever the view: the swing runs on and the light stays at the hip, so
 // turning round neither restarts the swing nor moves the light. Everything the peers' sprites share with this one
 // - the rear-view rule, the picture, the hang, the swing's drive, the batch - is player/eotbLantern.js's; this
 // body keeps what is its alone: whether it hangs, and the light.
@@ -257,7 +257,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   /** Does the lantern hang this frame: lit at the waist, third person, on foot, alive, in your own form. */
   const lanternHangs = () => last.hipLantern && activeFlag && !FP && !died && !last.died && !last.riding && !last.transformed;
   /** HT-WAIST-BACK: is it DRAWN this frame - it hangs, and the sprite is painted from behind (eotbLantern.js
-   *  isRearView: orientation 3, 4 or 5). */
+   *  isRearView: orientation 4). */
   const lanternShown = () => lanternHangs() && isRearView(shown?.orientation);
   /** The frame the sprite faces: its walk's facing (UpdateOrientation's `lastMoveDirection`), else the yaw. */
   function facingBasis() {

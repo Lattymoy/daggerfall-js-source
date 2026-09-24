@@ -972,10 +972,11 @@ but its facing (`lastMoveDirection`), its frame clock and the placed base (`plac
 
 **HT-WAIST-BACK (2026-09-24, Mac, looking at screenshots of the lantern at the hip from the front, the side, walking
 and behind: "Just have it show on the back of the sprite, not all angles. Make sure all the eye of the Beholder sprites
-get this change").**
+get this change"; then, of the back diagonals it first let in: "It still shows on the back side angle").**
 
-- **The rule** (`player/eotbLantern.js isRearView`): the lantern's picture is drawn only from the views that show the
-  sprite's BACK - orientation 4, and the back diagonals 3 and 5 - and from none of 0, 1, 2, 6, 7. It is asked of the
+- **The rule** (`player/eotbLantern.js isRearView`): the lantern's picture is drawn only from straight behind - the
+  one view that shows the sprite's back square on, orientation 4 - and from none of 0, 1, 2, 3, 5, 6, 7: not the back
+  diagonals 3 and 5, which draw the back three-quarter. It is asked of the
   orientation UpdateBillboard last PAINTED (`shown.orientation`, the delayed repaint's), not of the one just measured,
   so the lantern appears and goes with the picture under it.
 - **The numbering, verified.** `orientationFor` (IL_4779-IL_47a3) makes 0 the camera in front of the facing and 4 the
@@ -984,7 +985,7 @@ get this change").**
   record is a back was read off the vendored art, upscaled side by side: archive 112364's idle (records 0-4), walk
   (5-9) and armed walk (20-24), and 112372's idle (0-4) - +0 is the face, +1 the front three-quarter, +2 the profile,
   +3 the back three-quarter (shoulder blades, the seat, the heels) and +4 the back. Every on-foot set shares the wheel,
-  so the rear views are those drawing +3 or +4: 3, 4 and 5. `mirrorFlips` (the Mirror string's flip at 0 and 4) turns
+  so the rear view is the one drawing +4: orientation 4 (`BACK_RECORD`). `mirrorFlips` (the Mirror string's flip at 0 and 4) turns
   a front or a back over, never one into the other. A body that has never moved faces nowhere (the IL's Vector3.zero,
   which SignedAngle reads as 0) and paints its front: no lantern until it has turned.
 - **Unseen, it still hangs**: the swing runs on (`stepLantern` asks whether it HANGS, not whether it is drawn), the

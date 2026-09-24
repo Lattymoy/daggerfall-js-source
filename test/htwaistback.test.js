@@ -2,10 +2,10 @@
 // hung at the right hip - visible from the front, the side, walking and behind: "Just have it show on the back of the
 // sprite, not all angles. Make sure all the eye of the Beholder sprites get this change."
 //
-// THE LAW. The lantern's picture is drawn only while the viewer sees the sprite's BACK: the three views of EOTB's
-// eight whose record is a back - orientation 4 (the camera straight behind, record +4) and the back diagonals 3 and
-// 5 (record +3, the one mirrored) - and never from the front, the front diagonals or the sides (0, 1, 2, 6, 7). The
-// numbering is orientationFor's (0 the camera in front, 4 behind) through the wheel [0, 1, 2, 3, 4, 3, 2, 1]; which
+// THE LAW. The lantern's picture is drawn only while the viewer sees the sprite STRAIGHT FROM BEHIND: the one view
+// of EOTB's eight whose record is the back - orientation 4 (the camera straight behind, record +4) - and never from
+// the back diagonals 3 and 5 (record +3, the back three-quarter; HT-WAIST-BACK let them in first, and Mac: "It still
+// shows on the back side angle"), the front, the front diagonals or the sides (0, 1, 2, 6, 7). The numbering is orientationFor's (0 the camera in front, 4 behind) through the wheel [0, 1, 2, 3, 4, 3, 2, 1]; which
 // record is a back was read off the vendored art (112364 idle 0-4, walk 5-9, armed walk 20-24; 112372 idle 0-4).
 // Unseen, it still HANGS: it swings on, and the local player's light stays at the hip.
 //
@@ -83,13 +83,13 @@ function viewFrom(b, o, extra = {}, motion = {}) {
   return b.draw(null, { eye: cam.eye, feet: [0, 0, 0], yaw: cam.yaw });
 }
 
-test('HT-WAIST-BACK rule: the rear views are 3, 4 and 5 - the three whose record is the sprite\'s back (+3, +4) on EOTB\'s wheel; 0, 1, 2, 6, 7 are not, and nothing that is not an orientation is (mutants: a side view let in; a back diagonal left out)', () => {
+test('HT-WAIST-BACK rule: the rear view is 4 alone - the one whose record is the sprite\'s back (+4) on EOTB\'s wheel; the back diagonals 3 and 5 (+3) are not, nor are 0, 1, 2, 6, 7, and nothing that is not an orientation is (mutants: a side view let in; a back diagonal left out)', () => {
   assert.equal(typeof L.isRearView, 'function', 'player/eotbLantern.js isRearView - the one rule every EOTB sprite asks');
-  assert.deepEqual(EIGHT.filter((o) => L.isRearView(o)), [3, 4, 5], 'straight behind and the two back diagonals');
-  // the rule IS the wheel's: a view is a rear view exactly when the record it draws is +3 or +4
-  for (const o of EIGHT) assert.equal(L.isRearView(o), RECORD_OFFSETS[o] >= 3, `orientation ${o} draws record +${RECORD_OFFSETS[o]}`);
+  assert.deepEqual(EIGHT.filter((o) => L.isRearView(o)), [4], 'straight behind - not the back diagonals (Mac: "It still shows on the back side angle")');
+  // the rule IS the wheel's: a view is the rear view exactly when the record it draws is +4
+  for (const o of EIGHT) assert.equal(L.isRearView(o), RECORD_OFFSETS[o] === 4, `orientation ${o} draws record +${RECORD_OFFSETS[o]}`);
   assert.deepEqual(EIGHT.map((o) => stateFor('Move', o).record - stateFor('Move', 0).record), [0, 1, 2, 3, 4, 3, 2, 1], 'the wheel, as the tables draw it');
-  assert.equal(L.REAR_RECORD, 3, 'the back three-quarter is the first back record');
+  assert.equal(L.BACK_RECORD, 4, 'the back, straight on - not the back three-quarter (+3)');
   // and orientationFor's numbering, the geometry the rule is read against: a figure facing +Z, the camera round it
   const facing = [0, 0, 1];
   const at = (deg) => [Math.sin(deg * Math.PI / 180), 0, Math.cos(deg * Math.PI / 180)];
@@ -97,12 +97,14 @@ test('HT-WAIST-BACK rule: the rear views are 3, 4 and 5 - the three whose record
   assert.equal(orientationFor(facing, at(180)), 4, 'the camera straight behind: 4');
   assert.deepEqual([orientationFor(facing, at(135)), orientationFor(facing, at(225))], [3, 5], 'the back diagonals');
   assert.deepEqual([orientationFor(facing, at(90)), orientationFor(facing, at(270))], [2, 6], 'the sides');
-  for (const junk of [undefined, null, NaN, 3.5, '4']) assert.equal(L.isRearView(junk), false, `${String(junk)}: not a view`);
+  for (const junk of [undefined, null, NaN, 3.5, 4.5, '4']) assert.equal(L.isRearView(junk), false, `${String(junk)}: not a view`);
   assert.equal(L.isRearView(12), true, 'the wheel wraps (12 is 4)');
+  assert.equal(L.isRearView(-4), true, 'either way (-4 is 4)');
+  assert.deepEqual([11, 13, -3, -5].map((o) => L.isRearView(o)), [false, false, false, false], 'and a wrapped back diagonal is still a diagonal');
   assert.equal(ORIENTATIONS, 8);
 });
 
-test('HT-WAIST-BACK (your sprite): the camera swung round the body - the lantern is DRAWN from 3, 4 and 5 and from none of 0, 1, 2, 6, 7; from the front and the side it still hangs and lights you from the hip, and its batch is kept, never re-minted per turn (mutants: the body never asks the rule; the light and the batch dropped off the back)', async () => {
+test('HT-WAIST-BACK (your sprite): the camera swung round the body - the lantern is DRAWN from 4 alone and from none of 0, 1, 2, 3, 5, 6, 7 - not the back diagonals; from the front and the side it still hangs and lights you from the hip, and its batch is kept, never re-minted per turn (mutants: the body never asks the rule; the light and the batch dropped off the back)', async () => {
   setPlayerWaistLightOverride(null);
   try {
     const { b, r } = await liveBody();
@@ -119,7 +121,7 @@ test('HT-WAIST-BACK (your sprite): the camera swung round the body - the lantern
       assert.ok(playerWaistLightOverride(), `view ${o}: and lights you from where it hangs`);
       if (!L.isRearView?.(o)) assert.equal(drew, false, `view ${o} is not the back: no lantern`);
     }
-    assert.deepEqual(drawnAt.sort(), [3, 4, 5], 'the back, and only the back');
+    assert.deepEqual(drawnAt, [4], 'straight behind, and only straight behind - not the back diagonals');
     assert.equal(lanternBatches(r).length, 1, 'one batch, minted at the first rear view - kept while the lantern hangs, not re-minted each time the sprite turns its back');
     assert.equal(lanternFrees(r).length, 0, 'and never freed by a turn to the front');
   } finally { setPlayerWaistLightOverride(null); }
@@ -167,7 +169,7 @@ function frame(w, peers, o, dt = 1 / 60) {
   return w.drawLanterns?.() ?? 0;
 }
 
-test('HT-WAIST-BACK (the others): a walker whose pose says `hl` hangs THE SAME lantern - Daggerfall\'s picture through the same loader, uploaded once under the same key, hung by the same law - DRAWN from their back only (3, 4, 5), each on its own tilted basis; it lights nothing; without `hl`, nothing at all (mutants: the walker never hangs it; the rule not asked; the bit ignored; the picture asked twice)', async () => {
+test('HT-WAIST-BACK (the others): a walker whose pose says `hl` hangs THE SAME lantern - Daggerfall\'s picture through the same loader, uploaded once under the same key, hung by the same law - DRAWN from straight behind only (4, not the back diagonals 3 and 5), each on its own tilted basis; it lights nothing; without `hl`, nothing at all (mutants: the walker never hangs it; the rule not asked; the bit ignored; the picture asked twice)', async () => {
   setPlayerWaistLightOverride(null);
   try {
     const { renderer, art, asked } = peerRig();
@@ -187,7 +189,7 @@ test('HT-WAIST-BACK (the others): a walker whose pose says `hl` hangs THE SAME l
       const n = frame(w, [walker({ hl: 1 })], o);
       if (lanternDraws(renderer).length > before) { if (!drawnAt.includes(o)) drawnAt.push(o); assert.equal(n, 1); }
     }
-    assert.deepEqual(drawnAt.sort(), [3, 4, 5], 'from their back, and only their back - the local sprite\'s rule');
+    assert.deepEqual(drawnAt, [4], 'from straight behind them, and only there - the local sprite\'s rule');
     assert.equal(asked(), 1, 'asked once, however many frames (ASYNC NEVER DROPS - coalesced, never re-asked)');
     assert.deepEqual(renderer.uploads.filter((u) => u.archive === KEY).map((u) => [u.rec, u.img.width, u.img.height]), [[0, 10, 20]], 'uploaded once, under the local body\'s key');
     // the hang is the local body's law: the same function, fed this walker's sprite
@@ -322,11 +324,13 @@ test('HT-WAIST-BACK: ONE HOME - your sprite and the walkers hang it through play
   }
 });
 
-test('HT-WAIST-BACK: recorded - the HT-WAIST sections of Handheld-Torches.md and Eye-Of-The-Beholder.md carry the dated HT-WAIST-BACK note (the rear views, the peers, the one home), and the Ledger A row\'s EOTB clause says the back; the all-angles sentence is gone (mutant: the record left saying it hangs in every view)', () => {
+test('HT-WAIST-BACK: recorded - the HT-WAIST sections of Handheld-Torches.md and Eye-Of-The-Beholder.md carry the dated HT-WAIST-BACK note (the rear view - straight behind, not the back diagonals -, the peers, the one home), and the Ledger A row\'s EOTB clause says the back; the all-angles sentence and the three-rear-views one are gone (mutant: the record left saying it hangs in every view)', () => {
   const ht = rd('bible/06-Systems/Handheld-Torches.md');
   const hts = ht.slice(ht.indexOf('## HT-WAIST - THE LANTERN AT THE WAIST'));
   assert.match(hts, /HT-WAIST-BACK \(2026-09-24/);
-  assert.match(hts, /orientation 4[^.]*3[^.]*5|3, 4 (?:and|or) 5/);
+  assert.match(hts, /straight behind/);
+  assert.match(hts, /It still shows on the back side angle/, 'Mac\'s word on the back diagonals, quoted');
+  assert.doesNotMatch(hts, /3, 4 (?:and|or) 5|three views of Eye Of The Beholder\'s eight/, 'the three-rear-views rule is rewritten');
   assert.match(hts, /player\/eotbLantern\.js/);
   assert.match(hts, /createPeerWalkers|walkers/);
   const eo = rd('bible/06-Systems/Eye-Of-The-Beholder.md');
@@ -334,10 +338,13 @@ test('HT-WAIST-BACK: recorded - the HT-WAIST sections of Handheld-Torches.md and
   assert.match(eos, /HT-WAIST-BACK \(2026-09-24/);
   assert.match(eos, /isRearView/);
   assert.match(eos, /112364/, 'the numbering verified against the vendored art, and said where');
+  assert.match(eos, /It still shows on the back side angle/);
+  assert.doesNotMatch(eos, /3, 4 (?:and|or) 5/, 'the three-rear-views rule is rewritten');
   assert.doesNotMatch(eos, /\*\*Only\*\* in third person, on foot, alive and in your own form - the rider/, 'the old "only" line, which said nothing of the view, is rewritten');
   const row = rd('bible/01-Overview/Port-Ledger.md').split('\n').find((l) => l.startsWith('|') && /\(HT-WAIST, 2026-09-24/.test(l));
   assert.ok(row, 'HT-WAIST\'s Ledger A row');
   assert.match(row, /HT-WAIST-BACK/);
-  assert.match(row, /from behind|its back/);
+  assert.match(row, /straight behind/);
+  assert.doesNotMatch(row, /three rear views/, 'the row\'s three-rear-views clause is rewritten');
   assert.match(row, /test\/htwaistback\.test\.js/);
 });

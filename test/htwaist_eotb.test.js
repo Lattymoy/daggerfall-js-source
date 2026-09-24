@@ -15,7 +15,8 @@
 //
 // HT-WAIST-BACK (2026-09-24, Mac: "Just have it show on the back of the
 // sprite, not all angles"): the picture is drawn only from behind - the
-// painted orientation 3, 4 or 5 (player/eotbLantern.js isRearView;
+// painted orientation 4, straight behind - not the back diagonals 3 and 5
+// (Mac: "It still shows on the back side angle"; player/eotbLantern.js isRearView;
 // test/htwaistback.test.js pins the rule and the peers'). So every body here
 // is first walked a step away from the camera, sheathed and with no lantern,
 // and stands with its back to the eye (orientation 4 - the IL keeps a
@@ -107,7 +108,7 @@ test('HT-WAIST (EOTB): lit at the waist, a SECOND billboard - Daggerfall\'s lant
   } finally { _resetModSettings(); }
 });
 
-test('HT-WAIST (EOTB): it SWINGS with the sprite\'s walk - a walk begun tilts the quad in the view plane and shortens it as it swings toward or away from the eye; it settles upright at rest; HT-WAIST-BACK: seen from the side it is not drawn (mutant: the swing not stepped, or not drawn)', async () => {
+test('HT-WAIST (EOTB): it SWINGS with the sprite\'s walk - a walk begun tilts the quad in the view plane and shortens it as it swings toward or away from the eye; it settles upright at rest; HT-WAIST-BACK: seen from a back diagonal or the side it is not drawn (mutant: the swing not stepped, or not drawn)', async () => {
   const { b, r } = await liveBody();
   ticks(b, 12, state({ hipLantern: true }));
   await drawn(b);
@@ -117,14 +118,24 @@ test('HT-WAIST (EOTB): it SWINGS with the sprite\'s walk - a walk begun tilts th
   b.draw(null, view);
   const walk = lanternDraws(r).at(-1);
   assert.ok(walk.size.h < HIP_LANTERN_SPRITE.height - 1e-6, 'swinging along the line of sight: foreshortened');
-  // turning to walk away and to the right of the screen (HT-WAIST-BACK: a back diagonal, orientation 3 - still seen
-  // from behind): it swings across the view plane now - the quad tilts
-  const diagonal = state({ hipLantern: true }, { forward: 1, strafe: 1, standing: false, speed: 5 });
-  ticks(b, 40, diagonal);
+  // turning to walk away and to the right of the screen (HT-WAIST-BACK: a back diagonal, orientation 3 - Mac: "It
+  // still shows on the back side angle"): it swings across its body, and is NOT drawn
+  const atDiagonal = lanternDraws(r).length;
+  ticks(b, 40, state({ hipLantern: true }, { forward: 1, strafe: 1, standing: false, speed: 5 }));
   b.draw(null, view);
   assert.equal(b.state().shown.orientation, 3, 'a back diagonal');
-  const tilt = lanternDraws(r).at(-1);
-  assert.ok(Math.abs(tilt.up[0]) > 0.02, `the quad tilts (${tilt.up})`);
+  assert.equal(lanternDraws(r).length, atDiagonal, 'seen from a back diagonal: not drawn');
+  assert.ok(Math.abs(b.state().lantern.swing.side) > 0.02, 'but it swings across');
+  // walking straight away again (orientation 4): the stride's sway swings it across the view plane - the quad tilts
+  let tilt = null;
+  for (let i = 0; i < 40; i++) {
+    ticks(b, 1, state({ hipLantern: true }, { forward: 1, standing: false, speed: 5 }));
+    b.draw(null, view);
+    const d = lanternDraws(r).at(-1);
+    if (b.state().shown.orientation === 4 && (!tilt || Math.abs(d.up[0]) > Math.abs(tilt.up[0]))) tilt = d;
+  }
+  assert.equal(b.state().shown.orientation, 4, 'straight behind');
+  assert.ok(tilt && Math.abs(tilt.up[0]) > 0.02, `the quad tilts (${tilt?.up})`);
   assert.ok(Math.abs(Math.hypot(...tilt.up) - 1) < 1e-9 && Math.abs(tilt.right[0] * tilt.up[0] + tilt.right[1] * tilt.up[1] + tilt.right[2] * tilt.up[2]) < 1e-9, 'a rotation of the view plane\'s basis');
   // HT-WAIST-BACK's negative: walking straight to the right, the sprite is seen from its SIDE - it swings on, undrawn
   const drawnBefore = lanternDraws(r).length;

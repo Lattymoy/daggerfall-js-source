@@ -8,16 +8,16 @@
 // here, once, and both call it - a second copy is how the player's own sprite and everyone else's would come to
 // show it differently:
 //
-//   THE REAR-VIEW RULE (`isRearView`). The picture is drawn only while the viewer sees the sprite's BACK. EOTB's
-//   wheel (player/eotbBillboard.js RECORD_OFFSETS, [0, 1, 2, 3, 4, 3, 2, 1]; orientationFor's 0 is the camera in
-//   front, 4 the camera behind) draws five records from front to back, and the vendored art says which of them is
-//   a back: record +0 is the face, +1 the front three-quarter, +2 the profile, +3 the back three-quarter (the
+//   THE REAR-VIEW RULE (`isRearView`). The picture is drawn only while the viewer sees the sprite STRAIGHT FROM
+//   BEHIND. EOTB's wheel (player/eotbBillboard.js RECORD_OFFSETS, [0, 1, 2, 3, 4, 3, 2, 1]; orientationFor's 0 is
+//   the camera in front, 4 the camera behind) draws five records from front to back, and the vendored art says
+//   which: record +0 is the face, +1 the front three-quarter, +2 the profile, +3 the back three-quarter (the
 //   shoulder blades, the seat, the heels) and +4 the back - read off archives 112364 (idle 0-4, walk 5-9, armed
-//   walk 20-24) and 112372 (idle 0-4), which every on-foot set shares by the wheel. So the rear views are those
-//   whose record is +3 or more: orientation 4, straight behind, and the back diagonals 3 (record +3, mirrored) and
-//   5 (record +3). The front, the front diagonals and the sides - 0, 1, 2, 6, 7 - draw no lantern. The rule reads
-//   the view the sprite is DRAWN from this frame (the local body's painted orientation; a peer's viewOf), so the
-//   lantern and the picture under it always agree.
+//   walk 20-24) and 112372 (idle 0-4), which every on-foot set shares by the wheel. The rear view is the one whose
+//   record is +4: orientation 4 alone. The back diagonals 3 and 5 (record +3) draw none - HT-WAIST-BACK first let
+//   them in, and Mac, seeing it there: "It still shows on the back side angle" - nor do the front, the front
+//   diagonals and the sides (0, 1, 2, 6, 7). The rule reads the view the sprite is DRAWN from this frame (the
+//   local body's painted orientation; a peer's viewOf), so the lantern and the picture under it always agree.
 //
 //   THE ART (`loadLanternArt`, `createLanternArt`). The Lantern template's own world texture, from the player's
 //   ARENA2, uploaded under its own key (`LANTERN_ART_KEY`). Each sprite layer keeps a store (the body its own, the
@@ -48,13 +48,13 @@ import { LANTERN_TEMPLATE } from '../systems/playerTorch.js';
 import { templateByIndex } from '../systems/itemTemplates.js';
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the one angle wrap
 
-/** The first record of EOTB's wheel that shows the sprite's back (+3 the back three-quarter, +4 the back). */
-export const REAR_RECORD = 3;
-/** HT-WAIST-BACK: is `orientation` a view of the sprite's back - 3, 4 or 5 on EOTB's wheel? Anything else, and
- *  anything that is not an orientation, is not. */
+/** The record of EOTB's wheel that shows the sprite's back, straight on (+4; +3 is the back three-quarter). */
+export const BACK_RECORD = 4;
+/** HT-WAIST-BACK: is `orientation` the view from straight behind the sprite - 4 on EOTB's wheel, the one drawing
+ *  record +4? The back diagonals (3, 5) are not, nor is anything else, nor anything that is not an orientation. */
 export function isRearView(orientation) {
   if (!Number.isInteger(orientation)) return false;
-  return RECORD_OFFSETS[((orientation % ORIENTATIONS) + ORIENTATIONS) % ORIENTATIONS] >= REAR_RECORD;
+  return RECORD_OFFSETS[((orientation % ORIENTATIONS) + ORIENTATIONS) % ORIENTATIONS] === BACK_RECORD;
 }
 
 /** The hook, off the sprite: a fraction of the quad's height above its base, the hip's side out along the

@@ -800,9 +800,10 @@ stands it down each frame, so its light point never outlives the lane. Eye-Of-Th
 
 **HT-WAIST-BACK (2026-09-24, Mac, looking at screenshots of the lantern at the sprite's hip from the front, the side,
 walking and behind: "Just have it show on the back of the sprite, not all angles. Make sure all the eye of the
-Beholder sprites get this change").** The lantern's picture is drawn only from the three views of Eye Of The
-Beholder's eight that show the sprite's BACK: orientation 4 (the camera straight behind, record +4) and the back
-diagonals 3 and 5 (record +3, mirrored at 3) - never from the front, the front diagonals or the sides (0, 1, 2, 6, 7).
+Beholder sprites get this change"; then, of the back diagonals it first let in:
+"It still shows on the back side angle").** The lantern's picture is drawn only from straight behind: the one view of Eye Of The Beholder's eight
+that shows the sprite's back square on, orientation 4 (the camera straight behind, record +4) - never from the back
+diagonals 3 and 5 (record +3, the back three-quarter), the front, the front diagonals or the sides (0, 1, 2, 6, 7).
 The rule is `isRearView` (`player/eotbLantern.js`), read against the view the sprite is PAINTED from, so the lantern
 and the picture under it always agree; the numbering is `orientationFor`'s (0 the camera in front) through the wheel,
 and which record is a back was checked against the vendored art (Eye-Of-The-Beholder.md HT-WAIST has how). Unseen, it
@@ -812,8 +813,8 @@ in every on-foot set, and every other player drawn online as the set they chose 
 `net/peerRiders.js createPeerWalkers`) whose pose says `hl` (HT-WAIST-NET, below) - the same picture through the same loader (the peers' art
 store, `createEotbArt`, holds its own `createLanternArt`; the renderer caches the texture once under the key), hung by
 the same law, swung off that walker's own motion (its pace off the drawn feet - MWBODY1's law, lifted to
-`net/peerPace.js` so the bodies and the walkers read one -, its yaw's turn, its walk clip's phase), drawn from their
-back alone. One home for all of it: `player/eotbLantern.js` (the rule, the art, the hang, the swing's drive, the batch);
+`net/peerPace.js` so the bodies and the walkers read one -, its yaw's turn, its walk clip's phase), drawn from
+straight behind them alone. One home for all of it: `player/eotbLantern.js` (the rule, the art, the hang, the swing's drive, the batch);
 `eotbBody.js` keeps what is the local body's alone (whether it hangs, and the light), a walker keeps its `hl`. A peer's
 lantern is drawn by `drawLanterns`, called from world.js's `drawPeerBodies` - the hook world.js's exterior pass and
 worldModes' dungeon and interior passes all call right after your own body (the tilt is the lantern's own right and
@@ -822,7 +823,8 @@ no body. Its batch goes when the lantern is put out, when the walker goes or sto
 destroyed; the recentre carries it; its draw builds nothing. It lights nothing - no peer's light does. The rider and
 the beast still hang none, on your screen or theirs; the Morrowind body is not a sprite and is unchanged. Pins:
 `test/htwaistback.test.js` (8, every one failing on the base); `test/htwaist_eotb.test.js`'s bodies stand with their
-backs to the camera now, and its sideways walk is a back diagonal, with the side view its negative case.
+backs to the camera now, and its sideways walk is a back diagonal and the side view, both its negative cases (the tilt
+is read walking straight away).
 
 **Online: the others see it (HT-WAIST-NET, 2026-09-24).** Other players are drawn with the Morrowind body
 (MWBODY1), so a lantern at the waist its owner alone could see was half of what Mac asked for. The pose carries it:

@@ -248,8 +248,9 @@ export const WALK_ONE_SHOTS = Object.freeze([
  * A walker whose shown pose says `hl` (HT-WAIST-NET: their lit lantern hangs at the waist) hangs Daggerfall's lantern
  * picture at the sprite's right hip by the local body's own law (player/eotbLantern.js - the art, the hang, the swing's
  * drive, the batch), swung off this walker's own motion - its pace off the drawn feet (net/peerPace.js, MWBODY1's),
- * the pose's yaw's turn, the walk clip's phase - and DRAWN only from behind (`isRearView` of the view this walker is
- * drawn from, the local sprite's rule). Seen from the front or the side it still hangs and swings, undrawn. Its batch
+ * the pose's yaw's turn, the walk clip's phase - and DRAWN only from straight behind (`isRearView` of the view this
+ * walker is drawn from, the local sprite's rule). Seen from a back diagonal, the side or the front it still hangs and
+ * swings, undrawn. Its batch
  * goes when the lantern is put out, when the walker goes (the figure's drop) and when the layer is destroyed. It
  * lights nothing (a peer casts no light). The hosts draw it with `drawLanterns`, beside the bodies (world.js
  * drawPeerBodies, the one hook every mode's pass calls after the player's own body): its tilt is its own right and
@@ -336,7 +337,7 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
     const art = store.lantern?.ensure();
     if (!art || !r.batch || !r.size || !eye) return;
     hangSpriteLantern(l, r.batch.origin, r.size.h, fx, fz, eye, feet, Math.atan2(-right[2], right[0]), 1, art);
-    if (!isRearView(view)) return;   // seen from the front or the side: it hangs, it swings, it is not drawn
+    if (!isRearView(view)) return;   // not seen from straight behind: it hangs, it swings, it is not drawn
     mintSpriteLantern(l, store.renderer);
     lit.push(l);
   }

@@ -447,20 +447,20 @@
     ]
   },
   {
-    "name": "HT-WAIST-BACK-the-rule-lets-the-sides-in",
+    "name": "HT-WAIST-BACK-the-rule-lets-the-back-diagonals-in",
     "file": "src/player/eotbLantern.js",
-    "old": "  return RECORD_OFFSETS[((orientation % ORIENTATIONS) + ORIENTATIONS) % ORIENTATIONS] >= REAR_RECORD;",
-    "new": "  return RECORD_OFFSETS[((orientation % ORIENTATIONS) + ORIENTATIONS) % ORIENTATIONS] >= REAR_RECORD - 1;",
+    "old": "  return RECORD_OFFSETS[((orientation % ORIENTATIONS) + ORIENTATIONS) % ORIENTATIONS] === BACK_RECORD;",
+    "new": "  return RECORD_OFFSETS[((orientation % ORIENTATIONS) + ORIENTATIONS) % ORIENTATIONS] >= BACK_RECORD - 1;",
     "tests": [
       "test/htwaistback.test.js",
       "test/htwaist_eotb.test.js"
     ]
   },
   {
-    "name": "HT-WAIST-BACK-the-rule-drops-the-diagonals",
+    "name": "HT-WAIST-BACK-the-rule-the-back-diagonals-instead",
     "file": "src/player/eotbLantern.js",
-    "old": "export const REAR_RECORD = 3;",
-    "new": "export const REAR_RECORD = 4;",
+    "old": "export const BACK_RECORD = 4;",
+    "new": "export const BACK_RECORD = 3;",
     "tests": [
       "test/htwaistback.test.js",
       "test/htwaist_eotb.test.js"
@@ -516,7 +516,7 @@
   {
     "name": "HT-WAIST-BACK-the-walker-never-asks-the-rule",
     "file": "src/net/peerRiders.js",
-    "old": "    if (!isRearView(view)) return;   // seen from the front or the side: it hangs, it swings, it is not drawn\n",
+    "old": "    if (!isRearView(view)) return;   // not seen from straight behind: it hangs, it swings, it is not drawn\n",
     "new": "",
     "tests": [
       "test/htwaistback.test.js"
