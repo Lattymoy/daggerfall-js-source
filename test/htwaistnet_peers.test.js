@@ -69,7 +69,9 @@ test('HT-WAIST-NET sender: the bit is 1 ONLY while a lit lantern hangs at the wa
   assert.equal(typeof bit, 'function', 'systems/playerTorch.js waistLanternPoseBit - the pose\'s producer, beside the one question');
   _resetModSettings();
   try {
-    assert.equal(bit(lantern()), undefined, 'the shipped switch is off: the lantern is held, and no held light rides the wire');
+    assert.equal(bit(lantern()), 1, 'shipped on (HT-WAIST-ON): the lit lantern hangs at the waist, and the pose says so');
+    setModSetting(V, KEY, false);
+    assert.equal(bit(lantern()), undefined, 'the switch off: the lantern is held, and no held light rides the wire');
     setModSetting(V, KEY, true);
     assert.equal(bit(lantern()), 1, 'on: the lit lantern hangs at the waist, and the pose says so');
     assert.equal(bit(torch()), undefined, 'a torch is held - MW-D51\'s held light still rides nothing');

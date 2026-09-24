@@ -310,7 +310,7 @@ frame - "Takes effect at once."
 
 The pane carries ONE key the mod does not ship: HT-WAIST's
 `Handling.LanternsAtWaist`, the port's own, directly under Relaxed
-Lanterns and off by default - so the pane is the 52 shipped keys, the
+Lanterns and ON by default since HT-WAIST-ON - so the pane is the 52 shipped keys, the
 port's `Enabled` and that one (HT-WAIST below).
 
 ## Hosts and seams
@@ -719,6 +719,12 @@ a torch stops the loop on the change. Record: `01-Overview/Field-Bugs-2026-09-23
 
 Asked how, Mac chose a switch on this pane, off by default; and the lantern must be SEEN at the hip: "Let it be a
 separate animated item on movement with eye of the Beholder sprites also".
+
+**HT-WAIST-ON (the same day, Mac: "Have the lantern change on by default").** The switch ships ON: a lit lantern hangs at
+the waist for every player who has not turned it off, and the mod's own hand law for a lantern is the switch turned off.
+A value a player saved is theirs either way (no reset: nobody could have saved it before it shipped). HT1's and HT6's pins,
+which hold the MOD's law, set the switch off explicitly; HT-WAIST's own pins lead with the shipped default and each keeps
+its switch-off twin.
 
 **The departure.** `Handling.LanternsAtWaist` is the port's own key on a vendored mod's pane - the first on this
 pane the mod does not ship at all (MODS-ON, HT4, SOC5, HT5, HT7 and 3ARMS each moved a SHIPPED default; ORL1's

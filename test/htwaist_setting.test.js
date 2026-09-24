@@ -1,6 +1,7 @@
 // HT-WAIST (2026-09-24, Mac: "Let the lantern item be able to be hung at
 // the waist instead of having to be held" - and, asked how: a switch on the
-// Handheld Torches pane, off by default). THE SWITCH.
+// Handheld Torches pane, off by default - ON by default since HT-WAIST-ON, the same day: "Have the lantern change
+// on by default"). THE SWITCH.
 //
 // `Handling.LanternsAtWaist` is the port's own key on a vendored mod's pane
 // - the first key on this pane the mod does not ship at all (every earlier
@@ -29,10 +30,10 @@ const lantern = () => ({ group: 'UselessItems2', templateIndex: TEMPLATES.Lanter
 const torch = () => ({ group: 'UselessItems2', templateIndex: TEMPLATES.Torch, currentCondition: 50, maxCondition: 50 });
 const candle = () => ({ group: 'UselessItems2', templateIndex: TEMPLATES.Candle, currentCondition: 16, maxCondition: 16 });
 
-test('HT-WAIST: the switch is on the Handheld Torches pane - a toggle, OFF by default, its words the mod\'s kind and saying it is the port\'s; the shipped modsettings.json does not carry it (mutant: the key gone, defaulted on, or its words silent)', () => {
+test('HT-WAIST: the switch is on the Handheld Torches pane - a toggle, ON by default (HT-WAIST-ON), its words the mod\'s kind and saying it is the port\'s; the shipped modsettings.json does not carry it (mutant: the key gone, defaulted off, or its words silent)', () => {
   const def = MOD_SETTINGS[V].keys[KEY];
   assert.ok(def, 'the key is declared on the vendored pane');
-  assert.equal(def.default, false, 'OFF by default - Mac: a switch the player turns on');
+  assert.equal(def.default, true, 'ON by default - HT-WAIST-ON (2026-09-24, Mac: "Have the lantern change on by default"); a player turns it off');
   assert.equal(typeof def.default, 'boolean', 'a ToggleKey, not a slider or a choice');
   assert.equal(def.options, undefined); assert.equal(def.min, undefined); assert.equal(def.text, undefined);
   assert.match(def.description, /^If enabled, lanterns hang at your waist instead of being held/, 'in the mod\'s own voice - RelaxedLanterns\' "If enabled, ..."');
@@ -46,7 +47,7 @@ test('HT-WAIST: the switch is on the Handheld Torches pane - a toggle, OFF by de
   const keys = Object.keys(MOD_SETTINGS[V].keys);
   assert.equal(keys.indexOf(KEY), keys.indexOf('Handling.RelaxedLanterns') + 1, 'directly under Relaxed Lanterns, the switch it takes the rest of the way');
   _resetModSettings();
-  assert.equal(modSetting(V, KEY), false, 'the store reads it as a declared switch, off');
+  assert.equal(modSetting(V, KEY), true, 'the store reads it as a declared switch, on (HT-WAIST-ON)');
 });
 
 test('HT-WAIST: the switch is REACHABLE - curated onto the mod\'s tile, so the drawer draws it (mutant: left off MOD_CURATED, TORCH-BIND\'s unreachable key again)', () => {
@@ -54,19 +55,22 @@ test('HT-WAIST: the switch is REACHABLE - curated onto the mod\'s tile, so the d
   assert.ok(modDials(V).includes(KEY), 'and modDials keeps it - it is a real key, not a typo the drawer drops');
 });
 
-test('HT-WAIST: LoadSettings carries the switch - off by default, the store\'s value when set (mutant: the field misread or hard-wired)', () => {
+test('HT-WAIST: LoadSettings carries the switch - on by default, the store\'s value when set (mutant: the field misread or hard-wired)', () => {
   _resetModSettings();
-  assert.equal(readTorchSettings().lanternsAtWaist, false, 'the shipped store: off');
+  assert.equal(readTorchSettings().lanternsAtWaist, true, 'the shipped store: on (HT-WAIST-ON)');
   const defaults = Object.fromEntries(Object.entries(MOD_SETTINGS[V].keys).map(([k, d]) => [k, d.default]));
   assert.equal(readTorchSettings(() => ({ ...defaults, [KEY]: true })).lanternsAtWaist, true, 'a store with it on: on');
   assert.equal(readTorchSettings(() => ({ ...defaults, [KEY]: true })).lanternRelaxed, false, 'and it is its own field - Relaxed Lanterns is not turned on by it');
-  assert.equal(readTorchSettings(() => ({ ...defaults, 'Handling.RelaxedLanterns': true })).lanternsAtWaist, false, 'nor it by Relaxed Lanterns');
+  assert.equal(readTorchSettings(() => ({ ...defaults, [KEY]: false })).lanternsAtWaist, false, 'a store with it off: off');
+  assert.equal(readTorchSettings(() => ({ ...defaults, [KEY]: false, 'Handling.RelaxedLanterns': true })).lanternsAtWaist, false, 'nor it by Relaxed Lanterns');
 });
 
 test('HT-WAIST: lanternAtWaist - the ONE question: a lantern, with Handheld Torches on and the switch on; never a torch or a candle; nothing with the mod off (mutant: any leg dropped)', () => {
   _resetModSettings();
   try {
-    assert.equal(lanternAtWaist(lantern()), false, 'the shipped switch is off: the lantern is held, as it always was');
+    assert.equal(lanternAtWaist(lantern()), true, 'the shipped switch is on (HT-WAIST-ON): the lantern hangs at the waist');
+    setModSetting(V, KEY, false);
+    assert.equal(lanternAtWaist(lantern()), false, 'off: the lantern is held, as it always was');
     setModSetting(V, KEY, true);
     assert.equal(lanternAtWaist(lantern()), true, 'on: the lantern hangs at the waist');
     assert.equal(lanternAtWaist(torch()), false, 'a torch is still held');

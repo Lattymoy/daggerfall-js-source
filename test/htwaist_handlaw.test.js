@@ -197,6 +197,7 @@ test('HT-WAIST: the first-person hand never holds the waist\'s lantern - no lant
 test('HT-WAIST: the light shines from the HIP - LANTERN_HIP in the yaw frame, over BOTH writers of the torch\'s override; a drawn body\'s point when one is handed in; a torch keeps TORCH_OFFSET; switch off, the lantern takes the override as before (mutant: the waist rule dropped or read after the override)', () => {
   _resetModSettings();
   setPlayerTorchOffsetOverride(null); setPlayerWaistLightOverride(null);
+  setModSetting(V, WAIST, false);   // HT-WAIST-ON ships it on: the off leg first
   try {
     const ln = lantern();
     const e = { lightSource: ln, items: [ln] };
@@ -235,6 +236,8 @@ test('HT-WAIST: the Morrowind build is asked for the lantern at the hip off the 
   try {
     const ln = lantern();
     const ent = { race: 'Breton', gender: 'male', faceIndex: 0, items: [ln], lightSource: ln };
+    assert.equal(armBuildOptsOf(ent).hipLight, true, 'shipped on (HT-WAIST-ON): the body is built with it');
+    setModSetting(V, WAIST, false);
     assert.equal(armBuildOptsOf(ent).hipLight, false, 'the switch off: no lantern at the hip');
     assert.equal(armBuildOptsOf(ent).torch, false, 'and it is never the held torch');
     setModSetting(V, WAIST, true);

@@ -61,7 +61,9 @@ const V = HANDHELD_TORCHES_VENDOR;
 const T = TEMPLATES;
 const settle = () => new Promise((r) => setTimeout(r, 5));
 
-const defaults = () => Object.fromEntries(Object.entries(MOD_SETTINGS[V].keys).map(([k, d]) => [k, d.default]));
+// the MOD's own law: the port's HT-WAIST switch (on by default since HT-WAIST-ON) off, so a lantern is held as the
+// mod holds it - the switch's own law is htwaist_*.test.js's
+const defaults = () => ({ ...Object.fromEntries(Object.entries(MOD_SETTINGS[V].keys).map(([k, d]) => [k, d.default])), 'Handling.LanternsAtWaist': false });
 const torch = (cond = 50) => ({ group: 'UselessItems2', templateIndex: T.Torch, currentCondition: cond, maxCondition: 50 });
 const lantern = (cond = 100) => ({ group: 'UselessItems2', templateIndex: T.Lantern, currentCondition: cond, maxCondition: 100 });
 const candle = () => ({ group: 'UselessItems2', templateIndex: T.Candle, currentCondition: 16, maxCondition: 16 });
