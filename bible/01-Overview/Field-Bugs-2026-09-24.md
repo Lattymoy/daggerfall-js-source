@@ -991,7 +991,7 @@ rider:
 - The frame clock is the saddle's for a mounted beast and EOTB's `speedMod`
   run halving on foot.
 - A new swing count plays `AttackMeleeLycan` once, forward, at LYCAN_TICK,
-  as the local body's `playLycanAttack` does (`eotbBody.js:552`). The count
+  as the local body's `playLycanAttack` does (`eotbBody.js:489`). The count
   first seen is no swing.
 
 The hand-off is RIDE's: `isRiding` is true only once the art is up, so while
@@ -1009,7 +1009,7 @@ world.js's `cam` and sets it each modal frame.
 **The local body, beside it.** `eotbBody.js` asked for every sprite with
 the mod's settings (`cfg`), which never carry the form. So a wereboar saw the
 werewolf on themselves, while the others now draw the boar. The draw and the
-placement take the live form now (`lookNow`, `eotbBody.js:419`). The preload
+placement take the live form now (`lookNow`, `eotbBody.js:356`). The preload
 fetches the live form's lycan set, and fetches it again when the form
 changes (`:270`, `:713`).
 
@@ -1072,7 +1072,7 @@ local player's goes through `mwView.mwViewDrawBody` (`mwView.js:329`,
 `worldModes.js:7150` and `:7247` (the dungeon and the interior passes),
 and `dungeon.js:1064`. `dungeonContext.js`, the fourth motor host, builds
 the dungeon for those hosts and draws no body of its own. The other players'
-bodies go through `peerBodies.js:380` (`PeerBodies.draw`). The open world
+bodies go through `peerBodies.js:377` (`PeerBodies.draw`). The open world
 calls it at `world.js:14276`, and the modal passes reach it through
 `host.drawPeerBodies` (`worldModes.js:7151`, `:7248`). The fix therefore
 sits in one place and reaches every host.
