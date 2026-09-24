@@ -147,6 +147,8 @@ import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 // dicts, neither of which belongs in a screen that repaints itself.
 import { paneControls, discardControlsStaging, captureArmed, controlsPromptOpen, dismissControlsPrompt } from './enhancedControls.js';
 // FT0: the features home - one list over the three stores, filtered by kind
+import { OVERHAUL_PANELS, currentOption } from '../systems/overhauls.js';   // OVH1: the three looks
+import { UI_PACKS, packUrl } from '../systems/uiPack.js';   // OVH2: a pack's own picture on its card
 import { FEATURES, KINDS, KIND_ORDER, GROUPS, GROUP_ORDER, filterFeatures, featureCounts, featureForControl, resolveControl, modModules, modDials } from '../systems/features.js';   // FT14: the groups and each mod's curated keys
 import '../world/landView.js';   // RF4: the land-view lane registers itself with the registry
 import '../world/outdoors.js';   // RF4: the outdoors lane too
@@ -181,7 +183,7 @@ import { serviceBase, storedSession } from '../net/accountClient.js';
 // by it. Empty at FT0; the Enhanced category of Settings and the Mods
 // section keep their rows until each one's slice moves it here
 // (bible/10-UI/Features-Arc.md).
-const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Online', 'Test Room', 'Settings', 'Features', 'About'];   // FT16: Controls is a Settings CATEGORY, not a rail door   // FT14: Mods is gone - every mod is a tile on Features, and what the pane carried besides stands under them   // ONLINE1: the shared world's door
+const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Online', 'Test Room', 'Settings', 'Features', 'Overhauls', 'About'];   // OVH1: the three looks   // FT16: Controls is a Settings CATEGORY, not a rail door   // FT14: Mods is gone - every mod is a tile on Features, and what the pane carried besides stands under them   // ONLINE1: the shared world's door
 // FD1 (Mac, 2026-09-11): the CLASSIC skin opens on this same door. Its
 // three game doors collapse into BEGIN, which leads into the classic
 // start sequence - the title, the film, Daggerfall's own start window -
@@ -190,7 +192,7 @@ const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Online', 'Test Room
 // SO1: ENHANCED left the rail for a category of Settings (settingsMap).
 // ONLINE1: ONLINE joins it - Mac: "if using classic, you'd see the
 // other user's paperdoll" - the same pane, the same save brought in.
-const SECTIONS_CLASSIC = ['Begin', 'Online', 'Settings', 'Features', 'About'];   // FT14; FT16: Controls is a Settings category
+const SECTIONS_CLASSIC = ['Begin', 'Online', 'Settings', 'Features', 'Overhauls', 'About'];   // OVH1   // FT14; FT16: Controls is a Settings category
 
 // U51: the same rail with the boot-only questions swapped for the
 // in-game ones. Continue and New Game answer "which game", which is
@@ -203,7 +205,7 @@ const SECTIONS_CLASSIC = ['Begin', 'Online', 'Settings', 'Features', 'About'];  
 // mode's doors), and the pane says so in words. A rail that drops the
 // row instead teaches the player the door was never there - the same
 // argument the Mods section is built on.
-const SECTIONS_PAUSE = ['Resume', 'Save Game', 'Load Game', 'Settings', 'Features', 'About', 'Exit'];   // FT14; FT16: Controls is a Settings category
+const SECTIONS_PAUSE = ['Resume', 'Save Game', 'Load Game', 'Settings', 'Features', 'Overhauls', 'About', 'Exit'];   // OVH1   // FT14; FT16: Controls is a Settings category
 
 const idOf = (label) => label.toLowerCase().split(' ')[0];
 
@@ -919,7 +921,7 @@ function paneOnline(body) {
   // agreeing to are still on the surface they enter through, where a
   // page in the bible cannot reach them.
   const foot = el('div', 'card svonlinefoot');
-  foot.append(el('p', 'meta', 'Everyone brings their own save; you see each other everywhere and can talk. A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers. A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers. Towns and the open country share who is there and the creatures that find you: what one player meets, everyone nearby sees and fights - and its creatures can hurt you too. The clock and the sky are the world\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, and the quest clocks stand still. Online is the enhanced lane: every enhancement the port owns is on for everyone. Most of your mods stay yours - turn them on or off online as you like. Six switches are the room\u2019s: Basic Roads and World of Daggerfall, because both shape the terrain and a room shares one ground, and Meaner Monsters, the Combat and Armor Overhaul and Unleveled Loot, because a dungeon\u2019s foes belong to whoever hosts it and loot changes hands.'));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door
+  foot.append(el('p', 'meta', 'Everyone brings their own save; you see each other everywhere and can talk. A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers. A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers. Towns and the open country share who is there and the creatures that find you: what one player meets, everyone nearby sees and fights - and its creatures can hurt you too. The clock and the sky are the world\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, and the quest clocks stand still. The shared world is the enhanced lane: every enhancement the port owns in the world is on for everyone. The screens you play through are your own - your UI Overhaul, with the chat, your friends, the party and trading in their own panels over it. Most of your mods stay yours - turn them on or off online as you like. Six switches are the room\u2019s: Basic Roads and World of Daggerfall, because both shape the terrain and a room shares one ground, and Meaner Monsters, the Combat and Armor Overhaul and Unleveled Loot, because a dungeon\u2019s foes belong to whoever hosts it and loot changes hands.'));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door
   foot.append(field('Relay', 'onlineServer', DEFAULT_SERVER, 200));
   body.append(foot);
 }
@@ -2474,6 +2476,94 @@ function paneFeatures(body) {
   if (featureKind == null || featureKind === 'mod') modsFooter(body);   // FT14: what the Mods pane carried that was never a mod setting
 }
 
+// ── OVH1 (2026-09-24, Mac: "A new option on the main menu that opens to show 3 large panels. These panels will
+// have directional arrows allowing you to switch being different feature sets") - THE OVERHAULS PANE. Three cards,
+// one look each (systems/overhauls.js is the registry and the only writer): the arrows BROWSE, the button WEARS, so a
+// look that reloads the game is never worn by a stray arrow press. The card a player is browsing survives a render.
+const ovhAt = {};   // panel id -> the option index being shown
+/** The picture a look carries: a UI pack's own art, else its emblem. */
+function overhaulPicture(p, o, inUse) {
+  const pic = el('div', 'look-pic');
+  pic.dataset.look = o.id;
+  const pack = p.id === 'ui' ? UI_PACKS[o.pack] : null;
+  if (pack) {
+    const img = el('img');
+    img.alt = `${o.name}: the inventory`;
+    img.loading = 'lazy';
+    img.src = packUrl(pack, 'Img/INVE00I0.IMG.png');
+    pic.append(img);
+  } else {
+    const em = el('div', 'look-emblem', o.name);
+    em.append(el('small', null, p.title.replace(/ Overhaul$/, '')));
+    pic.append(em);
+  }
+  if (inUse) pic.append(el('span', 'look-badge', 'In use'));
+  return pic;
+}
+function overhaulPanel(p) {
+  if (!p.options.length) {   // OVH1b: a panel with nothing in it yet - its title, an empty picture, one line
+    const card = el('section', 'look-panel look-empty');
+    card.dataset.panel = p.id;
+    card.dataset.state = 'empty';
+    card.setAttribute('aria-label', p.title);
+    const pic = el('div', 'look-pic');
+    pic.append(el('div', 'look-emptyline', p.empty));
+    card.append(el('h2', 'look-title', p.title), pic);
+    return card;
+  }
+  const cur = currentOption(p);
+  const n = p.options.length;
+  const at = ((ovhAt[p.id] ?? Math.max(0, p.options.indexOf(cur))) % n + n) % n;
+  const o = p.options[at];
+  const card = el('section', 'look-panel');
+  card.dataset.panel = p.id;
+  card.dataset.state = !cur ? 'custom' : o === cur ? 'on' : 'browse';
+  card.setAttribute('aria-label', p.title);
+  card.tabIndex = 0;
+  const go = (d) => { ovhAt[p.id] = (at + d + n) % n; render(); document.querySelector(`.look-panel[data-panel="${p.id}"]`)?.focus(); };
+  card.onkeydown = (e) => {
+    if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); go(1); }
+  };
+  card.append(el('h2', 'look-title', p.title), overhaulPicture(p, o, o === cur));
+  const nav = el('div', 'look-nav');
+  const arrow = (d, glyph, word) => {
+    const b = el('button', 'look-arrow', glyph);
+    b.type = 'button';
+    b.setAttribute('aria-label', `${word} ${p.title.toLowerCase()} look`);
+    b.disabled = n < 2;
+    b.onclick = (e) => { e.stopPropagation(); go(d); };
+    return b;
+  };
+  const mid = el('div');
+  mid.setAttribute('aria-live', 'polite');
+  mid.append(el('div', 'look-name', o.name), el('div', 'look-by', o.by));
+  const dots = el('div', 'look-dots');
+  p.options.forEach((x, i) => dots.append(el('span', `look-dot${i === at ? ' at' : ''}${x === cur ? ' on' : ''}`)));
+  mid.append(dots);
+  nav.append(arrow(-1, '‹', 'Previous'), mid, arrow(1, '›', 'Next'));
+  card.append(nav, el('p', 'look-blurb', o.blurb));
+  const use = el('button', 'act primary look-use', o === cur ? 'In use' : `Use ${o.name}`);
+  use.type = 'button';
+  use.disabled = o === cur;
+  use.onclick = () => {
+    const r = o.apply();
+    if (r?.reload) { location.replace(r.url); return; }
+    render();
+  };
+  card.append(use);
+  if (!cur) card.append(el('p', 'look-note', 'Custom: your own mix from Features. Using a look sets every switch it covers.'));
+  const forced = isOnlinePage() && p.online ? p.online : null;
+  card.append(el('p', 'look-note', forced ? `${p.effect} ${forced}` : p.effect));
+  return card;
+}
+function paneOverhauls(body) {
+  body.classList.add('wide');
+  const grid = el('div', 'look-grid');
+  for (const p of OVERHAUL_PANELS) grid.append(overhaulPanel(p));
+  body.append(grid);
+}
+
 /** The kind labels a row wears, in KIND_ORDER whatever order the row lists them. */
 function kindTags(kinds) {
   const w = el('div', 'kinds');
@@ -2753,6 +2843,7 @@ export const SYSTEM_PANES = Object.freeze([
   ['resume', 'Resume'], ['save', 'Save Game'], ['load', 'Load Game'],
   ['settings', 'Settings'],   // FT16: Controls is a category INSIDE it
   ['features', 'Features'],   // FT0
+  ['overhauls', 'Overhauls'],   // OVH1
   ['about', 'About'], ['exit', 'Exit'],   // FT14: no Mods pane
 ]);
 
@@ -2786,6 +2877,7 @@ function pauseSystem(body) {
     ({
       save: paneSave, load: paneLoad,
       features: paneFeatures,   // FT0
+      overhauls: paneOverhauls,   // OVH1
       about: paneAbout, exit: paneExit,
     })[sysSec](detail);
   }
@@ -3318,6 +3410,7 @@ function renderInto() {
         test: paneTest,
         save: paneSave, exit: paneExit,
         features: paneFeatures,   // FT0
+        overhauls: paneOverhauls,   // OVH1
         about: paneAbout, begin: paneBegin,   // FD1: the classic rail's door; SO1: Enhanced is a Settings category now
       })[section](body);
     }

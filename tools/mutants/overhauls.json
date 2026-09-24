@@ -1,0 +1,173 @@
+[
+  {
+    "name": "OVH-texture-panel-not-empty",
+    "file": "src/systems/overhauls.js",
+    "tests": [
+      "test/overhauls.test.js"
+    ],
+    "old": "    options: Object.freeze([]),\n  }),",
+    "new": "    options: Object.freeze([OVERHAUL_UI_PLACEHOLDER]),\n  }),"
+  },
+  {
+    "name": "OVH-sound-look-writes-one-row",
+    "file": "src/systems/overhauls.js",
+    "tests": [
+      "test/overhauls.test.js"
+    ],
+    "old": "export const SOUND_ROWS = Object.freeze(['enhanced-sounds', 'mod-immersive-footsteps']);",
+    "new": "export const SOUND_ROWS = Object.freeze(['enhanced-sounds']);"
+  },
+  {
+    "name": "OVH-custom-read-as-a-look",
+    "file": "src/systems/overhauls.js",
+    "tests": [
+      "test/overhauls.test.js"
+    ],
+    "old": "export function currentOption(panel) { return panel.options.find((o) => o.isOn()) ?? null; }",
+    "new": "export function currentOption(panel) { return panel.options.find((o) => o.isOn()) ?? panel.options[0] ?? null; }"
+  },
+  {
+    "name": "OVH-pack-set-without-the-skin",
+    "file": "src/systems/overhauls.js",
+    "tests": [
+      "test/overhauls.test.js"
+    ],
+    "old": "  if (setUiSkin(skin) === null) url.searchParams.set('skin', skin);\n",
+    "new": "  if (skin === 'x') setUiSkin(skin);\n"
+  },
+  {
+    "name": "OVH-classic-reads-grimoire-in-use",
+    "file": "src/systems/overhauls.js",
+    "tests": [
+      "test/overhauls.test.js"
+    ],
+    "old": "  isOn: () => uiSkin() === skin && (skin !== 'classic' || (activeUiPack()?.id ?? UI_PACK_NONE) === pack),",
+    "new": "  isOn: () => uiSkin() === skin,"
+  },
+  {
+    "name": "OVH-pack-worn-on-the-enhanced-skin",
+    "file": "src/systems/uiPack.js",
+    "tests": [
+      "test/overhauls.test.js"
+    ],
+    "old": "  if (uiSkin(search) !== 'classic') return null;\n",
+    "new": ""
+  },
+  {
+    "name": "OVH-override-door-wears-the-stored-pack",
+    "file": "src/systems/uiPack.js",
+    "tests": [
+      "test/overhauls.test.js"
+    ],
+    "old": "(skinOverride(search) ? UI_PACK_NONE : clean(getPref('uiPack')) ?? UI_PACK_NONE)",
+    "new": "(clean(getPref('uiPack')) ?? UI_PACK_NONE)"
+  },
+  {
+    "name": "OVH-cifrci-case-fold-dropped",
+    "file": "src/systems/uiPack.js",
+    "tests": [
+      "test/overhauls.test.js"
+    ],
+    "old": "    else if ((m = /^CifRci\\/(.+)\\.png$/i.exec(served))) cifRci.set(m[1].toUpperCase(), served);",
+    "new": "    else if ((m = /^CifRci\\/(.+)\\.png$/i.exec(served))) cifRci.set(m[1], served);"
+  },
+  {
+    "name": "OVH-pack-upload-without-alpha",
+    "file": "src/ui/packArt.js",
+    "tests": [
+      "test/overhauls.test.js"
+    ],
+    "old": "{ smooth: true, alpha: true }",
+    "new": "{ smooth: true }"
+  },
+  {
+    "name": "OVH-loadimg-hands-the-pack-size",
+    "file": "src/ui/nativePanel.js",
+    "tests": [
+      "test/overhauls.test.js"
+    ],
+    "old": "  return { tex: packed ?? renderer.uploadTexture('img', name, bitmapToColor32(bmp, palette)), w: bmp.width, h: bmp.height };",
+    "new": "  return { tex: packed ?? renderer.uploadTexture('img', name, bitmapToColor32(bmp, palette)), w: packed ? bmp.width * 3 : bmp.width, h: bmp.height };"
+  },
+  {
+    "name": "OVH-loadimg-asks-no-pack",
+    "file": "src/ui/nativePanel.js",
+    "tests": [
+      "test/overhauls.test.js"
+    ],
+    "old": "  const packed = await packImgTexture(renderer, name);\n  return",
+    "new": "  const packed = null;\n  return"
+  },
+  {
+    "name": "OVH-renderer-alpha-flag-dropped-at-upload",
+    "file": "src/render/renderer.js",
+    "tests": [
+      "test/overhauls.test.js"
+    ],
+    "old": "    if (opts.alpha) (this._alphaArt ??= new WeakSet()).add(tex);",
+    "new": "    if (opts.alpha === 'never') (this._alphaArt ??= new WeakSet()).add(tex);"
+  },
+  {
+    "name": "OVH-sdf-classic-spacing-kept",
+    "file": "src/ui/text.js",
+    "tests": [
+      "test/overhauls.test.js"
+    ],
+    "old": "export const SDF_GLYPH_SPACING = 0;",
+    "new": "export const SDF_GLYPH_SPACING = 1;"
+  },
+  {
+    "name": "OVH-sdf-baseline-at-the-top",
+    "file": "src/ui/text.js",
+    "tests": [
+      "test/overhauls.test.js"
+    ],
+    "old": "    const baseline = y + (fnt.fixedHeight - 2) * scale;",
+    "new": "    const baseline = y;"
+  },
+  {
+    "name": "OVH-sdf-missing-code-not-questioned",
+    "file": "src/ui/text.js",
+    "tests": [
+      "test/overhauls.test.js"
+    ],
+    "old": "const sdfCode = (sdf, code) => (sdf.glyphs.has(code) ? code : FNT_ERROR_CODE);",
+    "new": "const sdfCode = (sdf, code) => (sdf.glyphs.has(code) ? code : 32);"
+  },
+  {
+    "name": "OVH3-player-trade-gated-back-on-the-skin",
+    "file": "src/ui/playerTradeDoor.js",
+    "tests": [
+      "test/overhauls.test.js"
+    ],
+    "old": "export const playerTradeReady = () => typeof document !== 'undefined';",
+    "new": "export const playerTradeReady = () => false;"
+  },
+  {
+    "name": "OVH3-chat-gated-back-on-the-skin",
+    "file": "src/scenes/world.js",
+    "tests": [
+      "test/overhauls.test.js"
+    ],
+    "old": "    if (typeof document !== 'undefined') chatStart();",
+    "new": "    if (enhanced && typeof document !== 'undefined') chatStart();"
+  },
+  {
+    "name": "OVH2-doll-backdrop-composed-in",
+    "file": "src/ui/paperDoll.js",
+    "tests": [
+      "test/overhauls.test.js"
+    ],
+    "old": "await composeDoll(_art, _deps, entity, { background: !packBg });",
+    "new": "await composeDoll(_art, _deps, entity);"
+  },
+  {
+    "name": "OVH2-buttons-ask-no-pack",
+    "file": "src/ui/messageBox.js",
+    "tests": [
+      "test/overhauls.test.js"
+    ],
+    "old": "const packUrl = _packFailed.has(record) ? null : packCifRciUrl('BUTTONS.RCI', record, 0);",
+    "new": "const packUrl = null;"
+  }
+]

@@ -306,7 +306,7 @@ test('nativeTrade: icons NEVER upscale and centre in the 50x38 cell (ItemListScr
 // There was no harness in this repo for asserting DRAWN text - the
 // other UI suites pin it by reading the source, which cannot tell a
 // live total from a stale one. drawText asks the font for every glyph
-// by INDEX (text.js:88-89), so a font that records those indices
+// by INDEX (text.js:166-167), so a font that records those indices
 // reconstructs exactly the string the renderer was asked to paint.
 // That is an observation of the draw, not of the code.
 //

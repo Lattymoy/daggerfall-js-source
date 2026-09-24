@@ -1032,8 +1032,12 @@ their setting as residue.
   skill tallying ONCE PER CHECK before the roll, and the underwater
   forgiveness (:837-843 - the foot position collapses to
   feetY - 0.25 against the block water surface).
-- **The motor's capsule work**: _climbWallProbe - two rays at
-  0.4h/0.8h along the wall direction, reach radius+0.1, standing in
+- **The motor's capsule work**: _climbWallProbe - rays at 0.4h,
+  0.8h, the cylinder's base (r) and the lower cap's lowest wall
+  contact (CLIMB_CAP_LOW = r - sqrt((r+0.1)^2 - r^2), about 0.067 -
+  DISC21: the two upper rays alone let go of the wall with the
+  feet 0.72 m under the lip, and the climber fell back into the pit)
+  along the wall direction, reach radius+0.1, standing in
   for CollisionFlags.Sides + the GetClimbedWallInfo capsule cast
   (documented departure); a hit latches myLedgeDirection = the
   horizontal -normal (:608) so turning the camera mid-climb keeps
@@ -1713,7 +1717,7 @@ not gate on `HasAction`; it gates on `playerMotor.IsStandingStill`
 that `GroundedMovement` writes straight into `moveDirection`, so DFU
 plays the stride. The port walked the autorunner forward in silence in
 every host. All four now pass `standingStill: player.standing`, the
-motor's own mirror of that getter (`world.js:14682` already did at its
+motor's own mirror of that getter (`world.js:14679` already did at its
 other footstep site) - which is also still the paralysis answer,
 because the hosts zero both axes for a frozen player.
 

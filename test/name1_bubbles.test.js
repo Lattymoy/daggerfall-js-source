@@ -416,10 +416,9 @@ test('NAME1 + BUBBLE1: the wiring in scenes/world.js - the layer is made ONCE be
   assert.match(w, /import \{ createNameLayer, nameLayerWanted \} from '\.\.\/ui\/nameLayer\.js';/);
   assert.match(w, /import \{ RemotePlayers, composeLook, createSightCache \} from '\.\.\/net\/remotePlayers\.js';/);   // AUDIT 68 S22: sightBlockedBy is the cache's to call, never the host's
   assert.match(bare, /let online = null, remotePlayers = null, peerBodies = null, nameLayer = null, nameSight = null,/, 'one handle each, held for the session');
-  // AUDIT NAME1 F7: the SKIN gates the DOM face, exactly as it gates the chat panel the bubbles belong to.
-  assert.match(bare, /if \(nameLayerWanted\(enhanced\)\) nameLayer = createNameLayer\(\{\}\);/, 'made for the skin that owns this screen, and where there is a document to put it in');
-  assert.match(bare, /if \(enhanced && typeof document !== 'undefined'\) chatStart\(\);/, '...the same gate the chat takes');
-  assert.ok(bare.indexOf('const enhanced = isEnhanced();') < bare.indexOf('nameLayerWanted(enhanced)'), 'the skin is read before it is asked about');
+  // AUDIT NAME1 F7 + OVH3: the DOM face takes the gate the chat panel the bubbles belong to takes - a document, on either skin.
+  assert.match(bare, /if \(nameLayerWanted\(\)\) nameLayer = createNameLayer\(\{\}\);/, 'made where there is a document to put it in');
+  assert.match(bare, /if \(typeof document !== 'undefined'\) chatStart\(\);/, '...the same gate the chat takes');
   assert.equal((w.match(/createNameLayer\(/g) ?? []).length, 1, 'called in exactly one place - never per frame');
   assert.match(bare, /nameSight = createSightCache\(\);/, 'AUDIT NAME1 F2/F5: and the sight cache is the session\'s, made once beside it');
   assert.equal((w.match(/createSightCache\(/g) ?? []).length, 1, 'never per frame either - a cache rebuilt every frame is no cache');
@@ -444,12 +443,10 @@ test('NAME1 + BUBBLE1: the wiring in scenes/world.js - the layer is made ONCE be
 
 // ── THE FIXES (AUDIT NAME1, 2026-09-16: fifteen findings read off the slice, driven here) ──────────
 
-test('AUDIT NAME1 F7: the DOM face is the SKIN\'S, not the document\'s - a classic-skin page (online\'s forcing can fail, MAC-N3) keeps the classic bitmap names it always had, and never gets the enhanced pixel face with no chat panel beside it (mutant: the gate back on the document alone)', () => {
-  assert.equal(nameLayerWanted(true, {}), true, 'the enhanced skin, in a browser: the DOM face');
-  assert.equal(nameLayerWanted(false, {}), false, 'THE FINDING: a classic skin with a document gets NO layer - so `if (!nameLayer)` draws the bitmap names');
-  assert.equal(nameLayerWanted(true, null), false, 'and a Node probe gets none either');
-  assert.equal(nameLayerWanted(true, undefined), false);
-  assert.equal(nameLayerWanted(undefined, {}), false);
+test('AUDIT NAME1 F7 + OVH3: the DOM face is the CHAT\'S gate - a document, on either skin (the online panels keep their own face over any UI Overhaul); a page with none keeps the classic bitmap names (mutant: the layer gated back on the skin, away from the chat it belongs to)', () => {
+  assert.equal(nameLayerWanted({}), true, 'a browser: the DOM face, whichever skin');
+  assert.equal(nameLayerWanted(null), false, 'a Node probe gets none');
+  assert.equal(nameLayerWanted(undefined), false);
   // and the whole point of the refusal: the classic page still HAS a face, because the fallback is gated on the layer
   const rp = stand([{ id: 'a', at: [0, 0, -10], height: 1.8 }]);
   const r = recorder();

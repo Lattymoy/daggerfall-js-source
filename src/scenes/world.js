@@ -1471,12 +1471,12 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  AUDIT-FIELD F7: A FLOOR, NOT THE WHOLE DISTANCE. The first cut
    *  called 64 "more than the fastest accelerated step", which is true
    *  of a fixed physics STEP and false of a FRAME: the motor moves
-   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:1038),
+   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:1044),
    *  and the frame that hitches is exactly the frame in which the
    *  streamer is behind. A horse at the shipped default limit of sixty
    *  covers ~65 units in a 10 fps frame and ~120 at the mod's ceiling of
    *  a hundred - past a 64-unit probe, off the built world, and once the
-   *  motor is airborne `airControl` is false (motor.js:1579) so zeroing
+   *  motor is airborne `airControl` is false (motor.js:1601) so zeroing
    *  the drive on the NEXT frame no longer steers: the fall is already
    *  paid for. `travelLookahead` measures the frame that is about to
    *  run instead, and keeps 64 as its floor. */
@@ -9979,16 +9979,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     peerRiders = createPeerRiders({ renderer });   // RIDE: the others in the saddle
     // NAME1 + BUBBLE1: the names are the enhanced skin's DOM now (ui/nameLayer.js) - online forces that skin
     // (OL1), so this is normally the face a player sees. Made ONCE, here, beside the peers it labels.
-    // AUDIT NAME1 F7: gated on the SKIN as well as the document, exactly as the chat below is. Online's forcing of
-    // the enhanced lane can fail (MAC-N3 records how), and a classic-skin online page was getting this layer: the
-    // enhanced pixel face over a classic HUD, no classic name pass under it (the fallback is `if (!nameLayer)`)
-    // and no chat panel to put the bubbles beside. One gate, one answer - the skin either owns this screen or it
-    // does not, and a classic page keeps the bitmap names it always had.
-    if (nameLayerWanted(enhanced)) nameLayer = createNameLayer({});
+    // AUDIT NAME1 F7: the layer's gate is the CHAT's (ui/nameLayer.js nameLayerWanted) - one gate, one answer, so the
+    // bubbles never stand over heads with no chat beside them. OVH3: that gate is a document now, on either skin.
+    if (nameLayerWanted()) nameLayer = createNameLayer({});   // OVH3: on either skin, beside the chat it belongs to
     // AUDIT NAME1 F2/F5: the sight cache is the SESSION'S, not a frame's - it is keyed by peer id and it remembers
     // both the last ray and how long it has been saying "blocked". Made beside the layer and kept with it.
     nameSight = createSightCache();
-    if (enhanced && typeof document !== 'undefined') chatStart();   // CHAT1: the live chat is the enhanced skin's (a DOM panel); classic has no place for it yet   // the player's own arms switch (MWA1) turns the layer on; new data, new bodies
+    if (typeof document !== 'undefined') chatStart();   // OVH3: the online panels mount on EITHER skin - they keep their own face over the classic screens (the UI Overhaul is the player's online); CHAT1: the live chat is a DOM panel   // the player's own arms switch (MWA1) turns the layer on; new data, new bodies
     // AUDIT ONLINE D12: a clean goodbye - the room's leave, not a silence; the rigs and the dolls released. The panel
     // stays: a page restored from the cache gets its chat back through chatFrame's rejoin (AUDIT CHAT B4).
     // NAME1: and the NAME LAYER stays with it, for exactly that reason - a layer torn down at the farewell would
@@ -14701,7 +14698,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // layer, because a talk window is a modal above the vitals.
     // AUDIT 39: THE CALL IS UNCONDITIONAL. drawHud runs the damage
     // flash and the enhanced DOM HUD ABOVE its own `!art` return
-    // (hud.js:416-444) because neither reads ARENA2 - "a player whose
+    // (hud.js:418-446) because neither reads ARENA2 - "a player whose
     // HUD art failed to load still has vitals". Wrapping the whole
     // call in `if (hudArt)` inverted that: hudArt starts null and is
     // filled by a fire-and-forget load whose failure leaves it null

@@ -1,0 +1,23 @@
+[
+  {
+    "name": "CT-probe-upper-rays-only",
+    "file": "src/player/motor.js",
+    "tests": ["test/climb_top.test.js"],
+    "old": "for (const y of [this.height * 0.4, this.height * 0.8, CAPSULE_RADIUS, CLIMB_CAP_LOW]) {",
+    "new": "for (const y of [this.height * 0.4, this.height * 0.8]) {"
+  },
+  {
+    "name": "CT-cap-ray-at-cylinder-base",
+    "file": "src/player/motor.js",
+    "tests": ["test/climb_top.test.js"],
+    "old": "for (const y of [this.height * 0.4, this.height * 0.8, CAPSULE_RADIUS, CLIMB_CAP_LOW]) {",
+    "new": "for (const y of [this.height * 0.4, this.height * 0.8, CAPSULE_RADIUS]) {"
+  },
+  {
+    "name": "CT-cap-height-made-up",
+    "file": "src/player/motor.js",
+    "tests": ["test/climb_top.test.js"],
+    "old": "export const CLIMB_CAP_LOW = CAPSULE_RADIUS - Math.sqrt(CLIMB_SIDE_REACH ** 2 - CAPSULE_RADIUS ** 2);",
+    "new": "export const CLIMB_CAP_LOW = 0.1;"
+  }
+]

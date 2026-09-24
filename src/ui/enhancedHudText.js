@@ -47,9 +47,9 @@
 // online panels and the touch layer beside them. The NATIVE WINDOWS
 // are still drawn on the canvas in the 1996 bitmap face under this
 // skin, and that is a slice of its own rather than an oversight:
-// ui/deathScreen.js:168-170, ui/restWindow.js:866, ui/saveWindow.js:628+
+// ui/deathScreen.js:168-170, ui/restWindow.js:866, ui/saveWindow.js:641+
 // (shadowText, eight sites), ui/travelPopUp.js:716,
-// ui/questJournal.js:641-642, ui/messageBox.js:454/:457 and
+// ui/questJournal.js:641-642, ui/messageBox.js:469/:472 and
 // ui/actionText.js:45/:137 (every ActionTextBox's parchment on the
 // classic skin). Each of those is a native window whose every drawn
 // element cites a DFU rect (THE NATIVE-WINDOW RULE), so the face

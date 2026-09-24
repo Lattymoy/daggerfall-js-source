@@ -1,18 +1,17 @@
 // THE PLAYER-TRADE DOOR (TRADE1, 2026-09-21) - the one place the window two players share is built, the same fork
-// ui/tradeDoor.js is for the shop counter. It exists ONLY in the enhanced skin (that is where this feature is drawn);
-// `playerTradeReady()` is the gate a host asks before it offers the row, so a classic-skin player is never shown a
-// Trade button that cannot open.
+// ui/tradeDoor.js is for the shop counter. OVH3: it is an ONLINE window, drawn in its own face over either skin (the
+// online panels keep theirs whatever UI Overhaul is worn); `playerTradeReady()` is the gate a host asks before it
+// offers the row, so a page with no document is never shown a Trade button that cannot open.
 //
 // The window is wrapped in the generic overlay shape every host's frame already drives (isChoiceWindow, done, input,
 // click, wheel, hover, tick, draw, dispose) - tradeDoor.js's `enhancedTradeOverlay`, and for the same reason - and it
 // loads as a LAZY CHUNK through ui/enhancedChunk.js, so a deploy that lands while a tab is open is SAID, not silent
 // (MENU1). The session it draws is net/tradeSession.js's; this file owns only the overlay's life.
-import { isEnhanced } from '../systems/uiSkin.js';
 import { mountEnhancedChunk } from './enhancedChunk.js';
 import { registerOverlay } from './enhancedOverlays.js';
 
-/** Can this skin draw the window? The enhanced one reads no ARENA2 at all, as the shop counter's does not. */
-export const playerTradeReady = () => isEnhanced() && typeof document !== 'undefined';
+/** Can this page draw the window? It reads no ARENA2 at all, as the enhanced shop counter's does not. */
+export const playerTradeReady = () => typeof document !== 'undefined';   // OVH3: an online window - it keeps its own face over either skin
 
 /**
  * Build the window over `session`. `deps`: `{ items(), entity, gold() }` - the live pack, the player entity, the purse.
