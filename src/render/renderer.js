@@ -1848,6 +1848,8 @@ export class Renderer {
   setContact(on) { this._contactWanted = !!on; }
   /** VOL1: the lanterns' glow marched through their shadows by the air pass (`?volumetrics=off` restores the lane's analytic glow per fragment). */
   setVolumetrics(on) { this._volumetricsWanted = !!on; if (this._airPass) this._airPass.volOn = this._volumetricsWanted; }
+  /** VC7b: the haze march's door - `?haze=off` (syncLightingLane reads it). */
+  setHaze(on) { this._hazeWanted = !!on; if (this._airPass) this._airPass.hazeOn = this._hazeWanted; }
   /** EL1: the in-scatter gain folded with the fog's density (zero with the fog off, so clear air glows nowhere). */
   _scatterGain() { const lane = this._lane; return lane ? lane.scatter * lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]) : 0; }
   /** VOL1: does the air pass draw this frame's glow - a world frame the pass was prepared for and has not yet resolved
@@ -1946,6 +1948,7 @@ export class Renderer {
       // VOL1: the glow's shader is built from the lane's own curve and integral and the shadow block, handed over - the air pass is a leaf and imports neither
       this._air = this._airPass ??= new AirPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS }, glsl: { shadow: SHADOW_GLSL, tonemap: this._lane.tonemapGlsl, scatter: this._lane.scatterGlsl }, maxLights: this.maxPointLights });
       this._air.volOn = this._volumetricsWanted !== false;
+      this._air.hazeOn = this._hazeWanted !== false;   // VC7b
     }
     else { if (this._air) { this._air.release(); this._frameFbo = null; } this._air = null; }
   }
@@ -2083,6 +2086,7 @@ export class Renderer {
         shadows: sp, textures: this.textures, emissionTextures: this.emissionTextures, blackTex: this._blackTex,
         windowEmission: this._windowEmission, isSpectral: isSpectralArchive, bindVao, clearColor: this._clearColor,
         scatter: this._scatterGain(), exposure: this._exposure,   // VOL1: the glow's gain (the fog's) and the scene's exposure, for the march
+        haze: this._lane ? this._lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]) : 0,   // VC7b: the fog's extinction, for the sun's march through the haze
       });
     }
     this._perf?.mark('world');   // VC6d: the passes' work is submitted; everything until the sky or the resolve is the world's own draws

@@ -2,7 +2,7 @@
 // Game/Weather/Weather.cs + the PlayerEntity daily tick (MIT,
 // Daggerfall Workshop; the table data is Assets/Resources/
 // WeatherTable.json, itself the climate and weather table of the
-// Daggerfall Chronicles pg. 47). R12 shipped the whole PRESENTATION
+// Daggerfall Chronicles pg. 47 - kept in weatherTable.js). R12 shipped the whole PRESENTATION
 // (world/weather.js: fog, sky variants, sun dimming, lightning,
 // precipitation, ambience routing) driven by a static ?weather URL
 // param; this module is the STATE the param stood in for - the
@@ -38,108 +38,21 @@
 
 import { CLIMATE_INDICES } from './travel.js';   // {0,0,0,1,2,3,4,5,5,5} by (climate - Ocean) - TravelTimeCalculator.cs:30, the same map WeatherManager.cs:432 spends
 import { CLIMATES, CLIMATE_BASE_TYPES, getWorldClimateSettings } from '../formats/mapsFile.js';
-import { SEASONS, seasonValue, dateFromClassicMinutes } from './gameDate.js';
+import { seasonValue, dateFromClassicMinutes } from './gameDate.js';
 import { WEATHER_TYPES } from '../world/weather.js';
 import { seededRng } from './wind.js';   // CLK2: the evolution's own generator - never the classic lane's sequence
 import { isEnhanced } from './uiSkin.js';   // CLK2: the evolution is the enhanced lane's
 import { getPref } from './uiPrefs.js';
 import { groundIsSnowy, climateSeasonFromMinutes } from '../world/climateSwaps.js';   // WEATHER2a: the terrain's own snow law
-import { fieldAt } from './weatherField.js';   // WEATHER2b: the day's words as places
+import { fieldAt, FIELD_RANGE_M, pixelOfField } from './weatherField.js';   // WEATHER2b: the day's words as places
+import { systemsNear, wornAmong, skyCells, approachAt, insideClip } from './weatherMap.js';   // WEATHER3b: the world weather map - systems on the land; WEATHER3c: its sky and its wind
 
 export { WEATHER_TYPES };
 
-/** WeatherType enum values (Weather.cs:18-30): the index into
- *  WEATHER_TYPES is the enum - Sunny 0, Cloudy 1, Overcast 2, Fog 3,
- *  Rain 4, Thunder 5, Snow 6 ("descending pleasant-ness"). */
-export const WEATHER_ENUM = Object.freeze(Object.fromEntries(WEATHER_TYPES.map((w, i) => [w, i])));
-
-// ---- the table (WeatherTable.json, digit for digit) -----------------
-// Chances in %, one row per season, in DFU's COMPILED odds order:
-// [Sunny, Cloudy, Overcast, Fog, Rain, Snow, Thunder]. Seasons keyed
-// by the gameDate enum (Fall 0, Spring 1, Summer 2, Winter 3). Every
-// row sums to 100 (Validate() normalizes at a 0.1 tolerance;
-// verbatim rows need none - pinned).
-const R = (sunny, cloudy, overcast, fog, rain, snow, thunder) => [sunny, cloudy, overcast, fog, rain, snow, thunder];
-const WEATHER_TABLE = Object.freeze({
-  desert: {
-    [SEASONS.Winter]: R(75, 15, 0, 3, 5, 0, 2),
-    [SEASONS.Spring]: R(75, 15, 0, 0, 5, 0, 5),
-    [SEASONS.Summer]: R(85, 15, 0, 0, 0, 0, 0),
-    [SEASONS.Fall]:   R(80, 15, 0, 0, 3, 0, 2),
-  },
-  mountains: {
-    [SEASONS.Winter]: R(18, 20, 25, 2, 0, 35, 0),
-    [SEASONS.Spring]: R(30, 23, 15, 2, 20, 0, 10),
-    [SEASONS.Summer]: R(45, 25, 15, 0, 10, 0, 5),
-    [SEASONS.Fall]:   R(30, 18, 20, 2, 20, 0, 10),
-  },
-  jungle: {
-    [SEASONS.Winter]: R(15, 20, 25, 3, 25, 0, 12),
-    [SEASONS.Spring]: R(20, 15, 10, 3, 37, 0, 15),
-    [SEASONS.Summer]: R(35, 20, 10, 0, 25, 0, 10),
-    [SEASONS.Fall]:   R(20, 20, 20, 0, 25, 0, 15),
-  },
-  swamp: {
-    [SEASONS.Winter]: R(15, 20, 25, 25, 0, 15, 0),
-    [SEASONS.Spring]: R(10, 10, 20, 20, 25, 0, 15),
-    [SEASONS.Summer]: R(25, 15, 15, 15, 20, 0, 10),
-    [SEASONS.Fall]:   R(15, 15, 15, 20, 20, 0, 15),
-  },
-  subtropical: {
-    [SEASONS.Winter]: R(20, 20, 20, 5, 25, 0, 10),
-    [SEASONS.Spring]: R(30, 15, 10, 3, 27, 0, 15),
-    [SEASONS.Summer]: R(40, 15, 10, 0, 20, 0, 15),
-    [SEASONS.Fall]:   R(25, 20, 15, 0, 25, 0, 15),
-  },
-  woodlands: {
-    [SEASONS.Winter]: R(25, 15, 20, 5, 10, 25, 0),
-    [SEASONS.Spring]: R(35, 15, 10, 5, 25, 0, 10),
-    [SEASONS.Summer]: R(60, 20, 5, 0, 10, 0, 5),
-    [SEASONS.Fall]:   R(25, 15, 20, 10, 20, 0, 10),
-  },
-});
-export { WEATHER_TABLE };
-
-/** The compiled-order weather TYPE per column (see the note above -
- *  Snow sits before Thunder, Weather.cs:94-100). */
-const COMPILED_TYPES = Object.freeze([
-  WEATHER_ENUM.sunny, WEATHER_ENUM.cloudy, WEATHER_ENUM.overcast, WEATHER_ENUM.fog,
-  WEATHER_ENUM.rain, WEATHER_ENUM.snow, WEATHER_ENUM.thunder,
-]);
-
-/** WeatherTable.GetWeather's climate dispatch (Weather.cs:200-224). */
-export function weatherTableFor(climateIndex) {
-  switch (climateIndex) {
-    case CLIMATES.Desert: case CLIMATES.Desert2: return WEATHER_TABLE.desert;
-    case CLIMATES.Mountain: case CLIMATES.MountainWoods: return WEATHER_TABLE.mountains;
-    case CLIMATES.Rainforest: return WEATHER_TABLE.jungle;
-    case CLIMATES.Ocean: case CLIMATES.Swamp: return WEATHER_TABLE.swamp;
-    case CLIMATES.Subtropical: return WEATHER_TABLE.subtropical;
-    case CLIMATES.Woodlands: case CLIMATES.HauntedWoodlands: return WEATHER_TABLE.woodlands;
-    default:
-      console.warn(`[weather] unknown climate ${climateIndex} - Sunny`);   // LogWarning + Sunny (Weather.cs:221-223)
-      return null;
-  }
-}
-
-/** The roll (WeatherClimateSeason.GetWeather, Weather.cs:116-129):
- *  uniform [0,100), subtract each chance in compiled order until
- *  <= 0; Sunny on fall-through. Answers the WeatherType ENUM. */
-export function rollWeather(climateIndex, season, rolls = Math.random) {
-  const table = weatherTableFor(climateIndex);
-  if (!table) return WEATHER_ENUM.sunny;
-  const row = table[season];
-  if (!row) {
-    console.warn(`[weather] unknown season ${season} - Sunny`);   // WeatherClimate.GetWeather's own arm (Weather.cs:167-168)
-    return WEATHER_ENUM.sunny;
-  }
-  let rand = rolls() * 100;
-  for (let i = 0; i < row.length; i++) {
-    rand -= row[i];
-    if (rand <= 0) return COMPILED_TYPES[i];
-  }
-  return WEATHER_ENUM.sunny;   // fallback with DFU's own warning path
-}
+// The table, its dispatch and the roll live in weatherTable.js (WEATHER3:
+// the world weather map reads the same odds); re-exported whole.
+import { WEATHER_ENUM, rollWeather } from './weatherTable.js';
+export { WEATHER_ENUM, WEATHER_TABLE, weatherTableFor, rollWeather } from './weatherTable.js';
 
 // ---- the module state ----------------------------------------------
 
@@ -226,7 +139,9 @@ export function weatherFieldOn() {
  *  a new one means the change on this frame is a crossing - a short front. */
 export const weatherCrossingStamp = () => _crossings;
 /** WEATHER2b: the cells near the player at the last sample - { x, z, r, word, d }
- *  in field metres, nearest first - for the clouds; and the one the player stands in. */
+ *  in field metres, nearest first - for the clouds; and the one the player stands in.
+ *  WEATHER3c: on the map's lane, every system's bands, most important first, each
+ *  with its `imp` and its word's `rank` (the renderer's pick and draw order). */
 export const currentFieldCells = () => _fieldCells;
 export const currentFieldCell = () => _fieldInside;
 /**
@@ -238,6 +153,7 @@ export const currentFieldCell = () => _fieldInside;
  */
 export function sampleWeatherField(nowMinutes, climateIndex, at, climateAt, how = 'live') {
   if (!weatherFieldOn() || !at || !climateAt) return false;
+  if (weatherMapOn()) return sampleWeatherMap(nowMinutes, climateIndex, at, climateAt, how);   // WEATHER3b: the map supersedes the field on its own lane
   if (!_climateWeathersValid && !_climateWeathersRolled) return false;   // no words yet: the drain rolls them first
   const f = fieldAt({ day: Math.floor(nowMinutes / 1440), minuteOfDay: nowMinutes % 1440, at, climateAt, wordOfClimate: (c) => WEATHER_TYPES[weatherForClimate(c)] });
   _fieldCells = f.cells; _fieldInside = f.inside;
@@ -245,6 +161,122 @@ export function sampleWeatherField(nowMinutes, climateIndex, at, climateAt, how 
   if (changed && how === 'live') _crossings++;
   else if (changed && how === 'jump') _jumps++;
   return changed;
+}
+
+// ---- WEATHER3b (2026-09-22): THE WORLD WEATHER MAP IS THE SKY -----------
+// Mac: "imagine a map, one location its sunny, one is cloudy, one has a
+// rainstorm, etc." systems/weatherMap.js is the law (systems born on the
+// land, drifting, growing, dying; the weather a pure function of place
+// and minute); this is its seam into the sim. On its lane - the field's
+// own (the enhanced skin, Enhanced Environments, the weather-events row,
+// forced on online) unless `?wxmap=off` hands the lane back to WEATHER2b's
+// field - the player's word is the map at the player:
+//   - every exterior frame, through the same `_set` (the ground law, the
+//     raw word kept for the wind's violence);
+//   - every arrival (a travel landing, a respawn, a teleport) as a JUMP;
+//   - INDOORS, over the place the player is inside (`sampleWeatherIndoors`,
+//     the host naming it), so the rain heard through the walls starts and
+//     stops with the sky outside - each change a jump, since no one inside
+//     saw it come.
+// A change is a CROSSING - the storm's edge walked into, or drifting over
+// - only on a live frame that follows the last sample closely in time and
+// place; across a clock jump (a rest, a load, a sentence, an online join)
+// or a teleport's distance it is a jump, whatever the host called it, so
+// no host has to know which of its paths moved the clock. The day roll
+// still rolls (the classic lane and the save read the array), but the
+// drain and CLK2's evolution stand down here: the zones' words reach no
+// one. Online needs nothing: every client reads the same map at the
+// shared clock's minute.
+let _mapOverride = null;   // tests: true/false; null reads the lane
+let _mapUrlDoor = null;    // ?wxmap=off, read once (lazily)
+export function setWeatherMapLaw(on) { _mapOverride = on == null ? null : !!on; }
+export function weatherMapOn() {
+  if (_mapOverride !== null) return _mapOverride;
+  _mapUrlDoor ??= new URLSearchParams(globalThis.location?.search ?? '').get('wxmap') !== 'off';
+  return _mapUrlDoor && weatherFieldOn();
+}
+/** A sample further than this from the last (field metres) is an arrival, not a walk. */
+export const MAP_JUMP_M = 2000;
+/** The systems are found once per game minute and whenever the player has
+ *  moved this far since; within it the found set still holds every system
+ *  over the player (they are gathered this much wider than the sky's reach). */
+const MAP_REFIND_M = 250;
+let _mapAt = null;   // the last sample's place, for the crossing-or-arrival test
+let _mapSampledAt = null;   // its minute
+let _mapNear = [], _mapNearAt = null, _mapNearMinute = null, _mapNearLookup = null;
+let _mapIntensity = 0;
+let _mapApproach = 0;
+let _arrivals = 0;
+/** AUDIT WEATHER3 R5: the count of map samples that were ARRIVALS - a jump,
+ *  a clock jump, a teleport's distance, every indoor frame - whether or not
+ *  the word changed. The jump stamp moves only with the word, and a landing
+ *  under the same sky is still a landing: the distant storms' thunder on its
+ *  way belongs to the place left behind. */
+export const weatherArrivalStamp = () => _arrivals;
+/** WEATHER3d: the map's systems near the player this minute (field metres, standing where they are), [] off the
+ *  map's lane - the distant storms' strikes are read off them. */
+export const currentMapSystems = () => (weatherMapOn() ? _mapNear : []);
+/** WEATHER3c: the wind of the storms drawing near (wind.js VIOLENCE's scale), 0 off the map's lane. */
+export const currentWindApproach = () => (weatherMapOn() ? _mapApproach : 0);
+/** WEATHER3c: the sky the clouds' cells stand on - clear air on the map's lane (the player's own system is a cell
+ *  like any other, so the blue shows past a deck's edge), null off it (the worn word's, as WEATHER2c has it). */
+export const currentCloudBase = () => (weatherMapOn() ? 'sunny' : null);
+/** WEATHER3b: the intensity of the worn word at the player, 0..1 (the
+ *  system's envelope, falling from its centre out) - the WX2 front's peak
+ *  on the map's lane; null off it (the front rolls its own). */
+export const currentWeatherIntensity = () => (weatherMapOn() ? _mapIntensity : null);
+function sampleWeatherMap(nowMinutes, climateIndex, at, climateAt, how) {
+  const minute = Math.floor(nowMinutes);
+  if (minute !== _mapNearMinute || climateAt !== _mapNearLookup || !_mapNearAt || Math.hypot(at[0] - _mapNearAt[0], at[1] - _mapNearAt[1]) > MAP_REFIND_M) {
+    _mapNear = systemsNear(at[0], at[1], minute, climateAt, FIELD_RANGE_M + MAP_REFIND_M);
+    _mapNearAt = [at[0], at[1]]; _mapNearMinute = minute; _mapNearLookup = climateAt;
+  }
+  // AUDIT-3i: the player's word through the SAME ground law as the travel map's and the hover's - rain over snow
+  // ground is snow BEFORE the strongest is chosen, so the strength the player feels is the one the map draws there
+  // (resolved raw first, a rain front's intensity was worn under a stronger snow front's word); `raw` keeps the
+  // painting system's own word for the sky's violence
+  const ground = mapGround(climateAt);
+  const worn = wornAmong(_mapNear, at[0], at[1], (w, cx, cz) => ground(w, cx, cz, nowMinutes));
+  _mapIntensity = worn.intensity;
+  // WEATHER3c: THE SKY IS THE MAP'S. Every system within the sky's reach gives the clouds its bands as nested discs -
+  // a fair-weather field, a deck's edge, a fog bank on the low ground, a storm's skirt, rain and tower - each word
+  // through the ground law at ITS OWN place (a winter storm is a snow cloud where it stands), ranked by how much of
+  // the sky it fills from here; the renderer keeps what its slots hold and draws the lowest priority first
+  _fieldCells = skyCells(_mapNear, at[0], at[1], (w, cx, cz) => ground(w, cx, cz, nowMinutes)).filter((c) => c.d - c.r <= FIELD_RANGE_M).sort((a, b) => b.imp - a.imp);
+  _fieldInside = _fieldCells.find((c) => c.d < c.r && insideClip(c, at[0], at[1]) && c.word === worn.word) ?? null;   // c.d in the system's own measure (WEATHER3h); a storm cell only inside its front
+  _mapApproach = approachAt(_mapNear, at[0], at[1]);
+  const away = _mapSampledAt === null || minute < _mapSampledAt || minute - _mapSampledAt > STALE_DRAIN_MINUTES
+    || !_mapAt || Math.hypot(at[0] - _mapAt[0], at[1] - _mapAt[1]) > MAP_JUMP_M;
+  _mapAt = [at[0], at[1]]; _mapSampledAt = minute;
+  const changed = _set(WEATHER_ENUM[worn.raw], climateIndex, nowMinutes);
+  if (how === 'jump' || away) _arrivals++;   // AUDIT WEATHER3 R5: an arrival whether or not the word moved
+  if (changed && (how === 'jump' || away)) _jumps++;
+  else if (changed) _crossings++;
+  return changed;
+}
+/** WEATHER3c / AUDIT WEATHER3 R1: THE GROUND LAW AT A PLACE, for every reader of the map's words - the sky's cells,
+ *  the travel map's washes and forecast, the distant storms: `(word, x, z, minutes)` answers the word as it falls at
+ *  field (x, z) at that minute (WEATHER2a: rain or a storm over a ground that wears snow is snow). One law, so the
+ *  map never says "Rain" where the player standing there gets snow. */
+export function mapGround(climateAt) {
+  return (word, x, z, minutes) => {
+    if (word !== 'rain' && word !== 'thunder') return word;
+    const px = pixelOfField(x, z);
+    return WEATHER_TYPES[overGround(WEATHER_ENUM[word], climateAt(px.x, px.y), minutes)];
+  };
+}
+
+/** WEATHER3b: the indoor tick's sample - the map over the place the
+ *  player is inside (`at` the field position the host answers for it: the
+ *  building's or the dungeon's own pixel), so the weather outside goes on
+ *  while they are in. A change is a jump: no one inside saw it come.
+ *  AUDIT WEATHER3 R3: it used to read the last OUTDOOR sample's place, and
+ *  an arrival that went straight in - a load into a dungeon, a recall, a
+ *  boot underground - read the old place's sky or none at all. The place
+ *  is the host's to say, every indoor frame. Nothing off the lane. */
+export function sampleWeatherIndoors(nowMinutes, climateIndex, at, climateAt) {
+  if (!weatherMapOn() || !at || !climateAt) return false;
+  return sampleWeatherMap(nowMinutes, climateIndex, at, climateAt, 'jump');
 }
 
 // ---- WEATHER2a (2026-09-14): NO RAIN OVER SNOW -----------------------
@@ -341,6 +373,7 @@ export function weatherForClimate(climateIndex) {
  *  seams lane), cited by name because a line number rots. Answers
  *  true when the weather changed. */
 export function applyClimateWeather(climateIndex, nowMinutes = null, at = null, climateAt = null) {
+  if (at && climateAt && nowMinutes != null && weatherMapOn()) return sampleWeatherMap(nowMinutes, climateIndex, at, climateAt, 'jump');   // WEATHER3b: the map at the destination - the zones' words reach no one on its lane
   let changed = applyFromArray(climateIndex, nowMinutes);   // WEATHER2a: the arrival's minute, for the ground the sky lands over
   if (changed) _jumps++;   // WX2a: a world re-init is the PLAYER arriving, not the weather
   if (at && climateAt && sampleWeatherField(nowMinutes, climateIndex, at, climateAt, changed ? 'drain' : 'jump')) changed = true;   // WEATHER2b: the field at the destination, one jump
@@ -428,6 +461,10 @@ export function tickWeather(nowMinutes, climateIndex, rolls = Math.random) {
     _rolledAtMinutes = stampRoll(nowMinutes);   // AUDIT WORLD5 C5: the day's own minute online
   }
   if (!_updateFromClimateArray) return false;
+  // WEATHER3b: the day still rolls (the classic lane and the save read it), but on the map's lane nothing applies it.
+  // AUDIT WEATHER3 R4: asked BEFORE the flag is spent - the pending apply waits, so a lane switched off mid-session
+  // (the skin, Enhanced Environments) drains the zone's slot on its next frame instead of wearing the map's last word
+  if (weatherMapOn()) return false;
   _updateFromClimateArray = false;
   const changed = applyFromArray(climateIndex, nowMinutes);
   // WX2a: a LIVE drain - the day turned while the player stood under the
@@ -449,6 +486,7 @@ export function tickWeather(nowMinutes, climateIndex, rolls = Math.random) {
  *  Answers true when the weather changed. */
 export function weatherRespawn(nowMinutes, climateIndex, rolls = Math.random, at = null, climateAt = null) {
   const base = getWorldClimateSettings(climateIndex).climateType;
+  if (at && climateAt && weatherMapOn()) { _lastClimateBase = base; return sampleWeatherMap(nowMinutes, climateIndex, at, climateAt, 'jump'); }   // WEATHER3b: every respawn lands under the map's sky there, whatever the climate it left
   if (base === _lastClimateBase) return false;
   _lastClimateBase = base;
   // WEATHER2b: under the field the destination's sky is the FIELD's word there - DFU's fresh roll for the
@@ -477,6 +515,7 @@ export function restoreWeather(weather) {
   _climateWeathersRolled = true;
   _updateFromClimateArray = false;
   _jumps++;   // WX2a: a load lands the player under the saved sky, whole
+  _mapAt = null;   // WEATHER3b: and the map's first word after it is a jump too, wherever the load landed (no place to have come from)
   _evolveHour = null;   // CLK2: the evolution re-anchors on the loaded clock, rolling nothing
   _climateWeathersValid = false;   // CLK2 (AUDIT 65 SL-1): a loaded save's array is not THIS session's - an in-session load leaves the outgoing session's roll standing, and the evolution stays dormant until the next day roll re-rolls it
 }
@@ -539,6 +578,7 @@ export function weatherEvolutionOn() {
  */
 export function evolveClimateWeathers(nowMinutes) {
   const hour = Math.floor(nowMinutes / 60);
+  if (weatherMapOn()) { _evolveHour = hour; return false; }   // WEATHER3b: the map is the lane's weather; the zones' words reach no one
   // CLK2 review: VALID, not merely rolled - a loaded save stamps the
   // array rolled without rolling it (all Sunny), and an evolution off
   // that would hand the drain a slot the save never had; the loaded sky
@@ -578,6 +618,8 @@ export function resetWeatherSim() {
   _jumps = 0;
   _heard = null; _heardGain = 1; _heardAtJump = -1;   // DISC9 / DISC11
   _crossings = 0; _fieldCells = []; _fieldInside = null; _fieldOverride = null; _fieldUrlDoor = null;   // WEATHER2b
+  _mapOverride = null; _mapUrlDoor = null; _mapAt = null; _mapSampledAt = null;   // WEATHER3b
+  _mapNear = []; _mapNearAt = null; _mapNearMinute = null; _mapNearLookup = null; _mapIntensity = 0; _mapApproach = 0; _arrivals = 0;
   _rolledAtMinutes = null;
   _zoneChangedAtMinutes = new Array(6).fill(null);
   _climateWeathersValid = false;

@@ -388,9 +388,12 @@ import { warmPrograms } from '../render/warmPrograms.js';
 import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor, MILL_SOUND, millSoundPosition } from '../world/windmills.js';   // WM2b: the sails; WM4c: the hum
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
-import { setWeather, setHeardWeather, heardWeather, currentWeather, currentWeatherRaw, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers, weatherJumpStamp, setSharedWeather, rollClimateWeathersForDay, sampleWeatherField, weatherCrossingStamp, currentFieldCells } from '../systems/weatherSim.js';
-import { fieldFromNative, nativeFromField } from '../systems/weatherField.js';   // WEATHER2b: the field's metres from the streaming world's natives, and back
-import { cellOf } from '../render/volumetricClouds.js';   // WEATHER2c: the field's cells as the clouds' cells   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
+import { setWeather, setHeardWeather, heardWeather, currentWeather, currentWeatherRaw, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers, weatherJumpStamp, setSharedWeather, rollClimateWeathersForDay, sampleWeatherField, weatherCrossingStamp, currentFieldCells, currentWeatherIntensity, currentCloudBase, currentWindApproach, currentMapSystems, weatherMapOn, sampleWeatherIndoors, weatherArrivalStamp, mapGround } from '../systems/weatherSim.js';
+import { createDistantStorms, thunderSourceAt, THUNDER_SOURCE_M } from '../systems/distantStorms.js';   // WEATHER3d: the storms at a distance
+import { createStormLights } from '../systems/lightning.js';   // BOLT: the strikes themselves - their channels and their light
+import { LightningBoltsRenderer } from '../render/lightningBolts.js';   // BOLT: the channels, drawn
+import { fieldFromNative, nativeFromField, fieldOfPixelLocal } from '../systems/weatherField.js';   // WEATHER2b: the field's metres from the streaming world's natives, and back
+import { cellOfField } from '../render/volumetricClouds.js';   // WEATHER2c: the field's cells as the clouds' cells   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
 import { classicSaveToSnapshot, takePendingClassicSave, peekPendingClassicSave } from '../systems/classicSave.js';   // SAV3: the classic-save import arm
 import { readTokens as readRscTokens, RSC } from '../formats/textRsc.js';   // SAV3: the classic rumors' token payloads
 import { lookScale, lookInvert, keyboardLookRate } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
@@ -903,6 +906,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   // WATER1: the water surface - enhanced skin, its own switch, `?water=off`
   // the kill door. A draw only: nothing here tells the game where water is.
   const waterOn = waterSwitchOn();   // FT6: the one composition (render/waterSurface.js)
+  const distantStorms = createDistantStorms();   // WEATHER3d: the storms at a distance - their strikes and their thunder on its way
+  const stormLights = createStormLights();   // BOLT: every strike's channel and light, the storm overhead's and the distant ones'
+  const boltsGl = sky.enhanced ? new LightningBoltsRenderer(renderer.gl) : null;   // BOLT: built on the enhanced lane (the wisps' law)
+  let boltFrame = { bolts: [], flash: null };   // BOLT: this frame's burning channels and the light a near ground strike throws
+  let seenArrival = 0;   // AUDIT WEATHER3 R5: the sim's arrival stamp at the last frame
   let lightning = weather === 'thunder'
     ? new LightningPlayer(Number(params.get('wseed')) || 1) : null;
   // WX2: THE FRONT REACHES THE GROUND (systems/weatherFront.js). The sim's
@@ -921,7 +929,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** WEATHER2b: the player's place in the field's metres, the map's climate lookup, and the field's cells in this host's space for the clouds. */
   const fieldXZ = () => { const wc = state.worldCoords(walkMode ? player.pos : cam.pos); return fieldFromNative(wc.x, wc.z); };
   const climateAt = (px, py) => maps.getClimateIndex(px, py);
-  const fieldCellsHere = () => currentFieldCells().map((c) => { const n = nativeFromField(c.x, c.z); const h = state.localFromWorld(n[0], n[1]); return cellOf(c.word, h[0], h[1], c.r); });
+  const mapGroundHere = mapGround(climateAt);   // AUDIT WEATHER3 R1: the ground law the map's words go through, here
+  const fieldCellsHere = () => currentFieldCells().map((c) => cellOfField(c, (x, z) => { const n = nativeFromField(x, z); return state.localFromWorld(n[0], n[1]); })).filter(Boolean);   // WEATHER3c: the map's cells carry their importance and rank to the renderer's pick; WEATHER3g: a storm cell its clip
   function applyWeather(w) {
     weather = w;
     weatherFog = weatherFogRow(w);   // EV4; DS1: the mod's table, unscaled
@@ -3006,7 +3015,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     ridingVolumeScale: () => (_travelSoundsOff ? 0 : 1),   // AUDIT-TO1 J1: TransportManager.RidingVolumeScale = 0 for the journey
     // RR1: IsShipAvailiable's reads - the location under the player (loaded, a port) and whether they stand on the ship
     // AUDIT-RR2 G22: `travelOptionsEnabled` asks TO's "hasPort" (RoleplayRealism.cs:635-644; TravelOptionsMapWindow.cs:870-873 - the hand-written port list), else the flag
-    shipLocation: () => { const loc = _questLoc(); return loc ? { loaded: true, portTown: (modSetting('travel-options', 'Enabled') === true ? hasPort(loc.mapTableData?.mapId) : (loc.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0), onShip: isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()) } : { loaded: false, onShip: false }; },
+    shipLocation: () => { const loc = _questLoc(); return loc ? { locationLoaded: true, portTown: (modSetting('travel-options', 'Enabled') === true ? hasPort(loc.mapTableData?.mapId) : (loc.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0), onShip: isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()) } : { locationLoaded: false, onShip: false }; },   // DISC13-D: `locationLoaded`, the key isShipAvailable reads - `loaded` left shipPorts answering every port as the wilderness
     // RR2: EnhancedRiding's reads - the look, the ground, the module's settings
     lookPitch: () => cam.pitch, lookYaw: () => cam.yaw, groundHeightAt: (x, z) => heightAt(x, z),
     enhancedRiding: () => (rrRidingOn() ? { terrainFollowing: rrRidingSetting('followTerrainEnabled') === true, softenFollow: rrRidingSetting('followTerrainSoftenFactor') ?? 8 } : null),
@@ -7138,13 +7147,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     mwViewFirstPerson();
     return createTravelMapWindow({
       maps, mapDict, woods,
+      // WEATHER3e: the world weather map on the sheet - its systems washed over the bay and the forecast in the
+      // hover - read at this host's own clock; none under a ?weather pin or off the map's lane
+      weather: { on: () => !weatherOverride && weatherMapOn(), minutes: () => playerTicker.classicMinutes },
       roads: () => terrainGen.roads(),   // ROADS 7: the map draws the network
       // GetPlayerTravelPosition, not PlayerGPS's raw pixel: DFU's travel
       // map reads it for the crosshair (:864), the player's region
       // (:1611) and the journey itself, and aboard a ship all three
       // answer the boarding point.
       getPlayerPixel: playerTravelOrigin,
-      getClimateIndex: (x, yy) => maps.getClimateIndex(x, yy),
+      getClimateIndex: climateAt,   // AUDIT WEATHER3 R2b: the host's one lookup - the weather map's births are cached per lookup, and the sim's is warm
       // TP1: the popup's GuildManager.FastTravel fold reads the
       // player's guild memberships off the entity.
       playerEntity: () => playerEntity,
@@ -8355,7 +8367,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8788-8852 -
+  // worldModes answers it in BOTH modes (worldModes.js:8791-8855 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -11819,6 +11831,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   // reference BEFORE this line must therefore be `modes?.` - which is
   // what test/audit24_wave37.test.js asserts, both ways.
   var modes = createWorldModes({
+    // WEATHER3b / AUDIT WEATHER3 R3: the world weather map over the place the player is inside - the building's pixel,
+    // or the dungeon's own (playerTravelPixel answers both) - every indoor frame; nothing under a ?weather pin
+    weatherIndoors: () => {
+      if (weatherOverride) return;
+      const p = playerTravelPixel();
+      sampleWeatherIndoors(Math.floor(playerTicker.classicMinutes), maps.getClimateIndex(p.x, p.y), fieldOfPixelLocal(p.x, p.y, TERRAIN_SIZE / 2, TERRAIN_SIZE / 2), climateAt);
+    },
     // TERRAIN-SCALE1: a raw scene height - the interior cache's legacy frame - stood again on today's ground
     restandSceneHeight: (y, x, z, was) => restandHeight(y - state.compensation[1], x, z, was) + state.compensation[1],
     // JAN1: the pose is the player's - a door in or out hands the pair through these (HARD2c's one home).
@@ -13578,7 +13597,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const crossing = weatherCrossingStamp() !== seenCrossing;
     seenCrossing = weatherCrossingStamp();
     if (crossing && !jump) sky.weatherArrive();
-    const fx = weatherFront.tick({ dt, weather, arrival: enhancedFront ? sky.frontArrival() : 1, nowMinutes: playerTicker.classicMinutes, tsec: now / 1000, jump });
+    const fx = weatherFront.tick({ dt, weather, arrival: enhancedFront ? sky.frontArrival() : 1, nowMinutes: playerTicker.classicMinutes, tsec: now / 1000, jump, peak: weatherOverride ? null : currentWeatherIntensity() });   // WEATHER3b: the map's intensity at the player is the peak
     if (fx.changed) wxFrom = wxNow;
     wxNow = enhancedFront ? blendTerms(wxFrom, weatherTerms(), fx.t) : weatherTerms();
     const wd = windDrive(sky, now / 1000, dt);   // WIND3: the frame's wind in every consumer's units, read once
@@ -13615,6 +13634,27 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // unreachable there) stands down so there is ONE lightning, as in DFU
     // with the mod. LightningPlayer keeps ticking for the audio schedule.
     const flash = params.has('flashtest') ? 2 : (isEnhanced() && !sky.dynamic ? strobe : 1);
+    // WEATHER3d: THE STORMS AT A DISTANCE - each thunderstorm the world weather map stands near strikes on its own
+    // seeded schedule: its own cloud lights (the clouds' composite, in its direction) and its thunder arrives its
+    // distance over the speed of sound later, quieter the further, from its side. The storm overhead stays DFU's
+    // strobe and ambience above. Enhanced only; nothing off the map's lane (no systems); a jump forgets the old place.
+    if (jump || weatherArrivalStamp() !== seenArrival) { distantStorms.reset(); stormLights.reset(); }   // AUDIT WEATHER3 R5: any landing, the word moved or not; BOLT: the strikes burning were the old place's
+    seenArrival = weatherArrivalStamp();
+    const struckFar = [];   // BOLT: the distant strikes fired this frame, in host metres
+    if (isEnhanced() && !weatherOverride) {
+      const ds = distantStorms.tick({ systems: currentMapSystems(), at: fieldXZ(), minutes: playerTicker.classicMinutes, seconds: now / 1000, ground: mapGroundHere });
+      const hostOf = (x, z) => { const n = nativeFromField(x, z); return state.localFromWorld(n[0], n[1]); };
+      const bh = ds.bolt && hostOf(ds.bolt.x, ds.bolt.z);
+      sky.distantBolt?.(bh ? { x: bh[0], z: bh[1], r: ds.bolt.r, strength: ds.bolt.strength } : null);
+      for (const s of ds.sounds) { const h = hostOf(s.x, s.z); audio.play3d(s.clip, thunderSourceAt(cam.pos, h[0], h[1]), s.volume, { refDistance: THUNDER_SOURCE_M, maxDistance: THUNDER_SOURCE_M * 8 }); }
+      for (const s of ds.strikes) { const h = hostOf(s.x, s.z); struckFar.push({ x: h[0], z: h[1], seed: s.seed, kind: s.kind, strength: s.strength }); }
+    }
+    // BOLT: THE STRIKES THEMSELVES - a ground strike's channel from its cloud's base to the land, far or overhead, and
+    // the light a near one throws on it (systems/lightning.js). Enhanced only. Under Dynamic Skies too: the mod draws no
+    // channel, and its own flash keeps the light (setFlashLight below takes the mod's first).
+    boltFrame = isEnhanced()
+      ? stormLights.frame({ seconds: now / 1000, eye: mwv.eye, distant: struckFar, player: lightning, shown: !!lightningShown, test: Number(params.get('bolttest')) || 0 })
+      : { bolts: [], flash: null };
     // EV5: the moons light the night - the masser as a second key, the
     // secunda folded into the ambient. null by day and under classic.
     const moonNow = sky.moonlight();
@@ -13649,7 +13689,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (skyInside) { skyInside = false; sky.setInside(false); }   // DS1: ExteriorTransitionEvent
     sky.use((currentEntry ? currentEntry.skyBase : 16) + (weatherSkyOffset === 0
       ? seasonValue(dateFromClassicMinutes(playerTicker.classicMinutes)) : weatherSkyOffset), minute, weatherSkyOffset === 0,
-    { weather, violence: weatherOverride ?? currentWeatherRaw(), classicMinutes: playerTicker.classicMinutes, sun: wxNow.sun, flash: flash - 1, pos: walkMode ? player.pos : cam.pos, cells: fieldCellsHere() });   // WEATHER2a: the wind blows by the table's word; WEATHER2b/c: the field's cells are the clouds' cells   // ES1: the sky's clock and weather; VC4: the camera's world position, the clouds' and their shadow's origin; the enhanced sky's clouds and moons; VC3: the strobe lights the clouds; DS1 (AUDIT 61): the ONE sunlight scale the ground takes (the front's blend of the host's SetSunlightScale - pin and latch included; the raw row under ?front=off)
+    { weather, violence: weatherOverride ?? currentWeatherRaw(), classicMinutes: playerTicker.classicMinutes, sun: wxNow.sun, flash: flash - 1, pos: walkMode ? player.pos : cam.pos, cells: fieldCellsHere(), cloudBase: weatherOverride ? null : currentCloudBase(), approach: weatherOverride ? 0 : currentWindApproach() });   // WEATHER2a: the wind blows by the table's word; WEATHER2b/c: the field's cells are the clouds' cells   // ES1: the sky's clock and weather; VC4: the camera's world position, the clouds' and their shadow's origin; the enhanced sky's clouds and moons; VC3: the strobe lights the clouds; DS1 (AUDIT 61): the ONE sunlight scale the ground takes (the front's blend of the host's SetSunlightScale - pin and latch included; the raw row under ?front=off)
     // Verbatim: fog is never disabled (SetFog keeps RenderSettings.fog on);
     // Sunny/Overcast ARE linear fog to 2400 - the classic distance haze.
     // DaggerfallSky.SetSkyFogColor (:318-325): anything denser than
@@ -13691,7 +13731,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       }
       const wodSel = wodLit ? _wodSelect(n, _wodFill(n)) : null;   // WOD2: the lanterns and the mod's lights, one selection
       const lit = withPlayerLights(wodSel ? wodSel.data : nearestLights(_sceneLights, cam.pos, renderer.maxPointLights, worldLightAnimator.ranges, null, 0, n),   // EL1: the installed set's cap (16 classic, 48 on the lane); PERF-LIGHTS: `n` is how much of the pool is live
-        magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), thunderlockMuzzleLight(playerEntity, player.pos, cam.yaw), ...camps.lights(), ...droppedTorches.lights());   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash
+        magic?.candleLight(), playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...camps.lights(), ...droppedTorches.lights());   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
       if (wodSel) _wodSetLights(lit, wodSel);
       else renderer.setPointLights(lit, CITY_LIGHT_COLOR_F32);
     } else {
@@ -13702,13 +13742,13 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // WOD2: ...and the mod's lights, which burn at every hour.
       const wodSel = wodLit ? _wodSelect(0, _wodFill(0)) : null;
       const lit = withPlayerLights(wodSel ? wodSel.data : new Float32Array(0),
-        magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), thunderlockMuzzleLight(playerEntity, player.pos, cam.yaw), ...camps.lights(), ...droppedTorches.lights());   // HT1; FIELD-GUN13 the muzzle flash
+        magic?.candleLight(), playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...camps.lights(), ...droppedTorches.lights());   // HT1; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
       if (wodSel) _wodSetLights(lit, wodSel);
       else renderer.setPointLights(lit, CITY_LIGHT_COLOR_F32);
     }
     hccTick(dt, now);   // AUDIT HCC H1: LateUpdate - after the motor and the recentre, before the world pass draws the wagon
     renderer.setClearColor(SKY_CLEAR);   // INCIDENT 2026-09-04 / REVIEW 2026-09-05: this frame is the EXTERIOR's (the mode frames returned above and clear black in worldModes) - CameraClearManager.cs:51-57
-    renderer.setFlashLight(sky.lightningLight());   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored
+    renderer.setFlashLight(sky.lightningLight() ?? boltFrame.flash);   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored; BOLT: else a near ground strike's own light, from where it struck
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute), WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one
     meterFor(renderer.gl)?.markCpu('bodies');   // PERF-ZONE2: the Morrowind bodies - the player's, every peer's - the wagon and the camps, which the renderer's own 'world' mark used to swallow
@@ -14199,6 +14239,12 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       wisps.draw(wd, proj, view, new Float32Array(cam.pos), now / 1000);
       renderer.markForeignPass();
     }
+    // BOLT: the burning channels, over what the world drew and behind what stands in front of them - from the eye the
+    // view was built from (mwv.eye: a third-person camera stands metres off the head, cam.pos)
+    if (boltsGl && boltFrame.bolts.length) {
+      boltsGl.draw(boltFrame.bolts, proj, view, new Float32Array(mwv.eye));
+      renderer.markForeignPass();
+    }
     // GR1: THE LAB'S GRASS. The scatter is the lab's 1,200,000 candidates
     // over a 420m square around the eye, kept where they land on a GRASS
     // tile of a near-ring pixel - never on a road record, never on a tile
@@ -14434,7 +14480,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       if ((modes?.mode ?? 'exterior') === 'exterior') {
         const _mfwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
         magic.firePending([...cam.pos], _mfwd);
-        magic.update(dt, player.pos, _mfwd, player.height);   // X11: the candle hangs off the look direction
+        magic.update(dt, player.pos, _mfwd, player.height, player.feetAt());   // X11: the candle hangs off the look direction; DISC13-A off the render feet
         { const mv = lycanthropeMoveSound(playerEntity, dt); if (mv != null) audio.playOneShot(mv, 1); }   // LM1: the beast's own noise while transformed (real time)
       }
       // U8h/AUDIT 17e F17: the worn-weapon bind moved INTO createWeaponRig
@@ -14490,7 +14536,6 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           }).catch((e) => console.error('[civil]', e));
         }
       }
-      weaponRig.draw({ paralyzed });
     }
     // AUDIT 21 (hosts lane, F7): THE HUD, which this host did not have.
     //
@@ -14538,6 +14583,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // charges down the foe in the way, once each
         if (rrRidingOn() && player.riding && player.isRunning) rrRidingContacts();
       }
+      // DISC14 (Starempire42 on Discord: "is there a way to make it so I can see my weapon above my horse?"): the
+      // weapons draw OVER the mount. OnGUI puts the horse at GUI.depth 2, "behind other HUD elements & weapons"
+      // (TransportManager's own comment, and EnhancedRiding.cs:234-235's), and the rig drew first, so the horse's
+      // head covered the hand and the blade's root. Drawn here, after the mount and before drawHud.
+      if (walkMode && playerSpawned) weaponRig.draw({ paralyzed });
       drawPeerNames(proj, view, mwv.eye);   // ONLINE1: the names over the heads
       // WORLD-HOVER: the plaque, where this host already draws its HUD.
       // It races EXACTLY what the press races - the same six live picks

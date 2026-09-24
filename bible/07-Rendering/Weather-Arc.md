@@ -112,7 +112,10 @@ cells stand (a grazing sky ray crosses 24 km; a cell 6 km out with a
 3 km radius is missed by any single resolution), and the light march
 reads what its step resolved. The slab both marches walk is the UNION
 of the zone's and the cells' (`slabOf`), so a thunderhead's tops are
-reached under a sunny zone's lower lid. A cell's `dark` and `grey`
+reached under a sunny zone's lower lid. (SLAB-SPAN, 2026-09-23: the
+union was every ray's, so one low cell anywhere started every ray under
+the zone's deck and left bare dome round the horizon; each ray now walks
+its own spans - `raySpans`, the Volumetric Clouds arc.) A cell's `dark` and `grey`
 reach the lighting: the dark moved into the field block (a cell has
 its own), and the grey pulls the lit colour toward the shade's, so a
 storm under a sunny zone is a storm's colour and not a bright cumulus
@@ -253,3 +256,751 @@ the front's fog crossing carries the immersion today; the ambience's
 birds in a sandstorm (DFU's player, kept 1:1).
 
 `test/weather2d_sandstorm.test.js`.
+
+## WEATHER3 - THE WORLD WEATHER MAP (the design, before the code, 2026-09-22)
+
+Mac, 2026-09-22: "I recieved a report that weather never changes on
+online mode. The idea is that weather is persistant in the world both
+offline/online, and that a location could have a rainstorm while another
+experiences sunshine... imagine a map, one location its sunny, one is
+cloudy, one has a rainstorm, etc." Then: "I want this to be as detailed
+as possible. A true overhaul within enhanced enviroments."
+
+### What stands, measured
+
+The report did not reproduce: three real hours replayed online through
+the real ticker (`createPlayerTicker` under `setSharedClock`) turn one
+woodland spot's sky six times. But the model under it is not the map Mac
+describes, and reading `weatherField.js` whole says why:
+
+- The unit of weather is still the CLIMATE ZONE's word - six words a
+  day (`rollClimateWeathersForDay`), re-rolled hourly by CLK2's
+  evolution. Only rain, thunder, snow and the sandstorm become cells
+  (WEATHER2b); sunny, cloudy, overcast and fog are the whole zone's.
+  Two woodland towns can never be sunny and cloudy at once, and between
+  a rain day's cells the sky is overcast - never sun.
+- The day is the seed (`seededRng(day...)`, `driftOfDay`): at midnight
+  every cell of the world is thrown away and a new set stands. Weather
+  does not persist across a day; it is re-dealt.
+- Offline rolls from `Math.random` (DFU's law), online from the day's
+  seed: the same place at the same minute is a different sky in the
+  two, and a save carries a word the world does not.
+- Everything under the sky - the drops, the fog row, the sun, the
+  ear, the wind - reads ONE word at the player; the sky's zone row is
+  that word to the horizon, with at most 8 cells (3 on Low) blended on
+  top, last-over-first.
+- Indoors nothing samples: the day and hour rolls land on the first
+  frame back outside, so the rain heard through a door is the word the
+  player carried in.
+
+### The model: WEATHER SYSTEMS on the land, a function of place and time
+
+The enhanced lane's weather becomes a set of **systems** - a cloud
+field, an overcast deck, a fog bank, a rain band, a thunderstorm, a
+snow squall, a sandstorm - each BORN somewhere, MOVING, GROWING,
+MATURING and DYING. The weather at a place is the system over it, or
+clear air where none is. Nothing is rolled per day or per zone.
+
+**Birth - a space-time lattice.** The land is cut into NODES on a
+lattice in field metres and game time (the pitch is the law's constant,
+~40 km and ~8 game hours to start; calibrated in slice A). Each node
+seeds one candidate from a generator keyed on (gx, gz, gt) and a world
+constant - never the day, so a system born at 23:00 is still raining at
+02:00. The candidate's TYPE is DFU's own table (the Chronicles' odds,
+`WEATHER_TABLE`) for the CLIMATE under its birthplace and the SEASON at
+its birth - a 'sunny' draw is no system (clear air). So the table stays
+the law of how much of each weather a climate gets; the map decides
+WHERE and WHEN.
+
+**Life.** Each type has a lifetime range (a thunderstorm hours, a rain
+band most of a day, a fog bank a night), an envelope (grows, holds,
+decays) that scales its radius and its intensity, and a structure:
+
+| type | core | ring | skirt |
+|---|---|---|---|
+| thunder | thunder | rain | cloudy |
+| rain | rain | overcast | cloudy |
+| snow | snow | overcast | - |
+| overcast | overcast | cloudy | - |
+| fog | fog | - | - |
+| cloudy | cloudy | - | - |
+| sandstorm | sandstorm | cloudy | - |
+
+so a storm is SEEN coming - cloud first, then the deck, then the rain,
+the thunder at its heart - and the intensity falls from the core out
+(a drizzle at the edge, the downpour inside).
+
+**Motion.** A prevailing wind that is itself a slow field over the map
+and the days (as built: a westerly bent by large-scale noise over the
+land, plus two terms that turn at fixed rates - a backing one round
+every five days, a veering one every 2.3 - not one heading for the
+world): systems ride it, storms faster than decks, fog barely. A
+system's position is its birthplace plus the wind's path since birth -
+closed form, no state.
+
+**The land and the clock.**
+- Diurnal: fog is born in the small hours, stands thickest after dawn
+  and thins through the afternoon (as built: born around 04:00, a bank
+  living four to ten hours);
+  summer thunder is born in the afternoon; clear nights stay clear
+  more often than days.
+- The ground: a cell's word goes through WEATHER2a's law at ITS OWN
+  climate and season (`overGround`), so a winter storm is snow in the
+  cloud as well as at the player.
+- Sand stands only on the desert tables' land (WEATHER2d's rule, now a
+  birth rule).
+- Priority where systems overlap: thunder > rain > snow > sandstorm >
+  fog > overcast > cloudy > clear. The worn word is the highest
+  present; the others still show in the sky.
+
+**One function, every client, both modes.** `weatherAt(x, z, minutes)`
+is PURE: the same place at the same minute is the same weather offline
+and online, for every player, replayable, with nothing to carry and
+nothing for the relay to know. Offline runs it on the save's clock,
+online on the shared clock - the SAME map, read at each clock's now. A
+save no longer needs its sky: a load reads the map (a jump); the word
+is still written for the classic lane. Rest, fast travel and a
+sentence move the clock and the map is simply read at the new minute.
+
+**Calibration is a gate.** Sampled over thousands of places and
+minutes per climate and season, the share of each word must match the
+Chronicles table within a tolerance - pinned, so a tuning of radii or
+lifetimes that drifts the climate's weather fails the build.
+
+### What each consumer gets
+
+- **The player's word and intensity** (weatherSim): on the lane the
+  word is the map at the player, every exterior frame; the INTENSITY
+  (envelope x core falloff) feeds WX2's front as the peak instead of
+  the per-cut seeded episode. A change on a live frame is a crossing
+  (the short lead); an arrival, a load, a respawn or a clock jump is a
+  jump. The day roll, CLK2's evolution and the WEATHER2b field stand
+  down on the lane (the classic lane keeps DFU's day roll, 1:1).
+- **Indoors**: the map is read at the door's position on the indoor
+  tick, so the rain through the door starts and stops while you are
+  inside (betterAmbience's loop reads it).
+- **The clouds**: every system near enough is a cell - all types, not
+  only the wet ones - so a sunny valley shows the storm on the ridge
+  and a player under the deck sees the blue beyond its edge. The base
+  row the cells sit on is clear air; the player's own system is a cell
+  like any other. The 8 slots (3 on Low) go to the systems that matter
+  most to the eye (size over distance, weighted by type), drawn in
+  priority order so the overlap blend agrees with the word.
+- **The wind**: rises with a storm's APPROACH (WEATHER2b's residual) -
+  the violence is the worn word's or the nearest storm's scaled by its
+  distance, whichever is greater.
+- **Distant storms**: a thunderstorm on the horizon flashes its own
+  cloud and its thunder arrives late and quiet - the delay is its
+  distance over the speed of sound, the volume falls with it.
+- **The travel map** (the enhanced held map, the world sheet): a
+  WEATHER LAYER - each system as a soft wash in its type's ink with a
+  glyph, drifting as the clock runs - and the hover over a place says
+  its weather now and its FORECAST, read off the same pure function a
+  few hours ahead ("Rain, heavy - clearing in about 3 hours"). The
+  classic travel map is DFU's and draws none.
+
+### The slices
+
+- **A - The map law** (`systems/weatherMap.js`, pure): the lattice,
+  types, lifecycles, structure, the wind field, `weatherAt`, `systemsNear`,
+  `forecastAt`; the calibration gate.
+- **B - The sim seam**: the lane's word, intensity, crossings and jumps
+  off the map; indoor sampling; the day roll, evolution and field stood
+  down on the lane; saves and online need nothing new.
+- **C - The sky**: all-type cells, the importance ranking and priority
+  order, the clear base row, snow cells through the ground law, the
+  wind's approach.
+- **D - Storms at a distance**: the distant flash and the late thunder.
+- **E - The weather layer on the map**, and the forecast in the hover.
+- **F - The records, the audit.**
+
+**Lane and doors.** The enhanced skin, Enhanced Environments and the
+`weather-events` row (forced on online, as it is); `?wxmap=off` falls
+back to WEATHER2b's field. As built, that is the ONE door: the slices
+share the lane, and no slice has a switch of its own. The classic
+lane is DFU's, 1:1, throughout.
+
+**Not DFU, and why.** DFU's weather is a zone's word rolled once a day;
+this is a world with weather in it. The port's departure, a Ledger A row
+superseding CLK2's evolution and WEATHER2b's field on the lane.
+
+### Slice A shipped - the map law (2026-09-22)
+
+`systems/weatherMap.js`, pure, and `systems/weatherTable.js` (DFU's
+table, dispatch and roll moved whole out of `weatherSim.js`, which
+re-exports every name, so the map and the sim read one table without an
+import cycle). Pinned by `test/weather3a_weathermap.test.js`, with
+`tools/mutants/weather3a.json` at 14/14 dead. Three things the build
+taught, each a change from the design above:
+
+- **Births are one Poisson process PER TYPE, not one typed draw per
+  node.** Each node draws a Poisson count of candidates per type, places
+  each uniformly in its cell and its eight hours, and keeps it with
+  probability (the type's weight for the climate under it and the season
+  at its birth, times the hour's factor) over the type's ceiling. That is
+  exactly a thinned homogeneous Poisson process. By Campbell's theorem
+  and the colouring theorem, the counts of each band covering a point are
+  then independent Poissons. So the worn word's share is closed form, and
+  the table can be solved BACKWARDS into birth weights (`birthLaw`)
+  instead of tuned toward. The wind is read at each system's birthplace:
+  it turns over ~240 km and a system rides at most tens, so the process
+  stays homogeneous to the eye and to the gate.
+- **A ring is an AREA in core areas, and a tight row THINS it.** The
+  first build had fixed ring radii, and no fixed shape reaches all 24
+  rows. The swamp's spring is a quarter rain and 15% thunder but only
+  a tenth cloudy, so every storm's cloud skirt alone painted more cloud
+  than the table allows. The rings painting a word are now thinned
+  together to exactly its share where they would overshoot. A storm born
+  in the swamp spring has a thinner skirt than one born over the summer
+  woodlands, and every row is reachable by construction.
+- **The day re-aims the solve.** A type born more at some hours (fog in
+  the small hours, summer thunder in the afternoon, cloud by day) covers
+  unevenly, and a share is not linear in its covering mean. The flat
+  solve therefore fell two points short on subtropical summer. The solve
+  now iterates against the day-averaged shares (48 half-hour bins, each
+  type's exposure being its birth cosine smeared over the ages its
+  systems live to) until they ARE the table's.
+
+The sandstorm is a quarter of the desert table's cloudy
+(`SAND_SHARE_OF_CLOUDY`); the Chronicles have no sandstorm column, and
+the calibration counts one as the cloudy it came from. Measured: every
+row's analytic day shares match the table within 1e-4. Sampled, all 24
+rows land within ±1.7 points at 6,000 samples a row. The gate holds six
+rows to 2.6 points each and to a 0.8 mean. A player's query costs about
+0.1 ms, and every system within 40 km of the player (the sky's reach)
+about 0.3 ms.
+
+### Slice B shipped - the sim seam (2026-09-22)
+
+The map is the sky on its lane: `weatherSim.js` WEATHER3b, pinned by
+`test/weather3b_simseam.test.js` (`tools/mutants/weather3b.json` 17/17
+dead), and approved by THE WORLD WEATHER MAP row in Ledger A.
+
+- **The lane** is the field's own (the enhanced skin, Enhanced
+  Environments, the weather-events row, forced on online). `?wxmap=off`
+  hands it back to WEATHER2b's field. `sampleWeatherField` routes to
+  the map there, so the hosts' sampling calls are unchanged (their frame
+  gained the front's `peak`, below, and slice F the indoor place).
+- **The word** is `wornAmong` over the systems within the sky's reach.
+  They are found once per game minute, or whenever the player has moved
+  250 m, and resolved every frame. It goes through the same `_set`, so
+  WEATHER2a's ground law holds and the raw word is kept for the wind.
+- **Crossing or jump is the sim's call, not the host's.** A change is a
+  crossing only when it follows the last sample within
+  STALE_DRAIN_MINUTES and MAP_JUMP_M (2 km). A rest, a load, a sentence,
+  an online join or a teleport is a jump even when a host calls its
+  frame live. Travel and respawn (same climate base included, where DFU
+  rolls nothing) sample the destination as one jump, and never pass
+  through the zone's word.
+- **The day roll stands down.** It still rolls (the classic lane and
+  the save read the array), but the drain applies nothing and CLK2's
+  evolution rests.
+- **Indoors**, the indoor frame (`worldModes.js`, before Better
+  Ambience's rain source reads the word) re-reads the map over the
+  place the player is in (as shipped, the last outdoor sample's place;
+  slice F made the host name it). Each change is a jump, so the sky outside is
+  simply there on the way out.
+- **The front's peak is the place's.** `currentWeatherIntensity()`
+  (the system's envelope, falling from its heart out) is placed in the
+  mode's range every frame, so walking in from a storm's edge thickens
+  the drizzle into the downpour. Lanes with no map keep WX2's seeded
+  episode.
+- **The clouds** still get the precipitating systems' cores in
+  WEATHER2b's cell shape. Slice C gives the sky the whole structure.
+
+The day-roll machine's own pins (W1, S41, CLK2/CLK4, WORLD5 C4/C5,
+SAV3, WEATHER2a/b/d, AUDIT 57 F3) were written for the one lane that
+existed. Each now declares the non-map lane it tests, beside its reset.
+
+### Slice C shipped - the sky (2026-09-22)
+
+The clouds read the map whole. `test/weather3c_sky.test.js` pins it
+(`tools/mutants/weather3c.json` 15/15 dead), and THE WORLD WEATHER MAP
+row now names it.
+
+- **Every system near is a cloud, as nested discs** (`skyCells`): the
+  skirt's disc, the ring's inside it, the core's inside that. Each word
+  goes through WEATHER2a's ground law at the cell's own place, so a
+  winter storm is a snow cloud where it stands. A fair-weather field, a
+  deck, a fog bank on the low ground, a storm on the ridge: all stand in
+  the sky, not only the wet ones.
+- **The slots** (`pickCells`, in the renderer): the tier's 8 (3 on Low)
+  go to the cells that fill the most sky from here. Importance is the
+  word's weight times the angle the disc fills, and a disc overhead
+  counts double, so the sky above is never the one dropped. They are
+  drawn lowest priority first, so the storm's heart is blended last
+  over its own skirt. The test runs the shader's resolve in JS over
+  hundreds of places: the cloud fully overhead is always the worn word.
+- **Clear air under it all** (`cloudBaseOf`). On the map's lane the
+  clouds stand on clear air's row and state (cover, softness, colours),
+  and the player's own system is a cell like any other. The blue shows
+  past a deck's edge, a far cumulus is lit white, and the storm overhead
+  is dark by its own grey. That is WEATHER2c's thunderhead-over-a-sunny-
+  zone case, now the whole sky's. The dome, the fog and the sun keep the
+  worn word, eased on the WX2 front.
+- **The wind of what is coming** (`approachAt`, `wind.js` tick's
+  `approach`): the strongest storm near brings its VIOLENCE at its
+  envelope, falling from its disc's edge to nothing 15 km beyond. It is
+  a floor under the fronts, never summed with one, so the wind gets up
+  before the first drop and dies as the storm passes.
+
+Measured: the whole sample - the word, the sky's cells and the wind -
+costs about 0.02 ms a frame. Off the lane, nothing changes: WEATHER2b's
+cells are cut in their own order on the worn word's row, as before.
+
+### Slice D shipped - storms at a distance (2026-09-22)
+
+`systems/distantStorms.js` holds the law, pinned by
+`test/weather3d_distantstorms.test.js` (`tools/mutants/weather3d.json`
+15/15 dead).
+
+- **The strikes** are the storm's and the minute's. Each game minute
+  draws a Poisson count at STRIKES_PER_MINUTE (0.15, about twice a real
+  minute at the default TimeScale) times the storm's envelope, seeded
+  by its lattice id. Every client under the shared clock sees the same
+  strikes, and frame-by-frame is the same as all at once. The first
+  build struck at 0.8 a game minute, and an afternoon of swamp storms
+  strobed; measured and brought down.
+- **The light**: the march writes one stripe a frame, so a per-cloud
+  flash cannot ride it, which is why the overhead strobe is already
+  whole-sky at the composite. A distant strike is a bolt in the
+  composite instead (`boltOf`): the direction to the thunderhead's
+  middle (BOLT_HEIGHT), a cone as wide as its cloud, on the cloud's own
+  radiance only, so clear sky that way stays dark. It falls away over
+  BOLT_SECONDS.
+- **The thunder** (`thunderOf`) comes its distance over 343 m/s late,
+  half a minute for a storm 10 km off. Its volume falls with distance
+  (and with the storm's strength): a crack inside 4 km, the roll beyond,
+  nothing past 25 km. It is played THUNDER_SOURCE_M out toward the
+  storm, so it comes from its side.
+- **Whose storm**: under a thunderstorm's heart, DFU's LightningPlayer
+  and the ambience own the lightning and thunder, as before. Only the
+  others strike here. A jump (a load, a landing) plays no backlog and
+  forgets the thunder still on its way (as shipped, only when the word
+  changed; slice F made every landing count). Enhanced only, never under a
+  `?weather` pin, and nothing off the map's lane.
+
+### Slice E shipped - the weather on the map (2026-09-22)
+
+The enhanced travel map shows the picture Mac drew: sunny here, cloud
+there, a rainstorm over the hills. The law is `ui/weatherLayer.js`, and
+it is drawn on `ui/heldMap.js`'s world sheet. Pinned by
+`test/weather3e_maplayer.test.js` (`tools/mutants/weather3e.json` 15/15
+dead).
+
+- **The wash**: every system over the bay is a soft-rimmed radial wash
+  per band, laid lowest priority first so a storm's heart is inked last.
+  Its pigment is mixed a third of the way to the pen's brown, so it sits
+  in the sheet's one hand, and it is heavier with the storm's strength.
+  A grown storm with room on the paper is signed with a pen glyph: slant
+  strokes for rain, a bolt, a star for snow, level lines for fog, a
+  drift for sand. The first render drew hard discs, which read as polka
+  dots; seen in Chromium and softened. The far view carried a page of
+  glyphs; they now wait for GLYPH_MIN_ENV and GLYPH_MIN_PX.
+- **Cost**: the whole bay is about 2,700 systems, read once every
+  WEATHER_LAYER_REFRESH_MINUTES (10 game minutes, about a quarter of a
+  pixel of drift). The "37 ms after" first recorded here was never
+  measured. Slice F measured it over a patchwork of every climate:
+  about 2,500 systems, 130 ms for the first read (60 ms once the code
+  is warm), then 12-27 ms a refresh. The wash lives on the sheet's KEPT
+  static layer, keyed on that refresh, so a frame that only breathes
+  costs nothing. A pan or a zoom redrew it, until slice F.
+- **The hover** carries the weather at the pixel and its forecast off
+  the same law, 12 hours ahead: "Daggerfall : Daggerfall · Rain, heavy
+  - clearing in about 3 hours". It is read once per pixel per refresh.
+- **A bug the tests caught**: the layer centred its read on the sheet's
+  height in field metres. The field's y runs up from the real bay's
+  south edge, so any sheet not 500 rows tall read the wrong stretch of
+  land. It was right on the real map only by coincidence. The centre now
+  goes through the field law (`fieldOfMapPixel`).
+- `world.js` hands the map `weather: { on, minutes }`: on the map's lane
+  and never under a pin, at the host's own clock. The classic travel map
+  is DFU's and draws none.
+
+### Slice F shipped - the audit (2026-09-23)
+
+Two independent reads of slices A-E. One read the runtime: does it run,
+and what did it break. The other read the records: do they say true
+things. Pinned by `test/weather3f_audit.test.js`
+(`tools/mutants/weather3f.json` 15/15 dead). The slices' own mutant
+records were re-aimed wherever F moved their source, and all six files
+are 0 survived, 0 stale.
+
+The runtime read:
+
+- **R1 - one ground law for every reader.** The sky's cells went through
+  WEATHER2a's ground law, but the travel map's washes, its hover
+  forecast and the distant storms did not. They said "Rain" and struck
+  lightning where the player standing there got snow. `mapGround`
+  (weatherSim) is now the one law, `(word, x, z, minutes)` at the
+  place's own climate. The sky, the map's marks, the forecast and the
+  storms' strikes all read it, and a thunderstorm over snow ground is a
+  squall that strikes nothing.
+- **R2 - the map's cost.** The travel map made a lookup per window, and
+  the births cache is per lookup, so every open read the whole bay cold.
+  It now reads with the host's own lookup, which is the sim's and warm.
+  A full births cache (BIRTHS_MEMO, 40,000 nodes) sheds its OLDEST
+  quarter, not the whole. **R2a:** a pan or a zoom inked every wash's
+  gradient again, a few thousand a frame. The washes are now inked once
+  a refresh onto their own map-sized layer (WASH_LAYER_SCALE, 2 layer
+  pixels a map pixel), and the view draws it as one image. The glyphs,
+  a handful, are still inked at the paper's resolution.
+- **R3 - indoors reads the place the host names.** The indoor sample
+  read the last OUTDOOR sample's place. An arrival straight indoors (a
+  load into a dungeon, a recall) read the old place's sky, or none.
+  Each host now names the place every indoor frame (`weatherIndoors`:
+  the building's or dungeon's own pixel), and a load clears the last
+  place, so its first word is a jump wherever it landed. The
+  `_mapFresh` flag this replaced was redundant with that.
+- **R4 - a lane switched off mid-session.** The drain spent the day's
+  pending apply on the map's lane, so switching the skin or Enhanced
+  Environments off wore the map's last word until the next day. The map
+  check now comes before the flag is spent, so the next frame off the
+  lane wears the zone's slot.
+- **R5 - every landing is an arrival.** The distant storms reset on the
+  jump stamp, which moves only when the word changes. A landing under
+  the same sky kept the old place's thunder on its way. The sim now
+  counts arrivals (`weatherArrivalStamp`), word or no word, and the
+  hosts reset on it. Thunder that fell due while the frames stopped (a
+  building, a window, a pause) is dropped once it is more than
+  THUNDER_LATE_SECONDS (1 s) late, not played in one burst.
+- **R6 - left as built.** The sky's state is computed twice on a frame
+  where the clouds' base row differs from the dome's (the map's lane
+  under weather). That is one extra `skyState` call, the cost of the
+  clouds standing on clear air. It was not measured, and is left as
+  built.
+
+The records read: this arc said slice B's mutants were 16/16 (they were
+17/17); that the hosts' frame did not change (it gained the front's
+peak); that the swamp spring is "a sixth" thunder (15%); that the table
+moved out so the sim and the map would not import each other (they
+must not form a cycle - the sim does import the map); that fog burns
+off by late morning (it peaks after dawn and thins through the
+afternoon); that every slice has its own kill door (`?wxmap=off` is the
+only one); that the wind is noise in space and time (it is noise over
+the land plus two fixed turns); and a "37 ms" refresh nobody measured.
+Each is corrected where it stood, with the build's own numbers.
+
+### Slice G - clarity: fronts, not a rash (the design, 2026-09-23)
+
+Mac, on the first real render of the travel map: "this needs more
+clarity". The render (a high-summer afternoon over a stand-in bay, no
+ARENA2 here) showed about 1,930 systems, 1,270 of them thunderstorms
+4-7 km across. Each is a few map pixels, so the bay read as a speckle of
+grey dots, not "sunny here, a rainstorm over there". The pigments, mixed
+a third of the way to the pen's brown, came out as one grey-blue.
+
+The shares were right; the SCALE was wrong. Every type was born as an
+independent Poisson process, so a climate's 15% of thunder came as
+thousands of small independent cells.
+
+**The model (G1).**
+- **Rain is a FRONT.** A rain system is regional: a core tens of
+  kilometres in radius (built at 25-50 km; shipped at 40-75 km after the
+  second render still read as circles), with overcast and cloud rings
+  around it, living half a day to a day and a half.
+- **Thunderstorms are born INSIDE rain fronts.** A thunder cell is a
+  child of a front. It is born at a place inside the front's core and
+  rides with it rigidly, so a storm is a rain front mottled with its
+  cells, not a cell on its own. The cells are thinned by the land and the
+  season where each is born, so a front drifting over a desert grows no
+  storms there.
+- **The other types are larger too.** Overcast decks and cloud fields
+  are regional, fog banks and sandstorms are tens of kilometres, and each
+  type is born on its own lattice, sized to it.
+- **The calibration stays exact.** Thunder is now a Cox process: cells
+  are Poisson inside the fronts' cores, and the fronts are Poisson. With
+  K fronts over a point and c the cells' covering mean per front, the
+  chance of no thunder is E[e^-(1-e^-c)K], which is exp(-nu(1-e^-c)).
+  The effective covering means are nu(1-e^-c) for thunder and nu e^-c for
+  rain, so the solve and the day's re-aim run as before. What the
+  closed form does not see - a cell poking past its front's rim, a front
+  growing past cells born when it was smaller - is measured by the
+  sampled calibration gate.
+- **Known cost:** a front that drifts from one climate into another
+  carries its rain with it. The table holds per climate on average over
+  its land, not at its borders.
+
+**The map (G2).** Distinct pigments (rain blue, storm violet, snow white,
+overcast slate, cloud pale grey, fog cream, sand ochre), mixed only
+lightly toward the pen. A legend on the sheet.
+
+### Slice G shipped - clarity (2026-09-23)
+
+Pinned by `test/weather3g_fronts.test.js` (`tools/mutants/weather3g.json`
+22/22 dead). The pins slices A-F held on the old shapes were re-aimed at
+the new law, and their mutant records moved with it: 3a 14/14, 3b 17/17,
+3c 15/15, 3d 15/15, 3e 15/15, 3f 15/15. The build taught four things the
+design above did not have:
+
+- **A cell paints only inside its front's core as it is now (`clip`).**
+  A cell near the rim poked past the front, so thunder fell where the
+  Cox law has no front, and the sampled rain and thunder drifted a point
+  or two off the table. The clip travels everywhere the word does: the
+  worn word (`insideClip`), the sky (`uCellK`, a clip disc per cloud cell
+  in the shader, fading at the front's rim with the cell's own rim), the
+  travel map (`ctx.clip`), and the hosts' one conversion (`cellOfField`
+  in `render/volumetricClouds.js`, which both exterior hosts now call).
+- **Cells are drawn over the front's grown core widened by a cell, and
+  from a cell's life BEFORE the front's birth.** Drawn only inside the
+  core, a grown front's rim is short of storms (31.9% of it under a cell
+  where the law says 38.9%, the pin's own measure). Begun only at the
+  front's birth, a young front is. With both, every point of a live core
+  has cells at the one steady rate, so the Cox law is exact: the analytic
+  day shares match every row within 1e-6.
+- **Drift is capped at tens of kilometres.** At 120 metres a game minute
+  a front rode up to 216 km over its life, and one climate's weather
+  reached deep into the next. Every type now drifts at most 60 km in its
+  longest life (pinned). A front still visibly moves over hours.
+- **Off the map is the climate at its nearest edge, not the sea.** Found
+  by the desert showing overcast its table has none of: fronts born past
+  the map's edge were read as ocean, and their weather rode 140 km onto
+  the land. The Iliac Bay map's north and east edges are land.
+
+Measured, over a patchwork of every climate and at the gate:
+- **Calibration.** All 24 rows sampled over the whole map, edges
+  included, across 20 years of each season: a mean miss of 0.33 points
+  and a worst of 1.7. The gate now samples the same way. One season
+  alone sees only a few hundred independent fronts, and its noise
+  reached 3.4 points.
+- **Regional.** Two places 10 km apart share their weather 72-79% of
+  the time, 44-55% at 30 km, and 24-32% at 100 km.
+- **Cost.** The bay holds 400-700 systems, not 1,900. A whole-bay read
+  is 55-115 ms cold and 3-8 ms a refresh. A player's query is 0.12 ms,
+  the sky's 40 km read 0.2 ms, and a 12-hour hover forecast about 3 ms.
+
+**The map (G2).** Every weather has its own pigment, leaning 12% toward
+the pen, not a third. The pin holds every pair of pigments a visible
+distance apart, and caught fog and snow as one white, so snow is now an
+icy blue. The washes are laid UNDER the ink already on the sheet
+(destination-over), so the coast and the borders stay the pen's. A
+cell's wash thins across most of its disc, so a front's cells run into
+one dark heart. Fog is signed only on a wide bank. No glyph is drawn on
+the margin past the map's edge. A legend in the sheet's top-right corner
+(the hands hold its lower edge) names every weather, with the pen's sign
+on the four that would otherwise read as the same pale.
+
+### Slice H shipped - shapes, and the map drawn, not blotted (2026-09-23)
+
+Mac, on slice G's render: "I just feel like they look too much like blobs
+and blots". Then, choosing the direction: "make them irregular", and on
+the drawn prototype: "I like it, but the goal is not being overbearing on
+the map. It needs to be more subtle". Pinned by
+`test/weather3h_shapes.test.js` (`tools/mutants/weather3h.json` 20/20
+dead). The pins of slices A-G that read a system as a disc, or the map
+as washes, were re-aimed at the shapes and the regions.
+
+**Verification.** All of slices A-G's mutants were re-run against the
+shaped law. None survived, but 22 records named source the slice had
+rewritten. Each was re-aimed at the same behaviour in the new code, and
+8 of those then survived the pins. 2 were already caught by pins in
+another file, and each record now names that file. The other 6 were
+real gaps, each now pinned:
+- The fog-under-a-deck case (3b) had stopped biting. Its search measured
+  the deck as a disc, so the spot it found lay under the deck's outer
+  ring, where the fog ranks first anyway. It now uses the law's shaped
+  measure, and asserts that the deck is the weightier cloud overhead.
+- The map (3e): each word is filled with its own hatch, the weaker
+  first, and nothing is traced of a region a pan puts off the paper on
+  any side.
+- The sheet (3f): the glyphs and the legend are drawn over the pen.
+- The law (3g): cells are born past the stretched core by up to a
+  cell's own reach, never further.
+
+One source fix came with it: `hatchPattern` kept a null when there was
+no canvas yet, which would have pinned the bare tint for good. It now
+keeps only a pattern it made.
+
+**The shapes (the law).**
+- A system's outline at bearing theta is its radius times m(theta) =
+  n (1 + sum a_k cos k(theta - phi_k)), for k = 2 (the stretch that makes
+  a front a band), 3 and 4 (its lobes). The amplitudes are drawn per
+  system up to its type's `SHAPE_AMPS`, and n makes the mean of m^2 round
+  the bearing exactly 1. So the outline encloses exactly the disc's area,
+  and every band is the same shape scaled.
+- The calibration is Campbell's theorem over AREAS, so it holds unchanged:
+  over all 24 rows and the whole map across 20 years, a mean miss of 0.36
+  points.
+- The multiple-angle identities give cos and sin of k theta from the unit
+  direction, so `shapeFactor` needs no trigonometry. The cloud shader runs
+  the identical polynomial (`shapeF`, with `uCellS/U` for the cell and
+  `uCellKS/KU` for its front's clip). A circle's shape reduces to
+  `length()` exactly.
+- Every reader of a system's size reads the shape: the worn word
+  (`radialOf`), a storm cell's clip, the search (`reach`, and the
+  exported `searchReach` bound), the wind of an approaching storm (the gap
+  to the outline that way), the distant storms' "under its heart", and
+  the map's glyphs. Cells are drawn over the front's STRETCHED core.
+- About a third of systems or more are visibly irregular: their outline
+  more than 1.4x further one way than another.
+- The search bound now carries the shape's stretch. Over ~2,000 real
+  systems no outline rode past that bound on its drift alone, so the ride
+  term is pinned by the formula, not by a probe.
+
+**The map (drawn in regions).**
+- The travel map no longer lays a soft radial wash per system. That was
+  an ink blot, whatever its colour.
+- It reads the worn word off the law at every 1.6 km cell of the bay,
+  once a refresh (`weatherField`). Each word's cells are traced into
+  closed loops (`traceLoops`, a directed boundary walk, so holes wind the
+  other way and a nonzero fill is the region). The staircase is rounded
+  three times in the coast's own hand (inkMap `roundCorners`) and thinned
+  to one point per third of a cell.
+- The regions are drawn under the pen: a faint tint (at most 0.3), a
+  sparse hatch only where something falls or lies (rain's single diagonal,
+  a storm's cross-hatch, snow's and sand's dots, fog's dashes), and a thin
+  outline (0.9 px) only where it helps. Cloud and the overcast deck are a
+  tint and nothing more, and cloud is never outlined.
+- The legend's swatches are the same hatch. The glyphs sign a front, not
+  every cell: a storm cell's needs a 24 px heart.
+- The map is the law: every cell's word is `weatherAt` at its centre.
+- Cost: 30-70 ms for the field and 20-50 ms for the regions, once per
+  refresh (10 game minutes). A pan redraws the kept loops (25-50k
+  points) and never reads the weather again. On the law's side: a
+  player's query 0.4 ms, the sky's read 0.6 ms, a hover's 12-hour
+  forecast 8-10 ms (once per pixel per refresh), and a warm whole-bay read
+  9-30 ms.
+
+### Slice I shipped - the strength of what falls, and a lighter hand (2026-09-23)
+
+Mac, on slice H's render: "Let's make this more subtle and push the
+detail further". The detail chosen: strength inside a region, so light
+and heavy rain read differently. Pinned by
+`test/weather3i_strength.test.js` (`tools/mutants/weather3i.json`).
+
+**The root cause was in the law, not the map.**
+- `weatherFront.js` already said what intensity should do: "walking in
+  from the edge thickens a drizzle into the downpour". The law did not
+  do it.
+- `bandAt` let the intensity fall across the system's whole outline,
+  rings included. The rain core only reaches a little over half way out,
+  so inside it the intensity fell from 1 to just 0.73 of the envelope.
+  A grown front was heavy to its very edge: over the bay, 77% of the
+  ground under rain and 64% under snow read "heavy" (at least 0.7), and
+  the step from the overcast ring into the rain was a step into a
+  downpour.
+- The intensity now falls across the CORE, the band where the system's
+  word falls: the whole envelope at the heart, a fifth of it
+  (`EDGE_INTENSITY`) at the core's edge. The rings beyond hold the
+  edge's fifth. A storm cell has no rings, so it is unchanged.
+- Over the core's area the intensity is uniform on [0.2, 1] times the
+  envelope. With the hover's own steps, a grown core is about 19%
+  light, 44% moderate and 37% heavy. Measured over the bay, rain and snow
+  now spread as evenly as the storm cells always did.
+- In the game this is felt, not only seen: walking into a front, the
+  rain starts light and builds to its heart. The word frequencies (the
+  calibration) are untouched, since only the intensity changed.
+
+**The map.**
+- One strength law: `STRENGTH_STEPS` (0.35, 0.7) is what the hover
+  calls light and heavy, and what the map draws (`strengthOf`). Only
+  what falls has a strength.
+- The field keeps each cell's step next to its word. `fieldStrength`
+  traces, for every word that falls, the loops of its cells that are at
+  least moderate and at least heavy. The CELLS nest: every heavy cell is
+  a moderate one of the same word. The rounded loops need not: rounding
+  cuts a corner by its leg's length, so an inner loop with shorter legs
+  can stand up to a map pixel past its outer one. The painter therefore
+  CLIPS each step to its word's region and to the steps below it, so what
+  is drawn nests whatever the rounding does. Cost: 12-39 ms more, once
+  per refresh.
+- A step's pattern is the word's own marks again, set BETWEEN the marks
+  already there, with no tint of its own. Each step doubles the marks:
+  - a line family moves across its own direction, half a tile and then
+    the quarters, so rain's and the storm's lines stand evenly spaced,
+    11.3, 5.7 and 2.8 px apart;
+  - dots move where they leave the most room: snow's stagger fills to an
+    even square lattice and then to the stagger half its size (8, then
+    5.66 px), the most even any arrangement of that many dots can be.
+    The sandstorm's scatter spreads as widely as its three dots allow
+    (5.0, then 3.6 px). The test proves both by trying every shift.
+  - Every mark is drawn in its tile and the eight around it, so the
+    repeat is seamless at the sides and the corners.
+- The sheet lays the weather UNDER the pen already on it, where every
+  stroke goes beneath the last. The painter makes its strokes in reverse
+  order there, so the picture is exactly the one drawn over.
+- The legend's falling words show a moderate fall, the commonest step
+  over a front (42-45% of falling cells over the bay, a plurality). A
+  last row shows the rain's hatch light, moderate and heavy side by
+  side: "Light to heavy". With no canvas for the patterns, each step is
+  a half tint more, as on the map.
+
+**One strength for the player, the map and the hover.**
+- The sim now resolves the player's word through the same ground law as
+  the map and the hover: rain over snow ground is snow before the
+  strongest is chosen. `wornAmong` also answers `raw`, the painting
+  system's own word, which the sky's violence keeps (a winter storm
+  still looks a storm while it snows).
+- The hover reads the refresh's minute, the one the hatch under it was
+  read at.
+
+**A lighter hand.** Every tint, hatch and outline is about two thirds of
+slice H's. The light hatch is sparser (a 16 px tile, not 12), and the
+outline is a 0.7 px hairline.
+
+**AUDIT-3i (before it shipped; Mac: "Definitely want to do one more
+comprehensive audit before we push this").** Three lenses, each proving
+its findings by running code; every finding was reproduced before it was
+paid.
+- Does it reach a player: yes. Walking into a grown front the rain now
+  builds 0.50 -> 0.68 -> 0.82 -> 1.0 of its peak, where it was 0.79 at
+  the edge before. Over the bay the mean rain peak fell from 0.82 to
+  0.65, close to the lane without a map (0.63); thunder is unchanged
+  (0.82), and online and offline read the same intensity at every place
+  and minute. Paid: on winter ground the sim resolved the word BEFORE
+  the ground law, so where a rain front lay under a snow front it wore
+  the rain front's strength while the map drew the snow front's (2.5% of
+  falling ground; the same fault left the cloud overhead unmatched in
+  winter). And the hover read the live minute, not the hatch's.
+- What it broke: nothing a player reads; 704 related tests, lint and
+  types clean. Paid: the strength loops stood past their regions (up to
+  1.1 map px); `strengthOf` made an array for every cell of every
+  refresh; a core of no size gave NaN (unreachable, now all edge). Noted:
+  between two overlapping rings of the same word `wornAmong` now keeps
+  the stronger system rather than the nearer (rings hold the edge's
+  value); nothing reads that system today.
+- Do the pins derive: they did not. 16 of 18 wrong implementations
+  passed every test, among them a host that never handed the strength to
+  the painter, a painter that filled every step with its whole region,
+  hatch marks drawn at the wrong place, and dots set in rows. The tests
+  were rewritten to check the drawn geometry end to end, the paths and
+  clips of every stroke, the host's hand-off, the winter ground, and the
+  legend's fit; each wrong implementation is now a mutant, and all of
+  them die.
+- Noted, not changed: the map's "light" is a grown front's edge, 40-51%
+  of the rain profile in game; the thin end of the profile is a young or
+  dying front's. A hover's pixel and its 2-pixel field cell can differ in
+  step at a region's edge.
+
+
+### BOLT - the lightning itself (2026-09-24)
+
+Mac: "Can we do detailed cloud and cloud to ground lighting? Not just when in storms but also being able to be
+seen far away?" A storm's lightning had only ever been light: the storm overhead strobed the sun (DFU's
+LightningPlayer) and a distant storm lit its own cloud (slice D). No channel was ever drawn.
+- **The strike** (`systems/lightning.js`, pure): from its seed, cloud-to-ground (CG_SHARE, three in ten, as in a
+  real storm) or in the cloud. A ground strike fires two to four return strokes down one channel tens of
+  milliseconds apart, the first the brightest; a flash in the cloud two to five softer pulses over most of a second.
+  `flickerAt` is that brightness, and the channel, the cloud's glow and the land's light all read it.
+- **The channel**: a stepped leader from the cloud's base to the ground - 30 m steps, each kinked sideways with a
+  little of the last one's heading, branches that fork, thin and die before the ground, the main channel alone
+  reaching it. Every strike's channel is its seed's, so a distant storm's strike (seeded by the storm and the minute,
+  slice D) is the same channel for every client.
+- **Where**: a distant storm's strikes land inside its core (`strikePlace`) and are heard from there; the storm
+  overhead's land where DFU's schedule throws them (`localStrike`: a crack 600 m to 4 km off and mostly to the ground,
+  a roll 2.5 to 8 km and mostly in the cloud). The cloud's base is the sky's own thunder base above the eye, and
+  both ends drop by the Earth's curve at the strike's distance.
+- **Drawn** (`render/lightningBolts.js`): ribbons turned to the eye, a hot core and a soft halo, added onto the
+  frame and tested against the world's depth. **Far away**: never thinner than BOLT_MIN_PX (1.4 px) on the
+  screen, the air thinning its light over BOLT_SEEN_M (45 km); past the camera's six-kilometre far plane each vertex
+  is drawn along its own sight line just inside it, where it lands on the screen and how wide it is unchanged.
+  The strikes stand round, and the ribbons face, the eye the view is built from - world.js's is the camera
+  machine's (`mwv.eye`), which in third person stands metres off the head (`cam.pos`); the first shots, taken
+  with no body spawned, drew every strike 22° off its cloud until the host handed that eye.
+- **The land's light**: a ground strike within FLASH_REACH_M (3.5 km) lights the land round the player from its
+  side - the renderer's flash light, 300 m toward the strike and 250 m up, as Dynamic Skies' own flash stands over
+  the player (the lane's lights are clustered and fall off over their range; a light at a foot kilometres off lit
+  nothing). Under the mod its own flash keeps the light; the channels are drawn under it too (it draws none).
+- `?bolttest=<metres>` holds one ground strike that far east of the eye at its first stroke's peak, for shots.
+- Pinned by `test/bolt_lightning.test.js` (9 tests: the laws on the strike, the flicker, the channel, the column,
+  the store, the storm overhead, the distant strikes, and both shaders run in JS).

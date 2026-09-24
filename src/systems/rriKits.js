@@ -326,3 +326,5 @@ export function useBandage(item, collection, { entity = null } = {}) {
   tallySkill(entity, SKILLS.Medical, 1);
   return { kind: 'bandaged', healed: heal };
 }
+/** DISC13-B: what the pack's Use button asks (useItem.js usableItem) - off, the handler hands the click back. */
+useBandage.usable = () => rriModule('bandaging');

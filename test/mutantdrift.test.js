@@ -122,8 +122,16 @@ test('AUDIT QS6 F7: every mutant record still names source that is there - a rec
 // - MAC-BUG-W5-13 is named for the pool's gate and mutates the drip's. Its
 //   tests fail the old door only at place(), never at the drip, the
 //   footprint or the pool.
+// - The SEVENTH MERGE brought three of main's records that name two sites on main
+//   itself (DISC13-A's two torch/flash lines, one per lit path; WEATHER3a's
+//   birth gate, written twice in weatherMap.js). They are carried as they came,
+//   for their authors to re-aim; the rule that nothing new joins stands for
+//   this branch's own records.
 // The map can only shrink.
 const CARRIED_AIM = new Map([
+  ['disc13.json::DISC13-A-world-hands-the-torch-the-stepped-feet', 2],
+  ['disc13.json::DISC13-A-worldModes-hands-the-flash-the-stepped-feet', 2],
+  ['weather3a.json::WEATHER3a-births-ignore-the-hour', 2],
   ['acc1d.json::ACC1d-12-a-signed-out-player-asks-anyway', 2],
   ['auditsoc.json::B9-any-tab-speaks-for-the-seat', 2],
   ['auditsoc.json::B8-panel-clock-never-ticks', 2],

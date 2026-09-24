@@ -137,10 +137,10 @@ test('EV6: the skies neither query CURRENT_PROGRAM nor restore - the hosts mark 
     const s = readFileSync(host, 'utf8');
     // GR1: the world host has a third seam, the lab's grass; WIND3: both
     // hosts one more, the wisps (drawn after the rain, on their own program)
-    // WEATHER2d: and the sand, one more in both
-    const want = host === 'src/scenes/world.js' ? 5 : 4;
+    // WEATHER2d: and the sand, one more in both; BOLT: and the lightning's channels, one more in both
+    const want = host === 'src/scenes/world.js' ? 6 : 5;
     assert.equal((s.match(/renderer\.markForeignPass\(\);/g) || []).length, want,
-      `${host} marks its foreign seams (the sky, the rain, the sand, the wisps${want === 5 ? ', and the grass' : ''})`);
+      `${host} marks its foreign seams (the sky, the rain, the sand, the wisps, the bolts${want === 6 ? ', and the grass' : ''})`);
   }
 });
 
@@ -316,7 +316,7 @@ test('AUDIT 47: no shader in the tree uses a uniform it did not declare in its o
     const vs = tpl('LAB_GRASS_HEAD') + tpl('GAME_GRASS_FIELD') + tpl('LAB_GRASS_VS');
     const fs = tpl('LAB_GRASS_HEAD') + tpl('LAB_GRASS_FS');
     for (const [label, body] of [['labGrass VS', vs], ['labGrass FS', fs]]) {
-      const declared = new Set([...body.matchAll(/uniform\s+\w+\s+([^;]+);/g)].flatMap((x) => x[1].split(',').map((v) => v.trim().replace(/\[.*?\]/, '').split('//')[0].trim())));
+      const declared = new Set([...body.matchAll(/uniform\s+(?:(?:lowp|mediump|highp)\s+)?\w+\s+([^;]+);/g)].flatMap((x) => x[1].split(',').map((v) => v.trim().replace(/\[.*?\]/, '').split('//')[0].trim())));
       const used = new Set([...body.matchAll(/\bu[A-Z]\w*/g)].map((x) => x[0]));
       const missing = [...used].filter((u) => !declared.has(u));
       assert.deepEqual(missing, [], `${label} uses undeclared: ${missing.join(', ')}`);
@@ -348,7 +348,7 @@ test('AUDIT 47: no shader in the tree uses a uniform it did not declare in its o
       // lighting lane composes EL_GLSL + EL_FOG_GLSL + EL_POINT_LIT_GLSL into each of its shaders
       const body = m[2].replace(/\$\{CLOUD_SHADOW_GLSL\}/g, shared).replace(/\$\{CLOUD_FIELD_GLSL\}/g, field).replace(/\$\{SHADOW_GLSL\}/g, shadowGlsl).replace(/\$\{AIR_AO_GLSL\}/g, aoGlsl).replace(/\$\{AIR_ADAPT_GLSL\}/g, adaptGlsl)
         .replace(/\$\{([A-Z_]+)\}/g, (all, name) => { const b = s.match(new RegExp(`const ${name} = \`([^\`]*)\``)); return b ? b[1] : all; });
-      const declared = new Set([...body.matchAll(/uniform\s+\w+\s+([^;]+);/g)]
+      const declared = new Set([...body.matchAll(/uniform\s+(?:(?:lowp|mediump|highp)\s+)?\w+\s+([^;]+);/g)]
         .flatMap((x) => x[1].split(',').map((v) => v.trim().replace(/\[.*?\]/, '').split('//')[0].trim())));
       const used = new Set([...body.matchAll(/\bu[A-Z]\w*/g)].map((x) => x[0]));
       const missing = [...used].filter((u) => !declared.has(u));

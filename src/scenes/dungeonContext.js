@@ -1663,7 +1663,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:9401 / exterior.js:3648), set
+  // host's own townTalk sink (world.js:9413 / exterior.js:3658), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2718,7 +2718,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1067 against :1096; worldModes.js:7056 against :7080).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1067 against :1096; worldModes.js:7059 against :7083).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3289,8 +3289,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:14388,
-              // exterior.js:5189 and worldModes.js:7256 already ran;
+              // playerArrowHitFoe is the one copy world.js:14434,
+              // exterior.js:5218 and worldModes.js:7259 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -4742,7 +4742,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // water sounds. Castle-block detection (doNotPlayInCastle) pends.
   const sceneAmbience = new AmbientEffects(DUNGEON_AMBIENT_WAITS);
   sceneAmbience.setPreset('dungeon');
-  function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false, playerHeight = CAPSULE_HEIGHT, playerSneaking = false, playerMove = null, playerBobY = 0, playerCrouching = false) {
+  function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false, playerHeight = CAPSULE_HEIGHT, playerSneaking = false, playerMove = null, playerBobY = 0, playerCrouching = false, playerRenderFeet = null) {
     _ecvT += dt;
     respawnSweep(_ecvT);   // WORLD8: the hour's respawn, once a second
     const ecvOn = combatVisualsOn();   // ECV1: once per frame
@@ -4975,7 +4975,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the engine hangs the Light effect's magic candle 1.4 units in
     // FRONT of the player, and `-view[2..10]` is the same forward the
     // cast above fires down.
-    magic.update(dt, playerFeet, [-view[2], -view[6], -view[10]], playerHeight);   // M3: player spell missiles fly in the engine
+    magic.update(dt, playerFeet, [-view[2], -view[6], -view[10]], playerHeight, playerRenderFeet);   // M3: player spell missiles fly in the engine; DISC13-A the candle off the render feet
     { const mv = lycanthropeMoveSound(playerEntity, dt); if (mv != null) audio.playOneShot(mv, 1); }   // LM1: the beast's own noise while transformed (real time)
     // S19: WeaponManager's paralysis gate - weapons hide and the
     // machine holds while paralyzed (casting is NOT gated, verbatim:

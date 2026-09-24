@@ -1,30 +1,33 @@
 [
   {
-    "name": "MACR1-the-pad-is-applied-with-no-transform-too",
+    "name": "MACR1-no-transform-takes-a-window-too",
     "file": "src/combat/fpArm.js",
-    "old": "      const padFrac = screenTransform ? FP_TOP_PAD : 0;",
-    "new": "      const padFrac = FP_TOP_PAD;",
+    "old": "      const rect = screenTransform ? screenTransform({ x: 0, y: 0, w: W, h: H }) : null;",
+    "new": "      const rect = screenTransform ? screenTransform({ x: 0, y: 0, w: W, h: H }) : { x: 0, y: 0, w: W, h: H };",
     "tests": [
-      "test/macr_fixes.test.js"
+      "test/macr_fixes.test.js",
+      "test/disc13.test.js"
     ]
   },
   {
-    "name": "MACR1-the-frame-is-padded-but-the-lens-is-not-raised",
+    "name": "MACR1-the-lens-takes-no-window",
     "file": "src/combat/fpArm.js",
-    "old": "      const proj = pad > 0 ? frustum(-hw, hw, -hh, hh * (1 + 2 * padFrac), near, far) : perspective(FP_FIELD_OF_VIEW, pw / ph, near, far);",
+    "old": "      const proj = win ? frustum(-hw + win.k0 * px, -hw + (win.k0 + fw) * px, hh - (win.r0 + fh) * py, hh - win.r0 * py, near, far) : perspective(FP_FIELD_OF_VIEW, pw / ph, near, far);",
     "new": "      const proj = perspective(FP_FIELD_OF_VIEW, pw / ph, near, far);",
     "tests": [
       "test/macr_fixes.test.js",
-      "test/fparm.test.js"
+      "test/fparm.test.js",
+      "test/disc13.test.js"
     ]
   },
   {
-    "name": "MACR1-the-composite-is-not-extended-up",
+    "name": "MACR1-the-composite-back-on-the-moved-rect",
     "file": "src/combat/fpArm.js",
-    "old": "        renderer.drawScreenQuad(tex, { x: rect.x, y: rect.y - up, w: rect.w, h: rect.h + up }, { u0: 0, v0: phFull / CHAR_SPRITE_RT_SIZE, u1: pw / CHAR_SPRITE_RT_SIZE, v1: 0 });",
-    "new": "        renderer.drawScreenQuad(tex, rect, { u0: 0, v0: phFull / CHAR_SPRITE_RT_SIZE, u1: pw / CHAR_SPRITE_RT_SIZE, v1: 0 });",
+    "old": "        renderer.drawScreenQuad(tex, win.dst, { u0: 0, v0: fh / CHAR_SPRITE_RT_SIZE, u1: fw / CHAR_SPRITE_RT_SIZE, v1: 0 });",
+    "new": "        renderer.drawScreenQuad(tex, rect, { u0: 0, v0: fh / CHAR_SPRITE_RT_SIZE, u1: fw / CHAR_SPRITE_RT_SIZE, v1: 0 });",
     "tests": [
-      "test/macr_fixes.test.js"
+      "test/macr_fixes.test.js",
+      "test/disc13.test.js"
     ]
   },
   {

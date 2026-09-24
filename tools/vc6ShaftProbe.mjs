@@ -62,7 +62,7 @@ const out = await page.evaluate(async ({ W, H }) => {
   };
   quad([-40, 0, -40], [40, 0, -40], [40, 0, 40], [-40, 0, 40], [0, 1, 0]);      // the ground
   quad([-1, 0, -12], [1, 0, -12], [1, 9, -12], [-1, 9, -12], [0, 0, 1]);        // the pillar, between the eye and the sun
-  const mesh = r.createMesh({ positions: new Float32Array(P), normals: new Float32Array(N), uvs: new Float32Array(UV), indices: new Uint32Array(IDX), subMeshes: [{ archive: 1, record: 1, start: 0, count: IDX.length }] });
+  const mesh = r.createMesh({ positions: new Float32Array(P), normals: new Float32Array(N), uvs: new Float32Array(UV), indices: new Uint32Array(IDX), subMeshes: [{ textureArchive: 1, textureRecord: 1, startIndex: 0, primitiveCount: IDX.length / 3 }] });
 
   const proj = perspective(Math.PI / 3, W / H, 0.1, 400);
   const eye = [0, 1.7, 6];
@@ -90,6 +90,7 @@ const out = await page.evaluate(async ({ W, H }) => {
   const shot = (deck) => {
     r.setLightingLane(EL_LANE);
     r.setAir(true);
+    r.setHaze(false);   // VC7b: the beams alone - the haze march is tools/vc7bHazeProbe.mjs's to measure
     if (r.air) r.air._now = () => 1000;   // the eye's clock frozen: a with/without comparison is the deck's alone
     r.setClearColor([0.53, 0.7, 0.92, 1]);
     r.setLighting(new Float32Array([0.35, 0.35, 0.4]), 0.9, new Float32Array([1, 0.95, 0.85]));

@@ -684,10 +684,10 @@ test('DS1 seam: the controller stands the mod beside the dome on the one lane, a
     assert.match(s, /if \(skyInside\) \{ skyInside = false; sky\.setInside\(false\); \}/, `${host}: ExteriorTransitionEvent before the sky’s frame`);
     assert.match(s, /isEnhanced\(\) && !sky\.dynamic \? strobe : 1/, `${host}: one lightning under the mod - the strobe stands down (AUDIT 61)`);
     assert.match(s, /classicMinutes: playerTicker\.classicMinutes, sun: wxNow\.sun, flash: flash - 1, pos: [^}]+ \}/, `${host}: the ONE sunlight scale the ground takes rides the sky’s frame (AUDIT 61; WX2’s blend of the host’s SetSunlightScale)`);
-    assert.match(s, /renderer\.setFlashLight\(sky\.lightningLight\(\)\);/, `${host}: the flash on the light channel`);
+    assert.match(s, /renderer\.setFlashLight\(sky\.lightningLight\(\) \?\? boltFrame\.flash\);/, `${host}: the flash on the light channel - the mod's first, else a near ground strike's (BOLT)`);
     assert.match(s, /if \(sky\.pixelSnow\) precipOpts\.pixelSnow = sky\.pixelSnow;/, `${host}: the pixel snow`);
     // the flash composes AFTER the lanterns are stored
-    assert.ok(s.lastIndexOf('renderer.setPointLights(') < s.indexOf('renderer.setFlashLight(sky.lightningLight())'), `${host}: setFlashLight follows setPointLights`);
+    assert.ok(s.lastIndexOf('renderer.setPointLights(') < s.indexOf('renderer.setFlashLight(sky.lightningLight() ?? boltFrame.flash)'), `${host}: setFlashLight follows setPointLights`);
   }
   // AUDIT 61: the mod's fog rows are installed verbatim - EV4's distance
   // scale is DFU's row's law - and the far ring's ramp starts where the

@@ -84,6 +84,17 @@ is the sprite's sheathe, and the arms sheathe with their own clips
 the sprite, which is what Mac asked for. The arms' own frame, stance,
 mirror and clip laws are untouched.
 
+**DISC14-C (2026-09-23): the arms keep the plain bob.** The bob's doubled
+-idle shape (centred on the rest) is for a doubled `w_` sprite texture.
+On the arms' full-screen composite it swung above the rest, and under
+DISC14-B's defaults the floor pinned it there for half of every stride.
+Main's shipped defaults jerked the arms mostly through the preset's Step,
+which B turned off (Field-Bugs DISC14-C has the numbers). The arms have
+their own bob integrator on the plain
+shape (`armsPosition`), with the same inertia the sprite takes. The
+sprite takes the doubled shape only over a doubled `w_` hit, the rule
+DW-CLIP gave the half-size shift.
+
 ## Method by method
 
 | FPSWeaponClone (IL) | Home in `weaponWidget.js` | Notes |
@@ -169,6 +180,18 @@ the mod wrote a Description it is the pane's; where it wrote none the
 port did. The Features home's row (`mod-weapon-widget`) is the mod's own
 Enabled switch; "takes effect at once", the widget reads its switches
 every frame.
+
+**Two defaults are not the mod's (DISC14-B, 2026-09-23).** Mac, with a
+screenshot of this tile: *"these need to be the default values ingame
+for diverse weapons. The current defaults are wrong on the screen."*
+`Modules.DoubleScaleTextures` ships ON here (off in the mod), and
+`Inertia.Scale` ships 0 (1.0 in the mod). Every other key is as shipped.
+Diverse Weapons is on by default, and these are the values Mac chose
+for its idles against what the old defaults drew. WW1's shipped-defaults pin names
+the two, and the clone's benches put the shipped values back, so the
+clone's own laws are still tested against the mod. The Thunderlock
+turns Inertia on as its own departure, and keeps the mod's scale for it
+while the player's module is off (`gunViewmodel.js` `GUN_INERTIA_SCALE`).
 
 ## Hosts
 
