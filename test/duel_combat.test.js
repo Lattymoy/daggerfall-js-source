@@ -28,6 +28,7 @@ const stats = (o = {}) => ({ strength: 62, intelligence: 40, willpower: 45, agil
 const skillsAll = (v) => Object.fromEntries(Array.from({ length: 35 }, (_, i) => [i, v]));
 const mkPlayer = (o = {}) => ({ isPlayer: true, level: 9, raceId: 2, stats: stats(), skills: skillsAll(35), career: { attackModifierFlags: 0, weaponArmorShieldsBitfield: 0x00070000, abilityFlagsAndSpellPointsBitfield: 0 }, health: 70, maxHealth: 80, items: [], activeEffects: [], armorValues: [60, 70, 80, 65, 90, 100, 75], reflexes: 2, biographyAvoidHitMod: 0, ...o });
 const SWORD = 118;   // a Long Blade's template (characters/weapons.js weaponSkillUsed)
+const AXE = 127;     // an Axe's - a weapon whose skill slot is NOT the long blade's
 
 /** The frame a striker's host would send, through the relay's own law. */
 function strikeFrom(attacker, weapon, { by = 'melee', sw = 'StrikeDown', at } = {}) {
@@ -40,9 +41,9 @@ test('DUEL1 THE STUB IS THE STRIKER: the defender\'s resolution off the wire\'s 
   for (const pcaao of [false, true]) {
     if (pcaao) installPcaao({ read: (k) => ({ Enabled: true, equipmentDamageEnhanced: true, armorHitFormulaRedone: true, criticalStrikesIncreaseDamage: true, conditionBasedEffectiveness: true, softMaterialRequirements: true, fixedStrengthDamageModifier: true })[k] ?? false, other: () => undefined });
     try {
-      for (const [label, weapon] of [['longsword', createWeapon(SWORD, 3, () => 0.5)], ['fist', null]]) {
+      for (const [label, weapon] of [['longsword', createWeapon(SWORD, 3, () => 0.5)], ['axe', createWeapon(AXE, 2, () => 0.5)], ['fist', null]]) {
         if (weapon) weapon.currentCondition = Math.round(weapon.maxCondition * 0.8);
-        const attacker = mkPlayer({ skills: { ...skillsAll(35), [SKILLS.LongBlade]: 64, [SKILLS.HandToHand]: 41, [SKILLS.CriticalStrike]: 27, [SKILLS.Backstabbing]: 12 } });
+        const attacker = mkPlayer({ skills: { ...skillsAll(35), [SKILLS.LongBlade]: 64, [SKILLS.Axe]: 88, [SKILLS.HandToHand]: 41, [SKILLS.CriticalStrike]: 27, [SKILLS.Backstabbing]: 12 } });
         const frame = strikeFrom(attacker, weapon);
         assert.ok(frame, 'the sheet passes the relay\'s law');
         let total = 0;
@@ -104,10 +105,13 @@ test('DUEL1 THE FLOOR: a blow with `spare` that would kill leaves the player at 
     const e = { health: 10, maxHealth: 80, activeEffects: [] };
     hurtPlayer(e, 4, { spare: () => { spared++; } });
     assert.deepEqual([e.health, spared, died], [6, 0, 0], 'not a killing blow');
+    hurtPlayer(e, 6, { spare: () => { spared++; } });
+    assert.deepEqual([e.health, spared, died, avoided], [1, 1, 0, 0], 'a blow of EXACTLY the health left is a killing blow, and it stops at one');
+    e.health = 6;
     hurtPlayer(e, 50, { spare: () => { spared++; } });
-    assert.deepEqual([e.health, spared, died, avoided], [1, 1, 0, 0], 'the killing blow stops at one');
+    assert.deepEqual([e.health, spared, died, avoided], [1, 2, 0, 0], 'so does an overkill');
     hurtPlayer(e, 3, { spare: () => { spared++; } });
-    assert.deepEqual([e.health, spared], [1, 2], 'at one, any duel blow is the fall');
+    assert.deepEqual([e.health, spared], [1, 3], 'at one, any duel blow is the fall');
     hurtPlayer(e, 3);
     assert.deepEqual([e.health, died], [0, 1], 'a wolf in the ring kills as it always has');
     // the one registration: duelSpare says it to the duel

@@ -2380,13 +2380,14 @@ export const DUEL_DATA_MAX = DUEL_FRAME_MAX - 96;
 export const DUEL_HZ_MAX = 10;
 export const DUEL_IN_HZ_MAX = DUEL_HZ_MAX * 2;
 /** The attacker's sheet, at most: a level (the cast frame's honest ceiling), an attribute, a skill; a race index
- *  (the eight playable races, 1..8 - 0 read as none); a strike's weapon template and material (the item tables'
- *  own ranges) and its condition as a percentage; a bow's draw; the damage and the health a result may say. */
+ *  (the eight playable races, 1..8 - 0 read as none); a strike's weapon template (the look's own bound on an item's
+ *  template - a mod's weapon is a template too) and material, and its condition as a percentage; a bow's draw; the
+ *  damage and the health a result may say. */
 export const DUEL_LEVEL_MAX = CAST_LEVEL_MAX;
 export const DUEL_STAT_MAX = 100;
 export const DUEL_SKILL_MAX = 100;
 export const DUEL_RACE_MAX = 8;
-export const DUEL_TEMPLATE_MAX = 511;
+export const DUEL_TEMPLATE_MAX = 65535;
 export const DUEL_MATERIAL_MAX = 15;
 export const DUEL_DRAW_MS_MAX = 60_000;
 export const DUEL_DMG_MAX = CARD_VITAL_MAX;

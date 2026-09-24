@@ -222,7 +222,7 @@ export function createDuelManager({
     incoming.clear();
     if (outgoing && outgoing.peer !== peer) once({ k: 'cancel', to: outgoing.peer, s: outgoing.s, why: 'busy' });
     outgoing = null; waiting = null; starting = null;
-    duel = { peer, s, c: [c[0], c[1], c[2]], sub: sub ?? null, startedAt: now(), n: 0, seen: 0, phase: 'live', overAt: 0, end: null, goneSince: null, outSince: null, blows: null };
+    duel = { peer, s, c: [c[0], c[1], c[2]], sub: sub ?? null, startedAt: now(), n: 0, seen: 0, phase: 'live', overAt: 0, end: null, goneSince: null, outSince: null, blows: null, fightSaid: false };
     say(`The duel with ${nameOf(peer)} begins - fight in ${DUEL_COUNTDOWN_MS / 1000} seconds!`);
     onStart(duel);
     mgr.onChange?.();
@@ -345,7 +345,7 @@ export function createDuelManager({
           if (incoming.size >= 4 && !incoming.has(from)) return;
           const fresh = !incoming.has(from);
           incoming.set(from, { s: d.s, at: now(), sub });
-          if (fresh) { say(`${nameOf(from)} challenges you to a duel.`); onPrompt(from); }
+          if (fresh) { say(`${nameOf(from)} challenges you to a duel - answer on the prompt, or press F on them.`); onPrompt(from); }
           mgr.onChange?.();
           return;
         }
@@ -446,6 +446,7 @@ export function createDuelManager({
       }
       const d = liveDuel();
       if (!d) return;
+      if (!d.fightSaid && !counting(d)) { d.fightSaid = true; say('Fight!'); }   // the count is over: blows count from here
       // I cannot fight on (I went indoors, or fell to something else): the duel is off, and nothing is recorded
       const no = can();
       if (no === 'dead' || no === 'outdoors') { post({ k: 'end', to: d.peer, s: d.s, why: no === 'dead' ? 'dead' : 'left' }); finish(no === 'dead' ? 'dead' : 'left'); return; }

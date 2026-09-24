@@ -13120,7 +13120,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     }
     last = now;
     meterFor(renderer.gl)?.markCpu('online');   // PERF-CPU
-    if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); }   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
+    if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); } else if (player.arena) player.arena = null;   // DUEL1: no online frame, no duel's law to hold the body - the ring is the live duel's alone   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
     meterFor(renderer.gl)?.markCpu('sim');   // PERF-CPU: everything between here and the next mark is the rest of the simulation
     lookGate(gamePaused());   // a window up frees the cursor; closing re-locks
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
