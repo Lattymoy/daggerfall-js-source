@@ -63,7 +63,7 @@ export const setMusicMuted = (v) => { musicMuted = Boolean(v); };
 
 export const musicGain = () => (musicMuted ? 0 : MUSIC_GAIN * getFloat('Controls', 'MusicVolume', 0, 1));
 
-/** DISC19-B (2026-09-24, Mac: "Sometimes when music tracks switch, its very abrupt instead of seamlessly fading in
+/** DISC20-B (2026-09-24, Mac: "Sometimes when music tracks switch, its very abrupt instead of seamlessly fading in
  *  between tracks"): THE FADER - a gain between a player's song and its master that only the transitions write. The
  *  master is the VOLUME (MusicVolume and the video mute), with three writers that would each undo a ramp (see above);
  *  the fader is the fade alone, so neither cancels the other. A ramp starts from wherever the fader stands, so a fade
@@ -216,7 +216,7 @@ export class SongPlayer {
     this._timer = null;
     this._voices = [];
     this._master = null;
-    this._fader = null;   // DISC19-B: built with the master
+    this._fader = null;   // DISC20-B: built with the master
     this._destination = destination;
   }
 
@@ -226,12 +226,12 @@ export class SongPlayer {
     this._master.gain.value = musicGain();
     this._master.connect(this._destination ?? this.ctx.destination);
     if (this._reverbSend) this._master.connect(this._reverbSend);   // AUDIT-BA F4
-    this._fader = this.ctx.createGain();   // DISC19-B: the transition's own gain, under the volume
+    this._fader = this.ctx.createGain();   // DISC20-B: the transition's own gain, under the volume
     this._fader.gain.value = 1;
     this._fader.connect(this._master);
   }
 
-  /** DISC19-B: ramp the fader to `level` over `seconds` (see rampFader). */
+  /** DISC20-B: ramp the fader to `level` over `seconds` (see rampFader). */
   fadeTo(level, seconds) { rampFader(this.ctx, this._fader, level, seconds); }
 
   /** The MusicVolume setting moved (2026-08-27): follow it now, not at
@@ -498,7 +498,7 @@ export class SongPlayer {
     if (!g) {
       g = this.ctx.createGain();
       g.gain.value = this._state[channel]?.volume ?? 1;
-      g.connect(this._fader ?? this._master);   // DISC19-B: through the fader
+      g.connect(this._fader ?? this._master);   // DISC20-B: through the fader
       this._chGains[channel] = g;
     }
     return g;
@@ -580,7 +580,7 @@ export class AudioSongPlayer {
     this.loop = true;
     this._source = null;
     this._master = null;
-    this._fader = null;   // DISC19-B: built with the master
+    this._fader = null;   // DISC20-B: built with the master
     this._destination = destination;
   }
 
@@ -590,12 +590,12 @@ export class AudioSongPlayer {
     this._master.gain.value = trackGain();   // the setting alone: a mastered pack needs no FM trim
     this._master.connect(this._destination ?? this.ctx.destination);
     if (this._reverbSend) this._master.connect(this._reverbSend);   // AUDIT-BA F4
-    this._fader = this.ctx.createGain();   // DISC19-B: the transition's own gain, under the volume
+    this._fader = this.ctx.createGain();   // DISC20-B: the transition's own gain, under the volume
     this._fader.gain.value = 1;
     this._fader.connect(this._master);
   }
 
-  /** DISC19-B: ramp the fader to `level` over `seconds` (see rampFader). */
+  /** DISC20-B: ramp the fader to `level` over `seconds` (see rampFader). */
   fadeTo(level, seconds) { rampFader(this.ctx, this._fader, level, seconds); }
 
   /** Follow the setting now (see SongPlayer.resyncGain). */
@@ -620,7 +620,7 @@ export class AudioSongPlayer {
     const src = this.ctx.createBufferSource();
     src.buffer = buffer;
     src.loop = this.loop;
-    src.connect(this._fader ?? this._master);   // DISC19-B: through the fader
+    src.connect(this._fader ?? this._master);   // DISC20-B: through the fader
     // A non-looping clip has to clear `playing`, or the director reads
     // a song that is still sounding forever and never re-evaluates.
     src.onended = () => { if (this._source === src) { this.playing = false; this._source = null; } };

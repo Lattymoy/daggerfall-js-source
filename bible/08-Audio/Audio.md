@@ -643,7 +643,7 @@ fall into water whose first swimming frame plays with `lostGrounding`
 still up, and a standing-still frame that leaves the anchor where it was
 while `rebase()` still re-seeds.
 
-## DISC19-B (2026-09-24): a music switch fades - a recorded departure
+## DISC20-B (2026-09-24): a music switch fades - a recorded departure
 
 Mac: *"Sometimes when music tracks switch, its very abrupt instead of
 seamlessly fading in between tracks."*
@@ -655,7 +655,7 @@ SongManager makes: a weather ring crossed, dawn, a door, a new location,
 a quest's PlaySong. The port did the same. A song that ended on its own
 before the next one was the smooth case, hence "sometimes".
 
-The port departs, at Mac's word (Port-Ledger A, DISC19-B):
+The port departs, at Mac's word (Port-Ledger A, DISC20-B):
 
 - **The fader.** Each player (`SongPlayer`, `AudioSongPlayer`) runs its
   song through a gain of its own, `_fader`, into its master. The synth's
@@ -680,4 +680,4 @@ The port departs, at Mac's word (Port-Ledger A, DISC19-B):
 - **The start.** A first song, and a song after one that ended, rise in
   at once, from the MIDI.BSA path and a music pack's alike.
 
-Pins: `test/disc19.test.js` (B), `tools/mutants/disc19.json`.
+Pins: `test/disc20.test.js` (B), `tools/mutants/disc20.json`.

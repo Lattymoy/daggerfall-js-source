@@ -245,7 +245,7 @@ void main(){
  *  straight up and white, with a scale of zero, which is "no moon". */
 const UP = new Float32Array([0, 1, 0]);
 const WHITE = new Float32Array([1, 1, 1]);
-const NO_FOG_RANGE = new Float32Array([0, 1]);   // DISC19-A: a range for the unfogged draw (mode 0 never reads it)
+const NO_FOG_RANGE = new Float32Array([0, 1]);   // DISC20-A: a range for the unfogged draw (mode 0 never reads it)
 
 export const LAB_GRASS_FS = `in float vT; in float vTint; in float vFade; in float vLam; in float vSnow; in float vWet; in vec3 vGround; in float vMoonLam;   // WIND4: appended, so the lab's own locator still finds this line
 uniform vec3 uAmb, uSunCol, uMoonCol; uniform float uDim, uSunScale, uMoonScale;   // WIND4: the sun's SCALE and the moon, the two terms the ground has and the grass did not
@@ -434,7 +434,7 @@ export function applyGrassEdits(text, edits) {
   }
   return out;
 }
-/** DISC19-A (2026-09-24, Mac: "Grass isnt affected by fog"): THE GROUND'S FOG, ON THE BLADES. The lab's grass
+/** DISC20-A (2026-09-24, Mac: "Grass isnt affected by fog"): THE GROUND'S FOG, ON THE BLADES. The lab's grass
  *  program had no fog term, GR1 carried it byte for byte, and the renderer's fog reaches only its own programs - so
  *  every row the ground takes (a clear day's linear 2400, the rain's exp 0.003, the heavy fog's exp 0.05, the
  *  sandstorm's exp 0.09, Dynamic Skies' exp2 and colour) left the field drawn to its 300 m fade, dimmed by LAB_DIM
@@ -456,28 +456,28 @@ export const GRASSFOG_VS_EDITS = Object.freeze([
   Object.freeze({
     why: 'the blade hands the fragment its world point, which the fog measures its distance from',
     from: 'out vec3 vGround;                       // GR4\n',
-    to: 'out vec3 vGround;                       // GR4\nout vec3 vWorld;                        // DISC19-A: where the fog measures from\n',
+    to: 'out vec3 vGround;                       // GR4\nout vec3 vWorld;                        // DISC20-A: where the fog measures from\n',
   }),
   Object.freeze({
     why: 'the world point is where the blade vertex stands, the point the view projects',
     from: '  gl_Position = uVP * vec4(p,1.0);',
-    to: '  vWorld = p;   // DISC19-A\n  gl_Position = uVP * vec4(p,1.0);',
+    to: '  vWorld = p;   // DISC20-A\n  gl_Position = uVP * vec4(p,1.0);',
   }),
 ]);
 export const GRASSFOG_FS_EDITS = Object.freeze([
   Object.freeze({
     why: 'the terrain\'s five fog uniforms and its fogFactorAt, verbatim, so a blade fogs as the ground under it does',
     from: 'out vec4 o;\n',
-    to: 'in vec3 vWorld;\nuniform vec3 uFogColor; uniform int uFogMode; uniform float uFogDensity; uniform vec2 uFogRange; uniform vec3 uCamPos;   // DISC19-A: the terrain\'s fog\n'
+    to: 'in vec3 vWorld;\nuniform vec3 uFogColor; uniform int uFogMode; uniform float uFogDensity; uniform vec2 uFogRange; uniform vec3 uCamPos;   // DISC20-A: the terrain\'s fog\n'
       + FOG_FACTOR_GLSL + 'out vec4 o;\n',
   }),
   Object.freeze({
     why: 'the lit and stepped colour blended to the fog colour at the blade\'s distance, as the terrain\'s last line does',
     from: '  o = vec4(c, mix(vFade * smoothstep(0.0, 0.30, vT), 1.0, uPixel));',
-    to: '  c = mix(uFogColor, c, fogFactorAt(vWorld));   // DISC19-A\n  o = vec4(c, mix(vFade * smoothstep(0.0, 0.30, vT), 1.0, uPixel));',
+    to: '  c = mix(uFogColor, c, fogFactorAt(vWorld));   // DISC20-A\n  o = vec4(c, mix(vFade * smoothstep(0.0, 0.30, vT), 1.0, uPixel));',
   }),
 ]);
-/** what the game compiles: the lab's stages under the pixel style's edits, then the fog's (DISC19-A) */
+/** what the game compiles: the lab's stages under the pixel style's edits, then the fog's (DISC20-A) */
 export const GAME_GRASS_VS = applyGrassEdits(applyGrassEdits(LAB_GRASS_VS, GRASSPX_VS_EDITS), GRASSFOG_VS_EDITS);
 export const GAME_GRASS_FS = applyGrassEdits(applyGrassEdits(LAB_GRASS_FS, GRASSPX_FS_EDITS), GRASSFOG_FS_EDITS);
 
@@ -1125,7 +1125,7 @@ export class LabGrassRenderer {
     this.u = {};
     for (const n of ['uVP', 'uTime', 'uWind', 'uRange', 'uEye', 'uSunDir', 'uWindDir', 'uSnowFull', 'uSlotN', 'uCellFrame', 'uBladeScale', 'uCellSize', 'uGField', 'uGFieldOrigin', 'uGFieldM', 'uSnowGlobal', 'uWindV', 'uAmb', 'uSunCol', 'uDim', 'uSunScale', 'uMoonDir', 'uMoonScale', 'uMoonCol',
       'uPixel', 'uPxVariants', 'uPxSteps', 'uPxTintBands', 'uPxSheet',   // GRASS-PX: the pixel style's five (GRASS-PX3 took the sway's two)
-      'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.u[n] = gl.getUniformLocation(prog, n);   // DISC19-A: the terrain's fog
+      'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.u[n] = gl.getUniformLocation(prog, n);   // DISC20-A: the terrain's fog
     // the blade, and three instance streams the lab's layout plus the game's root height
     // GRASS2: the instance buffers are made ONCE and shared by both
     // levels of detail - only the corner buffer differs between them, so
@@ -1383,7 +1383,7 @@ export class LabGrassRenderer {
     gl.uniform3fv(u.uMoonDir, light.moonDir ?? UP);
     gl.uniform1f(u.uMoonScale, light.moonScale ?? 0);
     gl.uniform3fv(u.uMoonCol, light.moonCol ?? WHITE);
-    // DISC19-A: the frame's fog as the terrain takes it (renderer.setFog's state, measured from the view's eye). A
+    // DISC20-A: the frame's fog as the terrain takes it (renderer.setFog's state, measured from the view's eye). A
     // host that hands none draws the field unfogged - mode 0 is a factor of exactly 1, the lab's own picture.
     const fog = light.fog;
     gl.uniform1i(u.uFogMode, fog ? fog.mode : 0);

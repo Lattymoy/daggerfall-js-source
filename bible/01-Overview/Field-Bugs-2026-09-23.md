@@ -1655,7 +1655,11 @@ AUDIT 65 XL-4's and MWBODY1's host pins are re-aimed. The mutants are
 `tools/mutants/disc18.json`, all seven dead.
 
 
-# DISC19 - five in one message
+# DISC20 - five in one message
+
+(DISC19 on its branch. Main's own DISC19, the six Discord reports and the
+city watch in `Field-Bugs-2026-09-24.md`, landed first, so this batch takes
+the next number.)
 
 Mac, 2026-09-24: *"1. Grass isnt affected by fog 2. Sometimes when music
 tracks switch, its very abrupt instead of seamlessly fading in between
@@ -1663,7 +1667,7 @@ tracks 3. Horse and carts can be seen parked in the sky 4. Lightning can
 be seen even when its not storming. 5. The weapon widget default toggle
 unfer diverse weapons should be set to off by default"*
 
-## DISC19-A: the grass stood out of the fog
+## DISC20-A: the grass stood out of the fog
 
 **Cause.** The lab's grass program had no fog term, GR1 carried it byte
 for byte, and the renderer's fog only reaches its own programs. So under
@@ -1683,7 +1687,7 @@ after the pixel style's, so the fog is not snapped to a ramp step:
   (the lab's unfogged picture) when a host hands none;
 - `world.js` hands the fog the ground took this frame, from the view's eye.
 
-## DISC19-B: a switch cut the song off
+## DISC20-B: a switch cut the song off
 
 **Cause.** DFU cuts: `DaggerfallSongPlayer.Play` calls `Stop` first, and
 `Stop` is `audioSource.Stop()` or the sequencer's `NoteOffAll`. The old
@@ -1709,7 +1713,7 @@ write it, and neither cancels a fade. `music.js`:
 - a first song, and a song after one that ended, rise in at once;
 - `stop()` cancels a switch in flight.
 
-## DISC19-C: parked teams in the sky
+## DISC20-C: parked teams in the sky
 
 **Cause.** A peer's HCC word carries the height the OWNER's client stood
 the team at, and nothing re-read it on the viewer's ground. The one place
@@ -1761,7 +1765,7 @@ Two smaller faults in the same code:
 Old kept records need no purge: they stand on the ground now and expire
 on their own.
 
-## DISC19-D: lightning under a clear sky
+## DISC20-D: lightning under a clear sky
 
 **Cause.** Since WEATHER3g a thunderstorm is a cell of a rain front, and
 it paints (its word, its cloud) only inside its front's core as the core
@@ -1781,7 +1785,7 @@ snow squall, whole (AUDIT WEATHER3 R1). A storm with no clip strikes as
 before, every client still sees the same strikes, and a far storm's
 lightning is still seen from afar, as BOLT asked.
 
-## DISC19-E: the Weapon Widget preset back to off
+## DISC20-E: the Weapon Widget preset back to off
 
 Diverse Weapons' Weapon Widget Preset has shipped off since DISC16-B. A
 default only answers for a player who never touched the switch, though:
@@ -1797,7 +1801,7 @@ file that never mentioned the mod is not grown one.
 
 ## Pins
 
-`test/disc19.test.js` (13):
+`test/disc20.test.js` (13):
 
 - A: the grass stage run through `test/glsl.mjs` in both styles (no fog
   is the old picture to the bit, 100 m into heavy fog is the fog colour,
@@ -1816,8 +1820,8 @@ file that never mentioned the mod is not grown one.
 
 GRASS-PX's composition pin now composes both edit lists, and
 `test/hccWorld.mjs`'s ground can move. The mutants,
-`tools/mutants/disc19.json`, are all 34 dead. Of the 88 older records the
+`tools/mutants/disc20.json`, are all 34 dead. Of the 88 older records the
 change reaches, 87 died as they stood; `WEATHER3f-squall-strikes` (the
 centre's gate) survived, because R1's winter is snow everywhere and the
-new strike-point gate stood in for it. It runs `test/disc19.test.js` too
+new strike-point gate stood in for it. It runs `test/disc20.test.js` too
 now, which holds a squall's edge over thunder ground dark.

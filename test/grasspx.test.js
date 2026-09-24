@@ -164,7 +164,7 @@ test('GRASS AUDIT 1: the rim has somewhere to land - the highlight is the top tw
 
 test('GRASS-PX: the compiled stages are the lab\'s text under the declared edits, each landing exactly once, and the lab\'s text is untouched', () => {
   assert.equal(GRASSPX_VS_EDITS.length, 4, 'GRASS-PX3: the two sway edits are gone - the wind is the lab\'s in both styles'); assert.equal(GRASSPX_FS_EDITS.length, 6);
-  // DISC19-A: and then the fog's edits, over the pixel style's (the fog is not snapped to a ramp rung)
+  // DISC20-A: and then the fog's edits, over the pixel style's (the fog is not snapped to a ramp rung)
   assert.equal(GAME_GRASS_VS, applyGrassEdits(applyGrassEdits(LAB_GRASS_VS, GRASSPX_VS_EDITS), GRASSFOG_VS_EDITS));
   assert.equal(GAME_GRASS_FS, applyGrassEdits(applyGrassEdits(LAB_GRASS_FS, GRASSPX_FS_EDITS), GRASSFOG_FS_EDITS));
   for (const [lab, edits] of [[LAB_GRASS_VS, GRASSPX_VS_EDITS], [LAB_GRASS_FS, GRASSPX_FS_EDITS]]) {

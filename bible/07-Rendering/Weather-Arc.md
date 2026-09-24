@@ -1070,7 +1070,7 @@ entirely" and "Sometimes thunder ends abruptly".
 - Pinned by `test/disc17.test.js`; mutants `tools/mutants/disc17.json`.
   `01-Overview/Field-Bugs-2026-09-23.md`, DISC17.
 
-## DISC19-D - a storm strikes only where it is drawn (2026-09-24)
+## DISC20-D - a storm strikes only where it is drawn (2026-09-24)
 
 Mac: *"Lightning can be seen even when its not storming."*
 
@@ -1090,5 +1090,5 @@ Mac: *"Lightning can be seen even when its not storming."*
   is drawn a snow squall, whole (R1). A storm with no clip strikes as
   before, every client still sees the same strikes, and a far storm's
   lightning is still seen from afar.
-- Pinned by `test/disc19.test.js` (D); mutants `tools/mutants/disc19.json`.
-  `01-Overview/Field-Bugs-2026-09-23.md`, DISC19-D.
+- Pinned by `test/disc20.test.js` (D); mutants `tools/mutants/disc20.json`.
+  `01-Overview/Field-Bugs-2026-09-23.md`, DISC20-D.

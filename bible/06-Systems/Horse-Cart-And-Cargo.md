@@ -426,7 +426,7 @@ the handler runs in it, so the mod's refusals and lines are unchanged;
 F1-F4 decide as before where the plaque does not stand. A recorded
 departure: Port-Ledger A, THE HORSE'S VERBS ON THE PLAQUE.
 
-## DISC19-C - a parked team stands on the viewer's ground (2026-09-24)
+## DISC20-C - a parked team stands on the viewer's ground (2026-09-24)
 
 Mac: *"Horse and carts can be seen parked in the sky."*
 
@@ -479,9 +479,9 @@ Two faults beside it:
 - `offsetAll` takes the parked wagon's box down with the old frame.
 
 The kept records from before TERRAIN-SCALE1 need no purge: they stand on
-the ground now and expire on their own. Pinned by `test/disc19.test.js`
-(C); mutants `tools/mutants/disc19.json`.
-`01-Overview/Field-Bugs-2026-09-23.md`, DISC19-C.
+the ground now and expire on their own. Pinned by `test/disc20.test.js`
+(C); mutants `tools/mutants/disc20.json`.
+`01-Overview/Field-Bugs-2026-09-23.md`, DISC20-C.
 
 ## What is and is not ported
 

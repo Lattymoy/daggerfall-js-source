@@ -1239,7 +1239,7 @@ export function createHorseCartRuntime(deps) {
     deployedVisual?.offset(d); stationaryHorseVisual?.offset(d);
     trail.offset(d); hitchedWagonPath.offset(d); horseFollower.offset(d);
   }
-  /** DISC19-C (2026-09-24, Mac: "Horse and carts can be seen parked in the sky"): the ground under the standing team
+  /** DISC20-C (2026-09-24, Mac: "Horse and carts can be seen parked in the sky"): the ground under the standing team
    *  was built again (the pool's groundMoved - a pixel streamed in, the road network or a late World of Daggerfall
    *  pack rebuilding one). The mod grounds the parked wagon and the waiting horse once (Tick's `grounded` return, the
    *  requested pose's tolerance) because its terrain never changes under a scene; the port's can, by metres on a

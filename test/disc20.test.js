@@ -1,4 +1,4 @@
-// DISC19 (2026-09-24, Mac, five in one message). bible/01-Overview/Field-Bugs-2026-09-23.md, DISC19.
+// DISC20 (2026-09-24, Mac, five in one message). bible/01-Overview/Field-Bugs-2026-09-23.md, DISC20.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -14,7 +14,7 @@ import { glslFunctions } from './glsl.mjs';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
-// ── DISC19-A: "Grass isnt affected by fog" ──
+// ── DISC20-A: "Grass isnt affected by fog" ──
 /** The grass fragment stage's colour for a blade `d` metres from the eye under `fog` (mode 0 none, 1 linear, 2 exp,
  *  3 exp2), run on the stage's own text through test/glsl.mjs - smooth (uPixel 0) or the pixel tuft (uPixel 1, a
  *  solid tip texel from the sheet). */
@@ -34,8 +34,8 @@ function bladeColour(fs, { d, fog = { mode: 0, density: 0, range: [0, 1] }, pixe
 }
 const near = (a, b, e) => a.every((v, i) => Math.abs(v - b[i]) <= e);
 
-test('DISC19-A: a blade fogs as the ground under it does - heavy fog swallows it at 100 m, rain thins it, a clear day barely touches it; smooth and pixel alike, and with no fog the picture is the unfogged stage\'s own (mutants: the blend dropped; the blend before the pixel ramp; the world point not handed down)', () => {
-  const unfogged = applyGrassEdits(LAB_GRASS_FS, GRASSPX_FS_EDITS);   // the stage as it compiled before DISC19
+test('DISC20-A: a blade fogs as the ground under it does - heavy fog swallows it at 100 m, rain thins it, a clear day barely touches it; smooth and pixel alike, and with no fog the picture is the unfogged stage\'s own (mutants: the blend dropped; the blend before the pixel ramp; the world point not handed down)', () => {
+  const unfogged = applyGrassEdits(LAB_GRASS_FS, GRASSPX_FS_EDITS);   // the stage as it compiled before DISC20
   for (const pixel of [0, 1]) {
     const clear = bladeColour(unfogged, { d: 100, pixel });
     assert.deepEqual(bladeColour(GAME_GRASS_FS, { d: 100, pixel }), clear, `${pixel ? 'pixel' : 'smooth'}: no fog, the same picture`);
@@ -52,7 +52,7 @@ test('DISC19-A: a blade fogs as the ground under it does - heavy fog swallows it
   }
 });
 
-test('DISC19-A: the grass\'s fog is the terrain\'s - its fogFactorAt is TERRAIN_FS\'s text, its five uniforms looked up and set from the frame\'s fog, the world point handed down, and the world host hands the ground\'s fog from the view\'s eye (mutant: the host hands no fog)', () => {
+test('DISC20-A: the grass\'s fog is the terrain\'s - its fogFactorAt is TERRAIN_FS\'s text, its five uniforms looked up and set from the frame\'s fog, the world point handed down, and the world host hands the ground\'s fog from the view\'s eye (mutant: the host hands no fog)', () => {
   const terrain = rd('src/render/renderer.js');
   const at = terrain.indexOf('float fogFactorAt(vec3 worldPos) {', terrain.indexOf('const TERRAIN_FS = `'));
   const body = terrain.slice(at, terrain.indexOf('\n}\n', at) + 3);
@@ -67,8 +67,8 @@ test('DISC19-A: the grass\'s fog is the terrain\'s - its fogFactorAt is TERRAIN_
   assert.match(rd('src/scenes/world.js'), /\{ fog: \{ mode: renderer\._fogMode, density: renderer\._fogDensity, range: renderer\._fogRange, color: renderer\._fogColor, camPos: renderer\._camPos \},/);
 });
 
-// ── DISC19-E: "The weapon widget default toggle under diverse weapons should be set to off by default" ──
-test('DISC19-E: Diverse Weapons\' Weapon Widget Preset ships off, and a value saved before this reset is let go once - the shipped off applies - while a choice made after it is kept across reloads (mutants: no reset; the reset every load; the stamp never written)', () => {
+// ── DISC20-E: "The weapon widget default toggle under diverse weapons should be set to off by default" ──
+test('DISC20-E: Diverse Weapons\' Weapon Widget Preset ships off, and a value saved before this reset is let go once - the shipped off applies - while a choice made after it is kept across reloads (mutants: no reset; the reset every load; the stamp never written)', () => {
   const prevLs = globalThis.localStorage;
   const K = 'dfjs-mod-settings', V = 'diverse-weapons', P = 'WeaponWidgetPreset';
   try {
@@ -111,8 +111,8 @@ test('DISC19-E: Diverse Weapons\' Weapon Widget Preset ships off, and a value sa
   }
 });
 
-// ── DISC19-D: "Lightning can be seen even when its not storming" ──
-test('DISC19-D: a storm cell strikes only where it is drawn - wholly outside its front\'s core it strikes nothing, half outside it strikes only inside, unclipped it strikes as ever, and never onto snow where it lands; and a sunny afternoon in the swamp that 248 strikes lit is dark (mutants: the clip gate dropped; the strike point\'s ground unread)', async () => {
+// ── DISC20-D: "Lightning can be seen even when its not storming" ──
+test('DISC20-D: a storm cell strikes only where it is drawn - wholly outside its front\'s core it strikes nothing, half outside it strikes only inside, unclipped it strikes as ever, and never onto snow where it lands; and a sunny afternoon in the swamp that 248 strikes lit is dark (mutants: the clip gate dropped; the strike point\'s ground unread)', async () => {
   const { createDistantStorms } = await import('../src/systems/distantStorms.js');
   const { insideClip } = await import('../src/systems/weatherMap.js');
   const CIRCLE = Object.freeze([1, 0, 0, 0, 0, 0, 0]);
@@ -160,7 +160,7 @@ test('DISC19-D: a storm cell strikes only where it is drawn - wholly outside its
   assert.deepEqual([strikes, sounds], [0, 0], 'no lightning and no thunder under a sunny sky with no storm drawn (248 strikes and 43 claps before)');
 });
 
-// ── DISC19-B: "Sometimes when music tracks switch, its very abrupt instead of seamlessly fading in between tracks" ──
+// ── DISC20-B: "Sometimes when music tracks switch, its very abrupt instead of seamlessly fading in between tracks" ──
 /** A MusicService on fake players (SongPlayer's play/stop/playing/song contract, fades logged) and a manual clock. */
 async function fadingService() {
   const { MusicService } = await import('../src/systems/music.js');
@@ -184,7 +184,7 @@ async function fadingService() {
   return { svc, log, timers, flush, player };
 }
 
-test('DISC19-B: a song that follows another fades the first out, then rises in - the old song is not cut and the new one does not start at full; a first song and a song that ended rise in at once (mutants: the switch without its fade; the start without its rise)', async () => {
+test('DISC20-B: a song that follows another fades the first out, then rises in - the old song is not cut and the new one does not start at full; a first song and a song that ended rise in at once (mutants: the switch without its fade; the start without its rise)', async () => {
   const { MUSIC_FADE_OUT_S, MUSIC_FADE_IN_S } = await import('../src/systems/music.js');
   const { svc, log, timers, flush } = await fadingService();
   assert.equal(svc.playSong('DAY'), true);
@@ -208,7 +208,7 @@ test('DISC19-B: a song that follows another fades the first out, then rises in -
   assert.equal(timers.length, 0);
 });
 
-test('DISC19-B: during a fade the latest request is the one that plays, the song fading out asked for again turns round without a restart, and a stop starts nothing after it (mutants: the flip-back dropped; the stop leaves the switch armed)', async () => {
+test('DISC20-B: during a fade the latest request is the one that plays, the song fading out asked for again turns round without a restart, and a stop starts nothing after it (mutants: the flip-back dropped; the stop leaves the switch armed)', async () => {
   const { MUSIC_FADE_IN_S, MUSIC_FADE_OUT_S } = await import('../src/systems/music.js');
   const { svc, log, timers, flush } = await fadingService();
   svc.playSong('DAY'); log.length = 0;
@@ -238,7 +238,7 @@ test('DISC19-B: during a fade the latest request is the one that plays, the song
   assert.equal(svc.playing, false);
 });
 
-test('DISC19-B: a music pack\'s track rises in the same way, and a switch fades whichever player sounds (mutant: the pack\'s start without its rise)', async () => {
+test('DISC20-B: a music pack\'s track rises in the same way, and a switch fades whichever player sounds (mutant: the pack\'s start without its rise)', async () => {
   const { MUSIC_FADE_IN_S, MUSIC_FADE_OUT_S } = await import('../src/systems/music.js');
   const { setMusicReplacements, clearMusicReplacements } = await import('../src/systems/musicReplacement.js');
   const { setValue } = await import('../src/systems/settings.js');
@@ -269,7 +269,7 @@ test('DISC19-B: a music pack\'s track rises in the same way, and a switch fades 
   }
 });
 
-test('DISC19-B: the fader - the song runs through a gain of its own under the volume, a fade ramps from wherever it stands, and the volume slider and the video mute write the master, never the fader (mutants: the song bypasses the fader; the ramp jumps from its old start)', async () => {
+test('DISC20-B: the fader - the song runs through a gain of its own under the volume, a fade ramps from wherever it stands, and the volume slider and the video mute write the master, never the fader (mutants: the song bypasses the fader; the ramp jumps from its old start)', async () => {
   const { SongPlayer, AudioSongPlayer, rampFader } = await import('../src/systems/songPlayer.js');
   const calls = [];
   const param = (tag) => ({
@@ -317,7 +317,7 @@ test('DISC19-B: the fader - the song runs through a gain of its own under the vo
   rampFader(null, g, 1, 1); rampFader(ctx, null, 1, 1);   // no context, no fader: nothing, never a throw
 });
 
-// ── DISC19-C: "Horse and carts can be seen parked in the sky" ──
+// ── DISC20-C: "Horse and carts can be seen parked in the sky" ──
 /** A collider over `groundAt(x, z)` (null: not built there) that also stands every box the pool adds - a wagon's box
  *  answers the ray at its top, 1.3 m over its root, two metres about it - and counts its casts. */
 function groundCollider(groundAt) {
@@ -368,7 +368,7 @@ const wheelsOver = (pool, p, ground) => {
 };
 let QUAT = null;
 
-test('DISC19-C: a team the relay kept from before the ground was lowered - a fifth of its height up, 20 m over 100 m of ground - stands on the viewer\'s ground: the wagon by the mod\'s two-wheel solve, the horse by its probe, the box with them; a re-stand does not climb onto its own box; the ground moving under it moves it (mutants: no grounding; the owner\'s box not left out of the ray)', async () => {
+test('DISC20-C: a team the relay kept from before the ground was lowered - a fifth of its height up, 20 m over 100 m of ground - stands on the viewer\'s ground: the wagon by the mod\'s two-wheel solve, the horse by its probe, the box with them; a re-stand does not climb onto its own box; the ground moving under it moves it (mutants: no grounding; the owner\'s box not left out of the ray)', async () => {
   QUAT ??= await import('../src/world/quat.js');
   let G = 100;   // my ground, scene metres
   const { pool, col } = await hccPool({ groundAt: () => G });
@@ -403,7 +403,7 @@ test('DISC19-C: a team the relay kept from before the ground was lowered - a fif
   assert.equal(col.casts, casts, 'no probe for a team on ground that did not move');
 });
 
-test('DISC19-C: a word my ground is not under yet stands as said and is tried again a second later, then stands on it; a word the viewer\'s ground agrees with stands where it was said; a moving team is its owner\'s live word and is never probed; the stand rides the floating origin and a re-anchor (mutants: no retry; a moving team grounded)', async () => {
+test('DISC20-C: a word my ground is not under yet stands as said and is tried again a second later, then stands on it; a word the viewer\'s ground agrees with stands where it was said; a moving team is its owner\'s live word and is never probed; the stand rides the floating origin and a re-anchor (mutants: no retry; a moving team grounded)', async () => {
   QUAT ??= await import('../src/world/quat.js');
   const { GROUND_RETRY_SECONDS } = await import('../src/systems/horseCartLaw.js');
   let built = false;
@@ -452,7 +452,7 @@ test('DISC19-C: a word my ground is not under yet stands as said and is tried ag
   assert.equal(col.casts, casts1, 'no probe for a team on the move');
 });
 
-test('DISC19-C: my own parked wagon and waiting horse stand again when the ground under them is built again - the mod grounds them once, and a rebuild left them on the old ground; only the ground that moved asks (mutant: the pool\'s re-stand never reaches the runtime)', async () => {
+test('DISC20-C: my own parked wagon and waiting horse stand again when the ground under them is built again - the mod grounds them once, and a rebuild left them on the old ground; only the ground that moved asks (mutant: the pool\'s re-stand never reaches the runtime)', async () => {
   const { makeWorld } = await import('./hccWorld.mjs');
   const { TRANSPORT, WAGON_MODE } = await import('../src/systems/horseCartLaw.js');
   const { rt, w, step, walk, state } = makeWorld();
@@ -480,7 +480,7 @@ test('DISC19-C: my own parked wagon and waiting horse stand again when the groun
   assert.ok(!within([-50, 0, 400]) && !within([400, 0, 900]), 'not the next pixel over');
 });
 
-test('DISC19-C: a crossing that leaves the parked wagon\'s pixel takes its box away - it stood in the old frame, and no wagon is shown to stand it again (mutant: the key forgotten, the box left 819 m off as a wall no one sees)', async () => {
+test('DISC20-C: a crossing that leaves the parked wagon\'s pixel takes its box away - it stood in the old frame, and no wagon is shown to stand it again (mutant: the key forgotten, the box left 819 m off as a wall no one sees)', async () => {
   const deployed = { isGrounded: true, position: [10, 0, 10], rotation: [0, 0, 0, 1], cargoTier: 0 };
   let show = true;
   const runtime = { view: () => ({ state: { HorseName: '' }, moving: null, deployed: show ? deployed : null, horse: null, persistence: true }), lateUpdate() {}, rebase() {} };
@@ -503,7 +503,7 @@ test('DISC19-C: a crossing that leaves the parked wagon\'s pixel takes its box a
   assert.ok(Math.abs(col.buckets.get('hccWagon').m[12] - (10 - 819.2)) < 1e-3, 'a Float32 matrix');
 });
 
-test('DISC19-C: the world host asks the pool to re-stand over every pixel it builds, bound once the pool exists (the boot\'s first pixel builds before it)', () => {
+test('DISC20-C: the world host asks the pool to re-stand over every pixel it builds, bound once the pool exists (the boot\'s first pixel builds before it)', () => {
   const s = rd('src/scenes/world.js');
   const decl = s.indexOf('let hccGroundMoved = null;');
   const first = s.indexOf('const playerPixel = await buildPixel(first.px, first.py);');

@@ -504,7 +504,7 @@ directory by `test/audit18_bible_docs.test.js`:
   draws. Two of the three worst findings (the black ramp, the wall) were
   lines the pins held exactly, and the one bug the fixes introduced was
   invisible to every pin and loud on the first readback.**
-  **DISC19-A (2026-09-24, Mac: "Grass isnt affected by fog"): THE BLADES
+  **DISC20-A (2026-09-24, Mac: "Grass isnt affected by fog"): THE BLADES
   TAKE THE GROUND'S FOG.** The lab's program had no fog term, GR1 carried
   it byte for byte, and the renderer's fog reaches only its own programs,
   so under every fog row the ground takes the field was drawn out to its
@@ -520,7 +520,7 @@ directory by `test/audit18_bible_docs.test.js`:
   from the view's own eye. The fragment stage is the lab's under
   `GRASSPX_FS_EDITS` then `GRASSFOG_FS_EDITS`; run through `test/glsl.mjs`
   in both styles, no fog is the old picture to the bit and each fog mode
-  is exactly the terrain's blend (`test/disc19.test.js`).
+  is exactly the terrain's blend (`test/disc20.test.js`).
 - `grassPixelArt.js` - GRASS-PX THE TUFT SHEET: eight 8x16 tufts (GRASS-PX4; 16x32 until 2026-09-22, and the laws are written as fractions of the tuft so the old size still builds through `buildTuftSheet({ w, h })`) built at boot from a seed (one-texel stalks bending as height squared, four tones with one highlight texel, alpha 0 or 255), their coverage mip chain (max alpha per block, never an average, down to 1x1), the pixel style's numbers (8 Hz sway, 24 lean steps, 3x tuft width, 8-step ramp, 4 tint bands) and `pixelGrass()`, the row's word; the shader edits themselves are `GRASSPX_VS_EDITS` / `GRASSPX_FS_EDITS` in labGrass.js.
 - `systems/wind.js` - **WIND1 (2026-09-02) THE WIND IS ITS OWN THING.**
   Mac: "wind should be something different from the weather. Imagine a

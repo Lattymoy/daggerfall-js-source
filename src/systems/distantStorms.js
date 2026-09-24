@@ -141,7 +141,7 @@ export function createDistantStorms() {
         for (const t of strikesIn(s.id, last, minutes, envAt)) {
           const seed = strikeSeed(s.id, t), strike = strikeOf(seed);
           const [px, pz] = strikePlace(seed, s.x, s.z, s.bands[0][0]);
-          // DISC19-D (2026-09-24, Mac: "Lightning can be seen even when its not storming"): a storm CELL paints - its
+          // DISC20-D (2026-09-24, Mac: "Lightning can be seen even when its not storming"): a storm CELL paints - its
           // word, its cloud - only inside its front's core as it is now (`clip`, WEATHER3g), and a cell born out in the
           // front's full-grown size can lie wholly or partly outside it. The strikes read the clip only for the "under
           // its heart" skip above, so four cells in ten that paint nothing struck on, and 61% of strikes landed where

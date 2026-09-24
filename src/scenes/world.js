@@ -903,7 +903,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const labGrass = isEnhanced() && getPref('enhancedEnvironments') && grassDensity > 0 && new URLSearchParams(globalThis.location?.search ?? '').get('grass') !== 'off'
     ? new LabGrassRenderer(renderer.gl) : null;
   let labGrassField = null;   // GR5: the world-anchored field, filled a cell or two a frame
-  let hccGroundMoved = null;   // DISC19-C: the horse-cart pool's re-stand over a pixel just built - bound once the pool is (the boot's first pixel builds before it)
+  let hccGroundMoved = null;   // DISC20-C: the horse-cart pool's re-stand over a pixel just built - bound once the pool is (the boot's first pixel builds before it)
   // WATER1: the water surface - enhanced skin, its own switch, `?water=off`
   // the kill door. A draw only: nothing here tells the game where water is.
   const waterOn = waterSwitchOn();   // FT6: the one composition (render/waterSurface.js)
@@ -2241,7 +2241,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const t = state.pixelTranslation(px, py);
       labGrassField.invalidate(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE);
     }
-    // DISC19-C (Mac: "Horse and carts can be seen parked in the sky"): and a parked wagon or a waiting horse on this
+    // DISC20-C (Mac: "Horse and carts can be seen parked in the sky"): and a parked wagon or a waiting horse on this
     // pixel - mine or a peer's - stands again on the ground as it now is (horseCartPool.js groundMoved). The mod
     // grounds its standing team once; a rebuild under it (the road network, a late World of Daggerfall pack) left it
     // on the old ground until its owner walked out of the pixel and back.
@@ -3511,7 +3511,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     threats: hccThreats, selfId: () => online?.id ?? null, peerName: (id) => peerName(id),
     onChanged: () => { _hccDirty = true; }, toWire: (p) => campToWire(p), log: console,   // AUDIT HCC O5: the change key in the wire frame (campToWire is the pose's law, declared with the stream below; read only once frames run)
   });
-  hccGroundMoved = hcc.groundMoved;   // DISC19-C
+  hccGroundMoved = hcc.groundMoved;   // DISC20-C
   const hccRuntime = createHorseCartRuntime({
     ready: () => walkMode && playerSpawned && !_teleporting && !_traveling,   // TryGetGameManager: a game in progress, the player standing, the world up
     transport: {
@@ -14482,7 +14482,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // SCALE is what sets with the sun, and the moon is what is left
         // when it has. The same fields render/renderer.js hands its own
         // programs.
-        { fog: { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos },   // DISC19-A: the fog the ground took this frame, from the view's own eye
+        { fog: { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos },   // DISC20-A: the fog the ground took this frame, from the view's own eye
           sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, dim: wxNow.dim,
           sunScale: renderer._sunScale, moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonCol: renderer._moonColor },   // WX2: the dim crosses on the front
         { dir: wd.dir, speed: wd.slider * wd.gust, windV: wd.windV },
