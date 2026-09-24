@@ -232,5 +232,10 @@ export function lanternAtWaist(item) {
  *  Beholder's sprite faces the way it walks, not the camera's yaw, so it hands the drawn lantern's point in
  *  here (player/eotbBody.js) and clears it when it stops drawing. `null`: LANTERN_HIP. */
 let _waistOverride = null;
-export function setPlayerWaistLightOverride(o) { _waistOverride = o ? { left: +o.left || 0, up: +o.up || 0, forward: +o.forward || 0 } : null; }
+const _waistPoint = { left: 0, up: 0, forward: 0 };   // written in place: its writer runs every frame the lantern is drawn
+export function setPlayerWaistLightOverride(o) {
+  if (!o) { _waistOverride = null; return; }
+  _waistPoint.left = +o.left || 0; _waistPoint.up = +o.up || 0; _waistPoint.forward = +o.forward || 0;
+  _waistOverride = _waistPoint;
+}
 export const playerWaistLightOverride = () => _waistOverride;

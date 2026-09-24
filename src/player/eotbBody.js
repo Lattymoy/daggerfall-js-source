@@ -272,7 +272,9 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   let lanternBatchH = 0;        // the height it was minted at
   let lanternYaw = null;        // last frame's facing, for the turn's pull
   let waistWritten = false;
-  const lanternScratch = { d: [0, 0, -1], right: [0, 0, 0], up: [0, 0, 0] };
+  // the frame's scratch - drawLantern and stepLantern run every Eye Of The Beholder frame and allocate nothing
+  const lanternScratch = { d: [0, 0, -1], right: [0, 0, 0], up: [0, 0, 0], hook: [0, 0, 0], cr: [0, 0, 0], mid: [0, 0, 0], waist: { left: 0, up: 0, forward: 0 } };
+  const LANTERN_REST = Object.freeze(createLanternSwing());
   /** Is the lantern drawn this frame: lit at the waist, third person, on foot, alive, in your own form. */
   const lanternShown = () => last.hipLantern && activeFlag && !FP && !died && !last.died && !last.riding && !last.transformed;
   function ensureLanternArt() {
@@ -295,7 +297,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   /** One frame of the swing, off the sprite's own walk: the speed the Move tables step at along the facing, the
    *  facing's turn, and the walk cycle's phase off the frame clock while a Move table plays. */
   function stepLantern(dt) {
-    if (!lanternShown()) { lanternYaw = null; Object.assign(lanternSwing, createLanternSwing()); dropLantern(); return; }
+    if (!lanternShown()) { lanternYaw = null; Object.assign(lanternSwing, LANTERN_REST); dropLantern(); return; }   // at rest, in place
     const { fx, fz } = facingBasis();
     const yaw = Math.atan2(fx, fz);
     let yawRate = 0;
@@ -338,16 +340,16 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     const ex = cam.pos[0] - cam.feet[0], ez = cam.pos[2] - cam.feet[2];
     const el = Math.hypot(ex, ez) || 1;
     const side = L.side * scale;
-    const hook = [
-      base[0] + rx * side + ex / el * L.towardEye,
-      base[1] + batchSize.h * L.heightFraction,
-      base[2] + rz * side + ez / el * L.towardEye,
-    ];
-    // the swing, from the facing frame into the view plane: the tilt, and the shortening toward or away
     const S = lanternScratch;
+    const hook = S.hook;
+    hook[0] = base[0] + rx * side + ex / el * L.towardEye;
+    hook[1] = base[1] + batchSize.h * L.heightFraction;
+    hook[2] = base[2] + rz * side + ez / el * L.towardEye;
+    // the swing, from the facing frame into the view plane: the tilt, and the shortening toward or away
     const d = lanternSwingDown(lanternSwing, S.d);
     const wx = rx * d[0] + fx * d[1], wy = d[2], wz = rz * d[0] + fz * d[1];
-    const cr = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];
+    const cr = S.cr;
+    cr[0] = Math.cos(cam.yaw); cr[1] = 0; cr[2] = -Math.sin(cam.yaw);
     const dx = wx * cr[0] + wz * cr[2];
     const len = Math.hypot(dx, wy);
     const sin = len > 1e-6 ? dx / len : 0, cos = len > 1e-6 ? -wy / len : 1;
@@ -361,10 +363,13 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     lanternBatch.conceal = material();
     renderer.drawBillboards([lanternBatch], S.right, S.up);
     // the light, from the lantern's middle, in the offset words PlayerTorch's seam speaks (the yaw frame)
-    const mid = [hook[0] - S.up[0] * drawnH * 0.5, hook[1] - S.up[1] * drawnH * 0.5, hook[2] - S.up[2] * drawnH * 0.5];
+    const mid = S.mid;
+    mid[0] = hook[0] - S.up[0] * drawnH * 0.5; mid[1] = hook[1] - S.up[1] * drawnH * 0.5; mid[2] = hook[2] - S.up[2] * drawnH * 0.5;
     const yaw = cam.yaw, sy = Math.sin(yaw), cy = Math.cos(yaw);
     const px = mid[0] - cam.feet[0], pz = mid[2] - cam.feet[2];
-    setPlayerWaistLightOverride({ left: -(px * cy - pz * sy), up: mid[1] - cam.feet[1], forward: px * sy + pz * cy });
+    const wo = S.waist;
+    wo.left = -(px * cy - pz * sy); wo.up = mid[1] - cam.feet[1]; wo.forward = px * sy + pz * cy;
+    setPlayerWaistLightOverride(wo);
     waistWritten = true;
     return true;
   }

@@ -46,15 +46,6 @@
     ]
   },
   {
-    "name": "HT-WAIST-the-stow-arm-takes-the-waist",
-    "file": "src/systems/handheldTorches.js",
-    "old": "&& !w.s.lanternRelaxed && !atWaist(l)) {",
-    "new": "&& !w.s.lanternRelaxed) {",
-    "tests": [
-      "test/htwaist_handlaw.test.js"
-    ]
-  },
-  {
     "name": "HT-WAIST-the-torch-arm-spares-the-waist",
     "file": "src/systems/handheldTorches.js",
     "old": "    if (!hasFreeHand() && l && !isLantern(l)) {",
@@ -68,15 +59,6 @@
     "file": "src/systems/handheldTorches.js",
     "old": "    if (w.s.lanternsAtWaist && !hasFreeHand() && waistPress()) return true;\n",
     "new": "",
-    "tests": [
-      "test/htwaist_handlaw.test.js"
-    ]
-  },
-  {
-    "name": "HT-WAIST-waist-press-keeps-the-stowed-torch",
-    "file": "src/systems/handheldTorches.js",
-    "old": "    w.lastLightSource = null;\n    setLight(firstOf('UselessItems2', T.Lantern));",
-    "new": "    setLight(firstOf('UselessItems2', T.Lantern));",
     "tests": [
       "test/htwaist_handlaw.test.js"
     ]
@@ -413,7 +395,7 @@
   {
     "name": "HT-WAIST-the-sprite-lights-nothing",
     "file": "src/player/eotbBody.js",
-    "old": "    setPlayerWaistLightOverride({ left: -(px * cy - pz * sy), up: mid[1] - cam.feet[1], forward: px * sy + pz * cy });\n",
+    "old": "    setPlayerWaistLightOverride(wo);\n",
     "new": "",
     "tests": [
       "test/htwaist_eotb.test.js"
@@ -453,6 +435,15 @@
     "new": "",
     "tests": [
       "test/htwaist_eotb.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-the-remembered-torch-lit-over-the-waist-lantern",
+    "file": "src/systems/handheldTorches.js",
+    "old": "    if (atWaist(l)) { w.lastLightSource = null; return; }\n",
+    "new": "",
+    "tests": [
+      "test/htwaist_handlaw.test.js"
     ]
   }
 ]

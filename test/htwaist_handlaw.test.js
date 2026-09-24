@@ -243,3 +243,22 @@ test('HT-WAIST: the Morrowind build is asked for the lantern at the hip off the 
     assert.equal(armBuildOptsOf({ ...ent, items: [t], lightSource: t }).hipLight, false, 'a torch is the hand\'s');
   } finally { _resetModSettings(); }
 });
+
+test('HT-WAIST: a lantern lit at the waist by any door (Use, a quickslot) is the light - a torch stowed earlier is not lit over it when a hand frees; switch off, the mod ends on the lantern too (mutant: the hand law\'s third arm left to relight the remembered torch)', () => {
+  for (const onSwitch of [true, false]) {
+    const r = rig({ [WAIST]: onSwitch });
+    const tc = torch(), ln = lantern();
+    r.entity.items.push(tc, ln); r.entity.lightSource = tc;
+    r.frame();
+    r.entity.equip = { slots: { [EQUIP_SLOTS.LeftHand]: weapon(WEAPONS.Long_Bow) } };
+    r.frame();
+    assert.equal(r.entity.lightSource, null, `${onSwitch}: the bow stowed the torch`);
+    assert.equal(r.h.lastLightSource, tc, `${onSwitch}: and the mod remembers it`);
+    r.entity.lightSource = ln;   // useItem's light arm / a quickslot: setLightSource, no key
+    r.frame();
+    r.entity.equip = { slots: {} };   // the bow put away: a hand frees
+    r.frame(); r.frame();
+    assert.equal(r.entity.lightSource, ln, `${onSwitch}: the lantern is still the light`);
+    assert.notEqual(r.entity.lightSource, tc, `${onSwitch}: the stowed torch was not lit over it`);
+  }
+});

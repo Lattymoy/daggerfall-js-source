@@ -503,14 +503,12 @@ export function createHandheldTorches({
     }
   }
   /** HT-WAIST: the toggle with no hand free - the waist's lantern and nothing else. Answers whether it acted;
-   *  false falls through to the mod's own refusal. Lighting the waist's lantern forgets a stowed light: the
-   *  player chose the lantern, and a remembered torch taking the slot back when a hand frees (the hand law's
-   *  last arm) would put it out again. */
+   *  false falls through to the mod's own refusal. Lighting the waist's lantern forgets a stowed light - the
+   *  hand law's first line, on the next frame, as it does for a lantern lit through Use or a quickslot. */
   function waistPress() {
     const l = light();
     if (l) { if (!atWaist(l)) return false; toggleLightSourceAction(); return true; }   // douse
     if (!contains('UselessItems2', T.Lantern)) return false;
-    w.lastLightSource = null;
     setLight(firstOf('UselessItems2', T.Lantern));
     igniteTail();
     return true;
@@ -543,10 +541,14 @@ export function createHandheldTorches({
    *  code (HT6 below) instead of a second copy of the rule. `l` is the
    *  light Update read at the top of the frame. */
   function handLaw(l) {
+    // HT-WAIST: a lantern lit at the waist - by the key, Use or a quickslot - IS the light, so a light stowed before
+    // it is forgotten, as the mod's own stow arm forgets it when a lantern takes its place (switch off); left
+    // remembered, the third arm below lit it over the lantern the moment a hand freed
+    if (atWaist(l)) { w.lastLightSource = null; return; }
     if (!hasFreeHand() && l && !isLantern(l)) {
       if (w.s.onStow > ON_STOW.Unequip) dropLightSource(l);
       else { w.lastLightSource = l; setLight(null); }
-    } else if (!hasFreeHand() && l && isLantern(l) && !w.s.lanternRelaxed && !atWaist(l)) {   // HT-WAIST: a lantern at the waist is in no hand, so no hand's absence stows it
+    } else if (!hasFreeHand() && l && isLantern(l) && !w.s.lanternRelaxed) {   // (HT-WAIST: a lantern at the waist never reaches here - the early return above)
       if (!w.sheathed) say(MESSAGES.noFreeHand);
       w.lastLightSource = l; setLight(null);
     } else if (hasFreeHand() && w.lastLightSource) {
