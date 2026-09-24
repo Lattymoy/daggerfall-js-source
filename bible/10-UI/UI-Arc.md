@@ -14894,6 +14894,16 @@ departure names; the two hands still arrive through drawHud's bag and
 art: the probe's cells drew their two-letter fallback, which is the
 ladder's last arm and not its first.
 
+### DISC21-C - an empty press names the ready key (2026-09-24)
+
+Scratchie on Discord: the weapon "shows up in the '2' slot, but when I press it the game says 'nothing is in that
+slot' and I can't attack anything". The weapon is the MAIN cell, whose chip is ReadyWeapon's key - Z, which in the
+pixel face reads as a 2 - and a new character's weapon starts sheathed, as classic's does; the 2 is QuickUse2's empty
+bottom slot. `systems/quickslots.js` `emptySlotLine`: the empty press adds "Press Z to ready your weapon." when the hand
+holds a weapon still sheathed - the main cell's own chip, the player's binding (`ui/quickslotTags.js` `quickslotHand`),
+read off the rig in the player's hands in each host and the interior mode's own. `test/disc21.test.js` (C).
+`01-Overview/Field-Bugs-2026-09-23.md`, DISC21-C.
+
 ### AUDIT QS - the arc audited the same day
 
 One read-only adversarial lane over the merged tree, driving the model,
