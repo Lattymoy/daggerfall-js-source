@@ -125,14 +125,15 @@
 // viewport it withdrew that clause about, and the withdrawal held:
 // not one activation site changed.
 //
-// WHAT E5 DID NOT TAKE, because DFU's own arm for it does not apply:
-// SetRetroAspectViewport (:98-146), the pillarboxed 4:3 / 16:10 rect
-// that reads the SAME hudHeight term. It is RetroModeAspectCorrection
-// - a render-to-texture presenter with a clearer camera behind it -
-// and this port has no retro rendering mode at all, so the branch has
-// nothing to be attached to. The docked-bar term inside it is the one
-// this file now carries; if a retro mode is ever built, it reads
-// dockedLargeHudHeight and there is no second copy to find.
+// WHAT E5 DID NOT TAKE, because DFU's own arm for it did not apply
+// then: SetRetroAspectViewport (:98-146), the pillarboxed 4:3 / 16:10
+// rect that reads the SAME hudHeight term. It is RetroModeAspectCorrection
+// - a render-to-texture presenter with a clearer camera behind it - and
+// the port had no retro rendering mode. RETRO1 built one
+// (systems/retroMode.js, render/retroPass.js), and the branch landed
+// where E5 said it would: worldViewportRect below reads
+// dockedLargeHudHeight, and largeHudWorldAspect takes the retro
+// texture's shape, so there is still no second copy to find.
 
 import { ImgFile } from '../formats/imgFile.js';
 import { CifRciFile } from '../formats/cifRciFile.js';
@@ -151,6 +152,7 @@ import { drawVitalsBars } from './hudVitals.js';   // VB1: the nine-bar law - no
 import { raceArt } from '../systems/races.js';
 import { racialOverrideHeadArt } from '../systems/vampirism.js';   // V5: the curse heads, DFU's override-first order
 import { getBool, getFloat, getInt } from '../systems/settings.js';
+import { retroRenderingMode, retroAspectCorrection, retroWorldAspect, retroAspectViewportRect } from '../systems/retroMode.js';   // RETRO1: the retro texture's aspect and the pillarbox
 import { getInteractionMode } from '../player/interactionMode.js';
 import { cursorActive } from '../player/pointerLock.js';
 import { routeAction } from './input.js';
@@ -562,7 +564,29 @@ export function largeHudViewportRect(canvasHeight, bar = largeHudBar()) {
  * denominator they share.
  */
 export function largeHudWorldAspect(width, height, bar = largeHudBar()) {
+  // RETRO1: a camera rendering into a RenderTexture takes the TEXTURE's
+  // aspect (320/200, or 320/154 over a docked bar - the _HUD twin exists
+  // for exactly this), and RetroPresentation stretches the result over
+  // the rect below. So under retro mode the lens is the texture's shape.
+  const retro = retroWorldAspect();
+  if (retro) return retro;
   return width / Math.max(1, height - dockedLargeHudHeight(bar));
+}
+
+/**
+ * RETRO1 - THE WORLD RECT EVERY HOST SETS AND MAPS THROUGH:
+ * largeHudViewportRect, or - with retro mode on and its aspect
+ * correction set - SetRetroAspectViewport's pillarbox (ViewportChanger.cs
+ * :41-45, :96-147; the arithmetic is systems/retroMode.js's), which takes
+ * the SAME docked-bar height off the bottom. The hosts hand it to
+ * setWorldViewport, and the tap ray, the lock's screen point and the name
+ * labels map through it, so a pillarboxed world moves no pick. It needs
+ * the canvas WIDTH, which the docked rect never did.
+ */
+export function worldViewportRect(canvasWidth, canvasHeight, bar = largeHudBar()) {
+  const aspect = retroRenderingMode() !== 0 ? retroAspectCorrection() : 0;
+  if (!aspect || !(canvasWidth > 0) || !(canvasHeight > 0)) return largeHudViewportRect(canvasHeight, bar);
+  return retroAspectViewportRect(canvasWidth, canvasHeight, aspect, dockedLargeHudHeight(bar));
 }
 
 /** ROAD-D D10 - weaponOffsetHeight (FPSWeapon.cs:146-155). Same

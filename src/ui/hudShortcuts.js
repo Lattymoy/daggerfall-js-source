@@ -6,7 +6,7 @@
 // defaults F10 and Shift-F10) and no consumer for any of them, so both
 // keys were free and did nothing.
 //
-// Two of the five are ported here:
+// Two of the five were ported here first (AUDIT 64):
 //
 //   LargeHUDToggle (:308-312) - `DaggerfallUnity.Settings.LargeHUD =
 //   !DaggerfallUnity.Settings.LargeHUD`. The setting is a LIVE-tier key
@@ -25,11 +25,16 @@
 //   lives here and is read by ui/hud.js's paint gate rather than by a
 //   host frame that would also stop the vitals detector.
 //
-// The three the port still has no destination for are named for the
+// RETRO1 ported a third: ToggleRetroPP (:320-326) -
+// RetroRenderer.TogglePostprocessing, the retro pass's posterize or
+// palettize switched off and on (systems/retroMode.js holds the flag, the
+// renderer reads it with the frame's config). Session state, as DFU's
+// is - a field on RetroRenderer, never written to settings.ini.
+//
+// The two the port still has no destination for are named for the
 // record and are NOT ported: DebuggerToggle (:297-301, the quest
-// debugger overlay), Pause (:303-306, reached in this port through the
-// Escape action's pause door) and ToggleRetroPP (:320-326, there is no
-// retro post-processing pass).
+// debugger overlay) and Pause (:303-306, reached in this port through
+// the Escape action's pause door).
 //
 // This module imports only systems leaves so that ui/input.js - the
 // one keydown door two of the four hosts route through - can take it
@@ -37,6 +42,7 @@
 
 import { getBool, setValue } from '../systems/settings.js';
 import { hotkeyHit } from '../systems/dialogShortcuts.js';
+import { toggleRetroPostprocessing } from '../systems/retroMode.js';   // RETRO1: a systems leaf, as the rule above asks
 
 // DaggerfallHUD.cs:47 `bool renderHUD = true;`
 let _renderHud = true;
@@ -55,7 +61,7 @@ export function toggleHudRender() {
 export function _resetHudRender() { _renderHud = true; }
 
 /**
- * The two shortcut arms of DaggerfallHUD.Update, for one keydown.
+ * The three shortcut arms of DaggerfallHUD.Update, for one keydown.
  * Returns true when the key was consumed.
  *
  * `IsDownWith` is Unity's GetKeyDown - ONE edge per press - so a
@@ -78,6 +84,12 @@ export function hudShortcutKey(e, keys = null) {
   // arms cannot both answer one press.
   if (hotkeyHit('HUDToggle', e.code, e, keys)) {
     toggleHudRender();
+    return true;
+  }
+  // :321-326 - RetroRenderer.TogglePostprocessing (Shift-F11). DFU flips
+  // the field whether or not retro mode is on; so does this.
+  if (hotkeyHit('ToggleRetroPP', e.code, e, keys)) {
+    toggleRetroPostprocessing();
     return true;
   }
   return false;

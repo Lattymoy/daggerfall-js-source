@@ -1066,6 +1066,11 @@ export class AirPass {
     this.targets = null;
     // EL4: the frame image (canvas-sized), the luminance image and the two adaptation images
     this.frame = null;
+    // RETRO1: the frame images by slot - the canvas's, and a retro world frame's (render/retroPass.js), which is
+    // the retro image's size. A retro world frame and a full-size one (a video or a map over the world) can
+    // alternate inside one presented frame; each keeps its own image rather than reallocating the other's
+    this._frames = { canvas: null, retro: null };
+    this.resolveTo = null;   // RETRO1: { fbo, w, h } - where the resolve writes instead of the canvas (the retro image)
     this.lum = null;
     this.adapt = null;      // [a, b], this.adaptIndex the current
     this.adaptIndex = 0;
@@ -1129,10 +1134,14 @@ export class AirPass {
    *  TEXTURE (EL6: the AO, the glares, the emitters and the shafts read it
    *  at the resolve - the frame's own depth, no replay), (re)allocated when
    *  the canvas changes size. */
-  _ensureFrame(W, H) {
+  _ensureFrame(W, H, slot = 'canvas') {
     const gl = this.gl;
-    if (this.frame && this.frame.w === W && this.frame.h === H) return this.frame;
-    if (this.frame) { gl.deleteTexture(this.frame.tex); for (const d of this.frame.depths) gl.deleteTexture(d); for (const f of this.frame.depthFbos) gl.deleteFramebuffer(f); gl.deleteFramebuffer(this.frame.fbo); }
+    const kept = this._frames[slot];
+    if (kept && kept.w === W && kept.h === H) {
+      if (this.frame !== kept) { this.frame = kept; this.prevValid = false; }   // RETRO1: the other slot's image - its previous depth is not this frame's previous
+      return kept;
+    }
+    if (kept) { gl.deleteTexture(kept.tex); for (const d of kept.depths) gl.deleteTexture(d); for (const f of kept.depthFbos) gl.deleteFramebuffer(f); gl.deleteFramebuffer(kept.fbo); }
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
@@ -1167,7 +1176,7 @@ export class AirPass {
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, depths[0], 0);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindTexture(gl.TEXTURE_2D, null);
-    this.frame = { tex, depths, depthFbos, depthIndex: 0, depth: depths[0], prevDepth: depths[1], fbo, w: W, h: H };
+    this.frame = this._frames[slot] = { tex, depths, depthFbos, depthIndex: 0, depth: depths[0], prevDepth: depths[1], fbo, w: W, h: H };
     this.prevValid = false;   // a new frame image: the previous depth is the far plane
     if (!this.lum) this._ensureAdapt();
     return this.frame;
@@ -1209,10 +1218,12 @@ export class AirPass {
   get adaptTexture() { return this.adapt ? this.adapt[this.adaptIndex].tex : null; }
 
   /** EL4: bind the frame image for the world pass of a W x H canvas, and
-   *  make it the frame target every pass restores to. Returns its fbo. */
-  beginFrameTarget(W, H) {
+   *  make it the frame target every pass restores to. Returns its fbo.
+   *  RETRO1: `slot` 'retro' for a retro world frame, whose W x H is the
+   *  retro image's. */
+  beginFrameTarget(W, H, slot = 'canvas') {
     if (!(W > 0 && H > 0)) return null;   // AUDIT-EL F18
-    const f = this._ensureFrame(W, H);
+    const f = this._ensureFrame(W, H, slot);
     const gl = this.gl;
     // EL8: this frame writes the other depth; the one just written is the previous
     f.depthIndex ^= 1;
@@ -1608,8 +1619,8 @@ export class AirPass {
       gl.uniform2f(P.gauss.uDir, 0, 1 / T.bloom.h);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
-    // 4. the frame to the canvas
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    // 4. the frame to the canvas - RETRO1: or into the retro image, the frame's own size, which the renderer presents next
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.resolveTo?.fbo ?? null);
     setFrameTarget(null);
     gl.viewport(0, 0, F.w, F.h);
     gl.useProgram(P.resolve.p);

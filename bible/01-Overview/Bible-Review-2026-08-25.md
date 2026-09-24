@@ -193,7 +193,7 @@ live, 18 unavailable, 145 stored"; the tree says 46 / 17 / 108 - off
 nearly 6x on live. ~38 keys the spec lists unmarked are now live;
 AssetInjection moved from NA to LIVE. The built control also diverges
 from the spec's interaction contract beyond the three deviations its
-as-built header admits: enums WRAP (`settingsLaw.js:128-134`), there
+as-built header admits: enums WRAP (`settingsLaw.js:134-140`), there
 is no TEXT_LAW / prompt / colour editor / Backspace-reset / digit
 jumps / focus zones, and the two "required companion changes"
 (`resetToDefaults` returning saveSettings; `dataSourceLabel`) were
@@ -216,7 +216,7 @@ own AUDIT-18 correction.
 Doc review only, nothing fixed - but four code comments assert the
 opposite of their own code and deserve a slice's attention:
 - `src/ui/deathScreen.js:87-88` claims "`drop` is read by each host's
-  frame" - no host reads it (the Ledger row `:458` is right, the
+  frame" - no host reads it (the Ledger row `:459` is right, the
   comment is wrong).
 - `src/systems/mysticism.js:53` header "OPEN AND LOCK ARE NOT WIRED" -
   they are (X1, `actionSystem.js:930-931`).
@@ -233,11 +233,11 @@ opposite of their own code and deserve a slice's attention:
 
 ## Line-citation drift (low, batched)
 
-`Port-Ledger.md:554` (save.js:31/:548/:557 → :28/:600/:630), `:587`
+`Port-Ledger.md:555` (save.js:31/:548/:557 → :28/:600/:630), `:587`
 (world.js:3102 → :2412); `Quest-Arc.md:719`/`:2906`
 (worldModes.js:571 → :903); `Player-Arc.md:955` (worldModes.js:799 →
 :2764), `:304` (world.js "531 lines" → 3,564); `Characters-Arc.md:190`
-(CHAR_PIXEL "7" - `renderer.js:615` ships 9, and the doc missed two
+(CHAR_PIXEL "7" - `renderer.js:616` ships 9, and the doc missed two
 later revisions recorded in `paperdollViewer.js:138`), `:2114`
 (interiorContext.js:206 → :199); `Rendering.md:101`
 (CHAR_SPRITE_RT_SIZE "256" → 512).

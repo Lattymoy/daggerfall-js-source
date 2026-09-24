@@ -37,6 +37,11 @@ export const ENUM_LAW = Object.freeze({
   'GUI/GUIFilterMode': { values: ['Point', 'Bilinear', 'Trilinear'], encode: 'index', cite: 'AdvancedSettings:360-379' },
   'GUI/VideoFilterMode': { values: ['Point', 'Bilinear', 'Trilinear'], encode: 'index', cite: 'AdvancedSettings:360-379' },
   'GUI/HelmAndShieldMaterialDisplay': { values: ['Off', 'No Leather Chain', 'No Leather', 'On'], encode: 'index', cite: 'AdvancedSettings:309-321' },
+  // RETRO1: RetroModeConfigPage's three controls, in its own words (Internal_Strings retroMode*, posterization*,
+  // palettization*, FourThree/SixteenTen - the CSV's "4:03" is a spreadsheet's reading of 4:3)
+  'Video/RetroRenderingMode': { values: ['Off', '320x200', '640x400'], encode: 'index', cite: 'RetroModeConfigPage:39-47' },
+  'Video/PostProcessingInRetroMode': { values: ['Off', 'Posterization (full)', 'Posterization (-sky)', 'Palettization (full)', 'Palettization (-sky)'], encode: 'index', cite: 'RetroModeConfigPage:51-62' },
+  'Video/RetroModeAspectCorrection': { values: ['Off', '4:3', '16:10'], encode: 'index', cite: 'RetroModeConfigPage:64-73 (RetroModeAspects)' },
 });
 
 /** {min,max,step,coarse,format,source}. format: pct | mult | a unit. */
@@ -57,6 +62,7 @@ export const NUMBER_LAW = Object.freeze({
   'Enhancements/DungeonAmbientLightScale': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU (:333-341)' },
   'Enhancements/NightAmbientLightScale': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU (:333-341)' },
   'Enhancements/PlayerTorchLightScale': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU (:333-341)' },
+  'Video/PalettizationLUTShift': { min: 0, max: 8, step: 1, coarse: 1, source: 'DFU GetInt, no range (SettingsManager:412) - RETRO1 clamps 0..8, the last shift whose LUT (256 >> 8) has a texel' },
 });
 
 /** RRGGBBAA - the alpha is load-bearing (ToolTipBackgroundColor ships 404040D2). */

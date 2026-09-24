@@ -13,6 +13,7 @@
 
 import { crashText } from './ui/crashText.js';   // the crash line, pinned in its own module
 import { Renderer } from './render/renderer.js';
+import { retroFrameConfig } from './systems/retroMode.js';   // RETRO1: the renderer's retro source - the settings are read here, not in render/
 import { windowEmissionRGB } from './render/windowEmission.js';
 // BOOT1 (2026-09-20, Mac: "overall performance improvements"): THE GAME
 // HOSTS ARE BEHIND A DOOR, NOT ON THE ENTRY. These four were static
@@ -51,6 +52,7 @@ import { staleChunkAction, RELOAD_KEY, STALE_CHUNK_TEXT } from './systems/staleC
 async function boot() {
   const canvas = document.getElementById('c');
   const renderer = new Renderer(canvas);
+  renderer.setRetroSource(retroFrameConfig);   // RETRO1: DFU's retro mode - asked once per world frame, so the settings screen's change lands on the next
   const params = new URLSearchParams(location.search);
   setScreenshotCanvas(canvas);   // KB1: once, beside the counter - the hosts' routeAction arm shoots it (AUDIT KB1: a window's F8 stays the window's)
   // AUDIT KB1 F3: the keybinding carry's report, told on the HUD the moment a scene can speak. Loaded OFF the entry's

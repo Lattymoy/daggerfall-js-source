@@ -83,12 +83,12 @@
   {
     "name": "f5-owed-frame-lost",
     "file": "src/render/renderer.js",
-    "old": "    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; }   // EL8: the frame's clock starts with its passes; VC6d: and its first span\n    if (this._shadows && world)",
-    "new": "    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; }   // EL8: the frame's clock starts with its passes; VC6d: and its first span\n    if (this._shadows && world)",
+    "old": "    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n    const retro = world",
+    "new": "    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n    const retro = world",
     "tests": [
       "test/audit_el.test.js"
     ],
-    "why": "PERF-READ1 re-aimed by content: the perf reset sits after the deck line now."
+    "why": "PERF-READ1 re-aimed by content: the perf reset sits after the deck line now. RETRO1 re-aimed BY CONTENT: the retro mode's lines now sit beside this one; same law, same killer."
   },
   {
     "name": "f5-bound-frame-not-owed",

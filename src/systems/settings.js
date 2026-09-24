@@ -275,6 +275,17 @@ export const LIVE = Object.freeze({
   // door answers the same way - so the key is LIVE the moment the
   // command database has a door, which is what E3 built.
   'Enhancements/LypyL_GameConsole': 'src/systems/consoleCommands.js',
+  // RETRO1: DFU's retro mode. The five had sat stored-tier since the
+  // settings screen shipped, offered and read by nothing; systems/
+  // retroMode.js reads them for the renderer every world frame (the
+  // world's texture, its effect, the mip chains) and for the hosts'
+  // lens and world rect (ui/hudLarge.js), so a change lands on the next
+  // frame, as DFU's DeployCoreGameEffectSettings does.
+  'Video/RetroRenderingMode': 'src/systems/retroMode.js',
+  'Video/PostProcessingInRetroMode': 'src/systems/retroMode.js',
+  'Video/UseMipMapsInRetroMode': 'src/systems/retroMode.js',
+  'Video/RetroModeAspectCorrection': 'src/systems/retroMode.js',
+  'Video/PalettizationLUTShift': 'src/systems/retroMode.js',
 });
 /** unavailable: meaningless in a browser, or the port implements only
  *  ONE side of the branch. The launcher shows these disabled WITH the
