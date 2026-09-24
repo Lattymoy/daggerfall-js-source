@@ -380,7 +380,7 @@ vec3 elPointLitWet(vec3 wp, vec3 n, float wet, out vec3 glint) {
     // EL2: the lantern's map; EL8: every other lantern a contact shadow off the previous frame's depth;
     // F3/MAC-T1: never for the light in the hand - by name, -2 in the caster table (LIGHT-NEAR1: and no longer by its distance to the camera, which dropped the lamp overhead too);
     // F5: and only within the share of the range where the light is worth a shadow
-    float sh = k >= 0 ? pointShadowAt(k, wp, n)
+    float sh = k >= 0 ? casterShadowAt(k, uPointLights[i], wp, n)   // DISC15: a 512 slot or a lo one - indoors, every light has one
       : (k == -2 || d > uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)}) ? 1.0   // MAC-T1: -2 is the hand's light, by name
       : contactShadow(wp, n, Ln, d);
     // EL4: a glint - Blinn-Phong, a low gloss for stone and wood, a twelfth of the light: wet stone under a torch
@@ -410,7 +410,7 @@ vec3 elPointFlat(vec3 wp, vec3 base) {
     int i = elClusterLight(cell, j);
     float d = length(uPointLights[i].xyz - wp);
     if (d >= uPointLights[i].w) continue;   // EL5
-    float sh = shadowOfLight(i, base, vec3(0.0, 1.0, 0.0));   // EL2; EL5: any caster's
+    float sh = shadowOfLight(i, uPointLights[i], base, vec3(0.0, 1.0, 0.0));   // EL2; EL5: any caster's; DISC15: either tier
     acc += sh * elAttenuation(d, uPointLights[i].w) * uPointColors[i];
   }
   return acc;

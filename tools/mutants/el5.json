@@ -165,8 +165,8 @@
   {
     "name": "glsl-no-caster-dark",
     "file": "src/render/shadowPass.js",
-    "old": "  return k >= 0 ? pointShadowAt(k, wp, n) : 1.0;",
-    "new": "  return k >= 0 ? pointShadowAt(k, wp, n) : 0.0;",
+    "old": "  return k >= 0 ? casterShadowAt(k, L, wp, n) : 1.0;",
+    "new": "  return k >= 0 ? casterShadowAt(k, L, wp, n) : 0.0;",
     "tests": [
       "test/el5_field.test.js"
     ]

@@ -656,7 +656,7 @@ void main() {
     for (int s = 0; s < ${AIR_VOL_STEPS}; s++) {
       float t = ta + (float(s) + jitter) * dt;
       float ds = t - t0;
-      sum += pointShadowOne(k, uCamPos + dir * t) / (h2 + ds * ds);
+      sum += casterShadowOne(k, Lr, uCamPos + dir * t) / (h2 + ds * ds);   // DISC15: a 512 slot or a lo one
     }
     acc += sum * dt * uPointColors[i];
   }
@@ -1040,7 +1040,7 @@ export class AirPass {
         this.programs.vol = vol;
         vol.shadow = {
           sunShadow: u(p, 'uSunShadow'), sunVP: u(p, 'uSunVP'), sunParams: u(p, 'uSunShadowParams'), sunTexel: u(p, 'uSunTexel'),
-          pointShadow: u(p, 'uPointShadow'), pointParams: u(p, 'uPointShadowParams'), shadowIndex: u(p, 'uShadowIndex'), casterOf: u(p, 'uCasterOf'),
+          pointShadow: u(p, 'uPointShadow'), pointParams: u(p, 'uPointShadowParams'), shadowIndex: u(p, 'uShadowIndex'), casterOf: u(p, 'uCasterOf'), pointShadowLo: u(p, 'uPointShadowLo'),
         };
       } catch (e) {
         this.programs.vol = null; this.programs.volTone = null;

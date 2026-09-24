@@ -200,7 +200,7 @@
   {
     "name": "glsl-table-lit",
     "file": "src/render/shadowPass.js",
-    "old": "  int k = uCasterOf[i];\n  return k >= 0 ? pointShadowAt(k, wp, n) : 1.0;",
+    "old": "  int k = uCasterOf[i];\n  return k >= 0 ? casterShadowAt(k, L, wp, n) : 1.0;",
     "new": "  return 1.0;",
     "tests": [
       "test/el8_contact.test.js"
