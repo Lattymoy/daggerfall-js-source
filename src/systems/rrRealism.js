@@ -6,19 +6,19 @@
 // equipment damage, the classic strength bonus, the bank loan), the
 // ship gate, the encumbrance penalty, the douse on leaving a dungeon,
 // the purification potion, the class enemies' appearance, the
-// underworld guilds' expulsion, the Fighters' hand-to-hand, the bed.
+// underworld guilds' expulsion, the bed (the Fighters' hand-to-hand is
+// RETIRED - FGH2H-R, below).
 // The variant NPC sprites, enhanced riding and the refined training
 // window are RR2; the Master Armorer quest line, its fort and its
 // factions are RR3.
 //
 // A leaf: modSettings (the switches), weapons (a material's modifier),
-// mobileTypes and skills (the tables' keys). Everything that reads an
+// mobileTypes (the tables' keys). Everything that reads an
 // entity or the scene is handed in by its caller, and rrInstall.js
 // registers the seams.
 import { modSetting } from './modSettings.js';
 import { WEAPONS, weaponMaterialModifier } from '../characters/weapons.js';
 import { MOBILE_TYPES } from '../characters/mobileTypes.js';
-import { SKILLS } from './skills.js';
 
 export const RR_VENDOR = 'roleplay-realism';
 export const RR_MOD = Object.freeze({ title: 'RoleplayRealism', version: '1.8', guid: 'd828b782-46e9-40e7-8ae6-19cde308032e' });

@@ -622,6 +622,6 @@ rr3b 24, rri1 11, rri2 18).
 `vendor/roleplay-realism/`. Suites `test/rr1_realism.test.js` (11),
 `test/rr2_realism.test.js` (12), `test/rr3_questline.test.js` (11),
 `test/rr3b_worlddata.test.js` (9), `test/auditrr.test.js` (15), `test/auditrr2.test.js` (17). Campaigns `tools/mutants/rr1.json`
-(19: 18 dead, 1 equivalent), `tools/mutants/rr2.json` (28 dead),
+(18: 17 dead, 1 equivalent - RR1-17 went with the seam it aimed at, FGH2H-R), `tools/mutants/rr2.json` (28 dead),
 `tools/mutants/rr3.json` (33: 31 dead, 2 equivalent),
 `tools/mutants/rr3b.json` (24 dead).
