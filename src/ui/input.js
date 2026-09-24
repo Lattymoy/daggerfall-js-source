@@ -54,6 +54,7 @@ import {
 import { hudShortcutKey } from './hudShortcuts.js';
 import { hotbarInForce } from '../systems/uiSkin.js';   // AUDIT CONTRIB H1: the diamond's actions stand down while the hotbar is in force
 import { statusReadoutTakesAction, setStatusBindings } from '../systems/statusReadout.js';   // STATUS-LIVE: the readout yields to whatever wants the slot, and the panel names the live Status key. A LEAF - this module is in ui/actionText.js's own import ring (through ui/inputMessageBox.js), so reaching for the BOX from here put its class body in a temporal dead zone
+import { printScreen } from './screenshot.js';   // AUDIT KB1: PrintScreen is routed like every world action, so a window's F8 stays the window's
 import { getInt, getFloat } from '../systems/settings.js';   // SWING-SAY: the swing mode and its threshold, for the boot readout
 
 // The registry singleton - built on first read, so the module can be
@@ -64,8 +65,23 @@ export function bindings() {
   _bindings = loadOrCreateBindings();
   setStatusBindings(_bindings);   // STATUS-LIVE: the readout's caption names the key that actually answers
   saySwingChain();   // SWING-SAY: once, at the moment the store is first real
+  deliverCarried();   // AUDIT KB1 F3: what the one-time carry could not bring forward, told to the player
   return _bindings;
 }
+
+// AUDIT KB1 F3: THE CARRY'S REPORT GOES TO THE PLAYER. systems/inputActions.js loadOrCreateBindings leaves on the
+// store what a v1 file's carry could not keep - an action whose new key the player's own file already spends, a
+// mod's old key another action holds - and this module cannot say it: the HUD door (systems/notify.js) reaches this
+// file through its own imports. So the composition root (main.js) hands the sink in, and the report is delivered
+// once, whichever of the two - the sink or the store - comes first.
+let _carriedSink = null;
+function deliverCarried() {
+  const r = _bindings?.carried;
+  if (!r || !_carriedSink) return;
+  _bindings.carried = null;
+  _carriedSink(r);
+}
+export function setKeybindNoticeSink(fn) { _carriedSink = fn; deliverCarried(); }
 /** Tests (and the I3 controls window) swap the live store. */
 export function setBindings(b) { _bindings = b; setStatusBindings(b); }   // STATUS-LIVE: a rebound Status key renames the readout's caption with it
 
@@ -313,10 +329,30 @@ function codeDown(store, keys, code, ring = keys) {
   return true;
 }
 
-/** KB1: the modifiers an event says are down, as the held-keys Set a listener without a host's ring hands `actionOf` -
- *  so a combo bound to a key that such a listener owns (the hotbar's slots, the screenshot) still resolves. The
- *  LEFT codes, because DFU's combo keys are the left modifiers (inputActions.js comboModifiers). */
-export const eventModifiers = (e) => new Set([e?.shiftKey && 'ShiftLeft', e?.ctrlKey && 'ControlLeft', e?.altKey && 'AltLeft'].filter(Boolean));
+/**
+ * AUDIT KB1: WHAT A KEY EVENT MEANS TO A LISTENER THAT HOLDS NO HOST RING - a window's own-key close (the book on
+ * CastSpell, the dial on QuickDial, the sheet on F5), the hotbar's slots, the screenshot. The event's own modifier
+ * flags pick the combo (the LEFT codes, DFU's combo keys - inputActions.js comboModifiers), both dicts answer (a pad
+ * button is a secondary), a switched-off mod's key means nothing, and NOTHING IS WRITTEN.
+ *
+ * Two bugs made this one door. `actionOf(e)` with no ring read the bare code, so a window opened by a combo (the
+ * dial on Shift+Q) could not be closed by it - Shift+Q read as Q, RecastSpell. And the first cut's answer for the
+ * hotbar and the screenshot, `actionOf(e, eventModifiers(e))`, handed the latch a made-up ring: DFU's held-first
+ * flags (modifierHeldFirstDict) are the HOST's frame state, polled over the host's own held keys, and a listener's
+ * guess of a ring must not write them. The latch exists to order a modifier against a key across frames; a
+ * listener has one event, and the event's flags are the whole truth about it.
+ */
+export function eventAction(e) {
+  if (!e?.code) return null;
+  const b = bindings();
+  for (const [flag, mod] of [['shiftKey', 'ShiftLeft'], ['ctrlKey', 'ControlLeft'], ['altKey', 'AltLeft']]) {
+    if (!e[flag] || e.code === mod) continue;
+    const a = actionForCode(b, comboCode(mod, e.code));
+    if (a) return actionLive(a) ? a : null;
+  }
+  const a = actionForCode(b, e.code);
+  return a && actionLive(a) ? a : null;
+}
 
 /** The action a key event means under the live bindings, or null.
  *  Hand in the host's held-keys Set and combos resolve too: a keydown
@@ -708,7 +744,11 @@ export function routeKey(e, ctx, setPlayerPos = null, keys = null) {
   // .cs:634-637), which is what `noteKeyDown` already gives the polled
   // three; the repeat is nothing here too, and it is SWALLOWED rather than
   // handed on, so no ladder below can act on it either.
-  if (e.repeat && QUICKSLOT_ACTIONS.has(act)) return true;
+  //
+  // AUDIT KB1: AND EVERY ROUTED ACTION, not the quickslots alone. The repeat reached routeAction for every arm that
+  // opens no window (a window, once up, takes the repeats through the overlay branch above): a held F8 took a
+  // screenshot per repeat, a held F9 quicksaved per repeat. DFU dispatches all of them on ActionStarted.
+  if (e.repeat && act) return true;
   return routeAction(act, ctx, setPlayerPos);
 }
 
@@ -852,6 +892,7 @@ export function routeAction(action, ctx, setPlayerPos = null) {
     case 'QuickSave': return ctx.quickSave ? (ctx.quickSave(), true) : false;
     case 'QuickLoad': return ctx.quickLoad ? (ctx.quickLoad(setPlayerPos), true) : false;
     case 'DebugOverlay': return ctx.toggleDebugHud ? (ctx.toggleDebugHud(), true) : false;   // KB1: the dungeon's readout, off its own action
+    case 'PrintScreen': return printScreen();   // KB1 + AUDIT KB1: the key's own door (ui/screenshot.js), reached only with no window up
     // U45: the four the large HUD reaches that no keybind in this
     // port has ever routed. Each is a real DFU destination and each
     // is optional here, so the panel is live the moment a host grows

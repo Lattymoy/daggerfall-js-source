@@ -110,7 +110,7 @@ import { rarityAttr, rarityLines } from '../systems/lootRarity.js';   // LR1: th
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { repaintKeepingScroll } from './domRepaint.js';
-import { overlayAction, actionOf } from './input.js';   // MAC-C: and the REGISTRY's answer for the two window keys
+import { overlayAction, eventAction } from './input.js';   // MAC-C: and the REGISTRY's answer for the two window keys
 import { audio } from '../systems/audio.js';   // MAC-O6: the pack's own transfer cue - this window carried none at all
 import { SOUND } from '../systems/soundClips.js';
 
@@ -1247,7 +1247,7 @@ function stow(item) {
   // 26 F156: planStore answers `{ ok: true, map: true }` for a
   // MiscItems.Map - the reveal runs, the paper is consumed, nothing
   // lands in the destination. The classic window routes it
-  // (nativeInventory.js:865) and this one did not, so dragging a
+  // (nativeInventory.js:869) and this one did not, so dragging a
   // treasure map out of the pack dropped the paper on the floor and
   // revealed nothing.
   if (plan.map) { use(item, deps.items?.() ?? []); return; }
@@ -1262,7 +1262,7 @@ function stow(item) {
   // again on the other side, and a tip that stays open after every
   // press is the quirk being fixed.
   // AUDIT INV2 B-F1: THE ENTITY AND THE PROVENANCE RIDE, as they do at
-  // the classic window's own call (nativeInventory.js:871). Without them
+  // the classic window's own call (nativeInventory.js:875). Without them
   // `clearLightSourceOnLeave` - AUDIT 26 F157's first statement inside
   // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
   // went on lighting the player from where it lay. INV2 made that a
@@ -1296,7 +1296,7 @@ function take(item) {
   if (plan.map) { use(item, remoteTarget(deps, sessionState())); return; }
   // MAC-O6 (report: "looting gold/items makes no sound"): DoTransferItem's
   // own cue (:1569 gold's clink, :1583 everything else), which the classic
-  // window plays (nativeInventory.js:891) and this one never did - the ONLY
+  // window plays (nativeInventory.js:895) and this one never did - the ONLY
   // difference between the two windows' calls to planTake/applyTransfer was
   // that this one dropped `plan.sound` on the floor. Played here, ahead of
   // the gold interception below, exactly as DFU's own PlayOneShot sits
@@ -2466,8 +2466,9 @@ function render() {
 // This line used to read `e.key !== 'F6'` - the DFU DEFAULT spelled as
 // a literal, which is I2's and FIX-F's bug twice over: a player who
 // rebinds Inventory in the controls window gets a pack that opens on
-// their key and closes on nobody's. It reads the REGISTRY now, the same
-// `actionOf` the hosts' own ladders read.
+// their key and closes on nobody's. It reads the REGISTRY now - AUDIT
+// KB1: through `eventAction`, the event's own read, so a combo'd key
+// closes what it opened and a pad button (a secondary) does too.
 //
 // And the other window key CROSSES OVER rather than doing nothing: the
 // pack closes and the sheet opens, in that order, because `showOverlay`
@@ -2487,10 +2488,11 @@ function onKey(e) {
   // world (A-F4). Escape ends the drag and keeps the window; a second
   // one closes it, as it always did.
   if (overlayAction(e) === 'back' && drag) { e.preventDefault(); e.stopPropagation(); dragStop(false); return; }
-  const act = actionOf(e);
+  const act = eventAction(e);   // AUDIT KB1: the event's own read - a pack opened by a combo closes on it
   if (act === 'CharacterSheet' && typeof deps?.openCharSheet === 'function') {
     e.preventDefault();
     e.stopPropagation();
+    if (e.repeat) return;   // AUDIT KB1: a held key's repeat is swallowed, not an open-shut flicker
     // JAN1 (2026-09-18, Janome: "got this while toggling between F5 and F6 menus" - CRASH `openCharSheet is not a
     // function`): THE HOOK IS READ BEFORE ANYTHING CLOSES - the file's own law at the close arm above - because
     // `onExit` unmounts, and the unmount clears `deps` to `{}` before this line ran on it.
@@ -2502,7 +2504,7 @@ function onKey(e) {
   if (overlayAction(e) !== 'back' && act !== 'Inventory') return;
   e.preventDefault();
   e.stopPropagation();
-  onExit();
+  if (!e.repeat) onExit();
 }
 
 function releaseLock() {

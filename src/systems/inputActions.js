@@ -1046,20 +1046,39 @@ export const KEYBINDS_VERSION = 2;
 /**
  * KB1: A v1 FILE COMES FORWARD, ONCE. The standard moved three defaults a saved file may still hold, and the
  * autofill that follows every load fills a missing action only on a FREE code - so a v1 file keeps E on AbortSpell
- * and Interact never lands, keeps Backquote on the console and AbortSpell never lands. So, before the autofill:
- *  - E, Backquote and Left Ctrl are let go where they still hold the OLD default (AbortSpell, ToggleConsole, Slide) -
- *    a player who put something else there keeps it, and AbortSpell lands on Backquote only if Backquote is free;
- *  - the mods' keys come in from their old TextKeys: a value the player SAVED that the port never shipped is their
- *    choice and binds the action (on a free code); `None` keeps the action unbound; a shipped value is left to the
- *    registry's new default.
- * Answers what it moved, so the caller can say so.
+ * and Interact never lands, keeps Backquote on the console and AbortSpell never lands.
+ *
+ * AUDIT KB1 F1/F2/F3 - THE ORDER IS THE LAW. The first cut carried the mods' old keys BEFORE the autofill, and
+ * "a free code" then meant free in the v1 file, not free once the standard's defaults stood - so a torch key saved
+ * as E took E from Interact, an old Travel Options G (the mod switched off, the key dead) took G from the torch
+ * drop, and the action that lost its key was never named. And E was let go of AbortSpell whether or not Backquote
+ * could take it, so a player who had spent Backquote lost the spell's abort without a word. Now, in three steps:
+ *  1. LET GO. E, Backquote and Left Ctrl are let go where they still hold the OLD default (AbortSpell,
+ *     ToggleConsole, Slide), and the two hidden actions let go of ANY code they hold - they do nothing, and a row
+ *     that holds a key and does nothing is how a key gets spent twice (HIDDEN_ACTIONS).
+ *  2. THE STANDARD'S DEFAULTS LAND - the autofill, on every code the player's own file left free.
+ *  3. THE MODS' OLD KEYS come in, onto a code free AFTER step 2 - a player's choice never takes a key from another
+ *     action. A value they SAVED that the port never shipped is their choice; `None` keeps the action unbound; a
+ *     shipped value is left to the new default. A choice that could not land is reported (`kept`).
+ * Then every action the standard gives a key and this file left keyless (its default spent by the player's own
+ * binding, not removed on purpose) is reported (`lost`), so the player is TOLD - the caller hands the report to the
+ * HUD (ui/input.js setKeybindNoticeSink). Answers `{ moved, kept, lost }`; a file already at the version answers
+ * all three empty and touches nothing.
  */
 export function migrateKeyBinds(store, fromVersion) {
-  const moved = [];
-  if (fromVersion >= KEYBINDS_VERSION) return moved;
+  const report = { moved: [], kept: [], lost: [] };
+  if (fromVersion >= KEYBINDS_VERSION) return report;
   for (const [code, was] of [['KeyE', 'AbortSpell'], ['Backquote', 'ToggleConsole'], ['ControlLeft', 'Slide']]) {
-    if (store.primary.get(code) === was) { store.primary.delete(code); touched(store); moved.push(`${was} off ${code}`); }
+    if (store.primary.get(code) === was) { store.primary.delete(code); touched(store); report.moved.push(`${was} off ${code}`); }
   }
+  for (const hidden of HIDDEN_ACTIONS) {
+    for (const primary of [true, false]) {
+      const had = getBinding(store, hidden, primary);
+      if (had != null) { clearBinding(store, hidden, primary); report.moved.push(`${hidden} off ${had}`); }
+    }
+  }
+  resetDefaults(store, true);   // step 2: the standard's defaults, on every code still free
+  const spoken = (code) => actionForCode(store, code) != null || comboModifiers(store).has(code);
   for (const [vendor, rows] of Object.entries(MOD_ACTIONS)) {
     for (const row of rows) {
       let saved;
@@ -1071,14 +1090,19 @@ export function migrateKeyBinds(store, fromVersion) {
         name = i < row.options.length ? row.options[i] : (String(storedModSetting(vendor, row.choice) ?? '').trim() || null);
         if (name == null) continue;
       }
-      if (name === KEYCODE_NONE || name === 'None') { clearBinding(store, row.action, true); store.removedPrimary.add(row.action); moved.push(`${row.action} unbound`); continue; }
+      if (name === KEYCODE_NONE || name === 'None') { clearBinding(store, row.action, true); store.removedPrimary.add(row.action); report.moved.push(`${row.action} unbound`); continue; }
       const code = domCodeForKeyCode(String(name));
-      if (!code || actionForCode(store, code)) continue;   // a key that parses to nothing, or one already spoken for: the default stands
+      if (!code || getBinding(store, row.action, true) === code) continue;   // a key that parses to nothing, or the one it already has
+      if (spoken(code)) { report.kept.push({ action: row.action, code, holder: actionForCode(store, code) }); continue; }
       setBinding(store, code, row.action, true);
-      moved.push(`${row.action} on ${code}`);
+      report.moved.push(`${row.action} on ${code}`);
     }
   }
-  return moved;
+  for (const [code, action] of DEFAULT_BINDINGS) {
+    if (getBinding(store, action, true) != null || store.removedPrimary.has(action)) continue;
+    report.lost.push({ action, code, holder: actionForCode(store, code) });
+  }
+  return report;
 }
 
 export function loadOrCreateBindings() {
@@ -1090,10 +1114,15 @@ export function loadOrCreateBindings() {
       const data = JSON.parse(raw);
       loadKeyBinds(store, data);
       const from = Number(data?.version) || 1;
-      const moved = migrateKeyBinds(store, from);   // KB1: before the autofill, so the new defaults can land
+      const report = migrateKeyBinds(store, from);   // KB1: runs the autofill inside it, between its steps
       resetDefaults(store, true);
-      if (moved.length) console.info(`[keybinds] brought forward to v${KEYBINDS_VERSION}: ${moved.join(', ')}`);
-      if (from < KEYBINDS_VERSION) saveKeyBinds(store);   // written as v2 at once, so the carry runs exactly once
+      if (from < KEYBINDS_VERSION) {
+        const said = [...report.moved, ...report.kept.map((k) => `${k.action} kept its key (${k.code} is ${k.holder}'s)`),
+          ...report.lost.map((l) => `${l.action} has no key (${l.code} is ${l.holder}'s)`)];
+        if (said.length) console.info(`[keybinds] brought forward to v${KEYBINDS_VERSION}: ${said.join(', ')}`);
+        if (report.kept.length || report.lost.length) store.carried = report;   // AUDIT KB1 F3: for the player, not the console only (ui/input.js)
+        saveKeyBinds(store);   // written as v2 at once, so the carry runs exactly once
+      }
       // MAC-D1: ...and the autofill pass above will NOT do this, by
       // design - it obeys the removal marks. This runs after it and
       // writes the repair back, so the next load starts sound.

@@ -157,8 +157,11 @@ test('I4: the apply CONTRACT - a clashing set is order-dependent, and the gate i
   setUnsavedBinding(u, 'MoveForwards', 'KeyI');   // KeyI is Status's default
   assert.equal(checkDuplicates(u).ok, false, 'the gate SEES it, and blocks the close');
   applyUnsavedKeybinds(store, u);
-  assert.equal(getBinding(store, 'MoveForwards'), null, 'the earlier action loses the code');
-  assert.equal(getBinding(store, 'Status'), 'KeyI', 'the later one keeps it');
+  // AUDIT KB1 F4: the apply reads "differs" off the store as it stood BEFORE the walk (a code MOVED by the replace
+  // prompt must mark its old holder removed whatever the order), so here the row that CHANGED takes the code and the
+  // row that did not is left holding nothing - still a lost key, which is the point: only the gate prevents it.
+  assert.equal(getBinding(store, 'MoveForwards'), 'KeyI', 'the changed row takes the code');
+  assert.equal(getBinding(store, 'Status'), null, 'and the untouched one is left unbound - the clash the gate exists to stop');
 });
 
 test('I4: Default resets the live registry and re-stages from it', () => {

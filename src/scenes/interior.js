@@ -191,7 +191,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // rollout enumerated four, so F5 in the ?interior route reloaded
     // the page and destroyed the session - the exact failure AUDIT 17e
     // F41 recorded for the others - and F11 went fullscreen. The law
-    // (ui/input.js:679-680) is "every host that registers a keydown
+    // (ui/input.js:715-716) is "every host that registers a keydown
     // calls this FIRST", and it is NOT conditional on the host having
     // a destination for the key. First, because every arm below
     // returns before its own preventDefault - worldModes.js:8503 sits
@@ -381,7 +381,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // scan, for the reason DFU states on the gate (SetActive(false) on
     // the geometry would mess with the open map's rendering). Update's
     // own call at :1001 is the one-shot lazy init, not a per-frame
-    // driver. dungeon.js:780 and worldModes.js:6423/:6451 gate the same
+    // driver. dungeon.js:786 and worldModes.js:6423/:6451 gate the same
     // way; this is that gate for this host.
     lookGate(!!overlay);   // AUDIT-AMAP H8
     if (!gamePaused()) ctx.automapTick?.(dt, cam.pos, fwd);

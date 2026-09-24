@@ -1,0 +1,222 @@
+[
+  {
+    "name": "AUDIT-KB1-F1-the-carry-runs-before-the-defaults",
+    "file": "src/systems/inputActions.js",
+    "old": "  resetDefaults(store, true);   // step 2: the standard's defaults, on every code still free\n",
+    "new": "",
+    "tests": [
+      "test/kb1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-KB1-F2-a-taken-key-is-taken-silently",
+    "file": "src/systems/inputActions.js",
+    "old": "      if (spoken(code)) { report.kept.push({ action: row.action, code, holder: actionForCode(store, code) }); continue; }",
+    "new": "",
+    "tests": [
+      "test/kb1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-KB1-F3-a-lost-key-is-not-reported",
+    "file": "src/systems/inputActions.js",
+    "old": "    report.lost.push({ action, code, holder: actionForCode(store, code) });",
+    "new": "",
+    "tests": [
+      "test/kb1_audit.test.js",
+      "test/kb1_keybinds.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-KB1-F3-a-hidden-action-keeps-a-moved-key",
+    "file": "src/systems/inputActions.js",
+    "old": "      if (had != null) { clearBinding(store, hidden, primary); report.moved.push(`${hidden} off ${had}`); }",
+    "new": "",
+    "tests": [
+      "test/kb1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-KB1-F3-a-boot-line-is-dropped",
+    "file": "src/systems/notify.js",
+    "old": "  if (waiting.length || !speak(text, delay)) waiting.push([String(text ?? ''), delay]);   // in order, behind any still waiting",
+    "new": "  speak(text, delay);",
+    "tests": [
+      "test/kb1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-KB1-F3-the-report-delivered-twice",
+    "file": "src/ui/input.js",
+    "old": "  _bindings.carried = null;\n",
+    "new": "",
+    "tests": [
+      "test/kb1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-KB1-F4-differs-read-off-the-half-applied-store",
+    "file": "src/systems/controlsConfig.js",
+    "old": "      const cur = before.get(`${primary}:${action}`);",
+    "new": "      const cur = getBinding(store, action, primary);",
+    "tests": [
+      "test/kb1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-KB1-F5-holds-read-as-code-equality",
+    "file": "src/systems/controlsConfig.js",
+    "old": "const clashes = (a, b) => a != null && b != null && getDuplicates([a, b]).size > 0;",
+    "new": "const clashes = (a, b) => a != null && a === b;",
+    "tests": [
+      "test/kb1_audit.test.js",
+      "test/enhancedControls.test.js",
+      "test/mousecontrols.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-KB1-F6-own-slot-read-as-someone-else",
+    "file": "src/systems/controlsConfig.js",
+    "old": "  if (holders.length === 1 && holders[0].action === action) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/kb1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-KB1-the-grid-offers-Slide",
+    "file": "src/ui/controlsWindow.js",
+    "old": "    this.buttons = gridButtons().filter((b) => !HIDDEN_ACTIONS.includes(b.action));",
+    "new": "    this.buttons = gridButtons();",
+    "tests": [
+      "test/kb1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-KB1-UI1-the-claim-stands-for-the-panels-life",
+    "file": "src/player/pointerLock.js",
+    "old": "  for (const c of _cursorKeyClaims) if (c.takes(e)) return true;",
+    "new": "  for (const c of _cursorKeyClaims) if (c) return true;",
+    "tests": [
+      "test/kb1_audit.test.js",
+      "test/kb1_keybinds.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-KB1-UI2-the-books-repeat-closes-it",
+    "file": "src/ui/enhancedSpellbook.js",
+    "old": "  if (!e.repeat) onExit();",
+    "new": "  onExit();",
+    "tests": [
+      "test/kb1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-KB1-UI3-eventAction-reads-the-bare-code",
+    "file": "src/ui/input.js",
+    "old": "    const a = actionForCode(b, comboCode(mod, e.code));\n    if (a) return actionLive(a) ? a : null;",
+    "new": "    const a = null;\n    if (a) return actionLive(a) ? a : null;",
+    "tests": [
+      "test/kb1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-KB1-UI4-the-prompt-is-not-reported-open",
+    "file": "src/ui/enhancedControls.js",
+    "old": "export const controlsPromptOpen = () => prompt != null;",
+    "new": "export const controlsPromptOpen = () => false;",
+    "tests": [
+      "test/enhancedControls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-KB1-UI5-a-freed-cursors-click-presses-a-slot",
+    "file": "src/ui/enhancedHotbar.js",
+    "old": "  if (typeof document === 'undefined' || !document.pointerLockElement) return;",
+    "new": "  if (typeof document === 'undefined') return;",
+    "tests": [
+      "test/kb1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-KB1-UI5-no-mouse-listener",
+    "file": "src/ui/enhancedHotbar.js",
+    "old": "  window.addEventListener('mousedown', onMouse, true);   // AUDIT KB1: a slot bound to a mouse button",
+    "new": "",
+    "tests": [
+      "test/kb1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-KB1-UI6-the-pad-cannot-close-the-pause",
+    "file": "src/ui/pauseWindow.js",
+    "old": "    this.toggleClosedSecondary = getBinding(bindings(), 'Escape', false);",
+    "new": "    this.toggleClosedSecondary = null;",
+    "tests": [
+      "test/kb1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-KB1-UI6-the-pad-cannot-close-the-pack",
+    "file": "src/ui/nativeInventory.js",
+    "old": "    this.toggleClosedSecondary = getBinding(bindings(), 'Inventory', false);",
+    "new": "    this.toggleClosedSecondary = null;",
+    "tests": [
+      "test/kb1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-KB1-UI7-a-repeat-answers-the-grids-prompt",
+    "file": "src/ui/controlsWindow.js",
+    "old": "    if (this.top && e?.repeat) return;\n",
+    "new": "",
+    "tests": [
+      "test/kb1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-KB1-H1-the-world-ladder-routes-the-repeat",
+    "file": "src/scenes/world.js",
+    "old": "      else if (e.repeat) { e.preventDefault(); return; }   // AUDIT KB1: the press edge alone - routeKey's law (ui/input.js), so a held F8/F9 is one shot, one save\n",
+    "new": "",
+    "tests": [
+      "test/kb1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-KB1-H2-the-dungeon-ring-fills-under-a-window",
+    "file": "src/scenes/dungeon.js",
+    "old": "    if (!ctx.uiOverlayActive) {\n      keys.add(e.code);",
+    "new": "    if (true) {\n      keys.add(e.code);",
+    "tests": [
+      "test/kb1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-KB1-H2-the-world-ring-fills-under-the-modes-window",
+    "file": "src/scenes/world.js",
+    "old": "    if (!modes?.overlayHeld) {\n      keys.add(e.code);",
+    "new": "    if (true) {\n      keys.add(e.code);",
+    "tests": [
+      "test/kb1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-KB1-H3-the-blob-revoked-at-once",
+    "file": "src/ui/screenshot.js",
+    "old": "        later(() => URL.revokeObjectURL(url), REVOKE_AFTER_MS);",
+    "new": "        later(() => URL.revokeObjectURL(url), 0);",
+    "tests": [
+      "test/kb1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-KB1-H4-a-listener-writes-the-latch",
+    "file": "src/ui/input.js",
+    "old": "export function eventAction(e) {\n  if (!e?.code) return null;",
+    "new": "export function eventAction(e) {\n  if (e?.code) return actionOf(e, new Set([e.shiftKey && 'ShiftLeft', e.ctrlKey && 'ControlLeft', e.altKey && 'AltLeft'].filter(Boolean)));\n  if (!e?.code) return null;",
+    "tests": [
+      "test/kb1_audit.test.js"
+    ]
+  }
+]

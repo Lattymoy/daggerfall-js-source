@@ -25,9 +25,11 @@ THE KEYBINDING STANDARD records every departure from DFU's table.
 3. **One key, one action.** No default code ships twice. The hotbar's slots 1-4 are the diamond's own four actions,
    so a pad's d-pad reaches them too; what they do follows which bar is in force (`uiSkin.js hotbarInForce`).
 4. **A held key is asked for, never taken.** Binding a key another action holds opens "X is used by Y. Give it to
-   Z instead?" in every controls window - Yes stages the holder unbound, No stages nothing. (The classic windows'
-   `yield` pass, which silently unbound a port row the grid cannot draw, is left only for DFU's combo-modifier clash,
-   which no single key names.) DFU's own duplicate law still colours and blocks what the prompt cannot see.
+   Z instead?" in every controls window - Yes stages every holder unbound, No (or Escape) stages nothing. "Holds" is
+   DFU's own clash law (`getDuplicates`): a combo against a bare modifier is asked for too, and a key moving between
+   an action's own two slots says so. A key's auto-repeat answers no prompt. Yes stays Yes across a reboot: the
+   apply reads "changed" off the registry as it stood before it (AUDIT KB1 F4). DFU's duplicate law still colours
+   and blocks what only a hand-edited file can carry in.
 5. **Every key is read through the registry, live.** `held`, `pressed`, `released` and `actionOf` resolve codes,
    combos included, against the player's bindings at the moment of the read, so a rebind applies at once. A mod
    switched off answers nothing on its keys (`actionLive`, at the one gate every reader takes); its keys stay bound
@@ -35,9 +37,13 @@ THE KEYBINDING STANDARD records every departure from DFU's table.
    sweep in `test/kb1_keybinds.test.js` names with their reasons (the back-button latch, Alt's preventDefault, the
    travel panel's help, a talk window's confirm alias, the developer fly-cam).
 6. **Tests hold it, and old saves come forward.** The file carries `version: 2`. A version-1 file is carried once:
-   E, Backquote and Left Ctrl are let go where they still hold DFU's old defaults (AbortSpell, the console, Slide),
-   and a mod key the player SAVED is carried into its action (a value the port only ever shipped is left to the new
-   default; `None` stays unbound). The carry runs before the load's autofill, so the new rows can land.
+   (1) E, Backquote and Left Ctrl are let go where they still hold DFU's old defaults (AbortSpell, the console,
+   Slide), and the two hidden actions let go of any key; (2) the standard's defaults land on every key the player's
+   own file left free; (3) a mod key the player SAVED is carried into its action onto a key still free after that (a
+   value the port only ever shipped is left to the new default; `None` stays unbound) - a player's old choice never
+   takes a key from another action. What could not be carried - an action whose new key the player's own file
+   already spends, a mod's old key another action now holds - is TOLD to the player on the HUD once a scene stands
+   (`controlsConfig.js keybindCarryNotes`, `notify.js hudTextWhenShown`), a mod's line only while it is on.
 
 ## Mac's four calls (2026-09-23)
 
@@ -45,14 +51,38 @@ THE KEYBINDING STANDARD records every departure from DFU's table.
   `` ` ``, the key DFU spent on a console this port has not.
 - **Enter online = chat.** Online, the chat panel claims ActivateCursor's key (`pointerLock.js claimCursorKey`):
   Enter opens the chat and does not free the mouse; `Y` (FreeMouse) frees it. Offline, Enter frees the mouse as
-  DFU's does (PlayerMouseLook.cs:190).
+  DFU's does (PlayerMouseLook.cs:190). The claim is PER PRESS, on the chat's own word: with the chat hidden, or
+  unable to open, Enter is the game's again (AUDIT KB1).
 - **The digit row is the quickbar/hotbar.** 1-4 are the diamond (and the hotbar's first four); 5-0 the hotbar's
   slots 5-10. Horse Cart and Cargo, which had shipped on 5 and 6, moved to `,` and `.` (the mod's own F7 and F10 are
   the browser's caret browsing and DFU's HUD toggle).
 - **DFU's dead rows: build two, hide two.** `CenterView` (Home) levels the view through the look filter;
-  `PrintScreen` (F8) saves the game canvas as a PNG (`ui/screenshot.js`) - DFU binds both and reads neither.
+  `PrintScreen` (F8) saves the game canvas as a PNG (`ui/screenshot.js`, routed by the hosts like every world
+  action, so an automap's own F8 - its third background - stays the automap's) - DFU binds both and reads neither.
   `ToggleConsole` and `Slide` ship unbound and off the page, freeing `` ` `` and Left Ctrl. The dungeon's
   diagnostics readout, a raw F8 that answered only while F8 was unbound, is the `DebugOverlay` action, unbound.
+
+## AUDIT KB1 (2026-09-24, Mac: "Audit this before we merge")
+
+Three lenses over the standard - the registry and the carry, the windows and the pad and the chat, the scene hosts -
+found seventeen things; every one is paid and pinned by execution in `test/kb1_audit.test.js` (the pane's Escape in
+`test/enhancedControls.test.js`). The ones that change what a player meets:
+
+- **The carry's order** (above, law 6): a torch key saved as E no longer takes E from Interact; an old Travel
+  Options key, the mod off, no longer takes the torch's G; a lost key is said, not silent.
+- **Enter with the chat hidden** frees the mouse again (the claim stood for the panel's life - a dead key).
+- **F8 in an automap** changes its background and nothing else; every routed world action answers the PRESS, not the
+  auto-repeat (a held F8 or F9 was a shot or a save per repeat).
+- **E closing a shop, a talk or a book window** is not also the next frame's Interact - a key a window takes joins
+  no ring (DFU's PollInput never runs under a pausing window).
+- **Windows closing on their own key** read the event's own modifiers and both dicts (`input.js eventAction`), so a
+  combo closes what it opened and the pad's View / Menu close what they opened; a held key's repeat is swallowed, not
+  an open-shut flicker. The classic pause, pack and rest windows take the secondary slot too.
+- **The hotbar** presses a slot bound to a mouse button (while the game has the mouse).
+- **Escape on the Controls page's prompt** answers No and keeps the staged binds (it left the section and threw
+  them all away).
+- **The classic grid and mouse popup** no longer offer the two hidden actions' slots.
+- Listeners that hold no host ring (the hotbar, the windows) read keys without writing the host's modifier latch.
 
 ## The defaults
 

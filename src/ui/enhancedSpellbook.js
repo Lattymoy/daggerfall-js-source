@@ -30,7 +30,7 @@
 // order being right.
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
-import { overlayAction, actionOf } from './input.js';   // KB1: and the registry's answer for the book's own key
+import { overlayAction, eventAction } from './input.js';   // KB1: and the registry's answer for the book's own key
 import {
   spellEffects, spellPointCost, EFFECT_NOT_FOUND, ENTER_SPELL_NAME,
   CANNOT_DELETE_VAMP, CANNOT_DELETE_WERE, DELETE_SPELL_PROMPT,
@@ -409,10 +409,12 @@ function onKey(e) {
   // applies to F5 and the pack applies to F6. KB1: the comment said so and
   // the line read Escape alone - the book opened on CastSpell and did not
   // close on it. The registry's answer, as the pack reads its own.
-  if (overlayAction(e) !== 'back' && actionOf(e) !== 'CastSpell') return;
+  if (overlayAction(e) !== 'back' && eventAction(e) !== 'CastSpell') return;
   e.preventDefault();
   e.stopPropagation();
-  onExit();
+  // AUDIT KB1: the PRESS closes, the auto-repeat of a held key is swallowed - it closed the book, and the next
+  // repeat reached the host with the slot empty and opened it again, open-shut for as long as the key was down
+  if (!e.repeat) onExit();
 }
 
 export function mountEnhancedSpellbook(hostEl, d = {}) {

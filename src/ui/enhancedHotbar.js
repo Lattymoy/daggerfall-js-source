@@ -28,7 +28,7 @@
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { PIXEL_STACK } from './pixelifyFive.js';
 import { getPref } from '../systems/uiPrefs.js';
-import { isTextEntryTarget, bindings, actionOf, eventModifiers } from './input.js';
+import { isTextEntryTarget, bindings, eventAction, mouseCode } from './input.js';
 import { HOTBAR_SLOT_ACTIONS } from '../systems/inputActions.js';   // KB1: the ten slots are ten registry actions
 import { quickslotTag } from './quickslotTags.js';   // KB1: a slot's chip names the key its action is bound to
 import {
@@ -163,6 +163,7 @@ function bindKeys() {
   if (keysBound || typeof window === 'undefined') return;
   keysBound = true;
   window.addEventListener('keydown', onKey, true);
+  window.addEventListener('mousedown', onMouse, true);   // AUDIT KB1: a slot bound to a mouse button
 }
 
 // ── THE FRAME ─────────────────────────────────────────────────────
@@ -337,13 +338,30 @@ function onKey(e) {
   // someone else held - a table of its own beside the controls pane's. The slot is whatever the key MEANS now: a
   // player who moved slot 7 to a mouse button, or a pad's d-pad on slots 1-4, presses it; a digit bound to anything
   // else is simply not a slot.
-  const i = HOTBAR_SLOT_ACTIONS.indexOf(actionOf(e, eventModifiers(e)));
+  const i = HOTBAR_SLOT_ACTIONS.indexOf(eventAction(e));   // AUDIT KB1: the event's own read - a listener writes no latch
   if (i < 0) return;
   // The hotbar owns the digit: no host ladder below may read it too
   // (keys 1-4 are the diamond's by default, and the diamond is put away).
   e.preventDefault();
   e.stopImmediatePropagation();
   if (e.repeat) return;   // a held key presses once, as the diamond's keys do (MAC-R2)
+  pressHotbar(i);
+}
+
+/** AUDIT KB1 (the UI lens' fifth finding): A SLOT ON A MOUSE BUTTON PRESSES. The pane captures Mouse0-2 for any row
+ *  and the chip shows the button, but this bar listened for keys alone, so the slot never fired - and slots 1-4 on a
+ *  button were dead while the bar is in force, because the diamond's own arms stand down then (ui/input.js
+ *  hotbarInForce). The button means what the registry says, read the same way as a key; only while the game has the
+ *  mouse (the pointer locked), because a click with the cursor free is a click on the page. */
+function onMouse(e) {
+  if (!bar || !hotbarMode() || dropOwners.size || lastPaused) return;
+  if (typeof document === 'undefined' || !document.pointerLockElement) return;
+  const code = mouseCode(e.button);
+  if (!code) return;
+  const i = HOTBAR_SLOT_ACTIONS.indexOf(eventAction({ code, shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, altKey: e.altKey }));
+  if (i < 0) return;
+  e.preventDefault();
+  e.stopImmediatePropagation();   // the hosts' mousedown (the swing, the activate) never sees a button a slot took
   pressHotbar(i);
 }
 

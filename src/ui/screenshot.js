@@ -4,15 +4,18 @@
 // commented out (:946-953). The port shipped the same dead row, so F8 did nothing. This is the key made to do what
 // its name says: the game canvas, saved as a PNG.
 //
-// ONE listener, installed once at boot, not an arm in each host's ladder: a screenshot does not depend on which
-// scene is up, and a window being open is exactly when a player wants one. It reads the registry like every other
-// key (the action, combos through the event's own modifiers), and skips a text field's typing.
+// AUDIT KB1 (the hosts lens' first finding): A WORLD ACTION, ROUTED LIKE EVERY OTHER. The first cut was its own
+// listener over every host, so it fired under a window too - and DFU's automaps spend F8 on their third background
+// colour (systems/dialogShortcuts.js AutomapSwitchToAutomapBackgroundAlternative3), so one F8 there changed the
+// background AND downloaded a PNG. The standard's law 2 says a window's keys are the window's; the hosts' ladders
+// already keep that law for every action (a window up takes the key first, ui/input.js routeKey's overlay branch),
+// so the key goes through them: routeAction's 'PrintScreen' arm calls `printScreen`, and the canvas is handed
+// in once at boot (main.js).
 //
 // THE FRAME, NOT THE BUFFER'S LEFTOVERS. The renderer's context does not preserve its drawing buffer, so reading the
 // canvas from inside a key event gets a cleared buffer. A requestAnimationFrame callback queued now runs AFTER the
 // host's own (queued during the previous frame), and the buffer is only cleared after every callback of the frame
 // has run - so the read lands on the frame just drawn.
-import { actionOf, eventModifiers, isTextEntryTarget } from './input.js';
 
 /** `daggerfall-20260923-141502.png` - local time, sortable, no characters a filesystem refuses. */
 export function screenshotName(d = new Date()) {
@@ -20,9 +23,14 @@ export function screenshotName(d = new Date()) {
   return `daggerfall-${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}.png`;
 }
 
+/** AUDIT KB1 (the hosts lens' third finding): how long the object URL outlives the click. Revoked at 0 ms, a browser
+ *  that starts the download asynchronously (Firefox, Safari) can find the blob gone and save nothing; FileSaver.js
+ *  holds its URL 40 s for exactly this. The blob is one PNG, so holding it that long costs nothing. */
+export const REVOKE_AFTER_MS = 40_000;
+
 /** Save `canvas` as a PNG after the frame now being drawn. Answers a promise of the file name, or null when the
  *  canvas gave no image (a lost context). */
-export function takeScreenshot(canvas, { raf = globalThis.requestAnimationFrame, doc = globalThis.document } = {}) {
+export function takeScreenshot(canvas, { raf = globalThis.requestAnimationFrame, doc = globalThis.document, later = setTimeout } = {}) {
   return new Promise((resolve) => {
     const shoot = () => {
       canvas.toBlob((blob) => {
@@ -34,7 +42,7 @@ export function takeScreenshot(canvas, { raf = globalThis.requestAnimationFrame,
         doc.body.appendChild(a);
         a.click();
         a.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 0);
+        later(() => URL.revokeObjectURL(url), REVOKE_AFTER_MS);
         resolve(a.download);
       }, 'image/png');
     };
@@ -42,15 +50,14 @@ export function takeScreenshot(canvas, { raf = globalThis.requestAnimationFrame,
   });
 }
 
-/** Install the key, once. Returns the uninstaller. */
-export function installScreenshotKey(canvas, { target = globalThis.window, shoot = takeScreenshot } = {}) {
-  if (!canvas || !target?.addEventListener) return () => {};
-  const onKey = (e) => {
-    if (e.repeat || isTextEntryTarget(e.target)) return;
-    if (actionOf(e, eventModifiers(e)) !== 'PrintScreen') return;
-    e.preventDefault();
-    shoot(canvas);
-  };
-  target.addEventListener('keydown', onKey);
-  return () => target.removeEventListener('keydown', onKey);
+let _canvas = null;
+let _shoot = takeScreenshot;
+/** Boot hands the game canvas in, once (main.js). `shoot` is the tests' seam. */
+export function setScreenshotCanvas(canvas, { shoot = takeScreenshot } = {}) { _canvas = canvas ?? null; _shoot = shoot; }
+/** routeAction's PrintScreen arm: true when a shot was taken (a canvas stands), false otherwise - so a host with no
+ *  canvas leaves the key alone, as every door-less arm does. */
+export function printScreen() {
+  if (!_canvas) return false;
+  _shoot(_canvas);
+  return true;
 }

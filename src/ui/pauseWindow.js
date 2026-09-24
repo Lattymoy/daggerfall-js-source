@@ -183,8 +183,8 @@ export class PauseOptionsWindow {
     // GameManager.cs:515-518, and ActionComplete is the RELEASE edge
     // (InputManager.cs:634-637) - so its opening release is spent before
     // the window exists and :186's bare `GetKeyUp` is safe there. Every
-    // host here opens on the key DOWN (world.js:7861, exterior.js:3064,
-    // ui/input.js:543) and then routes that same key's release into the
+    // host here opens on the key DOWN (world.js:7869, exterior.js:3072,
+    // ui/input.js:579) and then routes that same key's release into the
     // window it just mounted, so the release door closes only a window
     // whose own press it saw.
     this.isCloseWindowDeferred = false;
@@ -193,10 +193,17 @@ export class PauseOptionsWindow {
     // the pause to another key opened it with that key and could not close it with the same one. The back button
     // (the literal Escape, GetBackButtonUp) closes it too, as in DFU.
     this.toggleClosedBinding = getBinding(bindings(), 'Escape');
+    // AUDIT KB1: and the SECONDARY slot's code - the pad's button (PAD1 binds View to Inventory and Menu to Escape in the
+    // secondary dict) opened this window through the host's dual-dict read and could not close it; DFU's field is the
+    // primary alone because DFU's pad closes through GetBackButtonUp, a door this port's windows do not carry.
+    this.toggleClosedSecondary = getBinding(bindings(), 'Escape', false);
   }
 
   /** GetKeyUp(toggleClosedBinding) || GetBackButtonUp() (:183-188) - the two keys that close this window. */
-  _isCloseKey(code) { return code === 'Escape' || (!!this.toggleClosedBinding && code === this.toggleClosedBinding); }
+  _isCloseKey(code) {
+    return code === 'Escape' || (!!this.toggleClosedBinding && code === this.toggleClosedBinding)
+      || (!!this.toggleClosedSecondary && code === this.toggleClosedSecondary);
+  }
 
   _click() { audio.playOneShot(SOUND.ButtonClick, 1); }
 

@@ -48,7 +48,7 @@ import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeTopOverlay, registerOverlay } from './enhancedOverlays.js';   // PX28; AUDIT CHAT C1: the dial is on the stack like every other enhanced overlay
 import { isEnhanced } from '../systems/uiSkin.js';
 import { requestLook } from '../player/pointerLock.js';   // PL3: the dial gives the pointer back when it goes
-import { actionOf } from './input.js';   // KB1: the key that opened it is the registry's QuickDial
+import { eventAction } from './input.js';   // KB1: the key that opened it is the registry's QuickDial
 
 const el = (t, cls, txt) => {
   const n = document.createElement(t);
@@ -149,7 +149,7 @@ export function mountPixelDial(hostEl, { entries = [], onClose = () => {} } = {}
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); return; }
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); commit(); return; }
-    if (actionOf(e) === 'QuickDial') { e.preventDefault(); e.stopPropagation(); close(); return; }   // PX15: the key that opened it closes it - KB1: QuickDial's, wherever it is bound (it was a literal Tab)
+    if (eventAction(e) === 'QuickDial') { e.preventDefault(); e.stopPropagation(); if (!e.repeat) close(); return; }   // PX15: the key that opened it closes it - KB1: QuickDial's, wherever it is bound (it was a literal Tab)
     for (const [dir, { keys }] of Object.entries(DIRS)) {
       if (keys.includes(e.key)) {
         e.preventDefault(); e.stopPropagation();

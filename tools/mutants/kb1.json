@@ -2,8 +2,8 @@
   {
     "name": "KB1-the-E-carry-skipped",
     "file": "src/systems/inputActions.js",
-    "old": "    if (store.primary.get(code) === was) { store.primary.delete(code); touched(store); moved.push(`${was} off ${code}`); }",
-    "new": "    if (false) { store.primary.delete(code); touched(store); moved.push(`${was} off ${code}`); }",
+    "old": "    if (store.primary.get(code) === was) { store.primary.delete(code); touched(store); report.moved.push(`${was} off ${code}`); }",
+    "new": "    if (false) { store.primary.delete(code); touched(store); report.moved.push(`${was} off ${code}`); }",
     "tests": [
       "test/kb1_keybinds.test.js"
     ]
@@ -14,14 +14,15 @@
     "old": "      if (saved === undefined || row.shipped.includes(saved)) continue;",
     "new": "      if (saved === undefined) continue;",
     "tests": [
-      "test/kb1_keybinds.test.js"
+      "test/kb1_keybinds.test.js",
+      "test/kb1_audit.test.js"
     ]
   },
   {
     "name": "KB1-a-cleared-mod-key-comes-back",
     "file": "src/systems/inputActions.js",
-    "old": "      if (name === KEYCODE_NONE || name === 'None') { clearBinding(store, row.action, true); store.removedPrimary.add(row.action); moved.push(`${row.action} unbound`); continue; }",
-    "new": "      if (name === KEYCODE_NONE || name === 'None') { clearBinding(store, row.action, true); moved.push(`${row.action} unbound`); continue; }",
+    "old": "      if (name === KEYCODE_NONE || name === 'None') { clearBinding(store, row.action, true); store.removedPrimary.add(row.action); report.moved.push(`${row.action} unbound`); continue; }",
+    "new": "      if (name === KEYCODE_NONE || name === 'None') { clearBinding(store, row.action, true); report.moved.push(`${row.action} unbound`); continue; }",
     "tests": [
       "test/kb1_keybinds.test.js"
     ]
@@ -29,8 +30,8 @@
   {
     "name": "KB1-the-carry-runs-every-load",
     "file": "src/systems/inputActions.js",
-    "old": "      if (from < KEYBINDS_VERSION) saveKeyBinds(store);",
-    "new": "      ",
+    "old": "        saveKeyBinds(store);   // written as v2 at once, so the carry runs exactly once",
+    "new": "        ",
     "tests": [
       "test/kb1_keybinds.test.js"
     ]
@@ -38,7 +39,7 @@
   {
     "name": "KB1-the-other-dict-is-not-asked",
     "file": "src/systems/controlsConfig.js",
-    "old": "  for (const [a, c] of other) if (c === code) return { action: a, primary: !u.usingPrimary };",
+    "old": "  for (const [a, c] of other) if (clashes(code, c)) out.push({ action: a, primary: !u.usingPrimary });",
     "new": "  ",
     "tests": [
       "test/kb1_keybinds.test.js"
@@ -47,7 +48,7 @@
   {
     "name": "KB1-yes-leaves-the-holder-bound",
     "file": "src/systems/controlsConfig.js",
-    "old": "  if (holder) (holder.primary ? u.primary : u.secondary).set(holder.action, null);",
+    "old": "  for (const h of holders) (h.primary ? u.primary : u.secondary).set(h.action, null);",
     "new": "  ",
     "tests": [
       "test/kb1_keybinds.test.js"
@@ -56,17 +57,17 @@
   {
     "name": "KB1-enter-online-frees-the-mouse-too",
     "file": "src/player/pointerLock.js",
-    "old": "    if (act !== FREE_MOUSE_ACTION && !(act === 'ActivateCursor' && !cursorKeyClaimed())) return;",
+    "old": "    if (act !== FREE_MOUSE_ACTION && !(act === 'ActivateCursor' && !cursorKeyClaimed(e))) return;",
     "new": "    if (act !== FREE_MOUSE_ACTION && act !== 'ActivateCursor') return;",
     "tests": [
       "test/kb1_keybinds.test.js"
     ]
   },
   {
-    "name": "KB1-the-screenshot-reads-a-literal-F8",
-    "file": "src/ui/screenshot.js",
-    "old": "    if (actionOf(e, eventModifiers(e)) !== 'PrintScreen') return;",
-    "new": "    if (e.code !== 'F8') return;",
+    "name": "KB1-the-screenshot-arm-answers-nothing",
+    "file": "src/ui/input.js",
+    "old": "    case 'PrintScreen': return printScreen();",
+    "new": "    case 'PrintScreen': return false;",
     "tests": [
       "test/kb1_keybinds.test.js"
     ]
@@ -83,8 +84,8 @@
   {
     "name": "KB1-the-pause-closes-on-a-literal-Escape",
     "file": "src/ui/pauseWindow.js",
-    "old": "  _isCloseKey(code) { return code === 'Escape' || (!!this.toggleClosedBinding && code === this.toggleClosedBinding); }",
-    "new": "  _isCloseKey(code) { return code === 'Escape'; }",
+    "old": "    return code === 'Escape' || (!!this.toggleClosedBinding && code === this.toggleClosedBinding)\n      || (!!this.toggleClosedSecondary && code === this.toggleClosedSecondary);",
+    "new": "    return code === 'Escape';",
     "tests": [
       "test/kb1_keybinds.test.js"
     ]
@@ -92,7 +93,7 @@
   {
     "name": "KB1-the-pack-closes-on-a-literal-F6",
     "file": "src/ui/nativeInventory.js",
-    "old": "    if (code === 'Escape' || code === 'Enter' || (!!this.toggleClosedBinding && code === this.toggleClosedBinding)) { this._close(); return; }",
+    "old": "    if (code === 'Escape' || code === 'Enter' || (!!this.toggleClosedBinding && code === this.toggleClosedBinding)\n      || (!!this.toggleClosedSecondary && code === this.toggleClosedSecondary)) { this._close(); return; }",
     "new": "    if (code === 'Escape' || code === 'Enter' || code === 'F6') { this._close(); return; }",
     "tests": [
       "test/kb1_keybinds.test.js"

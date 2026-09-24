@@ -1200,7 +1200,7 @@ test('TO1: the wiring - one construction, the fork on the popup\'s word, the pan
   assert.ok(!/showOverlay\(travelControlUI\)/.test(w), 'the panel is NEVER in the overlay slot - an overlay holds the motor and the clock');
   // its keys and its clicks
   // KB1: taken ABOVE the key ring - a key the panel answers joins no ring, so C (camp) is not also a Crouch press
-  assert.match(w, /if \(travelControlUI\?\.isShowing && !townTalk\.overlayActive && \(modes\?\.mode \?\? 'exterior'\) === 'exterior'\) \{\s*if \(travelControlUI\.input\(e\.code, e\)\) \{ e\.preventDefault\(\); return; \}[^\n]*\n[^\n]*\n\s*\}\s*\n\s*keys\.add\(e\.code\);/);
+  assert.match(w, /if \(travelControlUI\?\.isShowing && !townTalk\.overlayActive && \(modes\?\.mode \?\? 'exterior'\) === 'exterior'\) \{\s*if \(travelControlUI\.input\(e\.code, e\)\) \{ e\.preventDefault\(\); return; \}[^\n]*\n[^\n]*\n\s*\}\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!modes\?\.overlayHeld\) \{\n\s*keys\.add\(e\.code\);/);   // AUDIT KB1: the ring's fill, under the mode window's gate now
   assert.match(w, /if \(v && travelControlUI\.click\(v\[0\], v\[1\]\)\) return;/);
   // the frame's two scaled things, and only those two
   assert.match(w, /const travelScale = worldTimeScale\(\);/);

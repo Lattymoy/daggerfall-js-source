@@ -110,11 +110,11 @@ import { nativeMetrics, drawRect } from './nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
 import { drawText, measureText } from './text.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
-import { onSavedKeyBinds, PORT_ACTIONS } from '../systems/inputActions.js';   // AUDIT SOC D3: the port's own rows YIELD here too - the ADVANCED popup is DFU's six and no more
+import { onSavedKeyBinds, PORT_ACTIONS, HIDDEN_ACTIONS } from '../systems/inputActions.js';   // AUDIT SOC D3: the port's own rows YIELD here too - the ADVANCED popup is DFU's six and no more
 import {
   currentDict, setUnsavedBinding, checkDuplicates, buttonText, ELONGATED_TEXT,
   INTERNAL_DUPE_COLOR, CROSS_DUPE_COLOR, removeKeybindPromptRows, comboFromEvent,
-  bindingHolder, replaceKeybindPromptRows, stageReplace,
+  bindingHolders, replaceKeybindPromptRows, stageReplace,
 } from '../systems/controlsConfig.js';
 import {
   makeSlider, setScrollIndex, sliderClick, sliderDrag, sliderGetValue, sliderScroll,
@@ -163,6 +163,10 @@ export const KEYBIND_ROWS = Object.freeze([
   { action: 'QuickSave', label: 'QuickSave', x: 210, y: 20 },
   { action: 'QuickLoad', label: 'QuickLoad', x: 210, y: 40 },
 ]);
+
+/** AUDIT KB1: the rows this popup draws and answers - DFU's six less the port's HIDDEN ToggleConsole (there is no
+ *  console; a key bound on its row would do nothing and be spent twice - inputActions.js HIDDEN_ACTIONS). */
+const LIVE_ROWS = Object.freeze(KEYBIND_ROWS.filter((r) => !HIDDEN_ACTIONS.includes(r.action)));
 
 /** CreateSlider's panel (:228-249): 70x45, label centred at the top,
  *  trough at (0,6) 70 wide. */
@@ -255,7 +259,7 @@ export class MouseControlsWindow {
     this.capture = null;      // waitingForInput (:57)
     this.top = null;          // 'remove' | 'replace'
     this._removeAction = null;
-    this._replace = null;     // KB1: { action, code, holder } while the replace prompt stands
+    this._replace = null;     // KB1: { action, code, holders } while the replace prompt stands
     this._box = null;
     this.dupes = checkDuplicates(this.unsaved, { yield: PORT_ACTIONS });
     this.tip = new ToolTip();
@@ -381,16 +385,19 @@ export class MouseControlsWindow {
       const action = this.capture;
       this.capture = null;
       // KB1 (law 4): the grid's own ask (ui/controlsWindow.js _bindCaptured) - a held key is asked for, never taken.
-      const holder = bindingHolder(this.unsaved, action, combo ?? code);
-      if (holder) { this.top = 'replace'; this._replace = { action, code: combo ?? code, holder }; return; }
+      const holders = bindingHolders(this.unsaved, action, combo ?? code);
+      if (holders.length) { this.top = 'replace'; this._replace = { action, code: combo ?? code, holders }; return; }
       setUnsavedBinding(this.unsaved, action, combo ?? code);
       this._refresh();
       return;
     }
+    // AUDIT KB1: a prompt is answered by a PRESS. The hosts hand repeated keydowns to the window, so a key held a beat
+    // after its capture (Escape, Y, N - all bindable) answered the prompt it had just raised.
+    if (this.top && e?.repeat) return;
     if (this.top === 'replace') {
       if (code === 'KeyY') {
         this._click();
-        stageReplace(this.unsaved, this._replace.action, this._replace.code, this._replace.holder);
+        stageReplace(this.unsaved, this._replace.action, this._replace.code, this._replace.holders);
         this._refresh();
       }
       if (code === 'KeyY' || code === 'KeyN' || code === 'Escape') { this.top = null; this._replace = null; }
@@ -429,7 +436,7 @@ export class MouseControlsWindow {
     this._mouse = [vx, vy];
     if (this.capture || this.top) { this.tip.hide(); return; }
     const dict = currentDict(this.unsaved);
-    for (const row of KEYBIND_ROWS) {
+    for (const row of LIVE_ROWS) {
       if (inRect(toNative(MouseControlsWindow.rowButtonRect(row)), vx, vy)) {
         // SuppressToolTip (:167-169): only an elongated label gets one.
         const code = dict.get(row.action);
@@ -486,7 +493,7 @@ export class MouseControlsWindow {
       this.top = null;
       return true;
     }
-    for (const row of KEYBIND_ROWS) {
+    for (const row of LIVE_ROWS) {
       if (inRect(toNative(MouseControlsWindow.rowButtonRect(row)), vx, vy)) {
         this._click();
         if (right) {
@@ -565,7 +572,7 @@ export class MouseControlsWindow {
 
     // the six keybind rows
     const dict = currentDict(this.unsaved);
-    for (const row of KEYBIND_ROWS) {
+    for (const row of LIVE_ROWS) {
       const lw = measureText(font.fnt, row.label);
       put(row.label, row.x + ROW_LABEL.w - lw, row.y + Math.round((ROW_SIZE.h - glyphH) / 2));
       const [bx, by, bw, bh] = MouseControlsWindow.rowButtonRect(row);
@@ -616,7 +623,7 @@ export class MouseControlsWindow {
     if (this.capture) put('Press a key...', 4, MOUSE_PANEL[3] - 12);
 
     if (this.top === 'remove' || this.top === 'replace') {
-      const rows = this.top === 'replace' ? replaceKeybindPromptRows(this._replace.action, this._replace.code, this._replace.holder)
+      const rows = this.top === 'replace' ? replaceKeybindPromptRows(this._replace.action, this._replace.code, this._replace.holders, this.unsaved.usingPrimary)
         : removeKeybindPromptRows(this._removeAction, currentDict(this.unsaved).get(this._removeAction));
       this._box = layoutMessageBox(font, rows, [MB_BUTTONS.Yes, MB_BUTTONS.No]);
       if (!drawMessageBox(renderer, m, font, this._box)) {

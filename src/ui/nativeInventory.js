@@ -392,6 +392,10 @@ export class NativeInventoryWindow {
     // KB1: "Store toggle closed binding for this window" (DaggerfallInventoryWindow, GetBinding(Actions.Inventory)),
     // read once at push - it was a literal F6, so an Inventory rebound off F6 opened this window and could not close it.
     this.toggleClosedBinding = getBinding(bindings(), 'Inventory');
+    // AUDIT KB1: and the SECONDARY slot's code - the pad's button (PAD1 binds View to Inventory and Menu to Escape in the
+    // secondary dict) opened this window through the host's dual-dict read and could not close it; DFU's field is the
+    // primary alone because DFU's pad closes through GetBackButtonUp, a door this port's windows do not carry.
+    this.toggleClosedSecondary = getBinding(bindings(), 'Inventory', false);
     this.tab = 'weapons';          // SelectTabPage(TabPages.WeaponsAndArmor) on setup
     // U57: selectedActionMode, CheckWagonAccess and SetChooseOne are
     // one read now (systems/inventorySession.js) - the enhanced pack
@@ -1008,7 +1012,8 @@ export class NativeInventoryWindow {
     // and A8 retired the interim letters that stood here: E used to
     // close, which is InventoryEquip's letter in DFU, and the tabs
     // answered to digits 1-4 where DFU gives them F1-F4.
-    if (code === 'Escape' || code === 'Enter' || (!!this.toggleClosedBinding && code === this.toggleClosedBinding)) { this._close(); return; }
+    if (code === 'Escape' || code === 'Enter' || (!!this.toggleClosedBinding && code === this.toggleClosedBinding)
+      || (!!this.toggleClosedSecondary && code === this.toggleClosedSecondary)) { this._close(); return; }
     if (code === 'KeyN') this.scroll = applyScroll(this.scroll, 'down', this._filtered().length);
     if (code === 'KeyP') this.scroll = applyScroll(this.scroll, 'up', this._filtered().length);
     // DaggerfallInventoryWindow.cs's own Hotkey assignments, in its

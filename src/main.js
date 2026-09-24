@@ -40,7 +40,7 @@ const bootWorld = (...a) => import('./scenes/world.js').then((m) => m.bootWorld(
 import { ensureArena2, getBytes } from './scenes/dataSource.js';
 import { installCursor } from './ui/cursor.js';
 import { mountFpsCounter } from './ui/fpsCounter.js';   // FPS1: the counter, over every host
-import { installScreenshotKey } from './ui/screenshot.js';   // KB1: the PrintScreen action, over every host
+import { setScreenshotCanvas } from './ui/screenshot.js';   // KB1: the PrintScreen action's canvas - the key itself is routed by the hosts (AUDIT KB1)
 import { getPref } from './systems/uiPrefs.js';   // FPS1: its switch
 import { publishBootParams, BOOT_DOOR_KEYS } from './systems/onlineLane.js';   // MAC-N3: the boot's params are the URL, or the online lane reads nothing
 // The deployed site is redeployed several times a day and every deploy
@@ -52,7 +52,13 @@ async function boot() {
   const canvas = document.getElementById('c');
   const renderer = new Renderer(canvas);
   const params = new URLSearchParams(location.search);
-  installScreenshotKey(canvas);   // KB1: once, beside the counter - a screenshot does not depend on the scene
+  setScreenshotCanvas(canvas);   // KB1: once, beside the counter - the hosts' routeAction arm shoots it (AUDIT KB1: a window's F8 stays the window's)
+  // AUDIT KB1 F3: the keybinding carry's report, told on the HUD the moment a scene can speak. Loaded OFF the entry's
+  // static graph (BOOT2): the notice door reaches the box's whole import ring, and the input readers load with the
+  // first scene anyway; the sink delivers whichever of it and the registry comes first (ui/input.js).
+  Promise.all([import('./ui/input.js'), import('./systems/controlsConfig.js'), import('./systems/notify.js')])
+    .then(([input, cfg, notify]) => input.setKeybindNoticeSink((report) => { for (const line of cfg.keybindCarryNotes(report)) notify.hudTextWhenShown(line, 12); }))
+    .catch((err) => console.warn('[keybinds] the carry notice could not load:', err?.message ?? err));
   mountFpsCounter({ enabled: () => params.has('fps') || !!getPref('showFps'), stats: () => renderer.stats });   // FPS1: over every host, on the pref or the probe door; PERF3: with the renderer's counts
   const status = (msg) => {
     document.title = `Daggerfall Enhanced - ${msg}`;

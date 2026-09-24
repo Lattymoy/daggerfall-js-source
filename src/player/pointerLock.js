@@ -73,15 +73,21 @@ export const FREE_MOUSE_ACTION = 'FreeMouse';
  *  frees the mouse (PlayerMouseLook.cs:190). Online the chat panel opens on that same action (ui/chatPanel.js
  *  CHAT_OPEN_ACTION), and both listeners sit on the window's capture phase, so ONE Enter opened the chat AND flipped
  *  cursorActive - and the flag, left up, then refused the relock when the chat closed. A mounted chat CLAIMS the key;
- *  while any claim stands the toggle answers FreeMouse alone (Y by default). Counted, and each release is once-only,
- *  so a panel torn down twice cannot hand back a claim another panel still holds. */
-let _cursorKeyClaims = 0;
-export function claimCursorKey() {
-  _cursorKeyClaims++;
-  let held = true;
-  return () => { if (held) { held = false; _cursorKeyClaims--; } };
+ *  the toggle then leaves ActivateCursor to it (FreeMouse, Y by default, always frees the mouse). Each release is
+ *  once-only, so a panel torn down twice cannot hand back a claim another panel still holds.
+ *  AUDIT KB1: A CLAIM IS PER PRESS. `takes(e)` is the claimant's own word on whether it will act on THIS event; a
+ *  claim that stood for the panel's life made Enter dead whenever the chat declined it (hidden, unable to open),
+ *  where DFU's Enter frees the mouse. */
+const _cursorKeyClaims = new Set();
+export function claimCursorKey(takes = () => true) {
+  const claim = { takes };
+  _cursorKeyClaims.add(claim);
+  return () => { _cursorKeyClaims.delete(claim); };
 }
-export const cursorKeyClaimed = () => _cursorKeyClaims > 0;
+export function cursorKeyClaimed(e = null) {
+  for (const c of _cursorKeyClaims) if (c.takes(e)) return true;
+  return false;
+}
 
 /** One call per host at boot: Enter (Actions.ActivateCursor) or the
  *  player's own FreeMouse key frees the mouse during play and takes it
@@ -119,7 +125,7 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionOf = nu
     // binding over `_cursorActive` is the bug PL3 spent a whole slice
     // on, in a new hat.
     const act = actionOf(e);
-    if (act !== FREE_MOUSE_ACTION && !(act === 'ActivateCursor' && !cursorKeyClaimed())) return;   // KB1: online, ActivateCursor's key is the chat's
+    if (act !== FREE_MOUSE_ACTION && !(act === 'ActivateCursor' && !cursorKeyClaimed(e))) return;   // KB1: online, ActivateCursor's key is the chat's - when the chat takes this press
     e.preventDefault();
     // PL1: "Don't allow activate cursor for 0.3 seconds after closing
     // an input message box" (PlayerMouseLook.cs:192-196).

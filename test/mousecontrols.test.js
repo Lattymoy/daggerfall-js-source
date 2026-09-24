@@ -645,15 +645,20 @@ test('G6: re-opening the ADVANCED window re-checks duplicates - OnPush -> OnRetu
   cw.click(cont[0] + 1, cont[1] + 1);                                // back to the grid
   assert.equal(cw.advancedOpen, false);
 
-  // a clash made on the GRID, between the two visits, through its own UI. KB1: an exact code another row holds
-  // ASKS now (law 4) and never stages a clash, so the clash is DFU's combo one (GetDuplicates' second phase):
-  // Shift+T while Run holds Left Shift on its own.
+  // a clash on the GRID's staging, between the two visits. KB1 + AUDIT KB1 F5: every capture ASKS now - an exact
+  // code and DFU's combo law alike (Shift+T while Run holds Left Shift) - so the grid's own UI can no longer stage
+  // one; the clash is laid on the shared staging directly (what a pre-prompt file would hand it), and the grid's
+  // refresh paints it.
   const escCode = comboCode('ShiftLeft', 'KeyT');
   const b0 = cw.buttons[0];
   const b0Code = currentDict(cw.unsaved).get(b0.action);
   cw.click(b0.x + 1, b0.y + 1);
   cw.input('KeyT', { shiftKey: true });
-  assert.equal(cw.top, null, 'no replace prompt - no row holds Shift+T itself');
+  assert.equal(cw.top, 'replace', 'the combo is ASKED for - Run holds its bare modifier');
+  cw.input('KeyN');
+  assert.equal(cw.top, null);
+  setUnsavedBinding(cw.unsaved, b0.action, escCode);
+  cw._refresh();
   assert.ok(cw.dupes.internal.has(escCode), 'the grid paints the clash');
   assert.equal(cw.advanced.dupes.internal.has(escCode), false,
     'the cached popup still holds its construction-time snapshot');

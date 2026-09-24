@@ -70,7 +70,7 @@ import {
   createUnsavedKeybinds, currentDict, setUnsavedBinding, checkDuplicates,
   applyUnsavedKeybinds, buttonText,
   comboFromEvent, removeKeybindPromptRows, swingHint,
-  bindingHolder, replaceKeybindPromptRows, stageReplace, stagedDefaults,
+  bindingHolders, replaceKeybindPromptRows, stageReplace, stagedDefaults,
 } from '../systems/controlsConfig.js';
 
 /** The shell's own `el`, three lines, kept LOCAL on purpose:
@@ -116,7 +116,7 @@ let dupes = { internal: new Set(), cross: new Set(), ok: true };
 let armed = null;          // the action awaiting a key (:52 waitingForInput)
 let armedHandler = null;   // the document keydown listener while it waits
 let armedMouse = null;     // MAC-K1: and its mouse half - one arm, two doors
-let prompt = null;         // { kind: 'defaults' } | { kind: 'remove', action } | { kind: 'replace', action, code, holder }
+let prompt = null;         // { kind: 'defaults' } | { kind: 'remove', action } | { kind: 'replace', action, code, holders, usingPrimary }
 let pendingDefaults = false;   // KB1: Defaults is staged; Continue commits it with the live reset
 let notice = null;         // the multipleAssignments line, or the saved note
 let repaint = () => {};
@@ -142,6 +142,14 @@ export const controlsDuplicates = () => dupes;
  *  eat the one key DFU is most careful to let through. It stands down
  *  while this answers. */
 export const captureArmed = () => armed;
+
+/** AUDIT KB1 (the UI lens' fourth finding): A PROMPT STANDING IS THE PANE'S, and Escape answers it No. The prompt
+ *  card draws in place of the whole list, so it reads as a dialog - but with no capture armed, Escape fell through to
+ *  the menu's back stack, which left the section and DISCARDED every staged bind (discardControlsStaging) or, on the
+ *  pause face, resumed. Since KB1 nearly every bind raises the replace prompt, so a reflexive Escape there was the
+ *  common way to lose a whole session of edits. ui/enhancedMenu.js's back stack asks this first. */
+export const controlsPromptOpen = () => prompt != null;
+export function dismissControlsPrompt() { if (prompt) answerPrompt(false); }
 
 function disarm() {
   if (armedHandler && typeof document !== 'undefined') {
@@ -170,8 +178,8 @@ function bindCaptured(code, e) {
   const next = combo ?? code;
   notice = null;
   // KB1 (law 4): a key another action holds is ASKED for. The staged copy used to take it and colour both rows red.
-  const holder = bindingHolder(stage(), action, next);
-  if (holder) { prompt = { kind: 'replace', action, code: next, holder }; repaint(); return; }
+  const holders = bindingHolders(stage(), action, next);
+  if (holders.length) { prompt = { kind: 'replace', action, code: next, holders, usingPrimary: stage().usingPrimary }; repaint(); return; }
   setUnsavedBinding(stage(), action, next);
   refresh();
   repaint();
@@ -227,7 +235,7 @@ function arm(action) {
  *  keybind button itself (:361) and the right-click remove (:372,
  *  where it is ANDed with the unbound-slot refusal). The pending
  *  capture is the only live gesture on the screen. The classic grid
- *  carries the law in one line (ui/controlsWindow.js:377); this face
+ *  carries the law in one line (ui/controlsWindow.js:383); this face
  *  carries it as ONE predicate wrapped round every click surface, so
  *  a control cannot be added without it. arm()'s own leading disarm()
  *  is then unreachable-by-click — which is DFU's shape, not a loss. */
@@ -266,7 +274,7 @@ function answerPrompt(yes) {
     setUnsavedBinding(unsaved, p.action, null);
     refresh();
   } else if (yes && p?.kind === 'replace') {
-    stageReplace(unsaved, p.action, p.code, p.holder);   // KB1: the holder staged unbound, the bind lands
+    stageReplace(unsaved, p.action, p.code, p.holders);   // KB1: the holder staged unbound, the bind lands
     refresh();
   } else if (yes && p?.kind === 'defaults') {
     // SetDefaults (:296-317) - KB1: STAGED, as the page's own sentence
@@ -359,7 +367,7 @@ function promptCard() {
   const c = el('div', 'card ctl-prompt');
   c.append(el('h3', null, prompt.kind === 'defaults' ? 'Default controls' : prompt.kind === 'replace' ? 'Key in use' : 'Remove keybind'));
   const rows = prompt.kind === 'defaults' ? [DEFAULTS_PROMPT]
-    : prompt.kind === 'replace' ? replaceKeybindPromptRows(prompt.action, prompt.code, prompt.holder)
+    : prompt.kind === 'replace' ? replaceKeybindPromptRows(prompt.action, prompt.code, prompt.holders, prompt.usingPrimary)
       : removeKeybindPromptRows(prompt.action, currentDict(unsaved).get(prompt.action));
   for (const line of rows) c.append(el('p', 'meta', line));
   const acts = el('div', 'acts');

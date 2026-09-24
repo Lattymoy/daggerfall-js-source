@@ -55,13 +55,13 @@ import { loadImg, nativeMetrics, drawImg } from './nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
 import { drawText, measureText } from './text.js';
-import { ACTIONS, PORT_ACTIONS, saveKeyBinds } from '../systems/inputActions.js';   // AUDIT SOC D3: the port's own rows YIELD here - this window's art cannot draw them
+import { ACTIONS, PORT_ACTIONS, HIDDEN_ACTIONS, saveKeyBinds } from '../systems/inputActions.js';   // AUDIT SOC D3: the port's own rows YIELD here - this window's art cannot draw them
 import { bindings, mouseCode } from './input.js';   // MAC-K1: the ONE crossed-name table, so this grid does not spell it a second time
 import {
   createUnsavedKeybinds, currentDict, setUnsavedBinding, checkDuplicates,
   applyUnsavedKeybinds, resetUnsavedToDefaults, buttonText, ELONGATED_TEXT,
   INTERNAL_DUPE_COLOR, CROSS_DUPE_COLOR, comboFromEvent, removeKeybindPromptRows,
-  bindingHolder, replaceKeybindPromptRows, stageReplace,
+  bindingHolders, replaceKeybindPromptRows, stageReplace,
 } from '../systems/controlsConfig.js';
 import { ToolTip } from './toolTip.js';
 import { MouseControlsWindow } from './mouseControlsWindow.js';   // ROAD-G G6: the ADVANCED tab's destination
@@ -174,12 +174,14 @@ export class ControlsWindow {
     // Setup (DaggerfallControlsWindow.cs:142) - the joystick window's
     // staging, owned here because THIS window's OnPop saves it
     this.unsaved.joystick = createJoystickUnsaved(bindings());
-    this.buttons = gridButtons();
+    // AUDIT KB1: the grid's art prints every DFU row, Slide among them; the port's HIDDEN two do nothing, so their
+    // slot is not a button - a key bound there would be a key spent twice (inputActions.js HIDDEN_ACTIONS).
+    this.buttons = gridButtons().filter((b) => !HIDDEN_ACTIONS.includes(b.action));
     this.capture = null;        // the action awaiting a key (:52 waitingForInput)
     this.top = null;            // 'dupes' | 'defaults' | 'remove' | 'replace' | 'note'
     this._noteRows = null;
     this._removeAction = null;
-    this._replace = null;       // KB1: { action, code, holder } while the replace prompt stands
+    this._replace = null;       // KB1: { action, code, holders } while the replace prompt stands
     this._box = null;
     this.dupes = checkDuplicates(this.unsaved, { yield: PORT_ACTIONS });
     // U37: DFU points every key button at the shared tooltip and
@@ -227,13 +229,14 @@ export class ControlsWindow {
 
   /** KB1 (law 4): the captured code lands - or, when another action holds it in the shown dict, the window ASKS.
    *  The staged copy used to take it, and the `yield` pass then left a port row this art cannot draw silently
-   *  unbound (the player never saw that G stopped dropping the torch). The prompt names the holder, a mod's with
-   *  its mod, so the one clash `yield` still settles is a combo's modifier, which no single key names. */
+   *  unbound (the player never saw that G stopped dropping the torch). The prompt names every holder, a mod's with
+   *  its mod - AUDIT KB1 F5: under getDuplicates' own relation, so a combo's bare modifier is asked for too and
+   *  `yield` is left nothing a capture made. */
   _bindCaptured(code) {
     const action = this.capture;
     this.capture = null;
-    const holder = bindingHolder(this.unsaved, action, code);
-    if (holder) { this.top = 'replace'; this._replace = { action, code, holder }; return; }
+    const holders = bindingHolders(this.unsaved, action, code);
+    if (holders.length) { this.top = 'replace'; this._replace = { action, code, holders }; return; }
     setUnsavedBinding(this.unsaved, action, code);
     this._refresh();
   }
@@ -267,10 +270,13 @@ export class ControlsWindow {
       this._bindCaptured(combo ?? code);
       return;
     }
+    // AUDIT KB1: a prompt is answered by a PRESS. The hosts hand repeated keydowns to the window, so a key held a beat
+    // after its capture (Escape, Y, N - all bindable) answered the prompt it had just raised.
+    if (this.top && e?.repeat) return;
     if (this.top === 'replace') {
       if (code === 'KeyY') {
         this._click();
-        stageReplace(this.unsaved, this._replace.action, this._replace.code, this._replace.holder);
+        stageReplace(this.unsaved, this._replace.action, this._replace.code, this._replace.holders);
         this._refresh();
       }
       if (code === 'KeyY' || code === 'KeyN' || code === 'Escape') { this.top = null; this._replace = null; }
@@ -502,7 +508,7 @@ export class ControlsWindow {
         : this.top === 'defaults' ? ['Are you sure you want to set default controls?']
           : this.top === 'remove'
             ? removeKeybindPromptRows(this._removeAction, currentDict(this.unsaved).get(this._removeAction))
-            : this.top === 'replace' ? replaceKeybindPromptRows(this._replace.action, this._replace.code, this._replace.holder)
+            : this.top === 'replace' ? replaceKeybindPromptRows(this._replace.action, this._replace.code, this._replace.holders, this.unsaved.usingPrimary)
               : this._noteRows;
       const buttons = (this.top === 'defaults' || this.top === 'remove' || this.top === 'replace') ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : [];
       this._box = layoutMessageBox(font, rows, buttons);

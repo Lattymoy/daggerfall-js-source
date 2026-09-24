@@ -82,6 +82,7 @@ const presenters = [];
 export function registerPresenter(p) {
   if (!p || typeof p !== 'object') return () => {};
   presenters.push(p);
+  flushWaiting();
   return () => { const i = presenters.indexOf(p); if (i >= 0) presenters.splice(i, 1); };
 }
 
@@ -98,7 +99,7 @@ function order() {
 export const notifyPresenters = () => order().map((p) => p.priority ?? 0);
 
 /** Tests: drop every presenter at once. */
-export function _resetNotifyForTests() { presenters.length = 0; }
+export function _resetNotifyForTests() { presenters.length = 0; waiting.length = 0; }
 
 /** A message as rows: a string is one row (SetText's one Text token,
  *  DaggerfallMessageBox.cs:405-408, split on newlines the way the
@@ -181,6 +182,10 @@ function rowText(r) {
  * @param {string} text  @param {number} [delay]
  */
 export function hudText(text, delay = undefined) {
+  flushWaiting();   // AUDIT KB1 F3: a boot line still waiting goes first, the moment any host can speak
+  return speak(text, delay);
+}
+function speak(text, delay) {
   for (const p of order()) {
     if (typeof p.hudText !== 'function') continue;
     if (p.hudText(String(text ?? ''), delay)) return true;
@@ -192,3 +197,25 @@ export function hudText(text, delay = undefined) {
  *  kept as its own name because the reference calls both in
  *  consecutive lines (PlayerActivate.cs:527-529). */
 export const popupMessage = (text) => hudText(text);
+
+/**
+ * AUDIT KB1 F3: A LINE SAID BEFORE ANY HOST STANDS. `hudText` answers false with no presenter and the line is gone -
+ * right for a producer inside a scene, wrong for one that speaks at BOOT: the keybinding file is brought forward the
+ * moment the registry is first read (systems/inputActions.js migrateKeyBinds), and what it could not carry (an action
+ * whose new key the player's own file already spends) must reach the player, not the console. So the line waits
+ * here and is spoken at the first registration of a presenter that takes HUD text, or the first line any producer
+ * speaks once one can - FALLBACK, NOT SILENCE, for
+ * the one moment the fallback above cannot cover.
+ */
+const waiting = [];
+export function hudTextWhenShown(text, delay = undefined) {
+  flushWaiting();
+  if (waiting.length || !speak(text, delay)) waiting.push([String(text ?? ''), delay]);   // in order, behind any still waiting
+}
+function flushWaiting() {
+  while (waiting.length) {
+    const [text, delay] = waiting[0];
+    if (!speak(text, delay)) return;
+    waiting.shift();
+  }
+}

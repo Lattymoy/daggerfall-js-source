@@ -18,7 +18,7 @@
 
 import {
   ACTIONS, getBinding, setBinding, addRemovedPrimaryAction, addRemovedSecondaryAction, resetDefaults,
-  isCombo, getCombo, comboCode, actionLabel, createBindings, serializeKeyBinds, loadKeyBinds,
+  isCombo, getCombo, comboCode, actionLabel, actionLive, createBindings, serializeKeyBinds, loadKeyBinds,
 } from './inputActions.js';
 
 /** internalDupeColor / crossDupeColor (:44-45): red for a clash
@@ -176,12 +176,28 @@ function yieldDuplicates(u, yielded) {
  *  refuses to close while checkDuplicates reports either kind of
  *  clash (AllowCancel false), which is exactly why that gate blocks
  *  the exit rather than merely colouring the labels. Callers that
- *  bypass the window must run checkDuplicates themselves. */
+ *  bypass the window must run checkDuplicates themselves.
+ *
+ *  AUDIT KB1 F4: "differs from the live one" is read off the store AS IT
+ *  STOOD BEFORE THE APPLY, not as the walk has left it. A code that
+ *  MOVES - the replace prompt's Yes: the holder staged null, the key
+ *  staged on the new action - is a duplicate-free set, and still the
+ *  walk's order decided it: when the new action came first, its
+ *  setBinding took the code off the holder, the holder's row then read
+ *  live null = staged null, and it was never marked removed - so the
+ *  next boot's autofill put its default back. KB1 appended every port
+ *  and mod action to the END of ACTIONS, which made that the usual
+ *  case. DFU's SetKeyBindValues (:541-559) walks the same way and
+ *  has the same hole; the port's window meant "stays unbound". */
 export function applyUnsavedKeybinds(store, u) {
+  const before = new Map();
+  for (const primary of [true, false]) {
+    for (const action of (primary ? u.primary : u.secondary).keys()) before.set(`${primary}:${action}`, getBinding(store, action, primary));
+  }
   for (const primary of [true, false]) {
     const dict = primary ? u.primary : u.secondary;
     for (const [action, code] of dict) {
-      const cur = getBinding(store, action, primary);
+      const cur = before.get(`${primary}:${action}`);
       if (cur !== code) {
         if (primary && code == null) addRemovedPrimaryAction(store, action);
         if (!primary && code == null) addRemovedSecondaryAction(store, action);   // PAD1: a cleared pad row stays cleared
@@ -369,29 +385,64 @@ export function removeKeybindPromptRows(action, code) {
  * already holds answered with a red clash (the enhanced pane) or - in the two classic windows, whose `yield` pass
  * gave a port row's key up to any grid bind - with a port action silently left unbound. Every window now stops at
  * the capture and asks; Yes stages the holder unbound and the bind, No stages nothing.
- * `bindingHolder` is the question: who else holds `code` - another action in the SHOWN dict, or anyone (this
+ * `bindingHolders` is the question: who else holds `code` - another action in the SHOWN dict, or anyone (this
  * action's own other slot included) in the other dict, which DFU's cross check counts as a clash too (:241-262).
- * Answers `{ action, primary }` or null.
+ * Answers every `{ action, primary }` that holds it, [] when the key is free.
+ *
+ * AUDIT KB1 F5: "holds it" is getDuplicates' OWN relation, not code equality - the prompt and the red clash are one
+ * law. A combo whose modifier another action holds bare (Shift+T against a bare Shift), and a bare key that heads
+ * someone's combo, clash in DFU's check (:188-214); read as `===`, they got no prompt and the red clash came back,
+ * and in the classic windows a Continue blocked by a row the art could not draw. Several can hold one bare modifier
+ * through their combos, so the answer is a list and Yes stages every one of them unbound.
  */
-export function bindingHolder(u, action, code) {
-  if (code == null) return null;
-  for (const [a, c] of currentDict(u)) if (a !== action && c === code) return { action: a, primary: u.usingPrimary };
+const clashes = (a, b) => a != null && b != null && getDuplicates([a, b]).size > 0;
+export function bindingHolders(u, action, code) {
+  if (code == null) return [];
+  const out = [];
+  for (const [a, c] of currentDict(u)) if (a !== action && clashes(code, c)) out.push({ action: a, primary: u.usingPrimary });
   const other = u.usingPrimary ? u.secondary : u.primary;
-  for (const [a, c] of other) if (c === code) return { action: a, primary: !u.usingPrimary };
-  return null;
+  for (const [a, c] of other) if (clashes(code, c)) out.push({ action: a, primary: !u.usingPrimary });
+  return out;
 }
 
-/** The prompt's two lines, in the player's words (inputActions.js actionLabel names a mod's key with its mod). */
-export function replaceKeybindPromptRows(action, code, holder) {
-  const who = `${actionLabel(holder.action)}${holder.primary ? '' : ' (secondary)'}`;
+/** The prompt's two lines, in the player's words (inputActions.js actionLabel names a mod's key with its mod).
+ *  AUDIT KB1 F6: the action's OWN other slot is not "used by" someone else - it is the key moving slots. */
+export function replaceKeybindPromptRows(action, code, holders, usingPrimary = true) {
+  const key = buttonText(code, true);
+  if (holders.length === 1 && holders[0].action === action) {
+    return [
+      `${key} is already ${actionLabel(action)}'s ${holders[0].primary ? 'primary' : 'secondary'} key.`,
+      `Make it the ${usingPrimary ? 'primary' : 'secondary'} key instead?`,
+    ];
+  }
+  const who = holders.map((h) => `${actionLabel(h.action)}${h.primary ? '' : ' (secondary)'}`).join(' and ');
   return [
-    `${buttonText(code, true)} is used by ${who}.`,
+    `${key} is used by ${who}.`,
     `Give it to ${actionLabel(action)} instead?`,
   ];
 }
 
-/** Yes: the holder is staged unbound in the dict it holds the code in, and the bind lands in the shown one. */
-export function stageReplace(u, action, code, holder) {
-  if (holder) (holder.primary ? u.primary : u.secondary).set(holder.action, null);
+/** Yes: every holder is staged unbound in the dict it holds the key in, and the bind lands in the shown one. */
+export function stageReplace(u, action, code, holders) {
+  for (const h of holders) (h.primary ? u.primary : u.secondary).set(h.action, null);
   currentDict(u).set(action, code);
+}
+
+/**
+ * AUDIT KB1 F3: THE CARRY'S REPORT, in the player's words - one HUD line per action the one-time carry of a v1
+ * keybinding file (inputActions.js migrateKeyBinds) could not keep on its key. A mod's line only while its mod is
+ * on: a key for a mod the player does not run is nothing to be told about at the door.
+ */
+export function keybindCarryNotes(report, live = actionLive) {
+  const out = [];
+  const holderText = (h) => (h ? actionLabel(h) : 'another key');
+  for (const l of report?.lost ?? []) {
+    if (!live(l.action)) continue;
+    out.push(`${actionLabel(l.action)} has no key: ${buttonText(l.code, true)} is ${holderText(l.holder)}'s. Set one in Controls.`);
+  }
+  for (const k of report?.kept ?? []) {
+    if (!live(k.action)) continue;
+    out.push(`${actionLabel(k.action)} stays on its new key: ${buttonText(k.code, true)} is ${holderText(k.holder)}'s. Change it in Controls.`);
+  }
+  return out;
 }

@@ -28,11 +28,11 @@ import {
 } from '../src/ui/input.js';
 import { setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
 import { bindCursorToggle, claimCursorKey, cursorKeyClaimed, cursorActive, setCursorActive } from '../src/player/pointerLock.js';
-import { installScreenshotKey, screenshotName } from '../src/ui/screenshot.js';
+import { setScreenshotCanvas, screenshotName } from '../src/ui/screenshot.js';
 import { LookFilter, takeFrameLook } from '../src/player/lookFilter.js';
 import { PauseOptionsWindow } from '../src/ui/pauseWindow.js';
 import { NativeInventoryWindow } from '../src/ui/nativeInventory.js';
-import { bindingHolder, createUnsavedKeybinds, replaceKeybindPromptRows, stageReplace, currentDict } from '../src/systems/controlsConfig.js';
+import { bindingHolders, createUnsavedKeybinds, replaceKeybindPromptRows, stageReplace, currentDict } from '../src/systems/controlsConfig.js';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const defaults = () => { const s = createBindings(); resetDefaults(s); return s; };
@@ -148,34 +148,39 @@ test('KB1 (Mac: "Enter = chat"): while a chat panel claims the key, Enter opens 
     setCursorActive(false);
     setBindings(null);
   }
-  assert.match(rd('src/ui/chatPanel.js'), /const releaseCursorKey = claimCursorKey\(\);/, 'the chat panel claims it for as long as it stands');
+  assert.match(rd('src/ui/chatPanel.js'), /const releaseCursorKey = claimCursorKey\(takesKey\);/, 'the chat panel claims it for as long as it stands - AUDIT KB1: press by press, on its own handler\'s word');
 });
 
 // ── DFU'S DEAD ROWS, BUILT ─────────────────────────────────────────────
 
-test('KB1 (Mac: "build 2"): PrintScreen takes a screenshot - F8 by default, wherever it is rebound, never from a text field (mutant: the listener reads a literal F8)', () => {
+test('KB1 (Mac: "build 2") + AUDIT KB1: PrintScreen takes a screenshot - F8 by default, wherever it is rebound, routed like every world action: never under a window, never from a text field, never on a repeat (mutants: the arm missing; the repeat routed)', () => {
   const store = defaults();
   setBindings(store);
-  let fn = null;
-  const target = { addEventListener: (t, f) => { fn = f; }, removeEventListener: () => { fn = null; } };
   const shots = [];
-  const off = installScreenshotKey({ id: 'c' }, { target, shoot: (c) => shots.push(c) });
-  const key = (code, extra = {}) => ({ code, key: code, repeat: false, target: { tagName: 'CANVAS' }, preventDefault() { this.prevented = true; }, ...extra });
-  fn(key('F8'));
-  assert.equal(shots.length, 1, 'F8 shoots');
-  fn(key('F8', { target: { tagName: 'INPUT' } }));
-  fn(key('F8', { repeat: true }));
-  assert.equal(shots.length, 1, 'not from a field, not on a repeat');
-  setBinding(store, 'F12', 'PrintScreen');
-  fn(key('F8'));
-  assert.equal(shots.length, 1, 'rebound, F8 no longer shoots');
-  fn(key('F12'));
-  assert.equal(shots.length, 2, '...and the new key does');
-  off();
-  assert.equal(fn, null, 'and it can be uninstalled');
-  assert.match(screenshotName(new Date(2026, 8, 23, 14, 5, 9)), /^daggerfall-20260923-140509\.png$/);
-  assert.match(rd('src/main.js'), /installScreenshotKey\(canvas\);/, 'installed once, at boot');
-  setBindings(null);
+  setScreenshotCanvas({ id: 'c' }, { shoot: (c) => shots.push(c) });
+  try {
+    const key = (code, extra = {}) => ({ code, key: code, repeat: false, target: { tagName: 'CANVAS' }, preventDefault() { this.prevented = true; }, ...extra });
+    const world = { uiOverlayActive: false };
+    assert.equal(routeKey(key('F8'), world), true);
+    assert.equal(shots.length, 1, 'F8 shoots');
+    routeKey(key('F8', { target: { tagName: 'INPUT' } }), world);
+    assert.equal(routeKey(key('F8', { repeat: true }), world), true, 'a repeat is swallowed...');
+    assert.equal(shots.length, 1, '...and shoots nothing; nor does a field');
+    const under = [];
+    routeKey(key('F8'), { uiOverlayActive: true, overlayIsNative: true, overlayInput: (c) => under.push(c) });
+    assert.deepEqual(under, ['F8'], 'a window up takes F8 (the automaps\' third background, AUDIT KB1)');
+    assert.equal(shots.length, 1, '...and no screenshot is taken under it');
+    setBinding(store, 'F12', 'PrintScreen');
+    routeKey(key('F8'), world);
+    assert.equal(shots.length, 1, 'rebound, F8 no longer shoots');
+    routeKey(key('F12'), world);
+    assert.equal(shots.length, 2, '...and the new key does');
+    assert.match(screenshotName(new Date(2026, 8, 23, 14, 5, 9)), /^daggerfall-20260923-140509\.png$/);
+    assert.match(rd('src/main.js'), /setScreenshotCanvas\(canvas\);/, 'the canvas handed in once, at boot');
+  } finally {
+    setScreenshotCanvas(null);
+    setBindings(null);
+  }
 });
 
 test('KB1 (Mac: "build 2"): CenterView levels the view through the look filter - the owed pitch replaced, paid out smoothly, and never latched as a hand\'s look (mutant: pitch snapped, or fed through add())', () => {
@@ -212,7 +217,7 @@ test('KB1: a window closes on the key that opened it, wherever it is bound - the
   inv.input('KeyI');
   assert.equal(inv.done, true, 'the pack closes on Inventory\'s key');
   setBindings(null);
-  assert.match(rd('src/ui/enhancedSpellbook.js'), /if \(overlayAction\(e\) !== 'back' && actionOf\(e\) !== 'CastSpell'\) return;/, 'the enhanced book on its own key too');
+  assert.match(rd('src/ui/enhancedSpellbook.js'), /if \(overlayAction\(e\) !== 'back' && eventAction\(e\) !== 'CastSpell'\) return;/, 'the enhanced book on its own key too (AUDIT KB1: the event\'s own read)');
 });
 
 // ── LAW 4: ASKED, NOT TAKEN ────────────────────────────────────────────
@@ -220,17 +225,17 @@ test('KB1: a window closes on the key that opened it, wherever it is bound - the
 test('KB1 law 4: a held key names its holder - across both dicts - and Yes gives it over, holder cleared (mutants: the other dict not asked; the holder left bound)', () => {
   const store = defaults();
   const u = createUnsavedKeybinds(store);
-  assert.deepEqual(bindingHolder(u, 'Jump', 'KeyG'), { action: 'TorchDrop', primary: true });
-  assert.deepEqual(replaceKeybindPromptRows('Jump', 'KeyG', { action: 'TorchDrop', primary: true }),
+  assert.deepEqual(bindingHolders(u, 'Jump', 'KeyG'), [{ action: 'TorchDrop', primary: true }]);
+  assert.deepEqual(replaceKeybindPromptRows('Jump', 'KeyG', [{ action: 'TorchDrop', primary: true }]),
     ['G is used by Drop the light (Handheld Torches).', 'Give it to Jump instead?']);
-  assert.equal(bindingHolder(u, 'Jump', 'Space'), null, 'an action\'s own key is no clash');
+  assert.deepEqual(bindingHolders(u, 'Jump', 'Space'), [], 'an action\'s own key is no clash');
   u.usingPrimary = false;
-  assert.deepEqual(bindingHolder(u, 'Jump', 'KeyG'), { action: 'TorchDrop', primary: true }, 'the primary is asked from the secondary side too');
-  stageReplace(u, 'Jump', 'KeyG', { action: 'TorchDrop', primary: true });
+  assert.deepEqual(bindingHolders(u, 'Jump', 'KeyG'), [{ action: 'TorchDrop', primary: true }], 'the primary is asked from the secondary side too');
+  stageReplace(u, 'Jump', 'KeyG', [{ action: 'TorchDrop', primary: true }]);
   assert.equal(u.primary.get('TorchDrop'), null);
   assert.equal(currentDict(u).get('Jump'), 'KeyG');
   for (const f of ['src/ui/enhancedControls.js', 'src/ui/controlsWindow.js', 'src/ui/mouseControlsWindow.js']) {
-    assert.match(rd(f), /bindingHolder\(/, `${f} asks`);
+    assert.match(rd(f), /bindingHolders\(/, `${f} asks`);
   }
 });
 
@@ -246,7 +251,7 @@ test('KB1 law 6: a v1 file comes forward ONCE - the three moved DFU defaults let
   delete file.version;
   const s = createBindings();
   loadKeyBinds(s, file);
-  const moved = migrateKeyBinds(s, 1);
+  const { moved } = migrateKeyBinds(s, 1);
   resetDefaults(s, true);
   assert.ok(moved.includes('AbortSpell off KeyE') && moved.includes('ToggleConsole off Backquote') && moved.includes('Slide off ControlLeft'));
   assert.equal(getBinding(s, 'Interact'), 'KeyE', 'E interacts');
@@ -256,15 +261,16 @@ test('KB1 law 6: a v1 file comes forward ONCE - the three moved DFU defaults let
   assert.equal(actionForCode(s, 'ControlLeft'), null, 'Left Ctrl is free');
   assert.equal(getBinding(s, 'QuickDial'), 'Tab');
   assert.equal(getBinding(s, 'HorseMount'), 'Comma');
-  assert.deepEqual(migrateKeyBinds(s, KEYBINDS_VERSION), [], 'a v2 file is never carried twice');
+  assert.deepEqual(migrateKeyBinds(s, KEYBINDS_VERSION), { moved: [], kept: [], lost: [] }, 'a v2 file is never carried twice');
   // a player who had put Rest on E keeps it; Interact waits, rebindable
   const mine = createBindings();
   loadKeyBinds(mine, file);
   mine.primary.set('KeyE', 'Rest');
-  migrateKeyBinds(mine, 1);
+  const told = migrateKeyBinds(mine, 1);
   resetDefaults(mine, true);
   assert.equal(actionForCode(mine, 'KeyE'), 'Rest');
   assert.equal(getBinding(mine, 'Interact'), null, 'the new action waits rather than fighting for the key');
+  assert.deepEqual(told.lost.find((l) => l.action === 'Interact'), { action: 'Interact', code: 'KeyE', holder: 'Rest' }, 'AUDIT KB1 F3: ...and the player is told so');
   assert.equal(getBinding(mine, 'AbortSpell'), 'Backquote', 'the abort still moves - E was not its to keep');
 });
 
@@ -283,8 +289,8 @@ test('KB1 law 6: a mod key the player SAVED is carried into the registry; a ship
     const s = createBindings();
     resetDefaults(s);
     for (const [c, a] of [...s.primary]) if (['TorchToggleLight', 'TorchDrop', 'TorchThrow', 'ShoulderSwitch', 'AutoPerspective', 'FollowPaths', 'HorseMount', 'HorseSummon', 'Interact', 'QuickDial'].includes(a)) s.primary.delete(c);
-    s.primary.delete('KeyL');   // the player's L, free for the carry (LogBook's default re-lands elsewhere or waits)
-    const moved = migrateKeyBinds(s, 1);
+    s.primary.delete('KeyL'); s.removedPrimary.add('LogBook');   // the player had cleared LogBook's L in Controls - free for the carry (AUDIT KB1: a real v1 file marks the removal, and the carry runs after the autofill)
+    const { moved } = migrateKeyBinds(s, 1);
     resetDefaults(s, true);
     assert.equal(getBinding(s, 'TorchToggleLight'), 'KeyL', 'a key they chose is theirs');
     assert.equal(getBinding(s, 'TorchDrop'), 'KeyG', 'Tab was the mod\'s own shipped value - the new default stands');

@@ -312,8 +312,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // enhanced prompts) walked the player and flipped the modes with every letter; routeKey's own gate stood only
     // under an overlay.
     if (isTextEntryTarget(e.target)) return;
-    keys.add(e.code);
-    noteKeyDown(keyEdge, e.code, e.repeat);   // MWCROUCH: the press event, buffered for the frame that reads it
+    // AUDIT KB1 (the hosts lens' second finding): and a key a WINDOW takes joins no ring - this listener runs before
+    // the routing one below, so the window is still up here, and the E that closed it was on the next frame's down
+    // ring: `pressed(..., 'Interact')` activated again on a slot now empty. DFU's PollInput never runs under a pausing
+    // window (InputManager.cs:487-503).
+    if (!ctx.uiOverlayActive) {
+      keys.add(e.code);
+      noteKeyDown(keyEdge, e.code, e.repeat);   // MWCROUCH: the press event, buffered for the frame that reads it
+    }
     if (e.code === 'AltLeft') e.preventDefault();
     // R1: the four modes switch here too - DFU's currentMode is global
     // and the standalone dungeon has no townTalk to carry the keydown.

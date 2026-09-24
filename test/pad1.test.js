@@ -261,7 +261,7 @@ test('PAD1-E every registry action has a consumer, or is on the recorded list of
   // KB1: CenterView and PrintScreen are READ now (Mac: "build 2") - the look filter's centre and ui/screenshot.js -
   // and the two left are HIDDEN_ACTIONS (off the pane, unbound). The hotbar's slots are read through the one list
   // that names them (HOTBAR_SLOT_ACTIONS, beside the registry), so it is counted as their reader.
-  const hotbarRead = files.some(([, src]) => /HOTBAR_SLOT_ACTIONS\.indexOf\(actionOf\(/.test(src));
+  const hotbarRead = files.some(([, src]) => /HOTBAR_SLOT_ACTIONS\.indexOf\(eventAction\(/.test(src));   // AUDIT KB1: the event's own read
   assert.ok(hotbarRead, 'the bar reads its ten slots through HOTBAR_SLOT_ACTIONS');
   const left = unread.filter((a) => !(hotbarRead && HOTBAR_SLOT_ACTIONS.includes(a)));
   assert.deepEqual(left.sort(), [...HIDDEN_ACTIONS].sort(), `unrouted: ${left}`);

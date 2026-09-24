@@ -30,7 +30,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  paneControls, discardControlsStaging, captureArmed, controlsStaging,
+  paneControls, discardControlsStaging, captureArmed, controlsStaging, controlsPromptOpen, dismissControlsPrompt,
   controlsDuplicates, shownGroups, MULTIPLE_ASSIGNMENTS, DEFAULTS_PROMPT,
 } from '../src/ui/enhancedControls.js';
 import { CATEGORY_IDS } from '../src/ui/settingsMap.js';   // AUDIT FT16 CTRL-a: the door the bindings live behind
@@ -38,7 +38,7 @@ import { SYSTEM_PANES } from '../src/ui/enhancedMenu.js';
 import { KEYBIND_ROWS } from '../src/ui/mouseControlsWindow.js';
 import { bindings, setBindings, isTextEntryTarget } from '../src/ui/input.js';
 import {
-  ACTIONS, createBindings, resetDefaults, getBinding, onSavedKeyBinds, comboCode, ACTION_GROUPS, HIDDEN_ACTIONS,
+  ACTIONS, createBindings, resetDefaults, getBinding, setBinding, onSavedKeyBinds, comboCode, ACTION_GROUPS, HIDDEN_ACTIONS,
 } from '../src/systems/inputActions.js';
 import { setModSetting, modSetting } from '../src/systems/modSettings.js';   // KB1: a mod's group follows its switch
 import { currentDict, buttonText, removeKeybindPromptRows } from '../src/systems/controlsConfig.js';
@@ -288,6 +288,11 @@ test('FIX-F: a key held under a modifier binds the COMBO', () => {
   withPane(({ doc, view }) => {
     keyBtn(view, 'Inventory').onclick();
     doc.listeners[0].fn(keyEvent('KeyT', { shiftKey: true }));
+    // AUDIT KB1 F5: Run holds Left Shift bare, and DFU's combo law (GetDuplicates :188-196) makes that a clash - so
+    // the combo is ASKED for, like any held key, and Yes lands it with Run staged unbound.
+    assert.ok(!captureArmed() && find(view.body, 'act').some((b) => b.textContent === 'Yes'), 'the prompt stands');
+    answer(view, true);
+    assert.equal(currentDict(controlsStaging()).get('Run'), null, 'the bare modifier\'s holder gives it up');
     const code = currentDict(controlsStaging()).get('Inventory');
     assert.equal(code, comboCode('ShiftLeft', 'KeyT'),
       'comboFromEvent maps the event’s virtual flag onto the LEFT physical key');
@@ -374,6 +379,7 @@ test('MAC-K1: a button pressed under a modifier binds the COMBO, as a key does',
     keyBtn(view, 'Inventory').onclick();
     doc.listeners.find((l) => l.type === 'mousedown')
       .fn({ button: 1, shiftKey: true, preventDefault() {}, stopPropagation() {} });
+    answer(view, true);   // AUDIT KB1 F5: Run's bare Left Shift heads the combo - asked, then given
     assert.equal(currentDict(controlsStaging()).get('Inventory'), comboCode('ShiftLeft', 'Mouse2'),
       'one combo law, whichever door the code came through');
   });
@@ -385,7 +391,7 @@ test('FIX-F: while a capture is armed EVERY other control is inert (:281 etc.)',
   // Defaults (:299), Continue (:321), CurrentBindings (:338), the
   // keybind button (:361) and the right-click remove (:372, ANDed
   // with the unbound refusal). The classic grid carries it in one
-  // line (ui/controlsWindow.js:377 `if (this.capture) return true;`);
+  // line (ui/controlsWindow.js:383 `if (this.capture) return true;`);
   // this face carries it as the `act` wrapper. Without it CONTINUE
   // saves and re-stages under a LIVE capture, and the Primary toggle
   // flips the dict the pending keystroke is about to be written into.
@@ -470,11 +476,14 @@ test('KB1: a key another action holds ASKS before it moves (law 4) - No stages n
 });
 
 test('FIX-F: duplicates are flagged and BLOCK Continue with the classic window’s words', () => {
-  withPane(({ doc, view, store }) => {
-    // KB1: an exact code asks now (above), so the clash left to colour is DFU's COMBO law (GetDuplicates' second
-    // phase, :188-196): a combo's modifier may not also stand as an independent key, and Run holds Left Shift.
-    keyBtn(view, 'Inventory').onclick();
-    doc.listeners[0].fn(keyEvent('KeyT', { shiftKey: true }));
+  withPane(({ view, store, render }) => {
+    // KB1 + AUDIT KB1 F5: every capture ASKS now, exact codes and DFU's combo law alike, so a clash reaches the pane
+    // only from the FILE - a hand-edited one, or one saved before the prompt existed. Here the live registry holds
+    // Inventory on Shift+T while Run holds Left Shift bare (GetDuplicates' second phase, :188-196), and the pane
+    // stages what it is handed.
+    setBinding(store, comboCode('ShiftLeft', 'KeyT'), 'Inventory');
+    discardControlsStaging();
+    render();
     assert.equal(controlsDuplicates().ok, false);
     assert.ok(controlsDuplicates().internal.has(comboCode('ShiftLeft', 'KeyT')));
     const flagged = find(view.body, 'ctl-dupe').map((b) => b.dataset.action).sort();
@@ -488,8 +497,9 @@ test('FIX-F: duplicates are flagged and BLOCK Continue with the classic window�
     assert.equal(MULTIPLE_ASSIGNMENTS, 'You have multiple assignments...');
     assert.match(read('src/ui/controlsWindow.js'), /'You have multiple assignments\.\.\.'/,
       'and the two windows say the same thing because it is the same refusal');
-    // ...and NOTHING reached the registry.
-    assert.equal(getBinding(store, 'Inventory', true), 'F6');
+    // ...and NOTHING reached the registry: it holds what it held.
+    assert.equal(getBinding(store, 'Inventory', true), comboCode('ShiftLeft', 'KeyT'));
+    assert.equal(getBinding(store, 'Run', true), 'ShiftLeft');
   });
 });
 
@@ -616,15 +626,17 @@ test('FIX-F / KB1: DEFAULTS resets behind a confirm, through the registry’s ow
 });
 
 test('FIX-F: the PRIMARY/SECONDARY toggle is refused while the shown dict clashes', () => {
-  withPane(({ doc, view }) => {
+  withPane(({ view, store, render }) => {
     assert.equal(controlsStaging().usingPrimary, true);
     one(view.body, 'ctl-which').onclick();
     assert.equal(controlsStaging().usingPrimary, false, 'the secondary dict is editable');
     assert.equal(keyBtn(view, 'MoveForwards').textContent, 'NONE', 'and it starts empty');
     one(view.body, 'ctl-which').onclick();
 
-    keyBtn(view, 'Inventory').onclick();
-    doc.listeners[0].fn(keyEvent('KeyT', { shiftKey: true }));   // KB1: the combo clash (an exact code asks first)
+    // AUDIT KB1 F5: every capture asks, so the clash comes from the file (the combo law against Run's Left Shift)
+    setBinding(store, comboCode('ShiftLeft', 'KeyT'), 'Inventory');
+    discardControlsStaging();
+    render();
     one(view.body, 'ctl-which').onclick();
     assert.equal(controlsStaging().usingPrimary, true,
       'DaggerfallControlsWindow refuses the switch while the shown dict clashes (:337-343)');
@@ -657,4 +669,19 @@ test('FIX-F: the pane wears the skin’s own classes and adds no face of its own
     'the enhanced pane drives the LAW modules and nothing else - dragging the '
     + 'classic canvas windows (controlsWindow/mouseControlsWindow/nativePanel) in '
     + 'would make the enhanced skin pay for art it never draws');
+});
+
+test('AUDIT KB1 (UI 4): Escape on the replace prompt answers No and KEEPS the staged binds - the menu\'s back stack asks the pane first (mutant: the prompt not reported open, so the section is left and the staging discarded)', () => {
+  withPane(({ doc, view }) => {
+    keyBtn(view, 'MoveForwards').onclick();
+    doc.listeners[0].fn(keyEvent(FREE));
+    assert.equal(currentDict(controlsStaging()).get('MoveForwards'), FREE, 'a staged bind');
+    keyBtn(view, 'Jump').onclick();
+    doc.listeners[0].fn(keyEvent('KeyE'));
+    assert.equal(controlsPromptOpen(), true, 'E is Interact\'s - the prompt stands');
+    dismissControlsPrompt();   // what the back stack's Escape now calls
+    assert.equal(controlsPromptOpen(), false);
+    assert.equal(currentDict(controlsStaging()).get('Jump'), 'Space', 'No: nothing moved');
+    assert.equal(currentDict(controlsStaging()).get('MoveForwards'), FREE, 'and the earlier staged bind is still there');
+  });
 });

@@ -729,16 +729,26 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
       e.stopPropagation();
       return;
     }
-    if (log.open) {
-      // open but the caret wandered (a tap on the canvas): the open key brings it back rather than reaching the game
-      if (action(e) === CHAT_OPEN_ACTION && e.isTrusted !== false && !isTextEntryTarget(e.target)) { e.preventDefault(); e.stopPropagation(); input.focus?.(); }
-      return;
-    }
-    if (hidden) return;   // CHAT-R2: put away means put away - the key does not pull it back
-    if (isOpenKey(e, { canOpen, overlay, action })) { e.preventDefault(); e.stopPropagation(); open(); }
+    if (!takesKey(e)) return;
+    e.preventDefault(); e.stopPropagation();
+    if (log.open) input.focus?.();   // open but the caret wandered (a tap on the canvas): the open key brings it back rather than reaching the game
+    else open();
+  };
+  /** Whether a key outside the field is this panel's: the open key while it is closed (and not put away), or the
+   *  same key bringing the caret back while it is open. AUDIT KB1 (the UI lens' first finding): ONE predicate, read
+   *  by the handler above AND by the cursor toggle through the claim below - the claim used to stand for the panel's
+   *  whole life, so with the chat HIDDEN (CHAT-R2: "a key the game itself wants") or unable to open, Enter neither
+   *  opened it nor freed the mouse: a dead key, saved across sessions with the hidden pref. */
+  const takesKey = (e) => {
+    if (log.open) return action(e) === CHAT_OPEN_ACTION && e.isTrusted !== false && !isTextEntryTarget(e.target);
+    if (hidden) return false;   // CHAT-R2: put away means put away - the key does not pull it back
+    return isOpenKey(e, { canOpen, overlay, action });
   };
   win.addEventListener('keydown', onKey, true);
-  const releaseCursorKey = claimCursorKey();   // KB1: one key, one action - Enter opens this panel online, FreeMouse (Y) frees the mouse
+  // KB1: one key, one action - Enter opens this panel online, FreeMouse (Y) frees the mouse. The toggle's capture
+  // listener is registered first (at host boot, before online starts), so it asks the claim, and the claim is
+  // exactly the press this panel will take.
+  const releaseCursorKey = claimCursorKey(takesKey);
   form.addEventListener('submit', (e) => { e.preventDefault(); submit({ keep: touch }); });
   close.addEventListener('click', () => closePanel());
   openBtn.addEventListener('click', () => open());

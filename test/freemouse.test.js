@@ -119,8 +119,9 @@ test('FREEMOUSE by source: ONE reader ORs the two actions - there is no second t
   // over the same module global is the bug PL3 spent a slice on, and a
   // host-side `e.code === 'KeyY'` is AUDIT 58's (a key-literal in a host
   // makes a rebindable row inert in both directions).
-  // KB1: ...and ActivateCursor answers only while no chat claims its key (online, Enter opens the chat; Y frees the mouse)
-  assert.match(pl, /const act = actionOf\(e\);\s*\n\s*if \(act !== FREE_MOUSE_ACTION && !\(act === 'ActivateCursor' && !cursorKeyClaimed\(\)\)\) return;/);
+  // KB1: ...and ActivateCursor answers only while no chat claims THIS press (online, Enter opens the chat; Y frees the
+  // mouse) - AUDIT KB1: the claim is asked with the event, so a chat that declines the press leaves Enter to DFU
+  assert.match(pl, /const act = actionOf\(e\);\s*\n\s*if \(act !== FREE_MOUSE_ACTION && !\(act === 'ActivateCursor' && !cursorKeyClaimed\(e\)\)\) return;/);
   assert.equal((pl.match(/addEventListener\('keydown', onKey, true\)/g) ?? []).length, 1, 'one listener');
   // No host COMPARES an event's code to the default key. The first
   // draft of this line swept for the string and caught

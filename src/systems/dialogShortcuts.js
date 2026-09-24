@@ -476,8 +476,8 @@ export function shortcutBinding(button) {
  * port's windows are handed a code by their host, and the two hosts
  * speak DIFFERENT alphabets - a native window gets the raw `e.code`,
  * the dungeon's overlay seam gets the 'char:<k>' action ui/input.js
- * builds (input.js:330-346, the mangling restWindow's toggle-close
- * reads back through this function at restWindow.js:300-302). Both
+ * builds (input.js:366-382, the mangling restWindow's toggle-close
+ * reads back through this function at restWindow.js:304-306). Both
  * resolve to one browser code here so a window asks the table once and
  * works under either host.
  */
