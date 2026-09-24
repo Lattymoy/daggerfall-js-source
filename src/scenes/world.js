@@ -9559,6 +9559,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   if (onlineOn) townTalk.ensureFactions?.().then(() => { if (townTalk.factionDict) setWorldPriceTilt(worldPriceTiltOf(townTalk.factionDict)); }).catch(() => {});
   let peerRiders = null;   // RIDE: another player in the saddle, drawn as Eye Of The Beholder's mounted sprite (net/peerRiders.js)
   let online = null, remotePlayers = null, peerBodies = null, nameLayer = null, nameSight = null, _onlineLast = null, _onlineKey = null, _onlineKeySince = 0, _onlineMovingUntil = 0;
+  const voiceChannels = new VoiceChannels();   // VOICE-CUT1/VOICE-MOVE1: frame-owned so active positional speech can follow its speaker
   let _hsLatch = false;   // AUDIT DISC7 B2: the motor's half-speed flag off the last frame that MOVED - a stop reads it true (standing), and the move hold must not send that as a slow trot
   // D-ONLINE1 (2026-09-17, a player: "still see you have died then main menu"): `onlineFrame` LEAVES the room the
   // instant the death screen goes up (AUDIT ONLINE D12: the dead broadcast nothing and see no one), every frame,
@@ -9894,7 +9895,6 @@ export async function bootWorld(canvas, renderer, params, status) {
     // generation token also defeats the Morrowind decode race: if A is still loading when B arrives,
     // A is stale when its await finishes and is never allowed to start over B. Different speakers keep
     // independent channels and can overlap naturally.
-    const voiceChannels = new VoiceChannels();
     online.onVoice = async ({ id, playback, mine }) => {
       const generation = voiceChannels.replace(id);
       const clip = playback?.source === 'df' ? playback.clip : await loadMorrowindVoice(audio, playback);
@@ -9984,6 +9984,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (const link of chatLinks?.values() ?? []) link.leave();
       peerBodies?.destroy();
       remotePlayers?.destroy();
+      voiceChannels.clear();   // VOICE-MOVE1: no long positional line survives the world/session teardown
       peerRiders?.destroy();   // RIDE
     });
   };
@@ -11795,6 +11796,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) hcc.sweepOwners(ids, now, FOES_STALE_MS); }   // HCC-ONLINE: a peer's team goes as their puppets and camps do - the same memoised list, the same liveness   // PERF11: the same list   // SURV3: a peer's camps go as their puppets do - the same liveness, the same answer-gate   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
     hcc.pruneKept(isCellRoom(online.room) ? [online.room, ...online.haloRooms()] : [], now);   // HCC-PARK: a kept team is its CELL's - it stands while I hold that cell's socket (mine or a halo's), and its welcome brings it back
     const drawable = online.drawable();
+    // VOICE-MOVE1: the listener already follows the camera in audio.setListener(); move the SOURCE too so
+    // a long song/line follows the remote body's interpolated pose instead of staying where /v began.
+    voiceChannels.syncPositions(online.peers, onlineToScene);
     peerCastVisuals(drawable);   // SPELLFX1: a peer's new cast, drawn once
     // RIDE (2026-09-23, Mac: "ensure over people see others riding on horses"): a peer in the saddle is drawn as the
     // rider FIRST, so the body and the doll below stand nothing for them and their name rides over the rider

@@ -10,8 +10,8 @@
 import { getPref } from './uiPrefs.js';
 
 /** VOICE-RANGE1/2: speech carries farther than incidental peer sounds.
- * Keep footsteps/swings/riding on PEER_SOUND_PROFILE (6 -> 30 m); a spoken line
- * stays strong a little farther out and fades to silence at 45 m. */
+ * Keep footsteps/swings/riding on PEER_SOUND_PROFILE (6 -> 30 m); spoken lines
+ * default to 45 m and the listener may tune that range from 15..100 m. */
 export const VOICE_DISTANCE_MIN = 15;
 export const VOICE_DISTANCE_MAX = 100;
 export const VOICE_DISTANCE_DEFAULT = 45;
@@ -36,7 +36,7 @@ export class VoiceChannels {
     const old = this._speakers.get(id);
     old?.stop?.();
     const generation = (old?.generation ?? 0) + 1;
-    this._speakers.set(id, { generation, stop: null });
+    this._speakers.set(id, { generation, stop: null, move: null });
     return generation;
   }
 
@@ -54,8 +54,24 @@ export class VoiceChannels {
       handle.stop();
       return false;
     }
-    this._speakers.set(id, { generation, stop: handle.stop });
+    this._speakers.set(id, { generation, stop: handle.stop, move: typeof handle.move === 'function' ? handle.move : null });
     return true;
+  }
+
+  /** VOICE-MOVE1: keep active positional lines on the speaker's live interpolated body.
+   * Flat self-echo handles have no move function and are deliberately ignored. A remote
+   * speaker that leaves the roster takes their still-playing line with them. */
+  syncPositions(peers, positionOf) {
+    for (const [id, slot] of this._speakers) {
+      if (!slot.move) continue;
+      const peer = peers?.get?.(id);
+      if (!peer?.shown) {
+        slot.stop?.();
+        this._speakers.delete(id);
+        continue;
+      }
+      slot.move(positionOf(peer.shown));
+    }
   }
 
   stop(id) {

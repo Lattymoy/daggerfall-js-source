@@ -140,7 +140,8 @@ test('VOICE-RANGE2: speech range and global voice volume are listener-side prefs
 test('VOICE-CUT1: each speaker owns one interruptible line; replacement cuts immediately and stale async completions are killed', () => {
   const ch = new VoiceChannels();
   const stopped = [];
-  const handle = (name) => ({ stop: () => stopped.push(name) });
+  const moved = [];
+  const handle = (name, mobile = false) => ({ stop: () => stopped.push(name), ...(mobile ? { move: (p) => moved.push([name, p]) } : {}) });
 
   const a1 = ch.replace('alice');
   assert.equal(ch.attach('alice', a1, handle('alice-1')), true);
@@ -155,13 +156,20 @@ test('VOICE-CUT1: each speaker owns one interruptible line; replacement cuts imm
   assert.equal(ch.attach('alice', a1, handle('alice-stale')), false);
   assert.deepEqual(stopped, ['alice-1', 'alice-stale'], 'a late async decode from the old generation is stopped');
 
-  assert.equal(ch.attach('alice', a2, handle('alice-2')), true);
+  assert.equal(ch.attach('alice', a2, handle('alice-2', true)), true);
+  ch.syncPositions(new Map([['alice', { shown: [4, 5, 6] }], ['bob', { shown: [1, 1, 1] }]]), (p) => p.map((n) => n + 1));
+  assert.deepEqual(moved, [['alice-2', [5, 6, 7]]], 'VOICE-MOVE1: only positional handles follow the current remote pose');
   const a3 = ch.replace('alice');
   assert.equal(a3, a2 + 1);
   assert.deepEqual(stopped, ['alice-1', 'alice-stale', 'alice-2']);
 
+  const c1 = ch.replace('carol');
+  assert.equal(ch.attach('carol', c1, handle('carol-1', true)), true);
+  ch.syncPositions(new Map(), (p) => p);
+  assert.deepEqual(stopped, ['alice-1', 'alice-stale', 'alice-2', 'carol-1'], 'VOICE-MOVE1: a positional line stops when its speaker leaves the roster');
+
   ch.clear();
-  assert.deepEqual(stopped, ['alice-1', 'alice-stale', 'alice-2', 'bob-1'], 'clear stops the other speaker too');
+  assert.deepEqual(stopped, ['alice-1', 'alice-stale', 'alice-2', 'carol-1', 'bob-1'], 'clear stops the other speaker too');
 });
 
 test('VOICE1 client: a presence session sends only to a capable relay, validates inbound playback, and channel sessions cannot emit voices', () => {

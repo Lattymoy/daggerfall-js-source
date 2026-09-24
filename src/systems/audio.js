@@ -518,7 +518,11 @@ export class AudioEngine {
     };
     src.onended = () => finish(false);
     src.start();
-    return { duration: buf.duration, stop: () => finish(true) };
+    return {
+      duration: buf.duration,
+      move: (p) => { if (!done) placeAudio(pan, p); },   // VOICE-MOVE1: a long one-shot stays attached to a moving speaker
+      stop: () => finish(true),
+    };
   }
 
   play3d(index, pos, volume = 1, opts = {}) {

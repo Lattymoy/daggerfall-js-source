@@ -49,7 +49,7 @@ function screenSide(eye, target, p) {
 
 
 test('VOICE-CUT1 audio: interruptible flat and positional one-shots expose stop handles without changing the old duration APIs', () => {
-  const { e, sources } = riggedEngine();
+  const { e, sources, panners } = riggedEngine();
 
   const flat = e.playOneShotHandle(42, 1);
   assert.ok(flat?.stop);
@@ -60,7 +60,10 @@ test('VOICE-CUT1 audio: interruptible flat and positional one-shots expose stop 
 
   const positional = e.play3dHandle(42, [1, 0, 3], 1, PEER_SOUND_PROFILE);
   assert.ok(positional?.stop);
+  assert.ok(positional?.move);
   assert.equal(positional.duration, 0.5);
+  positional.move([9, 2, 7]);
+  assert.deepEqual([panners.at(-1).positionX.value, panners.at(-1).positionY.value, panners.at(-1).positionZ.value], [9, 2, -7], 'VOICE-MOVE1: a live one-shot panner follows its speaker');
   positional.stop();
   assert.equal(sources.at(-1).stopped, true);
 
