@@ -958,11 +958,27 @@ export const KEY_MIGRATIONS = Object.freeze([
   Object.freeze({ vendor: 'horse-cart-and-cargo', key: 'Hotkeys.QuickMountDismount', was: 'F7' }),
   Object.freeze({ vendor: 'horse-cart-and-cargo', key: 'Hotkeys.SummonTransport', was: 'F10' }),
 ]);
+/** DISC19-E (2026-09-24, Mac: "The weapon widget default toggle under diverse weapons should be set to off by
+ *  default"): A SWITCH WHOSE DEFAULT MOVED, RESET ONCE. Diverse Weapons' Weapon Widget Preset has shipped off since
+ *  DISC16-B, but a default only answers for a player who never touched the switch, and every player who turned it on
+ *  while DW-CLIP shipped it on (or tried it) holds a SAVED value and still sees it on. So a stored value WITHOUT this
+ *  entry's stamp is let go on load and the file written back, and the shipped off applies. setModSetting stamps the
+ *  key when a player sets it from now on, so a choice made after the reset is kept across reloads - unlike
+ *  KEY_MIGRATIONS, which can only match a value. A file that never mentioned the mod is not grown one. */
+export const SWITCH_RESETS = Object.freeze([
+  Object.freeze({ vendor: 'diverse-weapons', key: 'WeaponWidgetPreset', stamp: 'WeaponWidgetPreset@DISC19' }),
+]);
 function migrate(m) {
   let changed = false;
   for (const { vendor, key, was } of KEY_MIGRATIONS) {
     const held = m?.[vendor];
     if (!held || held[key] !== was) continue;
+    delete held[key];
+    changed = true;
+  }
+  for (const { vendor, key, stamp } of SWITCH_RESETS) {
+    const held = m?.[vendor];
+    if (!held || !Object.hasOwn(held, key) || held[stamp] === true) continue;
     delete held[key];
     changed = true;
   }
@@ -1116,6 +1132,7 @@ export function setModSetting(vendor, key, value) {
   const m = load();
   const v = coerce(def, value);
   (m[vendor] ??= {})[key] = v;
+  for (const r of SWITCH_RESETS) if (r.vendor === vendor && r.key === key) m[vendor][r.stamp] = true;   // DISC19-E: chosen after the reset - kept
   save();
   return v;
 }
