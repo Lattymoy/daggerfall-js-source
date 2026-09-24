@@ -1,0 +1,183 @@
+[
+  {
+    "name": "DISC21-A-the-biography-weapon-hand-built",
+    "file": "src/systems/biography.js",
+    "old": "  if (group === 'Weapons') return createWeapon(t.index, t.index === ARROW_TEMPLATE ? 0 : material, rolls);\n",
+    "new": "  if (group === 'Weapons') return { group, templateIndex: t.index, material, name: t.name, value: 1 };\n",
+    "tests": [
+      "test/disc21.test.js"
+    ]
+  },
+  {
+    "name": "DISC21-A-the-bare-record-unminted",
+    "file": "src/systems/biography.js",
+    "old": "  return mintCondition(item);\n};",
+    "new": "  return item;\n};",
+    "tests": [
+      "test/disc21.test.js"
+    ]
+  },
+  {
+    "name": "DISC21-A-the-kit-s-mint-dropped",
+    "file": "src/systems/rriKits.js",
+    "old": "      mintCondition(dagger);\n",
+    "new": "",
+    "tests": [
+      "test/disc21.test.js"
+    ]
+  },
+  {
+    "name": "DISC21-A-the-kit-wears-nothing",
+    "file": "src/systems/rriKits.js",
+    "old": "      dagger.currentCondition = Math.trunc(dagger.maxCondition * QUESTIONS_DAGGER_WEAR);\n",
+    "new": "      dagger.currentCondition = Math.trunc((dagger.maxCondition ?? 0) * 0);\n",
+    "tests": [
+      "test/disc21.test.js"
+    ]
+  },
+  {
+    "name": "DISC21-A-no-repair-on-load",
+    "file": "src/systems/save.js",
+    "old": "    const n = repairUnmintedConditions(list);\n",
+    "new": "    const n = 0;\n",
+    "tests": [
+      "test/disc21.test.js"
+    ]
+  },
+  {
+    "name": "DISC21-A-the-repair-reminted-what-was-minted",
+    "file": "src/systems/conditionRepair.js",
+    "old": "if (!it || typeof it !== 'object' || it.maxCondition != null || !WEARABLE.has(it.group)",
+    "new": "if (!it || typeof it !== 'object' || !WEARABLE.has(it.group)",
+    "tests": [
+      "test/disc21.test.js"
+    ]
+  },
+  {
+    "name": "DISC21-A-the-repair-mints-what-is-not-worn",
+    "file": "src/systems/conditionRepair.js",
+    "old": " || !WEARABLE.has(it.group) || !Object.isExtensible(it)) continue;",
+    "new": " || !Object.isExtensible(it)) continue;",
+    "tests": [
+      "test/disc21.test.js"
+    ]
+  },
+  {
+    "name": "DISC21-A-the-arrow-whole",
+    "file": "src/systems/conditionRepair.js",
+    "old": "    if (it.group === 'Weapons' && it.templateIndex === ARROW_TEMPLATE) it.currentCondition = 0;\n    else if",
+    "new": "    if",
+    "tests": [
+      "test/disc21.test.js"
+    ]
+  },
+  {
+    "name": "DISC21-A-the-dagger-whole",
+    "file": "src/systems/conditionRepair.js",
+    "old": "    else if (had === 0 && isQuestionsDagger(it)) it.currentCondition = Math.trunc(it.maxCondition * QUESTIONS_DAGGER_WEAR);\n",
+    "new": "",
+    "tests": [
+      "test/disc21.test.js"
+    ]
+  },
+  {
+    "name": "DISC21-B-yes-opens-inside-the-click",
+    "file": "src/scenes/worldModes.js",
+    "old": "        onYes: () => { pendingDungeonWagonOpen = true; return null; },",
+    "new": "        onYes: () => { dungeonCtx.openInventoryWithWagon(); return null; },",
+    "tests": [
+      "test/disc21.test.js"
+    ]
+  },
+  {
+    "name": "DISC21-B-the-frame-never-takes-it",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (pendingDungeonWagonOpen) { pendingDungeonWagonOpen = false; dungeonCtx.openInventoryWithWagon(); }   // DISC21-B: the box is off the slot now\n",
+    "new": "",
+    "tests": [
+      "test/disc21.test.js"
+    ]
+  },
+  {
+    "name": "DISC21-B-a-pending-yes-outlives-the-exit",
+    "file": "src/scenes/worldModes.js",
+    "old": "    pendingDungeonWagonOpen = false;   // DISC21-B: a Yes pending is this dungeon's, never the next one's\n",
+    "new": "",
+    "tests": [
+      "test/disc21.test.js"
+    ]
+  },
+  {
+    "name": "DISC21-B-a-pending-yes-outlives-a-load",
+    "file": "src/scenes/worldModes.js",
+    "old": "        pendingDungeonWagonOpen = false;   // DISC21-B: nor a loaded or teleported player's next dungeon's\n",
+    "new": "",
+    "tests": [
+      "test/disc21.test.js"
+    ]
+  },
+  {
+    "name": "DISC21-C-the-line-never-names-the-key",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (!r) { say?.(emptySlotLine(hooks.hand?.() ?? undefined)); return { kind: 'empty' }; }",
+    "new": "  if (!r) { say?.(QUICKSLOT_TEXT.emptySlot); return { kind: 'empty' }; }",
+    "tests": [
+      "test/disc21.test.js"
+    ]
+  },
+  {
+    "name": "DISC21-C-names-it-with-the-weapon-out",
+    "file": "src/systems/quickslots.js",
+    "old": "  return weapon && sheathed && readyKey ?",
+    "new": "  return weapon && readyKey ?",
+    "tests": [
+      "test/disc21.test.js"
+    ]
+  },
+  {
+    "name": "DISC21-C-names-it-for-bare-hands",
+    "file": "src/systems/quickslots.js",
+    "old": "  return weapon && sheathed && readyKey ?",
+    "new": "  return sheathed && readyKey ?",
+    "tests": [
+      "test/disc21.test.js"
+    ]
+  },
+  {
+    "name": "DISC21-C-the-hand-reads-no-sheath",
+    "file": "src/ui/quickslotTags.js",
+    "old": "sheathed: !!pw?.sheathed,",
+    "new": "sheathed: false,",
+    "tests": [
+      "test/disc21.test.js"
+    ]
+  },
+  {
+    "name": "DISC21-C-the-wrong-action-s-key",
+    "file": "src/ui/quickslotTags.js",
+    "old": "  const tag = quickslotTag(CELL_ACTIONS.main, { bindings: store });\n  return { weapon",
+    "new": "  const tag = quickslotTag(CELL_ACTIONS.c2, { bindings: store });\n  return { weapon",
+    "tests": [
+      "test/disc21.test.js"
+    ]
+  },
+  {
+    "name": "DISC21-C-the-interior-reads-the-outer-rig",
+    "file": "src/scenes/worldModes.js",
+    "old": "    quickUse(n) { return host.quickUse?.(n, interiorWeapon) === true; },",
+    "new": "    quickUse(n) { return host.quickUse?.(n) === true; },",
+    "tests": [
+      "test/disc21.test.js",
+      "test/qs2_inputs.test.js"
+    ]
+  },
+  {
+    "name": "DISC21-C-the-world-host-reads-the-outer-rig",
+    "file": "src/scenes/world.js",
+    "old": "    hand: () => quickslotHand(rig),   // DISC21-C",
+    "new": "    hand: () => quickslotHand(weaponRig),   // DISC21-C",
+    "tests": [
+      "test/disc21.test.js"
+    ]
+  }
+]
