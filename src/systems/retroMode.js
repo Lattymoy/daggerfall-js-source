@@ -15,7 +15,7 @@
 // renderer never imports the settings store.
 //
 // THE TARGETS ARE ASSETS, NOT CODE. RetroRenderer's four RenderTexture
-// fields are assigned in the scene from Assets/Resources: RetroTarget
+// fields are assigned in PlayerAdvanced.prefab from Assets/Resources: RetroTarget
 // 320x200, RetroTarget640x400, and a _HUD twin of each (320x154 and
 // 640x308, m_Width/m_Height of the .renderTexture files) that
 // UpdateRenderTarget (:414-447, the pick at :425-435) picks when the large HUD is on AND
@@ -63,7 +63,7 @@
 //     the pillarbox's width * 46/320), and the world strip above it is
 //     wider for its height than DFU's - at 1920x1080 in 4:3 the bar is
 //     276 px against 207 and the strip 1.791 wide a unit of height
-//     against 1.649; in 16:10 the 320x154 image is stretched 3.5% where
+//     against 1.649; in 16:10 the 320x154 image is stretched 3.4% where
 //     DFU shows it at its own shape.
 import { getInt, getBool } from './settings.js';
 

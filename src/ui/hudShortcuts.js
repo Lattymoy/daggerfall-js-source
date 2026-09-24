@@ -2,7 +2,7 @@
 //
 // DaggerfallHUD.Update polls five DaggerfallShortcut bindings every
 // frame (DaggerfallHUD.cs:295-326). The port had the whole binding
-// TABLE (systems/dialogShortcuts.js:199 lists them, :317 gives the
+// TABLE (systems/dialogShortcuts.js:208 lists them, :326 gives the
 // defaults F10 and Shift-F10) and no consumer for any of them, so both
 // keys were free and did nothing.
 //
@@ -79,7 +79,7 @@ export function hudShortcutKey(e, keys = null) {
     setValue('GUI', 'LargeHUD', !getBool('GUI', 'LargeHUD'));
     return true;
   }
-  // :315-317 - renderHUD. CheckSetModifiers (dialogShortcuts.js:156-159)
+  // :315-317 - renderHUD. CheckSetModifiers (dialogShortcuts.js:165-168)
   // is what keeps Shift-F10 off F10 and F10 off Shift-F10, so the two
   // arms cannot both answer one press.
   if (hotkeyHit('HUDToggle', e.code, e, keys)) {
@@ -87,7 +87,12 @@ export function hudShortcutKey(e, keys = null) {
     return true;
   }
   // :321-326 - RetroRenderer.TogglePostprocessing (Shift-F11). DFU flips
-  // the field whether or not retro mode is on; so does this.
+  // the field whether or not retro mode is on; so does this. AUDIT RETRO1
+  // H1: in DFU the same press ALSO quick-loads - F11 is QuickLoad's, a
+  // DialogShortcut chord is no InputManager combo to suppress it
+  // (InputManager.cs:1683-1685), and GameManager's Update prompts after
+  // the HUD's (GameManager.cs:577-584), loading without asking unless
+  // mods conflict. The toggle here consumes the key (Ledger A, RETRO1).
   if (hotkeyHit('ToggleRetroPP', e.code, e, keys)) {
     toggleRetroPostprocessing();
     return true;

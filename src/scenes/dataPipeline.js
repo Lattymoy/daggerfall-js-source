@@ -165,12 +165,13 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     // partial pack should do.
     const swapFrame = decodedTexture(archive, record, frame);
     const color32 = swapFrame ?? t.getColor32(bitmap, 0);
-    renderer.uploadTexture(archive, key, color32);
+    const replacement = !!swapFrame;   // AUDIT RETRO1 A4 (second pass F2): a pack's frame is TryImportTexture's too
+    renderer.uploadTexture(archive, key, color32, { replacement });
     // F49: the auto-emissive arm follows the FRAME - DFU builds a
     // material per frame, and a torch's every frame is self-lit. The
     // billboard path looks the mask up under this same composite key.
     if (isEmissive(archive, record) && archive !== FIRE_WALLS_ARCHIVE) {
-      renderer.uploadEmissionTexture(archive, key, color32, { white: true });
+      renderer.uploadEmissionTexture(archive, key, color32, { white: true, replacement });
     }
   };
   const gpuMeshes = new Map(); // shared across pixels, never destroyed

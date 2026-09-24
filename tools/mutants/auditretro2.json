@@ -1,0 +1,391 @@
+[
+  {
+    "name": "AUDITRETRO2-F1-the-exterior-modal-frame-shown-late",
+    "file": "src/scenes/exterior.js",
+    "old": "      renderer.resolveFrame();   // AUDIT RETRO1 E5/C8 (second pass F1/J2)",
+    "new": "      // AUDIT RETRO1 E5/C8 (second pass F1/J2)",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-F2-a-packs-frame-capped",
+    "file": "src/scenes/dataPipeline.js",
+    "old": "    const replacement = !!swapFrame;",
+    "new": "    const replacement = false;",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-F3-the-lane-resolved-under-the-scissor",
+    "file": "src/render/renderer.js",
+    "old": "    if (sc) this.gl.disable(this.gl.SCISSOR_TEST);\n",
+    "new": "",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-F3-the-scissor-not-put-back",
+    "file": "src/render/renderer.js",
+    "old": "    if (sc) { this.gl.enable(this.gl.SCISSOR_TEST); this.gl.scissor(sc[0], sc[1], sc[2], sc[3]); }\n",
+    "new": "",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-F4-a-left-shifts-build-kept",
+    "file": "src/render/retroPass.js",
+    "old": "    if (this.lut && this.lut.shift === shift) { this._dropJob(); return this.lut; }",
+    "new": "    if (this.lut && this.lut.shift === shift) return this.lut;",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-F5-a-failed-shift-never-retried",
+    "file": "src/render/retroPass.js",
+    "old": "    this._lutFailed = null;\n    if (this._lutJob && this._lutJob.shift !== shift) this._dropJob();",
+    "new": "    if (this._lutJob && this._lutJob.shift !== shift) this._dropJob();",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-F5-retro-off-keeps-the-failure",
+    "file": "src/render/retroPass.js",
+    "old": "    this._dropJob();\n    this._lutFailed = null;\n  }",
+    "new": "    this._dropJob();\n  }",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-F6-a-failed-allocation-cached",
+    "file": "src/render/retroPass.js",
+    "old": "        if (err) throw new Error(",
+    "new": "        if (false) throw new Error(",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-F6-a-slab-under-a-stale-flip",
+    "file": "src/render/retroPass.js",
+    "old": "    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);\n    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);\n",
+    "new": "",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-F7-no-block-cap",
+    "file": "src/render/retroPass.js",
+    "old": "      } while (!r.done && ++blocks < this._lutMaxBlocks && this._now() - t0 < this._lutBudgetMs);",
+    "new": "      } while (!r.done && this._now() - t0 < this._lutBudgetMs);",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-F7-a-row-of-blocks-a-step",
+    "file": "src/render/retroPass.js",
+    "old": "        yield null;\n",
+    "new": "",
+    "tests": [
+      "test/auditretro1.test.js",
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-F8-the-arm-over-the-bar",
+    "file": "src/render/renderer.js",
+    "old": "      strip = v && v.y > 0 ? this._viewportPx({ x: 0, y: v.y, w: 1, h: v.h }) : null;",
+    "new": "      strip = null;",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-F8-the-2d-pass-left-in-the-strip",
+    "file": "src/render/renderer.js",
+    "old": "    if (strip) gl.viewport(0, 0, this.canvas.width, this.canvas.height);   // the 2D pass's whole canvas back\n",
+    "new": "",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-J1-the-classic-present-outside-the-measure",
+    "file": "src/render/renderer.js",
+    "old": "    if (this._retroOwed && !this._air?.pending) this._presentRetroFrame();\n    if (this._perfOpen && !this._air?.pending) this._perfClose();",
+    "new": "    if (this._perfOpen && !this._air?.pending) this._perfClose();\n    if (this._retroOwed && !this._air?.pending) this._presentRetroFrame();",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-J1-the-lane-present-outside-the-measure",
+    "file": "src/render/renderer.js",
+    "old": "    if (this._retroOwed) this._presentRetroFrame();   // RETRO1: the lane resolved into the retro image - now the image to the canvas (J1: before the meter closes)\n    this._perfClose();",
+    "new": "    this._perfClose();\n    if (this._retroOwed) this._presentRetroFrame();",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-J1-the-present-takes-no-span",
+    "file": "src/render/renderer.js",
+    "old": "    if (this._perfOpen) this._perf?.mark('retro');\n",
+    "new": "",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-J4-the-whole-table-held",
+    "file": "src/render/retroPass.js",
+    "old": "  const out = new Uint8Array(size * size * B * 4);   // one z-slab",
+    "new": "  const out = new Uint8Array(size * size * size * 4);   // one z-slab",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-J4-every-slab-at-layer-0",
+    "file": "src/render/retroPass.js",
+    "old": "gl.texSubImage3D(gl.TEXTURE_3D, 0, 0, 0, slab.z, job.size",
+    "new": "gl.texSubImage3D(gl.TEXTURE_3D, 0, 0, 0, 0, job.size",
+    "tests": [
+      "test/auditretro1.test.js",
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-J4-the-size-uploaded-as-a-slab",
+    "file": "src/render/retroPass.js",
+    "old": "        if (!r.done && r.value) this._lutSlab(job, r.value);",
+    "new": "        if (r.value) this._lutSlab(job, r.value);",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-J7-a-null-texture-keyed",
+    "file": "src/render/renderer.js",
+    "old": "    if (opts.replacement) { if (tex) this._replacements.add(tex); }   // AUDIT RETRO1 A4: TryImportTexture's",
+    "new": "    if (opts.replacement) { this._replacements.add(tex); }   // AUDIT RETRO1 A4: TryImportTexture's",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-J7-a-null-emission-map-keyed",
+    "file": "src/render/renderer.js",
+    "old": "    if (opts.replacement) { if (tex) this._replacements.add(tex); }   // AUDIT RETRO1 A4: a replacement albedo's map",
+    "new": "    if (opts.replacement) { this._replacements.add(tex); }   // AUDIT RETRO1 A4: a replacement albedo's map",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-G1-a-stale-side-counts",
+    "file": "src/systems/dialogShortcuts.js",
+    "old": "  const live = (flag) => typeof flag !== 'boolean' || flag;",
+    "new": "  const live = () => true;",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-G2-the-page-test-first",
+    "file": "src/systems/onlineLane.js",
+    "old": "  return Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key) && isOnlinePage(search) ?",
+    "new": "  return isOnlinePage(search) && Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key) ?",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-G3-the-world-ladder-reads-the-chord",
+    "file": "src/scenes/world.js",
+    "old": "    const act = retroToggleKey(e, keys) ? null : actionOf(e, keys);",
+    "new": "    const act = actionOf(e, keys);",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-G3-the-exterior-ladder-reads-the-chord",
+    "file": "src/scenes/exterior.js",
+    "old": "    const act = retroToggleKey(e, keys) ? null : actionOf(e, keys);",
+    "new": "    const act = actionOf(e, keys);",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-I3-the-scissor-shadow-outlives-its-clear",
+    "file": "src/render/renderer.js",
+    "old": "  clearScreenScissor() { this._scissor = null; this.gl.disable(",
+    "new": "  clearScreenScissor() { this.gl.disable(",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-I4-a-mid-build-shift-change-kept",
+    "file": "src/render/retroPass.js",
+    "old": "    if (this._lutJob && this._lutJob.shift !== shift) this._dropJob();\n",
+    "new": "",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-I4-the-old-table-leaked",
+    "file": "src/render/retroPass.js",
+    "old": "      if (this.lut) gl.deleteTexture(this.lut.tex);\n      return (this.lut = {",
+    "new": "      return (this.lut = {",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-I4-the-shipped-budget-a-second",
+    "file": "src/render/retroPass.js",
+    "old": "lutBudgetMs = RETRO_LUT_BUDGET_MS,",
+    "new": "lutBudgetMs = 1000,",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-I4-retro-off-keeps-the-build",
+    "file": "src/render/retroPass.js",
+    "old": "    this.lut = null;\n    this._dropJob();",
+    "new": "    this.lut = null;",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-I4-the-candidate-bound-strict",
+    "file": "src/render/retroPass.js",
+    "old": "if (dr * dr + dg * dg + db * db <= bound) cand[k++] = i;",
+    "new": "if (dr * dr + dg * dg + db * db < bound) cand[k++] = i;",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-I5-the-presentation-texel-turned",
+    "file": "src/render/retroPass.js",
+    "old": "gl.uniform2f(this.P.uPresent, RETRO_PRESENTATION[0], RETRO_PRESENTATION[1]);",
+    "new": "gl.uniform2f(this.P.uPresent, RETRO_PRESENTATION[1], RETRO_PRESENTATION[0]);",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-I5-the-image-fetched-flipped",
+    "file": "src/render/retroPass.js",
+    "old": "  vec4 c = texture(uColor, uv);",
+    "new": "  vec4 c = texture(uColor, vec2(uv.x, 1.0 - uv.y));",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-I5-a-degenerate-quad",
+    "file": "src/render/retroPass.js",
+    "old": "new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1])",
+    "new": "new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1])",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-I6-a-replacements-emission-swept",
+    "file": "src/render/renderer.js",
+    "old": "    if (opts.replacement) { if (tex) this._replacements.add(tex); }   // AUDIT RETRO1 A4: a replacement albedo's map - neither is capped",
+    "new": "    if (opts.replacement) { }   // AUDIT RETRO1 A4: a replacement albedo's map - neither is capped",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-I6-a-panel-resolves-under-its-scissor",
+    "file": "src/render/renderer.js",
+    "old": "    if (this._retroOwed || this._air?.pending) { if (this._worldViewportPx) this.endWorldPass(); this._compositeAir(); }\n    const gl = this.gl;\n    // EVERY global",
+    "new": "    if (this._retroOwed) { if (this._worldViewportPx) this.endWorldPass(); this._compositeAir(); }\n    const gl = this.gl;\n    // EVERY global",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-I6-the-bright-pass-reads-the-world-rect",
+    "file": "src/render/airPass.js",
+    "old": "    gl.uniform4fv(P.bright.uRect, rect);",
+    "new": "    gl.uniform4fv(P.bright.uRect, this.rect);",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-I6-the-span-over-the-whole-canvas",
+    "file": "src/render/renderer.js",
+    "old": "Math.max(1, Math.round((f.view ? f.view.h : 1) * this.canvas.height))",
+    "new": "Math.max(1, Math.round(this.canvas.height))",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-I6-a-texel-of-no-pixels",
+    "file": "src/render/characterSprite.js",
+    "old": "const texel = span ? Math.max(1, Math.round(pixel * span[0] / span[1])) : pixel;",
+    "new": "const texel = span ? Math.round(pixel * span[0] / span[1]) : pixel;",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-I6-retro-off-keeps-the-image-viewport",
+    "file": "src/render/renderer.js",
+    "old": "      if (this._retroFrame) this._restoreWorldViewport();   // the frame retro mode goes off on",
+    "new": "      if (false) this._restoreWorldViewport();   // the frame retro mode goes off on",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-I7-the-hud-answers-under-a-window",
+    "file": "src/ui/input.js",
+    "old": "  if (ctx.uiOverlayActive) {\n    // U26: a NATIVE window keys off raw codes",
+    "new": "  if (ctx.uiOverlayActive) {\n    if (hudShortcutKey(e, keys)) return true;\n    // U26: a NATIVE window keys off raw codes",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-I7-one-warning-for-every-key",
+    "file": "src/systems/settings.js",
+    "old": "  const k = `${fn}|${section}|${key}|${raw}`;",
+    "new": "  const k = `${fn}|${section}|${raw}`;",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-I7-a-bad-bool-said-every-read",
+    "file": "src/systems/settings.js",
+    "old": "  warnOnce('GetBool', section, key, raw, 'False');",
+    "new": "  console.warn(`[settings] GetBool() could not read value [${section}]${key}. Returning False.`);",
+    "tests": [
+      "test/auditretro1.test.js"
+    ]
+  }
+]

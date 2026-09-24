@@ -279,7 +279,7 @@ test('RETRO1: the present shader - the presentation texel snapped, "Sky untouche
 test('RETRO1: RetroPass - the image and its depth texture at the target\'s size, Point and clamped; present clears the canvas black, draws the rect, builds the LUT once per shift, leaves the baseline', () => {
   const { gl, calls } = recordingGl();
   const built = [];
-  const pass = new RetroPass(gl, { build: (vs, fs) => { built.push([vs, fs]); return { id: 'retroProg' }; } });
+  const pass = new RetroPass(gl, { build: (vs, fs) => { built.push([vs, fs]); return { id: 'retroProg' }; }, now: () => 0 });   // AUDIT RETRO1's second pass (I2): a clock of its own - not whatever the machine's 4 ms holds
   try {
     const fbo = pass.beginFrameTarget(320, 200);
     assert.equal(fbo, pass.target.fbo); assert.equal(frameTarget(), fbo, 'the frame target every pass restores to');
@@ -305,22 +305,23 @@ test('RETRO1: RetroPass - the image and its depth texture at the target\'s size,
     const u = (name) => calls.slice(0, draw).filter((c) => c[1] === name).at(-1)?.slice(2);
     assert.deepEqual(u('uRect'), [160, 72, 960, 648]);
     assert.deepEqual(u('uKind'), [2], 'palettize'); assert.deepEqual(u('uNoSky'), [0]); assert.deepEqual(u('uLutSize'), [8], '256 >> 5');
-    assert.ok(calls.some((c) => c[0] === 'texImage3D' && c[4] === 8 && c[5] === 8 && c[6] === 8), 'the LUT uploaded, 8 a side');
-    assert.ok(calls.some((c) => c[0] === 'uniform1i' && c[1] === 'uLut' && c[2] === 2) || built.length === 1, 'units set at build');
+    assert.ok(calls.some((c) => c[0] === 'texStorage3D' && c[4] === 8 && c[5] === 8 && c[6] === 8), 'the LUT allocated, 8 a side');
+    assert.ok(calls.some((c) => c[0] === 'texSubImage3D' && c[5] === 0 && c[8] === 8), 'and filled - one slab of 8 layers');
+    assert.ok(calls.some((c) => c[0] === 'uniform1i' && c[1] === 'uLut' && c[2] === 2), 'units set at build');
     assert.deepEqual(calls.slice(draw).filter((c) => c[0] === 'viewport').at(-1).slice(1), [0, 0, 1280, 720], 'the full canvas back');
     assert.ok(calls.slice(draw).some((c) => c[0] === 'enable' && c[1] === 1), 'the baseline back');
     // the same shift again: no rebuild; another: rebuilt; posterize: no LUT at all
     pass.beginFrameTarget(320, 200); calls.length = 0;
     pass.present({ rect: [0, 0, 1280, 720], canvasW: 1280, canvasH: 720, post: 4, lutShift: 5 });
-    assert.ok(!calls.some((c) => c[0] === 'texImage3D'), 'one LUT a shift');
+    assert.ok(!calls.some((c) => c[0] === 'texStorage3D'), 'one LUT a shift');
     assert.deepEqual(calls.filter((c) => c[1] === 'uNoSky').at(-1).slice(2), [1], '-sky');
     pass.beginFrameTarget(320, 200); calls.length = 0;
     pass.present({ rect: [0, 0, 1280, 720], canvasW: 1280, canvasH: 720, post: 3, lutShift: 6 });
-    assert.ok(calls.some((c) => c[0] === 'texImage3D' && c[4] === 4), 'a new shift, a new LUT');
+    assert.ok(calls.some((c) => c[0] === 'texStorage3D' && c[4] === 4), 'a new shift, a new LUT');
     pass.beginFrameTarget(320, 200); calls.length = 0;
     pass.present({ rect: [0, 0, 1280, 720], canvasW: 1280, canvasH: 720, post: 1, lutShift: 2 });
     assert.deepEqual(calls.filter((c) => c[1] === 'uKind').at(-1).slice(2), [1], 'posterize');
-    assert.ok(!calls.some((c) => c[0] === 'texImage3D'), 'posterize builds no LUT, even at a shift it has never seen');
+    assert.ok(!calls.some((c) => c[0] === 'texStorage3D'), 'posterize builds no LUT, even at a shift it has never seen');
     assert.equal(pass._lutJob, null, 'nor starts one (AUDIT RETRO1 E1: a build runs a slice a frame, so an upload is not the only sign of one)');
     assert.equal(pass.lut.shift, 6, 'the palette\'s LUT is left as it was');
     assert.deepEqual(calls.filter((c) => c[1] === 'uLutSize').at(-1).slice(2), [1], 'and the shader is told there is none');
@@ -344,7 +345,7 @@ test('RETRO1: a program that will not build presents with a NEAREST blit - a ret
     pass.present({ rect: [10, 20, 640, 400], canvasW: 1280, canvasH: 720, post: 3, lutShift: 1 });
     const blit = calls.find((c) => c[0] === 'blitFramebuffer');
     assert.deepEqual(blit?.slice(1), [0, 0, 320, 200, 10, 20, 650, 420, 16384, 9728]);
-    assert.ok(!calls.some((c) => c[0] === 'drawArrays' || c[0] === 'texImage3D'), 'no draw, no LUT');
+    assert.ok(!calls.some((c) => c[0] === 'drawArrays' || c[0] === 'texStorage3D'), 'no draw, no LUT');
     pass.beginFrameTarget(320, 200);
     pass.present({ rect: [10, 20, 640, 400], canvasW: 1280, canvasH: 720, post: 3, lutShift: 1 });
     assert.equal(said.length, 1, 'once');

@@ -1,7 +1,8 @@
 # Retro Mode (RETRO1)
 
 2026-09-24, Mac: "Can we get retro mode from DFU ported over?" - and
-AUDIT RETRO1 the same day (Mac: "Audit this"), below.
+AUDIT RETRO1 the same day (Mac: "Audit this") and its second pass (Mac:
+"One more audit"), below.
 
 DFU's Retro Mode renders the world at 320x200 or 640x400 and shows it
 point-sampled, optionally posterized or cut down to Daggerfall's own
@@ -40,10 +41,13 @@ retro.
   (the docked strip, or the pillarbox) is kept, normalized, as where it
   lands - placed on the canvas as it is when the image is shown (AUDIT
   RETRO1 B6). The first screen quad presents it (`_compositeAir`'s first
-  branch), or the first-person overlay (the Morrowind arms, C2), or a
-  panel opened ahead of either (B2), or the host's `resolveFrame()` at the
-  foot of its frame (every host now, C8/E5) - a frame never waits for the
-  next `beginFrame` unless its host skipped the foot.
+  branch), or the first-person overlay (the Morrowind arms, C2, on either
+  lane since the second pass), or a panel opened ahead of either (B2), or
+  the host's `resolveFrame()` at the foot of its frame (every host, the
+  `?exterior` host's modal foot included since the second pass's F1) - a
+  frame never waits for the next `beginFrame` unless its host skipped the
+  foot. `?perf` measures the present, and the LUT's slice inside it, as
+  the frame's `retro` span (J1).
 - **Enhanced Lighting lane.** The lane's own frame image is made the
   retro size, in a second slot (`AirPass._frames.retro`) so a menu or a
   video over the world never reallocates either; its passes run at that
@@ -51,7 +55,10 @@ retro.
   writes into the retro image (`AirPass.resolveTo`), which is presented
   after it. The "-sky" test reads the lane frame's depth, taken when the
   frame begins (AUDIT RETRO1 B5). A menu's frame on the canvas slot
-  resolves over its whole image, not the last world frame's rect (B4).
+  resolves over its whole image, not the last world frame's rect (B4). A
+  screen scissor live at the frame's first quad is lifted for the lane's
+  passes and its resolve as well as for the present (the second pass's
+  F3 - a box above row 200 clipped the 320x200 resolve away).
 
 After the present nothing of the image is left on a unit - the next
 retro frame binds that image to draw into, and a sampler still reading
@@ -72,15 +79,20 @@ and the lightning's minimum width (the world image's height,
   element, window (scaled freely, DaggerfallBaseWindow.cs:85), the
   weapon, the horse, the casting hands (FPSSpellCasting.cs:88-89), the
   automap's windows and the video (stretched, VideoPlayerDrawer.cs:50)
-  lay out inside the pillarbox. Here only the world is pillarboxed - so
+  lay out inside the pillarbox - as the presenter's ViewportChanger sets
+  it (:140); the main camera's sets it null every frame (:47-50), and at
+  one execution order Unity does not say which runs last (AUDIT RETRO1's
+  second pass, H2), so DFU's own UI may not always be pillarboxed. Here
+  only the world is pillarboxed - so
   a docked bar is the canvas's width, taller than DFU's (its bar is the
   pillarbox's width * 46/320: at 1920x1080 in 4:3, 276 px against 207),
   and the world strip above it is wider for its height than DFU's
-  (1.791 against 1.649; in 16:10 the 320x154 image is stretched 3.5%
+  (1.791 against 1.649; in 16:10 the 320x154 image is stretched 3.4%
   where DFU shows it at its own shape) (AUDIT RETRO1 A2).
-- **No mip bias.** DFU biases the albedo -0.75 whenever retro mode is on
-  (TextureReader.cs:271-274 - the gate is `RetroRenderingMode > 0`, not
-  `UseMipMapsInRetroMode`). WebGL2 has no sampler LOD bias, and a bias
+- **No mip bias.** DFU biases GetTexture2D's albedo -0.75 whenever retro
+  mode is on (TextureReader.cs:271-274 - the gate is `RetroRenderingMode >
+  0`, not `UseMipMapsInRetroMode`; replacements included; its atlases, :521,
+  and terrain arrays, :737-781, get none). WebGL2 has no sampler LOD bias, and a bias
   uniform in every world shader was not worth the risk; the retro
   frame's mip choice is its own resolution's.
 - **Two clamps DFU does not have.** `PostProcessingInRetroMode` 0..4 (DFU
@@ -91,10 +103,16 @@ and the lightning's minimum width (the world image's height,
 - **The LUT follows the shift, a slice a frame.** DFU builds it once a
   session (`if (lut) return;`), in one go (850 ms at the shipped shift
   by its own comment). The port rebuilds it when the shift changes,
-  `RETRO_LUT_BUDGET_MS` (4 ms) a frame with the image shown plain until
-  it is whole, and frees it when retro mode goes off (AUDIT RETRO1
-  E1/E2); a build or upload that fails shows the image plain and says so
-  once (E3).
+  `RETRO_LUT_BUDGET_MS` (4 ms) a frame - a block at a time, never more
+  than `RETRO_LUT_MAX_BLOCKS` (128) however coarse the clock - with the
+  image shown plain until it is whole, STREAMED into a texture allocated
+  when the build starts, a z-slab at a time, so no frame holds or uploads
+  the whole table (64 MiB at shift 0); and frees it when retro mode goes
+  off (AUDIT RETRO1 E1/E2, the second pass's J3/J4). A build or an
+  allocation that fails (WebGL says so through getError, not a throw)
+  shows the image plain, is said once, and is tried again once the shift
+  or retro mode changes (E3, F5/F6); a build for a shift the player has
+  left is dropped (F4/J6).
 - **The mip switch lands at once, both ways.** DFU's arm writes an
   instance field (TextureReader.cs:207, :469) that nothing sets back, so
   in DFU the switch latches for the session: what loads after retro mode
@@ -106,8 +124,11 @@ and the lightning's minimum width (the world image's height,
   `Screen.width` (PlayerActivate.cs:294), so with an aspect correction it
   misses by the pillarbox; the port maps through the presented rect.
 - **The twin follows the drawn bar (AUDIT RETRO1 A1/C3).** DFU asks the
-  settings (:425), and in DFU a docked bar is always drawn when they say
-  so (DaggerfallHUD.cs:213-216). The port's enhanced skin draws no
+  settings (:425), and in DFU a docked bar is drawn when they say so
+  (DaggerfallHUD.cs:213-216) - once play starts: until then DaggerfallHUD
+  turns the large HUD off (:330-338), and for those loading frames DFU
+  itself pairs the 320x154 texture with a full-screen rect; Shift-F10
+  hides the bar and keeps its rect (:347-351), as the port does. The port's enhanced skin draws no
   classic bar, and the classic skin draws none while its art loads, so
   the settings alone gave a 320x154 image with a 2.078 lens stretched
   over the whole canvas. The texture, the lens and the rect now all read
@@ -127,14 +148,28 @@ and the lightning's minimum width (the world image's height,
   enhanced far ring (`farRing.js`) draws at the far plane, so the port's
   -sky modes leave it as sky.
 - **The Morrowind first-person arms (C2).** They have no DFU original.
-  On the classic set they are drawn on the canvas after the image is
-  shown, at their own resolution, as DFU's OnGUI weapon is; under the
-  Enhanced Lighting lane they are lane-encoded and need its resolve, so
-  they are drawn into the lane's frame and are retro with the world.
-  Either way they keep the canvas's lens while a retro world is
-  stretched to its rect, so a shot's orb leaves up to ~94 px inboard of
-  the drawn barrel at 1920x1080 in 4:3 (none at 16:10, ~62 px outboard
-  with no correction on 16:9).
+  They are drawn on the canvas after the image is shown, at their own
+  resolution, as DFU's OnGUI weapon is, on either lane (the second
+  pass's F8/G4: the lane's shaders end in `elEncode` - display bytes -
+  and the Weapon Widget's path, the default, had always drawn them after
+  the resolve; the first pass had kept the overlay path in the lane's
+  frame), and where retro off puts them: a docked bar's rows across the
+  whole width. They keep the canvas's lens while a retro world is
+  stretched to its rect, so a shot's orb leaves up to ~94 px further
+  inboard of the drawn barrel at 1920x1080 in 4:3 than with retro off
+  (none at 16:10, ~62 px outboard with no correction on 16:9) - figures
+  for a FieldOfView of 60, the arm's own; at the default 65 the two
+  lenses already part by ~53 px with retro off (I11).
+- **Shift-F11 only toggles (the second pass, H1).** In DFU the same press
+  also QUICK-LOADS during play: F11 is QuickLoad's (InputManager.cs:1032),
+  a DialogShortcut chord is no InputManager combo that could suppress it
+  (:1683-1685), and GameManager's Update prompts after the HUD's
+  (GameManager.cs:577-584) - loading without asking unless mods conflict
+  (SaveLoadManager.cs:489-517). The port's toggle consumes the key.
+
+The settings' words are DFU's; its CSV's `FourThree,4:03`
+(Internal_Strings.csv:1050) is a spreadsheet artefact - the runtime
+English table says 4:3, as the screen here does.
 
 **The LUT is DFU's, byte for byte.** The first record here said .NET's
 unstable `Array.Sort` left one tie unreproduced. AUDIT RETRO1 modelled
@@ -177,6 +212,53 @@ finding fixed and pinned (`test/auditretro1.test.js`) or recorded above.
 - **Recorded, not fixed:** A2, A5, A6, B7 and C2's lens (the departures
   above).
 
+## AUDIT RETRO1, THE SECOND PASS (2026-09-24, Mac: "One more audit")
+
+Main merged in first (DISC22, OVH1-OVH4, FGH2H, QUEST-UID1), then five
+fresh lenses - the first pass's own fixes (F), integration with main and
+play in every host (G), fidelity (H), the pins and the docs (I), cost and
+robustness (J). Nothing HIGH; every confirmed finding fixed and pinned
+(`test/auditretro2.test.js`, the first pass's file where its own pin was
+the wrong one) or recorded above.
+
+- **MED (the pins).** A committed mutant survived: the first pass's D5
+  pin, re-aimed at the slot swap, stopped seeing the canvas slot freed
+  when the retro slot is first made (I1). Four pins leaned on the real
+  4 ms clock and on test order - alone, three failed; B1's "no LUT on a
+  unit" was vacuous, its present drawing plain (I2). Nothing pinned the
+  scissor shadow's clear (I3).
+- **LOW (the code).** The `?exterior` host's modal foot had no
+  `resolveFrame` (F1/J2). A pack's per-frame art was still capped (F2).
+  A live scissor still clipped the lane's resolve into the image (F3).
+  The LUT: a slice overran its 4 ms by a whole row of blocks, and ran
+  until the tick of a coarse (privacy-rounded) clock - it steps a block
+  at a time now, capped at 128 a frame (F7/J3); shift 0 held and uploaded
+  its 64 MiB in one piece - streamed a z-slab at a time now (J4); a build
+  for a shift the player had left stayed pinned (F4/J6); a failed shift
+  was never tried again, and WebGL's own failure, reported through
+  getError, was cached as a black table (F5/F6/J5). `?perf` closed the
+  frame before the present and its LUT slice (J1). A replacement upload
+  on a lost context threw from the WeakSet (J7). The first-person arms
+  were retro under the lane only on the widget-off path, and changed
+  shape with retro over a docked bar (F8/G4). A stale Alt or Ctrl in a
+  host's held-key Set - its keyup lost with the focus - turned Shift-F11
+  back into a quickload with no prompt, and a stale Shift turned F11
+  into the toggle: a held side now counts only while the event reports
+  its virtual (G1). Every settings read built a URLSearchParams for the
+  one forced key (G2, main's DISC22-A, a dozen reads a frame under
+  retro). The outdoor hosts' status readout read Shift-F11 as QuickLoad
+  (G3).
+- **Records.** Shift-F11 also quick-loads in DFU during play (H1); DFU's
+  UI pillarbox has two writers (H2); the docked bar's loading frames,
+  the bias's reach and the prefab (H3); "twelve re-aimed" was thirteen
+  (I8); the "float32" credit (I9); 3.5% was 3.4% (I10); the arms'
+  figures are relative to retro off at FieldOfView 60 (I11); "4:3" (I12).
+- **Outside retro, left for their own slices:** DISC22-C's loot panel
+  centred on the canvas where the crosshair is re-centred into a docked
+  strip (G5); OVH2's `_alphaArt` WeakSet add, the J7 shape (J7); `?perf`'s
+  `air` span opened by a non-world frame's resolve after the meter has
+  closed (J).
+
 ## Testing
 
 `test/retro1.test.js` (20 pins): the settings and their clamps, the
@@ -189,8 +271,8 @@ clear, the rect, the LUT once per shift, the fallback blit when the
 program will not build); the renderer's lifecycle under both lanes (the
 owed frame, a menu, a panel, the slots); the mip caps; the LIVE tier and
 the words; Shift-F11; the muzzle and the bolts.
-`tools/mutants/retro1.json`: 54 mutants, all dead (twelve re-aimed by
-content at the audit).
+`tools/mutants/retro1.json`: 54 mutants, all dead (thirteen re-aimed by
+content at the audit, two more at its second pass).
 
 `test/auditretro1.test.js` (30 pins), on a STATEFUL fake GL with
 WebGL2's own constants (units, attachments, each texture's parameters,
@@ -198,11 +280,22 @@ the feedback-loop and sampler-type rules): one pin a finding, above,
 plus the LUT's and the palette's SHA-256 (D1), the pass's GL state
 texture by texture (D2), the renderer's viewport, clear colour and one
 pass (D3), every late-upload cap (D4) and the lane's retro slot (D5).
-`tools/mutants/auditretro1.json`: 51 mutants, all dead.
+`tools/mutants/auditretro1.json`: 51 mutants, all dead (six re-aimed at
+the second pass; B6's fix spans two sites, so its revert was checked by
+hand against the pre-audit renderer). The fake GL is `test/retroGl.mjs`.
 
-NOT SEEN ON A GPU. No probe was run for this slice or its audit (Mac:
-"Do not use probes"); the shader is pinned by source and the pass by
-the fake GLs. A
+`test/auditretro2.test.js` (14 pins), the second pass's: a pack's frame
+flagged (F2), the lane's resolve under a scissor (F3), the LUT's jobs,
+failures, block cap and streamed slabs (F4-F7, J3-J6, I4 with shift 0's
+SHA-256), what the present hands the shader (I5), a stale modifier
+(G1), the page test and the outdoor action read (G2/G3), the scissor
+shadow's clear (I3), the half-pinned fixes (I6), `?perf`'s retro span
+(J1), a lost context (J7). `tools/mutants/auditretro2.json`: 43 mutants,
+all dead.
+
+NOT SEEN ON A GPU. No probe was run for this slice or either pass of its
+audit (Mac: "Do not use probes"); the shader is pinned by source and the
+pass by the fake GLs. A
 program that fails to build presents with a plain NEAREST blit and says
 so once in the console - a retro world without its effect, never a
 black one.

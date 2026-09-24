@@ -113,7 +113,7 @@ test('audit39 F49: the upload arm reuses the ALBEDO, after the window arm, and s
   // An animated flat is uploaded frame by frame and the billboard path
   // looks the mask up under that same composite key, so a torch's every
   // frame needs one.
-  assert.match(s, /renderer\.uploadEmissionTexture\(archive, key, color32, \{ white: true \}\);/);
+  assert.match(s, /renderer\.uploadEmissionTexture\(archive, key, color32, \{ white: true, replacement \}\);/);   // AUDIT RETRO1 F2
 });
 
 test('audit39 F49: an auto-emissive mask wears Color.white, a window mask wears the window style', () => {

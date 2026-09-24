@@ -237,8 +237,8 @@
   {
     "name": "RETRO1-lut-never-rebuilt",
     "file": "src/render/retroPass.js",
-    "old": "    if (this.lut && this.lut.shift === shift) return this.lut;",
-    "new": "    if (this.lut) return this.lut;",
+    "old": "    if (this.lut && this.lut.shift === shift) { this._dropJob(); return this.lut; }",
+    "new": "    if (this.lut) { this._dropJob(); return this.lut; }",
     "tests": [
       "test/retro1.test.js"
     ]
@@ -318,8 +318,8 @@
   {
     "name": "RETRO1-classic-lane-never-presents",
     "file": "src/render/renderer.js",
-    "old": "    if (this._retroOwed && !this._air?.pending) return this._presentRetroFrame();",
-    "new": "    if (false) return this._presentRetroFrame();",
+    "old": "    if (this._retroOwed && !this._air?.pending) this._presentRetroFrame();",
+    "new": "    if (false) this._presentRetroFrame();",
     "tests": [
       "test/retro1.test.js"
     ]

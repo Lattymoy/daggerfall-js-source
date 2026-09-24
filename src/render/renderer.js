@@ -2101,8 +2101,13 @@ export class Renderer {
   /** RETRO1: PRESENT the retro image to the canvas (RetroPass.present) - the
    *  classic lane's resolve, and the lane's second half once its own resolve
    *  has written the image. The present binds units 0..2 and a program and a
-   *  VAO of its own, so the shadows are forgotten after it. */
+   *  VAO of its own, so the shadows are forgotten after it. AUDIT RETRO1 J1:
+   *  both callers in _compositeAir call it BEFORE the frame's meter closes,
+   *  so `?perf` shows the present - and the LUT's slice inside it - as the
+   *  frame's last span, `retro` (the classic arm's line carries no comment:
+   *  PERF-2D's pin reads that function's first 700 characters). */
   _presentRetroFrame() {
+    if (this._perfOpen) this._perf?.mark('retro');
     this._retroOwed = false;
     this._close2D();
     const f = this._retroFrame;
@@ -2213,8 +2218,8 @@ export class Renderer {
   resolveFrame() { this._compositeAir(); }
 
   _compositeAir() {
+    if (this._retroOwed && !this._air?.pending) this._presentRetroFrame();
     if (this._perfOpen && !this._air?.pending) this._perfClose();   // AUDIT 68 S16-perf-no-resolve-leak: no resolve owed - the frame's first screen draw closes its meter, as the resolve would
-    if (this._retroOwed && !this._air?.pending) return this._presentRetroFrame();
     if (!this._air?.pending) return;
     // PERF-2D: AFTER the early return, and that ordering is the whole
     // saving. drawScreenQuad calls this at the head of EVERY quad, so a
@@ -2222,6 +2227,8 @@ export class Renderer {
     // frame and hand the per-quad bracket straight back. The air pass
     // only needs the baseline when it actually resolves.
     this._close2D();
+    const sc = this._scissor;   // AUDIT RETRO1 F3: a screen scissor live at the first quad is not the passes' - lifted for them and the present, and put back
+    if (sc) this.gl.disable(this.gl.SCISSOR_TEST);
     this._perf?.mark('air');   // VC6d: the AO, the bloom, the shafts and the resolve
     this._air.setCloudShadow(this._cloudShadow ?? this._deckOwed);   // VC6c: the FRAME's deck - the host sets it after beginFrame, so the shafts can only read it here
     this._air.composite();   // EL4: the resolve - the frame to the canvas
@@ -2237,8 +2244,9 @@ export class Renderer {
     // invalidates them. (VC6c/VC6d pin the two lines above this one as
     // adjacent, which is why the reason is written here and not there.)
     this._forgetTextureShadows();
+    if (this._retroOwed) this._presentRetroFrame();   // RETRO1: the lane resolved into the retro image - now the image to the canvas (J1: before the meter closes)
     this._perfClose();   // EL8: the clock stops at the resolve; the line, when it is due
-    if (this._retroOwed) this._presentRetroFrame();   // RETRO1: the lane resolved into the retro image - now the image to the canvas
+    if (sc) { this.gl.enable(this.gl.SCISSOR_TEST); this.gl.scissor(sc[0], sc[1], sc[2], sc[3]); }
     this._frameFbo = null;
     this._lastProgram = null; this._lastVao = null;
     this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
@@ -3475,10 +3483,19 @@ void main() {
 
     drawScreenOverlayQuad(tex, u1, v1) {
     const gl = this.gl;
-    // AUDIT RETRO1 C2: on the classic set a retro world is PRESENTED before the first-person overlay, which lands on
-    // the canvas at its own resolution as DFU's OnGUI weapon does - it was drawn into the image, pixelated,
-    // posterized and stretched to the pillarbox. The lane's overlay is lane-encoded and goes through the resolve.
-    if (this._retroOwed && !this._air) { if (this._worldViewportPx) this.endWorldPass(); this._compositeAir(); }
+    // AUDIT RETRO1 C2 (and its second pass, F8/G4): a retro world is PRESENTED before the first-person overlay, on
+    // either lane - the lane's shaders end in elEncode, display bytes, and the Weapon Widget's path (drawScreenQuad)
+    // has always drawn the arm after the resolve - so the arm lands on the canvas at its own resolution, as DFU's
+    // OnGUI weapon does, and where retro off puts it: the docked strip's rows across the whole width (the
+    // pillarbox is the world's alone). It was drawn into the image - pixelated, posterized, squeezed to the rect.
+    let strip = null;
+    if (this._retroOwed) {
+      const v = this._worldViewportFrame;
+      if (this._worldViewportPx) this.endWorldPass();
+      this._compositeAir();
+      strip = v && v.y > 0 ? this._viewportPx({ x: 0, y: v.y, w: 1, h: v.h }) : null;
+      if (strip) gl.viewport(strip[0], strip[1], strip[2], strip[3]);
+    }
     this._ensureOverlayProgram();
     this._use(this.overlayProgram);
     this._activeTexture(gl.TEXTURE0);
@@ -3489,6 +3506,7 @@ void main() {
     this._open2D(this._overlayVAO);   // PERF-2D
     gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
     this.stats.texBinds++; this.stats.draws++;
+    if (strip) gl.viewport(0, 0, this.canvas.width, this.canvas.height);   // the 2D pass's whole canvas back
   }
 
   /** PERF-WARM: build the full-screen overlay program and its VAO -
@@ -3594,7 +3612,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (mips) gl.generateMipmap?.(gl.TEXTURE_2D);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, mips ? (gl.NEAREST_MIPMAP_NEAREST ?? filter) : filter);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
-    if (opts.replacement) this._replacements.add(tex);   // AUDIT RETRO1 A4: TryImportTexture's - DFU's retro arm never reaches it
+    if (opts.replacement) { if (tex) this._replacements.add(tex); }   // AUDIT RETRO1 A4: TryImportTexture's - DFU's retro arm never reaches it (J7: a lost context's null is no key)
     else if (mips && !this._retroMips) gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 0);   // RETRO1: loaded under retro mode without mip maps (_applyRetroMips)
     this.textures.set(key, tex);
     if (opts.alpha) (this._alphaArt ??= new WeakSet()).add(tex);   // OVH2: the texture's own treatment, read at every screen draw of it
@@ -4358,7 +4376,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.generateMipmap?.(gl.TEXTURE_2D);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST ?? gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    if (opts.replacement) this._replacements.add(tex);   // AUDIT RETRO1 A4: a replacement albedo's map - neither is capped
+    if (opts.replacement) { if (tex) this._replacements.add(tex); }   // AUDIT RETRO1 A4: a replacement albedo's map - neither is capped (J7: a lost context's null is no key)
     else if (!this._retroMips) gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 0);   // RETRO1: the albedo's cap, so both samples still come from one level
     this._activeTexture(gl.TEXTURE0);
     this.emissionTextures.set(key, tex);

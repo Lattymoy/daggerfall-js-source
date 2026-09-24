@@ -7809,7 +7809,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // press included, and actionOf reads it through the held-first
     // LATCH (G3/GR); it carries the suppression half too (:1681-1685,
     // "space is jump, LeftShift+Space opens inventory: ignore it").
-    const act = actionOf(e, keys);   // I2: the registry owns the code -> action read
+    const act = retroToggleKey(e, keys) ? null : actionOf(e, keys);   // I2: the registry owns the code -> action read; AUDIT RETRO1 G3: Shift-F11 is the HUD's (below), never QuickLoad's - routeKey's hosts take it first too
     // STATUS-LIVE: THE READOUT YIELDS HERE TOO. This host runs its own
     // key ladder rather than routeKey's, so its Escape arm (and its
     // quickslot and window arms) never reach ui/input.js's routeAction

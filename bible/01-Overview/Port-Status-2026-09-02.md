@@ -594,7 +594,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   `Utility/ViewportChanger.cs:52-61` and `HUDCrosshair.cs:43-52` are a dozen
   lines each; the cost is the seam. `gl.viewport` is set full-canvas at
   four sites inside the renderer's own frame brackets
-  (`render/renderer.js:2235, :2038, :2972, :3297`) and the 2D passes
+  (`render/renderer.js:2242, :2038, :2980, :3305`) and the 2D passes
   need the full canvas back. D10 withdrew one clause as stale with
   evidence: there are no screen-to-ray conversions to fix, because the
   port's activation ray is the camera's forward vector, not a pixel
@@ -844,7 +844,7 @@ ships, which is the warning the section's own preamble opens with.
 2. **`:636` the custom builder's hidden `ResetBonusPool` control** (STRUCK at E2, landing after this list was written: the control is live) ->
    UI arc (a keybinding slice). **Its stated blocker is now retired**:
    the row says "the port has no keybinding registry to hang it on", and
-   `systems/dialogShortcuts.js:194`/`:322` carries `ResetBonusPool` with
+   `systems/dialogShortcuts.js:203`/`:331` carries `ResetBonusPool` with
    its `Ctrl-U` default since A8. Nothing in `ui/chargen.js`,
    `ui/chargenArt.js` or `systems/customClass.js` consumes it. This is
    the smallest open row in the section.

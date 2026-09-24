@@ -61,15 +61,20 @@
 // than this stable sort does; AUDIT RETRO1 modelled .NET's introsort and
 // found no texel moved at any shift - the LUT is DFU's, byte for byte.
 //
-// THE LUT'S COST (AUDIT RETRO1 E1-E3). DFU builds it in one go (850 ms
-// at the shipped shift, 7 s at shift 0 - its own comments). Here it is
-// built a TIME SLICE A FRAME (RETRO_LUT_BUDGET_MS) and the effect stays
-// off until the table is whole, so choosing palettization costs no
-// hitch; a build or an upload that throws is remembered for that shift
-// and said once, and the image is shown without the effect; the table is
-// freed when retro mode goes off (dropLut). DFU builds it once a session
-// whatever the shift later says (`if (lut) return;`); the port rebuilds
-// it when the shift changes.
+// THE LUT'S COST (AUDIT RETRO1 E1-E3, and its second pass J3-J6). DFU
+// builds it in one go (850 ms at the shipped shift, 7 s at shift 0 - its
+// own comments). Here it is built a TIME SLICE A FRAME
+// (RETRO_LUT_BUDGET_MS, and never more than RETRO_LUT_MAX_BLOCKS blocks,
+// for a clock too coarse to stop a slice), one 8x8x8 block at a time,
+// and STREAMED: its texture is allocated when the build starts and each
+// z-slab is uploaded as it is finished, so no frame holds or uploads the
+// whole table (64 MiB at shift 0). The effect stays off until the table
+// is whole. A build or an allocation that fails shows the image without
+// the effect, is said once and is tried again once the shift or retro
+// mode changes; a build for a shift the player has left is dropped; the
+// table is freed when retro mode goes off (dropLut). DFU builds it once a
+// session whatever the shift later says (`if (lut) return;`); the port
+// rebuilds it when the shift changes.
 //
 // THE STATE THE PRESENT LEAVES (AUDIT RETRO1 B1, B3). The image and its
 // depth are unbound from units 0 and 1 and the LUT from unit 2 after the
@@ -92,6 +97,9 @@ export const RETRO_PRESENTATION = Object.freeze([640, 400]);
 
 /** AUDIT RETRO1 E1: the LUT build's time a frame, in milliseconds. */
 export const RETRO_LUT_BUDGET_MS = 4;
+/** AUDIT RETRO1 J3: and its blocks a frame at most - the bound when the clock is too coarse to see 4 ms pass
+ *  (a privacy-rounded performance.now ticks at 16.7 or 100 ms). About 3 to 6 ms of blocks. */
+export const RETRO_LUT_MAX_BLOCKS = 128;
 
 /** art_pal (RetroRenderer.cs:53-314), r, g, b per colour, in DFU's order. */
 export const ART_PAL = Object.freeze([
@@ -216,15 +224,18 @@ const artPalTree = () => (_tree ??= buildPaletteTree());
  * then g then b, each the palette colour nearest to (r, g, b) << shift -
  * as FastColorPalette answers it (see the header: a candidate search per
  * block, the tree wherever two colours tie). A generator that yields
- * after every row of 8x8x8 blocks and returns { size, data }:
- * buildRetroLut drives it whole, the pass a time slice a frame.
+ * null after every 8x8x8 block and, once a z-slab of blocks is whole,
+ * that slab - { z, depth, data }, its texels from layer z on; `data` is
+ * the one slab buffer, filled again for the next slab, so its consumer
+ * takes it before stepping on (AUDIT RETRO1 J3/J4). Returns the LUT's
+ * size. buildRetroLut drives it whole, the pass a time slice a frame.
  */
 export function* retroLutSteps(shift) {
   const size = retroLutSize(shift);
-  const out = new Uint8Array(Math.max(0, size) ** 3 * 4);
-  if (!(size > 0)) return { size: 0, data: out };
+  if (!(size > 0)) return 0;
   const pal = Int32Array.from(ART_PAL), n = ART_PAL_COUNT, tree = artPalTree();   // typed: the frozen array's elements are the slow kind
   const B = Math.min(8, size);
+  const out = new Uint8Array(size * size * B * 4);   // one z-slab
   const cand = new Int32Array(n);
   const far = (c, lo, hi) => Math.max((c - lo) * (c - lo), (c - hi) * (c - hi));
   const gap = (c, lo, hi) => (c < lo ? lo - c : c > hi ? c - hi : 0);
@@ -259,25 +270,25 @@ export function* retroLutSteps(shift) {
                 if (fit < bestFit) { best = i; bestFit = fit; ties = 1; } else if (fit === bestFit) ties++;
               }
               if (ties > 1) best = nearestPaletteIndex(tree, R, G, Bv)[0];   // a tie: the tree's own answer
-              const o = ((bz * size + gy) * size + rx) * 4;
+              const o = (((bz - b0) * size + gy) * size + rx) * 4;
               out[o] = pal[best * 3]; out[o + 1] = pal[best * 3 + 1]; out[o + 2] = pal[best * 3 + 2]; out[o + 3] = 255;
             }
           }
         }
+        yield null;
       }
-      yield;
     }
+    yield { z: b0, depth: B, data: out };
   }
-  return { size, data: out };
+  return size;
 }
 
-/** InitLut whole: the steps driven to the end. */
+/** InitLut whole: the steps driven to the end, the slabs laid into one table - { size, data }. */
 export function buildRetroLut(shift) {
-  const it = retroLutSteps(shift);
-  for (;;) {
-    const r = it.next();
-    if (r.done) return r.value;
-  }
+  const size = Math.max(0, retroLutSize(shift));
+  const data = new Uint8Array(size ** 3 * 4);
+  for (const slab of retroLutSteps(shift)) if (slab) data.set(slab.data, slab.z * size * size * 4);   // for-of never sees the return (the size)
+  return { size, data };
 }
 
 /** The present pass's kind for a PostProcessingInRetroMode value. */
@@ -336,16 +347,17 @@ void main() {
  * `lutBudgetMs` are the LUT's clock and its slice (tests hand their own).
  */
 export class RetroPass {
-  constructor(gl, { build, now = () => globalThis.performance?.now?.() ?? Date.now(), lutBudgetMs = RETRO_LUT_BUDGET_MS }) {
+  constructor(gl, { build, now = () => globalThis.performance?.now?.() ?? Date.now(), lutBudgetMs = RETRO_LUT_BUDGET_MS, lutMaxBlocks = RETRO_LUT_MAX_BLOCKS }) {
     this.gl = gl;
     this._build = build;
     this._now = now;
     this._lutBudgetMs = lutBudgetMs;
+    this._lutMaxBlocks = lutMaxBlocks;
     this.target = null;    // { fbo, tex, depth, w, h } - the world's retro image and its depth
     this.pending = false;  // a retro frame is bound and not yet presented
     this.lut = null;       // { tex, shift, size }
-    this._lutJob = null;   // { shift, it } - a LUT being built a slice a frame
-    this._lutFailed = new Set();   // shifts whose build or upload threw
+    this._lutJob = null;   // { shift, size, tex, it } - a LUT being built a slice a frame, its texture filled a slab at a time
+    this._lutFailed = null;   // the shift whose build failed - tried again once the shift or retro mode changes (J5)
     this.failed = false;   // the program would not build: blit instead
     this.P = null;
   }
@@ -435,51 +447,79 @@ export class RetroPass {
 
   /** The palette's LUT for a shift, or null while it is still being built
    *  (a slice a frame, AUDIT RETRO1 E1) or if building it failed (E3,
-   *  said once a shift). Uploaded on unit 2 and unbound after. */
+   *  said once and tried again once the shift or retro mode changes).
+   *  Filled on unit 2 a slab at a time and unbound after (J4). */
   _lut(shift) {
-    if (this.lut && this.lut.shift === shift) return this.lut;
-    if (this._lutFailed.has(shift)) return null;
-    if (!this._lutJob || this._lutJob.shift !== shift) this._lutJob = { shift, it: retroLutSteps(shift) };
+    if (this.lut && this.lut.shift === shift) { this._dropJob(); return this.lut; }   // J6: a build for a shift the player left is dropped
+    if (this._lutFailed === shift) return null;
+    this._lutFailed = null;
+    if (this._lutJob && this._lutJob.shift !== shift) this._dropJob();
     const gl = this.gl;
-    let tex = null;
     try {
-      const t0 = this._now();
-      let r;
-      do { r = this._lutJob.it.next(); } while (!r.done && this._now() - t0 < this._lutBudgetMs);
+      if (!this._lutJob) {
+        const size = retroLutSize(shift);
+        const tex = gl.createTexture();
+        this._lutJob = { shift, size, tex, it: retroLutSteps(shift) };
+        gl.activeTexture(gl.TEXTURE2);
+        gl.bindTexture(gl.TEXTURE_3D, tex);
+        gl.getError();   // J5: the flag cleared, so the one read below is this allocation's - WebGL reports a failure there, it does not throw
+        gl.texStorage3D(gl.TEXTURE_3D, 1, gl.RGBA8, size, size, size);
+        const err = gl.getError();
+        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);   // lut.filterMode = Point (:336)
+        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);   // lut.wrapMode = Clamp
+        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE);
+        gl.bindTexture(gl.TEXTURE_3D, null);
+        gl.activeTexture(gl.TEXTURE0);
+        if (err) throw new Error(`GL error ${err} allocating the ${size}^3 table`);
+      }
+      const job = this._lutJob, t0 = this._now();
+      let r, blocks = 0;
+      do {
+        r = job.it.next();
+        if (!r.done && r.value) this._lutSlab(job, r.value);   // the return is the size, no slab
+      } while (!r.done && ++blocks < this._lutMaxBlocks && this._now() - t0 < this._lutBudgetMs);
       if (!r.done) return null;   // not whole yet: this frame shows the image without the effect
       this._lutJob = null;
-      const { size, data } = r.value;
       if (this.lut) gl.deleteTexture(this.lut.tex);
-      this.lut = null;
-      tex = gl.createTexture();
-      gl.activeTexture(gl.TEXTURE2);
-      gl.bindTexture(gl.TEXTURE_3D, tex);
-      gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-      gl.texImage3D(gl.TEXTURE_3D, 0, gl.RGBA8, size, size, size, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
-      gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
-      gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);   // lut.filterMode = Point (:336)
-      gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-      gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);   // lut.wrapMode = Clamp
-      gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE);
-      gl.bindTexture(gl.TEXTURE_3D, null);
-      gl.activeTexture(gl.TEXTURE0);
-      return (this.lut = { tex, shift, size });
+      return (this.lut = { tex: job.tex, shift, size: job.size });
     } catch (e) {
-      this._lutJob = null;
-      this._lutFailed.add(shift);
-      if (tex) { gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4); gl.bindTexture(gl.TEXTURE_3D, null); gl.deleteTexture(tex); }   // the half-made table, not cached (an incomplete texture reads black), and the unpack state back
+      this._dropJob();
+      this._lutFailed = shift;
       gl.activeTexture(gl.TEXTURE0);
       console.warn(`[retro] the palette LUT (shift ${shift}) could not be built - presenting without the effect:`, e?.message ?? e);
       return null;
     }
   }
 
-  /** AUDIT RETRO1 E2: free the LUT (and any build in flight) - retro mode went off. */
+  /** J4: one finished z-slab into the table's texture. The unpack flags are the baseline's first - a 3D upload
+   *  from an array with FLIP_Y or PREMULTIPLY on is an INVALID_OPERATION, and a DOM upload that threw can leave
+   *  them on. A slab's rows are size * 4 bytes, so the default alignment serves. */
+  _lutSlab(job, slab) {
+    const gl = this.gl;
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_3D, job.tex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.texSubImage3D(gl.TEXTURE_3D, 0, 0, 0, slab.z, job.size, job.size, slab.depth, gl.RGBA, gl.UNSIGNED_BYTE, slab.data);
+    gl.bindTexture(gl.TEXTURE_3D, null);
+    gl.activeTexture(gl.TEXTURE0);
+  }
+
+  /** The build in flight, and its half-filled texture, dropped. */
+  _dropJob() {
+    if (this._lutJob?.tex) this.gl.deleteTexture(this._lutJob.tex);
+    this._lutJob = null;
+  }
+
+  /** AUDIT RETRO1 E2: free the LUT (and any build in flight) - retro mode went off. A failed shift is tried again
+   *  when it comes back (J5). */
   dropLut() {
     if (this.lut) this.gl.deleteTexture(this.lut.tex);
     this.lut = null;
-    this._lutJob = null;
+    this._dropJob();
+    this._lutFailed = null;
   }
 
   /**

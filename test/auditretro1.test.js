@@ -19,7 +19,8 @@
 //                 a failed build or present survived (E3), one warning (E4),
 //                 the program warmed (E7)
 //
-// The fake GL here is STATEFUL (lens B's): texture units, framebuffer
+// The fake GL is STATEFUL (lens B's, test/retroGl.mjs, shared with the
+// second pass's test/auditretro2.test.js): texture units, framebuffer
 // attachments, each texture's own parameters, the capabilities, and the
 // two draw-time rules WebGL2 enforces that this audit is about - a
 // sampler reading a texture attached to the framebuffer it draws into (a
@@ -33,7 +34,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import {
-  RETRO_ASPECT, retroAspectViewportRect, retroFrameConfig, _resetRetroPostprocessing, toggleRetroPostprocessing,
+  RETRO_ASPECT, retroAspectViewportRect, retroFrameConfig, _resetRetroPostprocessing, toggleRetroPostprocessing, retroPostprocessingEnabled, palettizationLutShift, retroUseMipMaps,
 } from '../src/systems/retroMode.js';
 import {
   ART_PAL, buildRetroLut, retroLutSteps, RETRO_FS, RetroPass, retroShownByte, retroGammaOf,
@@ -50,144 +51,13 @@ import { helpOf } from '../src/ui/settingsCopy.js';
 import { largeHudWorldAspect, worldViewportRect, dockedLargeHudHeight } from '../src/ui/hudLarge.js';
 import { retroToggleKey, hudShortcutKey } from '../src/ui/hudShortcuts.js';
 import { routeKey } from '../src/ui/input.js';
+import { E, stateGl, presents, retroCfg, fakeMesh, programBuilder } from './retroGl.mjs';
 
 const src = (rel) => readFileSync(new URL(`../src/${rel}`, import.meta.url), 'utf8');
 const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
 const L = new Float32Array([0.3, 0.8, -0.2]);
 const near = (a, b, eps = 1e-6) => Math.abs(a - b) <= eps;
 
-// ── the stateful fake GL ──────────
-
-const E = {
-  DEPTH_BUFFER_BIT: 0x100, STENCIL_BUFFER_BIT: 0x400, COLOR_BUFFER_BIT: 0x4000,
-  POINTS: 0, LINES: 1, TRIANGLES: 4, TRIANGLE_STRIP: 5, TRIANGLE_FAN: 6, ZERO: 0, ONE: 1, NONE: 0,
-  SRC_ALPHA: 0x302, ONE_MINUS_SRC_ALPHA: 0x303, FUNC_ADD: 0x8006, MIN: 0x8007, MAX: 0x8008,
-  TEXTURE_2D: 0x0DE1, TEXTURE_3D: 0x806F, TEXTURE_2D_ARRAY: 0x8C1A, TEXTURE_CUBE_MAP: 0x8513,
-  TEXTURE_MAG_FILTER: 0x2800, TEXTURE_MIN_FILTER: 0x2801, TEXTURE_WRAP_S: 0x2802, TEXTURE_WRAP_T: 0x2803, TEXTURE_WRAP_R: 0x8072,
-  TEXTURE_MAX_LEVEL: 0x813D, TEXTURE_BASE_LEVEL: 0x813C, TEXTURE_COMPARE_MODE: 0x884C,
-  NEAREST: 0x2600, LINEAR: 0x2601, NEAREST_MIPMAP_NEAREST: 0x2700, LINEAR_MIPMAP_NEAREST: 0x2701, NEAREST_MIPMAP_LINEAR: 0x2702, LINEAR_MIPMAP_LINEAR: 0x2703,
-  REPEAT: 0x2901, CLAMP_TO_EDGE: 0x812F, MIRRORED_REPEAT: 0x8370,
-  RED: 0x1903, RG: 0x8227, RGB: 0x1907, RGBA: 0x1908, R8: 0x8229, RG8: 0x822B, RGB8: 0x8051, RGBA8: 0x8058,
-  R16F: 0x822D, RG16F: 0x822F, RGBA16F: 0x881A, R32F: 0x822E, RGBA32F: 0x8814, R32UI: 0x8236, RGBA32UI: 0x8D70,
-  RED_INTEGER: 0x8D94, RGBA_INTEGER: 0x8D99, UNSIGNED_BYTE: 0x1401, UNSIGNED_SHORT: 0x1403, INT: 0x1404, UNSIGNED_INT: 0x1405, FLOAT: 0x1406, HALF_FLOAT: 0x140B,
-  DEPTH_COMPONENT: 0x1902, DEPTH_COMPONENT16: 0x81A5, DEPTH_COMPONENT24: 0x81A6, DEPTH_COMPONENT32F: 0x8CAC, DEPTH_STENCIL: 0x84F9, DEPTH24_STENCIL8: 0x88F0,
-  FRAMEBUFFER: 0x8D40, READ_FRAMEBUFFER: 0x8CA8, DRAW_FRAMEBUFFER: 0x8CA9, RENDERBUFFER: 0x8D41, FRAMEBUFFER_COMPLETE: 0x8CD5,
-  COLOR_ATTACHMENT0: 0x8CE0, DEPTH_ATTACHMENT: 0x8D00, DEPTH_STENCIL_ATTACHMENT: 0x821A,
-  ARRAY_BUFFER: 0x8892, ELEMENT_ARRAY_BUFFER: 0x8893, UNIFORM_BUFFER: 0x8A11, STATIC_DRAW: 0x88E4, DYNAMIC_DRAW: 0x88E8, STREAM_DRAW: 0x88E0,
-  VERTEX_SHADER: 0x8B31, FRAGMENT_SHADER: 0x8B30, COMPILE_STATUS: 0x8B81, LINK_STATUS: 0x8B82,
-  DEPTH_TEST: 0x0B71, CULL_FACE: 0x0B44, BLEND: 0x0BE2, SCISSOR_TEST: 0x0C11, STENCIL_TEST: 0x0B90, POLYGON_OFFSET_FILL: 0x8037,
-  BACK: 0x0405, FRONT: 0x0404, CW: 0x0900, CCW: 0x0901, LESS: 0x0201, EQUAL: 0x0202, LEQUAL: 0x0203, GREATER: 0x0204, GEQUAL: 0x0206, ALWAYS: 0x0207,
-  UNPACK_ALIGNMENT: 0x0CF5, PACK_ALIGNMENT: 0x0D05, UNPACK_FLIP_Y_WEBGL: 0x9240, UNPACK_PREMULTIPLY_ALPHA_WEBGL: 0x9241,
-  TEXTURE0: 0x84C0,
-};
-for (let i = 1; i < 32; i++) E[`TEXTURE${i}`] = E.TEXTURE0 + i;
-const TARGET_OF = (type) => (/2DArray/.test(type) ? E.TEXTURE_2D_ARRAY : /3D/.test(type) ? E.TEXTURE_3D : /Cube/.test(type) ? E.TEXTURE_CUBE_MAP : E.TEXTURE_2D);
-
-function stateGl(W = 1280, H = 720) {
-  let ids = 0;
-  const calls = [], errors = [];
-  const canvas = { clientWidth: W, clientHeight: H, width: W, height: H };
-  const s = {
-    active: 0, units: Array.from({ length: 32 }, () => ({})), drawFb: null, readFb: null, fbos: new Map(), prog: null,
-    enabled: new Set([E.DEPTH_TEST, E.CULL_FACE]), depthMask: true, viewport: [0, 0, W, H], clearColor: [0, 0, 0, 0], scissor: [0, 0, W, H],
-    clears: [], draws: [], blits: [],
-  };
-  const obj = (kind, extra = {}) => ({ kind, id: ++ids, ...extra });
-  const bound = (target) => s.units[s.active][target];
-  const attach = (target, att, tex) => {
-    const fb = target === E.READ_FRAMEBUFFER ? s.readFb : s.drawFb;
-    if (!fb) return;
-    if (!s.fbos.has(fb)) s.fbos.set(fb, {});
-    s.fbos.get(fb)[att] = tex;
-  };
-  const draw = (what) => {
-    const p = s.prog;
-    s.draws.push({ what, prog: p, fb: s.drawFb, viewport: [...s.viewport], scissorOn: s.enabled.has(E.SCISSOR_TEST), units: s.units.slice(0, 5).map((u) => ({ ...u })) });
-    if (!p) return;
-    const onUnit = new Map();
-    const att = s.drawFb ? Object.values(s.fbos.get(s.drawFb) ?? {}) : [];
-    for (const smp of p.samplers) {
-      if (!smp.active) continue;
-      const unit = p.units[smp.name] ?? 0;
-      const prev = onUnit.get(unit);
-      if (prev && prev.type !== smp.type) errors.push({ what, err: 'INVALID_OPERATION: two sampler types on one unit', unit, a: prev.name, b: smp.name });
-      onUnit.set(unit, smp);
-      const tex = s.units[unit]?.[TARGET_OF(smp.type)];
-      if (tex && att.includes(tex)) errors.push({ what, err: 'INVALID_OPERATION: feedback loop', sampler: smp.name, unit, tex: tex.id });
-    }
-  };
-  const impl = {
-    createTexture: () => obj('tex', { params: {} }), createFramebuffer: () => obj('fbo'), createRenderbuffer: () => obj('rb'),
-    createBuffer: () => obj('buf'), createVertexArray: () => obj('vao'), createQuery: () => obj('q'),
-    createShader: (type) => obj('sh', { type }), createProgram: () => obj('prog', { shaders: [], samplers: [], units: {}, values: {}, locs: new Map() }),
-    shaderSource: (sh, text) => { sh.src = text; },
-    attachShader: (p, sh) => { p.shaders.push(sh); },
-    linkProgram: (p) => {
-      const text = p.shaders.map((x) => x.src ?? '').join('\n');
-      const re = /uniform\s+(?:(?:highp|mediump|lowp)\s+)?((?:u|i)?sampler\w+)\s+([^;]+);/g;
-      let m;
-      while ((m = re.exec(text))) {
-        for (const raw of m[2].split(',')) {
-          const name = raw.trim().replace(/\[.*$/, '');
-          if (name) p.samplers.push({ name, type: m[1], active: (text.match(new RegExp(`\\b${name}\\b`, 'g')) ?? []).length > 1 });
-        }
-      }
-    },
-    getShaderParameter: () => true, getProgramParameter: () => true, getShaderInfoLog: () => '', getProgramInfoLog: () => '',
-    getUniformLocation: (p, name) => { if (!p.locs.has(name)) p.locs.set(name, { p, name }); return p.locs.get(name); },
-    getAttribLocation: () => 0, getExtension: () => null, isContextLost: () => false,
-    getParameter: () => new Float32Array(4), checkFramebufferStatus: () => E.FRAMEBUFFER_COMPLETE,
-    isEnabled: (cap) => s.enabled.has(cap), enable: (cap) => s.enabled.add(cap), disable: (cap) => s.enabled.delete(cap),
-    depthMask: (b) => { s.depthMask = !!b; },
-    viewport: (x, y, w, h) => { s.viewport = [x, y, w, h]; },
-    scissor: (x, y, w, h) => { s.scissor = [x, y, w, h]; },
-    clearColor: (r, g, b, a) => { s.clearColor = [r, g, b, a]; },
-    clear: (bits) => { s.clears.push({ bits, fb: s.drawFb, scissorOn: s.enabled.has(E.SCISSOR_TEST), depthMask: s.depthMask, viewport: [...s.viewport], color: [...s.clearColor] }); },
-    useProgram: (p) => { s.prog = p; },
-    uniform1i: (loc, v) => { if (loc?.p) { loc.p.units[loc.name] = v; loc.p.values[loc.name] = [v]; } },
-    uniform1f: (loc, ...v) => { if (loc?.p) loc.p.values[loc.name] = v; },
-    uniform2f: (loc, ...v) => { if (loc?.p) loc.p.values[loc.name] = v; },
-    uniform4f: (loc, ...v) => { if (loc?.p) loc.p.values[loc.name] = v; },
-    uniform4fv: (loc, v) => { if (loc?.p) loc.p.values[loc.name] = Array.from(v); },
-    uniform2fv: (loc, v) => { if (loc?.p) loc.p.values[loc.name] = Array.from(v); },
-    activeTexture: (u) => { s.active = u - E.TEXTURE0; },
-    bindTexture: (target, tex) => { s.units[s.active][target] = tex ?? null; },
-    texParameteri: (target, pname, v) => { const t = bound(target); if (t) t.params[pname] = v; },
-    texImage2D: (target, level, fmt, w, h) => { const t = bound(target); if (t && level === 0) Object.assign(t, { fmt, w, h }); },
-    texStorage2D: (target, levels, fmt, w, h) => { const t = bound(target); if (t) Object.assign(t, { fmt, w, h, levels }); },
-    texImage3D: (target, level, fmt, w, h, d) => { const t = bound(target); if (t && level === 0) Object.assign(t, { fmt, w, h, d }); },
-    deleteTexture: (tex) => { if (tex) tex.deleted = true; for (const u of s.units) for (const k of Object.keys(u)) if (u[k] === tex) u[k] = null; },
-    bindFramebuffer: (target, fb) => {
-      if (target === E.FRAMEBUFFER || target === E.DRAW_FRAMEBUFFER) s.drawFb = fb ?? null;
-      if (target === E.FRAMEBUFFER || target === E.READ_FRAMEBUFFER) s.readFb = fb ?? null;
-    },
-    deleteFramebuffer: (fb) => { if (fb) fb.deleted = true; if (s.drawFb === fb) s.drawFb = null; if (s.readFb === fb) s.readFb = null; },
-    framebufferTexture2D: (target, att, _tt, tex) => attach(target, att, tex),
-    framebufferTextureLayer: (target, att, tex) => attach(target, att, tex),
-    framebufferRenderbuffer: (target, att, _rt, rb) => attach(target, att, rb),
-    blitFramebuffer: (...a) => { s.blits.push({ readFb: s.readFb, drawFb: s.drawFb, args: a }); },
-    drawArrays: () => draw('drawArrays'), drawElements: () => draw('drawElements'),
-    drawArraysInstanced: () => draw('drawArraysInstanced'), drawElementsInstanced: () => draw('drawElementsInstanced'),
-  };
-  const gl = new Proxy({}, {
-    get(_, k) {
-      if (k in E) return E[k];
-      if (k === 'drawingBufferWidth') return canvas.width;
-      if (k === 'drawingBufferHeight') return canvas.height;
-      if (k === 'canvas') return canvas;
-      if (typeof k === 'string' && k.toUpperCase() === k) return `GL_${k}`;   // a constant this file does not use is at least distinct
-      const f = impl[k];
-      return (...a) => { calls.push([k, ...a]); return f ? f(...a) : undefined; };
-    },
-  });
-  canvas.getContext = () => gl;
-  return { gl, canvas, calls, errors, s };
-}
-
-/** The present's own draw - the retro program's (it owns the one uKind). */
-const presents = (s) => s.draws.filter((d) => d.prog?.locs?.has('uKind'));
-const retroCfg = (over = {}) => ({ width: 320, height: 200, hudWidth: 320, hudHeight: 154, post: 1, lutShift: 5, mipmaps: true, ...over });
-const fakeMesh = (gl) => ({ vao: gl.createVertexArray(), subMeshes: [{ textureArchive: 1, textureRecord: 1, primitiveCount: 1, startIndex: 0 }] });
 
 // ── A: fidelity ──────────
 
@@ -300,11 +170,16 @@ test('AUDIT RETRO1 B1: a present leaves nothing of the image on a unit - the nex
   const light = { fog: null, sunDir: L, amb: [1, 1, 1], sunCol: [1, 1, 1], dim: 0, sunScale: 1, moonDir: L, moonScale: 0, moonCol: [0, 0, 0] };
   const wind = { dir: [1, 0], speed: 1, windV: [0, 0] };
   try {
+    // the second pass (I2): the LUT whole first, or the present checked below draws plain and "no LUT" is vacuous
+    for (let f = 0; f < 200 && !r.retro?.lut; f++) { r.beginFrame(I, I, L, WORLD_FRAME); r.drawScreenQuad(null, { x: 0, y: 0, w: 1, h: 1 }); }
+    assert.ok(r.retro.lut, 'the palette\'s LUT is whole');
+    s.draws.length = 0;
     r.beginFrame(I, I, L, WORLD_FRAME);   // the enhanced skin: no screen quad - presented at the next beginFrame
     r.beginFrame(I, I, L, WORLD_FRAME);
     const t = r.retro.target;
     assert.equal(s.drawFb, t.fbo, 'the world draws into the image again');
     assert.equal(presents(s).length, 1, 'the owed image was presented first');
+    assert.equal(presents(s)[0].prog.values.uKind[0], 2, 'palettized - the LUT was on unit 2 for it');
     for (let u = 0; u < 3; u++) {
       assert.ok(![t.tex, t.depth].includes(s.units[u][E.TEXTURE_2D]), `unit ${u} holds none of the image`);
       assert.equal(s.units[u][E.TEXTURE_3D] ?? null, null, `unit ${u} holds no LUT`);
@@ -434,38 +309,45 @@ test('AUDIT RETRO1 C1: Shift-F11 under an open window loads nothing - it is the 
   _resetRetroPostprocessing();
   routeKey(ev(true), ctx, null, new Set(['ShiftLeft']));
   assert.equal(loads, 0, 'Shift-F11 under a window: no load');
+  assert.equal(retroPostprocessingEnabled(), true, 'and no toggle either - DaggerfallHUD.Update is dead under a window (the second pass, I7)');
   routeKey(ev(false), ctx, null, new Set());
   assert.equal(loads, 1, 'F11 under a window still loads (the death screen\'s hint)');
-  assert.equal(retroFrameConfig(), null);
   const w = src('scenes/world.js');
   assert.match(w, /actionForCode\(bindings\(\), e\.code\) === 'QuickLoad' && !retroToggleKey\(e, keys\)\) \{/, 'the exterior ladder\'s own arm');
   _resetRetroPostprocessing();
 });
 
-test('AUDIT RETRO1 C2: on the classic set the first-person overlay is drawn on the CANVAS after the image is shown; under the lane it goes into the lane\'s frame and through its resolve', () => {
+test('AUDIT RETRO1 C2 (and the second pass, F8/G4): the first-person overlay is drawn on the CANVAS after the image is shown, on either lane, where retro off puts it - the docked strip\'s rows, the whole width', () => {
   for (const lane of [false, true]) {
-    const { canvas, s } = stateGl();
-    const r = new Renderer(canvas);
-    if (lane) { r.setLightingLane(EL_LANE); r.setAir(true); }
-    r.setRetroSource(() => retroCfg());
-    r.setWorldViewport({ x: 0.125, y: 0, w: 0.75, h: 1 });
-    try {
-      r.beginFrame(I, I, L, WORLD_FRAME);
-      const arm = { id: 'armRT' };
-      s.draws.length = 0;
-      r.drawScreenOverlayQuad(arm, 0.5, 0.5);
-      const overlay = s.draws.find((d) => d.units[0][E.TEXTURE_2D] === arm);
-      if (!lane) {
-        assert.equal(presents(s).length, 1, 'classic: the image shown first');
-        assert.equal(overlay.fb, null, 'the arm on the canvas');
-        assert.deepEqual(overlay.viewport, [0, 0, 1280, 720], 'over the whole canvas, at its own resolution');
-      } else {
-        assert.equal(presents(s).length, 0, 'lane: nothing shown yet');
-        assert.equal(overlay.fb, r.air.frame.fbo, 'the arm in the lane\'s frame');
-      }
-      r.drawScreenQuad(null, { x: 0, y: 0, w: 1, h: 1 });
-    } finally { setFrameTarget(null); }
+    for (const [rect, want] of [[{ x: 0.125, y: 0, w: 0.75, h: 1 }, [0, 0, 1280, 720]], [{ x: 0.125, y: 0.25, w: 0.75, h: 0.75 }, [0, 180, 1280, 540]]]) {
+      const { canvas, s } = stateGl();
+      const r = new Renderer(canvas);
+      if (lane) { r.setLightingLane(EL_LANE); r.setAir(true); }
+      r.setRetroSource(() => retroCfg());
+      r.setWorldViewport(rect);
+      try {
+        r.beginFrame(I, I, L, WORLD_FRAME);
+        const arm = { id: 'armRT' };
+        s.draws.length = 0;
+        r.drawScreenOverlayQuad(arm, 0.5, 0.5);
+        const overlay = s.draws.find((d) => d.units[0][E.TEXTURE_2D] === arm);
+        const tag = `${lane ? 'lane' : 'classic'}, y ${rect.y}`;
+        assert.equal(presents(s).length, 1, `${tag}: the image shown first`);
+        assert.equal(overlay.fb, null, `${tag}: the arm on the canvas, at its own resolution`);
+        assert.deepEqual(overlay.viewport, want, `${tag}: the pillarbox is the world's alone - the arm keeps the width, and a docked bar's rows`);
+        assert.deepEqual(s.viewport, [0, 0, 1280, 720], `${tag}: the 2D pass's whole canvas back after it`);
+        r.drawScreenQuad(null, { x: 0, y: 0, w: 1, h: 1 });
+      } finally { setFrameTarget(null); }
+    }
   }
+  // ...and retro off draws it where it always did - the world pass's viewport, the docked strip
+  const { canvas, s } = stateGl();
+  const r = new Renderer(canvas);
+  r.setWorldViewport({ x: 0, y: 0.25, w: 1, h: 0.75 });
+  r.beginFrame(I, I, L, WORLD_FRAME);
+  s.draws.length = 0;
+  r.drawScreenOverlayQuad({ id: 'armRT' }, 0.5, 0.5);
+  assert.deepEqual(s.draws.at(-1).viewport, [0, 180, 1280, 540]);
 });
 
 test('AUDIT RETRO1 C6: a rig sprite drawn into the retro image is sized in the IMAGE\'s pixels, a texel a whole number of them', () => {
@@ -496,7 +378,7 @@ test('AUDIT RETRO1 C7: the shift steps 0..7 (8 is a one-texel LUT - a black worl
   try {
     assert.equal(NUMBER_LAW['Video/PalettizationLUTShift'].max, 7);
     setValue('Video', 'PalettizationLUTShift', 8);
-    assert.equal(getInt('Video', 'PalettizationLUTShift', 0, 7), 7);
+    assert.equal(palettizationLutShift(), 7, 'the getter\'s own clamp (the second pass, I7: getInt with a 7 of its own could not fail)');
     assert.equal(buildRetroLut(8).size, 1, 'what 8 would have been');
     assert.equal(helpOf('Video/RetroRenderingMode'), 'Renders world at lower resolutions', 'RetroModeConfigPage.cs:36, retroModeTip');
   } finally { resetToDefaults(); }
@@ -515,8 +397,9 @@ test('AUDIT RETRO1 C8/E5: every host shows its frame at its own foot - a frame t
   assert.equal(d.hits.length, 2, 'both dungeon frame tails');
   for (const i of d.hits) assert.match(d.h.slice(i, i + 600), /capturePendingScreenshot\(canvas\);/);
   const x = at('scenes/exterior.js', []);
-  assert.equal(x.hits.length, 1);
-  assert.ok(x.hits[0] > x.h.indexOf('townTalk.frame(dt);   // T3b'), 'after the last draw');
+  assert.equal(x.hits.length, 2, 'both ?exterior frame tails - the modal one was missed (the second pass, F1/J2)');
+  assert.ok(x.hits[1] > x.h.indexOf('townTalk.frame(dt);   // T3b'), 'after the last draw');
+  assert.match(x.h.slice(x.hits[0] - 200, x.hits[0] + 250), /townTalk\.frame\(dt\);\n\s+renderer\.resolveFrame\(\);[^\n]*\n\s+frameAbort\(\);/, 'the modal foot, after its last draw');
   assert.match(src('render/renderer.js'), /resolveFrame\(\) \{ this\._compositeAir\(\); \}/);
 });
 
@@ -530,7 +413,7 @@ test('AUDIT RETRO1 D1: the LUT at DFU\'s shipped shift and the palette are pinne
 
 test('AUDIT RETRO1 D2: the pass\'s GL state, texture by texture - the image and its depth Point and clamped at 24 bits, the LUT Point and clamped, the samplers on units 0/1/2, the baseline back after the draw', () => {
   const { gl, s } = stateGl();
-  const pass = new RetroPass(gl, { build: (vs, fs) => { const p = gl.createProgram(); const a = gl.createShader(E.VERTEX_SHADER), b = gl.createShader(E.FRAGMENT_SHADER); gl.shaderSource(a, vs); gl.shaderSource(b, fs); gl.attachShader(p, a); gl.attachShader(p, b); gl.linkProgram(p); return p; } });
+  const pass = new RetroPass(gl, { build: programBuilder(gl), now: () => 0 });
   try {
     pass.beginFrameTarget(320, 200);
     const t = pass.target;
@@ -543,7 +426,7 @@ test('AUDIT RETRO1 D2: the pass\'s GL state, texture by texture - the image and 
     s.clears.length = 0;
     pass.present({ depth: null, rect: [160, 0, 960, 720], canvasW: 1280, canvasH: 720, post: 3, lutShift: 5, clear: [0.25, 0.5, 0.75, 1] });
     const lut = pass.lut.tex;
-    assert.deepEqual([lut.fmt, lut.w, lut.h, lut.d], [E.RGBA8, 8, 8, 8]);
+    assert.deepEqual([lut.fmt, lut.w, lut.h, lut.d, lut.levels, lut.layers.size], [E.RGBA8, 8, 8, 8, 1, 8], 'one level, every layer filled');
     assert.deepEqual(lut.params, { ...point, [E.TEXTURE_WRAP_R]: E.CLAMP_TO_EDGE }, 'the LUT: Point, Clamp (:336)');
     const P = pass.P.p;
     assert.deepEqual([P.units.uColor, P.units.uDepth, P.units.uLut], [0, 1, 2], 'every sampler on its own unit');
@@ -614,8 +497,9 @@ test('AUDIT RETRO1 D5: a menu over a lane retro frame takes the canvas slot and 
     r.beginFrame(I, I, L); r.drawScreenQuad(null, { x: 0, y: 0, w: 1, h: 1 });   // a menu first: the canvas slot exists
     r.beginFrame(I, I, L, WORLD_FRAME); r.drawScreenQuad(null, { x: 0, y: 0, w: 1, h: 1 });
     r.beginFrame(I, I, L, WORLD_FRAME); r.drawScreenQuad(null, { x: 0, y: 0, w: 1, h: 1 });
-    const ap = r.air, kept = ap._frames.retro;
+    const ap = r.air, kept = ap._frames.retro, cv = ap._frames.canvas;
     assert.equal(ap.prevValid, true, 'two world frames: the retro slot has a previous depth');
+    assert.ok(![cv.tex, ...cv.depths].some((t) => t.deleted) && !cv.fbo.deleted, 'allocating the retro slot freed nothing of the canvas one (the second pass, I1)');
     r.beginFrame(I, I, L);   // the SWAP back to the kept canvas slot
     assert.ok(![kept.tex, ...kept.depths].some((t) => t.deleted) && !kept.fbo.deleted, 'the retro slot\'s images live');
     assert.equal(ap.prevValid, false, 'the canvas slot\'s previous depth is no frame\'s previous');
@@ -634,13 +518,13 @@ test('AUDIT RETRO1 D7: the shader\'s ints are highp - at shift 0 the index arith
 
 // ── E: cost and robustness ──────────
 
-test('AUDIT RETRO1 E1: the LUT is built a time slice a frame - the image is shown plain until the table is whole, then palettized, uploaded once', () => {
-  let n = 0;
-  for (const _ of retroLutSteps(1)) n++;
-  assert.equal(n, 256, 'shift 1: a step per row of 8x8x8 blocks');
+test('AUDIT RETRO1 E1: the LUT is built a time slice a frame - the image is shown plain until the table is whole, then palettized', () => {
+  let n = 0, slabs = 0;
+  for (const v of retroLutSteps(1)) { n++; if (v) slabs++; }
+  assert.deepEqual([n, slabs], [4096 + 16, 16], 'shift 1: a step per 8x8x8 block and one per finished z-slab (the second pass, J3/J4)');
   const { gl, s } = stateGl();
   let clock = 0;
-  const pass = new RetroPass(gl, { build: (vs, fs) => { const p = gl.createProgram(); const a = gl.createShader(E.VERTEX_SHADER), b = gl.createShader(E.FRAGMENT_SHADER); gl.shaderSource(a, vs); gl.shaderSource(b, fs); gl.attachShader(p, a); gl.attachShader(p, b); gl.linkProgram(p); return p; }, now: () => (clock += 1), lutBudgetMs: 20 });
+  const pass = new RetroPass(gl, { build: programBuilder(gl), now: () => (clock += 1), lutBudgetMs: 20 });
   try {
     const kinds = [];
     for (let f = 0; f < 40 && !pass.lut; f++) {
@@ -651,7 +535,7 @@ test('AUDIT RETRO1 E1: the LUT is built a time slice a frame - the image is show
     assert.ok(kinds.length > 1, `built over ${kinds.length} frames, not in one`);
     assert.ok(kinds.slice(0, -1).every((k) => k === 0), 'plain while it builds');
     assert.equal(kinds.at(-1), 2, 'palettized the frame it is whole');
-    assert.deepEqual([pass.lut.tex.fmt, pass.lut.tex.w, pass.lut.size], [E.RGBA8, 64, 64]);
+    assert.deepEqual([pass.lut.tex.fmt, pass.lut.tex.w, pass.lut.size, pass.lut.tex.layers.size], [E.RGBA8, 64, 64, 64], 'every layer filled');
     assert.equal(s.draws.length, kinds.length, 'a present every frame all the same');
   } finally { setFrameTarget(null); }
   assert.deepEqual(src('render/retroPass.js').match(/export const RETRO_LUT_BUDGET_MS = (\d+);/)?.[1], '4');
@@ -663,7 +547,7 @@ test('AUDIT RETRO1 E2: retro mode off frees the LUT - Shift-F11 (the effect off,
   let cfg = retroCfg({ post: 3 });
   r.setRetroSource(() => cfg);
   try {
-    r.beginFrame(I, I, L, WORLD_FRAME); r.drawScreenQuad(null, { x: 0, y: 0, w: 1, h: 1 });
+    for (let f = 0; f < 200 && !r.retro?.lut; f++) { r.beginFrame(I, I, L, WORLD_FRAME); r.drawScreenQuad(null, { x: 0, y: 0, w: 1, h: 1 }); }   // the second pass (I2): whole on the real clock, however long that takes
     const lut = r.retro.lut.tex;
     cfg = retroCfg({ post: 0 });
     r.beginFrame(I, I, L, WORLD_FRAME); r.drawScreenQuad(null, { x: 0, y: 0, w: 1, h: 1 });
@@ -677,20 +561,20 @@ test('AUDIT RETRO1 E2: retro mode off frees the LUT - Shift-F11 (the effect off,
 
 test('AUDIT RETRO1 E3: a LUT that cannot be built shows the image plain and says so once; a present that throws still leaves the frame the canvas\'s', () => {
   const base = stateGl();
-  const gl = new Proxy(base.gl, { get: (t, k) => (k === 'texImage3D' ? () => { throw new RangeError('out of memory'); } : t[k]) });   // the 8 MB upload refused
+  const gl = new Proxy(base.gl, { get: (t, k) => (k === 'texSubImage3D' ? () => { throw new RangeError('out of memory'); } : t[k]) });   // a slab's upload refused
   const warn = console.warn; const said = [];
   console.warn = (...a) => said.push(a.join(' '));
   try {
-    const pass = new RetroPass(gl, { build: (vs, fs) => { const p = gl.createProgram(); const a = gl.createShader(E.VERTEX_SHADER), b = gl.createShader(E.FRAGMENT_SHADER); gl.shaderSource(a, vs); gl.shaderSource(b, fs); gl.attachShader(p, a); gl.attachShader(p, b); gl.linkProgram(p); return p; } });
+    const pass = new RetroPass(gl, { build: programBuilder(gl), now: () => 0 });
     for (let f = 0; f < 3; f++) {
       pass.beginFrameTarget(320, 200);
       assert.doesNotThrow(() => pass.present({ rect: [0, 0, 1280, 720], canvasW: 1280, canvasH: 720, post: 3, lutShift: 5 }));
       assert.equal(pass.P.p.values.uKind[0], 0, 'the image, plain');
     }
-    assert.equal(said.filter((m) => m.includes('LUT')).length, 1, 'said once, and not retried');
+    assert.equal(said.filter((m) => m.includes('LUT')).length, 1, 'said once, and not retried while the shift stands');
     assert.equal(pass.lut, null);
     assert.ok(base.calls.some((c) => c[0] === 'deleteTexture'), 'the half-made texture freed');
-    assert.deepEqual(base.calls.filter((c) => c[0] === 'pixelStorei').at(-1), ['pixelStorei', E.UNPACK_ALIGNMENT, 4], 'the unpack alignment back');
+    assert.equal(base.s.active, 0, 'TEXTURE0 active again');
   } finally { console.warn = warn; setFrameTarget(null); }
   const { canvas } = stateGl();
   const r = new Renderer(canvas);
@@ -715,6 +599,14 @@ test('AUDIT RETRO1 E4: a stored value that will not parse is said once a key and
     setValue('Video', 'PalettizationLUTShift', 'x');
     getInt('Video', 'PalettizationLUTShift', 0, 7);
     assert.equal(said.length, 2, 'a new bad value is said again');
+    // the second pass (I7): the key is part of the key - two keys, one bad value, two lines - and GetBool, read every
+    // world frame for UseMipMapsInRetroMode, is said once too
+    setValue('Video', 'RetroModeAspectCorrection', 'x');
+    getInt('Video', 'RetroModeAspectCorrection', 0, 2);
+    assert.equal(said.length, 3, 'another key\'s bad value is its own line');
+    setValue('Video', 'UseMipMapsInRetroMode', 'yes');
+    for (let i = 0; i < 50; i++) retroUseMipMaps();
+    assert.equal(said.length, 4, 'a bad bool once');
   } finally { console.warn = warn; resetToDefaults(); _resetForTests(); }
 });
 

@@ -800,7 +800,11 @@ directory by `test/audit18_bible_docs.test.js`:
   main.js (`setRetroSource`); the pillarbox reaches it through each host's
   `setWorldViewport(worldViewportRect(...))`. AUDIT RETRO1: DFU's own
   gamma round trip, the LUT built a slice a frame, nothing of the image
-  left bound. See `07-Rendering/Retro-Mode.md`.
+  left bound; its second pass: the LUT stepped a block at a time (at most
+  `RETRO_LUT_MAX_BLOCKS` a frame) and streamed into a texture allocated
+  up front, a z-slab at a time (`texStorage3D` + `texSubImage3D`), a
+  failed allocation caught through getError and retried when the shift
+  or retro mode changes. See `07-Rendering/Retro-Mode.md`.
 - `volumetricClouds.js` - VC3 THE VOLUMETRIC CLOUDS: a raymarched slab between
   two altitudes, shaped by the VC2 volumes, lit by the sun (the moon at night)
   with a short light march, driven by the eased weather row, a per-weather

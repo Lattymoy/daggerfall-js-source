@@ -227,7 +227,7 @@ import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfVie
 import { keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released, actionOf, held, moveHeld, anyMove, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, routeAction, installContextMenuGuard, POLLED_ACTIONS, QUICKSLOT_ACTIONS, swingKeyHeld } from '../ui/input.js';
 import { useQuickslot, swapQuickslot, offHandQuickslot, spellQuickslotPress, offHandOffersSwap, tickQuickslotHold } from '../systems/quickslots.js';   // QS2/QS4: the diamond's performers   // QS6: the spell slot, the off hand's swap question, and the hold machine
 import { armUnloadGuard, releaseUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game; AUDIT-MACL F3: ...and down for a door the game opened itself   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
-import { hudShortcutKey } from '../ui/hudShortcuts.js';   // AUDIT 64 F36/F37: DaggerfallHUD.Update's LargeHUDToggle / HUDToggle arms
+import { hudShortcutKey, retroToggleKey } from '../ui/hudShortcuts.js';   // AUDIT 64 F36/F37: DaggerfallHUD.Update's LargeHUDToggle / HUDToggle arms
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady, pauseOpts } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin; MAC-L1: pauseOpts is the ONE reader of the door's options
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
@@ -2994,7 +2994,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // press included, and actionOf reads it through the held-first
     // LATCH (G3/GR); it carries the suppression half too (:1681-1685,
     // "space is jump, LeftShift+Space opens inventory: ignore it").
-    const act = actionOf(e, keys);   // I2: the registry owns the code -> action read
+    const act = retroToggleKey(e, keys) ? null : actionOf(e, keys);   // I2: the registry owns the code -> action read; AUDIT RETRO1 G3: Shift-F11 is the HUD's (below), never QuickLoad's - routeKey's hosts take it first too
     // STATUS-LIVE: THE READOUT YIELDS HERE TOO. This host runs its own
     // key ladder rather than routeKey's, so its Escape arm (and its
     // quickslot and window arms) never reach ui/input.js's routeAction
@@ -4509,6 +4509,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // townTalk always draws.
       hccTick(dt, now);   // AUDIT HCC H1: the runtime's LateUpdate indoors too
       townTalk.frame(dt);
+      renderer.resolveFrame();   // AUDIT RETRO1 E5/C8 (second pass F1/J2): this host's modal foot too - world.js's has it
       frameAbort();   // AUDIT-WH2 L1-F4: the frame never reached frameEnd - close the token, take no sample
       requestAnimationFrame(frame);
       return;

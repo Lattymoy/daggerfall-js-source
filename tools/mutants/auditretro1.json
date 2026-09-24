@@ -59,7 +59,7 @@
   {
     "name": "AUDITRETRO1-A4-a-replacement-capped-at-upload",
     "file": "src/render/renderer.js",
-    "old": "    if (opts.replacement) this._replacements.add(tex);   // AUDIT RETRO1 A4: TryImportTexture's - DFU's retro arm never reaches it\n    else if (mips",
+    "old": "    if (opts.replacement) { if (tex) this._replacements.add(tex); }   // AUDIT RETRO1 A4: TryImportTexture's - DFU's retro arm never reaches it (J7: a lost context's null is no key)\n    else if (mips",
     "new": "    if (mips",
     "tests": [
       "test/auditretro1.test.js"
@@ -188,17 +188,17 @@
   {
     "name": "AUDITRETRO1-C2-the-arm-into-the-image",
     "file": "src/render/renderer.js",
-    "old": "    if (this._retroOwed && !this._air) { if (this._worldViewportPx) this.endWorldPass(); this._compositeAir(); }\n    this._ensureOverlayProgram();",
-    "new": "    this._ensureOverlayProgram();",
+    "old": "    if (this._retroOwed) {\n      const v = this._worldViewportFrame;\n      if (this._worldViewportPx) this.endWorldPass();\n      this._compositeAir();",
+    "new": "    if (false) {\n      const v = this._worldViewportFrame;\n      if (this._worldViewportPx) this.endWorldPass();\n      this._compositeAir();",
     "tests": [
       "test/auditretro1.test.js"
     ]
   },
   {
-    "name": "AUDITRETRO1-C2-the-lane-arm-shown-unresolved",
+    "name": "AUDITRETRO1-C2-the-lane-arm-left-in-the-image",
     "file": "src/render/renderer.js",
-    "old": "    if (this._retroOwed && !this._air) { if",
-    "new": "    if (this._retroOwed) { if",
+    "old": "    if (this._retroOwed) {\n      const v = this._worldViewportFrame;",
+    "new": "    if (this._retroOwed && !this._air) {\n      const v = this._worldViewportFrame;",
     "tests": [
       "test/auditretro1.test.js"
     ]
@@ -243,8 +243,8 @@
   {
     "name": "AUDITRETRO1-C8-the-exterior-frame-shown-late",
     "file": "src/scenes/exterior.js",
-    "old": "    renderer.resolveFrame();   // AUDIT RETRO1 E5/C8",
-    "new": "    // AUDIT RETRO1 E5/C8",
+    "old": "    renderer.resolveFrame();   // AUDIT RETRO1 E5/C8: a frame that drew no screen quad",
+    "new": "    // AUDIT RETRO1 E5/C8: a frame that drew no screen quad",
     "tests": [
       "test/auditretro1.test.js"
     ]
@@ -414,8 +414,8 @@
   {
     "name": "AUDITRETRO1-E1-the-lut-built-in-one-frame",
     "file": "src/render/retroPass.js",
-    "old": "      do { r = this._lutJob.it.next(); } while (!r.done && this._now() - t0 < this._lutBudgetMs);",
-    "new": "      do { r = this._lutJob.it.next(); } while (!r.done);",
+    "old": "      } while (!r.done && ++blocks < this._lutMaxBlocks && this._now() - t0 < this._lutBudgetMs);",
+    "new": "      } while (!r.done);",
     "tests": [
       "test/auditretro1.test.js"
     ]
@@ -432,7 +432,7 @@
   {
     "name": "AUDITRETRO1-E3-a-failed-lut-retried-a-frame",
     "file": "src/render/retroPass.js",
-    "old": "      this._lutFailed.add(shift);\n",
+    "old": "      this._lutFailed = shift;\n",
     "new": "",
     "tests": [
       "test/auditretro1.test.js"
