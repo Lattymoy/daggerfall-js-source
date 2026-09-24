@@ -114,6 +114,7 @@ import { onSavedKeyBinds, PORT_ACTIONS } from '../systems/inputActions.js';   //
 import {
   currentDict, setUnsavedBinding, checkDuplicates, buttonText, ELONGATED_TEXT,
   INTERNAL_DUPE_COLOR, CROSS_DUPE_COLOR, removeKeybindPromptRows, comboFromEvent,
+  bindingHolder, replaceKeybindPromptRows, stageReplace,
 } from '../systems/controlsConfig.js';
 import {
   makeSlider, setScrollIndex, sliderClick, sliderDrag, sliderGetValue, sliderScroll,
@@ -125,7 +126,7 @@ import { getBool, getFloat, getInt, setValue, saveSettings, effectiveSettings } 
 // MeleeAttackDetection is the ONE of this window's ten keys tiered
 // `stored` - the port has no melee-detection branch to consume it - so
 // it is read through effectiveSettings, the settings menu's own
-// display surface, exactly as ui/pauseWindow.js:144-146 reads its
+// display surface, exactly as ui/pauseWindow.js:146-148 reads its
 // three stored-tier controls. The tier doctrine reserves the typed
 // getters for LIVE keys, and settings.test.js enforces it. The CLAMP
 // GetInt(0,1) would have applied (SettingsManager.cs:516) is applied
@@ -252,8 +253,9 @@ export class MouseControlsWindow {
     this.done = false;
     this.isChoiceWindow = true;
     this.capture = null;      // waitingForInput (:57)
-    this.top = null;          // 'remove'
+    this.top = null;          // 'remove' | 'replace'
     this._removeAction = null;
+    this._replace = null;     // KB1: { action, code, holder } while the replace prompt stands
     this._box = null;
     this.dupes = checkDuplicates(this.unsaved, { yield: PORT_ACTIONS });
     this.tip = new ToolTip();
@@ -376,9 +378,22 @@ export class MouseControlsWindow {
       // narrowing of its two-key gesture onto the event's modifier
       // flags - is the grid's, unchanged.
       const combo = comboFromEvent(code, e);
-      setUnsavedBinding(this.unsaved, this.capture, combo ?? code);
+      const action = this.capture;
       this.capture = null;
+      // KB1 (law 4): the grid's own ask (ui/controlsWindow.js _bindCaptured) - a held key is asked for, never taken.
+      const holder = bindingHolder(this.unsaved, action, combo ?? code);
+      if (holder) { this.top = 'replace'; this._replace = { action, code: combo ?? code, holder }; return; }
+      setUnsavedBinding(this.unsaved, action, combo ?? code);
       this._refresh();
+      return;
+    }
+    if (this.top === 'replace') {
+      if (code === 'KeyY') {
+        this._click();
+        stageReplace(this.unsaved, this._replace.action, this._replace.code, this._replace.holder);
+        this._refresh();
+      }
+      if (code === 'KeyY' || code === 'KeyN' || code === 'Escape') { this.top = null; this._replace = null; }
       return;
     }
     if (this.top === 'remove') {
@@ -461,7 +476,7 @@ export class MouseControlsWindow {
 
   click(vx, vy, right = false) {
     if (this.capture) return true;
-    if (this.top === 'remove') {
+    if (this.top === 'remove' || this.top === 'replace') {
       if (this._box) {
         const hit = messageBoxHit(this._box, vx, vy);
         if (hit === MB_BUTTONS.Yes) this.input('KeyY');
@@ -600,9 +615,9 @@ export class MouseControlsWindow {
 
     if (this.capture) put('Press a key...', 4, MOUSE_PANEL[3] - 12);
 
-    if (this.top === 'remove') {
-      const rows = removeKeybindPromptRows(this._removeAction,
-        currentDict(this.unsaved).get(this._removeAction));
+    if (this.top === 'remove' || this.top === 'replace') {
+      const rows = this.top === 'replace' ? replaceKeybindPromptRows(this._replace.action, this._replace.code, this._replace.holder)
+        : removeKeybindPromptRows(this._removeAction, currentDict(this.unsaved).get(this._removeAction));
       this._box = layoutMessageBox(font, rows, [MB_BUTTONS.Yes, MB_BUTTONS.No]);
       if (!drawMessageBox(renderer, m, font, this._box)) {
         (this._box.rows ?? []).forEach((r, i) =>

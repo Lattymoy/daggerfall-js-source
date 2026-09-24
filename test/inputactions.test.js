@@ -49,6 +49,18 @@ test('I1: the Actions enum, verbatim names and order (:324-384)', () => {
     'QuickLootAll', 'QuickLootOpen',
     // FREEMOUSE: appended past the plaque's two, like every port row.
     'FreeMouse',
+    // KB1 (2026-09-23, Mac: "formalize a solid solution" for the keybinds): every
+    // key that does something in the world is an action - E's activate, the
+    // dial, the hotbar's slots past the diamond's four, the vendored mods' keys
+    // (which each mod read off its own TextKey where no binding table could see
+    // it) and the dungeon's diagnostics readout. Appended, under the same law.
+    'Interact', 'QuickDial',
+    'Hotbar5', 'Hotbar6', 'Hotbar7', 'Hotbar8', 'Hotbar9', 'Hotbar10',
+    'TorchToggleLight', 'TorchDrop', 'TorchThrow',
+    'ShoulderSwitch', 'AutoPerspective',
+    'FollowPaths',
+    'HorseMount', 'HorseSummon',
+    'DebugOverlay',
   ]);
   // ActionNameToEnum's sentinel: unknown parses to Unknown, and
   // Unknown itself is NOT a bindable action.
@@ -62,14 +74,18 @@ test('I1: ResetDefaults\' table, every row (:979-1032)', () => {
   // module under test is the exact failure AUDIT 21 F12 recorded, so
   // the literals are restated here from the C#.
   assert.deepEqual(DEFAULT_BINDINGS.map(([c, a]) => `${c}=${a}`), [
-    'Escape=Escape', 'Backquote=ToggleConsole',
+    // KB1 - THREE DEPARTURES FROM DFU'S ROWS, Mac's calls (Ledger A, KEYBINDING STANDARD): ToggleConsole's
+    // Backquote and Slide's Left Ctrl are NOT bound (no console here, and DFU reads Slide nowhere either - both are
+    // HIDDEN_ACTIONS, off the pane), and AbortSpell moves off E, which is the port's Interact, onto the Backquote
+    // the console left. Every other row is DFU's, row for row.
+    'Escape=Escape',
     'KeyW=MoveForwards', 'KeyS=MoveBackwards', 'KeyA=MoveLeft', 'KeyD=MoveRight',
     'ArrowLeft=TurnLeft', 'ArrowRight=TurnRight',
     'PageUp=FloatUp', 'PageDown=FloatDown', 'Space=Jump', 'KeyC=Crouch',
-    'ControlLeft=Slide', 'ShiftLeft=Run', 'Mouse2=AutoRun',
+    'ShiftLeft=Run', 'Mouse2=AutoRun',
     'KeyR=Rest', 'KeyT=Transport',
     'F1=StealMode', 'F2=GrabMode', 'F3=InfoMode', 'F4=TalkMode',
-    'Backspace=CastSpell', 'KeyQ=RecastSpell', 'KeyE=AbortSpell', 'KeyU=UseMagicItem',
+    'Backspace=CastSpell', 'KeyQ=RecastSpell', 'Backquote=AbortSpell', 'KeyU=UseMagicItem',
     'KeyZ=ReadyWeapon', 'Mouse1=SwingWeapon', 'KeyH=SwitchHand',
     'KeyI=Status', 'F5=CharacterSheet', 'F6=Inventory',
     'Mouse0=ActivateCenterObject', 'Enter=ActivateCursor',
@@ -94,6 +110,17 @@ test('I1: ResetDefaults\' table, every row (:979-1032)', () => {
     // the enum above and ships UNBOUND, because the cell it is drawn in is
     // the off hand's and Digit4 presses that.
     'Digit1=QuickUse1', 'Digit2=QuickUse2', 'Digit3=QuickSpell', 'Digit4=QuickOffHand',
+    // KB1: the standard's own rows - E interacts (Mac's call), Tab is the dial,
+    // 5-0 are the hotbar's slots 5-10 (slots 1-4 ARE the four above), and each
+    // vendored mod's keys where nothing else answers: the torch's O/G/X, Eye Of
+    // The Beholder's B and keypad +, Travel Options' K, and Horse Cart and
+    // Cargo's comma and period (off 5 and 6, which the hotbar now owns).
+    'KeyE=Interact', 'Tab=QuickDial',
+    'Digit5=Hotbar5', 'Digit6=Hotbar6', 'Digit7=Hotbar7', 'Digit8=Hotbar8', 'Digit9=Hotbar9', 'Digit0=Hotbar10',
+    'KeyO=TorchToggleLight', 'KeyG=TorchDrop', 'KeyX=TorchThrow',
+    'KeyB=ShoulderSwitch', 'NumpadAdd=AutoPerspective',
+    'KeyK=FollowPaths',
+    'Comma=HorseMount', 'Period=HorseSummon',
   ]);
   // every bindable action except the four with no default key
   // (MoveLeft/MoveRight arrive via A/D; TurnLeft/TurnRight via
@@ -110,10 +137,12 @@ test('I1: ResetDefaults\' table, every row (:979-1032)', () => {
   // QUICK-LOOT B4 appended two more, each with a default (P and J),
   // so the table and the enum both grow by two and the one unbound
   // action below is still the only one.
-  assert.equal(DEFAULT_BINDINGS.length, 52);
-  assert.equal(bound.size, 52, 'no action is defaulted twice');
-  assert.equal(ACTIONS.length, 53);
-  assert.deepEqual(ACTIONS.filter((a) => !bound.has(a)), ['QuickSwap'], 'exactly one action ships unbound');
+  // KB1: two DFU rows unbound (the hidden console and Slide), seventeen actions appended, sixteen of them bound -
+  // DebugOverlay ships unbound, a developer's key.
+  assert.equal(DEFAULT_BINDINGS.length, 66);
+  assert.equal(bound.size, 66, 'no action is defaulted twice');
+  assert.equal(ACTIONS.length, 70);
+  assert.deepEqual(ACTIONS.filter((a) => !bound.has(a)), ['ToggleConsole', 'Slide', 'QuickSwap', 'DebugOverlay'], 'the four that ship unbound, named');
   const codes = DEFAULT_BINDINGS.map(([c]) => c);
   assert.equal(new Set(codes).size, codes.length, 'and no KEY is spent twice - the number row was free');
 });
@@ -157,7 +186,7 @@ test('I1: the two clears - by action walks all its codes, by code takes one (:80
 test('I1: a FULL reset clears primary and the removed list but NOT secondary (:956-960)', () => {
   const s = createBindings();
   resetDefaults(s);
-  assert.equal(s.primary.size, 52);   // SOC5: DFU's 44 plus SocialInteract; QS2: plus the three quickslot rows; QS4: plus the off hand's; QUICK-LOOT B4: plus the plaque's two; FREEMOUSE: plus the mouse toggle's own key
+  assert.equal(s.primary.size, 66);   // KB1: DFU's 42 (its console and Slide rows unbound) plus the port's 24; SOC5: DFU's 44 plus SocialInteract; QS2: plus the three quickslot rows; QS4: plus the off hand's; QUICK-LOOT B4: plus the plaque's two; FREEMOUSE: plus the mouse toggle's own key
   // a secondary binding on a code no default uses SURVIVES the reset;
   // one on a default's code is stolen back by SetBinding's alt-removal.
   // QUICK-LOOT B4: this was KeyP, chosen because no default used it -

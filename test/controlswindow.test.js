@@ -25,7 +25,9 @@ const freshStore = () => { const b = createBindings(); resetDefaults(b); return 
 // became tests about a clash. Deriving it means a new default can
 // never change what a test is asking again.
 const freeCode = (store) => {
-  const letters = 'PYZXQKJUOBNM'.split('').map((c) => `Key${c}`);
+  // KB1: every letter is somebody's since the standard (the mods' keys joined the table), so the candidates
+  // run on past the letters into keys no default holds
+  const letters = [...'PYZXQKJUOBNM'.split('').map((c) => `Key${c}`), 'Semicolon', 'Quote', 'BracketLeft', 'BracketRight'];
   const free = letters.find((c) => !actionForCode(store, c));
   assert.ok(free, 'every candidate letter is spoken for - this fixture needs a new one');
   return free;

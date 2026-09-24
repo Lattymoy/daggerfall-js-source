@@ -28,11 +28,11 @@
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { PIXEL_STACK } from './pixelifyFive.js';
 import { getPref } from '../systems/uiPrefs.js';
-import { isTextEntryTarget, bindings, QUICKSLOT_ACTIONS } from './input.js';
-import { actionForCode } from '../systems/inputActions.js';
-import { modHotkeyCodes } from '../systems/modSettings.js';   // AUDIT CONTRIB H1: a mod's hotkey is the mod's
+import { isTextEntryTarget, bindings, actionOf, eventModifiers } from './input.js';
+import { HOTBAR_SLOT_ACTIONS } from '../systems/inputActions.js';   // KB1: the ten slots are ten registry actions
+import { quickslotTag } from './quickslotTags.js';   // KB1: a slot's chip names the key its action is bound to
 import {
-  HOTBAR_SIZE, HOTBAR_KEYS, HOTBAR_CODES, HOTBAR_TEXT, hotbarView, hotbarRevision, hotbarPress, hotbarReady,
+  HOTBAR_SIZE, HOTBAR_TEXT, hotbarView, hotbarRevision, hotbarPress, hotbarReady,
   hotbarEntryForItem, hotbarEntryForSpell, setHotbarSlot, clearHotbarSlot, swapHotbarSlots, hotbarEntry,
   hotbarSlotOf, firstFreeHotbarSlot, hotbarKindOf,
 } from '../systems/quickslots.js';
@@ -73,6 +73,7 @@ let liveOpts = {};
 let liveEntity = null;
 let lastHidden = true;
 let lastPaused = true;   // AUDIT CONTRIB H1: a window or the freed cursor - the keys are not the player's
+let keysRev = -1;   // KB1: the bindings revision the chips were named at
 let lastSig = null;
 let keysBound = false;
 let captionTimer = null;
@@ -131,7 +132,7 @@ function build() {
     icon.draggable = false;
     const glyph = el('span', 'hb-glyph');
     face.append(icon, glyph);
-    const key = el('span', 'hb-key', HOTBAR_KEYS[i]);
+    const key = el('span', 'hb-key', hotbarKeyOf(i) ?? '');
     const count = el('span', 'hb-count');
     const pip = el('span', 'hb-pip');
     const wear = el('span', 'hb-wear');
@@ -207,6 +208,8 @@ function paint() {
   const entity = dropping ? (dropEntity ?? liveEntity) : liveEntity;
   const readiedIndex = liveOpts.readied?.index ?? null;
   const view = hotbarView(entity, { readiedIndex });
+  const rev = bindings().rev;
+  if (rev !== keysRev) { keysRev = rev; slots.forEach((sl, i) => { const t = hotbarKeyOf(i) ?? ''; if (sl.key.textContent !== t) sl.key.textContent = t; }); }   // KB1: a rebind renames the chips
   const sig = `${hotbarRevision()}|${dropping ? 1 : 0}|${view.map((v) => (v.empty ? '-'
     : `${v.name}|${v.count ?? ''}|${Number.isFinite(v.condition) ? Math.round(v.condition) : ''}|${v.ghost ? 1 : 0}|${v.active ? 1 : 0}|${v.item ? 1 : 0}`)).join('~')}`;
   if (sig === lastSig) return;
@@ -221,7 +224,7 @@ function paintSlot(s, v, entity) {
   n.classList.toggle('hb-active', !!v.active);
   n.classList.toggle('hb-spell', v.type === 'spell');
   for (const c of ELEMENT_CLASS) n.classList.toggle(`el-${c}`, v.type === 'spell' && ELEMENT_CLASS[v.element] === c);
-  n.title = v.empty ? `Slot ${HOTBAR_KEYS[v.slot]}` : `${v.name}${v.type === 'spell' && RANGE_WORD[v.rangeType] ? ` (${RANGE_WORD[v.rangeType]})` : ''}`;
+  n.title = v.empty ? `Slot ${v.slot + 1}` : `${v.name}${v.type === 'spell' && RANGE_WORD[v.rangeType] ? ` (${RANGE_WORD[v.rangeType]})` : ''}`;
   if (v.empty) {
     iconFor(s, v.slot, null, entity);
     s.glyph.textContent = '';
@@ -324,20 +327,18 @@ function showCaption(text, bad = false) {
   captionTimer = setTimeout(() => caption?.classList.remove('on'), CAPTION_MS);
 }
 
+/** The modifiers an event carries, as held codes - so a slot bound to a combo (Shift + 1) resolves as one. */
 function onKey(e) {
   // AUDIT CONTRIB H1: gated on the GAME's pause, not the HUD's visibility - with the HUD toggled off the keys fell
   // through to the diamond the hotbar replaces (1 drank the diamond's potion), and 5-0 did nothing
   if (!bar || !hotbarMode() || dropOwners.size || lastPaused) return;
-  if (e.ctrlKey || e.metaKey || e.altKey) return;
-  const i = HOTBAR_CODES.indexOf(e.code);
+  if (e.metaKey || isTextEntryTarget(e.target)) return;
+  // KB1: THE SLOTS ARE REGISTRY ACTIONS. This read `Digit1`-`Digit0` off the event and stepped aside for any digit
+  // someone else held - a table of its own beside the controls pane's. The slot is whatever the key MEANS now: a
+  // player who moved slot 7 to a mouse button, or a pad's d-pad on slots 1-4, presses it; a digit bound to anything
+  // else is simply not a slot.
+  const i = HOTBAR_SLOT_ACTIONS.indexOf(actionOf(e, eventModifiers(e)));
   if (i < 0) return;
-  if (isTextEntryTarget(e.target)) return;
-  // AUDIT CONTRIB H1: A DIGIT THAT IS SOMEONE ELSE'S STAYS THEIRS. The bar took every digit at the capture phase, so a
-  // key the player bound to an action in the controls pane, and a mod's hotkey (Horse Cart and Cargo's mount and
-  // summon ship on 5 and 6), never reached the host. The diamond's own five are the hotbar's to take - it replaces them.
-  const act = actionForCode(bindings(), e.code);
-  if (act && !QUICKSLOT_ACTIONS.has(act)) return;
-  if (modHotkeyCodes().has(e.code)) return;
   // The hotbar owns the digit: no host ladder below may read it too
   // (keys 1-4 are the diamond's by default, and the diamond is put away).
   e.preventDefault();
@@ -384,14 +385,14 @@ export function hotbarDropItem(i, item) {
   const e = hotbarEntryForItem(item);
   if (!e || !setHotbarSlot(i, e)) return false;
   lastSig = null; paint(); strike(i, true);
-  showCaption(HOTBAR_TEXT.added(e.name, HOTBAR_KEYS[i]));
+  showCaption(HOTBAR_TEXT.added(e.name, i + 1));
   return true;
 }
 export function hotbarDropSpell(i, sp) {
   const e = hotbarEntryForSpell(sp);
   if (!e || !setHotbarSlot(i, e)) return false;
   lastSig = null; paint(); strike(i, true);
-  showCaption(HOTBAR_TEXT.added(e.name, HOTBAR_KEYS[i]));
+  showCaption(HOTBAR_TEXT.added(e.name, i + 1));
   return true;
 }
 
@@ -404,7 +405,7 @@ export function toggleHotbarItem(item) {
   const free = firstFreeHotbarSlot();
   if (free < 0) return HOTBAR_TEXT.full;
   hotbarDropItem(free, item);
-  return HOTBAR_TEXT.added(hotbarEntryForItem(item)?.name ?? 'It', HOTBAR_KEYS[free]);
+  return HOTBAR_TEXT.added(hotbarEntryForItem(item)?.name ?? 'It', free + 1);
 }
 export function toggleHotbarSpell(sp) {
   const at = hotbarSlotOf(sp, { spell: true });
@@ -412,9 +413,15 @@ export function toggleHotbarSpell(sp) {
   const free = firstFreeHotbarSlot();
   if (free < 0) return HOTBAR_TEXT.full;
   hotbarDropSpell(free, sp);
-  return HOTBAR_TEXT.added(sp?.name ?? 'It', HOTBAR_KEYS[free]);
+  return HOTBAR_TEXT.added(sp?.name ?? 'It', free + 1);
 }
-export const hotbarKeyOf = (i) => (i >= 0 ? HOTBAR_KEYS[i] : null);
+/** KB1: the key a slot answers to, as its chip names it - the slot's registry action through the diamond's own tag
+ *  law (ui/quickslotTags.js), so a rebound slot says so and an unbound one says nothing. */
+export const hotbarKeyOf = (i) => {
+  if (!(i >= 0 && i < HOTBAR_SLOT_ACTIONS.length)) return null;
+  const t = quickslotTag(HOTBAR_SLOT_ACTIONS[i], { bindings: bindings() });
+  return t?.kind === 'key' ? t.text : null;
+};
 
 /**
  * A DRAG THAT THIS FILE OWNS - out of the spellbook's rail, and from one
@@ -474,7 +481,7 @@ function track(x, y) {
   let text = '';
   if (i >= 0) {
     slots[i].node.classList.add('dragover');
-    text = hbDrag.payload.kind === 'slot' ? (i === hbDrag.payload.slot ? '' : `Move to ${HOTBAR_KEYS[i]}`) : `Hotbar ${HOTBAR_KEYS[i]}`;
+    text = hbDrag.payload.kind === 'slot' ? (i === hbDrag.payload.slot ? '' : `Move to ${i + 1}`) : `Hotbar ${i + 1}`;
   } else if (hbDrag.payload.kind === 'slot') text = 'Clear';
   verb.textContent = text;
   verb.classList.toggle('on', !!text);

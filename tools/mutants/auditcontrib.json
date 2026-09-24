@@ -136,29 +136,33 @@
   },
   {
     "name": "H1-a-switched-off-mod-holds-its-keys",
-    "file": "src/systems/modSettings.js",
-    "old": "    if (Object.hasOwn(keys, 'Enabled') && modSetting(vendor, 'Enabled') === false) continue;\n",
-    "new": "",
+    "file": "src/systems/inputActions.js",
+    "old": "  return !vendor || !!modSetting(vendor, 'Enabled');",
+    "new": "  return true;",
     "tests": [
-      "test/auditcontrib.test.js"
+      "test/auditcontrib.test.js",
+      "test/kb1_keybinds.test.js",
+      "test/eotb_audit2.test.js"
     ]
   },
   {
     "name": "H1-the-bar-eats-a-mods-hotkey",
     "file": "src/ui/enhancedHotbar.js",
-    "old": "  if (modHotkeyCodes().has(e.code)) return;\n",
-    "new": "",
+    "old": "  const i = HOTBAR_SLOT_ACTIONS.indexOf(actionOf(e, eventModifiers(e)));",
+    "new": "  const i = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0'].indexOf(e.code);",
     "tests": [
-      "test/auditcontrib.test.js"
+      "test/auditcontrib.test.js",
+      "test/pad1.test.js"
     ]
   },
   {
     "name": "H1-the-bar-eats-a-bound-digit",
-    "file": "src/ui/enhancedHotbar.js",
-    "old": "  if (act && !QUICKSLOT_ACTIONS.has(act)) return;\n",
-    "new": "",
+    "file": "src/systems/inputActions.js",
+    "old": "  ['Digit5', 'Hotbar5'],",
+    "new": "  ['Digit5', 'HorseMount'],",
     "tests": [
-      "test/auditcontrib.test.js"
+      "test/auditcontrib.test.js",
+      "test/kb1_keybinds.test.js"
     ]
   },
   {

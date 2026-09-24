@@ -125,7 +125,7 @@ test('FIX-E: F11 reaches the world host’s quickload from UNDER the death scree
   // where it used to quickload - and kept its place above the rung; test/donline1_respawn.test.js holds the door.
   const arm = w.indexOf("if (townTalk.overlayActive && !isTextEntryTarget(e.target) && (modes?.mode ?? 'exterior') === 'exterior' && actionForCode(bindings(), e.code) === 'QuickLoad') {\n      e.preventDefault();");
   assert.ok(w.slice(arm, arm + 900).includes('else hudCtx.quickLoad();'), 'and quickload is still what F11 does when the death was not online');
-  const gate = w.indexOf('if (townTalk.keydown(e)) return;');
+  const gate = w.indexOf('if (townTalk.keydown(e, keys)) return;');   // KB1: the rung hands its mode keys the held Set
   assert.ok(arm > 0 && gate > arm, 'the arm stands above the townTalk rung');
   // the same law routeKey has carried for the dungeon and interior hosts
   assert.match(read('src/ui/input.js'), /if \(actionOf\(e, keys\) === 'QuickLoad'\) \{ ctx\.quickLoad\?\.\(setPlayerPos\); return true; \}/);

@@ -22,8 +22,8 @@
   {
     "name": "QS2-the-three-never-yield-in-the-classic-windows",
     "file": "src/systems/inputActions.js",
-    "old": "export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen', 'FreeMouse']);",
-    "new": "export const PORT_ACTIONS = Object.freeze(['SocialInteract']);",
+    "old": "export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen', 'FreeMouse',",
+    "new": "export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickLootAll', 'QuickLootOpen', 'FreeMouse',",
     "tests": [
       "test/qs2_inputs.test.js",
       "test/soc5_interact.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "QS2-the-quickslot-rows-hidden-under-the-Online-heading",
     "file": "src/ui/enhancedControls.js",
-    "old": "  for (const g of PORT_GROUPS) group(body, g.title, g.rows.map((r) => [r.action, r.label]));",
-    "new": "  group(body, PORT_GROUP_TITLE, PORT_ROWS.map((r) => [r.action, r.label]));",
+    "old": "  for (const grp of shownGroups()) group(body, grp.title, grp.rows.map((r) => [r.action, r.label]));",
+    "new": "  group(body, 'Online', shownGroups().flatMap((grp) => grp.rows.map((r) => [r.action, r.label])));",
     "tests": [
       "test/qs2_inputs.test.js",
       "test/soc5_interact.test.js"
@@ -41,11 +41,13 @@
   },
   {
     "name": "QS2-two-pane-rows-name-the-same-slot",
-    "file": "src/ui/enhancedControls.js",
-    "old": "  Object.freeze({ action: 'QuickUse2', label: 'Use quickslot 2' }),",
-    "new": "  Object.freeze({ action: 'QuickUse2', label: 'Use quickslot 1' }),",
+    "file": "src/systems/inputActions.js",
+    "old": "    ['Hotbar5', 'Hotbar slot 5'], ['Hotbar6', 'Hotbar slot 6'],",
+    "new": "    ['Hotbar5', 'Hotbar slot 5'], ['Hotbar5', 'Hotbar slot 6'],",
     "tests": [
-      "test/qs2_inputs.test.js"
+      "test/qs2_inputs.test.js",
+      "test/kb1_keybinds.test.js",
+      "test/enhancedControls.test.js"
     ]
   },
   {

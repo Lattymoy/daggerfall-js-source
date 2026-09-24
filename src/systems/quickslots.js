@@ -863,9 +863,8 @@ export function restoreQuickslotSaveData(data) {
 // host edited.
 
 export const HOTBAR_SIZE = 10;
-/** The key each slot answers to, in slot order: 1..9 then 0. */
-export const HOTBAR_KEYS = Object.freeze(['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']);
-export const HOTBAR_CODES = Object.freeze(HOTBAR_KEYS.map((k) => `Digit${k}`));
+// KB1: the key each slot answers to is its REGISTRY action's (systems/inputActions.js HOTBAR_SLOT_ACTIONS), not a
+// table here - the fixed Digit1-Digit0 list this held was a second keymap beside the controls pane's.
 const hotbar = new Array(HOTBAR_SIZE).fill(null);
 let hotbarRev = 0;   // bumped on every write, so a view can tell "changed" in one compare
 

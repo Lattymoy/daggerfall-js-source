@@ -56,6 +56,8 @@
 
 import { loadImg, nativeMetrics, drawImg, drawImgSub, drawImgCrop, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { getBool } from '../systems/settings.js';   // UI4: EnableInventoryInfoPanel
+import { bindings } from './input.js';   // KB1: the live registry
+import { getBinding } from '../systems/inputActions.js';   // KB1: the toggle-close binding, GetBinding(Actions.Inventory)
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U25
 import { useItem, isLightSource, isPotionRecipe, nextVariant, USE_PENDING } from '../systems/useItem.js';   // U25; AUDIT 64 F49/F50
 import { potionRecipeByKey } from '../systems/potions.js';   // AUDIT 64 F49: PotionRecipeIngredients' recipe lookup
@@ -387,6 +389,9 @@ export class NativeInventoryWindow {
     this.hooks = hooks;
     this.done = false;
     this.isChoiceWindow = true;    // raw codes through the overlay seam
+    // KB1: "Store toggle closed binding for this window" (DaggerfallInventoryWindow, GetBinding(Actions.Inventory)),
+    // read once at push - it was a literal F6, so an Inventory rebound off F6 opened this window and could not close it.
+    this.toggleClosedBinding = getBinding(bindings(), 'Inventory');
     this.tab = 'weapons';          // SelectTabPage(TabPages.WeaponsAndArmor) on setup
     // U57: selectedActionMode, CheckWagonAccess and SetChooseOne are
     // one read now (systems/inventorySession.js) - the enhanced pack
@@ -997,13 +1002,13 @@ export class NativeInventoryWindow {
       return;
     }
     if (this.topBox) { this._dismissBox(); return; }   // the click-anywhere boxes answer any key
-    // F6 is the TOGGLE binding closing its own window (the port's
+    // The Inventory binding (F6 by default) is the TOGGLE closing its own window (the port's
     // toggleClosedBinding arm); Escape and Enter are the overlay
     // seam's. Everything else on this screen is DaggerfallShortcut's,
     // and A8 retired the interim letters that stood here: E used to
     // close, which is InventoryEquip's letter in DFU, and the tabs
     // answered to digits 1-4 where DFU gives them F1-F4.
-    if (code === 'Escape' || code === 'Enter' || code === 'F6') { this._close(); return; }
+    if (code === 'Escape' || code === 'Enter' || (!!this.toggleClosedBinding && code === this.toggleClosedBinding)) { this._close(); return; }
     if (code === 'KeyN') this.scroll = applyScroll(this.scroll, 'down', this._filtered().length);
     if (code === 'KeyP') this.scroll = applyScroll(this.scroll, 'up', this._filtered().length);
     // DaggerfallInventoryWindow.cs's own Hotkey assignments, in its

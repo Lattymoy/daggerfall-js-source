@@ -36,7 +36,8 @@ import { domCodeForKeyCode, keyCodeForDomCode, isBindableKeyCode, KEYCODE_NONE }
 import { MOD_SETTINGS, isIntKey, isFloatKey, isChoiceKey, isTextKey, isTupleKey, modSettingsOf, setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
 import { BOB_SHAPE as WW_BOB_SHAPE, STEP_CONDITION as WW_STEP_CONDITION } from '../src/combat/weaponWidget.js';
 import { FEATURES } from '../src/systems/features.js';
-import { DEFAULT_BINDINGS } from '../src/systems/inputActions.js';   // HT4: the keys DFU already answers
+import { DEFAULT_BINDINGS, PORT_ACTIONS, MOD_ACTIONS } from '../src/systems/inputActions.js';   // HT4: the keys DFU already answers; KB1: and the mods' own, which are actions now
+import { shortcutBinding } from '../src/systems/dialogShortcuts.js';   // KB1: DFU's world shortcuts
 import { CREDITS } from '../src/ui/credits.js';
 import { TEMPLATES } from '../src/systems/useItem.js';
 import { WEAPONS } from '../src/characters/weapons.js';
@@ -49,6 +50,8 @@ import { playerTorchOffsetOverride, setPlayerTorchOffsetOverride, playerTorchLig
 import { isTransformedLycanthrope } from '../src/systems/lycanthropy.js';
 import { templateByIndex } from '../src/systems/itemTemplates.js';
 
+/** KB1: action -> its default code, so the fixture's key taps (KeyO/KeyG/KeyX) reach the registry's torch actions. */
+const DEFAULT_CODE = Object.fromEntries(DEFAULT_BINDINGS.map(([code, action]) => [action, code]));
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
 const near = (a, b, eps = 1e-6, msg) => assert.ok(Math.abs(a - b) <= eps, msg ?? `${a} ~ ${b}`);
@@ -86,7 +89,8 @@ function rig(over = {}, deps = {}) {
     castPlaying: false, spellArmed: false, thirdPerson: false, climbing: false, swimming: false, transformedLycanthrope: false,
     motion: { grounded: true, standing: true, speedRatio: 1, baseSpeed: 1, localVel: [0, 0, 0] }, look: [0, 0], swingHeld: false, cursorActive: false,
     camera: () => ({ pos: [0, 1.7, 0], feet: [0, 0, 0], yaw: 0, pitch: 0, forward: [0, 0, 1], right: [1, 0, 0], up: [0, 1, 0] }),
-    collider: () => deps.collider ?? null, keyDown: (c) => keys.has(c), sheathWeapons: () => { ctx.sheathed = true; sheathes.push(1); },
+    collider: () => deps.collider ?? null, actionDown: (a) => keys.has(DEFAULT_CODE[a]),   // KB1: the registry's three actions, on their default keys (O, G, X)
+    sheathWeapons: () => { ctx.sheathed = true; sheathes.push(1); },
   };
   const frame = (dt = 0.016) => { h.update(dt, ctx); h.lateUpdate(dt, ctx); };
   const press = (code, dt = 0.016) => { keys.add(code); frame(dt); };
@@ -231,7 +235,9 @@ test('HT1: LoadSettings - the fields carry the mod\'s own multipliers (Speed x20
   _resetModSettings();
   const s = readTorchSettings();
   assert.equal(s.enabled, true);
-  assert.deepEqual([s.toggleKey, s.dropKey, s.throwKey], ['KeyO', 'KeyG', 'KeyX'], 'the three bindings, parsed (HT4: the drop key is G - the mod ships Tab, which the port spends on the pixel dial; SOC5: the toggle is O - the mod ships F, which the port now spends on SocialInteract)');
+  // KB1: the three KeyCodes are not settings any more - they are the registry's TorchToggleLight/TorchDrop/TorchThrow
+  // (HT4 pins their defaults: O, G, X), so LoadSettings carries no key field for anything to read by mistake.
+  assert.deepEqual([s.toggleKey, s.dropKey, s.throwKey], [undefined, undefined, undefined], 'no key fields');
   // HT7: the port's default is Unequip - the mod ships Drop and the dial
   // still offers it, which the pane pin above holds in the mod's own
   // order. LoadSettings reads whatever the store says, so what is pinned
@@ -256,7 +262,8 @@ test('HT1: LoadSettings - the fields carry the mod\'s own multipliers (Speed x20
   assert.equal(r.moveSmoothSpeed, 1); assert.equal(r.bobSmoothSpeed, 1000); assert.equal(r.bobShape, 1);
   assert.equal(r.inertiaScale, 50); assert.equal(r.inertiaSpeed, 1000); near(r.inertiaForwardScale, 0.1); near(r.inertiaForwardSpeed, 0.4);
   assert.equal(r.scaleTextureFactor, 1, 'a zero factor would divide the sprite by nothing; floored at 1');
-  assert.equal(r.toggleKey, null, 'the mod\'s "Detected an invalid key code": KeyCode.None, the key never fires');
+  // KB1: the mod's "Detected an invalid key code" is the carry's to judge now - a stored name that parses to no code
+  // leaves the registry's default standing (test/kb1_keybinds.test.js).
   assert.deepEqual(r.fireDamageRange, [2, 5]); assert.equal(r.onStow, ON_STOW.Unequip);
   assert.equal(torchItemWords(torch()), 'new torch', 'Condition().ToLower() + " " + LongName.ToLower()');
   assert.equal(torchItemWords(lantern(10)), 'battered lantern');
@@ -811,7 +818,7 @@ test('HT1: the rig runs the component beside the widget - one per rig, the pool 
   assert.match(rig, /const _torchesOn = handheldOn\(\);\s*(?:\/\/[^\n]*\n\s*)*if \(!_torchesOn && _handheldWasOn\) handheld\.dispose\(\);[^\n]*\n\s*_handheldWasOn = _torchesOn;[\s\S]{0,3000}?if \(widgetOn\(\) \|\| _torchesOn \|\| shieldOn\(\) \|\| thunderlockHeld\(\)\) \{/);
   // AUDIT-EOTB2: the torch hand's third-person gate asks the sprite body too (Eye Of The Beholder's ToggleBillboard hides the FPV hand)
   assert.match(rig, /if \(_torchesOn\) \{\s*bindTorches\(\);\s*const tctx = \{\s*renderer, canvas: c, entity, machine: playerWeapon\.machine, sheathed: playerWeapon\.sheathed, usingRightHand: playerWeapon\.usingRightHand,\s*castPlaying: fpsSpellCasting\.isPlayingAnim, spellArmed: spellArmed\(\), thirdPerson: fpArm\.thirdActive\(\) \|\| eotbHidesWeapon\(\),[^\n]*\n\s*climbing: !!cam\?\.climbing, swimming: !!mv\.swimming, transformedLycanthrope: !!entity && isTransformedLycanthrope\(entity\),/);
-  assert.match(rig, /look, swingHeld: _held, cursorActive: cursorActive\(\), camera: camThunk, collider: \(\) => collider\?\.\(\) \?\? null,\s*keyDown: \(code\) => !!keyDown\?\.\(code\), sheathWeapons: \(\) => \{ if \(!playerWeapon\.sheathed\) playerWeapon\.toggleSheath\(\); \},\s*\};\s*handheld\.update\(dt, tctx\);\s*handheld\.lateUpdate\(dt, tctx\);/);
+  assert.match(rig, /look, swingHeld: _held, cursorActive: cursorActive\(\), camera: camThunk, collider: \(\) => collider\?\.\(\) \?\? null,\s*actionDown: \(action\) => !!actionDown\?\.\(action\), sheathWeapons: \(\) => \{ if \(!playerWeapon\.sheathed\) playerWeapon\.toggleSheath\(\); \},\s*\};\s*handheld\.update\(dt, tctx\);\s*handheld\.lateUpdate\(dt, tctx\);/);
   // MAC-I: every sprite in this seam takes the frame's TINT now (FPSWeapon.Tint, off the room's light);
   // the ORDER and the returns are what this pin holds, and neither moved.
   // SW1: the shield draws between the arms' return and the torch hand -
@@ -822,7 +829,7 @@ test('HT1: the rig runs the component beside the widget - one per rig, the pool 
   // holding the screen stops the classic body's four painters, the torch
   // hand among them (hands holding a map hold no torch either).
   assert.match(rig, /if \(fpArm\.active\(\)\) \{[^}]*fpArm\.draw\(c\);[^}]*return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(sheetWindowUp\(\)\) return;\s*(?:\/\/[^\n]*\n\s*)*if \(shieldRect\) shield\.draw\(\(index, rect, uv\) => drawShieldSprite\(index, rect, uv, fpTint\)\);\s*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(torchOnly && !gunSliding\) return;[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*if \(!shown\(\) && !gunSliding\) return;[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*const tlArt = c && thunderlockHeld\(\) \? artFor\(playerWeapon\.weapon\) : null;\s*if \(tlArt\?\.anchor && tlArt\.unionBox\) \{ drawThunderlock\(tlArt, c, fpTint\); return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(gunSliding && !shown\(\)\) return;\s*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint\)\) return;/, 'the arms return first (no classic hand under the Morrowind arms), the shield behind the torch hand, the torch hand under the weapon');
-  assert.match(rig, /keyDown = null, torches = \(\) => null, sheetWindowUp = \(\) => false \}\)/, 'the two deps the hosts feed, and MAP-WEAPON\'s third - defaulted so a host that never heard of it draws what it always drew');
+  assert.match(rig, /actionDown = null, torches = \(\) => null, sheetWindowUp = \(\) => false \}\)/, 'KB1: the registry\'s held read (it was the raw key set) and the pool - the two deps the hosts feed, and MAP-WEAPON\'s third - defaulted so a host that never heard of it draws what it always drew');
   assert.match(rig, /if \(!_torchesOn && _handheldWasOn\) handheld\.dispose\(\);/, 'AUDIT 66 F8: the switch off is a teardown - update() runs only while the mod is on, so the burning loop could not stop itself');
   assert.match(rig, /dispose\(\) \{ handheld\.dispose\(\); _handheldWasOn = false; \}/, 'AUDIT 66 F8: and the host has a door to call');
   assert.match(rig, /handheld,\s*\/\/ HT1/);
@@ -849,7 +856,7 @@ test('HT1: the five hosts - each owns a pool, feeds the rig its raw keys and the
   for (const [name, src] of [['world', world], ['exterior', ext], ['worldModes', wm], ['dungeonContext', dc]]) {
     assert.match(src, /import \{ createDroppedTorches \} from '\.\/droppedTorches\.js';/, `${name}: the pool`);
     assert.match(src, /= createDroppedTorches\(\{/, `${name}: owns one`);
-    assert.match(src, /keyDown: \(code\) => (?:keys\.has\(code\)|!!opts\.keyDown\?\.\(code\)), torches: \(\) => (?:droppedTorches|interiorTorches),/, `${name}: the rig's two deps`);
+    assert.match(src, /actionDown: \(action\) => (?:held\(keys, action\)|!!opts\.actionDown\?\.\(action\)), torches: \(\) => (?:droppedTorches|interiorTorches),/, `${name}: the rig's two deps (KB1: the registry's held read)`);
   }
   for (const [name, src] of [['world', world], ['exterior', ext]]) {
     assert.match(src, /\.\.\.droppedTorches\.lights\(\)\)/, `${name}: the dropped lights in the point-light channel`);
@@ -888,7 +895,7 @@ test('HT1: the five hosts - each owns a pool, feeds the rig its raw keys and the
   assert.match(dc, /waterLevel: \(\) => \(_fpFeet \? blockWaterLevelAt\(/, 'the dungeon\'s water plane for the douse');
   assert.match(dc, /droppedTorches\.destroyAll\(\);\s*weaponRig\.dispose\?\.\(\);/, 'AUDIT 66 F5/F8: the pool and the rig\'s component leave with the dungeon, beside the foes\' batches and the wall torches\' loops');
   assert.match(dj, /\.\.\.ctx\.torchLights\(\)\)/); assert.match(dj, /\.\.\.ctx\.torchBatches\(\)\]/); assert.match(dj, /key\.startsWith\('droppedTorch:'\) \|\| key\.startsWith\('camp:'\) \|\| key\.startsWith\('hearth:'\)\)\) \{/);   // AUDIT-WH2 L2-F1/F2: the fires joined this ladder - ?dungeon stood and NAMED camp:/hearth: and answered neither
-  assert.match(dj, /keyDown: \(code\) => keys\.has\(code\)/);
+  assert.match(dj, /actionDown: \(action\) => held\(keys, action\)/);
 });
 
 // HT4 (2026-09-15, Mac: "Pressing tab drops torches, tab is reserved for the menu"):
@@ -903,112 +910,33 @@ test('HT1: the five hosts - each owns a pool, feeds the rig its raw keys and the
 // a vendored mod declares against DFU's own bindings AND the keys the port
 // spends on top of them, so the next mod folded in cannot repeat this quietly.
 // A player may still bind whatever they like; this is about what SHIPS.
-test('HT4: no vendored mod ships a key the port has already spent', () => {
-  // AUDIT HT4 F1: this read `Object.keys(DEFAULT_BINDINGS)`, and
-  // DEFAULT_BINDINGS is an ARRAY of [code, action] pairs - so the set
-  // held '0'..'43' and `dfuBound.has('KeyR')` was permanently false.
-  // The DFU half of this pin could not fire, while four records called
-  // that half the whole point of it. Proven by driving it: a vendored
-  // mod shipping "R" (DFU's Rest) passed. The codes, not the indices.
-  const dfuBound = new Set(DEFAULT_BINDINGS.map(([code]) => code));
-  // The keys the PORT spends that DFU does not - each read straight from the
-  // source that spends it, so a rename there fails here rather than drifting.
-  const input = rd('src/ui/input.js');
-  assert.match(input, /if \(e\.code === 'Tab'\) \{ return ctx\.toggleDial/, 'PX15: Tab is the pixel dial');
-  // AUDIT HT4 F1b: Escape was left out of this set BECAUSE the dead
-  // half above was trusted to catch it. It is named here now, and the
-  // assertion below proves the DFU half is live rather than assuming it.
-  const portSpent = new Set(['Tab', 'Escape']);   // the dial, and the door out of every pane
-  assert.ok(dfuBound.has('KeyR') && dfuBound.has('Escape'),
-    'the DFU half is LIVE - this set holds key CODES, not array indices (AUDIT HT4 F1)');
-
-  const offenders = [];
-  for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) {
-    for (const [key, def] of Object.entries(mod.keys)) {
-      // EOTB0: `text` alone is not enough. DFU's TextKey carries two
-      // different kinds - a KeyCode binding AND an input AXIS name
-      // ("Mouse ScrollWheel") - and Eye Of The Beholder ships both.
-      // An axis is not a key and cannot collide with one, so the
-      // port declares the kind (`axis: true`) and this gate reads
-      // the DECLARATION rather than guessing from the value. The
-      // assertion below stays strict for everything that IS a key.
-      if (!def.text || def.axis || typeof def.default !== 'string') continue;   // only the KeyCode fields
-      // TO1: ...and an EMPTY default is not a key either. Travel
-      // Options' `RoadsIntegration.FollowPathsCustomKeyBind` ships ""
-      // because it is only read when the CHOICE above it is set to
-      // "Custom Key Bind" (TravelOptionsMod.cs:224-232), and an unset
-      // custom bind falls back to F there. Nothing is bound, so nothing
-      // can collide; the gate below stays strict for every key that
-      // names one.
-      if (def.default === '') continue;
-      const code = domCodeForKeyCode(def.default);
-      assert.ok(code, `${vendor}/${key} ships "${def.default}", which is not a KeyCode the port can bind`);
-      if (portSpent.has(def.default) || dfuBound.has(code)) offenders.push(`${vendor}/${key} = ${def.default} (${code})`);
-    }
-    // AUDIT-TO1 I1: ...AND A MULTIPLE-CHOICE KEY THAT CHOOSES A KEY.
-    // Travel Options' RoadsIntegration.FollowPathsKey is a
-    // MultipleChoiceKey over ["None", "F", "G", "K", "O", "X", "Custom
-    // Key Bind"] whose default is an INDEX, so the TextKey walk above
-    // (`typeof def.default !== 'string'`) stepped straight over it - and
-    // it shipped on F, the key SOC5 spends on SocialInteract, for three
-    // days with this gate green. The setting DECLARES the kind
-    // (`keyChoice: true`, the `axis` precedent), because a walk that
-    // guessed from the value took Weapon Widget's Bob.Shape "U" for a
-    // key. The option at the default index is judged exactly as a
-    // TextKey default; "None" and "Custom Key Bind" name no key.
-    for (const [key, def] of Object.entries(mod.keys)) {
-      if (!def.keyChoice) continue;
-      assert.ok(Array.isArray(def.options) && typeof def.default === 'number', `${vendor}/${key} declares keyChoice and is not a choice list`);
-      const choice = def.options[def.default];
-      const code = domCodeForKeyCode(choice);
-      if (!code) continue;   // "None" / "Custom Key Bind"
-      if (portSpent.has(choice) || dfuBound.has(code)) offenders.push(`${vendor}/${key} = option ${def.default} "${choice}" (${code})`);
-    }
+test('HT4 (re-aimed by KB1): no action ships on a key another action, DFU\'s world shortcuts or the browser already answers - the vendored mods\' keys included, because they ARE actions now (mutant: TorchDrop back on Tab)', () => {
+  // HT4 walked every vendored mod's TextKey default against DFU's bindings and the keys the port spent raw (the
+  // dial's literal Tab), because each mod read its own key off its own store where no binding table could see it -
+  // and Handheld Torches shipped Tab, so one press opened the dial and dropped the light. KB1 closed the class at
+  // its root: the mods' keys are registry actions (MOD_ACTIONS), their defaults are rows of DEFAULT_BINDINGS beside
+  // DFU's, the dial is QuickDial there too, and the TextKeys are read once, by the carry, and never again. So the
+  // pin is the table's: one code, one action, across ALL of it - and a port row never on a key DFU's world
+  // shortcuts or the browser take.
+  const codes = DEFAULT_BINDINGS.map(([code]) => code);
+  const twice = codes.filter((c, i) => codes.indexOf(c) !== i);
+  assert.deepEqual(twice, [], 'a default code ships on two actions - one press would do two things');
+  const world = new Set(['LargeHUDToggle', 'HUDToggle', 'ToggleRetroPP', 'Pause'].map((n) => shortcutBinding(n).code));
+  const browser = new Set(['F7', 'F12']);   // caret browsing, the dev tools (F5/F6/F11 are DFU's own rows, swallowed)
+  for (const [code, action] of DEFAULT_BINDINGS) {
+    if (!PORT_ACTIONS.includes(action)) continue;
+    assert.ok(!world.has(code), `${action} ships ${code}, a DFU world shortcut`);
+    assert.ok(!browser.has(code), `${action} ships ${code}, which the browser takes`);
   }
-  assert.deepEqual(offenders, [],
-    'these ship on a key the port or DFU already answers - one press would do two things');
-
-  // AUDIT-TO1 I1 (b): ...AND NO TWO VENDORED MODS SHIP THE SAME KEY. The
-  // walk above judges a mod against DFU and the port; it never judged
-  // two mods against EACH OTHER, and the first pick for the follow key
-  // was X - Handheld Torches' throw. Every shipped key code across every
-  // vendor, once.
-  const shipped = new Map();   // code -> first owner
-  const twice = [];
-  for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) {
-    for (const [key, def] of Object.entries(mod.keys)) {
-      let name = null;
-      if (def.text && !def.axis && typeof def.default === 'string' && def.default !== '') name = def.default;
-      else if (def.keyChoice) name = def.options[def.default];
-      const code = name ? domCodeForKeyCode(name) : null;
-      if (!code) continue;
-      const owner = `${vendor}/${key}`;
-      if (shipped.has(code)) twice.push(`${owner} and ${shipped.get(code)} both ship ${code}`);
-      else shipped.set(code, owner);
-    }
-  }
-  assert.deepEqual(twice, [], 'two vendored mods ship the same key - one press would do two things');
-
-  // ...AND THE AXIS EXEMPTION IS NOT A HOLE. It is still a `text` key -
-  // the pane shows it as one - so the skip above turns on the declared
-  // KIND and nothing else, and it is driven here rather than trusted:
-  // the value really is one no KeyCode resolver can answer, which is
-  // why it must not reach the assertion, and at least one such key
-  // exists so the clause is not dead.
-  const axes = Object.entries(MOD_SETTINGS).flatMap(([v, m]) =>
-    Object.entries(m.keys).filter(([, d]) => d.axis).map(([k, d]) => [`${v}/${k}`, d]));
-  assert.ok(axes.length >= 1, 'no key declares itself an axis - the exemption above is dead code');
-  for (const [name, d] of axes) {
-    assert.equal(d.text, true, `${name}: an axis is still a text field in the pane`);
-    assert.equal(domCodeForKeyCode(d.default), null, `${name} resolves as a KeyCode - then it is a key, not an axis`);
-  }
-
-  // and the three this mod ships are the three it ships, named, so a silent
-  // repoint of one of them is a failure rather than a diff nobody reads
-  const k = MOD_SETTINGS['handheld-torches'].keys;
-  assert.equal(k['Handling.ToggleLightInput'].default, 'O', 'SOC5: repointed off the F-menu\'s F');
-  assert.equal(k['Handling.ManualDropInput'].default, 'G', 'HT4: repointed off the dial\'s Tab');
-  assert.equal(k['Throwing.ThrowTorchInput'].default, 'X');
+  // every mod action ships a key, and the three this mod ships are the three it ships, named
+  const def = new Map(DEFAULT_BINDINGS.map(([code, action]) => [action, code]));
+  for (const rows of Object.values(MOD_ACTIONS)) for (const r of rows) assert.ok(def.has(r.action), `${r.action} ships a key`);
+  assert.equal(def.get('TorchToggleLight'), 'KeyO', 'SOC5: off the F-menu\'s F');
+  assert.equal(def.get('TorchDrop'), 'KeyG', 'HT4: off the dial\'s Tab');
+  assert.equal(def.get('TorchThrow'), 'KeyX');
+  assert.equal(def.get('QuickDial'), 'Tab', 'the dial holds Tab, in the same table');
+  // ...and the mod does not read its TextKeys any more
+  assert.doesNotMatch(rd('src/systems/handheldTorches.js'), /domCodeForKeyCode\(s\['(Handling|Throwing)\./, 'the three keys are not parsed off the store');
 });
 
 // HT5 (2026-09-16, Mac: "the torch when being held isn't affected by the

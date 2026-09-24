@@ -143,6 +143,14 @@ export class LookFilter {
     this.residualPitch = 0;
   }
 
+  /** KB1: CenterView (Home) - the view LEVELLED. DFU binds the action and reads it nowhere; this is classic
+   *  Daggerfall's centre key. The owed pitch is replaced by the one that lands the target at level, and the filter
+   *  pays it out like any look - not latched as the frame's look (`add` would be), so the weapon widget does not
+   *  sway to a key that is not a hand moving the mouse. */
+  centerPitch(cam) {
+    this.residualPitch = -(cam?.pitch ?? 0);
+  }
+
   /** ApplyLook's `lookTarget += delta` (:126): the scaled deltas, in
    *  the camera's own units (radians; pitch already inverted). */
   add(dyaw, dpitch) {

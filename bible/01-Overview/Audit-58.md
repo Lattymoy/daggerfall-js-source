@@ -269,7 +269,7 @@ host, once by the mode machine it builds - and `bindCursorToggle` installs
 a listener per call over a module-global flag, so one Enter press flipped
 twice and netted zero. **Key combos never reached the keydown dispatch:**
 `actionOf(e, keys)` resolves a combo only when a held-keys Set is handed
-in (`src/ui/input.js:250-271`) and no production call site supplied one,
+in (`src/ui/input.js:252-273`) and no production call site supplied one,
 so every rebind to a combo was dead in every host. `townTalk`'s F1-F4
 interaction-mode branch sat ABOVE its own overlay gate, so the mode
 changed under an open window, and the four modes were dispatched off

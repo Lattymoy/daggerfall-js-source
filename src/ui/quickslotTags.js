@@ -26,8 +26,6 @@
 // corner would be a lie of a different kind.
 import { getBinding, isCombo, getCombo } from '../systems/inputActions.js';
 import { buttonText } from '../systems/controlsConfig.js';
-import { modSetting } from '../systems/modSettings.js';
-import { domCodeForKeyCode } from '../systems/keyCodes.js';
 import { unityButtonGlyph } from './padGlyphs.js';
 
 /** Which action each cell of the diamond announces. The off hand's is
@@ -41,18 +39,9 @@ export const CELL_ACTIONS = Object.freeze({
   off: 'QuickOffHand',   // QS4: light or douse - what an off hand does
 });
 
-/** Handheld Torches binds its toggle as a MOD TextKey rather than an
- *  InputManager action (systems/handheldTorches.js readTorchSettings,
- *  default "O"), so a tag read from the mod's own store is KEYBOARD ONLY -
- *  a TextKey cannot name a pad button.
- *
- *  QS4 KEPT IT AND STOPPED SHOWING IT. The mod's key still works, as
- *  HT4 kept every other key the mod ships; but the CELL names the
- *  port's own `QuickOffHand`, which presses the same act through the
- *  same guard, is rebindable in the enhanced pane, and can wear a pad
- *  glyph. `torchTag` stands for a caller that wants the mod's own key. */
-export const TORCH_TOGGLE_SETTING = 'Handling.ToggleLightInput';
-export const TORCH_VENDOR = 'handheld-torches';
+/* KB1: `torchTag` - the chip read off Handheld Torches' own TextKey store - is gone with that store. The toggle is
+ * the registry's TorchToggleLight action (systems/inputActions.js MOD_ACTIONS), so `quickslotTag('TorchToggleLight')`
+ * names it, pad glyph and all, and QS4's reason for the cell naming QuickOffHand stands on its own. */
 
 /** The key's name on a chip. `buttonText` is DFU's GetButtonText and
  *  names the digit row Alpha1..Alpha0 - 'A1' on the controls grid,
@@ -92,14 +81,6 @@ export function quickslotTag(action, { bindings = null, controller = false, fami
   if (key) return { kind: 'key', text: tagText(key) };
   if (pad) return { kind: 'glyph', family, code: pad };
   return null;
-}
-
-/** The torch cell's tag - the mod's key, named by the same function.
- *  Null when the mod names no key the port can bind. */
-export function torchTag(read = () => modSetting(TORCH_VENDOR, TORCH_TOGGLE_SETTING)) {
-  let code = null;
-  try { code = domCodeForKeyCode(read()); } catch { code = null; }   // a store that is not there is not a key
-  return code ? { kind: 'key', text: tagText(code) } : null;
 }
 
 /** The off-hand cell's action, by what is standing in it: a lit torch

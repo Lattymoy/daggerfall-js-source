@@ -30,7 +30,7 @@
 // order being right.
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
-import { overlayAction } from './input.js';
+import { overlayAction, actionOf } from './input.js';   // KB1: and the registry's answer for the book's own key
 import {
   spellEffects, spellPointCost, EFFECT_NOT_FOUND, ENTER_SPELL_NAME,
   CANNOT_DELETE_VAMP, CANNOT_DELETE_WERE, DELETE_SPELL_PROMPT,
@@ -44,7 +44,7 @@ import { TARGET_DESCRIPTIONS, ELEMENT_DESCRIPTIONS } from './spellIcons.js';
 // for the diamond's spell slot.
 import { hotbarSlotOf } from '../systems/quickslots.js';
 import { setHotbarDropMode, hotbarAcceptsDrops, beginHotbarDrag, takeHotbarDragClick, hotbarMode, toggleHotbarSpell,
-  hotbarKeyOf, spellSigil } from './enhancedHotbar.js';   // PX23b: the classic's OWN words for the two icons
+  spellSigil } from './enhancedHotbar.js';   // PX23b: the classic's OWN words for the two icons
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -256,7 +256,7 @@ function render() {
     // HB1: the hotbar's button in the diamond's place - on the bar comes
     // off, else it goes on the first free slot. Dragging picks the slot.
     const at = hotbarSlotOf(sel.spell, { spell: true });
-    const hb = el('button', `act sb-slot${at >= 0 ? ' on' : ''}`, at >= 0 ? `Off hotbar ${hotbarKeyOf(at)}` : 'Add to hotbar');
+    const hb = el('button', `act sb-slot${at >= 0 ? ' on' : ''}`, at >= 0 ? `Off hotbar ${at + 1}` : 'Add to hotbar');
     hb.onclick = () => { notice = toggleHotbarSpell(sel.spell); render(); };
     acts.append(hb);
   } else {
@@ -406,8 +406,10 @@ function onKey(e) {
     return;
   }
   // ESCAPE and the host's own book key close it, the law U52's sheet
-  // applies to F5 and the pack applies to F6.
-  if (overlayAction(e) !== 'back') return;
+  // applies to F5 and the pack applies to F6. KB1: the comment said so and
+  // the line read Escape alone - the book opened on CastSpell and did not
+  // close on it. The registry's answer, as the pack reads its own.
+  if (overlayAction(e) !== 'back' && actionOf(e) !== 'CastSpell') return;
   e.preventDefault();
   e.stopPropagation();
   onExit();

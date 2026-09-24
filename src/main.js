@@ -40,6 +40,7 @@ const bootWorld = (...a) => import('./scenes/world.js').then((m) => m.bootWorld(
 import { ensureArena2, getBytes } from './scenes/dataSource.js';
 import { installCursor } from './ui/cursor.js';
 import { mountFpsCounter } from './ui/fpsCounter.js';   // FPS1: the counter, over every host
+import { installScreenshotKey } from './ui/screenshot.js';   // KB1: the PrintScreen action, over every host
 import { getPref } from './systems/uiPrefs.js';   // FPS1: its switch
 import { publishBootParams, BOOT_DOOR_KEYS } from './systems/onlineLane.js';   // MAC-N3: the boot's params are the URL, or the online lane reads nothing
 // The deployed site is redeployed several times a day and every deploy
@@ -51,6 +52,7 @@ async function boot() {
   const canvas = document.getElementById('c');
   const renderer = new Renderer(canvas);
   const params = new URLSearchParams(location.search);
+  installScreenshotKey(canvas);   // KB1: once, beside the counter - a screenshot does not depend on the scene
   mountFpsCounter({ enabled: () => params.has('fps') || !!getPref('showFps'), stats: () => renderer.stats });   // FPS1: over every host, on the pref or the probe door; PERF3: with the renderer's counts
   const status = (msg) => {
     document.title = `Daggerfall Enhanced - ${msg}`;

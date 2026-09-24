@@ -61,6 +61,7 @@ import {
   createUnsavedKeybinds, currentDict, setUnsavedBinding, checkDuplicates,
   applyUnsavedKeybinds, resetUnsavedToDefaults, buttonText, ELONGATED_TEXT,
   INTERNAL_DUPE_COLOR, CROSS_DUPE_COLOR, comboFromEvent, removeKeybindPromptRows,
+  bindingHolder, replaceKeybindPromptRows, stageReplace,
 } from '../systems/controlsConfig.js';
 import { ToolTip } from './toolTip.js';
 import { MouseControlsWindow } from './mouseControlsWindow.js';   // ROAD-G G6: the ADVANCED tab's destination
@@ -85,7 +86,7 @@ import { SOUND } from '../systems/soundClips.js';
  *  layout, six rows, equally full.
  *
  *  So 'SocialInteract' is rebound in the ENHANCED controls window alone
- *  (ui/enhancedControls.js PORT_ROWS, the 'Online' group) - a DOM pane that
+ *  (ui/enhancedControls.js, over systems/inputActions.js ACTION_GROUPS - the 'Online' group) - a DOM pane that
  *  grows a row without moving a pixel of anyone's art. Nothing is broken by the
  *  absence: the action ships bound to KeyF by default
  *  (systems/inputActions.js DEFAULT_BINDINGS), and online forces the enhanced
@@ -175,9 +176,10 @@ export class ControlsWindow {
     this.unsaved.joystick = createJoystickUnsaved(bindings());
     this.buttons = gridButtons();
     this.capture = null;        // the action awaiting a key (:52 waitingForInput)
-    this.top = null;            // 'dupes' | 'defaults' | 'remove' | 'note'
+    this.top = null;            // 'dupes' | 'defaults' | 'remove' | 'replace' | 'note'
     this._noteRows = null;
     this._removeAction = null;
+    this._replace = null;       // KB1: { action, code, holder } while the replace prompt stands
     this._box = null;
     this.dupes = checkDuplicates(this.unsaved, { yield: PORT_ACTIONS });
     // U37: DFU points every key button at the shared tooltip and
@@ -223,6 +225,19 @@ export class ControlsWindow {
 
   _refresh() { this.dupes = checkDuplicates(this.unsaved, { yield: PORT_ACTIONS }); }
 
+  /** KB1 (law 4): the captured code lands - or, when another action holds it in the shown dict, the window ASKS.
+   *  The staged copy used to take it, and the `yield` pass then left a port row this art cannot draw silently
+   *  unbound (the player never saw that G stopped dropping the torch). The prompt names the holder, a mod's with
+   *  its mod, so the one clash `yield` still settles is a combo's modifier, which no single key names. */
+  _bindCaptured(code) {
+    const action = this.capture;
+    this.capture = null;
+    const holder = bindingHolder(this.unsaved, action, code);
+    if (holder) { this.top = 'replace'; this._replace = { action, code, holder }; return; }
+    setUnsavedBinding(this.unsaved, action, code);
+    this._refresh();
+  }
+
   input(code, e = null) {
     if (this._popup) {
       this._popup.input(code, e);
@@ -249,9 +264,16 @@ export class ControlsWindow {
       // three - which is what every DFU default binds anyway. The
       // storage, the duplicate law and the runtime read take any pair.
       const combo = comboFromEvent(code, e);
-      setUnsavedBinding(this.unsaved, this.capture, combo ?? code);
-      this.capture = null;
-      this._refresh();
+      this._bindCaptured(combo ?? code);
+      return;
+    }
+    if (this.top === 'replace') {
+      if (code === 'KeyY') {
+        this._click();
+        stageReplace(this.unsaved, this._replace.action, this._replace.code, this._replace.holder);
+        this._refresh();
+      }
+      if (code === 'KeyY' || code === 'KeyN' || code === 'Escape') { this.top = null; this._replace = null; }
       return;
     }
     if (this.top === 'defaults') {
@@ -375,13 +397,11 @@ export class ControlsWindow {
       // this reads the one table (ui/input.js MOUSE_CODES) rather than
       // spelling the crossing a second time.
       const code = mouseCode(right ? 2 : (middle ? 1 : 0));
-      setUnsavedBinding(this.unsaved, this.capture, code);
-      this.capture = null;
-      this._refresh();
+      this._bindCaptured(code);
       return true;
     }
     if (this.top) {
-      if ((this.top === 'defaults' || this.top === 'remove') && this._box) {
+      if ((this.top === 'defaults' || this.top === 'remove' || this.top === 'replace') && this._box) {
         const hit = messageBoxHit(this._box, vx, vy);
         if (hit === MB_BUTTONS.Yes) this.input('KeyY');
         else if (hit === MB_BUTTONS.No) this.input('KeyN');
@@ -482,8 +502,9 @@ export class ControlsWindow {
         : this.top === 'defaults' ? ['Are you sure you want to set default controls?']
           : this.top === 'remove'
             ? removeKeybindPromptRows(this._removeAction, currentDict(this.unsaved).get(this._removeAction))
-            : this._noteRows;
-      const buttons = (this.top === 'defaults' || this.top === 'remove') ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : [];
+            : this.top === 'replace' ? replaceKeybindPromptRows(this._replace.action, this._replace.code, this._replace.holder)
+              : this._noteRows;
+      const buttons = (this.top === 'defaults' || this.top === 'remove' || this.top === 'replace') ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : [];
       this._box = layoutMessageBox(font, rows, buttons);
       if (!drawMessageBox(renderer, m, font, this._box)) {
         (this._box.rows ?? []).forEach((r, i) => drawText(renderer, font, r.text, m.ox + 20 * m.s, m.oy + (20 + i * 10) * m.s, m.s, TEXT_COLOR));

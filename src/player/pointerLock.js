@@ -69,6 +69,20 @@ export function toggleCursorActive(canvas) {
  *  the one module that reads it. */
 export const FREE_MOUSE_ACTION = 'FreeMouse';
 
+/** KB1 (Mac: "Enter = chat" online; "Y frees the cursor"): WHO OWNS ActivateCursor's KEY. Offline it is DFU's - Enter
+ *  frees the mouse (PlayerMouseLook.cs:190). Online the chat panel opens on that same action (ui/chatPanel.js
+ *  CHAT_OPEN_ACTION), and both listeners sit on the window's capture phase, so ONE Enter opened the chat AND flipped
+ *  cursorActive - and the flag, left up, then refused the relock when the chat closed. A mounted chat CLAIMS the key;
+ *  while any claim stands the toggle answers FreeMouse alone (Y by default). Counted, and each release is once-only,
+ *  so a panel torn down twice cannot hand back a claim another panel still holds. */
+let _cursorKeyClaims = 0;
+export function claimCursorKey() {
+  _cursorKeyClaims++;
+  let held = true;
+  return () => { if (held) { held = false; _cursorKeyClaims--; } };
+}
+export const cursorKeyClaimed = () => _cursorKeyClaims > 0;
+
 /** One call per host at boot: Enter (Actions.ActivateCursor) or the
  *  player's own FreeMouse key frees the mouse during play and takes it
  *  back. `isWindowUp` is the
@@ -105,7 +119,7 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionOf = nu
     // binding over `_cursorActive` is the bug PL3 spent a whole slice
     // on, in a new hat.
     const act = actionOf(e);
-    if (act !== 'ActivateCursor' && act !== FREE_MOUSE_ACTION) return;
+    if (act !== FREE_MOUSE_ACTION && !(act === 'ActivateCursor' && !cursorKeyClaimed())) return;   // KB1: online, ActivateCursor's key is the chat's
     e.preventDefault();
     // PL1: "Don't allow activate cursor for 0.3 seconds after closing
     // an input message box" (PlayerMouseLook.cs:192-196).

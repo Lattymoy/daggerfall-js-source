@@ -132,13 +132,15 @@ WithPlayer, None, FollowingPlayer):
 - `src/systems/modSettings.js` `horse-cart-and-cargo` - the eight keys
   plus `Enabled`; a disabled mod is one DFU never loaded (nothing stands,
   nothing rides the wire, the windows fall back, and the machine drops
-  what it was observing - `suspend`). ONE DEPARTURE, recorded (HCC-KEYS):
-  the hotkeys ship on `5` / `6` (`Alpha5` / `Alpha6`), because the mod's
-  `K` and `G` are Travel Options' follow key and Handheld Torches' drop
-  key in this tree and no letter is free; the mod's own fallbacks for an
-  unparseable entry stay `K` / `G`, as its IL has them. The first cut
-  shipped `F7` / `F10` and neither was free (AUDIT HCC K1, below); a file
-  that saved them loses exactly those, once.
+  what it was observing - `suspend`). ONE DEPARTURE, recorded (HCC-KEYS,
+  then KB1): the two hotkeys are not the mod's TextKeys but the registry's
+  `HorseMount` and `HorseSummon` actions (`systems/inputActions.js`
+  `MOD_ACTIONS`), shipped on `,` and `.` and bound in Controls under the
+  mod's name. The mod's `K` and `G` are Travel Options' follow key and
+  Handheld Torches' drop key in this tree; the first cut shipped `F7` /
+  `F10` and neither was free (AUDIT HCC K1, below); HCC-KEYS moved them to
+  `5` / `6`, which the hotbar's slots own since KB1. A player's own saved
+  TextKey is carried into the registry once (`migrateKeyBinds`).
 
 ## HCC-ONLINE - the enhancement
 
@@ -213,13 +215,14 @@ killed by a mutant in `tools/mutants/hcc.json`.
 **Notifications and UI.**
 - K1: `F10` is DFU's LargeHUDToggle and `Shift-F10` its HUDToggle (world
   shortcuts, answered with the key already in the ring), and `F7` is the
-  browser's caret browsing. The keys moved to `5` / `6`; the gate now walks
-  every vendored mod's shipped keys against DFU's bindings, its world
-  shortcuts, the browser's keys and each other.
+  browser's caret browsing. The keys moved to `5` / `6` (KB1: then to `,` /
+  `.`, as registry actions); the gate walks every default in the one
+  registry table - DFU's, the port's and the mods' - against each other,
+  DFU's world shortcuts and the browser's keys.
 - K2 / K3: the hotkeys were a derivation over the held-key set (a tap
   shorter than a frame lost; no gate under a DOM surface). They read the
   frame's edge ring behind the IL's own `IsPlayingGame` / `LoadInProgress`
-  gate.
+  gate (KB1: through `pressed`, as the registry's actions).
 - K4: a captured key could never be cleared to `None`; the capture has the
   controls pane's clear, and the notes say the port's control.
 - U4 / H1: the runtime was ticked only outdoors and after the draw - the
@@ -430,7 +433,7 @@ and struck (constructors, the `<Start>d__161` coroutine's five, the
 `<>c` lambda bodies, the event accessors). That leaves
 **398 authored methods**, each a row of `test/hcc_scope.test.js` with the
 symbol and module that carries it or a sentence saying why the port has
-no twin. **341 are ported**; **57 have no twin**, in these families and
+no twin. **340 are ported**; **58 have no twin**, in these families and
 no other:
 
 - `DeployedWagonFollowerCollisionFilter` (11): `Physics.IgnoreCollision`
@@ -445,6 +448,11 @@ no other:
   toggle of its own yet (its action panel's wagon button is a consumed
   no-op awaiting its slice); when it lands it gates through
   `canAccessWagonStorage(Trade)` as the inventory's does.
+- `TrailingWagonRuntime::ParseConfiguredHotkey` (1, KB1): the mod's two
+  hotkeys are the registry's `HorseMount` and `HorseSummon` actions (Comma
+  and Period by default), bound in Controls beside every other key, so
+  there is no KeyCode text to parse; a player's old choice is carried
+  into the registry once (`migrateKeyBinds`).
 - Unity transform / hierarchy / lifetime plumbing (`OwnsTransform`,
   `get_Parent`, `ResetVisualLocalTransform`, the cargo tier roots, the
   mesh destroys, `OnDestroy`), DFU's event bus and `UIWindowFactory`

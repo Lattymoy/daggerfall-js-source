@@ -32,7 +32,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   ACTIONS, DEFAULT_BINDINGS, DEFAULT_SECONDARY_BINDINGS, createBindings, resetDefaults, setBinding, clearBinding,
-  getBinding, addRemovedSecondaryAction, serializeKeyBinds, loadKeyBinds,
+  getBinding, addRemovedSecondaryAction, serializeKeyBinds, loadKeyBinds, HIDDEN_ACTIONS, HOTBAR_SLOT_ACTIONS,
 } from '../src/systems/inputActions.js';
 
 import { DEFAULT_JOYSTICK_UI, STANDARD_TO_UNITY_BUTTON, isAxisKeyName } from '../src/systems/gamepad.js';
@@ -136,7 +136,7 @@ test('PAD1-C the store: a full reset and the load-time autofill both FILL the pa
   // secondary back to the pad button - so the test stopped asking what
   // it says it asks. A code no default holds, in EITHER dict, is what
   // this fixture has always meant.
-  const own = 'PYZXQKJUOBNM'.split('').map((c) => `Key${c}`)
+  const own = [...'PYZXQKJUOBNM'.split('').map((c) => `Key${c}`), 'Semicolon', 'Quote', 'BracketLeft', 'BracketRight']   // KB1: past the letters, which are all spoken for
     .find((c) => !DEFAULT_BINDINGS.some(([code]) => code === c)
       && !DEFAULT_SECONDARY_BINDINGS.some(([code]) => code === c));
   assert.ok(own, 'every candidate letter is spoken for - this fixture needs a new one');
@@ -258,7 +258,13 @@ test('PAD1-E every registry action has a consumer, or is on the recorded list of
   const walk = (d) => { for (const e of readdirSync(join(ROOT, d), { withFileTypes: true })) { const p = `${d}/${e.name}`; if (e.isDirectory()) walk(p); else if (e.name.endsWith('.js') && !EDITORS.has(p)) files.push([p, stripComments(readFileSync(join(ROOT, p), 'utf8'))]); } };
   walk('src');
   const unread = ACTIONS.filter((a) => !files.some(([, src]) => new RegExp(`(?<![A-Za-z0-9_])${a}(?![A-Za-z0-9_])`).test(src)));
-  assert.deepEqual(unread.sort(), ['CenterView', 'PrintScreen', 'Slide', 'ToggleConsole'], `unrouted: ${unread}`);
+  // KB1: CenterView and PrintScreen are READ now (Mac: "build 2") - the look filter's centre and ui/screenshot.js -
+  // and the two left are HIDDEN_ACTIONS (off the pane, unbound). The hotbar's slots are read through the one list
+  // that names them (HOTBAR_SLOT_ACTIONS, beside the registry), so it is counted as their reader.
+  const hotbarRead = files.some(([, src]) => /HOTBAR_SLOT_ACTIONS\.indexOf\(actionOf\(/.test(src));
+  assert.ok(hotbarRead, 'the bar reads its ten slots through HOTBAR_SLOT_ACTIONS');
+  const left = unread.filter((a) => !(hotbarRead && HOTBAR_SLOT_ACTIONS.includes(a)));
+  assert.deepEqual(left.sort(), [...HIDDEN_ACTIONS].sort(), `unrouted: ${left}`);
 });
 
 // Mac, on PAD1: "changing the keybind on the quick pane should change the
@@ -279,9 +285,10 @@ test('PAD1-F a rebind through the controls pane changes the quickslot chip: the 
   assert.deepEqual(quickslotTag('QuickUse1', pad), { kind: 'glyph', family: 'xbox', code: 'JoystickButton5' }, 'the chip is the new button');
   assert.equal(getBinding(store, 'Jump', false), null, 'RB was Jump\'s; DFU\'s single-bind law took it (the pane\'s duplicate check would have said so first)');
   // and on the keyboard side
-  u.primary.set('QuickUse1', 'KeyG');
+  u.primary.set('QuickUse1', 'KeyL');   // KB1: G is the torch's drop now, and an apply runs only on a clash-free set - L's holder (LogBook) cleared, as the pane's replace does
+  u.primary.set('LogBook', null);
   applyUnsavedKeybinds(store, u);
-  assert.deepEqual(quickslotTag('QuickUse1', { ...pad, controller: false }), { kind: 'key', text: 'G' });
+  assert.deepEqual(quickslotTag('QuickUse1', { ...pad, controller: false }), { kind: 'key', text: 'L' });
   // the HUD's frame reads the LIVE store and keys its repaint on the tag
   const hud = rd('src/ui/enhancedHud.js');
   assert.match(hud, /const tagOpts = \{ bindings: bindings\(\), controller, family: family \?\? 'xbox' \};/, 'the registry, read in the frame - never captured at build');

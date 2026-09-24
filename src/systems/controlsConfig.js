@@ -18,7 +18,7 @@
 
 import {
   ACTIONS, getBinding, setBinding, addRemovedPrimaryAction, addRemovedSecondaryAction, resetDefaults,
-  isCombo, getCombo, comboCode,
+  isCombo, getCombo, comboCode, actionLabel, createBindings, serializeKeyBinds, loadKeyBinds,
 } from './inputActions.js';
 
 /** internalDupeColor / crossDupeColor (:44-45): red for a clash
@@ -200,6 +200,17 @@ export function resetUnsavedToDefaults(store, u) {
   u.secondary = fresh.secondary;
 }
 
+/** KB1: DEFAULTS, STAGED. The enhanced pane says "Nothing is saved until you press Continue", and its Defaults
+ *  reset the LIVE registry and saved it on the spot - DFU's window does (SetDefaults, :229-238), the pane's own
+ *  sentence did not. This is the reset run on a COPY of the live store (so the secondary dict's keep-what-you-chose
+ *  law reads the player's own pad rows), staged; the pane commits it with the live reset on Continue. */
+export function stagedDefaults(store) {
+  const copy = createBindings();
+  loadKeyBinds(copy, serializeKeyBinds(store));
+  resetDefaults(copy);
+  return createUnsavedKeybinds(copy);
+}
+
 // GetButtonText's classic table (:322-410, the non-SDF arm - the
 // port draws the classic font), translated to the port's e.code
 // alphabet key for key. What the table does not name falls to
@@ -351,4 +362,36 @@ export function removeKeybindPromptRows(action, code) {
     'Are you sure you want to remove the keybind',
     `for ${splitCamel(action)} ('${buttonText(code, true)}')?`,
   ];
+}
+
+/**
+ * KB1 (the standard's law 4): A KEY SOMEONE ELSE HOLDS IS ASKED FOR, NOT TAKEN. A bind onto a code another action
+ * already holds answered with a red clash (the enhanced pane) or - in the two classic windows, whose `yield` pass
+ * gave a port row's key up to any grid bind - with a port action silently left unbound. Every window now stops at
+ * the capture and asks; Yes stages the holder unbound and the bind, No stages nothing.
+ * `bindingHolder` is the question: who else holds `code` - another action in the SHOWN dict, or anyone (this
+ * action's own other slot included) in the other dict, which DFU's cross check counts as a clash too (:241-262).
+ * Answers `{ action, primary }` or null.
+ */
+export function bindingHolder(u, action, code) {
+  if (code == null) return null;
+  for (const [a, c] of currentDict(u)) if (a !== action && c === code) return { action: a, primary: u.usingPrimary };
+  const other = u.usingPrimary ? u.secondary : u.primary;
+  for (const [a, c] of other) if (c === code) return { action: a, primary: !u.usingPrimary };
+  return null;
+}
+
+/** The prompt's two lines, in the player's words (inputActions.js actionLabel names a mod's key with its mod). */
+export function replaceKeybindPromptRows(action, code, holder) {
+  const who = `${actionLabel(holder.action)}${holder.primary ? '' : ' (secondary)'}`;
+  return [
+    `${buttonText(code, true)} is used by ${who}.`,
+    `Give it to ${actionLabel(action)} instead?`,
+  ];
+}
+
+/** Yes: the holder is staged unbound in the dict it holds the code in, and the bind lands in the shown one. */
+export function stageReplace(u, action, code, holder) {
+  if (holder) (holder.primary ? u.primary : u.secondary).set(holder.action, null);
+  currentDict(u).set(action, code);
 }

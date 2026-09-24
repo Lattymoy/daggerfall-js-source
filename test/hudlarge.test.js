@@ -343,17 +343,16 @@ test('hudLarge: every panel posts an action ui/input.js can route', () => {
     'CastSpell', 'Inventory', 'ReadyWeapon', 'UseMagicItem', 'Transport',
     'AutoMap', 'TravelMap', 'Rest',
   ]);
-  // A host that has not grown a door yet does not consume the action -
-  // for the FIVE arms U45 added. The four that predate it (Rest,
-  // AutoMap, QuickSave, QuickLoad) return true whether or not a
-  // handler exists, because they were written for routeKey where the
-  // answer means "preventDefault", not "something happened". Pinned as
-  // the inconsistency it is; it costs the large HUD nothing, because
-  // routeLargeHudClick consumes a hit on the bar either way.
-  for (const a of ['Status', 'TravelMap', 'ReadyWeapon', 'UseMagicItem', 'Transport']) {
+  // A host that has not grown a door yet does not consume the action.
+  // The four arms that predate U45 (Rest, AutoMap, QuickSave, QuickLoad)
+  // used to return true whether or not a handler existed - pinned here as
+  // the inconsistency it was - and KB1 closed it: `true` tells routeKey's
+  // host the key was spent, so it preventDefaulted and swallowed a key
+  // that did nothing. Every arm answers honestly now, as do LogBook and
+  // NoteBook, which shared the shape.
+  for (const a of ['Status', 'TravelMap', 'ReadyWeapon', 'UseMagicItem', 'Transport', 'Rest', 'AutoMap', 'QuickSave', 'QuickLoad', 'LogBook', 'NoteBook', 'DebugOverlay']) {
     assert.equal(routeAction(a, {}), false, `${a} reports honestly`);
   }
-  assert.equal(routeAction('Rest', {}), true, 'and the older arms do not');
   assert.equal(routeAction('nonsense', ctx), false);
 });
 

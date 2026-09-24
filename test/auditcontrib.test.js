@@ -16,8 +16,9 @@ import { createExteriorFoes } from '../src/scenes/exteriorFoes.js';
 import { audio } from '../src/systems/audio.js';
 import { setUiSkin, hotbarInForce } from '../src/systems/uiSkin.js';
 import { setPref } from '../src/systems/uiPrefs.js';
-import { routeAction } from '../src/ui/input.js';
-import { modHotkeyCodes, setModSetting } from '../src/systems/modSettings.js';
+import { routeAction, setBindings, keyEdges, noteKeyDown, beginInputFrame, pressed, actionOf } from '../src/ui/input.js';
+import { setModSetting } from '../src/systems/modSettings.js';
+import { createBindings, resetDefaults, getBinding, HOTBAR_SLOT_ACTIONS } from '../src/systems/inputActions.js';
 import * as HB from '../src/systems/quickslots.js';
 import { TEMPLATES } from '../src/systems/useItem.js';
 
@@ -254,15 +255,31 @@ test('AUDIT CONTRIB H1: with the hotbar in force the diamond is put AWAY - none 
   assert.equal(used, 1);
 });
 
-test('AUDIT CONTRIB H1: a mod\'s hotkey is the mod\'s - Horse Cart and Cargo\'s 5 and 6 are held while it is on, released while it is off; and the bar steps aside for them and for any digit bound to another action', () => {
+test('AUDIT CONTRIB H1 (re-aimed by KB1): a mod\'s hotkey is the mod\'s ACTION - Horse Cart and Cargo\'s two answer while it is on and not while it is off, off the digit row the bar owns; the bar reads its ten slots through the registry', () => {
+  // H1 first held this with `modHotkeyCodes()`, a set of the codes the mods' TextKeys named, which the bar stepped
+  // aside for. KB1 retired the TextKeys: the mods' keys are registry actions, the readers' actionLive gate answers
+  // for "the mod is off", and one key is one action - so the bar's digits and HCC's keys cannot meet at all.
+  const store = createBindings();
+  resetDefaults(store);
+  setBindings(store);
+  assert.equal(getBinding(store, 'HorseMount'), 'Comma');
+  assert.equal(getBinding(store, 'HorseSummon'), 'Period');
+  assert.deepEqual(['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0'].map((c) => actionOf({ code: c })),
+    [...HOTBAR_SLOT_ACTIONS], 'the digit row is the bar\'s ten slots, and nothing else\'s');
+  const keys = new Set(['Comma']);
+  const edge = keyEdges();
+  noteKeyDown(edge, 'Comma');
+  beginInputFrame(edge);
   setModSetting('horse-cart-and-cargo', 'Enabled', true);
-  try { assert.ok(modHotkeyCodes().has('Digit5') && modHotkeyCodes().has('Digit6')); }
+  try { assert.equal(pressed(edge, keys, 'HorseMount'), true, 'on, the key mounts'); }
   finally { setModSetting('horse-cart-and-cargo', 'Enabled', false); }
-  assert.equal(modHotkeyCodes().has('Digit5'), false, 'a mod switched off holds nothing');
+  assert.equal(pressed(edge, keys, 'HorseMount'), false, 'a mod switched off answers nothing on its key');
+  assert.equal(actionOf({ code: 'Comma' }), null, '...and its key means nothing to a listener either');
   const b = rd('src/ui/enhancedHotbar.js');
-  assert.match(b, /const act = actionForCode\(bindings\(\), e\.code\);\n\s*if \(act && !QUICKSLOT_ACTIONS\.has\(act\)\) return;\n\s*if \(modHotkeyCodes\(\)\.has\(e\.code\)\) return;/);
+  assert.match(b, /const i = HOTBAR_SLOT_ACTIONS\.indexOf\(actionOf\(e, eventModifiers\(e\)\)\);/, 'the bar asks the registry which slot a key is');
   assert.match(b, /if \(!bar \|\| !hotbarMode\(\) \|\| dropOwners\.size \|\| lastPaused\) return;/, 'gated on the game\'s pause, not the HUD\'s visibility');
   assert.match(rd('src/ui/hud.js'), /paused: !!cursorActive,/);
+  setBindings(null);
 });
 
 const lightOf = (templateIndex, name) => ({ group: 'UselessItems2', templateIndex, name, currentCondition: 40, maxCondition: 100 });

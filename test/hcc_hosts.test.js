@@ -131,7 +131,8 @@ test('HCC hosts: world.js - the frame, the draw, the origin, the ray, the plaque
     /hccTick\(dt, now\);[^\n]*\n\s+renderer\.setClearColor\(SKY_CLEAR\);/,
     /if \(hcc\.enabled && _mode\(\) === 'exterior'\) livePersonBatches\.push\(\.\.\.hcc\.batches\(\)\);/,
     // AUDIT HCC K2/K3: GetKeyDown is the frame's edge ring, behind HandleConfiguredHotkeys' IsPlayingGame / LoadInProgress gate
-    /const hccKeyDown = \(name\) => \{ const c = domCodeForKeyCode\(name\); return !!c && !gamePaused\(\) && !pointerSurfaces\.size && !_loading && pressedCode\(latch\.edge, c\); \};/,
+    // KB1: and the key is the registry's action - the mod's TextKey is no longer parsed
+    /const hccActionPressed = \(action\) => !gamePaused\(\) && !pointerSurfaces\.size && !_loading && pressed\(latch\.edge, keys, action\);/,
     // AUDIT HCC U6: the mod's HUD label, where the plaque is not already naming the horse
     /horseNameTooltip\.set\(tipOn \? hcc\.tooltipText\(cam\.pos, /,
     /camps\.draw\(renderer\);[^\n]*\n\s+hcc\.draw\(renderer\);/, /camps\.offsetAll\(r\.offset\);[^\n]*\n\s+hcc\.offsetAll\(r\.offset\);/,
@@ -167,7 +168,7 @@ test('HCC hosts: exterior.js mirrors the same seams over the fixed city (no stre
     /hcc\.setEnabled\(hccOn\(\)\); if \(hcc\.enabled\) hccPollSettings\(nowMs\); hcc\.frame\(dt, cam\.pos, gamePaused\(\) \? 0 : dt \* (?:worldTimeScale|hccTimeScale)\(\)\);/,   // AUDIT HCC (branch audit): the runtime's Time.deltaTime - held by the pause, scaled with the world
     /hccTick\(dt, now\);[^\n]*\n\s+townTalk\.frame\(dt\);/, /hccTick\(dt, now\);[^\n]*\n\s+renderer\.setClearColor\(SKY_CLEAR\);/,
     /if \(hcc\.enabled\) personBatches\.push\(\.\.\.hcc\.batches\(\)\);/,
-    /const hccKeyDown = \(name\) => \{ const c = domCodeForKeyCode\(name\); return !!c && !gamePaused\(\) && pressedCode\(latch\.edge, c\); \};/,
+    /const hccActionPressed = \(action\) => !gamePaused\(\) && pressed\(latch\.edge, keys, action\);/,
     /camps\.draw\(renderer, texRemap\);[^\n]*\n\s+hcc\.draw\(renderer, texRemap\);/,
     /const _hccPick = pickActivatableHit\(cam\.pos, useFwd, hcc\.targets\(\), collider\);/, /horseCart: _hccPick,/,
     /else if \(_race\.horseCartWins\) \{ hcc\.activate\(_hccPick\.key, _hccPick\.distance, \(l\) => townTalk\.say\(l\), \(\) => setMidScreenText\(TOO_FAR_AWAY_TEXT\), plaqueActionFor\(_hccPick\.key\)\); \}/,   // ACT-MENU: and the verb the plaque lit

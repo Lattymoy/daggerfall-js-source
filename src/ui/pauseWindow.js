@@ -92,6 +92,8 @@ import { ENUM_LAW } from './settingsLaw.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { BUILD_TAG } from '../buildTag.js';
+import { bindings } from './input.js';   // KB1: the live registry, for the toggle-close binding
+import { getBinding } from '../systems/inputActions.js';   // KB1: InputManager.GetBinding(Actions.Escape)
 
 /** barMaxLength (:28). */
 export const BAR_MAX = 109.1;
@@ -181,12 +183,20 @@ export class PauseOptionsWindow {
     // GameManager.cs:515-518, and ActionComplete is the RELEASE edge
     // (InputManager.cs:634-637) - so its opening release is spent before
     // the window exists and :186's bare `GetKeyUp` is safe there. Every
-    // host here opens on the key DOWN (world.js:7874, exterior.js:3065,
-    // ui/input.js:520) and then routes that same key's release into the
+    // host here opens on the key DOWN (world.js:7861, exterior.js:3064,
+    // ui/input.js:543) and then routes that same key's release into the
     // window it just mounted, so the release door closes only a window
     // whose own press it saw.
     this.isCloseWindowDeferred = false;
+    // KB1: "Store toggle closed binding for this window" - DaggerfallPauseOptionsWindow's is GetBinding(Actions.Escape),
+    // read once at push as the rest window's is. The window closed on a literal Escape alone, so a player who moved
+    // the pause to another key opened it with that key and could not close it with the same one. The back button
+    // (the literal Escape, GetBackButtonUp) closes it too, as in DFU.
+    this.toggleClosedBinding = getBinding(bindings(), 'Escape');
   }
+
+  /** GetKeyUp(toggleClosedBinding) || GetBackButtonUp() (:183-188) - the two keys that close this window. */
+  _isCloseKey(code) { return code === 'Escape' || (!!this.toggleClosedBinding && code === this.toggleClosedBinding); }
 
   _click() { audio.playOneShot(SOUND.ButtonClick, 1); }
 
@@ -210,7 +220,7 @@ export class PauseOptionsWindow {
     if (this.top) { this.top = null; return; }   // any key clears a note
     // :703-708's arming edge - the press this window SAW, which the
     // press that opened it never is.
-    if (code === 'Escape') this.isCloseWindowDeferred = true;
+    if (this._isCloseKey(code)) this.isCloseWindowDeferred = true;
   }
 
   /** ROAD-E E1: THE TOGGLE CLOSE, on the edge DFU reads it from. :183-188
@@ -227,7 +237,7 @@ export class PauseOptionsWindow {
    *  the press, exactly as `input` above has them. */
   keyup(code) {
     if (this.top) return;
-    if (code !== 'Escape') return;
+    if (!this._isCloseKey(code)) return;
     // :709's `&& isCloseWindowDeferred` - the press that opened this
     // window was consumed by the host and never reached here, so its
     // release finds nothing armed and closes nothing.

@@ -25,6 +25,7 @@ import {
   createUnsavedKeybinds, currentDict, setUnsavedBinding, removeKeybindPromptRows,
 } from '../src/systems/controlsConfig.js';
 import { createTownTalk } from '../src/scenes/townTalk.js';
+import { comboCode } from '../src/systems/inputActions.js';   // KB1: the combo clash G6 now makes
 import { createBindings, resetDefaults, saveKeyBinds, onSavedKeyBinds } from '../src/systems/inputActions.js';
 import {
   getBool, getFloat, getInt, setValue, effectiveSettings, _resetForTests,
@@ -334,8 +335,8 @@ test('G6: the ADVANCED tab opens it over the grid, on the SAME staged dicts', ()
   const btn = toNative(MouseControlsWindow.rowButtonRect(KEYBIND_ROWS[0]));
   cw.click(btn[0] + 1, btn[1] + 1);
   assert.equal(cw.advanced.capture, 'Escape');
-  cw.input('KeyJ');
-  assert.equal(currentDict(cw.unsaved).get('Escape'), 'KeyJ');
+  cw.input('Semicolon');   // KB1: a key no default holds - J is the plaque's now, and a held key asks first
+  assert.equal(currentDict(cw.unsaved).get('Escape'), 'Semicolon');
 
   // CONTINUE pops back onto the grid, which re-checks duplicates
   const cont = toNative(CONTINUE_RECT);
@@ -644,12 +645,15 @@ test('G6: re-opening the ADVANCED window re-checks duplicates - OnPush -> OnRetu
   cw.click(cont[0] + 1, cont[1] + 1);                                // back to the grid
   assert.equal(cw.advancedOpen, false);
 
-  // a clash made on the GRID, between the two visits, through its own UI
-  const escCode = currentDict(cw.unsaved).get('Escape');
+  // a clash made on the GRID, between the two visits, through its own UI. KB1: an exact code another row holds
+  // ASKS now (law 4) and never stages a clash, so the clash is DFU's combo one (GetDuplicates' second phase):
+  // Shift+T while Run holds Left Shift on its own.
+  const escCode = comboCode('ShiftLeft', 'KeyT');
   const b0 = cw.buttons[0];
   const b0Code = currentDict(cw.unsaved).get(b0.action);
   cw.click(b0.x + 1, b0.y + 1);
-  cw.input(escCode);
+  cw.input('KeyT', { shiftKey: true });
+  assert.equal(cw.top, null, 'no replace prompt - no row holds Shift+T itself');
   assert.ok(cw.dupes.internal.has(escCode), 'the grid paints the clash');
   assert.equal(cw.advanced.dupes.internal.has(escCode), false,
     'the cached popup still holds its construction-time snapshot');

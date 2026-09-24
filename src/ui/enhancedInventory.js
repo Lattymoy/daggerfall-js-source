@@ -845,7 +845,7 @@ function hotbarIntent(item, over) {
   const hot = hotbarSlotNode(over);
   if (hot) {
     const n = Number(hot.dataset.slot);
-    return hotbarTakesItem(item) ? { kind: 'hotbar', label: `Hotbar ${hotbarKeyOf(n)}`, slot: n } : { kind: 'nope', label: null };
+    return hotbarTakesItem(item) ? { kind: 'hotbar', label: `Hotbar ${n + 1}`, slot: n } : { kind: 'nope', label: null };
   }
   return over?.closest?.('.hb') ? { kind: 'none', label: '' } : null;
 }
@@ -1247,7 +1247,7 @@ function stow(item) {
   // 26 F156: planStore answers `{ ok: true, map: true }` for a
   // MiscItems.Map - the reveal runs, the paper is consumed, nothing
   // lands in the destination. The classic window routes it
-  // (nativeInventory.js:860) and this one did not, so dragging a
+  // (nativeInventory.js:865) and this one did not, so dragging a
   // treasure map out of the pack dropped the paper on the floor and
   // revealed nothing.
   if (plan.map) { use(item, deps.items?.() ?? []); return; }
@@ -1262,7 +1262,7 @@ function stow(item) {
   // again on the other side, and a tip that stays open after every
   // press is the quirk being fixed.
   // AUDIT INV2 B-F1: THE ENTITY AND THE PROVENANCE RIDE, as they do at
-  // the classic window's own call (nativeInventory.js:866). Without them
+  // the classic window's own call (nativeInventory.js:871). Without them
   // `clearLightSourceOnLeave` - AUDIT 26 F157's first statement inside
   // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
   // went on lighting the player from where it lay. INV2 made that a
@@ -1296,7 +1296,7 @@ function take(item) {
   if (plan.map) { use(item, remoteTarget(deps, sessionState())); return; }
   // MAC-O6 (report: "looting gold/items makes no sound"): DoTransferItem's
   // own cue (:1569 gold's clink, :1583 everything else), which the classic
-  // window plays (nativeInventory.js:886) and this one never did - the ONLY
+  // window plays (nativeInventory.js:891) and this one never did - the ONLY
   // difference between the two windows' calls to planTake/applyTransfer was
   // that this one dropped `plan.sound` on the floor. Played here, ahead of
   // the gold interception below, exactly as DFU's own PlayOneShot sits
@@ -1828,7 +1828,7 @@ function itemRow(item, from = 'local') {
     if (hotbarMode()) {
       // HB1: the row on the hotbar says which key, the diamond's chip's law
       const at = hotbarSlotOf(item);
-      if (at >= 0) row.append(el('span', 'qs-mark', hotbarKeyOf(at)));
+      if (at >= 0) row.append(el('span', 'qs-mark', hotbarKeyOf(at) ?? String(at + 1)));
     } else {
       const slot = quickslotOf(item);
       if (slot) row.append(el('span', 'qs-mark', slot === 'swap' ? 'SWAP' : (slot === 'c1' ? '1' : '2')));
@@ -2056,7 +2056,7 @@ function quickslotActs(item) {
   if (hotbarMode()) {
     if (!hotbarTakesItem(item)) return [];
     const at = hotbarSlotOf(item);
-    const b = el('button', `act qs-act${at >= 0 ? ' on' : ''}`, at >= 0 ? `Off hotbar ${hotbarKeyOf(at)}` : 'Add to hotbar');
+    const b = el('button', `act qs-act${at >= 0 ? ' on' : ''}`, at >= 0 ? `Off hotbar ${at + 1}` : 'Add to hotbar');
     b.onclick = () => { notice = toggleHotbarItem(item); refresh(); render(); };
     return [b];
   }

@@ -107,6 +107,7 @@
 import { isTextEntryTarget, swallowBrowserKey, bindings } from './input.js';
 import { actionForCode } from '../systems/inputActions.js';
 import { overlayOpen } from './enhancedOverlays.js';
+import { claimCursorKey } from '../player/pointerLock.js';   // KB1: while the panel stands, ActivateCursor's key is its open key and not the cursor toggle
 import { isTouchDevice } from './touch.js';
 import { CHAT_MAX } from '../net/wire.js';
 import { tagOf } from '../net/chat.js';
@@ -737,6 +738,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     if (isOpenKey(e, { canOpen, overlay, action })) { e.preventDefault(); e.stopPropagation(); open(); }
   };
   win.addEventListener('keydown', onKey, true);
+  const releaseCursorKey = claimCursorKey();   // KB1: one key, one action - Enter opens this panel online, FreeMouse (Y) frees the mouse
   form.addEventListener('submit', (e) => { e.preventDefault(); submit({ keep: touch }); });
   close.addEventListener('click', () => closePanel());
   openBtn.addEventListener('click', () => open());
@@ -823,6 +825,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
       if (!alive) return;
       alive = false;
       win.removeEventListener('keydown', onKey, true);
+      releaseCursorKey();
       root.remove?.();
     },
   };

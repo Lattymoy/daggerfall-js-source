@@ -156,16 +156,14 @@ export const MOD_CURATED = Object.freeze({
   // RRI1: the three a player reaches for first - the new items, and what loot is.
   'roleplay-realism-items': Object.freeze(['newWeapons', 'newArmor', 'lootRebalance']),
   'roleplay-realism': Object.freeze(['advancedArchery', 'climbingRestriction', 'underworldExpulsion', 'shipPorts']),   // SHIP-PORTS: the boat's own switch, where a player can find it
-  // TORCH-BIND (2026-09-22, a player on Discord: "No option to rebind
-  // Handheld Torches actions"): the three TextKeys are the mod's own key
-  // store, read raw by the hosts, and the Mods pane that once captured
-  // them went with FT14 - this list was the only door left, and it did
-  // not name them. The relaxed switch rides along: 3ARMS ships it off.
-  'handheld-torches': Object.freeze(['Handling.ToggleLightInput', 'Handling.ManualDropInput', 'Throwing.ThrowTorchInput',
+  // KB1: a mod's KEYS are not dials. TORCH-BIND put the three TextKeys here because the hosts read them raw and
+  // this was the only door left; they are the registry's actions now (systems/inputActions.js MOD_ACTIONS) and
+  // are bound in Controls, under the mod's name, beside every other key - where a clash can be seen. The relaxed
+  // switch rides along: 3ARMS ships it off.
+  'handheld-torches': Object.freeze([
     'Handling.RelaxedTwoHandedWeapons', 'Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Bob.Length']),
-  // HCC: the two hotkeys (the mod's own key store, as Handheld Torches'),
-  // the persistence switch, and the two distances a player reaches for.
-  'horse-cart-and-cargo': Object.freeze(['Hotkeys.QuickMountDismount', 'Hotkeys.SummonTransport', 'Persistence.PhysicalPersistence',
+  // HCC: the persistence switch and the distances a player reaches for (KB1: its two hotkeys are Controls').
+  'horse-cart-and-cargo': Object.freeze(['Persistence.PhysicalPersistence',
     'Following.HorseFollowDistance', 'WagonAccess.InteriorAccessDistance', 'Following.AvoidCombat', 'Following.FollowFastTravel', 'Presentation.ShowTrailingWagon']),
   pcaao: Object.freeze(['equipmentDamageEnhanced', 'fadingEnchantedItems', 'armorHitFormulaRedone',
     'criticalStrikesIncreaseDamage', 'conditionBasedEffectiveness', 'softMaterialRequirements',
@@ -177,13 +175,12 @@ export const MOD_CURATED = Object.freeze({
   // one is curated hard. The five are what a player reaches for first:
   // whether a cautious trip is walked, whether a ship needs a port,
   // what a location does to a journey in progress, how fast it may run,
-  // and which key follows a road. Everything else - the fourteen dot
+  // and (KB1: in Controls now, as FollowPaths) which key follows a road. Everything else - the fourteen dot
   // colours, the junction map's placement, the fare scaling - stays in
   // the mod's own pane.
   'travel-options': Object.freeze([
     'CautiousTravel.PlayerControlledCautiousTravel', 'ShipTravel.OnlyFromPorts',
     'GeneralOptions.LocationPause', 'TimeAcceleration.AccelerationLimit',
-    'RoadsIntegration.FollowPathsKey', 'RoadsIntegration.FollowPathsCustomKeyBind',   // TORCH-BIND: the custom key travelOptions.js reads
   ]),
   'ambient-text': Object.freeze(['textChance', 'interval', 'postTextInterval', 'textDisplayTime']),   // AT0: all four it ships - the mod is small enough that curation would only hide something
   // EOTB0: the mod ships FIFTY-FOUR keys across nine sections, so this
@@ -191,8 +188,8 @@ export const MOD_CURATED = Object.freeze({
   // first: how far back the camera sits, which shoulder it sits over,
   // how fast it follows, and how big you are drawn. Everything else
   // stays in the mod's own pane.
-  // TORCH-BIND: the two keys eotbCamera.js reads ride the tile too - the same class as the torch keys.
-  'eye-of-the-beholder': Object.freeze(['Camera.SwitchShoulder', 'AutoTogglePerspective.ToggleInput', 'Camera.LongitudinalDistance', 'Camera.FrontalPlaneOffset',
+  // KB1: its two keys (SwitchShoulder, ToggleInput) are Controls' ShoulderSwitch and AutoPerspective.
+  'eye-of-the-beholder': Object.freeze(['Camera.LongitudinalDistance', 'Camera.FrontalPlaneOffset',
     'Camera.Speed', 'Animation.BillboardScale']),
   // IF1: the clip quality and the two volumes are what a player reaches for.
   'immersive-footsteps': Object.freeze(['AudioQualitySettings.SoundClipQuality', 'FootstepSettings.FootstepVolumeMulti', 'ArmorSwaySettings.ArmorSwayVolumeMulti']),
