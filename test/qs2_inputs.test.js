@@ -31,7 +31,10 @@ import {
   createBindings, resetDefaults, setBinding, getBinding, actionForCode, loadKeyBinds, serializeKeyBinds,
 } from '../src/systems/inputActions.js';
 import { routeAction, QUICKSLOT_ACTIONS, POLLED_ACTIONS } from '../src/ui/input.js';
-import { GRID_ACTIONS, ADVANCED_ROWS, PORT_ROWS, PORT_GROUPS, QUICKSLOT_GROUP_TITLE, QUICKLOOT_GROUP_TITLE, MOUSE_GROUP_TITLE } from '../src/ui/enhancedControls.js';
+import { gridButtons } from '../src/ui/controlsWindow.js';   // KB1: the classic faces, read off the windows that draw them
+import { KEYBIND_ROWS } from '../src/ui/mouseControlsWindow.js';
+import { ACTION_GROUPS, HIDDEN_ACTIONS } from '../src/systems/inputActions.js';
+const GRID_ACTIONS = gridButtons().map((b) => b.action);
 import { createWeaponRig } from '../src/combat/weaponRig.js';
 import { equipItem, equipTableOf, EQUIP_SLOTS } from '../src/systems/equip.js';
 import { assignQuickslot, clearQuickslots, swapQuickslot, quickslotOf } from '../src/systems/quickslots.js';
@@ -60,9 +63,9 @@ test('QS2: the three actions are APPENDED - past DFU\'s forty-four and past SOC5
   // that names "the last seven" now has an eighth row behind it. It is
   // sliced from the END of the port's rows rather than widened to
   // include a row this pin is not about.
-  assert.deepEqual(ACTIONS.slice(-8, -1), [...QS, ...QL], 'the seven rows QS2 and QUICK-LOOT own, in this order');
-  assert.equal(ACTIONS.at(-1), 'FreeMouse', 'and FREEMOUSE\'s is the newest, appended past them');
-  assert.equal(ACTIONS.length, 53, 'DFU\'s 44 + SOC5\'s 1 + QS2\'s 3 + QS4\'s 1 + QS6\'s 1 + QUICK-LOOT\'s 2 + FREEMOUSE\'s 1');
+  assert.deepEqual(ACTIONS.slice(45, 52), [...QS, ...QL], 'the seven rows QS2 and QUICK-LOOT own, in this order');
+  assert.equal(ACTIONS[52], 'FreeMouse', 'and FREEMOUSE\'s appended past them');
+  assert.equal(ACTIONS.length, 70, 'DFU\'s 44 + SOC5\'s 1 + QS2\'s 3 + QS4\'s 1 + QS6\'s 1 + QUICK-LOOT\'s 2 + FREEMOUSE\'s 1 + KB1\'s 17 (Interact, QuickDial, six hotbar slots, eight mod keys, DebugOverlay)');
   // Every index DFU's own enum had, it still has. This is the whole reason the
   // list is appended to and never inserted into (ui/controlsWindow.js).
   assert.equal(ACTIONS[43], 'AutoRun', 'DFU\'s last row keeps index 43');
@@ -77,11 +80,11 @@ test('QS2: the three actions are APPENDED - past DFU\'s forty-four and past SOC5
 });
 
 test('QS2: the port\'s own actions YIELD in the classic windows - all four of them, because none of the four is on either classic face (mutant: the three left out of PORT_ACTIONS, so a classic player is told of a clash against a row they cannot see or clear)', () => {
-  assert.deepEqual([...PORT_ACTIONS], ['SocialInteract', ...QS, ...QL, 'FreeMouse']);   // FREEMOUSE: the classic windows cannot draw its row either
+  assert.deepEqual([...PORT_ACTIONS], ['SocialInteract', ...QS, ...QL, 'FreeMouse', ...ACTIONS.slice(53)]);   // FREEMOUSE: the classic windows cannot draw its row either; KB1: nor any of its seventeen
   // The claim PORT_ACTIONS makes is "not drawable by a classic window", and it
   // is derived here rather than asserted: the classic grid is ACTIONS[2..40)
   // and the ADVANCED popup is its six.
-  const classicFace = new Set([...GRID_ACTIONS, ...ADVANCED_ROWS.map((r) => r.action)]);
+  const classicFace = new Set([...GRID_ACTIONS, ...KEYBIND_ROWS.map((r) => r.action)]);
   for (const a of PORT_ACTIONS) assert.ok(!classicFace.has(a), `${a} is on neither classic face`);
   // ...and the other way: nothing DFU's own windows DO draw yields there.
   for (const a of classicFace) assert.ok(!PORT_ACTIONS.includes(a), `${a} is drawable and must not yield`);
@@ -102,16 +105,18 @@ test('QS2: the defaults are the number row, spent exactly once each, and free be
   // binds one; what it must not be is a second action on a spent key.
   const acts = DEFAULT_BINDINGS.map(([, a]) => a);
   assert.equal(new Set(acts).size, acts.length, 'no action is defaulted twice');
-  assert.deepEqual(ACTIONS.filter((a) => !acts.includes(a)), ['QuickSwap'],
-    'exactly one action ships unbound, and it is the one whose cell another key presses');
-  assert.equal(DEFAULT_BINDINGS.length, ACTIONS.length - 1);
+  // KB1: three more ship unbound - the two DFU rows nothing reads (HIDDEN_ACTIONS, off the pane) and the
+  // developer's DebugOverlay - and the swap is still the one whose cell another key presses.
+  assert.deepEqual(ACTIONS.filter((a) => !acts.includes(a)), ['ToggleConsole', 'Slide', 'QuickSwap', 'DebugOverlay'],
+    'the actions that ship unbound');
+  assert.equal(DEFAULT_BINDINGS.length, ACTIONS.length - 4);
   // THE KEYS WERE FREE. DFU's own table is the rows above SOC5's, and none of
   // them is a digit - read off the table rather than asserted about it.
   const dfu = DEFAULT_BINDINGS.slice(0, 44).map(([c]) => c);
   for (const d of ['Digit1', 'Digit2', 'Digit3']) assert.ok(!dfu.includes(d), `SetupDefaults never spends ${d}`);
   // The port's own spending, named where it is spent, so a rename there fails
   // here (the same shape HT4's pin uses one file over).
-  assert.match(rd('src/ui/input.js'), /if \(e\.code === 'Tab'\) \{ return ctx\.toggleDial/, 'PX15: Tab is the pixel dial');
+  assert.equal(DEFAULT_BINDINGS.find(([, a]) => a === 'QuickDial')?.[0], 'Tab', 'PX15: Tab is the pixel dial - KB1: as the QuickDial row, in this same table');
   // A live store built from the defaults answers each digit with its action.
   const s = createBindings();
   resetDefaults(s);
@@ -150,46 +155,23 @@ test('QS2: a bindings blob written BEFORE this slice gains the three on the next
 
 // ── THE PANE ─────────────────────────────────────────────────────────
 
-test('QS2: the enhanced pane draws the three under their OWN heading, and the coverage rule still holds over every group (mutants: the rows dropped so the keys are unrebindable; the rows hidden under SOC5\'s Online heading; a row twice)', () => {
-  // QUICK-LOOT B4: a THIRD group, for the reason the second exists - a
-  // row the classic windows cannot draw needs a heading of its own, or
-  // a clash against it is one a classic player can neither see nor
-  // clear. The coverage rule below is what actually holds it: every
-  // bindable action has exactly one row across every group.
-  // FREEMOUSE: a FOURTH heading, one row. Filing it under 'Online'
-  // would repeat the mistake this pin's own note names - the Enter/chat
-  // collision that motivates the key is an online thing, but freeing
-  // the mouse is something you do to read the screen.
-  assert.deepEqual(PORT_GROUPS.map((g) => g.title), ['Online', QUICKSLOT_GROUP_TITLE, QUICKLOOT_GROUP_TITLE, MOUSE_GROUP_TITLE]);
-  assert.equal(MOUSE_GROUP_TITLE, 'Mouse');
-  assert.deepEqual(PORT_GROUPS[3].rows.map((r) => [r.action, r.label]), [
-    ['FreeMouse', 'Free the mouse (press again to look)'],
-  ]);
-  assert.equal(QUICKSLOT_GROUP_TITLE, 'Quickslots');
-  assert.equal(QUICKLOOT_GROUP_TITLE, 'Quick loot');
-  assert.deepEqual(PORT_GROUPS[2].rows.map((r) => [r.action, r.label]), [
-    ['QuickLootAll', 'Take everything'],
-    ['QuickLootOpen', 'Open the container'],
-  ]);
-  assert.ok(!PORT_GROUPS[0].rows.concat(PORT_GROUPS[1].rows).some((r) => QL.includes(r.action)),
-    'not under Online and not under Quickslots - looting is neither');
-  assert.deepEqual(PORT_GROUPS[1].rows.map((r) => [r.action, r.label]), [
-    ['QuickUse1', 'Use quickslot 1'],
-    ['QuickUse2', 'Use quickslot 2'],
-    ['QuickSpell', 'Ready quickslot spell (hold to cycle the book)'],   // QS6: the spell slot, beside the two it behaves like
-    ['QuickSwap', 'Swap weapon'],              // QS6: still here, still rebindable, shipped unbound
-    ['QuickOffHand', 'Off hand: light, douse or swap'],   // QS4's press, and QS6's fold
-  ]);
-  assert.ok(!PORT_GROUPS[0].rows.some((r) => QS.includes(r.action)), 'not under Online - a potion press is not an online act');
-  // COVERAGE: every bindable action has exactly one row across every group.
-  const all = [...GRID_ACTIONS, ...ADVANCED_ROWS.map((r) => r.action), ...PORT_ROWS.map((r) => r.action)];
+test('QS2 (re-aimed by KB1): the enhanced pane draws the quickslots under their OWN heading - with the hotbar\'s slots, which ARE those keys - and the coverage rule holds over every group (mutants: the rows dropped so the keys are unrebindable; the rows hidden under Online; a row twice)', () => {
+  // QS2 gave the quickslots a heading of their own (a potion press is not an online act), QUICK-LOOT B4 the plaque
+  // its own, FREEMOUSE the mouse its own. KB1 kept every one of those calls and made the groups the registry's
+  // ACTION_GROUPS: the hotbar's ten slots join the quickslots, because its slots 1-4 ARE the diamond's four
+  // actions (one key, one action - the meaning follows hotbarInForce).
+  const g = (t) => ACTION_GROUPS.find((x) => x.title === t);
+  assert.deepEqual(g('Quickslots and hotbar').rows.slice(0, 5).map((r) => r.action), ['QuickUse1', 'QuickUse2', 'QuickSpell', 'QuickOffHand', 'QuickSwap']);
+  assert.match(g('Quickslots and hotbar').rows.find((r) => r.action === 'QuickSpell').label, /hold to cycle the book/, 'HOTSLOT: the hold is said');
+  assert.ok(g('Interaction').rows.some((r) => r.action === 'QuickLootAll') && g('Interaction').rows.some((r) => r.action === 'QuickLootOpen'),
+    'looting sits with the other things you do to what is in front of you');
+  assert.ok(!g('Online').rows.some((r) => QS.includes(r.action) || QL.includes(r.action)), 'not under Online - a potion press is not an online act');
+  // COVERAGE: every bindable action has exactly one row across every group; the hidden two have none.
+  const all = ACTION_GROUPS.flatMap((x) => x.rows.map((r) => r.action));
   assert.equal(new Set(all).size, all.length, 'none twice');
-  assert.deepEqual([...all].sort(), [...ACTIONS].sort(), 'and none missing');
-  // ...and the union really is the groups, so the coverage rule cannot be
-  // satisfied by a flat list nothing draws.
-  assert.deepEqual(PORT_GROUPS.flatMap((g) => g.rows), [...PORT_ROWS]);
+  assert.deepEqual([...all, ...HIDDEN_ACTIONS].sort(), [...ACTIONS].sort(), 'and none missing');
   assert.match(rd('src/ui/enhancedControls.js'),
-    /for \(const g of PORT_GROUPS\) group\(body, g\.title, g\.rows\.map\(\(r\) => \[r\.action, r\.label\]\)\);/,
+    /for \(const grp of shownGroups\(\)\) group\(body, grp\.title, grp\.rows\.map\(\(r\) => \[r\.action, r\.label\]\)\);/,
     'the groups are RENDERED, not merely declared');
 });
 
@@ -234,11 +216,12 @@ test('QS2: routeAction sends each action to its ctx door with the slot number, a
   for (const a of HOLD) assert.ok(POLLED_ACTIONS.has(a), `${a} holds, so the frame owns it`);
   for (const a of QS) if (!HOLD.includes(a)) assert.ok(!POLLED_ACTIONS.has(a), `${a} does not hold, so it is an edge action`);
   const src = rd('src/ui/input.js');
-  assert.match(src, /case 'QuickUse1': return ctx\.quickUse\?\.\(1\) === true;/);
-  assert.match(src, /case 'QuickUse2': return ctx\.quickUse\?\.\(2\) === true;/);
-  assert.match(src, /case 'QuickSwap': return ctx\.quickSwap\?\.\(\) === true;/);
-  assert.match(src, /case 'QuickOffHand': return ctx\.quickOffHand\?\.\(\) === true;/);
-  assert.match(src, /case 'QuickSpell': return ctx\.quickSpell\?\.\(\) === true;/);
+  // AUDIT CONTRIB H1: each arm stands down first while the hotbar is in force (the diamond put away)
+  assert.match(src, /case 'QuickUse1': return !hotbarInForce\(\) && ctx\.quickUse\?\.\(1\) === true;/);
+  assert.match(src, /case 'QuickUse2': return !hotbarInForce\(\) && ctx\.quickUse\?\.\(2\) === true;/);
+  assert.match(src, /case 'QuickSwap': return !hotbarInForce\(\) && ctx\.quickSwap\?\.\(\) === true;/);
+  assert.match(src, /case 'QuickOffHand': return !hotbarInForce\(\) && ctx\.quickOffHand\?\.\(\) === true;/);
+  assert.match(src, /case 'QuickSpell': return !hotbarInForce\(\) && ctx\.quickSpell\?\.\(\) === true;/);
   assert.deepEqual([...QUICKSLOT_ACTIONS].sort(), [...QS].sort(), 'and the set the self-routing hosts read is the same five');
 });
 

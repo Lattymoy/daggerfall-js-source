@@ -100,17 +100,17 @@
   {
     "name": "D5-TORCH-BIND-toggle-key-uncurated",
     "file": "src/systems/features.js",
-    "old": "  'handheld-torches': Object.freeze(['Handling.ToggleLightInput', 'Handling.ManualDropInput', 'Throwing.ThrowTorchInput',",
-    "new": "  'handheld-torches': Object.freeze(['Handling.ManualDropInput', 'Throwing.ThrowTorchInput',",
+    "old": "  'handheld-torches': Object.freeze([\n    'Handling.RelaxedTwoHandedWeapons',",
+    "new": "  'handheld-torches': Object.freeze(['Handling.ToggleLightInput',\n    'Handling.RelaxedTwoHandedWeapons',",
     "tests": [
       "test/discord5.test.js"
     ]
   },
   {
     "name": "D5-TORCH-BIND-eotb-keys-uncurated",
-    "file": "src/systems/features.js",
-    "old": "  'eye-of-the-beholder': Object.freeze(['Camera.SwitchShoulder', 'AutoTogglePerspective.ToggleInput', 'Camera.LongitudinalDistance',",
-    "new": "  'eye-of-the-beholder': Object.freeze(['Camera.LongitudinalDistance',",
+    "file": "src/player/eotbCamera.js",
+    "old": "    // KB1: the two keys the mod binds beside the wheel are the registry's ShoulderSwitch and AutoPerspective\n",
+    "new": "    switchShoulderKey: g('Camera.SwitchShoulder') ?? null,\n    // KB1: the two keys the mod binds beside the wheel are the registry's ShoulderSwitch and AutoPerspective\n",
     "tests": [
       "test/discord5.test.js"
     ]
@@ -154,8 +154,8 @@
   {
     "name": "D5-HOTSLOT-book-button-does-not-rerender",
     "file": "src/ui/enhancedSpellbook.js",
-    "old": "    notice = inSlot ? 'Taken out of the quickslot.' : 'In the quickslot - press its key to ready it, hold to cycle the book.';\n    render();",
-    "new": "    notice = inSlot ? 'Taken out of the quickslot.' : 'In the quickslot - press its key to ready it, hold to cycle the book.';",
+    "old": "      notice = inSlot ? 'Taken out of the quickslot.' : 'In the quickslot - press its key to ready it, hold to cycle the book.';\n      render();",
+    "new": "      notice = inSlot ? 'Taken out of the quickslot.' : 'In the quickslot - press its key to ready it, hold to cycle the book.';",
     "tests": [
       "test/discord5.test.js"
     ]

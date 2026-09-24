@@ -275,12 +275,7 @@ function main(argv) {
   const base = val('--base') ?? 'HEAD';
   const apply = opt('--apply'), moveStruck = opt('--struck');
   const only = argv.flatMap((a, i) => (a === '--target' ? [argv[i + 1]] : []));
-  // AUDIT DISC18: THE BUFFER. world.js passed git's default 1 MiB of output
-  // at 244b1136; `git show` of it threw ENOBUFS, the catch below read that
-  // as "a new file", and every cite into the port's largest file went
-  // unmoved - "0 cites to move" - through a batch that shifted it 57 lines.
-  // citeMerge.mjs has carried the same buffer since it was written.
-  const git = (...args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 28 });
+  const git = (...args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 28 });   // DISC17: world.js passed the default 1 MiB, and `git show` of it threw into the new-file catch below - the largest target skipped in silence (citeMerge's own buffer)
   const changed = git('diff', '--name-only', base, '--', 'src', 'bible', 'test', 'tools').split('\n').filter(Boolean);
   const targets = (only.length ? only : changed).filter((f) => /\.(js|mjs|md)$/.test(f));
   const docs = git('ls-files', 'bible', 'test', 'src', 'tools').split('\n').filter((f) => /\.(js|mjs|md|sh)$/.test(f) && !SELF_DOCS.includes(f));   // RF3: the tools' own fixtures are not docs

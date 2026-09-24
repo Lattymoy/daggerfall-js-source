@@ -43,6 +43,39 @@ import { FootstepMachine, FOOTSTEP_CLIP_SETS } from '../systems/footsteps.js';  
 import { RidingAnimator, RIDING_VOLUME_SCALE, nextNeighDelay } from '../systems/riding.js';   // RIDE-SOUND: a peer's hooves are TransportManager's own loop, clip swap and neigh
 import { TRANSPORT_MODES } from '../systems/transport.js';   // RIDE-SOUND: the pose's `rd` as the animator's mode
 import { swingSoundFor, SOUND } from '../systems/soundClips.js';   // PEER-FS2: a peer's own swing sound, off the pose's `an` edge and their equipped weapon
+import { billboardSize } from '../world/rmbFlats.js';   // PCORPSE1: a corpse stands as the dungeon's own corpses stand
+import { raceGenderPain3Sound, CLASSIC_PLAYER_DEATH_SOUND } from '../systems/playerDeath.js';   // PCORPSE1: the fallen player's own cry
+import { RACES } from '../systems/races.js';
+
+// ── PCORPSE1: THE FALLEN ──────────────────────────────────────────
+//
+// Discord, 2026-09-23: "add dead corpses to players that died against mobs, based on the class they play - right
+// now they just disappear. The corpse should stay for 1 minute and disappear, and give it the player's death sound
+// depending on whether it's a woman or a man."
+//
+// THE BODY IS THE CLASS'S OWN CORPSE: `corpseTexture` off the same EnemyBasics row the peer's class sprite is drawn
+// from (classMobileType), which is exactly the body a killed class enemy of that class leaves in a dungeon
+// (dungeonContext spawnCorpse). DFU's data gives every human class ONE body (TEXTURE.380 record 1), so a Mage and a
+// Knight fall the same - which is Daggerfall's own answer, read from its table rather than restated here. A peer
+// with no class to go on falls to the Thief row, the class sprite's own default.
+//
+// THE CRY IS THE PLAYER'S OWN death voice: GetRaceGenderPain3Sound (PlayerDeath.cs:179-201), the race's clip for the
+// peer's gender - the woman's cry for a woman, the man's for a man - at the footsteps' distance falloff.
+
+/** How long a fallen player's body lies, in ms. */
+export const CORPSE_MS = 60_000;
+/** Bodies kept at once - a massacre is bounded like every other peer cache. */
+export const CORPSES_MAX = 32;
+/** The corpse row for a look: the class's own, else the Thief's (the class sprite's default). */
+export function corpseTextureFor(look) {
+  const t = classMobileType(look?.class) ?? THIEF_MOBILE_TYPE;
+  return ENEMY_BASICS[t]?.corpseTexture ?? ENEMY_BASICS[THIEF_MOBILE_TYPE]?.corpseTexture ?? null;
+}
+/** The fallen player's death cry: their race's Pain3 for their gender, the classic clip for a race outside the eight. */
+export function peerDeathSound(look) {
+  const clip = raceGenderPain3Sound(RACES[look?.race] ?? RACES.Breton, look?.gender === 'female' ? 'female' : 'male');
+  return clip >= 0 ? clip : CLASSIC_PLAYER_DEATH_SOUND;
+}
 
 /** entity.career?.name for a CUSTOM class; CLASS_CAREERS[entity.careerIndex] for a STOCK one, whose loaded career
  *  object does not carry its own name (see the import comment above) - null if neither resolves, same as before
@@ -56,21 +89,22 @@ function careerName(entity) {
  *  through to for any class name its switch statement does not recognize. */
 const THIEF_MOBILE_TYPE = 138;
 
-/** A career name ("Warrior", "Mage", ...) to the matching class-enemy MobileType (128+), or null for a peer with no
- *  class name to go on at all (mid-chargen, or an older peer whose look predates this field). `ENEMY_NAMES` is
+/** A career name ("Warrior", "Mage", ...) to the matching class-enemy MobileType (128+). `ENEMY_NAMES` is
  *  generated straight off DFU's own EnemyBasics table (see characters/enemyBasics.js's header) - class rows start
  *  at array index 43, mobileType 128 - so this reads the SAME data dungeonContext.js's own class-enemy foes render
  *  from, rather than a second, hand-kept copy of the mapping (the Unity co-op mod this was ported from keeps its
  *  own switch statement for exactly this; a data-driven lookup here cannot drift out of sync with the sprite table
  *  the way a hand-written one can).
- *  A NON-empty name this build does not recognize (a custom or modded class) falls to THIEF_MOBILE_TYPE rather than
- *  null - matching the Unity mod precisely: its switch statement's own default arm is `return MobileTypes.Thief`,
- *  reached for any string that fails every case. The empty/missing case is kept separate because Unity's own
- *  RefreshProfile guards it BEFORE ever reaching that switch (`if (string.IsNullOrEmpty(newJob)) return;`) - so an
- *  as-yet-classless peer there keeps showing whatever it already had (here, the paperdoll) rather than jumping to
- *  Thief and back once a real class arrives. */
+ *  2026-09-23 ("show ALL players as animated sprites, always"): this used to return null - and RemotePlayers used
+ *  to leave the peer on the flat paperdoll forever - for a name it did not recognize AND for a name that never
+ *  arrived at all (no class synced yet, an older peer whose look predates the field, or a custom class name
+ *  `validLook` stripped for using a character its regex did not allow). Every one of those cases now lands on
+ *  THIEF_MOBILE_TYPE instead, same as the Unity mod's own switch-statement default arm does for an unrecognized
+ *  class name - so a peer is NEVER stuck without a mobileType to try, and the paperdoll fallback in RemotePlayers
+ *  is reached only for its own remaining reasons (spritesOn off, or a build that is still composing/genuinely
+ *  failing - a missing texture, deps not wired), never for "we don't know their class". */
 export function classMobileType(name) {
-  if (typeof name !== 'string' || !name) return null;
+  if (typeof name !== 'string' || !name) return THIEF_MOBILE_TYPE;
   const i = ENEMY_NAMES.indexOf(name);
   return i >= 43 ? 128 + (i - 43) : THIEF_MOBILE_TYPE;
 }
@@ -300,6 +334,15 @@ export function createSightCache({ now = () => Date.now(), every = NAME_SIGHT_MS
 export const DOLLS_MAX = 64;
 /** A doll that failed to compose is not retried before this (AUDIT ONLINE C5). */
 export const DOLL_RETRY_MS = 5000;
+/** A class-enemy SPRITE build that failed is not retried before this. Kept far shorter than DOLL_RETRY_MS (2026-09-23,
+ *  "always show all players as animated sprites"): the paperdoll fallback here is meant to be the rare, brief
+ *  exception - a texture genuinely not there yet, deps not wired, a slow connection - not something a peer sits in
+ *  for 5+ seconds at a stretch while a sprite would otherwise be one attempt away. A short retry means a transient
+ *  failure (a texture load racing the network, or landing the very frame after this peer's build was requested)
+ *  clears itself almost immediately, at the cost of one extra getTexture call a second for a peer that is still
+ *  failing outright (missing deps, no texture row for that mobileType) - a real cost, but a bounded and small one:
+ *  only peers CURRENTLY on the paperdoll retry at all, never the whole roster. */
+export const MOBILE_RETRY_MS = 1000;
 
 /** The player's look, as the hello carries it. */
 export function composeLook(entity) {
@@ -440,6 +483,100 @@ export class RemotePlayers {
     this._wanted = new Set();    // SLAM7: the look keys the last sync ASKED FOR - composed or composing, drawn or not
     this._queue = Promise.resolve();
     this._mobiles = new Map();   // 2026-09-17: peer id -> a ready MobileUnit bundle | Promise building | { failedUntil } - see _mobileFor
+    this._corpses = [];          // PCORPSE1: { pose, room, until, batch | null, building } - the fallen, in wire space
+    this._told = new Map();      // AUDIT CONTRIB A3: acct -> { at, until, cried } - a party member's death their party pose tells of
+    this._lastEye = null;        // PCORPSE1: the listener, for the cry's falloff between syncs
+    this._lastToScene = null;
+  }
+
+  /** PCORPSE1: a peer fell. `pose` is its last pose (wire space), `room` the room it was heard in. The body is drawn
+   *  from the next sync on; the cry plays now, at the distance the last sync placed the listener. */
+  addCorpse(peer, pose, room = null, { until = null, quiet = false } = {}) {
+    if (!pose) return;
+    const ct = corpseTextureFor(peer?.look);
+    const c = { id: peer?.id ?? null, acct: peer?.acct ?? null, pose: { x: pose.x, y: pose.y, z: pose.z }, room, until: until ?? this._now() + CORPSE_MS, ct, batch: null, building: false };
+    this._corpses.push(c);
+    while (this._corpses.length > CORPSES_MAX) this._dropCorpse(this._corpses.shift());
+    const audio = this.deps?.audio;
+    if (audio?.playOneShot && !quiet) {
+      let falloff = 1;
+      const eye = this._lastEye;
+      if (eye && this._lastToScene) {
+        const f = this._lastToScene(c.pose);
+        const d = Math.hypot(f[0] - eye[0], f[1] - eye[1], f[2] - eye[2]);
+        falloff = d <= 8 ? 1 : d >= 45 ? 0 : 1 - (d - 8) / 37;
+      }
+      if (falloff > 0) audio.playOneShot(peerDeathSound(peer?.look), falloff);
+    }
+  }
+
+  /** PCORPSE1: bodies whose room the player has left for another kind of space are not this scene's to draw - a
+   *  dungeon's local coordinates mean nothing outdoors. `keep(room)` answers whether a corpse heard there still
+   *  belongs to the scene now. */
+  keepCorpses(keep) {
+    for (const c of [...this._corpses]) if (!keep(c.room)) this._dropCorpse(c);
+  }
+
+  /** RESURRECT1: the bodies lying in this scene, as the party pick reads a person ({id, acct, feet, height}). */
+  corpseMarks(toScene = (p) => [p.x, p.y, p.z]) {
+    return this._corpses.filter((c) => !c.dead && (c.id || c.acct)).map((c) => ({ id: c.id, acct: c.acct, feet: toScene(c.pose), height: 0.9 }));
+  }
+  /** PCORPSE3: is a body already lying for this account (or peer)? */
+  hasCorpseOf(acct, id = null) { return this._corpses.some((c) => !c.dead && ((acct && c.acct === acct) || (id && c.id === id))); }
+  /** PCORPSE3: the body of a member who got up (a respawn, a rise) - gone. */
+  dropCorpseOf(acct) { for (const c of [...this._corpses]) if (acct && c.acct === acct) this._dropCorpse(c); }
+
+  /** PCORPSE3, AUDIT CONTRIB A3: A PARTY MEMBER'S BODY THEIR PARTY POSE TELLS OF (`dd` {k, x, y, z, at}). The host
+   *  kept one memo per death and wrote it BEFORE asking whether the body's room was this scene's - so a body in a
+   *  dungeon I walked into after the death never stood, and one a building's walls took from the scene (keepCorpses)
+   *  never came back. The minute runs from the first word of THIS death (`at`) on this clock; the body stands
+   *  whenever `here` (the scene is the one it lies in) and none lies already, for what is left of its minute, and it
+   *  cries only the once. */
+  partyBody(acct, id, look, dd, here) {
+    if (!acct || !dd) return;
+    let e = this._told.get(acct);
+    if (!e || e.at !== dd.at) this._told.set(acct, e = { at: dd.at, until: this._now() + CORPSE_MS, cried: false });
+    if (this.hasCorpseOf(acct, id)) { e.cried = true; return; }   // the death pose brought it (and its cry)
+    if (!here || this._now() >= e.until) return;
+    this.addCorpse({ id, acct, look }, dd, dd.k, { until: e.until, quiet: e.cried });
+    e.cried = true;
+  }
+  /** PCORPSE3: a member no longer fallen (a rise, a respawn) - the body goes with the word of it. */
+  partyRose(acct) { this._told.delete(acct); this.dropCorpseOf(acct); }
+  /** PCORPSE3: a member gone from the party - nothing more is told of them; a body lying stays its minute. */
+  partyForget(acct) { this._told.delete(acct); }
+
+  _dropCorpse(c) {
+    if (!c) return;
+    const i = this._corpses.indexOf(c);
+    if (i >= 0) this._corpses.splice(i, 1);
+    c.dead = true;
+    if (c.batch) this.renderer.destroyBillboardBatch?.(c.batch);
+    c.batch = null;
+  }
+
+  _syncCorpses(toScene) {
+    const now = this._now();
+    for (const c of [...this._corpses]) {
+      if (now >= c.until) { this._dropCorpse(c); continue; }
+      if (!c.batch) {
+        if (c.building || !c.ct || !this.deps?.getTexture || !this.deps?.uploadRecordFrame) continue;
+        c.building = true;
+        Promise.resolve(this.deps.getTexture(c.ct.archive)).then((tex) => {
+          c.building = false;
+          if (c.dead || !tex || c.ct.record >= (tex.recordCount ?? Infinity)) return;
+          try {
+            this.deps.uploadRecordFrame(c.ct.archive, c.ct.record, 0);
+            const batch = this.renderer.createBillboardBatch(c.ct.archive, `${c.ct.record}#0`, billboardSize(tex, c.ct.record), [[0, 0, 0]]);
+            batch.origin = [0, 0, 0];
+            c.batch = batch;
+          } catch { c.ct = null; }   // a body that cannot be drawn is not retried every frame; the cry already played
+        }, () => { c.building = false; });
+        continue;
+      }
+      const f = toScene(c.pose);
+      c.batch.origin[0] = f[0]; c.batch.origin[1] = f[1]; c.batch.origin[2] = f[2];
+    }
   }
 
   /** The doll for a look: composed once per look, serialized; a failure waits DOLL_RETRY_MS before another try. */
@@ -478,8 +615,9 @@ export class RemotePlayers {
 
   /** The mobile-unit bundle for a peer's class-enemy sprite: composed once per PEER (not shared by look, the way a
    *  doll is - each peer's MobileUnit keeps its own animation clock and facing, exactly as each foe's own `f.mobile`
-   *  does in dungeonContext.js), retried after DOLL_RETRY_MS on a failure (a missing texture, a build that threw) -
-   *  same shape as `dollFor`, so a peer this fails for just keeps the paperdoll rather than never being drawn.
+   *  does in dungeonContext.js), retried after MOBILE_RETRY_MS on a failure (a missing texture, a build that threw) -
+   *  same shape as `dollFor`, so a peer this fails for just keeps the paperdoll rather than never being drawn - just
+   *  for a much shorter stretch than a failed doll compose gets (see MOBILE_RETRY_MS's own comment for why).
    *  `mobileType`/`gender` changing (a peer's class - or, mid-look, their sex - changed) tears down and rebuilds:
    *  a MobileUnit is built FOR one type/gender pair, and does not re-type itself the way a foe's async retypeFoe can.
    *
@@ -513,7 +651,7 @@ export class RemotePlayers {
     p.then((bundle) => {
       if (this._mobiles.get(peerId) !== p) return;   // SLAM12's own race: a peer released or rebuilt while this was in flight
       if (bundle) this._mobiles.set(peerId, bundle);
-      else this._mobiles.set(peerId, { failedUntil: this._now() + DOLL_RETRY_MS });
+      else this._mobiles.set(peerId, { failedUntil: this._now() + MOBILE_RETRY_MS });
     });
     return p;
   }
@@ -620,6 +758,10 @@ export class RemotePlayers {
    */
   sync(peers, toScene = (p) => [p.x, p.y, p.z], { bodyHeight = () => 0, dt = 0, eye = null, poseAgeMs = null } = {}) {
     const live = new Set();
+    // PCORPSE1: the fallen lie on whatever the living do - placed, aged out, drawn
+    if (eye && eye.length === 3) this._lastEye = [eye[0], eye[1], eye[2]];
+    this._lastToScene = toScene;
+    this._syncCorpses(toScene);
     this._shown = [];   // every drawable peer, doll, mobile or body, for the name pass
     this._wanted = new Set();   // SLAM7: rebuilt every frame - a look nobody is standing in any more stops being needed at once
     // 2026-09-17: read once a sync, not once a peer - the pref does not change mid-frame, and a card's toggle takes
@@ -638,25 +780,20 @@ export class RemotePlayers {
       live.add(peer.id);
       // 2026-09-17: a peer whose class maps onto a class-enemy sprite (classMobileType) is drawn as that sprite,
       // animated off their synced pose (_syncMobilePeer) - the same billboard a hostile Warrior/Mage/etc. already
-      // is, just puppeted by the wire instead of AI. Anyone else - no class yet, a custom class this build has no
-      // sprite for, a mobile build still composing/waiting out a retry, or the player having turned the 'Other
-      // players' card off (spritesOn false) - keeps the paperdoll, exactly as before this whole feature existed.
+      // is, just puppeted by the wire instead of AI. 2026-09-23: classMobileType no longer returns null for "no
+      // class yet" or "a custom class this build does not recognize" - both land on THIEF_MOBILE_TYPE now, so
+      // EVERY peer maps to a sprite the instant spritesOn is true. Only a build that is still composing/waiting
+      // out a retry (a missing texture, deps not wired - see _buildMobile), or the player having turned the
+      // 'Other players' card off (spritesOn false), keeps the paperdoll now - never "we don't know their class".
       // DISC12 (Mac: werewolves "not wired correctly"): A PEER IN BEAST FORM IS THE BEAST. The pose's `wb` says which
       // (LycanthropyTypes 1 werewolf, 2 wereboar); the sprite is the enemy's own (MobileTypes 9 / 14), puppeted off the
       // pose like any class sprite - whatever the 'Other players' card says, since a person drawn there is a lie.
       const beast = peer.shown.wb | 0;
-      const mobileType = beast ? (beast === 2 ? MOBILE_TYPES.Wereboar : MOBILE_TYPES.Werewolf) : spritesOn ? classMobileType(peer.look?.class) : null;
-      if (spritesOn && !beast && mobileType == null && peer.look && !peer.look.class) {
-        // Same "just fix it" logging as _buildMobile: if this fires, the
-        // problem is UPSTREAM of the sprite build entirely - the peer's
-        // `class` never arrived over the wire at all, so classMobileType
-        // never had a name to map.
-        if (!this._warnedNoClass) this._warnedNoClass = new Set();
-        if (!this._warnedNoClass.has(peer.id)) {
-          this._warnedNoClass.add(peer.id);
-          console.warn(`[remotePlayers] peer ${peer.id} has no look.class (${JSON.stringify(peer.look)}) - staying on the paperdoll.`);
-        }
-      }
+      // AUDIT CONTRIB S1: a peer with NO LOOK yet (heard by pose before its introduction - first contact, a SLAM recall)
+      // keeps the doll path until the look lands: classMobileType's Thief is for a look with no class or one this build
+      // does not know, and handing it to a look that has not arrived drew a Thief, then nothing while the real class
+      // built, then the real sprite
+      const mobileType = beast ? (beast === 2 ? MOBILE_TYPES.Wereboar : MOBILE_TYPES.Werewolf) : spritesOn && peer.look ? classMobileType(peer.look.class) : null;
       const bundle = mobileType != null && ENEMY_BASICS[mobileType] ? this._mobileFor(peer.id, mobileType, peer.look?.gender === 'female' ? 'female' : 'male') : null;
       if (bundle && typeof bundle.then !== 'function') { this._syncMobilePeer(peer, bundle, toScene, dt, eye); continue; }
       this._syncDollPeer(peer, toScene);
@@ -672,6 +809,18 @@ export class RemotePlayers {
     // AUDIT DROPS E4: a peer drawn as a Morrowind BODY holds no batch, so the sweep above never reached their
     // stride machine or their swing edge - the entries stayed for the life of the session (SLAM4's class), and a
     // stale `an` played a phantom swing when that peer came back
+    // RESURRECT1: a fallen player standing again where they fell (a resurrection) takes their body with them
+    if (this._corpses.length) {
+      const up = new Map();
+      for (const peer of peers) if (peer?.shown && peer.id) up.set(peer.id, peer.shown);
+      for (const c of [...this._corpses]) {
+        const s = up.get(c.id);
+        if (!s) continue;
+        if (this._now() - (c.until - CORPSE_MS) < 2000) continue;   // PCORPSE2: a body's first two seconds - the fallen figure's last frames are not a rise
+        const a = toScene(s), b = toScene(c.pose);
+        if (Math.hypot(a[0] - b[0], a[2] - b[2]) < 2.5) this._dropCorpse(c);
+      }
+    }
     for (const id of this._footsteps.keys()) if (!seen.has(id)) this._footsteps.delete(id);
     for (const id of this._attackAn.keys()) if (!seen.has(id)) this._attackAn.delete(id);
     for (const id of [...this._riding.keys()]) if (!seen.has(id)) this._stopRidingSound(id);   // RIDE-SOUND: a peer gone (or every peer, on the dead's empty sync) takes their hooves with them
@@ -870,6 +1019,7 @@ export class RemotePlayers {
   batches() {
     const out = [];
     for (const e of this._batches.values()) out.push(e.batch);
+    for (const c of this._corpses) if (c.batch) out.push(c.batch);   // PCORPSE1: and the fallen
     return out;
   }
 
@@ -1040,5 +1190,7 @@ export class RemotePlayers {
     this._wanted.clear();   // SLAM7: nothing is needed by a host that is gone
     for (const key of [...this._dolls.keys()]) this._release(key);
     this._mobiles.clear();   // 2026-09-17: no GPU resource of its own to release (the shared archive texture cache outlives any one peer), just the map
+    for (const c of [...this._corpses]) this._dropCorpse(c);   // PCORPSE1: the host is gone, and its bodies with it
+    this._told.clear();
   }
 }

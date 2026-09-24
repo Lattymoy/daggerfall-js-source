@@ -9,7 +9,7 @@
 // Unity transform, no Harmony, no ModManager message bus, no session-scoped texture release. There is no NOT DONE
 // row. The dump is READ here: a row's method must be in it, and no authored method may be missing from the table.
 //
-// 341 of 398 are ported; 57 have no twin (AUDIT HCC U6 ported the horse-name label's three). The bible page (06-Systems/Horse-Cart-And-Cargo.md) states
+// 340 of 398 are ported; 58 have no twin (AUDIT HCC U6 ported the horse-name label's three; KB1 retired ParseConfiguredHotkey - the keys are registry actions). The bible page (06-Systems/Horse-Cart-And-Cargo.md) states
 // these numbers and the no-twin families, and a pin below holds it to them.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -220,7 +220,7 @@ const IL = {
   'TrailingWagonRuntime::ClampHorseFollowDistance': { port: 'clampHorseFollowDistance', mod: 'horseCart.js' },
   'TrailingWagonRuntime::ClampInteriorWagonAccessDistance': { port: 'clampInteriorWagonAccessDistance', mod: 'horseCart.js' },
   'TrailingWagonRuntime::IsWithinInteriorEntranceDistance': { port: 'isWithinInteriorEntranceDistance', mod: 'horseCart.js' },
-  'TrailingWagonRuntime::ParseConfiguredHotkey': { port: 'parseConfiguredHotkey', mod: 'horseCart.js' },
+  'TrailingWagonRuntime::ParseConfiguredHotkey': { port: null, why: 'no twin here: KB1 made the mod\'s two hotkeys the registry\'s HorseMount and HorseSummon actions (systems/inputActions.js MOD_ACTIONS), bound in Controls like every key, so there is no KeyCode text to parse; a player\'s old choice is carried into the registry once (migrateKeyBinds)' },
   'TrailingWagonRuntime::ApplyPendingPersistenceWork': { port: 'applyPendingPersistenceWork', mod: 'horseCart.js' },
   'TrailingWagonRuntime::DisablePersistenceAndRecall': { port: 'applyPendingPersistenceWork', mod: 'horseCart.js' },
   'TrailingWagonRuntime::EnablePersistenceFromCurrentPlayerState': { port: 'applyPendingPersistenceWork', mod: 'horseCart.js' },
@@ -517,11 +517,11 @@ test('HCC scope: every ported row names a symbol that exists in the module it na
     assert.ok(v.why.length > 60, `${k}: a reason, not a shrug`);
     assert.doesNotMatch(v.why, /NOT DONE|todo|later/i);
   }
-  assert.equal(PORTED.length, 341); assert.equal(NOT.length, 57);
+  assert.equal(PORTED.length, 340); assert.equal(NOT.length, 58);
 });
 
 test('HCC scope: the no-twin rows fall into the families the port cannot have, and no runtime arithmetic is among them', () => {
-  const families = ['collider holds no bodies', 'transform hierarchy', 'ModManager mod-message bus', 'Harmony', 'uploadTexture\'s cache', 'HUD TextLabel', 'Unity object lifetimes', 'event bus', 'trade window has no wagon toggle', 'pre-rc save files', 'DFU\'s Button', 'SaveDataInterface', 'drawn meshes never enter the collider', 'Unity layers', 'UIWindowFactory', 'action-button panel', 'derived at each open', 'hierarchy of tier roots'];
+  const families = ['collider holds no bodies', 'transform hierarchy', 'ModManager mod-message bus', 'Harmony', 'uploadTexture\'s cache', 'HUD TextLabel', 'Unity object lifetimes', 'event bus', 'trade window has no wagon toggle', 'pre-rc save files', 'DFU\'s Button', 'SaveDataInterface', 'drawn meshes never enter the collider', 'Unity layers', 'UIWindowFactory', 'action-button panel', 'derived at each open', 'hierarchy of tier roots', 'registry\'s HorseMount and HorseSummon actions'];
   for (const [k, v] of NOT) assert.ok(families.some((f) => v.why.includes(f)), `${k}: "${v.why.slice(0, 60)}" is not one of the known families`);
   // the arithmetic types are ported whole
   for (const t of ['GroundSurfaceSelection', 'HorseFollowPath', 'HorseFollowController', 'StationaryHorseBillboard', 'Wagon41214VisualBuilder', 'WagonSaveData', 'DisjointSet', 'ComponentData']) {
@@ -533,8 +533,8 @@ test('HCC scope: the no-twin rows fall into the families the port cannot have, a
 test('HCC scope: the bible page states THIS table, and a 1:1 claim for this mod stands beside its check', () => {
   const page = rd('bible/06-Systems/Horse-Cart-And-Cargo.md');
   assert.match(page, /\*\*398 authored methods\*\*/);
-  assert.match(page, /\*\*341 are ported\*\*/);
-  assert.match(page, /\*\*57 have no twin\*\*/);
+  assert.match(page, /\*\*340 are ported\*\*/);
+  assert.match(page, /\*\*58 have no twin\*\*/);
   assert.match(page, /test\/hcc_scope\.test\.js/);
   const notNames = new Set(NOT.map(([k]) => k.split('::')[0]));
   for (const t of ['DeployedWagonFollowerCollisionFilter', 'HorseCartUiCompatibilityCoordinator', 'TrailingWagonTradeWindow']) assert.ok(notNames.has(t) && page.includes(t), `the page names ${t} among the no-twins`);

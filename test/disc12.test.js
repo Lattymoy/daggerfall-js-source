@@ -57,7 +57,9 @@ test('DISC12 doll: a peer in beast form stands as the werewolf or the wereboar -
   const mk = (id, wb) => ({ id, name: id, look: { ...LOOK, class: '' }, shown: { ...P, ...(wb ? { wb } : {}) } });
   rp.sync([mk('wolf', 1), mk('boar', 2), mk('man', 0)], (p) => [p.x, p.y, p.z], {});
   assert.deepEqual(asked.filter(([id]) => id !== 'man'), [['wolf', MOBILE_TYPES.Werewolf], ['boar', MOBILE_TYPES.Wereboar]]);
-  assert.equal(asked.some(([id]) => id === 'man'), false, 'a human with no class keeps the doll');
+  // the contributor's sprite fix (2026-09-23): a human with no class to go on stands as the THIEF sprite, the Unity
+  // mod's own default, rather than the flat doll - and never as a beast
+  assert.deepEqual(asked.filter(([id]) => id === 'man'), [['man', 138]], 'a human with no class stands as the Thief, never the beast');
   assert.match(rd('src/scenes/world.js'), /const afoot = drawable\.filter\(\(d\) => !peerRiders\.isRiding\(d\.id\) && !d\.shown\?\.wb\);/, 'a beast takes no body');
   assert.match(rd('src/scenes/world.js'), /lh: rig\.playerWeapon\.usingRightHand \? undefined : 1,\n\s*wb: \(\(\) => \{ const l = liveLycanthropy\(playerEntity\); return l\?\.isTransformed \? \(l\.infectionType \| 0\) \|\| undefined : undefined; \}\)\(\),/, 'the sender: the live rig\'s hand, the curse\'s form');
 });

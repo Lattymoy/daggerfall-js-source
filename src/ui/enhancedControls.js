@@ -17,7 +17,7 @@
 //     copies both live dicts, setUnsavedBinding writes only to the
 //     copy, checkDuplicates reports the two kinds of clash and whether
 //     the window may close, applyUnsavedKeybinds is SetAllKeyBindValues
-//     and resetUnsavedToDefaults is the registry's own reset.
+//     and stagedDefaults is the registry's own reset, staged (KB1).
 //   systems/inputActions.js — the registry itself, plus saveKeyBinds.
 //
 // Nothing here decides anything about keys. If the classic grid and
@@ -38,7 +38,9 @@
 //  - RIGHT CLICK, or the row's ✕, prompts to remove the binding
 //    (PromptRemoveKeybindMessage :290-320), and refuses on a slot that
 //    is already unbound exactly as DFU's does (:292).
-//  - DEFAULTS confirms, then resets the LIVE registry and re-stages.
+//  - DEFAULTS confirms, then STAGES the registry's reset (KB1); Continue
+//    commits it.
+//  - A KEY ANOTHER ACTION HOLDS asks before it moves (KB1, law 4).
 //  - DUPLICATES colour the binding — red inside the shown dict, blue
 //    across the two — and EITHER kind blocks CONTINUE with the classic
 //    window's own multipleAssignments line.
@@ -61,12 +63,14 @@
 // a text field here would make every host's router treat the pane as
 // a typing surface.
 
-import { ACTIONS, saveKeyBinds } from '../systems/inputActions.js';
+import { saveKeyBinds, resetDefaults, ACTION_GROUPS } from '../systems/inputActions.js';
+import { modSetting } from '../systems/modSettings.js';   // KB1: a mod's group is drawn while the mod is on
 import { bindings, mouseCode, swingMode } from './input.js';   // MAC-K1: a mouse button is a binding, so the capture must be able to take one
 import {
   createUnsavedKeybinds, currentDict, setUnsavedBinding, checkDuplicates,
-  applyUnsavedKeybinds, resetUnsavedToDefaults, buttonText, splitCamel,
+  applyUnsavedKeybinds, buttonText,
   comboFromEvent, removeKeybindPromptRows, swingHint,
+  bindingHolders, replaceKeybindPromptRows, stageReplace, stagedDefaults,
 } from '../systems/controlsConfig.js';
 
 /** The shell's own `el`, three lines, kept LOCAL on purpose:
@@ -79,104 +83,22 @@ const el = (t, cls, txt) => {
   return n;
 };
 
-/** The grid's own coverage: ui/controlsWindow.js's KEY_GROUPS run
- *  Actions[2..40), which is DFU's SetupKeybindButtons (:146-152).
- *  Escape and ToggleConsole sit before it, QuickSave/QuickLoad/
- *  PrintScreen/AutoRun past its end — DFU's quirk, and the reason
- *  those six live in the ADVANCED window instead. */
-export const GRID_ACTIONS = Object.freeze(ACTIONS.slice(2, 40));
-
-/** The six the ADVANCED popup edits, with the Internal_Settings face
- *  each wears there — ui/mouseControlsWindow.js's KEYBIND_ROWS
- *  (:157-164), in its order. Restated rather than imported: that
- *  module is the classic canvas window, 600 lines of nativePanel
- *  drawing, and the enhanced skin must not pull it in to name six
- *  strings. test/enhancedControls.test.js pins the two against each
- *  other so the restatement cannot drift. */
-export const ADVANCED_ROWS = Object.freeze([
-  Object.freeze({ action: 'Escape', label: 'Escape' }),
-  Object.freeze({ action: 'AutoRun', label: 'AutoRun' }),
-  Object.freeze({ action: 'ToggleConsole', label: 'Console' }),
-  Object.freeze({ action: 'PrintScreen', label: 'Screenshot' }),
-  Object.freeze({ action: 'QuickSave', label: 'QuickSave' }),
-  Object.freeze({ action: 'QuickLoad', label: 'QuickLoad' }),
-]);
-
-/** SOC5 (2026-09-16, Mac: "Players should be able to interact with others in
- *  the world upon encountering them by pressing F on their body"): A THIRD
- *  GROUP, because the first two are both SOMEONE ELSE'S LIST and this row
- *  belongs to neither.
+/** KB1 (2026-09-23, Mac: "ensuring keybinds are organized and working as intended"): THE PANE DRAWS THE STANDARD'S
+ *  GROUPS - systems/inputActions.js ACTION_GROUPS, every action once, in the group a player looks for it under, with
+ *  a player's words for it. It used to draw the CLASSIC window's two faces (DFU's thirty-eight-button grid slice and
+ *  the ADVANCED popup's six) and then the port's rows in four headings after them, so Jump sat beside Transport in
+ *  one alphabet-free list of fifty and a mod's keys were not on the page at all. The classic windows keep their
+ *  art-fixed grids (ui/controlsWindow.js, ui/mouseControlsWindow.js); this pane is not their copy any more.
  *
- *  GRID_ACTIONS is `Actions[2..40)` - DFU's SetupKeybindButtons, the classic
- *  window's thirty-eight fixed buttons - and widening that slice would claim
- *  the classic grid draws a thirty-ninth, which its art cannot (see
- *  ui/controlsWindow.js KEY_GROUPS). ADVANCED_ROWS is
- *  ui/mouseControlsWindow.js's KEYBIND_ROWS restated, and
- *  test/enhancedControls.test.js pins the two against each other row for row,
- *  so a seventh entry here would be a claim the classic ADVANCED popup edits
- *  something it has never heard of.
- *
- *  So the port's own actions get their own heading. Today it is one row. The
- *  pane's coverage rule - every bindable action has a row, none twice - is what
- *  makes this a requirement rather than a preference. */
-const ONLINE_ROWS = Object.freeze([
-  Object.freeze({ action: 'SocialInteract', label: 'Interact with player' }),
-]);
-/** QS2 (2026-09-17, Mac's quickslot diamond): A FOURTH GROUP, and the reason is
- *  the heading rather than the list. 'Online' is a true word for the F-menu and
- *  a false one for a potion press: a player scanning for "how do I drink the
- *  thing in slot one" would never look under it, and a group whose title does
- *  not describe its rows is worse than no group at all. So the port's rows are
- *  a LIST OF GROUPS now - one heading per kind of departure - and PORT_ROWS
- *  stays the flat union of them, because the pane's coverage rule (every
- *  bindable action has a row, none twice) is asked of the union. */
-const QUICKSLOT_ROWS = Object.freeze([
-  Object.freeze({ action: 'QuickUse1', label: 'Use quickslot 1' }),
-  Object.freeze({ action: 'QuickUse2', label: 'Use quickslot 2' }),
-  // QS6: the SPELL slot, beside the two consumables it behaves like -
-  // a tap readies, a hold cycles the book.
-  Object.freeze({ action: 'QuickSpell', label: 'Ready quickslot spell (hold to cycle the book)' }),   // HOTSLOT: the hold was said nowhere
-  // QS6: the swap keeps its row and its rebind; what it lost is the
-  // default key, so a player who wants one of their own comes here.
-  Object.freeze({ action: 'QuickSwap', label: 'Swap weapon' }),
-  Object.freeze({ action: 'QuickOffHand', label: 'Off hand: light, douse or swap' }),
-]);
-/** The heading the third group wears. Its own constant so the pin names it. */
-export const PORT_GROUP_TITLE = 'Online';
-/** QS2's own, the same way. */
-export const QUICKSLOT_GROUP_TITLE = 'Quickslots';
-/** QUICK-LOOT B4: ...and the plaque's two, under their own heading for
- *  the same reason the two above have theirs - the CLASSIC windows
- *  cannot draw a row DFU never had, so a clash against one of these is
- *  a clash a classic player can neither see nor clear. */
-export const QUICKLOOT_GROUP_TITLE = 'Quick loot';
-const QUICKLOOT_ROWS = Object.freeze([
-  Object.freeze({ action: 'QuickLootAll', label: 'Take everything' }),
-  Object.freeze({ action: 'QuickLootOpen', label: 'Open the container' }),
-]);
-/** FREEMOUSE (2026-09-22, Mac: "an entirely new keybind. A mouse free
- *  that allows you to toggle the use of your mouse"): its own heading,
- *  and it holds ONE row on purpose. The alternative was to file it
- *  under 'Online' - where the chat collision that motivates it lives -
- *  and that is the mistake QS2 already named: a group whose title does
- *  not describe its rows is worse than no group. Freeing the mouse is
- *  not an online thing; it is a thing you do to read the screen. */
-export const MOUSE_GROUP_TITLE = 'Mouse';
-const MOUSE_ROWS = Object.freeze([
-  // The LABEL says what it does in the player's words, not the
-  // action's: "free the mouse" is the thing they came here looking
-  // for, and it is a toggle, so the row says both halves.
-  Object.freeze({ action: 'FreeMouse', label: 'Free the mouse (press again to look)' }),
-]);
-/** The port's own headings, in the order the pane draws them. */
-export const PORT_GROUPS = Object.freeze([
-  Object.freeze({ title: PORT_GROUP_TITLE, rows: ONLINE_ROWS }),
-  Object.freeze({ title: QUICKSLOT_GROUP_TITLE, rows: QUICKSLOT_ROWS }),
-  Object.freeze({ title: QUICKLOOT_GROUP_TITLE, rows: QUICKLOOT_ROWS }),
-  Object.freeze({ title: MOUSE_GROUP_TITLE, rows: MOUSE_ROWS }),
-]);
-/** Every port row, flat: the coverage rule's half of the answer. */
-export const PORT_ROWS = Object.freeze([...ONLINE_ROWS, ...QUICKSLOT_ROWS, ...QUICKLOOT_ROWS, ...MOUSE_ROWS]);
+ *  A MOD'S GROUP IS DRAWN WHILE THE MOD IS ON, which is the same switch its keys answer to (inputActions.js
+ *  actionLive). Off, its keys stay bound - switching it back on must not find them given away - and a bind onto one
+ *  asks first, naming the mod. */
+export function shownGroups(isOn = modIsOn) {
+  return ACTION_GROUPS.filter((grp) => !grp.mod || isOn(grp.mod));
+}
+function modIsOn(vendor) {
+  try { return !!modSetting(vendor, 'Enabled'); } catch { return false; }
+}
 
 /** ShowMultipleAssignmentsMessage's line, the string the classic grid
  *  draws (ui/controlsWindow.js's `top === 'dupes'` row). The same
@@ -194,7 +116,8 @@ let dupes = { internal: new Set(), cross: new Set(), ok: true };
 let armed = null;          // the action awaiting a key (:52 waitingForInput)
 let armedHandler = null;   // the document keydown listener while it waits
 let armedMouse = null;     // MAC-K1: and its mouse half - one arm, two doors
-let prompt = null;         // { kind: 'defaults' } | { kind: 'remove', action }
+let prompt = null;         // { kind: 'defaults' } | { kind: 'remove', action } | { kind: 'replace', action, code, holders, usingPrimary }
+let pendingDefaults = false;   // KB1: Defaults is staged; Continue commits it with the live reset
 let notice = null;         // the multipleAssignments line, or the saved note
 let repaint = () => {};
 
@@ -220,6 +143,14 @@ export const controlsDuplicates = () => dupes;
  *  while this answers. */
 export const captureArmed = () => armed;
 
+/** AUDIT KB1 (the UI lens' fourth finding): A PROMPT STANDING IS THE PANE'S, and Escape answers it No. The prompt
+ *  card draws in place of the whole list, so it reads as a dialog - but with no capture armed, Escape fell through to
+ *  the menu's back stack, which left the section and DISCARDED every staged bind (discardControlsStaging) or, on the
+ *  pause face, resumed. Since KB1 nearly every bind raises the replace prompt, so a reflexive Escape there was the
+ *  common way to lose a whole session of edits. ui/enhancedMenu.js's back stack asks this first. */
+export const controlsPromptOpen = () => prompt != null;
+export function dismissControlsPrompt() { if (prompt) answerPrompt(false); }
+
 function disarm() {
   if (armedHandler && typeof document !== 'undefined') {
     document.removeEventListener('keydown', armedHandler, { capture: true });
@@ -244,8 +175,12 @@ function bindCaptured(code, e) {
   // The combo arm: a captured key held under Ctrl/Shift/Alt binds the
   // pair, anything else binds the single code.
   const combo = comboFromEvent(code, e);
-  setUnsavedBinding(stage(), action, combo ?? code);
+  const next = combo ?? code;
   notice = null;
+  // KB1 (law 4): a key another action holds is ASKED for. The staged copy used to take it and colour both rows red.
+  const holders = bindingHolders(stage(), action, next);
+  if (holders.length) { prompt = { kind: 'replace', action, code: next, holders, usingPrimary: stage().usingPrimary }; repaint(); return; }
+  setUnsavedBinding(stage(), action, next);
   refresh();
   repaint();
 }
@@ -300,7 +235,7 @@ function arm(action) {
  *  keybind button itself (:361) and the right-click remove (:372,
  *  where it is ANDed with the unbound-slot refusal). The pending
  *  capture is the only live gesture on the screen. The classic grid
- *  carries the law in one line (ui/controlsWindow.js:355); this face
+ *  carries the law in one line (ui/controlsWindow.js:383); this face
  *  carries it as ONE predicate wrapped round every click surface, so
  *  a control cannot be added without it. arm()'s own leading disarm()
  *  is then unreachable-by-click — which is DFU's shape, not a loss. */
@@ -317,6 +252,7 @@ export function discardControlsStaging() {
   unsaved = null;
   dupes = { internal: new Set(), cross: new Set(), ok: true };
   prompt = null;
+  pendingDefaults = false;
   notice = null;
   repaint = () => {};
 }
@@ -337,11 +273,21 @@ function answerPrompt(yes) {
   if (yes && p?.kind === 'remove') {
     setUnsavedBinding(unsaved, p.action, null);
     refresh();
+  } else if (yes && p?.kind === 'replace') {
+    stageReplace(unsaved, p.action, p.code, p.holders);   // KB1: the holder staged unbound, the bind lands
+    refresh();
   } else if (yes && p?.kind === 'defaults') {
-    // SetDefaults (:296-317): the LIVE registry's own reset, saved
-    // there and then, and a fresh staging copy over it.
-    resetUnsavedToDefaults(bindings(), unsaved);
-    saveKeyBinds(bindings());
+    // SetDefaults (:296-317) - KB1: STAGED, as the page's own sentence
+    // says. DFU's window reset the live registry and saved it there and
+    // then; this pane told the player nothing is saved until Continue.
+    // The defaults are staged off a copy, and Continue runs the live
+    // reset (the joystick tail and the removal marks with it) before the
+    // staged dicts land, so what is committed is the defaults plus any
+    // edit made after them.
+    const using = unsaved.usingPrimary;
+    unsaved = stagedDefaults(bindings());
+    unsaved.usingPrimary = using;
+    pendingDefaults = true;
     refresh();
   }
   repaint();
@@ -351,6 +297,7 @@ function answerPrompt(yes) {
  *  duplicate stands, and otherwise the apply and the save. */
 function applyAndSave() {
   if (!dupes.ok) { notice = MULTIPLE_ASSIGNMENTS; repaint(); return false; }
+  if (pendingDefaults) { resetDefaults(bindings()); pendingDefaults = false; }   // KB1: the staged Defaults, committed
   applyUnsavedKeybinds(bindings(), unsaved);
   saveKeyBinds(bindings());
   // Re-stage off the registry we just wrote: the pane stays open on
@@ -418,10 +365,10 @@ function keyRow(action, label) {
 
 function promptCard() {
   const c = el('div', 'card ctl-prompt');
-  c.append(el('h3', null, prompt.kind === 'defaults' ? 'Default controls' : 'Remove keybind'));
-  const rows = prompt.kind === 'defaults'
-    ? [DEFAULTS_PROMPT]
-    : removeKeybindPromptRows(prompt.action, currentDict(unsaved).get(prompt.action));
+  c.append(el('h3', null, prompt.kind === 'defaults' ? 'Default controls' : prompt.kind === 'replace' ? 'Key in use' : 'Remove keybind'));
+  const rows = prompt.kind === 'defaults' ? [DEFAULTS_PROMPT]
+    : prompt.kind === 'replace' ? replaceKeybindPromptRows(prompt.action, prompt.code, prompt.holders, prompt.usingPrimary)
+      : removeKeybindPromptRows(prompt.action, currentDict(unsaved).get(prompt.action));
   for (const line of rows) c.append(el('p', 'meta', line));
   const acts = el('div', 'acts');
   const yes = el('button', 'act primary', 'Yes');
@@ -459,7 +406,10 @@ export function paneControls(body, { render = () => {} } = {}) {
     + 'Hold Ctrl, Shift or Alt while you press to bind a combination. '
     + 'Right-click a binding, or press ✕, to remove it.'));
   head.append(el('p', 'meta',
-    'Nothing is saved until you press Continue. Leave this page and your changes are dropped.'));
+    'One key does one thing: a key that is already in use asks before it moves. '
+    + 'Keys inside a window (Escape, Enter, the arrows, a window\'s own letters) belong to that window and are not listed here.'));
+  head.append(el('p', 'meta',
+    'Nothing is saved until you press Continue, Defaults included. Leave this page and your changes are dropped.'));
 
   const acts = el('div', 'acts');
   const which = el('button', 'act ctl-which', unsaved.usingPrimary ? 'Primary' : 'Secondary');
@@ -478,12 +428,8 @@ export function paneControls(body, { render = () => {} } = {}) {
   }
   body.append(head);
 
-  group(body, 'Actions', GRID_ACTIONS.map((a) => [a, splitCamel(a)]));
-  group(body, 'Advanced', ADVANCED_ROWS.map((r) => [r.action, r.label]));
-  // SOC5: the port's own row. It is drawn LAST because it is the newest law,
-  // and because the classic window - which this pane is the skin of - has no
-  // place for it at all: the enhanced window is the one door to rebinding F.
-  for (const g of PORT_GROUPS) group(body, g.title, g.rows.map((r) => [r.action, r.label]));
+  // KB1: the standard's groups, a mod's while it is on (shownGroups above).
+  for (const grp of shownGroups()) group(body, grp.title, grp.rows.map((r) => [r.action, r.label]));
   // TORCH-BIND (2026-09-22, a player: "Keybind changes do not stick?" -
   // the one Continue sat 53 rows above the row they had just bound, and
   // leaving dropped the change): the head card is sticky now, and the

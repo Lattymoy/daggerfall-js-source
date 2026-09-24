@@ -383,7 +383,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     setMidScreenText(`Interaction is now in ${m} mode.`);
   }
 
-  function keydown(e) {
+  function keydown(e, keys = null) {   // KB1: the host's held Set, so a combo'd mode key resolves (the dungeon host's arm already reads it)
     // STATUS-LIVE: THE GATE IS THE PAUSE, NOT THE SLOT. This rung
     // consumes every key under an occupant, which is right for a
     // window the game is stopped for and wrong for one it is not: the
@@ -468,7 +468,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // player who moves StealMode off F1 moves the key, and an F1 they
     // have re-pointed at Inventory falls through this ladder to the
     // host's own `actionOf` and opens the pack.
-    const m = MODE_ACTIONS[actionOf(e)];
+    const m = MODE_ACTIONS[actionOf(e, keys)];
     if (m) {
       e.preventDefault();
       setMode(m);

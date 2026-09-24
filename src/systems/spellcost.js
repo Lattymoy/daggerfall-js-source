@@ -73,6 +73,7 @@ export const EFFECT_COST_TABLE = Object.freeze({
   '24,0':   row(SKILLS.Illusion, { duration: costs(20, 80) }),                              // ShadowNormal - S21
   '24,1':   row(SKILLS.Illusion, { duration: costs(40, 120) }),                             // ShadowTrue - S21
   '29,255': row(SKILLS.Illusion, {}),                                                       // MorphSelf - NO components (the fudge, at Illusion)
+  '45,255': row(SKILLS.Restoration, {}),                                                    // RESURRECT1: Resurrect - the port's own; no components (the fudge, at Restoration)
 
   // ---- Mysticism ----
   '2,255':  row(SKILLS.Mysticism, { duration: costs(60, 120) }),                            // CreateItem

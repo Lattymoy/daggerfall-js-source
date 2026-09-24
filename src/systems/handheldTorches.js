@@ -52,7 +52,6 @@ import { getItemHands, EQUIP_SLOTS, ITEM_HANDS, addEquipChangeListener } from '.
 import { weaponTypeForItem, WEAPON_TYPES, NATIVE_W, NATIVE_H } from '../combat/fpsWeapon.js';
 import { weaponOffsetHeight } from '../ui/hudLarge.js';
 import { SOUND } from './soundClips.js';
-import { domCodeForKeyCode } from './keyCodes.js';
 import { moveTowards, moveTowards2, snap, BOB_SHAPE, STEP_CONDITION } from '../combat/weaponWidget.js';   // WW1: Unity's pieces and the two choice tables, one home
 import { setPlayerTorchOffsetOverride } from './playerTorch.js';
 import { toScreenOrder } from '../formats/color32Order.js';   // HT3: a SCREEN sprite keeps its rows - see the note there   // TEX1: the SHAPE the upload path reads - `{ colors }`, never a decoded PNG's `{ data }`
@@ -124,13 +123,13 @@ export const isHeldLight = (it) => isTorch(it) || isLantern(it);
 /** The clone's settings from the store, as LoadSettings derives them
  *  (Presentation.Speed x2000, Bob.Length /100, SizeX/Y x2, SpeedMove
  *  x4, SpeedState x500, Shape x0.5, Inertia.Scale/Speed x500,
- *  ForwardDepth/ForwardSpeed x0.2; the three keys parsed as KeyCodes). */
+ *  ForwardDepth/ForwardSpeed x0.2). KB1: the three KeyCodes are not
+ *  settings any more - they are the registry's TorchToggleLight, TorchDrop
+ *  and TorchThrow actions (systems/inputActions.js MOD_ACTIONS). */
 export function readTorchSettings(read = () => modSettingsOf(HANDHELD_TORCHES_VENDOR)) {
   const s = read();
   return {
     enabled: !!s.Enabled,
-    toggleKey: domCodeForKeyCode(s['Handling.ToggleLightInput']), dropKey: domCodeForKeyCode(s['Handling.ManualDropInput']),
-    throwKey: domCodeForKeyCode(s['Throwing.ThrowTorchInput']),
     lastLight: !!s['Handling.RememberLastLightSource'], onStow: s['Handling.OnStow'] | 0, onPick: s['Handling.OnPick'] | 0,
     stowOnSpellcasting: !!s['Handling.StowWhenSpellcasting'], stowOnClimbing: !!s['Handling.StowWhenClimbing'], stowOnSwimming: !!s['Handling.StowWhenSwimming'],
     twoHandedRelaxed: !!s['Handling.RelaxedTwoHandedWeapons'], lanternRelaxed: !!s['Handling.RelaxedLanterns'],
@@ -559,7 +558,7 @@ export function createHandheldTorches({
    * @param dt   the frame's seconds
    * @param c    the frame: { renderer, canvas, entity, machine, sheathed, usingRightHand, castPlaying, spellArmed, thirdPerson,
    *             climbing, swimming, transformedLycanthrope, motion: {...}, look, swingHeld, cursorActive, camera() -> { pos, feet, yaw, pitch, forward, right },
-   *             collider(), keyDown(code), sheathWeapons() }
+   *             collider(), actionDown(action), sheathWeapons() }
    */
   function update(dt, c) {
     ctx = c;
@@ -601,13 +600,14 @@ export function createHandheldTorches({
       if (w.lightSourceTemplateIndexLast !== cur.templateIndex) { w.lightSourceTemplateIndexLast = cur.templateIndex; if (isTorch(cur) || isLantern(cur)) refresh = true; }
     } else if (w.hasLightSource) { w.hasLightSource = false; w.lightSourceTemplateIndexLast = -1; }
     if (refresh) refreshSprite();
-    // the keys (0x17e1-0x19f4): GetKeyDown, GetKey, GetKeyUp of the three KeyCodes
-    const down = (code) => !!code && !!c.keyDown?.(code);
-    const pressed = (code) => down(code) && !w.keysLast.has(code);
-    const released = (code) => !down(code) && !!code && w.keysLast.has(code);
-    if (pressed(w.s.toggleKey)) toggleLightPress();
-    if (pressed(w.s.dropKey)) { if (hasFreeHand()) dropLightSourceAction(light()); else say(MESSAGES.noFreeHand); }
-    if (pressed(w.s.throwKey)) {
+    // the keys (0x17e1-0x19f4): GetKeyDown, GetKey, GetKeyUp of the three KeyCodes - KB1: the registry's three
+    // actions, held through the host's `actionDown`; the edges are the mod's own, off last frame's held set
+    const down = (action) => !!c.actionDown?.(action);
+    const pressed = (action) => down(action) && !w.keysLast.has(action);
+    const released = (action) => !down(action) && w.keysLast.has(action);
+    if (pressed('TorchToggleLight')) toggleLightPress();
+    if (pressed('TorchDrop')) { if (hasFreeHand()) dropLightSourceAction(light()); else say(MESSAGES.noFreeHand); }
+    if (pressed('TorchThrow')) {
       if (contains('UselessItems2', T.Torch)) {
         if (!hasFreeHand()) say(MESSAGES.noFreeHand);
         else {
@@ -617,7 +617,7 @@ export function createHandheldTorches({
         }
       } else say(MESSAGES.throwTorchless);
     }
-    if (down(w.s.throwKey) && contains('UselessItems2', T.Torch) && hasFreeHand()) {
+    if (down('TorchThrow') && contains('UselessItems2', T.Torch) && hasFreeHand()) {
       w.throwTimer += dt * w.s.throwScale;
       // AUDIT 66 F9: DrawTrajectory is NOT run here. The mod feeds its
       // 300 integration steps to a LineRenderer (0x1e4a-0x1e60); this
@@ -630,11 +630,11 @@ export function createHandheldTorches({
       // `Throwing.ShowTrajectory` is inert until then, and says so on
       // the pane, beside EmissionShadows.
     }
-    if (released(w.s.throwKey)) {
+    if (released('TorchThrow')) {
       if (hasFreeHand()) throwLightSourceAction(light(), clampStrength(w.throwTimer / w.throwTime)); else say(MESSAGES.noFreeHand);
       w.throwTimer = 0;
     }
-    w.keysLast = new Set([w.s.toggleKey, w.s.dropKey, w.s.throwKey].filter((k) => k && down(k)));
+    w.keysLast = new Set(['TorchToggleLight', 'TorchDrop', 'TorchThrow'].filter(down));
     // the dropped torches' burn (0x19f4-0x1bdc) is the pool's tick - the host runs it
   }
 

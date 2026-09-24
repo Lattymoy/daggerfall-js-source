@@ -272,7 +272,7 @@
   {
     "name": "the-chronicle-forgets-the-key-it-is-named-after",
     "file": "src/ui/enhancedChronicle.js",
-    "old": "  if (actionOf(e) === 'LogBook') {",
+    "old": "  if (eventAction(e) === 'LogBook') {",
     "new": "  if (false) {",
     "tests": [
       "test/enhancedLevelUp.test.js"
@@ -282,7 +282,7 @@
   {
     "name": "the-chronicle-reads-the-literal-instead-of-the-registry",
     "file": "src/ui/enhancedChronicle.js",
-    "old": "  if (actionOf(e) === 'LogBook') {",
+    "old": "  if (eventAction(e) === 'LogBook') {",
     "new": "  if (e.code === 'KeyL') {",
     "tests": [
       "test/enhancedLevelUp.test.js"

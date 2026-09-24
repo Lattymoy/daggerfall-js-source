@@ -269,8 +269,8 @@
   {
     "name": "D-ONLINE1-F11-still-quickloads-an-online-death",
     "file": "src/scenes/world.js",
-    "old": "      if (townTalk.overlay instanceof DeathScreen && _deathWasOnline) respawnOnlinePlayer();\n      else hudCtx.quickLoad();",
-    "new": "      hudCtx.quickLoad();",
+    "old": "      if (townTalk.overlay instanceof DeathScreen && _deathWasOnline) townTalk.overlay.input('confirm');",
+    "new": "      if (false) townTalk.overlay.input('confirm');",
     "tests": [
       "test/donline1_respawn.test.js",
       "test/fixe_deathMenu.test.js"
@@ -279,8 +279,8 @@
   {
     "name": "D-ONLINE1-the-snapshot-is-taken-after-the-leave-cleared-the-room",
     "file": "src/scenes/world.js",
-    "old": "      if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room\n      if (online.room) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); _foesRoom = null; }",
-    "new": "      if (online.room) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); _foesRoom = null; }\n      if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();",
+    "old": "      if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room\n      if (online.room) {\n        // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure\n        _deadMark = online._pose ? { k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() } : null;\n        _partyComposedAt = -Infinity;\n        // PDEATH-FOES, AUDIT CONTRIB P1: my foes are the survivors' now - each to the one nearest it, as I see it (the\n        // only true view of where my foes stand), named on my last frame BEFORE the death pose; what nobody took stays mine\n        const near = isCellRoom(online.room) && (modes?.mode ?? 'exterior') === 'exterior' ? (peersNear() ?? []) : [];\n        if (near.length) {\n          const heirOf = (f) => { const at = f.ai?.feet; if (!at) return null; let id = null, best = Infinity; for (const q of near) { const d = Math.hypot(at[0] - q.feet[0], at[2] - q.feet[2]); if (d < best) { best = d; id = q.id; } } return id; };\n          const frame = exteriorFoes.handOverFrame(heirOf);\n          const n = frame && online.sendFoes(frame) ? exteriorFoes.dropOwnLive() : 0;\n          console.info(`[foes] handed ${n} foe(s) to the survivors`);\n        }\n        online.sendDeath?.();\n      }\n      if (online.room) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); _foesRoom = null; }",
+    "new": "      if (online.room) {\n        // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure\n        _deadMark = online._pose ? { k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() } : null;\n        _partyComposedAt = -Infinity;\n        // PDEATH-FOES, AUDIT CONTRIB P1: my foes are the survivors' now - each to the one nearest it, as I see it (the\n        // only true view of where my foes stand), named on my last frame BEFORE the death pose; what nobody took stays mine\n        const near = isCellRoom(online.room) && (modes?.mode ?? 'exterior') === 'exterior' ? (peersNear() ?? []) : [];\n        if (near.length) {\n          const heirOf = (f) => { const at = f.ai?.feet; if (!at) return null; let id = null, best = Infinity; for (const q of near) { const d = Math.hypot(at[0] - q.feet[0], at[2] - q.feet[2]); if (d < best) { best = d; id = q.id; } } return id; };\n          const frame = exteriorFoes.handOverFrame(heirOf);\n          const n = frame && online.sendFoes(frame) ? exteriorFoes.dropOwnLive() : 0;\n          console.info(`[foes] handed ${n} foe(s) to the survivors`);\n        }\n        online.sendDeath?.();\n      }\n      if (online.room) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); _foesRoom = null; }\n      if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();",
     "tests": [
       "test/donline1_respawn.test.js",
       "test/auditworld.test.js"

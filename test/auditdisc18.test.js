@@ -42,7 +42,6 @@ import { MINUTES_PER_DAY } from '../src/systems/gameDate.js';
 import { reviveForPlay, respawnHealth } from '../src/systems/deathRespawn.js';
 import { maxFatigue } from '../src/systems/statMods.js';
 import { saveSlot, exitAutosaveNames, QUICK_SAVE_NAME } from '../src/systems/saveSlots.js';
-import { DeathScreen } from '../src/ui/deathScreen.js';
 import { WEAPON_MATERIALS } from '../src/characters/weapons.js';
 import { ActionSystem } from '../src/world/actionSystem.js';
 import { ACTION_FLAGS, TRIGGER_FLAGS } from '../src/world/rdbLayout.js';
@@ -581,16 +580,6 @@ test('AUDIT DISC18 S4: the revival stands an exhausted corpse up with the same f
   const respawn = { health: 12, maxHealth: 80, fatigue: 0, stats: { strength: 50, endurance: 60 } };
   reviveForPlay(respawn, { force: true });
   assert.equal(respawn.fatigue, respawnHealth(maxFatigue(respawn)), 'the respawn pays it too');
-});
-
-test('AUDIT DISC18: the online death screen names its respawn and no key that does nothing', () => {
-  const had = Object.getOwnPropertyDescriptor(globalThis, 'location');
-  Object.defineProperty(globalThis, 'location', { value: { search: '?online=1&load=1', pathname: '/' }, configurable: true, writable: true });
-  try {
-    const hint = new DeathScreen({ eyeHeight: 1.6, capsuleHeight: 1.8 }).hint;
-    assert.match(hint, /respawn/i);
-    assert.doesNotMatch(hint, /F11|load|end/i);
-  } finally { if (had) Object.defineProperty(globalThis, 'location', had); else delete globalThis.location; }
 });
 
 // ═══ E: the pick and the swing ════════════════════════════════════════════════════════════════════════════════════

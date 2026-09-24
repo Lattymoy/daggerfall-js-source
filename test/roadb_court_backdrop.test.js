@@ -346,7 +346,7 @@ test('B5: both outdoor hosts keep the RAW back-button latch the accelerator read
     const s = src(f);
     // Above the townTalk return, or the ladder never reaches it with a
     // window up - which is every frame of a prison sentence.
-    assert.match(s, /if \(e\.code === 'Escape'\) backButtonHeld = true;\n\s*if \(townTalk\.keydown\(e\)\) return;/,
+    assert.match(s, /if \(e\.code === 'Escape'\) backButtonHeld = true;\n\s*if \(townTalk\.keydown\(e, keys\)\) return;/,   // KB1: the rung takes the held Set
       `${f}: the latch is raised BEFORE the overlay swallows the key`);
     assert.match(s, /if \(e\.code === 'Escape'\) backButtonHeld = false;/, `${f}: and lowered on the release`);
     assert.match(s, /backButtonHeld: \(\) => backButtonHeld,/, `${f}: and handed to the court flow`);

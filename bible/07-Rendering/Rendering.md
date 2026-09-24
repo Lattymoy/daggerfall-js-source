@@ -808,7 +808,10 @@ the image".
 - **Fewer.** WISP_MAX 240 at a gale (WIND4's 650), the floor the same
   share - a couple of dozen in a calm. A flourish is a bigger, more
   deliberate mark than a streak, and a few read as wind where the
-  streaks needed numbers.
+  streaks needed numbers. DISC17-A (2026-09-24, Mac: "I really want to
+  give the wisps more opacity and reduce the amount of wind wisps"): 120
+  at a gale and 10 in a calm, each twice as dark (WISP_LOOK's alpha
+  0.20/0.24, where it was 0.10/0.12).
 - **The flourish.** `render/windWisps.js`: a wisp is a RIBBON of
   WISP_SEGMENTS (40) segments along a path - an arched or S stroke down
   the wind (`sin²`, so it leaves level and meets its curl level) for the
@@ -824,7 +827,7 @@ the image".
   across its width, and is DRAWN ON - the head runs the path over the
   first WISP_DRAW_HEAD of the wisp's life, the tail follows it off from
   WISP_DRAW_TAIL - riding the same wind integral, wrap and wobble as
-  before. Its alpha is the look's own, never more than a breath.
+  before. Its alpha is the look's own (doubled by DISC17-A).
 - **The sand keeps its streak.** A look carries `curl`; the sandstorm's
   is 0, so its 7000 grains are one straight quad each, as they were.
 - Pinned by `test/wind5_swirls.test.js` (the path mirrored term for term:

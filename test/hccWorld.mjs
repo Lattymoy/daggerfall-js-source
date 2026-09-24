@@ -30,7 +30,8 @@ export function makeWorld({ cart = true, horse = true, settings = {}, ground = 0
     entity: { wagonWeight: () => w.weight, wagonKgLimit: () => 750 },
     activateMode: () => w.activateMode, fadeInProgress: () => false,
     say: (l) => w.said.push(l), setMidScreenText: (t) => w.mid.push(t), tooFarText: () => 'You are too far away...',
-    settings: () => ({ ...w.settings }), keyDown: (n) => w.keys.has(n), now: () => w.now, travelOptionsActive: () => w.travelOpt,
+    settings: () => ({ ...w.settings }), actionPressed: (a) => w.keys.has(a),   // KB1: the registry's HorseMount/HorseSummon, pressed this frame
+    now: () => w.now, travelOptionsActive: () => w.travelOpt,
     worldCoordToMapPixel: () => ({ x: 0, y: 0 }),
     openInventoryWithWagon: () => { w.openedInv++; },
     openNamePrompt: (o) => { w.prompt = { ...o, open: true }; return { isOpen: () => !!w.prompt?.open }; },

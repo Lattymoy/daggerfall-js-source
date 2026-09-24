@@ -170,8 +170,8 @@ carried only the first of the two lines, so a player fighting with the
 left-hand weapon loaded back holding the right hand's item, or bare
 fists. By the time it was found, the two restore lines had drifted six
 and thirteen lines apart inside their own hosts, and the comment in
-`worldModes.js` that pointed between them cited `world.js:6642` and
-`dungeonContext.js:6278` - lines that had moved to `:4927` and `:6253`.
+`worldModes.js` that pointed between them cited `world.js:6706` and
+`dungeonContext.js:6297` - lines that had moved to `:4945` and `:6272`.
 *Three copies of a rule, and the signpost between them stale as well.*
 
 The pair lives in `src/combat/playerWeapon.js` now - `weaponPoseOf`,
@@ -218,8 +218,8 @@ for the drift this program's thesis predicts, and both came back clean;
 the honest result of an audit is sometimes that the work is not owed.
 
 **S1 - the two exterior hosts' draw ladders. THE HOSTS ARE NOT PEERS,
-and the record never said so.** `main.js:95` routes `?exterior`,
-`?region` and `?loc` to `bootExterior`; the front door (`main.js:213`)
+and the record never said so.** `main.js:103` routes `?exterior`,
+`?region` and `?loc` to `bootExterior`; the front door (`main.js:221`)
 boots `bootWorld`. main.js says it in its own words: *"Dev scenes stay
 one param away (?exterior/?world/etc)."* So this is a shipping ladder
 against a dev scene's ladder, not two live copies of one law - which is
@@ -249,13 +249,13 @@ three collapsed on verification.**
 2. *"`npcSession.onWorldChanged()` is on both door exits and not on the
    teleport/load path."* True, and correct: every caller of
    `forceExitToExterior` follows it with `_teleportToPixel`, and THAT
-   function owns the call (`world.js:5552`, DFU's `OnMapPixelChanged` /
+   function owns the call (`world.js:5554`, DFU's `OnMapPixelChanged` /
    `OnLoadEvent`). The quickload caller goes through
    `restoreSessionState` instead. Calling it in both places would be the
    redundancy, not the fix.
-3. *"`worldModes.js:9592` disposes the dungeon overlay that
+3. *"`worldModes.js:9599` disposes the dungeon overlay that
    `dungeonCtx.destroy()` disposes again - HARD1's double free."* Already
-   known, already written down, at `dungeonContext.js:7096-7097`:
+   known, already written down, at `dungeonContext.js:7099-7100`:
    *"dispose() is idempotent (A2), which is what makes the outer host's
    call harmless."* The tree had the answer before the audit asked.
 

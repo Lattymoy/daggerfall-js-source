@@ -1,46 +1,114 @@
 [
-  { "name": "the-action-is-spliced-mid-list-instead-of-appended", "file": "src/systems/inputActions.js",
+  {
+    "name": "the-action-is-spliced-mid-list-instead-of-appended",
+    "file": "src/systems/inputActions.js",
     "old": "  'ActivateCenterObject', 'ActivateCursor',",
     "new": "  'ActivateCenterObject', 'ActivateCursor', 'FreeMouse',",
-    "tests": ["test/freemouse.test.js", "test/inputactions.test.js", "test/qs2_inputs.test.js"] },
-  { "name": "the-action-ships-with-no-default-key", "file": "src/systems/inputActions.js",
+    "tests": [
+      "test/freemouse.test.js",
+      "test/inputactions.test.js",
+      "test/qs2_inputs.test.js"
+    ]
+  },
+  {
+    "name": "the-action-ships-with-no-default-key",
+    "file": "src/systems/inputActions.js",
     "old": "  ['KeyY', 'FreeMouse'],",
     "new": "",
-    "tests": ["test/freemouse.test.js", "test/inputactions.test.js"] },
-  { "name": "the-default-lands-on-a-key-a-mod-already-offers", "file": "src/systems/inputActions.js",
+    "tests": [
+      "test/freemouse.test.js",
+      "test/inputactions.test.js"
+    ]
+  },
+  {
+    "name": "the-default-lands-on-a-key-a-mod-already-offers",
+    "file": "src/systems/inputActions.js",
     "old": "  ['KeyY', 'FreeMouse'],",
     "new": "  ['KeyK', 'FreeMouse'],",
-    "tests": ["test/freemouse.test.js"] },
-  { "name": "the-default-collides-with-another-port-row", "file": "src/systems/inputActions.js",
+    "tests": [
+      "test/freemouse.test.js"
+    ]
+  },
+  {
+    "name": "the-default-collides-with-another-port-row",
+    "file": "src/systems/inputActions.js",
     "old": "  ['KeyY', 'FreeMouse'],",
     "new": "  ['KeyJ', 'FreeMouse'],",
-    "tests": ["test/freemouse.test.js", "test/inputactions.test.js"] },
-  { "name": "the-row-stops-yielding-in-the-classic-windows", "file": "src/systems/inputActions.js",
-    "old": "'QuickLootAll', 'QuickLootOpen', 'FreeMouse']);",
-    "new": "'QuickLootAll', 'QuickLootOpen']);",
-    "tests": ["test/freemouse.test.js", "test/qs2_inputs.test.js", "test/soc5_interact.test.js"] },
-  { "name": "the-pane-draws-no-row-so-the-key-is-unrebindable", "file": "src/ui/enhancedControls.js",
-    "old": "export const PORT_ROWS = Object.freeze([...ONLINE_ROWS, ...QUICKSLOT_ROWS, ...QUICKLOOT_ROWS, ...MOUSE_ROWS]);",
-    "new": "export const PORT_ROWS = Object.freeze([...ONLINE_ROWS, ...QUICKSLOT_ROWS, ...QUICKLOOT_ROWS]);",
-    "tests": ["test/freemouse.test.js", "test/enhancedControls.test.js"] },
-  { "name": "the-row-is-hidden-under-the-online-heading", "file": "src/ui/enhancedControls.js",
-    "old": "  Object.freeze({ title: MOUSE_GROUP_TITLE, rows: MOUSE_ROWS }),",
-    "new": "",
-    "tests": ["test/freemouse.test.js", "test/qs2_inputs.test.js", "test/enhancedControls.test.js"] },
-  { "name": "the-reader-forgets-the-new-action", "file": "src/player/pointerLock.js",
-    "old": "    if (act !== 'ActivateCursor' && act !== FREE_MOUSE_ACTION) return;",
-    "new": "    if (act !== 'ActivateCursor') return;",
-    "tests": ["test/freemouse.test.js"] },
-  { "name": "the-reader-forgets-DFUs-own-action", "file": "src/player/pointerLock.js",
-    "old": "    if (act !== 'ActivateCursor' && act !== FREE_MOUSE_ACTION) return;",
+    "tests": [
+      "test/freemouse.test.js",
+      "test/inputactions.test.js"
+    ]
+  },
+  {
+    "name": "the-row-stops-yielding-in-the-classic-windows",
+    "file": "src/systems/inputActions.js",
+    "old": "export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen', 'FreeMouse',",
+    "new": "export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen',",
+    "tests": [
+      "test/freemouse.test.js",
+      "test/qs2_inputs.test.js",
+      "test/soc5_interact.test.js"
+    ]
+  },
+  {
+    "name": "the-pane-draws-no-row-so-the-key-is-unrebindable",
+    "file": "src/systems/inputActions.js",
+    "old": "    ['ActivateCursor', 'Free the mouse (offline) / open chat (online)'], ['FreeMouse', 'Free the mouse (press again to look)'],",
+    "new": "    ['ActivateCursor', 'Free the mouse (offline) / open chat (online)'],",
+    "tests": [
+      "test/freemouse.test.js",
+      "test/enhancedControls.test.js",
+      "test/kb1_keybinds.test.js"
+    ]
+  },
+  {
+    "name": "the-row-is-hidden-under-the-online-heading",
+    "file": "src/systems/inputActions.js",
+    "old": "  g('Online', [\n    ['SocialInteract', 'Interact with player'],\n  ]),",
+    "new": "  g('Online', [\n    ['SocialInteract', 'Interact with player'], ['FreeMouse', 'Free the mouse (press again to look)'],\n  ]),",
+    "tests": [
+      "test/freemouse.test.js",
+      "test/qs2_inputs.test.js",
+      "test/enhancedControls.test.js"
+    ]
+  },
+  {
+    "name": "the-reader-forgets-the-new-action",
+    "file": "src/player/pointerLock.js",
+    "old": "    if (act !== FREE_MOUSE_ACTION && !(act === 'ActivateCursor' && !cursorKeyClaimed(e))) return;",
+    "new": "    if (!(act === 'ActivateCursor' && !cursorKeyClaimed(e))) return;",
+    "tests": [
+      "test/freemouse.test.js",
+      "test/kb1_keybinds.test.js"
+    ]
+  },
+  {
+    "name": "the-reader-forgets-DFUs-own-action",
+    "file": "src/player/pointerLock.js",
+    "old": "    if (act !== FREE_MOUSE_ACTION && !(act === 'ActivateCursor' && !cursorKeyClaimed(e))) return;",
     "new": "    if (act !== FREE_MOUSE_ACTION) return;",
-    "tests": ["test/freemouse.test.js"] },
-  { "name": "taking-the-mouse-back-asks-for-no-lock", "file": "src/player/pointerLock.js",
+    "tests": [
+      "test/freemouse.test.js",
+      "test/kb1_keybinds.test.js"
+    ]
+  },
+  {
+    "name": "taking-the-mouse-back-asks-for-no-lock",
+    "file": "src/player/pointerLock.js",
     "old": "  if (_cursorActive) releaseLook();\n  else if (canvas) requestLook(canvas);",
     "new": "  if (_cursorActive) releaseLook();",
-    "tests": ["test/freemouse.test.js"] },
-  { "name": "a-freed-cursor-is-taken-back-by-a-passing-gesture", "file": "src/player/pointerLock.js",
+    "tests": [
+      "test/freemouse.test.js"
+    ]
+  },
+  {
+    "name": "a-freed-cursor-is-taken-back-by-a-passing-gesture",
+    "file": "src/player/pointerLock.js",
     "old": "  if (_cursorActive) return;\n  _lastRequestAt = nowMs();",
     "new": "  _lastRequestAt = nowMs();",
-    "tests": ["test/freemouse.test.js", "test/menu_pointer_relock.test.js"] }
+    "tests": [
+      "test/freemouse.test.js",
+      "test/menu_pointer_relock.test.js"
+    ]
+  }
 ]

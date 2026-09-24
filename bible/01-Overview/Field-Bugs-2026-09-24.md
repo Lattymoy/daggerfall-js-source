@@ -147,7 +147,11 @@ DISC18-A over the backup save made beforehand.
 - `restorePlayer` decides the revival on the save's own health but runs it
   after the effects and survival are restored. The dead save comes back
   at the respawn health, without the poison or the cold, and stays alive.
-- An online page's death screen says `ENTER respawn` (`ONLINE_DEATH_HINT`).
+- An online page's death screen no longer names keys that do nothing. This
+  batch said `ENTER respawn`; at the merge, main's own death screen (DEATH4,
+  DEATH6, AUDIT CONTRIB A5) already counted the online respawn down in the
+  hint's place ("RISING IN n   ENTER now"), and this batch's hint was
+  folded into it.
 
 **Recorded, not changed.**
 - Offline, a dead save still loads at 0 HP (ONLINE-DEATH-FIX's pinned
@@ -457,14 +461,15 @@ confirmed finding was reproduced in node, fixed at its root and pinned in
   host keeps the shared colour.
 
 **The pins.** A pin that could not fail ("standing defenders are not
-summoned twice" ticked once, where a countdown needs many) and a
-tautological one (the hint compared with its own constant) are rewritten;
-the old-save infection repair, the action and effect arms of
-`hasMeshCollider`, the QuickSave in the exit list and the summon's fallback,
-townsperson and range arms are pinned. The cite shifter was blind to
-`world.js` (over git's default 1 MiB buffer; `tools/citeShift.mjs` now
-reads with a 256 MiB buffer and fails loud), and the cites it missed were
-moved. Four quotations it had rewritten are restored.
+summoned twice" ticked once, where a countdown needs many) is rewritten, and
+a tautological one (the hint compared with its own constant) went with the
+hint into main's death screen at the merge; the old-save infection repair,
+the action and effect arms of `hasMeshCollider`, the QuickSave in the exit
+list and the summon's fallback, townsperson and range arms are pinned. The
+cite shifter was blind to `world.js` (over git's default 1 MiB buffer;
+main's DISC17 gave `tools/citeShift.mjs` the large buffer the same day, and
+this batch makes its catch fail loud on anything but a new file), and the
+cites it missed were moved. Six quotations it had rewritten are restored.
 
 **Recorded, not changed.** Two other entries still carry no `permanent`
 flag, so a load drops them too: the survival needs' (`needs.js`), rewritten

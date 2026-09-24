@@ -558,15 +558,6 @@
     ]
   },
   {
-    "name": "AUDIT-DISC18-hint-back-to-old",
-    "file": "src/ui/deathScreen.js",
-    "old": "export const ONLINE_DEATH_HINT = 'ENTER respawn';",
-    "new": "export const ONLINE_DEATH_HINT = 'ENTER end   F11 load';",
-    "tests": [
-      "test/auditdisc18.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-DISC18-E1-cast-cut-at-reach",
     "file": "src/combat/weaponRig.js",
     "old": "      first ??= collider.raycastHit(eye, lookDir, RAY_DISTANCE);",

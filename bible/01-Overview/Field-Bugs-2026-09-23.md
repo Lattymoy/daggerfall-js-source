@@ -782,6 +782,112 @@ lead handed to the newest seat when nobody is online): no pin held the
 all-away arm. `test/auditparty8.test.js` now holds it (every remaining seat
 away - the longest-standing leads), and S23 names that suite.
 
+# CONTRIB - the contributor's drop, integrated and read
+
+Mac: *"Integrate these please. My contributer made these for the codebase"* -
+two zips: the hotbar, player corpses, Resurrect, the death screen, UI sounds
+(85 whole files), and a sprite-fix patch.
+
+## The integration
+
+The drop's files came off several bases; scored against every commit, the
+nearest was 2b42cadb3, and the drop was committed there verbatim (branch
+`contrib-hotbar`) and merged. Its relay steps world100-102 never ran on a
+relay; ours had deployed world100 and world101 (DISC7, DISC12). The merged
+graph is **world102**: DISC12's pose plus the drop's death flag `dd`, the
+party pose's Resurrect call `rz` and fallen body `dd`, and the look's
+widened `class`. Resurrect is registered (effect 45) but not craftable, as
+MorphSelf is not, and carries its own spellbook description.
+
+**The cites.** `citeMerge` read a line both sides carry verbatim as
+THEIRS and moved its numbers through their diff - and the drop's
+untouched comments sat beside targets that had moved on their side
+(nine cites, `spellcost.js:182` -> :181 among them). A shared line's
+number was read off one side's target and the line cannot say which;
+the tool now maps it from both and moves it only where the two agree,
+else prints it AMBIGUOUS for a person (`test/citemerge.test.js`).
+
+## The read: three lenses, every finding verified in the code
+
+- **A1 - Resurrect could not be cast at a body with no foe beside it.**
+  The ready-made spell is ByTouch, and CastReadySpell's touch probe sees
+  foes and standing mates only - a fallen mate is neither - so the click
+  was eaten silently. The body the Resurrect gate already found is the
+  touch.
+- **A2 - one death, several bodies.** `sendDeath` speaks down the cell's
+  socket and every halo's; the first copy took the peer off the list, so
+  each later copy was a fresh death (a body and a cry per copy - a
+  Thief's and a Breton's, the look gone). The session delivers one death
+  per life; a living pose after it is a new life.
+- **A3 - a party-told body met after the death never stood.** The memo of
+  "seen" was written before the room check, so a body in a dungeon walked
+  into later, or one a building's walls took from the scene, never stood
+  again. `remotePlayers.partyBody` keeps each death's minute from its
+  first word and stands the body whenever the scene is its own, crying
+  once.
+- **A4 - risen, and still looking at the sky.** The dungeon's clear and
+  F11's online respawn skipped the view hand-back. Every close restores
+  it (and the enhanced veil goes with the screen); F11 goes through
+  Enter's reset.
+- **A5 - three seconds to raise a mate on the classic skin.** The online
+  hold was the enhanced face's alone; the classic reset respawned the
+  player and cleared the body at DFU's three seconds. Online, the hold is
+  the screen's on either skin, and the classic face says the count.
+- **A6 - the Resurrect snapshot outlived a respawn.** Taken through the
+  teleport's await with the player already healed, it made an old call
+  raise the next death at once. It is taken only while dead and dropped
+  on the first living frame.
+- **P1-P3 - the dying player's foes, doubled or lost.** Every survivor
+  judged "nearest" against its own lagging view, so two could take one foe
+  (two owners streaming it) or none. The dying owner - the one true view -
+  names each foe's heir on its last frame (`e`), and the survivor named
+  adopts it on that frame's arrival. The watch is never handed; the owner
+  lets go of exactly what it handed and keeps the rest.
+- **S1 - a Thief before the introduction.** A peer heard by pose before
+  its look arrived was drawn as a Thief, then nothing, then its class.
+  No look keeps the doll until the look lands.
+- **U1/U2 - the UI click.** Any one-shot in the 150 ms before a click
+  (a hit, the ambience) swallowed it, and a touch held on a hotbar slot
+  past 150 ms sounded twice. Only a sound chosen inside an input event
+  counts as the click's own, and the window opens at the press.
+
+Also: `OnlineSession` declares `onPeerDeath` (the type check), and the
+drop's trailing comments moved back onto the lines they describe.
+
+## The hotbar (the third lens)
+
+- **H1 - the digits were taken from everyone.** The bar read 1-0 at the
+  window's capture phase and swallowed them, so a digit the player bound
+  to an action in the controls pane, and Horse Cart and Cargo's mount and
+  summon (shipped on 5 and 6), never reached the host. And the diamond it
+  replaces was only hidden: a pad's d-pad and a rebound key still drank,
+  readied and lit from slots nobody could see, and with the HUD toggled
+  off the digits fell through to them. Now the diamond is put away while
+  the hotbar is in force (`hotbarInForce`: its five actions route nothing,
+  its hold machine taps nothing), the bar steps aside for any digit bound
+  to another action and for every enabled mod's hotkey
+  (`modHotkeyCodes`), and its keys follow the game's pause, not the HUD's
+  visibility. **Decision for Mac:** HCC's defaults (5, 6) and the hotbar's
+  slots 5 and 6 still share keys - HCC wins, as a binding should; moving
+  HCC's defaults is a KEY_MIGRATIONS row if the hotbar should have them.
+- **H2 - the light slot lit whatever the mod picked.** It went to the off
+  hand's toggle (the last light used, else a lantern, a torch, a candle):
+  a Candle slot lit the Lantern, a Lantern slot put out a lit candle, a
+  slot whose light was gone lit another. It is the pack's own Use on the
+  slot's kind now - that light lit, the lit one of the kind doused, none
+  left refused.
+- **H3 - a refused press flashed gold.** The doors answer the route
+  `true` whatever the performer decided. The four performers leave their
+  own answer for the bar, and `readySpell` answers as DFU's SetReadySpell
+  does (false on silence, no spell points, the hands mid-cast).
+- **H4 - the bar keyed the whole pack once per slot every frame.** One
+  pass now.
+- **H5 - the bar's icons skipped DW3's dye.** Asked with it, as the
+  diamond and the pack do.
+
+Pinned by execution in `test/auditcontrib.test.js`; mutants:
+`tools/mutants/auditcontrib.json` (21, all killed).
+
 # ARROW2 - the double arrows (DISC8-F), found
 
 DISC8-F counted shafts and found one. The second arrow was never a shaft:
@@ -1279,7 +1385,9 @@ here.
 
 ---
 
-# MAP-LAG - the enhanced map after the weather
+# MAP-LAG - the enhanced map after the weather (REMOVED by DISC17-C, below)
+
+The weather this kept is gone from the map, and this machinery with it (DISC17-C). The record stands.
 
 Mac: *"One bug is the enhanced map now is very laggy after we
 introduced the weather changes."*
@@ -1345,7 +1453,7 @@ one go.
 **Not verified here:** in the game. There is no game data in the
 container.
 
-The pins are `test/maplag.test.js` (8). WEATHER3e's and WEATHER3i's hover
+The pins were `test/maplag.test.js` (8, DELETED by DISC17-C). WEATHER3e's and WEATHER3i's hover
 pins now read the forecast at rest.
 
 ---
@@ -1420,3 +1528,78 @@ The pins are `test/disc16.test.js` (3), and MAC3's downhill pin reads
 the rest. DW1 and AUDIT-DW pin the preset's default off. DISC14's three B
 pins went with it. The mutants are `tools/mutants/disc16.json`, all
 seven dead; DISC14-B's five records are retired.
+
+# DISC17 - the wisps, the thunder, and the map's weather removed
+
+Mac, 2026-09-24, in one message: *"1. I really want to give the wisps
+more opacity and reduce the amount of wind wisps 2. Sometimes thunder
+ends abruptly 3. Remove the enhanced map weather enhancements
+entirely"*
+
+## DISC17-A: fewer wisps, each darker
+
+Half as many and twice as dark:
+
+- `WISP_MAX` goes from 240 to 120. A calm keeps the same floor share,
+  10 wisps where it was 19.
+- `WISP_LOOK`'s alpha goes from 0.10/0.12 to 0.20/0.24. The heart of a
+  flourish's ink peaks at 0.70 in a gale (0.35 before) and 0.32 in a calm.
+
+The sandstorm's look is not the wind's mark and is unchanged. Not seen
+on a screen here, since the container has no game data. The two numbers
+are the dials if it wants another step either way.
+
+## DISC17-B: thunder cut off mid-roll
+
+**Cause.** WEATHER3d plays a distant storm's thunder from a stand-in
+`THUNDER_SOURCE_M` (13 m) from the ear, toward the storm, at a 13 m
+reference distance. The stand-in is a WebAudio panner, and a panner stays
+where it was put. The ear moved on under a rolling clip:
+
+- Walking, every metre was a metre off the 13 m reference.
+- At every map pixel crossed, the floating origin's recentre
+  (`streamingWorld.js`, 819.2 m) moved the ear over 800 m from the
+  stand-in in one frame. The clip fell 35 dB (38 on a diagonal crossing)
+  mid-roll, which is the abrupt end.
+
+The storm overhead is DFU's ambience, placed at PlaySomewhereOnHorizon's
+3000 m minimum distance. Neither a walk nor a recentre changes its level,
+so it is left as DFU has it.
+
+**Fix.** `play3d(..., { far: true })` keeps the shot's offset from the
+listener: `setListener` moves it with the ear until its clip has run out,
+then lets it go. Both exterior hosts play the distant thunder `far`.
+Every other one-shot still stays where it was put.
+
+**Also found.** `tools/citeShift.mjs` read HEAD's `world.js` with
+`execFileSync`'s default 1 MiB buffer. The file passed that size, and the
+throw landed in the tool's new-file catch, so its largest target was
+skipped without a word. It takes `citeMerge.mjs`'s buffer now.
+
+## DISC17-C: the map's weather removed
+
+The travel map is the bay again:
+
+- `ui/weatherLayer.js` is deleted.
+- `ui/heldMap.js` is its pre-WEATHER3e self plus the unrelated MAP-FIELD8
+  and MAP-FIT1 changes: no regions, glyphs, legend, hover weather or
+  forecast, and none of MAP-LAG's raster, job or resting forecast.
+- `world.js` hands it no `weather`, and its climate lookup is the plain
+  `maps.getClimateIndex` again.
+- The sheet contract loses MAP-LAG's `paintUnder`, and the town and
+  automap sheets their empty ones.
+
+The sim keeps every law the map read (`forecastAt`, `mapGround`,
+`wornAmong`), and the three comments that named the map as a reader say
+it no longer is. Retired with it:
+
+- `test/weather3e_maplayer.test.js` and `test/maplag.test.js`, DELETED with
+  their mutant lists.
+- The map's tests in `weather3f` (R1's and R2's map halves, R2a),
+  `weather3g` (the map, the sheet), `weather3h` (the field, the regions,
+  the hand, the pen's sign) and `weather3i` (all but the law and the
+  player's strength), and their 57 mutant records.
+- EM1-25/26 go back to the click arm as it stands.
+
+The pins are `test/disc17.test.js` (5). Its mutants,
+`tools/mutants/disc17.json`, are all ten dead.

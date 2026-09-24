@@ -51,12 +51,12 @@ test('ES1 the switch: the enhanced skin and the pref; the wind rides it and keep
   } finally { setUiSkin(skin); setPref('soundEnhancements', true); }
 });
 
-test('MAC-O6 + ES1 by source: the enhanced inventory plays DoTransferItem’s cue on take AND store, off `plan.sound`, behind the switch; the wind gate composes the switch (mutant: a cue unguarded, or one door dropped)', () => {
+test('MAC-O6 + ES1 + SND1 by source: the enhanced inventory plays DoTransferItem’s cue on take AND store, off `plan.sound`, ALWAYS - as the classic window and DFU do (SND1, Discord 2026-09-23: every take clicks, gold plays the gold sound); the wind gate composes the switch (mutant: a cue gated or one door dropped)', () => {
   const inv = rd('src/ui/enhancedInventory.js');
-  const cues = inv.match(/if \(enhancedSoundsOn\(\)\) audio\.playOneShot\(plan\.sound === 'gold' \? SOUND\.GoldPieces : SOUND\.ButtonClick, 1\);/g) ?? [];
-  assert.equal(cues.length, 2, 'take and store, each behind the switch');
-  assert.equal((inv.match(/audio\.playOneShot\(/g) ?? []).length, 2, 'and no cue in this window escapes it');
-  assert.match(inv, /import \{ enhancedSoundsOn \} from '\.\.\/systems\/enhancedSounds\.js';/);
+  const cues = inv.match(/^  audio\.playOneShot\(plan\.sound === 'gold' \? SOUND\.GoldPieces : SOUND\.ButtonClick, 1\);/gm) ?? [];
+  assert.equal(cues.length, 2, 'take and store, each unguarded');
+  assert.equal((inv.match(/audio\.playOneShot\(/g) ?? []).length, 2, 'and no other cue in this window');
+  assert.doesNotMatch(inv, /enhancedSoundsOn\(\)\) audio\.playOneShot\(plan\.sound/, 'the take cue is no longer behind the Enhanced sounds switch');
   // the classic window's own call is the reference, unchanged
   assert.match(rd('src/ui/nativeInventory.js'), /audio\.playOneShot\(plan\.sound === 'gold' \? SOUND\.GoldPieces : SOUND\.ButtonClick, 1\);/, 'the classic window plays it always, as DFU does');
   const wind = rd('src/systems/windAudio.js');

@@ -38,7 +38,7 @@ import { MINUTES_PER_DAY } from '../src/systems/gameDate.js';
 import { startPoison, POISONS } from '../src/systems/poisons.js';
 import { respawnHealth } from '../src/systems/deathRespawn.js';
 import { saveSlot, exitAutosaveNames, QUICK_SAVE_NAME } from '../src/systems/saveSlots.js';
-import { DeathScreen, ONLINE_DEATH_HINT } from '../src/ui/deathScreen.js';
+import { DeathScreen, ONLINE_RESPAWN_SECONDS } from '../src/ui/deathScreen.js';
 import { createTownWatch, isTownThreat, TOWN_WATCH_STAND_DOWN_SECONDS } from '../src/systems/townWatch.js';
 import { createCityGuards, GUARD_MOBILE_TYPE } from '../src/scenes/cityGuards.js';
 import { createExteriorFoes } from '../src/scenes/exteriorFoes.js';
@@ -203,14 +203,18 @@ test('DISC18-C: the online exit autosave writes every slot of a living player an
   assert.ok(!handler.includes('saveKeysOfCharacter('), 'no second list of slots beside the guarded one');
 });
 
-test('DISC18-C: an online page\'s death screen says its respawn; offline keeps the full hint', () => {
+test('DISC18-C: an online page\'s death screen counts its respawn in the hint\'s place, and offline keeps the full hint - main\'s DEATH4 and AUDIT CONTRIB A5 said it first, and this batch\'s own hint was folded into theirs at the merge', () => {
   withSearch('?online=1&load=1', () => {
-    const hint = new DeathScreen({ eyeHeight: 1.6, capsuleHeight: 1.8 }).hint;
-    assert.equal(hint, ONLINE_DEATH_HINT);
-    assert.match(hint, /respawn/i, 'AUDIT DISC18: the words themselves - the constant set back to the old hint must fail here');
-    assert.doesNotMatch(hint, /F11/);
+    const ds = new DeathScreen({ eyeHeight: 1.6, capsuleHeight: 1.8 });
+    assert.equal(ds.online, true);
+    assert.equal(ds.respawnIn, ONLINE_RESPAWN_SECONDS, 'RISING IN, counted from the whole wait');
   });
-  withSearch('?load=1', () => assert.equal(new DeathScreen({ eyeHeight: 1.6, capsuleHeight: 1.8 }).hint, 'ENTER end   F11 load'));
+  withSearch('?load=1', () => {
+    const ds = new DeathScreen({ eyeHeight: 1.6, capsuleHeight: 1.8 });
+    assert.equal(ds.online, false);
+    assert.equal(ds.hint, 'ENTER end   F11 load');
+  });
+  assert.match(rd('src/ui/deathScreen.js'), /const hint = this\.online \? `RISING IN \$\{this\.respawnIn\}   ENTER now` : this\.hint;/, 'no dead key drawn online');
 });
 
 // ═══ F: the watch and the town ════════════════════════════════════════════════════════════════════════════════════

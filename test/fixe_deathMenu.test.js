@@ -125,7 +125,7 @@ test('FIX-E: F11 reaches the world host’s quickload from UNDER the death scree
   // where it used to quickload - and kept its place above the rung; test/donline1_respawn.test.js holds the door.
   const arm = w.indexOf("if (townTalk.overlayActive && !isTextEntryTarget(e.target) && (modes?.mode ?? 'exterior') === 'exterior' && actionForCode(bindings(), e.code) === 'QuickLoad') {\n      e.preventDefault();");
   assert.ok(w.slice(arm, arm + 900).includes('else hudCtx.quickLoad();'), 'and quickload is still what F11 does when the death was not online');
-  const gate = w.indexOf('if (townTalk.keydown(e)) return;');
+  const gate = w.indexOf('if (townTalk.keydown(e, keys)) return;');   // KB1: the rung hands its mode keys the held Set
   assert.ok(arm > 0 && gate > arm, 'the arm stands above the townTalk rung');
   // the same law routeKey has carried for the dungeon and interior hosts
   assert.match(read('src/ui/input.js'), /if \(actionOf\(e, keys\) === 'QuickLoad'\) \{ ctx\.quickLoad\?\.\(setPlayerPos\); return true; \}/);
@@ -136,6 +136,6 @@ test('FIX-E: the interior slot releases what it overwrites, and the fixed city o
   assert.match(read('src/scenes/exterior.js'), /new DeathScreen\(\{[^\n]*hint: 'ENTER end' \}\)/, 'no save path, no F11 hint');
   assert.match(read('src/scenes/world.js'), /new DeathScreen\(\{ eyeHeight: player\.eye\[1\] - player\.pos\[1\], capsuleHeight: player\.height, onReset: \(\) => \(_deathWasOnline \? respawnOnlinePlayer\(\) : endRunToTitleMenu\(renderer\)\) \}\)/, 'the world keeps the full hint - its F11 is real now (D-ONLINE1: and its reset respawns when the death was online)');
   const ds = read('src/ui/deathScreen.js');
-  assert.match(ds, /hint = isOnlinePage\(\) \? ONLINE_DEATH_HINT : 'ENTER end   F11 load'/, 'the default hint is the full one offline (DISC18-C: an online page\'s says its respawn)');
-  assert.match(ds, /drawText\(renderer, font, this\.hint,/, 'and the screen draws the hint it was given');
+  assert.match(ds, /hint = 'ENTER end   F11 load'/, 'the default hint is the full one');
+  assert.match(ds, /const hint = this\.online \? `RISING IN \$\{this\.respawnIn\}   ENTER now` : this\.hint;[^\n]*\n\s*drawText\(renderer, font, hint,/, 'and the screen draws the hint it was given (AUDIT CONTRIB A5: online, the hold\'s count in its place)');
 });

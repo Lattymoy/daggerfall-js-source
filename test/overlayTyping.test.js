@@ -52,17 +52,21 @@ test('CG2: a DOM text field owns its key - the dungeon route neither routes nor 
   // talkPaused()` now - a box the game is not stopped for lets the key
   // through to the world - and the field's step-aside is still the
   // FIRST statement inside it, which is what this pin is about.
-  assert.match(tt, /function keydown\(e\) \{\s*\n(\s*\/\/[^\n]*\n)*\s*if \(overlay && talkPaused\(\)\) \{\s*\n(\s*\/\/[^\n]*\n)*\s*if \(isTextEntryTarget\(e\.target\)\) return true;\s*\n\s*e\.preventDefault\(\);/, 'the field\'s key steps out before the preventDefault, consumed for the host');
+  assert.match(tt, /function keydown\(e, keys = null\) \{[^\n]*\n(\s*\/\/[^\n]*\n)*\s*if \(overlay && talkPaused\(\)\) \{\s*\n(\s*\/\/[^\n]*\n)*\s*if \(isTextEntryTarget\(e\.target\)\) return true;\s*\n\s*e\.preventDefault\(\);/, 'the field\'s key steps out before the preventDefault, consumed for the host');
   assert.match(tt, /import \{ overlayAction, actionOf, isTextEntryTarget \} from '\.\.\/ui\/input\.js';/);
   // the dungeon host preventDefaults on true, which is why routeKey answers false for a field
   assert.match(read('src/scenes/dungeon.js'), /if \(routeKey\(e, ctx, \(p\) => player\.spawn\(p\[0\], p\[1\], p\[2\]\), keys\)\) e\.preventDefault\(\);/);
-  assert.match(read('src/ui/input.js'), /if \(ctx\.uiOverlayActive\) \{\s*\n\s*if \(isTextEntryTarget\(e\.target\)\) return false;/);
+  // KB1: the field's step-aside stands ABOVE the overlay branch now - a DOM field over the world with no overlay in
+  // the slot is typed into too, and every letter was an action
+  assert.match(read('src/ui/input.js'), /export function routeKey\(e, ctx, setPlayerPos = null, keys = null\) \{\s*\n(\s*\/\/[^\n]*\n)*\s*if \(isTextEntryTarget\(e\?\.target\)\) return false;\s*\n\s*if \(ctx\.uiOverlayActive\) \{/);
+  assert.equal(routeKey({ code: 'KeyM', key: 'm', target: { tagName: 'INPUT' } }, { uiOverlayActive: false, toggleAutomap: () => calls.push(['map']) }, null, new Set()), false, 'no overlay: a field\'s M is typed, not the map');
+  assert.equal(calls.length, 1, 'and the map did not open');
   // the wizard's own capture listener uses the one definition and lets the field's key bubble
   const wiz = read('src/ui/enhancedChargen.js');
   assert.match(wiz, /if \(isTextEntryTarget\(e\.target\) && action !== 'back'\) return;/, 'steps aside for a field - for every key it can type (DISC10-B: Escape is the wizard\'s)');
   assert.doesNotMatch(wiz, /t\.tagName === 'INPUT'/, 'no second copy of the rule');
   // the hosts' ladders still put townTalk first, so the fix sits where the swallow was
-  for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(read(h), /if \(townTalk\.keydown\(e\)\) return;/, `${h}: the rung`);
+  for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(read(h), /if \(townTalk\.keydown\(e, keys\)\) return;/, `${h}: the rung`);
 });
 
 test('CG2: an enhanced wizard that will not mount hands the classic wizard the same flow instead of holding the slot for ever', () => {

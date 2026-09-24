@@ -99,15 +99,6 @@
     ]
   },
   {
-    "name": "DISC18-C-online-hint-lies",
-    "file": "src/ui/deathScreen.js",
-    "old": "hint = isOnlinePage() ? ONLINE_DEATH_HINT : 'ENTER end   F11 load'",
-    "new": "hint = 'ENTER end   F11 load'",
-    "tests": [
-      "test/disc18.test.js"
-    ]
-  },
-  {
     "name": "DISC18-F-watch-comes-for-the-wanted",
     "file": "src/systems/townWatch.js",
     "old": "      if (crime) { countdown = 0; calm = 0; return null; }",
