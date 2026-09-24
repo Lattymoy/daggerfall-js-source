@@ -37,7 +37,7 @@ import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { equipTableOf } from './equip.js';   // AUDIT 58: no lowerCondition - the Namira payload bills nothing (FormulaHelper.cs:707)
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';   // the FallExe enum at its V3 home - never through enchantments.js (cycle)
 import { MOBILE_TYPES } from '../characters/mobileTypes.js';
-import { liveStat as liveStatOf } from './statMods.js';
+import { liveStat as liveStatOf, increaseDrainMagnitude } from './statMods.js';
 import { SOCIAL_GROUP_COUNT } from '../formats/factionFile.js';   // AUDIT 63 F6: the Masque raises ALL eleven groups (MasqueOfClavicusEffect.cs:39-43 over FactionFile.cs:552-566)
 
 /** ItemEnums.ArtifactsSubTypes (:238-262), the payload-bearing nine
@@ -310,19 +310,16 @@ const HANDLERS = new Map([
  *  And healAttributeDamage walks drain/transfer/disease/poison only,
  *  so a Heal Strength could never repair the old entry.
  *
- *  The clamp is DrainEffect.IncreaseMagnitude verbatim, and it is
- *  spelled out here rather than imported: effects.js owns it, and
- *  effects.js imports enchantments.js, which imports THIS file - the
- *  same cycle the header's magicDef note names. */
+ *  The clamp is DrainEffect.IncreaseMagnitude's one home in statMods.js
+ *  (AUDIT 68 S24-drain-clamp-duplicate: it was spelled out here beside
+ *  effects.js's copy, on a cycle the shared leaf never had). */
 function drainStrength(target, amount) {
   let entry = (target.activeEffects ?? []).find((a) => a.kind === 'drainAttribute' && a.stat === 'strength' && !a.ended);
   if (!entry) {
     entry = { kind: 'drainAttribute', stat: 'strength', magnitude: 0, permanent: true };
     (target.activeEffects ??= []).push(entry);
   }
-  const permanentValue = target.stats?.strength ?? 0;
-  if (permanentValue - (entry.magnitude + amount) < 1) entry.magnitude = permanentValue - 1;
-  else entry.magnitude += amount;
+  increaseDrainMagnitude(target, entry, amount);
 }
 
 /** The ONE registry row enchantments.js mounts for type 26: flags are
@@ -358,13 +355,7 @@ export function artifactHook(hookName) {
  */
 export function onPlayerStruckByEnemy(attacker, target, damage) {
   if (!target?.isPlayer || !attacker || damage <= 0) return;
-  const slots = equipTableOf(target);
-  if (!slots) return;
-  let ring = null;
-  for (const item of Object.values(slots)) {
-    if (item && (item.enchantments ?? []).some((e) => e?.type === ENCHANTMENT_TYPES.SpecialArtifactEffect && e.param === ARTIFACTS.RingOfNamira)) { ring = item; break; }
-  }
-  if (!ring) return;
+  if (!isWearingArtifact(target, ARTIFACTS.RingOfNamira)) return;   // AUDIT 68 S24-namira-duplicate-reader: the one hardened scan, not a copy of it
   const team = ENEMY_BASICS[attacker.mobileType]?.team ?? null;
   let reflected;
   switch (team) {

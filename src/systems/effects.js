@@ -31,7 +31,7 @@
 
 import { savingThrow, rollMagnitude, EFFECT_FLAGS, careerTolerance } from './spellcast.js';
 import { raceById, raceByKey } from './races.js';   // L2-slice (magic-10): the racial immunity arm
-import { STAT_KEYS_ORDER, FATIGUE_MULTIPLIER, maxFatigue } from './statMods.js';
+import { STAT_KEYS_ORDER, FATIGUE_MULTIPLIER, maxFatigue, increaseDrainMagnitude } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
 import { tryAbsorption, effectCastingCost } from './absorption.js';
 import { enemyGroupOf, NEARBY } from './nearbyObjects.js';   // X8: Pacify matches on DFU's EnemyGroups, the same table X4 ported   // S24; X7: the Identify refund reads the same per-effect cost
@@ -611,15 +611,6 @@ export function healAttributeDamage(entity, stat, amount) {
     if (a.magnitude === 0) a.ended = true;   // forcedRoundsRemaining = 0
     if (remaining === 0) return;
   }
-}
-
-/** DrainEffect.IncreaseMagnitude, verbatim: the drain never reduces
- *  the stat below 1 relative to its PERMANENT value ("no invisible
- *  healing debt" - drain alone cannot zero a stat). */
-function increaseDrainMagnitude(target, entry, amount) {
-  const permanentValue = target.stats?.[entry.stat] ?? 0;
-  if (permanentValue - (entry.magnitude + amount) < 1) entry.magnitude = permanentValue - 1;
-  else entry.magnitude += amount;
 }
 
 /** One magic round for one ACTIVE entry - the saving throw rolls
