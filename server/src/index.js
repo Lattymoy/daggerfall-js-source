@@ -180,7 +180,7 @@ const SPENT_MAX = 4096;
 /** MOD1: the most accounts whose latest mute order one room remembers. */
 const ORDERS_MAX = 1024;
 
-import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, levelGate } from './relay.js';
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
 // welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
@@ -819,7 +819,9 @@ export class Room {
     // it (and one minted before an unmute cannot hold them in it).
     const order = this._orders.get(r.claims.s);
     const mu = order && order.i > r.claims.i ? order.mu : (r.claims.mu ?? 0);
-    return { name: r.claims.n, kind: r.claims.k, subject: r.claims.s, title: r.claims.t, glyphs: r.claims.g, mu };
+    // ADV1: and the Adventuring Level, off the same signature - `lv`
+    // beside the title and glyphs, stamped by `badged` wherever they are.
+    return { name: r.claims.n, kind: r.claims.k, subject: r.claims.s, title: r.claims.t, glyphs: r.claims.g, mu, lv: r.claims.lv };
   }
 
   /** The verifying key, imported once. Shared by the hello and by
@@ -916,7 +918,7 @@ export class Room {
       if (!others.length) { try { await this._sweep(); } catch (e) { console.warn('[room] sweep failed', e?.message ?? e); } await this.state.storage.put('hellos', gate.bucket); }   // an empty room forgets every look and secret an unclean close left behind - not its hello gate (AUDIT SOC A2: contained - a failed list here made every first hello into an empty hub throw before its welcome)
       await this.state.storage.put(secretKey(m.id), m.secret);
       if (!chat) { await this.state.storage.put(lookKey(m.id), m.look); this._looks.set(m.id, m.look); }   // a channel keeps no look: nobody is drawn from it
-      if (!this._setAttach(ws, { ...a, id: m.id, name: who.name, title: who.title, glyphs: who.glyphs, sub: who.subject, mu: who.mu, pose: chat ? null : m.pose, since: replaced?.since ?? now })) { this._refuse(ws, 'hello too large'); return; }   // MOD1: `sub` the verified account (what a mute names), `mu` until when it may not talk
+      if (!this._setAttach(ws, { ...a, id: m.id, name: who.name, title: who.title, glyphs: who.glyphs, lv: who.lv, sub: who.subject, mu: who.mu, pose: chat ? null : m.pose, since: replaced?.since ?? now })) { this._refuse(ws, 'hello too large'); return; }   // MOD1: `sub` the verified account (what a mute names), `mu` until when it may not talk   // ADV1: `lv` the Adventuring Level the token carried
       // SRV-N: `v` rides EVERY welcome, a channel's included. A player in the enhanced skin holds a presence socket
       // and one chat socket per tab; whichever reconnects first after a hand deploy is the one that notices, and the
       // client's detector (net/updateNotice.js) is a Set so the rest of them say nothing. SLAM13 (AUDIT SLAM A5): and
@@ -1547,7 +1549,7 @@ export class Room {
       if (!this._spend(ws, now, muteGate, 'mbucket', 'mdrops', 'too many mute orders')) return;   // AUDIT 68 X8-v-say-mute-unstruck: struck, as every arm is
       await this._loadKey();
       if (!this._verifyKey) return;
-      const r = await verifyOrder(m.order, this._verifyKey, { subtle: crypto.subtle, nowS: Math.floor(now / 1000) });
+      const r = await verifyOrder(m.order, this._verifyKey, { subtle: crypto.subtle, nowS: Math.floor(now / 1000), kind: 'mute' });
       if (!r.ok) return;   // silently, as `say` refuses: a forger learns nothing from being ignored
       const { s: sub, mu, i } = r.claims;
       const sig = m.order.slice(m.order.lastIndexOf('.') + 1);
@@ -1565,6 +1567,32 @@ export class Room {
         this._setAttach(other, { ...b, mu });
         this._send(other, told);   // the player hears it at once - muted until, or 0 for lifted
       }
+    }
+    if (m.t === 'level') {
+      // ═══ ADV1 — A LEVEL THAT ROSE, CARRIED IN ══════════════════════
+      //
+      // Mac: "Plus having their level appear on the left side of
+      // character name". The level rides the token, and a token is
+      // spent once, on a hello - so a level that rises in the middle of
+      // a fight would sit stale beside the name until the next room.
+      // The account service signs a LEVEL ORDER when it derives a new
+      // level, the player's own client carries it here, and the room
+      // checks two things only: the signature (with the key it already
+      // holds), and that the order names THIS socket's verified
+      // account. Nobody carries another player's level, and a level is
+      // never the carrier's own word.
+      const now = Date.now();
+      if (!this._spend(ws, now, levelGate, 'lvbucket', 'lvdrops', 'too many level orders')) return;
+      await this._loadKey();
+      if (!this._verifyKey) return;
+      const r = await verifyOrder(m.order, this._verifyKey, { subtle: crypto.subtle, nowS: Math.floor(now / 1000), kind: 'level' });
+      if (!r.ok) return;   // silently, as the mute arm refuses
+      const cur = this._attach(ws);   // read again after the awaits: the socket may have gone
+      if (!cur?.id || !cur.sub || r.claims.s !== cur.sub) return;
+      if (cur.lv === r.claims.lv) return;   // the same level twice is one level
+      if (!this._setAttach(ws, { ...cur, lv: r.claims.lv })) return;
+      const said = JSON.stringify({ t: 'level', id: cur.id, lv: r.claims.lv });
+      for (const [other, b] of [...this._all()]) if (b.id) this._send(other, said);   // everyone in the room, the carrier included
     }
   }
 

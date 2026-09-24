@@ -47,6 +47,7 @@ import { PIXELIFY_FIVE_FACE, PIXEL_STACK } from './pixelifyFive.js';   // the en
 import { NAME_GAP_PX, namePixelSize, nameViewportScale } from '../net/remotePlayers.js';
 import { titleBadge, glyphBadges, glyphSvgNode, cssRgba } from './playerBadge.js';   // ACC3: the same table the classic pass reads - one law, two faces   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
 import { graphemesOf } from '../systems/graphemes.js';   // EMOTE1's characters, which JOURNAL1's notebook break reads too
+import { advLevelText } from '../net/advLevel.js';   // ADV1: the Adventuring Level, left of the name
 
 export const NAME_STYLE_ID = 'dagger-names-style';
 
@@ -177,6 +178,17 @@ export const NAME_CSS = `${PIXELIFY_FIVE_FACE}
    decided. An empty run takes no room and no gap. */
 .dfname-glyphs { display: flex; align-items: center; gap: .18em; }
 .dfname-glyphs:empty { display: none; }
+/* ADV1 - THE ADVENTURING LEVEL, LEFT OF THE NAME (Mac: "having their
+   level appear on the left side of character name"). A small plate in
+   the row the name and glyphs already are, so the whole run stays
+   centred on the skull; amber, so it reads as a number about the player
+   and never as a title's colour or the party's green. Empty takes no
+   room: a peer whose token carried no level (an older build) wears
+   exactly the label it wore before. */
+.dfname-lv { font-size: .78em; line-height: 1; padding: .12em .32em .1em; border-radius: .3em;
+  color: #f2c46b; background: rgba(14, 16, 19, .72); border: 1px solid rgba(242, 196, 107, .45);
+  letter-spacing: .03em; }
+.dfname-lv:empty { display: none; }
 .dfname-glyph { width: .95em; height: .95em; display: block;
   filter: drop-shadow(0 1px 0 #000) drop-shadow(0 0 2px #000); }
 /* The bubble wraps at a bounded WIDTH (15em of its own size, so it stays a bubble at every distance) and the text
@@ -246,14 +258,17 @@ export function createNameLayer({ doc = document, now = () => Date.now() } = {})
     title.className = 'dfname-title';
     const tag = doc.createElement('div');
     tag.className = 'dfname-tag';
+    // ADV1: the level FIRST in the row - left of the name, as Mac put it
+    const lv = doc.createElement('span');
+    lv.className = 'dfname-lv';
     const name = doc.createElement('span');
     name.className = 'dfname-who';
     const glyphs = doc.createElement('span');
     glyphs.className = 'dfname-glyphs';
-    tag.append(name, glyphs);
+    tag.append(lv, name, glyphs);
     node.append(bubble, title, tag);
     root.append(node);
-    return { node, bubble, title, tag, name, glyphs, worn: null };
+    return { node, bubble, title, tag, lv, name, glyphs, worn: null };
   };
 
   /** ACC3: the glyph run, REBUILT ONLY WHEN IT CHANGES. A glyph set is
@@ -356,6 +371,7 @@ export function createNameLayer({ doc = document, now = () => Date.now() } = {})
         // edge lands the gap above it.
         setStyle(tag.node, 'top', `${Math.round(p.y - NAME_GAP_PX)}px`);
         setStyle(tag.node, 'fontSize', `${namePixelSize(p.scale ?? 1, vp, hudScale).toFixed(1)}px`);
+        setText(tag.lv, advLevelText(p.lv) ?? '');   // ADV1: "Lv 12", or nothing
         setText(tag.name, p.name ?? '');
         setStyle(tag.name, 'color', cssRgba(colorOf?.(p.id)) ?? '');
         // ACC3: the title above, in ITS colour, and the glyphs beside.

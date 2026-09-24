@@ -218,6 +218,7 @@ import { UnderwaterFog } from '../render/underwaterFog.js';   // ROAD-B (b3): Un
 import { NavClient } from '../ai/navClient.js';   // ENHANCED AI 3b
 import { getPref } from '../systems/uiPrefs.js';   // ENHANCED AI 3b: the Enhanced tab's switch
 import { raiseEnemyDeath, playRareDrop, pileBody } from './corpseMarker.js';   // UL1: OnEnemyDeath; LR3: the drop chime; LOOT-STACK: a body as the loot window's tab
+import { advFoeStruck, advFoeDied } from '../net/advTrack.js';   // ADV1: a foe the player fought pays its Adventuring XP when it dies, by any hand
 import { lootPile } from '../player/lootStack.js';   // LOOT-STACK: the pile under the reticle, as the loot window's tabs
 import { rollLootRarity, pileSource, dungeonRarityTier } from '../systems/lootRarity.js';   // LR1: the item ladder over every list this host mints (a foe's through hostCombat.spawnEnemyLoot, RF2)
 
@@ -247,7 +248,7 @@ const q3 = (v) => Math.round(v * 1000) / 1000; const GENDER_BIT = ['male', 'fema
 const HIT_POS_MAX = 1e6;
 // AUDIT FOES FOE5: the most damage one peer's blow may claim. The host TRUSTS the number (it never recomputes - the
 // striker's own calc is the game's), so without a bound any joiner could one-shot every foe in the room and empty it
-// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1978); the dungeon
+// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1982); the dungeon
 // had none. Past anything a legal swing, shaft or blast can roll.
 const HIT_DMG_MAX = 10000;
 /** AUDIT WORLD3 E3: can the ONE build chain actually stand this species? Both of buildFoeAt's branches need a truthy
@@ -1669,7 +1670,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:9492 / exterior.js:3667), set
+  // host's own townTalk sink (world.js:9499 / exterior.js:3667), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -3318,7 +3319,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:14953,
+              // playerArrowHitFoe is the one copy world.js:15015,
               // exterior.js:5237 and worldModes.js:7316 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
@@ -3657,7 +3658,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // body first handed the room a list with none (WORLD4: the first reader's list is the room's). Each copy rolls its
     // own, as a chest does.
     if (r.d === 1 && !f.dead) addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') });
-    if (r.d === 1) { if (!f.dead) { f.ai.feet[0] = p.feet[0]; f.ai.feet[1] = p.feet[1]; f.ai.feet[2] = p.feet[2]; } setFoeDead(f, true); }   // B10: the corpse where the host's foe fell, not where the ease had got to
+    if (r.d === 1) { if (!f.dead) { f.ai.feet[0] = p.feet[0]; f.ai.feet[1] = p.feet[1]; f.ai.feet[2] = p.feet[2]; advFoeDied(f); } setFoeDead(f, true); }   // B10: the corpse where the host's foe fell, not where the ease had got to   // ADV1: the host's frame says it fell - it pays me if I fought it
     else if (r.d === 0 && f.dead) {   // AUDIT WORLD7/8 B3: the stream's un-death is a REBUILD - the host minted a fresh entity (the hour's respawn), and the old body stood up looted, still cursed (a frozen drain killed it again at once and sent the host the blow) and with the dead foe's counts (phantom edges); WORLD3 E2's own arm
       const idx = foes.indexOf(f);
       if (idx >= 0 && idx < _layoutFoes && !_retyping.has(idx)) retypeFoe(idx, f.mobileType, f.gender ?? null).then((ok) => { if (ok && !_authority && foes[idx]) applyFoeRecord(foes[idx], r); }).catch((e) => console.error('[online] the rebuilt foe could not take the record - the foe stands as it is:', e));   // AUDIT ONCRASH1 A1
@@ -3696,7 +3697,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!_authority || !data || typeof data !== 'object') return false;
     const i = data.i | 0, dmg = Number(data.dmg);
     const f = foes[i];
-    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1978). The number is a peer's
+    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1982). The number is a peer's
     // word and the host trusts it without recomputing, so an unbounded one let any joiner one-shot every foe in the
     // room - and, through the kill door, empty it. 10000 is past anything a legal swing, shaft or blast can roll.
     if (!f || i >= _layoutFoes || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > HIT_DMG_MAX) return false;
@@ -4188,7 +4189,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:1553's restoreWorld goes through
+    // construction (exteriorFoes.js:1556's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
@@ -4322,6 +4323,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // AUDIT 68 S19-damagefoe-dead-reentry: a corpse takes no blow. EnemyDeath runs once; the round sinks tick on
     // after the killing tick inside one window, and each re-ran the whole death arm (trap, chime, OnEnemyDeath).
     if (foe.dead) return;
+    if (fromPlayer && !peer) advFoeStruck(foe);   // ADV1: MY blow - a joiner's too, before the divert sends it to the host
     // the STRIKER's own HUD - the target frame (PX30) and the concealed reveal (ECV1) - before the divert (AUDIT
     // WORLD2 B6: a joiner's blow never marked) and never for a peer's blow applied here (C4: a peer's poke across the
     // room hijacked the host's target frame)
@@ -4430,6 +4432,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         hudText.add(SOUL_TRAP_TEXT.trapSuccess);
       }
       foe.dead = true;
+      advFoeDied(foe);   // ADV1: whoever struck last - it pays me if a blow of mine is recent
       // E-slice: EnemyDeath:132-136 - the targeting foe's death
       // clears the alert (survivors re-raise it next update).
       // EnemyDeath:131-136 gates on `senses.Target ==

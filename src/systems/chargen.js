@@ -3,6 +3,7 @@ import { spellPointsFor } from '../combat/formulas.js';   // U10
 import { mintCharacterId } from './characterId.js';   // CHARID1
 import { CLASSIC_GAME_START_TIME } from './gameDate.js';   // AUDIT 23: the skill-check anchor
 import { liveStat, STAT_KEYS_ORDER, FATIGUE_MULTIPLIER } from './statMods.js';   // wave 28: MaxMagicka reads LiveIntelligence
+import { advHpOf, advMpOf } from './advLayer.js';   // ADV1: the Adventuring Level's online health and magicka, on top of both live maximums
 
 // Character creation (Systems S3). Verbatim ports from DFU
 // StatsRollout.cs / SkillsRollout.cs / DaggerfallSkills.cs /
@@ -313,9 +314,12 @@ export function defineLiveMaxHealth(entity) {
     configurable: true,
     enumerable: true,
     get() {
+      // ADV1: the Adventuring Level's online health ON TOP of the stored value (systems/advLayer.js) - never in it, so a
+      // level-up (which adds to `rawMaxHealth`) and the save (which keeps it) never carry the layer
+      const top = stored + advHpOf(this);
       const limiter = this.maxHealthLimiter;
-      if (!(limiter >= 1)) return stored;   // "Limiter must be 1 or greater"
-      return limiter < stored ? limiter : stored;
+      if (!(limiter >= 1)) return top;   // "Limiter must be 1 or greater"
+      return limiter < top ? limiter : top;
     },
     set(v) { stored = v; },
   });
@@ -364,7 +368,9 @@ export function defineLiveMaxMagicka(entity) {
         ? spellPoints(liveStat(this, 'intelligence'),
           spellPointMultiplier(career.abilityFlagsAndSpellPointsBitfield ?? 0x1000))
         : stored;
-      const effective = raw + (this.maxMagickaModifier ?? 0);
+      // ADV1: and the Adventuring Level's online magicka, a term of the sum the magic round never rewrites
+      // (systems/advLayer.js) - inside the floor, so a magery that makes the character unable still leaves 0
+      const effective = raw + (this.maxMagickaModifier ?? 0) + advMpOf(this);
       return effective < 0 ? 0 : effective;
     },
     set(v) { stored = v; },

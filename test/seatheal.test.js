@@ -11,6 +11,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import * as acorn from 'acorn';
 import { validFoeRecord } from '../src/net/wire.js';
+import { advFoeStruck, advFoeDied } from '../src/net/advTrack.js';   // ADV1: the kill door's stamps, in the harness's scope
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 const D = rd('src/scenes/dungeonContext.js');
@@ -53,7 +54,7 @@ function joiner() {
   `;
   // CORPSE-FOOD (2026-09-23): the stream's first word of a death rolls this joiner's copy of the body its food - stood
   // down here, where the seat is the subject (survtiers3.test.js mounts that arm)
-  const ctx = new Function('__s', `with (__s) { ${ctxBody} }`)(scoped({ foes, validFoeRecord, retypeFoe: (...a) => hooks.retype(...a), console, addCorpseFood: () => 0, liveStat: () => 50, playerEntity: null }));
+  const ctx = new Function('__s', `with (__s) { ${ctxBody} }`)(scoped({ foes, validFoeRecord, retypeFoe: (...a) => hooks.retype(...a), console, addCorpseFood: () => 0, liveStat: () => 50, playerEntity: null, advFoeStruck, advFoeDied }));
 
   const applyDungeonFoesLine = mustMatch(M, /applyDungeonFoes\(id, data[^)]*\) \{[^\n]*\},/, 'worldModes.applyDungeonFoes');
   const setDungeonAuthorityLine = mustMatch(M, /setDungeonAuthority\(on\) \{[^\n]*\},/, 'worldModes.setDungeonAuthority');

@@ -12,8 +12,8 @@
   {
     "name": "ACC1d-2-the-vouched-name-comes-off-the-FRAME",
     "file": "server/src/index.js",
-    "old": "    return { name: r.claims.n, kind: r.claims.k, subject: r.claims.s, title: r.claims.t, glyphs: r.claims.g, mu };",
-    "new": "    return { name: m.name, kind: r.claims.k, subject: r.claims.s, title: r.claims.t, glyphs: r.claims.g, mu };",
+    "old": "    return { name: r.claims.n, kind: r.claims.k, subject: r.claims.s, title: r.claims.t, glyphs: r.claims.g, mu, lv: r.claims.lv };",
+    "new": "    return { name: m.name, kind: r.claims.k, subject: r.claims.s, title: r.claims.t, glyphs: r.claims.g, mu, lv: r.claims.lv };",
     "tests": [
       "test/identitytoken.test.js"
     ],

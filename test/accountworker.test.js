@@ -94,7 +94,9 @@ test('ACC1b: the migration is the real schema, and applying it twice changes not
   // way (0007): its own table beside the row, never a column on it.
   // DUEL1 added `duel_results` the same way (0008): one row a duel that
   // named a loser - the record is COUNTED off it, no column on the row.
-  assert.deepEqual(tables, ['duel_results', 'letters', 'players', 'rate_limits', 'saves', 'sessions']);
+  // ADV1 added `adv_tracks` the same way (0009): one row a character's
+  // Adventuring Level total - the level itself is DERIVED from it.
+  assert.deepEqual(tables, ['adv_tracks', 'duel_results', 'letters', 'players', 'rate_limits', 'saves', 'sessions']);
   // ACC1b IS IDENTITY ALONE, and the PLAYERS row still is: the save
   // arrived beside it, never inside it.
   const cols = db._raw.prepare('PRAGMA table_info(players)').all().map((c) => c.name);
@@ -109,7 +111,12 @@ test('ACC1b: the migration is the real schema, and applying it twice changes not
   // ACC4 added TWO - `played_s` and `played_at`, the one fact about an
   // account no other column could derive: how long it has been played,
   // credited by the service's clock (src/net/playClock.js says why).
-  assert.deepEqual(cols.sort(), ['created_at', 'email', 'guest_name', 'handle', 'handle_lc', 'id',
+  // ADV1 added THREE - the ACCOUNT's hour of Adventuring XP (`adv_hour`,
+  // `adv_hour_xp`) and what the last report took out of it
+  // (`adv_last_credit`, read back by the same UPDATE's RETURNING): the
+  // hour's bound is the account's across all its characters, so it lives
+  // on the account's row. No level and no total is a column here.
+  assert.deepEqual(cols.sort(), ['adv_hour', 'adv_hour_xp', 'adv_last_credit', 'created_at', 'email', 'guest_name', 'handle', 'handle_lc', 'id',
     'last_seen', 'muted_by', 'muted_until', 'password', 'played_at', 'played_s', 'recovery_hash', 'registered_at', 'title']);
   assert.ok(!cols.some((c) => /founder|developer|sprout|glyph|grant/i.test(c)), `a grant became a column: ${cols}`);
   // SAVES AND PROVIDER LINKS ARE STILL NOT HERE. They arrive as their

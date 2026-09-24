@@ -3159,3 +3159,75 @@ five guests gave one account fifty wins in a quarter of an hour, with no duel.
 - A refused report says which bound: `why` is 'guest', 'draw', 'gap', 'pair' or 'winner', and the client's line says
   it (`net/duelRecord.js duelUncountedText`; a draw says nothing more, the duel said it).
 - Pinned in `test/duel_record.test.js` over the real migrations; `tools/mutants/auditduel1.json` A1/B5.
+
+## ADV1 — the Adventuring Level (2026-09-24)
+
+Mac, bringing a friend's MMORPG pillars ("The Hybrid Leveling System ... a traditional EverQuest-style Adventuring
+Level ... which dictates total health, magicka"): "What if the leveling system was something seperate unique to online
+but compatible". Asked three things, Mac answered: the online health and magicka go "On top" of Daggerfall's, the curve
+is a long "Grind", and offline play earns "No" Adventuring XP - "Plus having their level appear on the left side of
+character name and profile main menu + ingame profile".
+
+- **What it is.** A second level PER CHARACTER that exists only online. The Daggerfall character - its level, skills,
+  health, magicka and the save file - is untouched offline and online, so a character goes back and forth freely. The
+  track is kept by the account service under the id the character's own save carries (`systems/characterId.js`, the
+  id the cloud saves are filed under), never in the save.
+- **The curve** (`src/net/advLevel.js`, which both ends import). EverQuest's shape in integer arithmetic, so the service,
+  the relay and every browser agree on every boundary: the total to reach level L is
+  `10 * floor((n^3 * (n + 10) + 300n) / 30)` with n = L - 1. Level 2 at 100, 10 at 5,510, 20 at 68,200, 30 at 319,950,
+  50 (the cap) at 2,318,660 - the first levels in minutes, level 50 in hundreds of hours.
+- **What earns it, online only.** A foe is worth ten to its own level (clamped 1..30); a quest that ends in success is
+  worth 100 + 40 a Daggerfall level (clamped at 30), once per quest. A party earns MORE a head, never a share: every
+  partymate in the room earns the whole kill plus 10% a head beyond the first, up to the party's eight seats (the
+  pillar's "Group play is the prime source"). The city watch and townspeople pay nothing - a kill the law calls murder
+  earns nothing.
+- **A foe you fought** (`src/net/advTrack.js`). A foe pays every player who struck it in the last 30 s
+  (`ADV_ASSIST_MS`) when it dies, whoever struck the last blow. One rule for every door a kill comes through, because the
+  doors do not agree on who killed what: a dungeon's host never tells a joiner whose blow was last, so "the killing
+  blow" would have paid no joiner anything in the one place parties fight most. Both foe pools stamp the player's own
+  blows (`exteriorFoes.js`/`dungeonContext.js` `damageFoe`, before a puppet's divert) and every death asks - the
+  local death arm, an outdoor copy's `puppetDie`, a dungeon joiner's stream death. The stamps live in a WeakMap, never
+  on a foe record, so nothing streams or saves them.
+- **Whose word it is.** XP is the client's word - there is no clock that could measure a kill - so the SERVICE holds
+  the bounds (`server-account/src/adventuring.js reportAdvXp`): a report carries 1..5,000, an ACCOUNT earns at most
+  20,000 a clock hour across all its characters (a second character is not a second allowance), and an account keeps
+  at most 60 tracks. The hour is spent by ONE `UPDATE ... RETURNING` that also writes what it credited
+  (`adv_last_credit`), so two reports in flight never spend the same remainder (ACC4's `creditPlay` law). A report
+  the hour spent is credited 0 and answered, never refused; a track at the cap spends none of the hour. The honest
+  cost, said plainly: a modified client can report XP it did not earn, up to the hourly bound - about five days of
+  doing nothing else to reach the cap.
+- **The level is the service's.** It is never a column - derived from the total wherever it is read - and it rides
+  the identity token: `/v1/auth/token { character }` signs that character's level in as `lv` (1 before it earns
+  anything; none when the mint names no character, as every older build's does). The relay stamps it beside the
+  title and glyphs (`net/wire.js badged`) on every welcome row, join and roster, so nobody's level over their head is
+  their own word. A level that RISES mid-session comes back from `/v1/adv/xp` with a signed LEVEL ORDER
+  (`mintLevelOrder`, `{o:'level', s, lv}`); the client carries it into every room it is in (`{t:'level', order}`,
+  world108), and the relay takes it only from a socket whose verified account it names and fans `{t:'level', id, lv}`.
+  The one thing the client chooses is WHICH of its own characters it names at the mint - the relay cannot see which
+  character is being played, so a player with two characters could show the other's level. `verifyOrder` now asks for
+  an order's KIND by name: a player's own level order carried to the mute arm would otherwise have verified and read as
+  `mu` undefined - an unmute.
+- **"On top" of Daggerfall's** (`src/systems/advLayer.js`). The level adds 3 health and 2 magicka a level past the
+  first (level 50: +147 and +98), as two plain entity fields the live maximums read over everything they already sum
+  (`systems/chargen.js` `defineLiveMaxHealth`/`defineLiveMaxMagicka`) - so every heal, rest, bar and clamp reads the
+  online value, a Daggerfall level-up adds to the stored health and never to the layer, the lycanthrope's limiter still
+  caps the whole, and a magery that makes the character unable still leaves 0. Current health and magicka keep their
+  FRACTION as the layer goes on or rises. A save written online keeps the vitals as they would stand without the layer,
+  each at its fraction (`save.js snapshotPlayer` through `offlineVitals`); neither field is on the save's whitelist.
+  The layer is only ever put on on the online page, by the level the token or the service answered, and only upward.
+- **The level left of the name.** Over a head, a small amber plate ahead of the name in the name row
+  (`ui/nameLayer.js .dfname-lv`, empty and taking no room for a peer with no level) and the same words leading the
+  bitmap face's run; the plaque over a player leads with it; the Inspect card puts it left of the name with
+  "Adventuring Level N" on hover (the card's own "Level N" line is still their Daggerfall level); the main menu's
+  account card puts the level of the character that most recently earned Adventuring XP left of the account name and adds an
+  Adventuring row per character with how far into its level it is ("Mara Venn - Level 10, 490 / 2,150 XP to level 11").
+  There is no in-game profile of oneself (the Inspect card is only for others), so a rise is said on the HUD: "Your
+  Adventuring Level is now N."
+- **Not in this slice:** gear tiers gated by the level (there is no elite gear yet), elite packs and dungeons, and a
+  bar for the XP in the world.
+- `server-account/migrations/0009_adventuring.sql` (`adv_tracks`; the account's hour on `players`), `adventuring.js`,
+  `/v1/adv/xp`, the token's `level`, `account.adv` on `/v1/account`; the service is `acct9`. `src/net/identityToken.js`
+  (`ADV_LEVEL_MAX`, `lv`, the level order, `verifyOrder`'s kind), `net/wire.js` (`badged`'s `lv`, `readLevel`, the
+  level frame, world108), `server/src/index.js` (the stamp and the level arm), `net/online.js` (`levelOf`,
+  `sendLevelOrder`), `net/accountClient.js` (the minter names the character; `accountAdv`), `scenes/world.js` (the
+  tracker, the layer, the plaque). Pinned: `test/adv1.test.js` (17). `tools/mutants/adv1.json` (35, all dead).

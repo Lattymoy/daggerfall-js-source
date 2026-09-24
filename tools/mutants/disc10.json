@@ -578,8 +578,8 @@
   {
     "name": "DISC10-E-L4-maxhealth-ignores-the-limiter",
     "file": "src/systems/chargen.js",
-    "old": "      if (!(limiter >= 1)) return stored;   // \"Limiter must be 1 or greater\"\n      return limiter < stored ? limiter : stored;",
-    "new": "      return stored;",
+    "old": "      if (!(limiter >= 1)) return top;   // \"Limiter must be 1 or greater\"\n      return limiter < top ? limiter : top;",
+    "new": "      return top;",
     "tests": [
       "test/disc10_lycan.test.js"
     ]

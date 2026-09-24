@@ -29,7 +29,7 @@
  *  reason: a deploy that did not happen looks exactly like one that
  *  did. Kept in step with ACCOUNT_VERSION in wrangler.toml, which
  *  test/accountworker.test.js holds. */
-export const ACCOUNT_VERSION = 'acct8';   // acct8: DUEL1's duelling record; acct3: ACC3's titles and glyphs; acct4: ACC4's time played; acct5: MOD1's moderation; acct6: MAIL1's letters; acct7: TITLE-N's Dungeon Master and Patreon tiers
+export const ACCOUNT_VERSION = 'acct9';   // acct9: ADV1's Adventuring Level; acct8: DUEL1's duelling record; acct3: ACC3's titles and glyphs; acct4: ACC4's time played; acct5: MOD1's moderation; acct6: MAIL1's letters; acct7: TITLE-N's Dungeon Master and Patreon tiers
 
 /** A body bigger than this is not a request this service has. Read
  *  BEFORE the JSON is parsed, so a megabyte of nothing costs nothing. */
@@ -62,7 +62,7 @@ export const SAVE_NAME_MAX = 64;
  *  that is the shape of a PEER id, which is a different thing that
  *  happens to look similar, and reusing it would tie a save's filing to
  *  a bound the online arc is free to move. */
-const CHAR_ID_RE = /^[A-Za-z0-9_-]{4,64}$/;
+export const CHAR_ID_RE = /^[A-Za-z0-9_-]{4,64}$/;
 export const SAVE_PARTS = Object.freeze(['data', 'shot']);
 
 export function savePathOf(path) {
@@ -137,6 +137,9 @@ export const ROUTES = new Set([
   // DUEL1: the duelling record - the loser's own report, and any
   // account's two counts for the Inspect card. Both behind a session.
   '/v1/duel/loss', '/v1/duel/record',
+  // ADV1: the Adventuring Level - what one of the caller's characters
+  // earned online. Behind a session; the level itself rides the token.
+  '/v1/adv/xp',
 ]);
 
 /** The routes a caller reaches WITHOUT a credential. Everything else

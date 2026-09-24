@@ -28,6 +28,7 @@ import { itemLongName } from '../systems/itemInfo.js';
 import { raceDisplayName } from '../systems/talkSession.js';
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { duelRecordText } from '../net/duelRecord.js';   // DUEL1: the duelling record's words, the account card's own
+import { advLevelText } from '../net/advLevel.js';   // ADV1: the Adventuring Level, left of the name
 
 export const PROFILE_STYLE_ID = 'dagger-profile-style';
 
@@ -100,8 +101,13 @@ export function profileView({ name = null, peer = null, look = null, card = null
   const worn = card?.look ?? look ?? null;
   const race = typeof worn?.race === 'string' ? raceDisplayName(worn.race) : null;
   const klass = typeof worn?.class === 'string' ? worn.class : null;
+  // ADV1 (Mac: "having their level appear on the left side of character name and ... ingame profile"): the level the
+  // relay stamped off their signed token - never the card's own word (the card's "Level" is their Daggerfall level)
+  const lv = Number.isSafeInteger(peer?.lv) ? peer.lv : null;
   return {
     name: who,
+    level: advLevelText(lv),
+    levelTitle: advLevelText(lv) ? `Adventuring Level ${lv}` : null,
     title: titleBadge(peer),
     glyphs: glyphBadges(peer),
     line: [card ? `Level ${card.level}` : null, race, klass].filter(Boolean).join(' '),
@@ -135,6 +141,8 @@ ${PIXELIFY_FIVE_FACE}
 .dfprofile-title { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; line-height: 1.4; }
 .dfprofile-name { display: inline-flex; align-items: center; gap: 6px; font-size: 19px; line-height: 1.3; overflow-wrap: anywhere; }
 .dfprofile-glyph { width: 16px; height: 16px; flex: none; }
+.dfprofile-lv { flex: none; font-size: 13px; line-height: 1.3; padding: 1px 6px; border-radius: 4px; color: #f2c46b;
+  background: rgba(242, 196, 107, .1); border: 1px solid rgba(242, 196, 107, .45); }
 .dfprofile-line { font-size: 13px; color: var(--dim, #8b8578); line-height: 1.4; }
 .dfprofile-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 14px; }
 .dfprofile-h { font-size: 11px; color: var(--dim, #8b8578); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
@@ -196,6 +204,7 @@ export function createProfileWindow({ canOpen = () => true, onOpen = null, onClo
     if (v.title) { const t = el('div', 'dfprofile-title', v.title.text); t.style.color = cssRgba(v.title.rgba) ?? ''; head.append(t); }
     const nm = el('div', 'dfprofile-name');
     nm.id = 'dfprofile-name-node';
+    if (v.level) { const lv = el('span', 'dfprofile-lv', v.level); if (v.levelTitle) lv.title = v.levelTitle; nm.append(lv); }   // ADV1: left of the name
     nm.append(el('span', 'dfprofile-nametext', v.name));
     for (const g of v.glyphs) { const svg = glyphSvgNode(doc, g, 'dfprofile-glyph'); if (!svg) break; nm.append(svg); }
     head.append(nm);

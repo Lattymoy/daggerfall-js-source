@@ -202,6 +202,18 @@ export const GLYPHS = Object.freeze(['sprout', 'dev', 'mod', 'dm', 'disciple', '
  *  and either way the verifier says no. */
 export const GLYPHS_MAX = GLYPHS.length;
 
+/** ADV1 (2026-09-24, Mac: "What if the leveling system was something
+ *  seperate unique to online but compatible" ... "Plus having their level
+ *  appear on the left side of character name"): THE ADVENTURING LEVEL'S
+ *  CAP, and it lives HERE because the level rides the token (`lv`) and
+ *  the relay stamps it beside the name, exactly as a title - so the
+ *  verifier's bound is the vocabulary both ends share, and the curve that
+ *  reaches it (src/net/advLevel.js) reads it from here. */
+export const ADV_LEVEL_MAX = 50;
+
+/** A level a token or an order may carry: a whole number from 1 to the cap. */
+export const levelIssuable = (lv) => Number.isSafeInteger(lv) && lv >= 1 && lv <= ADV_LEVEL_MAX;
+
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 
@@ -239,13 +251,15 @@ export function nameIsIssuable(name) {
 /**
  * The claims, as they ride. Short keys because this travels in a hello
  * on every connection and the payload is base64 on top.
- * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number, t?: string, g?: string[], mu?: number}} Claims
+ * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number, t?: string, g?: string[], mu?: number, lv?: number}} Claims
  *   s  the account id          n  the display name
  *   k  guest or linked         i  issued at, epoch seconds
  *   e  expires at, epoch seconds
  *   t  the title WORN, absent for none (ACC3)
  *   g  the glyphs TRUE of this player, absent for none (ACC3)
  *   mu muted until, epoch seconds, absent when not muted (MOD1)
+ *   lv the Adventuring Level of the character the client named at the
+ *      mint, absent when it named none (ADV1)
  */
 
 /** The account id's own shape - the same one `net/social.js` already
@@ -280,6 +294,9 @@ export function claimsValid(c, { maxTtlS = MAX_TTL_S } = {}) {
   // mute that is already over is not a mute and the minter must not say
   // one is.
   if (c.mu !== undefined && (!Number.isSafeInteger(c.mu) || c.mu <= c.i)) return false;
+  // ADV1: the level, optional the same way - absent from a token minted
+  // without a character (an older build) - and within the cap when there.
+  if (c.lv !== undefined && !levelIssuable(c.lv)) return false;
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i) return false;                 // a token that is born dead
   if (c.e - c.i > maxTtlS) return false;        // a minter that got greedy
@@ -290,7 +307,7 @@ export function claimsValid(c, { maxTtlS = MAX_TTL_S } = {}) {
  * MINT. The account service's half - it holds the private key and
  * nothing else does.
  *
- * @param {{s:string, n:string, k:'guest'|'linked', t?:string, g?:string[], mu?:number}} who
+ * @param {{s:string, n:string, k:'guest'|'linked', t?:string, g?:string[], mu?:number, lv?:number}} who
  * @param {CryptoKey} privateKey  an Ed25519 private key
  * @param {{subtle: SubtleCrypto, nowS: number, ttlS?: number}} env
  * @returns {Promise<string>}
@@ -304,6 +321,7 @@ export async function mintToken(who, privateKey, { subtle, nowS, ttlS = MAX_TTL_
   if (who?.t !== undefined) claims.t = who.t;
   if (who?.g !== undefined && who.g.length) claims.g = who.g;
   if (who?.mu !== undefined) claims.mu = who.mu;   // MOD1: only while muted - an unmuted player mints the bytes they always did
+  if (who?.lv !== undefined) claims.lv = who.lv;   // ADV1: only when the client named its character
   // A BAD CLAIM SET IS REFUSED AT THE MINTER. The verifier would refuse
   // it too, but at the player's machine, where the only thing anyone
   // learns is that online is broken.
@@ -401,21 +419,28 @@ async function openSealed(token, publicKey, { subtle, nowS, skewS, valid }) {
  * between "a moderator muted you" and "you are now called that".
  */
 
-/** What an order may say. One word today; a closed list so a relay a
- *  build behind refuses a kind it does not know rather than guessing. */
-export const ORDER_KINDS = Object.freeze(['mute']);
+/** What an order may say - a closed list, so a relay a build behind
+ *  refuses a kind it does not know rather than guessing. ADV1 adds the
+ *  second: 'level', an Adventuring Level that ROSE while its player was
+ *  already in a room, carried in by that player's own client (the token
+ *  that let them in said the level they had then). */
+export const ORDER_KINDS = Object.freeze(['mute', 'level']);
 /** An order lives a minute - long enough to be carried to every room
  *  the moderator holds, short enough that a leaked one is stale before
  *  anyone could use it for anything but what it already said. */
 export const ORDER_TTL_S = 60;
 
-/** `{o:'mute', s, mu, i, e}` - `mu` 0 is "unmuted". */
+/** `{o:'mute', s, mu, i, e}` - `mu` 0 is "unmuted" - or `{o:'level', s,
+ *  lv, i, e}` (ADV1). Each kind carries its OWN field and never the
+ *  other's, so a level order can never be read as a mute that says
+ *  nothing, nor a mute as a level. */
 export function orderValid(c) {
   if (!c || typeof c !== 'object' || Array.isArray(c)) return false;
   if (!ORDER_KINDS.includes(c.o)) return false;
   if (c.n !== undefined || c.k !== undefined) return false;   // an identity's fields: never on an order
   if (typeof c.s !== 'string' || !ID_RE.test(c.s)) return false;
-  if (!Number.isSafeInteger(c.mu) || c.mu < 0) return false;
+  if (c.o === 'mute' && (!Number.isSafeInteger(c.mu) || c.mu < 0 || c.lv !== undefined)) return false;
+  if (c.o === 'level' && (!levelIssuable(c.lv) || c.mu !== undefined)) return false;
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > ORDER_TTL_S) return false;
   return true;
@@ -429,9 +454,22 @@ export async function mintOrder({ s, mu }, privateKey, { subtle, nowS, ttlS = OR
   return sealClaims(claims, privateKey, subtle);
 }
 
-/** VERIFY AN ORDER - the relay's half. Same ladder, same answers. */
-export async function verifyOrder(token, publicKey, { subtle, nowS, skewS = SKEW_S }) {
-  return openSealed(token, publicKey, { subtle, nowS, skewS, valid: orderValid });
+/** ADV1: MINT A LEVEL ORDER - `lv` the Adventuring Level `s`'s character
+ *  has now reached, signed by the service that derived it. */
+export async function mintLevelOrder({ s, lv }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
+  if (!Number.isSafeInteger(nowS)) throw new TypeError('mintLevelOrder needs an integer epoch-seconds clock');
+  const claims = { o: 'level', s, lv, i: nowS, e: nowS + ttlS };
+  if (!orderValid(claims)) throw new TypeError('mintLevelOrder refused an order it could not verify');
+  return sealClaims(claims, privateKey, subtle);
+}
+
+/** VERIFY AN ORDER - the relay's half. Same ladder, same answers - and
+ *  the KIND is the caller's to name (ADV1): a room's mute arm asks for a
+ *  mute and its level arm for a level, so an order of one kind carried to
+ *  the other's door is refused there, never read as something it is not. */
+export async function verifyOrder(token, publicKey, { subtle, nowS, skewS = SKEW_S, kind }) {
+  if (!ORDER_KINDS.includes(kind)) return { ok: false, why: 'kind' };
+  return openSealed(token, publicKey, { subtle, nowS, skewS, valid: (c) => orderValid(c) && c.o === kind });
 }
 
 /** Import a raw 32-byte Ed25519 public key - the shape a relay carries

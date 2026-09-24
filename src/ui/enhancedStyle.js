@@ -1099,6 +1099,12 @@ ${badgeCss()}
   text-transform: uppercase; color: var(--dim);
 }
 .card ul.acctfacts .acctval { flex: 1 1 auto; min-width: 0; color: var(--bone); font-size: 15px; }
+/* ADV1 - THE ADVENTURING LEVEL, LEFT OF THE NAME on the account card: the
+   plate the name over a head wears (ui/nameLayer.js .dfname-lv), at the
+   heading's scale. */
+.card h3 .acctlv { display: inline-block; vertical-align: middle; font-size: 0.6em; line-height: 1.2;
+  padding: 1px 6px; border-radius: 4px; color: #f2c46b; background: rgba(242, 196, 107, 0.1);
+  border: 1px solid rgba(242, 196, 107, 0.45); letter-spacing: 0.04em; margin-right: 0.35em; }
 
 /* ═══ THE RECOVERY CODE ═══════════════════════════════════════════
    THE ONE MOMENT THIS STRING EXISTS. Email is completely optional

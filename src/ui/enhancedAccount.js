@@ -29,6 +29,7 @@
 import { STAGES, FIELDS, FIELD_SPEC } from './accountFlow.js';
 import { TITLE_TEXT, GLYPH_PATH, GLYPH_STROKE, glyphBadges, badgeClass } from './playerBadge.js';   // ACC3c: the SAME table the name over a head reads, so the picker shows what a player will actually wear - the COLOUR is the skin's (this card may not style itself, and a pin holds that)
 import { duelRecordText } from '../net/duelRecord.js';   // DUEL1: the account card's K/D row
+import { advLevelText, advProgressText } from '../net/advLevel.js';   // ADV1: the Adventuring Level, left of the name and in its rows
 
 /** COPY LIVES IN ONE TABLE, so a stage cannot be drawn with a heading
  *  from one slice and a paragraph from another. Keyed by stage, and a
@@ -257,7 +258,19 @@ export function accountCard(doc, flow, { onClose = null } = {}) {
     // a different sentence; "Account" over "Your account" is the same
     // one twice.
     if (copy.tag !== 'Account') root.append(el('span', 'tag', copy.tag));
-    root.append(el('h3', null, stage === 'in' ? (flow.account?.name ?? copy.title) : copy.title));
+    // ADV1 (Mac: "having their level appear on the left side of character name and profile main menu"): the
+    // Adventuring Level of the character that most recently earned Adventuring XP, left of the name - the service's
+    // tracks come most recently earned first. None for an account that has not earned any yet, or a service before it.
+    const tracks = stage === 'in' && Array.isArray(flow.account?.adv) ? flow.account.adv : [];
+    const heading = stage === 'in' ? (flow.account?.name ?? copy.title) : copy.title;
+    const lvText = advLevelText(tracks[0]?.level);
+    if (lvText) {
+      const head = el('h3', null, null);
+      const chip = el('span', 'acctlv', lvText);
+      chip.title = `Adventuring Level ${tracks[0].level}`;
+      head.append(chip, el('span', 'acctname', heading));
+      root.append(head);
+    } else root.append(el('h3', null, heading));
     if (copy.blurb) root.append(el('p', 'meta', copy.blurb));
 
     // ── THE SIGNED-IN FACTS ─────────────────────────────────────────
@@ -287,6 +300,11 @@ export function accountCard(doc, flow, { onClose = null } = {}) {
       // it won and lost (net/duelRecord.js says whose word each result is). A service from before it says nothing.
       const duels = duelRecordText(flow.account.duels);
       if (duels) row('Duels', duels);
+      // ADV1: each character's Adventuring Level and how far into it they are - online's own level, never the save's
+      for (const t of tracks) {
+        if (!Number.isSafeInteger(t?.level) || !Number.isSafeInteger(t?.xp)) continue;
+        row('Adventuring', `${typeof t.name === 'string' && t.name ? t.name : 'A character'} - Level ${t.level}, ${advProgressText(t.xp)}`);
+      }
       root.append(rows);
       wardrobe();
       if (!flow.account.handle) {

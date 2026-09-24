@@ -40,6 +40,7 @@
 import { HANDLE_RE } from './handleShape.js';
 import { LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTER_LINES_MAX, LETTERS_SENT_MAX, LETTERS_PAIR_MAX } from './letterLaw.js';   // MAIL1: the letter's bounds, in the refusals' own sentences
 import { MUTE_RANGE_TEXT } from './moderation.js';   // AUDIT 68 S14-mute-range-text-duplicated: the mute's bound in the refusal's sentence, from its home
+import { ADV_TRACKS_MAX } from './advLevel.js';   // ADV1: the tracks' bound, in its refusal's own sentence
 
 /** WHERE THE SERVICE IS. Its own constant beside the relay's
  *  DEFAULT_SERVER (net/online.js), because they are two Workers and
@@ -143,6 +144,11 @@ export const REFUSALS = Object.freeze({
   'no-body': 'A letter needs some words.',
   'body-long': `A letter is at most ${LETTER_BODY_MAX} characters.`,
   'body-lines': `A letter is at most ${LETTER_LINES_MAX} lines.`,
+  // ADV1, the Adventuring Level. Each is a build or a device the service does not believe, never a player's mistake:
+  // the words say what happened, since there is nothing to retype.
+  'adv-character': 'The account service could not tell which character earned that.',
+  'adv-xp': 'The account service refused that experience report.',
+  'adv-full': `This account already has an Adventuring Level for ${ADV_TRACKS_MAX} characters, the most it keeps.`,
   server: 'The account service had a problem. Try again.',
   offline: 'Could not reach the account service. Check your connection.',
 });
@@ -269,7 +275,7 @@ export const muteAccount = (io, target, minutes) => call(io, '/v1/mod/mute', { t
  *  holds - this side does not get to say what goes in it, which is the
  *  whole point of the seam. A service with no signing pair answers
  *  `no-signing-key` rather than minting something the relay refuses. */
-export const mintIdentity = (io) => call(io, '/v1/auth/token', {});
+export const mintIdentity = (io, character = null) => call(io, '/v1/auth/token', character ? { character } : {});   // ADV1: naming the character brought online signs its Adventuring Level in
 
 // ── THE SESSION ON THIS DEVICE ──────────────────────────────────────
 
@@ -376,21 +382,29 @@ export function forgetSession(storage) {
  * The return stays the token alone: the session's contract with this
  * function is a string, and a pin holds it.
  *
+ * ADV1: `character` answers the id of the character being brought
+ * online (systems/characterId.js), read at EACH mint - the service signs
+ * that character's Adventuring Level into the token, and `who.level`
+ * carries it back. A getter that answers nothing mints as before.
+ *
  * @param {object} io
  * @param {(url: string, init: object) => Promise<any>} io.fetch
  * @param {any} io.storage  appStorage() in the app, a Map in a test
- * @param {((who: {name: string, kind: string, title: string|null, glyphs: string[]}) => void)|null} [io.onIssued]
+ * @param {((who: {name: string, kind: string, title: string|null, glyphs: string[], level: number|null}) => void)|null} [io.onIssued]
+ * @param {(() => string|null)|null} [io.character]
  * @returns {() => Promise<string|null>}
  */
-export function accountTokenMinter({ fetch, storage, onIssued = null }) {
+export function accountTokenMinter({ fetch, storage, onIssued = null, character = null }) {
   return async () => {
     const session = storedSession(storage);
     if (!session) return null;
-    const answer = await mintIdentity({ fetch, base: serviceBase(storage), secret: session.secret });
+    let named = null;
+    try { named = character?.() ?? null; } catch { named = null; }   // a seam that throws costs the level, never the hello
+    const answer = await mintIdentity({ fetch, base: serviceBase(storage), secret: session.secret }, typeof named === 'string' && named ? named : null);
     if (answer.ok) {
       const token = typeof answer.data?.token === 'string' ? answer.data.token : null;
       if (token) {
-        const who = { name: answer.data.name, kind: answer.data.kind, title: answer.data.title ?? null, glyphs: Array.isArray(answer.data.glyphs) ? answer.data.glyphs : [] };
+        const who = { name: answer.data.name, kind: answer.data.kind, title: answer.data.title ?? null, glyphs: Array.isArray(answer.data.glyphs) ? answer.data.glyphs : [], level: Number.isSafeInteger(answer.data.level) ? answer.data.level : null };
         adoptIdentity(storage, who);
         // A THROW HERE IS THE HOST'S AND IS NOT THE PLAYER'S. The token
         // is good and the connection is the thing that matters; a
@@ -448,6 +462,24 @@ export function accountDuels({ fetch, storage }) {
   return {
     lost: async (winner) => { const i = io(); return i ? reportDuelLoss(i, winner) : { ok: false, error: 'no-session' }; },
     record: async (id) => { const i = io(); return i ? readDuelRecord(i, id) : { ok: false, error: 'no-session' }; },
+  };
+}
+
+/** ADV1: what one of this account's characters earned online - `{ character, xp, level, credited, rose, order }`. */
+export const reportAdvXp = (io, character, xp, name = null) => call(io, '/v1/adv/xp', { character, xp, name });
+
+/**
+ * ADV1: THE ADVENTURING LEVEL'S REPORT, bound to this device's stored
+ * session (read at each call, as the beat reads it). With no session
+ * there is no account to earn for: `{ ok: false, error: 'no-session' }`,
+ * never a knock.
+ */
+export function accountAdv({ fetch, storage }) {
+  return {
+    report: async (character, xp, name = null) => {
+      const s = storedSession(storage);
+      return s ? reportAdvXp({ fetch, base: serviceBase(storage), secret: s.secret }, character, xp, name) : { ok: false, error: 'no-session' };
+    },
   };
 }
 

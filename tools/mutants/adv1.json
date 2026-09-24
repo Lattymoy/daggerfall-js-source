@@ -1,0 +1,317 @@
+[
+  {
+    "name": "ADV1-curve-off-by-one-at-its-boundary",
+    "file": "src/net/advLevel.js",
+    "old": "  while (L < ADV_LEVEL_MAX && advXpForLevel(L + 1) <= x) L++;",
+    "new": "  while (L < ADV_LEVEL_MAX && advXpForLevel(L + 1) < x) L++;",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-curve-cap-unread",
+    "file": "src/net/advLevel.js",
+    "old": "  const L = Math.max(1, Math.min(ADV_LEVEL_MAX, Math.trunc(Number(level) || 1)));",
+    "new": "  const L = Math.max(1, Math.trunc(Number(level) || 1));",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-curve-flat",
+    "file": "src/net/advLevel.js",
+    "old": "  return 10 * Math.floor((n * n * n * (n + 10) + 300 * n) / 30);",
+    "new": "  return 10 * Math.floor((n * n * (n + 10) + 300 * n) / 30);",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-party-splits-the-kill",
+    "file": "src/net/advLevel.js",
+    "old": "  return Math.round((Math.max(0, Math.trunc(Number(xp) || 0)) * (100 + ADV_PARTY_BONUS_PCT * (n - 1))) / 100);",
+    "new": "  return Math.round((Math.max(0, Math.trunc(Number(xp) || 0)) * (100 + ADV_PARTY_BONUS_PCT * (n - 1))) / 100 / n);",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-bonus-from-level-zero",
+    "file": "src/net/advLevel.js",
+    "old": "  return { hp: ADV_HP_PER_LEVEL * (L - 1), mp: ADV_MP_PER_LEVEL * (L - 1) };",
+    "new": "  return { hp: ADV_HP_PER_LEVEL * L, mp: ADV_MP_PER_LEVEL * L };",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-kill-level-unclamped",
+    "file": "src/net/advLevel.js",
+    "old": "export const advKillXp = (foeLevel) => ADV_KILL_XP_PER_LEVEL * clampInt(foeLevel, 1, ADV_KILL_LEVEL_MAX);",
+    "new": "export const advKillXp = (foeLevel) => ADV_KILL_XP_PER_LEVEL * clampInt(foeLevel, 0, 999);",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-hour-bound-per-character",
+    "file": "server-account/src/adventuring.js",
+    "old": "     WHERE id = ?1\n     RETURNING adv_last_credit AS credit`,",
+    "new": "     WHERE id = ?1 AND ?2 < 0\n     RETURNING adv_last_credit AS credit`,",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-hour-window-never-resets",
+    "file": "server-account/src/adventuring.js",
+    "old": "       adv_last_credit = CASE WHEN adv_hour = ?2 THEN MIN(?3, MAX(0, ?4 - adv_hour_xp)) ELSE MIN(?3, ?4) END,",
+    "new": "       adv_last_credit = MIN(?3, MAX(0, ?4 - adv_hour_xp)),",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-hour-bound-unread",
+    "file": "server-account/src/adventuring.js",
+    "old": "  const credited = Math.max(0, int(spent?.credit));",
+    "new": "  const credited = want;",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-tracks-unbounded",
+    "file": "server-account/src/adventuring.js",
+    "old": "    if (int(n?.n) >= ADV_TRACKS_MAX) return { error: 'adv-full' };",
+    "new": "    if (int(n?.n) > ADV_TRACKS_MAX) return { error: 'adv-full' };",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-report-of-zero-taken",
+    "file": "server-account/src/adventuring.js",
+    "old": "  if (!Number.isSafeInteger(xp) || xp < 1 || xp > ADV_XP_REPORT_MAX) return { error: 'adv-xp' };",
+    "new": "  if (!Number.isSafeInteger(xp) || xp < 0 || xp > ADV_XP_REPORT_MAX) return { error: 'adv-xp' };",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-cap-spends-the-hour",
+    "file": "server-account/src/adventuring.js",
+    "old": "  const want = Math.min(xp, ADV_XP_MAX - before);",
+    "new": "  const want = xp;",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-rose-always",
+    "file": "server-account/src/adventuring.js",
+    "old": "rose: level > advLevelForXp(before),",
+    "new": "rose: level >= advLevelForXp(before),",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-order-for-no-rise",
+    "file": "server-account/src/index.js",
+    "old": "        if (r.rose) {\n          const key = await signingKey(env, subtle);",
+    "new": "        if (true) {\n          const key = await signingKey(env, subtle);",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-token-level-off-the-body",
+    "file": "server-account/src/index.js",
+    "old": "        const lv = advCharacterOk(body.character) ? ((await advTrackOf(ctx, who.player.id, body.character))?.level ?? 1) : undefined;",
+    "new": "        const lv = advCharacterOk(body.character) ? (body.level ?? (await advTrackOf(ctx, who.player.id, body.character))?.level ?? 1) : undefined;",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-token-level-unbounded",
+    "file": "src/net/identityToken.js",
+    "old": "  if (c.lv !== undefined && !levelIssuable(c.lv)) return false;",
+    "new": "  if (c.lv !== undefined && !Number.isSafeInteger(c.lv)) return false;",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-order-kind-unasked",
+    "file": "src/net/identityToken.js",
+    "old": "  return openSealed(token, publicKey, { subtle, nowS, skewS, valid: (c) => orderValid(c) && c.o === kind });",
+    "new": "  return openSealed(token, publicKey, { subtle, nowS, skewS, valid: (c) => orderValid(c) });",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-level-order-may-carry-a-mute",
+    "file": "src/net/identityToken.js",
+    "old": "  if (c.o === 'level' && (!levelIssuable(c.lv) || c.mu !== undefined)) return false;",
+    "new": "  if (c.o === 'level' && !levelIssuable(c.lv)) return false;",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-relay-level-for-somebody-else",
+    "file": "server/src/index.js",
+    "old": "      if (!cur?.id || !cur.sub || r.claims.s !== cur.sub) return;",
+    "new": "      if (!cur?.id) return;",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-relay-mute-arm-reads-a-level",
+    "file": "server/src/index.js",
+    "old": "nowS: Math.floor(now / 1000), kind: 'mute' });",
+    "new": "nowS: Math.floor(now / 1000), kind: 'level' });",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-badge-level-unbounded",
+    "file": "src/net/wire.js",
+    "old": "  if (levelIssuable(lv)) row.lv = lv;",
+    "new": "  if (lv) row.lv = lv;",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-session-level-to-an-old-relay",
+    "file": "src/net/online.js",
+    "old": "    if (typeof order !== 'string' || !order || order.length > 1024 || !this.levelOk) return false;",
+    "new": "    if (typeof order !== 'string' || !order || order.length > 1024) return false;",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-session-stands-a-stranger",
+    "file": "src/net/online.js",
+    "old": "      const p = this.peers.get(m.id);\n      if (p) p.lv = lv;",
+    "new": "      const p = this.peers.get(m.id) ?? (this.peers.set(m.id, { id: m.id, lv }), this.peers.get(m.id));\n      if (p) p.lv = lv;",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-kill-window-unread",
+    "file": "src/net/advTrack.js",
+    "old": "  if (!e || e.paid || !(now - e.at <= ADV_ASSIST_MS) || now < e.at) return false;",
+    "new": "  if (!e || e.paid || now < e.at) return false;",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-kill-paid-twice",
+    "file": "src/net/advTrack.js",
+    "old": "  e.paid = true;\n",
+    "new": "  e.paid = false;\n",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-offline-xp-kept",
+    "file": "src/net/advTrack.js",
+    "old": "    if (stopped || !earning()) return 0;",
+    "new": "    if (stopped) return 0;",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-network-loss-drops-the-xp",
+    "file": "src/net/advTrack.js",
+    "old": "    else if (r?.error === 'auth' || r?.error === 'no-session') pending = 0;   // no account to earn for: nothing to keep",
+    "new": "    else pending = 0;",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-refusal-retried-forever",
+    "file": "src/net/advTrack.js",
+    "old": "    if (PERMANENT.has(r?.error)) { stopped = true; pending = 0; try { onStop(r.error); } catch { /* the stop stands */ } }",
+    "new": "    if (PERMANENT.has(r?.error)) { pending = 0; try { onStop(r.error); } catch { /* the stop stands */ } }",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-layer-in-the-stored-health",
+    "file": "src/systems/chargen.js",
+    "old": "      const top = stored + advHpOf(this);",
+    "new": "      const top = stored;",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-layer-leaves-health-behind",
+    "file": "src/systems/advLayer.js",
+    "old": "  if (Number.isFinite(entity.health)) entity.health = keepFraction(entity.health, hpFrom, entity.maxHealth);",
+    "new": "",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-layered-health-saved",
+    "file": "src/systems/save.js",
+    "old": "  if (advHpOf(entity) || advMpOf(entity)) Object.assign(snap, offlineVitals(entity));",
+    "new": "",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-scale-kills",
+    "file": "src/systems/advLayer.js",
+    "old": "  return Math.max(1, Math.min(to, Math.round((v * to) / from)));",
+    "new": "  return Math.max(0, Math.min(to, Math.floor((v * to) / from)));",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-plate-after-the-name",
+    "file": "src/ui/nameLayer.js",
+    "old": "    tag.append(lv, name, glyphs);",
+    "new": "    tag.append(name, lv, glyphs);",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-profile-reads-the-card-level",
+    "file": "src/ui/profileWindow.js",
+    "old": "  const lv = Number.isSafeInteger(peer?.lv) ? peer.lv : null;",
+    "new": "  const lv = Number.isSafeInteger(card?.level) ? card.level : null;",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  },
+  {
+    "name": "ADV1-card-shows-the-oldest-track",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "    const lvText = advLevelText(tracks[0]?.level);",
+    "new": "    const lvText = advLevelText(tracks.at(-1)?.level);",
+    "tests": [
+      "test/adv1.test.js"
+    ]
+  }
+]
