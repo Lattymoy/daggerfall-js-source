@@ -206,23 +206,29 @@ what that player saw.
   world host's static closure, so the page already holds it. The standalone
   `?dungeon` host still loads five of them late (AUDIT DISC18, D2).
 
-**Not changed, and Mac's call: a hit chance with no floor.** Two mods ship on
+**Mac's call: a hit chance with no floor, now clamped.** Two mods ship on
 by default (MO1): Physical Combat And Armor Overhaul and Meaner Monsters.
-- PCAAO's hit chance has no 3..97 clamp. The mod computes
+- PCAAO's hit chance had no 3..97 clamp. The mod computes
   `Mathf.Clamp(chanceToHit, 3, 97)` and throws the result away, and the port
-  keeps that bug for bug (`05-Combat/Physical-Combat-Overhaul.md`).
+  kept that bug for bug (`05-Combat/Physical-Combat-Overhaul.md`).
 - Dodging counts half, and a monster's Dodging is 5 x level + 30.
 - Its soft-material rule means DFU's "ineffective" refusal never fires.
   The mod's own warning appears only when the damage multiplier is 0.45 or
   below.
-- Measured for a skill-30 character with steel: 0 of 2000 blows land on a
-  Vampire or a Lich, 30 of 2000 on a Wraith, and nothing is said.
+- Measured for a skill-30 character with steel: 0 of 2000 blows landed on
+  a Vampire or a Lich, 30 of 2000 on a Wraith, and nothing was said.
 - Stock DFU refuses those blows with a message on every swing. Quests of
   the first rank send players at these monsters.
 
-Applying the mod author's intended clamp would be a Ledger A departure, and
-it also caps monster hits on the player at 97%. Leaving both mods off by
-default would reverse MO1. Either is a decision, not a fix.
+The choices were the mod author's intended clamp (a Ledger A departure that
+also caps monster hits on the player at 97%), the bug as shipped, or both
+mods off by default (reversing MO1). **Mac chose the clamp (2026-09-24,
+option 1).** `pcaaoSuccessfulHit` applies `Mathf.Clamp(num, 3, 97)` - DFU's
+own FormulaHelper clamp, which the stock core already applies - in both
+directions. The same character now lands 55 of 2000 on a Vampire and 51 on
+a Lich; a monster's certain blow on the player misses 3 in 100. The other
+three clamps the mod discards stay discarded. Recorded on Ledger A's PCO1
+row; pinned in `test/pcaao.test.js`.
 
 ## DISC18-E: the King of Worms' door (report 6)
 

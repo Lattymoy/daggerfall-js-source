@@ -349,5 +349,50 @@
     "tests": [
       "test/disc18.test.js"
     ]
+  },
+  {
+    "name": "DISC18-D-hit-chance-unclamped",
+    "file": "src/combat/pcaao.js",
+    "old": "  return dice100(Math.max(PCAAO_HIT_CHANCE_MIN, Math.min(PCAAO_HIT_CHANCE_MAX, chance)), rolls());",
+    "new": "  return dice100(chance, rolls());",
+    "tests": [
+      "test/pcaao.test.js"
+    ]
+  },
+  {
+    "name": "DISC18-D-hit-chance-no-floor",
+    "file": "src/combat/pcaao.js",
+    "old": "  return dice100(Math.max(PCAAO_HIT_CHANCE_MIN, Math.min(PCAAO_HIT_CHANCE_MAX, chance)), rolls());",
+    "new": "  return dice100(Math.min(PCAAO_HIT_CHANCE_MAX, chance), rolls());",
+    "tests": [
+      "test/pcaao.test.js"
+    ]
+  },
+  {
+    "name": "DISC18-D-hit-chance-no-ceiling",
+    "file": "src/combat/pcaao.js",
+    "old": "  return dice100(Math.max(PCAAO_HIT_CHANCE_MIN, Math.min(PCAAO_HIT_CHANCE_MAX, chance)), rolls());",
+    "new": "  return dice100(Math.max(PCAAO_HIT_CHANCE_MIN, chance), rolls());",
+    "tests": [
+      "test/pcaao.test.js"
+    ]
+  },
+  {
+    "name": "DISC18-D-floor-moved",
+    "file": "src/combat/pcaao.js",
+    "old": "export const PCAAO_HIT_CHANCE_MIN = 3;",
+    "new": "export const PCAAO_HIT_CHANCE_MIN = 2;",
+    "tests": [
+      "test/pcaao.test.js"
+    ]
+  },
+  {
+    "name": "DISC18-D-ceiling-moved",
+    "file": "src/combat/pcaao.js",
+    "old": "export const PCAAO_HIT_CHANCE_MAX = 97;",
+    "new": "export const PCAAO_HIT_CHANCE_MAX = 98;",
+    "tests": [
+      "test/pcaao.test.js"
+    ]
   }
 ]

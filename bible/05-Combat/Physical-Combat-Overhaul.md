@@ -47,7 +47,7 @@ its `modsettings.json`:
 | `CalculateSwingModifiers` | DFU's own table | the callers' `damageMod`/`toHitMod` (playerAttackOptions, SWING_MODS) - the same numbers |
 | `CalculateProficiencyModifiers` / `CalculateRacialModifiers` | stat-driven per weapon skill and race, on the C#'s else-if ladders | `pcaaoProficiencyModifiers`, `pcaaoRacialModifiers` |
 | `CalculateWeaponToHit` | material x2 + 2 ("+14, not +60") | `pcaaoWeaponToHit` |
-| `CalculateArmorToHit` / `AdrenalineRush` / `StatDiffs` / `Skills` / `Adjustments` / `SuccessfulHit` | the player 100 less the enchantment channels, a class enemy 60, a monster its part; a sixth of health and +8/+12; luck/10, agility/4, speed/8 less the target's luck rounded; dodging halved; +50 for a monster target, -50 always; the sum, its clamp DISCARDED, Dice100 | `pcaaoArmorToHit` ... `pcaaoSuccessfulHit` |
+| `CalculateArmorToHit` / `AdrenalineRush` / `StatDiffs` / `Skills` / `Adjustments` / `SuccessfulHit` | the player 100 less the enchantment channels, a class enemy 60, a monster its part; a sixth of health and +8/+12; luck/10, agility/4, speed/8 less the target's luck rounded; dodging halved; +50 for a monster target, -50 always; the sum, its 3..97 clamp (DISCARDED by the C#, APPLIED here - the one departure, below), Dice100 | `pcaaoArmorToHit` ... `pcaaoSuccessfulHit` |
 | `CalculateStruckBodyPart` | twenty slots, feet likelier than the head | `PCAAO_BODY_PARTS`, `pcaaoStruckBodyPart` |
 | `CriticalStrikeHandler` | luck's `Mathf.Floor((luck-50)/25f)` term (clamp discarded) bending the divisor | `pcaaoCriticalStrike` |
 | `GetBonusOrPenaltyByEnemyType` | willpower's `Random.Range(0, n)` bonus and the level penalty on the career's Bonus/Phobia bits, the Humanoid arm on GetEnemyGroup | `pcaaoBonusOrPenaltyByEnemyType` |
@@ -64,16 +64,31 @@ its `modsettings.json`:
 | `MirrorVCEH` / `OnAttackDamageCalculated` / `OnSavingThrow` | the Vanilla Combat Event Handler's two events, mirrored to relay to OTHER mods | not carried - no consumer here (README) |
 | `Debug.LogFormat("matReqDamMulti")` | a Unity console line | not carried |
 
+## The one departure: the hit chance's floor (DISC18-D, Mac's call 2026-09-24)
+
+`CalculateSuccessfulHit` computes `Mathf.Clamp(num, 3, 97)` and never
+assigns it, so under the mod a sum below zero was a certain miss. With a
+monster's Dodging at 5 x level + 30 (halved) and the soft-material rule
+replacing DFU's "ineffective" refusal, a skill-30 character with steel
+landed 0 of 2000 blows on a Vampire or a Lich and was told nothing
+(Discord: "In a dungeon that I cant hurt enemy's"). Offered the clamp, the
+bug as shipped, or both mods off by default, Mac chose the clamp.
+`pcaaoSuccessfulHit` applies it - DFU's own FormulaHelper clamp, the one
+the stock core applies and the mod's author wrote - in both directions:
+every blow lands at least 3 in 100 (55 of 2000 on that Vampire, 51 on the
+Lich) and misses at least 3 in 100, a monster's on the player included.
+Ledger A's PCO1 row records it; `test/pcaao.test.js` pins it.
+
 ## What is kept bug for bug
 
 - `Mathf.Round` rounds half to EVEN (`unityRound`), and every float the
   C# computes is a float32 (`Math.fround` at each step), so `15 * 0.9f`
   is `13.5f` and rounds to 14 where a double would say 13.
-- Four `Mathf.Clamp` calls whose result the C# DISCARDS: the hit
-  chance's 3..97 (a 300 always hits, a -300 never), the natural
-  resistance's +-0.2 (moot - three stats of 100 reach exactly 0.2),
-  the critical strike's luck term, the shield chances. Not clamped here
-  either.
+- Three of the four `Mathf.Clamp` calls whose result the C# DISCARDS:
+  the natural resistance's +-0.2 (moot - three stats of 100 reach
+  exactly 0.2), the critical strike's luck term, the shield chances. Not
+  clamped here either. The fourth, the hit chance's 3..97, IS applied -
+  the one departure (below).
 - C# integer division truncates toward zero; where an operand can be
   negative (a stat below 50, a level difference) the port truncates.
 - The archery hit table's `> 8000` arm sits behind `> 5000` and never
