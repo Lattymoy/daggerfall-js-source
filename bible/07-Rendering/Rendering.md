@@ -789,6 +789,23 @@ directory by `test/audit18_bible_docs.test.js`:
   used now only to name a world-fixed cell a third of a degree across) and
   `bayer4`, read by PS3's dither over Dynamic Skies' own colour reduction.
   It was `retroPixel.js`, the pass's shared GLSL, until the pass went.
+- `retroPass.js` - RETRO1 DFU'S RETRO MODE, THE PASS (2026-09-24, Mac: "Can
+  we get retro mode from DFU ported over?"): a WORLD frame drawn into a
+  320x200 or 640x400 image (320x154 / 640x308 over a docked large HUD) with
+  its own depth texture, presented point-sampled through DFU's 640x400
+  presentation target, posterized or palettized on the way (art_pal's 258
+  colours through InitLut's LUT, FastColorPalette's k-d tree answers), the
+  "-sky" pair leaving the far plane alone; under the lane the lane's frame
+  is made that small and resolves into the image. A leaf - the settings
+  and the sizes are `systems/retroMode.js`'s, handed to the renderer by
+  main.js (`setRetroSource`); the pillarbox reaches it through each host's
+  `setWorldViewport(worldViewportRect(...))`. AUDIT RETRO1: DFU's own
+  gamma round trip, the LUT built a slice a frame, nothing of the image
+  left bound; its second pass: the LUT stepped a block at a time (at most
+  `RETRO_LUT_MAX_BLOCKS` a frame) and streamed into a texture allocated
+  up front, a z-slab at a time (`texStorage3D` + `texSubImage3D`), a
+  failed allocation caught through getError and retried when the shift
+  or retro mode changes. See `07-Rendering/Retro-Mode.md`.
 - `volumetricClouds.js` - VC3 THE VOLUMETRIC CLOUDS: a raymarched slab between
   two altitudes, shaped by the VC2 volumes, lit by the sun (the moon at night)
   with a short light march, driven by the eased weather row, a per-weather

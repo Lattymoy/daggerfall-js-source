@@ -237,11 +237,18 @@ export function labelOf(key) {
   return bare.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/_/g, ' ').trim();
 }
 
+/** AUDIT RETRO1 C7: DFU's words that live outside GameSettings.txt -
+ *  RetroModeConfigPage's one tip (RetroModeConfigPage.cs:36, the
+ *  Internal_Strings `retroModeTip`), on the setting its page is for. */
+const PAGE_TIPS = Object.freeze({
+  'Video/RetroRenderingMode': 'Renders world at lower resolutions',
+});
+
 /** The explanation, in DFU's own words where DFU wrote one. Empty
  *  string when it did not - the screen then shows the status line
  *  alone rather than inventing a sentence. */
 export function helpOf(key) {
-  return SETTINGS_INFO[dfuTextKey(key)] ?? '';
+  return SETTINGS_INFO[dfuTextKey(key)] ?? PAGE_TIPS[key] ?? '';
 }
 
 /** MENU: what a NOT-AVAILABLE row prints where its control would be.

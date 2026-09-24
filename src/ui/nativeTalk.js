@@ -41,7 +41,7 @@
 // row draws in ListBox's selectedTextColor with no shadow.
 // ET1-AUDIT F1: THE KEYBOARD IS DFU'S. This header used to say "DFU
 // has no keyboard here", and it does: DialogShortcuts.txt binds all
-// twelve of this window's buttons (systems/dialogShortcuts.js:331-336
+// twelve of this window's buttons (systems/dialogShortcuts.js:340-345
 // - A Tell me about, W Where is, L/P/T/J the four categories, O ask,
 // G goodbye, C copy, F1/F2/F3 the tones), and input() walks them
 // FIRST through firstHotkey, landing on press(name) like a click. The

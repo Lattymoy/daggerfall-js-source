@@ -1510,7 +1510,7 @@ out of it and hold for all future work:
      exists so evidence, not theory, drives the next fix.
 
 **2026-07-07 - the crash-class audit (no-undef joins the gate).** Mac's second live crash (Y1@407:239805) mapped through the
-deterministic bundle to characterSprite.js:75 calling trs() WITHOUT
+deterministic bundle to characterSprite.js:80 calling trs() WITHOUT
 importing it - unbound since C8 E3d; vite emits unknown identifiers
 as presumed globals, so node --check, the build, and the headless
 suite all pass while the first real viewmodel frame throws

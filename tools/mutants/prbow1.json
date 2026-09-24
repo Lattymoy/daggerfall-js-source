@@ -38,8 +38,8 @@
   {
     "name": "resolution-read-at-box",
     "file": "src/render/characterSprite.js",
-    "old": "  const screenPxH = Math.abs(prjY(at[0], at[1] + halfH, at[2]) - prjY(at[0], at[1] - halfH, at[2])) * canvas.clientHeight / 2;",
-    "new": "  const screenPxH = Math.abs(prjY(center[0], center[1] + halfH, center[2]) - prjY(center[0], center[1] - halfH, center[2])) * canvas.clientHeight / 2;",
+    "old": "  const screenPxH = Math.abs(prjY(at[0], at[1] + halfH, at[2]) - prjY(at[0], at[1] - halfH, at[2])) * (span ? span[0] : canvas.clientHeight) / 2;",
+    "new": "  const screenPxH = Math.abs(prjY(center[0], center[1] + halfH, center[2]) - prjY(center[0], center[1] - halfH, center[2])) * (span ? span[0] : canvas.clientHeight) / 2;",
     "tests": [
       "test/prbow1_bow.test.js"
     ]

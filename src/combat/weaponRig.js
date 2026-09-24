@@ -228,7 +228,7 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  */
 export function muzzleRay(drawn, fovRad, forward = MUZZLE_FORWARD) {
   if (!drawn?.muzzle) return null;
-  const { rect, canvasW, canvasH, muzzle, flip, viewport = null } = drawn;
+  const { rect, canvasW, canvasH, muzzle, flip, viewport = null, aspect = null } = drawn;
   if (!(canvasW > 0) || !(canvasH > 0) || !(fovRad > 0)) return null;
   // the mirror flips the whole composite about the rect's own centre,
   // so the muzzle goes with it (gunFrameRect's own law)
@@ -263,7 +263,10 @@ export function muzzleRay(drawn, fovRad, forward = MUZZLE_FORWARD) {
   const r = worldRectPx(viewport, canvasW, canvasH);
   if (!(r.w > 0) || !(r.h > 0)) return null;
   const tanY = Math.tan(fovRad / 2);
-  const tanX = tanY * (r.w / r.h);   // the WORLD STRIP's aspect - the same one the host's own perspective() takes (hudLarge.largeHudWorldAspect)
+  // the WORLD STRIP's aspect - the same one the host's own perspective() takes (hudLarge.largeHudWorldAspect). RETRO1:
+  // unless the frame says otherwise - a retro world is projected at its texture's shape and stretched over the strip,
+  // so the lens's own aspect (Renderer.worldProjAspect) is the one a strip pixel maps through
+  const tanX = tanY * (aspect > 0 ? aspect : r.w / r.h);
   return {
     right: (((px - r.x) / r.w) * 2 - 1) * tanX * forward,
     up: (1 - ((py - r.y) / r.h) * 2) * tanY * forward,   // screen y counts DOWN, camera up counts UP
@@ -913,7 +916,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // world object. `worldViewportRect` outlives endWorldPass for
     // exactly this reader; null is the full canvas, which is what
     // every host without a docked large HUD hands back.
-    _tlDrawn = { rect, canvasW: canvas.width, canvasH: canvas.height, muzzle: art.muzzle ?? null, flip: handedFlip(), viewport: renderer.worldViewportRect ?? null };
+    _tlDrawn = { rect, canvasW: canvas.width, canvasH: canvas.height, muzzle: art.muzzle ?? null, flip: handedFlip(), viewport: renderer.worldViewportRect ?? null, aspect: renderer.worldProjAspect ?? null };   // RETRO1: and the lens's aspect
     // FIELD-GUN13 (Mac: "The muzzle flash itself shouldn't be affected
     // by the darkening lighting").
     //

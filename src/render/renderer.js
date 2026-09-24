@@ -454,6 +454,7 @@ export function groundSharpnessTier(search = globalThis.location?.search ?? '') 
 import { multiply as mat4Multiply } from '../world/mat4.js';   // PERF-CROWD2: proj * view, for this call's planes
 import { PerfMeter, perfOn, perfZones, perfCpu, setMeter } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
 import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_CONTACT_UNIT as CONTACT_UNIT } from './airPass.js';   // EL3: the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit; EL6: all of it off the frame's own depth, at the resolve
+import { RetroPass } from './retroPass.js';   // RETRO1: DFU's retro mode - the world's small image, its effect and its present (a leaf, the air pass's kind)
 import { decalIndices, DECAL_FLOATS_PER_VERTEX } from '../combat/bloodDecals.js';   // BLOOD1a: the index winding and the vertex stride are the decal module's, so the writer and the buffer cannot disagree about the format
 import { BLOOD_ABSORB_ENCODED, INK_DEPTH } from '../combat/bloodArt.js';
 import { glslFloat } from './airPass.js';   // AUDIT BLOOD3 F9: a dial at a whole number is an INT literal in GLSL, and vec3 * int does not compile   // BLOOD3: the film's absorption - the classic mark takes the depth, the lane takes the sheen too
@@ -1120,6 +1121,16 @@ export class Renderer {
     this._airPass = null;
     this._airWanted = false;
     this._frameFbo = null;   // EL4: the frame image the world pass draws into while the air is on (null = the canvas)
+    // RETRO1: DFU's retro mode (render/retroPass.js, systems/retroMode.js). The source is a function answering the
+    // frame's retro config or null - main.js hands it systems/retroMode.js's retroFrameConfig, so this file never
+    // reads the settings store; it is asked once per WORLD frame
+    this._retro = null;         // the RetroPass, built on the first retro frame
+    this._retroSource = null;
+    this._retroFrame = null;    // the retro world frame in flight: its image, its effect, the rect it presents to, its depth
+    this._retroOwed = false;    // a retro image is drawn and not yet presented
+    this._retroMips = true;     // whether the world's textures read their mip chains (TextureReader's retro arm)
+    this._replacements = new WeakSet();   // AUDIT RETRO1 A4: replacement textures (TryImportTexture) - DFU's retro arm never reaches them
+    this._scissor = null;       // AUDIT RETRO1 B3: the live screen scissor as gl.scissor took it, or null - the present lifts it and puts it back
     this._spriteDepth = 0;   // AUDIT-EL F2: inside renderCharacterSprite (a foreign rect: no AO)
     this._clusters = null;        // LC1: the grid's workspace, made with the lane's textures
     this._clusterTex = null;      // LC1: { grid, list } - the two integer textures the world shaders read
@@ -2028,14 +2039,130 @@ export class Renderer {
     // frame whose resolve was deferred to here (an enhanced-skin frame
     // draws no screen quad of its own), and its GPU clock was begun
     // twice before it was ended once.
+    if (this._retroOwed && !this._panelSaved) this._compositeAir();   // RETRO1: a retro image still owed is presented first, under its own frame's config (a lane image owed with it resolves into it on the way)
     if (this._perfOpen && !this._air?.pending) this._perfClose();   // AUDIT 68 S16-perf-no-resolve-leak: a world frame with no resolve owed (the classic lane, `?air=off`) that drew no screen quad
     if (this._air?.pending && !this._panelSaved) this._compositeAir();
     this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set
+    const retro = world && !this._panelSaved ? this._retroBegin() : null;   // RETRO1: after the owed present, which reads the frame it presents
     if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; this._perfOpen = true; }   // EL8: the frame's clock starts with its passes; VC6d: and its first span
     if (this._shadows && world) this._renderPasses(proj, view, lightDir);
     // EL4: THE FRAME IMAGE - the world pass draws into it, the clear included; a panel frame keeps the canvas
-    this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(this.canvas.width, this.canvas.height) : null;
+    this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(retro ? retro.width : this.canvas.width, retro ? retro.height : this.canvas.height, retro ? 'retro' : 'canvas') : null;
+    // RETRO1: THE RETRO IMAGE. Under the lane its frame is the image's size (above) and its resolve writes into the
+    // image; on the classic set the world pass draws into the image itself. Either way the frame's first screen
+    // quad presents it (_compositeAir). AUDIT RETRO1 B5: the depth the sky test reads is this frame's, taken now -
+    // the lane's frame's, or (null) the image's own
+    if (retro && this._air) { this._air.resolveTo = this._retro.resolveTarget(retro.width, retro.height, this._frameFbo); retro.depth = this._air.frame?.depth ?? null; }
+    else if (retro) this._frameFbo = this._retro.beginFrameTarget(retro.width, retro.height);
+    else if (this._air) this._air.resolveTo = null;
+    this._retroOwed = !!retro;
   }
+
+  /** RETRO1: this WORLD frame's retro frame, or null. With one, the world
+   *  viewport becomes the retro image's whole and the canvas rect the host
+   *  asked for (setWorldViewport - the docked bar's strip, or the aspect
+   *  correction's pillarbox) is kept, NORMALIZED, as the rect the image is
+   *  presented to (AUDIT RETRO1 B6: an owed present lands on the canvas as
+   *  it is when it is shown, resized or not). AUDIT RETRO1 C3: the image is
+   *  the _HUD twin when that rect is a docked strip - it starts above the
+   *  bottom edge - so the texture follows the bar the host's lens and rect
+   *  were taken from. The mip chains follow the config (a no-op unless it
+   *  changed); retro mode off frees the palette's LUT (E2). */
+  _retroBegin() {
+    const cfg = this._retroSource?.() ?? null;
+    this._applyRetroMips(cfg ? cfg.mipmaps : true);
+    const view = this._worldViewportFrame, docked = !!view && view.y > 0;
+    const width = docked ? cfg?.hudWidth : cfg?.width, height = docked ? cfg?.hudHeight : cfg?.height;
+    if (!cfg || !(width > 0) || !(height > 0)) {
+      if (this._retroFrame) this._restoreWorldViewport();   // the frame retro mode goes off on: an owed present just took the viewport to the full canvas
+      this._retroFrame = null;
+      this._retro?.dropLut();
+      return null;
+    }
+    this._retroPass();
+    this._retroFrame = { width, height, post: cfg.post, lutShift: cfg.lutShift, mipmaps: cfg.mipmaps, view: view ? { ...view } : null, depth: null };
+    this._worldViewportPx = [0, 0, width, height];
+    this._restoreWorldViewport();
+    return this._retroFrame;
+  }
+
+  /** RETRO1: the RetroPass, built once. */
+  _retroPass() { return (this._retro ??= new RetroPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs) })); }
+
+  /** A normalized bottom-left rect (null: the whole canvas) in the canvas's
+   *  pixels as they stand - beginFrame's world rect arithmetic. */
+  _viewportPx(r) {
+    const W = this.canvas.width, H = this.canvas.height;
+    return r
+      ? [Math.round(r.x * W), Math.round(r.y * H), Math.max(0, Math.round(r.w * W)), Math.max(0, Math.round(r.h * H))]
+      : null;
+  }
+
+  /** RETRO1: PRESENT the retro image to the canvas (RetroPass.present) - the
+   *  classic lane's resolve, and the lane's second half once its own resolve
+   *  has written the image. The present binds units 0..2 and a program and a
+   *  VAO of its own, so the shadows are forgotten after it. AUDIT RETRO1 J1:
+   *  both callers in _compositeAir call it BEFORE the frame's meter closes,
+   *  so `?perf` shows the present - and the LUT's slice inside it - as the
+   *  frame's last span, `retro` (the classic arm's line carries no comment:
+   *  PERF-2D's pin reads that function's first 700 characters). */
+  _presentRetroFrame() {
+    if (this._perfOpen) this._perf?.mark('retro');
+    this._retroOwed = false;
+    this._close2D();
+    const f = this._retroFrame;
+    try {
+      if (this._retro && f) {
+        this._retro.present({
+          depth: f.depth, rect: this._viewportPx(f.view) ?? [0, 0, this.canvas.width, this.canvas.height], canvasW: this.canvas.width, canvasH: this.canvas.height,
+          post: f.post, lutShift: f.lutShift, clear: this._clearColor, scissor: this._scissor,
+        });
+      } else this._retro?.release();
+    } finally {   // AUDIT RETRO1 E3: whatever the present did, the frame is the canvas's and the shadows are forgotten
+      this._forgetTextureShadows();
+      this._frameFbo = null;
+      this._lastProgram = null; this._lastVao = null;
+    }
+  }
+
+  /** RETRO1: TextureReader's retro arm (:93, :123, :206, :468) - no mip
+   *  chain in retro mode unless UseMipMapsInRetroMode. The port keeps the
+   *  chains it built and caps the level they are read to (TEXTURE_MAX_LEVEL
+   *  0 reads level 0 alone, which is a texture built without one), over
+   *  every cached world texture, emission map and tile array - so the switch
+   *  lands on what is loaded as well as what loads next, where DFU's lands
+   *  on what loads next. A texture with no chain is unmoved by either cap. */
+  _applyRetroMips(want) {
+    if (want === this._retroMips) return;
+    this._retroMips = want;
+    const gl = this.gl, level = want ? 1000 : 0;   // 1000: GL's own default
+    this._activeTexture(gl.TEXTURE0);
+    for (const tex of [...this.textures.values(), ...this.emissionTextures.values()]) { if (this._replacements.has(tex)) continue; gl.bindTexture(gl.TEXTURE_2D, tex); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, level); }
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
+    for (const tex of this.tileArrays.values()) { gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex); gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAX_LEVEL, level); }
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
+    this._tArrayTex = null;   // PERF-TEX2: the terrain's array shadow - its next draw binds its own again
+  }
+
+  /** RETRO1: where the renderer asks for each WORLD frame's retro config -
+   *  systems/retroMode.js retroFrameConfig, handed over by main.js; null
+   *  (the default, and every test's) is retro off. */
+  setRetroSource(fn) { this._retroSource = typeof fn === 'function' ? fn : null; }
+  /** RETRO1: the retro world frame in flight or last presented - a probe's read. */
+  get retroFrame() { return this._retroFrame ? { ...this._retroFrame } : null; }
+  /** AUDIT RETRO1 C6: while a retro world pass is live, [the image's height, the canvas pixels it is shown over] - what
+   *  a sprite sized in canvas pixels needs to be sized in the image's instead; null otherwise. */
+  get retroImageSpan() {
+    const f = this._retroFrame;
+    return this._retroOwed && f ? [f.height, Math.max(1, Math.round((f.view ? f.view.h : 1) * this.canvas.height))] : null;
+  }
+  /** RETRO1: the RetroPass or null - a probe's read. */
+  get retro() { return this._retro; }
+  /** RETRO1: the world projection's aspect (|proj[5] / proj[0]|) - what a
+   *  canvas pixel mapped into the world must use, since a retro frame is
+   *  projected at its image's shape and stretched to the rect it lands in. */
+  get worldProjAspect() { const p = this._proj; return p && p[0] ? Math.abs(p[5] / p[0]) : null; }
 
   /** EL2/EL3: THE PASSES BEFORE THE FRAME, at the top of beginFrame - the
    *  shadow maps (render/shadowPass.js) and then the air's images
@@ -2091,6 +2218,7 @@ export class Renderer {
   resolveFrame() { this._compositeAir(); }
 
   _compositeAir() {
+    if (this._retroOwed && !this._air?.pending) this._presentRetroFrame();
     if (this._perfOpen && !this._air?.pending) this._perfClose();   // AUDIT 68 S16-perf-no-resolve-leak: no resolve owed - the frame's first screen draw closes its meter, as the resolve would
     if (!this._air?.pending) return;
     // PERF-2D: AFTER the early return, and that ordering is the whole
@@ -2099,7 +2227,9 @@ export class Renderer {
     // frame and hand the per-quad bracket straight back. The air pass
     // only needs the baseline when it actually resolves.
     this._close2D();
-    this._perf?.mark('air');   // VC6d: the AO, the bloom, the shafts and the resolve
+    const sc = this._scissor;   // AUDIT RETRO1 F3: a screen scissor live at the first quad is not the passes' - lifted for them and the present, and put back
+    if (sc) this.gl.disable(this.gl.SCISSOR_TEST);
+    if (this._perfOpen) this._perf?.mark('air');   // VC6d: the AO, the bloom, the shafts and the resolve - a WORLD frame's (AUDIT RETRO1 J8: a menu's resolve, the meter closed, opened a span nothing closed)
     this._air.setCloudShadow(this._cloudShadow ?? this._deckOwed);   // VC6c: the FRAME's deck - the host sets it after beginFrame, so the shafts can only read it here
     this._air.composite();   // EL4: the resolve - the frame to the canvas
     // AUDIT-AIR1: THE RESOLVE IS A FOREIGN PASS, and this seam - alone of
@@ -2114,7 +2244,9 @@ export class Renderer {
     // invalidates them. (VC6c/VC6d pin the two lines above this one as
     // adjacent, which is why the reason is written here and not there.)
     this._forgetTextureShadows();
+    if (this._retroOwed) this._presentRetroFrame();   // RETRO1: the lane resolved into the retro image - now the image to the canvas (J1: before the meter closes)
     this._perfClose();   // EL8: the clock stops at the resolve; the line, when it is due
+    if (sc) { this.gl.enable(this.gl.SCISSOR_TEST); this.gl.scissor(sc[0], sc[1], sc[2], sc[3]); }
     this._frameFbo = null;
     this._lastProgram = null; this._lastVao = null;
     this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
@@ -2257,7 +2389,16 @@ export class Renderer {
       () => this._ensureCharQuadProgram(),
       () => this._ensureParticleProgram(),
       () => this._ensureOverlayProgram(),
+      ...(this._retroSource ? [() => this._warmRetro()] : []),   // AUDIT RETRO1 E7
     ];
+  }
+
+  /** AUDIT RETRO1 E7: the retro present's program, built by the warm when retro mode is on at load rather than inside
+   *  the first retro frame. The build binds a program and a VAO of its own, so the shadows are dropped after it. */
+  _warmRetro() {
+    if (!this._retroSource?.()) return;
+    this._retroPass()._program();
+    this._lastProgram = null; this._lastVao = null;
   }
 
   /**
@@ -3053,10 +3194,11 @@ void main() {
     const ox = this._screenOffset?.[0] ?? 0, oy = this._screenOffset?.[1] ?? 0;
     const yTop = Math.round(y + oy), hh = Math.max(0, Math.round(h));
     gl.enable(gl.SCISSOR_TEST);
-    gl.scissor(Math.round(x + ox), gl.drawingBufferHeight - yTop - hh, Math.max(0, Math.round(w)), hh);
+    this._scissor = [Math.round(x + ox), gl.drawingBufferHeight - yTop - hh, Math.max(0, Math.round(w)), hh];   // AUDIT RETRO1 B3: the shadow a retro present puts back
+    gl.scissor(this._scissor[0], this._scissor[1], this._scissor[2], this._scissor[3]);
   }
 
-  clearScreenScissor() { this.gl.disable(this.gl.SCISSOR_TEST); }
+  clearScreenScissor() { this._scissor = null; this.gl.disable(this.gl.SCISSOR_TEST); }
 
   /**
    * ROAD-C c2/S10: THE SCISSOR-ONLY BRACKET, and it exists for the same
@@ -3341,6 +3483,19 @@ void main() {
 
     drawScreenOverlayQuad(tex, u1, v1) {
     const gl = this.gl;
+    // AUDIT RETRO1 C2 (and its second pass, F8/G4): a retro world is PRESENTED before the first-person overlay, on
+    // either lane - the lane's shaders end in elEncode, display bytes, and the Weapon Widget's path (drawScreenQuad)
+    // has always drawn the arm after the resolve - so the arm lands on the canvas at its own resolution, as DFU's
+    // OnGUI weapon does, and where retro off puts it: the docked strip's rows across the whole width (the
+    // pillarbox is the world's alone). It was drawn into the image - pixelated, posterized, squeezed to the rect.
+    let strip = null;
+    if (this._retroOwed) {
+      const v = this._worldViewportFrame;
+      if (this._worldViewportPx) this.endWorldPass();
+      this._compositeAir();
+      strip = v && v.y > 0 ? this._viewportPx({ x: 0, y: v.y, w: 1, h: v.h }) : null;
+      if (strip) gl.viewport(strip[0], strip[1], strip[2], strip[3]);
+    }
     this._ensureOverlayProgram();
     this._use(this.overlayProgram);
     this._activeTexture(gl.TEXTURE0);
@@ -3351,6 +3506,7 @@ void main() {
     this._open2D(this._overlayVAO);   // PERF-2D
     gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
     this.stats.texBinds++; this.stats.draws++;
+    if (strip) gl.viewport(0, 0, this.canvas.width, this.canvas.height);   // the 2D pass's whole canvas back
   }
 
   /** PERF-WARM: build the full-screen overlay program and its VAO -
@@ -3456,8 +3612,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (mips) gl.generateMipmap?.(gl.TEXTURE_2D);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, mips ? (gl.NEAREST_MIPMAP_NEAREST ?? filter) : filter);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+    if (opts.replacement) { if (tex) this._replacements.add(tex); }   // AUDIT RETRO1 A4: TryImportTexture's - DFU's retro arm never reaches it (J7: a lost context's null is no key)
+    else if (mips && !this._retroMips) gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 0);   // RETRO1: loaded under retro mode without mip maps (_applyRetroMips)
     this.textures.set(key, tex);
-    if (opts.alpha) (this._alphaArt ??= new WeakSet()).add(tex);   // OVH2: the texture's own treatment, read at every screen draw of it
+    if (opts.alpha && tex) (this._alphaArt ??= new WeakSet()).add(tex);   // OVH2: the texture's own treatment, read at every screen draw of it (AUDIT RETRO1 J7: a lost context's null is no key)
     const base = `${archive}_${record}`;
     let keys = this._texKeysByBase.get(base);
     if (!keys) this._texKeysByBase.set(base, keys = new Set());
@@ -3599,11 +3757,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       const r = this._worldViewportPending;
       this._worldViewportPending = null;
       this._worldViewportFrame = r ? { ...r } : null;   // FIELD-GUN19: the record, for the 2D pass
-      const W = this.canvas.width, H = this.canvas.height;
-      this._worldViewportPx = r
-        ? [Math.round(r.x * W), Math.round(r.y * H),
-          Math.max(0, Math.round(r.w * W)), Math.max(0, Math.round(r.h * H))]
-        : null;
+      this._worldViewportPx = this._viewportPx(r);
       if (this._worldViewportPx) this._restoreWorldViewport();
     }
     this._beginLane(proj, view, lightDir, opts?.world === true);   // EL2/EL3/EL4: the maps, the images and the frame, before the clear
@@ -3684,6 +3838,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   beginPanelFrame(proj, view, lightDir, rect, clearRGBA = PANEL_CLEAR_RGBA, setup = null) {
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     if (this._panelSaved) throw new Error('beginPanelFrame: already inside a panel frame');
+    // AUDIT RETRO1 B2: the world frame's image is shown BEFORE a panel draws over the canvas - a panel opened ahead of
+    // the frame's first screen quad drew into the retro image (or the lane's frame) and the image was never shown
+    if (this._retroOwed || this._air?.pending) { if (this._worldViewportPx) this.endWorldPass(); this._compositeAir(); }
     const gl = this.gl;
     // EVERY global this pass can touch, saved by name. A thirteenth
     // one added to the renderer later must be added HERE - the source
@@ -4219,6 +4376,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.generateMipmap?.(gl.TEXTURE_2D);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST ?? gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    if (opts.replacement) { if (tex) this._replacements.add(tex); }   // AUDIT RETRO1 A4: a replacement albedo's map - neither is capped (J7: a lost context's null is no key)
+    else if (!this._retroMips) gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 0);   // RETRO1: the albedo's cap, so both samples still come from one level
     this._activeTexture(gl.TEXTURE0);
     this.emissionTextures.set(key, tex);
     this._texGen++;   // EV2: cached sub-mesh lookups refresh
@@ -4521,6 +4680,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // the far edge texel at transformed-uv 1.0 boundary ties.
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    if (!this._retroMips) gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAX_LEVEL, 0);   // RETRO1: loaded under retro mode without mip maps (_applyRetroMips)
     this.tileArrays.set(archive, tex);
     return tex;
   }

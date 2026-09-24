@@ -125,5 +125,5 @@ test('AUDIT 58 (f3/input): EVERY host that registers a keydown hands its held-ke
   assert.match(inp, /export function actionOf\(e, keys = null\) \{\n {2}const b = bindings\(\);\n {2}if \(keys\) \{/);
   assert.match(inp, /export function routeKey\(e, ctx, setPlayerPos = null, keys = null\) \{/);
   assert.match(inp, /const act = actionOf\(e, keys\);/, 'routeKey forwards it');
-  assert.match(inp, /if \(actionOf\(e, keys\) === 'QuickLoad'\)/, 'including the arm that answers from under a window');
+  assert.match(inp, /if \(actionOf\(e, keys\) === 'QuickLoad' && !retroToggleKey\(e, keys\)\)/, 'including the arm that answers from under a window (AUDIT RETRO1 C1: never on the retro toggle\'s chord)');
 });

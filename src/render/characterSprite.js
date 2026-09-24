@@ -68,9 +68,14 @@ export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW
   const at = aim === center ? center : landAnchor(center, anchor, camDir, right);   // PR-BOW1: where the quad stands
   const pvS = multiply(proj, view);
   const prjY = (x, y, z) => { const w = pvS[3]*x + pvS[7]*y + pvS[11]*z + pvS[15]; return (pvS[1]*x + pvS[5]*y + pvS[9]*z + pvS[13]) / w; };
-  // PR-BOW1: the resolution is read where the quad is drawn, so a texel stays `pixel` screen pixels
-  const screenPxH = Math.abs(prjY(at[0], at[1] + halfH, at[2]) - prjY(at[0], at[1] - halfH, at[2])) * canvas.clientHeight / 2;
-  const ph = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(screenPxH / pixel)));
+  // PR-BOW1: the resolution is read where the quad is drawn, so a texel stays `pixel` screen pixels. AUDIT RETRO1 C6:
+  // under retro mode the world is drawn into its small image, so the sprite is sized in the IMAGE's pixels and a texel
+  // is a whole number of them - a canvas-sized texel (9 px) is 1.67 of a 200-row image's, and the sprite's texels came
+  // out 1 and 2 pixels wide and shimmered
+  const span = renderer.retroImageSpan ?? null;
+  const texel = span ? Math.max(1, Math.round(pixel * span[0] / span[1])) : pixel;
+  const screenPxH = Math.abs(prjY(at[0], at[1] + halfH, at[2]) - prjY(at[0], at[1] - halfH, at[2])) * (span ? span[0] : canvas.clientHeight) / 2;
+  const ph = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(screenPxH / texel)));
   const pw = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(ph * halfW / halfH)));
   const miniEye = [center[0] - camDir[0] * 4, center[1] - camDir[1] * 4, center[2] - camDir[2] * 4];
   const sTex = renderer.renderCharacterSprite(mesh, rigMat, ortho(halfW, halfH, 0.1, 8), lookAt(miniEye, center, [0, 1, 0]), pw, ph);

@@ -373,6 +373,18 @@ is what the code says it should be, and `ui` beside it.
 mark happens to be, and the last span of a frame has no next mark of
 its own. Close it by hand or it measures the wait.**
 
+**AUDIT RETRO1 J8 (2026-09-24, found by the retro audit's second pass;
+Mac: "Take care of those") - the same lesson from the other side: a span
+opened after its frame had closed.** A menu's or a video's frame over the
+world on the Enhanced Lighting lane is still the lane's frame, resolved by
+`_compositeAir`, and its `mark('air')` ran whether or not a world frame's
+meter was open. Under `?perf=zones` that opened an `air` zone after the
+world frame's `frame()`, and nothing closed it until the next world
+frame's first mark - the rAF wait counted as `air`. (`?perf=cpu` folded the
+menu frame's resolve into the world frames' `air` mean the same way.) The
+mark is a world frame's only now - `_perfOpen`, AUDIT 68 S16's flag -
+pinned in `test/auditretro2.test.js`.
+
 ## GROUND-LAST - the ground is drawn after the meshes (2026-09-21)
 
 Mac: *"I want proper fucking fixes."* This is one. Every lens of GRAIN
