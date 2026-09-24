@@ -365,6 +365,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       waterLevel: null,   // AddWater is a DUNGEON block's (Automap.cs:1982-2001); an interior has no water level
       positions: cpu.positions,
       indices: cpu.indices,
+      normals: cpu.normals ?? null,   // DISC22-G: the file's facing - a building's ceilings are not its storeys
       matrix,
     });
     collider.addMesh('interior', cpu.positions, cpu.indices, matrix);

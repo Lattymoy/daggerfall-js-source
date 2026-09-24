@@ -65,6 +65,10 @@ const PUBLIC_ALLOWLIST = new Map([
   // only picture the enhanced map will ship; the map itself is drawn
   // onto the paper at runtime from MAPS and WOODS data (10-UI/Held-Map-Arc.md).
   ['public/art/held-map.png', "OURS - Mac's own painting of the held parchment (MAP0, 2026-09-18; the fourth painting, MAP-FIELD8, 2026-09-22); no ARENA2 pixel in it"],
+  // DISC22-C (2026-09-24): THE GRIMOIRE LOOT SHEET. Mac's own parchment for the classic skins' quick-loot panel under
+  // the GrimoireUI pack ("The screenshot of the parchment is a spritesheet to be used for the loot menu (grimoire
+  // UI)"), 106x180, cut at its two gold rules by ui/classicLootPanel.js.
+  ['public/art/grimoire-loot-parchment.png', "OURS - Mac's own parchment for the GrimoireUI loot panel (DISC22-C, 2026-09-24); no ARENA2 pixel in it"],
   ['public/art/gun-idle.png', "OURS - Mac's own weapon art for the gun lab (2026-09-19); no ARENA2 pixel in it"],
   ['public/art/gun-fire-sheet.webp', "OURS - Mac's own six-frame fire sheet for the gun lab (2026-09-19); no ARENA2 pixel in it"],
   ['public/art/gun-paperdoll.png', "OURS - Mac's own weapon art for the gun lab (2026-09-19), baked down and cut for the doll's hand by tools/gunPaperdoll.mjs; no ARENA2 pixel in it"],
@@ -483,6 +487,12 @@ const BUNDLE_ART = new Map([
   ['public/art/grimoire-ui/',
     { manifest: 'vendor/grimoire-ui/grimoire-ui.files.json',
       why: "THIRD-PARTY - GrimoireUI 1.2 (LordSquacquerone, Nexus Daggerfall Unity mod 1222); the pack's own StreamingAssets pictures - 93 redrawn IMG screens, BUTTONS.RCI 0-37 and the save window's eight panel and button textures - byte for byte from the archive Mac supplied (see vendor/grimoire-ui/README.md)" }],
+  // HUD-ICON1 (2026-09-24): Daggerfall Unity's OWN interaction-mode icons - DFU-authored art out of Unity's
+  // Resources folder (Assets/Resources/Icons), MIT like the C# the port translates, never ARENA2 data. The listing
+  // is generated from the pinned commit, not written by hand.
+  ['public/art/dfu-icons/',
+    { manifest: 'vendor/dfu-icons/dfu-icons.files.json',
+      why: "THIRD-PARTY - Daggerfall Unity (Daggerfall Workshop, MIT); HUDInteractionModeIcon's four icon sets (icon, classic, colour, mono - steal, grab, info, talk), byte for byte from Assets/Resources/Icons at the commit the listing pins (see vendor/dfu-icons/README.md)" }],
   ['public/art/diverse-weapons/',
     { manifest: 'vendor/diverse-weapons/diverse-weapons.dfmod.json',
       why: "THIRD-PARTY - Diverse Weapons 1.7.3 (RealAKP); the mod's own first-person weapon sprites - eighteen weapons x ten metals, plain and enchanted, every record and frame, Weapon Widget's double-scale idles and the icons - re-encoded from the bundle's Texture2D objects by tools/diverseWeaponsExtract.mjs as indexed PNG where the picture fits one (lossless for every drawn pixel; see the vendor README)" }],

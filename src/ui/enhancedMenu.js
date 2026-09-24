@@ -137,7 +137,7 @@ import { SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { overlayAction } from './input.js';   // U51: Escape, through the shared table
 import { MOD_SETTINGS, modSetting, setModSetting, isIntKey, isFloatKey, isChoiceKey, isTextKey, isTupleKey } from '../systems/modSettings.js';
 import { keyCodeForDomCode, KEYCODE_NONE } from '../systems/keyCodes.js';   // HT1: a TextKey's capture spells the key as Unity would
-import { isOnlinePage, onlineForcedPref, onlineForcedModSetting } from '../systems/onlineLane.js';   // OL1: online is the enhanced lane, whole - a forced switch is shown locked   // ROADS 24; DS1: the integer keys; UL1: the choice keys
+import { isOnlinePage, onlineForcedPref, onlineForcedModSetting, onlineForcedSetting } from '../systems/onlineLane.js';   // OL1: online is the enhanced lane, whole - a forced switch is shown locked   // ROADS 24; DS1: the integer keys; UL1: the choice keys
 import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 // FIX-F (Mac: "changing keybinds in classic/enhanced do not work"): the
 // rebinding pane. The enhanced skin is the DEFAULT and had no door to
@@ -156,6 +156,7 @@ import '../world/outdoors.js';   // RF4: the outdoors lane too
 // thinks (ui/accountFlow.js, node-drivable), this draws it
 import { AccountFlow } from './accountFlow.js';
 import { accountCard } from './enhancedAccount.js';
+import { skinCard } from './skinCard.js';   // DISC23-B2: the skin, on the profile
 import { saveTile, cloudStateOf, saveFromCard } from './saveTile.js';   // TILE1 (Mac: "a detailed tile based design for your saves... showing your portrait and character information"), and ACC2c's card-shaped save
 import { loadFace } from './facePortrait.js';   // TILE1: the character's face, the one home chargen also reads
 import { cloudIo, cloudList, pushSlot, pullSlot, removeCloudSlot, cloudOnly, slotKeyOf, cloudRefusalText } from '../systems/cloudSaves.js';   // ACC2: the backup a tile can offer, AUDIT-312 F1's delete, and ACC2c's download of a save that is only up there
@@ -686,7 +687,7 @@ function paneContinue(body) {
 // settings, because they are questions about the game you are about to
 // start and nowhere else. StartInDungeon in particular is the answer
 // to "do I begin in Privateer's Hold" - a new-game question wearing a
-// settings key's clothes (systems/settings.js:89-94).
+// settings key's clothes (systems/settings.js:90-95).
 function paneNew(body) {
   const c = el('div', 'card');
   c.append(el('h3', null, 'A new character'));
@@ -826,6 +827,7 @@ function accountWindow() {
   for (const c of ['tl', 'tr', 'bl', 'br']) win.append(el('span', `px-gem px-corner px-${c}`));
   const body = el('div', 'px-body');
   body.append(accountBody());
+  body.append(skinCard(document).root);   // DISC23-B2 (Mac: "a choosable skin system in the menu player profile system itself"): who you are drawn as, beside who you are
   win.append(body);
   return win;
 }
@@ -1457,6 +1459,7 @@ function settingRow(key, { compact = false, home = false } = {}) {
     b.classList.add('rowact');   // AUDIT UI: sized by the sheet, not inline
     if (raw === 'True') b.classList.add('primary');
     b.onclick = () => write(key, stepValue(key, raw, 1));
+    if (onlineForcedSetting(_sec, _k) !== undefined) lockOnline(b, null, { note: ONLINE_SETTING_NOTE, value: raw === 'True' });   // DISC22-A: the room's rule, shown locked
     ctl.append(b);
   } else {
     ctl.append(val);
@@ -1506,7 +1509,7 @@ function write(key, next) {
 }
 
 // ── MODS ─────────────────────────────────────────────────────────
-// There is NO mod system (Ledger C, Not planned - and settings.js:165
+// There is NO mod system (Ledger C, Not planned - and settings.js:166
 // blocks four keys on exactly that ground). The section still exists,
 // because Mac's call was to set the menus up now, and because a rail
 // that quietly omits mods teaches the player they are impossible.
@@ -1546,6 +1549,8 @@ const ONLINE_SHARED_NOTE = 'On while online - a dungeon\u2019s monsters belong t
  *  intensive training with it. Not the ground's reason and not the host's foes', so its own words. */
 const ONLINE_RULESET_NOTE = 'Set while online - a room plays one ruleset, so a combat or training rule one player changes for their own blows would be two games in one dungeon. Your own choice returns when you play offline.';
 const ONLINE_RULESET_KEYS = Object.freeze({ 'roleplay-realism': Object.freeze(['advancedArchery', 'weaponSpeed', 'weaponMaterials', 'classicStrengthDamageBonus', 'equipDamage', 'encumbranceEffects', 'RefinedTraining.intensiveTraining']) });
+/** DISC22-A: a DFU setting the room plays by (onlineLane.js ONLINE_FORCED_SETTINGS) - its own reason. */
+const ONLINE_SETTING_NOTE = 'Set while online - every player in a room meets the same smiths, so a room plays one rule for mending enchanted items. Your own choice returns when you play offline.';
 const onlineLockNote = (vendor, key) => (ONLINE_GROUND_VENDORS.includes(vendor) ? ONLINE_GROUND_NOTE : ONLINE_RULESET_KEYS[vendor]?.includes(key) ? ONLINE_RULESET_NOTE : ONLINE_SHARED_NOTE);
 function lockOnline(b, main, { note = ONLINE_LOCK_NOTE, value = true } = {}) {
   b.textContent = value ? 'On (online)' : 'Off (online)';
@@ -2051,10 +2056,11 @@ function peerSpritesCard() {
   const c = el('div', 'card');
   c.append(el('h3', null, 'Other players'));
   c.append(el('p', 'meta',
-    'How a player without a Morrowind body (the card above) is drawn: as their character\u2019s class - a Warrior '
-    + 'looks like a Warrior, a Mage like a Mage - animated and puppeted by what they\u2019re actually doing, the '
-    + 'same sprite a hostile one of them already is. Off: the flat paperdoll portrait instead, standing still.'));
-  c.append(prefRow('peerClassSprites', 'Animated class sprite', 'On: the sprite above. Off: the paperdoll.', { home: true }));
+    'How a player without a Morrowind body (the card above) is drawn: as the Eye of the Beholder sprite they chose '
+    + 'for themselves, or - if they play without it - as their character\u2019s class (a Warrior looks like a Warrior, '
+    + 'a Mage like a Mage), animated and puppeted by what they\u2019re actually doing. Off: the flat paperdoll portrait '
+    + 'instead, standing still.'));   // DISC23-B: the chosen set first, the class only for a player without one
+  c.append(prefRow('peerClassSprites', 'Animated sprite', 'On: the sprite above. Off: the paperdoll.', { home: true }));
   c.append(prefRow('peerAttackSounds', 'Attack sounds', 'On: hear other players\u2019 weapon swings. Off: silent, no matter how close.', { home: true }));   // PEER-FS1: the two peer-sound switches, beside the sprite one
   c.append(prefRow('peerFootsteps', 'Footstep sounds', 'On: hear other players\u2019 footsteps as they walk. Off: silent, no matter how close.', { home: true }));
   return c;
@@ -2287,13 +2293,34 @@ function tileStates(f) {
     set: (i) => setModSetting(c.vendor, c.key, i === 1) };
 }
 
+/** DISC23-C: the segment that turns a feature off is the one that SAYS so. */
+export const OFF_LABEL = 'Off';
+
+/**
+ * DISC23-C (Skeptikali on Discord: "if a feature would be enabled, the ON button would turn Green, and if a feature
+ * would be disabled, the OFF button would turn Red"): what a bar says about its feature. A bar with an Off segment
+ * is a SWITCH - on whenever any other segment is pressed; a bar with none (Pixel / Smooth, a DFU filter mode) is a
+ * CHOICE, and its feature is never off.
+ *
+ * FT14 read "off" by POSITION - the first segment - and that was wrong wherever the Off is not first: Grass Density
+ * runs Full, Half, Quarter, Off, so at Full its tile read off and at Off it read on. The label is what the player
+ * reads, the same across all three stores (a pref's tiers, a DFU enum's values, a boolean's Off / On).
+ * @param {{labels: string[], at: number}} st
+ * @returns {{off: number, switch: boolean, on: boolean}}
+ */
+export function barReading(st) {
+  const off = st.labels.indexOf(OFF_LABEL);
+  return { off, switch: off >= 0, on: off < 0 || st.at !== off };
+}
+
 /** FT14: the bar. One object for two states or five. */
 function segBar(st, label) {
-  const seg = el('div', `ft-seg${st.at > 0 ? ' is-on' : ''}${st.locked ? ' locked' : ''}`);
+  const r = barReading(st);
+  const seg = el('div', `ft-seg${r.switch ? ' ft-seg-switch' : ''}${st.locked ? ' locked' : ''}`);
   seg.setAttribute('role', 'group');
   seg.setAttribute('aria-label', label);
   st.labels.forEach((L, i) => {
-    const b = el('button', `ft-segb${i === 0 ? ' off' : ''}`, L);
+    const b = el('button', `ft-segb${i === r.off ? ' off' : ''}`, L);
     b.type = 'button';
     b.setAttribute('aria-pressed', String(i === st.at));
     if (st.locked) {
@@ -2314,12 +2341,12 @@ function segBar(st, label) {
 let featureSel = null;
 let featureOpen = null;
 
-/** FT14: one feature, as a tile. */
-function featureTile(f) {
+/** FT14: one feature, as a tile. (Exported for DISC23-C's pins, which press its bar against a fake document.) */
+export function featureTile(f) {
   const c = resolveControl(f);
   const st = tileStates(f);
   const t = el('div', `ft-tile${featureSel === f.id ? ' sel' : ''}`);
-  t.dataset.on = st && st.at > 0 ? '1' : '0';
+  t.dataset.on = st && barReading(st).on ? '1' : '0';
   if (st?.locked) t.dataset.locked = '1';
   t.tabIndex = 0;
   const show = () => { featureSel = f.id; paintRail(); for (const n of document.querySelectorAll('.ft-tile')) n.classList.toggle('sel', n === t); };
@@ -3573,6 +3600,9 @@ export function mountEnhancedMenu(host, {
   // has to work around. The tabbed window IS the pause home face, so a
   // landing sets the TAB and leaves the section alone.
   if (['quests', 'stats', 'system'].includes(at)) pauseTab = at;
+  // DISC22-B: ...or a SECTION of the rail - the classic pause window's Controls button lands on Settings (the port's
+  // whole settings screen, Controls among its categories), not on the home face a press away from it.
+  else if (at && sections.some((l) => idOf(l) === at)) section = at;
   questSel = null;
   statsSec = 'character';
   statsAllSkills = false;

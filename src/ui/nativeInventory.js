@@ -90,7 +90,7 @@ import {
 } from '../systems/inventorySession.js';
 import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, isBrokenItem, EQUIP_SLOTS, FORBIDDEN_EQUIPMENT_TEXT_ID, ITEM_BROKEN_TEXT_ID, equipDelaySnapshot, billEquipDelayOnClose } from '../systems/equip.js';   // S23; FX1 (F128): the per-visit swap-pause clock
 import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } from './paperDoll.js';
-import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, safeScrollIndex, beginScrollerDrag, dragScrollerIndex,   // MAC-N2: the thumb drag
+import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, preloadIconRecord, drawStackLabel, safeScrollIndex, beginScrollerDrag, dragScrollerIndex,   // MAC-N2: the thumb drag
   preloadScrollerArrowArt, drawScrollerArrows, drawScrollerThumb, playScrollerArrowClick,
   makeSlotToolTip, itemBackgroundColour, drawCellBackground } from './itemScroller.js';
 import { templateByIndex, itemBaseValue, inventoryItemImage } from '../systems/itemTemplates.js';
@@ -357,7 +357,7 @@ function makeAccessoryIconDrawer(icons, identityOf = null) {
       warm.add(key);
       icons.getTexture(img.archive).then(async (tex) => {
         if (img.record < tex.recordCount) {
-          await icons.preloadRecord?.(img.archive, img.record, img.dye);   // AUDIT-DW F1: this record's replacement, decoded when it is drawn - not the archive's 280 before the first classic icon
+          await preloadIconRecord(icons, img);   // AUDIT-DW F1 / DISC22-D: this record's replacement, decoded when it is drawn - by the drawer itself
           const variant = icons.uploadRecord(img.archive, img.record, { mips: false, removeMask: true, dye: img.dye });   // REVIEW 2026-09-05: item art is UI art - ImageReader.cs:59, no mip chain; HM1: GetInventoryImage strips the 0xFF mask (the helm's halo)
           glKeys.set(key, `${img.archive}_${img.record}${variant ?? '#ui'}`);
           sizes.set(key, tex.getSize(img.record));

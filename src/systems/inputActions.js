@@ -958,7 +958,7 @@ export function loadKeyBinds(store, data) {
 // DFU keeps KeyBindings.txt BESIDE settings.ini, its own file with its
 // own serializer (GetKeyBindsSavePath) - so the port keeps its own
 // localStorage key beside the settings store's, same try/catch shield
-// as systems/settings.js:156.
+// as systems/settings.js:157.
 const STORAGE_KEY = 'dagger.keybinds';
 
 // DA1: the storage seam - localStorage in a browser, the desktop

@@ -263,8 +263,8 @@
   {
     "name": "RIDE-latest-word",
     "file": "src/net/peerRiders.js",
-    "old": "      const pose = peer?.shown;",
-    "new": "      const pose = peer?.pose;",
+    "old": "      const pose = peer?.shown;\n      if (!pose) continue;\n      // PR-WW1: a beast",
+    "new": "      const pose = peer?.pose;\n      if (!pose) continue;\n      // PR-WW1: a beast",
     "tests": [
       "test/hcc_park.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "RIDE-riding-before-drawn",
     "file": "src/net/peerRiders.js",
-    "old": "    isRiding: (id) => !!riders.get(id)?.batch,",
-    "new": "    isRiding: (id) => riders.has(id),",
+    "old": "    isDrawn: (id) => !!figs.get(id)?.batch,",
+    "new": "    isDrawn: (id) => figs.has(id),",
     "tests": [
       "test/hcc_park.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "RIDE-fixed-name-height",
     "file": "src/net/peerRiders.js",
-    "old": "    heightOf: (id) => { const r = riders.get(id); return r?.batch && r.size && r.xml ? r.size.h + r.xml.y / r.xml.scale : 0; },",
-    "new": "    heightOf: (id) => (riders.has(id) ? 2.6 : 0),",
+    "old": "    heightOf: (id) => { const r = figs.get(id); return r?.batch && r.size && r.xml ? r.size.h + r.xml.y / r.xml.scale : 0; },",
+    "new": "    heightOf: (id) => (figs.has(id) ? 2.6 : 0),",
     "tests": [
       "test/hcc_park.test.js"
     ]

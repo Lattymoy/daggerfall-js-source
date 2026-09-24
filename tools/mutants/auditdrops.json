@@ -74,7 +74,7 @@
   {
     "name": "AD-A2-finished-received-again",
     "file": "src/systems/questShare.js",
-    "old": "  if (machine.hasFinishedSharedQuestNamed?.(questName)) return { ok: false, reason: 'done' };",
+    "old": "  if (shareId !== undefined ? machine.hasFinishedSharedCopy?.(questName, shareId) : machine.hasFinishedSharedQuestNamed?.(questName)) return { ok: false, reason: 'done' };",
     "new": "",
     "tests": [
       "test/auditdrops.test.js"

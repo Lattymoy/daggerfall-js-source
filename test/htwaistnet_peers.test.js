@@ -14,7 +14,7 @@
 // otherwise; validPose admits it, poseChanged sends its edge at once,
 // lerpPose carries it; and a peer's body hangs the lantern through the rig's
 // own door (`b.rig.setHipLight(!!shown.hl)` in `_arm`), swung off that
-// body's own stub camera as the local one swings off the motor. world106.
+// body's own stub camera as the local one swings off the motor. world107 (world106 on its branch; main's DISC23-B took world106 first).
 //
 // Driven through the real code: the wire's door, two OnlineSessions over
 // fake sockets either side of the real relay Room (test/fakeRoom.mjs), and
@@ -227,7 +227,7 @@ test('HT-WAIST-NET: recorded - the deferral is retired where HT-WAIST wrote it (
   const arc = rd('bible/06-Systems/Handheld-Torches.md');
   const sec = arc.slice(arc.indexOf('## HT-WAIST - THE LANTERN AT THE WAIST'));
   assert.doesNotMatch(sec, /The wire is untouched|Online: NOT carried/, 'RETIRING A FLAG DELETES THE SENTENCE');
-  assert.match(sec, /HT-WAIST-NET/); assert.match(sec, /`hl`/); assert.match(sec, /world106/);
+  assert.match(sec, /HT-WAIST-NET/); assert.match(sec, /`hl`/); assert.match(sec, /world107/);
   const mw = rd('bible/02-Formats/Morrowind-Rules.md');
   const mws = mw.slice(mw.indexOf('## HT-WAIST (2026-09-24)'));
   assert.doesNotMatch(mws.slice(0, 4000), /\*\*Peers\*\*: unchanged/, 'the body\'s record no longer says peers never ask');
@@ -237,7 +237,7 @@ test('HT-WAIST-NET: recorded - the deferral is retired where HT-WAIST wrote it (
   assert.doesNotMatch(row, /the wire is untouched/);
   assert.match(row, /HT-WAIST-NET/);
   const online = rd('bible/06-Systems/Online-Arc.md');
-  assert.match(online, /^## HT-WAIST-NET \(2026-09-24[^\n]*world106$/m, 'the online arc\'s section');
+  assert.match(online, /^## HT-WAIST-NET \(2026-09-24[^\n]*world107$/m, 'the online arc\'s section');
   const w = rd('src/net/wire.js');
-  assert.match(w, /\nexport const RELAY_VERSION = 'world\d+';[^\n]*HT-WAIST-NET \(2026-09-24[^\n]*? - world106\./, 'the relay\'s version chain names it at world106');
+  assert.match(w, /\nexport const RELAY_VERSION = 'world\d+';[^\n]*HT-WAIST-NET \(2026-09-24[^\n]*? - world107 /, 'the relay\'s version chain names it at world107');
 });

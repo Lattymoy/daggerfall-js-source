@@ -1,0 +1,119 @@
+[
+  {
+    "name": "HI1-corner-no-resScale",
+    "file": "src/ui/hudCrosshair.js",
+    "tests": [
+      "test/hud_icon1.test.js"
+    ],
+    "old": "const k = iconStyleScale(style) / iconResScale(scale);",
+    "new": "const k = iconStyleScale(style);"
+  },
+  {
+    "name": "HI1-xhair-takes-resScale",
+    "file": "src/ui/hudCrosshair.js",
+    "tests": [
+      "test/hud_icon1.test.js"
+    ],
+    "old": "const ds = iconStyleScale(style), w = icon.w * ds",
+    "new": "const ds = iconStyleScale(style) / iconResScale(scale), w = icon.w * ds"
+  },
+  {
+    "name": "HI1-xhair-not-centred",
+    "file": "src/ui/hudCrosshair.js",
+    "tests": [
+      "test/hud_icon1.test.js"
+    ],
+    "old": "{ x: cx - w / 2, y: cy - h / 2, w, h }",
+    "new": "{ x: cx, y: cy, w, h }"
+  },
+  {
+    "name": "HI1-corner-also-draws-word",
+    "file": "src/ui/hudCrosshair.js",
+    "tests": [
+      "test/hud_icon1.test.js"
+    ],
+    "old": "    renderer.drawScreenQuad(icon.tex, { x, y, w, h });\n    return;\n",
+    "new": "    renderer.drawScreenQuad(icon.tex, { x, y, w, h });\n"
+  },
+  {
+    "name": "HI1-corner-picture-dropped",
+    "file": "src/ui/hudCrosshair.js",
+    "tests": [
+      "test/hud_icon1.test.js"
+    ],
+    "old": "  const icon = modeIcon(renderer, style, mode);\n  if (icon) {\n    const k",
+    "new": "  const icon = null;\n  if (icon) {\n    const k"
+  },
+  {
+    "name": "HI1-xhair-picture-dropped",
+    "file": "src/ui/hudCrosshair.js",
+    "tests": [
+      "test/hud_icon1.test.js"
+    ],
+    "old": "      const icon = modeIcon(renderer, style, mode);\n      if (icon) {",
+    "new": "      const icon = null;\n      if (icon) {"
+  },
+  {
+    "name": "HI1-mono-set-lost",
+    "file": "src/ui/modeIcons.js",
+    "tests": [
+      "test/hud_icon1.test.js"
+    ],
+    "old": "if (s === 'monochrome') return 'mono';",
+    "new": "if (s === 'monochrome') return 'icon';"
+  },
+  {
+    "name": "HI1-classicxhair-set-lost",
+    "file": "src/ui/modeIcons.js",
+    "tests": [
+      "test/hud_icon1.test.js"
+    ],
+    "old": "if (s === 'classic' || s === 'classicxhair') return 'classic';",
+    "new": "if (s === 'classic') return 'classic';"
+  },
+  {
+    "name": "HI1-colourxhair-set-lost",
+    "file": "src/ui/modeIcons.js",
+    "tests": [
+      "test/hud_icon1.test.js"
+    ],
+    "old": "if (s === 'colour' || s === 'colourxhair') return 'colour';",
+    "new": "if (s === 'colour') return 'colour';"
+  },
+  {
+    "name": "HI1-talk-misnamed",
+    "file": "src/ui/modeIcons.js",
+    "tests": [
+      "test/hud_icon1.test.js"
+    ],
+    "old": "dialogue: 'talk'",
+    "new": "dialogue: 'dialogue'"
+  },
+  {
+    "name": "HI1-smooth-sampling",
+    "file": "src/ui/modeIcons.js",
+    "tests": [
+      "test/hud_icon1.test.js"
+    ],
+    "old": "{ alpha: true })",
+    "new": "{ alpha: true, smooth: true })"
+  },
+  {
+    "name": "HI1-no-alpha",
+    "file": "src/ui/modeIcons.js",
+    "tests": [
+      "test/hud_icon1.test.js"
+    ],
+    "old": "px, { alpha: true })",
+    "new": "px, {})"
+  },
+  {
+    "name": "HI1-one-file-not-the-set",
+    "file": "src/ui/modeIcons.js",
+    "tests": [
+      "test/hud_icon1.test.js"
+    ],
+    "old": "for (const s of Object.values(MODE_ICON_SUFFIX)) if",
+    "new": "for (const s of [suffix]) if"
+  }
+]

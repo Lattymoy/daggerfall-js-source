@@ -605,6 +605,44 @@ export function paintCaret(ctx, x, y, yaw = 0, pen = {}) {
   ctx.fill();
 }
 
+/** DISC23-A: a party member's label sits this far under the member's caret, and two members standing on one spot
+ *  have their names this near before the second drops a line (AUDIT SOC D2's stack, on a plan). */
+export const PARTY_CARET_LABEL_GAP = 3;
+export const PARTY_CARET_STACK_PX = 10;
+
+/**
+ * DISC23-A: THE PARTY ON A PLAN - each member a caret of the player's own shape, facing where they face, in the party's
+ * green, with the name under it haloed as every name on every sheet is. The caret, not the bay's ring: on a street or a
+ * storey a member is a body with a heading, the thing the player's own caret is, and a friend walking toward you reads
+ * as one. Drawn BEFORE the player's caret, so the player is never under a friend.
+ *
+ * `marks` are in PAPER pixels already; `pen` carries the green (ui/partyMapMarks.js PARTY_MARK_CSS, handed in by the
+ * sheet so this module keeps no online import) and the sheet's halo.
+ * @param {*} ctx
+ * @param {Array<{x:number, y:number, yaw?:number, name?:string}>} marks
+ * @param {{fill:string, halo:string}} pen
+ */
+export function paintPartyCarets(ctx, marks, pen) {
+  if (!ctx?.beginPath || !marks?.length) return;
+  const placed = [];
+  for (const m of marks) {
+    paintCaret(ctx, m.x, m.y, m.yaw ?? 0, { fill: pen.fill, halo: pen.halo });
+    // the i-th member standing where another already is drops a line, so two names never print over each other
+    const stack = placed.filter((q) => Math.abs(q.x - m.x) < PARTY_CARET_STACK_PX && Math.abs(q.y - m.y) < PARTY_CARET_STACK_PX).length;
+    placed.push(m);
+    if (!m.name) continue;
+    const ly = m.y + CARET_R + PARTY_CARET_LABEL_GAP + stack * PARTY_LABEL_STACK;
+    ctx.font = `600 12px ${NAME_FACE}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.lineWidth = 2 * HALO_PEN;
+    ctx.strokeStyle = pen.halo;
+    ctx.strokeText(m.name, m.x, ly);
+    ctx.fillStyle = pen.fill;
+    ctx.fillText(m.name, m.x, ly);
+  }
+}
+
 /**
  * WHERE A SHEET RESTS: the whole plan on the paper, centred on `focus`
  * where there is one and left to the window's own clamp where there is

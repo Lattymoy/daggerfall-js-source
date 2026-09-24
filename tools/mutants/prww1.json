@@ -83,8 +83,8 @@
   {
     "name": "PRWW1-fallback-lost-while-the-art-loads",
     "file": "src/net/peerRiders.js",
-    "old": "    isRiding: (id) => !!riders.get(id)?.batch,\n",
-    "new": "    isRiding: (id) => riders.has(id),\n",
+    "old": "    isDrawn: (id) => !!figs.get(id)?.batch,\n",
+    "new": "    isDrawn: (id) => figs.has(id),\n",
     "tests": [
       "test/prww1_werewolf.test.js"
     ]
@@ -92,7 +92,7 @@
   {
     "name": "PRWW1-modal-hook-narrowed-back",
     "file": "src/scenes/world.js",
-    "old": "    extraBillboards: () => [...(remotePlayers?.batches() ?? []), ...(peerRiders?.batches() ?? [])],\n",
+    "old": "    extraBillboards: () => [...(remotePlayers?.batches() ?? []), ...(peerRiders?.batches() ?? []), ...(peerWalkers?.batches() ?? [])],\n",
     "new": "    extraBillboards: () => remotePlayers?.batches() ?? [],\n",
     "tests": [
       "test/prww1_werewolf.test.js"

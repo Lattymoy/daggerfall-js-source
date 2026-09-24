@@ -5491,13 +5491,13 @@ instance* for the interior mode, so it covers the shops entered from
 `?exterior` too. It passed neither of `EntityEffectManager`'s two
 ready-spell events (`hostMagic.js:78-79`), and those two doors are the
 *only* route into the machine's `CastSpellDo` / `CastEffectDo` latches
-(`machine.js:848`/`:831`; C# subscribes them in the action's
+(`machine.js:867`/`:850`; C# subscribes them in the action's
 constructor). Every `cast X spell do` and `cast X effect do` on this
 whole route could therefore never latch and never fire. The pair the
 other two engine-owning hosts wire (`world.js:4098-4099`,
-`dungeonContext.js:2246-2247`) is wired here now, and with it
+`dungeonContext.js:2247-2248`) is wired here now, and with it
 `CastSpellDo`'s two world reads — `getClassicSpellEffects` and the
-byte-folded `spellHasMatchForClassicEffect` (`world.js:8425-8428`),
+byte-folded `spellHasMatchForClassicEffect` (`world.js:8430-8433`),
 absent which the action self-completes at *parse*
 (`actions.js:2756`/`:2763`) and the task can never arm at all.
 
@@ -6286,3 +6286,28 @@ every death went to the orphan, the `killed N` trigger read the new one, and the
 behaviour now lets go of a target the quest no longer holds (by UID and by symbol) and resolves it again, and the
 resync keeps this world's Foe counters (the larger kill count; the injury and a pending kill this world's own events set - AUDIT DISC7 D7 dropped the restraint, which is the quest's word on both sides; C2 relinks every standing behaviour at the resync, symbol included, and C3 keeps this world's longer spell and item queues). Record: `01-Overview/Field-Bugs-2026-09-23.md`. Pinned in
 `test/disc6.test.js`; `tools/mutants/disc6.json`.
+
+## QUEST-UID1 - a quest offered before a load is not the loaded game's (2026-09-24)
+
+Found tracing the "two letters from the queen" report (Mac: "Go ahead and tackle your reported weaknesses").
+The report itself was DFU's own `_BRISIEN` timeline: the invitation, the reminder 30 days on under the same item
+name, the last letter, then the quest's end removing its letters and topics. No path delivers the letter twice. The
+trace found a real weakness beside it:
+
+- **The refusal DFU makes and the port did not.** `StartQuest` ends in `quests.Add(quest.UID, quest)`
+  (QuestMachine.cs:725), a Dictionary.Add that throws on a UID already live. `startQuestImmediate` used `set` and
+  replaced the live quest in silence. It now throws the same words restoreSaveData already threw, after `start()` and
+  the topic registration, in C#'s order, and the quest on the table stands.
+- **The door the duplicate came through.** A quickload runs from under any window (FIX-E, for the death screen's F11),
+  a quest offer popup among them, and the offer flow kept the quest it had parsed in the game being replaced. Yes
+  after the load started it in the loaded game, and a restored quest drawing the same UID was overwritten. DFU cannot
+  reach this: its load window and quickload key both stand on the HUD. The bridge's `restore` now calls
+  `offerFlow.reset()` beside `machine.clearState()`, so the offer (and a guild picker's pool) goes with the game it was
+  parsed in, and an answer to its popup closes.
+- **Left as DFU has it:** a throw inside a quest's tick. A protected quest (`_BRISIEN`, `S0000999`, `S0000977`) is
+  logged and its later tasks wait for the next tick; any other quest ends (QuestMachine.cs:466-480). The trace's
+  harness had no world, so its `place npc` threw on every tick. Whether a real tavern ever does is the question put to
+  the reporter (did they reach the inn, and was Brisienna there).
+
+Pins: `test/quest_uid1.test.js` (3) through the real bridge over the vendored quests; mutants
+`tools/mutants/questuid1.json` (5, all dead).

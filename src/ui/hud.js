@@ -46,6 +46,9 @@ import { getBool } from '../systems/settings.js';   // AUDIT 28 W2: EnableArrowC
 import { getItem, isSummoned, ARROW_TEMPLATE } from '../systems/inventory.js';   // AUDIT 28 W2: GetItem(Arrow, priorityToConjured)
 import { EQUIP_SLOTS } from '../systems/equip.js';   // AUDIT 28 W2: the bow hand
 import { nativeMetrics } from './nativePanel.js';
+import { frameMark } from '../systems/frameClock.js';   // DISC22-C: the classic loot panel draws the frame resolved in THIS frame
+import { classicLootFrame } from '../systems/classicLootFrame.js';   // DISC22-C: a leaf - hud.js must not reach the item graph
+import { drawLootPanel } from './classicLootPanel.js';   // DISC22-C: quick loot's classic face
 import { packImgTexture } from './packArt.js';   // OVH2: the worn UI pack's picture
 import { ToolTip } from './toolTip.js';
 
@@ -688,6 +691,7 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
     drawCrosshairAndModeIcon(renderer, canvas, font,
       { cursorActive, scale: s2, border: HUD_BORDER, barWidth: HUD_NATIVE_BAR_WIDTH, showModeIcon: false,
         largeHudHeight: dockedLargeHudHeight(lastLargeHudBar) });
+    drawClassicLoot(renderer, canvas, font);   // DISC22-C: quick loot's classic face
     // DaggerfallHUD.cs:203 sets breathBar.Enabled from ShowBreathBar
     // every frame and the force-off block (:214-220) does NOT include
     // it, so the bar survives the large HUD - drawn here after the
@@ -774,5 +778,12 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   drawEscortFaces(renderer, canvas);
   drawCrosshairAndModeIcon(renderer, canvas, font,
     { cursorActive, scale: s, border: HUD_BORDER, barWidth: HUD_NATIVE_BAR_WIDTH });
+  drawClassicLoot(renderer, canvas, font);   // DISC22-C: quick loot's classic face, beside the crosshair
   drawSpellIconRows(renderer, canvas, vitals, dt, { font, cursorActive, largeHudRect: null, hover });
+}
+
+/** DISC22-C: the classic skins' quick-loot panel - the frame worldHoverFrame resolved THIS frame, the lit row banded. */
+function drawClassicLoot(renderer, canvas, font) {
+  const loot = classicLootFrame(frameMark());
+  if (loot) drawLootPanel(renderer, nativeMetrics(canvas), font, loot.frame, loot.lit);
 }

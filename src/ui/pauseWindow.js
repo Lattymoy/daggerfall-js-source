@@ -183,7 +183,7 @@ export class PauseOptionsWindow {
     // GameManager.cs:515-518, and ActionComplete is the RELEASE edge
     // (InputManager.cs:634-637) - so its opening release is spent before
     // the window exists and :186's bare `GetKeyUp` is safe there. Every
-    // host here opens on the key DOWN (world.js:7939, exterior.js:3096,
+    // host here opens on the key DOWN (world.js:7942, exterior.js:3096,
     // ui/input.js:579) and then routes that same key's release into the
     // window it just mounted, so the release door closes only a window
     // whose own press it saw.
@@ -252,7 +252,7 @@ export class PauseOptionsWindow {
     this.isCloseWindowDeferred = false;
     this._click();   // ContinueButton's sound, which this port's two close doors share
     this._closeWith();
-    // MAC1 J, the classic twin (ui/pauseDoor.js:270-287): the close runs
+    // MAC1 J, the classic twin (ui/pauseDoor.js:286-306): the close runs
     // inside this click/keyup, the activation requestPointerLock needs.
     this.hooks.relock?.();
   }
@@ -269,7 +269,7 @@ export class PauseOptionsWindow {
     if (inRect(R.continue, vx, vy)) {
       this._click();
       this._closeWith();
-      // MAC1 J, the classic twin (ui/pauseDoor.js:270-287): the close runs
+      // MAC1 J, the classic twin (ui/pauseDoor.js:286-306): the close runs
       // inside this click/keyup, the activation requestPointerLock needs.
       // On the RESUME exits, never on the shared `_closeWith`: the SAVE
       // and LOAD arms below travel it to OPEN the slot window, and the
@@ -498,16 +498,17 @@ export function openClassicPauseFlow(show, hooks = {}) {
     // MAC1 J: a COMPLETED save or load drains the whole stack back to
     // the HUD, inside the slot window's own click - so this exit is a
     // resume too, and the enhanced twin relocks on exactly it
-    // (ui/pauseDoor.js:282 fires for 'save' and 'load', not 'exit').
+    // (ui/pauseDoor.js:301 fires for 'save' and 'load', not 'exit').
     popToHUD: push ? () => { win?._closeWith(); hooks.relock?.(); } : null,
     ...extra,
   });
   win = new PauseOptionsWindow({
     ...hooks,
     saveLoadPushes: !!push,   // C1: does this host's door stack, or replace?
-    openControls: controlsArtLoaded()
+    // DISC22-B: the port's whole settings screen where the host can mount it (ui/pauseDoor.js), else DFU's grid
+    openControls: hooks.openSettings ?? (controlsArtLoaded()
       ? () => show(new ControlsWindow({ onBack: () => openClassicPauseFlow(show, hooks) }))
-      : null,
+      : null),
     openSave: hooks.saveAs
       ? () => mount(new SaveWindow('save', saveWindowHooks({ saveAs: hooks.saveAs })))
       : null,

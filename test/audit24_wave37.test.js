@@ -11,6 +11,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { stripTakesClick as realStripTakesClick } from '../src/ui/travelControlUI.js';   // DISC22-E: the pointerdown rung's gate
 
 // Mutation campaign: 13 reintroductions, 13 killed. Both hosts'
 // pointerdown and wheel lines back to the method guard (the shipped
@@ -112,12 +113,15 @@ function fireListener(lineSrc, event = {}) {
   // the state this pin fires in), so the fall-through past it is what
   // gets witnessed, exactly as with `travelControlUI` above.
   const quickLootWheel = () => false;
+  // DISC22-E: the strip's gate is the lock, asked through the real predicate - with `travelControlUI` null it
+  // answers false, so the fall-through is what is witnessed
+  const stripTakesClick = realStripTakesClick;
   new Function('canvas', 'townTalk', 'requestLook', 'routeLargeHudClick', 'hudCtx', 'mwViewWheel',
     'document', 'gamePaused', 'latch', 'createActivateGate', 'setClickDelay',
-    'travelControlUI', 'isEnhanced', 'nativeMetrics', 'pointToNative', 'quickLootWheel',
+    'travelControlUI', 'isEnhanced', 'nativeMetrics', 'pointToNative', 'quickLootWheel', 'stripTakesClick',
     `var modes; ${lineSrc}`)(canvas, townTalk, requestLook, routeLargeHudClick, hudCtx, mwViewWheel,
     document, gamePaused, latch, createActivateGate, setClickDelay,
-    travelControlUI, isEnhanced, nativeMetrics, pointToNative, quickLootWheel);
+    travelControlUI, isEnhanced, nativeMetrics, pointToNative, quickLootWheel, stripTakesClick);
   assert.equal(seen.length, 1, 'one listener registered');
   seen[0].fn({ preventDefault: () => seen.push({ type: 'preventDefault' }), button: 0, clientX: 0, clientY: 0, ...event });
   return seen.map((s) => s.type);
