@@ -352,9 +352,9 @@ export const ACT_ROOM_BYTES_PER_S = 1024 * 1024;
  *  exactly, one flooder can hold at most a sixteenth of it, and an honest door (a few KiB to a room) still lands
  *  whole and at once. */
 export const ACT_SENDER_BYTES_PER_S = ACT_ROOM_BYTES_PER_S / 16;
-/** AUDIT WORLD6b-iii(c) C3: the room's HIT bytes a second, fanned - the hit frame carries a corpse's GRANT since
- *  WORLD6b-iii(c) (up to a frame's worth of items), so the arm that was a 150-byte control channel is a bulk one and
- *  counts its bytes as the foes and the acts do (AUDIT WORLD3 A1's law); over it a blow is dropped, nobody struck. */
+/** AUDIT WORLD6b-iii(c) C3: a SENDER's HIT bytes a second (AUDIT 68, as DROPS B3 made the trade's) - the hit frame
+ *  carries a corpse's GRANT since WORLD6b-iii(c) (up to a frame's worth of items), so the arm that was a 150-byte control
+ *  channel is a bulk one and counts its bytes as the foes and the acts do (AUDIT WORLD3 A1's law); over it a blow is dropped, nobody struck. */
 export const HIT_ROOM_BYTES_PER_S = 256 * 1024;
 /** WORLD3: a client's action frames a second - a click's worth, on their own bucket at the relay (a door never
  *  starves a pose) and refused to the caller at home past it. */
@@ -1867,7 +1867,7 @@ export const TRADE_DATA_MAX = TRADE_FRAME_MAX - 64;
 /** The most trade frames a socket may send a second, and the most one socket is sent (the destination's funnel). */
 export const TRADE_HZ_MAX = 8;
 export const TRADE_ROOM_HZ_MAX = 32;
-/** The room's trade BYTES a second, fanned - a commit carries a pack's worth of items, so the room budgets bytes as the hits do. */
+/** A sender's trade BYTES a second (AUDIT DROPS B3) - a commit carries a pack's worth of items, so the arm budgets bytes as the hits do. */
 export const TRADE_ROOM_BYTES_PER_S = 192 * 1024;
 /** Why a trade ended, as a code the client puts words to (net/tradeSession.js tradeWhyText). */
 export const TRADE_WHY = Object.freeze(['declined', 'cancelled', 'left', 'busy', 'timeout', 'range', 'refused']);
