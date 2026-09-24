@@ -5377,6 +5377,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the sway does not ride a fast travel, a teleport or a load's
     // landing to the new place.
     cameraRecoiler.reset();
+    modes?.abortTransition?.();   // AUDIT 68 X3-transition-build-race: a door build still in flight lands in the world being left - it frees itself instead of publishing
     // A1: a fast travel is where the calendar jumps WEEKS - straighten
     // the season BEFORE the destination pixel builds, or the arrival
     // is skinned for the month the player left and the frame loop
@@ -6518,6 +6519,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       // Awaiting here costs nothing once it has resolved and is the
       // difference between reading a save and destroying one.
       if (!spellsByIndex) await _magicRegistries.catch(() => null);
+      // AUDIT 68 X3-transition-build-race: a door build still in flight
+      // belongs to the game being replaced - abandon it and WAIT for it
+      // to unwind (its context freed, any seams it borrowed handed back)
+      // before the save is read over the entity it was building for.
+      modes?.abortTransition?.();
+      await modes?.transitionSettled?.();
       const extras = restorePlayer(playerEntity, snap, spellsByIndex);
       if (!extras) { townTalk.say('Save version mismatch.'); return; }
       autoBuildArms(playerEntity);   // MWA1: the loaded character's arms (a boot into ?load has no chargenDone until here)
@@ -11925,6 +11932,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // than its standalone refusal. The cast engine in THIS host
     // already routes to it; dungeon mode runs the context's own.
     onTeleport: () => teleportPrompt(),
+    standLooseFoe: (mobileType, opts) => _standLooseFoe(mobileType, opts),   // AUDIT 68 S23-coven-punishment-interior-only: CreateFoeSpawner stands wherever the player is - the summoning punishments ride the enchantments' mode-routed stand
     canvas, renderer, player, cam, keys, latch, blocks,
     // V5: PlayerGPS, for CanRest. Only this host knows what kind of
     // place the player is standing in, and the rest law's first two

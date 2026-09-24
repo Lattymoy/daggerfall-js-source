@@ -15,7 +15,10 @@ const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 test('WORLD6b-iii(d): a building streams no foes BY THE LOCK - the interior pool has exactly three spawners (a quest\'s, the summon\'s, the watch\'s), all the player\'s own; the world host streams a world room\'s frame from the dungeon alone and lands a world room\'s frame on the dungeon alone; the record says why', () => {
   const wm = rd('src/scenes/worldModes.js');
   const sites = [...wm.matchAll(/interiorFoes\??\.spawnFoe\(/g)].length;
-  assert.equal(sites, 5, `the interior pool's spawn sites: the summon's punishment (two arms), the quest's CreateFoe (two arms), the enchant replace - and nothing of a layout's (${sites})`);
+  // AUDIT 68 S23-coven-punishment-interior-only: the summon's punishment
+  // stands through the loose-foe door, which indoors is
+  // standInteriorLooseFoe's one spawn - it lost its own second arm.
+  assert.equal(sites, 4, `the interior pool's spawn sites: the loose-foe stand (the summon's punishment rides it), the quest's CreateFoe (two arms), the enchant replace - and nothing of a layout's (${sites})`);
   assert.match(wm, /const type = MOBILE_TYPES\[DAEDRIC_FOES\[Math\.floor\(rolls\(\) \* DAEDRIC_FOES\.length\)\]\];/, 'the summon\'s punishment');
   assert.match(wm, /interiorFoes\.spawnFoe\(foe\.foeType, /, 'the quest\'s CreateFoe');
   assert.match(wm, /return interiorFoes\.spawnFoe\(mobileType, feet, \{ replacing: true \}\);/, 'the enchant replace of one of those');

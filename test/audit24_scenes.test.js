@@ -167,6 +167,10 @@ test('audit24 wave20: findBehaviours sees the static-NPC behaviours too', () => 
     'and the people');
   // Unity destroys those behaviours with their GameObjects on the
   // scene transition, so the interior teardown must notify them.
+  // AUDIT 68 S23-dungeon-npc-behaviours-not-destroyed: through the ONE
+  // people walk both scene teardowns share.
   const t = s.slice(s.indexOf('function teardownQuestFlats() {'));
-  assert.match(t.slice(0, 900), /for \(const pn of interiorCtx\?\.people \?\? \[\]\) \{[\s\S]*?pn\.questBehaviour\.notifyDestroyed\?\.\(\);/);
+  assert.match(t.slice(0, 300), /teardownStands\(questFlats, interiorCtx\?\.people\);/);
+  const w = s.slice(s.indexOf('function destroyPeopleBehaviours(people) {'));
+  assert.match(w.slice(0, 300), /for \(const pn of people \?\? \[\]\) \{[\s\S]*?pn\.questBehaviour\.notifyDestroyed\?\.\(\);\s*pn\.questBehaviour = null;/);
 });

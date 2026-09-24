@@ -147,6 +147,7 @@ const CARRIED_AIM = new Map([
   ['hcc.json::HCC-disabled-still-shows', 2],
   ['macbugw5.json::MAC-BUG-W5-13-the-pools-gate-still-asks-for-the-door-it-no-longer-knocks-on', 4],
   ['orl1.json::the-interior-hosts-FIRST-last-resort-skips-the-door', 2],
+  ['perfsun.json::PERF-SUN1-the-sun-map-samples-NEAREST-so-a-single-tap-is-no-longer-a-2x2', 2],
   ['perfsun.json::PERF-SUN2-the-gate-drops-the-n-dot-L-half-so-every-wall-facing-away-still-pays', 3],
   ['perfsun.json::PERF-SUN2-the-gate-drops-the-uniform-half-so-dusk-and-night-still-pay', 3],
   ['perfsun.json::PERF-SUN2-the-gated-branch-answers-ONE-instead-of-zero-so-an-unlit-face-is-fully-lit', 3],

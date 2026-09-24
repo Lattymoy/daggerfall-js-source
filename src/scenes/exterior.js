@@ -3847,6 +3847,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // it the mounted dungeon context kept its standalone refusal and a
     // cast underground did nothing at all.
     onTeleport: () => teleportPrompt(),
+    standLooseFoe: (mobileType, opts) => _standLooseFoe(mobileType, opts),   // AUDIT 68 S23-coven-punishment-interior-only: CreateFoeSpawner stands wherever the player is - the summoning punishments ride the enchantments' mode-routed stand
     // U39: this host never passed a scene context, so every consumer
     // of questSceneCtx().mapId read the `?? 0` fallback - which the
     // tavern's rental key exposed, since a room is stored by (mapId,
@@ -3964,6 +3965,35 @@ export async function bootExterior(canvas, renderer, params, status) {
       };
     },
   });
+  /** SD1: SoulBound's break release and the Sanguine Rose's
+   *  Daedroth, through DFU's own placement - in whichever world the
+   *  player is actually standing in. ROAD-G G2 GAVE THE EXTERIOR ARM
+   *  ITS POOL: the sentence that stood here said "above ground this
+   *  host's only pool is the WATCH, which mints watchmen and exposes
+   *  no free spawn pair", so a soul released or a Rose used in the
+   *  street released nothing at all. That premise died with the
+   *  encounter mount above, and world.js:4307-4323 is the shape.
+   *  INTERIOR still refuses - worldModes' interior pool exposes no
+   *  loose-spawn door - which is EC1's answer and world.js's own for
+   *  the same mode. AUDIT 68 S23-coven-punishment-interior-only: at
+   *  FUNCTION scope, so the mode machine's bag can hand it down too
+   *  (the summoning punishments stand through it). */
+  const _standLooseFoe = (mobileType, o = {}) => {
+    const mode = _mode();
+    if (_mode() === 'interior') return modes?.insideStandLooseFoe?.(mobileType, o) ?? null;   // ROAD-G G1: a building stands it through the interior pool (CreateFoe.cs:219-233), the same door world.js reaches - THE FOUR HOSTS RULE
+    if (mode !== 'exterior' && mode !== 'dungeon') return null;
+    const d = mode === 'dungeon' ? (modes?.dungeonCtx ?? null) : null;
+    return standLooseFoe({
+      collider: d ? d.collider : collider,
+      feet: enchantFeet(),
+      yawRad: cam.yaw,
+      fovDegrees: fieldOfView() * 180 / Math.PI,   // fieldOfView() answers RADIANS
+      foes: enchantFoes(),
+      spawn: (mt, pos, so) => (d
+        ? d.spawnLooseFoe(mt, pos, { yawRad: so.yawRad, allied: so.allied })
+        : exteriorFoes.spawnFoe(mt, pos, { yaw: so.yawRad, allied: so.allied })),
+    }, mobileType, o);
+  };
   /** AUDIT 58 (f2/hosts): THE ENCHANT CTX, MOUNTED HERE TOO - THE FOUR
    *  HOSTS RULE, and the third host that owed it.
    *
@@ -4014,33 +4044,6 @@ export async function bootExterior(canvas, renderer, params, status) {
     // would be two laws the day one of them moves. See `_mode` /
     // `_insidePool` / `enchantFeet` / `enchantFoes` / `enchantFoeSinks`
     // above the cast engine.
-    /** SD1: SoulBound's break release and the Sanguine Rose's
-     *  Daedroth, through DFU's own placement - in whichever world the
-     *  player is actually standing in. ROAD-G G2 GAVE THE EXTERIOR ARM
-     *  ITS POOL: the sentence that stood here said "above ground this
-     *  host's only pool is the WATCH, which mints watchmen and exposes
-     *  no free spawn pair", so a soul released or a Rose used in the
-     *  street released nothing at all. That premise died with the
-     *  encounter mount above, and world.js:4307-4323 is the shape.
-     *  INTERIOR still refuses - worldModes' interior pool exposes no
-     *  loose-spawn door - which is EC1's answer and world.js's own for
-     *  the same mode. */
-    const _standLooseFoe = (mobileType, o = {}) => {
-      const mode = _mode();
-      if (_mode() === 'interior') return modes?.insideStandLooseFoe?.(mobileType, o) ?? null;   // ROAD-G G1: a building stands it through the interior pool (CreateFoe.cs:219-233), the same door world.js reaches - THE FOUR HOSTS RULE
-      if (mode !== 'exterior' && mode !== 'dungeon') return null;
-      const d = mode === 'dungeon' ? (modes?.dungeonCtx ?? null) : null;
-      return standLooseFoe({
-        collider: d ? d.collider : collider,
-        feet: enchantFeet(),
-        yawRad: cam.yaw,
-        fovDegrees: fieldOfView() * 180 / Math.PI,   // fieldOfView() answers RADIANS
-        foes: enchantFoes(),
-        spawn: (mt, pos, so) => (d
-          ? d.spawnLooseFoe(mt, pos, { yawRad: so.yawRad, allied: so.allied })
-          : exteriorFoes.spawnFoe(mt, pos, { yaw: so.yawRad, allied: so.allied })),
-      }, mobileType, o);
-    };
     /** V3: the Wabbajack's transform, routed by the same POOL
      *  MEMBERSHIP the sinks are - WabbajackEffect.cs:63-95 removes the
      *  struck enemy and CreateEnemy's the new career under its OWN

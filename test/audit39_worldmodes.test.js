@@ -49,7 +49,7 @@ test('AUDIT39 #29: the start-marker test runs BEFORE the mode/collider commit, a
   // DFU: `if (!dungeon.StartMarker) { Destroy(newDungeon); RaiseOnFailedTransition(...); return; }`
   // BEFORE EnableDungeonParent/MovePlayerToMarker (PlayerEnterExit.cs:921-934).
   const refusal = WM.slice(at, at + 200);
-  assert.match(refusal, /ctx\.destroy\(\);\n\s+dungeonCtx = null;\n\s+return false;/,
+  assert.match(refusal, /abandonContext\(ctx\);\n\s+dungeonCtx = null;\n\s+return false;/,   // AUDIT 68: the ONE abandon, which destroys
     'Destroy + the handle cleared - the built layout must not leak');
   const commit = WM.indexOf("setMode('dungeon');", at);   // AUDIT-WH2 L1-F5: `mode` has one writer now; the ORDER this pin holds is unchanged
   assert.ok(commit > at, 'the three commits sit BELOW the refusal, not above it');

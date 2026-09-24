@@ -855,7 +855,10 @@ test('ORL1: the interior host\'s two level-up arms, and the dungeon host\'s font
   // enhanced level-up window landed and three hosts got it.
   const wm = rd('src/scenes/worldModes.js');
   const arms = wm.match(/interiorOverlay = host\.makeCharSheet\?\.\(\) \?\? createCharSheetWindow\(\{ entity: playerEntity \}\);/g) ?? [];
-  assert.equal(arms.length, 2, 'BOTH interior level-up arms go through the ONE seam');
+  // AUDIT 68 S23-levelup-closure-dup: the two identical arms are ONE
+  // closure now, which the ticker AND the rest session both hand in.
+  assert.equal(arms.length, 1, 'the ONE interior level-up arm goes through the ONE seam');
+  assert.equal((wm.match(/onLevelUp: onInteriorLevelUp,/g) ?? []).length, 2, 'the walk and the rest both level up through it');
   assert.match(wm, /import \{ createCharSheetWindow \} from '\.\.\/ui\/charSheetDoor\.js';/);
   assert.doesNotMatch(wm, /new (Virtue)?LevelUpScreen\(/, 'and neither builds a screen of its own');
 

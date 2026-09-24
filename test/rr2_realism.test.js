@@ -146,7 +146,7 @@ test('RR2 the decision per person: the two switches, the face override for the b
   assert.doesNotMatch(ic, /(?:getTexture|uploadRecord|createBillboardBatch)\(pn\.textureArchive/, 'and none reads the born flat');
   assert.match(rd('src/scenes/dataPipeline.js'), /flatFaceOverride\(archive, record\) \?\? flats\?\.faceIndex\(archive, record\) \?\? -1/, 'the face lookup reads the override first');
   const wm = rd('src/scenes/worldModes.js');
-  assert.match(wm, /variantPerson: \(pn\) => rrVariantPerson\(pn, \{\s*buildingType: interiorBuilding\?\.buildingType \?\? -1, quality: interiorBuilding\?\.quality \?\? 0,/);
+  assert.match(wm, /variantPerson: \(pn\) => rrVariantPerson\(pn, \{\s*buildingType: building\?\.buildingType \?\? -1, quality: building\?\.quality \?\? 0,/);   // AUDIT 68 S23-failed-entry-stale-building: the door's record, read during the build
   assert.match(wm, /worldClimate: hit\.dfLocation\?\.climate\?\.worldClimate \?\? null,/, 'AUDIT-RR F13: the WORLD climate (223-232), not the base type');
   reset();
 });

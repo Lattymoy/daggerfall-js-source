@@ -223,7 +223,8 @@ test('audit24 wave24: GetDisplayName names the NPC from the seed, and the click 
   // field collectInteriorPeople does not write, so every static NPC in
   // the game reached TalkManager as ''
   const wm = readFileSync(new URL('../src/scenes/worldModes.js', import.meta.url), 'utf8');
-  assert.match(wm, /const displayName = staticNpcName\(npcData, \{ getFaction: \(id\) => dict\?\.get\(id\) \?\? null, nameBank: currentNameBank\(\) \}\);/);
+  assert.match(wm, /const displayName = npcDisplayName\(npcData\);/);   // AUDIT 68 S23-npc-display-name-dup: the one derivation
+  assert.match(wm, /const npcDisplayName = \(npcData\) => \{\s*const dict = townTalk\?\.factionDict \?\? null;\s*return staticNpcName\(npcData, \{ getFaction: \(id\) => dict\?\.get\(id\) \?\? null, nameBank: currentNameBank\(\) \}\);/);
   // AUDIT 26 (hosts-modal): and the record handed to TalkToStaticNPC is
   // StaticNPC.Data (TalkManager.cs:752-770 reads .Data.nameSeed,
   // .Data.factionID, .Data.race), not the block-person record - `pn`

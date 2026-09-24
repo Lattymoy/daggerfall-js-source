@@ -151,7 +151,7 @@ test('AUDIT 26 F019: the exterior activation ray clicks them (PlayerActivate.cs:
   // against its distance - tryEnter still runs the pick and the arms.
   // The law is unchanged and the slice now spans both halves.
   const from = wm.indexOf('function exteriorActivationTargets()');
-  const to = wm.indexOf('function rayAabbProbe(');
+  const to = wm.indexOf('function tryExit(');
   assert.ok(from > 0 && to > from, 'the exterior ray changed shape');
   const ray = wm.slice(from, to);
   assert.ok(ray.includes('async function tryEnter()'), 'tryEnter no longer follows the target build');
