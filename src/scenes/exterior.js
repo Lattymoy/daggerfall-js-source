@@ -5084,7 +5084,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute), WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one
     renderer.setCloudShadow(sky?.cloudShadow ?? null);   // VC4: the frame's deck, for the body and everything before the terrain
-    mwViewDrawBody(canvas, { proj, view, eye, feet: player.feetAt(), yaw: cam.yaw });   // MW-D24
+    mwViewDrawBody(canvas, { proj, view, eye, feet: player.bodyFeetAt(), yaw: cam.yaw });   // MW-D24; DISC18: the body at the capsule's own feet, not the camera's smoothed ones
     mwViewDrawWagon(renderer, texRemap);   // EOTB-IL: the cart, when the transport is the cart
     camps.draw(renderer, texRemap);   // SURV3: the tents
     hcc.draw(renderer, texRemap);   // HCC: the wagon and its cargo

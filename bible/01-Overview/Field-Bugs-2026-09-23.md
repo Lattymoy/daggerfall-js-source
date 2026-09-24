@@ -1603,3 +1603,54 @@ it no longer is. Retired with it:
 
 The pins are `test/disc17.test.js` (5). Its mutants,
 `tools/mutants/disc17.json`, are all ten dead.
+
+# DISC18 - the body's legs in the ground, not the save
+
+Mac, 2026-09-24: *"I dont know if its my save or not, but my
+characterless are in the ground. I havent recieved any reports from
+other players"* ("characterless" read as "character's legs").
+
+**Not the save.** Every host drew the third-person body at
+`player.feetAt()`. That covers both bodies, the Morrowind body and Eye Of
+The Beholder's sprite, since both draw through `mwViewDrawBody`.
+`feetAt` is the height the CAMERA rides (AUDIT 65 XL-4): EV1's
+interpolation with MAC1's low-pass over `STEP_SMOOTH_TAU` (0.06 s), so a
+rung or a terrain facet does not pop the view. A low-pass trails a climb
+by the climb's vertical speed times its time constant. So on every hill
+the body was drawn under the ground it stood on, and over it going down.
+Measured through the real motor and collider:
+
+| Grade | Walking | Running |
+|---|---|---|
+| 10 degrees | 4 cm | 7 cm |
+| 20 degrees | 8 cm | 14 cm |
+| 30 degrees | 13 cm | 23 cm |
+| 40 degrees | 19 cm | 33 cm |
+
+On a stair it was up to a whole rung. Standing still it settles within a
+few frames, which is why it read as a place or a save rather than a
+motion.
+
+DISC16-A's capsule rest was real and stands: it lifted the resting body
+5 to 15 cm on a slope. This is the other half of what "sunk into hills"
+looked like, and it only shows while moving.
+
+**Fix.** `motor.js` `bodyFeetAt()` is EV1's span lerp alone: the
+capsule's own interpolated feet, with the same snap guard, and it leaves
+the camera's filter alone. All five body draws take it (`world.js`,
+`exterior.js`, `dungeon.js`, and `worldModes.js`'s dungeon and interior
+passes). The cameras keep `feetAt` and its smoothing, as do the torch
+light and every gameplay reader. On a stair the body now steps up a rung
+as the capsule does, and the camera glides after it.
+
+The pins are `test/disc18.test.js` (3):
+
+- the body on the ground to 0.1 mm on 10 to 40 degree hills, walking and
+  running, up and down, at 60 and 144 Hz;
+- the old placement's sink measured beside it;
+- the accessor and the filter;
+- the five draws and the cameras.
+
+AUDIT 65 XL-4's and MWBODY1's host pins are re-aimed. The mutants are
+`tools/mutants/disc18.json`, all seven dead.
+
