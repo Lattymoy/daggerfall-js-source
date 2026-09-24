@@ -38,14 +38,14 @@
 |---|---|
 | 171 keys / 13 sections, all raw strings | `src/systems/settingsDefaults.js`, pinned `test/settings.test.js:35‑35` |
 | Tier counts today: **8 live, 18 unavailable, 145 stored** | `src/systems/settings.js:64‑101` |
-| `canvas.width = canvas.clientWidth` — CSS px, **DPR 1** | `src/render/renderer.js:1427‑1064` |
-| `nativeMetrics` floors to **s=1 on every phone in both orientations** | `src/ui/nativePanel.js:28‑31` |
+| `canvas.width = canvas.clientWidth` — CSS px, **DPR 1** | `src/render/renderer.js:1435‑1064` |
+| `nativeMetrics` floors to **s=1 on every phone in both orientations** | `src/ui/nativePanel.js:29‑31` |
 | Today's launcher draws at a **hardcoded `s=2`** | `src/scenes/launcherScene.js:62`, `:82` | *(DELETED at FD1, 2026-09-11)*
 | FONT0003: `fixedWidth 5`, `fixedHeight 7`, space glyph 4 | pinned `test/audit18_ui_native.test.js:66‑70` |
-| `FNT_ASCII_START = 33`; codes < 33 draw as a space; **no arrow / ellipsis / degree / middle‑dot glyph exists** | `src/formats/fntFile.js:15`, `src/ui/text.js:80‑86` |
-| `measureText` takes `font.fnt`, returns virtual px at scale 1 | `src/ui/text.js:60‑67` |
-| `drawRect` / `shadowText` / `drawImg` consume `{s, ox, oy}` — **any** metric object works | `src/ui/nativePanel.js:68‑84` |
-| `layoutMessageBox` hard‑codes `(320‑w)/2, (200‑h)/2`; `drawMessageBox` returns `false` unless SPOP.RCI is preloaded — and nothing preloads it before the game | `src/ui/messageBox.js:144`, `:203` |
+| `FNT_ASCII_START = 33`; codes < 33 draw as a space; **no arrow / ellipsis / degree / middle‑dot glyph exists** | `src/formats/fntFile.js:15`, `src/ui/text.js:158‑86` |
+| `measureText` takes `font.fnt`, returns virtual px at scale 1 | `src/ui/text.js:134‑67` |
+| `drawRect` / `shadowText` / `drawImg` consume `{s, ox, oy}` — **any** metric object works | `src/ui/nativePanel.js:77‑84` |
+| `layoutMessageBox` hard‑codes `(320‑w)/2, (200‑h)/2`; `drawMessageBox` returns `false` unless SPOP.RCI is preloaded — and nothing preloads it before the game | `src/ui/messageBox.js:146`, `:218` |
 | `ListPickerWindow.draw` calls `nativeMetrics(canvas)` **itself** | `src/ui/listPicker.js:148` |
 | `attachTouch` is called only by world/interior/exterior/dungeon; it unconditionally builds F5/F6/☰/C/SV/LD + a movement stick claiming the left half of the viewport | `src/ui/touch.js:52‑190` |
 | `ensureAudio(fetch)` is exported from `src/scenes/shared.js:491`, is safe un‑awaited, and `audio.ensure` attaches its own gesture‑resume (`src/systems/audio.js:152`, `ensure`) | — |
@@ -480,7 +480,7 @@ Rows with no control (`readout`, `blocked`, `unavailable`, `info`) have `ctrlRec
 
 Everything is `nativePanel.drawRect` + `nativePanel.shadowText`. **No ARENA2 art is loaded by this screen** (SPOP.RCI / BUTTONS.RCI / PICK00I0.IMG are only preloaded by scenes that run *after* the launcher). **No glyph outside ASCII 33..126 is ever passed to `drawText`** — `FNT_ASCII_START = 33` (`fntFile.js:15`) means every arrow, ellipsis, degree sign and middle dot silently becomes a space. Every triangle/chevron/lock/knob is built from `drawRect`. Separators are `" - "`, truncation markers are `"..."`, "65 deg" not "65°".
 
-Text inside a filled button (PLAY, a selected rail plate, a dialog button) is drawn with **no shadow** — DFU's `ShadowPosition = zero` case, precedent `guildServiceWindow.js:178‑177`. Everything else goes through `shadowText` (DFU's `AddDefaultShadowedTextLabel`, `nativePanel.js:24‑25`, `:78‑84`).
+Text inside a filled button (PLAY, a selected rail plate, a dialog button) is drawn with **no shadow** — DFU's `ShadowPosition = zero` case, precedent `guildServiceWindow.js:178‑177`. Everything else goes through `shadowText` (DFU's `AddDefaultShadowedTextLabel`, `nativePanel.js:25‑25`, `:78‑84`).
 
 ### 3.1 `widgetFor(key)` — total, decidable, no implementer judgement
 
@@ -612,7 +612,7 @@ One chrome for all of them. Panel is centred **on the page**, not on 320×200:
 w = Math.min(pageW - 12, 240)
 h = 6 + titleH + bodyLines*LINE_H + 4 + btnH + 6
 x = Math.floor((pageW - w)/2), y = Math.max(4, Math.floor((pageH - h)/2))
-dim   = SCREEN_DIM over the whole CANVAS   (nativePanel.js:26)
+dim   = SCREEN_DIM over the whole CANVAS   (nativePanel.js:27)
 frame = 1px BORDER, fill PANEL_DEEP
 btnH  = Math.max(14, TAP);  buttons right-aligned, 6 apart, width = max(44, measure+12)
 ```
@@ -901,13 +901,13 @@ This single test would have caught the phone text halving, the 8‑px picker row
 | `WeaponAttackThreshold` MaxCharacters 5, clamped `0.001..1.0` on save | `:444` |
 | `SoundFont` is ReadOnly and is never written back; shows `default` when empty | `:264-267` |
 | `MouseLookSensitivity` slider `0.1..16.0`, `GetValue() = Value/10` | `:253-263` (the port's range follows its consumer clamp — flagged in §3.2 and on the row's help line) |
-| `ButtonClick` on every button press | `DaggerfallMessageBox.ButtonClickHandler:487`, precedent `messageBox.js:267-276` |
+| `ButtonClick` on every button press | `DaggerfallMessageBox.ButtonClickHandler:487`, precedent `messageBox.js:282-291` |
 | Wheel = one row per notch | `ListBox`, precedent `listPicker.js:111-115` |
 | Clamp selection to the visible range | `ListBox`, precedent `listPicker.js:102-103` |
 | Scrollbar thumb = `DisplayUnits / TotalUnits` | `VerticalScrollBar.cs:187-198`, precedent `nativeTalk.js:94-95` |
 | Glyph advance, space width, trailing spacing | `DaggerfallFont.cs:377-383`, `:623-627` → `text.js` |
-| Default text colour + `+1,+1` shadow; `ShadowPosition = zero` inside filled buttons | `DaggerfallUI` → `nativePanel.js:24-25`; precedent `guildServiceWindow.js:178-180` |
-| `ScreenDimColor` behind modals | `DaggerfallUI` → `nativePanel.js:26` |
+| Default text colour + `+1,+1` shadow; `ShadowPosition = zero` inside filled buttons | `DaggerfallUI` → `nativePanel.js:25-26`; precedent `guildServiceWindow.js:178-180` |
+| `ScreenDimColor` behind modals | `DaggerfallUI` → `nativePanel.js:27` |
 | The launcher gate (wizard shown when unvalidated OR `ShowOptionsAtStart` OR a held key; skip straight to Options when the path is good) | `SceneControl.cs:46`, wizard `:154` → `main.js:91` |
 
 ### 9.2 OURS — the presentation split (Ledger A), flagged in each file's header
@@ -927,7 +927,7 @@ The **seven categories, their order, titles, blurbs and the whole key→category
 ### 9.4 Explicitly **out** of this slice (record as Ledger rows)
 
 * **The in‑game route.** `SettingsWindow` already satisfies the overlay contract (`isChoiceWindow` + `input(code,e)` + `click(vx,vy)` + `wheel(dir)` + `draw` + `done`), which is exactly the shape `dungeonContext.js:2922`, `worldModes.js:1486` and `townTalk.js:249` consume — but no pause window exists yet, so the only routes back in remain the `GUI/ShowOptionsAtStart` gate and `?launcher`. The confirm dialog names `?launcher` explicitly. Note the honest limit: the in‑game seam exposes `overlayClick`/`overlayWheel` but **no** `pointermove`/`pointerup`, so slider *drag* will not work in‑game until that seam grows — tapping the track will, so it is a convenience loss, not a trap. Say so in the Ledger row.
-* ~~**`Video/FieldOfView` as a live setting.** `Math.PI/3` is hardcoded at five hosts. Wiring it is worth doing and is a separate commit with its own pin; until then the row is `stored` and operable (its range is DFU law).~~ **STALE - STRUCK (ROAD-G G7 records sweep, 2026-09-04).** *Shipped by the SETT/MENU view-settings slice and never struck here, so this bullet went on naming five `Math.PI/3` sites that no longer exist - the whole reason the cites had rotted. `src/ui/viewSettings.js:23` is `fieldOfView()`, `GetInt(sectionVideo, "FieldOfView", 60, 120)` verbatim (SettingsManager.cs:418, clamp 60..120), READ AT THE POINT OF USE so a change lands on the next frame; the five projections that carried a copy each read it now - `worldModes.js:7040`, `world.js:13650`, `interior.js:351`, `exterior.js:4928`, `dungeon.js:1027`. Wiring it also corrected the shipped view: every copy sat at 60, which is DFU's MINIMUM and not its 65 default.*
+* ~~**`Video/FieldOfView` as a live setting.** `Math.PI/3` is hardcoded at five hosts. Wiring it is worth doing and is a separate commit with its own pin; until then the row is `stored` and operable (its range is DFU law).~~ **STALE - STRUCK (ROAD-G G7 records sweep, 2026-09-04).** *Shipped by the SETT/MENU view-settings slice and never struck here, so this bullet went on naming five `Math.PI/3` sites that no longer exist - the whole reason the cites had rotted. `src/ui/viewSettings.js:23` is `fieldOfView()`, `GetInt(sectionVideo, "FieldOfView", 60, 120)` verbatim (SettingsManager.cs:418, clamp 60..120), READ AT THE POINT OF USE so a change lands on the next frame; the five projections that carried a copy each read it now - `worldModes.js:7040`, `world.js:13647`, `interior.js:351`, `exterior.js:4928`, `dungeon.js:1027`. Wiring it also corrected the shipped view: every copy sat at 60, which is DFU's MINIMUM and not its 65 default.*
 * **`GUI/InteractionModeIcon` and the other un‑vendored enums.** Extend `scripts/bakeSettingsText.mjs` to emit a `SETTINGS_VALUES` table from `vendor/dfu-settings/GameSettings.txt` and, where that file is silent, vendor the lists from `DaggerfallAdvancedSettingsWindow.cs`. Until a list is vendored the key stays `blocked('novalues')`. **Never guess an option name.**
 * **`index.html`'s `user-scalable=no`.** It removes the only text‑size escape hatch a low‑vision player has on a WebGL canvas. Removing it is a one‑token change with whole‑port consequences (the game canvas wants it) and belongs in its own row; the in‑screen `Text Size` row is this slice's answer.
 * **Safe‑area insets.** `viewport-fit=cover` is set with no `env(safe-area-inset-*)` anywhere in the tree, so on a notched phone the footer sits under the home‑indicator strip. A whole‑port row; note that this screen's `oy` letterbox partly absorbs it in comfort mode but not in portrait, where `oy = 0`.

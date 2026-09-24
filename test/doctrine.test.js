@@ -476,6 +476,13 @@ const BUNDLE_ART = new Map([
   ['public/art/roleplay-realism/',
     { manifest: 'vendor/roleplay-realism/roleplay-realism.dfmod.json',
       why: "THIRD-PARTY - Roleplay & Realism 1.8 (Hazelnut); the mod's own seven variant shop and tavern keeper sprites (197_0-0 .. 197_6-0, the XML scale beside each under vendor/) and its seventeen BUTTONS.RCI records 21-37 (the training window's '5 Days' and the rest of its index) - the PNGs the mod ships in its Textures/ folder, byte for byte (see the vendor README)" }],
+  // OVH2 (2026-09-24, Mac: "Our first overhaul option will be the file attached"): GrimoireUI's 139 pictures - the
+  // mod's own hand-drawn UI (parchment, wood and new lettering over Daggerfall's screen layouts), vendored byte for
+  // byte the way Roleplay & Realism's BUTTONS.RCI repaints are. A LOOSE-FILE pack ships no .dfmod, so its authority is
+  // the archive's own listing, generated from the zip (sha256 recorded beside it) - the same both-ways derivation.
+  ['public/art/grimoire-ui/',
+    { manifest: 'vendor/grimoire-ui/grimoire-ui.files.json',
+      why: "THIRD-PARTY - GrimoireUI 1.2 (LordSquacquerone, Nexus Daggerfall Unity mod 1222); the pack's own StreamingAssets pictures - 93 redrawn IMG screens, BUTTONS.RCI 0-37 and the save window's eight panel and button textures - byte for byte from the archive Mac supplied (see vendor/grimoire-ui/README.md)" }],
   ['public/art/diverse-weapons/',
     { manifest: 'vendor/diverse-weapons/diverse-weapons.dfmod.json',
       why: "THIRD-PARTY - Diverse Weapons 1.7.3 (RealAKP); the mod's own first-person weapon sprites - eighteen weapons x ten metals, plain and enchanted, every record and frame, Weapon Widget's double-scale idles and the icons - re-encoded from the bundle's Texture2D objects by tools/diverseWeaponsExtract.mjs as indexed PNG where the picture fits one (lossless for every drawn pixel; see the vendor README)" }],

@@ -5490,7 +5490,7 @@ incoming lane's `F2 real seam` test is gated on `ARENA2_PATH`, so a
 bare `npm test` skips it and reports green - it went in unexecuted.
 Run with ARENA2 it failed twice over. First a `TypeError`: its fake
 renderer had no `gl`, and `drawMenuBackdrop` measures the live context
-when no canvas is passed (`chargenArt.js:82`). With that stubbed, the
+when no canvas is passed (`chargenArt.js:83`). With that stubbed, the
 real assertion failed - and the assertion was WRONG. It ticked the
 player by zero and expected a frame, but `FLCPlayer.cs`'s Update order
 displays the current buffer only once a frame delay has ELAPSED, and
@@ -10581,7 +10581,7 @@ list clamps to the LAST page.
 
 **THE PORT.** Every host answers a pointer off its letterboxed 320x200
 panel with a fabricated `(-1, -1)` - `pointToNative`
-(`ui/nativePanel.js:107-111`) returns null out there, and
+(`ui/nativePanel.js:117-121`) returns null out there, and
 `scenes/townTalk.js`, both of `scenes/worldModes.js`' overlay slots and
 `scenes/dungeon.js` (through `scenes/dungeonContext.js`'s
 `overlayHover`) all substitute the pair. That is not a position; ROAD-C
@@ -14624,7 +14624,7 @@ death screen (`ui/deathScreen.js:168-170`), the rest window's rows
 (`ui/restWindow.js:866`), the save window (`ui/saveWindow.js`, eight
 `shadowText` sites), the travel popup (`ui/travelPopUp.js:716`), the quest
 journal (`ui/questJournal.js:641-642`), every MessageBox row
-(`ui/messageBox.js:454, 434`) and every ActionTextBox (`ui/actionText.js:45,
+(`ui/messageBox.js:469, 434`) and every ActionTextBox (`ui/actionText.js:45,
 152`) still draw in the bitmap font - each a native window under THE
 NATIVE-WINDOW RULE, whose face cannot move without its DFU metrics moving
 too. That is a FONT2 slice, not this one.

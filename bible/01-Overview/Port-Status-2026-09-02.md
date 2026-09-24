@@ -321,8 +321,8 @@ reference surface absent · **Departure** = deliberate, ledgered.
 | **sys-audio** | Data verbatim / engine risk | **Verbatim** | 133 songs, 39 playlists, 76 named clips. |
 | **sys-save** | Broad / three features silently dropped | **Verbatim** | ROAD-A A4 took the envelope stragglers (resistances, `skillsRecentlyRaised`, `minMetalToHit`, `previousVampireClan`, `timeToBecomeVampireOrWerebeast`, `playerTeleportedIntoDungeon`); ROAD-C C1 built the multi-slot window over the store. |
 | **ui-core** | Verbatim | **Verbatim** | ROAD-A A7 built a real `VerticalScrollBar` with a draggable thumb, the item scroller's arrow states, the list picker's double-click law and the message box's scrolling variant with its image panel - and with it, paintings. |
-| **ui-hud** | Verbatim (classic) / Partial (enhanced default) | **Verbatim on both skins** | The skin fork moved BELOW the game-state seams: `ui/hud.js:501` runs `updateHudVitals` and `:556` `drawNearDeathFlicker`, both above the enhanced branch at `:609` and above the `!art` return, and the enhanced HUD takes the Detect markers at `:625`. `lastHealthLost()` is no longer pinned at 0, so `CameraRecoiler` lives in all three hosts. |
-| **ui-windows-a** | Rect parity excellent / two crash doors | **Verbatim** | ROAD-D D2 shipped both scroll thumbs (`chargenArt.js:777` over `RECTS.pickScroll`, `spellbookWindow.js:1016` over the 7-wide rail). |
+| **ui-hud** | Verbatim (classic) / Partial (enhanced default) | **Verbatim on both skins** | The skin fork moved BELOW the game-state seams: `ui/hud.js:503` runs `updateHudVitals` and `:558` `drawNearDeathFlicker`, both above the enhanced branch at `:611` and above the `!art` return, and the enhanced HUD takes the Detect markers at `:627`. `lastHealthLost()` is no longer pinned at 0, so `CameraRecoiler` lives in all three hosts. |
+| **ui-windows-a** | Rect parity excellent / two crash doors | **Verbatim** | ROAD-D D2 shipped both scroll thumbs (`chargenArt.js:781` over `RECTS.pickScroll`, `spellbookWindow.js:1016` over the 7-wide rail). |
 | **ui-windows-b** | Broadly ported | **Verbatim** | Both automaps are native windows. ROAD-D D6 built the ship purchase over the shared bank-market mount and gave `buildingIsUnlocked` the `ownsShip` key its last arm needed. |
 | **ui-enhanced** | Departure lane | **Departure lane, scoped** | `ui/worldPlaque.js:317` puts the skin gate above `ensure()`, so the unscoped `*`/`html`/`body`/`button`/`#app` rules never reach the classic page. 9 modules / 8,940 lines. |
 | **xcut-seams** | Clean, with one block | **Clean** | The quest machine's region-faction block was the wave. |
@@ -403,7 +403,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   "DR1: THE TWO WINDOW SEAMS, MOUNTED"), pinned by three DR1 cases in
   `test/x11b.test.js`. This was also Ledger row `:709`'s adjudication,
   and that row is struck with it.
-- **`src/ui/enhancedMenu.js:3021`** - the rest of the keyboard; the
+- **`src/ui/enhancedMenu.js:3113`** - the rest of the keyboard; the
   wizard walks to `done` with no pointer. *The enhanced menu is the
   enhanced skin, a Ledger A departure, so no C# line is owed. The flag
   names its own blocker: focus order across a rail, a settings list and
@@ -594,7 +594,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   `Utility/ViewportChanger.cs:52-61` and `HUDCrosshair.cs:43-52` are a dozen
   lines each; the cost is the seam. `gl.viewport` is set full-canvas at
   four sites inside the renderer's own frame brackets
-  (`render/renderer.js:2141, :2058, :2888, :3211`) and the 2D passes
+  (`render/renderer.js:2149, :2066, :2896, :3220`) and the 2D passes
   need the full canvas back. D10 withdrew one clause as stale with
   evidence: there are no screen-to-ray conversions to fix, because the
   port's activation ray is the camera's forward vector, not a pixel

@@ -1018,9 +1018,16 @@ export function textureParams(gl, opts = {}) {
  * (U10: sixteen translucent UI panels were drawing opaque). A TEXTURED quad
  * takes the 1-bit cutout unless the caller opts in - classic art IS a 1-bit
  * cutout, and only ui/titleScreen.js asks for anything else.
+ *
+ * OVH2: `alphaArt` - the TEXTURE was uploaded as art authored with real
+ * alpha (`uploadTexture(..., { alpha: true })`: a UI pack's hi-res PNG,
+ * soft-edged where the classic IMG it stands in for was a 1-bit cutout).
+ * That is the texture's property, like its sampling, so it rides the
+ * texture to every draw of it - a caller that draws the pack's panel
+ * never has to know it is the pack's.
  */
-export function screenQuadBlends(tex, color, opts = {}) {
-  return (!tex && (color[3] ?? 1) < 1) || Boolean(tex && opts.blend);   // BLACK-ARMS: an absent alpha is 1, the upload's own law
+export function screenQuadBlends(tex, color, opts = {}, alphaArt = false) {
+  return (!tex && (color[3] ?? 1) < 1) || Boolean(tex && (opts.blend || alphaArt));   // BLACK-ARMS: an absent alpha is 1, the upload's own law
 }
 
 /** setFog takes a STRING mode and shadows an int; the panel bracket
@@ -1176,6 +1183,7 @@ export class Renderer {
     this._ambientTri = null;
 
     this.textures = new Map(); // "archive_record" -> WebGLTexture
+    this._alphaArt = new WeakSet();   // OVH2: textures uploaded { alpha: true } - authored with real alpha, drawn blended
     this.emissionTextures = new Map(); // "archive_record" -> window mask
     // AUDIT 39 F49: keys whose emission map is the AUTO-EMISSIVE albedo
     // (MaterialReader.cs:448-453 - EmissionColor = Color.white), not a
@@ -3170,7 +3178,8 @@ void main() {
       gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], a);
       q.r = color[0]; q.g = color[1]; q.b = color[2]; q.a = a;
     }
-    const useTex = tex ? 1 : 0, blendTex = (tex && opts.blend) ? 1 : 0;
+    const alphaArt = !!tex && !!this._alphaArt?.has(tex);   // OVH2: a pack's soft-edged art blends wherever it is drawn
+    const useTex = tex ? 1 : 0, blendTex = (tex && (opts.blend || alphaArt)) ? 1 : 0;
     if (q.useTex !== useTex) { gl.uniform1i(this._screenQuad.useTex, useTex); q.useTex = useTex; }
     if (q.blendTex !== blendTex) { gl.uniform1i(this._screenQuad.blendTex, blendTex); q.blendTex = blendTex; }
     // c2/S10: opts.rotate = { rad, px, py } - the pivot is in the SAME
@@ -3195,7 +3204,7 @@ void main() {
     // Textured quads keep their existing law (discard a<0.5, opaque
     // rgb) so no art path changes - unless the CALLER opts in with
     // { blend: true }, which only ui/titleScreen.js does (U21c).
-    const blend = screenQuadBlends(tex, color, opts);
+    const blend = screenQuadBlends(tex, color, opts, alphaArt);
     if (blend) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); }
     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
     this.stats.draws++;
@@ -3468,7 +3477,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // hand back the wrong sampling silently. Only the logo asks for smooth
     // today and its key is unique, so nothing was broken - but a cache
     // that quietly ignores an argument is a trap, not a cache.
-    const key = `${archive}_${record}${opts.smooth ? '#smooth' : ''}${opts.opaque ? '#opaque' : ''}${opts.mips === false ? (opts.variant ?? '#ui') : ''}`;   // INCIDENT 2026-09-04: DFU caches materials per alphaIndex; REVIEW 2026-09-05: the un-mipped UI variant of a world archive (item icons) keys apart too; AUDIT 61: `variant: ''` keeps the plain batch key for world art uploaded without a chain (a mod atlas built mipChain:false - SIB1)
+    const key = `${archive}_${record}${opts.smooth ? '#smooth' : ''}${opts.opaque ? '#opaque' : ''}${opts.mips === false ? (opts.variant ?? '#ui') : ''}${opts.alpha ? '#alpha' : ''}`;   // INCIDENT 2026-09-04: DFU caches materials per alphaIndex; REVIEW 2026-09-05: the un-mipped UI variant of a world archive (item icons) keys apart too; AUDIT 61: `variant: ''` keeps the plain batch key for world art uploaded without a chain (a mod atlas built mipChain:false - SIB1)
     if (this.textures.has(key)) return this.textures.get(key);
     const gl = this.gl;
     const tex = gl.createTexture();
@@ -3505,6 +3514,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, mips ? (gl.NEAREST_MIPMAP_NEAREST ?? filter) : filter);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
     this.textures.set(key, tex);
+    if (opts.alpha) (this._alphaArt ??= new WeakSet()).add(tex);   // OVH2: the texture's own treatment, read at every screen draw of it
     this._texGen++;   // EV2: cached sub-mesh lookups refresh
     return tex;
   }
@@ -3521,7 +3531,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // fixing the cache bug by creating a leak.
     const base = record === undefined ? archive : `${archive}_${record}`;
     let freed = false;
-    for (const key of [base, `${base}#smooth`, `${base}#opaque`, `${base}#ui`]) {   // REVIEW 2026-09-05: every variant
+    for (const key of [base, `${base}#smooth`, `${base}#opaque`, `${base}#ui`, `${base}#smooth#alpha`]) {   // OVH2: a pack's art (smooth + alpha)   // REVIEW 2026-09-05: every variant
       const tex = this.textures.get(key);
       if (!tex) continue;
       this.gl.deleteTexture(tex);

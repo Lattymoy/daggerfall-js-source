@@ -700,7 +700,7 @@ const SOURCE_CITES = [
   // and the table captured ONE, with a sixth number baked into the pick - so
   // citeMerge bumped the LITERAL at the BOX1/TI3 merge and left the doc, and
   // four of the five had been stale for waves (`worldModes.js:6850` for a line
-  // that is 5921, `world.js:12549` for 8836, `interior.js:319` for 329,
+  // that is 5921, `world.js:12546` for 8836, `interior.js:319` for 329,
   // `dungeon.js:951` for 959). Every one is captured now, against the
   // projection each host really builds.
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:\d+`/, EX, /^ {6}fieldOfView\(\),$/],

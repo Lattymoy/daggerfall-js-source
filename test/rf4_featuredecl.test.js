@@ -33,7 +33,7 @@ test('RF4: every prefs row declares its switch, and the shelf and the lane deriv
   assert.deepEqual(FEATURE_PREF_DEFAULTS, Object.fromEntries(prefsRows.map((f) => [f.control.key, f.control.initial])));
   assert.deepEqual(FEATURE_PREF_ONLINE, Object.fromEntries(prefsRows.map((f) => [f.control.key, f.control.online])));
   // the two the registry has no row for stay the lane's own
-  assert.equal(ONLINE_FORCED_PREFS.skin, 'enhanced'); assert.equal(ONLINE_FORCED_PREFS.mwArms, true);
+  assert.equal(Object.hasOwn(ONLINE_FORCED_PREFS, 'skin'), false, 'OVH3: the skin is the player\'s online'); assert.equal(ONLINE_FORCED_PREFS.mwArms, true);
   // and the shelf reads them live: loot rarity ON offline (LR5) and forced on online
   _resetForTests();
   assert.equal(getPref('lootRarity'), true);

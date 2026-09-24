@@ -262,6 +262,7 @@ export const LIVE = Object.freeze({
   // three plain bars had been the setting-FALSE path all along.
   'GUI/EnableVitalsIndicators': 'src/ui/hudVitals.js',
   'GUI/SwapHealthAndFatigueColors': 'src/ui/hudVitals.js',
+  'GUI/SDFFontRendering': 'src/ui/text.js',   // OVH2: a classic font draws its UI pack's SDF face (DaggerfallFont.IsSDFCapable) only with this on
   // U41: the classic travel map. Stored-tier since the settings
   // screen shipped - the outline it offers is drawn by a window the
   // port did not have until the region pages landed.
