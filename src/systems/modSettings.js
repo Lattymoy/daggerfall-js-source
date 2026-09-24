@@ -288,7 +288,7 @@ export const MOD_SETTINGS = Object.freeze({
       classicStrengthDamageBonus: Object.freeze({ default: false, description: 'Display the strength damage bonus like classic Daggerfall (half) rather than the value used internally that DFU displays' }),
       variantNpcs: Object.freeze({ default: true, description: 'Enable variant NPC sprites in shops & taverns' }),
       variantResidents: Object.freeze({ default: true, description: 'This populates 80% of houses with the townsfolk you see walking around insteam of random adventurer flats' }),
-      fightersTeachHandToHand: Object.freeze({ default: false, description: 'Enable this module to replace Giantish with Hand 2 Hand for training and guild ranks. (Not compatible with other mods that change Fighters Guild)' }),
+      // fightersTeachHandToHand RETIRED (FGH2H-R, 2026-09-24, Mac: "retire it") - see RETIRED_KEYS below
       loanAmountPerLevel: Object.freeze({ default: 4, options: Object.freeze(['2000', '4000', '6000', '8000', '10000', '20000', '30000', '40000', '50000']), description: 'Sets the maximum amount per level that can be borrowed from banks' }),
       // EnhancedRiding (RR2)
       'EnhancedRiding.enhancedRiding': Object.freeze({ default: true, description: 'Enable enhanced horse riding module, improving presentation and allowing galloping.' }),
@@ -968,8 +968,22 @@ export const KEY_MIGRATIONS = Object.freeze([
 export const SWITCH_RESETS = Object.freeze([
   Object.freeze({ vendor: 'diverse-weapons', key: 'WeaponWidgetPreset', stamp: 'WeaponWidgetPreset@DISC20' }),
 ]);
+/** FGH2H-R (2026-09-24, Mac: "retire it"): A SWITCH TAKEN OFF THE PANE. Roleplay & Realism's
+ *  fightersTeachHandToHand swapped Giantish for HandToHand in the Fighters Guild's lists; FGH2H put HandToHand in the
+ *  base lists beside Giantish, which left the switch one effect - taking Giantish away - so it is retired whole (the
+ *  Port-Ledger's FGH2H row). A player who turned it on holds a SAVED true for a key nothing declares, so the stored
+ *  value is let go on load, once, and the file written back; a file that never mentioned the key is not touched. */
+export const RETIRED_KEYS = Object.freeze([
+  Object.freeze({ vendor: 'roleplay-realism', key: 'fightersTeachHandToHand' }),
+]);
 function migrate(m) {
   let changed = false;
+  for (const { vendor, key } of RETIRED_KEYS) {
+    const held = m?.[vendor];
+    if (!held || !Object.hasOwn(held, key)) continue;
+    delete held[key];
+    changed = true;
+  }
   for (const { vendor, key, was } of KEY_MIGRATIONS) {
     const held = m?.[vendor];
     if (!held || held[key] !== was) continue;
