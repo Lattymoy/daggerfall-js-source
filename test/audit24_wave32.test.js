@@ -171,7 +171,7 @@ test('audit24 wave32: every foe pool in the port is a subscriber, and the dungeo
   // so it runs the fan-out inline - on the window the tick CLAIMED, not on
   // arithmetic of its own (which had neither catch-up nor the 2880 cap).
   const d = rd('src/scenes/dungeonContext.js');
-  assert.ok(d.includes('runMagicRoundsFor(f.entity, _tick.magicRoundWindow.from, _tick.magicRoundWindow.to, { sinks: foeSinks(f) });'),
+  assert.ok(d.includes('runMagicRoundsFor(f.entity, _tick.magicRoundWindow.from, _tick.magicRoundWindow.to, { sinks: foeSinks(f, false) });'),   // AUDIT 68 S19-round-ticks-player-provenance: a round is nobody's blow
     'the dungeon frame body rides the claimed window');
   assert.ok(!/for \(let r = _prevMinute;/.test(d), 'and its old private minute loop is gone');
 });

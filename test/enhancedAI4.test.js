@@ -494,7 +494,7 @@ test('ENHANCED AI 4: the host chooses the motor by the switch and refills the bu
   // can run this host without ARENA2.
   const decl = host.indexOf('const enhancedNav = {');
   const firstMint = host.indexOf('async function buildFoeAt(');
-  const lazy = host.indexOf('const [shared, engineRig');
+  const lazy = host.indexOf('const [{ EnemyAI, withinYaw');   // AUDIT 68 S04-v-dungeon-dead-rig-deps: the lazy block's first destructure now
   assert.ok(decl > 0 && firstMint > 0 && lazy > 0);
   assert.ok(decl < lazy, 'enhancedNav must be declared before the lazy foe block');
   assert.ok(decl < firstMint, 'enhancedNav must be declared before buildFoeAt');

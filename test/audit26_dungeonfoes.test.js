@@ -94,7 +94,7 @@ test('F204: the dungeon REST window jumps the clock without the tick, so it deca
   const i = DUNGEON_CTX.indexOf('const _restAdvance = (n, sharedEnd = null) => {');
   const fn = DUNGEON_CTX.slice(i, DUNGEON_CTX.indexOf('\n  };', i));
   assert.ok(i > 0 && fn.length > 200, 'the rest advance arm was found whole');
-  assert.ok(fn.includes('decayEnemyAlert(playerEntity, Math.floor(classicMinutesRef.value));'),
+  assert.ok(fn.includes('decayEnemyAlert(playerEntity, Math.floor(end));'),   // AUDIT 68 S19-rest-alert-decay-wrong-clock: the session's minute
     'the window that advances the clock owes the decay Update would have run in those frames');
   assert.ok(fn.indexOf('decayEnemyAlert(') < fn.indexOf('intermittentEnemySpawn({'),
     'and BEFORE the catch-up loop, as PlayerEntity.Update orders them (:380 before :486)');
@@ -200,9 +200,9 @@ test('F218: applyWorld destroys the live foes past the snapshot (SerializableSta
     'the live tail past the snapshot is walked backward for the splice');
   const tail = fn.slice(fn.indexOf('for (let i = foes.length - 1;'));
   assert.ok(tail.includes('renderer.destroyBillboardBatch(f.batch)'), 'the live batch is freed');
-  assert.ok(tail.includes('renderer.destroyBillboardBatch(f.corpseBatch)'), 'and a post-save corpse\'s too');
-  assert.ok(tail.includes('corpses.indexOf(f.corpseBatch)') && tail.includes('billboardBatches.indexOf(f.corpseBatch)'),
-    'spliced from BOTH owner lists, as the rewind arm above does');
+  // AUDIT 68 S19-corpses-array-dead: through the one helper the rewind arm above calls (it frees the flat, splices it
+  // from billboardBatches - its one owner list - and clears f.corpse), not a hand copy of it
+  assert.ok(tail.includes('freeCorpse(f);'), 'and a post-save corpse\'s too, through freeCorpse');
   assert.ok(tail.includes('f.questBehaviour?.notifyDestroyed();'), 'Destroy(gameObject): the quest resource uncouples');
   assert.ok(tail.includes('foes.splice(i, 1);'), 'and the record leaves the pool, so the counter rewind cannot double it');
 

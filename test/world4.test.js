@@ -103,7 +103,7 @@ test('WORLD4: the dungeon host and the memory by source - the container vocabula
   assert.match(d, /const _lootSeen = new Set\(\);/, 'the containers the room has opened');
   // AUDIT WORLD4 D6: no `[\s\S]*?` across a law - the gaps let a mutation walk in over the top of them. The body,
   // whole, from its brace to its close, and through AUDIT WORLD4 C4's canon.
-  assert.match(d, /function lootHolder\(key\) \{\s*const canon = lootKeyOf\(key\);\s*if \(!canon\) return null;\s*const \[kind, iStr\] = canon\.split\(':'\);\s*const i = Number\(iStr\);\s*if \(kind === 'loot'\) \{ const p = lootPiles\[i\]; return p && Array\.isArray\(p\.items\) \? p\.items : null; \}\s*\/\/[^\n]*\n\s*if \(kind === 'corpse'\) \{ const f = foes\[i\]; return i < _layoutFoes && f\?\.dead && Array\.isArray\(f\.entity\?\.items\) \? f\.entity\.items : null; \}\s*return null;\s*\}/,
+  assert.match(d, /function lootHolder\(key\) \{\s*const canon = lootKeyOf\(key\);\s*if \(!canon\) return null;\s*const \[kind, iStr\] = canon\.split\(':'\);\s*const i = Number\(iStr\);\s*if \(kind === 'loot'\) \{ const p = lootPiles\[i\]; return p && Array\.isArray\(p\.items\) \? p\.items : null; \}\s*\/\/[^\n]*\n\s*if \(kind === 'corpse'\) \{ const f = foes\[i\]; return i < _layoutFoes && lootableBody\(f\) && Array\.isArray\(f\.entity\?\.items\) \? f\.entity\.items : null; \}\s*return null;\s*\}/,   // AUDIT 68 S19-removed-foe-lootable: a body, not any dead record
     'the vocabulary: a layout pile and a layout corpse - a quest spawn\'s body is the player\'s own, the bound the stream and the hit already take');
   const holderBody = d.slice(d.indexOf('function lootHolder'), d.indexOf('\n  }', d.indexOf('function lootHolder')));
   assert.doesNotMatch(holderBody, /droppedLoot/, 'and never a dropped pile: a drop is the dropper\'s (AUDIT WORLD B3)');
@@ -121,7 +121,6 @@ test('WORLD4: the dungeon host and the memory by source - the container vocabula
   assert.match(d, /function lootRecords\(keys\) \{\s*const out = \[\];\s*for \(const key of keys \?\? \[\]\) \{\s*const canon = lootKeyOf\(key\);\s*const held = canon && lootHolder\(canon\);\s*if \(!held\) continue;\s*if \(held\.length > LOOT_LIST_MAX\) \{/, 'the mint: canon, holder, cap');
   assert.match(d, /out\.push\(\{ k: canon, r: held\.map\(\(it\) => \(\{ \.\.\.it \}\)\)(?:, \.\.\.\(Number\.isFinite\(_lootAt\.get\(canon\)\) \? \{ t: _lootAt\.get\(canon\) \} : \{\}\))? \}\);[^\n]*\n\s*\}\s*return out;\s*\}/, 'and a COPY of the list, keyed canonically');
   assert.match(d, /return a\.length \|\| l\.length \? \{ k: _locationKey, \.\.\.\(a\.length \? \{ a \} : \{\}\), \.\.\.\(l\.length \? \{ l \} : \{\}\) \} : null;/);
-  assert.match(d, /lootSeen: \(\) => \[\.\.\._lootSeen\],/, 'the API');
   const w = rd('src/scenes/world.js');
   assert.match(w, /const keys = \[\.\.\.\(\(data\?\.a \?\? \[\]\)\.map\(\(r\) => r\.key\)\), \.\.\.\(\(data\?\.l \?\? \[\]\)\.map\(\(r\) => r\.k\)\)\];\s*if \(!keys\.length\) return false;/, 'the pending set holds a container\'s key beside a door\'s');
   assert.match(rd('src/net/wire.js'), /\{t:'act', data\}\s*a change to the room's doors, levers, movers and loot/);

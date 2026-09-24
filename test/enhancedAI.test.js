@@ -217,7 +217,7 @@ test('ENHANCED AI 3b: the client bakes without a worker, caches, and a hydrated 
   assert.notEqual(k, navCacheKey({ key: 'dungeon:other', tris: 10, minY: -5, maxY: -2 }), 'a different dungeon');
   const src = readFileSync('src/scenes/dungeonContext.js', 'utf8');
   assert.match(src, /if \(playerFeet && !enhancedNav\.requested && getPref\('enhancedAI'\)\) \{/, 'the host asks once, with the switch on, once the feet are known');
-  assert.match(src, /api\.enhancedNav = enhancedNav;/, 'and exposes the bake for the motor');
+  assert.match(src, /nav: \(\) => enhancedNav\.chf,/, 'and hands the bake to the motor through a thunk');   // AUDIT 68 S19-dead-api-exports: `api.enhancedNav` had no reader - the motor reads this
 });
 
 // DEGENERATE-BAKE GUARD (2026-09-20, Mac's patch): a report of foes

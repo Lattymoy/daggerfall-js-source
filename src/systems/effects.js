@@ -629,7 +629,9 @@ function increaseDrainMagnitude(target, entry, amount) {
 function runEffectRound(a, target, sinks, rolls) {
   if (a.kind === 'continuousDamage') {
     const n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls);
-    if (n > 0 && sinks.hurt) sinks.hurt(n);
+    // AUDIT 68 S19-round-ticks-player-provenance: the tick is DamageHealthFromSource(caster) - the player's blow only
+    // when the player cast it (no caster is the player, hostMagic's `!caster` law). A round sink bills nobody else.
+    if (n > 0 && sinks.hurt) sinks.hurt(n, { fromPlayer: !a.caster || !!a.caster.isPlayer });
     handleAttackFromSource(a.caster);   // DamageHealthFromSource's tail, wave 31
   } else if (a.kind === 'continuousDamageSpellPoints') {
     const n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls);
