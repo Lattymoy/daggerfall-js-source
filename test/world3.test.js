@@ -55,10 +55,10 @@ test('WORLD3: the wire and the Room - an act is an object from a hello\'d socket
   await r.raw(cold, JSON.stringify({ t: 'act', data: act }));
   assert.deepEqual(cold.sent.at(-1), { t: 'error', m: 'act before hello' });
   // its own bucket: the poses' untouched, a stream of acts struck out
-  const pose0 = JSON.stringify(j2.att.bucket);
+  const pose0 = JSON.stringify(j2.meters.bucket);
   let n = 0; while (!j2.closed && n++ < DROP_STRIKES_MAX + ACT_HZ_MAX + 20) await r.raw(j2, JSON.stringify({ t: 'act', data: act }));
   assert.ok(j2.closed && j2.sent.at(-1)?.m === 'too many acts', `struck out after ${n} (${j2.sent.at(-1)?.m})`);
-  assert.equal(JSON.stringify(j2.att.bucket), pose0, 'the pose bucket untouched by a door');
+  assert.equal(JSON.stringify(j2.meters.bucket), pose0, 'the pose bucket untouched by a door');
   assert.ok(ACT_HZ_MAX <= POSE_HZ_MAX);
   // the room's budget: over it dropped, nobody struck
   r.room._roomActs = { tokens: 0, at: Date.now() };

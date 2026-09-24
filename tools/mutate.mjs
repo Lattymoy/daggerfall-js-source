@@ -8,7 +8,9 @@
 //
 // A list is a JSON array of { name, file, old, new, tests[], equivalent?, why? }. For each: copy the file aside,
 // replace the FIRST occurrence of `old` with `new` (the record must be exact - a mutant that does not apply is
-// reported, not skipped silently), run the named tests, restore the file byte-for-byte, and say whether the mutant
+// reported, not skipped silently - and name ONE site: a text that stands twice is aimed at whichever copy is higher
+// up, so a copy added above the one it was written for takes its mutant; test/mutantdrift.test.js's MUT-AIM holds
+// every record to one), run the named tests, restore the file byte-for-byte, and say whether the mutant
 // SURVIVED (the pins cannot fail it) or died. A survivor is a finding. A mutant marked `equivalent: true` is one the
 // slice DECIDED to leave alive - redundant code kept as belt-and-braces, say - and `why` says so; it is expected to
 // survive, reported as such, and counted as a failure only if it unexpectedly DIES (the record is then stale).

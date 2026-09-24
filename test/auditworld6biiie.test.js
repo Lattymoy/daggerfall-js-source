@@ -193,14 +193,14 @@ test('AUDIT WORLD6b-iii(e) B1/B2/B9: the Room - who carries the room\'s budget (
   // full rig answered, and a room whose budget is spent dropping the next ask with no strike.
   assert.equal(answered, 14 * WHO_HZ_MAX, `every ask from correct clients at their own rate is answered (${answered})`);
   assert.equal(WHO_ROOM_HZ_MAX, SOCKETS_MAX * WHO_HZ_MAX, 'derived: the sum of every socket\'s own gate'); assert.equal(relay.WHO_ROOM_HZ_MAX, WHO_ROOM_HZ_MAX);
-  for (const w of askers) { assert.equal(w.closed, null); assert.equal(w.att.junk ?? 0, 0); assert.equal(w.att.wdrops ?? 0, 0, 'no strike: the room\'s budget drops, the socket\'s own gate passed'); }
+  for (const w of askers) { assert.equal(w.closed, null); assert.equal(w.meters.junk ?? 0, 0); assert.equal(w.meters.wdrops ?? 0, 0, 'no strike: the room\'s budget drops, the socket\'s own gate passed'); }
   const s = rd('server/src/index.js');
   assert.match(s, /const budget = tokenGate\(this\._roomWho, now, WHO_ROOM_HZ_MAX\);\s*\n\s*this\._roomWho = budget\.bucket;\s*\n\s*if \(!budget\.pass\) return;\s*\n\s*const target = /, 'SLAM9: the budget before the SCAN, not only before the read - a refused ask costs the object nothing');
   assert.match(s, /let look = this\._looks\.get\(b\.id\) \?\? null;\s*\n\s*if \(!look\) \{ look = \(await this\.state\.storage\.get\(lookKey\(b\.id\)\)\) \?\? null; if \(look\) this\._looks\.set\(b\.id, look\); \}/, 'the looks kept');
   assert.match(s, /if \(this\._attach\(tws\)\?\.id !== b\.id\) return;/, 'B9: the socket read again after the await');
   assert.match(s, /this\._looks\.set\(m\.id, m\.look\); \}/, 'set at the hello'); assert.match(s, /this\._looks\.delete\(a\.id\);/, 'gone at the leave'); assert.match(s, /this\._looks\.clear\(\);\s*\n\s*const dead = \['hellos'\];/, 'cleared with the sweep');
   const bare = s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[ \t])\/\/[^\n]*/gm, '$1');   // comments away - and only a `//` that begins a comment, not the one inside `wss://` (AUDIT SLAM found the naive stripper eating a real line)
-  assert.match(bare, /if \(!id \|\| id === a\.id\) \{ this\._junk\(ws, a\); return; \}\s*const budget = [^\n]*\s*this\._roomWho = budget\.bucket;\s*if \(!budget\.pass\) return;\s*const target = [^\n]*\s*if \(!target\) return;/, 'B3: one\'s own name is junk, a name that left is nothing - with SLAM9\'s budget between them');
+  assert.match(bare, /if \(!id \|\| id === a\.id\) \{ this\._junk\(ws\); return; \}\s*const budget = [^\n]*\s*this\._roomWho = budget\.bucket;\s*if \(!budget\.pass\) return;\s*const target = [^\n]*\s*if \(!target\) return;/, 'B3: one\'s own name is junk, a name that left is nothing - with SLAM9\'s budget between them');
   assert.ok(relayVersionAtLeast(66), 'the relay says which one it is, and says a later one just as well');
 });
 

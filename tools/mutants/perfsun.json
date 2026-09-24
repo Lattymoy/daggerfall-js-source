@@ -137,8 +137,8 @@
  {
   "name": "AUDIT-F4-the-billboard-tint-decodes-the-moon-and-the-sun-into-ONE-scratch-again",
   "file": "src/render/renderer.js",
-  "old": "sc = this._c3(this._sunColor, this._decC);",
-  "new": "sc = this._c3(this._sunColor, this._decB);",
+  "old": "mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decC);",
+  "new": "mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decB);",
   "tests": [
    "test/perfsun_fragment.test.js"
   ]

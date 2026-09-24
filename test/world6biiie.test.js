@@ -215,19 +215,19 @@ test('WORLD6b-iii(e): the Room - who answers the asker alone with the member\'s 
   assert.deepEqual(ofType(c, 'join').filter((m) => m.id === 'bbbb-0002').at(-1), { t: 'join', id: 'bbbb-0002', name: 'bbbb-0002', look: r.look, pose: validPose(at(2, 2)) }, 'the member\'s join, its latest pose (as the relay keeps it)');
   assert.equal(ofType(a, 'join').filter((m) => m.id === 'bbbb-0002').length, 1, 'the asker alone hears it (a\'s one is the hello\'s own join)');
   assert.equal(ofType(b, 'join').filter((m) => m.id === 'bbbb-0002').length, 0);
-  assert.equal(c.att.junk ?? 0, 0);
-  await who(c, 'zzzz-0009'); assert.equal(c.att.junk ?? 0, 0, 'nobody: no answer and NO junk (AUDIT WORLD6b-iii(e) B3: the honest race with a leave)');
+  assert.equal(c.meters.junk ?? 0, 0);
+  await who(c, 'zzzz-0009'); assert.equal(c.meters.junk ?? 0, 0, 'nobody: no answer and NO junk (AUDIT WORLD6b-iii(e) B3: the honest race with a leave)');
   assert.equal(ofType(c, 'join').length, 1, 'the one answer - nothing more (c heard no hello after its own)');
   const e = r.connect(); await r.hello(e, 'eeee-0005', at(1, 1));   // its own bucket
-  await who(e, 'eeee-0005'); assert.equal(e.att.junk, 1, 'my own name: junk');
+  await who(e, 'eeee-0005'); assert.equal(e.meters.junk, 1, 'my own name: junk');
   assert.equal(ofType(e, 'join').length, 0, 'nothing answered'); assert.equal(e.closed, null);
   await who(e, ''); assert.ok(e.closed, 'no name: the parser\'s error, the socket closed (B6: what the relay refuses the client never sends)');
   // the asks' own bucket: WHO_HZ_MAX in one instant, the rest dropped and counted; the strikes close the socket
   const d = r.connect(); await r.hello(d, 'dddd-0004', at(1, 1));
   for (let i = 0; i < 8; i++) await who(d, 'aaaa-0001');
   assert.equal(ofType(d, 'join').filter((m) => m.id === 'aaaa-0001').length, WHO_HZ_MAX, `WHO_HZ_MAX answers (${ofType(d, 'join').length}; a's join predates d, its welcome carried a)`);
-  assert.equal(d.att.wdrops, 8 - WHO_HZ_MAX, 'the rest dropped'); assert.equal(d.closed, null);
-  assert.equal(d.att.drops ?? 0, 0, 'the pose bucket untouched');
+  assert.equal(d.meters.wdrops, 8 - WHO_HZ_MAX, 'the rest dropped'); assert.equal(d.closed, null);
+  assert.equal(d.meters.drops ?? 0, 0, 'the pose bucket untouched');
   // a channel: no roster, no answer
   const ch = fakeRoom('chat:world'); const x = ch.connect(), y = ch.connect();
   await ch.hello(x, 'xxxx-0001'); await ch.hello(y, 'yyyy-0002');

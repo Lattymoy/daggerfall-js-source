@@ -28,8 +28,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fakeRoom } from './fakeRoom.mjs';
-import { parseClient, sanitizeChat, redGate, chatGate, RED_HZ_MAX, CHAT_HZ_MAX, CHAT_MAX, RELAY_VERSION } from '../src/net/wire.js';
+import { parseClient, sanitizeChat, redGate, chatGate, RED_HZ_MAX, CHAT_HZ_MAX, CHAT_MAX, RELAY_VERSION, CHAT_ROOM_HZ_MAX, CHAT_WORLD_ROOM } from '../src/net/wire.js';
 import { ChatLog } from '../src/net/chat.js';
+import { OnlineSession } from '../src/net/online.js';
+import { fakeSocketClass } from './fakeSocket.mjs';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 const ofType = (ws, t) => ws.sent.filter((m) => m.t === t);
@@ -198,18 +200,34 @@ test('RED1: the log marks a red line from the relay\'s frame TYPE, and a red lin
 test('RED1: the host parses /red and NEVER guards it - the authority is the relay\'s, and a second copy of it here would be wrong the moment a grant lapses', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /const red = \/\^\\\/red\\s\+\(\[\\s\\S\]\+\)\$\/i\.exec\(text\.trim\(\)\);/, 'the command');
-  assert.match(w, /if \(red\) return chatLinks\.get\(tabId\)\?\.sendRed\(red\[1\]\) \?\? false;/, 'straight to the link');
-  const arm = w.slice(w.indexOf('const red = /^'), w.indexOf('return chatLinks.get(tabId)?.sendChat(text)'));
+  // CHAT-CHAN: from any tab, straight to the WORLD link - the one room every player online is in (a red line said in a
+  // region's room, or on a tab with no room of its own, would reach a region or nobody)
+  assert.match(w, /if \(red\) return chatLinks\.get\('world'\)\?\.sendRed\(red\[1\]\) \?\? false;/, 'straight to the link');
+  const arm = w.slice(w.indexOf('const red = /^'), w.indexOf('const mod = parseModCommand(text);'));
   assert.doesNotMatch(arm, /glyph|dev|wardrobe|title/i, 'the host must not decide who may speak as the server');
   // ...and the SERVER's line lands on the log with the flag set by US,
   // from the frame type - never from a field on the frame.
-  assert.match(w, /link\.onRed = \(line\) => chatLog\.push\(tab\.id, \{ text: line\.text, at: line\.at, red: true \}\);/, 'the flag is set here, on a line nobody sent');
+  assert.match(w, /link\.onRed = \(line\) => chatLog\.pushAll\(\{ text: line\.text, at: line\.at, red: true \}\);/, 'the flag is set here, on a line nobody sent (CHAT-CHAN: one line on every tab)');
 
   const online = rd('src/net/online.js');
   const recv = online.slice(online.indexOf("} else if (m.t === 'red') {"), online.indexOf("} else if (m.t === 'social') {"));
   assert.match(recv, /this\.onRed\?\.\(\{ text, at:/, 'the session hands it on');
   assert.doesNotMatch(recv, /m\.id|m\.name/, 'a server line has neither, and reading one would invent a speaker');
   assert.match(recv, /chatInGate/, 'CHAT-G: gated COMING IN too - the relay a client talks to is the player\'s own choice');
+  // ...and DRIVEN, because the pattern above also matches the arm after this one: a flood of red lines from one relay
+  // inside one instant reaches the log at the room's own rate and no faster (CHAT-CHAN found the gate's removal
+  // surviving that pattern - RED1-12)
+  const { FakeWS, sockets } = fakeSocketClass();
+  const link = new OnlineSession({ url: 'wss://relay.test', name: 'a', id: 'aaaa-0001', secret: 'secret-of-aaaa-0001', presence: false, WebSocketImpl: FakeWS, now: () => 1_000_000 });
+  const reds = []; link.onRed = (line) => reds.push(line);
+  const info = console.info, warn = console.warn; console.info = () => {}; console.warn = () => {};
+  try {
+    link.join(CHAT_WORLD_ROOM); sockets[0].open();
+    sockets[0].receive({ t: 'welcome', id: 'aaaa-0001', peers: [], host: null, world: null, v: RELAY_VERSION });
+    for (let i = 0; i < CHAT_ROOM_HZ_MAX + 5; i++) sockets[0].receive({ t: 'red', text: `broadcast ${i}`, at: 1 });
+  } finally { console.info = info; console.warn = warn; }
+  assert.equal(reds.length, CHAT_ROOM_HZ_MAX, 'the room\'s rate, and the rest dropped');
+  assert.equal(link.stats.chatsDropped, 5);
 
   // The panel draws it red, and not as an italic aside: the system's
   // notices are asides and this is an announcement.
@@ -221,6 +239,6 @@ test('RED1: the host parses /red and NEVER guards it - the authority is the rela
 test('RED1: the wire version moved, because this is a relay change', () => {
   // SLAM8's law reaches this slice like any other: a `say` frame the
   // old relay does not know is a different deployed worker.
-  assert.equal(RELAY_VERSION, 'world101');   // world101: DISC12 lh/wb; world100: DISC7 hs; world99: HCC-PARK + RIDE; world98: SPELLFX1; world91: QUEST1 + TRADE1 + PEER-FS1; world92: AUDIT DROPS B3/C1/C3; world96: the party-rest drop's pose fields
+  assert.equal(RELAY_VERSION, 'world102');   // world102: CHAT-CHAN + DICE1 + EMOTE1 + INSPECT1 + JOURNAL1 + AUDIT ATTACH; world101: DISC12 lh/wb; world100: DISC7 hs; world99: HCC-PARK + RIDE; world98: SPELLFX1; world91: QUEST1 + TRADE1 + PEER-FS1; world92: AUDIT DROPS B3/C1/C3; world96: the party-rest drop's pose fields
   assert.match(rd('test/relayversion.test.js'), /world89: '[0-9a-f]{64}'/, 'and its law is recorded');
 });

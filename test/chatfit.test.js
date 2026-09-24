@@ -56,7 +56,7 @@ function mount({ badges = new Map(), svg = true, roster = null } = {}) {
 
 test('CHAT-FIT: the sheet - the column is absolute inside a relative column of fixed width, a row\'s line is nowrap flex and only the NAME shrinks (ellipsis), and the line badge classes exist at the roster\'s sizes', () => {
   const who = rule('.dfchat-who');
-  assert.equal(who.position, 'relative'); assert.equal(who.width, '148px'); assert.equal(who.display, undefined, 'the column is not a flex column any more - its inner is');
+  assert.equal(who.position, 'relative'); assert.equal(who.width, 'calc(148px * var(--dfchat-scale, 1))', 'CHAT-SIZE: 148px at the sheet\'s own size, and wider with the text'); assert.equal(who.display, undefined, 'the column is not a flex column any more - its inner is');
   const inner = rule('.dfchat-who-inner');
   assert.equal(inner.position, 'absolute'); assert.equal(inner.inset, '0'); assert.equal(inner.display, 'flex'); assert.equal(inner['flex-direction'], 'column');
   const list = rule('.dfchat-wholist'); assert.equal(list['overflow-y'], 'auto'); assert.equal(list['min-height'], '0');
@@ -163,10 +163,17 @@ test('CHAT-FIT: OnlineSession.badgeOf - mine as adopted, a peer in the room, a p
 
 test('CHAT-FIT: by source - the host hands the panel a `badgeOf` read off the ACTIVE CHANNEL\'s session, the one the roster reads, and the badge pass runs inside the name pass so every caller of one runs the other', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /badgeOf: \(id\) => \(chatLinks\?\.get\(chatLog\?\.active\) \?\? online\)\?\.badgeOf\?\.\(id\) \?\? null,/);
-  assert.match(w, /roster: \(\) => chatLinks\?\.get\(chatLog\?\.active\) \?\? online \?\? null,/, 'the same session the roster reads');
+  // CHAT-CHAN: both through the ACTIVE TAB's session (chatSessionOf) - the roster's composed lists (the Party's, the
+  // Local's) are built over that same session, so one session still answers the badge and the row
+  assert.match(w, /badgeOf: \(id\) => chatSessionOf\(chatLog\?\.active\)\?\.badgeOf\?\.\(id\) \?\? null,/);
+  assert.match(w, /roster: \(\) => chatRosterOf\(chatLog\?\.active\),/, 'the same session the roster reads');
+  assert.match(w, /const chatRosterOf = \(tabId\) => \{\s*const s = chatSessionOf\(tabId\);[^\n]*\n\s*if \(tabId === 'party'\) return partyRosterSource\(social\?\.party, s, [^\n]*\n\s*if \(tabId === 'local'\) return localRosterSource\(s, /, 'every roster over the one session');
   const p = rd('src/ui/chatPanel.js');
   assert.match(p, /const paintNames = \(\) => \{\s*if \(nameColor\) \{[\s\S]*?\}\s*paintBadges\(\);\s*\};/);
   assert.match(p, /if \(r\.badgeKey === key\) continue;/, 'a line is re-laid only on a change');
-  assert.equal((p.match(/doc\.createElementNS\?\.\('http:\/\/www\.w3\.org\/2000\/svg', 'svg'\)/g) ?? []).length, 1, 'ONE svg door, shared by the roster row and the chat line');
+  // INSPECT1: the door moved to ui/playerBadge.js glyphSvgNode - the one drawing the name over a head and the profile card
+  // share too - so the panel keeps NO svg door of its own, and its one glyph builder goes through that one
+  assert.equal((p.match(/createElementNS/g) ?? []).length, 0, 'no svg door of the panel\'s own');
+  assert.match(p, /const glyphSvg = \(g, cls\) => glyphSvgNode\(doc, g, cls\);/, 'ONE glyph builder, shared by the roster row and the chat line, through the one drawing');
+  assert.equal((rd('src/ui/playerBadge.js').match(/doc\?\.createElementNS\?\.\('http:\/\/www\.w3\.org\/2000\/svg', 'svg'\)/g) ?? []).length, 1, '...which has ONE svg door');
 });

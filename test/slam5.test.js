@@ -52,7 +52,7 @@ function strictRoom(key) {
   const room = new Room(state, env);
   const { token } = roomSigner(env, () => Date.now());
   const connect = () => {
-    const ws = { sent: [], closed: null, att: { key, id: null, name: null, pose: null, bucket: null, drops: 0 },
+    const ws = { sent: [], closed: null, att: { key, id: null, name: null, pose: null },   // the relay's fresh attachment (its meters are the instance's - AUDIT ATTACH)
       send(s) { this.sent.push(JSON.parse(s)); },
       close(c, r) { this.closed = { code: c, reason: r }; const i = sockets.indexOf(ws); if (i >= 0) sockets.splice(i, 1); },
       serializeAttachment(a) { this.att = JSON.parse(JSON.stringify(a)); }, deserializeAttachment() { return this.att; } };

@@ -29,7 +29,7 @@
  *  reason: a deploy that did not happen looks exactly like one that
  *  did. Kept in step with ACCOUNT_VERSION in wrangler.toml, which
  *  test/accountworker.test.js holds. */
-export const ACCOUNT_VERSION = 'acct5';   // acct3: ACC3's titles and glyphs; acct4: ACC4's time played; acct5: MOD1's moderation
+export const ACCOUNT_VERSION = 'acct6';   // acct3: ACC3's titles and glyphs; acct4: ACC4's time played; acct5: MOD1's moderation; acct6: MAIL1's letters
 
 /** A body bigger than this is not a request this service has. Read
  *  BEFORE the JSON is parsed, so a megabyte of nothing costs nothing. */
@@ -129,6 +129,11 @@ export const ROUTES = new Set([
   // ACC2: the LISTING is a fixed path; every other save route carries
   // the slot in it and is matched by `savePathOf`.
   '/v1/saves',
+  // MAIL1: letters to a registered player, kept until their reader
+  // throws them away. The box is a GET; the three that change something
+  // are POSTs, each naming the letter in its body - never in the path,
+  // so an id is never a URL a log keeps.
+  '/v1/mail/inbox', '/v1/mail/send', '/v1/mail/read', '/v1/mail/delete',
 ]);
 
 /** The routes a caller reaches WITHOUT a credential. Everything else

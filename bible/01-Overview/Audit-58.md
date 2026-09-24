@@ -168,11 +168,11 @@ now has a name per host.
 readers asked one.** `interiorFoes` and `interiorGuards` are both live
 inside a building; the senses feed, the enchant pool and the rest refusal
 each walked only the first, so the indoor city watch was invisible to all
-three (`src/scenes/worldModes.js:1023-1091`). **The exterior host mounted no
+three (`src/scenes/worldModes.js:1024-1092`). **The exterior host mounted no
 enchant ctx at all** - the session has ONE, and that host set none, so
 every enchantment payload that needs a foe idled in the host a player
 spends most of their time in (`setDefaultEnchantCtx` is imported at
-`src/scenes/exterior.js:61` now, and the pool it answers with is the
+`src/scenes/exterior.js:62` now, and the pool it answers with is the
 live one). **`scenes/interior.js` registered a keydown listener and never
 called `swallowBrowserKey`**, so F5 inside a building reloaded the page
 and destroyed the session - against `src/ui/input.js:643-665`'s own law,

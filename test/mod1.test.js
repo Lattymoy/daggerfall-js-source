@@ -405,7 +405,7 @@ test('MOD1: the session carries `sub` onto peers and lines, hands a muted frame 
 test('MOD1: the world host parses the commands before a line is sent, and every room it holds tells the player they are muted', () => {
   const w = src('src/scenes/world.js');
   const at = (re) => { const m = re.exec(w); assert.ok(m, `world.js no longer has ${re}`); return m.index; };
-  assert.ok(at(/const mod = parseModCommand\(text\);/) < at(/return chatLinks\.get\(tabId\)\?\.sendChat\(text\) \?\? false;/), 'a /mute typed must never go out as a chat line');
+  assert.ok(at(/const mod = parseModCommand\(text\);/) < at(/return chatLinks\.get\(tabId\)\?\.sendChat\(text, \{ me \}\) \?\? false;/), 'a /mute typed must never go out as a chat line');
   assert.match(w, /link\.onMuted = onMuted;/, 'every chat link');
   assert.match(w, /online\.onMuted = onMuted;/, 'and the place room\'s own session');
   assert.match(w, /runModCommand\(mod, \{ session: \{ peers \}, links, mute, refusal: accountRefusalText \}\)/);

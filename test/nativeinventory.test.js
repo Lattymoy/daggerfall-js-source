@@ -235,7 +235,9 @@ test('U25 / THE ONE CONSTRUCTION SEAM: ONE inventory builder per host', () => {
     // identity still comes from the POOL (corpseLootHooks) and still
     // reaches the same builder behind the same art gate; quick loot is
     // handed that very object and answers null when it is not wanted.
-    assert.match(src, /takeLoot\(lootKey, \(l\) => townTalk\.say\(l\),\n\s*inventoryDoorReady\(\) \? \(loot\) => \{\n\s*if \(quickLootTake\(lootKey, loot, playerEntity, \(l\) => townTalk\.say\(l\), \{ getQuest: [^}]*\}\)\) return;[^\n]*\n\s*const w = makeInventoryWindow\(\{ loot \}\);\n\s*if \(w\) townTalk\.showOverlay\(w\);[^\n]*\n\s*\} : null\)/,   // DISC10-E L3 re-aim: a refused pack is null and mounts nothing
+    // LOOT-STACK: the decline is a press's only, and the pile rides
+    // beside the pool's hooks into the same builder.
+    assert.match(src, /takeLoot\(lootKey, \(l\) => townTalk\.say\(l\),\n\s*inventoryDoorReady\(\) \? \(loot\) => \{\n\s*if \(!pileKeys && quickLootTake\(lootKey, loot, playerEntity, \(l\) => townTalk\.say\(l\), \{ getQuest: [^}]*\}\)\) return;[^\n]*\n\s*const pile = lootPile\([^\n]*\n\s*const w = makeInventoryWindow\(\{ loot: pile \? \{ \.\.\.loot, pile \} : loot \}\);\n\s*if \(w\) townTalk\.showOverlay\(w\);[^\n]*\n\s*\} : null\)/,   // DISC10-E L3 re-aim: a refused pack is null and mounts nothing
       `${f}: the corpse must reach the same builder, behind the same art gate`);
   }
   // the dungeon host has one too, and it is the door's

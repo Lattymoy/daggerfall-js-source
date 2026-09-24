@@ -313,7 +313,7 @@ test('audit24 wave38: the encounter pool exports the seam, and the host asks BOT
   // Routing a `foeCorpse:` key into the watch pool is not a harmless
   // miss: cityGuards.js:1113-1115 turns the key into
   // `guards.find((g) => g.id === id)` over ids minted by
-  // `_nextGuardId++`, and takeCorpseLoot (corpseMarker.js:195-354)
+  // `_nextGuardId++`, and takeCorpseLoot (corpseMarker.js:195-358)
   // tests only `corpseDisabled` and `entity.items` - never death - so
   // opening an encounter corpse would empty a LIVE watchman's pack.
   // AUDIT 65 MC-2 MADE THE ARM TWO RUNGS: the corpse now competes for
@@ -322,9 +322,18 @@ test('audit24 wave38: the encounter pool exports the seam, and the host asks BOT
   // `hit.distance > CorpseActivationDistance` ->
   // SetMidScreenText(youAreTooFarAway) (PlayerActivate.cs:936-941).
   // Both rungs are run here, because the ladder runs both.
-  const exLines = rd('src/scenes/exterior.js').split('\n');
-  const armAt = exLines.findIndex((l) => l.includes("lootKey.startsWith('foeCorpse:')"));
-  assert.ok(armAt > 0, 'the fixed-city host no longer carries the corpse-key router');
+  const exSrc = rd('src/scenes/exterior.js');
+  const exLines = exSrc.split('\n');
+  // LOOT-STACK: the router moved into the host's ONE corpse door
+  // (`openBodyLoot`), which the press and the loot window's pile tabs
+  // both go through - so the arm is that call, and the harness below
+  // runs the door's own source with it.
+  const doorAt = exSrc.indexOf('  const bodyPool = (lootKey) => ');
+  assert.ok(doorAt > 0, 'the fixed-city host no longer carries the corpse-key router');
+  const doorSrc = exSrc.slice(doorAt, exSrc.indexOf('\n  };\n', doorAt) + 5);
+  assert.match(doorSrc, /lootKey\.startsWith\('foeCorpse:'\) \? exteriorFoes : cityGuards/);
+  const armAt = exLines.findIndex((l) => l.trim() === 'openBodyLoot(lootKey);');
+  assert.ok(armAt > 0, 'the press goes through the door');
   // MAC-E gave the router a body (the pool takes the host's inventory
   // door now, so the arm spans lines), so the window this reads is the
   // ARM rather than the one line above it. The law is the same one:
@@ -351,13 +360,13 @@ test('audit24 wave38: the encounter pool exports the seam, and the host asks BOT
   let quickTakes = false;
   const arm = new Function('lootKey', '_lootPick', 'exteriorFoes', 'cityGuards', 'townTalk',
     'surfacePlayer', 'setMidScreenText', 'TOO_FAR_AWAY_TEXT', 'inventoryDoorReady', 'makeInventoryWindow',
-    'quickLootTake', 'playerEntity', armSrc);
+    'quickLootTake', 'playerEntity', 'lootPile', doorSrc + armSrc);
   const run = (k, pick) => arm(k, pick,
     { takeLoot: (key, say2, open) => { took.push(['encounter', key]); if (open) open({ items: () => [] }); } },
     { takeLoot: (key, say2, open) => { took.push(['watch', key]); if (open) open({ items: () => [] }); } },
     { say: () => {}, showOverlay: (w) => opened.push(w) }, () => {}, (t) => said.push(t), TOO_FAR_AWAY_TEXT,
     () => true, (o) => o,
-    (key, hooks) => { quick.push(key); return quickTakes ? {} : null; }, { items: [] });
+    (key, hooks) => { quick.push(key); return quickTakes ? {} : null; }, { items: [] }, () => null);
   const near = { distance: 1, reach: CORPSE_ACTIVATION_DISTANCE };
   run('foeCorpse:3', near);
   run('guardCorpse:3', near);

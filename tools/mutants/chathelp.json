@@ -1,0 +1,30 @@
+[
+  {
+    "name": "CHAT-HELP-quiet-ignored",
+    "file": "src/net/chat.js",
+    "old": "    if (!quiet && !(this.open && tab.id === this.active)) tab.unread++;",
+    "new": "    if (!(this.open && tab.id === this.active)) tab.unread++;",
+    "tests": ["test/chathelp.test.js"]
+  },
+  {
+    "name": "CHAT-HELP-every-line-quiet",
+    "file": "src/net/chat.js",
+    "old": "    if (!quiet && !(this.open && tab.id === this.active)) tab.unread++;",
+    "new": "",
+    "tests": ["test/chathelp.test.js"]
+  },
+  {
+    "name": "CHAT-HELP-the-greeting-points-at-nothing",
+    "file": "src/net/chatCommands.js",
+    "old": "export const CHAT_GREETING_TEXT = 'Welcome! Type /help for chat commands.';",
+    "new": "export const CHAT_GREETING_TEXT = 'Welcome!';",
+    "tests": ["test/chathelp.test.js"]
+  },
+  {
+    "name": "CHAT-HELP-no-greeting-on-join",
+    "file": "src/scenes/world.js",
+    "old": "    chatLog.push(chatLog.active, { text: CHAT_GREETING_TEXT, system: true }, { quiet: true });",
+    "new": "",
+    "tests": ["test/chathelp.test.js"]
+  }
+]

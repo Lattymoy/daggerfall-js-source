@@ -147,7 +147,7 @@ test('SLAM13 A1: ONE SENDER CANNOT HOLD THE ROOM\'S ACT BUCKET IN DEBT - a flood
     assert.ok(cost > ACT_SENDER_BYTES_PER_S && cost * 2 > ACT_ROOM_BYTES_PER_S, `the fixture is past both rates (${cost} a fan)`);
     await r.raw(ws[1], big);
     assert.equal(ofType(ws[0], 'act').length, 1, 'the first big act lands whole - a real chest cascade must');
-    assert.ok(ws[1].att.abytes.bytes < 0, 'and puts ITS OWN bucket in debt');
+    assert.ok(ws[1].meters.abytes.bytes < 0, 'and puts ITS OWN bucket in debt');
     const room = r.room._roomActBytes.bytes;
     assert.equal(room, ACT_ROOM_BYTES_PER_S - cost, 'the room charged once');
     await r.raw(ws[1], big);   // the flood: under SLAM11 this second frame put the ROOM in debt for the next second
@@ -158,7 +158,7 @@ test('SLAM13 A1: ONE SENDER CANNOT HOLD THE ROOM\'S ACT BUCKET IN DEBT - a flood
     await r.raw(ws[2], door);
     assert.equal(ofType(ws[0], 'act').length, 2, 'an honest door from somebody else lands at once');
     assert.equal(ofType(ws[5], 'act').length, 2, 'for everyone');
-    assert.ok(ws[2].att.abytes.bytes > 0, 'its sender\'s share barely dented');
+    assert.ok(ws[2].meters.abytes.bytes > 0, 'its sender\'s share barely dented');
   } finally { h.done(); }
 });
 
@@ -170,11 +170,11 @@ test('SLAM13 A1: a frame the ROOM refuses charges the sender nothing either - an
     r.room._roomActBytes = { bytes: -1, at: h.clock };   // the room in debt (a flooder's doing, under the old law)
     await r.raw(ws[2], door);
     assert.equal(ofType(ws[0], 'act').length, 0, 'refused by the room');
-    assert.equal(ws[2].att.abytes.bytes, ACT_SENDER_BYTES_PER_S, 'the sender\'s share is FULL - refilled, not charged');
+    assert.equal(ws[2].meters.abytes.bytes, ACT_SENDER_BYTES_PER_S, 'the sender\'s share is FULL - refilled, not charged');
     h.tick(1000);   // the room repaid
     await r.raw(ws[2], door);
     assert.equal(ofType(ws[0], 'act').length, 1, 'and the door lands the moment the room can carry it');
-    assert.ok(ws[2].att.abytes.bytes < ACT_SENDER_BYTES_PER_S && ws[2].att.abytes.bytes > 0, 'charged once, for the one that went');
+    assert.ok(ws[2].meters.abytes.bytes < ACT_SENDER_BYTES_PER_S && ws[2].meters.abytes.bytes > 0, 'charged once, for the one that went');
   } finally { h.done(); }
 });
 

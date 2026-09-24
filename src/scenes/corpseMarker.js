@@ -203,6 +203,10 @@ export function corpseLootTargets(entries, keyPrefix, { isCorpse, feetOf, idOf =
       aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] },
       distance: RAY_DISTANCE,
       reach: CORPSE_ACTIVATION_DISTANCE,
+      // LOOT-STACK: a BODY, in the producer's own word - the pick turns a
+      // pile of these (player/lootStack.js) and reads no key's prefix to
+      // know one.
+      body: true,
     });
   });
   return targets;
@@ -355,6 +359,19 @@ export function openCorpseLoot(entry, { playerEntity, say = () => {}, openWindow
   }
   openWindow(corpseLootHooks(entry));
   return items.length;
+}
+
+/**
+ * LOOT-STACK: A BODY AS THE LOOT WINDOW'S TAB (player/lootStack.js
+ * lootPile) - its name and how much it holds - or null for a body a tab
+ * must not offer: a disabled one, an empty one (its press would only say
+ * "The body has no treasure." and close the window it came from), and a
+ * PUPPET's, which is its owner's to empty and opens no window here.
+ */
+export function pileBody(entry) {
+  if (!entry || entry.corpseDisabled || entry.puppet) return null;
+  const count = entry.entity?.items?.length ?? 0;
+  return count > 0 ? { name: enemyDisplayName(entry.mobileType) ?? 'Body', count } : null;
 }
 
 export function takeCorpseLoot(entry, playerEntity, say = () => {}) {

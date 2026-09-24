@@ -652,14 +652,20 @@ test('AUDIT 65 MC-2: a target past its handler\'s reach is HANDED OVER and refus
     // into. It answers null here - the switch is what the pin below
     // drives, and this one is about the REFUSAL - so the fall-through
     // to the window is what gets witnessed.
+    // LOOT-STACK: the opener goes through the host's one corpse door
+    // (`openBodyLoot`, which the loot window's pile tabs call too), so
+    // the door's own source runs ahead of the rung and its opener.
+    const doorAt = src.indexOf('  const bodyPool = (lootKey) => ');
+    assert.ok(doorAt > 0, `${file}: the corpse door`);
+    const door = src.slice(doorAt, src.indexOf('\n  };\n', doorAt) + 5);
     const arm = new Function('lootKey', '_lootPick', 'exteriorFoes', 'cityGuards', 'townTalk',
       'surfacePlayer', 'setMidScreenText', 'TOO_FAR_AWAY_TEXT', 'inventoryDoorReady', 'makeInventoryWindow',
-      'quickLootTake', 'playerEntity',
-      [lines[at], ...lines.slice(openAt, end)].join('\n'));
+      'quickLootTake', 'playerEntity', 'lootPile',
+      [door, lines[at], ...lines.slice(openAt, end)].join('\n'));
     const run = (pick) => arm('foeCorpse:1', pick,
       { takeLoot: (k) => took.push(k) }, { takeLoot: (k) => took.push(k) },
       { say: () => {}, showOverlay: () => {} }, () => {}, (t) => said.push(t), TOO_FAR_AWAY_TEXT,
-      () => true, (o) => o, () => null, {});
+      () => true, (o) => o, () => null, {}, () => null);
     run({ distance: 8, reach: CORPSE_ACTIVATION_DISTANCE });
     assert.deepEqual(said, [TOO_FAR_AWAY_TEXT], `${file}: a body past 3.75 is refused`);
     assert.deepEqual(took, [], `${file}: ...and not opened`);
