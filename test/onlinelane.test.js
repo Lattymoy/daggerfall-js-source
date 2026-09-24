@@ -86,7 +86,14 @@ test('OL1 - THE FUTURE HALF: every boolean switch the port declares is either fo
   assert.deepEqual(unanswered, [], 'a new switch must say whether the online lane forces it (systems/onlineLane.js ONLINE_FORCED_PREFS) or leaves it to the player (ONLINE_PLAYERS_OWN_PREFS)');
   for (const k of Object.keys(ONLINE_FORCED_PREFS)) assert.ok(Object.hasOwn(PREF_DEFAULTS, k), `${k} is a uiPrefs key`);
   for (const k of ONLINE_PLAYERS_OWN_PREFS) assert.ok(Object.hasOwn(PREF_DEFAULTS, k), `${k} is a uiPrefs key`);
-  for (const k of booleans.filter((k) => /^enhanced/.test(k))) assert.equal(ONLINE_FORCED_PREFS[k], true, `${k} is an enhancement and the lane forces it`);
+  // OL-LIGHT (2026-09-24, Mac: "Can we let people disable it online"): the one enhancement left to the player online -
+  // lighting is what this screen draws, and nothing the room agrees on reads it (features.js's row says why)
+  const PLAYERS_ENHANCEMENTS = ['enhancedLighting'];
+  for (const k of booleans.filter((k) => /^enhanced/.test(k) && !PLAYERS_ENHANCEMENTS.includes(k))) assert.equal(ONLINE_FORCED_PREFS[k], true, `${k} is an enhancement and the lane forces it`);
+  for (const k of PLAYERS_ENHANCEMENTS) {
+    assert.equal(Object.hasOwn(ONLINE_FORCED_PREFS, k), false, `${k} is not forced online`);
+    assert.ok(ONLINE_PLAYERS_OWN_PREFS.includes(k), `${k} is the player's, by name`);
+  }
   assert.equal(ONLINE_FORCED_PREFS.skin, 'enhanced');
   // MODS-ONLINE-2: the MOD half of this pin is now total and lives in
   // test/modsonline.test.js (every vendor classified, every forced key

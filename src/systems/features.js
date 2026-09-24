@@ -346,7 +346,13 @@ export const FEATURES = Object.freeze([
       + 'shafts of sunlight. Off is Daggerfall Unity\u2019s flat shading.',
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'enhancedLighting', initial: true, online: true }),
+    // OL-LIGHT (2026-09-24, Mac: "Can we let people disable it online"): THE PLAYER'S, ONLINE TOO. It was forced on
+    // with the rest of the enhanced lane, so a player it did not suit - the interior flicker DISC15 closed, a GPU
+    // that cannot carry forty-eight shadowed lanterns - had no way out online. Lighting is what THIS screen draws:
+    // the room agrees on nothing through it (render/enhancedLighting.js lightingOn is its one reader, and no wire
+    // field, relay law or shared roll reads the lane), the same shape as the chat's visibility and the peers'
+    // sprites the lane already leaves to the player.
+    control: Object.freeze({ store: 'prefs', key: 'enhancedLighting', initial: true, online: 'player' }),
   }),
   // FT7 (2026-09-14): THE TWO QUALITY TIERS OF THE ENHANCED OUTDOORS
   // (PERF1) - the grass field's fraction and the clouds' march. Both
