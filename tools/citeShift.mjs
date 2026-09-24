@@ -275,7 +275,10 @@ function main(argv) {
   const base = val('--base') ?? 'HEAD';
   const apply = opt('--apply'), moveStruck = opt('--struck');
   const only = argv.flatMap((a, i) => (a === '--target' ? [argv[i + 1]] : []));
-  const git = (...args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8' });
+  // AUDIT 68 X5: git's default 1 MiB maxBuffer threw ENOBUFS on `git show` of a
+  // target past 1 MiB (world.js crossed it), and the new-file catch below swallowed
+  // it - every cite into the tree's largest file was silently never moved.
+  const git = (...args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 28 });
   const changed = git('diff', '--name-only', base, '--', 'src', 'bible', 'test', 'tools').split('\n').filter(Boolean);
   const targets = (only.length ? only : changed).filter((f) => /\.(js|mjs|md)$/.test(f));
   const docs = git('ls-files', 'bible', 'test', 'src', 'tools').split('\n').filter((f) => /\.(js|mjs|md|sh)$/.test(f) && !SELF_DOCS.includes(f));   // RF3: the tools' own fixtures are not docs
