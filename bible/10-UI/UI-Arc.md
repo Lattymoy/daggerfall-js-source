@@ -8442,7 +8442,10 @@ only on stacks - a pile is a glance, not a list.
   dungeon hosts call - the splash clock's reasoning one slice on - so
   neither host can forget it and neither can run it twice. Enhanced
   skin only: the classic HUD saying nothing about a pile is
-  Daggerfall's own answer, not an omission. It tears down with the
+  Daggerfall's own answer, not an omission. (DISC22-C, 2026-09-24:
+  the classic skins take quick loot too now, at Satranath's report and
+  on Mac's parchment - a canvas panel for a LOOT LIST only, with quick
+  loot on; `01-Overview/Field-Bugs-2026-09-24.md` DISC22-C.) It tears down with the
   host. The context's returned object needed a name (`api`) for the
   frame to ask itself, which is all that change is.
 

@@ -122,7 +122,7 @@
   {
     "name": "WORLD-HOVER-skin-gate-removed-from-the-seam",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return null; }   // (the hide",
+    "old": "  if (!dom && !classic) { hideWorldPlaque(); return null; }   // (the hide",
     "new": "  if (false) { hideWorldPlaque(); return null; }   // (the hide",
     "tests": [
       "test/worldhover.test.js",
@@ -151,8 +151,8 @@
   {
     "name": "WORLD-HOVER-cursorActive-ignored",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (cursorActive || !eye || !dir || !collider) { foldQuickLoot(null); showWorldPlaque(null); return null; }",
-    "new": "  if (!eye || !dir || !collider) { foldQuickLoot(null); showWorldPlaque(null); return null; }",
+    "old": "  if (cursorActive || !eye || !dir || !collider) { foldQuickLoot(null); setClassicLootFrame(null); if (dom) showWorldPlaque(null); return null; }",
+    "new": "  if (!eye || !dir || !collider) { foldQuickLoot(null); setClassicLootFrame(null); if (dom) showWorldPlaque(null); return null; }",
     "tests": [
       "test/worldhover.test.js",
       "test/enhancedInventory.test.js"
@@ -603,8 +603,8 @@
   {
     "name": "WORLD-HOVER-the-hide-keeps-the-signature",
     "file": "src/ui/worldPlaque.js",
-    "old": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  if (!node) return;\n  shownSig = null;\n  blank(node);\n}",
-    "new": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  if (!node) return;\n  blank(node);\n}",
+    "old": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  setClassicLootFrame(null);   // DISC22-C: and the classic panel's frame with it\n  if (!node) return;\n  shownSig = null;\n  blank(node);\n}",
+    "new": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  setClassicLootFrame(null);   // DISC22-C: and the classic panel's frame with it\n  if (!node) return;\n  blank(node);\n}",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -612,8 +612,8 @@
   {
     "name": "WORLD-HOVER-the-hide-door-ensures-a-node",
     "file": "src/ui/worldPlaque.js",
-    "old": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  if (!node) return;\n  shownSig = null;\n  blank(node);\n}",
-    "new": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  const n = ensure();\n  if (!n) return;\n  shownSig = null;\n  blank(n);\n}",
+    "old": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  setClassicLootFrame(null);   // DISC22-C: and the classic panel's frame with it\n  if (!node) return;\n  shownSig = null;\n  blank(node);\n}",
+    "new": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  setClassicLootFrame(null);   // DISC22-C: and the classic panel's frame with it\n  const n = ensure();\n  if (!n) return;\n  shownSig = null;\n  blank(n);\n}",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -885,8 +885,8 @@
   {
     "name": "AUDIT-WH2-the-seam-gate-stops-hiding",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return null; }   // (the hide",
-    "new": "  if (!worldPlaqueOn()) { return null; }   // (the hide",
+    "old": "  if (!dom && !classic) { hideWorldPlaque(); return null; }   // (the hide",
+    "new": "  if (!dom && !classic) { return null; }   // (the hide",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -894,8 +894,8 @@
   {
     "name": "AUDIT-WH2-the-seam-drops-the-anchor",
     "file": "src/ui/worldPlaque.js",
-    "old": "    showWorldPlaque(frame, plaqueAnchor(canvas));",
-    "new": "    showWorldPlaque(frame);",
+    "old": "    if (dom) showWorldPlaque(frame, plaqueAnchor(canvas));",
+    "new": "    if (dom) showWorldPlaque(frame);",
     "tests": [
       "test/worldhover.test.js"
     ]

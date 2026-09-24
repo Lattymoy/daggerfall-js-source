@@ -597,6 +597,46 @@ person. (The "already have" refusal Skibbster saw for a quest finished
 before, and still standing as a week's tombstone, was AUDIT 68's
 S29-share-name-tombstoned, already on main.)
 
+## DISC22-C: quick loot on the classic skins, on Mac's parchment
+
+Satranath (*"no hotbar or quickloot on grimoire either, i think i will
+stick with the enhanced ui"*) and Mac, with a parchment image (*"a
+spritesheet to be used for the loot menu (grimoire UI)"*).
+
+**Cause.** Quick loot's law has no DOM in it
+(`systems/quickLoot.js`, `systems/worldHover.js`). But the one gate over
+the whole hover resolve, `worldPlaqueOn` (enhanced and not touch), was
+the DOM plaque's own. So on the classic skins no frame was resolved and no
+row was ever lit, and the wheel, P, J and the take all fell through to the
+inventory window.
+
+**Fix.** `worldHoverFrame` resolves and folds on the classic skins too,
+while quick loot is on (`classicPlaqueOn`). The DOM plaque stays
+enhanced-only (AUDIT 39's law: a classic page never injects the enhanced
+style). The frame is left in `quickLoot.js` (`classicLootFrame`), held
+with the frame mark it was resolved in so a stale one is never drawn. It lives in a leaf module (`systems/classicLootFrame.js`, no imports), because the first cut read it from `quickLoot.js`: that closed an import ring from `hud.js` into the item graph, which initialised `itemTransfer.js` before its own constants, and four test files failed to load.
+`drawHud` draws it on both classic branches through
+`ui/classicLootPanel.js`, beside the crosshair, with the lit row banded.
+
+The panel has two faces:
+
+- **Under the GrimoireUI pack, Mac's parchment**
+  (`public/art/grimoire-loot-parchment.png`, 106 x 180, a
+  PUBLIC_ALLOWLIST row). The two gold rules at rows 38 and 141 cut it
+  into three:
+  - the top piece, with the title band and the first rule;
+  - the body, stretched to the rows;
+  - the bottom piece, with the second rule, "and N more" and the curl.
+  The scroll grows and shrinks with the pile.
+- **Without the pack, DFU's tooltip box** (ToolTip.cs's two colours,
+  a bare DrawText).
+
+It appears for a loot list only. The classic HUD still names nothing else
+in the world, which is DFU's.
+
+The classic HOTBAR is not in this slice. See the open question in the
+report.
+
 ## DISC22-G: the enhanced dungeon map, mended and made the better map
 
 Mac: *"enhanced dungeon automap is broken and doesn't work properly. This
@@ -699,7 +739,20 @@ with no ceiling and no stair, which is how they passed over every one:
   laws (they held the whole-level fit and a teleporter end with no name).
 
 
-Mutants: `tools/mutants/disc22.json`, 25, and `tools/mutants/disc22g.json`, 20, all dead.
+- `test/disc22c_classic_loot.test.js` (5), through the real hover seam,
+  selection and panel, with Mac's PNG decoded off disk:
+  - the classic skin resolves a loot frame with no DOM, lights a row,
+    and the wheel moves it;
+  - quick loot off resolves nothing;
+  - a later frame draws nothing stale;
+  - under GrimoireUI, three pieces cut at rows 40 and 140, the body as
+    tall as the rows, the lit row banded, and the body growing with the
+    pile;
+  - without the pack, the tooltip box even with the sheet loaded, and
+    nothing for a name frame;
+  - drawHud draws it on both classic branches.
+
+Mutants: `tools/mutants/disc22.json`, 25, `tools/mutants/disc22g.json`, 20, and `tools/mutants/disc22c.json`, 11, all dead.
 EM2's floor records (`em2.json`) are aimed at the new model. They
 still die, 26 of them, except EM2-16 (the `len > 0` guard). The facing
 test is now written `!(up >= FLOOR_NY)` and rejects a NaN facing on its
