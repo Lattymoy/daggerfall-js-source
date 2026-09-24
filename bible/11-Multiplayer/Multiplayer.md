@@ -27,7 +27,9 @@ with their own character from their own save, seeing each other, sharing
 the host's world - its time, its weather, its enemies, its doors - and
 fighting beside each other against NPCs.
 
-**It is not** PvP, an MMO, or a shared campaign. Nobody's save changes
+**It is not** PvP, an MMO, or a shared campaign - with ONE door through the first: a DUEL (DUEL1, 2026-09-24, Mac:
+"I want to be the foundation of pvp"), consensual and bounded - two players who both said yes, in a ring of light,
+until one falls to 1 health, and both are healed after (`06-Systems/Community-Arc.md` DUEL1). Nobody's save changes
 shape because they played with a friend. It IS, since WORLD1
 (2026-09-12, Mac: "The world is the server and every player should
 inhabit that world while also being able to continue their progress
@@ -42,7 +44,7 @@ and not by anyone's save.
 Each player's quest state, dialogue state, travel map and history are
 their own. You walk together; the story you are in is yours.
 
-Why: the save envelope (`systems/save.js:774`) already splits the world
+Why: the save envelope (`systems/save.js:781`) already splits the world
 from the player - `position, pose, classicMinutes, world, locationKey`
 on one side; `quest, talk, travelMap, escortingFaces, interior` on the
 other. That line IS the replication boundary. A shared campaign would
@@ -64,7 +66,7 @@ introduces peers and relays bytes; it runs no game.
 
 Why, and this is the constraint that decides everything: **lockstep is
 impossible here.** The frame loop is `requestAnimationFrame` with a
-variable `dt` (`scenes/world.js:9202`) and 110 source files call
+variable `dt` (`scenes/world.js:9229`) and 110 source files call
 `Math.random` unseeded. Two clients cannot simulate the same world in
 parallel and agree, and making them able to would mean a fixed-step
 deterministic rewrite of the simulation. So one authority owns the

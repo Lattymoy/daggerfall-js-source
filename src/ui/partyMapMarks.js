@@ -151,3 +151,35 @@ export function partyMarksKey(marks) {
   // label naming the town they had left. `leader` is still absent, and deliberately: no map draws it.
   return marks.map((m) => `${m.acct ?? m.name}:${m.px},${m.py},${m.in},${m.online ? 1 : 0},${m.name},${m.loc}`).join('|');
 }
+
+/**
+ * DISC23-A (2026-09-24, Starempire42 on Discord: "It would be really nice to be able to see your party members on the
+ * town and dungeon maps. This would make it much easier to figure out where everyone is and find each other") - THE
+ * PARTY ON THE PLANS.
+ *
+ * The bay reads a member's TRAVEL PIXEL (readPartyMarks above), which is the whole of what the hub relays - and a
+ * pixel is the whole town, the whole dungeon. A street plan and a storey need METRES, and the only metres this client
+ * has for another player are their BODY's: the peer the room is drawing, at its feet in this scene's own frame
+ * (scenes/world.js peersNear, the reading trade's 5 m and party rest's 15 m already measure by). So the plans take a
+ * second dep, `partyNear: () => [{acct, name, feet: [x, y, z], yaw}]` - the party members whose bodies stand in THIS
+ * room - and this is its one reading. A member in another dungeon, or out of the room's range, has no body here and
+ * is simply not on this plan; they are still on the bay, which is the map for "where is everyone".
+ *
+ * @param {(() => any[])|null|undefined} party
+ * @returns {Array<{acct: string|null, name: string, feet: number[], yaw: number}>}
+ */
+export function readPartyBodies(party) {
+  const rows = typeof party === 'function' ? party() : null;
+  if (!Array.isArray(rows)) return [];
+  const out = [];
+  for (const r of rows) {
+    const f = r?.feet;
+    if (!f || typeof f !== 'object') continue;
+    const x = Number(f[0]), y = Number(f[1]), z = Number(f[2]);
+    // a body with no place in this frame is not drawn at the origin - "not here" is the truth (SOC6's law)
+    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;
+    const yaw = Number(r.yaw);
+    out.push({ acct: r.acct ?? null, name: String(r.name ?? '').trim() || PARTY_LEGEND_TEXT, feet: [x, y, z], yaw: Number.isFinite(yaw) ? yaw : 0 });
+  }
+  return out;
+}

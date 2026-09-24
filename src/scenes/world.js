@@ -187,6 +187,10 @@ import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';
 import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmount, deductGoldPieces } from '../systems/court.js';   // AUDIT 17e F6   // G2   // F-slice: travel gold; U41: GetGoldAmount + the pieces half of DeductFastTravelGold
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
+import { isBackFacing } from '../characters/enemyMotor.js';   // DUEL1: a duel opponent's blow from behind me is a backstab's chance
+import { markFoeStruck } from '../ui/hudFoeTarget.js';   // DUEL1: my duel opponent's health, on the enhanced HUD's target bar
+import { lowerCondition } from '../systems/equip.js';   // DUEL1: my weapon wears on a blow that landed on my opponent
+import { reportPlayerAttack } from '../combat/formulas.js';   // DUEL1: the defender's answer, on my HUD's damage numbers
 import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque, worldPlaqueOn } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, its hide door for the branches that return above it, and the teardown
 import { quickLootWheel, quickLootTake, quickLootArm, plaqueActionFor, plaqueActionSelection, plaqueLightFirst } from '../systems/quickLoot.js';   // QUICK-LOOT B4: the wheel, the take, and the two keys that arm what the next activate means
 import { lootPile } from '../player/lootStack.js';   // LOOT-STACK: the pile under the reticle, as the loot window's tabs
@@ -246,7 +250,7 @@ import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.j
 import { StreamingWorldState, TerrainSlots, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords, SCENE_MAP_RATIO, nearestFirstFrom } from '../world/streamingWorld.js';   // HCC: StreamingWorld.SceneMapRatio; AUDIT BRANCH (WoD) L1-3: DFU's terrain array; AUDIT 68 S22: the load list's one order
 import { horseNameTooltip } from '../ui/horseNameTooltip.js';   // AUDIT HCC U6: the mod's HUD label, both skins
 import { createHorseCartPool } from './horseCartPool.js';
-import { createPeerRiders } from '../net/peerRiders.js';   // RIDE: another player in the saddle   // HCC: Horse Cart and Cargo's presentation - the wagon's five pieces, the horse's eight views, the peers' teams
+import { createPeerRiders, createPeerWalkers, createEotbArt } from '../net/peerRiders.js';   // RIDE: another player in the saddle   // HCC: Horse Cart and Cargo's presentation - the wagon's five pieces, the horse's eight views, the peers' teams
 import { createHorseCartRuntime } from '../systems/horseCart.js';   // HCC: TrailingWagonRuntime over this host's seams
 import { isQualifyingThreatState } from '../systems/horseFollow.js';   // HCC: CollectThreats' qualification, the mod's own five-term test
 import { totalWeight } from '../systems/inventory.js';   // HCC: PlayerEntity.WagonWeight
@@ -279,10 +283,10 @@ import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exterio
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
 import { floorLanding } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27)
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // TO1: the avoid-encounter roll reads skillValue live (imported above, SURV6) Stealth   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
-import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
+import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook, registerDuelFell, duelSpare } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady, sheetHolderOf, buildArmsFor } from '../combat/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does
-import { weaponPoseOf, applyWeaponPose, mergeWeaponPose } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
+import { weaponPoseOf, applyWeaponPose, mergeWeaponPose, playerMeleeCanHit } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
 import { addItem, spendAmmoFor, carriedWeight } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
 import { calculateAttackDamage } from '../combat/formulas.js';   // X2-slice: enemy-arrow impacts
@@ -294,7 +298,7 @@ import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';   // AT2: Ambient Text's one component - this host claims it and feeds it the frame
 import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory
-import { accountTokenMinter, storedSession, accountPlayBeat, muteAccount, serviceBase, accountRefusalText } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4: and the beat that counts time played
+import { accountTokenMinter, storedSession, accountPlayBeat, muteAccount, serviceBase, accountRefusalText, accountDuels } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4: and the beat that counts time played
 import { parseModCommand, runModCommand, mutedText, mutedNotices } from '../net/moderation.js';   // MOD1: /mute and /unmute, and the line a muted player reads
 import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, knocked from here and measured by the account service's clock
 import { appStorage } from '../systems/appStorage.js';   // ACC1d: where that session lives - the app's store, not the tab's (a second tab is the same player)
@@ -328,10 +332,15 @@ import { createTradeManager, TRADE_RANGE_M, inTradeRange, tradeDistance } from '
 import { createTradePack } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack
 import { createPlayerTradeWindow, playerTradeReady } from '../ui/playerTradeDoor.js';   // TRADE1: the enhanced window two players share
 import { createSocialMenu, socialPlaqueRows, plaqueRowFor } from '../ui/socialMenu.js';   // SOC5: the F-menu over that body - Add friend, Invite to party
-import { createProfileWindow, profileView } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
+import { createProfileWindow, profileView, profileDuelLine } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
+import { createDuelManager, DUEL_RADIUS_M, DUEL_RANGE_M, DUEL_COUNTDOWN_MS, ringCentre, validRingRecord } from '../net/duelSession.js';   // DUEL1: the duel's state machine (pure)
+import { createDuelRecords, duelUncountedText } from '../net/duelRecord.js';   // DUEL1: the Inspect card's duelling record, asked and kept
+import { createDuelPrompt } from '../ui/duelPrompt.js';   // DUEL1: the challenge, as the challenged player sees it
+import { DuelWallRenderer } from '../render/duelWall.js';   // DUEL1: the ring's holographic wall
+import { duelAttackerOf, duelWeaponOf, duelSwingOf, resolveDuelStrike, duelBlowPlausible, duelSpellOf, duelSpellFromWire, duelWearDamage, DUEL_TRAIL_MS } from '../combat/duelCombat.js';   // DUEL1: the blow between two duellists, both halves
 import { createPageWindow, pageView } from '../ui/pageWindow.js';   // JOURNAL1: a page another player holds out, read and kept
 import { PageOffers, pageOfferText, pageShownText, pageTooFarText, keptPageTokens, keptLetterTokens, letterOfPage, PAGE_UNSUPPORTED_TEXT, PAGE_NO_READERS_TEXT, PAGE_GONE_TEXT } from '../net/journalPage.js';   // JOURNAL1: a page of the journal shown, and one shown to me kept
-import { quickslotTag } from '../ui/quickslotTags.js';   // JOURNAL1: the F-menu's own key, named off the live bindings
+import { quickslotTag, quickslotHand } from '../ui/quickslotTags.js';   // JOURNAL1: the F-menu's own key, named off the live bindings
 import { isTouchDevice } from '../ui/touchDevice.js';   // JOURNAL1: ...or a tap, where a finger points
 import { composeCard, createCardAnswerGate, CARD_WAIT_MS } from '../net/profileCard.js';   // INSPECT1: my card when asked, and how often one asker is answered
 import { relayVersionSeen, buildUpdateSeen, fetchLiveBuildTag, RELAY_RESTART_TEXT, BUILD_UPDATE_TEXT, BUILD_POLL_MS } from '../net/updateNotice.js';   // SRV-N: the relay moved, or the build did
@@ -413,7 +422,7 @@ import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: the mills are an e
 import { drawEnhancedStatusLine } from '../ui/enhancedHudText.js';   // FONT1: the online status line in the skin's own face
 import { rrRidingOn, rrRidingSetting } from '../systems/rrRealism.js';   // RR2: EnhancedRiding's switches
 import { createRrRidingContacts } from '../systems/rrRidingHost.js';   // RR2 / AUDIT-RR F15: the trample and the charge, one home for both outdoor hosts
-import { LETHAL_HIT } from '../combat/bloodDecals.js';   // the trample's splash hands its blow over - a civilian, from the player, gone in one contact
+import { LETHAL_HIT, bloodHit } from '../combat/bloodDecals.js';   // the trample's splash hands its blow over - a civilian, from the player, gone in one contact
 import { RIDING_VOLUME_SCALE } from '../systems/riding.js';   // AUDIT-RR F16: the trample clip at RidingVolumeScale
 import { setRrHostSeams, rrEnabled } from '../systems/rrInstall.js';   // RR2: what the riding component reads off the scene
 import { rrFortProximityLines, rrMasterArmorerDiscovery } from '../systems/rrQuestLine.js';   // RR3: the two PlayerGPS subscribers
@@ -898,6 +907,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   const distantStorms = createDistantStorms();   // WEATHER3d: the storms at a distance - their strikes and their thunder on its way
   const stormLights = createStormLights();   // BOLT: every strike's channel and light, the storm overhead's and the distant ones'
   const boltsGl = sky.enhanced ? new LightningBoltsRenderer(renderer.gl) : null;   // BOLT: built on the enhanced lane (the wisps' law)
+  // DUEL1: the duel ring's wall - in EVERY skin (the players must see the ring whatever they play in); a shader that
+  // will not build costs the wall, never the game (the duel's clamp holds the body either way)
+  const duelWall = (() => { try { return new DuelWallRenderer(renderer.gl); } catch (e) { console.warn('[duel] the ring wall could not be built', e); return null; } })();
   let boltFrame = { bolts: [], flash: null };   // BOLT: this frame's burning channels and the light a near ground strike throws
   let seenArrival = 0;   // AUDIT WEATHER3 R5: the sim's arrival stamp at the last frame
   let lightning = weather === 'thunder'
@@ -1471,12 +1483,12 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  AUDIT-FIELD F7: A FLOOR, NOT THE WHOLE DISTANCE. The first cut
    *  called 64 "more than the fastest accelerated step", which is true
    *  of a fixed physics STEP and false of a FRAME: the motor moves
-   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:1044),
+   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:1074),
    *  and the frame that hitches is exactly the frame in which the
    *  streamer is behind. A horse at the shipped default limit of sixty
    *  covers ~65 units in a 10 fps frame and ~120 at the mod's ceiling of
    *  a hundred - past a 64-unit probe, off the built world, and once the
-   *  motor is airborne `airControl` is false (motor.js:1601) so zeroing
+   *  motor is airborne `airControl` is false (motor.js:1632) so zeroing
    *  the drive on the NEXT frame no longer steers: the fall is already
    *  paid for. `travelLookahead` measures the frame that is about to
    *  run instead, and keeps 64 as its floor. */
@@ -4181,11 +4193,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   // target and healed nobody - found while wiring reflection, which
   // needs the caster's sinks for the same reason.
   const playerSpellSinks = {
-    hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },
+    hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n, _duelScope ? { spare: duelSpare } : undefined); },   // DUEL1: a duel opponent's spell, landing now (duelBlowIn), stops at 1 health
     heal: (n) => { if (n > 0) { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); surfacePlayer(); } },
     drainMagicka: (n) => { if (n > 0) { playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - n); surfacePlayer(); } },
     restoreMagicka: (n) => { if (n > 0) { playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity, (playerEntity.magicka ?? 0) + n); surfacePlayer(); } },
-    drainFatigue: (n) => drainExteriorFatigue(n),
+    // AUDIT DUEL1 B3: a duel opponent's fatigue damage (landing now, or a round of theirs) leaves 1 - at 0 the exhaustion
+    // collapse (onExhaustedExterior) can kill a swimmer or a player a foe can see, through no duel's floor
+    drainFatigue: (n, a = null) => drainExteriorFatigue(_duelScope || a?.bundleDuel ? Math.min(n, Math.max(0, (playerEntity.fatigue ?? 0) - 1)) : n),
     restoreFatigue: (n) => { if (n > 0) { playerEntity.fatigue = Math.min(maxFatigue(playerEntity), (playerEntity.fatigue ?? 0) + n); surfacePlayer(); } },
     say: (l) => townTalk.say(l),
   };
@@ -4195,6 +4209,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
     allyMarks: () => allyMarksNear(),   // AID1 onto ALLY-CAST: the party mates' bodies, for a beneficial touch, missile or blast (declared beside allyTargetPick, below)
     peerBodies: () => peersNear(),   // SPELLFX1: every player's body, where a peer's drawn missile stops (declared below this engine's build)
+    // DUEL1: my duel opponent's body, for my harmful spells alone, while we fight - and the door the blow leaves by
+    duelMark: () => { if (!duelMgr.fighting) return null; const b = duelBody(duelMgr.opponent); return b ? { ...b, name: peerName(b.id) ?? 'your opponent' } : null; },
+    castAtDuel: (id, sp) => duelSpellOut(id, sp),
     collider: { raycast: (o, d, m) => ((modes?.mode === 'interior' && modes?.interiorCollider) ? modes?.interiorCollider : collider).raycast(o, d, m) },
     playerEntity,
     playerSinks: playerSpellSinks,
@@ -4315,10 +4332,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2461 mounts the same one, gated on
+  // and dungeonContext.js:2462 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:5664
+  // that context through modes.dungeonCtx - so worldModes.js:5673
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -4403,7 +4420,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:410-415) never looks the record up in `foes`, and
+    // (exteriorFoes.js:412-417) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1481-1499) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
@@ -4727,15 +4744,16 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  which writes the equip table; the rig reads that table on its own frame
    *  (weaponRig syncWorn) and the ladder answers ahead of the frame, so the
    *  refresh is asked for here rather than waited for. */
-  const quickslotHooks = () => ({
+  const quickslotHooks = (rig = weaponRig) => ({
     ...useHooks,
     isEnchanted,
     nowMinute: () => Math.floor(playerTicker.classicMinutes ?? 0),
     rows: (id, pick) => townTalk.lines(id, pick),
+    hand: () => quickslotHand(rig),   // DISC21-C: an empty press names the key that readies a sheathed weapon
   });
-  const quickUse = (n) => {
+  const quickUse = (n, rig = weaponRig) => {   // DISC21-C: the rig in the player's hands - worldModes hands its own indoors, as LH1's swap does
     useQuickslot(n === 1 ? 'c1' : 'c2', {
-      entity: playerEntity, items: playerEntity.items ?? [], hooks: quickslotHooks(), say: (l) => townTalk.say(l),
+      entity: playerEntity, items: playerEntity.items ?? [], hooks: quickslotHooks(rig), say: (l) => townTalk.say(l),
     });
     return true;
   };
@@ -5103,7 +5121,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // exhaustion arm, and for REST that is a different rule rather
     // than a rough one: a guard spawned anywhere in town blocks sleep
     // FOREVER, because guards persist until the crime clears.
-    enemiesNearby: () => areEnemiesNearby(
+    enemiesNearby: () => duelEnemyNear() || areEnemiesNearby(   // DUEL1: nobody sleeps through a duel
       [...cityGuards.guards, ...exteriorFoes.foes], { resting: true }),
     // PARTY-REST5: stamped only on a REAL enemy break (systems/restSession.js's own two call sites) - never on an
     // ordinary wake/healed/loiter-done finish, and never for a follower's own mirror (whose deps never sets this
@@ -6451,7 +6469,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6283), so exterior mode and a
+    // composer, dungeonContext.js:6286), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -6921,7 +6939,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // walking out of a wilderness ambush by map. Same pool the rest
     // gate reads, and the STRICT variant - resting's slack distance is
     // the sleep rule, not this one.
-    if (areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes])) {
+    // DUEL1: and a duel opponent IS an enemy nearby (Mac: the ring "keeps them from going outside of the duel space") -
+    // no travelling out of a duel by map
+    if (duelEnemyNear() || areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes])) {
       townTalk.say(CANNOT_TRAVEL_ENEMIES_TEXT);
       return;
     }
@@ -7062,7 +7082,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       health: playerEntity.health, maxHealth: playerEntity.maxHealth, fatigue: playerEntity.fatigue,
       luck: liveStat(playerEntity, 'luck'), stealth: skillValue(playerEntity, SKILLS.Stealth),
     }),
-    enemiesNearby: () => areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]),
+    enemiesNearby: () => duelEnemyNear() || areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]),   // DUEL1: no journey out of a duel either
     diseaseCount: () => diseaseCount(playerEntity),
     showHealthStatus: () => hudCtx.showStatus?.(),
     say: (line) => townTalk.say(line),
@@ -7441,6 +7461,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       // is the way to the bay and it keeps its ladder.
       where: () => ({ inLocation: true }),
       townPlayer: () => ({ x: local[0] / WORLD_PER_PX, y: local[2] / WORLD_PER_PX, yaw: cam.yaw }),
+      // DISC23-A: the party in these streets, their feet taken into the location's frame by the SAME subtraction the
+      // player's `local` is (the translation and the origin read at open, which the held motor keeps true)
+      townParty: () => partyNear().map((m) => ({ ...m, feet: [m.feet[0] - t[0] - b.locOrigin[0], m.feet[1] - t[1] - b.locOrigin[1], m.feet[2] - t[2] - b.locOrigin[2]] })),
     }));
   };
   /** SetCustomBuildingName (ExteriorAutomap.cs:867-899): the plate's
@@ -7586,7 +7609,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // QS2: the diamond's three presses, beside the sheath panel's door and for
     // the same reason - one object is this host's whole routeAction contract,
     // and a door that is not on it is a key that does nothing.
-    quickUse: (n) => quickUse(n),
+    quickUse: (n, rig) => quickUse(n, rig),   // DISC21-C: the mode's own rig, when it hands one
     quickSwap: (rig) => quickSwap(rig),   // LH1: the mode's own rig, when it hands one
     quickOffHand: () => quickOffHand(),
     quickSpell: () => quickSpell(),   // QS6
@@ -7708,6 +7731,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // Quests section needed a fourth reader, which is one more
         // than a copied walk survives.
         questLog: () => questBridge?.questLog() ?? { active: [], finished: [] },
+        repairQuests: () => questBridge?.repair?.() ?? null,   // QREPAIR: the Settings' Repair active quests
       });
     },
     cycleMode: (dir) => townTalk.setMode(dir > 0 ? hudLargeNextMode(getInteractionMode()) : hudLargePrevMode(getInteractionMode())),
@@ -8138,6 +8162,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // up - DFU never saves during a death.
   addEventListener('beforeunload', () => {
     if (!online || !playerSpawned) return;
+    // AUDIT DUEL1 D5 + B4: a duel in play ends here as `left` (the opponent is told now, not after DUEL_GONE_MS) and its
+    // heal runs now - the exit autosave below must not keep a duel's 1 health or its opponent's spells
+    try { duelLeaveNow(); } catch { /* no duel was built: nothing to end */ }
     const save = (saveName) => (modes ? modes?.quickSaveNow(saveName) : worldQuickSave(saveName));   // `?.` even inside the ternary: audit24 wave37's gate above the declaration is all-or-nothing
     for (const saveName of exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() })) save(saveName);
   });
@@ -8419,7 +8446,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8803-8867 -
+  // worldModes answers it in BOTH modes (worldModes.js:8823-8887 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -8626,7 +8653,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     discoverLocation: (regionName, locationName) => {
       const loc = maps.getLocationByName(regionName, locationName);
       if (!loc?.loaded) throw new Error(`Error finding location ${regionName} : ${locationName}`);
-      discoverLocation(loc.mapTableData.mapId, { regionName: loc.regionName, locationName: loc.name });
+      return discoverLocation(loc.mapTableData.mapId, { regionName: loc.regionName, locationName: loc.name });   // QREPAIR: whether it was new, for the repair's count (RevealLocation reads nothing back)
     },
     /** RevealLocation's readmap note - PlayerNotebook.AddNote(string). */
     addNote: (text) => questBridge?.notebook?.addNote(text),
@@ -9232,6 +9259,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // own methods, 1:1; the machine's dialogLink/addDialog arg shapes
     // are already the C# ones)
     addQuestTopics: (quest) => topicTree.addQuestTopicsForQuest(quest),
+    hasQuestTopics: (quest) => topicTree.dictQuestInfo.has(quest.uid),   // QREPAIR: a quest the talk never heard of (a received shared quest) gets its topics; one that has them is not re-added (that un-discovers residences)
     relinkQuestTopics: (quest) => topicTree.relinkQuestResources(quest),   // AUDIT 68 S29-share-topics: a shared-quest resync rebuilt its resources
     dialogLink: (uid, name, type, name2, type2) => topicTree.dialogLinkForQuestInfoResource(uid, name, type, name2 ?? null, type2 ?? QUEST_INFO_RESOURCE_TYPE.NotSet),
     addDialog: (uid, name, type, instantRebuild) => topicTree.addDialogForQuestInfoResource(uid, name, type, instantRebuild),
@@ -9604,6 +9632,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // shared economy (recorded). Offline nothing is installed and the player's own tilted walk runs.
   if (onlineOn) townTalk.ensureFactions?.().then(() => { if (townTalk.factionDict) setWorldPriceTilt(worldPriceTiltOf(townTalk.factionDict)); }).catch(() => {});
   let peerRiders = null;   // RIDE: another player in the saddle, drawn as Eye Of The Beholder's mounted sprite (net/peerRiders.js)
+  let peerWalkers = null;   // DISC23-B: another player on foot, drawn as the Eye Of The Beholder set they chose (net/peerRiders.js)
   let online = null, remotePlayers = null, peerBodies = null, nameLayer = null, nameSight = null, _onlineLast = null, _onlineKey = null, _onlineKeySince = 0, _onlineMovingUntil = 0;
   let _hsLatch = false;   // AUDIT DISC7 B2: the motor's half-speed flag off the last frame that MOVED - a stop reads it true (standing), and the move hold must not send that as a slow trot
   // D-ONLINE1 (2026-09-17, a player: "still see you have died then main menu"): `onlineFrame` LEAVES the room the
@@ -9664,6 +9693,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let socialMenu = null;
   let profileWin = null;   // INSPECT1: the profile over a player the F key found - made beside the F-menu it opens from
   let pageWin = null;   // JOURNAL1: the page a player held out to me, read - made beside the profile, under its gate
+  let duelPrompt = null;   // DUEL1: the challenge at me, as a strip at the top of the screen - made beside the profile
   const pageOffers = new PageOffers();   // JOURNAL1: the pages held out to me, one per writer, waiting to be read
   let _letterPending = null;   // JOURNAL1: { draft, at } - a page sent as a letter, waiting for the chronicle to come down so the letters can open on it
   let _profileAsk = null;   // INSPECT1: { peerId, at, sent } - the card asked for and not yet answered; the frame retries the send and times the wait
@@ -9691,6 +9721,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   // stream every changed one FOES_MS apart (every one FOES_FULL_MS apart, so a dropped delta heals); while another
   // hosts, my layout foes are puppets that follow the stream and my blows on them go to the host as hits.
   let _foesSentAt = -Infinity, _foesFullAt = -Infinity, _foesInAt = -Infinity;
+  let _duelRingSaid = null;   // DUEL1: the id of the ring my foes frame last said I stand in (null: none)
+  /** DUEL1: THE RINGS OTHERS DUEL IN, off their foes frames (exteriorFoes.js setOnDuel) - peer id -> { rec, at }; drawn
+   *  for every onlooker, each ring once (both duellists say it), dropped when it is said down or goes stale. */
+  const _duelRings = new Map();
+  const DUEL_RING_STALE_MS = 6000;
   let _foesRoom = null;   // WORLD6b: the room the puppets belong to
   const campToWire = (p) => { const wc = state.worldCoords(p); return [wc.x, p[1] - state.compensation[1], wc.z]; };   // SURV3: the pose's own law for the world frame
   const campToScene = (p) => { const l = state.localFromWorld(p[0], p[2]); return [l[0], p[1] + state.compensation[1], l[1]]; };
@@ -9732,7 +9767,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const full = now - _foesFullAt >= FOES_FULL_MS;
     const frame = cell ? ((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoes.foesFrame(full, _hccDirty) : null) : modes?.dungeonFoesFrame?.(full);
     if (!frame) return false;
-    if (cell && full) frame.c = camps.wireRecords(campToWire); if (cell && (full || _hccDirty)) { frame.hv = hcc.wireRecord(campToWire); _hccDirty = false; }   // HCC-ONLINE: my horse and wagon as shown (null: none stand) ride beside the camps - on every full frame, and on a moved word between them   // AUDIT SURV B: an empty list says "none stand" - the last camp packed reaches the peers   // SURV3: my camps ride my full frame - a shared world object in the cell's own way
+    if (cell && full) frame.c = camps.wireRecords(campToWire); if (cell && (full || _hccDirty)) { frame.hv = hcc.wireRecord(campToWire); _hccDirty = false; } if (cell) duelRingWord(frame, full);   // HCC-ONLINE: my horse and wagon as shown (null: none stand) ride beside the camps - on every full frame, and on a moved word between them   // AUDIT SURV B: an empty list says "none stand" - the last camp packed reaches the peers   // SURV3: my camps ride my full frame - a shared world object in the cell's own way
     if (!online.sendFoes(frame)) { _foesFullAt = -Infinity; return false; }   // AUDIT WORLD2 A9: a refused frame's deltas were already committed - the next frame carries every foe
     if (full) _foesFullAt = now;
     return true;
@@ -9909,6 +9944,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     exteriorFoes.setOnSites((from, sites) => wodPeerSites(from, sites), wodSprungList);   // WOD7: a peer's sprung markers - mine are spent; mine ride my full frames
     exteriorFoes.setOnCamps((from, c, at) => camps.applyOwner(from, c, campToScene, at));   // SURV3: a peer's camps, off their foes frame past the pool's own room test, through validCampRecord
     exteriorFoes.setOnHcc((from, hv, at) => hcc.applyOwner(from, hv, campToScene, at), () => hcc.clearPeers());
+    exteriorFoes.setOnDuel((from, r, at) => { const rec = r === null ? null : validRingRecord(r); if (rec) _duelRings.set(from, { rec, at }); else _duelRings.delete(from); }, () => _duelRings.clear());   // DUEL1: a peer's ring, for the wall
     online.onPark = (room, e) => hcc.applyKept(room, e, campToScene, performance.now());   // HCC-PARK: a cell's word about a parked team (mine or a halo's cell), its owner here or not
     online.onParks = (room, list) => hcc.replaceKept(room, list, campToScene, performance.now());   // HCC-PARK: and a cell's whole memory, after its welcome   // HCC-ONLINE: a peer's horse and wagon, the same frame, the same room test, through validHccRecord; and the peers' teams go wherever the pool's puppets go (a room change, a leave)
     online.onTrade = (id, data) => { tradeMgr.onFrame(id, data); };
@@ -9942,7 +9978,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // from someone in my room, and nothing on the card is more than the room could see of me standing there, bar my
     // sheet's numbers. An ANSWER is drawn only on the profile that asked for it: an answer from anyone else, or one that
     // lands after the player closed the card or moved on to another's, draws nothing.
-    online.onCard = (id, d) => {
+    online.onCard = (id, d, sub = null) => {
       if (d?.ask) {
         if (!cardAnswers.pass(id, performance.now())) return;
         const card = composeCard(playerEntity);
@@ -9951,9 +9987,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       if (!d?.card || _profileAsk?.peerId !== id) return;
       _profileAsk = null;
+      _profileSub = sub;   // DUEL1: the account the relay stamped on their answer - their duelling record is read by it
       const p = online.peers.get(id) ?? null;
-      profileWin?.update(id, profileView({ name: peerName(id), peer: p, look: p?.look ?? null, card: d.card, state: 'answered' }));
+      profileWin?.update(id, withDuel(id, profileView({ name: peerName(id), peer: p, look: p?.look ?? null, card: d.card, state: 'answered' })));
     };
+    // DUEL1: A DUEL FRAME AT ME - the law decides (net/duelSession.js); `sub` the sender's account as the relay stamped it
+    online.onDuel = (id, d, sub = null) => { duelMgr.onFrame(id, d, sub); };
     // JOURNAL1 (Addison Knox: "Player journals ... shared in-world for storytelling"): A PAGE HELD OUT TO ME. Held,
     // never opened over my game (net/journalPage.js PageOffers: a writer's newest replaces their last and waits
     // PAGE_HOLD_MS), under the name the room knows them by now, and said on the social tab once in a while per writer
@@ -9980,7 +10019,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // MWBODY1: the enhanced skin with Morrowind data attached puts every peer in a body of its own; otherwise the doll
     const enhanced = isEnhanced();   // the skin cannot change without a reload (switchSkin), so it is read once, not per frame
     peerBodies = new PeerBodies({ renderer, enabled: () => enhanced && !!getPref('mwArms') && morrowindDataCount() > 0, generation: morrowindDataGeneration });
-    peerRiders = createPeerRiders({ renderer });   // RIDE: the others in the saddle
+    const eotbArt = createEotbArt({ renderer });   // DISC23-B: one store for the riders' and the walkers' art
+    peerRiders = createPeerRiders({ renderer, art: eotbArt });   // RIDE: the others in the saddle
+    peerWalkers = createPeerWalkers({ renderer, art: eotbArt, enabled: () => getPref('peerClassSprites') !== false });   // DISC23-B: the others on foot, as the set they chose - the 'Other players' card's sprite side
     // NAME1 + BUBBLE1: the names are the enhanced skin's DOM now (ui/nameLayer.js) - online forces that skin
     // (OL1), so this is normally the face a player sees. Made ONCE, here, beside the peers it labels.
     // AUDIT NAME1 F7: the layer's gate is the CHAT's (ui/nameLayer.js nameLayerWanted) - one gate, one answer, so the
@@ -10007,6 +10048,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       peerBodies?.destroy();
       remotePlayers?.destroy();
       peerRiders?.destroy();   // RIDE
+      peerWalkers?.destroy();   // DISC23-B
     });
   };
   // CHAT1 (Mac: "the live chat in enhanced format ... one world tab with
@@ -10314,6 +10356,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     peerAct = (act) => {
       if (act.k === 'page.read') { readPage(act.peer); return; }   // JOURNAL1: not a hub act - a page they hold out to me, read
       if (act.k === 'profile.inspect') { inspectPeer(act.peer); return; }   // INSPECT1: not a hub act - a look at someone standing here, and a card asked of them
+      if (act.k === 'duel.accept') { const r = duelMgr.accept(act.peer); if (!r.ok) tradeSay(r.why === 'try again' ? TRY_AGAIN_TEXT : `You cannot accept: ${r.why}.`); return; }   // DUEL1: not hub acts - the duel's own law
+      if (act.k === 'duel.decline') { duelMgr.decline(act.peer); return; }
+      if (act.k === 'duel.yield') { duelMgr.yieldDuel(); return; }
       if (act.k === 'trade.request') {   // TRADE1: not a hub act - two players in one room, so the host routes it to the trade manager (or, if they had asked first, accepts)
         const r = tradeMgr.request(act.peer);
         if (!r.ok) tradeSay(r.why === 'try again' ? TRY_AGAIN_TEXT : `You cannot trade with them: ${r.why}.`);
@@ -10336,7 +10381,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       doc: document, win: globalThis,
       canOpen: socialMenuCanOpen,
       onOpen: () => surfaceOpen('profile'),
-      onClose: () => { surfaceClose('profile'); _profileAsk = null; },   // a card closed is a card no longer waited on
+      onClose: () => { surfaceClose('profile'); _profileAsk = null; _profileSub = null; _profileView = null; },   // a card closed is a card no longer waited on
+      onDuel: (peerId) => duelChallenge(peerId),   // DUEL1: the Challenge button (Mac: "When inspecting a player, they should be able to send an invite to duel")
+    });
+    // DUEL1: the challenge at me - the newest standing one, with Accept and Decline (the F-menu's rows are the other way)
+    duelPrompt = createDuelPrompt({
+      asks: () => duelMgr.asks(), now: () => performance.now(), name: (id) => peerName(id) ?? 'Someone', touch: isTouchDevice(), doc: document,
+      accept: (id) => { const r = duelMgr.accept(id); if (!r.ok) tradeSay(r.why === 'try again' ? TRY_AGAIN_TEXT : `You cannot accept: ${r.why}.`); },
+      decline: (id) => { duelMgr.decline(id); },
     });
     // JOURNAL1: the page window, beside the profile and under the same gate - the F-menu's 'Read their page' opens it
     // over a page held out to me (pageOffers), and F again puts it away (socialInteract). Keep files the page it shows
@@ -10410,7 +10462,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  manager says, and the look (INSPECT1: a player standing in front of you can always be looked at). The F-card's
    *  rows, the plaque's verbs and the plaque's press all read this one bag, so the two surfaces offer the same rows
    *  through the one door (`peerAct`) - main's ACT-MENU law, which a bag built three times would drift from. */
-  const peerActsFor = (peerId) => ({ ...social.actionsFor(peerId), ...tradeActionsFor(peerId), canInspect: true, canReadPage: !!pageOffers.get(peerId) });   // JOURNAL1: and a page they hold out to me, while it waits
+  const peerActsFor = (peerId) => ({ ...social.actionsFor(peerId), ...tradeActionsFor(peerId), canInspect: true, canReadPage: !!pageOffers.get(peerId), ...duelActionsFor(peerId) });   // DUEL1: and a challenge from them to answer, or our duel to yield   // JOURNAL1: and a page they hold out to me, while it waits
   /** The trade's frame: retries and timeouts, and the two things that end a live trade for free - the peer leaving (no open
    *  socket of mine reports them any more) and, inside tick(), the peer stepping past TRADE_RANGE_M metres (`near`). The
    *  range rule holds in the overworld, an interior and a dungeon alike now - the old overworld-only guard is gone with the
@@ -10419,6 +10471,286 @@ export async function bootWorld(canvas, renderer, params, status) {
     const s = tradeMgr.session;
     if (s && (!online || !online.reachesPeer(s.peer))) tradeMgr.peerGone(s.peer, 'left');
     tradeMgr.tick();
+  };
+
+  // ═══ DUEL1 (2026-09-24, Mac: "When inspecting a player, they should be able to send an invite to duel which then
+  // traps both players in a surrounding transparent holographic wall that keeps them from going outside of the duel
+  // space"; asked: weapons, bows and spells all count; "Loser drops to 1HP and both are fully healed on duel end. Add a
+  // dueling K/D to the profile menu and player inspect profile"; outdoors only; the record per account) ══════════════
+  // Everything decisive lives in net/duelSession.js (the handshake, the ring, every end), combat/duelCombat.js (the blow,
+  // both halves), render/duelWall.js (the wall) and the account service (the record); this block connects them to this
+  // scene's socket, bodies, motor, HUD, chat and account.
+  /** DUEL1: a live duel's opponent is AN ENEMY NEARBY to every gate that asks (the travel map, a journey, rest): the
+   *  ring holds the body, and these hold the doors a map or a bed would open out of it. */
+  function duelEnemyNear() { return !!duelMgr?.live; }
+  /** A peer's body in THIS scene (peersNear's { id, feet, height }), or null. */
+  const duelBody = (peerId) => (peerId ? (peersNear()?.find((x) => x.id === peerId) ?? null) : null);
+  /** A peer's feet in the WORLD frame - their pose's own (net/online.js `shown`) - or null. */
+  const duelWorldOf = (peerId) => { const q = peerId ? online?.peers.get(peerId)?.shown : null; return q && Number.isFinite(q.x) && Number.isFinite(q.y) && Number.isFinite(q.z) ? [q.x, q.y, q.z] : null; };
+  /** Can I duel now: null, or the wire's word for why not. OUTDOORS ONLY (Mac's answer): the streaming world's exterior,
+   *  never a building or a dungeon; alive; on a relay that carries the frame. */
+  const duelCan = () => {
+    if (playerEntity.health <= 0 || modes?.deathUp?.()) return 'dead';
+    if ((modes?.mode ?? 'exterior') !== 'exterior') return 'outdoors';
+    if (!online || online.status !== 'open' || !online.duelOk) return 'busy';
+    return null;
+  };
+  /** DUEL_RANGE_M between two BODIES, the trade's own measure (metres, never a pixel or a room). */
+  const duelNear = (peerId) => { const b = duelBody(peerId); return !!b && tradeDistance(player.feetAt(), b.feet) <= DUEL_RANGE_M; };
+  const duelAccount = accountDuels({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
+  /** AUDIT DUEL1 B6: my own feet (world frame) over the last DUEL_TRAIL_MS of a live duel, oldest first - a swing reached
+   *  me if it reached where I was when its striker saw me (duelCombat.js duelBlowPlausible). */
+  const _duelTrail = [];
+  let _duelScope = false;   // the opponent's spell is landing: its instant damage stops at the duel's floor (playerSpellSinks)
+  const _duelSent = new Map();   // my blow's number -> { kind, weapon } - what its result is about
+  let _duelFoe = null;      // my opponent as the HUD's target bar reads a foe ({ entity: { name, health, maxHealth }, dead })
+  let _duelWall = null;     // { c (world), alpha, live } - my own ring, drawn from the duel's start to its fade
+  const duelMgr = createDuelManager({
+    send: (d) => online?.sendDuel(d) === true,
+    now: () => performance.now(),   // monotonic: a wall clock that steps must not age an ask or a duel
+    say: tradeSay,
+    peerName: (id) => peerName(id),
+    selfId: () => online?.id ?? '',
+    near: duelNear,
+    can: duelCan,
+    // the ring stands between the two bodies, in the world frame the wire carries
+    ringFor: (peerId) => { const b = duelBody(peerId); const c = b ? ringCentre(player.feetAt(), b.feet) : null; return c ? campToWire(c) : null; },
+    reaches: (peerId) => online?.reachesPeer(peerId) === true,
+    myPos: () => ((modes?.mode ?? 'exterior') === 'exterior' ? campToWire(player.feetAt()) : null),
+    peerPos: duelWorldOf,
+    onPrompt: () => duelPrompt?.render(),
+    onStart: (d) => {
+      profileWin?.hide();
+      _duelWall = { c: d.c, s: d.s, alpha: 0, live: true };
+      _duelFoe = { entity: { name: peerName(d.peer) ?? 'Your opponent', health: 1, maxHealth: 1 }, dead: false };
+      _duelSent.clear();
+      audio.playOneShot(SOUND.Parry6, 1);   // the blades cross: the count begins
+    },
+    onBlow: (d, duel) => duelBlowIn(d, duel),
+    onResult: (d) => duelResultIn(d),
+    onEnd: (duel, end) => duelEnded(duel, end),
+    onHeal: () => duelHeal(),
+    vitals: () => [playerEntity.health, playerEntity.maxHealth],
+  });
+  duelMgr.onChange = () => { duelPrompt?.render(); repaintDuelProfile(); };
+  registerDuelFell(() => duelMgr.fell());   // characters/playerEntity.js duelSpare: every duel-sourced blow's floor says it here
+  /** THE DEFENDER: my opponent's blow, checked by the law (theirs, this duel's, past the count, once, in budget), placed
+   *  (combat/duelCombat.js duelBlowPlausible - a blow from where they are not seen lands nothing) and resolved on MY
+   *  sheet, landed through the one door with the duel's floor. `{ hit, dmg }`, or null for a blow that could not be. */
+  const duelBlowIn = (d, duel) => {
+    if (playerEntity.health <= 0 || modes?.deathUp?.() || (modes?.mode ?? 'exterior') !== 'exterior') return null;
+    if (!duelBlowPlausible(d, [..._duelTrail.map((e) => e.p), campToWire(player.feetAt())], duelWorldOf(duel.peer), DUEL_RADIUS_M)) return null;
+    const who = peerName(duel.peer) ?? 'Your opponent';
+    if (d.k === 'spell') {
+      const spell = duelSpellFromWire(d.spell);
+      if (!spell) return null;
+      townTalk.say(`${who} casts ${spell.name || 'a spell'} on you.`);
+      const before = playerEntity.health;
+      _duelScope = true;
+      try { magic.applySpellToPlayer(spell, d.level, null, { duelCast: true }); } finally { _duelScope = false; }
+      const dmg = Math.max(0, Math.trunc(before - playerEntity.health));
+      if (dmg > 0) { flashPlayerDamage(dmg); playPlayerVoice(audio, playerPainVoice(playerEntity, dmg)); }
+      surfacePlayer();
+      return { hit: true, dmg };
+    }
+    tallySkill(playerEntity, SKILLS.Dodging, 1);   // the defender's own tally, once a blow, as a foe's blow tallies it
+    const from = campToScene(d.p);
+    const r = resolveDuelStrike(d, playerEntity, { backFacing: isBackFacing(cam.yaw, player.feetAt(), from) });
+    if (r.dmg > 0) {
+      hurtPlayer(playerEntity, r.dmg, { spare: duelSpare });
+      audio.playOneShot(hitSoundFor(d.w ? { templateIndex: d.w.t } : null), PLAYER_HIT_VOLUME);
+      flashPlayerDamage(r.dmg);
+      playPlayerVoice(audio, playerPainVoice(playerEntity, r.dmg));
+      surfacePlayer();
+    }
+    return r;
+  };
+  /** THE ATTACKER: my blow out - my sheet and my weapon (never a number: the defender resolves it). The swing is theirs
+   *  when it left; its result comes back as `duelResultIn`. */
+  const duelStrikeOut = (by, weapon, swing, drawMs = 0) => {
+    const w = duelWeaponOf(weapon), sw = duelSwingOf(swing);
+    const n = duelMgr.blow('strike', { by, p: campToWire(player.feetAt()), a: duelAttackerOf(playerEntity, weapon), ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...(drawMs > 0 ? { at: Math.min(60000, Math.trunc(drawMs)) } : {}) });
+    if (n) { _duelSent.set(n, { kind: 'strike', weapon }); if (_duelSent.size > 64) _duelSent.delete(_duelSent.keys().next().value); }
+    return !!n;
+  };
+  /** My spell reached my opponent (the cast engine's duel marks, scenes/hostMagic.js): its harmful families out. */
+  const duelSpellOut = (peerId, sp) => {
+    const spell = duelSpellOf(sp);
+    if (!spell || peerId !== duelMgr.opponent) return false;
+    const n = duelMgr.blow('spell', { p: campToWire(player.feetAt()), level: Math.max(1, Math.min(30, Math.trunc(playerEntity.level || 1))), spell });
+    if (n) { _duelSent.set(n, { kind: 'spell', weapon: null }); if (_duelSent.size > 64) _duelSent.delete(_duelSent.keys().next().value); }
+    return !!n;
+  };
+  /** The melee arm, offered my swing BEFORE the ladder's pools: my opponent's capsule within a weapon's reach, in view
+   *  and in sight - the foes' own test (exteriorFoes.js resolvePlayerHit's canSee). True when the strike left. */
+  const duelMeleeHit = (eye, inViewFn) => {
+    if (!duelMgr.fighting) return false;
+    const b = duelBody(duelMgr.opponent);
+    if (!b) return false;
+    const c = [b.feet[0], b.feet[1] + (b.height ?? CAPSULE_HEIGHT) / 2, b.feet[2]];
+    const dx = c[0] - eye[0], dy = c[1] - eye[1], dz = c[2] - eye[2];
+    const dist = Math.hypot(dx, dy, dz), l = dist || 1;
+    const wall = collider.raycast(eye, [dx / l, dy / l, dz / l], dist);
+    if (!playerMeleeCanHit(dist, !!inViewFn?.(c), !Number.isFinite(wall) || wall >= dist - 1e-3)) return false;
+    return duelStrikeOut('melee', weaponRig.playerWeapon.strikingWeapon, weaponRig.playerWeapon.machine?.state);
+  };
+  /** My opponent's body as the arrows' target list takes one (arrowFlight.js foeTargets) - [] outside a fight. */
+  const duelArrowTargets = () => {
+    if (!duelMgr.fighting) return [];
+    const b = duelBody(duelMgr.opponent);
+    return b ? [{ feet: b.feet, ref: { duel: true, id: b.id, dead: false, ai: { feet: b.feet, height: b.height ?? CAPSULE_HEIGHT } } }] : [];
+  };
+  /** The defender's answer to one of my blows: the HUD's number (HN1's seam), my opponent's health on the target bar,
+   *  and for a strike that landed the sound, the blood and my weapon's wear (FormulaHelper's DamageEquipment attacker
+   *  half, which ran on the defender's machine against a stub and so never reached my own blade). */
+  const duelResultIn = (d) => {
+    const sent = _duelSent.get(d.n) ?? null;
+    _duelSent.delete(d.n);
+    reportPlayerAttack({ hit: d.hit === 1, damage: d.dmg, critical: false, backstab: false, ineffective: false });
+    if (_duelFoe) { _duelFoe.entity.health = d.h[0]; _duelFoe.entity.maxHealth = d.h[1]; markFoeStruck(_duelFoe); }
+    const b = duelBody(duelMgr.duel?.peer);
+    if (d.dmg > 0 && sent?.kind === 'strike') {
+      if (b) {
+        audio.play3d(hitSoundFor(sent.weapon ?? null), b.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 });
+        hitEffects.showBloodSplash(0, [b.feet[0], b.feet[1] + (b.height ?? CAPSULE_HEIGHT) / 2, b.feet[2]], null, bloodHit(d.dmg, { maxHealth: d.h[1] }, { fromPlayer: true, weapon: sent.weapon ?? null }));
+      }
+      if (sent.weapon) {
+        let amount = Math.trunc((10 * duelWearDamage(d.dmg, sent.weapon, playerEntity) + 50) / 100);   // AUDIT DUEL1 A2: the defender's damage, never past what this weapon could deal
+        if (amount === 0 && Math.random() < 0.2) amount = 1;
+        if (amount > 0) lowerCondition(sent.weapon, amount, playerEntity, (l) => townTalk.say(l));
+      }
+    }
+  };
+  /** The duel is over here. The ring comes down (the wall fades), the target bar goes, and MY LOSS - mine alone: nobody
+   *  credits themselves a win - goes to the account service naming the winner by the account the relay stamped on
+   *  their frames. Then the Inspect card, if it stands for either of us, reads the new record. */
+  const duelEnded = (duel, end) => {
+    if (_duelWall) _duelWall.live = false;
+    if (_duelFoe) { _duelFoe.dead = true; _duelFoe = null; }
+    if (end.lost && duel.sub) {
+      duelAccount.lost(duel.sub).then((r) => {
+        if (r?.ok && r.data?.recorded === false) { const line = duelUncountedText(r.data.why); if (line) tradeSay(line); }   // AUDIT DUEL1: the service says which bound, and the line says it too
+        duelRecords.forget(duel.sub); repaintDuelProfile();
+      }).catch(() => {});
+    } else if (end.won && duel.sub) duelRecords.forget(duel.sub);
+  };
+  /** DUEL_HEAL_HOLD_MS after the end: "both are fully healed on duel end" - health, fatigue and magicka in full, and the
+   *  opponent's spells on me stripped (a duel's poison does not outlive the duel). A player who fell to something else in
+   *  the meantime is not raised by it. */
+  /** AUDIT DUEL1 D5: the player is leaving the game - every duel state ends here (duelSession.js reset: a live duel as
+   *  `left`, my asks taken back, the asks at me refused), and a duel in play or in its hold heals at once. */
+  const duelLeaveNow = () => {
+    const had = !!duelMgr.duel;
+    duelMgr.reset();
+    if (had) duelHeal();
+  };
+  const duelHeal = () => {
+    if (Array.isArray(playerEntity.activeEffects)) playerEntity.activeEffects = playerEntity.activeEffects.filter((a) => !a?.bundleDuel);
+    if (playerEntity.health > 0 && !modes?.deathUp?.()) {
+      playerEntity.health = playerEntity.maxHealth;
+      playerEntity.fatigue = maxFatigue(playerEntity);
+      playerEntity.magicka = playerEntity.maxMagicka ?? playerEntity.magicka;
+      townTalk.say('You are fully healed.');
+    }
+    surfacePlayer();
+  };
+  /** The duel's rows on a peer (ui/socialMenu.js): 'Accept duel' + 'Decline duel' while their challenge waits, 'Yield the
+   *  duel' while we fight - nothing else (the challenge itself is the Inspect card's). */
+  const duelActionsFor = (peerId) => {
+    if (!online) return {};
+    const st = duelMgr.stateFor(peerId);
+    if (st === 'incoming') {
+      const why = duelCan() === 'outdoors' ? 'a duel is fought outdoors' : !duelNear(peerId) ? `too far away (max ${DUEL_RANGE_M} m)` : null;
+      return { duelRow: { label: 'Accept duel', k: 'duel.accept', enabled: !why && !duelCan(), why: why ?? 'not now' }, canDeclineDuel: true };
+    }
+    if (st === 'live') return { duelRow: { label: 'Yield the duel', k: 'duel.yield', enabled: true } };
+    return {};
+  };
+  /** The Inspect card's Challenge button, as the law says it now: the label and whether it can go (and why not). */
+  const duelButtonFor = (peerId) => {
+    if (!online || !peerId) return null;
+    if (!online.duelOk) return { label: 'Challenge to a duel', enabled: false, why: 'The server cannot carry a duel yet.' };
+    const st = duelMgr.stateFor(peerId);
+    if (st === 'incoming') return { label: 'Accept duel', enabled: !duelCan() && duelNear(peerId), why: duelCan() === 'outdoors' ? 'A duel is fought outdoors.' : `Stand within ${DUEL_RANGE_M} m of them.` };
+    if (st === 'outgoing') return { label: 'Challenge sent', enabled: false, why: 'Waiting for their answer.' };
+    if (st === 'live' || st === 'waiting') return { label: 'Duelling', enabled: false, why: null };
+    if (st === 'busy') return { label: 'Challenge to a duel', enabled: false, why: 'You are already in a duel.' };
+    const no = duelCan();
+    if (no === 'outdoors') return { label: 'Challenge to a duel', enabled: false, why: 'A duel is fought outdoors.' };
+    if (no === 'dead') return { label: 'Challenge to a duel', enabled: false, why: 'You have fallen.' };
+    if (no) return { label: 'Challenge to a duel', enabled: false, why: 'Not connected.' };
+    if (!online.reachesPeer(peerId)) return { label: 'Challenge to a duel', enabled: false, why: 'No link to them.' };
+    if (!duelNear(peerId)) return { label: 'Challenge to a duel', enabled: false, why: `Stand within ${DUEL_RANGE_M} m of them.` };
+    return { label: 'Challenge to a duel', enabled: true };
+  };
+  /** The Inspect card's press: the law asks again before anything is sent (the button may be a moment old). */
+  const duelChallenge = (peerId) => {
+    const r = duelMgr.request(peerId);
+    if (!r.ok) tradeSay(r.why === 'try again' ? TRY_AGAIN_TEXT : `You cannot duel them: ${r.why}.`);
+    repaintDuelProfile();
+  };
+  /** The Inspect card's duelling record: the account service's count for the account the relay stamped on their card
+   *  (net/duelRecord.js), kept a minute; `_profileSub` is that stamp for the card standing now. */
+  let _profileSub = null;
+  const duelRecords = createDuelRecords({ read: (id) => duelAccount.record(id), now: () => performance.now(), onRecord: () => repaintDuelProfile() });
+  let _profileView = null;   // the last view the card stood on, re-drawn with the duel's word when it moves
+  /** A profile view with the duel's word on it - the Challenge button as the law says it now, and the record's line
+   *  (asked of the account service by the relay's stamp, `_profileSub`; no stamp, no line). The base view is kept, so
+   *  the card is re-drawn with the duel's word alone when that moves (a challenge sent, a record landed). */
+  const withDuel = (peerId, v) => {
+    _profileView = v;
+    return { ...v, duel: duelButtonFor(peerId), duels: _profileSub ? profileDuelLine(duelRecords.get(_profileSub)) : null };
+  };
+  const repaintDuelProfile = () => {
+    const id = profileWin?.isOpen() ? profileWin.peerId() : null;
+    if (!id || !_profileView) return;
+    profileWin.update(id, withDuel(id, _profileView));
+  };
+  /** The duel's frame: the law's lapses, retries and ends, then the ring - the motor's clamp for my own body while a
+   *  duel is live, in THIS scene's frame from the world frame every frame (a floating-origin shift moves the scene, not
+   *  the ring) - and the prompt's countdown. Runs before the death return, so a dead duellist's duel ends. */
+  const duelFrame = () => {
+    duelMgr.tick();
+    // my ring rose or fell: the onlookers hear it on the next frame - in a CELL room, the only one whose foes frame carries
+    // it (AUDIT DUEL1 C1: a duel ended in a dungeon left every one of that room's frames forced full)
+    if (online && isCellRoom(online.room) && (duelMgr.live?.s ?? null) !== _duelRingSaid) _foesFullAt = -Infinity;
+    const live = duelMgr.live;
+    const tNow = performance.now();
+    if (live && (modes?.mode ?? 'exterior') === 'exterior') {
+      _duelTrail.push({ t: tNow, p: campToWire(player.feetAt()) });
+      while (_duelTrail.length && tNow - _duelTrail[0].t > DUEL_TRAIL_MS) _duelTrail.shift();
+    } else if (_duelTrail.length) _duelTrail.length = 0;
+    player.arena = live && (modes?.mode ?? 'exterior') === 'exterior' ? { centre: campToScene(live.c), radius: DUEL_RADIUS_M } : null;
+    duelPrompt?.render();
+  };
+  /** DUEL1: THE RING I DUEL IN, FOR THE ONLOOKERS, on my foes frame (validRingRecord's shape): on every FULL frame while it
+   *  stands (a joiner learns it within FOES_FULL_MS) and once more, as null, when it comes down; a frame without it leaves
+   *  the last word standing (the HCC's law). A change forces the next frame full (duelFrame). */
+  const duelRingWord = (frame, full) => {
+    const d = duelMgr.live;
+    const key = d?.s ?? null;
+    if (!full || (key === null && _duelRingSaid === null)) return;
+    frame.du = d ? { s: d.s, c: d.c, p: d.peer } : null;
+    _duelRingSaid = key;
+  };
+  /** The rings to draw this frame, in THIS scene's frame (the wall's uniforms): my own - rising in over 0.6 s from the
+   *  start, dying away over 1.2 s from the end - and the others' still fresh, each duel once. */
+  const duelRingsNow = (dt) => {
+    const out = [], seen = new Set();
+    const w = _duelWall;
+    if (w) {
+      w.alpha = w.live ? Math.min(1, w.alpha + dt / 0.6) : Math.max(0, w.alpha - dt / 1.2);
+      if (!w.live && w.alpha <= 0) _duelWall = null;
+      else { out.push({ centre: campToScene(w.c), radius: DUEL_RADIUS_M, alpha: w.alpha }); seen.add(w.s); }
+    }
+    const t = performance.now();
+    for (const [id, e] of _duelRings) {
+      if (t - e.at > DUEL_RING_STALE_MS) { _duelRings.delete(id); continue; }
+      if (seen.has(e.rec.s)) continue;
+      seen.add(e.rec.s);
+      out.push({ centre: campToScene(e.rec.c), radius: DUEL_RADIUS_M, alpha: 0.85 });
+    }
+    return out;
   };
   /** SOC5: the line that goes on the world tab when an act LEFT. The hub writes no chat line (SOC1); the client puts
    *  words to what it did, exactly as net/social.js noteText does for what it was told. */
@@ -10638,6 +10970,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     const mine = from;
     const dx = peer.feet[0] - mine[0], dy = peer.feet[1] - mine[1], dz = peer.feet[2] - mine[2];
     return Math.sqrt(dx * dx + dy * dy + dz * dz);
+  };
+  /** DISC23-A (2026-09-24, Starempire42 on Discord: "It would be really nice to be able to see your party members on
+   *  the town and dungeon maps"): the party members whose BODIES this client draws in the room I am in - their feet in
+   *  this scene's frame (peersNear, the frame my own feet are in), their facing (the peer's eased yaw, the caret's own
+   *  convention) and their name. The town and dungeon plans draw from this; a member with no tracked body here is
+   *  omitted, not guessed at - they are on the bay, which reads the hub's pixel. Composed on every read: they walk. */
+  const partyNear = () => {
+    const near = peersNear();
+    if (!near?.length || !social?.party) return [];
+    const out = [];
+    for (const m of social.others()) {
+      const peer = near.find((p) => m.peers?.includes(p.id));
+      if (!peer?.feet) continue;
+      out.push({ acct: m.acct, name: m.name, feet: [peer.feet[0], peer.feet[1], peer.feet[2]], yaw: online?.peers.get(peer.id)?.shown?.yaw ?? 0 });
+    }
+    return out;
   };
   /** PARTY-REST2/3: true when `pose` (a party member's last broadcast pose) puts them in the SAME place as me
    *  (samePlace) AND within PARTY_REST_RADIUS meters for real (distanceToPartyAccount) - the one law both
@@ -11557,7 +11905,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     const can = !!online?.cardOk;
     _profileAsk = can ? { peerId, at: performance.now(), sent: false } : null;
     if (_profileAsk) _profileAsk.sent = online.sendCard({ to: peerId, ask: true }) === true;
-    return profileWin.show(peerId, profileView({ name: peerName(peerId), peer: p, look: p.look ?? null, state: can ? 'asking' : 'unsupported' }));
+    _profileSub = null;   // DUEL1: no stamp until their card answers
+    return profileWin.show(peerId, withDuel(peerId, profileView({ name: peerName(peerId), peer: p, look: p.look ?? null, state: can ? 'asking' : 'unsupported' })));
   };
   /** INSPECT1: the profile's frame - an ask the gate held back goes when it can, and a wait that ran out is said. */
   const profileFrame = () => {
@@ -11567,7 +11916,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const id = _profileAsk.peerId;
     _profileAsk = null;
     const p = online?.peers.get(id) ?? null;
-    profileWin?.update(id, profileView({ name: peerName(id), peer: p, look: p?.look ?? null, state: 'silent' }));
+    profileWin?.update(id, withDuel(id, profileView({ name: peerName(id), peer: p, look: p?.look ?? null, state: 'silent' })));
   };
   // ═══ JOURNAL1 - A PAGE OF MY JOURNAL, SHOWN; AND ONE SHOWN TO ME, READ AND KEPT ═══════════════════════════════════
   // Addison Knox: "Player journals ... shared in-world for storytelling". The journal is DFU's notebook, which the
@@ -11698,6 +12047,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const onlineFrame = (now, dt) => {
     chatFrame();   // CHAT1: before the dead return, so the channels keep their heartbeat and their reconnect while the death screen is up (the panel itself is paused away like any HUD - AUDIT CHAT B7)
     tradeFrame();   // TRADE1: retries, timeouts, a peer gone or out of reach - before the dead return, as the chat's is
+    duelFrame();   // DUEL1: the duel's law, and the ring my body is kept in - before the dead return, so a fall ends the duel
     profileFrame();   // INSPECT1: the card's ask retried and its wait timed - the trade's own kind of work, beside it
     pageFrame();   // JOURNAL1: a page whose writer left the room goes with them
     mail?.poll();   // MAIL1: a look at the letterbox when one is due - before the dead return, as the chat's heartbeat is
@@ -11729,7 +12079,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         const rez = social?.acct ? rezFor(social.others(), social.acct, _rezSeen) : null;
         if (rez) { resurrectInPlace(rez); return; }
       }
-      peerBodies.destroy(); remotePlayers.sync([], onlineToScene); peerRiders?.destroy(); return;   // AUDIT RIDE: and no rider stands frozen over it either
+      peerBodies.destroy(); remotePlayers.sync([], onlineToScene); peerRiders?.destroy(); peerWalkers?.destroy(); return;   // AUDIT RIDE: and no rider stands frozen over it either
     }   // AUDIT WORLD B6: the dungeon's and the building's death screens stand in the mode's slot   // AUDIT MWBODY B7: and no body stands frozen over the death screen
     _rezSeen = null;   // AUDIT CONTRIB A6: alive - the next death takes its own snapshot of what the party's poses say
     const mode = modes?.mode ?? 'exterior';   // audit24_wave37: guarded on the OBJECT above its own declaration (the frame runs after it)
@@ -11866,6 +12216,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     peerRiders.sync(drawable, onlineToScene, { eye: cam.pos, right: [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)], dt });
     const afoot = drawable.filter((d) => !peerRiders.isRiding(d.id) && !d.shown?.wb);   // DISC12: a beast wears no Morrowind body - it stands as the beast's own sprite (remotePlayers)
     peerBodies.sync(afoot, onlineToScene, dt, player.pos, { priority: (id) => !!social?.isPartyPeer(id) });   // the nearest first, the far ones asleep; AUDIT PARTY8: a party mate before a stranger
+    // DISC23-B: a peer on foot who stands in no Morrowind body here stands as the Eye Of The Beholder set they chose -
+    // after the bodies (a Morrowind player's own choice for everyone they meet), before the class sprite and the doll
+    peerWalkers.sync(drawable, onlineToScene, { eye: cam.pos, right: [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)], dt, skip: (id) => peerBodies.heightOf(id) > 0 });
     // PCORPSE1: a body heard in a room this scene has left for another KIND of space (a dungeon's local frame, the
     // street's world frame) is not this scene's to draw; one heard anywhere in the overworld's cells still is
     // PCORPSE3: a party member's body their party pose tells of, that the death pose never brought me (I was between
@@ -11883,7 +12236,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (const acct of [..._partyBodies]) if (!others.some((m) => m.acct === acct)) { _partyBodies.delete(acct); remotePlayers.partyForget(acct); }
     }
     if (online.room) remotePlayers.keepCorpses((r) => r === online.room || ((isWorldRoom(r) || isCellRoom(r)) && (isWorldRoom(online.room) || isCellRoom(online.room))));   // PCORPSE2: never judged while between rooms (a cell crossing's gap) - no room is not another space
-    remotePlayers.sync(drawable, onlineToScene, { bodyHeight: (id) => peerRiders.heightOf(id) || peerBodies.heightOf(id), dt, eye: player.pos, poseAgeMs: (p) => online.poseAgeMs(p) });   // 2026-09-17: dt drives the class-enemy billboard path's own animation clock; eye is the local player's own position, needed for mobileOrientation's facing calculation (see remotePlayers.js _syncMobilePeer)
+    remotePlayers.sync(drawable, onlineToScene, { bodyHeight: (id) => peerRiders.heightOf(id) || peerBodies.heightOf(id) || peerWalkers.heightOf(id), dt, eye: player.pos, poseAgeMs: (p) => online.poseAgeMs(p) });   // 2026-09-17: dt drives the class-enemy billboard path's own animation clock; eye is the local player's own position, needed for mobileOrientation's facing calculation (see remotePlayers.js _syncMobilePeer)
   };
   /** SPELLFX1 (the Unity co-op's RpcPlayPlayerSpellCastVisual): EVERY PEER'S CAST, DRAWN. The pose already carries the
    *  cast count, its range and now its element; a count that moves on a peer I could see last frame is one cast, and
@@ -12023,6 +12376,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // publish clock is reset, not the publish forced: the frame's own worldPublish sends it this same frame.
     onLootClaimed: () => { _worldPublishedAt = -Infinity; },
     peers: peersNear,
+    partyNear: () => partyNear(),   // DISC23-A: the party's bodies, for the dungeon's and the building's plans
     allyMarks: () => allyMarksNear(),   // AID1 onto ALLY-CAST: the dungeon's own cast engine gives to the same mates
     selfId: () => online?.id ?? null,
     dungeonAuthority,   // WORLD2: a dungeon built while another hosts starts as puppets
@@ -12039,6 +12393,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // worldModes.js). False (not handled) when this session is not
     // live online play, so the caller falls back to endRunToTitleMenu
     // exactly as it always did offline.
+    duelHolds: () => duelEnemyNear(),   // DUEL1: a live duel holds its duellist - no door out of the ring
     onlineRespawn: () => { if (!(_deathWasOnline ?? _onlineWorldSession())) return false; respawnOnlinePlayer(); return true; },   // ONLINE-DEATH-FIX: a reset that beats the frame's backstop (Enter on the first frame) has no snapshot yet - ask the live answer rather than read null as offline
     activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
     activateLockOnly: () => _tapLockOnly,   // TS1: the stick-half tap - the modal ladders stop after the lock pick
@@ -12210,7 +12565,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // channel, so the interior mode borrows the door rather than building a
     // second one. (Its own weapon rig takes the swap's refresh; see
     // worldModes' interiorKeyCtx.)
-    quickUse: (n) => quickUse(n),
+    quickUse: (n, rig) => quickUse(n, rig),   // DISC21-C: the mode's own rig, when it hands one
     quickSwap: (rig) => quickSwap(rig),   // LH1: the mode's own rig, when it hands one
     quickOffHand: () => quickOffHand(),
     quickSpell: () => quickSpell(),   // QS6
@@ -12250,6 +12605,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // in test/questbridge.test.js caught - exterior.js's comment had
     // said "world.js keeps two copies of this walk" and it was right.
     pauseQuestLog: () => questBridge?.questLog() ?? { active: [], finished: [] },
+    repairQuests: () => questBridge?.repair?.() ?? null,   // QREPAIR: the interior pause's Settings row, off this host's bridge
     revealLocation,
     magic, spellsByIndex: () => spellsByIndex,   // M2: the one cast engine + SPELLS.STD ride into the interior arm
     townTalk,   // U23: the interior host borrows FACTION.TXT/TEXT.RSC + the talk seam
@@ -12794,7 +13150,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     }
     last = now;
     meterFor(renderer.gl)?.markCpu('online');   // PERF-CPU
-    if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); }   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
+    if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); } else if (player.arena) player.arena = null;   // DUEL1: no online frame, no duel's law to hold the body - the ring is the live duel's alone   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
     meterFor(renderer.gl)?.markCpu('sim');   // PERF-CPU: everything between here and the next mark is the rest of the simulation
     lookGate(gamePaused());   // a window up frees the cursor; closing re-locks
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
@@ -13600,6 +13956,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // ONLINE1 (AUDIT ONLINE D5): the others' billboards were placed before this step from the old origin - they follow it, or every peer jumps a tile for one frame at each crossing
       if (remotePlayers) for (const b of remotePlayers.batches()) { b.origin[0] += r.offset[0]; b.origin[1] += r.offset[1]; b.origin[2] += r.offset[2]; }
       peerRiders?.offsetAll(r.offset);   // RIDE: the riders' sprites follow the origin as the dolls do
+      peerWalkers?.offsetAll(r.offset);   // DISC23-B: and the walkers'
       if (_onlineLast) { _onlineLast[0] += r.offset[0]; _onlineLast[1] += r.offset[1]; _onlineLast[2] += r.offset[2]; }
       if (peerBodies) peerBodies.offsetAll(r.offset);   // MWBODY1 (AUDIT MWBODY B2): the bodies' feet follow the origin as the dolls do
     }
@@ -13970,6 +14327,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       allBatches.push(b);
     }
     if (peerRiders) for (const b of peerRiders.batches()) { if (!(cullOn && billboardOutside(b))) allBatches.push(b); }   // RIDE: the others in the saddle
+    if (peerWalkers) for (const b of peerWalkers.batches()) { if (!(cullOn && billboardOutside(b))) allBatches.push(b); }   // DISC23-B: and on foot, as they chose
     // NEAR-FIRST (2026-09-21): THE PIXELS ARE WALKED NEAREST FIRST. The
     // map's insertion order is the order the pixels streamed in, which
     // is nothing to do with where the eye is - so a far town's walls
@@ -14535,6 +14893,17 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       meterFor(renderer.gl)?.mark('world');
       renderer.markForeignPass();   // EV6: the grass changed programs behind the shadows' back
     }
+    // DUEL1: THE RINGS' WALLS - my own duel's, rising in and dying away, and every duel the cells around me say stands
+    // (each once: both duellists say it). After the grass, from the view's own eye (mwv.eye, the bolts' law), fogged as
+    // the ground is; a foreign pass.
+    if (duelWall) {
+      const rings = duelRingsNow(dt);
+      if (rings.length) {
+        duelWall.draw(rings, proj, view, new Float32Array(mwv.eye), now / 1000,
+          { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos });
+        renderer.markForeignPass();
+      }
+    }
     // C13: streaming-world arrows fly against the live pixel
     // collider (lost on geometry/terrain, as DFU misses are). Drawn
     // without a remap - the streaming pixels each carry their own,
@@ -14574,16 +14943,16 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // at another foe (MT-ii's infighting selection) LANDS now, on
       // BowDamage's non-player arm. Both pools are candidates; the
       // shooter is excluded inside the flight module.
-      foeTargets: [...exteriorFoes.foes, ...cityGuards.guards]
-        .filter((t) => !t.dead && t.ai).map((t) => ({ feet: t.ai.feet, ref: t })),
-      onFoeHit: (m, t) => exteriorFoes.arrowHitFoe(m, t),
+      foeTargets: [...[...exteriorFoes.foes, ...cityGuards.guards]
+        .filter((t) => !t.dead && t.ai).map((t) => ({ feet: t.ai.feet, ref: t })), ...duelArrowTargets()],   // DUEL1: and my duel opponent's body, while we fight
+      onFoeHit: (m, t) => (t?.duel ? undefined : exteriorFoes.arrowHitFoe(m, t)),   // DUEL1: a foe's shaft stops on a duellist and deals them nothing
       // AUDIT 39 (#64): and the PLAYER's shaft lands too. It used to
       // fly, spend its Arrow and tally Archery against a guard or an
       // encounter foe and inflict nothing - both impact arms were
       // gated on `m.enemy`, and this bow branch `continue`s past the
       // melee hit chain below. The damage door is each pool's own, so
       // a killed watchman still runs the crime and the corpse.
-      onPlayerArrowHitFoe: (m, t) => playerArrowHitFoe(m, t, {
+      onPlayerArrowHitFoe: (m, t) => (t?.duel ? duelStrikeOut('arrow', m.weapon ?? null, 'StrikeDown', weaponRig.playerWeapon?.lastDrawMs ?? 0) : playerArrowHitFoe(m, t, {   // DUEL1: my shaft on my duel opponent is a strike their client resolves
         playerEntity, playerWeapon: weaponRig.playerWeapon, playerFeet: player.pos,
         dealDamage: (f, d) => (cityGuards.guards.includes(f)
           ? cityGuards.hurtGuard(f, d, player.pos, m.dir)   // AUDIT-39r: the shaft shoves the watch too (WeaponManager.cs:576-595)
@@ -14605,7 +14974,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         onAttackFromPlayer: (f) => (cityGuards.guards.includes(f)
           ? cityGuards.handleAttackFromPlayer(f, player.pos)
           : exteriorFoes.attackFromPlayer(f, player.pos, 'arrow')),   // AUDIT WORLD6b-iii(e) A2: the shaft's kind on the zero blow; AUDIT WORLD6b-ii B4: the one door - a PUPPET's is its owner's (a zero blow diverted, a damaging one already was), no area of mine wakes
-      }),
+      })),
     });
     arrows.draw(renderer);
     // C9: the exterior FP weapon - swings/sounds through the rig. The
@@ -14670,7 +15039,12 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // AUDIT DISC19: `swing` is the one swing's token - the attack
         // grunt rolls in the first pool that has anyone, not in each.
         const swing = {};
-        if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, makeInView(proj, view, multiply), guardHitSound, { spareDefenders: true, swing })) {
+        // DUEL1: my duel opponent first - a swing that reaches them is theirs (their client resolves it: net/duelSession.js),
+        // tallied as a connect, and no pool, civilian or door hears it
+        if (duelMeleeHit(cam.pos, makeInView(proj, view, multiply))) {
+          tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);
+          surfacePlayer();
+        } else if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, makeInView(proj, view, multiply), guardHitSound, { spareDefenders: true, swing })) {
           // X-slice: encounter foes resolve after the watch, before civilians
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, makeInView(proj, view, multiply), guardHitSound, { swing })) {
             tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);

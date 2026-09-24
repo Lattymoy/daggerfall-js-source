@@ -45,8 +45,9 @@ import {
 } from '../systems/automapFloors.js';
 import { boundarySegments, linkSegments, fitView, toPaper, toMap, viewCentredOn, scaleMinOf, FIT_MARGIN as INK_FIT_MARGIN } from './inkMap.js';
 import { tryAddOrEditUserNote, setUserNote } from '../systems/automap.js';
+import { readPartyBodies, PARTY_MARK_CSS } from './partyMapMarks.js';   // DISC23-A: the party's bodies, in this frame
 import {
-  paintPlanStatic, paintPlanOverlay, floorStripLayout, floorStripHit, paintFloorStrip,
+  paintPlanStatic, paintPlanOverlay, floorStripLayout, floorStripHit, paintFloorStrip, paintFloorStripParty,
 } from './inkAutomap.js';
 import { stripFont } from './mapStrip.js';
 
@@ -81,6 +82,7 @@ const _frames = new WeakMap();   // rows -> { bounds, floors, full: Map<storey, 
  *   insideBuilding?: boolean,
  *   title?: string,
  *   askText?: (initial: string, done: (text: string|null) => void) => void,
+ *   party?: () => Array<{acct?: string|null, name?: string, feet?: number[], yaw?: number}>,
  * }} deps
  */
 export function createAutomapSheet(deps = {}) {
@@ -302,6 +304,27 @@ export function createAutomapSheet(deps = {}) {
     return { x, z, yaw: p?.yaw ?? 0 };
   }
 
+  /** DISC23-A: the party members standing on THIS storey, in plan units - the player caret's own law (a member on
+   *  another storey is not drawn on this one), read fresh on every paint because they walk while the map is up. */
+  function partyHere() {
+    const f = ensureFrame();
+    if (!f.floors.length) return [];
+    const out = [];
+    for (const m of readPartyBodies(deps.party)) {
+      if (floorAt(f.floors, m.feet[1]) !== index) continue;
+      const [x, z] = toPlan(m.feet[0], m.feet[2]);
+      out.push({ x, z, yaw: m.yaw, name: m.name });
+    }
+    return out;
+  }
+
+  /** DISC23-A: the storeys the party stands on, as the strip's own indices. */
+  function partyStoreys() {
+    const f = ensureFrame();
+    if (!f.floors.length) return new Set();
+    return new Set(readPartyBodies(deps.party).map((m) => floorAt(f.floors, m.feet[1])));
+  }
+
   /** The way in, while it has been found, and only on its own storey. */
   function entranceHere() {
     const f = ensureFrame();
@@ -390,7 +413,10 @@ export function createAutomapSheet(deps = {}) {
         entrance: entranceHere(),
         marks: marksHere(),
         links: linksHere(),
+        party: partyHere(),   // DISC23-A
+        partyFill: PARTY_MARK_CSS,
       });
+      paintFloorStripParty(ctx, strip, partyStoreys(), PARTY_MARK_CSS);   // DISC23-A: and which storeys they are on
     },
 
     pickAt(px, py) {
@@ -410,6 +436,13 @@ export function createAutomapSheet(deps = {}) {
     // pixels and the marks are in plan units, so the reach is measured
     // through the view the sheet was last painted with - which is the
     // view the player is pointing at.
+      // DISC23-A: a party member under the pointer answers their name, as a note answers its words
+      if (lastView) {
+        for (const m of partyHere()) {
+          const [x, y] = toPaper(lastView, m.x, m.z);
+          if ((x - px) ** 2 + (y - py) ** 2 <= MARK_REACH * MARK_REACH) return { label: m.name, cursor: '' };
+        }
+      }
       const mark = nearestMark(px, py);
       if (mark) return { label: mark.name || (deps.title ?? ''), cursor: 'pointer' };
       return { label: deps.title ?? '', cursor: '' };
@@ -447,8 +480,10 @@ export function createAutomapSheet(deps = {}) {
       return true;
     },
 
-    /** DISC22-G: the way in breathes while it is on the sheet, so the window repaints on its beat. */
-    breathes() { return !!entranceHere(); },
+    /** DISC22-G: the way in breathes while it is on the sheet, so the window repaints on its beat. DISC23-A: and so
+     *  does a party with anyone in this level - on ANY storey, so a member who climbs onto this one appears within a
+     *  beat rather than when something else next repaints. */
+    breathes() { return !!entranceHere() || readPartyBodies(deps.party).length > 0; },
 
     /**
      * THE FLOOR KEYS. A storey up and a storey down, on the two pairs a
@@ -502,6 +537,9 @@ export function createAutomapSheet(deps = {}) {
     /** Which storey is up, and the list it came from. */
     get floor() { ensureFrame(); return index; },   // DISC22-G: the frame first - it is what sets the player's storey
     floors() { return ensureFrame().floors; },
+    /** DISC23-A: the party on this storey (plan units), and the storeys the party stands on. */
+    partyHere,
+    partyStoreys,
     setFloor,
     /** Up and down a storey - what the floor keys ask for. */
     step,

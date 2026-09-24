@@ -164,8 +164,8 @@
   {
     "name": "D22G-no-breath",
     "file": "src/ui/automapSheet.js",
-    "old": "    breathes() { return !!entranceHere(); },",
-    "new": "    breathes() { return false; },",
+    "old": "    breathes() { return !!entranceHere() || readPartyBodies(deps.party).length > 0; },",
+    "new": "    breathes() { return readPartyBodies(deps.party).length > 0; },",
     "tests": [
       "test/disc22g_automap.test.js"
     ]

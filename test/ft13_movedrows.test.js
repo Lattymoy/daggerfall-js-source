@@ -40,7 +40,7 @@ test('FT13: a moved key draws nothing - the seam answers null, every caller appe
   assert.match(menu, /const paneKeys = \(catId\) => keysOf\(catId\)\.filter\(\(key\) => !featureForControl\('settings', key\)\);/, 'the keys a category still shows');
   assert.match(menu, /const put = \(parent, row\) => \{ if \(row\) parent\.append\(row\); \};/);
   assert.match(menu, /const keys = paneKeys\(catId\);\s*\/\/ FT13[\s\S]*?if \(tierOf\(key\) === 'live'\) \{ const r = settingRow\(key\); if \(r\) out\.push\(r\); \}/, 'a category\'s rows');
-  assert.match(menu, /const liveCount = \(catId\) => portRows\(catId\)\.length \+ paneKeys\(catId\)\.filter\(\(k\) => tierOf\(k\) === 'live'\)\.length;/, 'the rail count is what the pane shows');
+  assert.match(menu, /const liveCount = \(catId\) => portRows\(catId\)\.filter\(\(r\) => r\.dataset\?\.live !== '0'\)\.length \+ paneKeys\(catId\)\.filter\(\(k\) => tierOf\(k\) === 'live'\)\.length;/, 'the rail count is what the pane shows - QREPAIR: a port row greyed here (the quest repair on the front door) is not one that works here');
   assert.match(menu, /const liveKeys = paneKeys\(cat\.id\)\.filter\(\(key\) => tierOf\(key\) === 'live'\);[\s\S]*?for \(const key of liveKeys\) put\(list, settingRow\(key\)\);/, 'the pause door\'s live list');
   assert.match(menu, /for \(const key of keys\) put\(body, settingRow\(key\)\);/, 'the folded tiers');
   // FT14: a mod's CARD is gone with the Mods pane. The seam it proved - `put` appends only what it is

@@ -130,7 +130,7 @@ test('JOURNAL1 wire: a page is a player\'s words with their lines - the letter\'
   assert.ok(widest.length <= PAGE_FRAME_MAX, `and its frame fits: ${widest.length} of ${PAGE_FRAME_MAX}`);
   assert.ok(PAGE_FRAME_MAX < MAX_FRAME_BYTES);
   assert.ok(PAGE_LINE_MAX >= MAX_LINE_LENGTH + 1, 'a notebook line, with DFU\'s leading space, is a page line - the relay imports no game module, so this pin holds the two apart');
-  assert.equal(RELAY_VERSION, 'world105');   // AUDIT 68's relay law (world105); TITLE-N's dm frame (world104); the contributor's dd/rz moved it past the arc's world102; the page frame stays gated at 102
+  assert.equal(RELAY_VERSION, 'world107');   // DUEL1's duel frame (world107); DISC23-B's look (world106); AUDIT 68's relay law (world105); TITLE-N's dm frame (world104); the contributor's dd/rz moved it past the arc's world102; the page frame stays gated at 102
   assert.equal(PAGE_RELAY_MIN, 102);
   assert.equal(relaySupportsPage('world102'), true);
   assert.equal(relaySupportsPage('world101'), false);
@@ -603,7 +603,7 @@ test('JOURNAL1 host by source: a page held out to me is HELD with its writer\'s 
   const block = w.slice(w.indexOf('const pageReadHow = () => {'), w.indexOf('const pageFrame = () => {'));
   assert.match(block, /if \(isTouchDevice\(\)\) return 'face them and press /, 'on a phone, the social button - ui/touch.js\'s own F');
   assert.match(block, /const tag = quickslotTag\('SocialInteract', \{ bindings: bindings\(\) \}\);\s*\n\s*return tag\?\.kind === 'key' \? `press \$\{tag\.text\} on them` : null;/, 'the F-menu\'s own key, off the live bindings');
-  assert.match(w, /canInspect: true, canReadPage: !!pageOffers\.get\(peerId\) \}\);/, 'the one bag');
+  assert.match(w, /canInspect: true, canReadPage: !!pageOffers\.get\(peerId\), \.\.\.duelActionsFor\(peerId\) \}\);/, 'the one bag');
   assert.match(w, /if \(act\.k === 'page\.read'\) \{ readPage\(act\.peer\); return; \}/);
   assert.match(block, /const o = pageOffers\.get\(peerId\);\s*\n\s*if \(!o \|\| !pageWin\) \{ tradeSay\(PAGE_GONE_TEXT\); return false; \}\s*\n\s*return pageWin\.show\(peerId, pageView\(\{ name: o\.name \?\? peerName\(peerId\), page: o\.page, kept: o\.kept, canKeep: !!questBridge\?\.notebook \}\)\);/);
   assert.match(w, /if \(pageWin\?\.isOpen\(\)\) \{ pageWin\.hide\(\); return true; \}/, 'F again puts it away');

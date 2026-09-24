@@ -282,12 +282,12 @@ test('AUDIT39 #64: all three non-dungeon hosts mark the shaft and resolve it', (
   ]) {
     const s = src(f);
     assert.ok(s.includes(fire), `${f} rides LastBowUsed on the shaft`);
-    assert.match(s, /onPlayerArrowHitFoe: \(m, t\) => playerArrowHitFoe\(m, t, \{/, `${f} resolves it`);
+    assert.match(s, /onPlayerArrowHitFoe: \(m, t\) => (?:\(t\?\.duel \? duelStrikeOut\('arrow'[^\n]*\) : )?playerArrowHitFoe\(m, t, \{/, `${f} resolves it`);   // DUEL1: world.js's shaft on a duel opponent is a strike first
     // AUDIT 39r R13: the pin used to stop at that opening brace and
     // inspect none of the keys, so a host that quietly stopped passing
     // the screen weapon, the feet or the damage door still matched.
     // Bound the window by the call's own close and name them.
-    const i = s.indexOf('onPlayerArrowHitFoe: (m, t) => playerArrowHitFoe(m, t, {');
+    const i = s.indexOf('playerArrowHitFoe(m, t, {', s.indexOf('onPlayerArrowHitFoe: (m, t) =>'));   // DUEL1: world.js's arm is the duel's first, then this
     const opts = s.slice(i, s.indexOf('\n      }),', i));
     assert.match(opts, /playerWeapon: \w+\.playerWeapon,/, `${f} hands in the LIVE screen weapon (SWING_MODS)`);
     assert.match(opts, /playerFeet: player\.pos,/, `${f} hands in the feet the backstab arc is measured from`);
@@ -322,7 +322,7 @@ test('AUDIT39 #65: the interior arrow update takes the four impact options it ne
   assert.match(call, /onFoeHit: \(m, t\) => interiorFoes\?\.arrowHitFoe\(m, t\),/);
   // ...and the PLAYER's shaft damages through the pool that owns the
   // billboard, the same `_encounter` split this host's sinks take -
-  // world.js:13847's own law, so a killed watchman still runs the crime
+  // world.js:14204's own law, so a killed watchman still runs the crime
   // and the corpse.
   assert.match(call, /dealDamage: \(f, d\) => \(f\._encounter\n\s+\? interiorFoes\?\.damageFoe\(f, d, player\.pos, m\.dir, \{ kind: 'arrow' \}\)[^\n]*\n\s+: interiorGuards\?\.hurtGuard\(f, d, player\.pos, m\.dir\)\),/);
   // the player-side arm of the same call

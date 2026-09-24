@@ -87,7 +87,7 @@ test('PEER-PLAQUE1 hosts by source: the street races the F key\'s own pick and n
   assert.match(namer, /const name = peerName\(id\);\s*if \(!name\) return null;/, 'a peer the session no longer names draws nothing');
   assert.match(namer, /const marks = badge \? glyphMarks\(badge\) : '';/);
   assert.match(namer, /const acts = social \? peerActsFor\(id\) : null;/, 'the F-menu\'s own bag');
-  assert.match(w, /const peerActsFor = \(peerId\) => \(\{ \.\.\.social\.actionsFor\(peerId\), \.\.\.tradeActionsFor\(peerId\), canInspect: true, canReadPage: !!pageOffers\.get\(peerId\) \}\);/, 'both halves, and the look (INSPECT1), and a page held out to me (JOURNAL1)');
+  assert.match(w, /const peerActsFor = \(peerId\) => \(\{ \.\.\.social\.actionsFor\(peerId\), \.\.\.tradeActionsFor\(peerId\), canInspect: true, canReadPage: !!pageOffers\.get\(peerId\), \.\.\.duelActionsFor\(peerId\) \}\);/, 'both halves, and the look (INSPECT1), and a page held out to me (JOURNAL1)');
   assert.match(namer, /return \{ title: marks \? `\$\{name\} \$\{marks\}` : name, subs: \[cast, peerRelationText\(acts\)\]\.filter\(Boolean\), actions: acts \? socialPlaqueRows\(id, acts\) : \[\], actionsUnlit: true \};/);   // ALLY-CAST: the cast line above the relation; ACT-MENU: the card's rows, unlit
   assert.match(w, /peerHoverPick: \(\) => _hoverPeerPick\(cam\.pos, socialFwd\(\)\),\s*\n\s*peerHoverName: \(key\) => peerHoverName\(key\),/, 'the two doors the modal hosts reach - the pick off the F key\'s OWN ray (AUDIT DROPS E3), never the mode\'s eye');
   assert.match(w, /const hit = peerInSight\(cam\.pos, socialFwd\(\)\);/, 'the same ray the key casts');

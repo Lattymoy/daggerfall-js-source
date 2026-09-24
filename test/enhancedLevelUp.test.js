@@ -479,7 +479,10 @@ test('LV1: every attribute has the port\'s OWN sentence, and no ARENA2 is read t
   const v = src('src/ui/levelUpView.js');
   assert.match(v, /systems\/spellcast\.js:158/, 'willpower names the saving throw that consumes MagicResist');
   assert.match(v, /formulas\.js:306-307 statsToHit/, 'agility names the term inside the hit roll');
-  assert.match(v, /player\/motor\.js:476 walkSpeed/, 'speed names the motor that reads it');
+  // derived, not a literal: the motor's own walkSpeed read, wherever it now stands (a literal went stale three times)
+  const walkAt = src('src/player/motor.js').split('\n').findIndex((l) => /this\.speed = walkSpeed\(this\.stats\.speed\);/.test(l)) + 1;
+  assert.ok(walkAt > 0, 'the motor still reads walkSpeed');
+  assert.match(v, new RegExp(`player/motor\\.js:${walkAt} walkSpeed`), 'speed names the motor that reads it');
   assert.match(v, /unleveledLoot\.js:95/, 'luck names the rarity roll a player actually notices');
   assert.doesNotMatch(v, /toHitModifier = floor\(agility \/ 10\) - 5\.\n\s*agility:/,
     'and the sheet\'s display modifier is no longer offered as what rides a swing');

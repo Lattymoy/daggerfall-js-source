@@ -43,7 +43,7 @@
 // this lane is.
 // ═══════════════════════════════════════════════════════════════════
 
-import { PEN, HALO_PEN, NAME_FACE, toPaper, paintCaret, CARET_R } from './inkMap.js';
+import { PEN, HALO_PEN, NAME_FACE, toPaper, paintCaret, paintPartyCarets, CARET_R } from './inkMap.js';
 import { STRIP, stripScale, grabHit } from './mapStrip.js';
 
 /** What each thing on a dungeon plan is drawn in. Every one of these is
@@ -195,7 +195,8 @@ export function paintPlanStatic(ctx, plan, view, opts) {
  *          player?:{x:number,z:number,yaw?:number}|null,
  *          entrance?:{x:number,z:number}|null,
  *          marks?:Array<{x:number,z:number,kind?:string,name?:string}>,
- *          links?:Array<{x0:number,z0:number,x1:number,z1:number}>}} opts
+ *          links?:Array<{x0:number,z0:number,x1:number,z1:number}>,
+ *          party?:Array<{x:number,z:number,yaw?:number,name?:string}>, partyFill?:string}} opts
  */
 export function paintPlanOverlay(ctx, view, opts) {
   if (!ctx?.setTransform) return;
@@ -281,6 +282,14 @@ export function paintPlanOverlay(ctx, view, opts) {
     ctx.lineTo(x, y - BEACON_R * 0.55);
     ctx.lineTo(x + BEACON_R * 0.4, y - BEACON_R * 0.15);
     ctx.stroke();
+  }
+
+  // DISC23-A: the party members on this storey, under the player's own caret
+  if (opts.party?.length && opts.partyFill) {
+    paintPartyCarets(ctx, opts.party.map((m) => {
+      const [x, y] = toPaper(view, m.x, m.z);
+      return { x, y, yaw: m.yaw, name: m.name };
+    }), { fill: opts.partyFill, halo: PLAN_PEN.halo });
   }
 
   if (opts.player) {
@@ -377,4 +386,33 @@ export function paintFloorStrip(ctx, layout, { font = null } = {}) {
     }
   }
   ctx.restore();
+}
+
+/** DISC23-A: the dot a storey wears on the strip while a party member stands on it, in strip units. */
+export const FLOOR_PARTY_DOT = Object.freeze({ r: 3, gap: 5 });
+
+/**
+ * DISC23-A: WHICH FLOOR YOUR FRIEND IS ON. A member is drawn only on their own storey (the player caret's law), so a
+ * member one floor down is on no plan the player is looking at - and "find each other" is exactly that question. The
+ * strip answers it: a dot in the party's green beside every storey a member stands on, so the next press is the right
+ * one. On the overlay, not the kept layer, because members change storeys while the plan under them does not.
+ * @param {*} ctx
+ * @param {{scale:number, rows:Array<{index:number, x:number, y:number, h:number}>}|null} layout
+ * @param {Set<number>} storeys
+ * @param {string} fill
+ */
+export function paintFloorStripParty(ctx, layout, storeys, fill) {
+  if (!ctx?.beginPath || !layout?.rows?.length || !storeys?.size) return;
+  const r = FLOOR_PARTY_DOT.r * layout.scale, gap = FLOOR_PARTY_DOT.gap * layout.scale;
+  for (const row of layout.rows) {
+    if (!storeys.has(row.index)) continue;
+    const x = row.x - gap - r, y = row.y + row.h / 2;
+    ctx.lineWidth = 2 * HALO_PEN;
+    ctx.strokeStyle = PLAN_PEN.halo;
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fill();
+  }
 }

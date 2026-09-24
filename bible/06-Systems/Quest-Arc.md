@@ -716,7 +716,7 @@ Ignoring') - permanent by parity, recorded in the coverage pin.
   faction-listener slot (addFactionListener first-claim-wins /
   removeFactionListener at dispose; PlayerActivate.StaticNPCClick
   reads the map - :1534, the only consumer in the DFU tree, and
-  wired at src/scenes/worldModes.js:571). activeFactionPersons walks NON-COMPLETE quests only -
+  wired at src/scenes/worldModes.js:573). activeFactionPersons walks NON-COMPLETE quests only -
   completed quests must not lock an NPC out (QuestMachine.cs:1085).
   The non-individual parse throw carries the TEMPLATE-SetComplete
   quirk; its sibling's does not.
@@ -1453,7 +1453,7 @@ spamming the same questor does not re-pulse the task. DFU makes you go
 click someone else and come back.
 
 The port carries `lastNPCClicked` as an NPCData-shaped OBJECT LITERAL,
-and both hosts mint a fresh one at every click - worldModes.js:1210's
+and both hosts mint a fresh one at every click - worldModes.js:1212's
 quest-flat arm builds `{ hash, flags, factionID, nameSeed, gender,
 buildingKey, mapID }` inline, and questBridge.clickNpc runs
 `staticNpcData(pn, sceneCtx)`. So `lastClicked === this.clickMemory`
@@ -2902,7 +2902,7 @@ has never allowed. Expanding in place now. (The caller-side
 `PlayerActivate.StaticNPCClick:1534`. `TalkManager.cs` does not
 contain the word `Listener`. Three port comments named TalkManager as
 the reader and marked the wiring `(Q4 wires)` - over a reader the port
-already ships, at `worldModes.js:571`. A pending marker over shipped
+already ships, at `worldModes.js:573`. A pending marker over shipped
 work is worse than no marker at all: it sends the next reader looking
 for work that is done, in a file that never had it. Four sites
 corrected, the bible's copy included.
@@ -5470,7 +5470,7 @@ lesson one host over.
 **What did NOT ship:** PlayerEntity.Update's per-minute *intermittent
 spawn* roll (:486-492) still has no caller on this route. It is not
 this pool's dependency — it is a loop that carries the passive-guard
-spawns and the NPC-guard conversion with it (world.js:3724-3816) — and
+spawns and the NPC-guard conversion with it (world.js:3736-3828) — and
 it is named at the mount so the absence reads as a fact.
 
 **(c) The find-place seam's absence, narrowed to one sentence.**
@@ -5489,15 +5489,15 @@ knows its one city outright.
 This host owns a cast engine of its own, and `worldModes` takes *that
 instance* for the interior mode, so it covers the shops entered from
 `?exterior` too. It passed neither of `EntityEffectManager`'s two
-ready-spell events (`hostMagic.js:78-79`), and those two doors are the
+ready-spell events (`hostMagic.js:79-80`), and those two doors are the
 *only* route into the machine's `CastSpellDo` / `CastEffectDo` latches
-(`machine.js:867`/`:850`; C# subscribes them in the action's
+(`machine.js:868`/`:851`; C# subscribes them in the action's
 constructor). Every `cast X spell do` and `cast X effect do` on this
 whole route could therefore never latch and never fire. The pair the
-other two engine-owning hosts wire (`world.js:4098-4099`,
-`dungeonContext.js:2247-2248`) is wired here now, and with it
+other two engine-owning hosts wire (`world.js:4110-4111`,
+`dungeonContext.js:2248-2249`) is wired here now, and with it
 `CastSpellDo`'s two world reads — `getClassicSpellEffects` and the
-byte-folded `spellHasMatchForClassicEffect` (`world.js:8428-8431`),
+byte-folded `spellHasMatchForClassicEffect` (`world.js:8455-8458`),
 absent which the action self-completes at *parse*
 (`actions.js:2756`/`:2763`) and the task can never arm at all.
 
@@ -6311,3 +6311,40 @@ trace found a real weakness beside it:
 
 Pins: `test/quest_uid1.test.js` (3) through the real bridge over the vendored quests; mutants
 `tools/mutants/questuid1.json` (5, all dead).
+
+## QREPAIR - REPAIR ACTIVE QUESTS (2026-09-24, Mac: "Add a quest refresh option to settings")
+
+Asked what a refresh should do, Mac chose "Repair active quests": put back the people, items, foes and map marks an
+active quest is missing, keep its progress. `systems/quest/questRepair.js` is one pass over every quest still running
+(neither complete nor tombstoned); the pause's Settings runs it from the Game category's "Repair active quests" row,
+confirmed first, and the row's note becomes the pass's own line. On the front door the row is drawn greyed with where
+it lives. DFU has no such pass; this is the port's own (Port-Ledger section A, QREPAIR).
+
+**What it puts back, and the fault each answers.**
+1. **A placement a marker lost.** Every completed `place npc|item|foe` action names where its resource belongs; a
+   resource no marker of any of the quest's Places holds is assigned there again through the action's own call,
+   `Place.assignQuestResource`, without the action's unhide and without its cull. The fault: a party's shared-quest
+   resync replaces each Place's siteDetails with the partner's copy, and the `place` action, complete, never runs
+   again. A Person's last-assigned Place settles two placements; two Places and nothing to settle them leave it alone.
+2. **A site link the quest never got.** `hasSiteLink` asks the SITE, not the quest (QuestMachine.cs:1739, kept), so a
+   second quest placing where a first already had leaned on the first's link, and when the first ended the second's
+   resources stood nowhere. One link per (quest, Place) that holds targets.
+3. **The map.** Every `reveal` that ran is filed again (the hosts' `discoverLocation` now answers whether it was new, for
+   the count). A quest the talk never heard of gets its topics (a received shared quest: receiveSharedQuest adds none);
+   a quest that has them is not re-added, since adding them again un-discovers residences the player already found.
+4. **Where the player stands, now.** The current interior or dungeon mounts again with `machine.mountByName` set for the
+   pass: a standing resource is matched by quest and symbol NAME (`sceneMount.js isAlreadyInjected`), because after a
+   load a standing foe holds a restored symbol DFU's identity match misses and the plain mount would stand it twice.
+   DFU's own mounts keep the identity match.
+
+**What it never touches.** A destroyed person or an individual at home; an item picked up, carried, dropped, made the
+player's own, or given to a foe; a foe all of whose spawns are dead, or one the quest removed. A hidden person placed
+again stays hidden. No task, action, clock or timer is written.
+
+**The line.** "Quests repaired: put back 1 person; reconnected 1 place; marked 1 location on your map." - or "Nothing
+was missing from your active quest(s).", or "You have no active quests to repair."; a part that could not be checked
+(a Place with no markers, a reveal naming no location) is counted, never fatal.
+
+Every host's pause hands `repairQuests` off its own bridge (`questBridge.repair`): the world, the fixed city, the
+dungeon, and the interior pause through its host. Pinned: `test/qrepair.test.js` (6) over a real machine, Place and
+mount; `tools/mutants/qrepair.json`.

@@ -168,11 +168,11 @@ now has a name per host.
 readers asked one.** `interiorFoes` and `interiorGuards` are both live
 inside a building; the senses feed, the enchant pool and the rest refusal
 each walked only the first, so the indoor city watch was invisible to all
-three (`src/scenes/worldModes.js:1012-1085`). **The exterior host mounted no
+three (`src/scenes/worldModes.js:1014-1087`). **The exterior host mounted no
 enchant ctx at all** - the session has ONE, and that host set none, so
 every enchantment payload that needs a foe idled in the host a player
 spends most of their time in (`setDefaultEnchantCtx` is imported at
-`src/scenes/exterior.js:62` now, and the pool it answers with is the
+`src/scenes/exterior.js:63` now, and the pool it answers with is the
 live one). **`scenes/interior.js` registered a keydown listener and never
 called `swallowBrowserKey`**, so F5 inside a building reloaded the page
 and destroyed the session - against `src/ui/input.js:680-702`'s own law,
@@ -224,7 +224,7 @@ mitigates in `DaggerfallEntity.DecreaseHealth`
 (`Assets/Scripts/Game/Entities/DaggerfallEntity.cs:312-328`), the base
 class every entity passes through, with DFU's own comment "from all
 sources"; the port consumed the pool only in `hurtPlayer`
-(`src/characters/playerEntity.js:201`) and the three foe doors subtracted
+(`src/characters/playerEntity.js:216`) and the three foe doors subtracted
 raw, so a Shield cast on a foe absorbed nothing. Beside it: `CastReadySpell`
 had grown a magicka-sufficiency refusal DFU does not have and re-priced
 the spell at click time, the six concealment effects lost DFU's
@@ -521,7 +521,7 @@ Left, deliberately, each recorded at its site or here:
   a zero-damage arrow into a pacified watchman turned nobody while the
   identical SWING turned the area. `handleAttackFromPlayer` is on the
   pool's public surface now (as the encounter pool's has always been,
-  `exteriorFoes.js:1973`) and all three seams route by pool membership.
+  `exteriorFoes.js:1978`) and all three seams route by pool membership.
 - ~~The indoor WATCH refuses the Wabbajack: DFU transforms any
   `EnemyEntity` and `Knight_CityWatch` is one, but the guard pool exposes
   no remove/spawn pair. The refusal and its reason are written into the
