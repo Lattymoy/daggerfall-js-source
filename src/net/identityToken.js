@@ -188,13 +188,13 @@ export const ACCOUNT_KINDS = Object.freeze(['guest', 'linked']);
 /** The titles that exist. A title is WORN one at a time, so a token
  *  carries at most one. Grants are the service's business (who HOLDS
  *  one); this list is the vocabulary both ends share. */
-export const TITLES = Object.freeze(['founder', 'developer']);
+export const TITLES = Object.freeze(['founder', 'developer', 'dungeonmaster', 'disciple', 'apostle', 'hierophant']);   // TITLE-N (2026-09-24, Mac): the Dungeon Master, and the three Patreon tiers in their order
 
 /** The glyphs that exist. A glyph is not worn, it is TRUE of a player -
  *  sprout is "this account is new", dev is "this is a developer", mod is
  *  "this is a moderator" (MOD1, Mac: "a moderator glyph") - so a token
  *  may carry several and a player chooses none of them. */
-export const GLYPHS = Object.freeze(['sprout', 'dev', 'mod']);
+export const GLYPHS = Object.freeze(['sprout', 'dev', 'mod', 'dm', 'disciple', 'apostle', 'hierophant']);   // TITLE-N: each new title has its own glyph (Mac), true of whoever holds the title
 
 /** The bound on `g`, and it is the vocabulary's own size rather than a
  *  number somebody picked: a token carrying more glyph slots than there

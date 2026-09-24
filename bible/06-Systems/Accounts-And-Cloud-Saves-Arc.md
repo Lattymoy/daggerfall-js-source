@@ -3074,3 +3074,35 @@ record is `06-Systems/Community-Arc.md` (MAIL1). This is the service's part of i
   `to_id` cascades, while `from_id` and `from_name` are what was sent.
 - `src/net/letterLaw.js` is the letter's law for both ends. The worker bundles it, so it is in the deploy's paths.
 - `src/net/accountClient.js`'s one table has a sentence for every new word, since ACC1e's walk reads letterLaw.js too.
+
+## TITLE-N and TITLE-R — the Dungeon Master, the Patreon tiers, and a roster of glyphs (2026-09-24)
+
+Mac: "Titles shouldnt show in the online panel. Only gyphs. Titles should remain over names and within chat itself.
+Remove the founder title from being obtained. Current users keep their founder title", and "Add 4 new titles/glyphs -
+Dungeon Master is an orange title with its own glyph. This title allows the user to use the /dm to message chat with
+orange text (similar to /red). This goes strictly to the account SquidKamer. Disciple, Apostle, Hierophant are new
+patreon titles. These also recieve their own unique glyphs. The account Dutchess will recieve the Disciple title/glyph".
+
+- **The vocabulary** (`src/net/identityToken.js`, in the relay bundle): the titles are `dungeonmaster`, `disciple`,
+  `apostle` and `hierophant`, and the glyphs are `dm`, `disciple`, `apostle` and `hierophant`. Each title carries its
+  own glyph. `src/ui/playerBadge.js` gives each title its word and colour: the Dungeon Master is orange (#ff8c1a), and
+  the tiers are teal, violet and rose, since Mac named no colours for them. Each glyph takes its title's colour, and
+  has its own shape (a d20, a flame, an open book, a crown) and a classic mark. `src/ui/enhancedAccount.js` names each
+  one on the card.
+- **The grants** (`server-account/src/titles.js`, `TIER_LISTS`): each title is a handle list in `wrangler.toml`, which
+  is the developers' own law. `DUNGEON_MASTER_HANDLES = "SquidKamer"` and `DISCIPLE_HANDLES = "Dutchess,Satranath"` (Mac added Satranath the same day); Apostle
+  and Hierophant are empty. A list grants its title and its glyph, and never to a guest. A lapsed Patreon tier is a
+  handle taken off the list, and it disappears from that player's next token. The service is `acct7`.
+- **/dm** is RED1's law, one glyph over. The client sends `{t:'narrate', text}` on the World link, and only from a
+  world104 relay (`DM_RELAY_MIN`, since an older one closes the socket on the frame).
+  - The relay accepts it only from a socket whose signed token carried `dm`. A developer, a player or a typed glyph is
+    ignored in silence.
+  - It is metered on its own bucket (`DM_HZ_MAX`) and fanned as `{t:'dm', text, at}`, with no speaker.
+  - The client gates it coming in and keeps it as a system line on every tab, drawn in the title's orange.
+  - The host parses it before /red and never guards it.
+- **The roster** (the chat's online column) shows glyphs only. The title stays over the name (`ui/nameLayer.js`,
+  `net/remotePlayers.js`) and on a chat line (`badgeNodes`).
+- **Founder** is closed. It was already derived from `registered_at <= FOUNDER_UNTIL` (2026-09-23T00:00Z), so no
+  account registered since then could obtain it, and every account that holds it keeps it, both held and worn. A pin
+  now holds both halves.
+- `test/titlen.test.js` has 8 pins. `tools/mutants/titlen.json` has 17 mutants, all dead. The relay is world104.

@@ -268,21 +268,19 @@ test('ACC3c: the chat roster wears the badge, MY OWN ROW INCLUDED - the relay ne
   assert.match(src('src/net/roster.js'), /readBadge\(from\)/, 'one reader, not a second spelling of the vocabulary check');
 });
 
-test('ACC3c: the roster REPAINTS when a badge changes - it is keyed, and a stale title would sit on screen until somebody else joined', () => {
+test('ACC3c / TITLE-R: the roster REPAINTS when a glyph changes - it is keyed, and a stale glyph would sit on screen until somebody else joined; it wears NO title (Mac: "Titles shouldnt show in the online panel. Only glyphs"), and the glyphs follow the name (mutants: the glyphs out of the key; the title back on the row)', () => {
   // SOC3 put the open menu in this key for exactly this reason. A
-  // title equipped, or a sprout that aged out, changes nothing else
-  // about the row - so without the badge in the key the list is
-  // correct and never redrawn.
+  // sprout that aged out changes nothing else about the row - so
+  // without the glyphs in the key the list is correct and never redrawn.
   const panel = src('src/ui/chatPanel.js');
   const key = /const key = label \+ '\|' \+ total \+ '\|' \+ \(menuFor \?\? ''\) \+ '\|' \+ rows\.map\(\(r\) => [^\n]*\)\.join\(','\);/.exec(panel);   // CHAT-CHAN: the list's own word leads the key
   assert.ok(key, 'the roster key moved');
-  assert.match(key[0], /r\.title/, 'a title that changes must repaint the row it is on');
-  assert.match(key[0], /r\.glyphs/);
-  // And the title goes BEFORE the name, the glyphs after - the world
-  // label read left to right, so one name does not sit two ways round
-  // on one screen.
-  const row = panel.slice(panel.indexOf('const badge = titleBadge(r);'), panel.indexOf("if (dup.has(r.name.toLowerCase()))"));
-  // CHAT-FIT: the three sit in the row's one nowrap LINE (`line`), not on the row itself
-  assert.ok(row.indexOf('dfchat-who-title') < row.indexOf('line.append(nameEl)'), 'the title is appended before the name');
-  assert.ok(row.indexOf('line.append(nameEl)') < row.indexOf('dfchat-who-glyph'), 'the glyphs after it');
+  assert.match(key[0], /r\.glyphs/, 'a glyph that changes must repaint the row it is on');
+  assert.doesNotMatch(key[0], /r\.title/, 'TITLE-R: the row draws no title, so a title changing repaints nothing');
+  const row = panel.slice(panel.indexOf("const line = el('div', 'dfchat-who-line');"), panel.indexOf("if (dup.has(r.name.toLowerCase()))"));
+  assert.doesNotMatch(row, /titleBadge|who-title/, 'TITLE-R: no title on the roster row');
+  // CHAT-FIT: they sit in the row's one nowrap LINE (`line`), not on the row itself
+  assert.ok(row.indexOf('line.append(nameEl)') >= 0 && row.indexOf('line.append(nameEl)') < row.indexOf('dfchat-who-glyph'), 'the glyphs after the name');
+  // the title stays where Mac kept it: over the name (ui/nameLayer.js, net/remotePlayers.js) and on a chat line
+  assert.match(panel, /const badgeNodes = \(peer, prefix\) => \{\s*const badge = titleBadge\(peer\);/, 'a chat line still wears its author\'s title');
 });

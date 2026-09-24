@@ -29,7 +29,7 @@
  *  reason: a deploy that did not happen looks exactly like one that
  *  did. Kept in step with ACCOUNT_VERSION in wrangler.toml, which
  *  test/accountworker.test.js holds. */
-export const ACCOUNT_VERSION = 'acct6';   // acct3: ACC3's titles and glyphs; acct4: ACC4's time played; acct5: MOD1's moderation; acct6: MAIL1's letters
+export const ACCOUNT_VERSION = 'acct7';   // acct3: ACC3's titles and glyphs; acct4: ACC4's time played; acct5: MOD1's moderation; acct6: MAIL1's letters; acct7: TITLE-N's Dungeon Master and Patreon tiers
 
 /** A body bigger than this is not a request this service has. Read
  *  BEFORE the JSON is parsed, so a megabyte of nothing costs nothing. */

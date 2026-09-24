@@ -307,7 +307,7 @@ import { enhancedHudScale } from '../ui/enhancedHud.js';   // AUDIT NAME1 F3: th
 import { makeHitPend } from '../net/hitPend.js';   // AUDIT FOES FOE2: a blow the wire refused waits and goes
 import { PeerBodies } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body
 import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs and their lines
-import { oocText, localLineHeard, nextRegionRoom, regionJoinedText, CHAN_OLD_RELAY_TEXT, ROLL_OLD_RELAY_TEXT, EMOTE_OLD_RELAY_TEXT } from '../net/chat.js';   // CHAT-CHAN: the channels' own laws (a second chat import: CHAT1's pin holds the first as it stands)
+import { oocText, localLineHeard, nextRegionRoom, regionJoinedText, CHAN_OLD_RELAY_TEXT, ROLL_OLD_RELAY_TEXT, EMOTE_OLD_RELAY_TEXT, partyNoteTab } from '../net/chat.js';   // CHAT-CHAN: the channels' own laws (a second chat import: CHAT1's pin holds the first as it stands)
 import { parseChatLine, HELP_LINES, CHAT_GREETING_TEXT, unknownCommandText, emptyCommandText, hostMisuseText, badRollText, expandShortcodes, EMOTE_LINES } from '../net/chatCommands.js';   // CHAT-CHAN: what a typed line IS; DICE1: and a roll; EMOTE1: an action, a gesture, a shortcode
 import { partyRosterSource, localRosterSource } from '../net/roster.js';   // CHAT-CHAN: the Party and Local tabs' composed lists
 import { SocialState, accountId, accountSecret } from '../net/social.js';   // SOC2: the friends and the party, as the hub says them; the account the hub's hello carries; SOC3: and the two colours a name wears in the DOM - my party's green, a friend's blue
@@ -10027,6 +10027,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // below is: CHAT1's pin holds those five lines as they stand, and
       // the hello is built when the socket opens, a turn later.
       link.mintToken = identityMinter;
+      link.onDm = (line) => chatLog.pushAll({ text: line.text, at: line.at, dm: true });   // TITLE-N: the Dungeon Master's line, on every tab as /red's is
       // SOC2: the HUB tab's link carries the account (net/social.js accountId - the profile's, not the tab's); the
       // presence session never does, and a later channel tab would not either: the hub is the one room that checks
       // it. Set after the join, which is safe because a socket opens on a later turn and the hello is built when it
@@ -10058,6 +10059,12 @@ export async function bootWorld(canvas, renderer, params, status) {
           });
           return true;
         }
+        // TITLE-N (Mac: "Dungeon Master ... allows the user to use the /dm to message chat with orange text (similar to
+        // /red)"): /red's law below, one frame over - parsed here and never guarded: whether this player may is the
+        // RELAY's question, asked of their signed token, and it ignores anyone else in silence. From any tab, on the
+        // World channel, the one room every player online is in.
+        const dm = /^\/dm\s+([\s\S]+)$/i.exec(text.trim());
+        if (dm) return chatLinks.get('world')?.sendDm(dm[1]) ?? false;
         // RED1 (Mac: "a red text system (kind of like warframe) where I
         // can message chat as the server"). THE COMMAND IS ALWAYS
         // PARSED AND NEVER GUARDED HERE: whether this player may speak
@@ -10215,7 +10222,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const why = SHARE_REFUSAL_TEXT[result.reason];
       setMidScreenText(why ? `${who} tried to share "${label}", but you ${why}` : `Could not receive the quest "${label}" from ${who}.`);
     };
-    social.onNote = (note, text) => { if (text) chatLog.push(String(note?.code ?? '').startsWith('party.') ? 'party' : tab.id, { text, system: true }); };   // CHAT-CHAN: a party's own news on the Party tab, beside its conversation
+    social.onNote = (note, text) => { if (text) chatLog.push(partyNoteTab(note, social, tab.id), { text, system: true }); };   // CHAT-CHAN: a party's own news on the Party tab, beside its conversation
     social.onError = (text) => { chatLog.push(tab.id, { text: `Social: ${text}`, system: true }); };
     // SOC3: the social button and the friends + party panel are made here, over `social`, `link` and `chatPanel`
     // (Mac: "A social button next to the chat UI, that when tapped opens the new friends list + party interface").
@@ -11341,6 +11348,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const chatFrame = () => {
     if (!chatLinks) return;
     buildPoll(performance.now());
+    chatLog.setShown('party', !!social?.party);   // CHAT-P (Mac: "Party chat should only show if in a party"): the tab is on the bar while a party is
     chatRegionFrame(performance.now());   // CHAT-CHAN: before the rejoin - a region crossed moves the link, a rejoin takes it back to where it is
     for (const [tabId, link] of chatLinks) {
       const room = chatLog.tab(tabId).room;   // CHAT-CHAN: a tab whose channel is not known yet (the Region tab, before its first region) has nothing to rejoin
