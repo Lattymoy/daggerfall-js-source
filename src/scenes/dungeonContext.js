@@ -3042,8 +3042,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // a readied spell on the click; only the SWING needs the weapon
     // out (WeaponManager verbatim, audit 2026-08-17).
     if (magic.interceptAttack(held)) return;   // the armed click casts, no swing
-    if (playerWeapon.sheathed) return;
-    weaponRig.attackInput(dx, dy, held);
+    weaponRig.attackInput(dx, dy, held);   // AUDIT 68 S09-sheathed-swing: the rig refuses the swing itself; a host-side sheath gate here ate the RELEASE
   }
   function resolvePlayerHit(eye, inViewFn, playerFeet, lookDir) {
     // AUDIT 23 (combat-14): entity colliders resolve FIRST

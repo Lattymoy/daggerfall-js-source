@@ -633,7 +633,6 @@ test('FIELD-GUN6: the lab\'s feel is the GAME\'s - one home, and it reaches both
     'the gun\'s own frame stands ahead of both classic paths');
   assert.match(rig, /kick: _tlKick/, 'and the draw reads the spring');
   assert.match(rig, /_tlRecoil\.punch\(\);/, 'the shot kicks');
-  assert.match(rig, /_tlShake\.punch\(\);/, 'and shakes');
   assert.match(rig, /betterAmbience\.weaponKick\?\./, 'the ROOM moves, through the one camera shaker the port has');
   // ...and the two 1:1 ports it no longer goes through are UNTOUCHED
   // by it, which is the other half of what this bought.

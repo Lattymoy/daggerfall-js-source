@@ -125,6 +125,3 @@ export const shieldWidgetTextures = Object.freeze({ size: shieldWidgetSize, imag
 
 /** The four archives, for a probe or a pin. */
 export const SHIELD_ARCHIVES = Object.freeze(Object.keys(SHIELD_ARCHIVE_SIZES).map(Number));
-
-/** Tests only: the cache is a session's. */
-export function _resetShieldSpritesForTests() { _images.clear(); }
