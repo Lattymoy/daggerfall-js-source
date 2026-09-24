@@ -142,6 +142,14 @@ export function createInfection(key, { day = 0, regionIndex = -1 } = {}) {
   return {
     kind: 'disease',
     infection: key,
+    // DISC16-A: DiseaseEffect's forcedRoundsRemaining (DiseaseEffect.cs
+    // :32, :67-77) - the round clock never ends it, only its own
+    // lifecycle does (endDisease's `ended`). Every other disease has
+    // carried this since S18; without it tickActiveEffects counted the
+    // entry's absent rounds down to NaN, the save wrote the NaN as null,
+    // and the first round after a load read `null <= 0` and dropped the
+    // infection.
+    permanent: true,
     disease: null,                       // classicDiseaseType = Diseases.None
     daysOfSymptomsLeft: PERMANENT_DISEASE_VALUE,
     statMods: {},

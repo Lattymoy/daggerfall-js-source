@@ -74,7 +74,7 @@ const QUIET = (() => {
 
 /** The producer chain, end to end: chargen mints the skills array, the
  *  curse mints the racialOverride, and the MAGIC ROUND is what writes
- *  `entry.skillMods` (lycanthropy.js:239-240 - ApplyLycanthropeAdvantages
+ *  `entry.skillMods` (lycanthropy.js:245-246 - ApplyLycanthropeAdvantages
  *  re-applied every round, LycanthropyEffect.cs:566-584). Nothing here
  *  touches `entity.skills`, which is the whole point: the permanent
  *  array never moves, so a reader of it never sees the +30. */

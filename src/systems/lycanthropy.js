@@ -156,6 +156,12 @@ export function createLycanthropyCurse(entity, infectionType, { now = 0, rolls =
     kind: 'racialOverride',
     racial: 'lycanthropy',
     key: LYCANTHROPY_CURSE_KEY,
+    // DISC16-A: "permanent until removed" - RacialOverrideEffect's
+    // forcedRoundsRemaining (RacialOverrideEffect.cs:28, :71-80); the
+    // cure's `ended` is its `forcedRoundsRemaining = 0` (:485). Without
+    // it the round clock counted the absent rounds to NaN, the save
+    // wrote null, and the first round after a load dropped the curse.
+    permanent: true,
     infectionType,
     isTransformed: false,
     lastKilledInnocent: now,     // UpdateSatiation runs in Start

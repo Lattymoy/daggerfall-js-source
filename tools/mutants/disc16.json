@@ -1,0 +1,56 @@
+[
+  {
+    "name": "DISC16-A-werewolf-curse-rounds-out",
+    "file": "src/systems/lycanthropy.js",
+    "old": "    permanent: true,\n    infectionType,",
+    "new": "    infectionType,",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-A-vampire-curse-rounds-out",
+    "file": "src/systems/vampirism.js",
+    "old": "    permanent: true,   // DISC16-A",
+    "new": "    // DISC16-A",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-A-infection-rounds-out",
+    "file": "src/systems/infection.js",
+    "old": "    permanent: true,\n    disease: null,",
+    "new": "    disease: null,",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-A-old-saves-not-repaired",
+    "file": "src/systems/save.js",
+    "old": "if (a.kind === 'racialOverride' || a.infection) a.permanent = true;",
+    "new": "if (a.kind === 'racialOverride' && a.infection) a.permanent = true;",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-A-cured-curse-kept",
+    "file": "src/systems/effects.js",
+    "old": "    if (a.permanent) return !a.ended;",
+    "new": "    if (a.permanent) return true;",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-B-dungeon-reads-world-candle",
+    "file": "src/scenes/worldModes.js",
+    "old": "          dungeonCtx.candleLight(), playerTorchLight(",
+    "new": "          magic?.candleLight(), playerTorchLight(",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  }
+]

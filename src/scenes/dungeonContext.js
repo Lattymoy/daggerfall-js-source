@@ -5807,9 +5807,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     /** X11: the Light effect's candle. The engine owns the candle (it
      *  is the player's, and every casting host builds one engine); the
      *  LIGHT has to be handed out because each host builds its own
-     *  point-light array. ?world reads magic.candleLight() directly
-     *  off its own engine; the standalone ?dungeon host only ever
-     *  holds this context, so it reads it here. */
+     *  point-light array. BOTH hosts read it here (DISC16-B): the
+     *  dungeon's casts are this context's engine's, and ?world's own
+     *  engine is not updated underground - reading that one lit
+     *  nothing, or a candle left at the street it was cast on. */
     candleLight: () => magic.candleLight(),
     /** X11 probe seams: the FOE cast door and the per-foe sinks. Both
      *  halves of a reflection live here - the spell going out and the

@@ -667,6 +667,16 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // no turn. `deathScheduled` IS fakeDeathVideoPlayed, which DFU saves, and
   // stays.
   for (const a of entity.activeEffects) if (a.infection && !a.dreamPlayed) a.dreamScheduled = false;
+  // DISC16-A: THE CURSES AND INFECTIONS ALREADY ON DISK. Both were minted
+  // without the `permanent` flag their DFU classes' forcedRoundsRemaining
+  // stands for (RacialOverrideEffect.cs:28, :71-80; DiseaseEffect.cs:32,
+  // :67-77), so every live round decremented an absent roundsRemaining to
+  // NaN and the envelope's JSON wrote it as null - and the first round
+  // after the load read `null <= 0` and dropped the entry: a werewolf or a
+  // vampire came back human after any load, the spell still in the book.
+  // The entry itself was saved whole, so repairing it here gives those
+  // players their curse back.
+  for (const a of entity.activeEffects) if (a.kind === 'racialOverride' || a.infection) a.permanent = true;
   // V2a: the racial override MARKER is a live reference into the list
   // just restored - rebuilt here, never serialized on its own, so the
   // marker and the entry can never disagree (the gates - a second
