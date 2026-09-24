@@ -57,7 +57,7 @@ enabled = true
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct6"
+ACCOUNT_VERSION = "acct7"
 # The site that may call this. "*" while nothing is live; it is narrowed
 # to the real origin before a single account exists.
 ALLOWED_ORIGIN = "*"
@@ -82,6 +82,17 @@ DEVELOPER_HANDLES = "Lattymoy"
 # Asynian"). Taking a handle off revokes the shield on the next token
 # and the commands on the next call.
 MODERATOR_HANDLES = "Asynian"
+# TITLE-N (2026-09-24, Mac): the Dungeon Master - the orange title, the
+# die beside the name, and /dm's orange line (the relay reads the right
+# off the `dm` glyph in the signed token, as /red reads `dev`). "This
+# goes strictly to the account SquidKamer."
+DUNGEON_MASTER_HANDLES = "SquidKamer"
+# TITLE-N: the three Patreon tiers, lowest first - each list grants its
+# title and its glyph. Dutchess is the first Disciple (Mac); a tier that
+# lapses is a handle taken off, gone from that player's next token.
+DISCIPLE_HANDLES = "Dutchess"
+APOSTLE_HANDLES = ""
+HIEROPHANT_HANDLES = ""
 
 [[d1_databases]]
 binding = "DB"

@@ -761,3 +761,23 @@ line, never sent) and it is never counted unread (`net/chat.js` push's `quiet`),
 the chat and no badge asks them to. The chat box's own hint is unchanged. `test/chathelp.test.js` (3),
 `tools/mutants/chathelp.json` 4 of 4 dead.
 
+
+## CHAT-P and CHAT-W — the Party tab only in a party, and a channel's lines kept to its tab (2026-09-24)
+
+Mac: "Party chat should only show if in a party", and "Messages sent in world chat shouldnt carry over to region chat".
+
+- **CHAT-W, the root cause.** The relay keeps its rooms apart, and so does the open panel: each tab lists its own lines.
+  The leak was the peek, the last five lines drawn over the world while the chat is closed. CHAT-CHAN took the peek
+  from every tab, so a World line stood over the screen of a player reading Region, marked "World". The peek now draws
+  the open tab's lines, plus the Party tab's (`peekAll`), because a party's line is said to the player and not to a
+  room they happen to be in. Notices the game says (`pushAll`) are on every tab, so they still show. The other tabs
+  signal news with their badge.
+- **CHAT-P.** The Party row starts off the bar (`hidden`). The chat frame puts it on the bar while `social.party` holds
+  (`ChatLog.setShown`) and takes it off otherwise.
+  - While off the bar, the tab cannot be selected and its unread count is on no badge.
+  - Taking it off while it is the front tab hands the front to the first tab still on the bar, which is read at once
+    if the chat is open. Its lines stay as history.
+  - A party note lands on the Party tab only while a party holds. The note of my own removal lands on the tab I am
+    reading, whatever order it and the party frame arrive in (`net/chat.js partyNoteTab`).
+- Pinned in `test/chatchan.test.js`, with re-aimed pins in `test/chat1.test.js`. Mutants: `tools/mutants/chatchan.json`
+  `CHAT-W-*` and `CHAT-P-*`, all dead.

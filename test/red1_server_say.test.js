@@ -239,6 +239,6 @@ test('RED1: the host parses /red and NEVER guards it - the authority is the rela
 test('RED1: the wire version moved, because this is a relay change', () => {
   // SLAM8's law reaches this slice like any other: a `say` frame the
   // old relay does not know is a different deployed worker.
-  assert.equal(RELAY_VERSION, 'world103');   // world103: the contributor's dd/rz over the arc's deploy; world102: CHAT-CHAN + DICE1 + EMOTE1 + INSPECT1 + JOURNAL1 + AUDIT ATTACH; world101: DISC12 lh/wb; world100: DISC7 hs; world99: HCC-PARK + RIDE; world98: SPELLFX1; world91: QUEST1 + TRADE1 + PEER-FS1; world92: AUDIT DROPS B3/C1/C3; world96: the party-rest drop's pose fields
+  assert.equal(RELAY_VERSION, 'world104');   // world104: TITLE-N's narrate/dm frame and badge vocabulary; world103: the contributor's dd/rz over the arc's deploy; world102: CHAT-CHAN + DICE1 + EMOTE1 + INSPECT1 + JOURNAL1 + AUDIT ATTACH; world101: DISC12 lh/wb; world100: DISC7 hs; world99: HCC-PARK + RIDE; world98: SPELLFX1; world91: QUEST1 + TRADE1 + PEER-FS1; world92: AUDIT DROPS B3/C1/C3; world96: the party-rest drop's pose fields
   assert.match(rd('test/relayversion.test.js'), /world89: '[0-9a-f]{64}'/, 'and its law is recorded');
 });

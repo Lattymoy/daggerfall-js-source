@@ -18,6 +18,9 @@
 //   DEVELOPER your handle is in the service's DEVELOPER_HANDLES.
 //   SPROUT    your account is younger than SPROUT_S.
 //   DEV       the same list as the Developer title.
+//   DUNGEON MASTER, DISCIPLE, APOSTLE, HIEROPHANT (TITLE-N, 2026-09-24)
+//             your handle is in that title's own list in the config;
+//             each list grants the title AND its glyph.
 //
 // WHY THAT AND NOT A `grants` TABLE. Mac asked that "all current
 // players should be granted the founder title", and the obvious
@@ -82,6 +85,37 @@ function handleList(raw) {
   return new Set(raw.split(',').map((h) => h.trim().toLowerCase()).filter(Boolean));
 }
 
+/** ═══ TITLE-N (2026-09-24, Mac) ═══════════════════════════════════
+ *
+ * "Dungeon Master is an orange title with its own glyph. This title
+ * allows the user to use the /dm to message chat with orange text
+ * (similar to /red). This goes strictly to the account SquidKamer" -
+ * and "Disciple, Apostle, Hierophant are new patreon titles. These also
+ * recieve their own unique glyphs. The account Dutchess will recieve
+ * the Disciple title/glyph".
+ *
+ * Each is a HANDLE LIST IN CONFIG, the developers' own law and for the
+ * developers' reason: granting one is a reviewed, deployed edit, never
+ * a reach into the live database - and a Patreon tier that lapses is a
+ * handle taken off a list, gone from that player's next token. The
+ * title is HELD and may be worn; the glyph beside it is TRUE, and so
+ * is the Dungeon Master's /dm: the relay reads that right off the `dm`
+ * glyph in the signed token, as /red reads `dev`.
+ */
+export const TIER_LISTS = Object.freeze({
+  dungeonmaster: 'DUNGEON_MASTER_HANDLES',
+  disciple: 'DISCIPLE_HANDLES',
+  apostle: 'APOSTLE_HANDLES',
+  hierophant: 'HIEROPHANT_HANDLES',
+});
+/** The glyph each of those titles carries, in the vocabulary's words. */
+export const TIER_GLYPH = Object.freeze({ dungeonmaster: 'dm', disciple: 'disciple', apostle: 'apostle', hierophant: 'hierophant' });
+
+/** Does this player hold that list's title? A guest holds none, for the developer's reason. */
+export const holdsTier = (title, player, env) =>
+  typeof player?.handle === 'string' && !!player.handle && Object.hasOwn(TIER_LISTS, title)
+  && handleList(env?.[TIER_LISTS[title]]).has(player.handle.toLowerCase());
+
 /** Is this player one of them? A handle a guest does not have cannot
  *  be in any list, so a guest is never a developer - which is right:
  *  the list names people, and a guest row is a device. */
@@ -114,6 +148,7 @@ export function titlesHeld(player, env) {
   // vanishes with a cleared browser and was never anybody's.
   if (Number.isFinite(player?.registered_at) && player.registered_at <= FOUNDER_UNTIL) held.push('founder');
   if (isDeveloper(player, env)) held.push('developer');
+  for (const t of Object.keys(TIER_LISTS)) if (holdsTier(t, player, env)) held.push(t);   // TITLE-N
   return held;
 }
 
@@ -125,6 +160,7 @@ export function glyphsOf(player, env, nowS) {
   if (Number.isFinite(player?.created_at) && nowS - player.created_at < SPROUT_S) on.push('sprout');
   if (isDeveloper(player, env)) on.push('dev');
   if (isModerator(player, env)) on.push('mod');   // MOD1: the blue shield
+  for (const t of Object.keys(TIER_LISTS)) if (holdsTier(t, player, env)) on.push(TIER_GLYPH[t]);   // TITLE-N: each title's own glyph
   return on;
 }
 
