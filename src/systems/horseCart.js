@@ -1239,6 +1239,17 @@ export function createHorseCartRuntime(deps) {
     deployedVisual?.offset(d); stationaryHorseVisual?.offset(d);
     trail.offset(d); hitchedWagonPath.offset(d); horseFollower.offset(d);
   }
+  /** DISC19-C (2026-09-24, Mac: "Horse and carts can be seen parked in the sky"): the ground under the standing team
+   *  was built again (the pool's groundMoved - a pixel streamed in, the road network or a late World of Daggerfall
+   *  pack rebuilding one). The mod grounds the parked wagon and the waiting horse once (Tick's `grounded` return, the
+   *  requested pose's tolerance) because its terrain never changes under a scene; the port's can, by metres on a
+   *  levelled site - so they stand again, on what is there now, on the next frame. `within(position)` narrows it to
+   *  the ground that moved; a following horse is grounded every step already.
+   *  @param {(position: number[]) => boolean} [within] */
+  function regroundStanding(within = () => true) {
+    if (deployedVisual?.isAlive && within(deployedVisual.position)) { deployedVisual.grounded = false; deployedVisual.nextGroundRetryTime = 0; }
+    if (stationaryHorseVisual?.isAlive && !isHorseFollowing() && within(stationaryHorseVisual.position)) stationaryHorseVisual.hasRequestedPose = false;
+  }
   function handleStartLoad() { wagonState = newSaveData(); clearAllTransientState(); pendingPersistenceNormalization = !physicalPersistenceEnabled; }
   function handleNewGame() { wagonState = newSaveData(); clearAllTransientState(); pendingPersistenceNormalization = !physicalPersistenceEnabled; }
   function getSaveData() {
@@ -1254,7 +1265,7 @@ export function createHorseCartRuntime(deps) {
   function suspend() { clearAllTransientState(); }
 
   return {
-    lateUpdate, rebase, handleSettingsChanged,
+    lateUpdate, rebase, regroundStanding, handleSettingsChanged,
     handleStartLoad, handleNewGame, getSaveData, restoreSaveData, newSaveData, suspend,
     handlePreTransition, handleSuccessfulInteriorTransition, handleFailedTransition, handleExteriorTransition,
     handlePreFastTravel, handlePostFastTravel,

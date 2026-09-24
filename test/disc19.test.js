@@ -112,16 +112,16 @@ test('DISC19-E: Diverse Weapons\' Weapon Widget Preset ships off, and a value sa
 });
 
 // ── DISC19-D: "Lightning can be seen even when its not storming" ──
-test('DISC19-D: a storm cell strikes only where it is drawn - wholly outside its front\'s core it strikes nothing, half outside it strikes only inside, unclipped it strikes as ever; and a sunny afternoon in the swamp that 248 strikes lit is dark (mutant: the clip gate dropped)', async () => {
+test('DISC19-D: a storm cell strikes only where it is drawn - wholly outside its front\'s core it strikes nothing, half outside it strikes only inside, unclipped it strikes as ever, and never onto snow where it lands; and a sunny afternoon in the swamp that 248 strikes lit is dark (mutants: the clip gate dropped; the strike point\'s ground unread)', async () => {
   const { createDistantStorms } = await import('../src/systems/distantStorms.js');
   const { insideClip } = await import('../src/systems/weatherMap.js');
   const CIRCLE = Object.freeze([1, 0, 0, 0, 0, 0, 0]);
   const cell = (clip) => ({ type: 'thunder', id: 'thunder:9:9:9:0', x: 20000, z: 0, r: 5000, reach: 5000, env: 1, bornAt: 300, life: 2000, bands: [[5000, 'thunder']], clip, shape: CIRCLE });
-  const run = (s) => {
+  const run = (s, ground = null) => {
     const ds = createDistantStorms();
     const out = { strikes: [], sounds: 0, lit: 0 };
     for (let f = 0; f <= 600 * 5; f++) {   // 600 game minutes, a frame a real second
-      const r = ds.tick({ systems: [s], at: [0, 0], minutes: 1000 + f / 5, seconds: f });
+      const r = ds.tick({ systems: [s], at: [0, 0], minutes: 1000 + f / 5, seconds: f, ground });
       out.strikes.push(...r.strikes); out.sounds += r.sounds.length; if (r.bolt) out.lit++;
     }
     return out;
@@ -134,6 +134,10 @@ test('DISC19-D: a storm cell strikes only where it is drawn - wholly outside its
   const h = run(half);
   assert.ok(h.strikes.length > 0 && h.strikes.length < free.strikes.length, `half its strikes (${h.strikes.length} of ${free.strikes.length})`);
   for (const s of h.strikes) assert.ok(insideClip(half, s.x, s.z), 'every one where the cell is drawn');
+  // and where it lands is the ground's to say: the centre over thunder ground, the cell's east half over snow
+  const east = run(cell(null), (type, x) => (x <= 20000 ? 'thunder' : 'snow'));
+  assert.ok(east.strikes.length > 0 && east.strikes.length < free.strikes.length, `the west half's strikes (${east.strikes.length})`);
+  for (const s of east.strikes) assert.ok(s.x <= 20000, 'none on the snow');
 
   // the report's own afternoon, measured: a swamp everywhere, the player's word sunny, 18 clipped cells in range
   const { systemsNear, weatherAt } = await import('../src/systems/weatherMap.js');
@@ -307,4 +311,203 @@ test('DISC19-B: the fader - the song runs through a gain of its own under the vo
   rampFader(ctx, old, 1, 1);
   assert.deepEqual(calls, [['ff', 'cancel', 20], ['ff', 'set', 0.4, 20], ['ff', 'ramp', 1, 21]], 'from where it stood, not from where the last ramp began');
   rampFader(null, g, 1, 1); rampFader(ctx, null, 1, 1);   // no context, no fader: nothing, never a throw
+});
+
+// ── DISC19-C: "Horse and carts can be seen parked in the sky" ──
+/** A collider over `groundAt(x, z)` (null: not built there) that also stands every box the pool adds - a wagon's box
+ *  answers the ray at its top, 1.3 m over its root, two metres about it - and counts its casts. */
+function groundCollider(groundAt) {
+  const buckets = new Map();
+  const col = {
+    buckets, casts: 0,
+    addMesh: (k, p, i, m) => buckets.set(k, { m: [...m] }),
+    removeBucket: (k) => buckets.delete(k),
+    surfaceHit: (o, d, max, filter) => {
+      col.casts++;
+      const hits = [];
+      if (d[1] < 0) {
+        const g = groundAt(o[0], o[2]);
+        if (g !== null && o[1] >= g && o[1] - g <= max) hits.push({ dist: o[1] - g, key: null, normal: [0, 1, 0] });
+        for (const [k, b] of buckets) {
+          if (filter?.skip?.includes(k)) continue;
+          const top = b.m[13] + 1.3;
+          if (Math.abs(o[0] - b.m[12]) <= 2 && Math.abs(o[2] - b.m[14]) <= 2 && o[1] >= top && o[1] - top <= max) hits.push({ dist: o[1] - top, key: k, normal: [0, 1, 0] });
+        }
+      }
+      hits.sort((a, b) => a.dist - b.dist);
+      return hits[0] ?? { dist: Infinity, key: null, normal: null };
+    },
+    sphereCast: () => ({ dist: Infinity, key: null }),
+  };
+  return col;
+}
+async function hccPool({ groundAt, clock = { t: 0 }, runtime = null } = {}) {
+  const { createHorseCartPool } = await import('../src/scenes/horseCartPool.js');
+  const { syntheticWagon41214 } = await import('./hccModel.mjs');
+  const { CARGO_DEFINITIONS } = await import('../src/systems/wagon41214.js');
+  const { WAGON_MODEL_ID } = await import('../src/systems/horseCartLaw.js');
+  const gpu = { [WAGON_MODEL_ID]: { id: WAGON_MODEL_ID } };
+  for (const d of CARGO_DEFINITIONS) gpu[d.modelId] = { id: d.modelId };
+  const renderer = { createMesh: (m) => ({ m }), drawMesh() {}, createBillboardBatch: () => ({ origin: [0, 0, 0] }), destroyBillboardBatch() {}, uploadTexture() {} };
+  const meshes = { getGpuMesh: async (id) => gpu[id] ?? null, cpuModels: new Map([[WAGON_MODEL_ID, syntheticWagon41214()]]) };
+  const col = groundCollider(groundAt);
+  const pool = createHorseCartPool({ renderer, meshes, collider: () => col, now: () => clock.t, fetchFn: async () => ({ ok: false, status: 404 }), selfId: () => 'me', log: { error() {}, warn() {}, info() {} } });
+  pool.attach(runtime ?? { view: () => ({ state: { HorseName: '' }, moving: null, deployed: null, horse: null, persistence: true }), lateUpdate() {}, rebase() {} });
+  return { pool, col, clock };
+}
+const settle = async () => { for (let i = 0; i < 12; i++) await new Promise((r) => setTimeout(r, 0)); };
+/** How high a peer's wagon's wheels ride over `ground`, less their radius: 0 is standing on it. */
+const wheelsOver = (pool, p, ground) => {
+  const { quatRotate } = QUAT;
+  const P = pool.parts;
+  return [P.wheelLeftPivot, P.wheelRightPivot].map((pv) => p.wagon.position[1] + quatRotate(p.wagon.rotation, pv)[1] - P.wheelRadius - ground);
+};
+let QUAT = null;
+
+test('DISC19-C: a team the relay kept from before the ground was lowered - a fifth of its height up, 20 m over 100 m of ground - stands on the viewer\'s ground: the wagon by the mod\'s two-wheel solve, the horse by its probe, the box with them; a re-stand does not climb onto its own box; the ground moving under it moves it (mutants: no grounding; the owner\'s box not left out of the ray)', async () => {
+  QUAT ??= await import('../src/world/quat.js');
+  let G = 100;   // my ground, scene metres
+  const { pool, col } = await hccPool({ groundAt: () => G });
+  const toScene = (q) => [(q[0] - 100000) / 40, q[1], (q[2] - 200000) / 40];
+  const stale = 120;   // the owner's client stood it on the prefab's 1.5: 100 x 1.5 / 1.25
+  const kept = { k: 'k1', id: 'p1', name: 'Ann', r: { w: [2, 100400, stale, 200400, 0, 0, 0, 1, 25, 0], h: [100400, stale, 200520, 0, 1, 0] } };
+  pool.replaceKept('world:6,9', [kept], toScene, 0);
+  await settle();   // the wagon's mesh (its pivots) up
+  pool.frame(1 / 30, [0, 101, 0]);
+  const p = pool.peers.get('kept:k1');
+  for (const over of wheelsOver(pool, p, G)) assert.ok(Math.abs(over) < 1e-6, `the wheels on my ground, not ${stale - G} m over it (${over})`);
+  assert.ok(Math.abs(p.horse.position[1] - G) < 1e-9, `the horse on it (${p.horse.position[1]})`);
+  assert.ok(Math.abs(p.shownWagon[1] - p.wagon.position[1]) < 1e-9, 'shown where it stands from the first frame');
+  const box = col.buckets.get('hccWagon:kept:k1');
+  assert.ok(box && Math.abs(box.m[13] - p.wagon.position[1]) < 1e-4, 'its box stands with it (a Float32 matrix)');
+  assert.ok(Math.abs(p.wagon.position[0] - 10) < 1e-6 && Math.abs(p.wagon.position[2] - 10) < 1e-6, 'where it was said, across');
+  // a re-stand (a pixel built under it) probes past the box it stood: still on the ground, not on its own roof
+  pool.groundMoved(-1e6, -1e6, 1e6, 1e6);
+  pool.frame(1 / 30, [0, 101, 0]);
+  for (const over of wheelsOver(pool, pool.peers.get('kept:k1'), G)) assert.ok(Math.abs(over) < 1e-6, `re-stood on the ground (${over})`);
+  // the ground rebuilt two metres lower (a late World of Daggerfall pack levelling the site): it follows at once
+  G = 98;
+  pool.groundMoved(-1e6, -1e6, 1e6, 1e6);
+  pool.frame(1 / 30, [0, 99, 0]);
+  const q = pool.peers.get('kept:k1');
+  for (const over of wheelsOver(pool, q, G)) assert.ok(Math.abs(over) < 1e-6, `followed the ground down (${over})`);
+  assert.ok(Math.abs(q.horse.position[1] - G) < 1e-9);
+  // a pixel built elsewhere asks nothing of it
+  const casts = col.casts;
+  pool.groundMoved(5000, 5000, 5800, 5800);
+  pool.frame(1 / 30, [0, 99, 0]);
+  assert.equal(col.casts, casts, 'no probe for a team on ground that did not move');
+});
+
+test('DISC19-C: a word my ground is not under yet stands as said and is tried again a second later, then stands on it; a word the viewer\'s ground agrees with stands where it was said; a moving team is its owner\'s live word and is never probed; the stand rides the floating origin and a re-anchor (mutants: no retry; a moving team grounded)', async () => {
+  QUAT ??= await import('../src/world/quat.js');
+  const { GROUND_RETRY_SECONDS } = await import('../src/systems/horseCartLaw.js');
+  let built = false;
+  const clock = { t: 0 };
+  const { pool, col } = await hccPool({ groundAt: () => (built ? 50 : null), clock });
+  let ox = 100000;
+  const toScene = (q) => [(q[0] - ox) / 40, q[1], (q[2] - 200000) / 40];
+  pool.applyOwner('p1', { w: [2, 100400, 62, 200400, 0, 0, 0, 1, 25, 0], h: [100400, 62, 200520, 0, 1, 0] }, toScene, 1);
+  await settle();
+  pool.frame(1 / 30, [0, 51, 0]);
+  const p = () => pool.peers.get('p1');
+  assert.equal(p().wagon.position[1], 62, 'no ground to stand on: as the owner said');
+  assert.equal(p().horse.position[1], 62);
+  built = true;
+  clock.t += GROUND_RETRY_SECONDS / 2;
+  pool.frame(1 / 30, [0, 51, 0]);
+  assert.equal(p().horse.position[1], 62, 'not every frame - the mod\'s retry');
+  clock.t += GROUND_RETRY_SECONDS / 2 + 1e-6;
+  pool.frame(1 / 30, [0, 51, 0]);
+  for (const over of wheelsOver(pool, p(), 50)) assert.ok(Math.abs(over) < 1e-6, `stood once the ground came (${over})`);
+  assert.equal(p().horse.position[1], 50);
+  // my floating origin moves, then a fast travel re-anchors it: the stand is a delta off the word, carried by both
+  const before = [...p().wagon.position];
+  ox += 819.2 * 40;
+  pool.offsetAll([-819.2, 0, 0]);
+  pool.frame(1 / 30, [0, 51, 0]);
+  assert.ok(Math.abs(p().wagon.position[0] - (before[0] - 819.2)) < 1e-9 && Math.abs(p().wagon.position[1] - before[1]) < 1e-9, 'shifted with the world, still standing');
+  // a live word from an owner whose ground is mine - their own solve on flat ground 50, the root the wheels' radius
+  // less their pivots' height over it - stands where they said it, to a micron
+  const casts0 = col.casts;
+  const Y0 = 50 + pool.parts.wheelRadius - pool.parts.wheelLeftPivot[1];
+  pool.applyOwner('p2', { w: [2, 100800, Y0, 200800, 0, 0, 0, 1, 25, 0], h: [100800, 50, 200920, 0, 1, 0] }, toScene, 2);
+  pool.frame(1 / 30, [0, 51, 0]);
+  const q = pool.peers.get('p2');
+  assert.ok(col.casts > casts0, 'probed');
+  assert.ok(Math.abs(q.horse.position[1] - 50) < 1e-9);
+  assert.ok(Math.abs(q.wagon.position[1] - Y0) < 1e-6, `where it was said (${q.wagon.position[1]} vs ${Y0})`);
+  assert.deepEqual(q.wagon.rotation.map((v) => Math.round(v * 1e6) / 1e6), [0, 0, 0, 1], 'level, as it was said');
+  // a team on the move stands as its owner says it, and is never probed
+  const casts1 = col.casts;
+  pool.applyOwner('p3', { w: [3, 101200, 70, 201200, 0, 0, 0, 1, 25, 0], h: [101200, 70, 201320, 0, 1, 1] }, toScene, 3);
+  pool.frame(1 / 30, [0, 51, 0]);
+  const m = pool.peers.get('p3');
+  assert.deepEqual(m.wagon.position, toScene([101200, 70, 201200]), 'a following wagon: the owner\'s word');
+  assert.deepEqual(m.horse.position, toScene([101200, 70, 201320]), 'a walking horse: the owner\'s word');
+  assert.equal(col.casts, casts1, 'no probe for a team on the move');
+});
+
+test('DISC19-C: my own parked wagon and waiting horse stand again when the ground under them is built again - the mod grounds them once, and a rebuild left them on the old ground; only the ground that moved asks (mutant: the pool\'s re-stand never reaches the runtime)', async () => {
+  const { makeWorld } = await import('./hccWorld.mjs');
+  const { TRANSPORT, WAGON_MODE } = await import('../src/systems/horseCartLaw.js');
+  const { rt, w, step, walk, state } = makeWorld();
+  step(); rt.tryUseTransport(TRANSPORT.Cart); step(); walk(10); w.mode = TRANSPORT.Foot; step(3);
+  assert.equal(state().Mode, WAGON_MODE.Deployed);
+  const y0 = rt.view().deployed.position[1], h0 = rt.view().horse.position[1];
+  w.ground = -2.5;   // the site levelled under them
+  step(3);
+  assert.equal(rt.view().deployed.position[1], y0, 'the mod grounds once: the wagon stays on the old ground');
+  assert.equal(rt.view().horse.position[1], h0);
+  rt.regroundStanding(() => false);
+  step(2);
+  assert.equal(rt.view().deployed.position[1], y0, 'ground that moved elsewhere asks nothing');
+  rt.regroundStanding();
+  step(2);
+  assert.ok(Math.abs(rt.view().deployed.position[1] - (y0 - 2.5)) < 1e-6, `the wagon on the new ground (${rt.view().deployed.position[1]})`);
+  assert.ok(Math.abs(rt.view().horse.position[1] - -2.5) < 1e-6, 'and the horse');
+  assert.ok(rt.view().deployed.isGrounded && rt.view().horse.isInteractive, 'standing, pressable');
+  // the pool hands the runtime the rebuilt pixel's bounds, a wagon's length of margin about it
+  let within = null;
+  const { pool } = await hccPool({ groundAt: () => 0, runtime: { view: () => ({ state: { HorseName: '' }, moving: null, deployed: null, horse: null, persistence: true }), lateUpdate() {}, rebase() {}, regroundStanding: (f) => { within = f; } } });
+  pool.groundMoved(0, 0, 819.2, 819.2);
+  assert.equal(typeof within, 'function');
+  assert.ok(within([400, 7, 400]) && within([-5, 0, 824]), 'inside, and astride the edge');
+  assert.ok(!within([-50, 0, 400]) && !within([400, 0, 900]), 'not the next pixel over');
+});
+
+test('DISC19-C: a crossing that leaves the parked wagon\'s pixel takes its box away - it stood in the old frame, and no wagon is shown to stand it again (mutant: the key forgotten, the box left 819 m off as a wall no one sees)', async () => {
+  const deployed = { isGrounded: true, position: [10, 0, 10], rotation: [0, 0, 0, 1], cargoTier: 0 };
+  let show = true;
+  const runtime = { view: () => ({ state: { HorseName: '' }, moving: null, deployed: show ? deployed : null, horse: null, persistence: true }), lateUpdate() {}, rebase() {} };
+  const { pool, col } = await hccPool({ groundAt: () => 0, runtime });
+  pool.frame(1 / 30, [0, 1, 0]);
+  await settle();
+  pool.frame(1 / 30, [0, 1, 0]);
+  assert.ok(col.buckets.has('hccWagon'), 'the parked wagon stands its box');
+  // the crossing: the origin moves and the wagon's pixel is left behind in the same frame
+  pool.offsetAll([-819.2, 0, 0]);
+  show = false;
+  pool.frame(1 / 30, [0, 1, 0]);
+  assert.ok(!col.buckets.has('hccWagon'), 'no box where no wagon is');
+  // and a wagon still shown after a crossing stands its box again at the shifted pose
+  show = true;
+  pool.frame(1 / 30, [0, 1, 0]);
+  deployed.position = [10 - 819.2, 0, 10];
+  pool.offsetAll([-819.2, 0, 0]);
+  pool.frame(1 / 30, [0, 1, 0]);
+  assert.ok(Math.abs(col.buckets.get('hccWagon').m[12] - (10 - 819.2)) < 1e-3, 'a Float32 matrix');
+});
+
+test('DISC19-C: the world host asks the pool to re-stand over every pixel it builds, bound once the pool exists (the boot\'s first pixel builds before it)', () => {
+  const s = rd('src/scenes/world.js');
+  const decl = s.indexOf('let hccGroundMoved = null;');
+  const first = s.indexOf('const playerPixel = await buildPixel(first.px, first.py);');
+  const pool = s.indexOf('const hcc = createHorseCartPool({');
+  const bind = s.indexOf('hccGroundMoved = hcc.groundMoved;');
+  assert.ok(decl > 0 && decl < first && first < pool && pool < bind, 'declared before the first build, bound after the pool');
+  const set = s.indexOf('built.set(key, {');
+  const call = s.indexOf('hccGroundMoved(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE);');
+  assert.ok(set > 0 && call > set && call - set < 6000, 'after the pixel is published, over its own bounds');
+  assert.match(s.slice(call - 200, call), /if \(hccGroundMoved\) \{\s+const t = state\.pixelTranslation\(px, py\);\s+$/);
 });

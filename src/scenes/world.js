@@ -903,6 +903,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const labGrass = isEnhanced() && getPref('enhancedEnvironments') && grassDensity > 0 && new URLSearchParams(globalThis.location?.search ?? '').get('grass') !== 'off'
     ? new LabGrassRenderer(renderer.gl) : null;
   let labGrassField = null;   // GR5: the world-anchored field, filled a cell or two a frame
+  let hccGroundMoved = null;   // DISC19-C: the horse-cart pool's re-stand over a pixel just built - bound once the pool is (the boot's first pixel builds before it)
   // WATER1: the water surface - enhanced skin, its own switch, `?water=off`
   // the kill door. A draw only: nothing here tells the game where water is.
   const waterOn = waterSwitchOn();   // FT6: the one composition (render/waterSurface.js)
@@ -2240,6 +2241,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       const t = state.pixelTranslation(px, py);
       labGrassField.invalidate(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE);
     }
+    // DISC19-C (Mac: "Horse and carts can be seen parked in the sky"): and a parked wagon or a waiting horse on this
+    // pixel - mine or a peer's - stands again on the ground as it now is (horseCartPool.js groundMoved). The mod
+    // grounds its standing team once; a rebuild under it (the road network, a late World of Daggerfall pack) left it
+    // on the old ground until its owner walked out of the pixel and back.
+    if (hccGroundMoved) {
+      const t = state.pixelTranslation(px, py);
+      hccGroundMoved(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE);
+    }
     // AUDIT-TO1 B3: the second hook. BOOT-TDZ2: THE MOD IS ASKED FIRST,
     // because this builder runs inside the boot's OWN first build and
     // `playerTravelPixel()` reads `walkMode`, `player` and `cam` - three
@@ -3502,6 +3511,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     threats: hccThreats, selfId: () => online?.id ?? null, peerName: (id) => peerName(id),
     onChanged: () => { _hccDirty = true; }, toWire: (p) => campToWire(p), log: console,   // AUDIT HCC O5: the change key in the wire frame (campToWire is the pose's law, declared with the stream below; read only once frames run)
   });
+  hccGroundMoved = hcc.groundMoved;   // DISC19-C
   const hccRuntime = createHorseCartRuntime({
     ready: () => walkMode && playerSpawned && !_teleporting && !_traveling,   // TryGetGameManager: a game in progress, the player standing, the world up
     transport: {
