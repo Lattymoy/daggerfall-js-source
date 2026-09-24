@@ -11,7 +11,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { PlayerMotor, STEP_OFFSET } from '../src/player/motor.js';
+import { PlayerMotor, STEP_OFFSET, CAPSULE_RADIUS } from '../src/player/motor.js';
 import { Collider } from '../src/player/collider.js';
 
 const walk = { forward: 1, strafe: 0, run: false, jump: false, up: false, down: false };
@@ -19,7 +19,8 @@ const slopeOf = (deg) => Math.tan(deg * Math.PI / 180);
 function walkDown(deg, steps = 600, dt = 1 / 60) {
   const slope = slopeOf(deg);
   const m = new PlayerMotor(new Collider((x, z) => -slope * z));
-  m.pos = [0, 0, 0]; m.grounded = true;
+  m.pos = [0, CAPSULE_RADIUS * (Math.sqrt(1 + slope * slope) - 1), 0]; m.grounded = true;   // DISC16-A: settled, at the capsule's rest
+  for (let i = 0; i < 2; i++) m.update(1 / 60, { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false }, 0);   // ...settled there by the motor itself
   let airborne = 0, landings = 0, worstDrop = 0, rises = 0, prevE = m.eyeAt()[1];
   for (let i = 0; i < steps; i++) {
     m.update(dt, walk, 0);
@@ -38,7 +39,9 @@ test('MAC3: walking down a terrain slope keeps the capsule on the floor - no hop
     assert.equal(r.airborne, 0, `${deg} degrees: airborne steps`);
     assert.equal(r.landings, 0, `${deg} degrees: landings`);
     assert.equal(r.rises, 0, `${deg} degrees: the eye never climbs on the way down`);
-    assert.ok(Math.abs(r.m.pos[1] - (-r.slope * r.m.pos[2])) < 1e-6, `${deg} degrees: the feet are on the floor at the end`);
+    // DISC16-A: the floor is the capsule's REST on the grade - its lowest point r(1/cos - 1) over the ground beneath it
+    const rest = CAPSULE_RADIUS * (Math.sqrt(1 + r.slope * r.slope) - 1);
+    assert.ok(Math.abs(r.m.pos[1] - (-r.slope * r.m.pos[2] + rest)) < 1e-6, `${deg} degrees: the feet are on the floor at the end`);
     // one frame's drop is one frame's travel down the slope, not a fall
     const perStep = r.slope * (r.m.pos[2] / 600);
     assert.ok(-r.worstDrop <= perStep * 1.05 + 1e-6, `${deg} degrees: worst eye drop ${(-r.worstDrop).toFixed(4)} vs the slope's ${perStep.toFixed(4)} per step`);
