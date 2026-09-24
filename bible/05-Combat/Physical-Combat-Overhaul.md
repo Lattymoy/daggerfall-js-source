@@ -52,7 +52,7 @@ its `modsettings.json`:
 | `CriticalStrikeHandler` | luck's `Mathf.Floor((luck-50)/25f)` term (clamp discarded) bending the divisor | `pcaaoCriticalStrike` |
 | `GetBonusOrPenaltyByEnemyType` | willpower's `Random.Range(0, n)` bonus and the level penalty on the career's Bonus/Phobia bits, the Humanoid arm on GetEnemyGroup | `pcaaoBonusOrPenaltyByEnemyType` |
 | `CalculateHandToHandAttackDamage` / `CalculateWeaponAttackDamage` | the strength term, the Skeletal Warrior's halving and the silver six's doubling, a two-handed non-bow doubling the strength term | `pcaaoHandToHandAttackDamage`, `pcaaoWeaponAttackDamage`, `SILVER_DOUBLED_CAREERS` |
-| `AdjustWeaponHitChanceMod` / `AdjustWeaponAttackDamage` | Roleplay Realism's archery: the bow's draw time in ms bends hit and damage; registered on FormulaHelper whatever the armour module says (AUDIT PCO1) | `pcaaoAdjustWeaponHitChanceMod`, `pcaaoAdjustWeaponAttackDamage`, registered on `formulas.adjustWeaponHitChanceMod` / `adjustWeaponAttackDamage` - DFU's two no-op hooks, grown into the stock core at the C#'s two sites (AUDIT PCO1); the draw timer is `playerWeapon.lastDrawMs` (below) |
+| `AdjustWeaponHitChanceMod` / `AdjustWeaponAttackDamage` | Roleplay Realism's archery: the bow's draw time in ms bends hit and damage; registered on FormulaHelper whatever the armour module says (AUDIT PCO1) | Roleplay Realism's own `rrAdjustWeaponHitChanceMod`, `rrAdjustWeaponAttackDamage` (rrRealism.js - one export, AUDIT 68), registered on `formulas.adjustWeaponHitChanceMod` / `adjustWeaponAttackDamage` - DFU's two no-op hooks, grown into the stock core at the C#'s two sites (AUDIT PCO1); the draw timer is `playerWeapon.lastDrawMs` (below) |
 | `AlterDamageBasedOnWepCondition` / `AlterArmorReducBasedOnItemCondition` | the condition bands | `pcaaoAlterDamageBasedOnWepCondition`, `pcaaoAlterArmorReducBasedOnItemCondition` |
 | `ArmorMaterialIdentifier` / `ArmorMaterialModifierFinder` / `EqualizeMaterialConditions` / `SpecificWeaponConditionDamage` | the four material ladders | the four `pcaao*` of the same names |
 | `DamageEquipment` + `ApplyConditionDamageThrough*` + `MaterialDifferenceDamageCalculation` + `WarningMessagePlayerEquipmentCondition` | "Believable Equipment Characteristics And Durability": the weapon wears by its kind, the struck side by the material difference, a fist wears the piece; the fading module destroys the player's enchanted piece; the player is warned in the mod's words | `pcaaoDamageEquipment` and the helpers; `equip.lowerCondition` grew LowerCondition's `removeFromCollectionWhenBreaks`; registered on `formulas.damageEquipment` for DFU's own path |
@@ -106,15 +106,19 @@ its `modsettings.json`:
   switches of this mod's from PCO1 to MM1). `meanerMonsters` is
   `meanerMonsters/Enabled` - Ralzar's mod, vendored
   (`04-Characters/Meaner-Monsters.md`); `rolePlayRealismArchery` is
-  `roleplayRealism/advancedArchery`, undefined (not loaded) until that
-  mod is vendored. `modSettingIfDeclared` is the read. With both mods
+  `roleplay-realism/Enabled` and `roleplay-realism/advancedArchery` -
+  RR1 vendored the mod under that id (the placeholder `roleplayRealism`
+  key read undefined, so the arm was dead until AUDIT 68).
+  `modSettingIfDeclared` is the read. With both mods
   on, Ralzar's row lands first and this mod's edit over it, as DFU
   Awakes the dependency first.
 - **The bow's draw time.** DFU hands `weaponAnimTime` (FPSWeapon's
   animTime, ms) to CalculateAttackDamage. The port's classic bow now
-  times its draw: `playerWeapon.lastDrawMs` starts when the drawback
-  begins (StrikeUp) and reads at the release; the instant shot is 0
-  (the archery arms gate on `> 0`). Enemy archers pass 0, as DFU's
+  times its draw: `playerWeapon.lastDrawMs` is the machine's held
+  StrikeUp ticks x the bow's 0.0625 s tick (GetAnimTime - game time,
+  so a pause mid-draw does not count; AUDIT 68), written at every
+  release, the touch button's included; the instant shot is 0 (the
+  archery arms gate on `> 0`). Enemy archers pass 0, as DFU's
   EnemyAttack does.
 - **`item.customMagic`.** The warning's name picks the short name for a
   custom-enchanted item, the long name otherwise; the port's items

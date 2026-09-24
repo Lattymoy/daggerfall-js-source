@@ -29,6 +29,7 @@
 // does); DFU's write-back path is unported because DFU's own
 // SaveTree.Save() writes the header only ("TODO: Write other records").
 
+import { readCStringScan } from './fileProxy.js';
 import { readSpellRecord } from './spellsStd.js';
 import { parseCharacterRecordData } from './characterRecord.js';
 
@@ -114,25 +115,9 @@ export const ITEM_FLAGS = Object.freeze({
   Enchanted: 0x20,
 });
 
-/** FileProxy.ReadCString with a non-zero readLength: the FULL length is
- *  consumed and only TRAILING NULs trim - an embedded NUL and whatever
- *  follows it stay in the string (the AUDIT 24 formats law rumorFile.js
- *  records). Classic bytes decode as latin1, the readers' charter. */
-export function readCStringFixed(bytes, start, length) {
-  let s = '';
-  for (let i = start; i < start + length; i++) s += String.fromCharCode(bytes[i]);
-  return s.replace(/\0+$/, '');
-}
-
-/** FileProxy.ReadCString with readLength 0: scan to the first NUL and
- *  read exactly that many bytes (the NUL itself is NOT consumed). */
-export function readCStringScan(bytes, start) {
-  let end = start;
-  while (end < bytes.length && bytes[end] !== 0) end++;
-  let s = '';
-  for (let i = start; i < end; i++) s += String.fromCharCode(bytes[i]);
-  return s;
-}
+/** FileProxy.ReadCString, both arms - fileProxy.js is their one home
+ *  (AUDIT 68); re-exported for the save tree's own readers. */
+export { readCStringFixed, readCStringScan } from './fileProxy.js';
 
 /** SaveTree.ReadPosition - i32 WorldX/WorldY/WorldZ. */
 export function readPosition(view, offset) {

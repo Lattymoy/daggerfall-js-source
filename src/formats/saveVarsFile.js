@@ -78,18 +78,8 @@ export const CHEAT_FLAGS = Object.freeze({
 // dependency rather than minting a second table. Re-exported so the
 // reader's API is whole.
 import { SHIP_TYPES } from '../systems/banking.js';
+import { readCStringFixed } from './fileProxy.js';   // FileProxy.ReadCString(reader, n) - AUDIT 68: the one home
 export { SHIP_TYPES };
-
-const latin1 = (bytes, start, end) => {
-  let s = '';
-  for (let i = start; i < end; i++) s += String.fromCharCode(bytes[i]);
-  return s;
-};
-
-/** FileProxy.ReadCString(reader, n): full n bytes consumed, trailing
- *  NULs trimmed, embedded NULs kept (the AUDIT 24 formats law). */
-const cstringFixed = (bytes, start, length) =>
-  latin1(bytes, start, start + length).replace(/\0+$/, '');
 
 /** Represents a SAVEVARS.DAT file (SaveVars.cs). */
 export class SaveVars {
@@ -236,7 +226,7 @@ export class SaveVars {
         type: bytes[o],
         region: v.getInt8(o + 1),
         ruler: v.getInt8(o + 2),
-        name: cstringFixed(bytes, o + 3, 26),
+        name: readCStringFixed(bytes, o + 3, 26),
         rep: v.getInt16(o + 29, true),
         power: v.getInt16(o + 31, true),
         id: v.getInt16(o + 33, true),

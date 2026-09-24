@@ -13,11 +13,7 @@
 //   text in the classic TEXT.RSC token encoding (readTokens'
 //   charter).
 
-const latin1 = (bytes, start, end) => {
-  let s = '';
-  for (let i = start; i < end; i++) s += String.fromCharCode(bytes[i]);
-  return s;
-};
+import { readCStringFixed } from './fileProxy.js';
 
 /** RumorFile.RumorTypes (:44-56). */
 export const CLASSIC_RUMOR_TYPES = Object.freeze({
@@ -54,9 +50,7 @@ export class RumorFile {
       // the stale tail behind it (classic fixed-size records leave
       // one whenever a longer name was overwritten) stay in the
       // string. The port stopped at the FIRST NUL.
-      let end = pos + 9;
-      while (end > pos && bytes[end - 1] === 0) end--;
-      const questName = latin1(bytes, pos, end);
+      const questName = readCStringFixed(bytes, pos, 9);   // AUDIT 68: the one FileProxy law
       pos += 9;
       const unknown = v.getUint16(pos, true); pos += 2;
       const npcID = v.getUint32(pos, true); pos += 4;

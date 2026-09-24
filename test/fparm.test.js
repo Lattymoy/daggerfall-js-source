@@ -213,7 +213,7 @@ test('MW-D10: the neck takes 0.75 of the look, and the port pitches the OTHER WA
   // 8 degrees and a port that rotates in the local frame moves the eye
   // somewhere else.
   const src2 = rd('src/formats/mwFirstPerson.js');
-  assert.match(src2, /mul33\(mul33\(mul33\(w, rotate\), transpose33\(w\)\), local\.rotation\)/,
+  assert.match(src2, /mat33Mul\(mat33Mul\(mat33Mul\(w, rotate\), transpose33\(w\)\), local\.rotation\)/,
     'worldOrient * rotate * worldOrient^-1 * localRot, in that order');
 
   // AND THE SIGN CONVERSION. Morrowind counts pitch downward; this port
@@ -909,10 +909,9 @@ test('MW-D20: the neck conjugates in the OBJECT ROOT frame - the file root\'s ro
   // the conjugation a root-relative frame dies here, not only a direct
   // call with the right argument.
   void applyFirstPersonNeck; void GRAPH_ROOT;
-  const rootRef = [...skel.nodes.entries()].find(([, n]) => n.parent < 0)[0];
   const assembly = {
     fns: { poseSkeleton, skelMats: skeletonSpaceMatrices },
-    skeleton: skel, rootRef, pieces: [],
+    skeleton: skel, pieces: [],
   };
   poseAssembly(assembly, { sampleTrack: st, neckPitch: 0.4, neckAim: 1 });
   const rot = [...assembly.pose.get(skel.byName.get('bip01 neck')).rotation];
@@ -2534,8 +2533,10 @@ test('IG2: the swap caches - archives resident per generation, the memos gated o
   // the mSpeed pin proved it the day the weapon walk joined the memo.
   assert.match(arm, /if \(gen === null\) return fn\(e\.bytes\);/, 'the esm walk memo is gated');
   assert.match(arm, /if \(gen === null \|\| gen === undefined\) return clipReport\(/, 'the kf parse memo is gated');
-  assert.match(arm, /const gen = typeof d\.morrowindDataGeneration === 'function' \? d\.morrowindDataGeneration\(\) : null;/,
+  // AUDIT 68: the stamp is ADOPTED - one generation memoised, the old one dropped
+  assert.match(arm, /const gen = adoptMemoGeneration\(d\.morrowindDataGeneration\);/,
     'and only the real store\'s stamp turns them on');
+  assert.match(arm, /if \(typeof genOf !== 'function'\) return null;/, 'no stamp, no memo');
 });
 
 test('IG6: the arms are FIXED TO THE SCREEN by default - the owner\'s final call, the classic sprite\'s behaviour', () => {
@@ -3123,8 +3124,9 @@ test('PX26 F1/F2/F3: the menu figure carries the hand, instantly, and a mid-buil
   // F3: a swap during a build waits, exactly as the worn table does.
   // MAC-S1 moved the flush itself into flushPending() - ONE home, called
   // from every exit out of `busy` - so the queued hand is quoted there.
-  assert.match(arm, /if \(busy\) \{ pendingWeapon = \{ item, hasAmmo \}; return false; \}/);
-  assert.match(arm, /if \(pendingWeapon\) \{ const w = pendingWeapon; pendingWeapon = null; api\.setWeapon\(w\.item, \{ hasAmmo: w\.hasAmmo \}\); \}/);
+  // AUDIT 68: the WHOLE request queues (the quiver's count with it) and replays whole
+  assert.match(arm, /if \(busy\) \{ pendingWeapon = \{ item, hasAmmo, ammoCount \}; return false; \}/);
+  assert.match(arm, /if \(pendingWeapon\) \{ const w = pendingWeapon; pendingWeapon = null; api\.setWeapon\(w\.item, \{ hasAmmo: w\.hasAmmo, ammoCount: w\.ammoCount \}\); \}/);
 });
 
 test('PX27: the arm\u2019s REACH is swept over every clip, not the idle alone', async () => {

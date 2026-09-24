@@ -23,7 +23,7 @@
 
 import {
   createWeaponMachine, machineAttack, machineStep, gestureDirection,
-  MAX_GESTURE_SECONDS, BOW_DRAWN_HOLD_FRAME, machineCancelBowDraw, THUNDERLOCK_NUM_FRAMES,
+  MAX_GESTURE_SECONDS, BOW_DRAWN_HOLD_FRAME, machineCancelBowDraw, THUNDERLOCK_NUM_FRAMES, CLASSIC_UPDATE_INTERVAL,
 } from '../characters/weaponStates.js';
 import { GUN_FEEL, GUN_TICK_SECONDS, GUN_COOLDOWN_SECONDS } from './gunFeel.js';   // FIELD-GUN7: the lab's cadence, from the one home
 import { DIRECTION_TO_STRIKE, ATTACKS_FP, sampleClip } from '../characters/anims.js';
@@ -266,6 +266,7 @@ export class PlayerWeapon {
     this.currentRightHandWeapon = null;
     this.currentLeftHandWeapon = null;
     this.sheathed = true;   // classic starts sheathed; Z readies (WeaponManager.Sheathed)
+    this.lastDrawMs = 0;   // PCO1: the last bow shot's weaponAnimTime (_bowAnimTimeMs)
     this.animCtx = null;   // AUDIT-RR F1: the rig's thunk answering { entity, weaponType, usingRightHand } - what GetMeleeWeaponAnimTime's C# signature carries (player, weaponType, weaponHands)
     // DFU's Gesture: the timestamped trail, its vector sum and its
     // TRAVEL length (WeaponManager.cs:93-155).
@@ -408,21 +409,20 @@ export class PlayerWeapon {
         // an arrow (the >10 s timeout is the machine's own 'undraw'),
         // and letting the button go RELEASES (StrikeDown).
         if (m.state === 'StrikeUp' && m.frame === BOW_DRAWN_HOLD_FRAME) {
-          if (cancelHeld) { machineCancelBowDraw(m, this.liveSpeed); this._drawStartedAt = null; return null; }
+          if (cancelHeld) { machineCancelBowDraw(m, this.liveSpeed); return null; }
           if (!held && machineAttack(m, 'StrikeDown')) {
             // PCO1: the draw's length in milliseconds - FPSWeapon's
             // animTime, which WeaponManager hands CalculateAttackDamage
             // as `weaponAnimTime` and Roleplay Realism's archery reads.
-            this.lastDrawMs = this._drawStartedAt == null ? 0 : Math.max(0, Math.round(nowMs() - this._drawStartedAt));
-            this._drawStartedAt = null;
+            this.lastDrawMs = this._bowAnimTimeMs();
             return 'StrikeDown';
           }
           return null;
         }
-        if (rise && m.state !== 'StrikeUp' && machineAttack(m, 'StrikeUp')) { this._drawStartedAt = nowMs(); return 'StrikeUp'; }
+        if (rise && m.state !== 'StrikeUp' && machineAttack(m, 'StrikeUp')) return 'StrikeUp';
         return null;
       }
-      if (rise && machineAttack(m, 'StrikeDown')) { this.lastDrawMs = 0; return 'StrikeDown'; }   // PCO1: the instant shot has no draw
+      if (rise && machineAttack(m, 'StrikeDown')) { this.lastDrawMs = this._bowAnimTimeMs(); return 'StrikeDown'; }   // PCO1: the instant shot has no draw (0 ticks held)
       return null;
     }
     this._bowHeld = false;
@@ -436,8 +436,7 @@ export class PlayerWeapon {
       this._clickHeld = held;
       if (!held) { this._gestureClear(); return null; }
       if (!(rise || swingMode === 2)) { this._gestureClear(); return null; }
-      const dir = CLICK_ATTACK_DIRECTIONS[Math.floor(rolls() * CLICK_ATTACK_DIRECTIONS.length)];
-      const strike = DIRECTION_TO_STRIKE[dir];
+      const strike = this._rollClickStrike(rolls);
       return machineAttack(this.machine, strike) ? strike : null;
     }
     this._clickHeld = false;
@@ -465,6 +464,23 @@ export class PlayerWeapon {
     this._gestureClear();
     if (strike && machineAttack(this.machine, strike)) return strike;
     return null;
+  }
+
+  /** AUDIT 68 S08-clickattack-direction-dup: WeaponManager.cs:343's
+   *  roll over CLICK_ATTACK_DIRECTIONS - the swing-mode click and the
+   *  touch button's clickAttack, one table. */
+  _rollClickStrike(rolls) {
+    return DIRECTION_TO_STRIKE[CLICK_ATTACK_DIRECTIONS[Math.floor(rolls() * CLICK_ATTACK_DIRECTIONS.length)]];
+  }
+
+  /** PCO1 / AUDIT 68 S08-bow-draw-time-wallclock: weaponAnimTime,
+   *  `(int)(FPSWeapon.GetAnimTime() * 1000)` - the ticks the bow held in
+   *  StrikeUp times its tick. GAME time: the machine counts them only
+   *  while it steps (a pause mid-draw adds nothing) and keeps them across
+   *  StrikeUp->StrikeDown; a shot loosed from Idle held none. */
+  _bowAnimTimeMs() {
+    const m = this.machine;
+    return Math.trunc(m.ticks * (m.tick ?? CLASSIC_UPDATE_INTERVAL) * 1000);
   }
 
   /** Gesture.Clear (WeaponManager.cs:149-154). */
@@ -506,9 +522,14 @@ export class PlayerWeapon {
   clickAttack(rolls = Math.random) {
     // combat-2: the bow ignores the random-direction roll too - DFU's
     // click arm is bypassed by the forced bow direction (:355-358).
-    if (this.machine.isBow) return machineAttack(this.machine, 'StrikeDown') ? 'StrikeDown' : null;
-    const DIRS = ['UpRight', 'Left', 'Right', 'DownLeft', 'Down', 'DownRight'];
-    const strike = DIRECTION_TO_STRIKE[DIRS[Math.floor(rolls() * DIRS.length)]];
+    // AUDIT 68 S08-bow-draw-time-wallclock: and the shot's draw time is
+    // written here too - a tap after a drawn shot inherited its value.
+    if (this.machine.isBow) {
+      if (!machineAttack(this.machine, 'StrikeDown')) return null;
+      this.lastDrawMs = this._bowAnimTimeMs();
+      return 'StrikeDown';
+    }
+    const strike = this._rollClickStrike(rolls);
     return machineAttack(this.machine, strike) ? strike : null;
   }
 
@@ -635,6 +656,3 @@ export function playerAttackOptions(weapon, machineState, backstabChance = 0, ro
   const swing = SWING_MODS[machineState] ?? { damage: 0, toHit: 0 };
   return { weapon, damageMod: swing.damage, toHitMod: swing.toHit, backstabChance, rolls };
 }
-/** PCO1: the clock the bow's draw is timed on - performance.now where
- *  there is one (the browser), Date.now in node. */
-const nowMs = () => (typeof performance !== 'undefined' && performance && typeof performance.now === 'function' ? performance.now() : Date.now());
