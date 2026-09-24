@@ -122,9 +122,11 @@ export const npcServiceKind = (npcFactionId) => NPC_SERVICE[npcFactionId] ?? nul
 // Guild.cs :335-346. No guild overrides either method, so the cap is
 // flat and the price is the member/non-member split times LEVEL.
 export const TRAINING_SKILLS = Object.freeze({
+  // FGH2H: the hall trains HandToHand too - the rank law's new skill is one
+  // a member can buy (a DEPARTURE, Port-Ledger row for guilds.js and this file).
   FightersGuild: [SKILLS.Archery, SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.CriticalStrike,
-    SKILLS.Giantish, SKILLS.Jumping, SKILLS.LongBlade, SKILLS.Orcish, SKILLS.Running,
-    SKILLS.ShortBlade, SKILLS.Swimming],
+    SKILLS.Giantish, SKILLS.HandToHand, SKILLS.Jumping, SKILLS.LongBlade, SKILLS.Orcish,
+    SKILLS.Running, SKILLS.ShortBlade, SKILLS.Swimming],
   MagesGuild: [SKILLS.Alteration, SKILLS.Daedric, SKILLS.Destruction, SKILLS.Dragonish,
     SKILLS.Harpy, SKILLS.Illusion, SKILLS.Impish, SKILLS.Mysticism, SKILLS.Orcish,
     SKILLS.Restoration, SKILLS.Spriggan, SKILLS.Thaumaturgy],

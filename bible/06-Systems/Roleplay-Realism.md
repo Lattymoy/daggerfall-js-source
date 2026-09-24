@@ -53,7 +53,7 @@ after Items'), and the seams they hang on.
 | purificationPotion: `CureDiseasePotionRR` | `RegisterEffectTemplate(..., true)` - the recipes replaced | `potions.overridePotionRecipes` |
 | enemyAppearance: `UpdateEnemyClassAppearances` (:697-773) | `EnemyBasics.Enemies[...]` written at Awake | `applyEnemyAppearance(ENEMY_BASICS)` at install (`revertEnemyAppearance` for the test and the next load) |
 | underworldExpulsion: `ThievesGuildRR` / `DarkBrotherhoodRR` | `GuildManager.RegisterCustomGuild` - AllowGuildExpulsion, Join, Leave, TokensExpulsion | `guilds.setUnderworldRule` (the clamp bypassed, the join floor), `setGuildExpelledHook` (the squad through the host's foe spawner), `updateRank`'s `lines` (the box's rows, `%pcn` expanded) |
-| fightersTeachHandToHand: `FightersGuildRR` | GuildSkills / TrainingSkills, the virtuals | `guilds.setGuildSkillsOverride`, `guildServices.setTrainingSkillsOverride` |
+| fightersTeachHandToHand: `FightersGuildRR` | GuildSkills / TrainingSkills, the virtuals (since FGH2H the base lists carry HandToHand beside Giantish; the module's own lists drop Giantish) | `guilds.setGuildSkillsOverride`, `guildServices.setTrainingSkillsOverride` |
 | bedSleeping: `RegisterCustomActivation(41000..41002, BedActivation)` (:126-128, :464-506) | PlayerActivate's custom activations | `interiorContext` lists the beds; `worldModes` targets them while the switch is on and runs `toggleRest` - which IS DaggerfallUI's rest gate (:651-687) BedActivation restates |
 
 Read against the C#:

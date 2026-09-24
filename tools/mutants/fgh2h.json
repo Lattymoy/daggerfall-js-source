@@ -1,0 +1,29 @@
+[
+  {
+    "name": "FGH2H-hand-to-hand-dropped-from-the-guild-skills",
+    "file": "src/systems/guilds.js",
+    "old": "      SKILLS.HandToHand, SKILLS.LongBlade, SKILLS.Orcish, SKILLS.ShortBlade],",
+    "new": "      SKILLS.LongBlade, SKILLS.Orcish, SKILLS.ShortBlade],",
+    "tests": [
+      "test/fgh2h_fighters_handtohand.test.js"
+    ]
+  },
+  {
+    "name": "FGH2H-hand-to-hand-in-giantish-place",
+    "file": "src/systems/guilds.js",
+    "old": "    skills: [SKILLS.Archery, SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.Giantish,\n      SKILLS.HandToHand, SKILLS.LongBlade,",
+    "new": "    skills: [SKILLS.Archery, SKILLS.Axe, SKILLS.BluntWeapon,\n      SKILLS.HandToHand, SKILLS.LongBlade,",
+    "tests": [
+      "test/fgh2h_fighters_handtohand.test.js"
+    ]
+  },
+  {
+    "name": "FGH2H-the-hall-never-trains-it",
+    "file": "src/systems/guildServices.js",
+    "old": "    SKILLS.Giantish, SKILLS.HandToHand, SKILLS.Jumping,",
+    "new": "    SKILLS.Giantish, SKILLS.Jumping,",
+    "tests": [
+      "test/fgh2h_fighters_handtohand.test.js"
+    ]
+  }
+]

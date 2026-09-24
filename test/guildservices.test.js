@@ -85,7 +85,7 @@ test('services: training caps at 50 and costs the split TIMES LEVEL', () => {
 
 test('services: a knightly order trains NOTHING, and a temple trains its own list', () => {
   assert.equal(trainingSkills(orderOf('Rose')), null, 'KnightlyOrder.TrainingSkills returns null');
-  assert.equal(trainingSkills(GUILDS.FightersGuild).length, 11);
+  assert.equal(trainingSkills(GUILDS.FightersGuild).length, 12);   // FGH2H: DFU's eleven and HandToHand
   assert.equal(trainingSkills(templeOf('Zenithar')).length, 12);
 
   // The TRAINING list is not the GUILD-SKILL list the rank law reads -

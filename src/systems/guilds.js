@@ -109,8 +109,15 @@ export const GUILDS = Object.freeze({
     name: 'FightersGuild',
     guildGroup: GUILD_GROUPS.FightersGuild,
     factionId: 41,
+    // FGH2H (2026-09-24, Mac: "change the fighter guild requirements where it
+    // allows bare handed"): HandToHand joins DFU's seven (FightersGuild.cs's
+    // guildSkills) and Giantish stays - a DEPARTURE, rowed in the Port-Ledger
+    // (this file), in both lanes. Added, never swapped: the rank law counts
+    // skills past a bar, so one more only lets a fist-fighter in and turns no
+    // member out. Roleplay & Realism's fightersTeachHandToHand still swaps
+    // Giantish out when it is on (rrRealism.js, FightersGuildRR's own list).
     skills: [SKILLS.Archery, SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.Giantish,
-      SKILLS.LongBlade, SKILLS.Orcish, SKILLS.ShortBlade],
+      SKILLS.HandToHand, SKILLS.LongBlade, SKILLS.Orcish, SKILLS.ShortBlade],
     rankTitles: ['Apprentice', 'Journeyman', 'Swordsman', 'Protector', 'Defender',
       'Warder', 'Guardian', 'Champion', 'Warrior', 'Master'],
     text: { ineligibleBadRep: 679, ineligibleLowSkill: 680, eligible: 681, welcome: 684, promotion: 686 },
