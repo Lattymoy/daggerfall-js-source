@@ -574,7 +574,12 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // A save written by the exit autosave carries the poison that did it;
   // restoring the health alone loads the player straight back into the
   // same death, which is the loop from the other end.
-  if (isOnlinePage() && !((entity.health ?? 0) > 0)) reviveForPlay(entity);
+  // DISC16-C: DECIDED HERE, on the save's own health - and RUN below,
+  // once the save's effects and survival record are the entity's. Run
+  // here it ended the drains of the entity being REPLACED, and the lines
+  // below then restored the save's poison and exposure over the revival:
+  // the player loaded at half health, still poisoned, and died again.
+  const loadDeadOnline = isOnlinePage() && !((entity.health ?? 0) > 0);
   entity.stats = { ...snap.stats };
   entity.survival = snap.survival && typeof snap.survival === 'object' ? { ...snap.survival, notes: {} } : null;   // SURV1: a pre-SURV save starts fresh at the host's first tick
   // Pre-S15 saves carry no fatigue: default to rested (MaxFatigue =
@@ -682,6 +687,9 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // marker and the entry can never disagree (the gates - a second
   // infection, the disease immunity - read the marker).
   entity.racialOverride = entity.activeEffects.find((a) => a.kind === 'racialOverride' && !a.ended) ?? null;
+  // DISC16-C: the revival decided above, now that the poison, the
+  // continuous damage and the exposure it ends are the save's own.
+  if (loadDeadOnline) reviveForPlay(entity);
   // X10: bundleId is a MODULE-scope monotonic counter, not saved
   // state - DFU has no counter to collide because its bundles are
   // object references re-instanced on load. A fresh process starts

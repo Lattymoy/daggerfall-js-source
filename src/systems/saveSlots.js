@@ -364,3 +364,14 @@ export function quickLoadSlot(characterName, storage = store(), characterId = nu
   const key = findSave(characterName, QUICK_SAVE_NAME, storage, characterId);
   return key === -1 ? null : loadSlot(key, storage);
 }
+
+/** ONLINE-AUTOSAVE1's slots (scenes/world.js's `beforeunload`): the
+ *  QuickSave and every slot this character already has - OR NONE while
+ *  the player is dead or the death screen is up (DISC16-C). DFU never
+ *  writes during a death (PlayerDeath pauses the game and ends in
+ *  TitleMenuFromDeath); the exit autosave wrote the corpse, still
+ *  poisoned, into every slot, and every load of every slot died again. */
+export function exitAutosaveNames(entity, { deathUp = false, storage = store() } = {}) {
+  if (deathUp || !(entity?.health > 0)) return [];
+  return [...new Set([QUICK_SAVE_NAME, ...saveKeysOfCharacter(entity.name, storage).map((key) => saveInfoOf(key, storage)?.saveName).filter(Boolean)])];
+}

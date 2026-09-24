@@ -155,7 +155,7 @@ test('ROAD-G G1(a): the door is gated on the PLAYER being the source (F035\'s la
   // it. The gate is DFU's `sourceEntityBehaviour ==
   // PlayerEntityBehaviour` (DaggerfallEntityBehaviour.cs:203) wrapping
   // the whole aggro block at :250-261: a watchman struck by a rat
-  // (the cross-pool `hurtFromFoe` minted at cityGuards.js:305) or
+  // (the cross-pool `hurtFromFoe` minted at cityGuards.js:312) or
   // killed by a fall (EnemyMotor.ApplyFallDamage calls DecreaseHealth
   // and nothing else, :1398-1401) must turn NOBODY.
   //
@@ -314,8 +314,8 @@ test('ROAD-G G1(b): both hosts route the transform by POOL MEMBERSHIP', () => {
   // (exteriorFoes.js:414-419) never looks a record up in `foes` and
   // both pools share the host's one renderer, so the old arm tore a
   // watchman down exactly as `removeGuard` does - batch freed,
-  // `dead = true`, no corpse, skipped by cityGuards.js:823 and spliced
-  // at :1012 in that same pass. The router is an OWNERSHIP fix, not a
+  // `dead = true`, no corpse, skipped by cityGuards.js:906 and spliced
+  // at :1095 in that same pass. The router is an OWNERSHIP fix, not a
   // leak fix, and no page may say otherwise again.
   // (the halves are joined at runtime so this very file does not carry
   // the sentence it bans)

@@ -30,6 +30,13 @@ import { drawText, measureText } from './text.js';
 import { PlayerDeathSequence, DEATH_TIME_BEFORE_RESET } from '../systems/playerDeath.js';   // D1
 import { playerEntity } from '../characters/playerEntity.js';   // D1: the death clip's race/gender
 import { audio } from '../systems/audio.js';
+import { isOnlinePage } from '../systems/onlineLane.js';   // DISC16-C: the hint an online page's death tells the truth with
+
+/** DISC16-C: an online page's death is a RESPAWN (ONLINE-DEATH-FIX) and
+ *  loading is refused there, so "ENTER end   F11 load" named two keys
+ *  that do neither - and sent players to quit from the death screen,
+ *  which is exactly when the exit autosave wrote the corpse. */
+export const ONLINE_DEATH_HINT = 'ENTER respawn';
 
 const DIM = [0.5, 0.5, 0.45, 1];
 /** D1: the death screen DRIVES PlayerDeath's sequence - the camera
@@ -42,7 +49,7 @@ const DIM = [0.5, 0.5, 0.45, 1];
  *  and the reason the hint is drawn. `drop` is read by each host's
  *  frame to sink its camera - one player, one death, one law. */
 export class DeathScreen {
-  constructor({ eyeHeight, capsuleHeight, onReset = null, entity = playerEntity, hint = 'ENTER end   F11 load' } = {}) {
+  constructor({ eyeHeight, capsuleHeight, onReset = null, entity = playerEntity, hint = isOnlinePage() ? ONLINE_DEATH_HINT : 'ENTER end   F11 load' } = {}) {
     this.done = false;
     this.hint = hint;   // FIX-E: a host with no quickload (the fixed city) draws no F11 - a hint that is a lie is worse than none
     // MERGE AUDIT: the death clip is the character's OWN race/gender

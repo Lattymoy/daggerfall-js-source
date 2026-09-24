@@ -7,6 +7,14 @@
 //   B - "Light spell does not work in dungeons": the world host's dungeon frame lit its point lights with ITS OWN
 //       engine's candle, while every cast underground is the dungeon context's engine's and the world's engine is not
 //       updated below ground - the candle drew as a flame and lit nothing (or stood lit at the street it was cast on).
+//   C - "rested while poisoned put me into an infinite death loop ... it overwrote all my saves": the online exit
+//       autosave wrote the dead, poisoned player into EVERY slot of the character, and the online load's revival ran
+//       before the save's effects and survival were restored - so each slot loaded at half health with the poison
+//       back on and died again. The death screen told an online player "ENTER end   F11 load", two keys that do neither.
+//   F - "guards will arrest and attack me for resting within city limits but will not protect me from 5 angry centaur
+//       invaders ... in town?": the resting arrest is DFU's law and stays; the five centaurs were a wilderness camp
+//       pitched inside a town (its gate read the PREVIOUS pixel's location on the frame a new one is entered, and never
+//       where the group lands); and, Mac's ask, THE WATCH DEFENDS THE TOWN - the port's own, behind its Features row.
 import './modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,6 +26,15 @@ import { LYCANTHROPY_TYPES, VAMPIRE_CLANS, INFECTION, startInfection, liveInfect
 import { runMagicRoundsFor, setSharedClock, alignEntityClocks, resetMagicRoundMarker, setWorldMinutes } from '../src/systems/worldTick.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 import { MINUTES_PER_DAY } from '../src/systems/gameDate.js';
+import { startPoison, POISONS } from '../src/systems/poisons.js';
+import { respawnHealth } from '../src/systems/deathRespawn.js';
+import { saveSlot, exitAutosaveNames, QUICK_SAVE_NAME } from '../src/systems/saveSlots.js';
+import { DeathScreen, ONLINE_DEATH_HINT } from '../src/ui/deathScreen.js';
+import { createTownWatch, isTownThreat, TOWN_WATCH_STAND_DOWN_SECONDS } from '../src/systems/townWatch.js';
+import { createCityGuards, GUARD_MOBILE_TYPE } from '../src/scenes/cityGuards.js';
+import { createExteriorFoes } from '../src/scenes/exteriorFoes.js';
+import { getTargets, PLAYER_TARGET, staticTeamOf } from '../src/characters/enemyTargets.js';
+import { PlayerWeapon } from '../src/combat/playerWeapon.js';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 
@@ -115,4 +132,202 @@ test('DISC16-B: the world host\'s dungeon frame lights the DUNGEON engine\'s can
   assert.ok(!branch.includes('magic?.candleLight()') && !branch.includes('magic.candleLight()'), 'this host\'s own engine is not updated underground');
   assert.ok(!/\bmagic\??\.update\(/.test(branch), 'and nothing here updates it - so its candle is never the dungeon\'s');
   assert.match(rd('src/scenes/dungeonContext.js'), /candleLight: \(\) => magic\.candleLight\(\),/, 'the context hands out its own engine\'s candle');
+});
+
+// ═══ C: the death loop ═══════════════════════════════════════════════════════════════════════════════════════════
+const withSearch = (search, fn) => {
+  const had = Object.getOwnPropertyDescriptor(globalThis, 'location');
+  Object.defineProperty(globalThis, 'location', { value: { search, pathname: '/' }, configurable: true, writable: true });
+  try { return fn(); } finally { if (had) Object.defineProperty(globalThis, 'location', had); else delete globalThis.location; }
+};
+/** A slot store with the enumeration surface the slot module walks. */
+const memStorage = () => {
+  const m = new Map();
+  return {
+    getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => { m.set(k, String(v)); }, removeItem: (k) => { m.delete(k); },
+    key: (i) => [...m.keys()][i] ?? null, get length() { return m.size; },
+  };
+};
+/** The corpse the exit autosave wrote: dead, the poison that did it still on, soaked and frozen. */
+const corpse = () => {
+  const p = mortal();
+  startPoison(p, POISONS.Arsenic, T0, () => 0.5);
+  p.survival = { exposure: 600, wet: 300 };
+  p.health = 0;
+  return p;
+};
+
+test('DISC16-C: an online load of a dead save revives the SAVE\'s player - its poison and its exposure ended - and it stays alive', () => {
+  setWorldMinutes(T0); resetMagicRoundMarker(null);
+  const snap = JSON.parse(JSON.stringify(snapshotPlayer(corpse(), { classicMinutes: T0 })));
+  const q = { isPlayer: true };
+  withSearch('?online=1&load=1', () => assert.ok(restorePlayer(q, snap)));
+  assert.equal(q.health, respawnHealth(100));
+  assert.deepEqual(q.activeEffects.filter((a) => a.kind === 'poison'), [], 'the poison that killed them is not loaded back on');
+  assert.deepEqual([q.survival.exposure, q.survival.wet], [0, 0], 'nor the cold');
+  let hurt = 0;
+  runMagicRoundsFor(q, T0, T0 + 60, { sinks: { hurt: (n) => { hurt += n; q.health -= n; } } });
+  assert.equal(hurt, 0, 'an hour on, nothing has taken a point');
+  assert.ok(q.health > 0);
+  resetMagicRoundMarker(null);
+});
+
+test('DISC16-C: the online exit autosave writes every slot of a living player and NO slot of a dead one or under a death screen', () => {
+  const storage = memStorage();
+  const p = mortal();
+  for (const name of [QUICK_SAVE_NAME, 'Backup', 'Before online']) saveSlot(p.name, name, snapshotPlayer(p, { classicMinutes: T0 }), { storage });
+  assert.deepEqual(exitAutosaveNames(p, { storage }).sort(), ['Backup', 'Before online', QUICK_SAVE_NAME].sort(), 'alive: every slot, as ONLINE-AUTOSAVE1 was asked');
+  assert.deepEqual(exitAutosaveNames(p, { storage, deathUp: true }), [], 'the death screen is up: none');
+  assert.deepEqual(exitAutosaveNames({ ...p, health: 0 }, { storage }), [], 'dead: none');
+  // and the handler writes only through that answer, with every host's death read
+  const w = rd('src/scenes/world.js');
+  const at = w.indexOf("addEventListener('beforeunload', () => {\n    if (!online || !playerSpawned) return;");
+  const handler = w.slice(at, w.indexOf('\n  });', at));
+  assert.ok(at > 0, 'the online exit autosave was found');
+  assert.match(handler, /for \(const saveName of exitAutosaveNames\(playerEntity, \{ deathUp: townTalk\.overlay instanceof DeathScreen \|\| !!modes\?\.deathUp\?\.\(\) \}\)\) save\(saveName\);/);
+  assert.ok(!handler.includes('saveKeysOfCharacter('), 'no second list of slots beside the guarded one');
+});
+
+test('DISC16-C: an online page\'s death screen says its respawn; offline keeps the full hint', () => {
+  withSearch('?online=1&load=1', () => assert.equal(new DeathScreen({ eyeHeight: 1.6, capsuleHeight: 1.8 }).hint, ONLINE_DEATH_HINT));
+  withSearch('?load=1', () => assert.equal(new DeathScreen({ eyeHeight: 1.6, capsuleHeight: 1.8 }).hint, 'ENTER end   F11 load'));
+});
+
+// ═══ F: the watch and the town ════════════════════════════════════════════════════════════════════════════════════
+const TOWN = { enabled: true, playerInTown: true, crime: false, threats: 1, defenders: 0, locationKey: '3,12' };
+
+test('DISC16-F: the watch comes to a monster hunting the player in town after the witnessed-crime countdown, not for a wanted player, not after the player left - and walks away when the town is quiet', () => {
+  const w = createTownWatch({ rand: () => 0.5 });   // Random.Range(5, 11) -> 8
+  let t = 0, act = w.tick(0, TOWN);
+  while (!act && t < 30) { act = w.tick(0.25, TOWN); t += 0.25; }
+  assert.equal(act, 'summon');
+  assert.equal(t, 8, 'the witnessed-crime arrival, to the second');
+  assert.equal(w.tick(0.25, { ...TOWN, defenders: 3 }), null, 'standing defenders are not summoned twice');
+  const gone = createTownWatch({ rand: () => 0 });
+  gone.tick(0, TOWN);
+  assert.equal(gone.tick(6, { ...TOWN, locationKey: '4,12' }), null, 'the player left inside the window: nobody comes (PlayerEntity.cs:355-359)');
+  const wanted = createTownWatch({ rand: () => 0 });
+  for (let i = 0; i < 40; i++) assert.equal(wanted.tick(0.5, { ...TOWN, crime: true }), null, 'a wanted player gets the ordinary watch, never defenders');
+  const quiet = createTownWatch();
+  assert.equal(quiet.tick(TOWN_WATCH_STAND_DOWN_SECONDS - 1, { ...TOWN, threats: 0, defenders: 3 }), null);
+  assert.equal(quiet.tick(1.01, { ...TOWN, threats: 0, defenders: 3 }), 'dismiss', 'ten quiet seconds and they walk away');
+  assert.equal(createTownWatch().tick(0.1, { ...TOWN, enabled: false, defenders: 2 }), 'dismiss', 'the switch off sends them home');
+  assert.equal(createTownWatch().tick(0.1, { ...TOWN, playerInTown: false, defenders: 2 }), 'dismiss', 'so does leaving the town');
+});
+
+test('DISC16-F: a threat is a live hostile foe of this client HUNTING a player inside the town rect - never a puppet, a quest foe, a pacified or allied one, or one minding its own business', () => {
+  const hunter = () => ({ ai: { isHostile: true, target: PLAYER_TARGET, feet: [1, 0, 1] }, entity: { team: 'Centaurs' } });
+  const inside = () => true;
+  assert.equal(isTownThreat(hunter(), { inTownRect: inside }), true);
+  assert.equal(isTownThreat(hunter(), { inTownRect: () => false }), false, 'outside the rect');
+  for (const [why, patch] of [['a peer\'s puppet', { puppet: {} }], ['a quest foe', { isQuestFoe: true }], ['dead', { dead: true }]]) {
+    assert.equal(isTownThreat({ ...hunter(), ...patch }, { inTownRect: inside }), false, why);
+  }
+  const calm = hunter(); calm.ai.isHostile = false;
+  assert.equal(isTownThreat(calm, { inTownRect: inside }), false, 'pacified');
+  const ally = hunter(); ally.entity.team = 'PlayerAlly';
+  assert.equal(isTownThreat(ally, { inTownRect: inside }), false, 'the player\'s own summon');
+  const idle = hunter(); idle.ai.target = null;
+  assert.equal(isTownThreat(idle, { inTownRect: inside }), false, 'a rat minding its own business');
+});
+
+// the watch1 rig: a synthetic CLASS18.CFG and MONSTER.BSA, a flat open world
+function craftCfg({ hpPerLevel = 4, speed = 90, str = 40, agi = 85, luck = 55, atkFlags = 0x08 } = {}) {
+  const b = new Uint8Array(74); const v = new DataView(b.buffer);
+  b[10] = atkFlags; v.setUint16(52, hpPerLevel, true);
+  const attrs = [str, 50, 50, agi, 50, 50, speed, luck];
+  for (let i = 0; i < 8; i++) v.setUint16(58 + i * 2, attrs[i], true);
+  return b;
+}
+function craftMonsterBsa(records) {
+  const NAME_FIELD = 14, ENTRY = 18;
+  const dataLen = records.reduce((a, [, b]) => a + b.length, 0);
+  const out = new Uint8Array(4 + dataLen + ENTRY * records.length); const v = new DataView(out.buffer);
+  v.setInt16(0, records.length, true); v.setUint16(2, 0x0100, true);
+  let pos = 4;
+  for (const [, bytes] of records) { out.set(bytes, pos); pos += bytes.length; }
+  for (const [name, bytes] of records) { for (let i = 0; i < name.length; i++) out[pos + i] = name.charCodeAt(i); v.setInt32(pos + NAME_FIELD, bytes.length, true); pos += ENTRY; }
+  return out;
+}
+function stubClassCfg() {
+  const b = new Uint8Array(80); const v = new DataView(b.buffer);
+  v.setUint16(52, 10, true);
+  for (let i = 0; i < 8; i++) v.setUint16(58 + i * 2, 50, true);
+  return b;
+}
+const bsa = craftMonsterBsa([['ENEMY000.CFG', craftCfg()]]);
+const stubTex = { getSize: () => ({ width: 64, height: 100 }), getScale: () => ({ width: 0, height: 0 }), recordCount: 8, getFrameCount: () => 4 };
+const fetchBytes = async (n) => { if (n === 'MONSTER.BSA') return bsa; if (n === 'CLASS18.CFG') return stubClassCfg(); throw new Error(`no ${n} in this pin`); };
+const townsman = () => ({ level: 1, reflexes: 2, skills: new Array(40).fill(20), skillUses: new Array(40).fill(0), items: [], activeEffects: [], stats: { strength: 50, agility: 50, luck: 50, speed: 50, endurance: 50, willpower: 50, intelligence: 50, personality: 50 }, health: 100, maxHealth: 100, crimeCommitted: 0 });
+const rig = (playerEntity) => ({
+  renderer: { createBillboardBatch: () => ({}), destroyBillboardBatch: () => {}, textures: new Map() },
+  collider: { raycast: () => Infinity, heightAt: () => 0, raycastHit: () => ({ dist: Infinity, normal: null }), sphereOverlaps: () => false,
+    move: (feet, dx, dy, dz) => { feet[0] += dx; feet[2] += dz; return { grounded: true, hitCeiling: false, groundKey: 'floor' }; } },   // a flat open world the watch can walk
+  fetchBytes, getTexture: async () => stubTex, uploadRecordFrame: () => {},
+  currentMinute: () => 523530, currentPixelKey: () => '3,12',
+  playerEntity, audio: null, onPlayerHurt: () => {}, rolls: () => 0.5, rand: () => 0.9, say: () => {},
+});
+const FEET0 = [0, 0, 0], EYE0 = [0, 1.6, 0], FWD0 = [0, 0, 1];
+
+test('DISC16-F: the defenders come as the player\'s allies, sent at the monster - DFU\'s own target chain never picks the player - outlive the crime-clear walk-away, are not saved, turn into the watch at a crime, and walk away with no body', async () => {
+  const p = townsman();
+  const guards = createCityGuards(rig(p));
+  const monsters = createExteriorFoes(rig(p));
+  const centaur = await monsters.spawnFoe(0, [8, 0, 8], { feetGiven: true });
+  centaur.ai.target = PLAYER_TARGET;
+  let disabled = 0;
+  const came = await guards.summonDefenders({ playerFeet: FEET0, playerFwd: FWD0, pool: [{ pos: [3, 0, 3], fwdYaw: 0, guard: true, disable: () => { disabled++; } }], threats: [centaur] });
+  assert.equal(came, 1, 'the wandering guard near the player answers first');
+  assert.equal(disabled, 1, 'and the NPC he was is disabled');
+  const g = guards.guards[0];
+  assert.equal(g.defender, true);
+  assert.deepEqual([g.entity.team, g.entity.mobileTeam], ['PlayerAlly', 'PlayerAlly'], 'both per-instance teams, the allied summon\'s shape');
+  assert.equal(g.ai.target, centaur, 'sent at the threat');
+  assert.equal(getTargets(g, [centaur], FEET0).target, centaur, 'GetTargets picks the monster');
+  assert.equal(getTargets(g, [], FEET0).target, null, 'and never the player, even with nothing else to pick');
+  guards.update(0.016, FEET0, EYE0, {});
+  assert.equal(g.dead, false, 'no crime is standing, and the defender does not walk away with the crime watch');
+  assert.deepEqual(guards.snapshotWorld((f) => ({ x: f[0], z: f[2] })), [], 'a defender is not saved');
+  p.crimeCommitted = 4;   // Assault
+  guards.update(0.016, FEET0, EYE0, {});
+  assert.equal(g.defender, false, 'a crime makes him the watch');
+  assert.deepEqual([g.entity.team, g.entity.mobileTeam], [staticTeamOf(GUARD_MOBILE_TYPE), staticTeamOf(GUARD_MOBILE_TYPE)]);
+  assert.equal(getTargets(g, [], FEET0).target, PLAYER_TARGET, 'and the watch hunts the criminal');
+  p.crimeCommitted = 0;
+  guards.update(0.016, FEET0, EYE0, {});
+  assert.equal(g.dead, true, 'as the watch, he walks away when the crime clears');
+  await guards.summonDefenders({ playerFeet: FEET0, playerFwd: FWD0, pool: [{ pos: [2, 0, 2], fwdYaw: 0, guard: true, disable: () => {} }], threats: [centaur] });
+  const d = guards.guards.find((x) => !x.dead);
+  assert.equal(guards.defenderCount(), 1);
+  assert.equal(guards.dismissDefenders(), 1);
+  assert.equal(d.dead, true);
+  assert.ok(!d.corpse, 'walked away: no body, nothing to loot');
+});
+
+test('DISC16-F: the player\'s swing spares a defender while the monsters\' pool has not been offered it - and strikes him only when he is all that is in front', async () => {
+  const p = townsman();
+  const guards = createCityGuards(rig(p));
+  const monsters = createExteriorFoes(rig(p));
+  const centaur = await monsters.spawnFoe(0, [9, 0, 9], { feetGiven: true });
+  centaur.ai.target = PLAYER_TARGET;
+  await guards.summonDefenders({ playerFeet: FEET0, playerFwd: FWD0, pool: [{ pos: [0, 0, 1.2], fwdYaw: Math.PI, guard: true, disable: () => {} }], threats: [centaur] });
+  const d = guards.guards[0];
+  d.entity.health = 10000;
+  const swing = new PlayerWeapon({});
+  assert.equal(guards.resolvePlayerHit(swing, EYE0, FWD0, FEET0, () => true, null, { spareDefenders: true }), false, 'the watch\'s pass leaves him for last');
+  assert.equal(d.entity.health, 10000);
+  assert.equal(guards.resolvePlayerHit(swing, EYE0, FWD0, FEET0, () => true, null, { defendersOnly: true }), true, 'with nothing else in front, the swing reaches him (friendly protection\'s fallback)');
+});
+
+test('DISC16-F by source: the host runs the town watch after the pools move, resolves the swing watch -> monsters -> defenders -> townsfolk, and keeps camps out of every location\'s rect', () => {
+  const w = rd('src/scenes/world.js');
+  assert.match(w, /exteriorFoes\.update\(dt, _pf, cam\.pos, _foeSenses\(\)\);[^\n]*\n\s*livePersonBatches\.push\(\.\.\.exteriorFoes\.batches\(\)\);\n\s*if \(playerSpawned\) _townWatchFrame\(dt\);/);
+  assert.match(w, /enabled: getPref\('townWatch'\) !== false && !isTransformedLycanthrope\(playerEntity\),\n\s*playerInTown: inTown, crime: !!playerEntity\.crimeCommitted,/);
+  const swingAt = w.indexOf("guardHitSound, { spareDefenders: true })) {");
+  const order = ['guardHitSound, { spareDefenders: true })) {', 'if (exteriorFoes.resolvePlayerHit(', "guardHitSound, { defendersOnly: true }))", 'cityGuards.resolveCivilianHit('].map((k) => w.indexOf(k, swingAt));
+  assert.ok(swingAt > 0 && order.every((i, k) => i >= 0 && (k === 0 || i > order[k - 1])), `the four passes in order: ${order}`);
+  assert.match(w, /inside: false, inLocationRect: _inAnyLocationRect\(walkMode \? player\.pos : cam\.pos\),/, 'the chunk roll asks the pixel just entered');
+  assert.match(w, /anchor = placeFoeFreely\(anchorEnv, [^\n]*\n\s*if \(anchor && _inAnyLocationRect\(\[anchor\.x, anchor\.y, anchor\.z\]\)\) anchor = null;/, 'the camp is never pitched in a town');
+  assert.match(w, /spot = placeFoeFreely\(memberEnv, [^\n]*\n\s*if \(spot && _inAnyLocationRect\(\[spot\.x, spot\.y, spot\.z\]\)\) spot = null;/, 'nor a member over its line');
+  assert.match(w, /const loc = locationIndex\.get\(`\$\{px\.x \+ dx\},\$\{px\.y \+ dy\}`\);\n\s*if \(loc\?\.exterior\?\.exteriorData && isInLocationRect\(wc\.x, wc\.z, locationWorldRect\(loc, px\.x \+ dx, px\.y \+ dy\)\)\) return true;/, 'every location\'s widened rect, the pixel and its neighbours');
 });

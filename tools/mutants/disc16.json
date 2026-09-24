@@ -52,5 +52,248 @@
     "tests": [
       "test/disc16.test.js"
     ]
+  },
+  {
+    "name": "DISC16-C-revival-before-the-effects",
+    "file": "src/systems/save.js",
+    "old": "  const loadDeadOnline = isOnlinePage() && !((entity.health ?? 0) > 0);\n",
+    "new": "  const loadDeadOnline = false; if (isOnlinePage() && !((entity.health ?? 0) > 0)) reviveForPlay(entity);\n",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-C-no-revival",
+    "file": "src/systems/save.js",
+    "old": "  if (loadDeadOnline) reviveForPlay(entity);\n",
+    "new": "\n",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-C-exit-save-writes-the-dead",
+    "file": "src/systems/saveSlots.js",
+    "old": "  if (deathUp || !(entity?.health > 0)) return [];",
+    "new": "  if (deathUp) return [];",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-C-exit-save-ignores-the-death-screen",
+    "file": "src/systems/saveSlots.js",
+    "old": "  if (deathUp || !(entity?.health > 0)) return [];",
+    "new": "  if (!(entity?.health > 0)) return [];",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-C-handler-reads-no-death",
+    "file": "src/scenes/world.js",
+    "old": "exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() })",
+    "new": "exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen })",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-C-online-hint-lies",
+    "file": "src/ui/deathScreen.js",
+    "old": "hint = isOnlinePage() ? ONLINE_DEATH_HINT : 'ENTER end   F11 load'",
+    "new": "hint = 'ENTER end   F11 load'",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-F-watch-comes-for-the-wanted",
+    "file": "src/systems/townWatch.js",
+    "old": "      if (crime) { countdown = 0; calm = 0; return null; }",
+    "new": "      if (false) { countdown = 0; calm = 0; return null; }",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-F-watch-follows-a-player-who-left",
+    "file": "src/systems/townWatch.js",
+    "old": "return locationKey === countdownKey ? 'summon' : null;",
+    "new": "return 'summon';",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-F-watch-arrives-at-once",
+    "file": "src/systems/townWatch.js",
+    "old": "        countdown = TOWN_WATCH_ARRIVAL_MIN_SECONDS + Math.floor(rand() * TOWN_WATCH_ARRIVAL_SPAN);",
+    "new": "        countdown = 0.001;",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-F-watch-leaves-while-fighting",
+    "file": "src/systems/townWatch.js",
+    "old": "      if (calm < TOWN_WATCH_STAND_DOWN_SECONDS) return null;",
+    "new": "      if (calm < 0) return null;",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-F-watch-stays-when-switched-off",
+    "file": "src/systems/townWatch.js",
+    "old": "        return defenders > 0 ? 'dismiss' : null;",
+    "new": "        return null;",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-F-threat-need-not-hunt",
+    "file": "src/systems/townWatch.js",
+    "old": "  if (!isPlayerTarget(f.ai.target)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-F-threat-puppets-count",
+    "file": "src/systems/townWatch.js",
+    "old": "  if (!f || f.dead || f.puppet || !f.ai || !f.entity) return false;",
+    "new": "  if (!f || f.dead || !f.ai || !f.entity) return false;",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-F-threat-allies-count",
+    "file": "src/systems/townWatch.js",
+    "old": "  if (f.entity.team === 'PlayerAlly') return false;\n",
+    "new": "",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-F-defender-mobile-team-not-allied",
+    "file": "src/scenes/cityGuards.js",
+    "old": "        entity.team = 'PlayerAlly'; entity.mobileTeam = 'PlayerAlly';",
+    "new": "        entity.team = 'PlayerAlly';",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-F-defender-not-sent-at-threat",
+    "file": "src/scenes/cityGuards.js",
+    "old": "        if (threat?.ai) ai.makeEnemyHostileToAttacker(threat, threat.ai.feet, 600);",
+    "new": "",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-F-defender-walks-with-crime-watch",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      for (const g of guards) if (!g.dead && !g.defender) { g.dead = true; releaseGuardBatch(g); }",
+    "new": "      for (const g of guards) if (!g.dead) { g.dead = true; releaseGuardBatch(g); }",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-F-crime-leaves-defenders-allied",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    if (playerEntity.crimeCommitted) for (const g of guards) if (!g.dead && g.defender) enlistDefender(g, playerFeet);",
+    "new": "",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-F-enlist-keeps-allied-mobile-team",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    g.entity.team = g.entity.mobileTeam = staticTeamOf(GUARD_MOBILE_TYPE);",
+    "new": "    g.entity.team = staticTeamOf(GUARD_MOBILE_TYPE);",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-F-defenders-saved",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    return guards.filter((g) => !g.dead && !g.defender).map((g) => {",
+    "new": "    return guards.filter((g) => !g.dead).map((g) => {",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-F-dismiss-leaves-a-body",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    for (const g of guards) if (!g.dead && g.defender) { g.dead = true; releaseGuardBatch(g); n++; }",
+    "new": "    for (const g of guards) if (!g.dead && g.defender) { g.dead = true; g.corpse = true; releaseGuardBatch(g); n++; }",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-F-swing-takes-the-defender-first",
+    "file": "src/scenes/cityGuards.js",
+    "old": "(defendersOnly ? g.defender : !(spareDefenders && g.defender))",
+    "new": "(defendersOnly ? g.defender : true)",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-F-no-npc-guard-conversion",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      if (!p.guard || room() <= 0) continue;\n      if (Math.hypot(p.pos[0] - playerFeet[0]",
+    "new": "      if (true) continue;\n      if (Math.hypot(p.pos[0] - playerFeet[0]",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-F-host-never-runs-the-watch",
+    "file": "src/scenes/world.js",
+    "old": "      if (playerSpawned) _townWatchFrame(dt);",
+    "new": "",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-F-host-swing-order",
+    "file": "src/scenes/world.js",
+    "old": "guardHitSound, { spareDefenders: true })) {",
+    "new": "guardHitSound)) {",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-F-camp-reads-stale-pixel",
+    "file": "src/scenes/world.js",
+    "old": "inside: false, inLocationRect: _inAnyLocationRect(walkMode ? player.pos : cam.pos),",
+    "new": "inside: false, inLocationRect: _musicInLocationRect(),",
+    "tests": [
+      "test/disc16.test.js"
+    ]
+  },
+  {
+    "name": "DISC16-F-camp-pitched-in-town",
+    "file": "src/scenes/world.js",
+    "old": "      if (anchor && _inAnyLocationRect([anchor.x, anchor.y, anchor.z])) anchor = null;",
+    "new": "",
+    "tests": [
+      "test/disc16.test.js"
+    ]
   }
 ]

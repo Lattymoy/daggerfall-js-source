@@ -61,7 +61,7 @@ import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F217
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
 import { EnemyAI, withinYaw, isBackFacing } from '../characters/enemyMotor.js';
-import { runTargetMachine, isPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack, wireRecipient, bumpAtkCount } from '../characters/enemyTargets.js';   // AUDIT WATCH1: the wire's spellings, one home   // MT-ii   // ROAD-G G1: MakeEnemyHostileToAttacker's entity-side half, for the watch too
+import { runTargetMachine, isPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack, wireRecipient, bumpAtkCount, staticTeamOf } from '../characters/enemyTargets.js';   // AUDIT WATCH1: the wire's spellings, one home   // MT-ii   // ROAD-G G1: MakeEnemyHostileToAttacker's entity-side half, for the watch too
 import { applyDamageToNonPlayer, spawnEnemyLoot } from './hostCombat.js';   // MT-ii: EnemyAttack.ApplyDamageToNonPlayer
 import { EnemyAttack } from '../characters/enemyAttack.js';
 import { makeEnemyEntity } from '../characters/enemyEntity.js';
@@ -224,7 +224,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   const activeCount = () => guards.filter((g) => !g.dead).length;
 
   /** SpawnCityGuard: the C17 class-foe recipe at a position/facing. */
-  async function spawnGuardAt(pos, yaw, attackerFeet = null, { level = null } = {}) {   // AUDIT ALL A6: a restore hands the saved level in as final
+  async function spawnGuardAt(pos, yaw, attackerFeet = null, { level = null, defender = false, threat = null } = {}) {   // AUDIT ALL A6: a restore hands the saved level in as final; DISC16-F: a DEFENDER comes for the threat, as the player's ally
     const basics = ENEMY_BASICS[GUARD_MOBILE_TYPE];
     const pending = { feet: [pos[0], pos[1] + 0.1, pos[2]] };   // AUDIT-39r: shifted by offsetAll until the record lands
     spawning.push(pending);
@@ -273,7 +273,14 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       pending.feet = ai.feet;   // AUDIT-39r: the AI's copy is the live array from here
       // MakeEnemyHostileToAttacker + GiveUpTimer *= 3, verbatim: a
       // crime-responding guard pursues without having seen the player.
-      ai.makeHostileToPlayer(600, attackerFeet);   // wave 36: MakeEnemyHostileToAttacker seeds the remembered position too
+      // DISC16-F: a DEFENDER is the player's ally instead - the allied
+      // summon's shape (both per-instance teams, exteriorFoes.js), so
+      // DFU's own target chain never picks the player - and it is sent
+      // at the THREAT with the same tripled give-up timer.
+      if (defender) {
+        entity.team = 'PlayerAlly'; entity.mobileTeam = 'PlayerAlly';
+        if (threat?.ai) ai.makeEnemyHostileToAttacker(threat, threat.ai.feet, 600);
+      } else ai.makeHostileToPlayer(600, attackerFeet);   // wave 36: MakeEnemyHostileToAttacker seeds the remembered position too
       const attack = new EnemyAttack({ liveSpeed: () => liveStat(entity, 'speed'), playerLevel: playerEntity.level, reflexes: playerEntity.reflexes });   // AUDIT 39: EnemyAttack.cs:69-72, ditto
       // EnemyMotor.cs:131-137 computes hasBowAttack from the MobileEnemy
       // FLAGS, and EnemyBasics.cs:2197-2212 gives Knight_CityWatch
@@ -284,7 +291,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       attack.rangedAttack = false;
       const mobile = new MobileUnit(GUARD_MOBILE_TYPE, basics, (rec) => tex.getFrameCount(rec), Math.random, 'male');
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-      const g = { id: _nextGuardId++, mobile, ai, attack, entity, batch, tex, archive, mobileType: GUARD_MOBILE_TYPE, idleH, dead: false, _prevMState: 'Idle', _mout: null,
+      const g = { id: _nextGuardId++, mobile, ai, attack, entity, batch, tex, archive, mobileType: GUARD_MOBILE_TYPE, idleH, dead: false, _prevMState: 'Idle', _mout: null, defender: !!defender,   // DISC16-F
         // WATCH1: THE WATCH RIDES THE CELL'S STREAM. `seq` is this watchman's number on the wire, minted by the
         // encounter pool's own counter the first time he rides a frame (one number space with the foes, so a
         // peer's blow names one thing); `_atkA`/`_atkB` the attack count and its recipient in the pool's spelling
@@ -541,6 +548,79 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     return Math.acos(Math.max(-1, Math.min(1, cos))) * 180 / Math.PI;
   }
 
+  /** DISC16-F: THE WATCH DEFENDS THE TOWN (systems/townWatch.js
+   *  decides when; this is the arrival). The crime response's own two
+   *  arms, with the defenders minted as the player's allies and sent at
+   *  the threat nearest them:
+   *    - the wandering guards within GUARD_NPC_SPAWN_RANGE of the player
+   *      first, converted where they stand and the source NPC disabled
+   *      (the immediate arm's conversion, PlayerEntity.cs:659-671);
+   *    - else 2-5 at the spawner's band, out of the player's view
+   *      (CreateFoeSpawner's fallback, :687 - SPAWNER_ARMS.cityGuards).
+   *  The cap is the watch's own maxActiveGuardSpawns, shared with any
+   *  watchman standing, and never underground or inside a building
+   *  (:625's gate). Answers how many came. */
+  async function summonDefenders({ playerFeet, playerFwd = [0, 0, 1], pool = [], threats = [] } = {}) {
+    const _ee = enterExitFlags?.();
+    if (_ee?.isPlayerInsideDungeon || _ee?.isPlayerInside) return 0;
+    const live = threats.filter((t) => t?.ai?.feet && !t.dead);
+    if (!playerFeet || !live.length) return 0;
+    const room = () => MAX_ACTIVE_GUARD_SPAWNS - activeCount();
+    const nearestThreat = (at) => {
+      let best = null, bd = Infinity;
+      for (const t of live) { const d = Math.hypot(t.ai.feet[0] - at[0], t.ai.feet[2] - at[2]); if (d < bd) { bd = d; best = t; } }
+      return best;
+    };
+    let came = 0;
+    for (const p of pool) {
+      if (!p.guard || room() <= 0) continue;
+      if (Math.hypot(p.pos[0] - playerFeet[0], p.pos[1] - playerFeet[1], p.pos[2] - playerFeet[2]) > GUARD_NPC_SPAWN_RANGE) continue;
+      const g = await spawnGuardAt(p.pos, p.fwdYaw, null, { defender: true, threat: nearestThreat(p.pos) });
+      if (!g) continue;
+      p.disable();   // "Classic disables the NPC that the guard is spawned from"
+      came++;
+    }
+    if (came > 0) return came;
+    const count = Math.min(room(), 2 + Math.floor(rand() * 4));   // Random.Range(2, 6)
+    if (count <= 0) return 0;
+    const env = placeFoeEnv({
+      collider,
+      playerFeet: [playerFeet[0], playerFeet[1] + 0.9, playerFeet[2]],
+      playerYawRad: Math.atan2(playerFwd?.[0] ?? 0, playerFwd?.[2] ?? 1),
+      fovDegrees: (fieldOfView() * 180) / Math.PI,
+      rolls: rand,
+      isOccupied: entityOccupancy((g) => g.ai?.feet, () => guards.filter((g) => !g.dead), playerFeet),
+    });
+    for (let i = 0; i < count; i++) {
+      let spot = null;
+      for (let a = 0; a < GUARD_PLACE_ATTEMPTS && !spot; a++) spot = placeFoeFreely(env, SPAWNER_ARMS.cityGuards);
+      if (!spot) continue;
+      const threat = nearestThreat([spot.x, spot.y, spot.z]);
+      const yaw = threat ? Math.atan2(threat.ai.feet[0] - spot.x, threat.ai.feet[2] - spot.z) : 0;
+      if (await spawnGuardAt([spot.x, spot.y, spot.z], yaw, null, { defender: true, threat })) came++;
+    }
+    return came;
+  }
+  /** DISC16-F: the town is quiet, the player left it, or the switch went
+   *  off - the defenders walk away, as the crime watch walks away when
+   *  its crime clears: no corpse and nothing to loot. */
+  function dismissDefenders() {
+    let n = 0;
+    for (const g of guards) if (!g.dead && g.defender) { g.dead = true; releaseGuardBatch(g); n++; }
+    return n;
+  }
+  const defenderCount = () => guards.filter((g) => !g.dead && g.defender).length;
+  /** DISC16-F: a crime turns a defender into the ordinary watch on the
+   *  spot - its species' team back on both per-instance fields (the
+   *  allied copy would otherwise keep the player out of its target list,
+   *  EnemySenses.cs:776) and the crime watch's own pursuit seeded. */
+  function enlistDefender(g, playerFeet) {
+    g.defender = false;
+    g.entity.team = g.entity.mobileTeam = staticTeamOf(GUARD_MOBILE_TYPE);
+    g.ai.isHostile = true;
+    g.ai.makeHostileToPlayer(600, playerFeet ?? null);
+  }
+
   /** AUDIT 24 (the seven-slice sweep): free a guard's LIVE billboard
    *  batch the moment nothing will draw it again. `batches()` skips
    *  every dead guard and a corpse draws from its own entry in
@@ -787,8 +867,11 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // despawns for its length rather than only at the door. Offline is
     // untouched - vanilla's own crime-clear law already stands alone
     // there, the same way arrestFlow's fix leaves offline alone.
+    // DISC16-F: a CRIME turns the town's defenders into that watch
+    // first - they are guards, and the law below is theirs from here on.
+    if (playerEntity.crimeCommitted) for (const g of guards) if (!g.dead && g.defender) enlistDefender(g, playerFeet);
     if ((!playerEntity.crimeCommitted || (sharedClockOn() && playerEntity.arrested)) && !isTransformedLycanthrope(playerEntity)) {
-      for (const g of guards) if (!g.dead) { g.dead = true; releaseGuardBatch(g); }   // no corpse - they walk away
+      for (const g of guards) if (!g.dead && !g.defender) { g.dead = true; releaseGuardBatch(g); }   // no corpse - they walk away; DISC16-F: a defender is not the crime's and leaves on the town watch's word
     }
     // AUDIT 17e F7 - PlayerEntity.cs:533-537 verbatim: the surrender
     // dialogue flag resets once no city watch is alive. It only ever
@@ -1015,10 +1098,17 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
 
   /** The player's swing resolves against live guards (the dungeon's
    *  resolvePlayerHit shape over playerWeapon.resolveHit). */
-  function resolvePlayerHit(playerWeapon, eye, lookDir, playerFeet, inViewFn, onHitSound) {
+  function resolvePlayerHit(playerWeapon, eye, lookDir, playerFeet, inViewFn, onHitSound, { spareDefenders = false, defendersOnly = false } = {}) {
     if (inViewFn) _lastInView = inViewFn;   // the assault-carry swing below reaches here without one
     const view = inViewFn ?? _lastInView;
-    const live = guards.filter((g) => !g.dead);
+    // DISC16-F: THE DEFENDERS ARE PROTECTED ACROSS POOLS. MeleeDamage's
+    // friendly protection strikes a PlayerAlly only when nothing else is
+    // in front of the player (WeaponManager.cs:930-944, :1057-1064), but
+    // the host resolves this pool BEFORE the monsters' - so a defender in
+    // reach beside the centaur was the only thing in THIS pool and took
+    // the swing meant for the monster. The host spares them on the first
+    // pass and offers them alone after the monsters' pool missed.
+    const live = guards.filter((g) => !g.dead && (defendersOnly ? g.defender : !(spareDefenders && g.defender)));
     if (!live.length) return false;
     const canSee = (g) => {
       const c = [g.ai.feet[0], g.ai.feet[1] + (g.ai.height ?? 1.8) / 2, g.ai.feet[2]];   // REVIEW 2026-09-05: the watchman's own capsule centre
@@ -1308,7 +1398,10 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  natives in, dead guards out. A quickload during a pursuit
    *  despawned the whole watch - a free escape from any crime. */
   function snapshotWorld(toNative) {
-    return guards.filter((g) => !g.dead).map((g) => {
+    // DISC16-F: a DEFENDER is not saved - it is the town's answer to the
+    // monsters standing, and a load that restores those monsters raises
+    // the answer again through the town watch's own countdown.
+    return guards.filter((g) => !g.dead && !g.defender).map((g) => {
       const wc = toNative(g.ai.feet);
       return {
         nativeX: wc.x, nativeZ: wc.z, y: g.ai.feet[1], yaw: g.ai.yaw,
@@ -1353,7 +1446,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     releaseGuardBatch(g);
     g.dead = true;   // no `corpse` - a removed guard is destroyed, not killed
   }
-  return { guards, spawnCityGuards, makeNpcGuardsIntoEnemies, anyWatchStanding, update, offsetAll, collectPixel, clearLive, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, hoverName, hoverContents, liveTargets, liveHoverName, takeLoot, pileBody: (key) => pileBody(corpseEntryFor(guards, key, 'guardCorpse', corpseLens)), snapshotWorld, restoreWorld, removeGuard, handleAttackFromPlayer,   // LOOT-STACK: a body as the loot window's tab
+  return { guards, spawnCityGuards, makeNpcGuardsIntoEnemies, anyWatchStanding, update, offsetAll, collectPixel, clearLive, resolvePlayerHit, resolveCivilianHit, activeCount, summonDefenders, dismissDefenders, defenderCount, lootTargets, hoverName, hoverContents, liveTargets, liveHoverName, takeLoot, pileBody: (key) => pileBody(corpseEntryFor(guards, key, 'guardCorpse', corpseLens)), snapshotWorld, restoreWorld, removeGuard, handleAttackFromPlayer,   // LOOT-STACK: a body as the loot window's tab
     /** RR2: PlayerEntity.SpawnCityGuard(position, direction) (PlayerEntity.cs:678-694) for a caller
      *  outside the watch's own call - the ONE watchman minted where a walker stood, facing their
      *  way, hostile to the player. Resolves to the guard record (or null when the world moved on). */
