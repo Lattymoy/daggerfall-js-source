@@ -389,10 +389,15 @@ test('WEATHER3i: THE HOVER NAMES WHAT IS DRAWN - read at the refresh\'s minute, 
     for (let py = 5; py < 250 && told < 3; py += 7) {
       for (let px = 5; px < 400 && told < 3; px += 7) {
         const [fx, fz] = fieldOfMapPixel(px, py);
-        const at = (m) => forecastText(forecastAt(fx, fz, m, woods, { hours: WEATHER_FORECAST_HOURS, step: 30, ground: wx.ground }), WEATHER_FORECAST_HOURS);
+        const read = (m) => forecastAt(fx, fz, m, woods, { hours: WEATHER_FORECAST_HOURS, step: 30, ground: wx.ground });
+        const at = (m) => forecastText(read(m), WEATHER_FORECAST_HOURS);
         const drawn = at(wx.minutes), live = at(clock.m);
         if (drawn === live) continue;
-        wx.forecasts.clear();
+        wx.forecasts.clear(); wx.nows.clear();
+        // MAP-LAG: the weather there named on the move, and the forecast once the pointer rests - both at the refresh's minute
+        const f = read(wx.minutes);
+        assert.equal(win._withWeather('', px, py), weatherPhrase(f.now.word, f.now.intensity), `${px},${py}: named at the refresh's minute`);
+        win._clock += 1; win._readRestingForecast();
         assert.equal(win._withWeather('', px, py), drawn, `${px},${py}: "${drawn}", not the live minute's "${live}"`);
         told++;
       }

@@ -358,6 +358,7 @@ export function createAutomapSheet(deps = {}) {
 
     tick() { /* the plan is rebuilt off the reveal sets' own sizes, on demand */ },
 
+    paintUnder() { /* nothing lies under the plan's ink */ },
     mount() { /* the automap claims none of the world map's chrome */ },
     unmount() { /* ...so it gives none back */ },
 

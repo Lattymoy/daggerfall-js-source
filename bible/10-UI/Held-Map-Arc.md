@@ -1200,3 +1200,17 @@ Pins: `test/maptoggle.test.js` (4, driven: the gate on/off/classic, the doors ha
 classic null against a live switch, the row, the fourth painting's numbers against the file's own header);
 `test/heldmap.test.js` U61 re-aimed to the gate. `tools/mutants/maptoggle.json`: 9 records, 9 dead. Not
 verified in a browser beyond the probe.
+
+## MAP-LAG - what lies under the ink is kept too (2026-09-23, Mac)
+
+A sheet may have something under its ink that must not be inked with it.
+The world's weather regions were 85 ms and more a frame, because they
+rode the kept static layer, whose key is the view. The sheet contract
+(`mapStrip.js` SHEET_MEMBERS) gains `paintUnder(ctx, env)`. The window
+calls it every frame, before it lays the kept ink, and marks the static
+paint with `env.underlay` so the sheet leaves that part out of the ink.
+The town and the automap draw nothing there. The world sheet lays the
+weather's own raster (`_drawWeatherUnder`): moved by a pan, stretched by
+a zoom, inked again crisp when the view has held still, and inked as a
+job a slice a frame. With no kept layer the sheet inks the regions as it
+always did. `01-Overview/Field-Bugs-2026-09-23.md`, MAP-LAG.

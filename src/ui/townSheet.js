@@ -321,6 +321,7 @@ export function createTownSheet(deps = {}) {
     mark() { /* the middle button marks a place on the BAY; a street has none */ },
     key() { return false; },
     tick() { /* the plates are rebuilt off the view, on demand */ },
+    paintUnder() { /* nothing lies under the plan's ink */ },
     mount() { /* the town claims none of the world map's chrome */ },
     unmount() { },
 
