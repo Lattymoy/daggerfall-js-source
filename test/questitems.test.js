@@ -436,7 +436,7 @@ test('quest lists: the social law (level-or-rep gate, N/M/F rows), SelectQuest a
   // path raises TWICE (QuestMachine.cs:450-451 raises again after
   // StartQuest's own raise), so a scheduled one-time quest records
   // twice in the accepted list - save-state parity.
-  const scheduled = m.scheduleParsedQuest(quest);
+  const scheduled = m.scheduleQuest(CHILD);
   m.tick();
   assert.deepEqual(m.of('onQuestStarted').map((c) => c[1]), [scheduled, scheduled]);
 });

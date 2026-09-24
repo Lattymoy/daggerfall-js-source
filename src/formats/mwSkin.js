@@ -23,6 +23,7 @@
 // was this header's own overstatement.
 
 import { deref } from './mwNifFile.js';
+import { affineOfTransform, affineMul } from './mwAffine.js';   // AUDIT 68 S11-affine-dup: one home
 
 // Every NiNode-derived record, the reference's own membership test
 // (nifloader.cpp:932-937 recurses whatever casts to Nif::NiNode) - a
@@ -43,31 +44,6 @@ const NODE_TYPES = new Set([
 
 // Affine {a: Float32Array(9) row-major rotation*scale, t: [x,y,z]}.
 const IDENT_A = Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]);
-
-function affineFrom(rotation, translation, scale) {
-  const a = new Float32Array(9);
-  for (let i = 0; i < 9; i++) a[i] = rotation[i] * scale;
-  return { a, t: [translation[0], translation[1], translation[2]] };
-}
-
-/** out = p ∘ l (apply l first, then p). */
-function affineMul(p, l) {
-  const a = new Float32Array(9);
-  for (let r = 0; r < 3; r++) {
-    for (let c = 0; c < 3; c++) {
-      a[r * 3 + c] =
-        p.a[r * 3] * l.a[c] + p.a[r * 3 + 1] * l.a[3 + c] + p.a[r * 3 + 2] * l.a[6 + c];
-    }
-  }
-  return {
-    a,
-    t: [
-      p.a[0] * l.t[0] + p.a[1] * l.t[1] + p.a[2] * l.t[2] + p.t[0],
-      p.a[3] * l.t[0] + p.a[4] * l.t[1] + p.a[5] * l.t[2] + p.t[1],
-      p.a[6] * l.t[0] + p.a[7] * l.t[1] + p.a[8] * l.t[2] + p.t[2],
-    ],
-  };
-}
 
 /** Inverse of a rotation*uniformScale affine. */
 function affineInverse(m) {
@@ -333,7 +309,7 @@ export function skeletonSpaceMatrices(skeleton, pose, skeletonRoot) {
     } else {
       const node = skeleton.nodes.get(ref);
       const local = pose.get(ref) ?? node.rest;
-      m = affineMul(matOf(node.parent), affineFrom(local.rotation, local.translation, local.scale));
+      m = affineMul(matOf(node.parent), affineOfTransform(local));
     }
     out.set(ref, m);
     return m;
@@ -359,7 +335,7 @@ export function skinToSkelMatrix(skeleton, pose, skeletonRoot, rootBone) {
   let m = { a: IDENT_A, t: [0, 0, 0] };
   for (const r of chain) {
     const local = pose.get(r) ?? skeleton.nodes.get(r).rest;
-    m = affineMul(m, affineFrom(local.rotation, local.translation, local.scale));
+    m = affineMul(m, affineOfTransform(local));
   }
   return affineInverse(m);
 }
@@ -420,13 +396,10 @@ export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normals
   // wisdom the reference's own code contradicts. Identity on every
   // retail shape anyone has measured, which is why nothing saw it.
   let post = affineMul(
-    affineFrom(skin.transform.rotation, skin.transform.translation, skin.transform.scale),
+    affineOfTransform(skin.transform),
     skinToSkelMatrix(skeleton, pose, skin.skeletonRoot, skin.rootBone),
   );
-  if (skin.shapeTransform) {
-    const st = skin.shapeTransform;
-    post = affineMul(affineFrom(st.rotation, st.translation, st.scale), post);
-  }
+  if (skin.shapeTransform) post = affineMul(affineOfTransform(skin.shapeTransform), post);
   const n = batch.positions.length / 3;
   // PERF-RIG1 (2026-09-21, Mac: "continue looking into fixing exterior
   // performance issues"): THE ACCUMULATORS ARE THE BATCH'S. This runs

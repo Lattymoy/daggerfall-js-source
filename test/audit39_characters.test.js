@@ -66,7 +66,7 @@ test('audit39 #69: stopDistance is the TARGET\'s, and the vs-AI value lets the s
   // ...and inside 1.5 it stops there too
   vsFoe._dist = 1.4;
   vsFoe._classicTick([0, 0, 1.4]);
-  assert.equal(vsFoe.moving, false, 'stopping at 1.5, where enemyAttack.js:154-155 lets the swing land');
+  assert.equal(vsFoe.moving, false, 'stopping at 1.5, where enemyAttack.js:165-166 lets the swing land');
 
   // UNARMED (no targeting context) is the player value, unchanged
   const legacy = mkTicker(null);

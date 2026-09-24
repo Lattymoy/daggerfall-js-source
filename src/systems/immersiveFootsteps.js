@@ -361,7 +361,10 @@ export function createImmersiveFootsteps({ audio = defaultAudio, settings = read
     // Start's LoadAudio, and change.HasChanged("AudioQualitySettings", "SoundClipQuality")'s reload
     if (s.Enabled && loadedQuality !== s.SoundClipQuality && !(loading && loadingQuality === s.SoundClipQuality)) {
       loadingQuality = s.SoundClipQuality;
-      loading = loadAudio(s.SoundClipQuality).finally(() => { loading = null; loadingQuality = -1; });
+      // AUDIT 68 S27-if-load-clobber: a superseded load settles its OWN marker only - it cleared the newer load's, so
+      // settle() answered early and the next settings change of any kind started the whole set a third time
+      const pending = loadAudio(s.SoundClipQuality).finally(() => { if (loading === pending) { loading = null; loadingQuality = -1; } });
+      loading = pending;
     }
   }
   const settle = () => { const p = loading; return p ? p.then(() => undefined) : Promise.resolve(); };

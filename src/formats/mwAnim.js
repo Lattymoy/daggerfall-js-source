@@ -21,6 +21,7 @@
 
 import { deref, KEY_TYPE } from './mwNifFile.js';
 import { allWeaponShortGroups } from './mwFirstPerson.js';
+import { segment, sampleKeyGroup } from './mwKeys.js';
 
 // --- text keys and groups --------------------------------------------------
 
@@ -155,109 +156,9 @@ export function extractTracks(nif) {
 
 // --- sampling --------------------------------------------------------------
 
-function hermite(v0, out0, v1, in1, t) {
-  const t2 = t * t;
-  const t3 = t2 * t;
-  const h1 = 2 * t3 - 3 * t2 + 1;
-  const h2 = -2 * t3 + 3 * t2;
-  const h3 = t3 - 2 * t2 + t;
-  const h4 = t3 - t2;
-  return h1 * v0 + h2 * v1 + h3 * out0 + h4 * in1;
-}
-
-/**
- * MW-D33: TCB tangents for key i, exactly generateTCBTangents
- * (nifkey.hpp:172-204) on the per-key coefficients readTCBKey derives
- * from tension/continuity/bias (nifkey.hpp:165-168):
- *
- *   A = (1-t)(1-c)(1+b)   B = (1-t)(1+c)(1-b)
- *   C = (1-t)(1+c)(1+b)   D = (1-t)(1-c)(1-b)
- *
- * FIRST and LAST keys take the half-sum of the one neighbouring delta -
- * inTan = delta*((A+B)*0.5), outTan = delta*((C+D)*0.5) (:178-182,
- * :198-203). INTERIOR keys weight by TIME SPAN, not 0.5 - the port had
- * flattened both sides to 0.5 and lost the asymmetry of unevenly spaced
- * keys:
- *
- *   timeSpan = next.mTime - prev.mTime
- *   inTan  = (prevDelta*A + nextDelta*B) * ((cur - prev) / timeSpan)
- *   outTan = (prevDelta*C + nextDelta*D) * ((next - cur) / timeSpan)
- *
- * A ZERO span `continue`s (:189-190), leaving the struct's
- * zero-initialised tangents (mInTan{}/mOutTan{}, nifkey.hpp:38-40) - so
- * the answer there is 0, not a computed slope. A single-key list also
- * keeps zero tangents (`keys.size() <= 1`, :174-175).
- *
- * @returns {[number, number]} [inTan, outTan]
- */
-function tcbTangents(keys, i, dim, axis) {
-  const val = (k) => (dim === 1 ? k.value : k.value[axis]);
-  if (keys.length <= 1) return [0, 0];
-  const [t, c, b] = keys[i].tbc || [0, 0, 0];
-  const A = (1 - t) * (1 - c) * (1 + b);
-  const B = (1 - t) * (1 + c) * (1 - b);
-  const C = (1 - t) * (1 + c) * (1 + b);
-  const D = (1 - t) * (1 - c) * (1 - b);
-  if (i === 0 || i === keys.length - 1) {
-    const delta = i === 0 ? val(keys[1]) - val(keys[0]) : val(keys[i]) - val(keys[i - 1]);
-    return [delta * ((A + B) * 0.5), delta * ((C + D) * 0.5)];
-  }
-  const prev = keys[i - 1];
-  const cur = keys[i];
-  const next = keys[i + 1];
-  const timeSpan = next.time - prev.time;
-  if (timeSpan === 0) return [0, 0];
-  const prevDelta = val(cur) - val(prev);
-  const nextDelta = val(next) - val(cur);
-  return [
-    (prevDelta * A + nextDelta * B) * ((cur.time - prev.time) / timeSpan),
-    (prevDelta * C + nextDelta * D) * ((next.time - cur.time) / timeSpan),
-  ];
-}
-
-/** Find the key segment bracketing time; returns [i0, i1, u]. */
-function segment(keys, time) {
-  if (time <= keys[0].time) return [0, 0, 0];
-  const last = keys.length - 1;
-  if (time >= keys[last].time) return [last, last, 0];
-  let i = 0;
-  while (keys[i + 1].time < time) i++;
-  const span = keys[i + 1].time - keys[i].time;
-  return [i, i + 1, span > 0 ? (time - keys[i].time) / span : 0];
-}
-
-function sampleGroup(group, dim, time) {
-  const { keys, type } = group;
-  if (!keys.length) return null;
-  const [i0, i1, u] = segment(keys, time);
-  const k0 = keys[i0];
-  const k1 = keys[i1];
-  const comp = (axis) => {
-    const v0 = dim === 1 ? k0.value : k0.value[axis];
-    const v1 = dim === 1 ? k1.value : k1.value[axis];
-    if (i0 === i1) return v0;
-    // MW-D33: Constant answers by WHICH HALF of the segment the playhead
-    // is in - `fraction > 0.5f ? b.mValue : a.mValue` (controller.hpp:
-    // 140-141) - not "always the left key", which the port had.
-    if (type === KEY_TYPE.constant) return u > 0.5 ? v1 : v0;
-    if (type === KEY_TYPE.quadratic) {
-      // f(t) = a.mValue*b1 + b.mValue*b2 + a.mOutTan*b3 + b.mInTan*b4
-      // (controller.hpp:150-158): the LEFT key's OUT tangent, the RIGHT
-      // key's IN tangent.
-      const out0 = dim === 1 ? k0.outTan : k0.outTan[axis];
-      const in1 = dim === 1 ? k1.inTan : k1.inTan[axis];
-      return hermite(v0, out0, v1, in1, u);
-    }
-    if (type === KEY_TYPE.tbc) {
-      const [, out0] = tcbTangents(keys, i0, dim, axis);
-      const [in1] = tcbTangents(keys, i1, dim, axis);
-      return hermite(v0, out0, v1, in1, u);
-    }
-    return v0 + (v1 - v0) * u;
-  };
-  if (dim === 1) return comp(0);
-  return [comp(0), comp(1), comp(2)];
-}
+// AUDIT 68 S11-colorkey-tbc: the float KeyGroup sampler (Hermite, the TCB
+// tangents, the segment search) lives in mwKeys.js - the particle colour
+// ramp is a KeyGroup too, and its own copy dropped the TCB tangents.
 
 /** Quaternion slerp on [w,x,y,z]. */
 function slerp(a, b, u) {
@@ -324,9 +225,9 @@ function sampleRotation(track, time) {
   if (track.rotationType === KEY_TYPE.xyz) {
     const [gx, gy, gz] = track.xyzRotations;
     const angles = [
-      sampleGroup(gx, 1, time) ?? 0,
-      sampleGroup(gy, 1, time) ?? 0,
-      sampleGroup(gz, 1, time) ?? 0,
+      sampleKeyGroup(gx, 1, time) ?? 0,
+      sampleKeyGroup(gy, 1, time) ?? 0,
+      sampleKeyGroup(gz, 1, time) ?? 0,
     ];
     const order = AXIS_ORDERS[track.axisOrder ?? 0] ?? AXIS_ORDERS[0];
     // Apply order[0] first: q = q2 x q1 x q0 in Hamilton terms.
@@ -356,8 +257,8 @@ function sampleRotation(track, time) {
 export function sampleTrack(track, time) {
   return {
     rotation: sampleRotation(track, time),
-    translation: sampleGroup(track.translations, 3, time),
-    scale: sampleGroup(track.scales, 1, time),
+    translation: sampleKeyGroup(track.translations, 3, time),
+    scale: sampleKeyGroup(track.scales, 1, time),
   };
 }
 
@@ -494,8 +395,8 @@ export function animVelocity(keys, track, group) {
   if (starttime == null || stoptime == null || !(stoptime > starttime)) return 0;
   // The accum root's TRANSLATION channel alone - getTranslation() is
   // all the reference samples here (animation.cpp:218-219).
-  const a = track.translations ? sampleGroup(track.translations, 3, starttime) : null;
-  const b = track.translations ? sampleGroup(track.translations, 3, stoptime) : null;
+  const a = track.translations ? sampleKeyGroup(track.translations, 3, starttime) : null;
+  const b = track.translations ? sampleKeyGroup(track.translations, 3, stoptime) : null;
   if (!a || !b) return 0;
   // accumulate (1,1,0): the third component is MW's vertical.
   return Math.hypot(a[0] - b[0], a[1] - b[1]) / (stoptime - starttime);

@@ -130,7 +130,6 @@ window.__qs = {
 document.title = 'ready';
 <\/script></body></html>`;
 
-await writeFile(PAGE_PATH, PAGE);
 const vite = await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });
 await vite.listen();
 const port = vite.httpServer.address().port;
@@ -139,6 +138,8 @@ const fails = [];
 const ok = (cond, what, got) => { console.log(`   ${cond ? 'ok  ' : 'FAIL'}  ${what}${got !== undefined ? `   (${JSON.stringify(got)})` : ''}`); if (!cond) fails.push(what); };
 
 try {
+  // AUDIT 68 X2-probe-tmp-page-leak: written inside the try, so the finally that unlinks it always runs.
+  await writeFile(PAGE_PATH, PAGE);
   const page = await browser.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));

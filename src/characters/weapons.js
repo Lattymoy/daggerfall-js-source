@@ -214,7 +214,7 @@ const byIndex = new Map(templates.map((t) => [t.index, t]));
 const roundHalfEven = (x) => { const f = Math.floor(x); return (x - f === 0.5) ? (f % 2 === 0 ? f : f + 1) : Math.round(x); };
 export function weightForMaterial(weightInKg, material) {
   const quarterKgs = Math.trunc(weightInKg * 4);
-  const matQuarterKgs = (quarterKgs * weightMultipliersByMaterial[material]) / 4;
+  const matQuarterKgs = (quarterKgs * (weightMultipliersByMaterial[material] ?? 4)) / 4;   // AUDIT 68 S27-weightForMaterial-dup: an unknown material weighs its base (x4/4), never NaN - the inventory copy's guard, kept in the one home
   return roundHalfEven(matQuarterKgs) / 4;
 }
 

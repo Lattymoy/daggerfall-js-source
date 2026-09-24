@@ -79,7 +79,8 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
+import { isMain } from './lib/isMain.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const LEDGER = 'bible/01-Overview/Port-Ledger.md';
@@ -90,8 +91,9 @@ export const SELF_DOCS = Object.freeze(['tools/citeShift.mjs', 'tools/citeMerge.
 
 /** A cite of any file on a line - where the continuations after one cite
  *  stop belonging to it. A C# cite stops them too (RF3: the `.cs` arm),
- *  so "(:N)" after `SerializablePlayer.cs:421` is the C#'s, not ours. */
-export const ANY_CITE = /(?<![\w/])(?:[\w./-]*\/)?[\w.-]+\\?\.(?:js|mjs|md|sh|cs):\d+|(?:Port-Ledger row|Ledger rows?|ledger rows?) `?:\d+/g;
+ *  so "(:N)" after `SerializablePlayer.cs:421` is the C#'s, not ours.
+ *  AUDIT 68: a test's escaped path (`systems\/spellcast\.js:158`) is one too. */
+export const ANY_CITE = /(?<![\w/])(?:[\w./-]*\/)?(?:[\w.-]+\\\/)*[\w.-]+\\?\.(?:js|mjs|md|sh|cs):\d+|(?:Port-Ledger row|Ledger rows?|ledger rows?) `?:\d+/g;
 /** The bare continuations after a cite: `:N, /:N, / :N, /N, `, :N` and (RF3) `(:N`.
  *  RF4 (2026-09-21): the SPACED slash. "world.js:6548 / :6549 / :6728" is the
  *  same continuation with the separator set off by spaces - the MAC-D shift
@@ -172,6 +174,13 @@ export function lineMap(hunks) {
 
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+/** The path a cite spells before its `:N`, unescaped (`systems\/spellcast\.js`
+ *  is systems/spellcast.js) - or null when it names no directory. */
+function citedPath(text) {
+  const p = text.slice(0, text.lastIndexOf(':')).replace(/\\([./])/g, '$1').replace(/^(\.\.?\/)+/, '');
+  return p.includes('/') ? p : null;
+}
+
 /** The spellings a cite INTO `target` can take, as regexes with the
  *  number in group 1 and an optional range end in group 2. */
 export function citeSpellings(target) {
@@ -180,8 +189,9 @@ export function citeSpellings(target) {
   const res = [
     // the path or the basename, then :N or :N-M (the path form first so the basename form does not eat it)
     new RegExp(`(?<![\\w/])(?:[\\w./-]*/)?${esc(base)}:(\\d+)(?:-(\\d+))?`, 'g'),
-    // the tests' regex spelling: world\.js:N
-    new RegExp(`(?<![\\w/])${esc(stem)}\\\\${esc(ext)}:(\\d+)(?:-(\\d+))?`, 'g'),
+    // the tests' regex spelling: world\.js:N. AUDIT 68 X5-citeshift-escaped-regex-pins-never-move: a
+    // bare `/` before it can only be the regex's own delimiter, and a directory is escaped (`systems\/`)
+    new RegExp(`(?<![\\w\\\\])(?:[\\w.-]+\\\\/)*${esc(stem)}\\\\${esc(ext)}:(\\d+)(?:-(\\d+))?`, 'g'),
   ];
   if (target === LEDGER) {
     res.push(/Port-Ledger row :(\d+)()/g);
@@ -196,11 +206,14 @@ export function citeSpellings(target) {
  * the next cite of any file, each under the same content check.
  * @param holdEscaped  (RF3) target numbers whose escaped test literal
  *   must stay - the docs carry them on struck lines only (see the CLI).
+ * @param ambiguousBare  (AUDIT 68) another target of this run has the same
+ *   basename, so a cite that names no directory is not known to be this
+ *   target's: it is held as 'ambiguous' rather than moved once per target.
  * @returns [{line, col, text, from:[a,b|null], to:[a',b'|null], status, spelling, kind}]
- *   status: 'move' | 'struck' | 'inside' | 'mismatch' | 'same' | 'pinned-struck'
+ *   status: 'move' | 'struck' | 'inside' | 'mismatch' | 'same' | 'pinned-struck' | 'ambiguous'
  *   spelling: 'path' | 'escaped' | 'ledger'; kind: 'cite' | 'cont'
  */
-export function planDoc({ docText, target, oldLines, newLines, map, moveStruck = false, holdEscaped = null }) {
+export function planDoc({ docText, target, oldLines, newLines, map, moveStruck = false, holdEscaped = null, ambiguousBare = false }) {
   const plan = [];
   const lines = docText.split('\n');
   const same1 = (x, y) => x != null && y != null && x.trim() === y.trim();
@@ -217,24 +230,32 @@ export function planDoc({ docText, target, oldLines, newLines, map, moveStruck =
     return { status: 'move', ma, mb };
   };
   const spellings = citeSpellings(target).map((re, i) => [re, i === 0 ? 'path' : i === 1 ? 'escaped' : 'ledger']);
+  const ambiguous = (v) => (v.status === 'move' ? { ...v, status: 'ambiguous' } : v);
   lines.forEach((l, i) => {
     const spans = [];
     for (const [re, spelling] of spellings) {
       for (const m of l.matchAll(re)) {
+        // AUDIT 68 X5-citeshift-foreign-path-and-ambiguous-basename: a
+        // directory written before the basename names ONE file - `ui/chargen.js`
+        // is not a cite into src/systems/chargen.js, and the content check
+        // cannot tell (a pure shift passes it whatever file the cite names).
+        const dir = spelling !== 'ledger' && citedPath(m[0]);
+        if (dir && dir !== target && !target.endsWith('/' + dir) && !dir.endsWith('/' + target)) continue;
         const a = +m[1], b = m[2] ? +m[2] : null;
-        const v = verdict(l, a, b, spelling);
+        const bare = ambiguousBare && spelling !== 'ledger' && !dir;
+        const v = bare ? ambiguous(verdict(l, a, b, spelling)) : verdict(l, a, b, spelling);
         plan.push({ line: i + 1, col: m.index, text: m[0], from: [a, b], to: [v.ma, v.mb], status: v.status, spelling, kind: 'cite' });
-        spans.push(m.index + m[0].length);
+        spans.push([m.index + m[0].length, bare]);
       }
     }
     if (!spans.length) return;
     // RF3: a continuation belongs to the cite just before it, up to the next cite of ANY file (CITE-CS: or C# member, or cell edge)
     const stops = regionStops(l);
-    for (const from of spans.sort((x, y) => x - y)) {
+    for (const [from, bare] of spans.sort((x, y) => x[0] - y[0])) {
       const to = stops.find((x) => x >= from) ?? l.length;
       for (const { m, at } of continuationsIn(l, from, to)) {
         const a = +m[2], b = m[3] ? +m[3] : null;
-        const v = verdict(l, a, b, 'path');
+        const v = bare ? ambiguous(verdict(l, a, b, 'path')) : verdict(l, a, b, 'path');
         plan.push({ line: i + 1, col: at, text: m[0], from: [a, b], to: [v.ma, v.mb], status: v.status, spelling: 'path', kind: 'cont' });
       }
     }
@@ -286,7 +307,12 @@ function main(argv) {
   const targets = (only.length ? only : changed).filter((f) => /\.(js|mjs|md)$/.test(f));
   const docs = git('ls-files', 'bible', 'test', 'src', 'tools').split('\n').filter((f) => /\.(js|mjs|md|sh)$/.test(f) && !SELF_DOCS.includes(f));   // RF3: the tools' own fixtures are not docs
   let moved = 0, applied = 0, held = 0;
+  // AUDIT 68: two targets with one basename (src/systems/loot.js and
+  // survival/loot.js) - a bare `loot.js:N` is neither's to move, where it was
+  // moved once by each, the second time off the first one's rewrite.
+  const sharedBase = new Set(targets.map((t) => basename(t)).filter((b, i, all) => all.indexOf(b) !== i));
   for (const target of targets) {
+    const ambiguousBare = sharedBase.has(basename(target));
     const hunks = hunksFromDiff(git('diff', '-U0', base, '--', target));
     if (!hunks.length) continue;
     const map = lineMap(hunks);
@@ -301,7 +327,7 @@ function main(argv) {
     for (const doc of docs) {
       if (doc === target) continue;
       const text = readFileSync(join(ROOT, doc), 'utf8');
-      const plan = planDoc({ docText: text, target, oldLines, newLines, map, moveStruck });
+      const plan = planDoc({ docText: text, target, oldLines, newLines, map, moveStruck, ambiguousBare });
       plans.set(doc, { text, plan });
       for (const p of plan) {
         if (p.spelling === 'escaped') continue;
@@ -311,7 +337,7 @@ function main(argv) {
     }
     const holdEscaped = new Set([...struckNums].filter((n) => !movedNums.has(n)));
     for (const [doc, { text }] of plans) {
-      const plan = planDoc({ docText: text, target, oldLines, newLines, map, moveStruck, holdEscaped }).filter((p) => p.status !== 'same');
+      const plan = planDoc({ docText: text, target, oldLines, newLines, map, moveStruck, holdEscaped, ambiguousBare }).filter((p) => p.status !== 'same');
       if (!plan.length) continue;
       for (const p of plan) {
         const arrow = `${p.text} -> ${p.to[0]}${p.from[1] != null ? '-' + p.to[1] : ''}${p.kind === 'cont' ? ' (a continuation)' : ''}`;
@@ -326,4 +352,4 @@ function main(argv) {
   return moved && !apply ? 1 : 0;
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) process.exit(main(process.argv.slice(2)));
+if (isMain(import.meta.url)) process.exit(main(process.argv.slice(2)));

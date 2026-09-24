@@ -11,7 +11,7 @@
   {
     "name": "C2-resync-finds-no-behaviour",
     "file": "src/systems/quest/machine.js",
-    "old": "      if (b.questUID === uid) out.push(b);",
+    "old": "      if (b?.questUID === uid) out.push(b);",
     "new": "      if (false) out.push(b);",
     "tests": [
       "test/auditdisc7.test.js"
@@ -300,7 +300,7 @@
     "name": "B7-panner-built-for-a-silent-clip",
     "file": "src/systems/audio.js",
     "old": "    if (!this._buffer(clip)) return null;   // AUDIT DISC7 B7",
-    "new": "",
+    "new": "    // AUDIT DISC7 B7",
     "tests": [
       "test/auditdisc7.test.js"
     ]

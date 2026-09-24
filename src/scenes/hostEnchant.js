@@ -25,7 +25,6 @@
 // route by LIVE mode; worldMinutes; the settings store). A host that
 // passed those in would be re-answering a question the port answers
 // once.
-import { applySpell } from '../systems/effects.js';
 import { playerInSunlight, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the two E1 conditional flags
 import { worldMinutes } from '../systems/worldTick.js';
 import { getBool } from '../systems/settings.js';
@@ -41,6 +40,13 @@ import { ENEMY_BASICS } from '../characters/enemyBasics.js';
  *  running for free, and a spawn that cannot find a spot in a sealed
  *  corridor must not spin here. */
 export const LOOSE_FOE_PLACE_ATTEMPTS = 12;
+
+/** AUDIT 68 S21-loose-foe-stacking: the spots handed to a pool whose spawn has not landed yet, per scene (keyed by
+ *  its collider). PlaceFoeFreely's OverlapSphere meets every placed foe's collider; here a spawn is async (the
+ *  career fetch, the texture warm) and the record joins its pool only afterwards, so a squad stood in one loop
+ *  (RR's expulsion wave) saw none of its own and stood foes inside each other. A spot is taken the moment it is
+ *  chosen and released when the spawn settles. */
+const _pendingSpots = new WeakMap();
 
 /** SD1: stand a loose foe - SoulBound's break release, the Sanguine
  *  Rose's Daedroth - through DFU's OWN placement law.
@@ -60,6 +66,8 @@ export const LOOSE_FOE_PLACE_ATTEMPTS = 12;
 export function standLooseFoe({ collider, feet, yawRad, fovDegrees, foes, spawn },
   mobileType, { allied = false, lineOfSightCheck = true, minDistance = 4, maxDistance = 20, attempts = LOOSE_FOE_PLACE_ATTEMPTS } = {}) {   // AUDIT-RR F4: CreateFoeSpawner's own distances and its attempt budget ride in (GameObjectHelper.cs:1314 - the defaults are its own)
   if (!feet || !collider || !spawn) return null;
+  let pending = _pendingSpots.get(collider);
+  if (!pending) _pendingSpots.set(collider, (pending = new Set()));
   const env = placeFoeEnv({
     collider,
     // origin at the controller centre, as tryPlaceFoe has it - DFU
@@ -67,7 +75,7 @@ export function standLooseFoe({ collider, feet, yawRad, fovDegrees, foes, spawn 
     playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
     playerYawRad: yawRad,
     fovDegrees,
-    isOccupied: entityOccupancy((f) => f.ai?.feet, () => foes, feet),
+    isOccupied: entityOccupancy((f) => f.ai?.feet, () => [...foes, ...pending], feet),
   });
   let spot = null;
   for (let i = 0; i < attempts && !spot; i++) {
@@ -79,7 +87,12 @@ export function standLooseFoe({ collider, feet, yawRad, fovDegrees, foes, spawn 
   const fly = (ENEMY_BASICS[mobileType]?.behaviour ?? 'General') === 'Flying';
   const pos = [spot.x, fly ? spot.y + 1.5 : spot.y, spot.z];
   const yaw = Math.atan2(feet[0] - spot.x, feet[2] - spot.z);   // LookAt player
-  return Promise.resolve(spawn(mobileType, pos, { yawRad: yaw, allied })).catch(() => null);
+  const held = { ai: { feet: [spot.x, spot.y - 0.9, spot.z], height: 1.8 } };   // a capsule centred on the point the law tested
+  pending.add(held);
+  const release = () => { pending.delete(held); };
+  let landing;
+  try { landing = spawn(mobileType, pos, { yawRad: yaw, allied }); } catch (err) { release(); throw err; }
+  return Promise.resolve(landing).catch(() => null).finally(release);
 }
 
 /**
@@ -124,7 +137,6 @@ export function createEnchantCtx({
   replaceFoe = null,
   isResting = () => !!playerEntity?.isResting,
   travelUIShowing = () => false,
-  rolls = Math.random,
 } = {}) {
   return {
     spellsByIndex,
@@ -173,14 +185,10 @@ export function createEnchantCtx({
       if (target === playerEntity) { magic.applySpellToPlayer(record, attacker?.level ?? 1, casterOf()); return; }
       const f = foes().find((x) => !x.dead && x.entity === target);
       if (!f) return;
-      const caster = casterOf();
-      const r = applySpell(record, attacker?.level ?? 1, target, foeSinks(f), rolls, caster);
-      // The same re-target hostMagic does for the cast paths - this
-      // door is the enchantment path's equivalent seam.
-      if (r.reflected && caster?.entity) {
-        if (caster.entity === playerEntity) magic.applySpellToPlayer(record, attacker?.level ?? 1, caster, { reflectedCount: 1 });
-        else applySpell(record, attacker?.level ?? 1, caster.entity, caster.sinks ?? {}, rolls, caster, { reflectedCount: 1 });
-      }
+      // AUDIT 68 S21-strike-landing-dup: the cast paths' ONE foe landing (the Soul Trap line, the Calm/Charm flag,
+      // the reflection's re-target), handed this door's membership-routed sinks. A copy here kept the reflection
+      // alone, so a Cast When Strikes Soul Trap never said "Trap active." and a struck Charm never pacified.
+      magic.applySpellToFoe(record, attacker?.level ?? 1, f, casterOf(), undefined, foeSinks(f));
     },
     nearbyFoes: (range) => {
       const pf = feet();

@@ -103,7 +103,7 @@
   {
     "name": "scatter-no-window",
     "file": "src/render/enhancedLighting.js",
-    "old": "  const ta = Math.max(0, t0 - range), tb = Math.min(dist, t0 + range);",
+    "old": "  const ta = Math.max(0, t0 - chord), tb = Math.min(dist, t0 + chord);",
     "new": "  const ta = 0, tb = dist;",
     "tests": [
       "test/el1_enhancedlighting.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "scatter-h-floor",
     "file": "src/render/enhancedLighting.js",
-    "old": "  const h = Math.max(Math.sqrt(hx * hx + hy * hy + hz * hz), 0.25);",
-    "new": "  const h = Math.sqrt(hx * hx + hy * hy + hz * hz);",
+    "old": "  const h = Math.max(Math.sqrt(h2), 0.25);",
+    "new": "  const h = Math.sqrt(h2);",
     "tests": [
       "test/el1_enhancedlighting.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "farring-classic-fs",
     "file": "src/render/farRing.js",
-    "old": "    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, this.lane ? this.lane.farRingFs : FS));",
-    "new": "    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, FS));",
+    "old": "    const p = buildProgram(gl, VS, this.lane ? this.lane.farRingFs : FS, 'far ring');",
+    "new": "    const p = buildProgram(gl, VS, FS, 'far ring');",
     "tests": [
       "test/el1_enhancedlighting.test.js"
     ]

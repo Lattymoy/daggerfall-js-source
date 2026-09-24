@@ -2,9 +2,9 @@
 // window capture listeners first, then the focused element's own handler. Imported for its side effect (globals).
 class Node_ {
   constructor(tag) { this.tagName = String(tag).toUpperCase(); this.children = []; this.parentNode = null; this.style = {}; this.attrs = {}; this.listeners = {}; this._text = ''; this.className = ''; this.scrollTop = 0; this.scrollLeft = 0; this.disabled = false; this.value = ''; }
-  append(...ns) { for (const n of ns) { if (typeof n === 'string') n = new Text_(n); n.parentNode = this; this.children.push(n); } }
+  append(...ns) { for (const raw of ns) { const n = toNode(raw); n.parentNode = this; this.children.push(n); } }   // AUDIT 68 X2-chargendom-append-throws: a string used to reassign the loop's const and throw
   appendChild(n) { this.append(n); return n; }
-  prepend(...ns) { this.children.unshift(...ns.map((n) => (n.parentNode = this, n))); }
+  prepend(...ns) { const nodes = ns.map(toNode); for (const n of nodes) n.parentNode = this; this.children.unshift(...nodes); }
   remove() { if (this.parentNode) { this.parentNode.children = this.parentNode.children.filter((c) => c !== this); this.parentNode = null; } }
   set textContent(t) { this.children = []; this._text = String(t); }
   get textContent() { return this._text + this.children.map((c) => c.textContent).join(''); }
@@ -23,7 +23,9 @@ class Node_ {
   getBoundingClientRect() { return { left: 0, top: 0, width: 100, height: 100 }; }
   get classList() { const n = this; return { add: (c) => { n.className += ' ' + c; }, remove() {}, toggle() {}, contains: (c) => n.className.split(/\s+/).includes(c) }; }
 }
-class Text_ { constructor(t) { this._t = t; this.children = []; } get textContent() { return this._t; } }
+class Text_ { constructor(t) { this._t = t; this.children = []; this.parentNode = null; } get textContent() { return this._t; } }
+/** A string child is a text node, as the DOM's append/prepend make it. */
+const toNode = (n) => (typeof n === 'string' ? new Text_(n) : n);
 function matches(n, sel) { if (sel.startsWith('.')) return n.className.split(/\s+/).includes(sel.slice(1)); return n.tagName === sel.toUpperCase(); }
 const docListeners = {};
 globalThis.document = {

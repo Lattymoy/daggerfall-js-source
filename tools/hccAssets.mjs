@@ -21,8 +21,10 @@
 // assemblies are `tools/ilDump.py`'s (dnfile + dncil).
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 import { readUnityBundle } from '../src/formats/unityBundle.js';
 import { readManifestResources } from '../src/formats/dotnetResources.js';
+import { isMain } from './lib/isMain.mjs';
 
 /** The bundle's text assets, by the name they carry inside it, mapped
  *  to the path this tree keeps them at. */
@@ -50,10 +52,10 @@ export function readHccAssets(bundleBytes) {
   return out;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isMain(import.meta.url)) {
   const src = process.argv[2];
   if (!src) { console.error('usage: node tools/hccAssets.mjs "<horse cart and cargo.dfmod>" [outDir]'); process.exit(1); }
-  const outDir = process.argv[3] ?? new URL('../vendor/horse-cart-and-cargo/', import.meta.url).pathname;
+  const outDir = process.argv[3] ?? fileURLToPath(new URL('../vendor/horse-cart-and-cargo/', import.meta.url));
   for (const a of readHccAssets(new Uint8Array(readFileSync(src)))) {
     const sha = createHash('sha256').update(a.bytes).digest('hex');
     if (!a.path) { console.log(`  (unmapped) ${a.name}  ${a.bytes.length} bytes  ${sha}`); continue; }

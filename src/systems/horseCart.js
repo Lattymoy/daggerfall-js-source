@@ -255,7 +255,6 @@ export function createHorseCartRuntime(deps) {
   // the parked wagon and the standing horse
   let deployedVisual = null, stationaryHorseVisual = null;
   let nextDeployedSpawnRetryTime = 0, deployedSpawnFailureLogged = false, nextHorseSpawnRetryTime = 0, horseSpawnFailureLogged = false;
-  let horseTextureLoadAttempted = false, horseTextureFailureLogged = false, horseWalkTextureLoadAttempted = false, horseWalkTextureFailureLogged = false;
   // the interior transition
   let pendingInteriorWorldX = 0, pendingInteriorWorldZ = 0, pendingInteriorHorseWorldX = 0, pendingInteriorHorseWorldZ = 0;
   let pendingInteriorTransportMode = TRANSPORT.Foot, hasPendingInteriorDeployment = false, hasPendingInteriorHorseDeployment = false, pendingInteriorEntranceEligible = false;
@@ -267,7 +266,6 @@ export function createHorseCartRuntime(deps) {
   let travelOptionsWasActive = false, travelOptionsQueryFailed = false;
   let selectWagonOnNextInventoryOpen = false;
   let horseNameInputBox = null;
-  let lastDt = 0;
 
   const tm = () => deps.transport;
   const pee = () => deps.enterExit;
@@ -333,12 +331,13 @@ export function createHorseCartRuntime(deps) {
     return true;
   }
   function clearMovingPresentation() {
+    const had = !!wagonVisual;
     wagonVisual = null;
     trail.clear(); hitchedWagonPath.clear(); hitchedWagonPathInitialized = false;
     followingWagonFailureLogged = false; horseRecoveredThisFrame = false; nextFollowingWagonSpawnRetryTime = 0;
     hasLastValidGroundState = false;
     spawnFailureLogged = false; cargoFailureLogged = false;
-    changed();
+    if (had) changed();   // AUDIT 68 S27-hcc-changed-every-frame: only a teardown that tore something down is a word - lateUpdate runs this every frame no wagon trails
   }
   function resetWheelMotionState() { if (wagonVisual) wagonVisual.wheel = { has: false, prevPos: [...V_ZERO], prevFwd: [...V_FORWARD], angle: 0 }; }
   const wagonActive = () => !!wagonVisual?.pose.active;
@@ -1036,14 +1035,10 @@ export function createHorseCartRuntime(deps) {
   }
 
   // ── the presentations, frame by frame [IL_4ff8-IL_5ef9, IL_7990-IL_7d3e]
-  function ensureHorseTextures() {
-    if (horseTextureLoadAttempted && !deps.presentation?.horseArt?.ensureStationary?.()) return false;
-    horseTextureLoadAttempted = true;
-    const ok = !!deps.presentation?.horseArt?.ensureStationary?.();
-    if (!ok) { if (!horseTextureFailureLogged && deps.presentation?.horseArt?.failed?.()) { horseTextureFailureLogged = true; log.error?.('[TrailingWagon] stationary horse graphics disabled: the horse art could not be loaded'); } return false; }   // the port's art arrives asynchronously - a load in flight is not a failure (the mod's TryLoad is synchronous and fails once)
-    horseTextureFailureLogged = false; return true;
-  }
-  function ensureHorseWalkTextures() { if (horseWalkTextureLoadAttempted && deps.presentation?.horseArt?.hasWalk?.()) return; horseWalkTextureLoadAttempted = true; deps.presentation?.horseArt?.ensureWalk?.(); }
+  // AUDIT 68 S27-hcc-walk-fetch-storm: the pool owns the art's load state and its one failure line (the mod's TryLoad
+  // fails once - horseCartPool's two latches); the attempt flags here never stopped a retry and their log was unreachable
+  function ensureHorseTextures() { return !!deps.presentation?.horseArt?.ensureStationary?.(); }
+  function ensureHorseWalkTextures() { deps.presentation?.horseArt?.ensureWalk?.(); }
   function shouldShowMovingWagon() {
     if (!showTrailingWagon) return false;
     const teamOk = physicalPersistenceEnabled ? (wagonState.HorseMode === HORSE_MODE.HitchedToWagon && tm().hasHorse()) : tm().hasCart();
@@ -1052,10 +1047,8 @@ export function createHorseCartRuntime(deps) {
   }
   function applyGroundedPose(target, pathForward, dt) {
     const next = groundedPoseStep(phys, wagonVisual.pose, target, pathForward, dt);
-    if (next.hasLastValid) hasLastValidGroundState = true;
-    if (!next.hasLastValid) { wagonVisual.pose = next; resetWheelMotionState(); return; }
-    if (!wagonVisual.pose.active) { wagonVisual.pose = next; return; }
     wagonVisual.pose = next;
+    if (next.hasLastValid) hasLastValidGroundState = true; else resetWheelMotionState();
   }
   function updateWheelAnimation() {
     if (!wagonVisual || !wagonActive() || !wagonVisual.parts) { resetWheelMotionState(); return; }
@@ -1197,7 +1190,6 @@ export function createHorseCartRuntime(deps) {
 
   // ── LateUpdate [IL_4e60] - the frame
   function lateUpdate(dt) {
-    lastDt = dt;
     if (!ready()) { clearPendingTransportModeRefresh(); clearMovingPresentation(); destroyAllStationaryPresentations(); return; }
     refreshHorseNameInputState();
     applyPendingPersistenceWork();

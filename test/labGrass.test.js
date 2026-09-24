@@ -193,22 +193,25 @@ test('GR4: the root takes the colour of the tile it stands on, and the base fade
   // root height lost its own attribute to a lane of the first.
   const src = readFileSync(new URL('../src/render/labGrass.js', import.meta.url), 'utf8');
   assert.match(src, /this\.bufs = \[1, 2, 4\]\.map/, 'three streams');
-  assert.match(src, /\[\[0, 1, gl\.UNSIGNED_SHORT\], \[1, 2, gl\.UNSIGNED_BYTE\], \[2, 4, gl\.UNSIGNED_BYTE\]\]/, 'u16 then two u8');
-  assert.match(src, /gl\.vertexAttribPointer\(loc, 4, type, true, 0, 0\);/, 'NORMALIZED, so the GPU does the unpack');
+  // AUDIT 68 S16-grass-point-alloc: one lane table, built once in the constructor, read by the VAOs, writeSlot and _point
+  assert.match(src, /Object\.freeze\(\{ loc: 1, type: gl\.UNSIGNED_SHORT, bytes: 8 \}\),\n\s*Object\.freeze\(\{ loc: 2, type: gl\.UNSIGNED_BYTE, bytes: 4 \}\),\n\s*Object\.freeze\(\{ loc: 4, type: gl\.UNSIGNED_BYTE, bytes: 4 \}\),/, 'u16 then two u8');
+  assert.match(src, /gl\.vertexAttribPointer\(L\.loc, 4, L\.type, true, 0, 0\);/, 'NORMALIZED, so the GPU does the unpack');
   assert.match(src, /C\[i \* 4\] = u8\(placed\.ground\[i \* 3\]\);/, 'and the ground colour is packed from the placer\'s own floats');
 });
 
 test('GR4: the game feeds each tile\'s MEAN colour, averaged once where the texels already are', () => {
   const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
-  // Averaged where the layers are decoded for the tile array - the
-  // texels are on the CPU there already, once per archive - rather
-  // than sampled per blade.
-  assert.match(world, /groundMeanColour\.set\(groundArchive, layers\.map\(\(rgba\) => \{/);
-  assert.match(world, /return n \? \[r \/ n \/ 255, g \/ n \/ 255, b \/ n \/ 255\] : \[0\.10, 0\.145, 0\.065\];/);
+  // Averaged where the layers are decoded - the texels are on the CPU
+  // there already, once per archive - rather than sampled per blade.
+  // AUDIT 68 S17: through the one law (tileMeanColour, pinned on a real
+  // color32 in audit68_worldjs), learned beside grassRecords whenever the
+  // SCENE's map lacks the archive, not on the renderer's cache miss.
+  const learn = world.slice(world.indexOf('if (!grassRecords.has(groundArchive)) {'), world.indexOf('const terrain = renderer.createTerrainSurface('));
+  assert.match(learn, /groundMeanColour\.set\(groundArchive, layers\.map\(tileMeanColour\)\);/);
   // ground(x, z) is keep's OWN lookup - same pieces, same tile maths -
   // answering with the colour instead of the height, so the root under
   // a blade takes the colour of the very tile keep let it stand on.
-  const g = world.slice(world.indexOf('const ground = (x, z) => {'), world.indexOf('if (!labGrassField) labGrassField = createGrassFields('));
+  const g = world.slice(world.indexOf('const ground = (x, z) => {'), world.indexOf('if (!labGrassField) labGrassField = createGrassField('));   // AUDIT 68: `createGrassFields(` was never there - the slice ran to -1
   assert.match(g, /const tx = Math\.floor\(lx \/ 6\.4\); const tz = Math\.floor\(lz \/ 6\.4\);/);
   assert.match(g, /const rec = p\.tilemapBytes\[tz \* TERRAIN_TILE_DIM \+ tx\] >> 2;/);
   assert.match(g, /return groundMeanColour\.get\(p\.groundArchive\)\?\.\[rec\] \?\? null;/);
@@ -283,7 +286,7 @@ test('GR5: the host runs the field, not the walk', () => {
   const src = readFileSync(new URL('../src/render/labGrass.js', import.meta.url), 'utf8');
   // GRASS5: the stride is in BYTES now, because a blade is no longer a
   // whole number of floats - eight bytes of u16 and two lots of four u8.
-  assert.match(src, /gl\.bufferSubData\(gl\.ARRAY_BUFFER, slot \* p \* w\.bytes, w\.data\);/, 'a cell arrives by bufferSubData into its slot');
+  assert.match(src, /gl\.bufferSubData\(gl\.ARRAY_BUFFER, slot \* p \* this\._lanes\[k\]\.bytes, this\._packs\[k\]\);/, 'a cell arrives by bufferSubData into its slot');
   assert.match(src, /clearSlot\(slot\) \{[\s\S]{0,700}bufferSubData\(gl\.ARRAY_BUFFER, slot \* p \* 8, this\._zeros\)/, 'and leaves by zeros');
 });
 
@@ -320,8 +323,8 @@ test('GRASS5: a blade is sixteen bytes, and every lane is finer than the float i
   // FORMAT as well as the offset, so moving to a slot with the old float
   // shape un-packs every attribute and the draw dies.
   const pt = src.slice(src.indexOf('  _point(slot) {'), src.indexOf('  _drawVisibleSlots(vp'));
-  assert.match(pt, /gl\.vertexAttribPointer\(loc, 4, type, true, 0, slot \* p \* bytes\);/, 'the type travels with the offset');
-  assert.match(pt, /gl\.UNSIGNED_SHORT, 8\], \[1, 2, gl\.UNSIGNED_BYTE, 4\], \[2, 4, gl\.UNSIGNED_BYTE, 4\]/);
+  assert.match(pt, /gl\.vertexAttribPointer\(L\.loc, 4, L\.type, true, 0, slot \* p \* L\.bytes\);/, 'the type travels with the offset');
+  assert.match(pt, /const L = this\._lanes\[k\];/, 'AUDIT 68 S16-grass-point-alloc: off the constructor\'s one table');
 });
 
 test('GRASS5: the range is no longer a memory question - and the window at 300 m holds less than the lab’s own 200 m did', () => {

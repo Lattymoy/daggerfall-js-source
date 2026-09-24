@@ -190,7 +190,7 @@
   },
   {
     "name": "hash-shift-4",
-    "file": "src/systems/betterAmbience.js",
+    "file": "src/formats/netRuntime.js",
     "old": "  for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;",
     "new": "  for (let i = 0; i < s.length; i++) h = ((h << 4) - h + s.charCodeAt(i)) | 0;",
     "tests": [

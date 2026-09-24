@@ -29,6 +29,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { readPng, writePng } from './pngIO.mjs';
+import { isMain } from './lib/isMain.mjs';
 
 /** An RGBA canvas, and the two operations these sheets need. */
 export function canvas(width, height, fill = [0, 0, 0, 0]) {
@@ -213,7 +214,7 @@ function fillTri(c, depth, size, ox, s, rgba, sample = null) {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
   const opt = (k, d = null) => args.find((a) => a.startsWith(`--${k}=`))?.split('=').slice(1).join('=') ?? d;
   const src = args.find((a) => !a.startsWith('--'));

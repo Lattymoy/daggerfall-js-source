@@ -39,8 +39,8 @@
 //     AdjustWeaponAttackDamage), registered when THAT mod's
 //     advancedArchery switch is on; and Ralzar's Meaner Monsters
 //     (Kirk.O's edit), applied when that mod is loaded -
-//     pcaaoMeanerMonsters.js. The port has no mod list, so both are
-//     switches on the Mods pane, off by default.
+//     pcaaoMeanerMonsters.js. The port has no mod list, so both read
+//     those mods' own switches on the Mods pane (MM1).
 //
 // ── HOW IT LANDS HERE ───────────────────────────────────────────
 //
@@ -85,7 +85,7 @@ import { liveStat } from '../systems/statMods.js';
 import { skillValue, SKILLS } from '../systems/skills.js';
 import { RACES } from '../systems/races.js';
 import { SPECIAL_ABILITY_BITS } from '../systems/specialAdvantages.js';
-import { weaponMinDamage, weaponMaxDamage, weaponSkillUsed } from '../characters/weapons.js';
+import { WEAPONS, weaponMinDamage, weaponMaxDamage, weaponSkillUsed } from '../characters/weapons.js';
 import { equipTableOf, lowerCondition, slotForBodyPart, EQUIP_SLOTS, weaponProficiencyFlag } from '../systems/equip.js';
 import { SHIELD_PARTS, isShieldTemplate, itemArmorValue } from '../systems/armorMaterials.js';
 import { conditionPercentage, itemLongName } from '../systems/itemInfo.js';
@@ -101,6 +101,7 @@ import {
   MATERIAL_INEFFECTIVE_TEXT, SUCCESSFUL_BACKSTAB_TEXT,
 } from './formulas.js';
 import { meanerMonstersOn } from './pcaaoMeanerMonsters.js';
+import { RR_VENDOR, rrAdjustWeaponHitChanceMod, rrAdjustWeaponAttackDamage } from '../systems/rrRealism.js';   // AUDIT 68 S08-pcaao-archery-duplicate: RR's two archery members, one export
 
 export { MEANER_MONSTERS, meanerMonstersRow, meanerMonstersOn } from './pcaaoMeanerMonsters.js';
 
@@ -150,7 +151,11 @@ export function pcaaoModules(read = (k) => modSetting(PCAAO_VENDOR, k), other = 
     // its `advancedArchery`, `GetMod("Meaner Monsters")` - read those
     // mods' own switches through `other`; a mod the port has not
     // vendored answers undefined, as one DFU has not loaded does.
-    rolePlayRealismArchery: enabled && !!other('roleplayRealism', 'advancedArchery'),
+    // AUDIT 68 S08-pcaao-rr-archery-dead-vendor-key: RR is vendored as
+    // RR_VENDOR ('roleplay-realism'); the old 'roleplayRealism' key was
+    // never declared, so the arm was dead. Loaded (Enabled) first, then
+    // its switch, as Awake reads them.
+    rolePlayRealismArchery: enabled && !!other(RR_VENDOR, 'Enabled') && !!other(RR_VENDOR, 'advancedArchery'),
     meanerMonsters: enabled && meanerMonstersOn(read, other),
   });
 }
@@ -173,7 +178,6 @@ const nativeMaterial = (item) => item?.material ?? 0;
 const weaponSkillOf = (weapon) => weaponSkillUsed(weapon?.templateIndex) ?? SKILLS.HandToHand;
 const materialModifier = (weapon) => WEAPON_MATERIAL_MODIFIER[weapon?.material] ?? 0;   // GetWeaponMaterialModifier
 const shortName = (item) => item?.name ?? templateByIndex(item?.templateIndex)?.name ?? 'Item';
-const SHORT_BOW = 129, LONG_BOW = 130, DAGGER = 113, TANTO = 114;
 
 /** shieldBlockSuccess - the mod's static, written by the overhaul's
  *  CalculateAttackDamage (or by DamageEquipment itself when the
@@ -493,45 +497,12 @@ export function pcaaoWeaponAttackDamage(attacker, target, damageModifier, weapon
       damage *= 2;
     }
   }
-  const twoHanded = getItemHands(weapon) === ITEM_HANDS.Both && weapon.templateIndex !== SHORT_BOW && weapon.templateIndex !== LONG_BOW;
+  const twoHanded = getItemHands(weapon) === ITEM_HANDS.Both && weapon.templateIndex !== WEAPONS.Short_Bow && weapon.templateIndex !== WEAPONS.Long_Bow;
   damage += twoHanded ? pcaaoDamageModifier(stat(attacker, 'strength')) * 2 : pcaaoDamageModifier(stat(attacker, 'strength'));
   damage += materialModifier(weapon);
   if (damage < 1) damage = 0;
   if (damage >= 1) damage += pcaaoBonusOrPenaltyByEnemyType(attacker, target, rolls);
-  if (modules.rolePlayRealismArchery) damage = pcaaoAdjustWeaponAttackDamage(attacker, target, damage, weaponAnimTime, weapon);
-  return damage;
-}
-
-// ── Roleplay Realism's archery, as the mod bakes it in ─────────────
-/** AdjustWeaponHitChanceMod: a bow's draw time (ms) bends the hit
- *  chance - a snap shot -40, a long hold -10 (the `> 8000` arm is
- *  unreachable behind `> 5000`; carried as written). */
-export function pcaaoAdjustWeaponHitChanceMod(attacker, target, hitChanceMod, weaponAnimTime, weapon) {
-  if (weaponAnimTime > 0 && (weapon.templateIndex === SHORT_BOW || weapon.templateIndex === LONG_BOW)) {
-    let mod = hitChanceMod;
-    if (weaponAnimTime < 200) mod -= 40;
-    else if (weaponAnimTime < 500) mod -= 10;
-    else if (weaponAnimTime < 1000) mod = hitChanceMod;
-    else if (weaponAnimTime < 2000) mod += 10;
-    else if (weaponAnimTime > 5000) mod -= 10;
-    else if (weaponAnimTime > 8000) mod -= 20;
-    return mod;
-  }
-  return hitChanceMod;
-}
-/** AdjustWeaponAttackDamage: the draw time scales the damage, in a
- *  DOUBLE, truncated back to int. */
-export function pcaaoAdjustWeaponAttackDamage(attacker, target, damage, weaponAnimTime, weapon) {
-  if (weaponAnimTime > 0 && (weapon.templateIndex === SHORT_BOW || weapon.templateIndex === LONG_BOW)) {
-    let d = damage;
-    if (weaponAnimTime < 800) d *= weaponAnimTime / 800.0;
-    else if (weaponAnimTime < 5000) d = damage;
-    else if (weaponAnimTime < 6000) d *= 0.85;
-    else if (weaponAnimTime < 8000) d *= 0.75;
-    else if (weaponAnimTime < 9000) d *= 0.5;
-    else d *= 0.25;
-    return int(d);
-  }
+  if (modules.rolePlayRealismArchery) damage = rrAdjustWeaponAttackDamage(damage, weaponAnimTime, weapon);
   return damage;
 }
 
@@ -650,8 +621,8 @@ export function pcaaoEqualizeMaterialConditions(item) {
 /** SpecificWeaponConditionDamage: a bow's string wears by its
  *  material tier alone. */
 export function pcaaoSpecificWeaponConditionDamage(weapon, damageWep, materialValue) {
-  if (weapon.templateIndex === LONG_BOW) return materialValue === 1 ? 1 : materialValue === 2 ? 2 : 3;
-  if (weapon.templateIndex === SHORT_BOW) return materialValue === 1 ? 1 : 2;
+  if (weapon.templateIndex === WEAPONS.Long_Bow) return materialValue === 1 ? 1 : materialValue === 2 ? 2 : 3;
+  if (weapon.templateIndex === WEAPONS.Short_Bow) return materialValue === 1 ? 1 : 2;
   return damageWep;
 }
 
@@ -784,7 +755,7 @@ export function pcaaoDamageEquipment(attacker, target, damage, weapon, struckBod
       startItemCondPer = conditionPercentage(weapon);
       pcaaoApplyConditionDamageThroughWeaponDamage(weapon, attacker, wepDamage, bluntWep, shtbladeWep, missileWep, wepEqualize, modules, rolls, say);
     } else if (ws === SKILLS.ShortBlade) {
-      const heavy = weapon.templateIndex === DAGGER || weapon.templateIndex === TANTO;
+      const heavy = weapon.templateIndex === WEAPONS.Dagger || weapon.templateIndex === WEAPONS.Tanto;
       wepDamage += int(liveStrength / 30);
       const wepMatDiv = F(F(wepEqualize * F(heavy ? 0.9 : 0.3)) + 1);
       wepDamage = Math.ceil(F(wepDamage / wepMatDiv));
@@ -1032,7 +1003,6 @@ export function pcaaoAttackDamage(attacker, target, {
   let skillID = 0;
   let unarmedAttack = false, weaponAttack = false, bluntWep = false, critSuccess = false;
   let critDamMulti = F(1), critHitAddi = 0, matReqDamMulti = F(1);
-  const player = isPlayer(attacker) ? attacker : (isPlayer(target) ? target : null);
   const AITarget = isPlayer(target) ? null : target;
   const AIAttacker = isPlayer(attacker) ? null : attacker;
   // an enemy's weapon loses to its own natural attack when that averages higher
@@ -1125,7 +1095,7 @@ export function pcaaoAttackDamage(attacker, target, {
   } else if (weapon) {
     weaponAttack = true;
     chanceToHitMod += pcaaoWeaponToHit(weapon);
-    if (modules.rolePlayRealismArchery) chanceToHitMod = pcaaoAdjustWeaponHitChanceMod(attacker, target, chanceToHitMod, weaponAnimTime, weapon);
+    if (modules.rolePlayRealismArchery) chanceToHitMod = rrAdjustWeaponHitChanceMod(chanceToHitMod, weaponAnimTime, weapon);
     if (pcaaoSuccessfulHit(attacker, target, chanceToHitMod, struckBodyPart, rolls, modules, notes)) {
       if (notes) notes.hit = true;
       damage = pcaaoWeaponAttackDamage(attacker, target, damageModifiers, weaponAnimTime, weapon, rolls, modules);
@@ -1207,9 +1177,9 @@ export function installPcaao({ read = null, other = null } = {}) {
   // stock path consults these two names (formulas.js); the overhaul's
   // own core reads the switch directly.
   registerFormulaOverride('adjustWeaponHitChanceMod', (attacker, target, hitChanceMod, weaponAnimTime, weapon) =>
-    (modules().rolePlayRealismArchery ? pcaaoAdjustWeaponHitChanceMod(attacker, target, hitChanceMod, weaponAnimTime, weapon) : undefined));
+    (modules().rolePlayRealismArchery ? rrAdjustWeaponHitChanceMod(hitChanceMod, weaponAnimTime, weapon) : undefined));
   registerFormulaOverride('adjustWeaponAttackDamage', (attacker, target, damage, weaponAnimTime, weapon) =>
-    (modules().rolePlayRealismArchery ? pcaaoAdjustWeaponAttackDamage(attacker, target, damage, weaponAnimTime, weapon) : undefined));
+    (modules().rolePlayRealismArchery ? rrAdjustWeaponAttackDamage(damage, weaponAnimTime, weapon) : undefined));
   return true;
 }
 export function uninstallPcaao() {

@@ -170,7 +170,7 @@ test('encounters: the dungeon host arm - the rest loop, the sight raise, the kil
   const wt = readFileSync(join(root, 'src/systems/worldTick.js'), 'utf8');
   assert.ok(wt.includes('decayEnemyAlert(entity, nowMinutes);'),
     'the shared player tick decays it - every host, dungeon included');
-  assert.ok(fn.includes('decayEnemyAlert(playerEntity, Math.floor(classicMinutesRef.value));'),
+  assert.ok(fn.includes('decayEnemyAlert(playerEntity, Math.floor(end));'),   // AUDIT 68 S19-rest-alert-decay-wrong-clock: the session's minute
     'and the rest advance, which jumps the clock without that tick, runs it before the roll it gates');
   assert.ok(fn.indexOf('decayEnemyAlert(') < fn.indexOf('intermittentEnemySpawn({'),
     'decay BEFORE the catch-up loop, as PlayerEntity.Update orders them (:380 before :486)');

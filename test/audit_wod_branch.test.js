@@ -17,7 +17,7 @@ import { Collider } from '../src/player/collider.js';
 import { objectMatrix } from '../src/world/wodLocationObjects.js';
 import { loadLocationPrefab } from '../src/world/wodLocationData.js';
 import { WodWorld, fetchPackBytes, WOD_RETRY_MAX } from '../src/world/worldOfDaggerfall.js';
-import { StreamingWorldState, TerrainSlots, MAX_TERRAIN_ARRAY } from '../src/world/streamingWorld.js';
+import { StreamingWorldState, TerrainSlots, MAX_TERRAIN_ARRAY, nearestFirstFrom } from '../src/world/streamingWorld.js';
 import { createExteriorFoes } from '../src/scenes/exteriorFoes.js';
 import { createDroppedLoot } from '../src/scenes/droppedLoot.js';
 import { WodSpawner, WOD_LOOT_LOCATION_INDEX, WOD_LOOT_ALIGN } from '../src/world/wodSpawner.js';
@@ -610,9 +610,9 @@ test('WOD6: the pixels a late region names are built again on the list in its or
   const built = new Map([['5,5', { px: 5, py: 5 }], ['7,5', { px: 7, py: 5 }], ['6,6', { px: 6, py: 6 }]]);
   const inFlight = new Map([['9,9', {}]]);
   const destroyed = [], queue = [], logs = [];
-  const h = new Function('wod', 'built', 'inFlight', 'state', 'walkMode', 'playerSpawned', 'destroyPixel', 'queue', 'console',
+  const h = new Function('wod', 'built', 'inFlight', 'state', 'walkMode', 'playerSpawned', 'destroyPixel', 'queue', 'console', 'nearestFirstFrom',
     `let _seasonHoldKey = null;\n${WORLD.slice(i, j)}\nreturn { sweepWodLate, late: _wodLate, hold: () => _seasonHoldKey };`)(
-    wod, built, inFlight, { current: { x: 5, y: 5 } }, true, true, (px, py, o) => destroyed.push(`${px},${py}:${JSON.stringify(o)}`), queue, { log: (m) => logs.push(m) });
+    wod, built, inFlight, { current: { x: 5, y: 5 } }, true, true, (px, py, o) => destroyed.push(`${px},${py}:${JSON.stringify(o)}`), queue, { log: (m) => logs.push(m) }, nearestFirstFrom);   // AUDIT 68 S22: the load list's one order
   wod.onLate(16, new Set(['7,5', '5,5', '9,9', '40,40']));
   h.sweepWodLate();
   assert.deepEqual(destroyed.sort(), ['5,5:{"collectLoose":false}', '7,5:{"collectLoose":false}'], 'torn down with their loose piles kept - the carry keeps the markers');

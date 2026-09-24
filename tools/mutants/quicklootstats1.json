@@ -20,12 +20,13 @@
   {
     "name": "every-group-gets-a-material-row",
     "file": "src/systems/itemInfo.js",
-    "old": "  if (item.group === 'Weapons' || item.group === 'Armor') push('Material', materialName(item));",
+    "old": "  push('Material', itemNameParts(item).material);",
     "new": "  push('Material', materialName(item));",
     "tests": [
       "test/quicklootstats.test.js",
       "test/quickloot.test.js"
-    ]
+    ],
+    "why_reaimed": "AUDIT 68 S27-statrows-material-leak: the row reads the name's own material (itemNameParts), which is '' outside Weapons and Armor; re-aimed so the raw materialName still gives a book a material row."
   },
   {
     "name": "a-survival-item-gets-a-condition-row-too",

@@ -10,8 +10,7 @@
 //     order (PaperDollRenderer.BlitItems).
 // Dye tables (C5b) and the GetEquipSlot assignment rules (C5c) follow.
 
-import templates from './itemTemplates.json' with { type: 'json' };
-import { templateByIndex } from '../systems/itemTemplates.js';   // FIELD-GUN5: the custom rows too - see getTemplate
+import { templateByIndex, ITEM_TEMPLATES } from '../systems/itemTemplates.js';   // FIELD-GUN5: the custom rows too - see getTemplate
 
 export const EQUIP_SLOTS = Object.freeze({
   None: -1,
@@ -38,25 +37,23 @@ export const EQUIP_SLOTS = Object.freeze({
   Feet: 26,
 });
 
-export const ITEM_TEMPLATES = templates;
+export { ITEM_TEMPLATES };
 
 /** Template by classic index (templates are index-keyed but sparse-safe).
  *
  *  FIELD-GUN5 (Mac, from play: "The paperdoll doesn't equip the
- *  texture"). This map is built ONCE from the frozen DFU JSON, so it
- *  is blind to `registerCustomTemplates` - and the doll's compose
- *  filters `worn` on `getTemplate` answering, so the port's own
- *  weapon was dropped from the draw list before anything could fail
- *  further down. A second copy of a lookup that a registration door
- *  can extend is a copy that goes stale the first time anyone uses
- *  the door.
+ *  texture"). A map built ONCE from the frozen DFU JSON is blind to
+ *  `registerCustomTemplates` - and the doll's compose filters `worn`
+ *  on `getTemplate` answering, so the port's own weapon was dropped
+ *  from the draw list before anything could fail further down. A
+ *  second copy of a lookup that a registration door can extend is a
+ *  copy that goes stale the first time anyone uses the door.
  *
- *  So it asks the ONE home. The DFU rows are still this module's
- *  own - `templateByIndex` reads the same frozen table first and the
- *  custom map only after it - and nothing about a classic item's
- *  answer changes. */
-const byIndex = new Map(templates.map((t) => [t.index, t]));
-export const getTemplate = (index) => byIndex.get(index) ?? templateByIndex(index) ?? undefined;
+ *  So it asks the ONE home. AUDIT 68 S05-paperdoll-template-copy: and
+ *  ONLY the one home - the map FIELD-GUN5 kept in front of it answered
+ *  a mod-patched classic row (registerTemplateOverrides, which
+ *  `templateByIndex` asks first) with the unpatched copy. */
+export const getTemplate = (index) => templateByIndex(index) ?? undefined;
 
 /** Equipped list -> paperdoll draw order (BlitItems verbatim: ascending drawOrder). */
 export function paperdollOrder(items) {

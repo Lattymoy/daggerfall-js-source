@@ -15,15 +15,13 @@ import { ALIGN } from './weaponAlign.js';
  * the declared departure. Everything else is the classic law: bottom
  * anchored, aligned by the table's Alignment/Offset, and AlignRight
  * becoming AlignLeft under the handedness mirror (:459-464).
- *
- * `kick` is the lab's own: the recoil offset in NATIVE (320x200)
- * units, scaled with the surface so it reads the same at any window
- * size.
+ * AUDIT 68 S08: no `kick` here - the recoil lands after the widget
+ * transform, in gunViewmodel.gunFrameRect, the one frame both sides draw.
  */
 export function placeSprite({
   canvasW, canvasH, frameW, frameH,
   widthPct = 0.62, align = ALIGN.Center, offset = 0,
-  flip = false, kick = { x: 0, y: 0 }, offsetHeight = 0,
+  flip = false, offsetHeight = 0,
 }) {
   const w = canvasW * widthPct;
   const h = w * (frameH / frameW);
@@ -33,6 +31,5 @@ export function placeSprite({
   else if (a === ALIGN.Center) x = canvasW / 2 - w / 2;
   else x = canvasW * (1 - offset) - w;
   const y = canvasH - h - offsetHeight;
-  const sx = canvasW / 320, sy = canvasH / 200;
-  return { x: x + kick.x * sx * (flip ? -1 : 1), y: y + kick.y * sy, w, h };
+  return { x, y, w, h };
 }

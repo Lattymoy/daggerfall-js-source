@@ -17,7 +17,7 @@
 //
 // HOW IT DRAWS, and why this needs no renderer change at all: the port
 // has ALREADY shipped a first-person pass. renderCharacterSprite
-// (render/renderer.js:1209) binds an offscreen target with its OWN depth
+// (render/renderer.js:1169) binds an offscreen target with its OWN depth
 // renderbuffer, clears colour AND depth, swaps the frame's proj/view for
 // ones the caller supplies, draws, and restores; drawScreenOverlayQuad
 // (:987) composites it fullscreen with an alpha cut and no depth test.
@@ -58,11 +58,11 @@ import {
   aimingFactor, fpAnimSources, pickAnimSource, anySourceHasGroup, FP_BASE_MODEL, animSourceName,
   gmstValue, GMST_SNEAK_DELTA, sneakOffset,
   lightRecords, pickTorchRecord, blendMaskBones, overlayTracks, overlaySampler, weaponFlags, MW_TWO_HANDED,   // MW-D51: the held torch
-  tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, resolveBodyParts, ARM_PARTS, raceBeastFlag, raceRecords, armorRecords, clothingRecords,
+  tpAnimSources, TP_BASE_MODEL, playerBodyRows, MW_UNITS_PER_METER, resolveBodyParts, ARM_PARTS, raceRecords, armorRecords, clothingRecords,
   facePools, meshBounds,
   movementAnimState, composeMovementGroup, MOVEMENT_FALLBACK_SPEED, MOVEMENT_SPEED_CAP, turnAnimSpeed,
   jumpAnimState,
-  sourcesKeyTime, sourcesVelocity, sourceVelocityOf,
+  sourcesKeyTime, sourceVelocityOf,
 } from '../formats/mwFirstPerson.js';
 import { PART_BONES, dfRaceKeyOf } from '../formats/mwNpc.js';
 import { portraitFeatures, headFeatures, hairFeatures, matchFace, FACE_MATCH_VERSION } from '../formats/mwFaceMatch.js';
@@ -523,7 +523,7 @@ export function armReach(eye, unionBounds) {
 /**
  * PACK THE ASSEMBLY for drawCharacter's vertex stream: 9 floats per
  * vertex, [pos.xyz, colour.rgb, normal.xyz], NON-INDEXED, because
- * drawCharacter issues drawArrays (renderer.js:1142). The MW readers hand
+ * drawCharacter issues drawArrays (renderer.js:1098). The MW readers hand
  * back indexed triangles, so the indices are expanded here.
  *
  * NORMALS ARE COMPUTED, not read. poseAssembly skins positions with a
@@ -537,7 +537,7 @@ export function armReach(eye, unionBounds) {
  * left arm is lit inside-out - dark where the right arm is bright - and
  * that is a lighting bug that reads as "the mesh is wrong" rather than
  * as "the mirror is wrong". drawCharacter disables back-face culling
- * (renderer.js:1140), so the winding costs nothing else.
+ * (renderer.js:1096), so the winding costs nothing else.
  */
 export function packFpArm(pieces, out = null) {
   let tris = 0;
@@ -872,6 +872,31 @@ async function prepareClothingColours(resolve, parts, archives, gen) {
 /** MW-D38: the icon cache, per data generation / record / size / dye. */
 const ITEM_ICON_CACHE = new Map();
 
+/** AUDIT 68 S08-fparm-gen-cache-leak: THE MEMOS HOLD ONE GENERATION - the
+ *  store's current one. Every memo above keys on `${gen}:`, and nothing
+ *  ever dropped an old generation, so each Remove data or re-attach left
+ *  a whole decoded data set (every texture's mips, .kf reports, esm
+ *  walks) reachable for the session - dataSource drops its own caches on
+ *  the bump. A build adopts the generation its store reads now; unload()
+ *  re-reads it (weaponRig's fpRecheck unloads after the bump), so the old
+ *  set goes with the rig. A store with no generation (a test's deps)
+ *  memoises nothing, as before. */
+let memoGen = null;
+let memoGenOf = null;
+function adoptMemoGeneration(genOf) {
+  if (typeof genOf !== 'function') return null;
+  memoGenOf = genOf;
+  const gen = genOf();
+  if (gen !== memoGen) {
+    memoGen = gen;
+    for (const m of [ESM_WALK_CACHE, CLIP_REPORT_CACHE, TEXTURE_CACHE, FACE_MATCH_CACHE, CLOT_COLOUR_CACHE, ITEM_ICON_CACHE]) m.clear();
+  }
+  return gen;
+}
+/** Test seam: the entries the generation memos hold. */
+export const _memoEntryCount = () => ESM_WALK_CACHE.size + CLIP_REPORT_CACHE.size + TEXTURE_CACHE.size
+  + FACE_MATCH_CACHE.size + CLOT_COLOUR_CACHE.size + ITEM_ICON_CACHE.size;
+
 /** MW-D38: frame a mesh's bounds for the icon camera: a three-quarter
  *  view from above-front-right, the ortho fitted to the projected
  *  corners with a little air. Pure; pinned. */
@@ -906,11 +931,6 @@ async function measurePart(record, archives, kind) {
   await loadFromArchives(archives, [path]);
   const arc = archives.find((a) => a.has(path));
   if (!arc) return null;
-  let parseNif; let flattenNif;
-  try {
-    ({ parseNif } = await import('../formats/mwNifFile.js'));
-    ({ flattenNif } = await import('../formats/mwNifMesh.js'));
-  } catch { return null; }
   let batches;
   try { batches = flattenNif(parseNif(arc.get(path).slice())); } catch { return null; }
   const file = batches.map((b) => b.material && b.material.textureFile).find(Boolean);
@@ -1018,34 +1038,19 @@ export function weaponRestSide(arm, bone) {
   return x > 1e-4 ? 'right' : x < -1e-4 ? 'left' : 'centre';
 }
 
-/** Template 131 is Daggerfall's arrow. This test existed as THREE
+/** Daggerfall's arrows in the pack. This test existed as THREE
  *  literals (the rig's out-of-arrows auto-sheathe, the card's build
- *  button, and the swap seam wanted a fourth) - one export now. */
-export const DF_ARROW_TEMPLATE = 131;
-export function hasDaggerfallArrows(items) {
-  return !!items?.some((it) => it.templateIndex === DF_ARROW_TEMPLATE && (it.stackCount ?? 1) > 0);
-}
+ *  button, and the swap seam wanted a fourth) - one export now.
+ *  AUDIT 68 S27-ammoCount-dup: and the COUNT under it is inventory.js's
+ *  ammoCountFor, beside the spend law - this file carried a copy of it,
+ *  and the copy was the one the rig read. */
+export const hasDaggerfallArrows = (items) => ammoCountFor(items, null) > 0;
 /** THE SAME QUESTION, ASKED OF THE WEAPON. A bow is out of ammunition
  *  when there are no Arrows; the Dwarven Thunderlock when there are no
  *  Dwemer Pellets. Everything that is not a ranged weapon answers with
  *  the arrow test it always did, so no caller has to know which it is
  *  holding to keep behaving. */
-export function hasAmmoFor(items, weapon) {
-  const template = ammoTemplateFor(weapon) ?? DF_ARROW_TEMPLATE;
-  return !!items?.some((it) => it.templateIndex === template && (it.stackCount ?? 1) > 0);
-}
-export function ammoCountOf(items, weapon) {
-  const template = ammoTemplateFor(weapon) ?? DF_ARROW_TEMPLATE;
-  let n = 0;
-  for (const it of items ?? []) if (it.templateIndex === template) n += Math.max(0, it.stackCount ?? 1);
-  return n;
-}
-/** WS1: how many arrows the pack carries - the quiver shows min(count, its slots). */
-export function daggerfallArrowCount(items) {
-  let n = 0;
-  for (const it of items ?? []) if (it.templateIndex === DF_ARROW_TEMPLATE) n += Math.max(0, it.stackCount ?? 1);
-  return n;
-}
+export const hasAmmoFor = (items, weapon) => ammoCountFor(items, weapon) > 0;
 
 /**
  * MW-LOAD: THE ARCHIVE PATHS resolveWeaponParts WILL READ, before it
@@ -1153,7 +1158,7 @@ export const archiveHas = (archives) => (p) => (archives ?? []).some((a) => a.ha
  *  bow that resolves with ammunition in the pack and no arrow on it is
  *  a fault the player sees from the chair and could not name - the
  *  card's note is the same sentence, but the card is a menu away. */
-import { ammoTemplateFor } from '../characters/thunderlockIds.js';   // what a ranged weapon spends - a leaf (see the file)
+import { ammoCountFor } from '../systems/inventory.js';   // AUDIT 68 S27-ammoCount-dup: the ammunition count's one home, beside the spend law
 import { ownWeaponModelFor } from '../characters/ownWeaponModels.js';   // FIELD-GUN-MW2: the weapons Morrowind does not have - a leaf too
 
 const saidArrow = new Set();
@@ -1528,7 +1533,7 @@ export async function buildFpArm({
     // clip/texture memos stand down (the walk memo below keys on the
     // byte length too, so it is collision-safe either way). Only the
     // real store's monotonic stamp turns the swap caches on.
-    const gen = typeof d.morrowindDataGeneration === 'function' ? d.morrowindDataGeneration() : null;
+    const gen = adoptMemoGeneration(d.morrowindDataGeneration);
     const walk = (e, kind, fn) => {
       // MW-LOAD: a derived record set answers by kind and never walks.
       if (e.records) return armRecordsOf(e.records, kind);
@@ -1832,7 +1837,6 @@ export async function buildFpArm({
     }
     // hasAnimation: ANY source. The reverse search below picks WHICH.
     const groupSet = new Set(sources.flatMap((so) => so.groups));
-    const clip = sources[sources.length - 1];
     // THE REFUSAL MOVES WITH THE RULE. MW-D8 refused when "Idle" did not
     // reset; that group need not exist at all in a first-person .kf that
     // only carries idle1h and friends. What must exist is SOME idle this
@@ -2054,7 +2058,11 @@ export function collectArmTextures(pieces, archives, gen = null) {
     } catch (err) {
       const entry = { ok: false, path, error: err.message, image: warningImage() };
       out.set(file, entry);
-      if (gen !== null) TEXTURE_CACHE.set(`${gen}:${file}`, entry);
+      // AUDIT 68 S08-fparm-gen-cache-leak: a texture whose load FAILED
+      // (a lazy archive that never got the bytes) is not the
+      // generation's answer - clothingColourOf's rule. Kept, a fetch
+      // blip left the magenta warning on that piece for the session.
+      if (gen !== null && !(typeof arc.loaded === 'function' && !arc.loaded(path))) TEXTURE_CACHE.set(`${gen}:${file}`, entry);
     }
   }
   return out;
@@ -2468,6 +2476,22 @@ export function createFpArm() {
   }
   function releaseMesh() { releaseGpu(mesh); mesh = null; }
 
+  /** MW-D11: the textures hung on a packed mesh's ranges, ONCE - a
+   *  character texture per textured range with its NiTexturingProperty
+   *  clamp (3, WRAP_S_WRAP_T, when there is no material), and the
+   *  NiAlphaProperty threshold (0-255 in the file). One home for the
+   *  icon, the body and the arm (AUDIT 68 S08-fparm-texture-hang-triplicate). */
+  function hangRangeTextures(ranges, textures) {
+    for (const r of ranges) {
+      if (!r.textureFile) continue;
+      const entry = textures.get(r.textureFile);
+      if (!entry) continue;
+      const m = r.piece.material;
+      r.tex = renderer.createCharacterTexture(entry.image.mips, wrapModes(m ? m.clampMode : 3));
+      r.alphaCut = m && m.alphaTest ? (m.alphaThreshold || 0) / 255 : 0;
+    }
+  }
+
   /** MW-D38: one ground mesh, textured, rendered to an icon-sized image. */
   function renderGroundMesh(nifBytes, archives, gen, size) {
     let batches;
@@ -2490,15 +2514,7 @@ export function createFpArm() {
     const packed = packFpArm(pieces);
     const mesh = renderer.createCharacterMesh(packed.packed, { uv: true });
     mesh.ranges = packed.ranges;
-    const textures = collectArmTextures(pieces, archives, gen);
-    for (const r of mesh.ranges) {
-      if (!r.textureFile) continue;
-      const entry = textures.get(r.textureFile);
-      if (!entry) continue;
-      const clampMode = r.piece.material ? r.piece.material.clampMode : 3;
-      r.tex = renderer.createCharacterTexture(entry.image.mips, wrapModes(clampMode));
-      r.alphaCut = r.piece.material && r.piece.material.alphaTest ? (r.piece.material.alphaThreshold || 0) / 255 : 0;
-    }
+    hangRangeTextures(mesh.ranges, collectArmTextures(pieces, archives, gen));
     const { view, proj } = iconFrame({ minX, minY, minZ, maxX, maxY, maxZ });
     const px = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(8, size | 0));
     let img = null;
@@ -2594,15 +2610,7 @@ export function createFpArm() {
     if (!thirdMesh) {
       thirdMesh = renderer.createCharacterMesh(thirdPacked.packed, { uv: true });
       thirdMesh.ranges = thirdPacked.ranges;
-      for (const r of thirdMesh.ranges) {
-        if (!r.textureFile) continue;
-        const entry = t.textures.get(r.textureFile);
-        if (!entry) continue;
-        const clampMode = r.piece.material ? r.piece.material.clampMode : 3;
-        r.tex = renderer.createCharacterTexture(entry.image.mips, wrapModes(clampMode));
-        r.alphaCut = r.piece.material && r.piece.material.alphaTest
-          ? (r.piece.material.alphaThreshold || 0) / 255 : 0;
-      }
+      hangRangeTextures(thirdMesh.ranges, t.textures);
     } else {
       renderer.updateCharacterMesh(thirdMesh, thirdPacked.packed);
     }
@@ -3155,7 +3163,7 @@ export function createFpArm() {
       return;
     }
     if (pendingWorn) { const p = pendingWorn; pendingWorn = null; api.setWorn(p); }
-    if (pendingWeapon) { const w = pendingWeapon; pendingWeapon = null; api.setWeapon(w.item, { hasAmmo: w.hasAmmo }); }
+    if (pendingWeapon) { const w = pendingWeapon; pendingWeapon = null; api.setWeapon(w.item, { hasAmmo: w.hasAmmo, ammoCount: w.ammoCount }); }   // AUDIT 68 X7-pendingweapon-drops-ammocount: the quiver's count rides the queue
     if (pendingTorch !== null) { const l = pendingTorch; pendingTorch = null; api.setTorch(l); }   // MW-D51
   }
 
@@ -3251,6 +3259,7 @@ export function createFpArm() {
 
     unload() {
       buildGen += 1;   // AUDIT MW-TORCH F7: a build in flight lands dead
+      adoptMemoGeneration(memoGenOf);   // AUDIT 68 S08-fparm-gen-cache-leak: a bumped generation's memos go with the rig
       pendingBuild = null; lastBuildOpts = null;
       releaseMesh(); built = null; packed = null;
       held = null; heldMemo = null; lastFrame = null; drewLast = false;   // MAP3: the sheet goes with the rig
@@ -3365,22 +3374,23 @@ export function createFpArm() {
      *  and the game paused, which is when equipment changes. */
     setWorn(pieces) {
       if (!built || !built.ok || !lastBuildOpts) return false;
-      const key = wornEquipKeyOf(pieces);
-      if (key === wornEquipKey) return false;
       // PX25: A CHANGE DURING A REBUILD IS NOT DROPPED. The pack hands
       // over the table on every action now, and two quick equips land
       // the second while the first is still building; returning false
       // here left the key unmoved and the body one change behind until
       // something else asked. The latest table waits and is applied the
       // moment the in-flight build settles.
+      // AUDIT 68 S08-fparm-busy-queue-drops-latest: queued BEFORE the
+      // key compare - mid-build the key is the in-flight table's, so
+      // X->Y->X compared X equal and left Y queued. The flush compares.
       if (busy) { pendingWorn = pieces; return false; }
+      const key = wornEquipKeyOf(pieces);
+      if (key === wornEquipKey) return false;
       wornEquipKey = key;
       return this.build({ ...lastBuildOpts, armor: pieces, weapon: lastBuildOpts.weapon });
     },
     setWeapon(item, { hasAmmo = false, ammoCount = null } = {}) {
       if (!built || !built.ok) return false;
-      const key = fpWeaponKey(item, hasAmmo);
-      if (key === wornKey) return false;
       // PX26 F3: A SWAP DURING A BUILD IS NOT DROPPED, the same law
       // PX25 gave the worn table. The pack now hands the hand over on
       // every action, and a sword swapped while the body is rebuilding
@@ -3388,9 +3398,19 @@ export function createFpArm() {
       // unmoved - the wheel would show the old blade until something
       // else changed. The latest hand waits and goes when the build
       // settles.
-      if (busy) { pendingWeapon = { item, hasAmmo }; return false; }
+      // AUDIT 68 S08-fparm-busy-queue-drops-latest: the WHOLE request,
+      // queued before the key compare (wornKey is the old hand until a
+      // swap lands, so switching back mid-swap was dropped).
+      if (busy) { pendingWeapon = { item, hasAmmo, ammoCount }; return false; }
+      const key = fpWeaponKey(item, hasAmmo);
+      if (key === wornKey) return false;
+      // AUDIT 68 X7-fparm-swap-rejection-unhandled: a swap that failed on
+      // THIS rig is not retried by the per-frame door; another weapon, a
+      // rebuild or a re-attach (a new rig) asks again.
+      if (built.weaponFailed === key) return false;
       busy = true;
       const token = built;
+      token.weaponFailed = null;
       return (async () => {
         try {
           const d = buildDeps || await import('../scenes/dataSource.js');
@@ -3409,6 +3429,37 @@ export function createFpArm() {
             weapon: item, hasAmmo, allWeapons: token.allWeapons, find,
             skeletonBytes: token.skeletonBytes, has: archiveHas(archives),   // MW-D50
           });
+          // MW-D24: the SAME swap on the third-person body - same door
+          // (resolveWeaponParts), this rig's own skeleton bytes, so the
+          // bow lands on ITS "Weapon Bone Left" and the arrow test runs
+          // against bones this rig actually has.
+          // AUDIT 68 X7-fparm-swap-rejection-unhandled: RESOLVED HERE,
+          // before either rig changes - findLoaded throws for a load that
+          // failed, and a throw after the first-person rebind left that
+          // rig half-swapped.
+          const t = thirdBuilt && thirdBuilt.ok ? thirdBuilt : null;
+          let tResolved = null;
+          let tHolster = null;
+          if (t) {
+            tResolved = resolveWeaponParts({
+              weapon: item, hasAmmo, allWeapons: token.allWeapons, find,
+              skeletonBytes: t.skeletonBytes, has: archiveHas(archives),   // MW-D50
+            });
+            // WS1: the holster follows the hand - the scabbard preloaded,
+            // the parts resolved against THIS rig's skeleton (its addons
+            // already in it), the old three slots dropped with the weapon's.
+            await loadFromArchives(archives, holsterPartPaths({ weaponModel: tResolved.weaponInfo?.model }));
+            tHolster = t.sheathing !== false
+              ? resolveHolsterParts({
+                mwType: tResolved.mwType, weaponModel: tResolved.weaponInfo?.model,
+                weaponBytes: tResolved.parts.find((p) => p.slot === 'weapon')?.bytes ?? null,
+                ammo: tResolved.arrowInfo ? { bytes: tResolved.parts.find((p) => p.slot === 'arrow')?.bytes ?? null, type: tResolved.arrowInfo.type } : null,
+                ammoCount: ammoCount ?? (hasAmmo ? Number.MAX_SAFE_INTEGER : 0),
+                find, hasBone: (n) => t.arm.skeleton.byName.has(String(n).toLowerCase()), parseNif: parseNifOnce,
+              })
+              : { parts: [], info: null, notes: [] };
+          }
+          const gen = token.catalog?.gen ?? null;   // AUDIT 68 S08-fparm-gen-cache-leak: the swap rides the build's decode memo
           const arm = token.arm;
           arm.pieces = arm.pieces.filter((p) => p.slot !== 'weapon' && p.slot !== 'arrow');
           bindPartsInto(arm, resolved.parts);
@@ -3416,8 +3467,8 @@ export function createFpArm() {
           // are open; what the arm already decoded stays.
           const fresh = arm.pieces.filter((p) => p.slot === 'weapon' || p.slot === 'arrow');
           // MW-LOAD: covers collectArmTextures' reads for the new pieces.
-          await preloadArmTextures(fresh, archives);
-          for (const [file, tex] of collectArmTextures(fresh, archives)) {
+          await preloadArmTextures(fresh, archives, gen);
+          for (const [file, tex] of collectArmTextures(fresh, archives, gen)) {
             if (!token.textures.has(file)) token.textures.set(file, tex);
           }
           const oldType = token.mwType;
@@ -3440,29 +3491,7 @@ export function createFpArm() {
           poseAt(c.startTime);
           if (token.weapon) token.weapon.side = weaponRestSide(arm, token.weapon.bone);
           if (token.arrow) token.arrow.side = weaponRestSide(arm, token.arrow.bone);
-          // MW-D24: the SAME swap on the third-person body - same door
-          // (resolveWeaponParts), this rig's own skeleton bytes, so the
-          // bow lands on ITS "Weapon Bone Left" and the arrow test runs
-          // against bones this rig actually has.
-          if (thirdBuilt && thirdBuilt.ok) {
-            const t = thirdBuilt;
-            const tResolved = resolveWeaponParts({
-              weapon: item, hasAmmo, allWeapons: token.allWeapons, find,
-              skeletonBytes: t.skeletonBytes, has: archiveHas(archives),   // MW-D50
-            });
-            // WS1: the holster follows the hand - the scabbard preloaded,
-            // the parts resolved against THIS rig's skeleton (its addons
-            // already in it), the old three slots dropped with the weapon's.
-            await loadFromArchives(archives, holsterPartPaths({ weaponModel: tResolved.weaponInfo?.model }));
-            const tHolster = t.sheathing !== false
-              ? resolveHolsterParts({
-                mwType: tResolved.mwType, weaponModel: tResolved.weaponInfo?.model,
-                weaponBytes: tResolved.parts.find((p) => p.slot === 'weapon')?.bytes ?? null,
-                ammo: tResolved.arrowInfo ? { bytes: tResolved.parts.find((p) => p.slot === 'arrow')?.bytes ?? null, type: tResolved.arrowInfo.type } : null,
-                ammoCount: ammoCount ?? (hasAmmo ? Number.MAX_SAFE_INTEGER : 0),
-                find, hasBone: (n) => t.arm.skeleton.byName.has(String(n).toLowerCase()), parseNif: parseNifOnce,
-              })
-              : { parts: [], info: null, notes: [] };
+          if (t) {
             const swapped = new Set(['weapon', 'arrow', ...HOLSTER_SLOTS]);
             t.arm.pieces = t.arm.pieces.filter((p) => !swapped.has(p.slot));
             bindPartsInto(t.arm, [...tResolved.parts, ...tHolster.parts]);
@@ -3470,8 +3499,8 @@ export function createFpArm() {
             t.notes = [...(t.notes || []).filter((n) => !/^holster[ :@]/.test(n)), ...tHolster.notes];
             const tFresh = t.arm.pieces.filter((p) => swapped.has(p.slot));
             // MW-LOAD: same cover for the third-person rig's new pieces.
-            await preloadArmTextures(tFresh, archives);
-            for (const [file, tex] of collectArmTextures(tFresh, archives)) {
+            await preloadArmTextures(tFresh, archives, gen);
+            for (const [file, tex] of collectArmTextures(tFresh, archives, gen)) {
               if (!t.textures.has(file)) t.textures.set(file, tex);
             }
             t.mwType = tResolved.mwType;
@@ -3486,7 +3515,7 @@ export function createFpArm() {
           // The old action clip belonged to the old weapon's group.
           actionState = null; actionSource = null; attackType = null; holdWindUp = false;
           wornKey = key;
-          if (lastBuildOpts) { lastBuildOpts.weapon = item; lastBuildOpts.hasAmmo = hasAmmo; }   // AUDIT MW-TORCH F5: setWorn's rebuild carries the hand that is IN it
+          if (lastBuildOpts) { lastBuildOpts.weapon = item; lastBuildOpts.hasAmmo = hasAmmo; lastBuildOpts.ammoCount = ammoCount; }   // AUDIT MW-TORCH F5: setWorn's rebuild carries the hand that is IN it (AUDIT 68 S08-fparm-ammocount-dropped: and its quiver)
           const wasDrawn = !sheathed;
           // MW-D28: isStillWeapon (character.cpp:1364) - a DRAWN hand
           // swapping one real weapon for another plays NO unequip and NO
@@ -3516,6 +3545,18 @@ export function createFpArm() {
             if (wasDrawn) { busy = false; api.setSheathed(false); }
           }
           return true;
+        } catch (err) {
+          // AUDIT 68 X7-fparm-swap-rejection-unhandled: every caller drops
+          // this promise (the per-frame door, the flush, the peers), so a
+          // throw here was an unhandled rejection - the CRASH overlay -
+          // once a frame. The rig's own verdict instead, as buildFpArm
+          // gives one: the old weapon stands, the card says why, and the
+          // key is remembered so the frame door does not ask again.
+          const msg = err?.message ?? String(err);
+          token.weaponFailed = key;
+          token.notes = [...(token.notes || []).filter((n) => !/^weapon: the swap /.test(n)), `weapon: the swap to this weapon failed - ${msg}`];
+          console.warn(`[mw] weapon swap failed - ${msg}`);
+          return false;
         } finally {
           busy = false;
           // PX33 (Mac: the bow "doesn't equip instantly visually in the
@@ -3703,8 +3744,8 @@ export function createFpArm() {
     setTorch(lit) {
       const want = !!lit;
       if (!built || !built.ok) return false;
+      if (busy) { pendingTorch = want; return false; }   // AUDIT 68 S08-fparm-busy-queue-drops-latest: the latest light, before the compare
       if (torchLit === want) return false;
-      if (busy) { pendingTorch = want; return false; }
       torchLit = want;
       if (lastBuildOpts) lastBuildOpts.torch = want;   // AUDIT MW-TORCH F5: the equip-follow rebuild carries the light, not the build's stale flag
       // AUDIT MW-TORCH F3: a bind that failed once on this rig (the mesh
@@ -3728,14 +3769,20 @@ export function createFpArm() {
           if (built !== token) return false;
           const find = (p) => findLoaded(archives, p);
           await loadFromArchives(archives, torchPartPaths({ torch: true, allLights: token.allLights, has: archiveHas(archives) }));
-          const bindTorch = async (rigBuilt) => {
-            const resolved = resolveTorchPart({ torch: true, allLights: token.allLights, find, skeletonBytes: rigBuilt.skeletonBytes, has: archiveHas(archives) });
+          const resolveFor = (rigBuilt) => resolveTorchPart({ torch: true, allLights: token.allLights, find, skeletonBytes: rigBuilt.skeletonBytes, has: archiveHas(archives) });
+          // AUDIT 68 X7-fparm-swap-rejection-unhandled: both rigs resolve
+          // (the reads that can throw) before either changes.
+          const tRig = thirdBuilt && thirdBuilt.ok ? thirdBuilt : null;
+          const fpResolved = resolveFor(token);
+          const tpResolved = tRig ? resolveFor(tRig) : null;
+          const gen = token.catalog?.gen ?? null;   // AUDIT 68 S08-fparm-gen-cache-leak: the build's decode memo
+          const bindTorch = async (rigBuilt, resolved) => {
             rigBuilt.arm.pieces = rigBuilt.arm.pieces.filter((p) => p.slot !== 'torch');
             rigBuilt.arm.effects = (rigBuilt.arm.effects ?? []).filter((e) => e.slot !== 'torch');   // MAC-Q: the old flame goes with the old torch
             bindPartsInto(rigBuilt.arm, resolved.parts);
             const fresh = [...rigBuilt.arm.pieces.filter((p) => p.slot === 'torch'), ...rigBuilt.arm.effects.filter((e) => e.slot === 'torch')];
-            await preloadArmTextures(fresh, archives);
-            for (const [file, tex] of collectArmTextures(fresh, archives)) {
+            await preloadArmTextures(fresh, archives, gen);
+            for (const [file, tex] of collectArmTextures(fresh, archives, gen)) {
               if (!rigBuilt.textures.has(file)) rigBuilt.textures.set(file, tex);
             }
             rigBuilt.torch = resolved.torchInfo;
@@ -3743,14 +3790,22 @@ export function createFpArm() {
             rigBuilt.notes = [...(rigBuilt.notes || []).filter((n) => !/^torch[ :]/.test(n)), ...resolved.notes];
             rigBuilt.pieces = armPieceRows(rigBuilt.arm.pieces).length;
           };
-          await bindTorch(token);
-          if (thirdBuilt && thirdBuilt.ok) await bindTorch(thirdBuilt);
+          await bindTorch(token, fpResolved);
+          if (tRig) await bindTorch(tRig, tpResolved);
           // The ranges the textures hang on are the piece list; a new
           // piece is a new list, so the meshes repack.
           releaseMesh(); packed = null;
           releaseThirdMesh(); thirdPacked = null;
           refreshTorch(true);
           return true;
+        } catch (err) {
+          // AUDIT 68 X7-fparm-swap-rejection-unhandled: setWeapon's catch -
+          // the per-frame door drops this promise. The flag stays lit, so
+          // that door does not ask again; a douse and re-light retries.
+          const msg = err?.message ?? String(err);
+          token.notes = [...(token.notes || []).filter((n) => !/^torch: the light /.test(n)), `torch: the light could not be hung - ${msg}`];
+          console.warn(`[mw] torch bind failed - ${msg}`);
+          return false;
         } finally {
           busy = false;
           for (const fn of listeners) { try { fn(); } catch { /* see build() */ } }
@@ -4047,16 +4102,7 @@ export function createFpArm() {
         // resolved ONCE and hung on them - the per-frame path re-uploads
         // vertices and touches nothing else.
         mesh.ranges = packed.ranges;
-        for (const r of mesh.ranges) {
-          if (!r.textureFile) continue;
-          const entry = built.textures.get(r.textureFile);
-          if (!entry) continue;
-          const clamp = r.piece.material ? r.piece.material.clampMode : 3;
-          r.tex = renderer.createCharacterTexture(entry.image.mips, wrapModes(clamp));
-          // NiAlphaProperty's own threshold, 0-255 in the file.
-          r.alphaCut = r.piece.material && r.piece.material.alphaTest
-            ? (r.piece.material.alphaThreshold || 0) / 255 : 0;
-        }
+        hangRangeTextures(mesh.ranges, built.textures);
       } else {
         renderer.updateCharacterMesh(mesh, packed.packed);
       }
@@ -4325,16 +4371,7 @@ export function createFpArm() {
       // them every step) - the per-piece table walked every vertex again
       // per frame, and per body once the peers stood in the same pass.
       let { minX, minY, minZ, maxX, maxY, maxZ } = t.arm.bounds ?? {};
-      if (!(maxX > minX)) {
-        minX = Infinity; minY = Infinity; minZ = Infinity; maxX = -Infinity; maxY = -Infinity; maxZ = -Infinity;
-        for (const r of armPieceRows(t.arm.pieces)) {
-          const b = r.bounds;
-          if (!b) continue;
-          if (b.minX < minX) minX = b.minX; if (b.maxX > maxX) maxX = b.maxX;
-          if (b.minY < minY) minY = b.minY; if (b.maxY > maxY) maxY = b.maxY;
-          if (b.minZ < minZ) minZ = b.minZ; if (b.maxZ > maxZ) maxZ = b.maxZ;
-        }
-      }
+      if (!(maxX > minX)) ({ minX, minY, minZ, maxX, maxY, maxZ } = meshBounds(t.arm.pieces) ?? {});   // AUDIT 68: poseAssembly's own fold, over the pieces
       if (!(maxX > minX)) return false;
       const halfH = ((maxZ - minZ) * u * rs.height) / 2;
       const halfW = (Math.hypot(maxX - minX, maxY - minY) * u * rs.weight) / 2;
@@ -4447,14 +4484,10 @@ export function createFpArm() {
       }
       const u = 1 / MW_UNITS_PER_METER;
       const rs = (built && built.raceScale) || { weight: 1, height: 1 };
-      let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
-      for (const r of armPieceRows(t.arm.pieces)) {
-        const b = r.bounds;
-        if (!b) continue;
-        if (b.minX < minX) minX = b.minX; if (b.maxX > maxX) maxX = b.maxX;
-        if (b.minY < minY) minY = b.minY; if (b.maxY > maxY) maxY = b.maxY;
-        if (b.minZ < minZ) minZ = b.minZ; if (b.maxZ > maxZ) maxZ = b.maxZ;
-      }
+      // AUDIT 68 S08-fparm-texture-hang-triplicate: the pieces' own fold
+      // (meshBounds, what poseAssembly sets) - off the pieces, because an
+      // unposed figure's arm.bounds may predate a weapon swap.
+      const { minX, minY, minZ, maxX, maxY, maxZ } = meshBounds(t.arm.pieces) ?? {};
       if (!(maxX > minX)) return null;
       // feet at the origin, facing the viewer: drawThird's +180 makes yaw
       // 0 face -Z in pass space, and the eye below sits on +Z.

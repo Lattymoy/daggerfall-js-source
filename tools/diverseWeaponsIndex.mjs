@@ -20,6 +20,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isMain } from './lib/isMain.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const MANIFEST = 'vendor/diverse-weapons/diverse-weapons.dfmod.json';
@@ -62,7 +63,7 @@ ${rows.join('\n')}
 `;
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (isMain(import.meta.url)) {
   const json = readFileSync(join(ROOT, MANIFEST), 'utf8');
   const names = manifestSpriteNames(json);
   const index = encodeIndex(names);

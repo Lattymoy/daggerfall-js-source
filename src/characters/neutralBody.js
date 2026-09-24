@@ -51,7 +51,7 @@ export const BUILD_MIN = 0.6, BUILD_MAX = 1.6;
 
 export function buildNeutralBody(ramps, opts = {}) {
   const SEG = 28;
-  const SKIN = [196, 154, 116], BOOT = [92, 74, 58], HAIR = [64, 54, 44];
+  const SKIN = [196, 154, 116], BOOT = [92, 74, 58];
   const faces = [];
   let grp = 'body'; // limb tag for animation (body/head/armL/armR/legL/legR)
   const sq = (u, p) => Math.sign(u) * Math.pow(Math.abs(u), p);
@@ -256,12 +256,11 @@ export function buildNeutralBody(ramps, opts = {}) {
   }
   grp = 'legL'; leg(-1); grp = 'legR'; leg(1); grp = 'body';
 
-  // FEET: forward, from the TRUE thin ankle (rx ~0.066).
-  // Slim ankle: taper the bottom rows in (the measured 0.066 still read
-  // as a fat joint against the foot).
+  // FEET: forward, from the TRUE thin ankle (rx ~0.066). ANK is the
+  // ankle stump's top ring. AUDIT 68 S05-neutralbody-dead-writes: a
+  // "slim ankle" rewrite of legProf's bottom rows stood here, AFTER
+  // leg() had lofted them - it never reached the geometry.
   const ANK = 0.045;
-  legProf[0] = { y: ANKLE_Y, rx: ANK, rz: ANK };
-  if (legProf[1]) legProf[1] = { y: legProf[1].y, rx: (ANK + legProf[1].rx) / 2, rz: (ANK + legProf[1].rz) / 2 };
   // FOOT: an explicit FLAT-SOLED volume extruded forward (a box, not a
   // stack of ellipse rings - rings around a short span make a ball).
   // Cross-sections are taken along Z (heel->toe), each a small vertical
@@ -306,11 +305,9 @@ export function buildNeutralBody(ramps, opts = {}) {
 
   // SHADING: bake ART_PAL palette ramps per face by lighting intensity
   // (upper-right key, like the game) - the retro banded skin/boot look,
-  // not smooth material lighting. Continuous lerp between ramp steps so
-  // it isn't blocky. Colour tag on each face selects the ramp.
+  // not smooth material lighting. Colour tag on each face selects the ramp.
 
   const Lx = 0.5, Ly = 0.55, Lz = 0.67, Ln = Math.hypot(Lx, Ly, Lz);
-  const lerp = (a, b, t) => [Math.round(a[0]+(b[0]-a[0])*t), Math.round(a[1]+(b[1]-a[1])*t), Math.round(a[2]+(b[2]-a[2])*t)];
   const shade = (ramp, it) => ramp[Math.max(0, Math.min(ramp.length-1, Math.round(it*(ramp.length-1))))]; // SNAP to a ramp step: hard palette bands (blocky shader look), no lerp
   // AMBIENT OCCLUSION (geometry-derived): a face is occluded when other
   // faces sit IN FRONT of it (its normal hemisphere) within a short

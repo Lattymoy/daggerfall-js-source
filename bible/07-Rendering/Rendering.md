@@ -51,6 +51,14 @@ directory by `test/audit18_bible_docs.test.js`:
   (`transformSphere`), the frustum's normalised planes (`spherePlanes`,
   over frustum.js's extraction) and the sphere test the shadow and air
   replays cull by. A leaf: no GL. See `07-Rendering/Enhanced-Lighting-Arc.md`.
+  AUDIT 68: `batchSphere` is a billboard batch's lifted sphere, the one home
+  batchVisible, shadowReachBatch and the shadow cache's scans all take.
+- `billboardKey.js` - AUDIT 68: a billboard batch's texture key
+  (`archive_record`, `#frame` for an animated flat), re-minted whenever the
+  archive, record or frame moved. The billboard pass, the shadow replay and
+  the air pass's emission replay all key through it, so a batch recorded for
+  the maps without being drawn (SHADOW-REACH) casts its current frame. A
+  leaf: no GL, no imports.
 - `cloudShadow.js` - EE5 / VC4 THE CLOUD SHADOW BLOCK: the uniforms and
   the reader (`cloudShadowAt`) that answer how much sun reaches a point
   on the ground, off the map `volumetricClouds.js` writes. Its own leaf
@@ -59,6 +67,17 @@ directory by `test/audit18_bible_docs.test.js`:
   program that lights by the sun, and the air pass's shafts, which
   cannot import from the renderer that imports them. No GL, no imports.
   See `07-Rendering/Volumetric-Clouds-Arc.md`.
+- `fogGlsl.js` - AUDIT 68 THE FOG BLOCK: `FOG_GLSL`, the one `fogFactorAt`
+  every world pass interpolates - renderer.js's seven programs, the water
+  surface and the lighting lane's five (DS1's exp2 had been added to nine
+  copies). Each shader declares its own fog uniforms; `setFog` feeds them.
+  No GL, no imports.
+- `glProgram.js` - AUDIT 68 ONE COMPILE AND LINK: `buildProgram(gl, vs, fs,
+  label)`, which the renderer's `_buildProgram` and every foreign pass's
+  program go through (the sky, the rain, the wisps, the clouds and their
+  noise, the far ring, the bolts, Dynamic Skies, the grass, the enhanced
+  sky); a fault throws the driver's log, a constructor fault the boot probe
+  sees. No imports.
 - `shadowPass.js` - EL2 THE SHADOW PASS: records what the world pass draws and
   replays it depth-only from the light at the top of the next frame - a
   two-cascade sun map outdoors, a cube map from the nearest lantern indoors -

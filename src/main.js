@@ -237,7 +237,6 @@ async function boot() {
   if (!params.has('novideo')) {
     try {
       const { playVideo } = await import('./ui/videoPlayer.js');
-      const { getBytes } = await import('./scenes/dataSource.js');
       const { ensureAudio } = await import('./scenes/shared.js');
       status('splash');
       // AUDIT 19 F2(vid): BOOT AUDIO FIRST. The player resolves its
@@ -354,7 +353,7 @@ const rememberReload = () => {
 // Crash observability: an uncaught exception in the frame loop kills
 // requestAnimationFrame silently - on the deployed site that reads as
 // "the game crashed" with no signal. Surface the stack on screen so
-// playtest reports pinpoint the throw.
+// playtest reports pinpoint the throw. Returns the report's element.
 function crashOverlay(msg) {
   const prior = document.getElementById('crash');
   if (prior) {
@@ -363,13 +362,14 @@ function crashOverlay(msg) {
     // that names the cause - keep a count and the newest text.
     prior._count = (prior._count ?? 1) + 1;
     prior.textContent = `CRASH (${prior._count})\n${msg}`;
-    return;
+    return prior;
   }
   const el = document.createElement('pre');
   el.id = 'crash';
   el.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;max-height:45%;overflow:auto;background:#300;color:#f88;font:12px monospace;padding:8px;border:1px solid #f66;z-index:20;white-space:pre-wrap;pointer-events:none';   // PL3: a report, not a wall - it sat over the bottom half of the canvas and ate every click that should have relocked the pointer
   el.textContent = `CRASH\n${msg}`;
   document.body.appendChild(el);
+  return el;
 }
 
 addEventListener('error', (e) => crashOverlay(crashText(e.error, e) || e.message));
@@ -382,6 +382,10 @@ addEventListener('unhandledrejection', (e) => crashOverlay(`unhandled rejection\
 // cause must read as signal, never as silent black).
 document.getElementById('c')?.addEventListener('webglcontextlost', (e) => {
   e.preventDefault();
-  crashOverlay('graphics context lost (usually memory pressure on phones)\n\ntap here to reload');
-  document.getElementById('crash')?.addEventListener('click', () => location.reload());
+  const el = crashOverlay('graphics context lost (usually memory pressure on phones)\n\ntap here to reload');
+  // AUDIT 68 S02-contextlost-tap-dead: PL3 made the report click-through,
+  // so the promised tap fell to the dead canvas. This one takes taps, and
+  // by onclick - a second loss must not stack a second listener.
+  el.style.pointerEvents = 'auto';
+  el.onclick = () => location.reload();
 });

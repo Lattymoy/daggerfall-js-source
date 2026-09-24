@@ -9,11 +9,11 @@
 // The impulse is the port's own arithmetic on those numbers, not FMOD's
 // reverb: an early-reflection cluster at `reflectionsDelay` at the
 // `reflections` level, a dense noise tail from `reverbDelay` at the
-// `reverb` level decaying by 60 dB over `decayTime`, its high band decaying
-// `decayHFRatio` times as fast, the whole scaled by `room` and its high
-// band by `roomHF`. What a player hears is a cave, a stone room and a
-// quarry in that order of size and brightness; the exact tail is not
-// FMOD's and is said so in the record.
+// `reverb` level decaying by 60 dB over `decayTime`, its high band over
+// `decayTime x decayHFRatio` (I3DL2's HF-to-mid decay-time ratio), the
+// whole scaled by `room` and its high band by `roomHF`. What a player
+// hears is a cave, a stone room and a quarry in that order of size and
+// brightness; the exact tail is not FMOD's and is said so in the record.
 export const REVERB_PRESET = Object.freeze({
   Cave: Object.freeze({ room: -1000, roomHF: 0, decayTime: 2.91, decayHFRatio: 1.30, reflections: -602, reflectionsDelay: 0.015, reverb: -302, reverbDelay: 0.022, HFReference: 5000, diffusion: 100, density: 100 }),
   Stoneroom: Object.freeze({ room: -1000, roomHF: -300, decayTime: 2.31, decayHFRatio: 0.64, reflections: -711, reflectionsDelay: 0.012, reverb: 83, reverbDelay: 0.017, HFReference: 5000, diffusion: 100, density: 100 }),
@@ -45,7 +45,7 @@ export function reverbImpulseSamples(p, sampleRate) {
     }
   }
   // the tail: noise decaying to -60 dB over decayTime; the high band (a one-pole split at HFReference)
-  // decays decayHFRatio times as fast and is scaled by roomHF.
+  // decays over decayTime x decayHFRatio and is scaled by roomHF.
   //
   // AUDIT-BA F1: THE TAIL IS NORMALISED TO UNIT ENERGY before the level gain scales it. A noise tail written at
   // amplitude `tail` per sample convolves to a wet signal of RMS gain tail x sqrt(N) over its N samples - the
@@ -54,7 +54,7 @@ export function reverbImpulseSamples(p, sampleRate) {
   // whole tail carries energy tail^2 and no more; the early taps are impulses and carry their gain squared each.
   const start = Math.floor(p.reverbDelay * sampleRate);
   const lowDecay = Math.log(1000) / (p.decayTime * sampleRate);
-  const highDecay = Math.log(1000) / ((p.decayTime / Math.max(0.05, p.decayHFRatio)) * sampleRate);
+  const highDecay = Math.log(1000) / ((p.decayTime * Math.max(0.05, p.decayHFRatio)) * sampleRate);   // AUDIT 68 S31-reverb-hf-decay-ratio-inverted: was decayTime / ratio
   const alpha = Math.exp(-p.HFReference * Math.PI / (sampleRate / 2));   // e^(-2 pi f / fs), the one-pole coefficient at HFReference
   for (let ch = 0; ch < 2; ch++) {
     const rnd = noise(0x9e3779b9 + ch * 7919);

@@ -1,0 +1,76 @@
+[
+  {
+    "name": "AUDIT68-S16-bbkey-the-emission-replay-trusts-the-stamped-key",
+    "file": "src/render/airPass.js",
+    "old": "          const key = billboardKey(b);",
+    "new": "          const key = b._bbKey ?? billboardKey(b);",
+    "tests": [
+      "test/audit68_render_a.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-S16-air-an-unprepared-frame-takes-the-last-world-frames-AO",
+    "file": "src/render/airPass.js",
+    "old": "    gl.uniform1f(P.resolve.uAOMix, prepared ? AIR_AO_RESOLVE : 0);",
+    "new": "    gl.uniform1f(P.resolve.uAOMix, this.f ? AIR_AO_RESOLVE : 0);",
+    "tests": [
+      "test/audit68_render_a.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-S16-air-release-keeps-a-stale-prepare",
+    "file": "src/render/airPass.js",
+    "old": "    this.fresh = false;   // AUDIT 68 S16-air-stale-ao-unprepared: a prepare the resolve never took",
+    "new": "    // AUDIT 68 S16-air-stale-ao-unprepared: a prepare the resolve never took",
+    "tests": [
+      "test/audit68_render_a.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-S16-perf-no-air-the-screen-draw-never-closes-the-meter",
+    "file": "src/render/renderer.js",
+    "old": "    if (this._perfOpen && !this._air?.pending) this._perfClose();   // AUDIT 68 S16-perf-no-resolve-leak: no resolve owed - ",
+    "new": "    // AUDIT 68 S16-perf-no-resolve-leak: no resolve owed - ",
+    "tests": [
+      "test/audit68_render_a.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-S16-perf-a-frame-with-no-screen-draw-is-never-closed",
+    "file": "src/render/renderer.js",
+    "old": "    if (this._perfOpen && !this._air?.pending) this._perfClose();   // AUDIT 68 S16-perf-no-resolve-leak: a world frame",
+    "new": "    // AUDIT 68 S16-perf-no-resolve-leak: a world frame",
+    "tests": [
+      "test/audit68_render_a.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-S16-flatanim-a-stall-steps-once",
+    "file": "src/render/flatAnimation.js",
+    "old": "    const n = this.oneShot ? Math.min(steps, this.frameCount + 1) : ((steps - 1) % this.frameCount) + 1;",
+    "new": "    const n = steps >= this.frameCount ? 1 : steps;",
+    "tests": [
+      "test/audit68_render_a.test.js",
+      "test/flatanim.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-S16-elscatter-a-missing-ray-is-not-refused",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  if (c2 <= 0) return 0;\n  const chord = Math.sqrt(c2);",
+    "new": "  const chord = Math.sqrt(Math.max(c2, range * range));",
+    "tests": [
+      "test/audit68_render_a.test.js",
+      "test/el1_enhancedlighting.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-S16-grass-a-draw-with-no-field-runs-anyway",
+    "file": "src/render/labGrass.js",
+    "old": "    if (!this.count || !this.slotBox) return;",
+    "new": "    if (!this.count) return;",
+    "tests": [
+      "test/audit68_render_a.test.js"
+    ]
+  }
+]

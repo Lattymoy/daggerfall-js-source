@@ -104,6 +104,7 @@ export class QuestResourceBehaviour {
       return true;
     }
     if (this.machine.getQuest(this.questUID) === this.targetQuest && this.targetQuest.getResource(this.targetSymbol) === this.targetResource) return false;
+    this.targetResource?.uncoupleBehaviour(this);   // AUDIT 68 S30-relink-leaks-orphan-resources: the orphan lets go
     this.targetQuest = null; this.targetResource = null;
     this.cacheTarget();
     if (this.targetResource?.symbol) this.targetSymbol = this.targetResource.symbol;

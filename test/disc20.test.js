@@ -11,6 +11,7 @@ import {
   FOG_FACTOR_GLSL, applyGrassEdits,
 } from '../src/render/labGrass.js';
 import { glslFunctions } from './glsl.mjs';
+import { FOG_GLSL } from '../src/render/fogGlsl.js';   // AUDIT 68: fogFactorAt's one home
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
@@ -53,10 +54,11 @@ test('DISC20-A: a blade fogs as the ground under it does - heavy fog swallows it
 });
 
 test('DISC20-A: the grass\'s fog is the terrain\'s - its fogFactorAt is TERRAIN_FS\'s text, its five uniforms looked up and set from the frame\'s fog, the world point handed down, and the world host hands the ground\'s fog from the view\'s eye (mutant: the host hands no fog)', () => {
+  // AUDIT 68 (the merge): TERRAIN_FS interpolates fogFactorAt from render/fogGlsl.js, its one home - the grass's is that text
   const terrain = rd('src/render/renderer.js');
-  const at = terrain.indexOf('float fogFactorAt(vec3 worldPos) {', terrain.indexOf('const TERRAIN_FS = `'));
-  const body = terrain.slice(at, terrain.indexOf('\n}\n', at) + 3);
-  assert.equal(FOG_FACTOR_GLSL, body, 'the terrain\'s own function, verbatim');
+  const tfs = terrain.slice(terrain.indexOf('const TERRAIN_FS = `'), terrain.indexOf('`;', terrain.indexOf('const TERRAIN_FS = `')));
+  assert.ok(tfs.includes('${FOG_GLSL}'), 'the terrain\'s program takes the one fog law');
+  assert.equal(FOG_FACTOR_GLSL, FOG_GLSL + '\n', 'the terrain\'s own function, verbatim');
   assert.ok(GAME_GRASS_VS.includes('out vec3 vWorld;') && GAME_GRASS_VS.includes('  vWorld = p;'), 'the world point handed down');
   assert.equal(GRASSFOG_VS_EDITS.length, 2); assert.equal(GRASSFOG_FS_EDITS.length, 2);
   const blend = GAME_GRASS_FS.indexOf('  c = mix(uFogColor, c, fogFactorAt(vWorld));');

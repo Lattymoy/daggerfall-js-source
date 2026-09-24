@@ -69,15 +69,18 @@ test('containers: the verbatim house-container predicate (S2b)', async () => {
 });
 
 test('inventory: removeOne - stack decrement, singleton splice, absent false (audit 2026-08-17)', () => {
+  // AUDIT 68 S27-dead-code: the pick is GetItem's, BY GROUP - the group-blind arm this drove is gone
+  const W = { group: 'Weapons' };
   const list = [
-    { templateIndex: 131, name: 'Arrow', stackCount: 3 },
-    { templateIndex: 113, name: 'Dagger' },
+    { group: 'Weapons', templateIndex: 131, name: 'Arrow', stackCount: 3 },
+    { group: 'Weapons', templateIndex: 113, name: 'Dagger' },
   ];
-  assert.equal(removeOne(list, 131), true);
+  assert.equal(removeOne(list, 131, W), true);
   assert.equal(list[0].stackCount, 2, 'a stack decrements');
-  assert.equal(removeOne(list, 113), true);
+  assert.equal(removeOne(list, 113, W), true);
   assert.equal(list.length, 1, 'a singleton splices out');
-  assert.equal(removeOne(list, 113), false, 'absent removes nothing');
-  removeOne(list, 131); removeOne(list, 131);
+  assert.equal(removeOne(list, 113, W), false, 'absent removes nothing');
+  assert.equal(removeOne(list, 131, { group: 'Armor' }), false, 'another group\'s item of that index is not taken');
+  removeOne(list, 131, W); removeOne(list, 131, W);
   assert.equal(list.length, 0, 'the stack exhausts to empty');
 });

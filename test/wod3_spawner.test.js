@@ -125,7 +125,7 @@ test('WOD3: the host stands what a marker answers - placed foes out of the cap, 
   assert.match(w, /droppedLoot\.seedPile\(pile\.items, \[pile\.local\[0\] \+ t\[0\], pile\.local\[1\] \+ t\[1\], pile\.local\[2\] \+ t\[2\]\], \{ archive: pile\.archive, record: pile\.record \}, null, key, \{ unsaved: true \}\);/, 'WOD5: LoadID 0, never saved - pixel-local until it stands (AUDIT BRANCH (WoD) m1)');
   const x = rd('src/scenes/exteriorFoes.js');
   assert.match(x, /const activeCount = \(\) => foes\.filter\(\(f\) => !f\.dead && !f\.puppet && !f\.placed\)\.length;/);
-  assert.match(x, /if \(!questBehaviour && !replacing && !puppet && !placed && activeCount\(\) >= MAX_ACTIVE_ENCOUNTER_FOES\) return null;/);
+  assert.match(x, /const capped = !questBehaviour && !replacing && !puppet && !placed && !loose;[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(capped && activeCount\(\) \+ spawning\.filter\(\(s\) => s\.capped\)\.length >= MAX_ACTIVE_ENCOUNTER_FOES\) return null;/);   // AUDIT 68 S20-encounter-cap-race: and the spawns still in flight
   assert.match(x, /const pending = \{ feet: \[pos\[0\], pos\[1\] \+ \(feetGiven \|\| groundAlign \? 0 : 0\.1\), pos\[2\]\] \};/, 'no walker\'s lift on an aligned foe');
   assert.match(x, /const centreY = behaviour === 'Flying' \? pos\[1\] : alignControllerToGround\(pos\[1\], groundAlign\.hitDist, enemyControllerHeight\(idleH, behaviour\)\);\n\s*pending\.feet\[1\] \+= centreY - idleH \/ 2 - pos\[1\];/, 'the drop on the capsule the sprite sized, as a delta');
   assert.match(x, /if \(!f\.placed && _playerDist > ENCOUNTER_CULL_DISTANCE && /, 'never culled: DFU\'s loose foes stand until a load or a teleport sweeps them');

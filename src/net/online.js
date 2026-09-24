@@ -72,7 +72,7 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, dmGate, relaySupportsDm, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questShareGate, questInGate, validQuestFrame, QUEST_SEND_MS, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, parkGate, relaySupportsPark, PARK_CELL_MAX, PARK_KEY_RE, PARK_TTL_MS, relaySupportsChannels, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote, validCardData, cardGate, cardInGate, CARD_FRAME_MAX, CARD_IN_HZ_MAX, relaySupportsCard, validPageData, pageGate, pageInGate, PAGE_FRAME_MAX, PAGE_IN_HZ_MAX, relaySupportsPage } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
+import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, dmGate, relaySupportsDm, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questInGate, validQuestFrame, QUEST_SEND_MS, QUEST_HUB_MIN_MS, PARTY_MAX, tokenGate, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, parkGate, relaySupportsPark, PARK_CELL_MAX, PARK_KEY_RE, PARK_TTL_MS, relaySupportsChannels, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote, validCardData, cardGate, cardInGate, CARD_FRAME_MAX, CARD_IN_HZ_MAX, relaySupportsCard, validPageData, pageGate, pageInGate, PAGE_FRAME_MAX, PAGE_IN_HZ_MAX, relaySupportsPage } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -116,6 +116,9 @@ const FALLEN_MAX = 256;
 /** The relay this port hosts (server/wrangler.toml). */
 /** AUDIT DROPS B3: the most senders the inbound trade gate keeps a bucket for before it forgets them all - a room holds SOCKETS_MAX at most, so an honest map never reaches it. */
 const TRADE_IN_SENDERS_MAX = 64;
+/** AUDIT 68 S14-quest-inbound-ungated: the quest shares one room passes a second - an honest hub's worst case, every
+ *  other seat of my party sharing at the hub's own per-socket cooldown (QUEST_HUB_MIN_MS), with all of them at once for its burst. */
+const QUEST_IN_ROOM_HZ = ((PARTY_MAX - 1) * 1000) / QUEST_HUB_MIN_MS;
 export const DEFAULT_SERVER = 'wss://daggerfall-online.mackcothran.workers.dev';
 /** A peer silent this long is HIDDEN (out of range, or its socket is
  *  gone and the leave is on its way); only the room's leave removes it. */
@@ -261,10 +264,9 @@ export class OnlineSession {
     this.onQuestShared = null;    // QUEST1: (acct, name, quest) => void - a party member's shared quest in
     this._sbucket = null;         // SOC2: the social acts' own gate at home (SOCIAL_HZ_MAX - an act the hub would drop is never sent)
     this._pbucket = null;         // SOC2: the party poses' own gate at home (PARTY_HZ_MAX)
-    this._qgateAt = null;          // QUEST1: the quest-share act's own cooldown at home (questShareGate - a plain cooldown, not a bucket; see its own note in wire.js)
     this._lastParty = null;       // SOC2: the last party pose that LEFT, and when - an unchanged one is not re-sent, and a socket that reopens re-sends the first (the hub's attachment is fresh)
     this._lastPartyAt = -Infinity;
-    this._lastQuestShareAt = -Infinity;   // QUEST1: the client's own floor beside the hub's bucket (QUEST_SEND_MS)
+    this._lastQuestShareAt = -Infinity;   // QUEST1: the client's own floor beside the hub's cooldown (QUEST_SEND_MS)
     this.name = name;
     this.title = null;         // NAME-ADOPT: my own badge, as the service issued it - never asserted by this side
     this.glyphs = [];
@@ -295,7 +297,6 @@ export class OnlineSession {
     this.onRoll = null;           // DICE1: ({id, name, at, mine, sub, ch, roll}) => void - a roll the RELAY made, checked by the dice's law
     this._rollBucket = null;      // DICE1: my own rolls out, rollGate's law
     this.castOk = false;          // AUDIT ALLY-CAST B1: the relay that welcomed this socket routes cast frames (relaySupportsCast) - an older one CLOSES the socket on one
-    this._inCastSaid = false;
     this.onTrade = null;          // TRADE1: (id, data) => void - a trade frame from a peer, projected by the wire's validTradeData, addressed to ME
     this.onPeerDeath = null;      // PCORPSE1: (peer {id, look, name}, pose, room) => void - another player's LAST pose: they fell there
     this.onCast = null;           // ALLY-CAST: (id, data) => void - a party mate's spell at ME, projected by the wire's validCastData; the host decides what lands
@@ -311,16 +312,13 @@ export class OnlineSession {
     this.onCard = null;           // INSPECT1: (id, data) => void - a card frame at ME (an ask for my card, or the answer to mine), projected by the wire's validCardData
     this._cardBucket = null;      // INSPECT1: my own card frames out, asks and answers together - cardGate's law
     this._inCardBuckets = new Map();   // INSPECT1: the gate on card frames coming in, per sender - the cast gate's shape
-    this._inCardSaid = false;
     this.pageOk = false;          // JOURNAL1: the relay that welcomed this socket routes page frames (relaySupportsPage) - an older one CLOSES the socket on one, so no page is shown through it
     this.onPage = null;           // JOURNAL1: (id, data) => void - a page of another player's journal held out to ME, projected by the wire's validPageData
     this._pageBucket = null;      // JOURNAL1: my own pages out - pageGate's law
     this._inPageBuckets = new Map();   // JOURNAL1: the gate on pages coming in, per sender - the card gate's shape
-    this._inPageSaid = false;
     // name (below), so once Local chat went down this session a heal cast at a mate spent a chat line and a chat line a cast
     this._inTradeBuckets = new Map();   // TRADE1: and the gate on trade frames coming IN, per sender (AUDIT DROPS B3) - a peer is chosen by the sender, so a flood is a peer's, never the relay's
-    this._inTradeSaid = false;
-    this._inAidSaid = false;
+    this._inDirectedSaid = new Set();   // AUDIT 68 S14-inbound-directed-gate-dup: the kinds whose flood the console has said, once each (`_directedIn`)
     this.onHit = null;            // WORLD2: (id, data) => void - a blow on my foe in (the host's, from anyone)
     this.onAct = null;            // WORLD3: (id, data) => void - a door, a lever or a platform moved by another in my room
     this._abucket = null;         // WORLD3: the actions' own gate at home (ACT_HZ_MAX)
@@ -370,6 +368,7 @@ export class OnlineSession {
     // room, the LINES (a note, an error - each a chat line nobody sent) on a tighter one, the other members' poses on a
     // third; an honest hub at full tilt passes whole (net/wire.js SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, PARTY_IN_HZ_MAX)
     this._inSocial = new Map(); this._inNote = new Map(); this._inParty = new Map(); this._inQuest = new Map();
+    this._inQuestRoom = new Map();   // AUDIT 68 S14-quest-inbound-ungated: the quest arm's own per-room gate, ahead of its per-sender cooldown
     this._inSocialSaid = false;
     this.peers = new Map();    // id -> { id, name, look, pose, from, at, shown, seenAt } - MERGED over every room held (WORLD6b-iii(b))
     this._fallen = new Set();  // AUDIT CONTRIB A2: ids whose death pose was delivered - ONE death per life, however many sockets carry it
@@ -400,9 +399,9 @@ export class OnlineSession {
     this._who.clear();   // AUDIT WORLD6b-iii(e) B4: a crossing forgets who was asked - an answer lost in the last cell (its socket died, the peer's leave raced the ask) held the stranger unseen for WHO_RETRY_MS in this one
     const h = this._halo.get(room);
     // AUDIT WORLD6b-iii(b) A1/B7/C2: a LIVE, OPEN halo alone is promoted - one dropped and pending its retry (ws null)
-    // handed a dead socket to the primary and the next setHalo closed the good one; a stale entry is dropped and the
-    // ordinary join stands the cell's socket at once
-    if (h && !(h.ws && h.status === 'open')) this._halo.delete(room);
+    // handed a dead socket to the primary and the next setHalo closed the good one; any other entry is ended by the
+    // ordinary join's leave() and the cell's socket stood at once. AUDIT 68 X7/S14-halo-connecting-orphan: it was
+    // deleted here first, so a CONNECTING halo's socket was never closed - leave() closes only what `_halo` still holds
     if (h && h.ws && h.status === 'open' && this._ws && isCellRoom(room) && isCellRoom(this.room)) {
       // WORLD6b-iii(b): a crossing into a cell already hello'd as a halo PROMOTES its socket - no close, no reconnect,
       // no roster wiped (the seam crossing was a churn: every puppet gone, every peer re-said); the cell left steps
@@ -578,6 +577,7 @@ export class OnlineSession {
     this._inChat.delete(room);   // CHAT-G: a room let go takes its bucket with it, or a long session accumulates one per cell it ever walked through
     this._inSocial.delete(room); this._inNote.delete(room); this._inParty.delete(room);   // AUDIT SOC B3: and the hub's three
     for (const k of [...this._inQuest.keys()]) if (k.startsWith(`${room}|`)) this._inQuest.delete(k);   // AUDIT DROPS C2: keyed room|acct
+    this._inQuestRoom.delete(room);   // AUDIT 68 S14-quest-inbound-ungated
     if (s) for (const id of s) if (!this._held(id)) this.peers.delete(id);
   }
   _openHalo(room, backoff = BACKOFF_MIN_MS) {
@@ -1146,8 +1146,9 @@ export class OnlineSession {
   /** QUEST1: sharing an accepted quest with the party - systems/questShare.js's own envelope
    *  ({questName, displayName, data}, prepareQuestShare's own shape), sent as-is; the hub resolves "my party" on its
    *  own (the same roster the party pose view already reads), so nothing here names a target. A deliberate,
-   *  one-off click, never a stream - QUEST_SEND_MS is the client's own floor beside the hub's own QUEST_HZ_MAX
-   *  bucket, the same belt-and-suspenders relationship PARTY_SEND_MS/partyGate already keep. */
+   *  one-off click, never a stream - QUEST_SEND_MS is the client's own floor beside the hub's own cooldown at half of
+   *  it (questShareGate, QUEST_HUB_MIN_MS), the same belt-and-suspenders relationship PARTY_SEND_MS/partyGate already keep.
+   *  AUDIT 68 S14-quest-client-gate-redundant: the floor alone - a copy of the hub's cooldown here passed whenever it did. */
   /** @param {{questName?: string, displayName?: string, data?: object}} [share] */
   shareQuest(share = {}) {
     const { questName, displayName, data } = share;
@@ -1155,11 +1156,9 @@ export class OnlineSession {
     if (typeof questName !== 'string' || !questName || !data || typeof data !== 'object') return false;
     const now = this._now();
     if (now - this._lastQuestShareAt < QUEST_SEND_MS) return false;
-    const gate = questShareGate(this._qgateAt, now);
-    if (!gate.pass) return false;
     const quest = { questName, displayName: typeof displayName === 'string' ? displayName : '', data };
     if (!this._send({ t: 'quest', quest })) return false;
-    this._qgateAt = gate.at; this._lastQuestShareAt = now; this.stats.questShares = (this.stats.questShares ?? 0) + 1;
+    this._lastQuestShareAt = now; this.stats.questShares = (this.stats.questShares ?? 0) + 1;
     return true;
   }
 
@@ -1252,6 +1251,24 @@ export class OnlineSession {
       console.warn(`[online] ${ch === 'party' ? 'party chat' : 'chat'} from ${room} is arriving faster than ${ch === 'party' ? PARTY_CHAT_ROOM_HZ_MAX : CHAT_ROOM_HZ_MAX}/s - lines are being dropped. An honest relay does not do this.`);
     }
     return false;
+  }
+
+  /** A frame one peer addressed to ME (a trade, a cast, a card, a page): never my own back, gated coming in PER SENDER
+   *  (AUDIT DROPS B3 - one bucket for every sender together let two flooders crowd out my partner's trade commit, whose
+   *  goods were already gone; the map forgets every sender past TRADE_IN_SENDERS_MAX), said once a kind on the console,
+   *  projected by the wire's own law and delivered only when it names me. AUDIT 68 S14-inbound-directed-gate-dup: one
+   *  door - the four arms were one block copied four times. */
+  _directedIn(m, now, kind, buckets, gate, hz, valid, deliver) {
+    if (typeof m.id !== 'string' || m.id === this.id) return;
+    if (buckets.size > TRADE_IN_SENDERS_MAX) buckets.clear();
+    const g = gate(buckets.get(m.id) ?? null, now);
+    buckets.set(m.id, g.bucket);
+    if (!g.pass) {
+      if (!this._inDirectedSaid.has(kind)) { this._inDirectedSaid.add(kind); console.warn(`[online] ${kind} frames are arriving faster than ${hz}/s - frames are being dropped.`); }
+      return;
+    }
+    const d = valid(m.data);
+    if (d && d.to === this.id) this._deliver(kind, () => deliver(m.id, d));
   }
 
   _receive(data, room = this.room) {
@@ -1350,62 +1367,20 @@ export class OnlineSession {
       // edge reaches me down the socket that reports me, and a trade is decided by metres, not by which cell I stand in),
       // never my own back, gated coming in (the sender chooses the peer, so an over-rate stream is dropped and said once),
       // projected by the wire's own law, and addressed to ME. The session applies it; nothing is read from it here.
-      if (typeof m.id === 'string' && m.id !== this.id) {
-        // AUDIT DROPS B3: the inbound gate is PER SENDER - one bucket for every sender together let two flooders
-        // crowd out my partner's commit, whose goods were already gone (LOOT-DUP: sent means gone)
-        if (this._inTradeBuckets.size > TRADE_IN_SENDERS_MAX) this._inTradeBuckets.clear();
-        const g = tradeInGate(this._inTradeBuckets.get(m.id) ?? null, now);
-        this._inTradeBuckets.set(m.id, g.bucket);
-        if (!g.pass) {
-          if (!this._inTradeSaid) { this._inTradeSaid = true; console.warn(`[online] trade frames are arriving faster than ${TRADE_IN_HZ_MAX}/s - frames are being dropped.`); }
-        } else {
-          const d = validTradeData(m.data);
-          if (d && d.to === this.id) this._deliver('trade', () => this.onTrade?.(m.id, d));
-        }
-      }
+      this._directedIn(m, now, 'trade', this._inTradeBuckets, tradeInGate, TRADE_IN_HZ_MAX, validTradeData, (id, d) => this.onTrade?.(id, d));
     } else if (m.t === 'cast') {
       // ALLY-CAST: a cast frame the relay routed to me - on any socket I hold, never my own back, gated coming in per
       // sender (the trade arm's law), projected by the wire, addressed to ME. The host applies what it trusts of it.
-      if (typeof m.id === 'string' && m.id !== this.id) {
-        if (this._inCastBuckets.size > TRADE_IN_SENDERS_MAX) this._inCastBuckets.clear();
-        const g = castInGate(this._inCastBuckets.get(m.id) ?? null, now);
-        this._inCastBuckets.set(m.id, g.bucket);
-        if (!g.pass) {
-          if (!this._inCastSaid) { this._inCastSaid = true; console.warn(`[online] cast frames are arriving faster than ${CAST_IN_HZ_MAX}/s - frames are being dropped.`); }
-        } else {
-          const d = validCastData(m.data);
-          if (d && d.to === this.id) this._deliver('cast', () => this.onCast?.(m.id, d));
-        }
-      }
+      this._directedIn(m, now, 'cast', this._inCastBuckets, castInGate, CAST_IN_HZ_MAX, validCastData, (id, d) => this.onCast?.(id, d));
     } else if (m.t === 'card') {
       // INSPECT1: a card frame the relay routed to me - an ask for my card or the answer to mine - on any socket I hold,
       // never my own back, gated coming in per sender (the cast arm's law), projected by the wire, addressed to ME
-      if (typeof m.id === 'string' && m.id !== this.id) {
-        if (this._inCardBuckets.size > TRADE_IN_SENDERS_MAX) this._inCardBuckets.clear();
-        const g = cardInGate(this._inCardBuckets.get(m.id) ?? null, now);
-        this._inCardBuckets.set(m.id, g.bucket);
-        if (!g.pass) {
-          if (!this._inCardSaid) { this._inCardSaid = true; console.warn(`[online] card frames are arriving faster than ${CARD_IN_HZ_MAX}/s - frames are being dropped.`); }
-        } else {
-          const d = validCardData(m.data);
-          if (d && d.to === this.id) this._deliver('card', () => this.onCard?.(m.id, d));
-        }
-      }
+      this._directedIn(m, now, 'card', this._inCardBuckets, cardInGate, CARD_IN_HZ_MAX, validCardData, (id, d) => this.onCard?.(id, d));
     } else if (m.t === 'page') {
       // JOURNAL1: a page of another player's journal the relay routed to me - on any socket I hold, never my own back,
       // gated coming in per sender (the card arm's law), projected by the wire, addressed to ME. The host holds it for
       // me to read; nothing opens over my game on its own.
-      if (typeof m.id === 'string' && m.id !== this.id) {
-        if (this._inPageBuckets.size > TRADE_IN_SENDERS_MAX) this._inPageBuckets.clear();
-        const g = pageInGate(this._inPageBuckets.get(m.id) ?? null, now);
-        this._inPageBuckets.set(m.id, g.bucket);
-        if (!g.pass) {
-          if (!this._inPageSaid) { this._inPageSaid = true; console.warn(`[online] pages are arriving faster than ${PAGE_IN_HZ_MAX}/s - frames are being dropped.`); }
-        } else {
-          const d = validPageData(m.data);
-          if (d && d.to === this.id) this._deliver('page', () => this.onPage?.(m.id, d));
-        }
-      }
+      this._directedIn(m, now, 'page', this._inPageBuckets, pageInGate, PAGE_IN_HZ_MAX, validPageData, (id, d) => this.onPage?.(id, d));
     } else if (m.t === 'park') {
       // HCC-PARK: a cell's word about one owner's parked team - on any cell socket I hold (my own cell's or a halo's:
       // a team parked across the seam stands for me too), never my own back; the name is the relay's stamp
@@ -1526,9 +1501,7 @@ export class OnlineSession {
       // type a dishonest one would most want to flood.
       const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
       if (!text) return;
-      const g = chatInGate(this._inChat.get(room), now);
-      this._inChat.set(room, g.bucket);
-      if (!g.pass) { this.stats.chatsDropped++; return; }
+      if (!this._lineIn(room, null, now)) return;
       this._deliver('chat', () => this.onRed?.({ text, at: Number.isFinite(m.at) ? m.at : now }));
     } else if (m.t === 'dm') {
       // TITLE-N: THE DUNGEON MASTER SPEAKING - the red arm's law: known by the FRAME TYPE, no id and no name on it to
@@ -1545,9 +1518,7 @@ export class OnlineSession {
       // log, and the relay is the player's own choice.
       const until = mutedUntilOf(m);
       if (until === null) return;
-      const g = chatInGate(this._inChat.get(room), now);
-      this._inChat.set(room, g.bucket);
-      if (!g.pass) { this.stats.chatsDropped++; return; }
+      if (!this._lineIn(room, null, now)) return;
       this._deliver('chat', () => this.onMuted?.({ until }));
     } else if (m.t === 'social') {
       // AUDIT SOC B3: GATED COMING IN, as a chat line is (CHAT-G) - a note or an error becomes a chat line (net/chat.js
@@ -1576,10 +1547,16 @@ export class OnlineSession {
       if (f && f.acct !== this.acct) this._deliver('party', () => this.onParty?.(f.acct, f.p));
     } else if (m.t === 'quest') {
       // QUEST1: a party member's shared quest, under questInGate's cooldown per SENDER (AUDIT DROPS C2; QUEST_HUB_MIN_MS,
-      // the hub's own) - an honest hub, at most PARTY_MAX-1 senders each throttled to QUEST_HZ_MAX, never trips it; a flood does.
+      // the hub's own) - an honest hub, at most PARTY_MAX-1 senders each held to that cooldown, never trips it; a flood does.
       // never my own account's back, same reasoning as the party pose above
       const f = validQuestFrame(m);
       if (!f || f.acct === this.acct) return;
+      // AUDIT 68 S14-quest-inbound-ungated: and PER ROOM first, AUDIT SOC B3's law for every hub arm - the sender's
+      // account is the relay's word, so a made-up one per frame passed the per-sender cooldown every time
+      const rg = tokenGate(this._inQuestRoom.get(room), now, QUEST_IN_ROOM_HZ, PARTY_MAX - 1);
+      this._inQuestRoom.set(room, rg.bucket);
+      if (!rg.pass) { this.stats.questSharesDropped = (this.stats.questSharesDropped ?? 0) + 1; return; }
+      if (this._inQuest.size > TRADE_IN_SENDERS_MAX) this._inQuest.clear();   // bounded as the directed frames' maps are
       // AUDIT DROPS C2: the cooldown is the SENDER's (their account), so one member's share never costs another's
       const qk = `${room}|${f.acct}`;
       const g = questInGate(this._inQuest.get(qk), now);
@@ -1587,7 +1564,9 @@ export class OnlineSession {
       if (!g.pass) { this.stats.questSharesDropped = (this.stats.questSharesDropped ?? 0) + 1; return; }
       this._deliver('quest', () => this.onQuestShared?.(f.acct, f.name, f.quest));
     } else if (m.t === 'error') {
-      this.status = 'error'; this.error = String(m.m ?? 'relay error');
+      // AUDIT 68 S14-halo-error-wedges-primary: the session's status is my own room's alone - a halo's refusal is that
+      // halo's, and its own onclose (a terminal code remembered, a busy one retried) follows the frame
+      if (primary) { this.status = 'error'; this.error = String(m.m ?? 'relay error'); }
     }
   }
 

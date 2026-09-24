@@ -29,8 +29,10 @@
 // does); DFU's write-back path is unported because DFU's own
 // SaveTree.Save() writes the header only ("TODO: Write other records").
 
+import { readCStringScan } from './fileProxy.js';
 import { readSpellRecord } from './spellsStd.js';
 import { parseCharacterRecordData } from './characterRecord.js';
+import { readBuildingData, BUILDING_DATA_SIZE } from './blocksFile.js';
 
 export const SAVETREE_FILENAME = 'SAVETREE.DAT';
 
@@ -114,25 +116,9 @@ export const ITEM_FLAGS = Object.freeze({
   Enchanted: 0x20,
 });
 
-/** FileProxy.ReadCString with a non-zero readLength: the FULL length is
- *  consumed and only TRAILING NULs trim - an embedded NUL and whatever
- *  follows it stay in the string (the AUDIT 24 formats law rumorFile.js
- *  records). Classic bytes decode as latin1, the readers' charter. */
-export function readCStringFixed(bytes, start, length) {
-  let s = '';
-  for (let i = start; i < start + length; i++) s += String.fromCharCode(bytes[i]);
-  return s.replace(/\0+$/, '');
-}
-
-/** FileProxy.ReadCString with readLength 0: scan to the first NUL and
- *  read exactly that many bytes (the NUL itself is NOT consumed). */
-export function readCStringScan(bytes, start) {
-  let end = start;
-  while (end < bytes.length && bytes[end] !== 0) end++;
-  let s = '';
-  for (let i = start; i < end; i++) s += String.fromCharCode(bytes[i]);
-  return s;
-}
+/** FileProxy.ReadCString, both arms - fileProxy.js is their one home
+ *  (AUDIT 68); re-exported for the save tree's own readers. */
+export { readCStringFixed, readCStringScan } from './fileProxy.js';
 
 /** SaveTree.ReadPosition - i32 WorldX/WorldY/WorldZ. */
 export function readPosition(view, offset) {
@@ -166,8 +152,8 @@ export function readSaveTreeHeader(bytes) {
 
 /**
  * SaveTreeBuildingRecords - i32 length then length/26 BuildingData
- * records, field-for-field the shape blocksFile.js gives RMB building
- * lists (DFLocation.BuildingData is the one DFU struct behind both).
+ * records, read by blocksFile.js's readBuildingData
+ * (DFLocation.BuildingData is the one DFU struct behind every list).
  * @returns {{record: object, nextOffset: number}}
  */
 export function readBuildingRecords(bytes, offset) {
@@ -175,23 +161,11 @@ export function readBuildingRecords(bytes, offset) {
   const streamPosition = offset;
   const recordLength = v.getInt32(offset, true);
   let pos = offset + 4;
-  const numberOfBuildings = recordLength > 0 ? Math.trunc(recordLength / 26) : 0;
+  const numberOfBuildings = recordLength > 0 ? Math.trunc(recordLength / BUILDING_DATA_SIZE) : 0;
   const recordData = new Array(numberOfBuildings);
   for (let i = 0; i < numberOfBuildings; i++) {
-    recordData[i] = {
-      nameSeed: v.getUint16(pos, true),
-      serviceTimeLimit: v.getUint32(pos + 2, true),
-      unknown: v.getUint16(pos + 6, true),
-      unknown2: v.getUint16(pos + 8, true),
-      unknown3: v.getUint32(pos + 10, true),
-      unknown4: v.getUint32(pos + 14, true),
-      factionId: v.getUint16(pos + 18, true),
-      sector: v.getInt16(pos + 20, true),
-      locationId: v.getUint16(pos + 22, true),
-      buildingType: bytes[pos + 24],
-      quality: bytes[pos + 25],
-    };
-    pos += 26;
+    recordData[i] = readBuildingData(v, pos);
+    pos += BUILDING_DATA_SIZE;
   }
   return {
     record: { streamPosition, recordLength, numberOfBuildings, recordData },

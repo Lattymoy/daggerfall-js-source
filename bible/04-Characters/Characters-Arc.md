@@ -2551,8 +2551,8 @@ sweep, called from the single removal door.
 standing in a dungeon was never found - and since SetComplete sits
 inside C#'s instance loop, `change foe X team 1` re-ran every machine
 tick for ever instead of completing. `worldModes.liveQuestFoes()` is
-the inside pool's half of DFU's one database; the interior arm stays
-empty, that host having no enemy pool at all.
+the inside pool's half of DFU's one database - the dungeon's, and
+(AUDIT 68) the building's, whose IF pool stands quest foes too.
 
 Pins: 8 in `test/dungeoninfighting.test.js`. One pre-existing pin
 (`ch3`'s fall-damage arm) was repaired rather than merely advanced:
@@ -2723,7 +2723,7 @@ distinction: `AssignBowDamageToTarget`'s player arm
 (DaggerfallMissile.cs:660-688) calls `WeaponManager.WeaponDamage`, so
 :630 runs for the shaft exactly as for the swing. The pool's door is
 PUBLIC now (beside `removeGuard` on the returned surface, as the
-encounter pool has always exported its own at `exteriorFoes.js:1964`)
+encounter pool has always exported its own at `exteriorFoes.js:1973`)
 and all three seams ROUTE by pool membership, mirroring the
 `dealDamage` router directly above each of them. A DAMAGING shaft now
 runs the pair twice for a guard - once inside `damageGuard`, once

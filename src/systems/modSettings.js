@@ -1126,6 +1126,13 @@ export function modSettingsOf(vendor) {
   return out;
 }
 
+/** AUDIT 68 S15-eotb-settings-snapshot: DFU's ModSettingsChange, as a
+ *  number. Every write moves it, so a reader that holds a resolved copy
+ *  (the EOTB camera and body) re-reads when there is something new
+ *  rather than never - the same idiom as `morrowindDataGeneration`. */
+let _generation = 0;
+export const modSettingsGeneration = () => _generation;
+
 export function setModSetting(vendor, key, value) {
   const def = declaredKey(vendor, key);
   if (!def) throw new Error(`setModSetting: ${vendor}/${key} is not a declared switch`);
@@ -1134,6 +1141,7 @@ export function setModSetting(vendor, key, value) {
   (m[vendor] ??= {})[key] = v;
   for (const r of SWITCH_RESETS) if (r.vendor === vendor && r.key === key) m[vendor][r.stamp] = true;   // DISC20-E: chosen after the reset - kept
   save();
+  _generation++;
   return v;
 }
 
@@ -1169,4 +1177,4 @@ export function flattenModPreset(vendor, values) {
 }
 
 /** For tests: forget everything. */
-export function _resetModSettings() { memory = null; try { appStorage()?.removeItem(STORE_KEY); } catch { /* none */ } }
+export function _resetModSettings() { memory = null; _generation++; try { appStorage()?.removeItem(STORE_KEY); } catch { /* none */ } }

@@ -1,0 +1,140 @@
+[
+  {
+    "name": "AUDIT68-S01-a-bake-runs-on-import-again",
+    "file": "scripts/bakeBooks.mjs",
+    "old": "if (isMain(import.meta.url)) {\nconst entries = parseBookMapping(",
+    "new": "if (true) {\nconst entries = parseBookMapping(",
+    "tests": [
+      "test/audit68_tools.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-S01-the-guard-compares-unresolved-paths",
+    "file": "tools/lib/isMain.mjs",
+    "old": "  return realpathSync(argv1) === realpathSync(fileURLToPath(url));",
+    "new": "  return argv1 === fileURLToPath(url);",
+    "tests": [
+      "test/audit68_tools.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-S01-the-schema-line-is-a-label-again",
+    "file": "scripts/bakeSettingsText.mjs",
+    "old": "    if (line.startsWith('-') || /^schema:/i.test(line)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/audit68_tools.test.js",
+      "test/settingsText.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-X5-a-foreign-path-is-this-targets-cite",
+    "file": "tools/citeShift.mjs",
+    "old": "        if (dir && dir !== target && !target.endsWith('/' + dir) && !dir.endsWith('/' + target)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/audit68_tools.test.js",
+      "test/citemerge.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-X5-a-shared-basename-moves-once-per-target",
+    "file": "tools/citeShift.mjs",
+    "old": "        const bare = ambiguousBare && spelling !== 'ledger' && !dir;",
+    "new": "        const bare = false;",
+    "tests": [
+      "test/audit68_tools.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-X5-a-regex-delimiter-hides-the-escaped-cite",
+    "file": "tools/citeShift.mjs",
+    "old": "new RegExp(`(?<![\\\\w\\\\\\\\])(?:[\\\\w.-]+\\\\\\\\/)*${esc(stem)}",
+    "new": "new RegExp(`(?<![\\\\w/])(?:[\\\\w.-]+\\\\\\\\/)*${esc(stem)}",
+    "tests": [
+      "test/audit68_tools.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-X5-a-leftover-backup-is-copied-over",
+    "file": "tools/mutate.mjs",
+    "old": "if (leftovers.length) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/audit68_tools.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-X5-a-signal-kills-the-harness-mid-mutant",
+    "file": "tools/mutate.mjs",
+    "old": "for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { interrupted = sig; child?.kill(sig); });\n",
+    "new": "",
+    "tests": [
+      "test/audit68_tools.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-X5-an-unparseable-mutant-is-a-verdict",
+    "file": "tools/mutate.mjs",
+    "old": "      if (!m.syntax && /\\.[cm]?js$/.test(m.file)) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/audit68_tools.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-X5-confirm-reads-the-suite-through-1-MiB",
+    "file": "tools/mutation/confirm.mjs",
+    "old": "timeout: 600000, maxBuffer: 1 << 28 });",
+    "new": "timeout: 600000 });",
+    "tests": [
+      "test/audit68_tools.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-X5-one-commit-two-tags-is-two-commits",
+    "file": "tools/verify-deploy.mjs",
+    "old": "  if (localTag.startsWith(liveTag) || liveTag.startsWith(localTag)) {",
+    "new": "  if (localTag === liveTag) {",
+    "tests": [
+      "test/audit68_tools.test.js",
+      "test/verifydeploy.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-X5-git-sizes-the-tag-again",
+    "file": "scripts/buildTag.mjs",
+    "old": "git rev-parse --short=12 HEAD",
+    "new": "git rev-parse --short HEAD",
+    "tests": [
+      "test/audit68_tools.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-X5-section-C-runs-to-the-end-again",
+    "file": "tools/ledgerSweep.mjs",
+    "old": "const secC = ledger.slice(startC, endC < 0 ? undefined : endC);",
+    "new": "const secC = ledger.slice(startC);",
+    "tests": [
+      "test/audit68_tools.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-X5-an-empty-open-flags-list-is-unreadable",
+    "file": "tools/regenOpenFlags.mjs",
+    "old": "const cut = firstEntry < 0 ? bodyLines.length : firstEntry;",
+    "new": "const cut = firstEntry < 0 ? process.exit(2) : firstEntry;",
+    "tests": [
+      "test/audit68_tools.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT68-S06-the-drape-is-compressed-twice",
+    "file": "tools/villagerRender.mjs",
+    "old": "  return dr ? drapedPiece(dr.name, dr.ramp) : [];",
+    "new": "  return dr ? compress(drapedPiece(dr.name, dr.ramp)) : [];",
+    "tests": [
+      "test/audit68_tools.test.js"
+    ]
+  }
+]

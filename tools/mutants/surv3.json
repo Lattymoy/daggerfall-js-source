@@ -128,8 +128,8 @@
   {
     "name": "SURV3-the-scene-cache-drops-the-camps",
     "file": "src/systems/sceneCache.js",
-    "old": "    camps: camps.map((c) => ({ ...c, pos: [...(c.pos ?? [])] })),",
-    "new": "    camps: [],",
+    "old": "  cache.scenes.set(sceneName, copySceneEntry(entry));",
+    "new": "  cache.scenes.set(sceneName, { ...copySceneEntry(entry), camps: [] });",
     "tests": [
       "test/surv3_camps.test.js"
     ]

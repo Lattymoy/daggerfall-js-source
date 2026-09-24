@@ -1,6 +1,6 @@
 // SW1 - SHIELD WIDGET 1.6, RedRoryOTheGlen, ported 1:1 off the shipped
 // DLL's IL (bible/05-Combat/Shield-Widget.md). These pin the arithmetic
-// the IL states, the four bugs kept bug for bug, and the gate ladder -
+// the IL states, the bugs kept bug for bug, and the gate ladder -
 // the part of the mod a reader is most likely to "tidy" into something
 // that is no longer the mod.
 
@@ -220,8 +220,9 @@ test('SW1: the recoil conditions, and the ring is one of the nine parry clips', 
     widget.onAttackDamageCalculated(ev);
     assert.equal(sounds.length, 1, 'AnyAttack rings either way');
     assert.ok(sounds[0].clip >= PARRY_CLIP_FIRST && sounds[0].clip < PARRY_CLIP_FIRST + PARRY_CLIP_COUNT);
-    assert.equal(sounds[0].pitch, 1.1);
-    assert.equal(sounds[0].vol, 0, 'the IL really does pass volume 0');
+    // AUDIT 68 S09-shield-impact-silent: the IL's (clip, 0, 1.1f) is PlayOneShot(sound, spatialBlend, volumeScale)
+    assert.equal(sounds[0].vol, 1.1, 'volumeScale 1.1 - the 0 is the spatialBlend, not the volume');
+    assert.equal(sounds[0].pitch, 1);
   }
   // AnyHit (3) wants damage, AnyMiss (4) wants none
   const anyHit = rig({ 'Modules.Recoil': true, 'Recoil.Condition': SHIELD_RECOIL_CONDITION.AnyHit });
@@ -483,7 +484,8 @@ test('SW1: the rig runs the shield beside the weapon’s clone - its own frame, 
   assert.match(rig, /const shieldOn = \(\) => modSetting\('shield-widget', 'Enabled'\);/);
   // the Recoil module's trigger: PCAAO's event, at the tail of every
   // resolution of an enemy's attack on the player
-  assert.match(rig, /setAttackOnPlayerHook\(\(attacker, target, damage, struckBodyPart\) => \{/);
+  assert.match(rig, /const attackOnPlayer = \(attacker, target, damage, struckBodyPart\) => \{/);
+  assert.match(rig, /setAttackOnPlayerHook\(attackOnPlayer\);/, 'AUDIT 68 S09-rig-globals-last-built: re-claimed by the stepping rig');
   assert.match(rig, /shield\.onAttackDamageCalculated\(\{ targetIsPlayer: true, bodyPart: struckBodyPart, damage, item: shieldItem\(\) \}\);/);
   // the frame feed, and the draw before the torch hand
   assert.match(rig, /if \(shieldOn\(\)\) shield\.lateUpdate\(\{/);
@@ -535,7 +537,8 @@ function shieldRig({ sheathed = true, whenSheathed = 3, enabled = true, weaponWi
   setModSetting('handheld-torches', 'Enabled', torches);
   const entity = {
     items: [], stats: { speed: 50 },
-    equip: { slots: { [EQUIP_SLOTS.LeftHand]: { templateIndex: SHIELD_TEMPLATES.Kite, nativeMaterialValue: 513, currentCondition: 100, maxCondition: 100 } } },
+    // AUDIT 68 S09-v-shield-material-ignored: the shape the minters write - NativeMaterialValue lives in `material`
+    equip: { slots: { [EQUIP_SLOTS.LeftHand]: { group: 'Armor', templateIndex: SHIELD_TEMPLATES.Kite, material: 513, currentCondition: 100, maxCondition: 100 } } },
   };
   const r = createWeaponRig({
     renderer: { uploadTexture: () => null, drawScreenQuad: () => {} },

@@ -3,21 +3,11 @@
 // length, raised scale bumps over the surface, and wider ventral scutes
 // underneath. Built in FINAL (compressed) body space and tagged 'body'
 // so it moves with the pelvis. Highly detailed - the focus piece.
-
-function shadeTail(faces, ramp) {
-  const Lx = 0.5, Ly = 0.55, Lz = 0.67, Ln = Math.hypot(Lx, Ly, Lz);
-  const snap = (t) => ramp[Math.max(0, Math.min(ramp.length - 1, Math.round(t * (ramp.length - 1))))];
-  for (const f of faces) { const it = Math.min(1, Math.max(0.08, (f.n[0]*Lx + f.n[1]*Ly + f.n[2]*Lz) / Ln * 0.9 + 0.18)); f._i = it; f.c = snap(it); }
-  return faces;
-}
+import { shadePiece, pushQuad } from './pieceLoft.js';
 
 export function buildTail(skin, kind = 'argonian') {
   const faces = [];
-  const quad = (a, b, c, d, g = 'body') => {
-    const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2], vx=d[0]-a[0],vy=d[1]-a[1],vz=d[2]-a[2];
-    let nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx; const L=Math.hypot(nx,ny,nz)||1;
-    faces.push({ p:[...a,...b,...c,...d], n:[nx/L,ny/L,nz/L], g });
-  };
+  const quad = (a, b, c, d) => pushQuad(faces, a, b, c, d, 'body');
   const tri = (a, b, c) => quad(a, b, c, c);
 
   // Spine: roots at the pelvis back (y~0.90, z-0.11), sweeps back + down,
@@ -55,16 +45,19 @@ export function buildTail(skin, kind = 'argonian') {
   ]).map((p) => ({ x: 0, ...p }));
 
   // Tangent per node.
-  const T = spine.map((p, i) => {
+  const T = spine.map((_, i) => {
     const a = spine[Math.max(0, i-1)], b = spine[Math.min(spine.length-1, i+1)];
     let t = [b.x-a.x, b.y-a.y, b.z-a.z]; const l = Math.hypot(...t) || 1; return [t[0]/l, t[1]/l, t[2]/l];
   });
-  // Planar curve (x=0): width axis = X; dorsal axis = tangent x X, flipped
-  // so it points up. No twist.
+  // Planar curve (x=0): width axis = X; dorsal axis = X x tangent, a 90deg
+  // in-plane turn of the tangent - continuous along the curve, so no twist.
+  // AUDIT 68 S06-khajiit-tail-frame-flip: the sign was chosen PER RING
+  // ("flip so it points up"), which mirrored every ring past the point
+  // where the Khajiit tip curls forward - a bow-tie pinch in the tube.
   const side = [1, 0, 0];
   const frame = T.map((t) => {
-    let d = [t[1]*side[2]-t[2]*side[1], t[2]*side[0]-t[0]*side[2], t[0]*side[1]-t[1]*side[0]];
-    if (d[1] < 0) d = [-d[0], -d[1], -d[2]]; const dl = Math.hypot(...d) || 1; d = [d[0]/dl, d[1]/dl, d[2]/dl];
+    let d = [side[1]*t[2]-side[2]*t[1], side[2]*t[0]-side[0]*t[2], side[0]*t[1]-side[1]*t[0]];
+    const dl = Math.hypot(...d) || 1; d = [d[0]/dl, d[1]/dl, d[2]/dl];
     return { s: side, d };
   });
   const N = 10; // sides around the tube
@@ -76,9 +69,11 @@ export function buildTail(skin, kind = 'argonian') {
   };
   const rings = spine.map((_, i) => Array.from({ length: N }, (_, k) => ringPt(i, k)));
 
-  // Tube surface.
+  // Tube surface, wound so the normal (tangent x circumference) faces
+  // OUT like the cap, fin and scutes - the old ring-first winding lit the
+  // whole tube inside-out (the character shader is one-sided).
   for (let i = 0; i + 1 < rings.length; i++) for (let k = 0; k < N; k++) {
-    const j = (k + 1) % N; quad(rings[i][k], rings[i][j], rings[i+1][j], rings[i+1][k]);
+    const j = (k + 1) % N; quad(rings[i][k], rings[i+1][k], rings[i+1][j], rings[i][j]);
   }
   // Tip cap.
   const last = spine[spine.length - 1];
@@ -158,7 +153,6 @@ export function buildTail(skin, kind = 'argonian') {
         const len = p.r * 0.85 * bushy;
         // tuft points outward and sweeps back along the tail
         const tip = [base[0] + nx*len - t[0]*len*0.7, base[1] + ny*len - t[1]*len*0.7, base[2] + nz*len - t[2]*len*0.7];
-        const w = p.r * 0.16;
         const a2 = a + 0.5, c2 = Math.cos(a2), s2 = Math.sin(a2);
         const sx2 = c2*sd[0] + s2*d[0], sy2 = c2*sd[1] + s2*d[1], sz2 = c2*sd[2] + s2*d[2];
         const b2 = [p.x + p.r*sx2, p.y + p.r*sy2, p.z + p.r*sz2];
@@ -167,5 +161,5 @@ export function buildTail(skin, kind = 'argonian') {
     }
   }
 
-  return shadeTail(faces, skin);
+  return shadePiece(faces, skin, 0.08, 0.18);
 }

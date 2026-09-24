@@ -76,10 +76,14 @@ test('arch3d: full corpus decomposes - all 10251 records', { skip: skipReal }, (
   assert.equal(a.load(bytes), true);
   assert.equal(a.count, 10251);
 
-  // Patch must have been applied to the working copy, not the caller's bytes.
+  // Patch must land on the record's private copy, not the caller's bytes
+  // (AUDIT 68 S10-arch3d-26mb-copy: the archive is wrapped, not copied).
   const [firstOffset, firstData] = ARCH3D_PATCH[0];
-  assert.equal(a._bsa._bytes[firstOffset], firstData[0]);
-  assert.equal(a._bsa._bytes[firstOffset + 1], firstData[1]);
+  assert.equal(a._bsa._bytes, bytes);
+  const r0 = a._bsa._directory.findIndex((d) => firstOffset >= d.position && firstOffset < d.position + d.size);
+  assert.equal(a.loadRecord(r0), true);
+  const rel = firstOffset - a._bsa.getRecordPosition(r0);
+  assert.deepEqual([...a._records[r0].bytes.subarray(rel, rel + 2)], firstData);
   assert.notDeepEqual(
     [bytes[firstOffset], bytes[firstOffset + 1]],
     firstData,

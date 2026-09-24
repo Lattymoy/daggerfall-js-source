@@ -60,7 +60,7 @@ let nextId = 0;
  *  of one for update() to drive it for a frame. */
 const watchman = () => ({
   id: ++nextId, dead: false, batch: {}, mobileType: GUARD_MOBILE_TYPE,
-  _prevMState: 'Idle', _mout: null, archive: 399, tex: stubTex,
+  _swingSeq: 0, _mout: null, archive: 399, tex: stubTex,
   entity: { health: 40, maxHealth: 40, activeEffects: [], items: [] },
   mobile: { update: () => ({ record: 0, frame: 0, flip: false }) },
   ai: {
@@ -68,7 +68,7 @@ const watchman = () => ({
     _dist: 3, height: 1.8, moving: false, target: null, giveUpTimer: 200,
     update() {}, _centre: () => [1, 0.9, 1],
   },
-  attack: { machine: { state: 'Idle' }, update() {} },
+  attack: { machine: { state: 'Idle' }, swingSeq: 0, update() {} },
   sounds: { tick: () => null },
   concealment: () => 0,
 });

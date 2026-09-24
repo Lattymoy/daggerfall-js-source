@@ -170,10 +170,11 @@ test('FA1: all FOUR static-flat sites arm, and every host that DRAWS them ticks'
   ]) {
     assert.match(read(host), tick, `${host} draws flats it never ticks`);
   }
-  // and the renderer must actually READ the frame the animator writes
-  assert.match(read('render/renderer.js'),
+  // and the renderer must actually READ the frame the animator writes (AUDIT 68 S16-bbkey-stale-shadow-reach: through the key's one home)
+  assert.match(read('render/billboardKey.js'),
     /b\.frame == null \? `\$\{b\.archive\}_\$\{b\.record\}` : `\$\{b\.archive\}_\$\{b\.record\}#\$\{b\.frame\}`/,
     'the draw ignores the frame');
+  assert.match(read('render/renderer.js'), /const key = billboardKey\(b\);/, 'the draw keys through it');
 });
 
 // ---------------------------------------------------------------

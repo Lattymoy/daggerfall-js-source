@@ -195,13 +195,14 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
     const bar = el('div', 'remoteacts trade-footer');
     const status = session.phase === 'committing' ? 'Exchanging goods...'
       : session.phase === 'done' || session.phase === 'cancelled' ? (session.lastMessage || '')
+        : session.withdrawing ? `Cancelling - waiting for ${session.peerName} to answer...`   // AUDIT 68: a confirm that left binds until the peer answers
         : session.bothLocked ? 'Both locked - press Confirm to finish, or change your offer to reopen.'
           : session.myLock ? `Locked. Waiting for ${session.peerName} to lock...`
             : `Any change to either offer unlocks both sides. Stay within ${TRADE_RANGE_M} m of ${session.peerName}.`;
     bar.append(el('p', 'ptrade-note', note || status));
     const open = session.phase === 'open';
     const cancel = el('button', 'act', open ? 'Cancel trade' : 'Close');
-    cancel.disabled = session.phase === 'committing';
+    cancel.disabled = session.phase === 'committing' || session.withdrawing;
     cancel.onclick = () => (open ? session.cancel() : deps.onExit());
     bar.append(cancel);
     const lock = el('button', 'act', session.myLock ? 'Unlock' : 'Lock');

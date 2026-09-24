@@ -29,8 +29,8 @@
   {
     "name": "PERF-SUN1-the-sampler-stops-comparing-so-one-tap-really-is-one-texel",
     "file": "src/render/shadowPass.js",
-    "old": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE);\n    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);\n    this.sunTex = sun;",
-    "new": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);\n    this.sunTex = sun;",
+    "old": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE);\n    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);\n    gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);\n    return tex;",
+    "new": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);\n    gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);\n    return tex;",
     "tests": [
       "test/perfsun_fragment.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PERF-SUN1-the-sun-map-samples-NEAREST-so-a-single-tap-is-no-longer-a-2x2",
     "file": "src/render/shadowPass.js",
-    "old": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR);",
-    "new": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);",
+    "old": "this.sunTex = this._depthArray(SHADOW_SUN_SIZE, SHADOW_CASCADES.length, gl.LINEAR);",
+    "new": "this.sunTex = this._depthArray(SHADOW_SUN_SIZE, SHADOW_CASCADES.length, gl.NEAREST);",
     "tests": [
       "test/perfsun_fragment.test.js"
     ]

@@ -263,5 +263,6 @@ test('OL4 (AUDIT ALL O1/O2): the PRODUCTION default is the shared clock - no cal
   assert.equal(/isOnlinePage/.test(bl), false, 'the URL is not the predicate: the clock is (one home with RESTX2, OL3, ECON1)');
   assert.equal((bl.match(/online = sharedClockOn\(\)/g) ?? []).length, 2, 'both defaults read the clock');
   const wm = readFileSync(new URL('../src/scenes/worldModes.js', import.meta.url), 'utf8');
-  assert.ok(wm.includes("insideOpenShop = !!interiorBuilding?.insideOpenShop\n          || (interiorBuilding?.buildingType != null && isShop(interiorBuilding.buildingType) && isBuildingOpen(interiorBuilding.buildingType, _hour));"), 'O2: a restored interior keeps the saved latch and adds the effective hours - a session that begins inside a closed shop online stands its clerk and sells, not steals');
+  // AUDIT 68 S23-failed-entry-stale-building: the door's record, committed with the context
+  assert.ok(wm.includes("insideOpenShop = !!building?.insideOpenShop\n          || (building?.buildingType != null && isShop(building.buildingType) && isBuildingOpen(building.buildingType, _hour));"), 'O2: a restored interior keeps the saved latch and adds the effective hours - a session that begins inside a closed shop online stands its clerk and sells, not steals');
 });

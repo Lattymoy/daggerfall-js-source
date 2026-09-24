@@ -25,7 +25,7 @@
     "name": "MACD1-the-swing-is-not-among-the-verbs-that-cannot-be-lost",
     "file": "src/systems/inputActions.js",
     "old": "export const UNLOSEABLE_ACTIONS = Object.freeze(['SwingWeapon',",
-    "new": "export const UNLOSEABLE_ACTIONS = Object.freeze([(",
+    "new": "export const UNLOSEABLE_ACTIONS = Object.freeze([",
     "tests": [
       "test/inputactions.test.js",
       "test/audit63_items_loot.test.js",

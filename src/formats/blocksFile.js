@@ -12,6 +12,7 @@
 //     975, 1025, 1034, 1036) so broken dead-ends and exits are corrected.
 // Structural simplification only: DFU's WorldDataReplacement mod-injection
 // hooks are not ported (Unity AssetInjection, no equivalent in this runtime).
+// Not ported (no port consumer): DiscardAllBlocks.
 
 import { BsaFile, DIRECTORY_TYPES } from './bsaFile.js';
 import { worldDataDoor } from './worldDataDoor.js';   // RR3b: WorldDataReplacement's four asks (BlocksFile.cs:214, :273, :385, :850)
@@ -92,6 +93,28 @@ function defaultResources() {
       action: 0,
     },
     lightResource: { unknown1: 0, unknown2: 0, radius: 0 },
+  };
+}
+
+/** Size of one BuildingData record (DFLocation.BuildingData). */
+export const BUILDING_DATA_SIZE = 26;
+
+/** One BuildingData record at `pos`. AUDIT 68 S10-rmb-record-readers-dup:
+ *  the RMB FLD header, the MAPS exterior and SAVETREE's building records
+ *  all store this shape - one reader for the three. */
+export function readBuildingData(view, pos) {
+  return {
+    nameSeed: view.getUint16(pos, true),
+    serviceTimeLimit: view.getUint32(pos + 2, true),
+    unknown: view.getUint16(pos + 6, true),
+    unknown2: view.getUint16(pos + 8, true),
+    unknown3: view.getUint32(pos + 10, true),
+    unknown4: view.getUint32(pos + 14, true),
+    factionId: view.getUint16(pos + 18, true),
+    sector: view.getInt16(pos + 20, true),
+    locationId: view.getUint16(pos + 22, true),
+    buildingType: view.getUint8(pos + 24),
+    quality: view.getUint8(pos + 25),
   };
 }
 
@@ -207,11 +230,6 @@ export class BlocksFile {
   discardBlock(block) {
     if (block < 0 || block >= this.count) return;
     this._blocks[block] = null;
-  }
-
-  /** Discard all block records. */
-  discardAllBlocks() {
-    for (let block = 0; block < this.count; block++) this.discardBlock(block);
   }
 
   /** DFBlock representation of a record (null on failure, matching empty DFBlock). */
@@ -365,20 +383,8 @@ export class BlocksFile {
 
     // Building data list.
     for (let i = 0; i < 32; i++) {
-      h.buildingDataList[i] = {
-        nameSeed: v.getUint16(r.pos, true),
-        serviceTimeLimit: v.getUint32(r.pos + 2, true),
-        unknown: v.getUint16(r.pos + 6, true),
-        unknown2: v.getUint16(r.pos + 8, true),
-        unknown3: v.getUint32(r.pos + 10, true),
-        unknown4: v.getUint32(r.pos + 14, true),
-        factionId: v.getUint16(r.pos + 18, true),
-        sector: v.getInt16(r.pos + 20, true),
-        locationId: v.getUint16(r.pos + 22, true),
-        buildingType: rec.bytes[r.pos + 24],
-        quality: rec.bytes[r.pos + 25],
-      };
-      r.pos += 26;
+      h.buildingDataList[i] = readBuildingData(v, r.pos);
+      r.pos += BUILDING_DATA_SIZE;
     }
 
     // Section2 unknown data.
@@ -519,22 +525,9 @@ export class BlocksFile {
       r.pos += 16;
     }
 
-    const blockPeopleRecords = new Array(header.numPeopleRecords);
-    for (let i = 0; i < header.numPeopleRecords; i++) {
-      const textureBitfield = v.getUint16(r.pos + 12, true);
-      blockPeopleRecords[i] = {
-        position: r.pos,
-        xPos: v.getInt32(r.pos, true),
-        yPos: v.getInt32(r.pos + 4, true),
-        zPos: v.getInt32(r.pos + 8, true),
-        textureBitfield,
-        textureArchive: textureBitfield >> 7,
-        textureRecord: textureBitfield & 0x7f,
-        factionID: v.getInt16(r.pos + 14, true),
-        flags: rec.bytes[r.pos + 16],
-      };
-      r.pos += 17;
-    }
+    // AUDIT 68 S10-rmb-record-readers-dup: a people record is the flat
+    // record's 17 bytes (DFU's two structs differ only in name).
+    const blockPeopleRecords = this._readRmbFlatObjectRecords(r, rec, header.numPeopleRecords);
 
     const blockDoorRecords = new Array(header.numDoorRecords);
     for (let i = 0; i < header.numDoorRecords; i++) {

@@ -139,8 +139,10 @@ test('MT-iv: ChangeFoeTeam finally reaches a quest foe standing in a DUNGEON', (
   assert.match(wm, /liveQuestFoes\(\) \{/, 'worldModes exposes it');
   assert.match(wm, /return dungeonCtx\.foes\.filter\(\(f\) => !f\.dead && f\.questBehaviour\);/,
     'as the live quest-spawned records');
-  assert.match(wm, /if \(mode !== 'dungeon' \|\| !dungeonCtx\) return \[\];/,
-    'and the INTERIOR arm stays empty - that host has no enemy pool');
+  // AUDIT 68 S23-liveQuestFoes-interior-empty: the building's pool stands
+  // quest foes since IF, so its arm is the same walk, not an empty one.
+  assert.match(wm, /if \(mode === 'interior'\) return interiorEnemyDatabase\(\)\.filter\(\(f\) => f\.questBehaviour\);/,
+    'and the INTERIOR arm walks the building\'s own pool');
 });
 
 test("P0b (Mac 2026-08-28): the dungeon's CAST arm guards on the SELECTED target, not the player", () => {

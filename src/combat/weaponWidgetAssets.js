@@ -25,6 +25,7 @@ import { toColor32, toScreenOrder } from '../formats/color32Order.js';   // WW3:
 import { decodePng } from '../systems/textureReplacement.js';
 import { MATERIAL_NAMES } from '../systems/itemInfo.js';   // MetalTypes' names, Iron..Daedric
 import { WEAPON_MATERIALS } from '../characters/weapons.js';
+import { customTextureNames } from './diverseWeapons.js';   // AUDIT 68 S09-texname-dup: the one spelling
 
 export const WEAPON_WIDGET_MOD = Object.freeze({
   guid: '9f301f2b-298b-43d8-8f3f-c54deaa841e0',
@@ -38,12 +39,20 @@ export { DFMOD_KEY_PREFIX };
 const isWidgetDfmod = (name) => /\.dfmod$/i.test(name) && /weapon.?widget/i.test(name.slice(name.lastIndexOf('/') + 1));
 const isPng = (name) => /\.png$/i.test(name);
 
+/** TryImportCifRci's metal suffix: the metal's name, or none for
+ *  MetalTypes.None (bare hands, the werecreature) - the one rule the
+ *  clone's lookup (weaponWidget.js customTexture) reads. */
+export function widgetMetalName(material) {
+  return material != null && material !== WEAPON_MATERIALS.None ? MATERIAL_NAMES[material] : null;
+}
+
 /** TryImportCifRci's name for a weapon frame: the file, the record and
- *  frame, and the metal's name when there is one (MetalTypes.None -
- *  bare hands, the werecreature - adds nothing). */
-export function widgetTextureName(fileName, record, frame, material, prefix = 'w_') {
-  const metal = material != null && material !== WEAPON_MATERIALS.None ? MATERIAL_NAMES[material] : null;
-  return `${prefix}${fileName}_${record}-${frame}${metal ? `_${metal}` : ''}`;
+ *  frame, and the metal's name when there is one. AUDIT 68
+ *  S09-texname-dup: the game's own spelling (diverseWeapons.js
+ *  customTextureNames) asked first, not a second copy of it - `w_` under
+ *  `doubleScale`, the plain name without. */
+export function widgetTextureName(fileName, record, frame, material, doubleScale = true) {
+  return customTextureNames(fileName, record, frame, widgetMetalName(material), doubleScale)[0];
 }
 
 // ---- the registry ----------------------------------------------------

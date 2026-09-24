@@ -21,7 +21,7 @@
 // the torso turns — a centaur that leaves its own hindquarters when it
 // twists is worse than one that has none.
 
-import { HSCALE } from './pieceLoft.js';
+import { HSCALE, quadder, boxer } from './pieceLoft.js';
 
 /** A bay coat: dark points, warm body. Its own ramp — a horse shaded off
  *  a human skin ramp reads as a pink animal. */
@@ -39,32 +39,8 @@ const WITHERS_Y = 1.02;
 /** How far back the barrel runs from the human spine. */
 const BARREL_LEN = 0.62;
 
-function quadder(faces, ramp) {
-  return (a, b, c, d, shade) => {
-    const ux = b[0] - a[0],
-      uy = b[1] - a[1],
-      uz = b[2] - a[2];
-    const vx = d[0] - a[0],
-      vy = d[1] - a[1],
-      vz = d[2] - a[2];
-    let nx = uy * vz - uz * vy,
-      ny = uz * vx - ux * vz,
-      nz = ux * vy - uy * vx;
-    const L = Math.hypot(nx, ny, nz) || 1;
-    const c3 = ramp[Math.max(0, Math.min(ramp.length - 1, Math.round(shade * (ramp.length - 1))))];
-    faces.push({ p: [...a, ...b, ...c, ...d], n: [nx / L, ny / L, nz / L], c: [...c3], g: 'body', _i: shade });
-  };
-}
-
 /** A box between two corners, six faces, shaded top-bright. */
-function box(quad, x0, y0, z0, x1, y1, z1, top = 0.95, side = 0.66, bottom = 0.3) {
-  quad([x0, y1, z1], [x1, y1, z1], [x1, y0, z1], [x0, y0, z1], side); // front
-  quad([x1, y1, z0], [x0, y1, z0], [x0, y0, z0], [x1, y0, z0], side * 0.7); // back
-  quad([x1, y1, z1], [x1, y1, z0], [x1, y0, z0], [x1, y0, z1], side * 0.85); // right
-  quad([x0, y1, z0], [x0, y1, z1], [x0, y0, z1], [x0, y0, z0], side * 0.85); // left
-  quad([x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1], top); // top
-  quad([x0, y0, z1], [x1, y0, z1], [x1, y0, z0], [x0, y0, z0], bottom); // underside
-}
+const box = boxer();
 
 /**
  * @param {number[][]} ramp coat colours, dark -> light

@@ -19,7 +19,7 @@
 // winner is the match at the LEFTMOST position, ties broken by
 // pattern order. That is exactly .NET's alternation semantics.
 
-import { Symbol as QuestSymbol, symbolToSaveData, symbolFromSaveData } from './symbol.js';
+import { symbolToSaveData, symbolFromSaveData } from './symbol.js';
 import { staticMessagesTable } from './tables.js';
 import { parseInt as questParseInt } from './parseUtils.js';
 
@@ -65,13 +65,19 @@ export class QuestResource {
       // link nulled by the old one's late destroy event - and C#
       // cannot do that, because its assignment never reaches the field
       // at all. So the clear is guarded on identity.
-      behaviour.offDestroy(this._onBehaviourDestroyed);
-      if (this._questResourceBehaviour === behaviour) this._questResourceBehaviour = null;
+      this.uncoupleBehaviour(behaviour);
     };
   }
 
-  get Symbol() { return this.symbol; }
-  set Symbol(v) { this.symbol = v; }
+  /** Let go of a behaviour: its destroy event no longer reaches this
+   *  resource, and the link clears if it is still that behaviour.
+   *  AUDIT 68 S30-relink-leaks-orphan-resources: the destroy handler
+   *  above, and a behaviour relinking to the live resource after a
+   *  shared-quest resync - the orphan it leaves stayed subscribed. */
+  uncoupleBehaviour(behaviour) {
+    behaviour.offDestroy(this._onBehaviourDestroyed);
+    if (this._questResourceBehaviour === behaviour) this._questResourceBehaviour = null;
+  }
 
   /** QuestResourceBehaviour (QuestResource.cs:105-117): setting the
    *  scene link SUBSCRIBES the destroy uncoupling, so a torn-down
@@ -220,5 +226,3 @@ export class QuestResource {
     }
   }
 }
-
-export { QuestSymbol };

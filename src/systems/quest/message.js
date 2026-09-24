@@ -66,8 +66,6 @@ export class Message {
     this.variants.push(variant);
   }
 
-  replaceMessage(id, source) { this.loadMessage(id, source); }
-
   /** Tokens for this message; variant -1 picks a random variant
    *  (uniform roll, injectable). QUIRK KEPT (Message.cs:161): any
    *  EXPLICIT variant answers variant 0 - DFU's else-arm is `index =

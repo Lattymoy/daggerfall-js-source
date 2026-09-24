@@ -57,7 +57,7 @@
 import { getBool } from '../systems/settings.js';   // AUDIT 28 W1: DisableEnemyDeathAlert
 import { floorLanding } from '../player/enterExit.js';
 import { billboardSize } from '../world/rmbFlats.js';
-import { addItem, isGoldPieces, addGoldPieces, takeOneInto } from '../systems/inventory.js';   // QUICK-LOOT B2: the one-item door, which the bulk take below is now written over
+import { addItem, takeOneInto } from '../systems/inventory.js';   // QUICK-LOOT B2: the one-item door, which the bulk take below is now written over
 import { SOUND } from '../systems/soundClips.js';
 import { lootRarityOn, bestRarity, RARITIES } from '../systems/lootRarity.js';   // LR3: the drop chime asks the body's best tier
 import { CORPSE_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../player/activate.js';
@@ -313,6 +313,38 @@ export const corpseLootHooks = (entry) => ({
   pos: [...(entry.corpseMarker?.pos ?? entry.ai?.feet ?? [0, 0, 0])],
 });
 
+/** AUDIT 68 S18-corpse-prelude-dup: PlayerActivate's first two corpse
+ *  answers, written ONCE for both take paths (the window door below and
+ *  the online grant's bulk take) - they were two line-for-line copies.
+ *  Answers what was taken when one of them answered, null when the body
+ *  is neither empty nor a lone quiver.
+ *
+ *  NOTE both taking arms leave the container ENABLED. DFU disables a
+ *  corpse only on the activation that FINDS it empty (:946), which is
+ *  the one after the take - so the player who loots a body and
+ *  activates it again is told it has no treasure, and only then does it
+ *  stop being a target. Disabling on the take would eat that line. */
+function corpsePrelude(entry, playerEntity, say) {
+  if (!entry || entry.corpseDisabled) return 0;
+  const items = entry.entity?.items;
+  // :942-947 - the body has no treasure, and the container is
+  // DISABLED: an emptied corpse stops being activatable.
+  if (!items?.length) {
+    entry.corpseDisabled = true;
+    say('The body has no treasure.');   // theBodyHasNoTreasure
+    return 0;
+  }
+  // :948-952 - one item and it is arrows: taken whole, no window.
+  if (items.length === 1 && items[0]?.templateIndex === ARROW_TEMPLATE_INDEX) {
+    playerEntity.items = playerEntity.items || [];
+    addItem(playerEntity.items, items[0]);
+    items.length = 0;
+    say('You collect the arrows.');   // youCollectArrows
+    return 1;
+  }
+  return null;
+}
+
 /**
  * PlayerActivate's CorpseMarker arm, WHOLE (:936-957).
  *
@@ -339,20 +371,9 @@ export const corpseLootHooks = (entry) => ({
  * anything happen" test still reads.
  */
 export function openCorpseLoot(entry, { playerEntity, say = () => {}, openWindow = null } = {}) {
-  if (!entry || entry.corpseDisabled) return 0;
-  const items = entry.entity?.items;
-  if (!items?.length) {
-    entry.corpseDisabled = true;
-    say('The body has no treasure.');   // theBodyHasNoTreasure
-    return 0;
-  }
-  if (items.length === 1 && items[0]?.templateIndex === ARROW_TEMPLATE_INDEX) {
-    playerEntity.items = playerEntity.items || [];
-    addItem(playerEntity.items, items[0]);
-    items.length = 0;
-    say('You collect the arrows.');   // youCollectArrows
-    return 1;
-  }
+  const answered = corpsePrelude(entry, playerEntity, say);
+  if (answered !== null) return answered;
+  const items = entry.entity.items;
   if (typeof openWindow !== 'function') {
     console.warn('[corpse] no inventory door - the body stays shut rather than emptying itself');
     return items.length;
@@ -375,28 +396,9 @@ export function pileBody(entry) {
 }
 
 export function takeCorpseLoot(entry, playerEntity, say = () => {}) {
-  if (!entry || entry.corpseDisabled) return 0;
-  const items = entry.entity?.items;
-  // :942-947 - the body has no treasure, and the container is
-  // DISABLED: an emptied corpse stops being activatable.
-  if (!items?.length) {
-    entry.corpseDisabled = true;
-    say('The body has no treasure.');   // theBodyHasNoTreasure
-    return 0;
-  }
-  // :948-952 - one item and it is arrows: taken whole, no window.
-  // NOTE both taking arms leave the container ENABLED. DFU disables a
-  // corpse only on the activation that FINDS it empty (:946), which is
-  // the one after this - so the player who loots a body and activates
-  // it again is told it has no treasure, and only then does it stop
-  // being a target. Disabling on the take would eat that line.
-  if (items.length === 1 && items[0]?.templateIndex === ARROW_TEMPLATE_INDEX) {
-    playerEntity.items = playerEntity.items || [];
-    addItem(playerEntity.items, items[0]);
-    items.length = 0;
-    say('You collect the arrows.');   // youCollectArrows
-    return 1;
-  }
+  const answered = corpsePrelude(entry, playerEntity, say);
+  if (answered !== null) return answered;
+  const items = entry.entity.items;
   playerEntity.items = playerEntity.items || [];
   let n = 0;
   // DoTransferItem's FIRST statement (DaggerfallInventoryWindow.cs:1562-1571):

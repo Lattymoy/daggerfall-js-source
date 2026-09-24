@@ -61,8 +61,10 @@ import { getPref } from '../systems/uiPrefs.js';
 import { BLOOD_ABSORB, BLOOD_F0, BLOOD_MENISCUS, WET_THICK_LO, WET_THICK_HI, INK_DEPTH, WET_DARKEN } from '../combat/bloodArt.js';   // BLOOD3: the film's own law, beside the tints it already owns
 import { isEnhanced } from '../systems/uiSkin.js';
 import { SHADOW_GLSL, shadowCacheOn } from './shadowPass.js';   // EL2: the receiver block - the sun map on the sun term, the cube map on its lantern; SC1: the cache's door
+import { FOG_GLSL as EL_FOG_GLSL } from './fogGlsl.js';   // AUDIT 68 S17-fog-glsl-dup: the fog law's one home, the classic lane's too (the lane's five interpolate it by this name)
 import { AIR_ADAPT_GLSL, AIR_CONTACT_GLSL, AIR_CONTACT_RANGE_FRACTION, airOn, contactOn, glslFloat } from './airPass.js';   // EL6: no AO block - the resolve's; EL8: the contact block
 import { BAYER_GLSL, BAYER_MEAN } from './orderedDither.js';
+import { CLOUD_SHADOW_GLSL } from './cloudShadow.js';   // AUDIT 68 S16-el-cloudshadow-dup: the reader's one home, as the classic lane and the shafts take it - five hand copies were here
 import { CLUSTER_X, CLUSTER_Y, CLUSTER_Z, CLUSTER_LIST_W, clustersOn } from './lightClusters.js';   // LC1: the grid the lantern loop walks, and its door   // EL6: the dither at the encode - the port's one Bayer
 import { SHADE_DARK } from '../systems/concealDraw.js';   // AUDIT-EL F14: the shade's pull toward black, interpolated as the classic BB_FS does   // EL3: the ambient occlusion image by screen position, and its kill door; EL4: the adapted exposure
 
@@ -70,9 +72,6 @@ import { SHADE_DARK } from '../systems/concealDraw.js';   // AUDIT-EL F14: the s
  *  vec4 + forty-eight vec3 are 96 uniform vectors; ES 3.0 guarantees 224
  *  for a fragment shader. */
 export const EL_MAX_LIGHTS = 48;
-/** The classic lane's cap, restated here so the renderer's cap is one of
- *  two named numbers and never a literal. */
-export const EL_CLASSIC_MAX_LIGHTS = 16;
 /** The exposure the lane installs with. Chosen against the classic lane's
  *  numbers: a wall at ambient 0.12 lands at ~0.145, a 0.5 surface at ~0.52,
  *  a 1.0 surface at ~0.82 with the rest as headroom. `?exposure=` is the
@@ -212,17 +211,24 @@ export function elTonemapRGB(c, white = EL_WHITE) {
  *  the eye at the origin looking down unit `dir` to a surface `dist`
  *  away, the light at `light` (relative to the eye) with `range`. The
  *  in-scattered radiance of a uniform medium with `density` is
- *  density * (atan((t1 - t0) / h) - atan((ta - t0) / h)) / h, where t0
+ *  density * (atan((tb - t0) / h) - atan((ta - t0) / h)) / h, where t0
  *  is the light's foot on the ray, h its distance off the ray, and
- *  [ta, t1] is the ray clipped to [0, dist] and to the light's range
- *  about t0 - so the medium beyond the light's reach contributes
- *  nothing. The GLSL in EL_GLSL is this, term for term. */
+ *  [ta, tb] is the ray clipped to [0, dist] and to its CHORD through the
+ *  light's sphere (t0 -+ sqrt(range^2 - h^2)) - so the medium beyond the
+ *  light's reach contributes nothing, and a ray that misses the sphere
+ *  gets nothing. EL_SCATTER_GLSL is this, term for term (AUDIT 68
+ *  S16-elscatter-twin-drift: AUDIT VOL1 moved the GLSL to the chord and
+ *  left this on the old slab of the range either side of t0). */
 export function elScatter(light, range, dir, dist, density) {
   if (!(range > 0) || !(density > 0) || !(dist > 0)) return 0;
   const t0 = light[0] * dir[0] + light[1] * dir[1] + light[2] * dir[2];
   const hx = light[0] - dir[0] * t0, hy = light[1] - dir[1] * t0, hz = light[2] - dir[2] * t0;
-  const h = Math.max(Math.sqrt(hx * hx + hy * hy + hz * hz), 0.25);
-  const ta = Math.max(0, t0 - range), tb = Math.min(dist, t0 + range);
+  const h2 = hx * hx + hy * hy + hz * hz;
+  const c2 = range * range - h2;
+  if (c2 <= 0) return 0;
+  const chord = Math.sqrt(c2);
+  const h = Math.max(Math.sqrt(h2), 0.25);
+  const ta = Math.max(0, t0 - chord), tb = Math.min(dist, t0 + chord);
   if (tb <= ta) return 0;
   return density * (Math.atan((tb - t0) / h) - Math.atan((ta - t0) / h)) / h;
 }
@@ -301,18 +307,6 @@ float elAttenuation(float d, float range) {
 }
 ${EL_TONEMAP_GLSL}
 ${EL_SCATTER_GLSL}
-`;
-
-const EL_FOG_GLSL = `
-float fogFactorAt(vec3 worldPos) {
-  if (uFogMode == 0) return 1.0;
-  float d = length(worldPos - uCamPos);
-  if (uFogMode == 1) {
-    return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
-  }
-  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }
-  return exp(-uFogDensity * d);
-}
 `;
 
 /** LC1: THE CLUSTER BLOCK - the grid and the list (render/lightClusters.js), read once per fragment. With the
@@ -500,14 +494,7 @@ uniform float uClipY;
 uniform float uAutomapMode;
 uniform float uAutomapWaterLevel;
 uniform vec4 uAutomapWaterColor;
-uniform sampler2D uCloudShadowMap;
-uniform vec4 uCloudShadowRect;
-float cloudShadowAt(vec3 wp) {
-  if (uCloudShadowRect.w <= 0.0) return 1.0;
-  vec2 uv = (wp.xz - uCloudShadowRect.xy) * uCloudShadowRect.z;
-  if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return 1.0;
-  return 1.0 - (1.0 - texture(uCloudShadowMap, uv).r) * uCloudShadowRect.w;
-}
+${CLOUD_SHADOW_GLSL}
 ${EL_GLSL}
 ${SHADOW_GLSL}
 ${AIR_CONTACT_GLSL}
@@ -582,14 +569,7 @@ uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
-uniform sampler2D uCloudShadowMap;
-uniform vec4 uCloudShadowRect;
-float cloudShadowAt(vec3 wp) {
-  if (uCloudShadowRect.w <= 0.0) return 1.0;
-  vec2 uv = (wp.xz - uCloudShadowRect.xy) * uCloudShadowRect.z;
-  if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return 1.0;
-  return 1.0 - (1.0 - texture(uCloudShadowMap, uv).r) * uCloudShadowRect.w;
-}
+${CLOUD_SHADOW_GLSL}
 ${EL_GLSL}
 ${SHADOW_GLSL}
 ${AIR_CONTACT_GLSL}
@@ -681,14 +661,7 @@ uniform vec3 uMoonDir;
 uniform float uTrilight;   // BLOOD AUDIT 5: and the trilight ambient the mesh takes
 uniform vec3 uAmbientSky;
 uniform vec3 uAmbientGround;
-uniform sampler2D uCloudShadowMap;
-uniform vec4 uCloudShadowRect;
-float cloudShadowAt(vec3 wp) {
-  if (uCloudShadowRect.w <= 0.0) return 1.0;
-  vec2 uv = (wp.xz - uCloudShadowRect.xy) * uCloudShadowRect.z;
-  if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return 1.0;
-  return 1.0 - (1.0 - texture(uCloudShadowMap, uv).r) * uCloudShadowRect.w;
-}
+${CLOUD_SHADOW_GLSL}
 ${EL_GLSL}
 ${SHADOW_GLSL}
 ${AIR_CONTACT_GLSL}
@@ -855,14 +828,7 @@ uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
-uniform sampler2D uCloudShadowMap;
-uniform vec4 uCloudShadowRect;
-float cloudShadowAt(vec3 wp) {
-  if (uCloudShadowRect.w <= 0.0) return 1.0;
-  vec2 uv = (wp.xz - uCloudShadowRect.xy) * uCloudShadowRect.z;
-  if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return 1.0;
-  return 1.0 - (1.0 - texture(uCloudShadowMap, uv).r) * uCloudShadowRect.w;
-}
+${CLOUD_SHADOW_GLSL}
 ${EL_GLSL}
 ${SHADOW_GLSL}
 ${AIR_CONTACT_GLSL}
@@ -955,14 +921,7 @@ uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
-uniform sampler2D uCloudShadowMap;
-uniform vec4 uCloudShadowRect;
-float cloudShadowAt(vec3 wp) {
-  if (uCloudShadowRect.w <= 0.0) return 1.0;
-  vec2 uv = (wp.xz - uCloudShadowRect.xy) * uCloudShadowRect.z;
-  if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return 1.0;
-  return 1.0 - (1.0 - texture(uCloudShadowMap, uv).r) * uCloudShadowRect.w;
-}
+${CLOUD_SHADOW_GLSL}
 ${EL_GLSL}
 ${SHADOW_GLSL}
 ${AIR_CONTACT_GLSL}

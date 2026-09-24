@@ -18,7 +18,7 @@
 //
 // Built in FINAL (compressed) body space and tagged 'body'.
 
-import { HSCALE } from './pieceLoft.js';
+import { HSCALE, quadder, boxer } from './pieceLoft.js';
 
 /** Dark chitin. Bright enough to keep its silhouette — the wereboar
  *  taught that a dark thing on a dark ground has no shape at all. */
@@ -31,31 +31,8 @@ export const CHITIN_RAMP = [
   [186, 166, 144],
 ];
 
-function quadder(faces, ramp) {
-  return (a, b, c, d, shade) => {
-    const ux = b[0] - a[0],
-      uy = b[1] - a[1],
-      uz = b[2] - a[2];
-    const vx = d[0] - a[0],
-      vy = d[1] - a[1],
-      vz = d[2] - a[2];
-    let nx = uy * vz - uz * vy,
-      ny = uz * vx - ux * vz,
-      nz = ux * vy - uy * vx;
-    const L = Math.hypot(nx, ny, nz) || 1;
-    const c3 = ramp[Math.max(0, Math.min(ramp.length - 1, Math.round(shade * (ramp.length - 1))))];
-    faces.push({ p: [...a, ...b, ...c, ...d], n: [nx / L, ny / L, nz / L], c: [...c3], g: 'body', _i: shade });
-  };
-}
-
-function box(quad, x0, y0, z0, x1, y1, z1, top = 0.95, side = 0.64, under = 0.3) {
-  quad([x0, y1, z1], [x1, y1, z1], [x1, y0, z1], [x0, y0, z1], side);
-  quad([x1, y1, z0], [x0, y1, z0], [x0, y0, z0], [x1, y0, z0], side * 0.7);
-  quad([x1, y1, z1], [x1, y1, z0], [x1, y0, z0], [x1, y0, z1], side * 0.86);
-  quad([x0, y1, z0], [x0, y1, z1], [x0, y0, z1], [x0, y0, z0], side * 0.86);
-  quad([x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1], top);
-  quad([x0, y0, z1], [x1, y0, z1], [x1, y0, z0], [x0, y0, z0], under);
-}
+// Chitin boxes: a darker default side and brighter flanks than the beasts'.
+const box = boxer({ side: 0.64, flank: 0.86 });
 
 /** A limb segment between two points, as a thin box aligned to the run. */
 function limb(quad, ax, ay, az, bx, by, bz, r, shade) {
@@ -129,10 +106,14 @@ export function buildArachnid(ramp = CHITIN_RAMP, s = {}) {
   for (const side of [-1, 1]) {
     for (let i = 0; i < n; i++) {
       // Fan from forward-ish to backward-ish along the body's side.
+      // AUDIT 68 S06-arachnid-legs-point-symmetric: the angle is measured
+      // off the lateral axis and MIRRORED by side (43deg ahead of lateral
+      // for the front pair to 66deg behind it for the rear). It was a
+      // 180deg turn of the right side, so the front legs crossed the body.
       const t = n > 1 ? i / (n - 1) : 0.5;
-      const ang = (-0.75 + t * 1.9) * side + (side < 0 ? Math.PI : 0);
-      const dirX = Math.sin(ang) * (side < 0 ? -1 : 1);
-      const dirZ = Math.cos(ang);
+      const ang = 0.75 - t * 1.9;
+      const dirX = side * Math.cos(ang);
+      const dirZ = Math.sin(ang);
       const rootX = side * thorax * 0.8;
       const rootZ = thorax * (1.1 - t * 1.1);
       const kneeX = rootX + dirX * span * 0.5;

@@ -38,9 +38,11 @@ for (const t of tests) {
   const dir = path.join(COVROOT, String(i));
   fs.mkdirSync(dir, { recursive: true });
   const r = spawnSync(process.execPath, ['--test', path.join('test', t)], {
-    cwd: ROOT, encoding: 'utf8', timeout: 180000,
+    cwd: ROOT, encoding: 'utf8', timeout: 180000, maxBuffer: 1 << 28,   // AUDIT 68: the 1 MiB default is a ceiling a big file's TAP can reach
     env: { ...process.env, NODE_V8_COVERAGE: dir, ARENA2_PATH: process.env.ARENA2_PATH },
   });
+  // a file the harness lost would leave its lines "executed by no test" - loud, never a partial map
+  if (r.error || r.status === null) { console.error(`${t}: HARNESS ERROR (${r.error?.code ?? r.signal}) - coverage would be partial`); process.exit(2); }
   // gather all ranges per src file across all coverage json shards
   const ranges = {};
   let files = [];

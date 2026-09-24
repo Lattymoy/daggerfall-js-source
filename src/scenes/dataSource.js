@@ -424,7 +424,6 @@ export async function storeMusicFiles(files) {
 }
 export const storedMusicNames = () => assetNames(MUSIC_STORE);
 export const loadMusicFile = (fileName) => assetBytes(MUSIC_STORE, fileName);
-export const clearStoredMusic = () => clearAssets(MUSIC_STORE);
 
 /** SNDREP1: a SOUND pack (DFU's StreamingAssets/Sound WAVs) rides the MUSIC store - it is audio the player supplied,
  *  with the music pack's own lifecycle, and a store of its own would be a database version bump for two files. The
@@ -474,7 +473,6 @@ export async function storeDerived(key, bytes) {
   return true;
 }
 export const loadDerived = (key) => assetBytes(DERIVED_STORE, key);
-export const clearDerived = () => clearAssets(DERIVED_STORE);
 
 /** MW-LOAD: a derived artifact that is plain data. The envelope is the
  *  key itself: what comes back is the value only when it was written
@@ -557,9 +555,13 @@ let _mwArchiveCache = null;   // { gen, archives }
 let _mwFileCache = null;      // { gen, files: Map<name, bytes> }
 export const loadMorrowindFile = async (fileName) => {
   if (!_mwFileCache || _mwFileCache.gen !== _mwGeneration) _mwFileCache = { gen: _mwGeneration, files: new Map() };
-  if (_mwFileCache.files.has(fileName)) return _mwFileCache.files.get(fileName);
+  // AUDIT 68 S18-mw-cache-stale-generation: the read lands in the cache it STARTED under. An attach (or a clear)
+  // mid-read replaced the module's cache, and the old bytes were written into the NEW generation's - or threw on
+  // the null a clear left.
+  const cache = _mwFileCache;
+  if (cache.files.has(fileName)) return cache.files.get(fileName);
   const bytes = await assetBytes(MW_STORE, fileName);
-  if (bytes) _mwFileCache.files.set(fileName, bytes);
+  if (bytes) cache.files.set(fileName, bytes);
   return bytes;
 };
 export const clearStoredMorrowind = async () => {
@@ -636,7 +638,8 @@ async function clearDerivedPrefix(prefix) {
  */
 export const loadMorrowindArmRecords = async (fileName) => {
   if (!_mwRecordsCache || _mwRecordsCache.gen !== _mwGeneration) _mwRecordsCache = { gen: _mwGeneration, files: new Map() };
-  if (_mwRecordsCache.files.has(fileName)) return _mwRecordsCache.files.get(fileName);
+  const cache = _mwRecordsCache;   // AUDIT 68 S18-mw-cache-stale-generation: loadMorrowindFile's law
+  if (cache.files.has(fileName)) return cache.files.get(fileName);
   const blob = await assetBlob(MW_STORE, fileName);
   if (!blob) return null;
   const { extractArmRecords, isArmRecords, ARM_RECORDS_VERSION } = await import('../formats/mwFirstPerson.js');
@@ -656,7 +659,7 @@ export const loadMorrowindArmRecords = async (fileName) => {
     }
     console.info(`[mw] ${fileName}: arm records extracted in ${Math.round(t2 - t0)} ms (read ${Math.round(t1 - t0)}, walk ${Math.round(t2 - t1)}) and kept`);
   }
-  _mwRecordsCache.files.set(fileName, records);
+  cache.files.set(fileName, records);
   return records;
 };
 
@@ -670,12 +673,12 @@ export async function loadMorrowindArchives() {
   if (_mwArchiveCache && _mwArchiveCache.gen === _mwGeneration) return _mwArchiveCache.archives;
   if (_mwArchivesInflight && _mwArchivesInflight.gen === _mwGeneration) return _mwArchivesInflight.promise;
   const gen = _mwGeneration;
-  const promise = _openMorrowindArchives().finally(() => { if (_mwArchivesInflight && _mwArchivesInflight.gen === gen) _mwArchivesInflight = null; });
+  const promise = _openMorrowindArchives(gen).finally(() => { if (_mwArchivesInflight && _mwArchivesInflight.gen === gen) _mwArchivesInflight = null; });
   _mwArchivesInflight = { gen, promise };
   return promise;
 }
 
-async function _openMorrowindArchives() {
+async function _openMorrowindArchives(gen) {
   const { MwBsaFile } = await import('../formats/mwBsaFile.js');
   const names = (await storedMorrowindNames()).filter((n) => /\.bsa$/i.test(n));
   const rank = (n) => {
@@ -736,7 +739,9 @@ async function _openMorrowindArchives() {
       console.warn(`morrowind archive ${n}: ${err.message}`);
     }
   }
-  _mwArchiveCache = { gen: _mwGeneration, archives };
+  // AUDIT 68 S18-mw-cache-stale-generation: stamped with the generation the open began under, and kept only while
+  // that is still the live one - the live counter here made a set opened before an attach read as current.
+  if (gen === _mwGeneration) _mwArchiveCache = { gen, archives };
   return archives;
 }
 
@@ -772,7 +777,7 @@ export const morrowindDataFingerprint = () => _mwFingerprint;
  * archive count. A loose mod folder (.nif/.dds, no .bsa) or a .esm
  * attached beside an archive that is already there leaves the archive
  * count untouched - and this line is the only writer of the generation
- * and the only place `_mwEsm`/`_mwArchiveCache`/`_mwFileCache` are
+ * and the only place `_mwArchiveCache`/`_mwFileCache` are
  * dropped, so counting archives alone left the loose override and the
  * ESM door dead until the page was reloaded. The sorted names also
  * move when a re-attach swaps one file for another of the same count,
@@ -871,36 +876,10 @@ export async function registerMorrowindData() {
   const changed = _mwFingerprint !== null
     ? print !== _mwFingerprint
     : (_mwCountedNames !== null && [...names].sort().join('\n') !== _mwCountedNames);
-  if (changed) { _mwGeneration++; _mwEsm = undefined; _mwArchiveCache = null; _mwFileCache = null; _mwRecordsCache = null; }   // MW7: a new attach re-reads the ESM; IG2: and drops the swap caches; MW-LOAD: and the record memo
+  if (changed) { _mwGeneration++; _mwArchiveCache = null; _mwFileCache = null; _mwRecordsCache = null; }   // IG2: a new attach drops the swap caches; MW-LOAD: and the record memo
   _mwFingerprint = print;
   _mwCount = next;
   return _mwCount;
-}
-
-/**
- * MW7: the stored Morrowind.esm, parsed - the record file the body
- * parts live in. It is NOT inside the BSA (it sits beside it in Data
- * Files, which is why storeMorrowindFiles takes .esm as well as .bsa),
- * so it has its own door. Answers null when no .esm was attached: the
- * first-person layer degrades to the classic sprite rather than
- * failing, exactly as it does for any other missing piece.
- *
- * Parsed once and cached - the file is tens of megabytes and the rig
- * rebuilds on every attach and every toggle.
- */
-let _mwEsm;
-export async function loadMorrowindEsm() {
-  if (_mwEsm !== undefined) return _mwEsm;
-  const name = (await storedMorrowindNames()).find((n) => /\.esm$/i.test(n));
-  if (!name) return (_mwEsm = null);
-  try {
-    const { parseEsm } = await import('../formats/mwEsmFile.js');
-    _mwEsm = parseEsm(await loadMorrowindFile(name));
-  } catch (err) {
-    console.warn(`morrowind esm ${name}: ${err.message}`);
-    _mwEsm = null;
-  }
-  return _mwEsm;
 }
 
 export async function pickMorrowindFiles() {
@@ -947,7 +926,6 @@ export async function storeTextureFiles(files) {
 }
 export const storedTextureNames = () => assetNames(TEXTURE_STORE);
 export const loadTextureFile = (fileName) => assetBytes(TEXTURE_STORE, fileName);
-export const clearStoredTextures = () => clearAssets(TEXTURE_STORE);
 
 /**
  * The asset-pack pick, in the shape of the ARENA2 one. ONE overlay,
@@ -1281,6 +1259,29 @@ export async function readZip(file, onProgress) {   // exported for the harness
   return entries.map(({ name, data }) => [normalizeName(name), data]);
 }
 
+/** AUDIT 68 S18-drop-items-after-await: a drop's FileSystemEntry roots, read NOW. A DataTransferItemList is readable
+ *  only while its drop event dispatches - past the handler's first await its length reads 0 - so both drop doors
+ *  (this picker and the classic-saves one in menu.js) walked the first dropped item and stopped. Call it before
+ *  any await. */
+export const droppedEntries = (dataTransfer) => [...(dataTransfer?.items ?? [])].map((it) => it.webkitGetAsEntry?.()).filter(Boolean);
+/** Every file under `roots`, depth first, as `onFile(file, path)` - `path` rebuilt from the walk, because a
+ *  dropped entry carries no webkitRelativePath. A browser read error REJECTS: the bare success callbacks this
+ *  replaced left a failed drop pending for ever, saying nothing. */
+export async function walkDroppedEntries(roots, onFile) {
+  const walk = async (entry, prefix) => {
+    if (entry.isFile) await onFile(await new Promise((res, rej) => entry.file(res, rej)), prefix + entry.name);
+    else if (entry.isDirectory) {
+      const reader = entry.createReader();
+      let batch;
+      do {
+        batch = await new Promise((res, rej) => reader.readEntries(res, rej));
+        for (const en of batch) await walk(en, prefix + entry.name + '/');
+      } while (batch.length);
+    }
+  };
+  for (const en of roots) await walk(en, '');
+}
+
 
 /** Boot gate: resolves when a data source can serve. Shows the
  *  folder-pick overlay only when neither IndexedDB nor the network
@@ -1354,19 +1355,14 @@ export async function ensureArena2() {
     ui.addEventListener('dragover', (e) => e.preventDefault());
     ui.addEventListener('drop', async (e) => {
       e.preventDefault();
+      const roots = droppedEntries(e.dataTransfer);   // AUDIT 68 S18-drop-items-after-await: before the first await
       const files = [];
-      const walk = async (entry) => {
-        if (entry.isFile) files.push(await new Promise((r) => entry.file(r)));
-        else if (entry.isDirectory) {
-          const reader = entry.createReader();
-          let batch;
-          do {
-            batch = await new Promise((r) => reader.readEntries(r));
-            for (const en of batch) await walk(en);
-          } while (batch.length);
-        }
-      };
-      for (const item of e.dataTransfer.items) { const en = item.webkitGetAsEntry?.(); if (en) await walk(en); }
+      try {
+        await walkDroppedEntries(roots, (f) => { files.push(f); });
+      } catch (err) {
+        msg.textContent = `drop failed: ${err?.message ?? err}. ${FOLDER_PICK_HINT}`;
+        return;
+      }
       ingest(files);
     });
   });

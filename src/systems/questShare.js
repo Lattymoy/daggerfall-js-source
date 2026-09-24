@@ -65,7 +65,7 @@
 // own counters, so keeping the sender's risks colliding with a quest
 // the receiver already has for an unrelated reason.
 
-import { MEMBERSHIP_STATUS } from './quest/questLists.js';
+import { MEMBERSHIP_STATUS, isMainQuestName } from './quest/questLists.js';
 import { GUILDS, hasJoined } from './guilds.js';
 import { QUEST_FRAME_MAX } from '../net/wire.js';
 
@@ -79,13 +79,6 @@ import { QUEST_FRAME_MAX } from '../net/wire.js';
  *  the wire envelope (t, quest.questName, quest.displayName) around
  *  this payload. */
 export const QUEST_SHARE_MAX_BYTES = QUEST_FRAME_MAX - 512;
-
-/** ui/questRail.js's own isMainQuest, duplicated rather than imported -
- *  that module is UI-layer and this one is systems-layer, and a quest
- *  UID's own name is enough that the two never need to agree through a
- *  shared import to agree in fact. Keep this in step with questRail.js's
- *  copy if either ever changes. */
-const isMainQuestName = (questName) => /^S0000/.test(questName ?? '') || questName === '_BRISIEN';
 
 /** SENDER SIDE: one quest's shareable envelope, or a refusal.
  *  `machine` is the sender's own QuestMachine. */

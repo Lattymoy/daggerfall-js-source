@@ -49,7 +49,6 @@ import { appStorage } from './appStorage.js';   // DA1: localStorage in a browse
 // SaveLoadManager's names (:42-44), as storage-key prefixes.
 export { SAVE_DATA_PREFIX, SAVE_INFO_PREFIX, SAVE_SHOT_PREFIX, characterIdOf, adoptLegacyCards, mintCharacterId };   // CHARID1: still this module's words to every caller
 export const QUICK_SAVE_NAME = 'QuickSave';
-export const AUTO_SAVE_NAME = 'AutoSave';
 
 const store = () => appStorage();
 
@@ -243,8 +242,7 @@ export function loadSlot(key, storage = store()) {
 }
 
 /** The F2 law extended to slots: "is there a game THIS BUILD can
- *  restore" - version-gated beside the reader, like
- *  restorableQuicksave. */
+ *  restore" - version-gated beside the reader. */
 export function restorableSlot(key, storage = store()) {
   const snap = loadSlot(key, storage);
   return snap && snap.v === SAVE_VERSION ? snap : null;

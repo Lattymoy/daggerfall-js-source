@@ -27,7 +27,7 @@ export const PLACE_ATTACH_FIELDS = Object.freeze(['key', 'id', 'name', 'title', 
 export const PLACE_METER_FIELDS = Object.freeze([
   'bucket', 'drops', 'wbucket', 'wdrops', 'sbucket', 'sdrops', 'pbucket', 'pdrops', 'tradeBucket', 'tdrops', 'tbytes', 'tinbucket',
   'castBucket', 'castDrops', 'cin', 'abucket', 'adrops', 'abytes', 'fbucket', 'fdrops', 'hbucket', 'cbucket', 'cdrops',
-  'rollBucket', 'rollDrops', 'rbucket', 'mbucket', 'junk', 'cardBucket', 'cardDrops', 'parkBucket', 'parkDrops',
+  'rollBucket', 'rollDrops', 'rbucket', 'rdrops', 'mbucket', 'mdrops', 'junk', 'cardBucket', 'cardDrops', 'parkBucket', 'parkDrops',
   'pageBucket', 'pageDrops',   // JOURNAL1
 ]);
 /** Every frame a place socket can send, once - the room's host, so its memory and its stream are its own. */

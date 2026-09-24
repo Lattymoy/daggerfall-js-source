@@ -36,17 +36,3 @@ export function packCharacterFaces(faces) {
   }
   return out;
 }
-
-/** Bounding box of a face set (for height-normalising a rig pose). */
-export function facesBounds(faces) {
-  let minX = Infinity, minY = Infinity, minZ = Infinity;
-  let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
-  for (const f of faces) {
-    for (let i = 0; i < f.p.length; i += 3) {
-      minX = Math.min(minX, f.p[i]); maxX = Math.max(maxX, f.p[i]);
-      minY = Math.min(minY, f.p[i + 1]); maxY = Math.max(maxY, f.p[i + 1]);
-      minZ = Math.min(minZ, f.p[i + 2]); maxZ = Math.max(maxZ, f.p[i + 2]);
-    }
-  }
-  return { minX, minY, minZ, maxX, maxY, maxZ };
-}

@@ -31,7 +31,7 @@
 
 import { savingThrow, rollMagnitude, EFFECT_FLAGS, careerTolerance } from './spellcast.js';
 import { raceById, raceByKey } from './races.js';   // L2-slice (magic-10): the racial immunity arm
-import { STAT_KEYS_ORDER, FATIGUE_MULTIPLIER, maxFatigue } from './statMods.js';
+import { STAT_KEYS_ORDER, FATIGUE_MULTIPLIER, maxFatigue, increaseDrainMagnitude } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
 import { tryAbsorption, effectCastingCost } from './absorption.js';
 import { enemyGroupOf, NEARBY } from './nearbyObjects.js';   // X8: Pacify matches on DFU's EnemyGroups, the same table X4 ported   // S24; X7: the Identify refund reads the same per-effect cost
@@ -613,15 +613,6 @@ export function healAttributeDamage(entity, stat, amount) {
   }
 }
 
-/** DrainEffect.IncreaseMagnitude, verbatim: the drain never reduces
- *  the stat below 1 relative to its PERMANENT value ("no invisible
- *  healing debt" - drain alone cannot zero a stat). */
-function increaseDrainMagnitude(target, entry, amount) {
-  const permanentValue = target.stats?.[entry.stat] ?? 0;
-  if (permanentValue - (entry.magnitude + amount) < 1) entry.magnitude = permanentValue - 1;
-  else entry.magnitude += amount;
-}
-
 /** One magic round for one ACTIVE entry - the saving throw rolls
  *  FRESH here every round (F10), gated on the spell's range (S15).
  *  Fortify/buff/drain rounds carry no per-round action (their state
@@ -629,7 +620,9 @@ function increaseDrainMagnitude(target, entry, amount) {
 function runEffectRound(a, target, sinks, rolls) {
   if (a.kind === 'continuousDamage') {
     const n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls);
-    if (n > 0 && sinks.hurt) sinks.hurt(n);
+    // AUDIT 68 S19-round-ticks-player-provenance: the tick is DamageHealthFromSource(caster) - the player's blow only
+    // when the player cast it (no caster is the player, hostMagic's `!caster` law). A round sink bills nobody else.
+    if (n > 0 && sinks.hurt) sinks.hurt(n, { fromPlayer: !a.caster || !!a.caster.isPlayer });
     handleAttackFromSource(a.caster);   // DamageHealthFromSource's tail, wave 31
   } else if (a.kind === 'continuousDamageSpellPoints') {
     const n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls);
@@ -1428,7 +1421,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     //
     // The "until attacked" half already exists here - every foe damage
     // door re-hostiles a pacified target (MakeEnemyHostileToAttacker),
-    // which enemyMotor.js:420 has anticipated by name since the
+    // which enemyMotor.js:422 has anticipated by name since the
     // C-slice.
     //
     // Chance-only, no magnitude, TargetFlags_Other - so it takes the

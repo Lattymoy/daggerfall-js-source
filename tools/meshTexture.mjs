@@ -46,6 +46,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { writePng } from './pngIO.mjs';
+import { isMain } from './lib/isMain.mjs';
 
 // ── the palette, along the gun ───────────────────────────────────────
 //
@@ -464,7 +465,7 @@ export function mipChain(top) {
   return levels;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
   const opt = (k, d = null) => args.find((a) => a.startsWith(`--${k}=`))?.split('=').slice(1).join('=') ?? d;
   const files = args.filter((a) => !a.startsWith('--'));

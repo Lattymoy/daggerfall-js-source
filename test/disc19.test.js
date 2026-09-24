@@ -431,7 +431,7 @@ test('DISC19-D: every module the dungeon\'s foe subsystem loads lazily is one th
   const at = dc.indexOf('if (opts.foes && palette) {');
   const block = dc.slice(at, dc.indexOf('} catch (err) {', at));
   const lazy = [...block.matchAll(/import\('(\.[^']+)'\)/g)].map((m) => resolve(SRC_ROOT, 'scenes', m[1]));
-  assert.ok(at > 0 && lazy.length >= 8, `the foe block's lazy imports were found (${lazy.length})`);
+  assert.ok(at > 0 && lazy.length >= 7, `the foe block's lazy imports were found (${lazy.length})`);   // 7 since AUDIT 68 dropped the dead rig's shared/engineRig/raceCharacter imports
   const held = staticClosure('scenes/world.js');
   const lazyOnly = lazy.filter((p) => !held.has(p)).map((p) => p.slice(SRC_ROOT.length + 1));
   assert.deepEqual(lazyOnly, [], 'a lazy-only chunk in the foe block is a dungeon of flats after the next deploy');
