@@ -3130,3 +3130,16 @@ Mac: "Add a dueling K/D to the profile menu and player inspect profile", kept pe
 - **The client** (`src/net/accountClient.js accountDuels`): the loss and the ask go only with a stored session, the
   bearer in the header. `src/net/duelRecord.js` says a record ("3 won, 1 lost (K/D 3.00)"; no losses reads the wins)
   and keeps the Inspect card's reads a minute. The main menu's account card has a Duels row.
+
+## DEV2 — two more developers (2026-09-24)
+
+Mac: "Give trashBattery, LostMyLeg the developer title/glyph".
+
+- `server-account/wrangler.toml` now reads `DEVELOPER_HANDLES = "Lattymoy,trashBattery,LostMyLeg"`. The list is
+  case-folded (`titles.js handleList`), so either spelling of a handle matches.
+- The list grants the whole developer set, not the badge alone: the Developer title (held, and wearable), the red `dev`
+  glyph, RED1's /red (the relay reads the glyph off the signed token), MOD1's /mute and /unmute (`canModerate` is a
+  moderator OR a developer), and protection from being muted.
+- It reaches each player on their next token, after the account worker deploys. Nothing else changes, and no
+  migration runs.
+- Pinned in `test/titlen.test.js`: the list's value, and that both handles hold the title and the glyph in any case.
