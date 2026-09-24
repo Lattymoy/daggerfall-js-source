@@ -39,7 +39,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { call, forgetSession, handleShapeOk } from './accountClient.js';
 import { letterWords, LETTER_ID_RE, LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTERS_INBOX_MAX } from './letterLaw.js';
-import { agoText } from './social.js';   // AUDIT 68 S14-ago-text-duplicated: the friends list's own ladder, not a copy of it
+import { agoLadder } from './social.js';   // AUDIT 68 S14-ago-text-duplicated: the friends list's own ladder, not a copy of it
 
 /** How often the host looks at the box while the game runs. */
 export const MAIL_POLL_MS = 3 * 60 * 1000;
@@ -84,9 +84,9 @@ export function letterWhole(l) {
   return head && body ? { ...head, body, read: true } : null;
 }
 
-/** How long ago a letter was sent, in the friends list's own manner (net/social.js agoText). */
+/** How long ago a letter was sent, in the friends list's own manner (net/social.js agoLadder). */
 export function letterAgeText(sentAtS, nowMs) {
-  return agoText(nowMs - sentAtS * 1000);
+  return agoLadder(nowMs - sentAtS * 1000);
 }
 
 /** A reply's subject: "Re: " once, however many times the letter has gone back and forth, within the bound. */

@@ -319,13 +319,13 @@ export class SocialState {
 export function lastOnlineText(online, seen, now) {
   if (online) return 'Online';
   if (!Number.isFinite(seen) || seen == null) return 'Never online';
-  return `Last online ${agoText(now - seen)}`;
+  return `Last online ${agoLadder(now - seen)}`;
 }
 
 /** How long `ms` is, as a row says it: "just now", "5 min ago", "3 h ago", "yesterday", "2 days ago", "3 weeks ago",
  *  "long ago" past a year; a negative span (clocks apart) is "just now". AUDIT 68 S14-ago-text-duplicated: the ONE
  *  ladder - the friends list's and the letterbox's (net/mail.js letterAgeText) were two copies of it. */
-export function agoText(ms) {
+export function agoLadder(ms) {
   const ago = Math.max(0, ms);
   const min = 60_000, hour = 60 * min, day = 24 * hour, week = 7 * day;
   if (ago < min) return 'just now';
