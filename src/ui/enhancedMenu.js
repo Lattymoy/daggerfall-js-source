@@ -3471,6 +3471,7 @@ export function mountEnhancedMenu(host, {
   onAction = handler;
   mode = m === 'pause' ? 'pause' : 'boot';
   hooks = h ?? {};
+  questRepairSaid = null;   // QREPAIR: a repair's line is that visit's
   // MAC1 (Mac, 2026-09-10: "after exiting game and then going back to
   // enhanced settings, the Build and Switch Arms options are gone and
   // require me to reattach the files"). The Morrowind store is COUNTED
@@ -3501,7 +3502,6 @@ export function mountEnhancedMenu(host, {
   // is a fresh visit. The armed Delete goes with it, because an armed
   // destructive button must never outlive the screen it was armed on.
   cloudAsked = false;
-  questRepairSaid = null;   // QREPAIR: a repair's line is that visit's
   cloudArm = null;
   sections = mode === 'pause' ? SECTIONS_PAUSE : isEnhanced() ? SECTIONS_BOOT : SECTIONS_CLASSIC;   // FD1: one door, two rails
   // WHICH PANE OPENS. Both doors open on the PIXEL HOME (PX1/PX2) -
