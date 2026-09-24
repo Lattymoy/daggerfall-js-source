@@ -16,13 +16,15 @@
 import { GLOBAL_SCALE, RAY_DISTANCE, pickActivatableHit } from '../player/activate.js';
 import { localAabb, transformedAabb } from '../render/frustum.js';
 import { multiply } from '../world/mat4.js';
-import { mat4FromQuatPos, mat4FromQuatPosScale, quatAngleAxis, quatLookRotation, quatSlerp, UNITY_QUAT_IDENTITY } from '../world/quat.js';
+import { mat4FromQuatPos, mat4FromQuatPosScale, quatAngleAxis, quatLookRotation, quatSlerp, quatForward, UNITY_QUAT_IDENTITY } from '../world/quat.js';
 import { buildWagonParts, usableBounds, CARGO_DEFINITIONS, cargoPiecesShown } from '../systems/wagon41214.js';
 import {
   WAGON_MODEL_ID, HORSE_VIEWS, HORSE_WALK_FRAMES, HORSE_SPRITE_WIDTH, HORSE_SPRITE_HEIGHT, HORSE_WALK_SPRITE_HEIGHT,
   calculateHorseOrientation, horseViewFor, horseTargetLabel, ACTIVATION_REACH, HORSE_BOX_CENTER, HORSE_BOX_SIZE,
   stepHorseWalk, freshHorseWalk, START_WALKING_SPEED, WAGON_MODE, HORSE_MODE,
+  pickGround, STATIONARY_PROBE_HEIGHT, STATIONARY_PROBE_DISTANCE, GROUND_RETRY_SECONDS,   // DISC20-C: a peer's standing team, stood on my ground
 } from '../systems/horseCartLaw.js';
+import { DeployedWagonVisual } from '../systems/horseCart.js';   // DISC20-C: the mod's own two-wheel solve, for a peer's parked wagon
 import { PARK_REACH, PARK_TTL_MS } from '../net/wire.js';   // HCC-PARK: how far a kept team's parts may stand from its anchor, and how long the relay keeps one
 import { WAGON_HOVER_TEXT } from '../player/eotbWagon.js';   // the hover word for a wagon - the noun of Eye Of The Beholder's Info line, so both carts read alike
 import { hccWireRecord, validHccRecord, hccRecordKey, easeToward, HCC_WIRE_KIND } from '../systems/horseCartWire.js';
@@ -120,7 +122,8 @@ export function createHorseCartPool({
   // the billboards: mine and the peers'
   const _horseBatches = new Map();   // owner ('' mine) -> batch
   // the peers: owner -> { wire: { w, h } (the validated record, WIRE frame), toScene, wagon, horse (this frame's targets,
-  // SCENE frame), name, at, shownWagon, shownRotation, shownHorse, walk (the reader's own stride), bucketKey }
+  // SCENE frame), name, at, shownWagon, shownRotation, shownHorse, walk (the reader's own stride), bucketKey, ground
+  // (DISC20-C: where the word stands on my ground - groundPeer) }
   const _peers = new Map();
   const _live = new Map();   // HCC-PARK: owner -> their live word { w, h, n, toScene, at } (the foes frame's `hv`)
   const _kept = new Map();   // HCC-PARK: `${room}|${k}` -> a cell's kept word { room, k, id, w, h, n, name, expires, toScene, seq } (the relay's memory; AUDIT HCC-PARK: per ROOM and per owner KEY, so one cell's word never unsays another's)
@@ -270,6 +273,7 @@ export function createHorseCartPool({
     if (s?.deployed && _parts && s.wagon) standWagonCollider(wagonMatrix(s.wagon.position, s.wagon.rotation)); else standWagonCollider(null);
     if (s?.horse && _stillReady) { const b = horseBatch(''); if (b) poseHorseBatch(b, cameraPos, s.horse); } else dropHorseBatch('');
     for (const [owner, p] of _peers) {
+      groundPeer(owner, p);   // DISC20-C: a parked wagon and a standing horse, on MY ground
       retarget(p);   // AUDIT HCC O1: the wire frame, converted THIS frame - a rebase or a re-anchor of mine moves nothing of theirs
       if (p.horse) {
         const was = p.shownHorse;
@@ -370,7 +374,11 @@ export function createHorseCartPool({
     for (const p of _peers.values()) {
       for (const v of [p.shownHorse, p.shownWagon]) if (v) { v[0] += offset[0]; v[1] += offset[1]; v[2] += offset[2]; }
     }
-    _bucketKey = null;   // the collider box stands again at the shifted pose on the next frame
+    // the collider box stands again at the shifted pose on the next frame. DISC20-C: and the box that stood goes NOW -
+    // its matrix is the old frame's, and a crossing that also leaves the wagon's pixel shows no wagon to stand it
+    // again, which left it in the pixel entered, 819 m off: a wall no one could see
+    if (_bucketKey) collider()?.removeBucket?.(WAGON_BUCKET);
+    _bucketKey = null;
   }
   /** Every transition and every load: the peers' LIVE words go (their art with them, where the cell keeps nothing of
    *  theirs); the runtime keeps its own record (the mod's handlers). HCC-PARK: the kept records are the cell's and
@@ -395,6 +403,59 @@ export function createHorseCartPool({
   function retarget(p) {
     p.wagon = p.wire.w ? { ...p.wire.w, position: p.toScene(p.wire.w.position) } : null;
     p.horse = p.wire.h ? { ...p.wire.h, position: p.toScene(p.wire.h.position) } : null;
+    const g = p.ground;   // DISC20-C: where this word stands on my ground, as a delta off it
+    if (!g || g.wire !== p.wire) return;
+    if (p.wagon && g.dw) { const q = p.wagon.position; p.wagon.position = [q[0] + g.dw[0], q[1] + g.dw[1], q[2] + g.dw[2]]; p.wagon.rotation = g.rot; }
+    if (p.horse && g.dh !== null) { const q = p.horse.position; p.horse.position = [q[0], q[1] + g.dh, q[2]]; }
+  }
+  /**
+   * DISC20-C (2026-09-24, Mac: "Horse and carts can be seen parked in the sky"): A PEER'S STANDING TEAM, ON MY
+   * GROUND. A word carries the height its OWNER's client stood the team at - the owner's ground, never re-read on
+   * mine. The one place the two part by much is a word older than the ground: the relay keeps a parked team for 72
+   * hours (HCC-PARK, an identical word refreshing it), and TERRAIN-SCALE1 lowered every ground from the prefab's 1.5
+   * to the game scene's 1.25 four hours after HCC-PARK shipped - re-standing the heights a save, a scene cache and an
+   * anchor carry, and not this one. Every team kept from before it, and every word from a tab still on the old build,
+   * stood a fifth of the ground's height up: 20 m over 100 m of ground, 60 m over 300. (World of Daggerfall's levelled
+   * sites and Basic Roads' smoothing, on for one player and off for the other, part them the same way, by less.)
+   *
+   * So a PARKED wagon and a STANDING horse are stood on my ground by the mod's own law - the wagon by its two-wheel
+   * solve (DeployedWagonVisual, the owner's heading), the horse by the stationary probe - once per word, from 1000 m
+   * over to 3000 m down, the surface nearest the word's height kept, the owner's box and mine left out of the ray (a
+   * re-stand must not land on the box it stood). Kept as a delta off the word, so my floating origin and a re-anchor
+   * carry it; a word my ground is not under yet stands as said and tries again in GROUND_RETRY_SECONDS, and a pixel
+   * built under it asks again at once (groundMoved). A moving team is its owner's live word and stands as said.
+   */
+  function groundPeer(owner, p) {
+    let g = p.ground;
+    if (!g || g.wire !== p.wire) g = p.ground = { wire: p.wire, dw: null, rot: null, dh: null, due: 0 };
+    if (g.due === null || now() < g.due) return;   // stood, or waiting out its retry
+    const col = collider();
+    const skip = [WAGON_BUCKET, peerWagonBucket(owner)];
+    const phys = { raycastAll: (o, d, m) => raycastAllOver(col, o, d, m, skip), log: null };
+    let missing = false;
+    const w = p.wire.w;
+    if (w?.kind === HCC_WIRE_KIND.Deployed && !g.dw) {
+      const at = p.toScene(w.position);
+      const v = _parts ? new DeployedWagonVisual(_parts, at, quatForward(w.rotation), 0, 1, phys, 0) : null;   // the pivots need the mesh
+      if (v?.isGrounded) { g.dw = [v.position[0] - at[0], v.position[1] - at[1], v.position[2] - at[2]]; g.rot = v.rotation; } else missing = true;
+    }
+    const h = p.wire.h;
+    if (h && !h.walking && g.dh === null) {
+      const at = p.toScene(h.position);
+      const best = pickGround(phys.raycastAll([at[0], at[1] + STATIONARY_PROBE_HEIGHT, at[2]], [0, -1, 0], STATIONARY_PROBE_DISTANCE), at[1]);
+      if (best) g.dh = best.point[1] - at[1]; else missing = true;
+    }
+    g.due = missing ? now() + GROUND_RETRY_SECONDS : null;
+  }
+  /** DISC20-C: the ground in [x0, x1] x [z0, z1] (scene metres) was built again - a pixel streamed in, the road
+   *  network or a late World of Daggerfall pack rebuilding one. What stands on it stands again on what is there now:
+   *  my parked wagon and waiting horse (the mod grounds them once - its terrain never changes under a scene - and the
+   *  port's can) and every peer's. A margin of a wagon's length, for a team astride the edge. */
+  function groundMoved(x0, z0, x1, z1) {
+    const M = 6;
+    const within = (q) => !!q && q[0] >= x0 - M && q[0] <= x1 + M && q[2] >= z0 - M && q[2] <= z1 + M;
+    runtime?.regroundStanding?.(within);
+    for (const p of _peers.values()) if (p.ground && (within(p.wagon?.position) || within(p.horse?.position))) p.ground = null;
   }
   /**
    * HCC-PARK: WHAT STANDS FOR A PEER. Two kinds of word, two kinds of display. An owner's LIVE word (`hv` on their
@@ -410,7 +471,7 @@ export function createHorseCartPool({
   function showPeer(key, v) {
     if (!enabled || !v || (!v.w && !v.h)) { if (_peers.has(key)) dropPeer(key); return; }
     let p = _peers.get(key);
-    if (!p) { p = { wire: null, toScene: null, wagon: null, horse: null, name: '', ownerId: null, ownerName: '', at: 0, kept: false, shownWagon: null, shownHorse: null, shownRotation: null, walk: freshHorseWalk(), bucketKey: null }; _peers.set(key, p); }
+    if (!p) { p = { wire: null, toScene: null, wagon: null, horse: null, name: '', ownerId: null, ownerName: '', at: 0, kept: false, shownWagon: null, shownHorse: null, shownRotation: null, walk: freshHorseWalk(), bucketKey: null, ground: null }; _peers.set(key, p); }
     p.wire = { w: v.w, h: v.h };
     p.toScene = v.toScene ?? ((q) => q);
     p.at = v.at ?? p.at;
@@ -536,7 +597,7 @@ export function createHorseCartPool({
     get runtime() { return runtime; },
     presentation: { wagonParts, horseArt, onChanged: () => onChanged?.() },
     phys,
-    frame, batches, draw, targets, hoverName, tooltipText, activate, offsetAll, destroyAll, clearPeers, shown,
+    frame, batches, draw, targets, hoverName, tooltipText, activate, offsetAll, destroyAll, clearPeers, shown, groundMoved,
     wireRecord, applyOwner, sweepOwners, applyKept, replaceKept, pruneKept, parkWord,
     get peers() { return _peers; }, get kept() { return _kept; }, get parts() { return _parts; },
   };
