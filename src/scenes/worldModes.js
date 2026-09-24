@@ -6545,7 +6545,6 @@ export function createWorldModes(host) {
    *  rig after the mode (HARD2c's one home). One line at the read: WORLD1's pin windows the exit's head. */
   const dungeonPose = () => weaponPoseOf(dungeonCtx?.weaponRig?.()?.playerWeapon ?? null);
   function exitDungeonNow() {
-    pendingDungeonWagonOpen = false;   // DISC21-B: a Yes pending is this dungeon's, never the next one's
     unleveledLootPreTransition();   // UL1: OnPreTransition (TransitionDungeonExterior) - and NO OnTransitionExterior here, bug for bug
     // Verbatim PositionPlayerToDungeonExit; the camera faces the normal.
     const landing = dungeonEntranceLanding(dungeonReturn.candidates.map((e) => e.door));
@@ -6555,6 +6554,7 @@ export function createWorldModes(host) {
     dungeonCtx.destroy();
     dungeonCtx = null;
     dungeonLoc = null;
+    pendingDungeonWagonOpen = false;   // DISC21-B: a Yes pending was this dungeon's, never the next one's
     host.horseCart?.()?.handleExteriorTransition();   // HCC: OnTransitionExterior / OnTransitionDungeonExterior [IL_9ae4] - the interior access closes, the following horse resumes
     setMode('exterior');
     host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change
@@ -9525,11 +9525,11 @@ export function createWorldModes(host) {
         _insidePartyRestExempt = false;   // TAVERN-REST1/GUILD-REST1: cleared on the same teleport/load arm as the tavern latch above
       }
       if (dungeonCtx) {
-        pendingDungeonWagonOpen = false;   // DISC21-B: nor a loaded or teleported player's next dungeon's
         host.onDungeonLeave?.();   // WORLD1: a load or a teleport out is a leave too
         teardownDungeonQuestFlats();
         dungeonCtx.overlayWindow?.()?.dispose?.();   // the same OnPop, for the dungeon context's own slot
         dungeonCtx.destroy(); dungeonCtx = null; dungeonLoc = null;
+        pendingDungeonWagonOpen = false;   // DISC21-B: nor a loaded or teleported player's next dungeon's
       }
       player.collider = baseCollider();
       host.horseCart?.()?.handleExteriorTransition();   // HCC: a load or a teleport out is an exterior transition too

@@ -101,7 +101,7 @@
   {
     "name": "DISC21-B-a-pending-yes-outlives-the-exit",
     "file": "src/scenes/worldModes.js",
-    "old": "    pendingDungeonWagonOpen = false;   // DISC21-B: a Yes pending is this dungeon's, never the next one's\n",
+    "old": "    pendingDungeonWagonOpen = false;   // DISC21-B: a Yes pending was this dungeon's, never the next one's\n",
     "new": "",
     "tests": [
       "test/disc21.test.js"

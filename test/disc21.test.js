@@ -116,8 +116,9 @@ test('DISC21-B: the exit door\'s wagon prompt - Yes is taken a frame later, once
   assert.match(fn, /onYes: \(\) => \{ pendingDungeonWagonOpen = true; return null; \}/);
   assert.doesNotMatch(fn, /onYes: \(\) => \{ dungeonCtx\.openInventoryWithWagon\(\)/, 'never inside the box\'s click');
   assert.match(wm, /if \(pendingDungeonExit\) \{ pendingDungeonExit = false; exitDungeonNow\(\); return true; \}[^\n]*\n\s+if \(pendingDungeonWagonOpen\) \{ pendingDungeonWagonOpen = false; dungeonCtx\.openInventoryWithWagon\(\); \}/);
-  assert.match(wm, /function exitDungeonNow\(\) \{\s+pendingDungeonWagonOpen = false;/, 'a Yes pending is this dungeon\'s alone');
-  assert.match(wm, /if \(dungeonCtx\) \{\s+pendingDungeonWagonOpen = false;\s+[^\n]*\n\s+host\.onDungeonLeave\?\.\(\);   \/\/ WORLD1: a load or a teleport out is a leave too/, 'nor a load\'s or a teleport\'s next dungeon\'s');
+  const exit = wm.slice(wm.indexOf('function exitDungeonNow() {'), wm.indexOf('function exitDungeonNow() {') + 1400);
+  assert.match(exit, /dungeonCtx\.destroy\(\);\s+dungeonCtx = null;\s+dungeonLoc = null;\s+pendingDungeonWagonOpen = false;/, 'a Yes pending is this dungeon\'s alone');
+  assert.match(wm, /host\.onDungeonLeave\?\.\(\);   \/\/ WORLD1: a load or a teleport out is a leave too[\s\S]{0,400}?dungeonCtx\.destroy\(\); dungeonCtx = null; dungeonLoc = null;\s+pendingDungeonWagonOpen = false;/, 'nor a load\'s or a teleport\'s next dungeon\'s');
   // ...and the three lines the slot model above stands for are the context's own
   const ctx = rd('src/scenes/dungeonContext.js');
   assert.match(ctx, /openInventoryWithWagon\(\) \{\s+if \(activeOverlay\) return false;/, 'the open refuses a held slot');

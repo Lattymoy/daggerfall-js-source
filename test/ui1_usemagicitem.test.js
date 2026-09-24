@@ -81,7 +81,8 @@ test('UI1: the door exists in all three player hosts and routes through the port
   // potion the window's Use button drinks, so its hooks are this same object
   // with the three the window adds at its own call site.
   assert.equal((world.match(/\.\.\.useHooks,/g) ?? []).length, 3, 'every reader takes the ONE bag');
-  assert.match(world, /const quickslotHooks = \(\) => \(\{\s*\n\s*\.\.\.useHooks,/, 'QS2\'s reader included');
+  // DISC21-C: the bag takes the rig in the player's hands
+  assert.match(world, /const quickslotHooks = \((?:rig = weaponRig)?\) => \(\{\s*\n\s*\.\.\.useHooks,/, 'QS2\'s reader included');
   assert.match(world, /useMagicItem: \(item\) => useMagicItem\(item\),/, 'lent to worldModes');
   assert.match(read('src/scenes/worldModes.js'), /useMagicItem: \(item\) => host\.useMagicItem\?\.\(item\),/, 'and on to the dungeon ctx');
   assert.match(read('src/scenes/dungeonContext.js'), /onUse: \(item\) => opts\.useMagicItem\?\.\(item\),/);
