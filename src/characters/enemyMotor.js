@@ -1853,4 +1853,19 @@ export class EnemyAI {
     this._acc = 0; this.knockbackSpeed = 0; this.hurtKnock = false; this.moving = false;
     this._restGrounded = false;   // AUDIT WORLD2 B12: a foe that takes the seat standing still re-grounds on its first step, not its first move
   }
+
+  /** AUDIT 68 S20-offset-ai-memory: the floating-origin recenter moves every WORLD position the motor holds, not the
+   *  feet alone. The fall anchor is DFU's own (FloatingOrigin.cs:128-130 -> EnemyMotor.AdjustLastGrounded, :235-238);
+   *  the pursuit memory is a departure (EnemySenses hears no OnPositionUpdate), else a foe hunting out of sight walks
+   *  819.2 m the wrong way. Aliases (predictedTargetPos IS lastKnownTargetPos, destination may BE detourDestination)
+   *  move once. */
+  offsetOrigin(offset) {
+    const moved = new Set();
+    for (const p of [this.feet, this.destination, this.detourDestination, this.lastKnownTargetPos, this.oldLastKnownTargetPos, this.predictedTargetPos, this._predictedTargetPosWithoutLead]) {
+      if (!p || moved.has(p)) continue;
+      moved.add(p);
+      p[0] += offset[0]; p[1] += offset[1]; p[2] += offset[2];
+    }
+    this.lastGroundedY += offset[1];
+  }
 }

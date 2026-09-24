@@ -5804,6 +5804,7 @@ export function createWorldModes(host) {
           const _hooks = droppedLootHooks(pile);   // G5
           // QUICK-LOOT B4: the same door, on the player's own pile.
           if (!quickLootTake(key, _hooks, playerEntity, (l) => say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) mountInterior(interiorInventory({ loot: _hooks }));   // AUDIT QL-WEIGHT1
+          else interiorDropped.releaseEmptied();   // AUDIT 68 S20-frame-return-kills-loop: the take is its own window close (the world hosts' law)
         }
         return true;
       }

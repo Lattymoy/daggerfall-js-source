@@ -4258,7 +4258,6 @@ export async function bootExterior(canvas, renderer, params, status) {
       return person;
     },
   });
-  let _lastPlayerPos = null, _playerStill = false;
 
   const lightAnimator = new CityLightAnimator(cityLights.length, CITY_LIGHT_RANGE);
   // WOD4: the Hold's FireLights burn at every hour, each in its own
@@ -4846,16 +4845,19 @@ export async function bootExterior(canvas, renderer, params, status) {
             const pile = droppedLoot.pileFor(dropKey);
             const _hooks = droppedLootHooks(pile);
             // QUICK-LOOT B4: the same door, on the player's own pile.
-            if (quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine?.getQuest?.(uid) ?? null })) return;   // AUDIT QL-WEIGHT1
-            const w = makeInventoryWindow({
-              // U53: THE HOST'S OWN FACTORY, not a twelfth copy of it.
-              // This arm hand-rolled the window with the SAME eleven hooks
-              // makeInventoryWindow already passes, plus the two below -
-              // which is precisely what its `extra` parameter is for.
-              onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
-              loot: _hooks,   // G5: DaggerfallLoot's own identity
-            });
-            if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
+            // AUDIT 68 S20-frame-return-kills-loop: a branch - a return here left frame() with no next frame queued; the take is its own window close
+            if (quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine?.getQuest?.(uid) ?? null })) droppedLoot.releaseEmptied();   // AUDIT QL-WEIGHT1
+            else {
+              const w = makeInventoryWindow({
+                // U53: THE HOST'S OWN FACTORY, not a twelfth copy of it.
+                // This arm hand-rolled the window with the SAME eleven hooks
+                // makeInventoryWindow already passes, plus the two below -
+                // which is precisely what its `extra` parameter is for.
+                onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
+                loot: _hooks,   // G5: DaggerfallLoot's own identity
+              });
+              if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
+            }
           }
           else modes.tryEnter().then((opened) => {
             // GRAVE1: same law as world.js's twin - an activation that
@@ -5288,9 +5290,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // MAC1: PlayerMotor.IsStandingStill is the motor's `standing` (see
       // world.js's note) - the camera's frame-to-frame position carries
       // the settling head bob and flickered a stopped walker's gate.
-      _playerStill = walkMode ? !!player.standing : (_lastPlayerPos !== null &&
-        Math.hypot(cam.pos[0] - _lastPlayerPos[0], cam.pos[2] - _lastPlayerPos[2]) < 0.001);
-      _lastPlayerPos = [cam.pos[0], cam.pos[1], cam.pos[2]];
+      const _playerStill = !!player.standing;
       // audit 2026-08-17: DFU pauses the sim under UI windows - the
       // population freezes (dt 0 still returns frames for drawing)
       // while the talk overlay is up, so nobody walks away mid-talk.

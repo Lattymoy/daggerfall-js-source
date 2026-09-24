@@ -13364,16 +13364,19 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
               const _hooks = droppedLootHooks(pile);
               // QUICK-LOOT B4: the same door, on the player's own pile -
               // the hooks this arm was already building for the window.
-              if (quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) return;   // AUDIT QL-WEIGHT1
-              const w = makeInventoryWindow({
-                // U53: THE HOST'S OWN FACTORY, not a twelfth copy of it.
-                // This arm hand-rolled the window with the SAME eleven hooks
-                // makeInventoryWindow already passes, plus the two below -
-                // which is precisely what its `extra` parameter is for.
-                onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
-                loot: _hooks,   // G5: DaggerfallLoot's own identity
-              });
-              if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
+              // AUDIT 68 S20-frame-return-kills-loop: a branch - a return here left frame() with no next frame queued; the take is its own window close
+              if (quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) droppedLoot.releaseEmptied();   // AUDIT QL-WEIGHT1
+              else {
+                const w = makeInventoryWindow({
+                  // U53: THE HOST'S OWN FACTORY, not a twelfth copy of it.
+                  // This arm hand-rolled the window with the SAME eleven hooks
+                  // makeInventoryWindow already passes, plus the two below -
+                  // which is precisely what its `extra` parameter is for.
+                  onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
+                  loot: _hooks,   // G5: DaggerfallLoot's own identity
+                });
+                if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
+              }
             }
             else modes.tryEnter().then((opened) => {
               // GRAVE1: an activation that hit NOTHING - no door either -

@@ -552,7 +552,7 @@ test('ROAD-G G2 review: the encounter pool\'s frame seams - the tick, the draw, 
     '      droppedLoot.tickFlats(dt);');
   assert.ok(frame.includes('exteriorFoes.update(dt,'),
     'the mounted pool DRIVES on the frame (WINFOE1, 2026-09-17: and no longer freezes under a window - the civilians still do)');
-  assert.ok(frame.includes('const popDt = townTalk.overlayActive ? 0 : dt;') || slice('      _lastPlayerPos = [cam.pos[0], cam.pos[1], cam.pos[2]];', '      const live = ').includes('townTalk.overlayActive ? 0 : dt'),
+  assert.ok(frame.includes('const popDt = townTalk.overlayActive ? 0 : dt;') || slice('      const _playerStill = !!player.standing;', '      const live = ').includes('townTalk.overlayActive ? 0 : dt'),
     'WINFOE1: the population (the civilians) still freezes under the talk overlay - nobody walks away mid-talk');
   assert.ok(frame.includes('personBatches.push(...exteriorFoes.batches());'),
     '...and DRAWS on the same flats\' axis the watch does');

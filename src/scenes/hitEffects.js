@@ -139,7 +139,8 @@ export function createHitEffects({
     getTexture(archive).then((t) => {
       // the pool can be cleared while the archive warms (a scene torn
       // down, a pixel evicted) - the corpse mint's lesson, same shape
-      if (entry.dead || !t) return;
+      if (entry.dead) return;
+      if (!t) { retire(entry); return; }   // AUDIT 68 S20-hiteffects-warm-leak: no art, nothing to draw or end on - it leaves the live list
       if (t.recordCount != null && record >= t.recordCount) { retire(entry); return; }
       const frameCount = t.getFrameCount?.(record) ?? 1;
       for (let f = 0; f < frameCount; f++) uploadRecordFrame(archive, record, f);
@@ -201,7 +202,7 @@ export function createHitEffects({
       // FIELD-GUN14: a flat that arrived mid-flight takes the position
       // it is at NOW, not the one it was asked for a frame ago.
       if (tracked) entry.batch.origin = [entry.at[0] - entry.pos[0], entry.at[1] - entry.pos[1], entry.at[2] - entry.pos[2]];
-    }).catch(() => {});
+    }).catch(() => { if (!entry.batch) retire(entry); });   // AUDIT 68 S20-hiteffects-warm-leak: a failed warm (the archive's rejection is cached) left a batchless entry tick() skips for ever
     return entry;
   }
 

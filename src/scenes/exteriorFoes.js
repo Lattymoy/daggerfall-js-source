@@ -152,7 +152,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // here until the record exists; `feet` is repointed at the AI's own
   // array as soon as there is one, because EnemyAI COPIES the position
   // it is handed.
-  const spawning = [];    // { feet }
+  const spawning = [];    // { feet, capped }
   // AUDIT-39r: THE SWEEP'S EPOCH. clearLive below is
   // CleanupUntrackedObjects, but emptying an array cannot reach work
   // that is still crossing an await - a spawn or a corpse mint in
@@ -228,10 +228,14 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // it (null: nothing within 3); the drop needs the capsule the sprite
   // sizes, so it lands once the sprite has.
   async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null, allied = false, feetGiven = false, replacing = false, puppet = null, seq = null, level = null, placed = false, groundAlign = null, site = null } = {}) {
-    if (!questBehaviour && !replacing && !puppet && !placed && activeCount() >= MAX_ACTIVE_ENCOUNTER_FOES) return null;   // WORLD6b: a puppet is not this cap's
+    const capped = !questBehaviour && !replacing && !puppet && !placed;   // WORLD6b: a puppet is not this cap's
+    // AUDIT 68 S20-encounter-cap-race: a capped spawn still crossing its awaits holds its slot - a camp's members all
+    // start in one synchronous loop, and each saw the count from before any of them landed
+    if (capped && activeCount() + spawning.filter((s) => s.capped).length >= MAX_ACTIVE_ENCOUNTER_FOES) return null;
     const basics = ENEMY_BASICS[mobileType];
     if (!basics || !basics.maleTexture) return null;
     const pending = { feet: [pos[0], pos[1] + (feetGiven || groundAlign ? 0 : 0.1), pos[2]] };   // AUDIT 39: shifted by offsetAll until the record lands. REVIEW 2026-09-05: a restore hands back the exact saved feet (SerializableEnemy.cs:196) - a flyer never grounds, so the walker's lift would climb 0.1 per load
+    pending.capped = capped;
     spawning.push(pending);
     const gen = epoch;   // AUDIT-39r: the world this foe is being built for
     try {
@@ -553,6 +557,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   }
 
   function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false, kind = 'melee', peer = false, peerId = null } = {}) {
+    if (f.dead) return;   // AUDIT 68 S20-foe-dies-twice: a corpse takes no blow - a magic round after the killing one re-ran the whole death (notice, loot handlers, corpse)
     // WORLD6b: a PEER's blow (applyHit) is the dungeon door's law (WORLD2): no HUD mark and no reveal of this
     // player's - the striker's own rang at the striker
     if (!peer) {
@@ -1386,6 +1391,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     for (const c of corpseBatches) renderer.destroyBillboardBatch(c.batch);
     corpseBatches.length = 0;
     foes.length = 0;
+    for (const s of spawning) s.capped = false;   // AUDIT 68 S20-encounter-cap-race: a cancelled spawn holds no slot in the next world
     _owners.clear(); _pupPending.clear(); _pupIndex.clear();   // AUDIT WORLD6b C10: the teardown ends the owners' records too
     _onHccClear?.();   // AUDIT HCC O2: and the peers' teams with them - a fast travel's clearLive re-anchors the origin with no offset to ride
   }
@@ -1394,7 +1400,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   function offsetAll(offset) {
     for (const f of foes) {
       if (!f.ai) continue;
-      f.ai.feet[0] += offset[0]; f.ai.feet[1] += offset[1]; f.ai.feet[2] += offset[2];
+      f.ai.offsetOrigin(offset);   // AUDIT 68 S20-offset-ai-memory: the pursuit memory and the fall anchor with the feet
     }
     // AUDIT 39: the spawns still crossing their awaits move too.
     for (const s of spawning) { s.feet[0] += offset[0]; s.feet[1] += offset[1]; s.feet[2] += offset[2]; }

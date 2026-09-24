@@ -114,7 +114,6 @@ export function createHorseCartPool({
   const _cargoLoading = new Map();
   let _bucketKey = null;     // the pose the parked wagon's collider stands at
   // the horse art
-  const _still = new Array(HORSE_VIEWS).fill(null);   // view -> true once uploaded
   let _stillLoading = null, _stillReady = false, _stillFailed = false;
   let _walkLoading = null, _walkReady = false;
   // the billboards: mine and the peers'
@@ -160,7 +159,6 @@ export function createHorseCartPool({
     if (_stillFailed || _stillLoading || !renderer?.uploadTexture) return false;
     _stillLoading = Promise.all(Array.from({ length: HORSE_VIEWS }, (_, v) => fetchPng(horseStillFile(v)).then((px) => {
       renderer.uploadTexture(HORSE_ARCHIVE, horseStillRecord(v), px);
-      _still[v] = true;
     }))).then(() => { _stillReady = true; onChanged?.(); }).catch((e) => { _stillFailed = true; log?.error?.(`[TrailingWagon] the horse art would not load: ${e?.message ?? e}`); }).finally(() => { _stillLoading = null; });
     return false;
   }

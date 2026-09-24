@@ -605,6 +605,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  did not commit, and the watch responds to that crime, so the
    *  town turns on them for a rat's work. */
   function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false, peer = false } = {}) {
+    if (g.dead) return;   // AUDIT 68 S20-foe-dies-twice: a corpse takes no blow - a magic round after the killing one tallied a second Murder and minted a second body
     // AUDIT WATCH1 A4: a PEER's blow (WATCH1's net seam) is the encounter pool's peer law (AUDIT WORLD6b B2): no
     // reveal of this player's and no kill notice of this player's - the striker's own rang at the striker.
     if (damage > 0 && !peer) markConcealedHit(g, _ecvT);   // ECV1: a hit on an unseen watchman flashes him
@@ -1283,10 +1284,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  only ever manifested in ?world. */
   function offsetAll(offset) {
     const [dx, dy, dz] = offset;
-    for (const g of guards) {
-      if (g.ai?.feet) { g.ai.feet[0] += dx; g.ai.feet[1] += dy; g.ai.feet[2] += dz; }
-      if (g.ai?.knockbackDir) continue;   // a direction, not a position
-    }
+    for (const g of guards) g.ai.offsetOrigin(offset);   // AUDIT 68 S20-offset-ai-memory: the pursuit memory and the fall anchor with the feet
     // AUDIT-39r: the spawns still crossing their awaits move too - the
     // encounter pool's law, and this pool is recentred from the same
     // host frame (world.js's cityGuards/exteriorFoes offsetAll pair).
