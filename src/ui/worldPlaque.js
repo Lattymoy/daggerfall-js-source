@@ -448,7 +448,7 @@ export function worldHoverFrame({
   // opened (or the skin changed) cannot be pressed later by a click that never saw it
   if (!worldPlaqueOn()) { hideWorldPlaque(); return null; }   // (the hide folds the highlight away too: AUDIT DISC7 A8)
   // `cursorActive` is the crosshair's OWN first statement (there is no
-  // reticle while a window is up, hudCrosshair.js:114) and so it is the
+  // reticle while a window is up, hudCrosshair.js:117) and so it is the
   // plaque's. In the dungeon this was an accident of scheduling - the
   // driver only ran with no overlay up - and an accident is not a law.
   if (cursorActive || !eye || !dir || !collider) { foldQuickLoot(null); showWorldPlaque(null); return null; }

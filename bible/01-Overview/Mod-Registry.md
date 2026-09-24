@@ -4,7 +4,7 @@
 > left as it wrote them.** They were true of the fifteen rows that
 > existed on 2026-09-15 and they are the record of what putting those
 > rows side by side found. The live numbers are derived, not written:
-> `vendor/` holds 31 directories and 18 of their READMEs still carry an
+> `vendor/` holds 32 directories and 18 of their READMEs still carry an
 > unfilled permission line, each shown as `RECORD OPEN` in the table
 > (AUDIT BRANCH (WoD), 2026-09-23, counted them again after the merge
 > brought `horse-cart-and-cargo`, the twenty-seventh; WOD1 had counted 26
@@ -77,6 +77,7 @@ not the date the slice shipped, where those differ.
 | `better-ambience` | manifest, settings, all sixteen C# sources (carried inside the bundle as TextAssets), the author's MIT LICENSE, the 29 WAV clips the mod asks for (from the author's repository) | Joshua Steinhauer (joshcamas) | 0.1.4 | shipped `.dfmod` from the Nexus archive `BetterAmbience-139-0-1-5-1666071806` (labelled 0.1.5; the manifest inside says 0.1.4); behaviour off the SOURCES the bundle carries; the clips' FSB5 imports are undecodable here, so the repository's WAVs stand in | MIT (the repository's LICENSE); granted (Mac handed the archive over 2026-09-16) - **RECORD OPEN** | BA1 | 2026-09-16 | `06-Systems/Better-Ambience.md` |
 | `climates-calories` | manifest, the mod's item templates, sixteen item icons | Ralzar | 1.7.1 | shipped zip `Climates_and_Calories-49-1-7-1-1707751069`; the rules off the DLL's IL (`tools/ilDump.py`), then OVERHAULED, not ported | granted - an overhaul, relayed by Mac 2026-09-17 ("we have been given permission to completely overhaul this mod") | SURV1-SURV7 | 2026-09-18 | `06-Systems/Climates-Calories.md` |
 | `dfu-books` | data | Daggerfall Unity (Interkarma and contributors) | - | `Assets/Resources/books.txt` @ `81e89e90` | MIT | route (a) | 2026-08-20 | `10-UI/UI-Arc.md` |
+| `dfu-icons` | the sixteen interaction-mode icons (four sets x steal/grab/info/talk) | Daggerfall Unity (Interkarma and contributors) | - | `Assets/Resources/Icons` @ `2343305d` | MIT | HUD-ICON1 | 2026-09-24 | `01-Overview/Port-Ledger.md` |
 | `dfu-quests` | data | Daggerfall Unity (Interkarma and contributors) | - | `Assets/StreamingAssets/{Quests,Tables}` @ `81e89e90` | MIT | route (a) | 2026-08-20 | `06-Systems/Quest-Arc.md` |
 | `dfu-settings` | data | Daggerfall Unity (Interkarma and contributors) | - | `defaults.ini.txt` + `Text/GameSettings.txt` @ `81e89e90` | MIT | route (a) | 2026-08-20 | `10-UI/Settings-Screen-Spec.md` |
 | `dfu-text` | data | Daggerfall Unity (Interkarma and contributors) | - | `Text/Master Localization CSV Files/Internal_RSC.csv` @ `master`, fetched 2026-09-18 | MIT | route (a) | 2026-09-18 | `01-Overview/Mac-Bugs-U.md` |
