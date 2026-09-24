@@ -9375,7 +9375,7 @@ cited and ported somewhere in `src/`. FOUR were not:
 |---|---|---|
 | DaggerfallUseMagicItemWindow | 139 | **CLOSED, UI1** - see below |
 | DaggerfallMerchantServicePopupWindow | 175 | **CLOSED, UI2** - see below |
-| DaggerfallTransportWindow | 264 | OPEN, and it is a SYSTEM gap wearing a UI hat: `motor.js:627` reads `riding: false` with "the transport arc pends". The window is the last tenth of that arc, not a slice on its own |
+| DaggerfallTransportWindow | 264 | OPEN, and it is a SYSTEM gap wearing a UI hat: `motor.js:633` reads `riding: false` with "the transport arc pends". The window is the last tenth of that arc, not a slice on its own |
 | DaggerfallUnityMouseControlsWindow | - | NOT A GAP: DFU's own mouse-settings screen, and the port's settings surface (U29) carries those keys already |
 
 ### UI1 CLOSED: the use-magic-item window
@@ -9419,7 +9419,7 @@ the art-less fallback.
 ### What is left
 
 `DaggerfallTransportWindow` alone, and it wants its own arc: the window
-is trivial, `TransportManager` is not - `motor.js:627` reads
+is trivial, `TransportManager` is not - `motor.js:633` reads
 `riding: false` with "the transport arc pends". With UI1 and UI2
 closed, **58 of DFU's 60 real windows are ported**, and the 59th is a
 system's last tenth.
@@ -15652,7 +15652,7 @@ that through `InputManager` (:1084-1108, one poll a frame in
 `GetKeyDown` at all, so every consumer wrote its own out of the only
 read there was.
 
-`motor.js:1052` had already named this bug's twin from the other side:
+`motor.js:1058` had already named this bug's twin from the other side:
 "a render frame that accumulates less than one physics step swallowed
 the press" - the fix there moved `_heightAction` out of the fixed-step
 loop. The half that remained was the host's.
