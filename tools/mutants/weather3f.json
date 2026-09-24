@@ -24,7 +24,7 @@
  {"name": "WEATHER3f-arrival-only-on-change", "file": "src/systems/weatherSim.js",
   "old": "  if (how === 'jump' || away) _arrivals++;", "new": "  if (changed && (how === 'jump' || away)) _arrivals++;", "tests": ["test/weather3f_audit.test.js"]},
  {"name": "WEATHER3f-host-resets-on-word-only", "file": "src/scenes/exterior.js",
-  "old": "    if (jump || weatherArrivalStamp() !== seenArrival) distantStorms.reset();", "new": "    if (jump) distantStorms.reset();", "tests": ["test/weather3f_audit.test.js", "test/weather3d_distantstorms.test.js"]},
+  "old": "    if (jump || weatherArrivalStamp() !== seenArrival) { distantStorms.reset(); stormLights.reset(); }", "new": "    if (jump) { distantStorms.reset(); stormLights.reset(); }", "tests": ["test/weather3f_audit.test.js", "test/weather3d_distantstorms.test.js"]},
  {"name": "WEATHER3f-late-thunder-bursts", "file": "src/systems/distantStorms.js",
   "old": "        if (seconds - h.due <= THUNDER_LATE_SECONDS) sounds.push(h);", "new": "        sounds.push(h);", "tests": ["test/weather3f_audit.test.js"]},
  {"name": "WEATHER3f-indoors-old-place", "file": "src/systems/weatherSim.js",

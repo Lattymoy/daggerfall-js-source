@@ -5,6 +5,7 @@ this section owns renderer specifics.
 
 Current (`src/render/`) - one bullet per module, pinned against the real
 directory by `test/audit18_bible_docs.test.js`:
+- `lightningBolts.js` - BOLT: a ground strike's channel drawn as ribbons of light, never thinner than a line far away, past the far plane along its own sight line (systems/lightning.js the strike)
 - `renderer.js` - WebGL2, two programs: lit solid geometry (MVP, directional
   light 0.45 + 0.55*diffuse, alpha < 0.5 discard) and Y-locked billboards
   expanded in the vertex shader. EV5 added a SECOND directional term to

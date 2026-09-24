@@ -226,6 +226,7 @@ export class LightningPlayer {
     this._litHalf = false;
     this._on = false;
     this.lastClipClass = null; // 'short' | 'thunder' | 'roll' for audio
+    this.strikes = 0;          // BOLT: strikes so far - a host sees a new one land (systems/lightning.js localStrike)
   }
 
   _int(min, max) { // random.Next semantics: max exclusive
@@ -255,6 +256,7 @@ export class LightningPlayer {
       }
       this._slots = this._int(min, max);
       this._phase = 1;
+      this.strikes++;   // BOLT: counted, never drawn from the stream - DFU's schedule is untouched
       this._slotsDone = 0;
       this._litHalf = false;
       // StartWaiting() fires WITH PlayEffects (:150-151): the next wait
