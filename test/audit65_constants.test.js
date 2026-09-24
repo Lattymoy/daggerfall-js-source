@@ -74,7 +74,7 @@ const QUIET = (() => {
 
 /** The producer chain, end to end: chargen mints the skills array, the
  *  curse mints the racialOverride, and the MAGIC ROUND is what writes
- *  `entry.skillMods` (lycanthropy.js:239-240 - ApplyLycanthropeAdvantages
+ *  `entry.skillMods` (lycanthropy.js:242-243 - ApplyLycanthropeAdvantages
  *  re-applied every round, LycanthropyEffect.cs:566-584). Nothing here
  *  touches `entity.skills`, which is the whole point: the permanent
  *  array never moves, so a reader of it never sees the +30. */
@@ -251,9 +251,9 @@ test('AUDIT 65 CV-2: an enemy shaft meets the player at 0.45 + 0.35, two-sided, 
 test('AUDIT 65 CV-2: EVERY player-side capsule call carries the player body, at all five sites', () => {
   // The seam is five direct calls: hostMagic's AoE arm and its enemy
   // missile contact, dungeonContext's two enemy-missile player arms, and
-  // the shared ArrowFlight the three world hosts fly (world.js:289,
+  // the shared ArrowFlight the three world hosts fly (world.js:290,
   // exterior.js:37, worldModes.js:89; the dungeon runs its own loop and
-  // takes the shared player-arrow LAW at dungeonContext.js:81) - so
+  // takes the shared player-arrow LAW at dungeonContext.js:91) - so
   // worldModes.js and exterior.js hold no arrow contact of their own.
   // THE FOUR HOSTS RULE: the sweep is the WHOLE of src/, not a list of
   // three files, or a fifth host wiring its own contact escapes it.

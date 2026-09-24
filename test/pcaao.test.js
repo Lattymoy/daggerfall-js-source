@@ -104,12 +104,33 @@ test('PCO1: the hit\'s helpers - armour, adrenaline, stat diffs, skills, adjustm
   assert.equal(pcaaoAdjustmentsToHit(cls), -50);
 });
 
-test('PCO1: CalculateSuccessfulHit is NOT clamped - the C# computes Mathf.Clamp(3, 97) and throws it away', () => {
+test('PCO1 + DISC19-D: CalculateSuccessfulHit IS clamped to 3..97 - the C# computes Mathf.Clamp(3, 97) and throws it away, and the port applies it (Mac\'s call, 2026-09-24: a Vampire no build could hit)', () => {
   const p = mkPlayer(); const mon = monster(0);
-  assert.equal(pcaaoSuccessfulHit(p, mon, 300, 3, fixed(0.999), M), true, 'a 300 lands on a 99 roll');
-  assert.equal(pcaaoSuccessfulHit(p, mon, -300, 3, fixed(0.0), M), false, 'a -300 misses on a 0 roll');
+  assert.equal(pcaaoSuccessfulHit(p, mon, 300, 3, fixed(0.96), M), true, 'a 300 lands on a 96 roll');
+  assert.equal(pcaaoSuccessfulHit(p, mon, 300, 3, fixed(0.97), M), false, '...and misses on 97: three in a hundred miss, however certain');
+  assert.equal(pcaaoSuccessfulHit(p, mon, -300, 3, fixed(0.02), M), true, 'a -300 lands on a 2 roll');
+  assert.equal(pcaaoSuccessfulHit(p, mon, -300, 3, fixed(0.03), M), false, '...and misses on 3: three in a hundred land, however hopeless');
+  // both directions ride the one function: a monster's certain blow on the player misses three in a hundred too
+  assert.equal(pcaaoSuccessfulHit(mon, p, 300, 3, fixed(0.97), M), false);
+  assert.equal(pcaaoSuccessfulHit(mon, p, -300, 3, fixed(0.02), M), true);
   assert.deepEqual([...PCAAO_BODY_PARTS], [0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 5, 5, 5, 5, 6, 6], 'feet likelier than the head, legs than the hands');
   assert.equal(pcaaoStruckBodyPart(0), 0); assert.equal(pcaaoStruckBodyPart(0.99), 6);
+});
+
+test('DISC19-D (Mac\'s call, 2026-09-24): whole blows - a skill-30 character with a steel sword lands about three in a hundred on a Vampire and a Lich, where the mod as shipped landed none in two thousand', () => {
+  for (const id of [28, 32]) {   // Vampire, Lich
+    const mon = monster(id);
+    const p = mkPlayer({ skills: skillsAll(30) });
+    let seed = 7; const lcg = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return (seed % 10000) / 10000; };
+    let hits = 0;
+    for (let i = 0; i < 2000; i++) {
+      const sword = { group: 'Weapons', templateIndex: 120, material: 1, flags: 0, maxCondition: 1e9, currentCondition: 1e9, name: 'Longsword' };
+      const notes = { hit: false };
+      pcaaoAttackDamage(p, mon, { weapon: sword, rolls: lcg, dfRand: fixed(0), notes, modules: M });
+      if (notes.hit) hits++;
+    }
+    assert.ok(hits >= 30 && hits <= 90, `monster ${id}: ${hits} of 2000 landed - the floor's three in a hundred`);
+  }
 });
 
 test('PCO1: CriticalStrikeHandler - luck bends the divisor, the clamp is discarded', () => {

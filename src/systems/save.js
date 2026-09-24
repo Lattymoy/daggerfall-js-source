@@ -25,6 +25,7 @@ import { snapshotAutomap, restoreAutomap } from './automap.js';   // A1: dictAut
 import { createSceneCache, snapshotSceneCache, restoreSceneCache } from './sceneCache.js';   // P1
 import { seedCustomSpellIndex } from './spellMaker.js';   // S1: made spells carry their own record
 import { seedBundleSeq } from './effects.js';   // X10: the live-bundle counter's restore half
+import { repairLostCurses } from './curseRepair.js';   // CURSE-REPAIR1: a curse the round clock pruned, given back
 import { SOCIAL_GROUPS } from '../formats/factionFile.js';   // AUDIT 24
 import { travelMapSaveData, restoreTravelMapSaveData } from './travelMapState.js';   // U41: TravelMapSaveData
 import { getEscortFacesSaveData, restoreEscortFacesSaveData } from '../ui/hudEscortFaces.js';   // FE1: SaveData_v1.escortingFaces
@@ -574,7 +575,12 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // A save written by the exit autosave carries the poison that did it;
   // restoring the health alone loads the player straight back into the
   // same death, which is the loop from the other end.
-  if (isOnlinePage() && !((entity.health ?? 0) > 0)) reviveForPlay(entity);
+  // DISC19-C: DECIDED HERE, on the save's own health - and RUN below,
+  // once the save's effects and survival record are the entity's. Run
+  // here it ended the drains of the entity being REPLACED, and the lines
+  // below then restored the save's poison and exposure over the revival:
+  // the player loaded at half health, still poisoned, and died again.
+  const loadDeadOnline = isOnlinePage() && !((entity.health ?? 0) > 0);
   entity.stats = { ...snap.stats };
   entity.survival = snap.survival && typeof snap.survival === 'object' ? { ...snap.survival, notes: {} } : null;   // SURV1: a pre-SURV save starts fresh at the host's first tick
   // Pre-S15 saves carry no fatigue: default to rested (MaxFatigue =
@@ -664,14 +670,27 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // at its default, false. The port saved the push flag too, so a save
   // taken while the dream was up - its close never to come in the loaded
   // game - held the infection at `!dreamScheduled` for ever: no dream, so
-  // no turn. `deathScheduled` IS fakeDeathVideoPlayed, which DFU saves, and
-  // stays.
+  // no turn. `deathScheduled` IS fakeDeathVideoPlayed, which DFU saves -
+  // but DFU can never save under a video (GameManager.Update returns while
+  // the game is not playing), so its saved `true` always goes with a curse
+  // already deployed. The port's online exit autosave writes under the
+  // vampire's death video too (AUDIT DISC19), and a `true` on a live,
+  // undeployed infection is that frame: the close never comes in the
+  // loaded game, so the flag restores false and the video comes again.
   for (const a of entity.activeEffects) if (a.infection && !a.dreamPlayed) a.dreamScheduled = false;
+  for (const a of entity.activeEffects) if (a.infection && !a.deployed) a.deathScheduled = false;
+  // CURSE-PERSIST1: a save written before the curse and the infection carried `permanent` holds them with a null round
+  // budget (NaN, as JSON writes it), which the next tick read as spent and pruned - the flag is given at the one door old
+  // data comes in by, so tickActiveEffects keeps its one law and never learns these kinds by name.
+  for (const a of entity.activeEffects) if ((a.kind === 'racialOverride' || a.infection) && !a.permanent) a.permanent = true;
   // V2a: the racial override MARKER is a live reference into the list
   // just restored - rebuilt here, never serialized on its own, so the
   // marker and the entry can never disagree (the gates - a second
   // infection, the disease immunity - read the marker).
   entity.racialOverride = entity.activeEffects.find((a) => a.kind === 'racialOverride' && !a.ended) ?? null;
+  // DISC19-C: the revival decided above, now that the poison, the
+  // continuous damage and the exposure it ends are the save's own.
+  if (loadDeadOnline) reviveForPlay(entity);
   // X10: bundleId is a MODULE-scope monotonic counter, not saved
   // state - DFU has no counter to collide because its bundles are
   // object references re-instanced on load. A fresh process starts
@@ -808,6 +827,9 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
       + `${spellsByIndex ? '' : ' (SPELLS.STD not loaded yet)'} - HELD, not dropped:`, _pending);
   }
   seedCustomSpellIndex(entity.spells);
+  // CURSE-REPAIR1: after the spellbook AND the effect list (and the racial marker) are back - a tagged curse spell with no
+  // curse behind it is a curse the round clock pruned before CURSE-PERSIST1, given back at the save's own clock.
+  repairLostCurses(entity, { now: Math.floor(snap.classicMinutes ?? 0) });
   // T4: a load replaces the discovery store; a pre-T4 save carries no
   // field and restores an empty one (nothing was discoverable then).
   restoreDiscovery(snap.discovery);

@@ -834,6 +834,22 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'wildernessCamps', initial: true, online: 'player' }),
   }),
+  // DISC19-F (2026-09-24, Discord through Mac: "enhance guard
+  // interaction"): THE WATCH DEFENDS THE TOWN (systems/townWatch.js) -
+  // the port's own. DFU's combat watch exists only for a crime; this
+  // brings it, as the player's ally, when a monster hunts the player
+  // inside a town. Off is DFU's watch alone.
+  Object.freeze({
+    id: 'town-watch',
+    group: 'combat',
+    title: 'The watch defends the town',
+    note: 'When a monster hunts you inside a town and you are not wanted, the city watch comes to fight it on your side, '
+      + 'and walks away once the town is quiet. Commit a crime and they turn on you like any watch. Off keeps the classic '
+      + 'watch, which only ever comes for a crime.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'townWatch', initial: true, online: 'player' }),
+  }),
   // SURV2 (2026-09-18, Mac: "All on by default"): THE SURVIVAL ARC -
   // an overhaul of Ralzar's Climates & Calories (vendor/climates-
   // calories/README.md), not a port. The one switch for the whole of
