@@ -188,3 +188,16 @@ test('CITE-CS: a C# member, or a table cell\'s edge, ends a cite\'s region as a 
   assert.equal(out('world.js:10 falls back `a || b` (:12)'), 'world.js:11 falls back `a || b` (:13)');
   assert.deepEqual(regionStops('| a `world.js:1` | B.Cc (:2) |'), [0, 5, 17, 19, 29], 'the cite, the member and the cells\' edges, in order');
 });
+
+test('CITE-BUF: the git helper answers with the whole of the port\'s largest file - execFileSync\'s 1 MiB default made `git show` of scenes/world.js (1,057,642 bytes) throw, the new-file catch skipped the target, and every world.js cite went unmoved in a run that reported nothing wrong (mutants: the default buffer back; a buffer smaller than the biggest file)', async () => {
+  const { GIT_MAX_BUFFER } = await import('../tools/citeShift.mjs');
+  const { readFileSync: rf, statSync } = await import('node:fs');
+  const { execFileSync } = await import('node:child_process');
+  const root = new URL('..', import.meta.url);
+  const src = rf(new URL('tools/citeShift.mjs', root), 'utf8');
+  assert.match(src, /const git = \(\.\.\.args\) => execFileSync\('git', args, \{ cwd: ROOT, encoding: 'utf8', maxBuffer: GIT_MAX_BUFFER \}\);/, 'the helper carries the wide buffer');
+  const files = execFileSync('git', ['ls-files', 'src', 'bible', 'test', 'tools'], { cwd: root, encoding: 'utf8', maxBuffer: GIT_MAX_BUFFER }).split('\n').filter(Boolean);
+  const biggest = Math.max(...files.map((f) => { try { return statSync(new URL(f, root)).size; } catch { return 0; } }));
+  assert.ok(biggest > 1024 * 1024, 'the case is real: a tracked file is past the 1 MiB default');
+  assert.ok(GIT_MAX_BUFFER >= biggest * 16, `room for the largest file (${biggest} bytes) many times over`);
+});
