@@ -68,8 +68,8 @@ finding and the move.
 | `cloudQuality` | Cloud quality | default | **MOVED (FT7, 2026-09-14)** - Enhanced; its tiers pinned as the march table's own keys |
 | `enhancedWater` | Enhanced water | on | **MOVED (FT6, 2026-09-14)** - Enhanced; the switch's composition given one home first |
 | `enhancedCombatVisuals` | Enhanced combat visuals | on | **MOVED (FT8, 2026-09-14)** - Enhanced; the Settings category it emptied is off the rail (FT12) |
-| `mwArms` | (no switch - a load/unload button under Morrowind data) | off | open. Needs a real switch on the list |
-| `hudScale`, `showFps`, `textScale`, `skin`, `touch*`, `online*` | scattered | - | NOT features. Settings, and they stay in Settings |
+| `mwArms` | (no switch - a load/unload button under Morrowind data) | off | **RETIRED (MWA4, 2026-09-25)** - the attached files are the switch: the assets card, at the head of the list, has Attach and Remove data alone |
+| `hudScale`, `showFps`, `skipStartVideo`, `textScale`, `skin`, `touch*`, `online*` | scattered | - | NOT features. Settings, and they stay in Settings (UXB1-A's `skipStartVideo` is Settings > Interface, on the main menu only) |
 
 ### Mod Authored (mod settings, `modSettings.js`) - today on the Mods rail section
 

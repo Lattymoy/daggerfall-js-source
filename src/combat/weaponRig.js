@@ -167,15 +167,16 @@ export function armsStandFor(entity, { ready = () => fpArm.ready(), builtFor = (
  *  not work on first launch" - only the test room built them at boot;
  *  a normal game had the arms only after the Enhanced pane's Build
  *  button, and the module singleton dies with the tab, so every launch
- *  began bare. The pane's Build now sets the `mwArms` pref and Unload
- *  clears it, and each host that owns a rig calls this once the entity
+ *  began bare. Each host that owns a rig calls this once the entity
  *  is a made character - at its rig's creation for a continuing
  *  session, after the wizard for a new one, after a restore for a
  *  load. A refusal is logged, never thrown: the arms are a departure
  *  the classic sprite stands in for. Returns the build's result, or
  *  null when nothing was asked for. */
-export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), dataCount = morrowindDataCount, measure = registerMorrowindData, measured = morrowindDataFingerprint, standing = armsStandFor } = {}) {
-  if (!entity?.chargenDone || !wanted() || !(dataCount() > 0) || standing(entity)) return null;
+export async function autoBuildArms(entity, { dataCount = morrowindDataCount, measure = registerMorrowindData, measured = morrowindDataFingerprint, standing = armsStandFor } = {}) {
+  // MWA4: the attached files are the switch - MWA1's `mwArms` pref (and MWA2's On/Off row over it) is retired, and
+  // Remove data is the off (ui/enhancedMenu.js morrowindCard)
+  if (!entity?.chargenDone || !(dataCount() > 0) || standing(entity)) return null;
   // AUDIT 65 XL-6: the boot menu only COUNTS the store now (names, no
   // sizes), so this can run before the host bootstrap's fingerprint
   // lands - and fpArm keys its kept face verdict on that print. Measure
@@ -199,7 +200,7 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     over a real one - hudText.add
  *                     (dungeonContext.js:2869), townTalk.say
  *                     (exterior.js:2134, world.js:4175) and
- *                     worldModes' own interior sink (worldModes.js:427,
+ *                     worldModes' own interior sink (worldModes.js:428,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
  *                     is unreached,

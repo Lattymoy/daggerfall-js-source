@@ -413,9 +413,9 @@ import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: 
 import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBobbing
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
-import { keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released, actionOf, held, moveHeld, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings, routeAction, installContextMenuGuard, POLLED_ACTIONS, QUICKSLOT_ACTIONS, swingKeyHeld } from '../ui/input.js';
+import { keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released, actionsOf, held, moveHeld, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings, routeAction, installContextMenuGuard, POLLED_ACTIONS, QUICKSLOT_ACTIONS, swingKeyHeld } from '../ui/input.js';
 import { armUnloadGuard, releaseUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game; AUDIT-MACL F3: ...and down for a door the game opened itself
-import { actionForCode, getBinding } from '../systems/inputActions.js';   // AUDIT-TO1 H2: the help's TravelMap binding, read through the store's own accessor   // FIX-E: the overlay's QuickLoad read, off the code alone   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
+import { codeMeans, getBinding } from '../systems/inputActions.js';   // AUDIT-TO1 H2: the help's TravelMap binding, read through the store's own accessor   // FIX-E: the overlay's QuickLoad read, off the code alone   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
 import { hudShortcutKey, retroToggleKey } from '../ui/hudShortcuts.js';   // AUDIT 64 F36/F37: DaggerfallHUD.Update's LargeHUDToggle / HUDToggle arms
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady, pauseOpts } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin; MAC-L1: pauseOpts is the ONE reader of the door's options
@@ -4338,7 +4338,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2462 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:5673
+  // that context through modes.dungeonCtx - so worldModes.js:5682
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -7597,14 +7597,14 @@ export async function bootWorld(canvas, renderer, params, status) {
      *  GameManager.Instance.WeaponManager.ToggleSheath() - a SINGLETON
      *  call with no scene gate at all, registered for both buttons at
      *  :211-212, so the panel is live on every screen the bar is drawn
-     *  on. Here routeAction's arm is optional (ui/input.js:778) and
+     *  on. Here routeAction's arm is optional (ui/input.js:809) and
      *  only dungeonContext.js carried the door, so above ground, in
      *  ?exterior and inside a building the click was swallowed by
      *  routeLargeHudClick's unconditional `return true` and nothing
      *  drew or sheathed - while Z kept working everywhere, which is
      *  why it read as "only the panel is dead". THE FOUR HOSTS RULE.
      *  No double-fire from the keyboard: routeKey declines
-     *  POLLED_ACTIONS (ui/input.js:633), so a Z press reaches the
+     *  POLLED_ACTIONS (ui/input.js:652), so a Z press reaches the
      *  frame's edge latch and nothing else. */
     toggleSheath: () => weaponRig.toggleSheath(),
     // QS2: the diamond's three presses, beside the sheath panel's door and for
@@ -7763,7 +7763,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // filled below the overlay gate (G3), and a key under a window
     // joins none - so no combo, as DFU's Update returns before PollInput.
     // AUDIT RETRO1 C1: but Shift-F11 - the retro toggle's chord on this key - is no load.
-    if (townTalk.overlayActive && !isTextEntryTarget(e.target) && (modes?.mode ?? 'exterior') === 'exterior' && actionForCode(bindings(), e.code) === 'QuickLoad' && !retroToggleKey(e, keys)) {
+    if (townTalk.overlayActive && !isTextEntryTarget(e.target) && (modes?.mode ?? 'exterior') === 'exterior' && codeMeans(bindings(), e.code, 'QuickLoad') && !retroToggleKey(e, keys)) {   // UXB1-S: its key, shared or not
       e.preventDefault();
       // D-ONLINE1 (Mac, 2026-09-17: "you should just respawn in this case"): F11 on the death screen used to
       // always quickload - the player back at their last save, mobs included. Online, respawn IS the answer to
@@ -7829,7 +7829,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     // AUDIT 58 (f3/input) - THE COMBO ARM'S MISSING ARGUMENT.
     // actionOf resolves a COMBO code only when it is handed the host's
-    // held-keys Set (ui/input.js:268-289), and no host passed one - so
+    // held-keys Set (ui/input.js:269-290), and no host passed one - so
     // GetUnaryKey's combo branch (InputManager.cs:1666-1712) was live
     // for the POLLED actions, which read through held(), and dead for
     // every DISPATCHED one. A player who bound Inventory to Shift+I in
@@ -7838,179 +7838,199 @@ export async function bootWorld(canvas, renderer, params, status) {
     // press included, and actionOf reads it through the held-first
     // LATCH (G3/GR); it carries the suppression half too (:1681-1685,
     // "space is jump, LeftShift+Space opens inventory: ignore it").
-    const act = retroToggleKey(e, keys) ? null : actionOf(e, keys);   // I2: the registry owns the code -> action read; AUDIT RETRO1 G3: Shift-F11 is the HUD's (below), never QuickLoad's - routeKey's hosts take it first too
-    // STATUS-LIVE: THE READOUT YIELDS HERE TOO. This host runs its own
-    // key ladder rather than routeKey's, so its Escape arm (and its
-    // quickslot and window arms) never reach ui/input.js's routeAction
-    // - where the one copy of this law lives. Same call, same answer:
-    // an action that wants the slot closes the readout first, and
-    // Escape is SPENT by the close.
-    if (statusReadoutTakesAction(act)) { e.preventDefault(); return; }
-    // AUDIT SOC B4/D1: F ON A BODY WORKS INSIDE TOO. The social door sat under the exterior gate below, and the
-    // interior and dungeon modes' own contexts (scenes/worldModes.js interiorKeyCtx, dungeonCtx) carry no
-    // `socialInteract`, so in a tavern or a dungeon - where two players meet as often as in a street - F did nothing
-    // at all. It answers here, above the mode gate and under the same overlay and window gates the F-menu opens by
-    // (socialMenuCanOpen): the door itself says false on a page with no account, and the ladder falls through.
-    if (!townTalk.overlayActive && act === 'SocialInteract' && socialMenuCanOpen() && socialInteract()) { e.preventDefault(); return; }
-    // QUICK-LOOT B4: THE TWO KEYS, HERE FOR SOC5's OWN REASON. This
-    // sits above the mode gate beside SocialInteract and the
-    // quickslots, so it answers in a street, a shop and a dungeon
-    // alike - the modal modes run under this host's listener, and a
-    // fourth gate invented for loot would be the thing that arm was
-    // written to stop. `quickLootArm` refuses unless something is
-    // HIGHLIGHTED, so with no list under the crosshair the ladder falls
-    // through and P and J are whatever else wants them.
-    //
-    // It arms a mode and fires the host's own one-frame activate
-    // (`_tapArmed`, the same latch the touch tap uses), because the key
-    // is known here and only the FRAME has the ray, the pick and the
-    // pools that own the container.
-    if (!townTalk.overlayActive && socialMenuCanOpen() && quickLootArm(act)) { _tapArmed = 2; e.preventDefault(); return; }
-    // QS2: THE SAME PLACE, FOR THE SAME REASON. A quickslot is worth more in a
-    // dungeon than it is on a road, so these three answered above the mode gate
-    // too - under the same overlay and pause gates (socialMenuCanOpen is
-    // `not paused and no window over the HUD`, which is exactly the door a
-    // gameplay key takes here) rather than a fourth gate invented for them.
-    // (QS7 below RETIRED that placement: the modal ctxs answer these keys
-    // themselves now, so the quickslot is still live in a dungeon and in a
-    // tavern - through ONE ladder instead of two.)
-    // QS6: EXCEPT THE THREE THAT HOLD. QuickUse1, QuickUse2 and QuickSpell are
-    // POLLED_ACTIONS now (ui/input.js): a tap performs the slot and a hold
-    // cycles it, and only the frame can tell those apart - so this ladder must
-    // decline them here exactly as routeKey's own `POLLED_ACTIONS.has(act)`
-    // arm does, or the down edge would drink the potion the hold was about to
-    // choose. This is WEAPON-VIS2's lesson at a second door.
-    // QS7 (2026-09-17, Mac: "if you go into a tavern with a lit torch, pressing 4
-    // does not actually make it go out, it just goes thru the 'douse' and
-    // 'ignite' motions"). AND THE MODE GATE IS BACK ON THIS ARM, because what
-    // it was written to reach now answers for itself. QS2 put the quickslots
-    // ABOVE the gate when the modal contexts carried no quickslot doors at
-    // all; QS4 gave `interiorKeyCtx` and `dungeonCtx` the whole set, and
-    // worldModes' own ladder (U43's one dispatch) routes the same ui/input.js
-    // table over them. Two ladders, both live on the same window, both
-    // reaching the ONE handheld-torches mod - so a single Digit4 in a tavern
-    // pressed `toggleLightPress` TWICE: douse, then ignite, net nothing, with
-    // both clips played. That is WEAPON-VIS2's double-fire exactly, at a third
-    // door, and the fix is the same one: whoever owns the mode owns the key.
-    // (The SocialInteract arm above stays ungated - AUDIT SOC B4/D1's whole
-    // finding is that the modal contexts carry NO socialInteract, so there is
-    // no second answer to collide with.)
-    if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && socialMenuCanOpen()) { if (!e.repeat && routeAction(act, hudCtx)) { e.preventDefault(); return; } if (e.repeat) { e.preventDefault(); return; } }   // MAC-R2: the press edge alone - a held key's auto-repeat is nothing (ui/input.js routeKey has the law)
-    // U45 - THE ONE DOOR PER DESTINATION: this ladder and the large
-    // HUD's eleven panels open the same windows, so they read the same
-    // object. It is the same law U43 applied to the interior arm, one
-    // host over. QuickLoad keeps its own arm below because it is the
-    // one action that works with a window UP (the death screen's F11).
-    if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
-      // PX17b (Mac: "tab isn't working in-game"): THE BELL NOBODY
-      // RANG. PX15 hung toggleDial on hudCtx and trusted routeKey's
-      // Tab arm to ring it - but THIS host never calls routeKey; like
-      // exterior it runs its own ladder, and only exterior got the
-      // inline arm. So the world's rose was wired and unreachable -
-      // the drawn-door-that-opens-nothing bug, inverted. The arm now
-      // lives here, behind the same overlay/mode gate as every
-      // sibling door; preventDefault only when the dial answers, so
-      // classic Tab keeps its default.
-      // TO1's travel panel keys are taken ABOVE the ring now (KB1) - see the arm at the ring's fill.
-      if (act === 'QuickDial' && hudCtx.toggleDial()) { e.preventDefault(); return; }   // KB1: the registry's QuickDial, not a literal Tab
-      // AUDIT 64 F36/F37 - THE HUD'S OWN SHORTCUTS (DaggerfallHUD.cs
-      // :308-318). This host runs its own ladder and never calls
-      // routeKey, which is where the other two hosts take these keys,
-      // so the arm lives here too or F10/Shift-F10 would work in a
-      // dungeon and not in the street - the FOUR HOSTS trap. It stays
-      // INSIDE the mode gate: an interior or dungeon mode is mounted
-      // by scenes/worldModes.js, whose own routeKey call already
-      // answers these keys, and two live arms would flip the setting
-      // twice per press and cancel out.
-      if (hudShortcutKey(e, keys)) { e.preventDefault(); return; }
-      if (act === 'CharacterSheet') { hudCtx.toggleCharSheet(); return; }
-      // U43: LogBook (L) and NoteBook (N) - two of GameManager's own
-      // dispatch chain (:541-548) that the port bound at I1 and then
-      // read NOWHERE, while ui/questJournal.js sat built with all four
-      // of its pages. The interior and dungeon hosts answer them too.
-      if (act === 'LogBook') { e.preventDefault(); hudCtx.toggleLogbook(); return; }
-      if (act === 'NoteBook') { e.preventDefault(); hudCtx.toggleNotebook(); return; }
-      // U8d: F6 opens the classic inventory (DFU's default Inventory
-      // binding; same host rule as F5).
-      if (act === 'Inventory' && inventoryDoorReady()) { hudCtx.toggleInventory(); return; }
-      // M2/I2: the CastSpell action opens the spellbook
-      // (GameManager.cs:550-553); the cast is the attack click.
-      if (act === 'CastSpell') { e.preventDefault(); hudCtx.toggleSpellbook(); return; }
-      // FIX-F: Q readies the last spell cast, E drops the readied one
-      // (EntityEffectManager.cs:257-270) - bound since I1, read by nothing.
-      if (act === 'RecastSpell') { e.preventDefault(); magic.recastSpell(); return; }
-      if (act === 'AbortSpell') { e.preventDefault(); magic.abortReadySpell(); return; }
-      // V5: Rest, the last dead binding above ground. It was routed in
-      // the DUNGEON's chain and nowhere else, so KeyR outdoors did
-      // nothing at all - and with it comes CanRest's town half: the
-      // camping refusal, the Vagrancy charge and the watch.
-      // S40: the key is R (InputManager.cs:997, SetupDefaults) and
-      // GameManager's dispatch (GameManager.cs:534-537) carries no
-      // scene gate at all; this ladder's gate is the U43 flag still
-      // standing over these lines. ROAD-H H5: a byte-identical SECOND
-      // arm stood fourteen lines below, unreachable behind this one,
-      // and was deleted - this is the arm that fires.
-      if (act === 'Rest') { e.preventDefault(); hudCtx.toggleRest(); return; }
-      // P-slice: the classic quicksave bindings (F9 save, F11 load -
-      // InputManager.SetupDefaults), above ground at last.
-      if (act === 'QuickSave') { e.preventDefault(); hudCtx.quickSave(); return; }
-      // F-slice: the travel map (V - InputManager.SetupDefaults:1028).
-      if (act === 'TravelMap') { hudCtx.openTravelMap(); return; }
-      // A2: the exterior automap (Actions.AutoMap outdoors,
-      // DaggerfallUI.cs:633-650 - the town-map half of the dispatch).
-      // I2: through the registry, so M is rebindable like every other
-      // action rather than a second hardcoded literal.
-      if (act === 'AutoMap') { hudCtx.toggleAutomap(); return; }
-      // I3: Escape with no overlay opens the pause screen; it closes
-      // itself on the same key. U51: WHICH screen is ui/pauseDoor.js's
-      // decision - the classic OPTN00I0 panel, or the enhanced menu in
-      // pause mode - and pauseDoorReady is that fork's own gate, since
-      // only one of the two needs art before it can draw a word.
-      if (act === 'Escape' && pauseDoorReady()) { hudCtx.togglePause(); return; }
-      // AUDIT-MACK F1: THE FALL-THROUGH - see the long note at the
-      // same place in `scenes/exterior.js`. `ui/input.js`'s
-      // `routeAction` dispatches ten actions onto ctx doors; this
-      // ladder had arms for five of them, and `Transport`, `Status`,
-      // `UseMagicItem` and the two mode cycles were reachable only by
-      // CLICKING the large HUD panel. Mac reported the one he uses.
-      // The tail is the table now, so a door on `hudCtx` is reachable
-      // by its own action the moment it exists.
-      //
-      // MAC-L1: AND IT IS THE TAIL. AUDIT-MACK wrote it ABOVE the
-      // Escape arm just above, so `routeAction` claimed Escape first
-      // and that arm became unreachable - which is how MAC-L1's crash
-      // reached a player: the table's Escape case hands the door its
-      // options, the arm above hands it none, and only the table's
-      // route was live. A tail that is not last is not a tail; it is an
-      // arm that silently outranks every arm below it. `test/mack_bugs`
-      // gates the position now, not just the presence.
-      // WEAPON-VIS2: this ladder never calls routeKey (the comment
-      // above the Escape arm says so directly), so routeKey's own
-      // `POLLED_ACTIONS.has(act)` decline (ui/input.js:737) never
-      // touched this door. hudCtx carries toggleSheath (AUDIT 58, for
-      // the large HUD's sheath panel), so 'ReadyWeapon' - Z - reached
-      // routeAction from BOTH here AND the frame's own poll below
-      // (MWCROUCH's `pressed(latch.edge, keys, 'ReadyWeapon')`, the
-      // `zNowW && !zPrevW` latch at the time) on every single press: drawn, then
-      // sheathed straight back, net nothing, every time. A player
-      // could equip a weapon, see it confirmed in the inventory, hear
-      // a sheathe click on every press, and never once see it on
-      // screen - `toggleSheathCalls` climbing by exactly 2 a press
-      // (WEAPON-VIS1) is what actually caught it, not a guess. The
-      // same exclusion routeKey already uses closes this door too.
-      if (POLLED_ACTIONS.has(act)) { /* the frame's poll owns it */ }
-      else if (e.repeat) { e.preventDefault(); return; }   // AUDIT KB1: the press edge alone - routeKey's law (ui/input.js), so a held F8/F9 is one shot, one save
-      else if (routeAction(act, hudCtx)) { e.preventDefault(); return; }
+    // UXB1-S (2026-09-25, the UX backlog: "So you wont add multiple key bindings even when asked?"): A SHARED KEY DOES
+    // ALL IT WAS GIVEN. A key a player put on more than one action (inputActions.js shareBinding - the Controls pages'
+    // "use for both") answers each of them, owner first, and the ladder - `worldKeyAction` below, word for word, each `return`
+    // now the press being used - runs once per action. A key with none runs it once with null: the HUD's own shortcuts are
+    // keys, not actions, and they answer on the first pass alone, so a shared F10 cannot flip the large HUD twice.
+    const acts = retroToggleKey(e, keys) ? [] : actionsOf(e, keys);   // I2: the registry owns the code -> action read; AUDIT RETRO1 G3: Shift-F11 is the HUD's (below), never QuickLoad's - routeKey's hosts take it first too
+    // AUDIT UXB1 F1: ...until a WINDOW comes up - a pausing one (bindCursorToggle's own predicate) or a pointer surface
+    // (the chat, the friends panel, the F-menu: they pause nothing, and take keys). The keys are its from there: a key
+    // shared by two windows' doors opens the first, not both stacked, and nothing after a door is done behind it.
+    const windowUp = () => gamePaused() || (modes?.modalWindowUp?.() ?? false) || pointerSurfaces.size > 0;
+    const upBefore = windowUp();
+    const pass = acts.length ? acts : [null];
+    let spent = false;
+    for (let i = 0; i < pass.length; i++) {
+      if (worldKeyAction(pass[i], i === 0)) spent = true;
+      if (!upBefore && windowUp()) break;
     }
-    if (act === 'QuickLoad' && (modes?.mode ?? 'exterior') === 'exterior') {
-      e.preventDefault();
-      hudCtx.quickLoad();
-      return;
-    }
+    if (spent) return;
     if (e.code === 'AltLeft') e.preventDefault();
     // DFU parity: mouselook is the resting state - any gameplay
     // keypress re-engages a dropped lock (no click-to-look mode).
     if (!gamePaused() && !pointerSurfaces.size && document.pointerLockElement !== canvas) requestLook(canvas);   // AUDIT SOC B6: never under an open chat, friends panel or F-menu - a key there is the surface's, and a relock under it is a dead panel
+    function worldKeyAction(act, first) {
+      // STATUS-LIVE: THE READOUT YIELDS HERE TOO. This host runs its own
+      // key ladder rather than routeKey's, so its Escape arm (and its
+      // quickslot and window arms) never reach ui/input.js's routeAction
+      // - where the one copy of this law lives. Same call, same answer:
+      // an action that wants the slot closes the readout first, and
+      // Escape is SPENT by the close.
+      if (statusReadoutTakesAction(act)) { e.preventDefault(); return true; }
+      // AUDIT SOC B4/D1: F ON A BODY WORKS INSIDE TOO. The social door sat under the exterior gate below, and the
+      // interior and dungeon modes' own contexts (scenes/worldModes.js interiorKeyCtx, dungeonCtx) carry no
+      // `socialInteract`, so in a tavern or a dungeon - where two players meet as often as in a street - F did nothing
+      // at all. It answers here, above the mode gate and under the same overlay and window gates the F-menu opens by
+      // (socialMenuCanOpen): the door itself says false on a page with no account, and the ladder falls through.
+      if (!townTalk.overlayActive && act === 'SocialInteract' && socialMenuCanOpen() && socialInteract()) { e.preventDefault(); return true; }
+      // QUICK-LOOT B4: THE TWO KEYS, HERE FOR SOC5's OWN REASON. This
+      // sits above the mode gate beside SocialInteract and the
+      // quickslots, so it answers in a street, a shop and a dungeon
+      // alike - the modal modes run under this host's listener, and a
+      // fourth gate invented for loot would be the thing that arm was
+      // written to stop. `quickLootArm` refuses unless something is
+      // HIGHLIGHTED, so with no list under the crosshair the ladder falls
+      // through and P and J are whatever else wants them.
+      //
+      // It arms a mode and fires the host's own one-frame activate
+      // (`_tapArmed`, the same latch the touch tap uses), because the key
+      // is known here and only the FRAME has the ray, the pick and the
+      // pools that own the container.
+      if (!townTalk.overlayActive && socialMenuCanOpen() && quickLootArm(act)) { _tapArmed = 2; e.preventDefault(); return true; }
+      // QS2: THE SAME PLACE, FOR THE SAME REASON. A quickslot is worth more in a
+      // dungeon than it is on a road, so these three answered above the mode gate
+      // too - under the same overlay and pause gates (socialMenuCanOpen is
+      // `not paused and no window over the HUD`, which is exactly the door a
+      // gameplay key takes here) rather than a fourth gate invented for them.
+      // (QS7 below RETIRED that placement: the modal ctxs answer these keys
+      // themselves now, so the quickslot is still live in a dungeon and in a
+      // tavern - through ONE ladder instead of two.)
+      // QS6: EXCEPT THE THREE THAT HOLD. QuickUse1, QuickUse2 and QuickSpell are
+      // POLLED_ACTIONS now (ui/input.js): a tap performs the slot and a hold
+      // cycles it, and only the frame can tell those apart - so this ladder must
+      // decline them here exactly as routeKey's own `POLLED_ACTIONS.has(act)`
+      // arm does, or the down edge would drink the potion the hold was about to
+      // choose. This is WEAPON-VIS2's lesson at a second door.
+      // QS7 (2026-09-17, Mac: "if you go into a tavern with a lit torch, pressing 4
+      // does not actually make it go out, it just goes thru the 'douse' and
+      // 'ignite' motions"). AND THE MODE GATE IS BACK ON THIS ARM, because what
+      // it was written to reach now answers for itself. QS2 put the quickslots
+      // ABOVE the gate when the modal contexts carried no quickslot doors at
+      // all; QS4 gave `interiorKeyCtx` and `dungeonCtx` the whole set, and
+      // worldModes' own ladder (U43's one dispatch) routes the same ui/input.js
+      // table over them. Two ladders, both live on the same window, both
+      // reaching the ONE handheld-torches mod - so a single Digit4 in a tavern
+      // pressed `toggleLightPress` TWICE: douse, then ignite, net nothing, with
+      // both clips played. That is WEAPON-VIS2's double-fire exactly, at a third
+      // door, and the fix is the same one: whoever owns the mode owns the key.
+      // (The SocialInteract arm above stays ungated - AUDIT SOC B4/D1's whole
+      // finding is that the modal contexts carry NO socialInteract, so there is
+      // no second answer to collide with.)
+      if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && socialMenuCanOpen()) { if (!e.repeat && routeAction(act, hudCtx)) { e.preventDefault(); return true; } if (e.repeat) { e.preventDefault(); return true; } }   // MAC-R2: the press edge alone - a held key's auto-repeat is nothing (ui/input.js routeKey has the law)
+      // U45 - THE ONE DOOR PER DESTINATION: this ladder and the large
+      // HUD's eleven panels open the same windows, so they read the same
+      // object. It is the same law U43 applied to the interior arm, one
+      // host over. QuickLoad keeps its own arm below because it is the
+      // one action that works with a window UP (the death screen's F11).
+      if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+        // PX17b (Mac: "tab isn't working in-game"): THE BELL NOBODY
+        // RANG. PX15 hung toggleDial on hudCtx and trusted routeKey's
+        // Tab arm to ring it - but THIS host never calls routeKey; like
+        // exterior it runs its own ladder, and only exterior got the
+        // inline arm. So the world's rose was wired and unreachable -
+        // the drawn-door-that-opens-nothing bug, inverted. The arm now
+        // lives here, behind the same overlay/mode gate as every
+        // sibling door; preventDefault only when the dial answers, so
+        // classic Tab keeps its default.
+        // TO1's travel panel keys are taken ABOVE the ring now (KB1) - see the arm at the ring's fill.
+        if (act === 'QuickDial' && hudCtx.toggleDial()) { e.preventDefault(); return true; }   // KB1: the registry's QuickDial, not a literal Tab
+        // AUDIT 64 F36/F37 - THE HUD'S OWN SHORTCUTS (DaggerfallHUD.cs
+        // :308-318). This host runs its own ladder and never calls
+        // routeKey, which is where the other two hosts take these keys,
+        // so the arm lives here too or F10/Shift-F10 would work in a
+        // dungeon and not in the street - the FOUR HOSTS trap. It stays
+        // INSIDE the mode gate: an interior or dungeon mode is mounted
+        // by scenes/worldModes.js, whose own routeKey call already
+        // answers these keys, and two live arms would flip the setting
+        // twice per press and cancel out.
+        if (first && hudShortcutKey(e, keys)) { e.preventDefault(); return true; }
+        if (act === 'CharacterSheet') { hudCtx.toggleCharSheet(); return true; }
+        // U43: LogBook (L) and NoteBook (N) - two of GameManager's own
+        // dispatch chain (:541-548) that the port bound at I1 and then
+        // read NOWHERE, while ui/questJournal.js sat built with all four
+        // of its pages. The interior and dungeon hosts answer them too.
+        if (act === 'LogBook') { e.preventDefault(); hudCtx.toggleLogbook(); return true; }
+        if (act === 'NoteBook') { e.preventDefault(); hudCtx.toggleNotebook(); return true; }
+        // U8d: F6 opens the classic inventory (DFU's default Inventory
+        // binding; same host rule as F5).
+        if (act === 'Inventory' && inventoryDoorReady()) { hudCtx.toggleInventory(); return true; }
+        // M2/I2: the CastSpell action opens the spellbook
+        // (GameManager.cs:550-553); the cast is the attack click.
+        if (act === 'CastSpell') { e.preventDefault(); hudCtx.toggleSpellbook(); return true; }
+        // FIX-F: Q readies the last spell cast, E drops the readied one
+        // (EntityEffectManager.cs:257-270) - bound since I1, read by nothing.
+        if (act === 'RecastSpell') { e.preventDefault(); magic.recastSpell(); return true; }
+        if (act === 'AbortSpell') { e.preventDefault(); magic.abortReadySpell(); return true; }
+        // V5: Rest, the last dead binding above ground. It was routed in
+        // the DUNGEON's chain and nowhere else, so KeyR outdoors did
+        // nothing at all - and with it comes CanRest's town half: the
+        // camping refusal, the Vagrancy charge and the watch.
+        // S40: the key is R (InputManager.cs:997, SetupDefaults) and
+        // GameManager's dispatch (GameManager.cs:534-537) carries no
+        // scene gate at all; this ladder's gate is the U43 flag still
+        // standing over these lines. ROAD-H H5: a byte-identical SECOND
+        // arm stood fourteen lines below, unreachable behind this one,
+        // and was deleted - this is the arm that fires.
+        if (act === 'Rest') { e.preventDefault(); hudCtx.toggleRest(); return true; }
+        // P-slice: the classic quicksave bindings (F9 save, F11 load -
+        // InputManager.SetupDefaults), above ground at last.
+        if (act === 'QuickSave') { e.preventDefault(); hudCtx.quickSave(); return true; }
+        // F-slice: the travel map (V - InputManager.SetupDefaults:1028).
+        if (act === 'TravelMap') { hudCtx.openTravelMap(); return true; }
+        // A2: the exterior automap (Actions.AutoMap outdoors,
+        // DaggerfallUI.cs:633-650 - the town-map half of the dispatch).
+        // I2: through the registry, so M is rebindable like every other
+        // action rather than a second hardcoded literal.
+        if (act === 'AutoMap') { hudCtx.toggleAutomap(); return true; }
+        // I3: Escape with no overlay opens the pause screen; it closes
+        // itself on the same key. U51: WHICH screen is ui/pauseDoor.js's
+        // decision - the classic OPTN00I0 panel, or the enhanced menu in
+        // pause mode - and pauseDoorReady is that fork's own gate, since
+        // only one of the two needs art before it can draw a word.
+        if (act === 'Escape' && pauseDoorReady()) { hudCtx.togglePause(); return true; }
+        // AUDIT-MACK F1: THE FALL-THROUGH - see the long note at the
+        // same place in `scenes/exterior.js`. `ui/input.js`'s
+        // `routeAction` dispatches ten actions onto ctx doors; this
+        // ladder had arms for five of them, and `Transport`, `Status`,
+        // `UseMagicItem` and the two mode cycles were reachable only by
+        // CLICKING the large HUD panel. Mac reported the one he uses.
+        // The tail is the table now, so a door on `hudCtx` is reachable
+        // by its own action the moment it exists.
+        //
+        // MAC-L1: AND IT IS THE TAIL. AUDIT-MACK wrote it ABOVE the
+        // Escape arm just above, so `routeAction` claimed Escape first
+        // and that arm became unreachable - which is how MAC-L1's crash
+        // reached a player: the table's Escape case hands the door its
+        // options, the arm above hands it none, and only the table's
+        // route was live. A tail that is not last is not a tail; it is an
+        // arm that silently outranks every arm below it. `test/mack_bugs`
+        // gates the position now, not just the presence.
+        // WEAPON-VIS2: this ladder never calls routeKey (the comment
+        // above the Escape arm says so directly), so routeKey's own
+        // `POLLED_ACTIONS.has(act)` decline (ui/input.js:768) never
+        // touched this door. hudCtx carries toggleSheath (AUDIT 58, for
+        // the large HUD's sheath panel), so 'ReadyWeapon' - Z - reached
+        // routeAction from BOTH here AND the frame's own poll below
+        // (MWCROUCH's `pressed(latch.edge, keys, 'ReadyWeapon')`, the
+        // `zNowW && !zPrevW` latch at the time) on every single press: drawn, then
+        // sheathed straight back, net nothing, every time. A player
+        // could equip a weapon, see it confirmed in the inventory, hear
+        // a sheathe click on every press, and never once see it on
+        // screen - `toggleSheathCalls` climbing by exactly 2 a press
+        // (WEAPON-VIS1) is what actually caught it, not a guess. The
+        // same exclusion routeKey already uses closes this door too.
+        if (POLLED_ACTIONS.has(act)) { /* the frame's poll owns it */ }
+        else if (e.repeat) { e.preventDefault(); return true; }   // AUDIT KB1: the press edge alone - routeKey's law (ui/input.js), so a held F8/F9 is one shot, one save
+        else if (routeAction(act, hudCtx)) { e.preventDefault(); return true; }
+      }
+      if (act === 'QuickLoad' && (modes?.mode ?? 'exterior') === 'exterior') {
+        e.preventDefault();
+        hudCtx.quickLoad();
+        return true;
+      }
+      return false;
+    }
   });
   // D4: the overlay's KEY-UP edge. This listener has drained the
   // movement Set since the first host and never told the open window
@@ -8023,7 +8043,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // AUDIT 58 (f3/input) - THE ONE READER. This host builds the mode
   // machine unconditionally, and that machine used to register a
   // SECOND bindCursorToggle over the same module-global flag
-  // (player/pointerLock.js:57-171), so ONE Enter flipped it twice and
+  // (player/pointerLock.js:57-174), so ONE Enter flipped it twice and
   // `cursorActive()` could never rise here at all - the large HUD's
   // eleven panels were unreachable by mouse in this host, and the
   // second flip fired a releaseLook/requestLook pair inside one event.
@@ -8033,7 +8053,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // (scenes/worldModes.js's modalWindowUp, published on the object).
   // `modes` is the hoisted var this file's other listeners already
   // read through `?.`, so the closure reaches it once it is built.
-  bindCursorToggle(canvas, () => gamePaused() || (modes?.modalWindowUp?.() ?? false), (e) => actionOf(e, keys));   // KB1: the host's held Set, so a combo'd FreeMouse resolves
+  bindCursorToggle(canvas, () => gamePaused() || (modes?.modalWindowUp?.() ?? false), (e) => actionsOf(e, keys));   // KB1: the host's held Set, so a combo'd FreeMouse resolves
   // AUDIT 24 (wave 37) - THE LIVE CRASH. `modes` is a VAR, deliberately
   // hoisted so these two listeners can be installed HERE and still reach
   // the mode machine that is not built until ~600 lines below. `var`
@@ -8451,7 +8471,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8823-8887 -
+  // worldModes answers it in BOTH modes (worldModes.js:8832-8896 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -10024,7 +10044,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     remotePlayers = new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture, uploadRecordFrame, audio } });   // 2026-09-17: uploadRecordFrame added for the class-enemy billboard path (net/remotePlayers.js _buildMobile/_syncMobilePeer) - the doll path never touches it
     // MWBODY1: the enhanced skin with Morrowind data attached puts every peer in a body of its own; otherwise the doll
     const enhanced = isEnhanced();   // the skin cannot change without a reload (switchSkin), so it is read once, not per frame
-    peerBodies = new PeerBodies({ renderer, enabled: () => enhanced && !!getPref('mwArms') && morrowindDataCount() > 0, generation: morrowindDataGeneration });
+    peerBodies = new PeerBodies({ renderer, enabled: () => enhanced && morrowindDataCount() > 0, generation: morrowindDataGeneration });   // MWA4: attached is on
     const eotbArt = createEotbArt({ renderer });   // DISC23-B: one store for the riders' and the walkers' art
     peerRiders = createPeerRiders({ renderer, art: eotbArt });   // RIDE: the others in the saddle
     peerWalkers = createPeerWalkers({ renderer, art: eotbArt, enabled: () => getPref('peerClassSprites') !== false });   // DISC23-B: the others on foot, as the set they chose - the 'Other players' card's sprite side

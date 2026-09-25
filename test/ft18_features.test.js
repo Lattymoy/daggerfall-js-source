@@ -273,10 +273,11 @@ test('FT18 by source: the pane\'s search filters in place and All off asks first
   assert.match(menu, /featureQuery = '';   \/\/ FT18: a fresh visit searches nothing/);
   // the menu's own key handler stands down for a text field, so typing in the search never walks the menu
   assert.match(menu, /if \(t && \(t\.tagName === 'INPUT' \|\| t\.tagName === 'TEXTAREA' \|\| t\.isContentEditable\)\) return;/);
-  const card = menu.slice(menu.indexOf('function morrowindCard() {'), menu.indexOf('\n}', menu.indexOf('function morrowindCard() {')));
-  const rows = [...card.matchAll(/mw\.append\(prefRow\(([\s\S]*?)\)\);/g)];
-  assert.ok(rows.length >= 1);
-  for (const m of rows) assert.match(m[1], /home: true/, 'a row the card draws is the card\'s own - a moved key\'s row is null');
+  // MWA4: the card draws no switch row at all now - Attach and Remove data alone - so none can be a moved key's null
+  const at = menu.indexOf('export function morrowindCard(');
+  assert.ok(at > 0, 'the Morrowind assets card');
+  const card = menu.slice(at, menu.indexOf('\n}', at));
+  assert.doesNotMatch(card, /prefRow\(/, 'MWA4: no switch row on the card, so no bare row');
   assert.doesNotMatch(card, /prefRow\('mwSheathing'/);
   const css = read('src/ui/enhancedStyle.js');
   assert.match(css, /\.ft-tile\[hidden\], \.ft-grid\[hidden\], \.ft-grouphead\[hidden\], \.ft-none\[hidden\] \{ display: none; \}/, 'a hidden tile is gone whatever its own display rule says');

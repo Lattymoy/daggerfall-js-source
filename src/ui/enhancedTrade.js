@@ -51,11 +51,15 @@ import {
 import {
   CANNOT_BE_REPAIRED_TEXT, INTERRUPT_REPAIR_TEXT,
   isBeingRepaired as itemIsBeingRepaired, isRepairFinished, collectRepaired,
+  updateRepairTimes, repairCountdown, repairCountdownText,   // UXB1-K: when a job is ready
 } from '../systems/repairService.js';
 import { planTake, applyTransfer, clearLightSourceOnLeave, CANNOT_CARRY_TEXT, HOW_MANY_ITEMS, parseSplitAmount } from '../systems/itemTransfer.js';
 import { howManyField } from './howManyField.js';   // DISC25-F: the counter's how-many field, the pack's own
 import { isTextEntryTarget } from './input.js';
-import { isSummoned, carriedWeight, totalWeight, transferAll } from '../systems/inventory.js';
+import { isSummoned, carriedWeight, totalWeight, transferAll, addItem } from '../systems/inventory.js';   // AUDIT UXB1 F4: addItem, a returning lot's merge
+import { getBool } from '../systems/settings.js';   // UXB1-K: InstantRepairs - no clock to count down
+import { dateFromClassicMinutes, dateString } from '../systems/gameDate.js';
+import { sharedRealTimeText } from '../systems/worldTick.js';   // UXB1-K: online, the ready time in the player's own clock
 import { shopliftAttempt } from '../systems/theft.js';
 import { entityMaxEncumbrance } from '../combat/formulas.js';
 import { CANNOT_REMOVE_ITEM_TEXT } from '../systems/createItem.js';
@@ -121,6 +125,8 @@ let unregisterOutside = () => {};
 let lastRowClick = { item: null, time: 0 };
 const DOUBLE_CLICK_MS = 500;
 let keyHandler = null;
+/** UXB1-K: the repair counter's estimates, one scheduler pass per paint (repairEstimatesNow). */
+let repairEst = null;
 
 const inBuy = () => mode === 'Buy';
 const selling = () => mode === 'Sell' || mode === 'SellMagic';
@@ -315,7 +321,7 @@ function pickLocal(item) {
     const amount = chosenAmount(item, stackOf(item));   // DISC25-F: and part of it back off the basket
     if (amount == null) return askAgain(item);
     if (amount < stackOf(item)) applyTransfer(item, { amount }, basket, deps.shelfItems());
-    else move(item, basket, deps.shelfItems());
+    else unstageToShelf(item);   // AUDIT UXB1 F4: the whole lot rejoins its stack
     qty = { item: null, text: '' };
     playTransferSound();
     render();
@@ -362,6 +368,15 @@ function splitMaxOf(item, side) {
       (i) => i.group === 'Transportation' && i.templateIndex === SMALL_CART_TEMPLATE) ?? null,
   });
   return d.kind === 'stage' || d.kind === 'unstage' ? stackOf(item) : 0;
+}
+
+/** AUDIT UXB1 F4: goods put back on the shelf rejoin their stack - ItemCollection.AddItem's merge (inventory.js
+ *  addItem), which DFU's click-back (TransferItem) and ClearSelectedItems (TransferAll) both reach. A split lot is its
+ *  own record, and `move`'s push left "Oil ×2" beside "Oil ×10" on the shelf it came from. */
+function unstageToShelf(item) {
+  const i = basket.indexOf(item);
+  if (i >= 0) basket.splice(i, 1);
+  addItem(deps.shelfItems(), item);
 }
 
 function takeItemFromRepair(item) {
@@ -429,7 +444,7 @@ function transferSelected() {
 
 function clear() {
   selected = null;
-  if (inBuy()) { while (basket.length) move(basket[0], basket, deps.shelfItems()); return; }
+  if (inBuy()) { while (basket.length) unstageToShelf(basket[0]); return; }   // AUDIT UXB1 F4: each lot rejoins its stack
   if (mode === 'Repair') {
     const now = deps.nowMinutes?.() ?? 0;
     for (const it of [...remoteList()]) {
@@ -603,6 +618,35 @@ function close() {
 
 function setTab(t) { tab = t; render(); }
 
+// ── UXB1-K: THE REPAIR COUNTER'S CLOCK ─────────────────────────────
+// (2026-09-25, the UX backlog: "Countdown timer/estimate for repairs when not instant.") DFU labels every item at the
+// repair counter "DONE" or "%d days" (RepairItemLabelTextHandler :282-288, the remote scroller's LabelTextHandler
+// :244); the port had the law (repairService.js repairStatusLabel) and no skin drew it, so a player who left a sword
+// had no way to know when to come back. The estimate for an item only staged is the scheduler's own pass
+// (updateRepairTimes with commit false - FilterRemoteItems' :725), run once per paint; InstantRepairs has no clock.
+
+/** One scheduler pass over the counter, or null where there is no clock to read. */
+function repairEstimatesNow() {
+  if (mode !== 'Repair' || getBool('Controls', 'InstantRepairs')) return null;
+  return updateRepairTimes(remoteList(), { commit: false, nowMinutes: deps.nowMinutes?.() ?? 0 });
+}
+/** An item's countdown and its words, or null (instant repairs, or nothing owed). */
+function repairWhen(item, now) {
+  if (!repairEst) return null;
+  const c = repairCountdown(item, now, repairEst.get(item) ?? null);
+  return c ? { ...c, text: repairCountdownText(c) } : null;
+}
+const pad2 = (n) => String(n).padStart(2, '0');
+/** The detail strip's line: the hour and the day it is ready, and online the player's own clock beside it (the
+ *  bank's due date shape, worldModes.js dueDateText). */
+export function repairReadyLine(c) {
+  if (!c) return null;
+  if (c.done) return 'Ready to collect.';
+  const d = dateFromClassicMinutes(c.doneAt);
+  const real = sharedRealTimeText(c.doneAt);
+  return `${c.estimate ? 'Ready about' : 'Ready by'} ${pad2(d.hour)}:${pad2(d.minute)}, ${dateString(d)}${real ? ` (${real})` : ''}.`;
+}
+
 // ── ROWS ──────────────────────────────────────────────────────────
 
 function itemTile(line) {
@@ -634,6 +678,10 @@ function itemRow(item, from) {
     const now = deps.nowMinutes?.() ?? 0;
     const done = itemIsBeingRepaired(item) ? isRepairFinished(item, now) : true;
     row.classList.add(done ? 'on' : 'ghost');
+    // UXB1-K: RepairItemLabelTextHandler's misc label (DaggerfallTradeWindow.cs:282-288), which no skin drew - when
+    // the job is ready, counted down (repairService.js repairCountdown/Text)
+    const when = repairWhen(item, now);
+    if (when) row.append(el('span', `itemrepair${when.done ? ' done' : ''}`, when.text));
   }
   if (selected?.item === item) row.classList.add('picked');
   // A single click reads the item (the tooltip strip below the lists);
@@ -730,6 +778,11 @@ function detailStrip() {
     if (qty.item !== item) qty = { item, text: String(max) };
     info.append(howManyField({ max, text: qty.text, onInput: (t) => { qty.text = t; } }));
   }
+  // UXB1-K: at the repair counter, when it is ready
+  if (mode === 'Repair' && selected.side === 'remote') {
+    const line = repairReadyLine(repairWhen(selected.item, deps.nowMinutes?.() ?? 0));
+    if (line) info.append(el('p', 'trade-quote trade-ready', line));
+  }
   bar.append(info);
   const closeBtn = el('button', 'act', 'Close');
   closeBtn.onclick = () => { selected = null; render(); };
@@ -793,6 +846,7 @@ function render() {
   // without this a click halfway down a long shelf snapped the view
   // back to its top every time.
   const prevScroll = Array.from(host.querySelectorAll('.packcol')).map((c) => c.scrollTop);
+  repairEst = repairEstimatesNow();   // UXB1-K: one scheduler pass for every row this paint draws
   host.innerHTML = '';
   const shell = el('div', 'px-home px-over trade-shell');
   const win = el('div', 'px-win trade-win');

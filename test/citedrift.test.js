@@ -8,7 +8,7 @@
 //
 //   - `ui/spellMakerWindow.js` declared "RECORDED DEPARTURES" and closed
 //     the first with "Ledger A carries the widget row already
-//     (Port-Ledger.md:817)". Section A carried no widget row at all -
+//     (Port-Ledger.md:818)". Section A carried no widget row at all -
 //     the AUDIT 17m / F7 shape, a claim of approval standing in for one -
 //     and :686 was the stat-colour NIT row by then. The row exists now
 //     (Ledger A, TB1) and the sites cite it BY NAME.
@@ -660,9 +660,9 @@ const SOURCE_CITES = [
   ['src/scenes/exterior.js', /early-returns \(equip\.js:(\d+)\)\./,
     'src/systems/equip.js', /^ {2}if \(entity\.equip \|\| \(entity\.items \?\? \[\]\)\.length\) return;$/],
   ['src/ui/pauseWindow.js', /world\.js:\d+, exterior\.js:(\d+),/,
-    EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return; \}/],
+    EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return true; \}/],
   ['src/ui/restWindow.js', /world\.js:\d+, exterior\.js:(\d+),/,
-    EX, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return; \}/],
+    EX, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return true; \}/],
   // AUDIT 62 (review): ...AND THE OTHER HALF OF THE SAME SENTENCE. The
   // two entries above read the exterior number out of a cite that names
   // THREE files, so the `world.js` half sat unpinned and had been stale
@@ -671,9 +671,9 @@ const SOURCE_CITES = [
   // field. A half-pinned cite is the shape ROAD-G G1 already caught
   // once; both halves are read here now.
   ['src/ui/pauseWindow.js', /world\.js:(\d+), exterior\.js:\d+,/,
-    WO, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return; \}/],
+    WO, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return true; \}/],
   ['src/ui/restWindow.js', /world\.js:(\d+), exterior\.js:\d+,/,
-    WO, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return; \}/],
+    WO, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return true; \}/],
   // AUDIT SURV-TIERS (the third pass): ...and the sentence's THIRD half, which neither entry read - it had rotted
   // to a comment in input.js's header (525) while the Rest arm moved to 813.
   ['src/ui/restWindow.js', /exterior\.js:\d+, ui\/input\.js:(\d+)\)/,
@@ -688,9 +688,9 @@ const SOURCE_CITES = [
   ['test/probehygiene.test.js', /exterior\.js:(\d+)-\d+ and world\.js's copy/,
     EX, /if \(!playerEntity\.chargenDone && params\.has\('class'\)\) \{/],
   ['test/roade_up_seam.test.js', /exterior\.js:(\d+)\/:\d+/,
-    EX, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return; \}/],
+    EX, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return true; \}/],
   ['test/roade_up_seam.test.js', /exterior\.js:\d+\/:(\d+)/,
-    EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return; \}/],
+    EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return true; \}/],
   ['bible/01-Overview/Audit-58.md', /`src\/scenes\/exterior\.js:(\d+)` now/, EX, /setDefaultEnchantCtx/],
   ['bible/06-Systems/Systems-Arc.md', /`exterior\.js:(\d+)`, `world\.js:1462`/, EX, /playerTicker\.advance\(60\);/],
   ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:(\d+)-\d+\)/,
@@ -699,8 +699,8 @@ const SOURCE_CITES = [
   // AUDIT QS6 F1, a fifth time and at a second door: this row names FIVE hosts
   // and the table captured ONE, with a sixth number baked into the pick - so
   // citeMerge bumped the LITERAL at the BOX1/TI3 merge and left the doc, and
-  // four of the five had been stale for waves (`worldModes.js:6890` for a line
-  // that is 5921, `world.js:12966` for 8836, `interior.js:323` for 329,
+  // four of the five had been stale for waves (`worldModes.js:6899` for a line
+  // that is 5921, `world.js:12986` for 8836, `interior.js:323` for 329,
   // `dungeon.js:953` for 959). Every one is captured now, against the
   // projection each host really builds.
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:\d+`/, EX, /^ {6}fieldOfView\(\),$/],
@@ -974,8 +974,8 @@ test('CD6: every `src/` line Port-Status cites is the line it describes', () => 
 //
 // The G1 lane re-resolved ~180 `:NNN` cites after moving code in four
 // hosts, and the pass advanced only the LEADING number of every
-// multi-number citation: `cityGuards.js:925-832`, `world.js:8488-8462`,
-// `worldModes.js:1298 against :1079`. Forty of them came out as ranges
+// multi-number citation: `cityGuards.js:925-832`, `world.js:8508-8482`,
+// `worldModes.js:1299 against :1080`. Forty of them came out as ranges
 // that cannot exist, and every pin in this file was green throughout,
 // because each one resolves a single number a human chose to list.
 //

@@ -187,6 +187,8 @@ export function plaqueAnchor(canvas) {
 function paint(n, f, sel = -1, stats = []) {
   n.textContent = '';
   n.classList.toggle('has-list', f.kind === 'items' || f.kind === 'actions');
+  // UXB1-N: the namer's tone colours the title (a private-property container's, enhancedStyle.js .tone-private)
+  n.classList.toggle('tone-private', f.tone === 'private');
   const title = document.createElement('div');
   title.className = 'wplaque-title';
   // The mod joins a door's label with `\r` - "To\rPrivateer's Hold" -

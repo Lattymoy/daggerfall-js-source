@@ -866,7 +866,7 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:2197 (the factory) and :1904 (a
+                        worldModes.js:2204 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
                         dungeonContext.js:1073, world.js:2719,
@@ -8608,7 +8608,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:3020 as a second book built by hand 342 lines below the
+worldModes.js:3027 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -9318,7 +9318,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:6758` and `dungeonContext.js:1630` answer the same
+`worldModes.js:6767` and `dungeonContext.js:1630` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -9383,7 +9383,7 @@ cited and ported somewhere in `src/`. FOUR were not:
 
 ### UI1 CLOSED: the use-magic-item window
 
-The port had the DOOR and not the room. `input.js:779` routed
+The port had the DOOR and not the room. `input.js:810` routed
 `Actions.UseMagicItem` to `ctx.openUseMagicItem`, `hudLarge.js:153`
 gave the large HUD's button its rect, `inputActions.js` bound KeyU -
 and no host implemented the method, so a live binding silently did
@@ -10026,7 +10026,7 @@ than because the screen agrees with a narrower port.
 stays unbuilt - an owner call, unchanged: the port has no gamepad layer
 at all, the serialized joystick blocks are simply absent from
 `KeyBindData_v1`, and the flag that says so is
-`src/systems/inputActions.js:1232`. The JOYSTICK tab still answers with
+`src/systems/inputActions.js:1368`. The JOYSTICK tab still answers with
 its note, and Ledger `:593`'s live clause now names that window alone.
 `weaponSensitivitySlider` is commented out in DFU itself (:42, :355) -
 nine controls are built, the tenth is a stub - and
@@ -10607,7 +10607,7 @@ c2 flight 2 caught the same pair driving the town map's chrome.
   row 0.
 
 **THE FIX.** `vy >= 0 &&` in front of the `update` call in both hovers
-- the arm `ui/chargen.js:1123` and `ui/spellbookWindow.js:442` already
+- the arm `ui/chargen.js:1153` and `ui/spellbookWindow.js:442` already
 carry. (The third guarded sibling is not the same arm:
 `ui/spellIconPickerWindow.js:227` tests `vx >= 0 && vy >= 0`, and
 `test/citedrift.test.js`'s CD8c pins that two-part shape by name.)
@@ -10650,7 +10650,7 @@ mutants - the guard deleted from either new window, "ALL THREE" restored
 to the Ledger, "both" restored to Testing.md - all go red.
 
 **AND THE THREE SIBLINGS ARE NOT ONE ARM.** The first draft of the
-section above called `ui/chargen.js:1123`, `ui/spellbookWindow.js:442`
+section above called `ui/chargen.js:1153`, `ui/spellbookWindow.js:442`
 and `ui/spellIconPickerWindow.js:227` "the same arm". They are not:
 the icon picker tests `vx >= 0 && vy >= 0`, the two-part shape CD8c
 pins by regex, while the other two test `vy` alone. The two new guards
@@ -10738,7 +10738,7 @@ if (alt.ContainsKey(code)) alt.Remove(code);        // InputManager.cs:729-734
 - and for a SECONDARY write the "other" dict IS the primary, so a
 secondary Jump written onto `ShiftLeft` deletes Run's primary row, and
 the reverse order deletes Jump's secondary row by the same line. The
-port carries it at `inputActions.js:740-741`. Either order collapses the
+port carries it at `inputActions.js:827-828`. Either order collapses the
 pair.
 
 The route that DOES produce it is the LOAD path. `LoadActionKeybinds`
@@ -10749,7 +10749,7 @@ if (!dict.ContainsKey(key) && actionVal != Actions.Unknown)
     dict.Add(key, actionVal);                       // InputManager.cs:1950-1969
 ```
 
-- ported at `inputActions.js:921-931`, whose own comment already said
+- ported at `inputActions.js:1057-1067`, whose own comment already said
 "Raw map-set, NOT setBinding". So a hand-edited `KeyBindings.txt` that
 puts Jump on the run key as a SECONDARY, with the primary `Space` spent
 on something else, loads exactly as written; and it SURVIVES the
@@ -16764,7 +16764,7 @@ removed.
 **REFUTED, and written down because the next reader will wonder.**
 A window key (F5/F6/L) pressed during a level-up cannot stack a second
 one. The overlay carries `isChoiceWindow`, and both key seams - the
-dungeon/interior `routeKey` (ui/input.js:705-717) and townTalk's own
+dungeon/interior `routeKey` (ui/input.js:724-736) and townTalk's own
 (:371-381) - hand the raw code to the OVERLAY and return before any
 toggle arm can run. The same guard is why QuickLoad, which routeKey
 otherwise allows from under any overlay, cannot reach past this one
@@ -17024,7 +17024,7 @@ UNDER the strip rather than at a box that now contains it. All four new
 checks fail against the shipped code.
 
 **F5 - THE ROW NAMED A KEY CALLED NONE.** `buttonText(null)` is
-KeyCode.None's own string (`systems/controlsConfig.js:294`), so a
+KeyCode.None's own string (`systems/controlsConfig.js:359`), so a
 player who CLEARED the character-sheet binding was handed a plate
 reading A LEVEL AWAITS / NONE - an instruction to press a key that does
 not exist, which is the bug the registry lookup was there to prevent
@@ -18109,3 +18109,149 @@ AUDIT DISC7 (2026-09-23, Mac: "Do an audit before we merge"): a player's list st
 (`plaqueLightFirst`), the lit verb follows its row by id when the list changes, the card's refused acts are listed in
 italics with their reason (`.wplaque-row.off`) and a press on one says it, a single lit verb leaves the wheel to the
 camera, and every door that takes the plaque down folds its highlight away. Pins: `test/auditdisc7.test.js`.
+
+## UXB1 - THE UX BACKLOG (2026-09-25, a contributor's list: "if someone else wants to do any of these first go for it")
+
+Fifteen items in five groups, each answered on both skins where both have the screen. The section A row is
+`01-Overview/Port-Ledger.md`'s THE UX BACKLOG; the controls half is written into `10-UI/Controls.md`.
+
+- **A - Skip Start Video** (off by default): the pref `skipStartVideo`, Settings > Interface on the main menu only. `main.js`
+  reads it at both front doors - the enhanced door's INTRO2 film and the classic ANIM0001 splash - beside the probes'
+  one-visit `?nointro`/`?novideo`. A skip by the pref starts the menu's theme on the first press, at the menu's level (a
+  browser plays nothing before a gesture); `?nointro` stays silent. The player's own online (it is read before any room).
+- **B - Continue is Confirm** on the enhanced Controls page, head and foot: the button commits, and says so.
+- **C - the ✕ and the right-click clear at once**, staged like every edit ("Having to scroll back to your key is bad").
+  The classic grid keeps DFU's PromptRemoveKeybindMessage.
+- **D - "Is there a reason you cannot have multiple keys bound to the same action such as jump+swim-up? If so,
+  highlight conflicting keybinds."** The reason is KB1's law 3/4 (one key, one action - DFU's own duplicate law), and the
+  case in the question needs no second binding: Jump and Crouch already raise and lower a swimming or levitating body
+  (LevitateMotor.cs:86-89; every motor host passes the pair). So the page says it - Float up and Float down carry "Jump
+  (SPACE) rises too while you swim or levitate", in the live keys - and giving Jump's key to Float up is answered "you
+  need neither". The conflict itself is highlighted where it is decided: the replace question stands in the sticky head
+  over the list it no longer replaces, the row the key would go to edged in brass and the row that holds it in red.
+- **S - and then: "So you wont add multiple key bindings even when asked? I dont care if it goes against daggerfall."**
+  So it is added, and recorded as a departure. The held-key question has a third answer, USE FOR BOTH (a button on the
+  enhanced page, B in the classic grid and its ADVANCED popup), offered wherever every holder holds this very key: the
+  key stays and lands on the new action too, and a press does all of them. The store keeps DFU's code -> action
+  orientation for a key's OWNER and lists its sharers beside it (`inputActions.js` shareBinding, dictEntries,
+  actionsForCode), saved only where there are any; every per-frame poll sees each action and every dispatch runs each
+  (`ui/input.js` actionsOf, routeKey; `world.js` and `exterior.js` run their ladder once per action, the HUD's own
+  shortcut keys on the first pass alone; every window's own-key close asks "does this key mean me"). DFU's duplicate law
+  now finds only the clash no press resolves - a combo against its own modifier bound bare - still red or blue and still
+  blocking; a share is green, and each of its rows names what else the key does. Measured in a browser on the way:
+  the page's key-state colours had never drawn on the main menu's Settings (the door's `.shell .act` outranked them, so
+  even DFU's red clash was a plain key), and the sticky head the question stands in was a 35% wash with the rows
+  printed through it - both fixed (`enhancedStyle.js`, the UXB1-S rules).
+- **E - Sync from server**: `systems/onlineSync.js`, a card under the Online pane's rules. THERE IS NO HOST TO ASK: a relay
+  serves the wire and /health and publishes no rules, because the rules are the online lane's - this build's, the same on
+  every server. So the sync copies the lane into the offline stores (every forced pref, DFU setting and room mod key,
+  and Smaller Dungeons off, since online every dungeon is full size), lists what differs before the press, and keeps
+  what it replaced for Undo. `mwArms` is left to its Build (and MWA4 retired it). On a default shelf the one difference is Enhanced AI.
+- **F - keys a feature uses and no screen moves**: the Controls page ends with "Keys that do not move" (the HUD's three
+  DaggerfallShortcuts and the Transport window's F/H/C/S behind the Transport key - how the game itself summons a horse
+  or a cart), and a mod's Features tile names its keys (Drop the light, Summon horse and wagon...) read-only, with one
+  press through to Controls. Every key is READ off the registry or the shortcut table.
+- **G - what an attribute does**: the level-up screen's own lines (`ATTRIBUTE_BLURB`, each annotated with the formula it
+  is true of) as every attribute row's hover, and the selected one's line beside the list - the rolled stats, the
+  builder and the review.
+- **H - a class to a file and back**: `customClassDoc`/`parseCustomClassDoc` and `ChargenFlow.customImport` - the clipboard
+  and a `.dfclass.json` each way, every value through the builder's own laws, the special picks through the windows'
+  own gates, and the Create gates untouched (an unbalanced class loads and is refused as a hand-built one would be).
+- **I - the difficulty dagger**: a gauge where the bare tally stood - DFU's track on its side, the mark at `daggerY`
+  normalised, the band Create allows, the advancement multiplier the dagger costs, red outside the band; the special
+  picks' pane carries it too.
+- **J - 16:9 without scrolling**: measured in a browser at 1920x1080, 1600x900, 1366x768 and 1280x720 - the class list,
+  the skills, the review and the builder scrolled at every size (the review by 613px at 1080). A desk block (1100px and a
+  fine pointer; the finger keeps its 44px floor) gives the long lists the width a desk has - the class list two columns,
+  the skills and the review three, the builder three (skills, attributes, the class under its name) - and every stage
+  fits at all four sizes.
+- **K - a countdown for repairs that are not instant**: the classic counter draws DFU's own misc label ("DONE" / "N
+  days", RepairItemLabelTextHandler) that it had never drawn; the enhanced counter counts each job down on its row,
+  days while a day or more is left and hours under one, an estimate while staged.
+- **L - splitting a shop's stack** ("12 oil, I want 2"): the classic counter asks DFU's "how many" on a Control-click and
+  when a stack only partly fits (TransferItem's gate); the enhanced counter carries a count on a clean stack. (Main's
+  DISC25-F built the same split on both counters the same day; the merge kept DISC25-F's - one law in
+  `systems/itemTransfer.js`, the how-many field - and this list's two additions on top of it: the click's own Control,
+  read off the pointer seam, and a returned lot rejoining its stack on both counters, AUDIT UXB1 F4.)
+- **M - the private-property question, clickable**: the keyed panel's click rows sat one row above their labels (a click
+  on "Y - yes" answered No) - mended for every keyed menu - and the question is DFU's YesNo box now (`ui/yesNoBox.js`):
+  the parchment and BUTTONS.RCI on the classic skin, a two-button card on the enhanced one, No the default, no Escape.
+- **N/O - a stranger's container, and one already searched**: the plaque names a house container "Private property" in
+  its own tone, and "Searched" once its window opened on this stock (stamped with the stock's day, shut by the restock).
+  The enhanced plaque only: the classic HUD line has no second line to carry it.
+
+Pins: `test/uxb1*.test.js` (52), with `enhancedControls.test.js` (22), `ccrep`, `housecontainers` and `macro7_gate`
+re-aimed, and for S every pin that stated one key, one action re-aimed to the shared-key law (the I4 duplicate and apply
+pins, SOC D3's yield, the hosts' ladder and window-key source pins). Mutants: `tools/mutants/uxb1.json`, 38, all dead;
+`worldhover.json`'s four signature records and thirty-one records S moved re-aimed by content.
+
+### AUDIT UXB1 (2026-09-25, "Audit before merge") - ten findings: nine mended, one checked and left, one found beside them
+
+- **F1 - a shared key dispatched past the window it opened.** routeKey and both self-routing ladders ran every action
+  on the key whatever the first one did, so Inventory and Character Sheet on one key opened both, stacked. The loop
+  stops once a window is up (routeKey on the context's live `uiOverlayActive`, the ladders on bindCursorToggle's own
+  predicate read before the pass, and above ground a pointer surface the pass opened - the chat, the friends panel,
+  the F-menu pause nothing and take keys); two actions that open nothing still both run.
+- **F2 - a second sync replaced the undo.** `applyOnlineSync` wrote a fresh record each time, so the first sync's
+  values were beyond Undo's reach after any second one. The record now grows: one row a rule, a rule both syncs wrote
+  keeping the later value (the player's own just before it).
+- **F3/F8 - a newer build's shares were lost.** The load dropped every unknown name and seated a key's first known
+  sharer as its OWNER where the file's owner was a newer build's action - and the save that followed wrote that name
+  over it, the one thing `unknown` exists to keep. What cannot be seated is carried (`sharedUnknown`,
+  `secondarySharedUnknown`) and written back while the key's owner is the one it was loaded under; a key whose owner
+  is unknown is not bound here, as for an unshared one. The seat itself is one function (`seatOnKey`) where the share
+  and the load had each spelled it.
+- **F4 - a split lot put back on the classic shelf stood apart.** UXB1-L's split makes a record of its own, and the
+  classic window's click-back and Clear pushed it, leaving "Oil x2" beside "Oil x10". Both go through AddItem's merge
+  now, as the enhanced counter's did.
+- **F5 - the frame's polls built a pair per key per call.** `held`/`pressed`/`released` walked dictEntries' generator
+  for every action every frame; they walk the maps as they stand, and a dict's sharers only where it has any.
+- **F7 - the enhanced counter ran the carry dry-run three times a paint** (the strip, its count, the footer); it runs
+  once per item per paint, the memo live only while render() builds. Recorded as an equivalent mutant: it changes no
+  figure. (Gone with the count it served when the merge with main kept DISC25-F's how-many field.)
+- **F9 - `bindCursorToggle`'s parameter was named for one action** and handed every action a shared key carries; named
+  for what it takes, and a single action still reads the same.
+- **F10 - a comment said a key could not carry both** (stale since S), and the float note did not name the third
+  answer; both mended.
+- **Checked, not changed. F6** - the classic repair labels are recomputed every frame: the pass is over the jobs the
+  window already walks each frame, and a cache would need keying on every job's condition and booking (Repair stamps
+  them in place without changing the list) - the draw now reads the list once and hands it over. And one found beside
+  them: an imported class name kept control and format characters the name box cannot type - a line break into the
+  classic label, a bidi override that turned the name around - so the parser strips them.
+
+Pins: `uxb1e` +1, `uxb1k` +1, `uxb1s` +1 and a secondary-share poll, `uxb1g`'s name, `enhancedControls`' note;
+`combohosts`' routeKey pin re-aimed to the loop, `freemouse`'s reader pin to the renamed parameter. Mutants:
+`uxb1.json` 52 - five S records re-aimed by content, fourteen new - 51 dead, 1 equivalent as recorded; `survtiers3.json`'s
+rest-window cite record re-aimed with the cite. Cites: 114 moved by `tools/citeShift.mjs`, ten struck Ledger and
+Settings-Screen-Spec cites CD4 reads moved by hand, and the Ledger's gamepad-note cite re-resolved (it had run two lines
+past the end of `inputActions.js` since UXB1-S).
+
+## MWA4 - THE MORROWIND ASSETS CARD, ATTACH AND REMOVE (2026-09-25, before the merge: "Can you reorganize the marrowind attachment selector, remove the on and off button (defunct) and only keep attach and remove data buttons. Only reduce the amount of over explaining text and put it at the top of the feature list")
+
+**Attached is on.** MWA2's "Use Morrowind assets" On/Off row switched `mwArms`, a pref the online lane forced on at
+every boot - so online it never stuck, and offline a player who attached the files and never found the row played
+without them. The switch is retired with its row: the attached files are the arms' switch, online and off.
+`weaponRig.js autoBuildArms` gates on a made character, the data and the standing arm; the peer bodies (`world.js`) on
+the enhanced skin and the data; the lane forces nothing (`onlineLane.js`), so the sync's skip table for it went too
+(`onlineSync.js`). Attach builds the body for a character in play (a front-door attach leaves it to the next door),
+and Remove data - unload, then clear the store - is the off.
+
+**The card** (`enhancedMenu.js morrowindCard`) heads the feature list, above the tiles, on the All and Mod Authored
+filters. It is a title, one line of what the files do (`MW_CARD_LINE`), the two readings that matter (Data; Arms once
+attached: On, "Builds when you play", or the refusal's reason), and Attach data / Remove data. It dropped the two
+paragraphs, the switch's own paragraph, the Weapon / Torch / Arms mode / Body stats, the Face, Worn and ESM readout,
+the look-lag switch and the viewer's and inspector's doors (the pages stand at their addresses). What did not work
+still says why, and only then (`morrowindTroubleLines`: the missing pieces, a refused third person, a race the files
+lack) - MWDIAG's law that the reason belongs on the card.
+
+**Two consequences, handled.** Weapon Sheathing's switch was on the card twice over - it has its own tile, which is its
+one door now (its effect line no longer points at the card). And the look-lag button was the only way out of the mode
+it stored, so the key is bumped again (`fpArm.js`, `dagger.mwArmsFollowCamera3`): every player lands on the fixed
+default, and the look-lag path stays in the rig for the probe.
+
+Pins: `mwarms_fps.test.js` +1 (the card RENDERED in three states through its own function - nothing attached,
+attached and standing, a build that did not stand - and the attach/remove wiring by source) and MWA1/MWA2's pins
+re-aimed; `fparm`, `mwtorch`, `features`, `settingsUI`, `ws1_sheathing`, `mwattach`, `mwbody1`, `rf4_featuredecl`
+and `uxb1e_onlinesync` re-aimed to the card and the retired switch; `mac1_playreport`'s measure-before-build pin moved
+to the attach pick, which registers what it stored. Mutants: `tools/mutants/mwa4.json`, 11, all
+dead; `uxb1.json`'s record on the sync's arms-switch skip retired with the skip (51).

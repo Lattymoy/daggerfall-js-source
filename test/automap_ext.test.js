@@ -712,7 +712,7 @@ test('A2 wiring pins: the M-outside dispatch in both exterior hosts, gated on a 
     const h = src(host);
     const g = h.indexOf(GATE);
     assert.ok(g > 0, `${host}: the ladder is gated once, on the overlay AND the mode`);
-    const arm = h.indexOf("if (act === 'AutoMap') { hudCtx.toggleAutomap(); return; }");
+    const arm = h.indexOf("if (act === 'AutoMap') { hudCtx.toggleAutomap(); return true; }");
     assert.ok(arm > g, `${host}: and M-outside sits inside that gate`);
   }
   const w = src('src/scenes/world.js');

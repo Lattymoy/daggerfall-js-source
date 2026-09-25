@@ -506,7 +506,7 @@ test('AUDIT 64 F36/F37: the arm is in every host that dispatches keys - routeKey
   // scenes/exterior.js never call it and carry the arm themselves.
   assert.match(src('ui/input.js'), /if \(hudShortcutKey\(e, keys\)\) return true;/);
   for (const host of ['scenes/world.js', 'scenes/exterior.js']) {
-    assert.match(src(host), /if \(hudShortcutKey\(e, keys\)\) \{ e\.preventDefault\(\); return; \}/, `${host} takes the keys`);
+    assert.match(src(host), /if \(first && hudShortcutKey\(e, keys\)\) \{ e\.preventDefault\(\); return true; \}/, `${host} takes the keys (UXB1-S: on the ladder's first pass alone - a shared key must not flip the HUD twice)`);
   }
   // ...and routeKey takes them BELOW its overlay return, because
   // DaggerfallUI.cs:429-433 updates only the top window.

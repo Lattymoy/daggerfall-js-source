@@ -46,8 +46,9 @@
 // AbortSpell and RecastSpell are routeAction's (FIX-F); every other
 // world key is an action too since KB1 - the one registry, read live.
 import {
-  loadOrCreateBindings, actionForCode, actionLive,
+  loadOrCreateBindings, actionLive,
   getCombo, comboCode, comboModifiers, isPairedCode, modifierHeldFirstDict,
+  actionsForCode,
 } from '../systems/inputActions.js';
 // AUDIT 64 F36/F37: DaggerfallHUD.Update's own shortcut arms. A leaf
 // on systems/ alone, so this module can take it without a cycle.
@@ -343,22 +344,33 @@ function codeDown(store, keys, code, ring = keys) {
  * listener has one event, and the event's flags are the whole truth about it.
  */
 export function eventAction(e) {
-  if (!e?.code) return null;
+  return eventActions(e)[0] ?? null;
+}
+/** UXB1-S: ...EVERY action it means - a SHARED key (inputActions.js shareBinding) means more than one, owner first.
+ *  The same door, the same combo pick and the same dead-mod law; `eventAction` is its first answer. */
+export function eventActions(e) {
+  if (!e?.code) return [];
   const b = bindings();
   for (const [flag, mod] of [['shiftKey', 'ShiftLeft'], ['ctrlKey', 'ControlLeft'], ['altKey', 'AltLeft']]) {
     if (!e[flag] || e.code === mod) continue;
-    const a = actionForCode(b, comboCode(mod, e.code));
-    if (a) return actionLive(a) ? a : null;
+    const as = actionsForCode(b, comboCode(mod, e.code));
+    if (as.length) return as.filter(actionLive);
   }
-  const a = actionForCode(b, e.code);
-  return a && actionLive(a) ? a : null;
+  return actionsForCode(b, e.code).filter(actionLive);
 }
+/** UXB1-S: does this event mean this action - its only one, or one of a shared key's? A window's own-key close asks. */
+export const eventMeans = (e, action) => eventActions(e).includes(action);
 
 /** The action a key event means under the live bindings, or null.
  *  Hand in the host's held-keys Set and combos resolve too: a keydown
  *  on the combo'd key with its modifier already down answers the
  *  COMBO's action, and the plain binding on that key is suppressed. */
 export function actionOf(e, keys = null) {
+  return actionsOf(e, keys)[0] ?? null;
+}
+/** UXB1-S: ...EVERY action a shared key means, owner first - the combo arm, the latch and the dead-mod law exactly as
+ *  above. A host's ladder dispatches each (`actionOf` is the first); an unbound key answers []. */
+export function actionsOf(e, keys = null) {
   const b = bindings();
   if (keys) {
     // ROAD-G G3: the ring AS THE HOST HOLDS IT, plus this press. A host
@@ -375,19 +387,18 @@ export function actionOf(e, keys = null) {
     for (const m of comboModifiers(b)) {
       if (!keys.has(m)) continue;
       const cc = comboCode(m, e.code);
-      const a = actionForCode(b, cc);
+      const as = actionsForCode(b, cc);
       // ...and the combo only ANSWERS when GetUnaryKey says it hits:
       // the modifier's latch must be UP (:1695-1711). Hold K, then
       // Shift, and this press of K reports its plain action WHEN THAT
       // K DISQUALIFIES the modifier - paired with it, i.e. the combo'd
       // action is double-bound, or a modifier itself; otherwise
       // nothing kept the flag down and the combo answers.
-      if (a && codeDown(b, down, cc)) return actionLive(a) ? a : null;   // KB1: a switched-off mod's key means nothing
+      if (as.length && codeDown(b, down, cc)) return as.filter(actionLive);   // KB1: a switched-off mod's key means nothing
     }
-    if (!codeDown(b, down, e.code)) return null;
+    if (!codeDown(b, down, e.code)) return [];
   }
-  const a = actionForCode(b, e.code);
-  return a && actionLive(a) ? a : null;
+  return actionsForCode(b, e.code).filter(actionLive);
 }
 
 /** Held-state read for the hosts' per-frame polls: is ANY key bound
@@ -406,8 +417,18 @@ export function held(keys, action) {
   if (!actionLive(action)) return false;   // KB1: a switched-off mod's action is never down
   const b = bindings();
   pollLatch(b, keys);           // the frame's raise/lower, before any read (:1826-1832)
-  for (const [code, a] of b.primary) if (a === action && codeDown(b, keys, code)) return true;
-  for (const [code, a] of b.secondary) if (a === action && codeDown(b, keys, code)) return true;
+  return actionDown(b, keys, action);   // UXB1-S: a shared key holds every action on it
+}
+
+/** UXB1-S: is a key `action` holds down - as the key's owner or beside it, the primary dict and then the secondary
+ *  (GetKey's dual-dict fallthrough, :1084)? `ring` is the edge ring for pressed/released; held reads the held Set.
+ *  AUDIT UXB1 F5: the frame's polls ask this per action per frame, so it walks the maps as they stand - the
+ *  dictEntries generator it replaced built a pair per key per call - and a dict's sharers only where it has any. */
+function actionDown(b, keys, action, ring) {
+  for (const [code, a] of b.primary) if (a === action && codeDown(b, keys, code, ring)) return true;
+  if (b.sharedPrimary?.size) for (const [code, list] of b.sharedPrimary) if (list.includes(action) && codeDown(b, keys, code, ring)) return true;
+  for (const [code, a] of b.secondary) if (a === action && codeDown(b, keys, code, ring)) return true;
+  if (b.sharedSecondary?.size) for (const [code, list] of b.sharedSecondary) if (list.includes(action) && codeDown(b, keys, code, ring)) return true;
   return false;
 }
 
@@ -466,9 +487,7 @@ function edgeAction(ring, keys, action) {
   if (!ring || !ring.size || !actionLive(action)) return false;
   const b = bindings();
   pollLatch(b, keys);           // the same frame sweep every read takes (:1826-1832)
-  for (const [code, a] of b.primary) if (a === action && codeDown(b, keys, code, ring)) return true;
-  for (const [code, a] of b.secondary) if (a === action && codeDown(b, keys, code, ring)) return true;
-  return false;
+  return actionDown(b, keys, action, ring);   // UXB1-S
 }
 /** InputManager.GetKeyDown's dual-dict fallthrough over the frame's down ring. */
 export function pressed(edges, keys, action) { return edgeAction(edges?.downFrame, keys, action); }
@@ -584,7 +603,7 @@ export function overlayAction(e) {
   // `'-': 'minus'`, `r: 'reroll'`, `R: 'reroll'` that used to stand
   // here were unreachable and read as a promise the module could not
   // keep. A consumer that wants those keys reads 'char:-' / 'char:r' /
-  // 'char:R' beside its own action name, as ui/chargen.js:1833 already
+  // 'char:R' beside its own action name, as ui/chargen.js:1863 already
   // did and ui/charsheet.js's LevelUpScreen now does. The branches are
   // deliberately NOT reordered: putting the table first would starve
   // every text field of '-', 'r' and 'R'. '+' and '=' are outside the
@@ -713,7 +732,7 @@ export function routeKey(e, ctx, setPlayerPos = null, keys = null) {
     if (a) { ctx.overlayInput(a); return true; }
     // Quickload works from ANY overlay (the death screen's F11 hint
     // must be true); everything else stays gated.
-    if (actionOf(e, keys) === 'QuickLoad' && !retroToggleKey(e, keys)) { ctx.quickLoad?.(setPlayerPos); return true; }   // AUDIT 58 (f3/input): the Set rides in here too, so a QuickLoad rebound to a COMBO still answers from under a window; AUDIT RETRO1 C1: never Shift-F11, the retro toggle's chord on this key
+    if (actionsOf(e, keys).includes('QuickLoad') && !retroToggleKey(e, keys)) { ctx.quickLoad?.(setPlayerPos); return true; }   // AUDIT 58 (f3/input): the Set rides in here too, so a QuickLoad rebound to a COMBO still answers from under a window; AUDIT RETRO1 C1: never Shift-F11, the retro toggle's chord on this key
     return false;
   }
   // AUDIT 64 F36/F37 - THE HUD'S OWN SHORTCUTS (DaggerfallHUD.cs
@@ -727,7 +746,19 @@ export function routeKey(e, ctx, setPlayerPos = null, keys = null) {
   // KB1: the diagnostics readout was a raw F8 here, answering only while F8 was unbound (FIX-F) - which, with DFU's
   // PrintScreen on F8, was never. It is the registry's DebugOverlay now (routeAction below), shipped unbound; F8
   // takes the screenshot (ui/screenshot.js).
-  const act = actionOf(e, keys);
+  // UXB1-S: EVERY ACTION THE KEY CARRIES, in turn - a SHARED key (inputActions.js shareBinding) does all it was given,
+  // owner first, and the press is used if any of them used it. One action is the loop run once: the arms below are
+  // each action's, untouched.
+  // AUDIT UXB1 F1: until a window comes up - the overlay branch above owns the keys from then (uiOverlayActive is
+  // each context's live getter), so a key shared by two windows' doors opens the first, not both stacked.
+  let used = false;
+  for (const act of actionsOf(e, keys)) {
+    used = routeKeyAction(e, act, ctx, setPlayerPos) || used;
+    if (ctx.uiOverlayActive) break;
+  }
+  return used;
+}
+function routeKeyAction(e, act, ctx, setPlayerPos) {
   // PX15: THE DIAL, the port's own too - QuickDial (Tab) raises the enhanced
   // compass rose. `=== true` matters: a host without the arm, or the
   // classic skin (the opener's own gate), answers false and the key keeps

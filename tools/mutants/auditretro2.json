@@ -229,8 +229,8 @@
   {
     "name": "AUDITRETRO2-G3-the-world-ladder-reads-the-chord",
     "file": "src/scenes/world.js",
-    "old": "    const act = retroToggleKey(e, keys) ? null : actionOf(e, keys);",
-    "new": "    const act = actionOf(e, keys);",
+    "old": "    const acts = retroToggleKey(e, keys) ? [] : actionsOf(e, keys);",
+    "new": "    const acts = actionsOf(e, keys);",
     "tests": [
       "test/auditretro2.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "AUDITRETRO2-G3-the-exterior-ladder-reads-the-chord",
     "file": "src/scenes/exterior.js",
-    "old": "    const act = retroToggleKey(e, keys) ? null : actionOf(e, keys);",
-    "new": "    const act = actionOf(e, keys);",
+    "old": "    const acts = retroToggleKey(e, keys) ? [] : actionsOf(e, keys);",
+    "new": "    const acts = actionsOf(e, keys);",
     "tests": [
       "test/auditretro2.test.js"
     ]

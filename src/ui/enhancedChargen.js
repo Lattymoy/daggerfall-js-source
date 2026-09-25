@@ -49,7 +49,8 @@ import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { overlayAction, isTextEntryTarget } from './input.js';   // CG2: one definition of 'a DOM field's key is the field's'
 import { SKILL_NAMES } from '../systems/skills.js';
 import { QUESTION_COUNT } from '../systems/classQuestions.js';        // AUDIT 39: the quiz's own count, not a tenth copy of ten
-import { HELP_TOPICS, REP_GROUPS, REP_MAX } from '../systems/customClass.js';              // AUDIT 39: the builder's help picker; CC-REP: the reputation ledger's groups and reach
+import { HELP_TOPICS, REP_GROUPS, REP_MAX, DIFFICULTY_MIN, DIFFICULTY_MAX, advancementMultiplier, daggerFraction, customClassDoc } from '../systems/customClass.js';              // AUDIT 39: the builder's help picker; CC-REP: the reputation ledger's groups and reach; UXB1-H/I: the class document, the dagger
+import { ATTRIBUTE_BLURB, attributeLabel as attrName } from './levelUpView.js';   // UXB1-G: the port's own line per attribute, each true of the code (LV1's audit)
 import { labelFor } from '../systems/specialAdvantages.js';           // AUDIT 39: DFU's own words for an advantage key
 import { NAME_MAX_CHARACTERS as NAME_MAX } from './chargen.js';
 import { traceProvinces, MAP_W, MAP_H, PROVINCE_NAMES } from './provinceMap.js';
@@ -391,7 +392,7 @@ function classQuestionsStage() {
 function classStage() {
   const pane = el('div', 'stagebody');
 
-  const list = el('div', 'list');
+  const list = el('div', 'list classlist');   // UXB1-J: two columns on a desk (enhancedStyle.js)
   for (let i = 0; i < flow.classRowCount(); i++) {
     const name = flow.classRowName(i);
     const row = el('div', `row${i === flow.classListIndex ? ' on' : ''}`);
@@ -527,6 +528,9 @@ function customAdvPane(c) {
   const pane = el('div', 'stagebody solo');
   const wrap = el('div', 'skillpane');
   wrap.append(el('h2', null, c.sub === 'advantage' ? 'Special advantages' : 'Special disadvantages'));
+  // UXB1-I: the dagger stays in sight while the picks that move it are made - the classic dagger stands beside this
+  // window (its trails keep animating under it, UI-Arc's U20b note); this pane replaces the builder, so it carries it
+  wrap.append(daggerGauge(flow.customDifficulty()));
   const rows = el('div', 'list');
   list.forEach((item, i) => {
     const row = el('div', 'row');
@@ -597,11 +601,14 @@ function customClassStage() {
   const pane = el('div', 'stagebody solo');
   // CC-GRID (Ember: "the custom class building menu being in a list is
   // a bit clunky ... as a list it means having to scroll around to see
-  // all the options"): the builder is a two-column grid on a wide
-  // screen - the twelve skills down one side, the attributes and the
-  // class itself down the other, the name across the top and the acts
-  // across the foot - so the whole class is on one page. Below 900px
-  // it is the one list it always was (enhancedStyle.js .skillpane.builder).
+  // all the options"): the builder is a grid on a wide screen - the
+  // twelve skills down one side, the attributes and the class itself
+  // beside them, the name across the top and the acts across the foot -
+  // so the whole class is on one page. Below 900px it is the one list it
+  // always was (enhancedStyle.js .skillpane.builder). UXB1-J: THREE
+  // columns on a desk - the skills, the attributes, and the class itself
+  // under its name with the acts beneath - so 16:9 needs no scroll; the
+  // DOM keeps the phone's reading order and the grid areas place it.
   const wrap = el('div', 'skillpane builder');
 
   // THE NAME. The FLOW owns the text, as the name screen's box does -
@@ -621,10 +628,11 @@ function customClassStage() {
     box.value = flow.custom.className;
   };
   box.classList.add('span');
+  box.classList.add('b-name');
   wrap.append(box);
 
   // THE TWELVE SLOTS, in the three groups the builder writes them to.
-  const skillsCol = el('div', 'builder-col');
+  const skillsCol = el('div', 'builder-col b-skills');
   for (const [label, from, to] of CUSTOM_SKILL_GROUPS) {
     const sec = el('div', 'skillgroup');
     const head = el('div', 'skillhead');
@@ -642,11 +650,11 @@ function customClassStage() {
     skillsCol.append(sec);
   }
   wrap.append(skillsCol);
-  const shapeCol = el('div', 'builder-col');
 
   // THE FREE-EDIT LEDGER. StatsRollout's spinners clamp 10..75 and the
   // POOL is free to go negative - the exit gate is what demands the
   // balance, so the pool is shown rather than the buttons disabled.
+  const attrsCol = el('div', 'builder-col b-attrs');
   const stats = el('div', 'skillgroup');
   const statHead = el('div', 'skillhead');
   statHead.append(el('span', 'skillk', 'Attributes'));
@@ -655,7 +663,8 @@ function customClassStage() {
   STAT_KEYS_ORDER.forEach((key, i) => {
     const row = el('div', `row${i === c.statCursor ? ' on' : ''}`);
     const main = el('button', 'row-main');
-    main.append(el('div', 'row-name', key[0].toUpperCase() + key.slice(1)));
+    main.append(el('div', 'row-name', attrName(key)));
+    main.title = ATTRIBUTE_BLURB[key];   // UXB1-G
     main.onclick = () => { flow.applyHit({ customStatCursor: i }); paint(); };
     row.append(main);
     row.append(stepper(c.stats[key], (dir) => {
@@ -665,11 +674,14 @@ function customClassStage() {
     }));
     stats.append(row);
   });
-  shapeCol.append(stats);
+  stats.append(attrHelp(STAT_KEYS_ORDER[c.statCursor]));   // UXB1-G: the selected attribute, in words
+  attrsCol.append(stats);
+  wrap.append(attrsCol);
 
   // THE SHAPE OF THE CLASS: hit points, what it is good and bad at,
-  // and the dagger's tally - which is difficultyPoints over the hit
-  // points AND both special adjustments, so it moves as you spend.
+  // and the dagger - which reads difficultyPoints over the hit points
+  // AND both special adjustments, so it moves as you spend.
+  const classCol = el('div', 'builder-col b-class');
   const shape = el('div', 'skillgroup');
   const shapeHead = el('div', 'skillhead');
   shapeHead.append(el('span', 'skillk', 'The class itself'));
@@ -698,19 +710,158 @@ function customClassStage() {
     row.append(main);
     shape.append(row);
   }
-  shape.append(poolBar('Difficulty', flow.customDifficulty()));
-  shapeCol.append(shape);
-  wrap.append(shapeCol);
+  shape.append(daggerGauge(flow.customDifficulty()));   // UXB1-I: the dagger, where the tally stood
+  classCol.append(shape);
+  wrap.append(classCol);
 
-  const a = el('div', 'acts span');
+  const a = el('div', 'acts span b-acts');
   const make = el('button', 'act primary', 'Create this class');
   make.onclick = () => { flow.applyHit({ customExit: true }); paint(); };
   const help = el('button', 'act', 'What do these mean?');
   help.onclick = () => { flow.applyHit({ customHelp: true }); paint(); };
-  a.append(make, help);
+  // UXB1-H: the class, to a file or the clipboard and back
+  const exp = el('button', `act class-export${classIo === 'export' ? ' on' : ''}`, 'Export');
+  exp.onclick = () => { classIo = classIo === 'export' ? null : 'export'; classIoNote = null; paint(); };
+  const imp = el('button', `act class-import${classIo === 'import' ? ' on' : ''}`, 'Import');
+  imp.onclick = () => { classIo = classIo === 'import' ? null : 'import'; classIoNote = null; paint(); };
+  a.append(make, help, exp, imp);
   wrap.append(a);
+  if (classIo) wrap.append(classIoCard());
   pane.append(wrap);
   return pane;
+}
+
+// ── UXB1-G: WHAT AN ATTRIBUTE DOES ───────────────────────────────
+// (2026-09-25, the UX backlog: "Stat explanations on hover/tiny button (Minimizes need for external resources)".)
+// DFU's stats screen explains nothing - its attribute buttons only select (chargenArt.js's setStatCursor) - so a
+// new player met eight bare words. The lines are the level-up screen's (levelUpView.js ATTRIBUTE_BLURB: the port's
+// own words, each annotated with the formula it is true of), shown on hover (a row's title) and, for the attribute
+// selected - by a click, a tap or the arrows - in words beside it.
+function attrHelp(key) {
+  const box = el('div', 'attrhelp');
+  box.append(el('h4', null, attrName(key ?? '')));
+  box.append(el('p', null, ATTRIBUTE_BLURB[key] ?? ''));
+  return box;
+}
+
+// ── UXB1-I: THE DIFFICULTY DAGGER ────────────────────────────────
+// (2026-09-25, the UX backlog: "Restore the difficulty dagger or some other similar visual indicator".) The classic
+// builder slides CUST08I0's dagger up its gauge as the class grows stronger (UpdateDifficulty :500-511); this view
+// showed one bare number. The gauge is DFU's track laid on its side: the dagger stands where daggerY puts it
+// (customClass.js daggerFraction - the same lopsided scale), the band between the two limits is the one Create
+// allows (-12..40, TEXT.RSC 306 outside it), and the words say what the dagger costs: the advancement multiplier the
+// career will carry (:498), which is how much slower every skill trains.
+function daggerGauge(points) {
+  const inRange = points >= DIFFICULTY_MIN && points <= DIFFICULTY_MAX;
+  const g = el('div', `dagger${inRange ? '' : ' red'}`);
+  g.setAttribute('role', 'meter');
+  g.setAttribute('aria-valuemin', String(DIFFICULTY_MIN));
+  g.setAttribute('aria-valuemax', String(DIFFICULTY_MAX));
+  g.setAttribute('aria-valuenow', String(points));
+  const head = el('div', 'dagger-head');
+  head.append(el('span', 'skillk', 'Difficulty'));
+  head.append(el('span', 'dagger-val', `${points > 0 ? '+' : ''}${points}`));
+  g.append(head);
+  const track = el('div', 'dagger-track');
+  const pct = (p) => `${(daggerFraction(p) * 100).toFixed(2)}%`;
+  const band = el('span', 'dagger-band');
+  band.style.left = pct(DIFFICULTY_MIN);
+  band.style.width = `${((daggerFraction(DIFFICULTY_MAX) - daggerFraction(DIFFICULTY_MIN)) * 100).toFixed(2)}%`;
+  const zero = el('span', 'dagger-zero');
+  zero.style.left = pct(0);
+  const mark = el('span', 'dagger-mark');
+  mark.style.left = pct(points);
+  mark.append(daggerGlyph());
+  track.append(band, zero, mark);
+  g.append(track);
+  const ends = el('div', 'dagger-ends');
+  ends.append(el('span', null, 'weaker'), el('span', null, 'stronger'));
+  g.append(ends);
+  g.append(el('div', 'row-note dagger-note', inRange
+    ? `Skills advance at \u00d7${advancementMultiplier(points).toFixed(2)} the effort.`
+    : 'The dagger is in the red: bring it back inside the band to create this class.'));
+  return g;
+}
+/** The port's own dagger, drawn in the skin's ink - a blade, a guard, a grip (not CUST08I0: this view reads no art). */
+function daggerGlyph() {
+  const g = svg('svg', { viewBox: '0 0 16 40', width: '16', height: '40', 'aria-hidden': 'true', class: 'dagger-glyph' });
+  g.append(svg('path', { d: 'M8 0 L11 23 L5 23 Z', class: 'dagger-blade' }));
+  g.append(svg('rect', { x: '1', y: '23', width: '14', height: '3', class: 'dagger-guard' }));
+  g.append(svg('rect', { x: '6.5', y: '26', width: '3', height: '10', class: 'dagger-grip' }));
+  g.append(svg('circle', { cx: '8', cy: '37.5', r: '2.5', class: 'dagger-guard' }));
+  return g;
+}
+
+// ── UXB1-H: THE CLASS, TO A FILE AND BACK ────────────────────────
+// (2026-09-25, the UX backlog: "Export/Import class from file/clipboard.") The document and every law it is read
+// back through are systems/customClass.js's (customClassDoc / parseCustomClassDoc); the flow's one door loads it
+// (ChargenFlow.customImport). This is only the card: the clipboard and a file each way, and a box to paste into
+// where a browser will not let the page read the clipboard.
+let classIo = null;       // null | 'export' | 'import' - which card the acts opened (the view's own state, not the flow's)
+let classIoNote = null;   // the card's last word: done, or why not
+export const CLASS_FILE_EXT = '.dfclass.json';
+export const classFileName = (name) => `${String(name || 'custom class').trim().replace(/[^\w -]+/g, '').replace(/\s+/g, '-').toLowerCase() || 'custom-class'}${CLASS_FILE_EXT}`;
+const classDocText = () => JSON.stringify(customClassDoc(flow.custom), null, 2);
+function classIoCard() {
+  const card = el('div', 'card classio span b-io');
+  const say = (t) => { classIoNote = t; paint(); };
+  if (classIo === 'export') {
+    card.append(el('h3', null, 'Export this class'));
+    card.append(el('p', 'row-note', 'The name, the skills, the attributes, the special advantages and disadvantages and the reputations - everything you chose here.'));
+    const acts = el('div', 'acts');
+    const copy = el('button', 'act primary', 'Copy to clipboard');
+    copy.onclick = async () => {
+      try { await globalThis.navigator.clipboard.writeText(classDocText()); say('Copied. Paste it into Import on any Daggerfall Enhanced character.'); }
+      catch { say('The browser would not let this page write the clipboard - save it as a file instead.'); }
+    };
+    const save = el('button', 'act', 'Save as a file');
+    save.onclick = () => {
+      const name = classFileName(flow.custom.className);
+      const url = URL.createObjectURL(new Blob([classDocText()], { type: 'application/json' }));
+      const link = document.createElement('a');
+      link.href = url; link.download = name;
+      document.body.append(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      say(`Saved as ${name}.`);
+    };
+    acts.append(copy, save);
+    card.append(acts);
+  } else {
+    card.append(el('h3', null, 'Import a class'));
+    card.append(el('p', 'row-note', 'A class exported from this screen. It replaces what is on the builder now; Create still checks it.'));
+    const field = el('textarea', 'classio-text');
+    field.setAttribute('aria-label', 'Paste a class here');
+    field.placeholder = 'Paste a class here';
+    field.rows = 3;
+    field.spellcheck = false;
+    card.append(field);
+    const load = (text) => {
+      const r = flow.customImport(text);
+      if (!r.ok) { say(r.error); return; }
+      classIo = null;
+      say(r.skipped.length ? `Loaded. ${r.skipped.length} special pick${r.skipped.length === 1 ? '' : 's'} the windows would not take ${r.skipped.length === 1 ? 'was' : 'were'} left out.` : 'Loaded.');
+    };
+    const acts = el('div', 'acts');
+    const go = el('button', 'act primary', 'Load');
+    go.onclick = () => load(field.value);
+    const paste = el('button', 'act', 'Paste from clipboard');
+    paste.onclick = async () => {
+      try { load(await globalThis.navigator.clipboard.readText()); }
+      catch { say('The browser would not let this page read the clipboard - paste into the box instead.'); }
+    };
+    const open = el('button', 'act', 'Open a file');
+    open.onclick = () => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = `${CLASS_FILE_EXT},.json,application/json,text/plain`;
+      input.onchange = async () => { const f = input.files?.[0]; if (f) load(await f.text()); };
+      input.click();
+    };
+    acts.append(go, paste, open);
+    card.append(acts);
+  }
+  if (classIoNote) card.append(el('p', 'classio-note', classIoNote));
+  return card;
 }
 
 // ── HOW YOUR HISTORY IS WRITTEN ──────────────────────────────────
@@ -950,7 +1101,8 @@ function statsStage() {
   STAT_KEYS_ORDER.forEach((key, i) => {
     const row = el('div', `row${i === flow.statCursor ? ' on' : ''}`);
     const main = el('button', 'row-main');
-    main.append(el('div', 'row-name', key[0].toUpperCase() + key.slice(1)));
+    main.append(el('div', 'row-name', attrName(key)));
+    main.title = ATTRIBUTE_BLURB[key];   // UXB1-G: on hover
     main.onclick = () => { flow.applyHit({ setStatCursor: i }); paint(); };
     row.append(main);
     row.append(stepper(flow.stats?.[key] ?? 0, (dir) => {
@@ -964,6 +1116,7 @@ function statsStage() {
 
   const detail = el('div', 'detail');
   const d = el('div', 'dcard');
+  d.append(attrHelp(STAT_KEYS_ORDER[flow.statCursor]));   // UXB1-G: and for the one selected - the pointer-less way in
   d.append(el('h3', null, 'What these buy you'));
   const dl = el('dl', 'stats');
   const derived = flow.derived() ?? {};
@@ -995,7 +1148,7 @@ function statsStage() {
 // group is where its points come from.
 function skillsStage() {
   const pane = el('div', 'stagebody solo');
-  const wrap = el('div', 'skillpane');
+  const wrap = el('div', 'skillpane skills3');   // UXB1-J: the three groups side by side on a desk
   let cursor = 0;
   for (const [group, ids] of flow.skillRows()) {
     const sec = el('div', 'skillgroup');
@@ -1167,30 +1320,39 @@ function summaryStage() {
   who.append(idcol);
   list.append(who);
 
+  // UXB1-J: the review in three columns on a desk - the attributes, the primary and major skills, the minor ones -
+  // so the whole character is one screen at 16:9; one column (the list it was) everywhere else.
+  const grid = el('div', 'reviewgrid');
+  const cols = [el('div', 'reviewcol'), el('div', 'reviewcol'), el('div', 'reviewcol')];
   // AUDIT 64 F33: the SUMMARY's own rollout pool. CHAR1: and its own
   // total, because this screen edits the same eight values and asks the
   // same question - statTotalFinal reads whichever pool is on screen.
-  list.append(sectionHead('Attributes', flow.sumStatPool ?? 0, flow.statTotalFinal));
+  cols[0].append(sectionHead('Attributes', flow.sumStatPool ?? 0, flow.statTotalFinal));
   STAT_KEYS_ORDER.forEach((key, i) => {
-    list.append(reviewRow(key[0].toUpperCase() + key.slice(1), flow.stats?.[key] ?? 0, (dir) => {
+    const row = reviewRow(attrName(key), flow.stats?.[key] ?? 0, (dir) => {
       flow.applyHit({ setStatCursor: i });
       flow.applyHit({ statStep: dir });
       paint();
-    }));
+    });
+    row.title = ATTRIBUTE_BLURB[key];   // UXB1-G
+    cols[0].append(row);
   });
 
   let cursor = 0;
-  for (const [group, ids] of flow.skillRows()) {
-    list.append(sectionHead(group[0].toUpperCase() + group.slice(1), flow.pools?.[group] ?? 0));
+  flow.skillRows().forEach(([group, ids], g) => {
+    const col = cols[g < 2 ? 1 : 2];   // primary and major share the middle column, minor the last
+    col.append(sectionHead(group[0].toUpperCase() + group.slice(1), flow.pools?.[group] ?? 0));
     for (const id of ids) {
       const at = cursor++;
-      list.append(reviewRow(SKILL_NAMES[id] ?? `Skill ${id}`, flow.skills?.[id] ?? 0, (dir) => {
+      col.append(reviewRow(SKILL_NAMES[id] ?? `Skill ${id}`, flow.skills?.[id] ?? 0, (dir) => {
         flow.applyHit({ setSkillCursor: at });
         flow.applyHit({ skillStep: dir, group });
         paint();
       }));
     }
-  }
+  });
+  grid.append(...cols);
+  list.append(grid);
   pane.append(list);
 
   const detail = el('div', 'detail');
@@ -1357,6 +1519,7 @@ function paintInto() {
     face: faceStage, stats: statsStage, skills: skillsStage,
     reflexes: reflexStage, summary: summaryStage,
   };
+  if (flow.state !== 'customClass') { classIo = null; classIoNote = null; }   // UXB1-H: the card is the builder's, and leaves with it
   stagePrimary = null;
   nameOk = null;
   pane.append(flow.biogRepBox?.length

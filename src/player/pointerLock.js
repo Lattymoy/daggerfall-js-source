@@ -93,9 +93,11 @@ export function cursorKeyClaimed(e = null) {
  *  player's own FreeMouse key frees the mouse during play and takes it
  *  back. `isWindowUp` is the
  *  host's own overlay predicate - DFU gates on !IsGamePaused, and a
- *  window up is this port's paused. */
-export function bindCursorToggle(canvas, isWindowUp = () => false, actionOf = null) {
-  if (typeof addEventListener !== 'function' || !actionOf) return () => {};
+ *  window up is this port's paused. `actionsOf` answers a key event's
+ *  actions - every one a shared key carries (UXB1-S; the hosts pass
+ *  ui/input.js's actionsOf) - or a single action, which reads the same. */
+export function bindCursorToggle(canvas, isWindowUp = () => false, actionsOf = null) {
+  if (typeof addEventListener !== 'function' || !actionsOf) return () => {};
   // PL3 (2026-09-12, Mac: "The mouse pointer can still get stuck outside
   // of the game, not allowing you to interact with the game unless
   // refreshing"). The flag is a module global that NOTHING reset: a
@@ -124,8 +126,9 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionOf = nu
     // one toggle, one flag, one place that can refuse it - a second
     // binding over `_cursorActive` is the bug PL3 spent a whole slice
     // on, in a new hat.
-    const act = actionOf(e);
-    if (act !== FREE_MOUSE_ACTION && !(act === 'ActivateCursor' && !cursorKeyClaimed(e))) return;   // KB1: online, ActivateCursor's key is the chat's - when the chat takes this press
+    const got = actionsOf(e);
+    const acts = Array.isArray(got) ? got : got ? [got] : [];   // UXB1-S (AUDIT UXB1 F9: named for what the hosts hand in)
+    if (!acts.includes(FREE_MOUSE_ACTION) && !(acts.includes('ActivateCursor') && !cursorKeyClaimed(e))) return;   // KB1: online, ActivateCursor's key is the chat's - when the chat takes this press
     e.preventDefault();
     // PL1: "Don't allow activate cursor for 0.3 seconds after closing
     // an input message box" (PlayerMouseLook.cs:192-196).

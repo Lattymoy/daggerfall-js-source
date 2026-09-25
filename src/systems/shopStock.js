@@ -187,6 +187,12 @@ export const createStockedDate = (date) => ((date?.year ?? 0) * 1000) + dayOfYea
 /** PlayerActivate's own comparison (:882, :911), spelled once so the
  *  three activation arms in the host cannot drift apart. */
 export const needsRestock = (container, today) => (container?.stockedDate ?? 0) < today;
+/** UXB1-O (2026-09-25, the UX backlog: "flag objects with generated loot ... 'your character' would know which ones
+ *  have open lids"): this character has looked at THIS stock - opened (`openedOn`, stamped with the stock's own day
+ *  when the window opens) and neither rolled again since nor due to be. The day's restock closes the lid again, as it
+ *  refills the drawer: a searched container is only ever the stock the player saw. */
+export const stockSearched = (container, today) => Number.isFinite(container?.openedOn) && container.openedOn > 0
+  && container.openedOn === container.stockedDate && !needsRestock(container, today);
 
 /** StockShopShelf, verbatim. Returns the item list; every item
  *  carries value = its DaggerfallUnityItem base value.
@@ -438,6 +444,17 @@ export const PRIVATE_PROPERTY_MODELS_15_AND_UP = Object.freeze([
 /** HC1 - PlayerActivate's PrivatePropertyId (:94): the TEXT.RSC 37
  *  Yes/No question a stocked house container asks before opening. */
 export const PRIVATE_PROPERTY_TEXT_ID = 37;
+/** UXB1-M: the question as DFU's box sets it - SetTextTokens(37) keeps each row's own centring
+ *  (DaggerfallMessageBox.cs:432-441), which the keyed panel's flattening threw away - with record 37's own two
+ *  lines, centred, when there is no TEXT.RSC to read. Blank rows are the record's layout and stay. */
+export const PRIVATE_PROPERTY_FALLBACK_ROWS = Object.freeze([
+  Object.freeze({ text: 'This looks like private property. Do you', center: true }),
+  Object.freeze({ text: 'still want to look through it?', center: true }),
+]);
+export function privatePropertyRows(rows) {
+  const out = (rows ?? []).map((r) => (typeof r === 'string' ? { text: r, center: true } : { text: String(r?.text ?? ''), center: r?.center !== false }));
+  return out.some((r) => r.text.trim() !== '') ? out : PRIVATE_PROPERTY_FALLBACK_ROWS.map((r) => ({ ...r }));
+}
 
 export function stockHouseContainer({ buildingType, record }, playerEntity = {}, { rolls = Math.random, contRand = rand } = {}) {
   const items = [];

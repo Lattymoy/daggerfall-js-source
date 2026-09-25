@@ -260,7 +260,11 @@ export function resolveHover(hit, { name = null, contents = null } = {}) {
     if (named.actionsUnlit) f.startUnlit = true;
     return f;
   }
-  return frame(key, 'name', named.title, named.subs ?? []);
+  const f = frame(key, 'name', named.title, named.subs ?? []);
+  // UXB1-N: a namer's TONE - how the title is coloured (worldTooltips.js houseContainerHover's `private`). Carried only
+  // when a namer says one, so every other frame keeps its shape.
+  if (typeof named.tone === 'string' && named.tone) f.tone = named.tone;
+  return f;
 }
 
 /**
@@ -333,5 +337,5 @@ export function selectedRow(sel, frame) {
 export function frameSignature(f) {
   if (!f) return null;
   const rows = f.rows.map((r) => `${r.name}\u0002${r.stack}\u0002${r.rarity ?? ''}`).join('\u001f');
-  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;
+  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}${f.tone ? `|${f.tone}` : ''}`;   // UXB1-N: a tone that changes repaints
 }

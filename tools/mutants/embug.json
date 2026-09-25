@@ -72,8 +72,8 @@
   {
     "name": "EMBUG2-the-sheet-takes-the-travel-key-alone-again-so-M-cannot-shut-it",
     "file": "src/ui/heldMap.js",
-    "old": "    if (code === 'Escape' || _act === 'TravelMap' || _act === 'AutoMap') {",
-    "new": "    if (code === 'Escape' || _act === 'TravelMap') {",
+    "old": "    if (code === 'Escape' || _acts.includes('TravelMap') || _acts.includes('AutoMap')) {",
+    "new": "    if (code === 'Escape' || _acts.includes('TravelMap')) {",
     "tests": [
       "test/map3_heldpose.test.js",
       "test/heldmap.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "EMBUG2-the-sheet-takes-the-automap-key-alone-so-the-world-map-cannot-shut",
     "file": "src/ui/heldMap.js",
-    "old": "    if (code === 'Escape' || _act === 'TravelMap' || _act === 'AutoMap') {",
-    "new": "    if (code === 'Escape' || _act === 'AutoMap') {",
+    "old": "    if (code === 'Escape' || _acts.includes('TravelMap') || _acts.includes('AutoMap')) {",
+    "new": "    if (code === 'Escape' || _acts.includes('AutoMap')) {",
     "tests": [
       "test/map3_heldpose.test.js",
       "test/heldmap.test.js"

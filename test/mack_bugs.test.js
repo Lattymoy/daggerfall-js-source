@@ -36,7 +36,7 @@ test('AUDIT-MACK F2: ONE feeder per held-key Set, and every reader is on a fed o
   // matters: it asserted that every file reading `held(keys, ...)`
   // must itself write the mouse codes into that Set. `worldModes.js`
   // does not OWN a Set - it takes `keys` off the host bag
-  // (`exterior.js:3804`) - and the lender's own mousedown writes the
+  // (`exterior.js:3824`) - and the lender's own mousedown writes the
   // codes UNGATED on a listener that is never removed. The codes were
   // always there.
   //
@@ -282,7 +282,7 @@ test('AUDIT-MACK F1: every ctx door routeAction dispatches is reachable BY ITS A
   // ...and the two that hand-write a ladder really end it on the
   // table, which is what makes the assertion above true for them.
   for (const h of ['exterior', 'world']) {
-    assert.match(rd(`src/scenes/${h}.js`), /if \(routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return; \}/,
+    assert.match(rd(`src/scenes/${h}.js`), /if \(routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return true; \}/,
       `${h}.js: the tail of the ladder is the TABLE, not a list someone maintains`);
   }
 });
@@ -458,11 +458,11 @@ test('MAC-L1: the routeAction fall-through is the LAST arm of every ladder it is
   // it in the same block.
   for (const f of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
     const src = rd(f).replace(/^\s*\/\/.*$/gm, '');
-    const at = src.indexOf('if (routeAction(act, hudCtx)) { e.preventDefault(); return; }');
+    const at = src.indexOf('if (routeAction(act, hudCtx)) { e.preventDefault(); return true; }');
     assert.ok(at > 0, `${f} has the fall-through`);
     // the rest of the enclosing block: up to the brace that closes it
     const after = src.slice(at);
-    const end = after.indexOf('\n    }');
+    const end = after.indexOf('\n      }');   // UXB1-S: the ladder is a function of its own now, one level deeper
     assert.ok(end > 0, `${f}: the fall-through's block closes`);
     const tail = after.slice(0, end);
     assert.doesNotMatch(tail, /if \(act === '/,

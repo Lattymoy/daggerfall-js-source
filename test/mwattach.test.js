@@ -123,16 +123,17 @@ test('MWFIX 3 (restored at MW-D8): the rig watches the attach GENERATION, not a 
     'and it does NOT start a multi-second parse from inside the frame loop');
 });
 
-test('MWFIX2: the mesh-viewer link resolves to the SITE ROOT, from the game as well as the menu', () => {
+test('MWFIX2: the mesh-viewer link resolved to the SITE ROOT, from the game as well as the menu - MWA4 took the link off the card; the page is still built there', () => {
   // THE DEFECT: the build puts every extra page at the site root
   // (vite.config's rollup inputs) and the game one directory down at
   // /play/, so a bare relative 'mw-viewer.html' asked for
   // /play/mw-viewer.html and 404'd. It worked from menu.html, which is
   // why it shipped.
+  // MWA4 ("only keep attach and remove data buttons"): the viewer's and the inspector's doors left the assets card -
+  // the pages stand at their addresses - so no link remains to resolve, and none may come back bare.
   const em = rd('src/ui/enhancedMenu.js');
-  assert.match(em, /window\.open\(sitePage\('mw-viewer\.html'\), '_blank'\)/, 'the link goes through the resolver');
-  assert.ok(!em.includes("window.open('mw-viewer.html'"), 'and the bare relative form is gone');
-  assert.match(em, /const sitePage = \(page\) => \{/, 'which has a home and states its reasoning');
+  assert.ok(!em.includes("window.open('mw-viewer.html'"), 'the bare relative form stays gone');
+  assert.doesNotMatch(em, /mw-viewer\.html|mw-inspect\.html/, 'MWA4: the card keeps Attach and Remove alone');
 
   // the law itself, exercised over both doors AND both deploy shapes -
   // `base: './'` promises the same build serves from a project path and

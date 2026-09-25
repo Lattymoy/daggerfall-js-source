@@ -224,6 +224,25 @@ export function houseContainerName(modelIdNum) {
   return HOUSE_CONTAINER_NAMES[modelIdNum] ?? INTERACT_TEXT;
 }
 
+/** UXB1-N / UXB1-O (2026-09-25, the UX backlog: "highlight private property titles with a different color to
+ *  distinguish them from shop items for quick readability", and "flag objects with generated loot since sometimes there
+ *  can be tons in a scene and 'your character' would know which ones have open lids"): WHAT A HOUSE CONTAINER'S PLAQUE
+ *  SAYS BEYOND ITS WORD. The mod names a Chest a Chest whoever owns it (.cs:552-633), and in a shop the owner's
+ *  furniture stands beside the stock, so "Shop Shelf" and "Chest" read alike - and only one of them is somebody's
+ *  private property (PlayerActivate's HouseContainers arm asks, :902-925; a shelf does not). So a container that is
+ *  NOT the player's carries the `private` tone - a colour of its own (enhancedStyle.js .wplaque.tone-private) - and
+ *  says so on a line under its word; and one this character has opened since it was last stocked says that too
+ *  (shopStock.js stockSearched). The player's own storage says neither. Port additions, not the mod's (Ledger A,
+ *  UXB1). */
+export const PRIVATE_PROPERTY_SUB = 'Private property';
+export const SEARCHED_SUB = 'Searched';
+export const PRIVATE_TONE = 'private';
+export function houseContainerHover(title, { owned = false, searched = false } = {}) {
+  if (!title) return null;
+  if (owned) return { title };
+  return { title, subs: searched ? [PRIVATE_PROPERTY_SUB, SEARCHED_SUB] : [PRIVATE_PROPERTY_SUB], tone: PRIVATE_TONE };
+}
+
 export const SHOP_SHELF_TEXT = 'Shop Shelf';
 export const LOOT_PILE_TEXT = 'Loot Pile';
 export const LADDER_TEXT = 'Ladder';
