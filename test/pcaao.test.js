@@ -30,6 +30,7 @@ import {
   pcaaoShieldBlockChanceCalculation, pcaaoCompareShieldToUnderArmor, pcaaoNaturalDamageResistance, pcaaoAttackDamage,
   pcaaoProficiencyModifiers, pcaaoRacialModifiers, installPcaao, uninstallPcaao, SILVER_DOUBLED_CAREERS, PCAAO_REDUCTION_ROWS,
   MEANER_MONSTERS, meanerMonstersRow, _shieldBlockSuccess,
+  pcaaoFades,
 } from '../src/combat/pcaao.js';
 import { calculateAttackDamage, damageModifier, damageEquipment, formulaOverride, registerFormulaOverride, adjustWeaponHitChanceMod, adjustWeaponAttackDamage, weaponAttackDamage } from '../src/combat/formulas.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
@@ -268,6 +269,26 @@ test('PCO1: the fading module DESTROYS the player\'s enchanted piece on breaking
   pcaaoWarningMessagePlayerEquipmentCondition({ templateIndex: 130, name: 'Long Bow', maxCondition: 100, currentCondition: 40 }, 60, s);
   pcaaoWarningMessagePlayerEquipmentCondition({ templateIndex: 103, name: 'Boots', maxCondition: 100, currentCondition: 80 }, 82, s);
   assert.deepEqual(say, [['My Longsword Could Use A Sharpening', 2], ["My Mace's Shaft Is Nearly Split In Two", 2], ['The Bowstring On My Long Bow Nearly Snapped From That', 2]]);
+});
+
+test('RARE-BREAK1: a Rare or Legendary piece off the rarity ladder breaks and STAYS under the fading module; DFU\'s own enchanted piece still fades', () => {
+  const foe = classEnemy(17); foe.stats = stats({ strength: 60 });
+  const sword = { group: 'Weapons', templateIndex: 120, material: 1, flags: 0, maxCondition: 1000, currentCondition: 1000 };
+  const wearOnly = modsOf({ armorHitFormulaRedone: false });
+  const breakOn = (extra) => {
+    const p = mkPlayer({ stats: stats({ strength: 60 }) });
+    const helm = { group: 'Armor', templateIndex: 107, material: 0x201, maxCondition: 100, currentCondition: 1, name: 'Helm', enchantments: [{ type: 5, param: 1 }], ...extra };
+    p.items.push(helm); wear(helm, equipTableOf(p), EQUIP_SLOTS.Head);
+    pcaaoDamageEquipment(foe, p, 10, sword, 0, { rolls: fixed(0.99), say: null, modules: wearOnly });
+    assert.equal(helm.currentCondition, 0, 'it broke');
+    return p.items.includes(helm);
+  };
+  assert.equal(breakOn({ rarity: 'rare' }), true, 'a Rare (yellow) piece stays in the pack, broken');
+  assert.equal(breakOn({ rarity: 'legendary', legendary: 'x' }), true, 'so does a Legendary');
+  assert.equal(breakOn({}), false, 'DFU\'s own enchanted piece (no rolled tier) is destroyed, as the mod says');
+  assert.equal(pcaaoFades({ enchantments: [{ type: 5, param: 1 }], rarity: 'rare' }), false);
+  assert.equal(pcaaoFades({ enchantments: [{ type: 5, param: 1 }] }), true);
+  assert.equal(pcaaoFades({ rarity: 'magic' }), false, 'a Magic (blue) piece carries no enchantment at all');
 });
 
 test('PCO1: the reduction tables - a cell of each, the condition factor under its cap, the natural resistance subtracted', () => {
