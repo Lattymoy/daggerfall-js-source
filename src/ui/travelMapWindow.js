@@ -107,13 +107,13 @@ import { readPartyMarks, partyMarksKey, PARTY_DOT_RGB, PARTY_OFFLINE_DOT_RGB } f
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
 import { ListPickerWindow, preloadListPickerArt, listPickerArtLoaded } from './listPicker.js';
-import { TravelPopUpWindow, preloadTravelPopUpArt, NOT_ENOUGH_GOLD_TEXT_ID } from './travelPopUp.js';
+import { TravelPopUpWindow, preloadTravelPopUpArt, NOT_ENOUGH_GOLD_TEXT_ID } from './travelPopUp.js';  import { classicScope } from './enhancedScope.js';   // PORT0: the classic map keeps its own boxes and lists
 import { TeleportPopUpWindow, preloadTeleportPopUpArt } from './teleportPopUp.js';   // G5
 import { drawText } from './text.js';
 import { bindings } from './input.js';
 import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM8: Find is a pushed DaggerfallInputMessageBox
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // AUDIT 64 F23: the DaggerfallShortcut table, IsUpWith's modifier mask and all
-import { actionForCode } from '../systems/inputActions.js';
+import { codeMeans } from '../systems/inputActions.js';   // UXB1-S: its own key, shared or not
 import { ImgFile } from '../formats/imgFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { TextRsc } from '../formats/textRsc.js';
@@ -1533,7 +1533,7 @@ export class TravelMapWindow {
     }
     // Update's own keys (:378-425)
     // Update's toggle-closed binding and the back button (:376-386)
-    if (code === 'Escape' || actionForCode(bindings(), code) === 'TravelMap') {
+    if (code === 'Escape' || codeMeans(bindings(), code, 'TravelMap')) {
       this.closeTravelWindows();
       return;
     }
@@ -1979,4 +1979,14 @@ export function registerTravelMapConsoleCommands(deps = {}) {
   } catch (ex) {
     console.error(`Error Registering Travelmap Console commands: ${ex?.message ?? ex}`);
   }
+}
+
+// PORT0: THE CLASSIC MAP STAYS CLASSIC. A player who chose DFU's own
+// travel map in the settings (ui/mapSkin.js heldMapChosen) chose its
+// prompts and lists with it, so its draw - and the popups and pickers
+// drawn inside it - runs in the classic scope, where the enhanced
+// decision box and list stand down (ui/enhancedScope.js).
+{
+  const classicDraw = TravelMapWindow.prototype.draw;
+  TravelMapWindow.prototype.draw = function draw(...args) { return classicScope(() => classicDraw.apply(this, args)); };
 }

@@ -69,6 +69,8 @@ import { STAT_KEYS_ORDER } from './statMods.js';
 import { SKILL_NAMES, SKILL_COUNT } from './skills.js';
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';
 import { enchantmentName, enchantmentParamName } from './enchantmentCatalogue.js';
+import { rollSigil, sigilLines, sigilOnline, SIGIL_BANDS } from './sigil.js';   // SIGIL1: a weapon won online may carry a sigil
+import { ROLLED_TIERS } from './rarityTier.js';   // RARE-BREAK1: the rolled tiers' one home
 
 export const LOOT_RARITY_KEY = 'lootRarity';
 /** The switch. Read at every seam, so a press takes effect on the next
@@ -86,7 +88,7 @@ export const RARITIES = Object.freeze({
   legendary: Object.freeze({ rank: 3, label: 'Legendary', colour: '#e07a2e', tint: Object.freeze([0.85, 0.42, 0.10, 0.50]) }),
   artifact:  Object.freeze({ rank: 4, label: 'Artifact',  colour: '#b57bee', tint: Object.freeze([0.60, 0.35, 0.85, 0.50]) }),
 });
-export const ROLLED_TIERS = Object.freeze(['magic', 'rare', 'legendary']);
+export { ROLLED_TIERS };   // RARE-BREAK1: its one home is the leaf (rarityTier.js), so a formula can ask it without the ladder
 
 const enchanted = (item) => !!(item?.enchantments?.length || item?.customEnchantments?.length);
 
@@ -178,8 +180,9 @@ export const SOURCE_MULT = Object.freeze({ corpse: 1, pile: 1.3, boss: 2.5 });
 export const LUCK_PER_POINT = 2;
 
 /** The three thresholds, per mille, for one source at one luck. */
-export function rarityChances({ kind = 'corpse', tier = 0, boss = false, luck = 50 } = {}) {
-  const mult = boss ? SOURCE_MULT.boss : (SOURCE_MULT[kind] ?? 1);
+export function rarityChances({ kind = 'corpse', tier = 0, boss = false, luck = 50, qualityMult = 1 } = {}) {
+  // ELITE: `qualityMult` scales the whole ladder (1.2 = every tier 20% likelier), caps unchanged
+  const mult = (boss ? SOURCE_MULT.boss : (SOURCE_MULT[kind] ?? 1)) * (Number.isFinite(qualityMult) && qualityMult > 0 ? qualityMult : 1);
   const luckMod = (Math.max(0, Math.min(100, luck | 0)) - 50) * LUCK_PER_POINT;
   const at = (w) => Math.max(0, Math.min(w.cap, (w.base + w.perTier * Math.max(0, tier)) * mult + luckMod));
   const magic = at(RARITY_WEIGHTS.magic);
@@ -584,13 +587,32 @@ export function rollLootRarity(items, source, { rolls = Math.random, luck = 50 }
  *  roll runs over the items NOT on its table: the loot it carries, not
  *  the sword it swings - a Legendary in a Daedra Lord's hand would have
  *  struck the player with it. The source is corpseSource's. */
-export function rollCorpseLoot(entity, basics, { rolls = Math.random, luck = 50 } = {}) {
+export function rollCorpseLoot(entity, basics, { rolls = Math.random, luck = 50, qualityMult = 1 } = {}) {
   if (!lootRarityOn() || !entity) return entity?.items ?? [];
   const worn = new Set(entity.equip ? equipTableOf(entity).filter(Boolean) : []);
   const loot = (entity.items ?? []).filter((it) => it && !worn.has(it));
-  rollLootRarity(loot, corpseSource(basics, entity.level), { rolls, luck });
+  rollLootRarity(loot, { ...corpseSource(basics, entity.level), qualityMult }, { rolls, luck });
   return entity.items;
 }
+/** SIGIL1 (Mac: "weapons obtained through online play recieve a sort of sigil power"; "Magic and up, found online";
+ *  "Chance at the drop, then grows"): THE WIN. Every Magic, Rare or Legendary WEAPON of a list just won - a corpse's
+ *  when its foe dies, a treasure pile's when it is minted - rolls its sigil once, in a session that plays online:
+ *  about one in five, more with more `fighters` (systems/sigil.js rollSigil; PSCALE1's count, read at the death).
+ *  Never ammunition, an artifact, a quest's item, or a weapon that already carries one. Offline, nothing. Answers
+ *  how many were marked. */
+export function stampWonWeapons(items, fighters = 1, { rolls = Math.random } = {}) {
+  if (!sigilOnline() || !lootRarityOn() || !Array.isArray(items)) return 0;
+  let n = 0;
+  for (const it of items) {
+    if (!it || it.group !== 'Weapons' || isAmmunition(it) || it.questItem || it.sigil) continue;
+    const tier = rarityOf(it);
+    if (!SIGIL_BANDS[tier]) continue;   // Common, and an artifact's own tier: no band
+    const s = rollSigil(tier, fighters, rolls);
+    if (s) { it.sigil = s; n++; }
+  }
+  return n;
+}
+
 /** The best tier in a list (a corpse's, a pile's), for the drop sound
  *  and the plaque; null for an empty or off list. */
 export function bestRarity(items) {
@@ -664,7 +686,7 @@ export function rarityLines(item) {
   const tier = rarityOf(item);
   if (tier === 'common') return [];
   const out = [RARITIES[tier].label];
-  if (!identified(item)) { out.push('Unidentified'); return out; }
+  if (!identified(item)) { out.push('Unidentified'); return [...out, ...sigilLines(item)]; }   // SIGIL1: a sigil is the port's own mark, seen at once
   for (const a of item.affixes ?? []) out.push(affixLabel(a));
   if (item.rarity && Array.isArray(item.enchantments)) {
     for (const e of item.enchantments) {
@@ -674,6 +696,7 @@ export function rarityLines(item) {
       out.push(param && param !== 'None' ? `${enchantmentName(key)}: ${param}` : enchantmentName(key ?? ''));
     }
   }
+  out.push(...sigilLines(item));   // SIGIL1: what the sigil gives in my hand, and how far it has grown
   const lore = item.legendary ? legendaryById(item.legendary)?.lore : null;
   if (lore) out.push(lore);
   return out;

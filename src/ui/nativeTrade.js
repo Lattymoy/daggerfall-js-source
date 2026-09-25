@@ -28,7 +28,7 @@
 
 import { loadImg, nativeMetrics, drawImg, drawImgSub, shadowText } from './nativePanel.js';   // MAC-N2: drawImgSub, the selected tab's INVE01I0 cutout
 import { drawScreenDimBackdrop } from './chargenArt.js';
-import { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, ARROW_H, DOWN_ARROW_Y, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel,
+import { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, CELL_MARGIN, ARROW_H, DOWN_ARROW_Y, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel,
   preloadScrollerArrowArt, drawScrollerArrows, drawScrollerThumb, playScrollerArrowClick, makeSlotToolTip,
   itemBackgroundColour, drawCellBackground, beginScrollerDrag, dragScrollerIndex } from './itemScroller.js';   // MAC-N2: the thumb drag
 import { getBool } from '../systems/settings.js';   // AUDIT 64 F53: InstantRepairs, the repair tint's first arm
@@ -47,8 +47,9 @@ import {
   MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID, DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID,
 } from '../systems/tradeModes.js';
 import { CANNOT_BE_REPAIRED_TEXT, INTERRUPT_REPAIR_TEXT, isBeingRepaired as itemIsBeingRepaired,
-  isRepairFinished, collectRepaired } from '../systems/repairService.js';   // D7: the Repair mode's remote arm
-import { isSummoned, carriedWeight, totalWeight, transferAll } from '../systems/inventory.js';   // TransferItem's summoned guard; AUDIT 63 F48: transferAll is ItemCollection.TransferAll (:452), DoSteal's move
+  isRepairFinished, collectRepaired, updateRepairTimes, repairStatusLabel } from '../systems/repairService.js';   // D7: the Repair mode's remote arm; UXB1-K: its misc label
+import { isFurnishing } from '../systems/decorFurnish.js';   // DECOR2b: furniture is delivered, never carried
+import { isSummoned, carriedWeight, totalWeight, transferAll, addItem } from '../systems/inventory.js';   // TransferItem's summoned guard; AUDIT 63 F48: transferAll is ItemCollection.TransferAll (:452), DoSteal's move
 import { shopliftAttempt } from '../systems/theft.js';   // AUDIT 63 F48: DoSteal's decision (:909-916)
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // PlayerEntity.MaxEncumbrance
 // AUDIT 58: DaggerfallTradeWindow inherits the two target-icon panels
@@ -222,6 +223,9 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && 
  *   crimeTheft()           -> CrimeCommitted = Crimes.Theft (:927)
  *   spawnCityGuards(flag)  -> SpawnCityGuards(true) (:928)
  *   say(line, seconds)     -> AddHUDText(text, 2) (:918, :925)
+ *   deliver(items)         -> DECOR2b: furniture stolen off the shelf,
+ *                             to the host's delivery, as bought furniture
+ *                             goes (never the pack; decorFurnish.js)
  *
  *   getQuest(uid)  -> QuestMachine.GetQuest, for TransferItem's quest
  *                     arm. UNWIRED: no host passes one yet, and DFU
@@ -325,8 +329,15 @@ export class NativeTradeWindow {
         this[this._drag.which] = dragScrollerIndex(this._drag.latch, vy, len);
       }
     }
-    if (this.box || vx < 0 || vy < 0) { this._tip.hide(); return; }
+    if (this.box || this.inputBox || vx < 0 || vy < 0) { this._tip.hide(); return; }
     this._tip.show(this._itemAt(vx, vy), vx, vy, { getQuest: this.hooks.getQuest ?? null });
+  }
+
+  /** UXB1-L: the pointer seam's DOWN (the hosts' `pointer('down', ..., { ctrl, shift })`, worldModes.js) carries the
+   *  click's own Control - Input.GetKey polled at the click (:1513), read off the event rather than a key latch that
+   *  a focus change can strand. DISC25-F's keydown/keyup pair is the other door. */
+  pointer(phase, vx, vy, button = 0, mods = null) {
+    if (phase === 'down' && mods) this._controlDown = !!mods.ctrl;
   }
 
   /** MAC-N2: the release edge the hosts send on mouseup (ROAD-E E1) -
@@ -433,16 +444,14 @@ export class NativeTradeWindow {
    *  repairJobsAt, character for character, so the host hands it in
    *  rather than the window growing a second copy.
    *
-   *  RECORDED: FilterRemoteItems ends with `UpdateRepairTimes(false)`
-   *  (:725), the ESTIMATE pass, and this does not run it. That pass
-   *  exists for exactly one reader - RepairItemLabelTextHandler's
-   *  "%d days" MISC LABEL (:282-288), which is an ItemListScroller
-   *  label template the port's shared scroller does not draw (icon,
-   *  stack count and tooltip only). Running it here would also run it
-   *  per FRAME rather than per Refresh, and its clamp never decreases,
-   *  so the estimate would ratchet. The keyed collect list computes
-   *  the same number on demand through repairStatusLabel; when the
-   *  misc label lands, it does the same. */
+   *  FilterRemoteItems ends with `UpdateRepairTimes(false)` (:725),
+   *  the ESTIMATE pass, which exists for exactly one reader -
+   *  RepairItemLabelTextHandler's "%d days" MISC LABEL (:282-288).
+   *  UXB1-K drew that label (draw, `_repairLabels`) and runs the pass
+   *  there, per frame: the port's pass with commit false is PURE - it
+   *  answers a Map and stamps nothing - so the ratchet DFU's stored
+   *  estimate would suffer per frame cannot happen, and this list
+   *  stays the filter alone. */
   remoteList() {
     if (this.mode === 'Buy') return this.hooks.shelfItems?.() ?? [];
     if (this.mode === 'Repair') return this.hooks.repairItems?.() ?? this.remoteItems;
@@ -468,6 +477,17 @@ export class NativeTradeWindow {
     const i = from.indexOf(item);
     if (i >= 0) from.splice(i, 1);
     to.push(item);
+  }
+
+  /** AUDIT UXB1 F4: goods put back on the shelf rejoin their stack - ItemCollection.AddItem's merge (inventory.js
+   *  addItem), which DFU's click-back (TransferItem, :800-801) and ClearSelectedItems (TransferAll) both reach. A
+   *  split lot is its own record, and `_move`'s push left "Oil x2" beside "Oil x10" on the shelf it came from. `n`
+   *  short of the lot is DISC25-F's split back (applyTransfer, whose addItem merges too). */
+  _unstage(item, n = amountOf(item)) {
+    if (n < amountOf(item)) { applyTransfer(item, { amount: n }, this.basket, this.hooks.shelfItems()); return; }
+    const i = this.basket.indexOf(item);
+    if (i >= 0) this.basket.splice(i, 1);
+    addItem(this.hooks.shelfItems(), item);
   }
 
   /** TEXT.RSC rows through the macro table. The trade records quote
@@ -545,7 +565,7 @@ export class NativeTradeWindow {
       return;
     }
     // Buy: a basket item clicks back OUT to the shelf (:800-801)
-    if (d.kind === 'unstage') { this._split(item, amountOf(item), (n) => this._moveCount(item, n, this.basket, this.hooks.shelfItems())); return; }
+    if (d.kind === 'unstage') { this._split(item, amountOf(item), (n) => this._unstage(item, n)); return; }
     if (d.kind === 'refuse') this._refuse(d.refusal);
   }
 
@@ -585,8 +605,9 @@ export class NativeTradeWindow {
       // no gate, so a player could stage and buy past MaxEncumbrance
       // through the shop screen. The bag under test is pack + basket -
       // the player walks out with both.
-      const plan = planTake(item, {
-        bag: [...this.hooks.packItems(), ...this.basket],
+      // DECOR2b: a piece of furniture is delivered, never carried - no room to find for it, and none it takes
+      const plan = isFurnishing(item) ? { ok: true, amount: item.stackCount ?? 1 } : planTake(item, {
+        bag: [...this.hooks.packItems(), ...this.basket.filter((x) => !isFurnishing(x))],
         entity: this.hooks.entity ?? null,
       });
       if (!plan.ok) { this.box = { rows: [{ text: plan.refusal?.text ?? CANNOT_CARRY_TEXT, center: true }], buttons: null }; return; }
@@ -638,7 +659,7 @@ export class NativeTradeWindow {
    *  on the floor of a collection nobody reads. */
   _clear() {
     if (this.mode === 'Buy') {
-      while (this.basket.length) this._move(this.basket[0], this.basket, this.hooks.shelfItems());
+      while (this.basket.length) this._unstage(this.basket[0]);
       return;
     }
     if (this.mode === 'Repair') {
@@ -690,6 +711,7 @@ export class NativeTradeWindow {
     this.hooks.tallyPickpocket?.(1);
     if (!out.caught) {
       this.hooks.say?.(STEAL_SUCCESS_TEXT, 2);
+      this._deliverFurniture(this.basket);   // DECOR2b
       transferAll(this.basket, this.hooks.packItems());
       this.hooks.tallyCrimeGuild?.(true, 1);
     } else {
@@ -698,6 +720,15 @@ export class NativeTradeWindow {
       this.hooks.spawnCityGuards?.(true);
     }
     this._close();
+  }
+
+  /** DECOR2b: STOLEN FURNITURE IS DELIVERED, as bought furniture is - never carried (it was staged with no room found
+   *  for it): the basket's furniture to the host's delivery. A host with none carries it as before. */
+  _deliverFurniture(list) {
+    if (!this.hooks.deliver) return;
+    const going = list.filter(isFurnishing);
+    for (const it of going) list.splice(list.indexOf(it), 1);
+    if (going.length) this.hooks.deliver(going);
   }
 
   /** CloseWindow -> OnPop (:404-407). Every exit from this screen is
@@ -891,7 +922,7 @@ export class NativeTradeWindow {
    *  + basketItems.GetWeight()` - what the player walks out with, not
    *  what is in the pack right now. */
   _carriedWeight() {
-    return carriedWeight(this.hooks.entity ?? {}) + totalWeight(this.basket);
+    return carriedWeight(this.hooks.entity ?? {}) + totalWeight(this.basket.filter((x) => !isFurnishing(x)));   // DECOR2b: delivered, not carried
   }
   /** UpdateLocalTargetIcon override (:635-647): the wagon's picture
    *  and its 750kg line while UsingWagon, else the base window's
@@ -962,8 +993,10 @@ export class NativeTradeWindow {
     drawTargetIconPanel(renderer, m, font, R.localTargetIcon, lti.container, lti.label);
     const rti = this._remoteTargetIcon();
     drawTargetIconPanel(renderer, m, font, R.remoteTargetIcon, rti.container, rti.label);
+    const remote = this.remoteList();
+    const repairLabels = this._repairLabels(remote);   // UXB1-K: one estimate pass per frame, over the list drawn
     for (const [rect, scroll, items] of [
-      [R.remoteList, this.remoteScroll, this.remoteList()],
+      [R.remoteList, this.remoteScroll, remote],
       [R.localList, this.localScroll, this.localList()],
     ]) {
       items.slice(scroll, scroll + LIST_SLOTS).forEach((it, s) => {
@@ -975,6 +1008,12 @@ export class NativeTradeWindow {
         drawCellBackground(renderer, m, rect, s, this._cellColour(it, rect === R.remoteList));
         this._drawIcon(renderer, m, it, rect, s);
         drawStackLabel(renderer, _art?.font4 ?? font, m, it, rect, s);
+        // UXB1-K: RepairItemLabelTextHandler's misc label (:282-288), set on the remote scroller in Repair mode
+        // (:244): ItemListScroller's miscLabelTemplate - Position zero, Left/Top in the button's margins
+        // (ItemListScroller.cs:211-217, :368-377), the default font (TextLabel.RefreshLayout's DefaultFont,
+        // FONT0003) in the default text colour and shadow (TextLabel's own defaults).
+        const label = rect === R.remoteList ? repairLabels?.get(it) : null;
+        if (label) shadowText(renderer, font, label, m, rect[0] + CELL_X + CELL_MARGIN, rect[1] + s * SLOT_H + CELL_MARGIN);
       });
       // ROAD-A7: the arrows' red/green states and the art thumb.
       drawScrollerArrows(renderer, m, rect, scroll, items.length);
@@ -990,6 +1029,18 @@ export class NativeTradeWindow {
     } else this._boxLayout = null;
     if (this.inputBox) this.inputBox.draw(renderer, canvas, font);   // DISC25-F: the pushed how-many box, over the panel
     this._tip.draw(renderer, m, font);   // D7: last, over the panel and the box
+  }
+
+  /** UXB1-K: the misc label's text per remote item, in Repair mode - repairStatusLabel ("DONE" / "N days") over the
+   *  scheduler's ESTIMATE pass (updateRepairTimes with commit false, FilterRemoteItems' :725). That pass is pure (it
+   *  answers a Map and stamps nothing), so running it per frame cannot ratchet the way DFU's stored
+   *  EstimatedRepairTime would. Null outside Repair, and under InstantRepairs, where DFU's pass returns before it
+   *  estimates anything (:516) and there is no clock to label. */
+  _repairLabels(items = this.remoteList()) {
+    if (this.mode !== 'Repair' || getBool('Controls', 'InstantRepairs')) return null;
+    const now = this.hooks.nowMinutes?.() ?? 0;
+    const est = updateRepairTimes(items, { commit: false, nowMinutes: now });
+    return new Map(items.map((it) => [it, repairStatusLabel(it, now, est.get(it) ?? null)]));
   }
 
   /** DISC25-F: Control's up edge (CM5's pair). */

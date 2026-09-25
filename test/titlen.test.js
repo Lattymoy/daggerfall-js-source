@@ -67,7 +67,9 @@ test('TITLE-N grants: the Dungeon Master is SquidKamer\'s alone and Disciple is 
   const v = (k) => new RegExp(`^${k} = "([^"]*)"$`, 'm').exec(toml)?.[1];
   assert.equal(v('DUNGEON_MASTER_HANDLES'), 'SquidKamer', 'Mac: "This goes strictly to the account SquidKamer"');
   assert.equal(v('DISCIPLE_HANDLES'), 'Dutchess,Satranath,Skibbster', 'Mac: "The account Dutchess will recieve the Disciple title/glyph", then "Satranath please add this account as a disciple also", then "Skibbster needs to be a disciple ingame"');
-  assert.equal(v('APOSTLE_HANDLES'), '', 'nobody yet');
+  assert.equal(v('APOSTLE_HANDLES'), 'SirMcMobdon', 'Mac (2026-09-25): "Add SirMcMobdon as an Apostle ingame title/glyph"');
+  assert.deepEqual(titlesHeld({ handle: 'sirmcmobdon', created_at: 0, registered_at: 1_900_000_000 }, { APOSTLE_HANDLES: v('APOSTLE_HANDLES') }), ['apostle'], 'SirMcMobdon: the Apostle title, case-folded');
+  assert.deepEqual(glyphsOf({ handle: 'SirMcMobdon', created_at: 0 }, { APOSTLE_HANDLES: v('APOSTLE_HANDLES') }, 10 ** 10), ['apostle'], 'and its glyph');
   assert.equal(v('DEVELOPER_HANDLES'), 'Lattymoy,trashBattery,LostMyLeg', 'DEV2, Mac: "Give trashBattery, LostMyLeg the developer title/glyph"');
   for (const h of ['trashbattery', 'LOSTMYLEG']) {
     const dev = { handle: h, created_at: 0, registered_at: 1_900_000_000 };

@@ -47,8 +47,8 @@
   {
     "name": "PERF-SUN1-the-cheap-tap-returns-AFTER-the-kernel-so-it-saves-nothing",
     "file": "src/render/shadowPass.js",
-    "old": "  if (!soft && c >= ${SHADOW_PCF_CASCADES}) return texture(uSunShadow, vec4(p.xy, float(c), ref));\n  float lit = 0.0;",
-    "new": "  float lit = 0.0;",
+    "old": "  if (!soft && c >= ${SHADOW_PCF_CASCADES}) return texture(uSunShadow, vec4(p.xy, float(c), ref));\n  // PERF-EXT5 (2026-09-25",
+    "new": "  // PERF-EXT5 (2026-09-25",
     "tests": [
       "test/perfsun_fragment.test.js"
     ]

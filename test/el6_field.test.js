@@ -63,10 +63,10 @@ test('EL6: the constants and the shader laws - the lights archive, the emitter s
   for (const [name, fs] of [['mesh', EL_MESH_FS], ['bb', EL_BB_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS]]) {
     assert.ok(fs.includes(BAYER_GLSL), `${name} carries the Bayer`);
     // DW-C: the Deep Waters distance fog rides the DISPLAY colour, inside the dither (the mod's post effect reads the finished image)
-    assert.ok(fs.includes(`return elEncode(col) + ${dither};`) || fs.includes(`return dwWaterFog(elEncode(col), wp) + ${dither};`), `${name}: the lane's encode dithers, zero-mean`);
+    assert.ok(fs.includes(`return col + ${dither};`) || fs.includes(`return dwWaterFog(col, wp) + ${dither};`), `${name}: the lane's encode dithers, zero-mean (EL-DISTANCE: col is already encoded)`);
   }
   assert.ok(EL_FAR_RING_FS.includes(BAYER_GLSL));
-  assert.ok(EL_FAR_RING_FS.includes(`outColor = vec4(elEncode(col) + ${dither}, 1.0);`), 'the ring\'s sky gradient dithers too');
+  assert.ok(EL_FAR_RING_FS.includes(`outColor = vec4(col + ${dither}, 1.0);`), 'the ring\'s sky gradient dithers too');
   assert.match(EL_MESH_FS, /vec3 rel = uPointLights\[i\]\.xyz - uCamPos;\n    if \(length\(rel\) > dist \+ uPointLights\[i\]\.w\) continue;/, 'the in-scatter loop skips a lantern the ray cannot reach');
   assert.match(a, /return textureLod\(uDepth, \(uRect\.xy \+ wuv \* uRect\.zw\) \/ uCanvas, 0\.0\)\.r;/, 'the depth block samples the canvas-sized frame at the world rect - its one level, by name (AUDIT-VC7 G3)');
   assert.match(a, /uniform highp sampler2D uDepth;/, 'at a depth\'s precision: a fragment shader\'s samplers are lowp unless told (AUDIT-VC7 G2)');

@@ -146,17 +146,8 @@
   {
     "name": "DISC20-C-no-grounding",
     "file": "src/scenes/horseCartPool.js",
-    "old": "      groundPeer(owner, p);   // DISC20-C: a parked wagon and a standing horse, on MY ground\n",
+    "old": "      groundPeer(p);   // DISC20-C: a parked wagon and a standing horse, on MY ground\n",
     "new": "",
-    "tests": [
-      "test/disc20.test.js"
-    ]
-  },
-  {
-    "name": "DISC20-C-the-owner-s-box-not-left-out-of-the-ray",
-    "file": "src/scenes/horseCartPool.js",
-    "old": "const skip = [WAGON_BUCKET, peerWagonBucket(owner)];",
-    "new": "const skip = [WAGON_BUCKET];",
     "tests": [
       "test/disc20.test.js"
     ]

@@ -11,6 +11,7 @@
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
 import { frameBegin, frameEnd, frameAbort } from '../systems/frameClock.js';   // PERF1: the frame's script time; AUDIT-WH2 L1-F4: and the door an early return takes
+import { frameCapSkip } from '../systems/frameCap.js';   // FPS-CAP1: DFU's TargetFrameRate - a held frame re-arms before the clock and the input frame
 import { INTERIOR_CLEAR } from '../render/renderer.js';
 import { getInteractionMode, setInteractionMode, MODE_ACTIONS } from '../player/interactionMode.js';   // R1: the global PlayerActivate mode; AUDIT 58: its four ACTIONS
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's centred label
@@ -53,7 +54,7 @@ import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk.js';   // GetRan
 import { hideWorldPlaque, destroyWorldPlaque } from '../ui/worldPlaque.js';   // AUDIT-WH H4: the plaque's hide door, for the overlay branch that returns above drawFoes
 import { quickLootWheel, quickLootArm } from '../systems/quickLoot.js';   // QUICK-LOOT B4: the plaque owns the wheel while it lists, and the two keys arm what the next activate means
 import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells, claimFrame, frameAlive, frameHeld } from './shared.js';
-import { isTextEntryTarget, keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released, routeKey, routeKeyUp, held, moveHeld, anyMove, actionOf, swallowBrowserKey, mouseCode, isSwingButton, swingHeld, keyboardLook, installContextMenuGuard, swingKeyHeld } from '../ui/input.js';
+import { isTextEntryTarget, keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released, routeKey, routeKeyUp, held, moveHeld, anyMove, actionsOf, swallowBrowserKey, mouseCode, isSwingButton, swingHeld, keyboardLook, installContextMenuGuard, swingKeyHeld } from '../ui/input.js';
 import { armUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game   // AUDIT 39r: the mouse half of the held set
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { capturePendingScreenshot } from '../systems/saveSlots.js';   // SS1: the context arms the shot, THIS loop delivers it
@@ -137,7 +138,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // below, after this context; null falls to standing defaults.
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:6313), so each
+      // context owns none of its own (dungeonContext.js:6400), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:286-306).
       relock: () => requestLook(canvas) });
@@ -344,8 +345,8 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // through. It arms a mode and fires the one-frame activate
     // (`_tapArmed`) the touch tap already uses, because the key is
     // known here and only the FRAME has the ray and the pools.
-    if (!ctx.uiOverlayActive && quickLootArm(actionOf(e, keys))) { _tapArmed = 2; e.preventDefault(); return; }
-    const im = MODE_ACTIONS[actionOf(e, keys)];
+    if (!ctx.uiOverlayActive && actionsOf(e, keys).some(quickLootArm)) { _tapArmed = 2; e.preventDefault(); return; }   // UXB1-S: every action a shared key carries
+    const im = actionsOf(e, keys).map((a) => MODE_ACTIONS[a]).find(Boolean);
     if (im) {
       e.preventDefault();   // ALWAYS consumed - a repeat press must not reach the browser (F1 = help)
       // AUDIT 64 F34: PlayerActivate.cs:1424 - the mode line is
@@ -448,7 +449,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   }, { passive: false });
   // C8 E3c: RMB drag-to-swing (classic weapon control; menu suppressed)
   // U45: Actions.ActivateCursor (Enter) frees the mouse during play.
-  bindCursorToggle(canvas, () => ctx.uiOverlayActive, (e) => actionOf(e, keys));   // KB1: the host's held Set, so a combo'd FreeMouse resolves
+  bindCursorToggle(canvas, () => ctx.uiOverlayActive, (e) => actionsOf(e, keys));   // KB1: the host's held Set, so a combo'd FreeMouse resolves
   // MAC-L3: the browser menu is shut for the WHOLE page, not just this
   // canvas - thirteen DOM surfaces sit over it and only two of them shut
   // it themselves. One listener, one home (ui/input.js).
@@ -723,6 +724,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // imported the door without ever calling it. A host that boots
     // after this one rebuilds the node on its first painted frame.
     if (!frameAlive(_frameToken)) { destroyWorldPlaque(); return; }   // P0: a later boot or an unwind killed this loop
+    if (frameCapSkip(now)) { requestAnimationFrame(frame); return; }   // FPS-CAP1: held back to the Frame Rate Cap - no stamp, no input frame, `last` kept
     frameBegin(now);   // PERF1: the script time (systems/frameClock.js)
     beginInputFrame(keyEdge);   // MWCROUCH
     // AUDIT 39 (#160): a full-screen video owns the canvas for its

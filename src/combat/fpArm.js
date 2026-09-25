@@ -17,7 +17,7 @@
 //
 // HOW IT DRAWS, and why this needs no renderer change at all: the port
 // has ALREADY shipped a first-person pass. renderCharacterSprite
-// (render/renderer.js:1188) binds an offscreen target with its OWN depth
+// (render/renderer.js:1208) binds an offscreen target with its OWN depth
 // renderbuffer, clears colour AND depth, swaps the frame's proj/view for
 // ones the caller supplies, draws, and restores; drawScreenOverlayQuad
 // (:987) composites it fullscreen with an alpha cut and no depth test.
@@ -32,7 +32,7 @@
 //     framebuffer, so there is nothing to be clipped by.
 //
 // MW-D10: the framing constants this pass USED to borrow from the voxel
-// viewmodel (render/characterSprite.js:118-130) are gone with the mapper
+// viewmodel (render/characterSprite.js:132-144) are gone with the mapper
 // that needed them. Rule 54 places the camera inside the rig, so there
 // is no distance to push, no drop to apply and no scale to solve - and
 // the viewmodel's two hard-won laws do not transfer either: its camera
@@ -525,7 +525,7 @@ export function armReach(eye, unionBounds) {
 /**
  * PACK THE ASSEMBLY for drawCharacter's vertex stream: 9 floats per
  * vertex, [pos.xyz, colour.rgb, normal.xyz], NON-INDEXED, because
- * drawCharacter issues drawArrays (renderer.js:1106). The MW readers hand
+ * drawCharacter issues drawArrays (renderer.js:1121). The MW readers hand
  * back indexed triangles, so the indices are expanded here.
  *
  * NORMALS ARE COMPUTED, not read. poseAssembly skins positions with a
@@ -539,7 +539,7 @@ export function armReach(eye, unionBounds) {
  * left arm is lit inside-out - dark where the right arm is bright - and
  * that is a lighting bug that reads as "the mesh is wrong" rather than
  * as "the mirror is wrong". drawCharacter disables back-face culling
- * (renderer.js:1104), so the winding costs nothing else.
+ * (renderer.js:1119), so the winding costs nothing else.
  */
 export function packFpArm(pieces, out = null) {
   let tris = 0;
@@ -2282,9 +2282,9 @@ export function esmDiagnosis(names, parts, race) {
  * (the reference's own aiming value, npcanimation.cpp:714-718), the
  * offset zeroed at both applications, the lens taking the whole look -
  * whose image is INVARIANT under pitch: the arms are fixed to the
- * screen exactly as the classic sprite is. The Morrowind feel stays one
- * toggle away (the pause card), and the probe's law layers measure it
- * with the flag OFF.
+ * screen exactly as the classic sprite is. The Morrowind feel stays in
+ * the rig (setFollowCamera - the card's switch for it left at MWA4), and
+ * the probe's law layers measure it with the flag OFF.
  */
 // KEY BUMPED (IG6b): the v1 key ('dagger.mwArmsFollowCamera') can hold
 // an ACCIDENTAL off - the toggle's first label named the mode you were
@@ -2295,7 +2295,10 @@ export function esmDiagnosis(names, parts, race) {
 // abandons the old value so every player lands back on the fixed
 // default; the action-named button re-persists a deliberate choice
 // under the new key.
-const FOLLOW_CAMERA_KEY = 'dagger.mwArmsFollowCamera2';
+// BUMPED AGAIN (MWA4): the assets card keeps Attach and Remove alone, so
+// the look-lag button is gone - and a stored look-lag would be a mode no
+// player can leave. The bump lands everyone on the fixed default.
+const FOLLOW_CAMERA_KEY = 'dagger.mwArmsFollowCamera3';
 /** WW1: a screen-space transform over the arms' composite, or null - set per frame by the rig from the weapon widget. */
 let screenTransform = null;
 // DA1: through the storage seam, not localStorage directly - the pin
@@ -4628,7 +4631,7 @@ export function createFpArm() {
      *
      * MW-D34, THE MEASURED CHIRALITY (mwArmProbe L5b, through the REAL
      * composite - MW-D23's law): this pass composites through the
-     * WORLD's lens, which is mirrorProjectionX (dungeon.js:750 et al.),
+     * WORLD's lens, which is mirrorProjectionX (dungeon.js:752 et al.),
      * and the port's world convention puts the player's RIGHT at +X at
      * yaw 0 (motor.js:738) - a LEFT-handed convention the mirror turns
      * into correct screen imagery. A right-handed NIF actor placed with

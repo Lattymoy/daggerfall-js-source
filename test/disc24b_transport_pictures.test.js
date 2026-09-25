@@ -220,5 +220,5 @@ test('DISC24-B: the enhanced lists (pack, detail, shop, player trade) picture th
     assert.match(readFileSync(new URL(f, ROOT), 'utf8'), /linePictureUrl\(line, \{ scale: 2,/, f);
   }
   const inv = readFileSync(new URL('src/ui/enhancedInventory.js', ROOT), 'utf8');
-  assert.equal((inv.match(/linePictureUrl\(line, \{ scale: [24], onReady: render \}\)/g) ?? []).length, 2, 'the pack\'s tile and its detail card');
+  assert.equal((inv.match(/linePictureUrl\(line, \{ scale: [24], onReady: (?:render|ready) \}\)/g) ?? []).length, 2, 'the pack\'s tile and its detail card');
 });

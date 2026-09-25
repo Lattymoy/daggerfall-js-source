@@ -3196,7 +3196,7 @@ collapse is a bare `RaiseTime(1 * SecondsPerHour)` (`:2429`) that
 returns; `Update` is not re-entered.
 
 The port's hosts implement that same RaiseTime as
-`playerTicker.advance(60)` (`exterior.js:1070`, `world.js:1877`), fired
+`playerTicker.advance(60)` (`exterior.js:1071`, `world.js:1943`), fired
 from inside `sinks.drainFatigue` - so it re-enters `tickPlayerMinutes`
 from inside that function's own fatigue band. The nested tick wrote the
 marker an hour ahead, the outer frame's own `setWorldMinutes` then
@@ -3354,7 +3354,7 @@ PNG through the DOM and cached `{ width, height, data }` - the shape
 pass that object straight on as a colour32
 (`const color32 = swap ?? t.getColor32(bitmap, ...)`), and
 `renderer.uploadTexture` reads `color32.colors` and calls `asBytes` on
-it (`renderer.js:2958`). `colors` was `undefined`, `asBytes` reads
+it (`renderer.js:3044`). `colors` was `undefined`, `asBytes` reads
 `.buffer` off it, and the upload threw. Every pin on this door held:
 they asserted the cache stored the object the decoder returned, by
 IDENTITY, which is precisely the assertion that cannot see a wrong
@@ -3365,7 +3365,7 @@ orientation is not its only problem".
 **And orientation was the other half.** The port's texel convention is
 bottom-up: `getColor32` writes `dstRow = (dstHeight - 1 - border - y) *
 dstWidth` (`baseImageFile.js:143`, `BaseImageFile.cs:250`), the upload
-leaves `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:2948`), and `BB_VS`
+leaves `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:3034`), and `BB_VS`
 samples the quad's top at v=1 (`renderer.js:368-392`). A browser decode
 is TOP row first. So a swap named correctly would still have drawn
 mirrored beside the classic art in the same batch loop - the exact
@@ -4572,7 +4572,7 @@ the true clause along with the false ones is in the campaign, because
 over-retiring is the equal and opposite failure.
 
 **And one delegation pointed at a flag nobody had ever written.**
-`world.js:3104` said the dungeon-mode enchant ctx was "FLAGGED there
+`world.js:3267` said the dungeon-mode enchant ctx was "FLAGGED there
 with the rest of its enchant wiring" in `dungeonContext.js`. It was
 not. `setDefaultEnchantCtx` had exactly **one** caller in the tree, so
 the standalone `?dungeon` host ran every arm that needs a host
@@ -4655,7 +4655,7 @@ affinity scans saw an empty room. Nothing threw and nothing was
 logged - the enchantment simply had no effect where the fighting is.
 
 And it really was the only ctx in play: **no host passes an
-`enchantCtx` at the strike site** (`formulas.js:505` defaults it
+`enchantCtx` at the strike site** (`formulas.js:506` defaults it
 `null`), so `mergeCtx` folds this one mount under every dispatch, in
 every mode. FS1 had just found the other half of the same hole - the
 standalone `?dungeon` host mounts no ctx at all - and that half is
@@ -5550,7 +5550,7 @@ to that cite and moves under the same content check; citeMerge had
 done this since CS2 and citeShift only reported them, so the two
 regexes are one law now, exported from citeShift (`ANY_CITE`,
 `CONTINUATION`) and imported by citeMerge. (2) A TEST'S ESCAPED
-LITERAL FOLLOWS THE ROW IT PINS: `world\.js:6360` in citedrift.test.js
+LITERAL FOLLOWS THE ROW IT PINS: `world\.js:6575` in citedrift.test.js
 is a quote of a Ledger row's text; the row is STRUCK and its number
 held, and the literal used to move anyway, parting the pin from its
 row at every shift. The CLI plans every doc first, learns which
@@ -8118,3 +8118,23 @@ and both windows by content. 15 mutants, 15 dead.
 
 **The lesson: a name is what a player types, and a player types the
 same thing twice. Identity that can be typed is not identity.**
+
+### SPAWN-ROADS - NO RUIN ON A ROAD (2026-09-25)
+
+Mac: "Anyway to have things avoid being on a road?" - asked when the audit of the
+EliteDungeons drop counted what its rate did to the roads: with spawned dungeons on 40%
+of empty pixels (30% normal + 10% elite), 7,547 road pixels, 9,553 track pixels and
+1,160 river or stream pixels held a ruin's flattened plateau at their centre (1,921
+road pixels at the old 10%). Every path in the network runs from its pixel's CENTRE to
+the edges its compass byte names, and the centre is where a ruin stands, so the whole
+question is the pixel's own byte: `spawnedDungeons.js pathFreePixel` refuses a pixel
+with any road, track, river or stream bit, and a pixel with none has no path inside it.
+Deterministic online: the lane forces Basic Roads (`onlineLane.js`
+ONLINE_ROOM_MOD_KEYS), so every client reads the same four arrays; the generated
+fallback network has no water arrays and its roads and tracks still count. THE ONE
+TIMING SEAM: a pixel can be built before the network lands (the roads sweep exists for
+exactly that). A ruin minted then is PROVISIONAL (`_spawnUnroaded`), and
+`sweepRoadless` first takes back every provisional ruin a path crosses - its index
+entry and its TTL clock, never the one the player is standing in (TTL1's own
+exception) - then rebuilds the pixels, which ask again. Pinned in
+`test/spawnroads.test.js`, mutants in `tools/mutants/spawnroads.json`.

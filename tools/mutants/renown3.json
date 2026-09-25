@@ -1,0 +1,66 @@
+[
+  {
+    "name": "RENOWN3-ceiling-unread-for-a-kill",
+    "file": "src/net/renown.js",
+    "old": "RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel, 1, RENOWN_KILL_LEVEL_MAX), renownCeiling(renown));",
+    "new": "RENOWN_KILL_XP_PER_LEVEL * clampInt(foeLevel, 1, RENOWN_KILL_LEVEL_MAX);",
+    "tests": [
+      "test/renown3.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN3-ceiling-unread-for-a-quest",
+    "file": "src/net/renown.js",
+    "old": "RENOWN_QUEST_XP_PER_LEVEL * Math.min(clampInt(characterLevel, 1, RENOWN_QUEST_LEVEL_MAX), renownCeiling(renown));",
+    "new": "RENOWN_QUEST_XP_PER_LEVEL * clampInt(characterLevel, 1, RENOWN_QUEST_LEVEL_MAX);",
+    "tests": [
+      "test/renown3.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN3-unknown-renown-read-as-the-cap",
+    "file": "src/net/renown.js",
+    "old": "export const renownCeiling = (renown) => clampInt(renown ?? 1, 1, RENOWN_MAX) + RENOWN_OVER_MAX;",
+    "new": "export const renownCeiling = (renown) => clampInt(renown ?? RENOWN_MAX, 1, RENOWN_MAX) + RENOWN_OVER_MAX;",
+    "tests": [
+      "test/renown3.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN3-ceiling-a-level-off",
+    "file": "src/net/renown.js",
+    "old": "export const renownCeiling = (renown) => clampInt(renown ?? 1, 1, RENOWN_MAX) + RENOWN_OVER_MAX;",
+    "new": "export const renownCeiling = (renown) => clampInt(renown ?? 1, 1, RENOWN_MAX) + RENOWN_OVER_MAX + 1;",
+    "tests": [
+      "test/renown3.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN3-ceiling-four",
+    "file": "src/net/renown.js",
+    "old": "export const RENOWN_OVER_MAX = 3;",
+    "new": "export const RENOWN_OVER_MAX = 4;",
+    "tests": [
+      "test/renown3.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN3-kill-read-without-my-renown",
+    "file": "src/scenes/world.js",
+    "old": "renownKillXp(renownFoeLevel(foe), renownNow)",
+    "new": "renownKillXp(renownFoeLevel(foe))",
+    "tests": [
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN3-quest-read-without-my-renown",
+    "file": "src/scenes/world.js",
+    "old": "const xp = renownQuestXp(playerEntity.level, renownNow);",
+    "new": "const xp = renownQuestXp(playerEntity.level, 50);",
+    "tests": [
+      "test/renown1.test.js",
+      "test/sigil1.test.js"
+    ]
+  }
+]

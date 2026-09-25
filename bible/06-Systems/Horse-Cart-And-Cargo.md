@@ -162,7 +162,9 @@ following horse and trailing team stand in a shared cell, so:
   EASES a peer's team between words (12 per second, a step past 20 m
   snaps) and draws it with the same pieces, cargo and billboard - the
   horse's orientation and its stride are the reader's own, as a sprite's
-  must be. A peer's PARKED wagon stands a collider of its own.
+  must be. A peer's PARKED wagon stood a collider of its own (AUDIT HCC
+  O3) - reversed by PR-WAGON1: another player's team stands none, and it
+  yields the ray.
 - **The plaque names whose (HCC-TIP).** A peer's horse hovers as the mod
   names it (its name, else "Horse"), their wagon as "Wagon", and the World
   Tooltips plaque's second row says "Owned by <Peer>" - the session's name,
@@ -191,9 +193,9 @@ killed by a mutant in `tools/mutants/hcc.json`.
 - O2: a fast travel's teardown (`clearLive`, which re-anchors the origin
   with no offset) kept the peers' teams; it clears them as `clearPuppets`
   does.
-- O3: a peer's parked wagon had no collider. It stands `hccWagon:<owner>`,
-  gone with the owner, the sweep or a change of kind, and the ray gives it
-  the surface pardon.
+- O3: a peer's parked wagon had no collider. It stood `hccWagon:<owner>`,
+  gone with the owner, the sweep or a change of kind, and the ray gave it
+  the surface pardon. **Reversed by PR-WAGON1 (2026-09-24)**, below.
 - O4: a peer's horse name passed control characters, bidi overrides and
   names the filter refuses. It rides the wire's label door
   (`sanitizeLabel`: printable ASCII, the name filter).
@@ -464,8 +466,8 @@ Two faults beside it:
     pool's parts, the owner's heading);
   - the horse by the stationary probe;
   - from 1000 m over to 3000 m down, the surface nearest the word's
-    height kept, with the owner's box and mine left out of the ray (a
-    re-stand must not land on the box it stood).
+    height kept, my own wagon's box left out of the ray (the owner's box,
+    which a re-stand once had to skip, stands none since PR-WAGON1).
 - The stand is a delta off the word, so the floating origin and a
   re-anchor carry it. Where the viewer's ground is not built yet the word
   stands as said and is tried again each second (`GROUND_RETRY_SECONDS`).
@@ -549,3 +551,62 @@ no other:
   first thing to look at in one is the trailing wagon behind the cart and
   the horse standing where you dismounted; online, a second client seeing a
   rider, the owned line, and a parked wagon after its owner goes indoors.
+
+## PR-WAGON1 - another player's wagon never blocks you (2026-09-24)
+
+A player's report, relayed by Mac: "Players can grief other players with the
+wagon by putting it in front of dungeon entryways and building entrances".
+Asked how, Mac chose: "Others' wagons don't block".
+
+O3 had stood a peer's parked wagon a box in my collider, and HCC-PARK keeps a
+parked team for 72 hours after its owner leaves - so a wagon left across a shop
+door or a dungeon's mouth walled it off for everyone, for days, and its box
+took the click from the door behind it besides.
+
+- **No wall.** Another player's wagon stands no collider in my world - their
+  live word or a cell's kept word, parked or moving (`scenes/horseCartPool.js`:
+  `standPeerCollider` and `peerWagonBucket` are gone; `groundPeer`'s ray skips
+  my box alone). My own parked wagon keeps the mod's BoxCollider
+  (`WAGON_BUCKET`): it is mine to move.
+- **It yields the ray.** Their wagon and their horse are targets that YIELD
+  (`yields: true`): `player/activate.js firmFirst` is the law's one home - the
+  nearest-hit law over the entrants that hold their ground first, and over the
+  yielding ones only when that found nothing. `pickActivatableHit` reads it
+  over a target list and `player/activationRace.js` over the families' picks
+  (`raceWinner`; `raceActivation`'s rivals ignore a yielding pick), so a door,
+  a dungeon's mouth, a body, a townsperson or a foe behind their team takes the
+  press and the plaque, and with nothing else on the ray their team is still
+  named ("Owned by ...") and pressed.
+
+Pins: `test/prwagon1.test.js` (7: six failing on the base, the seventh the
+audit's below); `test/hcc_pool.test.js`'s O3 pin reversed; `test/disc20.test.js`'s
+kept team stands no box. Mutants: `tools/mutants/prwagon1.json` (11, all dead);
+`hcc.json` and `disc20.json` re-aimed, the three records on the removed box
+retired.
+
+**AUDIT BRANCH-0925 (2026-09-25, the pre-merge audit, Mac: "Audit before we
+merge").**
+
+- **PRW1-A: their wagon is met at its own turned box.** With no box of theirs
+  the target was the wagon's AXIS-ALIGNED box alone, and `noSurface`. Parked at
+  any heading off the quarter turns, that square box bulges past the wagon at
+  every corner, and an eye in a corner - a crouch (`CROUCH_EYE_HEIGHT` 0.8,
+  below the wagon's top) beside it, outside the wagon - read as INSIDE:
+  CASTLE1's no-surface rule dropped it, so the wagon a pace ahead could not be
+  named "Owned by Ann" or pressed. The base named it at its box's surface. And
+  from further off - older than PR-WAGON1, main reads the same - the corner's
+  empty road was measured as the wagon (0.60 m where the wagon is 2.33 m
+  away), so a wagon beyond reach could be named. The peer
+  wagon now carries DISC10's `obb`, the same as Eye Of The Beholder's cart
+  (`player/eotbWagon.js`): the ray meets the wagon's own box, an eye in a
+  corner is outside it, and an eye inside the wagon itself still names
+  nothing. Pinned at an eighth turn (the prwagon1 pins parked only at a quarter
+  turn, where the two boxes are the same). Mutant: the `obb` dropped.
+- **P1: my following team holds the ray too.** "My own team never yields" was
+  held for my parked wagon and my horse, and not for my FOLLOWING wagon: a
+  mutant that made it yield survived both suites. `hcc_pool.test.js` pins it;
+  the three own-team mutants are recorded in `prwagon1.json`.
+- **R1 / R2: the records.** Two present-tense statements of O3 on this page
+  (the HCC-ONLINE paragraph and DISC20-C's ray), the Port-Ledger AUDIT HCC row,
+  and the hcc_pool and disc20 rows in Testing.md still described the box
+  PR-WAGON1 took away. They now say what the pins hold.

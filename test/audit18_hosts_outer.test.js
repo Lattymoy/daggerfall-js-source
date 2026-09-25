@@ -170,7 +170,7 @@ test('audit18 hosts: worldModes overlayHeld covers the DUNGEON overlay, and hold
   const decl = s.slice(s.indexOf('const overlayHeld'), s.indexOf('const crouchHeld'));
   assert.match(decl, /dungeonCtx/, 'overlayHeld ignores the dungeon overlay - the motor walks under an open window');
   assert.match(decl, /uiOverlayActive/);
-  // DFU PauseGame(true) stops the movers too (dungeon.js:338 does).
+  // DFU PauseGame(true) stops the movers too (dungeon.js:339 does).
   assert.match(s, /if \(!overlayHeld\) dungeonCtx\.actions\.update\(dt\);/,
     'the dungeon movers still travel under an open window');
 });
@@ -536,7 +536,7 @@ test('audit18 hosts: BOTH exterior hosts take the fog colour from the shared law
     assert.doesNotMatch(s, /sky\.renderer\.fogColor = sky\.renderer\.clearColor;/);
   }
   const shared = src('src/scenes/shared.js');
-  assert.match(shared, /fogColorFor\(fogNow\) \{\s*\n\s*if \(dynamic\?\.fogColor\) return dynamic\.fogColor;\s*\n\s*return outdoorFogColor\(fogNow, \(enhancedSky \?\? dynamicSky \?\? sky\)\.clearColor\);/,
+  assert.match(shared, /fogColorFor\(fogNow\) \{\s*\n\s*const c = dynamic\?\.fogColor \?\? outdoorFogColor\(fogNow, \(enhancedSky \?\? dynamicSky \?\? sky\)\.clearColor\);\s*\n\s*return dreadW > 0 \? dreadGrade\(c, dreadW\) : c;/,
     'the controller answers SetSkyFogColor over the sky it holds, or the mod\u2019s own colour');
 });
 

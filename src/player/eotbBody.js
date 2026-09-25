@@ -203,7 +203,16 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   let attachedState = null;
   let cfg = look();
   let cfgGeneration = modSettingsGeneration();
-  function reload() { cfg = look(); cfgGeneration = modSettingsGeneration(); return cfg; }
+  function reload() {
+    const was = cfg;
+    cfg = look(); cfgGeneration = modSettingsGeneration();
+    // PROFILE2: A SET CHANGED UNDER A LIVE BODY is fetched whole, as the mod's LoadSettings -> Initialize ->
+    // InitializeTextures does. Before this the body fetched the new set frame by frame as each was first drawn, and
+    // until each landed its slot drew the OLD set's frame - a skin chosen on the pause screen walked away as two
+    // people for a second. `preload` is a no-op for what is already up.
+    if (renderer && (was.onFoot !== cfg.onFoot || was.onHorse !== cfg.onHorse)) preload();
+    return cfg;
+  }
   /** the frame's state, as bodyState shapes it */
   let last = bodyState();
   /** the frame's camera, handed in by the view seam */

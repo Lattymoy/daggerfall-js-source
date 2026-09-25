@@ -170,6 +170,7 @@ test('HCC pool: the targets, the names and the press - the parked wagon\'s box, 
   assert.ok(Math.abs((hb.max[0] - hb.min[0]) - 2.6) < 1e-6 && Math.abs((hb.max[2] - hb.min[2]) - 1.1) < 1e-6, 'facing +X the 2.6 length lies along X');
   assert.ok(Math.abs(hb.min[1] - 0) < 1e-6 && Math.abs(hb.max[1] - 2.2) < 1e-6);
   assert.equal(t[1].noSurface, true, 'a flat has no collider to meet'); assert.equal(t[0].noSurface, undefined, 'the parked wagon has its box');
+  assert.ok(t.every((x) => x.yields === undefined), 'PR-WAGON1: my own team never yields the ray - it is mine, and solid');
   assert.deepEqual(pool.hoverName(KEY_WAGON), { title: 'Wagon' }); assert.deepEqual(pool.hoverName(KEY_HORSE), { title: 'Bess' });
   assert.equal(pool.hoverName(3), null); assert.equal(pool.hoverName('camp:1'), null);
   assert.equal(pool.activate(KEY_WAGON, 2), true); assert.deepEqual(rt.calls.at(-1), ['wagon', 2]);
@@ -177,6 +178,7 @@ test('HCC pool: the targets, the names and the press - the parked wagon\'s box, 
   pool.attach(fakeRuntime({ moving: moving(), teamFollowing: true }));
   assert.deepEqual(pool.targets().map((x) => x.key), [KEY_FOLLOWING_WAGON]);
   assert.equal(pool.targets()[0].noSurface, true);
+  assert.equal(pool.targets()[0].yields, undefined, 'AUDIT BRANCH-0925 P1: my FOLLOWING team holds the ray too - it is mine');
   pool.attach(fakeRuntime({ moving: { ...moving(), interaction: false }, teamFollowing: true }));
   assert.equal(pool.targets().length, 0, 'the trailing wagon without its trigger box is not a target');
   assert.deepEqual(pool.hoverName(KEY_FOLLOWING_WAGON), { title: 'Wagon' });
@@ -323,7 +325,7 @@ test('HCC-ONLINE wire: the ease - a step under twenty metres eases, a longer one
   pool.clearPeers(); assert.equal(pool.peers.size, 0);
 });
 
-test('AUDIT HCC O1/O3/O7/O8/O9: a peer\'s team is converted every frame, parks a box, goes when my switch goes, never loads for a disabled viewer, and is not named unseen', async () => {
+test('AUDIT HCC O1/O3/O7/O8/O9: a peer\'s team is converted every frame, stands no box and yields the ray (O3, reversed by PR-WAGON1), goes when my switch goes, never loads for a disabled viewer, and is not named unseen', async () => {
   const renderer = fakeRenderer();
   const col = fakeCollider();
   let ox = 100000;   // the host's origin: the conversion reads it LIVE, as campToScene does
@@ -338,9 +340,12 @@ test('AUDIT HCC O1/O3/O7/O8/O9: a peer\'s team is converted every frame, parks a
   await flush(12);
   pool.frame(1 / 30, [0, 1, 0]);
   assert.ok(pool.targets().some((t) => t.key === 'hccPeer:p1:h'), 'and it is, once its art stands');
-  // O3: the parked wagon stands a box of its own, and has a surface for the ray
-  assert.ok(col.buckets.has('hccWagon:p1'), 'O3: a peer\'s parked wagon is a box to walk around');
-  assert.equal(pool.targets().find((t) => t.key === 'hccPeer:p1:w').noSurface, false);
+  // O3, reversed by PR-WAGON1 (Mac: "Others' wagons don't block"): a peer's parked wagon stands no box in my collider,
+  // has no surface for the ray to meet, and - with its horse - yields the ray to anything behind it
+  assert.deepEqual([...col.buckets.keys()], [], 'PR-WAGON1: another player\'s parked wagon is no wall');
+  const pw = pool.targets().find((t) => t.key === 'hccPeer:p1:w');
+  assert.equal(pw.noSurface, true, 'PR-WAGON1: no box, no surface'); assert.equal(pw.yields, true);
+  assert.equal(pool.targets().find((t) => t.key === 'hccPeer:p1:h').yields, true, 'PR-WAGON1: nor their horse');
   // O1: my floating origin moves (the pool shifts what it shows; the host's conversion now answers the new frame) -
   // the team stays where it stands in the WORLD, with no snap back to a stale scene point
   const before = [...pool.peers.get('p1').shownHorse];
@@ -354,15 +359,16 @@ test('AUDIT HCC O1/O3/O7/O8/O9: a peer\'s team is converted every frame, parks a
   ox += 5000 * 40;
   pool.frame(1 / 30, [0, 1, 0]);
   assert.deepEqual(pool.peers.get('p1').shownHorse, toScene([100200, -3, 200240]), 'O1: past the snap, the new frame\'s point');
-  // O3: the wagon rolls on (Following) - the box goes; the owner leaves - nothing of theirs stands
+  // PR-WAGON1: the wagon rolling on (Following) yields as the parked one did, and parked again it is still no wall;
+  // the owner leaves - nothing of theirs stands
   pool.applyOwner('p1', { w: [HCC_WIRE_KIND.Following, 100400, -3, 200400, 0, 0, 0, 1, 25, 0] }, toScene, 2);
   pool.frame(1 / 30, [0, 1, 0]);
-  assert.ok(!col.buckets.has('hccWagon:p1'), 'O3: only a PARKED wagon is a box');
+  assert.equal(pool.targets().find((t) => t.key === 'hccPeer:p1:w').yields, true, 'PR-WAGON1: a moving team yields');
   pool.applyOwner('p1', { w: [HCC_WIRE_KIND.Deployed, 100400, -3, 200400, 0, 0, 0, 1, 25, 0] }, toScene, 3);
   pool.frame(1 / 30, [0, 1, 0]);
-  assert.ok(col.buckets.has('hccWagon:p1'));
+  assert.deepEqual([...col.buckets.keys()], [], 'PR-WAGON1: parked again, still no wall');
   pool.sweepOwners(new Set(), 4);
-  assert.ok(!col.buckets.has('hccWagon:p1'), 'O3: a swept owner takes the box');
+  assert.equal(pool.peers.size, 0, 'a swept owner takes their team');
   // O7: my switch turned off is a word now, not at my next full frame
   const n = changed;
   pool.setEnabled(false);

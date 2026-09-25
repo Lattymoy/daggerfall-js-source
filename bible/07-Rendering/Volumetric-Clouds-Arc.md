@@ -591,6 +591,10 @@ stripes leaves the beams between all and none (not "half" - unmeasured); the boi
 for every player, but the cover's drift rides the session's own wind integral (WIND2), so "every player sees one
 sky" is true of the boil and the ice, not of the cover.
 
+WISPS-RETURN (2026-09-25, `Rendering.md` WISPS-RETURN) retired WIND5's ribbon: a wisp is a thin quad again and its
+alpha the look's own (no 1.6), and a calm draws 10 since DISC17-A. The wisp law above - `swirl`, the ribbon, the pen
+and the ink - went with it; the clock (G6) stands, pinned in `wind3_windworld.test.js`.
+
 **In the game (2026-09-23).** The last of "the not done yet": the sky run in the real game, Daggerfall city, with
 the player's own ARENA2 (SwiftShader, so pictures and relative cost only). Noon sunny, a storm at 16:00, rain at
 11:00, golden hour at 17:20, dusk at 18:10 and an overcast at 13:00, each looking four ways. Three things came out of

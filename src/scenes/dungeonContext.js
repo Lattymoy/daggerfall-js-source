@@ -149,7 +149,7 @@ import { createTradeWindow, tradeDoorReady } from '../ui/tradeDoor.js';   // the
 import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT } from '../systems/tradeModes.js';   // DR1: DoModeAction's spell arm (:954-995)
 import { isEquipped } from '../systems/equip.js';   // DR1: FilterLocalItems' `!item.IsEquipped` (:693)
 import { totalGoldAmount } from '../systems/court.js';   // DR1: the trade screen's gold strip - AUDIT 58: PlayerEntity.GetGoldAmount (:1313-1316), coins PLUS letters
-import { isAzurasStarEquipped } from '../systems/artifactEffects.js';   // V3: the Star's kill capture
+import { isAzurasStarEquipped, registerFoeDoor } from '../systems/artifactEffects.js';   // V3: the Star's kill capture; AUDIT PSCALE1 DOORS-2: Namira's reflection through this pool's door
 import { applySpell, hasActiveEffect, entityIsParalyzed, maxFatigue, applyEnemyMotorEffectFlags, concealmentFlags } from '../systems/effects.js';   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
 import { liveStat, killIfAnyLiveStatZero } from '../systems/statMods.js';
 import { breathStep } from '../systems/breath.js';
@@ -193,7 +193,8 @@ import { trs, multiply, identity, UP_Y } from '../world/mat4.js';
 import { StaticBatchBuilder, keyResolver } from '../render/staticBatch.js';   // PERF5: the level's static models as one mesh
 import { Collider } from '../player/collider.js';
 import { ActionSystem } from '../world/actionSystem.js';
-import { collectDungeonEnemies } from '../characters/dungeonEnemies.js';
+import { collectDungeonEnemies, expandEliteEnemies } from '../characters/dungeonEnemies.js';
+import { ELITE_FOE_MULTIPLIER, ELITE_HEALTH_SCALE, ELITE_DAMAGE_SCALE, ELITE_LOOT_DROP_MULT, ELITE_LOOT_QUALITY_MULT } from '../world/spawnedDungeons.js';   // ELITE: an elite spawn's foe count and strength
 import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemyBasics.js';
 import { bloodDecalDeps } from '../combat/bloodSwitch.js';   // BLOOD1a
 import { createBloodMarks } from '../combat/bloodMarks.js';   // BLOOD1a: HARD1 - the ring is this context's to own and to end
@@ -219,8 +220,11 @@ import { UnderwaterFog } from '../render/underwaterFog.js';   // ROAD-B (b3): Un
 import { NavClient } from '../ai/navClient.js';   // ENHANCED AI 3b
 import { getPref } from '../systems/uiPrefs.js';   // ENHANCED AI 3b: the Enhanced tab's switch
 import { raiseEnemyDeath, playRareDrop, pileBody } from './corpseMarker.js';   // UL1: OnEnemyDeath; LR3: the drop chime; LOOT-STACK: a body as the loot window's tab
+import { FOE_LEVEL_MAX } from '../net/wire.js';   // AUDIT RENOWN1 GAME-3: the stream's bound on a class foe's level
+import { partyFoeLoses, partyFoeHits, partyFoeHeals, noteFighter, foeFighters, takeWholeBlow, PARTY_ME } from '../systems/partyScale.js';   // PSCALE1: a shared foe weighs whoever fights it
+import { renownFoeStruck, renownFoeDied, renownFoeCarry, renownFoeRevived } from '../net/renownTracker.js';   // RENOWN1: a foe the player fought pays its Renown XP when it dies, by any hand   // AUDIT RENOWN1 GAME-10: a rebuilt foe keeps my blows, a revived one forgets them
 import { lootPile } from '../player/lootStack.js';   // LOOT-STACK: the pile under the reticle, as the loot window's tabs
-import { rollLootRarity, pileSource, dungeonRarityTier } from '../systems/lootRarity.js';   // LR1: the item ladder over every list this host mints (a foe's through hostCombat.spawnEnemyLoot, RF2)
+import { rollLootRarity, pileSource, dungeonRarityTier, stampWonWeapons } from '../systems/lootRarity.js';   // LR1: the item ladder over every list this host mints (a foe's through hostCombat.spawnEnemyLoot, RF2)
 
 
 
@@ -248,7 +252,7 @@ const q3 = (v) => Math.round(v * 1000) / 1000; const GENDER_BIT = ['male', 'fema
 const HIT_POS_MAX = 1e6;
 // AUDIT FOES FOE5: the most damage one peer's blow may claim. The host TRUSTS the number (it never recomputes - the
 // striker's own calc is the game's), so without a bound any joiner could one-shot every foe in the room and empty it
-// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1996); the dungeon
+// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:2040); the dungeon
 // had none. Past anything a legal swing, shaft or blast can roll.
 const HIT_DMG_MAX = 10000;
 /** AUDIT WORLD3 E3: can the ONE build chain actually stand this species? Both of buildFoeAt's branches need a truthy
@@ -788,7 +792,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // Classic billboards join the flat batches (RDB raw-pivot rule);
   // gender picks the archive; record 0 is the standing frame (no AI -
   // Characters C5 rigs replace these).
-  const enemies = collectDungeonEnemies(
+  const _layoutEnemies = collectDungeonEnemies(
     dungeon.blocks.map((b) => ({
       markers: b.layout.markers, waterLevel: b.layout.waterLevel,
       originX: b.originX, originZ: b.originZ,
@@ -798,6 +802,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       dungeonType: dfLocation.mapTableData.dungeonType,
       playerLevel: playerEntity.level,   // ChooseRandomEnemyType bands on the LIVE level (wired audit 2026-08-16; was stuck at the default 1)
     });
+  // ELITE DUNGEONS: an elite spawned dungeon stands ELITE_FOE_MULTIPLIER foes at every marker.
+  // The extras are pulled back from walls by a ray through this dungeon's own collider (every
+  // peer has the same geometry, so every peer builds the same list - the foe frame's index law).
+  // The ray starts at chest height so a step or a floor seam does not read as a wall.
+  const enemies = dfLocation?.elite
+    ? expandEliteEnemies(_layoutEnemies, {
+      copies: ELITE_FOE_MULTIPLIER,
+      clearance: (from, dir, dist) => collider.raycast([from[0], from[1] + 0.9, from[2]], dir, dist),
+      // DROPS-AUDIT ELITE-LEDGE: and the floor under a copy - a ray down from a metre over the marker's height, so a
+      // copy off a walkway's edge (or onto a crate) reads as another floor and turns to the next bearing
+      floor: (at) => { const d = collider.raycast([at[0], at[1] + 1, at[2]], [0, -1, 0], 3); return Number.isFinite(d) ? at[1] + 1 - d : null; },
+    })
+    : _layoutEnemies;
   // C8 E1 (?foes): CLASS enemies (mobileType > 43, human morphology)
   // spawn as canonical rigs instead of their C3 billboards - one rig
   // per enemy (individual animation state), floor-snapped through the
@@ -990,6 +1007,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
   }
 
+  /** ELITE DUNGEONS: a foe minted from an elite record stands with ELITE_HEALTH_SCALE times its
+   *  rolled health and hits for ELITE_DAMAGE_SCALE times the damage (combat/formulas.js
+   *  calculateAttackDamage reads `damageScale` at the tail, so every blow door - melee, bow,
+   *  foe-on-foe - is covered). The record's `elite` rides `src`, so a respawn or a retype keeps it. */
+  function eliteLootOpts(e) {
+    return e?.elite ? { lootDropMult: ELITE_LOOT_DROP_MULT, lootQualityMult: ELITE_LOOT_QUALITY_MULT } : {};
+  }
+  function applyEliteScaling(entity, e) {
+    if (!e?.elite || !entity) return;
+    entity.maxHealth = Math.max(1, Math.round(entity.maxHealth * ELITE_HEALTH_SCALE));
+    entity.health = entity.maxHealth;
+    entity.damageScale = ELITE_DAMAGE_SCALE;
+    entity.elite = true;
+  }
   async function buildFoeAt(e, fallbackFlat = true, { at = -1 } = {}) {
     const basics = ENEMY_BASICS[e.mobileType];
     if (!basics) return;
@@ -997,6 +1028,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // WORLD3: a rebuild (retypeFoe) stands in the OLD record's place - the old batch freed, the old record dead to
     // everything still holding it (the target machine's cull, a stale frame), the new one posed by the next frame
     const stand = (rec) => {
+      registerFoeDoor(rec.entity, (n) => damageFoe(rec, n, null, null, { fromPlayer: true, kind: 'spell' }));   // AUDIT PSCALE1 DOORS-2: a reflected blow is a blow through the one door (its death, its fighters, the host)
       const old = at >= 0 ? foes[at] : null;
       if (!old) { foes.push(rec); return; }
       // AUDIT WORLD3 E4: the context died while this rebuild awaited its art (a stream frame can start one at any
@@ -1038,13 +1070,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const cf = new D.ClassFile();
       cf.load(await D.fetchBytes(`CLASS${String(careerIndex).padStart(2, '0')}.CFG`));
       const entity = D.makeEnemyEntity(e.mobileType, basics, cf.career, D.playerEntity.level);
+      applyEliteScaling(entity, e);   // ELITE: double health, double damage
       // S1/E4b/AUDIT 18/AUDIT 24/LR1: SetEnemyCareer's whole loot chain -
       // the table on the PLAYER's level and gender, the equipment
       // appended and put on, the map/potion/recipe trio, the port's
       // rarity roll over the carried loot - ONE seam (RF2:
       // hostCombat.spawnEnemyLoot); the loot rides the entity and the
       // corpse carries it on death.
-      spawnEnemyLoot(entity, e.mobileType, basics, D.playerEntity);
+      spawnEnemyLoot(entity, e.mobileType, basics, D.playerEntity, eliteLootOpts(e));   // ELITE: +20% drops, +20% quality
       const ai = new (getPref('enhancedAI') ? D.EnhancedEnemyAI : D.EnemyAI)(collider, pos, yawDeg * Math.PI / 180, {   // ENHANCED AI 4: the switch chooses the motor; the bake is read per step
         nav: () => enhancedNav.chf, navWorld: enhancedNav.world, navSeed: (yawDeg * 1000) | 0,
         // AUDIT 39: a THUNK, not a snapshot - TakeAction re-reads
@@ -1117,7 +1150,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const yawDeg = ((e.mobileType * 73 + Math.round(e.x + e.z)) % 8) * 45;   // deterministic facing (Ledger A rule)
       const career = await D.loadMonsterCareer(e.mobileType, D.fetchBytes);
       const entity = D.makeEnemyEntity(e.mobileType, basics, career, D.playerEntity.level);
-      spawnEnemyLoot(entity, e.mobileType, basics, D.playerEntity);   // RF2: SetEnemyCareer's whole loot chain, one seam (the table, the kit, the trio, the port's roll)
+      applyEliteScaling(entity, e);   // ELITE: double health, double damage
+      spawnEnemyLoot(entity, e.mobileType, basics, D.playerEntity, eliteLootOpts(e));   // ELITE: +20% drops, +20% quality. RF2: SetEnemyCareer's whole loot chain, one seam (the table, the kit, the trio, the port's roll)
       // C12: the behaviour motors - flying/spectral pursue in 3D at
       // the face with no gravity, aquatic ride WaterMove against the
       // block water surface (beached = frozen, verbatim).
@@ -1241,7 +1275,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // AUDIT 58: this is the SetHealth(0) door, not a damage source -
     // like hurtPlayer's bypassShield it must not be mitigated, or a
     // quest that removes a foe would be eaten by its own Shield.
-    zeroFoeHealth: (f) => { if (!f.dead) damageFoe(f, f.entity.health, null, null, { bypassShield: true }); },
+    zeroFoeHealth: (f) => { if (!f.dead) damageFoe(f, f.entity.health, null, null, { fromPlayer: false, bypassShield: true }); },   // AUDIT RENOWN1 GAME-6: SetHealth(0) is nobody's blow - it paid Renown as mine, and woke the area as my attack
     spellsByIndex: () => spellsByIndex,
     foeSinks: (f) => foeSinks(f),
     rolls: Math.random,
@@ -1676,7 +1710,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:10007 / exterior.js:3670), set
+  // host's own townTalk sink (world.js:10309 / exterior.js:3692), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2183,8 +2217,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   }
   const playerSinks = { hurt: hurtPlayer, heal: healPlayer, drainMagicka, drainFatigue, restoreFatigue, restoreMagicka, say: (l) => hudText.add(l) };   // S21: concealment start messages
   const foeSinks = (f, fromPlayer = true) => ({
-    hurt: (n, o) => damageFoe(f, n, null, null, { kind: 'spell', fromPlayer: o?.fromPlayer ?? fromPlayer }),   // WORLD2: the kind rides the hit; AUDIT WORLD2 B7: a foe's spell is not the player's blow; AUDIT 68 S19-round-ticks-player-provenance: a tick says whose it is (effects.js runEffectRound)
-    heal: (n) => { f.entity.health = Math.min(f.entity.maxHealth ?? Infinity, f.entity.health + n); },
+    hurt: (n, o) => damageFoe(f, n, null, null, { kind: 'spell', fromPlayer: o?.fromPlayer ?? fromPlayer, whole: !!o?.whole }),   // WORLD2: the kind rides the hit; AUDIT WORLD2 B7: a foe's spell is not the player's blow; AUDIT 68 S19-round-ticks-player-provenance: a tick says whose it is (effects.js runEffectRound)
+    heal: (n) => healFoe(f, n),   // AUDIT PSCALE1 DOORS-5: a heal on a shared foe is a heal of the bigger pool
     drainMagicka: foeDrainMagicka(f.entity),
     restoreMagicka: (n) => { if (n > 0) f.entity.magicka = Math.min(f.entity.maxMagicka ?? Infinity, (f.entity.magicka ?? 0) + n); },
     drainFatigue: (n) => { if (n > 0) f.entity.fatigue = Math.max(0, (f.entity.fatigue ?? 0) - n); },
@@ -2217,7 +2251,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1176,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1238,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2228,7 +2262,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  makes its dungeon arm a deliberate no-op (:857): both windows
    *  raise `done` from inside their own pick/cancel/close
    *  (ListPickerWindow._pick/_cancel, ui/listPicker.js:203/:212;
-   *  NativeTradeWindow's close, ui/nativeTrade.js:645), and
+   *  NativeTradeWindow's close, ui/nativeTrade.js:666), and
    *  tickOverlay drains the slot and reconciles the stack. A second
    *  clear here would only race that drain. */
   const mountSpellWindow = (win) => pushDungeonWindow(win);
@@ -2488,6 +2522,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!nf?.entity) return;
       nf.entity.wabbajackActive = true;   // once per creature (WabbajackEffect:68)
       nf.entity.health -= missing;        // carry over damage (:94)
+      renownFoeCarry(f, nf);              // AUDIT RENOWN1 GAME-10: the Wabbajack's change is the same fight - my blows on it count
     }).catch(() => {});
   }
   // FS1 (wave D): the mount itself. `enchantCtx: false` is the
@@ -2742,7 +2777,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1095 against :1125; worldModes.js:7122 against :7146).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1097 against :1127; worldModes.js:7120 against :7146).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -2777,9 +2812,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   /** WORLD8: ONE HOME for a treasure pile's roll - the build's and the hour's respawn's (LootTables.cs:229/:237 on the
    *  PLAYER's level and gender, the pile trio, the rarity roll at the dungeon's tier). */
   function rollPileItems() {
-    const items = generateLootItems(lootKey, { level: playerEntity.level, gender: playerEntity.gender });
+    const elite = !!dfLocation?.elite;   // ELITE: the piles get the same +20% drops and +20% quality as the foes
+    const items = generateLootItems(lootKey, { level: playerEntity.level, gender: playerEntity.gender }, undefined, elite ? { itemChanceScale: ELITE_LOOT_DROP_MULT } : {});
     addPileLootExtras(items, lootKey);
-    rollLootRarity(items, pileSource(dungeonRarityTier(dfLocation.mapTableData.dungeonType)), { luck: liveStat(playerEntity, 'luck') });
+    rollLootRarity(items, { ...pileSource(dungeonRarityTier(dfLocation.mapTableData.dungeonType)), qualityMult: elite ? ELITE_LOOT_QUALITY_MULT : 1 }, { luck: liveStat(playerEntity, 'luck') });
+    stampWonWeapons(items, 1);   // SIGIL1: a pile found online, its weapons' sigils rolled at the mint
     return items;
   }
   {
@@ -3325,8 +3362,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:15604,
-              // exterior.js:5241 and worldModes.js:7331 already ran;
+              // playerArrowHitFoe is the one copy world.js:16170,
+              // exterior.js:5264 and worldModes.js:7778 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3422,11 +3459,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             // swing does (BowDamage :141) - so the Dodging tally
             // fires here too, hit roll or no.
             tallySkill(playerEntity, SKILLS.Dodging, 1);
-            const dmg = foeDeps && shooter ? foeDeps.calculateAttackDamage(shooter.entity, playerEntity, {
+            const dmg = foeDeps && shooter ? _weighHit(shooter, foeDeps.calculateAttackDamage(shooter.entity, playerEntity, {
               weapon: m.weapon,   // AUDIT 18: target group derived from the entity (isPlayer -> Humanoid)
               onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),   // S19b: poisoned arrows
               say: (l) => hudText.add(l),   // C-slice
-            }) : 0;
+            })) : 0;   // PSCALE1: an arrow as a blow is - weighed once, so the flash and the cry below read what I took (AUDIT PSCALE1 DOORS-3)
             hurtPlayer(dmg);
             // AUDIT 24 (wave 46): an enemy ARROW reaches the player
             // through BowDamage -> ApplyDamageToPlayer ->
@@ -3506,6 +3543,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     freeCorpse(f);
     const pi = foes.indexOf(f);   // AUDIT WORLD7/8 C12: the body's loot record goes with the body - the next death's corpse is a new container, its claim not refused as already spoken
     if (pi >= 0) { _lootSeen.delete(`corpse:${pi}`); _lootAt.delete(`corpse:${pi}`); }
+    renownFoeRevived(f);   // AUDIT RENOWN1 GAME-10: a foe that stands up again is a new fight - it can pay again
   }
 
   /** WORLD2: one PUPPET frame - the pose from the stream (the feet eased toward the streamed feet over the stream's
@@ -3564,7 +3602,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // AUDIT ONCRASH1 B4a: and the SENDER obeys the door the reader now applies - `h` is clamped to FOE_HEALTH_MAX as
       // the exterior twin has clamped it since WORLD6b, because an unclamped one would have its whole record refused.
       const r = { i, t: f.mobileType, f: [q2(f.ai.feet[0]), q2(f.ai.feet[1]), q2(f.ai.feet[2])], y: q3(f.ai.yaw), h: Number.isFinite(f.entity.health) ? Math.max(0, Math.min(FOE_HEALTH_MAX, f.entity.health)) : 0, d: f.dead ? 1 : 0, a: f._atkA | 0, m: f.ai.moving ? 1 : 0, g, c: f._castN | 0, s: f._castIdx | 0, ...(f.gender === 'female' ? { x: 1 } : {}) };   // t: the species (AUDIT WORLD2 B5)
-      const key = `${r.f[0]},${r.f[1]},${r.f[2]},${r.y},${r.h},${r.d},${r.a},${r.m},${r.g},${r.c},${r.s}`;
+      // AUDIT RENOWN1 GAME-3: a CLASS foe's level, the exterior stream's `l` (AUDIT WORLD6b-ii B2) - every client builds
+      // the layout's class foes at ITS OWN level, so a joiner's copy of my level-3 knight was a level-30 knight on a
+      // level-30 joiner's screen, and paid it 300 Renown XP for the kill that paid me 30. A monster's level is its
+      // species', the same everywhere, and rides nothing.
+      if (f.mobileType >= 128 && Number.isInteger(f.entity?.level) && f.entity.level >= 0 && f.entity.level <= FOE_LEVEL_MAX) r.l = f.entity.level;
+      if (!f.dead && _sharedFoe(f)) { const n = fightN(f); if (n > 1) r.n = n; }   // AUDIT PSCALE1: how many fight it - every joiner weighs its hits by the host's count
+      const key = `${r.f[0]},${r.f[1]},${r.f[2]},${r.y},${r.h},${r.d},${r.a},${r.m},${r.g},${r.c},${r.s},${r.n}`;
       if (!full && f._sentKey === key) continue;
       f._sentKey = key;
       out.push(r);
@@ -3653,6 +3697,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!r) return;
     const p = f._pup ?? (f._pup = { feet: [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], yaw: f.ai.yaw, moving: false, hurt: false, strike: null, a: null, target: null, c: null, cast: null });
     if (typeof r.g === 'string') p.target = r.g;   // WORLD3: whose blow this puppet's is
+    if (r.d !== 1) f._fightN = r.n ?? 1;   // AUDIT PSCALE1: the host's count of who fights it (a record without one: one). SIGIL1: a LIVE record's - a body's carries none, and the fight it died in was the last live count (its Renown bonus, its sigils)
+    if (r.l !== undefined && f.mobileType >= 128) f.streamedLevel = r.l;   // AUDIT RENOWN1 GAME-3: the host's class foe's level - what its kill is worth (net/renownTracker.js renownFoeLevel)
     if (r.c != null) { const c = r.c | 0; if (p.c != null && c !== p.c) p.cast = r.s | 0; p.c = c; }   // WORLD3: a cast once per count, never the count a joiner arrived with
     if (Array.isArray(r.f) && r.f.length === 3 && r.f.every(Number.isFinite)) { p.feet[0] = r.f[0]; p.feet[1] = r.f[1]; p.feet[2] = r.f[2]; }
     if (Number.isFinite(r.y)) p.yaw = r.y;
@@ -3663,8 +3709,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // The host's kill fed the host's copy alone - a death is raised where it happens - and a joiner who opened the
     // body first handed the room a list with none (WORLD4: the first reader's list is the room's). Each copy rolls its
     // own, as a chest does.
-    if (r.d === 1 && !f.dead) addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') });
-    if (r.d === 1) { if (!f.dead) { f.ai.feet[0] = p.feet[0]; f.ai.feet[1] = p.feet[1]; f.ai.feet[2] = p.feet[2]; } setFoeDead(f, true); }   // B10: the corpse where the host's foe fell, not where the ease had got to
+    if (r.d === 1 && !f.dead) { addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') }); stampWonWeapons(f.entity.items, f._fightN ?? 1); }   // SIGIL1: and its own roll of the sigils, at the host's count - the room adopts the first opener's list
+    if (r.d === 1) { if (!f.dead) { f.ai.feet[0] = p.feet[0]; f.ai.feet[1] = p.feet[1]; f.ai.feet[2] = p.feet[2]; renownFoeDied(f); } setFoeDead(f, true); }   // B10: the corpse where the host's foe fell, not where the ease had got to   // RENOWN1: the host's frame says it fell - it pays me if I fought it
     else if (r.d === 0 && f.dead) {   // AUDIT WORLD7/8 B3: the stream's un-death is a REBUILD - the host minted a fresh entity (the hour's respawn), and the old body stood up looted, still cursed (a frozen drain killed it again at once and sent the host the blow) and with the dead foe's counts (phantom edges); WORLD3 E2's own arm
       const idx = foes.indexOf(f);
       if (idx >= 0 && idx < _layoutFoes && !_retyping.has(idx)) retypeFoe(idx, f.mobileType, f.gender ?? null).then((ok) => { if (ok && !_authority && foes[idx]) applyFoeRecord(foes[idx], r); }).catch((e) => console.error('[online] the rebuilt foe could not take the record - the foe stands as it is:', e));   // AUDIT ONCRASH1 A1
@@ -3703,7 +3749,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!_authority || !data || typeof data !== 'object') return false;
     const i = data.i | 0, dmg = Number(data.dmg);
     const f = foes[i];
-    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1996). The number is a peer's
+    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:2040). The number is a peer's
     // word and the host trusts it without recomputing, so an unbounded one let any joiner one-shot every foe in the
     // room - and, through the kill door, empty it. 10000 is past anything a legal swing, shaft or blast can roll.
     if (!f || i >= _layoutFoes || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > HIT_DMG_MAX) return false;
@@ -3727,7 +3773,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (pain && pain.clip >= 0) audio.play3d(pain.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });
     }
     if (pt != null) inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) });   // WORLD6b-iii(e): the dose lands on the host's foe as FormulaHelper lands it - inside the blow, before the health moves, the foe's own saving throw rolled here; AUDIT WORLD6b-iii(e) A3: on the striker's word, whatever the number
-    damageFoe(f, dmg, at, dir, { fromPlayer: true, peer: true, kind, peerId: id });
+    damageFoe(f, dmg, at, dir, { fromPlayer: true, peer: true, kind, peerId: id, whole: data.z === 1 });   // AUDIT PSCALE1 DOORS-1: a joiner's kill is a kill
     if (data.ar === 1 && kind === 'arrow' && arrowsIn(f.entity.items ??= []) < HIT_ARROWS_MAX) addItem(f.entity.items, bowDamageArrow());   // WORLD3: the shaft, where BowDamage puts it (MAC-N1: minted) (:145-147) - the corpse's items are the record's; AUDIT WORLD6b-iii(e) A1: HIT_ARROWS_MAX a body from peers' shafts
     return true;
   }
@@ -4037,7 +4083,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     _retyping.add(i);
     try {
       const rec = await buildFoeAt({ ...f.src, mobileType, gender: gender === 'female' || gender === 'male' ? gender : undefined }, true, { at: i });
-      return !!rec && foes[i] === rec;
+      const landed = !!rec && foes[i] === rec;
+      // AUDIT RENOWN1 GAME-10: a LIVE foe stood again in another body (a joiner's copy rebuilt as the host's species) is
+      // the same fight, and my blows on it still count; a dead one's rebuild (the stream's un-death, the hour's respawn)
+      // is a new fight, and carries nothing
+      if (landed && !f.dead) renownFoeCarry(f, rec);
+      return landed;
     } finally { _retyping.delete(i); }
   }
   /** MAC6 #1: where this dungeon stands - its map pixel and map id, for the save (null for a location with no map row: the probe). */
@@ -4175,7 +4226,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // CORPSE-FOOD: and a body the room's memory hands an arrival without its list (the memory writes none since AUDIT
     // WORLD4 D4) is this copy's own roll too - food and all, as the stream's death above. A save off disk carries its
     // own list, and a room's list is the room's.
-    if (wire && sf.dead && !f.dead && sf.items == null) addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') });
+    if (wire && sf.dead && !f.dead && sf.items == null) { addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') }); stampWonWeapons(f.entity.items, 1); }   // SIGIL1: the sigils too, a fight nobody here saw
     if (sf.dead && Number.isFinite(sf.died)) { const _n = _wallNow(); f._diedAt = _n == null ? sf.died : Math.min(sf.died, _n); }   // WORLD8: the room's stamp, not this client's arrival; AUDIT WORLD7/8 B4: never AHEAD of now (a far-future stamp revoked the hour for thirty days)
     if (sf.dead && !f.dead) setFoeDead(f, true);
     // SL2 (AUDIT 23 save-load-2): the BACKWARD rewind. DFU's load
@@ -4195,7 +4246,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:1571's restoreWorld goes through
+    // construction (exteriorFoes.js:1612's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
@@ -4325,10 +4376,38 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   /** AUDIT 26 F035/F041: `fromPlayer` is this door's provenance flag,
    *  the third pool's copy of the same law - see exteriorFoes. */
   let _ecvT = 0;   // ECV1: the foe pass's clock (seconds), for the shimmer and the hit reveal - declared above its first reader
-  function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true, bypassShield = false, kind = 'melee', peer = false, peerId = null } = {}) {
+  /** PSCALE1: a SHARED foe - one of the layout's, which every client in the room holds by index and the host
+   *  simulates for all of them. A foe past the layout (a rest's ambush, a quest's wave, a Wabbajack's change) is only
+   *  mine to see, and my own summoned ally is nobody's to weigh. Offline, and in a dungeon split while its host is
+   *  silent (SEAT-HEAL), only my own blows ever reach a copy, so its fighters are one and nothing is weighed. */
+  function _sharedFoe(f) {
+    if (!f || f.entity?.team === 'PlayerAlly') return false;
+    const i = foes.indexOf(f);
+    return i >= 0 && i < _layoutFoes;
+  }
+  /** AUDIT PSCALE1 (Mac: "Whoever fights it"): how many players fight `f` - counted at this door from every blow it
+   *  takes while I run the layout (systems/partyScale.js foeFighters), else the host's word on its record (`n`). Kept
+   *  on the foe (`_fightN`) for the readers outside this pool (the Renown bonus, the sigil's forge). */
+  function fightN(f) { return _authority ? (f._fightN = foeFighters(f, performance.now())) : (f._fightN ?? 1); }
+  /** PSCALE1: a shared foe's weapon or arrow hit on me, weighed by the players fighting it, the remainder carried on
+   *  me (AUDIT PSCALE1 DOORS-4) - ONE home for the blow and the arrow, so the flash and the cry read what I took. */
+  function _weighHit(f, dmg) { return f && _sharedFoe(f) ? partyFoeHits(dmg, fightN(f), playerEntity) : dmg; }
+  /** AUDIT PSCALE1 DOORS-5: a heal on a shared foe while I run the layout is a heal of the bigger pool; a joiner's copy
+   *  is the host's to heal (the next record says so). */
+  function healFoe(f, n) {
+    if (!(n > 0) || !f?.entity || f.dead) return;
+    const h = _authority && _sharedFoe(f) ? partyFoeHeals(f, n, fightN(f)) : n;
+    f.entity.health = Math.min(f.entity.maxHealth ?? Infinity, f.entity.health + h);
+  }
+
+  function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true, bypassShield = false, kind = 'melee', peer = false, peerId = null, whole = false } = {}) {
     // AUDIT 68 S19-damagefoe-dead-reentry: a corpse takes no blow. EnemyDeath runs once; the round sinks tick on
     // after the killing tick inside one window, and each re-ran the whole death arm (trap, chime, OnEnemyDeath).
     if (foe.dead) return;
+    if (fromPlayer && !peer) renownFoeStruck(foe);   // RENOWN1: MY blow - a joiner's too, before the divert sends it to the host
+    // AUDIT PSCALE1 DOORS-1: a KILL is not a blow - a Disintegrate, a stat drained to zero (the sinks' `whole`), the
+    // Razor's whole-health strike (its mark on the foe) - and no fighters' toughness divides it, here or at the host
+    const _whole = whole || takeWholeBlow(foe.entity);
     // the STRIKER's own HUD - the target frame (PX30) and the concealed reveal (ECV1) - before the divert (AUDIT
     // WORLD2 B6: a joiner's blow never marked) and never for a peer's blow applied here (C4: a peer's poke across the
     // room hijacked the host's target frame)
@@ -4381,7 +4460,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           ...(_pAt ? { p: [q2(_pAt[0]), q2(_pAt[1]), q2(_pAt[2])] } : {}),
           ...(knockDir ? { d: [q3(knockDir[0]), q3(knockDir[1]), q3(knockDir[2])] } : {}),
           ...(_pt != null ? { pt: _pt } : {}),   // WORLD6b-iii(e): the striker's poison rides to the host's foe; AUDIT WORLD6b-iii(e) A3: the calc's word, whatever the number (the Strikes payload can zero it after the dose)
-          ...(kind === 'arrow' ? { ar: 1 } : {}) });
+          ...(kind === 'arrow' ? { ar: 1 } : {}),
+          ...(_whole ? { z: 1 } : {}) });
         return;
       }
     }
@@ -4414,7 +4494,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // HandleAttackFromSource runs after it unconditionally (:630), so
     // a fully absorbed blow still knocks back and still turns the foe.
     const healthDamage = bypassShield ? damage : damageShieldPool(foe.entity, damage);
-    foe.entity.health -= healthDamage;
+    // AUDIT PSCALE1 (Mac: "Whoever fights it"): every player's blow names a fighter - mine, and a joiner's through
+    // applyHit - here where the host hears them all
+    if (fromPlayer) noteFighter(foe, peer ? peerId : PARTY_ME, performance.now());
+    // PSCALE1: a shared foe fights its fighters with more health - its damage over their toughness, here where the
+    // host applies every blow (a SetHealth(0) and a kill are no blows, and stand as they were)
+    foe.entity.health -= !bypassShield && !_whole && _sharedFoe(foe) ? partyFoeLoses(foe, healthDamage, fightN(foe)) : healthDamage;
     if (foe.entity.health <= 0) {
       // X5: SOUL TRAP intercepts the kill, exactly where DFU's
       // EnemyEntity.SetHealth override does (:157-177) - before the
@@ -4437,6 +4522,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         hudText.add(SOUL_TRAP_TEXT.trapSuccess);
       }
       foe.dead = true;
+      renownFoeDied(foe);   // RENOWN1: whoever struck last - it pays me if a blow of mine is recent
       // E-slice: EnemyDeath:132-136 - the targeting foe's death
       // clears the alert (survivors re-raise it next update).
       // EnemyDeath:131-136 gates on `senses.Target ==
@@ -4445,6 +4531,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if ((!foeDeps || !foe.ai?._armedTargeting || foeDeps.isLocalPlayerTarget(foe.ai?.target)) && foe.ai?.detected) setEnemyAlert(playerEntity, false);   // AUDIT WORLD3 C3: mine, not a peer's
       spawnCorpse(foe);
       playRareDrop(audio, foe.ai.feet, foe.entity.items);   // LR3: the chime for a Rare or better on the body
+      stampWonWeapons(foe.entity.items, _sharedFoe(foe) ? fightN(foe) : 1);   // SIGIL1: the body's Magic+ weapons won online may carry a sigil; a bigger fight, better odds
       raiseEnemyDeath(foe.entity, { luck: liveStat(playerEntity, 'luck') });   // UL1: OnEnemyDeath (EnemyDeath.cs:139) - the kill, not the load's rewind. AUDIT VC6: the player's luck, which SURV2's food rolls against - this host keeps no loot stream of its own, so the roll stays Math.random as its spawn loot's is
       return;
     }
@@ -4558,7 +4645,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     tallySkill(foeDeps.playerEntity, SKILLS.Dodging, 1);
     // S18: the special-attack rider seam - monster weaponless hits
     // run OnMonsterHit per hit (disease/paralysis/fatigue)
-    const dmg = foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {
+    const dmg = _weighHit(f, foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {
       weapon: wpn,   // AUDIT 18: target group derived from the entity (isPlayer -> Humanoid)
       onMonsterHit: (att, tgt, hit) => onMonsterHit(att, tgt, hit, {
         currentDay: Math.floor(classicMinutesRef.value / MINUTES_PER_DAY), sinks: playerSinks,
@@ -4572,7 +4659,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // formulas clear the weapon's poison)
       onInflictPoison: (att, tgt, pt) => inflictPoison(foeDeps.playerEntity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),
       say: (l) => hudText.add(l),   // C-slice: equipment breaks speak
-    });
+    }));   // PSCALE1: harder for the players fighting it - weighed once, so the flash and the cry below read what I took (AUDIT PSCALE1 DOORS-3)
     if (dmg > 0) audio.playOneShot(hitSoundFor(wpn), PLAYER_HIT_VOLUME);   // AUDIT 58: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
     // C2-slice (combat-9): a connected attack that LOST the roll
     // rings the miss sound too (ApplyDamageToPlayer's else arm).
@@ -5999,7 +6086,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // both of them hand it in: dungeon.js's opts bag and
         // worldModes' (the world-hosted crawl, which is where the
         // classic start into Privateer's Hold lives, and which is the
-        // pause door ui/input.js:810 reaches underground).
+        // pause door ui/input.js:841 reaches underground).
         relock: () => opts.relock?.(),
         // the LOAD arm needs the host's position applier, exactly as
         // routeKey's own QuickLoad case passes it

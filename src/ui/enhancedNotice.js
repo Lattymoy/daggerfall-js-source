@@ -58,11 +58,11 @@
 // watchdog - until it releases it.
 
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
-import { isEnhanced } from '../systems/uiSkin.js';
+import { isEnhanced, isEnhancedPlus } from '../systems/uiSkin.js';   // PLUS1: the toast's fade is Enhanced Plus's
 
 export const ENHANCED_NOTICE_ID = 'enhanced-notice';
 /** The sheet's transition length (ui/enhancedStyle.js .notice), in ms. */
-export const NOTICE_SLIDE_MS = 260;
+export const NOTICE_SLIDE_MS = 260;  import { TOAST_FADE_MS } from './enhancedFrame.js'; export { TOAST_FADE_MS };   // TOAST2: a HUD line (a skill up, a tally) fades where it stands, over the kit's time
 /** A box that has not drawn for this long is gone: slide its panel out. */
 export const NOTICE_WATCHDOG_MS = 400;
 /** ClickAnywhereToClose, said the enhanced way - a quiet caption under the text. */
@@ -218,7 +218,7 @@ export function releaseEnhancedNotice(key) {
     try { p.host.remove(); } catch { /* already gone */ }
     if (!panels.size) { try { stack?.remove(); } catch { /* already gone */ } stack = null; }
   };
-  if (schedule(gone, NOTICE_SLIDE_MS) == null) gone();
+  if (schedule(gone, p.toast && isEnhancedPlus() ? TOAST_FADE_MS : NOTICE_SLIDE_MS) == null) gone();   // TOAST2: a toast's fade is longer than a box's slide
 }
 
 let seq = 0;

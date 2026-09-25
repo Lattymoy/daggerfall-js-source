@@ -333,7 +333,7 @@ test('AUDIT 39 (#110): the building list holds residences, named or not', () => 
 // D9: the walk is over BUILDINGS, whose Position (RMBLayout.cs:570-571)
 // is BLOCK-LOCAL - so the directory has to re-add the block origin the
 // door's own world position used to carry. whereIsAnswer subtracts a
-// LOCATION-LOCAL player term (talkTopics.js:475), so without it every
+// LOCATION-LOCAL player term (talkTopics.js:482), so without it every
 // block's buildings collapse onto block (0,0)'s coordinates and every
 // compass hint outside that block points the wrong way.
 test('AUDIT 39 (#110): a directory row carries BLOCK ORIGIN + the subrecord Position', () => {

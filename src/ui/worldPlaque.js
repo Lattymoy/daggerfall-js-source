@@ -187,16 +187,27 @@ export function plaqueAnchor(canvas) {
 function paint(n, f, sel = -1, stats = []) {
   n.textContent = '';
   n.classList.toggle('has-list', f.kind === 'items' || f.kind === 'actions');
+  // UXB1-N: the namer's tone colours the title (a private-property container's, enhancedStyle.js .tone-private)
+  n.classList.toggle('tone-private', f.tone === 'private');
   const title = document.createElement('div');
   title.className = 'wplaque-title';
   // The mod joins a door's label with `\r` - "To\rPrivateer's Hold" -
   // and that IS a line break, not a separator to flatten. One node per
   // line inside the one title block, so the `has-list` divider still
   // sits under the whole label rather than between its halves.
-  for (const line of String(f.title).split('\n')) {
+  const lines = String(f.title).split('\n');
+  for (let i = 0; i < lines.length; i++) {
     const l = document.createElement('div');
     l.className = 'wplaque-titleline';
-    l.textContent = line;
+    if (i === 0 && f.renown) {
+      // RENOWN1: a player's Renown, the number in its box left of the name - the box the name over their head wears
+      const r = document.createElement('span');
+      r.className = 'wplaque-renown';
+      r.textContent = String(f.renown);
+      const t = document.createElement('span');
+      t.textContent = lines[i];
+      l.append(r, t);
+    } else l.textContent = lines[i];
     title.append(l);
   }
   n.append(title);

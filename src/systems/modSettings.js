@@ -10,6 +10,7 @@
 
 import { appStorage } from './appStorage.js';   // the one storage seam - localStorage lives there alone
 import { onlineForcedModSetting } from './onlineLane.js';   // MODS-ONLINE-2: online, the room's ground is forced and every other switch is the player's
+import { FOOT_SKIN_COUNT, CLASS_SKINS, classSkinLabel } from '../player/classSkins.js';   // SKIN2: the class skins past the mod's sixteen
 
 const STORE_KEY = 'dfjs-mod-settings';
 
@@ -752,11 +753,14 @@ export const MOD_SETTINGS = Object.freeze({
       // Heavy Fighter F 4 and M 5, Mage F 6 and M 7, Thief Mage 8/9, Fighter Mage 10/11, Thief 12/13, Fighter Thief
       // 14/15), and the art says the rest: every even set is a woman and every odd set a man, and the five riders are
       // the fighters by their helms and boots (green-booted women, cyan-booted men - the on-foot sets' own colours).
-      'Graphics.OnFoot': Object.freeze({ default: 0, min: 0, max: 15, description: 'Sprite when on foot',
+      // SKIN2 (2026-09-25, Mac: "Implement these as new skin options"): Daggerfall's own classes follow the mod's
+      // sixteen as 16 onwards (player/classSkins.js) - the mod's range kept as its own, the port's past it.
+      'Graphics.OnFoot': Object.freeze({ default: 0, min: 0, max: FOOT_SKIN_COUNT - 1, description: 'Sprite when on foot',
         labels: Object.freeze(['Light Fighter (female)', 'Light Fighter (male)', 'Medium Fighter (female)', 'Medium Fighter (male)',
           'Heavy Fighter (female)', 'Heavy Fighter (male)', 'Mage (female)', 'Mage (male)',
           'Thief Mage (female)', 'Thief Mage (male)', 'Fighter Mage (female)', 'Fighter Mage (male)',
-          'Thief (female)', 'Thief (male)', 'Fighter Thief (female)', 'Fighter Thief (male)']) }),
+          'Thief (female)', 'Thief (male)', 'Fighter Thief (female)', 'Fighter Thief (male)',
+          ...CLASS_SKINS.map(classSkinLabel)]) }),
       'Graphics.OnHorse': Object.freeze({ default: 0, min: 0, max: 4, description: 'Sprite when riding a horse',
         labels: Object.freeze(['Light Fighter (female)', 'Medium Fighter (male)', 'Medium Fighter (female)', 'Heavy Fighter (male)', 'Heavy Fighter (female)']) }),
       'Graphics.ReadyStance': Object.freeze({ default: 2, options: Object.freeze(['Never', 'When Idle', 'When Idle or Moving']), description: 'Whether the sprite will change states when readying a weapon or spell' }),
@@ -957,6 +961,14 @@ export const MOD_SETTINGS = Object.freeze({
       'GeneralOptions.AllowWeather': Object.freeze({ default: false, description: "Allows weather effects during time accelerated travel" }),
       'GeneralOptions.AllowAnnoyingSounds': Object.freeze({ default: false, description: "Allows footstep and hoof sounds during time accelerated travel" }),
       'GeneralOptions.AllowRealGrass': Object.freeze({ default: false, description: "Allows the Real Grass mod to run during time accelerated travel" }),
+      // TRAVEL-NAV1 (2026-09-25, Mac: "Improving travel options navigation
+      // to properly route around objects and stopping before running into
+      // buildings"): THE PORT'S OWN KEY on the mod's pane, as HT-WAIST's is
+      // on Handheld Torches' - the vendored modsettings.json does not carry
+      // it and its words say so. ON: a journey steers round buildings,
+      // walls and rocks and pauses short of what it cannot pass
+      // (systems/travelSteer.js). OFF: the mod's own beeline, exactly.
+      'GeneralOptions.AvoidObstacles': Object.freeze({ default: true, description: 'Steers time accelerated travel around buildings, walls and rocks, and pauses the journey before walking into one it cannot get round. (This port’s own switch - the mod has none.)' }),
       'TimeAcceleration.DefaultStartingAcceleration': Object.freeze({ default: 4, options: Object.freeze(["1", "2", "3", "5", "10", "15", "20", "25", "30", "40", "50"]), description: "The initial time acceleration used after starting the game" }),
       'TimeAcceleration.AlwaysUseStartingAcceleration': Object.freeze({ default: false, description: "Always uses the default starting acceleration when initiating a journey, rather than value from the previous journey" }),
       'TimeAcceleration.AccelerationLimit': Object.freeze({ default: 60, min: 10, max: 100, description: "The maximum limit allowed for time acceleration, road following is limited to half this amount" }),

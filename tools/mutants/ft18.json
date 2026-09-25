@@ -1,0 +1,374 @@
+[
+  {
+    "name": "FPSCAP-no-floor",
+    "file": "src/systems/frameCap.js",
+    "old": "n >= FRAME_CAP_FLOOR ?",
+    "new": "n > 0 ?",
+    "tests": [
+      "test/fpscap1.test.js"
+    ]
+  },
+  {
+    "name": "FPSCAP-no-clamp",
+    "file": "src/systems/frameCap.js",
+    "old": "getInt('Video', 'TargetFrameRate', 0, 300)",
+    "new": "getInt('Video', 'TargetFrameRate')",
+    "tests": [
+      "test/fpscap1.test.js"
+    ]
+  },
+  {
+    "name": "FPSCAP-no-slack",
+    "file": "src/systems/frameCap.js",
+    "old": "now < state.due - FRAME_CAP_SLACK_MS",
+    "new": "now < state.due",
+    "tests": [
+      "test/fpscap1.test.js"
+    ]
+  },
+  {
+    "name": "FPSCAP-slot-booked-from-the-stamp",
+    "file": "src/systems/frameCap.js",
+    "old": "state.due = state.due && now - state.due < interval ? state.due + interval : now + interval;",
+    "new": "state.due = now + interval;",
+    "tests": [
+      "test/fpscap1.test.js"
+    ]
+  },
+  {
+    "name": "FPSCAP-a-gap-is-a-burst",
+    "file": "src/systems/frameCap.js",
+    "old": "state.due = state.due && now - state.due < interval ? state.due + interval : now + interval;",
+    "new": "state.due = state.due ? state.due + interval : now + interval;",
+    "tests": [
+      "test/fpscap1.test.js"
+    ]
+  },
+  {
+    "name": "FPSCAP-the-stamp-not-remembered",
+    "file": "src/systems/frameCap.js",
+    "old": "  if (state.at === now) return state.held;   // one decision per stamp: the host and the counter agree\n",
+    "new": "",
+    "tests": [
+      "test/fpscap1.test.js"
+    ]
+  },
+  {
+    "name": "FPSCAP-the-counter-counts-the-screen",
+    "file": "src/ui/fpsCounter.js",
+    "old": "    if (frameCapSkip(now)) { if (live && raf) handle = raf(tick); return; }\n",
+    "new": "",
+    "tests": [
+      "test/fpscap1.test.js"
+    ]
+  },
+  {
+    "name": "FPSCAP-the-world-host-ungated",
+    "file": "src/scenes/world.js",
+    "old": "    if (frameCapSkip(now)) { requestAnimationFrame(frame); return; }   // FPS-CAP1: held back to the Frame Rate Cap - no stamp, no input frame, `last` kept\n",
+    "new": "",
+    "tests": [
+      "test/fpscap1.test.js",
+      "test/perf1.test.js"
+    ]
+  },
+  {
+    "name": "FPSCAP-the-interior-host-ungated",
+    "file": "src/scenes/interior.js",
+    "old": "    if (frameCapSkip(now)) { requestAnimationFrame(frame); return; }   // FPS-CAP1: held back to the Frame Rate Cap - `last` kept, so the next drawn frame's dt covers it\n",
+    "new": "",
+    "tests": [
+      "test/fpscap1.test.js"
+    ]
+  },
+  {
+    "name": "FPSCAP-the-dungeon-gate-below-the-input-frame",
+    "file": "src/scenes/dungeon.js",
+    "old": "    if (frameCapSkip(now)) { requestAnimationFrame(frame); return; }   // FPS-CAP1: held back to the Frame Rate Cap - no stamp, no input frame, `last` kept\n    frameBegin(now);   // PERF1: the script time (systems/frameClock.js)\n    beginInputFrame(keyEdge);   // MWCROUCH\n",
+    "new": "    frameBegin(now);   // PERF1: the script time (systems/frameClock.js)\n    beginInputFrame(keyEdge);   // MWCROUCH\n    if (frameCapSkip(now)) { requestAnimationFrame(frame); return; }   // FPS-CAP1: held back to the Frame Rate Cap - no stamp, no input frame, `last` kept\n",
+    "tests": [
+      "test/fpscap1.test.js"
+    ]
+  },
+  {
+    "name": "FPSCAP-vsync-left-stored",
+    "file": "src/systems/settings.js",
+    "old": "  'Video/VSync': 'the browser always waits for the screen refresh',\n",
+    "new": "",
+    "tests": [
+      "test/fpscap1.test.js"
+    ]
+  },
+  {
+    "name": "FPSCAP-the-row-walks-the-range",
+    "file": "src/ui/settingsLaw.js",
+    "old": "    if (law.stops) return stepStops(law, raw, dir, coarse);   // FPS-CAP1\n",
+    "new": "",
+    "tests": [
+      "test/fpscap1.test.js"
+    ]
+  },
+  {
+    "name": "FPSCAP-zero-reads-as-a-number",
+    "file": "src/ui/settingsLaw.js",
+    "old": "  if (law.offBelow !== undefined && n < law.offBelow) return 'Off';   // FPS-CAP1\n",
+    "new": "",
+    "tests": [
+      "test/fpscap1.test.js"
+    ]
+  },
+  {
+    "name": "FT18-the-wind-read-as-the-sway",
+    "file": "src/systems/featureLanes.js",
+    "old": "export const windRead = () => WIND_PARTS.some(on);",
+    "new": "export const windRead = () => on('floraSway');",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-the-wind-writes-the-sway",
+    "file": "src/systems/featureLanes.js",
+    "old": "for (const k of WIND_PARTS) setPref(k, v === true || v === 'true');",
+    "new": "setPref('floraSway', v === true || v === 'true');",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-the-diamond-beats-the-hotbar",
+    "file": "src/systems/featureLanes.js",
+    "old": "  if (getPref(QUICKBAR_STYLE_PREF) === 'hotbar') return 'hotbar';\n  return getPref(QUICKSLOTS_PREF) === false ? 'off' : 'diamond';",
+    "new": "  if (getPref(QUICKSLOTS_PREF) === false) return 'off';\n  return getPref(QUICKBAR_STYLE_PREF) === 'hotbar' ? 'hotbar' : 'diamond';",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-the-diamond-leaves-the-hotbar-up",
+    "file": "src/systems/featureLanes.js",
+    "old": "  setPref(QUICKBAR_STYLE_PREF, 'quickbar');\n  setPref(QUICKSLOTS_PREF, v !== 'off');",
+    "new": "  setPref(QUICKSLOTS_PREF, v !== 'off');",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-blood-off-read-from-the-marks",
+    "file": "src/systems/featureLanes.js",
+    "old": "  if (!BLOOD_PARTS.some(on)) return 'off';",
+    "new": "  if (!on(BLOOD_PREF)) return 'off';",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-an-amount-leaves-the-parts-off",
+    "file": "src/systems/featureLanes.js",
+    "old": "  if (!BLOOD_PARTS.some(on)) for (const k of BLOOD_PARTS) setPref(k, true);\n",
+    "new": "",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-blood-off-forgets-nothing",
+    "file": "src/systems/featureLanes.js",
+    "old": "  if (v === 'off') { for (const k of BLOOD_PARTS) setPref(k, false); return; }",
+    "new": "  if (v === 'off') { setPref(BLOOD_PREF, false); return; }",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-a-covered-pref-undeclared",
+    "file": "src/systems/features.js",
+    "old": "const declaredPrefs = (list) => list.flatMap((f) => [f.control, ...(f.control?.also ?? [])])",
+    "new": "const declaredPrefs = (list) => list.flatMap((f) => [f.control])",
+    "tests": [
+      "test/ft18_features.test.js",
+      "test/rf4_featuredecl.test.js"
+    ]
+  },
+  {
+    "name": "FT18-a-part-not-the-rows-own",
+    "file": "src/systems/features.js",
+    "old": "      if (!pt || !own.has(pt.key)) out.push(`part '${pt?.key}' is not the row's key or one it covers`);\n",
+    "new": "",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-a-classic-unchecked",
+    "file": "src/systems/features.js",
+    "old": "    if (!ok) out.push(`classic '${c.classic}' is not one of the row's values`);\n",
+    "new": "",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-a-covered-pref-without-its-default",
+    "file": "src/systems/features.js",
+    "old": "        if (a.initial === undefined) out.push(`also: the covered pref '${a.key}' declares its initial value`);\n",
+    "new": "",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-the-search-reads-no-note",
+    "file": "src/systems/features.js",
+    "old": "  return fold([f?.title, f?.note, GROUPS",
+    "new": "  return fold([f?.title, GROUPS",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-the-search-reads-no-part",
+    "file": "src/systems/features.js",
+    "old": "    ...(c.parts ?? []).map((pt) => pt.label), mod?.title",
+    "new": "    mod?.title",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-the-search-any-word",
+    "file": "src/systems/features.js",
+    "old": "  return words.every((w) => text.includes(w));",
+    "new": "  return words.some((w) => text.includes(w));",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-curly-quotes-kept",
+    "file": "src/systems/features.js",
+    "old": ".replace(/[\\u2018\\u2019]/g, \"'\")",
+    "new": "",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-the-walls-ignore-their-classic",
+    "file": "src/systems/features.js",
+    "old": "key: 'Video/RandomDungeonTextures', classic: 0 }),",
+    "new": "key: 'Video/RandomDungeonTextures' }),",
+    "tests": [
+      "test/ft18_features.test.js",
+      "test/ft11_dfu_rest.test.js"
+    ]
+  },
+  {
+    "name": "FT18-a-group-dropped",
+    "file": "src/systems/features.js",
+    "old": "export const GROUP_ORDER = Object.freeze(['sight', 'interface', 'sound', 'world', 'loot', 'combat', 'character']);",
+    "new": "export const GROUP_ORDER = Object.freeze(['sight', 'interface', 'world', 'loot', 'combat', 'character']);",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-all-off-moves-the-rooms-rows",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "    if (!st || st.locked) continue;\n    const to = classicSegment(f, st);",
+    "new": "    if (!st) continue;\n    const to = classicSegment(f, st);",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-a-second-press-overwrites-the-keep",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  for (const { f, st } of plan) if (!Object.hasOwn(keep, f.id)) keep[f.id] = st.labels[st.at];",
+    "new": "  for (const { f, st } of plan) keep[f.id] = st.labels[st.at];",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-the-keep-never-spent",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  setPref(FEATURES_RESTORE_PREF, null);\n  return n;",
+    "new": "  return n;",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-classic-ignored",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  if (c?.classic !== undefined) {\n    const i = c.store === 'settings'",
+    "new": "  if (false) {\n    const i = c.store === 'settings'",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-the-search-repaints",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  search.oninput = () => { featureQuery = search.value; applyQuery(); };",
+    "new": "  search.oninput = () => { featureQuery = search.value; render(); };",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-all-off-unasked",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "{ label: 'All off', onClick: () => ask('Turn Everything Off', ALL_OFF_ASK, 'All off', () => { featuresAllOff(); }) },",
+    "new": "{ label: 'All off', onClick: () => { featuresAllOff(); render(); } },",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-the-query-outlives-the-visit",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  featureQuery = '';   // FT18: a fresh visit searches nothing\n",
+    "new": "",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-a-chip-writes-nothing",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "      else b.onclick = () => { setPref(pt.key, !on); render(); };",
+    "new": "      else b.onclick = () => { render(); };",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-the-holster-not-rebuilt",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "      set: (i) => { setPref(c.key, i === 1); TILE_AFTER[c.key]?.(); } };",
+    "new": "      set: (i) => { setPref(c.key, i === 1); } };",
+    "tests": [
+      "test/ws1_sheathing.test.js"
+    ]
+  },
+  {
+    "name": "FT18-a-hidden-tile-still-shows",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".ft-tile[hidden], .ft-grid[hidden], .ft-grouphead[hidden], .ft-none[hidden] { display: none; }\n",
+    "new": "",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "FT18-the-outdoors-off-says-more",
+    "file": "src/world/outdoors.js",
+    "old": "  ['off', 'Off'],",
+    "new": "  ['off', 'Off - Daggerfall’s outdoors'],",
+    "tests": [
+      "test/ft18_features.test.js"
+    ]
+  }
+]

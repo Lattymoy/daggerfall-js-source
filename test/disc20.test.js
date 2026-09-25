@@ -371,7 +371,7 @@ const wheelsOver = (pool, p, ground) => {
 };
 let QUAT = null;
 
-test('DISC20-C: a team the relay kept from before the ground was lowered - a fifth of its height up, 20 m over 100 m of ground - stands on the viewer\'s ground: the wagon by the mod\'s two-wheel solve, the horse by its probe, the box with them; a re-stand does not climb onto its own box; the ground moving under it moves it (mutants: no grounding; the owner\'s box not left out of the ray)', async () => {
+test('DISC20-C: a team the relay kept from before the ground was lowered - a fifth of its height up, 20 m over 100 m of ground - stands on the viewer\'s ground: the wagon by the mod\'s two-wheel solve, the horse by its probe, and no box of theirs in my collider (PR-WAGON1); a re-stand stays on the ground; the ground moving under it moves it (mutant: no grounding)', async () => {
   QUAT ??= await import('../src/world/quat.js');
   let G = 100;   // my ground, scene metres
   const { pool, col } = await hccPool({ groundAt: () => G });
@@ -385,10 +385,9 @@ test('DISC20-C: a team the relay kept from before the ground was lowered - a fif
   for (const over of wheelsOver(pool, p, G)) assert.ok(Math.abs(over) < 1e-6, `the wheels on my ground, not ${stale - G} m over it (${over})`);
   assert.ok(Math.abs(p.horse.position[1] - G) < 1e-9, `the horse on it (${p.horse.position[1]})`);
   assert.ok(Math.abs(p.shownWagon[1] - p.wagon.position[1]) < 1e-9, 'shown where it stands from the first frame');
-  const box = col.buckets.get('hccWagon:kept:k1');
-  assert.ok(box && Math.abs(box.m[13] - p.wagon.position[1]) < 1e-4, 'its box stands with it (a Float32 matrix)');
+  assert.deepEqual([...col.buckets.keys()], [], 'PR-WAGON1: a kept team is no wall - AUDIT HCC O3\'s box stood with it here, for 72 hours');
   assert.ok(Math.abs(p.wagon.position[0] - 10) < 1e-6 && Math.abs(p.wagon.position[2] - 10) < 1e-6, 'where it was said, across');
-  // a re-stand (a pixel built under it) probes past the box it stood: still on the ground, not on its own roof
+  // a re-stand (a pixel built under it): still on the ground
   pool.groundMoved(-1e6, -1e6, 1e6, 1e6);
   pool.frame(1 / 30, [0, 101, 0]);
   for (const over of wheelsOver(pool, pool.peers.get('kept:k1'), G)) assert.ok(Math.abs(over) < 1e-6, `re-stood on the ground (${over})`);
@@ -509,7 +508,7 @@ test('DISC20-C: a crossing that leaves the parked wagon\'s pixel takes its box a
 test('DISC20-C: the world host asks the pool to re-stand over every pixel it builds, bound once the pool exists (the boot\'s first pixel builds before it)', () => {
   const s = rd('src/scenes/world.js');
   const decl = s.indexOf('let hccGroundMoved = null;');
-  const first = s.indexOf('const playerPixel = await buildPixel(first.px, first.py);');
+  const first = s.indexOf('const playerPixel = await awaitedBuild(first.px, first.py);');
   const pool = s.indexOf('const hcc = createHorseCartPool({');
   const bind = s.indexOf('hccGroundMoved = hcc.groundMoved;');
   assert.ok(decl > 0 && decl < first && first < pool && pool < bind, 'declared before the first build, bound after the pool');

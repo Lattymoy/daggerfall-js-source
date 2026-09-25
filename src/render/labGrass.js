@@ -628,8 +628,32 @@ export const cellKey = (cx, cz) => cx * 65536 + cz;
  *  edge are `0` for the eye's own column, `k * cell - o` to its right
  *  and `o + j * cell` to its left; at o = 0 the two series both yield 0,
  *  which is the degenerate double column the peak lives on.
- *  Pure, so a pin can hold it against the fill loop. */
+ *  Pure, so a pin can hold it against the fill loop.
+ *
+ *  PERF-EXT20 (2026-09-25, the players: "fps issues in the exterior
+ *  but fine in the interior", "me too my friend.. don't know why. I
+ *  got a RX6600"): AND IT IS SWEPT ONCE. The answer is a pure function
+ *  of its three arguments - 394 for the shipped span, every time - and
+ *  the sweep that finds it is 11-33 ms, paid by every createGrassField:
+ *  the boot, every teleport and quickload, and until PERF-EXT21 every
+ *  pixel crossing, on the crossing frame itself. The first call per
+ *  (radius, cell, steps) sweeps and the rest read the memo. The memo is
+ *  this module's and lives as long as it does - one entry per distinct
+ *  question, and the game asks one. The world warms it at mount, behind
+ *  the loading screen, so no frame pays even the first sweep. */
+const _discMemo = new Map();   // PERF-EXT20: `${radius},${cell},${steps}` -> the swept count
+let _discSweeps = 0;
+/** PERF-EXT20: how many times the sweep has actually run - the test seam. */
+export const discSweeps = () => _discSweeps;
 export function discSlotCount(radius, cell = GRASS_CELL, steps = 240) {
+  const key = `${radius},${cell},${steps}`;
+  let n = _discMemo.get(key);
+  if (n === undefined) { n = discSweep(radius, cell, steps); _discMemo.set(key, n); }
+  return n;
+}
+/** PERF10's sweep, verbatim - discSlotCount's answer when the memo has none. */
+function discSweep(radius, cell, steps) {
+  _discSweeps++;
   const r2 = radius * radius;
   const axes = [];
   for (let i = 0; i < steps; i++) {
@@ -765,13 +789,14 @@ export const grassPerCell = (density = LAB_GRASS.density, span = LAB_GRASS.densi
  * neighbouring blades were as different as distant ones and the sward
  * read as a flat carpet of noise past a few metres - the eye needs
  * correlation to see a field rather than a texture. GRASS2 pulled the
- * tint toward a low-frequency value noise in the SCENE's frame (the
- * floating origin's: a corner of the player's map pixel, so a patch
- * belongs to the ground until the next pixel crossing re-anchors the
- * whole field with it - GRASS AUDIT 1 corrected the word "world" here;
- * the GPU read the same frame, so nothing moved), two octaves, tens of
- * metres across: the mean unchanged, the variance moved from
- * blade-to-blade to patch-to-patch.
+ * tint toward a low-frequency value noise in the FIELD's frame (GRASS
+ * AUDIT 1 corrected the word "world" here, and PERF-EXT21 the word
+ * "scene": the field's frame is the scene's as it stood when the field
+ * was made, and the field keeps it across every floating-origin shift
+ * since, so a patch belongs to the ground for the field's whole life -
+ * it re-anchored at every pixel crossing while the crossing rebuilt the
+ * field), two octaves, tens of metres across: the mean unchanged, the
+ * variance moved from blade-to-blade to patch-to-patch.
  *
  * GRASS2 did it in the vertex stage, and that was the wrong stage. The
  * clump is a function of the root's world position and nothing else; a
@@ -817,18 +842,67 @@ export const bakedTint = (rnd, x, z) => Math.max(0, Math.min(1, rnd + (grassClum
 /**
  * One cell's blades, padded to `perCell` with zero-height blades so the
  * slot is always full. The laws are placeLabGrassSteps' own, per blade.
+ *
+ * PERF-EXT21: `originX`/`originZ` are where the field's cell (0, 0)
+ * stands in the scene - 0 until the floating origin first moves under a
+ * field, and at 0 every lane is byte for byte what it was. A blade is
+ * placed in the FIELD's frame exactly as before (the same doubles, so
+ * the same GRASS6 tint), and only its scene position - what keep() and
+ * ground() are asked about, and what the slot stores - adds the origin.
+ *
+ * PERF-EXT22: it is beginGrassCell and stepGrassCell below, run end to
+ * end - the one loop, which a field on the move runs a slice at a time.
  */
-export function placeLabGrassCell(cx, cz, { keep, ground = null, perCell, height = LAB_GRASS.height, seed = LAB_GRASS.seed, cell = GRASS_CELL }) {
-  const inst = new Float32Array(perCell * 4); const inst2 = new Float32Array(perCell * 4);
-  const rootY = new Float32Array(perCell); const groundCol = new Float32Array(perCell * 3);
-  let s = grassCellSeed(cx, cz, seed);
+export function placeLabGrassCell(cx, cz, opts) {
+  const st = beginGrassCell(cx, cz, opts);
+  stepGrassCell(st, st.perCell, opts);
+  return { inst: st.inst, inst2: st.inst2, rootY: st.rootY, ground: st.ground, count: st.count, perCell: st.perCell };
+}
+
+/**
+ * PERF-EXT22 (2026-09-25, the players: "fps issues in the exterior but
+ * fine in the interior", "me too my friend.. don't know why. I got a
+ * RX6600"): A CELL CAN BE PLACED IN SLICES. A cell is 6,122 candidate
+ * blades - ~1.6-2 ms of keep() and ground() and noise - and a walking
+ * eye brings one in on 5-9% of frames (17% at 15 m/s), each a spike of
+ * 4-8 ms on the frame that pays it. The placer's whole state between two
+ * candidates is the xorshift word, the candidate index and the count of
+ * blades kept, so the loop can stop after any candidate and go on later
+ * with nothing lost: `beginGrassCell` is everything before the loop,
+ * `stepGrassCell` runs `budget` more candidates of it - the body word
+ * for word - and says when the cell is done. However the loop is cut,
+ * the lanes are the same bytes (pinned at 1, 1,500 and the whole cell).
+ * The arrays are the cell's own, handed to writeSlot when it is done,
+ * exactly as placeLabGrassCell's were.
+ */
+export function beginGrassCell(cx, cz, { perCell, seed = LAB_GRASS.seed, cell = GRASS_CELL, originX = 0, originZ = 0 }) {
+  return {
+    cx, cz, cell, originX, originZ, perCell,
+    s: grassCellSeed(cx, cz, seed),   // the xorshift word
+    i: 0,                             // the next candidate
+    n: 0,                             // the blades that stood so far
+    count: 0,                         // writeSlot's name for n
+    inst: new Float32Array(perCell * 4), inst2: new Float32Array(perCell * 4),
+    rootY: new Float32Array(perCell), ground: new Float32Array(perCell * 3),
+  };
+}
+
+/** PERF-EXT22: `budget` more candidates of a begun cell; true once the
+ *  last one is placed. `keep`/`ground` are this frame's - a slice asks
+ *  the world as it stands when the slice runs. */
+export function stepGrassCell(st, budget, { keep, ground = null, height = LAB_GRASS.height }) {
+  const { inst, inst2, rootY, cell, originX, originZ } = st;
+  const groundCol = st.ground;
+  let s = st.s;
   const rnd = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
-  const ox = cx * cell, oz = cz * cell;
-  let n = 0;
-  for (let i = 0; i < perCell; i++) {
+  const ox = st.cx * cell, oz = st.cz * cell;
+  let n = st.n;
+  const end = Math.min(st.perCell, st.i + budget);
+  for (let i = st.i; i < end; i++) {
     const px = rnd() * cell, pz = rnd() * cell;
     const a = rnd() * 6.283, rr = rnd() * rnd() * 0.55;
-    const x = ox + px + Math.cos(a) * rr, z = oz + pz + Math.sin(a) * rr;
+    const fx = ox + px + Math.cos(a) * rr, fz = oz + pz + Math.sin(a) * rr;   // PERF-EXT21: in the field's frame
+    const x = fx + originX, z = fz + originZ;   // PERF-EXT21: in the scene's
     const h = (0.22 + rnd() * 0.42) * (height / 34);
     const phase = rnd() * 6.283;
     const lx = (rnd() - 0.5) * 0.5, lz = (rnd() - 0.5) * 0.5;
@@ -836,7 +910,7 @@ export function placeLabGrassCell(cx, cz, { keep, ground = null, perCell, height
     const w = 0.052 + rnd() * 0.055;
     const y = keep(x, z);
     if (y === null || y === undefined) continue;
-    const tint = bakedTint(tRnd, x, z);   // GRASS6: pulled toward the patch it stands in; GRASS AUDIT 1: only for a blade that STANDS - the noise is 0.43 ms a cell and a road cell refuses most of its candidates
+    const tint = bakedTint(tRnd, fx, fz);   // GRASS6: pulled toward the patch it stands in; GRASS AUDIT 1: only for a blade that STANDS - the noise is 0.43 ms a cell and a road cell refuses most of its candidates; PERF-EXT21: the FIELD's patch, which no shift moves
     inst[n * 4] = x; inst[n * 4 + 1] = z; inst[n * 4 + 2] = h; inst[n * 4 + 3] = phase;
     inst2[n * 4] = lx; inst2[n * 4 + 1] = lz; inst2[n * 4 + 2] = tint; inst2[n * 4 + 3] = w;
     rootY[n] = y;
@@ -844,16 +918,31 @@ export function placeLabGrassCell(cx, cz, { keep, ground = null, perCell, height
     groundCol[n * 3] = gc ? gc[0] : 0.10; groundCol[n * 3 + 1] = gc ? gc[1] : 0.145; groundCol[n * 3 + 2] = gc ? gc[2] : 0.065;
     n++;
   }
+  st.s = s; st.i = end; st.n = n; st.count = n;
   // the pad: height 0 draws nothing (the vertex stage collapses h=0)
-  return { inst, inst2, rootY, ground: groundCol, count: n, perCell };
+  return end >= st.perCell;
 }
+
+/** PERF-EXT22: how many candidate blades a rim cell places a frame -
+ *  ~0.3-0.5 ms, a quarter of a cell. */
+export const GRASS_SLICE = 1500;
+/** PERF-EXT22: the fraction of the range inside which a cell is always
+ *  placed WHOLE - the shader's own fade start (`smoothstep(uRange*0.55,
+ *  uRange, d)`, the lab's), inside which every blade of a cell draws. */
+export const GRASS_WHOLE_AT = 0.55;
+/** PERF-EXT22: more cells than this waiting and the field is catching up
+ *  (a boot, a teleport, a pixel re-read under the eye), and fills whole
+ *  cells at the pace it always did; this many or fewer, and it is a walk.
+ *  Eight holds a 15 m/s ride to slices (four did not - `grassWalkKeep.mjs`),
+ *  and costs a boot the last eight rim cells a slice at a time, at 300 m. */
+export const GRASS_CATCH_UP = 8;
 
 /**
  * The field: which cells stand around the eye, each in its own slot.
  * `update(ex, ez)` a frame: it frees cells out of range, and fills at
  * most `perFrame` new ones - a cell is a few thousand blades and a
- * few thousand keep() lookups, milliseconds, so the walk never
- * hitches and never has to be time-sliced.
+ * few thousand keep() lookups, milliseconds. PERF-EXT22: and on a walk
+ * that is the spike - a rim cell is placed a slice a frame (see update).
  */
 export function createGrassField(renderer, { keep, ground = null, span = LAB_GRASS.span, density = LAB_GRASS.density, height = LAB_GRASS.height, seed = LAB_GRASS.seed, cell = GRASS_CELL, range = LAB_GRASS.range, perFrame = 2, slots: slotsOverride = 0 }) {
   const perCell = grassPerCell(density);   // GRASS2: the RATE, off the lab's own span - `span` below is the window, and the two are not the same question
@@ -884,15 +973,53 @@ export function createGrassField(renderer, { keep, ground = null, span = LAB_GRA
   const live = new Map();     // cellKey -> { slot, cx, cz }
   const free = [];
   for (let i = 0; i < slots; i++) free.push(i);
+  // PERF-EXT21 (2026-09-25, the players: "fps issues in the exterior
+  // but fine in the interior", "me too my friend.. don't know why. I got
+  // a RX6600"): THE FIELD HAS AN ORIGIN OF ITS OWN. The host threw the
+  // field away at every floating-origin shift - every map-pixel crossing
+  // - because its cells were keyed on SCENE coordinates, and 819.2 is not
+  // a whole number of 30 m cells. So every crossing re-specified the
+  // three buffers (38.6 MB), drew 2 slots of 357 on the crossing frame,
+  // and re-placed, re-packed and re-uploaded ~355 cells over the next
+  // ~176 frames: 0.9-1.35 s of main thread on the prover's Xeon, +5-7.5
+  // ms a frame for three seconds, the grass visibly vanishing and
+  // regrowing nearest-first, every blade reshuffled (0 of 352 slots came
+  // back where they were). Once every ~3 minutes on foot and oftener on
+  // a horse, outdoors only, which is the report exactly.
+  //
+  // (gx, gz) is where the field's cell (0, 0) stands in the scene. It
+  // starts at the scene's own 0 and moves with the scene at a shift, so
+  // a cell's key, its seed and its blades are the field's for as long
+  // as the field lives, and the scene is only ever the frame the
+  // questions arrive in. Doubles, and only these two grow: the slots
+  // store scene positions that stay scene-bounded, shifted in place.
+  let gx = 0, gz = 0;
+  /** PERF-EXT22: the rim cell being placed a slice a frame - { d, cx,
+   *  cz, key, st } - or null. Not live and holding no slot until done. */
+  let pending = null;
   /** PERF10: the square distance from the eye to a cell's nearest point -
-   *  _drawVisibleSlots' own test, so what is filled is what is drawn. */
+   *  _drawVisibleSlots' own test, so what is filled is what is drawn.
+   *  PERF-EXT21: the cell's edges stood in the field's frame, the eye
+   *  in the scene's. */
   const nearSq = (cx, cz, ex, ez) => {
-    const dx = Math.max(cx * cell - ex, 0, ex - (cx + 1) * cell);
-    const dz = Math.max(cz * cell - ez, 0, ez - (cz + 1) * cell);
+    const dx = Math.max(cx * cell + gx - ex, 0, ex - ((cx + 1) * cell + gx));
+    const dz = Math.max(cz * cell + gz - ez, 0, ez - ((cz + 1) * cell + gz));
     return dx * dx + dz * dz;
   };
   return {
     perCell, slots, live,
+    /** PERF-EXT21: the floating origin moved by `offset` (streamingWorld's
+     *  [dx, dy, dz], the one every other scene position in the host rides).
+     *  The field's cell grid moves with it and every standing slot's frame
+     *  and box are moved in place - O(slots), no placement, no upload: the
+     *  packed lanes are cell-local and never knew where the scene was. */
+    shiftOrigin(offset) {
+      gx += offset[0]; gz += offset[2];
+      renderer.shiftSlots(offset);
+      pending = null;   // PERF-EXT22: a half-placed cell holds scene positions of the old frame - it starts again in the new one
+    },
+    /** PERF-EXT22: the rim cell in progress, for a probe or a pin. */
+    get pending() { return pending; },
     // GRASS-STALE1 (2026-09-19, Discord: "grass is flying and not on the
     // ground" around graveyards and other POIs): a cell, once placed, is
     // never rebuilt unless it leaves render range entirely (the loop
@@ -917,9 +1044,11 @@ export function createGrassField(renderer, { keep, ground = null, span = LAB_GRA
     // that is DRAWN rather than on a bilinear guess, which is about
     // WHICH height a cell reads; this is about WHEN, and a cell that
     // read the right surface at the wrong moment is wrong either way.
-    invalidate(x0, z0, x1, z1) {
-      const cx0 = Math.floor(x0 / cell), cx1 = Math.floor(x1 / cell);
-      const cz0 = Math.floor(z0 / cell), cz1 = Math.floor(z1 / cell);
+    invalidate(x0, z0, x1, z1) {   // PERF-EXT21: a SCENE rect, asked of the field's grid
+      const cx0 = Math.floor((x0 - gx) / cell), cx1 = Math.floor((x1 - gx) / cell);
+      const cz0 = Math.floor((z0 - gz) / cell), cz1 = Math.floor((z1 - gz) / cell);
+      // PERF-EXT22: a cell half placed from the data this rect replaces starts again
+      if (pending && pending.cx >= cx0 && pending.cx <= cx1 && pending.cz >= cz0 && pending.cz <= cz1) pending = null;
       for (let cz = cz0; cz <= cz1; cz++) for (let cx = cx0; cx <= cx1; cx++) {
         const key = cellKey(cx, cz);
         const held = live.get(key);
@@ -933,26 +1062,59 @@ export function createGrassField(renderer, { keep, ground = null, span = LAB_GRA
       const keepR2 = span * span;      // PERF10: held out to here
       const fillR2 = range * range;    // PERF10: placed only inside here
       const k = Math.ceil(range / cell) + 1;
-      const ecx = Math.floor(ex / cell), ecz = Math.floor(ez / cell);
+      const ecx = Math.floor((ex - gx) / cell), ecz = Math.floor((ez - gz) / cell);   // PERF-EXT21: the eye's cell on the field's grid
       // free what fell out of range. PERF10: cx/cz ride the entry, so
       // this sweep - which runs over every live cell every frame and
       // usually frees nothing - allocates nothing at all.
       for (const [key, held] of live) {
         if (nearSq(held.cx, held.cz, ex, ez) > keepR2) { renderer.clearSlot(held.slot); live.delete(key); free.push(held.slot); }
       }
+      if (pending && nearSq(pending.cx, pending.cz, ex, ez) > fillR2) pending = null;   // PERF-EXT22: walked out of reach before it was done - it would not be begun now either
       // fill what came into range, nearest first, a few a frame
       let budget = perFrame;
-      /** @type {{ d:number, cx:number, cz:number, key:number }[]} */
+      /** @type {{ d:number, cx:number, cz:number, key:number, st?:object }[]} */
       const want = [];   // HARD3: a NAMED shape, because a mixed [number, number, number, string] literal widens to (number|string)[] and `a[0] - b[0]` stops type-checking
       for (let cz = ecz - k; cz <= ecz + k; cz++) for (let cx = ecx - k; cx <= ecx + k; cx++) {
         const d = nearSq(cx, cz, ex, ez);
         if (d > fillR2) continue;
         const key = cellKey(cx, cz);
-        if (!live.has(key)) want.push({ d, cx, cz, key });
+        if (!live.has(key) && key !== pending?.key) want.push({ d, cx, cz, key });
       }
       want.sort((a, b) => a.d - b.d);
-      for (const { d, cx, cz, key } of want) {
+      const missing = want.length + (pending ? 1 : 0);
+      // PERF-EXT22: A WALK PLACES ITS RIM A SLICE A FRAME. A walking eye
+      // brings cells in at the rim - their nearest point just inside the
+      // 300 m range, where the draw keeps 0-2% of a cell's blades - one
+      // every ~11 frames at a run, and each was a whole cell on the frame
+      // it arrived: a 4-8 ms spike on 5-17% of frames. With a few cells
+      // waiting, a rim cell (past GRASS_WHOLE_AT of the range, where the
+      // fade begins) is begun and placed GRASS_SLICE candidates a frame,
+      // written the frame it is done; it lands ~4 frames later, a metre
+      // at a gallop, 300 m out. A cell inside the fade's start still
+      // comes whole, and with more than GRASS_CATCH_UP waiting - a boot,
+      // a teleport, a near pixel re-read - every cell does, two a frame,
+      // at the pace the field always filled at.
+      const catchUp = missing > GRASS_CATCH_UP;
+      const wholeR2 = (range * GRASS_WHOLE_AT) * (range * GRASS_WHOLE_AT);
+      const ask = { keep: keepNow, ground: groundNow, height };
+      let sliced = false;
+      if (pending) {
+        sliced = !catchUp;
+        if (stepGrassCell(pending.st, catchUp ? perCell : GRASS_SLICE, ask)) {
+          want.unshift({ ...pending, d: nearSq(pending.cx, pending.cz, ex, ez) });   // done: it takes its slot below, first
+          pending = null;
+        }
+      }
+      for (const item of want) {
+        const { d, cx, cz, key } = item;
         if (budget <= 0) break;
+        if (!item.st && !catchUp && d > wholeR2) {   // PERF-EXT22: a rim cell on a walk
+          if (pending || sliced) continue;           // one slice a frame
+          const st = beginGrassCell(cx, cz, { perCell, seed, cell, originX: gx, originZ: gz });
+          sliced = true;
+          if (!stepGrassCell(st, GRASS_SLICE, ask)) { pending = { d, cx, cz, key, st }; continue; }
+          item.st = st;   // a cell no bigger than a slice is done in one
+        }
         let slot = free.pop();
         if (slot === undefined) {
           // AUDIT PERF10 F1: A BOUND CAN BE WRONG; A HOLE MUST NOT BE
@@ -975,14 +1137,15 @@ export function createGrassField(renderer, { keep, ground = null, span = LAB_GRA
           renderer.clearSlot(far.slot); live.delete(farKey); slot = far.slot;
         }
         budget--;
-        renderer.writeSlot(slot, placeLabGrassCell(cx, cz, { keep: keepNow, ground: groundNow, perCell, height, seed, cell }));
+        renderer.writeSlot(slot, item.st ?? placeLabGrassCell(cx, cz, { keep: keepNow, ground: groundNow, perCell, height, seed, cell, originX: gx, originZ: gz }));   // PERF-EXT21; PERF-EXT22: or the rim cell its slices finished
         live.set(key, { slot, cx, cz });
       }
       // AUDIT PERF10 F5: what was MISSING when this update began - not
       // what is still missing now. GR5's comment said "pending" and the
       // number never meant that; the one caller ignores it and the pin
       // reads it as "the rest wait their turn", both of which hold.
-      return want.length;
+      // PERF-EXT22: a cell half placed is missing too.
+      return missing;
     },
   };
 }
@@ -1226,7 +1389,10 @@ export class LabGrassRenderer {
     this.slotCount = new Int32Array(slots);       // GRASS2: every slot starts empty, so every slot starts at zero blades
     // GRASS5: the per-slot frame a packed blade is decoded against -
     // origin x, origin z, the cell's height floor and its height span.
-    this.slotFrame = new Float32Array(slots * 4);
+    // PERF-EXT21: doubles, so a frame moved by shiftSlots is moved
+    // exactly and rounds to float32 once, at the upload - where every
+    // frame rounded before. Written unshifted, it uploads the same bits.
+    this.slotFrame = new Float64Array(slots * 4);
     this.slotSpan = new Float32Array(slots);   // GRASS5: the cell's own xz extent, which is NOT the cell size
     this._packA = new Uint16Array(perCell * 4);   // the scratch a cell is packed through, reused
     this._packB = new Uint8Array(perCell * 4);
@@ -1295,6 +1461,21 @@ export class LabGrassRenderer {
       gl.bufferSubData(gl.ARRAY_BUFFER, slot * p * this._lanes[k].bytes, this._packs[k]);
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
+  }
+
+  /** PERF-EXT21: the floating origin moved by `offset` - every standing
+   *  slot's decode frame and culling box move with it, in place. The
+   *  packed lanes are cell-local and are not touched, so nothing is
+   *  uploaded; a cleared slot's frame moves too and is never read. */
+  shiftSlots(offset) {
+    if (!this.slotFrame) return;
+    const dx = offset[0], dy = offset[1], dz = offset[2];
+    const F = this.slotFrame;
+    for (let s = 0; s < this.slots; s++) {
+      F[s * 4] += dx; F[s * 4 + 1] += dz; F[s * 4 + 2] += dy;
+      const b = this.slotBox[s];
+      if (b) { b[0] += dx; b[1] += dy; b[2] += dz; b[3] += dx; b[4] += dy; b[5] += dz; }
+    }
   }
 
   /** GR5: a cell leaves - its heights go to zero, and h=0 draws nothing. */

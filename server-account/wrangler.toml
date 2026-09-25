@@ -57,7 +57,7 @@ enabled = true
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct9"
+ACCOUNT_VERSION = "acct10"
 # The site that may call this. "*" while nothing is live; it is narrowed
 # to the real origin before a single account exists.
 ALLOWED_ORIGIN = "*"
@@ -94,7 +94,8 @@ DUNGEON_MASTER_HANDLES = "SquidKamer"
 # title and its glyph. Dutchess and Satranath are the first Disciples (Mac); a tier that
 # lapses is a handle taken off, gone from that player's next token.
 DISCIPLE_HANDLES = "Dutchess,Satranath,Skibbster"
-APOSTLE_HANDLES = ""
+# 2026-09-25, Mac: "Add SirMcMobdon as an Apostle ingame title/glyph".
+APOSTLE_HANDLES = "SirMcMobdon"
 HIEROPHANT_HANDLES = ""
 
 [[d1_databases]]

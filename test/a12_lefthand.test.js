@@ -192,7 +192,7 @@ test('a12 rig: the hand never changes MID-SWING (:271, !isAttacking)', () => {
 
 test('a12 rig: the wereclaws still win over both hands (ApplyWeapon\'s first arm, :735-739)', () => {
   const entity = wearing(KATANA, DAGGER);
-  // the live curse entry racialFpsWeapon reads (lycanthropy.js:127-129)
+  // the live curse entry racialFpsWeapon reads (lycanthropy.js:128-130)
   entity.activeEffects = [{ kind: 'racialOverride', racial: 'lycanthropy', isTransformed: true }];
   const r = rig({ entity });
   r.frame(1 / 60);

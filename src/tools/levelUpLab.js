@@ -27,7 +27,7 @@ import { createCharSheetWindow } from '../ui/charSheetDoor.js';
 // import makes the bundler build a NAMESPACE OBJECT for the target, and
 // a namespace object reads EVERY binding the module exports the moment
 // it is built - including the ones a module re-exports from somewhere
-// else. `ui/enhancedHud.js:1004` re-exports `compassScroll`, which is
+// else. `ui/enhancedHud.js:1127` re-exports `compassScroll`, which is
 // `ui/hud.js`'s, and hud.js and enhancedHud.js import each other. So
 // the namespace read hud.js's `const compassScroll` while hud.js was
 // still initialising: "can't access lexical declaration before

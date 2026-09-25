@@ -390,15 +390,15 @@ export function createDecorTextureSource({ getTexture, scaledSize, replacementSi
     /** The record's GPU picture of `kind`, when built. */
     texture(rec, kind) { return textures.get(`${key(rec)}:${kind}`) ?? null; },
     /**
-     * PumpArchiveWarmup: while any of the batch's pictures is not on the GPU
-     * yet the batch waits (true) - every missing one started at once, so it
+     * PumpArchiveWarmup: while any of the spawn batch's pictures is not on the GPU
+     * yet it waits (true) - every missing one started at once, so it
      * waits on the slowest load and no more. DFU builds its atlases inside
      * the frame; the port reads files asynchronously.
      */
-    warm(batch) {
+    warm(spawn) {   // a spawn batch (its positions and how far its pictures are warm) - not a renderer batch
       let busy = false;
-      for (let i = batch.warm; i < batch.positions.length; i++) {
-        const p = batch.positions[i];
+      for (let i = spawn.warm; i < spawn.positions.length; i++) {
+        const p = spawn.positions[i];
         const rec = { archive: p.archive, record: p.record };
         const kind = kindOf(rec);
         const k = `${key(rec)}:${kind}`;
@@ -411,7 +411,7 @@ export function createDecorTextureSource({ getTexture, scaledSize, replacementSi
             .finally(() => building.delete(k)));
         }
       }
-      if (!busy) batch.warm = batch.positions.length;
+      if (!busy) spawn.warm = spawn.positions.length;
       return busy;
     },
   };

@@ -1,0 +1,52 @@
+[
+  {
+    "name": "EL-DISTANCE-the-finish-blends-the-fog-in-linear-again",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  vec3 col = mix(uFogColor, elEncode(tm), fogFactorAt(wp));",
+    "new": "  vec3 col = elEncode(mix(elDecode(uFogColor), tm, fogFactorAt(wp)));",
+    "tests": [
+      "test/perffog_uniform.test.js",
+      "test/el1_enhancedlighting.test.js"
+    ]
+  },
+  {
+    "name": "EL-DISTANCE-the-far-ring-blends-the-fog-in-linear-again",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  vec3 col = mix(elEncode(elTonemapRGB(lit * ex)), uFogColor, min(base + rim, 1.0));   // HQ1",
+    "new": "  vec3 col = elEncode(mix(elTonemapRGB(lit * ex), elDecode(uFogColor), min(base + rim, 1.0)));   // HQ1",
+    "tests": [
+      "test/perffog_uniform.test.js",
+      "test/el1_enhancedlighting.test.js"
+    ]
+  },
+  {
+    "name": "EL-DISTANCE-the-lanterns-glow-in-the-fog-is-dropped",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  if (glow.r + glow.g + glow.b > 0.0) col = elEncode(elDecode(col) + glow);\n",
+    "new": "",
+    "tests": [
+      "test/perffog_uniform.test.js",
+      "test/el1_enhancedlighting.test.js"
+    ]
+  },
+  {
+    "name": "EL-DISTANCE-the-glow-is-added-in-display-space",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  if (glow.r + glow.g + glow.b > 0.0) col = elEncode(elDecode(col) + glow);",
+    "new": "  col += glow;",
+    "tests": [
+      "test/perffog_uniform.test.js",
+      "test/el1_enhancedlighting.test.js"
+    ]
+  },
+  {
+    "name": "EL-DISTANCE-the-host-decodes-a-fog-no-shader-reads",
+    "file": "src/render/renderer.js",
+    "old": "    gl.uniform3fv(prog.fogColor, this._fogColor);",
+    "new": "    gl.uniform3fv(prog.fogColor, this._fogColor); this._fogLin = this._c3(this._fogColor, this._decA);",
+    "tests": [
+      "test/perffog_uniform.test.js",
+      "test/el1_enhancedlighting.test.js"
+    ]
+  }
+]

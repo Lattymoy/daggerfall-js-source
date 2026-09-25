@@ -49,13 +49,13 @@ test('audit24 lifetimes: an encounter foe frees its billboard batch on BOTH ends
   // MT-ii: the cull's distance is measured to the PLAYER now (`_dist`
   // became target-relative when the pool armed), but the LIFETIME law
   // this pin guards is unchanged - release, then mark dead.
-  assert.match(update, /_playerDist > ENCOUNTER_CULL_DISTANCE[\s\S]{0,200}releaseFoeBatch\(f\)/,
+  assert.match(update, /_playerDist > \(f\.campId != null \? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE\)[\s\S]{0,260}releaseFoeBatch\(f\)/,
     'the cull releases before it marks the foe dead');
   // and death - where the record STAYS in `foes` (the tail splice
   // spares corpses), so the batch would be unreachable and undead
   // AUDIT 26 F035/F041 grew the header: the door takes a provenance
   // flag (fromPlayer), defaulting true.
-  const dmg = bodyOf(src, "function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false, kind = 'melee', peer = false, peerId = null } = {})");   // WORLD6b: the blow's kind and a peer's provenance, the dungeon door's own
+  const dmg = bodyOf(src, "function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false, kind = 'melee', peer = false, peerId = null, whole = false } = {})");   // WORLD6b: the blow's kind and a peer's provenance, the dungeon door's own
   // The window is a PROXIMITY bound, not a law - it exists so the
   // release cannot drift out of the death branch entirely. X5 put the
   // Soul Trap intercept between the two points (the trap can refuse
@@ -89,7 +89,7 @@ test('audit24 lifetimes: a city guard frees its batch on both death paths, and t
   // per-frame walk over `guards` paid for them. DFU destroys the
   // walk-away watch outright (EnemyEntity.cs:184-191) and keeps only
   // the killed body. So the key is the guard's own id now, and the
-  // prune is the encounter pool's (exteriorFoes.js:1029).
+  // prune is the encounter pool's (exteriorFoes.js:1070).
   // AUDIT-WH H2 moved the spelling, not the law: the id function is
   // one const now, read by the corpse lens AND by the live-foe
   // producer the plaque races, so a guard and the body it becomes
@@ -314,7 +314,7 @@ test('audit24: the floating-origin recenter reaches EVERY world-position pool', 
   const world = read('src/scenes/world.js');
   const i = world.indexOf('if (r.offset) {');
   assert.ok(i > 0);
-  const block = world.slice(i, i + 2600);
+  const block = world.slice(i, world.indexOf('\n    }\n', i));   // the recenter block whole (a fixed window stopped short once the block grew)
   for (const pool of ['cityGuards.offsetAll', 'exteriorFoes.offsetAll', 'droppedLoot.offsetAll',
     'offsetArrows(arrows', 'magic.offsetAll']) {
     assert.ok(block.includes(pool), `${pool} follows the origin`);

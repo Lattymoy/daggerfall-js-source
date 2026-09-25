@@ -186,3 +186,66 @@ export function collectDungeonEnemies(blockLayouts, { locationId, dungeonType, p
   return out;
 }
 
+
+// ---------------------------------------------------------------- ELITE DUNGEONS
+//
+// An elite spawned dungeon (world/spawnedDungeons.js isEliteSpawn) stands `copies` foes at every
+// enemy marker instead of one. The copies are the same record - same type, gender, reaction and
+// spawn band - offset a little around the marker so they do not stand inside one another. The
+// offsets are fixed (no RNG) and the wall check reads the dungeon's own geometry, so every peer
+// builds the SAME list in the SAME order: the online foe frame indexes the layout run by position.
+
+/** How far (metres) an extra copy stands from its marker, before the wall check shortens it. */
+export const ELITE_COPY_OFFSET = 0.9;
+/** Keep this much air between a copy and the wall it was pulled back from. */
+const ELITE_WALL_MARGIN = 0.45;
+
+/** DROPS-AUDIT ELITE-LEDGE: a copy must stand on the marker's own floor - a floor found under it within this many
+ *  metres of the marker's. Off a walkway's edge the floor below is metres down (or none), and the copy fell. */
+export const ELITE_FLOOR_STEP = 0.6;
+
+/**
+ * Expand a collectDungeonEnemies list for an elite dungeon. Original records keep their order
+ * and fields; each is followed by its extra copies, marked `eliteCopy: true`. Every record in the
+ * output (originals included) carries `elite: true`, which buildFoeAt reads to scale the foe.
+ * @param {Array<object>} enemies collectDungeonEnemies output
+ * @param {{copies?:number, offset?:number,
+ *   clearance?:(from:number[], dir:number[], dist:number) => number,
+ *   floor?:(at:number[]) => ?number}} o
+ *   clearance: metres of free space from `from` along the unit horizontal `dir`, up to `dist`
+ *   (the host answers it with a collider ray; omitted = open floor everywhere).
+ *   floor: the height of the floor under `at` (null: none near) - DROPS-AUDIT ELITE-LEDGE; omitted = level floor.
+ */
+export function expandEliteEnemies(enemies, { copies = 3, offset = ELITE_COPY_OFFSET, clearance = null, floor = null } = {}) {
+  const n = Math.max(1, copies | 0);
+  const out = [];
+  for (const e of enemies) {
+    out.push({ ...e, elite: true });
+    const base = floor ? floor([e.x, e.y, e.z]) : null;
+    for (let k = 1; k < n; k++) {
+      // spread the extras evenly round the marker, starting east, then west, ...
+      const a0 = ((k - 1) / (n - 1)) * 2 * Math.PI;
+      // DROPS-AUDIT ELITE-LEDGE: the copy's own bearing first, then a quarter turn either way, then the far side -
+      // the first that keeps it on the marker's floor; none does, and it stands on the marker itself
+      let x = e.x, z = e.z;
+      for (const turn of [0, 0.5, -0.5, 1]) {
+        const a = a0 + turn * Math.PI;
+        const dir = [Math.cos(a), 0, Math.sin(a)];
+        let d = offset;
+        if (clearance) {
+          const free = clearance([e.x, e.y, e.z], dir, offset + ELITE_WALL_MARGIN);
+          if (Number.isFinite(free)) d = Math.max(0, Math.min(offset, free - ELITE_WALL_MARGIN));
+        }
+        const cx = e.x + dir[0] * d, cz = e.z + dir[2] * d;
+        if (floor && base != null && d > 0) {
+          const f = floor([cx, e.y, cz]);
+          if (f == null || Math.abs(f - base) > ELITE_FLOOR_STEP) continue;
+        }
+        x = cx; z = cz;
+        break;
+      }
+      out.push({ ...e, x, z, elite: true, eliteCopy: true });
+    }
+  }
+  return out;
+}

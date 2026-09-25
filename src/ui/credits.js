@@ -53,6 +53,16 @@ export const CREDITS = Object.freeze({
       vendor: Object.freeze(['raum-book']),
       link: 'https://github.com/Lattymoy/project-raum',
     }),
+    Object.freeze({
+      title: 'Daggerfall class skins',
+      // SKIN2: an art pack, not a mod (no switch, so no Features row) - Mac's ExistingClasses archive. It names no author for the pack (one folder
+      // names Kamer, for the bounty hunter), so the screen says so rather than crediting a guess; the record is open in
+      // vendor/class-skins/README.md and the registry row.
+      author: 'Unnamed (ExistingClasses)',
+      what: 'Daggerfall\u2019s own classes to wear in third person (SKIN2): the acrobat, assassin, burglar, bounty hunter, dark acolyte, Dark Brotherhood, healer, monk, nightblade, pirate and sorcerer, most in both sexes, and the vanilla adventurer - twenty redrawn sheets, chosen on your profile\u2019s Skin card beside Eye of the Beholder\u2019s sets.',
+      terms: 'Carried by the artists\u2019 permission, on Mac\u2019s word - the archive states no licence. The 1,683 pictures vendored as shipped (their names mapped to the archive\u2019s in class-skins.files.json); see vendor/class-skins/README.md for the open permission record.',
+      vendor: Object.freeze(['class-skins']),
+    }),
   ]),
   mods: Object.freeze([
     Object.freeze({

@@ -239,7 +239,7 @@ test('AUDIT RETRO1 G1: a held modifier the event does not report is stale - Shif
 test('AUDIT RETRO1 G2/G3: the settings\' page test comes after the forced table (a dozen reads a frame); the outdoor hosts\' action read never sees Shift-F11', () => {
   assert.match(src('systems/onlineLane.js'), /return Object\.hasOwn\(ONLINE_FORCED_SETTINGS\[section\] \?\? \{\}, key\) && isOnlinePage\(search\)/);
   for (const f of ['scenes/world.js', 'scenes/exterior.js']) {
-    assert.match(src(f), /const act = retroToggleKey\(e, keys\) \? null : actionOf\(e, keys\);/, f);
+    assert.match(src(f), /const acts = retroToggleKey\(e, keys\) \? \[\] : actionsOf\(e, keys\);/, f);   // UXB1-S: every action a shared key carries, none under the chord
   }
 });
 
@@ -357,7 +357,7 @@ test('AUDIT RETRO1 I6: the half-pinned fixes - a replacement\'s emission map pas
     try {
       r.beginFrame(I, I, L, WORLD_FRAME); r.drawScreenQuad(null, Q);
       r.beginFrame(I, I, L); r.drawScreenQuad(null, Q);
-      assert.deepEqual(r.air.programs.bright.p.values.uRect, [0, 0, 1280, 720]);
+      assert.deepEqual(r.air.programs.bright[0].p.values.uRect, [0, 0, 1280, 720]);   // PERF-EXT31: the bright pass built for no glow - a menu frame's
     } finally { setFrameTarget(null); }
   }
   // (d) the span over a docked strip, and a texel never 0 for a fine pixel on a tall canvas

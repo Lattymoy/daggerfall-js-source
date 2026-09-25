@@ -1949,7 +1949,7 @@ test('MW-D33: a curated face wins, a missing curated id falls back, and the verd
   assert.equal(typeof at(0, undefined).head, 'string');
 });
 
-test('MW-D33: the worn verdicts reach the card - one line per piece, dressed or reasoned', () => {
+test('MW-D33: the worn verdicts reach status() - one per piece, dressed or reasoned (MWA4: no longer printed on the card)', () => {
   const pieces = [
     { kind: 'armor', templateIndex: ARMOR_ENUM.Cuirass, material: ARMOR_MATERIAL.Iron },
     { kind: 'clothing', templateIndex: 165, name: 'Short Shirt' },
@@ -1965,13 +1965,14 @@ test('MW-D33: the worn verdicts reach the card - one line per piece, dressed or 
   assert.equal(v[0].reason, null);
   assert.deepEqual(v[1].dressed, []);
   assert.match(v[1].reason, /classic sprite stands/);
-  // and the wiring: the build carries them, status exposes them, the
-  // card prints them.
+  // and the wiring: the build carries them and status exposes them. MWA4
+  // took the per-piece readout off the assets card ("reduce the amount of
+  // over explaining text") - it answers a probe's status() read now.
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
   assert.match(arm, /worn: wornVerdicts\(armor \?\? \[\], worn\),/);
   assert.match(arm, /worn: built && built\.ok \? built\.worn : null,/);
   const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
-  assert.match(menu, /armState\.worn/);
+  assert.doesNotMatch(menu, /armState\.worn/, 'MWA4: the card keeps the failure lines alone');
 });
 
 // ═══ MW-D35: the face is MATCHED, not walked ════════════════════════
@@ -2572,7 +2573,7 @@ test('IG6: the arms are FIXED TO THE SCREEN by default - the owner\'s final call
   assert.match(arm, /const pitch = followCam \? 0 : \(cam\.pitch \|\| 0\);/,
     'the lens pitches only on the law path');
   assert.ok(!/FOLLOW_LENS_FACTOR|FOLLOW_TILT_MAX/.test(arm), 'the tilt constants are gone');
-  // The toggle is live and persistent - the pause card flips it.
+  // The toggle is live and persistent - the probe flips it (the card's switch left at MWA4).
   const inst = createFpArm();
   assert.equal(inst.followCamera(), true, 'a bare Node context (no storage) still defaults ON');
   assert.equal(inst.setFollowCamera(false), false);
@@ -2585,13 +2586,14 @@ test('IG6: the arms are FIXED TO THE SCREEN by default - the owner\'s final call
   // PERSISTED it, overriding every later default. The bump abandons
   // the stored value; the state moved to the stats block; the button
   // says what clicking DOES.
-  assert.match(arm, /const FOLLOW_CAMERA_KEY = 'dagger\.mwArmsFollowCamera2';/,
-    'the storage key is the v2 - the v1 value is abandoned, not trusted');
+  // MWA4: AND BUMPED AGAIN - the assets card keeps Attach and Remove
+  // alone, so the look-lag button and its stats row left it, and a
+  // stored look-lag would be a mode no player could leave. The v3 key
+  // lands every player on the fixed default.
+  assert.match(arm, /const FOLLOW_CAMERA_KEY = 'dagger\.mwArmsFollowCamera3';/,
+    'the storage key is the v3 - the v2 value is abandoned with its button');
   const menu = readFileSync('src/ui/enhancedMenu.js', 'utf8');
-  assert.match(menu, /fpArm\.followCamera\(\)\s*\n?\s*\? \{ label: 'Switch arms to Morrowind look-lag', onClick: \(\) => \{ fpArm\.setFollowCamera\(false\); render\(\); \} \}\s*\n?\s*: \{ label: 'Switch arms to fixed \(classic\)', onClick: \(\) => \{ fpArm\.setFollowCamera\(true\); render\(\); \} \}/,
-    'the button names the ACTION, never the current mode');
-  assert.match(menu, /\['Arms mode', fpArm\.followCamera\(\)\s*\n?\s*\? 'fixed to the screen \(classic-style\)'\s*\n?\s*: 'Morrowind look-lag'\]/,
-    'and the CURRENT mode is a stats row, where a state belongs');
+  assert.doesNotMatch(menu, /setFollowCamera|'Arms mode'/, 'MWA4: no switch and no mode row on the card');
   // The probe measures BOTH modes: the law layers with the flag off,
   // the shipped fix with it on (cy invariant under every look, the
   // clamp-hard ones included, and under the bob).

@@ -385,7 +385,7 @@ test('AUDIT LV2 F4: the strip hangs in the HUD\'s own bottom column, not on the 
   // grows upward with its CONTENT (breath, effects, needs) and again
   // with `--hud-scale` - so with a live block the strip sat 19px into
   // the vitals at scale 1 on a phone and 154px into them at scale 2.
-  // QS3's rule (ui/enhancedHud.js:430-433) is that a CENTRED thing
+  // QS3's rule (ui/enhancedHud.js:536-539) is that a CENTRED thing
   // above the vitals belongs IN the column; only a CORNER does the
   // arithmetic. tools/levelUpProbe.mjs measures the boxes; this pins
   // where the node goes.
@@ -427,7 +427,7 @@ test('AUDIT LV2 F4: the strip hangs in the HUD\'s own bottom column, not on the 
 
 test('AUDIT LV2 F5: the level\'s row names a key only when there IS one', () => {
   // `buttonText(null)` is KeyCode.None's own string, "NONE"
-  // (systems/controlsConfig.js:294), so a player who cleared the sheet
+  // (systems/controlsConfig.js:359), so a player who cleared the sheet
   // binding was handed a plate reading A LEVEL AWAITS / NONE.
   const store = loadOrCreateBindings();
   assert.notEqual(codeForAction(store, 'CharacterSheet'), null, 'the default build binds it');

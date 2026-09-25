@@ -701,3 +701,24 @@ then differ from the room's for the rest of the page.
 - `src/world/roadsProducer.js` `basicRoadsPathsPoint` - the question the
   loader asks Basic Roads.
 - `tools/worldOfDaggerfallAssets.mjs` - the archive to `vendor/`.
+
+## ROADS-CLEAR - off the roads (2026-09-25, a port departure)
+
+Mac: "Camps, mountains from WOD, shouldnt be placed on roads". The mod keeps a
+site off a pixel whose own byte carries a road or track (LocationLoader.cs:146-151),
+and nothing more - but the shipped layouts reach far past their pixel: the
+mountains ~1.9 km from the site, the large rock fields ~500 m, and 41,349 of the
+114,087 sites the lists stand spill into the next pixel, where its road runs.
+`world/roadClearance.js` asks the FOOTPRINT against the painted network (every
+path a band from its pixel's centre to the edge or corner its compass bit names,
+half a path width either side) in the site's pixel and every pixel it reaches.
+A camp, fort, shrine, ruin, cave or nature spot is refused whole at its pick (a
+`continue`, the mod's own road-test shape, so a later instance may take the
+pixel); a rock field or mountain keeps every piece but those whose own mesh box
+reaches a road (no mesh, no collider). Deterministic online: the lane forces
+Basic Roads. A pixel built before the network lands is built again by the roads
+sweep, and asks then. Over the shipped lists no whole site reaches a road; the
+pieces do. Pinned in `test/roadsclear.test.js`, mutants in
+`tools/mutants/roadsclear.json`. The wilderness camps (CAMP-RING) take the same
+test for their anchor (its whole ring) and each member.
+

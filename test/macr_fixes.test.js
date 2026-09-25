@@ -87,7 +87,7 @@ test('MAC-R2: a held quickslot key\'s auto-repeat is nothing - routeKey swallows
   assert.match(inp, /if \(POLLED_ACTIONS\.has\(act\)\) return false;\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(e\.repeat && act\) return true;\s*\n\s*return routeAction\(act, ctx, setPlayerPos\);/, 'the repeat is swallowed before the table - AUDIT KB1: every routed action\'s, not the quickslots\' alone');
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const h = read(host);
-    assert.match(h, /QUICKSLOT_ACTIONS\.has\(act\) && !POLLED_ACTIONS\.has\(act\) && [^\n]*\) \{ if \(!e\.repeat && routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return; \} if \(e\.repeat\) \{ e\.preventDefault\(\); return; \} \}/, `${host}: the press routes, the repeat is eaten`);
+    assert.match(h, /QUICKSLOT_ACTIONS\.has\(act\) && !POLLED_ACTIONS\.has\(act\) && [^\n]*\) \{ if \(!e\.repeat && routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return true; \} if \(e\.repeat\) \{ e\.preventDefault\(\); return true; \} \}/, `${host}: the press routes, the repeat is eaten`);
   }
 });
 

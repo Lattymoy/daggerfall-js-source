@@ -456,6 +456,7 @@ export class Place extends QuestResource {
 
         const buildingKey = makeBuildingKey(b.x, b.y, i);
         if (world.isHouseOwned?.(buildingKey)) continue;
+        if (world.isPlayerHome?.(location.mapTableData?.mapId, buildingKey)) continue;   // HOME1: nor a player's online home (a departure: DFU has one player)
         if (summary.buildingType === BT_GUILDHALL
           && !(guildHallFaction === 0 || summary.factionId === guildHallFaction)) continue;
         if (summary.factionId === DARK_BROTHERHOOD_FACTION || summary.factionId === THIEVES_GUILD_FACTION) continue;

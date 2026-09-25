@@ -50,7 +50,7 @@ import { INTERIOR_ELEMENT_NAMES } from '../systems/automapModel.js';   // ROAD-C
 // markers, which is the member DFU puts them in.
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { THIEVES_GUILD_FACTION_ID, DARK_BROTHERHOOD_FACTION_ID } from '../systems/crimeGuilds.js';   // FactionFile.cs:91/:135
-import { rollLootRarity, pileSource, INTERIOR_RARITY_TIER } from '../systems/lootRarity.js';   // LR1: a tavern's pile rolls at the town's tier
+import { rollLootRarity, pileSource, INTERIOR_RARITY_TIER, stampWonWeapons } from '../systems/lootRarity.js';   // LR1: a tavern's pile rolls at the town's tier; SIGIL1: its weapons' sigils
 import { generateItems as generateLootItems, addPileLootExtras, DUNGEON_LOOT_KEYS, DROP_ICON_ARCHIVES } from '../systems/loot.js';
 
 /** AUDIT 63 F22: DaggerfallInterior.AddFlats' treasure arm
@@ -108,6 +108,7 @@ export function seedInteriorTreasure({ markers, building, locationType, pool, le
     // LootTables.cs:146-159 - the matrix, then the J..O map/potion/
     // recipe tail, on the PLAYER's level and gender.
     const items = rollLootRarity(addPileLootExtras(generateLootItems(lootKey, { level, gender }), lootKey), pileSource(INTERIOR_RARITY_TIER), { luck });   // LR1
+    stampWonWeapons(items, 1);   // SIGIL1: a pile found online, its weapons' sigils rolled at the mint
     minted.push(pool.seedPile(items, pos, { archive: DROP_ICON_ARCHIVES.clothing, record: 0 }, key));
   });
   return minted;

@@ -30,6 +30,14 @@
 //   roll reads the player's level and gender) stay in the scene cache
 //   and off the wire. The interior's foes and guards are a quest's or a
 //   crime's - the player's own - and are not streamed (recorded).
+//
+// HOME1 (2026-09-25): AN ONLINE HOME'S ROOM CARRIES NO LOOT AT ALL. Its
+// owner and whoever they let in stand in it together (presence and the
+// doors), but its cupboards are the owner's storage, kept in the owner's
+// own save - so the memory says nothing of them, a peer's word about one
+// never lands (a word about `container:3` would have overwritten the
+// owner's chest, and then been published back as the room's), and a
+// refused act's records name none. The bag's `home` says so.
 import { sharedRecord, validActionRecord } from './actionSystem.js';
 import { validLootList, LOOT_LIST_MAX } from '../systems/loot.js';
 import { mintSharedStamp } from '../net/wire.js';   // AUDIT WORLD6a B7: one stamp mint at the wire, twelve digits always
@@ -50,8 +58,8 @@ export function interiorLocationKey(mapId, buildingKey) {
  *  the composition through it. `owned`: an owned house (or any ship interior - DFU does not distinguish ships, so
  *  owning one owns them all, and two players in one hull would disagree about whether the room exists) keeps NO
  *  room at all: no key, no memory, no presence room either (the host reports a 0 building key). */
-export function mintInteriorShared(locationKey, { owned = false } = {}) {
-  return { locationKey: owned ? null : (locationKey ?? null), owned: !!owned, stamp: mintSharedStamp(), seen: new Set(), tooBig: new Set(), applied: false, openKey: null, openWin: null };
+export function mintInteriorShared(locationKey, { owned = false, home = false } = {}) {
+  return { locationKey: owned ? null : (locationKey ?? null), owned: !!owned, home: !!home, stamp: mintSharedStamp(), seen: new Set(), tooBig: new Set(), applied: false, openKey: null, openWin: null };
 }
 
 /** The container vocabulary a building shares - the cache's own keys (`shelf:<i>`, `container:<i>`, worldModes
@@ -128,12 +136,12 @@ export function applyInteriorLoot(ctx, list, { seen = new Set(), openKey = null,
 /** The building's SHARED world for the room's memory: the opened containers the room knows of (`seen`) and every
  *  action record's shared half; keyed by the building and stamped by the mode's context, so another building's
  *  memory - or this one's own, back from a reconnect's welcome (AUDIT WORLD B1) - is refused. */
-export function composeInteriorShared(ctx, { locationKey, stamp, seen = new Set(), tooBig = new Set() } = {}) {
+export function composeInteriorShared(ctx, { locationKey, stamp, seen = new Set(), tooBig = new Set(), home = false } = {}) {
   if (!ctx || !locationKey) return null;
   return {
     locationKey, stamp,
     world: {
-      loot: interiorLootRecords(ctx, [...seen], tooBig),
+      loot: home ? [] : interiorLootRecords(ctx, [...seen], tooBig),   // HOME1: a home's cupboards are its owner's alone
       actions: (ctx.actions?.collectSaveData?.() ?? []).map(sharedRecord),
     },
   };
@@ -142,21 +150,21 @@ export function composeInteriorShared(ctx, { locationKey, stamp, seen = new Set(
 /** The room's memory applied, once per context, never its own: the action records projected and RESTORED (the
  *  memory is where the doors stand as this player walks in - a restore, like the cache's, not a swing heard), the
  *  opened containers through applyInteriorLoot. Answers true when it landed. */
-export function applyInteriorShared(ctx, shared, { locationKey, stamp, seen = new Set(), openKey = null, today = null } = {}) {
+export function applyInteriorShared(ctx, shared, { locationKey, stamp, seen = new Set(), openKey = null, today = null, home = false } = {}) {
   if (!ctx || !shared || !locationKey || shared.locationKey !== locationKey || !shared.world || typeof shared.world !== 'object') return false;
   if (shared.stamp === stamp) return false;
   const acts = Array.isArray(shared.world.actions) ? shared.world.actions.map(validActionRecord).filter(Boolean) : [];
   if (acts.length) ctx.actions?.restoreSaveData?.(acts);
-  applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today });
+  if (!home) applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today });   // HOME1: no word lands on a home's cupboards
   return true;
 }
 
 /** AUDIT WORLD3 A3's seam for a building: the CURRENT shared record of each named object - a door's or a
  *  container's, told apart by the key - for an act the wire refused. */
-export function interiorActionRecords(ctx, keys, { locationKey, tooBig = new Set() } = {}) {
+export function interiorActionRecords(ctx, keys, { locationKey, tooBig = new Set(), home = false } = {}) {
   if (!ctx || !locationKey || !Array.isArray(keys) || !keys.length) return null;
   const want = new Set(keys);
   const a = (ctx.actions?.collectSaveData?.() ?? []).filter((r) => want.has(r.key)).map(sharedRecord);
-  const l = interiorLootRecords(ctx, keys, tooBig);
+  const l = home ? [] : interiorLootRecords(ctx, keys, tooBig);   // HOME1
   return a.length || l.length ? { k: locationKey, ...(a.length ? { a } : {}), ...(l.length ? { l } : {}) } : null;
 }

@@ -67,6 +67,17 @@ export const TRAVEL_OPTIONS_TEXT = Object.freeze({
   HelpInfo: "Travel Options Help\n\nTravel Map\n\nLeftClick - Select travel destination (region, location, map pixel)\nRightClick - Zoom in or out\nMiddleClick - Mark a location\nI - Location information known to character\n\nAccelerated Travel\n\n{0} - Follow road or track\nM - Open travel map while travelling (or click map button)\nC - Pause travel for camp (or click camp button)\n{1} - Exit travel (or click exit button)\n{2} - Open travel map when stopped to resume journey,\n    or to choose a new destination",
 });
 
+/** TRAVEL-NAV1: THE PORT'S OWN WORDS, kept OUT of the table above - that
+ *  table is the mod's CSV and its pin asserts nothing was invented in it.
+ *  The steering (systems/travelSteer.js) is the port's, so its two stops
+ *  speak here, in the mod's own voice: "Paused the journey since ..." is
+ *  MsgNearLocation's sentence, and a stopped journey is resumed from the
+ *  map exactly as the mod's own stops are. */
+export const TRAVEL_NAV_TEXT = Object.freeze({
+  MsgBlocked: "Paused the journey since the way ahead is blocked.",
+  MsgStuck: "Paused the journey since you're making no headway.",
+});
+
 /** C#'s `string.Format` for the placeholders these strings use: `{0}`,
  *  `{1}`, `{2}` filled positionally. An index with no argument is left
  *  as it stands rather than printed as "undefined". */

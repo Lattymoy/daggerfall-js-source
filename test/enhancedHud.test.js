@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { compassPlace, COMPASS_POINTS, COMPASS_SPAN } from '../src/ui/enhancedHud.js';
-import { markFoeStruck, foeTarget, tickFoeTarget, clearFoeTarget, FOE_TARGET_SECONDS } from '../src/ui/hudFoeTarget.js';
+import { markFoeStruck, foeTarget, foeTargetRef, tickFoeTarget, clearFoeTarget, FOE_TARGET_SECONDS } from '../src/ui/hudFoeTarget.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
@@ -303,4 +303,39 @@ test('PX32: the reticle - the enhanced skin had NO crosshair and NO mode word', 
   assert.doesNotMatch(css, /\.hud-reticle \{[^}]*--hud-scale/);
   assert.match(css, /\.hud-cross::before, \.hud-cross::after \{ content: ''; position: absolute; background: #d8cfae;/);
   assert.match(css, /\.hud-modeword \{[^}]*color: rgb\(243,239,44\); text-shadow: 2px 2px 0 rgb\(93,77,12\); \}/, 'the mode word in the classic shadowed pair');
+});
+
+test('VB2: the lost chunk holds, then drains to the bar - and a gain snaps it', async () => {
+  const { stepGhost, GHOST_HOLD, GHOST_RATE } = await import('../src/ui/enhancedHud.js');
+  let g = stepGhost(null, 80, 0);
+  assert.deepEqual([g.at, g.pct], [80, 80], 'the first frame has nothing lost');
+  g = stepGhost(g, 50, 0.016);
+  assert.equal(g.at, 80, 'a hit leaves the chunk where the bar was');
+  assert.equal(g.hold, GHOST_HOLD);
+  g = stepGhost(g, 50, GHOST_HOLD + 0.01);
+  g = stepGhost(g, 50, 0.1);
+  assert.equal(g.at, 80 - GHOST_RATE * 0.1, 'then it drains');
+  for (let i = 0; i < 100; i++) g = stepGhost(g, 50, 0.1);
+  assert.equal(g.at, 50, 'and never past the bar');
+  g = stepGhost(g, 90, 0.016);
+  assert.equal(g.at, 90, 'a gain snaps it - nothing was lost');
+});
+
+test('FRAME1b: the foe bar knows WHICH foe, not just its name - two rats are two foes', () => {
+  clearFoeTarget();
+  assert.equal(foeTargetRef(), null);
+  const a = { entity: { name: 'Rat', health: 40, maxHealth: 100 } };
+  const b = { entity: { name: 'Rat', health: 85, maxHealth: 100 } };
+  markFoeStruck(a, { fromPlayer: true });
+  assert.equal(foeTargetRef(), a.entity);
+  markFoeStruck(b, { fromPlayer: true });
+  assert.equal(foeTarget().name, 'Rat');
+  assert.equal(foeTargetRef(), b.entity, 'same name, different foe');
+  b.dead = true;
+  assert.equal(foeTargetRef(), null);
+  clearFoeTarget();
+  // the HUD keys its loss readout on the ref, never on the name
+  const src = readFileSync(new URL('../src/ui/enhancedHud.js', import.meta.url), 'utf8');
+  assert.match(src, /last\.foeRef !== ref/);
+  assert.doesNotMatch(src, /last\.foe !== t\.name\) \{[^}]*ghosts\.foe = null/);
 });

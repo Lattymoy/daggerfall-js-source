@@ -272,7 +272,7 @@ test('U51: the host arms are no-ops BY DESIGN, and say so', () => {
 
 test('U51: Escape closes the pause door, through the shared table', () => {
   const src = read('src/ui/enhancedMenu.js');
-  assert.match(src, /import \{ overlayAction \} from '\.\/input\.js'/,
+  assert.match(src, /import \{ overlayAction(?:, bindings)? \} from '\.\/input\.js'/,   // UXB1-F: and the live bindings a Features tile names
     'not a second key map - the same table every other window answers through');
   const onKey = src.slice(src.indexOf('function onKey(e)'), src.indexOf('function releaseLock()'));
   assert.match(onKey, /overlayAction\(e\) !== 'back'/, 'Escape and nothing else');
@@ -583,7 +583,7 @@ test('PX28b: TAB ITSELF closes an open window - the registry answers the key', (
   // ONE listener, where the registry already knows what is open, so a
   // window added later is covered by having registered at all.
   assert.match(reg, /window\.addEventListener\('keydown', onTab, true\);/, 'capture phase');
-  assert.match(reg, /eventAction\(e\) !== 'QuickDial'\) return;/, 'KB1: the dial\'s key, wherever it is bound - not a literal Tab (AUDIT KB1: eventAction, so a combo closes it)');
+  assert.match(reg, /!eventMeans\(e, 'QuickDial'\)\) return;/, 'KB1: the dial\'s key, wherever it is bound - not a literal Tab (AUDIT KB1: eventAction, so a combo closes it)');
   assert.match(reg, /closeTopOverlay\(\);/);
   // OT1 added closeOnOutsideTap, a listener on each window's SHELL (a
   // pointer on a scrim is that scrim's); the Tab listener stays ONE.

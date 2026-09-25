@@ -978,9 +978,9 @@ else saw Daggerfall's pixel werewolf. A transformed rider was worse: the
 rider layer ran first and drew a person on a horse (112382 + the rider's
 set), where the player saw their beast.
 
-The wire was never at fault. `wb` goes out on its edge (`wire.js:1003`),
+The wire was never at fault. `wb` goes out on its edge (`wire.js:1051`),
 through the door (`:1051`) and the easing (`online.js:206`), from the sender
-at `world.js:12698`.
+at `world.js:13217`.
 
 **Fix.** `peerRiders.js` takes a peer whose pose says `wb`, as it takes a
 rider:
@@ -991,17 +991,17 @@ rider:
 - The frame clock is the saddle's for a mounted beast and EOTB's `speedMod`
   run halving on foot.
 - A new swing count plays `AttackMeleeLycan` once, forward, at LYCAN_TICK,
-  as the local body's `playLycanAttack` does (`eotbBody.js:489`). The count
+  as the local body's `playLycanAttack` does (`eotbBody.js:498`). The count
   first seen is no swing.
 
 The hand-off is RIDE's: `isRiding` is true only once the art is up, so while
 it loads or has failed, and in a build without it, DISC12's enemy sprite
 still stands for them. A beast is never nothing.
 
-The modal passes (`worldModes.js:7172` the dungeon, `:7364` the interior)
+The modal passes (`worldModes.js:7619` the dungeon, `:7815` the interior)
 draw only `host.extraBillboards`. That was `remotePlayers.batches()` alone,
 so a beast drawn by the rider layer would have been nothing indoors and
-underground. It hands over both layers' batches now (`world.js:12863`). A
+underground. It hands over both layers' batches now (`world.js:13382`). A
 rider never reaches those passes: a door dismounts. The eye the layer turns
 its sprites to (`cam.pos`) is live in every mode, because worldModes shares
 world.js's `cam` and sets it each modal frame.
@@ -1009,7 +1009,7 @@ world.js's `cam` and sets it each modal frame.
 **The local body, beside it.** `eotbBody.js` asked for every sprite with
 the mod's settings (`cfg`), which never carry the form. So a wereboar saw the
 werewolf on themselves, while the others now draw the boar. The draw and the
-placement take the live form now (`lookNow`, `eotbBody.js:356`). The preload
+placement take the live form now (`lookNow`, `eotbBody.js:365`). The preload
 fetches the live form's lycan set, and fetches it again when the form
 changes (`:270`, `:713`).
 
@@ -1054,10 +1054,10 @@ the scene the picture takes in:
 - `drawRigSpriteBox` takes an optional `anchor`. The picture is taken along
   the eye's ray to the anchor, still centred on the box so the gear stays in
   it. The quad stands where the anchor's own image lands on the anchor
-  (`characterSprite.js:95` `landAnchor`). Every point then draws at a place
+  (`characterSprite.js:109` `landAnchor`). Every point then draws at a place
   that does not depend on the box. The voxel rigs pass no anchor and draw as
   they did.
-- `drawThird` (`fpArm.js:4644`) anchors on the actor's own axis (MW x = y =
+- `drawThird` (`fpArm.js:4647`) anchors on the actor's own axis (MW x = y =
   0, where the root stands at `feet`), at the body's mid-height. That
   height is read off the drawn ranges less `CARRIED_SLOTS` (`fpArm.js:676`:
   the hand's weapon and round, the torch, the held sheet, Weapon Sheathing's
@@ -1068,13 +1068,13 @@ the scene the picture takes in:
 
 **Hosts.** Every Morrowind body in the port goes through `drawThird`. The
 local player's goes through `mwView.mwViewDrawBody` (`mwView.js:329`,
-`:339`), which four files call: `world.js:14894`, `exterior.js:5100`,
-`worldModes.js:7165` and `:7262` (the dungeon and the interior passes),
-and `dungeon.js:1079`. `dungeonContext.js`, the fourth motor host, builds
+`:339`), which four files call: `world.js:15453`, `exterior.js:5123`,
+`worldModes.js:7612` and `:7709` (the dungeon and the interior passes),
+and `dungeon.js:1081`. `dungeonContext.js`, the fourth motor host, builds
 the dungeon for those hosts and draws no body of its own. The other players'
 bodies go through `peerBodies.js:377` (`PeerBodies.draw`). The open world
-calls it at `world.js:14895`, and the modal passes reach it through
-`host.drawPeerBodies` (`worldModes.js:7166`, `:7263`). The fix therefore
+calls it at `world.js:15454`, and the modal passes reach it through
+`host.drawPeerBodies` (`worldModes.js:7613`, `:7710`). The fix therefore
 sits in one place and reaches every host.
 
 The pins are `test/prbow1_bow.test.js`: seven tests, all failing on the
@@ -1097,8 +1097,8 @@ is folded off its positions. The fold's results are unchanged:
 pins stand.
 
 **The portrait.** `fpArm.figure()` draws the enhanced inventory's model
-figure (`enhancedInventory.js:1471`), which is shown in a 110:184 cell with
-object-fit: contain (`enhancedStyle.js:3565`). It framed `meshBounds` over
+figure (`enhancedInventory.js:1475`), which is shown in a 110:184 cell with
+object-fit: contain (`enhancedStyle.js:3814`). It framed `meshBounds` over
 EVERY piece, then hid the unlit torch, the arrow off the string and the
 empty holster twin, so gear it did not show still moved the frame. Its width
 was the box's azimuth-safe diagonal, so a longsword pointing at the viewer,
@@ -1330,3 +1330,53 @@ Mutants: `tools/mutants/disc24.json`, 30, all dead. Nine records re-aimed
 by content: `auditdisc7` C6, `auditlight` sc1-dyn-ignored, `deathloop1`'s
 two, `disc22` D22D (now the enhanced door's), `el8` cadence, `fieldgun16`,
 `perfon2` PERF-BASIS, `weeds1` the lantern replay, and `macd` MACD2.
+
+---
+
+# PR-WAGON1 — another player's wagon at a door (2026-09-24)
+
+**Report** (a player, relayed by Mac): "Players can grief other players with
+the wagon by putting it in front of dungeon entryways and building
+entrances". Mac's choice, asked how: "Others' wagons don't block".
+
+**Cause.** AUDIT HCC O3 stood another player's PARKED wagon a collider box in
+my world (`hccWagon:<owner>`), and HCC-PARK has the relay keep a parked team
+for 72 hours after its owner leaves. A wagon left across a shop door or a
+dungeon's mouth was a wall for everyone for days - and its activation box, the
+nearest thing on the ray, took the click from the door behind it too.
+
+**Fix.** Another player's wagon stands no collider, live or kept, parked or
+moving; mine keeps the mod's BoxCollider. Their wagon and horse YIELD the ray
+(`player/activate.js firmFirst`, read by `pickActivatableHit` and by
+`player/activationRace.js`): anything firm the ray meets behind them - a door,
+a dungeon's mouth, a body, a townsperson, a foe - takes the press and the
+plaque; with nothing else on the ray their team is still named and pressed.
+Horse-Cart-And-Cargo.md PR-WAGON1 has the law; Online-Arc.md's O3 bullet says
+it is reversed.
+
+**Pins.** `test/prwagon1.test.js` (6), every one failing on the base;
+`test/hcc_pool.test.js` (O3 reversed), `test/disc20.test.js`,
+`test/lootstack.test.js` (the source pin). Mutants `tools/mutants/prwagon1.json`
+(7 dead); `hcc.json` and `disc20.json` re-aimed.
+
+---
+
+# WISPS-RETURN — the wind wisps are streaks again (2026-09-25)
+
+**Request** (Mac): "I want to return to the original wind wisps before our
+current design".
+
+**What changed.** WIND5's swirl (2026-09-23: each wisp a calligraphic
+flourish, a ribbon ending in a curl, drawn on and off along its path) is
+retired, and each wisp is WIND3's straight streak along the wind again -
+its quad, its length and its fade. DISC17-A's count (120 at a gale, 10 in a
+calm) and its doubled opacity stand: those asks were about how many and how
+dark, not about the shape. A streak at its darkest is 0.44 in a gale and
+0.20 in a calm. The sandstorm is unchanged. The record, and why, is
+`07-Rendering/Rendering.md` WISPS-RETURN.
+
+**Pins.** `test/wispsreturn.test.js` (3), every one failing on the base;
+`test/disc17.test.js`, `test/wind3_windworld.test.js` and
+`test/weather2d_sandstorm.test.js` follow;
+`test/wind5_swirls.test.js` RETIRED. Mutants `tools/mutants/wispsreturn.json`
+(13 dead); `wind5.json` retired; `auditvc7.json` re-aimed.

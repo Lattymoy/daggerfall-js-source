@@ -31,7 +31,7 @@
 import { calculateCost } from './shopStock.js';
 import { templateByIndex } from './itemTemplates.js';
 import { isEnchantedItem } from './enchantments.js';
-import { MINUTES_PER_DAY } from './gameDate.js';
+import { MINUTES_PER_DAY, MINUTES_PER_HOUR } from './gameDate.js';
 import { getBool } from './settings.js';   // RRI2: InstantRepairs picks the mod's repair factor
 import { conditionBasedPricesOn, conditionRepairCostBase } from './rriRealism.js';   // RRI2: the CalculateItemRepairCost override
 
@@ -160,6 +160,32 @@ export function repairJobsAt(entity, buildingKey, nowMinutes) {
     if (isRepairFinished(item, nowMinutes)) item.currentCondition = item.maxCondition;
   }
   return out;
+}
+
+/** UXB1-K (2026-09-25, the UX backlog: "Countdown timer/estimate for repairs when not instant."): WHEN A JOB IS READY.
+ *  The done-time repairStatusLabel reads, as numbers a screen can count down: a BOOKED job's committed timeStarted +
+ *  repairTime, or - for a job only staged at the counter - now plus the scheduler's own estimate (updateRepairTimes
+ *  with commit false, the pass FilterRemoteItems ends with, :725). Null when nothing is owed: an unbooked item at full
+ *  condition is RepairItemLabelTextHandler's `repairDone` arm (:284). `estimate` says the figure is not stamped yet. */
+export function repairCountdown(item, nowMinutes, estimateMinutes = null) {
+  if (isBeingRepaired(item)) {
+    const doneAt = repairTimeDone(item);
+    return { done: doneAt <= nowMinutes, doneAt, minutesLeft: Math.max(0, doneAt - nowMinutes), estimate: false };
+  }
+  if (item.currentCondition === item.maxCondition) return null;
+  const time = estimateMinutes ?? calculateItemRepairTime(item.currentCondition, item.maxCondition);
+  return { done: false, doneAt: nowMinutes + time, minutesLeft: time, estimate: true };
+}
+/** ...and in words: DFU's own unit while a day or more is left (its "%d days", the same ceiling - daysUntil), hours
+ *  under a day, where "1 days" said nothing about this evening; a finished job is ready to collect. A staged job's
+ *  figure is an estimate and says so. */
+export function repairCountdownText(c) {
+  if (!c) return null;
+  if (c.done) return 'Ready';
+  const days = Math.ceil(c.minutesLeft / MINUTES_PER_DAY);
+  const hours = Math.max(1, Math.ceil(c.minutesLeft / MINUTES_PER_HOUR));
+  const span = c.minutesLeft >= MINUTES_PER_DAY ? `${days} day${days === 1 ? '' : 's'}` : `${hours} hour${hours === 1 ? '' : 's'}`;
+  return c.estimate ? `About ${span}` : `Ready in ${span}`;
 }
 
 /** The label half (RepairItemLabelTextHandler :282-288): 'done' or

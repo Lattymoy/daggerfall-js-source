@@ -625,7 +625,7 @@ the DEFAULT state, because starting weapons land in the bag unequipped
 `WEAPON_SKILL[playerWeapon.weapon.name]` raw at both its swing sites
 where the exterior hosts guarded with `?.`: the strike-frame bow test
 threw on EVERY bare-handed swing (reproduced live at
-dungeonContext.js:2017 by tools/fistProbe.mjs), the melee tally on
+dungeonContext.js:2051 by tools/fistProbe.mjs), the melee tally on
 every resolved fist hit. Fixed with the rule enforced, not remembered:
 a source sweep over src/scenes fails on any unguarded
 `playerWeapon.weapon.` deref, the bare-handed path is driven
@@ -797,7 +797,7 @@ is a `baseWeight` assignment here, as it is in C#, and the monster arm
 is the pin this file was written for; the campaign's first mutant is
 exactly that plausible wrong fix.
 
-`totalWeight` (inventory.js:339) IS `ItemCollection.GetWeight`, so the
+`totalWeight` (inventory.js:351) IS `ItemCollection.GetWeight`, so the
 only arithmetic added is the x4 and C#'s truncating `(int)` cast. Four
 pools call the formula (dungeon foes, the shared host-combat arm, the
 city watch, exterior foes) and all four now hand the foe's own list
@@ -1360,19 +1360,19 @@ the step, and the dip only ever makes `|dir|` larger.
 `onAttackFromPlayer` the sentence is about is `:215`, which is where the
 sibling comment in `cityGuards.js` was pointed in the same round). The
 dungeon's three-host sentence had its `exterior.js` number re-resolved
-and its `world.js:13839` left naming a `WorldTime`/`PauseWhileOpen` note
-800 lines from the host's `onPlayerArrowHitFoe` (`world.js:15493`); all
+and its `world.js:14367` left naming a `WorldTime`/`PauseWhileOpen` note
+800 lines from the host's `onPlayerArrowHitFoe` (`world.js:16059`); all
 three halves are read in `citedrift.test.js` now, the shape AUDIT 62's
 review had to apply to `pauseWindow`/`restWindow`. And `listPicker.js`'s
 "three routers that mount a bare picker" named three lines, none of
 which was a router — the round bumped the dungeon's `:4112` to `:4113`
 mechanically, and a wrong number moved by the right offset is still
 wrong. All three are resolved by content (`townTalk.js:1241`,
-`worldModes.js:8914`, `dungeonContext.js:6639`) and pinned as a set.
+`worldModes.js:9371`, `dungeonContext.js:6726`) and pinned as a set.
 
 The `worldModes.js` fix inserts one line, so cites into that host past
-it move by one: the dungeon's `worldModes.js:7430` and
-`chargenSession.js`'s `worldModes.js:9027` are bumped and pinned. Four
+it move by one: the dungeon's `worldModes.js:7886` and
+`chargenSession.js`'s `worldModes.js:9484` are bumped and pinned. Four
 `worldModes.js` cites elsewhere (`interior.js`, `world.js`,
 `tradeModes.js`, `saveWindow.js`) and `UI-Arc.md`'s notebook trio were
 ALREADY stale before this round and are left as found rather than
@@ -1438,6 +1438,21 @@ has the list.
 
 **MM1 (2026-09-12).** Meaner Monsters vendored (`04-Characters/Meaner-Monsters.md`), and Mac's rule - no compatibility switches between mods: the overhaul's `meanerMonsters` and `rolePlayRealismArchery` switches are gone; its two derived arms read the other mods' own switches (`modSettingIfDeclared`), and Ralzar's row lands before the overhaul's edit at mint, as DFU Awakes the dependency first.
 
+
+**RARE-BREAK1 (2026-09-25, a port departure from the mod's Fading Enchanted Items).**
+A player's report: "I've lost my boots and legs, both rare (yellow) rarity ... blue
+items break, yellow items disappear. is this intended?" It was the mod's own
+module - "Enchanted Weapons and Armor will be destroyed upon breaking from
+physical combat", on by default and forced whole online with the rest of PCAAO -
+meeting the port's rarity ladder (`systems/lootRarity.js`, LR1): a Rare or
+Legendary carries ONE DFU catalogue enchantment as its flavour, so the module
+read it as an enchanted item and took it from the pack, while a Magic (numeric
+affixes, no enchantment) broke and stayed. Mac: "Rarity loot breaks, not
+destroyed". `pcaao.js pcaaoFades` leaves any piece that rolled a tier on the
+ladder out of the fade: it breaks and stays, repairable. DFU's own enchanted
+loot (MAGIC.DEF, made and soul-bound items - no rolled tier) still fades as the
+mod says. Pinned in `test/pcaao.test.js`, mutants in
+`tools/mutants/rarebreak1.json`.
 ## WW1 - WEAPON WIDGET, THE MOD, 1:1, AND THE MORROWIND ARMS (2026-09-14, Mac's call) - SHIPPED
 
 Mac: "This is our next mod I want to add 1:1 while also having it work

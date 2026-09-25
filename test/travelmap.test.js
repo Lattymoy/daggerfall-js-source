@@ -230,7 +230,7 @@ test('U41: the world host mounts the art window and keeps performFastTravel\'s o
   // the law: the gate, then the arm inside it, then the panel that
   // shares the door.
   const gate = src.indexOf("if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {");
-  const arm = src.indexOf("if (act === 'TravelMap') { hudCtx.openTravelMap(); return; }");
+  const arm = src.indexOf("if (act === 'TravelMap') { hudCtx.openTravelMap(); return true; }");
   assert.ok(gate > 0 && arm > gate,
     'the TravelMap action opens the map (I2; V is its registry default, InputManager:1028)');
   assert.match(src, /openTravelMap: \(\) => toggleTravelMap\(\)/, 'and the large HUD reaches the same door');
@@ -308,8 +308,11 @@ test('U41: the world host mounts the art window and keeps performFastTravel\'s o
   // 5800 -> 6600: the camps go through natives across the re-anchored
   // frame - their snapshot and teardown, with their own note, above the
   // needles - beside WoD's own arrival lines.
-  const core = src.slice(k, k + 6600);
-  for (const needle of ['destroyPixel(bx, by)', 'state.init(px, py)', 'buildPixel(first.px']) {
+  // PIN MOVED (PERF-EXT21), 6600 -> 7400: the sweep empties the grass
+  // field too - a crossing no longer does - with its own note, above the
+  // needles.
+  const core = src.slice(k, k + 7400);
+  for (const needle of ['destroyPixel(bx, by)', 'state.init(px, py)', 'awaitedBuild(first.px']) {
     assert.ok(core.includes(needle), `the core carries ${needle}`);
   }
   // AUDIT 39 (#158) - StreamingWorld.CleanupUntrackedObjects (:1620-1644,

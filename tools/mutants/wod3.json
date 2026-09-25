@@ -319,8 +319,8 @@
   {
     "name": "the-placed-foe-is-culled",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "if (!f.placed && !f.managed && _playerDist > ENCOUNTER_CULL_DISTANCE",
-    "new": "if (!f.managed && _playerDist > ENCOUNTER_CULL_DISTANCE",
+    "old": "if (!f.placed && !f.managed && _playerDist > (f.campId != null ? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE)",
+    "new": "if (!f.managed && _playerDist > (f.campId != null ? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE)",
     "tests": [
       "test/wod3_spawner.test.js"
     ]

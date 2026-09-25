@@ -93,8 +93,8 @@ test('RE1: the exterior host stands its encounter through the ONE law', () => {
   assert.match(body, /placeFoeFreely\(env, \{\n\s*minDistance: hit\.minDistance, maxDistance: hit\.maxDistance,\n\s*lineOfSightCheck: hit\.lineOfSightCheck,\n\s*\}\)/,
     'all three of the arm\'s arguments are passed, not a hardcoded band');
   assert.match(body, /fovDegrees: fieldOfView\(\) \* 180 \/ Math\.PI,/, 'fieldOfView() answers RADIANS');
-  assert.match(body, /isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet, \(\) => exteriorFoePool\(\), feet\)/,
-    'and the spot must be empty of the foes already standing');
+  assert.match(body, /isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet \?\? f\.feet, _placingPool, feet\)/,
+    'and the spot must be empty of the foes already standing - AUDIT PSCALE1 COUNT-3: and of those still arriving');
   assert.match(body, /const fly = \(ENEMY_BASICS\[hit\.mobileType\]\?\.behaviour \?\? 'General'\) === 'Flying';/);
   assert.match(body, /yaw: Math\.atan2\(feet\[0\] - spot\.x, feet\[2\] - spot\.z\)/, 'LookAt player');
   assert.match(world, /_standEncounterFoe\(hit, playerFeet\);/, 'the tick calls it');

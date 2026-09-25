@@ -89,10 +89,18 @@ export const MAX_CAMP_SPAWN_DISTANCE = 150;
  *          minDistance?:number, maxDistance?:number, rolls?:() => number}} o
  * @returns {{x:number,y:number,z:number}|null}
  */
-export function campAnchorSpot({ feet, yawRad, fovDegrees, groundAt, minDistance = MIN_CAMP_SPAWN_DISTANCE, maxDistance = MAX_CAMP_SPAWN_DISTANCE, rolls = Math.random }) {
+export function campAnchorSpot({ feet, yawRad, fovDegrees, groundAt, minDistance = MIN_CAMP_SPAWN_DISTANCE, maxDistance = MAX_CAMP_SPAWN_DISTANCE, rolls = Math.random, bearingDegrees = null }) {
   if (!feet || typeof groundAt !== 'function') return null;
-  const side = fovDegrees + rolls() * 4;
-  const yawDegrees = rolls() > 0.5 ? -side : side;
+  // CAMP-RING: a group handed its own bearing (campGroupBearings - one of several groups spread
+  // round the player) stands on that bearing, jittered two degrees either way; a lone group keeps
+  // the old law - just outside the view, a coin for the side.
+  let yawDegrees;
+  if (Number.isFinite(bearingDegrees)) {
+    yawDegrees = bearingDegrees + rolls() * 4 - 2;
+  } else {
+    const side = fovDegrees + rolls() * 4;
+    yawDegrees = rolls() > 0.5 ? -side : side;
+  }
   const yaw = yawRad + yawDegrees * Math.PI / 180;
   const dist = minDistance + rolls() * (maxDistance - minDistance);
   const x = feet[0] + Math.sin(yaw) * dist;
@@ -101,6 +109,11 @@ export function campAnchorSpot({ feet, yawRad, fovDegrees, groundAt, minDistance
   if (!Number.isFinite(y)) return null;   // off the built ground: no spot this try
   return { x, y, z };
 }
+
+// CAMP-SIGHT (2026-09-25, Mac: "reduce the sight radius to 60"): a wilderness camp's members see
+// 60 metres, not DFU's 102.4 - so a group stood 100-150 m out never spots the player on the frame
+// it appears, and a camp can be approached before it notices. Every other foe keeps SIGHT_RADIUS.
+export const CAMP_SIGHT_RADIUS = 60;
 
 export const CAMP_SIZE = Object.freeze([3, 5]);   // inclusive
 export const PACK_SIZE = Object.freeze([2, 4]);
@@ -158,32 +171,61 @@ export const rollCampKind = (roll01 = Math.random()) => (roll01 < 0.5 ? 'camp' :
 // single-location preview host (`?exterior`/`?region=`/`?loc=`) with no
 // chunk streaming to hang a roll off, so the timer below is the only
 // trigger it can have, and it still calls it.
-export const CAMP_CHANCE_ON_CHUNK_LOAD = 0.15;   // 15% per chunk entered
+//
+// CAMP-RING (2026-09-25): the chance is 50% per chunk entered, and a hit stands THREE groups at
+// once, spread round the player a hundred to a hundred and fifty metres out (campGroupBearings).
+export const CAMP_CHANCE_ON_CHUNK_LOAD = 0.50;   // 50% per chunk entered
 export const rollCampChanceOnChunkLoad = (roll01 = Math.random()) => roll01 < CAMP_CHANCE_ON_CHUNK_LOAD;
+/** CAMP-RING: how many groups one chunk-load hit stands. */
+export const CAMP_GROUPS_ON_CHUNK_LOAD = 3;
+
+/**
+ * CAMP-RING: bearings (degrees off the player's facing, clockwise from above - Unity's yaw) for
+ * the groups of one hit. Mac, 2026-09-25: "one in front of me, one right and one left" - so the
+ * three stand ahead, to the right and to the left, 90 degrees apart. Ahead is IN view: at 100-150
+ * metres that group is seen standing there, which is the point. More than three groups continue
+ * round the circle evenly; `fovDegrees` is kept for the call shape and not read.
+ */
+export const CAMP_GROUP_BEARINGS = Object.freeze([0, 90, 270]);   // front, right, left
+export function campGroupBearings(fovDegrees, n = CAMP_GROUPS_ON_CHUNK_LOAD) {
+  void fovDegrees;
+  if (n <= CAMP_GROUP_BEARINGS.length) return CAMP_GROUP_BEARINGS.slice(0, Math.max(1, n));
+  return Array.from({ length: n }, (_, k) => (k * 360) / n);
+}
 
 /** Whether IT IS THIS PLAYER'S TURN to roll, among every player within
  *  `radius` (world units - metres, this port's scale) of `myFeet`,
  *  including players outside this scene's own streamed cell (`peers`
  *  is `peersNear()`'s list, `{id, feet}` each, already converted into
  *  THIS frame's coordinates). The pick is deterministic and needs no
- *  message of its own: everyone in range computes the same comparison
- *  over the same roster and agrees on the same one lowest id, so
- *  exactly one of them proceeds and the rest return null before
- *  spending a roll at all. Offline (`myId` null, or no peers) always
- *  answers true - there is no one to defer to. */
+ *  message of its own: greedy by id over everyone this client can place
+ *  (AUDIT PSCALE1 COUNT-5) - the lowest id rolls, and each next id rolls
+ *  unless a roller already chosen stands within `radius` of it - so a
+ *  group within reach of one another agrees on its one lowest id, and a
+ *  chain elects its lowest end AND whoever stands out of that roller's
+ *  reach. PSCALE1's lone-wanderer roll passes the partymates alone
+ *  (world.js runEncounterTick); the camps pass every peer. Offline
+ *  (`myId` null, or no peers) always answers true - there is no one to
+ *  defer to. */
 export const GROUP_ROLL_RADIUS = 100;
 export function amGroupRollOwner(myId, myFeet, peers, radius = GROUP_ROLL_RADIUS) {
   if (myId == null || !myFeet || !peers?.length) return true;
   const r2 = radius * radius;
-  let lowest = String(myId);
-  for (const p of peers) {
-    if (p?.id == null || p.id === myId || !p.feet) continue;
-    const dx = p.feet[0] - myFeet[0], dz = p.feet[2] - myFeet[2];
-    if (dx * dx + dz * dz > r2) continue;
-    const pid = String(p.id);
-    if (pid < lowest) lowest = pid;
+  const me = String(myId);
+  const near = (a, b) => { const dx = a[0] - b[0], dz = a[2] - b[2]; return dx * dx + dz * dz <= r2; };
+  // AUDIT PSCALE1 COUNT-5: GREEDY BY ID, over everyone this client can place. The lowest id rolls; each next id rolls
+  // unless a roller already chosen stands within `radius` of it. Deferring to ANY lower id within reach let a chain
+  // (A, B, C sixty apart, ids ascending) elect A alone, and C - 120 from A - met nothing: A's wanderers stand at A.
+  const all = [{ id: me, feet: myFeet }];
+  for (const p of peers) if (p?.id != null && String(p.id) !== me && Array.isArray(p.feet)) all.push({ id: String(p.id), feet: p.feet });
+  all.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const rollers = [];
+  for (const p of all) {
+    const taken = rollers.some((r) => near(r.feet, p.feet));
+    if (p.id === me) return !taken;
+    if (!taken) rollers.push(p);
   }
-  return lowest === String(myId);
+  return true;
 }
 
 /** The composition a hit rolls, shared by both entry points below -
@@ -288,4 +330,19 @@ export function rollCampEncounterOnChunkLoad(ctx, rolls = Math.random) {
   if (!campGateOk(ctx)) return null;
   if (!rollCampChanceOnChunkLoad(rolls())) return null;
   return rollGroupComposition(ctx, rolls);
+}
+
+/** CAMP-RING: the chunk-load roll that stands SEVERAL groups. One chance roll for the chunk; on a
+ *  hit, each group rolls its own composition (so one can be bandits and the next wolves) and
+ *  takes its own bearing round the player. Null on a miss, else the non-empty list of groups. */
+export function rollCampEncountersOnChunkLoad(ctx, rolls = Math.random, { groups = CAMP_GROUPS_ON_CHUNK_LOAD, fovDegrees = 60 } = {}) {
+  if (!campGateOk(ctx)) return null;
+  if (!rollCampChanceOnChunkLoad(rolls())) return null;
+  const bearings = campGroupBearings(fovDegrees, groups);
+  const out = [];
+  for (let g = 0; g < groups; g++) {
+    const hit = rollGroupComposition(ctx, rolls);
+    if (hit) out.push({ ...hit, bearingDegrees: bearings[g] });
+  }
+  return out.length ? out : null;
 }

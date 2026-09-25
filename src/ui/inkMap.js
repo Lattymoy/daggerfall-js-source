@@ -504,11 +504,13 @@ export function buildInkModel(deps) {
  * port list, systems/travelPorts.js hasPort, asked through the window
  * so this module never learns the list); `mapId` is MapSummary.MapID,
  * what the mod's mark and ports laws key on.
+ * HUB1: `hubAt` answers the region hub a mark IS (systems/regionHubs.js), or null - online alone; the host hands
+ * none offline and no mark carries one.
  * @param {{ summaries?: Iterable<any>, filters?: any,
  *   isDiscovered?: (summary: any) => boolean, nameOf?: (summary: any) => string,
- *   isPort?: (summary: any) => boolean }} deps
+ *   isPort?: (summary: any) => boolean, hubAt?: (summary: any) => any }} deps
  */
-export function buildInkMarks({ summaries = [], filters = {}, isDiscovered = undefined, nameOf = () => '', isPort = () => false }) {
+export function buildInkMarks({ summaries = [], filters = {}, isDiscovered = undefined, nameOf = () => '', isPort = () => false, hubAt = () => null }) {
   const opts = isDiscovered ? { isDiscovered } : {};
   return buildMarkerModel(summaries, filters, opts).map((m) => ({
     x: m.x, y: -m.z,             // the pixel's centre, in map pixels (y down)
@@ -518,6 +520,7 @@ export function buildInkMarks({ summaries = [], filters = {}, isDiscovered = und
     summary: m.summary,
     mapId: m.summary?.mapID ?? m.summary?.mapId ?? null,
     port: !!isPort(m.summary),
+    hub: hubAt(m.summary) ?? null,
   }));
 }
 
@@ -719,7 +722,7 @@ export function placeNames(marks, view, band, { paperW, paperH, measure }) {
   for (const m of marks) {
     if (!shown.has(m.colorIndex) || !onSheet(m)) continue;
     const [px, py] = toPaper(view, m.x, m.y);
-    const r = (GLYPH_R[m.kind] ?? 4) + 1;
+    const r = markReach(m) + 1;   // HUB1: a hub's circle is ground its glyph holds
     boxes.push({ x: px - r, y: py - r, w: r * 2, h: r * 2 });
   }
   const hits = (box) => boxes.some((b) => b.x < box.x + box.w && b.x + b.w > box.x && b.y < box.y + box.h && b.y + b.h > box.y);
@@ -727,7 +730,7 @@ export function placeNames(marks, view, band, { paperW, paperH, measure }) {
     const [px, py] = toPaper(view, m.x, m.y);
     const measured = measure(m.name, size, nameFont(m, size));
     const w = Number.isFinite(measured) ? measured : 0;   // a stub's NaN would let every name overlap
-    const glyph = (GLYPH_R[m.kind] ?? 4) + 1;
+    const glyph = markReach(m) + 1;   // HUB1: set clear of a hub's circle, not only its glyph
     // MAP-FIELD6: FOUR PLACES TO TRY, not one. Seeding the glyphs into
     // the test (above) is what stops a label landing on a mark, but with
     // a single candidate it also silenced the two names that most needed
@@ -883,6 +886,8 @@ export function paintInkStatic(ctx, model, view, opts) {
     if (!shown.has(m.colorIndex) || !visible(m.x, m.y)) continue;
     inked.push([m, ...toPaper(view, m.x, m.y)]);
   }
+  // HUB1: a hub's circle goes down FIRST - its glyph's halo and ink then sit on it, so the town reads on the colour
+  for (const [m, x, y] of inked) if (m.hub) paintHubCircle(ctx, x, y, markReach(m), !!m.hub.capital);
   for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);
   for (const [m, x, y] of inked) {
     paintGlyph(ctx, m.kind, x, y);
@@ -996,6 +1001,29 @@ export function paintHarbour(ctx, x, y) {
   // the arc's start with a stray diagonal (AUDIT-MAP A6)
   ctx.moveTo(ax + 3 * Math.cos(Math.PI * 0.15), ay + 0.5 + 3 * Math.sin(Math.PI * 0.15));
   ctx.arc(ax, ay + 0.5, 3, Math.PI * 0.15, Math.PI * 0.85);
+  ctx.stroke();
+}
+
+/** HUB1 (Mac: "a color coded circle indicator ... for distinguishing"): a region's hub sits in a coloured circle
+ *  under its glyph - BLUE, or PURPLE for one of the three kingdoms' capitals. Neither colour is one the sheet already
+ *  speaks in: the selection's ring is gold, the player's mark red, the party's green, Travel Options' mark yellow. */
+export const HUB_CIRCLE = Object.freeze({
+  hub: Object.freeze({ fill: 'rgba(38, 72, 152, 0.26)', rim: 'rgba(38, 72, 152, 0.92)' }),
+  capital: Object.freeze({ fill: 'rgba(112, 38, 132, 0.26)', rim: 'rgba(112, 38, 132, 0.92)' }),
+});
+/** How far the circle reaches past the glyph it holds, in paper pixels. */
+export const HUB_CIRCLE_PAD = 3.5;
+/** How far a mark's ink reaches from its centre: its glyph, and a hub's circle round it. Names keep clear of it. */
+export const markReach = (m) => (GLYPH_R[m.kind] ?? 4) + (m.hub ? HUB_CIRCLE_PAD : 0);
+/** Paint one hub's circle at paper (x, y): the wash, then the rim. Skin. */
+export function paintHubCircle(ctx, x, y, r, capital = false) {
+  const c = capital ? HUB_CIRCLE.capital : HUB_CIRCLE.hub;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = c.fill;
+  ctx.fill();
+  ctx.strokeStyle = c.rim;
+  ctx.lineWidth = 1.6;
   ctx.stroke();
 }
 

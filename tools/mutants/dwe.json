@@ -1538,8 +1538,8 @@
   {
     "name": "DW-E4-managed-culled",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (!f.placed && !f.managed && _playerDist > ENCOUNTER_CULL_DISTANCE",
-    "new": "      if (!f.placed && _playerDist > ENCOUNTER_CULL_DISTANCE",
+    "old": "      if (!f.placed && !f.managed && _playerDist > (f.campId != null ? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE)",
+    "new": "      if (!f.placed && _playerDist > (f.campId != null ? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE)",
     "tests": [
       "test/dwe_enemies.test.js"
     ]

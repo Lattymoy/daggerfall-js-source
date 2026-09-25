@@ -170,10 +170,10 @@ test('AUDIT 58 (f3/input): every ENTRY host binds ActivateCursor at most once (T
   assert.doesNotMatch(wm, /bindCursorToggle \} from '\.\.\/player\/pointerLock\.js'/, 'and does not import it');
   assert.match(wm, /^ {4}modalWindowUp,$/m, 'it publishes its window predicate instead');
   for (const host of ['scenes/world.js', 'scenes/exterior.js']) {
-    assert.match(src(host), /bindCursorToggle\(canvas, \(\) => gamePaused\(\) \|\| \(modes\?\.modalWindowUp\?\.\(\) \?\? false\), \(e\) => actionOf\(e, keys\)\);/,   // KB1: with the host's held Set, so a combo'd FreeMouse resolves
+    assert.match(src(host), /bindCursorToggle\(canvas, \(\) => gamePaused\(\) \|\| \(modes\?\.modalWindowUp\?\.\(\) \?\? false\), \(e\) => actionsOf\(e, keys\)\);/,   // UXB1-S: every action a shared key carries   // KB1: with the host's held Set, so a combo'd FreeMouse resolves
       `${host}: one binding, and the mode machine's guard is OR'd into it rather than lost`);
   }
-  assert.match(src('scenes/dungeon.js'), /bindCursorToggle\(canvas, \(\) => ctx\.uiOverlayActive, \(e\) => actionOf\(e, keys\)\);/,
+  assert.match(src('scenes/dungeon.js'), /bindCursorToggle\(canvas, \(\) => ctx\.uiOverlayActive, \(e\) => actionsOf\(e, keys\)\);/,
     'the standalone dungeon host is the control case - it always had exactly one');
 });
 

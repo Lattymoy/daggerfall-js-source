@@ -40,6 +40,15 @@ const CELL = 2;
 const COARSE = 64;
 const FINE_CELLS_MAX = 64;
 const COARSE_CELLS_MAX = 1024;
+/** PERF-EXT25 (2026-09-25, the players: "fps issues in the exterior but fine in the interior", "me too my
+ *  friend.. don't know why. I got a RX6600"): A CELL'S KEY IS A NUMBER. Every triangle a streamed pixel files, and
+ *  every cell a query reads, minted a template string - `${gx},${gz}` - to hash, look up and drop: on a synthetic
+ *  city pixel (300,000 triangles) the insert was ~1 s of main thread across the build and its garbage the GC's.
+ *  (gx + 2^20) * 2^21 + (gz + 2^20) is exact in a double and one-to-one for |g| < 2^20 cells - two million units
+ *  on the fine grid, sixty-seven million on the coarse, against a bucket's pixel-local coordinates in the
+ *  thousands - and the grid is a BROAD phase: two cells that shared a key would only hand a query more triangles
+ *  for the narrow phase to refuse, never fewer. The same triangles are found; every answer is the same bits. */
+const cellKey = (gx, gz) => (gx + 0x100000) * 0x200000 + (gz + 0x100000);
 /** AUDIT ONCRASH1 B5a: the most sweep steps one move() may be split into - a motion larger than this is taken
  *  whole rather than swept, because a loop whose length a caller's arithmetic chooses is a frozen tab waiting. */
 const SUBSTEPS_MAX = 256;
@@ -89,7 +98,7 @@ function fileWide(bucket, a, b, c, idx) {
   if ((maxX - minX + 1) * (maxZ - minZ + 1) > COARSE_CELLS_MAX) { bucket.huge.push(idx); return; }
   for (let gx = minX; gx <= maxX; gx++) {
     for (let gz = minZ; gz <= maxZ; gz++) {
-      const k = `${gx},${gz}`;
+      const k = cellKey(gx, gz);   // PERF-EXT25
       let cell = bucket.coarse.get(k);
       if (!cell) { cell = []; bucket.coarse.set(k, cell); }
       cell.push(idx);
@@ -106,7 +115,7 @@ function nearCells(bucket, lx, lz) {
   const gz = Math.floor(lz / CELL);
   for (let ox = -1; ox <= 1; ox++) {
     for (let oz = -1; oz <= 1; oz++) {
-      const cell = bucket.grid.get(`${gx + ox},${gz + oz}`);
+      const cell = bucket.grid.get(cellKey(gx + ox, gz + oz));   // PERF-EXT25
       if (cell) NEAR.push(cell);
     }
   }
@@ -115,7 +124,7 @@ function nearCells(bucket, lx, lz) {
     const cz = Math.floor(lz / COARSE);
     for (let ox = -1; ox <= 1; ox++) {
       for (let oz = -1; oz <= 1; oz++) {
-        const cell = bucket.coarse.get(`${cx + ox},${cz + oz}`);
+        const cell = bucket.coarse.get(cellKey(cx + ox, cz + oz));   // PERF-EXT25
         if (cell) NEAR.push(cell);
       }
     }
@@ -141,7 +150,7 @@ function wideCellsOnRay(bucket, ox, oz, dir, reach) {
     const tDeltaZ = Math.abs(COARSE * invZ);
     let walked = 0;
     while (walked <= reach) {
-      const cell = bucket.coarse.get(`${cx},${cz}`);
+      const cell = bucket.coarse.get(cellKey(cx, cz));   // PERF-EXT25
       if (cell) out.push(cell);
       if (tMaxX < tMaxZ) { walked = tMaxX; tMaxX += tDeltaX; cx += stepX; }
       else { walked = tMaxZ; tMaxZ += tDeltaZ; cz += stepZ; }
@@ -308,7 +317,8 @@ export class Collider {
       const c = tx(indices[i + 2]);
       const idx = bucket.tris.length;
       bucket.tris.push([a, b, c]);
-      for (const v of [a, b, c]) {
+      for (let j = 0; j < 3; j++) {   // PERF-EXT25: the three corners without a fourth array a triangle
+        const v = j === 0 ? a : j === 1 ? b : c;
         for (let k = 0; k < 3; k++) {
           if (v[k] < bucket.min[k]) bucket.min[k] = v[k];
           if (v[k] > bucket.max[k]) bucket.max[k] = v[k];
@@ -321,7 +331,7 @@ export class Collider {
       if ((maxX - minX + 1) * (maxZ - minZ + 1) > FINE_CELLS_MAX) { fileWide(bucket, a, b, c, idx); continue; }   // AUDIT BRANCH (WoD) B1
       for (let gx = minX; gx <= maxX; gx++) {
         for (let gz = minZ; gz <= maxZ; gz++) {
-          const k = `${gx},${gz}`;
+          const k = cellKey(gx, gz);   // PERF-EXT25
           let cell = bucket.grid.get(k);
           if (!cell) { cell = []; bucket.grid.set(k, cell); }
           cell.push(idx);
@@ -358,8 +368,15 @@ export class Collider {
    * bucket (which raycastHit AND _resolveSphere would then walk for
    * movement, senses, activation and arrows). Strictly additive: with
    * no filter the walk is byte-for-byte what it was.
+   *
+   * TRAVEL-NAV1: and an OPTIONAL `out` - { dist, key, normal: [x, y, z] },
+   * the caller's own - which is written and returned in place of a fresh
+   * result, the normal into the caller's array ([0, 0, 0] on a miss).
+   * The travel steering casts a dozen feelers a frame through here
+   * (systems/travelSteer.js createColliderProbe) and owns one result for
+   * all of them. Without it the answer is the one it always was.
    */
-  raycastHit(origin, dir, maxDist, filter = null) {
+  raycastHit(origin, dir, maxDist, filter = null, out = null) {
     let best = Infinity;
     let bestKey = null;
     let bestTri = null;   // M3 climbing: the hit surface's normal rides the result
@@ -400,7 +417,7 @@ export class Collider {
       visited.clear();
       let walked = 0;
       while (walked <= Math.min(maxDist, best)) {
-        const cell = bucket.grid.get(`${cx},${cz}`);
+        const cell = bucket.grid.get(cellKey(cx, cz));   // PERF-EXT25
         if (cell) {
           for (const ti of cell) {
             if (visited.has(ti)) continue;
@@ -430,15 +447,21 @@ export class Collider {
     // best triangle's unit normal, oriented to FACE the ray - both
     // faces hit (as above), so the sign follows the approach side.
     let normal = null;
+    let nx = 0, ny = 0, nz = 0;
     if (bestTri) {
       const [a, b, c] = bestTri;
-      let nx = (b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]);
-      let ny = (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]);
-      let nz = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+      nx = (b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]);
+      ny = (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]);
+      nz = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
       const l = Math.hypot(nx, ny, nz) || 1;
       nx /= l; ny /= l; nz /= l;
       if (nx * dir[0] + ny * dir[1] + nz * dir[2] > 0) { nx = -nx; ny = -ny; nz = -nz; }
-      normal = [nx, ny, nz];
+      if (!out) normal = [nx, ny, nz];
+    }
+    if (out) {   // TRAVEL-NAV1: the caller's own result, written in place
+      out.dist = best; out.key = bestKey;
+      out.normal[0] = nx; out.normal[1] = ny; out.normal[2] = nz;
+      return out;
     }
     return { dist: best, key: bestKey, normal };
   }

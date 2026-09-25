@@ -1,0 +1,104 @@
+[
+  {
+    "name": "PR-WAGON1-their-wagon-holds-the-ray",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "ACTIVATION_REACH, noSurface: true, yields: true });\n      }\n      // AUDIT HCC O9",
+    "new": "ACTIVATION_REACH, noSurface: true });\n      }\n      // AUDIT HCC O9",
+    "tests": [
+      "test/prwagon1.test.js"
+    ]
+  },
+  {
+    "name": "PR-WAGON1-their-horse-holds-the-ray",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "ACTIVATION_REACH, noSurface: true, yields: true });\n    }\n    return out;",
+    "new": "ACTIVATION_REACH, noSurface: true });\n    }\n    return out;",
+    "tests": [
+      "test/prwagon1.test.js"
+    ]
+  },
+  {
+    "name": "PR-WAGON1-their-wagon-a-wall-again",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "      if (p.wagon) { p.shownWagon = easeToward(p.shownWagon, p.wagon.position, dt); p.shownRotation = p.shownRotation ? quatSlerp(p.shownRotation, p.wagon.rotation, 1 - Math.exp(-12 * dt)) : [...p.wagon.rotation]; }\n",
+    "new": "      if (p.wagon) { p.shownWagon = easeToward(p.shownWagon, p.wagon.position, dt); p.shownRotation = p.shownRotation ? quatSlerp(p.shownRotation, p.wagon.rotation, 1 - Math.exp(-12 * dt)) : [...p.wagon.rotation]; }\n      if (p.wagon?.kind === HCC_WIRE_KIND.Deployed && _parts) p.bucketKey = standBox(`hccWagon:${owner}`, wagonMatrix(p.wagon.position, p.wagon.rotation), p.bucketKey);\n",
+    "tests": [
+      "test/prwagon1.test.js"
+    ]
+  },
+  {
+    "name": "PR-WAGON1-the-yield-ignored",
+    "file": "src/player/activate.js",
+    "old": "  return nearest(entrants.filter((e) => !yieldsRay(e))) ?? nearest(entrants.filter(yieldsRay));",
+    "new": "  return nearest(entrants);",
+    "tests": [
+      "test/prwagon1.test.js"
+    ]
+  },
+  {
+    "name": "PR-WAGON1-alone-never-named",
+    "file": "src/player/activate.js",
+    "old": "  return nearest(entrants.filter((e) => !yieldsRay(e))) ?? nearest(entrants.filter(yieldsRay));",
+    "new": "  return nearest(entrants.filter((e) => !yieldsRay(e)));",
+    "tests": [
+      "test/prwagon1.test.js"
+    ]
+  },
+  {
+    "name": "PR-WAGON1-the-hit-forgets-it-yields",
+    "file": "src/player/activate.js",
+    "old": "    bestYields = yieldsRay(target);",
+    "new": "    bestYields = false;",
+    "tests": [
+      "test/prwagon1.test.js"
+    ]
+  },
+  {
+    "name": "PR-WAGON1-the-yielding-pick-still-a-rival",
+    "file": "src/player/activationRace.js",
+    "old": "  const firmD = (p) => (p && !yieldsRay(p) ? p.distance : Infinity);",
+    "new": "  const firmD = (p) => (p ? p.distance : Infinity);",
+    "tests": [
+      "test/prwagon1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BRANCH-0925-PRW1-A-their-wagon-met-at-the-square-box",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "obb: { m: pm, box: _parts.box }, ",
+    "new": "",
+    "tests": [
+      "test/prwagon1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BRANCH-0925-P1-my-following-wagon-yields",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "reach: ACTIVATION_REACH, noSurface: true });\n    }\n    if (s?.horse)",
+    "new": "reach: ACTIVATION_REACH, noSurface: true, yields: true });\n    }\n    if (s?.horse)",
+    "tests": [
+      "test/prwagon1.test.js",
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BRANCH-0925-P1-my-parked-wagon-yields",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "out.push({ key: KEY_WAGON, aabb: aabbOf(box), distance: RAY_DISTANCE, reach: ACTIVATION_REACH });",
+    "new": "out.push({ key: KEY_WAGON, aabb: aabbOf(box), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, yields: true });",
+    "tests": [
+      "test/prwagon1.test.js",
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BRANCH-0925-P1-my-horse-yields",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "out.push({ key: KEY_HORSE, aabb: aabbOf(horseBox(s.horse)), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });",
+    "new": "out.push({ key: KEY_HORSE, aabb: aabbOf(horseBox(s.horse)), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true, yields: true });",
+    "tests": [
+      "test/prwagon1.test.js",
+      "test/hcc_pool.test.js"
+    ]
+  }
+]

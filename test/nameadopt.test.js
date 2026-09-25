@@ -138,7 +138,8 @@ test('NAME-ADOPT bug 1: and the button reads the store, so the store is the thin
   const menu = rd('src/ui/enhancedMenu.js');
   const mark = menu.slice(menu.indexOf('function profileMark()'), menu.indexOf('function profileMark()') + 700);
   assert.match(mark, /const who = storedSession\(appStorage\(\)\);/);
-  assert.match(mark, /who\?\.name \?\? 'Sign in'/);
+  assert.match(mark, /session: who,/, 'PROFILE1: the portrait is handed the store\'s session');
+  assert.match(rd('src/ui/profileBadge.js'), /session\?\.name \?\? 'Sign in'/, 'and draws its name');
 });
 
 // ── THE MINTER ──────────────────────────────────────────────────────
@@ -155,7 +156,7 @@ test('NAME-ADOPT: every mint ADOPTS what the answer says and hands it to the hos
   assert.equal(tok, 'v1.abc.def');
   // ...but the answer is no longer thrown away.
   assert.equal(storedSession(st).name, 'Lattymoy', 'the store learned it');
-  assert.deepEqual(seen, [{ name: 'Lattymoy', kind: 'linked', title: 'developer', glyphs: ['dev'] }], 'and so did the host');
+  assert.deepEqual(seen, [{ name: 'Lattymoy', kind: 'linked', title: 'developer', glyphs: ['dev'], level: null }], 'and so did the host (RENOWN1: with the level the token was signed with - none from a mint that named no character)');
 
   // A HOST THAT THROWS DOES NOT COST THE HELLO ITS WORD. The token is
   // good and the connection is what matters; a display seam that breaks
@@ -228,5 +229,5 @@ test('NAME-ADOPT: the host starts from the ISSUED name and every mint corrects e
   const adopt = w.slice(w.indexOf('const adoptIssued = (who) => {'), w.indexOf('const identityMinter ='));
   assert.match(adopt, /online\?\.adoptIdentity\?\.\(who\);/, 'the presence session');
   assert.match(adopt, /for \(const link of chatLinks\?\.values\?\.\(\) \?\? \[\]\) link\.adoptIdentity\?\.\(who\);/, 'and every chat link - the roster draws my row from whichever link its tab holds');
-  assert.match(w, /accountTokenMinter\(\{ fetch: \(u, i\) => globalThis\.fetch\(u, i\), storage: appStorage\(\), onIssued: adoptIssued \}\)/);
+  assert.match(w, /accountTokenMinter\(\{ fetch: \(u, i\) => globalThis\.fetch\(u, i\), storage: appStorage\(\), onIssued: adoptIssued,\s+character: /);   // RENOWN1: and the character coming online
 });

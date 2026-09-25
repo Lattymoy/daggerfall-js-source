@@ -62,8 +62,11 @@ test('MAC1 A: the boot door counts the Morrowind store itself and repaints when 
   const menu = src('src/ui/enhancedMenu.js');
   assert.match(menu, /import \{[^}]*\bcountMorrowindArchives\b[^}]*\} from '\.\.\/scenes\/dataSource\.js'/, 'the menu imports the NAMES-ONLY count');
   const mountBlock = menu.slice(menu.indexOf('hooks = h ?? {};'), menu.indexOf('sections = mode ==='));
-  assert.doesNotMatch(mountBlock, /registerMorrowindData\(\)/, 'AUDIT 65 XL-6: the MOUNT never calls the fingerprinting pass (the Build button does, before it spends seconds)');
-  assert.match(menu, /await ds\.registerMorrowindData\(\);\s*\n\s*const \{ buildArmsFor \} = await import/, 'the Build-arms button measures the set first, so fpArm\'s kept face verdict is a lookup');
+  assert.doesNotMatch(mountBlock, /registerMorrowindData\(\)/, 'AUDIT 65 XL-6: the MOUNT never calls the fingerprinting pass (the attach pick does - MWA4 - before a build spends seconds)');
+  // MWA4: the Build-arms toggle is gone; Attach builds, AFTER the pick - and the pick measures what it stored itself
+  // (pickMorrowindFiles' register), so fpArm's kept face verdict is still a lookup
+  assert.match(menu, /const n = await ds\.pickMorrowindFiles\(\);[\s\S]{0,400}?const \{ buildArmsFor \} = await import/, 'Attach builds after the pick');
+  assert.match(src('src/scenes/dataSource.js'), /store: storeMorrowindFiles,\n\s*register: registerMorrowindData,/, '...and the pick measures the set it stored');
   // Inside mount, after the hooks land and before any pane renders: the
   // count is kicked when nothing has counted (`_mwCount`'s -1) and the
   // SAME host repaints.
@@ -206,8 +209,8 @@ test('MAC1 D: the far rings draw the trees and the flats that move, and nothing 
   // the wire: the streaming host's flat walk asks it per batch, with the
   // batch's own height and the animator's frame as the "moves" bit
   const w = src('src/scenes/world.js');
-  assert.match(w, /import \{ farFlatVisible \} from '\.\.\/world\/flatDistance\.js'/);
-  assert.match(w, /const ring = Math\.max\(Math\.abs\(p\.px - state\.current\.x\), Math\.abs\(p\.py - state\.current\.y\)\);\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(pixelVisible \|\| pixelCasts\) for \(const b of p\.batches\) \{\s*\n\s*const off = [^\n]*EV3\s*\n\s*if \(off && !renderer\.shadowReach\(b\._box, t\[0\], t\[1\], t\[2\]\)\) continue;[^\n]*\n\s*if \(!farFlatVisible\(\{ ring, height: b\.size\?\.h \?\? 0, animated: b\.frame != null \}\)\) continue;/,
+  assert.match(w, /import \{ farFlatVisibleAt \} from '\.\.\/world\/flatDistance\.js'/);   // PERF-EXT12: the rule's positional home - no object a batch a frame
+  assert.match(w, /const ring = Math\.max\(Math\.abs\(p\.px - state\.current\.x\), Math\.abs\(p\.py - state\.current\.y\)\);\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(pixelVisible \|\| pixelCasts\) for \(const b of p\.batches\) \{\s*\n\s*const off = [^\n]*EV3\s*\n\s*if \(off && !renderer\.shadowReach\(b\._box, t\[0\], t\[1\], t\[2\]\)\) continue;[^\n]*\n\s*if \(!farFlatVisibleAt\(ring, b\.size\?\.h \?\? 0, b\.frame != null\)\) continue;/,
     'the ring is Chebyshev from the player\'s pixel and the rule runs after the frustum test and the reach (AUDIT REACH: a pixel neither seen nor reached walks no batch at all, and the rule is asked only of a batch the frame or a shadow can keep)');
 });
 

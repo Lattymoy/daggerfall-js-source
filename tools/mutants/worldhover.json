@@ -29,7 +29,7 @@
   {
     "name": "WORLD-HOVER-signature-is-the-key-alone",
     "file": "src/systems/worldHover.js",
-    "old": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
+    "old": "  return `${f.key}|${f.kind}|${f.renown ?? ''}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}${f.tone ? `|${f.tone}` : ''}`;",
     "new": "  return `${f.key}`;",
     "tests": [
       "test/worldhover.test.js",
@@ -39,8 +39,8 @@
   {
     "name": "WORLD-HOVER-signature-drops-the-sub-lines",
     "file": "src/systems/worldHover.js",
-    "old": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
-    "new": "  return `${f.key}|${f.kind}|${f.title}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
+    "old": "  return `${f.key}|${f.kind}|${f.renown ?? ''}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}${f.tone ? `|${f.tone}` : ''}`;",
+    "new": "  return `${f.key}|${f.kind}|${f.renown ?? ''}|${f.title}|${rows}|${f.rest}|${f.empty ? 'e' : ''}${f.tone ? `|${f.tone}` : ''}`;",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -198,8 +198,8 @@
   {
     "name": "WORLD-HOVER-a-multi-line-title-is-flattened",
     "file": "src/ui/worldPlaque.js",
-    "old": "  for (const line of String(f.title).split('\\n')) {",
-    "new": "  for (const line of [String(f.title)]) {",
+    "old": "  const lines = String(f.title).split('\\n');",
+    "new": "  const lines = [String(f.title)];",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -360,8 +360,8 @@
   {
     "name": "WORLD-HOVER-raceWinner-tie-order-inverted",
     "file": "src/player/activationRace.js",
-    "old": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
-    "new": "  for (const p of [foe, peer, person, ground, pile, corpse, torch, horseCart, wagon, water, camp]) {",
+    "old": "  return firmFirst([camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "new": "  return firmFirst([foe, peer, person, ground, pile, corpse, torch, horseCart, wagon, water, camp], nearestInOrder);",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -495,8 +495,8 @@
   {
     "name": "WORLD-HOVER-a-foe-beats-a-townsperson-on-a-tie",
     "file": "src/player/activationRace.js",
-    "old": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
-    "new": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, foe, peer, person]) {",
+    "old": "  return firmFirst([camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "new": "  return firmFirst([camp, water, wagon, horseCart, torch, corpse, pile, ground, foe, peer, person], nearestInOrder);",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -504,8 +504,8 @@
   {
     "name": "WORLD-HOVER-a-townsperson-beats-the-door-on-a-tie",
     "file": "src/player/activationRace.js",
-    "old": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
-    "new": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, person, peer, ground, foe]) {",
+    "old": "  return firmFirst([camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "new": "  return firmFirst([camp, water, wagon, horseCart, torch, corpse, pile, person, peer, ground, foe], nearestInOrder);",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -729,7 +729,7 @@
   {
     "name": "WORLD-HOVER-the-dungeon-entrance-arm-loses-its-caller-again",
     "file": "src/scenes/worldModes.js",
-    "old": "      const entry = entries[key];\n      if (entry?.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE) {\n        return staticDoorName('dungeonEntrance', { locationName: currentLocationName() });\n      }\n",
+    "old": "      const entry = entries[key];\n      if (entry?.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE) {\n        return staticDoorName('dungeonEntrance', { locationName: currentLocationName(), elite: !!entry.dfLocation?.elite });   // ELITE: 'Elite Dungeon' over its mouth\n      }\n",
     "new": "",
     "tests": [
       "test/worldhover.test.js"
@@ -810,8 +810,8 @@
   {
     "name": "WORLD-HOVER-the-door-text-cache-ignores-the-generation",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (_doorTextKey === key && _doorTextGen === gen) return _doorText;",
-    "new": "      if (_doorTextKey === key) return _doorText;",
+    "old": "      if (_doorTextKey === key && _doorTextGen === gen && _doorTextHomes === homesV) return _doorText;",
+    "new": "      if (_doorTextKey === key && _doorTextHomes === homesV) return _doorText;",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -819,8 +819,8 @@
   {
     "name": "WORLD-HOVER-the-door-text-is-resolved-every-frame-again",
     "file": "src/scenes/worldModes.js",
-    "old": "      const gen = doorGeneration?.() ?? 0;\n      if (_doorTextKey === key && _doorTextGen === gen) return _doorText;\n",
-    "new": "      const gen = doorGeneration?.() ?? 0;\n",
+    "old": "      const gen = doorGeneration?.() ?? 0;\n      const homesV = host.onlineHomes?.version?.() ?? 0;\n      if (_doorTextKey === key && _doorTextGen === gen && _doorTextHomes === homesV) return _doorText;\n",
+    "new": "      const gen = doorGeneration?.() ?? 0;\n      const homesV = host.onlineHomes?.version?.() ?? 0;\n",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -957,8 +957,8 @@
   {
     "name": "AUDIT-WH2-the-signature-stops-seeing-the-title",
     "file": "src/systems/worldHover.js",
-    "old": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
-    "new": "  return `${f.key}|${f.kind}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
+    "old": "  return `${f.key}|${f.kind}|${f.renown ?? ''}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}${f.tone ? `|${f.tone}` : ''}`;",
+    "new": "  return `${f.key}|${f.kind}|${f.renown ?? ''}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}${f.tone ? `|${f.tone}` : ''}`;",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -966,8 +966,8 @@
   {
     "name": "AUDIT-WH2-the-signature-stops-seeing-the-tail",
     "file": "src/systems/worldHover.js",
-    "old": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
-    "new": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.empty ? 'e' : ''}`;",
+    "old": "  return `${f.key}|${f.kind}|${f.renown ?? ''}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}${f.tone ? `|${f.tone}` : ''}`;",
+    "new": "  return `${f.key}|${f.kind}|${f.renown ?? ''}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.empty ? 'e' : ''}${f.tone ? `|${f.tone}` : ''}`;",
     "tests": [
       "test/worldhover.test.js"
     ]

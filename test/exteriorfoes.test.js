@@ -30,7 +30,7 @@ test('exteriorfoes: the pool laws - cull AFTER fresh senses, the alert raise, th
   // the cull runs after ai.update so a just-spawned foe's Infinity
   // placeholder never culls it (the live probe caught the inversion)
   const upd = s.indexOf('f.ai.update(dt, playerFeet, _armed(f, senses), _fParalyzed, _fPaused);');
-  const cull = s.indexOf('> ENCOUNTER_CULL_DISTANCE');
+  const cull = s.indexOf(': ENCOUNTER_CULL_DISTANCE)');   // DROPS-AUDIT CAMP-CULL: the cull picks the camp's distance or the encounter's
   assert.ok(upd > 0 && cull > upd, 'senses first, cull second');
   // MT-ii advanced BOTH alert gates and the cull's distance. The
   // target==player term in EnemySenses:531-535 / EnemyDeath:131-136
@@ -78,7 +78,7 @@ test('exteriorfoes: the world host - the cadence loop, the travel reset, the fac
     'fast travel suppresses the traveled window, as DFU does');
   // encounter foes are spell targets and the sinks route by pool
   assert.ok(s.includes('[...cityGuards.guards, ...exteriorFoes.foes]'), 'magic.foes() sees both pools');
-  assert.ok(s.includes("g._encounter ? exteriorFoes.damageFoe(g, n, player.pos, null, { fromPlayer: fp, kind: 'spell' }) : cityGuards.hurtGuard(g, n, player.pos, null, { fromPlayer: fp })"),   // AUDIT WORLD6b-iii(a) B2: with the engine's provenance
+  assert.ok(s.includes("g._encounter ? exteriorFoes.damageFoe(g, n, player.pos, null, { fromPlayer: fp, kind: 'spell', whole: !!o?.whole }) : cityGuards.hurtGuard(g, n, player.pos, null, { fromPlayer: fp })"),   // AUDIT WORLD6b-iii(a) B2: with the engine's provenance; AUDIT PSCALE1 DOORS-1: and a kill's flag
     'the spell sink routes to the right damage door');
   // the melee chain: the watch, then encounters, then civilians
   const watch = s.indexOf('cityGuards.resolvePlayerHit(weaponRig.playerWeapon');

@@ -49,6 +49,10 @@ on:
       - "src/net/nameFilter.js"
       - "src/net/moderation.js"
       - "src/net/playClock.js"
+      - "src/net/renown.js"
+      - "src/net/homeLaw.js"
+      - "src/net/decorLaw.js"
+      - "src/net/guildLaw.js"
       - "src/net/wire.js"
       - "src/net/dice.js"
       - "src/world/mat4.js"
@@ -406,6 +410,67 @@ jobs:
           echo "mod/mute as a guest -> $code"
           if [ "$code" != "403" ] || ! grep -q '"not-moderator"' /tmp/mod.json; then
             echo "::error::/v1/mod/mute did not refuse a guest as not-moderator ($code)"; cat /tmp/mod.json || true; exit 1
+          fi
+
+          # AUDIT RENOWN1 DATA-2: A RENOWN REPORT IS ONE D1 BATCH - an UPDATE
+          # ... RETURNING with subqueries, an UPDATE, an INSERT ... SELECT
+          # and a SELECT, run as one transaction. node:sqlite runs all four;
+          # this asks D1. A fresh guest's first report of 1 XP is credited
+          # whole, and the same report again (the same id) is answered as a
+          # repeat and credited nothing - a 404 is a route that did not
+          # deploy, a 500 a migration that did not apply or a statement D1
+          # will not run.
+          rid=$(printf '%016x' "$(date +%s)")
+          code=$(curl -sS --max-time 15 -o /tmp/renown.json -w '%{http_code}' -X POST "$base/v1/renown/xp" \
+            -H 'content-type: application/json' -d "{\"secret\":\"$secret\",\"character\":\"deploy-smoke\",\"xp\":1,\"rid\":\"$rid\"}")
+          echo "renown/xp -> $code"
+          cat /tmp/renown.json || true
+          echo
+          if [ "$code" != "200" ] || ! grep -q '"credited":1' /tmp/renown.json; then
+            echo "::error::a Renown report failed on the deployed Worker ($code) - a first report of 1 XP must be credited 1"
+            exit 1
+          fi
+          code=$(curl -sS --max-time 15 -o /tmp/renown2.json -w '%{http_code}' -X POST "$base/v1/renown/xp" \
+            -H 'content-type: application/json' -d "{\"secret\":\"$secret\",\"character\":\"deploy-smoke\",\"xp\":1,\"rid\":\"$rid\"}")
+          echo "renown/xp again -> $code"
+          if [ "$code" != "200" ] || ! grep -q '"credited":0' /tmp/renown2.json || ! grep -q '"repeat":true' /tmp/renown2.json; then
+            echo "::error::a repeated Renown report was not answered as a repeat ($code)"; cat /tmp/renown2.json || true; exit 1
+          fi
+
+          # HOME1: THE HOMES ARE LIVE. A town's homes are any session's to
+          # read - a guest's too - so an empty town answers 200 with a list
+          # (a 500 is the migration that did not apply); and a guest's claim
+          # is refused as homes-need-account, never taken (a 404 is a route
+          # that did not deploy). Nothing is claimed here: a smoke that
+          # bought a home would leave a building owned by nobody real.
+          code=$(curl -sS --max-time 15 -o /tmp/homes.json -w '%{http_code}' -X POST "$base/v1/homes/town" \
+            -H 'content-type: application/json' -d "{\"secret\":\"$secret\",\"mapId\":1}")
+          echo "homes/town -> $code"
+          if [ "$code" != "200" ] || ! grep -q '"homes":\[' /tmp/homes.json; then
+            echo "::error::/v1/homes/town did not answer a town's homes ($code)"; cat /tmp/homes.json || true; exit 1
+          fi
+          code=$(curl -sS --max-time 15 -o /tmp/claim.json -w '%{http_code}' -X POST "$base/v1/homes/claim" \
+            -H 'content-type: application/json' -d "{\"secret\":\"$secret\",\"mapId\":1,\"buildingKey\":1,\"region\":0,\"character\":\"deploy-smoke\",\"price\":1}")
+          echo "homes/claim as a guest -> $code"
+          if [ "$code" != "403" ] || ! grep -q '"homes-need-account"' /tmp/claim.json; then
+            echo "::error::/v1/homes/claim did not refuse a guest as homes-need-account ($code)"; cat /tmp/claim.json || true; exit 1
+          fi
+          # DECOR1: AN ONLINE HOME'S DECOR IS LIVE. A home's pieces are any
+          # session's to read, so a home nobody owns answers 200 with an empty
+          # list (a 500 is the migration that did not apply); and a guest's
+          # placement is refused as homes-need-account (a 404 is a route that
+          # did not deploy). Nothing is placed: a guest owns no home to place in.
+          code=$(curl -sS --max-time 15 -o /tmp/decor.json -w '%{http_code}' -X POST "$base/v1/homes/decor" \
+            -H 'content-type: application/json' -d "{\"secret\":\"$secret\",\"mapId\":1,\"buildingKey\":1}")
+          echo "homes/decor -> $code"
+          if [ "$code" != "200" ] || ! grep -q '"pieces":\[' /tmp/decor.json; then
+            echo "::error::/v1/homes/decor did not answer a home's pieces ($code)"; cat /tmp/decor.json || true; exit 1
+          fi
+          code=$(curl -sS --max-time 15 -o /tmp/place.json -w '%{http_code}' -X POST "$base/v1/homes/decor/place" \
+            -H 'content-type: application/json' -d "{\"secret\":\"$secret\",\"mapId\":1,\"buildingKey\":1,\"character\":\"deploy-smoke\",\"piece\":{}}")
+          echo "homes/decor/place as a guest -> $code"
+          if [ "$code" != "403" ] || ! grep -q '"homes-need-account"' /tmp/place.json; then
+            echo "::error::/v1/homes/decor/place did not refuse a guest as homes-need-account ($code)"; cat /tmp/place.json || true; exit 1
           fi
 
           handle="smoke$(date +%s | tail -c 7)"

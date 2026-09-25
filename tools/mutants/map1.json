@@ -525,7 +525,7 @@
   {
     "name": "MAPFIELD6-names-ignore-glyphs",
     "file": "src/ui/inkMap.js",
-    "old": "  for (const m of marks) {\n    if (!shown.has(m.colorIndex) || !onSheet(m)) continue;\n    const [px, py] = toPaper(view, m.x, m.y);\n    const r = (GLYPH_R[m.kind] ?? 4) + 1;\n    boxes.push({ x: px - r, y: py - r, w: r * 2, h: r * 2 });\n  }",
+    "old": "  for (const m of marks) {\n    if (!shown.has(m.colorIndex) || !onSheet(m)) continue;\n    const [px, py] = toPaper(view, m.x, m.y);\n    const r = markReach(m) + 1;   // HUB1: a hub's circle is ground its glyph holds\n    boxes.push({ x: px - r, y: py - r, w: r * 2, h: r * 2 });\n  }",
     "new": "",
     "tests": [
       "test/heldmap.test.js"

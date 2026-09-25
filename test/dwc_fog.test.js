@@ -252,7 +252,7 @@ test('DW-C: the renderer carries the fog as a FRAME\'s - beginFrame clears it, a
   assert.match(r, /this\._dwFog\.set\(s\.dwFog\);/, '...and restores it');
   assert.match(r, /sf = this\._fogMode;\n\s*const sw = this\._dwFog\[0\];[^\n]*\n[\s\S]{0,400}this\._fogMode = 0; this\._dwFog\[0\] = 0;[\s\S]*?this\._fogMode = sf; this\._dwFog\[0\] = sw;/, 'the sprite bracket borrows it off and back');   // AUDIT 39 F47 keeps the scene's own borrow its own statement
   assert.equal((r.match(/outColor = vec4\(dwWaterFog\(/g) || []).length, 7, 'the seven classic world programs');
-  assert.match(rd('src/render/enhancedLighting.js'), /return dwWaterFog\(elEncode\(col\), wp\) \+ \(bayer4/, 'the lane: on the display colour, before the dither');
+  assert.match(rd('src/render/enhancedLighting.js'), /return dwWaterFog\(col, wp\) \+ \(bayer4/, 'the lane: on the display colour (EL-DISTANCE: col is already encoded), before the dither');
   assert.match(rd('src/render/waterSurface.js'), /outColor = vec4\(dwWaterFog\(mix\(uFogColor, col, fogFactorAt\(vWorldPos\)\), vWorldPos\), alpha\);/);
   // the behaviour of the door itself, on a bare renderer
   const calls = [];

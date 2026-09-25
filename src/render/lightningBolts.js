@@ -134,6 +134,14 @@ export function boltVertices(bolts, out) {
   return v;
 }
 
+/** EVENT1: the burning channels by their colour - `[[color, bolts]]` in first-seen order, a bolt with none in
+ *  BOLT_COLOR's group. One draw a colour: a frame holds one or two (the weather's storms, the dread's). Pure. */
+export function boltGroups(bolts) {
+  const groups = new Map();
+  for (const b of bolts) { const c = b.color ?? BOLT_COLOR; let g = groups.get(c); if (!g) groups.set(c, g = []); g.push(b); }
+  return [...groups];
+}
+
 export class LightningBoltsRenderer {
   constructor(gl) {
     this.gl = gl;
@@ -167,6 +175,10 @@ export class LightningBoltsRenderer {
   draw(bolts, proj, view, eye, seen = BOLT_SEEN_M, viewH = 0) {
     this.drawn = 0;
     if (!bolts?.length) return;
+    for (const [color, group] of boltGroups(bolts)) this._drawGroup(group, color, proj, view, eye, seen, viewH);   // EVENT1: a colour a draw
+  }
+
+  _drawGroup(bolts, color, proj, view, eye, seen, viewH) {
     const verts = boltVertices(bolts, this.data);
     if (!verts) return;
     const gl = this.gl, U = this.u;
@@ -177,7 +189,7 @@ export class LightningBoltsRenderer {
     gl.uniform1f(U.uPx, 2 / (proj[5] * Math.max(1, viewH || gl.drawingBufferHeight)));   // proj[5] = 1 / tan(fov / 2)
     gl.uniform1f(U.uFar, farOf(proj));
     gl.uniform1f(U.uCore, BOLT_CORE_M); gl.uniform1f(U.uHalo, BOLT_HALO); gl.uniform1f(U.uMinPx, BOLT_MIN_PX);
-    gl.uniform3fv(U.uColor, BOLT_COLOR); gl.uniform1f(U.uSeen, Math.max(1000, seen));
+    gl.uniform3fv(U.uColor, color); gl.uniform1f(U.uSeen, Math.max(1000, seen));
     gl.bindVertexArray(this.vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.data.subarray(0, verts * BOLT_STRIDE));
@@ -189,6 +201,6 @@ export class LightningBoltsRenderer {
     gl.enable(gl.CULL_FACE);
     gl.depthMask(true);
     gl.disable(gl.BLEND);
-    this.drawn = verts / 6;
+    this.drawn += verts / 6;
   }
 }

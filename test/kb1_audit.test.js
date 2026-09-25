@@ -398,7 +398,7 @@ test('AUDIT KB1 (hosts 1): F8 under a window is the window\'s - the automap\'s t
     assert.equal(saves, 1, 'a held F9 saves once');
     assert.equal(rd('src/ui/screenshot.js').includes("addEventListener('keydown'"), false, 'no listener of its own');
     for (const h of ['world.js', 'exterior.js']) {
-      assert.match(rd(`src/scenes/${h}`), /else if \(e\.repeat\) \{ e\.preventDefault\(\); return; \}[^\n]*\n\s*else if \(routeAction\(act, hudCtx\)\)/, `${h}'s own ladder takes the press alone`);
+      assert.match(rd(`src/scenes/${h}`), /else if \(e\.repeat\) \{ e\.preventDefault\(\); return true; \}[^\n]*\n\s*else if \(routeAction\(act, hudCtx\)\)/, `${h}'s own ladder takes the press alone`);
     }
   } finally { setBindings(null); }
 });

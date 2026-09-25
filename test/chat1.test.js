@@ -693,7 +693,7 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   assert.match(w, /status: chatStatus\(chatLog\.active\),/, 'the active tab\'s line');
   assert.match(w, /return s\?\.statusLine\(tab\?\.label \?\? 'chat'\) \?\? null;/, 'the session\'s own line, labelled (B5)');
   assert.doesNotMatch(w, /chat: \$\{link\.error/, 'and no remake of it');
-  assert.match(w, /const onlineFrame = \(now, dt\) => \{\s*chatFrame\(\);(?:[^\n]*\n)(?:\s*(?:\/\/[^\n]*|tradeFrame\(\);[^\n]*|duelFrame\(\);[^\n]*|profileFrame\(\);[^\n]*|pageFrame\(\);[^\n]*|mail\?\.poll\(\);[^\n]*)\n)*\s*if \(townTalk\.overlay instanceof DeathScreen \|\| modes\?\.deathUp\?\.\(\)\)/, 'the chat frame runs before the dead return: the channels keep their heartbeat and reconnect while the death screen is up');
+  assert.match(w, /const onlineFrame = \(now, dt\) => \{\s*chatFrame\(\);(?:[^\n]*\n)(?:\s*(?:\/\/[^\n]*|tradeFrame\(\);[^\n]*|duelFrame\(\);[^\n]*|profileFrame\(\);[^\n]*|pageFrame\(\);[^\n]*|mail\?\.poll\(\);[^\n]*|renownTracker\?\.tick\(\);[^\n]*)\n)*\s*if \(townTalk\.overlay instanceof DeathScreen \|\| modes\?\.deathUp\?\.\(\)\)/, 'the chat frame runs before the dead return: the channels keep their heartbeat and reconnect while the death screen is up');
   assert.match(w, /'pagehide', \(\) => \{\s*try \{ worldPublish\(performance\.now\(\), true\); \}\s*catch \(e\) \{[^\n]*\}\s*online\?\.leave\(\);\s*for \(const link of chatLinks\?\.values\(\) \?\? \[\]\) link\.leave\(\);\s*peerBodies\?\.destroy\(\);/, 'the goodbye leaves every channel - and AUDIT ONCRASH1 A7: the publish is behind its own guard, the leave is not behind the publish');
   assert.doesNotMatch(w, /chatPanel\?\.destroy\(\)/, 'AUDIT CHAT B4: and keeps the panel - a page restored from the cache gets its chat back');
   // CG2 rests on the host listening in the BUBBLE phase (AUDIT CHAT D2): a capture listener beside the panel's would fill the ring
@@ -705,7 +705,7 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   assert.equal((panel.match(/win\.addEventListener\(/g) ?? []).length, 1, 'and no other on the window (D5)');
   assert.match(panel, /e\.isTrusted !== false/, 'the touch layer\'s synthesized Enter opens nothing');
   assert.match(panel, /if \(e\.isComposing \|\| e\.keyCode === 229\) \{ e\.stopPropagation\(\); return; \}/, 'the IME\'s Enter (C3)');
-  assert.match(panel, /export const actionOfKey = \(e\) => actionForCode\(bindings\(\), e\.code\);/, 'the open key through the registry (C4)');
+  assert.match(panel, /export const actionOfKey = \(e\) => \(codeMeans\(bindings\(\), e\.code, CHAT_OPEN_ACTION\) \? CHAT_OPEN_ACTION : actionForCode\(bindings\(\), e\.code\)\);/, 'the open key through the registry (C4; UXB1-S: a shared key that carries it opens it)');
   const online = rd('src/net/online.js');
   assert.match(online, /if \(!this\.presence && this\.status === 'open' && now - this\._lastSentAt >= HEARTBEAT_MS && this\._send\(\{ t: 'ping' \}\)\) this\._lastSentAt = now;/, 'the channel heartbeat is a ping the runtime answers in its sleep');
   const room = rd('server/src/index.js');

@@ -4,17 +4,18 @@
 > left as it wrote them.** They were true of the fifteen rows that
 > existed on 2026-09-15 and they are the record of what putting those
 > rows side by side found. The live numbers are derived, not written:
-> `vendor/` holds 36 directories and 20 of their READMEs still carry an
+> `vendor/` holds 37 directories and 21 of their READMEs still carry an
 > unfilled permission line, each shown as `RECORD OPEN` in the table
-> (DW-A to DW-D, 2026-09-25, added `iliac-puddle-no-more`, the thirty-sixth -
-> its archive carries no readme either, so the open count rises by one again;
-> WA1, 2026-09-25, added `warm-ashes-ships`, the thirty-fifth - its
-> archive carries no readme, so its permission line waits for Mac and the
-> open count rises by one; DS1, 2026-09-25, added `detailed-ships`, the thirty-fourth - the same
-> author, the same readme permission, so the open count stands again;
-> AS1, 2026-09-25, added `aquatic-sprites`, the thirty-third - its
-> author's readme carries the permission itself, so the open count
-> stands; AUDIT BRANCH (WoD), 2026-09-23, counted them again after the merge
+> (the sea update's merge with main, 2026-09-25, counted them again: main's
+> SKIN2 added `class-skins`, the thirty-third, its record open; the sea update's
+> four follow it - AS1's `aquatic-sprites` the thirty-fourth (its author's
+> readme carries the permission itself, so the open count stands), DS1's
+> `detailed-ships` the thirty-fifth (the same author, the same readme
+> permission, so it stands again), WA1's `warm-ashes-ships` the thirty-sixth
+> (its archive carries no readme, so its permission line waits for Mac and
+> the open count rises by one) and DW-A to DW-D's `iliac-puddle-no-more` the
+> thirty-seventh (no readme either, so it rises by one again);
+> AUDIT BRANCH (WoD), 2026-09-23, counted them again after the merge
 > brought `horse-cart-and-cargo`, the twenty-seventh; WOD1 had counted 26
 > and 13 when it added the twenty-sixth;
 > the sentence had read 19 and 11 since ORL1 and nothing checks it, so
@@ -98,6 +99,7 @@ not the date the slice shipped, where those differ.
 | `horse-cart-and-cargo` | manifest, settings, the text table, both assemblies with their IL dumps, the 45 horse PNGs out of the assembly's manifest resources | demifiend000 | 1.0.0-rc12 | shipped `.dfmod` `Horse_Cart_And_Cargo_1374_1.2.4_2026-09-16T01-22Z`; behaviour off the DLL's IL (`tools/ilDump.py`); `tools/hccAssets.mjs` reproduces every vendored file from the bundle (`formats/dotnetResources.js` for the embedded art) | granted (Mac handed the bundle over 2026-09-23) - **RECORD OPEN** | HCC | 2026-09-23 | `06-Systems/Horse-Cart-And-Cargo.md` |
 | `meanerMonsters` | 46 sprite-scale XML, manifest | Ralzar (header: Hazelnut and Ralzar) | 1.5.2 | shipped zip; code from `Ralzar81/Meaner-Monsters` master | MIT (source header) | MM1 | 2026-09-12 | `04-Characters/Meaner-Monsters.md` |
 | `oblivion-remaster-leveling` | the whole mod: its ten shipped files - the 1,314 lines of Lua, the 487-byte `.omwaddon` (one GMST, `iLevelupTotal` 100), the manifest, both l10n yaml and the author's README | **not named in any shipped file** (Nexus Morrowind 56569) | 0.5.3 | shipped `.zip` `OblivionRemasterLikeLeveling_0.5.3-56569-v0-5-3-1748644502`; behaviour off the author's OWN LUA, which is the mod - there is nothing compiled to read | **the archive states NO LICENCE**; granted (Mac handed the archive over 2026-09-17) - **RECORD OPEN** | ORL1 | 2026-09-17 | `06-Systems/Oblivion-Remaster-Leveling.md` |
+| `class-skins` | twenty redrawn sprite sheets of Daggerfall's enemy classes (1,683 PNGs) and a manifest of every record's frame count, worn as on-foot skins 16-35 | **not named for the pack** (one folder names Kamer, for the bounty hunter) | - | Mac's `ExistingClasses.rar` (one RAR per set); three sets given port archive numbers, one record's frame gap closed and one stray underscore read as the frame it is; `class-skins.files.json` maps every file to its archive path and `tools/classSkinsListing.mjs` proves the bytes (`vendor/class-skins/README.md`) | granted (Mac handed the archive over 2026-09-25) - **RECORD OPEN** | SKIN2 | 2026-09-25 | `06-Systems/Eye-Of-The-Beholder.md` |
 | `pcaao` | manifest, settings | Kirk.O | 1.44 | shipped `.dfmod`, DLL decompiled (ILSpy 8.2.0.7535); **source repo only covers 1.40** (`6e19023`) | repository states none; granted (Mac handed the bundle over 2026-09-12) - **RECORD OPEN** | PCO1 | 2026-09-12 | `05-Combat/Physical-Combat-Overhaul.md` |
 | `raum-book` | the animated book itself | Mac (Lattymoy), project-raum | - | `Lattymoy/project-raum` @ `7fa7119e` | Mac's own work, at his word 2026-09-12 | the enhanced book | 2026-09-12 | `10-UI/UI-Arc.md` |
 | `roleplay-realism-items` | manifest, settings, `ItemTemplates.json`, the string table, the fifteen scripts (MIT, verbatim), and the 280 sprites with their `<rect>`s (`public/art/roleplay-realism-items/`, re-encoded from the bundle - RRI1) | Hazelnut & Ralzar | 1.3 | shipped zip `RoleplayRealism-Items-1.3-61-1-3-1707669833`; behaviour off the author's SOURCE (`ajrb/dfunity-mods` @ `0af2ec9`, `RoleplayRealismItems/`), the shipped bundle's manifest, settings, templates and string table diffed against it (identical) | code MIT (every script's header); **the sprites carry no licence text** - granted (Mac handed the zip over 2026-09-23) - **RECORD OPEN** | RRI1 | 2026-09-23 | `06-Systems/Roleplay-Realism-Items.md` |

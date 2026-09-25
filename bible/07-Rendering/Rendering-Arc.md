@@ -2414,13 +2414,13 @@ beside them. Then the same shape turned up everywhere else:
 
 | host | list |
 |---|---|
-| `dungeonContext.js:5405` | the mobiles, the drops, the spells |
-| `worldModes.js:7277` | the dungeon's flats, camps, torches and peers |
-| `worldModes.js:7459` | the interior's flats and peers |
-| `worldModes.js:7465-7530` | blood, torches, drops, foes, guards - **five separate uncut calls** |
-| `exterior.js:5272`, `world.js:15156` | the spell missiles |
-| `exterior.js:5348` | the fixed city's townspeople |
-| `interior.js:380`, `dungeon.js:1084` | the flats, the camps, the torches |
+| `dungeonContext.js:5492` | the mobiles, the drops, the spells |
+| `worldModes.js:7724` | the dungeon's flats, camps, torches and peers |
+| `worldModes.js:7915` | the interior's flats and peers |
+| `worldModes.js:7921-7987` | blood, torches, drops, foes, guards - **five separate uncut calls** |
+| `exterior.js:5295`, `world.js:15715` | the spell missiles |
+| `exterior.js:5371` | the fixed city's townspeople |
+| `interior.js:382`, `dungeon.js:1086` | the flats, the camps, the torches |
 
 Seven call sites, and an eighth waiting to be written next year. **Fixing
 them one at a time is how this bug got to be in eight places.** The test
@@ -2749,6 +2749,8 @@ evaluate all of them.**
 
 ## PERF-FOG (2026-09-19) - A UNIFORM WAS BEING DECODED ONCE A FRAGMENT
 
+*Superseded by EL-DISTANCE (2026-09-25, below): the lane blends the fog in display space now, so the fog colour is never decoded - here or anywhere - and the decoded uniform, its cache and its upload are gone.*
+
 Found by keeping on looking after PERF-SUN, in the same place and for
 the same reason: what does every exterior fragment actually run?
 
@@ -2805,6 +2807,37 @@ moved.
 **The lesson: a shader is the one place where "it's just a constant"
 costs you two million times a frame. The exterior's real bill was never
 in the things that were easy to count.**
+
+## EL-DISTANCE (2026-09-25) - THE LANE'S FOG IS BLENDED WHERE THE CLASSIC LANE BLENDS IT
+
+Mac: "Also to add with enhanced lighting. It almost gives this weird darkness/foggy look to distant terrian which I
+really dont like. Not sure what it is".
+
+**Cause.** `elFinish` (render/enhancedLighting.js) mixed the fog colour into the LINEAR, tonemapped surface and
+encoded the sum; the far ring's own finish did the same. The ramp is the one `fogFactorAt` the classic lane uses,
+but the classic lane mixes in DISPLAY space, and a mix in linear lands far nearer the fog colour once it is encoded -
+so the lane's distant ground reached the fog's colour a long way before the classic lane's: a pale grey-blue veil by
+day, a dark one at dusk and at night when the fog colour is dark.
+
+**Measured** (the investigators' synthetic hills through the real Renderer and lane in headless Chromium, the same
+scene on fdd099f46 and on the fix; luminance by view distance, 7 am): lane before / after / classic - 120-240 units
+75.2 / 57.9 / 61.4, 240-400 94.0 / 72.7 / 73.3, 400-700 116.2 / 87.5 / 86.8, 700-1200 144.1 / 114.4 / 113.8,
+1200-1800 178.2 / 156.1 / 155.1. The mid hills' colour 90,105,104 (saturation 0.15) before, 65,84,63 (0.25) after,
+68,83,66 (0.21) classic. The near field is unchanged. Ruled out on the way, by the same harness: the AO (a 1.000
+luminance ratio beyond 400 units), the air pass's haze (about 2 luma), the sun cascades beyond their reach.
+
+**Fix.** Both finishes blend in display space: `mix(uFogColor, elEncode(tm), fogFactorAt(wp))`, and the ring's
+`mix(elEncode(...), uFogColor, fade)`. A fully fogged fragment is still bit for bit the fog colour. HQ1's lantern
+glow in the fog is light the medium adds, so it is still added in linear, over the fogged surface, and only where a
+lantern reaches (an exactly black glow costs nothing). No fragment decodes the fog colour any more, so PERF-FOG's
+decoded uniform, its cache and its upload are gone with the need for them (above; PERF-FOG's law - never a
+per-fragment decode of the fog uniform - holds more strongly than it did).
+
+**Pins.** `test/perffog_uniform.test.js` rewritten to the law (the display-space blend in every lane shader and the
+ring, no decoded twin anywhere, the glow still added in linear, the probe linking with `uFogColor`) and
+`test/el1_enhancedlighting.test.js`'s fog line - each failing on fdd099f46. Mutants `tools/mutants/eldistance.json`
+(5 dead); `el1.json`'s raw-blend record re-aimed; `perffog.json` keeps the probe's record, the ten on the removed
+uniform, cache and upload retired with their code.
 
 ## TREES1 (2026-09-19) - THE DARKENING ON THE TREES WAS PERF-SUN1 MEETING A SPRITE
 
@@ -3212,3 +3245,57 @@ pin re-aimed by content, and VC3's two composite pins with it.
 those choices are the PORT'S, not the mod's - "1:1" covers the mod's
 shader, not the state the port synthesises to feed its own passes. The
 red line was in nobody's code and in one of our decisions.**
+
+## FPS-CAP1 - THE FRAME RATE CAP, LIVE (2026-09-25)
+
+Mac: *"Add FPS limiter to settings"*. The setting was already there - DFU's
+`Video/TargetFrameRate`, on the Video page as "Frame Rate Cap" since the
+settings screen shipped - and read by nothing: a stored-tier readout of "0".
+
+**THE LAW.** SettingsManager reads it `GetInt(sectionVideo,
+"TargetFrameRate", 0, 300)` (SettingsManager.cs:414) and
+StartGameBehaviour.ApplyStartSettings applies it only when it is 30 or more
+and VSync is off: "Default is 0 but anything below 30 is ignored and treated
+as disabled" (StartGameBehaviour.cs:244-250). `systems/frameCap.js` is that:
+`frameCapFps()` reads the store DFU's way (the clamp spelled out, so MENU T5
+reads it against the row), `frameCapRate` drops anything under 30.
+
+**ONE DEPARTURE (Ledger A).** Unity ignores `targetFrameRate` while
+`vSyncCount` is set, which is why DFU's rule turns the cap off under VSync.
+A page has no other mode - every rAF waits for the screen - so read DFU's
+way the cap could never act. It holds frames BACK instead, whatever VSync
+says: never faster than the screen, only slower. `Video/VSync` is
+unavailable now ("the browser always waits for the screen refresh"), and its
+help says to use the cap to run slower.
+
+**THE GATE.** Each of the four hosts asks `frameCapSkip(now)` at the top of
+its rAF callback - after the ownership guard, above PERF1's clock stamp and
+the input frame - and a held callback re-arms and returns: nothing is
+simulated or drawn, `last` does not move (the next drawn frame's dt covers
+the held time, under the hosts' 0.1 s clamp), no PERF1 sample is taken, and
+the input rings keep gathering, because `beginInputFrame` has not swapped
+them - a key pressed during a held frame is read on the next drawn one. A
+drawn frame books the next slot one interval on from its own slot, so an
+uneven screen still averages the cap (60 of a 144 Hz screen); a frame a whole
+interval late books from itself, so a hidden tab coming back does not race
+through the slots it missed. A 1 ms slack keeps a 60 cap on a 60 Hz screen
+from halving on a stamp that wobbles early.
+
+**THE COUNTER.** The FPS counter runs on its own rAF (FPS1: it measures the
+browser, not a host), so it would have gone on reading the screen's 144.
+Every callback of one browser frame is handed the same stamp, and the gate
+decides once per stamp - so the counter asks the same question and counts
+only the frames the game drew.
+
+**THE ROW.** `ui/settingsLaw.js` gave NUMBER_LAW `stops` and `offBelow`: the
+row walks Off, 30, 45, 60, 75, 90, 120, 144, 165, 240 and 300 (shift steps
+three), reads "Off" for any value under 30 and "60 fps" otherwise, and never
+offers 1-29, a cap DFU ignores. It is LIVE, so the pause menu's condensed
+settings carries it too.
+
+Pins: `test/fpscap1.test.js` (7 - the gate over 60 and 144 Hz stamps with
+and without a wobble, one decision a stamp and no burst after a gap, the
+store read DFU's way, the stepped row, VSync unavailable, the four hosts'
+placement, the counter driven over a capped second); `perf1` and
+`audit39_dungeonshared` re-aimed at the gate's line between the guard and
+the stamp.
