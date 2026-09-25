@@ -4535,7 +4535,31 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // flat's own half-diagonal (a flat is drawn about its centre, any facing)
     const bounds = boundsOf(centers.flat());
     bounds[3] += Math.hypot(size.w, size.h) * 0.5;
-    return { vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null, frame: null, bounds, _quads: count, _dyn: !!dynamic };
+    // PERF-EXT10 (2026-09-25, two players via Mac: "fps issues in the
+    // exterior but fine in the interior", "me too my friend.. don't know
+    // why. I got a RX6600"): A BATCH IS BORN WITH EVERY FIELD IT WILL EVER
+    // CARRY. This literal minted eleven, and the rest arrived later in
+    // whatever order a path first touched them - a producer's `_box`,
+    // `sway`, `conceal`, `noShadow`, `selfCard`; the shadow record's ten
+    // `_sh*`; the key's four `_bbKey*`; the signature's `_shId`; a move's
+    // `_shMovedAt`; a gib's `_moveScratch`; a free's `_dead`. Every order is
+    // its own hidden class to V8: three by day and five at night in the
+    // synthetic town, twelve to fifteen with the game's mix of producers. So every
+    // per-flat loop (the draw, its sort, the shadow record, the replay,
+    // the static signature) read its batches through polymorphic property
+    // lookups. Born with all of them, a batch keeps ONE shape for life.
+    // They are born UNDEFINED, not with typed defaults: the readers take
+    // undefined for "absent" (`_bbKey == null`, `_shSeen === true`,
+    // `_shMovedAt != null`, `_shId ??=`), and nothing in the tree tells a
+    // missing field from an undefined one. A field a batch gains anywhere
+    // in src/ belongs here too - test/perfextb.test.js sweeps the writes.
+    return {
+      vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null, frame: null, bounds, _quads: count, _dyn: !!dynamic,
+      _box: undefined, sway: undefined, conceal: undefined, noShadow: undefined, selfCard: undefined, _dead: undefined, _moveScratch: undefined,
+      _bbKey: undefined, _bbKeyRecord: undefined, _bbKeyFrame: undefined, _bbKeyArchive: undefined,
+      _shGen: undefined, _shSeen: undefined, _shOx: undefined, _shOy: undefined, _shOz: undefined, _shFrame: undefined,
+      _shRec: undefined, _shFlip: undefined, _shDyn: undefined, _shSway: undefined, _shMovedAt: undefined, _shId: undefined,
+    };
   }
 
   /**

@@ -83,3 +83,26 @@ Pins: `test/perfscale.test.js` 10 (S5's string rule and both S7 pins fail
 with `src/` at the slice's commit; the counter and frameInfo pins guard
 code that commit already had). Mutants: `perfscale.json` 43 dead;
 `auditretro1.json`'s D5 re-aimed.
+
+# PERF-EXT — the same report, answered in code (2026-09-25)
+
+**Report** (the same two players): "fps issues in the exterior but fine
+in the interior", "me too my friend.. don't know why. I got a RX6600".
+Mac, after PERF-SCALE: "Why are you so avoidant when it comes to
+addressing performance issues? I am not getting another player to do the
+work that youre suppose to do".
+
+**What changed.** The exterior's own cost, found by hunters on a harness
+(the real renderer and shadow pass over a counting GL, driven by
+`world.js`'s frame walk on a synthetic town) and re-measured by provers
+told to disprove each win. The flats and the frame's CPU:
+
+- **PERF-EXT10** - every flat batch is born with every field it will
+  carry, so the world's flats share ONE hidden class instead of 3-15; the
+  per-flat loops stop paying polymorphic lookups. Render-side JS on the
+  harness 1.62 -> 1.20 ms a frame by day, 2.28 -> 1.41 at night (node,
+  relative; the picture cannot change - no computed value does).
+
+`07-Rendering/Performance-Exterior.md` has the measurements, the pins
+and the mutants. Not seen on a GPU - there is no game data in the
+container.

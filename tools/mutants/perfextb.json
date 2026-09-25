@@ -1,0 +1,83 @@
+[
+  {
+    "name": "PERF-EXT10-1-the-hosts-dress-is-gained-after-birth-a-tree-and-a-town-flat-split",
+    "file": "src/render/renderer.js",
+    "old": "      _box: undefined, sway: undefined, conceal: undefined,",
+    "new": "      conceal: undefined,",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT10-2-conceal-noShadow-and-selfCard-are-gained-a-walker-a-pile-and-the-card-split",
+    "file": "src/render/renderer.js",
+    "old": " conceal: undefined, noShadow: undefined, selfCard: undefined, _dead: undefined,",
+    "new": " _dead: undefined,",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT10-3-a-free-and-a-gibs-move-add-their-field",
+    "file": "src/render/renderer.js",
+    "old": " _dead: undefined, _moveScratch: undefined,\n",
+    "new": "\n",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT10-4-the-key-memory-is-gained-at-the-first-draw",
+    "file": "src/render/renderer.js",
+    "old": "      _bbKey: undefined, _bbKeyRecord: undefined, _bbKeyFrame: undefined, _bbKeyArchive: undefined,\n",
+    "new": "",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT10-5-the-shadow-records-memory-is-gained-at-the-first-record",
+    "file": "src/render/renderer.js",
+    "old": "      _shGen: undefined, _shSeen: undefined, _shOx: undefined, _shOy: undefined, _shOz: undefined, _shFrame: undefined,\n",
+    "new": "",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT10-6-a-move-gains-_shMovedAt",
+    "file": "src/render/renderer.js",
+    "old": " _shSway: undefined, _shMovedAt: undefined, _shId: undefined,",
+    "new": " _shSway: undefined, _shId: undefined,",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT10-7-the-signature-gains-_shId",
+    "file": "src/render/renderer.js",
+    "old": " _shMovedAt: undefined, _shId: undefined,\n",
+    "new": " _shMovedAt: undefined,\n",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT10-8-a-host-writes-a-field-the-factory-never-minted",
+    "file": "src/scenes/world.js",
+    "old": "      batch.sway = floraSwayOf(archive, natureArchive, size.h);",
+    "new": "      batch.sway = floraSwayOf(archive, natureArchive, size.h); batch._flora = true;",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT10-9-the-shadow-pass-remembers-a-new-field-on-the-batch",
+    "file": "src/render/shadowPass.js",
+    "old": "      b._shGen = this._shiftGen;\n",
+    "new": "      b._shGen = this._shiftGen; b._shLast = this.frameNo;\n",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  }
+]
