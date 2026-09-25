@@ -999,3 +999,48 @@ get this change"; then, of the back diagonals it first let in: "It still shows o
 
 Pins: `test/htwaist_eotb.test.js` (its bodies stand with their backs to the camera now; its sideways walk is a back
 diagonal, the side view its negative case), `test/htwaistback.test.js`. Not verified in a browser (no ARENA2 here).
+
+## SKIN2 (2026-09-25): Daggerfall's classes as skins, and the Skin card's two panels
+
+Mac, with an archive of redrawn Daggerfall class sprites (ExistingClasses): *"1. Implement these as new skin options
+2. Reorganize the skin selector as 2 single panels for unmounted/mount that can be opened to view available skins"*.
+
+**The art.** Twenty sheets, vendored under `vendor/class-skins/<archive>/<archive>_<record>-<frame>.png` (1,682
+pictures, 8.2 MB), with `skins.json` listing each skin's archive, name, sex, whether it carries a bow, and every
+record's real frame count. The pack is not uniform, so the manifest counts the files rather than assuming the layout:
+the female healer casts in five frames, the bounty hunter's last ranged record has two, and one pirate walk record has
+three. Two records whose frames were numbered with a gap (the vanilla adventurer's record 3, the pirate's record 3)
+were renumbered in order when unpacked. `vendor/class-skins/README.md` has the provenance and the archive numbers.
+
+**The layout is not the mod's.** EOTB draws a player from twelve on-foot tables of five records each. A class sheet is
+Daggerfall's enemy-class shape: 0-4 walk (4 frames), 5-9 attack (6), 10-14 hurt (1), 15-19 idle (1), 20-24 ranged or
+spell (4), and 25-29 bow (4) on the four sheets that carry one (assassin and nightblade, both sexes). The orientation
+order is the same as the mod's (checked on the art: record +2 is the profile in both), so the wheel, the mirror and the
+size law carry over. `player/classSkins.js` holds the mapping:
+
+- `CLASS_TABLE_BASE`: the walks read the walk; the ready stances read the idle (a Daggerfall foe is never unarmed);
+  death reads the hurt pose (a class sheet has no fall); the swing reads the attack; the cast reads the ranged-or-spell
+  group; the loose reads the bow where the sheet has one (`CLASS_BOW_BASE`) and the throw where it does not.
+- `classFrame`: the body's clocks keep the mod's clip lengths, and the class record's own frames are spread over them
+  in order (a four-frame walk under a two-frame armed walk shows 0 and 2; a one-frame idle is held).
+
+**One door.** A class skin is `Graphics.OnFoot` 16-35, after the mod's sixteen (`classSkinOf`). `spriteFor` asks for
+it on every on-foot table and returns the class sheet's archive, record and frame with the mod's mirror; the mounted and
+beast tables stay the mod's whatever is worn on foot. So the body, the preload, the peers (`createPeerWalkers`) and the
+Skin card all draw a class skin through the door they already used. The setting's `max` and `labels` grow by the
+classes (`classSkinLabel`: "Healer (female)", "Dark Acolyte").
+
+**Online.** The look's `eo` bound was the mod's sixteen, so a peer in a class skin would have been clamped to the
+mod's last set. The bound is now `FOOT_SKINS` (36) in `net/wire.js`. It is a literal because the relay imports that
+file and not the skin table, and `test/skin2_class_skins.test.js` pins it equal to `FOOT_SKIN_COUNT`. DISC23-B's
+separate `EOTB_FOOT_SETS` constant went into it. RELAY_VERSION is now world109; the relay deploy ships it on merge,
+which drops connected players once.
+
+**The card** (`ui/skinCard.js`). Adding the classes would have put 57 pictures down the profile, so the card is now
+two panels, ON FOOT and MOUNTED. Each one is closed to the skin being worn, showing its picture, the panel's name and
+the skin's name. Pressing a panel's head opens its grid under it (`aria-expanded`, a chevron). The on-foot grid sits
+under two headings, "Eye of the Beholder" and "Daggerfall classes" (`FOOT_GROUPS`). Only one panel is open at a time.
+Choosing a skin wears it and closes the panel on it. The open panel stays open across the window's repaints.
+
+Pins: `test/skin2_class_skins.test.js` (7), `test/disc23b_eotb_sprites.test.js` (re-aimed at the panels and the wider
+bound); mutants `tools/mutants/skin2.json` (26, all dead). Not verified in a browser (no probes).

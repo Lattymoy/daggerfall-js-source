@@ -1,0 +1,241 @@
+[
+  {
+    "name": "S2-class-index-off-by-one",
+    "file": "src/player/classSkins.js",
+    "old": "onFoot >= EOTB_FOOT_SET_COUNT ? CLASS_SKINS[onFoot - EOTB_FOOT_SET_COUNT]",
+    "new": "onFoot > EOTB_FOOT_SET_COUNT ? CLASS_SKINS[onFoot - EOTB_FOOT_SET_COUNT]",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "S2-float-index-a-skin",
+    "file": "src/player/classSkins.js",
+    "old": "Number.isInteger(onFoot) && onFoot >=",
+    "new": "onFoot >=",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "S2-bow-never-looses",
+    "file": "src/player/classSkins.js",
+    "old": "table === 'AttackRanged' && skin.bow ? CLASS_BOW_BASE",
+    "new": "false ? CLASS_BOW_BASE",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "S2-bow-on-every-ranged",
+    "file": "src/player/classSkins.js",
+    "old": "table === 'AttackRanged' && skin.bow ? CLASS_BOW_BASE",
+    "new": "table === 'AttackRanged' ? CLASS_BOW_BASE",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "S2-death-reads-the-idle",
+    "file": "src/player/classSkins.js",
+    "old": "Idle: 15, Move: 0, Death: 10,",
+    "new": "Idle: 15, Move: 0, Death: 15,",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "S2-swing-reads-the-walk",
+    "file": "src/player/classSkins.js",
+    "old": "IdleMelee: 15, MoveMelee: 0, AttackMelee: 5,",
+    "new": "IdleMelee: 15, MoveMelee: 0, AttackMelee: 0,",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "S2-frames-not-spread",
+    "file": "src/player/classSkins.js",
+    "old": "return Math.floor((f * n) / t);",
+    "new": "return Math.min(n - 1, f);",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "S2-frame-past-the-clip",
+    "file": "src/player/classSkins.js",
+    "old": "const f = Math.min(Math.max(frame | 0, 0), t - 1);",
+    "new": "const f = Math.max(frame | 0, 0);",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "S2-horse-drawn-as-the-class",
+    "file": "src/player/eotbSprite.js",
+    "old": "const skin = !table.endsWith('Horse') && !table.endsWith('Lycan') ? classSkinOf(look.onFoot) : null;",
+    "new": "const skin = !table.endsWith('Lycan') ? classSkinOf(look.onFoot) : null;",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "S2-beast-drawn-as-the-class",
+    "file": "src/player/eotbSprite.js",
+    "old": "const skin = !table.endsWith('Horse') && !table.endsWith('Lycan') ? classSkinOf(look.onFoot) : null;",
+    "new": "const skin = !table.endsWith('Horse') ? classSkinOf(look.onFoot) : null;",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "S2-class-never-mirrored",
+    "file": "src/player/eotbSprite.js",
+    "old": "return { archive: skin.archive, record, frame: f, mirror, key:",
+    "new": "return { archive: skin.archive, record, frame: f, mirror: false, key:",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "S2-mirror-shares-the-cache",
+    "file": "src/player/eotbSprite.js",
+    "old": "rec: `${record}-${f}${mirror ? 'm' : ''}` };",
+    "new": "rec: `${record}-${f}` };",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "S2-wrong-orientation-offset",
+    "file": "src/player/eotbSprite.js",
+    "old": "const record = classRecord(skin, table, st.record - STATE_TABLES[table].base);",
+    "new": "const record = classRecord(skin, table, 0);",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "S2-setting-capped-at-the-mod",
+    "file": "src/systems/modSettings.js",
+    "old": "max: FOOT_SKIN_COUNT - 1, description: 'Sprite when on foot'",
+    "new": "max: 15, description: 'Sprite when on foot'",
+    "tests": [
+      "test/skin2_class_skins.test.js",
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "S2-relay-clamps-to-the-mod",
+    "file": "src/net/wire.js",
+    "old": "const eo = uint(look.eo, FOOT_SKINS - 1);",
+    "new": "const eo = uint(look.eo, 15);",
+    "tests": [
+      "test/skin2_class_skins.test.js",
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "S2-wire-count-drifts",
+    "file": "src/net/wire.js",
+    "old": "export const FOOT_SKINS = 36;",
+    "new": "export const FOOT_SKINS = 37;",
+    "tests": [
+      "test/skin2_class_skins.test.js",
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "S2-panels-open-at-once",
+    "file": "src/ui/skinCard.js",
+    "old": "const isOpen = open === key;",
+    "new": "const isOpen = true;",
+    "tests": [
+      "test/skin2_class_skins.test.js",
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "S2-panel-never-closes",
+    "file": "src/ui/skinCard.js",
+    "old": "head.onclick = () => { open = isOpen ? null : key; paint(); };",
+    "new": "head.onclick = () => { open = key; paint(); };",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "S2-choice-leaves-it-open",
+    "file": "src/ui/skinCard.js",
+    "old": "b.onclick = () => { setModSetting(VENDOR, key, s.index); open = null; paint(); };",
+    "new": "b.onclick = () => { setModSetting(VENDOR, key, s.index); paint(); };",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "S2-head-without-its-picture",
+    "file": "src/ui/skinCard.js",
+    "old": "    if (wearing?.url) head.append(art(wearing));\n",
+    "new": "",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "S2-head-names-nothing",
+    "file": "src/ui/skinCard.js",
+    "old": "words.append(el('span', 'skinname', wearing?.name ?? ''));",
+    "new": "words.append(el('span', 'skinname', ''));",
+    "tests": [
+      "test/skin2_class_skins.test.js",
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "S2-aria-expanded-lies",
+    "file": "src/ui/skinCard.js",
+    "old": "head.setAttribute('aria-expanded', isOpen ? 'true' : 'false');",
+    "new": "head.setAttribute('aria-expanded', 'false');",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "S2-one-shelf-for-all",
+    "file": "src/ui/skinCard.js",
+    "old": "const mine = sets.filter((s) => s.index >= g.from && s.index < g.to);",
+    "new": "const mine = g.from ? [] : sets;",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "S2-classes-lose-their-heading",
+    "file": "src/ui/skinCard.js",
+    "old": "        if (g.label) body.append(el('span', 'skingroup', g.label));\n",
+    "new": "",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "S2-chevron-stuck",
+    "file": "src/ui/skinCard.js",
+    "old": "isOpen ? '\\u25b4' : '\\u25be'",
+    "new": "'\\u25be'",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "S2-open-panel-no-edge",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".card .skinpanel.open { border-color: var(--brass); }",
+    "new": ".card .skinpanel.open { }",
+    "tests": [
+      "test/skin2_class_skins.test.js"
+    ]
+  }
+]

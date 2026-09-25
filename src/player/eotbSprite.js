@@ -25,13 +25,18 @@
 // Assets.js` uses): `import.meta.glob` is a Vite macro, and the pins
 // drive this module through its seams rather than through the bundle.
 
-import { ORIENTATIONS, stateFor, tableArchive, spriteKey } from './eotbBillboard.js';
+import { ORIENTATIONS, stateFor, tableArchive, spriteKey, STATE_TABLES, frameCount } from './eotbBillboard.js';
+import { classSkinOf, classRecord, classFrame } from './classSkins.js';   // SKIN2: Daggerfall's classes, past the mod's sixteen
 import { toColor32 } from '../formats/color32Order.js';   // EOTB-FLIP: the ONE row-order door a PNG crosses on its way to a world billboard
 import spriteInfo from '../../vendor/eye-of-the-beholder/spriteInfo.json' with { type: 'json' };
 
 const IN_BROWSER = typeof window !== 'undefined';
 const URLS = IN_BROWSER
-  ? import.meta.glob('../../vendor/eye-of-the-beholder/Textures/*/*.png', { eager: true, query: '?url', import: 'default' })
+  ? {
+    ...import.meta.glob('../../vendor/eye-of-the-beholder/Textures/*/*.png', { eager: true, query: '?url', import: 'default' }),
+    // SKIN2: the class skins, keyed the same way (`<archive>_<record>-<frame>`) - their archives (1504-1541) are not the mod's (112364-112386)
+    ...import.meta.glob('../../vendor/class-skins/*/*.png', { eager: true, query: '?url', import: 'default' }),
+  }
   : {};
 
 /** `<archive>_<record>-<frame>` -> the built asset's URL. */
@@ -103,8 +108,16 @@ export function spriteSize(w, h, state, xmlScale = 1) {
 export function spriteFor(table, orientation, frame, look = {}, { flip = false } = {}) {
   const st = stateFor(table, orientation);
   if (!st) return null;
-  const archive = tableArchive(table, look);
   const mirror = st.mirror !== !!flip;
+  // SKIN2: an on-foot table of a CLASS skin reads the class sheet's own record and frame (player/classSkins.js); the
+  // mounted and the beast tables are the mod's whatever is worn on foot
+  const skin = !table.endsWith('Horse') && !table.endsWith('Lycan') ? classSkinOf(look.onFoot) : null;
+  if (skin) {
+    const record = classRecord(skin, table, st.record - STATE_TABLES[table].base);
+    const f = classFrame(skin, record, frame, frameCount(table));
+    return { archive: skin.archive, record, frame: f, mirror, key: spriteKey(skin.archive, record, f), rec: `${record}-${f}${mirror ? 'm' : ''}` };
+  }
+  const archive = tableArchive(table, look);
   return {
     archive,
     record: st.record,
