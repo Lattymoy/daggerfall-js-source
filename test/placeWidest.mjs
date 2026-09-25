@@ -22,13 +22,14 @@ export const WIDE_PAGE = Object.freeze({ head: 'H'.repeat(PAGE_HEAD_MAX), lines:
 export const PARTY_POSE = { px: 100, py: 200, loc: 'Daggerfall', in: 0, h: 50, hm: 60, f: 1000, fm: 2000, m: 10, mm: 20, race: 'Nord', gender: 'male', face: 2 };
 
 /** Everything a place socket's attachment carries - what a wake must recompute, and nothing else. */
-export const PLACE_ATTACH_FIELDS = Object.freeze(['key', 'id', 'name', 'title', 'glyphs', 'sub', 'mu', 'pose', 'since', 'turn', 'kept', 'worldSeen', 'finalUsed']);
+export const PLACE_ATTACH_FIELDS = Object.freeze(['key', 'id', 'name', 'title', 'glyphs', 'sub', 'mu', 'lv', 'pose', 'since', 'turn', 'kept', 'worldSeen', 'finalUsed']);   // AUDIT RENOWN1 WIRE-4: `lv`, the Renown the token signed
 /** Every meter a place socket's arms spend - the instance's. */
 export const PLACE_METER_FIELDS = Object.freeze([
   'bucket', 'drops', 'wbucket', 'wdrops', 'sbucket', 'sdrops', 'pbucket', 'pdrops', 'tradeBucket', 'tdrops', 'tbytes', 'tinbucket',
   'castBucket', 'castDrops', 'cin', 'abucket', 'adrops', 'abytes', 'fbucket', 'fdrops', 'hbucket', 'cbucket', 'cdrops',
   'rollBucket', 'rollDrops', 'rbucket', 'rdrops', 'mbucket', 'mdrops', 'junk', 'cardBucket', 'cardDrops', 'parkBucket', 'parkDrops',
   'pageBucket', 'pageDrops',   // JOURNAL1
+  'duelBucket', 'duelDrops', 'rnbucket', 'rndrops',   // AUDIT RENOWN1 WIRE-4: DUEL1's meter and RENOWN1's, which neither slice listed
 ]);
 /** Every frame a place socket can send, once - the room's host, so its memory and its stream are its own. */
 export const placeFrames = (other) => [
@@ -40,6 +41,8 @@ export const placeFrames = (other) => [
   { t: 'card', data: { to: other, card: WIDE_CARD } },   // INSPECT1
   { t: 'page', data: { to: other, page: WIDE_PAGE } },   // JOURNAL1 (from a muted socket, as the widest is: the meter is spent, the page goes nowhere)
   { t: 'park', data: { c: 'c'.repeat(64), a: [1, 1] } },   // HCC-PARK (main's, merged): a character id at PARK_CHAR_RE's bound
+  { t: 'duel', data: { to: other, k: 'ask', s: 'abcdef' } },   // DUEL1 (AUDIT RENOWN1 WIRE-4: its meter was never spent here)
+  { t: 'renown', order: 'v1.a.b' },   // RENOWN1 (AUDIT RENOWN1 WIRE-4): the meter is spent, the order is refused unread
 ];
 
 /** The widest place socket and the eight senders filling its funnel, in a room of the widest key. */
@@ -47,7 +50,7 @@ export async function widestPlace(tick) {
   const r = fakeRoom('interior:m4294967295.16777216');   // a map id at ten digits, the building key's 1<<24 sentinel
   const title = TITLES.reduce((x, y) => (y.length > x.length ? y : x));
   const widest = async (ws, n) => {
-    const tok = await r.token(long(n), { s: long(n, 's'), n: 'N'.repeat(NAME_MAX), t: title, g: [...GLYPHS], mu: Math.floor(Date.now() / 1000) + 3600 });
+    const tok = await r.token(long(n), { s: long(n, 's'), n: 'N'.repeat(NAME_MAX), t: title, g: [...GLYPHS], mu: Math.floor(Date.now() / 1000) + 3600, lv: 50 });   // AUDIT RENOWN1 WIRE-4: every RENOWN1 client's token carries a level
     return r.hello(ws, long(n), WIDE_POSE, { tok, name: 'N'.repeat(NAME_MAX) });
   };
   const me = r.connect(); await widest(me, 0);   // the first hello: this world room's host

@@ -376,11 +376,13 @@ function host({ online = null, removeSiteFoes = () => {} } = {}) {
     collider: { surfaceHit: () => ({ dist: 1 }), removeBucket: () => {} },
     exteriorFoes: { spawnFoe: async () => null, removeFoe: () => {}, collectPixel: () => {}, removeSiteFoes },
     alignBillboardToGround, WOD_LOOT_ALIGN, WOD_LOOT_LOCATION_INDEX, DUNGEON_LOOT_KEYS: ['A', 'B', 'C', 'N'],
-    generateLootItems: () => [{ name: 'Gold' }], playerEntity: { level: 1, gender: 'male' }, addPileLootExtras: () => {}, rollLootRarity: () => {},
+    generateLootItems: () => [{ name: 'Gold' }], playerEntity: { level: 1, gender: 'male' }, addPileLootExtras: () => {}, rollLootRarity: () => {}, stampWonWeapons: () => 0,
     pileSource: () => 0, dungeonRarityTier: () => 0, liveStat: () => 50, getTexture, billboardSize: () => ({ w: 0.8, h: 0.6 }), droppedLoot,
     uploadRecord: () => {}, centredBase: (c) => c, renderer, flatBatchAabb: () => [0, 0, 0, 0, 0, 0], armFlatAnim: () => {}, uploadRecordFrame: () => {},
     _seasonStraightening: false, _loading: false, _recalling: false, rollHoldFoes: () => [], online, wodSiteId, yieldsTo, performance: { now: () => 0 },
     buildingDoors: [], doorGeneration: 0, droppedTorches: { collectPixel: () => {} }, cityGuards: { collectPixel: () => {} },
+    deepWaters: null,   // DW-B: destroyPixel hands a pixel's seafloor back to the Deep Waters host - none in this rig
+    dwDecor: null,   // DW-E2: and its seafloor's decorations to theirs - none in this rig either
   };
   const names = Object.keys(env);
   const body = `${SLICE.wodCode}\n${SLICE.dpCode}\n
@@ -404,7 +406,7 @@ ${SLICE.pubB}
       for (const k of [...built.keys()]) { const [a, b] = k.split(',').map(Number); if (!state.inRange(a, b)) destroyPixel(a, b); }
     }
     wodSlots.step(100, 100, state.terrainDistance, StreamingWorldState.onMap);   // the scene's start, as the host steps it
-    return { tick: tickWodSpawners, destroyPixel, publish, sweep, cross, carryOf: (k) => wodCarry.get(k), arriving: (v) => { _seasonStraightening = v; }, siteWas: _wodSiteWas,
+    return { tick: tickWodSpawners, destroyPixel, publish, sweep, cross, carryOf: (k) => wodCarry.get(k), arriving: (v) => { _seasonStraightening = v; },
       arrival: (list) => { _wodArrival = wodArrivalOf(list); }, onLoad: (c) => wodOnLoad(c), inside: (v) => { _wodInside = v; },
       sprung: _wodSprung, peerSprung: _wodPeerSprung, peerSites: wodPeerSites, sprungChanged: () => _wodSprungChanged };`;
   const api = new Function(...names, '__WodSpawner', '__LOOT', 'StreamingWorldState', body)(...names.map((k) => env[k]), WodSpawner, WOD_SPAWN_TYPE.Loot, StreamingWorldState);
@@ -502,7 +504,7 @@ test('WOD6 (AUDIT BRANCH m3, as DFU orders it): an arrival\'s markers meet Start
   const tp = WORLD.slice(WORLD.indexOf('  async function _teleportToPixel('));
   const up = tp.indexOf('_seasonStraightening = true;');
   const sweep = tp.indexOf('wodCarry.clear();');
-  const down = tp.indexOf('try { dest = await buildPixel(first.px, first.py); }\n    finally { _seasonStraightening = false; }');
+  const down = tp.indexOf('try { dest = await awaitedBuild(first.px, first.py); }\n    finally { _seasonStraightening = false; }');
   const stand = tp.indexOf('if (walkMode) { player.spawn(pos[0], pos[1], pos[2]); playerSpawned = true; }');
   assert.ok(up > 0 && up < sweep && sweep < down && down < stand, 'raised before the sweep, lowered after the build, before the stand');
   assert.doesNotMatch(tp.slice(down + 20, stand), /\bawait\b/, 'no await between the build landing and the player standing');
@@ -640,11 +642,14 @@ test('AUDIT BRANCH (WoD) m4: a sweep while a rebuild is in flight is heard - the
 });
 
 test('AUDIT BRANCH (WoD) m2: a rebuild of a pixel that had a site re-reads its grass - Basic Roads can forbid a site stood before its data landed', () => {
+  // PERF-EXT21: the publish re-reads the grass over EVERY pixel now (the crossing that used to heal a stale cell keeps its field),
+  // which covers a site a rebuild lost - so the rebuild needs no memory of the site (PERF-EXT21's review retired `_wodSiteWas`,
+  // the set a teardown filled for this: it gated the re-read, and was written and never read once the re-read stopped asking)
   const h = host();
   h.publish(100, 100, [[10, 5, 10]], { wodSite: { xMin: 1, xMax: 2, yMin: 1, yMax: 2 } });
-  h.destroyPixel(100, 100, { collectLoose: false });
-  assert.ok(h.siteWas.has('100,100'), 'the teardown remembers the site');
-  assert.match(WORLD, /const hadWodSite = _wodSiteWas\.delete\(key\);[^\n]*\n    if \(\(dfLocation \|\| wodSite \|\| hadWodSite\) && labGrassField\) \{/, 'and the publish re-reads the grass for it');
+  h.destroyPixel(100, 100, { collectLoose: false });   // a rebuild's teardown runs clean with nothing to remember
+  assert.doesNotMatch(WORLD, /_wodSiteWas/, 'no teardown remembers the site');
+  assert.match(WORLD, /\n    if \(labGrassField\) \{   \/\/ WOD2[^\n]*m2[^\n]*\n      const t = state\.pixelTranslation\(px, py\);\n      labGrassField\.invalidate\(t\[0\], t\[2\], t\[0\] \+ TERRAIN_SIZE, t\[2\] \+ TERRAIN_SIZE\);/, 'and the publish re-reads the grass for it, whatever stood there');
 });
 
 test('AUDIT BRANCH (WoD) L1-3: the host steps DFU\'s array on every crossing and at every world\'s start, and the Hold does not ride the pool', () => {

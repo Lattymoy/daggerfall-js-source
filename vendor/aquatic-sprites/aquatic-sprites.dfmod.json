@@ -1,0 +1,13 @@
+{
+    "ModTitle": "Aquatic Sprites",
+    "ModVersion": "1.0",
+    "ModAuthor": "Cliffworms",
+    "DFUnity_Version": "0.13.4",
+    "ModDescription": "Adds aquatic sprites to submerged caverns.",
+    "GUID": "18bca36a-7dab-463b-8d4c-dd9a95898cf0",
+    "Files": [
+        "Assets/Game/Mods/UnderwaterSprites/WorldData/W0000008.RDB.json",
+        "Assets/Game/Mods/UnderwaterSprites/WorldData/W0000000.RDB.json",
+        "Assets/Game/Mods/UnderwaterSprites/WorldData/W0000023.RDB.json"
+    ]
+}

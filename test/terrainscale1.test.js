@@ -191,7 +191,7 @@ test('TERRAIN-SCALE1: the scene cache keeps what it is handed - its frame, its s
 test('TERRAIN-SCALE1: an interior caches its floor in the BUILDING\'s frame - DFU\'s localPosition - and a legacy raw entry is stood again on today\'s ground', () => {
   assert.match(MODES, /const o = buildingOrigin\(\);\n    const droppedPiles = interiorDropped\.snapshotScene\(\)\.map\(\(p\) => \(\{ \.\.\.p, pos: \[p\.pos\[0\] - o\[0\], p\.pos\[1\] - o\[1\], p\.pos\[2\] - o\[2\]\] \}\)\);/);
   assert.match(MODES, /const droppedTorches = interiorTorches\.snapshot\(\(p\) => \[p\[0\] - o\[0\], p\[1\] - o\[1\], p\[2\] - o\[2\]\]\);/, 'the torches too');
-  assert.match(MODES, /return \{ lootContainers, actionDoors, droppedPiles, droppedTorches, frame: 'building', terrainScale: STREAMING_TERRAIN_SCALE \};/);
+  assert.match(MODES, /return \{ lootContainers, actionDoors, droppedPiles, droppedTorches, decor, decorItems, decorOwn, frame: 'building', terrainScale: STREAMING_TERRAIN_SCALE \};/);
   assert.match(MODES, /interiorTorches\.restore\(data\.droppedTorches, place\);/);
   assert.match(MODES, /const m = exteriorDoor\?\.matrix;\n    return m \? \[m\[12\], m\[13\], m\[14\]\] : \[0, 0, 0\];/, 'every door of a building carries the building\'s own matrix');
   assert.match(MODES, /const place = data\.frame === 'building'\n      \? \(p\) => \[p\[0\] \+ o\[0\], p\[1\] \+ o\[1\], p\[2\] \+ o\[2\]\]\n      : \(p\) => \[p\[0\], host\.restandSceneHeight \? host\.restandSceneHeight\(p\[1\], p\[0\], p\[2\], was\) : p\[1\], p\[2\]\];/);
@@ -203,7 +203,7 @@ test('TERRAIN-SCALE1: an interior caches its floor in the BUILDING\'s frame - DF
 
 function pump({ publish = false } = {}) {
   const i = WORLD.indexOf('  const inFlight = new Map();');
-  const j = WORLD.indexOf('  const breather = createBreather();', i);
+  const j = WORLD.indexOf('  const breather = createBreather(', i);   // PERF-EXT24: the breather takes options now
   assert.ok(i > 0 && j > i);
   const freed = [];
   const renderer = {
@@ -215,7 +215,9 @@ function pump({ publish = false } = {}) {
   const built = new Map();
   const buildingDoors = [{ pixelKey: '1,1' }, { pixelKey: '2,2' }, { pixelKey: '1,1' }];
   const hums = [];
-  const env = { built, renderer, collider, buildingDoors, doorGeneration: 0, hums };
+  const env = { built, renderer, collider, buildingDoors, doorGeneration: 0, hums,
+    // DW-D: DeepWaterRuntime's location-load count rides a location's build - none here
+    locationIndex: new Map(), spawnedDungeonAt: () => null, dwLocationLoadBegan: () => {}, dwLocationLoadEnded: () => {} };
   const body = `${WORLD.slice(i, j)}
     async function buildPixelNow(px, py) {
       const key = px + ',' + py;

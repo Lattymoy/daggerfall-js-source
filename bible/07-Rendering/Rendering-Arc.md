@@ -2414,13 +2414,13 @@ beside them. Then the same shape turned up everywhere else:
 
 | host | list |
 |---|---|
-| `dungeonContext.js:5482` | the mobiles, the drops, the spells |
-| `worldModes.js:7373` | the dungeon's flats, camps, torches and peers |
-| `worldModes.js:7555` | the interior's flats and peers |
-| `worldModes.js:7561-7626` | blood, torches, drops, foes, guards - **five separate uncut calls** |
-| `exterior.js:5289`, `world.js:14874` | the spell missiles |
-| `exterior.js:5365` | the fixed city's townspeople |
-| `interior.js:380`, `dungeon.js:1071` | the flats, the camps, the torches |
+| `dungeonContext.js:5576` | the mobiles, the drops, the spells |
+| `worldModes.js:7826` | the dungeon's flats, camps, torches and peers |
+| `worldModes.js:8017` | the interior's flats and peers |
+| `worldModes.js:8023-8089` | blood, torches, drops, foes, guards - **five separate uncut calls** |
+| `exterior.js:5295`, `world.js:16025` | the spell missiles |
+| `exterior.js:5371` | the fixed city's townspeople |
+| `interior.js:382`, `dungeon.js:1086` | the flats, the camps, the torches |
 
 Seven call sites, and an eighth waiting to be written next year. **Fixing
 them one at a time is how this bug got to be in eight places.** The test
@@ -2749,6 +2749,8 @@ evaluate all of them.**
 
 ## PERF-FOG (2026-09-19) - A UNIFORM WAS BEING DECODED ONCE A FRAGMENT
 
+*Superseded by EL-DISTANCE (2026-09-25, below): the lane blends the fog in display space now, so the fog colour is never decoded - here or anywhere - and the decoded uniform, its cache and its upload are gone.*
+
 Found by keeping on looking after PERF-SUN, in the same place and for
 the same reason: what does every exterior fragment actually run?
 
@@ -2805,6 +2807,37 @@ moved.
 **The lesson: a shader is the one place where "it's just a constant"
 costs you two million times a frame. The exterior's real bill was never
 in the things that were easy to count.**
+
+## EL-DISTANCE (2026-09-25) - THE LANE'S FOG IS BLENDED WHERE THE CLASSIC LANE BLENDS IT
+
+Mac: "Also to add with enhanced lighting. It almost gives this weird darkness/foggy look to distant terrian which I
+really dont like. Not sure what it is".
+
+**Cause.** `elFinish` (render/enhancedLighting.js) mixed the fog colour into the LINEAR, tonemapped surface and
+encoded the sum; the far ring's own finish did the same. The ramp is the one `fogFactorAt` the classic lane uses,
+but the classic lane mixes in DISPLAY space, and a mix in linear lands far nearer the fog colour once it is encoded -
+so the lane's distant ground reached the fog's colour a long way before the classic lane's: a pale grey-blue veil by
+day, a dark one at dusk and at night when the fog colour is dark.
+
+**Measured** (the investigators' synthetic hills through the real Renderer and lane in headless Chromium, the same
+scene on fdd099f46 and on the fix; luminance by view distance, 7 am): lane before / after / classic - 120-240 units
+75.2 / 57.9 / 61.4, 240-400 94.0 / 72.7 / 73.3, 400-700 116.2 / 87.5 / 86.8, 700-1200 144.1 / 114.4 / 113.8,
+1200-1800 178.2 / 156.1 / 155.1. The mid hills' colour 90,105,104 (saturation 0.15) before, 65,84,63 (0.25) after,
+68,83,66 (0.21) classic. The near field is unchanged. Ruled out on the way, by the same harness: the AO (a 1.000
+luminance ratio beyond 400 units), the air pass's haze (about 2 luma), the sun cascades beyond their reach.
+
+**Fix.** Both finishes blend in display space: `mix(uFogColor, elEncode(tm), fogFactorAt(wp))`, and the ring's
+`mix(elEncode(...), uFogColor, fade)`. A fully fogged fragment is still bit for bit the fog colour. HQ1's lantern
+glow in the fog is light the medium adds, so it is still added in linear, over the fogged surface, and only where a
+lantern reaches (an exactly black glow costs nothing). No fragment decodes the fog colour any more, so PERF-FOG's
+decoded uniform, its cache and its upload are gone with the need for them (above; PERF-FOG's law - never a
+per-fragment decode of the fog uniform - holds more strongly than it did).
+
+**Pins.** `test/perffog_uniform.test.js` rewritten to the law (the display-space blend in every lane shader and the
+ring, no decoded twin anywhere, the glow still added in linear, the probe linking with `uFogColor`) and
+`test/el1_enhancedlighting.test.js`'s fog line - each failing on fdd099f46. Mutants `tools/mutants/eldistance.json`
+(5 dead); `el1.json`'s raw-blend record re-aimed; `perffog.json` keeps the probe's record, the ten on the removed
+uniform, cache and upload retired with their code.
 
 ## TREES1 (2026-09-19) - THE DARKENING ON THE TREES WAS PERF-SUN1 MEETING A SPRITE
 

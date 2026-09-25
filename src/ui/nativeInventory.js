@@ -49,7 +49,7 @@
 // systems/court.js:207 (ItemCollection.GetCreditAmount, ItemCollection
 // .cs:108-118), spent letters-before-coins with the shortfall returned
 // by deductGold at court.js:249 (DeductGoldAmount, PlayerEntity.cs
-// :1324-1354), banked at systems/banking.js:485/:498, and described by
+// :1324-1354), banked at systems/banking.js:490/:503, and described by
 // the 1007 text at systems/itemInfo.js:104. Nothing was ever owed at
 // THIS surface anyway - DaggerfallInventoryWindow.cs has no
 // letter-of-credit arm at all.
@@ -505,6 +505,14 @@ export class NativeInventoryWindow {
    *  identity; it carries DaggerfallLoot's own three fields now
    *  (playerOwned, TextureArchive, TextureRecord). */
   _remoteTargetIcon() {
+    const shown = this._remoteTargetIconShown();
+    // DW-E3: Iliac Puddle No More's UpdateFishLootIcon (LateUpdate) - a loot target carrying a FishLootIcon has
+    // the remote panel's picture set to the fish's own icon over whatever the window drew there, its label kept
+    const own = this.hooks.loot?.remoteImage?.();
+    return own ? { image: own, label: shown.label } : shown;
+  }
+
+  _remoteTargetIconShown() {
     if (this.usingWagon) {
       return {
         container: CONTAINER_IMAGES.Wagon,

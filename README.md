@@ -27,7 +27,7 @@ costs about **$600 per month** to sustain across development tooling,
 multiplayer infrastructure, testing, builds, releases, and mod compatibility
 work.
 
-Support on Ko-fi: https://ko-fi.com/dfjs
+Support on Patreon: https://www.patreon.com/c/dfenhanced
 
 The monthly goal, suggested support levels, and funding breakdown are in
 [`SUPPORT.md`](SUPPORT.md). Sponsorship does not lock gameplay, source code,

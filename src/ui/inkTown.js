@@ -156,7 +156,7 @@ export const LEAD_AT = 0.9;
  *   `autoMapData` is an FLD-header grid, and every FLD grid in the port
  *   is read with its row index REVERSED - `buildGroundTilemap` takes
  *   `groundTiles[x][15 - y]` for "row 0 nearest Z=0"
- *   (world/rmbLayout.js:270), which is the same law at 16 rows that
+ *   (world/rmbLayout.js:282), which is the same law at 16 rows that
  *   ExteriorAutomap.cs:1481 is at 64. Copying `data[y * 64 + x]`
  *   straight into row y laid every block's bytes MIRRORED north-south
  *   against the anchors, the quest rings and the player's own caret -

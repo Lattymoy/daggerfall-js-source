@@ -40,6 +40,15 @@ const CELL = 2;
 const COARSE = 64;
 const FINE_CELLS_MAX = 64;
 const COARSE_CELLS_MAX = 1024;
+/** PERF-EXT25 (2026-09-25, the players: "fps issues in the exterior but fine in the interior", "me too my
+ *  friend.. don't know why. I got a RX6600"): A CELL'S KEY IS A NUMBER. Every triangle a streamed pixel files, and
+ *  every cell a query reads, minted a template string - `${gx},${gz}` - to hash, look up and drop: on a synthetic
+ *  city pixel (300,000 triangles) the insert was ~1 s of main thread across the build and its garbage the GC's.
+ *  (gx + 2^20) * 2^21 + (gz + 2^20) is exact in a double and one-to-one for |g| < 2^20 cells - two million units
+ *  on the fine grid, sixty-seven million on the coarse, against a bucket's pixel-local coordinates in the
+ *  thousands - and the grid is a BROAD phase: two cells that shared a key would only hand a query more triangles
+ *  for the narrow phase to refuse, never fewer. The same triangles are found; every answer is the same bits. */
+const cellKey = (gx, gz) => (gx + 0x100000) * 0x200000 + (gz + 0x100000);
 /** AUDIT ONCRASH1 B5a: the most sweep steps one move() may be split into - a motion larger than this is taken
  *  whole rather than swept, because a loop whose length a caller's arithmetic chooses is a frozen tab waiting. */
 const SUBSTEPS_MAX = 256;
@@ -89,7 +98,7 @@ function fileWide(bucket, a, b, c, idx) {
   if ((maxX - minX + 1) * (maxZ - minZ + 1) > COARSE_CELLS_MAX) { bucket.huge.push(idx); return; }
   for (let gx = minX; gx <= maxX; gx++) {
     for (let gz = minZ; gz <= maxZ; gz++) {
-      const k = `${gx},${gz}`;
+      const k = cellKey(gx, gz);   // PERF-EXT25
       let cell = bucket.coarse.get(k);
       if (!cell) { cell = []; bucket.coarse.set(k, cell); }
       cell.push(idx);
@@ -106,7 +115,7 @@ function nearCells(bucket, lx, lz) {
   const gz = Math.floor(lz / CELL);
   for (let ox = -1; ox <= 1; ox++) {
     for (let oz = -1; oz <= 1; oz++) {
-      const cell = bucket.grid.get(`${gx + ox},${gz + oz}`);
+      const cell = bucket.grid.get(cellKey(gx + ox, gz + oz));   // PERF-EXT25
       if (cell) NEAR.push(cell);
     }
   }
@@ -115,7 +124,7 @@ function nearCells(bucket, lx, lz) {
     const cz = Math.floor(lz / COARSE);
     for (let ox = -1; ox <= 1; ox++) {
       for (let oz = -1; oz <= 1; oz++) {
-        const cell = bucket.coarse.get(`${cx + ox},${cz + oz}`);
+        const cell = bucket.coarse.get(cellKey(cx + ox, cz + oz));   // PERF-EXT25
         if (cell) NEAR.push(cell);
       }
     }
@@ -141,7 +150,7 @@ function wideCellsOnRay(bucket, ox, oz, dir, reach) {
     const tDeltaZ = Math.abs(COARSE * invZ);
     let walked = 0;
     while (walked <= reach) {
-      const cell = bucket.coarse.get(`${cx},${cz}`);
+      const cell = bucket.coarse.get(cellKey(cx, cz));   // PERF-EXT25
       if (cell) out.push(cell);
       if (tMaxX < tMaxZ) { walked = tMaxX; tMaxX += tDeltaX; cx += stepX; }
       else { walked = tMaxZ; tMaxZ += tDeltaZ; cz += stepZ; }
@@ -261,7 +270,19 @@ export class Collider {
     const r = CAPSULE_RADIUS;
     const hx0 = this.heightAt(x - r, z), hx1 = this.heightAt(x + r, z), hz0 = this.heightAt(x, z - r), hz1 = this.heightAt(x, z + r);
     if (!(Number.isFinite(hx0) && Number.isFinite(hx1) && Number.isFinite(hz0) && Number.isFinite(hz1))) return h;
-    const gx = (hx1 - hx0) / (2 * r), gz = (hz1 - hz0) / (2 * r);
+    // DW-D (2026-09-25): THE GRADE IS A SLOPE'S, NEVER A STEP'S. The carved
+    // sea (Iliac Puddle No More) lays its seafloor under the heightfield, so
+    // at a carved cell's edge the floor STEPS from the sea's bed to the shore
+    // (the floor's walls stand in the step), and the centred difference read
+    // the step as a grade: a body on the shore within a radius of it rested
+    // r (sqrt(1 + g^2) - 1) over the ground at g = rise / 2r - twelve metres
+    // over a 25 m step, measured through a shore exit. Each axis takes the
+    // gentler of its two one-sided grades, and none where they disagree in
+    // sign (a ridge, a valley's floor): on a plane both ARE the centred one,
+    // so every slope rests as above, and at a step the body rests on the
+    // ground beneath it - on a cliff's top at its edge, or at its foot
+    // against the wall.
+    const gx = minmod((hx1 - h) / r, (h - hx0) / r), gz = minmod((hz1 - h) / r, (h - hz0) / r);
     return h + r * (Math.sqrt(1 + gx * gx + gz * gz) - 1);
   }
 
@@ -296,7 +317,8 @@ export class Collider {
       const c = tx(indices[i + 2]);
       const idx = bucket.tris.length;
       bucket.tris.push([a, b, c]);
-      for (const v of [a, b, c]) {
+      for (let j = 0; j < 3; j++) {   // PERF-EXT25: the three corners without a fourth array a triangle
+        const v = j === 0 ? a : j === 1 ? b : c;
         for (let k = 0; k < 3; k++) {
           if (v[k] < bucket.min[k]) bucket.min[k] = v[k];
           if (v[k] > bucket.max[k]) bucket.max[k] = v[k];
@@ -309,7 +331,7 @@ export class Collider {
       if ((maxX - minX + 1) * (maxZ - minZ + 1) > FINE_CELLS_MAX) { fileWide(bucket, a, b, c, idx); continue; }   // AUDIT BRANCH (WoD) B1
       for (let gx = minX; gx <= maxX; gx++) {
         for (let gz = minZ; gz <= maxZ; gz++) {
-          const k = `${gx},${gz}`;
+          const k = cellKey(gx, gz);   // PERF-EXT25
           let cell = bucket.grid.get(k);
           if (!cell) { cell = []; bucket.grid.set(k, cell); }
           cell.push(idx);
@@ -346,8 +368,15 @@ export class Collider {
    * bucket (which raycastHit AND _resolveSphere would then walk for
    * movement, senses, activation and arrows). Strictly additive: with
    * no filter the walk is byte-for-byte what it was.
+   *
+   * TRAVEL-NAV1: and an OPTIONAL `out` - { dist, key, normal: [x, y, z] },
+   * the caller's own - which is written and returned in place of a fresh
+   * result, the normal into the caller's array ([0, 0, 0] on a miss).
+   * The travel steering casts a dozen feelers a frame through here
+   * (systems/travelSteer.js createColliderProbe) and owns one result for
+   * all of them. Without it the answer is the one it always was.
    */
-  raycastHit(origin, dir, maxDist, filter = null) {
+  raycastHit(origin, dir, maxDist, filter = null, out = null) {
     let best = Infinity;
     let bestKey = null;
     let bestTri = null;   // M3 climbing: the hit surface's normal rides the result
@@ -388,7 +417,7 @@ export class Collider {
       visited.clear();
       let walked = 0;
       while (walked <= Math.min(maxDist, best)) {
-        const cell = bucket.grid.get(`${cx},${cz}`);
+        const cell = bucket.grid.get(cellKey(cx, cz));   // PERF-EXT25
         if (cell) {
           for (const ti of cell) {
             if (visited.has(ti)) continue;
@@ -418,15 +447,21 @@ export class Collider {
     // best triangle's unit normal, oriented to FACE the ray - both
     // faces hit (as above), so the sign follows the approach side.
     let normal = null;
+    let nx = 0, ny = 0, nz = 0;
     if (bestTri) {
       const [a, b, c] = bestTri;
-      let nx = (b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]);
-      let ny = (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]);
-      let nz = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+      nx = (b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]);
+      ny = (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]);
+      nz = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
       const l = Math.hypot(nx, ny, nz) || 1;
       nx /= l; ny /= l; nz /= l;
       if (nx * dir[0] + ny * dir[1] + nz * dir[2] > 0) { nx = -nx; ny = -ny; nz = -nz; }
-      normal = [nx, ny, nz];
+      if (!out) normal = [nx, ny, nz];
+    }
+    if (out) {   // TRAVEL-NAV1: the caller's own result, written in place
+      out.dist = best; out.key = bestKey;
+      out.normal[0] = nx; out.normal[1] = ny; out.normal[2] = nz;
+      return out;
     }
     return { dist: best, key: bestKey, normal };
   }
@@ -478,13 +513,17 @@ export class Collider {
   groundNormal(x, z) {
     const h = GROUND_NORMAL_STEP;
     const at = this.surfaceAt ?? this.heightAt;   // BLOOD1 AUDIT 3: the slope of the DRAWN ground - inside one triangle the difference is its plane exactly
-    const hx = at(x + h, z) - at(x - h, z);
-    const hz = at(x, z + h) - at(x, z - h);
-    if (!Number.isFinite(hx) || !Number.isFinite(hz)) return [0, 1, 0];
+    const c = at(x, z), xp = at(x + h, z), xm = at(x - h, z), zp = at(x, z + h), zm = at(x, z - h);
+    if (!Number.isFinite(xp - xm) || !Number.isFinite(zp - zm) || !Number.isFinite(c)) return [0, 1, 0];
+    // DW-D: the gentler one-sided grade per axis, restFloor's rule - on a
+    // plane it is the centred difference, and a STEP in the sampler (the
+    // carved sea's floor at a cell's edge) is not a cliff face half a
+    // sample either side of it: the Deep Waters shore probe read a shore
+    // half a metre from the carve as a wall and refused the landing.
     // `|| 0` is not belt and braces: -0 over flat ground is a real
     // answer that compares unequal to 0 and reads as a negative
     // gradient to anything that tests the sign.
-    const nx = (-hx / (2 * h)) || 0, nz = (-hz / (2 * h)) || 0;
+    const nx = (-minmod((xp - c) / h, (c - xm) / h)) || 0, nz = (-minmod((zp - c) / h, (c - zm) / h)) || 0;
     const l = Math.hypot(nx, 1, nz) || 1;
     return [nx / l, 1 / l, nz / l];
   }
@@ -1192,6 +1231,8 @@ export class Collider {
 
 const ZERO3 = [0, 0, 0];
 const TMP = [0, 0, 0];
+/** restFloor's limiter: the smaller of two one-sided grades that agree in sign, else 0. */
+const minmod = (a, b) => (a * b <= 0 ? 0 : Math.abs(a) < Math.abs(b) ? a : b);
 // AUDIT COL1 F9: the middle spheres' centres, reused. _resolveCapsule
 // runs several times per move() per body and is never re-entered, so
 // rebuilding this array per call was pure garbage at frame rate.

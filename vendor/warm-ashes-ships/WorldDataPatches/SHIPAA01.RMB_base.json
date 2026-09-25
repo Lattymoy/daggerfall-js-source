@@ -1,0 +1,4 @@
+{"format":"dfe-worlddata-patch/1","rebuilds":"SHIPAA01.RMB_base.json","base":{"kind":"block","block":"SHIPAA01.RMB","index":630},"sha256":"09ca6c194b444ac7ca1e728e102ae899ce4c84e1096c7f16d38a53083694e29b","ops":[
+["s",["RmbBlock","FldHeader","AutoMapData",1624],0],
+["s",["RmbBlock","FldHeader","AutoMapData",2840],0]
+]}

@@ -94,9 +94,19 @@ test('ACC1b: the migration is the real schema, and applying it twice changes not
   // way (0007): its own table beside the row, never a column on it.
   // DUEL1 added `duel_results` the same way (0008): one row a duel that
   // named a loser - the record is COUNTED off it, no column on the row.
-  // WB5b added `gate_kills` the same way (0009): one row a gate an
-  // account closed, keyed (day, account), counted off it.
-  assert.deepEqual(tables, ['duel_results', 'gate_kills', 'letters', 'players', 'rate_limits', 'saves', 'sessions']);
+  // RENOWN1 added `renown_tracks` the same way (0009): one row a character's
+  // Renown total - the level itself is DERIVED from it. HOME1 added `homes`
+  // the same way (0010): one row a building someone owns, keyed by the
+  // building - the registry that makes a home one owner's. DECOR1 added
+  // `home_decor` the same way (0011): one row a piece standing in an online
+  // home, keyed by the home and the piece's own id. GUILD1 added four (0013):
+  // `guilds` (one row a guild), `guild_members` (one row a character in one),
+  // `guild_invites` (one row an account asked to one) and `guild_ledger` (one
+  // row a movement of a treasury).
+  // WB5b added `gate_kills` the same way (0014 - 0009 on its branch, before
+  // RENOWN1 took it): one row a gate an account closed, keyed (day, account),
+  // counted off it.
+  assert.deepEqual(tables, ['duel_results', 'gate_kills', 'guild_invites', 'guild_ledger', 'guild_members', 'guilds', 'home_decor', 'homes', 'letters', 'players', 'rate_limits', 'renown_tracks', 'saves', 'sessions']);
   // ACC1b IS IDENTITY ALONE, and the PLAYERS row still is: the save
   // arrived beside it, never inside it.
   const cols = db._raw.prepare('PRAGMA table_info(players)').all().map((c) => c.name);
@@ -111,8 +121,13 @@ test('ACC1b: the migration is the real schema, and applying it twice changes not
   // ACC4 added TWO - `played_s` and `played_at`, the one fact about an
   // account no other column could derive: how long it has been played,
   // credited by the service's clock (src/net/playClock.js says why).
+  // RENOWN1 added THREE - the ACCOUNT's hour of Renown XP (`renown_hour`,
+  // `renown_hour_xp`) and what the last report took out of it
+  // (`renown_last_credit`, read back by the same UPDATE's RETURNING): the
+  // hour's bound is the account's across all its characters, so it lives
+  // on the account's row. No level and no total is a column here.
   assert.deepEqual(cols.sort(), ['created_at', 'email', 'guest_name', 'handle', 'handle_lc', 'id',
-    'last_seen', 'muted_by', 'muted_until', 'password', 'played_at', 'played_s', 'recovery_hash', 'registered_at', 'title']);
+    'last_seen', 'muted_by', 'muted_until', 'password', 'played_at', 'played_s', 'recovery_hash', 'registered_at', 'renown_hour', 'renown_hour_xp', 'renown_last_credit', 'title']);
   assert.ok(!cols.some((c) => /founder|developer|sprout|glyph|grant/i.test(c)), `a grant became a column: ${cols}`);
   // SAVES AND PROVIDER LINKS ARE STILL NOT HERE. They arrive as their
   // own migrations rather than as columns somebody added to this one.

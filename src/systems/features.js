@@ -178,6 +178,12 @@ export const MOD_CURATED = Object.freeze({
   unleveledLoot: Object.freeze(['Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril',
     'Adamantium', 'Ebony', 'Orcish', 'Daedric']),
   'roads-hazelnut': Object.freeze(['SmoothRoads', 'RiversAndStreams']),
+  // DW-D: twenty-four keys in one section, and these six are what a player
+  // reaches for first - how far the sea lets you see and how thick it is,
+  // how much of it shows through from above, the swim's burst and speed,
+  // and whether the deep is hostile. The rest stay in the mod's own pane.
+  'iliac-puddle-no-more': Object.freeze(['General.UnderwaterFogDistance', 'General.UnderwaterFogStrength',
+    'General.WaterSurfaceTopTransparency', 'General.EnableSwimStroke', 'General.SwimSpeedMultiplier', 'General.SpawnUnderwaterEnemies']),
   // TO1: the mod ships FIFTY-ONE keys across twelve sections, so this
   // one is curated hard. The five are what a player reaches for first:
   // whether a cautious trip is walked, whether a ship needs a port,
@@ -185,9 +191,13 @@ export const MOD_CURATED = Object.freeze({
   // and (KB1: in Controls now, as FollowPaths) which key follows a road. Everything else - the fourteen dot
   // colours, the junction map's placement, the fare scaling - stays in
   // the mod's own pane.
+  // TRAVEL-NAV1: and the port's own steering switch, on the tile so it is
+  // REACHABLE (TORCH-BIND's lesson, HT-WAIST's pin) - a key the drawer does
+  // not draw is a key nobody can turn.
   'travel-options': Object.freeze([
     'CautiousTravel.PlayerControlledCautiousTravel', 'ShipTravel.OnlyFromPorts',
     'GeneralOptions.LocationPause', 'TimeAcceleration.AccelerationLimit',
+    'GeneralOptions.AvoidObstacles',
   ]),
   'ambient-text': Object.freeze(['textChance', 'interval', 'postTextInterval', 'textDisplayTime']),   // AT0: all four it ships - the mod is small enough that curation would only hide something
   // EOTB0: the mod ships FIFTY-FOUR keys across nine sections, so this
@@ -422,6 +432,25 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced', 'classic']),
     control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'default', online: 'player', tiers: Object.freeze([['off', 'Off'], ['default', 'Default (4x)'], ['max', 'Maximum']]) }),
   }),
+  // PERF-SCALE (2026-09-25, two players via Mac: "One user is reporting fps issues in the exterior but fine in the
+  // interior ... GPU is NVIDIA GeForce RTX 4060 Ti", "me too my friend.. don't know why. I got a RX6600"): THE
+  // RENDER SCALE. The world was drawn at the window's whole size with no cap, so a large window paid two to four
+  // times the exterior's per-pixel work; this draws it smaller and presents it smooth (systems/renderScale.js
+  // carries the law). Retro Picture Mode wins over it. A dial, the player's own online: it is this screen's pixels.
+  Object.freeze({
+    id: 'render-scale',
+    group: 'sight',
+    title: 'Render scale',
+    note: 'Draws the world at a share of the window’s pixels and stretches it smooth to fit; the HUD and menus stay '
+      + 'sharp. Try 75% if the outdoors run slow on a large or high-resolution screen. Retro Picture Mode, when on, '
+      + 'takes its place.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    // AUDIT BRANCH-0925 PS-A1: `classic` - the row has no Off, and Daggerfall's own frame is the whole window
+    // (settings.js leaves DFU's resolution to the browser's canvas), so All off takes it to 100% (FT18's
+    // "to Daggerfall's own where a row has no Off"); without it All off left the world drawn at 50%
+    control: Object.freeze({ store: 'prefs', key: 'renderScale', initial: 1, online: 'player', classic: 1, tiers: Object.freeze([[1, '100%'], [0.85, '85%'], [0.75, '75%'], [0.67, '67%'], [0.5, '50%']]) }),
+  }),
   // FT8 (2026-09-14): ENHANCED COMBAT VISUALS (ECV1) - what the enhanced
   // skin DRAWS for a concealed foe; the rules are DFU's either way. The
   // last row of the Enhanced category of Settings, which is a pointer
@@ -485,7 +514,8 @@ export const FEATURES = Object.freeze([
     note: 'A Diablo-style ladder over Daggerfall\u2019s loot: a weapon, a piece of armour or a piece of jewellery may roll '
       + 'Magic, Rare or Legendary, with affixes you can read and compare. The odds follow the source - the dead '
       + 'thing\u2019s level, the dungeon\u2019s kind, your luck - never your level. A Rare or Legendary drops '
-      + 'unidentified until it is read. Off is Daggerfall\u2019s loot exactly.',
+      + 'unidentified until it is read. Off is Daggerfall\u2019s loot exactly. Online, some weapons you win carry a '
+      + 'sigil that grows with your Renown.',   // SIGIL1
     effect: 'Takes effect on the next roll; worn affixes follow within a magic round.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'lootRarity', initial: true, online: true }),   // LR5: ON by default (Mac) - the ladder is the port's own game, not an opt-in; the lane forces it on online as it always did
@@ -626,6 +656,22 @@ export const FEATURES = Object.freeze([
   // wilderness itself. Read at the world's mount, like the roads it
   // consults: the loader's list is built once per world.
   modFeature('world-of-daggerfall', 'Takes effect when the world next loads.', 'world'),
+  // AS1 (2026-09-25): AQUATIC SPRITES - `world`, three flooded dungeon
+  // blocks. The door caches a block once it is served, so a switch flipped
+  // mid-session reaches the next load, not the dungeon you stand in.
+  modFeature('aquatic-sprites', 'Takes effect when the game next loads.', 'world'),
+  // DS1 (2026-09-25): DETAILED SHIPS - `world`, the two ships you can own.
+  // Their building records are read through the door once per load.
+  modFeature('detailed-ships', 'Takes effect when the game next loads.', 'world'),
+  // WA1 (2026-09-25): WARM ASHES - SHIPS - `world`, the sea voyage. The travel
+  // hook reads the switch as a journey starts; an ambush already at sea
+  // finishes either way.
+  modFeature('warm-ashes-ships', 'Takes effect on your next sea voyage.', 'world'),
+  // DW-A to DW-D (2026-09-25): ILIAC PUDDLE NO MORE - `world`, the sea itself. The
+  // world host builds the deep bay (its host, its renderer, its swimmer) at
+  // the world's mount, so the switch reaches the next world; its looks and
+  // its swim read their dials every frame.
+  modFeature('iliac-puddle-no-more', 'Takes effect when the world next loads.', 'world'),
   modFeature('meanerMonsters', 'Takes effect on monsters spawned after the switch.', 'combat'),
   modFeature('pcaao', 'Takes effect at once.', 'combat'),
   modFeature('unleveledLoot', 'Takes effect on the next roll.', 'loot'),

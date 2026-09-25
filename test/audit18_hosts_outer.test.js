@@ -147,7 +147,7 @@ test('audit18 hosts: applyMotorEffectFlags - the EFFECT owns the flag (Levitate.
 
 test('audit18 hosts: EVERY host outside a dungeon recomputes the motor effect flags', () => {
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
-    assert.match(src(host), /applyMotorEffectFlags\(player, playerEntity\)/,
+    assert.match(src(host), /applyMotorEffectFlags\(player, playerEntity(?:, _dwForge \?\? undefined)?\)/,   // DW-D: the world host hands the carved sea's forge on the same write
       `${host} never writes the effect-driven motor flags - they leak from the last dungeon frame`);
   }
   // worldModes must clear them on the NON-dungeon arm, i.e. the call
@@ -170,7 +170,7 @@ test('audit18 hosts: worldModes overlayHeld covers the DUNGEON overlay, and hold
   const decl = s.slice(s.indexOf('const overlayHeld'), s.indexOf('const crouchHeld'));
   assert.match(decl, /dungeonCtx/, 'overlayHeld ignores the dungeon overlay - the motor walks under an open window');
   assert.match(decl, /uiOverlayActive/);
-  // DFU PauseGame(true) stops the movers too (dungeon.js:336 does).
+  // DFU PauseGame(true) stops the movers too (dungeon.js:339 does).
   assert.match(s, /if \(!overlayHeld\) dungeonCtx\.actions\.update\(dt\);/,
     'the dungeon movers still travel under an open window');
 });
@@ -536,7 +536,7 @@ test('audit18 hosts: BOTH exterior hosts take the fog colour from the shared law
     assert.doesNotMatch(s, /sky\.renderer\.fogColor = sky\.renderer\.clearColor;/);
   }
   const shared = src('src/scenes/shared.js');
-  assert.match(shared, /fogColorFor\(fogNow\) \{\s*\n\s*if \(dynamic\?\.fogColor\) return dynamic\.fogColor;\s*\n\s*return outdoorFogColor\(fogNow, \(enhancedSky \?\? dynamicSky \?\? sky\)\.clearColor\);/,
+  assert.match(shared, /fogColorFor\(fogNow\) \{\s*\n\s*const c = dynamic\?\.fogColor \?\? outdoorFogColor\(fogNow, \(enhancedSky \?\? dynamicSky \?\? sky\)\.clearColor\);\s*\n\s*return dreadW > 0 \? dreadGrade\(c, dreadW\) : c;/,
     'the controller answers SetSkyFogColor over the sky it holds, or the mod\u2019s own colour');
 });
 

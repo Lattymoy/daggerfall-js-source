@@ -145,7 +145,7 @@
   {
     "name": "every-locked-row-wears-the-grounds-reason-again",
     "file": "src/ui/enhancedMenu.js",
-    "old": "ONLINE_GROUND_VENDORS.includes(vendor) ? ONLINE_GROUND_NOTE : ONLINE_RULESET_KEYS[vendor]?.includes(key) ? ONLINE_RULESET_NOTE : ONLINE_SHARED_NOTE",
+    "old": "ONLINE_GROUND_VENDORS.includes(vendor) || ONLINE_GROUND_KEYS[vendor]?.includes(key) ? ONLINE_GROUND_NOTE : ONLINE_RULESET_KEYS[vendor]?.includes(key) ? ONLINE_RULESET_NOTE : ONLINE_SHARED_NOTE",
     "new": "ONLINE_GROUND_NOTE",
     "tests": [
       "test/modsonline.test.js",

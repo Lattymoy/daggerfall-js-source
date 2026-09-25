@@ -1,0 +1,681 @@
+[
+  {
+    "name": "DECOR2b-the-model-refused",
+    "file": "src/net/decorLaw.js",
+    "old": "return own && own.g === DECOR_FURNITURE_GROUP ? { model, flat: null, item: own } : null;",
+    "new": "return null;",
+    "tests": [
+      "test/decor2b.test.js",
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-furnitures-numbers-dropped",
+    "file": "src/net/decorLaw.js",
+    "old": "return own && own.g === DECOR_FURNITURE_GROUP ? { model, flat: null, item: own } : null;",
+    "new": "return own && own.g === DECOR_FURNITURE_GROUP ? { model, flat: null } : null;",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-group-another",
+    "file": "src/net/decorLaw.js",
+    "old": "export const DECOR_FURNITURE_GROUP = 8;",
+    "new": "export const DECOR_FURNITURE_GROUP = 9;",
+    "tests": [
+      "test/decor2b.test.js",
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-furniture-of-any-group",
+    "file": "src/systems/decorFurnish.js",
+    "old": "export const isFurnishing = (item) => item?.group === 'Furniture' && FURNITURE_TEMPLATES.includes(item?.templateIndex);",
+    "new": "export const isFurnishing = (item) => FURNITURE_TEMPLATES.includes(item?.templateIndex);",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-furniture-of-any-template",
+    "file": "src/systems/decorFurnish.js",
+    "old": "export const isFurnishing = (item) => item?.group === 'Furniture' && FURNITURE_TEMPLATES.includes(item?.templateIndex);",
+    "new": "export const isFurnishing = (item) => item?.group === 'Furniture';",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-a-pillow-given-looks",
+    "file": "src/systems/decorFurnish.js",
+    "old": "  if (FURNISH_PILLOWS.has(t)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-a-bed-as-furniture",
+    "file": "src/systems/decorFurnish.js",
+    "old": "  if (FURNISH_BEDS.has(t)) return ['bed'];",
+    "new": "  if (FURNISH_BEDS.has(t)) return ['furniture'];",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-a-chair-as-a-decoration-too",
+    "file": "src/systems/decorFurnish.js",
+    "old": "  if (FURNISH_TABLES_AND_CHAIRS.has(t)) return ['furniture'];",
+    "new": "  if (FURNISH_TABLES_AND_CHAIRS.has(t)) return ['furniture', 'decor'];",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-a-rug-a-decoration-alone",
+    "file": "src/systems/decorFurnish.js",
+    "old": "  return ['furniture', 'decor'];   // curtains, rugs, tapestries, skins",
+    "new": "  return ['decor'];   // curtains, rugs, tapestries, skins",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-last-chair-forgotten",
+    "file": "src/systems/decorFurnish.js",
+    "old": "new Set([221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232])",
+    "new": "new Set([221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231])",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-fanciest-bed-forgotten",
+    "file": "src/systems/decorFurnish.js",
+    "old": "new Set([217, 218, 219, 220])",
+    "new": "new Set([217, 218, 219])",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-looks-unfiltered",
+    "file": "src/systems/decorFurnish.js",
+    "old": "return kinds ? (entries ?? []).filter((e) => kinds.includes(e.kind)) : [];",
+    "new": "return kinds ? [...(entries ?? [])] : [];",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-row-unnamed",
+    "file": "src/systems/decorFurnish.js",
+    "old": "name: itemLongName(item), model: null, flat,",
+    "new": "name: 'Furniture', model: null, flat,",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-rows-numbers-dropped",
+    "file": "src/systems/decorFurnish.js",
+    "old": "looks, light: null, item: descriptor, storage: false,",
+    "new": "looks, light: null, item: null, storage: false,",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-a-pillows-picture-lost",
+    "file": "src/systems/decorFurnish.js",
+    "old": "icon: flat ? { archive: flat[0], record: flat[1], dye: null } : null,",
+    "new": "icon: null,",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-one-line-for-many",
+    "file": "src/systems/decorFurnish.js",
+    "old": "export const furnishingDeliveredLine = (names) => (names.length === 1\n",
+    "new": "export const furnishingDeliveredLine = (names) => (true\n",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-back-line-always-many",
+    "file": "src/systems/decorFurnish.js",
+    "old": "export const furnishingBackLine = (n) => (n === 1 ?",
+    "new": "export const furnishingBackLine = (n) => (false ?",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-pack-line-for-none",
+    "file": "src/systems/decorFurnish.js",
+    "old": "  return [rest ? packLine(rest) : null, furn ? furnishingBackLine(furn) : null].filter(Boolean).join(' ');",
+    "new": "  return [packLine(rest), furn ? furnishingBackLine(furn) : null].filter(Boolean).join(' ');",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-furniture-line-for-none",
+    "file": "src/systems/decorFurnish.js",
+    "old": "  return [rest ? packLine(rest) : null, furn ? furnishingBackLine(furn) : null].filter(Boolean).join(' ');",
+    "new": "  return [rest ? packLine(rest) : null, furnishingBackLine(furn)].filter(Boolean).join(' ');",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-furniture-counted-in-the-pack",
+    "file": "src/systems/decorFurnish.js",
+    "old": "  const rest = items.length - furn;",
+    "new": "  const rest = items.length;",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-store-unstocked",
+    "file": "src/systems/shopStock.js",
+    "old": "  [BUILDING_TYPES.FurnitureStore]: [0x08, FURNISHER_CHANCE],\n",
+    "new": "",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-its-chance-another",
+    "file": "src/systems/shopStock.js",
+    "old": "export const FURNISHER_CHANCE = 0x32;",
+    "new": "export const FURNISHER_CHANCE = 0x28;",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-store-skipping-its-own",
+    "file": "src/systems/shopStock.js",
+    "old": "if ((group === 'Furniture' && buildingType !== BUILDING_TYPES.FurnitureStore) || group === 'UselessItems1') continue;",
+    "new": "if (group === 'Furniture' || group === 'UselessItems1') continue;",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-every-shop-its-furniture",
+    "file": "src/systems/shopStock.js",
+    "old": "if ((group === 'Furniture' && buildingType !== BUILDING_TYPES.FurnitureStore) || group === 'UselessItems1') continue;",
+    "new": "if (group === 'UselessItems1') continue;",
+    "tests": [
+      "test/decor2b.test.js"
+    ],
+    "equivalent": true,
+    "why": "DFU's own skip kept for every other shop: no other shop's table names the Furniture group (SHOP_ITEM_GROUPS), so it guards nothing today - kept as DaggerfallLoot.StockShopShelf has it, for a table that ever does."
+  },
+  {
+    "name": "DECOR2b-the-deliveries-forgotten",
+    "file": "src/systems/save.js",
+    "old": "  snap.furnishings = (entity.furnishings ?? []).map((it) => ({ ...it }));\n",
+    "new": "",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-deliveries-shared",
+    "file": "src/systems/save.js",
+    "old": "  snap.furnishings = (entity.furnishings ?? []).map((it) => ({ ...it }));",
+    "new": "  snap.furnishings = entity.furnishings ?? [];",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-deliveries-read-back-shared",
+    "file": "src/systems/save.js",
+    "old": "  entity.furnishings = (snap.furnishings ?? []).map((it) => setItemFields(it));",
+    "new": "  entity.furnishings = snap.furnishings ?? [];",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-gate-asked-of-furniture",
+    "file": "src/ui/nativeTrade.js",
+    "old": "const plan = isFurnishing(item) ? { ok: true, amount: item.stackCount ?? 1 } : planTake(item, {",
+    "new": "const plan = planTake(item, {",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-basket-furniture-weighed",
+    "file": "src/ui/nativeTrade.js",
+    "old": "bag: [...this.hooks.packItems(), ...this.basket.filter((x) => !isFurnishing(x))],",
+    "new": "bag: [...this.hooks.packItems(), ...this.basket],",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-walk-out-weight-with-furniture",
+    "file": "src/ui/nativeTrade.js",
+    "old": "return carriedWeight(this.hooks.entity ?? {}) + totalWeight(this.basket.filter((x) => !isFurnishing(x)));",
+    "new": "return carriedWeight(this.hooks.entity ?? {}) + totalWeight(this.basket);",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-stolen-furniture-carried",
+    "file": "src/ui/nativeTrade.js",
+    "old": "      this._deliverFurniture(this.basket);   // DECOR2b\n",
+    "new": "",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-no-delivery-no-guard",
+    "file": "src/ui/nativeTrade.js",
+    "old": "    if (!this.hooks.deliver) return;\n    const going = list.filter(isFurnishing);",
+    "new": "    const going = list.filter(isFurnishing);",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-enhanced-gate-asked-of-furniture",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "  if (isFurnishing(item)) return { ok: true, amount: item.stackCount ?? 1 };\n",
+    "new": "",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-enhanced-stolen-basket-carried",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "if (basket.length) { deliverFurniture(basket); transferAll(basket, deps.packItems()); }",
+    "new": "if (basket.length) transferAll(basket, deps.packItems());",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-deliveries-unread",
+    "file": "src/scenes/worldModes.js",
+    "old": "furnishings: () => playerEntity.furnishings ?? [],   // DECOR2b",
+    "new": "furnishings: () => [],   // DECOR2b",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-counter-carrying-furniture",
+    "file": "src/scenes/worldModes.js",
+    "old": "        if (!isFurnishing(it)) addItem(playerEntity.items, it);",
+    "new": "        addItem(playerEntity.items, it);",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-keyed-list-carrying-furniture",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (isFurnishing(it)) decorDeliver([it]);   // DECOR2b: the furnisher delivers\n    else addItem(playerEntity.items, it);",
+    "new": "    addItem(playerEntity.items, it);",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-steal-with-no-delivery",
+    "file": "src/scenes/worldModes.js",
+    "old": "      deliver: (items) => decorDeliver(items),   // DECOR2b: furniture stolen off the shelf is delivered, as bought furniture is\n",
+    "new": "",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-closed-shop-carrying-furniture",
+    "file": "src/scenes/worldModes.js",
+    "old": "          decorDeliverCarried();   // DECOR2b: furniture taken off the shelf is delivered, never carried\n",
+    "new": "",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-furniture-back-into-the-pack",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (isFurnishing(item)) { decorHome(item).push(item); return; }\n",
+    "new": "",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-one-line-per-piece",
+    "file": "src/scenes/worldModes.js",
+    "old": "    for (const it of items) decorHome(it).push(it);\n    say(furnishingDeliveredLine(items.map((it) => itemLongName(it))));",
+    "new": "    for (const it of items) { decorHome(it).push(it); say(furnishingDeliveredLine([itemLongName(it)])); }",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-a-sale-saying-the-pack",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (own.length) say(ownBackLines(own, decorOwnBackLine));",
+    "new": "    if (own.length) say(decorOwnBackLine(own.length));",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-furniture-back-to-the-pack",
+    "file": "src/ui/decorPanel.js",
+    "old": "export const decorBackTo = (piece) => (piece?.item?.g === DECOR_FURNITURE_GROUP ? 'Your things' : 'your pack');",
+    "new": "export const decorBackTo = (piece) => 'your pack';",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-kinds-unsaid",
+    "file": "src/ui/decorPanel.js",
+    "old": "  const as = e?.looks ? ` as any of the ${e.looks.map((k) => DECOR_KINDS[k].toLowerCase()).join(' or ')} you choose` : '';",
+    "new": "  const as = '';",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-tab-unpressed-in-a-look",
+    "file": "src/ui/decorPanel.js",
+    "old": "chip(`Your things (${m})`, mode === 'own' || mode === 'look', () => setMode('own'))",
+    "new": "chip(`Your things (${m})`, mode === 'own', () => setMode('own'))",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-look-lost",
+    "file": "src/ui/decorPanel.js",
+    "old": "    lookFor = key;\n    lookKey = look;",
+    "new": "    lookFor = key;\n    lookKey = null;",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-preview-the-catalogues",
+    "file": "src/ui/decorPanel.js",
+    "old": "return (view?.entries ?? []).find((e) => e.key === (hoverKey ?? (mode === 'look' ? lookKey : selectedKey))) ?? null;",
+    "new": "return (view?.entries ?? []).find((e) => e.key === (hoverKey ?? selectedKey)) ?? null;",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-choice-the-catalogues",
+    "file": "src/ui/decorPanel.js",
+    "old": "const selected = () => (mode === 'own' ? ownSelected() : mode === 'look' ? lookSelected()",
+    "new": "const selected = () => (mode === 'own' ? ownSelected() : false ? lookSelected()",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-a-look-row-unselected",
+    "file": "src/ui/decorPanel.js",
+    "old": "r.setAttribute('aria-selected', e.key === (look ? lookKey : selectedKey) ? 'true' : 'false');",
+    "new": "r.setAttribute('aria-selected', e.key === selectedKey ? 'true' : 'false');",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-a-look-priced",
+    "file": "src/ui/decorPanel.js",
+    "old": "    const price = look ? 0 : priceOf(e);",
+    "new": "    const price = priceOf(e);",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-a-look-row-priced-in-words",
+    "file": "src/ui/decorPanel.js",
+    "old": "el('span', 'dfdecor-row-price', look ? 'free' : decorPriceText(price))",
+    "new": "el('span', 'dfdecor-row-price', decorPriceText(price))",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-a-look-never-chosen",
+    "file": "src/ui/decorPanel.js",
+    "old": "r.addEventListener('click', () => { if (look) lookKey = e.key; else selectedKey = e.key; redraw(); });",
+    "new": "r.addEventListener('click', () => { selectedKey = e.key; redraw(); });",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-look-view-unfiltered",
+    "file": "src/ui/decorPanel.js",
+    "old": "        ? filterDecor(entries, { kinds: lookOf().looks, text: f.text, size: f.size, sort: f.sort, radiusOf })",
+    "new": "        ? filterDecor(entries, { kinds: null, text: f.text, size: f.size, sort: f.sort, radiusOf })",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-furniture-gone-and-the-view-stays",
+    "file": "src/ui/decorPanel.js",
+    "old": "    } else if (mode === 'look' && !lookOf()) {",
+    "new": "    } else if (false) {",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-a-picture-invented",
+    "file": "src/ui/decorPanel.js",
+    "old": "    if (e.icon || e.flat) {\n      const img = el('img', '');",
+    "new": "    if (true) {\n      const img = el('img', '');",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-letters-always-furniture",
+    "file": "src/ui/decorPanel.js",
+    "old": "thumb.textContent = (DECOR_KINDS[e.looks?.[0]] ?? DECOR_KINDS.furniture).slice(0, 2);",
+    "new": "thumb.textContent = DECOR_KINDS.furniture.slice(0, 2);",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-furniture-said-to-be-carried",
+    "file": "src/ui/decorPanel.js",
+    "old": "const ownLine = (e) => (e.furnishing ? decorFurnishLine(e) : e.mount ? DECOR_MOUNT_LINE : DECOR_OWN_LINE);",
+    "new": "const ownLine = (e) => (e.mount ? DECOR_MOUNT_LINE : DECOR_OWN_LINE);",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-furnitures-name-lost",
+    "file": "src/ui/decorPanel.js",
+    "old": "      pickName.textContent = lookOf()?.name ?? '';\n",
+    "new": "",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-look-unsaid",
+    "file": "src/ui/decorPanel.js",
+    "old": "      pickLine.textContent = e ? `as ${e.name} - ${decorRowSub(e, radiusOf(e))}` : DECOR_LOOK_LINE;",
+    "new": "      pickLine.textContent = DECOR_LOOK_LINE;",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-a-look-priced-at-place",
+    "file": "src/ui/decorPanel.js",
+    "old": "const free = sel?.kind === 'own' || mode === 'look';",
+    "new": "const free = sel?.kind === 'own';",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-button-never-asks",
+    "file": "src/ui/decorPanel.js",
+    "old": "const label = mode === 'own' && sel?.looks ? DECOR_LOOK_BUTTON : 'Place';",
+    "new": "const label = 'Place';",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-place-past-the-look",
+    "file": "src/ui/decorPanel.js",
+    "old": "    if (mode === 'own' && sel.looks) { chooseLook(sel.key); return; }   // DECOR2b: its look first\n",
+    "new": "",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-look-placed-as-a-catalogue-piece",
+    "file": "src/ui/decorPanel.js",
+    "old": "    if (furn) onPlaceLook(furn, sel); else onPlace(sel);",
+    "new": "    onPlace(sel);",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-showlook-forgetting-the-furniture",
+    "file": "src/ui/decorPanel.js",
+    "old": "    showLook(key, look = null) { ownKey = key; chooseLook(key, look); },",
+    "new": "    showLook(key, look = null) { chooseLook(key, look); },",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-a-look-with-no-shape",
+    "file": "src/scenes/decorTool.js",
+    "old": "  model: look.model ?? null, flat: look.flat ?? null, light: null, storage: false, look: look.key,",
+    "new": "  model: look.model ?? null, flat: null, light: null, storage: false, look: look.key,",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-looks-light-and-holding",
+    "file": "src/scenes/decorTool.js",
+    "old": "  model: look.model ?? null, flat: look.flat ?? null, light: null, storage: false, look: look.key,",
+    "new": "  model: look.model ?? null, flat: look.flat ?? null, light: look.light ?? null, storage: !!look.storage, look: look.key,",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-bed-a-catalogue-piece",
+    "file": "src/scenes/decorTool.js",
+    "old": "key: furn.key, kind: 'own', own: furn.own, furnishing: true, name: furn.name, item: furn.item, count: furn.count,",
+    "new": "key: furn.key, kind: 'own', own: furn.own, furnishing: true, name: furn.name, item: null, count: furn.count,",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-look-forgotten-by-the-flight",
+    "file": "src/scenes/decorTool.js",
+    "old": "  model: look.model ?? null, flat: look.flat ?? null, light: null, storage: false, look: look.key,",
+    "new": "  model: look.model ?? null, flat: look.flat ?? null, light: null, storage: false,",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-look-placed-as-bought",
+    "file": "src/scenes/decorTool.js",
+    "old": "onPlaceLook: (furn, look) => beginPlacing(decorLookEntry(furn, look)),",
+    "new": "onPlaceLook: (furn, look) => beginPlacing(look),",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-deliveries-unlisted",
+    "file": "src/scenes/decorTool.js",
+    "old": "    rows(deps.furnishings?.() ?? [], (item, i) => decorFurnishingEntry(item, i));\n",
+    "new": "",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-a-model-moved-as-a-flat",
+    "file": "src/scenes/decorTool.js",
+    "old": "key: `own-piece:${piece.id}`, kind: 'own', model: piece.model ?? null,",
+    "new": "key: `own-piece:${piece.id}`, kind: 'own', model: null,",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-back-to-the-list",
+    "file": "src/scenes/decorTool.js",
+    "old": "    else if (look) panel.showLook(key, look);\n",
+    "new": "",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-pack-words-for-furniture",
+    "file": "src/scenes/decorTool.js",
+    "old": "!item ? `${name} taken down.` : isFurnishing(item) ? `${name} taken down - set it down again from Your things.` : `${name} is back in your pack.`",
+    "new": "!item ? `${name} taken down.` : `${name} is back in your pack.`",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-the-bar-saying-the-pack",
+    "file": "src/scenes/decorTool.js",
+    "old": "return p.entry.furnishing ? 'It is no longer among your things.' : 'It is no longer in your pack.';",
+    "new": "return 'It is no longer in your pack.';",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  },
+  {
+    "name": "DECOR2b-a-solid-colour-for-no-picture",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    image: img?.archive ? img : null,",
+    "new": "    image: img,",
+    "tests": [
+      "test/decor2b.test.js"
+    ]
+  }
+]

@@ -355,6 +355,6 @@ test('WB2 the seams: online alone, stood before the lights, the stone in the wor
   assert.match(w, /gate: gatePool \? pickActivatableHit\(cam\.pos, _hd, gatePool\.targets\(\), collider\) : null,/, 'the plaque races it too');
   assert.match(w, /\(key\) => gatePool\?\.hoverName\(key\) \?\? null,/);
   assert.match(w, /if \(gatePool && \(modes\?\.mode \?\? 'exterior'\) !== 'exterior'\) drawGateBanner\(null\);/, 'the countdown leaves with the street');
-  assert.match(read('src/player/activationRace.js'), /for \(const p of \[gate, camp, water,/, 'the gate heads the tie order');
+  assert.match(read('src/player/activationRace.js'), /firmFirst\(\[gate, camp, water,/, 'the gate heads the tie order');
   assert.ok(PORTAL_CENTRE_Y > ARCH_Y0 && PORTAL_CENTRE_Y < ARCH_Y1);
 });

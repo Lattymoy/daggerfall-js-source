@@ -248,7 +248,7 @@ export function installThunderlockIcons({ fetchBytes = null } = {}) {
   // every door refused to draw them.
   //
   // This is SURV-ART verbatim, one mod over - "the sprites aren't
-  // showing at all" - and textureReplacement.js:199 says so in the
+  // showing at all" - and textureReplacement.js:203 says so in the
   // comment right above the function. The audit read that file for F7
   // and took the URL law out of it while walking past the flag.
   return addVendorTextures(ICON_FILES.map(({ archive, record, frame, file, offset }) => ({

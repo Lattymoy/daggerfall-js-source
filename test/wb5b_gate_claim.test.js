@@ -91,7 +91,7 @@ test('WB5b the claim: a receipt the relay signed, naming the claiming account, i
   assert.deepEqual(await claimGate(ctx, { id: G, handle: 'Registered' }, rg, pubKey), { recorded: true, closed: 1 }, 'registered, the same receipt counts');
   db._raw.prepare('DELETE FROM players WHERE id = ?').run(A.id);
   assert.equal(db._raw.prepare('SELECT COUNT(*) AS n FROM gate_kills WHERE account = ?').get(A.id).n, 0, 'the account gone, its gates with it');
-  const sql = src('server-account/migrations/0009_gate_kills.sql');
+  const sql = src('server-account/migrations/0014_gate_kills.sql');
   assert.match(sql, /PRIMARY KEY \(day, account\)/);
   assert.match(sql, /FOREIGN KEY \(account\) REFERENCES players\(id\) ON DELETE CASCADE/);
 });
@@ -117,9 +117,9 @@ test('WB5b the worker: /v1/gate/claim behind a session and never open - the sess
   t.mock.method(Date, 'now', () => clock);
   const { priv, pub } = await gatePair();
   assert.ok(ROUTES.has('/v1/gate/claim') && !OPEN_ROUTES.has('/v1/gate/claim'));
-  assert.equal(ACCOUNT_VERSION, 'acct10');
+  assert.equal(ACCOUNT_VERSION, 'acct11');   // acct10 on its branch; main's RENOWN1, HOME1, DECOR1 and GUILD1 took acct10 first
   const toml = src('server-account/wrangler.toml');
-  assert.match(toml, /ACCOUNT_VERSION = "acct10"/);
+  assert.match(toml, /ACCOUNT_VERSION = "acct11"/);
   assert.match(toml, /^GATE_PUBLIC_KEY = ""$/m, 'the public half is a var, empty until the pair is minted');
   assert.doesNotMatch(toml, /GATE_SIGNING_KEY\s*=/, 'the private half is never in the account service\'s file');
   const { call } = await stand({ gateKey: pub });

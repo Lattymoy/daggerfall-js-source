@@ -218,7 +218,9 @@ test('U25 / THE ONE CONSTRUCTION SEAM: ONE inventory builder per host', () => {
     // handed the very same object the window would get, and minting it
     // twice would be two identities for one pile. The law is unchanged
     // and is asserted on the hoist instead of on the property.
-    const pileAt = src.indexOf('const _hooks = droppedLootHooks(pile);');
+    // DW-E3: the streaming host's arm names a FISH's identity the same way when the one ray met a fish (a fish is
+    // a DaggerfallLoot) - one hoisted object either way, handed to the window and to quick loot alike.
+    const pileAt = src.search(/const _hooks = (?:_fish \? dwFishLootHooks\(_fish\) : )?droppedLootHooks\(pile\);/);
     assert.ok(pileAt > 0, `${f}: the pile arm no longer names its own identity`);
     const pile = src.slice(pileAt, pileAt + 1100);   // QUICK-LOOT B4: past the decline and its reasoning, to the property itself
     // G5: DaggerfallLoot's identity travels with the pile through the

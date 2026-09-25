@@ -25,6 +25,7 @@ import { getPref, setPref, _resetForTests as resetPrefs } from '../src/systems/u
 import { _resetForTests as resetSettings } from '../src/systems/settings.js';
 import { _resetModSettings } from '../src/systems/modSettings.js';
 import { tileStates, classicSegment, allOffPlan, featuresAllOff, featuresRestore, featureTile, barReading, FEATURES_RESTORE_PREF, ALL_OFF_ASK } from '../src/ui/enhancedMenu.js';
+import { renderScaleSetting, _resetRenderScaleDoor } from '../src/systems/renderScale.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -50,7 +51,7 @@ test('FT18: ten rows are four, and nothing they offered is lost - every key, def
   for (const gone of ['grass-density', 'grass-style', 'wind-wisps', 'flora-sway', 'quickslot-diamond', 'quickbar-style', 'blood-marks', 'blood-overkill', 'blood-screen', 'blood-gore']) {
     assert.equal(row(gone), undefined, `${gone} is condensed`);
   }
-  assert.equal(FEATURES.length, 52);
+  assert.equal(FEATURES.length, 57);   // PERF-SCALE's render scale (2026-09-25) is the one row added since; the sea update's four mod rows (AS1, DS1, WA1, DW-D) came with its merge
   const want = { grassDensity: 1, grassStyle: 'pixel', floraSway: true, windWisps: true, quickbarStyle: 'quickbar', quickslots: true,
     'blood-gore': 'normal', 'blood-marks': true, 'blood-overkill': true, 'blood-screen': true };
   for (const [k, v] of Object.entries(want)) assert.equal(FEATURE_PREF_DEFAULTS[k], v, `${k} keeps its default`);
@@ -138,7 +139,7 @@ test('FT18: blood has an Off at last - the three parts off, the amount kept; an 
 test('FT18: the search finds by any word - title, note, part, group or a mod\'s author - in any order, without accents or curly quotes (mutant: the note, the parts or the author left out)', () => {
   const ids = (q) => FEATURES.filter((f) => matchesFeatureQuery(f, q)).map((f) => f.id);
   assert.equal(ids('').length, FEATURES.length, 'an empty query finds everything');
-  assert.deepEqual(ids('kamer'), ['mod-windmills-kamer', 'mod-world-of-daggerfall'], 'by the author');
+  assert.deepEqual(ids('kamer'), ['mod-windmills-kamer', 'mod-world-of-daggerfall', 'mod-warm-ashes-ships'], 'by the author (Warm Ashes - Ships is Kamer\'s too)');
   assert.deepEqual(ids('hotbar'), ['quick-slots'], 'by what a condensed row folded in');
   assert.deepEqual(ids('lens'), ['blood'], 'by a part');
   assert.ok(ids('sway').includes('wind'));
@@ -159,12 +160,16 @@ test('FT18: All off - every switch to Off, a row with no Off to Daggerfall\'s ow
     tileStates(row('quick-slots')).set(2);
     tileStates(row('dungeon-wall-style')).set(3);
     tileStates(row('cloud-quality')).set(2);
+    tileStates(row('render-scale')).set(4);   // AUDIT BRANCH-0925 PS-A1: the world drawn at half the window's pixels
+    _resetRenderScaleDoor();
+    assert.equal(renderScaleSetting(), 0.5);
     const before = Object.fromEntries(FEATURES.map((f) => [f.id, tileStates(f) && label(f.id)]));
     assert.equal(before['dungeon-wall-style'], 'Random');
     // the plan: the land view goes to Daggerfall's 3, the walls to Classic, the clouds (a choice) nowhere
     assert.equal(classicSegment(row('land-view-distance'), tileStates(row('land-view-distance'))), tileStates(row('land-view-distance')).labels.findIndex((l) => /\(3\)/.test(l)));
     assert.equal(classicSegment(row('dungeon-wall-style'), tileStates(row('dungeon-wall-style'))), 0);
     assert.equal(classicSegment(row('cloud-quality'), tileStates(row('cloud-quality'))), -1);
+    assert.equal(classicSegment(row('render-scale'), tileStates(row('render-scale'))), 0, 'AUDIT BRANCH-0925 PS-A1: the render scale has no Off - Daggerfall\'s own frame is the whole window, 100%');
     assert.equal(classicSegment(row('grass'), tileStates(row('grass'))), 3, 'the Off that SAYS Off, wherever it stands');
     assert.ok(!allOffPlan().some((m) => m.f.id === 'cloud-quality'));
 
@@ -179,11 +184,13 @@ test('FT18: All off - every switch to Off, a row with no Off to Daggerfall\'s ow
     assert.equal(label('cloud-quality'), 'High', 'a choice keeps what it was');
     assert.equal(getPref('grassStyle'), 'pixel', 'and so does a choice in a drawer');
     assert.equal(label('dungeon-wall-style'), 'Classic');
+    assert.deepEqual([label('render-scale'), getPref('renderScale'), renderScaleSetting()], ['100%', 1, 1], 'the world drawn at the window\'s own size again - the renderer reads 100%');
     assert.equal(label('enhanced-environments'), 'Off', 'the outdoors bar says Off now, so All off can find it');
     assert.deepEqual(BLOOD_PARTS.map((k) => getPref(k)), [false, false, false]);
     const keep = getPref(FEATURES_RESTORE_PREF);
     assert.equal(keep.blood, 'Heavy');
     assert.equal(keep['quick-slots'], 'Hotbar');
+    assert.equal(keep['render-scale'], '50%');
 
     // a second press keeps the FIRST press's values - even for a tile turned back on in between
     tileStates(row('blood')).set(1);
@@ -193,8 +200,9 @@ test('FT18: All off - every switch to Off, a row with no Off to Daggerfall\'s ow
 
     featuresRestore();
     for (const f of FEATURES) if (before[f.id]) assert.equal(label(f.id), before[f.id], `${f.id} is back`);
+    assert.equal(renderScaleSetting(), 0.5, 'and the render scale with them');
     assert.equal(getPref(FEATURES_RESTORE_PREF), null, 'the keep is spent');
-  } finally { delete globalThis.location; fresh(); }
+  } finally { delete globalThis.location; fresh(); _resetRenderScaleDoor(); }
 });
 
 test('FT18: online, All off leaves the room\'s rows as the room has them (mutant: the lock ignored)', () => {

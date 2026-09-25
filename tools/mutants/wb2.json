@@ -218,8 +218,8 @@
   {
     "name": "WB2-the-gate-loses-its-ties",
     "file": "src/player/activationRace.js",
-    "old": "  for (const p of [gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
-    "new": "  for (const p of [camp, gate, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
+    "old": "  return firmFirst([gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "new": "  return firmFirst([camp, gate, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
     "tests": [
       "test/wb2_gate.test.js"
     ]

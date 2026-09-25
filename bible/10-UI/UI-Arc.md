@@ -866,17 +866,17 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:2208 (the factory) and :1904 (a
+                        worldModes.js:2287 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:1077, world.js:2733,
-                        exterior.js:2579. It is the only window TWO
+                        dungeonContext.js:1117, world.js:3328,
+                        exterior.js:2585. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:7543, dungeonContext.js:6898. A seam
+    / NOTEBOOK          world.js:8273, dungeonContext.js:6995. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -983,6 +983,22 @@ GitHub provisions the apex certificate first and the www alias after,
 and it had not landed when this was written. The apex serves; if www is
 still 503 tomorrow the fix is to re-save the domain in the repo's Pages
 settings, which re-triggers provisioning.
+
+
+**PATREON1 (2026-09-25, Mac: "Replace website KOFI with patreon https://www.patreon.com/c/dfenhanced").** The corner
+plaque is Patreon's now: `<a class="patreon" href="https://www.patreon.com/c/dfenhanced">`, "Support on Patreon",
+and the drawn cup is Patreon's own mark on the same 4px grid (`.pmark`: the bar in the dim, five pixels tall, and a
+disc in the brass - a 5x5 with its corners cut). Still no image and no third-party script; still the page's
+only ask - Ko-fi is gone from the page, the README, SUPPORT.md and the repository's Sponsor button
+(`.github/FUNDING.yml`). The Patreon tiers are the titles the account service grants (TITLE-N: Disciple, Apostle,
+Hierophant). Pinned in `test/landing.test.js` (U64 + PATREON1).
+
+AUDIT BRANCH-0925 PATREON1-F1 (2026-09-25, the pre-merge audit, Mac: "Audit before we merge"): the sweep had left
+`.github/FUNDING.yml` at `ko_fi: dfjs`, so GitHub's Sponsor button - in the header of every repo page the landing
+page's Install, Source and issues links and the desktop app's releases link land on - still sent people to Ko-fi
+beside a README that said Patreon. It is `custom: ["https://www.patreon.com/c/dfenhanced"]` now (`custom`, not
+`patreon: dfenhanced`, which would link a URL Mac never gave), and the PATREON1 pin reads it, README.md and SUPPORT.md:
+the same Patreon, no Ko-fi (`tools/mutants/patreon1.json`, 4, all dead).
 
 ## U63 THE SITE WEARS THE GAME'S FACE (2026-08-27, Mac's call)
 
@@ -4767,7 +4783,7 @@ literal with no duplicates; all 71 display labels match DFU's recovered
 FALL.EXE text exactly; every secondary list matches its DFU array in
 order; the builder is reconstructed on re-entry on both sides, so the
 pick lists reset; a career's flags survive the save round trip (the
-career is spread as plain CFG data, save.js:285,529 - worth checking
+career is spread as plain CFG data, save.js:290,529 - worth checking
 because AUDIT 17h caught exactly this shape dropping player
 reputation); and parseCareerData leaves every numeric field finite and
 unsigned under the maximal fourteen-pick set.
@@ -8608,7 +8624,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:3031 as a second book built by hand 342 lines below the
+worldModes.js:3116 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -8691,7 +8707,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:3146 and
+questJournal.js from charSheetNav:53, world.js:3755 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -9318,7 +9334,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:6862` and `dungeonContext.js:1634` answer the same
+`worldModes.js:7303` and `dungeonContext.js:1675` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -9378,7 +9394,7 @@ cited and ported somewhere in `src/`. FOUR were not:
 |---|---|---|
 | DaggerfallUseMagicItemWindow | 139 | **CLOSED, UI1** - see below |
 | DaggerfallMerchantServicePopupWindow | 175 | **CLOSED, UI2** - see below |
-| DaggerfallTransportWindow | 264 | OPEN, and it is a SYSTEM gap wearing a UI hat: `motor.js:640` reads `riding: false` with "the transport arc pends". The window is the last tenth of that arc, not a slice on its own |
+| DaggerfallTransportWindow | 264 | OPEN, and it is a SYSTEM gap wearing a UI hat: `motor.js:687` reads `riding: false` with "the transport arc pends". The window is the last tenth of that arc, not a slice on its own |
 | DaggerfallUnityMouseControlsWindow | - | NOT A GAP: DFU's own mouse-settings screen, and the port's settings surface (U29) carries those keys already |
 
 ### UI1 CLOSED: the use-magic-item window
@@ -9422,7 +9438,7 @@ the art-less fallback.
 ### What is left
 
 `DaggerfallTransportWindow` alone, and it wants its own arc: the window
-is trivial, `TransportManager` is not - `motor.js:640` reads
+is trivial, `TransportManager` is not - `motor.js:687` reads
 `riding: false` with "the transport arc pends". With UI1 and UI2
 closed, **58 of DFU's 60 real windows are ported**, and the 59th is a
 system's last tenth.
@@ -10562,9 +10578,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:7935`,
+the other half went stale unnoticed. (The rest cite named `world.js:8667`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:7941` now.)
+deleted the second and the cite is `world.js:8673` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -14227,7 +14243,7 @@ items off your character."*
 
 It did not, and the whole of the reason is one line. INV1 hung the
 gesture on the pack's rows - `itemRow`'s `if (from === 'local')
-dragFrom(row, item)` (`ui/enhancedInventory.js:1877`) - and made the
+dragFrom(row, item)` (`ui/enhancedInventory.js:1936`) - and made the
 body a drop TARGET, with `equippedList` saying so in its own comment:
 *"the body is the equip target - `dragFrom`'s pointerup finds it by hit
 test, so the map needs no handler of its own"*. True for the direction
@@ -14640,7 +14656,7 @@ death screen (`ui/deathScreen.js:168-170`), the rest window's rows
 (`ui/restWindow.js:866`), the save window (`ui/saveWindow.js`, eight
 `shadowText` sites), the travel popup (`ui/travelPopUp.js:716`), the quest
 journal (`ui/questJournal.js:641-642`), every MessageBox row
-(`ui/messageBox.js:469, 434`) and every ActionTextBox (`ui/actionText.js:45,
+(`ui/messageBox.js:474, 434`) and every ActionTextBox (`ui/actionText.js:45,
 152`) still draw in the bitmap font - each a native window under THE
 NATIVE-WINDOW RULE, whose face cannot move without its DFU metrics moving
 too. That is a FONT2 slice, not this one.
@@ -15375,9 +15391,9 @@ whether an entry MATCHES and asserts nothing.
 Following it out was worse than the symptom. Five Ledger rows cite a
 PAIR - `` `world.js:N`, `exterior.js:M` `` - and the table captured `M`
 alone. So `M` was re-resolved at every wave for a year and `N` was never
-read: `world.js:5862` named a line that is 8950, `:918` one that is
+read: `world.js:6533` named a line that is 8950, `:1005` one that is
 1215, `:1094` one that is 2194, `:3903` one that is 3066, `:3920` one
-that is 8907. `world.js:5611-5643` and `dungeonContext.js:1447` were
+that is 8907. `world.js:6267-6299` and `dungeonContext.js:1488` were
 stale the same way. Seven numbers re-resolved BY CONTENT, every
 uncaptured half de-baked to `\d+`, and eight new entries added so every
 number in a pair is captured. The half nobody reads cannot rot in
@@ -15678,7 +15694,7 @@ that through `InputManager` (:1084-1108, one poll a frame in
 `GetKeyDown` at all, so every consumer wrote its own out of the only
 read there was.
 
-`motor.js:1088` had already named this bug's twin from the other side:
+`motor.js:1155` had already named this bug's twin from the other side:
 "a render frame that accumulates less than one physics step swallowed
 the press" - the fix there moved `_heightAction` out of the fixed-step
 loop. The half that remained was the host's.
@@ -16919,7 +16935,7 @@ says in its own header that a second `--apply` against the same base
 moves every cite AGAIN. Recovering this slice's line shifts by
 reverting the tree except the files it had edited re-created exactly
 that: the kept files still carried the first pass's moves, and the
-second pass moved them a second time - `dungeonContext.js:2470` became
+second pass moved them a second time - `dungeonContext.js:2511` became
 2221 where the line had gone to 2215. The repair is a pairing walk:
 read HEAD's number at the same position in the same file, resolve it
 BY CONTENT in the working tree, and write that. Forty-seven cites came
@@ -17005,7 +17021,7 @@ three of the block's four rows empty and the box it measured was 30px
 tall where an ordinary fight makes it 111.
 
 The fix is not a better number, it is the tree's own rule read the
-right way round. QS3 (`ui/enhancedHud.js:451-454`) already says it, for
+right way round. QS3 (`ui/enhancedHud.js:557-560`) already says it, for
 the quickslot diamond, in the opposite direction: the diamond lives on
 the HUD root rather than in `.hud-bottom` **because** it is a CORNER,
 "and a corner block inside a centred flex column moves whenever a bar

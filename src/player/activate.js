@@ -331,7 +331,7 @@ function pickFoeAlong(eye, dir, foes, collider, distance, accept) {
 
 /**
  * Pick the nearest activatable the eye ray hits within reach and sight.
- * @param {Array<{key:string, aabb:{min,max}, distance?:number, reach?:number}>} targets
+ * @param {Array<{key:string, aabb:{min,max}, distance?:number, reach?:number, yields?:boolean}>} targets
  * @returns {string|null} target key
  */
 export function pickActivatable(eye, dir, targets, collider) {
@@ -365,7 +365,7 @@ export function pickActivatable(eye, dir, targets, collider) {
  * `distance` is widened to RAY_DISTANCE so it can WIN the pick
  * therefore carries its real `reach` beside it, and the ladder speaks
  * the refusal when the winner came back out of reach. This is the
- * bulletin board's idiom (scenes/worldModes.js:5107-5120) given a
+ * bulletin board's idiom (scenes/worldModes.js:5400-5413) given a
  * field, not a second pick: one ray, one winner, the gate downstream.
  * Targets that were never widened answer `reach === distance`, which
  * the pre-gate has already enforced, so they can never refuse.
@@ -377,7 +377,25 @@ export function pickActivatable(eye, dir, targets, collider) {
  * holds the law). Here, and not at the call sites, so every reader of
  * the ray - the presses, the plaque - reads the one pile.
  *
- * @returns {{key:string, distance:number, reach:number}|null}
+ * PR-WAGON1 (2026-09-24, a player's report Mac relayed: "Players can
+ * grief other players with the wagon by putting it in front of dungeon
+ * entryways and building entrances"; Mac's choice: "Others' wagons
+ * don't block"): A TARGET THAT YIELDS. Another player's team - their
+ * wagon and their horse, live or kept (scenes/horseCartPool.js marks
+ * both `yields: true`: the producer's word, as LOOT-STACK's `body` is)
+ * - stands no collider in this world, and the one ray passes through
+ * it as the player now walks through it. It answers the ray only when
+ * the ray met nothing FIRM: every other target the ray strikes, at any
+ * distance - the door behind it, the dungeon's mouth, the body, the
+ * person, my own team - is the hit exactly as if the team were not
+ * there (a far one refusing out loud, MC-2's law), and a ray that meets
+ * nothing else names the team ("Owned by ...") and presses it.
+ * `firmFirst` below is the law and its ONE home: this pick reads it
+ * over a target list, and player/activationRace.js over the families'
+ * picks, so a team in the horse cart pool cannot take the ray from a
+ * door in the host's own.
+ *
+ * @returns {{key:string, distance:number, reach:number, yields?:boolean}|null}
  */
 /**
  * DISC10: the slab test in a RIGID box's own frame - `m` a column-major rotation and translation with no scale (the
@@ -393,7 +411,26 @@ export function rayObb(origin, dir, m, box) {
 }
 
 export function pickActivatableHit(eye, dir, targets, collider) {
-  return noteBodyStack(nearestActivatableHit(eye, dir, targets, collider), targets, (rest) => nearestActivatableHit(eye, dir, rest, collider));
+  const nearest = (list) => nearestActivatableHit(eye, dir, list, collider);
+  return noteBodyStack(firmFirst(targets, nearest), targets, nearest);   // PR-WAGON1: another player's team yields
+}
+
+/** PR-WAGON1: does this target - or the hit it won - yield the ray? Its
+ *  producer's word, and nothing else. */
+export const yieldsRay = (t) => !!t && t.yields === true;
+
+/**
+ * PR-WAGON1: THE RAY'S FIRM ANSWER FIRST. `nearest` over the entrants
+ * that hold their ground, and over the ones that yield only when that
+ * found nothing - an occluded or out-of-range firm target is nothing,
+ * as it is to the pick. `nearest` is the reader's OWN nearest-hit law
+ * (the pick's over targets, the race's over picks), so the yield
+ * changes which entrants race and never how they race. A list with
+ * nothing yielding in it is raced as it always was, with no copy made.
+ */
+export function firmFirst(entrants, nearest) {
+  if (!entrants.some(yieldsRay)) return nearest(entrants);
+  return nearest(entrants.filter((e) => !yieldsRay(e))) ?? nearest(entrants.filter(yieldsRay));
 }
 
 /** The ray's nearest hit - DFU's one raycast, as the port spells it (the
@@ -405,6 +442,7 @@ function nearestActivatableHit(eye, dir, targets, collider) {
   let bestAabb = null;
   let bestReach = DEFAULT_ACTIVATION_DISTANCE;
   let bestNoSurface = false;
+  let bestYields = false;
   let targetKeys = null;   // CASTLE1: the keys, minted only when a box holds the eye
   let firstHit;            // DISC19-E: the one surface DFU's ray meets, cast lazily
   for (const target of targets) {
@@ -469,6 +507,7 @@ function nearestActivatableHit(eye, dir, targets, collider) {
     // its pick reach IS its handler's constant.
     bestReach = target.reach ?? target.distance ?? DEFAULT_ACTIVATION_DISTANCE;
     bestNoSurface = target.noSurface === true;
+    bestYields = yieldsRay(target);
   }
   if (bestKey === null) return null;
   // Occlusion: solid world strictly in front of the target blocks it -
@@ -495,5 +534,7 @@ function nearestActivatableHit(eye, dir, targets, collider) {
       && hz >= b.min[2] - skin && hz <= b.max[2] + skin;
     if (!inside) return null;
   }
-  return { key: bestKey, distance: bestDist, reach: bestReach };
+  // PR-WAGON1: a yielding winner says so, so the race over the families'
+  // picks (activationRace.js) reads the law off the hit it was handed.
+  return bestYields ? { key: bestKey, distance: bestDist, reach: bestReach, yields: true } : { key: bestKey, distance: bestDist, reach: bestReach };
 }

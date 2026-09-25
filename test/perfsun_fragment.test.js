@@ -54,11 +54,12 @@ test('PERF-SUN1: the far cascade takes ONE tap, and the near ones keep the kerne
   assert.equal(SHADOW_PCF_CASCADES, 2);
   assert.ok(SHADOW_PCF_CASCADES < SHADOW_CASCADES.length, 'at least one cascade is cheap, or the change does nothing');
   assert.ok(SHADOW_PCF_CASCADES >= 1, 'and at least one keeps the kernel, or EL7’s contact hairline goes');
-  // the loop is still there for the near cascades
-  assert.match(SHADOW_GLSL, /for \(int y = -1; y <= 1; y\+\+\)/);
+  // the kernel is still there for the near cascades - PERF-EXT5 (2026-09-25): the 3x3 in four bilinear taps, its
+  // weights exactly (test/perfexta.test.js)
+  assert.match(SHADOW_GLSL, /vec2 wA = 2\.0 - f, wB = 1\.0 \+ f;/);
   assert.match(SHADOW_GLSL, /return lit \/ 9\.0;/);
-  // ...and the return is BEFORE the loop, or it saves exactly nothing
-  assert.ok(SHADOW_GLSL.indexOf('if (!soft && c >= 2) return texture(uSunShadow') < SHADOW_GLSL.indexOf('for (int y = -1; y <= 1; y++)'),
+  // ...and the return is BEFORE the kernel, or it saves exactly nothing
+  assert.ok(SHADOW_GLSL.indexOf('if (!soft && c >= 2) return texture(uSunShadow') < SHADOW_GLSL.indexOf('vec2 wA = 2.0 - f'),
     'the cheap tap returns before the kernel runs');
   // WHY the far one can afford it, in numbers rather than assertion: a
   // texel of the far cascade against a pixel at a hundred metres.

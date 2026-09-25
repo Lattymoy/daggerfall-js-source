@@ -41,14 +41,34 @@ export const FAR_FLAT_RING = 2;
 export const TALL_FLAT_HEIGHT = 2.5;
 
 /**
- * Does this flat batch draw at this ring?
- * @param {{ring: number, height: number, animated?: boolean}} p
- *   ring     Chebyshev map-pixel distance from the player's pixel
- *   height   the batch's scaled billboard height in world units
- *   animated true for a batch the FlatAnimator drives (`frame != null`)
+ * Does this flat batch draw at this ring? THE RULE'S ONE HOME.
+ *
+ * PERF-EXT12 (2026-09-25, the players' "fps issues in the exterior but
+ * fine in the interior"): POSITIONAL, because the streaming host asks it of
+ * every flat batch of every pixel it can see or reach, every frame - 1,131
+ * times a frame on the harness town - and the object form built a
+ * `{ ring, height, animated }` for each. AUDIT 65 had judged that object
+ * free: in a five-million-call microbenchmark V8 scalar-replaces a literal
+ * that never escapes. In the frame it does not. With a 1 MB young space,
+ * 3,065 harness frames ran 1,296-1,301 scavenges with the literal and
+ * 1,073-1,078 with this call - and the rule written out inline scavenges
+ * no less than this call does, so the garbage was the object, not the
+ * call: about 70 KB a frame, the collector's to meet (PERF-TOWN1's lesson).
+ * @param {number} ring      Chebyshev map-pixel distance from the player's pixel
+ * @param {number} height    the batch's scaled billboard height in world units
+ * @param {boolean} [animated] true for a batch the FlatAnimator drives (`frame != null`)
  */
-export function farFlatVisible({ ring, height, animated = false }) {
+export function farFlatVisibleAt(ring, height, animated = false) {
   if (ring < FAR_FLAT_RING) return true;
   if (animated) return true;
   return height >= TALL_FLAT_HEIGHT;
+}
+
+/**
+ * The same rule, asked with an object - the MAC1 form its pins speak, and
+ * nothing more than a call to the one home above.
+ * @param {{ring: number, height: number, animated?: boolean}} p
+ */
+export function farFlatVisible({ ring, height, animated = false }) {
+  return farFlatVisibleAt(ring, height, animated);
 }

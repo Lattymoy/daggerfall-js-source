@@ -566,7 +566,7 @@ test('S40 hosts: all four can now rest, and each supplies its own place', () => 
   assert.match(wm, /return interiorRestPlace\(\{/);
   assert.match(wm, /room: findRentedRoom\(playerEntity\.rentedRooms/);
   // H1's ledger, which both rest lanes had to leave as a constant.
-  assert.match(wm, /houseOwned: isHouseOwned\(playerEntity\.houses/);
+  assert.match(wm, /houseOwned: interiorHome \? interiorHome\.own : isHouseOwned\(playerEntity\.houses/);   // HOME1 re-aim: my online home's bed is mine too
   assert.match(wm, /guildCanRest\(guild, membershipOf/);
   assert.match(wm, /m\.type === INTERIOR_MARKER\.REST/);
   assert.match(wm, /permanentScene: !!scene && containsPermanentScene\(sceneCache\(\), scene\)/);
@@ -1825,7 +1825,7 @@ test('S40: the quest machine ticks THROUGH a rest, which is what the sub-tick is
     'the fixed-city host no longer refuses the sub-tick');
   // ...and the ordinary tick really is gated on the overlay, which is
   // what made this reachable.
-  assert.match(src('src/scenes/world.js'), /if \(!townTalk\.overlayActive && !_loading\) questBridge\.tick\(dt\);/);
+  assert.match(src('src/scenes/world.js'), /if \(!townTalk\.overlayActive && !worldMoveBusy\(\) && !hudFade\.fadeInProgress\) questBridge\.tick\(dt\);/);   // WA1: the fade and world-move gate beside the overlay's
   assert.match(src('src/scenes/worldModes.js'), /if \(!overlayHeld\) questBridge\?\.tick\(dt\);/);
   assert.match(src('src/scenes/exterior.js'), /if \(!_overlayHeld\) questBridge\?\.tick\(dt\);/);
 });

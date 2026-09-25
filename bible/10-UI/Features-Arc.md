@@ -203,7 +203,7 @@ switch operates nowhere but the home. On the home a settings switch's
 face toggles it (there is no help sheet there to open), as prefRow's
 face does.
 
-**Not done, by name.** The standalone dev host `scenes/dungeon.js:116`
+**Not done, by name.** The standalone dev host `scenes/dungeon.js:119`
 still reads the raw location - a probe door, sized by nothing, as the
 struck Ledger C row already says. Building on the feature (Mac's
 "genuine enhanced feature we can build on") is a design decision, not
@@ -1003,8 +1003,9 @@ Beholder moved to Sight (a look, a camera); the town watch to The world.
 
 One press, asked first: every switch goes to its Off, and a row with no Off
 goes to the value that is Daggerfall's own - declared on the row as
-`classic` (the land view's 3, the dungeon walls' Classic). A CHOICE with
-neither (cloud quality, the grass's style) stays: it is not on or off. What
+`classic` (the land view's 3, the dungeon walls' Classic, the render
+scale's 100%). A CHOICE with neither (cloud quality, the grass's style)
+stays: it is not on or off. What
 each moved tile had been is kept in a pref (`featuresRestore`, by segment
 label) so Restore puts it back, across a relaunch; a second All off keeps
 the first press's values. Online, a row the room decides is not touched and
@@ -1044,6 +1045,19 @@ The Other players and Night sounds cards stay under the tiles. Their
 switches are not departures to turn off: silencing crickets or drawing a
 peer as a paperdoll is not Daggerfall's own behaviour, so All off must not
 reach them, and a tile's Off would say it did.
+
+**AUDIT BRANCH-0925 (2026-09-25, the pre-merge audit of the branch main was
+merged into).** The merge brought FT18 onto PERF-SCALE's new Sight row
+"Render scale" (100% to 50%, no Off) and bumped the row count, and did not
+decide what All off does with it: the row had no `classic`, so All off
+skipped it and a player at 50% stayed there - the one enhancement still
+redrawing every frame after "Every mod and enhancement goes to Off, or to
+Daggerfall's own". Decided: 100% is its `classic` - Daggerfall's own frame
+is the whole window (`systems/settings.js` leaves DFU's resolution to the
+browser's canvas), and 100% is today's frame call for call
+(`07-Rendering/Rendering.md` PERF-SCALE). The All off pin drives a 50%
+tile to 100% and back on Restore, the renderer's source reading both
+(`tools/mutants/perfscale.json`: the `classic` dropped, dead).
 
 Pins: `test/ft18_features.test.js` (12 - the groups, the condensed rows and
 what they still declare, the model's laws, each lane executed, the search,

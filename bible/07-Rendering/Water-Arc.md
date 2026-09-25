@@ -662,7 +662,7 @@ rather than trusted from memory: `Billboard.SetRDBResourceData` writes
 `WaterLevel = -8 * SoundIndex` (10000 for a zero) off a start marker's
 flat resource, `DaggerfallDungeon.FindMarkers` takes `StartMarkers[0]`
 for every block, and `RDBLayout.AddWater` stands a plane the size of the
-block at `level * -1 * GlobalScale`. That is `world/rdbLayout.js:470-476`
+block at `level * -1 * GlobalScale`. That is `world/rdbLayout.js:471-477`
 and the quad `scenes/dungeonContext.js` mints, line for line, and R7's
 corpus pins (32 of 187 blocks watered, Maorn's Guard's three levels)
 have held it since August. The "2 Water" the console prints is the count
@@ -714,3 +714,100 @@ dead - among them the defect put back as a SECOND draw after the
 overlay, a host regrowing its own draw, and the screen quad no longer
 resolving the frame.
 
+
+## WATER-PUDDLE - THE PUDDLE IS THE ART'S (2026-09-25)
+
+Mac: *"fixing any and all issues (especially with ingame puddles and
+tiles in towns that are one square)"*.
+
+**What was on screen.** Standing in Bubumbaret (the Sentinel desert,
+pixel 416,376), `window.__findTiles` put the camera over a record-23
+tile (byte 94, flipped): a pool painted in the sand, and over it the
+enhanced pass's full 6.4 m square of shimmering water, edge to edge. It
+was not that tile. Every record the corner table calls whole without
+knowing its shape did the same - DFU's shallow-water records (8, 23,
+33-36: the docks, moats and puddles, `SHALLOW_WHOLE`) and WATER-DRAW1's
+record 9 (`SHALLOW_DRAWN`). Their corners are all four because WATER1
+had no geometry for them (MAC2 took them whole from
+`PlayerMotor.OnShallowWaterTile`), so the pass covered the tile, not the
+water on it. That is the "one square" in the towns: a census of every
+RMB block's ground (a scratch script, not committed) found only TWO lone
+record-0 tiles in all the data - DFU's own sentinel tiles, WATER-DRAW1's
+second half, kept - and the rest of the lone squares are these records.
+
+**WATER-DRAW1 corrected.** It added record 9 as "water art" from a
+screenshot, with no ARENA2 in the container; it said so. The art (in
+the container now) disagrees for most of the Bay: record 9 carries no
+water at all in the desert, the woods, and every winter set; a strip in
+the mountains and about a fifth of the tile in the swamp. Drawn whole,
+it was a square of water on sand or grass.
+
+**The rule: the record's own texels.** `world/puddleMask.js` reads each
+of the seven records' texels: water where the colour sits within 24
+(Euclidean RGB) of one of the water tile's own colours - WATER5's rule,
+reverted with the basin, back for these records alone; every other tile
+keeps WATER1's corner table and its look. The texel answer is cleaned
+into shapes (4-connected patches under 32 texels: a wet speck in the
+sand dries, a dry fleck inside a pool fills, a dry patch at the tile's
+edge is the neighbour's ground and stays). The answer rides in the
+ALPHA of that record's layer of the ground tile array - every reader of
+the array takes `.rgb` (`TERRAIN_FS`, the enhanced terrain, the water's
+own texel), so the alpha was the free channel, and the array's mip
+chain carries the mask into the distance with no second texture. The
+layer is COPIED before it is written. Both hosts write it before the
+upload (`renderer.uploadTileArray(groundArchive, markPuddleWater(layers))`).
+
+In the pass, a puddle record's fragment reads that alpha at the
+record's own texel, turned the way `TERRAIN_FS` turns the tile
+(`PUDDLE_ROT`/`PUDDLE_TRANS`, the same four matrices, pinned against the
+terrain's), softened through `smoothstep(0.3, 0.7, a)` and multiplied
+into the shore feather: the shimmer now sits in the pool the art paints
+and the sand round it is sand.
+
+Measured on the art (the share of a tile the mask calls water, one
+archive per climate the terrain reaches - the rain sets, +2, are
+reachable only by hand, `world/climateSwaps.js` A1):
+
+| Archive | 8 | 9 | 23 | 33 | 34 | 35 | 36 |
+|---|---|---|---|---|---|---|---|
+| 2 desert | .20 | 0 | .32 | .28 | .42 | .53 | .48 |
+| 102 mountain | .24 | .13 | .82 | .83 | .56 | .86 | .71 |
+| 103 mountain winter | .30 | 0 | .10 | .49 | .49 | .42 | .56 |
+| 302 temperate | .24 | 0 | .57 | .50 | .45 | .63 | .49 |
+| 303 temperate winter | .23 | 0 | .36 | .29 | .45 | .52 | .44 |
+| 402 swamp | .86 | .22 | .76 | .70 | .75 | .73 | .77 |
+| 403 swamp winter | .50 | 0 | .20 | .20 | .55 | .73 | .52 |
+
+Before this slice every cell was 1. Recorded, not hidden: in a rain set
+the wet ground sits inside the tolerance of the dark water (mountain
+rain's shallow records read nearly whole), so a hand-picked rain season
+draws them as the pass did before - no worse, and not reachable in play.
+
+**The feet are not asked.** Where the player wades stays DFU's
+`OnShallowWaterTile` - the whole tile; `WATER_MASK_TABLE` is untouched
+and WATER-DRAW1's split holds (the draw and the law are two questions).
+The navigation keeps the law's table too. The GRASS follows the picture
+(GRASS-WET1: a blade in a puddle is a picture, not a physics): it asked
+the draw's corners and refused the whole tile, which would have left the
+dry ground of every puddle tile bald - a lawn with a 6.4 m hole in it
+wherever record 9 is grass art. It now asks the same mask for a puddle
+record (`puddleWetAt`, the pass's turn on the CPU, pinned against the
+shader's matrices), from the layers the pass uploads.
+
+**The probe.** `window.__findTiles(records, max = 40)` lists the built
+tiles of the given records - pixel, record, byte, and the world
+position on the ground - so a shot can stand over one; `__tileHere()`
+now says `artWet` too, the mask under the eye. Seen in play at
+Bubumbaret: the record-23 tile is its painted pool with the water inside
+the rim, and the town's record-9 tiles are their own ground. The before and
+after shots are renders of game data and stay out of the repo.
+
+**Pinned** in `test/waterpuddle.test.js` (6): the list and the
+tolerance; the colour rule texel-exact (24 water, 25 dry), the speck
+dropped, the fleck filled, record 9 in grass dry, the copy; `cleanMask`'s
+edge law; the shader's record test, its alpha read through the turn and
+the turn matrices against `TERRAIN_FS`'s, both hosts' upload, the feet
+still whole; the CPU's turn against the shader's, texel for texel, and
+the grass placer asking it; and, with ARENA2, the desert puddle a pool (not the tile)
+and the desert's and the woods' record 9 dry. Mutants (21, 21 dead):
+`tools/mutants/waterpuddle.json`.

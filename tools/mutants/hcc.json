@@ -464,8 +464,8 @@
   {
     "name": "HCC-race-ignores-horsecart",
     "file": "src/player/activationRace.js",
-    "old": "  for (const p of [gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
-    "new": "  for (const p of [gate, camp, water, wagon, torch, corpse, pile, ground, person, peer, foe]) {",
+    "old": "  return firmFirst([gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "new": "  return firmFirst([gate, camp, water, wagon, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
     "tests": [
       "test/hcc_hosts.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "HCC-race-horsecart-before-cart",
     "file": "src/player/activationRace.js",
-    "old": "  for (const p of [gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
-    "new": "  for (const p of [gate, camp, water, horseCart, wagon, torch, corpse, pile, ground, person, peer, foe]) {",
+    "old": "  return firmFirst([gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "new": "  return firmFirst([gate, camp, water, horseCart, wagon, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
     "tests": [
       "test/hcc_hosts.test.js"
     ]
@@ -519,24 +519,6 @@
     "name": "AUDIT-HCC-O1-targets-landed-once",
     "file": "src/scenes/horseCartPool.js",
     "old": "      retarget(p);   // AUDIT HCC O1: the wire frame, converted THIS frame - a rebase or a re-anchor of mine moves nothing of theirs\n",
-    "new": "",
-    "tests": [
-      "test/hcc_pool.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-HCC-O3-peer-wagon-no-box",
-    "file": "src/scenes/horseCartPool.js",
-    "old": "      standPeerCollider(owner, p);\n",
-    "new": "",
-    "tests": [
-      "test/hcc_pool.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-HCC-O3-swept-box-stands",
-    "file": "src/scenes/horseCartPool.js",
-    "old": "    if (p?.bucketKey) collider()?.removeBucket?.(peerWagonBucket(owner));\n",
     "new": "",
     "tests": [
       "test/hcc_pool.test.js"

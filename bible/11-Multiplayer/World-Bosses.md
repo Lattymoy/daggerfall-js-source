@@ -397,7 +397,7 @@ service whose half is not the relay's refuses every receipt at the `signature` r
 receipt for its week, so a mended pair still counts it. A relay with no key still runs the fight and the loot - the
 receipt is then unsigned and the account service declines it, and nothing else changes.
 
-**The account service** (acct10): migration 0009 `gate_kills (day, account, boss, earned, at)`, primary key
+**The account service** (acct11 - acct10 on its branch): migration 0014 (0009 on its branch) `gate_kills (day, account, boss, earned, at)`, primary key
 `(day, account)`, so a receipt counts once whatever happens to it. `POST /v1/gate/claim { receipt }` behind a session
 whose account is the receipt's `s`. `/v1/account` carries the count, and the main menu's account card and the Inspect
 card say *Gates closed: 3*. Guests fight and loot; the record is registered accounts', as the duel's is (AUDIT DUEL1
@@ -479,7 +479,7 @@ ships in ONE slice.
 | **WB2** | the gate in the exterior: the model and its textures, the membrane and the beacon passes, its states and countdown, the plaque and the banner, the enter door (answered *not yet* until WB3's relay is live) | no |
 | **WB3** | the arena place and the relay's boss room: the room key and its window, `gateBrain.js`, the `gate` frame both ways, the hit ledger, the checkpoint, the receipt and its key, the hub's world line; `RELAY_VERSION` once | **yes** |
 | **WB4** | the boss on the client: the oversized body and its hit volume, the telegraph pass, the wind-up frames, glow and sounds, the boss bar, the player's side of every attack, cast out and back in - shipped in two: **WB4a** (he fights: the body, the telegraphs, the glow and voice, the bar, every blow he lands) and **WB4b** (he is fought: the swing, the shaft and the spell on his body) | no |
-| **WB5** | the spoils: the seeded roll, the spew's physics, the beams, halos and lights, the take and the gather, the device's record until a save holds them; the account service's claim (acct10) and the cards' line | account only |
+| **WB5** | the spoils: the seeded roll, the spew's physics, the beams, halos and lights, the take and the gather, the device's record until a save holds them; the account service's claim (acct11) and the cards' line | account only |
 | **WB6** | the Deadlands made alive (Mac: "an oblivion masterpiece"): **WB6a** the sky and the sea and the court's own light; **WB6b** the life - islands and spires out in the fire, the floor's floating shards, embers and ash, the strike's light and its thunder, the air's sound, one clock for every screen; **WB6c** the gate's transition, a vortex of fire in and out | no |
 | **WB7** | his voice and his music (Mac: "Proper boss audio during the boss fight"): the body's steps, growls, grunts, the ground's shock, thunder and his fall to the floor; the court's own score, written as notes - three war songs by his phase and a fanfare at his fall | no |
 
@@ -514,7 +514,7 @@ The court's half, on the client:
 | B6 | after the Wrath the Warden was still a body blows met, and blows were sent the relay would never judge | no body and no blow after it |
 | B7 | a player who came to the court after he fell heard his death cry then, minutes late | the cry only within `FALL_CRY_LATE_MS` of his fall, as the thud has its own |
 
-The relay's half (RELAY_VERSION world111):
+The relay's half (RELAY_VERSION world113 - world111 on its branch, renumbered at the merge past main's EVENT1, RENOWN1 and PARTY-TRAVEL):
 
 | # | what was wrong | now |
 |---|---|---|
@@ -581,7 +581,7 @@ alarm every 250 ms - the numbers a claim sets, the join, every refusal a blow me
 phases, the wrath, who earned a receipt), `net/gateReceipt.js` (the relay's first signature; unsigned without its
 key), the `gate` frame both ways in `net/wire.js`, the Room's gate arm in `server/src/index.js` (the Worker's and the
 hello's window, the meter, the beat, the checkpoint, the kill said once, the receipts, the hub's line), and the
-session's `gateOk`/`sendGate`/`onGate`. RELAY_VERSION world110. What moved from the page above, each a pin's find or
+session's `gateOk`/`sendGate`/`onGate`. RELAY_VERSION world110 on its branch (world113 at the merge with main, whose EVENT1, RENOWN1 and PARTY-TRAVEL took world110-112 first; GATE_RELAY_MIN 113). What moved from the page above, each a pin's find or
 a number the court's shape asked for: the court is 48 m across with the boss kept inside 16 m (a fight radius the
 players can always step out of); the fastest kill is 75 s, not 80 (the bucket's first burst); the Nova's band reaches
 30 m; every attack carries a minimum gap (0 but the Charge's 8) so a player standing INSIDE his body is still in reach;
@@ -592,7 +592,7 @@ the spoils roll the same, and WB5's account service will decline them. Pins `tes
 mutants `tools/mutants/wb3.json` (60 dead). The arena place (WB3b) is next; until it lands the gate's door still
 answers "not yet".
 
-**WB3b (2026-09-25) - the Burning Court.** The gate's door opens at a relay that runs its room (world110): walking
+**WB3b (2026-09-25) - the Burning Court.** The gate's door opens at a relay that runs its room (world113; world110 on its branch): walking
 through the fire enters the court - the dungeon host's own arm with a level made in code (`world/gateArena.js`), not
 a fifth host. A made location and a blocks file answering one made block holding nothing but its start marker, laid
 by the port's own `layoutDungeon`; the court stood into the built context before the marker is read - a 48 m floor of
@@ -675,10 +675,10 @@ seen headless over the court; the flats and the flight not yet with ARENA2 and a
 gates closed is WB5b.
 
 **WB5b (2026-09-25) - the gates closed.** The receipt the relay signed at the kill is carried to the account service by
-the account it names and counted there once (`server-account/src/accounts.js claimGate`, acct10): verified with the
+the account it names and counted there once (`server-account/src/accounts.js claimGate`, acct11): verified with the
 relay's public half (`GATE_PUBLIC_KEY`, a var in `server-account/wrangler.toml`, imported once per isolate) - the
 version, the signature, the claims, the week - and naming the session's own account, so nobody claims another's; one
-row a (day, account) in migration 0009's `gate_kills`, so a second claim - another device, a lost answer, a replay -
+row a (day, account) in migration 0014's `gate_kills`, so a second claim - another device, a lost answer, a replay -
 lands nothing and is answered `claimed`. A guest fights and loots and is answered `guest`; it keeps its id when it
 registers, so its receipt counts then, inside the week. No public half and every claim is declined `no-gate-key` (503),
 the service's gap and not the player's. `POST /v1/gate/claim` is behind a session; the count rides `/v1/account` and
@@ -757,7 +757,7 @@ mutants `tools/mutants/auditwb_court.json` (18 dead).
 socket's stamp and the silent unseated, one seat an account in a court, the court's present accounts, a newcomer's `in`
 alone written, the kill kept before it is said and the hub told until it answers, the hub's kept receipts and
 `_gateReceiptTo`), `net/gateBrain.js` (`freeSeat`, the empty bucket), `net/gateLaw.js` (a day's times made once),
-`net/wire.js` (`HELLO_WAIT_MS`, `GATE_TELL_RETRY_MS`, `gateReceiptKey`). RELAY_VERSION world111 - no file joins the
+`net/wire.js` (`HELLO_WAIT_MS`, `GATE_TELL_RETRY_MS`, `gateReceiptKey`). RELAY_VERSION world111 on its branch, world113 at the merge - no file joins the
 bundle; the bump drops every connected player once. Pins `test/auditwb_relay.test.js` (9); re-aimed: the exact-version
 pins and soc1's version record, two WB3 mutant records (the join's `present`, the hub's answer); mutants
 `tools/mutants/auditwb_relay.json` (29 dead).

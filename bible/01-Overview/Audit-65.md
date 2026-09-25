@@ -88,11 +88,17 @@ Refuted by both:
   measured at 0.2 ns per call over five million calls; V8 scalar-
   replaces a destructured literal that never escapes. EV2's law is
   about `Float32Array`s that escape into a model's matrix.
+  OVERTURNED 2026-09-25 by PERF-EXT12 (`07-Rendering/Performance-Exterior.md`):
+  in the frame V8 did not scalar-replace it - about 70 KB of young garbage
+  a frame on the harness town, gone with a positional call.
 - **`drawWaterSurface` re-uploads pass constants per pixel** (render) -
   the counts are real (34 uniform calls a surface) but the host comment
   the finding read as a law ('one uniform set a frame') describes the
   `waterUniforms()` object built once outside the loop, which is what
   the code does; `drawTerrain` has the same shape and always has.
+  OVERTURNED 2026-09-25 by PERF-EXT13 (`07-Rendering/Performance-Exterior.md`):
+  the object was built once, the GL block was not - ~71 calls a water
+  pixel, ~1,300 of a city frame's re-setting held values; one call now.
 - **Per-frame scratch objects in the deck chain** (render) - eight
   small objects a frame, and the proposed `gen` counter would have
   replaced the identity stamp `setCloudShadow` depends on with a second
@@ -356,7 +362,7 @@ half the lanes' own mutation tallies could not see.
   `Hand-to-Hand 30%` on one line and a damage range computed from 60 on
   the next. `charsheet.js:799` and `enhancedCharSheet.js:149` read
   `skillValue` now, which moves the enhanced skin's meter with its
-  number (`enhancedMenu.js:2639-2640`) - correctly, since the attribute
+  number (`enhancedMenu.js:2647-2648`) - correctly, since the attribute
   bars beside it were already live. The art-less `_drawFallback` pane
   still prints `''` for an absent skill (both refuters: decide the
   blank case first); DFU has no such pane.
@@ -666,8 +672,8 @@ it left for a person were resolved by content: four `pauseWindow.js`
 cites that were already wrong at the base (the mapper renumbers a wrong
 number onto a differently wrong line), the renderer's `setClearColor`
 self-cite (a bare `:N` inside its own file, which the mapper does not
-spell), and two escaped-regex cites in tests (`dungeon\.js:547`,
-`worldModes\.js:576`), which the mapper cannot see - the CS1 edge AUDIT
+spell), and two escaped-regex cites in tests (`dungeon\.js:550`,
+`worldModes\.js:603`), which the mapper cannot see - the CS1 edge AUDIT
 64's integration hit first. The Suite line restamped once; the full
 suite green over the merged tree. Round two (after the reset) took the
 five remaining reviews and the activation lane, merged onto round one's

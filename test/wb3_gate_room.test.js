@@ -369,6 +369,7 @@ test('WB3 wire: the client says two things - `in` with a level claim, `hit` with
   assert.deepEqual(validGateOut({ k: 'fell', at: 9, top: ['A', 'B', 'C', 'D'], n: 4, d: 3 }), { k: 'fell', at: 9, top: ['A', 'B', 'C'], n: 4, d: 3 });
   assert.equal(validGateOut({ k: 'rcpt', r: 'v1.abc.def' }), null);
   assert.equal(relaySupportsGate('world109'), false);
+  assert.equal(relaySupportsGate('world112'), false, 'main\'s PARTY-TRAVEL, the last relay without a fight (WB3 was world110 on its branch)');
   assert.equal(relaySupportsGate(`world${GATE_RELAY_MIN}`), true);
   assert.ok(relayVersionAtLeast(GATE_RELAY_MIN), 'the relay this tree builds runs it');
   assert.equal(RELAY_VERSION === 'world109', false);

@@ -294,7 +294,8 @@ test('LOOT-STACK the key is gone: no NextBody action, no default on ], no contro
     assert.doesNotMatch(rd(f), /NextBody|armBodyTurn|turnBodyStack/, f);
   }
   const act = rd('src/player/activate.js');
-  assert.match(act, /export function pickActivatableHit\(eye, dir, targets, collider\) \{\n {2}return noteBodyStack\(nearestActivatableHit\(eye, dir, targets, collider\), targets, \(rest\) => nearestActivatableHit\(eye, dir, rest, collider\)\);\n\}/);
+  // PR-WAGON1: the winner is the firm answer first (another player's team yields), and the note is still taken over it
+  assert.match(act, /export function pickActivatableHit\(eye, dir, targets, collider\) \{\n {2}const nearest = \(list\) => nearestActivatableHit\(eye, dir, list, collider\);\n {2}return noteBodyStack\(firmFirst\(targets, nearest\), targets, nearest\);[^\n]*\n\}/);
   assert.doesNotMatch(act, /export function nearestActivatableHit/, 'the raw pick stays private, so no reader asks the ray without the note');
 });
 

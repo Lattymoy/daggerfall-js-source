@@ -3090,8 +3090,8 @@ patreon titles. These also recieve their own unique glyphs. The account Dutchess
   has its own shape (a d20, a flame, an open book, a crown) and a classic mark. `src/ui/enhancedAccount.js` names each
   one on the card.
 - **The grants** (`server-account/src/titles.js`, `TIER_LISTS`): each title is a handle list in `wrangler.toml`, which
-  is the developers' own law. `DUNGEON_MASTER_HANDLES = "SquidKamer"` and `DISCIPLE_HANDLES = "Dutchess,Satranath,Skibbster"` (Mac added Satranath the same day, and Skibbster after it: "Skibbster needs to be a disciple ingame"); Apostle
-  and Hierophant are empty. A list grants its title and its glyph, and never to a guest. A lapsed Patreon tier is a
+  is the developers' own law. `DUNGEON_MASTER_HANDLES = "SquidKamer"` and `DISCIPLE_HANDLES = "Dutchess,Satranath,Skibbster"` (Mac added Satranath the same day, and Skibbster after it: "Skibbster needs to be a disciple ingame"); `APOSTLE_HANDLES = "SirMcMobdon"`
+  (2026-09-25, Mac: "Add SirMcMobdon as an Apostle ingame title/glyph"), and Hierophant is empty. A list grants its title and its glyph, and never to a guest. A lapsed Patreon tier is a
   handle taken off the list, and it disappears from that player's next token. The service is `acct7`.
 - **/dm** is RED1's law, one glyph over. The client sends `{t:'narrate', text}` on the World link, and only from a
   world104 relay (`DM_RELAY_MIN`, since an older one closes the socket on the frame).
@@ -3306,17 +3306,248 @@ object is the authority over the boss and signs a receipt for each account that 
   `server-account/wrangler.toml`, because a public key verifies and cannot sign) and verifies every receipt with it -
   the version, the signature, the claims, the week (`src/net/gateReceipt.js verifyReceipt`). The identity pair runs the
   other way (this service signs, the relay verifies), and neither can pass for the other.
-- **One statement is the write.** Migration 0009 adds `gate_kills` (day, account, boss, earned, at), primary key
+- **One statement is the write.** Migration 0014 (0009 on its branch - RENOWN1 took 0009 first) adds `gate_kills` (day, account, boss, earned, at), primary key
   (day, account), cascading with the account, no counter column. `claimGate` is one `INSERT OR IGNORE`: a second
   claim of the same day's kill lands nothing and is answered `recorded: false, why: 'claimed'`. The receipt must name the
   session's account (`not-yours`, 403); a receipt the relay did not sign is `receipt` (400); no public half is
   `no-gate-key` (503). A guest is answered `guest` and not counted - AUDIT DUEL1 A1's law - and counts once it registers
   under the same id.
 - **The routes.** `POST /v1/gate/claim { receipt }` behind a session; `GET /v1/account` carries `account.gates` and
-  `POST /v1/duel/record` answers `gates` beside the duels. The service is `acct10`.
+  `POST /v1/duel/record` answers `gates` beside the duels. The service is `acct11` (`acct10` on its branch - RENOWN1, HOME1, DECOR1 and GUILD1 took `acct10` first).
 - **The client** (`src/net/accountClient.js accountGates`, `src/net/gateClaims.js`): no session, no knock; the device
   keeps each receipt until an answer settles it. The account card has a *Gates closed* row; the Inspect card a line.
 - **The keys.** `node tools/mintGateKeys.mjs` mints the pair in one run and writes nothing to disk. Not automated in a
   workflow: the private half is set on the relay with `npx wrangler secret put GATE_SIGNING_KEY` from `server/`, and the
   public half is committed into `server-account/wrangler.toml`. Until then receipts go out unsigned and are declined, and
   the device keeps them for the week they carry.
+
+## RENOWN1 — Renown, the level that exists only online (2026-09-24)
+
+Mac, bringing a friend's MMORPG pillars ("The Hybrid Leveling System ... a traditional EverQuest-style Adventuring
+Level ... which dictates total health, magicka"): "What if the leveling system was something seperate unique to online
+but compatible". Asked three things, Mac answered: the online health and magicka go "On top" of Daggerfall's, the curve
+is a long "Grind", and offline play earns "No" XP - "Plus having their level appear on the left side of character name
+and profile main menu + ingame profile". Built as the Adventuring Level, then named: "Lets officially call this
+Renown" - every name in the code, on the wire and on screen says Renown now. A character's Renown is a level: "Renown
+12" in words, and beside a name the number alone in a box, left of the name where it always stood (Mac: "Just have it
+read 12 inside a box").
+
+- **What it is.** A second level PER CHARACTER that exists only online. The Daggerfall character - its level, skills,
+  health, magicka and the save file - is untouched offline and online, so a character goes back and forth freely. The
+  track is kept by the account service under the id the character's own save carries (`systems/characterId.js`, the
+  id the cloud saves are filed under), never in the save.
+- **The curve** (`src/net/renown.js`, which both ends import). EverQuest's shape in integer arithmetic, so the service,
+  the relay and every browser agree on every boundary: the total to reach level L is
+  `10 * floor((n^3 * (n + 10) + 300n) / 30)` with n = L - 1. Level 2 at 100, 10 at 5,510, 20 at 68,200, 30 at 319,950,
+  50 (the cap) at 2,318,660 - the first levels in minutes, level 50 in hundreds of hours.
+- **What earns it, online only.** A foe is worth ten to its own level (clamped 1..30); a quest that ends in success is
+  worth 100 + 40 a Daggerfall level (clamped at 30), once per quest - both read no higher than three levels above the
+  character's Renown since RENOWN3. A party earns MORE a head, never a share: every
+  partymate in the room earns the whole kill plus 10% a head beyond the first, up to the party's eight seats (the
+  pillar's "Group play is the prime source"). The city watch and townspeople pay nothing - a kill the law calls murder
+  earns nothing - and since AUDIT RENOWN1 neither does another player's watch, my own summoned ally, or a quest's
+  scripted kill.
+- **A foe you fought** (`src/net/renownTracker.js`). A foe pays every player who struck it in the last 30 s
+  (`RENOWN_ASSIST_MS`) when it dies, whoever struck the last blow. One rule for every door a kill comes through, because the
+  doors do not agree on who killed what: a dungeon's host never tells a joiner whose blow was last, so "the killing
+  blow" would have paid no joiner anything in the one place parties fight most. Both foe pools stamp the player's own
+  blows (`exteriorFoes.js`/`dungeonContext.js` `damageFoe`, before a puppet's divert) and every death asks - the
+  local death arm, an outdoor copy's `puppetDie`, a dungeon joiner's stream death. The stamps live in a WeakMap, never
+  on a foe record, so nothing streams or saves them.
+- **Whose word it is.** XP is the client's word - there is no clock that could measure a kill - so the SERVICE holds
+  the bounds (`server-account/src/renownTracks.js reportRenownXp`): a report carries 1..5,000, an ACCOUNT earns at most
+  20,000 a clock hour across all its characters (a second character is not a second allowance), and an account keeps
+  at most 60 tracks. The hour is spent by ONE `UPDATE ... RETURNING` that also writes what it credited
+  (`renown_last_credit`), so two reports in flight never spend the same remainder (ACC4's `creditPlay` law). A report
+  the hour spent is credited 0 and answered, never refused; a track at the cap spends none of the hour. The honest
+  cost, said plainly: a modified client can report XP it did not earn, up to the hourly bound - about five days of
+  doing nothing else to reach the cap (true since AUDIT RENOWN1, which made the hour's window move only forward and
+  the whole report one transaction).
+- **The level is the service's.** It is never a column - derived from the total wherever it is read - and it rides
+  the identity token: `/v1/auth/token { character }` signs that character's level in as `lv` (1 before it earns
+  anything; none when the mint names no character, as every older build's does). The relay stamps it beside the
+  title and glyphs (`net/wire.js badged`) on every welcome row, join and roster, so nobody's level over their head is
+  their own word. A level that RISES mid-session comes back from `/v1/renown/xp` with a signed RENOWN ORDER
+  (`mintRenownOrder`, `{o:'renown', s, lv}`); the client carries it into every room it is in (`{t:'renown', order}`,
+  world108), and the relay takes it only from a socket whose verified account it names and fans `{t:'renown', id, lv}`.
+  The one thing the client chooses is WHICH of its own characters it names at the mint - the relay cannot see which
+  character is being played, so a player with two characters could show the other's level. `verifyOrder` now asks for
+  an order's KIND by name: a player's own renown order carried to the mute arm would otherwise have verified and read as
+  `mu` undefined - an unmute.
+- **"On top" of Daggerfall's** (`src/systems/renownLayer.js`). The level adds 3 health and 2 magicka a level past the
+  first (level 50: +147 and +98), as two plain entity fields the live maximums read over everything they already sum
+  (`systems/chargen.js` `defineLiveMaxHealth`/`defineLiveMaxMagicka`) - so every heal, rest, bar and clamp reads the
+  online value, a Daggerfall level-up adds to the stored health and never to the layer, the lycanthrope's limiter caps
+  Daggerfall's own maximum with the layer above it (AUDIT RENOWN1 GAME-4 - it capped the whole, and took the layer
+  away), and a magery that makes the character unable still leaves 0. Current health and magicka keep their
+  FRACTION as the layer goes on or rises. A save written online keeps the vitals as they would stand without the layer,
+  each at its fraction (`save.js snapshotPlayer` through `offlineVitals`); neither field is on the save's whitelist.
+  The layer is only ever put on on the online page, by the level the token or the service answered, and only upward.
+- **The level left of the name, the number in a box.** Over a head, "12" in a small square amber box ahead of the
+  name in the name row (`ui/nameLayer.js .dfname-renown`, empty and taking no room for a peer with no level), and "[12]"
+  leading the bitmap face's run, the one box a bitmap line can draw. The plaque over a player boxes it the same way on
+  its title's first line: the namer hands the Renown BESIDE the name (`renown`), the hover frame carries it
+  (`systems/worldHover.js`, and the repaint guard signs it) and `ui/worldPlaque.js` draws the box, so it is never text in
+  a title. The Inspect card puts the box left of the name with
+  "Renown N" on hover (the card's own "Level N" line is still their Daggerfall level); the main menu's
+  account card puts the level of the character most recently played online left of the account name and adds a
+  Renown row for each of the five most recently played characters, with how far into its level it is ("Mara Venn -
+  Renown 10, 490 / 2,150 XP to Renown 11").
+  There is no in-game profile of oneself (the Inspect card is only for others), so a rise is said on the HUD: "Your
+  Renown is now N."
+- **Not in this slice:** gear tiers gated by the level (there is no elite gear yet), elite packs and dungeons, and a
+  bar for the XP in the world.
+- `server-account/migrations/0009_renown.sql` (`renown_tracks`; the account's hour on `players`), `renownTracks.js`,
+  `/v1/renown/xp`, the token's `level`, `account.renown` on `/v1/account`; the service is `acct9`. `src/net/identityToken.js`
+  (`RENOWN_MAX`, `lv`, the renown order, `verifyOrder`'s kind), `net/wire.js` (`badged`'s `lv`, `readRenown`, the
+  renown frame, world108), `server/src/index.js` (the stamp and the renown arm), `net/online.js` (`renownOf`,
+  `sendRenownOrder`), `net/accountClient.js` (the minter names the character; `accountRenown`), `scenes/world.js` (the
+  tracker, the layer, the plaque). Pinned: `test/renown1.test.js` (18). `tools/mutants/renown1.json` (40, all dead;
+  47 since AUDIT RENOWN1 - the seven its test titles named and the file never had).
+
+## AUDIT RENOWN1 — before anything is built on it (2026-09-25)
+
+Mac: "Lets audit this before we continue to build on it". Five lenses over RENOWN1 and RENOWN2 - security and trust,
+the game's hooks, the wire and the session, the data and the numbers, the displays and the records - each finding
+reproduced against the real modules (the service over the real migrations, the relay through `test/fakeRoom.mjs`, the
+session and tracker driven) before it was fixed. Nothing here changes what Renown is; it makes what RENOWN1 promised
+true.
+
+**The service** (`server-account/src/renownTracks.js reportRenownXp`, `accounts.js overRate`):
+
+- **SEC-1/DATA-1 (the worst): the hourly bound could be walked through.** The window was `renown_hour = ?`, and the
+  clock is read when a request ARRIVES, before its body - so a report that arrived at 00:59:59 and landed after a
+  01:00 report reopened the window that report had just opened, and the next one reopened it again. Driven through the
+  real worker with held bodies: 1,500,000 XP in under a minute, Renown 44 against "about five days". Now the window
+  only moves FORWARD (`MAX(renown_hour, ?)`), and a report stamped with an hour already past is charged to the window
+  that is open - an honest late report still counts. `overRate` had the same equality reset (its `acct:` row stayed at
+  1 through 300 requests), and the `login:` and `ip:` doors share that statement, so the limiter moves forward too.
+- **DATA-3, DATA-4, DATA-5, DATA-7: one transaction.** The report was five statements committed one by one, with the
+  decisions taken from reads made before the writes: fifty new characters at once all fit under the 60-track bound
+  (109 tracks); an error between the hour and the track spent the hour for nothing; two reports near the cap were both
+  charged in full and both said `rose`; and a report the hour had spent still made an empty track that took one of the
+  sixty places for good. Now ONE `db.batch` (D1 runs a batch as one transaction) whose first statement decides
+  everything in SQL against the rows as they stand inside it and says what it decided with `RETURNING`.
+- **DATA-4/GAME-9: a report's own id.** A report the service took whose answer was lost was sent again and credited
+  twice (3,000 earned, 6,000 kept). The client draws an id per report (`rid`, sixteen hex digits) and sends the same
+  report under the same id until it is answered; the track keeps the last id it took (`last_rid`, migration 0009,
+  unshipped and so changed in place), and a repeat is answered - `repeat: true`, credited nothing, with a signed order
+  if the level is past 1, since the lost answer may have been the one with the rise in it.
+- **DATA-2: the deploy asks D1.** The report's statements (an `UPDATE ... RETURNING` with subqueries, an
+  `INSERT ... SELECT`, a batch) ran only on node:sqlite; `account-deploy.yml` now reports 1 XP to the real D1 and sends
+  it again, and a deploy that cannot credit it and answer the repeat fails.
+
+**The relay** (`server/src/index.js`, the renown arm):
+
+- **SEC-2/SEC-3/WIRE-1: only a rise.** Any valid order inside its minute was taken and fanned when it "changed" the
+  level, so a player holding two of their own (level 2 and 3) flapped them - ten sockets of one account made a room of
+  sixty hear 600 frames a second, with no strike ever counted - and an older order replayed pulled the level shown DOWN.
+  Now an order that does not raise the socket's level is answered to its carrier alone (the level the room holds) and
+  fans nothing; a renown order in a channel or the hub is nothing at all (no client sends one there, and the world
+  channel is two thousand sockets); and the room has its own budget (`RENOWN_ROOM_HZ_MAX`, four a second) - over it a
+  rise is dropped unanswered and its carrier sends it again.
+
+**The session and the tracker** (`net/online.js`, `net/renownTracker.js`, `scenes/world.js`):
+
+- **WIRE-2/WIRE-3: a rise reaches every room.** The order was sent once, down the sockets open at that moment, behind
+  one gate for the session, and on the LAST relay's word about the frame: two rises inside a second lost the second (the
+  room stayed at 9 while the page said 11), a halo still minting its token was skipped and said hello with the old
+  level, and a relay a version behind could be sent the frame and close the socket. Now the page keeps the newest order
+  for its life (`RENOWN_ORDER_KEEP_MS`), and each socket is its own - sent the order once ITS OWN welcome names a relay
+  that knows the frame, on its own gate, and again every `RENOWN_RESEND_MS` until its room answers with the level (the
+  echo, or the relay's word that the room already holds it). A level heard on a renown frame only ever rises, mine and a
+  peer's.
+- **WIRE-2c/UI-5: the order whenever it is signed.** The order and "Your Renown is now N." were gated on the answer's
+  level beating the page's - and every socket mints a token, whose level the page adopts, so a token minted between the
+  report's commit and its answer swallowed both. `renownAnswer` is now one pure plan: the order carried whenever the
+  service signed one, the rise announced against what was SAID, the hour's line never at the cap or for a repeat.
+- **GAME-2: a refused report waits.** A report's worth piled up skipped the minute's wait, so against a service having
+  a bad minute the same report went every frame, each spending the account's limiter until every token mint on the
+  account failed with it. The minute is skipped only after an answer now, and each refusal in a row doubles the wait to
+  fifteen minutes (`RENOWN_BACKOFF_MAX_MS`).
+- **GAME-8: the page's last word.** The pagehide report was a plain fetch the browser drops with the page; `leave` sends
+  the held report through `keepalive` (the one credential door, the header) under its id, and clears nothing, so a page
+  the back-forward cache brings back sends it again and is answered a repeat.
+- **UI-4:** a refusal that ends reporting (a sixty-first character) is said, where it was dead text.
+
+**The hooks** (`net/renownTracker.js`, `exteriorFoes.js`, `dungeonContext.js`):
+
+- **GAME-1:** another player's city watch, stood here as puppets, paid - a partymate could farm the watch a criminal
+  friend kept summoning. The watch never pays, whoever's. **GAME-7:** my own summoned ally (the Sanguine Rose's, the
+  Skull of Corruption's clone) turned when struck and then paid; a foe that is my ally when my blow lands never pays.
+  **GAME-6:** a quest's `kill foe` (the SetHealth(0) door) was the player's blow - it paid, and woke the area as an
+  attack, as it had since before RENOWN1; it is nobody's blow now.
+- **GAME-3:** a dungeon joiner builds the layout's class foes at ITS OWN level, so a level-30 joiner earned 300 for the
+  host's level-3 knight (the host 30). The host streams a class foe's level (`l`, the exterior stream's field, which
+  `validFoeRecord` already bounds) and the joiner's kill is worth it.
+- **GAME-10:** a foe stood again as a new record (the Wabbajack's change, a joiner's rebuild as the host's species)
+  keeps my blows; a foe that stands up again forgets them and can pay again (it kept `paid` for ever).
+
+**The layer** (`systems/chargen.js`, `lycanthropy.js`, `passiveSpecials.js`, `renownLayer.js`):
+
+- **GAME-4:** the limiter is computed off the raw maximum, and capping raw + layer with it took the whole layer away the
+  minute the urge began (a Renown 50 werewolf at 247 of 247 fell to 100 of 100), and the cure's full heal left 100 of
+  247. The limiter caps Daggerfall's own maximum and the layer rides above it; the urge's clamp, every full heal and the
+  cure read the same ceiling.
+- **GAME-5:** the reduced magery's third was taken of the layer too, and the save then took off the whole layer - a save
+  at full magicka came back with 2 of 34. The magery reads Daggerfall's own maximum; and a maximum of 0 holds nothing
+  (`keepFraction` answered 1).
+
+**The displays** (`ui/enhancedAccount.js`, `enhancedStyle.js`, `profileWindow.js`, `world.js`):
+
+- **UI-1:** the account card's values could not shrink, and the Renown rows ran off both sides of a phone's window (the
+  key and the start of the name cut away where nothing could scroll to them); they shrink and wrap now. **UI-6:** a
+  capped row read "Renown 50, Renown 50 - the highest"; it says the level once. **UI-10:** the chip names whose Renown
+  it is, and the card says what it measures - the character most recently PLAYED online (a report the hour spent still
+  marks its character played). **UI-8:** an empty box is never drawn (`:empty` on the card's and the Inspect card's
+  box, as the name layer's had). **UI-3:** an open Inspect card follows the level the session knows.
+
+**Tests the audit added where the suite was blind** (UI-2, UI-3, UI-7, UI-9, WIRE-4): the relay's level on the who
+answer and a channel's join, and the relay test moved to a place room (it drove the world channel, where no name is
+drawn); a re-introduced peer's level; the box over a head across a rise; the bitmap face centred on its whole run; the
+answer's plan; and AUDIT ATTACH's closed lists, which never counted the attachment's `lv` or the duel's and the
+renown's meters.
+
+**Known, and left as they are:**
+
+- A foe that dies of POISON more than 30 s after the player's last blow pays nothing: a poison round carries no striker,
+  and a peer's dose rides into the owner's copy of a foe, so a round cannot be read as mine.
+- An account keeps at most 60 tracks and a track is never removed; no track is made any more until a character is
+  credited XP, and a sixty-first character is told why it earns nothing.
+- Over a head a character with no track yet wears 1 (the mint signs level 1 for a named character); the account card
+  shows no chip until a track exists.
+- The numbers, stated honestly (DATA-6): the hourly bound never meets a solo character or a small party, but a full
+  party of eight against the fiercest foes meets it (510 XP a kill at level 30 with the whole party's bonus, about forty
+  kills an hour). And XP follows the level of what was fought - a class foe stands at the character's OWN Daggerfall
+  level - so a character that levelled offline climbed ten times faster online: at Daggerfall level 30, Renown 10 was
+  19 kills and Renown 20 was 228. Offline play itself still earns nothing. Both were Mac's to tune, not the audit's -
+  and Mac answered the second (RENOWN3, below).
+
+**At the merge:** main took `acct9` (FOUNDER2) and `world108` (HT-WAIST-NET) while this was on its branch, so this
+deploy is `acct10` and `world109` - the RELAY_VERSION row rewritten with the merged bundle's hash, `RENOWN_RELAY_MIN`
+109 - or the deploy's "names this deploy" check would pass on the old Worker.
+
+Pinned: `test/auditrenown1.test.js` (19), and the RENOWN1 pins the fixes moved. `tools/mutants/auditrenown1.json`
+(60, all dead - the one survivor of the first run, the tracker's early report after a refusal, killed by a pin added
+with RENOWN3); thirteen older records re-aimed by content (twelve in `renown1.json`, one in `disc10.json`).
+
+## RENOWN3 — a foe pays by your Renown (2026-09-25)
+
+Mac, told the audit's number (a character that levelled offline took Renown 10 in 19 kills, ten times a new one's
+pace): "Whats the solution to this? Like a high level character shouldnt blow through online levels". Offered a foe
+read at most three levels above the character's Renown, Mac said "Yes".
+
+- **The ceiling** (`src/net/renown.js renownCeiling`, `RENOWN_OVER_MAX` 3). A kill and a quest are read no higher than
+  three levels above the character's Renown - a Renown the page does not know yet is Renown 1, the strictest. At Renown
+  1 a level-30 knight pays like a level-4 foe (40, not 300) and a quest sized to Daggerfall level 30 pays 260, not 1,300;
+  the ceiling rises with every level, and from Renown 27 no foe is cut. The party's bonus rides on top, unchanged.
+- **Why it answers the question.** Renown was paced by the Daggerfall character, because a career foe stands at the
+  character's own level and a quest is sized to it; now it is paced by Renown itself. A character new to Daggerfall
+  fights foes at or under the ceiling almost from its first kill and earns what it did (level-5 foes: 111 kills to
+  Renown 10 and 1,365 to Renown 20 - one more than before, a level-5 foe being one over the ceiling at Renown 1). A
+  Daggerfall level-30 character takes 59 kills to Renown 10 and 398 to Renown 20, where it took 19 and 228 - still
+  faster, since a harder fight is worth more up to the ceiling, but not ten times.
+- **Where it is read.** On the client, at the kill and at the quest's end, against the page's own Renown
+  (`scenes/world.js renownNow` - the token's word and the service's since). XP is the client's word in any case (the
+  service bounds it by the report and the hour); the ceiling is the pace an honest client keeps.
+- Pinned: `test/renown3.test.js` (2), the RENOWN1 rules and wiring pins it moved. `tools/mutants/renown3.json`.

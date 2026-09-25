@@ -145,7 +145,7 @@ void main() {
   // The emission (window style from getWindowColors32, or an auto-emissive
   // record's own albedo at Color.white) goes back on top of the lighting
   // its subtraction above paid for - o.Emission = emission.
-  outColor = vec4(mix(uFogColor, lit + emission, fogFactorAt(vWorldPos)), 1.0);
+  outColor = vec4(dwWaterFog(mix(uFogColor, lit + emission, fogFactorAt(vWorldPos)), vWorldPos), 1.0);   // DW-C: the sea's distance fog over the finished colour
   // A2: the Daggerfall/Automap shader's presentation, verbatim
   // (DaggerfallAutomap.shader:102-110): brightness falls with vertical
   // distance from the slice plane (floored at 40%), then the
@@ -343,7 +343,7 @@ void main() {
   // above that the vertex colour does NOT gate: LightMode_Emissive has
   // already forced that colour to black.
   lit += vEmissive * texel.rgb;
-  outColor = vec4(mix(uFogColor, lit, fogFactorAt(vWorldPos)), 1.0);
+  outColor = vec4(dwWaterFog(mix(uFogColor, lit, fogFactorAt(vWorldPos)), vWorldPos), 1.0);   // DW-C
 }`;
 
 const BB_VS = `#version 300 es
@@ -396,7 +396,7 @@ void main() {
 
 import { createClusterSpace, buildLightClusters, CLUSTER_GRID_W, CLUSTER_GRID_H, CLUSTER_LIST_W, CLUSTER_LIST_ROWS, CLUSTER_X, CLUSTER_Y, CLUSTER_NEAR, CLUSTER_Z_SCALE, CLUSTER_GRID_UNIT, CLUSTER_LIST_UNIT } from './lightClusters.js';   // LC1: the lantern loop's grid
 import { ShadowPass, SHADOW_GLSL } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
-import { boundsOf, spherePlanes, batchVisible, batchSphere, ZERO_ORIGIN } from './bounds.js';
+import { boundsOf, spherePlanes, batchVisible, batchSphere, ZERO_ORIGIN, placementGrid, quadHalfDiagonal } from './bounds.js';   // PERF-EXT1: and a batch's placement grid; the review: and the half-diagonal's one home
 import { billboardKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-shadow-reach: the batch's texture key - one home with the two replays
 import { cullDisabled } from './frustum.js';   // PERF-CROWD2: the billboard pass culls for every host, so no host can forget to
 import { getPref } from '../systems/uiPrefs.js';   // GRAIN2: the ground-sharpness dial, read where the tile array is built
@@ -450,6 +450,21 @@ export function groundSamplerFor(tier, driverMax = 1) {
  *  at each tier - without it the dial could not be measured at all. */
 export function groundSharpnessTier(search = globalThis.location?.search ?? '') {
   return new URLSearchParams(search).get('ground') ?? getPref('groundSharpness');
+}
+/** PERF-SCALE (2026-09-25): THE GPU THE BROWSER DRAWS ON, as its driver names it - WEBGL_debug_renderer_info's
+ *  UNMASKED_RENDERER_WEBGL where the browser hands it out, gl.RENDERER otherwise (a browser that masks it answers
+ *  a generic name there). A laptop's browser on its integrated GPU, or on SwiftShader, is the first thing a report
+ *  of "fps issues in the exterior but fine in the interior" has to rule out, and nothing on screen said which it
+ *  was. Read ONCE, by the Renderer's constructor: a getParameter is a round trip to the GPU process, never a
+ *  per-frame call. Null when neither answers a string. */
+export function gpuNameOf(gl) {
+  try {
+    const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    const v = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : null;
+    if (typeof v === 'string' && v) return v;
+    const r = gl.getParameter(gl.RENDERER);
+    return typeof r === 'string' && r ? r : null;
+  } catch { return null; }
 }
 import { multiply as mat4Multiply } from '../world/mat4.js';   // PERF-CROWD2: proj * view, for this call's planes
 import { PerfMeter, perfOn, perfZones, perfCpu, setMeter } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
@@ -529,7 +544,7 @@ void main() {
   if (uConceal.x == 4.0) lit = vec3(0.0);   // EOTB-IL: Eye Of The Beholder's shade - Color.black at the batch's alpha (UpdateMaterial, IL_4f69)
   float alpha = uSpectral == 1 ? tex.a : 1.0;
   if (uConceal.x > 0.0) alpha = tex.a * uConceal.y;
-  outColor = vec4(mix(uFogColor, lit, fogFactorAt(vBBWorld)), alpha);
+  outColor = vec4(dwWaterFog(mix(uFogColor, lit, fogFactorAt(vBBWorld)), vBBWorld), alpha);   // DW-C
 }`;
 
 // Dungeon water: one horizontal quad per watered RDB block, drawn after
@@ -569,7 +584,7 @@ void main() {
   // scrolled diagonally.
   vec2 uv = vWaterXZ / 6.4 + vec2(uWaterScroll);
   vec3 tex = texture(uWaterTex, uv).rgb;
-  outColor = vec4(mix(uFogColor, tex * uWaterColor.rgb, fogFactorAt(vWaterWorld)), uWaterColor.a);
+  outColor = vec4(dwWaterFog(mix(uFogColor, tex * uWaterColor.rgb, fogFactorAt(vWaterWorld)), vWaterWorld), uWaterColor.a);   // DW-C
 }`;
 
 // Terrain tilemap pass (R9): verbatim Daggerfall/TilemapTextureArray
@@ -702,7 +717,7 @@ void main() {
   float iD = length(iL);
   float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
   lit += tex * (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;
-  outColor = vec4(mix(uFogColor, lit, fogFactorAt(vWorldPos)), 1.0);
+  outColor = vec4(dwWaterFog(mix(uFogColor, lit, fogFactorAt(vWorldPos)), vWorldPos), 1.0);   // DW-C
 }`;
 
 const ZERO_CONTACT = new Float32Array(4);   // EL8: the contact params with the air off
@@ -843,7 +858,7 @@ void main() {
   vec3 rgb = vColor.rgb * exp(vec3(${glslFloat(BLOOD_ABSORB_ENCODED[0])}, ${glslFloat(BLOOD_ABSORB_ENCODED[1])}, ${glslFloat(BLOOD_ABSORB_ENCODED[2])}) * (1.0 - thick)) * lightAcc;
   float a = t.a * vColor.a;
   float f = fogFactorAt(vWorld);
-  outColor = vec4(mix(uFogColor, rgb, f), a);
+  outColor = vec4(dwWaterFog(mix(uFogColor, rgb, f), vWorld), a);   // DW-C
 }`;
 const CLASSIC_MAX_LIGHTS = 16;
 /** BLOOD1a: pos3 + uv2 + rgba4 (+ wet1, BLOOD2f), in bytes. */
@@ -954,7 +969,7 @@ export const INTERIOR_CLEAR = Object.freeze([0, 0, 0, 1.0]);
 /** AUDIT 65 RS-3: the texture unit the cloud-shadow map is RESERVED on
  *  (_uploadCloudShadow). It used to be 7, which is also where the
  *  Dynamic Skies pass lands `_MoonTex`: that mod binds its nine
- *  TEXTURE_SLOTS as `TEXTURE0 + i` (dynamicSkiesRenderer.js:856-863,
+ *  TEXTURE_SLOTS as `TEXTURE0 + i` (dynamicSkiesRenderer.js:888-895,
  *  over systems/dynamicSkies.js:432-435's nine names),
  *  so unit 7 was written by a foreign pass while the renderer's
  *  per-program stamp still said the shadow map was there. 15 sits
@@ -1129,6 +1144,11 @@ export class Renderer {
     this._retroFrame = null;    // the retro world frame in flight: its image, its effect, the rect it presents to, its depth
     this._retroOwed = false;    // a retro image is drawn and not yet presented
     this._retroMips = true;     // whether the world's textures read their mip chains (TextureReader's retro arm)
+    // PERF-SCALE: the render scale's source (systems/renderScale.js renderScaleSetting, handed over by main.js as the
+    // retro source is) - a function answering the frame's scale, 1 the whole canvas. Null (every test's) is 1
+    this._scaleSource = null;
+    // PERF-SCALE: the GPU the browser actually draws on, read ONCE here and never per frame - the FPS counter's line
+    this.gpuName = gpuNameOf(gl);
     this._replacements = new WeakSet();   // AUDIT RETRO1 A4: replacement textures (TryImportTexture) - DFU's retro arm never reaches them
     this._scissor = null;       // AUDIT RETRO1 B3: the live screen scissor as gl.scissor took it, or null - the present lifts it and puts it back
     this._spriteDepth = 0;   // AUDIT-EL F2: inside renderCharacterSprite (a foreign rect: no AO)
@@ -1230,6 +1250,10 @@ export class Renderer {
     this._fogMode = 0;
     this._fogDensity = 0;
     this._fogRange = new Float32Array([0, 1]);
+    // DW-C: Iliac Puddle No More's distance fog - fogGlsl.js uDwFog, five vec4s
+    // (world/deepWaterLook.js distanceFogUniforms). A FRAME's, as the cloud
+    // deck is: beginFrame clears it and the exterior host sets it after.
+    this._dwFog = new Float32Array(20);
     this._fogColor = new Float32Array([0, 0, 0]);
     this._camPos = new Float32Array(3);
     this._clipY = 1e9;   // A1: the automap slice, off by default
@@ -1299,6 +1323,7 @@ export class Renderer {
       fogDensity: gl.getUniformLocation(this.waterProgram, 'uFogDensity'),
       fogRange: gl.getUniformLocation(this.waterProgram, 'uFogRange'),
       camPos: gl.getUniformLocation(this.waterProgram, 'uCamPos'),
+      dwFog: gl.getUniformLocation(this.waterProgram, 'uDwFog'),   // DW-C
     };
     this.waterUProj = gl.getUniformLocation(this.waterProgram, 'uProj');
     this.waterUView = gl.getUniformLocation(this.waterProgram, 'uView');
@@ -1614,11 +1639,6 @@ export class Renderer {
     const gl = this.gl;
     return {
       fogColor: gl.getUniformLocation(program, 'uFogColor'),
-      // PERF-FOG: the lane's own, already decoded. A classic program does
-      // not declare it and a lane program that never calls elFinish has it
-      // optimised out, so this is null for both and the upload skips - the
-      // shader that wants linear fog is the one that asks for it.
-      fogColorLin: gl.getUniformLocation(program, 'uFogColorLin'),
       fogMode: gl.getUniformLocation(program, 'uFogMode'),
       clipY: gl.getUniformLocation(program, 'uClipY'),
       amMode: gl.getUniformLocation(program, 'uAutomapMode'),
@@ -1627,6 +1647,7 @@ export class Renderer {
       fogDensity: gl.getUniformLocation(program, 'uFogDensity'),
       fogRange: gl.getUniformLocation(program, 'uFogRange'),
       camPos: gl.getUniformLocation(program, 'uCamPos'),
+      dwFog: gl.getUniformLocation(program, 'uDwFog'),   // DW-C: the sea's distance fog - null where a program never calls it
     };
   }
 
@@ -1782,9 +1803,6 @@ export class Renderer {
       this._installWorldSet(this._classicSet);
     }
     this._lane = lane;
-    // PERF-FOG: the cached linear fog is the OLD lane's answer - a cache
-    // keyed on its input alone cannot see that the function changed.
-    if (this._fogLinFrom) this._fogLinFrom[0] = NaN;
     // EL2: the shadow pass rides a lane that asks for it; built once, kept
     if (lane?.shadows) {
       this._shadows = this._shadowPass ??= new ShadowPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS, terrain: TERRAIN_VS, char: CHAR_VS } });
@@ -2067,23 +2085,76 @@ export class Renderer {
    *  the _HUD twin when that rect is a docked strip - it starts above the
    *  bottom edge - so the texture follows the bar the host's lens and rect
    *  were taken from. The mip chains follow the config (a no-op unless it
-   *  changed); retro mode off frees the palette's LUT (E2). */
+   *  changed); retro mode off frees the palette's LUT (E2).
+   *
+   *  PERF-SCALE (2026-09-25): THE ONE HOME FOR A WORLD DRAWN SMALLER AND
+   *  SHOWN. With retro off and the render scale below 1, the frame is a
+   *  `kind: 'scale'` one on this same path: the image is the host's world
+   *  rect (the canvas when none) x the scale, rounded, and its present is
+   *  LINEAR and effect-free (RetroPass.present `smooth`). Retro wins - its
+   *  config is asked first and a retro frame never reads the scale. At a
+   *  scale of 1 there is no frame: the world draws straight to the canvas
+   *  (or the lane's canvas-sized frame) as it always did.
+   *
+   *  THE REVIEW: the world frame that goes back to no image (retro off, the
+   *  scale back at 100%) frees the image the last one drew - the RetroPass's
+   *  image and depth, and the lane's image-sized frame - so a session that
+   *  once tried 75% does not hold its framebuffers at 100% (a 4K canvas at
+   *  75% held 36 MiB classic, 89 MiB under the lane). The lane's frame is
+   *  the KEPT pass's, freed even when the lane went off in between (AUDIT
+   *  BRANCH-0925 PS-A2: `_air` is null then, the pass still holds its
+   *  frames, and this is the one drop there will be). The lane's canvas-sized
+   *  frame stays under a scale frame: a menu, a map or a video over the world
+   *  draws into it. Every screen-space kernel (the bloom's blur, the bolts'
+   *  pixel width) is sized in the image's pixels, as in any window of the
+   *  image's size: X% of a canvas looks like 100% of a window X% as large
+   *  (a 1080p window's glow is already twice a 4K one's on screen). */
   _retroBegin() {
     const cfg = this._retroSource?.() ?? null;
     this._applyRetroMips(cfg ? cfg.mipmaps : true);
     const view = this._worldViewportFrame, docked = !!view && view.y > 0;
-    const width = docked ? cfg?.hudWidth : cfg?.width, height = docked ? cfg?.hudHeight : cfg?.height;
-    if (!cfg || !(width > 0) || !(height > 0)) {
+    const scaled = cfg ? null : this._scaledImage();   // PERF-SCALE: retro wins
+    const width = scaled ? scaled.width : docked ? cfg?.hudWidth : cfg?.width, height = scaled ? scaled.height : docked ? cfg?.hudHeight : cfg?.height;
+    if (!(cfg || scaled) || !(width > 0) || !(height > 0)) {
       if (this._retroFrame) this._restoreWorldViewport();   // the frame retro mode goes off on: an owed present just took the viewport to the full canvas
+      if (this._retroFrame) this._dropWorldImage();   // PERF-SCALE (the review): and the image it drew into is freed, the present being made
       this._retroFrame = null;
       this._retro?.dropLut();
       return null;
     }
     this._retroPass();
-    this._retroFrame = { width, height, post: cfg.post, lutShift: cfg.lutShift, mipmaps: cfg.mipmaps, view: view ? { ...view } : null, depth: null };
+    if (scaled) { this._retro.dropLut(); this._retroFrame = { kind: 'scale', scale: scaled.scale, width, height, post: 0, lutShift: 0, mipmaps: true, view: view ? { ...view } : null, depth: null }; }
+    else this._retroFrame = { kind: 'retro', width, height, post: cfg.post, lutShift: cfg.lutShift, mipmaps: cfg.mipmaps, view: view ? { ...view } : null, depth: null };
     this._worldViewportPx = [0, 0, width, height];
     this._restoreWorldViewport();
     return this._retroFrame;
+  }
+
+  /** PERF-SCALE: the render scale's image for this frame - { scale, width, height }, the host's world rect in canvas
+   *  pixels (the whole canvas when it set none) x the scale, rounded - or null at 1 (or a source that answers no
+   *  scale below it), or over an empty rect. */
+  _scaledImage() {
+    const scale = this._scaleOn();
+    if (scale === null) return null;
+    const p = this._worldViewportPx ?? [0, 0, this.canvas.width, this.canvas.height];
+    if (!(p[2] > 0 && p[3] > 0)) return null;
+    return { scale, width: Math.max(1, Math.round(p[2] * scale)), height: Math.max(1, Math.round(p[3] * scale)) };
+  }
+
+  /** PERF-SCALE: THE ONE READING OF "THE SCALE IS ON" - the source's answer when it is a scale above 0 and below 1,
+   *  else null (100%). The frame's image (_scaledImage) and the warm's program (_warmRetro) both ask it. */
+  _scaleOn() {
+    const scale = Number(this._scaleSource?.() ?? 1);
+    return scale > 0 && scale < 1 ? scale : null;
+  }
+
+  /** PERF-SCALE (the review): free the world's image - the RetroPass's image and depth and the lane's image-sized
+   *  frame - once a world frame draws without one. Reached after the owed present (_beginLane presents first).
+   *  AUDIT BRANCH-0925 PS-A2: the frame is the KEPT pass's (`_airPass`, built once), not the installed one's - with
+   *  the lane or the air off `_air` is null while the pass keeps its frames, and this is the one chance to free it. */
+  _dropWorldImage() {
+    this._retro?.dropTarget();
+    this._airPass?.dropFrame('retro');
   }
 
   /** RETRO1: the RetroPass, built once. */
@@ -2116,6 +2187,7 @@ export class Renderer {
         this._retro.present({
           depth: f.depth, rect: this._viewportPx(f.view) ?? [0, 0, this.canvas.width, this.canvas.height], canvasW: this.canvas.width, canvasH: this.canvas.height,
           post: f.post, lutShift: f.lutShift, clear: this._clearColor, scissor: this._scissor,
+          smooth: f.kind === 'scale',   // PERF-SCALE: the render scale's image, LINEAR and effect-free
         });
       } else this._retro?.release();
     } finally {   // AUDIT RETRO1 E3: whatever the present did, the frame is the canvas's and the shadows are forgotten
@@ -2149,10 +2221,30 @@ export class Renderer {
    *  systems/retroMode.js retroFrameConfig, handed over by main.js; null
    *  (the default, and every test's) is retro off. */
   setRetroSource(fn) { this._retroSource = typeof fn === 'function' ? fn : null; }
+  /** PERF-SCALE: where the renderer asks for each WORLD frame's render scale - systems/renderScale.js
+   *  renderScaleSetting, handed over by main.js; null (the default, and every test's) is 1, today's frame. */
+  setRenderScaleSource(fn) { this._scaleSource = typeof fn === 'function' ? fn : null; }
+  /** PERF-SCALE: THE FRAME'S SIZE, for the FPS counter - the world image it draws into ([w, h]: the scale's or
+   *  retro's image, else the host's world rect, else the canvas), the canvas, the page's devicePixelRatio, the
+   *  render scale the last world frame took (1 under retro or at 100%) and the GPU (read once, gpuNameOf). A
+   *  property read or two: the counter asks once a second. */
+  get frameInfo() {
+    const f = this._retroFrame, c = this.canvas, p = this._worldViewportFrame ? this._viewportPx(this._worldViewportFrame) : null;
+    return {
+      gpu: this.gpuName,
+      world: f ? [f.width, f.height] : p ? [p[2], p[3]] : [c.width, c.height],
+      canvas: [c.width, c.height],
+      dpr: Number(globalThis.devicePixelRatio) || 1,
+      scale: f?.kind === 'scale' ? f.scale : 1,
+      retro: f?.kind === 'retro',
+    };
+  }
   /** RETRO1: the retro world frame in flight or last presented - a probe's read. */
   get retroFrame() { return this._retroFrame ? { ...this._retroFrame } : null; }
   /** AUDIT RETRO1 C6: while a retro world pass is live, [the image's height, the canvas pixels it is shown over] - what
-   *  a sprite sized in canvas pixels needs to be sized in the image's instead; null otherwise. */
+   *  a sprite sized in canvas pixels needs to be sized in the image's instead; null otherwise. PERF-SCALE: a scale
+   *  frame's too - a 3-pixel texel drawn into a 75% image is 2.25 of its pixels, and a whole number of them is what
+   *  keeps a sprite's texels even before the present smooths them. */
   get retroImageSpan() {
     const f = this._retroFrame;
     return this._retroOwed && f ? [f.height, Math.max(1, Math.round((f.view ? f.view.h : 1) * this.canvas.height))] : null;
@@ -2389,14 +2481,14 @@ export class Renderer {
       () => this._ensureCharQuadProgram(),
       () => this._ensureParticleProgram(),
       () => this._ensureOverlayProgram(),
-      ...(this._retroSource ? [() => this._warmRetro()] : []),   // AUDIT RETRO1 E7
+      ...(this._retroSource || this._scaleSource ? [() => this._warmRetro()] : []),   // AUDIT RETRO1 E7; PERF-SCALE: the scale's present is the same program
     ];
   }
 
   /** AUDIT RETRO1 E7: the retro present's program, built by the warm when retro mode is on at load rather than inside
    *  the first retro frame. The build binds a program and a VAO of its own, so the shadows are dropped after it. */
   _warmRetro() {
-    if (!this._retroSource?.()) return;
+    if (!this._retroSource?.() && this._scaleOn() === null) return;
     this._retroPass()._program();
     this._lastProgram = null; this._lastVao = null;
   }
@@ -2809,9 +2901,10 @@ export class Renderer {
     // world-space callers (the rig sprite box, the third-person arm)
     // keep the deck: they are characters in the world.
     const sp = this._proj, sv = this._view, sf = this._fogMode;
+    const sw = this._dwFog[0];   // DW-C: the sea's fog is borrowed off with the rest - the sprite fogs where it composites
     const sd = lensLocal ? this._cloudShadow : null;
     if (sd) { this._cloudShadow = null; this._csStamp++; }
-    this._proj = proj; this._view = view; this._fogMode = 0;
+    this._proj = proj; this._view = view; this._fogMode = 0; this._dwFog[0] = 0;
     this._spriteDepth++;   // AUDIT-EL F2
     // AUDIT 65 RS-2: EVERY borrow above is returned in ONE finally, the
     // GL state first and the JS caches after. drawCharacter dereferences
@@ -2837,7 +2930,7 @@ export class Renderer {
       this._restoreWorldViewport();
       const cc = this._clearColor;
       gl.clearColor(cc[0], cc[1], cc[2], cc[3]);
-      this._proj = sp; this._view = sv; this._fogMode = sf;
+      this._proj = sp; this._view = sv; this._fogMode = sf; this._dwFog[0] = sw;
       this._spriteDepth--;   // AUDIT-EL F2
       if (sd) { this._cloudShadow = sd; this._csStamp++; }
     }
@@ -2955,7 +3048,7 @@ ${FOG_GLSL}
 void main() {
   vec4 t = texture(uTex, vUV);
   if (t.a < 0.5) discard;
-  outColor = vec4(mix(uFogColor, t.rgb, fogFactorAt(vWorld)), 1.0);
+  outColor = vec4(dwWaterFog(mix(uFogColor, t.rgb, fogFactorAt(vWorld)), vWorld), 1.0);   // DW-C
 }`;
       this.charQuadProgram = this._buildProgram(vs, fs);
       const P = this.charQuadProgram;
@@ -2968,6 +3061,7 @@ void main() {
         fogDensity: gl.getUniformLocation(P, 'uFogDensity'),
         fogRange: gl.getUniformLocation(P, 'uFogRange'),
         camPos: gl.getUniformLocation(P, 'uCamPos'),
+        dwFog: gl.getUniformLocation(P, 'uDwFog'),   // DW-C
       };
       const vao = gl.createVertexArray();
       this._bindVao(vao);
@@ -3163,7 +3257,7 @@ void main() {
       pointColors: gl.getUniformLocation(P, 'uPointColors'),
       indirect: gl.getUniformLocation(P, 'uIndirect'),
       indirectColor: gl.getUniformLocation(P, 'uIndirectColor'),
-      ...this._fogLocs(P),   // MAC-BUG W6: the lane's decal wants uFogColorLin too, and _fogLocs is the one table that knows the whole set
+      ...this._fogLocs(P),   // MAC-BUG W6: the lane's decal wants the whole fog set too, and _fogLocs is the one table that knows it
     };
   }
 
@@ -3659,8 +3753,14 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     return freed;
   }
 
-  /** Build a VAO bundle from meshReader output. */
-  createMesh(model) {
+  /** Build a VAO bundle from meshReader output.
+   *  PERF-EXT23: `bounds` - { whole, subs } - is the spheres already
+   *  measured (StaticBatchBuilder.finishSliced, a range at a time between
+   *  frames, with boundsOf's own passes); given, the two walks below are
+   *  not run again. Absent, nothing changes.
+   *  @param {any} model
+   *  @param {{ bounds?: ?{ whole: Float32Array, subs: Float32Array[] } }} [opts] */
+  createMesh(model, { bounds: measured = null } = {}) {
     const gl = this.gl;
     const vao = gl.createVertexArray();
     this._bindVao(vao);
@@ -3688,8 +3788,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // EL5: the bounds the shadow replays cull by - the mesh's sphere and one
     // per sub-mesh (a static batch is a whole block in one mesh; its walls
     // are its sub-meshes). Local space; the record transforms them.
-    const bounds = boundsOf(model.positions);
-    const subMeshes = model.subMeshes.map((sm) => ({ ...sm, _bounds: boundsOf(model.positions, model.indices, sm.startIndex, sm.primitiveCount * 3) }));
+    const bounds = measured ? measured.whole : boundsOf(model.positions);
+    const subMeshes = model.subMeshes.map((sm, i) => ({ ...sm, _bounds: measured ? measured.subs[i] : boundsOf(model.positions, model.indices, sm.startIndex, sm.primitiveCount * 3) }));
     // HOTFIX 2026-08-31 (field crash, Firefox): the sub-meshes are
     // COPIED, never shared with the model. drawMesh's EV2 texture
     // cache stamps `_evTex`/`_evGen`/... onto each sub-mesh, and the
@@ -3732,6 +3832,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // never inherits the last exterior frame's map onto its walls.
     // VC6c: `_deckOwed` keeps it one moment longer, for an image the air pass still owes this frame (airPass.setCloudShadow); `_beginLane` drops it the instant that resolve is done.
     if (this._cloudShadow) { this._deckOwed = this._cloudShadow; this._cloudShadow = null; this._csStamp++; }
+    this._dwFog[0] = 0;   // DW-C: the sea's distance fog is a frame's too - no interior, dungeon or panel inherits it
     // EV6: the shadows reset with the counters - whatever ran between
     // frames (UI passes, another context's work) is not trusted. The
     // cloud-shadow upload stamps are the same kind of claim (RS-3) and
@@ -3855,6 +3956,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       fogDensity: this._fogDensity,
       fogRange: [this._fogRange[0], this._fogRange[1]],
       fogColor: this._fogColor,
+      dwFog: Float32Array.from(this._dwFog),   // DW-C
       ambient: this._ambient,
       // AUDIT-AMAP H5: setLighting's fourth argument defaults to null and
       // forwards to setAmbientTrilight, so a restore that forgot the
@@ -3944,6 +4046,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this.setAutomapMode(s.automapMode);
     this.setAutomapWater(s.automapWaterLevel, s.automapWaterColor);
     this.setFog(FOG_MODE_NAMES[s.fogMode] ?? 'off', s.fogDensity, s.fogRange[0], s.fogRange[1], s.fogColor);
+    this._dwFog.set(s.dwFog);   // DW-C
     this.setLighting(s.ambient, s.sunScale, s.sunColor);
     this.setAmbientTrilight(s.ambientTri);   // AUDIT-AMAP H5
     this._clockLit = s.clockLit;
@@ -4086,43 +4189,26 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (color) this._fogColor = color;
   }
 
+  /** DW-C: Iliac Puddle No More's distance fog for this frame - the twenty
+   *  floats world/deepWaterLook.js distanceFogUniforms packs, or null for
+   *  none. After beginFrame, which clears it: it is a frame's. */
+  setWaterFog(u) {
+    if (u) this._dwFog.set(u);
+    else this._dwFog[0] = 0;
+  }
+
   _uploadFog(prog) {
     const gl = this.gl;
     gl.uniform3fv(prog.fogColor, this._fogColor);
-    // PERF-FOG (2026-09-19): the lane's fog colour, decoded ONCE where the
-    // value changes rather than once per fragment in every lane shader
-    // there is. Cached against the display triple it was made from: the
-    // fog colour moves with the weather and the hour, which is a handful
-    // of times a minute, and this ran for every pixel of every frame.
-    if (prog.fogColorLin) gl.uniform3fv(prog.fogColorLin, this._fogColorLinear());
     gl.uniform1i(prog.fogMode, this._fogMode);
     gl.uniform1f(prog.fogDensity, this._fogDensity);
     gl.uniform2fv(prog.fogRange, this._fogRange);
     gl.uniform3fv(prog.camPos, this._camPos);
+    if (prog.dwFog) gl.uniform4fv(prog.dwFog, this._dwFog);   // DW-C: the sea's distance fog (off is [0].x = 0)
     if (prog.clipY) gl.uniform1f(prog.clipY, this._clipY);   // A1: only the mesh shader carries the slice
     if (prog.amMode) gl.uniform1f(prog.amMode, this._automapMode);   // A2: and the automap presentation
     if (prog.amWaterLevel) gl.uniform1f(prog.amWaterLevel, this._automapWaterLevel);   // c2/S6: with its water tint
     if (prog.amWaterColor) gl.uniform4fv(prog.amWaterColor, this._automapWaterColor);
-  }
-
-  /** PERF-FOG: `_fogColor` in linear, decoded only when it MOVES.
-   *
-   *  Through the lane's own `decode3`, which is the curve `elDecode`
-   *  compiles into every lane shader - so there is no second copy of the
-   *  law here, only a place to keep its answer. The fog colour changes
-   *  with the weather and the hour; this used to be recomputed for every
-   *  pixel of every frame. Its own scratch, never `_c3`'s, because that
-   *  one is handed out to whoever asks next. */
-  _fogColorLinear() {
-    const c = this._fogColor;
-    const was = this._fogLinFrom ?? (this._fogLinFrom = new Float32Array([NaN, NaN, NaN]));
-    if (!this._fogLin) this._fogLin = new Float32Array(3);
-    if (was[0] !== c[0] || was[1] !== c[1] || was[2] !== c[2]) {
-      was[0] = c[0]; was[1] = c[1]; was[2] = c[2];
-      if (this._lane) this._lane.decode3(c, this._fogLin);
-      else this._fogLin.set(c);
-    }
-    return this._fogLin;
   }
 
   /** A1: the automap slice plane - fragments of the SOLID mesh pass
@@ -4445,8 +4531,50 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // EL5: the batch's sphere about its origin - the centres' box, plus a
     // flat's own half-diagonal (a flat is drawn about its centre, any facing)
     const bounds = boundsOf(centers.flat());
-    bounds[3] += Math.hypot(size.w, size.h) * 0.5;
-    return { vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null, frame: null, bounds, _quads: count, _dyn: !!dynamic };
+    bounds[3] += quadHalfDiagonal(size);
+    // PERF-EXT10 (2026-09-25, two players via Mac: "fps issues in the
+    // exterior but fine in the interior", "me too my friend.. don't know
+    // why. I got a RX6600"): A BATCH IS BORN WITH EVERY FIELD IT WILL EVER
+    // CARRY. This literal minted eleven, and the rest arrived later in
+    // whatever order a path first touched them - a producer's `_box`,
+    // `sway`, `conceal`, `noShadow`, `selfCard`; the shadow record's ten
+    // `_sh*`; the key's four `_bbKey*`; the signature's `_shId`; a move's
+    // `_shMovedAt`; a gib's `_moveScratch`; a free's `_dead`. Every order is
+    // its own hidden class to V8: three by day and five at night in the
+    // synthetic town, twelve to fifteen with the game's mix of producers. So every
+    // per-flat loop (the draw, its sort, the shadow record, the replay,
+    // the static signature) read its batches through polymorphic property
+    // lookups. Born with all of them, a batch keeps ONE shape for life.
+    // They are born UNDEFINED, not with typed defaults: the readers take
+    // undefined for "absent" (`_bbKey == null`, `_shSeen === true`,
+    // `_shMovedAt != null`, `_shId ??=`), and nothing in the tree tells a
+    // missing field from an undefined one. ALL BUT THREE (the review): the
+    // shadow record's origin, `_shOx`/`_shOy`/`_shOz`, is born NaN. V8
+    // keeps a field in the representation of the first value it holds,
+    // and undefined is not a number - a field born undefined is a TAGGED
+    // slot, and every fractional origin recordBillboards writes into it,
+    // every batch every frame, was a fresh heap number (~40 bytes a batch
+    // a frame, 3,000 flats about 120 KB of young garbage a frame, which
+    // the base never made: its fields were born with their first double).
+    // Born NaN they are DOUBLE slots, written in place. NaN is never read
+    // as a place: every reader asks `_shSeen === true` first, and the
+    // static signature folds only batches the record has written. What the
+    // frame writes into the rest is Smis, booleans, strings or objects,
+    // which need no box (`sway`'s fraction is written once, by the host).
+    // A field a batch gains anywhere in src/ belongs here too -
+    // test/perfextb.test.js sweeps the writes, and weighs the record.
+    // PERF-EXT1 (2026-09-25, the same players): `_place`, the placements on
+    // a grid (bounds.js placementGrid), for a static batch of more than one
+    // flat - a pixel-wide wood's sphere reaches every shadow in its pixel,
+    // its trees do not. Never for one built dynamic: its centres move.
+    return {
+      vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null, frame: null, bounds, _quads: count, _dyn: !!dynamic,
+      _place: count > 1 && !dynamic ? placementGrid(centers) : null,
+      _box: undefined, sway: undefined, conceal: undefined, noShadow: undefined, selfCard: undefined, _dead: undefined, _moveScratch: undefined,
+      _bbKey: undefined, _bbKeyRecord: undefined, _bbKeyFrame: undefined, _bbKeyArchive: undefined,
+      _shGen: undefined, _shSeen: undefined, _shOx: NaN, _shOy: NaN, _shOz: NaN, _shFrame: undefined,
+      _shRec: undefined, _shFlip: undefined, _shDyn: undefined, _shSway: undefined, _shMovedAt: undefined, _shId: undefined,
+    };
   }
 
   /**
@@ -4485,6 +4613,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, batch.buffers[0]);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, verts, 0, count * 20);
+    // PERF-EXT1: the placements the shadow pass asks are the ones it was
+    // BORN with - moved, they speak for nothing, and a batch tested where
+    // it was built casts nothing where it is (the draw lens's prover: a
+    // gib's shadow gone in a cascade and three lantern faces). A batch that
+    // moves is judged by its sphere, which follows it below.
+    batch._place = null;
     // THE SPHERE, WITHOUT BUILDING A FLAT ARRAY TO ASK FOR IT. This
     // runs every frame of every flight, and `boundsOf` wants one
     // packed list - so the box is walked here and the sphere written
@@ -4500,7 +4634,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const cx = (lo0 + hi0) * 0.5, cy = (lo1 + hi1) * 0.5, cz = (lo2 + hi2) * 0.5;
     const bounds = (batch.bounds && batch.bounds.length === 4) ? batch.bounds : (batch.bounds = new Float32Array(4));
     bounds[0] = cx; bounds[1] = cy; bounds[2] = cz;
-    bounds[3] = Math.hypot(hi0 - cx, hi1 - cy, hi2 - cz) + Math.hypot(batch.size.w, batch.size.h) * 0.5;
+    bounds[3] = Math.hypot(hi0 - cx, hi1 - cy, hi2 - cz) + quadHalfDiagonal(batch.size);
     return true;
   }
 
@@ -4510,6 +4644,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const gl = this.gl;
     if (!batch) return;
     batch._dead = true;   // EL2: a shadow record from the last frame may still hold it
+    batch._place = null;   // PERF-EXT1: the placement grid is the batch's, and goes with it
     if (batch.vao) gl.deleteVertexArray(batch.vao);
     for (const b of batch.buffers || []) gl.deleteBuffer(b);
     batch.vao = null;
@@ -4622,6 +4757,17 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
     return tex;
+  }
+  /** DW-B: write a pixel's tilemap texture in place (Iliac Puddle No More's
+   *  clip and repaint, or the TileMap back as it streamed). */
+  writeTilemapTexture(tex, bytes, dim) {
+    const gl = this.gl;
+    this._activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, dim, dim, gl.RED_INTEGER, gl.UNSIGNED_BYTE, bytes);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
   }
   /** Upload/cache a ground archive as a 64x64 TEXTURE_2D_ARRAY. */
   uploadTileArray(archive, layers) {
@@ -4881,14 +5027,49 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       lightDir: u('uLightDir'), ambient: u('uAmbient'), sunScale: u('uSunScale'), sunColor: u('uSunColor'),
       moonDir: u('uMoonDir'), moonScale: u('uMoonScale'), moonColor: u('uMoonColor'),
       zenith: u('uSkyZenith'), horizon: u('uSkyHorizon'), tint: u('uTint'), opacity: u('uOpacity'), f0: u('uF0'), shoreSoft: u('uShoreSoft'),
-      fog: { fogColor: u('uFogColor'), fogMode: u('uFogMode'), fogDensity: u('uFogDensity'), fogRange: u('uFogRange'), camPos: u('uCamPos') },
+      fog: { fogColor: u('uFogColor'), fogMode: u('uFogMode'), fogDensity: u('uFogDensity'), fogRange: u('uFogRange'), camPos: u('uCamPos'), dwFog: u('uDwFog') },   // DW-C: and the sea's
       // VC4 recorded that the deck's shadow reached neither the grass nor the water; WATER1 closes the water half
       cloud: [u('uCloudShadowMap'), u('uCloudShadowRect')],
       maskUploaded: false,
     };
   }
 
+  /** PERF-EXT13: the one-row list drawWaterSurface hands drawWaterSurfaces, emptied after each call */
+  /** @type {Array<Array<any>>} */ _waterOne = [[null, null, null, null]];
+
+  /** WATER1's one surface - the town host's ground, the water lab's tiles: PERF-EXT13's list with one row. */
   drawWaterSurface(surface, modelMatrix, arrayTex, tilemapTex, tileSize, u, tileDim = 128) {
+    const one = this._waterOne, row = one[0];
+    row[0] = surface; row[1] = modelMatrix; row[2] = arrayTex; row[3] = tilemapTex;
+    this.drawWaterSurfaces(one, 1, tileSize, u, tileDim);
+    row[0] = row[1] = row[2] = row[3] = null;   // a scratch keeps nothing alive past the call
+  }
+
+  /**
+   * PERF-EXT13 (2026-09-25, the players' "fps issues in the exterior but
+   * fine in the interior"): EVERY VISIBLE PIXEL'S WATER IN ONE CALL. The
+   * streaming host drew each water pixel through its own drawWaterSurface,
+   * and each call sent the whole frame block again - the matrices, the
+   * clock and the wind, the sky, the fog, the shadow maps, the sun, the
+   * moon, the lamps, the samplers - and turned blend, depth-mask, cull,
+   * polygon offset and depth func on and off around its one draw: about 71
+   * GL calls a pixel, 2,415 for a city's 34, of which ~1,500 set a value
+   * already held. None of it can change between two pixels of one frame
+   * (the host hands every pixel the same `u`, and nothing runs between
+   * them). So the block goes up ONCE and the state goes on ONCE; per row,
+   * in the order given - the blend is order-dependent - only what is the
+   * pixel's own: its matrix, its tilemap on unit 2, its VAO, and the tile
+   * array on unit 0 when it differs from the row before (another climate's
+   * ground array), always for the first. Every draw samples the state it
+   * sampled before, in the same order. On Windows, where Chrome draws
+   * through ANGLE's D3D11 backend and a uniform call dirties its stage's
+   * whole block for the next draw (no value compare), the fragment stage's
+   * block goes up once a frame instead of once a water pixel.
+   * @param {Array<Array<any>>} rows  [surface, modelMatrix, arrayTex, tilemapTex] rows; the first `n` are drawn
+   * @param {number} n
+   */
+  drawWaterSurfaces(rows, n, tileSize, u, tileDim = 128) {
+    if (!n) return;   // no water in sight: not a GL call, as when no pixel called
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     const laneWater = !!(this._lane?.shadows && this.waterSurfaceProgramLane && this._shadows);   // EL7: the lane's water receives the sun map
@@ -4898,7 +5079,6 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (!L.maskUploaded) { gl.uniform4uiv(L.mask, packWaterMask(WATER_DRAW_MASK_TABLE)); L.maskUploaded = true; }   // WATER-DRAW1
     gl.uniformMatrix4fv(L.proj, false, this._proj);
     gl.uniformMatrix4fv(L.view, false, this._view);
-    gl.uniformMatrix4fv(L.model, false, modelMatrix);
     gl.uniform1f(L.lift, u.lift);
     gl.uniform1f(L.tileSize, tileSize);
     gl.uniform1i(L.tileDim, tileDim);
@@ -4937,13 +5117,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (count > 0) gl.uniform3fv(L.pointColors, this._pointColorData(count, true));
     gl.uniform4fv(L.indirect, this._indirect);
     gl.uniform3fv(L.indirectColor, this._indirectColor);
-    this._activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D_ARRAY, arrayTex);
     gl.uniform1i(L.tileArr, 0);
-    this._activeTexture(gl.TEXTURE2);
-    gl.bindTexture(gl.TEXTURE_2D, tilemapTex);
     gl.uniform1i(L.tilemap, 2);
-    this._activeTexture(gl.TEXTURE0);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);
@@ -4966,9 +5141,24 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.enable(gl.POLYGON_OFFSET_FILL);
     gl.polygonOffset(0, -2);
     gl.depthFunc(gl.LEQUAL);
-    this._bindVao(surface.vao);
-    gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);
-    this.stats.texBinds += 2; this.stats.draws++;
+    let bound = null;
+    for (let i = 0; i < n; i++) {
+      const row = rows[i], surface = row[0], arrayTex = row[2], tilemapTex = row[3];
+      gl.uniformMatrix4fv(L.model, false, row[1]);
+      if (i === 0 || arrayTex !== bound) {
+        this._activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D_ARRAY, arrayTex);
+        bound = arrayTex;
+        this.stats.texBinds++;
+      }
+      this._activeTexture(gl.TEXTURE2);
+      gl.bindTexture(gl.TEXTURE_2D, tilemapTex);
+      this.stats.texBinds++;
+      this._bindVao(surface.vao);
+      gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);
+      this.stats.draws++;
+    }
+    this._activeTexture(gl.TEXTURE0);
     this._bindVao(null);
     gl.depthFunc(gl.LESS);
     gl.disable(gl.POLYGON_OFFSET_FILL);
@@ -5028,7 +5218,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       // every flat in the world. This is the only site in the file that
       // holds more than one decoded colour live at once, which is why it
       // is the only one that could have it; found by the audit that had
-      // just pinned `_fogLin` against the same hazard one method away.
+      // just pinned PERF-FOG's decoded fog (gone since EL-DISTANCE) against the same hazard one method away.
       const am = this._c3(this._ambient, this._decA), mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decC);
       gl.uniform3f(
         this.bbUTint,
@@ -5064,6 +5254,20 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // order and only skips the repeats it happens to have.
     let lastKey = null;
     let lastSway = null;   // WIND3
+    // PERF-EXT11 (2026-09-25, the players' "fps issues in the exterior but
+    // fine in the interior"): THE SIZE AND THE ORIGIN GO UP WHEN THEY
+    // CHANGE, as the sway and the key's textures already did. Both were
+    // uploaded for every flat, and neither changes between most pairs:
+    // the sort below puts one record's batches together, and they share
+    // its size (783 size uploads a frame on the harness town, 65 after).
+    // Exact, because a uniform is the PROGRAM's and holds until the next
+    // upload to it: this call binds bbProgram once and nothing between
+    // two flats - the opaque phase, the blended one, the uSpectral and
+    // uConceal between them - binds another. The lasts are this CALL's
+    // (NaN matches nothing), never carried to the next, which may run
+    // another program (a lane swapped between two calls). A flip is the
+    // sign of `w`, compared by value like the rest.
+    let lastW = NaN, lastH = NaN, lastOx = NaN, lastOy = NaN, lastOz = NaN;
     const drawOne = (b) => {
       const key = billboardKey(b);   // FA1/MAC4: the key follows every field it is made of (billboardKey.js)
       const tex = this.textures.get(key);
@@ -5078,9 +5282,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
         this.stats.texBinds += 2;
         lastKey = key;
       }
-      gl.uniform2f(this.bbUSize, b.size.w, b.size.h);
+      const w = b.size.w, h = b.size.h;
+      if (w !== lastW || h !== lastH) { gl.uniform2f(this.bbUSize, w, h); lastW = w; lastH = h; }   // PERF-EXT11
       const o = b.origin || ZERO_ORIGIN;
-      gl.uniform3f(this.bbUOrigin, o[0], o[1], o[2]);
+      if (o[0] !== lastOx || o[1] !== lastOy || o[2] !== lastOz) { gl.uniform3f(this.bbUOrigin, o[0], o[1], o[2]); lastOx = o[0]; lastOy = o[1]; lastOz = o[2]; }   // PERF-EXT11
       const sw = b.sway || 0;   // WIND3: the batch's share of the lean, uploaded when it changes between batches
       if (sw !== lastSway) { gl.uniform1f(this.bbUSway, sw); lastSway = sw; }
       this._bindVao(b.vao);

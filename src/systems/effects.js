@@ -615,13 +615,19 @@ export function healAttributeDamage(entity, stat, amount) {
   }
 }
 
+/** DROPS-AUDIT ELITE-SPELLS: an elite foe's spells land at its `damageScale`, as its blows do (combat/formulas.js
+ *  calculateAttackDamage's tail, the same rounding and floor) - so a caster in an elite dungeon is as strong with
+ *  a Fireball as with its sword. The player's own casts, and every caster without a scale, are untouched. */
+export const casterDamageScaled = (n, ent) => (n > 0 && ent && !ent.isPlayer && Number.isFinite(ent.damageScale) && ent.damageScale !== 1
+  ? Math.max(1, Math.round(n * ent.damageScale)) : n);
+
 /** One magic round for one ACTIVE entry - the saving throw rolls
  *  FRESH here every round (F10), gated on the spell's range (S15).
  *  Fortify/buff/drain rounds carry no per-round action (their state
  *  applies via liveStat / hasActiveEffect). */
 function runEffectRound(a, target, sinks, rolls) {
   if (a.kind === 'continuousDamage') {
-    const n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls);
+    const n = casterDamageScaled(effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls), a.caster);   // DROPS-AUDIT ELITE-SPELLS
     // AUDIT 68 S19-round-ticks-player-provenance: the tick is DamageHealthFromSource(caster) - the player's blow only
     // when the player cast it (no caster is the player, hostMagic's `!caster` law). A round sink bills nobody else.
     // DUEL1: and the entry's duel tag rides along - a duel's damage over time (bundleDuel) stops at the duel's floor
@@ -904,7 +910,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       continue;
     }
     if (isDamageHealth(e)) {
-      const n = magnitude(e);
+      const n = casterDamageScaled(magnitude(e), caster?.entity);   // DROPS-AUDIT ELITE-SPELLS
       out.damage += n;
       if (n > 0 && sinks.hurt) sinks.hurt(n);
       // DamageHealthFromSource runs HandleAttackFromSource whatever the
@@ -960,7 +966,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       }
       const left = target?.health ?? 0;
       out.disintegrated = (out.disintegrated ?? 0) + 1;
-      if (left > 0 && sinks.hurt) { out.damage += left; sinks.hurt(left); }
+      if (left > 0 && sinks.hurt) { out.damage += left; sinks.hurt(left, { whole: true }); }   // AUDIT PSCALE1 DOORS-1: a Disintegrate is a kill - no fighters' toughness divides it
       continue;
     }
     if (isFortifyAttribute(e)) {

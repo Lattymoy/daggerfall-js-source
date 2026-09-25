@@ -29,6 +29,16 @@
  * optional and why they are written down: eight files outside `render/`
  * set them, and until now nothing said what they were.
  *
+ * PERF-EXT10 (2026-09-25): and every field below is MINTED at birth, the
+ * ones nobody has written yet as undefined, so a batch has one hidden
+ * class for life (renderer.js createBillboardBatch says why) - all but
+ * the shadow record's origin, `_shOx`/`_shOy`/`_shOz`, born NaN (the
+ * review): a field born undefined is a tagged slot, and every fractional
+ * origin stored into it every frame was a fresh heap number. The last
+ * block is the renderer's own bookkeeping - the key's memory
+ * (billboardKey.js) and the shadow pass's (shadowPass.js recordBillboards
+ * and the static signature) - declared so the mint and this list stay one.
+ *
  * @typedef {object} BillboardBatch
  * @property {WebGLVertexArrayObject|null} vao        the quad geometry (nulled by destroyBillboardBatch)
  * @property {number} indexCount                      6 per flat
@@ -43,7 +53,28 @@
  * @property {Float32Array} [bounds]                  EL5: the sphere [cx, cy, cz, r] about the origin the shadow and air replays cull by
  * @property {number} [_quads]                        BLOOD1b: how many quads the buffer holds, so `moveBillboardBatch` cannot write past it
  * @property {boolean} [_dyn]                         BLOOD1b: born DYNAMIC_DRAW, because its centres move every frame
+ * @property {object|null} [_place]                  PERF-EXT1: a static batch's placements on a grid (bounds.js placementGrid) - the shadow pass asks its QUADS; null for one flat, one built dynamic, one moved; and its quads' half-diagonal, once a size (placedHalfDiagonal, the review)
  * @property {Float32Array} [_moveScratch]            BLOOD1b: the move's own vertex staging, kept rather than re-minted each frame
+ * @property {number[]} [_box]                        EV3: the host's cull box [minX, minY, minZ, maxX, maxY, maxZ] (flatBatchAabb)
+ * @property {boolean} [noShadow]                     F2: a thing lying on the ground casts nothing (a loot pile)
+ * @property {boolean} [selfCard]                     DISC24-C: the player's own body card - it casts as drawn
+ * @property {boolean} [_dead]                        EL2: freed - a shadow record from the last frame may still hold it
+ * @property {string} [_bbKey]                        FA1/MAC4: the texture key, re-minted when a field it is made of moves (billboardKey.js)
+ * @property {number|string} [_bbKeyRecord]           ...the record it was minted from
+ * @property {number|null} [_bbKeyFrame]              ...the frame
+ * @property {number} [_bbKeyArchive]                 ...the archive
+ * @property {number} [_shGen]                        SC1: the floating origin's generation the pass last saw it in
+ * @property {boolean} [_shSeen]                      SC1: recorded at least once
+ * @property {number} [_shOx]                         SC1: the origin it was last recorded at, x (NaN until then - a double from birth, read only once `_shSeen`)
+ * @property {number} [_shOy]                         ...y
+ * @property {number} [_shOz]                         ...z
+ * @property {number} [_shFrame]                      AUDIT SC1: the frame it was last recorded on (-1 for a still flat)
+ * @property {number|string} [_shRec]                 AUDIT REACH: the record it was last recorded on
+ * @property {boolean} [_shFlip]                      AUDIT REACH: the flip it was last recorded with (the sign of size.w)
+ * @property {boolean} [_shDyn]                       SC1: a mover this frame - the dynamic replay's, not the cache's
+ * @property {boolean} [_shSway]                      SHADOW-REACH: moving by the wind alone (the slow cadence)
+ * @property {number} [_shMovedAt]                    SC1: the pass's frame number it last moved on
+ * @property {number} [_shId]                         SC1: its identity in the static signature, minted on first sight
  */
 
 /**

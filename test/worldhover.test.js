@@ -151,8 +151,9 @@ test('WORLD-HOVER: only the loot keys itemise - everything else is a name', () =
   // These are PREFIXES of the keys the hosts' own *Targets() producers
   // mint, never strings written out here. `foeCorpse:`/`guardCorpse:`
   // are the two above-ground bodies, which PX21c could not reach.
-  assert.deepEqual([...ITEMISED_KEYS], ['loot:', 'corpse:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:']);
-  for (const k of ['loot:0', 'corpse:3', 'droppedLoot:9', 'foeCorpse:abc', 'guardCorpse:x']) {
+  // DW-E3: `dwFish:` is Iliac Puddle No More's fish, a DaggerfallLoot of one item.
+  assert.deepEqual([...ITEMISED_KEYS], ['loot:', 'corpse:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:', 'dwFish:']);
+  for (const k of ['loot:0', 'corpse:3', 'droppedLoot:9', 'foeCorpse:abc', 'guardCorpse:x', 'dwFish:12']) {
     assert.equal(keyItemises(k), true, k);
   }
   for (const k of ['door:2', 'person:1', 'act:1:2', 'exit:0', 'container:4', 'eotbWagon', '17', null, undefined]) {
@@ -875,7 +876,7 @@ test('AUDIT-WH H5: the location\'s name is read in the PORT\'s spelling, from ON
   assert.equal((wm.match(/currentLocationName\(\)/g) ?? []).length, 3,
     'the three above-ground arms that take it - the building exit, the city wall and (AUDIT-WH M7) the dungeon entrance');
   assert.match(wm, /staticDoorName\('buildingExit', \{ locationName: currentLocationName\(\) \}\)/, 'the building exit, from inside');
-  assert.match(wm, /staticDoorName\('dungeonEntrance', \{ locationName: currentLocationName\(\) \}\)/, 'the dungeon entrance, from outside');
+  assert.match(wm, /staticDoorName\('dungeonEntrance', \{ locationName: currentLocationName\(\), elite: !!entry\.dfLocation\?\.elite \}\)/, 'the dungeon entrance, from outside');
   assert.match(wm, /locationName: currentLocationName\(\),\n\s+buildingType: bd\.buildingType,/, 'and the shopfront the city wall arm reads');
   // ...and the DUNGEON exit names the dungeon it is in, not the
   // location under the player, so it reads its own record - in the
@@ -1597,7 +1598,7 @@ test('AUDIT-WH2 L1-F1/F2: the door\'s word is dropped when the ray leaves it, an
   assert.equal((head.match(/return _doorText;/g) ?? []).length, 4,
     'the cache hit and all three misses hand back the same door\'s last word rather than caching a null');
   assert.doesNotMatch(head, /return null;/, 'and none of them caches the negative');
-  assert.match(arm, /_doorText = staticDoorName\('building', \{[\s\S]{0,400}?\}\);\n\s+_doorTextKey = key; _doorTextGen = gen;\n\s+return _doorText;/,
+  assert.match(arm, /_doorText = staticDoorName\('building', \{[\s\S]{0,400}?\}\);\n[\s\S]{0,400}?\n\s+_doorTextKey = key; _doorTextGen = gen; _doorTextHomes = homesV;\n\s+return _doorText;/,   // HOME1 re-aim: a home's line joins the text before the stamp, and the stamp takes the homes' version
     'the stamp is the LAST thing the success path does');
 });
 
@@ -1881,7 +1882,7 @@ test('AUDIT-WH M5/M6/M7/M10: every family the press acts on has a word, and the 
   // so `staticDoorName('dungeonEntrance')` was written, pinned, and had
   // no caller in the tree: "To Privateer's Hold" never drew once.
   assert.match(read('src/scenes/worldModes.js'),
-    /if \(entry\?\.door\?\.doorType === DOOR_TYPE\.DUNGEON_ENTRANCE\) \{\n\s+return staticDoorName\('dungeonEntrance', \{ locationName: currentLocationName\(\) \}\);/);
+    /if \(entry\?\.door\?\.doorType === DOOR_TYPE\.DUNGEON_ENTRANCE\) \{\n\s+return staticDoorName\('dungeonEntrance', \{ locationName: currentLocationName\(\), elite: !!entry\.dfLocation\?\.elite \}\);/);
 
   // AUDIT-WH2 L5-F13/F14: ...AND THE PREDICATE BEHIND `inTown`, which
   // nothing drove. `staticDoorName('dungeonExit', ...)` is exercised with
@@ -1962,7 +1963,7 @@ test('AUDIT-WH P1/P2/P5: one answer a frame, and the mod\'s own cache on the one
   // a ray and box-tests a location's buildings rather than reading a
   // table - and keyed on the two things that say "the same door, in
   // the same world".
-  assert.match(wm, /if \(_doorTextKey === key && _doorTextGen === gen\) return _doorText;/);
+  assert.match(wm, /if \(_doorTextKey === key && _doorTextGen === gen && _doorTextHomes === homesV\) return _doorText;/);   // HOME1 re-aim: a town's answer or a sale is a new word for the door
   assert.match(wm, /const gen = doorGeneration\?\.\(\) \?\? 0;/,
     'a moved origin or a streamed pixel misses the cache');
   // ...and every one of them dies with the mode.

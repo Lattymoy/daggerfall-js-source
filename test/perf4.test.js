@@ -65,7 +65,8 @@ test('PERF4 pins: the world host merges each placed model as it arrives (gates s
   const w = read('src/scenes/world.js');
   assert.match(w, /const staticBuilder = new StaticBatchBuilder\(\);\n\s+const resolveTexKey = keyResolver\(texRemap\);/, 'one builder per pixel build, resolving through the pixel\'s remap');
   assert.match(w, /models\.push\(entry\);\n\s+if \(!isCityGate\(placed\.modelIdNum\) && cpu\.normals && cpu\.uvs\) \{ staticBuilder\.add\(cpu, local, resolveTexKey\); entry\._batched = true; \}/, 'added right after the entry, after the remap was awaited; gates excluded');
-  assert.match(w, /const staticMerged = staticBuilder\.finish\(\);[^\n]*\n\s+const staticBatch = staticMerged \? renderer\.createMesh\(staticMerged\) : null;/, 'uploaded once at the end');
+  // PERF-EXT23: merged a breath at a time, the spheres handed to the upload (test/publishtail.test.js)
+  assert.match(w, /const staticMerged = await staticBuilder\.finishSliced\(\(\) => breather\.breathe\(\)\);[^\n]*\n\s+const staticBatch = staticMerged \? renderer\.createMesh\(staticMerged, \{ bounds: staticMerged\.bounds \}\) : null;/, 'uploaded once at the end');
   assert.match(w, /built\.set\(key, \{\n\s+staticBatch,/, 'kept on the pixel');
   assert.match(w, /if \(p\.staticBatch\) renderer\.drawMesh\(p\.staticBatch, pixelMatrix, null\);[^\n]*\n\s+for \(const m of p\.models\) \{\n\s+if \(m\._batched\) continue;/, 'drawn once, then the individual models minus the batched');
   assert.match(w, /if \(p\.staticBatch\) \{ renderer\.destroyMesh\(p\.staticBatch\); p\.staticBatch = null; \}/, 'freed in destroyPixel');

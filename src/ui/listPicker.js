@@ -33,7 +33,7 @@ import { loadImg, nativeMetrics, drawImg, shadowText, DEFAULT_TEXT_COLOR } from 
 import { drawMenuBackdrop, DOUBLE_CLICK_DELAY_MS } from './chargenArt.js';
 import { VerticalScrollBar, drawScrollThumb } from './verticalScrollBar.js';
 import { FntFile } from '../formats/fntFile.js';   // AUDIT 58: FONT0002, DaggerfallUI.SmallFont
-import { makeFont } from './text.js';
+import { makeFont } from './text.js';  import { isEnhancedPlus } from '../systems/uiSkin.js';  import { drawEnhancedPicker } from './enhancedPicker.js';   // PORT3: the list, in the enhanced skin
 
 /** pickerPanel.Size = the texture's size (:73), Center/Middle (:74-75). */
 export const PICKER_W = 200, PICKER_H = 128;
@@ -329,7 +329,7 @@ export class ListPickerWindow {
       // argument is only a pre-first-frame seed now, and is ignored
       // unless it really is a font: the three routers that mount a bare
       // picker pass a right-button BOOLEAN in that slot
-      // (townTalk.js:1241, worldModes.js:8928, dungeonContext.js:6802 - all three re-resolved BY CONTENT and pinned in test/citedrift.test.js by the ROAD-H tail review: they were stale together and a mechanical +1 had kept the dungeon's that way),
+      // (townTalk.js:1241, worldModes.js:9391, dungeonContext.js:6899 - all three re-resolved BY CONTENT and pinned in test/citedrift.test.js by the ROAD-H tail review: they were stale together and a mechanical +1 had kept the dungeon's that way),
       // and `false ?? this._font` kept the `false`, dropping the click
       // grid to 6+1=7 against a drawn and hovered grid of 7+1=8 for
       // FONT0003 - so from the 6th visible row on, the row you
@@ -374,7 +374,8 @@ export class ListPickerWindow {
     return true;
   }
 
-  draw(renderer, canvas, font) {
+  draw(renderer, canvas, font) {   // PORT3: under the enhanced skin the list is its own DOM window (the font latched first - the replayed click measures rows by it)
+    if (typeof document !== 'undefined' && isEnhancedPlus() && ((this._font = this.pickerFont ?? font), this._clampScroll(), drawEnhancedPicker(this, renderer, canvas, { x: PICKER_X, y: PICKER_Y, list: PICKER_RECTS.list }))) return;
     // No art, no window. A picker that cannot be cancelled still has to
     // go away here or it would hold the host for ever showing nothing -
     // so this bypasses AllowCancel deliberately, and says so.

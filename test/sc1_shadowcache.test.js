@@ -79,7 +79,7 @@ test('SC1: a still room costs zero point draws after its first replay - the cach
   frame(draw);   // records
   const first = frame(draw);   // the first replay
   assert.equal(first.staticFaces, 6, 'the cache drawn');
-  assert.equal(first.pointDraws, 6 * 3, 'six faces of two sub-meshes and the tile');
+  assert.equal(first.pointDraws, 6 * 2, 'six faces of the room and the tile - the room\'s two sub-meshes meet, one run (PERF-EXT2)');
   assert.equal(first.dynFaces, 0); assert.equal(first.blit, 6, 'and blitted into the live layers once');
   for (let f = 0; f < 5; f++) {
     const st = frame(draw);
@@ -104,7 +104,7 @@ test('SC1: a mesh that MOVES is a dynamic - drawn alone over the blitted cache e
   st = frame(walking);
   assert.equal(st.staticFaces, 6, 'the crate LEFT the static set: the cache is drawn again without it');
   assert.equal(st.dynFaces, 6, 'and the crate alone on top');
-  assert.ok(st.pointDraws > 6 * 3 && st.pointDraws <= 6 * 4, `the room's two and the tile into the cache (every face - they wrap the light); the crate into the live layers, in the faces that see it (${st.pointDraws})`);
+  assert.ok(st.pointDraws > 6 * 2 && st.pointDraws <= 6 * 3, `the room's two (one run, PERF-EXT2) and the tile into the cache (every face - they wrap the light); the crate into the live layers, in the faces that see it (${st.pointDraws})`);
   x = 2;
   frame(walking);
   st = frame(walking);
@@ -133,7 +133,7 @@ test('SC1: the static signature - a new still caster IN REACH redraws the cache,
   frame(withNear);
   st = frame(withNear);
   assert.equal(st.staticFaces, 6, 'a crate three units off is in reach: the cache is drawn again');
-  assert.ok(st.pointDraws > 6 * 3 && st.pointDraws <= 6 * 4, `with the crate in it (${st.pointDraws})`);
+  assert.ok(st.pointDraws > 6 * 2 && st.pointDraws <= 6 * 3, `with the crate in it - the room one run (PERF-EXT2), the tile, the crate where a face sees it (${st.pointDraws})`);
   // the same draws in another order: the same signature, no redraw
   const reordered = () => { r.drawMesh(near, I, null); r.drawTerrain(tile, I, {}, {}, 6.4); r.drawMesh(room, I, null); };
   frame(reordered);
@@ -194,14 +194,14 @@ test('SC1: a flat whose origin moves is a dynamic (per batch, on the batch), a s
   st = frame(draw);
   assert.equal(st.staticFaces, 6, 'the walker left the static set: the cache redrawn without it');
   assert.equal(st.dynFaces, 6);
-  assert.ok(st.pointDraws > 6 * 3 && st.pointDraws <= 6 * 5, `the room's two, the tile and the tree into the cache; the walker alone on top, in the faces that see them (${st.pointDraws})`);
+  assert.ok(st.pointDraws > 6 * 2 && st.pointDraws <= 6 * 4, `the room's two (one run, PERF-EXT2), the tile and the tree into the cache; the walker alone on top, in the faces that see them (${st.pointDraws})`);
   // the door
   r.setShadowCache(false);
   assert.equal(sp.cacheOn, false);
   frame(draw);
   st = frame(draw);
   assert.equal(st.staticFaces, 0); assert.equal(st.dynFaces, 0); assert.equal(st.blit, 0, 'no cache, no blit');
-  assert.equal(st.facesDrawn, 6); assert.ok(st.pointDraws > 6 * 3 && st.pointDraws <= 6 * 5, `the old path: everything in range, six faces (${st.pointDraws})`);
+  assert.equal(st.facesDrawn, 6); assert.ok(st.pointDraws > 6 * 2 && st.pointDraws <= 6 * 4, `the old path: everything in range, six faces - the room one run (PERF-EXT2) (${st.pointDraws})`);
   st = frame(draw);
   assert.equal(st.facesDrawn, 6, 'and again every frame (the nearest slot)');
   r.setShadowCache(true);
@@ -225,7 +225,7 @@ test('SC1: a rig is always dynamic, and a dead mesh is neither in the signature 
   r.destroyMesh(crate);
   st = frame(withCrate);   // the signature reads the mesh as it IS (dead now, though recorded alive): the cache is drawn again on this frame
   assert.equal(st.staticFaces, 6, 'the crate died: the static set changed, the cache is drawn again');
-  assert.ok(st.pointDraws >= 6 * 3 + 1 && st.pointDraws <= 6 * 3 + 6, `without it - the room, the tile, and the rig on top (${st.pointDraws})`);
+  assert.ok(st.pointDraws >= 6 * 2 + 1 && st.pointDraws <= 6 * 2 + 6, `without it - the room (one run, PERF-EXT2), the tile, and the rig on top (${st.pointDraws})`);
 });
 
 test('SC1: THE HOLD - a caster that moved stays dynamic for SHADOW_DYNAMIC_HOLD recorded frames after it stops (drawn alone on top, the cache untouched), and joins the cache once when the hold runs out (mutants: no hold, so a walker who pauses redraws every cache in reach on each step; the hold never ending)', () => {

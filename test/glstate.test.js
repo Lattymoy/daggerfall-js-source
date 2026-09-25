@@ -142,7 +142,8 @@ test('EV6: the skies neither query CURRENT_PROGRAM nor restore - the hosts mark 
     // WB2: and the Oblivion Gate's fire and beacon, one more in the world host (online again)
     // WB4a: and the Burning Court boss's telegraph, one more in the world host (drawn in the dungeon arm)
     // WB6a: and the Deadlands' sea and sky round the court, one more in the world host (the dungeon arm again)
-    const want = host === 'src/scenes/world.js' ? 10 : 5;
+    // DW-C: and Iliac Puddle No More's surfaces, one more in the world host (the carved sea is the streamed world's)
+    const want = host === 'src/scenes/world.js' ? 11 : 5;
     assert.equal((s.match(/renderer\.markForeignPass\(\);/g) || []).length, want,
       `${host} marks its foreign seams (the sky, the rain, the sand, the wisps, the bolts${want === 6 ? ', and the grass' : ''})`);
   }
@@ -307,7 +308,7 @@ test('AUDIT 47: no shader in the tree uses a uniform it did not declare in its o
   // expands it. An injected declaration - a string replace after the
   // template - does not count, because it hides from this reader as it
   // hid from the last one (AUDIT 47 F1).
-  const files = ['src/render/renderer.js', 'src/render/waterSurface.js', 'src/render/precipitation.js', 'src/render/enhancedSky.js', 'src/render/cloudNoise.js', 'src/render/volumetricClouds.js', 'src/render/enhancedLighting.js', 'src/render/farRing.js', 'src/render/shadowPass.js', 'src/render/airPass.js'];   // VC2/VC3: the noise generators, the slice viewer, the march and the composite; EL1: the lighting lane's five, and the far ring; EL2: the depth programs
+  const files = ['src/render/renderer.js', 'src/render/waterSurface.js', 'src/render/precipitation.js', 'src/render/enhancedSky.js', 'src/render/cloudNoise.js', 'src/render/volumetricClouds.js', 'src/render/enhancedLighting.js', 'src/render/farRing.js', 'src/render/shadowPass.js', 'src/render/airPass.js', 'src/render/deepWatersRender.js'];   // VC2/VC3: the noise generators, the slice viewer, the march and the composite; EL1: the lighting lane's five, and the far ring; EL2: the depth programs; DW-C: Iliac Puddle No More's floor, surfaces and sky fog
   const shadowGlsl = (readFileSync('src/render/shadowPass.js', 'utf8').match(/export const SHADOW_GLSL = `([\s\S]*?)`;/) || [, ''])[1];   // EL2: the receiver block another file composes in
   const cloudShadowGlsl = (readFileSync('src/render/cloudShadow.js', 'utf8').match(/export const CLOUD_SHADOW_GLSL = `([\s\S]*?)`;/) || [, ''])[1];   // VC6c: and the cloud shadow's, once TWO passes needed it
   const aoGlsl = (readFileSync('src/render/airPass.js', 'utf8').match(/export const AIR_AO_GLSL = `([\s\S]*?)`;/) || [, ''])[1];   // EL3: and the AO's

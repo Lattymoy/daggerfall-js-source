@@ -32,7 +32,8 @@
 // pass draws water the player swims). The coverage inside a tile is
 // the bilinear blend of its corners - the diagonal the shore tile's own
 // art follows - feathered by SHORE_SOFTNESS.
-import { WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // MAC2: the corner table is a leaf the player's feet share; WATER-DRAW1: the DRAW's half of it - the feet's is the law's own table, and the two are not the same question
+import { WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';
+import { PUDDLE_RECORDS } from '../world/puddleMask.js';   // WATER-PUDDLE: the records whose water is their art's   // MAC2: the corner table is a leaf the player's feet share; WATER-DRAW1: the DRAW's half of it - the feet's is the law's own table, and the two are not the same question
 import { WIND_ROW_CALM, WIND_ROW_SPAN } from '../systems/wind.js';
 import { getPref } from '../systems/uiPrefs.js';   // FT6: the switch, read here alone
 import { isEnhanced } from '../systems/uiSkin.js';
@@ -249,6 +250,10 @@ uint waterCorners(uint data) {
   uint word = j == 0u ? v.x : (j == 1u ? v.y : (j == 2u ? v.z : v.w));
   return (word >> ((data & 7u) * 4u)) & 15u;
 }
+// WATER-PUDDLE: a tile's turn as TERRAIN_FS applies it (render/renderer.js - DFU's row-major initializers transposed)
+const mat2 PUDDLE_ROT[4] = mat2[4](mat2(1.0, 0.0, 0.0, 1.0), mat2(0.0, -1.0, 1.0, 0.0), mat2(-1.0, 0.0, 0.0, -1.0), mat2(0.0, 1.0, -1.0, 0.0));
+const vec2 PUDDLE_TRANS[4] = vec2[4](vec2(0.0, 0.0), vec2(0.0, 1.0), vec2(1.0, 1.0), vec2(1.0, 0.0));
+bool isPuddleRecord(uint r) { return ${PUDDLE_RECORDS.map((r) => `r == ${r}u`).join(' || ')}; }
 float coverage(uint m, vec2 f) {
   float c00 = float(m & 1u), c10 = float((m >> 1u) & 1u);
   float c01 = float((m >> 2u) & 1u), c11 = float((m >> 3u) & 1u);
@@ -294,6 +299,15 @@ void main() {
   if (corners == 0u) discard;
   vec2 f = fract(unwrapped);
   float edge = smoothstep(0.5 - uShoreSoft, 0.5 + uShoreSoft, coverage(corners, f));
+  // WATER-PUDDLE: a puddle record (a dock, a moat, a puddle - drawn whole by its corners) keeps only the texels its own
+  // art paints water (world/puddleMask.js wrote them into its layer's alpha), read through the tile's turn at the
+  // record's own texel - the art's outline up close, its mip in the distance, never a square
+  uint rec = data >> 2u;
+  if (isPuddleRecord(rec)) {
+    int turn = int(data & 3u);
+    vec2 puv = PUDDLE_ROT[turn] * f + PUDDLE_TRANS[turn];
+    edge *= smoothstep(0.3, 0.7, textureGrad(uTileArr, vec3(puv, float(rec)), PUDDLE_ROT[turn] * wgx, PUDDLE_ROT[turn] * wgy).a);
+  }
   if (edge <= 0.002) discard;
   vec3 toEye = uCamPos - vWorldPos;
   float dist = length(toEye);
@@ -341,5 +355,5 @@ void main() {
   float mspec = pow(max(dot(n, Hm), 0.0), 220.0) * uMoonScale;
   col += uSunColor * (1.6 * spec) + uMoonColor * (0.7 * mspec);
   float alpha = (uOpacity + (1.0 - uOpacity) * F) * edge;
-  outColor = vec4(mix(uFogColor, col, fogFactorAt(vWorldPos)), alpha);
+  outColor = vec4(dwWaterFog(mix(uFogColor, col, fogFactorAt(vWorldPos)), vWorldPos), alpha);   // DW-C: the sea's distance fog
 }`;

@@ -150,8 +150,8 @@
  {
   "name": "PERF-ZONE2-bodies-mark-after-its-subject",
   "file": "src/scenes/world.js",
-  "old": "    meterFor(renderer.gl)?.markCpu('bodies');   // PERF-ZONE2: the Morrowind bodies - the player's, every peer's - the wagon and the camps, which the renderer's own 'world' mark used to swallow\n    // MW-D24: the player's own body, in third person only.\n    renderer.setCloudShadow(sky?.cloudShadow ?? null);",
-  "new": "    // MW-D24: the player's own body, in third person only.\n    renderer.setCloudShadow(sky?.cloudShadow ?? null);\n    meterFor(renderer.gl)?.markCpu('bodies');",
+  "old": "    meterFor(renderer.gl)?.markCpu('bodies');   // PERF-ZONE2: the Morrowind bodies - the player's, every peer's - the wagon and the camps, which the renderer's own 'world' mark used to swallow\n    if (deepWaters) { _dwNowMs = now; beginDeepWatersFrame(minute); }   // DW-C: the look and the distance fog - a frame's, so after the clear of both\n    // MW-D24: the player's own body, in third person only.\n    renderer.setCloudShadow(sky?.cloudShadow ?? null);",
+  "new": "    if (deepWaters) { _dwNowMs = now; beginDeepWatersFrame(minute); }   // DW-C: the look and the distance fog - a frame's, so after the clear of both\n    // MW-D24: the player's own body, in third person only.\n    renderer.setCloudShadow(sky?.cloudShadow ?? null);\n    meterFor(renderer.gl)?.markCpu('bodies');",
   "tests": [
    "test/perfrig1.test.js"
   ]

@@ -181,13 +181,13 @@ test('PERF2 pins: the sky passes, the clouds\' composite and the ring sit AT the
   assert.match(ring, /gl\.enable\(gl\.DEPTH_TEST\); gl\.depthFunc\(gl\.LEQUAL\);[^\n]*\n\s+gl\.depthMask\(false\);/);
   // the hosts: terrain, then the sky block, then the water
   const w = read('src/scenes/world.js');
-  const terrainAt = w.indexOf('renderer.drawTerrain(p.terrain, pixelMatrix,');
+  const terrainAt = w.indexOf('renderer.drawTerrain(p.dwTerrain ?? p.terrain, pixelMatrix,');   // DW-C: a pixel's clipped ground (Iliac Puddle No More's cap) draws in its place
   const skyAt = w.indexOf('sky.draw(cam.yaw, cam.pitch, fieldOfView(), worldAspect');
   const ringAt = w.indexOf('farRing.draw(view, {');
   const waterAt = w.indexOf('if (waterOn) {');
   const billAt = w.indexOf('renderer.drawBillboards(allBatches, camRight, UP_Y);');
   assert.ok(terrainAt > 0 && terrainAt < skyAt && skyAt < ringAt && ringAt < waterAt && waterAt < billAt, `world: terrain ${terrainAt} < sky ${skyAt} < ring ${ringAt} < water ${waterAt} < flats ${billAt}`);
-  assert.equal((w.match(/renderer\.markForeignPass\(\);/g) || []).length, 10, 'moved, not added (DUEL1 added the ring wall\'s seam, WB2 the gate\'s fire, WB4a the court\'s telegraph, WB6a the Deadlands\' sea and sky, counted in glstate too): glstate counts the seams (WIND3 added the wisps\' seam, WEATHER2d the sand\'s, BOLT the bolts\', counted there too)');
+  assert.equal((w.match(/renderer\.markForeignPass\(\);/g) || []).length, 11, 'moved, not added (DUEL1 added the ring wall\'s seam, WB2 the gate\'s fire, WB4a the court\'s telegraph, WB6a the Deadlands\' sea and sky, counted in glstate too): glstate counts the seams (WIND3 added the wisps\' seam, WEATHER2d the sand\'s, BOLT the bolts\', DW-C the sea surfaces\', counted there too)');
   const e = read('src/scenes/exterior.js');
   const eTerrain = e.indexOf('renderer.drawTerrain(groundSurface, identityMatrix,');
   const eSky = e.indexOf('sky.draw(Math.atan2(dx, dz), Math.atan2(dy, horiz)');

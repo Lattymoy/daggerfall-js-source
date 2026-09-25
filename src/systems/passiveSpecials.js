@@ -6,9 +6,9 @@
 // darkness magery have been mintable since chargen and read by
 // nothing, and the enchantment conditions' inSunlight/inHolyPlace ctx
 // arms, which had stood open since E1 and are answered here: the two
-// readers below are wired into the enchant ctx at world.js:4001-4002
-// off the host seam that worldModes.js:1083 and dungeonContext.js:2591
-// register (bible/01-Overview/Port-Ledger.md:719 strikes the pair
+// readers below are wired into the enchant ctx at world.js:4625-4626
+// off the host seam that worldModes.js:1142 and dungeonContext.js:2633
+// register (bible/01-Overview/Port-Ledger.md:729 strikes the pair
 // through as closed, V2c 2026-08-27).
 //
 // THE TWO FLAGS ARE SMALL LAWS, verbatim:
@@ -37,6 +37,7 @@
 
 import { isDayFromMinutes } from './gameDate.js';
 import { SPECIAL_ABILITY_BITS, REGENERATION_FLAGS } from './specialAdvantages.js';
+import { renownMpOf } from './renownLayer.js';   // AUDIT RENOWN1 GAME-5: the magery's third is of Daggerfall's own maximum, never the online layer
 
 // PassiveSpecialsEffect.cs:35-40, verbatim.
 export const SUN_DAMAGE_AMOUNT = 12;
@@ -138,7 +139,12 @@ export function passiveSpecialsMagicRound(entity, { nowMinutes = 0, clockMinutes
   let magery = 0;
   const _mod = entity.maxMagickaModifier ?? 0;
   entity.maxMagickaModifier = 0;
-  const raw = entity.maxMagicka ?? 0;
+  // AUDIT RENOWN1 GAME-5: and WITHOUT the online layer (renownLayer.js, 0 offline). The accessor adds Renown's magicka
+  // on top, so the reduced-magery third was taken of Daggerfall's maximum AND the layer - the layer added only two
+  // thirds of itself online, and a save (offlineVitals, which takes off the whole layer) came back at about 6% of the
+  // magicka it had. Taken off here by subtraction, and safely: with the modifier zeroed the accessor's floor cannot
+  // bite (the spell points are never below 0), so what it answers is exactly the raw value plus the layer.
+  const raw = Math.max(0, (entity.maxMagicka ?? 0) - renownMpOf(entity));
   entity.maxMagickaModifier = _mod;
   const dark = !isDay || (_host?.isInside?.() ?? false);
   if (dark) {

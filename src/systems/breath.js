@@ -33,6 +33,22 @@ export function deepBreath(memberships, duration) {
   return d;
 }
 
+// DW-D (2026-09-25): IsWaterBreathing is DaggerfallEntity's flag -
+// cleared every frame (ClearConstantEffects) and set again by whatever
+// keeps it: the Water Breathing effect, and Iliac Puddle No More's
+// ApplyArgonianInfiniteBreath, which sets it for an Argonian player
+// every LateUpdate wherever the player is (a dungeon's water too). The
+// mod's half is a rule its host installs, since the setting is the mod's.
+let _waterBreathingRule = null;
+/** Installs (null clears) the extra IsWaterBreathing rule; returns the one it replaced. */
+export function setWaterBreathingRule(fn) {
+  const prev = _waterBreathingRule;
+  _waterBreathingRule = typeof fn === 'function' ? fn : null;
+  return prev;
+}
+/** DaggerfallEntity.IsWaterBreathing: the effect, or the installed rule. */
+export const isWaterBreathing = (entity) => hasActiveEffect(entity, 'waterBreathing') || !!_waterBreathingRule?.(entity);
+
 /** PlayerEntity.FixedUpdate's breath clause (PlayerEntity.cs:322-343),
  *  ONE classic update's worth. While submerged without WaterBreathing:
  *  a dive from empty fills currentBreath through the guild fold
@@ -45,7 +61,7 @@ export function deepBreath(memberships, duration) {
  *  state = { tally } is breathUpdateTally; roll is Range(0, 2),
  *  max-exclusive, injectable for the pins. */
 export function breathStep(entity, submerged, state, roll = () => Math.floor(Math.random() * 2)) {
-  if (submerged && !hasActiveEffect(entity, 'waterBreathing')) {
+  if (submerged && !isWaterBreathing(entity)) {
     if (!entity.currentBreath) {
       entity.currentBreath = deepBreath(activeMemberships(entity), maxBreath(entity));   // V2e: the ACTIVE book (a vampire re-earns rank perks)
     }

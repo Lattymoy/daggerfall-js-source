@@ -1,0 +1,1675 @@
+{
+ "format": "dfe-worlddata-patch/1",
+ "rebuilds": "W0000023.RDB.json",
+ "base": {
+  "kind": "block",
+  "block": "W0000023.RDB",
+  "index": 1039
+ },
+ "sha256": "0cd9f30eec3db9e76bfcac8340022d6c4a4063cf1a5d280813aeece50887389d",
+ "ops": [
+  [
+   "r",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    15
+   ]
+  ],
+  [
+   "r",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    14
+   ]
+  ],
+  [
+   "r",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    13
+   ]
+  ],
+  [
+   "r",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    12
+   ]
+  ],
+  [
+   "r",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    11
+   ]
+  ],
+  [
+   "r",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    10
+   ]
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    4,
+    "RdbObjects",
+    57
+   ],
+   {
+    "Position": 32232,
+    "Index": 57,
+    "XPos": 742,
+    "YPos": -21,
+    "ZPos": 1381,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 105,
+      "TextureRecord": 1,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    4,
+    "RdbObjects",
+    58
+   ],
+   {
+    "Position": 28021,
+    "Index": 58,
+    "XPos": 680,
+    "YPos": -9,
+    "ZPos": 1333,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 105,
+      "TextureRecord": 9,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    4,
+    "RdbObjects",
+    59
+   ],
+   {
+    "Position": 38464,
+    "Index": 59,
+    "XPos": 485,
+    "YPos": -20,
+    "ZPos": 1209,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 105,
+      "TextureRecord": 7,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    4,
+    "RdbObjects",
+    60
+   ],
+   {
+    "Position": 71154,
+    "Index": 60,
+    "XPos": 642,
+    "YPos": -33,
+    "ZPos": 1153,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 2,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    4,
+    "RdbObjects",
+    61
+   ],
+   {
+    "Position": 31588,
+    "Index": 61,
+    "XPos": 646,
+    "YPos": -33,
+    "ZPos": 1173,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 2,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    4,
+    "RdbObjects",
+    62
+   ],
+   {
+    "Position": 91038,
+    "Index": 62,
+    "XPos": 621,
+    "YPos": -32,
+    "ZPos": 1161,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 3,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    4,
+    "RdbObjects",
+    63
+   ],
+   {
+    "Position": 53662,
+    "Index": 63,
+    "XPos": 613,
+    "YPos": -31,
+    "ZPos": 1115,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 3,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    4,
+    "RdbObjects",
+    64
+   ],
+   {
+    "Position": 48699,
+    "Index": 64,
+    "XPos": 605,
+    "YPos": -32,
+    "ZPos": 1134,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 3,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    4,
+    "RdbObjects",
+    65
+   ],
+   {
+    "Position": 19073,
+    "Index": 65,
+    "XPos": 628,
+    "YPos": -31,
+    "ZPos": 1132,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 3,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    4,
+    "RdbObjects",
+    66
+   ],
+   {
+    "Position": 93268,
+    "Index": 66,
+    "XPos": 440,
+    "YPos": -37,
+    "ZPos": 1104,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 105,
+      "TextureRecord": 2,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    4,
+    "RdbObjects",
+    67
+   ],
+   {
+    "Position": 41413,
+    "Index": 67,
+    "XPos": 947,
+    "YPos": -31,
+    "ZPos": 1260,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 4,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    4,
+    "RdbObjects",
+    68
+   ],
+   {
+    "Position": 38880,
+    "Index": 68,
+    "XPos": 929,
+    "YPos": -31,
+    "ZPos": 1280,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 4,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    4,
+    "RdbObjects",
+    69
+   ],
+   {
+    "Position": 49642,
+    "Index": 69,
+    "XPos": 963,
+    "YPos": -31,
+    "ZPos": 1288,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 4,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    4,
+    "RdbObjects",
+    44,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   0
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    4,
+    "RdbObjects",
+    45,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   0
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    4,
+    "RdbObjects",
+    34,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   -1536
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    63
+   ],
+   {
+    "Position": 85191,
+    "Index": 63,
+    "XPos": 1809,
+    "YPos": -134,
+    "ZPos": 1317,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 3,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    64
+   ],
+   {
+    "Position": 85228,
+    "Index": 64,
+    "XPos": 1813,
+    "YPos": -126,
+    "ZPos": 1337,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 3,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    65
+   ],
+   {
+    "Position": 36370,
+    "Index": 65,
+    "XPos": 1819,
+    "YPos": -119,
+    "ZPos": 1352,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 3,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    66
+   ],
+   {
+    "Position": 91486,
+    "Index": 66,
+    "XPos": 1834,
+    "YPos": -112,
+    "ZPos": 1362,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 3,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    67
+   ],
+   {
+    "Position": 48439,
+    "Index": 67,
+    "XPos": 1793,
+    "YPos": -139,
+    "ZPos": 1305,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 3,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    68
+   ],
+   {
+    "Position": 88642,
+    "Index": 68,
+    "XPos": 1833,
+    "YPos": -123,
+    "ZPos": 1336,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 2,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    69
+   ],
+   {
+    "Position": 20781,
+    "Index": 69,
+    "XPos": 1886,
+    "YPos": -16,
+    "ZPos": 1593,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 0,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    70
+   ],
+   {
+    "Position": 24423,
+    "Index": 70,
+    "XPos": 1840,
+    "YPos": -24,
+    "ZPos": 1857,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 1,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    71
+   ],
+   {
+    "Position": 30377,
+    "Index": 71,
+    "XPos": 1449,
+    "YPos": -30,
+    "ZPos": 1958,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 4,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    72
+   ],
+   {
+    "Position": 80917,
+    "Index": 72,
+    "XPos": 1465,
+    "YPos": -31,
+    "ZPos": 1934,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 4,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    73
+   ],
+   {
+    "Position": 17706,
+    "Index": 73,
+    "XPos": 1532,
+    "YPos": -30,
+    "ZPos": 1986,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 4,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    74
+   ],
+   {
+    "Position": 13607,
+    "Index": 74,
+    "XPos": 1534,
+    "YPos": -30,
+    "ZPos": 1968,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 4,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    75
+   ],
+   {
+    "Position": 72458,
+    "Index": 75,
+    "XPos": 1360,
+    "YPos": -18,
+    "ZPos": 1980,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 105,
+      "TextureRecord": 5,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    76
+   ],
+   {
+    "Position": 46274,
+    "Index": 76,
+    "XPos": 1489,
+    "YPos": -14,
+    "ZPos": 1865,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 105,
+      "TextureRecord": 10,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    77
+   ],
+   {
+    "Position": 26646,
+    "Index": 77,
+    "XPos": 1467,
+    "YPos": -20,
+    "ZPos": 1727,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 105,
+      "TextureRecord": 1,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    78
+   ],
+   {
+    "Position": 16519,
+    "Index": 78,
+    "XPos": 1144,
+    "YPos": -33,
+    "ZPos": 1315,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 5,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    79
+   ],
+   {
+    "Position": 87794,
+    "Index": 79,
+    "XPos": 1327,
+    "YPos": -32,
+    "ZPos": 1819,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 2,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    80
+   ],
+   {
+    "Position": 75340,
+    "Index": 80,
+    "XPos": 1321,
+    "YPos": -32,
+    "ZPos": 1838,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 2,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    81
+   ],
+   {
+    "Position": 19495,
+    "Index": 81,
+    "XPos": 1328,
+    "YPos": -32,
+    "ZPos": 1857,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 3,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    82
+   ],
+   {
+    "Position": 30998,
+    "Index": 82,
+    "XPos": 1343,
+    "YPos": -32,
+    "ZPos": 1836,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 3,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    83
+   ],
+   {
+    "Position": 79670,
+    "Index": 83,
+    "XPos": 1343,
+    "YPos": -30,
+    "ZPos": 1874,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 4,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    84
+   ],
+   {
+    "Position": 48660,
+    "Index": 84,
+    "XPos": 1323,
+    "YPos": -31,
+    "ZPos": 1891,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 4,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    85
+   ],
+   {
+    "Position": 61955,
+    "Index": 85,
+    "XPos": 1340,
+    "YPos": -39,
+    "ZPos": 1848,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 6,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    86
+   ],
+   {
+    "Position": 56038,
+    "Index": 86,
+    "XPos": 1479,
+    "YPos": -31,
+    "ZPos": 1790,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 106,
+      "TextureRecord": 4,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    87
+   ],
+   {
+    "Position": 32547,
+    "Index": 87,
+    "XPos": 1337,
+    "YPos": -39,
+    "ZPos": 1613,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 105,
+      "TextureRecord": 2,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "i",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    88
+   ],
+   {
+    "Position": 94892,
+    "Index": 88,
+    "XPos": 1356,
+    "YPos": -15,
+    "ZPos": 1417,
+    "Type": "Flat",
+    "Resources": {
+     "FlatResource": {
+      "Position": 0,
+      "TextureArchive": 105,
+      "TextureRecord": 6,
+      "Flags": 0,
+      "Magnitude": 0,
+      "SoundIndex": 0,
+      "FactionOrMobileId": 0,
+      "NextObjectOffset": 0,
+      "Action": 0
+     }
+    }
+   }
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    48,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   0
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    38,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   -512
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    5,
+    "RdbObjects",
+    3,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   -1410
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    0,
+    "RdbObjects",
+    1,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   0
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    0,
+    "RdbObjects",
+    28,
+    "Resources",
+    "FlatResource",
+    "SoundIndex"
+   ],
+   2
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    0,
+    "RdbObjects",
+    29,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   -1536
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    0,
+    "RdbObjects",
+    30,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   -1536
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    0,
+    "RdbObjects",
+    31,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   -512
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    0,
+    "RdbObjects",
+    44,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   -1536
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    0,
+    "RdbObjects",
+    47,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   -1024
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    1,
+    "RdbObjects",
+    14,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   -1956
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    1,
+    "RdbObjects",
+    15,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   -2002
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    1,
+    "RdbObjects",
+    17,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   -28
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    1,
+    "RdbObjects",
+    18,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   -2042
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    1,
+    "RdbObjects",
+    19,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   -1991
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    1,
+    "RdbObjects",
+    20,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   -39
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    1,
+    "RdbObjects",
+    23,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   -1820
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    1,
+    "RdbObjects",
+    24,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   -603
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    1,
+    "RdbObjects",
+    50,
+    "Resources",
+    "FlatResource",
+    "SoundIndex"
+   ],
+   2
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    1,
+    "RdbObjects",
+    53,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   0
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    1,
+    "RdbObjects",
+    64,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   -1536
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    1,
+    "RdbObjects",
+    65,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   0
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    1,
+    "RdbObjects",
+    70,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   -512
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    1,
+    "RdbObjects",
+    72,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   -1024
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    1,
+    "RdbObjects",
+    75,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   -1536
+  ],
+  [
+   "s",
+   [
+    "RdbBlock",
+    "ObjectRootList",
+    1,
+    "RdbObjects",
+    78,
+    "Resources",
+    "ModelResource",
+    "YRotation"
+   ],
+   -1536
+  ]
+ ]
+}

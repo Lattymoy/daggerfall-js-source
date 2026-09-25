@@ -26,7 +26,10 @@ floating origin (EV1) and shifts everything by 819 units when the
 player crosses a pixel boundary; the blades are baked in world
 coordinates and were not in the list of things shifted, so the whole
 sward jumped a pixel away until the next re-place 60m later. The
-shift now forces a re-place around the eye.
+shift now forces a re-place around the eye. (PERF-EXT21, 2026-09-25:
+the shift MOVES the field now - it has an origin of its own and follows
+this one in place, with no re-place at all;
+`07-Rendering/Performance-Exterior.md`.)
 
 **F3 - AN ARCHIVE COULD HAVE NO GRASS RECORDS.** The records were
 learned only inside the tile-array cache MISS, and that cache lives on

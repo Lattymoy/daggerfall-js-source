@@ -1,0 +1,95 @@
+{
+    "ModTitle": "Iliac Puddle No More",
+    "ModVersion": "1.2.2",
+    "ModAuthor": "jet082",
+    "ContactInfo": "",
+    "DFUnity_Version": "1.1.1",
+    "ModDescription": "The Iliac Puddle is now the Iliac Bay",
+    "GUID": "f1e8a1b3-8a4f-4f4e-bb6e-3d3a8a1b3f1e",
+    "Files": [
+        "Assets/Game/Mods/deep-waters/deep-waters.dfmod.json",
+        "Assets/Game/Mods/deep-waters/modsettings.json",
+        "Assets/Game/Mods/deep-waters/Scripts/DeepWaters.cs",
+        "Assets/Game/Mods/deep-waters/Scripts/DeepWaters.Bootstrap.cs",
+        "Assets/Game/Mods/deep-waters/Scripts/DeepWaterDiagnosticsRunner.cs",
+        "Assets/Game/Mods/deep-waters/Scripts/SwimmingSfxBridge.cs",
+        "Assets/Game/Mods/deep-waters/Scripts/DeepWaterWorld.cs",
+        "Assets/Game/Mods/deep-waters/Scripts/DeepBathymetry.cs",
+        "Assets/Game/Mods/deep-waters/Scripts/DeepWaterDistanceBake.cs",
+        "Assets/Game/Mods/deep-waters/Scripts/DeepWaterTileData.cs",
+        "Assets/Game/Mods/deep-waters/Scripts/DeepWaterFloorMesh.cs",
+        "Assets/Game/Mods/deep-waters/Scripts/DeepWaterFloorBuilder.cs",
+        "Assets/Game/Mods/deep-waters/Scripts/DeepWaterRuntime.cs",
+        "Assets/Game/Mods/deep-waters/Scripts/UnderwaterEncounterPulse.cs",
+        "Assets/Game/Mods/deep-waters/Scripts/UnderwaterDecorationCatalog.cs",
+        "Assets/Game/Mods/deep-waters/Scripts/UnderwaterDecorationBatchFactory.cs",
+        "Assets/Game/Mods/deep-waters/Scripts/OutdoorSwimDriver.cs",
+        "Assets/Game/Mods/deep-waters/Scripts/UnderwaterDistanceFog.cs",
+        "Assets/Game/Mods/deep-waters/Scripts/WaterSurfaceManager.cs",
+        "Assets/Game/Mods/deep-waters/Scripts/UnderwaterEnemySpawner.cs",
+        "Assets/Game/Mods/deep-waters/Scripts/UnderwaterPassiveFishSpawner.cs",
+        "Assets/Game/Mods/deep-waters/Scripts/PassiveFishSpeciesCatalog.cs",
+        "Assets/Game/Mods/deep-waters/Scripts/PassiveFishBehaviour.cs",
+        "Assets/Game/Mods/deep-waters/Scripts/UnderwaterDecorations.cs",
+        "Assets/Game/Mods/deep-waters/Scripts/UnderwaterLootSpawner.cs",
+        "Assets/Game/Mods/deep-waters/Assets/ItemTemplates.json",
+        "Assets/Game/Mods/deep-waters/Flats/longnose_butterflyfish.png",
+        "Assets/Game/Mods/deep-waters/Flats/largemouth_bass.png",
+        "Assets/Game/Mods/deep-waters/Flats/canary_rockfish.png",
+        "Assets/Game/Mods/deep-waters/Flats/crucian_carp.png",
+        "Assets/Game/Mods/deep-waters/Flats/mackerel.png",
+        "Assets/Game/Mods/deep-waters/Flats/white_zebra_angelfish.png",
+        "Assets/Game/Mods/deep-waters/Flats/finulon.png",
+        "Assets/Game/Mods/deep-waters/Shaders/DeepWaterTilemapClipWater.shader",
+        "Assets/Game/Mods/deep-waters/Shaders/DeepWaterTilemapTextureArrayClipWater.shader",
+        "Assets/Game/Mods/deep-waters/Shaders/TransparentWaterSurfaceTop.shader",
+        "Assets/Game/Mods/deep-waters/Shaders/TransparentWaterSurfaceUnderside.shader",
+        "Assets/Game/Mods/deep-waters/Shaders/UnderwaterBillboardBatchUnlit.shader",
+        "Assets/Game/Mods/deep-waters/Shaders/UnderwaterDistanceFog.shader",
+        "Assets/Game/Mods/deep-waters/Shaders/DeepWaterSeafloor.shader",
+        "Assets/Game/Mods/deep-waters/Resources/DistanceBake.bytes",
+        "Assets/Game/Mods/deep-waters/Resources/DistanceBakeVanilla.bytes"
+    ],
+    "Dependencies": [
+        {
+            "Name": "wilderness overhaul",
+            "IsOptional": true,
+            "IsPeer": false
+        },
+        {
+            "Name": "Wilderness Overhaul",
+            "IsOptional": true,
+            "IsPeer": false
+        },
+        {
+            "Name": "basicroads",
+            "IsOptional": true,
+            "IsPeer": false
+        },
+        {
+            "Name": "BasicRoads",
+            "IsOptional": true,
+            "IsPeer": false
+        },
+        {
+            "Name": "wod-terrain",
+            "IsOptional": true,
+            "IsPeer": false
+        },
+        {
+            "Name": "World of Daggerfall - Terrain",
+            "IsOptional": true,
+            "IsPeer": false
+        },
+        {
+            "Name": "animated water",
+            "IsOptional": true,
+            "IsPeer": false
+        },
+        {
+            "Name": "Animated Water",
+            "IsOptional": true,
+            "IsPeer": false
+        }
+    ]
+}

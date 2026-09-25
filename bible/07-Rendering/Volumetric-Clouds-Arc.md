@@ -591,6 +591,10 @@ stripes leaves the beams between all and none (not "half" - unmeasured); the boi
 for every player, but the cover's drift rides the session's own wind integral (WIND2), so "every player sees one
 sky" is true of the boil and the ice, not of the cover.
 
+WISPS-RETURN (2026-09-25, `Rendering.md` WISPS-RETURN) retired WIND5's ribbon: a wisp is a thin quad again and its
+alpha the look's own (no 1.6), and a calm draws 10 since DISC17-A. The wisp law above - `swirl`, the ribbon, the pen
+and the ink - went with it; the clock (G6) stands, pinned in `wind3_windworld.test.js`.
+
 **In the game (2026-09-23).** The last of "the not done yet": the sky run in the real game, Daggerfall city, with
 the player's own ARENA2 (SwiftShader, so pictures and relative cost only). Noon sunny, a storm at 16:00, rain at
 11:00, golden hour at 17:20, dusk at 18:10 and an overcast at 13:00, each looking four ways. Three things came out of
@@ -633,3 +637,73 @@ a cloudy 15:00 in the city, twelve seconds each way, 1815 ms a frame with the cl
 1203 ms with all three off (`?clouds=off&haze=off&wisps=off`) - the three together half again the frame on a software
 rasterizer; the main thread's script 19.0 ms against 16.7. A real GPU's per-pass numbers are `?perf=zones` on Mac's
 machine.
+
+## RAIN-FPS - the sweep takes as many frames as the sky costs (2026-09-25)
+
+Mac: *"some ... are reporting fps drops. I myself have flawless performance.
+One user said they turned off the rain and it fixed it."*
+
+**Measured, not guessed.** No player's GPU can be seen from here, so the
+numbers are relative ones from the software GPU (SwiftShader), which is the
+fair stand-in for a weak machine: it pays for fragment work the way a weak
+GPU does. In the game at Bubumbaret, noon, a frame took about 2610 ms sunny
+and 3110 ms in rain; with `?clouds=off` it took 2140 and 2090 - with the
+clouds off, rain costs what a clear day costs, so the whole of rain's drop
+is this pass (the falling rain's own draw is small and inside the noise).
+In the sky lab (`sky.html`, the clouds alone over the dome, default tier):
+
+| sky | ms a frame, before | after |
+|---|---|---|
+| sunny | 291 | 298 |
+| cloudy | 485 | 310 |
+| rain | 551 | 317 |
+| sunny, eight rain cells about the eye | 639 | 352 |
+| rain, eight rain cells | 1037 | 324 |
+
+**Why a covered sky costs twice a fair one.** The march's economy is
+VC6d's empty-space skipping: a fair sky is mostly air, and after four empty
+steps a ray strides three at a time. Under a deck there is no air - the ray
+walks lit cloud from the slab's foot, and every lit step pays the light
+march, the column above and the mottle. Halving the steps took a third off
+rain's cost and a fifth off sunny's; halving the light steps, a
+fourteenth. Thunder is the exception (1.25 times sunny): its cloud is dense
+enough that the rays end early. Each weather cell standing near adds about
+a sixth (WEATHER2c's per-step profile, and the cloud it brings). A
+per-ray cull of the cells a ray cannot meet was tried and measured: it
+changed nothing, because the cost is the cloud the cells add, not the loop
+over them - so it is not in the code.
+
+**The fix.** The sky map was re-marched every `SWEEP_FRAMES` (8) frames
+whatever it held. Now `sweepFramesFor(cover, cells)` gives the sweep the
+sky's cost in frames: the zone's cover from sunny's (0.32) to cloudy's
+(0.55) doubles it, each cell in play adds `CELL_SWEEP_COST` (0.15) of it,
+and the frames are 8 times that to the nearest power of two, at most 32 -
+8 for a fair sky, 16 for a covered one, 32 for a covered sky under storm
+cells. The pace is taken at a sweep's first stripe and held to its end (a
+sweep never changes its stripe height midway, so no row is skipped or
+marched twice), and the shadow map takes the sky's pace at its own sweep's
+start. Powers of two, so every pace divides every tier's maps.
+
+**What it costs the picture: nothing a frame shows.** The map is the same
+map - the same texels, the same steps, the same shader; with the drift
+frozen (`?still`) a storm sky under eight cells after its first sweep is
+pixel-identical to the old code's (the largest difference 0 over 506,000
+pixels). Only how long a full refresh takes changes: at 60 frames a second
+a storm's sky is re-marched whole about twice a second instead of seven
+times, and neighbouring stripes are still marched one frame apart, so
+there is no seam - the horizon's rows are at most a sweep older than the
+zenith's. Lightning never rode the map (the composite carries the flash
+and the distant bolt).
+
+**Pinned** in `test/rainfps.test.js` (3): the cost and the frames per sky
+(every weather word, the cells, the cap, nothing known is fair) and every
+pace dividing every tier's maps; the draw path on a recording GL - sunny in
+eight stripes, rain in sixteen, rain under eight cells in thirty-two, the
+shadow map's stripes with them, the sweep ending on its last stripe; and
+rain coming in mid-sweep pacing only the NEXT sweep, the shadow map out of step
+keeping its own sweep's pace. Mutants: `tools/mutants/rainfps.json`, 12, 12 dead.
+
+**For a player on a weak machine today** (before this ships): the Features
+pane's cloud quality, Low, costs a rain sky a quarter of Default's (151 ms
+against 551 in the lab); High costs five times Default in rain (2869 ms) and
+is for strong GPUs only.

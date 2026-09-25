@@ -88,6 +88,9 @@ export const ANNOUNCE_MS = 4500;
  *  skills at once is a REST, and six lines under the compass is a
  *  wall; the oldest go first and the level's row is never one of them. */
 export const MAX_ROWS = 4;
+/** SKILL2: how long a skill or mastery line takes to fade out at the end
+ *  of its ANNOUNCE_MS - it fades where it stands, it does not blink off. */
+export const FADE_MS = 700;
 
 /** The port's own words. Nothing here is TEXT.RSC: the level line the
  *  hosts used to `say` ("You have gained a level!") is the port's too,
@@ -177,7 +180,8 @@ export class LevelNotices {
         continue;
       }
       if (age >= ANNOUNCE_MS) continue;
-      out.push({ ...r, standing: false });
+      const fadeIn = age - (ANNOUNCE_MS - FADE_MS);   // SKILL2: ms into the fade, negative before it starts
+      out.push({ ...r, standing: false, fading: fadeIn >= 0, fadeElapsed: Math.max(0, fadeIn) });
     }
     // A LEVEL THAT IS OWED BUT WAS NEVER ANNOUNCED HERE still shows:
     // a save loaded with the flag already set, or a level earned while
@@ -327,7 +331,7 @@ let last = '';
 
 /**
  * WHERE IT HANGS - AUDIT LV2 F4, and QS3's rule read the right way
- * round (ui/enhancedHud.js:451-454): `.hud-bottom` is a CENTRED column
+ * round (ui/enhancedHud.js:557-560): `.hud-bottom` is a CENTRED column
  * anchored to the foot of the screen, so a centred thing that belongs
  * above the vitals goes IN it and rides it; only a CORNER block is
  * anchored to the HUD root and does the arithmetic itself, "because a
@@ -365,7 +369,10 @@ function rowNode(doc, r) {
   // (touch, or the freed cursor); the pause window's Stats page carries the same door for everyone else.
   const clickable = r.kind === NOTICE_LEVEL && codeForAction(bindings(), 'CharacterSheet') != null;
   const n = doc.createElement(clickable ? 'button' : 'div');
-  n.className = `lv-note lv-note-${r.kind}${r.standing ? ' lv-standing' : ''}${clickable ? ' lv-clickable' : ''}`;
+  n.className = `lv-note lv-note-${r.kind}${r.standing ? ' lv-standing' : ''}${clickable ? ' lv-clickable' : ''}${r.fading ? ' lv-fading' : ''}`;
+  // SKILL2: the strip is rebuilt whenever a row comes or goes, so a row
+  // already fading resumes its fade where it was instead of restarting it.
+  if (r.fading && n.style) n.style.animationDelay = `-${Math.round(r.fadeElapsed ?? 0)}ms`;
   if (clickable) {
     n.type = 'button';
     n.title = 'Open the level-up window';
@@ -424,7 +431,7 @@ export function drawLevelNotices({ owed = levelOwed(), hidden = false, now = now
   // after this one, so a strip raised on the first frame of a session
   // lands on the body and has to be moved home on the next.
   if (host) rehome(doc, host);
-  const sig = rows.map((r) => `${r.key}|${r.title}|${r.sub}|${r.standing ? 1 : 0}`).join('\n');
+  const sig = rows.map((r) => `${r.key}|${r.title}|${r.sub}|${r.standing ? 1 : 0}|${r.fading ? 1 : 0}`).join('\n');
   if (sig === last && (host || !rows.length)) return host;
   last = sig;
   if (!rows.length) { host?.remove(); host = null; return null; }

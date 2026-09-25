@@ -80,6 +80,7 @@ export function createGateCourt({
   try { if (gl) pass = new GateTelegraphRenderer(gl); } catch (e) { console.warn('[gate] the telegraph would not build', e?.message ?? e); pass = null; }
   /** the sprite: its texture once loaded (or the promise, or a failure), its batch while drawn */
   let body = null, loading = null, batch = null;
+  let batchShown = false;   // PERF-EXT10: the body's shown-or-not is the court's own, never a field the batch was not born with
   /** the fight this driver is on (its day), and what it has done with its attacks */
   let day = null, judged = noMark(), cued = noMark(), landed = noMark(), phaseHeard = 0, fellCued = false, wrathLanded = false;
   let prevT = -Infinity, hurtAt = -Infinity, shape = null;
@@ -202,7 +203,7 @@ export function createGateCourt({
   function drawBody(s, t) {
     loadBody(s);
     const act = bossAct(s, t, hurtAt);
-    if (!body?.tex || act.act === 'gone') { if (batch) batch.hidden = true; return; }
+    if (!body?.tex || act.act === 'gone') { batchShown = false; return; }
     const [x, z] = bossPlace(s, t);
     const at = courtToDungeon(x, 0, z);
     const eye = cam() ?? at;
@@ -216,7 +217,7 @@ export function createGateCourt({
       batch = renderer.createBillboardBatch(body.archive, rkey, { w, h }, [[0, 0, 0]]);
       batch.origin = [0, 0, 0];
     }
-    batch.hidden = false;
+    batchShown = true;
     batch.record = rkey;
     batch.size = size;
     if (batch.bounds) batch.bounds[3] = Math.hypot(w, h) * 0.5;   // the cull sphere follows the frame's own size
@@ -270,7 +271,7 @@ export function createGateCourt({
     /** The body and the spoils, for the host's billboard pass (AUDIT WB D10: one list, refilled each frame). */
     batches() {
       _batches.length = 0;
-      if (batch && !batch.hidden) _batches.push(batch);
+      if (batch && batchShown) _batches.push(batch);
       for (const b of spoils?.batches() ?? NONE) _batches.push(b);
       return _batches;
     },
@@ -290,11 +291,11 @@ export function createGateCourt({
       return (!!shape && !!pass) || lit;
     },
     /** What the driver holds, for the tests and the stats. */
-    state: () => ({ day, judgedI: judged.i, cuedI: cued.i, landedI: landed.i, phaseHeard, fellCued, wrathLanded, body: !!body?.tex, batch: !!batch && !batch.hidden, shape }),
+    state: () => ({ day, judgedI: judged.i, cuedI: cued.i, landedI: landed.i, phaseHeard, fellCued, wrathLanded, body: !!body?.tex, batch: !!batch && batchShown, shape }),
     /** Out of the court: the body put away, the bar hidden, the fight forgotten (the texture is kept - the next court wears it). */
     leave() {
       spoils?.gather();   // WB5: whatever is still on the floor goes into the pack - never lost to a door, a death or the day's end
-      if (batch) { renderer?.destroyBillboardBatch?.(batch); batch = null; }
+      if (batch) { renderer?.destroyBillboardBatch?.(batch); batch = null; batchShown = false; }
       drawGateBossBar(null);
       reset(null);
     },

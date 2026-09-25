@@ -12,7 +12,11 @@ import { readFileSync } from 'node:fs';
 import {
   windDrive, legacyGust, floraSwayOf, floraSwayOn, WIND_NONE, WIND_STEP_DT_MAX, LAB_WIND_RATE, WIND_SLIDER_MAX,
 } from '../src/systems/windDrive.js';
-import { WindWispsRenderer, wispCount, wispsOn, WISP_MAX, WISP_FLOOR, WISP_BOX, WISP_VS, WISP_FS, WISP_LOOK, WISP_GUST_DIV } from '../src/render/windWisps.js';
+import {
+  WindWispsRenderer, wispCount, wispsOn, WISP_MAX, WISP_FLOOR, WISP_BOX, WISP_VS, WISP_FS, WISP_LOOK, WISP_GUST_DIV,
+  WISP_CLOCK_PERIOD, WISP_WOBBLE_CYCLES, WISP_RATE_STEPS, wispClock,
+} from '../src/render/windWisps.js';
+import { glslFunctions } from './glsl.mjs';
 import {
   createWindAudio, windGain, windClipFor, windPitchFor, windSoundOn, WIND_GAIN_MAX, WIND_SLEW_PER_S, WIND_GAIN_FLOOR, WIND_BLOW_AT, WIND_LOOP,
 } from '../src/systems/windAudio.js';
@@ -95,11 +99,16 @@ test('WIND3 wisps: the count follows the strength with a floor; the renderer com
   let last = -1;
   for (let s = 0; s <= 1.0001; s += 0.05) { const c = wispCount(s); assert.ok(c >= last, 'monotonic'); last = c; }
   assert.ok(wispCount(0.35) > wispCount(0) && wispCount(0.35) < WISP_MAX, 'a sunny day sits between');
+  // the ramp's shape (moved from wind5_swirls.test.js when WISPS-RETURN retired it): the floor to a breeze of 0.05, all
+  // of them from 0.9, a smoothstep between - half the rest at its middle
+  assert.equal(wispCount(0.05), wispCount(0));
+  assert.equal(wispCount(0.9), WISP_MAX);
+  assert.equal(wispCount(0.475), Math.round(WISP_MAX * (WISP_FLOOR + (1 - WISP_FLOOR) * 0.5)));
   // the shaders: the lab's wrap, a streak along the velocity, a life fade, the strength in both stages
   assert.match(WISP_VS, /p = mod\(p - uEye \+ uBox\*0\.5, uBox\) \+ uEye - uBox\*0\.5;/, 'the lab\'s wrap - a world position wrapped around the eye');
   assert.match(WISP_VS, /p \+= vec3\(uWindOff\.x, 0\.0, uWindOff\.y\) \* gust;/, 'PROTO-19: a distance already travelled, never wind x time');
-  assert.match(WISP_VS, /float ph = fract\(uTime\*rate \+ seed\*7\.0\);\n  vLife = sin\(ph \* 3\.14159\);/, 'the wisp\'s own clock (WIND5: its phase also draws the flourish on)');
-  assert.match(WISP_VS, /p \+= \(vel \* \(c\.x - 0\.5\) \+ up \* c\.y\) \* len;/, 'stretched along the wind (WIND5: along the flourish\'s path, down the wind and across it in the curl\'s plane)');
+  assert.match(WISP_VS, /vLife = sin\(fract\(uTime\*rate \+ seed\*7\.0\) \* 3\.14159\);/, 'the wisp\'s own clock');
+  assert.match(WISP_VS, /p \+= vel \* \(aCorner\.y-0\.5\) \* len;/, 'stretched along the wind (WISPS-RETURN: WIND3\'s streak again, where WIND5 drew a flourish)');
   assert.match(WISP_FS, /a \*= vLife \* \(uAlpha\.x \+ uAlpha\.y \* uStrength\);/, 'never more than a breath (WEATHER2d: the look\'s alpha)');
   assert.deepEqual([...WISP_LOOK.alpha], [0.20, 0.24]); assert.deepEqual([...WISP_LOOK.color], [0.86, 0.89, 0.94]);   // DISC17-A: the alpha doubled (WIND3's 0.10, 0.12)
   assert.doesNotMatch(WISP_VS + WISP_FS, /uTime \* uWindV|uWindV \* uTime/, 'no wind x time anywhere');
@@ -133,6 +142,44 @@ test('WIND3 wisps: the count follows the strength with a floor; the renderer com
   assert.ok(r.windOff[0] >= 0 && r.windOff[0] < span && r.windOff[1] >= 0 && r.windOff[1] < span, `bounded: ${r.windOff}`);
   r.advance([-3, -3]);
   assert.ok(r.windOff[0] >= 0 && r.windOff[1] >= 0, 'a backward step wraps up, never negative');
+});
+
+// AUDIT-VC7 (G6), moved here from wind5_swirls.test.js when WISPS-RETURN (2026-09-25) retired that suite with the
+// flourish: the clock is the streak's as much as it was the flourish's (the wobble and the fade run on it).
+const I16 = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+/** WISP_VS's own main() at one corner of one wisp: the world position (the view-projection the identity) and the life. */
+function wispAt(x, y, { seed = 0.37, time = 12.3, fp32 = false } = {}) {
+  const f = glslFunctions(WISP_VS, {
+    uVP: I16, uEye: [0, 0, 0], uTime: time, uBox: 400, uStrength: 0.6, uWindV: [3, 4], uWindOff: [0, 0], uLen: [4, 2],
+    aCorner: [x, y], aSeed: [5, 2, -7, seed],
+  }, { fp32 });
+  f.main();
+  return { p: f.globals.gl_Position.slice(0, 3), vLife: f.globals.vLife };
+}
+
+test('WIND3 wisps\' clock WRAPS WHOLE (AUDIT-VC7 G6) - every rate whole cycles over its period, so the hosts\' seconds wrap without a seam; the renderer hands the wrapped clock and the wind x then z', () => {
+  assert.ok(Number.isInteger(0.35 * WISP_CLOCK_PERIOD) && Number.isInteger((0.25 / WISP_RATE_STEPS) * WISP_CLOCK_PERIOD), 'every life\'s rate a whole number of lives a period');
+  assert.ok(WISP_WOBBLE_CYCLES.every(Number.isInteger));
+  assert.equal(wispClock(WISP_CLOCK_PERIOD * 216 + 12.5), 12.5);
+  assert.equal(wispClock(-3), WISP_CLOCK_PERIOD - 3);
+  // the shader at a wrapped clock is the shader at the whole one, for every wisp (float64: the arithmetic, not the GPU)
+  for (const seed of [0.11, 0.37, 0.66, 0.92]) for (const T of [36000.3, 86400.77, 399.9, 400.1]) {
+    const whole = wispAt(0.3, 0.6, { seed, time: T }), wrapped = wispAt(0.3, 0.6, { seed, time: wispClock(T) });
+    const d = whole.p.map((v, i) => v - wrapped.p[i]);
+    assert.ok(Math.hypot(...d) < 1e-6 && Math.abs(whole.vLife - wrapped.vLife) < 1e-6, `seed ${seed} at ${T} s`);
+  }
+  // ...and at the GPU's own precision the wrap is what keeps a day-long session's phase: the whole clock at a day's
+  // seconds steps a life by a large share of a frame; the wrapped one holds it to the frame's own grain
+  const truth = wispAt(0.5, 0.5, { seed: 0.37, time: 86400.77 }).vLife;
+  const raw = Math.abs(wispAt(0.5, 0.5, { seed: 0.37, time: 86400.77, fp32: true }).vLife - truth);
+  const kept = Math.abs(wispAt(0.5, 0.5, { seed: 0.37, time: wispClock(86400.77), fp32: true }).vLife - truth);
+  assert.ok(kept < 1e-3 && kept < raw / 10, `a day in: ${raw.toExponential(2)} off unwrapped, ${kept.toExponential(2)} wrapped`);
+  // the renderer hands the wrapped clock
+  const { gl, calls } = stubGl();
+  const w = new WindWispsRenderer(gl, WISP_LOOK), I = new Float32Array(I16);
+  w.draw({ on: true, strength01: 1, windV: [5, -2], step: [0, 0] }, I, I, new Float32Array(3), 86400.77);
+  assert.deepEqual(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uTime').slice(2), [wispClock(86400.77)]);
+  assert.deepEqual(calls.find((c) => c[0] === 'uniform2f' && c[1] === 'uWindV').slice(2), [5, -2], 'the wind as it blows - x then z');
 });
 
 test('WIND3 wind loop: the gain never passes the ceiling, is nothing in a calm and the ceiling in a gale, breathes with the gust; the clip goes from the moan to the blow; the driver slews, swaps, stops on the floor and on a modal frame', () => {
@@ -257,7 +304,7 @@ test('WIND3 the hosts: both exterior hosts read the one wind once a frame, feed 
     one(/precip\.windV\[0\] = wd\.windV\[0\]; precip\.windV\[1\] = wd\.windV\[1\];/g, 'the rain\'s rate');
     one(/precip\.windOff\[0\] \+= wd\.step\[0\]; precip\.windOff\[1\] \+= wd\.step\[1\];/g, 'the rain\'s travel');
     assert.ok(!/_lastNow|labWindSlider|Math\.sin\(tsec \* 0\.31\)/.test(s), `${host}: no copy of the mapping, no private rain clock`);
-    const wisp = s.indexOf('if (wisps && wd.on && wispsOn()) {');
+    const wisp = s.search(/if \(wisps && wd\.on && wispsOn\(\)(?: && !_dwAirOff)?\) \{/);   // DW-C: the world host's wisps are the distance fog's while it is on
     assert.ok(wisp > 0 && wisp > s.indexOf('precip.draw(precipShown, proj, view'), `${host}: the wisps after the rain`);
     assert.ok(s.slice(wisp, wisp + 300).includes(`wisps.draw(wd, proj, view, new Float32Array(${eye}), now / 1000);\n      renderer.markForeignPass();`), `${host}: their own program is a foreign pass`);
     one(/const wisps = sky\.enhanced \? new WindWispsRenderer\(renderer\.gl\) : null;/g, 'built on the enhanced lane at boot');

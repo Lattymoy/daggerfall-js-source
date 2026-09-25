@@ -73,7 +73,7 @@ test('OT1: both exterior hosts feed the helper the pre-clear value and the sink 
     // - after, and the dungeon exit's value is gone before the latch
     // can see it.
     const read = s.indexOf('const _wasSwimming = !!player.isPlayerSwimming;');   // XL-1: the HOST flag (PlayerEnterExit.isPlayerSwimming)
-    const clear = s.indexOf('applyMotorEffectFlags(player, playerEntity);');
+    const clear = s.indexOf('applyMotorEffectFlags(player, playerEntity');   // DW-D: the world host hands it the carved sea's forge
     assert.ok(read > 0 && clear > 0 && read < clear, `${host}: _wasSwimming must be read before the per-frame clear`);
     // The write sits after the surface model (it needs the tile under
     // the player) and after the motor ran (it needs this frame's sunk).
@@ -96,5 +96,5 @@ test('OT1: the per-frame clear is untouched - the EFFECT still owns levitate/wat
   // helper's result goes to the OTHER member and this line keeps the
   // motor's own flag down every exterior frame.
   const shared = src('src/scenes/shared.js');
-  assert.match(shared, /player\.swimming = false;/, 'applyMotorEffectFlags still clears swimming');
+  assert.match(shared, /swimming = false \} = \{\}\) \{[\s\S]{0,500}?player\.swimming = !!swimming;/, 'applyMotorEffectFlags still clears swimming (DW-D: false unless the carved sea\'s forge rides the write)');
 });

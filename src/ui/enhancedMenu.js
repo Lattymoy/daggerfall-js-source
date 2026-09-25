@@ -45,7 +45,7 @@
 // reload. Classic works that way because classic is a DOS program with
 // a fixed 320x200 screen. Neither reason survives here.
 //
-// This is ONE screen, under BOTH skins (main.js:116-227, FD1: the
+// This is ONE screen, under BOTH skins (main.js:118-229, FD1: the
 // launcher and its settings window are deleted; the classic rail is
 // Begin, which leads into the splash and PICK03I0 exactly as before).
 // Every destination is a press away from every other, settings
@@ -107,7 +107,7 @@ import {
 import { mostRecentRestorable, restorableSaves, deleteSave, QUICK_SAVE_NAME } from '../systems/saveSlots.js';
 import { exportSavesZip, collectSlots, importSlots, entriesFromFiles, slotPathOf, TRANSFER_ZIP_NAME } from '../systems/saveTransfer.js';   // SP1: saves move between the website and the app
 import { appStorage } from '../systems/appStorage.js';   // SP1: the store under this build - the browser's on the site, the file store in the app   // SAV4: the slot store; SLOTS1: every slot
-import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES, isEnhanced } from '../systems/uiSkin.js';   // FD1: which boot rail
+import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES, isEnhanced, isEnhancedPlus } from '../systems/uiSkin.js';   // FD1: which boot rail
 import { getPref, setPref, isOpen, setOpen } from '../systems/uiPrefs.js';
 import { DEFAULT_SERVER } from '../net/online.js';   // ONLINE1: the relay this port hosts, the field's placeholder   // R7: the port's own switches; SO1: the folded tiers' memory
 import { replacementCount } from '../systems/musicReplacement.js';   // M-EXT: the packs card reports what the pick covers
@@ -149,7 +149,9 @@ import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 // dicts, neither of which belongs in a screen that repaints itself.
 import { paneControls, discardControlsStaging, captureArmed, controlsPromptOpen, dismissControlsPrompt } from './enhancedControls.js';
 // FT0: the features home - one list over the three stores, filtered by kind
-import { OVERHAUL_PANELS, currentOption } from '../systems/overhauls.js';   // OVH1: the three looks
+import { OVERHAUL_PANELS, currentOption } from '../systems/overhauls.js';
+import { PLUS_THEMES } from './enhancedFrame.js';   // PLUS2: Enhanced Plus's colours
+import { plusTheme, setPlusTheme } from './enhancedPlusStyle.js';  import { plusCursorOn, setPlusCursor } from './plusCursor.js';   // OVH1: the three looks
 import { UI_PACKS, packUrl } from '../systems/uiPack.js';   // OVH2: a pack's own picture on its card
 import { FEATURES, KINDS, KIND_ORDER, GROUPS, GROUP_ORDER, filterFeatures, featureCounts, featureForControl, resolveControl, modModules, modDials, matchesFeatureQuery } from '../systems/features.js';   // FT14: the groups and each mod's curated keys
 import '../world/landView.js';   // RF4: the land-view lane registers itself with the registry
@@ -932,7 +934,7 @@ function paneOnline(body) {
   // agreeing to are still on the surface they enter through, where a
   // page in the bible cannot reach them.
   const foot = el('div', 'card svonlinefoot');
-  foot.append(el('p', 'meta', 'Everyone brings their own save; you see each other everywhere and can talk. A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers. A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers. Towns and the open country share who is there and the creatures that find you: what one player meets, everyone nearby sees and fights - and its creatures can hurt you too. The clock and the sky are the world\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, so a quest that waits for an hour of the day waits for that hour of the world. Quest timers run while you play. The shared world is the enhanced lane: every enhancement the port owns in the world is on for everyone. The screens you play through are your own - your UI Overhaul, with the chat, your friends, the party and trading in their own panels over it. Most of your mods stay yours - turn them on or off online as you like. Six switches are the room\u2019s: Basic Roads and World of Daggerfall, because both shape the terrain and a room shares one ground, and Meaner Monsters, the Combat and Armor Overhaul and Unleveled Loot, because a dungeon\u2019s foes belong to whoever hosts it and loot changes hands.'));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door
+  foot.append(el('p', 'meta', 'Everyone brings their own save; you see each other everywhere and can talk. A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers. A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers. Towns and the open country share who is there and the creatures that find you: what one player meets, everyone nearby sees and fights - and its creatures can hurt you too. The clock and the sky are the world\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, so a quest that waits for an hour of the day waits for that hour of the world. Quest timers run while you play. The shared world is the enhanced lane: every enhancement the port owns in the world is on for everyone. The screens you play through are your own - your UI Overhaul, with the chat, your friends, the party and trading in their own panels over it. Most of your mods stay yours - turn them on or off online as you like. A few switches are the room\u2019s: the ones that shape the ground (Basic Roads, World of Daggerfall, Detailed Ships\u2019 deck, Iliac Puddle No More\u2019s sea), the ones that decide whose foes and whose loot (Meaner Monsters, the Combat and Armor Overhaul, Unleveled Loot, and the items and foes of Roleplay & Realism and of the deep), and the rules a room plays by - the Mods pane marks each.'));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door
   foot.append(field('Relay', 'onlineServer', DEFAULT_SERVER, 200));
   body.append(foot);
   body.append(onlineSyncCard());   // UXB1-E: under the rules it copies
@@ -1590,21 +1592,27 @@ const ONLINE_LOCK_NOTE = 'On while online - the shared world is the enhanced lan
 /** MODS-ONLINE-2: the Mods pane's own line. The lane's note (above)
  *  is about the PORT's switches and was wrong over the tiles the
  *  moment a mod stopped being forced. */
-const ONLINE_MODS_NOTE = 'Most of your mods are yours online: turn them on or off as you like. Twenty switches are the room\u2019s - Basic Roads and World of Daggerfall (both shape the terrain, so everyone stands on the same ground); Meaner Monsters, the Combat and Armor Overhaul, Unleveled Loot and Roleplay & Realism: Items\u2019 item switches, because a dungeon\u2019s foes are its host\u2019s and loot changes hands; and Roleplay & Realism\u2019s combat rules, because a room plays one ruleset.';
-const ONLINE_GROUND_NOTE = 'Set while online - it shapes the terrain itself (road beds smoothed in, camp sites levelled), so every player in a room has to stand on the same ground. Your own choice returns when you play offline.';
+const ONLINE_MODS_NOTE = 'Most of your mods are yours online: turn them on or off as you like. Thirty-four switches are the room\u2019s - Basic Roads and World of Daggerfall (both shape the terrain, so everyone stands on the same ground), Detailed Ships (every owner\u2019s ship stands at one place, so its deck is shared), Iliac Puddle No More\u2019s sea and its depth (the seafloor is ground too); Meaner Monsters, the Combat and Armor Overhaul, Unleveled Loot, Roleplay & Realism: Items\u2019 item switches and the deep\u2019s foes and sunken loot, because a dungeon\u2019s foes are its host\u2019s and loot changes hands; and Roleplay & Realism\u2019s combat rules and the deep\u2019s swimming rules, because a room plays one ruleset.';
+const ONLINE_GROUND_NOTE = 'Set while online - it shapes the ground itself (road beds smoothed in, camp sites levelled, the one deck every owner\u2019s ship shares, the seafloor carved to its depth), so every player in a room has to stand on the same ground. Your own choice returns when you play offline.';
 /** WOD1: the vendors whose room-owned switch is the GROUND's - the two
  *  that write terrain heights (roads' beds, World of Daggerfall's sites). */
-const ONLINE_GROUND_VENDORS = Object.freeze(['roads-hazelnut', 'world-of-daggerfall']);
+const ONLINE_GROUND_VENDORS = Object.freeze(['roads-hazelnut', 'world-of-daggerfall', 'detailed-ships']);   // DS1: the ships' shared deck
+/** DW-D: a vendor whose room-owned switches are the ground's AND other reasons names its ground keys - the carved
+ *  sea's switch and its depth. */
+const ONLINE_GROUND_KEYS = Object.freeze({ 'iliac-puddle-no-more': Object.freeze(['Enabled', 'General.WaterDepth']) });
 /** MODS-ONLINE-4: the other three, and their reason is not the ground -
  *  it is that this switch would be spending somebody else's evening. */
 const ONLINE_SHARED_NOTE = 'On while online - a dungeon\u2019s monsters belong to whoever is hosting it and loot passes between players, so a room has to agree on this one. Your own choice returns when you play offline.';
 /** MODS-ONLINE-5: one ruleset per room - the reason PCAAO is forced whole, and RR's six combat overrides and its
  *  intensive training with it. Not the ground's reason and not the host's foes', so its own words. */
-const ONLINE_RULESET_NOTE = 'Set while online - a room plays one ruleset, so a combat or training rule one player changes for their own blows would be two games in one dungeon. Your own choice returns when you play offline.';
-const ONLINE_RULESET_KEYS = Object.freeze({ 'roleplay-realism': Object.freeze(['advancedArchery', 'weaponSpeed', 'weaponMaterials', 'classicStrengthDamageBonus', 'equipDamage', 'encumbranceEffects', 'RefinedTraining.intensiveTraining']) });
+const ONLINE_RULESET_NOTE = 'Set while online - a room plays one ruleset, so a combat, training or swimming rule one player changes for their own play would be two games in one world. Your own choice returns when you play offline.';
+const ONLINE_RULESET_KEYS = Object.freeze({
+  'roleplay-realism': Object.freeze(['advancedArchery', 'weaponSpeed', 'weaponMaterials', 'classicStrengthDamageBonus', 'equipDamage', 'encumbranceEffects', 'RefinedTraining.intensiveTraining']),
+  'iliac-puddle-no-more': Object.freeze(['General.SwimSpeedMultiplier', 'General.EnableSwimStroke', 'General.ArgonianInfiniteBreath']),   // DW-D: the swim and the breath
+});
 /** DISC22-A: a DFU setting the room plays by (onlineLane.js ONLINE_FORCED_SETTINGS) - its own reason. */
 const ONLINE_SETTING_NOTE = 'Set while online - every player in a room meets the same smiths, so a room plays one rule for mending enchanted items. Your own choice returns when you play offline.';
-const onlineLockNote = (vendor, key) => (ONLINE_GROUND_VENDORS.includes(vendor) ? ONLINE_GROUND_NOTE : ONLINE_RULESET_KEYS[vendor]?.includes(key) ? ONLINE_RULESET_NOTE : ONLINE_SHARED_NOTE);
+const onlineLockNote = (vendor, key) => (ONLINE_GROUND_VENDORS.includes(vendor) || ONLINE_GROUND_KEYS[vendor]?.includes(key) ? ONLINE_GROUND_NOTE : ONLINE_RULESET_KEYS[vendor]?.includes(key) ? ONLINE_RULESET_NOTE : ONLINE_SHARED_NOTE);
 function lockOnline(b, main, { note = ONLINE_LOCK_NOTE, value = true } = {}) {
   b.textContent = value ? 'On (online)' : 'Off (online)';
   b.classList.toggle('primary', !!value);
@@ -2714,6 +2722,53 @@ function overhaulPanel(p) {
   mid.append(dots);
   nav.append(arrow(-1, '‹', 'Previous'), mid, arrow(1, '›', 'Next'));
   card.append(nav, el('p', 'look-blurb', o.blurb));
+  // PLUS2: ENHANCED PLUS'S COLOURS - offered on its own card while it is the look in use (they are its surfaces, and
+  // they change at once, no reload). One swatch per stone; the chosen one is pressed.
+  if (p.id === 'ui' && o.id === 'enhanced-plus' && o === cur) {
+    const row = el('div', 'look-colours');
+    row.setAttribute('role', 'group');
+    row.setAttribute('aria-label', 'Enhanced Plus colour');
+    row.append(el('span', 'look-colours-label', 'Colour'));
+    const now = plusTheme();
+    for (const [id, th] of Object.entries(PLUS_THEMES)) {
+      const b = el('button', 'look-colour');
+      b.type = 'button';
+      b.title = th.name;
+      b.setAttribute('aria-pressed', String(id === now));
+      const chip = el('i', 'look-colour-chip');
+      chip.style.background = th.swatch;
+      b.append(chip, el('span', null, th.name));
+      b.onclick = (e) => { e.stopPropagation(); setPlusTheme(id); render(); };
+      row.append(b);
+    }
+    card.append(row);
+    // PLUS6: the gauntlet cursor, on or off - worn at once
+    const crow = el('div', 'look-colours');
+    crow.setAttribute('role', 'group');
+    crow.setAttribute('aria-label', 'Enhanced Plus cursor');
+    crow.append(el('span', 'look-colours-label', 'Cursor'));
+    for (const [on, label] of [[true, 'Gauntlet'], [false, 'System']]) {
+      const b = el('button', 'look-colour', label);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(plusCursorOn() === on));
+      b.onclick = (e) => { e.stopPropagation(); setPlusCursor(on); render(); };
+      crow.append(b);
+    }
+    card.append(crow);
+    // PLUS7: the inventory's hover card, on or off (the right-click menu stays either way)
+    const hrow = el('div', 'look-colours');
+    hrow.setAttribute('role', 'group');
+    hrow.setAttribute('aria-label', 'Item info on hover');
+    hrow.append(el('span', 'look-colours-label', 'Item info on hover'));
+    for (const [on, label] of [[true, 'On'], [false, 'Off']]) {
+      const b = el('button', 'look-colour', label);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String((getPref('plusItemHover') !== false) === on));
+      b.onclick = (e) => { e.stopPropagation(); setPref('plusItemHover', on); render(); };
+      hrow.append(b);
+    }
+    card.append(hrow);
+  }
   const use = el('button', 'act primary look-use', o === cur ? 'In use' : `Use ${o.name}`);
   use.type = 'button';
   use.disabled = o === cur;
@@ -2776,7 +2831,7 @@ function paneAbout(body) {
   c.append(el('p', 'meta', 'An open-source reimplementation of The Elder Scrolls II: Daggerfall.'));
   c.append(stats([
     ['Build', BUILD_TAG],
-    ['Interface', SKIN_NAMES[uiSkin()]],
+    ['Interface', isEnhancedPlus() ? 'Enhanced Plus' : SKIN_NAMES[uiSkin()]],   // PLUS1
     ['Settings', `${Object.values(DEFAULTS).reduce((n, s2) => n + Object.keys(s2).length, 0)} keys`],
   ]));
   body.append(c);
@@ -3114,7 +3169,11 @@ function pauseStats(body) {
     rail.append(b);
   }
   wrap.append(rail);
-  const detail = el('div', 'px-qdetail');
+  // PLUS4: the ONE other detail pane on this rail with buttons on it (Pack/Spellbook/Chronicle/
+  // Ascend, below) - and the one that never picked up the px-sys class its System-tab twin (below,
+  // pauseSystem) carries. The kit's button role (enhancedFrame.js FRAME_ROLES) reads `.px-sys .act`,
+  // so without it these four fell through to the bare, unpainted base .act under Plus.
+  const detail = el('div', `px-qdetail${isEnhancedPlus() ? ' px-sys' : ''}`);   // DROPS-AUDIT F3: the system-page dress is Plus's - plain Enhanced's Stats page keeps its own buttons and rows
   ({ character: statsCharacter, attributes: statsAttributes, skills: statsSkills, specials: statsSpecials, standing: statsStanding })[statsSec](detail, m);
   // PX25: THE DOORS THE F5 SHEET CARRIED. The classic character sheet
   // has four buttons down its side - Inventory, Spellbook, Logbook,

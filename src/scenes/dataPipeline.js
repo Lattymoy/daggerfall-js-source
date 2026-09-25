@@ -10,7 +10,9 @@ import { isExteriorWindow } from '../world/climateSwaps.js';
 import { isEmissive, FIRE_WALLS_ARCHIVE } from '../world/emissiveTextures.js';   // TextureReader's auto-emissive table (lit lanterns, fireplaces, fire daedra)
 import { dfMeshToModel } from '../world/meshReader.js';
 import { fetchBytes, texName } from './shared.js';
-import { decodedTexture, preloadTextureArchive, isVendorArchive, vendorTextureStandIn } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones
+import { decodedTexture, preloadTextureArchive, isVendorArchive, vendorTextureStandIn, setTextureDeriveContext } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones
+import { classicRecordRgba } from '../formats/derivedTexture.js';   // WD2: a mod sprite rebuilt from the player's own record
+import { customModelFor } from '../world/customModels.js';   // DS1: models no ARCH3D carries
 import { dyeToken } from '../characters/dyes.js';   // DW3: the per-dye UI variant
 import { ROTOR, MACHINERY, MACHINERY_MODEL_ID, MACHINERY_CHILDREN, PLANK_GEAR, ROLLER } from '../world/windmillMesh.js';   // WM2b/WM2d/WM4b: the vendored mill and its machinery, uploaded like any other model
 import { skinnedBody } from '../world/windmills.js';   // WM2e: its walls and roof follow the climate
@@ -22,6 +24,9 @@ import { flatFaceOverride } from '../characters/staticNpc.js';   // RR2: FLATS.C
  *  the upload arms over a texture it built itself, in a container with
  *  no ARENA2. No host passes it.
  *  @param deps {{renderer, arch: Arch3dFile, palette: DFPalette, fetch?: (name: string) => Promise<Uint8Array>}} */
+/** DS1: TEXTURE.511 is the last archive Daggerfall ships; a higher number is a mod's own. */
+export const LAST_CLASSIC_TEXTURE_ARCHIVE = 511;
+
 export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes }) {
   const textureFiles = new Map();
   const texturePromises = new Map();
@@ -60,8 +65,26 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
           textureFiles.set(archive, v);
           return v;
         }
+        // DS1: an archive past Daggerfall's last TEXTURE file (TEXTURE.511)
+        // is a MOD's - a world-data block may name one whose pictures no
+        // loaded mod supplies. DFU's MaterialReader then answers no material
+        // and the billboard stands invisible (a logged miss, never a thrown
+        // scene); the port stands an empty shell in (recordCount 0, which
+        // every upload door already gates on) and says so once. A classic
+        // archive that will not load is still the player's missing data and
+        // still throws.
+        let bytes;
+        try {
+          bytes = await fetch(texName(archive));
+        } catch (e) {
+          if (archive <= LAST_CLASSIC_TEXTURE_ARCHIVE) throw e;
+          console.warn(`[texture] ${texName(archive)}: no such archive and no mod picture for it - its billboards stand invisible, as in DFU`);
+          const v = vendorTextureStandIn(archive);
+          textureFiles.set(archive, v);
+          return v;
+        }
         const t = new TextureFile();
-        t.load(await fetch(texName(archive)), texName(archive), palette);
+        t.load(bytes, texName(archive), palette);
         // M-TEX: the replacement PNGs for this archive decode HERE,
         // where there is already an await and the result is already
         // cached per archive. uploadRecord is synchronous and runs off
@@ -76,6 +99,22 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     }
     return texturePromises.get(archive);
   }
+  // WD2: a vendored sprite that IS a classic record (or one with the author's
+  // paint on it) is built from THIS pipeline's own archives - the player's
+  // ARENA2, the palette the host loaded - never shipped (formats/derivedTexture.js).
+  setTextureDeriveContext({
+    classicRgba: async (archive, record, frame = 0) => {
+      const t = await getTexture(archive);
+      if (!t || t.vendor) return null;
+      const bm = t.getDFBitmap(record, frame);
+      return bm?.width ? classicRecordRgba(bm, palette) : null;
+    },
+    /** DS1: the record's own scale (TextureFile.getScale) - what a stand-in for a classic sprite is sized by. */
+    classicScale: async (archive, record) => {
+      const t = await getTexture(archive);
+      return !t || t.vendor ? null : t.getScale(record);
+    },
+  });
   const getTextureSize = (archive, record) => {
     const t = textureFiles.get(archive);
     return { width: t.getWidth(record), height: t.getHeight(record) };
@@ -126,7 +165,11 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     renderer.uploadTexture(archive, record, color32, variant !== undefined ? { opaque, mips, variant, replacement } : { opaque, mips, replacement });
     // Exterior windows also get their emission mask (R2, MaterialReader
     // semantics: glass texels glow with the active window style).
-    if (isExteriorWindow(archive, record)) {
+    // DS1: a stand-in (a mod-only archive) has no classic bitmap to cut a
+    // window mask from - and IsExteriorWindow's `archive % 100` reads 1210's
+    // record 3 as a window. A mod picture's billboard material carries no
+    // window emission in DFU (GetStaticBillboardMaterial), so it gets none.
+    if (isExteriorWindow(archive, record) && !t.vendor) {
       renderer.uploadEmissionTexture(archive, record, t.getWindowColors32(bitmap), { replacement });
     } else if (isEmissive(archive, record) && archive !== FIRE_WALLS_ARCHIVE) {
       // AUDIT 39 F49: THE AUTO-EMISSIVE ARM (MaterialReader.cs:419-423
@@ -208,6 +251,13 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     if (modelIdNum === MACHINERY_MODEL_ID) {
       const gpu = await uploadModel(modelIdNum, MACHINERY);   // already inside getGpuMesh's in-flight entry
       cpuModels.set(modelIdNum, { modelIdNum, positions: MACHINERY.positions, indices: MACHINERY.indices, subMeshes: MACHINERY.subMeshes, doors: [] });
+      return gpu;
+    }
+    // DS1: the registry's models (world/customModels.js) - asked before ARCH3D, as MeshReplacement is
+    const custom = customModelFor(modelIdNum);
+    if (custom) {
+      const gpu = await uploadModel(modelIdNum, custom);
+      cpuModels.set(modelIdNum, { modelIdNum, positions: custom.positions, indices: custom.indices, subMeshes: custom.subMeshes, doors: custom.doors ?? [], normals: custom.normals, uvs: custom.uvs });
       return gpu;
     }
     const index = arch.getRecordIndex(modelIdNum);

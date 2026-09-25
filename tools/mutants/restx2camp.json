@@ -133,8 +133,8 @@
   {
     "name": "CAMP1-the-ring-excludes-its-own-edge",
     "file": "src/systems/campEncounters.js",
-    "old": "    if (dx * dx + dz * dz > r2) continue;\n    const pid = String(p.id);",
-    "new": "    if (dx * dx + dz * dz >= r2) continue;\n    const pid = String(p.id);",
+    "old": "  const near = (a, b) => { const dx = a[0] - b[0], dz = a[2] - b[2]; return dx * dx + dz * dz <= r2; };",
+    "new": "  const near = (a, b) => { const dx = a[0] - b[0], dz = a[2] - b[2]; return dx * dx + dz * dz < r2; };",
     "tests": [
       "test/camp1_groups.test.js"
     ]
@@ -142,8 +142,8 @@
   {
     "name": "CAMP1-the-highest-id-rolls",
     "file": "src/systems/campEncounters.js",
-    "old": "    if (pid < lowest) lowest = pid;",
-    "new": "    if (pid > lowest) lowest = pid;",
+    "old": "  all.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));",
+    "new": "  all.sort((a, b) => (a.id > b.id ? -1 : a.id < b.id ? 1 : 0));",
     "tests": [
       "test/camp1_groups.test.js"
     ]
@@ -169,8 +169,8 @@
   {
     "name": "CAMP1-the-world-host-rolls-without-asking-who-owns-the-group",
     "file": "src/scenes/world.js",
-    "old": "      if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {   // CAMP-REST: never while the player is resting or waiting",
-    "new": "      if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && getPref('wildernessCamps') !== false) {   // CAMP-REST: never while the player is resting or waiting",
+    "old": "      if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && !travelOptions?.isTravelActive && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {   // CAMP-REST: never while the player is resting or waiting; CAMP-TRAVEL (2026-09-25, Mac: \"it would stop players too often\"): nor while a Travel Options journey runs - the pixels a ride crosses roll no camps",
+    "new": "      if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && !travelOptions?.isTravelActive && getPref('wildernessCamps') !== false) {   // CAMP-REST: never while the player is resting or waiting; CAMP-TRAVEL (2026-09-25, Mac: \"it would stop players too often\"): nor while a Travel Options journey runs - the pixels a ride crosses roll no camps",
     "tests": [
       "test/camp1_groups.test.js"
     ]
@@ -178,8 +178,8 @@
   {
     "name": "CAMP1-the-chunk-roll-fires-from-inside-a-dungeon",
     "file": "src/scenes/world.js",
-    "old": "      if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {   // CAMP-REST: never while the player is resting or waiting",
-    "new": "      if (!playerEntity.isResting && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {",
+    "old": "      if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && !travelOptions?.isTravelActive && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {   // CAMP-REST: never while the player is resting or waiting; CAMP-TRAVEL (2026-09-25, Mac: \"it would stop players too often\"): nor while a Travel Options journey runs - the pixels a ride crosses roll no camps",
+    "new": "      if (!playerEntity.isResting && !travelOptions?.isTravelActive && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {",
     "tests": [
       "test/camp1_groups.test.js"
     ]
@@ -279,8 +279,8 @@
   {
     "name": "D-ONLINE1-the-snapshot-is-taken-after-the-leave-cleared-the-room",
     "file": "src/scenes/world.js",
-    "old": "      if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room\n      if (online.room) {\n        // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure\n        _deadMark = online._pose ? { k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() } : null;\n        _partyComposedAt = -Infinity;\n        // PDEATH-FOES, AUDIT CONTRIB P1: my foes are the survivors' now - each to the one nearest it, as I see it (the\n        // only true view of where my foes stand), named on my last frame BEFORE the death pose; what nobody took stays mine\n        const near = isCellRoom(online.room) && (modes?.mode ?? 'exterior') === 'exterior' ? (peersNear() ?? []) : [];\n        if (near.length) {\n          const heirOf = (f) => { const at = f.ai?.feet; if (!at) return null; let id = null, best = Infinity; for (const q of near) { const d = Math.hypot(at[0] - q.feet[0], at[2] - q.feet[2]); if (d < best) { best = d; id = q.id; } } return id; };\n          const frame = exteriorFoes.handOverFrame(heirOf);\n          const n = frame && online.sendFoes(frame) ? exteriorFoes.dropOwnLive() : 0;\n          console.info(`[foes] handed ${n} foe(s) to the survivors`);\n        }\n        online.sendDeath?.();\n      }\n      if (online.room) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); _foesRoom = null; }",
-    "new": "      if (online.room) {\n        // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure\n        _deadMark = online._pose ? { k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() } : null;\n        _partyComposedAt = -Infinity;\n        // PDEATH-FOES, AUDIT CONTRIB P1: my foes are the survivors' now - each to the one nearest it, as I see it (the\n        // only true view of where my foes stand), named on my last frame BEFORE the death pose; what nobody took stays mine\n        const near = isCellRoom(online.room) && (modes?.mode ?? 'exterior') === 'exterior' ? (peersNear() ?? []) : [];\n        if (near.length) {\n          const heirOf = (f) => { const at = f.ai?.feet; if (!at) return null; let id = null, best = Infinity; for (const q of near) { const d = Math.hypot(at[0] - q.feet[0], at[2] - q.feet[2]); if (d < best) { best = d; id = q.id; } } return id; };\n          const frame = exteriorFoes.handOverFrame(heirOf);\n          const n = frame && online.sendFoes(frame) ? exteriorFoes.dropOwnLive() : 0;\n          console.info(`[foes] handed ${n} foe(s) to the survivors`);\n        }\n        online.sendDeath?.();\n      }\n      if (online.room) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); _foesRoom = null; }\n      if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();",
+    "old": "      if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room\n      if (online.room) {\n        // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure\n        _deadMark = online._pose ? { k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() } : null;\n        _partyComposedAt = -Infinity;\n        // PDEATH-FOES, AUDIT CONTRIB P1: my foes are the survivors' now (handOverFoes), named on my last frame BEFORE the\n        // death pose; what nobody took stays mine\n        const _handed = handOverFoes();\n        if (_handed) console.info(`[foes] handed ${_handed} foe(s) to the survivors`);\n        online.sendDeath?.();\n      }\n      if (online.room) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); _foesRoom = null; }",
+    "new": "      if (online.room) {\n        // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure\n        _deadMark = online._pose ? { k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() } : null;\n        _partyComposedAt = -Infinity;\n        // PDEATH-FOES, AUDIT CONTRIB P1: my foes are the survivors' now (handOverFoes), named on my last frame BEFORE the\n        // death pose; what nobody took stays mine\n        const _handed = handOverFoes();\n        if (_handed) console.info(`[foes] handed ${_handed} foe(s) to the survivors`);\n        online.sendDeath?.();\n      }\n      if (online.room) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); _foesRoom = null; }\n      if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();",
     "tests": [
       "test/donline1_respawn.test.js",
       "test/auditworld.test.js"

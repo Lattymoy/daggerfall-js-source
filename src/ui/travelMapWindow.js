@@ -108,7 +108,7 @@ import { readGateMark, gateRingKey, gateRingTexels, GATE_DOT_RGB } from './gateM
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
 import { ListPickerWindow, preloadListPickerArt, listPickerArtLoaded } from './listPicker.js';
-import { TravelPopUpWindow, preloadTravelPopUpArt, NOT_ENOUGH_GOLD_TEXT_ID } from './travelPopUp.js';
+import { TravelPopUpWindow, preloadTravelPopUpArt, NOT_ENOUGH_GOLD_TEXT_ID } from './travelPopUp.js';  import { classicScope } from './enhancedScope.js';   // PORT0: the classic map keeps its own boxes and lists
 import { TeleportPopUpWindow, preloadTeleportPopUpArt } from './teleportPopUp.js';   // G5
 import { drawText } from './text.js';
 import { bindings } from './input.js';
@@ -1989,4 +1989,14 @@ export function registerTravelMapConsoleCommands(deps = {}) {
   } catch (ex) {
     console.error(`Error Registering Travelmap Console commands: ${ex?.message ?? ex}`);
   }
+}
+
+// PORT0: THE CLASSIC MAP STAYS CLASSIC. A player who chose DFU's own
+// travel map in the settings (ui/mapSkin.js heldMapChosen) chose its
+// prompts and lists with it, so its draw - and the popups and pickers
+// drawn inside it - runs in the classic scope, where the enhanced
+// decision box and list stand down (ui/enhancedScope.js).
+{
+  const classicDraw = TravelMapWindow.prototype.draw;
+  TravelMapWindow.prototype.draw = function draw(...args) { return classicScope(() => classicDraw.apply(this, args)); };
 }

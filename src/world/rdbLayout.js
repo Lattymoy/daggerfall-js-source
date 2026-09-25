@@ -394,6 +394,7 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
           record: fr.textureRecord, x, y, z, position: obj.position, action,
           rawY: obj.yPos, flags: fr.flags, factionOrMobileId: fr.factionOrMobileId,
           soundIndex: fr.soundIndex, actionByte: fr.action,
+          isCustomData: !!fr.isCustomData,   // WD1: RdbFlatResource.IsCustomData - only a world-data JSON block sets it
         };
         markers.push(marker);
         if (fr.textureRecord === 10) {

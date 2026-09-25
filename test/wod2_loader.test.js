@@ -403,7 +403,7 @@ test('WOD2: the streaming host wires the loader where DFU does - decision before
   assert.match(w, /const wodSel = wodLit \? _wodSelect\(0, _wodFill\(0\)\) : null;/, 'the day branch');
   assert.match(w, /const wodSel = wodLit \? _wodSelect\(n, _wodFill\(n\)\) : null;/, 'the night branch, after the lanterns');
   assert.match(w, /if \(p\.wodSite && tx >= p\.wodSite\.xMin && tx < p\.wodSite\.xMax && tz >= p\.wodSite\.yMin && tz < p\.wodSite\.yMax\) return null;/, 'grass keeps off the site');
-  assert.match(w, /if \(\(dfLocation \|\| wodSite \|\| hadWodSite\) && labGrassField\)/, 'and re-reads the ground a site moved - or a rebuild moved back (AUDIT BRANCH (WoD) m2)');
+  assert.match(w, /\n    if \(labGrassField\) \{   \/\/ WOD2: a levelled camp moved the ground the same way; AUDIT BRANCH \(WoD\) m2[^\n]*\n      const t = state\.pixelTranslation\(px, py\);/, 'and re-reads the ground a site moved - or a rebuild moved back (AUDIT BRANCH (WoD) m2) - as every publish does since PERF-EXT21');
 });
 
 test('WOD2: THE FOUR HOSTS - world.js streams terrain and is wired; exterior.js, worldModes.js and dungeonContext.js stream none and are flagged', () => {

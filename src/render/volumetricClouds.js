@@ -58,6 +58,7 @@ import { createRenderTarget, withTarget, frameTarget } from './renderTarget.js';
 import { CloudNoise } from './cloudNoise.js';
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 import { WEATHER_EASE_MINUTES, WEATHER_SKY, WIND_SECONDS_PER_MINUTE, sunSkyDirection, paletteAt } from './enhancedSky.js';   // WEATHER2c: a cell's cover and grey are its weather's row; VC7a: the sun that drives the day's convection
+import { DREAD_GLSL } from '../world/dreadSky.js';   // EVENT1: the live event's grade, the sky's last word
 
 /** VC7e: a JS number as a GLSL float literal (airPass.js glslFloat's law: `${1}` is an int to the compiler). */
 const glslF = (v) => (Number.isInteger(v) ? `${v}.0` : String(v));
@@ -76,8 +77,48 @@ export const MAX_CELLS = 8;
 /** WEATHER2c: a cell's rim, as a fraction of its radius - the band over
  *  which its profile blends into the zone's. */
 export const CELL_EDGE = 0.35;
-/** A full sweep of either map takes this many frames. */
+/** A full sweep of either map takes this many frames - a fair sky's; a heavier one takes more (sweepFramesFor). */
 export const SWEEP_FRAMES = 8;
+// ═══════════════════════════════════════════════════════════════════
+// RAIN-FPS (2026-09-25, Mac: "some ... are reporting fps drops. I myself
+// have flawless performance. One user said they turned off the rain and it
+// fixed it"): THE SWEEP TAKES AS MANY FRAMES AS THE SKY COSTS.
+//
+// Measured in the sky lab and the game on a software GPU (the stand-in for
+// a weak one): with the clouds off, rain costs what a clear day costs - the
+// whole of rain's drop is this pass. A texel of a covered sky costs about
+// twice a fair one's (the march walks lit cloud from the slab's foot, with
+// no empty air to stride over: cloudy 1.9, overcast 2.2, rain 2.2 times a
+// sunny sky's), and each weather cell standing near adds about a sixth
+// (eight rain cells over a rain sky, 4.3 times). The map was re-marched
+// every eight frames whatever it held, so a machine with no headroom lost a
+// quarter to a half of its frame rate the moment the rain came in.
+//
+// The sweep now takes the sky's cost in frames - a fair sky's eight, a
+// covered sky's sixteen, a covered sky under storm cells thirty-two - so a
+// frame's share of the march stays near a fair sky's in every weather. The
+// map itself is the same map (the same texels, the same steps); only how
+// long a full refresh takes changes, and a covered sky moves slowly: at 60
+// frames a second a storm's sky is re-marched whole twice a second, and
+// neighbouring stripes are still marched a frame apart. Powers of two, so
+// every pace divides every tier's map evenly.
+/** The cost a weather cell adds to a texel, as a share of the zone's own (measured: see above). */
+export const CELL_SWEEP_COST = 0.15;
+/** The longest sweep - a storm's sky under its cells. */
+export const SWEEP_FRAMES_MAX = 32;
+/** How much a sweep of this sky costs next to a fair sky's: the zone's cover from sunny's to cloudy's doubles it
+ *  (the lab's measure), each cell in play adds CELL_SWEEP_COST of it. Pure. */
+export function sweepCost(cover, cells) {
+  const lo = WEATHER_SKY.sunny.cover, hi = WEATHER_SKY.cloudy.cover;
+  const t = Math.min(1, Math.max(0, ((Number(cover) || 0) - lo) / (hi - lo)));
+  return (1 + t * t * (3 - 2 * t)) * (1 + CELL_SWEEP_COST * Math.max(0, cells | 0));
+}
+/** The frames a sweep of this sky takes: SWEEP_FRAMES times its cost, to the nearest power of two, at most
+ *  SWEEP_FRAMES_MAX. Pure. */
+export function sweepFramesFor(cover, cells) {
+  const k = Math.max(0, Math.round(Math.log2(sweepCost(cover, cells))));
+  return Math.min(SWEEP_FRAMES_MAX, SWEEP_FRAMES * 2 ** k);
+}
 /** VC6d: the steps a ray may take BEYOND its tier's budget. Empty-space
  *  skipping normally finishes a ray early, but a ray that enters and
  *  leaves cloud several times pays one step for each stride it backs
@@ -1293,8 +1334,10 @@ uniform float uAspect;
 uniform float uFlash;     // lightning: the WHOLE sky lit for the frame (the march writes one stripe a frame; the flash cannot ride it)
 uniform vec4 uBolt;       // WEATHER3d: a DISTANT storm's strike - xyz the direction to its cloud, w its light
 uniform float uBoltCos;   // ...and the cosine of the cone its cloud fills from here
+uniform float uDread;     // EVENT1: the live event's grade, 0 = none
 out vec4 outColor;
 const float PI = 3.14159265;
+${DREAD_GLSL}
 void main() {
   vec3 ray = normalize(vec3(vNdc.x * uTanHalfFov * uAspect, vNdc.y * uTanHalfFov, 1.0));
   float cp = cos(uPitch), sp = sin(uPitch);
@@ -1321,7 +1364,11 @@ void main() {
   // WEATHER3d: the distant strike lights its own cloud and nothing else - the cone its disc fills from here, soft at
   // the rim - on the cloud's own radiance (c.rgb carries its opacity), so clear sky in that direction stays dark
   float bolt = uBolt.w * smoothstep(uBoltCos, mix(uBoltCos, 1.0, 0.6), dot(dir, uBolt.xyz));
-  outColor = vec4(c.rgb * (1.0 + uFlash * 2.0 + bolt * 3.0), c.a);
+  // EVENT1: THE CLOUD GRADED, NOT ITS PREMULTIPLIED SUM - c.rgb carries the cloud's opacity (1 - c.a: the composite
+  // is sky * T + cloud), so the grade reads the cloud's own colour and puts the opacity back; clear sky adds nothing
+  float op = 1.0 - c.a;
+  vec3 cloud = op > 1e-4 ? dreadGrade(c.rgb / op, uDread) * op : c.rgb;
+  outColor = vec4(cloud * (1.0 + uFlash * 2.0 + bolt * 3.0), c.a);
 }`;
 
 /** The lab's shadow-map viewer: the square as a picture. */
@@ -1336,7 +1383,7 @@ void main() { outColor = vec4(texture(uMap, vNdc * 0.5 + 0.5).rrr, 1.0); }`;
 export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDark', 'uVary', 'uCellCount', 'uCell', 'uCellA', 'uCellB', 'uCellC', 'uCellK', 'uCellS', 'uCellU', 'uCellKS', 'uCellKU', 'uDrift', 'uShift', 'uCamXZ', 'uEvolve', 'uCoverDrift'];   // WEATHER2c: uDark moved in (a cell has its own), the slab and the cells added; VC6a: uVary
 export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uSkyTint', 'uDusk', 'uSteps', 'uLightSteps', 'uCellF', 'uCirrus', 'uCirrusLight', 'uCirrusDir'];   // VC6b: uSkyTint, uDusk; VC7c: the falls
 export const SHADOW_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uOrigin', 'uExtent', 'uLightDir', 'uSteps'];
-export const COMPOSITE_UNIFORMS = ['uMap', 'uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uFlash', 'uBolt', 'uBoltCos'];   // WEATHER3d: the distant strike
+export const COMPOSITE_UNIFORMS = ['uMap', 'uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uFlash', 'uBolt', 'uBoltCos', 'uDread'];   // EVENT1: the live event's grade   // WEATHER3d: the distant strike
 
 export class VolumetricClouds {
   /** `quality` a QUALITY key; `viewport` the caller's rect to restore
@@ -1376,12 +1423,16 @@ export class VolumetricClouds {
     this.shift = [0, 0];      // the floating origin's recenters, accumulated (metres)
     this.cam = [0, 0];        // the camera's world XZ
     this.flash = 0;
+    /** EVENT1: the live event's grade over the clouds, 0..1 (world/dreadSky.js) - the host's. */
+    this.dread = 0;
     this.bolt = null;   // WEATHER3d: a distant strike's light, or none
     this.cells = [];          // WEATHER2c: this frame's cells, in the host's world metres, capped at the tier's count
     this.testCellSpec = null; // WEATHER2c: `?cloudcell=` as handed by the controller; resolved against the first camera position seen
     this.testCell = null;
     this._packed = { c: new Float32Array(MAX_CELLS * 4), a: new Float32Array(MAX_CELLS * 4), b: new Float32Array(MAX_CELLS * 4), t: new Float32Array(MAX_CELLS * 4), k: new Float32Array(MAX_CELLS * 4), s: new Float32Array(MAX_CELLS * 4), u: new Float32Array(MAX_CELLS * 4), ks: new Float32Array(MAX_CELLS * 4), ku: new Float32Array(MAX_CELLS * 4), count: 0 };
     this.stripe = 0;
+    this.pace = SWEEP_FRAMES;        // RAIN-FPS: this sky sweep's frames, taken at its first stripe
+    this.shadowPace = SWEEP_FRAMES;  // ...and the shadow sweep's, at its own
     this.sweeps = 0;          // full sweeps of the sky map completed (the probe waits for one); the first is striped like every other - no stall
     this.origin = null;       // the shadow square's corner the camera asks for
     this.mapOrigin = null;    // the corner the map HOLDS - the deck's rect (the two differ for the frame between a crossing and its blit)
@@ -1522,7 +1573,9 @@ export class VolumetricClouds {
     // the sky map, a stripe at a time from the first frame on
     {
       const u = this.mu;
-      const rows = Math.ceil(q.height / SWEEP_FRAMES);
+      // RAIN-FPS: the pace is the sky's at a sweep's start and holds to its end - a sweep never changes stripe midway
+      if (this.stripe === 0) this.pace = sweepFramesFor(this.row?.cover, this.cells.length);
+      const rows = Math.ceil(q.height / this.pace);
       const y0 = this.stripe * rows;
       gl.useProgram(this.marchProgram);
       this._fieldUniforms(u);
@@ -1547,7 +1600,8 @@ export class VolumetricClouds {
     // the shadow map (VC4)
     {
       const u = this.su;
-      const rows = this.shadowFull ? q.shadow : Math.ceil(q.shadow / SWEEP_FRAMES);
+      if (!this.shadowFull && this.shadowStripe === 0) this.shadowPace = this.pace;   // RAIN-FPS: the sky's pace, at the shadow sweep's own start
+      const rows = this.shadowFull ? q.shadow : Math.ceil(q.shadow / this.shadowPace);
       const y0 = this.shadowFull ? 0 : this.shadowStripe * rows;
       gl.useProgram(this.shadowProgram);
       this._fieldUniforms(u);
@@ -1585,6 +1639,7 @@ export class VolumetricClouds {
     gl.uniform1f(u.uYaw, yaw); gl.uniform1f(u.uPitch, pitch);
     gl.uniform1f(u.uTanHalfFov, Math.tan(fovY / 2)); gl.uniform1f(u.uAspect, aspect);
     gl.uniform1f(u.uFlash, this.flash);
+    gl.uniform1f(u.uDread, this.dread);   // EVENT1
     const b = this.bolt;   // WEATHER3d
     gl.uniform4f(u.uBolt, b ? b.dir[0] : 0, b ? b.dir[1] : 1, b ? b.dir[2] : 0, b ? b.strength : 0); gl.uniform1f(u.uBoltCos, b ? b.cos : 1);
     gl.bindVertexArray(this.vao);

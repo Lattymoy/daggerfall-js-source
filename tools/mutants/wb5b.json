@@ -47,8 +47,8 @@
   {
     "name": "WB5b-the-account-view-without-gates",
     "file": "server-account/src/index.js",
-    "old": ", gates: await gateRecordOf(ctx, who.player.id) },",
-    "new": " },",
+    "old": ", gates: await gateRecordOf(ctx, who.player.id), renown:",
+    "new": ", renown:",
     "tests": [
       "test/wb5b_gate_claim.test.js"
     ]

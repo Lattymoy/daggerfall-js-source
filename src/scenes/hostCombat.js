@@ -105,8 +105,10 @@ export const hasBowAttack = (basics) =>
  *  affinity Human - so an Orc or a Knight is cut and a Zombie or a
  *  Daedra Lord is not. */
 const HUMANOID_LOOT_ITEM_SCALE = 0.25;   // MOD: keep a quarter of the item chance (drop 75%)
-export function spawnEnemyLoot(entity, mobileType, basics, player, { rolls = Math.random } = {}) {
-  const itemChanceScale = isHumanoid(entity) ? HUMANOID_LOOT_ITEM_SCALE : 1;
+// ELITE: `lootDropMult` scales every item category's chance (gold untouched, as the humanoid cut);
+// `lootQualityMult` scales the rarity ladder's odds. Both 1 everywhere but an elite dungeon.
+export function spawnEnemyLoot(entity, mobileType, basics, player, { rolls = Math.random, lootDropMult = 1, lootQualityMult = 1 } = {}) {
+  const itemChanceScale = (isHumanoid(entity) ? HUMANOID_LOOT_ITEM_SCALE : 1) * lootDropMult;
   entity.items = generateItems(enemyLootTableKey(mobileType, basics?.lootTableKey ?? '-'), { level: player.level, gender: player.gender }, undefined, { itemChanceScale, mobileType });
   const eq = equipEnemy(entity, mobileType, player.level, rolls, { player });
   addEnemyLootExtras(entity.items, basics, rolls);
@@ -117,7 +119,7 @@ export function spawnEnemyLoot(entity, mobileType, basics, player, { rolls = Mat
   // walked too: DFU's Items holds all of it, the port's droppable cut
   // (above) does not, and a foe's cuirass is worn either way.
   if (conditionBasedPricesOn()) randomConditionLootItems([...new Set([...entity.items, ...(eq?.worn ?? [])])], rolls);
-  rollCorpseLoot(entity, basics, { rolls, luck: liveStat(player, 'luck') });
+  rollCorpseLoot(entity, basics, { rolls, luck: liveStat(player, 'luck'), qualityMult: lootQualityMult });
   return entity.items;
 }
 

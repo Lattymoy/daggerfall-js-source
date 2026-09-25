@@ -61,6 +61,7 @@ import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { mountHitNumbers } from './hitNumbers.js';   // HN1
 import { activeSpellIcons, maxRoundsRemaining } from './hudActiveSpells.js';
 import { liveBundles } from '../systems/mysticism.js';   // PX30: the ONE bundle walk the HUD already uses
+import { isEnhancedPlus } from '../systems/uiSkin.js';   // PLUS1: the lost chunk and the low-health frame are Enhanced Plus's
 import { getPref } from '../systems/uiPrefs.js';   // PX30c: the port's own prefs, not DFU's settings
 import { survivalHudChips } from '../systems/survival/status.js';   // SURV5: the needs strip
 import { liveVampirism } from '../systems/racialLive.js';   // AUDIT SURV C: no hunger or sleep chip on a vampire
@@ -83,7 +84,7 @@ import { glyphSvg, padFamily } from './padGlyphs.js';
 import { controllerLook } from '../player/lookFilter.js';   // GP1's own latch: "the last input was the pad"
 import { bindings } from './input.js';
 // (breathShortThreshold lives in hud.js, imported below with compassScroll)
-import { foeTarget, tickFoeTarget } from './hudFoeTarget.js';
+import { foeTarget, foeTargetRef, tickFoeTarget } from './hudFoeTarget.js';
 // PX32: the reticle's LAWS are the classic module's - which setting shows
 // a crosshair, which style makes the mode word the crosshair, which
 // styles show a corner word - imported rather than restated.
@@ -283,6 +284,84 @@ const clipInset = (node, key, side) => {
   last[key] = v;
   node.style.clipPath = v;
 };
+/** VB2: how long the lost chunk stands before it drains (seconds), and
+ *  how fast it drains once it goes (percent of the bar per second). */
+export const GHOST_HOLD = 0.55;
+export const GHOST_RATE = 70;
+/** VB2: at or below this percentage the health bar's frame warns. */
+export const LOW_HEALTH_PCT = 25;
+/**
+ * VB2: one frame of the lost chunk, pure. `g` is last frame's
+ * { at, pct, hold } (or null), `pct` the bar now, `dt` seconds. A gain
+ * (or the first frame) snaps the chunk to the bar - there is nothing
+ * lost to show. A fresh loss restarts the hold from wherever the chunk
+ * stands, so a flurry of blows reads as one run of damage.
+ */
+export function stepGhost(g, pct, dt) {
+  const p = Math.max(0, Math.min(100, pct));
+  if (!g || p >= g.at) return { at: p, pct: p, hold: GHOST_HOLD };
+  if (p < g.pct) return { at: g.at, pct: p, hold: GHOST_HOLD };
+  if (g.hold > 0) return { at: g.at, pct: p, hold: g.hold - dt };
+  return { at: Math.max(p, g.at - GHOST_RATE * dt), pct: p, hold: 0 };
+}
+const ghosts = {};
+/** FRAME1b: the last health (percent) the foe bar showed for each foe,
+ *  keyed by the entity - so a foe struck again after its bar faded, or
+ *  after the player switched to another foe, starts its loss readout
+ *  from where ITS bar stood. A foe never shown before is taken as full:
+ *  the frame appears on the first blow, after the damage has landed,
+ *  and without this the first hit on any foe broke nothing off. */
+const foeSeen = new WeakMap();
+/** FRAME1: the smallest loss (percent of the bar, in ONE frame) that
+ *  breaks a piece off. A spell's cost or a blow clears it; the trickle
+ *  of a sprint's fatigue does not, so the bar is not raining pieces. */
+export const CHUNK_MIN_LOSS = 1.5;
+export const FOE_CHUNK_MIN_LOSS = 0.5;
+/**
+ * FRAME1: which of a bar's two chunk pieces the n-th loss uses, and
+ * which of the two identical animations it runs. Alternating the
+ * animation NAME is what restarts it on a piece that already fell - a
+ * class swap, with no forced reflow (the node tests' DOM has none).
+ */
+export const chunkFrame = (n) => ({ index: n % 2, cls: Math.floor(n / 2) % 2 ? 'fb' : 'fa' });
+const chunkCount = {};
+function dropChunk(key, chunks, to, from) {
+  const n = (chunkCount[key] = (chunkCount[key] ?? -1) + 1);
+  const { index, cls } = chunkFrame(n);
+  const c = chunks[index];
+  c.style.left = `${to.toFixed(1)}%`;
+  c.style.width = `${(from - to).toFixed(1)}%`;
+  c.className = `hud-chunk ${cls}`;
+}
+/** FRAME1c: a fallen piece is put AWAY, not left parked on its last
+ *  frame. The pieces animate with `forwards`, and an animation restarts
+ *  when its element comes back from display:none - every window hides
+ *  the HUD, so on each close the last pieces to fall fell again and the
+ *  bar seemed to lose health it had not lost. Cleared when the fall ends
+ *  (the ::after piece is the longer of the two) and whenever the HUD
+ *  hides, since a fall cut short by a window never reaches its end. */
+function stowChunk(c) { if (c && c.className !== 'hud-chunk') c.className = 'hud-chunk'; }
+function armChunks(chunks) {
+  for (const c of chunks) {
+    c.addEventListener?.('animationend', (e) => {
+      if (String(e.animationName ?? '').startsWith('hud-chunk-r')) stowChunk(c);
+    });
+  }
+}
+function stowAllChunks(p) {
+  for (const k of ['magicka', 'health', 'fatigue']) for (const c of p[k]?.chunks ?? []) stowChunk(c);
+  for (const c of p.foeChunks ?? []) stowChunk(c);
+}
+/** FRAME1: one frame of a bar's loss readout - the held pale strip, and
+ *  a falling piece when this frame took a real bite. */
+function lossTick(key, part, pct, dt, minLoss) {
+  if (!isEnhancedPlus()) return;   // PLUS1: plain Enhanced keeps its plain bars
+  const prev = ghosts[key] ?? null;
+  const g = stepGhost(prev, pct, dt);
+  ghosts[key] = g;
+  width(part.ghost, `${key}G`, g.at);
+  if (prev && part.chunks && prev.pct - g.pct >= minLoss) dropChunk(key, part.chunks, g.pct, prev.pct);
+}
 const width = (node, key, pct) => {
   const v = `${Math.max(0, Math.min(100, pct)).toFixed(1)}%`;
   if (last[key] === v) return;
@@ -319,6 +398,13 @@ function build(doc) {
   const foeTrack = el('div', 'hud-track hud-foetrack');
   const foeFill = el('i', 'hud-fill');
   foeTrack.append(foeFill);
+  // FRAME1: the foe's bar loses health the way yours does - a pale chunk
+  // that holds and drains, and a piece that breaks off and falls.
+  // DROPS-AUDIT F1: Plus's alone - built at all only under Plus, so plain Enhanced's tracks hold the nodes they always held
+  const plusLoss = isEnhancedPlus();
+  const foeGhost = plusLoss ? el('i', 'hud-ghost') : null;
+  const foeChunks = plusLoss ? [el('i', 'hud-chunk'), el('i', 'hud-chunk')] : null;
+  if (plusLoss) { foeTrack.append(foeGhost, ...foeChunks); armChunks(foeChunks); }
   // FOEBAR1 (2026-09-17, Mac, from a friend's two pictures): THE BLADE -
   // an alternate face for the same readout. Two pictures under the one
   // track: the dark twin-bladed shape with the skull hub is the empty
@@ -369,9 +455,20 @@ function build(doc) {
     const fill = el('i', 'hud-fill');
     const num = el('span', 'hud-num');
     track.append(fill, el('span', 'hud-vlabel', label), num);
+    // VB2: THE LOST CHUNK. A pale strip behind the fill that holds where
+    // the bar WAS for a beat and then drains down to it, so a hit reads
+    // as how much it took rather than only where it left you. It sits
+    // UNDER the fill by z-index (the track isolates), so the fill covers
+    // all of it but the part that was lost.
+    // DROPS-AUDIT F1: under Plus only - plain Enhanced's sheet has no rule taking these out of the track's flex row,
+    // so three stray nodes pushed the percentage in from the bar's right edge
+    const ghost = plusLoss ? el('i', 'hud-ghost') : null;
+    // FRAME1: the two pieces a loss breaks off, taken in turn (see dropChunk).
+    const chunks = plusLoss ? [el('i', 'hud-chunk'), el('i', 'hud-chunk')] : null;
+    if (plusLoss) { track.append(ghost, ...chunks); armChunks(chunks); }
     wrap.append(track);
     bars.append(wrap);
-    return { fill, num };
+    return { fill, num, ghost, chunks, wrap };
   };
   // Magicka left, health centre, fatigue right - the reference's own
   // order, and DFU's own three.
@@ -380,9 +477,18 @@ function build(doc) {
   const fatigue = vital('fatigue', 'Fatigue');
   bottom.append(bars);
   const effects = el('div', 'hud-effects');
-  bottom.append(effects);
   const needs = el('div', 'hud-needs');   // SURV5: the needs strip, under the effects
-  bottom.append(needs);
+  if (isEnhancedPlus()) {
+    // PLUS1b: ONE STATUS ROW. The active effects (a spell, a poison, a disease) and the needs (Peckish, Dehydrated,
+    // Wet) stood as two rows under the vitals; under Plus they share one, effects first, so the foot of the HUD is
+    // one line of chips rather than two.
+    const status = el('div', 'hud-status');
+    status.append(effects, needs);
+    bottom.append(status);
+  } else {
+    bottom.append(effects);
+    bottom.append(needs);
+  }
   root.append(bottom);
 
   // PX32: THE RETICLE. The enhanced branch returns before the classic
@@ -551,7 +657,7 @@ function build(doc) {
   cells.main.cell.addEventListener('pointerdown', tap(() => { liveOpts.quickSwitchHand?.(); }));
 
   doc.body.append(root);
-  return { root, compass, marks, detectMarks: [], gateMark: null, foe, foeName, foeFill, foeBladeFull, magicka, health, fatigue, effects, needs,
+  return { root, compass, marks, detectMarks: [], gateMark: null, foe, foeName, foeFill, foeGhost, foeChunks, foeBladeFull, magicka, health, fatigue, effects, needs,
     breath, breathFill, readied, reticle, cross, centreWord, cornerWord,
     quick, quickCells: cells, quickTags: tags, hotDock,
     spellChip: { chip: spellChip, tag: spellTag, img: spellGlyph, text: spellText, name: spellName } };
@@ -625,7 +731,7 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
   // exactly when it may still be up under the pack as a drop target.
   drawEnhancedHotbar(vitals, opts);
   if (hidden) {
-    if (last.hidden !== true) { last.hidden = true; host.style.display = 'none'; }
+    if (last.hidden !== true) { last.hidden = true; host.style.display = 'none'; stowAllChunks(parts); }   // FRAME1c
     return;
   }
   if (last.hidden !== false) { last.hidden = false; host.style.display = ''; }
@@ -669,11 +775,24 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
   const t = foeTarget();
   if (!t) {
     if (last.foe !== null) { last.foe = null; parts.foe.classList.remove('on'); }
+    last.foeRef = null;
   } else {
     if (last.foe !== t.name) { last.foe = t.name; parts.foe.classList.add('on'); }
-    put(parts.foeName, 'foeName', t.name);
+    // FRAME1b: the loss readout follows the FOE, not its name. Keyed on the
+    // name, two foes called "Rat" shared one ghost, and switching between
+    // them broke a piece off from the other rat's health - a chunk hanging
+    // across the middle of the bar, nowhere near this foe's fill.
+    const ref = foeTargetRef();
     const foePct = (t.health / t.maxHealth) * 100;
+    if (last.foeRef !== ref) {
+      last.foeRef = ref;
+      const was = Math.max(0, Math.min(100, (ref && foeSeen.get(ref)) ?? 100));
+      ghosts.foe = { at: was, pct: was, hold: GHOST_HOLD };
+    }
+    put(parts.foeName, 'foeName', t.name);
     width(parts.foeFill, 'foeFill', foePct);
+    lossTick('foe', { ghost: parts.foeGhost, chunks: parts.foeChunks }, foePct, dt, FOE_CHUNK_MIN_LOSS);
+    if (ref) foeSeen.set(ref, foePct);
     // FOEBAR1: the blade face, when the pref says so - the class picks
     // which of the two children shows, and the red picture is clipped in
     // from both tips by the same fraction the plain fill gives up.
@@ -713,6 +832,10 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
     // percent sign rather than something a player should have to read.
     const shown = now > 0 ? Math.max(1, Math.min(100, Math.round(pct))) : 0;
     put(part.num, `${key}N`, `${shown}%`);
+    // VB2: the lost chunk behind the fill, and the health frame's warning.
+    lossTick(key, part, pct, dt, CHUNK_MIN_LOSS);
+    const low = key === 'health' && now > 0 && pct <= LOW_HEALTH_PCT && isEnhancedPlus();
+    if (last[`${key}Low`] !== low) { last[`${key}Low`] = low; part.wrap.classList.toggle('low', low); }
   }
 
   // THE BREATH. DFU's own two laws: drawn only while holding breath,

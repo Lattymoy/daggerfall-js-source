@@ -224,8 +224,10 @@ test('AUDIT WB C1/C3 the site on a real coast: the boot spreads the land climate
   // the one water law, pinned equal to the held map's
   for (const climate of [CLIMATES.Ocean, 224, 231, -1]) for (let byte = 0; byte < 64; byte++) assert.equal(gateSeaPixel(climate, byte), isWaterPixel(climate, byte), `${climate}/${byte}`);
   // C3: a town in province 0 at the border (x = 400) - its ring reaches province 1, and a site there is named
-  // with the town's own province
-  const border = [{ region: 0, px: 399, py: 100, type: LOCATION_TYPES.TownCity, name: 'Borderton' }];
+  // with the town's own province. Two such towns: main's SPAWN rate (ELITE, 2026-09-25: any spawned dungeon 40% of
+  // pixels, up from 10%) leaves one ring's far side short of GATE_REGION_MIN_PIXELS, and a province that short never
+  // takes a gate
+  const border = [{ region: 0, px: 399, py: 100, type: LOCATION_TYPES.TownCity, name: 'Borderton' }, { region: 0, px: 399, py: 140, type: LOCATION_TYPES.TownCity, name: 'Marchford' }];
   const scan = scanGatePixels(fakeMaps(border));
   const across = [...(scan.byRegion.get(1) ?? [])];
   assert.ok(across.length > 0, 'the town\'s ring crosses the border');
@@ -233,7 +235,8 @@ test('AUDIT WB C1/C3 the site on a real coast: the boot spreads the land climate
     const site = findGateSite(day, scan);
     if (!site || site.region !== 1) continue;
     assert.equal(site.town.region, 0);
-    assert.equal(site.place, `Borderton, ${REGION_NAMES[0]}`, 'named with the town\'s own province, not the gate\'s');
+    assert.ok(['Borderton', 'Marchford'].includes(site.town.name));
+    assert.equal(site.place, `${site.town.name}, ${REGION_NAMES[0]}`, 'named with the town\'s own province, not the gate\'s');
     return;
   }
   assert.fail('no day put the gate across the border');

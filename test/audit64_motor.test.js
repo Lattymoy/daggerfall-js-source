@@ -73,9 +73,9 @@ const dfuBaseSpeed = (speed) => (speed + 150 - 0.5 * (100 - Math.max(speed, 30))
 const dfuSwimSpeed = (base, swimming) => base * (swimming / 200) + base / 4;
 
 test('AUDIT 64 F0: an EXTERIOR swimmer moves at GetSwimSpeed, not the grounded walk speed', () => {
-  // PlayerMotor.cs:383-389 - UpdateSpeed's third statement. `sunk` is
-  // controllerSink, which DoSinking/DoUnsinking write in lockstep with
-  // PlayerEnterExit.IsPlayerSwimming (PlayerHeightChanger.cs:419-423,
+  // PlayerMotor.cs:383-389 - UpdateSpeed's third statement, on
+  // PlayerEnterExit.IsPlayerSwimming, which DoSinking/DoUnsinking write in
+  // lockstep with controllerSink (PlayerHeightChanger.cs:419-423,
   // :374-377), and outdoors levitateMotor.IsSwimming stays FALSE
   // (PlayerEnterExit.cs:414-421), so FixedUpdate never returns early
   // and the GROUNDED path carries the swim speed.
@@ -84,6 +84,11 @@ test('AUDIT 64 F0: an EXTERIOR swimmer moves at GetSwimSpeed, not the grounded w
   m.onExteriorWater = true;
   for (let f = 0; f < 40; f++) m.update(DT, still(), 0);   // arm the sink
   assert.equal(m.sunk, true, 'DoSinking has armed');
+  // DW-D: the gate is DFU's own member now - PlayerEnterExit.IsPlayerSwimming,
+  // which DoSinking writes beside controllerSink (:423) and the exterior
+  // hosts carry (exteriorSwimming); this bare motor has no host, so the
+  // write is the test's
+  m.isPlayerSwimming = true;
 
   const z0 = m.pos[2];
   for (let f = 0; f < 60; f++) m.update(DT, still({ forward: 1 }), 0);
