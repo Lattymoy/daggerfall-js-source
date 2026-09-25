@@ -7049,7 +7049,7 @@ answers that exact string in the object's sleep, no event, no wake. Only a
 CHANNEL session (chat, `presence: false`) used it. A presence session's
 liveness rode the pose.
 
-**Now (`src/net/wire.js:944`, `src/net/online.js:1841`):**
+**Now (`src/net/wire.js:967`, `src/net/online.js:1928`):**
 
 - `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
   before) or every 20 s standing, as the peers' proof of life and the silence
@@ -9035,6 +9035,49 @@ Pinned: `test/guild1.test.js` (9), `test/accountworker.test.js` (the tables). `t
   cannot press is disabled and says why - "the guildmaster's alone", "take the gold out first", "hand the guild on
   first". Every form keeps its words across a repaint.
 
-Not yet: the tag beside the name and the guild chat (GUILD1c), and the guild hall (GUILD1d).
+Not yet at GUILD1b: the tag beside the name and the guild chat (GUILD1c, below), and the guild hall (GUILD1d).
 
 Pinned: `test/guild1b.test.js` (10). `tools/mutants/guild1b.json` (31).
+
+**GUILD1c - the tag beside the name, and the guild's chat** (2026-09-25, Mac: "Do guild1c").
+
+- **The guild rides the token.** The account service signs the named character's guild into its identity token - the
+  guild's id `gi`, its tag `gt` and the character's member row `gm` (the roster's `m<rowid>`), all three or none
+  (`net/identityToken.js` guildClaimsValid) - read at the mint off the roster as it stands (`server-account/src/guilds.js`
+  guildBadgeOf), and answers the tag beside the level for the page's own name. The client never says which guild. A room
+  stamps the TAG ALONE beside the name (`net/wire.js` badged); the id and the member row are the relay's, to route a
+  guild's chat and a removal by, and nobody else's to read.
+- **Where it shows**: `<HND>` right of the name, before the glyphs - over a head in both faces (`ui/nameLayer.js`; the
+  bitmap run of `net/remotePlayers.js` drawNamePoints centred on the whole of it), on a chat line and in the roster
+  (`ui/chatPanel.js`, `net/roster.js` - my own row too), and on the Inspect card (`ui/profileWindow.js`); one spelling,
+  `net/guildLaw.js` guildTagText. A peer in no guild wears the label it wore before.
+- **A membership that moves is said at once.** A token is read once, at a hello. So every guild act that moves a
+  membership answers a SIGNED ORDER (`guildOrdersOf`): founding, a join, a leave, a disbanding and the guild tab's look
+  say the actor's character's guild NOW (`{o:'guild'}`); the guild book (`net/guildBook.js` onOrders) hands a look's
+  order on when the membership it reads differs from the last one handed on - the first look always, since the page
+  cannot know what its rooms were told - and the host carries it down every socket it holds (`net/online.js`
+  sendGuildOrder: after each socket's own welcome names world113, one guild frame a socket every GUILD_SEND_MS, 1.5 s -
+  wider than the relay's own one-a-second gate, so two frames the wire bunched are not one it drops - and each once
+  more GUILD_RESEND_MS, 5 s, after its first, for the one it dropped anyway; a newer order in the older's place). A removal and a disbanding answer an OUT order (`{o:'guildout'}` - the
+  member row, or the guild whole), carried to the hub, the one room every online player holds a socket to: it takes the
+  membership off every socket of theirs and tells each, and their own client looks again and carries their none to
+  their other rooms (`onGuildGone`).
+- **The relay** (world113): a `guild` order is taken only from a socket whose verified account it names, and only when
+  NEWER than what the socket wears (its token's, or a later order's) - a replayed join cannot undo the leave after it;
+  a tag that moved fans to a place room on the room's own budget (GUILD_ROOM_HZ_MAX), and in a channel or the hub its
+  carrier alone hears it (renown's rule there). A `guildout` is believed on its signature, as a mute order is, and HELD
+  (`_guildOuts`), so a token or an order said before a removal cannot carry the member back into the guild's chat.
+- **The guild's chat**: a Guild tab beside the Party tab (`net/chat.js`), on the bar while the character is in a guild;
+  its lines ride the hub link with `ch: 'guild'` and the hub fans them to the sockets wearing the sender's guild alone,
+  on the guilds' own budget (GUILD_CHAT_ROOM_HZ_MAX, 40 a second); a sender in no guild says it to nobody, and a guild
+  line anywhere but the hub is junk. `/guild` or `/gu` say a line on it (`/g` stays the World's); its list is the hub's
+  peers wearing the tag, with my own row. A relay before world113 is told in words (GUILD_OLD_RELAY_TEXT). The service
+  is acct12.
+
+Not yet: the guild hall (GUILD1d). Known and left: after a change, the hub's World roster shows the new tag to its
+carrier alone - the others read it off their next roster (the hub fans no tag to two thousand sockets); the Guild tab's
+list names only the members the hub introduced (CHAT_ROSTER_MAX), though every member's lines arrive; and the main
+menu's profile badge does not draw the tag.
+
+Pinned: `test/guild1c.test.js` (14), and the pins the new fields moved (the badge, the attachment, the tabs, the chat
+channel lists). `tools/mutants/guild1c.json` (64, all dead).

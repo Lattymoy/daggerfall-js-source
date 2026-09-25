@@ -29,7 +29,7 @@
  *  reason: a deploy that did not happen looks exactly like one that
  *  did. Kept in step with ACCOUNT_VERSION in wrangler.toml, which
  *  test/accountworker.test.js holds. */
-export const ACCOUNT_VERSION = 'acct11';   // acct11: RENOWN4's track total in the mint's answer; acct10: RENOWN1's Renown, HOME1's online homes, DECOR1's decor and GUILD1's guilds (all unshipped, one deploy; acct9 on the branch - FOUNDER2 took acct9 first); acct8: DUEL1's duelling record; acct3: ACC3's titles and glyphs; acct4: ACC4's time played; acct5: MOD1's moderation; acct6: MAIL1's letters; acct7: TITLE-N's Dungeon Master and Patreon tiers; acct9: FOUNDER2's cutoff at 2026-09-25 (acct8 on its branch; DUEL1 took acct8 first)
+export const ACCOUNT_VERSION = 'acct12';   // acct12: GUILD1c's guild on the token (the mint's `gi`/`gt`/`gm` and its answer's tag) and the guild acts' signed orders; acct11: RENOWN4's track total in the mint's answer; acct10: RENOWN1's Renown, HOME1's online homes, DECOR1's decor and GUILD1's guilds (all unshipped, one deploy; acct9 on the branch - FOUNDER2 took acct9 first); acct8: DUEL1's duelling record; acct3: ACC3's titles and glyphs; acct4: ACC4's time played; acct5: MOD1's moderation; acct6: MAIL1's letters; acct7: TITLE-N's Dungeon Master and Patreon tiers; acct9: FOUNDER2's cutoff at 2026-09-25 (acct8 on its branch; DUEL1 took acct8 first)
 
 /** A body bigger than this is not a request this service has. Read
  *  BEFORE the JSON is parsed, so a megabyte of nothing costs nothing. */

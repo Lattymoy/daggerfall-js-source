@@ -103,8 +103,8 @@
   {
     "name": "ACC3c-11-the-roster-trusts-the-relay",
     "file": "src/net/roster.js",
-    "old": "    rows.push({ id, name: sanitizeName(name), tag: tagOf(id), me, ...readBadge(from) });",
-    "new": "    rows.push({ id, name: sanitizeName(name), tag: tagOf(id), me, title: from?.title ?? null, glyphs: from?.glyphs ?? [] });",
+    "old": "    rows.push({ id, name: sanitizeName(name), tag: tagOf(id), me, ...readBadge(from), gt: readGuildTag(from) });",
+    "new": "    rows.push({ id, name: sanitizeName(name), tag: tagOf(id), me, title: from?.title ?? null, glyphs: from?.glyphs ?? [], gt: readGuildTag(from) });",
     "tests": [
       "test/acc3wear.test.js"
     ],

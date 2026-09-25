@@ -43,11 +43,11 @@ test('CHAT-CHAN wire: one channel per politic region, whitelisted by enumeration
   for (const bad of ['chat:region.62', 'chat:region.-1', 'chat:region.01', 'chat:region.x', 'chat:party.q123']) assert.equal(isChatRoom(bad), false, `${bad}: a list, not a prefix (AUDIT CHAT A1)`);
   assert.ok(isSocialRoom(SOCIAL_ROOM) && !isSocialRoom(chatRegionRoom(4)), 'a region\'s channel is no hub: it keeps no seats');
 
-  assert.deepEqual(CHAT_LINE_CHANNELS, ['party']);
+  assert.deepEqual(CHAT_LINE_CHANNELS, ['party', 'guild']);   // GUILD1c: and a guild's line (test/guild1c.test.js)
   const hello = { hasHello: true };
   assert.deepEqual(parseClient(JSON.stringify({ t: 'chat', text: 'hi all' }), hello), { t: 'chat', text: 'hi all' }, 'a line naming no channel: the old shape, no key');
   assert.deepEqual(parseClient(JSON.stringify({ t: 'chat', text: ' hi party ', ch: 'party' }), hello), { t: 'chat', text: 'hi party', ch: 'party' });
-  for (const ch of ['guild', 'world', '', null, 7, ['party']]) assert.deepEqual(parseClient(JSON.stringify({ t: 'chat', text: 'hi', ch }), hello), { error: 'bad chat' }, `ch ${JSON.stringify(ch)}: refused whole - never quietly the room's line`);
+  for (const ch of ['clan', 'world', '', null, 7, ['party']]) assert.deepEqual(parseClient(JSON.stringify({ t: 'chat', text: 'hi', ch }), hello), { error: 'bad chat' }, `ch ${JSON.stringify(ch)}: refused whole - never quietly the room's line`);
 
   assert.equal(CHAN_RELAY_MIN, 102);
   assert.equal(relaySupportsChannels('world101'), false, 'DISC12\'s relay (the last before the arc) projects `{t:\'chat\', text}` and would fan a party line to everyone');
@@ -187,12 +187,12 @@ test('CHAT-CHAN session: a party line goes only to a relay that routes it (the w
   assert.equal(s.chanOk, true);
   assert.equal(s.sendChat('  psst  ', { ch: 'party' }), true);
   assert.deepEqual(out().at(-1), { t: 'chat', text: 'psst', ch: 'party' }, 'sanitized, and the channel named');
-  assert.equal(s.sendChat('guild line', { ch: 'guild' }), false, 'no such channel: refused at home, never sent for the relay to close on');
+  assert.equal(s.sendChat('clan line', { ch: 'clan' }), false, 'no such channel: refused at home, never sent for the relay to close on');
   assert.deepEqual(Object.keys(out().at(-1)), ['t', 'text', 'ch']);
   quiet(() => ws.receive({ t: 'chat', id: 'bbbb-0002', name: 'b', text: 'on my way', at: 5, ch: 'party' }));
-  quiet(() => ws.receive({ t: 'chat', id: 'bbbb-0002', name: 'b', text: 'guild?', at: 6, ch: 'guild' }));
+  quiet(() => ws.receive({ t: 'chat', id: 'bbbb-0002', name: 'b', text: 'clan?', at: 6, ch: 'clan' }));
   quiet(() => ws.receive({ t: 'chat', id: 'bbbb-0002', name: 'b', text: 'world', at: 7 }));
-  assert.deepEqual(heard.map((l) => [l.text, l.ch]), [['on my way', 'party'], ['guild?', null], ['world', null]], 'the relay\'s word, one of the wire\'s own, or none');
+  assert.deepEqual(heard.map((l) => [l.text, l.ch]), [['on my way', 'party'], ['clan?', null], ['world', null]], 'the relay\'s word, one of the wire\'s own, or none');
 });
 
 test('CHAT-CHAN session: the party lines coming in have their OWN gate - an honest hub at the World\'s full budget and the parties\' at once passes whole - and the cast\'s bucket is no longer the chat\'s (mutants: party lines on the room\'s bucket; a heal cast spending a chat token, which Local chat on the presence session made real)', () => {
@@ -232,7 +232,7 @@ test('CHAT-CHAN log: a line the game says goes on EVERY tab as ONE line - peeked
   assert.equal(n.system, true, 'the game\'s, whatever the caller said');
   assert.equal(n.tab, null, 'said on no one tab');
   for (const tab of log.tabs) assert.equal(tab.messages.at(-1), n, `the same line object on ${tab.id}`);
-  assert.deepEqual(log.tabs.map((t) => t.unread), [1, 0, 0, 0], 'unread where the player reads - the active tab');
+  assert.deepEqual(log.tabs.map((t) => t.unread), [1, 0, 0, 0, 0], 'unread where the player reads - the active tab');   // GUILD1c: five tabs
   assert.equal(log.unreadTotal(), 1, 'the Chat button counts the line that arrived, not the line times the tabs');
   assert.equal(log.peek().length, 1, 'the peek draws it once');
   assert.equal(log.pushAll({ text: '' }), null, 'nothing to say: nothing kept');
@@ -274,7 +274,7 @@ test('CHAT-W log: the peek is the open tab\'s and the party\'s - a World line ne
 
 test('CHAT-P log: the Party tab starts off the bar, is put on and taken off by the host, cannot be selected while off, counts no unread while off, and taking it off the front hands the front to the first tab on the bar - read at once when the chat is open (mutants: the Party tab shown from the start; select into a hidden tab; the front left on a hidden tab; the hidden count on the badge)', () => {
   const log = new ChatLog({ now: () => 1 });
-  assert.deepEqual(log.tabs.map((t) => [t.id, t.shown]), [['world', true], ['region', true], ['party', false], ['local', true]]);
+  assert.deepEqual(log.tabs.map((t) => [t.id, t.shown]), [['world', true], ['region', true], ['party', false], ['guild', false], ['local', true]]);   // GUILD1c: the Guild tab starts off the bar too
   assert.equal(log.select('party'), false, 'off the bar: not to the front');
   log.push('party', { id: 'b', name: 'B', text: 'early' });
   assert.equal(log.unreadTotal(), 0, 'a count on a tab nobody can see is on no badge');
@@ -319,7 +319,7 @@ test('CHAT-CHAN log: setRoom moves a tab\'s channel and names its PLACE, keeping
   assert.equal(log.setRoom('region', 'chat:region.17', 'Wayrest'), false);
   assert.equal(log.version, v2);
   assert.equal(log.setRoom('nowhere', 'x', 'y'), false);
-  assert.deepEqual(log.tabs.map((t) => t.link), [true, true, false, false], 'the World and Region tabs ride rooms of their own');
+  assert.deepEqual(log.tabs.map((t) => t.link), [true, true, false, false, false], 'the World and Region tabs ride rooms of their own');   // GUILD1c: the Guild tab rides the hub's
   assert.equal(regionJoinedText('Wayrest'), 'Region channel: Wayrest.');
 });
 
@@ -466,7 +466,7 @@ test('CHAT-CHAN panel: each tab says who it reaches (and the region\'s name), th
   log.pushAll({ text: 'The server is restarting.' });
   panel.render({});
   // the unread count is the tab's spoken name (the eye gets a dot - tools/chatChanProbe.mjs looks at it)
-  assert.deepEqual(tabs.map((b) => b.attrs['aria-label']), ['World, 2 unread', 'Region', 'Party, 1 unread', 'Local, 1 unread'], 'the World line and the game\'s notice (unread on the active tab), a line each on Party and Local');
+  assert.deepEqual(tabs.map((b) => b.attrs['aria-label']), ['World, 2 unread', 'Region', 'Party, 1 unread', 'Guild', 'Local, 1 unread'], 'the World line and the game\'s notice (unread on the active tab), a line each on Party and Local');   // GUILD1c: the Guild tab, off the bar and counting nothing
   assert.ok(tabs.every((b) => one(b, 'dfchat-badge').attrs['aria-hidden'] === 'true'), 'the dot says nothing a second time');
   const peek = one(root, 'dfchat-peek').children;
   // CHAT-W: the open tab's line, the party's, the game's - the Local aside is Local's alone (it waits on its dot)

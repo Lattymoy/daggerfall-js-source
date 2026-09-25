@@ -20,7 +20,7 @@
   {
     "name": "GUILD1b-the-short-founder-keeping-the-guild",
     "file": "src/net/guildBook.js",
-    "old": "        await this.door.disband(character);\n        return { ok: false, error: 'gold' };",
+    "old": "        const gone = await this.door.disband(character);\n        if (gone?.ok && typeof gone.data?.outOrder === 'string') this._hand({ outOrder: gone.data.outOrder });   // GUILD1c: a room that heard the founding hears it gone\n        return { ok: false, error: 'gold' };",
     "new": "        return { ok: false, error: 'gold' };",
     "tests": [
       "test/guild1b.test.js"

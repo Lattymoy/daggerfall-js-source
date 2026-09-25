@@ -97,6 +97,10 @@ neither, the size back after a reload, and the sheet's own size after a double c
 
 ## CHAT-CHAN - four channels: World, Region, Party, Local, and the aside out of character
 
+(GUILD1c, 2026-09-25, added a fifth tab on the Party tab's shape - Guild, on the bar while the character is in a guild,
+its lines on the hub link with `ch: 'guild'` and heard by the guild's members online alone; `/guild` or `/gu`.
+`06-Systems/Online-Arc.md` GUILD1c.)
+
 kurkku on Discord, 2026-09-23: "Global chat that everyone everywhere sees / regional chat that everyone in the region
 can see (so players in Wayrest see messages from other players in Wayrest and so on) / party chat". Addison Knox, the
 same day: "Roleplay chat channels (IC/OOC) keeps immersion intact by separating in-character dialogue from coordination

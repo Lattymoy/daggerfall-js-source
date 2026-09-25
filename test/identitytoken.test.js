@@ -325,9 +325,9 @@ test('ACC1a: PURE, and both ends can import it', async () => {
   // this file exactly as a Worker does
   assert.match(text, /nowS/);
   assert.match(text, /subtle/);
-  // it imports the wire's name law and nothing else
+  // it imports the wire's name law and the guild's shapes (GUILD1c - guildLaw.js imports nothing), and nothing else
   const imports = [...text.matchAll(/from\s+'(\.[^']+)'/g)].map((m) => m[1]);
-  assert.deepEqual(imports, ['./wire.js'], 'a new import here is a new file in the relay\'s bundle');
+  assert.deepEqual(imports, ['./wire.js', './guildLaw.js'], 'a new import here is a new file in the relay\'s bundle');
 });
 
 // ═══ ACC1d: THE TRIPWIRE FIRED, AND THIS IS WHAT REPLACED IT ═══════

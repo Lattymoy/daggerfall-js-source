@@ -55,6 +55,9 @@ export const CHAT_TABS = Object.freeze([
   Object.freeze({ id: 'world', label: 'World', room: CHAT_WORLD_ROOM, link: true, hint: 'Everyone online' }),
   Object.freeze({ id: 'region', label: 'Region', room: null, link: true, hint: 'Everyone in the region you stand in' }),
   Object.freeze({ id: 'party', label: 'Party', room: null, link: false, hint: 'Your party alone', hidden: true, peekAll: true }),
+  // GUILD1c (Mac: "Do guild1c" - the guild's chat): the Party tab's shape - its lines ride the hub's link with
+  // `ch: 'guild'` and reach the guild's members online alone, and the tab is on the bar while the character is in one
+  Object.freeze({ id: 'guild', label: 'Guild', room: null, link: false, hint: 'Your guild alone', hidden: true, peekAll: true }),
   Object.freeze({ id: 'local', label: 'Local', room: null, link: false, hint: 'Those near enough to hear you - speak in character here, and put an aside out of character in (( ))' }),
 ]);
 /** CHAT-CHAN: how long the player must stand in another region before the Region tab moves to its channel, ms - a
@@ -78,6 +81,10 @@ export const CHAN_OLD_RELAY_TEXT = 'This channel needs the server\'s next update
 export const ROLL_OLD_RELAY_TEXT = 'Dice need the server\'s next update.';
 /** EMOTE1: an action said to a relay from before them (EMOTE_RELAY_MIN) - it would say the words bare. */
 export const EMOTE_OLD_RELAY_TEXT = 'Actions need the server\'s next update.';
+/** GUILD1c: the Guild tab on a relay from before the guild's channel - the World link's welcome said so. */
+export const GUILD_OLD_RELAY_TEXT = 'The guild channel needs the server\'s next update.';
+/** GUILD1c: the Guild tab's word while the character is in no guild. */
+export const NO_GUILD_TEXT = 'You are not in a guild.';
 /** CHAT-CHAN: how far a Local line carries, scene units - the distance a peer's NAME is drawn at (net/remotePlayers.js
  *  NAME_RANGE; a pin holds them equal): whoever you can read over a head can hear you, and nobody further. */
 export const CHAT_SAY_RANGE = 60;

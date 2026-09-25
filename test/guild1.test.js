@@ -78,6 +78,8 @@ async function stand() {
   return { env, call, guest, registered };
 }
 const mine = async (call, who) => (await call('/v1/guilds/mine', { character: who.character }, who.secret)).body.guild;
+/** GUILD1c: an answer with the orders it carries set aside - test/guild1c.test.js reads those. */
+const bare = ({ order, outOrder, ...body }) => body;
 
 // ─── THE LAW ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -284,7 +286,7 @@ test('GUILD1 the treasury: any member puts gold in; the guildmaster alone takes 
 test('GUILD1 leaving and handing on: a member leaves; the guildmaster leaves only a guild with nobody else in it, and only once its treasury is empty - it goes; handed on, another member is guildmaster and the old one an officer; a guild whose guildmaster\'s account went is given its highest rank\'s longest-standing member; disbanding is the guildmaster\'s once the treasury is empty, and a guild nobody is left in gives its name and tag to the next founder (mutants: the guildmaster walking out on members, the treasury left to vanish, succession skipped, an orphaned name held)', async () => {
   const { env, call, registered, gm, officer, member, recruit, id } = await guildOfThree();
   assert.deepEqual(await call('/v1/guilds/leave', { character: gm.character }, gm.secret), { status: 409, body: { error: 'guild-master-leaves' } });
-  assert.deepEqual((await call('/v1/guilds/leave', { character: recruit.character }, recruit.secret)).body, { ok: true });
+  assert.deepEqual(bare((await call('/v1/guilds/leave', { character: recruit.character }, recruit.secret)).body), { ok: true });
   assert.equal(await mine(call, recruit), null);
   // handed on
   assert.deepEqual(await call('/v1/guilds/handover', { character: officer.character, member: await id(member) }, officer.secret), { status: 403, body: { error: 'guild-rank' } });
@@ -298,7 +300,7 @@ test('GUILD1 leaving and handing on: a member leaves; the guildmaster leaves onl
   assert.deepEqual(await call('/v1/guilds/disband', { character: officer.character }, officer.secret), { status: 403, body: { error: 'guild-rank' } });
   assert.deepEqual(await call('/v1/guilds/disband', { character: gm.character }, gm.secret), { status: 409, body: { error: 'guild-treasury' } });
   await call('/v1/guilds/withdraw', { character: gm.character, gold: 10 }, gm.secret);
-  assert.deepEqual((await call('/v1/guilds/disband', { character: gm.character }, gm.secret)).body, { ok: true });
+  assert.deepEqual(bare((await call('/v1/guilds/disband', { character: gm.character }, gm.secret)).body), { ok: true });
   assert.deepEqual([await mine(call, gm), await mine(call, officer)], [null, null], 'everything of it went');
   // the lone guildmaster leaves: the guild goes - once its treasury is empty
   const solo = await registered('Solo');
@@ -306,7 +308,7 @@ test('GUILD1 leaving and handing on: a member leaves; the guildmaster leaves onl
   await call('/v1/guilds/deposit', { character: solo.character, gold: 5 }, solo.secret);
   assert.deepEqual(await call('/v1/guilds/leave', { character: solo.character }, solo.secret), { status: 409, body: { error: 'guild-treasury' } });
   await call('/v1/guilds/withdraw', { character: solo.character, gold: 5 }, solo.secret);
-  assert.deepEqual((await call('/v1/guilds/leave', { character: solo.character }, solo.secret)).body, { ok: true, disbanded: true });
+  assert.deepEqual(bare((await call('/v1/guilds/leave', { character: solo.character }, solo.secret)).body), { ok: true, disbanded: true });
   // an orphaned guild's name and tag go to the next founder
   const lone = await registered('Loner');
   const { guild } = (await call('/v1/guilds/found', { character: lone.character, name: 'Orphans', tag: 'ORP' }, lone.secret)).body;

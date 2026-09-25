@@ -29,6 +29,7 @@ import { titleBadge, glyphMarks } from '../ui/playerBadge.js';   // ACC3: what a
 import { projectToScreen } from '../player/tapRay.js';   // one home (audit24 onehome): the touch layer's own projection
 import { LOOK_ITEM_FIELDS, LOOK_GROUPS } from './wire.js';   // the look's vocabulary: the wire's own
 import { renownText } from './renown.js';   // RENOWN1: Renown's words, left of the name in the bitmap face too
+import { guildTagText } from './guildLaw.js';   // GUILD1c: the guild's tag, right of the name in the bitmap face too
 // 2026-09-17 (per-request, the NON-Morrowind peer only - net/peerBodies.js and its Morrowind body are untouched):
 // the same class-enemy sprite classic dungeon humanoids already use (Warrior, Mage, Knight, ...), driven by simple
 // moving/striking flags off the peer's synced pose instead of AI - the reusable pieces dungeonContext.js already
@@ -1091,7 +1092,7 @@ export class RemotePlayers {
       // invent a title the other does not draw (ACC1d-MARK's own shape).
       // RENOWN1: and Renown, the relay's stamp - left of the name in both faces
       out.push({ id: e.peer.id, name: e.peer.name ?? '', x: s.x, y: s.y,
-        title: e.peer.title ?? null, glyphs: Array.isArray(e.peer.glyphs) ? e.peer.glyphs : [], lv: e.peer.lv ?? null,
+        title: e.peer.title ?? null, glyphs: Array.isArray(e.peer.glyphs) ? e.peer.glyphs : [], lv: e.peer.lv ?? null, gt: e.peer.gt ?? null,   // GUILD1c: and the guild's tag, the relay's stamp
         scale: nameScaleFor(s.depth) * lens, depth: s.depth, lens });
     }
     return out;
@@ -1140,7 +1141,9 @@ export class RemotePlayers {
       // RENOWN1: and the level LEFT of the name, in the same run for the same reason - boxed in brackets, the one box a
       // bitmap line can draw ("[12] Mack"; the DOM face draws a real one)
       const lead = renownText(n.lv);
-      const run = `${lead ? `[${lead}] ` : ''}${marks ? `${n.name} ${marks}` : n.name}`;
+      // GUILD1c: and the guild's tag right of the name, before the glyphs - "[12] Mack <HND>"
+      const named = guildTagText(n.gt) ? `${n.name} ${guildTagText(n.gt)}` : n.name;
+      const run = `${lead ? `[${lead}] ` : ''}${marks ? `${named} ${marks}` : named}`;
       const tw = measureText(font.fnt, run) * s;
       // AUDIT NAME1 F13: the gap takes the HOST's scale, and only that one. NAME_GAP_PX is a clearance in SCREEN
       // pixels and this face draws in the drawing buffer's, where `scale` (ui/hud.js hudScale, the 320x200 fit) is

@@ -3574,3 +3574,15 @@ while doing it and not the row's doing:** on a touch screen the vitals' own stri
 touch buttons' rows (the column stands 12px up, the buttons from 16), and chips under the vitals already lift them
 into the block wherever the two stand side by side (at scale 1 on a 1024px screen); both stand as they were. Not measured in a browser, by Mac's call.
 Pinned: `test/renown4b.test.js` (2); `tools/mutants/renown4b.json` (9, all dead, PLUS-DEFAULT's among them).
+
+## GUILD1c — a guild on the token (2026-09-25, acct12)
+
+Mac: "Do guild1c" - the guild tag beside names, and the guild's chat (`06-Systems/Online-Arc.md` GUILD1c). The token grows
+three OPTIONAL claims, all three or none (`net/identityToken.js` guildClaimsValid): `gi` the guild's id, `gt` its tag,
+`gm` the character's member row - each a string of the guild law's own shape (`net/guildLaw.js`, which joins the relay's
+bundle; it imports nothing). The mint reads them off the roster for the character the client named, as it reads the
+Renown level, and answers the tag beside the level; a character in none, and a mint naming none, carry none. Two ORDER
+kinds join `mute` and `renown`, each carrying its own fields and no other's: `guild` (the carrier's character's guild now,
+or none) and `guildout` (a member row, or a guild whole, gone). Every guild act that moves a membership answers the order
+that says so, signed in place of what it says (`guildOrdersOf`); a service with no key still acts and answers null.
+Pinned: `test/guild1c.test.js`; `tools/mutants/guild1c.json`.

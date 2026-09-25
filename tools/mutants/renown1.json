@@ -155,8 +155,8 @@
   {
     "name": "RENOWN1-level-order-may-carry-a-mute",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.o === 'renown' && (!renownIssuable(c.lv) || c.mu !== undefined)) return false;",
-    "new": "  if (c.o === 'renown' && !renownIssuable(c.lv)) return false;",
+    "old": "  if (c.o === 'renown' && (!renownIssuable(c.lv) || c.mu !== undefined || !noGuild)) return false;",
+    "new": "  if (c.o === 'renown' && (!renownIssuable(c.lv) || !noGuild)) return false;",
     "tests": [
       "test/renown1.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "RENOWN1-relay-level-for-somebody-else",
     "file": "server/src/index.js",
-    "old": "      if (!cur?.id || !cur.sub || r.claims.s !== cur.sub) return;",
-    "new": "      if (!cur?.id) return;",
+    "old": "      if (!cur?.id || !cur.sub || r.claims.s !== cur.sub) return;\n      if (!(r.claims.lv > (cur.lv ?? 0))) {",
+    "new": "      if (!cur?.id) return;\n      if (!(r.claims.lv > (cur.lv ?? 0))) {",
     "tests": [
       "test/renown1.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "RENOWN1-plate-after-the-name",
     "file": "src/ui/nameLayer.js",
-    "old": "    tag.append(lv, name, glyphs);",
-    "new": "    tag.append(name, lv, glyphs);",
+    "old": "    tag.append(lv, name, guild, glyphs);",
+    "new": "    tag.append(name, lv, guild, glyphs);",
     "tests": [
       "test/renown1.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "RENOWN1-levelless-label-takes-a-plate",
     "file": "src/net/remotePlayers.js",
-    "old": "      const run = `${lead ? `[${lead}] ` : ''}${marks ? `${n.name} ${marks}` : n.name}`;",
-    "new": "      const run = `[${lead ?? ''}] ${marks ? `${n.name} ${marks}` : n.name}`;",
+    "old": "      const run = `${lead ? `[${lead}] ` : ''}${marks ? `${named} ${marks}` : named}`;",
+    "new": "      const run = `[${lead ?? ''}] ${marks ? `${named} ${marks}` : named}`;",
     "tests": [
       "test/renown1.test.js"
     ]

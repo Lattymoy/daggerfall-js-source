@@ -141,8 +141,8 @@
       "test/acc3wear.test.js",
       "test/chatfit.test.js"
     ],
-    "old": "      line.append(nameEl);\n      for (const g of glyphBadges(r)) {",
-    "new": "      { const badge = titleBadge(r); if (badge) line.append(titleSpan(badge, 'dfchat-who-title')); }\n      line.append(nameEl);\n      for (const g of glyphBadges(r)) {"
+    "old": "      line.append(nameEl);\n      const gt = guildTagText(r.gt);",
+    "new": "      { const badge = titleBadge(r); if (badge) line.append(titleSpan(badge, 'dfchat-who-title')); }\n      line.append(nameEl);\n      const gt = guildTagText(r.gt);"
   },
   {
     "name": "TR-founder-cutoff-moved-forward",

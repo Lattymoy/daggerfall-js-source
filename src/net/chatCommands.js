@@ -7,6 +7,7 @@
 //
 //   /world /g <text>        the World channel          /region /r <text>     the region you stand in
 //   /party /p <text>        your party                 /local /l /say /s     those near enough to hear you
+//   /guild /gu <text>       your guild (GUILD1c)
 //   /ooc <text>             a Local aside out of character - the line wrapped in (( ))
 //   /roll /dice [NdM+K]     dice the RELAY rolls, on the active tab (DICE1, net/dice.js) - a d20 when nothing is said
 //   /me <action>            an ACTION on the active tab - "Bran looks around" (EMOTE1)
@@ -29,6 +30,7 @@ export const CHANNEL_COMMANDS = Object.freeze([
   Object.freeze({ names: Object.freeze(['world', 'g']), tab: 'world', wrap: null, help: '/world or /g <text> - to everyone online' }),
   Object.freeze({ names: Object.freeze(['region', 'r']), tab: 'region', wrap: null, help: '/region or /r <text> - to everyone in the region you stand in' }),
   Object.freeze({ names: Object.freeze(['party', 'p']), tab: 'party', wrap: null, help: '/party or /p <text> - to your party' }),
+  Object.freeze({ names: Object.freeze(['guild', 'gu']), tab: 'guild', wrap: null, help: '/guild or /gu <text> - to your guild' }),   // GUILD1c: /g is the World's
   Object.freeze({ names: Object.freeze(['local', 'l', 'say', 's']), tab: 'local', wrap: null, help: '/local, /l, /say or /s <text> - to those near enough to hear you, in character' }),
   Object.freeze({ names: Object.freeze(['ooc']), tab: 'local', wrap: 'ooc', help: '/ooc <text> - to those near you, out of character - (( ))' }),
 ]);

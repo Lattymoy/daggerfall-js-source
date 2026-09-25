@@ -123,8 +123,8 @@ test('RENOWN4 the service: the mint answers the named character\'s track total b
   assert.deepEqual([tok.level, tok.xp], [null, null], 'an older build\'s mint names no character, and has neither');
   tok = (await call('POST', '/v1/auth/token', { character: 'char-bbbb' }, me.secret)).body;
   assert.deepEqual([tok.level, tok.xp], [1, 0], 'another character is its own track');
-  assert.equal(ACCOUNT_VERSION, 'acct11');
-  assert.match(src('server-account/wrangler.toml'), /ACCOUNT_VERSION = "acct11"/);
+  assert.equal(ACCOUNT_VERSION, 'acct12');   // RENOWN4 was acct11; GUILD1c moved it on
+  assert.match(src('server-account/wrangler.toml'), /ACCOUNT_VERSION = "acct12"/);
 });
 
 test('RENOWN4 the client: the minter hands the total on beside the level - null for none, a fraction or a negative; a report\'s answer carries it through renownAnswer (mutants: the total dropped by the minter; a bad total taken; the answer\'s total dropped)', async () => {

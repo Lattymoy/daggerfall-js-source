@@ -78,7 +78,7 @@ test('DICE1 wire: the ask is a spec and nothing else - the dice\'s bounds, after
   assert.deepEqual(parseClient(JSON.stringify({ t: 'roll', n: 1, m: 20, k: 0, ch: 'party' }), h), { t: 'roll', n: 1, m: 20, k: 0, ch: 'party' });
   for (const bad of [{ n: 0, m: 6, k: 0 }, { n: 11, m: 6, k: 0 }, { n: 1, m: 1, k: 0 }, { n: 1, m: 1001, k: 0 }, { n: 1, m: 6, k: 1001 }, { n: 1, m: 6 }, { n: '1', m: 6, k: 0 }])
     assert.deepEqual(parseClient(JSON.stringify({ t: 'roll', ...bad }), h), { error: 'bad roll' }, JSON.stringify(bad));
-  assert.deepEqual(parseClient(JSON.stringify({ t: 'roll', n: 1, m: 6, k: 0, ch: 'guild' }), h), { error: 'bad roll' });
+  assert.deepEqual(parseClient(JSON.stringify({ t: 'roll', n: 1, m: 6, k: 0, ch: 'clan' }), h), { error: 'bad roll' });
   assert.deepEqual(parseClient(JSON.stringify({ t: 'roll', n: 1, m: 6, k: 0 })), { error: 'roll before hello' });
   assert.equal(ROLL_RELAY_MIN, 102);
   assert.equal(relaySupportsRoll('world101'), false, 'DISC12\'s relay (the last before the arc) answers a roll with "unknown message" and closes the socket');
@@ -185,7 +185,7 @@ test('DICE1 session: a roll is asked only of a relay that rolls, as a spec, one 
   assert.deepEqual(out().at(-1), { t: 'roll', n: 1, m: 20, k: 0, ch: 'party' });
   tick(1000);
   assert.equal(s.sendRoll({ n: 0, m: 6, k: 0 }), false, 'a spec the dice refuse never leaves');
-  assert.equal(s.sendRoll({ n: 1, m: 6, k: 0 }, { ch: 'guild' }), false);
+  assert.equal(s.sendRoll({ n: 1, m: 6, k: 0 }, { ch: 'clan' }), false);
   ws.receive({ t: 'roll', id: 'bbbb-0002', name: 'Bob', at: 5, n: 2, m: 6, k: 3, dice: [4, 5], total: 12 });
   ws.receive({ t: 'roll', id: 'bbbb-0002', name: 'Bob', at: 6, n: 2, m: 6, k: 3, dice: [4, 5], total: 20 });
   ws.receive({ t: 'roll', id: 'bbbb-0002', name: 'Bob', at: 7, n: 1, m: 6, k: 0, dice: [9], total: 9 });
@@ -225,10 +225,10 @@ test('DICE1 host by source: /roll is the parser\'s after the host\'s own, said o
   assert.match(onSend, /if \(cmd\.kind === 'badroll'\) \{ note\(badRollText\(cmd\.name\)\); return false; \}/);
   assert.match(onSend, /if \(cmd\.kind === 'roll'\) return chatRoll\(tabId, cmd\.spec\);/);
   const door = w.slice(w.indexOf('const chatRoll = '), w.indexOf('const _regionHold'));
-  assert.match(door, /const s = tabId === 'local' \? online : tabId === 'party' \? socialLink\(\) : chatLinks\.get\(tabId\);/);
+  assert.match(door, /const s = tabId === 'local' \? online : tabId === 'party' \|\| tabId === 'guild' \? socialLink\(\) : chatLinks\.get\(tabId\);/);   // GUILD1c: the Guild tab's door is the hub's too
   assert.match(door, /if \(s\?\.status === 'open' && !s\.rollOk\) return why\(ROLL_OLD_RELAY_TEXT\);/);
-  assert.match(door, /return s\?\.sendRoll\(spec, tabId === 'party' \? \{ ch: 'party' \} : \{\}\) \?\? false;/);
-  assert.match(w, /link\.onRoll = \(line\) => chatLog\.push\(tab\.room === SOCIAL_ROOM && line\.ch === 'party' \? 'party' : tab\.id, line\);/);
+  assert.match(door, /return s\?\.sendRoll\(spec, tabId === 'party' \|\| tabId === 'guild' \? \{ ch: tabId \} : \{\}\) \?\? false;/);
+  assert.match(w, /link\.onRoll = \(line\) => chatLog\.push\(tab\.room === SOCIAL_ROOM && \(line\.ch === 'party' \|\| line\.ch === 'guild'\) \? line\.ch : tab\.id, line\);/);
   assert.match(w, /online\.onRoll = \(line\) => \{ if \(localLineHeard\(line, peersNear\(\), player\.feetAt\(\)\)\) chatLog\.push\('local', line\); \};/);
   assert.match(ROLL_OLD_RELAY_TEXT, /server's next update/);
   const panel = rd('src/ui/chatPanel.js');

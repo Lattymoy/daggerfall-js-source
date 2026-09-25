@@ -101,8 +101,8 @@
   {
     "name": "RENOWN4-minter-drops-the-total",
     "file": "src/net/accountClient.js",
-    "old": "xp: Number.isSafeInteger(answer.data.xp) && answer.data.xp >= 0 ? answer.data.xp : null };",
-    "new": "xp: null };",
+    "old": "xp: Number.isSafeInteger(answer.data.xp) && answer.data.xp >= 0 ? answer.data.xp : null,   // RENOWN4",
+    "new": "xp: null,   // RENOWN4",
     "tests": [
       "test/renown4.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "RENOWN4-minter-takes-a-negative",
     "file": "src/net/accountClient.js",
-    "old": "xp: Number.isSafeInteger(answer.data.xp) && answer.data.xp >= 0 ? answer.data.xp : null };",
-    "new": "xp: Number.isSafeInteger(answer.data.xp) ? answer.data.xp : null };",
+    "old": "xp: Number.isSafeInteger(answer.data.xp) && answer.data.xp >= 0 ? answer.data.xp : null,   // RENOWN4",
+    "new": "xp: Number.isSafeInteger(answer.data.xp) ? answer.data.xp : null,   // RENOWN4",
     "tests": [
       "test/renown4.test.js"
     ]

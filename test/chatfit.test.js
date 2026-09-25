@@ -149,16 +149,16 @@ test('CHAT-FIT: a document with no SVG door draws no glyph and does not throw; w
 
 test('CHAT-FIT: OnlineSession.badgeOf - mine as adopted, a peer in the room, a peer this session once met and has since lost, null for a stranger and for no id', () => {
   const s = new OnlineSession({ name: 'Me' });
-  assert.deepEqual(s.badgeOf(s.id), { title: null, glyphs: [] }, 'mine, before the service spoke');
+  assert.deepEqual(s.badgeOf(s.id), { title: null, glyphs: [], gt: null }, 'mine, before the service spoke');   // GUILD1c: and the guild's tag, none
   s.adoptIdentity({ name: 'Me', title: 'founder', glyphs: ['sprout'] });
-  assert.deepEqual(s.badgeOf(s.id), { title: 'founder', glyphs: ['sprout'] });
+  assert.deepEqual(s.badgeOf(s.id), { title: 'founder', glyphs: ['sprout'], gt: null });
   s.peers.set('p1', { id: 'p1', name: 'Ice', title: 'dev', glyphs: ['dev'] });
-  assert.deepEqual(s.badgeOf('p1'), { title: 'dev', glyphs: ['dev'] });
+  assert.deepEqual(s.badgeOf('p1'), { title: 'dev', glyphs: ['dev'], gt: null });
   s._remember('p2', { name: 'Gone', title: 'founder', glyphs: [], look: null });
-  assert.deepEqual(s.badgeOf('p2'), { title: 'founder', glyphs: [] }, 'a peer who left is still signed');
+  assert.deepEqual(s.badgeOf('p2'), { title: 'founder', glyphs: [], gt: null }, 'a peer who left is still signed');
   assert.equal(s.badgeOf('p9'), null); assert.equal(s.badgeOf(null), null); assert.equal(s.badgeOf(undefined), null);
   s.peers.set('p3', { id: 'p3', name: 'Odd', title: undefined, glyphs: 'nope' });
-  assert.deepEqual(s.badgeOf('p3'), { title: null, glyphs: [] }, 'a malformed record answers a bare badge, not a throw');
+  assert.deepEqual(s.badgeOf('p3'), { title: null, glyphs: [], gt: null }, 'a malformed record answers a bare badge, not a throw');
 });
 
 test('CHAT-FIT: by source - the host hands the panel a `badgeOf` read off the ACTIVE CHANNEL\'s session, the one the roster reads, and the badge pass runs inside the name pass so every caller of one runs the other', () => {
@@ -167,7 +167,7 @@ test('CHAT-FIT: by source - the host hands the panel a `badgeOf` read off the AC
   // Local's) are built over that same session, so one session still answers the badge and the row
   assert.match(w, /badgeOf: \(id\) => chatSessionOf\(chatLog\?\.active\)\?\.badgeOf\?\.\(id\) \?\? null,/);
   assert.match(w, /roster: \(\) => chatRosterOf\(chatLog\?\.active\),/, 'the same session the roster reads');
-  assert.match(w, /const chatRosterOf = \(tabId\) => \{\s*const s = chatSessionOf\(tabId\);[^\n]*\n\s*if \(tabId === 'party'\) return partyRosterSource\(social\?\.party, s, [^\n]*\n\s*if \(tabId === 'local'\) return localRosterSource\(s, /, 'every roster over the one session');
+  assert.match(w, /const chatRosterOf = \(tabId\) => \{\s*const s = chatSessionOf\(tabId\);[^\n]*\n\s*if \(tabId === 'party'\) return partyRosterSource\(social\?\.party, s, [^\n]*\n\s*if \(tabId === 'guild'\) return guildRosterSource\(s, [^\n]*\n\s*if \(tabId === 'local'\) return localRosterSource\(s, /, 'every roster over the one session');   // GUILD1c: the Guild's over it too
   const p = rd('src/ui/chatPanel.js');
   assert.match(p, /const paintNames = \(\) => \{\s*if \(nameColor\) \{[\s\S]*?\}\s*paintBadges\(\);\s*\};/);
   assert.match(p, /if \(r\.badgeKey === key\) continue;/, 'a line is re-laid only on a change');

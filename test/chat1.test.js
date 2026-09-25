@@ -340,7 +340,8 @@ test('CHAT1 / AUDIT CHAT: the session as a CHANNEL (presence: false) - the hello
 
 test('CHAT1 / AUDIT CHAT: the log - the World tab from CHAT_TABS (one today, each a room the relay whitelists); a line kept on its tab under the cap; unread unless the panel is open ON that tab; select and open read it; the version bumps on what the panel would show; the peek holds then fades on the log\'s own clock; the tag from the id', () => {
   // CHAT-CHAN: four tabs - two ride rooms of their own (`link`), the World's fixed and the Region's set as the player moves
-  assert.deepEqual(CHAT_TABS.map((t) => [t.id, t.label, t.room, t.link]), [['world', 'World', 'chat:world', true], ['region', 'Region', null, true], ['party', 'Party', null, false], ['local', 'Local', null, false]]);
+  // GUILD1c: and a fifth, the Guild's, riding the hub's link as the Party's does
+  assert.deepEqual(CHAT_TABS.map((t) => [t.id, t.label, t.room, t.link]), [['world', 'World', 'chat:world', true], ['region', 'Region', null, true], ['party', 'Party', null, false], ['guild', 'Guild', null, false], ['local', 'Local', null, false]]);
   assert.ok(CHAT_TABS.every((t) => t.room === null || CHAT_ROOMS.has(t.room)), 'every room a tab starts on is a channel the relay runs (AUDIT CHAT A1)');
   assert.ok(CHAT_TABS.every((t) => typeof t.hint === 'string' && t.hint.length > 0), 'and each says who it reaches');
   assert.equal(CHAT_KEEP, 200); assert.equal(CHAT_FADE_MS, 20000); assert.equal(CHAT_PEEK, 5); assert.equal(CHAT_REJOIN_MS, 30000);
@@ -350,7 +351,7 @@ test('CHAT1 / AUDIT CHAT: the log - the World tab from CHAT_TABS (one today, eac
   assert.equal(tagOf(''), tagOf(null));
   let clock = 10_000;
   const log = new ChatLog({ keep: 3, now: () => clock });
-  assert.deepEqual(log.tabs.map((t) => [t.id, t.label, t.room, t.messages.length, t.unread]), [['world', 'World', 'chat:world', 0, 0], ['region', 'Region', null, 0, 0], ['party', 'Party', null, 0, 0], ['local', 'Local', null, 0, 0]]);
+  assert.deepEqual(log.tabs.map((t) => [t.id, t.label, t.room, t.messages.length, t.unread]), [['world', 'World', 'chat:world', 0, 0], ['region', 'Region', null, 0, 0], ['party', 'Party', null, 0, 0], ['guild', 'Guild', null, 0, 0], ['local', 'Local', null, 0, 0]]);
   assert.equal(log.active, 'world'); assert.equal(log.open, false);
   const v0 = log.version;
   assert.equal(log.push('nowhere', { id: 'a', name: 'A', text: 'x' }), null, 'no such tab: nothing kept');
@@ -475,7 +476,7 @@ test('CHAT1 / AUDIT CHAT: the panel - built once over the document with the shee
   assert.equal(doc.getElementById(CHAT_STYLE_ID)?.tagName, 'STYLE', 'the sheet');
   createChatPanel({ log: new ChatLog(), onSend() {}, action: defaultAction, doc, win, touch: false }).destroy();
   assert.equal(find(doc.head, '').filter((n) => n.id === CHAT_STYLE_ID).length, 1, 'injected once');
-  assert.deepEqual(find(root, 'dfchat-tab').map((b) => [b.textContent, b.dataset.tab]), [['World', 'world'], ['Region', 'region'], ['Party', 'party'], ['Local', 'local']], 'one tab per row of the log');
+  assert.deepEqual(find(root, 'dfchat-tab').map((b) => [b.textContent, b.dataset.tab]), [['World', 'world'], ['Region', 'region'], ['Party', 'party'], ['Guild', 'guild'], ['Local', 'local']], 'one tab per row of the log');
   assert.equal(win.listeners.filter((l) => l !== win.listeners[0]).length, 1, 'ONE listener on the window (AUDIT CHAT D5: of any type)');
   assert.equal(win.listeners[1].t, 'keydown'); assert.equal(win.listeners[1].capture, true);
   const input = panel.input;
@@ -639,7 +640,7 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   assert.match(w, /const chatStart = \(\) => \{\s*if \(!online\.url\) return;/, 'AUDIT CHAT A9/B1: a relay the law refused is no relay for the chat either');
   // CHAT-CHAN: a channel session per tab that rides a room of its OWN (`link`: the World and the Region tabs) - the Party
   // tab's lines come down the hub's link by the relay's own routing word, and the Region tab's room waits for its region
-  assert.match(w, /for \(const tab of chatLog\.tabs\) \{\s*if \(!tab\.link\) continue;[^\n]*\n\s*const link = new OnlineSession\(\{ url: online\.url, name: online\.name, look: online\.look, id: online\.id, secret: online\.secret, presence: false \}\);\s*link\.onChat = \(line\) => chatLog\.push\(tab\.room === SOCIAL_ROOM && line\.ch === 'party' \? 'party' : tab\.id, line\);[\s\S]{0,900}?link\.onRelay = onRelayVersion;\s*if \(tab\.room\) link\.join\(tab\.room\);[^\n]*\n\s*chatLinks\.set\(tab\.id, link\);/, 'a channel session per tab with a room, the presence session\'s identity, a line to its tab');
+  assert.match(w, /for \(const tab of chatLog\.tabs\) \{\s*if \(!tab\.link\) continue;[^\n]*\n\s*const link = new OnlineSession\(\{ url: online\.url, name: online\.name, look: online\.look, id: online\.id, secret: online\.secret, presence: false \}\);\s*link\.onChat = \(line\) => chatLog\.push\(tab\.room === SOCIAL_ROOM && \(line\.ch === 'party' \|\| line\.ch === 'guild'\) \? line\.ch : tab\.id, line\);[\s\S]{0,1100}?link\.onRelay = onRelayVersion;\s*link\.onGuildGone = guildGone;[^\n]*\n\s*if \(tab\.room\) link\.join\(tab\.room\);[^\n]*\n\s*chatLinks\.set\(tab\.id, link\);/, 'a channel session per tab with a room, the presence session\'s identity, a line to its tab');
   // CHAT-CHAN: and the Local tab is the presence session's own room, kept within earshot
   assert.match(w, /online\.onChat = \(line\) => \{ if \(localLineHeard\(line, peersNear\(\), player\.feetAt\(\)\)\) chatLog\.push\('local', line\); \};/, 'the Local tab: the presence session\'s lines, those within earshot');
   // RED1: and the SERVER's own line beside the player's, with the flag

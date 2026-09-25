@@ -31,6 +31,18 @@
 //
 // Every act ends in a fresh look, so what the tab draws is always the
 // service's word, never this client's guess.
+//
+// ═══ GUILD1c: AND THE ROOMS ARE TOLD ═══════════════════════════════
+//
+// The guild rides the identity token (the tag beside the name, the
+// guild's chat in the hub), and a token is read once, at a hello. So
+// the service signs what a membership is NOW on every look, and what a
+// removal or a disbanding took on the act that did it; this hands them
+// to the host (`onOrders`), which carries them to the rooms. A look's
+// order goes only when the membership it reads differs from the last
+// one handed on - the first look always, since this page cannot know
+// what its rooms were told before it - so a tab left open does not
+// send a frame down every socket each time it looks again.
 // ═══════════════════════════════════════════════════════════════════
 import { GUILD_FOUND_GOLD, guildGoldOk } from './guildLaw.js';
 
@@ -48,6 +60,13 @@ export const guildRefused = (error) => REFUSED.has(error);
 /** What the tab says when a deposit's answer was lost. */
 export const GUILD_DEPOSIT_UNSURE = 'The answer was lost. Read the ledger before you deposit again - the gold may already be in the treasury.';
 
+/** GUILD1c: a membership as a key - the guild, its tag and the character's row in it; '' for none. */
+export function guildBadgeKey(guild) {
+  if (!guild || typeof guild !== 'object') return '';
+  const you = Array.isArray(guild.members) ? guild.members.find((m) => m?.you)?.member ?? '' : '';
+  return `${guild.id ?? ''}|${guild.tag ?? ''}|${you}`;
+}
+
 export class GuildBook {
   /**
    * @param {object} opts
@@ -56,12 +75,16 @@ export class GuildBook {
    * @param {() => ({ gold: () => number, pay: (n: number) => void, credit: (n: number) => void })} opts.wallet
    *        the purse, then this region's bank account
    * @param {() => number} [opts.now]  ms
+   * @param {((orders: { order?: string, outOrder?: string }) => void)|null} [opts.onOrders]  GUILD1c: the host carries them
    */
-  constructor({ door, character, wallet, now = () => Date.now() }) {
+  constructor({ door, character, wallet, now = () => Date.now(), onOrders = null }) {
     this.door = door;
     this.character = character;
     this.wallet = wallet;
     this.now = now;
+    this.onOrders = onOrders;
+    /** GUILD1c: the membership the last order handed on said (`guildBadgeKey`), undefined before the first */
+    this._carried = undefined;
     /** 'unknown' | 'signed-out' | 'guest' | 'ready' | 'error' */
     this.state = 'unknown';
     /** @type {string|null} */ this.error = null;
@@ -109,7 +132,15 @@ export class GuildBook {
     this.state = 'ready';
     this.error = null;
     if (JSON.stringify([this.state, this.guild, this.invites]) !== was) this._changed();
+    // GUILD1c: the membership as the service reads it now, to the rooms - when it moved since the last one handed on
+    const key = guildBadgeKey(this.guild);
+    if (key !== this._carried && typeof mine.data?.order === 'string') { this._carried = key; this._hand({ order: mine.data.order }); }
     return { ok: true };
+  }
+
+  /** GUILD1c: orders to the host; a host that throws costs the rooms their news, never the tab its look. */
+  _hand(orders) {
+    try { this.onOrders?.(orders); } catch (e) { console.warn('[guild] carrying an order failed', e?.message ?? e); }
   }
 
   /** One act through the door, then a fresh look. Answers `{ ok, error?, data? }`. */
@@ -120,6 +151,8 @@ export class GuildBook {
     try {
       const r = await run(character);
       if (!r?.ok) this._whole(r?.error);
+      // GUILD1c: a removal's or a disbanding's word goes to the hub now; the act's own membership rides the look below
+      if (r?.ok && typeof r.data?.outOrder === 'string') this._hand({ outOrder: r.data.outOrder });
       return r?.ok ? { ok: true, data: r.data } : { ok: false, error: r?.error ?? 'server' };
     } finally {
       this.busy = false;
@@ -136,7 +169,8 @@ export class GuildBook {
       if (!r?.ok) return r;
       const w = this.wallet();
       if (w.gold() < GUILD_FOUND_GOLD) {   // the purse moved while the answer was out
-        await this.door.disband(character);
+        const gone = await this.door.disband(character);
+        if (gone?.ok && typeof gone.data?.outOrder === 'string') this._hand({ outOrder: gone.data.outOrder });   // GUILD1c: a room that heard the founding hears it gone
         return { ok: false, error: 'gold' };
       }
       w.pay(GUILD_FOUND_GOLD);

@@ -48,6 +48,7 @@ import { NAME_GAP_PX, namePixelSize, nameViewportScale } from '../net/remotePlay
 import { titleBadge, glyphBadges, glyphSvgNode, cssRgba } from './playerBadge.js';   // ACC3: the same table the classic pass reads - one law, two faces   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
 import { graphemesOf } from '../systems/graphemes.js';   // EMOTE1's characters, which JOURNAL1's notebook break reads too
 import { renownText } from '../net/renown.js';   // RENOWN1: Renown, left of the name
+import { guildTagText } from '../net/guildLaw.js';   // GUILD1c: the guild's tag, right of the name
 
 export const NAME_STYLE_ID = 'dagger-names-style';
 
@@ -178,6 +179,14 @@ export const NAME_CSS = `${PIXELIFY_FIVE_FACE}
    decided. An empty run takes no room and no gap. */
 .dfname-glyphs { display: flex; align-items: center; gap: .18em; }
 .dfname-glyphs:empty { display: none; }
+/* GUILD1c - THE GUILD'S TAG, right of the name, before the glyphs: "<HND>"
+   in angle brackets, the tag's own mark (the Renown's box is square), a
+   little smaller than the name and in a cool steel so it reads as the
+   company a player keeps - never the party's green, a title's colour or
+   the Renown's amber. Empty takes no room: a peer in no guild wears
+   exactly the label it wore before. */
+.dfname-guild { font-size: .82em; letter-spacing: .04em; color: #a9c4dd; }
+.dfname-guild:empty { display: none; }
 /* RENOWN1 - THE RENOWN, LEFT OF THE NAME (Mac: "having their
    level appear on the left side of character name"). A small plate in
    the row the name and glyphs already are, so the whole run stays
@@ -268,10 +277,13 @@ export function createNameLayer({ doc = document, now = () => Date.now() } = {})
     name.className = 'dfname-who';
     const glyphs = doc.createElement('span');
     glyphs.className = 'dfname-glyphs';
-    tag.append(lv, name, glyphs);
+    // GUILD1c: the guild's tag right of the name, before the glyphs
+    const guild = doc.createElement('span');
+    guild.className = 'dfname-guild';
+    tag.append(lv, name, guild, glyphs);
     node.append(bubble, title, tag);
     root.append(node);
-    return { node, bubble, title, tag, lv, name, glyphs, worn: null };
+    return { node, bubble, title, tag, lv, name, guild, glyphs, worn: null };
   };
 
   /** ACC3: the glyph run, REBUILT ONLY WHEN IT CHANGES. A glyph set is
@@ -376,6 +388,7 @@ export function createNameLayer({ doc = document, now = () => Date.now() } = {})
         setStyle(tag.node, 'fontSize', `${namePixelSize(p.scale ?? 1, vp, hudScale).toFixed(1)}px`);
         setText(tag.lv, renownText(p.lv) ?? '');   // RENOWN1: "12" in its box, or nothing
         setText(tag.name, p.name ?? '');
+        setText(tag.guild, guildTagText(p.gt) ?? '');   // GUILD1c: "<HND>", or nothing
         setStyle(tag.name, 'color', cssRgba(colorOf?.(p.id)) ?? '');
         // ACC3: the title above, in ITS colour, and the glyphs beside.
         // `colorOf` is deliberately not asked for either: the party's
