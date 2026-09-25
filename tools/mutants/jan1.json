@@ -11,8 +11,8 @@
   {
     "name": "JAN1-the-arm-takes-a-truthy-bag-entry",
     "file": "src/ui/enhancedInventory.js",
-    "old": "if (act === 'CharacterSheet' && typeof deps?.openCharSheet === 'function') {",
-    "new": "if (act === 'CharacterSheet' && deps?.openCharSheet) {",
+    "old": "if (acts.includes('CharacterSheet') && typeof deps?.openCharSheet === 'function') {",
+    "new": "if (acts.includes('CharacterSheet') && deps?.openCharSheet) {",
     "tests": [
       "test/jan1_fixes.test.js"
     ]

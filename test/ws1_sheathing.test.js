@@ -392,7 +392,7 @@ test('WS1: the wiring, by source - the third-person build takes the addons and t
   // "null" on the card) - the switch is the tile, and the tile's write rebuilds the standing body, as the row did
   const menu = rd('src/ui/enhancedMenu.js');
   assert.doesNotMatch(menu, /prefRow\('mwSheathing'/, 'no second switch, and no null on the card');
-  assert.match(menu, /mwSheathing: async \(\) => \{\s*\n\s*if \(!getPref\('mwArms'\) \|\| !morrowindDataCount\(\)\) return;\s*\n\s*const \{ buildArmsFor \} = await import\('\.\.\/combat\/weaponRig\.js'\);\s*\n\s*await buildArmsFor\(playerEntity\);/, 'the tile rebuilds the holster into a standing body');
+  assert.match(menu, /mwSheathing: async \(\) => \{\s*\n\s*if \(!morrowindDataCount\(\) \|\| !playerEntity\?\.chargenDone\) return;[^\n]*\n\s*const \{ buildArmsFor \} = await import\('\.\.\/combat\/weaponRig\.js'\);\s*\n\s*await buildArmsFor\(playerEntity\);/, 'the tile rebuilds the holster into a standing body');
   assert.match(menu, /set: \(i\) => \{ setPref\(c\.key, i === 1\); TILE_AFTER\[c\.key\]\?\.\(\); \} \};/, 'through the prefs switch\'s one write');
   const ds = rd('src/scenes/dataSource.js');
   const loosePush = ds.indexOf('archives.push(makeLooseArchive(loose));');

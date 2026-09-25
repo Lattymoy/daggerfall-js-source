@@ -105,7 +105,7 @@ export const ONLINE_FORCED_PREFS = {
   // mount on either skin now (scenes/world.js chatStart; ui/playerTradeDoor.js) and keep their own face over the
   // classic screens, so the UI Overhaul a player chose (systems/overhauls.js) is the one they play online. Nothing
   // the room agrees on reads the skin: it is what THIS screen draws.
-  mwArms: true,   // the Morrowind arms build at boot where the archives are attached (weaponRig.js autoBuildArms guards the data); without them the doll stands, as offline
+  // MWA4: and `mwArms` left with its switch - the attached Morrowind files are the arms' switch now, online and off.
 };
 /** RF4: the registry's door - `true`/`false` forces the key online,
  *  `'player'` leaves it to the player by name. Idempotent. */
@@ -121,6 +121,7 @@ export function declareOnlinePrefs(table) {
 export const ONLINE_PLAYERS_OWN_PREFS = [
   'touchAnalogStick', 'touchGyroLook', 'touchHaptics', 'touchFullscreen',   // TI2: how this phone is held
   'showFps',          // FPS1: a diagnostic over the game
+  'skipStartVideo',   // UXB1-A: whether THIS player sits through the opening film - read at the front door, before any room
   'chatHidden',       // CHAT-R2: whether THIS player wants the chat on screen - the room does not get a say in what someone looks at
   'peerClassSprites', // 2026-09-17: how OTHER players are drawn on THIS machine (animated class sprite vs paperdoll) -
                        // purely a local rendering choice, same shape as chatHidden above; it changes nothing the room agrees on

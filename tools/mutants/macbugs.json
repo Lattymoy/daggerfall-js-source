@@ -39,7 +39,7 @@
   {
     "name": "MAC-C-the-pack-goes-back-to-the-hardcoded-F6",
     "file": "src/ui/enhancedInventory.js",
-    "old": "  if (overlayAction(e) !== 'back' && act !== 'Inventory') return;",
+    "old": "  if (overlayAction(e) !== 'back' && !acts.includes('Inventory')) return;",
     "new": "  if (overlayAction(e) !== 'back' && e.key !== 'F6') return;",
     "tests": [
       "test/macc_window_keys.test.js"
@@ -57,8 +57,8 @@
   {
     "name": "MAC-C-the-sheet-page-claims-every-key-not-just-its-two",
     "file": "src/ui/charSheetDoor.js",
-    "old": "    if (act !== 'CharacterSheet' && !(act === 'Inventory' && hooks.inventory)) return;",
-    "new": "    if (act === null) return;",
+    "old": "    if (!acts.includes('CharacterSheet') && !(acts.includes('Inventory') && hooks.inventory)) return;",
+    "new": "    if (!acts.length) return;",
     "tests": [
       "test/macc_window_keys.test.js"
     ]
@@ -75,7 +75,7 @@
   {
     "name": "MAC-C-the-classic-sheet-goes-back-to-the-literal-F5",
     "file": "src/ui/charsheet.js",
-    "old": "      || action === 'Enter' || action === 'Escape' || bound === 'CharacterSheet' || action === 'KeyE') {",
+    "old": "      || action === 'Enter' || action === 'Escape' || bound('CharacterSheet') || action === 'KeyE') {",
     "new": "      || action === 'Enter' || action === 'Escape' || action === 'F5' || action === 'KeyE') {",
     "tests": [
       "test/macc_window_keys.test.js"
@@ -84,8 +84,8 @@
   {
     "name": "MAC-C-the-classic-sheet-crosses-over-with-no-door-so-it-just-shuts",
     "file": "src/ui/charsheet.js",
-    "old": "    if (bound === 'Inventory' && this.hooks?.inventory) {",
-    "new": "    if (bound === 'Inventory') {",
+    "old": "    if (bound('Inventory') && this.hooks?.inventory) {",
+    "new": "    if (bound('Inventory')) {",
     "tests": [
       "test/macc_window_keys.test.js"
     ]

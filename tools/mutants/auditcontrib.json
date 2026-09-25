@@ -148,7 +148,7 @@
   {
     "name": "H1-the-bar-eats-a-mods-hotkey",
     "file": "src/ui/enhancedHotbar.js",
-    "old": "  const i = HOTBAR_SLOT_ACTIONS.indexOf(eventAction(e));   // AUDIT KB1: the event's own read - a listener writes no latch",
+    "old": "  const i = slotOfActions(eventActions(e));   // AUDIT KB1: the event's own read - a listener writes no latch",
     "new": "  const i = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0'].indexOf(e.code);",
     "tests": [
       "test/auditcontrib.test.js",

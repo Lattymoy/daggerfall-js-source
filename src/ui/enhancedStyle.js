@@ -226,6 +226,16 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .card.slot .meta { margin-bottom: 10px; }
 .card h3 { font-family: var(--display); font-weight: 400; font-size: 22px; margin: 0 0 4px; }
 .card .meta { color: var(--dim); font-size: 13px; margin: 0 0 16px; }
+/* UXB1-E (2026-09-25, the UX backlog): the online rules, offline - what
+   differs as name, now, arrow, then; the room's value in brass. */
+.svsync-list { list-style: none; margin: 0 0 16px; padding: 0; }
+.svsync-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 8px; align-items: baseline;
+  padding: 6px 0; border-bottom: 1px solid rgba(125,116,96,0.25); font-size: 14px; }
+.svsync-row:last-child { border-bottom: 0; }
+.svsync-was { color: var(--dim); }
+.svsync-arrow { color: var(--dim); }
+.svsync-to { color: var(--brass); }
+.svsync .acts { display: flex; flex-wrap: wrap; gap: 10px; }
 .stats { display: grid; grid-template-columns: auto 1fr; gap: 7px 18px; margin: 0 0 18px; }
 .stats dt { color: var(--dim); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
 .stats dd { margin: 0; font-variant-numeric: tabular-nums; }
@@ -1816,10 +1826,39 @@ ${badgeCss()}
 .ctl-group h3 { margin-bottom: 2px; }
 /* TORCH-BIND (2026-09-22, a player: "Keybind changes do not stick?" - they
    had not found Continue, 53 rows above): the head card with Continue stays
-   in view while the list scrolls, and a second Continue closes the list. */
+   in view while the list scrolls, and a second Continue closes the list.
+   (The button reads Confirm since UXB1-B.) */
 .ctl-head { position: sticky; top: 0; z-index: 2; }
 .ctl-foot { display: flex; justify-content: flex-end; }
 .ctl-row:last-child { border-bottom: 0; }
+/* UXB1-D (2026-09-25, the UX backlog): a question about a key stands in the
+   sticky head (brass-edged, so it reads as the thing waiting on an answer)
+   over the list it no longer replaces - and the rows it is about say so:
+   the row the key would go to in brass, the row that holds it now in the
+   duplicate's red. */
+.ctl-head.ctl-asking { border-color: var(--brass); box-shadow: 0 6px 18px rgba(0,0,0,0.45); }
+.ctl-row.ctl-want { box-shadow: inset 3px 0 0 var(--brass); }
+.ctl-row.ctl-want .ctl-key { color: var(--brass); border-color: var(--brass); }
+.ctl-row.ctl-holder { box-shadow: inset 3px 0 0 var(--blood); }
+.ctl-row.ctl-holder .ctl-key { color: var(--blood); border-color: var(--blood); }
+/* UXB1-S: a SHARED key - one press, several actions, chosen - in its own
+   colour (a clash keeps the red and the blue), with the other actions it
+   answers named under the row. */
+.ctl-key.ctl-shared { color: #6fcf8a; border-color: #6fcf8a; }
+/* ...and the three states read in BOTH faces: the door's .shell .act and
+   the pause face's button rules outrank a bare two-class selector, so on
+   the main menu's Settings even DFU's red clash drew as a plain key. */
+.shell .ctl-key.ctl-dupe, .px-sys .ctl-key.ctl-dupe { color: var(--blood); border-color: var(--blood); }
+.shell .ctl-key.ctl-cross, .px-sys .ctl-key.ctl-cross { color: #4a9ae8; border-color: #4a9ae8; }
+.shell .ctl-key.ctl-shared, .px-sys .ctl-key.ctl-shared { color: #6fcf8a; border-color: #6fcf8a; }
+.ctl-alsos { color: #6fcf8a; }
+.ctl-prompt .ctl-share { border-color: #6fcf8a; }
+/* UXB1-F: the keys this page names and cannot move - drawn as a key's face,
+   dashed and dim, so nobody reads one as a button to press. */
+.ctl-fixedkey { display: inline-block; min-width: 154px; padding: 8px 12px; text-align: center;
+  border: 1px dashed var(--iron); color: var(--dim); font-variant-numeric: tabular-nums; }
+.px-sys .ctl-fixedkey { font-size: 15px; letter-spacing: 0.08em; padding: 6px 12px; min-width: 150px; }
+@media (max-width: 480px) { .ctl-fixedkey, .px-sys .ctl-fixedkey { min-width: 104px; } }
 /* ...and the window's face, where the same markup is drawn in whole
    pixels (the .px-sys block above). */
 .px-sys .ctl-key { font-size: 15px; letter-spacing: 0.08em; text-indent: 0.08em;
@@ -1832,6 +1871,11 @@ ${badgeCss()}
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 .px-sys .ctl-notice.bad { color: var(--blood); }
 .px-sys .ctl-head .acts { flex-wrap: wrap; }
+/* UXB1-S: the page's cards are a 35% wash (the door's .shell and the pause
+   face's .px-sys alike), and a STICKY one is read over
+   the rows scrolling under it - the question and its answers came out
+   printed across a row's words. The head alone is backed solid. */
+.shell .card.ctl-head, .px-sys .card.ctl-head { background: #0d1014; }
 @media (max-width: 480px) {
   .ctl-key, .px-sys .ctl-key { min-width: 104px; }
 }
@@ -2057,7 +2101,24 @@ ${badgeCss()}
    title does, so "on" reads the same way on both halves of the card. */
 .px-win.px-acctwin .card.skincard { border: 0; background: none; padding: 18px 0 0; margin: 18px 0 0;
   border-top: 1px solid var(--iron); text-align: center; }
-.card.skincard .fieldlabel { display: block; margin: 12px 0 6px; }
+/* SKIN2 (Mac: "2 single panels for unmounted/mount that can be opened
+   to view available skins"): each panel is closed to its worn skin - the
+   picture, the panel's name over the skin's - as one wide press, and
+   opens under itself to the grid; the open one takes the brass edge. */
+.card .skinpanel { margin: 10px 0 0; border: 1px solid var(--iron); border-radius: 2px; background: rgba(0,0,0,0.2); }
+.card .skinpanel.open { border-color: var(--brass); }
+.card button.skinhead { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px;
+  font: inherit; color: var(--bone); text-align: left; padding: 6px 12px; background: none; border: 0; cursor: pointer; }
+.card button.skinhead:hover { background: rgba(192,138,62,0.08); }
+.card button.skinhead:focus-visible { outline: 2px solid var(--brass); outline-offset: -2px; }
+.card button.skinhead .skinart { height: 56px; }
+.card .skinheadtext { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.card .skinheadtext .fieldlabel { display: block; margin: 0; }
+.card .skinheadtext .skinname { font-size: 14px; }
+.card .skinchev { color: var(--brass); font-size: 14px; }
+.card .skinbody { padding: 0 8px 8px; border-top: 1px solid var(--iron); }
+.card .skinbody > .skingrid:first-child { margin-top: 8px; }
+.card .skingroup { display: block; margin: 10px 0 6px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
 .card.skincard .skinhint { color: var(--brass); }
 .card.skincard .acts { justify-content: center; }
 .card .skingrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 6px; }
@@ -2081,6 +2142,15 @@ ${badgeCss()}
   color: rgb(243,239,44); border-color: var(--brass);
   text-shadow: 2px 2px 0 rgb(93,77,12); }
 
+/* PROFILE2 (Mac: "make the profile icon visible somehow on the pause
+   menu"): over the game the mark is a size smaller, so it stands in the
+   scrim above the pause window (74dvh tall, centred) rather than over
+   its tabs; and its window is centred - there is no wordmark to sit
+   under, which is what the door's deep top padding is for. */
+.px-over .px-profile { top: 10px; right: 12px; }
+.px-over .px-portrait { width: 48px; height: 48px; }
+.px-over .px-acctstage { padding: 24px 16px; grid-template-rows: 1fr; align-items: center; }
+.px-over .px-win.px-acctwin { align-self: center; max-height: min(640px, 86dvh); }
 @media (max-width: 480px) {
   /* On a phone the wordmark owns the top, so the mark loses its caption
      and keeps its portrait and gem - a 48px target, over the 44px floor. */
@@ -2804,6 +2874,24 @@ ${badgeCss()}
   overflow-wrap: break-word; }
 .trade-shell .trade-detail-info .trade-quote { margin: 4px 0 0; font-size: 13px;
   color: var(--brass); font-variant-numeric: tabular-nums; }
+/* UXB1-K (2026-09-25, the UX backlog): the repair counter's clock - each
+   job's countdown at the row's end, where the weight sits, in the brass a
+   finished job wears and the dim of one still on the bench; and the hour
+   and day it is ready on the strip. */
+.trade-shell .itemrepair { flex: 0 0 auto; margin-left: 10px; font-size: 12px; color: var(--dim);
+  font-variant-numeric: tabular-nums; white-space: nowrap; }
+.trade-shell .itemrepair.done { color: var(--brass); }
+.trade-shell .itemrow.ghost .itemrepair { opacity: 1; }
+.trade-shell .trade-detail-info .trade-ready { color: #d8cfae; }
+/* UXB1-L: the count for a shelf stack - a stepper over a numeric field,
+   and All; the field narrow, the steps the settings pane's own. */
+.trade-shell .trade-qty { display: flex; align-items: center; gap: 8px; margin: 6px 0 0; flex-wrap: wrap; }
+.trade-shell .trade-qtyk { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #a99b7a; }
+.trade-shell .trade-qtyin { width: 64px; min-height: 32px; padding: 4px 6px; text-align: center;
+  font: inherit; font-size: 14px; color: #e8e0c8; background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(125,116,96,0.6); font-variant-numeric: tabular-nums; }
+.trade-shell .trade-qtyin:focus { outline: none; border-color: var(--brass); }
+.trade-shell .trade-qtyall { padding: 4px 10px; min-height: 32px; }
 /* THE CONFIRM/REFUSAL BOX, over the counter it interrupts - Buy/Sell's
    Yes/No, the letter-of-credit notice, and the steal roll's own ask. */
 .trade-shell .sb-ask { position: absolute; inset: 0; display: flex; align-items: center;
@@ -2986,6 +3074,7 @@ ${badgeCss()}
      saw it. Sized here rather than in the FT block below, because this
      is where the law lives and the next control added must find it. */
   .ft-segb, .ft-mchip, .ft-tile-more, .ft-search { min-height: 44px; }   /* FT18: the search is a thumb's target too */
+  .ft-keys-to { min-height: 44px; }   /* UXB1-F: the keys' door is a control too */
 }
 .shell .step { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; background: none;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
@@ -3169,6 +3258,112 @@ ${badgeCss()}
    the walk floats on the sky like every other face; the class list
    keeps the shell's 0.38 breath and the dcard its own bordered card. */
 .wizard .stagebody { background: transparent; }
+
+/* ── UXB1 (2026-09-25, the UX backlog) - THE WIZARD'S ADDITIONS ──
+   G: an attribute's line, beside the stats and under the builder's
+   attributes. I: the difficulty dagger - DFU's track on its side, the
+   band Create allows, the dagger where daggerY puts it. H: the class
+   file card. J: the review's three columns (below). */
+/* the retired sheet's .skillgroup rule (uppercase, spaced) reaches any
+   text a group holds that is not a button - these two are prose */
+.attrhelp, .dagger { text-transform: none; letter-spacing: normal; }
+.attrhelp { margin: 0 0 14px; }
+.attrhelp h4 { margin: 0 0 4px; font-size: 13px; font-weight: 400; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--brass); text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.wizard .dcard .attrhelp p, .attrhelp p { margin: 0; font-size: 13.5px; line-height: 1.45; color: #c5bda2; }
+.skillgroup .attrhelp { padding: 8px 18px 0; margin: 0; }
+.dagger { padding: 10px 18px 6px; }
+.dagger-head { display: flex; justify-content: space-between; align-items: baseline; }
+.dagger-val { color: var(--brass); font-size: 18px; font-variant-numeric: tabular-nums;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.dagger.red .dagger-val { color: var(--blood); }
+.dagger-track { position: relative; height: 44px; margin: 6px 8px 2px; border-bottom: 2px solid rgba(125,116,96,0.45); }
+.dagger-band { position: absolute; bottom: 0; height: 8px; background: rgba(192,138,62,0.18);
+  border: 1px solid rgba(192,138,62,0.55); border-bottom: 0; }
+.dagger-zero { position: absolute; bottom: 0; width: 2px; height: 12px; background: rgba(125,116,96,0.85);
+  transform: translateX(-1px); }
+.dagger-mark { position: absolute; bottom: 2px; transform: translateX(-50%); line-height: 0; }
+.dagger-glyph { display: block; transform: rotate(180deg); filter: drop-shadow(2px 2px 0 rgba(0,0,0,0.7)); }
+.dagger-blade { fill: #d8cfae; }
+.dagger-guard { fill: var(--brass); }
+.dagger-grip { fill: #7d5a2e; }
+.dagger.red .dagger-blade { fill: var(--blood); }
+.dagger-ends { display: flex; justify-content: space-between; font-size: 11px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: #7d7460; margin: 0 6px; }
+.dagger-note { margin-top: 4px; }
+.dagger.red .dagger-note { color: var(--blood); }
+.skillpane > .dagger { padding-left: 0; padding-right: 0; margin-bottom: 10px; }
+.classio { margin: 12px 0 0; }
+.classio h3 { margin: 0 0 6px; }
+.classio-text { display: block; width: 100%; box-sizing: border-box; min-height: 64px; margin: 8px 0 0;
+  font: inherit; font-size: 13px; color: #d8cfae; background: rgba(0,0,0,0.4);
+  border: 2px solid rgba(125,116,96,0.55); border-radius: 0; padding: 8px 10px; resize: vertical; }
+.classio-text:focus { outline: none; border-color: var(--brass); }
+.classio-note { margin: 10px 0 0; font-size: 13px; color: var(--brass); text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.b-acts .act.on { border-color: var(--brass); color: rgb(243,239,44); }
+/* J: the builder's grid areas - the DOM keeps the phone's reading order
+   (name, skills, attributes, class, acts) and the grid places it. */
+@media (min-width: 900px) {
+  .skillpane.builder { grid-template-areas: "name name" "skills attrs" "skills klass" "acts acts" "io io"; }
+  .skillpane.builder > .b-name { grid-area: name; }
+  .skillpane.builder > .b-skills { grid-area: skills; }
+  .skillpane.builder > .b-attrs { grid-area: attrs; }
+  .skillpane.builder > .b-class { grid-area: klass; }
+  .skillpane.builder > .b-acts { grid-area: acts; }
+  .skillpane.builder > .b-io { grid-area: io; }
+}
+/* UXB1-J (2026-09-25, the UX backlog: "Try to modify the character
+   creation menu to prevent the need for scrolling on standard aspect
+   ratios (can't account for everything, but 16:9 shouldn't need to)"):
+   THE DESK'S WIZARD. Measured in a browser at 1920x1080, 1600x900,
+   1366x768 and 1280x720, the class list, the skills, the review and the
+   builder all scrolled at every one (the builder by 119px even at 1080,
+   the review by 613) and the biography and reflexes at the smaller two.
+   A mouse needs no 44px target - that floor is the finger's
+   (enhancedTapProbe.mjs, pointer: coarse keeps every rule above) - so
+   on a fine pointer a row is its words and its stepper, the long lists
+   take the width the desk has (the class list two columns, the skills
+   and the review three, the builder three), and the plaques lose the
+   air a phone's thumb needed. */
+@media (min-width: 1100px) and (pointer: fine) {
+  .wizard .row { min-height: 0; padding-top: 2px; padding-bottom: 2px; }
+  .wizard .row-main { min-height: 32px; padding: 2px 0; }
+  .wizard .row-note, .wizard .row-sub { margin-top: 1px; }
+  .wizard .skillgroup { margin: 0 0 12px; }
+  .wizard .skillhead { padding-bottom: 5px; }
+  .wizard .skillpane { padding-top: 18px; padding-bottom: 18px; }
+  .wizard .poolbar { padding-top: 8px; padding-bottom: 8px; }
+  .wizard .stagebody > .list.classlist { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start; column-gap: 12px; }
+  .wizard .skillpane.skills3 { max-width: 1180px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 28px; align-content: start; }
+  .wizard .skillpane.skills3 > .acts { grid-column: 1 / -1; }
+  .wizard .reviewgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 20px; }
+  .wizard .reviewhead { padding-top: 12px; padding-bottom: 12px; }
+  .wizard .question { padding-top: 22px; padding-bottom: 22px; }
+  .wizard .question h2 { margin-bottom: 14px; }
+  .wizard .answers { gap: 5px; }
+  .wizard .answer { min-height: 36px; padding: 7px 14px; }
+  .wizard .choose { gap: 18px; padding-top: 22px; padding-bottom: 22px; }
+  .wizard .bigbtn { min-height: 60px; padding: 14px 18px; }
+  .wizard .reflexbtn { min-height: 36px; padding: 7px 12px; }
+  .skillpane.builder { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 26px;
+    grid-template-areas: "skills attrs name" "skills attrs klass" "skills attrs acts" "io io io"; }
+  .skillpane.builder > .b-name { align-self: start; width: 100%; box-sizing: border-box; }
+  /* a third of the pane: the name box's 20px would cut its own question short */
+  .wizard .skillpane.builder > .b-name { font-size: 16px; letter-spacing: 0.04em; }
+  .skillpane.builder > .b-acts { justify-content: flex-start; flex-wrap: wrap; }
+  /* the review's columns are narrow at 1280: the row gives its padding
+     to the name, and a name that still does not fit ellipsizes rather
+     than running under its value */
+  .wizard .reviewgrid .row { padding-left: 8px; padding-right: 4px; gap: 6px; }
+  .wizard .reviewgrid .row-name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wizard .reviewgrid .skillhead.review { padding: 10px 8px 5px; }
+  .wizard .reviewgrid .ctl .val { min-width: 2ch; text-align: right; }
+  /* a class's description is TEXT.RSC rows - lines of one text - not
+     paragraphs, so they sit closer on a desk */
+  .wizard .dcard p { margin-bottom: 6px; line-height: 1.45; }
+}
 
 /* ── PX14/PX17d: THE DIAL, BUILT ── the in-game compass rose with
    its craft pass. FADE INTO VIEW: opacity and the depth-of-field
@@ -3834,6 +4029,11 @@ ${badgeCss()}
 .wplaque-title { font-size: 15px; line-height: 1.4; text-align: center; color: #d8cfae; }
 .wplaque-titleline { display: block; }
 .wplaque-sub { font-size: 12px; line-height: 1.4; text-align: center; color: #7d7460; }
+/* UXB1-N (2026-09-25, the UX backlog): somebody else's container - its
+   title in the ember a warning wears, its "Private property" line under
+   it in a quieter ember - so it never reads as the shop's own stock. */
+.wplaque.tone-private .wplaque-title { color: #e0875a; }
+.wplaque.tone-private .wplaque-sub { color: #a8674a; }
 /* PX21c's head rule, re-homed. Its TYPOGRAPHY retires with it - 11px
    uppercase letterspaced was a KIND label ("LOOT", "REMAINS"), and the
    merged surface names the thing itself ("Wardrobe", "Shop Shelf",
@@ -4178,6 +4378,11 @@ ${badgeCss()}
 .ft-mchip:hover { color: var(--bone); }
 .ft-tile-drawer .row { padding: 4px 0; border: 0; }
 .ft-tile-drawer .row-note, .ft-tile-drawer .row-sub { display: none; }   /* the rail carries the words */
+/* UXB1-F: a mod's keys on its tile - read-only, the key in a dashed box (a
+   key's face, not a button), and one press through to Controls. */
+.ft-key { font-family: var(--data); font-size: 11px; letter-spacing: 0.08em; color: var(--bone);
+  border: 1px dashed var(--iron); padding: 2px 8px; min-width: 28px; text-align: center; }
+.ft-keys-to { align-self: flex-start; font-size: 11px; padding: 4px 10px; }
 
 /* the reading rail */
 .ft-rail { position: sticky; top: 8px; background: var(--slate); border: 1px solid var(--iron);
@@ -4474,6 +4679,13 @@ button.lv-note.lv-clickable:hover, button.lv-note.lv-clickable:focus-visible {
   color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.85);
 }
 .inputbox.top { top: 8px; transform: translateX(-50%); }
+/* UXB1-M: DaggerfallMessageBox's YesNo in the skin's face (ui/yesNoBox.js) -
+   the input box's panel, but a decision the pointer answers: it TAKES
+   pointer events, and its two buttons stand under the question, No marked
+   as the default Return presses. */
+.inputbox.yesnobox { pointer-events: auto; }
+.yesnobox-acts { display: flex; justify-content: center; gap: 12px; margin: 6px 0 2px; }
+.yesnobox-acts .act { min-width: 96px; min-height: 40px; text-align: center; }
 .inputbox-rows { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; }
 .inputbox-field {
   font-size: 15px; line-height: 1.35; white-space: pre; overflow: hidden;

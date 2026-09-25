@@ -219,7 +219,7 @@ the honest result of an audit is sometimes that the work is not owed.
 
 **S1 - the two exterior hosts' draw ladders. THE HOSTS ARE NOT PEERS,
 and the record never said so.** `main.js:107` routes `?exterior`,
-`?region` and `?loc` to `bootExterior`; the front door (`main.js:225`)
+`?region` and `?loc` to `bootExterior`; the front door (`main.js:228`)
 boots `bootWorld`. main.js says it in its own words: *"Dev scenes stay
 one param away (?exterior/?world/etc)."* So this is a shipping ladder
 against a dev scene's ladder, not two live copies of one law - which is
@@ -253,7 +253,7 @@ three collapsed on verification.**
    `OnLoadEvent`). The quickload caller goes through
    `restoreSessionState` instead. Calling it in both places would be the
    redundancy, not the fix.
-3. *"`worldModes.js:9629` disposes the dungeon overlay that
+3. *"`worldModes.js:9638` disposes the dungeon overlay that
    `dungeonCtx.destroy()` disposes again - HARD1's double free."* Already
    known, already written down, at `dungeonContext.js:7117-7118`:
    *"dispose() is idempotent (A2), which is what makes the outer host's

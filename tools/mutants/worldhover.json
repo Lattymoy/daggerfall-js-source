@@ -29,7 +29,7 @@
   {
     "name": "WORLD-HOVER-signature-is-the-key-alone",
     "file": "src/systems/worldHover.js",
-    "old": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
+    "old": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}${f.tone ? `|${f.tone}` : ''}`;",
     "new": "  return `${f.key}`;",
     "tests": [
       "test/worldhover.test.js",
@@ -39,8 +39,8 @@
   {
     "name": "WORLD-HOVER-signature-drops-the-sub-lines",
     "file": "src/systems/worldHover.js",
-    "old": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
-    "new": "  return `${f.key}|${f.kind}|${f.title}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
+    "old": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}${f.tone ? `|${f.tone}` : ''}`;",
+    "new": "  return `${f.key}|${f.kind}|${f.title}|${rows}|${f.rest}|${f.empty ? 'e' : ''}${f.tone ? `|${f.tone}` : ''}`;",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -957,8 +957,8 @@
   {
     "name": "AUDIT-WH2-the-signature-stops-seeing-the-title",
     "file": "src/systems/worldHover.js",
-    "old": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
-    "new": "  return `${f.key}|${f.kind}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
+    "old": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}${f.tone ? `|${f.tone}` : ''}`;",
+    "new": "  return `${f.key}|${f.kind}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}${f.tone ? `|${f.tone}` : ''}`;",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -966,8 +966,8 @@
   {
     "name": "AUDIT-WH2-the-signature-stops-seeing-the-tail",
     "file": "src/systems/worldHover.js",
-    "old": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
-    "new": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.empty ? 'e' : ''}`;",
+    "old": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}${f.tone ? `|${f.tone}` : ''}`;",
+    "new": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.empty ? 'e' : ''}${f.tone ? `|${f.tone}` : ''}`;",
     "tests": [
       "test/worldhover.test.js"
     ]

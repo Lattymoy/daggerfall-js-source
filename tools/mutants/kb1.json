@@ -57,8 +57,8 @@
   {
     "name": "KB1-enter-online-frees-the-mouse-too",
     "file": "src/player/pointerLock.js",
-    "old": "    if (act !== FREE_MOUSE_ACTION && !(act === 'ActivateCursor' && !cursorKeyClaimed(e))) return;",
-    "new": "    if (act !== FREE_MOUSE_ACTION && act !== 'ActivateCursor') return;",
+    "old": "    if (!acts.includes(FREE_MOUSE_ACTION) && !(acts.includes('ActivateCursor') && !cursorKeyClaimed(e))) return;",
+    "new": "    if (!acts.includes(FREE_MOUSE_ACTION) && !acts.includes('ActivateCursor')) return;",
     "tests": [
       "test/kb1_keybinds.test.js"
     ]

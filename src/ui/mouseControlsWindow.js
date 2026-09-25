@@ -114,7 +114,7 @@ import { onSavedKeyBinds, PORT_ACTIONS, HIDDEN_ACTIONS } from '../systems/inputA
 import {
   currentDict, setUnsavedBinding, checkDuplicates, buttonText, ELONGATED_TEXT,
   INTERNAL_DUPE_COLOR, CROSS_DUPE_COLOR, removeKeybindPromptRows, comboFromEvent,
-  bindingHolders, replaceKeybindPromptRows, stageReplace,
+  bindingHolders, stageReplace, canShareKey, stageShare, replacePromptRows, SHARED_KEY_COLOR,
 } from '../systems/controlsConfig.js';
 import {
   makeSlider, setScrollIndex, sliderClick, sliderDrag, sliderGetValue, sliderScroll,
@@ -395,12 +395,16 @@ export class MouseControlsWindow {
     // after its capture (Escape, Y, N - all bindable) answered the prompt it had just raised.
     if (this.top && e?.repeat) return;
     if (this.top === 'replace') {
+      const r = this._replace;
       if (code === 'KeyY') {
         this._click();
-        stageReplace(this.unsaved, this._replace.action, this._replace.code, this._replace.holders);
+        stageReplace(this.unsaved, r.action, r.code, r.holders);
         this._refresh();
       }
-      if (code === 'KeyY' || code === 'KeyN' || code === 'Escape') { this.top = null; this._replace = null; }
+      // UXB1-S: B - "use it for both", the grid's own third answer (ui/controlsWindow.js)
+      const share = code === 'KeyB' && canShareKey(this.unsaved, r.action, r.code, r.holders);
+      if (share) { this._click(); stageShare(this.unsaved, r.action, r.code); this._refresh(); }
+      if (code === 'KeyY' || code === 'KeyN' || code === 'Escape' || share) { this.top = null; this._replace = null; }
       return;
     }
     if (this.top === 'remove') {
@@ -580,7 +584,7 @@ export class MouseControlsWindow {
       const code = dict.get(row.action);
       const label = this.capture === row.action ? '' : buttonText(code);
       const color = this.dupes.internal.has(code) ? INTERNAL_DUPE_COLOR
-        : this.dupes.cross.has(code) ? CROSS_DUPE_COLOR : TEXT_COLOR;
+        : this.dupes.cross.has(code) ? CROSS_DUPE_COLOR : this.dupes.shared?.has(code) ? SHARED_KEY_COLOR : TEXT_COLOR;   // UXB1-S
       put(label, bx + Math.round((bw - measureText(font.fnt, label)) / 2),
         by + Math.round((bh - glyphH) / 2), color);
     }
@@ -623,7 +627,7 @@ export class MouseControlsWindow {
     if (this.capture) put('Press a key...', 4, MOUSE_PANEL[3] - 12);
 
     if (this.top === 'remove' || this.top === 'replace') {
-      const rows = this.top === 'replace' ? replaceKeybindPromptRows(this._replace.action, this._replace.code, this._replace.holders, this.unsaved.usingPrimary)
+      const rows = this.top === 'replace' ? replacePromptRows(this.unsaved, this._replace)
         : removeKeybindPromptRows(this._removeAction, currentDict(this.unsaved).get(this._removeAction));
       this._box = layoutMessageBox(font, rows, [MB_BUTTONS.Yes, MB_BUTTONS.No]);
       if (!drawMessageBox(renderer, m, font, this._box)) {

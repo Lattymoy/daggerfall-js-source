@@ -370,8 +370,8 @@
   {
     "name": "B4-F-under-the-mode-gate",
     "file": "src/scenes/world.js",
-    "old": "if (!townTalk.overlayActive && act === 'SocialInteract' && socialMenuCanOpen() && socialInteract()) { e.preventDefault(); return; }",
-    "new": "if (false && act === 'SocialInteract' && socialMenuCanOpen() && socialInteract()) { e.preventDefault(); return; }",
+    "old": "if (!townTalk.overlayActive && act === 'SocialInteract' && socialMenuCanOpen() && socialInteract()) { e.preventDefault(); return true; }",
+    "new": "if (false && act === 'SocialInteract' && socialMenuCanOpen() && socialInteract()) { e.preventDefault(); return true; }",
     "tests": [
       "test/soc5_interact.test.js"
     ]

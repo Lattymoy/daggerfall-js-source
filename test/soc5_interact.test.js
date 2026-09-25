@@ -21,7 +21,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { ACTIONS, DEFAULT_BINDINGS, parseActionName, createBindings, resetDefaults, setBinding, getBinding, actionForCode, loadKeyBinds, serializeKeyBinds } from '../src/systems/inputActions.js';
+import { ACTIONS, DEFAULT_BINDINGS, parseActionName, createBindings, resetDefaults, setBinding, getBinding, actionForCode, actionsForCode, loadKeyBinds, serializeKeyBinds } from '../src/systems/inputActions.js';
 import { routeAction } from '../src/ui/input.js';
 import { KEYBIND_ROWS } from '../src/ui/mouseControlsWindow.js';   // KB1: the ADVANCED popup's own six
 import { ACTION_GROUPS, HIDDEN_ACTIONS } from '../src/systems/inputActions.js';
@@ -406,7 +406,7 @@ test('SOC5: scenes/world.js - the door on hudCtx, the ray read as the activation
   assert.match(w, /Friend request sent to \$\{who\}/); assert.match(w, /Party invite sent to \$\{who\}/);
   // the pointer door is the chat's, and the open gate is the chat's
   assert.match(w, /onOpen: \(\) => surfaceOpen\('menu'\),   \/\/ AUDIT CHAT C2's law/, 'AUDIT SOC B6: the card is a counted pointer surface');
-  assert.match(w, /if \(!townTalk\.overlayActive && act === 'SocialInteract' && socialMenuCanOpen\(\) && socialInteract\(\)\) \{ e\.preventDefault\(\); return; \}/, 'AUDIT SOC B4/D1: the door answers ABOVE the exterior gate - F on a body works in a tavern and a dungeon');
+  assert.match(w, /if \(!townTalk\.overlayActive && act === 'SocialInteract' && socialMenuCanOpen\(\) && socialInteract\(\)\) \{ e\.preventDefault\(\); return true; \}/, 'AUDIT SOC B4/D1: the door answers ABOVE the exterior gate - F on a body works in a tavern and a dungeon');
   assert.ok(w.indexOf("act === 'SocialInteract' && socialMenuCanOpen()") < w.indexOf("if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {"), 'written above the mode gate, not inside it');
   assert.match(w, /onClose: \(\) => surfaceClose\('menu'\),   \/\/ and taken back inside the one that closed/);
   assert.match(w, /const socialMenuCanOpen = \(\) => !gamePaused\(\) && !\(townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\)\);/, 'the chat\'s own gate: a window\'s keys are the window\'s');
@@ -499,25 +499,39 @@ test('AUDIT SOC D3: the port own action YIELDS in the classic windows - a grid a
   resetDefaults(store);
   assert.equal(getBinding(store, 'SocialInteract'), 'KeyF');
   assert.ok(checkDuplicates(createUnsavedKeybinds(store)).ok, 'the untouched defaults clash with nothing');
-  // the ENHANCED pane sees the clash, because it draws the row that can resolve it
+  // UXB1-S (2026-09-25): THE SAME KEY IS A SHARE NOW, and a share blocks nothing - so it is never yielded either. The
+  // yield is for the clash DFU's law still refuses (a combo against its own modifier bound bare), which a classic
+  // window cannot show on a port row and so could never clear.
   const enhanced = createUnsavedKeybinds(store);
   setUnsavedBinding(enhanced, 'Rest', 'KeyF');
-  assert.equal(checkDuplicates(enhanced).ok, false, 'the enhanced window still reports it: its Online group can clear it');
+  assert.equal(checkDuplicates(enhanced).ok, true, 'the enhanced window: a share, marked and let through');
+  assert.equal(checkDuplicates(enhanced).shared.has('KeyF'), true);
   assert.equal(enhanced.primary.get('SocialInteract'), 'KeyF', '...and never unbinds the row behind the player back');
-  // the CLASSIC windows yield it: a classic player puts Rest - one of the 38 rows the art draws - on F
+  // the CLASSIC windows keep a share too - a classic player puts Rest (a row the art draws) on F beside SocialInteract
   const u = createUnsavedKeybinds(store);
   setUnsavedBinding(u, 'Rest', 'KeyF');
-  const d = checkDuplicates(u, { yield: PORT_ACTIONS });
-  assert.equal(u.primary.get('SocialInteract'), null, 'the port row gives the key up rather than arguing for it');
-  assert.equal(u.primary.get('Rest'), 'KeyF');
+  let d = checkDuplicates(u, { yield: PORT_ACTIONS });
+  assert.equal(u.primary.get('SocialInteract'), 'KeyF', 'a share is not a clash: the port row keeps its key');
   assert.equal(d.ok, true, 'so the window closes');
   assert.equal(d.internal.size, 0); assert.equal(d.cross.size, 0);
-  // ...and the apply leaves a duplicate-free store with the action unbound and rebindable in the pane that draws it
   applyUnsavedKeybinds(store, u);
-  assert.equal(getBinding(store, 'Rest'), 'KeyF');
-  assert.equal(getBinding(store, 'SocialInteract'), null);
-  assert.equal(actionForCode(store, 'KeyF'), 'Rest');
-  assert.equal(checkDuplicates(createUnsavedKeybinds(store)).ok, true, 'no clash survives the apply, on either window');
+  assert.deepEqual(actionsForCode(store, 'KeyF'), ['SocialInteract', 'Rest'], 'the apply writes the share - F answers both');
+  // the port row YIELDS what IS a clash: SocialInteract bare on a modifier a grid row's combo leads with
+  const store2 = createBindings();
+  resetDefaults(store2);
+  assert.equal(actionForCode(store2, 'ControlRight'), null, '(a modifier nobody holds, for the fixture)');
+  const c = createUnsavedKeybinds(store2);
+  setUnsavedBinding(c, 'Rest', 'ControlRight+KeyT');
+  setUnsavedBinding(c, 'SocialInteract', 'ControlRight');
+  d = checkDuplicates(c, { yield: PORT_ACTIONS });
+  assert.equal(c.primary.get('SocialInteract'), null, 'the port row gives the key up rather than arguing for it');
+  assert.equal(c.primary.get('Rest'), 'ControlRight+KeyT');
+  assert.equal(d.ok, true, 'so the window closes');
+  // ...and the apply leaves a clash-free store with the action unbound and rebindable in the pane that draws it
+  applyUnsavedKeybinds(store2, c);
+  assert.equal(getBinding(store2, 'Rest'), 'ControlRight+KeyT');
+  assert.equal(getBinding(store2, 'SocialInteract'), null);
+  assert.equal(checkDuplicates(createUnsavedKeybinds(store2)).ok, true, 'no clash survives the apply, on either window');
   // a yielded action nobody else wants keeps its key: the pass unbinds a CLASH, not a row
   const clean = createBindings();
   resetDefaults(clean);
@@ -525,10 +539,10 @@ test('AUDIT SOC D3: the port own action YIELDS in the classic windows - a grid a
   checkDuplicates(quiet, { yield: PORT_ACTIONS });
   assert.equal(quiet.primary.get('SocialInteract'), 'KeyF', 'nothing clashed, so nothing was given up');
   assert.equal(currentDict(quiet).size, ACTIONS.length);
-  // and the yield is per dict: a code the SECONDARY holds is not a clash inside the primary
+  // and the yield is per dict: a clash the SECONDARY holds is not a clash inside the primary
   const two = createUnsavedKeybinds(clean);
-  two.secondary.set('Rest', 'KeyF');
-  two.secondary.set('SocialInteract', 'KeyF');
+  two.secondary.set('Rest', 'ControlRight+KeyT');
+  two.secondary.set('SocialInteract', 'ControlRight');
   checkDuplicates(two, { yield: PORT_ACTIONS });
   assert.equal(two.primary.get('SocialInteract'), 'KeyF', 'the primary is untouched by the other dict spelling');
   assert.equal(two.secondary.get('SocialInteract'), null, 'and the secondary yields its own');

@@ -9,10 +9,10 @@ import {
   createUnsavedKeybinds, currentDict, setUnsavedBinding, getDuplicates,
   internalDuplicatesExist, checkDuplicates, applyUnsavedKeybinds,
   resetUnsavedToDefaults, buttonText, MAX_BUTTON_TEXT, ELONGATED_TEXT,
-  INTERNAL_DUPE_COLOR, CROSS_DUPE_COLOR,
+  INTERNAL_DUPE_COLOR, CROSS_DUPE_COLOR, SHARED_KEY_COLOR,
 } from '../src/systems/controlsConfig.js';
 import {
-  createBindings, resetDefaults, setBinding, getBinding, actionForCode, ACTIONS,
+  createBindings, resetDefaults, setBinding, getBinding, actionForCode, actionsForCode, ACTIONS,
 } from '../src/systems/inputActions.js';
 import { KEY_GROUPS, KEY_BTN, TAB_RECTS, MLOOK_ALT_RECT, gridButtons } from '../src/ui/controlsWindow.js';
 
@@ -103,65 +103,97 @@ test('I4: staging copies BOTH dicts and writes nothing live until applied', () =
     'an unchanged set marks nothing - the mark rides the transition');
 });
 
-test('I4: duplicates - red inside the shown dict, blue across the two (:230-267)', () => {
+test('I4 + UXB1-S: the SAME key on two actions is a SHARE - marked, never blocking; DFU\'s law still finds, and blocks on, a combo against its own modifier - red inside the shown dict, blue across the two (:230-267)', () => {
+  // UXB1-S (2026-09-25, the UX backlog: "So you wont add multiple key bindings even when asked? I dont care if it goes
+  // against daggerfall"): the pin DFU's duplicate law held here is re-aimed, not dropped. Two actions on one code were
+  // DFU's red clash and refused the exit; they are a share now, chosen and kept. What the law still refuses is the
+  // clash no press can resolve - a combo whose modifier is bound bare - and that keeps both of DFU's colours.
   const store = freshStore();
   const u = createUnsavedKeybinds(store);
   assert.equal(checkDuplicates(u).ok, true, 'the defaults are clean');
-  // two actions on one code, in the SHOWN dict: internal (red)
+  assert.equal(checkDuplicates(u).shared.size, 0, '...and share nothing');
+  // two actions on one code, in the SHOWN dict: a share
   setUnsavedBinding(u, 'Rest', 'KeyW');
   let d = checkDuplicates(u);
-  assert.equal(d.internal.has('KeyW'), true);
-  assert.equal(d.ok, false, 'an internal clash blocks the exit');
-  assert.equal(internalDuplicatesExist(u), true);
+  assert.equal(d.internal.size, 0, 'not a clash');
+  assert.equal(d.shared.has('KeyW'), true, 'a share, and marked as one');
+  assert.equal(d.ok, true, 'a share does not block the exit');
+  assert.equal(internalDuplicatesExist(u), true, '(the raw same-code test still sees it - the pages ask checkDuplicates)');
   setUnsavedBinding(u, 'Rest', 'KeyR');
-  assert.equal(checkDuplicates(u).ok, true);
-  // the same code in the OTHER dict: cross (blue), and it blocks too
+  assert.equal(checkDuplicates(u).shared.size, 0);
+  // the same code in the OTHER dict: a share across the two, not DFU's blue
   u.secondary.set('Jump', 'KeyW');
   d = checkDuplicates(u);
-  assert.equal(d.internal.size, 0, 'not an internal clash');
-  assert.equal(d.cross.has('KeyW'), true);
+  assert.equal(d.cross.size, 0);
+  assert.equal(d.shared.has('KeyW'), true);
+  assert.equal(d.ok, true);
+  u.secondary.set('Jump', null);
+  // ...and an action on one key in both its slots is that action twice, not a share
+  u.secondary.set('MoveForwards', 'KeyW');
+  assert.equal(checkDuplicates(u).shared.size, 0, 'one action, both slots: nothing shared');
+  u.secondary.set('MoveForwards', null);
+  // THE LAW STILL STANDING: a combo against its own modifier bound bare - Shift+T beside Run's bare Shift
+  setUnsavedBinding(u, 'Rest', 'ShiftLeft+KeyT');
+  d = checkDuplicates(u);
+  assert.equal(d.internal.has('ShiftLeft+KeyT') && d.internal.has('ShiftLeft'), true, 'red, both of them');
+  assert.equal(d.ok, false, 'and it blocks the exit');
+  setUnsavedBinding(u, 'Rest', 'KeyR');
+  u.secondary.set('Rest', 'ShiftLeft+KeyT');
+  d = checkDuplicates(u);
+  assert.equal(d.internal.size, 0, 'across the two dicts it is not red...');
+  assert.equal(d.cross.has('ShiftLeft+KeyT'), true, '...it is blue');
   assert.equal(d.ok, false, 'DFU returns noRedDupes && cross == 0 - BOTH block');
   // unbound never counts, however many share it
   const u2 = createUnsavedKeybinds(store);
   setUnsavedBinding(u2, 'Rest', null);
   setUnsavedBinding(u2, 'Jump', null);
   assert.equal(checkDuplicates(u2).ok, true, 'two unbound actions are not duplicates');
+  assert.equal(checkDuplicates(u2).shared.size, 0, '...nor a share');
   assert.equal(getDuplicates([null, null, 'KeyW']).size, 0);
-  // the two colours are DFU's own
+  // the two colours are DFU's own; the share's is the port's, and neither of them
   assert.deepEqual([...INTERNAL_DUPE_COLOR], [1, 0, 0, 1]);
   assert.deepEqual(CROSS_DUPE_COLOR.slice(0, 3), [0, 0.58, 1]);
+  assert.notDeepEqual([...SHARED_KEY_COLOR], [...INTERNAL_DUPE_COLOR]);
+  assert.notDeepEqual([...SHARED_KEY_COLOR], [...CROSS_DUPE_COLOR]);
 });
 
-test('I4: the internal check dedupes each dict before the cross check (:256-258)', () => {
-  // Without the per-dict dedupe an INTERNAL pair would also read as a
-  // cross clash - the two lists concatenated would carry KeyW twice
-  // from the primary side alone. The mutation that removes the
-  // `new Set(...)` wrappers is what this pins.
+test('I4: the internal check dedupes each dict before the cross check (:256-258) - a combo clash inside one dict is read in both, as DFU\'s concatenation reads it', () => {
+  // DFU's cross list is each dict DEDUPED then concatenated, so the same code twice in one dict never read as blue.
+  // UXB1-S dedupes the union too (a code in both dicts is a share) - and a COMBO clash inside one dict is two DIFFERENT
+  // codes, which DFU's concatenation carried into the cross list as well: red wins where both are drawn.
   const store = freshStore();
   const u = createUnsavedKeybinds(store);
-  setUnsavedBinding(u, 'Rest', 'KeyW');        // internal clash, primary only
-  const d = checkDuplicates(u);
-  assert.equal(d.internal.has('KeyW'), true);
-  assert.equal(d.cross.has('KeyW'), false, 'an internal pair is NOT a cross clash');
+  setUnsavedBinding(u, 'Rest', 'KeyW');        // a share, primary only
+  let d = checkDuplicates(u);
+  assert.equal(d.internal.has('KeyW'), false);
+  assert.equal(d.cross.has('KeyW'), false, 'a share is neither colour');
+  setUnsavedBinding(u, 'Rest', 'ShiftLeft+KeyT');   // a combo clash, primary only
+  d = checkDuplicates(u);
+  assert.equal(d.internal.has('ShiftLeft+KeyT'), true);
+  assert.equal(d.cross.has('ShiftLeft+KeyT'), true, 'DFU\'s cross list carries it too; the draw puts red first');
 });
 
-test('I4: the apply CONTRACT - a clashing set is order-dependent, and the gate is what prevents it', () => {
-  // SetBinding steals a code from whoever holds it, so applying a set
-  // where two actions share one code leaves the EARLIER action
-  // unbound - DFU's SetKeyBindValues has exactly this shape
-  // (:541-559). It is never reached because the window refuses to
-  // close while duplicates exist; this pins BOTH halves, so nobody
-  // "fixes" the apply and quietly retires the gate that guards it.
+test('I4 + UXB1-S: the apply writes what the staged set says - two actions staged on one key BOTH keep it (a share), and a key moved off its holder leaves it', () => {
+  // DFU's SetKeyBindValues stole a code from whoever held it, so a set with two actions on one code applied
+  // ORDER-DEPENDENTLY and only the exit gate kept that state from the registry. UXB1-S made that state a choice, so the
+  // apply writes it: nobody the staged picture keeps on the key is stolen from, whatever order the walk meets them in.
   const store = freshStore();
   const u = createUnsavedKeybinds(store);
   setUnsavedBinding(u, 'MoveForwards', 'KeyI');   // KeyI is Status's default
-  assert.equal(checkDuplicates(u).ok, false, 'the gate SEES it, and blocks the close');
+  assert.equal(checkDuplicates(u).ok, true, 'a share: the gate lets it through');
   applyUnsavedKeybinds(store, u);
-  // AUDIT KB1 F4: the apply reads "differs" off the store as it stood BEFORE the walk (a code MOVED by the replace
-  // prompt must mark its old holder removed whatever the order), so here the row that CHANGED takes the code and the
-  // row that did not is left holding nothing - still a lost key, which is the point: only the gate prevents it.
-  assert.equal(getBinding(store, 'MoveForwards'), 'KeyI', 'the changed row takes the code');
-  assert.equal(getBinding(store, 'Status'), null, 'and the untouched one is left unbound - the clash the gate exists to stop');
+  assert.equal(getBinding(store, 'MoveForwards'), 'KeyI', 'the changed row has the key');
+  assert.equal(getBinding(store, 'Status'), 'KeyI', 'and the untouched one keeps it - one key, both actions');
+  assert.deepEqual(actionsForCode(store, 'KeyI'), ['Status', 'MoveForwards'], 'the holder first, the sharer beside it');
+  assert.equal(actionForCode(store, 'KeyW'), null, 'MoveForwards let go of its old key');
+  // ...and the replace answer (the holder staged elsewhere) still MOVES the key: the holder lets go of it
+  const v = createUnsavedKeybinds(store);
+  setUnsavedBinding(v, 'Rest', 'KeyI');
+  setUnsavedBinding(v, 'Status', null);
+  setUnsavedBinding(v, 'MoveForwards', 'KeyW');
+  applyUnsavedKeybinds(store, v);
+  assert.deepEqual(actionsForCode(store, 'KeyI'), ['Rest'], 'Status unbound and MoveForwards moved home: Rest alone');
+  assert.equal(store.removedPrimary.has('Status'), true, 'the emptied row is marked, as ever (AUDIT KB1 F4)');
 });
 
 test('I4: Default resets the live registry and re-stages from it', () => {

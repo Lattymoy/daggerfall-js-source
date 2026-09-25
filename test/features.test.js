@@ -135,10 +135,14 @@ test('FT14: the panel is tiles grouped by what they change, the control is alway
   assert.doesNotMatch(menu, /function paneMods\b/, 'the pane itself');
   assert.doesNotMatch(menu, /\bmods: paneMods\b/, 'and from both dispatch tables');
   // what it carried that was never a mod setting has a home, on the features screen
-  assert.match(menu, /function modsFooter\(body\) \{[\s\S]*?morrowindCard\(\)[\s\S]*?packsCard\(\)[\s\S]*?Enhancements\/LypyL_ModSystem/,
-    'the assets card, the packs door and DFU\'s own mod switches survive the pane');
+  assert.match(menu, /function modsFooter\(body\) \{[\s\S]*?packsCard\(\)[\s\S]*?Enhancements\/LypyL_ModSystem/,
+    'the packs door and DFU\'s own mod switches survive the pane');
   assert.match(menu, /if \(featureKind == null \|\| featureKind === 'mod'\) modsFooter\(body\);/,
     'drawn under the tiles, and only where a player looking for mods would be');
+  // MWA4: the assets card survives it too - at the HEAD of the list, above the tiles, on the same filter
+  assert.match(menu, /panes\.append\(main, rail\);\n\s*if \(featureKind == null \|\| featureKind === 'mod'\) body\.append\(morrowindCard\(\)\);[^\n]*\n\s*body\.append\(panes\);/,
+    'MWA4: the Morrowind assets card heads the feature list');
+  assert.doesNotMatch(menu.slice(menu.indexOf('function modsFooter('), menu.indexOf('\n}', menu.indexOf('function modsFooter('))), /morrowindCard\(\)/, 'and is drawn once');
 
   // (2) GROUPED BY WHAT THEY CHANGE, filtered by who wrote them
   assert.match(menu, /for \(const g of GROUP_ORDER\) \{\s*\n\s*const items = rows\.filter\(\(f\) => f\.group === g\);/,

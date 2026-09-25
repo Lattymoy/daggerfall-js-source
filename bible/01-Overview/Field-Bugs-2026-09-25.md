@@ -196,6 +196,53 @@ Discord's local IPC socket, but Rich Presence needs a Discord application
 (its client id and its art keys) registered on Discord's developer portal -
 Mac's to create. Nothing is shipped with a placeholder id.
 
+## MWHEAD1: the Morrowind body's head sliced flat in third person (Mac)
+
+Mac: *"The morrowind's model's head gets cut off in third person view. This
+is pre exhisting and has happened for awhile"*. Asked what it looks like:
+the top of the head sliced flat, the same at every zoom and look.
+
+**Cause.** The third-person body is a picture. `drawRigSpriteBox`
+(`render/characterSprite.js`, the one sprite law the Morrowind body and the
+voxel foes share) renders the rig under an ortho along the eye's ray and
+stands the picture upright in the world. The picture's window was the box's
+**world** half-height, but the ray is pitched:
+
+- the Morrowind eye sits at the head (`mwCamera` FOCAL_HEIGHT 124) and looks
+  down PR-BOW1's ray to the body's middle;
+- tilted by `p`, a point `v` above the box centre and `h` further along the
+  view draws at picture height `v cos p + h sin p`;
+- so the box's far top rises above `halfH` whenever
+  `h sin p > halfH (1 - cos p)`.
+
+On the Morrowind body the head stands forward of the box centre, because a
+sheathed longsword (PR-BOW1: y 2.9..59.5 out from its grip) pulls the centre
+back toward a camera behind the body. The crown rose out of the window and
+was cut flat: a few centimetres at every zoom. The pin reproduces it: the
+crown drew at 1.082 of the picture's half-height.
+
+**Fix.** The window is the box as the picture sees it:
+`halfH cos p + halfW sin p`. `halfW` is the box's azimuth-safe horizontal
+radius, so `|h| <= halfW` and the whole box is inside at any pitch. Level
+(`p` 0) it is the world half-height, so a level look draws exactly what it
+did. The quad is the window, so the picture still draws at true world size,
+at the same texel law. The tilt is the ray's own slope off its true length,
+not off `dist`: that is floored at 0.5, and an eye closer than that read the
+pitch low (the corner sweep caught it).
+
+The voxel foes' pictures ride the same law and are held whole too.
+
+Pins: `test/mwhead1_window.test.js` (3):
+- the crown at the Morrowind camera's own framing;
+- every corner of the box inside its picture at every zoom (MIN..MAX
+  distance), every look (-80..80 degrees) and every side;
+- the level look unchanged, the quad the window, texels square.
+
+`test/prbow1_bow.test.js`'s ortho and resolution pins are re-aimed at the
+law (each ray's own window; a texel is `pixel` screen pixels where the quad
+stands). Mutants: `tools/mutants/mwhead1.json` (5, all dead). Not verified
+in a browser (no probes).
+
 ---
 
 # PERF-SCALE — slow outdoors on a good GPU, and a counter that could not say why (2026-09-25)

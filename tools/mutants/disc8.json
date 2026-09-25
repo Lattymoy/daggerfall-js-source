@@ -56,8 +56,8 @@
   {
     "name": "DISC8D-escape-ignored",
     "file": "src/ui/useMagicItemWindow.js",
-    "old": "    return c === 'Escape' || (c != null",
-    "new": "    return (c != null",
+    "old": "    return c === 'Escape' || codeMeans(bindings(), c, 'UseMagicItem');",
+    "new": "    return codeMeans(bindings(), c, 'UseMagicItem');",
     "tests": [
       "test/disc8.test.js"
     ]

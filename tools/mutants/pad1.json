@@ -16,7 +16,7 @@
   { "name": "PAD1-C-mark-not-saved", "file": "src/systems/inputActions.js",
     "old": "    removedSecondaryActions: [...store.removedSecondary],   // PAD1", "new": "    removedSecondaryActions: [],", "tests": ["test/pad1.test.js"] },
   { "name": "PAD1-C-mark-loads-on-the-primary-law", "file": "src/systems/inputActions.js",
-    "old": "      for (const a of store.secondary.values()) if (a === action) bound = true;\n      if (!bound) store.removedSecondary.add(action);", "new": "      for (const a of store.primary.values()) if (a === action) bound = true;\n      for (const a of store.secondary.values()) if (a === action) bound = true;\n      if (!bound) store.removedSecondary.add(action);", "tests": ["test/pad1.test.js"] },
+    "old": "      for (const [, a] of dictEntries(store, false)) if (a === action) bound = true;\n      if (!bound) store.removedSecondary.add(action);", "new": "      for (const [, a] of dictEntries(store, true)) if (a === action) bound = true;\n      for (const [, a] of dictEntries(store, false)) if (a === action) bound = true;\n      if (!bound) store.removedSecondary.add(action);", "tests": ["test/pad1.test.js"] },
   { "name": "PAD1-C-rebind-keeps-the-mark", "file": "src/systems/inputActions.js",
     "old": "    else store.removedSecondary.delete(action);   // PAD1", "new": "", "tests": ["test/pad1.test.js", "test/inputactions.test.js"] },
   { "name": "PAD1-C-screens-do-not-mark-a-cleared-pad-row", "file": "src/systems/controlsConfig.js",

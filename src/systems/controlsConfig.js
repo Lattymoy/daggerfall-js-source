@@ -17,14 +17,19 @@
 // display face when one is wanted.
 
 import {
-  ACTIONS, getBinding, setBinding, addRemovedPrimaryAction, addRemovedSecondaryAction, resetDefaults,
+  ACTIONS, getBinding, addRemovedPrimaryAction, addRemovedSecondaryAction, resetDefaults,
   isCombo, getCombo, comboCode, actionLabel, actionLive, createBindings, serializeKeyBinds, loadKeyBinds,
+  MOD_ACTIONS, ACTION_GROUPS, codeForAction, actionsAt, shareBinding, dropBinding, clearBinding,
 } from './inputActions.js';
+import { shortcutBinding, MOD } from './dialogShortcuts.js';   // UXB1-F: the keys this page names and cannot move
 
 /** internalDupeColor / crossDupeColor (:44-45): red for a clash
  *  inside the shown dict, the blue for one across the two. */
 export const INTERNAL_DUPE_COLOR = Object.freeze([1, 0, 0, 1]);
 export const CROSS_DUPE_COLOR = Object.freeze([0, 0.58, 1, 1]);
+/** UXB1-S: the port's own third colour - a key shared by choice (sharedStagedCodes), which blocks nothing. Green, so
+ *  it reads as neither of DFU's two clashes. */
+export const SHARED_KEY_COLOR = Object.freeze([0.44, 0.81, 0.54, 1]);
 
 /** The label cap under the classic font (:64 - the non-SDF arm) and
  *  the elongation stand-in (:56). */
@@ -137,12 +142,33 @@ export const internalDuplicatesExist = (u) =>
  *  passes no `yield` at all and sees DFU's law byte for byte. */
 export function checkDuplicates(u, { yield: yielded = [] } = {}) {
   if (yielded.length) yieldDuplicates(u, yielded);
-  const internal = getDuplicates([...currentDict(u).values()]);
-  const cross = getDuplicates([
-    ...new Set([...u.primary.values()].filter((c) => c != null)),
-    ...new Set([...u.secondary.values()].filter((c) => c != null)),
-  ]);
-  return { internal, cross, ok: internal.size === 0 && cross.size === 0 };
+  // UXB1-S: DFU's law over each set's DISTINCT codes. The same key on two actions is a SHARE now - chosen, kept, and
+  // answered by both (inputActions.js shareBinding) - so what the law still finds is the kind of clash no press can
+  // resolve: a combo against its own modifier bound bare (Shift+T and Shift), a combo'd key heading another combo.
+  const internal = getDuplicates(distinct(currentDict(u).values()));
+  const cross = getDuplicates(distinct([...u.primary.values(), ...u.secondary.values()]));
+  return { internal, cross, shared: sharedStagedCodes(u), ok: internal.size === 0 && cross.size === 0 };
+}
+const distinct = (codes) => [...new Set([...codes].filter((c) => c != null))];
+
+/** UXB1-S: THE SHARED KEYS in the staged sets - every code more than one ACTION holds, across both dicts (an action
+ *  on one key in both of its slots is the same action twice, not a share). The pages mark them. */
+export function sharedStagedCodes(u) {
+  const by = new Map();
+  for (const dict of [u.primary, u.secondary]) {
+    for (const [action, code] of dict) if (code != null) (by.get(code) ?? by.set(code, new Set()).get(code)).add(action);
+  }
+  return new Set([...by].filter(([, actions]) => actions.size > 1).map(([code]) => code));
+}
+/** UXB1-S: ...and who else a row's key answers - every OTHER action staged on `code`, in either dict, for the row's
+ *  "Also:" line. [] for a key that is not shared. */
+export function keySharers(u, action, code) {
+  if (code == null) return [];
+  const out = [];
+  for (const dict of [u.primary, u.secondary]) {
+    for (const [a, c] of dict) if (c === code && a !== action && !out.includes(a)) out.push(a);
+  }
+  return out;
 }
 
 /** The `yield` pass: in EACH staged dict on its own, a yielded action
@@ -158,7 +184,8 @@ function yieldDuplicates(u, yielded) {
     for (const [action, code] of dict) if (code != null && !give.has(action)) kept.add(code);
     for (const action of give) {
       const code = dict.get(action);
-      if (code != null && kept.has(code)) dict.set(action, null);
+      // UXB1-S: a SHARE blocks nothing, so it is never given up - only a combo clash, which still blocks the exit
+      if (code != null && [...kept].some((k) => k !== code && clashes(code, k))) dict.set(action, null);
     }
   }
 }
@@ -168,15 +195,14 @@ function yieldDuplicates(u, yielded) {
  *  from the live one - and an emptied PRIMARY slot is marked removed
  *  so the autofill pass cannot quietly restore its default.
  *
- *  THE CONTRACT, which is DFU's and not a port shortcut: this runs
- *  only on a DUPLICATE-FREE set. SetBinding steals a code from
- *  whoever holds it, so applying a set where two actions share one
- *  code is ORDER-DEPENDENT - the later action wins and the earlier
- *  ends up unbound. DFU never reaches that state because the window
- *  refuses to close while checkDuplicates reports either kind of
- *  clash (AllowCancel false), which is exactly why that gate blocks
- *  the exit rather than merely colouring the labels. Callers that
- *  bypass the window must run checkDuplicates themselves.
+ *  THE CONTRACT was DFU's: this ran only on a DUPLICATE-FREE set,
+ *  because SetBinding steals a code from whoever holds it and two
+ *  actions on one code came out ORDER-DEPENDENT - the later won, the
+ *  earlier ended up unbound. UXB1-S made the same code on two actions
+ *  a SHARE, so the apply no longer steals from anyone the staged
+ *  picture keeps on the key (below); the windows still refuse to close
+ *  on the clash DFU's law still finds (a combo against its modifier),
+ *  and callers that bypass them must run checkDuplicates themselves.
  *
  *  AUDIT KB1 F4: "differs from the live one" is read off the store AS IT
  *  STOOD BEFORE THE APPLY, not as the walk has left it. A code that
@@ -201,7 +227,17 @@ export function applyUnsavedKeybinds(store, u) {
       if (cur !== code) {
         if (primary && code == null) addRemovedPrimaryAction(store, action);
         if (!primary && code == null) addRemovedSecondaryAction(store, action);   // PAD1: a cleared pad row stays cleared
-        setBinding(store, code ?? null, action, primary);
+        if (code == null) { clearBinding(store, action, primary); continue; }
+        // UXB1-S: SetBinding's steal, kept for everyone the staged picture does NOT keep on this key - a holder staged
+        // elsewhere lets go of it here (whatever order the walk meets the two in), and one staged on it too keeps it:
+        // that is a share, and the bind lands beside it rather than taking it.
+        for (const p of [true, false]) {
+          for (const holder of actionsAt(store, code, p)) {
+            if (holder === action && p === primary) continue;
+            if ((p ? u.primary : u.secondary).get(holder) !== code) dropBinding(store, code, holder, p);
+          }
+        }
+        shareBinding(store, code, action, primary);
       }
     }
   }
@@ -286,6 +322,35 @@ export function swingHint(code, mode, readyCode) {
     : mode === 2 ? `Press or hold ${btn} to swing.`
       : `Hold ${btn} and move the mouse to swing - the way you move picks the blow. A press without moving does nothing.`;
   return readyCode == null ? how : `${how} Draw your weapon first with ${buttonText(readyCode, true)} (Ready Weapon).`;
+}
+
+/** UXB1-D (2026-09-25, the UX backlog: "Is there a reason you cannot have multiple keys bound to the same action
+ *  such as jump+swim-up?"): THE TWO ROWS WHOSE KEY IS NOT THE ONLY ONE THAT MOVES YOU. LevitateMotor.Update rises on
+ *  Jump OR FloatUp and sinks on Crouch OR FloatDown (LevitateMotor.cs:86-89), and every host passes the pair
+ *  (`up: jumpHeld || held(keys, 'FloatUp')`) - so the swim-up a player wanted Space for is already Space's. Since
+ *  UXB1-S a key CAN carry both (Use for both, Controls.md law 3); this line is why this pair never needs to (AUDIT
+ *  UXB1 F10: it still said the key could not). Null for every other row, and when the partner action is unbound.
+ *  `dict` is the shown set. */
+const FLOAT_PARTNERS = Object.freeze({
+  FloatUp: Object.freeze({ partner: 'Jump', name: 'Jump', verb: 'rises' }),
+  FloatDown: Object.freeze({ partner: 'Crouch', name: 'Crouch', verb: 'sinks' }),
+});
+export function floatHint(action, dict) {
+  const f = FLOAT_PARTNERS[action];
+  const code = f ? dict?.get(f.partner) : null;
+  if (code == null) return null;
+  return `${f.name} (${buttonText(code, true)}) ${f.verb} too while you swim or levitate.`;
+}
+
+/** UXB1-D: ...and the replace prompt's answer for that pair. Binding Jump's key onto Float up (Crouch's onto Float
+ *  down) asks like any held key, but the honest answer is "you need neither": the key already does both. Every holder
+ *  must be the partner - a key someone else also holds is an ordinary clash - and the line names the key.
+ *  AUDIT UXB1 F10: the prompt has a third answer beside it now, and the line says that one is not needed either -
+ *  a share would only take Float up off its own key. */
+export function sharedFloatNote(action, holders, usingPrimary = true) {
+  const f = FLOAT_PARTNERS[action];
+  if (!f || !holders?.length || !holders.every((h) => h.action === f.partner)) return null;
+  return `${f.name} already ${f.verb} while you swim or levitate, so the key does both as it is, without ${SHARE_KEY_LABEL}: answer No to keep it on ${f.name}${usingPrimary ? '' : ' (secondary)'}.`;
 }
 
 /** GetButtonText + FormatButtonText. `full` skips the length cap
@@ -426,6 +491,83 @@ export function replaceKeybindPromptRows(action, code, holders, usingPrimary = t
 export function stageReplace(u, action, code, holders) {
   for (const h of holders) (h.primary ? u.primary : u.secondary).set(h.action, null);
   currentDict(u).set(action, code);
+}
+
+/** UXB1-S: THE THIRD ANSWER - "use it for both". Offered when every holder holds exactly this key (a combo against its
+ *  own modifier is a clash no press resolves, still DFU's) and none of them is the action itself (its own other slot
+ *  is the key moving, AUDIT KB1 F6). */
+export function canShareKey(u, action, code, holders) {
+  return code != null && holders.length > 0
+    && holders.every((h) => h.action !== action && (h.primary ? u.primary : u.secondary).get(h.action) === code);
+}
+/** ...and its answer: the bind lands in the shown set, and every holder keeps the key. */
+export function stageShare(u, action, code) {
+  currentDict(u).set(action, code);
+}
+/** The words: the enhanced page's third button, and the classic box's line (its keyed answer is B). */
+export const SHARE_KEY_LABEL = 'Use for both';
+export const SHARE_KEY_ROW = 'Or press B to use it for both.';
+/** The classic windows' replace box: the question, and the B line where a share is offered. */
+export function replacePromptRows(u, { action, code, holders }) {
+  const rows = replaceKeybindPromptRows(action, code, holders, u.usingPrimary);
+  return canShareKey(u, action, code, holders) ? [...rows, SHARE_KEY_ROW] : rows;
+}
+
+/**
+ * UXB1-F (2026-09-25, the UX backlog: "Show keybinds for game features, even if they cannot be changed there (Drop
+ * torch/summon horse/summon cart)"): THE KEYS THE CONTROLS PAGE CANNOT MOVE, NAMED ON IT ANYWAY.
+ *
+ * Two kinds reach a player in play and stood on no screen at all. The HUD's own three - DaggerfallHUD.Update's
+ * LargeHUDToggle and HUDToggle arms and RetroRenderer's post-processing toggle (ui/hudShortcuts.js), which DFU reads
+ * off its DaggerfallShortcut table and gives no rebinding screen either. And the Transport window's letters: in the
+ * game itself (no mod) a horse or a cart is not summoned by a key of its own, it is chosen in that window - Transport,
+ * then H or C. Both are read OFF the shortcut table (systems/dialogShortcuts.js shortcutBinding), so the page names
+ * the key the game answers, never a copy of it.
+ */
+export const FIXED_KEY_ROWS = Object.freeze([
+  Object.freeze({ button: 'LargeHUDToggle', label: 'Large HUD on or off' }),
+  Object.freeze({ button: 'HUDToggle', label: 'Hide or show the HUD' }),
+  Object.freeze({ button: 'ToggleRetroPP', label: 'Retro Mode\u2019s post-processing on or off' }),
+]);
+export const TRANSPORT_KEY_ROWS = Object.freeze([
+  Object.freeze({ button: 'TransportFoot', label: 'Transport: go on foot' }),
+  Object.freeze({ button: 'TransportHorse', label: 'Transport: ride your horse' }),
+  Object.freeze({ button: 'TransportCart', label: 'Transport: drive your cart' }),
+  Object.freeze({ button: 'TransportShip', label: 'Transport: sail your ship' }),
+]);
+
+/** A DaggerfallShortcut's key in this page's own words: buttonText's names, a modifier joined the way a combo is
+ *  ("SHIFT + F10"). HotkeySequence.ToString (:96-128) orders Ctrl, Alt, Shift; so does this. */
+export function shortcutKeyText(button) {
+  const seq = shortcutBinding(button);
+  if (!seq?.code) return buttonText(null);
+  const mods = [];
+  if (seq.modifiers & (MOD.Ctrl | MOD.LeftCtrl | MOD.RightCtrl)) mods.push('CTRL');
+  if (seq.modifiers & (MOD.Alt | MOD.LeftAlt | MOD.RightAlt)) mods.push('ALT');
+  if (seq.modifiers & (MOD.Shift | MOD.LeftShift | MOD.RightShift)) mods.push('SHIFT');
+  return [...mods, buttonText(seq.code, true)].join(' + ');
+}
+
+/** The rows the page draws for them: the HUD's three as they are, and each Transport letter behind the key that opens
+ *  that window ("T, then H") - the whole gesture, since the letter alone does nothing. `transport` is the Transport
+ *  action's code wherever the caller reads it (the registry's codeForAction, or a staged set's own dict). */
+export function fixedKeyRows(transport) {
+  const opener = transport == null ? 'Transport (unbound)' : buttonText(transport, true);
+  return [
+    ...FIXED_KEY_ROWS.map((r) => ({ label: r.label, key: shortcutKeyText(r.button) })),
+    ...TRANSPORT_KEY_ROWS.map((r) => ({ label: r.label, key: `${opener}, then ${shortcutKeyText(r.button)}` })),
+  ];
+}
+
+/** UXB1-F: a vendored mod's keys, named for its Features tile - read-only there, because they are BOUND in Controls
+ *  (KB1: one registry, where a clash can be seen). Each row is the action's own label on the Controls page, and the
+ *  key that answers it now (codeForAction: the primary, else the secondary - the order actionForCode resolves in). */
+export function modKeyRows(vendor, store) {
+  const labels = new Map(ACTION_GROUPS.flatMap((g) => g.rows.map((r) => [r.action, r.label])));
+  return (MOD_ACTIONS[vendor] ?? []).map(({ action }) => {
+    const code = codeForAction(store, action);
+    return { action, label: labels.get(action) ?? actionLabel(action), key: buttonText(code, true) };
+  });
 }
 
 /**

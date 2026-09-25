@@ -217,7 +217,7 @@ test('KB1: a window closes on the key that opened it, wherever it is bound - the
   inv.input('KeyI');
   assert.equal(inv.done, true, 'the pack closes on Inventory\'s key');
   setBindings(null);
-  assert.match(rd('src/ui/enhancedSpellbook.js'), /if \(overlayAction\(e\) !== 'back' && eventAction\(e\) !== 'CastSpell'\) return;/, 'the enhanced book on its own key too (AUDIT KB1: the event\'s own read)');
+  assert.match(rd('src/ui/enhancedSpellbook.js'), /if \(overlayAction\(e\) !== 'back' && !eventMeans\(e, 'CastSpell'\)\) return;/, 'the enhanced book on its own key too (AUDIT KB1: the event\'s own read; UXB1-S: shared or not)');
 });
 
 // ── LAW 4: ASKED, NOT TAKEN ────────────────────────────────────────────

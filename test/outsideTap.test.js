@@ -43,7 +43,9 @@ test('OT1 helper: a primary press on the shell outside the kept selector closes;
 
 test('OT1 wiring: every scrimmed enhanced window closes on a tap outside, the front door\'s account window included', () => {
   const menu = read('src/ui/enhancedMenu.js');
-  assert.match(menu, /stage\.append\(pauseWindow\(\)\);\s*\n\s*home\.append\(stage\);\s*\n(\s*\/\/[^\n]*\n)*\s*closeOnOutsideTap\(home, '\.px-win, \.px-clock, \.px-foot', \(\) => onAction\('resume'\)\);/, 'the pause window resumes on the scrim, and keeps its clock and foot');
+  // PROFILE2: the pause face carries the profile mark and its window now - with the window open the tap is the
+  // window's (it closes, the pause window stands), otherwise the scrim resumes and the mark is inside
+  assert.match(menu, /stage\.append\(pauseWindow\(\)\);\s*\n\s*home\.append\(stage\);[\s\S]{0,1400}?if \(accountOpen\) \{[\s\S]{0,300}?closeOnOutsideTap\(home, '\.px-acctwin', \(\) => \{ accountOpen = false; render\(\); \}\);\s*\n\s*\}\s*\n(\s*\/\/[^\n]*\n)*\s*else closeOnOutsideTap\(home, '\.px-win, \.px-clock, \.px-foot, \.px-profile', \(\) => onAction\('resume'\)\);/, 'the pause window resumes on the scrim, and keeps its clock, foot and profile mark - unless the profile window is open, whose tap closes it alone');
   // ACC1f: TWICE NOW, and the second one is why this line changed
   // rather than being relaxed. It used to read "once: the pause face
   // only - the front door has no scrim", which was true until the
@@ -56,9 +58,10 @@ test('OT1 wiring: every scrimmed enhanced window closes on a tap outside, the fr
   // without its own outside-tap still reddens here.
   const taps = menu.match(/closeOnOutsideTap\(home, '([^']+)'/g) ?? [];
   assert.deepEqual(taps, [
-    "closeOnOutsideTap(home, '.px-win, .px-clock, .px-foot'",
+    "closeOnOutsideTap(home, '.px-acctwin'",
+    "closeOnOutsideTap(home, '.px-win, .px-clock, .px-foot, .px-profile'",
     "closeOnOutsideTap(home, '.px-win'",
-  ], 'the door wires exactly two scrims: the pause face, and the account window');
+  ], 'the door wires exactly three scrims: the profile window over the pause face (PROFILE2), the pause face, and the account window on the door');
   assert.equal((menu.match(/closeOnOutsideTap\(/g) ?? []).length, taps.length, 'a scrim was wired somewhere this pin is not looking');
   // ...and the account window's is guarded by the flag that opens it,
   // so the door with no window open wires nothing and a tap on the

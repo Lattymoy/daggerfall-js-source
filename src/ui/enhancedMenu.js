@@ -45,7 +45,7 @@
 // reload. Classic works that way because classic is a DOS program with
 // a fixed 320x200 screen. Neither reason survives here.
 //
-// This is ONE screen, under BOTH skins (main.js:118-226, FD1: the
+// This is ONE screen, under BOTH skins (main.js:118-229, FD1: the
 // launcher and its settings window are deleted; the classic rail is
 // Begin, which leads into the splash and PICK03I0 exactly as before).
 // Every destination is a press away from every other, settings
@@ -134,10 +134,12 @@ import { enhancedHudScale as hudScaleNow, HUD_SCALE_MIN, HUD_SCALE_MAX } from '.
 import { playerEntity } from '../characters/playerEntity.js';
 // PX6: the Stats page's skill labels - the one home (systems/skills.js).
 import { SKILLS, SKILL_NAMES } from '../systems/skills.js';
-import { overlayAction } from './input.js';   // U51: Escape, through the shared table
+import { overlayAction, bindings } from './input.js';   // U51: Escape, through the shared table; UXB1-F: the live keys a tile names
+import { modKeyRows } from '../systems/controlsConfig.js';   // UXB1-F: a mod's keys, read-only on its tile
 import { MOD_SETTINGS, modSetting, setModSetting, isIntKey, isFloatKey, isChoiceKey, isTextKey, isTupleKey } from '../systems/modSettings.js';
 import { keyCodeForDomCode, KEYCODE_NONE } from '../systems/keyCodes.js';   // HT1: a TextKey's capture spells the key as Unity would
 import { isOnlinePage, onlineForcedPref, onlineForcedModSetting, onlineForcedSetting } from '../systems/onlineLane.js';   // OL1: online is the enhanced lane, whole - a forced switch is shown locked   // ROADS 24; DS1: the integer keys; UL1: the choice keys
+import { onlineSyncPlan, applyOnlineSync, lastOnlineSync, undoOnlineSync } from '../systems/onlineSync.js';   // UXB1-E: the room's rules, copied home
 import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 // FIX-F (Mac: "changing keybinds in classic/enhanced do not work"): the
 // rebinding pane. The enhanced skin is the DEFAULT and had no door to
@@ -160,7 +162,7 @@ import { accountCard } from './enhancedAccount.js';
 import { skinCard } from './skinCard.js';   // DISC23-B2: the skin, on the profile
 import { saveTile, cloudStateOf, saveFromCard } from './saveTile.js';   // TILE1 (Mac: "a detailed tile based design for your saves... showing your portrait and character information"), and ACC2c's card-shaped save
 import { loadFace } from './facePortrait.js';
-import { profileBadge, portraitSave } from './profileBadge.js';   // PROFILE1: the mark is the last character's portrait   // TILE1: the character's face, the one home chargen also reads
+import { profileBadge, portraitSave, liveCharacter } from './profileBadge.js';   // PROFILE1: the mark is the last character's portrait   // TILE1: the character's face, the one home chargen also reads
 import { cloudIo, cloudList, pushSlot, pullSlot, removeCloudSlot, cloudOnly, slotKeyOf, cloudRefusalText } from '../systems/cloudSaves.js';   // ACC2: the backup a tile can offer, AUDIT-312 F1's delete, and ACC2c's download of a save that is only up there
 import { serviceBase, storedSession } from '../net/accountClient.js';
 
@@ -817,7 +819,8 @@ const signedIn = () => !!storedSession(appStorage());
  *  asked for as a promise so the door never waits on a CIF read. */
 function profileMark() {
   const who = storedSession(appStorage());
-  const save = portraitSave(savedGames());
+  // PROFILE2: paused, the portrait is the character being PLAYED (the newest save may be another's)
+  const save = mode === 'pause' ? liveCharacter(playerEntity) : portraitSave(savedGames());
   return profileBadge(document, {
     session: who,
     save,
@@ -893,6 +896,7 @@ function paneOnline(body) {
   }
   if (!saves.length) {
     body.append(empty('No saved games', 'Online brings a saved character in. Save a game and every slot of it appears here.'));
+    body.append(onlineSyncCard());   // UXB1-E: the rules can come home before a character goes out
     return;
   }
   // TILE2 (Mac: "a detailed tile based design for your saves"): the
@@ -931,6 +935,50 @@ function paneOnline(body) {
   foot.append(el('p', 'meta', 'Everyone brings their own save; you see each other everywhere and can talk. A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers. A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers. Towns and the open country share who is there and the creatures that find you: what one player meets, everyone nearby sees and fights - and its creatures can hurt you too. The clock and the sky are the world\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, so a quest that waits for an hour of the day waits for that hour of the world. Quest timers run while you play. The shared world is the enhanced lane: every enhancement the port owns in the world is on for everyone. The screens you play through are your own - your UI Overhaul, with the chat, your friends, the party and trading in their own panels over it. Most of your mods stay yours - turn them on or off online as you like. Six switches are the room\u2019s: Basic Roads and World of Daggerfall, because both shape the terrain and a room shares one ground, and Meaner Monsters, the Combat and Armor Overhaul and Unleveled Loot, because a dungeon\u2019s foes belong to whoever hosts it and loot changes hands.'));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door
   foot.append(field('Relay', 'onlineServer', DEFAULT_SERVER, 200));
   body.append(foot);
+  body.append(onlineSyncCard());   // UXB1-E: under the rules it copies
+}
+
+// UXB1-E (2026-09-25, the UX backlog: "Add a 'sync from server' option so players can ensure their offline play
+// matches the host they prefer to play on if they want."): THE ROOM'S RULES, OFFLINE. The copy and its undo are
+// systems/onlineSync.js's; this is the card - what differs, the one press, and the way back. Every relay plays by
+// the same rules (they are this build's, not the server's), so there is no host to pick: the card says so.
+export const ONLINE_SYNC_TITLE = 'Sync from server';
+export const ONLINE_SYNC_NOTE = 'Play offline by the rules every online room plays by. Online, some switches are the room\u2019s whatever yours say; this sets yours the same way. They are this version\u2019s rules, the same on every server. Everything else stays yours.';
+export const ONLINE_SYNC_SAME = 'Your offline game already plays by the online rules.';
+const syncWord = (v) => (v === true || /^true$/i.test(String(v)) ? 'On' : v === false || /^false$/i.test(String(v)) ? 'Off' : String(v));
+export function onlineSyncCard() {
+  const card = el('div', 'card svsync');
+  card.append(el('h3', null, ONLINE_SYNC_TITLE));
+  card.append(el('p', 'meta', ONLINE_SYNC_NOTE));
+  const plan = onlineSyncPlan() ?? [];
+  const differ = plan.filter((r) => !r.same);
+  const acts = el('div', 'acts');
+  if (differ.length) {
+    const list = el('ul', 'svsync-list');
+    for (const r of differ) {
+      const li = el('li', 'svsync-row');
+      li.append(el('span', 'svsync-name', r.label), el('span', 'svsync-was', syncWord(r.offline)),
+        el('span', 'svsync-arrow', '\u2192'), el('span', 'svsync-to', syncWord(r.online)));
+      list.append(li);
+    }
+    card.append(list);
+    const go = el('button', 'act primary svsync-go', `Sync ${differ.length} setting${differ.length === 1 ? '' : 's'}`);
+    go.type = 'button';
+    go.onclick = () => { applyOnlineSync(plan); render(); };
+    acts.append(go);
+  } else {
+    card.append(el('p', 'meta svsync-same', ONLINE_SYNC_SAME));
+  }
+  const last = lastOnlineSync();
+  if (last?.rows?.length) {
+    const undo = el('button', 'act svsync-undo', 'Undo sync');
+    undo.type = 'button';
+    undo.title = `Puts back the ${last.rows.length} setting${last.rows.length === 1 ? '' : 's'} the last sync changed`;
+    undo.onclick = () => { undoOnlineSync(); render(); };
+    acts.append(undo);
+  }
+  if (acts.children.length) card.append(acts);
+  return card;
 }
 
 function paneLoad(body) {
@@ -1787,8 +1835,16 @@ function portRowsInterface({ pause = false } = {}) {
   out.push(prefRow('showFps', 'FPS counter',
     'Frames a second in the top-right corner, with the frame\u2019s milliseconds and the slowest frame of the '
     + 'last second. Takes effect at once. ?fps in the address bar forces it on for a probe.'));
+  if (!pause) out.push(prefRow('skipStartVideo', SKIP_START_VIDEO_NAME, SKIP_START_VIDEO_NOTE));   // UXB1-A: read at launch, so the front door's alone - as the skin's
   return out.filter(Boolean);   // FT13
 }
+
+/** UXB1-A (2026-09-25, the UX backlog: '"Skip Start Video" in the options ... Disabled by default, of course.'):
+ *  the row's words. The switch is uiPrefs' skipStartVideo, read by main.js at the front door. */
+export const SKIP_START_VIDEO_NAME = 'Skip start video';
+export const SKIP_START_VIDEO_NOTE = 'Open straight onto the main menu, without the opening film (on the classic skin, '
+  + 'without the splash video before the title too). The menu\u2019s music still plays. Takes effect the next time '
+  + 'the game starts.';
 
 /** QREPAIR (2026-09-24, Mac: "Add a quest refresh option to settings" - "Repair active quests"): THE GAME CATEGORY'S
  *  PORT ROW. The repair runs over a game in play, so its door is the PAUSE's settings (the host hands
@@ -1877,219 +1933,89 @@ function categoryRows(catId) {
 /** What the sub-rail counts: the rows that DO something here. */
 const liveCount = (catId) => portRows(catId).filter((r) => r.dataset?.live !== '0').length + paneKeys(catId).filter((k) => tierOf(k) === 'live').length;   // FT13: what is drawn; QREPAIR: a row greyed here does nothing here
 
-/** The Morrowind assets card, on the Mods page (MW-IMPORT, MW-D8, MWA1). */
-function morrowindCard() {
-  const sitePage = (page) => {
-    const dir = new URL('.', location.href);
-    const root = /\/play\/$/.test(dir.pathname) ? new URL('..', dir) : dir;
-    return new URL(page, root).href;
-  };
-
-  // MW-IMPORT: the attach door, ON THIS SURFACE - the launcher window has
-  // its M key, but the enhanced skin never routes through it.
+/** MWA4: what the Morrowind files do, in the card's one line. */
+export const MW_CARD_LINE = 'Your own Morrowind files (Morrowind.bsa and Morrowind.esm, with Tribunal and Bloodmoon if you have them) '
+  + 'draw your character in 3D. They stay in this browser.';
+/** MWA4: the arms' state in words - the one row the card keeps beside the data count. */
+export function morrowindArmsLine(armState) {
+  if (armState?.active) return 'On';
+  const reason = armState?.reason ?? 'not built';
+  return reason === 'not built' || reason === 'unloaded' ? 'Builds when you play' : reason;   // a refusal says why (MWDIAG)
+}
+/** MWA4: what did not work, in words - and nothing when everything did. */
+export function morrowindTroubleLines(armState) {
+  const out = [];
+  if (armState?.notes?.length) out.push(`Not in the arms: ${armState.notes.join('; ')}`);
+  if (armState?.third && !armState.third.ok) out.push(`Third person refused - ${armState.third.stage}: ${armState.third.error}`);
+  const e = armState?.esm;
+  if (e && !e.raceIsThere) out.push(`Your files carry no "${e.raceWanted}" body (they have: ${e.racesFound.join(', ') || 'none'}).`);
+  return out;
+}
+/** The Morrowind assets card, at the head of the features list (MW-IMPORT, MW-D8, MWA1, MWA4). `count` and
+ *  `armState` are the live reads; a test hands its own. */
+export function morrowindCard({ count = morrowindDataCount(), armState = fpArm.status() } = {}) {
+  // MW-IMPORT: the attach door, ON THIS SURFACE - the launcher window has its M key, but the enhanced skin never
+  // routes through it.
   //
-  // MW-D8: THERE IS NOW SOMETHING BEHIND THE BUTTON, which is the only
-  // thing that ever made one honest. MW-2 refused a 3D toggle because "a
-  // switch for one would be the screen lying about the build" - true then,
-  // when the rig was reverted and nothing had replaced it. The arm exists
-  // now, so a control for it states a fact.
-  //
-  // IT IS A BUTTON WITH A STATUS LINE, not a preference row. MWDIAG's
-  // lesson: five distinct causes were indistinguishable to the reporter
-  // for three fixes running because the reason lived in a console object
-  // nobody read. The reason belongs on the card, next to the button that
-  // produced it.
+  // MWA4 (2026-09-25, before the merge: "reorganize the marrowind attachment selector, remove the on and off button
+  // (defunct) and only keep attach and remove data buttons. Only reduce the amount of over explaining text and put it
+  // at the top of the feature list"): ATTACHED IS ON. MWA2's On/Off row switched `mwArms`, a pref the online lane forced on at every
+  // boot - so online it never stuck, and offline a player who attached the files and never found the row played
+  // without them. The files are the switch now: every consumer asks whether they are attached (weaponRig.js
+  // autoBuildArms, the peer bodies in world.js), Attach builds the body for a character in play, and Remove data is
+  // the off. The card is one line of what the files do, the two readings that matter, and the two buttons; the
+  // look-lag switch, the viewer and inspector doors (the pages stand at their addresses) and the per-piece readout
+  // left it, and Weapon Sheathing's switch is its own tile's. What did not work still says why (MWDIAG: the reason
+  // belongs on the card, next to the button that produced it) - and only then.
   const mw = el('div', 'card');
-  const armState = fpArm.status();
   mw.append(el('h3', null, 'Morrowind assets'));
-  mw.append(el('p', 'meta',
-    'Your own Morrowind.bsa (and Tribunal, Bloodmoon, Morrowind.esm) feed the mesh viewer, the '
-    + 'data inspector, and the in-game first-person arms. Stored in this browser exactly like '
-    + 'ARENA2; nothing uploads.'));
-  mw.append(el('p', 'meta',
-    'The arms draw textured, in the stance of the drawn weapon, holding the Morrowind counterpart '
-    + 'of what your right hand holds - the weapon follows your equipment as you play. While the '
-    + 'arms are on, the classic weapon sprite is off; Unload brings it straight back.'));
-  const count = morrowindDataCount();
+  mw.append(el('p', 'meta', MW_CARD_LINE));
   mw.append(stats([
-    ['Data', `${count} archive${count === 1 ? '' : 's'} attached`],
-    ['Arms', armState.active
-      ? `on - ${armState.pieces} pieces from ${armState.skeletonPath}`
-      : armState.reason],
-    ['Weapon', armState.weapon
-      ? `${armState.weapon.name || armState.weapon.id} at ${armState.weapon.bone}`
-        + (armState.weapon.side && armState.weapon.side !== 'unknown'
-          ? ` (${armState.weapon.side} side at rest)` : '')
-      : armState.active ? 'none - empty hands' : '-'],
-    // MW-D51: the carried light, beside the weapon - the record it
-    // resolved to and whether the rig's own .kf gives the left arm its
-    // "torch" clip (a rig without it holds the light where the idle
-    // leaves the hand).
-    ['Torch', armState.torch
-      ? `${armState.torch.name || armState.torch.id} at ${armState.torch.bone}`
-        + (armState.torchLit ? (armState.torchGroup ? ` - lit, "${armState.torchGroup}" playing` : ' - lit, no torch clip on this rig') : ' - doused')
-      : armState.active ? (armState.torchLit ? 'lit, but no Morrowind torch resolved - see the notes' : 'none - no light lit') : '-'],
-    // MW-D24: the BODY's own verdict, beside the arm's - scroll out in
-    // game to see it, and when the wheel refuses, this line is why.
-    // IG6b: the CURRENT arms mode, stated where a state belongs - on
-    // the stats block, not on the button that changes it.
-    ['Arms mode', fpArm.followCamera()
-      ? 'fixed to the screen (classic-style)'
-      : 'Morrowind look-lag'],
-    ['Body', armState.third
-      ? (armState.third.ok
-        ? `${armState.third.pieces} pieces from ${armState.third.skeletonPath} - scroll out for third person (view: ${armState.viewMode})`
-        : `refused - ${armState.third.stage}: ${armState.third.error}`)
-      : '-'],
+    ['Data', count ? `${count} archive${count === 1 ? '' : 's'} attached` : 'none attached'],
+    ...(count ? [['Arms', morrowindArmsLine(armState)]] : []),
   ]));
-  // MWA2 (2026-09-16, Mac: "I want to add a toggle for the morrowind
-  // asset pack"): ONE On/Off ROW over MWA1's own switch, in place of the
-  // Build / Unload pair. The `mwArms` pref was already the one gate every
-  // consumer reads - autoBuildArms at every door (weaponRig.js), the
-  // peer bodies online (world.js), and through fpArm.canThirdPerson()
-  // the view seam, which hands third person to Eye Of The Beholder
-  // where the Morrowind body is not there. So the row is the pack's
-  // toggle, whole: ON builds the body off the attached archives, OFF
-  // unloads it and the classic sprites (and the sprite body) come
-  // straight back; the archives stay attached either way.
-  //
-  // prefRow writes the pref and THEN asks; MWA1's law that the pref is
-  // on only when the build STOOD is kept by the refusal arm below.
-  const toggleMorrowind = async (on) => {
-    if (!on) { fpArm.unload(); setPref('mwArms', false); render(); return; }   // MWA1: and stay unloaded across launches
-    // Seconds long and synchronous - the BSA index, the whole ESM
-    // walk and every mesh parse, on the main thread. It happens with
-    // the game paused, once, and the card says so before you press
-    // rather than after the tab stops responding.
-    //
-    // TR2: THE OPTS COME FROM THE ONE HOME (weaponRig's
-    // armBuildOptsOf) - rule 6 picks the skeleton by SEX, rules
-    // 1-3 the body by RACE, the face by the wizard's own
-    // faceIndex, the worn set off the classic equip table, the
-    // weapon off the right hand, ammo off the quiver. The inline
-    // copy this replaces carried `female: !!playerEntity.gender`,
-    // which is TRUE for the string 'male' - every build asked for
-    // the female skeleton; the one home tests the string.
-    // AUDIT 65 XL-6: the boot door only COUNTED, so the set's print
-    // is still null here - and fpArm keys its kept face verdict on
-    // that print. The surface about to spend seconds measures the
-    // set first (the sizes pass, off plain gets), which is what
-    // makes the verdict a lookup instead of a dozen mesh parses.
+  const attach = async () => {
     const ds = await import('../scenes/dataSource.js');
-    await ds.registerMorrowindData();
-    const { buildArmsFor } = await import('../combat/weaponRig.js');
-    const res = await buildArmsFor(playerEntity);
-    if (res?.ok) setPref('mwArms', true);   // MWA1: the arms come back on the next launch by themselves
-    else setPref('mwArms', false);          // a refused build leaves the switch OFF, with its reason on the card
+    const n = await ds.pickMorrowindFiles();
+    // A character in play gets the body now (seconds, once); otherwise the next one made or loaded builds it at its
+    // door (autoBuildArms). TR2: the opts come from weaponRig's one home.
+    if (n > 0 && playerEntity?.chargenDone) {
+      const { buildArmsFor } = await import('../combat/weaponRig.js');
+      await buildArmsFor(playerEntity);
+    }
     render();
   };
+  const actions = [{ label: 'Attach data', primary: !count, onClick: attach }];
+  // MWA2 (2026-09-16): the door that removes the data itself - the one off there is now. Routed through the same
+  // confirm-before-destroy pattern as Delete Save.
   if (count) {
-    mw.append(prefRow('mwArms', 'Use Morrowind assets',
-      'The first- and third-person body, and other players\' bodies online, drawn from your attached archives. '
-      + 'Off: the classic weapon sprites, and Eye Of The Beholder for third person. Turning it on builds the body '
-      + '(a few seconds, once); the archives stay attached either way.',
-      { onChange: (on) => { toggleMorrowind(on); }, home: true }));
-    // WS1's holster switch is the Features home's Weapon Sheathing tile (FT18: its rebuild is TILE_AFTER's). The row
-    // that stood here drew nothing since FT13 moved the key - `prefRow` answers null for a moved key - and a bare
-    // `append(null)` printed the word "null" on this card for every player with Morrowind archives attached.
-  }
-  const armActions = [
-    { label: 'Attach data', primary: !count, onClick: async () => {
-      const ds = await import('../scenes/dataSource.js');
-      await ds.pickMorrowindFiles();
-      render();
-    } },
-  ];
-  // MWA2 (2026-09-16, follow-up): the toggle above writes `mwArms`, but
-  // online forces that pref to `true` at every boot (onlineLane.js's
-  // ONLINE_FORCED_PREFS) regardless of what the player set it to -
-  // autoBuildArms only refuses when `dataCount() > 0` is ALSO false. So
-  // switching the row off never sticks in an online session as long as
-  // the archives are still attached; the player who wants the arms gone
-  // for good needs a door that removes the data itself, not just the
-  // pref. `clearStoredMorrowind` (dataSource.js) already existed for
-  // this and was unwired. Routed through the same confirm-before-destroy
-  // pattern as Delete Save above.
-  if (count) {
-    armActions.push({ label: 'Remove data', onClick: () => ask(
+    actions.push({ label: 'Remove data', onClick: () => ask(
       'Remove Morrowind data',
-      'This clears the attached archives from this browser. The arms unload now, and stay off - even in an online '
-      + 'session that forces the switch back on - because there is nothing left to build them from. You can '
-      + 'attach data again later.',
+      'This clears the Morrowind files from this browser and unloads the arms. You can attach them again later.',
       'Remove',
       async () => {
         fpArm.unload();
-        setPref('mwArms', false);
         const ds = await import('../scenes/dataSource.js');
         await ds.clearStoredMorrowind();
         render();
       },
     ) });
   }
-  // IG6b: the one Morrowind-feel knob the owner asked for. The label
-  // names the ACTION - the first cut named the mode you were IN, which
-  // reads as "click to enable", and one natural click switched the
-  // owner to look-lag and persisted it; the current mode now sits on
-  // the stats block instead. A click flips live, no rebuild - the rig
-  // reads the flag per frame.
-  if (count) {
-    armActions.push(fpArm.followCamera()
-      ? { label: 'Switch arms to Morrowind look-lag', onClick: () => { fpArm.setFollowCamera(false); render(); } }
-      : { label: 'Switch arms to fixed (classic)', onClick: () => { fpArm.setFollowCamera(true); render(); } });
-  }
-  armActions.push({ label: 'Open mesh viewer', onClick: () => window.open(sitePage('mw-viewer.html'), '_blank') });
-  // MW-D: the page that answers what is actually IN the archives - which
-  // is the question four failed fixes never asked.
-  armActions.push({ label: 'Open data inspector', onClick: () => window.open(sitePage('mw-inspect.html'), '_blank') });
-  mw.append(acts(armActions));
-  // WHY, IN WORDS, WHEN IT DID NOT WORK. An empty box was the reverted
-  // rig's defining behaviour and is the one outcome forbidden here.
-  if (armState.notes && armState.notes.length) {
-    mw.append(el('p', 'meta', `Not in the arms: ${armState.notes.join('; ')}`));
-  }
-  // MW-D33: WHAT YOU ARE WEARING, AND WHETHER THE RIG AGREES. One line
-  // per equipped piece - the parts it dressed, or the reason it kept
-  // its sprite - because "it doesn't show" must never again arrive
-  // with nothing on screen to read.
-  // MW-D35: THE FACE, MATCHED - the measured likeness and its distances,
-  // so "the head doesn't match the portrait" arrives with the numbers.
-  if (armState.face && armState.face.reasons && armState.face.reasons.length) {
-    mw.append(el('p', 'meta', `Face: ${armState.face.reasons.join('; ')}`));
-  }
-  if (armState.worn) {
-    if (!armState.worn.length) {
-      mw.append(el('p', 'meta', 'Worn: nothing equipped in the armor or clothing slots at build time.'));
-    } else {
-      for (const w of armState.worn) {
-        mw.append(el('p', 'meta', w.dressed.length
-          ? `Worn: ${w.label} \u2192 ${w.dressed.join(', ')}`
-          : `Worn: ${w.label} \u2192 classic sprite: ${w.reason}`));
-      }
-    }
-  }
-  // AND WHAT THE DATA ACTUALLY OFFERS. "no record for this actor" is a
-  // dead end for whoever reads it; the race asked for, beside the races
-  // the files carry, is a next step.
-  if (armState.esm) {
-    const e = armState.esm;
-    mw.append(el('p', 'meta',
-      `Read ${e.files.join(', ')} — ${e.bodyRecords.toLocaleString()} body records, `
-      + `${e.firstPerson} of them first-person. Looked for race "${e.raceWanted}": `
-      + (e.raceIsThere ? 'present in your data.' : `NOT among the races your files carry (${e.racesFound.join(', ') || 'none'}).`)));
-  }
+  mw.append(acts(actions));
+  for (const line of morrowindTroubleLines(armState)) mw.append(el('p', 'meta', line));
   return mw;
 }
 
 /** 2026-09-17 (per-request): a toggle for how OTHER PLAYERS look when you have no Morrowind body of your own to put
  *  them in - the animated class-enemy sprite (Warrior, Mage, Knight, ... - whatever their character's class maps
  *  onto, net/remotePlayers.js classMobileType) by default, or the flat paperdoll every peer used to be drawn as,
- *  unconditionally, before this. A Morrowind body (mwArms card above) still takes priority over either when it
+ *  unconditionally, before this. A Morrowind body (the Morrowind assets card) still takes priority over either when it
  *  applies - this only decides between the two for a peer standing in neither. */
 function peerSpritesCard() {
   const c = el('div', 'card');
   c.append(el('h3', null, 'Other players'));
   c.append(el('p', 'meta',
-    'How a player without a Morrowind body (the card above) is drawn: as the Eye of the Beholder sprite they chose '
+    'How a player without a Morrowind body is drawn: as the Eye of the Beholder sprite they chose '
     + 'for themselves, or - if they play without it - as their character\u2019s class (a Warrior looks like a Warrior, '
     + 'a Mage like a Mage), animated and puppeted by what they\u2019re actually doing. Off: the flat paperdoll portrait '
     + 'instead, standing still.'));   // DISC23-B: the chosen set first, the class only for a player without one
@@ -2135,14 +2061,14 @@ function nightSoundsCard() {
 // home rather than a deletion: the Morrowind assets card, the texture
 // packs' door, and DFU's four switches for ITS mod system. They stand
 // under the tiles on the same screen, where a player who came looking
-// for "mods" now arrives.
+// for "mods" now arrives - the assets card at the head of the list
+// since MWA4.
 //
 // What is NOT drawn any more is the full key list per vendor - that is
 // the 360-key scroll the tiles replace, and features.js MOD_CURATED
 // carries the reasoning and the door back for a key that earns one.
 function modsFooter(body) {
   if (isOnlinePage()) body.append(el('p', 'meta', ONLINE_MODS_NOTE));   // MODS-ONLINE-2: said once, under the tiles - and it says what is actually true of the MODS pane
-  body.append(morrowindCard());   // SO1: the assets card, off the Enhanced pane
   body.append(peerSpritesCard()); // 2026-09-17: other players' look, without a Morrowind body of their own
   body.append(packsCard());       // SO1/M-EXT: the packs' door, off the launcher
   body.append(nightSoundsCard()); // SNDREP1: crickets and howl, on or off
@@ -2347,7 +2273,7 @@ export function classicSegment(f, st) {
  *  holster until the next build - while the row's effect line promised it at once. */
 const TILE_AFTER = Object.freeze({
   mwSheathing: async () => {
-    if (!getPref('mwArms') || !morrowindDataCount()) return;
+    if (!morrowindDataCount() || !playerEntity?.chargenDone) return;   // MWA4: attached is on - a character in play wears it
     const { buildArmsFor } = await import('../combat/weaponRig.js');
     await buildArmsFor(playerEntity);
     render();
@@ -2437,17 +2363,19 @@ export function featureTile(f) {
   if (vendor) {
     const mods = modModules(vendor);
     const dials = modDials(vendor);
-    if (mods.length || dials.length) {
+    const keys = modKeyRows(vendor, bindings());   // UXB1-F
+    if (mods.length || dials.length || keys.length) {
       const open = featureOpen === f.id;
       const b = el('button', 'ft-tile-more');
       b.type = 'button';
       b.setAttribute('aria-expanded', String(open));
       b.append(el('span', `ft-tile-car${open ? ' open' : ''}`, '\u203a'), document.createTextNode(' '
-        + [mods.length ? `${mods.length} modules` : '', dials.length ? `${dials.length} dials` : '']
+        + [mods.length ? `${mods.length} modules` : '', dials.length ? `${dials.length} dials` : '',
+          keys.length ? `${keys.length} keys` : '']
           .filter(Boolean).join(' \u00b7 ')));
       b.onclick = (e) => { e.stopPropagation(); featureOpen = open ? null : f.id; render(); };
       t.append(b);
-      if (open) t.append(featureDrawer(vendor, mods, dials));
+      if (open) t.append(featureDrawer(vendor, mods, dials, keys));
     }
   }
   // FT18: a condensed row's PARTS - the switches and the choice it folded in (the blood's three, the wind's two, the
@@ -2464,6 +2392,14 @@ export function featureTile(f) {
     if (open) t.append(featurePartsDrawer(parts));
   }
   return t;
+}
+
+/** UXB1-F (2026-09-25, the UX backlog: "Show keybinds for game features, even if they cannot be changed there (Drop
+ *  torch/summon horse/summon cart)"): the tile's door to where its keys ARE changed - Settings, Controls. */
+export const FEATURE_KEYS_NOTE = 'Keys are changed in Settings \u203a Controls.';
+function openControls() {
+  category = 'controls';
+  go('settings');
 }
 
 /** FT18: what a condensed row's tile opens - its switch parts as chips (the modules' shape), its choice parts as
@@ -2544,9 +2480,29 @@ export function featuresRestore(list = FEATURES) {
 /** FT14: what a mod's tile opens - its modules as chips, its curated
  *  dials as the same `modRow` the Mods pane drew. The keys NOT here
  *  keep the values the mod ships (features.js MOD_CURATED says why). */
-function featureDrawer(vendor, mods, dials) {
+function featureDrawer(vendor, mods, dials, keys = []) {
   const d = el('div', 'ft-tile-drawer');
   d.onclick = (e) => e.stopPropagation();
+  // UXB1-F: a mod's keys, first - read-only here (KB1 bound them in Controls, where a clash can be seen), in the live
+  // bindings, with the one press that goes to where they change.
+  if (keys.length) {
+    d.append(el('div', 'ft-drawer-label', 'Keys'));
+    for (const k of keys) {
+      const row = el('div', 'row ft-keyrow');
+      const main = el('div', 'row-main');
+      main.append(el('div', 'row-name', k.label));
+      row.append(main);
+      const ctl = el('div', 'ctl');
+      ctl.append(el('span', 'val ft-key', k.key));
+      row.append(ctl);
+      d.append(row);
+    }
+    const to = el('button', 'act ft-keys-to', 'Change in Controls');
+    to.type = 'button';
+    to.title = FEATURE_KEYS_NOTE;
+    to.onclick = () => openControls();
+    d.append(to);
+  }
   if (mods.length) {
     d.append(el('div', 'ft-drawer-label', 'Modules'));
     const box = el('div', 'ft-chipset');
@@ -2593,6 +2549,9 @@ function paintRail(rail = document.getElementById('ft-rail')) {
     const n = Object.keys(MOD_SETTINGS[rv].keys).length;
     const shown = 1 + modModules(rv).length + modDials(rv).length;
     pair('Settings', `${shown} of ${n} shown \u2013 the rest keep the mod\u2019s own values`);
+    // UXB1-F: and its keys, where a player reading about the mod is already looking
+    const keys = modKeyRows(rv, bindings());
+    if (keys.length) pair('Keys', `${keys.map((k) => `${k.label}: ${k.key}`).join(' \u00b7 ')} \u2013 ${FEATURE_KEYS_NOTE}`);
   }
   rail.append(kv);
 }
@@ -2681,6 +2640,7 @@ function paneFeatures(body) {
   rail.id = 'ft-rail';
   rail.setAttribute('aria-live', 'polite');
   panes.append(main, rail);
+  if (featureKind == null || featureKind === 'mod') body.append(morrowindCard());   // MWA4: the assets card heads the list
   body.append(panes);
   if (!featureSel) featureSel = rows[0].id;
   paintRail(rail);
@@ -2920,10 +2880,24 @@ function renderHome() {
     const stage = el('div', 'px-stage');
     stage.append(pauseWindow());
     home.append(stage);
+    // PROFILE2 (Mac, 2026-09-25: "make the profile icon visible somehow on the pause menu and allow changes"): THE
+    // PROFILE MARK OVER THE GAME TOO. The same portrait the door wears, top-right - the character being played - and
+    // the same window it opens: the account and the Skin card. A skin worn here is worn at once (the body re-reads the
+    // mod's store) and told to the room (scenes/world.js hands the new look to net/online.js setLook). The window is
+    // innermost: a tap outside it, or Escape, closes IT and leaves the pause window standing - never the game resumed
+    // from under a half-made choice.
+    home.append(profileMark());
+    if (accountOpen) {
+      const acct = el('div', 'px-stage px-acctstage');
+      acct.append(accountWindow());
+      home.append(acct);
+      closeOnOutsideTap(home, '.px-acctwin', () => { accountOpen = false; render(); });
+    }
     // OT1 (Mac: "tapping outside of any UI closes the UI"): a tap on the
     // scrim - outside the window, the clock and the foot - resumes,
     // the way Escape does; the front door has no scrim and no resume.
-    closeOnOutsideTap(home, '.px-win, .px-clock, .px-foot', () => onAction('resume'));
+    // PROFILE2: the mark is inside too (a press on it opens the window), and with the window open the tap is its.
+    else closeOnOutsideTap(home, '.px-win, .px-clock, .px-foot, .px-profile', () => onAction('resume'));
     // PX4 (Mac): NO FOOT AT PAUSE - no skin toggle, no About plaque;
     // About is a System-tab row instead, and the skin switch stays on
     // the boot face and the settings shell.
@@ -3741,6 +3715,9 @@ export function mountEnhancedMenu(host, {
   mode = m === 'pause' ? 'pause' : 'boot';
   hooks = h ?? {};
   questRepairSaid = null;   // QREPAIR: a repair's line is that visit's
+  // PROFILE2: and the profile window is a visit's too - the pause screen mounts this module again, and a window left
+  // open on the door (or on the last pause) must not be standing over the next one before the player asks for it
+  accountOpen = false;
   // MAC1 (Mac, 2026-09-10: "after exiting game and then going back to
   // enhanced settings, the Build and Switch Arms options are gone and
   // require me to reattach the files"). The Morrowind store is COUNTED

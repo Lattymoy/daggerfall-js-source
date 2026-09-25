@@ -32,7 +32,7 @@
 //     framebuffer, so there is nothing to be clipped by.
 //
 // MW-D10: the framing constants this pass USED to borrow from the voxel
-// viewmodel (render/characterSprite.js:118-130) are gone with the mapper
+// viewmodel (render/characterSprite.js:132-144) are gone with the mapper
 // that needed them. Rule 54 places the camera inside the rig, so there
 // is no distance to push, no drop to apply and no scale to solve - and
 // the viewmodel's two hard-won laws do not transfer either: its camera
@@ -2282,9 +2282,9 @@ export function esmDiagnosis(names, parts, race) {
  * (the reference's own aiming value, npcanimation.cpp:714-718), the
  * offset zeroed at both applications, the lens taking the whole look -
  * whose image is INVARIANT under pitch: the arms are fixed to the
- * screen exactly as the classic sprite is. The Morrowind feel stays one
- * toggle away (the pause card), and the probe's law layers measure it
- * with the flag OFF.
+ * screen exactly as the classic sprite is. The Morrowind feel stays in
+ * the rig (setFollowCamera - the card's switch for it left at MWA4), and
+ * the probe's law layers measure it with the flag OFF.
  */
 // KEY BUMPED (IG6b): the v1 key ('dagger.mwArmsFollowCamera') can hold
 // an ACCIDENTAL off - the toggle's first label named the mode you were
@@ -2295,7 +2295,10 @@ export function esmDiagnosis(names, parts, race) {
 // abandons the old value so every player lands back on the fixed
 // default; the action-named button re-persists a deliberate choice
 // under the new key.
-const FOLLOW_CAMERA_KEY = 'dagger.mwArmsFollowCamera2';
+// BUMPED AGAIN (MWA4): the assets card keeps Attach and Remove alone, so
+// the look-lag button is gone - and a stored look-lag would be a mode no
+// player can leave. The bump lands everyone on the fixed default.
+const FOLLOW_CAMERA_KEY = 'dagger.mwArmsFollowCamera3';
 /** WW1: a screen-space transform over the arms' composite, or null - set per frame by the rig from the weapon widget. */
 let screenTransform = null;
 // DA1: through the storage seam, not localStorage directly - the pin
