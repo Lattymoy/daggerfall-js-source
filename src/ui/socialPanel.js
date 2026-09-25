@@ -40,6 +40,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no friends and no parties. Ledger A row (ONLINE).
 import { overlayOpen } from './enhancedOverlays.js';
+import { isTextEntryTarget, swallowBrowserKey } from './input.js';   // DISC25-E: a letter's keys are the letter's
 import { isTouchDevice } from './touch.js';
 import { PARTY_MAX } from '../net/wire.js';
 import { lastOnlineText, PARTY_GREEN_CSS, FRIEND_CSS } from '../net/social.js';
@@ -791,6 +792,18 @@ export function createSocialPanel({ social, send = null, mail = null, keepLetter
   // clears its ring, and a press begun on the canvas must still let go)
   const swallow = (e) => e.stopPropagation();
   for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu']) { root.addEventListener(t, swallow); toast.addEventListener(t, swallow); }
+  // DISC25-E (Sir McMobdon on Discord, "Cant send letters": "Game still takes input making u jump and move and close
+  // the letter if u hit f"): A KEY TYPED INTO THIS PANEL'S FIELDS IS THE FIELD'S. The panel is not a window in any
+  // host's slot - it stands open while the player walks - so no overlay gate stood between a letter and the world's
+  // key ladder: every W walked, every space jumped, and F (SocialInteract) toggled the panel shut mid-word. Stopped
+  // on the panel's own root, in the bubble phase, the chat's rule (ui/chatPanel.js onKey): the field's own listeners
+  // (Ctrl/Cmd+Enter sends) have already run, and the browser's own keys (F5, F11) are swallowed first, since the host
+  // that swallows them will not see this one.
+  root.addEventListener('keydown', (e) => {
+    if (!isTextEntryTarget(e.target)) return;
+    swallowBrowserKey(e);
+    e.stopPropagation();
+  });
 
   return {
     root, toast,

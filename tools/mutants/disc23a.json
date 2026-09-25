@@ -11,7 +11,7 @@
   {
     "name": "D23A-every-storey",
     "file": "src/ui/automapSheet.js",
-    "old": "      if (floorAt(f.floors, m.feet[1]) !== index) continue;\n",
+    "old": "      if (sheetAt(f, m.feet[1]) !== index) continue;\n",
     "new": "",
     "tests": [
       "test/disc23a_party_plans.test.js"
@@ -29,7 +29,7 @@
   {
     "name": "D23A-no-strip-dot",
     "file": "src/ui/automapSheet.js",
-    "old": "      paintFloorStripParty(ctx, strip, partyStoreys(), PARTY_MARK_CSS);   // DISC23-A: and which storeys they are on\n",
+    "old": "      paintFloorStripParty(ctx, strip, partyStoreys(), PARTY_MARK_CSS);   // DISC23-A: and which floors they are on\n",
     "new": "",
     "tests": [
       "test/disc23a_party_plans.test.js"

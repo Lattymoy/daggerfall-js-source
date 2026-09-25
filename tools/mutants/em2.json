@@ -190,8 +190,8 @@
   {
     "name": "EM2-20-a-cell-is-covered-by-its-corner-rather-than-its-centre",
     "file": "src/systems/automapFloors.js",
-    "old": "        if (inTri(b.x0 + (gx + 0.5) * cell, pz, t)) covered[k] = 1;",
-    "new": "        if (inTri(b.x0 + gx * cell, pz, t)) covered[k] = 1;",
+    "old": "      const px = b.x0 + (gx + 0.5) * cell;",
+    "new": "      const px = b.x0 + gx * cell;",
     "tests": [
       "test/automapfloors.test.js"
     ],
@@ -200,8 +200,8 @@
   {
     "name": "EM2-21-the-cell-row-is-sampled-at-its-own-edge",
     "file": "src/systems/automapFloors.js",
-    "old": "      const pz = b.z0 + (gz + 0.5) * cell;",
-    "new": "      const pz = b.z0 + gz * cell;",
+    "old": "    const pz = b.z0 + (gz + 0.5) * cell;",
+    "new": "    const pz = b.z0 + gz * cell;",
     "tests": [
       "test/automapfloors.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "EM2-22-a-triangle-s-cells-are-not-bounded-by-its-own-box",
     "file": "src/systems/automapFloors.js",
-    "old": "    const gx1 = Math.min(w - 1, Math.ceil((Math.max(t.ax, t.bx, t.cx) - b.x0) / cell));",
-    "new": "    const gx1 = w - 1;",
+    "old": "  const gx1 = Math.min(w - 1, Math.ceil((Math.max(t.ax, t.bx, t.cx) - b.x0) / cell));",
+    "new": "  const gx1 = w - 1;",
     "tests": [
       "test/automapfloors.test.js"
     ],
@@ -239,8 +239,8 @@
   {
     "name": "EM2-25-the-plan-draws-every-storey-at-once",
     "file": "src/systems/automapFloors.js",
-    "old": "  const mine = tris.filter((t) => floorAt(floors, t.y) === index);",
-    "new": "  const mine = tris;",
+    "old": "  const mine = set.length ? trianglesFor(tris, floors, set) : [];\n  const bounds = box ?? planBounds(mine, cell);\n  const occ = floorOccupancy(mine, { cell, bounds, keep: (y) => want.has(floorAt(floors, y)) });",
+    "new": "  const mine = tris;\n  const bounds = box ?? planBounds(mine, cell);\n  const occ = floorOccupancy(mine, { cell, bounds });",
     "tests": [
       "test/automapfloors.test.js"
     ],
@@ -249,8 +249,8 @@
   {
     "name": "EM2-26-the-asked-for-storey-is-not-clamped-into-range",
     "file": "src/systems/automapFloors.js",
-    "old": "  const index = Math.max(0, Math.min(floors.length - 1, wanted ?? 0));",
-    "new": "  const index = wanted ?? 0;",
+    "old": "  return [Math.max(0, Math.min(floors.length - 1, wanted ?? 0))];",
+    "new": "  return [wanted ?? 0];",
     "tests": [
       "test/automapfloors.test.js"
     ],

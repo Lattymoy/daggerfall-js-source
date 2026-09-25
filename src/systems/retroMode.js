@@ -58,7 +58,10 @@
 //     scaled, DaggerfallBaseWindow.cs:85), the weapon, the horse, the
 //     casting hands (FPSSpellCasting.cs:88-89) and the automap's windows
 //     lay out inside the pillarbox. The port's 2D pass keeps the whole
-//     canvas; only the WORLD is pillarboxed. AUDIT RETRO1 A2: so a
+//     canvas; only the WORLD is pillarboxed - and, since DISC25-B, the
+//     enhanced held map, whose painted hands reached out over the black
+//     bars (it asks `retroScreenRect`; the Morrowind arm lane keeps the
+//     canvas, as C2 pins). AUDIT RETRO1 A2: so a
 //     docked bar is the CANVAS's width here, taller than DFU's (which is
 //     the pillarbox's width * 46/320), and the world strip above it is
 //     wider for its height than DFU's - at 1920x1080 in 4:3 the bar is
@@ -108,12 +111,32 @@ export function retroWorldAspect(mode, docked) {
  * `hudPx` is LargeHUD.ScreenHeight when the bar is docked, else 0.
  */
 export function retroAspectViewportRect(screenW, screenH, aspect, hudPx = 0) {
-  const heightRatio = Math.fround(Math.fround(screenH / 6) / 200);
-  const viewWidth = Math.trunc(Math.fround(Math.fround(320 * (aspect === RETRO_ASPECT.FOUR_THREE ? 5 : 6)) * heightRatio));
-  const pillarWidth = Math.trunc((screenW - viewWidth) / 2);
+  const pillarWidth = retroPillarWidth(screenW, screenH, aspect);
   const hudHeight = hudPx > 0 ? Math.fround(hudPx / screenH) : 0;
   const x = Math.fround(pillarWidth / screenW);
   return { x, y: hudHeight, w: Math.fround(1 - x * 2), h: Math.fround(1 - hudHeight) };
+}
+
+/** SetRetroAspectViewport's pillar (:98-125), in whole screen pixels - the one home of that arithmetic, which both
+ *  the world's rect above and the UI's rect below are cut from. */
+function retroPillarWidth(screenW, screenH, aspect) {
+  const heightRatio = Math.fround(Math.fround(screenH / 6) / 200);
+  const viewWidth = Math.trunc(Math.fround(Math.fround(320 * (aspect === RETRO_ASPECT.FOUR_THREE ? 5 : 6)) * heightRatio));
+  return Math.trunc((screenW - viewWidth) / 2);
+}
+
+/**
+ * DISC25-B (kurkku on Discord: "hands on the enhanced map sprite go over the black bars in retro mode" - "1996
+ * Fantasy ruined"): DaggerfallUI.CustomScreenRect, `new Rect(pillarWidth, 0, Screen.width - pillarWidth * 2,
+ * Screen.height)` (ViewportChanger.cs:139-140) - the screen DFU lays its windows out in while the pillarbox is up -
+ * in the pixels it is asked in (a DOM window asks in CSS pixels). Null where retro mode or its aspect correction is
+ * off, and where the window is narrower than the target: DFU's pillar goes negative there, and a DOM inset may not.
+ */
+export function retroScreenRect(screenW, screenH) {
+  const aspect = retroRenderingMode() !== 0 ? retroAspectCorrection() : 0;
+  if (!aspect || !(screenW > 0) || !(screenH > 0)) return null;
+  const pillar = retroPillarWidth(screenW, screenH, aspect);
+  return pillar > 0 ? { x: pillar, y: 0, w: screenW - pillar * 2, h: screenH } : null;
 }
 
 // RetroRenderer.enablePostprocessing (:34) and TogglePostprocessing

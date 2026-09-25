@@ -52,7 +52,9 @@ import {
   CANNOT_BE_REPAIRED_TEXT, INTERRUPT_REPAIR_TEXT,
   isBeingRepaired as itemIsBeingRepaired, isRepairFinished, collectRepaired,
 } from '../systems/repairService.js';
-import { planTake, applyTransfer, clearLightSourceOnLeave, CANNOT_CARRY_TEXT } from '../systems/itemTransfer.js';
+import { planTake, applyTransfer, clearLightSourceOnLeave, CANNOT_CARRY_TEXT, HOW_MANY_ITEMS, parseSplitAmount } from '../systems/itemTransfer.js';
+import { howManyField } from './howManyField.js';   // DISC25-F: the counter's how-many field, the pack's own
+import { isTextEntryTarget } from './input.js';
 import { isSummoned, carriedWeight, totalWeight, transferAll } from '../systems/inventory.js';
 import { shopliftAttempt } from '../systems/theft.js';
 import { entityMaxEncumbrance } from '../combat/formulas.js';
@@ -89,6 +91,9 @@ let staged = [];    // every other mode's staged lot (shown in the REMOTE column
 let usingWagon = false;
 let box = null;     // { rows, buttons: 'YesNo'|null, onYes }
 let selected = null;   // { item, side: 'local'|'remote' } - a single click's tooltip, not yet transferred
+// DISC25-F (Satranath and Starempire42 on Discord: "It doesn't appear possible to split stacks ... in shops when
+// making a purchase"): the tooltip's HOW MANY field - the item it was opened on, and its live text
+let qty = { item: null, text: '' };
 let unregisterOutside = () => {};
 // A manual double-click tracker. render() below tears down and rebuilds
 // EVERY row on EVERY click (even a plain single click, just to draw the
@@ -294,14 +299,69 @@ function pickLocal(item) {
   });
   if (d.kind === 'stage') {
     if (refuseTransfer(item)) return;
-    clearLightSourceOnLeave(item, deps.entity, true);
-    move(item, deps.packItems(), remoteItems());
+    const amount = chosenAmount(item, stackOf(item));   // DISC25-F: part of a stack goes on the counter
+    if (amount == null) return askAgain(item);
+    if (amount < stackOf(item)) applyTransfer(item, { amount }, deps.packItems(), remoteItems(), { entity: deps.entity, fromLocal: true });
+    else {
+      clearLightSourceOnLeave(item, deps.entity, true);
+      move(item, deps.packItems(), remoteItems());
+    }
+    qty = { item: null, text: '' };
     playTransferSound();
     render();
     return;
   }
-  if (d.kind === 'unstage') { move(item, basket, deps.shelfItems()); playTransferSound(); render(); return; }
+  if (d.kind === 'unstage') {
+    const amount = chosenAmount(item, stackOf(item));   // DISC25-F: and part of it back off the basket
+    if (amount == null) return askAgain(item);
+    if (amount < stackOf(item)) applyTransfer(item, { amount }, basket, deps.shelfItems());
+    else move(item, basket, deps.shelfItems());
+    qty = { item: null, text: '' };
+    playTransferSound();
+    render();
+    return;
+  }
   if (d.kind === 'refuse') refuse(d.refusal);
+}
+
+/** DISC25-F: a stack's count - DFU's stackCount, one for a thing that does not stack. */
+const stackOf = (item) => item?.stackCount ?? 1;
+
+/** DISC25-F: how many a move of `item` takes - the tooltip's field where it was opened on this item, parsed as DFU
+ *  parses the split popup (1..max, else null: nothing moves), and `max` everywhere else (a double click reaches for
+ *  the whole, as it always has). */
+function chosenAmount(item, max) {
+  return qty.item === item ? parseSplitAmount(qty.text, max) : max;
+}
+
+/** DISC25-F: a count DFU's parse refuses moves nothing; the box says the popup's own question with its max. */
+function askAgain(item) {
+  box = { rows: [{ text: HOW_MANY_ITEMS(splitMaxOf(item, selected?.side ?? 'local') || stackOf(item)), center: true }], buttons: null };
+  render();
+}
+
+/**
+ * DISC25-F: the most one move of the selected item takes, or 0 where it takes nothing or cannot split. Off the
+ * shelf, what the pack can carry (planTake's own amount - CanCarryAmount, DaggerfallTradeWindow.cs:842 - asked as a
+ * DRY RUN, since the quest rung writes); onto the counter and back off it, the whole stack (DFU passes no maxAmount
+ * there, :795/:803, so only Control splits); nothing for a repair, which takes a thing whole.
+ */
+function splitMaxOf(item, side) {
+  if (!item || mode === 'Repair') return 0;
+  if (side === 'remote') {
+    if (!inBuy()) return stackOf(item);
+    const plan = planTake(item, { bag: [...deps.packItems(), ...basket], entity: deps.entity ?? null, dryRun: true });
+    return plan.ok && !plan.map ? plan.amount : 0;
+  }
+  const d = localClickDecision(mode, item, {
+    inBasket: (i) => basket.includes(i),
+    allowMagicRepairs: deps.allowMagicRepairs ?? false,
+    usingIdentifySpell: deps.usingIdentifySpell ?? false,
+    wagonLoaded: (deps.entity?.wagonItems ?? []).length > 0,
+    usedWagon: (deps.entity?.items ?? []).find(
+      (i) => i.group === 'Transportation' && i.templateIndex === SMALL_CART_TEMPLATE) ?? null,
+  });
+  return d.kind === 'stage' || d.kind === 'unstage' ? stackOf(item) : 0;
 }
 
 function takeItemFromRepair(item) {
@@ -317,7 +377,10 @@ function pickRemote(item) {
       render();
       return;
     }
-    applyTransfer(item, plan, deps.shelfItems(), basket);
+    const amount = chosenAmount(item, plan.amount);   // DISC25-F: part of the shelf's stack into the basket
+    if (amount == null) return askAgain(item);
+    applyTransfer(item, { ...plan, amount }, deps.shelfItems(), basket);
+    qty = { item: null, text: '' };
     playTransferSound();
     render();
     return;
@@ -336,7 +399,11 @@ function pickRemote(item) {
     render();
     return;
   }
-  move(item, remoteItems(), deps.packItems());
+  const amount = chosenAmount(item, stackOf(item));   // DISC25-F: part of a staged stack back into the pack
+  if (amount == null) return askAgain(item);
+  if (amount < stackOf(item)) applyTransfer(item, { amount }, remoteItems(), deps.packItems());
+  else move(item, remoteItems(), deps.packItems());
+  qty = { item: null, text: '' };
   playTransferSound();
   render();
 }
@@ -656,6 +723,13 @@ function detailStrip() {
   info.append(el('p', 'meta', bits.filter(Boolean).join(' · ')));
   const quote = quotePriceFor(selected.item, selected.side);
   if (quote) info.append(el('p', 'trade-quote', `${quote.label} ${quote.price} gold`));
+  // DISC25-F: a stack more than one of which would move asks how many, here where the move is made
+  const item = selected.item;
+  const max = stackOf(item) > 1 ? splitMaxOf(item, selected.side) : 0;
+  if (max > 1) {
+    if (qty.item !== item) qty = { item, text: String(max) };
+    info.append(howManyField({ max, text: qty.text, onInput: (t) => { qty.text = t; } }));
+  }
   bar.append(info);
   const closeBtn = el('button', 'act', 'Close');
   closeBtn.onclick = () => { selected = null; render(); };
@@ -763,6 +837,9 @@ function onKey(e) {
     return;
   }
   if (overlayAction(e) === 'back') { e.preventDefault(); close(); return; }
+  // DISC25-F: Enter in the how-many field is the popup's Return - it moves the selected item with that count, not
+  // the whole lot's confirm
+  if (e.key === 'Enter' && isTextEntryTarget(e.target) && e.target.closest?.('.qtyfield') && selected) { e.preventDefault(); transferSelected(); render(); return; }
   if (e.key === 'Enter') { e.preventDefault(); modeAction(); }
 }
 
@@ -784,6 +861,7 @@ export function mountEnhancedTrade(hostEl, hooks = {}) {
   usingWagon = false;
   box = null;
   selected = null;
+  qty = { item: null, text: '' };
   onExit = hooks.onExit ?? (() => {});
   render();
   keyHandler = onKey;

@@ -98,7 +98,9 @@ import { noticeHold, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE
 // reading of them.
 import {
   planStore, planTake, applyTransfer, planDropGold, WAGON_KG_LIMIT,
+  HOW_MANY_ITEMS, parseSplitAmount,   // DISC25-F: the split popup's law, as the card's field
 } from '../systems/itemTransfer.js';
+import { howManyField } from './howManyField.js';   // DISC25-F: the card's field, one constructor for both counters
 import {
   openState, remoteTarget, planWagonToggle, hasCart, hasHorse, transportItem,
 } from '../systems/inventorySession.js';
@@ -574,6 +576,9 @@ let remote = null;
    to close the pile and press the key that has always opened it. */
 let packOpen = true;
 let goldEntry = null;   // the drop-gold field's live text, or null
+// DISC25-F (Satranath and Starempire42 on Discord: "It doesn't appear possible to split stacks currently, either in
+// inventory or in shops"): the card's HOW MANY field - which item it was opened on, and its live text
+let qty = { item: null, text: '' };
 let onExit = () => {};
 let keyHandler = null;
 let lockHandler = null;
@@ -1252,6 +1257,37 @@ function canStow(item) {
   return plan.ok || !!plan.refusal.text;
 }
 
+/** DISC25-F: the most a transfer of this item would move - its plan's own amount, asked as a DRY RUN (canStow's
+ *  reason: the quest rung writes) - or 0 where it would move nothing, or is a map's interception rather than a move. */
+function splitMax(item, dir) {
+  const plan = dir === 'store'
+    ? planStore(item, { remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne, dryRun: true })
+    : planTake(item, {
+      bag: deps.items?.() ?? [], entity: deps.entity, mode: 'remove',
+      chooseOne: session.chooseOne, usingWagon: session.usingWagon, dryRun: true,
+    });
+  return plan.ok && !plan.map ? plan.amount : 0;
+}
+
+/** DISC25-F: how many a transfer of `item` moves - the card's field where it was opened on this item, parsed as DFU
+ *  parses the popup (1..max, else null: nothing moves), and the plan's own `max` everywhere else (a drag, a loot
+ *  row's click - PX28's "looting just takes"). */
+function chosenAmount(item, max) {
+  return qty.item === item ? parseSplitAmount(qty.text, max) : max;
+}
+
+/**
+ * DISC25-F: THE HOW-MANY FIELD, on the card of a stack that more than one of would move. DFU asks the question in a
+ * popup - when the stack will not all fit, or under Control (TransferItem :1515-1539), which is how the classic window
+ * asks it (CM5) - and nothing in this skin ever did: a partial fit silently took what fit, and a whole stack moved
+ * whole. The question is on the card instead, where the buttons that move the stack are; it starts at the most that
+ * would move, so pressing the button unread is DFU's Return on the popup's seed.
+ */
+function qtyField(item, max) {
+  if (qty.item !== item) qty = { item, text: String(max) };
+  return howManyField({ max, text: qty.text, onInput: (t) => { qty.text = t; } });
+}
+
 /** LOCAL -> REMOTE, through U56's ladder. */
 function stow(item) {
   notice = null;
@@ -1265,10 +1301,14 @@ function stow(item) {
   // 26 F156: planStore answers `{ ok: true, map: true }` for a
   // MiscItems.Map - the reveal runs, the paper is consumed, nothing
   // lands in the destination. The classic window routes it
-  // (nativeInventory.js:892) and this one did not, so dragging a
+  // (nativeInventory.js:885) and this one did not, so dragging a
   // treasure map out of the pack dropped the paper on the floor and
   // revealed nothing.
   if (plan.map) { use(item, deps.items?.() ?? []); return; }
+  // DISC25-F: SplitStackPopup_OnGotUserInput's count (:1546-1559) - the card's field where it is up for this item,
+  // else what the plan would move; a count DFU's parse refuses moves nothing, and says the popup's own question
+  const amount = chosenAmount(item, plan.amount);
+  if (amount == null) { notice = HOW_MANY_ITEMS(plan.amount); render(); return; }
   // MAC-O6: the same cue this window's `take()` gained - storing (selling,
   // banking, dropping into a wagon or a pile) is a transfer too, and
   // planStore already hands back the sound (itemTransfer.js:221), unread
@@ -1280,12 +1320,13 @@ function stow(item) {
   // again on the other side, and a tip that stays open after every
   // press is the quirk being fixed.
   // AUDIT INV2 B-F1: THE ENTITY AND THE PROVENANCE RIDE, as they do at
-  // the classic window's own call (nativeInventory.js:898). Without them
+  // the classic window's own call (nativeInventory.js:891). Without them
   // `clearLightSourceOnLeave` - AUDIT 26 F157's first statement inside
   // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
   // went on lighting the player from where it lay. INV2 made that a
   // gesture; it was already the button's.
-  applyTransfer(item, plan, deps.items?.() ?? [], to, { entity: deps.entity, fromLocal: true });
+  applyTransfer(item, { ...plan, amount }, deps.items?.() ?? [], to, { entity: deps.entity, fromLocal: true });
+  if (qty.item === item) qty = { item: null, text: '' };
   // AUDIT INV2 B-F9: `stow` was written for the BUTTON, whose argument
   // is always `picked`; a drag hands it any row. Closing a tooltip the
   // player opened on some OTHER item, and moving `side` to a remote list
@@ -1312,9 +1353,11 @@ function take(item) {
   // pile reveals and consumes it, exactly as stowing one does. The
   // classic window routes both; this one routed neither.
   if (plan.map) { use(item, remoteTarget(deps, sessionState())); return; }
+  const amount = chosenAmount(item, plan.amount);   // DISC25-F: the card's count, as stow's
+  if (amount == null) { notice = HOW_MANY_ITEMS(plan.amount); render(); return; }
   // MAC-O6 (report: "looting gold/items makes no sound"): DoTransferItem's
   // own cue (:1569 gold's clink, :1583 everything else), which the classic
-  // window plays (nativeInventory.js:918) and this one never did - the ONLY
+  // window plays (nativeInventory.js:911) and this one never did - the ONLY
   // difference between the two windows' calls to planTake/applyTransfer was
   // that this one dropped `plan.sound` on the floor. Played here, ahead of
   // the gold interception below, exactly as DFU's own PlayOneShot sits
@@ -1324,7 +1367,8 @@ function take(item) {
   // interception (:1562-1571) fires and answers null - its `return`
   // skips the choose-one close below, and there is no arriving record
   // for the tab to follow.
-  const taken = applyTransfer(item, plan, from, bag, { entity: deps.entity, toPlayer: true });
+  const taken = applyTransfer(item, { ...plan, amount }, from, bag, { entity: deps.entity, toPlayer: true });
+  if (qty.item === item) qty = { item: null, text: '' };
   if (taken === null) { picked = null; refresh(); render(); return; }
   // G6 (:1585-1591): ONE is the whole gift. The window closes and the
   // callback runs - the claim and the taking are one event, so this
@@ -2220,6 +2264,8 @@ function detailCol() {
       const t = el('button', 'act', STOW_LABEL[remote.kind]);
       t.onclick = () => stow(picked);
       acts.append(t);
+      const max = (picked.stackCount ?? 1) > 1 ? splitMax(picked, 'store') : 0;
+      if (max > 1) acts.append(qtyField(picked, max));   // DISC25-F
     }
   } else {
     // G6: taking ONE from a reward tray IS the claim, and the window
@@ -2229,6 +2275,8 @@ function detailCol() {
       remote.kind === 'reward' ? 'Take this one' : 'Take');
     b.onclick = () => take(picked);
     acts.append(b);
+    const max = (picked.stackCount ?? 1) > 1 ? splitMax(picked, 'take') : 0;
+    if (max > 1) acts.append(qtyField(picked, max));   // DISC25-F
   }
   // USE is offered for EVERYTHING, exactly as the classic window's Use
   // mode is: `useItem` has an arm for every group and the honest answer
