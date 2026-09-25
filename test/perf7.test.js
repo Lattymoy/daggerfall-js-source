@@ -53,7 +53,7 @@ test('PERF7 createBreather: resolves at once inside the slice, awaits one frame 
 
 test('PERF7 pins: the world host keeps one breather for the stream, resets it at each build, and breathes after every placed model (mutant: the call dropped, or reset dropped so a long earlier await eats the first slice)', () => {
   const w = read('src/scenes/world.js');
-  // PERF-EXT-C5: the breather takes the frame clock's budget and lends its slices back (test/buildslice.test.js)
+  // PERF-EXT24: the breather takes the frame clock's budget and lends its slices back (test/buildslice.test.js)
   assert.match(w, /const breather = createBreather\(\{[^\n]*\n(    [^\n]*\n)+  \}\);\n\s+async function buildPixelNow\(px, py, \{ roadsRetry = false \} = \{\}\) \{\n\s+breather\.reset\(\);/, 'one breather, reset per build');
   assert.match(w, /entry\._batched = true; \}[^\n]*\n\s+await breather\.breathe\(\);/, 'after each model, inside the placements loop');
   const loopAt = w.indexOf('for (const placed of b.layout.models) {');

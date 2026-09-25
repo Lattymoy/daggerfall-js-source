@@ -26,7 +26,7 @@
 //    directly and can overlap a pump build mid-flight.
 // ═══════════════════════════════════════════════════════════════════
 
-import { generatePixelTerrain, restrideGrid } from './terrainGen.js';   // PERF-EXT-C7: and the promotion's grid, on either thread
+import { generatePixelTerrain, restrideGrid } from './terrainGen.js';   // PERF-EXT26: and the promotion's grid, on either thread
 import { buildRoadsFromSettlements } from './roadsProducer.js';   // AUDIT ROADS F2
 
 /** The escape hatch, read once at scene build (the ?cull=off shape). */
@@ -54,7 +54,7 @@ export class TerrainGenClient {
     this._woods = woods;
     this._worker = null;
     this._fifo = [];   // {job, resolve} - the worker answers in arrival order
-    this._grids = new Map();   // PERF-EXT-C7: id -> {job, resolve}, the promotions out on the worker
+    this._grids = new Map();   // PERF-EXT26: id -> {job, resolve}, the promotions out on the worker
     this._gridId = 0;
     const factory = workerFactory
       ?? ((terrainThreadDisabled() || typeof Worker === 'undefined' || !woodsBytes)
@@ -85,7 +85,7 @@ export class TerrainGenClient {
           if (m.stats && this._roadsStats) this._roadsStats(m.stats);
           return;
         }
-        if (m.t === 'grid' || m.t === 'gridError') { this._gridAnswer(m); return; }   // PERF-EXT-C7: by id, never through the FIFO
+        if (m.t === 'grid' || m.t === 'gridError') { this._gridAnswer(m); return; }   // PERF-EXT26: by id, never through the FIFO
         this._answer(m);
       };
       // a COPY - transferring the reader's own bytes would detach the
@@ -190,13 +190,13 @@ export class TerrainGenClient {
     });
   }
 
-  /** PERF-EXT-C7: whether a job runs off this thread. The world host
+  /** PERF-EXT26: whether a job runs off this thread. The world host
    *  sends STREAM1's promotions here only when it does; otherwise it keeps
    *  its one-a-frame queue (no Worker, `?terrainthread=off`, a dead one). */
   get threaded() { return !!this._worker; }
 
   /**
-   * PERF-EXT-C7 (2026-09-25, the players: "fps issues in the exterior but
+   * PERF-EXT26 (2026-09-25, the players: "fps issues in the exterior but
    * fine in the interior", "me too my friend.. don't know why. I got a
    * RX6600"): a built pixel's grid at `stride` (terrainGen.js
    * restrideGrid), off this thread when a worker is up. The samples are
@@ -255,7 +255,7 @@ export class TerrainGenClient {
     this._worker = null;
     this._roadsFallback();   // AUDIT ROADS F2: the worker took its network down with it
     for (const p of pending) p.resolve(generatePixelTerrain({ woods: this._woods, roads: this._roads ?? null, ...p.job }));
-    // PERF-EXT-C7: and the promotions it held - built here, once each
+    // PERF-EXT26: and the promotions it held - built here, once each
     const grids = [...this._grids.values()];
     this._grids.clear();
     for (const g of grids) g.resolve(restrideGrid({ woods: this._woods, ...g.job }));

@@ -220,7 +220,7 @@ test('WATER1: both exterior hosts - the gate, the has-water skip, and the slot a
   // WATER-AUDIT (M4): the water's own index set, built with the pixel and rebuilt with its restride, destroyed before the buffers it rides
   assert.match(w, /const waterIndices = waterOn \? buildWaterIndices\(tilemapBytes, stride\) : null;\s*\n\s*const water = waterIndices \? renderer\.createWaterSurface\(terrain, waterIndices\) : null;/, 'decided at the build');
   assert.match(w, /px, py, terrain, water, tilemapTex,/, 'carried on the built pixel');
-  const restride = w.slice(w.indexOf('  function restrideTerrain(p, stride'));   // PERF-EXT-C7: it takes the worker's grid too
+  const restride = w.slice(w.indexOf('  function restrideTerrain(p, stride'));   // PERF-EXT26: it takes the worker's grid too
   assert.match(restride.slice(0, restride.indexOf('\n  }\n')), /if \(p\.water\) \{ renderer\.destroyWaterSurface\(p\.water\); p\.water = null; \}[\s\S]*?renderer\.destroyMesh\(p\.terrain\);[\s\S]*?p\.water = waterIndices \? renderer\.createWaterSurface\(p\.terrain, waterIndices\) : null;/);
   assert.equal((w.match(/renderer\.destroyWaterSurface\(p\.water\)/g) || []).length, 2, 'the restride and the eviction');
   assert.match(w, /p\._visible = pixelVisible;/, 'the pixel gate\'s verdict, kept for the pass');

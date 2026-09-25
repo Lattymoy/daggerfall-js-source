@@ -5,7 +5,7 @@
 // `bootWorld` is one long function. Its body runs top to bottom, and
 // partway down it awaits its own first pixel build:
 //
-//     const playerPixel = await buildPixel(first.px, first.py);
+//     const playerPixel = await awaitedBuild(first.px, first.py);
 //
 // Everything that build reaches RUNS THEN - while every `const` and
 // `let` below it is still in its temporal dead zone. Reading one throws
@@ -115,7 +115,7 @@ test('BOOT-TDZ2: nothing the boot walk runs reads a binding the boot walk has no
     } else if (n.type === 'FunctionDeclaration' && n.id) fns.set(n.id.name, n);
   });
 
-  const buildAt = body.findIndex((n) => /const playerPixel = await buildPixel\(first\.px, first\.py\);/.test(src.slice(n.start, n.end)));
+  const buildAt = body.findIndex((n) => /const playerPixel = await awaitedBuild\(first\.px, first\.py\);/.test(src.slice(n.start, n.end)));
   assert.notEqual(buildAt, -1, 'the boot no longer awaits its own first pixel build by that name');
   assert.ok(buildAt > 0 && buildAt < body.length - 1, 'the first build is inside the boot walk');
 

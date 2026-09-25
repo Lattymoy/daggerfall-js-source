@@ -1,4 +1,4 @@
-// PERF-EXT-C (2026-09-25) - THE STREAMING HITCHES, the grass's share.
+// PERF-EXT20-22 (2026-09-25) - THE STREAMING HITCHES, the grass's share.
 //
 // The players: "fps issues in the exterior but fine in the interior",
 // "me too my friend.. don't know why. I got a RX6600". Outdoors the
@@ -91,8 +91,8 @@ function settle(field, eye, { keep, ground }) {
   throw new Error('the field never settled');
 }
 
-// ─── PERF-EXT-C1: THE DISC IS SWEPT ONCE ─────────────────────────────
-test('PERF-EXT-C1: discSlotCount sweeps once per question - every field after the first reads the memo, and the world warms it at mount', () => {
+// ─── PERF-EXT20: THE DISC IS SWEPT ONCE ─────────────────────────────
+test('PERF-EXT20: discSlotCount sweeps once per question - every field after the first reads the memo, and the world warms it at mount', () => {
   assert.equal(typeof G.discSweeps, 'function', 'the sweep counter is the seam this pin reads');
   const r = { allocSlots() {}, writeSlot() {}, clearSlot() {} };
   const before = G.discSweeps();
@@ -113,8 +113,8 @@ test('PERF-EXT-C1: discSlotCount sweeps once per question - every field after th
   assert.match(WORLD, /  let labGrassField = null;[^\n]*\n  if \(labGrass\) discSlotCount\(LAB_GRASS\.span\);/, 'warmed where the renderer is built');
 });
 
-// ─── PERF-EXT-C2: THE FIELD SURVIVES THE ORIGIN SHIFT ────────────────
-test('PERF-EXT-C2: a crossing moves the field in place - no buffer re-specified, no cell uploaded, every slot drawn where it stood', () => {
+// ─── PERF-EXT21: THE FIELD SURVIVES THE ORIGIN SHIFT ────────────────
+test('PERF-EXT21: a crossing moves the field in place - no buffer re-specified, no cell uploaded, every slot drawn where it stood', () => {
   const { gl, counts, rec } = recordingGl();
   const R = new G.LabGrassRenderer(gl);
   const { closures } = ring(2);
@@ -157,7 +157,7 @@ test('PERF-EXT-C2: a crossing moves the field in place - no buffer re-specified,
   assert.equal(moved, 0, `after a hundred round trips, ${moved} of ${back.length} slot frames are not the bits they were`);
 });
 
-test('PERF-EXT-C2: a field that crossed grows the same world as one that never did - the same cells, the same blades, the same tint', () => {
+test('PERF-EXT21: a field that crossed grows the same world as one that never did - the same cells, the same blades, the same tint', () => {
   const { closures } = ring(3);
   const A = recordingGl(), B = recordingGl();
   const RA = new G.LabGrassRenderer(A.gl), RB = new G.LabGrassRenderer(B.gl);
@@ -203,7 +203,7 @@ test('PERF-EXT-C2: a field that crossed grows the same world as one that never d
   assert.deepEqual([z0.inst, z0.inst2, z0.rootY, z0.ground], [pb.inst, pb.inst2, pb.rootY, pb.ground]);
 });
 
-test('PERF-EXT-C2: invalidate after a shift drops exactly the cells whose squares, where they stand in the scene now, meet the rect', () => {
+test('PERF-EXT21: invalidate after a shift drops exactly the cells whose squares, where they stand in the scene now, meet the rect', () => {
   const { closures } = ring(2);
   const r = { allocSlots() {}, writeSlot() {}, clearSlot() {}, shiftSlots() {} };
   const field = G.createGrassField(r, { ...closures([0, 0, 0]), perFrame: 1e9 });
@@ -224,7 +224,7 @@ test('PERF-EXT-C2: invalidate after a shift drops exactly the cells whose square
   assert.notDeepEqual(naive, want, 'the fixture tells the two frames apart');
 });
 
-test('PERF-EXT-C2: the host moves the field at a shift, empties it at a teleport, and re-reads it wherever a pixel lands or joins the near ring', () => {
+test('PERF-EXT21: the host moves the field at a shift, empties it at a teleport, and re-reads it wherever a pixel lands or joins the near ring', () => {
   const shift = WORLD.slice(WORLD.indexOf('    if (r.offset) {\n      // FloatingOrigin.OffsetPlayerController'), WORLD.indexOf('    if (r.pixelChanged) {\n      // P1: PlayerGPS.Update'));
   assert.ok(shift.length > 500, 'the shift block was found');
   assert.match(shift, /labGrassField\?\.shiftOrigin\(r\.offset\);/, 'the shift carries the field');
@@ -234,14 +234,18 @@ test('PERF-EXT-C2: the host moves the field at a shift, empties it at a teleport
   const cut = tp.indexOf('\n    labGrassField = null;\n');
   assert.ok(cut > 0 && cut < tp.indexOf('queue.push(...state.init(px, py));') && !/\bawait\b/.test(tp.slice(cut, tp.indexOf('queue.push(...state.init(px, py));'))),
     'a new scene frame starts an empty field - said before state.init re-anchors the scene, with no frame between');
-  assert.match(WORLD, /    _wodSiteWas\.delete\(key\);[^\n]*\n    if \(labGrassField\) \{[^\n]*\n      const t = state\.pixelTranslation\(px, py\);\n      labGrassField\.invalidate\(t\[0\], t\[2\], t\[0\] \+ TERRAIN_SIZE, t\[2\] \+ TERRAIN_SIZE\);/,
+  assert.match(WORLD, /\n    if \(labGrassField\) \{   \/\/ WOD2[^\n]*\n      const t = state\.pixelTranslation\(px, py\);\n      labGrassField\.invalidate\(t\[0\], t\[2\], t\[0\] \+ TERRAIN_SIZE, t\[2\] \+ TERRAIN_SIZE\);/,
     'every published pixel re-reads the cells over it, not a location\'s alone');
+  // PERF-EXT21 (the review): and so nothing is kept to ask it - the set
+  // AUDIT BRANCH (WoD) m2 filled at a teardown gated this very line, and
+  // was written and never read once the line stopped asking
+  assert.doesNotMatch(WORLD, /_wodSiteWas/, 'no teardown remembers a site for a publish that no longer asks');
   const rs = WORLD.slice(WORLD.indexOf('  function restrideTerrain('), WORLD.indexOf('  function destroyPixel('));
   assert.match(rs, /if \(stride === 1 && labGrassField\) \{\n      const t = state\.pixelTranslation\(p\.px, p\.py\);\n      labGrassField\.invalidate\(t\[0\], t\[2\], t\[0\] \+ TERRAIN_SIZE, t\[2\] \+ TERRAIN_SIZE\);/,
     'a promotion to the near ring re-reads the cells over it');
 });
 
-// ─── PERF-EXT-C3: A WALK PLACES ITS RIM A SLICE A FRAME ──────────────
+// ─── PERF-EXT22: A WALK PLACES ITS RIM A SLICE A FRAME ──────────────
 /** A renderer that records, per written slot, the cell's lanes as bytes. */
 function laneRecorder() {
   const writes = [];
@@ -256,7 +260,7 @@ function laneRecorder() {
 }
 const lanesOf = (p) => [p.inst, p.inst2, p.rootY, p.ground].map((a) => Buffer.from(a.buffer, a.byteOffset, a.byteLength).toString('base64')).join('|');
 
-test('PERF-EXT-C3: a cell placed a slice at a time is the cell placed whole - byte for byte, however the loop is cut', () => {
+test('PERF-EXT22: a cell placed a slice at a time is the cell placed whole - byte for byte, however the loop is cut', () => {
   assert.equal(typeof G.beginGrassCell, 'function', 'the placer can be begun');
   assert.equal(typeof G.stepGrassCell, 'function', 'and stepped');
   const { closures } = ring(2);
@@ -277,7 +281,7 @@ test('PERF-EXT-C3: a cell placed a slice at a time is the cell placed whole - by
   }
 });
 
-test('PERF-EXT-C3: on a walk no frame places more than one slice, every rim cell lands whole and exact, and the field ends where a whole fill would', () => {
+test('PERF-EXT22: on a walk no frame places more than one slice, every rim cell lands whole and exact, and the field ends where a whole fill would', () => {
   const { closures } = ring(2);
   const off = [-TERRAIN_SIZE, 0, 0];   // the walk is on a field that has crossed once: the slices ride its origin
   const cl0 = closures([0, 0, 0]), cl = closures(off);
@@ -325,7 +329,7 @@ test('PERF-EXT-C3: on a walk no frame places more than one slice, every rim cell
   assert.ok(extra.every((h) => nearest(h) > G.LAB_GRASS.range && nearest(h) <= G.LAB_GRASS.span), 'and the rest are the trailing rim the hysteresis keeps');
 });
 
-test('PERF-EXT-C3: inside the fade a cell still comes whole, a boot still fills two whole cells a frame, and a shift or an invalidate starts a half-placed cell again', () => {
+test('PERF-EXT22: inside the fade a cell still comes whole, a boot still fills two whole cells a frame, and a shift or an invalidate starts a half-placed cell again', () => {
   // the fade's start is the SHADER's (the lab's text), not a second guess of it
   const m = /smoothstep\(uRange\*([0-9.]+), uRange, d\)/.exec(G.LAB_GRASS_VS);
   assert.ok(m, 'the lab shader fades from a fraction of the range');

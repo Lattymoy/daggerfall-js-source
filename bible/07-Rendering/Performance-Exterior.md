@@ -19,13 +19,17 @@ and the RATIOS are the claim.
 
 ## Cluster C — the streaming hitches
 
+PERF-EXT20 to PERF-EXT26. The seven commits that landed them name them
+PERF-EXT-C1 to PERF-EXT-C7; the review renamed them into the pass's one
+sequence (`The review of cluster C`, below, has the map).
+
 The frames that freeze when you cross into a new map pixel or ride into a
 town. Nothing in `?perf=cpu` showed them: the steady frame is what it
 measures, and these are the frames around a crossing - every ~3 minutes
 on foot, oftener riding - which is exactly the "fine indoors" the players
 describe (an interior streams nothing).
 
-### PERF-EXT-C1 — the grass field's slot count is swept once
+### PERF-EXT20 — the grass field's slot count is swept once
 
 `discSlotCount` (render/labGrass.js, PERF10) answers how many 30 m cells
 the grass's disc can hold - 394 for the shipped span, a pure function of
@@ -46,11 +50,11 @@ force.
 | `discSlot.mjs` - discSlotCount(315), three calls | 22.2 / 12.3 / 11.5 ms | 28.1 (the one sweep - the world pays it at mount) / 0.01 / 0.00 ms |
 | `crossingFrame.mjs` - createGrassField on the crossing frame, six crossings | 10.6 / 11.0 / 8.2 / 7.8 / 7.6 / 7.7 ms | 0.1 ms each |
 
-Pins: `test/grassshift.test.js` C1 (the sweep counter: two fields, at most
+Pins: `test/grassshift.test.js` PERF-EXT20 (the sweep counter: two fields, at most
 one sweep; four distinct questions, four sweeps; the world's warm).
-Mutants: `tools/mutants/perfextc.json` C1 x4, all dead.
+Mutants: `tools/mutants/perfextc.json` PERF-EXT20 x4, all dead.
 
-### PERF-EXT-C2 — the grass field survives the floating-origin shift
+### PERF-EXT21 — the grass field survives the floating-origin shift
 
 **Before.** Every map-pixel crossing is a floating-origin shift
 (streamingWorld moves the scene 819.2 units), and the world host answered
@@ -113,7 +117,7 @@ nothing to wire, flagged here by name.
 | `grassCrossing.mjs` (all-grass ring) - the refill a crossing paid | 177 frames, 1,171.9 ms, median 6.46 ms a frame, 34.6 MB re-uploaded | not paid: the crossing builds no field (the harness scripts the old rebuild; `shiftProof.mjs` runs the new path) |
 | `walkEquiv.mjs` - a crossed field walking a world path against one that never moved | - | 368/368 the same cell keys; 354/354 drawn slots have a twin within 1 mm (worst 1.71e-4 m) |
 
-Pins: `test/grassshift.test.js` C2 x4 - the crossing (three offsets: east,
+Pins: `test/grassshift.test.js` PERF-EXT21 x4 - the crossing (three offsets: east,
 a vertical recentre, south) re-specifies nothing, uploads nothing and
 draws every slot moved by the offset; a crossed field grows the same
 world, cell for cell and tint for tint, as one that never moved;
@@ -122,11 +126,11 @@ scene rect; and the host's four sites. Three source pins changed on
 purpose: `labGrass.test.js` AUDIT 49 F2 / GR2 / GR5 (the shift reaches the
 field; the teleport empties it), `audit_wod_branch.test.js` m2 and
 `wod2_loader.test.js` (every publish re-reads the grass, which covers a
-lost site). Mutants: `perfextc.json` C2; `grass2.json`, `grass6.json`
+lost site). Mutants: `perfextc.json` PERF-EXT21; `grass2.json`, `grass6.json`
 and `grasspath.json` re-aimed by content (the tint's fx/fz, the grid's
 origin in nearSq).
 
-### PERF-EXT-C3 — a walk places its grass rim a slice a frame
+### PERF-EXT22 — a walk places its grass rim a slice a frame
 
 **Before.** A walking eye brings grass cells in at the rim - their nearest
 point just inside the 300 m range - and each was placed whole on the frame
@@ -173,7 +177,7 @@ filter). It was not proven, so it is not built.
 | `slicedTree.mjs` - 200 cells | whole cell median 1.59 ms | slices of 1 / 1,500 / whole byte-identical 20/20, 200/200, 200/200; a 1,500 slice median 0.33, p90 0.49, p99 0.81 ms |
 | `cellCost.mjs` - a whole cell (the boot's path) | 2.01-2.05 ms median | 2.02-2.03 ms |
 
-Pins: `test/grassshift.test.js` C3 x3 - the slice/whole byte identity at
+Pins: `test/grassshift.test.js` PERF-EXT22 x3 - the slice/whole byte identity at
 1, 777, 1,500 and the whole cell on a crossed field; a walk on a crossed
 field asks keep() at most a slice a frame, writes every rim cell with the
 bytes a whole placement makes, and ends holding a whole fill's cells plus
@@ -184,9 +188,9 @@ invalidate and a walk away each drop a half-placed cell that then lands,
 and a cell no bigger than a slice is never left half placed. Re-stated on
 purpose: `labGrass.test.js` GRASS6's order pin reads stepGrassCell (the
 loop's home) and GR5's five-metre step is given the frames its rim takes.
-Mutants: `perfextc.json` C3 x15, all dead.
+Mutants: `perfextc.json` PERF-EXT22 x15, all dead.
 
-### PERF-EXT-C4 — a pixel's publish tail breathes
+### PERF-EXT23 — a pixel's publish tail breathes
 
 **Before.** A streamed pixel's build breathes between its models (PERF7,
 `systems/buildBreather.js`), and after the last model it ran its tail in
@@ -242,10 +246,10 @@ group; createMesh handed the spheres keeps them and reads no vertex, and
 handed none measures as before; the host's three sites. Re-stated on
 purpose: `perf4.test.js` ("uploaded once at the end") and
 `wod4_privateershold.test.js` (the camp is batched before the merge).
-Mutants: `perfextc.json` C4 x13, all dead; `el5.json`'s two createMesh
+Mutants: `perfextc.json` PERF-EXT23 x13, all dead; `el5.json`'s two createMesh
 records re-aimed by content.
 
-### PERF-EXT-C5 — the build slice is what the frame left, and the meter sees it
+### PERF-EXT24 — the build slice is what the frame left, and the meter sees it
 
 **Before.** The stream's breather (PERF7) lent a flat 6 ms slice a frame.
 It resumes inside its own animation-frame callback, which the browser runs
@@ -263,12 +267,19 @@ world host sizes it with `frameFitBudget`: the frame clock's median frame
 interval (`frameInterval`, off the rAF stamps - 16.7 at 60 Hz, 6.9 at
 144, measured rather than assumed) less the last frame's own script
 (`lastBusy`) less 2.5 ms, between 3 ms (the prover's floor, not the
-hunter's 1) and 6. A build the pump did not start - the boot's first
-pixel, a teleport's - lends the whole 6, and so does a stream that has
-run two seconds. Every slice that ends in a yield is lent back:
-`lendFrame` folds it into the next frame-clock sample (so the counter's
-script ms includes it; `lastBusy` does not, or the slice would starve
-itself) and `?perf=cpu` shows it as a `build` span (`PerfMeter.addCpu`).
+hunter's 1) and 6. A build something waits on - the boot's first pixel,
+a teleport's, each through `awaitedBuild` - lends the whole 6, and so
+does a stream that has run two seconds. Every slice the breather can
+vouch for is lent back - one its own resume began and no frame ran
+inside (`framesBegun`, the frame clock's count): `lendFrame` folds it
+into the next frame-clock sample (so the counter's script ms includes
+it; `lastBusy` does not, or the slice would starve itself) and
+`?perf=cpu` shows it as a `build` span (`PerfMeter.addCpu`). A pixel's
+first slice, which a reset begins inside the pump's frame and the
+terrain worker's round trip stretches across frames, is not lent: the
+counter reads it low, never high by a wait a frame ran through (a fetch
+that settles before the next frame begins still counts - said in
+`systems/buildBreather.js`).
 
 **THE TRADE-OFF, stated - Mac should weigh it.** Nothing about what is
 built changes. But while the frame's script is over ~11 ms a streamed
@@ -286,19 +297,20 @@ not claimed away. `BUILD_SLICE_FLOOR_MS` and `BUILD_STREAM_AGE_MS`
 | before: the flat 6 ms slice | 60 (4.9 ms built a frame) | 54.9 (4.97) | 49.5 (4.96) | 41.4 (4.99) |
 | after: what the frame left | 59.4 (4.3) | 60 (2.48) | 57.7 (2.48) | 47.0 (2.50) |
 
-Pins: `test/buildslice.test.js` (5) - frameFitBudget's arithmetic, its
+Pins: `test/buildslice.test.js` (7) - frameFitBudget's arithmetic, its
 floor, its ceiling, 144 and 30 Hz, the age guard at 1,999/2,001 ms, the
 awaited build and a NaN; the breather asks once a slice, yields at the
-budget and not before, reports each slice, and without a budget keeps
-PERF7's slice; the frame clock's median interval ignores a hitch,
+budget and not before, reports a slice its resume began, and without a
+budget keeps PERF7's slice; the frame clock's median interval ignores a hitch,
 lastBusy excludes a lent slice, a lent slice lands in ONE sample, a
 negative one is not lent; the CPU meter's `build` bucket and the GPU
-meter's silence; the host's budget, lend and pump. Re-stated on purpose:
+meter's silence; the host's budget, lend and pump; and the review's two
+(below). Re-stated on purpose:
 `perf7.test.js`'s host pin and `terrainscale1.test.js`'s slice marker
-(the breather takes options). Mutants: `perfextc.json` C5 x18, all dead;
+(the breather takes options). Mutants: `perfextc.json` PERF-EXT24 x18, all dead;
 `terrainscale1.json`'s two BF1 records re-aimed by content.
 
-### PERF-EXT-C6 — a collider cell's key is a number
+### PERF-EXT25 — a collider cell's key is a number
 
 **Before.** Every triangle a streamed pixel files into the collider
 (`player/collider.js` `addMesh`, per model of every pixel, both skins)
@@ -337,12 +349,13 @@ holds cell for cell (decoded) the triangle lists of the OLD string-keyed
 filing, kept verbatim in the test with collider.js's constants read from
 it; every overlap on a lattice across coarse boundaries either side of
 zero, and every ray, answers exactly as a twin whose every cell holds
-every triangle (the soup walked whole - true by design on the base too,
-it is the picture's guard); the key's formula, its one-to-one-ness at the
+every triangle (the soup walked whole - true by design on the base too:
+a GUARD, not a pin, and the test's title and the file header say so -
+it is there for the lookup mutants); the key's formula, its one-to-one-ness at the
 corners of its range, and no template literal or corner array left.
-Mutants: `perfextc.json` C6 x8, all dead.
+Mutants: `perfextc.json` PERF-EXT25 x8, all dead.
 
-### PERF-EXT-C7 — STREAM1's promotions are built on the terrain worker
+### PERF-EXT26 — STREAM1's promotions are built on the terrain worker
 
 **Before.** A crossing moves the near ring (LOD_NEAR 3), and five pixels
 go from stride 4 to stride 1. STREAM1 took them off the crossing frame
@@ -394,4 +407,88 @@ spend, its landing checks, the one swap and the crossing frame's send.
 Re-stated on purpose: `distantland.test.js` (the restride reads the ghost
 rows through the kernel's law now - its comment said the restride "keeps
 its own", which is no longer true) and `water.test.js`'s restride slice.
-Mutants: `perfextc.json` C7 x16, all dead.
+Mutants: `perfextc.json` PERF-EXT26 x16, all dead.
+
+### The review of cluster C (2026-09-25)
+
+An adversarial review read the cluster against its base, re-ran the
+harnesses and set `src/` aside under the pins. Five findings, all five
+real; four are fixed in code or tests and the fifth in the names.
+
+**1. PERF-EXT24 lent waits as build time (major).** The breather's slice
+clock is wall time, and `onSlice` heard every slice that ended in a yield.
+A streamed pixel's first slice begins at `reset()` inside the pump's frame
+and runs on across `await terrainGen.generate` - the worker's round trip,
+frames going by in it - to its first breath (the first model, or since
+PERF-EXT23 the first flat group, so nearly every pixel). That whole
+interval was lent: the frame's own head counted twice, the other frames'
+script and the wait counted as the build's. So the counter's script ms,
+`tools/perfProbe.mjs`'s scriptMs and `?perf=cpu`'s `build` all read high
+on every streamed pixel - the telemetry this pass rests on. Now a slice
+is lent only if the breather's own resume began it AND the frame clock's
+`framesBegun` did not move inside it; everything else still yields
+exactly as before, and simply is not lent. The one wait it cannot see -
+a fetch that settles before the next frame begins, a cold texture off
+the disk cache - is said in the breather, not claimed away.
+
+| harness | base | the cluster's tip | this tree |
+|---|---|---|---|
+| the reviewer's `lendRepro.mjs` (real frameClock + breather, wired as world.js: reset at 8 ms in frame 0, the worker answers at 45, 1 ms of work, a breath) | heard nothing; frames mean 10.0, worst 10.0 ms | heard 38 ms; mean 19.5, worst 48.0 | heard nothing; mean 10.0, worst 10.0 |
+| `sliceAB.mjs` (headless Chromium, 240 frames, relative) - fps / ms built a frame / script ms, frame JS 9 ms | 60.1 / 4.97 / 10.0 | 60 / 3.94 / 14.7 | 60 / 3.91 / 14.4 |
+| the same, 12 ms | 54.7 / 4.95 / 21.4 | 60 / 2.50 / 15.8 | 60 / 2.48 / 15.9 |
+| the same, 14 ms | 49.6 / 4.93 / 22.8 | 58.1 / 2.50 / 26.1 | 58.1 / 2.49 / 25.6 |
+| the same, 18 ms | 41.0 / 4.94 / 26.6 | 47.0 / 2.52 / 30.3 | 47.0 / 2.51 / 29.9 |
+
+The steady stream is lent and paced as it was; only the straddling slices
+stop reading as script.
+
+**2. The awaited arm missed a teleport (minor).** `awaited` was inferred
+as `_streamSince == null`, and `_streamSince` is the pump's. A teleport's
+`await buildPixel(first)` is never alone: the frame loop keeps pumping,
+the queue `state.init` has just filled starts the new ring, and every
+slice of the arrival after its first was sized for the stream - 3-6 ms,
+always 3 on a 144 Hz display - against the record's own "a teleport's
+always does". The boot and the teleport build through `awaitedBuild` now,
+which counts what is in flight, and the budget's `awaited` is that count.
+While one is in flight every slice on the one breather has 6 ms, whichever
+build breathes: PERF7's flat slice, for moments nobody is playing
+through. And a teleport's sweep ends the old world's stream
+(`_streamSince = null`, after the door generation's bump): a stream in flight
+across a teleport kept its age, so the new world's ring skipped its two
+frame-fitted seconds.
+
+**3. `_wodSiteWas` was write-only (minor).** PERF-EXT21 made every publish
+re-read the grass, and the set AUDIT BRANCH (WoD) m2 filled at a teardown
+(to make a rebuild that lost its site re-read it) lost its only reader.
+It is retired - the set, its add, its delete - and m2's sentence rides the
+one invalidation it now shares with every publish. The four pins that
+held the dead lines hold the invalidation (`grassshift`,
+`audit_wod_branch`, `wod2_loader`) and the carry (`wod4_privateershold`);
+`auditwod.json`'s m2 record is re-aimed by content at the invalidation.
+
+**4. One of `colliderkeys`' three tests passes on the base (minor).** The
+query test is the equivalence guard of an exact refactor: it cannot fail
+before the change, by design. It is not folded into a test that fails,
+which would only have hidden it; its title and the file header say it is
+a guard and not a pin, and why it is kept (a lookup that spells the key
+another way reads cells nobody filed, and only a query sees it).
+
+**5. The names (minor).** The pass's slices are PERF-EXT<n> - cluster B
+holds 10-13 and D 30-31 - and this cluster's were PERF-EXT-C1..C7. They
+are PERF-EXT20..PERF-EXT26 now in every comment, test title, record and
+mutant name. The seven commits keep their subjects - history is not
+rewritten - so the map is here: C1 -> 20 (the slot count), C2 -> 21 (the
+origin shift), C3 -> 22 (the rim), C4 -> 23 (the publish tail), C5 -> 24
+(the slice), C6 -> 25 (the collider key), C7 -> 26 (the promotions).
+
+Pins: `test/buildslice.test.js` +2 - the lend (the reviewer's repro on the
+real modules; a resume's slice lent whole into the next sample; a slice a
+frame ran inside, and a reset's with no worker, not lent) and the awaited
+build (the host's own `awaitedBuild` and budget run at 144 Hz beside a
+stream: the floor, 6 while a teleport's build is in flight, the floor
+again once it stands or throws; its only callers; the sweep's end of the
+stream); its breather and host pins re-stated; `grassshift` and
+`audit_wod_branch` assert no `_wodSiteWas`. Each fails with `src/` at the
+cluster's tip. Mutants: `perfextc.json` +14 (PERF-EXT24-review x13,
+PERF-EXT21-review x1), three re-aimed by content, and `auditwod.json`'s m2
+re-aimed; all dead.

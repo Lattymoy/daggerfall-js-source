@@ -1,4 +1,4 @@
-// PERF-EXT-C7 (2026-09-25, the players: "fps issues in the exterior but
+// PERF-EXT26 (2026-09-25, the players: "fps issues in the exterior but
 // fine in the interior", "me too my friend.. don't know why. I got a
 // RX6600") - STREAM1'S PROMOTIONS ON THE TERRAIN WORKER. A crossing
 // promotes five pixels to stride 1, and STREAM1 paid them one a frame on
@@ -37,7 +37,7 @@ const WOODS_BYTES = syntheticWoodsBytes();
 const woods = new WoodsFile();
 assert.equal(woods.load(WOODS_BYTES.slice()), true);
 
-test('PERF-EXT-C7: restrideGrid is the one grid law - the kernel builds its grid with it, and it is buildTerrainGrid over the kept samples with the woods\' ghost rows', () => {
+test('PERF-EXT26: restrideGrid is the one grid law - the kernel builds its grid with it, and it is buildTerrainGrid over the kept samples with the woods\' ghost rows', () => {
   assert.equal(typeof TG.restrideGrid, 'function');
   for (const [px, py] of [[200, 150], [431, 222]]) {
     const samples = generateSamples(woods, px, py);
@@ -52,7 +52,7 @@ test('PERF-EXT-C7: restrideGrid is the one grid law - the kernel builds its grid
   assert.match(src, /const grid = restrideGrid\(\{ woods, px, py, stride, samples \}\);/, 'the build runs the same law');
 });
 
-test('PERF-EXT-C7: the REAL worker shell answers a grid job by its id, the bytes the main thread builds, its arrays transferred - and a grid before init says so under its id', async () => {
+test('PERF-EXT26: the REAL worker shell answers a grid job by its id, the bytes the main thread builds, its arrays transferred - and a grid before init says so under its id', async () => {
   const posted = [];
   const prevPost = globalThis.postMessage, prevOn = globalThis.onmessage;
   globalThis.postMessage = (msg, transfer) => posted.push({ msg, transfer });
@@ -87,7 +87,7 @@ test('PERF-EXT-C7: the REAL worker shell answers a grid job by its id, the bytes
   }
 });
 
-test('PERF-EXT-C7: the client sends a grid by id with the samples CLONED, answers by id beside the jobs\' FIFO, and builds on its own thread on a failure, a death or no worker at all', async () => {
+test('PERF-EXT26: the client sends a grid by id with the samples CLONED, answers by id beside the jobs\' FIFO, and builds on its own thread on a failure, a death or no worker at all', async () => {
   let onmessage = null, terminated = 0;
   const posts = [];
   const fake = { set onmessage(fn) { onmessage = fn; }, set onerror(_fn) {}, postMessage: (msg, transfer) => posts.push({ msg, transfer }), terminate: () => { terminated++; } };
@@ -122,7 +122,7 @@ test('PERF-EXT-C7: the client sends a grid by id with the samples CLONED, answer
   assert.equal(bytes((await none.grid({ px: 250, py: 160, stride: 1, samples })).positions), bytes(want.positions));
 });
 
-test('PERF-EXT-C7: the host sends every promotion to a worker that is up - on the crossing frame - swaps only a reply its pixel still wants, and keeps STREAM1\'s queue as the fallback', () => {
+test('PERF-EXT26: the host sends every promotion to a worker that is up - on the crossing frame - swaps only a reply its pixel still wants, and keeps STREAM1\'s queue as the fallback', () => {
   const spend = WORLD.slice(WORLD.indexOf('  function spendRestrides() {'), WORLD.indexOf('  function promoteOffThread(p) {'));
   assert.match(spend, /if \(terrainGen\.threaded\) \{\n      for \(const p of restridePending\.values\(\)\) promoteOffThread\(p\);\n      restridePending\.clear\(\);\n      return;\n    \}\n    let budget = RESTRIDE_PER_FRAME;/, 'all at once to the worker, else the one-a-frame queue');
   const off = WORLD.slice(WORLD.indexOf('  function promoteOffThread(p) {'), WORLD.indexOf('  function restrideTerrain('));

@@ -1,4 +1,4 @@
-// PERF-EXT-C6 (2026-09-25, the players: "fps issues in the exterior but
+// PERF-EXT25 (2026-09-25, the players: "fps issues in the exterior but
 // fine in the interior", "me too my friend.. don't know why. I got a
 // RX6600") - A COLLIDER CELL'S KEY IS A NUMBER. Every triangle a streamed
 // pixel files, and every cell a query reads, minted a `${gx},${gz}`
@@ -14,6 +14,16 @@
 // - so every query, which only ever asks the grid WHICH triangles to try,
 // is handed the same ones. Collision is a 1:1 port surface; the grid is
 // ours, and this holds that it did not move.
+//
+// AND ONE GUARD THAT IS NOT A PIN (PERF-EXT25's review, 2026-09-25). The
+// second test - every sphereOverlaps and raycastHit answered as a twin
+// whose every cell holds every triangle answers it - holds on the base
+// too, by design: an exact refactor answers every query as it did, and
+// that is the whole of its claim, so it cannot fail before the change and
+// is not counted among this file's pins. It is here for the mutants: a
+// lookup that spells the key another way reads cells nobody filed, and
+// only a query notices. The pins - the filing and the key - fail on the
+// base.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -98,7 +108,7 @@ function scene() {
   return pieces;
 }
 
-test('PERF-EXT-C6: every bucket files every triangle in the cells the old string-keyed filing did - fine, coarse and the short list alike', () => {
+test('PERF-EXT25: every bucket files every triangle in the cells the old string-keyed filing did - fine, coarse and the short list alike', () => {
   const c = new Collider(() => 0);
   const olds = [];
   for (const [n, [p, i, m]] of scene().entries()) {
@@ -134,7 +144,7 @@ test('PERF-EXT-C6: every bucket files every triangle in the cells the old string
   assert.ok(fine > 1000 && coarse > 10 && huge >= 1, `every home is exercised (${fine} fine cells, ${coarse} coarse, ${huge} on the short list)`);
 });
 
-test('PERF-EXT-C6: every query finds what a walk of EVERY triangle finds - the lookups read the cells the filing wrote, fine and coarse, across cell boundaries either side of zero', () => {
+test('PERF-EXT25 (a guard, not a pin - true on the base by design): every query finds what a walk of EVERY triangle finds - the lookups read the cells the filing wrote, fine and coarse, across cell boundaries either side of zero', () => {
   // The oracle is a twin whose every cell answers every triangle: its walks
   // test the whole soup, whatever key they ask with. The real collider
   // must answer each overlap and each ray exactly as it does.
@@ -182,7 +192,7 @@ test('PERF-EXT-C6: every query finds what a walk of EVERY triangle finds - the l
   assert.ok(rays > 50, `rays hit (${rays})`);
 });
 
-test('PERF-EXT-C6: the key is one-to-one over the cells a map can hold, and every cell lookup in the collider spells it the one way', () => {
+test('PERF-EXT25: the key is one-to-one over the cells a map can hold, and every cell lookup in the collider spells it the one way', () => {
   // the formula the decode above inverts, at the corners of its range and across zero
   const key = (gx, gz) => (gx + 0x100000) * 0x200000 + (gz + 0x100000);
   const seen = new Set();

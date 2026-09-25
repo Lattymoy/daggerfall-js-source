@@ -98,7 +98,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   // a real location starts from its own mean (MapData.averageHeight is
   // only ever computed there), every other from 0.
   const wodResult = wod && wod.picks.length ? applyPicks(samples, wod.picks, hasLocation ? avg : 0) : null;
-  const grid = restrideGrid({ woods, px, py, stride, samples });   // PERF-EXT-C7: the one grid law, the restride's too
+  const grid = restrideGrid({ woods, px, py, stride, samples });   // PERF-EXT26: the one grid law, the restride's too
   const tilemapBytes = convertTilemap(tilemap);
   const nature = layoutNature(samples, tilemap, {
     mapPixelX: px,
@@ -122,7 +122,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
 }
 
 /**
- * PERF-EXT-C7 (2026-09-25, the players: "fps issues in the exterior but
+ * PERF-EXT26 (2026-09-25, the players: "fps issues in the exterior but
  * fine in the interior", "me too my friend.. don't know why. I got a
  * RX6600"): A PIXEL'S GRID AT A STRIDE, from its samples as the pixel
  * keeps them (post-blend, post-smoothing) and the ghost rows off the woods

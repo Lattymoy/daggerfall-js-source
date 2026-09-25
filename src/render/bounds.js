@@ -66,13 +66,13 @@ export function boundsOf(positions, indices = null, start = 0, count = -1, strid
   return out;
 }
 
-/** PERF-EXT-C4: how many vertices one range of boundsSteps measures -
+/** PERF-EXT23: how many vertices one range of boundsSteps measures -
  *  under 0.1 ms a pass warm on the prover's machine, and a couple of ms
  *  the first time, before the loop is compiled. */
 export const BOUNDS_RANGE = 8192;
 
 /**
- * PERF-EXT-C4 (2026-09-25, the players: "fps issues in the exterior but
+ * PERF-EXT23 (2026-09-25, the players: "fps issues in the exterior but
  * fine in the interior", "me too my friend.. don't know why. I got a
  * RX6600"): boundsOf(positions) over a whole xyz array, CUT IN RANGES - a
  * generator that yields after every `range` vertices of either pass, so a

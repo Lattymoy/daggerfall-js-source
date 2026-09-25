@@ -1,4 +1,4 @@
-// PERF-EXT-C4 (2026-09-25, the players: "fps issues in the exterior but
+// PERF-EXT23 (2026-09-25, the players: "fps issues in the exterior but
 // fine in the interior", "me too my friend.. don't know why. I got a
 // RX6600") - THE PUBLISH TAIL BREATHES. A streamed pixel's build breathed
 // between its models (PERF7) and then ran its tail in one piece: the flats
@@ -60,7 +60,7 @@ function builder(n) {
   return b;
 }
 
-test('PERF-EXT-C4: boundsSteps is boundsOf cut in ranges - the same sphere, bit for bit, however the vertices are cut', () => {
+test('PERF-EXT23: boundsSteps is boundsOf cut in ranges - the same sphere, bit for bit, however the vertices are cut', () => {
   assert.equal(typeof B.boundsSteps, 'function', 'the sliced sphere exists');
   const drain = (it) => { let r = it.next(), n = 0; while (!r.done) { n++; r = it.next(); } return [r.value, n]; };
   const shapes = [
@@ -79,7 +79,7 @@ test('PERF-EXT-C4: boundsSteps is boundsOf cut in ranges - the same sphere, bit 
   }
 });
 
-test('PERF-EXT-C4: finishSliced makes finish()\'s mesh and createMesh\'s spheres, byte for byte, a breath between every unit', async () => {
+test('PERF-EXT23: finishSliced makes finish()\'s mesh and createMesh\'s spheres, byte for byte, a breath between every unit', async () => {
   assert.equal(typeof SB.StaticBatchBuilder.prototype.finishSliced, 'function');
   const N = 300;
   const ref = builder(N).finish();
@@ -99,7 +99,7 @@ test('PERF-EXT-C4: finishSliced makes finish()\'s mesh and createMesh\'s spheres
   assert.equal(await new SB.StaticBatchBuilder().finishSliced(async () => {}), null, 'nothing added, nothing made');
 });
 
-test('PERF-EXT-C4: createMesh handed the measured spheres takes them and reads no vertex; handed none, it measures as before', () => {
+test('PERF-EXT23: createMesh handed the measured spheres takes them and reads no vertex; handed none, it measures as before', () => {
   const N = 40;
   const merged = builder(N).finish();
   let reads = 0;
@@ -117,7 +117,7 @@ test('PERF-EXT-C4: createMesh handed the measured spheres takes them and reads n
   assert.equal(bytes(plain.bounds), bytes(B.boundsOf(merged.positions)));
 });
 
-test('PERF-EXT-C4: the world host merges a breath at a time, hands the spheres to the upload, and breathes between flat groups', () => {
+test('PERF-EXT23: the world host merges a breath at a time, hands the spheres to the upload, and breathes between flat groups', () => {
   assert.match(WORLD, /const staticMerged = await staticBuilder\.finishSliced\(\(\) => breather\.breathe\(\)\);[^\n]*\n\s+const staticBatch = staticMerged \? renderer\.createMesh\(staticMerged, \{ bounds: staticMerged\.bounds \}\) : null;/);
   assert.match(WORLD, /    for \(const \[k, centers\] of groups\) \{\n      await breather\.breathe\(\);/, 'a flat group a breath');
   // the interior and the dungeon merge once at their first frame, and keep finish()

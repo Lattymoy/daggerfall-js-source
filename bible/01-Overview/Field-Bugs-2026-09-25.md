@@ -101,10 +101,10 @@ streams nothing, which is the "fine in the interior" half.
 and re-measured on the change; `07-Rendering/Performance-Exterior.md`
 cluster C has the numbers and the laws):
 
-- **PERF-EXT-C1** - the grass field's slot count (an 11-33 ms sweep, paid
+- **PERF-EXT20** - the grass field's slot count (an 11-33 ms sweep, paid
   by every field built - every crossing, teleport and load) is swept once
   and warmed at mount.
-- **PERF-EXT-C2** - the grass field survives the floating-origin shift.
+- **PERF-EXT21** - the grass field survives the floating-origin shift.
   Every map-pixel crossing threw it away and regrew it: the grass
   vanished (2 slots of 357 drawn on the crossing frame), regrew
   nearest-first over ~3 s at +5-7.5 ms a frame and came back reshuffled.
@@ -112,19 +112,19 @@ cluster C has the numbers and the laws):
   place (0.2-0.3 ms, no upload); every stale-cell heal the rebuild gave
   by accident is said on purpose (every publish, every promotion), and a
   teleport or a load - which never emptied the field - does.
-- **PERF-EXT-C3** - a walk places its grass rim a slice a frame. A cell
+- **PERF-EXT22** - a walk places its grass rim a slice a frame. A cell
   arriving at the 300 m rim was placed whole on the frame it arrived, a
   4-8 ms spike on 5-17% of frames while moving; it is placed 1,500
   candidates a frame now, byte for byte the same cell (walking p99 4.4-6.6
   ms -> 1.4-1.8 ms). A boot or a teleport still fills whole cells at the
   old pace.
-- **PERF-EXT-C4** - a pixel's publish tail breathes. After its last
+- **PERF-EXT23** - a pixel's publish tail breathes. After its last
   model, a town or city pixel merged its static batch and measured its
   spheres in one piece - 39-66 ms of one frame on a synthetic city, 8-22
   ms on a town. The merge yields between models, sphere ranges and
   texture groups now (no unit over ~0.3 ms warm) and hands createMesh the
   spheres, byte for byte the same.
-- **PERF-EXT-C5** - the stream's build slice is what the frame left. A
+- **PERF-EXT24** - the stream's build slice is what the frame left. A
   flat 6 ms slice sat on top of the frame in the same rendering
   opportunity, so every streaming frame over ~8.7 ms of script missed
   vsync (12 ms of script ran at 55 fps while a pixel built, 18 ms at 41);
@@ -133,12 +133,12 @@ cluster C has the numbers and the laws):
   for the first time. The trade-off, for Mac: a heavy frame builds at up
   to half pace for at most two seconds, so the far ring's notch over a
   pixel still building stays open longer in clear weather.
-- **PERF-EXT-C6** - a collider cell's key is a number. The collider
+- **PERF-EXT25** - a collider cell's key is a number. The collider
   minted a string per cell a streamed triangle covered and per cell a
   query read; the key is one exact multiply-add now, and the insert of a
   synthetic city pixel's 300,000 triangles fell from ~1.07 s to ~0.76 s
   of main thread (-27-30%), every answer the same bits.
-- **PERF-EXT-C7** - the five terrain promotions every crossing makes are
+- **PERF-EXT26** - the five terrain promotions every crossing makes are
   built on the terrain worker. They were ~1.8 ms of grid a frame for five
   frames on the main thread; now the post and the reply's water are ~0.15
   ms each, the grid the same bytes, and the one-a-frame queue is the
@@ -148,4 +148,25 @@ cluster C has the numbers and the laws):
 `test/grassshift.test.js`, `test/publishtail.test.js`,
 `test/buildslice.test.js`, `test/colliderkeys.test.js`,
 `test/restrideworker.test.js`, every new pin failing on the tree before
-its slice. Mutants: `tools/mutants/perfextc.json`, 89, all dead.
+its slice (one test in `colliderkeys` is a guard that holds on both by
+design, and says so). Mutants: `tools/mutants/perfextc.json`, 103, all
+dead.
+
+## The review of cluster C (2026-09-25)
+
+An adversarial review of the cluster found five things, all real. The
+one that mattered: **PERF-EXT24 lent waits to the counter as if they
+were the build's work.** A streamed pixel's first slice began inside
+the pump's frame and ran on across the terrain worker's round trip, and
+that whole interval was lent - so on every streamed pixel the FPS
+counter's script ms, the probe's scriptMs and `?perf=cpu`'s `build` read
+high (the reviewer's repro: a 1 ms breath lent as 38 ms, worst frame 48
+for frames of 10). The breather lends only a slice its own resume began
+and no frame ran inside now; the stream's pace and its steady lend are
+unchanged (headless Chromium, 9-18 ms frames: the same fps and ms built
+as the cluster's tip). Also: a teleport's build now always gets the
+whole slice (it had been sized for the stream beside it), a set the grass
+change had left write-only is retired, a guard test is labelled as one,
+and the slices are renumbered PERF-EXT20-26 into the pass's one sequence
+(the commits say PERF-EXT-C1-C7). `07-Rendering/Performance-Exterior.md`,
+"The review of cluster C", has the numbers and the pins.

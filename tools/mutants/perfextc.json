@@ -1,6 +1,6 @@
 [
  {
-  "name": "PERF-EXT-C1-the-memo-is-never-written-so-every-field-sweeps-again",
+  "name": "PERF-EXT20-the-memo-is-never-written-so-every-field-sweeps-again",
   "file": "src/render/labGrass.js",
   "old": "  if (n === undefined) { n = discSweep(radius, cell, steps); _discMemo.set(key, n); }",
   "new": "  if (n === undefined) { n = discSweep(radius, cell, steps); }",
@@ -9,7 +9,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C1-the-key-forgets-the-steps-so-a-coarse-sweep-answers-for-the-fine-one",
+  "name": "PERF-EXT20-the-key-forgets-the-steps-so-a-coarse-sweep-answers-for-the-fine-one",
   "file": "src/render/labGrass.js",
   "old": "  const key = `${radius},${cell},${steps}`;",
   "new": "  const key = `${radius},${cell}`;",
@@ -18,7 +18,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C1-the-key-forgets-the-cell",
+  "name": "PERF-EXT20-the-key-forgets-the-cell",
   "file": "src/render/labGrass.js",
   "old": "  const key = `${radius},${cell},${steps}`;",
   "new": "  const key = `${radius},${steps}`;",
@@ -27,7 +27,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C1-the-world-never-warms-it-so-the-first-crossing-frame-sweeps",
+  "name": "PERF-EXT20-the-world-never-warms-it-so-the-first-crossing-frame-sweeps",
   "file": "src/scenes/world.js",
   "old": "  if (labGrass) discSlotCount(LAB_GRASS.span);",
   "new": "  if (false) discSlotCount(LAB_GRASS.span);",
@@ -36,17 +36,17 @@
   ]
  },
  {
-  "name": "PERF-EXT-C2-the-shift-block-throws-the-field-away-again",
+  "name": "PERF-EXT21-the-shift-block-throws-the-field-away-again",
   "file": "src/scenes/world.js",
-  "old": "      labGrassField?.shiftOrigin(r.offset);   // PERF-EXT-C2",
-  "new": "      labGrassField = null;   // PERF-EXT-C2",
+  "old": "      labGrassField?.shiftOrigin(r.offset);   // PERF-EXT21",
+  "new": "      labGrassField = null;   // PERF-EXT21",
   "tests": [
    "test/grassshift.test.js",
    "test/labGrass.test.js"
   ]
  },
  {
-  "name": "PERF-EXT-C2-the-grid-moves-but-the-slots-stay",
+  "name": "PERF-EXT21-the-grid-moves-but-the-slots-stay",
   "file": "src/render/labGrass.js",
   "old": "      renderer.shiftSlots(offset);",
   "new": "      void renderer;",
@@ -55,7 +55,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C2-the-grid-does-not-follow-the-origin-east-west",
+  "name": "PERF-EXT21-the-grid-does-not-follow-the-origin-east-west",
   "file": "src/render/labGrass.js",
   "old": "      gx += offset[0]; gz += offset[2];",
   "new": "      gz += offset[2];",
@@ -64,7 +64,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C2-the-grid-does-not-follow-the-origin-north-south",
+  "name": "PERF-EXT21-the-grid-does-not-follow-the-origin-north-south",
   "file": "src/render/labGrass.js",
   "old": "      gx += offset[0]; gz += offset[2];",
   "new": "      gx += offset[0];",
@@ -73,7 +73,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C2-a-vertical-recentre-leaves-the-height-floor-behind",
+  "name": "PERF-EXT21-a-vertical-recentre-leaves-the-height-floor-behind",
   "file": "src/render/labGrass.js",
   "old": "      F[s * 4] += dx; F[s * 4 + 1] += dz; F[s * 4 + 2] += dy;",
   "new": "      F[s * 4] += dx; F[s * 4 + 1] += dz;",
@@ -82,7 +82,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C2-the-culling-boxes-stay-where-the-cells-were",
+  "name": "PERF-EXT21-the-culling-boxes-stay-where-the-cells-were",
   "file": "src/render/labGrass.js",
   "old": "      if (b) { b[0] += dx; b[1] += dy; b[2] += dz; b[3] += dx; b[4] += dy; b[5] += dz; }",
   "new": "      if (b) { b[1] += dy; b[4] += dy; }",
@@ -91,7 +91,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C2-the-slot-frames-round-to-float32-at-every-shift-and-a-journey-drifts",
+  "name": "PERF-EXT21-the-slot-frames-round-to-float32-at-every-shift-and-a-journey-drifts",
   "file": "src/render/labGrass.js",
   "old": "    this.slotFrame = new Float64Array(slots * 4);",
   "new": "    this.slotFrame = new Float32Array(slots * 4);",
@@ -100,7 +100,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C2-invalidate-asks-the-scene-rect-of-the-field-grid-unconverted",
+  "name": "PERF-EXT21-invalidate-asks-the-scene-rect-of-the-field-grid-unconverted",
   "file": "src/render/labGrass.js",
   "old": "      const cx0 = Math.floor((x0 - gx) / cell), cx1 = Math.floor((x1 - gx) / cell);",
   "new": "      const cx0 = Math.floor(x0 / cell), cx1 = Math.floor(x1 / cell);",
@@ -109,7 +109,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C2-the-eye-is-found-on-the-scene-grid-not-the-fields",
+  "name": "PERF-EXT21-the-eye-is-found-on-the-scene-grid-not-the-fields",
   "file": "src/render/labGrass.js",
   "old": "      const ecx = Math.floor((ex - gx) / cell), ecz = Math.floor((ez - gz) / cell);",
   "new": "      const ecx = Math.floor(ex / cell), ecz = Math.floor(ez / cell);",
@@ -118,16 +118,16 @@
   ]
  },
  {
-  "name": "PERF-EXT-C2-a-blade-is-asked-about-at-its-field-position-not-its-scene-one",
+  "name": "PERF-EXT21-a-blade-is-asked-about-at-its-field-position-not-its-scene-one",
   "file": "src/render/labGrass.js",
-  "old": "    const x = fx + originX, z = fz + originZ;   // PERF-EXT-C2: in the scene's",
-  "new": "    const x = fx, z = fz;   // PERF-EXT-C2: in the scene's",
+  "old": "    const x = fx + originX, z = fz + originZ;   // PERF-EXT21: in the scene's",
+  "new": "    const x = fx, z = fz;   // PERF-EXT21: in the scene's",
   "tests": [
    "test/grassshift.test.js"
   ]
  },
  {
-  "name": "PERF-EXT-C2-the-tint-is-the-scenes-patch-so-a-crossing-recolours-the-field",
+  "name": "PERF-EXT21-the-tint-is-the-scenes-patch-so-a-crossing-recolours-the-field",
   "file": "src/render/labGrass.js",
   "old": "    const tint = bakedTint(tRnd, fx, fz);",
   "new": "    const tint = bakedTint(tRnd, x, z);",
@@ -136,19 +136,19 @@
   ]
  },
  {
-  "name": "PERF-EXT-C2-the-field-places-its-cells-at-the-scene-origin",
+  "name": "PERF-EXT21-the-field-places-its-cells-at-the-scene-origin",
   "file": "src/render/labGrass.js",
-  "old": "seed, cell, originX: gx, originZ: gz }));   // PERF-EXT-C2",
-  "new": "seed, cell }));   // PERF-EXT-C2",
+  "old": "seed, cell, originX: gx, originZ: gz }));   // PERF-EXT21",
+  "new": "seed, cell }));   // PERF-EXT21",
   "tests": [
    "test/grassshift.test.js"
   ]
  },
  {
-  "name": "PERF-EXT-C2-only-a-location-publish-re-reads-the-grass-again",
+  "name": "PERF-EXT21-only-a-location-publish-re-reads-the-grass-again",
   "file": "src/scenes/world.js",
-  "old": "    if (labGrassField) {   // WOD2: a levelled camp moved the ground the same way; PERF-EXT-C2: and so does every other publish",
-  "new": "    if ((dfLocation || wodSite) && labGrassField) {   // WOD2: a levelled camp moved the ground the same way; PERF-EXT-C2: and so does every other publish",
+  "old": "    if (labGrassField) {   // WOD2: a levelled camp moved the ground the same way; AUDIT BRANCH (WoD) m2: a rebuild that lost its site moved it back; PERF-EXT21: every publish re-reads it",
+  "new": "    if ((dfLocation || wodSite) && labGrassField) {   // WOD2: a levelled camp moved the ground the same way; AUDIT BRANCH (WoD) m2: a rebuild that lost its site moved it back; PERF-EXT21: every publish re-reads it",
   "tests": [
    "test/grassshift.test.js",
    "test/audit_wod_branch.test.js",
@@ -156,7 +156,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C2-a-promotion-to-the-near-ring-re-reads-nothing",
+  "name": "PERF-EXT21-a-promotion-to-the-near-ring-re-reads-nothing",
   "file": "src/scenes/world.js",
   "old": "    if (stride === 1 && labGrassField) {",
   "new": "    if (false && labGrassField) {",
@@ -165,7 +165,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C2-a-teleport-keeps-the-old-worlds-field",
+  "name": "PERF-EXT21-a-teleport-keeps-the-old-worlds-field",
   "file": "src/scenes/world.js",
   "old": "    labGrassField = null;\n    // BLOOD1 AUDIT 2",
   "new": "    // BLOOD1 AUDIT 2",
@@ -175,7 +175,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C3-a-begun-rim-cell-is-placed-whole-on-the-frame-it-arrives",
+  "name": "PERF-EXT22-a-begun-rim-cell-is-placed-whole-on-the-frame-it-arrives",
   "file": "src/render/labGrass.js",
   "old": "          if (!stepGrassCell(st, GRASS_SLICE, ask)) { pending = { d, cx, cz, key, st }; continue; }",
   "new": "          if (!stepGrassCell(st, perCell, ask)) { pending = { d, cx, cz, key, st }; continue; }",
@@ -184,7 +184,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C3-the-cell-in-progress-takes-its-whole-rest-on-a-walk",
+  "name": "PERF-EXT22-the-cell-in-progress-takes-its-whole-rest-on-a-walk",
   "file": "src/render/labGrass.js",
   "old": "        if (stepGrassCell(pending.st, catchUp ? perCell : GRASS_SLICE, ask)) {",
   "new": "        if (stepGrassCell(pending.st, perCell, ask)) {",
@@ -193,7 +193,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C3-a-slice-forgets-the-xorshift-word-so-the-rest-of-the-cell-is-another-cells",
+  "name": "PERF-EXT22-a-slice-forgets-the-xorshift-word-so-the-rest-of-the-cell-is-another-cells",
   "file": "src/render/labGrass.js",
   "old": "  st.s = s; st.i = end; st.n = n; st.count = n;",
   "new": "  st.i = end; st.n = n; st.count = n;",
@@ -202,7 +202,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C3-a-slice-forgets-how-many-stood-so-the-next-overwrites-them",
+  "name": "PERF-EXT22-a-slice-forgets-how-many-stood-so-the-next-overwrites-them",
   "file": "src/render/labGrass.js",
   "old": "  st.s = s; st.i = end; st.n = n; st.count = n;",
   "new": "  st.s = s; st.i = end; st.count = n;",
@@ -211,7 +211,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C3-a-frame-that-finished-a-cell-begins-another-two-slices-in-one-frame",
+  "name": "PERF-EXT22-a-frame-that-finished-a-cell-begins-another-two-slices-in-one-frame",
   "file": "src/render/labGrass.js",
   "old": "          if (pending || sliced) continue;           // one slice a frame",
   "new": "          if (pending) continue;           // one slice a frame",
@@ -220,16 +220,16 @@
   ]
  },
  {
-  "name": "PERF-EXT-C3-a-cell-inside-the-fade-is-sliced-too",
+  "name": "PERF-EXT22-a-cell-inside-the-fade-is-sliced-too",
   "file": "src/render/labGrass.js",
-  "old": "        if (!item.st && !catchUp && d > wholeR2) {   // PERF-EXT-C3: a rim cell on a walk",
-  "new": "        if (!item.st && !catchUp) {   // PERF-EXT-C3: a rim cell on a walk",
+  "old": "        if (!item.st && !catchUp && d > wholeR2) {   // PERF-EXT22: a rim cell on a walk",
+  "new": "        if (!item.st && !catchUp) {   // PERF-EXT22: a rim cell on a walk",
   "tests": [
    "test/grassshift.test.js"
   ]
  },
  {
-  "name": "PERF-EXT-C3-the-whole-cell-radius-is-a-guess-not-the-shaders-fade-start",
+  "name": "PERF-EXT22-the-whole-cell-radius-is-a-guess-not-the-shaders-fade-start",
   "file": "src/render/labGrass.js",
   "old": "export const GRASS_WHOLE_AT = 0.55;",
   "new": "export const GRASS_WHOLE_AT = 0.5;",
@@ -238,7 +238,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C3-the-field-never-catches-up-so-a-boot-slices-its-whole-rim",
+  "name": "PERF-EXT22-the-field-never-catches-up-so-a-boot-slices-its-whole-rim",
   "file": "src/render/labGrass.js",
   "old": "      const catchUp = missing > GRASS_CATCH_UP;",
   "new": "      const catchUp = false;",
@@ -247,7 +247,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C3-the-field-always-catches-up-so-the-walk-spikes-again",
+  "name": "PERF-EXT22-the-field-always-catches-up-so-the-walk-spikes-again",
   "file": "src/render/labGrass.js",
   "old": "      const catchUp = missing > GRASS_CATCH_UP;",
   "new": "      const catchUp = true;",
@@ -256,16 +256,16 @@
   ]
  },
  {
-  "name": "PERF-EXT-C3-a-shift-keeps-a-half-placed-cell-of-the-old-frame",
+  "name": "PERF-EXT22-a-shift-keeps-a-half-placed-cell-of-the-old-frame",
   "file": "src/render/labGrass.js",
-  "old": "      pending = null;   // PERF-EXT-C3: a half-placed cell holds scene positions of the old frame",
-  "new": "      void pending;   // PERF-EXT-C3: a half-placed cell holds scene positions of the old frame",
+  "old": "      pending = null;   // PERF-EXT22: a half-placed cell holds scene positions of the old frame",
+  "new": "      void pending;   // PERF-EXT22: a half-placed cell holds scene positions of the old frame",
   "tests": [
    "test/grassshift.test.js"
   ]
  },
  {
-  "name": "PERF-EXT-C3-an-invalidate-keeps-a-half-placed-cell-of-the-data-it-replaced",
+  "name": "PERF-EXT22-an-invalidate-keeps-a-half-placed-cell-of-the-data-it-replaced",
   "file": "src/render/labGrass.js",
   "old": "      if (pending && pending.cx >= cx0 && pending.cx <= cx1 && pending.cz >= cz0 && pending.cz <= cz1) pending = null;",
   "new": "      if (false) pending = null;",
@@ -274,7 +274,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C3-a-cell-the-eye-walked-away-from-is-still-finished-and-written",
+  "name": "PERF-EXT22-a-cell-the-eye-walked-away-from-is-still-finished-and-written",
   "file": "src/render/labGrass.js",
   "old": "      if (pending && nearSq(pending.cx, pending.cz, ex, ez) > fillR2) pending = null;",
   "new": "      if (false) pending = null;",
@@ -283,7 +283,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C3-a-half-placed-cell-is-not-counted-missing-so-the-field-reads-settled-too-soon",
+  "name": "PERF-EXT22-a-half-placed-cell-is-not-counted-missing-so-the-field-reads-settled-too-soon",
   "file": "src/render/labGrass.js",
   "old": "      const missing = want.length + (pending ? 1 : 0);",
   "new": "      const missing = want.length;",
@@ -292,7 +292,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C3-a-begun-cell-is-placed-at-the-scene-origin",
+  "name": "PERF-EXT22-a-begun-cell-is-placed-at-the-scene-origin",
   "file": "src/render/labGrass.js",
   "old": "          const st = beginGrassCell(cx, cz, { perCell, seed, cell, originX: gx, originZ: gz });",
   "new": "          const st = beginGrassCell(cx, cz, { perCell, seed, cell });",
@@ -301,7 +301,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C3-a-finished-cell-is-thrown-away-and-placed-again-whole",
+  "name": "PERF-EXT22-a-finished-cell-is-thrown-away-and-placed-again-whole",
   "file": "src/render/labGrass.js",
   "old": "renderer.writeSlot(slot, item.st ?? placeLabGrassCell(",
   "new": "renderer.writeSlot(slot, placeLabGrassCell(",
@@ -310,7 +310,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C4-the-merge-never-breathes-between-model-copies",
+  "name": "PERF-EXT23-the-merge-never-breathes-between-model-copies",
   "file": "src/render/staticBatch.js",
   "old": "      v += c.positions.length / 3;\n      yield;",
   "new": "      v += c.positions.length / 3;",
@@ -319,7 +319,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C4-the-merge-never-breathes-between-groups",
+  "name": "PERF-EXT23-the-merge-never-breathes-between-groups",
   "file": "src/render/staticBatch.js",
   "old": "      if (withBounds) { subs.push(boundsOf(positions, indices, start, at - start)); yield; }",
   "new": "      if (withBounds) { subs.push(boundsOf(positions, indices, start, at - start)); }",
@@ -328,7 +328,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C4-a-group-sphere-is-the-whole-meshs",
+  "name": "PERF-EXT23-a-group-sphere-is-the-whole-meshs",
   "file": "src/render/staticBatch.js",
   "old": "      if (withBounds) { subs.push(boundsOf(positions, indices, start, at - start)); yield; }",
   "new": "      if (withBounds) { subs.push(boundsOf(positions)); yield; }",
@@ -337,7 +337,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C4-the-sliced-merge-hands-no-whole-sphere",
+  "name": "PERF-EXT23-the-sliced-merge-hands-no-whole-sphere",
   "file": "src/render/staticBatch.js",
   "old": "    const whole = withBounds ? yield* boundsSteps(positions) : null;",
   "new": "    const whole = null;",
@@ -346,7 +346,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C4-finishSliced-drains-without-a-breath",
+  "name": "PERF-EXT23-finishSliced-drains-without-a-breath",
   "file": "src/render/staticBatch.js",
   "old": "      if (r.done) return r.value;\n      await breathe();",
   "new": "      if (r.done) return r.value;",
@@ -355,7 +355,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C4-the-sliced-sphere-centre-is-not-rounded-before-the-reach",
+  "name": "PERF-EXT23-the-sliced-sphere-centre-is-not-rounded-before-the-reach",
   "file": "src/render/bounds.js",
   "old": "  const sphere = new Float32Array(4);\n  if (n === 0) return sphere;",
   "new": "  const sphere = new Float64Array(4);\n  if (n === 0) return sphere;",
@@ -364,7 +364,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C4-a-range-skips-its-last-vertex",
+  "name": "PERF-EXT23-a-range-skips-its-last-vertex",
   "file": "src/render/bounds.js",
   "old": "    for (let o = k0 * 3, end = Math.min(n, k0 + range) * 3; o < end; o += 3) {\n      const x = positions[o]",
   "new": "    for (let o = k0 * 3, end = Math.min(n, k0 + range) * 3 - 3; o < end; o += 3) {\n      const x = positions[o]",
@@ -373,7 +373,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C4-the-reach-pass-measures-from-the-box-corner",
+  "name": "PERF-EXT23-the-reach-pass-measures-from-the-box-corner",
   "file": "src/render/bounds.js",
   "old": "  sphere[0] = (minX + maxX) / 2; sphere[1] = (minY + maxY) / 2; sphere[2] = (minZ + maxZ) / 2;",
   "new": "  sphere[0] = minX; sphere[1] = (minY + maxY) / 2; sphere[2] = (minZ + maxZ) / 2;",
@@ -382,7 +382,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C4-createMesh-ignores-the-measured-spheres-and-walks-again",
+  "name": "PERF-EXT23-createMesh-ignores-the-measured-spheres-and-walks-again",
   "file": "src/render/renderer.js",
   "old": "    const bounds = measured ? measured.whole : boundsOf(model.positions);",
   "new": "    const bounds = boundsOf(model.positions);",
@@ -391,7 +391,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C4-createMesh-walks-every-group-again",
+  "name": "PERF-EXT23-createMesh-walks-every-group-again",
   "file": "src/render/renderer.js",
   "old": "_bounds: measured ? measured.subs[i] : boundsOf(",
   "new": "_bounds: boundsOf(",
@@ -400,7 +400,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C4-the-world-host-merges-in-one-piece-again",
+  "name": "PERF-EXT23-the-world-host-merges-in-one-piece-again",
   "file": "src/scenes/world.js",
   "old": "    const staticMerged = await staticBuilder.finishSliced(() => breather.breathe());   // PERF4",
   "new": "    const staticMerged = staticBuilder.finish();   // PERF4",
@@ -411,7 +411,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C4-the-world-host-does-not-hand-the-spheres-over",
+  "name": "PERF-EXT23-the-world-host-does-not-hand-the-spheres-over",
   "file": "src/scenes/world.js",
   "old": "renderer.createMesh(staticMerged, { bounds: staticMerged.bounds })",
   "new": "renderer.createMesh(staticMerged)",
@@ -421,16 +421,16 @@
   ]
  },
  {
-  "name": "PERF-EXT-C4-the-flats-loop-never-breathes",
+  "name": "PERF-EXT23-the-flats-loop-never-breathes",
   "file": "src/scenes/world.js",
-  "old": "      await breather.breathe();   // PERF-EXT-C4: a flat group a breath",
-  "new": "      // PERF-EXT-C4: a flat group a breath",
+  "old": "      await breather.breathe();   // PERF-EXT23: a flat group a breath",
+  "new": "      // PERF-EXT23: a flat group a breath",
   "tests": [
    "test/publishtail.test.js"
   ]
  },
  {
-  "name": "PERF-EXT-C5-the-slice-is-flat-again-whatever-the-frame-spent",
+  "name": "PERF-EXT24-the-slice-is-flat-again-whatever-the-frame-spent",
   "file": "src/systems/buildBreather.js",
   "old": "  return Math.max(BUILD_SLICE_FLOOR_MS, Math.min(BUILD_SLICE_MS, left));",
   "new": "  return BUILD_SLICE_MS;",
@@ -439,7 +439,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C5-no-floor-so-a-heavy-frame-starves-the-stream",
+  "name": "PERF-EXT24-no-floor-so-a-heavy-frame-starves-the-stream",
   "file": "src/systems/buildBreather.js",
   "old": "  return Math.max(BUILD_SLICE_FLOOR_MS, Math.min(BUILD_SLICE_MS, left));",
   "new": "  return Math.max(0, Math.min(BUILD_SLICE_MS, left));",
@@ -448,7 +448,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C5-the-hunters-1-ms-floor",
+  "name": "PERF-EXT24-the-hunters-1-ms-floor",
   "file": "src/systems/buildBreather.js",
   "old": "export const BUILD_SLICE_FLOOR_MS = 3;",
   "new": "export const BUILD_SLICE_FLOOR_MS = 1;",
@@ -457,7 +457,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C5-no-margin-for-the-browser",
+  "name": "PERF-EXT24-no-margin-for-the-browser",
   "file": "src/systems/buildBreather.js",
   "old": "  const left = intervalMs - busyMs - BUILD_SLICE_MARGIN_MS;",
   "new": "  const left = intervalMs - busyMs;",
@@ -466,7 +466,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C5-an-old-stream-is-never-given-the-whole-slice-back",
+  "name": "PERF-EXT24-an-old-stream-is-never-given-the-whole-slice-back",
   "file": "src/systems/buildBreather.js",
   "old": "  if (awaited || streamingMs > BUILD_STREAM_AGE_MS) return BUILD_SLICE_MS;",
   "new": "  if (awaited) return BUILD_SLICE_MS;",
@@ -475,7 +475,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C5-an-awaited-build-is-sliced-like-the-stream",
+  "name": "PERF-EXT24-an-awaited-build-is-sliced-like-the-stream",
   "file": "src/systems/buildBreather.js",
   "old": "  if (awaited || streamingMs > BUILD_STREAM_AGE_MS) return BUILD_SLICE_MS;",
   "new": "  if (streamingMs > BUILD_STREAM_AGE_MS) return BUILD_SLICE_MS;",
@@ -484,7 +484,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C5-a-NaN-stalls-the-stream",
+  "name": "PERF-EXT24-a-NaN-stalls-the-stream",
   "file": "src/systems/buildBreather.js",
   "old": "  if (Number.isNaN(left)) return BUILD_SLICE_MS;",
   "new": "  if (Number.isNaN(left)) return 0;",
@@ -493,25 +493,25 @@
   ]
  },
  {
-  "name": "PERF-EXT-C5-the-budget-is-asked-once-and-never-again",
+  "name": "PERF-EXT24-the-budget-is-asked-once-and-never-again",
   "file": "src/systems/buildBreather.js",
-  "old": "      sliceStart = now();\n      sliceBudget = budget ? budget() : sliceMs;",
-  "new": "      sliceStart = now();",
+  "old": "      sliceStart = now();\n      sliceFrame = framesNow();\n      sliceBudget = budget ? budget() : sliceMs;",
+  "new": "      sliceStart = now();\n      sliceFrame = framesNow();",
   "tests": [
    "test/buildslice.test.js"
   ]
  },
  {
-  "name": "PERF-EXT-C5-no-slice-is-reported",
+  "name": "PERF-EXT24-no-slice-is-reported",
   "file": "src/systems/buildBreather.js",
-  "old": "      onSlice?.(spent);",
+  "old": "      if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent);   // PERF-EXT24 (the review): a resumed slice no frame ran inside",
   "new": "      void spent;",
   "tests": [
    "test/buildslice.test.js"
   ]
  },
  {
-  "name": "PERF-EXT-C5-the-lent-slice-is-dropped-not-sampled",
+  "name": "PERF-EXT24-the-lent-slice-is-dropped-not-sampled",
   "file": "src/systems/frameClock.js",
   "old": "  const busy = lastOwn + lent;",
   "new": "  const busy = lastOwn;",
@@ -520,7 +520,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C5-the-lent-slice-sizes-the-next-slice-too",
+  "name": "PERF-EXT24-the-lent-slice-sizes-the-next-slice-too",
   "file": "src/systems/frameClock.js",
   "old": "  lastOwn = Math.max(0, now - open);",
   "new": "  lastOwn = Math.max(0, now - open) + lent;",
@@ -529,7 +529,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C5-a-lent-slice-is-counted-in-every-sample-after",
+  "name": "PERF-EXT24-a-lent-slice-is-counted-in-every-sample-after",
   "file": "src/systems/frameClock.js",
   "old": "  lent = 0;\n  open = null;",
   "new": "  open = null;",
@@ -538,7 +538,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C5-the-interval-is-the-mean-a-hitch-drags",
+  "name": "PERF-EXT24-the-interval-is-the-mean-a-hitch-drags",
   "file": "src/systems/frameClock.js",
   "old": "  return s[intervalCount >> 1];",
   "new": "  return s.reduce((a, b) => a + b, 0) / intervalCount;",
@@ -547,7 +547,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C5-the-meter-drops-the-build-span",
+  "name": "PERF-EXT24-the-meter-drops-the-build-span",
   "file": "src/render/perfMeter.js",
   "old": "  addCpu(name, ms) { if (this.cpu && ms > 0) this.cpuZones.set(name, (this.cpuZones.get(name) ?? 0) + ms); }",
   "new": "  addCpu(name, ms) { void name; void ms; }",
@@ -556,7 +556,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C5-the-host-keeps-the-flat-slice",
+  "name": "PERF-EXT24-the-host-keeps-the-flat-slice",
   "file": "src/scenes/world.js",
   "old": "    budget: () => frameFitBudget({",
   "new": "    budget0: () => frameFitBudget({",
@@ -566,7 +566,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C5-the-host-never-lends-the-slice-back",
+  "name": "PERF-EXT24-the-host-never-lends-the-slice-back",
   "file": "src/scenes/world.js",
   "old": "    onSlice: (ms) => { lendFrame(ms); meterFor(renderer.gl)?.addCpu('build', ms); },",
   "new": "    onSlice: (ms) => { meterFor(renderer.gl)?.addCpu('build', ms); },",
@@ -575,25 +575,25 @@
   ]
  },
  {
-  "name": "PERF-EXT-C5-the-stream-never-begins-so-every-build-gets-the-whole-slice",
+  "name": "PERF-EXT24-the-stream-never-begins-so-every-build-gets-the-whole-slice",
   "file": "src/scenes/world.js",
-  "old": "    _streamSince ??= performance.now();   // PERF-EXT-C5: a run of streamed builds begins",
-  "new": "    // PERF-EXT-C5: a run of streamed builds begins",
+  "old": "    _streamSince ??= performance.now();   // PERF-EXT24: a run of streamed builds begins",
+  "new": "    // PERF-EXT24: a run of streamed builds begins",
   "tests": [
    "test/buildslice.test.js"
   ]
  },
  {
-  "name": "PERF-EXT-C5-the-stream-never-ends-so-its-age-guard-trips-at-once-next-time",
+  "name": "PERF-EXT24-the-stream-never-ends-so-its-age-guard-trips-at-once-next-time",
   "file": "src/scenes/world.js",
-  "old": "    if (!queue.length) _streamSince = null;   // PERF-EXT-C5: and ends with the queue",
-  "new": "    // PERF-EXT-C5: and ends with the queue",
+  "old": "    if (!queue.length) _streamSince = null;   // PERF-EXT24: and ends with the queue",
+  "new": "    // PERF-EXT24: and ends with the queue",
   "tests": [
    "test/buildslice.test.js"
   ]
  },
  {
-  "name": "PERF-EXT-C6-the-key-folds-so-far-cells-share-it",
+  "name": "PERF-EXT25-the-key-folds-so-far-cells-share-it",
   "file": "src/player/collider.js",
   "old": "const cellKey = (gx, gz) => (gx + 0x100000) * 0x200000 + (gz + 0x100000);",
   "new": "const cellKey = (gx, gz) => (gx + 0x100000) * 0x100 + (gz + 0x100000);",
@@ -602,37 +602,37 @@
   ]
  },
  {
-  "name": "PERF-EXT-C6-a-wide-triangle-is-filed-under-the-transposed-coarse-cell",
+  "name": "PERF-EXT25-a-wide-triangle-is-filed-under-the-transposed-coarse-cell",
   "file": "src/player/collider.js",
-  "old": "      const k = cellKey(gx, gz);   // PERF-EXT-C6\n      let cell = bucket.coarse.get(k);",
-  "new": "      const k = cellKey(gz, gx);   // PERF-EXT-C6\n      let cell = bucket.coarse.get(k);",
+  "old": "      const k = cellKey(gx, gz);   // PERF-EXT25\n      let cell = bucket.coarse.get(k);",
+  "new": "      const k = cellKey(gz, gx);   // PERF-EXT25\n      let cell = bucket.coarse.get(k);",
   "tests": [
    "test/colliderkeys.test.js"
   ]
  },
  {
-  "name": "PERF-EXT-C6-a-triangle-is-filed-under-the-transposed-fine-cell",
+  "name": "PERF-EXT25-a-triangle-is-filed-under-the-transposed-fine-cell",
   "file": "src/player/collider.js",
-  "old": "          const k = cellKey(gx, gz);   // PERF-EXT-C6\n          let cell = bucket.grid.get(k);",
-  "new": "          const k = cellKey(gz, gx);   // PERF-EXT-C6\n          let cell = bucket.grid.get(k);",
+  "old": "          const k = cellKey(gx, gz);   // PERF-EXT25\n          let cell = bucket.grid.get(k);",
+  "new": "          const k = cellKey(gz, gx);   // PERF-EXT25\n          let cell = bucket.grid.get(k);",
   "tests": [
    "test/colliderkeys.test.js"
   ]
  },
  {
-  "name": "PERF-EXT-C6-the-bounds-miss-a-triangles-third-corner",
+  "name": "PERF-EXT25-the-bounds-miss-a-triangles-third-corner",
   "file": "src/player/collider.js",
-  "old": "      for (let j = 0; j < 3; j++) {   // PERF-EXT-C6",
-  "new": "      for (let j = 0; j < 2; j++) {   // PERF-EXT-C6",
+  "old": "      for (let j = 0; j < 3; j++) {   // PERF-EXT25",
+  "new": "      for (let j = 0; j < 2; j++) {   // PERF-EXT25",
   "tests": [
    "test/colliderkeys.test.js"
   ]
  },
  {
-  "name": "PERF-EXT-C6-the-point-query-reads-the-wrong-fine-row",
+  "name": "PERF-EXT25-the-point-query-reads-the-wrong-fine-row",
   "file": "src/player/collider.js",
-  "old": "      const cell = bucket.grid.get(cellKey(gx + ox, gz + oz));   // PERF-EXT-C6",
-  "new": "      const cell = bucket.grid.get(cellKey(gx + ox, gz + ox));   // PERF-EXT-C6",
+  "old": "      const cell = bucket.grid.get(cellKey(gx + ox, gz + oz));   // PERF-EXT25",
+  "new": "      const cell = bucket.grid.get(cellKey(gx + ox, gz + ox));   // PERF-EXT25",
   "tests": [
    "test/colliderkeys.test.js",
    "test/perfcol1.test.js",
@@ -647,10 +647,10 @@
   ]
  },
  {
-  "name": "PERF-EXT-C6-the-point-query-reads-one-coarse-column",
+  "name": "PERF-EXT25-the-point-query-reads-one-coarse-column",
   "file": "src/player/collider.js",
-  "old": "        const cell = bucket.coarse.get(cellKey(cx + ox, cz + oz));   // PERF-EXT-C6",
-  "new": "        const cell = bucket.coarse.get(cellKey(cx, cz + oz));   // PERF-EXT-C6",
+  "old": "        const cell = bucket.coarse.get(cellKey(cx + ox, cz + oz));   // PERF-EXT25",
+  "new": "        const cell = bucket.coarse.get(cellKey(cx, cz + oz));   // PERF-EXT25",
   "tests": [
    "test/colliderkeys.test.js",
    "test/perfcol1.test.js",
@@ -665,10 +665,10 @@
   ]
  },
  {
-  "name": "PERF-EXT-C6-the-rays-coarse-walk-reads-transposed-cells",
+  "name": "PERF-EXT25-the-rays-coarse-walk-reads-transposed-cells",
   "file": "src/player/collider.js",
-  "old": "      const cell = bucket.coarse.get(cellKey(cx, cz));   // PERF-EXT-C6",
-  "new": "      const cell = bucket.coarse.get(cellKey(cz, cx));   // PERF-EXT-C6",
+  "old": "      const cell = bucket.coarse.get(cellKey(cx, cz));   // PERF-EXT25",
+  "new": "      const cell = bucket.coarse.get(cellKey(cz, cx));   // PERF-EXT25",
   "tests": [
    "test/colliderkeys.test.js",
    "test/perfcol1.test.js",
@@ -683,10 +683,10 @@
   ]
  },
  {
-  "name": "PERF-EXT-C6-the-rays-fine-walk-reads-transposed-cells",
+  "name": "PERF-EXT25-the-rays-fine-walk-reads-transposed-cells",
   "file": "src/player/collider.js",
-  "old": "        const cell = bucket.grid.get(cellKey(cx, cz));   // PERF-EXT-C6",
-  "new": "        const cell = bucket.grid.get(cellKey(cz, cx));   // PERF-EXT-C6",
+  "old": "        const cell = bucket.grid.get(cellKey(cx, cz));   // PERF-EXT25",
+  "new": "        const cell = bucket.grid.get(cellKey(cz, cx));   // PERF-EXT25",
   "tests": [
    "test/colliderkeys.test.js",
    "test/perfcol1.test.js",
@@ -701,7 +701,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C7-the-promotions-stay-on-the-main-thread-queue",
+  "name": "PERF-EXT26-the-promotions-stay-on-the-main-thread-queue",
   "file": "src/scenes/world.js",
   "old": "    if (terrainGen.threaded) {\n      for (const p of restridePending.values()) promoteOffThread(p);",
   "new": "    if (false) {\n      for (const p of restridePending.values()) promoteOffThread(p);",
@@ -710,7 +710,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C7-the-queue-is-sent-and-kept-so-each-promotion-is-built-twice",
+  "name": "PERF-EXT26-the-queue-is-sent-and-kept-so-each-promotion-is-built-twice",
   "file": "src/scenes/world.js",
   "old": "      restridePending.clear();\n      return;\n    }\n    let budget = RESTRIDE_PER_FRAME;",
   "new": "      return;\n    }\n    let budget = RESTRIDE_PER_FRAME;",
@@ -719,7 +719,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C7-a-reply-lands-on-an-evicted-pixel",
+  "name": "PERF-EXT26-a-reply-lands-on-an-evicted-pixel",
   "file": "src/scenes/world.js",
   "old": "      if (built.get(key) !== p) return;                              // evicted, or rebuilt, while the worker built it",
   "new": "      // evicted, or rebuilt, while the worker built it",
@@ -728,7 +728,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C7-a-reply-lands-on-a-pixel-that-walked-back-out",
+  "name": "PERF-EXT26-a-reply-lands-on-a-pixel-that-walked-back-out",
   "file": "src/scenes/world.js",
   "old": "      if (strideFor(p.px, p.py) !== 1 || p._stride === 1) return;   // walked back out, or promoted meanwhile",
   "new": "      if (p._stride === 1) return;   // walked back out, or promoted meanwhile",
@@ -737,7 +737,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C7-the-reply-is-thrown-away-and-built-again-here",
+  "name": "PERF-EXT26-the-reply-is-thrown-away-and-built-again-here",
   "file": "src/scenes/world.js",
   "old": "      restrideTerrain(p, 1, grid);",
   "new": "      restrideTerrain(p, 1);",
@@ -746,16 +746,16 @@
   ]
  },
  {
-  "name": "PERF-EXT-C7-the-crossing-frame-sends-nothing",
+  "name": "PERF-EXT26-the-crossing-frame-sends-nothing",
   "file": "src/scenes/world.js",
-  "old": "      if (terrainGen.threaded) spendRestrides();   // PERF-EXT-C7",
-  "new": "      // PERF-EXT-C7",
+  "old": "      if (terrainGen.threaded) spendRestrides();   // PERF-EXT26",
+  "new": "      // PERF-EXT26",
   "tests": [
    "test/restrideworker.test.js"
   ]
  },
  {
-  "name": "PERF-EXT-C7-the-worker-waits-for-the-roads-before-a-grid",
+  "name": "PERF-EXT26-the-worker-waits-for-the-roads-before-a-grid",
   "file": "src/world/terrainGenWorker.js",
   "old": "    if (m.t === 'grid') { answerGrid(m); return; }",
   "new": "    if (m.t === 'grid' && !pendingRoads) { answerGrid(m); return; }",
@@ -764,7 +764,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C7-the-worker-copies-the-grid-back-instead-of-transferring",
+  "name": "PERF-EXT26-the-worker-copies-the-grid-back-instead-of-transferring",
   "file": "src/world/terrainGenWorker.js",
   "old": "    globalThis.postMessage({ t: 'grid', id: m.id, positions, normals }, [positions.buffer, normals.buffer]);",
   "new": "    globalThis.postMessage({ t: 'grid', id: m.id, positions, normals });",
@@ -773,7 +773,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C7-a-failed-grid-answers-through-the-jobs-FIFO",
+  "name": "PERF-EXT26-a-failed-grid-answers-through-the-jobs-FIFO",
   "file": "src/world/terrainGenWorker.js",
   "old": "    globalThis.postMessage({ t: 'gridError', id: m.id, message: e?.message ?? String(e) });",
   "new": "    globalThis.postMessage({ t: 'error', message: e?.message ?? String(e) });",
@@ -782,7 +782,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C7-the-worker-builds-a-different-grid",
+  "name": "PERF-EXT26-the-worker-builds-a-different-grid",
   "file": "src/world/terrainGenWorker.js",
   "old": "    const { positions, normals } = restrideGrid({ ...m, woods });",
   "new": "    const { positions, normals } = restrideGrid({ ...m, woods, stride: 4 });",
@@ -791,7 +791,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C7-the-client-routes-a-grid-reply-into-the-FIFO",
+  "name": "PERF-EXT26-the-client-routes-a-grid-reply-into-the-FIFO",
   "file": "src/world/terrainGenClient.js",
   "old": "        if (m.t === 'grid' || m.t === 'gridError') { this._gridAnswer(m); return; }",
   "new": "        if (m.t === 'gridError') { this._gridAnswer(m); return; }",
@@ -800,7 +800,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C7-the-client-transfers-the-pixels-own-samples",
+  "name": "PERF-EXT26-the-client-transfers-the-pixels-own-samples",
   "file": "src/world/terrainGenClient.js",
   "old": "      this._worker.postMessage({ t: 'grid', id, ...job });",
   "new": "      this._worker.postMessage({ t: 'grid', id, ...job }, [job.samples.buffer]);",
@@ -809,7 +809,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C7-a-failed-grid-is-left-unbuilt",
+  "name": "PERF-EXT26-a-failed-grid-is-left-unbuilt",
   "file": "src/world/terrainGenClient.js",
   "old": "      g.resolve(restrideGrid({ woods: this._woods, ...g.job }));\n      return;",
   "new": "      g.resolve(null);\n      return;",
@@ -818,7 +818,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C7-a-dead-worker-strands-its-grids",
+  "name": "PERF-EXT26-a-dead-worker-strands-its-grids",
   "file": "src/world/terrainGenClient.js",
   "old": "    for (const g of grids) g.resolve(restrideGrid({ woods: this._woods, ...g.job }));",
   "new": "    void grids;",
@@ -827,7 +827,7 @@
   ]
  },
  {
-  "name": "PERF-EXT-C7-every-grid-shares-one-id",
+  "name": "PERF-EXT26-every-grid-shares-one-id",
   "file": "src/world/terrainGenClient.js",
   "old": "    const id = ++this._gridId;",
   "new": "    const id = this._gridId;",
@@ -836,13 +836,140 @@
   ]
  },
  {
-  "name": "PERF-EXT-C7-the-grid-law-drops-the-ghost-rows",
+  "name": "PERF-EXT26-the-grid-law-drops-the-ghost-rows",
   "file": "src/world/terrainGen.js",
   "old": "  return buildTerrainGrid(samples, stride, ghostSampler(woods, px, py));",
   "new": "  return buildTerrainGrid(samples, stride, () => 0);",
   "tests": [
    "test/restrideworker.test.js",
    "test/terrainworker.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT24-review-a-slice-a-frame-ran-inside-is-lent-again",
+  "file": "src/systems/buildBreather.js",
+  "old": "      if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent);",
+  "new": "      if (sliceFrame !== null) onSlice?.(spent);",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT24-review-every-slice-is-lent-again-the-reset-and-the-wait-too",
+  "file": "src/systems/buildBreather.js",
+  "old": "      if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent);",
+  "new": "      onSlice?.(spent);",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT24-review-a-reset-slice-is-vouched-for",
+  "file": "src/systems/buildBreather.js",
+  "old": "    reset() { sliceStart = now(); sliceFrame = null;",
+  "new": "    reset() { sliceStart = now(); sliceFrame = framesNow();",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT24-review-the-birth-slice-is-vouched-for",
+  "file": "src/systems/buildBreather.js",
+  "old": "  let sliceFrame = null;",
+  "new": "  let sliceFrame = framesNow();",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT24-review-the-resume-never-reads-the-count",
+  "file": "src/systems/buildBreather.js",
+  "old": "      sliceFrame = framesNow();\n",
+  "new": "      sliceFrame = -1;\n",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT24-review-the-frame-clock-counts-no-frame",
+  "file": "src/systems/frameClock.js",
+  "old": "  begun++;   // PERF-EXT24 (the review)",
+  "new": "",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT24-review-the-host-never-hands-the-count",
+  "file": "src/scenes/world.js",
+  "old": "    frames: framesBegun,   // PERF-EXT24 (the review): a slice a frame ran inside held a wait, and is not lent\n",
+  "new": "",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT24-review-awaited-is-inferred-from-an-idle-pump-again",
+  "file": "src/scenes/world.js",
+  "old": "awaited: _awaitedBuilds > 0 }),",
+  "new": "awaited: _streamSince == null }),",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT24-review-an-awaited-build-is-never-counted",
+  "file": "src/scenes/world.js",
+  "old": "    _awaitedBuilds++;\n",
+  "new": "",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT24-review-an-awaited-build-is-waited-on-for-ever",
+  "file": "src/scenes/world.js",
+  "old": "    finally { _awaitedBuilds--; }",
+  "new": "    finally { void _awaitedBuilds; }",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT24-review-a-teleport-builds-as-the-stream-does",
+  "file": "src/scenes/world.js",
+  "old": "    try { dest = await awaitedBuild(first.px, first.py); }",
+  "new": "    try { dest = await buildPixel(first.px, first.py); }",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT24-review-the-boot-builds-as-the-stream-does",
+  "file": "src/scenes/world.js",
+  "old": "  const playerPixel = await awaitedBuild(first.px, first.py);",
+  "new": "  const playerPixel = await buildPixel(first.px, first.py);",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT24-review-a-teleport-keeps-the-old-worlds-stream-age",
+  "file": "src/scenes/world.js",
+  "old": "    _streamSince = null;   // PERF-EXT24 (the review): the sweep ended the old world's stream - the new one's two seconds start at its first pump\n",
+  "new": "",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT21-review-the-write-only-set-comes-back",
+  "file": "src/scenes/world.js",
+  "old": "  const wodSlots = new TerrainSlots();   // AUDIT BRANCH (WoD) L1-3\n",
+  "new": "  const wodSlots = new TerrainSlots();   // AUDIT BRANCH (WoD) L1-3\n  const _wodSiteWas = new Set();\n",
+  "tests": [
+   "test/grassshift.test.js",
+   "test/audit_wod_branch.test.js"
   ]
  }
 ]

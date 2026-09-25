@@ -15,20 +15,25 @@ const WINDOW_MS = 1000;
 
 let open = null;       // the frame in flight: its start, ms
 let samples = [];      // [end ms, busy ms] within the window
-// PERF-EXT-C5: the stream build's slices run in their own animation-frame
+// PERF-EXT24: the stream build's slices run in their own animation-frame
 // callback AFTER a host's frameEnd, so no sample ever held them: frameCpu,
 // the FPS counter's script ms and `?perf=cpu` all read a streaming frame
 // as the frame alone. `lent` is what the breather reports between two
 // samples, folded into the next one's busy.
 let lent = 0;
-let lastOwn = 0;       // PERF-EXT-C5: the last sample's own script, lent time excluded - what the next slice is sized against
-const BEGINS = 15;     // PERF-EXT-C5: the frame intervals kept for their median
+let lastOwn = 0;       // PERF-EXT24: the last sample's own script, lent time excluded - what the next slice is sized against
+const BEGINS = 15;     // PERF-EXT24: the frame intervals kept for their median
 const intervals = new Float64Array(BEGINS);
 let intervalCount = 0, intervalAt = 0, lastBegin = null;
+// PERF-EXT24 (the review, 2026-09-25): every frame begun, counted - the
+// breather's witness. A slice that ends with this changed had a frame run
+// inside it, so its wall clock holds that frame's script (already in its
+// sample) and whatever wait let the frame in, and none of it is lent.
+let begun = 0;
 
 /** The top of a host's frame callback. */
 export function frameBegin(now) {
-  // PERF-EXT-C5: the rAF stamps a frame apart - the display's own period
+  // PERF-EXT24: the rAF stamps a frame apart - the display's own period
   // (16.7 at 60 Hz, 6.9 at 144), measured rather than assumed.
   if (lastBegin != null && now > lastBegin) {
     intervals[intervalAt] = now - lastBegin;
@@ -37,9 +42,14 @@ export function frameBegin(now) {
   }
   lastBegin = now;
   open = now;
+  begun++;   // PERF-EXT24 (the review)
 }
 
-/** PERF-EXT-C5: the median of the last BEGINS frame intervals, ms - 60 Hz's
+/** PERF-EXT24 (the review): how many frames have begun - a count, only
+ *  ever compared with itself. */
+export const framesBegun = () => begun;
+
+/** PERF-EXT24: the median of the last BEGINS frame intervals, ms - 60 Hz's
  *  period until two frames have begun. */
 export function frameInterval() {
   if (!intervalCount) return 1000 / 60;
@@ -50,10 +60,10 @@ export function frameInterval() {
 }
 const sortedIntervals = new Float64Array(BEGINS);   // frameInterval's scratch - asked once a build slice
 
-/** PERF-EXT-C5: the last frame's own script ms (0 before any). */
+/** PERF-EXT24: the last frame's own script ms (0 before any). */
 export const lastBusy = () => lastOwn;
 
-/** PERF-EXT-C5: work done between frames, on the frame's thread - a build
+/** PERF-EXT24: work done between frames, on the frame's thread - a build
  *  slice - lent to the next sample, so the script time says what the main
  *  thread really spent. */
 export function lendFrame(ms) { if (ms > 0) lent += ms; }
@@ -113,7 +123,7 @@ export function frameAbort() { open = null; }
 export function frameEnd(now = (typeof performance !== 'undefined' ? performance.now() : null)) {
   if (open == null || now == null) { open = null; return; }
   lastOwn = Math.max(0, now - open);
-  const busy = lastOwn + lent;   // PERF-EXT-C5: and the stream's slices since the last sample
+  const busy = lastOwn + lent;   // PERF-EXT24: and the stream's slices since the last sample
   lent = 0;
   open = null;
   samples.push([now, busy]);
@@ -132,4 +142,4 @@ export function frameCpu() {
   return { meanMs: sum / samples.length, worstMs: worst, frames: samples.length };
 }
 
-export function _resetFrameClock() { open = null; samples = []; lent = 0; lastOwn = 0; intervalCount = 0; intervalAt = 0; lastBegin = null; }
+export function _resetFrameClock() { open = null; samples = []; lent = 0; lastOwn = 0; intervalCount = 0; intervalAt = 0; lastBegin = null; begun = 0; }

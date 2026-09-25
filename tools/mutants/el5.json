@@ -258,7 +258,7 @@
     "file": "src/render/renderer.js",
     "old": "    const bounds = measured ? measured.whole : boundsOf(model.positions);",
     "new": "    const bounds = measured ? measured.whole : null;",
-    "why": "PERF-EXT-C4 re-aimed by content: createMesh takes a finishSliced merge's measured spheres, and measures them itself only when it is handed none - the arm this mutant is about.",
+    "why": "PERF-EXT23 re-aimed by content: createMesh takes a finishSliced merge's measured spheres, and measures them itself only when it is handed none - the arm this mutant is about.",
     "tests": [
       "test/el5_field.test.js"
     ]
@@ -268,7 +268,7 @@
     "file": "src/render/renderer.js",
     "old": ": boundsOf(model.positions, model.indices, sm.startIndex, sm.primitiveCount * 3) }));",
     "new": ": boundsOf(model.positions) }));",
-    "why": "PERF-EXT-C4 re-aimed by content: the sub-mesh sphere createMesh measures when no finishSliced spheres are handed in.",
+    "why": "PERF-EXT23 re-aimed by content: the sub-mesh sphere createMesh measures when no finishSliced spheres are handed in.",
     "tests": [
       "test/el5_field.test.js"
     ]

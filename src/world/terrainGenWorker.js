@@ -14,7 +14,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { WoodsFile } from '../formats/woodsFile.js';
-import { generatePixelTerrain, restrideGrid } from './terrainGen.js';   // PERF-EXT-C7: and a built pixel's grid at another stride
+import { generatePixelTerrain, restrideGrid } from './terrainGen.js';   // PERF-EXT26: and a built pixel's grid at another stride
 import { buildRoadsFromSettlements } from './roadsProducer.js';   // AUDIT ROADS F2
 import { cachedNetwork, roadsCacheKey } from './roadsCache.js';   // ROADS 19
 
@@ -70,7 +70,7 @@ function handle(m) {
       }
       return;
     }
-    // PERF-EXT-C7: a promotion's grid needs no network, so it never waits
+    // PERF-EXT26: a promotion's grid needs no network, so it never waits
     // behind one, and it answers by its id - never through the jobs' FIFO.
     if (m.t === 'grid') { answerGrid(m); return; }
     // ROADS 19: a job that arrives while the network is still loading
@@ -91,7 +91,7 @@ function handle(m) {
   }
 }
 
-/** PERF-EXT-C7: STREAM1's promotion, off the frame - {id, px, py, stride,
+/** PERF-EXT26: STREAM1's promotion, off the frame - {id, px, py, stride,
  *  samples} in (the samples a clone: the main thread keeps its own), the
  *  grid's two arrays TRANSFERRED back under the same id. A failure answers
  *  `gridError` under the id, and the client builds that one on its own

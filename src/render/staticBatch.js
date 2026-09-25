@@ -18,7 +18,7 @@
 // across the build's own awaits), and `finish()` regroups the index
 // ranges by texture into the shape `renderer.createMesh` takes.
 
-import { boundsOf, boundsSteps } from './bounds.js';   // PERF-EXT-C4: the spheres createMesh takes, measured in the merge's own slices - a leaf, no GL
+import { boundsOf, boundsSteps } from './bounds.js';   // PERF-EXT23: the spheres createMesh takes, measured in the merge's own slices - a leaf, no GL
 
 /** The rotation part of a TRS matrix applied to a normal. The block
  *  matrices are rotations and translations (rmbLayout's trs, scale 1),
@@ -101,7 +101,7 @@ export class StaticBatchBuilder {
   }
 
   /**
-   * PERF-EXT-C4 (2026-09-25, the players: "fps issues in the exterior but
+   * PERF-EXT23 (2026-09-25, the players: "fps issues in the exterior but
    * fine in the interior", "me too my friend.. don't know why. I got a
    * RX6600"): THE MERGE, A UNIT AT A TIME. A streamed pixel's build breathes
    * between its models (PERF7), and then ran its whole tail in one piece:
@@ -125,7 +125,7 @@ export class StaticBatchBuilder {
     }
   }
 
-  /** PERF4's merge, once: a generator that yields between units (PERF-EXT-C4) - finish() runs it straight
+  /** PERF4's merge, once: a generator that yields between units (PERF-EXT23) - finish() runs it straight
    *  through, finishSliced() a breath at a time. With `withBounds` it also measures the spheres createMesh
    *  would (boundsOf's own passes) and returns them as `bounds: { whole, subs }`. */
   *_merge(withBounds) {

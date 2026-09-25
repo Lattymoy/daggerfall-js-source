@@ -103,7 +103,7 @@ test('AUDIT 49: the grass is double-sided, follows the origin, learns its record
   assert.match(g, /gl\.disable\(gl\.BLEND\);\s*\n\s*if \(culled\) gl\.enable\(gl\.CULL_FACE\);/, 'and put back as it was found');
   assert.ok(!/CULL_FACE/.test(readFileSync('grass-proto.html', 'utf8')), 'the lab itself never culls');
   // F2: the scatter is baked in world coordinates, so an origin shift must
-  // reach it. It re-placed the whole field until PERF-EXT-C2; the field
+  // reach it. It re-placed the whole field until PERF-EXT21; the field
   // follows the origin in place now (test/grassshift.test.js holds how).
   assert.match(w, /exteriorFoes\.offsetAll\(r\.offset\);[^\n]*\n\s*labGrassField\?\.shiftOrigin\(r\.offset\);/, 'the origin shift reaches the field');
   // F3: the records are learned whenever missing, not only on a tile-cache miss
@@ -155,9 +155,9 @@ test('GR2: darker green and a billboard about Y in the lab and the game alike; o
   // GR5: nothing is swapped in whole any more - a cell arrives by one
   // bufferSubData into its own slot. The whole-field swap WAS the hitch.
   assert.doesNotMatch(w, /labGrass\.set\(/, 'no whole-field swap');
-  // PERF-EXT-C2: an origin shift no longer abandons the field - it moves it
+  // PERF-EXT21: an origin shift no longer abandons the field - it moves it
   // (test/grassshift.test.js); a new world (a teleport, a load) still starts one empty
-  assert.match(w, /labGrassField\?\.shiftOrigin\(r\.offset\);   \/\/ PERF-EXT-C2/, 'an origin shift carries the field');
+  assert.match(w, /labGrassField\?\.shiftOrigin\(r\.offset\);   \/\/ PERF-EXT21/, 'an origin shift carries the field');
 });
 
 // ── GR4: THE ROOT IS THE GROUND ───────────────────────────────────
@@ -266,7 +266,7 @@ test('GR5: a cell grows the same blades whoever is looking, and walking touches 
   // ...and a five-metre step reaches only the leading rim, and frees
   // nothing at all: the fill radius is the draw's range and cells are
   // held out to `span`, so nothing churns at the trailing edge.
-  // (PERF-EXT-C3: a walk's few rim cells arrive a slice a frame, so the
+  // (PERF-EXT22: a walk's few rim cells arrive a slice a frame, so the
   // step is given the frames its rim takes to land - the eye stays put.)
   for (let i = 0; i < 40; i++) f.update(start + 5, start);
   const near = w.filter((x) => x[0] === 'w').length;
@@ -288,7 +288,7 @@ test('GR5: the host runs the field, not the walk', () => {
   assert.match(world, /labGrassField = createGrassField\(labGrass, \{ keep, ground, density: grassDensity \}\);/);   // PERF1: at the pane's fraction of the lab's field
   assert.match(world, /labGrassField\.update\(ex, ez, keep, ground\);/, 'this frame\'s keep/ground, since the near pieces move with the eye');
   assert.doesNotMatch(world, /placeLabGrassSteps|labGrassWalk\b|labGrass\.set\(/, 'the whole-field walk and its 60MB swap are gone');
-  assert.match(world, /    arrows\.arrows\.length = 0;[^\n]*\n(    \/\/[^\n]*\n)+    labGrassField = null;\n/, 'a new world starts empty (PERF-EXT-C2: the teleport says so; the crossing keeps its field)');
+  assert.match(world, /    arrows\.arrows\.length = 0;[^\n]*\n(    \/\/[^\n]*\n)+    labGrassField = null;\n/, 'a new world starts empty (PERF-EXT21: the teleport says so; the crossing keeps its field)');
   const src = readFileSync(new URL('../src/render/labGrass.js', import.meta.url), 'utf8');
   // GRASS5: the stride is in BYTES now, because a blade is no longer a
   // whole number of floats - eight bytes of u16 and two lots of four u8.
@@ -421,8 +421,8 @@ test('GRASS6: the patch is BAKED - the clump noise is the placer\u2019s, once a 
   const gt = lrnd();
   assert.ok(Math.abs(g.inst2[2] - bakedTint(gt, gx, gz)) < 1e-6, 'the field placer\u2019s first blade is pulled to its patch too');
   // GRASS AUDIT 1: the noise is paid AFTER keep() - a road cell refuses most of its candidates, and 0.43 ms a cell was going on blades that never stood
-  // (PERF-EXT-C2: the cell placer bakes at the FIELD's coordinates, fx/fz - the scene's x/z less the field's origin;
-  // PERF-EXT-C3: its loop is stepGrassCell's, which placeLabGrassCell runs end to end)
+  // (PERF-EXT21: the cell placer bakes at the FIELD's coordinates, fx/fz - the scene's x/z less the field's origin;
+  // PERF-EXT22: its loop is stepGrassCell's, which placeLabGrassCell runs end to end)
   for (const [fn, bake] of [['export function stepGrassCell', 'bakedTint(tRnd, fx, fz)'], ['export function* placeLabGrassSteps', 'bakedTint(tRnd, x, z)']]) {
     const body = src.slice(src.indexOf(fn), src.indexOf('\n}\n', src.indexOf(fn)));
     assert.ok(body.indexOf('const tRnd = rnd();') > 0 && body.indexOf('const tRnd = rnd();') < body.indexOf('keep(x, z)') && body.indexOf('keep(x, z)') < body.indexOf(bake), `${fn}: the random is drawn in the lab's order, keep() decides, THEN the patch is looked up`);

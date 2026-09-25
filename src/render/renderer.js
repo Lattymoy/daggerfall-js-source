@@ -3749,7 +3749,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   /** Build a VAO bundle from meshReader output.
-   *  PERF-EXT-C4: `bounds` - { whole, subs } - is the spheres already
+   *  PERF-EXT23: `bounds` - { whole, subs } - is the spheres already
    *  measured (StaticBatchBuilder.finishSliced, a range at a time between
    *  frames, with boundsOf's own passes); given, the two walks below are
    *  not run again. Absent, nothing changes.

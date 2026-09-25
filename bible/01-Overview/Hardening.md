@@ -170,7 +170,7 @@ carried only the first of the two lines, so a player fighting with the
 left-hand weapon loaded back holding the right hand's item, or bare
 fists. By the time it was found, the two restore lines had drifted six
 and thirteen lines apart inside their own hosts, and the comment in
-`worldModes.js` that pointed between them cited `world.js:6820` and
+`worldModes.js` that pointed between them cited `world.js:6836` and
 `dungeonContext.js:6315` - lines that had moved to `:4964` and `:6290`.
 *Three copies of a rule, and the signpost between them stale as well.*
 
@@ -249,7 +249,7 @@ three collapsed on verification.**
 2. *"`npcSession.onWorldChanged()` is on both door exits and not on the
    teleport/load path."* True, and correct: every caller of
    `forceExitToExterior` follows it with `_teleportToPixel`, and THAT
-   function owns the call (`world.js:5648`, DFU's `OnMapPixelChanged` /
+   function owns the call (`world.js:5664`, DFU's `OnMapPixelChanged` /
    `OnLoadEvent`). The quickload caller goes through
    `restoreSessionState` instead. Calling it in both places would be the
    redundancy, not the fix.

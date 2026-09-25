@@ -167,7 +167,7 @@ export class PerfMeter {
    *  exactly what they read before this existed.
    */
   markCpu(name) { if (this.cpu) this._cpuMark(name); }
-  /** PERF-EXT-C5: milliseconds spent OUTSIDE the frame's spans, on its
+  /** PERF-EXT24: milliseconds spent OUTSIDE the frame's spans, on its
    *  thread - the stream build's slices, which run in their own animation
    *  frame callback after the script frame closed and so fell in no span
    *  at all. Added to `name`'s bucket; the open span is left alone. */

@@ -241,7 +241,7 @@ test('EV4: the wiring - fog seam, far ring, restride, and the per-set index buff
   assert.ok(world.includes('const lodOn = isEnhanced()'), 'the 1:1 lane keeps full resolution');
   assert.ok(world.includes('restrideTerrain(p, want)'), 'ring-class changes swap the surface in place');
   // EV7 moved buildPixel's kernel call into terrainGen.js whole; the
-  // ghost-row law lives there, and since PERF-EXT-C7 the RESTRIDE reads
+  // ghost-row law lives there, and since PERF-EXT26 the RESTRIDE reads
   // it too (terrainGen.js restrideGrid) - on the terrain worker when one
   // is up, on this thread when not.
   assert.ok(world.includes('restrideGrid({ woods, px: p.px, py: p.py, stride, samples: p.samples })'), 'the restride reads the neighbor pixels');
