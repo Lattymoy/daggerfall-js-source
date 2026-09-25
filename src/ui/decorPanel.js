@@ -29,7 +29,10 @@
 // The panel has three tabs (DECOR1e, DECOR2a): the catalogue, "In this
 // room" - the pieces standing, each moved, lit, made to hold things or
 // removed (or, the player's own, taken down) - and "Your things", what
-// in the pack can stand, free.
+// in the pack can stand, free. DECOR2b: "Your things" lists the
+// furniture the furnisher delivered too, and one that takes its look
+// from Daggerfall's own pieces opens the catalogue on its kinds to
+// choose it (the LOOK view), free.
 //
 // The surfaces decide nothing: what may be placed, what it costs and
 // where it goes are the host's (scenes/decorTool.js). Handed the
@@ -42,7 +45,7 @@ import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS } from './pixelifyFive.js';
 import { isTextEntryTarget } from './input.js';
 import { registerOverlay } from './enhancedOverlays.js';   // PX28b: Tab puts it away, as it puts away every enhanced window
 import { DECOR_KINDS, DECOR_SIZES, decorSize, filterDecor } from '../systems/decorCatalogue.js';
-import { decorRefund } from '../net/decorLaw.js';
+import { decorRefund, DECOR_FURNITURE_GROUP } from '../net/decorLaw.js';
 
 export const DECOR_STYLE_ID = 'dagger-decor-style';
 export const DECOR_CSS = `
@@ -65,6 +68,8 @@ ${PIXELIFY_FIVE_FACE}
 .dfdecor-card[data-mode="catalogue"] .dfdecor-room-actions { display: none; }
 .dfdecor-card[data-mode="own"] { grid-template-rows: auto auto minmax(0, 1fr) auto; }
 .dfdecor-card[data-mode="own"] .dfdecor-filters, .dfdecor-card[data-mode="own"] .dfdecor-room-actions { display: none; }
+.dfdecor-card[data-mode="look"] .dfdecor-room-actions, .dfdecor-card[data-mode="look"] .dfdecor-kinds,
+.dfdecor-card[data-mode="look"] .dfdecor-has { display: none; }
 .dfdecor-room-actions { display: flex; flex-wrap: wrap; gap: 4px; }
 .dfdecor-head { display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid var(--iron, #2b323b); padding-bottom: 6px; }
 .dfdecor-title { font-size: 18px; }
@@ -150,15 +155,26 @@ export const DECOR_HOLDS_LINE = 'It holds things - empty it first.';
 /** What removing a piece gives back, as said (the law's half, net/decorLaw.js decorRefund). */
 export const decorRefundText = (paid) => `${decorRefund(paid)} gold`;
 
+/** DECOR2b: where one's own piece goes when it is taken down - the pack, or (furniture, never carried) "Your things". */
+export const decorBackTo = (piece) => (piece?.item?.g === DECOR_FURNITURE_GROUP ? 'Your things' : 'your pack');
 /** What one placed piece's row says under its name. DECOR2a: one's own item says so - it cost nothing and goes back
- *  to the pack. */
+ *  to the pack (DECOR2b: or, furniture, to "Your things"). */
 export function decorPlacedSub({ piece, holds }) {
-  const first = piece.item ? 'yours - back to your pack when taken down' : `placed for ${piece.paid} gold`;
+  const first = piece.item ? `yours - back to ${decorBackTo(piece)} when taken down` : `placed for ${piece.paid} gold`;
   return [first, piece.storage ? (holds ? 'holds things (not empty)' : 'holds things') : null, piece.light ? 'gives light' : null]
     .filter(Boolean).join(' - ');
 }
 /** DECOR2a: what an item in the pack says under its name in the "Your things" list. */
 export const DECOR_OWN_LINE = 'yours - free to set down, and back to your pack when taken down';
+/** DECOR2b: what a piece of delivered furniture says there - never carried; set down free as the piece of its kinds the
+ *  owner chooses (or, a pillow, as itself), and back here when taken down. */
+export function decorFurnishLine(e) {
+  const as = e?.looks ? ` as any of the ${e.looks.map((k) => DECOR_KINDS[k].toLowerCase()).join(' or ')} you choose` : '';
+  return `delivered - free to set down${as}, and back here when taken down`;
+}
+/** DECOR2b: the look view's words - its button in "Your things", and its line while no look is chosen. */
+export const DECOR_LOOK_BUTTON = 'Choose its look';
+export const DECOR_LOOK_LINE = 'Choose how it looks - any of these, free.';
 
 /** What one catalogue row says under its name. */
 export function decorRowSub(entry, radius) {
@@ -217,17 +233,20 @@ export function createDecorButton({ onPress, touch = false, doc = document }) {
  *   gold      - what the player can pay with (the purse and the bank); count, cap - the room's pieces and its limit
  *   placed    - DECOR1e: the room's placed pieces, each `{ piece, name, entry, holds, own }` (its catalogue entry when
  *               read, whether it holds anything, and - DECOR2a - whether it is the player's own item)
- *   own       - DECOR2a: what in the pack can stand here, each a catalogue-shaped entry of kind 'own' (free)
+ *   own       - DECOR2a: what in the pack can stand here, each a catalogue-shaped entry of kind 'own' (free); DECOR2b:
+ *               and the delivered furniture, `looks` the catalogue kinds one takes its look from (null: a picture of
+ *               its own)
  * `onPlace(entry)` - the Place button; `onClose()` - the panel went (Close, Escape, or a placement began);
+ * DECOR2b: `onPlaceLook(furniture, look)` - the look view's Place: one's furniture, as the catalogue piece chosen;
  * `onPoint(entry|null)` - the piece the preview shows changed; `thumbOf(entry)` - a Promise of a flat's picture (a URL);
  * DECOR1e: `onMove(piece)`, `onRemove(piece)`, `onToggle(piece, 'light'|'storage')` - a placed piece's four changes.
  * @param {{ onPlace: (entry: any) => void, onClose?: () => void, onPoint?: (entry: any) => void,
  *   thumbOf?: (entry: any) => Promise<string|null>|null, onMove?: (piece: any) => void, onRemove?: (piece: any) => void,
- *   onToggle?: (piece: any, what: string) => void, doc?: any, win?: any }} opts
+ *   onToggle?: (piece: any, what: string) => void, onPlaceLook?: (furniture: any, look: any) => void, doc?: any, win?: any }} opts
  */
 export function createDecorPanel({
   onPlace, onClose = () => {}, onPoint = () => {}, thumbOf = () => null, onMove = () => {}, onRemove = () => {}, onToggle = () => {},
-  doc = document, win = globalThis,
+  onPlaceLook = () => {}, doc = document, win = globalThis,
 }) {
   injectStyle(doc);
   const el = maker(doc);
@@ -253,9 +272,9 @@ export function createDecorPanel({
   search.type = 'search';
   search.setAttribute('placeholder', 'Search');
   search.setAttribute('aria-label', 'Search the catalogue');
-  const kindChips = el('div', 'dfdecor-chips');
+  const kindChips = el('div', 'dfdecor-chips dfdecor-kinds');
   const sizeChips = el('div', 'dfdecor-chips');
-  const hasChips = el('div', 'dfdecor-chips');
+  const hasChips = el('div', 'dfdecor-chips dfdecor-has');
   const sortChips = el('div', 'dfdecor-chips');
   filters.append(search, kindChips, sizeChips, hasChips, sortChips);
 
@@ -302,9 +321,11 @@ export function createDecorPanel({
   const f = { kinds: new Set(), text: '', size: null, storage: null, light: null, sort: 'common' };
   let selectedKey = null;
   let hoverKey = null;
-  let mode = 'catalogue';     // DECOR1e: or 'room'; DECOR2a: or 'own'
+  let mode = 'catalogue';     // DECOR1e: or 'room'; DECOR2a: or 'own'; DECOR2b: or 'look'
   let placedId = null;        // the placed piece chosen in the room's view
   let ownKey = null;          // DECOR2a: the item chosen in the pack's list
+  let lookFor = null;         // DECOR2b: the furniture a look is being chosen for (its key in "Your things")
+  let lookKey = null;         // DECOR2b: the look chosen (a catalogue key)
   let listSig = '';           // what the list was last drawn from
   let pointedKey;             // the preview's piece, as last told to the host
   /** @type {Map<string, string|null>} */
@@ -345,12 +366,19 @@ export function createDecorPanel({
   /** What the preview shows for a placed piece: its catalogue entry, or the piece's own shape until the catalogue is read. */
   const placedShape = (it) => it.entry ?? { key: `placed:${it.piece.id}`, model: it.piece.model, flat: it.piece.flat, kind: 'decor', name: it.name };
   const ownSelected = () => (view?.own ?? []).find((e) => e.key === ownKey) ?? null;
+  /** DECOR2b: the furniture the look view is for (still among "Your things"), and the look chosen - one of its kinds'. */
+  const lookOf = () => (view?.own ?? []).find((e) => e.key === lookFor && e.looks) ?? null;
+  const lookSelected = () => {
+    const furn = lookOf();
+    return furn ? (view?.entries ?? []).find((e) => e.key === lookKey && furn.looks.includes(e.kind)) ?? null : null;
+  };
   const shown = () => {
     if (mode === 'room') { const it = placedSelected(); return it ? placedShape(it) : null; }
     if (mode === 'own') return (view?.own ?? []).find((e) => e.key === (hoverKey ?? ownKey)) ?? null;
-    return (view?.entries ?? []).find((e) => e.key === (hoverKey ?? selectedKey)) ?? null;
+    return (view?.entries ?? []).find((e) => e.key === (hoverKey ?? (mode === 'look' ? lookKey : selectedKey))) ?? null;
   };
-  const selected = () => (mode === 'own' ? ownSelected() : (view?.entries ?? []).find((e) => e.key === selectedKey) ?? null);
+  const selected = () => (mode === 'own' ? ownSelected() : mode === 'look' ? lookSelected()
+    : (view?.entries ?? []).find((e) => e.key === selectedKey) ?? null);
   const priceOf = (e) => (e && view?.priceOf ? view.priceOf(e) : null);
   const radiusOf = (e) => (e && view?.radiusOf ? view.radiusOf(e) : null);
 
@@ -365,7 +393,7 @@ export function createDecorPanel({
     const n = view?.placed?.length ?? 0;
     const m = view?.own?.length ?? 0;
     tabs.replaceChildren(chip('Catalogue', mode === 'catalogue', () => setMode('catalogue')), chip(`In this room (${n})`, mode === 'room', () => setMode('room')),
-      chip(`Your things (${m})`, mode === 'own', () => setMode('own')));
+      chip(`Your things (${m})`, mode === 'own' || mode === 'look', () => setMode('own')));   // DECOR2b: a look is chosen within them
   }
   function setMode(m) {
     if (mode === m) return;
@@ -373,6 +401,12 @@ export function createDecorPanel({
     card.dataset.mode = m;
     hoverKey = null;
     redraw();
+  }
+  /** DECOR2b: THE LOOK VIEW - the catalogue on the kinds one piece of furniture takes its look from, `look` chosen. */
+  function chooseLook(key, look = null) {
+    lookFor = key;
+    lookKey = look;
+    if (mode === 'look') redraw(); else setMode('look');
   }
   function placedRow(it) {
     const r = el('div', 'dfdecor-row');
@@ -411,12 +445,13 @@ export function createDecorPanel({
     sortChips.replaceChildren(...Object.keys(DECOR_SORTS).map((k) => chip(DECOR_SORTS[k], f.sort === k, () => { f.sort = k; redraw(); })));
   }
 
-  function row(e) {
+  /** One catalogue row - or, `look` (DECOR2b), one look for one's furniture: free. */
+  function row(e, look = false) {
     const r = el('div', 'dfdecor-row');
     r.setAttribute('role', 'option');
     r.dataset.key = e.key;
-    r.setAttribute('aria-selected', e.key === selectedKey ? 'true' : 'false');
-    const price = priceOf(e);
+    r.setAttribute('aria-selected', e.key === (look ? lookKey : selectedKey) ? 'true' : 'false');
+    const price = look ? 0 : priceOf(e);
     if (price != null && view && price > view.gold) r.className = 'dfdecor-row dim';
     const thumb = el('span', 'dfdecor-thumb');
     if (e.flat) {
@@ -431,28 +466,33 @@ export function createDecorPanel({
     }
     const main = el('span', '');
     main.append(el('div', 'dfdecor-row-name', e.name), el('div', 'dfdecor-row-sub', decorRowSub(e, radiusOf(e))));
-    r.append(thumb, main, el('span', 'dfdecor-row-price', decorPriceText(price)));
-    r.addEventListener('click', () => { selectedKey = e.key; redraw(); });
+    r.append(thumb, main, el('span', 'dfdecor-row-price', look ? 'free' : decorPriceText(price)));
+    r.addEventListener('click', () => { if (look) lookKey = e.key; else selectedKey = e.key; redraw(); });
     r.addEventListener('mouseenter', () => { hoverKey = e.key; paintSide(); });
     r.addEventListener('mouseleave', () => { if (hoverKey === e.key) { hoverKey = null; paintSide(); } });
     return r;
   }
 
-  /** DECOR2a: one item in the pack that can stand here - its pack picture, its name, free. */
+  /** DECOR2a: one item in the pack that can stand here - its pack picture, its name, free. DECOR2b: or a piece of
+   *  delivered furniture - with no picture of its own, its kind's letters. */
   function ownRow(e) {
     const r = el('div', 'dfdecor-row');
     r.setAttribute('role', 'option');
     r.dataset.key = e.key;
     r.setAttribute('aria-selected', e.key === ownKey ? 'true' : 'false');
     const thumb = el('span', 'dfdecor-thumb');
-    const img = el('img', '');
-    img.setAttribute('alt', '');
-    thumb.append(img);
-    const known = thumbs.get(e.key);
-    if (known) img.setAttribute('src', known); else askThumb(e, img);
+    if (e.icon || e.flat) {
+      const img = el('img', '');
+      img.setAttribute('alt', '');
+      thumb.append(img);
+      const known = thumbs.get(e.key);
+      if (known) img.setAttribute('src', known); else askThumb(e, img);
+    } else {
+      thumb.textContent = (DECOR_KINDS[e.looks?.[0]] ?? DECOR_KINDS.furniture).slice(0, 2);
+    }
     const main = el('span', '');
     const count = (e.count ?? 1) > 1 ? ` (${e.count})` : '';
-    main.append(el('div', 'dfdecor-row-name', `${e.name}${count}`), el('div', 'dfdecor-row-sub', DECOR_OWN_LINE));
+    main.append(el('div', 'dfdecor-row-name', `${e.name}${count}`), el('div', 'dfdecor-row-sub', e.furnishing ? decorFurnishLine(e) : DECOR_OWN_LINE));
     r.append(thumb, main, el('span', 'dfdecor-row-price', 'free'));
     r.addEventListener('click', () => { ownKey = e.key; redraw(); });
     r.addEventListener('mouseenter', () => { hoverKey = e.key; paintSide(); });
@@ -476,11 +516,19 @@ export function createDecorPanel({
       const own = view.own ?? [];
       if (ownKey && !own.some((e) => e.key === ownKey)) ownKey = null;   // set down, or gone from the pack
       list.replaceChildren(...(own.length ? own.map(ownRow) : [el('div', 'dfdecor-empty', 'Nothing in your pack can stand in a room.')]));
+    } else if (mode === 'look' && !lookOf()) {   // DECOR2b: the furniture set down, or gone - back to the list of it
+      mode = 'own';
+      card.dataset.mode = 'own';
+      redraw();
+      return;
     } else if (!entries) {
       list.replaceChildren(el('div', 'dfdecor-empty', 'Reading the catalogue...'));
     } else {
-      const shownEntries = filterDecor(entries, { kinds: f.kinds, text: f.text, size: f.size, storage: f.storage, light: f.light, sort: f.sort, radiusOf });
-      list.replaceChildren(...(shownEntries.length ? shownEntries.map(row) : [el('div', 'dfdecor-empty', 'Nothing matches.')]));
+      const look = mode === 'look';   // DECOR2b: the furniture's kinds alone, and neither holding nor light asked
+      const shownEntries = look
+        ? filterDecor(entries, { kinds: lookOf().looks, text: f.text, size: f.size, sort: f.sort, radiusOf })
+        : filterDecor(entries, { kinds: f.kinds, text: f.text, size: f.size, storage: f.storage, light: f.light, sort: f.sort, radiusOf });
+      list.replaceChildren(...(shownEntries.length ? shownEntries.map((e) => row(e, look)) : [el('div', 'dfdecor-empty', 'Nothing matches.')]));
     }
     listSig = signature();
     paintSide();
@@ -501,7 +549,7 @@ export function createDecorPanel({
       previewImg.removeAttribute?.('src');
     } else if (e.kind === 'own') {
       pickName.textContent = e.name;
-      pickLine.textContent = DECOR_OWN_LINE;
+      pickLine.textContent = e.furnishing ? decorFurnishLine(e) : DECOR_OWN_LINE;
       pickPrice.textContent = 'Free';
       if (!thumbs.has(e.key)) askThumb(e);
       const url = thumbs.get(e.key);
@@ -514,15 +562,22 @@ export function createDecorPanel({
       const url = e.flat ? thumbs.get(e.key) : null;
       if (url) previewImg.setAttribute('src', url); else previewImg.removeAttribute?.('src');
     }
+    if (mode === 'look') {   // DECOR2b: what is set down is one's furniture, by its own name - the look under it, free
+      pickName.textContent = lookOf()?.name ?? '';
+      pickLine.textContent = e ? `as ${e.name} - ${decorRowSub(e, radiusOf(e))}` : DECOR_LOOK_LINE;
+      pickPrice.textContent = 'Free';
+    }
     const model = e && e.model != null ? '1' : '0';
     if (preview.dataset.model !== model) preview.dataset.model = model;
     if (mode === 'room') {
       paintRoomSide();
     } else {
-      const price = sel?.kind === 'own' ? 0 : priceOf(sel);   // DECOR2a: one's own costs nothing
-      const why = sel ? decorWhyNot({ price, ready: sel.kind === 'own' || !!view?.ready, gold: view?.gold ?? 0, count: view?.count ?? 0, cap: view?.cap ?? 0 }) : null;
+      const free = sel?.kind === 'own' || mode === 'look';   // DECOR2a: one's own costs nothing (DECOR2b: nor its look)
+      const why = sel ? decorWhyNot({ price: free ? 0 : priceOf(sel), ready: free || !!view?.ready, gold: view?.gold ?? 0, count: view?.count ?? 0, cap: view?.cap ?? 0 }) : null;
       pickWhy.textContent = why ?? '';
       place.disabled = !sel || why !== null;
+      const label = mode === 'own' && sel?.looks ? DECOR_LOOK_BUTTON : 'Place';   // DECOR2b: furniture chooses its look first
+      if (place.textContent !== label) place.textContent = label;
     }
     const key = e ? e.key : null;
     if (key !== pointedKey) { pointedKey = key; onPoint(e); }
@@ -539,7 +594,7 @@ export function createDecorPanel({
     } else {
       pickName.textContent = it.name;
       pickLine.textContent = decorPlacedSub(it);
-      pickPrice.textContent = it.piece.item ? 'Take down: back to your pack' : `Remove: ${decorRefundText(it.piece.paid)} back`;
+      pickPrice.textContent = it.piece.item ? `Take down: back to ${decorBackTo(it.piece)}` : `Remove: ${decorRefundText(it.piece.paid)} back`;
     }
     lightBtn.textContent = it?.piece.light ? 'Light: on' : 'Light: off';
     storeBtn.textContent = it?.piece.storage ? 'Holds things: yes' : 'Holds things: no';
@@ -577,8 +632,10 @@ export function createDecorPanel({
   place.addEventListener('click', () => {
     const sel = selected();
     if (!sel || place.disabled) return;
+    if (mode === 'own' && sel.looks) { chooseLook(sel.key); return; }   // DECOR2b: its look first
+    const furn = mode === 'look' ? lookOf() : null;
     hide();
-    onPlace(sel);
+    if (furn) onPlaceLook(furn, sel); else onPlace(sel);
   });
   // Escape closes, unless a field is being typed into (the field's own Escape clears it)
   const onKey = (e) => {
@@ -632,11 +689,13 @@ export function createDecorPanel({
     previewCanvas: () => previewGl,
     /** Choose a piece by its key (the host's reopen after a placement keeps the choice). */
     select(key) { selectedKey = key; if (open) redraw(); },
-    /** DECOR1e: which view - 'catalogue' or 'room' - and the placed piece chosen in the room's. */
+    /** DECOR1e: which view - 'catalogue' or 'room' (DECOR2a: 'own'; DECOR2b: 'look') - and the placed piece chosen in the room's. */
     mode: () => mode,
     showRoom(id = null) { placedId = id ?? placedId; if (mode === 'room') redraw(); else setMode('room'); },
     /** DECOR2a: the pack's list, with `key` chosen (or the choice kept). */
     showOwn(key = null) { ownKey = key ?? ownKey; if (mode === 'own') redraw(); else setMode('own'); },
+    /** DECOR2b: the look view for the furniture keyed `key` in "Your things", `look` chosen. */
+    showLook(key, look = null) { ownKey = key; chooseLook(key, look); },
     selectedKey: () => selectedKey,
     destroy() {
       if (!alive) return;

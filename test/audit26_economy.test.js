@@ -173,8 +173,8 @@ test('audit26 F158: the basket takes the CanCarryAmount gate and splits', () => 
   const t = rd('src/ui/nativeTrade.js');
   const arm = t.slice(t.indexOf('_pickRemote(slot)'), t.indexOf('_clear()'));
   assert.ok(arm.includes('planTake(item, {'), 'the Buy-mode remote click routes through the ladder');
-  assert.ok(arm.includes('bag: [...this.hooks.packItems(), ...this.basket]'),
-    'the bag under test is pack + basket - the player walks out with both');
+  assert.ok(arm.includes('bag: [...this.hooks.packItems(), ...this.basket.filter((x) => !isFurnishing(x))]'),
+    'the bag under test is pack + basket - the player walks out with both (DECOR2b: less the delivered furniture)');
   assert.ok(arm.includes('applyTransfer(item, plan, this.hooks.shelfItems(), this.basket)'),
     'a partial fit splits through the same applyTransfer every screen uses');
   // and the split law itself: 3 fit of a 5-stack

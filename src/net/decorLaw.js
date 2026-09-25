@@ -76,13 +76,23 @@ export function decorItemOf(raw) {
   return { t, g, m, v, a, p };
 }
 
+/** DECOR2b: Daggerfall's ItemGroups.Furniture - the furnisher's pieces, whose shape the owner chooses among the
+ *  game's own models. */
+export const DECOR_FURNITURE_GROUP = 8;
+
 /** WHAT a piece is - `{ model, flat: null }` or `{ model: null, flat: [archive, record] }` - or null. DECOR2a: a flat
- *  may be the owner's own item, `item` its descriptor (decorItemOf), carried only when it is one. */
+ *  may be the owner's own item, `item` its descriptor (decorItemOf), carried only when it is one. DECOR2b: a model may
+ *  be one too, when the item is a piece of furniture (its group Daggerfall's Furniture) - a delivered table takes the
+ *  shape of one of the game's own; any other own item stands as its own picture, a flat. */
 export function decorWhatOf(raw) {
   const model = raw?.model ?? null;
   const flat = raw?.flat ?? null;
   const item = raw?.item ?? null;
-  if (flat === null && item === null && Number.isSafeInteger(model) && model > 0 && model <= DECOR_MODEL_MAX) return { model, flat: null };
+  if (flat === null && Number.isSafeInteger(model) && model > 0 && model <= DECOR_MODEL_MAX) {
+    if (item === null) return { model, flat: null };
+    const own = decorItemOf(item);
+    return own && own.g === DECOR_FURNITURE_GROUP ? { model, flat: null, item: own } : null;
+  }
   if (model === null && Array.isArray(flat) && flat.length === 2
     && Number.isSafeInteger(flat[0]) && flat[0] >= 0 && flat[0] <= DECOR_ARCHIVE_MAX
     && Number.isSafeInteger(flat[1]) && flat[1] >= 0 && flat[1] <= DECOR_RECORD_MAX) {

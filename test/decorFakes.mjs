@@ -10,6 +10,7 @@ import { createDecorTool } from '../src/scenes/decorTool.js';
 import { decorCatalogue, collectDecor } from '../src/systems/decorCatalogue.js';
 import { DECOR_CAP, decorPrice } from '../src/net/decorLaw.js';
 import { PROP_MODEL_TYPE } from '../src/world/interiorLayout.js';
+import { isFurnishing } from '../src/systems/decorFurnish.js';
 
 export const settle = () => new Promise((r) => setTimeout(r, 0));
 export const near = (a, b, eps = 1e-6) => Math.abs(a - b) < eps;
@@ -75,7 +76,7 @@ export const one = (n, cls) => all(n, cls)[0];
 export const text = (n) => (n.textContent || '') + (n.children ?? []).map(text).join('');
 export const chipNamed = (root, label) => all(root, 'dfdecor-chip').find((c) => c.textContent === label);
 
-/** A small catalogue: two chairs (a model kind), a chest (storage), a candle (a light flat), a book (a flat). */
+/** A small catalogue: two beds (models - rrRealism.js BED_MODELS), a chest (storage), a candle (a light flat), a book (a flat). */
 export function catalogue() {
   const collected = collectDecor([rmb([41000, 41000, 41001, 41811], [[210, 3], [209, 0]]), rmb([41000], [[209, 0]])]);
   return decorCatalogue(collected);
@@ -110,6 +111,8 @@ export const ACTIONS = new Map([['KeyW', 'MoveForwards'], ['KeyS', 'MoveBackward
  * credits `w.gold`, `hand.stick` is the host's stickAxes reading (null: no stick in hand), and `rays` each eye ray's
  * bucket filter. `radius(model)` the scan's measure of a model (null: unread). DECOR2a: `pack` the items carried -
  * packTake moves one of a stack out (a copy of one; the whole item when it is the last), packGive puts one back.
+ * DECOR2b: `furnishings` the furniture delivered - where a piece of furniture lives, as the host's decorHome has it:
+ * taken out whole, given back there, never to the pack.
  */
 export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 1000, homeDecor = null, locked = true, touch = false, radius = () => 0.8 } = {}) {
   const doc = fakeDoc();
@@ -135,6 +138,8 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
   const w = { gold, paid: [], credited: [] };
   const hand = { stick: null };
   const pack = [];   // DECOR2a: the items carried - packTake moves one of a stack out, as a drop does
+  const furnishings = [];   // DECOR2b: the furniture delivered (worldModes.js decorHome)
+  const homeOf = (item) => (isFurnishing(item) ? furnishings : pack);
   const rays = [];   // each eye ray's bucket filter (player/collider.js raycastHit's fourth), or null
   let visit = 1;
   let cursorOff = 0;
@@ -165,22 +170,23 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
     locked: () => state.locked, cursorOff: () => { cursorOff++; },
     wallet: () => ({ gold: w.gold, pay: (n) => { w.paid.push(n); w.gold -= n; }, credit: (n) => { w.credited.push(n); w.gold += n; } }),
     homeDecor, character: () => 'char-me', visit: () => visit,
-    pack: () => pack, identity: () => null, packHas: (item) => pack.includes(item),
+    pack: () => pack, identity: () => null, furnishings: () => furnishings, packHas: (item) => homeOf(item).includes(item),
     packTake: (item) => {
-      const i = pack.indexOf(item);
+      const list = homeOf(item);
+      const i = list.indexOf(item);
       if (i < 0) return null;
-      if ((item.stackCount ?? 1) > 1) { item.stackCount -= 1; return { ...item, stackCount: 1 }; }
-      pack.splice(i, 1);
+      if (list === pack && (item.stackCount ?? 1) > 1) { item.stackCount -= 1; return { ...item, stackCount: 1 }; }
+      list.splice(i, 1);
       return item;
     },
-    packGive: (item) => { pack.push(item); },
+    packGive: (item) => { homeOf(item).push(item); },
     openSlot: (o) => slots.push(['open', o]), closeSlot: (o) => slots.push(['close', o]),
     say: (l) => said.push(l), refusal: (word) => `refused: ${word}`, now: () => 0,
   });
   const cam = { pos: [10, 1.6, 10], yaw: 0, pitch: 0 };
   const frame = (over = {}) => tool.frame({ dt: 0.1, cam, overlayUp: false, interior: true, ...over });
   return {
-    tool, doc, win, entries, standing, holds, owned, hand, rays, pack, names, slots, said, w, cam, frame, draws, state,
+    tool, doc, win, entries, standing, holds, owned, hand, rays, pack, furnishings, names, slots, said, w, cam, frame, draws, state,
     setVisit: (v) => { visit = v; }, cursorOffs: () => cursorOff,
   };
 }

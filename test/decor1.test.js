@@ -242,6 +242,23 @@ test('DECOR2a an own item\'s piece in an online home: the service keeps WHICH it
   assert.equal(env.DB._raw.prepare('SELECT COUNT(*) AS n FROM home_decor').get().n, 0);
 });
 
+test('DECOR2b a piece of furniture in an online home: the service keeps a model with the furniture\'s own numbers - read back by every visitor, never rewritten by a move - and refuses any other own item on a model (mutants: the model refused, a statue let onto one)', async (t) => {
+  t.mock.method(Date, 'now', () => T0 * 1000);
+  const { call, registered } = await stand();
+  const aldric = await registered('Aldric');
+  const mara = await registered('Mara');
+  assert.equal((await call('POST', '/v1/homes/claim', home(), aldric)).status, 200);
+  const at = (extra = {}) => ({ ...HOME, character: 'char-aldric', ...extra });
+  const bed = piece({ id: 'b1', model: 41001, flat: null, item: { t: 219, g: 8, m: null, v: null, a: null, p: null }, paid: 0 });
+  const r = await call('POST', '/v1/homes/decor/place', at({ piece: bed }), aldric);
+  assert.deepEqual([r.status, r.body], [200, { ok: true, piece: bed }]);
+  assert.deepEqual((await call('POST', '/v1/homes/decor', HOME, mara)).body.pieces, [bed], 'every visitor reads which piece of furniture it is');
+  const moved = await call('POST', '/v1/homes/decor/move', at({ id: 'b1', place: { ...bed, pos: [2, 0, 2], rot: [45, 0, 0], item: { t: 217, g: 8 } } }), aldric);
+  assert.deepEqual(moved.body, { ok: true, piece: { ...bed, pos: [2, 0, 2], rot: [45, 0, 0] } }, 'moved, it is the same bed');
+  const statue = piece({ id: 's1', model: 41001, flat: null, item: { t: 265, g: 10 }, paid: 0 });
+  assert.equal((await call('POST', '/v1/homes/decor/place', at({ piece: statue }), aldric)).body.error, 'bad-decor', 'a statue is never a model');
+});
+
 test('DECOR1 the client\'s door: every call rides the one session as a Bearer header to its route, and no session is a word, not a throw; every refusal the service can say has a sentence; the deploy bundles the law and its smoke reads a room and refuses a guest (mutants: a route misspelt, the secret in the body)', async () => {
   const seen = [];
   const fetch = async (url, init) => { seen.push({ url, init }); return { ok: true, status: 200, json: async () => ({ ok: true }) }; };

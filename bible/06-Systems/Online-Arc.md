@@ -4689,7 +4689,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6593` read, on one physical line:
+`src/scenes/worldModes.js:6628` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -8703,3 +8703,37 @@ Three parts: DECOR2a the player's own things in a room, DECOR2b the furnisher, D
 
 Pinned: `test/decor2a.test.js` (7), `test/decor1.test.js` (+1: the service's half). `tools/mutants/decor2a.json`
 (59).
+
+**DECOR2b - the furnisher.**
+
+- **What it sells** (`src/systems/decorFurnish.js`, `src/systems/shopStock.js`). Daggerfall's Furniture group: twenty-
+  nine items (ItemTemplates 217-245) - beds, tables and chairs in oak, cherry, mahogany and teak, curtains, pillows,
+  rugs, tapestries and skins. No loot table rolls them and no shop ever sold them: DFU's stock loop skips the group for
+  every shop, and its Furniture Stores stand with empty shelves. Here the Furniture Store stocks them by Daggerfall's
+  own stock law (a piece's rarity within the shop's quality, then the dice by its rarity) at Daggerfall's own prices;
+  the chance is the port's - fifty, the clothier's (Ledger A). No other shop stocks any of it.
+- **Delivered, never carried.** A bed weighs up to 750, so nothing bought there is carried. Both shop screens stage a
+  piece whatever it weighs, and it weighs nothing in what the player walks out with. Bought at the counter or by the
+  keyed list, stolen off the shelf from either screen, or carried out of a closed shop, it is delivered - kept with the
+  character (the save's `furnishings`) and said once for the lot: "The Oak Chair will be delivered - set it down from
+  the Decorate panel in any room you can decorate." On the shelf a piece shows its initials: Daggerfall gives the
+  group no picture but the pillows', and the enhanced lists now draw none for archive 0, as the classic drawer never
+  did (`src/ui/enhancedInventory.js` itemLine), where they would have drawn TEXTURE.000's solid colour.
+- **Set down** from "Your things", listed after the pack's, free. A pillow stands as its own picture (TEXTURE.200
+  record 11). Every other piece has no picture of its own (its row shows its kind's letters); "Choose its look" opens
+  the panel's LOOK view - the catalogue on that piece's kinds alone (a bed any of the game's beds; a table or a chair
+  any of its furniture; curtains, a rug, a tapestry or skins any furniture or decoration), every look free - and it
+  stands as the chosen look's shape with the furniture's own name and numbers (Mac: "You pick it"). The look's light
+  and holding never come with it. Back from the flight is the look view, the look still chosen; moved, it keeps its
+  look. The law lets a model carry an own item's numbers only when the item's group is Furniture
+  (`src/net/decorLaw.js` DECOR_FURNITURE_GROUP), so the service keeps it and every visitor names it.
+- **Taken down** it is delivered again - back among "Your things", never the pack. A room sold, and an online home's
+  strays, say where the furniture went. Online, as DECOR2a's: the service has the piece first, and only then does the
+  furniture leave the deliveries.
+
+Not yet: delivered furniture is not sold back (the Furniture Store buys the group only from the pack, Daggerfall's own
+table).
+
+Pinned: `test/decor2b.test.js` (9), `test/decor1.test.js` (+1: the service keeps a model with the furniture's
+numbers). `tools/mutants/decor2b.json` (75, one equivalent: DFU's own skip kept for every other shop). Five older
+records re-aimed.

@@ -220,6 +220,7 @@ import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
 import { questLetterName, itemLongName } from '../systems/itemInfo.js';   // ResolveItemLongName's quest-letter arm; DECOR2a: an own item's name
 import { applyTransfer } from '../systems/itemTransfer.js';   // DECOR2a: one's own item leaves the pack as a drop does
 import { decorItemName, decorOwnBackLine } from '../systems/decorItems.js';   // DECOR2a: an own item's piece named from its numbers
+import { isFurnishing, furnishingDeliveredLine, ownBackLines } from '../systems/decorFurnish.js';   // DECOR2b: furniture delivered, never carried
 import { goldAmount, totalGoldAmount, deductGold, addGold, setCrimeCommitted, CRIMES } from '../systems/court.js';   // PT1: the ONE crime write (V4's SuppressCrime gate rides it)
 // Q4-v: the quest layer's host wiring. The BRIDGE (scenes/questBridge.js)
 // is created by the outer host (world.js) and rides in; this machine owns
@@ -683,8 +684,8 @@ export function createWorldModes(host) {
     locked: () => typeof document !== 'undefined' && document.pointerLockElement === canvas, cursorOff: () => setCursorActive(false),
     wallet: () => decorWallet(), homeDecor: host.homeDecor ?? null, character: () => host.decorCharacter?.() ?? null,
     // DECOR2a: the player's own things - what is carried, one of it out, one back
-    pack: () => playerEntity.items ?? [], identity: () => playerEntity,
-    packHas: (item) => (playerEntity.items ?? []).includes(item), packTake: (item) => decorPackTake(item), packGive: (item) => decorPackGive(item),
+    pack: () => playerEntity.items ?? [], identity: () => playerEntity, furnishings: () => playerEntity.furnishings ?? [],   // DECOR2b: and what the furnisher delivered
+    packHas: (item) => decorHome(item).includes(item), packTake: (item) => decorPackTake(item), packGive: (item) => decorPackGive(item),
     visit: () => _decorVisit,
     openSlot: (o) => { interiorOverlay = o; }, closeSlot: (o) => { if (interiorOverlay === o) interiorOverlay = null; },
     say, refusal: (w) => accountRefusalText(w),
@@ -2155,6 +2156,7 @@ export function createWorldModes(host) {
         loot: { items: () => shelf.items },
         onClose: () => {
           if (shopShelfTheft(shelfBefore, shelf.items.length)) tallyCrimeGuildRequirements(playerEntity, true, 1);
+          decorDeliverCarried();   // DECOR2b: furniture taken off the shelf is delivered, never carried
         },
       });
       if (win) { interiorOverlay = win; interiorLootOpened(`shelf:${i}`, win, { fresh }); }   // WORLD6a: the shelf is the room's from the open
@@ -2276,6 +2278,7 @@ export function createWorldModes(host) {
       // the click now, and OnPop's ClearSelectedItems (:404-407) puts
       // back whatever is still staged when the screen closes.
       packItems: () => (playerEntity.items ??= []),
+      deliver: (items) => decorDeliver(items),   // DECOR2b: furniture stolen off the shelf is delivered, as bought furniture is
       isEquipped: (it) => isEquipped(it),
       // remoteItems in REPAIR mode (:392) and the filtered view over it
       // (:705-724), which is repairService's own repairJobsAt.
@@ -2366,8 +2369,9 @@ export function createWorldModes(host) {
       for (const it of staged) {
         const i = shelf.items.indexOf(it);
         if (i >= 0) shelf.items.splice(i, 1);
-        addItem(playerEntity.items, it);
+        if (!isFurnishing(it)) addItem(playerEntity.items, it);
       }
+      decorDeliver(staged.filter(isFurnishing));   // DECOR2b: the furnisher delivers
     } else if (mode === 'Sell' || mode === 'SellMagic') {
       // The proceeds were weighed before they were paid: a purse that
       // would push the player past MaxEncumbrance becomes a letter of
@@ -2485,7 +2489,8 @@ export function createWorldModes(host) {
     deductGold(playerEntity, price);
     shelf.items.splice(at, 1);
     playerEntity.items = playerEntity.items || [];
-    addItem(playerEntity.items, it);
+    if (isFurnishing(it)) decorDeliver([it]);   // DECOR2b: the furnisher delivers
+    else addItem(playerEntity.items, it);
     tallySkill(playerEntity, SKILLS.Mercantile, 1);   // per completed trade (DFU OnTrade)
     surfacePlayer();
     return price;
@@ -3283,7 +3288,7 @@ export function createWorldModes(host) {
   function decorSold(sceneName, region) {
     const own = takeSceneOwn(sceneCache(), sceneName);   // DECOR2a: Mac - "Back to pack"
     for (const item of own) decorPackGive(item);
-    if (own.length) say(decorOwnBackLine(own.length));
+    if (own.length) say(ownBackLines(own, decorOwnBackLine));   // DECOR2b: furniture back among "Your things"
     const pieces = takeSceneDecor(sceneCache(), sceneName).filter((p) => !p?.item);   // the owner's own were never bought
     if (!pieces.length) return 0;
     const back = decorSaleBack(pieces);
@@ -3296,27 +3301,57 @@ export function createWorldModes(host) {
    *  moves it (itemTransfer.js applyTransfer: a lit torch stops lighting the player, a stack splits one off) - or null
    *  when it is no longer carried. */
   function decorPackTake(item) {
+    if (isFurnishing(item)) {   // DECOR2b: a delivered piece leaves the deliveries whole
+      const list = decorHome(item);
+      const i = list.indexOf(item);
+      if (i < 0) return null;
+      list.splice(i, 1);
+      return item;
+    }
     const pack = playerEntity.items ?? [];
     if (!pack.includes(item)) return null;
     return applyTransfer(item, { ok: true, amount: 1 }, pack, [], { entity: playerEntity, fromLocal: true }) ?? null;
   }
-  /** DECOR2a: one of the player's own things back into the pack - taken down, or its room sold. */
+  /** DECOR2a: one of the player's own things back where it lives - taken down, or its room sold: the pack, or (DECOR2b)
+   *  a piece of furniture delivered again. */
   function decorPackGive(item) {
+    if (isFurnishing(item)) { decorHome(item).push(item); return; }
     playerEntity.items ??= [];
     addItem(playerEntity.items, item);
+  }
+  /** DECOR2b: where one of the player's own things lives while it stands nowhere - the pack, or the furnisher's
+   *  deliveries (the save's `furnishings`: a bed is never carried). */
+  function decorHome(item) {
+    if (isFurnishing(item)) return (playerEntity.furnishings ??= []);
+    return (playerEntity.items ??= []);
+  }
+  /** DECOR2b: FURNITURE BOUGHT (or stolen) - delivered, not carried, and said once for the lot. */
+  function decorDeliver(items) {
+    if (!items.length) return;
+    for (const it of items) decorHome(it).push(it);
+    say(furnishingDeliveredLine(items.map((it) => itemLongName(it))));
+  }
+  /** DECOR2b: FURNITURE CARRIED OUT OF A CLOSED SHOP - taken off its shelf by the inventory's own hand, which weighs it
+   *  as it weighs anything - delivered when the window closes, as bought or stolen furniture is. */
+  function decorDeliverCarried() {
+    const pack = playerEntity.items ?? [];
+    const carried = pack.filter(isFurnishing);
+    for (const it of carried) pack.splice(pack.indexOf(it), 1);
+    decorDeliver(carried);
   }
   /** DECOR2a: THE OWNER'S OWN THINGS THE ONLINE HOME NO LONGER STANDS - taken down while the answer was out, or the
    *  service's piece lost - back to the pack, and said; the thing is the save's, never the room's. */
   function decorReturnStrays(pieces) {
     const standing = new Set(pieces.map((p) => p.id));
-    let n = 0;
+    const back = [];
     for (const id of interiorDecor.ownIds()) {
       if (standing.has(id)) continue;
       const item = interiorDecor.takeOwn(id);
-      if (item) { decorPackGive(item); n++; }
+      if (item) { decorPackGive(item); back.push(item); }
     }
-    if (n) say(n === 1 ? 'One of your things no longer stood here, and came back to your pack.' : `${n} of your things no longer stood here, and came back to your pack.`);
-    return n;
+    // DECOR2b: furniture back among "Your things"
+    if (back.length) say(ownBackLines(back, (n) => (n === 1 ? 'One of your things no longer stood here, and came back to your pack.' : `${n} of your things no longer stood here, and came back to your pack.`)));
+    return back.length;
   }
   /** DECOR1d: what a placement is paid with - the purse, then the region's bank account (HOME1's homes' own order);
    *  DECOR1e: and what a removal or a shrink gives back, into the purse. */
@@ -5682,7 +5717,7 @@ export function createWorldModes(host) {
     const own = takeSceneOwn(sceneCache(), homeSceneName(mapId, bd.buildingKey));   // DECOR2a: the owner's own things - "Back to pack"
     for (const item of own) decorPackGive(item);
     removePermanentScene(sceneCache(), homeSceneName(mapId, bd.buildingKey));
-    townTalk?.say?.(homeSoldLine(r.refund, r.decorBack) + (own.length ? ` ${decorOwnBackLine(own.length)}` : ''));   // DECOR1e: and its placed pieces' half
+    townTalk?.say?.(homeSoldLine(r.refund, r.decorBack) + (own.length ? ` ${ownBackLines(own, decorOwnBackLine)}` : ''));   // DECOR1e: and its placed pieces' half
   }
 
   /** ROAD-B: PlayerActivate.AttemptExteriorDoorBash (:1056-1079) - THE

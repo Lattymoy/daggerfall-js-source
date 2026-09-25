@@ -20,8 +20,8 @@
   {
     "name": "DECOR2a-an-item-on-a-model",
     "file": "src/net/decorLaw.js",
-    "old": "if (flat === null && item === null && Number.isSafeInteger(model)",
-    "new": "if (flat === null && Number.isSafeInteger(model)",
+    "old": "return own && own.g === DECOR_FURNITURE_GROUP ? { model, flat: null, item: own } : null;",
+    "new": "return own ? { model, flat: null, item: own } : null;",
     "tests": [
       "test/decor2a.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "DECOR2a-ones-own-priced-by-its-size",
     "file": "src/ui/decorPanel.js",
-    "old": "const price = sel?.kind === 'own' ? 0 : priceOf(sel);",
-    "new": "const price = priceOf(sel);",
+    "old": "const free = sel?.kind === 'own' || mode === 'look';",
+    "new": "const free = mode === 'look';",
     "tests": [
       "test/decor2a.test.js"
     ]
@@ -292,7 +292,7 @@
   {
     "name": "DECOR2a-the-rooms-words-a-cost",
     "file": "src/ui/decorPanel.js",
-    "old": "pickPrice.textContent = it.piece.item ? 'Take down: back to your pack' : `Remove: ${decorRefundText(it.piece.paid)} back`;",
+    "old": "pickPrice.textContent = it.piece.item ? `Take down: back to ${decorBackTo(it.piece)}` : `Remove: ${decorRefundText(it.piece.paid)} back`;",
     "new": "pickPrice.textContent = `Remove: ${decorRefundText(it.piece.paid)} back`;",
     "tests": [
       "test/decor2a.test.js"
@@ -409,7 +409,7 @@
   {
     "name": "DECOR2a-its-going-unsaid",
     "file": "src/scenes/decorTool.js",
-    "old": "    if (p.free && !deps.packHas?.(p.entry.own)) return 'It is no longer in your pack.';   // DECOR2a\n",
+    "old": "    if (p.free && !deps.packHas?.(p.entry.own)) return p.entry.furnishing ? 'It is no longer among your things.' : 'It is no longer in your pack.';   // DECOR2a (DECOR2b: furniture)\n",
     "new": "",
     "tests": [
       "test/decor2a.test.js"

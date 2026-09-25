@@ -11,8 +11,8 @@
   {
     "name": "DECOR1-a-model-and-a-flat-at-once",
     "file": "src/net/decorLaw.js",
-    "old": "if (flat === null && item === null && Number.isSafeInteger(model)",
-    "new": "if (item === null && Number.isSafeInteger(model)",
+    "old": "if (flat === null && Number.isSafeInteger(model) && model > 0 && model <= DECOR_MODEL_MAX) {",
+    "new": "if (Number.isSafeInteger(model) && model > 0 && model <= DECOR_MODEL_MAX) {",
     "tests": [
       "test/decor1.test.js"
     ]

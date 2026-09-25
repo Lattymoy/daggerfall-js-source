@@ -55,6 +55,7 @@ import {
 } from '../systems/repairService.js';
 import { planTake, applyTransfer, clearLightSourceOnLeave, CANNOT_CARRY_TEXT } from '../systems/itemTransfer.js';
 import { isSummoned, carriedWeight, totalWeight, transferAll } from '../systems/inventory.js';
+import { isFurnishing } from '../systems/decorFurnish.js';   // DECOR2b: furniture is delivered, never carried
 import { shopliftAttempt } from '../systems/theft.js';
 import { entityMaxEncumbrance } from '../combat/formulas.js';
 import { CANNOT_REMOVE_ITEM_TEXT } from '../systems/createItem.js';
@@ -280,8 +281,15 @@ function canTransferSelected() {
   // moving anything. Every other mode's remote click is "take this
   // back" and always answers something (at worst a Yes/No interrupt
   // box, which is still a real action, not a refusal).
-  if (inBuy()) return planTake(item, { bag: [...deps.packItems(), ...basket], entity: deps.entity ?? null }).ok;
+  if (inBuy()) return buyPlan(item).ok;
   return true;
+}
+
+/** The Buy basket's carry gate: what the player walks out with, pack and basket (planTake). DECOR2b: a piece of
+ *  furniture is delivered, never carried - it needs no room, and takes none. */
+function buyPlan(item) {
+  if (isFurnishing(item)) return { ok: true, amount: item.stackCount ?? 1 };
+  return planTake(item, { bag: [...deps.packItems(), ...basket.filter((x) => !isFurnishing(x))], entity: deps.entity ?? null });
 }
 
 function pickLocal(item) {
@@ -312,7 +320,7 @@ function takeItemFromRepair(item) {
 
 function pickRemote(item) {
   if (inBuy()) {
-    const plan = planTake(item, { bag: [...deps.packItems(), ...basket], entity: deps.entity ?? null });
+    const plan = buyPlan(item);
     if (!plan.ok) {
       box = { rows: [{ text: plan.refusal?.text ?? CANNOT_CARRY_TEXT, center: true }], buttons: null };
       render();
@@ -413,6 +421,17 @@ function doSteal() {
   render();
 }
 
+/** DECOR2b: STOLEN FURNITURE IS DELIVERED, as bought furniture is - never carried (it was staged with no room found
+ *  for it). `list` gives up its furniture (or only `one`, when named) to the host's delivery; answers how many went. A
+ *  host with no delivery carries it as before. */
+function deliverFurniture(list, one = null) {
+  if (!deps.deliver) return 0;
+  const going = list.filter((it) => isFurnishing(it) && (one === null || it === one));
+  for (const it of going) list.splice(list.indexOf(it), 1);
+  if (going.length) deps.deliver(going);
+  return going.length;
+}
+
 function runSteal() {
   const items = stealTargets();
   if (!items.length) return;
@@ -421,8 +440,8 @@ function runSteal() {
   deps.tallyPickpocket?.(1);
   if (!out.caught) {
     deps.say?.(STEAL_SUCCESS_TEXT, 2);
-    if (basket.length) transferAll(basket, deps.packItems());
-    else move(items[0], deps.shelfItems(), deps.packItems());
+    if (basket.length) { deliverFurniture(basket); transferAll(basket, deps.packItems()); }
+    else if (!deliverFurniture(deps.shelfItems(), items[0])) move(items[0], deps.shelfItems(), deps.packItems());
     selected = null;
     deps.tallyCrimeGuild?.(true, 1);
   } else {
@@ -809,6 +828,6 @@ export function mountEnhancedTrade(hostEl, hooks = {}) {
 /** GetCarriedWeight override, re-exported for a host that wants it
  *  (parity with nativeTrade.js's own `_carriedWeight`). */
 export function tradeCarriedWeight(entity) {
-  return carriedWeight(entity ?? {}) + totalWeight(basket);
+  return carriedWeight(entity ?? {}) + totalWeight(basket.filter((x) => !isFurnishing(x)));   // DECOR2b: delivered, not carried
 }
 export function tradeMaxEncumbrance(entity) { return entityMaxEncumbrance(entity ?? {}); }
