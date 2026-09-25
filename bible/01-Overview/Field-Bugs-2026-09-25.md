@@ -118,3 +118,19 @@ told to disprove each win. The flats and the frame's CPU:
 `07-Rendering/Performance-Exterior.md` has the measurements, the pins
 and the mutants. Not seen on a GPU - there is no game data in the
 container.
+
+## PERF-EXT1-5 - the shadows
+
+The Enhanced Lighting shadow pass, the sun's cascades and the lanterns'
+cube maps (`07-Rendering/Performance-Exterior.md`, THE SHADOWS):
+
+- **PERF-EXT1** - a pixel-wide flat batch (a wood, a climate's flora
+  record) reaches a shadow by its PLACEMENTS, not its 400-unit sphere: a
+  lantern is no longer held on the sway's beat by trees none of which
+  stand in its reach, and the near cascades skip a wood with no tree in
+  them. Shadow draws a frame on the harness town 297 -> 10 at night,
+  568 -> 193 at dusk, 271 -> 183 by day (at real density 616 -> 5,
+  983 -> 201, 373 -> 198), every quad of every skipped batch proven
+  beyond a clip plane (67.8 million of them). What moves: a walker
+  leaving a lantern's reach loses its shadow the next frame, as it does
+  in calm weather, not at the sway's next beat.

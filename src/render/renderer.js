@@ -396,7 +396,7 @@ void main() {
 
 import { createClusterSpace, buildLightClusters, CLUSTER_GRID_W, CLUSTER_GRID_H, CLUSTER_LIST_W, CLUSTER_LIST_ROWS, CLUSTER_X, CLUSTER_Y, CLUSTER_NEAR, CLUSTER_Z_SCALE, CLUSTER_GRID_UNIT, CLUSTER_LIST_UNIT } from './lightClusters.js';   // LC1: the lantern loop's grid
 import { ShadowPass, SHADOW_GLSL } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
-import { boundsOf, spherePlanes, batchVisible, batchSphere, ZERO_ORIGIN } from './bounds.js';
+import { boundsOf, spherePlanes, batchVisible, batchSphere, ZERO_ORIGIN, placementGrid } from './bounds.js';   // PERF-EXT1: and a batch's placement grid
 import { billboardKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-shadow-reach: the batch's texture key - one home with the two replays
 import { cullDisabled } from './frustum.js';   // PERF-CROWD2: the billboard pass culls for every host, so no host can forget to
 import { getPref } from '../systems/uiPrefs.js';   // GRAIN2: the ground-sharpness dial, read where the tile array is built
@@ -4553,8 +4553,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // `_shMovedAt != null`, `_shId ??=`), and nothing in the tree tells a
     // missing field from an undefined one. A field a batch gains anywhere
     // in src/ belongs here too - test/perfextb.test.js sweeps the writes.
+    // PERF-EXT1 (2026-09-25, the same players): `_place`, the placements on
+    // a grid (bounds.js placementGrid), for a static batch of more than one
+    // flat - a pixel-wide wood's sphere reaches every shadow in its pixel,
+    // its trees do not. Never for one built dynamic: its centres move.
     return {
       vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null, frame: null, bounds, _quads: count, _dyn: !!dynamic,
+      _place: count > 1 && !dynamic ? placementGrid(centers) : null,
       _box: undefined, sway: undefined, conceal: undefined, noShadow: undefined, selfCard: undefined, _dead: undefined, _moveScratch: undefined,
       _bbKey: undefined, _bbKeyRecord: undefined, _bbKeyFrame: undefined, _bbKeyArchive: undefined,
       _shGen: undefined, _shSeen: undefined, _shOx: undefined, _shOy: undefined, _shOz: undefined, _shFrame: undefined,
@@ -4598,6 +4603,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, batch.buffers[0]);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, verts, 0, count * 20);
+    // PERF-EXT1: the placements the shadow pass asks are the ones it was
+    // BORN with - moved, they speak for nothing, and a batch tested where
+    // it was built casts nothing where it is (the draw lens's prover: a
+    // gib's shadow gone in a cascade and three lantern faces). A batch that
+    // moves is judged by its sphere, which follows it below.
+    batch._place = null;
     // THE SPHERE, WITHOUT BUILDING A FLAT ARRAY TO ASK FOR IT. This
     // runs every frame of every flight, and `boundsOf` wants one
     // packed list - so the box is walked here and the sphere written
@@ -4623,6 +4634,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const gl = this.gl;
     if (!batch) return;
     batch._dead = true;   // EL2: a shadow record from the last frame may still hold it
+    batch._place = null;   // PERF-EXT1: the placement grid is the batch's, and goes with it
     if (batch.vao) gl.deleteVertexArray(batch.vao);
     for (const b of batch.buffers || []) gl.deleteBuffer(b);
     batch.vao = null;

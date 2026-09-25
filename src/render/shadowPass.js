@@ -56,7 +56,7 @@
 //     the culling above is what makes 24 face replays cheap.
 
 import { lookAt, multiply, ortho, perspective } from '../world/mat4.js';
-import { spherePlanes, transformSphere, recordVisible, subMeshVisible, batchVisible, sphereInPlanes, batchSphere, ZERO_ORIGIN } from './bounds.js';   // EL5: the cull
+import { spherePlanes, transformSphere, recordVisible, subMeshVisible, batchVisible, sphereInPlanes, batchSphere, ZERO_ORIGIN, placementRadius, placementsInCube, placementsInVolume } from './bounds.js';   // EL5: the cull; PERF-EXT1: and a batch's placements
 import { billboardKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-shadow-reach: re-keyed here, however the batch reached the records
 import { aabbOutside } from './frustum.js';   // SHADOW-REACH: a host's box against the cascades
 
@@ -277,6 +277,10 @@ export const SHADOW_SWAY_STILL = 0.02;
 export const SHADOW_SWAY_EVERY = 4;
 /** WIND3's lean at a flat's crown, world units: the shader's push at top = 1 and the gust's peak (renderer.js BB_VS). */
 export const swayLean = (wl, sway, h) => wl * 1.3 * 0.0015 * sway * h;
+/** PERF-EXT1: the radius that bounds each quad of batch `b` in a record whose wind's rate is `wl` - bounds.js's
+ *  placementRadius over WIND3's lean, which BB_VS applies only while uSway > 0 and scales by the quad's height
+ *  whichever way it hangs (an upside-down flame's h is negative). */
+const quadRadius = (wl, b) => { const h = b.size.h; return placementRadius(b.size, b.sway > 0 ? swayLean(wl, b.sway, h < 0 ? -h : h) : 0); };
 /** AUDIT SC1: a remembered placement matches to this - a floating-origin rebase adds the offset in a different order
  *  than the host did, and the last bit of a float is no motion. */
 export const SHADOW_STILL_EPS = 1e-3;
@@ -1207,10 +1211,14 @@ export class ShadowPass {
     for (let i = 0; i < this.count; i++) {
       const r = this.records[i];
       if (r.kind === REC_BB) {
+        const wl = Math.hypot(r.flatWind[0], r.flatWind[1]);
         for (const b of r.batches) {
           if (!b?.vao || b._dead || b._shDyn || b.noShadow || b.conceal || b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive)) continue;
           const c = batchSphere(b, this._bSphere);   // AUDIT 68 S16-batch-sphere-dup: the replays' own sphere
           if (c && !spheresTouch(c[0], c[1], c[2], c[3], pos[0], pos[1], pos[2], far)) continue;
+          // PERF-EXT1: ...and a pixel-wide batch by its QUADS, in the cube its six faces tile. One with none in it puts
+          // nothing in this cache, so whatever it does is no reason to rebuild it.
+          if (b._place && !placementsInCube(b, quadRadius(wl, b), pos[0], pos[1], pos[2], far)) continue;
           h = foldSignature(h, shId(b)); h = foldSignature(h, Math.round(b._shOx * 64) + Math.round(b._shOz * 64) * 7919); n++;
         }
         continue;
@@ -1234,13 +1242,21 @@ export class ShadowPass {
       const r = this.records[i];
       if (r.kind === REC_BB) {
         if (!r.dynamic) continue;
+        const wl = Math.hypot(r.flatWind[0], r.flatWind[1]);
         for (const b of r.batches) {
           if (!b?._shDyn || !b.vao || b._dead || b.noShadow || b.conceal) continue;
           if (b.selfCard && !self) continue;   // DISC24-C: the player's own card is no reason to redraw a map it will not be drawn into
           if (b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < SHADOW_FLAT_MIN_HEIGHT) || isSpectral(b.archive)) continue;
           if (b._shSway && near === DYN_SWAY) continue;
           const c = batchSphere(b, this._bSphere);   // AUDIT 68 S16-batch-sphere-dup
-          if (!c || spheresTouch(c[0], c[1], c[2], c[3], pos[0], pos[1], pos[2], far)) { if (!b._shSway) return DYN_MOVER; near = DYN_SWAY; }
+          if (c && !spheresTouch(c[0], c[1], c[2], c[3], pos[0], pos[1], pos[2], far)) continue;
+          // PERF-EXT1: a pixel-wide wood's sphere touches every lantern in its pixel, so it held every one on the sway's
+          // beat (six faces blitted and replayed every fourth frame) - asked of its trees, it holds only a lantern
+          // one of them stands by. The CUBE, not the far sphere: a face draws into its corners (pins: a quad at
+          // 22.3 of a 20 far, 17 along +X, still redraws the slot).
+          if (b._place && !placementsInCube(b, quadRadius(wl, b), pos[0], pos[1], pos[2], far)) continue;
+          if (!b._shSway) return DYN_MOVER;
+          near = DYN_SWAY;
         }
         continue;
       }
@@ -1357,6 +1373,7 @@ export class ShadowPass {
         // this loop binds another, and only this loop writes these two.
         // Reset per record, beside the sway's and the texture's.
         let lastW = NaN, lastH = NaN, lastOx = NaN, lastOy = NaN, lastOz = NaN;
+        const wl = Math.hypot(r.flatWind[0], r.flatWind[1]);   // PERF-EXT1: the record's wind, for its quads' lean
         for (const b of r.batches) {
           if (!b?.vao || b._dead || b.conceal || f.isSpectral(b.archive)) continue;   // a concealed foe and a ghost cast nothing
           if (filter !== REPLAY_ALL && (filter === REPLAY_STATIC) === !!b._shDyn) continue;   // SC1: by the batch's own word
@@ -1364,6 +1381,10 @@ export class ShadowPass {
           if (lightPos && b.selfCard && !self) continue;   // DISC24-C: the player's own card, only where it is redrawn every frame
           if (b.noShadow || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }   // F2: a thing on the ground is no standing card   // WEEDS1: ...and nothing under four texels of THIS cascade
           if (!batchVisible(planes, b)) { this.stats.culled++; continue; }   // EL5
+          // PERF-EXT1: a pixel-wide batch passes the sphere test in every cascade and face of its pixel; asked of its
+          // quads it is drawn only where one of them stands (the census's noon city: cascade 0 drew 123 flat batches a
+          // frame for 7 with a tree in it, cascade 1 144 for 79). A skip here is a batch that rasterises nothing.
+          if (b._place && !placementsInVolume(b, quadRadius(wl, b), planes)) { this.stats.culled++; continue; }
           // WEEDS1: F5's sphere test used to sit here and is GONE, because
           // it can no longer decide anything. A single-flat batch's radius
           // is hypot(w, h) / 2, so F5 fired only when hypot(w, h) < 4 texels

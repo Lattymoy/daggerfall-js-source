@@ -1,0 +1,146 @@
+[
+  {
+    "name": "PERF-EXT1-1-no-batch-is-born-with-its-placements",
+    "file": "src/render/renderer.js",
+    "old": "      _place: count > 1 && !dynamic ? placementGrid(centers) : null,",
+    "new": "      _place: null,",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT1-2-a-batch-built-dynamic-gets-a-grid-too",
+    "file": "src/render/renderer.js",
+    "old": "_place: count > 1 && !dynamic ? placementGrid(centers) : null,",
+    "new": "_place: count > 1 ? placementGrid(centers) : null,",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT1-3-a-move-keeps-the-birth-placements",
+    "file": "src/render/renderer.js",
+    "old": "    // moves is judged by its sphere, which follows it below.\n    batch._place = null;\n",
+    "new": "    // moves is judged by its sphere, which follows it below.\n",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT1-4-a-free-keeps-the-grid",
+    "file": "src/render/renderer.js",
+    "old": "    batch._place = null;   // PERF-EXT1: the placement grid is the batch's, and goes with it\n",
+    "new": "",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT1-5-the-replay-asks-the-sphere-alone",
+    "file": "src/render/shadowPass.js",
+    "old": "          if (b._place && !placementsInVolume(b, quadRadius(wl, b), planes)) { this.stats.culled++; continue; }\n",
+    "new": "",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT1-6-a-lantern-is-held-by-the-woods-sphere",
+    "file": "src/render/shadowPass.js",
+    "old": "          if (b._place && !placementsInCube(b, quadRadius(wl, b), pos[0], pos[1], pos[2], far)) continue;\n          if (!b._shSway) return DYN_MOVER;",
+    "new": "          if (!b._shSway) return DYN_MOVER;",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT1-7-the-static-signature-counts-the-woods-sphere",
+    "file": "src/render/shadowPass.js",
+    "old": "          if (b._place && !placementsInCube(b, quadRadius(wl, b), pos[0], pos[1], pos[2], far)) continue;\n          h = foldSignature(h, shId(b));",
+    "new": "          h = foldSignature(h, shId(b));",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT1-8-the-cube-is-the-far-sphere-the-hunters-first-cut",
+    "file": "src/render/bounds.js",
+    "old": "if (Math.abs(p[i] - lx) <= R && Math.abs(p[i + 1] - ly) <= R && Math.abs(p[i + 2] - lz) <= R) return true;",
+    "new": "if (Math.hypot(p[i] - lx, p[i + 1] - ly, p[i + 2] - lz) <= R) return true;",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT1-9-the-cube-forgets-the-lift",
+    "file": "src/render/bounds.js",
+    "old": "const lx = px - o[0], ly = py - o[1] - b.size.h * 0.5, lz = pz - o[2];",
+    "new": "const lx = px - o[0], ly = py - o[1], lz = pz - o[2];",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT1-10-the-volume-forgets-the-lift",
+    "file": "src/render/bounds.js",
+    "old": "  const ox = o[0], oy = o[1] + b.size.h * 0.5, oz = o[2];\n  const cs = q.cs, st = q.start, p = q.pts;\n  for (let k = 0, n = q.G * q.G;",
+    "new": "  const ox = o[0], oy = o[1], oz = o[2];\n  const cs = q.cs, st = q.start, p = q.pts;\n  for (let k = 0, n = q.G * q.G;",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT1-11-the-quad-bound-forgets-the-wind",
+    "file": "src/render/shadowPass.js",
+    "old": "return placementRadius(b.size, b.sway > 0 ? swayLean(wl, b.sway, h < 0 ? -h : h) : 0);",
+    "new": "return placementRadius(b.size, 0);",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT1-12-the-quad-bound-forgets-half-the-diagonal",
+    "file": "src/render/bounds.js",
+    "old": "return (Math.hypot(size.w, size.h) * 0.5 + lean) * (1 + 1e-5) + 1e-3;",
+    "new": "return (Math.hypot(size.w, size.h) * 0.25 + lean) * (1 + 1e-5) + 1e-3;",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT1-13-the-cube-drops-the-far-column-it-meets",
+    "file": "src/render/bounds.js",
+    "old": "  _cells[1] = Math.max(0, Math.min(top, Math.floor((x1 - q.x0) / q.sx)));",
+    "new": "  _cells[1] = Math.max(0, Math.min(top, Math.floor((x1 - q.x0) / q.sx) - 1));",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT1-14-a-cell-sphere-no-longer-prunes-the-volume",
+    "file": "src/render/bounds.js",
+    "old": "    if (cr < 0 || !sphereInPlanes(planes, cs[k * 4] + ox, cs[k * 4 + 1] + oy, cs[k * 4 + 2] + oz, cr + rad)) continue;",
+    "new": "    if (cr < 0) continue;",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT1-15-a-cell-sphere-leaves-out-its-farthest-placement",
+    "file": "src/render/bounds.js",
+    "old": "cs[k * 4 + 3] = Math.sqrt(r2) * (1 + 1e-6) + 1e-4;",
+    "new": "cs[k * 4 + 3] = Math.sqrt(r2) * 0.9;",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT1-16-one-cell-for-every-batch",
+    "file": "src/render/bounds.js",
+    "old": "  const G = n > PLACEMENT_ONE_CELL ? PLACEMENT_GRID : 1;",
+    "new": "  const G = 1;",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  }
+]

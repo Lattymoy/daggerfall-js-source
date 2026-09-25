@@ -262,3 +262,136 @@ noon (9,205) and at night (8,445) - the flats' deduped uploads, the
 replays', the water's one block - with 32,992 -> 27,402 GL calls at noon
 and 30,600 -> 25,338 at night over the four frames. The picture does not
 move; the frame does less to draw it.
+
+# THE SHADOWS (PERF-EXT1-5)
+
+The shadow lens and the draw-submission lens took the Enhanced Lighting
+shadow pass apart - the sun's three cascades, the eight lanterns' cube
+maps, SC1's static caches - on the same kind of harness (the real
+`Renderer`, the real `ShadowPass` and the lane over a counting GL; the
+shadow lens's `harness.mjs` town and its `harness2.mjs` at layoutNature's
+real density, 31 records over 128 x 128 tiles), and the draw lens's
+census of the REAL game over a real ARENA2 in the provers' scratch (not
+in this container). Where the two lenses found the same win in two forms,
+the slice says which form it took and on what measurement. Every number
+under "Measured" was re-run on the committed tree against the base
+(`1d05f5374`, PERF-EXT10-13 in); the provers' game-side numbers are
+quoted as theirs.
+
+## PERF-EXT1 - a flat batch reaches a shadow by its placements
+
+**What the frame paid.** A streamed pixel's flats are ONE batch per
+(archive, record) across the whole pixel - a climate's nature record is
+120 to 260 trees over 819 units - so a batch's bounding sphere is some
+four hundred units across. It passed every sun cascade and every lantern
+face in its pixel, and SC1 found it "near" every lantern there. A tree
+record sways in any breeze (floraSway is on by default, and above a
+metre or two a second of wind a tree's lean passes SHADOW_SWAY_STILL), so
+every lantern in a town at night blitted and redrew six faces on the
+sway's beat, drawing a wood none of whose trees stood in its reach. The
+draw lens's census of the real city at night: 1,676 of 2,301 draws a
+frame were that replay - 73% of the frame - and 16.6 of them had a tree
+in the face. At noon the near cascades drew 123 and 144 flat batches a
+frame for 7 and 79 with a tree in them.
+
+**The change.** A static batch of more than one flat keeps its
+placements on a grid (`bounds.js` `placementGrid`, minted in the batch's
+literal as `_place`), and the pass asks its QUADS: the replay, after the
+sphere test, whether any quad is in this cascade or face
+(`placementsInVolume`); `_dynamicNear` and `_staticSignature`, after
+theirs, whether any is in the lantern's CUBE (`placementsInCube`). A quad
+is bounded by the sphere at its placement lifted h/2 (batchSphere's
+lift, the sign kept) of radius hypot(w, h)/2 plus WIND3's lean at the
+crown, a hair wide for float32 - BB_VS's own corners, sway included - and
+a sphere beyond a plane rasterises nothing behind it. The cube and not
+the far sphere: the six faces' frusta tile the cube, and a face draws
+into its corners. A batch built dynamic has no grid (its centres move),
+and `moveBillboardBatch` and a free drop it.
+
+**Two forms, one taken.** The draw lens split a batch 4 x 4 over its
+footprint and tested every cell's sphere, then that cell's placements; the
+shadow lens kept a finer grid (up to 16 x 16), visited only the cells
+under the volume - a cascade's cut to the batch's own height span through
+the volume's inverted corners - and asked the static signature too. Both
+draw the same set. Built both ways on this tree and timed with a free
+no-op GL (`PLAIN=1`, 3 alternating runs, 300 frames):
+
+| real density, pass JS ms/frame | base | fine grid + slab cut | 4 x 4, every cell | 4 x 4, cube by its cells (taken) |
+|---|---|---|---|---|
+| day | 0.117 | 0.213 | 0.155 | 0.146 |
+| night | 0.440 | 0.431 | 0.373 | 0.366 |
+| dusk | 0.565 | 0.639 | 0.532 | 0.541 |
+
+and the two queries alone on one real-density pixel (31 records of ~264,
+`qbench.mjs`): the lanterns' cube 14-16 us a frame on the fine grid, 23-31
+on 4 x 4 testing every cell, 18 on 4 x 4 visiting only the cells the
+cube's box meets; the cascades' volume 43-47, 27-33 and 27-29. The slab
+cut costs more per batch than sixteen sphere tests. So the taken form is
+the draw lens's 4 x 4 cells with the shadow lens's cube query and its
+three sites (the signature included), and from the draw lens's prover
+two corrections the shadow lens's form lacked: the padded quad radius,
+and a moved batch dropping its grid (the hunter's first cut kept its
+birth placements; a gib's shadow went from a cascade and three faces).
+
+**Measured** (the shadow lens's harnesses, 300 frames walking and
+turning; means after SC1's hold, the frame's maximum in brackets):
+
+| | base | PERF-EXT1 |
+|---|---|---|
+| town, draws a frame, day | 270.6 (353) | 182.6 (258) |
+| town, dusk | 567.9 (1,287) | 192.8 (532) |
+| town, night | 297.3 (934) | 10.3 (274) |
+| town, GL calls day / dusk / night | 817 / 2,669 / 1,859 | 461 / 670 / 216 |
+| town, lantern faces redrawn / depth blitted a night frame | 18.6 / 4.88 Mtexel | 9.5 / 2.52 Mtexel |
+| real density, draws day | 373.3 (508) | 197.6 (296) |
+| real density, dusk | 982.8 (2,007) | 200.6 (537) |
+| real density, night | 615.5 (1,514) | 5.3 (257) |
+| real density, GL calls day / dusk / night | 1,279 / 4,549 / 3,299 | 529 / 629 / 111 |
+| pass JS with a free GL, day / night (two runs) | 0.117-0.127 / 0.440-0.535 | 0.146-0.175 / 0.366-0.373 |
+
+The provers' game-side A/B on the real city (the draw lens's `abref.mjs`,
+not re-run here): at night 2,298 -> 634 draws and 16,989 -> 6,055 GL calls
+a frame, lantern point draws 1,743.5 -> 11.5, `ShadowPass.render` 5.36 ->
+3.31 ms on SwiftShader; at noon the lanterns' 382.8 draws a frame to 0. On
+the players' Windows path (Chrome over ANGLE's D3D11) every removed flat
+draw also removes a vertex-stage constant-buffer rewrite, because uRight,
+uOrigin and uSize go up per draw.
+
+**The picture.** Where a replay runs, it draws what it drew: the harness's
+VERIFY mode placed every quad of every batch a replay skipped as BB_VS
+places it, sway at the gust's peak, and found each wholly beyond one clip
+plane - 67.8 million quads over 475,095 skipped batch-replays (day, dusk
+and night, walking, and turning in a 30 m/s wind), none unproven, no draw
+the base did not make. The draw lens's prover read back all 51 sun and
+lantern depth layers bit-identical on SwiftShader, a moved gib included.
+WHAT MOVES, exactly: a lantern whose only reason to redraw was a distant
+swaying wood no longer redraws. So a walker leaving its reach is erased
+the next frame - as calm weather erases it today - not at the sway's next
+beat; and a mover in the cube's corner past the far sphere (past the
+lamp's range, where it lights nothing) is not painted, as calm weather
+does not paint it today. The shadow lens's layer differential counted
+both: 2 of 7,152 windy layer states among trees, 0 of 7,599 calm.
+
+**Pinned** (`test/perfexta.test.js`, every one failing on the base): a
+lantern beside a swaying wood whose 41 trees stand 150+ units off redraws
+no face, blits nothing and binds none of it (the base: twelve faces), and
+redraws for one tree moved to its foot and for a 1 x 3 quad in a face's
+CORNER 22.3 from it (the far-sphere variant loses that one); the near
+cascades bind a wood 150+ from the eye in neither (the base: every
+cascade) and one with a tree at the eye in all; VERIFY in the suite -
+random woods, winds, origins and heights replayed into the sun's cascades
+and eight lanterns' caches and live layers, each skipped quad proven
+beyond one plane at the gust's two extremes; the grid holds every
+placement once as the float32 the GPU reads, and one flat, a dynamic
+batch, a move and a free carry none, a static batch moved into reach and
+a gib both casting where they are; a 10,000-tree wood answers twenty
+lanterns and two cascades as a scan does, reading under a third of what
+the scan reads, and a cascade off the wood reads no placement; a still
+wood out of reach leaves a lantern's static set without a rebuild; the
+lift (a crown alone in the cube) and the lean (0.07 of wind carrying a
+wide quad in) each hold the slot; and WHAT MOVES - a lantern beside a
+distant wood with a walker leaving is the same, frame for frame, in wind
+and in calm. The provers' own pins pass on the tree and fail on the base
+(`pins.test.mjs` 1-2); their guards pass on both (`pins2.test.mjs`'s
+corner, `gibpin.test.mjs`). Mutants `tools/mutants/perfexta.json` 1-16,
+all dead. `test/hard3_types.test.js`: the literal mints 35.

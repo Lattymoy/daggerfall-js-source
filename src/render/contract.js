@@ -50,6 +50,7 @@
  * @property {Float32Array} [bounds]                  EL5: the sphere [cx, cy, cz, r] about the origin the shadow and air replays cull by
  * @property {number} [_quads]                        BLOOD1b: how many quads the buffer holds, so `moveBillboardBatch` cannot write past it
  * @property {boolean} [_dyn]                         BLOOD1b: born DYNAMIC_DRAW, because its centres move every frame
+ * @property {object|null} [_place]                  PERF-EXT1: a static batch's placements on a grid (bounds.js placementGrid) - the shadow pass asks its QUADS; null for one flat, one built dynamic, one moved
  * @property {Float32Array} [_moveScratch]            BLOOD1b: the move's own vertex staging, kept rather than re-minted each frame
  * @property {number[]} [_box]                        EV3: the host's cull box [minX, minY, minZ, maxX, maxY, maxZ] (flatBatchAabb)
  * @property {boolean} [noShadow]                     F2: a thing lying on the ground casts nothing (a loot pile)
