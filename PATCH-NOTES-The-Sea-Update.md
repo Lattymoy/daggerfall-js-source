@@ -37,6 +37,9 @@
 - Detailed Ships is on for everyone online.
 - Warm Ashes - Ships ambushes belong to your own voyage. Aquatic Sprites is each player's own.
 
+## Fixes
+- Online: auto-travel no longer crashes the game when it stops beside a spawned dungeon ("Error finding location ...").
+
 ## Notes
 - Iliac Puddle No More's sunken loot and wrecks aren't in yet. Their settings are already listed, but they do nothing until that part arrives.
 - There's a Hole in the Bottom of the Ocean and Come Sail Away are not in this update.
