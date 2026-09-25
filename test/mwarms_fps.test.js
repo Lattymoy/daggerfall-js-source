@@ -121,7 +121,7 @@ test('MWA1 pins: the hosts build at every door a made character arrives through 
   const menu = read('src/ui/enhancedMenu.js');
   assert.doesNotMatch(menu, /mwArms'/, 'MWA4: nothing on the card writes a switch');
   assert.match(menu, /prefRow\('showFps', 'FPS counter',/, 'the counter has its row');
-  assert.match(read('src/main.js'), /mountFpsCounter\(\{ enabled: \(\) => params\.has\('fps'\) \|\| !!getPref\('showFps'\), stats: \(\) => renderer\.stats \}\);/, 'the counter mounts over every host, on the pref or ?fps, with the renderer\'s counts (PERF3)');
+  assert.match(read('src/main.js'), /mountFpsCounter\(\{ enabled: \(\) => params\.has\('fps'\) \|\| !!getPref\('showFps'\), stats: \(\) => renderer\.stats, info: \(\) => renderer\.frameInfo \}\);/, 'the counter mounts over every host, on the pref or ?fps, with the renderer\'s counts (PERF3) and its GPU and frame size (PERF-SCALE)');
 });
 
 test('MWA4 (before the merge: "remove the on and off button (defunct) and only keep attach and remove data buttons"): MWA2\'s On/Off row is gone and its switch with it - the attached files are the switch, online and off (mutant: the pref read back at any consumer)', () => {

@@ -49,8 +49,8 @@ test('U60: the root document is a page about the game, and the game is at /play/
   // game data" a page about the game can hold.
   // FIX-D: one url() is allowed, and it is not a picture - the digit five's
   // @font-face data URI (a 520-byte OFL glyph; see below). Every other url()
-  // is still forbidden. <img\s, not <img: the Ko-fi comment SAYS "<img>"
-  // while explaining why the cup is drawn in box-shadow instead of being one.
+  // is still forbidden. <img\s, not <img: the Patreon comment SAYS "<img>"
+  // while explaining why the mark is drawn in box-shadow instead of being one.
   // BR2 (2026-09-13) had put ONE raster here - Mac's uploaded logo as the
   // wordmark, under a whitelist of one; BR3 (Mac, 2026-09-14: "revert the
   // logo to the original Daggerfall Enhanced text") took it out again, so
@@ -386,14 +386,14 @@ test('U63: the page is the pixel face\'s own idioms, not the shell it replaced',
   assert.match(skin, /color: rgb\(243,239,44\); text-shadow: 2px 2px 0 rgb\(93,77,12\)/, '...which is the menu\'s pair');
   // TWO box SHAPES, and both are plaques: the .plaque rule (worn by
   // the door's Play/Install pair - DA shipped the downloadable app
-  // and its Install stands beside Play, same shape) and the Ko-fi
+  // and its Install stands beside Play, same shape) and the Patreon
   // mark at the top right - the same shape the About plaque has on
   // the home face, which is what makes a box read as a plaque here.
   // Nothing else on the page declares a box.
   const boxes = (css.match(/border: 2px solid #7d7460/g) ?? []).length;
-  assert.equal(boxes, 2, 'the plaque shape and the Ko-fi mark - no third box rule');
+  assert.equal(boxes, 2, 'the plaque shape and the Patreon mark - no third box rule');
   assert.match(css, /\.plaque \{/);
-  assert.match(css, /\.kofi \{/);
+  assert.match(css, /\.patreon \{/);
   // The door's three, exactly: Play into the browser, Install onto the
   // desk, Discord for the people, in that order, all wearing the one
   // plaque shape (DISC1, 2026-09-15, Mac: "Can you add our discord ...
@@ -439,34 +439,49 @@ test('U63: the fi ligature is off - "files" is not "Ales", on the site AND in th
 // site cleanup; the no-raster law above is its successor.)
 
 // ── U64: THE DOMAIN, AND THE HAT ──────────────────────────────────
-test('U64: the Ko-fi mark is a plaque with a drawn cup, near the top, and it is the only ask', () => {
+test('U64 + PATREON1: the Patreon mark is a plaque with Patreon\'s mark drawn, near the top, and it is the only ask - Ko-fi is gone (Mac, 2026-09-25: "Replace website KOFI with patreon")', () => {
   const css = landing.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? '';
   // ONE link - the corner mark alone. Not a banner, not a badge, and
   // not an <img>: an image would be the page's only raster, and a
   // raster is the one thing this site does not carry. (The credits
   // line came off with the DA cleanup's follow-up, Mac's call - the
   // mark is the whole ask now.)
-  const asks = [...landing.matchAll(/href="(https:\/\/ko-fi\.com\/[\w-]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(asks, ['https://ko-fi.com/dfjs'], 'the mark, and nothing else');
-  assert.match(landing, /<a class="kofi" href="https:\/\/ko-fi\.com\/dfjs" rel="noopener">/);
-  assert.doesNotMatch(landing, /<img[^>]*ko-fi/i, 'no badge image');
+  const asks = [...landing.matchAll(/href="(https:\/\/(?:www\.)?(?:patreon\.com|ko-fi\.com)\/[\w/-]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(asks, ['https://www.patreon.com/c/dfenhanced'], 'the mark, and nothing else - no Ko-fi left');
+  assert.match(landing, /<a class="patreon" href="https:\/\/www\.patreon\.com\/c\/dfenhanced" rel="noopener">/);
+  assert.match(landing, /<\/i>Support on Patreon\n/);
+  assert.doesNotMatch(landing, /ko-fi\.com|class="kofi"|Support on Ko-fi/i, 'Ko-fi is gone from the page');
+  assert.doesNotMatch(landing, /<img[^>]*patreon/i, 'no badge image');
   // Near the top, out of the wordmark's way, and a thumb's target.
-  assert.match(css, /\.kofi \{[\s\S]{0,200}position: absolute; top: 0; right: 0;/);
-  assert.match(css, /\.kofi \{[\s\S]{0,400}min-height: 44px;/);
+  assert.match(css, /\.patreon \{[\s\S]{0,200}position: absolute; top: 0; right: 0;/);
+  assert.match(css, /\.patreon \{[\s\S]{0,400}min-height: 44px;/);
   assert.match(css, /\.door \{ padding-bottom: 140px; padding-top: 84px; \}/, 'and the door makes room for it on a phone');
-  // The cup is DRAWN: one box-shadow pixel list, in the skin's own brass
-  // and dim, on the same 4px grid the rest of the page uses.
-  const cup = css.slice(css.indexOf('.cup {'), css.indexOf('.cup {') + 900);
-  assert.match(cup, /box-shadow:/);
-  const px = (cup.match(/-?\d+px -?\d+px 0 (var\(--brass\)|#7d7460)/g) ?? []);
-  assert.ok(px.length >= 9, `${px.length} shadow pixels drawn (the element itself is the tenth)`);
-  assert.ok(px.filter((p) => p.includes('#7d7460')).length === 2, 'two of them are steam');
+  // The mark is DRAWN: one box-shadow pixel list, in the skin's own brass
+  // and dim, on the same 4px grid the rest of the page uses - Patreon's
+  // bar (the element and four pixels under it, in the dim) and its disc
+  // (a 5x5 with its corners cut - 21 pixels in the brass, a column clear of the bar).
+  const mark = css.slice(css.indexOf('.pmark {'), css.indexOf('}', css.indexOf('.pmark {')));
+  assert.match(mark, /box-shadow:/);
+  const px = (mark.match(/-?\d+(?:px)? -?\d+(?:px)? 0 (?:var\(--brass\)|#7d7460)/g) ?? []);
+  assert.equal(px.filter((p) => p.includes('#7d7460')).length, 4, 'the bar: four pixels under the element');
+  assert.equal(px.filter((p) => p.includes('--brass')).length, 21, 'the disc: twenty-one');
   for (const p of px) {
     const [x, y] = p.split(' ').slice(0, 2).map((v) => Math.abs(Number(v.replace('px', ''))));
-    assert.equal(x % 2, 0, `${p}: on the grid`);
-    assert.equal(y % 2, 0, `${p}: on the grid`);
+    assert.equal(x % 4, 0, `${p}: on the grid`);
+    assert.equal(y % 4, 0, `${p}: on the grid`);
   }
-  assert.ok(cup.includes('#7d7460'), 'the steam is dim, not brass');
+  assert.doesNotMatch(css, /\.cup \{|\.kofi \{/, 'the cup and its rule are gone');
+  // AUDIT BRANCH-0925 PATREON1-F1: every ask is the ONE Patreon, the repository's own Sponsor button included -
+  // GitHub draws it in the header of every repo page (Install, Source and the issues link land there) from
+  // .github/FUNDING.yml, which still said `ko_fi: dfjs` beside a README that said Patreon. `custom` keeps Mac's /c/ URL.
+  const funding = read('.github/FUNDING.yml');
+  assert.equal(funding.trim(), 'custom: ["https://www.patreon.com/c/dfenhanced"]', 'the Sponsor button asks on Patreon');
+  assert.doesNotMatch(funding, /ko_fi|ko-fi/i);
+  for (const doc of ['README.md', 'SUPPORT.md']) {
+    const text = read(doc);
+    assert.ok(text.includes('https://www.patreon.com/c/dfenhanced'), `${doc} asks on the same Patreon`);
+    assert.doesNotMatch(text, /ko-fi|ko_fi|kofi/i, `${doc}: no Ko-fi left`);
+  }
 });
 
 test('DISC1: the Discord is front and centre - a plaque in the door\u2019s own row, one home, no new shape', () => {
@@ -494,7 +509,7 @@ test('DISC1: the Discord is front and centre - a plaque in the door\u2019s own r
   assert.doesNotMatch(css, /\.discord \{|\.dsc \{/, 'the invite grew its own rule');
   assert.doesNotMatch(landing, /<img[^>]*discord/i, 'no badge image - this page carries no raster');
   // An external link opened from a page that is not ours to trust.
-  assert.match(landing, /href="https:\/\/discord\.gg\/dfenhanced" rel="noopener"/, 'the invite carries rel=noopener, as the Ko-fi mark does');
+  assert.match(landing, /href="https:\/\/discord\.gg\/dfenhanced" rel="noopener"/, 'the invite carries rel=noopener, as the Patreon mark does');
 });
 
 test('U64: the live site is the custom domain, and the build does not care which', () => {

@@ -245,8 +245,8 @@
   {
     "name": "cadence-no-change-check",
     "file": "src/render/shadowPass.js",
-    "old": "        const staticStale = changed || !this._slotCached[k] || this._slotSig[k * 2] !== sig.hash || this._slotSig[k * 2 + 1] !== sig.count;",
-    "new": "        const staticStale = !this._slotCached[k] || this._slotSig[k * 2] !== sig.hash || this._slotSig[k * 2 + 1] !== sig.count;",
+    "old": "        const staticStale = changed || !this._slotCached[k] || this._slotSig[k * 2] !== sigHash || this._slotSig[k * 2 + 1] !== sigCount;",
+    "new": "        const staticStale = !this._slotCached[k] || this._slotSig[k * 2] !== sigHash || this._slotSig[k * 2 + 1] !== sigCount;",
     "tests": [
       "test/el8_contact.test.js"
     ]

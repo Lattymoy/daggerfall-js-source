@@ -31,7 +31,7 @@ import { settlementsOf, loadModRoads, basicRoadsPathsPoint } from '../world/road
 import { modSetting, modSettingsOf } from '../systems/modSettings.js';   // ROADS 24; HCC: the mod's eight switches
 import { hasPort } from '../systems/travelPorts.js';   // AUDIT-RR2 G22: Travel Options' port list for RR's ship gate
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
-import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH, surfaceHeightAt } from '../world/terrainSurface.js';
+import { buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH, surfaceHeightAt } from '../world/terrainSurface.js';
 import { waterUniforms, buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the pixel's own grid; WATER-AUDIT: its own index set
 import { waterCorners, WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // GRASS-WET1: the one table that says which of a tile's corners stand in water - the DRAW's, because a blade in a puddle is a picture, not a physics
 import { windowEmissionRGB } from '../render/windowEmission.js';
@@ -52,7 +52,7 @@ import { collectBlockFlats, billboardSize, mobileBillboardSize, centredBase } fr
 import { SeasonHelper } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper
 import { loadSeasonsTextures, seasonsInstalled } from '../systems/seasonsIliacBayAssets.js';   // SIB1: its textures, from the player's own copy of the mod
 import { createSeasonReskin } from '../world/seasonReskin.js';
-import { farFlatVisible } from '../world/flatDistance.js';   // MAC1: the far rings draw the trees and the flats that move, and nothing small   // ROAD-H H3: which pixels a season re-skin rebuilds - RefreshLoadedNatureBatches' per-batch decision, per KEY
+import { farFlatVisibleAt } from '../world/flatDistance.js';   // MAC1: the far rings draw the trees and the flats that move, and nothing small   // ROAD-H H3: which pixels a season re-skin rebuilds - RefreshLoadedNatureBatches' per-batch decision, per KEY
 import { isBulletinBoard, isCityGate, CITY_GATE_OPEN_MODEL_ID, CITY_GATE_CLOSED_MODEL_ID } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears; :1007-1011 - the two a city gate wears
 import { makeCityGate, updateCityGate } from '../world/cityGate.js';   // AUDIT 64 F14: DaggerfallCityGate
 import { staticBuildingBox, staticBuildingWorldAabb } from '../world/staticBuildings.js';   // AUDIT 64 F11: RMBLayout's StaticBuilding array
@@ -144,10 +144,10 @@ import { immersiveFootsteps, reportModCompatibilityIssues } from '../systems/imm
 import { betterAmbience, classicFootstepAllowed } from '../systems/betterAmbience.js';   // BA1: Better Ambience - the shake, the dungeon's fog and light, the reverb, the indoor rain, its own stride   // IF1: Immersive Footsteps owns the stride and the three landing sounds once its clips are in (DisableVanillaFootsteps)
 import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
 import { StaticBatchBuilder, keyResolver } from '../render/staticBatch.js';   // PERF4: a pixel's static models as one mesh
-import { createBreather } from '../systems/buildBreather.js';   // PERF7: the stream build yields to the frame
+import { createBreather, frameFitBudget } from '../systems/buildBreather.js';   // PERF7: the stream build yields to the frame; PERF-EXT24: a slice of what the frame left
 import { pieceIndex } from '../render/labGrass.js';   // PERF8: the piece under a point, by arithmetic
 import { meterFor } from '../render/perfMeter.js';   // GRASS2: the field gets a zone of its own - it was inside the world's
-import { LabGrassRenderer, createGrassField, grassRecordsOf, tileMeanColour, LAB_GRASS, LAB_DIM } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte
+import { LabGrassRenderer, createGrassField, grassRecordsOf, tileMeanColour, discSlotCount, LAB_GRASS, LAB_DIM } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte; PERF-EXT20: the field's slot count, warmed at mount
 import { windDrive, floraSwayOf, floraSwayOn } from '../systems/windDrive.js';   // WIND3: the one wind in every consumer's units; the flats' sway
 import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program
 import { createWindAudio, windSoundOn } from '../systems/windAudio.js';   // WIND3: the wind, heard
@@ -172,6 +172,7 @@ import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionStat
 import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, saveKeysOfCharacter, saveInfoOf, requestScreenshot, capturePendingScreenshot, exitAutosaveNames } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end   // ONLINE-AUTOSAVE1: saveKeysOfCharacter/saveInfoOf - every slot this character already has, kept in sync on an online exit too
 import { frameBegin, frameEnd, frameAbort } from '../systems/frameClock.js';   // PERF1: the frame's script time; AUDIT-WH2 L1-F4: and the door an early return takes
 import { frameCapSkip } from '../systems/frameCap.js';   // FPS-CAP1: DFU's TargetFrameRate - a held frame re-arms before the clock and the input frame
+import { frameInterval, lastBusy, lendFrame, framesBegun } from '../systems/frameClock.js';   // PERF-EXT24: the frame's period and its own script, and the stream's slices lent back - those no frame ran inside
 import { arrivalClampMinutes, playerTravelPosition } from '../systems/travel.js';   // F-slice; F114: the ship-aware travel origin
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion, directionHintString } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it; SPAWNED-DUNGEONS2b: the same eight-word compass
@@ -258,7 +259,8 @@ import { totalWeight } from '../systems/inventory.js';   // HCC: PlayerEntity.Wa
 import { WAGON_KG_LIMIT } from '../systems/itemTransfer.js';   // HCC: ItemHelper.WagonKgLimit
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name (DaggerfallInputMessageBox)
 import { getBool, getInt, getFloat } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
-import { STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, ghostSampler } from '../world/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water   // EV4: ghost rows for chunk-edge normals (the restride's own)
+import { STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION } from '../world/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water
+import { restrideGrid } from '../world/terrainGen.js';   // PERF-EXT26: the restride's grid - the kernel's own law (EV4's ghost rows), on the worker or here
 import { getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
 // The start-marker arm (StreamingWorld's PositionPlayerToLocation), the
 // law and its two location-type reads. AUDIT 64 F18/F19: DFU reaches it
@@ -903,6 +905,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const labGrass = isEnhanced() && getPref('enhancedEnvironments') && grassDensity > 0 && new URLSearchParams(globalThis.location?.search ?? '').get('grass') !== 'off'
     ? new LabGrassRenderer(renderer.gl) : null;
   let labGrassField = null;   // GR5: the world-anchored field, filled a cell or two a frame
+  if (labGrass) discSlotCount(LAB_GRASS.span);   // PERF-EXT20: the field's one sweep, paid here behind the loading screen - every createGrassField after reads the memo
   let hccGroundMoved = null;   // DISC20-C: the horse-cart pool's re-stand over a pixel just built - bound once the pool is (the boot's first pixel builds before it)
   // WATER1: the water surface - enhanced skin, its own switch, `?water=off`
   // the kill door. A draw only: nothing here tells the game where water is.
@@ -1024,7 +1027,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // The pixel builder below calls `travelOptions?.initLocationRects`
   // (AUDIT-TO1 B3's second hook) and the topic sync reads
   // `_travelRegionSeen`, and BOTH run inside the boot's own first build
-  // - `const playerPixel = await buildPixel(first.px, first.py)` - which
+  // - `const playerPixel = await awaitedBuild(first.px, first.py)` - which
   // happens three and a half thousand lines before the mod itself is
   // constructed. A `const` is in its TEMPORAL DEAD ZONE until its own
   // declaration RUNS, and optional chaining does not soften that:
@@ -1124,7 +1127,6 @@ export async function bootWorld(canvas, renderer, params, status) {
   // the build was in flight is heard.
   const wodCarry = new Map();   // pixel key -> { spawners: Map(centre -> [{spawner, flat}]), hold, piles, life }
   const wodSlots = new TerrainSlots();   // AUDIT BRANCH (WoD) L1-3
-  const _wodSiteWas = new Set();   // AUDIT BRANCH (WoD) m2: pixels torn down for a rebuild while a site levelled them
   const _wodT = [0, 0, 0];
   const _DOWN = [0, -1, 0];
   // WOD6: THE ARRIVAL'S OWN ORDER, AS DFU RUNS IT. InitWorld stands the
@@ -1513,6 +1515,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     inFlight.set(key, flying);
     return flying;
   }
+  // PERF-EXT24 (the review, 2026-09-25): A BUILD SOMETHING WAITS ON IS
+  // SAID BY THE ONE WAITING. The awaited arm was inferred from an idle
+  // pump (`_streamSince == null`), and a teleport's build is never alone:
+  // the frame loop keeps pumping while it is awaited, the queue
+  // `state.init` has just filled starts the new ring, and every slice
+  // after the arrival's first was sized for the stream - 3 ms on a 144 Hz
+  // display, the arrival up to twice as late. The boot and the teleport
+  // build through here now, and while one is in flight every slice on the
+  // one breather has the whole 6 ms, whichever build is breathing - the
+  // flat slice PERF7 gave all of them, for the moments nobody is playing.
+  let _awaitedBuilds = 0;   // builds in flight that something waits on - this door's, and only its
+  async function awaitedBuild(px, py) {
+    _awaitedBuilds++;
+    try { return await buildPixel(px, py); }
+    finally { _awaitedBuilds--; }
+  }
   // BUILD-FAIL1: WHAT A BUILD THAT THROWS LEAVES BEHIND. A build makes
   // things that outlive it - GPU surfaces and batches, its collider
   // bucket and its gates', its doors in the E-target list - and it hands
@@ -1545,7 +1563,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
   }
 
-  const breather = createBreather();   // PERF7: one slice clock for the stream; each build resets it
+  // PERF-EXT24 (2026-09-25, the players: "fps issues in the exterior but
+  // fine in the interior", "me too my friend.. don't know why. I got a
+  // RX6600"): THE SLICE IS WHAT THE FRAME LEFT (systems/buildBreather.js
+  // frameFitBudget). A build the pump runs - the stream - lends the frame
+  // interval less the frame's own script less a margin, 3 to 6 ms, and the
+  // whole 6 again once the stream has run two seconds; a build something
+  // awaits (the boot's first pixel, a teleport's - awaitedBuild, above)
+  // lends the whole slice. Each slice the breather can vouch for is lent
+  // to the frame clock and the `?perf=cpu` meter as `build`: until now
+  // neither saw the stream at all.
+  let _streamSince = null;   // PERF-EXT24: when the pump's current run of builds began; null while it is idle
+  const breather = createBreather({   // PERF7: one slice clock for the stream; each build resets it
+    budget: () => frameFitBudget({ intervalMs: frameInterval(), busyMs: lastBusy(), streamingMs: _streamSince == null ? 0 : performance.now() - _streamSince, awaited: _awaitedBuilds > 0 }),
+    onSlice: (ms) => { lendFrame(ms); meterFor(renderer.gl)?.addCpu('build', ms); },
+    frames: framesBegun,   // PERF-EXT24 (the review): a slice a frame ran inside held a wait, and is not lent
+  });
   async function buildPixelNow(px, py, { roadsRetry = false } = {}) {
     breather.reset();   // PERF7
     const key = `${px},${py}`;
@@ -2105,6 +2138,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const batches = [];
     made.batches = batches;   // BUILD-FAIL1
     for (const [k, centers] of groups) {
+      await breather.breathe();   // PERF-EXT23: a flat group a breath - its texture is a cached promise, a microtask, and gave no frame back
       const [archive, record] = k.split('_').map(Number);
       const t = await getTexture(archive);
       if (record >= t.recordCount) continue;
@@ -2177,8 +2211,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     // EV6: the pixel's models sort by MESH at build - one archetype's
     // placements draw back to back and the VAO shadow skips the rebind.
     models.sort((a, b) => a._order - b._order);
-    const staticMerged = staticBuilder.finish();   // PERF4
-    const staticBatch = staticMerged ? renderer.createMesh(staticMerged) : null;
+    // PERF-EXT23 (2026-09-25, the players: "fps issues in the exterior but
+    // fine in the interior", "me too my friend.. don't know why. I got a
+    // RX6600"): THE TAIL BREATHES TOO. The merge and createMesh's spheres ran
+    // after the last breath above in one piece - on a synthetic city pixel
+    // 45-60 ms of ONE frame, on a town 6-26 ms, for every town, city and WoD
+    // pixel streamed in. The merge now yields a model's copy, a range of the
+    // sphere's passes and a texture group at a time, and hands createMesh the
+    // spheres it measured, so createMesh walks nothing again. Same arrays,
+    // same spheres, byte for byte; the pixel publishes a few frames later.
+    const staticMerged = await staticBuilder.finishSliced(() => breather.breathe());   // PERF4
+    const staticBatch = staticMerged ? renderer.createMesh(staticMerged, { bounds: staticMerged.bounds }) : null;
     made.staticBatch = staticBatch;   // BUILD-FAIL1
 
     // AUDIT-TO1 B3: StreamingWorld.OnUpdateLocationGameObject
@@ -2236,8 +2279,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the blend never reaches past the pixel that carries the location -
     // so the next grass update() re-reads `keep`/`ground` fresh here and
     // only here.
-    const hadWodSite = _wodSiteWas.delete(key);   // AUDIT BRANCH (WoD) m2: a rebuild that lost its site moved the ground back
-    if ((dfLocation || wodSite || hadWodSite) && labGrassField) {   // WOD2: a levelled camp moved the ground the same way
+    //
+    // PERF-EXT21: AND FOR EVERY PIXEL NOW, not only a location's or a
+    // site's. A pixel crossing used to throw the whole field away, and
+    // that was quietly the heal for every other way a cell goes stale: a
+    // cell placed at the boot or after a teleport while its neighbour
+    // pixel was not built yet (its blades over the gap refused), a
+    // pixel rebuilt under it - the road network arriving, a season's
+    // re-skin, a late World of Daggerfall pack, a site a rebuild lost.
+    // The crossing keeps the field now, so each of those says so itself,
+    // at the one moment they all share: the pixel being published. A
+    // far pixel's rect holds no live cell and costs a few hundred Map
+    // reads; a near one re-reads exactly the cells that read it wrong.
+    if (labGrassField) {   // WOD2: a levelled camp moved the ground the same way; AUDIT BRANCH (WoD) m2: a rebuild that lost its site moved it back; PERF-EXT21: every publish re-reads it
       const t = state.pixelTranslation(px, py);
       labGrassField.invalidate(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE);
     }
@@ -2416,6 +2470,21 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  while it waited is dropped without building anything. */
   function spendRestrides() {
     if (!restridePending.size) return;
+    // PERF-EXT26 (2026-09-25, the players: "fps issues in the exterior but
+    // fine in the interior", "me too my friend.. don't know why. I got a
+    // RX6600"): WITH THE TERRAIN WORKER UP, EVERY PROMOTION GOES TO IT AT
+    // ONCE. A crossing promotes five pixels, and this queue paid them one a
+    // frame here - ~1.8 ms of grid a frame for five frames, for every
+    // enhanced-skin player. The worker already runs this very grid for
+    // every build (terrainGen.js restrideGrid), so it answers the same
+    // bytes; the surface swaps when the reply lands. Without a worker (none
+    // in the host, `?terrainthread=off`, one that died) the queue below is
+    // what it always was.
+    if (terrainGen.threaded) {
+      for (const p of restridePending.values()) promoteOffThread(p);
+      restridePending.clear();
+      return;
+    }
     let budget = RESTRIDE_PER_FRAME;
     const want = [...restridePending.values()]
       .sort((a, b) => (Math.abs(a.px - state.current.x) + Math.abs(a.py - state.current.y))
@@ -2431,8 +2500,24 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
   }
 
-  function restrideTerrain(p, stride) {
-    const grid = buildTerrainGrid(p.samples, stride, ghostSampler(woods, p.px, p.py));
+  /** PERF-EXT26: a promotion's grid, built on the terrain worker. The
+   *  reply swaps the surface only if the pixel it was asked for still
+   *  stands and still wants stride 1 - an eviction, a rebuild or a walk
+   *  back out while it was away drops it, and a pixel already promoted
+   *  keeps what it has. Nothing is made for a dropped reply, so nothing
+   *  is left to free. */
+  function promoteOffThread(p) {
+    const key = `${p.px},${p.py}`;
+    if (built.get(key) !== p) return;                  // evicted while it waited
+    if (strideFor(p.px, p.py) === p._stride) return;   // walked back out of the near ring
+    terrainGen.grid({ px: p.px, py: p.py, stride: 1, samples: p.samples }).then((grid) => {
+      if (built.get(key) !== p) return;                              // evicted, or rebuilt, while the worker built it
+      if (strideFor(p.px, p.py) !== 1 || p._stride === 1) return;   // walked back out, or promoted meanwhile
+      restrideTerrain(p, 1, grid);
+    }).catch((e) => console.error(`[terrain] promotion of ${key} failed:`, e));
+  }
+
+  function restrideTerrain(p, stride, grid = restrideGrid({ woods, px: p.px, py: p.py, stride, samples: p.samples })) {   // PERF-EXT26: or the grid the worker built
     if (p.water) { renderer.destroyWaterSurface(p.water); p.water = null; }
     renderer.destroyMesh(p.terrain);
     p.terrain = renderer.createTerrainSurface(grid.positions, grid.normals,
@@ -2440,6 +2525,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     const waterIndices = waterOn ? buildWaterIndices(p.tilemapBytes, stride) : null;
     p.water = waterIndices ? renderer.createWaterSurface(p.terrain, waterIndices) : null;
     p._stride = stride;
+    // PERF-EXT21: a promotion is the other way a pixel joins the grass
+    // (its near pieces are the stride-1 ones), and the crossing no longer
+    // rebuilds the field behind it - so the cells over it re-read it.
+    if (stride === 1 && labGrassField) {
+      const t = state.pixelTranslation(p.px, p.py);
+      labGrassField.invalidate(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE);
+    }
   }
 
   /** @param {{collectLoose?:boolean}} [opts] - A1: a season re-skin
@@ -2481,7 +2573,6 @@ export async function bootWorld(canvas, renderer, params, status) {
         carryWodSite(p, key, { piles });
       }
     } else {
-      if (p.wodSite) _wodSiteWas.add(key);   // m2
       if (p.wodSpawners || p.privateersHold) carryWodSite(p, key, { hold: p.privateersHold?.state ?? null });
     }
     // P2-slice (items-2): a loose pile dies WITH its pixel - the
@@ -2644,7 +2735,7 @@ export async function bootWorld(canvas, renderer, params, status) {
 
   status(`building player pixel ${startPixel.x},${startPixel.y}`);
   const first = queue.shift();
-  const playerPixel = await buildPixel(first.px, first.py);
+  const playerPixel = await awaitedBuild(first.px, first.py);
 
   // Camera: at the start location's origin, or the pixel centre.
   const cam = { pos: [TERRAIN_SIZE / 2, playerPixel.centerHeight + 40, TERRAIN_SIZE / 2], yaw: Math.PI, pitch: -0.1 };
@@ -5487,6 +5578,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     lockOn.unlock();   // AUDIT 62 F16: destroy()/removeFoe empties the pool WITHOUT flagging `dead`, so lockOn's death break never fires on the orphan the lock still holds
     magic.clearMissiles();
     arrows.arrows.length = 0;   // the flights own no GL objects - the mesh is the host's cache
+    // PERF-EXT21: AND THE GRASS FIELD. `state.init` below re-anchors the
+    // scene with no offset to ride, so a field kept across it would stand
+    // the old place's blades - at the old place's heights - wherever they
+    // fell in the new one. It always did: this sweep never reached the
+    // field, and the first pixel crossing after the arrival was what threw
+    // it away. The crossing keeps its field now (shiftOrigin), so the new
+    // world's empty field is said here, and the next frame starts one.
+    labGrassField = null;
     // BLOOD1 AUDIT 2 (2026-09-20): THE BLOOD GOES WITH THE WORLD. The
     // ring, the chunks in the air and the ceilings' drips are all in
     // SCENE space, and `state.init` below starts a NEW scene frame -
@@ -5528,11 +5627,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // and the cache is invalid because the ORIGIN moved, which is the
     // reason, rather than because a splice happened to run first.
     doorGeneration += 1;   // WORLD-HOVER: the origin was re-anchored, so every door's WORLD matrix moved with it
+    _streamSince = null;   // PERF-EXT24 (the review): the sweep ended the old world's stream - the new one's two seconds start at its first pump
     const first = queue.shift();
     if (seasonsActive && modEvent === 'travel') await seasons.onPostFastTravel().catch((e) => console.warn('[seasons] travel:', e?.message ?? e));   // SIB1: OnPostFastTravel, off the arrival month (SIB2: the travel popup's arm alone)
     if (seasonsActive && modEvent === 'load') await seasons.onLoad().catch((e) => console.warn('[seasons] load:', e?.message ?? e));   // SIB2: SaveLoadManager.OnLoad - the forced apply now, the unforced one next frame (seasons.tick)
     let dest;   // `finally`: a throwing build must not leave the poll off
-    try { dest = await buildPixel(first.px, first.py); }
+    try { dest = await awaitedBuild(first.px, first.py); }
     finally { _seasonStraightening = false; }
     if (seasonsActive && modEvent === 'travel') seasons.onUpdateTerrainsEnd();   // SIB1: StreamingWorld.OnUpdateTerrainsEnd's after-travel refresh (nothing stale stands, so it asks for no rebuild)
     // TeleportToMapPixel STORES the reposition method and calls
@@ -7515,6 +7615,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (building || queue.length === 0) return;
     building = true;
     const next = queue.shift();
+    _streamSince ??= performance.now();   // PERF-EXT24: a run of streamed builds begins
     try {
       await buildPixel(next.px, next.py);
       // AUDIT 24 (the seven-slice sweep): the streamer can unload this
@@ -7537,6 +7638,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       state.release(next.px, next.py);
     }
     building = false;
+    if (!queue.length) _streamSince = null;   // PERF-EXT24: and ends with the queue
   }
 
   const keys = new Set();
@@ -13022,6 +13124,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let _lastPlayerPos = null, _playerStill = false;   // T2: the politeness still-tracker
 const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first - a scratch, refilled per frame
   const _camRight = new Float32Array(3);   // EV2: the billboard right axis, refilled per frame
+  const _waterRows = [];   // PERF-EXT13: the frame's water pixels, one reused row each, handed to drawWaterSurfaces
   // EV3: THE FRUSTUM. The hatch reads once at build (?cull=off, the
   // ?sky=classic shape - a wrong bound in the field is a URL away from
   // proof); the planes refill per frame from the SAME proj*view the
@@ -13969,7 +14072,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       doorGeneration += 1;   // WORLD-HOVER: the floating origin moved, so every door's WORLD matrix did
       cityGuards.offsetAll(r.offset);
       exteriorFoes.offsetAll(r.offset);   // X-slice
-      labGrassField = null;   // AUDIT 49 F2 / GR5: the field is baked in world coordinates - a new world starts empty
+      labGrassField?.shiftOrigin(r.offset);   // PERF-EXT21: the field keeps its own origin and follows this one - every cell stays where it grew (AUDIT 49 F2 / GR5 threw it away here and regrew it for three seconds)
       droppedLoot.offsetAll(r.offset);
       droppedTorches.offsetAll(r.offset);   // HT1: the torches too
       camps.offsetAll(r.offset);   // SURV3: and the camps
@@ -14058,6 +14161,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         if (want === 1) restridePending.set(`${p.px},${p.py}`, p);   // the dear way round
         else { restridePending.delete(`${p.px},${p.py}`); restrideTerrain(p, want); }
       }
+      if (terrainGen.threaded) spendRestrides();   // PERF-EXT26: the promotions reach the worker on the crossing frame, ahead of the new pixels' jobs
       console.log(`stream: entered ${r.current.x},${r.current.y} (load ${r.load.length}, unload ${r.unload.length})`);
       // CAMP1 - GROUP ENCOUNTERS ON CHUNK LOAD (Mac, 2026-09-17: "this
       // should always happen when loading world chunks if it works like
@@ -14492,7 +14596,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       if (pixelVisible || pixelCasts) for (const b of p.batches) {
         const off = !pixelVisible || (cullOn && aabbOutside(_planes, b._box, t[0], t[1], t[2]));   // EV3
         if (off && !renderer.shadowReach(b._box, t[0], t[1], t[2])) continue;   // SHADOW-REACH: off screen and out of every shadow's reach
-        if (!farFlatVisible({ ring, height: b.size?.h ?? 0, animated: b.frame != null })) continue;   // MAC1 (a far flat the rule drops casts nothing either)
+        if (!farFlatVisibleAt(ring, b.size?.h ?? 0, b.frame != null)) continue;   // MAC1 (a far flat the rule drops casts nothing either); PERF-EXT12: positional, no object a batch a frame (flatDistance.js)
         b.origin = t;
         (off ? castBatches : allBatches).push(b);   // SHADOW-REACH: the maps alone, or the frame
       }
@@ -14563,10 +14667,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // the dome's own two colours to reflect.
     if (waterOn) {
       const wu = waterUniforms({ seconds: now / 1000, wind: windNow, rain: precipMode === 'rain' || precipMode === 'storm' ? fx.intensity : 0, sky: sky.waterSky() });
+      let n = 0;   // PERF-EXT13: collected, then ONE call - the frame's block once, not once a pixel (renderer.js)
       for (const p of built.values()) {
         if (!p._visible || !p.water) continue;
-        renderer.drawWaterSurface(p.water, p._pixelMatrix, renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4, wu);
+        const row = _waterRows[n++] ??= [null, null, null, null];
+        row[0] = p.water; row[1] = p._pixelMatrix; row[2] = renderer.tileArrays.get(p.groundArchive); row[3] = p.tilemapTex;
       }
+      renderer.drawWaterSurfaces(_waterRows, n, 6.4, wu);
+      for (let i = 0; i < n; i++) _waterRows[i].fill(null);   // a scratch keeps no evicted pixel's surface alive
     }
     meterFor(renderer.gl)?.markCpu('flats');   // PERF-CPU: submitting the billboards - the draws themselves, from JS. ABOVE setFlatWind, not between it and the draw: WIND3 pins the two as ADJACENT, and the wind is part of this phase anyway.
     bloodMarks.draw(camRight, UP_Y);   // BLOOD1a: the marks go down BEFORE the billboards, so a body standing in its own blood is over it and not under it. ABOVE setFlatWind for the reason its own neighbour gives: WIND3 pins the wind and the draw as ADJACENT.

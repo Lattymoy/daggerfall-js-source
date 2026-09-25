@@ -172,14 +172,14 @@ test('EL1: the five lane shaders declare the 48-light arrays and the lane\'s two
     assert.match(fs, /uniform vec3 uPointColors\[48\];/, `${name}: 48 colours`);
     assert.match(fs, /uniform float uELExposure;/, `${name}: the exposure`);
     assert.match(fs, /uniform float uELScatter;/, `${name}: the in-scatter`);
-    assert.match(fs, /elDecode\(/, `${name}: decodes`); assert.match(fs, /elEncode\(col\)/, `${name}: encodes`);
-    // PERF-FOG (2026-09-19) moved the DECODE, not the law: the fog colour
-    // is still blended in linear and re-encoded, so a fogged fragment is
-    // still exactly the fog colour - it just arrives decoded, because
-    // three pow() on a uniform, once a fragment, in every lane shader
-    // there is, was the thing being paid for saying it here.
-    assert.match(fs, /mix\(uFogColorLin, tm, fogFactorAt\(wp\)\)/, `${name}: the fog colour is blended in LINEAR and re-encoded, so a fogged fragment IS the fog colour`);
-    assert.match(fs, /uniform vec3 uFogColorLin;/, `${name}: ...and it is the decoded one the host sends`);
+    assert.match(fs, /elDecode\(/, `${name}: decodes`); assert.match(fs, /elEncode\(tm\)/, `${name}: encodes`);
+    // EL-DISTANCE (2026-09-25, Mac: "It almost gives this weird
+    // darkness/foggy look to distant terrian which I really dont like"):
+    // the fog is blended with the ENCODED surface, in display space as the
+    // classic lane blends it - a fogged fragment is still exactly the fog
+    // colour, and the ground fades on the classic lane's ramp, not ahead of it.
+    assert.match(fs, /mix\(uFogColor, elEncode\(tm\), fogFactorAt\(wp\)\)/, `${name}: the fog colour is blended in DISPLAY space, so a fogged fragment IS the fog colour and the ramp is the classic one`);
+    assert.doesNotMatch(fs, /uFogColorLin|mix\(uFogColor(?:Lin)?, tm,/, `${name}: ...never the linear mix that ran distant ground to the fog early`);
     assert.ok(!/\(1\.0 - d \/ uPointLights/.test(fs), `${name}: no classic falloff`);
     assert.match(fs, /uCloudShadowRect/, `${name}: the cloud shadow`);
   }

@@ -869,14 +869,14 @@ does the pack's USE arm.
                         worldModes.js:2204 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:1073, world.js:2719,
+                        dungeonContext.js:1073, world.js:2810,
                         exterior.js:2579. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:7494, dungeonContext.js:6799. A seam
+    / NOTEBOOK          world.js:7594, dungeonContext.js:6799. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -983,6 +983,22 @@ GitHub provisions the apex certificate first and the www alias after,
 and it had not landed when this was written. The apex serves; if www is
 still 503 tomorrow the fix is to re-save the domain in the repo's Pages
 settings, which re-triggers provisioning.
+
+
+**PATREON1 (2026-09-25, Mac: "Replace website KOFI with patreon https://www.patreon.com/c/dfenhanced").** The corner
+plaque is Patreon's now: `<a class="patreon" href="https://www.patreon.com/c/dfenhanced">`, "Support on Patreon",
+and the drawn cup is Patreon's own mark on the same 4px grid (`.pmark`: the bar in the dim, five pixels tall, and a
+disc in the brass - a 5x5 with its corners cut). Still no image and no third-party script; still the page's
+only ask - Ko-fi is gone from the page, the README, SUPPORT.md and the repository's Sponsor button
+(`.github/FUNDING.yml`). The Patreon tiers are the titles the account service grants (TITLE-N: Disciple, Apostle,
+Hierophant). Pinned in `test/landing.test.js` (U64 + PATREON1).
+
+AUDIT BRANCH-0925 PATREON1-F1 (2026-09-25, the pre-merge audit, Mac: "Audit before we merge"): the sweep had left
+`.github/FUNDING.yml` at `ko_fi: dfjs`, so GitHub's Sponsor button - in the header of every repo page the landing
+page's Install, Source and issues links and the desktop app's releases link land on - still sent people to Ko-fi
+beside a README that said Patreon. It is `custom: ["https://www.patreon.com/c/dfenhanced"]` now (`custom`, not
+`patreon: dfenhanced`, which would link a URL Mac never gave), and the PATREON1 pin reads it, README.md and SUPPORT.md:
+the same Patreon, no Ko-fi (`tools/mutants/patreon1.json`, 4, all dead).
 
 ## U63 THE SITE WEARS THE GAME'S FACE (2026-08-27, Mac's call)
 
@@ -8691,7 +8707,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:3132 and
+questJournal.js from charSheetNav:53, world.js:3223 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -10562,9 +10578,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:7886`,
+the other half went stale unnoticed. (The rest cite named `world.js:7988`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:7892` now.)
+deleted the second and the cite is `world.js:7994` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -15375,9 +15391,9 @@ whether an entry MATCHES and asserts nothing.
 Following it out was worse than the symptom. Five Ledger rows cite a
 PAIR - `` `world.js:N`, `exterior.js:M` `` - and the table captured `M`
 alone. So `M` was re-resolved at every wave for a year and `N` was never
-read: `world.js:5846` named a line that is 8950, `:904` one that is
+read: `world.js:5946` named a line that is 8950, `:906` one that is
 1215, `:1094` one that is 2194, `:3903` one that is 3066, `:3920` one
-that is 8907. `world.js:5596-5628` and `dungeonContext.js:1443` were
+that is 8907. `world.js:5696-5728` and `dungeonContext.js:1443` were
 stale the same way. Seven numbers re-resolved BY CONTENT, every
 uncaptured half de-baked to `\d+`, and eight new entries added so every
 number in a pair is captured. The half nobody reads cannot rot in

@@ -1,0 +1,38 @@
+[
+  {
+    "name": "AUDIT-BRANCH-0925-PATREON1-F1-the-sponsor-button-still-on-ko-fi",
+    "file": ".github/FUNDING.yml",
+    "old": "custom: [\"https://www.patreon.com/c/dfenhanced\"]",
+    "new": "ko_fi: dfjs",
+    "tests": [
+      "test/landing.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BRANCH-0925-PATREON1-F1-the-sponsor-button-another-patreon",
+    "file": ".github/FUNDING.yml",
+    "old": "custom: [\"https://www.patreon.com/c/dfenhanced\"]",
+    "new": "patreon: dfenhanced",
+    "tests": [
+      "test/landing.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BRANCH-0925-PATREON1-F1-the-readme-back-on-ko-fi",
+    "file": "README.md",
+    "old": "Support on Patreon: https://www.patreon.com/c/dfenhanced",
+    "new": "Support on Ko-fi: https://ko-fi.com/dfjs",
+    "tests": [
+      "test/landing.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BRANCH-0925-PATREON1-F1-support-back-on-ko-fi",
+    "file": "SUPPORT.md",
+    "old": "**Patreon:** https://www.patreon.com/c/dfenhanced",
+    "new": "**Ko-fi:** https://ko-fi.com/dfjs",
+    "tests": [
+      "test/landing.test.js"
+    ]
+  }
+]

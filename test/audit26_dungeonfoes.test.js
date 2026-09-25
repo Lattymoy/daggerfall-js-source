@@ -539,7 +539,10 @@ test('F212: the world host collects both pools with the pixel, which is also wha
   // main), 3900 -> 4600: the camps now go through natives across the
   // re-anchored frame, their snapshot and teardown with their own note
   // above the needles.
-  const core = WORLD.slice(t, t + 4600);
+  // PIN MOVED AGAIN (PERF-EXT21), 4600 -> 5400: the sweep now empties the
+  // grass field too - a crossing no longer does it - with its own note,
+  // above the needles.
+  const core = WORLD.slice(t, t + 5400);
   assert.ok(core.includes('destroyPixel(bx, by);'),
     'so a fast travel or a teleport takes every corpse with it');
   assert.ok(core.includes('exteriorFoes.clearLive();') && core.includes('cityGuards.clearLive();'),

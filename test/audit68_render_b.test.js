@@ -103,7 +103,7 @@ test('AUDIT 68 S17-wisp-wrap-gust: no wisp jumps when the wind\'s travel wraps -
     const circ = (d) => d - box * Math.round(d / box);
     const f = glslFunctions(WISP_VS, {
       uVP: I16, uEye: [0, 0, 0], uTime: 12.3, uBox: box, uStrength: 0.6, uWindV: [3, 0], uWindOff: [0, 0],
-      uLen: [...look.len], uCurl: look.curl, aCorner: [0.5, 0.5], aSeed: [10, 5, 20, 0],
+      uLen: [...look.len], aCorner: [0.5, 0.5], aSeed: [10, 5, 20, 0],
     }, { fp32: true });
     for (const seed of [0.07, 0.31, 0.37, 0.5, 0.77, 0.93]) {
       f.globals.aSeed = [10, 5, 20, Math.fround(seed)];
