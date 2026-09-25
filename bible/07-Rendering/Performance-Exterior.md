@@ -338,7 +338,8 @@ placements on a grid (`bounds.js` `placementGrid`, minted in the batch's
 literal as `_place`), and the pass asks its QUADS: the replay, after the
 sphere test, whether any quad is in this cascade or face
 (`placementsInVolume`); `_dynamicNear` and `_staticSignature`, after
-theirs, whether any is in the lantern's CUBE (`placementsInCube`). A quad
+theirs, whether any is in the lantern's CUBE (`placementsInCube`) - the
+signature outside a room drawn whole (the review, below). A quad
 is bounded by the sphere at its placement lifted h/2 (batchSphere's
 lift, the sign kept) of radius hypot(w, h)/2 plus WIND3's lean at the
 crown, a hair wide for float32 - BB_VS's own corners, sway included - and
@@ -515,11 +516,13 @@ change in the replays between two ranks. What differs is when an item
 is NAMED - `shId` mints on an item's first touch of any caster, item by
 item, where the walks minted caster by caster - and an id is a name held
 for the item's life that a cache compares only against its own last
-answer. DISC15's lo tier, which asks light by light and stops at its
-rebuild budget, asks the same walk for one (`_staticSignature`), so the
-signature has one home. The cpu lens's extension - per-caster candidate
-lists for the face replays - was neither prototyped nor measured, and is
-not here.
+answer. DISC15's lo tier, which asks light by light - EVERY lamp not
+fresh, every frame, for its rebuild budget is spent only on a change and
+a still room never spends it (the review corrected this line, which said
+it "stops at its rebuild budget") - asks the same walk for one
+(`_staticSignature`), so the signature has one home. The cpu lens's
+extension - per-caster candidate lists for the face replays - was
+neither prototyped nor measured, and is not here.
 
 **Measured.** The cpu lens's town (`townFrame.mjs --night`, 800 frames,
 `ab.sh` median of 9 alternating runs; the base is PERF-EXT2):
@@ -721,3 +724,128 @@ in every run.) The players' cards run the same calls through ANGLE's
 D3D11 back end, where each removed flat draw also removes a vertex-stage
 constant-buffer rewrite; the per-draw GPU-process and driver cost is not
 measurable here, and the fps they will see is not claimed.
+
+## THE REVIEW OF THE SHADOWS - the interior, the bound's two margins, the one homes
+
+An adversarial reviewer re-read PERF-EXT1-5 against the players' own
+words - "fps issues in the exterior but fine in the interior", "me too
+my friend.. don't know why. I got a RX6600" - and measured the half
+that was fine. Three findings, each reproduced on this tree before it
+was changed.
+
+**R1: PERF-EXT1 made a building's shadow pass dearer.** The reviewer's
+bench (`interiorBench.mjs`, in the review's scratch, not the tree: the
+real `Renderer` and `ShadowPass` of each tree on a free no-op GL,
+`renderer.everyLightCasts()` called as `worldModes.js` calls it,
+batches built as `interiorContext.js` builds them - one per (archive,
+record), a few flats each - and `beginFrame` timed) put the loss on
+DISC15's lo tier. `_renderLo` asks `_staticSignature` of every lamp
+that is not fresh EVERY frame - its budget, `SHADOW_LO_REBUILDS`, is
+spent only on a change, and a still room never changes - and PERF-EXT1's
+cube query ran in that walk for every multi-flat batch whose sphere
+touched the lamp, with a `Math.hypot` for the quad's half-diagonal at
+each: 1,600 cube queries a frame in a 40-lamp room, for nothing. PERF-EXT3
+above said the lo tier "stops at its rebuild budget"; it asks every lamp
+every frame (corrected there).
+
+**The change.** `_staticSignatures(cp, nC, out, quads)`: in a room its
+host draws whole (`f.everyLight`) BOTH walks - the eight's and the lo
+tier's - fold a batch by its sphere, as the base did; anywhere else by
+its quads, as PERF-EXT1 does. Where nothing is culled by view and
+nothing streams, a room's static set moves only when a thing in it does,
+and the quads could only spare a rebuild on that frame. By the sphere a
+signature folds a superset of what the quads fold, so no cache is left
+stale - a change of what a face draws is a change of the superset - and
+at worst a map is rebuilt for a flat that draws nothing into it, within
+the budget, as before PERF-EXT1. The replays that DRAW the maps still
+skip by the quads (`placementsInVolume`), so what a map holds is what
+PERF-EXT1 drew. And everywhere, the quad's half-diagonal is taken ONCE a
+size (`bounds.js` `placedHalfDiagonal`), remembered on the batch's grid
+with the w and h it is of - a host may write a size through, as
+`world.js` writes a walker's - where every ask took `Math.hypot` again:
+125-452 asks a frame on the town harness and 229-802 at real density,
+day to dusk.
+
+**Measured.** The reviewer's bench, `beginFrame` ms a frame (median of
+5-7 alternating runs, 1,500 frames after 300):
+
+| room (lamps x batches of flats) | base `1d05f5374` | first cut `dfe366f2c` | now |
+|---|---|---|---|
+| 40 x 40 of 6 | 0.193 | 0.466 | 0.200 |
+| 24 x 24 of 5 | 0.123 | 0.224 | 0.118 |
+| 30 x 30 of 5, clustered | 0.143 | 0.179 | 0.144 |
+| 16 x 20 of 4, clustered | 0.096 | 0.106 | 0.091 |
+| dungeon-like (no lo tier, 120 batches over 3,000 units) | 0.153 | 0.154 | 0.146 |
+
+(The 40 x 40 room's frames that change the eight - the eye walks a
+circle - draw 46 point draws where the base drew 240: the replays'
+quads, kept.) A dungeon is not drawn whole, so it runs the first cut's
+walk, and the three are within its noise. The same 40 x 40 hall NOT
+drawn whole (a case no host makes - every building calls
+`everyLightCasts`) is where the quads are still asked: 0.110 / 0.130 /
+0.133, the price of the eight's walk and the replays that save those
+194 draws. The pass's JS on the shadow lens's harnesses with a free GL
+(`PLAIN=1`, 5 alternating runs, median ms a frame), first cut -> now:
+real density by day 0.139 -> 0.114 (the base's 0.120-0.122), at night
+0.308 -> 0.296, at dusk 0.459 -> 0.424; the town by day 0.075 -> 0.077,
+at night 0.246 -> 0.215, at dusk 0.306 -> 0.306.
+
+**The picture.** Outside a room nothing moves: the draws a frame are the
+first cut's on both harnesses (town 72.6 / 80.6 / 8.0, real density
+88.9 / 90.7 / 2.0, day / dusk / night), and VERIFY on this tree over the
+reviewer's nine runs gives the first cut's totals exactly - 587,565
+batch-replays skipped, their 68,564,532 quads each proven beyond one
+clip plane, none unproven, no extra draw, 11,568 mesh replays with the
+base's triangles. In a room what moves is WHEN a map is rebuilt, never
+what it holds: a flat freed rebuilds every lo map its sphere reached,
+the base's answer (in the pin's hall 9 maps, where a quad of it stood in
+8).
+
+**R2: two margins of the quad's bound that no pin held.** Two of the
+reviewer's extra mutants survived the suite: the float pad dropped from
+`placementRadius`, and the lean taken by the SIGNED height. Both are
+pinned now. The pad: at 1,600 units float32 cannot tell a quad from one
+6e-5 nearer (the card holds `uOrigin + aCenter` no finer), so a quad
+whose unpadded bound misses a lantern's cube by 6e-5 is in, and one
+2e-3 out is not. The lean by |h|: an upside-down wide quad (h -1, the
+sign `droppedTorches.js` gives a flame) that the wind leans 0.07 toward
+a lamp holds it as the upright one does, and 0.15 further does not -
+BB_VS's own law (`* uSize.y`), held for the first producer that sways a
+negative height; today only flora sways. (`recordBillboards` takes the
+SIGNED lean for "is it swaying", so such a batch would be still to SC1
+and its lean the cache's; noted, not changed - nothing makes one.)
+
+**R3: one home for the lift and the half-diagonal.** PERF-EXT1 wrote
+batchSphere's lift out twice more, inline in the two placement queries
+- GHOST1's ghost campfire was two copies of that line disagreeing - and
+a third half-diagonal beside the birth's and a move's. `bounds.js`
+`batchLift` and `quadHalfDiagonal` are the one homes: batchSphere, both
+queries, `createBillboardBatch`'s sphere, `moveBillboardBatch`'s and
+`placementRadius` take them. The same arithmetic on the same values, so
+every sphere and radius keeps its bits (the suite, and VERIFY above).
+
+**Pinned** (`test/perfexta.test.js`, 16 -> 20): a still hall of twenty
+lamps and twenty batches of six flats under `everyLightCasts` reads no
+batch's placement grid in three frames while every lamp keeps its lo
+map (the first cut: 10,806 reads), the same hall not drawn whole still
+asks the quads, and a flat freed in the hall rebuilds, within the budget
+a frame, at least every lo map a quad of it stood in and at most every
+one its sphere reached; a swaying wood beside a lantern takes
+`Math.hypot` of its size once in ten frames (the first cut: 9), and a
+size written through in place - a crown grown taller, a quad grown wider
+- is asked again and carries the wood into a cube it did not reach; the
+pad and the lean by |h|, as above; and ONE HOME EACH, by source over
+`src/render/`: the lift written once and the half-diagonal once, at
+their homes, and every caller calling them. All four fail on the base;
+the room's, the half-diagonal's and the one home's on the first cut too,
+and the margins' pass there - they hold what it had.
+`test/blood1_decals.test.js`'s and `test/perfon2_peercull.test.js`'s
+by-source pins read the lift and the half-diagonal at their homes.
+Mutants: `perfexta.json` 42-54 (PERF-EXT-R1 to R13: the eight or the lo
+tier asking the quads in a room, the flag ignored, a street asked by the
+sphere, the memo asking every time or keyed on one of w and h, the pad,
+the signed lean, each home halved, the lift and the half-diagonal
+written out again), all dead; re-aimed by content:
+`perfexta.json` PERF-EXT1-7, 9-12 and PERF-EXT3-10, `ghost1.json`'s three
+lift records (now at its home), `blood1.json`'s three moved-sphere
+records and `el5.json`'s bb-bounds-no-flat. 68 run, 68 dead.

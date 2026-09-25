@@ -56,7 +56,7 @@
 //     the culling above is what makes 24 face replays cheap.
 
 import { lookAt, multiply, ortho, perspective } from '../world/mat4.js';
-import { spherePlanes, transformSphere, matrixScale, transformSphereScaled, recordVisible, subMeshVisible, batchVisible, sphereInPlanes, batchSphere, ZERO_ORIGIN, placementRadius, placementsInCube, placementsInVolume } from './bounds.js';   // EL5: the cull; PERF-EXT1: and a batch's placements
+import { spherePlanes, transformSphere, matrixScale, transformSphereScaled, recordVisible, subMeshVisible, batchVisible, sphereInPlanes, batchSphere, ZERO_ORIGIN, placementRadius, placedHalfDiagonal, placementsInCube, placementsInVolume } from './bounds.js';   // EL5: the cull; PERF-EXT1: and a batch's placements
 import { billboardKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-shadow-reach: re-keyed here, however the batch reached the records
 import { aabbOutside } from './frustum.js';   // SHADOW-REACH: a host's box against the cascades
 
@@ -279,8 +279,9 @@ export const SHADOW_SWAY_EVERY = 4;
 export const swayLean = (wl, sway, h) => wl * 1.3 * 0.0015 * sway * h;
 /** PERF-EXT1: the radius that bounds each quad of batch `b` in a record whose wind's rate is `wl` - bounds.js's
  *  placementRadius over WIND3's lean, which BB_VS applies only while uSway > 0 and scales by the quad's height
- *  whichever way it hangs (an upside-down flame's h is negative). */
-const quadRadius = (wl, b) => { const h = b.size.h; return placementRadius(b.size, b.sway > 0 ? swayLean(wl, b.sway, h < 0 ? -h : h) : 0); };
+ *  whichever way it hangs (an upside-down flame's h is negative). The review: the half-diagonal once a size
+ *  (placedHalfDiagonal), not a Math.hypot at every ask. */
+const quadRadius = (wl, b) => { const h = b.size.h; return placementRadius(placedHalfDiagonal(b), b.sway > 0 ? swayLean(wl, b.sway, h < 0 ? -h : h) : 0); };
 /** AUDIT SC1: a remembered placement matches to this - a floating-origin rebase adds the offset in a different order
  *  than the host did, and the last bit of a float is no motion. */
 export const SHADOW_STILL_EPS = 1e-3;
@@ -1138,7 +1139,7 @@ export class ShadowPass {
         const i = casters[rank];
         cp[rank * 4] = L[i * 4]; cp[rank * 4 + 1] = L[i * 4 + 1]; cp[rank * 4 + 2] = L[i * 4 + 2]; cp[rank * 4 + 3] = shadowFarFor(L[i * 4 + 3]);
       }
-      this._staticSignatures(cp, casters.length, this._sigOut);
+      this._staticSignatures(cp, casters.length, this._sigOut, !f.everyLight);   // the review: a room drawn whole by the sphere
     }
     // MAC-T1: the hand's light is -2 in the caster table - no slot, and no contact march either (enhancedLighting reads
     // the same table): F3's "never for the light in the hand", said by name rather than by distance from the camera
@@ -1250,8 +1251,19 @@ export class ShadowPass {
    *  that caster's (hash, count) in `out` on a touch - the same items into the same folds, so the same answers:
    *  foldSignature is a sum, blind to the order, and nothing here is read that the replays between two ranks could
    *  change. An item's id is minted on its first touch of ANY caster, item by item where the walks minted caster by
-   *  caster; an id is a name, held for the item's life, and a cache compares only its own last answer. */
-  _staticSignatures(cp, nC, out) {
+   *  caster; an id is a name, held for the item's life, and a cache compares only its own last answer.
+   *
+   *  PERF-EXT (2026-09-25, the review of the shadows): `quads` - a pixel-wide batch asked by its QUADS (PERF-EXT1), or
+   *  by its sphere alone as the base asked. A ROOM DRAWN WHOLE (DISC15's everyLightCasts, `f.everyLight`) asks by the
+   *  sphere: there the host culls nothing by view and streams nothing, so a room's static set moves only when a thing
+   *  in it does, and the quads could only spare a rebuild on that rare frame - while DISC15's lo tier asks EVERY lamp
+   *  EVERY frame (a still room never spends SHADOW_LO_REBUILDS), and PERF-EXT1's first cut paid a cube query a lamp a
+   *  batch for it: the reviewer's 40-lamp room, 40 batches of six flats, 0.240 -> 0.558 ms of beginFrame a frame - in
+   *  the half of "fps issues in the exterior but fine in the interior" that was fine. By the sphere a signature folds a SUPERSET of what the quads fold, so a
+   *  cache it keeps is never stale - a change of what a face draws is a change of the superset - and at worst it
+   *  rebuilds for a flat that draws nothing into it, as the base did. A cache compares only its own last answer, so
+   *  the question changing at a door is one rebuild, on the frame every cache rebuilds for the room's new records. */
+  _staticSignatures(cp, nC, out, quads) {
     for (let k = 0; k < nC; k++) { out[k * 2] = 0; out[k * 2 + 1] = 0; }
     for (let i = 0; i < this.count; i++) {
       const r = this.records[i];
@@ -1266,7 +1278,7 @@ export class ShadowPass {
             if (c && !spheresTouch(c[0], c[1], c[2], c[3], x, y, z, far)) continue;
             // PERF-EXT1: ...and a pixel-wide batch by its QUADS, in the cube its six faces tile. One with none in it puts
             // nothing in this cache, so whatever it does is no reason to rebuild it.
-            if (b._place) { if (rad < 0) rad = quadRadius(wl, b); if (!placementsInCube(b, rad, x, y, z, far)) continue; }
+            if (quads && b._place) { if (rad < 0) rad = quadRadius(wl, b); if (!placementsInCube(b, rad, x, y, z, far)) continue; }
             if (id === 0) { id = shId(b); at = Math.round(b._shOx * 64) + Math.round(b._shOz * 64) * 7919; }
             out[k * 2] = foldSignature(foldSignature(out[k * 2], id), at); out[k * 2 + 1]++;
           }
@@ -1284,12 +1296,13 @@ export class ShadowPass {
       }
     }
   }
-  /** DISC15: one light's signature, (hash, count), for the lo tier - which asks light by light and stops at
-   *  SHADOW_LO_REBUILDS; the walk is _staticSignatures'. */
+  /** DISC15: one light's signature, (hash, count), for the lo tier - which asks light by light, EVERY light that is
+   *  not fresh every frame while SHADOW_LO_REBUILDS lasts, and a still room never spends it (the review); the walk is
+   *  _staticSignatures', by the sphere alone, because the lo tier runs only in a room drawn whole. */
   _staticSignature(pos, far) {
     const cp = this._sigOne;
     cp[0] = pos[0]; cp[1] = pos[1]; cp[2] = pos[2]; cp[3] = far;
-    this._staticSignatures(cp, 1, this._sigOneOut);
+    this._staticSignatures(cp, 1, this._sigOneOut, false);
     return this._sigOneOut;
   }
   /** SC1: is any dynamic caster in the lantern's reach.

@@ -139,10 +139,26 @@ export function batchSphere(b, out) {
   if (!s) return null;
   const o = b.origin;
   out[0] = s[0] + (o ? o[0] : 0);
-  out[1] = s[1] + (o ? o[1] : 0) + (b.size?.h ?? 0) * 0.5;
+  out[1] = s[1] + (o ? o[1] : 0) + batchLift(b);
   out[2] = s[2] + (o ? o[2] : 0);
   out[3] = s[3];
   return out;
+}
+/** THE LIFT's one home (batchSphere says why it is the whole correctness of the sphere): how far above its placement a
+ *  batch's quad is centred - half its height, downward for an upside-down flame's negative one.
+ *
+ *  PERF-EXT (2026-09-25, the review of the shadows; the players' "fps issues in the exterior but fine in the interior"):
+ *  PERF-EXT1's two placement queries below wrote it out again inline, a copy each - GHOST1's ghost campfire was two
+ *  copies of this line disagreeing. Every sphere of a flat and every quad of a batch lift by this now.
+ *  @param {{ size?: { h: number }|null }} b */
+export function batchLift(b) {
+  return (b.size?.h ?? 0) * 0.5;
+}
+/** A flat's half-diagonal - how far its quad reaches from its centre at any facing (BB_VS spans w/2 by h/2 about it).
+ *  PERF-EXT (the review, as batchLift): one home for the batch's sphere at birth (createBillboardBatch), after a move
+ *  (moveBillboardBatch) and each quad's bound (placementRadius), which had written it three times. */
+export function quadHalfDiagonal(size) {
+  return Math.hypot(size.w, size.h) * 0.5;
 }
 const _batchSphere = new Float64Array(4);   // batchVisible's scratch - the replays' hot path allocates nothing
 /** A billboard batch against the planes, on batchSphere's sphere (no bounds: always drawn). */
@@ -236,12 +252,23 @@ export function placementGrid(centers) {
     for (let i = a; i < e; i += 3) { const dx = byCell[i] - cx, dy = byCell[i + 1] - cy, dz = byCell[i + 2] - cz; if (dx * dx + dy * dy + dz * dz > r2) r2 = dx * dx + dy * dy + dz * dz; }
     cs[k * 4] = cx; cs[k * 4 + 1] = cy; cs[k * 4 + 2] = cz; cs[k * 4 + 3] = Math.sqrt(r2) * (1 + 1e-6) + 1e-4;
   }
-  return { G, x0, z0, x1, z1, sx, sz, start, pts: byCell, cs };
+  return { G, x0, z0, x1, z1, sx, sz, start, pts: byCell, cs, hw: NaN, hh: NaN, half: 0 };   // the review: the half-diagonal's memo (placedHalfDiagonal), born empty
 }
-/** PERF-EXT1: the radius that bounds one quad of a batch - its half-diagonal plus WIND3's `lean` at the crown - a hair
- *  wide, so the float32 the GPU places a corner in can never land outside the double this is compared in. */
-export function placementRadius(size, lean) {
-  return (Math.hypot(size.w, size.h) * 0.5 + lean) * (1 + 1e-5) + 1e-3;
+/** PERF-EXT1: the radius that bounds one quad of a batch - its half-diagonal `half` plus WIND3's `lean` at the crown -
+ *  a hair wide, so the float32 the GPU places a corner in can never land outside the double this is compared in. */
+export function placementRadius(half, lean) {
+  return (half + lean) * (1 + 1e-5) + 1e-3;
+}
+/** PERF-EXT (2026-09-25, the review of the shadows): a placed batch's quad half-diagonal, taken ONCE for the size it
+ *  has. The replays, the lanterns' dynamic scans and the signature walk asked Math.hypot for it at every ask - 230 to
+ *  800 a frame on the provers' harnesses, some 50 ns each, and 40 a lamp a frame in the reviewer's room before the
+ *  walk there went by the sphere. A batch's size is its host's to rewrite (a walker's is written through every frame),
+ *  so the grid keeps the w and h its answer is of and asks again for any other: the same arithmetic on the same
+ *  values, so every radius keeps its bits. */
+export function placedHalfDiagonal(b) {
+  const q = b._place, s = b.size;
+  if (q.hw !== s.w || q.hh !== s.h) { q.hw = s.w; q.hh = s.h; q.half = quadHalfDiagonal(s); }
+  return q.half;
 }
 const _cells = new Int32Array(4);
 /** PERF-EXT1: the grid cells a box [x0, z0, x1, z1] in the batch's own frame meets, into _cells - false when it
@@ -261,7 +288,7 @@ function cellRange(q, x0, z0, x1, z1) {
  *  outside it rasterises into none of them - the cube, not the far SPHERE, whose corners a face still draws. */
 export function placementsInCube(b, rad, px, py, pz, far) {
   const q = b._place, o = b.origin || ZERO_ORIGIN, R = far + rad;
-  const lx = px - o[0], ly = py - o[1] - b.size.h * 0.5, lz = pz - o[2];   // the light in the batch's frame, the lift folded in
+  const lx = px - o[0], ly = py - o[1] - batchLift(b), lz = pz - o[2];   // the light in the batch's frame, the lift folded in
   if (!cellRange(q, lx - R, lz - R, lx + R, lz + R)) return false;
   const G = q.G, cs = q.cs, st = q.start, p = q.pts;
   for (let gx = _cells[0], gx1 = _cells[1]; gx <= gx1; gx++) {
@@ -281,7 +308,7 @@ export function placementsInCube(b, rad, px, py, pz, far) {
  *  (a cascade, a face)? Each cell's sphere first, then that cell's placements, each against the planes. */
 export function placementsInVolume(b, rad, planes) {
   const q = b._place, o = b.origin || ZERO_ORIGIN;
-  const ox = o[0], oy = o[1] + b.size.h * 0.5, oz = o[2];
+  const ox = o[0], oy = o[1] + batchLift(b), oz = o[2];
   const cs = q.cs, st = q.start, p = q.pts;
   for (let k = 0, n = q.G * q.G; k < n; k++) {
     const cr = cs[k * 4 + 3];

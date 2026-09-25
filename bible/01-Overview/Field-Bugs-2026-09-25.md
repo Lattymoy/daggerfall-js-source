@@ -189,3 +189,32 @@ Daggerfall city, a copy of ARENA2 in the session's scratch): at noon
 draws, the lanterns' 1,712 face draws to 12; the shadow pass's main
 thread 2.51 -> 1.97 ms at noon and 2.66 -> 1.96 at night (relative).
 Not seen on the players' cards.
+
+## AUDIT PERF-EXT1-5 (the review)
+
+Three findings from the adversarial read of the shadows, each
+reproduced in node on the real Renderer and ShadowPass before it was
+changed (`07-Rendering/Performance-Exterior.md`, THE REVIEW OF THE
+SHADOWS).
+
+- **R1: PERF-EXT1 made the shadow pass dearer in buildings** - the half
+  of "fps issues in the exterior but fine in the interior" that was
+  fine. DISC15's lo tier asks every lamp's static signature every frame
+  (a still room never spends its rebuild budget), and each ask ran
+  PERF-EXT1's cube query for every multi-flat batch its sphere touched:
+  `beginFrame` in a 40-lamp room 0.193 -> 0.466 ms a frame. A room its
+  host draws whole now folds batches by their spheres in both walks, as
+  before - never a stale map, at worst a rebuild within the budget - and
+  the streets keep their quads: 0.200 ms. The quad's half-diagonal is
+  taken once a size, not at every ask (the harnesses' pass JS at real
+  density by day 0.139 -> 0.114 ms, the base's 0.12). The same draws
+  and the same VERIFY totals outdoors.
+- **R2: two margins of the quad's bound had no pin** - the float pad
+  and the lean by |h| (an upside-down flame's sign). Both pinned.
+- **R3: the flat's lift and half-diagonal had grown copies** - one home
+  each now (`batchLift`, `quadHalfDiagonal`), the same bits.
+
+Pins: `test/perfexta.test.js` 20 (four new; the room's, the
+half-diagonal's and the one home's fail on the first cut `dfe366f2c`,
+all four on the base `1d05f5374`). Mutants: `perfexta.json` 54 - 13 new,
+all dead; 13 records re-aimed across perfexta, ghost1, blood1 and el5.

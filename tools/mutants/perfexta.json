@@ -56,7 +56,7 @@
   {
     "name": "PERF-EXT1-7-the-static-signature-counts-the-woods-sphere",
     "file": "src/render/shadowPass.js",
-    "old": "            if (b._place) { if (rad < 0) rad = quadRadius(wl, b); if (!placementsInCube(b, rad, x, y, z, far)) continue; }\n",
+    "old": "            if (quads && b._place) { if (rad < 0) rad = quadRadius(wl, b); if (!placementsInCube(b, rad, x, y, z, far)) continue; }\n",
     "new": "",
     "tests": [
       "test/perfexta.test.js"
@@ -74,7 +74,7 @@
   {
     "name": "PERF-EXT1-9-the-cube-forgets-the-lift",
     "file": "src/render/bounds.js",
-    "old": "const lx = px - o[0], ly = py - o[1] - b.size.h * 0.5, lz = pz - o[2];",
+    "old": "const lx = px - o[0], ly = py - o[1] - batchLift(b), lz = pz - o[2];",
     "new": "const lx = px - o[0], ly = py - o[1], lz = pz - o[2];",
     "tests": [
       "test/perfexta.test.js"
@@ -83,7 +83,7 @@
   {
     "name": "PERF-EXT1-10-the-volume-forgets-the-lift",
     "file": "src/render/bounds.js",
-    "old": "  const ox = o[0], oy = o[1] + b.size.h * 0.5, oz = o[2];\n  const cs = q.cs, st = q.start, p = q.pts;\n  for (let k = 0, n = q.G * q.G;",
+    "old": "  const ox = o[0], oy = o[1] + batchLift(b), oz = o[2];\n  const cs = q.cs, st = q.start, p = q.pts;\n  for (let k = 0, n = q.G * q.G;",
     "new": "  const ox = o[0], oy = o[1], oz = o[2];\n  const cs = q.cs, st = q.start, p = q.pts;\n  for (let k = 0, n = q.G * q.G;",
     "tests": [
       "test/perfexta.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "PERF-EXT1-11-the-quad-bound-forgets-the-wind",
     "file": "src/render/shadowPass.js",
-    "old": "return placementRadius(b.size, b.sway > 0 ? swayLean(wl, b.sway, h < 0 ? -h : h) : 0);",
-    "new": "return placementRadius(b.size, 0);",
+    "old": "return placementRadius(placedHalfDiagonal(b), b.sway > 0 ? swayLean(wl, b.sway, h < 0 ? -h : h) : 0);",
+    "new": "return placementRadius(placedHalfDiagonal(b), 0);",
     "tests": [
       "test/perfexta.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "PERF-EXT1-12-the-quad-bound-forgets-half-the-diagonal",
     "file": "src/render/bounds.js",
-    "old": "return (Math.hypot(size.w, size.h) * 0.5 + lean) * (1 + 1e-5) + 1e-3;",
-    "new": "return (Math.hypot(size.w, size.h) * 0.25 + lean) * (1 + 1e-5) + 1e-3;",
+    "old": "  return (half + lean) * (1 + 1e-5) + 1e-3;",
+    "new": "  return (half * 0.5 + lean) * (1 + 1e-5) + 1e-3;",
     "tests": [
       "test/perfexta.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "PERF-EXT3-10-the-signatures-are-asked-for-the-first-caster-alone",
     "file": "src/render/shadowPass.js",
-    "old": "      this._staticSignatures(cp, casters.length, this._sigOut);",
-    "new": "      this._staticSignatures(cp, 1, this._sigOut);",
+    "old": "this._staticSignatures(cp, casters.length, this._sigOut, !f.everyLight);",
+    "new": "this._staticSignatures(cp, 1, this._sigOut, !f.everyLight);",
     "tests": [
       "test/perfexta.test.js"
     ]
@@ -376,6 +376,123 @@
       "test/perfexta.test.js",
       "test/perfsun_fragment.test.js",
       "test/el2_shadows.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT-R1-the-eight-ask-the-quads-in-a-room-drawn-whole",
+    "file": "src/render/shadowPass.js",
+    "old": "this._staticSignatures(cp, casters.length, this._sigOut, !f.everyLight);",
+    "new": "this._staticSignatures(cp, casters.length, this._sigOut, true);",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT-R2-the-lo-tier-asks-every-lamp-by-its-quads-the-first-cut",
+    "file": "src/render/shadowPass.js",
+    "old": "    this._staticSignatures(cp, 1, this._sigOneOut, false);",
+    "new": "    this._staticSignatures(cp, 1, this._sigOneOut, true);",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT-R3-the-walk-ignores-its-question",
+    "file": "src/render/shadowPass.js",
+    "old": "            if (quads && b._place) {",
+    "new": "            if (b._place) {",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT-R4-a-street-is-asked-by-the-sphere-too",
+    "file": "src/render/shadowPass.js",
+    "old": "this._staticSignatures(cp, casters.length, this._sigOut, !f.everyLight);",
+    "new": "this._staticSignatures(cp, casters.length, this._sigOut, false);",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT-R5-the-half-diagonal-asked-at-every-ask",
+    "file": "src/render/bounds.js",
+    "old": "{ q.hw = s.w; q.hh = s.h; q.half = quadHalfDiagonal(s); }",
+    "new": "{ q.half = quadHalfDiagonal(s); }",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT-R6-a-taller-crown-keeps-the-old-half-diagonal",
+    "file": "src/render/bounds.js",
+    "old": "  if (q.hw !== s.w || q.hh !== s.h) {",
+    "new": "  if (q.hw !== s.w) {",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT-R7-a-wider-quad-keeps-the-old-half-diagonal",
+    "file": "src/render/bounds.js",
+    "old": "  if (q.hw !== s.w || q.hh !== s.h) {",
+    "new": "  if (q.hh !== s.h) {",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT-R8-the-quad-bound-without-its-float-pad",
+    "file": "src/render/bounds.js",
+    "old": "  return (half + lean) * (1 + 1e-5) + 1e-3;",
+    "new": "  return half + lean;",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT-R9-an-upside-down-quad-leans-by-its-signed-height",
+    "file": "src/render/shadowPass.js",
+    "old": "swayLean(wl, b.sway, h < 0 ? -h : h)",
+    "new": "swayLean(wl, b.sway, h)",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT-R10-the-lifts-one-home-lifts-nothing",
+    "file": "src/render/bounds.js",
+    "old": "  return (b.size?.h ?? 0) * 0.5;",
+    "new": "  return 0;",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT-R11-the-half-diagonals-one-home-halves-it-again",
+    "file": "src/render/bounds.js",
+    "old": "  return Math.hypot(size.w, size.h) * 0.5;",
+    "new": "  return Math.hypot(size.w, size.h) * 0.25;",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT-R12-the-cube-writes-the-lift-out-again",
+    "file": "src/render/bounds.js",
+    "old": "const lx = px - o[0], ly = py - o[1] - batchLift(b), lz = pz - o[2];",
+    "new": "const lx = px - o[0], ly = py - o[1] - b.size.h * 0.5, lz = pz - o[2];",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT-R13-a-move-writes-the-half-diagonal-out-again",
+    "file": "src/render/renderer.js",
+    "old": "    bounds[3] = Math.hypot(hi0 - cx, hi1 - cy, hi2 - cz) + quadHalfDiagonal(batch.size);",
+    "new": "    bounds[3] = Math.hypot(hi0 - cx, hi1 - cy, hi2 - cz) + Math.hypot(batch.size.w, batch.size.h) * 0.5;",
+    "tests": [
+      "test/perfexta.test.js"
     ]
   }
 ]

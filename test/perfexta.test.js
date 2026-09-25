@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import { Renderer, WORLD_FRAME } from '../src/render/renderer.js';
 import { EL_LANE, EL_MESH_FS, EL_BB_FS } from '../src/render/enhancedLighting.js';
 import * as bounds from '../src/render/bounds.js';   // a namespace: on the base the placement grid is missing, and only its pins fail
-import { sunCascadeMatrices, pointFaceMatrices, shadowFarFor, swayLean, spheresTouch, foldSignature, SHADOW_LIGHT_FLATS, SHADOW_NO_CAST_ARCHIVES, SHADOW_GLSL, SHADOW_SUN_SIZE } from '../src/render/shadowPass.js';
+import { sunCascadeMatrices, pointFaceMatrices, shadowFarFor, swayLean, spheresTouch, foldSignature, SHADOW_LIGHT_FLATS, SHADOW_NO_CAST_ARCHIVES, SHADOW_GLSL, SHADOW_SUN_SIZE, SHADOW_LO_REBUILDS } from '../src/render/shadowPass.js';
 import { StaticBatchBuilder, keyResolver } from '../src/render/staticBatch.js';
 
 const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
@@ -266,7 +266,7 @@ test('PERF-EXT1: THE REACH QUERY IS THE CELLS\', NOT A SCAN - a 10,000-tree batc
   let reads = 0;
   const pts = b._place.pts;
   b._place.pts = new Proxy(pts, { get(t, k) { if (typeof k === 'string' && /^\d+$/.test(k)) reads++; const v = Reflect.get(t, k, t); return typeof v === 'function' ? v.bind(t) : v; } });
-  const rad = bounds.placementRadius(b.size, 0);
+  const rad = bounds.placementRadius(bounds.quadHalfDiagonal(b.size), 0);
   const scan = 3 * centers.length;
   let total = 0, queries = 0;
   for (let k = 0; k < 20; k++) {
@@ -457,7 +457,7 @@ function signatureAlone(sp, x, y, z, far, name) {
         if (!b?.vao || b._dead || b._shDyn || b.noShadow || b.conceal || b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive)) continue;
         const s = bounds.batchSphere(b, c);
         if (s && !spheresTouch(s[0], s[1], s[2], s[3], x, y, z, far)) continue;
-        if (b._place) { const bh = b.size.h; if (!bounds.placementsInCube(b, bounds.placementRadius(b.size, b.sway > 0 ? swayLean(wl, b.sway, bh < 0 ? -bh : bh) : 0), x, y, z, far)) continue; }
+        if (b._place) { const bh = b.size.h; if (!bounds.placementsInCube(b, bounds.placementRadius(bounds.quadHalfDiagonal(b.size), b.sway > 0 ? swayLean(wl, b.sway, bh < 0 ? -bh : bh) : 0), x, y, z, far)) continue; }
         h = foldSignature(h, name(b)); h = foldSignature(h, Math.round(b._shOx * 64) + Math.round(b._shOz * 64) * 7919); n++;
       }
       continue;
@@ -539,7 +539,7 @@ test('PERF-EXT3: THE ONE WALK ANSWERS AS THE WALK A LANTERN - over 200 random fr
     if (rand() < 0.5) sp.recordTerrain(tile, I, null, null, 6.4);
     const nC = 1 + Math.floor(rand() * 8);
     for (let k = 0; k < nC; k++) cp.set([rand() * 80 - 40, rand() * 5, rand() * 80 - 40, shadowFarFor(4 + rand() * 20)], k * 4);
-    sp._staticSignatures(cp, nC, out);
+    sp._staticSignatures(cp, nC, out, true);   // by the quads, as outside a room drawn whole (the review)
     for (let k = 0; k < nC; k++) {
       const [h, n] = signatureAlone(sp, cp[k * 4], cp[k * 4 + 1], cp[k * 4 + 2], cp[k * 4 + 3], (o) => { assert.ok(o._shId > 0, 'an item the lantern folds was named by the walk'); return o._shId; });
       assert.equal(out[k * 2 + 1], n, `frame ${frame}, lantern ${k}: the count`);
@@ -602,10 +602,11 @@ test('PERF-EXT3: THE SAME CACHE, FRAME FOR FRAME - a scripted night of 120 frame
   };
   const asks = [];
   const ask = w.sp._staticSignatures.bind(w.sp);
-  w.sp._staticSignatures = (cp, nC, sig) => {
+  w.sp._staticSignatures = (cp, nC, sig, quads) => {
     asks.push(nC);
     for (let k = 0; k < nC; k++) assert.deepEqual([...cp.subarray(k * 4, k * 4 + 4)], [...w.sp._heldCasters.subarray(k * 4, k * 4 + 3), shadowFarFor(14)], 'each rank asked at its own light and the shadow\'s far');
-    return ask(cp, nC, sig);
+    assert.notEqual(quads, false, 'a street is asked by its quads (the review: only a room drawn whole by the sphere)');
+    return ask(cp, nC, sig, quads);
   };
   const a = script(w), b = script(twin);
   assert.deepEqual(asks, [...new Array(39).fill(7), ...new Array(80).fill(8)], 'one ask a frame, for every lit lantern at once (the first frame has no records to replay)');
@@ -723,4 +724,187 @@ test('PERF-EXT5: THE FOUR TAPS ARE THE NINE - on random depth maps (clamped at t
   assert.ok(worst.exact < 1e-12, `exact weights: the same light (${worst.exact})`);
   assert.ok(worst.trunc < 1 / 255 && worst.round < 1 / 255, `8-bit weights: within a 255th (truncated ${(worst.trunc * 255).toFixed(2)}, rounded ${(worst.round * 255).toFixed(2)} of one)`);
   assert.ok(penumbra > 5000, `the samples reached the penumbrae (${penumbra})`);
+});
+
+// ── PERF-EXT (the review of the shadows) ───────────────────────────────────
+// The reviewer re-measured the interior, where the players said the game was
+// fine, and found PERF-EXT1's cube query paid there a lamp a batch a frame;
+// and two margins of the quad's bound that no pin held.
+
+/** Every read of a batch's placement grid while the pass renders, counted: the grid behind a Proxy (none on a tree
+ *  without one - the base's batches carry no `_place`). */
+function countPlacements(sp, batches) {
+  const counter = { n: 0, on: false };
+  for (const b of batches) {
+    if (!b._place) continue;
+    const q = b._place;
+    b._place = new Proxy(q, { get(t, k) { if (counter.on) counter.n++; return t[k]; } });
+  }
+  const render = sp.render.bind(sp);
+  sp.render = (f) => { counter.on = true; try { return render(f); } finally { counter.on = false; } };
+  return counter;
+}
+
+test('PERF-EXT (the review): A ROOM DRAWN WHOLE ASKS NO PLACEMENT - a still tavern of twenty lamps and twenty batches of six flats under everyLightCasts (DISC15: every lamp\'s lo signature asked every frame, and a still room never spends SHADOW_LO_REBUILDS) reads no batch\'s placements a frame (the first cut: a cube query a lamp a batch, 0.240 -> 0.558 ms of beginFrame in the reviewer\'s 40-lamp room); the same room not drawn whole still asks its quads; and a flat freed in the room rebuilds, within the budget, every lo map a quad of it stood in and none its sphere does not reach', () => {
+  const build = () => {
+    const { r, sp } = stand();
+    const rand = rng(13);
+    const batches = [];
+    for (let k = 0; k < 20; k++) {   // a record's flats about the hall: a row of barrels, a set of chairs, 16 units across
+      const cs = [], cx = rand() * 48 - 24, cz = rand() * 48 - 24;
+      for (let i = 0; i < 6; i++) cs.push([cx + rand() * 16 - 8, rand() * 2, cz + rand() * 16 - 8]);
+      const b = r.createBillboardBatch(504, 1 + (k % 3), { w: 0.8 + rand(), h: 1 + rand() * 1.5 }, cs);
+      b.origin = [0, 0, 0];
+      batches.push(b);
+    }
+    const L = new Float32Array(20 * 4);
+    for (let i = 0; i < 20; i++) L.set([rand() * 56 - 28, 2.5, rand() * 56 - 28, 8 + rand() * 4], i * 4);   // a 60 x 60 hall's lamps
+    let list = batches.slice();
+    const frame = (every) => {
+      r.setPointLights(L, new Float32Array([1, 1, 1]));
+      if (every) r.everyLightCasts();
+      r.beginFrame(I, I, LIGHT_DIR, WORLD_FRAME);
+      const st = { ...sp.stats };
+      r.drawBillboards(list, RIGHT, UP);
+      r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 });
+      return st;
+    };
+    return { r, sp, batches, L, frame, drop: (b) => { list = list.filter((x) => x !== b); } };
+  };
+  // drawn whole: the lo tier holds every lamp, and a still frame reads no placement
+  const room = build();
+  for (let f = 0; f < 6; f++) room.frame(true);
+  const counter = countPlacements(room.sp, room.batches);
+  for (let f = 0; f < 3; f++) {
+    const st = room.frame(true);
+    assert.equal(st.loSlots, 20, 'every lamp keeps its lo map');
+    assert.equal(st.loFaces, 0, 'a still room redraws none');
+  }
+  assert.equal(counter.n, 0, `a still room drawn whole read ${counter.n} placements in three frames (the first cut: every lamp's lo walk, a cube query a batch)`);
+  // not drawn whole (a street, a dungeon): the eight still ask the quads
+  const street = build();
+  for (let f = 0; f < 6; f++) street.frame(false);
+  const streetCount = countPlacements(street.sp, street.batches);
+  street.frame(false);
+  assert.ok(streetCount.n > 0, `outside a room drawn whole the signature asks the quads (${streetCount.n} reads)`);
+  // correct by the sphere: a flat freed rebuilds every lo map it was drawn into, and none it could not reach
+  const far = (i) => shadowFarFor(room.L[i * 4 + 3]);
+  const c = new Float64Array(4);
+  let pick = null, must = -1, may = 0;
+  for (const b of room.batches) {
+    const rad = bounds.placementRadius(bounds.quadHalfDiagonal(b.size), 0);
+    let m = 0, y = 0;
+    for (let i = 0; i < 20; i++) {
+      const x = room.L[i * 4], ly = room.L[i * 4 + 1], z = room.L[i * 4 + 2];
+      const s = bounds.batchSphere(b, c);
+      if (spheresTouch(s[0], s[1], s[2], s[3], x, ly, z, far(i))) y++;
+      if (bounds.placementsInCube(b, rad, x, ly, z, far(i))) m++;
+    }
+    if (y > m && m > must) { pick = b; must = m; may = y; }
+  }
+  assert.ok(pick && must >= 1 && may > must, `a batch with quads in ${must} lamps' cubes and its sphere touching ${may}`);
+  room.drop(pick); room.r.destroyBillboardBatch(pick);
+  let faces = 0;
+  for (let f = 0; f < 20; f++) {
+    const st = room.frame(true);
+    assert.ok(st.loFaces <= 6 * SHADOW_LO_REBUILDS, `frame ${f}: within the rebuild budget (${st.loFaces} faces)`);
+    faces += st.loFaces;
+  }
+  assert.ok(faces >= 6 * must && faces <= 6 * may, `the freed flat rebuilt ${faces / 6} lo maps: at least the ${must} it stood in, at most the ${may} its sphere reached`);
+});
+
+test('PERF-EXT (the review): A QUAD\'S HALF-DIAGONAL ONCE A SIZE - a swaying wood beside a lantern for ten frames takes Math.hypot of its size once (the first cut: at every ask, 230 to 800 a frame on the provers\' harnesses); and a size its host rewrites in place is asked again - a crown grown taller, then a quad grown wider, each carries the wood into a lamp\'s cube it did not reach', () => {
+  const far = shadowFarFor(18), wl = 8, sway = 1;
+  const reach = (w, h) => far + bounds.placementRadius(bounds.quadHalfDiagonal({ w, h }), swayLean(wl, sway, Math.abs(h)));
+  const run = (size, grown, X) => {
+    const { r, frame } = stand();
+    // the quad at the origin, the lamp X off along -x; the other placement 300 beyond the lamp, so the batch's
+    // sphere holds the lamp and only the quad at the origin can answer
+    const b = r.createBillboardBatch(504, 1, { ...size }, [[0, 0, 0], [-300, 0, 0]]);
+    b.sway = sway; b.origin = [0, 0, 0];
+    const draw = () => { r.setFlatWind([wl, 0, 1, 1]); r.drawBillboards([b], RIGHT, UP); };
+    const lamp = new Float32Array([-X, 2, 0, 18]);
+    const hypot = Math.hypot;
+    const phase = (key) => {
+      let faces = 0, asked = 0;
+      Math.hypot = (...a) => { if (a.length === 2 && a[0] === key.w && a[1] === key.h) asked++; return hypot(...a); };
+      try { for (let f = 0; f < 10; f++) faces += frame(draw, lamp).dynFaces; } finally { Math.hypot = hypot; }
+      return { faces, asked };
+    };
+    const before = phase(size);
+    b.size.w = grown.w; b.size.h = grown.h;   // written through, as a host writes a walker's (world.js PERF-TOWN1)
+    const after = phase(grown);
+    return { before, after };
+  };
+  const W = 1.0625, H = 2.03125;
+  // taller: the crown's reach grows past the lamp
+  const tall = { w: W, h: 6.03125 };
+  const X1 = (reach(W, H) + reach(tall.w, tall.h)) / 2;
+  const t = run({ w: W, h: H }, tall, X1);
+  assert.equal(t.before.faces, 0, `at ${X1.toFixed(3)} the ${H} quad is out of the cube (reach ${reach(W, H).toFixed(3)})`);
+  assert.equal(t.before.asked, 1, `ten frames of a swaying wood took its half-diagonal ${t.before.asked} times`);
+  assert.ok(t.after.faces > 0, `grown to ${tall.h} (reach ${reach(tall.w, tall.h).toFixed(3)}) it holds the slot`);
+  assert.equal(t.after.asked, 1, `the new size asked once (${t.after.asked})`);
+  // wider: the same, by w alone
+  const wide = { w: 5.0625, h: H };
+  const X2 = (reach(W, H) + reach(wide.w, wide.h)) / 2;
+  const w = run({ w: W, h: H }, wide, X2);
+  assert.equal(w.before.faces, 0, 'the narrow quad is out');
+  assert.ok(w.after.faces > 0, `widened to ${wide.w} it holds the slot`);
+  assert.equal(w.after.asked, 1, 'the new width asked once');
+});
+
+test('PERF-EXT (the review): ONE HOME EACH - the flat\'s half-height lift is written once in src/render (bounds.js batchLift, which batchSphere and both placement queries call) and its half-diagonal once (quadHalfDiagonal, which the birth\'s sphere, a move\'s and placementRadius call); the first cut wrote the lift out again in each query, and the half-diagonal a third time', async () => {
+  const { readFileSync, readdirSync } = await import('node:fs');
+  const dir = new URL('../src/render/', import.meta.url);
+  const src = Object.fromEntries(readdirSync(dir).filter((f) => f.endsWith('.js')).map((f) => [f, readFileSync(new URL(f, dir), 'utf8')]));
+  const count = (re) => Object.entries(src).flatMap(([f, t]) => (t.match(re) ?? []).map(() => f));
+  assert.deepEqual(count(/size\??\.h(?: \?\? 0\))? \* 0\.5/g), ['bounds.js'], 'one lift: half the height, at its home');
+  assert.deepEqual(count(/Math\.hypot\([\w.]*size\.w, [\w.]*size\.h\)/g), ['bounds.js'], 'one half-diagonal, at its home');
+  const b = src['bounds.js'];
+  for (const fn of ['batchSphere', 'placementsInCube', 'placementsInVolume']) {
+    const body = b.slice(b.indexOf(`export function ${fn}(`), b.indexOf('\n}', b.indexOf(`export function ${fn}(`)));
+    assert.match(body, /batchLift\(b\)/, `${fn} lifts by the home`);
+  }
+  assert.equal((src['renderer.js'].match(/quadHalfDiagonal\((?:batch\.)?size\)/g) ?? []).length, 2, 'the birth and the move take the half-diagonal from the home');
+  assert.match(b, /return \(half \+ lean\) \* \(1 \+ 1e-5\) \+ 1e-3;/, 'placementRadius is handed it');
+});
+
+test('PERF-EXT (the review): THE BOUND\'S TWO MARGINS - the pad: at 1,600 units, where float32 cannot tell a quad from one 6e-5 nearer (the card holds uOrigin + aCenter no finer), a quad whose unpadded bound misses a lantern\'s cube by 6e-5 is still in it, and one 2e-3 out is not; the lean by |h|: an upside-down wide quad (h -1, a flame\'s sign) the wind leans 0.07 toward the lamp is in the lamp\'s reach as the upright one is, and nudged 0.15 further is not', () => {
+  // the pad, where the pass asks it (bounds.js placementsInCube, placementRadius)
+  const { r } = stand();
+  const size = { w: 1, h: 2 }, px = 1578.5, far = 20, miss = 6e-5;
+  const hd = bounds.quadHalfDiagonal(size);
+  const cube = (gap) => {
+    const b = r.createBillboardBatch(504, 1, size, [[0.5, 0, 0], [-300, 0, 0]]);
+    b.origin = [px + far + hd + gap - 0.5, 0, 0];   // the quad's centre far + hd + gap along +x from the lamp, level with it
+    return bounds.placementsInCube(b, bounds.placementRadius(hd, 0), px, 1, 0, far);
+  };
+  const xq = px + far + hd + miss;
+  assert.equal(Math.fround(px), px, 'the lamp is where float32 puts it');
+  assert.equal(Math.fround(xq), Math.fround(xq - miss), 'float32 cannot tell this quad from one 6e-5 nearer - on the tangent');
+  assert.equal(cube(miss), true, 'missed by 6e-5 unpadded, the pad keeps it in');
+  assert.equal(cube(2e-3), false, 'past the pad it is out');
+  // |h|, through the pass: a still quad (its signed lean reads as none to recordBillboards) is the cache's, a leaning
+  // one is the dynamics' - either way the lamp is HELD while it stands there, or rebuilt when it goes
+  const held = (x, h) => {
+    const s = stand();
+    const b = s.r.createBillboardBatch(504, 1, { w: 10, h }, [[x, 0, -100], [-300, 0, -100]]);
+    b.sway = 1.2; b.origin = [0, 0, 0];
+    const post = { vao: { id: 'vao-post' }, buffers: [], bounds: new Float32Array([0, 1, 0, 1.5]), subMeshes: [{ textureArchive: 300, textureRecord: 0, startIndex: 0, primitiveCount: 12 }] };
+    const at = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -2, 0, -99, 1]);
+    let list = [b];
+    // an upright crown leans with the wind and an upside-down one against it (BB_VS: `* uSize.y`): each toward the lamp
+    const draw = () => { s.r.setFlatWind([h < 0 ? 30 : -30, 0, 1, 1]); s.r.drawMesh(post, at, null); s.r.drawBillboards(list, RIGHT, UP); };
+    const lamp = new Float32Array([0, 0, -100, 18]);
+    let n = 0;
+    for (let f = 0; f < 10; f++) { const st = s.frame(draw, lamp); if (f >= 3) n += st.dynFaces; }
+    list = [];
+    for (let f = 0; f < 3; f++) n += s.frame(draw, lamp).staticFaces;
+    return n;
+  };
+  assert.ok(Math.abs(swayLean(30, 1.2, 1) - 0.0702) < 1e-9, 'the lean these are built on');
+  assert.ok(held(25.05, 1) > 0, 'upright, the lean carries it into reach');
+  assert.ok(held(25.05, -1) > 0, 'upside down, the lean carries it just as far');
+  assert.equal(held(25.2, -1), 0, 'upside down, past the lean\'s reach it is not');
 });

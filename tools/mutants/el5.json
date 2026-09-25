@@ -274,7 +274,7 @@
   {
     "name": "bb-bounds-no-flat",
     "file": "src/render/renderer.js",
-    "old": "    bounds[3] += Math.hypot(size.w, size.h) * 0.5;\n",
+    "old": "    bounds[3] += quadHalfDiagonal(size);\n",
     "new": "",
     "tests": [
       "test/el5_field.test.js"
