@@ -527,11 +527,11 @@ test('BA1: the four hosts gate the classic stride through the one gate, drive th
   assert.match(rd('src/systems/betterAmbience.js'), /setRemoveHealthListener\(\(amount\) => betterAmbience\.removeHealth\(amount, playerEntity\.maxHealth \?\? 0\)\);/);
   // the engine seams
   const audio = rd('src/systems/audio.js');
-  assert.match(audio, /setReverb\(preset\) \{/); assert.match(audio, /loop\(index, volume = 1, \{ lowpass = 0 \} = \{\}\)/); assert.match(audio, /send\.connect\(conv\)\.connect\(wet\)\.connect\(this\.ctx\.destination\);/, 'wet beside dry, off the send');
+  assert.match(audio, /setReverb\(preset\) \{/); assert.match(audio, /loop\(index, volume = 1, \{ lowpass = 0 \} = \{\}\)/); assert.match(audio, /send\.connect\(conv\)\.connect\(wet\)\.connect\(this\._listenerIn\);/, 'wet beside dry, off the send (DW-D: through the listener, as the dry master is)');
   // AUDIT-BA F4: the zone takes the music too - the send every bus feeds, both song players
   assert.match(audio, /this\._master\.connect\(this\._reverbIn\);/, 'the sound master feeds the send'); assert.match(audio, /reverbSend\(\) \{ return this\._out\(\) \? this\._reverbIn : null; \}/);
   const music = rd('src/systems/music.js');
-  assert.match(music, /new SongPlayer\(audio\.ctx, null, audio\.reverbSend\?\.\(\) \?\? null\)/, 'the MIDI player hands its master to the send');
+  assert.match(music, /new SongPlayer\(audio\.ctx, audio\.listenerBus\?\.\(\) \?\? null, audio\.reverbSend\?\.\(\) \?\? null\)/, 'the MIDI player hands its master to the send (DW-D: and its dry path to the listener, as every bus)');
   assert.match(music, /new AudioSongPlayer\(audio\.ctx, null, audio\.reverbSend\?\.\(\) \?\? null\)/, 'and the streamed one');
   assert.equal((rd('src/systems/songPlayer.js').match(/if \(this\._reverbSend\) this\._master\.connect\(this\._reverbSend\);/g) ?? []).length, 2, 'both players\' masters');
   const renderer = rd('src/render/renderer.js');

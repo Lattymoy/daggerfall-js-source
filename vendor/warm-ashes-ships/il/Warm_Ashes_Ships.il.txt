@@ -1,0 +1,493 @@
+==== TYPE .<Module> (fields: [])
+==== TYPE .WarmAshesShipsSaveData (fields: ['TempShip', 'HasTraveledbyShip'])
+
+---- WarmAshesShipsSaveData::.ctor rva=2050
+  maxstack=8 locals_sig=None size=7
+  IL_0251: ldarg.0        
+  IL_0252: call           System.Object::.ctor
+  IL_0257: ret            
+==== TYPE .WarmAshesShips (fields: ['mod', 'go', 'instance', 'hasTraveledbyShip', 'tempShip', 'travelTimeCalculatorPopUp'])
+
+---- WarmAshesShips::get_SaveDataType rva=2058
+  maxstack=8 locals_sig=None size=11
+  IL_0259: ldtoken        typedef:WarmAshesShipsSaveData
+  IL_025e: call           System.Type::GetTypeFromHandle
+  IL_0263: ret            
+
+---- WarmAshesShips::NewSaveData rva=2064
+  maxstack=8 locals_sig=None size=20
+  IL_0265: newobj         WarmAshesShipsSaveData::.ctor
+  IL_026a: dup            
+  IL_026b: ldc.i4.0       
+  IL_026c: stfld          WarmAshesShipsSaveData::TempShip
+  IL_0271: dup            
+  IL_0272: ldc.i4.0       
+  IL_0273: stfld          WarmAshesShipsSaveData::HasTraveledbyShip
+  IL_0278: ret            
+
+---- WarmAshesShips::GetSaveData rva=2079
+  maxstack=8 locals_sig=None size=29
+  IL_027a: newobj         WarmAshesShipsSaveData::.ctor
+  IL_027f: dup            
+  IL_0280: ldsfld         WarmAshesShips::tempShip
+  IL_0285: stfld          WarmAshesShipsSaveData::TempShip
+  IL_028a: dup            
+  IL_028b: ldarg.0        
+  IL_028c: ldfld          WarmAshesShips::hasTraveledbyShip
+  IL_0291: stfld          WarmAshesShipsSaveData::HasTraveledbyShip
+  IL_0296: ret            
+
+---- WarmAshesShips::RestoreSaveData rva=2098
+  maxstack=2 locals_sig=token(0x11000001) size=31
+  IL_02a4: ldarg.1        
+  IL_02a5: castclass      typedef:WarmAshesShipsSaveData
+  IL_02aa: stloc.0        
+  IL_02ab: ldloc.0        
+  IL_02ac: ldfld          WarmAshesShipsSaveData::TempShip
+  IL_02b1: stsfld         WarmAshesShips::tempShip
+  IL_02b6: ldarg.0        
+  IL_02b7: ldloc.0        
+  IL_02b8: ldfld          WarmAshesShipsSaveData::HasTraveledbyShip
+  IL_02bd: stfld          WarmAshesShips::hasTraveledbyShip
+  IL_02c2: ret            
+
+---- WarmAshesShips::Init rva=20c3
+  maxstack=8 locals_sig=None size=62
+  IL_02c4: ldarg.0        
+  IL_02c5: ldfld          DaggerfallWorkshop.Game.Utility.ModSupport.InitParams::Mod
+  IL_02ca: stsfld         WarmAshesShips::mod
+  IL_02cf: ldsfld         WarmAshesShips::mod
+  IL_02d4: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.Mod::get_Title
+  IL_02d9: newobj         UnityEngine.GameObject::.ctor
+  IL_02de: stsfld         WarmAshesShips::go
+  IL_02e3: ldsfld         WarmAshesShips::go
+  IL_02e8: callvirt       methodspec:UnityEngine.GameObject::AddComponent
+  IL_02ed: stsfld         WarmAshesShips::instance
+  IL_02f2: ldsfld         WarmAshesShips::mod
+  IL_02f7: ldsfld         WarmAshesShips::instance
+  IL_02fc: callvirt       DaggerfallWorkshop.Game.Utility.ModSupport.Mod::set_SaveDataInterface
+  IL_0301: ret            
+
+---- WarmAshesShips::Awake rva=2102
+  maxstack=8 locals_sig=None size=22
+  IL_0303: call           DaggerfallWorkshop.Game.GameManager::get_Instance
+  IL_0308: callvirt       DaggerfallWorkshop.Game.GameManager::get_QuestMachine
+  IL_030d: ldnull         
+  IL_030e: newobj         LeaveShip::.ctor
+  IL_0313: callvirt       DaggerfallWorkshop.Game.Questing.QuestMachine::RegisterAction
+  IL_0318: ret            
+
+---- WarmAshesShips::Start rva=2119
+  maxstack=8 locals_sig=None size=52
+  IL_031a: ldarg.0        
+  IL_031b: ldftn          WarmAshesShips::OnPreFastTravel
+  IL_0321: newobj         ::.ctor
+  IL_0326: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::add_OnPreFastTravel
+  IL_032b: ldarg.0        
+  IL_032c: ldftn          WarmAshesShips::CheckforEncounters
+  IL_0332: newobj         OnOnPostFastTravelEventHandler::.ctor
+  IL_0337: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::add_OnPostFastTravel
+  IL_033c: ldarg.0        
+  IL_033d: ldftn          WarmAshesShips::OnCreateLocationGameObject
+  IL_0343: newobj         OnCreateLocationGameObjectEventHandler::.ctor
+  IL_0348: call           DaggerfallWorkshop.StreamingWorld::add_OnCreateLocationGameObject
+  IL_034d: ret            
+
+---- WarmAshesShips::OnDisable rva=214e
+  maxstack=8 locals_sig=None size=52
+  IL_034f: ldarg.0        
+  IL_0350: ldftn          WarmAshesShips::OnPreFastTravel
+  IL_0356: newobj         ::.ctor
+  IL_035b: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::remove_OnPreFastTravel
+  IL_0360: ldarg.0        
+  IL_0361: ldftn          WarmAshesShips::CheckforEncounters
+  IL_0367: newobj         OnOnPostFastTravelEventHandler::.ctor
+  IL_036c: call           DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::remove_OnPostFastTravel
+  IL_0371: ldarg.0        
+  IL_0372: ldftn          WarmAshesShips::OnCreateLocationGameObject
+  IL_0378: newobj         OnCreateLocationGameObjectEventHandler::.ctor
+  IL_037d: call           DaggerfallWorkshop.StreamingWorld::remove_OnCreateLocationGameObject
+  IL_0382: ret            
+
+---- WarmAshesShips::CheckforEncounters rva=2183
+  maxstack=8 locals_sig=None size=22
+  IL_0384: ldarg.0        
+  IL_0385: ldfld          WarmAshesShips::hasTraveledbyShip
+  IL_038a: brfalse.s      921
+  IL_038c: ldarg.0        
+  IL_038d: ldarg.0        
+  IL_038e: call           WarmAshesShips::TransportToShipWithDelay
+  IL_0393: call           UnityEngine.MonoBehaviour::StartCoroutine
+  IL_0398: pop            
+  IL_0399: ret            
+
+---- WarmAshesShips::TransportToShipWithDelay rva=219a
+  maxstack=8 locals_sig=None size=14
+  IL_039b: ldc.i4.0       
+  IL_039c: newobj         <TransportToShipWithDelay>d__15::.ctor
+  IL_03a1: dup            
+  IL_03a2: ldarg.0        
+  IL_03a3: stfld          <TransportToShipWithDelay>d__15::<>4__this
+  IL_03a8: ret            
+
+---- WarmAshesShips::ResetShip rva=21a9
+  maxstack=8 locals_sig=None size=37
+  IL_03aa: ldstr          "SHIPAA00.RMB"
+  IL_03af: ldstr          "_base"
+  IL_03b4: ldc.i4.s       -8
+  IL_03b6: call           DaggerfallWorkshop.Utility.AssetInjection.WorldDataVariants::SetBlockVariant
+  IL_03bb: pop            
+  IL_03bc: ldstr          "SHIPAA01.RMB"
+  IL_03c1: ldstr          "_base"
+  IL_03c6: ldc.i4.s       -8
+  IL_03c8: call           DaggerfallWorkshop.Utility.AssetInjection.WorldDataVariants::SetBlockVariant
+  IL_03cd: pop            
+  IL_03ce: ret            
+
+---- WarmAshesShips::OnPreFastTravel rva=21d0
+  maxstack=4 locals_sig=None size=247
+  IL_03dc: ldarg.0        
+  IL_03dd: ldfld          WarmAshesShips::travelTimeCalculatorPopUp
+  IL_03e2: brtrue.s       1031
+  IL_03e4: ldarg.0        
+  IL_03e5: ldarg.1        
+  IL_03e6: callvirt       System.Object::GetType
+  IL_03eb: ldstr          "travelTimeCalculator"
+  IL_03f0: ldc.i4.s       61
+  IL_03f2: callvirt       System.Type::GetField
+  IL_03f7: ldarg.1        
+  IL_03f8: callvirt       System.Reflection.FieldInfo::GetValue
+  IL_03fd: castclass      typeref:DaggerfallWorkshop.Game.Utility.TravelTimeCalculator
+  IL_0402: stfld          WarmAshesShips::travelTimeCalculatorPopUp
+  IL_0407: ldarg.0        
+  IL_0408: ldfld          WarmAshesShips::travelTimeCalculatorPopUp
+  IL_040d: callvirt       DaggerfallWorkshop.Game.Utility.TravelTimeCalculator::get_OceanPixels
+  IL_0412: ldc.i4.0       
+  IL_0413: ble.s          1057
+  IL_0415: ldstr          "WA High Seas: Water Detected."
+  IL_041a: call           UnityEngine.Debug::Log
+  IL_041f: br.s           1068
+  IL_0421: ldstr          "WA High Seas: No Water Detected on Travel"
+  IL_0426: call           UnityEngine.Debug::Log
+  IL_042b: ret            
+  IL_042c: ldc.i4.0       
+  IL_042d: ldc.i4.s       100
+  IL_042f: call           UnityEngine.Random::Range
+  IL_0434: ldc.i4.s       75
+  IL_0436: blt            1234
+  IL_043b: ldsfld         WarmAshesShips::tempShip
+  IL_0440: brtrue         1234
+  IL_0445: ldarg.0        
+  IL_0446: ldarg.1        
+  IL_0447: call           WarmAshesShips::GetTravelByShip
+  IL_044c: brfalse.s      1188
+  IL_044e: ldarg.0        
+  IL_044f: call           WarmAshesShips::CheckIfPlayerOwnsShip
+  IL_0454: ldarg.0        
+  IL_0455: ldc.i4.1       
+  IL_0456: stfld          WarmAshesShips::hasTraveledbyShip
+  IL_045b: brfalse.s      1129
+  IL_045d: ldstr          "Player owns ship, setting small raid."
+  IL_0462: call           UnityEngine.Debug::Log
+  IL_0467: br.s           1151
+  IL_0469: ldc.i4.1       
+  IL_046a: stsfld         WarmAshesShips::tempShip
+  IL_046f: ldc.i4.1       
+  IL_0470: call           DaggerfallWorkshop.Game.Banking.DaggerfallBankManager::AssignShipToPlayer
+  IL_0475: ldstr          "Temporary ship assigned."
+  IL_047a: call           UnityEngine.Debug::Log
+  IL_047f: ldstr          "SHIPAA00.RMB"
+  IL_0484: ldstr          "_smallraid"
+  IL_0489: ldc.i4.s       -8
+  IL_048b: call           DaggerfallWorkshop.Utility.AssetInjection.WorldDataVariants::SetBlockVariant
+  IL_0490: pop            
+  IL_0491: ldstr          "SHIPAA01.RMB"
+  IL_0496: ldstr          "_smallraid"
+  IL_049b: ldc.i4.s       -8
+  IL_049d: call           DaggerfallWorkshop.Utility.AssetInjection.WorldDataVariants::SetBlockVariant
+  IL_04a2: pop            
+  IL_04a3: ret            
+  IL_04a4: ldstr          "Player is not traveling by ship."
+  IL_04a9: call           UnityEngine.Debug::Log
+  IL_04ae: ldstr          "SHIPAA00.RMB"
+  IL_04b3: ldstr          "_base"
+  IL_04b8: ldc.i4.s       -8
+  IL_04ba: call           DaggerfallWorkshop.Utility.AssetInjection.WorldDataVariants::SetBlockVariant
+  IL_04bf: pop            
+  IL_04c0: ldstr          "SHIPAA01.RMB"
+  IL_04c5: ldstr          "_base"
+  IL_04ca: ldc.i4.s       -8
+  IL_04cc: call           DaggerfallWorkshop.Utility.AssetInjection.WorldDataVariants::SetBlockVariant
+  IL_04d1: pop            
+  IL_04d2: ret            
+
+---- WarmAshesShips::GetTravelByShip rva=22d3
+  maxstack=8 locals_sig=None size=7
+  IL_04d4: ldarg.1        
+  IL_04d5: callvirt       DaggerfallWorkshop.Game.UserInterfaceWindows.DaggerfallTravelPopUp::get_TravelShip
+  IL_04da: ret            
+
+---- WarmAshesShips::CheckIfPlayerOwnsShip rva=22db
+  maxstack=8 locals_sig=None size=6
+  IL_04dc: call           DaggerfallWorkshop.Game.Banking.DaggerfallBankManager::get_OwnsShip
+  IL_04e1: ret            
+
+---- WarmAshesShips::OnCreateLocationGameObject rva=22e2
+  maxstack=8 locals_sig=None size=15
+  IL_04e3: ldarg.0        
+  IL_04e4: ldarg.0        
+  IL_04e5: ldarg.1        
+  IL_04e6: call           WarmAshesShips::HandleLocationWithDelay
+  IL_04eb: call           UnityEngine.MonoBehaviour::StartCoroutine
+  IL_04f0: pop            
+  IL_04f1: ret            
+
+---- WarmAshesShips::HandleLocationWithDelay rva=22f2
+  maxstack=8 locals_sig=None size=14
+  IL_04f3: ldc.i4.0       
+  IL_04f4: newobj         <HandleLocationWithDelay>d__22::.ctor
+  IL_04f9: dup            
+  IL_04fa: ldarg.1        
+  IL_04fb: stfld          <HandleLocationWithDelay>d__22::dfLocation
+  IL_0500: ret            
+
+---- WarmAshesShips::.ctor rva=2301
+  maxstack=8 locals_sig=None size=7
+  IL_0502: ldarg.0        
+  IL_0503: call           UnityEngine.MonoBehaviour::.ctor
+  IL_0508: ret            
+
+---- WarmAshesShips::.cctor rva=2309
+  maxstack=8 locals_sig=None size=1
+  IL_050a: ret            
+==== TYPE DaggerfallWorkshop.Game.Questing.Actions.LeaveShip (fields: [])
+
+---- LeaveShip::get_Pattern rva=230b
+  maxstack=8 locals_sig=None size=6
+  IL_050c: ldstr          "Leave Ship"
+  IL_0511: ret            
+
+---- LeaveShip::.ctor rva=2312
+  maxstack=8 locals_sig=None size=8
+  IL_0513: ldarg.0        
+  IL_0514: ldarg.1        
+  IL_0515: call           DaggerfallWorkshop.Game.Questing.ActionTemplate::.ctor
+  IL_051a: ret            
+
+---- LeaveShip::CreateNew rva=231b
+  maxstack=8 locals_sig=None size=23
+  IL_051c: ldarg.0        
+  IL_051d: ldarg.1        
+  IL_051e: callvirt       DaggerfallWorkshop.Game.Questing.ActionTemplate::Test
+  IL_0523: callvirt       System.Text.RegularExpressions.Group::get_Success
+  IL_0528: brtrue.s       1324
+  IL_052a: ldnull         
+  IL_052b: ret            
+  IL_052c: ldarg.2        
+  IL_052d: newobj         LeaveShip::.ctor
+  IL_0532: ret            
+
+---- LeaveShip::Update rva=2334
+  maxstack=2 locals_sig=None size=101
+  IL_0540: call           DaggerfallWorkshop.Game.GameManager::get_Instance
+  IL_0545: callvirt       DaggerfallWorkshop.Game.GameManager::get_PlayerGPS
+  IL_054a: callvirt       DaggerfallWorkshop.PlayerGPS::get_CurrentRegionIndex
+  IL_054f: ldc.i4.s       31
+  IL_0551: bne.un.s       1438
+  IL_0553: call           WarmAshesShips::ResetShip
+  IL_0558: call           DaggerfallWorkshop.Game.Banking.DaggerfallBankManager::get_OwnsShip
+  IL_055d: brtrue.s       1415
+  IL_055f: ldc.i4.1       
+  IL_0560: call           DaggerfallWorkshop.Game.Banking.DaggerfallBankManager::AssignShipToPlayer
+  IL_0565: call           DaggerfallWorkshop.Game.GameManager::get_Instance
+  IL_056a: callvirt       DaggerfallWorkshop.Game.GameManager::get_TransportManager
+  IL_056f: ldc.i4.3       
+  IL_0570: callvirt       DaggerfallWorkshop.Game.TransportManager::set_TransportMode
+  IL_0575: ldc.i4.0       
+  IL_0576: stsfld         WarmAshesShips::tempShip
+  IL_057b: call           DaggerfallWorkshop.Game.Banking.DaggerfallBankManager::ResetShip
+  IL_0580: ldarg.0        
+  IL_0581: callvirt       DaggerfallWorkshop.Game.Questing.ActionTemplate::SetComplete
+  IL_0586: ret            
+  IL_0587: call           DaggerfallWorkshop.Game.GameManager::get_Instance
+  IL_058c: callvirt       DaggerfallWorkshop.Game.GameManager::get_TransportManager
+  IL_0591: ldc.i4.3       
+  IL_0592: callvirt       DaggerfallWorkshop.Game.TransportManager::set_TransportMode
+  IL_0597: ldarg.0        
+  IL_0598: callvirt       DaggerfallWorkshop.Game.Questing.ActionTemplate::SetComplete
+  IL_059d: ret            
+  IL_059e: ldarg.0        
+  IL_059f: callvirt       DaggerfallWorkshop.Game.Questing.ActionTemplate::SetComplete
+  IL_05a4: ret            
+
+---- LeaveShip::GetSaveData rva=23a8
+  maxstack=1 locals_sig=token(0x11000002) size=15
+  IL_05b4: ldloca.s       local(0x0000)
+  IL_05b6: initobj        typedef:SaveData_v1
+  IL_05bc: ldloc.0        
+  IL_05bd: box            typedef:SaveData_v1
+  IL_05c2: ret            
+
+---- LeaveShip::RestoreSaveData rva=2309
+  maxstack=8 locals_sig=None size=1
+  IL_050a: ret            
+==== TYPE .<TransportToShipWithDelay>d__15 (fields: ['<>1__state', '<>2__current', '<>4__this'])
+
+---- <TransportToShipWithDelay>d__15::.ctor rva=23c3
+  maxstack=8 locals_sig=None size=14
+  IL_05c4: ldarg.0        
+  IL_05c5: call           System.Object::.ctor
+  IL_05ca: ldarg.0        
+  IL_05cb: ldarg.1        
+  IL_05cc: stfld          <TransportToShipWithDelay>d__15::<>1__state
+  IL_05d1: ret            
+
+---- <TransportToShipWithDelay>d__15::System.IDisposable.Dispose rva=2309
+  maxstack=8 locals_sig=None size=1
+  IL_050a: ret            
+
+---- <TransportToShipWithDelay>d__15::MoveNext rva=23d4
+  maxstack=3 locals_sig=token(0x11000003) size=150
+  IL_05e0: ldarg.0        
+  IL_05e1: ldfld          <TransportToShipWithDelay>d__15::<>1__state
+  IL_05e6: stloc.0        
+  IL_05e7: ldarg.0        
+  IL_05e8: ldfld          <TransportToShipWithDelay>d__15::<>4__this
+  IL_05ed: stloc.1        
+  IL_05ee: ldloc.0        
+  IL_05ef: brfalse.s      1527
+  IL_05f1: ldloc.0        
+  IL_05f2: ldc.i4.1       
+  IL_05f3: beq.s          1559
+  IL_05f5: ldc.i4.0       
+  IL_05f6: ret            
+  IL_05f7: ldarg.0        
+  IL_05f8: ldc.i4.m1      
+  IL_05f9: stfld          <TransportToShipWithDelay>d__15::<>1__state
+  IL_05fe: ldarg.0        
+  IL_05ff: ldc.r4         0.05000000074505806
+  IL_0604: newobj         UnityEngine.WaitForSeconds::.ctor
+  IL_0609: stfld          <TransportToShipWithDelay>d__15::<>2__current
+  IL_060e: ldarg.0        
+  IL_060f: ldc.i4.1       
+  IL_0610: stfld          <TransportToShipWithDelay>d__15::<>1__state
+  IL_0615: ldc.i4.1       
+  IL_0616: ret            
+  IL_0617: ldarg.0        
+  IL_0618: ldc.i4.m1      
+  IL_0619: stfld          <TransportToShipWithDelay>d__15::<>1__state
+  IL_061e: ldloc.1        
+  IL_061f: ldfld          WarmAshesShips::hasTraveledbyShip
+  IL_0624: brfalse.s      1645
+  IL_0626: call           DaggerfallWorkshop.Game.GameManager::get_Instance
+  IL_062b: callvirt       DaggerfallWorkshop.Game.GameManager::get_QuestListsManager
+  IL_0630: ldstr          "WAQ_SHIP_SMALLRAID"
+  IL_0635: ldc.i4.0       
+  IL_0636: callvirt       DaggerfallWorkshop.Game.Questing.QuestListsManager::GetQuest
+  IL_063b: stloc.2        
+  IL_063c: ldloc.2        
+  IL_063d: brfalse.s      1626
+  IL_063f: call           DaggerfallWorkshop.Game.Questing.QuestMachine::get_Instance
+  IL_0644: ldloc.2        
+  IL_0645: callvirt       DaggerfallWorkshop.Game.Questing.QuestMachine::StartQuest
+  IL_064a: call           DaggerfallWorkshop.Game.GameManager::get_Instance
+  IL_064f: callvirt       DaggerfallWorkshop.Game.GameManager::get_TransportManager
+  IL_0654: ldc.i4.3       
+  IL_0655: callvirt       DaggerfallWorkshop.Game.TransportManager::set_TransportMode
+  IL_065a: ldloc.1        
+  IL_065b: ldc.i4.0       
+  IL_065c: stfld          WarmAshesShips::hasTraveledbyShip
+  IL_0661: ldsfld         WarmAshesShips::tempShip
+  IL_0666: brfalse.s      1645
+  IL_0668: call           DaggerfallWorkshop.Game.Banking.DaggerfallBankManager::ResetShip
+  IL_066d: ldloc.1        
+  IL_066e: ldc.i4.0       
+  IL_066f: stfld          WarmAshesShips::hasTraveledbyShip
+  IL_0674: ldc.i4.0       
+  IL_0675: ret            
+
+---- <TransportToShipWithDelay>d__15::System.Collections.Generic.IEnumerator<System.Object>.get_Current rva=2476
+  maxstack=8 locals_sig=None size=7
+  IL_0677: ldarg.0        
+  IL_0678: ldfld          <TransportToShipWithDelay>d__15::<>2__current
+  IL_067d: ret            
+
+---- <TransportToShipWithDelay>d__15::System.Collections.IEnumerator.Reset rva=247e
+  maxstack=8 locals_sig=None size=6
+  IL_067f: newobj         System.NotSupportedException::.ctor
+  IL_0684: throw          
+
+---- <TransportToShipWithDelay>d__15::System.Collections.IEnumerator.get_Current rva=2476
+  maxstack=8 locals_sig=None size=7
+  IL_0677: ldarg.0        
+  IL_0678: ldfld          <TransportToShipWithDelay>d__15::<>2__current
+  IL_067d: ret            
+==== TYPE .<HandleLocationWithDelay>d__22 (fields: ['<>1__state', '<>2__current', 'dfLocation'])
+
+---- <HandleLocationWithDelay>d__22::.ctor rva=2485
+  maxstack=8 locals_sig=None size=14
+  IL_0686: ldarg.0        
+  IL_0687: call           System.Object::.ctor
+  IL_068c: ldarg.0        
+  IL_068d: ldarg.1        
+  IL_068e: stfld          <HandleLocationWithDelay>d__22::<>1__state
+  IL_0693: ret            
+
+---- <HandleLocationWithDelay>d__22::System.IDisposable.Dispose rva=2309
+  maxstack=8 locals_sig=None size=1
+  IL_050a: ret            
+
+---- <HandleLocationWithDelay>d__22::MoveNext rva=2494
+  maxstack=2 locals_sig=token(0x11000004) size=88
+  IL_06a0: ldarg.0        
+  IL_06a1: ldfld          <HandleLocationWithDelay>d__22::<>1__state
+  IL_06a6: stloc.0        
+  IL_06a7: ldloc.0        
+  IL_06a8: brfalse.s      1712
+  IL_06aa: ldloc.0        
+  IL_06ab: ldc.i4.1       
+  IL_06ac: beq.s          1744
+  IL_06ae: ldc.i4.0       
+  IL_06af: ret            
+  IL_06b0: ldarg.0        
+  IL_06b1: ldc.i4.m1      
+  IL_06b2: stfld          <HandleLocationWithDelay>d__22::<>1__state
+  IL_06b7: ldarg.0        
+  IL_06b8: ldc.r4         0.5
+  IL_06bd: newobj         UnityEngine.WaitForSeconds::.ctor
+  IL_06c2: stfld          <HandleLocationWithDelay>d__22::<>2__current
+  IL_06c7: ldarg.0        
+  IL_06c8: ldc.i4.1       
+  IL_06c9: stfld          <HandleLocationWithDelay>d__22::<>1__state
+  IL_06ce: ldc.i4.1       
+  IL_06cf: ret            
+  IL_06d0: ldarg.0        
+  IL_06d1: ldc.i4.m1      
+  IL_06d2: stfld          <HandleLocationWithDelay>d__22::<>1__state
+  IL_06d7: ldstr          "Location GameObject Created: "
+  IL_06dc: ldarg.0        
+  IL_06dd: ldfld          <HandleLocationWithDelay>d__22::dfLocation
+  IL_06e2: callvirt       DaggerfallWorkshop.DaggerfallLocation::get_Summary
+  IL_06e7: ldfld          LocationSummary::LocationName
+  IL_06ec: call           System.String::Concat
+  IL_06f1: call           UnityEngine.Debug::Log
+  IL_06f6: ldc.i4.0       
+  IL_06f7: ret            
+
+---- <HandleLocationWithDelay>d__22::System.Collections.Generic.IEnumerator<System.Object>.get_Current rva=24f8
+  maxstack=8 locals_sig=None size=7
+  IL_06f9: ldarg.0        
+  IL_06fa: ldfld          <HandleLocationWithDelay>d__22::<>2__current
+  IL_06ff: ret            
+
+---- <HandleLocationWithDelay>d__22::System.Collections.IEnumerator.Reset rva=247e
+  maxstack=8 locals_sig=None size=6
+  IL_067f: newobj         System.NotSupportedException::.ctor
+  IL_0684: throw          
+
+---- <HandleLocationWithDelay>d__22::System.Collections.IEnumerator.get_Current rva=24f8
+  maxstack=8 locals_sig=None size=7
+  IL_06f9: ldarg.0        
+  IL_06fa: ldfld          <HandleLocationWithDelay>d__22::<>2__current
+  IL_06ff: ret            
+==== TYPE .SaveData_v1 (fields: [])

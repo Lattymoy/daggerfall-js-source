@@ -115,6 +115,26 @@ export const FALL_HP_PER_METRE = 5;         // PlayerHealth.ApplyPlayerFallDamag
 export const GRAVITY = 20.0;
 /** LevitateMotor's overEncumbered threshold (:83): CarriedWeight * 4 > 250. */
 export const OVER_ENCUMBERED_LIMIT = 250;
+/** PlayerEnterExit.Update's dungeon arm, its afloat line (:395-404): Internal_Strings.csv:18 `cannotFloat`,
+ *  handed to AddHUDText for 1.75 s. */
+export const CANNOT_FLOAT_TEXT = 'You are carrying too much to stay afloat.';
+export const CANNOT_FLOAT_HUD_SECONDS = 1.75;
+/**
+ * The afloat line's latch, one step of the arm: `CarriedWeight * 4 > 250` - PlayerEnterExit's own test, with none
+ * of LevitateMotor's levitation or god-mode terms (:83) - on LevitateMotor.IsSwimming, never while water walking;
+ * the latch drops once either the weight or the swim does. It is PlayerEnterExit.displayAfloatMessage (:50), kept
+ * on the motor beside the host's other PlayerEnterExit member, and it moves only on a frame the arm runs: inside a
+ * dungeon, and at sea while Iliac Puddle No More's forge holds the arm open (DW-D). Returns the line to show, or null.
+ */
+export function afloatMessageStep(player, waterWalking) {
+  const overEncumbered = (player.carriedWeight?.() ?? 0) * 4 > OVER_ENCUMBERED_LIMIT;
+  if (overEncumbered && player.swimming && !player.displayAfloatMessage && !waterWalking) {
+    player.displayAfloatMessage = true;
+    return CANNOT_FLOAT_TEXT;
+  }
+  if ((!overEncumbered || !player.swimming) && player.displayAfloatMessage) player.displayAfloatMessage = false;
+  return null;
+}
 export const CAPSULE_HEIGHT = 1.8;
 export const CAPSULE_RADIUS = 0.35;
 export const STEP_OFFSET = 0.5;
@@ -400,6 +420,7 @@ export class PlayerMotor {
     this._levitating = false;
     this.waterWalking = false;
     this.waterSurfaceY = null;   // the current block's water surface (world y), null when dry
+    this.swimSpeedScale = 1;     // DW-D: Iliac Puddle No More's swim speed multiplier (a walk speed modifier while swimming - swimSpeedNow)
     this.jumped = false;         // set for the frame a jump actually starts (fatigue/tally consumer)
     this.crouching = false;      // P12: toggled via input.crouch (edge); standing needs headroom
     // PlayerHeightChanger.heightAction / camTimer: null | 'crouch' |
@@ -414,15 +435,23 @@ export class PlayerMotor {
     // writer is FrictionMotor.HeadDipHandling below.
     this.standingHeightAdjustment = 0;
     // A6 (PlayerHeightChanger.controllerSink, :78): the sunk capsule.
-    // toggleSink (:76) is the EDGE tracker DecideHeightAction reads;
-    // both are this one flag because the port applies the height at
-    // the action's start exactly as ControllerHeightChange does.
+    // toggleSink (:76) is the EDGE tracker DecideHeightAction reads.
+    // DW-D (2026-09-25): two flags again. They were one because vanilla
+    // DFU moves them together (the decision arms the action and the
+    // action flips the capsule the same frame), and Iliac Puddle No More
+    // writes the ACTION from outside - HeightAction = DoUnsinking for a
+    // swimmer whose head is clear of its sea - which flips the capsule
+    // and leaves the edge set, so DecideHeightAction does not sink it
+    // again while the swimmer stays on the water (forceUnsink below).
     this.sunk = false;
+    this.toggleSink = false;
     // PlayerMotor.OnExteriorWater == OnExteriorWaterMethod.Swimming -
     // the sink's ONE trigger (:127). Wave B's exterior-water slice
     // owns the model that raises it; until then it stays false and no
     // host sinks, which is the port's behaviour before this line.
-    this.onExteriorWater = false;   this.isPlayerSwimming = false;   // XL-1: PlayerEnterExit.isPlayerSwimming (:44, :177-178) beside it - DFU's OTHER swim member, the HOST's. A plain FIELD: no setter, written by the hosts alone (UpdateSpeed's swim gate below is the one _step read DFU has, PlayerMotor.cs:387 - still on `sunk`), and it must never arm cancelMovement the way `swimming` (levitateMotor.IsSwimming, PlayerMotor.cs:149-152) does. The split, and which reader takes which member, is exteriorSurface.js's header.
+    this.onExteriorWater = false;   this.isPlayerSwimming = false;   // XL-1: PlayerEnterExit.isPlayerSwimming (:44, :177-178) beside it - DFU's OTHER swim member, the HOST's. A plain FIELD: no setter, written by the hosts alone (UpdateSpeed's swim gate below is the one _step read DFU has, PlayerMotor.cs:387 - on this field since DW-D, which parted it from `sunk`), and it must never arm cancelMovement the way `swimming` (levitateMotor.IsSwimming, PlayerMotor.cs:149-152) does. The split, and which reader takes which member, is exteriorSurface.js's header.
+    this.displayAfloatMessage = false;   // PlayerEnterExit.displayAfloatMessage (:50) - afloatMessageStep's latch
+    this.levitateMotorEnabled = true;   // LevitateMotor.enabled - a disabled component's Update never runs (DW-D: the frame-spike guard)
     this._camFrom = EYE_HEIGHT;   // PlayerHeightChanger.prevCamLevel / targetCamLevel
     this._camTo = EYE_HEIGHT;
     // PlayerEntity.IsParalyzed, as FrictionMotor.GroundedMovement
@@ -506,6 +535,24 @@ export class PlayerMotor {
     if (b === this._swimming) return;
     this._swimming = b;
     this.cancelMovement = true;
+  }
+
+  /** PlayerSpeedChanger.RefreshWalkSpeed: GetWalkSpeed through the walk speed modifiers. The one the port carries is
+   *  DW-D's swim multiplier (Iliac Puddle No More's AddWalkSpeedMod, held while the player swims) - so it scales
+   *  GetBaseSpeed's walk arm wherever DFU reads it, never the crouch, the ride or the run (RefreshRunSpeed has its
+   *  own list). */
+  _refreshWalkSpeed() {
+    return walkSpeed(this.stats.speed) * (this.swimSpeedScale > 0 ? this.swimSpeedScale : 1);
+  }
+  /** IsMovingLessThanHalfSpeed's base (PlayerMotor.cs:176-180): GetWalkSpeed crouched, else GetBaseSpeed - which,
+   *  uncrouched, is the ride base on a mount and RefreshWalkSpeed off one. */
+  _halfSpeedBase() {
+    if (this.crouching) return walkSpeed(this.stats.speed);
+    return isRiding(this.transportMode) ? rideSpeed(this.stats.speed, rideBaseFor(this.transportMode)) : this._refreshWalkSpeed();
+  }
+  /** GetSwimSpeed(GetBaseSpeed()) - LevitateMotor's swim: GetBaseSpeed skips the crouch arm while it swims. */
+  swimSpeedNow() {
+    return swimSpeed(this._refreshWalkSpeed(), this.stats.swimming ?? 0);
   }
 
   get levitating() { return this._levitating; }
@@ -787,9 +834,7 @@ export class PlayerMotor {
     // the RIDE speed - which is what TR2's clop swap and its volume
     // halving key off. (TR-AUDIT F-E2: TR1 made the old comment false
     // and the old arithmetic with it.)
-    const half = (!this.crouching && isRiding(this.transportMode))
-      ? rideSpeed(this.stats.speed, rideBaseFor(this.transportMode))
-      : walkSpeed(this.stats.speed);
+    const half = this._halfSpeedBase();   // DW-D: and the walk arm through RefreshWalkSpeed's modifiers
     this.movingLessThanHalfSpeed = half / 2 >= appliedSpeed;
   }
 
@@ -837,12 +882,17 @@ export class PlayerMotor {
       // (:139-143) the crouched levitator is stood and the method
       // RETURNS - no sink arm, no crouch block.
       this.heightAction = 'stand';   // timerMax is NOT set here, DFU keeps its last
-    } else if (onWater && !this.sunk) {
-      // DoSinking (:147-152, :390-434) on the SLOW clock.
-      this._beginSink();
-    } else if (!onWater && this.sunk) {
-      // DoUnsinking (:153-158, :352-388), same clock.
-      this._beginUnsink();
+    } else if (onWater && !this.toggleSink) {
+      // DoSinking (:147-152, :390-434) on the SLOW clock - the capsule's
+      // own change guarded by controllerSink (:392), as DoSinking's is.
+      this.toggleSink = true;
+      if (!this.sunk) this._beginSink();
+      else { this.heightAction = 'sink'; this.heightTimerMax = HEIGHT_TIMER_SLOW; }
+    } else if (!onWater && this.toggleSink) {
+      // DoUnsinking (:153-158, :352-388), same clock, guarded by :354.
+      this.toggleSink = false;
+      if (this.sunk) this._beginUnsink();
+      else { this.heightAction = 'unsink'; this.heightTimerMax = HEIGHT_TIMER_SLOW; }
     } else if (this.levitating || onWater) {
       // The levitating fall-through (nothing left to decide) and
       // :171's `!onWater` half - a swimmer on exterior water cannot
@@ -911,7 +961,7 @@ export class PlayerMotor {
       //
       // The pass condition is `!Number.isFinite(dist)`, not a
       // comparison against the distance: collider.sphereCast
-      // (collider.js:631) returns Infinity ONLY on a clear sweep and a
+      // (collider.js:647) returns Infinity ONLY on a clear sweep and a
       // finite dist (0 on a start-overlap) for any hit, which is
       // exactly Unity's boolean. One accepted deviation: Unity's
       // SphereCast ignores colliders overlapping the START sphere, so a
@@ -952,6 +1002,23 @@ export class PlayerMotor {
     this.heightAction = 'unsink';
     this.heightTimerMax = HEIGHT_TIMER_SLOW;
   }
+
+  /** DW-D: `PlayerHeightChanger.HeightAction = DoUnsinking`, written from
+   *  outside (Iliac Puddle No More's KeepSurfaceCameraUnsunk,
+   *  RequestStandAfterWaterExit and ClearBoatSwimPose - each gated on
+   *  IsInWaterTile or a pending DoSinking, and never over a DoUnsinking
+   *  already under way). DoUnsinking's capsule work (:354-378) is the
+   *  arming block's; toggleSink is DecideHeightAction's and stays. */
+  forceUnsink() {
+    if (this.heightAction === 'unsink') return;
+    if (this.sunk) this._beginUnsink();
+  }
+  /** DW-D: `HeightAction = DoStanding` from outside (the same mod's stand
+   *  after a water exit): Update runs DoStand when CanStand, as the
+   *  pending action's own tick does. */
+  forceStand() { this.heightAction = 'stand'; }
+  /** PlayerHeightChanger.IsInWaterTile - written beside controllerSink by DoSinking/DoUnsinking. */
+  get isInWaterTile() { return this.sunk; }
 
   /** timerResetAction (:451-455). */
   _heightReset() {
@@ -1273,7 +1340,7 @@ export class PlayerMotor {
     this.standing = this.grounded;   // PlayerMotor.cs:325 - moveDirection zeroed, so :113-125 collapses to grounded
     this.movingLessThanHalfSpeed = this.grounded
       ? true
-      : walkSpeed(this.stats.speed) / 2 >= this.speed;   // :168-181 over the STALE UpdateSpeed field, the same quirk the hug rides
+      : this._halfSpeedBase() / 2 >= this.speed;   // :168-181 over the STALE UpdateSpeed field, the same quirk the hug rides
     return true;
   }
 
@@ -1442,7 +1509,7 @@ export class PlayerMotor {
             && this.pos[1] + this.height / 2 + 50 * 0.025 - 0.93 >= this.waterSurfaceY) {
           my = 0;
         }
-        speed = swimSpeed(walkSpeed(this.stats.speed), this.stats.swimming ?? 0);
+        speed = this.swimSpeedNow();
       } else {
         // neither swim arm: the field's resting value, levitateMoveSpeed
         speed = LEVITATE_MOVE_SPEED;
@@ -1454,7 +1521,7 @@ export class PlayerMotor {
       // the STALE land `speed`, never the swim speed computed here.
       this.movingLessThanHalfSpeed = this.grounded
         ? true
-        : walkSpeed(this.stats.speed) / 2 >= this.speed;
+        : this._halfSpeedBase() / 2 >= this.speed;
       // ...and IsStandingStill itself, off the same reasoning: with
       // moveDirection zeroed at :322-326, :113-125 collapses to
       // `grounded`. The footstep hosts read this term (PlayerFootsteps
@@ -1482,7 +1549,14 @@ export class PlayerMotor {
       // - so grounded/groundKey deliberately keep their last values,
       // as Unity's isGrounded does when no Move is issued.
       if (this.paralyzed) return;
-      const r = this.collider.move(this.pos, mx * speed * dt, my * speed * dt, mz * speed * dt, this.height);
+      // DW-D: ...and a DISABLED LevitateMotor (Iliac Puddle No More's GuardSwimMotorFrameSpike) runs no Update at all -
+      // PlayerMotor's return above still zeroes and mirrors, as it does for every swimmer, and nothing moves.
+      if (!this.levitateMotorEnabled) return;
+      // DW-D: LevitateMotor moves through groundMotor.MoveWithMovingPlatform - a bare CharacterController.Move, which
+      // never pulls the capsule DOWN onto what is under it; the snap is AcrobatMotor's anti-bump, PlayerMotor's
+      // grounded path alone. With it here a swimmer (or a levitator) passing within a step of anything under it was
+      // dragged onto it - a carved sea's floor wall caught a surface swimmer by the knees at the coast (measured).
+      const r = this.collider.move(this.pos, mx * speed * dt, my * speed * dt, mz * speed * dt, this.height, false);
       this.groundKey = r.grounded ? (r.groundKey ?? null) : null;
       this.grounded = r.grounded;
       return;
@@ -1539,7 +1613,7 @@ export class PlayerMotor {
       // sneak instead of under it, so a sneaking rider trotted.
       speed = rideBase != null
         ? rideSpeed(this.stats.speed, rideBase)
-        : (this.crouching ? crouchSpeed(this.stats.speed) : walkSpeed(this.stats.speed));
+        : (this.crouching ? crouchSpeed(this.stats.speed) : this._refreshWalkSpeed());   // DW-D: GetBaseSpeed's walk arm is RefreshWalkSpeed
       if (this.isSneaking) speed = sneakSpeed(speed);
     }
     // AUDIT 64 F0 - UpdateSpeed's THIRD statement (PlayerMotor.cs
@@ -1569,11 +1643,14 @@ export class PlayerMotor {
     // XL-1 NOTE: `isPlayerSwimming` is on this motor now, so re-pointing
     // this gate at it makes UpdateSpeed verbatim and closes the <=1-frame
     // gap where a dungeon exit onto open water carries the latch before
-    // DoSinking has armed the sink. Left on `sunk` here because that is
-    // the proxy AUDIT 64 F0 measured and pinned (PlayerHeightChanger.cs
-    // :419-423/:374-377 write the two in lockstep); the swap is a slice
-    // of its own, with its own pins.
-    if (this.sunk && !this.waterWalking) speed = swimSpeed(speed, this.stats.swimming ?? 0);
+    // DoSinking has armed the sink.
+    // DW-D (2026-09-25): THE SWAP, because the two stopped moving in
+    // lockstep. Iliac Puddle No More forges PlayerEnterExit.IsPlayerSwimming
+    // for its sea and unsinks the capsule of a swimmer whose head is clear
+    // of the surface (KeepSurfaceCameraUnsunk) - so `sunk` goes false
+    // while DFU's own gate, the host flag, stays true, and a proxy on
+    // `sunk` would walk the swimmer at the full ground speed.
+    if (this.isPlayerSwimming && !this.waterWalking) speed = swimSpeed(speed, this.stats.swimming ?? 0);
     this.speed = speed;   // UpdateSpeed writes the field the getter reads
     this._trackHalfSpeed(input, speed);
     // MW-D26: the frame's movement INPUT and applied speed, reported

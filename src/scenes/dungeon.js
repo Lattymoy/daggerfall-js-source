@@ -39,7 +39,7 @@ import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { thunderlockMuzzleLight } from '../systems/thunderlock.js';   // FIELD-GUN13: the muzzle flash is a light the player carries, the torch's own shape
 import { lookAt, perspective, mirrorProjectionX, identity, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 const BATCH_IDENTITY = identity();   // PERF5: the merged level is in world space already
-import { PlayerMotor, TELEPORT_FREEZE_S, motionBagOf } from '../player/motor.js';   // A6: DaggerfallAction.Teleport's physics settle; WW2: the one motion bag
+import { PlayerMotor, TELEPORT_FREEZE_S, motionBagOf, afloatMessageStep, CANNOT_FLOAT_HUD_SECONDS } from '../player/motor.js';   // A6: DaggerfallAction.Teleport's physics settle; WW2: the one motion bag; DW-D: the dungeon arm's afloat line
 import { mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewFootstep } from '../player/mwView.js';   // MW-D25: the Morrowind camera; AUDIT-EOTB2: the sprite's stride
 import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
 import { jumpSpeedMultiplier, isEnhancedJumping } from '../systems/skills.js';   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
@@ -78,6 +78,9 @@ import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfVie
 import { carriedWeight } from '../systems/inventory.js';   // F027 / E4: PlayerEntity.CarriedWeight, the gold counter's term and all
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
 import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
+import { createSwimMovement } from './deepWatersSwimMove.js';   // DW-D: Iliac Puddle No More's swim movement - the dungeon's water too (IsAnySwimming)
+import { deepWatersOn, deepWatersSwimSettings } from './deepWatersHost.js';
+import { loadGraceActive as dwLoadGraceActive } from '../world/deepWaterRuntime.js';
 
 // Water surface: the classic water tile (R11), drawn by the context's
 // own frame function since WATER-D1 - its colour (DUNGEON_WATER_COLOR)
@@ -135,7 +138,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // below, after this context; null falls to standing defaults.
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:6393), so each
+      // context owns none of its own (dungeonContext.js:6400), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:286-306).
       relock: () => requestLook(canvas) });
@@ -709,6 +712,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     }),
   });
   const _frameToken = claimFrame();   // P0: this session owns the loop until someone claims after it
+  const _dwSwimMove = createSwimMovement({ settings: deepWatersSwimSettings, collider: () => player.collider });   // DW-D
   function frame(now) {
     // AUDIT-WH L4: THE PLAQUE DIES WITH THE LOOP THAT RAISED IT. This
     // is the host's only unwind point - a later boot or an unwind has
@@ -861,6 +865,8 @@ export async function bootDungeon(canvas, renderer, params, status) {
       player.isPlayerSwimming = player.swimming = surf != null && player.pos[1] + player.height / 2 + 50 * 0.025 - 0.95 < surf;   // XL-1 (THE FOUR HOSTS): BOTH swim members off the one blockWaterLevel test, as PlayerEnterExit.cs:384-392 writes them. Outdoors the two part company - :421 clears the motor's with no tile test - which is why the exterior hosts write only the host flag
       player.levitating = ctx.playerLevitating();
       player.waterWalking = ctx.playerWaterWalking();
+      const afloat = afloatMessageStep(player, player.waterWalking);   // DW-D: the arm's afloat line (PlayerEnterExit.cs:395-404), on the swim it just wrote
+      if (afloat) ctx.hudSay?.(afloat, CANNOT_FLOAT_HUD_SECONDS);
       // S19 paralysis: FrictionMotor cancels ALL movement input (the
       // player still falls / rides platforms), AcrobatMotor cancels
       // the jump, LevitateMotor cancels levitate movement. Look
@@ -910,6 +916,15 @@ export async function bootDungeon(canvas, renderer, params, status) {
         down: crouchHeld || held(keys, 'FloatDown'),
         crouch: crouchPress,
       }, cam.yaw, cam.pitch);
+      // DW-D: OutdoorSwimMovementController, as the modal host runs it - the multiplier and the stroke in the water
+      if (deepWatersOn()) {
+        _dwSwimMove.update({
+          now: now / 1000, dt, player, entity: playerEntity, loadGrace: dwLoadGraceActive(performance.now() / 1000),
+          outdoorSwimming: false, anySwimming: !player.waterWalking && !!player.swimming,
+          input: { forward: paralyzed ? 0 : axes.forward, strafe: paralyzed ? 0 : axes.strafe, up: jumpHeld || held(keys, 'FloatUp'), down: crouchHeld || held(keys, 'FloatDown'), run: held(keys, 'Run') },
+          yaw: cam.yaw, pitch: cam.pitch, lookDir: fwd, cameraY: cam.pos[1], oceanY: null, seafloorY: () => null,
+        });
+      } else _dwSwimMove.reset(player);
       // FS-slice: PlayerFootsteps - the dungeon stride on stone with
       // the water arms (shallow = the LIVE capsule centre 0.57 under
       // the block water line - AUDIT 64 F4).

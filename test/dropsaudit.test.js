@@ -62,7 +62,7 @@ test('CAMP-CULL and CAMP-CAP: a camp member outlives the 100-150 m band it stand
   assert.ok(CAMP_CULL_DISTANCE > MAX_CAMP_SPAWN_DISTANCE + 25, 'past the band, with a margin');
   assert.ok(ENCOUNTER_CULL_DISTANCE < MAX_CAMP_SPAWN_DISTANCE, 'the finding: the encounter cull alone took most of the band');
   const foes = rd('src/scenes/exteriorFoes.js');
-  assert.match(foes, /if \(!f\.placed && _playerDist > \(f\.campId != null \? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE\) && /);
+  assert.match(foes, /if \(!f\.placed && !f\.managed && _playerDist > \(f\.campId != null \? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE\) && /);   // DW-E4: a spawner-managed foe is exempt too
   assert.match(foes, /const encounterRoom = \(\) => MAX_ACTIVE_ENCOUNTER_FOES - activeCount\(\) - spawning\.filter\(\(s\) => s\.capped\)\.length;\n\n\s*return \{ foes, spawnFoe, damageFoe, encounterRoom,/);
   assert.match(rd('src/scenes/world.js'), /let room = exteriorFoes\.encounterRoom\?\.\(\) \?\? Infinity;\n\s*for \(const h of chunkCampHits\) \{\n(?:\s*\/\/[^\n]*\n)*\s*const size = partyGroupMembers\(h\.mobileTypes, partySize\(\)\)\.length;\n\s*if \(size > room\) continue;\n\s*room -= size;\n\s*_standCampEncounter\(h, player\.feetAt\(\)\);/, 'the room is asked for the group as it will stand - grown by the party (PSCALE1)');
 });

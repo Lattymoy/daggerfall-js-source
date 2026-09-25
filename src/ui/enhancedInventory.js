@@ -1305,7 +1305,7 @@ function stow(item) {
   // 26 F156: planStore answers `{ ok: true, map: true }` for a
   // MiscItems.Map - the reveal runs, the paper is consumed, nothing
   // lands in the destination. The classic window routes it
-  // (nativeInventory.js:885) and this one did not, so dragging a
+  // (nativeInventory.js:893) and this one did not, so dragging a
   // treasure map out of the pack dropped the paper on the floor and
   // revealed nothing.
   if (plan.map) { use(item, deps.items?.() ?? []); return; }
@@ -1324,7 +1324,7 @@ function stow(item) {
   // again on the other side, and a tip that stays open after every
   // press is the quirk being fixed.
   // AUDIT INV2 B-F1: THE ENTITY AND THE PROVENANCE RIDE, as they do at
-  // the classic window's own call (nativeInventory.js:891). Without them
+  // the classic window's own call (nativeInventory.js:899). Without them
   // `clearLightSourceOnLeave` - AUDIT 26 F157's first statement inside
   // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
   // went on lighting the player from where it lay. INV2 made that a
@@ -1361,7 +1361,7 @@ function take(item) {
   if (amount == null) { notice = HOW_MANY_ITEMS(plan.amount); render(); return; }
   // MAC-O6 (report: "looting gold/items makes no sound"): DoTransferItem's
   // own cue (:1569 gold's clink, :1583 everything else), which the classic
-  // window plays (nativeInventory.js:911) and this one never did - the ONLY
+  // window plays (nativeInventory.js:919) and this one never did - the ONLY
   // difference between the two windows' calls to planTake/applyTransfer was
   // that this one dropped `plan.sound` on the floor. Played here, ahead of
   // the gold interception below, exactly as DFU's own PlayOneShot sits

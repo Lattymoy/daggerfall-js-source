@@ -77,8 +77,48 @@ export const MAX_CELLS = 8;
 /** WEATHER2c: a cell's rim, as a fraction of its radius - the band over
  *  which its profile blends into the zone's. */
 export const CELL_EDGE = 0.35;
-/** A full sweep of either map takes this many frames. */
+/** A full sweep of either map takes this many frames - a fair sky's; a heavier one takes more (sweepFramesFor). */
 export const SWEEP_FRAMES = 8;
+// ═══════════════════════════════════════════════════════════════════
+// RAIN-FPS (2026-09-25, Mac: "some ... are reporting fps drops. I myself
+// have flawless performance. One user said they turned off the rain and it
+// fixed it"): THE SWEEP TAKES AS MANY FRAMES AS THE SKY COSTS.
+//
+// Measured in the sky lab and the game on a software GPU (the stand-in for
+// a weak one): with the clouds off, rain costs what a clear day costs - the
+// whole of rain's drop is this pass. A texel of a covered sky costs about
+// twice a fair one's (the march walks lit cloud from the slab's foot, with
+// no empty air to stride over: cloudy 1.9, overcast 2.2, rain 2.2 times a
+// sunny sky's), and each weather cell standing near adds about a sixth
+// (eight rain cells over a rain sky, 4.3 times). The map was re-marched
+// every eight frames whatever it held, so a machine with no headroom lost a
+// quarter to a half of its frame rate the moment the rain came in.
+//
+// The sweep now takes the sky's cost in frames - a fair sky's eight, a
+// covered sky's sixteen, a covered sky under storm cells thirty-two - so a
+// frame's share of the march stays near a fair sky's in every weather. The
+// map itself is the same map (the same texels, the same steps); only how
+// long a full refresh takes changes, and a covered sky moves slowly: at 60
+// frames a second a storm's sky is re-marched whole twice a second, and
+// neighbouring stripes are still marched a frame apart. Powers of two, so
+// every pace divides every tier's map evenly.
+/** The cost a weather cell adds to a texel, as a share of the zone's own (measured: see above). */
+export const CELL_SWEEP_COST = 0.15;
+/** The longest sweep - a storm's sky under its cells. */
+export const SWEEP_FRAMES_MAX = 32;
+/** How much a sweep of this sky costs next to a fair sky's: the zone's cover from sunny's to cloudy's doubles it
+ *  (the lab's measure), each cell in play adds CELL_SWEEP_COST of it. Pure. */
+export function sweepCost(cover, cells) {
+  const lo = WEATHER_SKY.sunny.cover, hi = WEATHER_SKY.cloudy.cover;
+  const t = Math.min(1, Math.max(0, ((Number(cover) || 0) - lo) / (hi - lo)));
+  return (1 + t * t * (3 - 2 * t)) * (1 + CELL_SWEEP_COST * Math.max(0, cells | 0));
+}
+/** The frames a sweep of this sky takes: SWEEP_FRAMES times its cost, to the nearest power of two, at most
+ *  SWEEP_FRAMES_MAX. Pure. */
+export function sweepFramesFor(cover, cells) {
+  const k = Math.max(0, Math.round(Math.log2(sweepCost(cover, cells))));
+  return Math.min(SWEEP_FRAMES_MAX, SWEEP_FRAMES * 2 ** k);
+}
 /** VC6d: the steps a ray may take BEYOND its tier's budget. Empty-space
  *  skipping normally finishes a ray early, but a ray that enters and
  *  leaves cloud several times pays one step for each stride it backs
@@ -1391,6 +1431,8 @@ export class VolumetricClouds {
     this.testCell = null;
     this._packed = { c: new Float32Array(MAX_CELLS * 4), a: new Float32Array(MAX_CELLS * 4), b: new Float32Array(MAX_CELLS * 4), t: new Float32Array(MAX_CELLS * 4), k: new Float32Array(MAX_CELLS * 4), s: new Float32Array(MAX_CELLS * 4), u: new Float32Array(MAX_CELLS * 4), ks: new Float32Array(MAX_CELLS * 4), ku: new Float32Array(MAX_CELLS * 4), count: 0 };
     this.stripe = 0;
+    this.pace = SWEEP_FRAMES;        // RAIN-FPS: this sky sweep's frames, taken at its first stripe
+    this.shadowPace = SWEEP_FRAMES;  // ...and the shadow sweep's, at its own
     this.sweeps = 0;          // full sweeps of the sky map completed (the probe waits for one); the first is striped like every other - no stall
     this.origin = null;       // the shadow square's corner the camera asks for
     this.mapOrigin = null;    // the corner the map HOLDS - the deck's rect (the two differ for the frame between a crossing and its blit)
@@ -1531,7 +1573,9 @@ export class VolumetricClouds {
     // the sky map, a stripe at a time from the first frame on
     {
       const u = this.mu;
-      const rows = Math.ceil(q.height / SWEEP_FRAMES);
+      // RAIN-FPS: the pace is the sky's at a sweep's start and holds to its end - a sweep never changes stripe midway
+      if (this.stripe === 0) this.pace = sweepFramesFor(this.row?.cover, this.cells.length);
+      const rows = Math.ceil(q.height / this.pace);
       const y0 = this.stripe * rows;
       gl.useProgram(this.marchProgram);
       this._fieldUniforms(u);
@@ -1556,7 +1600,8 @@ export class VolumetricClouds {
     // the shadow map (VC4)
     {
       const u = this.su;
-      const rows = this.shadowFull ? q.shadow : Math.ceil(q.shadow / SWEEP_FRAMES);
+      if (!this.shadowFull && this.shadowStripe === 0) this.shadowPace = this.pace;   // RAIN-FPS: the sky's pace, at the shadow sweep's own start
+      const rows = this.shadowFull ? q.shadow : Math.ceil(q.shadow / this.shadowPace);
       const y0 = this.shadowFull ? 0 : this.shadowStripe * rows;
       gl.useProgram(this.shadowProgram);
       this._fieldUniforms(u);

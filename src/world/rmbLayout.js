@@ -62,6 +62,16 @@ export const isBulletinBoard = (modelID) => modelID === BULLETIN_BOARD_MODEL_ID;
  * @returns {{models:Array<{modelId:string,modelIdNum:number,matrix:Float32Array}>,
  *   groundTiles:Array<Array<{record:number,rotated:boolean,flipped:boolean}>>}}
  */
+/**
+ * RMBLayout.GetModelScaleVector (:74-77): a model record's scale, a zero
+ * (absent - every classic record) read as 1. Only a world-data JSON
+ * record carries one (WD1: Detailed Ships, Warm Ashes - Ships).
+ * @returns {[number, number, number]}
+ */
+export function modelScaleVector(obj) {
+  return [obj.xScale || 1, obj.yScale || 1, obj.zScale || 1];
+}
+
 export function layoutRmbBlock(dfBlock, { enhanced = false, windmills = true } = {}) {
   const rmb = dfBlock.rmbBlock;
   const models = [];
@@ -86,7 +96,8 @@ export function layoutRmbBlock(dfBlock, { enhanced = false, windmills = true } =
         obj.zPos * GLOBAL_SCALE,
         -obj.xRotation / ROTATION_DIVISOR,
         -obj.yRotation / ROTATION_DIVISOR,
-        -obj.zRotation / ROTATION_DIVISOR
+        -obj.zRotation / ROTATION_DIVISOR,
+        ...modelScaleVector(obj)
       );
       models.push({
         modelId: obj.modelId,
@@ -108,7 +119,8 @@ export function layoutRmbBlock(dfBlock, { enhanced = false, windmills = true } =
         (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE,
         -obj.xRotation / ROTATION_DIVISOR,
         -obj.yRotation / ROTATION_DIVISOR,
-        -obj.zRotation / ROTATION_DIVISOR
+        -obj.zRotation / ROTATION_DIVISOR,
+        ...modelScaleVector(obj)
       ),
     });
   }

@@ -270,7 +270,19 @@ export class Collider {
     const r = CAPSULE_RADIUS;
     const hx0 = this.heightAt(x - r, z), hx1 = this.heightAt(x + r, z), hz0 = this.heightAt(x, z - r), hz1 = this.heightAt(x, z + r);
     if (!(Number.isFinite(hx0) && Number.isFinite(hx1) && Number.isFinite(hz0) && Number.isFinite(hz1))) return h;
-    const gx = (hx1 - hx0) / (2 * r), gz = (hz1 - hz0) / (2 * r);
+    // DW-D (2026-09-25): THE GRADE IS A SLOPE'S, NEVER A STEP'S. The carved
+    // sea (Iliac Puddle No More) lays its seafloor under the heightfield, so
+    // at a carved cell's edge the floor STEPS from the sea's bed to the shore
+    // (the floor's walls stand in the step), and the centred difference read
+    // the step as a grade: a body on the shore within a radius of it rested
+    // r (sqrt(1 + g^2) - 1) over the ground at g = rise / 2r - twelve metres
+    // over a 25 m step, measured through a shore exit. Each axis takes the
+    // gentler of its two one-sided grades, and none where they disagree in
+    // sign (a ridge, a valley's floor): on a plane both ARE the centred one,
+    // so every slope rests as above, and at a step the body rests on the
+    // ground beneath it - on a cliff's top at its edge, or at its foot
+    // against the wall.
+    const gx = minmod((hx1 - h) / r, (h - hx0) / r), gz = minmod((hz1 - h) / r, (h - hz0) / r);
     return h + r * (Math.sqrt(1 + gx * gx + gz * gz) - 1);
   }
 
@@ -501,13 +513,17 @@ export class Collider {
   groundNormal(x, z) {
     const h = GROUND_NORMAL_STEP;
     const at = this.surfaceAt ?? this.heightAt;   // BLOOD1 AUDIT 3: the slope of the DRAWN ground - inside one triangle the difference is its plane exactly
-    const hx = at(x + h, z) - at(x - h, z);
-    const hz = at(x, z + h) - at(x, z - h);
-    if (!Number.isFinite(hx) || !Number.isFinite(hz)) return [0, 1, 0];
+    const c = at(x, z), xp = at(x + h, z), xm = at(x - h, z), zp = at(x, z + h), zm = at(x, z - h);
+    if (!Number.isFinite(xp - xm) || !Number.isFinite(zp - zm) || !Number.isFinite(c)) return [0, 1, 0];
+    // DW-D: the gentler one-sided grade per axis, restFloor's rule - on a
+    // plane it is the centred difference, and a STEP in the sampler (the
+    // carved sea's floor at a cell's edge) is not a cliff face half a
+    // sample either side of it: the Deep Waters shore probe read a shore
+    // half a metre from the carve as a wall and refused the landing.
     // `|| 0` is not belt and braces: -0 over flat ground is a real
     // answer that compares unequal to 0 and reads as a negative
     // gradient to anything that tests the sign.
-    const nx = (-hx / (2 * h)) || 0, nz = (-hz / (2 * h)) || 0;
+    const nx = (-minmod((xp - c) / h, (c - xm) / h)) || 0, nz = (-minmod((zp - c) / h, (c - zm) / h)) || 0;
     const l = Math.hypot(nx, 1, nz) || 1;
     return [nx / l, 1 / l, nz / l];
   }
@@ -1215,6 +1231,8 @@ export class Collider {
 
 const ZERO3 = [0, 0, 0];
 const TMP = [0, 0, 0];
+/** restFloor's limiter: the smaller of two one-sided grades that agree in sign, else 0. */
+const minmod = (a, b) => (a * b <= 0 ? 0 : Math.abs(a) < Math.abs(b) ? a : b);
 // AUDIT COL1 F9: the middle spheres' centres, reused. _resolveCapsule
 // runs several times per move() per body and is never re-entered, so
 // rebuilding this array per call was pure garbage at frame rate.

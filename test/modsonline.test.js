@@ -77,7 +77,7 @@ test('MODS-ONLINE-2: every vendored mod is classified, and the only keys the lan
   }
 });
 
-test('MODS-ONLINE-4: every mod switch is the player\'s online, except the twenty the room owns', () => {
+test('MODS-ONLINE-4: every mod switch is the player\'s online, except the thirty-four the room owns', () => {
   for (const [vendor, def] of Object.entries(MOD_SETTINGS)) {
     for (const key of Object.keys(def.keys)) {
       const room = ONLINE_ROOM_MOD_KEYS[vendor] && Object.hasOwn(ONLINE_ROOM_MOD_KEYS[vendor], key);
@@ -90,7 +90,7 @@ test('MODS-ONLINE-4: every mod switch is the player\'s online, except the twenty
   // The whole shelf, counted, so a mod quietly re-forced shows up as a
   // number rather than as a player's complaint.
   const forced = Object.values(ONLINE_ROOM_MOD_KEYS).reduce((n, keys) => n + Object.keys(keys).length, 0);
-  assert.equal(forced, 20, 'the lane forces twenty mod switches in the whole shelf');   // MODS-ONLINE-5: one ruleset per room - RR's six combat overrides and its intensive training   // RRI1/RR1 (merged 2026-09-23): five of Roleplay & Realism: Items' (the items that change hands) and two of Roleplay & Realism's (the location, the host's foes)   // WOD1: World of Daggerfall's Enabled, the second floor
+  assert.equal(forced, 34, 'the lane forces thirty-four mod switches in the whole shelf');   // DW-D: Iliac Puddle No More's thirteen - the sea and its depth (the fourth floor), the deep's foes and loot, its swim and breath rules   // DS1: Detailed Ships' Enabled, the ships' shared deck   // MODS-ONLINE-5: one ruleset per room - RR's six combat overrides and its intensive training   // RRI1/RR1 (merged 2026-09-23): five of Roleplay & Realism: Items' (the items that change hands) and two of Roleplay & Realism's (the location, the host's foes)   // WOD1: World of Daggerfall's Enabled, the second floor
   // MODS-ONLINE-4 (Mac: "What about player balance?"): the two GROUND
   // switches, and the three that spend somebody else's evening - the
   // host's dungeon foes (meaner monsters, the overhaul) and a roll that
@@ -98,8 +98,8 @@ test('MODS-ONLINE-4: every mod switch is the player\'s online, except the twenty
   // switch, World of Daggerfall's, which levels camp sites into the same
   // terrain the road beds are smoothed into.
   assert.deepEqual(Object.keys(ONLINE_ROOM_MOD_KEYS).sort(),
-    ['meanerMonsters', 'pcaao', 'roads-hazelnut', 'roleplay-realism', 'roleplay-realism-items', 'unleveledLoot', 'world-of-daggerfall']);
-  assert.equal(ONLINE_PLAYERS_OWN_MODS.length, Object.keys(MOD_SETTINGS).length - 7);
+    ['detailed-ships', 'iliac-puddle-no-more', 'meanerMonsters', 'pcaao', 'roads-hazelnut', 'roleplay-realism', 'roleplay-realism-items', 'unleveledLoot', 'world-of-daggerfall']);
+  assert.equal(ONLINE_PLAYERS_OWN_MODS.length, Object.keys(MOD_SETTINGS).length - 9);
 });
 
 test('MODS-ONLINE-2: a declared key is an OWN key - the lane and the store both refuse a name off Object.prototype', () => {
@@ -188,17 +188,19 @@ test('MODS-ONLINE-2: the lock, the pane and the door all say the same true thing
   // GROUND's reason, so they do not wear the ground's words.
   assert.match(menu, /const ONLINE_SHARED_NOTE = '[^']*belong to whoever is hosting it[^']*';/, 'the shared lock has its own words');
   assert.match(menu, /if \(ground !== undefined\) lockOnline\(b, null, \{ note: onlineLockNote\(vendor, key\), value: ground \}\);/);
-  // WOD1: the ground's words go to the two vendors that write terrain heights, and only them.
-  assert.match(menu, /const ONLINE_GROUND_VENDORS = Object\.freeze\(\['roads-hazelnut', 'world-of-daggerfall'\]\);/);
+  // WOD1: the ground's words go to the two vendors that write terrain heights, and only them. DS1: and the ships' shared deck.
+  assert.match(menu, /const ONLINE_GROUND_VENDORS = Object\.freeze\(\['roads-hazelnut', 'world-of-daggerfall', 'detailed-ships'\]\);/);
   // MODS-ONLINE-5: the ruleset's reason is its own words, and only RR's seven wear them
   assert.match(menu, /const ONLINE_RULESET_NOTE = '[^']*one ruleset[^']*';/, 'the ruleset lock has its own words');
-  assert.match(menu, /const onlineLockNote = \(vendor, key\) => \(ONLINE_GROUND_VENDORS\.includes\(vendor\) \? ONLINE_GROUND_NOTE : ONLINE_RULESET_KEYS\[vendor\]\?\.includes\(key\) \? ONLINE_RULESET_NOTE : ONLINE_SHARED_NOTE\);/);
+  // DW-D: a vendor whose room keys are the ground's AND other reasons names its ground keys (the carved sea's switch and depth)
+  assert.match(menu, /const ONLINE_GROUND_KEYS = Object\.freeze\(\{ 'iliac-puddle-no-more': Object\.freeze\(\['Enabled', 'General\.WaterDepth'\]\) \}\);/);
+  assert.match(menu, /const onlineLockNote = \(vendor, key\) => \(ONLINE_GROUND_VENDORS\.includes\(vendor\) \|\| ONLINE_GROUND_KEYS\[vendor\]\?\.includes\(key\) \? ONLINE_GROUND_NOTE : ONLINE_RULESET_KEYS\[vendor\]\?\.includes\(key\) \? ONLINE_RULESET_NOTE : ONLINE_SHARED_NOTE\);/);
   assert.match(menu, /if \(isOnlinePage\(\)\) body\.append\(el\('p', 'meta', ONLINE_MODS_NOTE\)\);/, 'the Mods pane says what is true of MODS');
   // The Online pane's own sentence claimed every mod was on for
   // everyone. A player reading that and then toggling one would be
   // reading a lie the port no longer tells.
   assert.ok(!/every enhancement and every mod is on for everyone/.test(menu), 'the old claim is gone');
-  assert.match(menu, /Most of your mods stay yours - turn them on or off online as you like\. Six switches are the room/, 'the door says what is true');
+  assert.match(menu, /Most of your mods stay yours - turn them on or off online as you like\. A few switches are the room\\u2019s: the ones that shape the ground/, 'the door says what is true');   // DW-D: "Six switches" had been false since RRI1/RR1 and DS1 - the door names the reasons, the pane the switches
 });
 
 test('MODS-ONLINE-2: a mod the player owns reaches no wire, no save and no roll', () => {

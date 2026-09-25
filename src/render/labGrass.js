@@ -248,6 +248,7 @@ void main(){
 const UP = new Float32Array([0, 1, 0]);
 const WHITE = new Float32Array([1, 1, 1]);
 const NO_FOG_RANGE = new Float32Array([0, 1]);   // DISC20-A: a range for the unfogged draw (mode 0 never reads it)
+const NO_WATER_FOG = new Float32Array(20);   // DW-C: uDwFog off ([0].x 0)
 
 export const LAB_GRASS_FS = `in float vT; in float vTint; in float vFade; in float vLam; in float vSnow; in float vWet; in vec3 vGround; in float vMoonLam;   // WIND4: appended, so the lab's own locator still finds this line
 uniform vec3 uAmb, uSunCol, uMoonCol; uniform float uDim, uSunScale, uMoonScale;   // WIND4: the sun's SCALE and the moon, the two terms the ground has and the grass did not
@@ -467,7 +468,7 @@ export const GRASSFOG_FS_EDITS = Object.freeze([
   Object.freeze({
     why: 'the lit and stepped colour blended to the fog colour at the blade\'s distance, as the terrain\'s last line does',
     from: '  o = vec4(c, mix(vFade * smoothstep(0.0, 0.30, vT), 1.0, uPixel));',
-    to: '  c = mix(uFogColor, c, fogFactorAt(vWorld));   // DISC20-A\n  o = vec4(c, mix(vFade * smoothstep(0.0, 0.30, vT), 1.0, uPixel));',
+    to: '  c = mix(uFogColor, c, fogFactorAt(vWorld));   // DISC20-A\n  c = dwWaterFog(c, vWorld);   // DW-C: and the carved sea\'s distance fog, as the terrain\'s last line takes it\n  o = vec4(c, mix(vFade * smoothstep(0.0, 0.30, vT), 1.0, uPixel));',
   }),
 ]);
 /** what the game compiles: the lab's stages under the pixel style's edits, then the fog's (DISC20-A) */
@@ -1290,7 +1291,7 @@ export class LabGrassRenderer {
     this.u = {};
     for (const n of ['uVP', 'uTime', 'uWind', 'uRange', 'uEye', 'uSunDir', 'uWindDir', 'uSnowFull', 'uSlotN', 'uCellFrame', 'uBladeScale', 'uCellSize', 'uGField', 'uGFieldOrigin', 'uGFieldM', 'uSnowGlobal', 'uWindV', 'uAmb', 'uSunCol', 'uDim', 'uSunScale', 'uMoonDir', 'uMoonScale', 'uMoonCol',
       'uPixel', 'uPxVariants', 'uPxSteps', 'uPxTintBands', 'uPxSheet',   // GRASS-PX: the pixel style's five (GRASS-PX3 took the sway's two)
-      'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.u[n] = gl.getUniformLocation(prog, n);   // DISC20-A: the terrain's fog
+      'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uDwFog']) this.u[n] = gl.getUniformLocation(prog, n);   // DISC20-A: the terrain's fog; DW-C: and the sea's
     // the blade, and three instance streams the lab's layout plus the game's root height
     // GRASS2: the instance buffers are made ONCE and shared by both
     // levels of detail - only the corner buffer differs between them, so
@@ -1569,6 +1570,7 @@ export class LabGrassRenderer {
     gl.uniform2fv(u.uFogRange, fog?.range ?? NO_FOG_RANGE);
     gl.uniform3fv(u.uFogColor, fog?.color ?? WHITE);
     gl.uniform3fv(u.uCamPos, fog?.camPos ?? eye);
+    if (u.uDwFog) gl.uniform4fv(u.uDwFog, fog?.dw ?? NO_WATER_FOG);   // DW-C: the frame's (renderer.setWaterFog); none handed, off
     gl.bindVertexArray(this.vao);
     this._drawVisibleSlots(o, eye, range);   // PERF2: the field, culled by cell
     gl.bindVertexArray(null);

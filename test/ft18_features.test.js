@@ -51,7 +51,7 @@ test('FT18: ten rows are four, and nothing they offered is lost - every key, def
   for (const gone of ['grass-density', 'grass-style', 'wind-wisps', 'flora-sway', 'quickslot-diamond', 'quickbar-style', 'blood-marks', 'blood-overkill', 'blood-screen', 'blood-gore']) {
     assert.equal(row(gone), undefined, `${gone} is condensed`);
   }
-  assert.equal(FEATURES.length, 53);   // PERF-SCALE's render scale (2026-09-25) is the one row added since
+  assert.equal(FEATURES.length, 57);   // PERF-SCALE's render scale (2026-09-25) is the one row added since; the sea update's four mod rows (AS1, DS1, WA1, DW-D) came with its merge
   const want = { grassDensity: 1, grassStyle: 'pixel', floraSway: true, windWisps: true, quickbarStyle: 'quickbar', quickslots: true,
     'blood-gore': 'normal', 'blood-marks': true, 'blood-overkill': true, 'blood-screen': true };
   for (const [k, v] of Object.entries(want)) assert.equal(FEATURE_PREF_DEFAULTS[k], v, `${k} keeps its default`);
@@ -139,7 +139,7 @@ test('FT18: blood has an Off at last - the three parts off, the amount kept; an 
 test('FT18: the search finds by any word - title, note, part, group or a mod\'s author - in any order, without accents or curly quotes (mutant: the note, the parts or the author left out)', () => {
   const ids = (q) => FEATURES.filter((f) => matchesFeatureQuery(f, q)).map((f) => f.id);
   assert.equal(ids('').length, FEATURES.length, 'an empty query finds everything');
-  assert.deepEqual(ids('kamer'), ['mod-windmills-kamer', 'mod-world-of-daggerfall'], 'by the author');
+  assert.deepEqual(ids('kamer'), ['mod-windmills-kamer', 'mod-world-of-daggerfall', 'mod-warm-ashes-ships'], 'by the author (Warm Ashes - Ships is Kamer\'s too)');
   assert.deepEqual(ids('hotbar'), ['quick-slots'], 'by what a condensed row folded in');
   assert.deepEqual(ids('lens'), ['blood'], 'by a part');
   assert.ok(ids('sway').includes('wind'));

@@ -113,8 +113,8 @@
     "tests": [
       "test/ql_frame.test.js"
     ],
-    "old": "              if (pile) {\n                const _hooks = droppedLootHooks(pile);",
-    "new": "              {\n                const _hooks = droppedLootHooks(pile);"
+    "old": "              if (pile || _fish) {\n                const _hooks = _fish ? dwFishLootHooks(_fish) : droppedLootHooks(pile);",
+    "new": "              {\n                const _hooks = _fish ? dwFishLootHooks(_fish) : droppedLootHooks(pile);"
   },
   {
     "name": "LG-exterior-null-pile-hooked",

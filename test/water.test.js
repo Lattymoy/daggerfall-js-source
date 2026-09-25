@@ -155,12 +155,12 @@ test('WATER1: the shader - the terrain\'s own grid lifted, the corner lookup by 
   assert.match(fs, /uniform uvec4 uWaterMask\[8\];/);
   assert.match(fs, /uint word = j == 0u \? v\.x : \(j == 1u \? v\.y : \(j == 2u \? v\.z : v\.w\)\);/, 'the component by compare, never a dynamic index');
   assert.match(fs, /if \(corners == 0u\) discard;/, 'no water, no blend');
-  assert.match(fs, /float edge = smoothstep\(0\.5 - uShoreSoft, 0\.5 \+ uShoreSoft, coverage\(corners, f\)\);\s*\n\s*if \(edge <= 0\.002\) discard;/, 'the feather, then nothing past it');
+  assert.match(fs, /float edge = smoothstep\(0\.5 - uShoreSoft, 0\.5 \+ uShoreSoft, coverage\(corners, f\)\);\s*\n(?:\s*\/\/[^\n]*\n)*\s*uint rec = data >> 2u;\n\s*if \(isPuddleRecord\(rec\)\) \{\n(?:[^\n]*\n){3}\s*\}\n\s*if \(edge <= 0\.002\) discard;/, 'the feather (WATER-PUDDLE: a puddle record\'s own art multiplied in), then nothing past it');
   assert.match(fs, /float diff = max\(dot\(n, uLightDir\), 0\.0\) \* shadow;/, 'the ground\'s sun term, shadowed by the deck');
   assert.match(fs, /vec3 lit = tex \* \(uAmbient \+ uSunColor \* \(uSunScale \* diff\) \+ uMoonColor \* \(uMoonScale \* mdiff\)\);/, 'TERRAIN_FS\'s light law');
   assert.match(fs, /float F = uF0 \+ \(0\.72 - uF0\) \* pow\(1\.0 - NdV, 5\.0\);/, 'Schlick, capped');
   assert.match(fs, /float alpha = \(uOpacity \+ \(1\.0 - uOpacity\) \* F\) \* edge;/);
-  assert.match(fs, /outColor = vec4\(mix\(uFogColor, col, fogFactorAt\(vWorldPos\)\), alpha\);/, 'the fog every world pass takes');
+  assert.match(fs, /outColor = vec4\(dwWaterFog\(mix\(uFogColor, col, fogFactorAt\(vWorldPos\)\), vWorldPos\), alpha\);/, 'the fog every world pass takes (DW-C: and the carved sea\'s distance fog over it)');
   // GRAIN1 (2026-09-19): the same texel, the same layer, the same scroll -
   // but sampled with the UNWRAPPED gradient, because the tile array is
   // mipmapped now and `fract` jumps. Taking the footprint from the
@@ -236,7 +236,8 @@ test('WATER1: both exterior hosts - the gate, the has-water skip, and the slot a
     'the clock, the eased wind the mills take, the front\'s rain, the dome\'s colours');
   // PERF-EXT13: the visible water pixels are collected - each pixel's water, its matrix, its ground array and its
   // tilemap - and drawn in ONE call after the walk
-  assert.match(w, /if \(!p\._visible \|\| !p\.water\) continue;\s*\n\s*const row = _waterRows\[n\+\+\] \?\?= \[null, null, null, null\];\s*\n\s*row\[0\] = p\.water; row\[1\] = p\._pixelMatrix; row\[2\] = renderer\.tileArrays\.get\(p\.groundArchive\); row\[3\] = p\.tilemapTex;\s*\n\s*\}\s*\n\s*renderer\.drawWaterSurfaces\(_waterRows, n, 6\.4, wu\);/);
+  assert.match(w, /if \(!p\._visible \|\| !p\.water \|\| p\.deepWaters\?\.hide\) continue;[^\n]*\n\s*const row = _waterRows\[n\+\+\] \?\?= \[null, null, null, null\];\s*\n\s*row\[0\] = p\.water; row\[1\] = p\._pixelMatrix; row\[2\] = renderer\.tileArrays\.get\(p\.groundArchive\); row\[3\] = p\.tilemapTex;\s*\n\s*\}\s*\n\s*renderer\.drawWaterSurfaces\(_waterRows, n, 6\.4, wu\);/);
+  // DW-C: a pixel whose cap Iliac Puddle No More hides takes its water with it (the condition above)
   const e = rd('src/scenes/exterior.js');
   assert.match(e, /const waterOn = waterSwitchOn\(\)[^\n]*\n\s*&& tilemapRectHasWater\(tilemapBytes, tilemapDim, loc\.width \* GROUND_TILE_DIM, loc\.height \* GROUND_TILE_DIM\);/, 'exterior: the one composition, and the town\'s own has-water question beside it (FT6)');
   const eslot = e.indexOf('    if (waterOn) {\n      renderer.drawWaterSurface(groundSurface, identityMatrix,');

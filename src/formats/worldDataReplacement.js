@@ -26,7 +26,7 @@
 import { getBool } from '../systems/settings.js';
 import { NO_VARIANT, makeLocationKey, getLocationVariant, getBlockVariantHere, getBuildingVariantHere, setNewLocationIndexResolver } from '../systems/worldDataVariants.js';
 import { LOCATION_TYPES, DUNGEON_TYPES, getWorldClimateSettings, REGION_NAMES } from './mapsFile.js';
-import { BLOCK_TYPES } from './blocksFile.js';
+import { BLOCK_TYPES, RDB_RESOURCE_TYPES } from './blocksFile.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { setWorldDataDoor } from './worldDataDoor.js';
 
@@ -70,6 +70,8 @@ let _blocksFile = null;           // ContentReader.BlockFileReader (AssignBlockI
 /** The host's BlocksFile - what AssignBlockIndices asks for the BSA's
  *  count and a name's classic index. */
 export function bindWorldDataBlocks(blocksFile) { _blocksFile = blocksFile ?? null; }
+/** WD1: the bound BlocksFile, for the world-data patches' classic reads (scenes/modWorldData.js). */
+export const boundWorldDataBlocks = () => _blocksFile;
 /** Once: the readers' door. Tests reset with `_resetWorldDataReplacement`. */
 export function installWorldDataReplacement() {
   setNewLocationIndexResolver(getNewDFLocationIndex);   // AUDIT-RR F33: SetNewLocationVariant -> GetNewDFLocationIndex (WorldDataVariants.cs:101) - RR3a's seam, wired
@@ -242,13 +244,10 @@ export function getDFBlockReplacementData(block, blockName) {
     if (variant === NO_VARIANT) blocks.set(blockName, NO_REPLACEMENT);
     return null;
   }
-  if (!blockName.endsWith('.RMB')) {   // AUDIT-RR2 G14: the C# deserialises a whole DFBlock, RdbBlock included (:363-369); the port's converter reads the RMB half only, so an RDB/RDI file is said and NOT served with a null body the dungeon layout would fall through
-    console.warn(`[worlddata] ${blockName}: RDB/RDI block replacement is not converted by the port - ignored`);
-    if (variant === NO_VARIANT) blocks.set(blockName, NO_REPLACEMENT);
-    return null;
-  }
+  // WD1 (Aquatic Sprites' three wet blocks): the whole DFBlock, RdbBlock and RdiBlock included (:363-369) - the
+  // AUDIT-RR2 G14 refusal of RDB/RDI files is lifted now that the converters below read both halves
   const dfBlock = blockFromJson(json, block);
-  replaceRmbBlockBuildingData(blockName, block, dfBlock);
+  if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);   // :382-384 - RMB blocks only
   blocks.set(blockKey, dfBlock);
   console.log(`[worlddata] Found DFBlock override: ${blockName} (index: ${block})`);
   return dfBlock;
@@ -365,7 +364,11 @@ function dungeonFromJson(d) {
 const modelFromJson = (m) => ({
   position: 0, modelIdNum: m.ModelIdNum ?? Number(m.ModelId ?? 0), modelId: String(m.ModelId ?? m.ModelIdNum ?? 0), objectType: m.ObjectType ?? 0,
   unknown1: 0, unknown2: 0, unknown3: 0, xPos1: 0, yPos1: 0, zPos1: 0,
-  xPos: m.XPos ?? 0, yPos: m.YPos ?? 0, zPos: m.ZPos ?? 0, nullValue2: 0,
+  xPos: m.XPos ?? 0, yPos: m.YPos ?? 0, zPos: m.ZPos ?? 0,
+  // WD1: RmbBlock3dObjectRecord's XScale/YScale/ZScale (DFBlock.cs:407-420) - a JSON record's own; zero (absent) is
+  // "unscaled" at the layout (RMBLayout.GetModelScaleVector; world/rmbLayout.js modelScale). Float32 fields.
+  xScale: Math.fround(m.XScale ?? 0), yScale: Math.fround(m.YScale ?? 0), zScale: Math.fround(m.ZScale ?? 0),
+  nullValue2: 0,
   xRotation: m.XRotation ?? 0, yRotation: m.YRotation ?? 0, zRotation: m.ZRotation ?? 0, unknown4: 0, unknown5: 0,
 });
 const flatFromJson = (f) => ({
@@ -417,11 +420,22 @@ export function groundDataFromJson(g) {
   }
   return { header: Uint8Array.from(g?.Header ?? new Array(8).fill(0)), groundTiles: tiles, groundScenery: scenery };
 }
-/** DFBlock from `<block>.RMB.json`: the port's `loadBlock` record with
- *  `index` the caller's (the C# sets dfBlock.Index = block). The FLD
- *  header's positions come from the subrecords (the JSON carries them
- *  there), its record counts from the arrays. */
+/** DFBlock from `<block>.RMB.json` / `.RDB.json` / `.RDI.json`: the
+ *  port's `loadBlock` record with `index` the caller's (the C# sets
+ *  dfBlock.Index = block). An RMB's FLD header takes its positions from
+ *  the subrecords (the JSON carries them there) and its record counts
+ *  from the arrays; an RDB or RDI file serves its own half (WD1). */
 export function blockFromJson(json, index) {
+  const name = json.Name ?? '';
+  const type = enumOf(BLOCK_TYPES, json.Type, name.endsWith('.RMB') ? BLOCK_TYPES.Rmb : name.endsWith('.RDB') ? BLOCK_TYPES.Rdb : name.endsWith('.RDI') ? BLOCK_TYPES.Rdi : BLOCK_TYPES.Unknown);
+  if (type === BLOCK_TYPES.Rdb || type === BLOCK_TYPES.Rdi) {
+    return {
+      position: json.Position ?? 0, index, name, type,
+      rmbBlock: null,
+      rdbBlock: type === BLOCK_TYPES.Rdb ? rdbBlockFromJson(json.RdbBlock ?? {}) : null,
+      rdiBlock: type === BLOCK_TYPES.Rdi ? { data: json.RdiBlock?.Data ? Uint8Array.from(json.RdiBlock.Data) : null } : null,
+    };
+  }
   const rmb = json.RmbBlock ?? {};
   const fh = rmb.FldHeader ?? {};
   const subRecords = (rmb.SubRecords ?? []).map(rmbSubRecordFromJson);
@@ -430,12 +444,11 @@ export function blockFromJson(json, index) {
   const blockPositions = new Array(32).fill(null).map((_, i) => ({ unknown1: 0, unknown2: 0, xPos: subRecords[i]?.xPos ?? 0, zPos: subRecords[i]?.zPos ?? 0, yRotation: subRecords[i]?.yRotation ?? 0 }));
   const buildingDataList = (fh.BuildingDataList ?? []).map(buildingDataFromJson);
   while (buildingDataList.length < 32) buildingDataList.push({ ...emptyBuildingData(), buildingType: -1 });   // AUDIT-RR2 G19: DFU's list is the JSON's length; the port's 32-slot shape pads with BuildingTypes.None (-1), not Alchemist (0)
-  const name = json.Name ?? '';
   return {
     position: json.Position ?? 0,
     index,
     name,
-    type: enumOf(BLOCK_TYPES, json.Type, name.endsWith('.RMB') ? BLOCK_TYPES.Rmb : BLOCK_TYPES.Unknown),
+    type,
     rmbBlock: {
       fldHeader: {
         numBlockDataRecords: subRecords.length, numMisc3dObjectRecords: misc3d.length, numMiscFlatObjectRecords: miscFlat.length,
@@ -449,6 +462,55 @@ export function blockFromJson(json, index) {
     rdiBlock: null,
   };
 }
+// ---- the RDB half (WD1) ----
+/** DFBlock.RdbResourceTypes by name. */
+const RDB_RESOURCE_BY_NAME = Object.freeze({ Model: RDB_RESOURCE_TYPES.Model, Light: RDB_RESOURCE_TYPES.Light, Flat: RDB_RESOURCE_TYPES.Flat });
+/** RdbActionResource: a Model object's own, or DFU's default struct (every field zero) when the JSON leaves the resource out. */
+const actionResourceFromJson = (a) => ({
+  position: a?.Position ?? 0, axis: a?.Axis ?? 0, duration: a?.Duration ?? 0, magnitude: a?.Magnitude ?? 0,
+  nextObjectOffset: a?.NextObjectOffset ?? 0, flags: a?.Flags ?? 0,
+  previousObjectOffset: a?.PreviousObjectOffset ?? 0, nextObjectIndex: a?.NextObjectIndex ?? 0,
+});
+/** RdbResources: the one resource RdbObjectProcessor wrote, the other two left at DFU's default struct. */
+function rdbResourcesFromJson(r) {
+  const m = r?.ModelResource, f = r?.FlatResource, l = r?.LightResource;
+  return {
+    modelResource: {
+      xRotation: m?.XRotation ?? 0, yRotation: m?.YRotation ?? 0, zRotation: m?.ZRotation ?? 0, modelIndex: m?.ModelIndex ?? 0,
+      triggerFlagStartingLock: m?.TriggerFlag_StartingLock ?? 0, soundIndex: m?.SoundIndex ?? 0, actionOffset: 0,
+      actionResource: actionResourceFromJson(m?.ActionResource),
+    },
+    flatResource: {
+      position: f?.Position ?? 0,
+      textureBitfield: (((f?.TextureArchive ?? 0) << 7) | ((f?.TextureRecord ?? 0) & 0x7f)) & 0xffff,
+      textureArchive: f?.TextureArchive ?? 0, textureRecord: f?.TextureRecord ?? 0, flags: f?.Flags ?? 0,
+      magnitude: f?.Magnitude ?? 0, soundIndex: f?.SoundIndex ?? 0, factionOrMobileId: f?.FactionOrMobileId ?? 0,
+      nextObjectOffset: f?.NextObjectOffset ?? 0, action: f?.Action ?? 0,
+      isCustomData: !!f?.IsCustomData,   // DFU's own field (DFBlock.cs:1064): a custom marker's whole FactionOrMobileId is its MobileType
+    },
+    lightResource: { unknown1: l?.Unknown1 ?? 0, unknown2: l?.Unknown2 ?? 0, radius: l?.Radius ?? 0 },
+  };
+}
+/** RdbBlockDesc from its JSON: the reference list as written (cut at the
+ *  first unused slot), the object roots with their objects. The internal
+ *  members (Header, ModelDataList, ObjectHeader, UnknownObjectList) are
+ *  not serialised and come back at their defaults, as in the C#. */
+export function rdbBlockFromJson(j) {
+  return {
+    position: 0, header: null, modelDataList: null, objectHeader: null, unknownObjectList: null,
+    modelReferenceList: (j.ModelReferenceList ?? []).map((m) => ({ modelId: m.ModelId ?? '', modelIdNum: m.ModelIdNum ?? 0, description: m.Description ?? '' })),
+    objectRootList: (j.ObjectRootList ?? []).map((g) => ({
+      rootOffset: 0,
+      rdbObjects: g?.RdbObjects ? g.RdbObjects.map((o) => ({
+        position: o.Position ?? 0, next: 0, previous: 0, index: o.Index ?? 0,
+        xPos: o.XPos ?? 0, yPos: o.YPos ?? 0, zPos: o.ZPos ?? 0,
+        type: enumOf(RDB_RESOURCE_BY_NAME, o.Type, 0), resourceOffset: 0,
+        resources: rdbResourcesFromJson(o.Resources),
+      })) : null,
+    })),
+  };
+}
+
 /** BuildingReplacementData from `<block>-<index>-building<n>.json`. */
 export function buildingReplacementFromJson(json) {
   return {

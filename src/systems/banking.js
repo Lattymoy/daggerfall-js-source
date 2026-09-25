@@ -317,6 +317,11 @@ export function assignShipToPlayer(player, shipType, { addPermanentScene = null 
   return shipType;
 }
 
+/** ResetShip (:128) - `ownedShip = ShipType.None` and nothing else: the
+ *  permanent scenes stay listed, as they do in DFU. WA1: Warm Ashes -
+ *  Ships takes back the ship it lends with this. */
+export function resetShip(player) { player.ownedShip = SHIP_TYPES.None; }
+
 /**
  * PurchaseShip (:467-486). The ladder is PurchaseHouse's, with one
  * difference worth keeping in view: the ship price is a FLAT table
@@ -742,7 +747,7 @@ export function bankingStatusRows(accounts, { regionName = () => '' } = {}) {
 //    the permanent-scene set, so housesForSale, allocateHouseToPlayer
 //    and sellHouse above are live; H2/H4 brought the BUY UI itself -
 //    DaggerfallBankPurchasePopUp is ui/bankPurchaseWindow.js
-//    (BankPurchaseWindow :102), mounted at scenes/worldModes.js:2872
+//    (BankPurchaseWindow :102), mounted at scenes/worldModes.js:2875
 //    openPurchase with drawBankModelPreview (:1938) as the dedicated
 //    3D model panel, and ui/bankWindow.js:246-259 routes BUY HOUSE's
 //    'pick' into it (a host without the window still falls back to

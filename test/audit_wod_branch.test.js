@@ -381,6 +381,8 @@ function host({ online = null, removeSiteFoes = () => {} } = {}) {
     uploadRecord: () => {}, centredBase: (c) => c, renderer, flatBatchAabb: () => [0, 0, 0, 0, 0, 0], armFlatAnim: () => {}, uploadRecordFrame: () => {},
     _seasonStraightening: false, _loading: false, _recalling: false, rollHoldFoes: () => [], online, wodSiteId, yieldsTo, performance: { now: () => 0 },
     buildingDoors: [], doorGeneration: 0, droppedTorches: { collectPixel: () => {} }, cityGuards: { collectPixel: () => {} },
+    deepWaters: null,   // DW-B: destroyPixel hands a pixel's seafloor back to the Deep Waters host - none in this rig
+    dwDecor: null,   // DW-E2: and its seafloor's decorations to theirs - none in this rig either
   };
   const names = Object.keys(env);
   const body = `${SLICE.wodCode}\n${SLICE.dpCode}\n

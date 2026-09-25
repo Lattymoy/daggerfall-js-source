@@ -145,7 +145,7 @@ void main() {
   // The emission (window style from getWindowColors32, or an auto-emissive
   // record's own albedo at Color.white) goes back on top of the lighting
   // its subtraction above paid for - o.Emission = emission.
-  outColor = vec4(mix(uFogColor, lit + emission, fogFactorAt(vWorldPos)), 1.0);
+  outColor = vec4(dwWaterFog(mix(uFogColor, lit + emission, fogFactorAt(vWorldPos)), vWorldPos), 1.0);   // DW-C: the sea's distance fog over the finished colour
   // A2: the Daggerfall/Automap shader's presentation, verbatim
   // (DaggerfallAutomap.shader:102-110): brightness falls with vertical
   // distance from the slice plane (floored at 40%), then the
@@ -343,7 +343,7 @@ void main() {
   // above that the vertex colour does NOT gate: LightMode_Emissive has
   // already forced that colour to black.
   lit += vEmissive * texel.rgb;
-  outColor = vec4(mix(uFogColor, lit, fogFactorAt(vWorldPos)), 1.0);
+  outColor = vec4(dwWaterFog(mix(uFogColor, lit, fogFactorAt(vWorldPos)), vWorldPos), 1.0);   // DW-C
 }`;
 
 const BB_VS = `#version 300 es
@@ -544,7 +544,7 @@ void main() {
   if (uConceal.x == 4.0) lit = vec3(0.0);   // EOTB-IL: Eye Of The Beholder's shade - Color.black at the batch's alpha (UpdateMaterial, IL_4f69)
   float alpha = uSpectral == 1 ? tex.a : 1.0;
   if (uConceal.x > 0.0) alpha = tex.a * uConceal.y;
-  outColor = vec4(mix(uFogColor, lit, fogFactorAt(vBBWorld)), alpha);
+  outColor = vec4(dwWaterFog(mix(uFogColor, lit, fogFactorAt(vBBWorld)), vBBWorld), alpha);   // DW-C
 }`;
 
 // Dungeon water: one horizontal quad per watered RDB block, drawn after
@@ -584,7 +584,7 @@ void main() {
   // scrolled diagonally.
   vec2 uv = vWaterXZ / 6.4 + vec2(uWaterScroll);
   vec3 tex = texture(uWaterTex, uv).rgb;
-  outColor = vec4(mix(uFogColor, tex * uWaterColor.rgb, fogFactorAt(vWaterWorld)), uWaterColor.a);
+  outColor = vec4(dwWaterFog(mix(uFogColor, tex * uWaterColor.rgb, fogFactorAt(vWaterWorld)), vWaterWorld), uWaterColor.a);   // DW-C
 }`;
 
 // Terrain tilemap pass (R9): verbatim Daggerfall/TilemapTextureArray
@@ -717,7 +717,7 @@ void main() {
   float iD = length(iL);
   float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
   lit += tex * (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;
-  outColor = vec4(mix(uFogColor, lit, fogFactorAt(vWorldPos)), 1.0);
+  outColor = vec4(dwWaterFog(mix(uFogColor, lit, fogFactorAt(vWorldPos)), vWorldPos), 1.0);   // DW-C
 }`;
 
 const ZERO_CONTACT = new Float32Array(4);   // EL8: the contact params with the air off
@@ -858,7 +858,7 @@ void main() {
   vec3 rgb = vColor.rgb * exp(vec3(${glslFloat(BLOOD_ABSORB_ENCODED[0])}, ${glslFloat(BLOOD_ABSORB_ENCODED[1])}, ${glslFloat(BLOOD_ABSORB_ENCODED[2])}) * (1.0 - thick)) * lightAcc;
   float a = t.a * vColor.a;
   float f = fogFactorAt(vWorld);
-  outColor = vec4(mix(uFogColor, rgb, f), a);
+  outColor = vec4(dwWaterFog(mix(uFogColor, rgb, f), vWorld), a);   // DW-C
 }`;
 const CLASSIC_MAX_LIGHTS = 16;
 /** BLOOD1a: pos3 + uv2 + rgba4 (+ wet1, BLOOD2f), in bytes. */
@@ -1250,6 +1250,10 @@ export class Renderer {
     this._fogMode = 0;
     this._fogDensity = 0;
     this._fogRange = new Float32Array([0, 1]);
+    // DW-C: Iliac Puddle No More's distance fog - fogGlsl.js uDwFog, five vec4s
+    // (world/deepWaterLook.js distanceFogUniforms). A FRAME's, as the cloud
+    // deck is: beginFrame clears it and the exterior host sets it after.
+    this._dwFog = new Float32Array(20);
     this._fogColor = new Float32Array([0, 0, 0]);
     this._camPos = new Float32Array(3);
     this._clipY = 1e9;   // A1: the automap slice, off by default
@@ -1319,6 +1323,7 @@ export class Renderer {
       fogDensity: gl.getUniformLocation(this.waterProgram, 'uFogDensity'),
       fogRange: gl.getUniformLocation(this.waterProgram, 'uFogRange'),
       camPos: gl.getUniformLocation(this.waterProgram, 'uCamPos'),
+      dwFog: gl.getUniformLocation(this.waterProgram, 'uDwFog'),   // DW-C
     };
     this.waterUProj = gl.getUniformLocation(this.waterProgram, 'uProj');
     this.waterUView = gl.getUniformLocation(this.waterProgram, 'uView');
@@ -1642,6 +1647,7 @@ export class Renderer {
       fogDensity: gl.getUniformLocation(program, 'uFogDensity'),
       fogRange: gl.getUniformLocation(program, 'uFogRange'),
       camPos: gl.getUniformLocation(program, 'uCamPos'),
+      dwFog: gl.getUniformLocation(program, 'uDwFog'),   // DW-C: the sea's distance fog - null where a program never calls it
     };
   }
 
@@ -2895,9 +2901,10 @@ export class Renderer {
     // world-space callers (the rig sprite box, the third-person arm)
     // keep the deck: they are characters in the world.
     const sp = this._proj, sv = this._view, sf = this._fogMode;
+    const sw = this._dwFog[0];   // DW-C: the sea's fog is borrowed off with the rest - the sprite fogs where it composites
     const sd = lensLocal ? this._cloudShadow : null;
     if (sd) { this._cloudShadow = null; this._csStamp++; }
-    this._proj = proj; this._view = view; this._fogMode = 0;
+    this._proj = proj; this._view = view; this._fogMode = 0; this._dwFog[0] = 0;
     this._spriteDepth++;   // AUDIT-EL F2
     // AUDIT 65 RS-2: EVERY borrow above is returned in ONE finally, the
     // GL state first and the JS caches after. drawCharacter dereferences
@@ -2923,7 +2930,7 @@ export class Renderer {
       this._restoreWorldViewport();
       const cc = this._clearColor;
       gl.clearColor(cc[0], cc[1], cc[2], cc[3]);
-      this._proj = sp; this._view = sv; this._fogMode = sf;
+      this._proj = sp; this._view = sv; this._fogMode = sf; this._dwFog[0] = sw;
       this._spriteDepth--;   // AUDIT-EL F2
       if (sd) { this._cloudShadow = sd; this._csStamp++; }
     }
@@ -3041,7 +3048,7 @@ ${FOG_GLSL}
 void main() {
   vec4 t = texture(uTex, vUV);
   if (t.a < 0.5) discard;
-  outColor = vec4(mix(uFogColor, t.rgb, fogFactorAt(vWorld)), 1.0);
+  outColor = vec4(dwWaterFog(mix(uFogColor, t.rgb, fogFactorAt(vWorld)), vWorld), 1.0);   // DW-C
 }`;
       this.charQuadProgram = this._buildProgram(vs, fs);
       const P = this.charQuadProgram;
@@ -3054,6 +3061,7 @@ void main() {
         fogDensity: gl.getUniformLocation(P, 'uFogDensity'),
         fogRange: gl.getUniformLocation(P, 'uFogRange'),
         camPos: gl.getUniformLocation(P, 'uCamPos'),
+        dwFog: gl.getUniformLocation(P, 'uDwFog'),   // DW-C
       };
       const vao = gl.createVertexArray();
       this._bindVao(vao);
@@ -3824,6 +3832,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // never inherits the last exterior frame's map onto its walls.
     // VC6c: `_deckOwed` keeps it one moment longer, for an image the air pass still owes this frame (airPass.setCloudShadow); `_beginLane` drops it the instant that resolve is done.
     if (this._cloudShadow) { this._deckOwed = this._cloudShadow; this._cloudShadow = null; this._csStamp++; }
+    this._dwFog[0] = 0;   // DW-C: the sea's distance fog is a frame's too - no interior, dungeon or panel inherits it
     // EV6: the shadows reset with the counters - whatever ran between
     // frames (UI passes, another context's work) is not trusted. The
     // cloud-shadow upload stamps are the same kind of claim (RS-3) and
@@ -3947,6 +3956,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       fogDensity: this._fogDensity,
       fogRange: [this._fogRange[0], this._fogRange[1]],
       fogColor: this._fogColor,
+      dwFog: Float32Array.from(this._dwFog),   // DW-C
       ambient: this._ambient,
       // AUDIT-AMAP H5: setLighting's fourth argument defaults to null and
       // forwards to setAmbientTrilight, so a restore that forgot the
@@ -4036,6 +4046,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this.setAutomapMode(s.automapMode);
     this.setAutomapWater(s.automapWaterLevel, s.automapWaterColor);
     this.setFog(FOG_MODE_NAMES[s.fogMode] ?? 'off', s.fogDensity, s.fogRange[0], s.fogRange[1], s.fogColor);
+    this._dwFog.set(s.dwFog);   // DW-C
     this.setLighting(s.ambient, s.sunScale, s.sunColor);
     this.setAmbientTrilight(s.ambientTri);   // AUDIT-AMAP H5
     this._clockLit = s.clockLit;
@@ -4178,6 +4189,14 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (color) this._fogColor = color;
   }
 
+  /** DW-C: Iliac Puddle No More's distance fog for this frame - the twenty
+   *  floats world/deepWaterLook.js distanceFogUniforms packs, or null for
+   *  none. After beginFrame, which clears it: it is a frame's. */
+  setWaterFog(u) {
+    if (u) this._dwFog.set(u);
+    else this._dwFog[0] = 0;
+  }
+
   _uploadFog(prog) {
     const gl = this.gl;
     gl.uniform3fv(prog.fogColor, this._fogColor);
@@ -4185,6 +4204,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform1f(prog.fogDensity, this._fogDensity);
     gl.uniform2fv(prog.fogRange, this._fogRange);
     gl.uniform3fv(prog.camPos, this._camPos);
+    if (prog.dwFog) gl.uniform4fv(prog.dwFog, this._dwFog);   // DW-C: the sea's distance fog (off is [0].x = 0)
     if (prog.clipY) gl.uniform1f(prog.clipY, this._clipY);   // A1: only the mesh shader carries the slice
     if (prog.amMode) gl.uniform1f(prog.amMode, this._automapMode);   // A2: and the automap presentation
     if (prog.amWaterLevel) gl.uniform1f(prog.amWaterLevel, this._automapWaterLevel);   // c2/S6: with its water tint
@@ -4738,6 +4758,17 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
     return tex;
   }
+  /** DW-B: write a pixel's tilemap texture in place (Iliac Puddle No More's
+   *  clip and repaint, or the TileMap back as it streamed). */
+  writeTilemapTexture(tex, bytes, dim) {
+    const gl = this.gl;
+    this._activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, dim, dim, gl.RED_INTEGER, gl.UNSIGNED_BYTE, bytes);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
+  }
   /** Upload/cache a ground archive as a 64x64 TEXTURE_2D_ARRAY. */
   uploadTileArray(archive, layers) {
     if (this.tileArrays.has(archive)) return this.tileArrays.get(archive);
@@ -4996,7 +5027,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       lightDir: u('uLightDir'), ambient: u('uAmbient'), sunScale: u('uSunScale'), sunColor: u('uSunColor'),
       moonDir: u('uMoonDir'), moonScale: u('uMoonScale'), moonColor: u('uMoonColor'),
       zenith: u('uSkyZenith'), horizon: u('uSkyHorizon'), tint: u('uTint'), opacity: u('uOpacity'), f0: u('uF0'), shoreSoft: u('uShoreSoft'),
-      fog: { fogColor: u('uFogColor'), fogMode: u('uFogMode'), fogDensity: u('uFogDensity'), fogRange: u('uFogRange'), camPos: u('uCamPos') },
+      fog: { fogColor: u('uFogColor'), fogMode: u('uFogMode'), fogDensity: u('uFogDensity'), fogRange: u('uFogRange'), camPos: u('uCamPos'), dwFog: u('uDwFog') },   // DW-C: and the sea's
       // VC4 recorded that the deck's shadow reached neither the grass nor the water; WATER1 closes the water half
       cloud: [u('uCloudShadowMap'), u('uCloudShadowRect')],
       maskUploaded: false,

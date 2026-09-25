@@ -347,6 +347,15 @@ const PUBLIC_ALLOWLIST = new Map([
   ['vendor/climates-calories/Textures/539_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - the waterskin"],
   ['vendor/climates-calories/Textures/50_7-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - the tent's canvas (SURV-TENT)"],
   ['vendor/climates-calories/Textures/67_10-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - the tent's pole (SURV-TENT)"],
+  // DS1 (2026-09-25): DETAILED SHIPS 1.0.0 (Cliffworms) - the four of its
+  // thirteen pictures that NO classic record is, measured against every
+  // record of every TEXTURE file at every offset (tools/detailedShipsAssets.mjs);
+  // the nine that are classic records ship as specs over the player's
+  // own (Textures/derived.json), never as pixels.
+  ['vendor/detailed-ships/Textures/1210_10-0.png', "THIRD-PARTY - Detailed Ships 1.0.0 (Cliffworms), carried under the author's readme ('may be distributed ... as long as I am credited'); the author's own 7x15 drawing - a green bottle"],
+  ['vendor/detailed-ships/Textures/1210_11-0.png', "THIRD-PARTY - Detailed Ships 1.0.0 (Cliffworms), carried under the author's readme ('may be distributed ... as long as I am credited'); the author's own 7x15 drawing - a blue bottle"],
+  ['vendor/detailed-ships/Textures/1210_12-0.png', "THIRD-PARTY - Detailed Ships 1.0.0 (Cliffworms), carried under the author's readme ('may be distributed ... as long as I am credited'); the author's own 7x15 drawing - an amber bottle"],
+  ['vendor/detailed-ships/Textures/1230_30-0.png', "THIRD-PARTY - Detailed Ships 1.0.0 (Cliffworms), carried under the author's readme; the Kynareth statue the readme credits to King of Worms and Zoran ('for the deity statues'), credited beside him"],
   // FOEBAR1 (2026-09-17): THE TARGET BAR'S BLADE FACE. Two pictures a
   // friend of Mac's drew for this port and sent through him to be its
   // alternate enemy health bar - a twin-bladed shape with a skull hub,
@@ -506,6 +515,11 @@ const BUNDLE_ART = new Map([
   ['public/art/diverse-weapons/',
     { manifest: 'vendor/diverse-weapons/diverse-weapons.dfmod.json',
       why: "THIRD-PARTY - Diverse Weapons 1.7.3 (RealAKP); the mod's own first-person weapon sprites - eighteen weapons x ten metals, plain and enchanted, every record and frame, Weapon Widget's double-scale idles and the icons - re-encoded from the bundle's Texture2D objects by tools/diverseWeaponsExtract.mjs as indexed PNG where the picture fits one (lossless for every drawn pixel; see the vendor README)" }],
+  // DW-E3: Iliac Puddle No More's seven fish - the author's own pictures (no classic record covers any: the
+  // extractor measures each against every TEXTURE file, DS1's search, and refuses one a record covers).
+  ['vendor/iliac-puddle-no-more/Flats/',
+    { manifest: 'vendor/iliac-puddle-no-more/iliac-puddle-no-more.dfmod.json',
+      why: "THIRD-PARTY - Iliac Puddle No More 1.2.2 (jet082); the mod's own seven fish, decoded from the bundle's Texture2D objects (DXT5, the first mip - the pixels the game samples) by tools/iliacPuddleAssets.mjs (see the vendor README)" }],
 ]);
 /** The basenames each bundle manifest names, lowercased. Memoised: the
  *  membership test runs once per tracked raster and the manifest is

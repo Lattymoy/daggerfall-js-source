@@ -453,7 +453,7 @@ vec3 elFinish(vec3 lit, vec3 wp) {
   // No lantern in reach answers exactly black, and then the frame pays nothing for it.
   vec3 glow = elTonemapRGB(elInScatter(wp) * ex);
   if (glow.r + glow.g + glow.b > 0.0) col = elEncode(elDecode(col) + glow);
-  return col + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it
+  return dwWaterFog(col, wp) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it   // DW-C: the sea's distance fog on the DISPLAY colour - the mod's post effect reads the camera's finished image
 }
 `;
 

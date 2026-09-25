@@ -72,6 +72,8 @@ import { setWeaponWidgetSources } from '../combat/weaponWidgetAssets.js';   // W
 import { setDiverseWeaponsSources } from '../combat/diverseWeaponsAssets.js';   // DW1: Diverse Weapons' per-weapon sprites, from the player's own bundle
 import { installDiverseWeaponsIcons } from '../combat/diverseWeaponsIcons.js';
 import { installRoleplayRealismItems } from '../systems/rriInstall.js';
+import { installDetailedShipsArt } from '../systems/detailedShips.js';   // DS1: Detailed Ships' pictures and xml scales
+import { installWarmAshesShips } from '../systems/warmAshesShips.js';   // WA1: Warm Ashes - Ships' quest list and save slot
 import { installRoleplayRealism } from '../systems/rrInstall.js';   // RR1: Roleplay & Realism's InitMod - after Items', as DFU loads them (Items is the one it looks up)   // RRI1: the templates, the patches, the art - the same seam, the same reason   // DW3: its icons, on the replacement door - here and not at worldTick's module scope, where the mod's law sits in an import cycle (a TDZ)
 import { getBool, getInt } from '../systems/settings.js';   // M-FM: Audio/AlternateMusic, read once for all three hosts; MAC-O4: Controls/WeaponSwingMode, the drag route's own missing term
 import { SongManager, musicEnvironment, holdEnvironment } from '../systems/songManager.js';
@@ -961,9 +963,11 @@ export function wireDoorSpells(actions, entity, say) {
  *  Before this, all four flags were written only inside the dungeon
  *  branch and never cleared: leaving a dungeon while levitating left
  *  the motor in its no-gravity branch forever. */
-export function applyMotorEffectFlags(player, entity, { waterSurfaceY = null } = {}) {
+export function applyMotorEffectFlags(player, entity, { waterSurfaceY = null, swimming = false } = {}) {
   player.waterSurfaceY = waterSurfaceY;
-  player.swimming = false;
+  // DW-D: Iliac Puddle No More's forge rides this ONE write - LevitateMotor.IsSwimming's setter arms CancelMovement
+  // on every change, so a clear here and a forge after it would cancel the swimmer's every step (XL-1's bug again)
+  player.swimming = !!swimming;
   player.levitating = hasActiveEffect(entity, 'levitate');
   player.waterWalking = hasActiveEffect(entity, 'waterWalking');
   player.slowFalling = hasActiveEffect(entity, 'slowfall');
@@ -1196,6 +1200,8 @@ export function ensureAudio(fetch = fetchBytes) {
   // M-TEX: textures register on the SAME seam, for the same reason.
   // Registration is a name list and a loader - no PNG is read until an
   // archive that has replacements is actually loaded.
+  installDetailedShipsArt();   // DS1: archives 1210/1230 on the texture door (their pictures built from your own records at the archive's load) and the six xml scales
+  installWarmAshesShips();   // WA1: the WA_Ships quest list (before any quest bridge is built - LoadQuestLists reads it) and the mod's save record
   installDiverseWeaponsIcons();   // DW3: before the archives load, so 233/234's preload carries the mod's icons
   installRoleplayRealismItems();
   installRoleplayRealism();   // RR1: the formula overrides, the guild classes, the hooks - once, in InitMod's order   // RRI1: the fourteen rows and the twenty patches before anything mints, the 280 sprites on the door
@@ -1998,7 +2004,7 @@ export function createMusicDirector({ fm = null, play = null, stop = null, playi
  *  through to `cam.yaw += movementX` - so every swing inside a
  *  building or a dungeon turned the camera with it.
  *
- *  `dungeon.js:269`, the standalone host, has always had the right
+ *  `dungeon.js:272`, the standalone host, has always had the right
  *  shape: attack, then return. It has no modal sibling to share the
  *  drag with, which is why it never needed a mode in the test at all.
  *

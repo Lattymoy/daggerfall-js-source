@@ -127,7 +127,7 @@ export const IDENTIFY_COST_MULTIPLIER = 25;
  *  no magic in it at all. It was never seen because the Identify
  *  destination was a null and the mode could not be opened; X7 opened
  *  it, so the derivation had to be right first. Both paths run at
- *  worldModes.js:2373 now (commitTrade) - the paid service and the spell. */
+ *  worldModes.js:2376 now (commitTrade) - the paid service and the spell. */
 export const itemIsIdentified = (item) => !isEnchanted(item) || item?.isIdentified === true;
 
 /** FormulaHelper.CalculateItemIdentifyCost (:1935-1955). FREE on the
@@ -185,7 +185,7 @@ export function identifySpellPass(items, chance, rolls = Math.random) {
  *  exact: the whole pass returns, nothing is identified, no magicka is
  *  spent and Mercantile is not tallied.
  *  (GodMode's `&& !GodMode` arm has no port counterpart, as
- *  motor.js:690 already records for the levitation term.) */
+ *  motor.js:737 already records for the levitation term.) */
 export const NOT_ENOUGH_SPELL_POINTS_TEXT = 'You do not have enough spell points left.';
 
 export const identifiedTallyText = (successCount, total) =>
@@ -405,14 +405,14 @@ export const DOESNT_NEED_IDENTIFY = 'This does not need to be identified.';
 
 // The three clauses that stood here are all closed:
 //  - the IDENTIFY SPELL arm (:956-996) is live. identifySpellPass
-//    (:161) feeds worldModes.js:2143-2163, which spends the magicka
+//    (:161) feeds worldModes.js:2146-2166, which spends the magicka
 //    ONCE for the whole list whatever the outcome and tells the player
 //    "N of M identified"; the window opens from openIdentifyWindow
-//    (worldModes.js:8820), the entry point the magic arc owed.
+//    (worldModes.js:8835), the entry point the magic arc owed.
 //  - the LETTER OF CREDIT is tender and bankable: minted at systems/
 //    inventory.js:69, summed by creditAmount at systems/court.js:207,
 //    spent letters-before-coins by deductGold at court.js:249, and
-//    moved at systems/banking.js:485 depositAllLetters / :476
+//    moved at systems/banking.js:490 depositAllLetters / :481
 //    withdrawLetter.
 //  - SellMagic's "fencing base price" TODO is DFU's own
 //    (DaggerfallTradeWindow.cs:464 carries it verbatim), so it is

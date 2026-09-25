@@ -20,8 +20,8 @@
   {
     "name": "CD-host-says-buildings-too",
     "file": "src/scenes/world.js",
-    "old": "underground: modes?.mode === 'dungeon' });",
-    "new": "underground: !!modes?.mode });",
+    "old": "underground: modes?.mode === 'dungeon', waterSurfaceY:",
+    "new": "underground: !!modes?.mode, waterSurfaceY:",
     "tests": [
       "test/cricketquiet.test.js"
     ]

@@ -1,0 +1,407 @@
+[
+ {
+  "name": "DW-A-the-coarse-tie-counts-as-sea",
+  "file": "src/world/deepWatersBake.js",
+  "old": "      if (wet > 32) out[cy] |= 1 << cx;",
+  "new": "      if (wet >= 32) out[cy] |= 1 << cx;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-fine-rows-counted-from-the-south",
+  "file": "src/world/deepWatersBake.js",
+  "old": "  const x0 = 2 * fx, y0 = SPAN - 2 - 2 * fy;",
+  "new": "  const x0 = 2 * fx, y0 = 2 * fy;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-coarse-reads-cell-corners-not-centres",
+  "file": "src/world/deepWatersBake.js",
+  "old": "          const x = 2 * (cx * 8 + fx) + 1, y = SPAN - 1 - 2 * (cy * 8 + fy);",
+  "new": "          const x = 2 * (cx * 8 + fx), y = SPAN - 2 * (cy * 8 + fy);",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-no-north-west-corner-link",
+  "file": "src/world/deepWatersBake.js",
+  "old": "    if (NW && (NW[7] & 0x80)) inc[0] |= 1;",
+  "new": "    if (false) inc[0] |= 1;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-no-north-east-corner-link",
+  "file": "src/world/deepWatersBake.js",
+  "old": "    if (NE && (NE[7] & 1)) inc[0] |= 0x80;",
+  "new": "    if (false) inc[0] |= 0x80;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-no-south-west-corner-link",
+  "file": "src/world/deepWatersBake.js",
+  "old": "    if (SW && (SW[0] & 0x80)) inc[7] |= 1;",
+  "new": "    if (false) inc[7] |= 1;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-no-south-east-corner-link",
+  "file": "src/world/deepWatersBake.js",
+  "old": "    if (SE && (SE[0] & 1)) inc[7] |= 0x80;",
+  "new": "    if (false) inc[7] |= 0x80;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-west-edge-only-straight-across",
+  "file": "src/world/deepWatersBake.js",
+  "old": "      if (W) { const m = ((W[row] >> 7) & 1) | (row > 0 ? (W[row - 1] >> 7) & 1 : 0) | (row < 7 ? (W[row + 1] >> 7) & 1 : 0); if (m) inc[row] |= 1; }",
+  "new": "      if (W) { const m = ((W[row] >> 7) & 1); if (m) inc[row] |= 1; }",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-east-edge-only-straight-across",
+  "file": "src/world/deepWatersBake.js",
+  "old": "      if (E) { const m = (E[row] & 1) | (row > 0 ? E[row - 1] & 1 : 0) | (row < 7 ? E[row + 1] & 1 : 0); if (m) inc[row] |= 0x80; }",
+  "new": "      if (E) { const m = (E[row] & 1); if (m) inc[row] |= 0x80; }",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-north-edge-only-straight-across",
+  "file": "src/world/deepWatersBake.js",
+  "old": "    if (N) { const m = N[7]; inc[0] |= m | ((m << 1) & 0xff) | (m >> 1); }",
+  "new": "    if (N) { const m = N[7]; inc[0] |= m; }",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-south-edge-only-straight-across",
+  "file": "src/world/deepWatersBake.js",
+  "old": "    if (S) { const m = S[0]; inc[7] |= m | ((m << 1) & 0xff) | (m >> 1); }",
+  "new": "    if (S) { const m = S[0]; inc[7] |= m; }",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-inside-flood-4-connected-across-rows",
+  "file": "src/world/deepWatersBake.js",
+  "old": "      const d = (m | ((m << 1) & 0xff) | (m >> 1)) & cand[r];",
+  "new": "      const d = m & cand[r];",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-inside-flood-never-leaves-its-row",
+  "file": "src/world/deepWatersBake.js",
+  "old": "      const m = reached[r] | (r > 0 ? reached[r - 1] : 0) | (r < 7 ? reached[r + 1] : 0);",
+  "new": "      const m = reached[r];",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-no-north-border-seeds",
+  "file": "src/world/deepWatersBake.js",
+  "old": "        if (py === 0 && row === 0) edge |= 0xff;",
+  "new": "        if (false) edge |= 0xff;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-no-south-border-seeds",
+  "file": "src/world/deepWatersBake.js",
+  "old": "        if (py === MAP_H - 1 && row === 7) edge |= 0xff;",
+  "new": "        if (false) edge |= 0xff;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-no-east-border-seeds",
+  "file": "src/world/deepWatersBake.js",
+  "old": "        if (px === MAP_W - 1) edge |= 0x80;",
+  "new": "        if (false) edge |= 0x80;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-no-west-border-seeds",
+  "file": "src/world/deepWatersBake.js",
+  "old": "        if (px === 0) edge |= 1;",
+  "new": "        if (false) edge |= 1;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-chamfer-diagonal-costs-one",
+  "file": "src/world/deepWatersBake.js",
+  "old": "        if (x > 0 && D[k - side - 1] + S2 < d) d = D[k - side - 1] + S2;",
+  "new": "        if (x > 0 && D[k - side - 1] + 1 < d) d = D[k - side - 1] + 1;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-distance-bytes-floor-not-round",
+  "file": "src/world/deepWatersBake.js",
+  "old": "Math.min(BAKE_DISTANCE_CAP, Math.round(d * BAKE_CELL_METERS / BAKE_DISTANCE_SCALE_METERS))",
+  "new": "Math.min(BAKE_DISTANCE_CAP, Math.floor(d * BAKE_CELL_METERS / BAKE_DISTANCE_SCALE_METERS))",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-off-map-cells-become-land",
+  "file": "src/world/deepWatersBake.js",
+  "old": "          if (!bits) { D[k] = Infinity; continue; }       // off the map: neither sea nor a seed",
+  "new": "          if (!bits) { D[k] = 0; continue; }",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-window-too-small-for-the-cap",
+  "file": "src/world/deepWatersBake.js",
+  "old": "const WINDOW_PIXELS = 5;",
+  "new": "const WINDOW_PIXELS = 4;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-quick-land-margin-eats-real-water",
+  "file": "src/world/deepWatersBake.js",
+  "old": "    return h > hiT ? 0 : h < loT ? 1 : -1;   // the noise only raises, and the clamp lifts to the sea",
+  "new": "    return h > hiT - 0.5 ? 0 : h < loT ? 1 : -1;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-quick-water-ignores-the-ground-noise",
+  "file": "src/world/deepWatersBake.js",
+  "old": "  const hiT = T_SCALED + MARGIN, loT = T_SCALED - EXTRA_NOISE_MAX - MARGIN;",
+  "new": "  const hiT = T_SCALED + MARGIN, loT = T_SCALED - MARGIN;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-threshold-without-the-epsilon",
+  "file": "src/world/deepWatersBake.js",
+  "old": "export const WATER_THRESHOLD = f32(f32(SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT) + f32(1e-5));",
+  "new": "export const WATER_THRESHOLD = f32(SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT);",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-bound-lower-ignores-overshoot",
+  "file": "src/world/deepWatersBake.js",
+  "old": "  return m - (s < q ? s : q);",
+  "new": "  return m;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-bound-upper-overshoot-too-small",
+  "file": "src/world/deepWatersBake.js",
+  "old": "  const s = (4 / 27) * (a + b), q = 0.25 * (a > b ? a : b);\n  return M + (s < q ? s : q);",
+  "new": "  const s = (1 / 27) * (a + b), q = 0.25 * (a > b ? a : b);\n  return M + (s < q ? s : q);",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-bound-forgets-the-ground-noise",
+  "file": "src/world/deepWatersBake.js",
+  "old": "  let lo = bLo + nLo, hi = bHi + nHi + EXTRA_NOISE_MAX;",
+  "new": "  let lo = bLo + nLo, hi = bHi + nHi;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-region-settles-without-the-ground-noise",
+  "file": "src/world/deepWatersBake.js",
+  "old": "  return lo > T_SCALED + MARGIN ? 0 : hi + EXTRA_NOISE_MAX < T_SCALED - MARGIN ? 1 : -1;",
+  "new": "  return lo > T_SCALED + MARGIN ? 0 : hi < T_SCALED - MARGIN ? 1 : -1;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-quick-noise-weights-read-the-pixel-not-the-cell",
+  "file": "src/world/deepWatersBake.js",
+  "old": "  cubicWeights((v - i * (SPAN / 3)) / (SPAN / 3), YU, v * 4);",
+  "new": "  cubicWeights(v / SPAN, YU, v * 4);",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-ground-noise-axes-swapped",
+  "file": "src/world/deepWatersBake.js",
+  "old": "    h += (getNoise(nx, ny, 0.3, 0.5, 0.5, 1) * getNoise(nx, ny, 0.9, 0.5, 0.5, 1)) * EXTRA_NOISE_SCALE;",
+  "new": "    h += (getNoise(nx, ny, 0.3, 0.5, 0.5, 1) * getNoise(ny, nx, 0.9, 0.5, 0.5, 1)) * EXTRA_NOISE_SCALE;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-ground-noise-y-not-from-the-south",
+  "file": "src/world/deepWatersBake.js",
+  "old": "  const nx0 = mapPixelX * SPAN, ny0 = (MAX_MAP_PIXEL_Y - mapPixelY) * SPAN;",
+  "new": "  const nx0 = mapPixelX * SPAN, ny0 = mapPixelY * SPAN;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-large-window-y-not-inverted",
+  "file": "src/world/deepWatersBake.js",
+  "old": "          out[(y * 3 + iy - 1) * 9 + (x * 3 + ix - 1)] = bytes[pos + (4 - iy) * 5 + ix];",
+  "new": "          out[(y * 3 + iy - 1) * 9 + (x * 3 + ix - 1)] = bytes[pos + iy * 5 + ix];",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-coarse-pays-for-settled-dry-centres",
+  "file": "src/world/deepWatersBake.js",
+  "old": "          if (q === 1) wet++; else if (q === 0) dry++; else open[n++] = x * 256 + y;",
+  "new": "          if (q === 1) wet++; else open[n++] = x * 256 + y;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-coarse-decides-at-31-dry",
+  "file": "src/world/deepWatersBake.js",
+  "old": "      for (let k = 0; k < n && wet <= 32 && dry < 32; k++) {",
+  "new": "      for (let k = 0; k < n && wet <= 32 && dry < 31; k++) {",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-fine-nearest-cell-rounds-half-up",
+  "file": "src/world/deepWatersBake.js",
+  "old": "    const num3 = clampInt(roundToInt(num), 0, this.widthCellsFine - 1);",
+  "new": "    const num3 = clampInt(Math.round(num), 0, this.widthCellsFine - 1);",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-coarse-nearest-cell-rounds-half-up",
+  "file": "src/world/deepWatersBake.js",
+  "old": "    return [clampInt(roundToInt(num), 0, this.widthCells - 1), clampInt(roundToInt(num2), 0, this.heightCells - 1)];",
+  "new": "    return [clampInt(Math.round(num), 0, this.widthCells - 1), clampInt(roundToInt(num2), 0, this.heightCells - 1)];",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-bake-rows-run-south-to-north",
+  "file": "src/world/deepWatersBake.js",
+  "old": "export const bakedSouthFraction = (fracZ) => f32(1 - clamp01(f32(fracZ)));",
+  "new": "export const bakedSouthFraction = (fracZ) => f32(clamp01(f32(fracZ)));",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-full-water-ignores-its-last-row",
+  "file": "src/world/deepWatersBake.js",
+  "old": "      for (let fy = 0; fy < 8 && all; fy++) if (fine[(cy * 8 + fy) * 8 + cx] !== 0xff) all = false;",
+  "new": "      for (let fy = 0; fy < 7 && all; fy++) if (fine[(cy * 8 + fy) * 8 + cx] !== 0xff) all = false;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-local-edge-reads-the-distance-plane",
+  "file": "src/world/deepWatersBake.js",
+  "old": "  sampleLocalEdgeDistanceMeters(mapPixelX, mapPixelY, fracX, fracZ) {\n    return this._bilinearSampleMeters('edge',",
+  "new": "  sampleLocalEdgeDistanceMeters(mapPixelX, mapPixelY, fracX, fracZ) {\n    return this._bilinearSampleMeters('dist',",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-rects-order-matters",
+  "file": "src/world/deepWatersBakeCache.js",
+  "old": "  for (const r of [...rows].sort((a, b) => a[0] - b[0])) {",
+  "new": "  for (const r of rows) {",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-key-drops-the-version",
+  "file": "src/world/deepWatersBakeCache.js",
+  "old": "  return `dwbake:v${BAKE_GENERATOR_VERSION}:${woodsHash >>> 0}:${rectsHash >>> 0}`;",
+  "new": "  return `dwbake:${woodsHash >>> 0}:${rectsHash >>> 0}`;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-key-drops-the-rects",
+  "file": "src/world/deepWatersBakeCache.js",
+  "old": "  return `dwbake:v${BAKE_GENERATOR_VERSION}:${woodsHash >>> 0}:${rectsHash >>> 0}`;",
+  "new": "  return `dwbake:v${BAKE_GENERATOR_VERSION}:${woodsHash >>> 0}`;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-a-miss-is-never-stored",
+  "file": "src/world/deepWatersBakeCache.js",
+  "old": "  if (g && store) await store.set(key,",
+  "new": "  if (false) await store.set(key,",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-rect-lookup-swaps-axes",
+  "file": "src/world/deepWatersBakeCache.js",
+  "old": "  return (px, py) => m.get(py * 1000 + px) ?? null;",
+  "new": "  return (px, py) => m.get(px * 1000 + py) ?? null;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ },
+ {
+  "name": "DW-A-a-worker-error-is-an-empty-bake",
+  "file": "src/world/deepWatersClient.js",
+  "old": "    if (!record && !disposed) record = await buildHere(woods, rects, { woodsBytes, ...(store !== undefined ? { store } : {}) });",
+  "new": "    if (!record) return null;",
+  "tests": [
+   "test/dwa_bake.test.js"
+  ]
+ }
+]

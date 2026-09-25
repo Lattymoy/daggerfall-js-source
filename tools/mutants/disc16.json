@@ -21,8 +21,8 @@
   {
     "name": "DISC16-A-one-axis-of-the-grade",
     "file": "src/player/collider.js",
-    "old": "    const gx = (hx1 - hx0) / (2 * r), gz = (hz1 - hz0) / (2 * r);",
-    "new": "    const gx = 0, gz = (hz1 - hz0) / (2 * r);",
+    "old": "    const gx = minmod((hx1 - h) / r, (h - hx0) / r), gz = minmod((hz1 - h) / r, (h - hz0) / r);",
+    "new": "    const gx = 0, gz = minmod((hz1 - h) / r, (h - hz0) / r);",
     "tests": [
       "test/disc16.test.js"
     ]

@@ -39,10 +39,11 @@ export const HOVER_MAX = 6;
  * `*Targets()` producers mint, never strings written out by hand here:
  * `loot:` and `corpse:` are the dungeon's RDB piles and its bodies,
  * `droppedLoot:` is what a player left on the floor, and `foeCorpse:`
- * and `guardCorpse:` are the two above-ground bodies. A key whose
+ * and `guardCorpse:` are the two above-ground bodies; `dwFish:` is Iliac
+ * Puddle No More's fish, a DaggerfallLoot of one item (DW-E3). A key whose
  * prefix is not here draws as a name.
  */
-export const ITEMISED_KEYS = Object.freeze(['loot:', 'corpse:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:']);
+export const ITEMISED_KEYS = Object.freeze(['loot:', 'corpse:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:', 'dwFish:']);
 
 /** Does this key open a list, or only a name? */
 export const keyItemises = (key) => typeof key === 'string' && ITEMISED_KEYS.some((p) => key.startsWith(p));

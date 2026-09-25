@@ -89,7 +89,7 @@ test('audit24 lifetimes: a city guard frees its batch on both death paths, and t
   // per-frame walk over `guards` paid for them. DFU destroys the
   // walk-away watch outright (EnemyEntity.cs:184-191) and keeps only
   // the killed body. So the key is the guard's own id now, and the
-  // prune is the encounter pool's (exteriorFoes.js:1052).
+  // prune is the encounter pool's (exteriorFoes.js:1070).
   // AUDIT-WH H2 moved the spelling, not the law: the id function is
   // one const now, read by the corpse lens AND by the live-foe
   // producer the plaque races, so a guard and the body it becomes
@@ -314,7 +314,7 @@ test('audit24: the floating-origin recenter reaches EVERY world-position pool', 
   const world = read('src/scenes/world.js');
   const i = world.indexOf('if (r.offset) {');
   assert.ok(i > 0);
-  const block = world.slice(i, i + 2600);
+  const block = world.slice(i, world.indexOf('\n    }\n', i));   // the recenter block whole (a fixed window stopped short once the block grew)
   for (const pool of ['cityGuards.offsetAll', 'exteriorFoes.offsetAll', 'droppedLoot.offsetAll',
     'offsetArrows(arrows', 'magic.offsetAll']) {
     assert.ok(block.includes(pool), `${pool} follows the origin`);

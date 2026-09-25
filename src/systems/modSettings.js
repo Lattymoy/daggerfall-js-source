@@ -127,6 +127,95 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
+  // AS1 (2026-09-25): AQUATIC SPRITES 1.0 (Cliffworms). No modsettings of
+  // its own - three world-data blocks, so one switch: the port's Enabled,
+  // the gate DFU's mod list is (a mod that is off is a mod DFU never
+  // loaded; scenes/modWorldData.js reads it at the door).
+  'aquatic-sprites': Object.freeze({
+    title: 'Aquatic Sprites',
+    author: 'Cliffworms',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Cliffworms’ Aquatic Sprites 1.0, 1:1: “Adds aquatic sprites to submerged caverns.” The weed, coral '
+          + 'and shells Daggerfall ships and never places, set into three of its flooded dungeon blocks - 119 of them, '
+          + 'drawn from your own game files.',
+      }),
+    }),
+  }),
+  // DS1 (2026-09-25): DETAILED SHIPS 1.0.0 (Cliffworms). No modsettings of
+  // its own - two building records and thirteen pictures - so one switch.
+  'detailed-ships': Object.freeze({
+    title: 'Detailed Ships',
+    author: 'Cliffworms',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Cliffworms’ Detailed Ships 1.0.0, 1:1: “Revamps the interior and exterior of player ships.” Rigging, '
+          + 'crates and barrels, tenders, rudders and railings outside; below decks, quarters for you and the crew, a '
+          + 'kitchen, a cargo hold, an armory and a shrine to Kynareth, with sailors to talk to.',
+      }),
+    }),
+  }),
+  // WA1 (2026-09-25): WARM ASHES - SHIPS 1.1 (Kamer). No modsettings of its
+  // own - a travel hook, a quest action and six world-data variants - so
+  // one switch.
+  'warm-ashes-ships': Object.freeze({
+    title: 'Warm Ashes - Ships',
+    author: 'Kamer',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Kamer\u2019s Warm Ashes - Ships 1.1, 1:1: \u201cEncounters on Ships and Ocean Fast Travel.\u201d Cross the sea by ship '
+          + 'and one voyage in four is ambushed: you are put on your ship\u2019s deck with your crew as pirate vessels close in '
+          + '(a ship is lent if you own none), and once the boarders are beaten you are set ashore where you were bound.',
+      }),
+    }),
+  }),
+  // DW-A (2026-09-25): ILIAC PUDDLE NO MORE 1.2.2 (jet082). Its one section,
+  // General, restated flat with the section in front of each name (the
+  // Immersive Footsteps convention), in the shipped order with the shipped
+  // defaults, ranges and descriptions - the typo in "Spawn underwate
+  // enemies" is the mod's own. Plus the port's `Enabled` (MO1: on). The
+  // steppers are the Mods pane's: a metre for the depth, a twentieth on
+  // the 0..1 sliders, a quarter on the swim multiplier (its floor).
+  'iliac-puddle-no-more': Object.freeze({
+    title: 'Iliac Puddle No More',
+    author: 'jet082',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'jet082’s Iliac Puddle No More 1.2.2, 1:1: “The Iliac Puddle is now the Iliac Bay.” The sea is carved out '
+          + 'under the water - a seafloor that falls away from every coast, as deep as 250 metres - with a surface you see '
+          + 'from above and below, open-water swimming and your breath to watch, fish, weed and coral, and what lives in '
+          + 'the deep.',
+      }),
+      'General.WaterDepth': Object.freeze({ default: 250.0, min: 5.0, max: 250.0, float: true, step: 1, description: 'Maximum water depth' }),
+      'General.SpawnWaterSurfaces': Object.freeze({ default: true, description: 'Render visible water surfaces' }),
+      'General.SpawnUnderwaterEnemies': Object.freeze({ default: true, description: 'Spawn underwate enemies' }),
+      'General.EnemyFrequency': Object.freeze({ default: 0.3, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'Enemy frequency rate' }),
+      'General.MaxLiveEnemies': Object.freeze({ default: 128, min: 0, max: 256, description: 'Maximum live underwater enemies' }),
+      'General.PassiveFishFrequency': Object.freeze({ default: 0.8, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'Fish frequency rate' }),
+      'General.MaxLiveFish': Object.freeze({ default: 720, min: 0, max: 1080, description: 'Maximum live passive fish' }),
+      'General.SpawnUnderwaterDecorations': Object.freeze({ default: true, description: 'Decorate the seafloor' }),
+      'General.DecorationPopulateRadius': Object.freeze({ default: 2, min: 1, max: 3, description: 'Decoration spawning radius in map pixels (3 = full loaded ring, no pop-in)' }),
+      'General.DecorationFrequency': Object.freeze({ default: 0.3, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'Decoration rate' }),
+      'General.MaxDecorationsPerTile': Object.freeze({ default: 1080, min: 64, max: 2160, description: 'Max decorations per map pixel (lower = better performance)' }),
+      'General.SeafloorLootRate': Object.freeze({ default: 0.5, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'Random loot rate' }),
+      'General.MaxLiveLootObjects': Object.freeze({ default: 192, min: 0, max: 256, description: 'Maximum isolated loot objects' }),
+      'General.TreasureClusterRate': Object.freeze({ default: 0.3, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'Wreckage treasure rate' }),
+      'General.MaxLiveTreasureClusters': Object.freeze({ default: 12, min: 0, max: 32, description: 'Maximum wrecks' }),
+      'General.TreasureCove': Object.freeze({ default: false, description: 'Increased loot multipliers + loot quality' }),
+      'General.WaterSurfaceTopTransparency': Object.freeze({ default: 0.7, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'Water surface transparency from above' }),
+      'General.WaterSurfaceBottomTransparency': Object.freeze({ default: 0.2, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'Water surface transparency from below' }),
+      'General.DarkerSurfaceWater': Object.freeze({ default: 0.0, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'Darker surface water tint' }),
+      'General.UnderwaterFogStrength': Object.freeze({ default: 0.5, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'Underwater fog strength' }),
+      'General.UnderwaterFogDistance': Object.freeze({ default: 0.3, min: 0.0, max: 1.0, float: true, step: 0.05, description: 'Underwater fog view distance' }),
+      'General.SwimSpeedMultiplier': Object.freeze({ default: 1.0, min: 0.25, max: 30.0, float: true, step: 0.25, description: 'Multiplier for outdoor swimming movement speed' }),
+      'General.EnableSwimStroke': Object.freeze({ default: true, description: 'Press Run while swimming for a burst of speed' }),
+      'General.ArgonianInfiniteBreath': Object.freeze({ default: true, description: 'Argonians never drown' }),
+    }),
+  }),
   // MM1: MEANER MONSTERS 1.5.2 (Ralzar). No modsettings of its own -
   // `Enabled` alone (DFU enables a mod by listing it). Listed BEFORE
   // the overhaul because the overhaul names it as a dependency and so
