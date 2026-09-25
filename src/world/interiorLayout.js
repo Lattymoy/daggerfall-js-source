@@ -35,6 +35,7 @@ import { GLOBAL_SCALE, DOOR_TYPE } from './meshReader.js';   // MAC-BUG1: a synt
 import { EDITOR_FLATS_ARCHIVE } from './rmbFlats.js';
 import { getStaticDoors } from './staticDoors.js';
 import { trs } from './mat4.js';
+import { modelScaleVector } from './rmbLayout.js';   // WD1: RMBLayout.GetModelScaleVector
 
 // DaggerfallInterior.cs:31 `const int propModelType = 3;`. Read here
 // for the prop bottom-Y rule (:420) and carried on every placement,
@@ -158,12 +159,14 @@ export function layoutInterior(dfBlock, blockIndex, recordIndex, getModel) {
       pz = obj.zPos * GLOBAL_SCALE;
     }
 
-    // Classic data never sets model scale; identity (as rmbLayout.js).
+    // RMBLayout.GetModelScaleVector (DaggerfallInterior.cs:444): classic
+    // data never sets a scale (identity); a world-data JSON record may (WD1).
     const matrix = trs(
       px, py, pz,
       -obj.xRotation / ROTATION_DIVISOR,
       -obj.yRotation / ROTATION_DIVISOR,
       -obj.zRotation / ROTATION_DIVISOR,
+      ...modelScaleVector(obj),
     );
 
     placements.push({ modelIdNum: obj.modelIdNum, objectType: obj.objectType, matrix });

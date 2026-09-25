@@ -176,9 +176,15 @@ test('AUDIT-RR2 G13: a building entry sets WorldDataVariants\' last key to THIS 
   assert.match(rd('src/scenes/exterior.js'), /setLastLocationKeyTo\(dfLocation\.regionIndex, dfLocation\.locationIndex \?\? 0\);\s+\/\/ AUDIT-RR2 G13[^\n]*\n\s+const d = buildingDataForDoor\(dfLocation\.exterior\.buildings, loc\.blocks, \{/);
 });
 
-test('AUDIT-RR2 G14/G16/G19: an RDB/RDI JSON is said and not served with a null body; the variant arm takes every asset the suffix finds (:284-292); the padded building rows are None', () => {
+test('AUDIT-RR2 G14/G16/G19: an RDB/RDI JSON is served whole since WD1 (never with a null body); the variant arm takes every asset the suffix finds (:284-292); the padded building rows are None', () => {
   const s = rd('src/formats/worldDataReplacement.js');
-  assert.match(s, /if \(!blockName\.endsWith\('\.RMB'\)\) \{[^\n]*\n\s+console\.warn\(`\[worlddata\] \$\{blockName\}: RDB\/RDI block replacement is not converted by the port - ignored`\);\s+if \(variant === NO_VARIANT\) blocks\.set\(blockName, NO_REPLACEMENT\);\s+return null;\s+\}/);
+  // G14 was the refusal of an RDB/RDI file the converter could not read; WD1 (Aquatic Sprites) ported the RDB
+  // and RDI halves, so the block is converted whole and only an RMB takes the building replacements (:382-384)
+  assert.match(s, /const dfBlock = blockFromJson\(json, block\);\s+if \(blockName\.endsWith\('\.RMB'\)\) replaceRmbBlockBuildingData\(blockName, block, dfBlock\);/);
+  const rdb = blockFromJson({ Name: 'W0000000.RDB', Type: 'Rdb', RdbBlock: { ModelReferenceList: [{ ModelId: '63130', ModelIdNum: 63130, Description: 'C0L' }], ObjectRootList: [{ RdbObjects: null }] } }, 1016);
+  assert.equal(rdb.rmbBlock, null);
+  assert.ok(rdb.rdbBlock, 'an RDB file serves its RDB half, never a null body');
+  assert.equal(rdb.rdbBlock.modelReferenceList[0].modelIdNum, 63130);
   const variantArm = s.slice(s.indexOf('export function loadNewDFLocationVariant'), s.indexOf('export const getNewDFBlockIndex'));
   assert.ok(!/startsWith\('locationnew-'\)/.test(variantArm), 'no prefix test on the mod arm');
   const b = blockFromJson({ Name: 'X.RMB', Type: 'Rmb', RmbBlock: { FldHeader: { BuildingDataList: [{ FactionId: 1, BuildingType: 2 }] }, SubRecords: [] } }, 5000);

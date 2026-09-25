@@ -161,8 +161,11 @@ export function collectDungeonEnemies(blockLayouts, { locationId, dungeonType, p
       // A marker with no archive is an editor flat, per rdbLayout.
       if ((marker.archive ?? EDITOR_FLATS_ARCHIVE) !== EDITOR_FLATS_ARCHIVE) continue;
       if (marker.record === FIXED_RECORD) {
-        const typeValue = marker.factionOrMobileId & 0xff;
-        if (typeValue === 99) continue;
+        // AddFixedRDBEnemy (RDBLayout.cs:1459-1498): a custom marker (a world-data
+        // JSON flat with IsCustomData) takes all 16 bits as its MobileType and skips
+        // the 99 test; a classic one masks the garbage MSBs (WD1)
+        const typeValue = marker.isCustomData ? marker.factionOrMobileId : marker.factionOrMobileId & 0xff;
+        if (!marker.isCustomData && typeValue === 99) continue;
         emit(marker, block, typeValue, true);
       } else if (marker.record === RANDOM_RECORD) {
         if (dungeonType >= ENCOUNTER_TABLES.length) continue; // verbatim per-flat guard

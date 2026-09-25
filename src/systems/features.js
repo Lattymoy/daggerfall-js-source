@@ -629,6 +629,10 @@ export const FEATURES = Object.freeze([
   // wilderness itself. Read at the world's mount, like the roads it
   // consults: the loader's list is built once per world.
   modFeature('world-of-daggerfall', 'Takes effect when the world next loads.', 'world'),
+  // AS1 (2026-09-25): AQUATIC SPRITES - `world`, three flooded dungeon
+  // blocks. The door caches a block once it is served, so a switch flipped
+  // mid-session reaches the next load, not the dungeon you stand in.
+  modFeature('aquatic-sprites', 'Takes effect when the game next loads.', 'world'),
   modFeature('meanerMonsters', 'Takes effect on monsters spawned after the switch.', 'combat'),
   modFeature('pcaao', 'Takes effect at once.', 'combat'),
   modFeature('unleveledLoot', 'Takes effect on the next roll.', 'loot'),

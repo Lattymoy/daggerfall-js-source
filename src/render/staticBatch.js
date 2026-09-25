@@ -35,6 +35,33 @@ function det3(m) {
   return m[0] * (m[5] * m[10] - m[9] * m[6]) - m[4] * (m[1] * m[10] - m[9] * m[2]) + m[8] * (m[1] * m[6] - m[5] * m[2]);
 }
 
+/**
+ * WD1: the normal matrix of a matrix whose upper 3x3 scales UNEVENLY - the
+ * inverse transpose (cofactors over the determinant; the scale of the
+ * result does not matter, rotateNormal renormalises) - or null when the
+ * columns are one length (rotation and uniform scale: the matrix itself
+ * is exact once renormalised). A world-data model's XScale/YScale/ZScale
+ * (Detailed Ships' ropes and railings) is the case: Unity lights it
+ * through the inverse transpose, as it does World of Daggerfall's rocks.
+ */
+export function unevenScaleNormalMatrix(m) {
+  const l0 = m[0] * m[0] + m[1] * m[1] + m[2] * m[2];
+  const l1 = m[4] * m[4] + m[5] * m[5] + m[6] * m[6];
+  const l2 = m[8] * m[8] + m[9] * m[9] + m[10] * m[10];
+  const hi = Math.max(l0, l1, l2), lo = Math.min(l0, l1, l2);
+  if (!(lo > 0) || hi - lo <= hi * 1e-6) return null;
+  // cofactor matrix of the upper 3x3 (column-major): cof = det * inverse^T
+  const a = m[0], b = m[4], c = m[8], d = m[1], e = m[5], f = m[9], g = m[2], h = m[6], i = m[10];
+  const s = det3(m) < 0 ? -1 : 1;   // cofactors carry the determinant's sign; a mirror must not turn the normals inward
+  // prettier-ignore
+  return new Float32Array([
+    s * (e * i - f * h), -s * (b * i - c * h), s * (b * f - c * e), 0,
+    -s * (d * i - f * g), s * (a * i - c * g), -s * (a * f - c * d), 0,
+    s * (d * h - e * g), -s * (a * h - b * g), s * (a * e - b * d), 0,
+    0, 0, 0, 1,
+  ]);
+}
+
 export class StaticBatchBuilder {
   constructor() {
     this.chunks = [];        // [{positions, normals, uvs, base}] one per model, already transformed
@@ -55,7 +82,7 @@ export class StaticBatchBuilder {
    *   the normals take `local` itself, exact for every rotation-and-translation block model.
    */
   add(cpu, local, resolveKey, normalMatrix = null) {
-    const nm = normalMatrix ?? local;
+    const nm = normalMatrix ?? unevenScaleNormalMatrix(local) ?? local;   // WD1: a scaled world-data model lights through its inverse transpose
     const n = cpu.positions.length / 3;
     if (!n || !cpu.subMeshes?.length) return;
     // WOD5: a MIRRORED model - a negative determinant, World of

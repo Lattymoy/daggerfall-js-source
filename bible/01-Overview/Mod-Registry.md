@@ -4,9 +4,11 @@
 > left as it wrote them.** They were true of the fifteen rows that
 > existed on 2026-09-15 and they are the record of what putting those
 > rows side by side found. The live numbers are derived, not written:
-> `vendor/` holds 32 directories and 18 of their READMEs still carry an
+> `vendor/` holds 33 directories and 18 of their READMEs still carry an
 > unfilled permission line, each shown as `RECORD OPEN` in the table
-> (AUDIT BRANCH (WoD), 2026-09-23, counted them again after the merge
+> (AS1, 2026-09-25, added `aquatic-sprites`, the thirty-third - its
+> author's readme carries the permission itself, so the open count
+> stands; AUDIT BRANCH (WoD), 2026-09-23, counted them again after the merge
 > brought `horse-cart-and-cargo`, the twenty-seventh; WOD1 had counted 26
 > and 13 when it added the twenty-sixth;
 > the sentence had read 19 and 11 since ORL1 and nothing checks it, so
@@ -75,6 +77,7 @@ not the date the slice shipped, where those differ.
 | `eye-of-the-beholder` | manifest, settings, presets, the per-sprite offsets folded to one table, and all 3035 sprites re-encoded as indexed PNG | RedRoryOTheGlen | 2.1 | shipped `.zip` `Eye_of_the_Beholder-762-2-1-1775438888`; the DLL and its IL dump vendored (EOTB-IL) | granted (Mac handed the archive over 2026-09-15) - **RECORD OPEN** | EOTB0-EOTB7, AUDIT-EOTB, AUDIT-EOTB2, EOTB-IL (the assembly and its IL dump vendored beside the art; 45 of 61 authored methods ported, every one read off the IL, 16 with no twin here - the count is checked against the dump in `test/eotb_scope.test.js`; see the page) | 2026-09-16 | `06-Systems/Eye-Of-The-Beholder.md` |
 | `immersive-footsteps` | manifest, settings, the two C# sources (the author's MIT repository at `ac03581`), all 210 MP3 clips in both qualities | Kirk.O | 1.01 | shipped `.zip` `Immersive_Footsteps_v1.01_-_DFU_v1.0.0_-_Windows-706-1-01-1713032612`; behaviour off the author's published SOURCE (the bundle's DLL is its build; its FSB5 clips are Unity's import of the same MP3s) | MIT (the main script's header); granted (Mac handed the archive over 2026-09-16) - **RECORD OPEN** | IF1 | 2026-09-16 | `06-Systems/Immersive-Footsteps.md` |
 | `better-ambience` | manifest, settings, all sixteen C# sources (carried inside the bundle as TextAssets), the author's MIT LICENSE, the 29 WAV clips the mod asks for (from the author's repository) | Joshua Steinhauer (joshcamas) | 0.1.4 | shipped `.dfmod` from the Nexus archive `BetterAmbience-139-0-1-5-1666071806` (labelled 0.1.5; the manifest inside says 0.1.4); behaviour off the SOURCES the bundle carries; the clips' FSB5 imports are undecodable here, so the repository's WAVs stand in | MIT (the repository's LICENSE); granted (Mac handed the archive over 2026-09-16) - **RECORD OPEN** | BA1 | 2026-09-16 | `06-Systems/Better-Ambience.md` |
+| `aquatic-sprites` | manifest, the shipped readme, and the author's EDIT of each of three wet RDB blocks (`WorldDataPatches/`, WD1) - the blocks themselves are rebuilt at load from the player's `BLOCKS.BSA` | Cliffworms | 1.0 | shipped `.zip` `Aquatic_Sprites_1.0-276-1-0-1642914017`; `tools/worldDataPatch.mjs` checks each patch rebuilds the shipped file's canonical sha256 | the author's readme: "The mod may be distributed/translated without my authorization as long as I am credited as the author." | AS1, WD1 | 2026-09-25 | `03-World/Aquatic-Sprites.md` |
 | `climates-calories` | manifest, the mod's item templates, sixteen item icons | Ralzar | 1.7.1 | shipped zip `Climates_and_Calories-49-1-7-1-1707751069`; the rules off the DLL's IL (`tools/ilDump.py`), then OVERHAULED, not ported | granted - an overhaul, relayed by Mac 2026-09-17 ("we have been given permission to completely overhaul this mod") | SURV1-SURV7 | 2026-09-18 | `06-Systems/Climates-Calories.md` |
 | `dfu-books` | data | Daggerfall Unity (Interkarma and contributors) | - | `Assets/Resources/books.txt` @ `81e89e90` | MIT | route (a) | 2026-08-20 | `10-UI/UI-Arc.md` |
 | `dfu-icons` | the sixteen interaction-mode icons (four sets x steal/grab/info/talk) | Daggerfall Unity (Interkarma and contributors) | - | `Assets/Resources/Icons` @ `2343305d` | MIT | HUD-ICON1 | 2026-09-24 | `01-Overview/Port-Ledger.md` |

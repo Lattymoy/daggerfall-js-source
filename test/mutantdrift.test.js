@@ -150,7 +150,6 @@ const CARRIED_AIM = new Map([
   ['perfsun.json::PERF-SUN2-the-gate-drops-the-uniform-half-so-dusk-and-night-still-pay', 3],
   ['perfsun.json::PERF-SUN2-the-gated-branch-answers-ONE-instead-of-zero-so-an-unlit-face-is-fully-lit', 3],
   ['perfsun.json::TREES1-the-terrain-pays-for-a-kernel-its-own-neighbours-already-give-it', 3],
-  ['rr3b.json::RR3b-10-a-variant-block-with-no-file-is-cached-as-none', 2],
   ['soc1.json::S32-room-budget-missing', 2],
 ]);
 

@@ -328,6 +328,7 @@ export const ONLINE_PLAYERS_OWN_MODS = [
   'travel-options',              // my own journey; OL2 already spends no world time online
   'diverse-weapons',        // DW1: the first-person weapon's and the icons' art - drawn on your own screen and nowhere else
   'horse-cart-and-cargo',   // HCC: whose horse and wagon stand where is the player's own; the others only SEE them (the online half rides the pose and the cell's frame, never a switch of the room's ground)
+  'aquatic-sprites',        // AS1: 119 flats of scenery in three flooded dungeon blocks - no collider, no action, no marker; a peer without them walks the same rooms (the editor's seven sub-degree turns of a room model are under half a degree)
 ];
 
 /** The forced value of a mod's switch on an online page, else undefined -

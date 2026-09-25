@@ -306,5 +306,15 @@ export const CREDITS = Object.freeze({
       vendor: Object.freeze(['horse-cart-and-cargo']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/1374',
     }),
+    Object.freeze({
+      title: 'Aquatic Sprites',
+      version: '1.0',
+      author: 'Cliffworms',
+      what: 'The underwater sprites Daggerfall ships and never places - weed, coral and shells - set into three of its flooded dungeon blocks, 119 of them, exactly where the author put them (AS1).',
+      terms: 'Distributed under the author’s own terms, which ask only for credit: “The mod may be distributed/translated without my authorization as long as I am credited as the author.” The author’s edits are vendored; the blocks are rebuilt from your own game files - see vendor/aquatic-sprites/README.md for the permission record.',
+      contact: 'Cliffworms, through the Nexus page (daggerfallunity mod 276)',
+      vendor: Object.freeze(['aquatic-sprites']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/276',
+    }),
   ]),
 });

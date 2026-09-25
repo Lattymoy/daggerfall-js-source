@@ -8,14 +8,19 @@
 //
 // BROWSER-ONLY: import.meta.glob is a Vite compile-time macro - node
 // tests register their JSON on the door from fs.
-import { registerWorldDataAsset, installWorldDataReplacement } from '../formats/worldDataReplacement.js';
+import { registerWorldDataAsset, installWorldDataReplacement, boundWorldDataBlocks } from '../formats/worldDataReplacement.js';
+import { rebuildWorldDataPatch, canonicalSha256 } from '../formats/worldDataPatch.js';
 import { modSetting } from '../systems/modSettings.js';
 
 // The glob sits INSIDE the loader (Vite rewrites it wherever it stands),
 // so a node test that imports a host reaching this module does not trip
 // on the macro - only a call would, and node never calls it.
 const globFiles = () => import.meta.glob('../../vendor/*/WorldData/*.json', { import: 'default' });
-const vendorOf = (path) => /vendor\/([^/]+)\/WorldData\//.exec(path)?.[1] ?? '';
+// WD1: a mod whose world data is a whole classic block with its edits in it
+// ships the edit only (formats/worldDataPatch.js); rebuilt here from the
+// player's BLOCKS.BSA and registered under the file's own DFU name.
+const globPatches = () => import.meta.glob('../../vendor/*/WorldDataPatches/*.json', { import: 'default' });
+const vendorOf = (path) => /vendor\/([^/]+)\/WorldData(?:Patches)?\//.exec(path)?.[1] ?? '';
 const baseName = (path) => path.split('/').pop();
 
 let _loaded = null;
@@ -31,7 +36,31 @@ export async function loadModWorldData() {
       const json = await load();
       if (registerWorldDataAsset(baseName(path), json, () => modSetting(vendor, 'Enabled') === true)) n++;
     }));
+    await Promise.all(Object.entries(globPatches()).map(async ([path, load]) => {
+      const vendor = vendorOf(path);
+      if (await registerWorldDataPatch(await load(), () => modSetting(vendor, 'Enabled') === true)) n++;
+    }));
     return n;
   })();
   return _loaded;
+}
+
+/**
+ * WD1: one vendored patch onto the door - rebuilt from the bound BLOCKS.BSA,
+ * checked against the author's file (its canonical sha256) and registered
+ * under the file's DFU name. A rebuild that does not come back to the
+ * author's bytes (a BLOCKS.BSA that is not the one the mod was made
+ * against) is said and still served: it is the author's edit on the
+ * player's own block, which is what the mod does to any block it meets.
+ * A patch whose ops do not land is said and not served.
+ * @returns {Promise<boolean>}
+ */
+export async function registerWorldDataPatch(patch, isOn) {
+  const blocks = boundWorldDataBlocks();
+  if (!blocks) { console.warn(`[worlddata] ${patch?.rebuilds}: no BLOCKS.BSA bound - patch not rebuilt`); return false; }
+  let json;
+  try { json = rebuildWorldDataPatch(patch, blocks); } catch (e) { console.error(`[worlddata] ${patch?.rebuilds}: ${e?.message ?? e}`); return false; }
+  const sha = await canonicalSha256(json);
+  if (sha !== patch.sha256) console.warn(`[worlddata] ${patch.rebuilds}: rebuilt from this BLOCKS.BSA, but not to the author's file (sha256 ${sha.slice(0, 12)}, the patch records ${String(patch.sha256).slice(0, 12)})`);
+  return registerWorldDataAsset(patch.rebuilds, json, isOn);
 }

@@ -182,7 +182,7 @@
   {
     "name": "the-batch-ignores-the-normal-matrix",
     "file": "src/render/staticBatch.js",
-    "old": "    const nm = normalMatrix ?? local;",
+    "old": "    const nm = normalMatrix ?? unevenScaleNormalMatrix(local) ?? local;",
     "new": "    const nm = local;",
     "tests": [
       "test/wod2_loader.test.js"

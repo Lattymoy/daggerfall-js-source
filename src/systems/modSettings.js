@@ -126,6 +126,22 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
+  // AS1 (2026-09-25): AQUATIC SPRITES 1.0 (Cliffworms). No modsettings of
+  // its own - three world-data blocks, so one switch: the port's Enabled,
+  // the gate DFU's mod list is (a mod that is off is a mod DFU never
+  // loaded; scenes/modWorldData.js reads it at the door).
+  'aquatic-sprites': Object.freeze({
+    title: 'Aquatic Sprites',
+    author: 'Cliffworms',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Cliffworms’ Aquatic Sprites 1.0, 1:1: “Adds aquatic sprites to submerged caverns.” The weed, coral '
+          + 'and shells Daggerfall ships and never places, set into three of its flooded dungeon blocks - 119 of them, '
+          + 'drawn from your own game files.',
+      }),
+    }),
+  }),
   // MM1: MEANER MONSTERS 1.5.2 (Ralzar). No modsettings of its own -
   // `Enabled` alone (DFU enables a mod by listing it). Listed BEFORE
   // the overhaul because the overhaul names it as a dependency and so
