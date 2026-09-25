@@ -308,5 +308,125 @@
   "tests": [
    "test/grassshift.test.js"
   ]
+ },
+ {
+  "name": "PERF-EXT-C4-the-merge-never-breathes-between-model-copies",
+  "file": "src/render/staticBatch.js",
+  "old": "      v += c.positions.length / 3;\n      yield;",
+  "new": "      v += c.positions.length / 3;",
+  "tests": [
+   "test/publishtail.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C4-the-merge-never-breathes-between-groups",
+  "file": "src/render/staticBatch.js",
+  "old": "      if (withBounds) { subs.push(boundsOf(positions, indices, start, at - start)); yield; }",
+  "new": "      if (withBounds) { subs.push(boundsOf(positions, indices, start, at - start)); }",
+  "tests": [
+   "test/publishtail.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C4-a-group-sphere-is-the-whole-meshs",
+  "file": "src/render/staticBatch.js",
+  "old": "      if (withBounds) { subs.push(boundsOf(positions, indices, start, at - start)); yield; }",
+  "new": "      if (withBounds) { subs.push(boundsOf(positions)); yield; }",
+  "tests": [
+   "test/publishtail.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C4-the-sliced-merge-hands-no-whole-sphere",
+  "file": "src/render/staticBatch.js",
+  "old": "    const whole = withBounds ? yield* boundsSteps(positions) : null;",
+  "new": "    const whole = null;",
+  "tests": [
+   "test/publishtail.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C4-finishSliced-drains-without-a-breath",
+  "file": "src/render/staticBatch.js",
+  "old": "      if (r.done) return r.value;\n      await breathe();",
+  "new": "      if (r.done) return r.value;",
+  "tests": [
+   "test/publishtail.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C4-the-sliced-sphere-centre-is-not-rounded-before-the-reach",
+  "file": "src/render/bounds.js",
+  "old": "  const sphere = new Float32Array(4);\n  if (n === 0) return sphere;",
+  "new": "  const sphere = new Float64Array(4);\n  if (n === 0) return sphere;",
+  "tests": [
+   "test/publishtail.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C4-a-range-skips-its-last-vertex",
+  "file": "src/render/bounds.js",
+  "old": "    for (let o = k0 * 3, end = Math.min(n, k0 + range) * 3; o < end; o += 3) {\n      const x = positions[o]",
+  "new": "    for (let o = k0 * 3, end = Math.min(n, k0 + range) * 3 - 3; o < end; o += 3) {\n      const x = positions[o]",
+  "tests": [
+   "test/publishtail.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C4-the-reach-pass-measures-from-the-box-corner",
+  "file": "src/render/bounds.js",
+  "old": "  sphere[0] = (minX + maxX) / 2; sphere[1] = (minY + maxY) / 2; sphere[2] = (minZ + maxZ) / 2;",
+  "new": "  sphere[0] = minX; sphere[1] = (minY + maxY) / 2; sphere[2] = (minZ + maxZ) / 2;",
+  "tests": [
+   "test/publishtail.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C4-createMesh-ignores-the-measured-spheres-and-walks-again",
+  "file": "src/render/renderer.js",
+  "old": "    const bounds = measured ? measured.whole : boundsOf(model.positions);",
+  "new": "    const bounds = boundsOf(model.positions);",
+  "tests": [
+   "test/publishtail.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C4-createMesh-walks-every-group-again",
+  "file": "src/render/renderer.js",
+  "old": "_bounds: measured ? measured.subs[i] : boundsOf(",
+  "new": "_bounds: boundsOf(",
+  "tests": [
+   "test/publishtail.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C4-the-world-host-merges-in-one-piece-again",
+  "file": "src/scenes/world.js",
+  "old": "    const staticMerged = await staticBuilder.finishSliced(() => breather.breathe());   // PERF4",
+  "new": "    const staticMerged = staticBuilder.finish();   // PERF4",
+  "tests": [
+   "test/publishtail.test.js",
+   "test/perf4.test.js",
+   "test/wod4_privateershold.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C4-the-world-host-does-not-hand-the-spheres-over",
+  "file": "src/scenes/world.js",
+  "old": "renderer.createMesh(staticMerged, { bounds: staticMerged.bounds })",
+  "new": "renderer.createMesh(staticMerged)",
+  "tests": [
+   "test/publishtail.test.js",
+   "test/perf4.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C4-the-flats-loop-never-breathes",
+  "file": "src/scenes/world.js",
+  "old": "      await breather.breathe();   // PERF-EXT-C4: a flat group a breath",
+  "new": "      // PERF-EXT-C4: a flat group a breath",
+  "tests": [
+   "test/publishtail.test.js"
+  ]
  }
 ]

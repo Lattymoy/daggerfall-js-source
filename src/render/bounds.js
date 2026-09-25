@@ -66,6 +66,56 @@ export function boundsOf(positions, indices = null, start = 0, count = -1, strid
   return out;
 }
 
+/** PERF-EXT-C4: how many vertices one range of boundsSteps measures -
+ *  under 0.1 ms a pass warm on the prover's machine, and a couple of ms
+ *  the first time, before the loop is compiled. */
+export const BOUNDS_RANGE = 8192;
+
+/**
+ * PERF-EXT-C4 (2026-09-25, the players: "fps issues in the exterior but
+ * fine in the interior", "me too my friend.. don't know why. I got a
+ * RX6600"): boundsOf(positions) over a whole xyz array, CUT IN RANGES - a
+ * generator that yields after every `range` vertices of either pass, so a
+ * mesh too big for one frame (a city pixel's merged batch, 600k vertices,
+ * 8-17 ms a sphere) is measured between frames (StaticBatchBuilder.
+ * finishSliced). Its return value is boundsOf's sphere BIT FOR BIT: the
+ * first pass is a min and a max and the second a max, and none of the
+ * three cares how the vertices are cut; the centre is rounded into the
+ * same float32 sphere before the second pass reads it back. It is the
+ * same law as boundsOf's, spelled for ranges, and it stands beside it
+ * rather than inside it on purpose: boundsOf also runs every frame for
+ * an animated rig (renderer.js), and cut into range helpers it measured a
+ * third slower there. test/publishtail.test.js holds the two to the same
+ * bytes on meshes of every shape, so neither can drift alone.
+ */
+export function* boundsSteps(positions, range = BOUNDS_RANGE) {
+  const n = Math.floor(positions.length / 3);
+  let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+  for (let k0 = 0; k0 < n; k0 += range) {
+    for (let o = k0 * 3, end = Math.min(n, k0 + range) * 3; o < end; o += 3) {
+      const x = positions[o], y = positions[o + 1], z = positions[o + 2];
+      if (x < minX) minX = x; if (x > maxX) maxX = x;
+      if (y < minY) minY = y; if (y > maxY) maxY = y;
+      if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+    }
+    yield;
+  }
+  const sphere = new Float32Array(4);
+  if (n === 0) return sphere;
+  sphere[0] = (minX + maxX) / 2; sphere[1] = (minY + maxY) / 2; sphere[2] = (minZ + maxZ) / 2;
+  let reach2 = 0;
+  for (let k0 = 0; k0 < n; k0 += range) {
+    for (let o = k0 * 3, end = Math.min(n, k0 + range) * 3; o < end; o += 3) {
+      const dx = positions[o] - sphere[0], dy = positions[o + 1] - sphere[1], dz = positions[o + 2] - sphere[2];
+      const d2 = dx * dx + dy * dy + dz * dz;
+      if (d2 > reach2) reach2 = d2;
+    }
+    yield;
+  }
+  sphere[3] = Math.sqrt(reach2);
+  return sphere;
+}
+
 /** EL5: a local sphere through an affine matrix (column-major): the centre
  *  transformed, the radius scaled by the largest axis scale. */
 export function transformSphere(m, s, out, o = 0) {

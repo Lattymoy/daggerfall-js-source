@@ -2105,6 +2105,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const batches = [];
     made.batches = batches;   // BUILD-FAIL1
     for (const [k, centers] of groups) {
+      await breather.breathe();   // PERF-EXT-C4: a flat group a breath - its texture is a cached promise, a microtask, and gave no frame back
       const [archive, record] = k.split('_').map(Number);
       const t = await getTexture(archive);
       if (record >= t.recordCount) continue;
@@ -2177,8 +2178,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     // EV6: the pixel's models sort by MESH at build - one archetype's
     // placements draw back to back and the VAO shadow skips the rebind.
     models.sort((a, b) => a._order - b._order);
-    const staticMerged = staticBuilder.finish();   // PERF4
-    const staticBatch = staticMerged ? renderer.createMesh(staticMerged) : null;
+    // PERF-EXT-C4 (2026-09-25, the players: "fps issues in the exterior but
+    // fine in the interior", "me too my friend.. don't know why. I got a
+    // RX6600"): THE TAIL BREATHES TOO. The merge and createMesh's spheres ran
+    // after the last breath above in one piece - on a synthetic city pixel
+    // 45-60 ms of ONE frame, on a town 6-26 ms, for every town, city and WoD
+    // pixel streamed in. The merge now yields a model's copy, a range of the
+    // sphere's passes and a texture group at a time, and hands createMesh the
+    // spheres it measured, so createMesh walks nothing again. Same arrays,
+    // same spheres, byte for byte; the pixel publishes a few frames later.
+    const staticMerged = await staticBuilder.finishSliced(() => breather.breathe());   // PERF4
+    const staticBatch = staticMerged ? renderer.createMesh(staticMerged, { bounds: staticMerged.bounds }) : null;
     made.staticBatch = staticBatch;   // BUILD-FAIL1
 
     // AUDIT-TO1 B3: StreamingWorld.OnUpdateLocationGameObject

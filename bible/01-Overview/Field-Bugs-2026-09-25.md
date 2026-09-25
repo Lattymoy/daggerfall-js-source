@@ -118,3 +118,9 @@ cluster C has the numbers and the laws):
   candidates a frame now, byte for byte the same cell (walking p99 4.4-6.6
   ms -> 1.4-1.8 ms). A boot or a teleport still fills whole cells at the
   old pace.
+- **PERF-EXT-C4** - a pixel's publish tail breathes. After its last
+  model, a town or city pixel merged its static batch and measured its
+  spheres in one piece - 39-66 ms of one frame on a synthetic city, 8-22
+  ms on a town. The merge yields between models, sphere ranges and
+  texture groups now (no unit over ~0.3 ms warm) and hands createMesh the
+  spheres, byte for byte the same.

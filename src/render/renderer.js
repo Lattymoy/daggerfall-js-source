@@ -3748,8 +3748,14 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     return freed;
   }
 
-  /** Build a VAO bundle from meshReader output. */
-  createMesh(model) {
+  /** Build a VAO bundle from meshReader output.
+   *  PERF-EXT-C4: `bounds` - { whole, subs } - is the spheres already
+   *  measured (StaticBatchBuilder.finishSliced, a range at a time between
+   *  frames, with boundsOf's own passes); given, the two walks below are
+   *  not run again. Absent, nothing changes.
+   *  @param {any} model
+   *  @param {{ bounds?: ?{ whole: Float32Array, subs: Float32Array[] } }} [opts] */
+  createMesh(model, { bounds: measured = null } = {}) {
     const gl = this.gl;
     const vao = gl.createVertexArray();
     this._bindVao(vao);
@@ -3777,8 +3783,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // EL5: the bounds the shadow replays cull by - the mesh's sphere and one
     // per sub-mesh (a static batch is a whole block in one mesh; its walls
     // are its sub-meshes). Local space; the record transforms them.
-    const bounds = boundsOf(model.positions);
-    const subMeshes = model.subMeshes.map((sm) => ({ ...sm, _bounds: boundsOf(model.positions, model.indices, sm.startIndex, sm.primitiveCount * 3) }));
+    const bounds = measured ? measured.whole : boundsOf(model.positions);
+    const subMeshes = model.subMeshes.map((sm, i) => ({ ...sm, _bounds: measured ? measured.subs[i] : boundsOf(model.positions, model.indices, sm.startIndex, sm.primitiveCount * 3) }));
     // HOTFIX 2026-08-31 (field crash, Firefox): the sub-meshes are
     // COPIED, never shared with the model. drawMesh's EV2 texture
     // cache stamps `_evTex`/`_evGen`/... onto each sub-mesh, and the

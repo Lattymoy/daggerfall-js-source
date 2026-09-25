@@ -185,3 +185,62 @@ and a cell no bigger than a slice is never left half placed. Re-stated on
 purpose: `labGrass.test.js` GRASS6's order pin reads stepGrassCell (the
 loop's home) and GR5's five-metre step is given the frames its rim takes.
 Mutants: `perfextc.json` C3 x15, all dead.
+
+### PERF-EXT-C4 — a pixel's publish tail breathes
+
+**Before.** A streamed pixel's build breathes between its models (PERF7,
+`systems/buildBreather.js`), and after the last model it ran its tail in
+one piece: the flats loop (each `getTexture` a cached promise - a
+microtask, which gives no frame back), `StaticBatchBuilder.finish`
+(copying every model's chunk into the merged arrays) and
+`renderer.createMesh`'s spheres (boundsOf over the whole mesh and again
+over every texture group). Every town, city and WoD pixel, both skins. On
+the hunter's synthetic city pixel (3,000 models of 200 vertices, 160
+groups; no ARCH3D here, so the ms scale with the real counts) that was
+39-66 ms of ONE frame; a town 8-22 ms.
+
+**After.** The merge is a generator (`_merge`) that yields after each
+model's copy, after each range of the whole sphere's two passes
+(`bounds.js` `boundsSteps`, 8,192 vertices a range) and after each group's
+index copy and sphere. `finish()` drains it straight through - the
+interior and the dungeon, which merge once at their first frame, keep it;
+`finishSliced(breathe)` awaits the breather between units and returns the
+spheres too, and `createMesh(merged, { bounds })` takes them instead of
+walking the vertices again. The world host awaits
+`finishSliced(() => breather.breathe())`, hands the spheres to the upload,
+and breathes once per flat group. The arrays and every sphere are the
+bytes the unbroken tail made; the pixel publishes a few frames later, the
+delay PERF7 already accepts.
+
+**boundsSteps stands beside boundsOf, not inside it.** Cut into range
+helpers that both would call, boundsOf ran a third slower on the one
+call that is per FRAME - an animated rig's sphere (`renderer.js`, stride
+9: 29 -> 40-50 us). So the sliced sphere is its own loop beside it: the
+same two passes (a min and a max, then a max from the float32-rounded
+centre), which no cut can change, held to boundsOf's bytes on meshes of
+every shape by `test/publishtail.test.js` - neither can drift alone.
+
+**Not done: the chunked upload.** The prover's step (d) - a 22.8 MB
+`bufferData` split into ~2 MB `bufferSubData` a breath - was left for a
+Chrome profile to justify; SwiftShader numbers are relative only.
+
+| harness | before (base) | after (this tree) |
+|---|---|---|
+| `buildTail.mjs` - city, the unbroken tail | finish 17.3-18.7 + createMesh 22.0-32.6 ms, one frame | - |
+| `tailSplit.mjs` - city's pieces | finish 18.7-21.9, whole boundsOf 10.7-18.3, groups' boundsOf 15.2-19.5 ms | - |
+| `tailSliced.mjs` - city, 3,309 breaths | (in-run reference: 42.6-66.1 ms one unit) | largest unit 0.29 ms warm (0.89 cold); createMesh(bounds) 0.07-0.10 ms; byte-identical |
+| `tailSliced.mjs` - town, 791 breaths | (in-run reference: 8.4-21.7 ms) | largest unit 0.23 ms warm (2.30 cold); byte-identical |
+| `unitDist.mjs` - city, every unit | - | p99 0.16-0.21 ms; the odd 1-2 ms unit is a collection or the first, uncompiled range |
+| `boundsBench.mjs` - boundsOf itself | rig 29-36 us, mesh 192-220 us | unchanged (boundsOf is byte for byte what it was) |
+
+Pins: `test/publishtail.test.js` (4) - boundsSteps is boundsOf's bytes on
+empty, single, large and extreme-at-either-end meshes at ranges of 1, 7,
+256, BOUNDS_RANGE and whole, with a yield per range; finishSliced gives
+finish()'s arrays and groups (mirrored placements among them) and
+createMesh's spheres byte for byte, with a breath per model, range and
+group; createMesh handed the spheres keeps them and reads no vertex, and
+handed none measures as before; the host's three sites. Re-stated on
+purpose: `perf4.test.js` ("uploaded once at the end") and
+`wod4_privateershold.test.js` (the camp is batched before the merge).
+Mutants: `perfextc.json` C4 x13, all dead; `el5.json`'s two createMesh
+records re-aimed by content.

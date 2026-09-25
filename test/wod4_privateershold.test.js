@@ -127,7 +127,7 @@ test('WOD4: the streaming host stands the camp on the block, climate and collide
   assert.match(block, /collider\.addMesh\(key, cpu\.positions, cpu\.indices, local, holdBucket\);/);
   assert.match(block, /addFlat\(hf\.archive, hf\.record, \.\.\.centredBase\(\[origin\[12\] \+ hf\.pos\[0\], origin\[13\] \+ hf\.pos\[1\], origin\[14\] \+ hf\.pos\[2\]\], billboardSize\(t, hf\.record\)\)\);/, 'no AlignToBase: centred');
   assert.match(block, /for \(const l of holdFireLights\(\)\) pixelWodLights\.push\(/, 'at every hour, on the per-light channel');
-  assert.ok(w.indexOf('    let privateersHold = null;') < w.indexOf('const staticMerged = staticBuilder.finish();'), 'into the batch before it is merged');
+  assert.ok(w.indexOf('    let privateersHold = null;') < w.indexOf('const staticMerged = await staticBuilder.finishSliced('), 'into the batch before it is merged');   // PERF-EXT-C4: the merge breathes
   assert.match(w, /privateersHold,   \/\/ WOD4/);
   assert.match(w, /if \(p\.privateersHold && !p\.privateersHold\.state\.rolled\) \{[^\n]*\n[^\n]*\n[^\n]*\n\s*else \{ standHold\(p, hs\); wodSprang\(hs\); \}/);   // WOD7: unless a peer rolled it
   assert.match(w, /function standHold\(p, site = null\) \{\n\s*const st = p\.privateersHold\.state;\n\s*st\.rolled = true;/, 'Start runs once');
