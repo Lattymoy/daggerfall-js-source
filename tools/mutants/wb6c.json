@@ -44,7 +44,7 @@
   {
     "name": "WB6c-no-hold-for-the-first-frames",
     "file": "src/ui/gateVeil.js",
-    "old": "      if (phase === 'shut') { wait = VEIL_OPEN_WAIT_TICKS; kick(); }",
+    "old": "      if (phase === 'shut') { wait = VEIL_OPEN_WAIT_TICKS; drawnAt = drawnN; kick(); }",
     "new": "      if (phase === 'shut') { open(t, VEIL_FRONT_IN); kick(); }",
     "tests": ["test/wb6c_gate_veil.test.js"]
   },
@@ -65,8 +65,8 @@
   {
     "name": "WB6c-the-watchdog-dropped",
     "file": "src/ui/gateVeil.js",
-    "old": "      else if (seconds(t) >= VEIL_HOLD_MAX_S) open(t, VEIL_FRONT_IN);",
-    "new": "      else if (false) open(t, VEIL_FRONT_IN);",
+    "old": "      } else if (seconds(t) >= VEIL_HOLD_MAX_S) open(t, VEIL_FRONT_IN);",
+    "new": "      } else if (false) open(t, VEIL_FRONT_IN);",
     "tests": ["test/wb6c_gate_veil.test.js"]
   },
   {

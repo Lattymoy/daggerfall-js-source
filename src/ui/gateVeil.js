@@ -9,10 +9,13 @@
 //
 // THE STEP (`cover` then `reveal`): the fire closes over the screen and the promise answers when it has (true - or
 // false at once where no veil can be made: the step goes on, unveiled); the host changes the place under it; then it
-// opens, holding shut for VEIL_OPEN_WAIT_TICKS ticks first, so the new place's first frames (its programs built on
-// first sight) do not eat the opening. Asked to close while it opens, it closes from where it stands - no jump. A place
-// taken from the player by force (the court coming apart, a death cast out) is `flash`: the fire at once, then open.
-// Shut past VEIL_HOLD_MAX_S it opens on whatever stands.
+// opens, holding shut until the new place has DRAWN VEIL_OPEN_WAIT_TICKS frames (AUDIT WB D5: the host says each one -
+// `frameDrawn`; its own ticks were not the world's frames, which a frame cap or a held frame skips), so its first
+// frames (its programs built on first sight) do not eat the opening; a host that says none counts the veil's ticks.
+// Asked to close while it opens, it closes from where it stands - no jump. A place taken from the player by force (the
+// court coming apart, a death cast out) is `flash`: the fire at once - drawn in the call itself (AUDIT WB D6), never a
+// frame of what it covers - then open. Shut past VEIL_HOLD_MAX_S it opens on whatever stands. `warm` builds it ahead,
+// in the browser's idle time, so the first step does not pay for its program.
 // Not a DFU member. Ledger A (WB).
 import { audio as defaultAudio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -40,6 +43,8 @@ export const VEIL_CUES = Object.freeze({
 export function createGateVeil({ doc = globalThis.document, raf = (f) => globalThis.requestAnimationFrame(f), now = () => performance.now(), engine = defaultAudio, win = globalThis } = {}) {
   let canvas = null, pass = null, broken = false;
   let phase = 'idle', at = 0, began = 0, from = VEIL_FRONT_IN, wait = 0, ticking = false;
+  /** AUDIT WB D5: the frames the host has said it drew, and whether it says them at all; the count at the reveal */
+  let drawnN = 0, hostCounts = false, drawnAt = 0;
   let waiters = [];
   const settle = (ok) => { const w = waiters; waiters = []; for (const f of w) f(ok); };
   const cue = (name) => {
@@ -83,8 +88,11 @@ export function createGateVeil({ doc = globalThis.document, raf = (f) => globalT
     const t = now();
     if (phase === 'closing' && seconds(t) >= VEIL_CLOSE_S) { phase = 'shut'; at = t; settle(true); }
     if (phase === 'shut') {
-      if (wait > 0) { wait--; if (wait === 0) open(t, VEIL_FRONT_IN); }
-      else if (seconds(t) >= VEIL_HOLD_MAX_S) open(t, VEIL_FRONT_IN);   // a build that never answered: open on what stands
+      if (wait > 0) {
+        if (!hostCounts) wait--;
+        if (hostCounts ? drawnN - drawnAt >= wait : wait === 0) { wait = 0; open(t, VEIL_FRONT_IN); }
+        else if (seconds(t) >= VEIL_HOLD_MAX_S) { wait = 0; open(t, VEIL_FRONT_IN); }
+      } else if (seconds(t) >= VEIL_HOLD_MAX_S) open(t, VEIL_FRONT_IN);   // a build that never answered: open on what stands
     }
     if (phase === 'opening' && seconds(t) >= VEIL_OPEN_S) phase = 'idle';
     if (phase === 'idle' || !canvas) { if (canvas) canvas.style.display = 'none'; return; }
@@ -115,7 +123,7 @@ export function createGateVeil({ doc = globalThis.document, raf = (f) => globalT
     /** Open it: from shut after VEIL_OPEN_WAIT_TICKS ticks, from a closing where it stands. */
     reveal() {
       const t = now();
-      if (phase === 'shut') { wait = VEIL_OPEN_WAIT_TICKS; kick(); }
+      if (phase === 'shut') { wait = VEIL_OPEN_WAIT_TICKS; drawnAt = drawnN; kick(); }
       else if (phase === 'closing') { open(t, current(t).front); settle(false); kick(); }
     },
     /** The fire at once, then open - a place taken by force. */
@@ -123,10 +131,15 @@ export function createGateVeil({ doc = globalThis.document, raf = (f) => globalT
       if (!build()) return;
       const t = now();
       if (phase === 'idle') show(t);
-      phase = 'shut'; at = t; wait = VEIL_OPEN_WAIT_TICKS;
+      phase = 'shut'; at = t; wait = VEIL_OPEN_WAIT_TICKS; drawnAt = drawnN;
       settle(true);
+      draw(t);   // AUDIT WB D6: the fire in this very call - the next tick is a frame late, and that frame showed what it covers
       kick();
     },
+    /** AUDIT WB D5: the host drew a frame of its place - the hold counts these, not the veil's own ticks. */
+    frameDrawn() { hostCounts = true; drawnN++; },
+    /** AUDIT WB D5: build the canvas and its program now, ahead of the first step (the host's idle time). */
+    warm() { return build(); },
     destroy() {
       settle(false);
       phase = 'idle';

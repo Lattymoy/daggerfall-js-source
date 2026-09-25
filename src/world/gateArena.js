@@ -256,7 +256,9 @@ export function courtBraziers() {
 }
 
 /** The braziers' lights, in the dungeon's frame: `{ x, y, z, range, color }` over each fire bed, their colour their own. */
-export const courtLights = () => courtBraziers().map(([, p]) => { const [x, y, z] = courtToDungeon(p[0], 2.2, p[2]); return { x, y, z, range: BRAZIER_RANGE, color: BRAZIER_COLOR }; });
+export const courtLights = () => (_courtLights ??= Object.freeze(courtBraziers().map(([, p]) => { const [x, y, z] = courtToDungeon(p[0], 2.2, p[2]); return Object.freeze({ x, y, z, range: BRAZIER_RANGE, color: BRAZIER_COLOR }); })));
+/** AUDIT WB D10: the braziers' lights, made once - they stand where they stand, and the court asks every frame. */
+let _courtLights = null;
 
 /**
  * The braziers joined to the frame's lights. The paired shape the dungeon host hands the renderer in (`{ data, colors }`,

@@ -242,7 +242,7 @@ law and the shader; `ui/gateVeil.js`, the canvas, its loop and its sounds):
   flame arms pouring into a white-hot eye, embers streaking with them.
 - **Shut**: the eye breathes while the place beyond is built, however long that takes (a build that never answers is
   given 20 s, then the veil opens on whatever stands).
-- **Opening**: held shut for the new place's first two frames (its programs are built on first sight, and must not eat
+- **Opening**: held shut for the new place's first two frames DRAWN (AUDIT WB D5 - the host says each; its programs are built on first sight, and must not eat
   the opening), then the eye widens from the middle and the new place is seen through it, the fire swept off past the
   edges over 1.7 s, to a roll of thunder and the fire's own sound.
 
@@ -365,7 +365,7 @@ game's own player and FM bank (`08-Audio/Audio.md` WB7), in D minor:
 | GATEWAR1 - he wakes | phase one | 132 BPM; i-VI-iv-V under a pizzicato ostinato on every eighth, the timpani on each downbeat and the kit's low end; brass stabs join, then the Warden's theme on the brass, then the choir under it |
 | GATEWAR2 - the ward breaks | phase two | 138 BPM; the choir from the first bar, the kit busier and rolling into every fourth bar, the theme dotted and high |
 | GATEWAR3 - his wrath | phase three, and the last minute before the Wrath at any phase | 150 BPM; the Neapolitan Eb against D, the kick on every beat, crashes every other bar, the tritone tolled, the theme at the top of the brass |
-| GATEFELL - he falls | his fall, for 12.5 s | a timpani roll into D major - fanfare, choir, bells - then quiet: the court is the Deadlands' air alone |
+| GATEFELL - he falls | his fall, for 12.5 s from when it began on this screen (AUDIT WB D2: a kill heard late plays it whole), then faded out | a timpani roll into D major - fanfare, choir, bells - then quiet: the court is the Deadlands' air alone |
 
 Nothing plays over the Wrath once it has landed. The court holds the music while it stands and lets it go the frame it
 is gone; a music pack can replace any of the four by name.
@@ -534,6 +534,20 @@ The spoils and the claims:
 | A6 | a storage that refused writes (a full quota, a private window) lost the receipts and the spoils' records silently | the session's memory keeps what the storage would not, one store for every reader |
 | A7 | the spoils' crash record was one slot: a second burst before a save wrote over the first | a list, one a day and character |
 | A9 | the spent day and the claims' queue were the device's: a second account on the device had its spoils refused and its receipts offered under the wrong sign-in (and let go as `not-yours`) | spent by day and account; receipts kept one a day and account, only the signed-in account's offered, another's kept unasked |
+
+The look and the sound:
+
+| # | what was wrong | now |
+|---|---|---|
+| D2 | the fanfare was stopped 12.5 s after his fall by the relay's clock: a kill heard late cut it short, and the quiet after it was a cut | timed from when it began here (`createCourtScore`), then faded (`MusicService.fadeOut`) |
+| D3 | his grunt wanted a share of his health gone in ONE word of it, and the relay says his health in small steps: in a big fight he never grunted | the loss counted since his last grunt |
+| D4 | the song player rewinds a second after a song's end (DFU's replay): the war songs fell silent a second at every loop | a song written as whole bars is `seamless` - the next pass begins on the bar line, to the tick |
+| D5 | the veil's hold counted its own ticks, and a frame cap or a held frame makes a tick no frame of the new place | the host says each frame it draws (`frameDrawn`); the veil is built ahead in idle time the first frame a gate stands (`warm`) |
+| D6 | a flash showed one frame of what it covers before the fire | drawn in the call itself |
+| D7 | the Deadlands' clock was timeOrigin + now(): a sleep stops the page's clock and not the wall's, and it drifted from every other screen | carried on the page's clock from an anchor on the wall and the relay's offset, taken again when they part by a second (`anchoredClock`) |
+| D8 | the falls' grain was read at the clock's radians, which never met themselves at the clock's wrap: the falls jumped | two layers a slide apart, each faded as it wraps, a whole number of slides a period |
+| D9 | the sky's three ridges and the towers were worked out for every pixel, the zenith's too | skipped above `RIDGES_TOP` (0.42 rad) |
+| D10 | the court's frame made its lists, its constant places, its braziers' lights, its fog and its light arrays anew | made once, or refilled |
 
 ## Shipped
 
@@ -756,3 +770,17 @@ device keeps the old verdict), `scenes/gateCourt.js` (the burst's account), `sce
 `grantSpoilsOutside`). Pins `test/auditwb_spoils.test.js` (7); re-aimed: WB5's record and spent-day pins, WB5b's queue
 (the signed-in account), verdict, worker and seam pins, ten WB5/WB5b mutant records; mutants
 `tools/mutants/auditwb_spoils.json` (26 dead).
+
+**AUDIT WB - the look and the sound (2026-09-25).** D2-D10 above: `systems/gateScore.js` (`createCourtScore`, the war
+songs `seamless`), `systems/music.js` (`fadeOut`), `systems/songPlayer.js` (the seamless loop), `scenes/gateCourt.js`
+(the grunt's count, the lists refilled), `ui/gateVeil.js` (`frameDrawn`, `warm`, the flash drawn at once),
+`render/deadlands.js` (`anchoredClock`, the falls' two layers, `RIDGES_TOP`), `scenes/spoilsPool.js` and
+`world/gateArena.js` (nothing made for an empty floor, the braziers' lights once), `scenes/worldModes.js` (the court's
+equator one array), `scenes/world.js` (the score's fade, the veil told and warmed, the clock, the court's hooks). Pins
+`test/auditwb_sound.test.js` (10); re-aimed: WB2's pool-frame seam, WB6a's lighting and backdrop seams, WB6b's clock
+and life seams, WB7's score seam, two WB6c mutant records; mutants `tools/mutants/auditwb_sound.json` (24 dead). The
+Deadlands, gate-pass, veil and score probes pass (15, 9, 13 and 11 checks) - the sky's new falls and skip, and the
+world half's membrane, compiled and drawn in a real WebGL2.
+
+With this the audit's confirmed findings are all fixed - 7 of the world's, 7 of the court's, 5 of the relay's, 5 of the
+spoils' and claims', 9 of the look and the sound - each pinned and mutated.

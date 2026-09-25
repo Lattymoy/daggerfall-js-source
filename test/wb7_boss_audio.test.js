@@ -201,8 +201,8 @@ test('WB7 the seams, by source: the world host lets the court hold the music whi
   const w = src('src/scenes/world.js');
   assert.match(w, /const gateScoreFrame = \(\) => \{\n\s+if \(modes\?\.gateArenaDay\?\.\(\) == null\) \{\n\s+if \(_scoreHeld\) \{ _scoreHeld = false; music\.stop\(\); \}\n\s+return false;\n\s+\}/);
   assert.match(w, /if \(!_scoreMade\) \{ _scoreMade = true; for \(const song of Object\.values\(gateScoreSongs\(\)\)\) music\.registerSong\(song\.name, song\); \}/);
-  assert.match(w, /const want = courtScoreFor\(gateLink\?\.state\?\.\(\) \?\? null, Date\.now\(\) \+ _sharedOffsetMs\) \?\? GATE_SONGS\.war1;/);
-  assert.match(w, /if \(want === SCORE_SILENCE\) \{ if \(music\.current !== null\) music\.stop\(\); \} else music\.playSong\(want\);/);
+  assert.match(w, /const want = _courtScore\.want\(gateLink\?\.state\?\.\(\) \?\? null, Date\.now\(\) \+ _sharedOffsetMs\) \?\? GATE_SONGS\.war1;/);   // AUDIT WB D2: the law as this machine hears it
+  assert.match(w, /if \(want === SCORE_SILENCE\) \{ if \(music\.current !== null\) music\.fadeOut\(\); \} else music\.playSong\(want\);/, 'AUDIT WB D2: the quiet after the fanfare faded in, not cut');
   const feed = w.indexOf('    if (!gateScoreFrame()) musicDirector.update({');
   const modal = w.indexOf('if (modes.frame(dt, now)) {');
   assert.ok(feed > 0 && feed < modal, 'the director fed when the court does not hold the music, before the modal return');

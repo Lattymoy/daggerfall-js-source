@@ -699,8 +699,8 @@ const SOURCE_CITES = [
   // AUDIT QS6 F1, a fifth time and at a second door: this row names FIVE hosts
   // and the table captured ONE, with a sixth number baked into the pick - so
   // citeMerge bumped the LITERAL at the BOX1/TI3 merge and left the doc, and
-  // four of the five had been stale for waves (`worldModes.js:6991` for a line
-  // that is 5921, `world.js:13267` for 8836, `interior.js:323` for 329,
+  // four of the five had been stale for waves (`worldModes.js:6994` for a line
+  // that is 5921, `world.js:13286` for 8836, `interior.js:323` for 329,
   // `dungeon.js:953` for 959). Every one is captured now, against the
   // projection each host really builds.
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:\d+`/, EX, /^ {6}fieldOfView\(\),$/],

@@ -47,6 +47,21 @@ import { buildProgram } from './glProgram.js';
 /** Every rate is whole cycles over this many seconds; the clock is handed wrapped to it. */
 export const DEAD_CLOCK_PERIOD = 600;
 export const deadClock = (seconds) => ((seconds % DEAD_CLOCK_PERIOD) + DEAD_CLOCK_PERIOD) % DEAD_CLOCK_PERIOD;
+/**
+ * AUDIT WB D7: THE DEADLANDS' CLOCK AS ONE MACHINE READS THE RELAY'S - carried on the page's clock (`perf`, which never
+ * steps back) from an anchor on the wall clock with the relay's offset (`wall`), taken again whenever the two part by
+ * more than `slackMs`: a sleep stops the page's clock and not the wall's (timeOrigin + now() drifted from every other
+ * screen after one), and an offset can move. Answers a reader of seconds.
+ * @param {{perf: () => number, wall: () => number, slackMs?: number}} clocks
+ */
+export function anchoredClock({ perf, wall, slackMs = 1000 }) {
+  let anchor = null;
+  return () => {
+    const p = perf(), w = wall();
+    if (anchor === null || Math.abs(anchor + p - w) > slackMs) anchor = w - p;
+    return (anchor + p) / 1000;
+  };
+}
 /** Azimuths are measured from the court's -z (toward the boss from the arrival), turning toward +x. */
 export const deadAzimuth = (dx, dz) => Math.atan2(dx, -dz);
 
@@ -71,8 +86,15 @@ export const SEA_LOOP_TURNS = 2;
 export const BEAM_CLIMB_TURNS = 300;
 export const SPINE_TURNS = 240;
 export const SEA_PULSE_TURNS = 60;
-/** The falls of fire down the near range: their grain slides down this many times a period. */
+/** The falls of fire down the near range: their grain slides down this many times a period. AUDIT WB D8: each slide is
+ *  one layer of grain crossing FALL_SLIDE of the noise, two layers half a slide apart, each faded out as it wraps (the
+ *  vortex's endless law) - a whole number of slides a period, so the clock's wrap is one more wrap; the grain read at
+ *  the clock's radians never met itself there, and the falls jumped. */
 export const FALL_TURNS = 180;
+export const FALL_SLIDE = 2 * Math.PI;
+/** AUDIT WB D9: above this elevation (radians) no ridge and no tower stands - the great tower's crown is at 0.36, its
+ *  crest and the antialiasing's margin above it - and the sky skips their noise there, the most of its sky. */
+export const RIDGES_TOP = 0.42;
 /** A rate of `turns` cycles a period, as the shader's radians a second. */
 const w = (turns) => ((turns / DEAD_CLOCK_PERIOD) * 2 * Math.PI).toFixed(6);
 /** The ridges, far to near: base elevation, rise, features round the horizon, jaggedness, haze toward the horizon. */
@@ -348,7 +370,8 @@ void main() {
     col += (vec3(1.0, 0.62, 0.3) * core * bands + vec3(0.9, 0.25, 0.05) * halo * 0.35) * along * uGain;
   }
 
-  // ── the horizon's ranges, far to near, and the towers stood among them
+  // ── the horizon's ranges, far to near, and the towers stood among them (none above RIDGES_TOP - AUDIT WB D9)
+  if (e < ${RIDGES_TOP.toFixed(4)}) {
   ${RIDGES.map((R, i) => `{
     float hgt = ${R.base.toFixed(4)} + ${R.rise.toFixed(4)} * ridge(az, ${R.freq.toFixed(2)}, ${(i * 17.3 + 4.1).toFixed(2)}, ${R.sharp.toFixed(2)});
     float aa = fwidth(e) * 1.5;
@@ -369,7 +392,10 @@ void main() {
       float cx = 0.3 + 0.4 * dhash(vec2(id, 3.0)) + 0.012 * sin(e * 140.0 + id);
       float hw = 0.015 + 0.04 * drop;                                  // in cells: a thread that spreads as it falls
       float thread = 1.0 - smoothstep(hw * 0.5, hw, abs(fract(cell) - cx));
-      float pour = 0.55 + 0.45 * dnoise(vec2(id * 3.1, e * 260.0 + t * ${w(FALL_TURNS)}));
+      float fph = fract(t * ${(FALL_TURNS / DEAD_CLOCK_PERIOD).toFixed(6)});
+      float fk = 1.0 - abs(2.0 * fph - 1.0);
+      float fg = mix(dnoise(vec2(id * 3.1 + 41.0, e * 260.0 + fract(fph + 0.5) * ${FALL_SLIDE.toFixed(6)})), dnoise(vec2(id * 3.1, e * 260.0 + fph * ${FALL_SLIDE.toFixed(6)})), fk);
+      float pour = 0.55 + 0.45 * fg;
       float span = step(e, lip) * step(sole, e) * smoothstep(0.0, 0.12, drop);
       float pool = exp(-max(e - sole, 0.0) * 160.0) * (1.0 - smoothstep(0.0, 0.35, abs(fract(cell) - cx))) * step(sole - 0.004, e);
       land += vec3(1.0, 0.45, 0.1) * uGain * on * (thread * pour * span * (0.45 + 0.55 * drop) + pool * 0.6);
@@ -377,6 +403,7 @@ void main() {
     land = mix(land, deadHorizon(d), ${R.haze.toFixed(3)});
     col = mix(col, land, m);
   }`).join('\n  ')}
+  }
   // the great tower's heart: a thread of fire up its spine, pulsing
   {
     float x = adiff(az, ${SIGIL_TOWER.az.toFixed(4)}) * cos(e);

@@ -344,7 +344,7 @@ test('WB2 the seams: online alone, stood before the lights, the stone in the wor
   const w = read('src/scenes/world.js');
   assert.match(w, /const gatePool = gateOmen \? createGatePool\(\{/, 'the omen\'s own gate - online alone');
   assert.match(w, /ready: \(\) => !!online\?\.gateOk,   \/\/ WB3b/, 'the door opens at a relay that runs a gate\'s boss room (WB3b; it said "not yet" to every relay until then)');
-  const frameAt = w.indexOf('try { gatePool?.frame(dt); }'), lightsAt = w.indexOf('const wodLit = wod ? _wodLitCount() : 0;');
+  const frameAt = w.indexOf('try { if (gatePool?.frame(dt)) warmGateVeil(); }'), lightsAt = w.indexOf('const wodLit = wod ? _wodLitCount() : 0;');   // AUDIT WB D5: and the step's veil warmed when a gate stands
   assert.ok(frameAt > 0 && frameAt < lightsAt, 'stood before the lights read it');
   assert.equal((w.match(/\.\.\.\(gatePool\?\.lights\(\) \?\? \[\]\), \.\.\.camps\.lights\(\), \.\.\.droppedTorches\.lights\(\)\);/g) ?? []).length, 2, 'its fire lights the ground by night and by day - after the hand lights, before the camps and the dropped torches the renderer\'s cap cuts first');
   assert.match(w, /gatePool\?\.draw\(renderer\);[^\n]*\n\s*camps\.draw\(renderer\);/, 'the stone in the world pass beside the tents (before them: the tents and the wagon keep their HCC pair)');

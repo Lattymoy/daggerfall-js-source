@@ -321,14 +321,14 @@ test('WB6b the air\'s driver: the beds set every frame (the wind breathing on th
 
 test('WB6b the seams, by source: the world host keeps the Deadlands\' clock on the relay\'s and hands it to the sky, the life, the court\'s flash and the shards; the air sounds while the court stands and stops the frame it does not - on the main frame, online or not; the life drawn after the telegraph, one seam marked; the court stands the land beside it and moves its shards before the frame\'s draws; the dungeon\'s own ambience is silent in the court (mutants: each seam removed)', () => {
   const w = src('src/scenes/world.js');
-  assert.match(w, /const deadlandsSeconds = \(\) => \(performance\.timeOrigin \+ performance\.now\(\) \+ _sharedOffsetMs\) \/ 1000;/, 'the relay\'s clock, never stepping back');
+  assert.match(w, /const deadlandsSeconds = anchoredClock\(\{ perf: \(\) => performance\.now\(\), wall: \(\) => Date\.now\(\) \+ _sharedOffsetMs \}\);/, 'the relay\'s clock, never stepping back between anchors (AUDIT WB D7: anchored on the wall clock, again when they part)');
   assert.match(w, /const deadlandsAirFrame = \(\) => \{ if \(modes\?\.gateArenaDay\?\.\(\) != null\) deadlandsAir\.frame\(deadlandsSeconds\(\), cam\.pos, courtFireBeds\); else deadlandsAir\.stop\(\); \};/);
   // ticked on the main frame after the online block, online or not (going offline is one of the court's ways out, and
   // the online frame does not run then), and stopped where the loop itself dies
   assert.match(w, /\n    if \(onlineOn && playerSpawned\) \{ if \(!online\) onlineStart\(\); onlineFrame\(now, dt\); \} else \{[^\n]*\n    deadlandsAirFrame\(\);/, 'on the main frame, after the court\'s ways out');
   assert.ok(!/const gateFrame = \(\) => \{[\s\S]{0,1200}deadlandsAir\.frame/.test(w), 'not on the online frame alone');
   assert.match(w, /const courtFireBeds = courtBraziers\(\)\.map\(\(\[, p\]\) => courtToDungeon\(p\[0\], 1\.2, p\[2\]\)\);/);
-  assert.match(w, /const lived = deadlandsPass\(\)\?\.drawLife\(proj, view, courtToDungeon\(0, 0, 0\), deadlandsSeconds\(\), fog, glow, courtBraziers\(\)\.map\(\(\[, p\]\) => p\), renderer\.worldViewportPx\?\.\[3\]\);\n\s+if \(told \|\| lived\) renderer\.markForeignPass\(\);/);
+  assert.match(w, /const lived = deadlandsPass\(\)\?\.drawLife\(proj, view, _courtCentre, deadlandsSeconds\(\), fog, glow, _courtBeds, renderer\.worldViewportPx\?\.\[3\]\);\n\s+if \(told \|\| lived\) renderer\.markForeignPass\(\);/);
   assert.match(w, /\n    deadlandsSeconds: \(\) => deadlandsSeconds\(\),/);
   const wm = src('src/scenes/worldModes.js');
   assert.match(wm, /if \(_courtMesh\) ctx\.dynamicDraws\.push\(\{ gpu: _courtMesh, object: \{ matrix: identity\(\) \} \}\);\n\s+standDeadlands\(ctx\);/, 'the land after the court, whose art it is cut from');

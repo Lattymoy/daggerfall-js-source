@@ -173,10 +173,10 @@ import { drawGateBanner } from '../ui/gateBanner.js';
 import { createGateLink, GATE_NO_TEXT } from '../net/gateLink.js'; import { readReceipt } from '../net/gateReceipt.js';   // AUDIT WB A2: a receipt's day, seed and account, for its spoils outside the court   // WB3b: what the client holds of a gate's fight - the relay's words, folded
 import { createGateClaims } from '../net/gateClaims.js';   // WB5b: the kill receipts, carried to the account service until counted
 import { createGateCourt } from './gateCourt.js';   // WB4: the fight on this screen - the boss drawn, heard and read, and his blows on me
-import { DeadlandsRenderer, skyGain } from '../render/deadlands.js';   // WB6a: the Deadlands' sky and sea round the Burning Court
+import { DeadlandsRenderer, skyGain, anchoredClock } from '../render/deadlands.js';   // WB6a: the Deadlands' sky and sea round the Burning Court
 import { createDeadlandsAir } from './deadlandsAir.js';   // WB6b: and their air - the wind, the fire, the thunder of the sky's strikes
 import { createGateVeil } from '../ui/gateVeil.js';   // WB6c: the step through the gate - a vortex of fire in and out
-import { gateScoreSongs, courtScoreFor, GATE_SONGS, SCORE_SILENCE } from '../systems/gateScore.js';   // WB7: the Warden's score - the court's own music
+import { gateScoreSongs, createCourtScore, GATE_SONGS, SCORE_SILENCE } from '../systems/gateScore.js';   // WB7: the Warden's score - the court's own music
 import { createSpoilsPool, spoilsStore, recoverSpoils, SPOILS_TEXT } from './spoilsPool.js';   // WB5: a fallen boss's spoils, spewed, glowing and taken
 import { gateRoomKey, isGateRoom, gateBossOf, gateTimes, gateAdmits, GATE_COLLAPSE_MS } from '../net/gateLaw.js';   // WB3b: the court's room, and its day's end
 import { gateLandingFor, courtRing, courtToDungeon, courtBraziers, COURT_TEXT, COURT_FOG, LAVA_Y } from '../world/gateArena.js';   // WB3b: the Burning Court's way home, its ring and its words   // WB2: the gate's countdown over the screen, near it
@@ -8520,7 +8520,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8931-8995 -
+  // worldModes answers it in BOTH modes (worldModes.js:8934-8998 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -10872,11 +10872,20 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
   /** WB6b: THE DEADLANDS' CLOCK - the relay's, in seconds (this page's monotonic clock carried onto it, so it never
    *  steps back between two frames): the sky's churn, its strikes, the court's flash, the shards' drift and the thunder
-   *  are one moment on every screen in the court. */
-  const deadlandsSeconds = () => (performance.timeOrigin + performance.now() + _sharedOffsetMs) / 1000;
+   *  are one moment on every screen in the court. AUDIT WB D7: ANCHORED ON THE WALL CLOCK - the page's clock is carried
+   *  from an anchor on Date.now() and the relay's offset, taken again when the two part by more than a second (a sleep
+   *  stops the page's clock and not the wall's, and timeOrigin + now() drifted from every other screen after one; an
+   *  offset that moved). Between anchors it runs on the page's clock alone, so it never steps back. */
+  const deadlandsSeconds = anchoredClock({ perf: () => performance.now(), wall: () => Date.now() + _sharedOffsetMs });
   /** WB6b: the court's air (scenes/deadlandsAir.js) - the wind, the fire, the thunder, the beasts; the braziers' fire
    *  beds in the dungeon's frame, where their loops burn. */
   const deadlandsAir = createDeadlandsAir(audio);
+  /** AUDIT WB D10: what the court's passes are handed every frame, made once - its sea's and its centre's place, its
+   *  braziers, and the frame's fog (one object, filled from the renderer's own as it stands) */
+  const _courtSea = courtToDungeon(0, LAVA_Y, 0), _courtCentre = courtToDungeon(0, 0, 0);
+  const _courtBeds = courtBraziers().map(([, p]) => p);
+  const _courtFog = { mode: 0, density: 0, range: null, color: null, camPos: null };
+  const courtFogNow = () => { _courtFog.mode = renderer._fogMode; _courtFog.density = renderer._fogDensity; _courtFog.range = renderer._fogRange; _courtFog.color = renderer._fogColor; _courtFog.camPos = renderer._camPos; return _courtFog; };
   const courtFireBeds = courtBraziers().map(([, p]) => courtToDungeon(p[0], 1.2, p[2]));
   let _spoilsAskedFor = null;
   const spoilsRecoverFrame = () => {
@@ -10934,6 +10943,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  is stood in; the music is let go the frame the court is gone (the song stopped, so the director's next frame hears
    *  it ended and plays its own). Answers whether the court holds the music this frame. */
   let _scoreHeld = false, _scoreMade = false;
+  const _courtScore = createCourtScore();   // AUDIT WB D2: the fanfare played whole from its own start
   const gateScoreFrame = () => {
     if (modes?.gateArenaDay?.() == null) {
       if (_scoreHeld) { _scoreHeld = false; music.stop(); }
@@ -10941,8 +10951,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     if (!_scoreMade) { _scoreMade = true; for (const song of Object.values(gateScoreSongs())) music.registerSong(song.name, song); }
     _scoreHeld = true;
-    const want = courtScoreFor(gateLink?.state?.() ?? null, Date.now() + _sharedOffsetMs) ?? GATE_SONGS.war1;   // the court before its fight's first word: the fight is there all the same
-    if (want === SCORE_SILENCE) { if (music.current !== null) music.stop(); } else music.playSong(want);
+    const want = _courtScore.want(gateLink?.state?.() ?? null, Date.now() + _sharedOffsetMs) ?? GATE_SONGS.war1;   // the court before its fight's first word: the fight is there all the same
+    if (want === SCORE_SILENCE) { if (music.current !== null) music.fadeOut(); } else music.playSong(want);   // AUDIT WB D2: the quiet after the fanfare is its ending, faded - not a cut
     return true;
   };
   const deadlandsAirFrame = () => { if (modes?.gateArenaDay?.() != null) deadlandsAir.frame(deadlandsSeconds(), cam.pos, courtFireBeds); else deadlandsAir.stop(); };
@@ -10953,6 +10963,15 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  machine's stepThroughFire), and flashed over the screen when the court is taken from the player by force. Online
    *  alone - the gate is. */
   const gateVeil = gateOmen ? createGateVeil() : null;
+  /** AUDIT WB D5: the veil built ahead - in the browser's idle time the first frame a gate stands - so the first step
+   *  through it does not pay for its program as the fire begins to close. */
+  let _veilWarmed = false;
+  const warmGateVeil = () => {
+    if (_veilWarmed || !gateVeil) return;
+    _veilWarmed = true;
+    const idle = globalThis.requestIdleCallback ? (f) => globalThis.requestIdleCallback(f, { timeout: 4000 }) : (f) => setTimeout(f, 1500);
+    idle(() => { try { gateVeil.warm(); } catch { /* the step builds it then */ } });
+  };
   const gatePool = gateOmen ? createGatePool({
     renderer, gl: renderer.gl, collider: () => collider,
     standing: () => gateOmen.standing(),
@@ -12645,15 +12664,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     // own air (the renderer's fog as it set it for the court, the sky's light following the lane's with the fog's colour)
     drawGateBackdrop: ({ proj, view }) => {
       const d = deadlandsPass();
-      if (d?.draw(proj, view, courtToDungeon(0, LAVA_Y, 0), deadlandsSeconds(), { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos }, skyGain(renderer._fogColor, COURT_FOG.color))) renderer.markForeignPass();
+      if (d?.draw(proj, view, _courtSea, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, COURT_FOG.color))) renderer.markForeignPass();
     },
     // WB4: the telegraph on the court's floor, in the dungeon arm's world pass - fogged as the floor is; WB6b: and the
     // air's life after it (the embers and the ash, render/deadlands.js drawLife), in the same air and the sky's light
     drawGateCourt: ({ proj, view, eye }) => {
-      const fog = { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos };
+      const fog = courtFogNow();
       const told = gateCourt?.drawPass(proj, view, eye, performance.now() / 1000, fog);
       const glow = skyGain(renderer._fogColor, COURT_FOG.color);
-      const lived = deadlandsPass()?.drawLife(proj, view, courtToDungeon(0, 0, 0), deadlandsSeconds(), fog, glow, courtBraziers().map(([, p]) => p), renderer.worldViewportPx?.[3]);
+      const lived = deadlandsPass()?.drawLife(proj, view, _courtCentre, deadlandsSeconds(), fog, glow, _courtBeds, renderer.worldViewportPx?.[3]);
       if (told || lived) renderer.markForeignPass();
     },
     deadlandsSeconds: () => deadlandsSeconds(),   // WB6b: the court's flash and the shards' drift keep the sky's clock
@@ -13592,6 +13611,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       townTalk.frame(dt);
       renderer.resolveFrame();   // AUDIT RETRO1 E5/C8: a frame that drew no screen quad (the enhanced skin, a sheathed weapon) is shown NOW, not at the next beginFrame
       capturePendingScreenshot(canvas);   // SS1: a save armed from a modal mode still lands its shot
+      gateVeil?.frameDrawn();   // AUDIT WB D5: the step's fire holds shut on the frames the new place has drawn
       frameAbort();   // AUDIT-WH2 L1-F4: the frame never reached frameEnd - close the token, take no sample
       requestAnimationFrame(frame);
       return;
@@ -14539,7 +14559,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     sky.renderer.fogMix = fogNow.excludeSky ? 0 : 1 - fogFactor(fogNow, 800);
 
     // WB2: the gate stood for this frame - before the lights (its fire lights the ground) and the world pass (its stone)
-    try { gatePool?.frame(dt); } catch (e) { console.warn('[gate] pool', e?.message ?? e); }
+    try { if (gatePool?.frame(dt)) warmGateVeil(); } catch (e) { console.warn('[gate] pool', e?.message ?? e); }   // AUDIT WB D5: a gate stands - the step's veil is built ahead
     // Lanterns on 17:00-08:00, flickering verbatim; pixel-local lights
     // placed under the current compensation, nearest 16 to the camera.
     // WOD2: the mod's lights burn at every hour and each carries its own
@@ -15605,6 +15625,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         window.__shotReady = true;
       }
     }
+    gateVeil?.frameDrawn();   // AUDIT WB D5: the step's fire holds shut on the frames the new place has drawn
     meterFor(renderer.gl)?.stopCpu();   // PERF-READ1: the last span closes HERE, not at the next frame's first mark - the rAF wait is nobody's
     frameEnd();   // PERF1
     requestAnimationFrame(frame);

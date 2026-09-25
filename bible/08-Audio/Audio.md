@@ -696,3 +696,8 @@ the frame it is gone, so the director's next frame hears its song ended and play
 `courtScoreFor` - see `11-Multiplayer/World-Bosses.md` section 5. `tools/gateScoreProbe.mjs` plays each song through
 the real song player into an OfflineAudioContext and measures it (every second sounding, no clipping, the war growing
 with his phases, the fall rung out in its time), and can write the renders as WAV for a person to hear.
+
+AUDIT WB (2026-09-25): the war songs are `seamless` - `SongPlayer` begins a seamless song's next pass on its bar line,
+to the tick, where DFU's rewind rings a second past a song's end first (the classic songs keep it); the fanfare is
+timed from when it began on this machine (`createCourtScore`) and ended by `MusicService.fadeOut` - DISC20-B's fade
+and then a stop, where `stop()` is a cut; and his grunt counts the loss since his last one.

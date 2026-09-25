@@ -93,6 +93,7 @@ export function spoilsStore(storage) {
     remove(k) { mem.delete(k); try { storage?.removeItem?.(k); } catch { /* nothing to lose */ } },
   };
 }
+const NONE = Object.freeze([]);
 /** AUDIT WB A7: the most crash records the device keeps (one a day and character), and spent receipts it remembers. */
 export const SPOILS_RECORDS_MAX = 8;
 export const SPOILS_SPENT_MAX = 32;
@@ -259,10 +260,12 @@ export function createSpoilsPool({
         if (f.fly.rest && f0 && Math.hypot(f.fly.pos[0] - f0[0], f.fly.pos[2] - f0[2]) <= SPOILS_TAKE_M && Math.abs(f.fly.pos[1] - f0[1]) < 2) takeOne(f);
       });
     },
-    /** The pieces, for the host's billboard pass. */
-    batches: () => floor.filter((f) => f.batch && !f.taken && f.left).map((f) => f.batch),
+    /** The pieces, for the host's billboard pass (AUDIT WB D10: an empty floor - the court's every frame but a kill's -
+     *  makes nothing). */
+    batches: () => (floor.length ? floor.filter((f) => f.batch && !f.taken && f.left).map((f) => f.batch) : NONE),
     /** A Rare-or-better resting piece's light, in the court's channel. */
     lights() {
+      if (!floor.length) return NONE;
       const out = [];
       for (const f of floor) {
         if (f.taken || !f.fly.rest || (RARITIES[f.piece.tier]?.rank ?? 0) < RARITIES.rare.rank) continue;
@@ -273,7 +276,7 @@ export function createSpoilsPool({
     },
     /** The glows, in the host's world pass. */
     drawPass(proj, view, eye, seconds, fog = null) {
-      if (!glow) return false;
+      if (!glow || !floor.length) return false;
       const t = now();
       const glows = floor.filter((f) => !f.taken && f.fly.rest).map((f) => ({ foot: [...f.fly.pos], tier: f.piece.tier, alpha: Math.min(1, (t - f.restAt) / SPOILS_RISE_MS) }));
       glow.draw(glows, proj, view, eye, seconds, fog);

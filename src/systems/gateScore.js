@@ -130,7 +130,9 @@ function makeSong(name, bpm, bars, write) {
   }
   events.push({ tick: 0, type: 'controller', channel: SCORE_CHANNELS.kit, controller: 7, value: 118 });
   events.sort((a, b) => a.tick - b.tick || RANK[a.type] - RANK[b.type]);
-  return { name, beatsPerMinute: bpm, secondsPerTick: 60 / (bpm * SCORE_TPQ), events, durationTicks: bars * 4 * SCORE_TPQ };
+  // AUDIT WB D4: a song written as whole bars loops on its bar line (systems/songPlayer.js `seamless`) - the player's
+  // classic rewind rings a second past the end first, and the war songs fell silent that long at every pass
+  return { name, beatsPerMinute: bpm, secondsPerTick: 60 / (bpm * SCORE_TPQ), events, durationTicks: bars * 4 * SCORE_TPQ, seamless: true };
 }
 
 /** The ostinato, the bass and the pads under a chord for one bar. `density` 1 eighths, 2 sixteenths in the last beat. */
@@ -275,4 +277,23 @@ export function courtScoreFor(s, now) {
   if (s.wrath != null) return SCORE_SILENCE;   // the Wrath has landed: nothing plays over it
   if (Number.isFinite(s.wrathAt) && s.wrathAt - now <= SCORE_WRATH_WARN_MS) return GATE_SONGS.war3;
   return s.phase >= 3 ? GATE_SONGS.war3 : s.phase === 2 ? GATE_SONGS.war2 : GATE_SONGS.war1;
+}
+
+/**
+ * AUDIT WB D2: THE SCORE AS ONE MACHINE HEARS IT - courtScoreFor, but his fall's fanfare, once begun here, plays WHOLE:
+ * SCORE_STING_MS from when it began on this screen, not from his fall (a word of the kill that came late cut it short),
+ * and what follows it is quiet. A fight of another day starts fresh. `want(s, now)` answers as courtScoreFor does.
+ */
+export function createCourtScore() {
+  let stingAt = null, day = null;
+  return {
+    want(s, now) {
+      const law = courtScoreFor(s, now);
+      if (law === null) { stingAt = null; day = null; return null; }
+      if (s.day !== day) { day = s.day; stingAt = null; }
+      if (law === GATE_SONGS.fell && stingAt === null) stingAt = now;
+      if (stingAt !== null && s.fell) return now - stingAt < SCORE_STING_MS ? GATE_SONGS.fell : SCORE_SILENCE;
+      return law;
+    },
+  };
 }

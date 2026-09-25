@@ -6061,6 +6061,9 @@ export function createWorldModes(host) {
    *  the court, once a session. */
   let _landMesh = null, _shardMesh = null;
   const COURT_BUCKET = 'wb:court';
+  /** AUDIT WB D10: the court's equator light, one array filled each frame (the renderer reads it that frame). */
+  const _courtEquator = new Float32Array(3);
+  const courtEquatorOf = (ct) => { _courtEquator.set(ct.equator); return _courtEquator; };
   /** WB3b: the court stood into a built context, before the start marker is read: its mesh among the context's own
    *  draws, its floor on the collider (the spawn lands on it), the way home its exit door (the exit family's ray,
    *  ladder and wagon word take it - no family of its own), and the way home's name. */
@@ -7216,7 +7219,7 @@ export function createWorldModes(host) {
       // line below already learned to.
       renderer.setMoonlight(null);
       renderer.setIndirectLight(NO_INDIRECT_POS, 0, NO_INDIRECT_COLOR);
-      if (isGateArena(dungeonLoc)) { const _cl = courtLighting(deadlandsFlash(_deadS)); const _ct = dungeonTrilight(!!renderer.lightingLane, _cl.tri); renderer.setLighting(new Float32Array(_ct.equator), 0, undefined, _ct); renderer.setMoonlight(_cl.key); }   // WB6a: the court is no dungeon - lit red from the sky, orange from the fire under it, and by the vortex's fire from behind the boss (the moon's term: the one directional light a dungeon frame leaves dark); the lane's dark rides the trilight as the fog's does   // WB6b: a strike in the sky flares over it, the moment the sky draws it
+      if (isGateArena(dungeonLoc)) { const _cl = courtLighting(deadlandsFlash(_deadS)); const _ct = dungeonTrilight(!!renderer.lightingLane, _cl.tri); renderer.setLighting(courtEquatorOf(_ct), 0, undefined, _ct); renderer.setMoonlight(_cl.key); }   // WB6a: the court is no dungeon - lit red from the sky, orange from the fire under it, and by the vortex's fire from behind the boss (the moon's term: the one directional light a dungeon frame leaves dark); the lane's dark rides the trilight as the fog's does   // WB6b: a strike in the sky flares over it, the moment the sky draws it
       // AUDIT 26 F001: a dungeon mesh is textured by SetDungeonTextures
       // (DaggerfallMesh.cs:153-169), which calls GetMaterial with NO
       // window style - so a dungeon's window records keep the colour a

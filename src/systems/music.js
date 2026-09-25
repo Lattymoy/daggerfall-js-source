@@ -222,6 +222,26 @@ export class MusicService {
     }, MUSIC_FADE_OUT_S * 1000);
   }
 
+  /** AUDIT WB D2: AN ENDING, where stop() is a cut - the song sounding fades out over `seconds` (DISC20-B's fade) and
+   *  then stops. A song asked for during it takes over as it would from any fading song; one asked for again comes
+   *  back up from where the fade stands. */
+  fadeOut(seconds = MUSIC_FADE_OUT_S) {
+    this._pending = null;
+    if (this._switch) { this._switch.to = null; this._current = null; return; }
+    if (!this.playing || this._current === null) { this.stop(); return; }
+    const sw = { from: this._current, to: null, timer: null };
+    this._current = null;
+    this._switch = sw;
+    this._fadeSounding(0, seconds);
+    sw.timer = this._later(() => {
+      if (this._switch !== sw) return;
+      this._switch = null;
+      this.player?.stop();
+      this._audio?.stop();
+      if (sw.to && !this._start(sw.to) && this._current === sw.to) this._current = null;
+    }, seconds * 1000);
+  }
+
   _cancelSwitch() {
     if (!this._switch) return;
     this._cancelLater(this._switch.timer);

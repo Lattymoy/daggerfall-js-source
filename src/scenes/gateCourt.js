@@ -46,6 +46,7 @@ export const FALL_CRY_LATE_MS = 1500;
 const noMark = () => ({ i: -1, at: NaN });
 const marked = (m, atk) => m.i === atk.i && m.at === atk.at;
 const setMark = (m, atk) => { m.i = atk.i; m.at = atk.at; };
+const NONE = Object.freeze([]);
 
 /** The boss by his id (the relay's word), or the day's (net/gateLaw.js). */
 export const bossOf = (s) => GATE_BOSSES.find((b) => b.id === s?.boss) ?? gateBossOf(s?.day ?? 0);
@@ -90,6 +91,8 @@ export function createGateCourt({
    *  next, the health last heard and his last grunt, the landing that shook the ground, the phase the thunder has
    *  answered, and whether his body has met the floor */
   let stepFrom = null, strideRun = 0, growlAt = null, hpHeard = null, gruntAt = -Infinity, quaked = noMark(), thunderPhase = 0, thudCued = false;
+  /** AUDIT WB D10: the frame's lists, refilled rather than made - the host asks for them every frame */
+  const _batches = [], _lights = [];
 
   function reset(d) {
     day = d; judged = noMark(); cued = noMark(); landed = noMark(); phaseHeard = 0; fellCued = false; wrathLanded = false;
@@ -161,8 +164,11 @@ export function createGateCourt({
     if (growlAt === null) growlAt = nextGrowl();
     else if (striking) growlAt = Math.max(growlAt, t + 3000);
     else if (t >= growlAt) { sound(BOSS_CUES.growl, s, t, null); growlAt = nextGrowl(); }
-    if (hpHeard !== null && s.max > 0 && hpHeard - s.hp >= s.max * HURT_SHARE && t - gruntAt >= HURT_GAP_MS) { gruntAt = t; sound(BOSS_CUES.hurt, s, t, null); }
-    hpHeard = s.hp;
+    // AUDIT WB D3: the loss is counted from his last grunt, not from the last word - the relay says his health in small
+    // steps, and in a big fight no one step was ever a share, so he never grunted at all; a heal (a newcomer's share)
+    // starts the count again from where he stands
+    if (hpHeard === null || s.hp > hpHeard) hpHeard = s.hp;
+    else if (s.max > 0 && hpHeard - s.hp >= s.max * HURT_SHARE && t - gruntAt >= HURT_GAP_MS) { gruntAt = t; hpHeard = s.hp; sound(BOSS_CUES.hurt, s, t, null); }
   }
 
   /** WB5: THE BURST - SPEW_AT_MS into his fall, this player's spoils leave his chest toward them, off the seed of the
@@ -261,10 +267,21 @@ export function createGateCourt({
     },
     /** A blow of mine landed on him: he flinches. */
     struck() { hurtAt = now(); },
-    /** The body and the spoils, for the host's billboard pass. */
-    batches: () => [...(batch && !batch.hidden ? [batch] : []), ...(spoils?.batches() ?? [])],
+    /** The body and the spoils, for the host's billboard pass (AUDIT WB D10: one list, refilled each frame). */
+    batches() {
+      _batches.length = 0;
+      if (batch && !batch.hidden) _batches.push(batch);
+      for (const b of spoils?.batches() ?? NONE) _batches.push(b);
+      return _batches;
+    },
     /** The glow on him and on the spoils, for the court's light channel (world/gateArena.js withCourtLights). */
-    lights() { const s = link.state(); const g = s && s.day !== null ? bossGlow(s, now()) : null; return [...(g ? [g] : []), ...(spoils?.lights() ?? [])]; },
+    lights() {
+      const s = link.state(); const g = s && s.day !== null ? bossGlow(s, now()) : null;
+      _lights.length = 0;
+      if (g) _lights.push(g);
+      for (const l of spoils?.lights() ?? NONE) _lights.push(l);
+      return _lights;
+    },
     /** The telegraph and the spoils' glow, in the host's world pass (after the court and the billboards, before the
      *  foes' screen quads). Answers whether either drew (the host marks the foreign pass). */
     drawPass(proj, view, eye, seconds, fog = null) {
