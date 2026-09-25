@@ -49,7 +49,7 @@ import {
   playerOnPathAt, pathsDataPoint, roadsDataPoint, nextPathDirection,
 } from './travelPaths.js';
 import { TravelAutopilot, rectOf, rectMinMax, rectContains } from './travelAutopilot.js';
-import { TRAVEL_OPTIONS_TEXT as T, format, localize } from './travelOptionsText.js';
+import { TRAVEL_OPTIONS_TEXT as T, TRAVEL_NAV_TEXT, format, localize } from './travelOptionsText.js';
 import { hasPort } from './travelPorts.js';
 import { FATIGUE_MULTIPLIER } from './statMods.js';
 import { LOCATION_TYPES, CLIMATES } from '../formats/mapsFile.js';
@@ -118,6 +118,10 @@ export function readTravelOptionsSettings(read = modSetting) {
     enableSounds: !!get('GeneralOptions.AllowAnnoyingSounds'),
     enableRealGrass: !!get('GeneralOptions.AllowRealGrass'),
     locationPause: get('GeneralOptions.LocationPause') | 0,
+    // TRAVEL-NAV1: the port's own switch on the mod's pane (modSettings.js
+    // - the mod has none): the journey steers round what stands in its way
+    // and stops short of what it cannot (systems/travelSteer.js).
+    avoidObstacles: !!get('GeneralOptions.AvoidObstacles'),
     // :209-215. The speed penalty is a PERCENTAGE off, so 20 is x0.8,
     // and the fatigue minimum is the setting PLUS ONE (:214).
     cautiousTravel: !!get('CautiousTravel.PlayerControlledCautiousTravel'),
@@ -310,6 +314,9 @@ export function createTravelOptions(deps = {}) {
     // :189 - the junction map's last drawn facing
     lastPlayerFacing: 0,
     junctionMapOn: false,
+    // TRAVEL-NAV1: the autopilot whose bearing the steering turned the body
+    // off last frame, or null - see yawDeg.
+    steeredBy: null,
   };
 
   // AUDIT-TO1 F1: :331-336, Init's guild registration. With paid
@@ -340,7 +347,18 @@ export function createTravelOptions(deps = {}) {
   const roads = () => deps.roads?.() ?? null;
   const pixel = () => deps.mapPixel?.() ?? { x: 0, y: 0 };
   const pos = () => deps.worldPos?.() ?? { x: 0, z: 0 };
-  const yawDeg = (invert = false) => normalisedYaw(deps.yaw?.() ?? 0, invert);
+  // TRAVEL-NAV1: THE FACING THE MOD READS IS ITS OWN. In DFU the autopilot
+  // writes `mouseLook.Yaw` every frame (PlayerAutoPilot.cs:96-104), so
+  // during a journey "the way the player faces" IS the bearing, and the
+  // mod leans on that: a leg's arrival picks the next edge by it
+  // (SelectNextPath, TravelOptionsMod.cs:722-751), the ring walk its next
+  // corner (:758), the junction disc its pip. The
+  // port's steering turns the body - and the camera with it - off that
+  // bearing to go round a house, so on a frame it did, the facing the mod
+  // reads is the autopilot's own bearing and not the camera's. Off a
+  // detour the two are the same number.
+  const yawDeg = (invert = false) => normalisedYaw(
+    st.autopilot && st.steeredBy === st.autopilot ? st.autopilot.yaw : (deps.yaw?.() ?? 0), invert);
 
   /** :382-390, SetTimeScale. In DFU this is `Time.timeScale` AND
    *  `Time.fixedDeltaTime`; in the port it is systems/timeScale.js,
@@ -390,8 +408,11 @@ export function createTravelOptions(deps = {}) {
     if (!st.destinationName) return;
     const rect = deps.locationWorldRect?.(st.destinationSummary);
     if (!rect) return;
+    // TRAVEL-NAV1: with the port's steering on, the arrival buffer is an
+    // arrival wherever it lies - a location that fills its pixel has it
+    // wholly in the neighbours (travelAutopilot.js update).
     st.autopilot = new TravelAutopilot(st.destinationSummary.pixel, rect,
-      travelSpeedMultiplier(st.destinationCautious, st.settings), { grow: true, isLocation: true });
+      travelSpeedMultiplier(st.destinationCautious, st.settings), { grow: true, isLocation: true, edgeArrival: st.settings.avoidObstacles });
     st.autopilot.onArrival = () => {
       ui?.closeWindow();
       clearTravelDestination();
@@ -808,6 +829,24 @@ export function createTravelOptions(deps = {}) {
       if (dc !== st.diseaseCount) {
         if (dc > st.diseaseCount) { interruptTravel(); deps.showHealthStatus?.(); }
         st.diseaseCount = dc;
+      }
+      // TRAVEL-NAV1: THE WAY AHEAD - the port's own step, LAST, so every
+      // stop of the mod's has had its say first and speaks its own words.
+      // The host's steering (systems/travelSteer.js steerDrive) turns the
+      // drive round what stands in the way and caps its force short of it,
+      // in place; a way it cannot find stops the journey here, before
+      // contact, as the mod's own stops do - the panel closes (the host's
+      // onClose is InterruptTravel, so the destination stays for the map's
+      // resume prompt) and a message box says why. A host whose panel does
+      // not interrupt is stopped outright (ROAD-CRASH's guard).
+      if (st.autopilot && drive && !drive.arrived && st.settings.avoidObstacles && deps.steer) {
+        const stop = deps.steer(drive, p.x, p.z, st.autopilot);
+        st.steeredBy = drive.yaw !== st.autopilot.yaw ? st.autopilot : null;
+        if (stop) {
+          stopTravelWithMessage(stop === 'stuck' ? TRAVEL_NAV_TEXT.MsgStuck : TRAVEL_NAV_TEXT.MsgBlocked);
+          if (st.autopilot) interruptTravel();
+          return { drive, handled: true, stopped: stop };
+        }
       }
     } else if (st.settings.roadsIntegration && !frame.inputPaused && frame.followKeyDown && frame.isPlayerOnHUD) {
       // :1438-1446 - the follow key, with no journey running
