@@ -288,7 +288,7 @@ test('AUDIT PSCALE1 a camp or a pack grows by its own members, mounted - one mor
     const stood = [];
     const standCamp = mount('', {
       placeFoeEnv: () => ({}), collider: {}, cam: { yaw: 0 }, fieldOfView: () => 1, entityOccupancy: () => () => false, _placingPool: () => [], campAnchorSpot: () => ({ x: 20, y: 0, z: 0 }),   // CAMP-FAR: main's anchor, a hundred metres out
-      LOOSE_FOE_PLACE_ATTEMPTS: 1, placeFoeFreely: () => ({ x: 1, y: 0, z: 1 }), _inAnyLocationRect: () => false, _nextCampId: 1,
+      LOOSE_FOE_PLACE_ATTEMPTS: 1, placeFoeFreely: () => ({ x: 1, y: 0, z: 1 }), _inAnyLocationRect: () => false, _nearRoad: () => false, CAMP_ROAD_CLEAR_M: 4, _nextCampId: 1,   // ROADS-CLEAR: no road here
       partyGroupMembers, partySize: () => n, ENEMY_BASICS: {},
       exteriorFoes: { spawnFoe: (mobileType) => { stood.push(mobileType); return Promise.resolve(null); } },
     }, `return (hit, feet) => ${fn.slice(fn.indexOf('{'))};`);
