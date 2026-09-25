@@ -2,8 +2,8 @@
   {
     "name": "PR-WAGON1-their-wagon-holds-the-ray",
     "file": "src/scenes/horseCartPool.js",
-    "old": "ACTIVATION_REACH, noSurface: true, yields: true });\n      // AUDIT HCC O9",
-    "new": "ACTIVATION_REACH, noSurface: true });\n      // AUDIT HCC O9",
+    "old": "ACTIVATION_REACH, noSurface: true, yields: true });\n      }\n      // AUDIT HCC O9",
+    "new": "ACTIVATION_REACH, noSurface: true });\n      }\n      // AUDIT HCC O9",
     "tests": [
       "test/prwagon1.test.js"
     ]
@@ -60,6 +60,45 @@
     "new": "  const firmD = (p) => (p ? p.distance : Infinity);",
     "tests": [
       "test/prwagon1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BRANCH-0925-PRW1-A-their-wagon-met-at-the-square-box",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "obb: { m: pm, box: _parts.box }, ",
+    "new": "",
+    "tests": [
+      "test/prwagon1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BRANCH-0925-P1-my-following-wagon-yields",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "reach: ACTIVATION_REACH, noSurface: true });\n    }\n    if (s?.horse)",
+    "new": "reach: ACTIVATION_REACH, noSurface: true, yields: true });\n    }\n    if (s?.horse)",
+    "tests": [
+      "test/prwagon1.test.js",
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BRANCH-0925-P1-my-parked-wagon-yields",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "out.push({ key: KEY_WAGON, aabb: aabbOf(box), distance: RAY_DISTANCE, reach: ACTIVATION_REACH });",
+    "new": "out.push({ key: KEY_WAGON, aabb: aabbOf(box), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, yields: true });",
+    "tests": [
+      "test/prwagon1.test.js",
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BRANCH-0925-P1-my-horse-yields",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "out.push({ key: KEY_HORSE, aabb: aabbOf(horseBox(s.horse)), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });",
+    "new": "out.push({ key: KEY_HORSE, aabb: aabbOf(horseBox(s.horse)), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true, yields: true });",
+    "tests": [
+      "test/prwagon1.test.js",
+      "test/hcc_pool.test.js"
     ]
   }
 ]

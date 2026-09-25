@@ -11,9 +11,9 @@
 // the SCRIPT line under it (systems/frameClock.js, stamped by the
 // hosts): the main thread's share of the frame, so a slow frame can be
 // read as the GPU's or ours.
-// switch (ui prefs `showFps`, or ?fps) on every tick, so the Enhanced
-// pane's row takes effect at once and costs nothing while off: the
-// element is hidden and the loop only counts.
+// switch (ui prefs `showFps`, or ?fps) on every tick, so the row in
+// Settings > Interface takes effect at once and costs nothing while off:
+// the element is hidden and the loop only counts.
 //
 // PERF-SCALE (2026-09-25, two players via Mac: "fps issues in the
 // exterior but fine in the interior ... GPU is NVIDIA GeForce RTX 4060
@@ -70,9 +70,13 @@ export function sizeLine(i) {
 export function mountFpsCounter({ enabled = () => true, raf = (typeof requestAnimationFrame === 'function' ? requestAnimationFrame : null), stats = null, info = null } = {}) {
   const el = document.createElement('div');
   el.id = 'fps-counter';
+  // AUDIT BRANCH-0925 PS-A4: capped at the window less its margins, and a long line WRAPS inside it - a Windows ANGLE
+  // GPU name made an unwrapped box 728px wide, off a phone's left edge, cutting off the start of the "gpu" line
+  // (tools/fpsCounterProbe.mjs measures it in Chromium)
   el.style.cssText = 'position:fixed;top:calc(8px + env(safe-area-inset-top, 0px));right:calc(8px + env(safe-area-inset-right, 0px));z-index:9;padding:4px 8px;border-radius:8px;'
+    + 'max-width:calc(100vw - 16px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));box-sizing:border-box;'
     + 'font:600 13px/1.3 ui-monospace,Menlo,Consolas,monospace;color:#e9e4d9;background:rgba(14,16,19,.65);pointer-events:none;'
-    + '-webkit-user-select:none;user-select:none;white-space:pre;text-align:right;display:none';
+    + '-webkit-user-select:none;user-select:none;white-space:pre-wrap;overflow-wrap:anywhere;text-align:right;display:none';
   el.style.display = 'none';   // set on the property too: the cssText above is a string to a stub document
   document.body.appendChild(el);
   let stamps = [];

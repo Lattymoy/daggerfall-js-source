@@ -989,8 +989,16 @@ settings, which re-triggers provisioning.
 plaque is Patreon's now: `<a class="patreon" href="https://www.patreon.com/c/dfenhanced">`, "Support on Patreon",
 and the drawn cup is Patreon's own mark on the same 4px grid (`.pmark`: the bar in the dim, five pixels tall, and a
 disc in the brass - a 5x5 with its corners cut). Still no image and no third-party script; still the page's
-only ask - Ko-fi is gone from the page, the README and SUPPORT.md. The Patreon tiers are the titles the account
-service grants (TITLE-N: Disciple, Apostle, Hierophant). Pinned in `test/landing.test.js` (U64 + PATREON1).
+only ask - Ko-fi is gone from the page, the README, SUPPORT.md and the repository's Sponsor button
+(`.github/FUNDING.yml`). The Patreon tiers are the titles the account service grants (TITLE-N: Disciple, Apostle,
+Hierophant). Pinned in `test/landing.test.js` (U64 + PATREON1).
+
+AUDIT BRANCH-0925 PATREON1-F1 (2026-09-25, the pre-merge audit, Mac: "Audit before we merge"): the sweep had left
+`.github/FUNDING.yml` at `ko_fi: dfjs`, so GitHub's Sponsor button - in the header of every repo page the landing
+page's Install, Source and issues links and the desktop app's releases link land on - still sent people to Ko-fi
+beside a README that said Patreon. It is `custom: ["https://www.patreon.com/c/dfenhanced"]` now (`custom`, not
+`patreon: dfenhanced`, which would link a URL Mac never gave), and the PATREON1 pin reads it, README.md and SUPPORT.md:
+the same Patreon, no Ko-fi (`tools/mutants/patreon1.json`, 4, all dead).
 
 ## U63 THE SITE WEARS THE GAME'S FACE (2026-08-27, Mac's call)
 

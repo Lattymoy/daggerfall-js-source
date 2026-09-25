@@ -162,7 +162,9 @@ following horse and trailing team stand in a shared cell, so:
   EASES a peer's team between words (12 per second, a step past 20 m
   snaps) and draws it with the same pieces, cargo and billboard - the
   horse's orientation and its stride are the reader's own, as a sprite's
-  must be. A peer's PARKED wagon stands a collider of its own.
+  must be. A peer's PARKED wagon stood a collider of its own (AUDIT HCC
+  O3) - reversed by PR-WAGON1: another player's team stands none, and it
+  yields the ray.
 - **The plaque names whose (HCC-TIP).** A peer's horse hovers as the mod
   names it (its name, else "Horse"), their wagon as "Wagon", and the World
   Tooltips plaque's second row says "Owned by <Peer>" - the session's name,
@@ -464,8 +466,8 @@ Two faults beside it:
     pool's parts, the owner's heading);
   - the horse by the stationary probe;
   - from 1000 m over to 3000 m down, the surface nearest the word's
-    height kept, with the owner's box and mine left out of the ray (a
-    re-stand must not land on the box it stood).
+    height kept, my own wagon's box left out of the ray (the owner's box,
+    which a re-stand once had to skip, stands none since PR-WAGON1).
 - The stand is a delta off the word, so the floating origin and a
   re-anchor carry it. Where the viewer's ground is not built yet the word
   stands as said and is tried again each second (`GROUND_RETRY_SECONDS`).
@@ -576,7 +578,35 @@ took the click from the door behind it besides.
   press and the plaque, and with nothing else on the ray their team is still
   named ("Owned by ...") and pressed.
 
-Pins: `test/prwagon1.test.js` (6, every one failing on the base);
-`test/hcc_pool.test.js`'s O3 pin reversed; `test/disc20.test.js`'s kept team
-stands no box. Mutants: `tools/mutants/prwagon1.json` (7); `hcc.json` and
-`disc20.json` re-aimed, the three records on the removed box retired.
+Pins: `test/prwagon1.test.js` (7: six failing on the base, the seventh the
+audit's below); `test/hcc_pool.test.js`'s O3 pin reversed; `test/disc20.test.js`'s
+kept team stands no box. Mutants: `tools/mutants/prwagon1.json` (11, all dead);
+`hcc.json` and `disc20.json` re-aimed, the three records on the removed box
+retired.
+
+**AUDIT BRANCH-0925 (2026-09-25, the pre-merge audit, Mac: "Audit before we
+merge").**
+
+- **PRW1-A: their wagon is met at its own turned box.** With no box of theirs
+  the target was the wagon's AXIS-ALIGNED box alone, and `noSurface`. Parked at
+  any heading off the quarter turns, that square box bulges past the wagon at
+  every corner, and an eye in a corner - a crouch (`CROUCH_EYE_HEIGHT` 0.8,
+  below the wagon's top) beside it, outside the wagon - read as INSIDE:
+  CASTLE1's no-surface rule dropped it, so the wagon a pace ahead could not be
+  named "Owned by Ann" or pressed. The base named it at its box's surface. And
+  from further off - older than PR-WAGON1, main reads the same - the corner's
+  empty road was measured as the wagon (0.60 m where the wagon is 2.33 m
+  away), so a wagon beyond reach could be named. The peer
+  wagon now carries DISC10's `obb`, the same as Eye Of The Beholder's cart
+  (`player/eotbWagon.js`): the ray meets the wagon's own box, an eye in a
+  corner is outside it, and an eye inside the wagon itself still names
+  nothing. Pinned at an eighth turn (the prwagon1 pins parked only at a quarter
+  turn, where the two boxes are the same). Mutant: the `obb` dropped.
+- **P1: my following team holds the ray too.** "My own team never yields" was
+  held for my parked wagon and my horse, and not for my FOLLOWING wagon: a
+  mutant that made it yield survived both suites. `hcc_pool.test.js` pins it;
+  the three own-team mutants are recorded in `prwagon1.json`.
+- **R1 / R2: the records.** Two present-tense statements of O3 on this page
+  (the HCC-ONLINE paragraph and DISC20-C's ray), the Port-Ledger AUDIT HCC row,
+  and the hcc_pool and disc20 rows in Testing.md still described the box
+  PR-WAGON1 took away. They now say what the pins hold.

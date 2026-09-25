@@ -452,6 +452,14 @@ test('PERF-SCALE S6: the counter shows the GPU line and the size line while on, 
     r.beginFrame(I, I, L, WORLD_FRAME); r.drawScreenQuad(null, Q);
     let on = false, infoReads = 0;
     const c = mountFpsCounter({ enabled: () => on, raf: null, stats: () => r.stats, info: () => { infoReads++; return r.frameInfo; } });
+    // AUDIT BRANCH-0925 PS-A4: the box is capped at the window less its two 8px margins and the safe areas, and a
+    // line longer than that WRAPS - a Windows ANGLE name ("ANGLE (NVIDIA, NVIDIA GeForce RTX 4060 Ti (0x00002803)
+    // Direct3D11 vs_5_0 ps_5_0, D3D11)") made an unwrapped box 728px wide, 346px off a 390px phone's left edge, and
+    // the size line alone overflows a phone. tools/fpsCounterProbe.mjs measures it in Chromium.
+    const css = c.el.style.cssText;
+    assert.match(css, /max-width:calc\(100vw - 16px - env\(safe-area-inset-left, 0px\) - env\(safe-area-inset-right, 0px\)\);box-sizing:border-box;/, 'capped at the window');
+    assert.match(css, /white-space:pre-wrap;overflow-wrap:anywhere;/, 'and a long line wraps inside it');
+    assert.doesNotMatch(css, /white-space:pre;/);
     for (let t = 0; t <= 1020; t += 1000 / 60) c.tick(t);
     assert.equal(infoReads, 0, 'hidden: never read');
     assert.equal(c.el.textContent, '', 'and nothing written');
@@ -558,6 +566,36 @@ test('PERF-SCALE S7 (the review): the world frame that goes back to no image fre
       r.air.dropFrame('retro');
       assert.deepEqual([r.air.frame, r.air._frames.retro, slot.tex.deleted], [null, null, true]);
       assert.doesNotThrow(() => r.air.dropFrame('retro'), 'twice is nothing');
+    } finally { setFrameTarget(null); }
+  }
+  // AUDIT BRANCH-0925 PS-A2: the lane turned OFF at 75%, then 100% - the renderer lets go of its AirPass (`air` is
+  // null while the lane is off) but keeps the pass itself, and with it the image-sized frame; the drop is the kept
+  // pass's, or the frame (a colour image, two depths and three framebuffers) is held for the rest of the session -
+  // `_retroFrame` is null from then on, so nothing would ever ask again, the lane back on or not
+  {
+    const { canvas } = stateGl(1920, 1080);
+    const r = new Renderer(canvas);
+    r.setLightingLane(EL_LANE); r.setAir(true);
+    let scale = 0.75;
+    r.setRenderScaleSource(() => scale);
+    try {
+      for (let k = 0; k < 2; k++) { r.beginFrame(I, I, L, WORLD_FRAME); r.drawScreenQuad(null, Q); }
+      const pass = r.air, slot = pass._frames.retro;
+      assert.deepEqual([slot.w, slot.h], [1440, 810], 'the lane\'s image-sized frame');
+      r.setLightingLane(null);   // Enhanced Lighting off (the hosts' syncLightingLane at the next mount)
+      assert.equal(r.air, null, 'the lane off lets go of the air pass');
+      for (let k = 0; k < 2; k++) { r.beginFrame(I, I, L, WORLD_FRAME); r.drawScreenQuad(null, Q); }
+      assert.equal(pass._frames.retro, slot, 'still kept while the world draws scaled');
+      scale = 1;
+      r.beginFrame(I, I, L, WORLD_FRAME); r.drawScreenQuad(null, Q);
+      assert.equal(r.retro.target, null);
+      assert.equal(pass._frames.retro, null, 'the lane off, the scale at 100%: the kept pass\'s image-sized frame is let go');
+      assert.deepEqual([slot.tex.deleted, ...slot.depths.map((d) => d.deleted), ...slot.depthFbos.map((f) => f.deleted), slot.fbo.deleted], [true, true, true, true, true, true]);
+      r.setLightingLane(EL_LANE);   // and the lane back on at 100% draws into its canvas-sized frame alone
+      r.beginFrame(I, I, L, WORLD_FRAME); r.drawScreenQuad(null, Q);
+      assert.equal(r.air, pass, 'the same pass, reinstalled');
+      assert.equal(pass._frames.retro, null);
+      assert.ok(pass._frames.canvas && pass.frame === pass._frames.canvas);
     } finally { setFrameTarget(null); }
   }
   // an owed image is presented BEFORE it is freed: the frame with no quad, then 100%
