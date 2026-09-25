@@ -36,7 +36,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import {
-  renownForXp, RENOWN_XP_MAX, RENOWN_XP_REPORT_MAX, RENOWN_XP_HOUR_MAX, RENOWN_TRACKS_MAX, RENOWN_NAME_MAX,
+  renownForXp, RENOWN_XP_MAX, RENOWN_XP_REPORT_MAX, RENOWN_XP_HOUR_MAX, RENOWN_TRACKS_MAX, RENOWN_NAME_MAX, renownRidOf,
 } from '../../src/net/renown.js';
 import { CHAR_ID_RE } from './service.js';
 
@@ -75,59 +75,101 @@ export async function renownTracksOf({ db }, playerId, limit = RENOWN_CARD_TRACK
 
 /**
  * A REPORT: `player` (the session's row, never the body's word) says its
- * `character` earned `xp`. Answers `{ character, xp, level, credited,
- * rose, max? }` - the track after it, what the track gained (the hour and
- * the cap let through), whether the level rose, and `max` once the track
- * holds the cap's total - or `{ error }`: 'renown-character' (not a character id),
- * 'renown-xp' (not a whole number from 1 to RENOWN_XP_REPORT_MAX), 'renown-full'
- * (a new character past RENOWN_TRACKS_MAX).
+ * `character` earned `xp`, under the report id `rid` (null from a client
+ * before the audit). Answers `{ character, xp, level, credited, rose,
+ * max?, repeat? }` - the track after it, what the track gained (the hour
+ * and the cap let through), whether the level rose, `max` once the track
+ * holds the cap's total, and `repeat` when this report's id is the one
+ * the track last took (it was credited then, and nothing is credited
+ * now) - or `{ error }`: 'renown-character' (not a character id),
+ * 'renown-xp' (not a whole number from 1 to RENOWN_XP_REPORT_MAX, or a
+ * report id out of its shape), 'renown-full' (a new character past
+ * RENOWN_TRACKS_MAX).
+ *
+ * ═══ AUDIT RENOWN1: ONE TRANSACTION ════════════════════════════════
+ *
+ * This was five statements, each committed alone, with the decisions
+ * taken in JS from reads made before the writes - and every seam between
+ * them was a finding:
+ *   - SEC-1/DATA-1: the window was `renown_hour = ?`, so a report
+ *     stamped with the hour BEFORE (a request that arrived at 00:59:59
+ *     and whose body came after the boundary) reopened the window the
+ *     report before it had just opened - 1,500,000 XP in a minute,
+ *     driven through the real worker. The window now only moves
+ *     forward, and a late report is charged to the window that is open.
+ *   - DATA-3: the track bound was a COUNT, then an INSERT - fifty new
+ *     characters reporting at once all fit under 60 (109 tracks).
+ *   - DATA-4: the hour was spent, then the track grown - an error
+ *     between them spent the hour for nothing; and a report whose answer
+ *     was lost was sent again and credited twice.
+ *   - DATA-5: what the track could still take, and whether it rose,
+ *     were read before the write - two reports near the cap were both
+ *     charged in full and both said `rose`.
+ *   - DATA-7 (UI-10): a report the hour had spent still made a track of
+ *     0 XP, which took one of the 60 places for good.
+ * Now ONE `db.batch` - D1 runs a batch as one transaction, and nothing
+ * else runs between its statements - whose first statement decides
+ * everything in SQL, against the rows as they stand inside it, and says
+ * what it decided with RETURNING; the rest carry that decision out.
  */
-export async function reportRenownXp({ db, nowS }, player, { character, xp, name = null }) {
+export async function reportRenownXp({ db, nowS }, player, { character, xp, name = null, rid = null }) {
   if (!Number.isSafeInteger(nowS)) throw new TypeError('reportRenownXp needs an integer epoch-seconds clock');
   if (!renownCharacterOk(character)) return { error: 'renown-character' };
   if (!Number.isSafeInteger(xp) || xp < 1 || xp > RENOWN_XP_REPORT_MAX) return { error: 'renown-xp' };
-  const known = await db.prepare('SELECT xp FROM renown_tracks WHERE player = ?1 AND char_id = ?2').bind(player.id, character).first();
-  if (!known) {
-    const n = await db.prepare('SELECT COUNT(*) AS n FROM renown_tracks WHERE player = ?1').bind(player.id).first();
-    if (int(n?.n) >= RENOWN_TRACKS_MAX) return { error: 'renown-full' };
-  }
-  const before = known ? int(known.xp) : 0;
-  // A TRACK AT THE CAP EARNS NOTHING MORE, and spends none of the hour on it - it is only the character last played.
-  if (before >= RENOWN_XP_MAX) {
-    await db.prepare('UPDATE renown_tracks SET name = COALESCE(?3, name), updated_at = ?4 WHERE player = ?1 AND char_id = ?2')
-      .bind(player.id, character, renownNameOf(name), nowS).run();
-    return { character, xp: before, level: renownForXp(before), credited: 0, rose: false, max: true };
-  }
-  // A TRACK NEAR THE CAP asks the hour only for what it can still take, so the hour is never spent on XP no track keeps
-  const want = Math.min(xp, RENOWN_XP_MAX - before);
-  // THE HOUR, SPENT IN ONE STATEMENT. Every SET reads the row as it WAS
-  // (SQL's own rule), so `renown_last_credit` is what this report took out
-  // of the window before `renown_hour_xp` moved - and SQLite runs one
-  // UPDATE at a time, so a second report reads the window this one left.
+  if (rid != null && !renownRidOf(rid)) return { error: 'renown-xp' };
+  const id = rid ?? null;
   const hour = Math.floor(nowS / HOUR_S);
-  const spent = await db.prepare(
-    `UPDATE players SET
-       renown_last_credit = CASE WHEN renown_hour = ?2 THEN MIN(?3, MAX(0, ?4 - renown_hour_xp)) ELSE MIN(?3, ?4) END,
-       renown_hour_xp = CASE WHEN renown_hour = ?2 THEN MIN(?4, renown_hour_xp + ?3) ELSE MIN(?4, ?3) END,
-       renown_hour = ?2
-     WHERE id = ?1
-     RETURNING renown_last_credit AS credit`,
-  ).bind(player.id, hour, want, RENOWN_XP_HOUR_MAX).first();
-  const credited = Math.max(0, int(spent?.credit));
-  // THE TRACK, made or grown in one statement, and never past the cap's total.
-  const row = await db.prepare(
-    `INSERT INTO renown_tracks (player, char_id, name, xp, created_at, updated_at)
-     VALUES (?1, ?2, ?3, MIN(?4, ?5), ?6, ?6)
-     ON CONFLICT (player, char_id) DO UPDATE SET
-       xp = MIN(?5, renown_tracks.xp + excluded.xp),
-       name = COALESCE(excluded.name, renown_tracks.name),
-       updated_at = excluded.updated_at
-     RETURNING xp`,
-  ).bind(player.id, character, renownNameOf(name), credited, RENOWN_XP_MAX, nowS).first();
-  const total = int(row?.xp);
+  const track = 'SELECT xp FROM renown_tracks WHERE player = ?1 AND char_id = ?2';
+  // A REPEAT is a report whose id the track last took; REFUSED a new character past the bound. Either wants nothing.
+  const repeat = `(?8 IS NOT NULL AND EXISTS (SELECT 1 FROM renown_tracks WHERE player = ?1 AND char_id = ?2 AND last_rid = ?8))`;
+  const refused = `(NOT EXISTS (${track}) AND (SELECT COUNT(*) FROM renown_tracks WHERE player = ?1) >= ?7)`;
+  // WHAT THE TRACK CAN STILL TAKE, read inside the transaction: a track near the cap asks the hour only for that
+  const want = `CASE WHEN ${repeat} OR ${refused} THEN 0 ELSE MIN(?3, MAX(0, ?4 - COALESCE((${track}), 0))) END`;
+  // WHAT THE HOUR HAS LEFT: the open window's remainder, or a whole window for an hour that has not been counted yet.
+  // A report stamped with an hour ALREADY PAST (renown_hour > ?6) is charged to the open window, never given its own.
+  const room = 'CASE WHEN renown_hour >= ?6 THEN MAX(0, ?5 - renown_hour_xp) ELSE ?5 END';
+  const credit = `MIN(${want}, ${room})`;
+  const [decided, , , after] = await db.batch([
+    // THE DECISION, and THE HOUR SPENT. Every SET reads the row as it WAS (SQL's own rule), so
+    // `renown_last_credit` is what this report took out of the window before `renown_hour_xp` moved.
+    db.prepare(
+      `UPDATE players SET
+         renown_last_credit = ${credit},
+         renown_hour_xp = CASE WHEN renown_hour >= ?6 THEN renown_hour_xp + ${credit} ELSE ${credit} END,
+         renown_hour = MAX(renown_hour, ?6)
+       WHERE id = ?1
+       RETURNING renown_last_credit AS credit, (${track}) AS before, ${repeat} AS repeat, ${refused} AS refused`,
+    ).bind(player.id, character, xp, RENOWN_XP_MAX, RENOWN_XP_HOUR_MAX, hour, RENOWN_TRACKS_MAX, id),
+    // A TRACK THAT EXISTS grows by the credit (never past the cap's total) and is the character last played.
+    db.prepare(
+      `UPDATE renown_tracks SET
+         xp = MIN(?3, xp + (SELECT renown_last_credit FROM players WHERE id = ?1)),
+         name = COALESCE(?4, name), last_rid = COALESCE(?5, last_rid), updated_at = ?6
+       WHERE player = ?1 AND char_id = ?2`,
+    ).bind(player.id, character, RENOWN_XP_MAX, renownNameOf(name), id, nowS),
+    // A NEW TRACK only with XP to hold, and only under the bound - asked IN the write, as saves.js putCard asks it.
+    db.prepare(
+      `INSERT INTO renown_tracks (player, char_id, name, xp, last_rid, created_at, updated_at)
+       SELECT ?1, ?2, ?3, renown_last_credit, ?4, ?5, ?5 FROM players
+       WHERE id = ?1 AND renown_last_credit > 0
+         AND NOT EXISTS (SELECT 1 FROM renown_tracks WHERE player = ?1 AND char_id = ?2)
+         AND (SELECT COUNT(*) FROM renown_tracks WHERE player = ?1) < ?6`,
+    ).bind(player.id, character, renownNameOf(name), id, nowS, RENOWN_TRACKS_MAX),
+    db.prepare(track).bind(player.id, character),
+  ]);
+  const d = decided?.results?.[0];
+  if (!d) throw new Error('reportRenownXp: no account row to charge');   // the session named a row that is gone - a 500, never bad data
+  if (Number(d.refused) === 1) return { error: 'renown-full' };
+  const before = int(d.before);
+  const credited = Math.max(0, int(d.credit));
+  const total = int(after?.results?.[0]?.xp);
   const level = renownForXp(total);
-  // `rose` against the total this report found: two reports racing may both say so, and each only mints an order.
+  // `rose` against the total this report found, inside the same transaction - so two reports never both say so.
   // `max` when the track now holds the cap's total: nothing more is earned, and the client says so rather than
   // reading a credit of nothing as the hour's bound.
-  return { character, xp: total, level, credited, rose: level > renownForXp(before), ...(total >= RENOWN_XP_MAX ? { max: true } : {}) };
+  return {
+    character, xp: total, level, credited, rose: level > renownForXp(before),
+    ...(total >= RENOWN_XP_MAX ? { max: true } : {}),
+    ...(Number(d.repeat) === 1 ? { repeat: true } : {}),
+  };
 }

@@ -259,15 +259,16 @@ export function accountCard(doc, flow, { onClose = null } = {}) {
     // one twice.
     if (copy.tag !== 'Account') root.append(el('span', 'tag', copy.tag));
     // RENOWN1 (Mac: "having their level appear on the left side of character name and profile main menu"): the
-    // Renown of the character that most recently earned Renown XP, left of the name - the service's
-    // tracks come most recently earned first. None for an account that has not earned any yet, or a service before it.
+    // Renown of the character most recently played online, left of the name - the service's tracks come most
+    // recently played first (AUDIT RENOWN1 UI-10: "earned" was never what it measured - a report the hour had spent
+    // still marks its character played). None for an account that has not earned any yet, or a service before it.
     const tracks = stage === 'in' && Array.isArray(flow.account?.renown) ? flow.account.renown : [];
     const heading = stage === 'in' ? (flow.account?.name ?? copy.title) : copy.title;
     const lvText = renownText(tracks[0]?.level);
     if (lvText) {
       const head = el('h3', null, null);
       const chip = el('span', 'acctrenown', lvText);
-      chip.title = `Renown ${tracks[0].level}`;
+      chip.title = `Renown ${tracks[0].level}${typeof tracks[0].name === 'string' && tracks[0].name ? ` - ${tracks[0].name}` : ''}`;   // AUDIT RENOWN1 UI-10: whose Renown it is
       head.append(chip, el('span', 'acctname', heading));
       root.append(head);
     } else root.append(el('h3', null, heading));
@@ -300,7 +301,8 @@ export function accountCard(doc, flow, { onClose = null } = {}) {
       // it won and lost (net/duelRecord.js says whose word each result is). A service from before it says nothing.
       const duels = duelRecordText(flow.account.duels);
       if (duels) row('Duels', duels);
-      // RENOWN1: each character's Renown and how far into it they are - online's own level, never the save's
+      // RENOWN1: each character's Renown and how far into it they are - online's own level, never the save's. The
+      // service sends the RENOWN_CARD_TRACKS (five) most recently played.
       for (const t of tracks) {
         if (!Number.isSafeInteger(t?.level) || !Number.isSafeInteger(t?.xp)) continue;
         row('Renown', `${typeof t.name === 'string' && t.name ? t.name : 'A character'} - Renown ${t.level}, ${renownProgressText(t.xp)}`);

@@ -54,10 +54,10 @@
     ]
   },
   {
-    "name": "RENOWN1-hour-bound-per-character",
+    "name": "RENOWN1-hour-spend-matches-nothing",
     "file": "server-account/src/renownTracks.js",
-    "old": "     WHERE id = ?1\n     RETURNING renown_last_credit AS credit`,",
-    "new": "     WHERE id = ?1 AND ?2 < 0\n     RETURNING renown_last_credit AS credit`,",
+    "old": "       WHERE id = ?1\n       RETURNING renown_last_credit AS credit, (${track}) AS before, ${repeat} AS repeat, ${refused} AS refused`,",
+    "new": "       WHERE id = ?1 AND ?2 IS NULL\n       RETURNING renown_last_credit AS credit, (${track}) AS before, ${repeat} AS repeat, ${refused} AS refused`,",
     "tests": [
       "test/renown1.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "RENOWN1-hour-window-never-resets",
     "file": "server-account/src/renownTracks.js",
-    "old": "       renown_last_credit = CASE WHEN renown_hour = ?2 THEN MIN(?3, MAX(0, ?4 - renown_hour_xp)) ELSE MIN(?3, ?4) END,",
-    "new": "       renown_last_credit = MIN(?3, MAX(0, ?4 - renown_hour_xp)),",
+    "old": "  const room = 'CASE WHEN renown_hour >= ?6 THEN MAX(0, ?5 - renown_hour_xp) ELSE ?5 END';",
+    "new": "  const room = 'MAX(0, ?5 - renown_hour_xp)';",
     "tests": [
       "test/renown1.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RENOWN1-hour-bound-unread",
     "file": "server-account/src/renownTracks.js",
-    "old": "  const credited = Math.max(0, int(spent?.credit));",
-    "new": "  const credited = want;",
+    "old": "  const credited = Math.max(0, int(d.credit));",
+    "new": "  const credited = xp;",
     "tests": [
       "test/renown1.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "RENOWN1-tracks-unbounded",
     "file": "server-account/src/renownTracks.js",
-    "old": "    if (int(n?.n) >= RENOWN_TRACKS_MAX) return { error: 'renown-full' };",
-    "new": "    if (int(n?.n) > RENOWN_TRACKS_MAX) return { error: 'renown-full' };",
+    "old": "  const refused = `(NOT EXISTS (${track}) AND (SELECT COUNT(*) FROM renown_tracks WHERE player = ?1) >= ?7)`;",
+    "new": "  const refused = `(NOT EXISTS (${track}) AND (SELECT COUNT(*) FROM renown_tracks WHERE player = ?1) > ?7)`;",
     "tests": [
       "test/renown1.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RENOWN1-cap-spends-the-hour",
     "file": "server-account/src/renownTracks.js",
-    "old": "  const want = Math.min(xp, RENOWN_XP_MAX - before);",
-    "new": "  const want = xp;",
+    "old": "  const want = `CASE WHEN ${repeat} OR ${refused} THEN 0 ELSE MIN(?3, MAX(0, ?4 - COALESCE((${track}), 0))) END`;",
+    "new": "  const want = `CASE WHEN ${repeat} OR ${refused} THEN 0 ELSE ?3 END`;",
     "tests": [
       "test/renown1.test.js"
     ]
@@ -119,7 +119,7 @@
   {
     "name": "RENOWN1-order-for-no-rise",
     "file": "server-account/src/index.js",
-    "old": "        if (r.rose) {\n          const key = await signingKey(env, subtle);",
+    "old": "        if (r.rose || (r.repeat && r.level > 1)) {\n          const key = await signingKey(env, subtle);",
     "new": "        if (true) {\n          const key = await signingKey(env, subtle);",
     "tests": [
       "test/renown1.test.js"
@@ -191,8 +191,8 @@
   {
     "name": "RENOWN1-session-level-to-an-old-relay",
     "file": "src/net/online.js",
-    "old": "    if (typeof order !== 'string' || !order || order.length > 1024 || !this.renownOk) return false;",
-    "new": "    if (typeof order !== 'string' || !order || order.length > 1024) return false;",
+    "old": "      if (!st.ok || st.lv >= o.lv) return;   // no word yet that this relay knows the frame, or the room has the level",
+    "new": "      if (st.lv >= o.lv) return;   // no word yet that this relay knows the frame, or the room has the level",
     "tests": [
       "test/renown1.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "RENOWN1-session-stands-a-stranger",
     "file": "src/net/online.js",
-    "old": "      const p = this.peers.get(m.id);\n      if (p) p.lv = lv;",
-    "new": "      const p = this.peers.get(m.id) ?? (this.peers.set(m.id, { id: m.id, lv }), this.peers.get(m.id));\n      if (p) p.lv = lv;",
+    "old": "      const p = this.peers.get(m.id);\n      if (p && lv > (p.lv ?? 0)) p.lv = lv;",
+    "new": "      const p = this.peers.get(m.id) ?? (this.peers.set(m.id, { id: m.id, lv }), this.peers.get(m.id));\n      if (p && lv > (p.lv ?? 0)) p.lv = lv;",
     "tests": [
       "test/renown1.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "RENOWN1-network-loss-drops-the-xp",
     "file": "src/net/renownTracker.js",
-    "old": "    else if (r?.error === 'auth' || r?.error === 'no-session') pending = 0;   // no account to earn for: nothing to keep",
-    "new": "    else pending = 0;",
+    "old": "    else refused++;   // anything else (offline, a busy service, a rate, a service without the route yet) holds the report and waits",
+    "new": "    else { refused++; held = null; }",
     "tests": [
       "test/renown1.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "RENOWN1-refusal-retried-forever",
     "file": "src/net/renownTracker.js",
-    "old": "    if (PERMANENT.has(r?.error)) { stopped = true; pending = 0; try { onStop(r.error); } catch { /* the stop stands */ } }",
-    "new": "    if (PERMANENT.has(r?.error)) { pending = 0; try { onStop(r.error); } catch { /* the stop stands */ } }",
+    "old": "    if (PERMANENT.has(r?.error)) { stopped = true; held = null; pending = 0; try { onStop(r.error); } catch { /* the stop stands */ } }",
+    "new": "    if (PERMANENT.has(r?.error)) { held = null; pending = 0; try { onStop(r.error); } catch { /* the stop stands */ } }",
     "tests": [
       "test/renown1.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "RENOWN1-layer-in-the-stored-health",
     "file": "src/systems/chargen.js",
-    "old": "      const top = stored + renownHpOf(this);",
-    "new": "      const top = stored;",
+    "old": "      return own + renownHpOf(this);",
+    "new": "      return own;",
     "tests": [
       "test/renown1.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "RENOWN1-scale-kills",
     "file": "src/systems/renownLayer.js",
-    "old": "  return Math.max(1, Math.min(to, Math.round((v * to) / from)));",
-    "new": "  return Math.max(0, Math.min(to, Math.floor((v * to) / from)));",
+    "old": "  return Math.min(to, Math.max(1, Math.round((v * to) / from)));",
+    "new": "  return Math.min(to, Math.max(0, Math.floor((v * to) / from)));",
     "tests": [
       "test/renown1.test.js"
     ]
@@ -355,6 +355,69 @@
     "file": "src/net/remotePlayers.js",
     "old": "const run = `${lead ? `[${lead}] ` : ''}",
     "new": "const run = `${lead ? `${lead} ` : ''}",
+    "tests": [
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN1-route-open-to-strangers",
+    "file": "server-account/src/service.js",
+    "old": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover']);",
+    "new": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover', '/v1/renown/xp']);",
+    "tests": [
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN1-frame-before-the-hello",
+    "file": "src/net/wire.js",
+    "old": "    if (!hasHello) return { error: 'renown before hello' };",
+    "new": "    void hasHello;",
+    "tests": [
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN1-character-unnamed",
+    "file": "src/net/accountClient.js",
+    "old": "secret: session.secret }, typeof named === 'string' && named ? named : null);",
+    "new": "secret: session.secret }, null);",
+    "tests": [
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN1-level-dropped-from-the-answer",
+    "file": "src/net/accountClient.js",
+    "old": "level: Number.isSafeInteger(answer.data.level) ? answer.data.level : null };",
+    "new": "level: null };",
+    "tests": [
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN1-levelless-label-takes-a-plate",
+    "file": "src/net/remotePlayers.js",
+    "old": "      const run = `${lead ? `[${lead}] ` : ''}${marks ? `${n.name} ${marks}` : n.name}`;",
+    "new": "      const run = `[${lead ?? ''}] ${marks ? `${n.name} ${marks}` : n.name}`;",
+    "tests": [
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN1-card-plate-after-the-name",
+    "file": "src/ui/profileWindow.js",
+    "old": "    if (v.level) { const lv = el('span', 'dfprofile-renown', v.level); if (v.levelTitle) lv.title = v.levelTitle; nm.append(lv); }   // RENOWN1: left of the name\n    nm.append(el('span', 'dfprofile-nametext', v.name));",
+    "new": "    nm.append(el('span', 'dfprofile-nametext', v.name));\n    if (v.level) { const lv = el('span', 'dfprofile-renown', v.level); if (v.levelTitle) lv.title = v.levelTitle; nm.append(lv); }   // RENOWN1: left of the name",
+    "tests": [
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN1-heading-changed-for-everyone",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "    } else root.append(el('h3', null, heading));",
+    "new": "    } else { const plain = el('h3', null, null); plain.append(el('span', 'acctname', heading)); root.append(plain); }",
     "tests": [
       "test/renown1.test.js"
     ]

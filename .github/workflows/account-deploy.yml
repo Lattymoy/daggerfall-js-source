@@ -409,6 +409,31 @@ jobs:
             echo "::error::/v1/mod/mute did not refuse a guest as not-moderator ($code)"; cat /tmp/mod.json || true; exit 1
           fi
 
+          # AUDIT RENOWN1 DATA-2: A RENOWN REPORT IS ONE D1 BATCH - an UPDATE
+          # ... RETURNING with subqueries, an UPDATE, an INSERT ... SELECT
+          # and a SELECT, run as one transaction. node:sqlite runs all four;
+          # this asks D1. A fresh guest's first report of 1 XP is credited
+          # whole, and the same report again (the same id) is answered as a
+          # repeat and credited nothing - a 404 is a route that did not
+          # deploy, a 500 a migration that did not apply or a statement D1
+          # will not run.
+          rid=$(printf '%016x' "$(date +%s)")
+          code=$(curl -sS --max-time 15 -o /tmp/renown.json -w '%{http_code}' -X POST "$base/v1/renown/xp" \
+            -H 'content-type: application/json' -d "{\"secret\":\"$secret\",\"character\":\"deploy-smoke\",\"xp\":1,\"rid\":\"$rid\"}")
+          echo "renown/xp -> $code"
+          cat /tmp/renown.json || true
+          echo
+          if [ "$code" != "200" ] || ! grep -q '"credited":1' /tmp/renown.json; then
+            echo "::error::a Renown report failed on the deployed Worker ($code) - a first report of 1 XP must be credited 1"
+            exit 1
+          fi
+          code=$(curl -sS --max-time 15 -o /tmp/renown2.json -w '%{http_code}' -X POST "$base/v1/renown/xp" \
+            -H 'content-type: application/json' -d "{\"secret\":\"$secret\",\"character\":\"deploy-smoke\",\"xp\":1,\"rid\":\"$rid\"}")
+          echo "renown/xp again -> $code"
+          if [ "$code" != "200" ] || ! grep -q '"credited":0' /tmp/renown2.json || ! grep -q '"repeat":true' /tmp/renown2.json; then
+            echo "::error::a repeated Renown report was not answered as a repeat ($code)"; cat /tmp/renown2.json || true; exit 1
+          fi
+
           handle="smoke$(date +%s | tail -c 7)"
           code=$(curl -sS --max-time 25 -o /tmp/reg.json -w '%{http_code}' -X POST "$base/v1/auth/register" \
             -H 'content-type: application/json' \

@@ -171,11 +171,12 @@ export const handleShapeOk = (handle) => typeof handle === 'string' && HANDLE_RE
  * @param {(url: string, init: object) => Promise<any>} io.fetch  the fetch to use
  * @param {string} [io.base]  the service's origin
  * @param {string|null} [io.secret]  the session secret, if there is one
+ * @param {boolean} [io.keepalive]  AUDIT RENOWN1 GAME-8: finish the call after the page is gone (the pagehide report)
  * @param {string} path  a `/v1/...` route
  * @param {object|null} [body]  POST body, or null for a GET
  * @returns {Promise<{ok: boolean, data?: any, error?: string, status?: number}>}
  */
-export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = null }, path, body = null) {
+export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = null, keepalive = false }, path, body = null) {
   const headers = { accept: 'application/json' };
   if (body) headers['content-type'] = 'application/json';
   // THE ONE PLACE A CREDENTIAL IS SENT. There is no `?secret=` branch
@@ -189,6 +190,9 @@ export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = nul
       method: body ? 'POST' : 'GET',
       headers,
       body: body ? JSON.stringify(body) : undefined,
+      // AUDIT RENOWN1 GAME-8: a call made as the page goes (the Renown report on pagehide) asks the browser to finish
+      // it after the page is gone - through this one door, so the credential still rides the header and nowhere else
+      ...(keepalive ? { keepalive: true } : {}),
     });
   } catch {
     // A NETWORK FAILURE IS A REFUSAL, NOT A THROW. ONCRASH1's law on
@@ -466,7 +470,7 @@ export function accountDuels({ fetch, storage }) {
 }
 
 /** RENOWN1: what one of this account's characters earned online - `{ character, xp, level, credited, rose, order }`. */
-export const reportRenownXp = (io, character, xp, name = null) => call(io, '/v1/renown/xp', { character, xp, name });
+export const reportRenownXp = (io, character, xp, name = null, rid = null) => call(io, '/v1/renown/xp', { character, xp, name, ...(rid ? { rid } : {}) });   // AUDIT RENOWN1 DATA-4: `rid` the report's own id
 
 /**
  * RENOWN1: THE RENOWN'S REPORT, bound to this device's stored
@@ -475,11 +479,14 @@ export const reportRenownXp = (io, character, xp, name = null) => call(io, '/v1/
  * never a knock.
  */
 export function accountRenown({ fetch, storage }) {
+  const report = async (character, xp, name = null, rid = null, keepalive = false) => {
+    const s = storedSession(storage);
+    return s ? reportRenownXp({ fetch, base: serviceBase(storage), secret: s.secret, keepalive }, character, xp, name, rid) : { ok: false, error: 'no-session' };
+  };
   return {
-    report: async (character, xp, name = null) => {
-      const s = storedSession(storage);
-      return s ? reportRenownXp({ fetch, base: serviceBase(storage), secret: s.secret }, character, xp, name) : { ok: false, error: 'no-session' };
-    },
+    report: (character, xp, name = null, rid = null) => report(character, xp, name, rid),
+    /** AUDIT RENOWN1 GAME-8: the same report as the page goes - `keepalive`, so the browser finishes it after the page. */
+    leave: (character, xp, name = null, rid = null) => report(character, xp, name, rid, true),
   };
 }
 

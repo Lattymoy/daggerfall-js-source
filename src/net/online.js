@@ -72,7 +72,7 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, dmGate, relaySupportsDm, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questInGate, validQuestFrame, QUEST_SEND_MS, QUEST_HUB_MIN_MS, PARTY_MAX, tokenGate, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, parkGate, relaySupportsPark, PARK_CELL_MAX, PARK_KEY_RE, PARK_TTL_MS, relaySupportsChannels, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote, validCardData, cardGate, cardInGate, CARD_FRAME_MAX, CARD_IN_HZ_MAX, relaySupportsCard, validPageData, pageGate, pageInGate, PAGE_FRAME_MAX, PAGE_IN_HZ_MAX, relaySupportsPage, validDuelData, duelGate, duelInGate, DUEL_FRAME_MAX, DUEL_IN_HZ_MAX, relaySupportsDuel, readRenown, renownGate, relaySupportsRenown } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
+import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, dmGate, relaySupportsDm, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questInGate, validQuestFrame, QUEST_SEND_MS, QUEST_HUB_MIN_MS, PARTY_MAX, tokenGate, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, parkGate, relaySupportsPark, PARK_CELL_MAX, PARK_KEY_RE, PARK_TTL_MS, relaySupportsChannels, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote, validCardData, cardGate, cardInGate, CARD_FRAME_MAX, CARD_IN_HZ_MAX, relaySupportsCard, validPageData, pageGate, pageInGate, PAGE_FRAME_MAX, PAGE_IN_HZ_MAX, relaySupportsPage, validDuelData, duelGate, duelInGate, DUEL_FRAME_MAX, DUEL_IN_HZ_MAX, relaySupportsDuel, readRenown, renownGate, relaySupportsRenown, RENOWN_ORDER_KEEP_MS, RENOWN_RESEND_MS } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -271,8 +271,8 @@ export class OnlineSession {
     this.title = null;         // NAME-ADOPT: my own badge, as the service issued it - never asserted by this side
     this.glyphs = [];
     this.lv = null;            // RENOWN1: my own Renown, as the service signed it (the token's `lv`, or a renown order since)
-    this.renownOk = false;      // RENOWN1: whether this relay knows the renown frame (RENOWN_RELAY_MIN)
-    this._rnbucket = null;     // RENOWN1: the renown order's own gate at home (RENOWN_HZ_MAX)
+    this._rnOrder = null;      // AUDIT RENOWN1 WIRE-2: the newest renown order this page holds - { order, lv, until }
+    this._rnSock = new WeakMap();   // AUDIT RENOWN1 WIRE-2/WIRE-3: per SOCKET - its own welcome's word on the frame, the level its room confirmed, its gate
     // ═══ ACC1d: THE IDENTITY TOKEN ═════════════════════════════════
     //
     // `mintToken` is an async () => string|null the HOST supplies - the
@@ -1079,20 +1079,54 @@ export class OnlineSession {
   }
 
   /** RENOWN1: carry a renown order the account service signed when my own level rose into EVERY room I am in - the cell
-   *  and the halo alike, since whoever can see me reads the level beside my name - and take the level as mine. Only to
-   *  a relay that knows the frame (an older one closes the socket on it), at the relay's own rate. False when nothing
-   *  went; the next room's token carries the level either way. */
+   *  and the halo alike, since whoever can see me reads the level beside my name - and take the level as mine. Answers
+   *  whether it went down any socket now; the next room's token carries the level either way.
+   *
+   *  AUDIT RENOWN1 WIRE-2/WIRE-3: IT WAS SENT ONCE, and a rise often never reached every room. The one send went only
+   *  down sockets 'open' at that moment, behind one gate for the whole session - two rises inside a second lost the
+   *  second (the room stayed at 9 while the page said 11), a halo still minting its token was skipped and then said
+   *  hello with the old level, and a relay one version behind heard the frame on a socket whose welcome had not come
+   *  yet (the session-wide flag was the LAST relay's word) and closed it. Now the page KEEPS the newest order for its
+   *  life (RENOWN_ORDER_KEEP_MS) and each socket is its own: an order goes down a socket once ITS OWN welcome has
+   *  named a relay that knows the frame, on ITS OWN gate, and again every RENOWN_RESEND_MS until that room answers
+   *  with my level - the relay's echo (a rise, fanned) or its word that the room already holds as much (not a rise,
+   *  said to the carrier alone). A socket that opens later gets it on its welcome; one whose gate is spent gets it on
+   *  a tick. */
   sendRenownOrder(order, lv = null) {
     const level = readRenown({ lv });
-    if (level !== null) this.lv = level;
-    if (typeof order !== 'string' || !order || order.length > 1024 || !this.renownOk) return false;
-    const gate = renownGate(this._rnbucket, this._now());
-    if (!gate.pass) return false;
-    const s = JSON.stringify({ t: 'renown', order });
-    let went = false;
-    if (this._ws && this.status === 'open') { try { this._ws.send(s); this.stats.sent++; went = true; } catch { /* the close will say */ } }
-    for (const [, h] of this._halo) if (h.status === 'open' && h.ws) { try { h.ws.send(s); this.stats.sent++; went = true; } catch { /* the close will say */ } }
-    if (went) this._rnbucket = gate.bucket;
+    if (level !== null && level > (this.lv ?? 0)) this.lv = level;   // AUDIT RENOWN1: my own level only rises in a session
+    if (typeof order !== 'string' || !order || order.length > 1024 || level === null) return false;
+    if (!this._rnOrder || level >= this._rnOrder.lv) this._rnOrder = { order, lv: level, until: this._now() + RENOWN_ORDER_KEEP_MS };
+    return this._flushRenown(this._now()) > 0;
+  }
+
+  /** AUDIT RENOWN1 WIRE-2: a socket's renown state, made fresh with the socket (a WeakMap on the socket itself, so a
+   *  halo promoted to the primary, or the primary demoted to a halo, keeps its own). */
+  _rnOf(ws) {
+    let st = this._rnSock.get(ws);
+    if (!st) this._rnSock.set(ws, st = { ok: false, lv: 0, sent: 0, at: -Infinity, bucket: null });
+    return st;
+  }
+
+  /** AUDIT RENOWN1 WIRE-2: the held order down every socket whose room has not confirmed it - on the socket's own
+   *  welcome, on a new order and on each tick. Answers how many sockets it went down. */
+  _flushRenown(now = this._now()) {
+    const o = this._rnOrder;
+    if (!o) return 0;
+    if (!(now < o.until)) { this._rnOrder = null; return 0; }   // the relay would refuse it now; the next hello carries the level
+    const frame = JSON.stringify({ t: 'renown', order: o.order });
+    let went = 0;
+    const down = (ws, open) => {
+      if (!ws || !open) return;
+      const st = this._rnOf(ws);
+      if (!st.ok || st.lv >= o.lv) return;   // no word yet that this relay knows the frame, or the room has the level
+      if (st.sent >= o.lv && now - st.at < RENOWN_RESEND_MS) return;   // this order went and has not been answered YET
+      const gate = renownGate(st.bucket, now);
+      if (!gate.pass) return;
+      try { ws.send(frame); this.stats.sent++; st.bucket = gate.bucket; st.at = now; st.sent = o.lv; went++; } catch { /* the close will say */ }
+    };
+    down(this._ws, this.status === 'open');
+    for (const [, h] of this._halo) down(h.ws, h.status === 'open');
     return went;
   }
 
@@ -1362,7 +1396,10 @@ export class OnlineSession {
       if (primary) this.cardOk = relaySupportsCard(relayV);   // INSPECT1
       if (primary) this.pageOk = relaySupportsPage(relayV);   // JOURNAL1
       if (primary) this.duelOk = relaySupportsDuel(relayV);   // DUEL1
-      if (primary) this.renownOk = relaySupportsRenown(relayV);   // RENOWN1
+      // AUDIT RENOWN1 WIRE-3: THIS SOCKET'S OWN WORD, not the session's - a halo's welcome names its own relay, and a
+      // socket whose welcome has not come is sent no renown order at all (the frame a relay behind would close it on)
+      const _rnWs = primary ? this._ws : this._halo.get(room)?.ws;
+      if (_rnWs) { this._rnOf(_rnWs).ok = relaySupportsRenown(relayV); this._flushRenown(now); }   // and a rise this room has not heard goes now
       if (primary) this.parkOk = relaySupportsPark(relayV);   // HCC-PARK: the same law for the park frame
       // merged, not wiped: a peer already known keeps where it is drawn
       const keep = new Set();
@@ -1471,13 +1508,24 @@ export class OnlineSession {
     } else if (m.t === 'renown') {
       // RENOWN1: A PLAYER'S LEVEL ROSE - a signed order the relay checked against that player's own account. Only a number
       // changes (the name layer reads it each frame), so there is nothing to gate: a peer I do not hold is ignored.
+      // AUDIT RENOWN1: A RISE ONLY RAISES. The relay fans only a level that raises the carrier's (SEC-3/WIRE-1), but two
+      // rooms that hold the same player hear the same rise at different moments - a late frame from the slower room
+      // must not step the number back (a peer's lower level after a reconnect as another character comes through the
+      // join and the welcome, never through this arm).
       const lv = readRenown(m);
       if (lv === null || typeof m.id !== 'string') return;
-      if (m.id === this.id) { this.lv = lv; return; }
+      if (m.id === this.id) {
+        // MY OWN, from this room: the relay's echo of my rise, or its word that the room already holds as much - this
+        // room has confirmed that level, so the held order stops going down its socket (WIRE-2)
+        const ws = primary ? this._ws : this._halo.get(room)?.ws;
+        if (ws) { const st = this._rnOf(ws); if (lv > st.lv) st.lv = lv; }
+        if (lv > (this.lv ?? 0)) this.lv = lv;
+        return;
+      }
       const p = this.peers.get(m.id);
-      if (p) p.lv = lv;
+      if (p && lv > (p.lv ?? 0)) p.lv = lv;
       const k = this._known.get(m.id);
-      if (k) k.lv = lv;
+      if (k && lv > (k.lv ?? 0)) k.lv = lv;
     } else if (m.t === 'pose') {
       // WORLD6b-iii(e): a stranger's pose - a member beyond the welcome's roster, asked for.
       // SLAM6: AND STOOD WHERE IT SAYS IT IS, THIS FRAME. The pose used to be dropped until the `who` answered, and
@@ -1721,6 +1769,7 @@ export class OnlineSession {
       if (went) this._lastPingAt = now;
     }   // CHAT1: a channel's keepalive, answered without waking the room
     if (this.presence && this.status === 'open') this._askRound(now);   // SLAM9: the fair ask over every peer not yet introduced
+    if (this._rnOrder) this._flushRenown(now);   // AUDIT RENOWN1 WIRE-2: a rise a room has not confirmed goes again, on each socket's own gate
     for (const p of [...this.peers.values()]) {
       // SLAM14 B2: a peer a welcome left unnamed, and that no pose or join has confirmed since, leaves each such room
       // when the silence law hides it - the moment it would have vanished from the screen in any case

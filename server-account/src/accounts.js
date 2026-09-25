@@ -414,10 +414,21 @@ export async function overRate({ db, nowS }, key, max = LOGIN_MAX, windowS = LOG
   // rather than from a SELECT after it, which is both a second call to
   // D1 and a window in which another request can bump the row and make
   // this caller read somebody else's number.
+  //
+  // AUDIT RENOWN1 (DATA-1, beside the hour's window it found): THE WINDOW
+  // ONLY MOVES FORWARD. `nowS` is read when a request ARRIVES, before its
+  // body, so a caller who sends headers in a window's last second and the
+  // body after the boundary lands an OLD window's start after a new one's.
+  // `window_start = excluded.window_start` took that as a fresh window and
+  // counted 1 - and the next new-window request did the same - so
+  // alternating the two reset the counter for ever (the `acct:` row stayed
+  // at 1 through 300 requests; the `login:` and `ip:` doors share this
+  // statement). A request stamped with a window already past is counted
+  // in the window that is open.
   const row = await db.prepare(`INSERT INTO rate_limits (key, window_start, count) VALUES (?, ?, 1)
     ON CONFLICT(key) DO UPDATE SET
-      count = CASE WHEN rate_limits.window_start = excluded.window_start THEN rate_limits.count + 1 ELSE 1 END,
-      window_start = excluded.window_start
+      count = CASE WHEN rate_limits.window_start >= excluded.window_start THEN rate_limits.count + 1 ELSE 1 END,
+      window_start = MAX(rate_limits.window_start, excluded.window_start)
     RETURNING count`).bind(key, start).first();
   return (row?.count ?? 0) > max;
 }

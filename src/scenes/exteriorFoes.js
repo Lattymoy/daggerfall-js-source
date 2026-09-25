@@ -414,7 +414,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     },
     // AUDIT 58: the SetHealth(0) door, not a damage source - like
     // hurtPlayer's bypassShield it must not be mitigated.
-    zeroFoeHealth: (f) => { if (!f.dead && !f.puppet) damageFoe(f, f.entity.health, null, null, { bypassShield: true }); },   // AUDIT WORLD6b B9
+    zeroFoeHealth: (f) => { if (!f.dead && !f.puppet) damageFoe(f, f.entity.health, null, null, { fromPlayer: false, bypassShield: true }); },   // AUDIT WORLD6b B9   // AUDIT RENOWN1 GAME-6: SetHealth(0) is nobody's blow - it paid Renown as mine, and woke the area as my attack
     spellsByIndex: () => spellsByIndex?.(),
     foeSinks: (f) => foeSinks(f),
     rolls,

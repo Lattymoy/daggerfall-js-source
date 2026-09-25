@@ -24,18 +24,23 @@
 -- the account card alone, never for anybody else's screen (a name over
 -- a head is the account's, signed into the token).
 --
+-- `last_rid` is the id of the last report the track took (AUDIT RENOWN1
+-- DATA-4): a client whose answer was lost sends the same report again
+-- under the same id, and is answered rather than credited twice.
+--
 -- The account row goes, and its tracks go with it (CASCADE).
 CREATE TABLE IF NOT EXISTS renown_tracks (
   player     TEXT NOT NULL,
   char_id    TEXT NOT NULL,
   name       TEXT,
   xp         INTEGER NOT NULL DEFAULT 0,
+  last_rid   TEXT,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL,
   PRIMARY KEY (player, char_id),
   FOREIGN KEY (player) REFERENCES players(id) ON DELETE CASCADE
 );
--- An account's tracks, the most recently earned first - the card reads it.
+-- An account's tracks, the most recently played online first - the card reads it.
 CREATE INDEX IF NOT EXISTS idx_renown_recent ON renown_tracks (player, updated_at);
 
 -- THE HOUR'S BOUND IS THE ACCOUNT'S, across all its characters, so a
@@ -45,6 +50,8 @@ CREATE INDEX IF NOT EXISTS idx_renown_recent ON renown_tracks (player, updated_a
 -- was credited - written by the same UPDATE that spends the window, so
 -- the credit is read back with RETURNING and two reports landing at
 -- once can never both spend the same remainder (ACC4's creditPlay law).
+-- The window only moves FORWARD: a report stamped with an hour already
+-- past is charged to the window that is open (AUDIT RENOWN1 SEC-1).
 ALTER TABLE players ADD COLUMN renown_hour INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE players ADD COLUMN renown_hour_xp INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE players ADD COLUMN renown_last_credit INTEGER NOT NULL DEFAULT 0;

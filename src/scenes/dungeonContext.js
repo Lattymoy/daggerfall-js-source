@@ -218,7 +218,8 @@ import { UnderwaterFog } from '../render/underwaterFog.js';   // ROAD-B (b3): Un
 import { NavClient } from '../ai/navClient.js';   // ENHANCED AI 3b
 import { getPref } from '../systems/uiPrefs.js';   // ENHANCED AI 3b: the Enhanced tab's switch
 import { raiseEnemyDeath, playRareDrop, pileBody } from './corpseMarker.js';   // UL1: OnEnemyDeath; LR3: the drop chime; LOOT-STACK: a body as the loot window's tab
-import { renownFoeStruck, renownFoeDied } from '../net/renownTracker.js';   // RENOWN1: a foe the player fought pays its Renown XP when it dies, by any hand
+import { FOE_LEVEL_MAX } from '../net/wire.js';   // AUDIT RENOWN1 GAME-3: the stream's bound on a class foe's level
+import { renownFoeStruck, renownFoeDied, renownFoeCarry, renownFoeRevived } from '../net/renownTracker.js';   // RENOWN1: a foe the player fought pays its Renown XP when it dies, by any hand   // AUDIT RENOWN1 GAME-10: a rebuilt foe keeps my blows, a revived one forgets them
 import { lootPile } from '../player/lootStack.js';   // LOOT-STACK: the pile under the reticle, as the loot window's tabs
 import { rollLootRarity, pileSource, dungeonRarityTier } from '../systems/lootRarity.js';   // LR1: the item ladder over every list this host mints (a foe's through hostCombat.spawnEnemyLoot, RF2)
 
@@ -1235,7 +1236,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // AUDIT 58: this is the SetHealth(0) door, not a damage source -
     // like hurtPlayer's bypassShield it must not be mitigated, or a
     // quest that removes a foe would be eaten by its own Shield.
-    zeroFoeHealth: (f) => { if (!f.dead) damageFoe(f, f.entity.health, null, null, { bypassShield: true }); },
+    zeroFoeHealth: (f) => { if (!f.dead) damageFoe(f, f.entity.health, null, null, { fromPlayer: false, bypassShield: true }); },   // AUDIT RENOWN1 GAME-6: SetHealth(0) is nobody's blow - it paid Renown as mine, and woke the area as my attack
     spellsByIndex: () => spellsByIndex,
     foeSinks: (f) => foeSinks(f),
     rolls: Math.random,
@@ -1670,7 +1671,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:9499 / exterior.js:3667), set
+  // host's own townTalk sink (world.js:9500 / exterior.js:3667), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2482,6 +2483,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!nf?.entity) return;
       nf.entity.wabbajackActive = true;   // once per creature (WabbajackEffect:68)
       nf.entity.health -= missing;        // carry over damage (:94)
+      renownFoeCarry(f, nf);              // AUDIT RENOWN1 GAME-10: the Wabbajack's change is the same fight - my blows on it count
     }).catch(() => {});
   }
   // FS1 (wave D): the mount itself. `enchantCtx: false` is the
@@ -3319,7 +3321,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:15015,
+              // playerArrowHitFoe is the one copy world.js:15021,
               // exterior.js:5237 and worldModes.js:7316 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
@@ -3500,6 +3502,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     freeCorpse(f);
     const pi = foes.indexOf(f);   // AUDIT WORLD7/8 C12: the body's loot record goes with the body - the next death's corpse is a new container, its claim not refused as already spoken
     if (pi >= 0) { _lootSeen.delete(`corpse:${pi}`); _lootAt.delete(`corpse:${pi}`); }
+    renownFoeRevived(f);   // AUDIT RENOWN1 GAME-10: a foe that stands up again is a new fight - it can pay again
   }
 
   /** WORLD2: one PUPPET frame - the pose from the stream (the feet eased toward the streamed feet over the stream's
@@ -3558,6 +3561,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // AUDIT ONCRASH1 B4a: and the SENDER obeys the door the reader now applies - `h` is clamped to FOE_HEALTH_MAX as
       // the exterior twin has clamped it since WORLD6b, because an unclamped one would have its whole record refused.
       const r = { i, t: f.mobileType, f: [q2(f.ai.feet[0]), q2(f.ai.feet[1]), q2(f.ai.feet[2])], y: q3(f.ai.yaw), h: Number.isFinite(f.entity.health) ? Math.max(0, Math.min(FOE_HEALTH_MAX, f.entity.health)) : 0, d: f.dead ? 1 : 0, a: f._atkA | 0, m: f.ai.moving ? 1 : 0, g, c: f._castN | 0, s: f._castIdx | 0, ...(f.gender === 'female' ? { x: 1 } : {}) };   // t: the species (AUDIT WORLD2 B5)
+      // AUDIT RENOWN1 GAME-3: a CLASS foe's level, the exterior stream's `l` (AUDIT WORLD6b-ii B2) - every client builds
+      // the layout's class foes at ITS OWN level, so a joiner's copy of my level-3 knight was a level-30 knight on a
+      // level-30 joiner's screen, and paid it 300 Renown XP for the kill that paid me 30. A monster's level is its
+      // species', the same everywhere, and rides nothing.
+      if (f.mobileType >= 128 && Number.isInteger(f.entity?.level) && f.entity.level >= 0 && f.entity.level <= FOE_LEVEL_MAX) r.l = f.entity.level;
       const key = `${r.f[0]},${r.f[1]},${r.f[2]},${r.y},${r.h},${r.d},${r.a},${r.m},${r.g},${r.c},${r.s}`;
       if (!full && f._sentKey === key) continue;
       f._sentKey = key;
@@ -3647,6 +3655,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!r) return;
     const p = f._pup ?? (f._pup = { feet: [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], yaw: f.ai.yaw, moving: false, hurt: false, strike: null, a: null, target: null, c: null, cast: null });
     if (typeof r.g === 'string') p.target = r.g;   // WORLD3: whose blow this puppet's is
+    if (r.l !== undefined && f.mobileType >= 128) f.streamedLevel = r.l;   // AUDIT RENOWN1 GAME-3: the host's class foe's level - what its kill is worth (net/renownTracker.js renownFoeLevel)
     if (r.c != null) { const c = r.c | 0; if (p.c != null && c !== p.c) p.cast = r.s | 0; p.c = c; }   // WORLD3: a cast once per count, never the count a joiner arrived with
     if (Array.isArray(r.f) && r.f.length === 3 && r.f.every(Number.isFinite)) { p.feet[0] = r.f[0]; p.feet[1] = r.f[1]; p.feet[2] = r.f[2]; }
     if (Number.isFinite(r.y)) p.yaw = r.y;
@@ -4031,7 +4040,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     _retyping.add(i);
     try {
       const rec = await buildFoeAt({ ...f.src, mobileType, gender: gender === 'female' || gender === 'male' ? gender : undefined }, true, { at: i });
-      return !!rec && foes[i] === rec;
+      const landed = !!rec && foes[i] === rec;
+      // AUDIT RENOWN1 GAME-10: a LIVE foe stood again in another body (a joiner's copy rebuilt as the host's species) is
+      // the same fight, and my blows on it still count; a dead one's rebuild (the stream's un-death, the hour's respawn)
+      // is a new fight, and carries nothing
+      if (landed && !f.dead) renownFoeCarry(f, rec);
+      return landed;
     } finally { _retyping.delete(i); }
   }
   /** MAC6 #1: where this dungeon stands - its map pixel and map id, for the save (null for a location with no map row: the probe). */

@@ -96,6 +96,14 @@ export function profileDuelLine(record) {
   const t = duelRecordText(record);
   return t ? `Duels: ${t}` : null;
 }
+/** AUDIT RENOWN1 UI-3: a view with the peer's Renown as the session knows it NOW - the level rises on a renown frame
+ *  while the card stands open, and the card showed the level it was opened with. A level the session does not know
+ *  leaves the view's own. */
+export function profileRenown(v, lv) {
+  const text = renownText(lv);
+  if (!v || !text || v.level === text) return v;
+  return { ...v, level: text, levelTitle: `Renown ${lv}` };
+}
 export function profileView({ name = null, peer = null, look = null, card = null, state = 'asking', duel = null, record = null } = {}) {
   const who = (typeof name === 'string' && name) ? name : 'Someone';
   const worn = card?.look ?? look ?? null;
@@ -144,6 +152,7 @@ ${PIXELIFY_FIVE_FACE}
 .dfprofile-renown { flex: none; font-size: 13px; line-height: 1.3; padding: 1px 5px; border-radius: 2px; min-width: 1.4em;
   text-align: center; font-variant-numeric: tabular-nums; color: #f2c46b;
   background: rgba(242, 196, 107, .1); border: 1px solid rgba(242, 196, 107, .8); }
+.dfprofile-renown:empty { display: none; }
 .dfprofile-line { font-size: 13px; color: var(--dim, #8b8578); line-height: 1.4; }
 .dfprofile-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 14px; }
 .dfprofile-h { font-size: 11px; color: var(--dim, #8b8578); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }

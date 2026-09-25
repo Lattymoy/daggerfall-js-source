@@ -55,7 +55,7 @@
 //   POST /v1/duel/record { id }           -> { id, wins, losses }
 // RENOWN1, Renown. The caller's own character, by the id its
 // save carries; the level rides the token when the mint names one:
-//   POST /v1/renown/xp { character, xp, name? } -> { character, xp, level, credited, rose, order }
+//   POST /v1/renown/xp { character, xp, name?, rid? } -> { character, xp, level, credited, rose, order, max?, repeat? }
 //   POST /v1/auth/token { character? }    -> { ..., level }
 //
 // ACC2, and every one of them needs a REGISTERED account (the wall):
@@ -393,10 +393,13 @@ export default {
         // so the level beside its name moves there now rather than at its
         // next connection - and a service with no key still credits, it
         // just cannot vouch for the new level until then.
-        const r = await reportRenownXp(ctx, who.player, { character: body.character, xp: body.xp, name: body.name ?? null });
+        // AUDIT RENOWN1 DATA-4: `rid` the report's own id, so a report sent again because its answer was lost is
+        // answered again (`repeat`) rather than credited twice - and a repeat carries an order too, since the
+        // answer that was lost may have been the one with the rise in it.
+        const r = await reportRenownXp(ctx, who.player, { character: body.character, xp: body.xp, name: body.name ?? null, rid: body.rid ?? null });
         if (r.error) return no(r.error, r.error === 'renown-full' ? 409 : 400, origin);
         let order = null;
-        if (r.rose) {
+        if (r.rose || (r.repeat && r.level > 1)) {
           const key = await signingKey(env, subtle);
           if (key) order = await mintRenownOrder({ s: who.player.id, lv: r.level }, key, { subtle, nowS });
         }

@@ -301,8 +301,8 @@ import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, F
 import { accountTokenMinter, storedSession, accountPlayBeat, muteAccount, serviceBase, accountRefusalText, accountDuels, accountRenown } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4: and the beat that counts time played
 import { parseModCommand, runModCommand, mutedText, mutedNotices } from '../net/moderation.js';   // MOD1: /mute and /unmute, and the line a muted player reads
 import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, knocked from here and measured by the account service's clock
-import { renownKillXp, renownQuestXp, renownPartyXp } from '../net/renown.js';   // RENOWN1: what a kill and a quest are worth, and the party's bonus
-import { createRenownTracker, setRenownKillHandler, renownFoeLevel } from '../net/renownTracker.js';   // RENOWN1: what this character earns online, carried to the account service
+import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/renown.js';   // RENOWN1: what a kill and a quest are worth, and the party's bonus
+import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer, renownFoeCarry } from '../net/renownTracker.js';   // RENOWN1: what this character earns online, carried to the account service
 import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the level's health and magicka, on top of Daggerfall's while online
 import { appStorage } from '../systems/appStorage.js';   // ACC1d: where that session lives - the app's store, not the tab's (a second tab is the same player)
 import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
@@ -335,7 +335,7 @@ import { createTradeManager, TRADE_RANGE_M, inTradeRange, tradeDistance } from '
 import { createTradePack } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack
 import { createPlayerTradeWindow, playerTradeReady } from '../ui/playerTradeDoor.js';   // TRADE1: the enhanced window two players share
 import { createSocialMenu, socialPlaqueRows, plaqueRowFor } from '../ui/socialMenu.js';   // SOC5: the F-menu over that body - Add friend, Invite to party
-import { createProfileWindow, profileView, profileDuelLine } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
+import { createProfileWindow, profileView, profileDuelLine, profileRenown } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
 import { createDuelManager, DUEL_RADIUS_M, DUEL_RANGE_M, DUEL_COUNTDOWN_MS, ringCentre, validRingRecord } from '../net/duelSession.js';   // DUEL1: the duel's state machine (pure)
 import { createDuelRecords, duelUncountedText } from '../net/duelRecord.js';   // DUEL1: the Inspect card's duelling record, asked and kept
 import { createDuelPrompt } from '../ui/duelPrompt.js';   // DUEL1: the challenge, as the challenged player sees it
@@ -4335,7 +4335,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2463 mounts the same one, gated on
+  // and dungeonContext.js:2464 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:5673
@@ -4415,6 +4415,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!nf?.entity) return;
       nf.entity.wabbajackActive = true;   // once per creature (WabbajackEffect:68)
       nf.entity.health -= missing;        // carry over damage (:94)
+      renownFoeCarry(f, nf);              // AUDIT RENOWN1 GAME-10: the Wabbajack's change is the same fight - my blows on it count
     };
     const host = enchantFoeHost(f, modes?.dungeonCtx ?? null, _insidePool);
     if (host === 'dungeon') { modes?.dungeonCtx.replaceFoe?.(targetEntity, mobileType); return; }   // wave 37: `modes?.` above the declaration, guarded on the OBJECT
@@ -6372,7 +6373,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // and 6pm regardless of travel type"). The two are separately
         // sourced - the racial arm off the compound race, the career
         // arm off the class's own CFG bit - which is exactly how the
-        // per-round burn already reads them (passiveSpecials.js:120).
+        // per-round burn already reads them (passiveSpecials.js:121).
         sunAverse: !!playerEntity.racialOverride?.sunDamage || careerSunDamage(playerEntity.career),
       });
       if (clamp > 0 && !sharedClockOn()) { setSyntheticTimeIncrease(true); playerTicker.advance(clamp); }   // AUDIT 63 F13: the arrival clamp is inside DFU's one shielded Update too
@@ -6472,7 +6473,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6289), so exterior mode and a
+    // composer, dungeonContext.js:6303), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -9892,27 +9893,28 @@ export async function bootWorld(canvas, renderer, params, status) {
   // The report goes every RENOWN_REPORT_MS; the service's answer is the truth, and a rise is carried to my rooms.
   const renownAccount = accountRenown({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
   let _renownCapHour = null;
+  let renownSaid = null;   // AUDIT RENOWN1 UI-5: the highest level the page has announced - a rise is said against this, never against renownNow
   const renownTracker = onlineOn ? createRenownTracker({
-    report: (c, xp, name) => renownAccount.report(c, xp, name),
+    report: (c, xp, name, rid) => renownAccount.report(c, xp, name, rid),
+    leave: (c, xp, name, rid) => renownAccount.leave(c, xp, name, rid),   // AUDIT RENOWN1 GAME-8: the page's last word, finished by the browser
     character: () => characterIdOf(playerEntity),
     name: () => (typeof playerEntity?.name === 'string' ? playerEntity.name : null),
     earning: () => !!online,
     onAnswer: (data, sent) => {
-      const level = Number.isSafeInteger(data?.level) ? data.level : null;
-      const was = renownNow;
-      renownAdopt(level);
-      if (level !== null && (was === null || level > was)) {
-        online?.sendRenownOrder?.(typeof data?.order === 'string' ? data.order : null, level);   // the rooms I am in hear it now
-        if (data?.rose) townTalk.say(`Your Renown is now ${level}.`);
-      }
-      if (Number.isSafeInteger(data?.credited) && data.credited < sent && !data?.max) {   // at the cap there is no hour to speak of
+      const a = renownAnswer(data, sent, renownSaid);   // AUDIT RENOWN1: one pure plan (net/renownTracker.js), pinned there
+      renownAdopt(a.level);
+      if (a.order) online?.sendRenownOrder?.(a.order, a.level);   // the rooms I am in hear it now - and again until each answers
+      if (a.announce !== null) { renownSaid = a.announce; townTalk.say(`Your Renown is now ${a.announce}.`); }
+      if (a.capped) {
         const hour = Math.floor(Date.now() / 3_600_000);
         if (_renownCapHour !== hour) { _renownCapHour = hour; tradeSay('You have earned all the Renown XP one hour allows. Your fighting still counts toward your skills.'); }
       }
     },
+    // AUDIT RENOWN1 UI-4: a refusal that ends reporting is SAID - the sentences were written and nothing ever showed them
+    onStop: (error) => tradeSay(`${accountRefusalText(error)} This character is earning no Renown.`),
   }) : null;
   if (renownTracker) {
-    globalThis.addEventListener?.('pagehide', () => { renownTracker.flush(); });   // RENOWN1: what was earned since the last report goes as the page does (best effort)
+    globalThis.addEventListener?.('pagehide', () => { renownTracker.leave(); });   // RENOWN1: what was earned since the last report goes as the page does. AUDIT RENOWN1 GAME-8: by `keepalive`, under the report's own id
     setRenownKillHandler((foe) => { renownTracker.earn(renownPartyXp(renownKillXp(renownFoeLevel(foe)), 1 + (partyNear()?.length ?? 0))); });
     const paid = new Set();
     renownQuestEnded = (q) => {
@@ -10757,7 +10759,8 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  (asked of the account service by the relay's stamp, `_profileSub`; no stamp, no line). The base view is kept, so
    *  the card is re-drawn with the duel's word alone when that moves (a challenge sent, a record landed). */
   const withDuel = (peerId, v) => {
-    _profileView = v;
+    _profileView = profileRenown(v, online?.renownOf?.(peerId) ?? null);   // AUDIT RENOWN1 UI-3: the Renown as the session knows it now
+    v = _profileView;
     return { ...v, duel: duelButtonFor(peerId), duels: _profileSub ? profileDuelLine(duelRecords.get(_profileSub)) : null };
   };
   const repaintDuelProfile = () => {
@@ -11970,6 +11973,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
   /** INSPECT1: the profile's frame - an ask the gate held back goes when it can, and a wait that ran out is said. */
   const profileFrame = () => {
+    // AUDIT RENOWN1 UI-3: a card open on a player whose Renown ROSE is re-drawn with it - the box over their head moves
+    // on the renown frame, and the card kept the level it was opened with
+    if (_profileView && profileWin?.isOpen()) { const lv = renownText(online?.renownOf?.(profileWin.peerId()) ?? null); if (lv && lv !== _profileView.level) repaintDuelProfile(); }
     if (!_profileAsk) return;
     if (!_profileAsk.sent) _profileAsk.sent = online?.sendCard({ to: _profileAsk.peerId, ask: true }) === true;
     if (performance.now() - _profileAsk.at < CARD_WAIT_MS) return;

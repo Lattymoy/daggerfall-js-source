@@ -315,11 +315,14 @@ export function defineLiveMaxHealth(entity) {
     enumerable: true,
     get() {
       // RENOWN1: Renown's online health ON TOP of the stored value (systems/renownLayer.js) - never in it, so a
-      // level-up (which adds to `rawMaxHealth`) and the save (which keeps it) never carry the layer
-      const top = stored + renownHpOf(this);
+      // level-up (which adds to `rawMaxHealth`) and the save (which keeps it) never carry the layer.
+      // AUDIT RENOWN1 GAME-4: and on top of the LIMITER too. The limiter is computed off the raw value
+      // (lycanthropy.js), so capping raw + layer with it took the whole layer away the minute the urge began - a
+      // Renown 50 werewolf at 247 of 247 fell to 100 of 100. The limiter caps Daggerfall's own maximum; the layer
+      // rides above whatever Daggerfall allows ("On top").
       const limiter = this.maxHealthLimiter;
-      if (!(limiter >= 1)) return top;   // "Limiter must be 1 or greater"
-      return limiter < top ? limiter : top;
+      const own = limiter >= 1 && limiter < stored ? limiter : stored;   // "Limiter must be 1 or greater"
+      return own + renownHpOf(this);
     },
     set(v) { stored = v; },
   });

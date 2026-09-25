@@ -32,10 +32,12 @@ export const renownHpOf = (e) => (Number.isFinite(e?.renownHp) && e.renownHp > 0
 export const renownMpOf = (e) => (Number.isFinite(e?.renownMp) && e.renownMp > 0 ? Math.trunc(e.renownMp) : 0);
 
 /** `v` moved from a maximum of `from` to one of `to`, keeping its fraction - whole, never above `to`, and never down to
- *  0 from anything above it (a scale must not kill); 0 and below stay where they are. */
+ *  0 from anything above it (a scale must not kill) unless the maximum itself is 0; 0 and below stay where they are.
+ *  AUDIT RENOWN1 GAME-5: `max(1, min(to, ...))` answered 1 for a maximum of 0 (a mage unable to hold magicka) - a
+ *  value above its own maximum; the bound is now the last word. */
 export function keepFraction(v, from, to) {
   if (!(v > 0) || !(from > 0) || !(to >= 0) || from === to) return v;
-  return Math.max(1, Math.min(to, Math.round((v * to) / from)));
+  return Math.min(to, Math.max(1, Math.round((v * to) / from)));
 }
 
 /**

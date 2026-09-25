@@ -60,8 +60,14 @@ function d1() {
         async first() { return stmt.get(...args) ?? null; },
         async all() { return { results: stmt.all(...args) }; },
         async run() { const r = stmt.run(...args); return { meta: { changes: Number(r.changes) } }; },
+        _rows() { return stmt.all(...args); },
       };
       return api;
+    },
+    // D1's batch: the statements in order, as ONE transaction (AUDIT RENOWN1 - the report is one)
+    async batch(list) {
+      db.exec('BEGIN');
+      try { const out = list.map((st) => ({ results: st._rows() })); db.exec('COMMIT'); return out; } catch (e) { db.exec('ROLLBACK'); throw e; }
     },
   };
 }
@@ -95,7 +101,7 @@ test('RENOWN1 the curve: EverQuest\'s shape in integers - level 2 at 100, 10 at 
   assert.deepEqual(renownProgress(RENOWN_XP_MAX + 5), { level: 50, xp: RENOWN_XP_MAX, into: 0, need: 0, frac: 1 });
   assert.equal(renownProgressText(150), '50 / 130 XP to Renown 3');
   assert.equal(renownProgressText(6000), '490 / 2,150 XP to Renown 11', 'thousands grouped');
-  assert.equal(renownProgressText(RENOWN_XP_MAX), 'Renown 50 - the highest');
+  assert.equal(renownProgressText(RENOWN_XP_MAX), 'the highest there is', 'AUDIT RENOWN1 UI-6: the row names the level already');
   assert.equal(renownText(12), '12', 'the number alone - every face puts it in a box (Mac: "Just have it read 12 inside a box")');
   for (const bad of [0, 51, 1.5, '12', null, undefined]) assert.equal(renownText(bad), null, `${bad} is no level`);
 });
@@ -282,46 +288,64 @@ test('RENOWN1 the wire: `badged` stamps `lv` beside the badge only within the bo
 
 // ── THE RELAY ───────────────────────────────────────────────────────
 
-test('RENOWN1 the relay: the hello\'s token level rides the welcome\'s rows and the join; a renown order is taken ONLY from a socket whose account it names and fanned to the room; one naming another account, one forged, a mute order at the level\'s door and a renown order at the mute\'s door all do nothing (mutants: a renown order carried for somebody else; the mute arm reading a renown order as an unmute)', async () => {
-  const r = fakeRoom(CHAT_WORLD_ROOM);
+test('RENOWN1 the relay: the hello\'s token level rides the welcome\'s rows and the join in a PLACE room, where a name is drawn over a head; a renown order is taken ONLY from a socket whose account it names, and only as a RISE - fanned to the room, the carrier included; the same level again, or an older lower one, is answered to its carrier alone and fans nothing; one naming another account, one forged and a mute order at the level\'s door all do nothing; in a channel a renown order is nothing at all, and a renown order at the mute\'s door is no unmute (mutants: a renown order carried for somebody else; the mute arm reading a renown order as an unmute; a join stamped without its level; a level that does not rise fanned; a renown order taken in a channel)', async () => {
+  // AUDIT RENOWN1 UI-2: this drove the world CHANNEL, where no name is drawn - and where no renown order is taken since
+  const r = fakeRoom('town:m11');
   const mara = r.connect(); await r.hello(mara, 'mara-0001', null, { lv: 7 });
-  const bob = r.connect(); await r.hello(bob, 'bobb-0002');
+  const bob = r.connect(); await r.hello(bob, 'bobb-0002', null, { lv: 3 });
+  const eve = r.connect(); await r.hello(eve, 'evee-0003');
   assert.equal(ofType(bob, 'welcome')[0].peers.find((p) => p.id === 'mara-0001').lv, 7, 'the welcome\'s row wears the signed level');
-  assert.equal(ofType(mara, 'join').find((j) => j.id === 'bobb-0002').lv, undefined, 'a token with no level stamps none');
+  assert.equal(ofType(mara, 'join').find((j) => j.id === 'bobb-0002').lv, 3, 'and so does the join');
+  assert.equal(ofType(mara, 'join').find((j) => j.id === 'evee-0003').lv, undefined, 'a token with no level stamps none');
   assert.equal(mara.att.lv, 7);
   const kp = await r.signer();
   const nowS = Math.floor(Date.now() / 1000);
   const carry = (ws, t, order) => r.room.webSocketMessage(ws, JSON.stringify({ t, order }));
+  const aSecond = () => new Promise((res) => setTimeout(res, 1100));   // a socket's own gate, one order a second
   // Bob carries Mara's order: nothing - nobody carries another player's level
   await carry(bob, 'renown', await mintRenownOrder({ s: 'acct-mara-0001', lv: 9 }, kp.privateKey, { subtle, nowS }));
   assert.equal(ofType(mara, 'renown').length + ofType(bob, 'renown').length, 0);
   // Mara carries her own: the room hears it
-  await carry(mara, 'renown', await mintRenownOrder({ s: 'acct-mara-0001', lv: 9 }, kp.privateKey, { subtle, nowS }));
+  const nine = await mintRenownOrder({ s: 'acct-mara-0001', lv: 9 }, kp.privateKey, { subtle, nowS });
+  await carry(mara, 'renown', nine);
   assert.deepEqual(ofType(bob, 'renown'), [{ t: 'renown', id: 'mara-0001', lv: 9 }]);
   assert.deepEqual(ofType(mara, 'renown'), [{ t: 'renown', id: 'mara-0001', lv: 9 }], 'the carrier too');
   assert.equal(mara.att.lv, 9, 'and the attachment keeps it for the next joiner\'s roster');
-  // forged, and the wrong kinds at each door
-  await new Promise((res) => setTimeout(res, 1100));
+  // AUDIT RENOWN1 SEC-3/WIRE-1: the same order again, then an OLDER, lower one - neither is a rise
+  await aSecond(); await carry(mara, 'renown', nine);
+  await aSecond(); await carry(mara, 'renown', await mintRenownOrder({ s: 'acct-mara-0001', lv: 8 }, kp.privateKey, { subtle, nowS: nowS - 20 }));
+  assert.equal(ofType(bob, 'renown').length, 1, 'the room hears no flap');
+  assert.deepEqual(ofType(mara, 'renown').slice(1), [{ t: 'renown', id: 'mara-0001', lv: 9 }, { t: 'renown', id: 'mara-0001', lv: 9 }], 'the carrier is told, each time, the level the room holds');
+  assert.equal(mara.att.lv, 9, 'an older order never lowers a level');
+  // forged, and the wrong kind at the level's door
+  await aSecond();
   const stranger = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   await carry(mara, 'renown', await mintRenownOrder({ s: 'acct-mara-0001', lv: 20 }, stranger.privateKey, { subtle, nowS }));
-  await new Promise((res) => setTimeout(res, 1100));
+  await aSecond();
   await carry(mara, 'renown', await mintOrder({ s: 'acct-mara-0001', mu: 0 }, kp.privateKey, { subtle, nowS }));
   assert.equal(ofType(bob, 'renown').length, 1, 'a forged order and a mute order raise no level');
-  // THE HOLE: a muted player carries their OWN renown order to the mute's door - it must not read as an unmute
-  const troll = r.connect(); await r.hello(troll, 'trol-0003', null, { mu: nowS + 600 });
-  await carry(troll, 'mute', await mintRenownOrder({ s: 'acct-trol-0003', lv: 5 }, kp.privateKey, { subtle, nowS }));
+  assert.equal(ofType(mara, 'renown').length, 3, 'and answer nothing');
+  // IN A CHANNEL (where a mute is heard): the mute's door takes no renown order as an unmute, and nothing takes a renown order
+  const c = fakeRoom(CHAT_WORLD_ROOM);
+  const ckp = await c.signer();
+  const troll = c.connect(); await c.hello(troll, 'trol-0003', null, { mu: nowS + 600, lv: 4 });
+  const listener = c.connect(); await c.hello(listener, 'lstn-0004');
+  await c.room.webSocketMessage(troll, JSON.stringify({ t: 'mute', order: await mintRenownOrder({ s: 'acct-trol-0003', lv: 5 }, ckp.privateKey, { subtle, nowS }) }));
   assert.equal(ofType(troll, 'muted').filter((m) => m.until === 0).length, 0, 'no unmute');
-  await r.chat(troll, 'free?');
-  assert.equal(ofType(bob, 'chat').length, 0, 'still muted');
+  await c.chat(troll, 'free?');
+  assert.equal(ofType(listener, 'chat').length, 0, 'still muted');
+  await c.room.webSocketMessage(troll, JSON.stringify({ t: 'renown', order: await mintRenownOrder({ s: 'acct-trol-0003', lv: 5 }, ckp.privateKey, { subtle, nowS }) }));
+  assert.equal(ofType(listener, 'renown').length + ofType(troll, 'renown').length, 0, 'AUDIT RENOWN1 WIRE-1: a channel of two thousand hears no level, and draws none');
+  assert.equal(troll.att.lv, 4);
 });
 
 // ── THE CLIENT ──────────────────────────────────────────────────────
 
-test('RENOWN1 the session: a peer\'s level off the welcome, the join and a renown frame; mine off the service\'s answer; `renownOf` by id; a renown order goes to every room I am in, only on a relay that knows the frame, one a second (mutants: a renown frame for a peer I do not hold standing one; an order sent to world107)', () => {
+test('RENOWN1 the session: a peer\'s level off the welcome, the join and a renown frame, which only ever raises it; mine off the service\'s answer; `renownOf` by id; a renown order is KEPT and goes down each socket once ITS OWN welcome names a relay that knows the frame, on its own gate, and again until that room answers with the level (mutants: a renown frame for a peer I do not hold standing one; an order sent to world107; a session-wide flag; a rise lost to the gate; an answered room sent again)', () => {
   const { FakeWS, sockets } = fakeSocketClass();
-  const clock = 1_000_000;
-  const s = new OnlineSession({ url: 'wss://relay.test', name: 'Mac', id: 'mac-0001', secret: 'secret-of-mac-0001', presence: false, WebSocketImpl: FakeWS, now: () => clock });
-  s.join(CHAT_WORLD_ROOM);
+  let clock = 1_000_000;
+  const s = new OnlineSession({ url: 'wss://relay.test', name: 'Mac', id: 'mac-0001', secret: 'secret-of-mac-0001', WebSocketImpl: FakeWS, now: () => clock });
+  s.join('world:2,12', { x: 1, y: 2, z: 3, yaw: 0, pitch: 0, mv: 0 });
   const ws = sockets[0];
   ws.open();
   ws.receive({ t: 'welcome', id: 'mac-0001', peers: [{ id: 'bob-0002', name: 'Bob', lv: 12 }, { id: 'eve-0003', name: 'Eve', lv: 99 }], n: 3, v: 'world107' });
@@ -329,19 +353,47 @@ test('RENOWN1 the session: a peer\'s level off the welcome, the join and a renow
   assert.equal(s.renownOf('eve-0003'), null, 'a level outside the bound is none');
   ws.receive({ t: 'renown', id: 'bob-0002', lv: 13 });
   assert.equal(s.renownOf('bob-0002'), 13);
+  ws.receive({ t: 'renown', id: 'bob-0002', lv: 11 });
+  assert.equal(s.renownOf('bob-0002'), 13, 'AUDIT RENOWN1: a late frame from a slower room never steps a level back');
   ws.receive({ t: 'renown', id: 'ghost-0009', lv: 13 });
   assert.equal(s.peers.has('ghost-0009'), false, 'a level for a peer I do not hold stands nobody');
   ws.receive({ t: 'renown', id: 'bob-0002', lv: 0 });
   assert.equal(s.renownOf('bob-0002'), 13, 'a malformed frame changes nothing');
   assert.equal(s.adoptIdentity({ name: 'Mac', level: 4 }), true);
   assert.equal(s.renownOf('mac-0001'), 4);
+  const renownSent = (w) => w.sent.map((x) => JSON.parse(x)).filter((m) => m.t === 'renown');
   assert.equal(s.sendRenownOrder('v1.a.b', 5), false, 'a world107 relay would close the socket on the frame');
   assert.equal(s.renownOf('mac-0001'), 5, 'but the level is mine either way');
+  // AUDIT RENOWN1 WIRE-2/WIRE-3: the order was KEPT, and goes the moment this socket's own welcome names world108
   ws.receive({ t: 'welcome', id: 'mac-0001', peers: [], n: 1, v: 'world108' });
-  assert.equal(s.sendRenownOrder('v1.a.b', 5), true);
-  assert.deepEqual(JSON.parse(ws.sent.at(-1)), { t: 'renown', order: 'v1.a.b' });
-  assert.equal(s.sendRenownOrder('v1.a.c', 5), false, 'one a second, as the relay takes them');
-  assert.equal(s.sendRenownOrder('', 5), false);
+  assert.deepEqual(renownSent(ws), [{ t: 'renown', order: 'v1.a.b' }]);
+  // a second rise inside the second: the gate holds it - it is not lost, it goes on a tick
+  assert.equal(s.sendRenownOrder('v1.a.c', 6), false, 'one a second, as the relay takes them');
+  clock += 1000; s.tick();
+  assert.deepEqual(renownSent(ws).at(-1), { t: 'renown', order: 'v1.a.c' }, 'the rise the gate held went on the next tick');
+  // unanswered, it goes again after RENOWN_RESEND_MS - answered, never again
+  clock += 1000; s.tick();
+  assert.equal(renownSent(ws).length, 2, 'not before RENOWN_RESEND_MS');
+  clock += 2500; s.tick();
+  assert.equal(renownSent(ws).length, 3, 'again, unanswered');
+  ws.receive({ t: 'renown', id: 'mac-0001', lv: 6 });
+  clock += 10_000; s.tick();
+  assert.equal(renownSent(ws).length, 3, 'the room answered with the level: nothing more goes down this socket');
+  assert.equal(s.renownOf('mac-0001'), 6);
+  ws.receive({ t: 'renown', id: 'mac-0001', lv: 5 });
+  assert.equal(s.renownOf('mac-0001'), 6, 'my own echo never steps my level back either');
+  // a HALO whose welcome has not come gets nothing; its welcome brings the kept order
+  s.setHalo(['world:3,12']);
+  const halo = sockets[1];
+  halo.open();
+  s.tick();
+  assert.deepEqual(renownSent(halo), [], 'no word from this socket\'s relay yet');
+  halo.receive({ t: 'welcome', id: 'mac-0001', peers: [], n: 1, v: 'world108' });
+  assert.deepEqual(renownSent(halo), [{ t: 'renown', order: 'v1.a.c' }], 'the rise this room never heard');
+  // past its keeping the order is dropped, and nothing more is sent
+  clock += 60_000; s.tick();
+  assert.equal(renownSent(halo).length, 1);
+  assert.equal(s.sendRenownOrder('', 7), false);
 });
 
 test('RENOWN1 the client\'s calls: the minter names the character it is bringing online and hands the signed level back; the report goes as a POST with the bearer and nothing with no session (mutants: the character unnamed; the level dropped from the answer)', async () => {
@@ -443,7 +495,7 @@ test('RENOWN1 the tracker: nothing is earned while not earning (offline); a repo
   assert.match(w, /renownQuestEnded\?\.\(q\);/, 'the bridge\'s end reaches it');
   assert.match(w, /if \(!q\?\.questSuccess\) return;/, 'a failure pays nothing');
   assert.match(w, /renownTracker\?\.tick\(\);/);
-  assert.match(w, /addEventListener\?\.\('pagehide', \(\) => \{ renownTracker\.flush\(\); \}\);/, 'what is held goes with the page');
+  assert.match(w, /addEventListener\?\.\('pagehide', \(\) => \{ renownTracker\.leave\(\); \}\);/, 'what is held goes with the page (AUDIT RENOWN1 GAME-8: by keepalive, under its own id)');
   assert.match(w, /online\?\.sendRenownOrder\?\.\(/, 'a rise is carried to my rooms');
 });
 
@@ -456,7 +508,7 @@ const liveEntity = () => {
   return e;
 };
 
-test('RENOWN1 the layer: "On top" - both live maximums read the level\'s bonus over everything they already sum, health and magicka keep their FRACTION as it goes on, rises and comes off; a level-up adds to the stored health and never the layer; the lycanthrope\'s limiter still caps; 0 stays 0 (mutants: the bonus in the stored value; current health left behind; the fraction lost)', () => {
+test('RENOWN1 the layer: "On top" - both live maximums read the level\'s bonus over everything they already sum, health and magicka keep their FRACTION as it goes on, rises and comes off; a level-up adds to the stored health and never the layer; the lycanthrope\'s limiter caps Daggerfall\'s own maximum and the layer rides above it; 0 stays 0 (mutants: the bonus in the stored value; current health left behind; the fraction lost)', () => {
   const e = liveEntity();
   assert.deepEqual([e.maxHealth, e.health, e.maxMagicka, e.magicka], [80, 60, 50, 50]);
   assert.deepEqual(setRenownLayer(e, 12), { hp: 33, mp: 22 });
@@ -465,7 +517,7 @@ test('RENOWN1 the layer: "On top" - both live maximums read the level\'s bonus o
   e.maxHealth = e.rawMaxHealth + 10;   // a Daggerfall level-up (advancement.js adds to the raw value)
   assert.deepEqual([e.rawMaxHealth, e.maxHealth], [90, 123], 'the layer rides on top of the new stored value');
   e.maxHealthLimiter = 70;   // the unsated urge
-  assert.equal(e.maxHealth, 70, 'the limiter still caps the whole');
+  assert.equal(e.maxHealth, 103, 'AUDIT RENOWN1 GAME-4: the limiter caps Daggerfall\'s own maximum (70 of 90), and the layer rides above it - it capped the whole, and took the layer away');
   e.maxHealthLimiter = 0;
   setRenownLayer(e, null);
   assert.deepEqual([e.maxHealth, e.maxMagicka, renownHpOf(e), renownMpOf(e)], [90, 50, 0, 0], 'off: exactly Daggerfall\'s own');
@@ -562,7 +614,7 @@ test('RENOWN1 the Inspect card and the plaque: the level the relay stamped stand
   assert.match(src('src/scenes/world.js'), /const renown = online\?\.renownOf\?\.\(id\) \?\? null;[^\n]*\n\s+return \{ title: marks \? `\$\{name\} \$\{marks\}` : name, renown, subs:/, 'the plaque over a player is handed it BESIDE the name, never in its text');
 });
 
-test('RENOWN1 the main menu\'s account card: the level of the character that most recently earned, left of the name, and a row per character with how far into its level it is; an account with no track draws the heading it always drew (mutants: the oldest track\'s level; the heading changed for everyone)', () => {
+test('RENOWN1 the main menu\'s account card: the level of the character most recently played online, left of the name, and a row for each of the five most recently played characters with how far into its level it is; an account with no track draws the heading it always drew (mutants: the oldest track\'s level; the heading changed for everyone)', () => {
   const mk = (tag) => {
     const n = {
       tag, className: '', title: '', children: [],
@@ -582,8 +634,8 @@ test('RENOWN1 the main menu\'s account card: the level of the character that mos
   ] };
   card.paint();
   const h3 = card.root.all.find((n) => n.tag === 'h3');
-  assert.deepEqual(h3.children.map((c) => [c.className, c.textContent]), [['acctrenown', '10'], ['acctname', 'Lattymoy']], 'the level of the character that most recently earned, left of the name');
-  assert.equal(h3.children[0].title, 'Renown 10');
+  assert.deepEqual(h3.children.map((c) => [c.className, c.textContent]), [['acctrenown', '10'], ['acctname', 'Lattymoy']], 'the level of the character most recently played online, left of the name');
+  assert.equal(h3.children[0].title, 'Renown 10 - Mara Venn', 'AUDIT RENOWN1 UI-10: and whose it is');
   const rows = card.root.all.filter((n) => n.className === 'acctval').map((n) => n.textContent);
   assert.ok(rows.includes('Mara Venn - Renown 10, 490 / 2,150 XP to Renown 11'), rows.join(' | '));
   assert.ok(rows.includes('A character - Renown 2, 50 / 130 XP to Renown 3'), 'a character whose name the service never heard');

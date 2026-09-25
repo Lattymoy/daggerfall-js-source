@@ -52,9 +52,15 @@ export { RENOWN_MAX };
 
 /* ═══ THE CURVE ═══════════════════════════════════════════════════════
  *
- * EverQuest's shape: the first levels come in minutes, level 10 in an
- * evening, level 20 in a few weeks of evenings, and level 50 in hundreds
- * of hours. The total to reach level L, with n = L - 1:
+ * EverQuest's shape: for a character new to Daggerfall the first levels
+ * come in minutes, level 10 in an evening, level 20 in a few weeks of
+ * evenings, and level 50 in hundreds of hours. The XP follows the level
+ * of what was fought, and a class foe stands at the character's OWN
+ * Daggerfall level (characters/enemyEntity.js), as does a quest's pay -
+ * so a character that levelled offline climbs faster online: at
+ * Daggerfall level 30 a class foe is worth 300, Renown 10 is 19 kills
+ * and Renown 20 is 228 (AUDIT RENOWN1 DATA-6). Offline play itself still
+ * earns nothing. The total to reach level L, with n = L - 1:
  *
  *     10 * floor((n^3 * (n + 10) + 300 * n) / 30)
  *
@@ -170,10 +176,17 @@ export function renownBonus(level) {
  * service bounds what a lying client can do with it instead: one report
  * carries at most RENOWN_XP_REPORT_MAX (a minute of the fiercest fighting a
  * group does, several times over), and an ACCOUNT earns at most
- * RENOWN_XP_HOUR_MAX in a clock hour, across all its characters - roughly
- * twice what a strong party earns - so a client that lies every hour of
- * every day still takes about five days of doing nothing else to reach
- * the cap, and an honest one is never held.
+ * RENOWN_XP_HOUR_MAX in a clock hour, across all its characters. A solo
+ * character or a small party never meets that bound; a full party of
+ * eight against the fiercest foes can (510 XP a kill at level 30 with the
+ * whole party's bonus - about forty kills an hour), and that is the
+ * bound's price, paid by the strongest play alone (AUDIT RENOWN1 DATA-6).
+ * A client that lies every hour of every day still takes 116 hours
+ * (2,318,660 / 20,000) - about five days - of doing nothing else to
+ * reach the cap, because the hour's window only moves FORWARD
+ * (renownTracks.js: a report stamped with an hour already past is charged
+ * to the window that is open, never given a fresh one - AUDIT RENOWN1
+ * SEC-1/DATA-1).
  */
 export const RENOWN_XP_REPORT_MAX = 5_000;
 export const RENOWN_XP_HOUR_MAX = 20_000;
@@ -183,6 +196,12 @@ export const RENOWN_REPORT_MS = 60_000;
 export const RENOWN_TRACKS_MAX = 60;
 /** A character's name as the service keeps it for the account card - display only, bounded. */
 export const RENOWN_NAME_MAX = 32;
+/** AUDIT RENOWN1 DATA-4/GAME-9: A REPORT'S OWN NAME - sixteen hex digits the client draws once per report and sends
+ *  again, unchanged, with every retry of that same report, so a report the service took whose answer was lost is
+ *  answered again rather than credited twice. */
+export const RENOWN_RID_RE = /^[0-9a-f]{16}$/;
+/** A report id in its shape, or null (a client before the audit sends none, and is answered as it always was). */
+export const renownRidOf = (rid) => (typeof rid === 'string' && RENOWN_RID_RE.test(rid) ? rid : null);
 
 /* ═══ THE WORDS ═══════════════════════════════════════════════════════ */
 
@@ -195,9 +214,11 @@ export function renownText(level) {
 
 const grouped = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
-/** A track's progress in words: "1,234 / 5,510 XP to Renown 10", or "Renown 50 - the highest" at the cap. */
+/** A track's progress in words: "1,234 / 5,510 XP to Renown 10", or "the highest there is" at the cap (AUDIT RENOWN1
+ *  UI-6: the account card's row names the level before it - "Old Hand - Renown 50, Renown 50 - the highest" said it
+ *  twice). */
 export function renownProgressText(xp) {
   const p = renownProgress(xp);
-  if (p.level >= RENOWN_MAX) return `Renown ${RENOWN_MAX} - the highest`;
+  if (p.level >= RENOWN_MAX) return 'the highest there is';
   return `${grouped(p.into)} / ${grouped(p.need)} XP to Renown ${p.level + 1}`;
 }
