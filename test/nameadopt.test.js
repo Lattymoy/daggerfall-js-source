@@ -138,7 +138,8 @@ test('NAME-ADOPT bug 1: and the button reads the store, so the store is the thin
   const menu = rd('src/ui/enhancedMenu.js');
   const mark = menu.slice(menu.indexOf('function profileMark()'), menu.indexOf('function profileMark()') + 700);
   assert.match(mark, /const who = storedSession\(appStorage\(\)\);/);
-  assert.match(mark, /who\?\.name \?\? 'Sign in'/);
+  assert.match(mark, /session: who,/, 'PROFILE1: the portrait is handed the store\'s session');
+  assert.match(rd('src/ui/profileBadge.js'), /session\?\.name \?\? 'Sign in'/, 'and draws its name');
 });
 
 // ── THE MINTER ──────────────────────────────────────────────────────

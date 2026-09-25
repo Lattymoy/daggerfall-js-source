@@ -159,7 +159,8 @@ import { AccountFlow } from './accountFlow.js';
 import { accountCard } from './enhancedAccount.js';
 import { skinCard } from './skinCard.js';   // DISC23-B2: the skin, on the profile
 import { saveTile, cloudStateOf, saveFromCard } from './saveTile.js';   // TILE1 (Mac: "a detailed tile based design for your saves... showing your portrait and character information"), and ACC2c's card-shaped save
-import { loadFace } from './facePortrait.js';   // TILE1: the character's face, the one home chargen also reads
+import { loadFace } from './facePortrait.js';
+import { profileBadge, portraitSave } from './profileBadge.js';   // PROFILE1: the mark is the last character's portrait   // TILE1: the character's face, the one home chargen also reads
 import { cloudIo, cloudList, pushSlot, pullSlot, removeCloudSlot, cloudOnly, slotKeyOf, cloudRefusalText } from '../systems/cloudSaves.js';   // ACC2: the backup a tile can offer, AUDIT-312 F1's delete, and ACC2c's download of a save that is only up there
 import { serviceBase, storedSession } from '../net/accountClient.js';
 
@@ -811,16 +812,18 @@ const signedIn = () => !!storedSession(appStorage());
 
 /** The profile mark, top-right of the door - the corner About does not
  *  use. It says who you are when it knows, and offers the way in when
- *  it does not. */
+ *  it does not. PROFILE1 (Mac: "more like a profile icon less like a
+ *  button"): a PORTRAIT - the last character's face (ui/profileBadge.js),
+ *  asked for as a promise so the door never waits on a CIF read. */
 function profileMark() {
-  const b = el('button', 'px-profile');
-  b.type = 'button';
   const who = storedSession(appStorage());
-  b.setAttribute('aria-label', who ? `Account: ${who.name ?? 'signed in'}` : 'Sign in or create an account');
-  b.append(el('span', 'px-profileicon', who ? '\u25c6' : '\u25c7'));
-  b.append(el('span', 'px-profilename', who?.name ?? 'Sign in'));
-  b.onclick = () => { accountOpen = true; render(); };
-  return b;
+  const save = portraitSave(savedGames());
+  return profileBadge(document, {
+    session: who,
+    save,
+    face: save ? loadFace(save, { scale: 2, copy: true }) : null,   // a COPY: the Continue pane's tile may draw this very face
+    onOpen: () => { accountOpen = true; render(); },
+  });
 }
 
 /** The window itself, wearing the pause window's own frame. */
