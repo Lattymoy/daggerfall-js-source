@@ -248,7 +248,15 @@ import { freeTavernRooms } from '../systems/guildServices.js';
 // B2: the bank - the window, the per-region accounts and the purse seam.
 import { BankWindow, preloadBankArt, bankArtLoaded, BANK_RECTS, BANK_PANEL_X, BANK_PANEL_Y } from '../ui/bankWindow.js';
 import { BankPurchaseWindow, preloadPurchaseArt, purchaseArtLoaded } from '../ui/bankPurchaseWindow.js';   // H2
-import { createBankAccounts, createHouses, BANK_REGION_COUNT, TRANSACTION_RESULT, ownsHouse, isHouseOwned, ownedHouseKey, houseSellPrice, housesForSale, allocateHouseToPlayer, purchaseHouse, ownsShip, ownedShipType, purchaseShip, sellShip, sellHouse, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS } from '../systems/banking.js';   // H1/H2   // H3: the two leaves - the sell price and the ship
+import { createBankAccounts, createHouses, BANK_REGION_COUNT, TRANSACTION_RESULT, ownsHouse, isHouseOwned, ownedHouseKey, houseSellPrice, housesForSale, allocateHouseToPlayer, purchaseHouse, ownsShip, ownedShipType, purchaseShip, sellShip, sellHouse, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, housePrice } from '../systems/banking.js';   // H1/H2   // H3: the two leaves - the sell price and the ship
+// HOME1: the online homes - the door's one answer, the offer, the owner's menu, and an owned home's own scene
+import {
+  homeCandidate, homePurchasable, homeSceneName, homeDoorAnswer, homeDoorTitle, homeLockedLine, homeBelongsLine,
+  homeForSaleLine, homeOfferLines, HOME_BOUGHT_LINE, homeShortLine, homeOwnerLines, homeEntryLine, homeSaleLines,
+  homeSoldLine, homeRefund, HOME_ENTRY_WORDS, HOME_BANK_LINES, buyOnlineHome, sellOnlineHome,
+} from '../systems/onlineHomes.js';
+import { HOME_ENTRIES, homePriceOk } from '../net/homeLaw.js';
+import { accountRefusalText } from '../net/accountClient.js';
 // P1: the scene cache - what an interior remembers across a visit.
 import {
   createSceneCache, cacheScene, restoreCachedScene,
@@ -721,7 +729,7 @@ export function createWorldModes(host) {
   function interiorPublishLoot(key, { claim = false } = {}) {
     const s = _intShared;
     const canon = interiorLootKeyOf(key);
-    if (!s?.locationKey || !canon || !interiorCtx) return false;
+    if (!s?.locationKey || !canon || !interiorCtx || s.home) return false;   // HOME1: a home's cupboards are never the room's
     if (claim && s.seen.has(canon)) return false;
     const l = interiorLootRecords(interiorCtx, [canon], s.tooBig);
     if (!l.length) return false;   // never opened, or too large to say - it stays this player's own
@@ -1156,6 +1164,11 @@ export function createWorldModes(host) {
   }
   // E2: the entered building's identity + the shop browse overlay.
   let interiorBuilding = null;
+  // HOME1: the online home the entered building IS, read once at its door and held for the visit - the storage's
+  // scene (currentInteriorScene), the bed, the room and the cupboards all ask this answer, never a later one (a
+  // town's answer landing mid-visit must not move my things to another scene). Null offline and for any building no
+  // player owns; `own` when it is this character's.
+  let interiorHome = null;
   // UL1: what Unleveled Loot reads of PlayerEnterExit, PlayerGPS and the
   // player - IsPlayerInsideOpenShop, Interior.BuildingData.Quality,
   // IsPlayerInsideDungeon, CurrentRegionIndex, CurrentLocation's
@@ -2999,6 +3012,9 @@ export function createWorldModes(host) {
   function currentInteriorScene() {
     const key = interiorBuilding?.buildingKey;
     if (!key) return null;
+    // HOME1: my online home keeps its things under its OWN scene - offline the same building is a stranger's, whose
+    // cupboards restock on the first open (systems/onlineHomes.js's header).
+    if (interiorHome?.own) return homeSceneName(homeTownOf(interiorBuilding), key);
     return interiorSceneName(questSceneCtx?.()?.mapId ?? 0, key);
   }
 
@@ -3244,6 +3260,7 @@ export function createWorldModes(host) {
       // only the shipyard list was, and openShipPurchase below is it.
       ownsHouse: () => ownsHouse(playerEntity.houses ?? [], bankRegion()),
       housesForSale: () => currentHousesForSale().length,
+      onlineHomeLines: () => (host.onlineHomes ? HOME_BANK_LINES : null),   // HOME1: online, a home is bought at its door
       // H2: BUY HOUSE reaches the purchase window. The U24 identity
       // guard again - a window that dispatches to another must not be
       // nulled by its OWN onClose - and the bank is restored when the
@@ -4639,6 +4656,7 @@ export function createWorldModes(host) {
    *  arm of the ladder that is not a table lookup. */
   let _doorTextKey = null;
   let _doorTextGen = -1;
+  let _doorTextHomes = -1;   // HOME1: the homes registry's version the text was read at - a town's answer, a sale, repaints the door
   let _doorText = null;
   /**
    * ...AND IT IS FREED WHEN THE MODE LEAVES THE STREET.
@@ -4935,7 +4953,8 @@ export function createWorldModes(host) {
       // (systems/worldHover.js), and a door's reach IS
       // DOOR_ACTIVATION_DISTANCE. Same refusal, one rung higher.
       const gen = doorGeneration?.() ?? 0;
-      if (_doorTextKey === key && _doorTextGen === gen) return _doorText;
+      const homesV = host.onlineHomes?.version?.() ?? 0;
+      if (_doorTextKey === key && _doorTextGen === gen && _doorTextHomes === homesV) return _doorText;
       // AUDIT-WH2 L1-F2: THE KEY IS STAMPED ON SUCCESS, NOT ON ENTRY.
       //
       // It used to be stamped here, with `_doorText = null` beside it,
@@ -4963,14 +4982,21 @@ export function createWorldModes(host) {
       discoverBuilding(locId, bd, null, questBuildingSource);   // .cs:719
       const db = getDiscoveredBuilding(locId, bd.buildingKey);
       if (!db) return _doorText;
+      // HOME1: a player's home is named for its owner ("Your home", "Aldric's home") and has no Lock Level - its lock
+      // is its owner's word, not a mechanism - only "Locked" when it will not open for me; a house I could buy says
+      // its price. The town is asked for here without waiting: its answer moves `homesV`, and this door is read again.
+      if (host.onlineHomes && homeCandidate(bd)) host.onlineHomes.ensure(homeTownOf(bd));
+      const home = homeOf(bd);
       _doorText = staticDoorName('building', {
-        displayName: db.displayName,
+        displayName: home ? homeDoorTitle(home) : db.displayName,
         locationName: currentLocationName(),
         buildingType: bd.buildingType,
-        unlocked: resolveBuildingUnlocked(bd),
+        unlocked: home ? true : resolveBuildingUnlocked(bd),
         quality: bd.quality ?? 0,
       });
-      _doorTextKey = key; _doorTextGen = gen;
+      const homeLine = home ? (homeDoorFor(bd, home) === 'locked' ? 'Locked' : null) : homeSaleHover(bd);
+      if (_doorText && homeLine) _doorText = { ..._doorText, subs: [...(_doorText.subs ?? []), homeLine] };
+      _doorTextKey = key; _doorTextGen = gen; _doorTextHomes = homesV;
       return _doorText;
     }
     if (typeof key !== 'string') return null;
@@ -4983,6 +5009,41 @@ export function createWorldModes(host) {
       return t ? { title: t } : null;
     }
     return null;
+  }
+
+  // ═══ HOME1 — THE ONLINE HOMES (systems/onlineHomes.js) ═══════════════════════════════════════════════════════════
+  // Mac: "allowing online players to purchase housing in any location", "Housing is exclusive", bought "At its front
+  // door", entry "Owner chooses". The registry is the host's (`host.onlineHomes`, built online only); these read it.
+  /** The town a building record is keyed by: the door's own location (buildingDataForDoor's `townMapId` - a streamed
+   *  neighbour's door is not the town under the player), else the location under the player. */
+  const homeTownOf = (b) => b?.townMapId || (questSceneCtx?.()?.mapId ?? 0);
+  /** The online home a building is, as this client last heard - null offline, for a building no player can own, or
+   *  while its town is not known yet. */
+  function homeOf(b) {
+    const homes = host.onlineHomes;
+    if (!homes || !b || !homeCandidate(b)) return null;
+    return homes.homeAt(homeTownOf(b), b.buildingKey);
+  }
+  /** Whether an active quest is set in this residence - the lock ladder's quest rung, its residencesOnly default. */
+  function questSiteHere(b) {
+    if (!questBridge || !isResidence(b?.buildingType)) return false;
+    return questBridge.machine.getSiteLinks(SITE_TYPES.Building, questSceneCtx?.()?.mapId ?? 0, b.buildingKey).length > 0;
+  }
+  /** What a home's door does for me (homeDoorAnswer): my party's handles, and my quest's rung. */
+  const homeDoorFor = (b, home) => homeDoorAnswer(home, { partyNames: host.partyNames?.() ?? [], questSite: questSiteHere(b) });
+  /** What a house I could buy costs - online, its town known, nobody's home, for sale (no quest in it) - priced as
+   *  Daggerfall prices a house, off its model's radius (housePrice); 0 for none, or for a model nobody can value. */
+  function homeOfferPrice(bd) {
+    const homes = host.onlineHomes;
+    if (!homes || !homeCandidate(bd) || !homes.known(homeTownOf(bd)) || homeOf(bd)) return 0;
+    if (!homePurchasable(bd, { isActiveQuestBuilding: questSiteHere })) return 0;
+    const price = housePrice(houseMeshRadius(bd));
+    return homePriceOk(price) ? price : 0;
+  }
+  /** The hover's line under a house I could buy. */
+  function homeSaleHover(bd) {
+    const price = homeOfferPrice(bd);
+    return price ? homeForSaleLine(price) : null;
   }
 
   /** BuildingIsUnlocked's ONE evaluation (PlayerActivate.cs:358): DFU
@@ -5003,11 +5064,7 @@ export function createWorldModes(host) {
         const m = membershipOf(activeMemberships(playerEntity), guild);
         return { hallAccessAnytime: hallAccessAnytime(guild, m), isMember: isMember(m) };
       },
-      isActiveQuestBuilding: (b) => {
-        if (!questBridge || !isResidence(b.buildingType)) return false;   // residencesOnly, DFU's default
-        const mapId = questSceneCtx?.()?.mapId ?? 0;
-        return questBridge.machine.getSiteLinks(SITE_TYPES.Building, mapId, b.buildingKey).length > 0;
-      },
+      isActiveQuestBuilding: questSiteHere,   // residencesOnly, DFU's default - HOME1: one spelling, the home door's too
       // H1: your own front door is not locked against you
       // (buildingLocks.js:65 - the first thing the ladder tests).
       // The hook has been in that law's contract since R1 with
@@ -5044,7 +5101,8 @@ export function createWorldModes(host) {
     discoverBuilding(locId, bd, null, questBuildingSource);
     const db = getDiscoveredBuilding(locId, bd.buildingKey);
     if (!db) return;
-    townTalk?.say?.(db.displayName);
+    const home = homeOf(bd);   // HOME1: a player's home is named for its owner, as its door is
+    townTalk?.say?.(home ? homeDoorTitle(home) : db.displayName);
     if (!unlocked && bd.buildingType < BUILDING_TYPES.Temple
       && bd.buildingType !== BUILDING_TYPES.HouseForSale) {
       // WORLD-HOVER: the sentence has ONE home now (buildingLocks.
@@ -5092,7 +5150,7 @@ export function createWorldModes(host) {
    *  and that second caller is what R1's FLAG said was missing -
    *  "what is missing is not the two rolls but the INPUT that would
    *  reach them". `attemptExteriorDoorBash` below is that input. */
-  async function activateStaticDoor(hit, entries, isBash = false) {
+  async function activateStaticDoor(hit, entries, isBash = false, { homeAsked = false } = {}) {
     // Route by verbatim door type: buildings to interiors, dungeon
     // entrances into the RDB crawl.
     // :507-509 - the bash SOUND, before any of the type routing and
@@ -5145,7 +5203,27 @@ export function createWorldModes(host) {
       // player where DFU always has BuildingSummary.
       if (bd && bd.buildingType != null) {
         if (locId) discoverBuilding(locId, bd, null, questBuildingSource);   // AUDIT 63 F49: PlayerEnterExit.cs:1032's call takes the quest name-override arm (PlayerGPS.cs:945-959)
-        const unlocked = resolveBuildingUnlocked(bd);
+        // HOME1: A PLAYER'S HOME ANSWERS FIRST. Online, a building the account service names as a player's home opens
+        // for its owner at any hour and for whoever else its owner lets in (Mac: "Owner chooses") - and for nobody
+        // else, by no pick, no bash and no spell: its lock is its owner's word, not a mechanism. In Info mode my own
+        // door is my menu and a house I could buy is its offer ("At its front door"); `homeAsked` is the press that
+        // comes back from either, going on to the door. A building the service does not name - or a town not heard
+        // from yet, `waitFor`'s bound - falls through to Daggerfall's ladder below, untouched.
+        let home = null;
+        let homeOpen = false;
+        if (host.onlineHomes && homeCandidate(bd)) {
+          await host.onlineHomes.waitFor(homeTownOf(bd));
+          home = homeOf(bd);
+          const door = homeDoorFor(bd, home);
+          if (door === 'locked') { townTalk?.say?.(homeLockedLine(home)); return true; }
+          if (!isBash && !homeAsked && getInteractionMode() === 'info') {
+            if (door === 'own') { openHomeOwnerMenu(bd, home, hit, entries); return true; }
+            const price = door === 'none' ? homeOfferPrice(bd) : 0;
+            if (price) { openHomeOffer(bd, price, hit, entries); return true; }
+          }
+          homeOpen = door !== 'none';
+        }
+        const unlocked = homeOpen || resolveBuildingUnlocked(bd);
         // X3: HandleOpenEffectOnExteriorDoor (:519-520). An armed OPEN
         // spell is tried on a locked building BEFORE the mode ladder,
         // and it spends itself either way (Open.cs:158's CancelEffect
@@ -5263,7 +5341,7 @@ export function createWorldModes(host) {
           factionId: bd.factionId ?? 0,
           buildingUnlocked: opened,
           isBrokenIn,
-          houseOwned: isHouseOwned(playerEntity.houses ?? [], bd.regionIndex ?? 0, bd.buildingKey),
+          houseOwned: home !== null || isHouseOwned(playerEntity.houses ?? [], bd.regionIndex ?? 0, bd.buildingKey),   // HOME1: a player's home has no residents to greet anyone
           isShop: isShop(bd.buildingType),
         });
         if (greet) {
@@ -5311,6 +5389,101 @@ export function createWorldModes(host) {
       }
     }
     return enterInteriorCore(hit, entries);
+  }
+
+  // ═══ HOME1 — THE OFFER, THE OWNER'S MENU, THE SALE ═════════════════════════════════════════════════════════════
+  /** The press that comes back from a home's box and goes on to the door, as Daggerfall's Info click does. */
+  const homeOnward = (hit, entries) => () => { activateStaticDoor(hit, entries, false, { homeAsked: true }).catch((e) => console.error(e)); };
+  /** The purse seam's two halves a home is paid from: the purse (letters of credit too - GetGoldAmount) and the
+   *  building's own region's bank account, minted on first use as the bank window mints it. */
+  function homeAccount(region) {
+    playerEntity.bankAccounts ??= createBankAccounts(BANK_REGION_COUNT);
+    return playerEntity.bankAccounts[region] ?? null;
+  }
+  /** THE OFFER at a house anyone may buy (Info). Yes buys it; No goes on to the door. */
+  function openHomeOffer(bd, price, hit, entries) {
+    townTalk?.showOverlay?.(new ChoiceWindow({
+      lines: homeOfferLines(price),
+      options: [
+        { code: 'KeyY', label: 'Y - yes', action: () => { buyHomeAt(bd, price).catch((e) => console.error(e)); } },
+        { code: 'KeyN', label: 'N - no', action: homeOnward(hit, entries) },
+      ],
+    }));
+  }
+  /** Buy it (systems/onlineHomes.js buyOnlineHome: the service's claim first, the gold once it lands), paid as
+   *  Daggerfall's PurchaseHouse pays - DeductGoldAmount off the purse, its shortfall off the region's account - and
+   *  the home's own scene made permanent, where what I keep in it will live. */
+  async function buyHomeAt(bd, price) {
+    const homes = host.onlineHomes;
+    if (!homes) return;
+    const region = bd.regionIndex ?? 0;
+    const mapId = homeTownOf(bd);
+    const purse = bankPurse();
+    const r = await buyOnlineHome(homes, {
+      mapId, buildingKey: bd.buildingKey, region, price,
+      afford: (n) => n <= purse.totalGold() + (homeAccount(region)?.accountGold ?? 0),
+      pay: (n) => { const short = purse.deductGold(n); const a = homeAccount(region); if (a) a.accountGold -= short; },
+    });
+    if (!r.ok) { townTalk?.say?.(r.error === 'gold' ? homeShortLine(price) : accountRefusalText(r.error)); return; }
+    addPermanentScene(sceneCache(), homeSceneName(mapId, bd.buildingKey));
+    townTalk?.say?.(HOME_BOUGHT_LINE);
+  }
+  /** THE OWNER'S MENU at their own door (Info): go in, who may enter, sell it. */
+  function openHomeOwnerMenu(bd, home, hit, entries) {
+    townTalk?.showOverlay?.(new ChoiceWindow({
+      lines: homeOwnerLines(home),
+      options: [
+        { code: 'KeyG', label: 'G - go in', action: homeOnward(hit, entries) },
+        { code: 'KeyW', label: 'W - who may enter', action: () => openHomeEntryMenu(bd, home.entry) },
+        { code: 'KeyS', label: 'S - sell it', action: () => openHomeSale(bd) },
+        { code: 'Escape', label: 'Esc - close', action: () => {} },
+      ],
+    }));
+  }
+  /** Who may walk in: the owner alone, their party, anyone (net/homeLaw.js HOME_ENTRIES). */
+  function openHomeEntryMenu(bd, current) {
+    const pick = (entry) => async () => {
+      if (entry === current) return;
+      const r = await host.onlineHomes.setEntry(homeTownOf(bd), bd.buildingKey, entry);
+      townTalk?.say?.(r.ok ? homeEntryLine(entry) : accountRefusalText(r.error));
+    };
+    townTalk?.showOverlay?.(new ChoiceWindow({
+      lines: ['Who may enter your home?', homeEntryLine(current)],
+      options: [
+        ...HOME_ENTRIES.map((e, i) => ({
+          code: `Digit${i + 1}`, label: `${i + 1} - ${HOME_ENTRY_WORDS[e]}`,
+          action: () => { pick(e)().catch((err) => console.error(err)); },
+        })),
+        { code: 'Escape', label: 'Esc - close', action: () => {} },
+      ],
+    }));
+  }
+  /** Sell it back - asked first, at the share Daggerfall pays for a deed of what this house costs. */
+  function openHomeSale(bd) {
+    const refund = homeRefund(housePrice(houseMeshRadius(bd)));
+    townTalk?.showOverlay?.(new ChoiceWindow({
+      lines: homeSaleLines(refund),
+      options: [
+        { code: 'KeyY', label: 'Y - yes', action: () => { sellHomeAt(bd).catch((e) => console.error(e)); } },
+        { code: 'KeyN', label: 'N - no', action: () => {} },
+      ],
+    }));
+  }
+  /** The sale (sellOnlineHome: released first, credited once the service agrees, at its own record of the price),
+   *  paid into the region's bank account as Daggerfall pays a deed, and the home's scene no longer kept - what was
+   *  left in it goes with the next clearing of the scene cache, as a sold house's does. */
+  async function sellHomeAt(bd) {
+    const homes = host.onlineHomes;
+    if (!homes) return;
+    const region = bd.regionIndex ?? 0;
+    const mapId = homeTownOf(bd);
+    const r = await sellOnlineHome(homes, {
+      mapId, buildingKey: bd.buildingKey,
+      credit: (n) => { const a = homeAccount(region); if (a) a.accountGold += n; },
+    });
+    if (!r.ok) { townTalk?.say?.(accountRefusalText(r.error)); return; }
+    removePermanentScene(sceneCache(), homeSceneName(mapId, bd.buildingKey));
+    townTalk?.say?.(homeSoldLine(r.refund));
   }
 
   /** ROAD-B: PlayerActivate.AttemptExteriorDoorBash (:1056-1079) - THE
@@ -5460,6 +5633,14 @@ export function createWorldModes(host) {
         // so a shop broken into after hours still sold at full price.
         if (building) building.insideOpenShop = insideOpenShop;
       }
+      // HOME1: the online home this building is, read HERE, once, before the interior stands - its residents, its
+      // furniture and (at the commit below) the visit's latch all take this answer. The door's own press already
+      // asked, so its town is warm; a restore asks now, bounded as the door is.
+      let home = null;
+      if (host.onlineHomes && building && homeCandidate(building)) {
+        await host.onlineHomes.waitFor(homeTownOf(building));
+        home = homeOf(building);
+      }
       // ROAD-B B4: the OTHER TWO latches PlayerActivate.TransitionInterior
       // sets in the same breath as insideOpenShop -
       //   playerEnterExit.IsPlayerInsideTavern    = RMBLayout.IsTavern(db.buildingType);
@@ -5496,7 +5677,7 @@ export function createWorldModes(host) {
       const peopleVisible = !building ? true : peopleAreVisible(building, {
         hour: _hour,
         insideOpenShop,
-        isHouseOwned: (key) => isHouseOwned(playerEntity.houses ?? [], building?.regionIndex ?? 0, key),
+        isHouseOwned: (key) => home !== null || isHouseOwned(playerEntity.houses ?? [], building?.regionIndex ?? 0, key),   // HOME1: a player's home - anyone's - has no residents
         guildForBuilding: (factionId) => {
           const g = guildOfFaction(factionId, resolveVariantGuild(_dict), _dict);
           if (!g) return null;
@@ -5508,7 +5689,9 @@ export function createWorldModes(host) {
       // evaluated at build like DFU's (:816) - the bank registry is the
       // host's, the peopleVisible idiom. Ships route at ACTIVATION
       // only, as DFU does.
-      const houseOwned = !!building && isHouseOwned(playerEntity.houses ?? [], building.regionIndex ?? 0, building.buildingKey);
+      // HOME1: online, the service's list decides wherever it names the building - my home's furniture is storage, a
+      // stranger's home's is not mine; elsewhere Daggerfall's own deed.
+      const houseOwned = !!building && (home ? home.own : isHouseOwned(playerEntity.houses ?? [], building.regionIndex ?? 0, building.buildingKey));
       // P8: parent the interior at the entered building's world matrix
       // (verbatim ownerPosition + buildingMatrix) - context coordinates
       // come back world-frame, landings run in one frame, and the walk
@@ -5564,6 +5747,11 @@ export function createWorldModes(host) {
       _insideTavern = insideTavern;
       _insideResidence = insideResidence;
       _insidePartyRestExempt = partyRestExempt;
+      interiorHome = home;   // HOME1: the visit's latch, committed with the identity and its three latches
+      // ...and my home's scene is KEPT, whichever page bought it: a purchase on a page that was never saved left the
+      // service's word standing and the save's permanent set without it, and the next clearing of the scene cache would
+      // have thrown my things away (idempotent - DFU's own AddPermanentScene guards with Contains).
+      if (home?.own) addPermanentScene(sceneCache(), homeSceneName(homeTownOf(building), building.buildingKey));
       // HEARTH1: the room's own fires, off the light list this context
       // already built - a tavern's hearth, a brazier in a hall. The
       // parent frame, which is what the lights carry and what the
@@ -5578,8 +5766,10 @@ export function createWorldModes(host) {
         const b = interiorBuilding;
         // AUDIT WORLD6a B6: ANY ship interior is owned - DFU does not distinguish ships, so a player who owns one owns
         // them all, and two players in one hull disagreed about whether the room existed; a hull is the boarder's own
-        const owned = b?.buildingType === BUILDING_TYPES.Ship || isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, b?.buildingKey);
-        _intShared = mintInteriorShared(interiorLocationKey(questSceneCtx?.()?.mapId ?? 0, b?.buildingKey ?? 0), { owned });   // AUDIT WORLD6a A1: the bag from the one mint, its key spelled as the pure half reads it
+        // HOME1: an ONLINE home keeps its room - its owner and whoever they let in stand in it together, and its
+        // cupboards are never the room's (the owner's are their storage, a visitor's are shut - the container arm).
+        const owned = b?.buildingType === BUILDING_TYPES.Ship || (!interiorHome && isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, b?.buildingKey));
+        _intShared = mintInteriorShared(interiorLocationKey(questSceneCtx?.()?.mapId ?? 0, b?.buildingKey ?? 0), { owned, home: !!interiorHome });   // AUDIT WORLD6a A1: the bag from the one mint, its key spelled as the pure half reads it
         const key = _intShared.locationKey;
         if (key) ctx.actions.onChanged = (recs) => host.onActions?.({ k: key, a: recs });
       }
@@ -5852,6 +6042,9 @@ export function createWorldModes(host) {
         // theft basket behind `loot.houseOwned` (:919), which is why
         // Yes opens the window in PRIVATE-PROPERTY mode below.
         const c = interiorCtx.containers[Number(key.split(':')[1])];
+        // HOME1: in someone else's home the cupboards are theirs - not a stranger's to restock, not a theft to roll,
+        // not the room's. Shut, and said so (what they keep is in their own save, never in mine).
+        if (c && interiorHome && !interiorHome.own) { say(homeBelongsLine(interiorHome)); return true; }
         if (c) {
           const b = interiorBuilding;
           // PT1: `loot.houseOwned` (:919) is set in the STRANGER arm
@@ -5887,7 +6080,7 @@ export function createWorldModes(host) {
             if (win) { interiorOverlay = win; if (!owned) interiorLootOpened(key, win, { fresh }); }   // WORLD6a: a stranger's cupboard is the room's from the open
           };
           const owned = (b?.buildingType === BUILDING_TYPES.Ship && ownsShip(playerEntity))
-            || isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, b?.buildingKey);
+            || (interiorHome ? interiorHome.own : isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, b?.buildingKey));   // HOME1: my online home's cupboards are my storage
           if (owned) {
             // ":907 - loot.stockedDate = 1; // Ensure it gets
             // serialized". A literal 1 is below any real
@@ -5967,6 +6160,7 @@ export function createWorldModes(host) {
     interiorCamps.destroyAll(); interiorHearths.length = 0;   // HEARTH1: this room's fires are this room's - one building's hearth is not the next one's
     interiorCtx = null;
     interiorBuilding = null;   // E2: the identity + overlay leave with the interior
+    interiorHome = null;   // HOME1: and the visit's home with it
     exteriorDoor = null;       // IS1: ...and the way back in with them
 // ROAD-B B1: the whole stack leaves with the interior, not just its
     // top - a rest suspended under a message box is a real occupant.
@@ -7293,7 +7487,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:9323's own wave-46 note); the interior
+          // a blow (world.js:9334's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -8292,7 +8486,7 @@ export function createWorldModes(host) {
       // that lets you sleep in it" - and that moment arrived in the
       // same merge: DaggerfallBankManager.IsHouseOwned is live over
       // the region's own registry slot.
-      houseOwned: isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, b?.buildingKey ?? 0),
+      houseOwned: interiorHome ? interiorHome.own : isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, b?.buildingKey ?? 0),   // HOME1: my online home's bed is mine
       // GetRentedRoom(mapId, buildingKey), through the SAME finder the
       // tavern window rents with - so the bed this answers is the bed
       // that was sold (tavern.js's own flag, retired here).
@@ -9224,12 +9418,12 @@ export function createWorldModes(host) {
       if (mode === 'dungeon') return dungeonCtx ? !!dungeonCtx.applyActions?.(id, data) : false;
       if (mode !== 'interior' || !interiorCtx || !_intShared?.locationKey || !data || data.k !== _intShared.locationKey) return false;
       const n = (Array.isArray(data.a) ? interiorCtx.actions.applyRemote(data.a) : 0)
-        + (Array.isArray(data.l) ? applyInteriorLoot(interiorCtx, data.l, { seen: _intShared.seen, openKey: _intShared.openKey, today: stockedToday() }) : 0);
+        + (!_intShared.home && Array.isArray(data.l) ? applyInteriorLoot(interiorCtx, data.l, { seen: _intShared.seen, openKey: _intShared.openKey, today: stockedToday() }) : 0);   // HOME1: no word lands on a home's cupboards (world/interiorShared.js)
       return n > 0;
     },
     placeActionRecords(keys) {
       if (mode === 'dungeon') return dungeonCtx ? (dungeonCtx.actionRecords?.(keys) ?? null) : null;
-      return mode === 'interior' && interiorCtx && _intShared?.locationKey ? interiorActionRecords(interiorCtx, keys, { locationKey: _intShared.locationKey, tooBig: _intShared.tooBig }) : null;
+      return mode === 'interior' && interiorCtx && _intShared?.locationKey ? interiorActionRecords(interiorCtx, keys, { locationKey: _intShared.locationKey, tooBig: _intShared.tooBig, home: _intShared.home }) : null;
     },
     restoreDungeonSave(extras) {
       if (mode !== 'dungeon' || !dungeonCtx) return false;
@@ -9531,7 +9725,7 @@ export function createWorldModes(host) {
         // the stack holds (ROAD-B B1).
         interiorWindows.reconcile(interiorOverlay);
         interiorWindows.clear((w) => w.dispose?.());
-        interiorCtx = null; interiorBuilding = null; interiorOverlay = null; exteriorDoor = null;
+        interiorCtx = null; interiorBuilding = null; interiorHome = null; interiorOverlay = null; exteriorDoor = null;   // HOME1: the visit's home with the identity
         _insideTavern = false;   // ROAD-B B4: PlayerEnterExit.cs:874, the same latch on the teleport/load arm
         _insidePartyRestExempt = false;   // TAVERN-REST1/GUILD-REST1: cleared on the same teleport/load arm as the tavern latch above
       }
@@ -9786,7 +9980,7 @@ export function createWorldModes(host) {
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
      *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3387-3409), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:6500). So an F9 pressed in a shop
+     *  unconditionally (world.js:6508). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -9825,7 +10019,7 @@ export function createWorldModes(host) {
       if (interiorOverlay instanceof DeathScreen) { interiorOverlay.restoreView(); interiorOverlay = null; }
     },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:6600)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:6608)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -9835,7 +10029,7 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:6767`
+     *  HARD2c: this used to spell them out, and named `world.js:6775`
      *  and `dungeonContext.js:6371` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */

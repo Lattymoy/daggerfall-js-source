@@ -41,6 +41,7 @@ import { HANDLE_RE } from './handleShape.js';
 import { LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTER_LINES_MAX, LETTERS_SENT_MAX, LETTERS_PAIR_MAX } from './letterLaw.js';   // MAIL1: the letter's bounds, in the refusals' own sentences
 import { MUTE_RANGE_TEXT } from './moderation.js';   // AUDIT 68 S14-mute-range-text-duplicated: the mute's bound in the refusal's sentence, from its home
 import { RENOWN_TRACKS_MAX } from './renown.js';   // RENOWN1: the tracks' bound, in its refusal's own sentence
+import { HOME_CAP } from './homeLaw.js';   // HOME1: the cap a refusal names
 
 /** WHERE THE SERVICE IS. Its own constant beside the relay's
  *  DEFAULT_SERVER (net/online.js), because they are two Workers and
@@ -149,6 +150,16 @@ export const REFUSALS = Object.freeze({
   'renown-character': 'The account service could not tell which character earned that.',
   'renown-xp': 'The account service refused that experience report.',
   'renown-full': `This account already has Renown for ${RENOWN_TRACKS_MAX} characters, the most it keeps.`,
+  // HOME1, the online homes (server-account/src/homes.js). A player meets these at a front door, beside the price.
+  'homes-need-account': 'Owning a home needs a username and a password. Give this account one and you can buy one.',
+  'home-taken': 'Somebody else owns this home now.',
+  'home-cap': `A character can own at most ${HOME_CAP} homes. Sell one to buy another.`,
+  'home-rate': 'You have bought and sold a lot of homes this hour. Try again later.',
+  'no-home': 'That home is not yours any more.',
+  'bad-home': 'The account service could not tell which building that is.',
+  'home-character': 'The account service could not tell which character is buying.',
+  'bad-entry': 'The account service does not know that setting. The game may need updating.',
+  'no-session': 'You are not signed in to an account.',
   server: 'The account service had a problem. Try again.',
   offline: 'Could not reach the account service. Check your connection.',
 });
@@ -487,6 +498,24 @@ export function accountRenown({ fetch, storage }) {
     report: (character, xp, name = null, rid = null) => report(character, xp, name, rid),
     /** AUDIT RENOWN1 GAME-8: the same report as the page goes - `keepalive`, so the browser finishes it after the page. */
     leave: (character, xp, name = null, rid = null) => report(character, xp, name, rid, true),
+  };
+}
+
+/**
+ * HOME1: THE ONLINE HOMES (server-account/src/homes.js) through the one door - a town's homes, the caller's own, and
+ * the three that change one. Every answer is `call`'s shape; no session is `no-session`, never a throw.
+ */
+export function accountHomes({ fetch, storage }) {
+  const post = async (path, body) => {
+    const s = storedSession(storage);
+    return s ? call({ fetch, base: serviceBase(storage), secret: s.secret }, path, body) : { ok: false, error: 'no-session' };
+  };
+  return {
+    town: (mapId) => post('/v1/homes/town', { mapId }),
+    mine: () => post('/v1/homes/mine', {}),
+    claim: ({ mapId, buildingKey, region, character, price }) => post('/v1/homes/claim', { mapId, buildingKey, region, character, price }),
+    release: (mapId, buildingKey) => post('/v1/homes/release', { mapId, buildingKey }),
+    entry: (mapId, buildingKey, entry) => post('/v1/homes/entry', { mapId, buildingKey, entry }),
   };
 }
 

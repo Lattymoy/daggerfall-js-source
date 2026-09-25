@@ -100,7 +100,7 @@ test('HC1: a shelf-set model in an OWNED house is MakeHouseContainer, not a shop
 
 test('HC1: the host answers houseOwned at BUILD, off the bank registry (:816)', () => {
   const wm = src('scenes/worldModes.js');
-  assert.ok(wm.includes('const houseOwned = !!building && isHouseOwned(playerEntity.houses ?? [], building.regionIndex ?? 0, building.buildingKey);'),   // AUDIT 68 S23-failed-entry-stale-building: the door's record, before the host commits it
+  assert.ok(wm.includes('const houseOwned = !!building && (home ? home.own : isHouseOwned(playerEntity.houses ?? [], building.regionIndex ?? 0, building.buildingKey));'),   // AUDIT 68 S23-failed-entry-stale-building: the door's record, before the host commits it. HOME1 re-aim: online, the service's list decides where it names the building (home1.test.js)
     'the host owns the registry and evaluates at BUILD');
   assert.ok(wm.includes('setupStaticNpc, houseOwned, peopleVisible,'),
     'the answer rides the opts into buildInteriorContext - the peopleVisible idiom');
@@ -122,7 +122,7 @@ test('HC1: owner access - house OR ship - opens loot-target storage, never stock
   // file. lastIndexOf, because the namer is declared above the ladder.
   const arm = wm.slice(wm.lastIndexOf("if (key.startsWith('container:')) {"));
   const guard = arm.indexOf("(b?.buildingType === BUILDING_TYPES.Ship && ownsShip(playerEntity))");
-  const houseGuard = arm.indexOf('|| isHouseOwned(playerEntity.houses ?? []');
+  const houseGuard = arm.indexOf('|| (interiorHome ? interiorHome.own : isHouseOwned(playerEntity.houses ?? []');   // HOME1 re-aim: my online home's cupboards are my storage
   assert.ok(guard >= 0 && houseGuard > guard, 'the ship arm (:905-906) rides the same OR as the house');
   const ownedLatch = arm.indexOf('c.items ??= [];');
   // PIN MOVED at A2, deliberately: the stranger arm's `??=` became the

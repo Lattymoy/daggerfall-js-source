@@ -107,7 +107,7 @@ export class HuntWindow {
     // a row of dots, taking no click (click() swallows) and Escape
     // alone (input above). So it rides the same per-frame door the
     // eight classic windows take (ui/restWindow.js:870,
-    // ui/bankWindow.js:410) with ITS OWN caption, never "click or
+    // ui/bankWindow.js:415) with ITS OWN caption, never "click or
     // press a key" (AUDIT ENH-NOTICE3 B2 - the hint tells the truth).
     // A per-frame door and not noticeHold: this window IS drawn every
     // frame, so the watchdog is the honest guard - a host that drops

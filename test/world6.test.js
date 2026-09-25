@@ -137,7 +137,7 @@ test('WORLD6a: the pure half - the memory is the opened containers the room know
 
 test('WORLD6a: the hosts by source - the interior mode keys and stamps its room at the mount (an owned house or ship keeps none), wires the doors\' seam, claims a container on the open, says a restock and the close through the frame\'s settle, fires the leave before both teardowns, and the mode machine dispatches the PLACE; the world host walks the one path; the pane says it', () => {
   const m = rd('src/scenes/worldModes.js');
-  assert.match(m, /const owned = b\?\.buildingType === BUILDING_TYPES\.Ship \|\| isHouseOwned\(playerEntity\.houses \?\? \[\], b\?\.regionIndex \?\? 0, b\?\.buildingKey\);\s*_intShared = mintInteriorShared\(interiorLocationKey\(questSceneCtx\?\.\(\)\?\.mapId \?\? 0, b\?\.buildingKey \?\? 0\), \{ owned \}\);[^\n]*\n\s*const key = _intShared\.locationKey;\s*if \(key\) ctx\.actions\.onChanged = \(recs\) => host\.onActions\?\.\(\{ k: key, a: recs \}\);/, 'the mount (AUDIT WORLD6a A1: the bag from the one mint; B6: any ship is owned)');
+  assert.match(m, /const owned = b\?\.buildingType === BUILDING_TYPES\.Ship \|\| \(!interiorHome && isHouseOwned\(playerEntity\.houses \?\? \[\], b\?\.regionIndex \?\? 0, b\?\.buildingKey\)\);\s*_intShared = mintInteriorShared\(interiorLocationKey\(questSceneCtx\?\.\(\)\?\.mapId \?\? 0, b\?\.buildingKey \?\? 0\), \{ owned, home: !!interiorHome \}\);[^\n]*\n\s*const key = _intShared\.locationKey;\s*if \(key\) ctx\.actions\.onChanged = \(recs\) => host\.onActions\?\.\(\{ k: key, a: recs \}\);/, 'the mount (AUDIT WORLD6a A1: the bag from the one mint; B6: any ship is owned; HOME1 re-aim: an online home keeps its room, loot-free)');
   assert.match(m, /fresh = true;   \/\/ AUDIT WORLD6a A5/, 'a cupboard\'s restock is said at the window');
   assert.match(m, /if \(win\) \{ interiorOverlay = win; if \(!owned\) interiorLootOpened\(key, win, \{ fresh \}\); \}/, 'a stranger\'s cupboard claimed on the open, an owner\'s never');
   assert.match(m, /const fresh = needsRestock\(shelf, today\);/, 'a shelf\'s restock is the open\'s word');
@@ -156,7 +156,7 @@ test('WORLD6a: the hosts by source - the interior mode keys and stamps its room 
   assert.match(m, /\{ kind: 'interior', buildingKey: _intShared\?\.owned \? 0 : \(interiorBuilding\?\.buildingKey \?\? 0\) \}/, 'an owned building keeps no room at all (AUDIT WORLD6a A6/B6)');
   assert.match(m, /restorePlaceSharedWorld\(shared\) \{[\s\S]*?if \(ok\) _intShared\.applied = true;/, 'the memory lands once per context');
   assert.match(m, /applyPlaceActions\(id, data\) \{[\s\S]*?data\.k !== _intShared\.locationKey\) return false;/, 'another building\'s act is not this one\'s');
-  assert.match(m, /placeActionRecords\(keys\) \{[\s\S]*?interiorActionRecords\(interiorCtx, keys, \{ locationKey: _intShared\.locationKey, tooBig: _intShared\.tooBig \}\)/);
+  assert.match(m, /placeActionRecords\(keys\) \{[\s\S]*?interiorActionRecords\(interiorCtx, keys, \{ locationKey: _intShared\.locationKey, tooBig: _intShared\.tooBig, home: _intShared\.home \}\)/);   // HOME1 re-aim: a home's room names no cupboard
   const w = rd('src/scenes/world.js');
   assert.match(w, /const shared = modes\?\.placeSharedWorld\?\.\(\);/); assert.match(w, /modes\?\.restorePlaceSharedWorld\?\.\(shared\)/); assert.match(w, /modes\?\.applyPlaceActions\?\.\(id, data\)/);
   assert.equal((w.match(/modes\?\.placeActionRecords\?\./g) ?? []).length, 2, 'the act and the flush');

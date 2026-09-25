@@ -29,7 +29,7 @@
  *  reason: a deploy that did not happen looks exactly like one that
  *  did. Kept in step with ACCOUNT_VERSION in wrangler.toml, which
  *  test/accountworker.test.js holds. */
-export const ACCOUNT_VERSION = 'acct9';   // acct9: RENOWN1's Renown; acct8: DUEL1's duelling record; acct3: ACC3's titles and glyphs; acct4: ACC4's time played; acct5: MOD1's moderation; acct6: MAIL1's letters; acct7: TITLE-N's Dungeon Master and Patreon tiers
+export const ACCOUNT_VERSION = 'acct9';   // acct9: RENOWN1's Renown and HOME1's online homes (both unshipped, one deploy); acct8: DUEL1's duelling record; acct3: ACC3's titles and glyphs; acct4: ACC4's time played; acct5: MOD1's moderation; acct6: MAIL1's letters; acct7: TITLE-N's Dungeon Master and Patreon tiers
 
 /** A body bigger than this is not a request this service has. Read
  *  BEFORE the JSON is parsed, so a megabyte of nothing costs nothing. */
@@ -140,6 +140,10 @@ export const ROUTES = new Set([
   // RENOWN1: Renown - what one of the caller's characters
   // earned online. Behind a session; the level itself rides the token.
   '/v1/renown/xp',
+  // HOME1: the online homes - one owner a building (homes.js). A town's
+  // homes are read by every session, a guest's too (the doors say whose
+  // a home is to everyone); the three that change one are an account's.
+  '/v1/homes/town', '/v1/homes/mine', '/v1/homes/claim', '/v1/homes/release', '/v1/homes/entry',
 ]);
 
 /** The routes a caller reaches WITHOUT a credential. Everything else

@@ -50,6 +50,7 @@ on:
       - "src/net/moderation.js"
       - "src/net/playClock.js"
       - "src/net/renown.js"
+      - "src/net/homeLaw.js"
       - "src/net/wire.js"
       - "src/net/dice.js"
       - "src/world/mat4.js"
@@ -432,6 +433,25 @@ jobs:
           echo "renown/xp again -> $code"
           if [ "$code" != "200" ] || ! grep -q '"credited":0' /tmp/renown2.json || ! grep -q '"repeat":true' /tmp/renown2.json; then
             echo "::error::a repeated Renown report was not answered as a repeat ($code)"; cat /tmp/renown2.json || true; exit 1
+          fi
+
+          # HOME1: THE HOMES ARE LIVE. A town's homes are any session's to
+          # read - a guest's too - so an empty town answers 200 with a list
+          # (a 500 is the migration that did not apply); and a guest's claim
+          # is refused as homes-need-account, never taken (a 404 is a route
+          # that did not deploy). Nothing is claimed here: a smoke that
+          # bought a home would leave a building owned by nobody real.
+          code=$(curl -sS --max-time 15 -o /tmp/homes.json -w '%{http_code}' -X POST "$base/v1/homes/town" \
+            -H 'content-type: application/json' -d "{\"secret\":\"$secret\",\"mapId\":1}")
+          echo "homes/town -> $code"
+          if [ "$code" != "200" ] || ! grep -q '"homes":\[' /tmp/homes.json; then
+            echo "::error::/v1/homes/town did not answer a town's homes ($code)"; cat /tmp/homes.json || true; exit 1
+          fi
+          code=$(curl -sS --max-time 15 -o /tmp/claim.json -w '%{http_code}' -X POST "$base/v1/homes/claim" \
+            -H 'content-type: application/json' -d "{\"secret\":\"$secret\",\"mapId\":1,\"buildingKey\":1,\"region\":0,\"character\":\"deploy-smoke\",\"price\":1}")
+          echo "homes/claim as a guest -> $code"
+          if [ "$code" != "403" ] || ! grep -q '"homes-need-account"' /tmp/claim.json; then
+            echo "::error::/v1/homes/claim did not refuse a guest as homes-need-account ($code)"; cat /tmp/claim.json || true; exit 1
           fi
 
           handle="smoke$(date +%s | tail -c 7)"

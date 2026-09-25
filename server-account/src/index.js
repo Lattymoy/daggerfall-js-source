@@ -108,6 +108,7 @@ import { signingKey } from './signing.js';
 import { titleWorn, glyphsOf } from './titles.js';
 import { sendLetter, inboxOf, readLetter, deleteLetter } from './letters.js';   // MAIL1: the letters' routes
 import { reportRenownXp, renownTrackOf, renownTracksOf, renownCharacterOk } from './renownTracks.js';   // RENOWN1: Renown's track
+import { claimHome, releaseHome, setHomeEntry, homesInTown, homesOf } from './homes.js';   // HOME1: the online homes' routes
 
 // THIS MODULE EXPORTS `default` AND NOTHING ELSE, and that is a
 // runtime requirement rather than a preference: in a module Worker
@@ -404,6 +405,31 @@ export default {
           if (key) order = await mintRenownOrder({ s: who.player.id, lv: r.level }, key, { subtle, nowS });
         }
         return json({ ...r, order }, 200, origin);
+      }
+
+      // ═══ HOME1: THE ONLINE HOMES ═════════════════════════════════
+      //
+      // A town's homes are anyone's to READ - a guest's session too, since
+      // every door says whose a home is. Owning one is an account's: the
+      // same wall as the letters' and the saves', with its own word (a
+      // guest is a device, and a home held by one a cleared browser loses
+      // is a building gone from the world). homes.js holds the bounds.
+      if (path.startsWith('/v1/homes/')) {
+        if (request.method !== 'POST') return no('method', 405, origin);
+        if (path === '/v1/homes/town') {
+          const r = await homesInTown(ctx, who.player, body);
+          return 'error' in r ? no(r.error, 400, origin) : json(r, 200, origin);
+        }
+        if (path === '/v1/homes/mine') return json(await homesOf(ctx, who.player), 200, origin);
+        if (accountKind(who.player) !== 'linked') return no('homes-need-account', 403, origin);
+        if (path === '/v1/homes/claim') {
+          const r = await claimHome(ctx, who.player, body);
+          if (!('error' in r)) return json(r, 200, origin);
+          const status = r.error === 'home-taken' || r.error === 'home-cap' ? 409 : r.error === 'home-rate' ? 429 : 400;
+          return no(r.error, status, origin);
+        }
+        const r = path === '/v1/homes/release' ? await releaseHome(ctx, who.player, body) : await setHomeEntry(ctx, who.player, body);
+        return 'error' in r ? no(r.error, r.error === 'bad-entry' ? 400 : 404, origin) : json(r, 200, origin);
       }
 
       if (path === '/v1/account/title' && request.method === 'POST') {

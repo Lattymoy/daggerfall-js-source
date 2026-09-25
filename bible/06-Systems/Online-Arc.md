@@ -4689,7 +4689,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6196` read, on one physical line:
+`src/scenes/worldModes.js:6390` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4831,7 +4831,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4257` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4265` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:255`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -8423,3 +8423,80 @@ No relay change, no account change. Pinned: `test/hub1.test.js` (5) - the rule o
 count, the ink (the circles' colours and their order under the glyphs, names and neighbours set clear), the host by
 source; `test/heldmap.test.js` HUB1 window (1) - the label and the box driven, online, capital and offline.
 `tools/mutants/hub1.json` (30).
+
+## HOME1 (2026-09-25, Mac: "allowing online players to purchase housing in any location"; asked, "Housing is exclusive", bought "At its front door", a house bought offline "Stay offline only", who walks in "Owner chooses") - a house anyone can buy at its door, and its door is its owner's
+
+Daggerfall Unity has one player and one house a region, bought at the bank; this is a Ledger A departure
+(`Port-Ledger.md` section A, AN ONLINE HOME IS ONE PLAYER'S, AND ITS DOOR IS THEIRS TO OPEN), online's alone. Mac's
+three answers: buy "At its front door" ("Click any unowned house's door and buy it there. Works in every town,
+including hamlets with no bank."); a house bought offline "Stay offline only" ("Online, the server's list is the only
+truth. The offline house keeps working offline. Nobody ever loses a house to a conflict."); who may enter, "Owner
+chooses" ("Private, Party or Public, changeable anytime. Guild is added when guilds land."). The defaults the arc
+took: three town homes a character, no upkeep.
+
+- **The registry** (`server-account/src/homes.js` over `migrations/0010_homes.sql`, its shapes `src/net/homeLaw.js`,
+  which the client reads too). A home is a building in a town: the town's unsigned map id and the building's key
+  there, the table's primary key - so a building is nobody's or one character's, never two, server-wide. It belongs
+  to one CHARACTER (the id its save carries, as Renown's tracks key on) of one REGISTERED account - a guest's device
+  can be lost with its browser, and a home held by an account nobody can sign back into would be a building gone
+  from the world - and its door names the account's handle, never the character. The claim is ONE statement that
+  lands only while the building is nobody's and the character holds fewer than HOME_CAP (3), so two claims racing
+  for one building, or for a character's last place, cannot both land; a claim sent again after a lost answer finds
+  the building already the same character's and is answered as the claim. Twenty claims an hour an account. Every
+  write names the owner in its WHERE, so another's home is exactly as absent as none (`no-home`). A town's homes are
+  any session's to read, a guest's too - whose each is, who may enter, which are the caller's own - never a price or
+  another account's character. A release answers what was paid. The account deleted, its homes go with it.
+  Routes `/v1/homes/town|mine|claim|release|entry`, POST; the deploy's smoke reads a town and refuses a guest's claim.
+- **The client's reading** (`src/systems/onlineHomes.js`): a town at a time, asked as the player walks into it
+  (`scenes/world.js`, the location rect's entry, beside HUB1's arrival line) and by any door of it, believed for a
+  minute; an unanswered ask keeps what was known and waits ten seconds before the next; a door waits at most 2.5
+  seconds for a town it has never heard from and then goes on under Daggerfall's law. `own` is read against the
+  character playing now; the account's other characters may always walk in, but a home is not theirs.
+- **Where the service's list decides.** Online, a building it names is that player's home; one it does not name -
+  or a town not heard from yet - stands under Daggerfall's own law, and that includes this character's own OFFLINE
+  house: it is a house the server never hears of, not one taken away, so it keeps its storage and its bed, and anyone
+  may still buy the building online, which then decides it (the offline house is still the character's offline).
+  The bank sells no house online: Buy House answers "Online, a home is bought at its own front door." - its list is
+  Daggerfall's house (`ui/bankWindow.js`).
+- **The door** (`scenes/worldModes.js activateStaticDoor`, BEFORE Daggerfall's lock ladder). A player's home opens
+  for its owner at any hour and for whoever the owner lets in: anyone when public, a player whose party holds the
+  owner when party (the handles the relay signs), and - Daggerfall's own rung - a player whose active quest is set
+  in it, so a quest never strands its player. It is shut to everyone else by no pick, no bash and no Open spell, the
+  refusal "This is <owner>'s home. The door is locked." In INFO mode a house anyone may buy is its offer: "This house
+  can be your home. It costs N gold, from your purse and this region's bank account. Buy it?" - the price Daggerfall's
+  bank asks for that house (its model's radius x 1280 - the model the door's own record now carries,
+  `systems/talkTopics.js buildingDataForDoor`, the town directory's for the same building); Yes claims it first and takes the gold only once the claim
+  lands (the purse, letters of credit too, then the region's account, as Daggerfall's PurchaseHouse pays), asking the
+  purse again after the answer and giving the claim back if it can no longer be paid; No goes on to the door, as
+  Daggerfall's Info click does. A house is a candidate when it is Daggerfall's for-sale house or an ordinary
+  residence (House1-4) - never a faction's House2 - and is for sale when no active quest is set in it. In Info mode
+  my own door is my menu: G go in, W who may enter (Only me, My party, Anyone), S sell it back - at Daggerfall's deed
+  share (85%) of what the SERVICE says was paid, into the region's account, credited only once the service agrees;
+  anything left inside is lost with the next clearing of the scene cache, as a sold house's is. The hover names a
+  home "Your home" or "<owner>'s home", with "Locked" when it will not open for me and no Lock Level (its lock is a
+  word, not a mechanism), and a house for sale "Can be your home: N gold"; the Info click names it the same way.
+- **The visit.** Its home is read once at the door and held for the visit (`interiorHome`): a town's answer landing
+  mid-visit moves nothing. MY home is mine as Daggerfall's owned house is - its shelves are storage, its cupboards
+  never restock, its bed is mine - and what I keep in it lives under ITS OWN scene (`homeSceneName`), never the
+  building's: offline the same building is a stranger's, whose cupboards restock the moment they are opened, and
+  under one name the first offline visit would have thrown my things away. The scene is made permanent at the
+  purchase and again at every entry (a purchase on a page never saved would otherwise leave it unkept). SOMEONE
+  ELSE'S home is not a stranger's house: its cupboards are shut ("This belongs to <owner>."), nothing restocks,
+  nothing is stolen. Any player's home has no residents and greets no one.
+- **The room.** An online home keeps its relay room (an owned offline house or a ship keeps none, as before), so its
+  owner and their guests stand in it together and its doors are shared - but the room carries NO LOOT
+  (`world/interiorShared.js`, the bag's `home`): its memory names no cupboard, a peer's word about one never lands
+  (a word about `container:3` would have overwritten the owner's chest, and then been published back as the room's),
+  and a refused act's records name none.
+- **Quests** (`systems/quest/place.js`, a departure: Daggerfall has one player): no quest picks a known player's home
+  as its residence (the towns this page has heard from).
+
+Offline nothing here exists and every door is Daggerfall's. **Known limits.** A quest set up for a town this page
+has not heard from can still pick a building that is someone's home; the quest rung then lets its player in. The
+gold is the save's, as all of it is. What a home holds lives in its owner's own save, never on the service - the
+next slices' decor (DECOR1) is the first thing kept there. No relay change. Pinned: `test/home1.test.js` (11) - the
+law, the service through the real Worker with every migration applied (one owner, the cap a character's, the repeat,
+entry, release, the cascade), the rate, the client's door to it, the client's law and registry, buying and selling,
+the room without loot, the bank online, the door's model, the wiring by source; re-aimed by content in `test/auditworld6a.test.js`,
+`test/world6.test.js`, `test/housecontainers.test.js`, `test/houses.test.js`, `test/restlodging.test.js`,
+`test/worldhover.test.js`. `tools/mutants/home1.json`.

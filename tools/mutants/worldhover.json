@@ -810,8 +810,8 @@
   {
     "name": "WORLD-HOVER-the-door-text-cache-ignores-the-generation",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (_doorTextKey === key && _doorTextGen === gen) return _doorText;",
-    "new": "      if (_doorTextKey === key) return _doorText;",
+    "old": "      if (_doorTextKey === key && _doorTextGen === gen && _doorTextHomes === homesV) return _doorText;",
+    "new": "      if (_doorTextKey === key && _doorTextHomes === homesV) return _doorText;",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -819,8 +819,8 @@
   {
     "name": "WORLD-HOVER-the-door-text-is-resolved-every-frame-again",
     "file": "src/scenes/worldModes.js",
-    "old": "      const gen = doorGeneration?.() ?? 0;\n      if (_doorTextKey === key && _doorTextGen === gen) return _doorText;\n",
-    "new": "      const gen = doorGeneration?.() ?? 0;\n",
+    "old": "      const gen = doorGeneration?.() ?? 0;\n      const homesV = host.onlineHomes?.version?.() ?? 0;\n      if (_doorTextKey === key && _doorTextGen === gen && _doorTextHomes === homesV) return _doorText;\n",
+    "new": "      const gen = doorGeneration?.() ?? 0;\n      const homesV = host.onlineHomes?.version?.() ?? 0;\n",
     "tests": [
       "test/worldhover.test.js"
     ]
