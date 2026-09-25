@@ -4695,7 +4695,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6637` read, on one physical line:
+`src/scenes/worldModes.js:6690` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -8547,6 +8547,39 @@ entry, release, the cascade), the rate, the client's door to it, the client's la
 the room without loot, the bank online, the door's model, the wiring by source; re-aimed by content in `test/auditworld6a.test.js`,
 `test/world6.test.js`, `test/housecontainers.test.js`, `test/houses.test.js`, `test/restlodging.test.js`,
 `test/worldhover.test.js`. `tools/mutants/home1.json`.
+
+### HOME2 (2026-09-25, Mac: "We need to ensure any house can be bought"; offered the door's offer on any click but Steal and House5/House6 counted as houses - "Recommended + should use our tooltip implementation") - any house, bought through its door's own tooltip
+
+HOME1 offered a house to a click in **Info mode alone** - every other mode walked in, so a player who never switched
+to Info never met a single offer. And the account service's deploy after the merge read red: its smoke test got
+`renown/xp -> 404` from an old instance a second after `/v1/health` said acct10 - the deploy had taken (the
+migrations 0009-0013 applied, the guild trigger among them, and the live routes answered 401 minutes later), but a
+red deploy reads as a service that is not there.
+
+- **Every house type is a house** (`systems/onlineHomes.js homeCandidate`). House5 and House6 join House1-4 and the
+  for-sale house - RMBLayout.IsResidence leaves them out, Mac's call is that any house sells. A guild's House2 (the
+  Thieves Guild's, the Dark Brotherhood's) still never does: sold to one player it would shut the guild out.
+- **The door's verbs, on the plaque** (`homeBuyRows`, `homeOwnerRows`; `scenes/worldModes.js homeDoorVerbs`). Online,
+  in every mode but Steal (which picks the lock), World Tooltips' plaque over a house I could buy lists "Go in" and
+  "Buy it: N gold", and over my own home "Go in", "Who may enter: ..." and "Sell it" - ACT-MENU's rows
+  (`systems/worldHover.js`), as a player's and a horse's are: the wheel lights one, the click presses it. "Go in" is
+  first and lit, so a plain click is still a plain click. The price is the buy row's, not a line of its own. The
+  door's cached text now minds the mode and the arm (`_doorTextVerbs`), so a switch to Steal or an arm repaints it.
+- **Buying takes two presses** (`HOME_BUY_ARM_MS` 5 s): the first arms the row ("Click again to buy: N gold"), the
+  second buys, through HOME1's own purchase (the service's claim first, the gold once it lands). A wheel notch too
+  many and one click never spend thousands. "Who may enter" moves round (only me, my party, anyone) through the
+  service, said when it lands; "Sell it" opens HOME1's sale window, whose warning a row could not carry.
+- **Where the plaque lists nothing** (a touch screen, World Tooltips off - the plaque's own gate), the click offers:
+  a house's offer in any mode but Steal ("Y - buy it", "N - just go in"), once a house a session - "just go in"
+  walks in and that house does not ask again - and always in Info; my home's menu in Info, as before. The press
+  reads the lit verb for ITS door alone (`plaqueActionFor(key)`), against the door as it stands at the press.
+- **The deploy's smoke asks again** (`.github/workflows/account-deploy.yml`, `post`): a call that answers 404 is
+  asked again, seven times five seconds apart, before the deploy is failed - an old instance wrote nothing for a
+  path it does not know. Every new route's call goes through it.
+
+Pinned: `test/home2.test.js` (4) - the law, the plaque's fold executed, the door by source, the deploy; re-aimed by
+content in `test/home1.test.js` (House5, the Info-only offer) and `test/worldhover.test.js` (the door cache).
+`tools/mutants/home2.json` (16, all dead); `home1.json` and `worldhover.json` records re-aimed.
 
 ## DECOR1 (2026-09-25, Mac: "building our own unique version instead of porting" Kaedius's Decorator; decor "Gold per placement"; asked, the catalogue "Everything Daggerfall furnishes", priced "By size", opened from "A UI element that can be clicked to open the decorate panel. Allows free cam mode for placement and an intuitive scrolling menu with filters", offline "kept in the save") - the decorator, from the ground up
 

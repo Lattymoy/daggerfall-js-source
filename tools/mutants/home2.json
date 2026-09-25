@@ -1,0 +1,147 @@
+[
+  {
+    "name": "HOME2-house5-left-out",
+    "file": "src/systems/onlineHomes.js",
+    "old": "|| t === BUILDING_TYPES.House5 || t === BUILDING_TYPES.House6;",
+    "new": "|| t === BUILDING_TYPES.House6;",
+    "tests": [
+      "test/home2.test.js"
+    ]
+  },
+  {
+    "name": "HOME2-house6-left-out",
+    "file": "src/systems/onlineHomes.js",
+    "old": "|| t === BUILDING_TYPES.House5 || t === BUILDING_TYPES.House6;",
+    "new": "|| t === BUILDING_TYPES.House5;",
+    "tests": [
+      "test/home2.test.js"
+    ]
+  },
+  {
+    "name": "HOME2-the-buy-row-first",
+    "file": "src/systems/onlineHomes.js",
+    "old": "  { id: HOME_VERB.enter, label: 'Go in' },\n  { id: HOME_VERB.buy, label: armed ?",
+    "new": "  { id: HOME_VERB.buy, label: armed ?",
+    "tests": [
+      "test/home2.test.js"
+    ]
+  },
+  {
+    "name": "HOME2-the-arm-unsaid",
+    "file": "src/systems/onlineHomes.js",
+    "old": "label: armed ? `Click again to buy: ${price} gold` : `Buy it: ${price} gold` },",
+    "new": "label: `Buy it: ${price} gold` },",
+    "tests": [
+      "test/home2.test.js"
+    ]
+  },
+  {
+    "name": "HOME2-the-entry-stuck",
+    "file": "src/systems/onlineHomes.js",
+    "old": "HOME_ENTRIES[(Math.max(0, HOME_ENTRIES.indexOf(entry)) + 1) % HOME_ENTRIES.length];",
+    "new": "HOME_ENTRIES[Math.max(0, HOME_ENTRIES.indexOf(entry))];",
+    "tests": [
+      "test/home2.test.js"
+    ]
+  },
+  {
+    "name": "HOME2-verbs-in-steal",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!host.onlineHomes || getInteractionMode() === 'steal') return null;\n    if (home?.own) return homeOwnerRows(home.entry);",
+    "new": "    if (!host.onlineHomes) return null;\n    if (home?.own) return homeOwnerRows(home.entry);",
+    "tests": [
+      "test/home2.test.js"
+    ]
+  },
+  {
+    "name": "HOME2-the-cache-blind-to-the-verbs",
+    "file": "src/scenes/worldModes.js",
+    "old": "_doorTextHomes === homesV && _doorTextVerbs === verbsSig) return _doorText;",
+    "new": "_doorTextHomes === homesV) return _doorText;",
+    "tests": [
+      "test/home2.test.js"
+    ]
+  },
+  {
+    "name": "HOME2-the-verb-unpassed",
+    "file": "src/scenes/worldModes.js",
+    "old": "return activateStaticDoor(entries[key], entries, false, { verb: plaqueActionFor(key) });",
+    "new": "return activateStaticDoor(entries[key], entries, false, {});",
+    "tests": [
+      "test/home2.test.js"
+    ]
+  },
+  {
+    "name": "HOME2-one-press-buys",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (homeArmed(bd)) { _homeArm = null; buyHomeAt(bd, price)",
+    "new": "    if (true) { _homeArm = null; buyHomeAt(bd, price)",
+    "tests": [
+      "test/home2.test.js"
+    ]
+  },
+  {
+    "name": "HOME2-the-arm-never-lapses",
+    "file": "src/scenes/worldModes.js",
+    "old": "const homeArmed = (bd) => !!_homeArm && _homeArm.id === homeIdOf(bd) && performance.now() - _homeArm.at <= HOME_BUY_ARM_MS;",
+    "new": "const homeArmed = (bd) => !!_homeArm && _homeArm.id === homeIdOf(bd);",
+    "tests": [
+      "test/home2.test.js"
+    ]
+  },
+  {
+    "name": "HOME2-the-fallback-asks-every-click",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (price && (mode === 'info' || !_homePassed.has(homeIdOf(bd)))) {",
+    "new": "if (price) {",
+    "tests": [
+      "test/home2.test.js",
+      "test/home1.test.js"
+    ]
+  },
+  {
+    "name": "HOME2-the-pass-unrecorded",
+    "file": "src/scenes/worldModes.js",
+    "old": "action: () => { _homePassed.add(homeIdOf(bd)); homeOnward(hit, entries)(); } },",
+    "new": "action: homeOnward(hit, entries) },",
+    "tests": [
+      "test/home2.test.js"
+    ]
+  },
+  {
+    "name": "HOME2-the-price-said-twice",
+    "file": "src/scenes/worldModes.js",
+    "old": "const homeLine = verbs ? null : home ?",
+    "new": "const homeLine = home ?",
+    "tests": [
+      "test/home2.test.js"
+    ]
+  },
+  {
+    "name": "HOME2-the-verbs-dropped",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (verbs) _doorText = { ..._doorText, actions: verbs };\n",
+    "new": "",
+    "tests": [
+      "test/home2.test.js"
+    ]
+  },
+  {
+    "name": "HOME2-the-sell-verb-for-a-stranger",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (verb === HOME_VERB.sell && door === 'own') {",
+    "new": "if (verb === HOME_VERB.sell) {",
+    "tests": [
+      "test/home2.test.js"
+    ]
+  },
+  {
+    "name": "HOME2-the-smoke-never-retries",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "            for i in $(seq 1 7); do",
+    "new": "            for i in $(seq 1 1); do",
+    "tests": [
+      "test/home2.test.js"
+    ]
+  }
+]

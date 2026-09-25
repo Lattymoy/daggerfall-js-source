@@ -132,7 +132,7 @@ import { dungeonStartDoorFor } from '../systems/save.js';   // CASTLE1: the load
 import { composeNamer, composeContents } from '../systems/worldHover.js';   // INTERIOR-BODIES: the interior stands itemised bodies now, so its contents reader is a LADDER like the other three hosts' rather than one prefix
 import { raceWinner } from '../player/activationRace.js';   // WORLD-HOVER: the race's WINNER, so the plaque names what the press would open
 import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, and the hide door for the branches that return above it
-import { quickLootTake } from '../systems/quickLoot.js';   // QUICK-LOOT B4: the take, through the window's own door
+import { quickLootTake, plaqueActionFor } from '../systems/quickLoot.js';   // QUICK-LOOT B4: the take, through the window's own door; HOME2: the verb the plaque lit over a door
 import { lootPile } from '../player/lootStack.js';   // LOOT-STACK: the pile under the reticle, as the loot window's tabs
 import { staticDoorName, npcHoverName, questResourceName, worldTooltipsOn, hideInteractTooltip,
   houseContainerName, houseContainerHover, actionName, actionDoorName, lootPileName,
@@ -258,6 +258,7 @@ import {
   homeCandidate, homePurchasable, homeSceneName, homeDoorAnswer, homeDoorTitle, homeLockedLine, homeBelongsLine,
   homeForSaleLine, homeOfferLines, HOME_BOUGHT_LINE, homeShortLine, homeOwnerLines, homeEntryLine, homeSaleLines,
   homeSoldLine, homeRefund, HOME_ENTRY_WORDS, HOME_BANK_LINES, buyOnlineHome, sellOnlineHome,
+  HOME_BUY_ARM_MS, HOME_VERB, homeBuyRows, homeOwnerRows, homeNextEntry, HOME_OFFER_BUY, HOME_OFFER_PASS,   // HOME2
 } from '../systems/onlineHomes.js';
 import { HOME_ENTRIES, homePriceOk } from '../net/homeLaw.js';
 // DECOR1c: the pieces a room's owner placed (their law, and the pool that stands them in the room)
@@ -4898,6 +4899,7 @@ export function createWorldModes(host) {
   let _doorTextKey = null;
   let _doorTextGen = -1;
   let _doorTextHomes = -1;   // HOME1: the homes registry's version the text was read at - a town's answer, a sale, repaints the door
+  let _doorTextVerbs = '';   // HOME2: whether the door's verbs were listed, and which buy was armed - a mode change or an arm repaints it
   let _doorText = null;
   /**
    * ...AND IT IS FREED WHEN THE MODE LEAVES THE STREET.
@@ -5195,7 +5197,8 @@ export function createWorldModes(host) {
       // DOOR_ACTIVATION_DISTANCE. Same refusal, one rung higher.
       const gen = doorGeneration?.() ?? 0;
       const homesV = host.onlineHomes?.version?.() ?? 0;
-      if (_doorTextKey === key && _doorTextGen === gen && _doorTextHomes === homesV) return _doorText;
+      const verbsSig = homeVerbsSig();
+      if (_doorTextKey === key && _doorTextGen === gen && _doorTextHomes === homesV && _doorTextVerbs === verbsSig) return _doorText;
       // AUDIT-WH2 L1-F2: THE KEY IS STAMPED ON SUCCESS, NOT ON ENTRY.
       //
       // It used to be stamped here, with `_doorText = null` beside it,
@@ -5235,9 +5238,13 @@ export function createWorldModes(host) {
         unlocked: home ? true : resolveBuildingUnlocked(bd),
         quality: bd.quality ?? 0,
       });
-      const homeLine = home ? (homeDoorFor(bd, home) === 'locked' ? 'Locked' : null) : homeSaleHover(bd);
+      // HOME2: a house I could buy, and my own home, list the door's VERBS on the plaque (onlineHomes.js homeBuyRows,
+      // homeOwnerRows) - the wheel lights one, the click presses it; the price is the buy row's, not a line of its own
+      const verbs = _doorText ? homeDoorVerbs(bd, home) : null;
+      const homeLine = verbs ? null : home ? (homeDoorFor(bd, home) === 'locked' ? 'Locked' : null) : homeSaleHover(bd);
       if (_doorText && homeLine) _doorText = { ..._doorText, subs: [...(_doorText.subs ?? []), homeLine] };
-      _doorTextKey = key; _doorTextGen = gen; _doorTextHomes = homesV;
+      if (verbs) _doorText = { ..._doorText, actions: verbs };
+      _doorTextKey = key; _doorTextGen = gen; _doorTextHomes = homesV; _doorTextVerbs = verbsSig;
       return _doorText;
     }
     if (typeof key !== 'string') return null;
@@ -5286,6 +5293,29 @@ export function createWorldModes(host) {
     const price = homeOfferPrice(bd);
     return price ? homeForSaleLine(price) : null;
   }
+  // ═══ HOME2 — THE DOOR'S VERBS (systems/onlineHomes.js HOME_VERB) ════════════════════════════════════════════════════
+  // Mac: "We need to ensure any house can be bought"; offered the offer on any click but Steal, "should use our
+  // tooltip implementation". Online, in every mode but Steal (which picks the lock), a house I could buy lists "Go
+  // in" and "Buy it" on the door's plaque, and my own home "Go in", "Who may enter" and "Sell it".
+  /** A building's id among the homes - its town and its key. */
+  const homeIdOf = (bd) => `${homeTownOf(bd)}:${bd?.buildingKey}`;
+  /** The buy armed by a first press: `{ id, at }` - a second press on the same house within HOME_BUY_ARM_MS buys. */
+  let _homeArm = null;
+  const homeArmed = (bd) => !!_homeArm && _homeArm.id === homeIdOf(bd) && performance.now() - _homeArm.at <= HOME_BUY_ARM_MS;
+  /** What the door's cached text depends on beyond the door: whether verbs are listed at all (Steal lists none) and the
+   *  arm that is live - its lapse repaints the row back to "Buy it". */
+  const homeVerbsSig = () => `${host.onlineHomes && getInteractionMode() !== 'steal' ? 'v' : ''}|${_homeArm && performance.now() - _homeArm.at <= HOME_BUY_ARM_MS ? _homeArm.id : ''}`;
+  /** The door's verbs, or null: my own home's, or a house's I could buy (homeOfferPrice), in any mode but Steal. */
+  function homeDoorVerbs(bd, home) {
+    if (!host.onlineHomes || getInteractionMode() === 'steal') return null;
+    if (home?.own) return homeOwnerRows(home.entry);
+    if (home) return null;
+    const price = homeOfferPrice(bd);
+    return price ? homeBuyRows(price, homeArmed(bd)) : null;
+  }
+  /** Houses whose click-offer was answered "just go in" this session - where the plaque lists no rows (a touch screen,
+   *  World Tooltips off) the click offers once a house, and Info mode's click always does. */
+  const _homePassed = new Set();
 
   /** BuildingIsUnlocked's ONE evaluation (PlayerActivate.cs:358): DFU
    *  computes it once off the hit BuildingSummary and hands the same
@@ -5380,7 +5410,7 @@ export function createWorldModes(host) {
       return true;
     }
     if (_hitDist > _hitReach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }   // AUDIT 65 MC-2: ActivateStaticDoor's OWN first statement (:501-504), before the bash sound and the lock ladder; the board arm keeps its gate inside activateBulletinBoard (:709-712), as C# does
-    return activateStaticDoor(entries[key], entries, false);
+    return activateStaticDoor(entries[key], entries, false, { verb: plaqueActionFor(key) });   // HOME2: the verb the door's plaque lit, if it listed any
   }
 
   /** ROAD-B: ActivateStaticDoor (PlayerActivate.cs:486-632) as its own
@@ -5391,7 +5421,7 @@ export function createWorldModes(host) {
    *  and that second caller is what R1's FLAG said was missing -
    *  "what is missing is not the two rolls but the INPUT that would
    *  reach them". `attemptExteriorDoorBash` below is that input. */
-  async function activateStaticDoor(hit, entries, isBash = false, { homeAsked = false } = {}) {
+  async function activateStaticDoor(hit, entries, isBash = false, { homeAsked = false, verb = null } = {}) {
     // Route by verbatim door type: buildings to interiors, dungeon
     // entrances into the RDB crawl.
     // :507-509 - the bash SOUND, before any of the type routing and
@@ -5457,10 +5487,19 @@ export function createWorldModes(host) {
           home = homeOf(bd);
           const door = homeDoorFor(bd, home);
           if (door === 'locked') { townTalk?.say?.(homeLockedLine(home)); return true; }
-          if (!isBash && !homeAsked && getInteractionMode() === 'info') {
-            if (door === 'own') { openHomeOwnerMenu(bd, home, hit, entries); return true; }
+          const mode = getInteractionMode();
+          if (!isBash && !homeAsked && mode !== 'steal') {
+            // HOME2: THE VERB THE PLAQUE LIT, pressed - read against the door as it stands now, not as it was drawn
             const price = door === 'none' ? homeOfferPrice(bd) : 0;
-            if (price) { openHomeOffer(bd, price, hit, entries); return true; }
+            if (verb === HOME_VERB.buy && price) { pressHomeBuy(bd, price); return true; }
+            if (verb === HOME_VERB.entry && door === 'own') { turnHomeEntry(bd, home); return true; }
+            if (verb === HOME_VERB.sell && door === 'own') { openHomeSale(bd); return true; }
+            // ...and where the plaque listed none (a touch screen, World Tooltips off), the click's own offer: my home's
+            // menu in Info mode, a house's offer in any mode but Steal - once a house a session, always in Info
+            if (verb == null) {
+              if (door === 'own' && mode === 'info') { openHomeOwnerMenu(bd, home, hit, entries); return true; }
+              if (price && (mode === 'info' || !_homePassed.has(homeIdOf(bd)))) { openHomeOffer(bd, price, hit, entries); return true; }
+            }
           }
           homeOpen = door !== 'none';
         }
@@ -5641,15 +5680,29 @@ export function createWorldModes(host) {
     playerEntity.bankAccounts ??= createBankAccounts(BANK_REGION_COUNT);
     return playerEntity.bankAccounts[region] ?? null;
   }
-  /** THE OFFER at a house anyone may buy (Info). Yes buys it; No goes on to the door. */
+  /** THE OFFER at a house anyone may buy, where the plaque lists no verbs (HOME2). Yes buys it; "just go in" goes on
+   *  to the door, and this house does not ask again this session. */
   function openHomeOffer(bd, price, hit, entries) {
     townTalk?.showOverlay?.(new ChoiceWindow({
       lines: homeOfferLines(price),
       options: [
-        { code: 'KeyY', label: 'Y - yes', action: () => { buyHomeAt(bd, price).catch((e) => console.error(e)); } },
-        { code: 'KeyN', label: 'N - no', action: homeOnward(hit, entries) },
+        { code: 'KeyY', label: HOME_OFFER_BUY, action: () => { buyHomeAt(bd, price).catch((e) => console.error(e)); } },
+        { code: 'KeyN', label: HOME_OFFER_PASS, action: () => { _homePassed.add(homeIdOf(bd)); homeOnward(hit, entries)(); } },
       ],
     }));
+  }
+  /** HOME2: THE BUY ROW PRESSED - the first press arms it ("Click again to buy"), a second on the same house within
+   *  HOME_BUY_ARM_MS buys. */
+  function pressHomeBuy(bd, price) {
+    if (homeArmed(bd)) { _homeArm = null; buyHomeAt(bd, price).catch((e) => console.error(e)); return; }
+    _homeArm = { id: homeIdOf(bd), at: performance.now() };
+  }
+  /** HOME2: THE ENTRY ROW PRESSED - who may enter moves on (only me, my party, anyone), said when the service has it. */
+  function turnHomeEntry(bd, home) {
+    const next = homeNextEntry(home.entry);
+    host.onlineHomes.setEntry(homeTownOf(bd), bd.buildingKey, next)
+      .then((r) => { townTalk?.say?.(r.ok ? homeEntryLine(next) : accountRefusalText(r.error)); })
+      .catch((e) => console.error(e));
   }
   /** Buy it (systems/onlineHomes.js buyOnlineHome: the service's claim first, the gold once it lands), paid as
    *  Daggerfall's PurchaseHouse pays - DeductGoldAmount off the purse, its shortfall off the region's account - and

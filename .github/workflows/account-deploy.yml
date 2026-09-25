@@ -390,10 +390,26 @@ jobs:
           secret=$(echo "$guest" | sed -n 's/.*"secret":"\([^"]*\)".*/\1/p')
           test -n "$secret" || { echo "::error::no guest session - /v1/auth/guest did not answer a secret"; echo "$guest"; exit 1; }
 
+          # A NEW ROUTE CAN 404 FOR A FEW SECONDS AFTER THE VERSION CHECK (2026-09-25). A deploy rolls out across
+          # the edge, and /v1/health naming this version on ONE request does not make every instance new: PR #387's
+          # run got renown/xp -> 404 from an old instance a second after health said acct10, and failed a deploy
+          # that had taken (the route answered minutes later). So a call below that 404s is asked again, for up to
+          # half a minute - an old instance wrote nothing for a path it does not know - and one that still 404s
+          # after that is a route that did not deploy. `post <out> <url> <json>` prints the status.
+          post() {
+            local out=$1 url=$2 data=$3 got=404
+            for i in $(seq 1 7); do
+              got=$(curl -sS --max-time 15 -o "$out" -w '%{http_code}' -X POST "$url" -H 'content-type: application/json' -d "$data")
+              if [ "$got" != "404" ]; then break; fi
+              echo "  $url -> 404 (attempt $i, an old instance?)" >&2
+              sleep 5
+            done
+            echo "$got"
+          }
+
           # ACC4: THE BEAT IS ONE UPDATE ... RETURNING with numbered
           # parameters. node:sqlite runs both; this asks D1 itself.
-          code=$(curl -sS --max-time 15 -o /tmp/beat.json -w '%{http_code}' -X POST "$base/v1/account/played" \
-            -H 'content-type: application/json' -d "{\"secret\":\"$secret\"}")
+          code=$(post /tmp/beat.json "$base/v1/account/played" "{\"secret\":\"$secret\"}")
           echo "played -> $code"
           cat /tmp/beat.json || true
           echo
@@ -405,8 +421,7 @@ jobs:
           # MOD1: THE MODERATION ROUTE IS LIVE AND SHUT. A guest is nobody's
           # moderator, so it must be refused 403 - a 404 is a route that did
           # not deploy, a 500 a migration that did not apply.
-          code=$(curl -sS --max-time 15 -o /tmp/mod.json -w '%{http_code}' -X POST "$base/v1/mod/mute" \
-            -H 'content-type: application/json' -d "{\"secret\":\"$secret\",\"target\":\"p_nobody\",\"minutes\":1}")
+          code=$(post /tmp/mod.json "$base/v1/mod/mute" "{\"secret\":\"$secret\",\"target\":\"p_nobody\",\"minutes\":1}")
           echo "mod/mute as a guest -> $code"
           if [ "$code" != "403" ] || ! grep -q '"not-moderator"' /tmp/mod.json; then
             echo "::error::/v1/mod/mute did not refuse a guest as not-moderator ($code)"; cat /tmp/mod.json || true; exit 1
@@ -421,8 +436,7 @@ jobs:
           # deploy, a 500 a migration that did not apply or a statement D1
           # will not run.
           rid=$(printf '%016x' "$(date +%s)")
-          code=$(curl -sS --max-time 15 -o /tmp/renown.json -w '%{http_code}' -X POST "$base/v1/renown/xp" \
-            -H 'content-type: application/json' -d "{\"secret\":\"$secret\",\"character\":\"deploy-smoke\",\"xp\":1,\"rid\":\"$rid\"}")
+          code=$(post /tmp/renown.json "$base/v1/renown/xp" "{\"secret\":\"$secret\",\"character\":\"deploy-smoke\",\"xp\":1,\"rid\":\"$rid\"}")
           echo "renown/xp -> $code"
           cat /tmp/renown.json || true
           echo
@@ -430,8 +444,7 @@ jobs:
             echo "::error::a Renown report failed on the deployed Worker ($code) - a first report of 1 XP must be credited 1"
             exit 1
           fi
-          code=$(curl -sS --max-time 15 -o /tmp/renown2.json -w '%{http_code}' -X POST "$base/v1/renown/xp" \
-            -H 'content-type: application/json' -d "{\"secret\":\"$secret\",\"character\":\"deploy-smoke\",\"xp\":1,\"rid\":\"$rid\"}")
+          code=$(post /tmp/renown2.json "$base/v1/renown/xp" "{\"secret\":\"$secret\",\"character\":\"deploy-smoke\",\"xp\":1,\"rid\":\"$rid\"}")
           echo "renown/xp again -> $code"
           if [ "$code" != "200" ] || ! grep -q '"credited":0' /tmp/renown2.json || ! grep -q '"repeat":true' /tmp/renown2.json; then
             echo "::error::a repeated Renown report was not answered as a repeat ($code)"; cat /tmp/renown2.json || true; exit 1
@@ -443,14 +456,12 @@ jobs:
           # is refused as homes-need-account, never taken (a 404 is a route
           # that did not deploy). Nothing is claimed here: a smoke that
           # bought a home would leave a building owned by nobody real.
-          code=$(curl -sS --max-time 15 -o /tmp/homes.json -w '%{http_code}' -X POST "$base/v1/homes/town" \
-            -H 'content-type: application/json' -d "{\"secret\":\"$secret\",\"mapId\":1}")
+          code=$(post /tmp/homes.json "$base/v1/homes/town" "{\"secret\":\"$secret\",\"mapId\":1}")
           echo "homes/town -> $code"
           if [ "$code" != "200" ] || ! grep -q '"homes":\[' /tmp/homes.json; then
             echo "::error::/v1/homes/town did not answer a town's homes ($code)"; cat /tmp/homes.json || true; exit 1
           fi
-          code=$(curl -sS --max-time 15 -o /tmp/claim.json -w '%{http_code}' -X POST "$base/v1/homes/claim" \
-            -H 'content-type: application/json' -d "{\"secret\":\"$secret\",\"mapId\":1,\"buildingKey\":1,\"region\":0,\"character\":\"deploy-smoke\",\"price\":1}")
+          code=$(post /tmp/claim.json "$base/v1/homes/claim" "{\"secret\":\"$secret\",\"mapId\":1,\"buildingKey\":1,\"region\":0,\"character\":\"deploy-smoke\",\"price\":1}")
           echo "homes/claim as a guest -> $code"
           if [ "$code" != "403" ] || ! grep -q '"homes-need-account"' /tmp/claim.json; then
             echo "::error::/v1/homes/claim did not refuse a guest as homes-need-account ($code)"; cat /tmp/claim.json || true; exit 1
@@ -460,14 +471,12 @@ jobs:
           # list (a 500 is the migration that did not apply); and a guest's
           # placement is refused as homes-need-account (a 404 is a route that
           # did not deploy). Nothing is placed: a guest owns no home to place in.
-          code=$(curl -sS --max-time 15 -o /tmp/decor.json -w '%{http_code}' -X POST "$base/v1/homes/decor" \
-            -H 'content-type: application/json' -d "{\"secret\":\"$secret\",\"mapId\":1,\"buildingKey\":1}")
+          code=$(post /tmp/decor.json "$base/v1/homes/decor" "{\"secret\":\"$secret\",\"mapId\":1,\"buildingKey\":1}")
           echo "homes/decor -> $code"
           if [ "$code" != "200" ] || ! grep -q '"pieces":\[' /tmp/decor.json; then
             echo "::error::/v1/homes/decor did not answer a home's pieces ($code)"; cat /tmp/decor.json || true; exit 1
           fi
-          code=$(curl -sS --max-time 15 -o /tmp/place.json -w '%{http_code}' -X POST "$base/v1/homes/decor/place" \
-            -H 'content-type: application/json' -d "{\"secret\":\"$secret\",\"mapId\":1,\"buildingKey\":1,\"character\":\"deploy-smoke\",\"piece\":{}}")
+          code=$(post /tmp/place.json "$base/v1/homes/decor/place" "{\"secret\":\"$secret\",\"mapId\":1,\"buildingKey\":1,\"character\":\"deploy-smoke\",\"piece\":{}}")
           echo "homes/decor/place as a guest -> $code"
           if [ "$code" != "403" ] || ! grep -q '"homes-need-account"' /tmp/place.json; then
             echo "::error::/v1/homes/decor/place did not refuse a guest as homes-need-account ($code)"; cat /tmp/place.json || true; exit 1

@@ -54,15 +54,18 @@ export const HOME_ASK_WAIT_MS = 2_500;
 export const HOME_ENTRY_WORDS = Object.freeze({ private: 'Only me', party: 'My party', public: 'Anyone' });
 
 /**
- * WHETHER A BUILDING CAN BE A HOME AT ALL: Daggerfall's own for-sale houses and its ordinary residences (House1-4,
- * the rows GetHousesForSale tops its list up from) - never a House2 that belongs to a faction, which Daggerfall's
- * lock law keeps for that guild's members alone (buildingLocks.js; the Thieves Guild's and the Dark Brotherhood's).
+ * WHETHER A BUILDING CAN BE A HOME AT ALL: Daggerfall's own for-sale houses and every house type it has - House1-4
+ * (the residences GetHousesForSale tops its list up from) and, HOME2 (Mac: "We need to ensure any house can be
+ * bought"; asked, "Also widen what counts as a house (House5/House6 too)"), House5 and House6, which RMBLayout.
+ * IsResidence leaves out - never a House2 that belongs to a faction, which Daggerfall's lock law keeps for that
+ * guild's members alone (buildingLocks.js; the Thieves Guild's and the Dark Brotherhood's): a guild's hideout sold
+ * to one player would shut the guild out.
  */
 export function homeCandidate(bd) {
   const t = bd?.buildingType;
   if (!homeBuildingKeyOk(bd?.buildingKey)) return false;
   if (t === BUILDING_TYPES.House2 && (bd.factionId ?? 0) !== 0) return false;
-  return t === BUILDING_TYPES.HouseForSale || isResidence(t);
+  return t === BUILDING_TYPES.HouseForSale || isResidence(t) || t === BUILDING_TYPES.House5 || t === BUILDING_TYPES.House6;
 }
 
 /** ...and whether one can be BOUGHT: a candidate no active quest is using (GetHousesForSale's own exclusion). */
@@ -103,6 +106,38 @@ export const homeForSaleLine = (price) => `Can be your home: ${price} gold`;
 export const homeOfferLines = (price) => ['This house can be your home.', `It costs ${price} gold, from your purse and this region's bank account.`, 'Buy it?'];
 export const HOME_BOUGHT_LINE = 'This house is your home now. Only you can enter it until you say otherwise.';
 export const homeShortLine = (price) => `You need ${price} gold, in your purse and this region's bank account together.`;
+/**
+ * HOME2 (Mac: "We need to ensure any house can be bought"; offered the door's offer on any click but Steal, with "our
+ * tooltip implementation"): THE DOOR'S VERBS ON THE PLAQUE. HOME1 offered a house only to a click in Info mode, a
+ * window every other mode never opened - so a player who clicked a door in the mode they walk in (Grab, Talk) walked
+ * in, and no house could be bought that way. The door's tooltip (World Tooltips' plaque) now lists what the door
+ * does, as ACT-MENU lists a player's and a horse's (systems/worldHover.js): the wheel lights a row and the click
+ * presses it. "Go in" is first and lit, so a plain click is still a plain click.
+ *
+ * BUYING TAKES TWO PRESSES. The first arms the row ("Click again to buy") for HOME_BUY_ARM_MS and the second buys - a
+ * wheel notch too many and one click must never spend thousands of gold. Where the plaque draws no rows (a touch
+ * screen, World Tooltips off) the click itself offers, once a house a session (worldModes.js).
+ */
+export const HOME_BUY_ARM_MS = 5_000;
+export const HOME_VERB = Object.freeze({ enter: 'home-enter', buy: 'home-buy', entry: 'home-entry', sell: 'home-sell' });
+/** The rows over a house anyone may buy, at `price`; `armed` after its first press. */
+export const homeBuyRows = (price, armed = false) => [
+  { id: HOME_VERB.enter, label: 'Go in' },
+  { id: HOME_VERB.buy, label: armed ? `Click again to buy: ${price} gold` : `Buy it: ${price} gold` },
+];
+/** The rows over my own home: go in, who may enter (a press moves it on), sell it (its own window - the warning
+ *  that what is inside is lost is not a row's to say). */
+export const homeOwnerRows = (entry) => [
+  { id: HOME_VERB.enter, label: 'Go in' },
+  { id: HOME_VERB.entry, label: `Who may enter: ${HOME_ENTRY_WORDS[entry] ?? HOME_ENTRY_WORDS[HOME_ENTRY_DEFAULT]}` },
+  { id: HOME_VERB.sell, label: 'Sell it' },
+];
+/** Who may enter after `entry`, a press on the row: only me, my party, anyone, and round again. */
+export const homeNextEntry = (entry) => HOME_ENTRIES[(Math.max(0, HOME_ENTRIES.indexOf(entry)) + 1) % HOME_ENTRIES.length];
+/** Where the plaque draws no rows, the click's own offer: its two answers. */
+export const HOME_OFFER_BUY = 'Y - buy it';
+export const HOME_OFFER_PASS = 'N - just go in';
+
 /** The owner's menu at their own door. */
 export const homeOwnerLines = (home) => ['This is your home.', homeEntryLine(home.entry)];
 export const homeEntryLine = (entry) => `Who may enter: ${HOME_ENTRY_WORDS[entry] ?? HOME_ENTRY_WORDS[HOME_ENTRY_DEFAULT]}.`;
