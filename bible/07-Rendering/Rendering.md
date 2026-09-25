@@ -805,7 +805,10 @@ directory by `test/audit18_bible_docs.test.js`:
   `RETRO_LUT_MAX_BLOCKS` a frame) and streamed into a texture allocated
   up front, a z-slab at a time (`texStorage3D` + `texSubImage3D`), a
   failed allocation caught through getError and retried when the shift
-  or retro mode changes. See `07-Rendering/Retro-Mode.md`.
+  or retro mode changes. See `07-Rendering/Retro-Mode.md`. PERF-SCALE
+  (2026-09-25): the render scale's image is this pass's too - one home for
+  a world drawn smaller and shown - presented `smooth` (LINEAR, unsnapped,
+  no effect); retro wins. See PERF-SCALE below.
 - `volumetricClouds.js` - VC3 THE VOLUMETRIC CLOUDS: a raymarched slab between
   two altitudes, shaped by the VC2 volumes, lit by the sun (the moon at night)
   with a short light march, driven by the eased weather row, a per-weather
@@ -911,6 +914,92 @@ our current design."*
   three moments they laid 482 px against a gale's 9747 - so if a calm
   should read at a glance, `WISP_FLOOR` is the dial. Not seen in the game
   here (no game data in the container).
+
+## PERF-SCALE - A RENDER SCALE, AND THE COUNTER NAMES THE GPU (2026-09-25)
+
+Two players, relayed by Mac: "One user is reporting fps issues in the
+exterior but fine in the interior ... GPU is NVIDIA GeForce RTX 4060 Ti",
+and "me too my friend.. don't know why. I got a RX6600". Mac: "It has
+nothing to do with our updates" - FPS1 (2026-09-11) had already heard
+"the outside still has optimization issues".
+
+**What the two reports share is the frame's SIZE, not the card.** A 4060
+Ti is no weak GPU. `Renderer.beginFrame` sizes the canvas at its CSS size
+(`clientWidth` x `clientHeight`) and every world pass - the opaque world,
+the sky and its march, the water, the air's AO, bloom and shafts, the
+flats, the Morrowind and Eye Of The Beholder bodies - ran at that size
+with no cap and no dial. A 1440p window is 1.8 times a 1080p one's
+pixels, a 4K or ultrawide one 2 to 4 times, and so is a browser zoomed
+below 100% or a driver's DSR/VSR; the exterior is where the per-pixel
+work is, the interior is small and dark. And nothing on screen said
+which GPU the browser drew on - a laptop's browser on its integrated
+chip, or on SwiftShader, reads exactly like "fine inside, slow outside".
+
+**THE LAW: ONE HOME FOR A WORLD DRAWN SMALLER AND SHOWN.** RETRO1's image
+path already drew the world into a small image and presented it
+(`Renderer._retroBegin`, `_presentRetroFrame`, `render/retroPass.js`).
+PERF-SCALE generalises it rather than writing a second copy:
+
+- The frame's world image is `kind: 'retro'` or `kind: 'scale'`
+  (`Renderer.retroFrame.kind`). With retro off and the scale below 1 the
+  image is the host's world rect in canvas pixels (the whole canvas when
+  it set none; a docked bar's strip when it did) x the scale, rounded
+  (`_scaledImage`). Every world pass draws into it - on the classic set
+  straight into the image, under the Enhanced Lighting lane into the
+  lane's frame at the image's size (its passes at that size too), which
+  resolves into the image. The first screen quad, the first-person
+  overlay, a panel or the next frame presents it, as a retro image.
+- **The present is LINEAR** (`RetroPass.present({ smooth: true })`):
+  sampled at the pixel's own spot, no 640x400 presentation snap, no
+  effect, the image's filter switched to LINEAR where it is sampled and
+  back to Point for a retro frame (only when the kind changes). An image
+  over the whole canvas writes every pixel and takes no clear; one over a
+  docked strip is drawn over a black canvas, as retro's.
+- **RETRO WINS.** The retro config is asked first; a retro frame never
+  reads the scale, and its 320x200 / 640x400 image is the world's.
+  Retro off with the scale on hands the world to the scale (the palette's
+  LUT is freed, as retro off always freed it).
+- **100% IS TODAY'S FRAME.** No image, no framebuffer, no pass, no
+  present: at a scale of 1 the frame's GL calls are the frame with no
+  scale source, call for call (`test/perfscale.test.js` S1).
+- **The UI is not scaled.** The HUD, the menus, the windows and the
+  first-person overlay are the 2D pass's, drawn after the present on the
+  canvas at its own size. Everything that maps a canvas pixel into the
+  world already maps through the host's rect, which the frame keeps
+  (`worldViewportRect` - the tap ray, the crosshair, the muzzle, the name
+  labels), and the passes that restore the world viewport restore the
+  image's (`worldViewportPx`: the sky, the clouds' map, the bolts' pixel
+  width, the lantern grid's rect). A sprite sized in canvas pixels is
+  sized in the image's (`retroImageSpan`, AUDIT RETRO1 C6's law, now for
+  either kind). The screenshot and the save thumbnail read the canvas
+  after the present.
+- **The setting** is the Features home's Sight row "Render scale"
+  (`systems/features.js` `render-scale`: 100%, 85%, 75%, 67%, 50%; 100%
+  the default; the player's own online - it is this screen's pixels).
+  `systems/renderScale.js` `renderScaleSetting` reads it (and a probe's
+  `?renderscale=` door, once a page) and is the renderer's source
+  (`setRenderScaleSource`, wired by `main.js` beside `setRetroSource`),
+  asked once per WORLD frame, so the tile's press lands on the next.
+
+**THE COUNTER NAMES THE GPU AND THE PIXELS.** `gpuNameOf` reads
+`WEBGL_debug_renderer_info`'s `UNMASKED_RENDERER_WEBGL` where the browser
+hands it out, `gl.RENDERER` otherwise (a masked browser answers a generic
+name there), ONCE, in the Renderer's constructor (`Renderer.gpuName`).
+`Renderer.frameInfo` is the frame's size: the world image, the canvas,
+`devicePixelRatio` and the scale ("retro" under retro mode). The FPS
+counter (`ui/fpsCounter.js`) shows two more lines while it is on -
+`gpu <name>` and `world WxH  canvas WxH  dpr N  scale N%` - read once a
+second, never while hidden; `window.__fpsStats` adds `gpu`, `world`,
+`canvas`, `dpr`, `scale` and `retro` when a probe asks. So one screenshot
+of the counter answers "which GPU" and "how many pixels".
+
+**Not done, and why.** The canvas is still sized in CSS pixels, not
+device pixels - the port never rendered at `devicePixelRatio`, so a HiDPI
+screen was already spared 1.5-2x; the size line shows the ratio so a
+report can say so. No automatic scale: the dial is the player's, and a
+frame-time governor would move the picture under them. Ledger A row
+PERF-SCALE. Pinned: `test/perfscale.test.js` (8); `tools/mutants/perfscale.json`
+(29, all dead). Record: `01-Overview/Field-Bugs-2026-09-25.md`.
 
 ## WIND5 - THE WIND'S FLOURISHES (2026-09-23)
 

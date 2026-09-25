@@ -122,7 +122,7 @@ test('MWA1 pins: the switch on the prefs shelf, flipped by Build and Unload; the
   assert.match(menu, /fpArm\.unload\(\); setPref\('mwArms', false\);/, 'Unload clears it');
   assert.match(menu, /const res = await buildArmsFor\(playerEntity\);\n\s+if \(res\?\.ok\) setPref\('mwArms', true\);/, 'Build sets it only when the build stood');
   assert.match(menu, /prefRow\('showFps', 'FPS counter',/, 'the counter has its row');
-  assert.match(read('src/main.js'), /mountFpsCounter\(\{ enabled: \(\) => params\.has\('fps'\) \|\| !!getPref\('showFps'\), stats: \(\) => renderer\.stats \}\);/, 'the counter mounts over every host, on the pref or ?fps, with the renderer\'s counts (PERF3)');
+  assert.match(read('src/main.js'), /mountFpsCounter\(\{ enabled: \(\) => params\.has\('fps'\) \|\| !!getPref\('showFps'\), stats: \(\) => renderer\.stats, info: \(\) => renderer\.frameInfo \}\);/, 'the counter mounts over every host, on the pref or ?fps, with the renderer\'s counts (PERF3) and its GPU and frame size (PERF-SCALE)');
 });
 
 test('MWA2 (Mac: "a toggle for the morrowind asset pack"): ONE On/Off row over the mwArms switch replaces Build / Unload - ON builds and holds the pref only when the build stood, OFF unloads; every consumer already reads that one pref', () => {

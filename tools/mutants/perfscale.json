@@ -1,0 +1,263 @@
+[
+  {
+    "name": "PERF-SCALE-the-scale-beats-retro",
+    "file": "src/render/renderer.js",
+    "old": "    const scaled = cfg ? null : this._scaledImage();",
+    "new": "    const scaled = this._scaledImage();",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-the-scale-never-read",
+    "file": "src/render/renderer.js",
+    "old": "    const scale = Number(this._scaleSource?.() ?? 1);",
+    "new": "    const scale = 1;",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-100-takes-an-image",
+    "file": "src/render/renderer.js",
+    "old": "    if (!(scale > 0 && scale < 1)) return null;",
+    "new": "    if (!(scale > 0 && scale <= 1)) return null;",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-the-canvas-not-the-host-rect",
+    "file": "src/render/renderer.js",
+    "old": "    const p = this._worldViewportPx ?? [0, 0, this.canvas.width, this.canvas.height];\n    if (!(p[2] > 0 && p[3] > 0)) return null;",
+    "new": "    const p = [0, 0, this.canvas.width, this.canvas.height];\n    if (!(p[2] > 0 && p[3] > 0)) return null;",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-floored-not-rounded",
+    "file": "src/render/renderer.js",
+    "old": "width: Math.max(1, Math.round(p[2] * scale))",
+    "new": "width: Math.max(1, Math.floor(p[2] * scale))",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-the-LUT-kept-under-the-scale",
+    "file": "src/render/renderer.js",
+    "old": "    if (scaled) { this._retro.dropLut(); this._retroFrame =",
+    "new": "    if (scaled) { this._retroFrame =",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-the-present-not-smooth",
+    "file": "src/render/renderer.js",
+    "old": "          smooth: f.kind === 'scale',",
+    "new": "          smooth: false,",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-the-sprite-sized-to-the-canvas",
+    "file": "src/render/renderer.js",
+    "old": "return this._retroOwed && f ? [f.height,",
+    "new": "return this._retroOwed && f && f.kind === 'retro' ? [f.height,",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-the-source-dropped",
+    "file": "src/render/renderer.js",
+    "old": "setRenderScaleSource(fn) { this._scaleSource = typeof fn === 'function' ? fn : null; }",
+    "new": "setRenderScaleSource(fn) { this._scaleSource = null; }",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-the-GPU-read-per-info",
+    "file": "src/render/renderer.js",
+    "old": "      gpu: this.gpuName,",
+    "new": "      gpu: gpuNameOf(this.gl),",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-the-unmasked-name-never-asked",
+    "file": "src/render/renderer.js",
+    "old": "    const v = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : null;",
+    "new": "    const v = null;",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-a-non-string-renderer-answered",
+    "file": "src/render/renderer.js",
+    "old": "    return typeof r === 'string' && r ? r : null;",
+    "new": "    return r ?? null;",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-the-warm-skips-the-scale",
+    "file": "src/render/renderer.js",
+    "old": "    if (!this._retroSource?.() && !(Number(this._scaleSource?.() ?? 1) < 1)) return;",
+    "new": "    if (!this._retroSource?.()) return;",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-the-image-left-point-filtered",
+    "file": "src/render/retroPass.js",
+    "old": "        const f = smooth ? gl.LINEAR : gl.NEAREST;",
+    "new": "        const f = gl.NEAREST;",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-the-filter-switched-one-way",
+    "file": "src/render/retroPass.js",
+    "old": "      if (!!t.smooth !== smooth) {",
+    "new": "      if (!t.smooth && smooth) {",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-the-shader-snaps-the-scale",
+    "file": "src/render/retroPass.js",
+    "old": "  if (uSmooth == 1) { outColor = texture(uColor, (gl_FragCoord.xy - uRect.xy) / uRect.zw); return; }\n",
+    "new": "",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-uSmooth-never-set",
+    "file": "src/render/retroPass.js",
+    "old": "      gl.uniform1i(P.uSmooth, smooth ? 1 : 0);\n",
+    "new": "",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-a-full-canvas-image-cleared-under",
+    "file": "src/render/retroPass.js",
+    "old": "      if (!smooth || !(rect[0] <= 0",
+    "new": "      if (true || !(rect[0] <= 0",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-a-strip-never-cleared",
+    "file": "src/render/retroPass.js",
+    "old": "      if (!smooth || !(rect[0] <= 0 && rect[1] <= 0 && rect[0] + rect[2] >= canvasW && rect[1] + rect[3] >= canvasH)) {",
+    "new": "      if (!smooth) {",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-the-fallback-blit-nearest",
+    "file": "src/render/retroPass.js",
+    "old": "gl.COLOR_BUFFER_BIT, smooth ? gl.LINEAR : gl.NEAREST);",
+    "new": "gl.COLOR_BUFFER_BIT, gl.NEAREST);",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-the-counter-reads-while-hidden",
+    "file": "src/ui/fpsCounter.js",
+    "old": "        const i = on ? info?.() : null;",
+    "new": "        const i = info?.();",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-no-GPU-line",
+    "file": "src/ui/fpsCounter.js",
+    "old": "\n          + (i ? `\\ngpu ${i.gpu ?? 'unknown'}` : '') + (size ? `\\n${size}` : '');",
+    "new": "\n          + (size ? `\\n${size}` : '');",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-no-size-line",
+    "file": "src/ui/fpsCounter.js",
+    "old": " + (size ? `\\n${size}` : '');",
+    "new": ";",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-the-probe-read-bare",
+    "file": "src/ui/fpsCounter.js",
+    "old": "globalThis.window.__fpsStats = () => (last && info ? { ...last, ...described() } : last);",
+    "new": "globalThis.window.__fpsStats = () => last;",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-a-shelf-value-unvalidated",
+    "file": "src/systems/renderScale.js",
+    "old": "  return door() ?? renderScaleOf(getPref('renderScale')) ?? 1;",
+    "new": "  return door() ?? getPref('renderScale') ?? 1;",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-the-door-read-every-frame",
+    "file": "src/systems/renderScale.js",
+    "old": "  if (_door === undefined) _door = renderScaleOf(",
+    "new": "  _door = renderScaleOf(",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-main-never-wires-it",
+    "file": "src/main.js",
+    "old": "  renderer.setRenderScaleSource(renderScaleSetting);",
+    "new": "  void renderScaleSetting;",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-75-by-default",
+    "file": "src/systems/features.js",
+    "old": "key: 'renderScale', initial: 1, online: 'player'",
+    "new": "key: 'renderScale', initial: 0.75, online: 'player'",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-forced-online",
+    "file": "src/systems/features.js",
+    "old": "key: 'renderScale', initial: 1, online: 'player'",
+    "new": "key: 'renderScale', initial: 1, online: true",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  }
+]

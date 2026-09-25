@@ -83,6 +83,15 @@
 // reads that unit. A live screen scissor is lifted for the clear and
 // the quad and put back.
 //
+// THE RENDER SCALE'S IMAGE (PERF-SCALE, 2026-09-25) is this pass's too:
+// one home for a world drawn smaller and shown. Two players' "fps issues
+// in the exterior but fine in the interior" (an RTX 4060 Ti, an RX 6600)
+// were a window drawn at its full size with no dial; with retro off and
+// the scale below 1 the renderer draws the world into this same image at
+// the world rect x the scale, and `present({ smooth: true })` shows it
+// LINEAR, unsnapped and without an effect. Retro wins: a retro frame
+// never reads the scale (Renderer._retroBegin, systems/renderScale.js).
+//
 // THE MIP CHAINS are the renderer's (Renderer._applyRetroMips):
 // TextureReader builds no mip chain in retro mode unless
 // UseMipMapsInRetroMode. The albedo's retro mip bias (-0.75 whenever
@@ -316,6 +325,7 @@ uniform vec2 uPresent;      // RetroPresentation's 640x400
 uniform int uKind;          // 0 plain Blit, 1 posterize, 2 palettize
 uniform int uNoSky;         // EXCLUDE_SKY
 uniform int uLutSize;
+uniform int uSmooth;        // PERF-SCALE: the render scale's image - LINEAR, unsnapped, no effect
 out vec4 outColor;
 // the display byte to DFU's linear and back: the exact sRGB pair
 vec3 srgbToLinear(vec3 c) { return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }
@@ -324,6 +334,7 @@ vec3 linearToSrgb(vec3 l) { return mix(l * 12.92, 1.055 * pow(l, vec3(1.0 / 2.4)
 vec3 unityLinearToGamma(vec3 l) { return max(1.055 * pow(max(l, vec3(0.0)), vec3(0.416666667)) - 0.055, vec3(0.0)); }
 vec3 unityGammaToLinear(vec3 s) { return s * (s * (s * 0.305306011 + 0.682171111) + 0.012522878); }
 void main() {
+  if (uSmooth == 1) { outColor = texture(uColor, (gl_FragCoord.xy - uRect.xy) / uRect.zw); return; }
   // the screen pixel's presentation texel, and that texel's centre - two
   // Point blits (source -> 640x400 -> screen) in one fetch
   vec2 uv = (floor((gl_FragCoord.xy - uRect.xy) / uRect.zw * uPresent) + 0.5) / uPresent;
@@ -420,7 +431,7 @@ export class RetroPass {
     try {
       const p = this._build(RETRO_VS, RETRO_FS);
       const u = (n) => gl.getUniformLocation(p, n);
-      this.P = { p, uColor: u('uColor'), uDepth: u('uDepth'), uLut: u('uLut'), uRect: u('uRect'), uPresent: u('uPresent'), uKind: u('uKind'), uNoSky: u('uNoSky'), uLutSize: u('uLutSize') };
+      this.P = { p, uColor: u('uColor'), uDepth: u('uDepth'), uLut: u('uLut'), uRect: u('uRect'), uPresent: u('uPresent'), uKind: u('uKind'), uNoSky: u('uNoSky'), uLutSize: u('uLutSize'), uSmooth: u('uSmooth') };
       // every sampler on its own unit, set once - a sampler2D and the
       // sampler3D left sharing unit 0 is an INVALID_OPERATION per draw
       gl.useProgram(p);
@@ -533,8 +544,17 @@ export class RetroPass {
    * canvas bound, the viewport at the full canvas, units 0-2 empty and
    * TEXTURE0 active, and the draw-state baseline (depth test, depth
    * writes and culling on, blending off).
+   *
+   * PERF-SCALE (2026-09-25): `smooth` is the render scale's image, not
+   * retro's - sampled LINEAR at the pixel's own spot (no presentation
+   * texel, no effect - the shader's smooth arm returns first), so a 75% world is stretched
+   * soft rather than blocky. The image's filter is switched here, where
+   * it is sampled, and only when the kind changes (a new image is
+   * NEAREST, retro's Point). The black clear is retro's clearer camera;
+   * a smooth image that covers the whole canvas overwrites every pixel
+   * and takes none.
    */
-  present({ depth, rect, canvasW, canvasH, post = 0, lutShift = 1, clear = null, scissor = null }) {
+  present({ depth, rect, canvasW, canvasH, post = 0, lutShift = 1, clear = null, scissor = null, smooth = false }) {
     this.pending = false;
     const gl = this.gl, t = this.target;
     setFrameTarget(null);
@@ -542,14 +562,25 @@ export class RetroPass {
     if (scissor) gl.disable(gl.SCISSOR_TEST);
     try {
       gl.viewport(0, 0, canvasW, canvasH);
-      gl.clearColor(0, 0, 0, 1);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      if (clear) gl.clearColor(clear[0], clear[1], clear[2], clear[3]);
+      if (!smooth || !(rect[0] <= 0 && rect[1] <= 0 && rect[0] + rect[2] >= canvasW && rect[1] + rect[3] >= canvasH)) {
+        gl.clearColor(0, 0, 0, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        if (clear) gl.clearColor(clear[0], clear[1], clear[2], clear[3]);
+      }
       if (!t || !(rect[2] > 0) || !(rect[3] > 0)) return;
+      if (!!t.smooth !== smooth) {   // PERF-SCALE: the image's filter follows the frame's kind
+        const f = smooth ? gl.LINEAR : gl.NEAREST;
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, t.tex);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, f);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, f);
+        gl.bindTexture(gl.TEXTURE_2D, null);
+        t.smooth = smooth;
+      }
       const P = this._program();
       if (!P) {
         gl.bindFramebuffer(gl.READ_FRAMEBUFFER, t.fbo);
-        gl.blitFramebuffer(0, 0, t.w, t.h, rect[0], rect[1], rect[0] + rect[2], rect[1] + rect[3], gl.COLOR_BUFFER_BIT, gl.NEAREST);
+        gl.blitFramebuffer(0, 0, t.w, t.h, rect[0], rect[1], rect[0] + rect[2], rect[1] + rect[3], gl.COLOR_BUFFER_BIT, smooth ? gl.LINEAR : gl.NEAREST);
         gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
         return;
       }
@@ -570,6 +601,7 @@ export class RetroPass {
       gl.uniform1i(P.uKind, kind);
       gl.uniform1i(P.uNoSky, noSky ? 1 : 0);
       gl.uniform1i(P.uLutSize, lut ? lut.size : 1);
+      gl.uniform1i(P.uSmooth, smooth ? 1 : 0);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       gl.bindVertexArray(null);
       // B1: nothing of the image stays on a unit - the next retro frame draws into it

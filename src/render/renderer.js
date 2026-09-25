@@ -451,6 +451,21 @@ export function groundSamplerFor(tier, driverMax = 1) {
 export function groundSharpnessTier(search = globalThis.location?.search ?? '') {
   return new URLSearchParams(search).get('ground') ?? getPref('groundSharpness');
 }
+/** PERF-SCALE (2026-09-25): THE GPU THE BROWSER DRAWS ON, as its driver names it - WEBGL_debug_renderer_info's
+ *  UNMASKED_RENDERER_WEBGL where the browser hands it out, gl.RENDERER otherwise (a browser that masks it answers
+ *  a generic name there). A laptop's browser on its integrated GPU, or on SwiftShader, is the first thing a
+ *  "fine inside, slow outside" report has to rule out, and nothing on screen said which it was. Read ONCE, by the
+ *  Renderer's constructor: a getParameter is a round trip to the GPU process, never a per-frame call. Null when
+ *  neither answers a string. */
+export function gpuNameOf(gl) {
+  try {
+    const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    const v = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : null;
+    if (typeof v === 'string' && v) return v;
+    const r = gl.getParameter(gl.RENDERER);
+    return typeof r === 'string' && r ? r : null;
+  } catch { return null; }
+}
 import { multiply as mat4Multiply } from '../world/mat4.js';   // PERF-CROWD2: proj * view, for this call's planes
 import { PerfMeter, perfOn, perfZones, perfCpu, setMeter } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
 import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_CONTACT_UNIT as CONTACT_UNIT } from './airPass.js';   // EL3: the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit; EL6: all of it off the frame's own depth, at the resolve
@@ -1129,6 +1144,11 @@ export class Renderer {
     this._retroFrame = null;    // the retro world frame in flight: its image, its effect, the rect it presents to, its depth
     this._retroOwed = false;    // a retro image is drawn and not yet presented
     this._retroMips = true;     // whether the world's textures read their mip chains (TextureReader's retro arm)
+    // PERF-SCALE: the render scale's source (systems/renderScale.js renderScaleSetting, handed over by main.js as the
+    // retro source is) - a function answering the frame's scale, 1 the whole canvas. Null (every test's) is 1
+    this._scaleSource = null;
+    // PERF-SCALE: the GPU the browser actually draws on, read ONCE here and never per frame - the FPS counter's line
+    this.gpuName = gpuNameOf(gl);
     this._replacements = new WeakSet();   // AUDIT RETRO1 A4: replacement textures (TryImportTexture) - DFU's retro arm never reaches them
     this._scissor = null;       // AUDIT RETRO1 B3: the live screen scissor as gl.scissor took it, or null - the present lifts it and puts it back
     this._spriteDepth = 0;   // AUDIT-EL F2: inside renderCharacterSprite (a foreign rect: no AO)
@@ -2067,23 +2087,45 @@ export class Renderer {
    *  the _HUD twin when that rect is a docked strip - it starts above the
    *  bottom edge - so the texture follows the bar the host's lens and rect
    *  were taken from. The mip chains follow the config (a no-op unless it
-   *  changed); retro mode off frees the palette's LUT (E2). */
+   *  changed); retro mode off frees the palette's LUT (E2).
+   *
+   *  PERF-SCALE (2026-09-25): THE ONE HOME FOR A WORLD DRAWN SMALLER AND
+   *  SHOWN. With retro off and the render scale below 1, the frame is a
+   *  `kind: 'scale'` one on this same path: the image is the host's world
+   *  rect (the canvas when none) x the scale, rounded, and its present is
+   *  LINEAR and effect-free (RetroPass.present `smooth`). Retro wins - its
+   *  config is asked first and a retro frame never reads the scale. At a
+   *  scale of 1 there is no frame: the world draws straight to the canvas
+   *  (or the lane's canvas-sized frame) as it always did. */
   _retroBegin() {
     const cfg = this._retroSource?.() ?? null;
     this._applyRetroMips(cfg ? cfg.mipmaps : true);
     const view = this._worldViewportFrame, docked = !!view && view.y > 0;
-    const width = docked ? cfg?.hudWidth : cfg?.width, height = docked ? cfg?.hudHeight : cfg?.height;
-    if (!cfg || !(width > 0) || !(height > 0)) {
+    const scaled = cfg ? null : this._scaledImage();   // PERF-SCALE: retro wins
+    const width = scaled ? scaled.width : docked ? cfg?.hudWidth : cfg?.width, height = scaled ? scaled.height : docked ? cfg?.hudHeight : cfg?.height;
+    if (!(cfg || scaled) || !(width > 0) || !(height > 0)) {
       if (this._retroFrame) this._restoreWorldViewport();   // the frame retro mode goes off on: an owed present just took the viewport to the full canvas
       this._retroFrame = null;
       this._retro?.dropLut();
       return null;
     }
     this._retroPass();
-    this._retroFrame = { width, height, post: cfg.post, lutShift: cfg.lutShift, mipmaps: cfg.mipmaps, view: view ? { ...view } : null, depth: null };
+    if (scaled) { this._retro.dropLut(); this._retroFrame = { kind: 'scale', scale: scaled.scale, width, height, post: 0, lutShift: 0, mipmaps: true, view: view ? { ...view } : null, depth: null }; }
+    else this._retroFrame = { kind: 'retro', width, height, post: cfg.post, lutShift: cfg.lutShift, mipmaps: cfg.mipmaps, view: view ? { ...view } : null, depth: null };
     this._worldViewportPx = [0, 0, width, height];
     this._restoreWorldViewport();
     return this._retroFrame;
+  }
+
+  /** PERF-SCALE: the render scale's image for this frame - { scale, width, height }, the host's world rect in canvas
+   *  pixels (the whole canvas when it set none) x the scale, rounded - or null at 1 (or a source that answers no
+   *  scale below it), or over an empty rect. */
+  _scaledImage() {
+    const scale = Number(this._scaleSource?.() ?? 1);
+    if (!(scale > 0 && scale < 1)) return null;
+    const p = this._worldViewportPx ?? [0, 0, this.canvas.width, this.canvas.height];
+    if (!(p[2] > 0 && p[3] > 0)) return null;
+    return { scale, width: Math.max(1, Math.round(p[2] * scale)), height: Math.max(1, Math.round(p[3] * scale)) };
   }
 
   /** RETRO1: the RetroPass, built once. */
@@ -2116,6 +2158,7 @@ export class Renderer {
         this._retro.present({
           depth: f.depth, rect: this._viewportPx(f.view) ?? [0, 0, this.canvas.width, this.canvas.height], canvasW: this.canvas.width, canvasH: this.canvas.height,
           post: f.post, lutShift: f.lutShift, clear: this._clearColor, scissor: this._scissor,
+          smooth: f.kind === 'scale',   // PERF-SCALE: the render scale's image, LINEAR and effect-free
         });
       } else this._retro?.release();
     } finally {   // AUDIT RETRO1 E3: whatever the present did, the frame is the canvas's and the shadows are forgotten
@@ -2149,10 +2192,30 @@ export class Renderer {
    *  systems/retroMode.js retroFrameConfig, handed over by main.js; null
    *  (the default, and every test's) is retro off. */
   setRetroSource(fn) { this._retroSource = typeof fn === 'function' ? fn : null; }
+  /** PERF-SCALE: where the renderer asks for each WORLD frame's render scale - systems/renderScale.js
+   *  renderScaleSetting, handed over by main.js; null (the default, and every test's) is 1, today's frame. */
+  setRenderScaleSource(fn) { this._scaleSource = typeof fn === 'function' ? fn : null; }
+  /** PERF-SCALE: THE FRAME'S SIZE, for the FPS counter - the world image it draws into ([w, h]: the scale's or
+   *  retro's image, else the host's world rect, else the canvas), the canvas, the page's devicePixelRatio, the
+   *  render scale the last world frame took (1 under retro or at 100%) and the GPU (read once, gpuNameOf). A
+   *  property read or two: the counter asks once a second. */
+  get frameInfo() {
+    const f = this._retroFrame, c = this.canvas, p = this._worldViewportFrame ? this._viewportPx(this._worldViewportFrame) : null;
+    return {
+      gpu: this.gpuName,
+      world: f ? [f.width, f.height] : p ? [p[2], p[3]] : [c.width, c.height],
+      canvas: [c.width, c.height],
+      dpr: Number(globalThis.devicePixelRatio) || 1,
+      scale: f?.kind === 'scale' ? f.scale : 1,
+      retro: f?.kind === 'retro',
+    };
+  }
   /** RETRO1: the retro world frame in flight or last presented - a probe's read. */
   get retroFrame() { return this._retroFrame ? { ...this._retroFrame } : null; }
   /** AUDIT RETRO1 C6: while a retro world pass is live, [the image's height, the canvas pixels it is shown over] - what
-   *  a sprite sized in canvas pixels needs to be sized in the image's instead; null otherwise. */
+   *  a sprite sized in canvas pixels needs to be sized in the image's instead; null otherwise. PERF-SCALE: a scale
+   *  frame's too - a 3-pixel texel drawn into a 75% image is 2.25 of its pixels, and a whole number of them is what
+   *  keeps a sprite's texels even before the present smooths them. */
   get retroImageSpan() {
     const f = this._retroFrame;
     return this._retroOwed && f ? [f.height, Math.max(1, Math.round((f.view ? f.view.h : 1) * this.canvas.height))] : null;
@@ -2389,14 +2452,14 @@ export class Renderer {
       () => this._ensureCharQuadProgram(),
       () => this._ensureParticleProgram(),
       () => this._ensureOverlayProgram(),
-      ...(this._retroSource ? [() => this._warmRetro()] : []),   // AUDIT RETRO1 E7
+      ...(this._retroSource || this._scaleSource ? [() => this._warmRetro()] : []),   // AUDIT RETRO1 E7; PERF-SCALE: the scale's present is the same program
     ];
   }
 
   /** AUDIT RETRO1 E7: the retro present's program, built by the warm when retro mode is on at load rather than inside
    *  the first retro frame. The build binds a program and a VAO of its own, so the shadows are dropped after it. */
   _warmRetro() {
-    if (!this._retroSource?.()) return;
+    if (!this._retroSource?.() && !(Number(this._scaleSource?.() ?? 1) < 1)) return;
     this._retroPass()._program();
     this._lastProgram = null; this._lastVao = null;
   }

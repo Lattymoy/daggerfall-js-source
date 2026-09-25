@@ -422,6 +422,22 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced', 'classic']),
     control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'default', online: 'player', tiers: Object.freeze([['off', 'Off'], ['default', 'Default (4x)'], ['max', 'Maximum']]) }),
   }),
+  // PERF-SCALE (2026-09-25, two players via Mac: "One user is reporting fps issues in the exterior but fine in the
+  // interior ... GPU is NVIDIA GeForce RTX 4060 Ti", "me too my friend.. don't know why. I got a RX6600"): THE
+  // RENDER SCALE. The world was drawn at the window's whole size with no cap, so a large window paid two to four
+  // times the exterior's per-pixel work; this draws it smaller and presents it smooth (systems/renderScale.js
+  // carries the law). Retro Picture Mode wins over it. A dial, the player's own online: it is this screen's pixels.
+  Object.freeze({
+    id: 'render-scale',
+    group: 'sight',
+    title: 'Render scale',
+    note: 'Draws the world at a share of the window’s pixels and stretches it smooth to fit; the HUD and menus stay '
+      + 'sharp. Try 75% if the outdoors run slow on a large or high-resolution screen. Retro Picture Mode, when on, '
+      + 'takes its place.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'renderScale', initial: 1, online: 'player', tiers: Object.freeze([[1, '100%'], [0.85, '85%'], [0.75, '75%'], [0.67, '67%'], [0.5, '50%']]) }),
+  }),
   // FT8 (2026-09-14): ENHANCED COMBAT VISUALS (ECV1) - what the enhanced
   // skin DRAWS for a concealed foe; the rules are DFU's either way. The
   // last row of the Enhanced category of Settings, which is a pointer

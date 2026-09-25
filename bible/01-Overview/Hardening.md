@@ -218,8 +218,8 @@ for the drift this program's thesis predicts, and both came back clean;
 the honest result of an audit is sometimes that the work is not owed.
 
 **S1 - the two exterior hosts' draw ladders. THE HOSTS ARE NOT PEERS,
-and the record never said so.** `main.js:105` routes `?exterior`,
-`?region` and `?loc` to `bootExterior`; the front door (`main.js:223`)
+and the record never said so.** `main.js:107` routes `?exterior`,
+`?region` and `?loc` to `bootExterior`; the front door (`main.js:225`)
 boots `bootWorld`. main.js says it in its own words: *"Dev scenes stay
 one param away (?exterior/?world/etc)."* So this is a shipping ladder
 against a dev scene's ladder, not two live copies of one law - which is

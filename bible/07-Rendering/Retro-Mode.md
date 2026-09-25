@@ -304,3 +304,11 @@ pass by the fake GLs. A
 program that fails to build presents with a plain NEAREST blit and says
 so once in the console - a retro world without its effect, never a
 black one.
+
+## PERF-SCALE shares the image (2026-09-25)
+
+The render scale (`07-Rendering/Rendering.md` PERF-SCALE) draws the world
+into this same image at the world rect x the scale and presents it LINEAR
+(`RetroPass.present({ smooth: true })`). Retro wins: with Retro Picture
+Mode on the scale is not read, and the image, its Point present and its
+effect are retro's as above.
