@@ -101,7 +101,7 @@ function fakeClock() {
 const withSkin = (skin, fn) => {
   const had = Object.hasOwn(globalThis, 'location') ? globalThis.location : undefined;
   const hadDoc = Object.hasOwn(globalThis, 'document') ? globalThis.document : undefined;
-  globalThis.location = { search: `?skin=${skin}` };
+  globalThis.location = { search: `?skin=${skin}${skin === 'enhanced' ? '&plus=0' : ''}` };   // PLUS-DEFAULT: these pin PLAIN Enhanced's toasts (Plus fades them longer - enhancedNotice.js TOAST_FADE_MS), so they say so
   const clock = fakeClock();
   try { return fn(clock); } finally {
     if (had === undefined) delete globalThis.location; else globalThis.location = had;

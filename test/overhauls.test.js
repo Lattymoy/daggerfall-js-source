@@ -53,8 +53,8 @@ test('OVH1: a Sound look reads and writes the SAME Features rows its tiles do - 
 
 test('OVH1/OVH2: a UI look is the skin and the pack over it - wearing one lands both on the shelf and reloads; a shelf that refuses the write carries the choice on the URL instead (SKIN-CARRY\'s law); GrimoireUI is in use only on the classic skin wearing the pack (mutants: the pack set without the skin; Classic reading GrimoireUI as in use)', () => {
   const ui = OVERHAUL_PANELS[2];
-  const [classic, enhanced, , grim] = ui.options;
-  assert.equal(currentOption(ui), enhanced, 'the default skin');
+  const [classic, , plusLook, grim] = ui.options;
+  assert.equal(currentOption(ui), plusLook, 'the default look - PLUS-DEFAULT: Enhanced Plus');
   const r = grim.apply();
   assert.equal(r.reload, true);
   assert.equal(getPref('skin'), 'classic');
@@ -218,8 +218,8 @@ test('PLUS1: Enhanced Plus is the enhanced skin with its own shelf key - wearing
   const ui = OVERHAUL_PANELS[2];
   const [classic, enhanced, plus] = ui.options;
   assert.equal(plus.id, 'enhanced-plus');
-  assert.equal(currentOption(ui), enhanced, 'a fresh shelf is plain Enhanced - Plus is opt-in');
-  assert.equal(isEnhancedPlus(''), false);
+  assert.equal(currentOption(ui), plus, 'PLUS-DEFAULT: a fresh shelf is Enhanced Plus - plain Enhanced is the player\'s pick');
+  assert.equal(isEnhancedPlus(''), true);
   const r = plus.apply();
   assert.equal(r.reload, true);
   assert.equal(getPref('skin'), 'enhanced', 'Plus is not a third skin');

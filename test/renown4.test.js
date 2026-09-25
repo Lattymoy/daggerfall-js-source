@@ -200,7 +200,9 @@ test('RENOWN4 the HUD, executed: the row hangs under the vitals and is off until
     const root = document.body.children.find((n) => n.className === 'hud');
     const bottom = find(root, 'hud-bottom');
     const row = find(root, 'hud-renown');
-    assert.deepEqual(bottom.children.map((n) => n.className), ['hud-hotdock', 'hud-breath', 'hud-bars', 'hud-renown', 'hud-effects', 'hud-needs'], 'right under the vitals');
+    const col = bottom.children.map((n) => n.className);
+    assert.deepEqual(col.slice(0, 4), ['hud-hotdock', 'hud-breath', 'hud-bars', 'hud-renown'], 'right under the vitals');
+    assert.ok(['hud-status', 'hud-effects'].includes(col[4]), 'and above the status row (Plus\'s one row, or plain Enhanced\'s two)');
     assert.equal(row.classList.contains('on'), false, 'offline: no row');
     let s = { level: 10, xp: 6000, pending: 1000 };
     setHudRenown(() => s);
@@ -239,7 +241,7 @@ test('RENOWN4 the HUD, executed: the row hangs under the vitals and is off until
 
 test('RENOWN4 the sheet: the row is off until lit, as wide as the vitals\' row on a desk and on a phone; the box is the name\'s gold in the HUD\'s square frame; the ghost is the fill\'s gold, faint; nobar takes the bar and the words and leaves the box (mutants: the row always drawn; the widths drifted from the vitals\')', () => {
   const CSS = src('src/ui/enhancedStyle.js');
-  assert.match(CSS, /\.hud-renown \{ display: none; align-items: center; gap: 8px; width: calc\(3 \* min\(190px, 23vw\) \+ 28px\); \}\n\.hud-renown\.on \{ display: flex; \}/);
+  assert.match(CSS, /\.hud-renown \{ display: none; align-items: center; gap: 8px; height: 22px; width: calc\(3 \* min\(190px, 23vw\) \+ 28px\); \}[^\n]*\n\.hud-renown\.on \{ display: flex; \}/);   // RENOWN4b: and its height, which the lifts count (renown4b.test.js)
   assert.match(CSS, /\.hud-vital \.hud-track \{ width: min\(190px, 23vw\); height: 20px;/, 'the vitals the row is as wide as');
   assert.match(CSS, /\.hud-bars \{ display: flex; align-items: center; gap: 14px; \}/);
   assert.match(CSS, /\.hud-vital \.hud-track \{ width: 26vw; \}\n\s*\.hud-renown \{ width: calc\(78vw \+ 20px\); \}/, 'the phone\'s three 26vw tracks and two 10px gaps');

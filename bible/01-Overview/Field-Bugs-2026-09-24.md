@@ -1098,7 +1098,7 @@ pins stand.
 
 **The portrait.** `fpArm.figure()` draws the enhanced inventory's model
 figure (`enhancedInventory.js:1475`), which is shown in a 110:184 cell with
-object-fit: contain (`enhancedStyle.js:3830`). It framed `meshBounds` over
+object-fit: contain (`enhancedStyle.js:3860`). It framed `meshBounds` over
 EVERY piece, then hid the unlit torch, the arrow off the string and the
 empty holster twin, so gear it did not show still moved the frame. Its width
 was the box's azimuth-safe diagonal, so a longsword pointing at the viewer,

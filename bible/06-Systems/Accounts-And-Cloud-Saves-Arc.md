@@ -3550,3 +3550,27 @@ come; the one face that never showed it was the player's own while playing.
   first report is answered.
 - Pinned: `test/renown4.test.js` (7). `tools/mutants/renown4.json` (28, all dead; a total signed into the token was
   dropped as equivalent - `mintToken` signs a fixed claim list).
+
+## RENOWN4b — the XP bar overlaps nothing (2026-09-25)
+
+Mac: "ensure the new xp bar doesnt overlap anything"; asked whether to measure the page in a headless browser, "No,
+CSS math only". So the check is arithmetic over the sheet's own numbers (`test/renown4b.test.js` - the model, and pins
+holding the sheet to every number it reads), and it found two things:
+
+- **The quickslot block stood in the vitals.** Its bottom is fixed at the vitals' top line (22 + 32 x scale, QS3) -
+  and the Renown row, under the vitals, lifts that line by its own 22px and the gap. On a 1024px screen at scale 1 (on
+  a 1280px one past 1.16, on a phone past about 1.2) the magicka bar stood in the diamond. While the row is lit the
+  block now goes up by the same amount (`.hud:has(.hud-renown.on) .hud-quick`: 32 x scale on a desk, 30 on a phone).
+- **On a touch screen the row stood in the touch buttons.** The bottom-right from 16 to 64px up is `ui/touch.js`'s
+  (jump, sheathe, the mode, the social door). There the row stands ABOVE the vitals and never lower than 68px (a
+  margin divided by the scale, so it holds at every scale, with the safe area), and the block rides two pixels above
+  it - by a row of effect or need chips more when there are chips.
+- **Under Enhanced Plus** the row is as wide as Plus's vitals (16px gaps), and the model runs both dresses.
+
+The model covers 13 widths from 360 to 2560px, HUD scales 0.5 to 2, both dresses, mouse and touch, a phone's safe area,
+the touch stick's corner, and a row of chips - 1,820 cases: the row never meets the block or the buttons, never runs
+past the vitals' own span, and never pushes the vitals into the block where they stood clear without it. **Found
+while doing it and not the row's doing:** on a touch screen the vitals' own strip already reaches into the
+touch buttons' rows (the column stands 12px up, the buttons from 16), and chips under the vitals already lift them
+into the block wherever the two stand side by side (at scale 1 on a 1024px screen); both stand as they were. Not measured in a browser, by Mac's call.
+Pinned: `test/renown4b.test.js` (2); `tools/mutants/renown4b.json` (9, all dead, PLUS-DEFAULT's among them).

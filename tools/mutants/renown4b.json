@@ -1,0 +1,84 @@
+[
+  {
+    "name": "RENOWN4b-the-desk-lift-short",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "\n.hud:has(.hud-renown.on) .hud-quick { bottom: calc(22px + 64px * var(--hud-scale)",
+    "new": "\n.hud:has(.hud-renown.on) .hud-quick { bottom: calc(22px + 32px * var(--hud-scale)",
+    "tests": [
+      "test/renown4b.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4b-the-phone-lift-short",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .hud:has(.hud-renown.on) .hud-quick { bottom: calc(46px + 60px * var(--hud-scale)",
+    "new": "  .hud:has(.hud-renown.on) .hud-quick { bottom: calc(46px + 30px * var(--hud-scale)",
+    "tests": [
+      "test/renown4b.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4b-the-row-under-the-vitals-on-touch",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "@media (pointer: coarse) and (hover: none) {\n  .hud-bars { order: 1; }\n",
+    "new": "@media (pointer: coarse) and (hover: none) {\n",
+    "tests": [
+      "test/renown4b.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4b-the-touch-margin-unscaled",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "calc((56px + env(safe-area-inset-bottom, 0px)) / var(--hud-scale) - 28px)",
+    "new": "calc(56px + env(safe-area-inset-bottom, 0px) - 28px)",
+    "tests": [
+      "test/renown4b.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4b-the-chips-unlifted-on-a-phone",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .hud:has(.hud-renown.on):has(.hud-eff, .hud-need) .hud-quick { bottom: calc(max(14px + 82px * var(--hud-scale), 70px + 54px * var(--hud-scale)) + env(safe-area-inset-bottom, 0px)); }\n",
+    "new": "",
+    "tests": [
+      "test/renown4b.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4b-the-tablet-lift-one-line",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "bottom: calc(max(24px + 62px * var(--hud-scale), 70px + 32px * var(--hud-scale))",
+    "new": "bottom: calc(max(70px + 32px * var(--hud-scale), 70px + 32px * var(--hud-scale))",
+    "tests": [
+      "test/renown4b.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4b-the-plus-width-plain",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "\n.hud-renown { width: calc(3 * min(190px, 23vw) + 32px); }",
+    "new": "\n.hud-renown { width: calc(3 * min(190px, 23vw) + 28px); }",
+    "tests": [
+      "test/renown4b.test.js"
+    ]
+  },
+  {
+    "name": "RENOWN4b-the-row-height-unset",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".hud-renown { display: none; align-items: center; gap: 8px; height: 22px; width:",
+    "new": ".hud-renown { display: none; align-items: center; gap: 8px; width:",
+    "tests": [
+      "test/renown4b.test.js",
+      "test/renown4.test.js"
+    ]
+  },
+  {
+    "name": "PLUS-DEFAULT-plus-off-again",
+    "file": "src/systems/uiPrefs.js",
+    "old": "  enhancedPlus: true,",
+    "new": "  enhancedPlus: false,",
+    "tests": [
+      "test/overhauls.test.js"
+    ]
+  }
+]
