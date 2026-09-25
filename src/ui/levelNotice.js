@@ -390,7 +390,7 @@ function rowNode(doc, r) {
   // THE LEVEL'S ROW NAMES THE WAY IN, and only the level's: a skill
   // line with a key on it would read as an instruction.
   // AUDIT LV2 F5: ...and only when there IS one. `buttonText(null)` is
-  // KeyCode.None's own string, "NONE" (systems/controlsConfig.js:322),
+  // KeyCode.None's own string, "NONE" (systems/controlsConfig.js:356),
   // so a player who cleared the sheet binding was shown a plate reading
   // A LEVEL AWAITS / NONE - an instruction to press a key called None.
   // The row still says a level is waiting; it just stops naming a way

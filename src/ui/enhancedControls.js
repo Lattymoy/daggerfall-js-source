@@ -43,10 +43,14 @@
 //    commits it.
 //  - A KEY ANOTHER ACTION HOLDS asks before it moves (KB1, law 4) - in
 //    the sticky head, over the list it leaves standing, with the rows
-//    that clash marked (UXB1-D).
-//  - DUPLICATES colour the binding — red inside the shown dict, blue
-//    across the two — and EITHER kind blocks CONFIRM with the classic
-//    window's own multipleAssignments line.
+//    that clash marked (UXB1-D) - and offers a third answer, USE FOR
+//    BOTH (UXB1-S): the key stays and lands here too, and a press does
+//    every action on it.
+//  - A SHARED KEY is green, and each of its rows names what else it
+//    does. A CLASH DFU's law still finds (a combo against its own
+//    modifier bound bare) colours the binding - red inside the shown
+//    dict, blue across the two - and EITHER kind blocks CONFIRM with the
+//    classic window's own multipleAssignments line.
 //  - CONFIRM (DFU's Continue, UXB1-B) on a clean set applies the staged
 //    dicts and saves.
 //  - LEAVING WITHOUT CONFIRM DISCARDS. That is the whole point of a
@@ -67,7 +71,7 @@
 // a text field here would make every host's router treat the pane as
 // a typing surface.
 
-import { saveKeyBinds, resetDefaults, ACTION_GROUPS } from '../systems/inputActions.js';
+import { saveKeyBinds, resetDefaults, ACTION_GROUPS, actionLabel } from '../systems/inputActions.js';
 import { modSetting } from '../systems/modSettings.js';   // KB1: a mod's group is drawn while the mod is on
 import { bindings, mouseCode, swingMode } from './input.js';   // MAC-K1: a mouse button is a binding, so the capture must be able to take one
 import {
@@ -75,6 +79,7 @@ import {
   applyUnsavedKeybinds, buttonText,
   comboFromEvent, swingHint, floatHint, sharedFloatNote, fixedKeyRows,
   bindingHolders, replaceKeybindPromptRows, stageReplace, stagedDefaults,
+  canShareKey, stageShare, keySharers, SHARE_KEY_LABEL,
 } from '../systems/controlsConfig.js';
 
 /** The shell's own `el`, three lines, kept LOCAL on purpose:
@@ -108,6 +113,8 @@ function modIsOn(vendor) {
  *  draws (ui/controlsWindow.js's `top === 'dupes'` row). The same
  *  words, because it is the same refusal. */
 export const MULTIPLE_ASSIGNMENTS = 'You have multiple assignments...';
+/** UXB1-S: the head of a shared key's row line - "Also: Float up". */
+export const SHARED_KEY_PREFIX = 'Also:';
 /** ConfirmDefaultsBox (:296-317). */
 export const DEFAULTS_PROMPT = 'Are you sure you want to set default controls?';
 /** UXB1-B (2026-09-25, the UX backlog: 'Change "Continue" in keybinds to "Submit" or "Confirm"'): the commit
@@ -245,7 +252,7 @@ function arm(action) {
  *  keybind button itself (:361) and the right-click remove (:372,
  *  where it is ANDed with the unbound-slot refusal). The pending
  *  capture is the only live gesture on the screen. The classic grid
- *  carries the law in one line (ui/controlsWindow.js:383); this face
+ *  carries the law in one line (ui/controlsWindow.js:388); this face
  *  carries it as ONE predicate wrapped round every click surface, so
  *  a control cannot be added without it. arm()'s own leading disarm()
  *  is then unreachable-by-click — which is DFU's shape, not a loss.
@@ -294,10 +301,13 @@ function clearBinding(action) {
 function answerPrompt(yes) {
   const p = prompt;
   prompt = null;
-  if (yes && p?.kind === 'replace') {
+  if (yes === 'share' && p?.kind === 'replace' && canShareKey(unsaved, p.action, p.code, p.holders)) {
+    stageShare(unsaved, p.action, p.code);   // UXB1-S: the bind lands, and every holder keeps the key
+    refresh();
+  } else if (yes === true && p?.kind === 'replace') {
     stageReplace(unsaved, p.action, p.code, p.holders);   // KB1: the holder staged unbound, the bind lands
     refresh();
-  } else if (yes && p?.kind === 'defaults') {
+  } else if (yes === true && p?.kind === 'defaults') {
     // SetDefaults (:296-317) - KB1: STAGED, as the page's own sentence
     // says. DFU's window reset the live registry and saved it there and
     // then; this pane told the player nothing is saved until Confirm.
@@ -366,13 +376,16 @@ function keyRow(action, label) {
   // UXB1-D: ...and the two whose key is not the only one that moves you - see floatHint.
   const rise = unsaved.usingPrimary ? floatHint(action, dict) : null;
   if (rise) main.append(el('div', 'row-sub', rise));
+  // UXB1-S: A SHARED KEY SAYS SO, on every row it answers - which other actions the press does too.
+  const also = keySharers(unsaved, action, code);
+  if (also.length) main.append(el('div', 'row-sub ctl-alsos', `${SHARED_KEY_PREFIX} ${also.map((a) => actionLabel(a)).join(', ')}`));
   row.append(main);
 
   const ctl = el('div', 'ctl');
   // A BUTTON, never an input (CG2): isTextEntryTarget must stay false
   // over this pane or every host's router reads it as a typing field.
   const dupe = dupes.internal.has(code) ? ' ctl-dupe'
-    : dupes.cross.has(code) ? ' ctl-cross' : '';
+    : dupes.cross.has(code) ? ' ctl-cross' : dupes.shared?.has(code) ? ' ctl-shared' : '';   // UXB1-S: a share, marked - a clash still wins
   const armedHere = armed === action;
   const key = el('button', `act rowact ctl-key${dupe}${armedHere ? ' ctl-arm' : ''}`,
     armedHere ? 'PRESS A KEY OR BUTTON' : buttonText(code, true));
@@ -413,6 +426,13 @@ function promptCard() {
   const no = el('button', 'act', 'No');
   no.onclick = () => answerPrompt(false);
   acts.append(yes, no);
+  // UXB1-S: THE THIRD ANSWER. The key stays where it is AND lands here - one key, both actions - wherever every holder
+  // holds this very key (a combo against its own modifier is still a clash no press resolves).
+  if (prompt.kind === 'replace' && canShareKey(unsaved, prompt.action, prompt.code, prompt.holders)) {
+    const both = el('button', 'act ctl-share', SHARE_KEY_LABEL);
+    both.onclick = () => answerPrompt('share');
+    acts.append(both);
+  }
   c.append(acts);
   return c;
 }
@@ -471,7 +491,7 @@ export function paneControls(body, { render = () => {} } = {}) {
       + 'Hold Ctrl, Shift or Alt while you press to bind a combination. '
       + 'Right-click a binding, or press ✕, to clear it.'));
     head.append(el('p', 'meta',
-      'One key does one thing: a key that is already in use asks before it moves, and the row that holds it is marked. '
+      'A key that is already in use asks first: move it, or use it for both. A shared key does everything it is bound to, and each of its rows says what else it does. '
       + 'Keys inside a window (Escape, Enter, the arrows, a window\'s own letters) belong to that window and are not listed here.'));
     head.append(el('p', 'meta',
       `Nothing is saved until you press ${CONFIRM_LABEL}, Defaults included. Leave this page and your changes are dropped.`));

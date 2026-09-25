@@ -4,7 +4,7 @@
 // item with a CastWhenUsed legacy enchantment, or any potion - and
 // picking one uses it.
 //
-// The port had the door and not the room: input.js:779 routes the
+// The port had the door and not the room: input.js:797 routes the
 // action to `ctx.openUseMagicItem`, hudLarge.js:153 gives the large
 // HUD's button its rect, inputActions.js binds KeyU - and no host
 // implemented the method, so a bound key did nothing. The anti-lie law
@@ -39,7 +39,7 @@ import { isEnchanted as defaultIsEnchanted } from '../systems/inventory.js';
 import { audio } from '../systems/audio.js';   // AUDIT 64 F43: MagicItemPicker_OnItemPicked's ButtonClick
 import { SOUND } from '../systems/soundClips.js';
 import { bindings } from './input.js';
-import { actionForCode } from '../systems/inputActions.js';
+import { codeMeans } from '../systems/inputActions.js';   // UXB1-S: its own key, shared or not
 import { normalizeCode } from '../systems/dialogShortcuts.js';
 
 /**
@@ -107,7 +107,7 @@ export function createUseMagicItemWindow({ items = [], onUse = null, onClose = n
   // finds nothing armed, so it cannot close what it opened.
   const closesIt = (code, e) => {
     const c = normalizeCode(code, e);   // 'back' is Escape, 'char:u' is KeyU
-    return c === 'Escape' || (c != null && actionForCode(bindings(), c) === 'UseMagicItem');
+    return c === 'Escape' || codeMeans(bindings(), c, 'UseMagicItem');
   };
   let isCloseWindowDeferred = false;
   const pick = win.input.bind(win);

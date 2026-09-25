@@ -239,7 +239,7 @@ test('AUDIT RETRO1 G1: a held modifier the event does not report is stale - Shif
 test('AUDIT RETRO1 G2/G3: the settings\' page test comes after the forced table (a dozen reads a frame); the outdoor hosts\' action read never sees Shift-F11', () => {
   assert.match(src('systems/onlineLane.js'), /return Object\.hasOwn\(ONLINE_FORCED_SETTINGS\[section\] \?\? \{\}, key\) && isOnlinePage\(search\)/);
   for (const f of ['scenes/world.js', 'scenes/exterior.js']) {
-    assert.match(src(f), /const act = retroToggleKey\(e, keys\) \? null : actionOf\(e, keys\);/, f);
+    assert.match(src(f), /const acts = retroToggleKey\(e, keys\) \? \[\] : actionsOf\(e, keys\);/, f);   // UXB1-S: every action a shared key carries, none under the chord
   }
 });
 

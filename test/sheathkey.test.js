@@ -140,7 +140,7 @@ test('SHEATH: every ctx the large HUD is handed carries the panel\u2019s door (T
 test('SHEATH: the two outdoor fall-through tails decline POLLED_ACTIONS too - AUDIT 58\u2019s panel door did not silently reopen the double-fire it fixed once already', () => {
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const src = read(f);
-    assert.match(src, /if \(POLLED_ACTIONS\.has\(act\)\) \{[^}]*\}\s*else if \(e\.repeat\) \{ e\.preventDefault\(\); return; \}[^\n]*\n\s*else if \(routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return; \}/,   // AUDIT KB1: and the repeat eaten between them - the press edge alone
+    assert.match(src, /if \(POLLED_ACTIONS\.has\(act\)\) \{[^}]*\}\s*else if \(e\.repeat\) \{ e\.preventDefault\(\); return true; \}[^\n]*\n\s*else if \(routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return true; \}/,   // AUDIT KB1: and the repeat eaten between them - the press edge alone
       `${f}: the fall-through tail declines a polled action before it ever reaches routeAction, exactly as routeKey does`);
     // AUDIT MW-TORCH: the poll is now the ONLY door for Z in these two
     // hosts - so its presence is pinned beside the decline.

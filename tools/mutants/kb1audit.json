@@ -114,8 +114,8 @@
   {
     "name": "AUDIT-KB1-UI3-eventAction-reads-the-bare-code",
     "file": "src/ui/input.js",
-    "old": "    const a = actionForCode(b, comboCode(mod, e.code));\n    if (a) return actionLive(a) ? a : null;",
-    "new": "    const a = null;\n    if (a) return actionLive(a) ? a : null;",
+    "old": "    const as = actionsForCode(b, comboCode(mod, e.code));\n    if (as.length) return as.filter(actionLive);",
+    "new": "    const as = [];\n    if (as.length) return as.filter(actionLive);",
     "tests": [
       "test/kb1_audit.test.js"
     ]
@@ -177,7 +177,7 @@
   {
     "name": "AUDIT-KB1-H1-the-world-ladder-routes-the-repeat",
     "file": "src/scenes/world.js",
-    "old": "      else if (e.repeat) { e.preventDefault(); return; }   // AUDIT KB1: the press edge alone - routeKey's law (ui/input.js), so a held F8/F9 is one shot, one save\n",
+    "old": "        else if (e.repeat) { e.preventDefault(); return true; }   // AUDIT KB1: the press edge alone - routeKey's law (ui/input.js), so a held F8/F9 is one shot, one save\n",
     "new": "",
     "tests": [
       "test/kb1_audit.test.js"
@@ -213,8 +213,8 @@
   {
     "name": "AUDIT-KB1-H4-a-listener-writes-the-latch",
     "file": "src/ui/input.js",
-    "old": "export function eventAction(e) {\n  if (!e?.code) return null;",
-    "new": "export function eventAction(e) {\n  if (e?.code) return actionOf(e, new Set([e.shiftKey && 'ShiftLeft', e.ctrlKey && 'ControlLeft', e.altKey && 'AltLeft'].filter(Boolean)));\n  if (!e?.code) return null;",
+    "old": "export function eventActions(e) {\n  if (!e?.code) return [];",
+    "new": "export function eventActions(e) {\n  if (e?.code) return actionsOf(e, new Set([e.shiftKey && 'ShiftLeft', e.ctrlKey && 'ControlLeft', e.altKey && 'AltLeft'].filter(Boolean)));\n  if (!e?.code) return [];",
     "tests": [
       "test/kb1_audit.test.js"
     ]

@@ -41,7 +41,7 @@ const read = (p) => readFileSync(join(root, p), 'utf8');
 
 test('ROAD-H H5: no host\'s keydown ladder carries the same action arm twice (mutant: paste any `if (act === ...)` line back a second time)', () => {
   // The defect was two byte-identical
-  // `if (act === 'Rest') { e.preventDefault(); hudCtx.toggleRest(); return; }`
+  // `if (act === 'Rest') { e.preventDefault(); hudCtx.toggleRest(); return true; }`
   // lines fourteen apart in ONE block of `scenes/world.js`. Every arm
   // in these ladders `return`s, so a second copy of a line that is
   // already above it is unreachable by construction - there is no
@@ -76,7 +76,7 @@ test('ROAD-H H5: no host\'s keydown ladder carries the same action arm twice (mu
   // BOTH comments said: S40's binding and dispatch reference and the
   // U43 flag remark, which would otherwise have died with the copy.
   const w = read('src/scenes/world.js');
-  assert.equal((w.match(/if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return; \}/g) ?? []).length, 1,
+  assert.equal((w.match(/if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return true; \}/g) ?? []).length, 1,
     'the world host has exactly one Rest arm');
   const comment = w.slice(w.lastIndexOf('// V5: Rest,'), w.indexOf("if (act === 'Rest')"));
   assert.match(comment, /InputManager\.cs:997/, 'S40\'s SetupDefaults cite survived the fold');
@@ -316,7 +316,7 @@ test('ROAD-H H8: a HELD button and a stick axis on the SAME resolved code do not
   // code out of the OTHER dict FIRST - `var alt = primary ?
   // secondaryActionKeyDict : actionKeyDict; if (alt.ContainsKey(code))
   // alt.Remove(code);` (InputManager.cs:730-734), ported at
-  // inputActions.js:740-741 - so EITHER order collapses it.
+  // inputActions.js:815-816 - so EITHER order collapses it.
   const collapse = defaultStore();
   setBinding(collapse, 'ShiftLeft', 'Jump', false);
   assert.equal(collapse.primary.get('ShiftLeft'), undefined,
@@ -332,7 +332,7 @@ test('ROAD-H H8: a HELD button and a stick axis on the SAME resolved code do not
   // map-set with only a SAME-dict check: `if (!dict.ContainsKey(key)
   // && actionVal != Actions.Unknown) dict.Add(key, actionVal);`
   // (LoadActionKeybinds, InputManager.cs:1950-1969; loadActionKeybinds,
-  // inputActions.js:921-931, whose own comment says "Raw map-set, NOT
+  // inputActions.js:1022-1032, whose own comment says "Raw map-set, NOT
   // setBinding"). A hand-edited KeyBindings.txt that puts Jump on the
   // run key as a SECONDARY - with the primary Space spent on something
   // else - loads exactly as written, and SURVIVES the startup autofill

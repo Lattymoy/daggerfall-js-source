@@ -261,7 +261,7 @@ test('PAD1-E every registry action has a consumer, or is on the recorded list of
   // KB1: CenterView and PrintScreen are READ now (Mac: "build 2") - the look filter's centre and ui/screenshot.js -
   // and the two left are HIDDEN_ACTIONS (off the pane, unbound). The hotbar's slots are read through the one list
   // that names them (HOTBAR_SLOT_ACTIONS, beside the registry), so it is counted as their reader.
-  const hotbarRead = files.some(([, src]) => /HOTBAR_SLOT_ACTIONS\.indexOf\(eventAction\(/.test(src));   // AUDIT KB1: the event's own read
+  const hotbarRead = files.some(([, src]) => /const slotOfActions = \(acts\) => acts\.map\(\(a\) => HOTBAR_SLOT_ACTIONS\.indexOf\(a\)\)/.test(src) && /slotOfActions\(eventActions\(/.test(src));   // AUDIT KB1: the event's own read; UXB1-S: each action a shared key carries
   assert.ok(hotbarRead, 'the bar reads its ten slots through HOTBAR_SLOT_ACTIONS');
   const left = unread.filter((a) => !(hotbarRead && HOTBAR_SLOT_ACTIONS.includes(a)));
   assert.deepEqual(left.sort(), [...HIDDEN_ACTIONS].sort(), `unrouted: ${left}`);
@@ -283,7 +283,7 @@ test('PAD1-F a rebind through the controls pane changes the quickslot chip: the 
   u.secondary.set('QuickUse1', 'JoystickButton5');
   applyUnsavedKeybinds(store, u);
   assert.deepEqual(quickslotTag('QuickUse1', pad), { kind: 'glyph', family: 'xbox', code: 'JoystickButton5' }, 'the chip is the new button');
-  assert.equal(getBinding(store, 'Jump', false), null, 'RB was Jump\'s; DFU\'s single-bind law took it (the pane\'s duplicate check would have said so first)');
+  assert.equal(getBinding(store, 'Jump', false), 'JoystickButton5', 'RB was Jump\'s and still is: two actions staged on one key are a SHARE since UXB1-S (the pane would have asked first - the apply writes what the set says)');
   // and on the keyboard side
   u.primary.set('QuickUse1', 'KeyL');   // KB1: G is the torch's drop now, and an apply runs only on a clash-free set - L's holder (LogBook) cleared, as the pane's replace does
   u.primary.set('LogBook', null);

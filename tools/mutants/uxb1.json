@@ -160,5 +160,170 @@
     "tests": [
       "test/uxb1n_containerplaque.test.js"
     ]
+  },
+  {
+    "name": "UXB1-S-a-dict-walk-forgets-the-sharers",
+    "file": "src/systems/inputActions.js",
+    "old": "    for (const a of shared?.get(code) ?? []) yield [code, a];\n",
+    "new": "",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-a-share-takes-the-key-from-its-owner",
+    "file": "src/systems/inputActions.js",
+    "old": "  if (!dict.has(code)) { dict.set(code, action); return; }\n  const list = shared.get(code) ?? [];",
+    "new": "  dict.set(code, action); return;\n  const list = shared.get(code) ?? [];",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-the-owner-leaving-takes-the-key-from-its-sharers",
+    "file": "src/systems/inputActions.js",
+    "old": "    if (list.length) { dict.set(code, list[0]); setShared(shared, code, list.slice(1)); }",
+    "new": "    if (false) { dict.set(code, list[0]); setShared(shared, code, list.slice(1)); }",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-a-steal-leaves-the-sharers-on-the-key",
+    "file": "src/systems/inputActions.js",
+    "old": "    (primary ? store.sharedPrimary : store.sharedSecondary)?.delete(code);\n    dict.set(code, action);",
+    "new": "    dict.set(code, action);",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-the-autofill-puts-a-shared-actions-default-back",
+    "file": "src/systems/inputActions.js",
+    "old": "  for (const [, a] of dictEntries(store, primary)) if (a === action) return;   // UXB1-S: an action on a shared key is not missing",
+    "new": "  for (const a of dict.values()) if (a === action) return;",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-the-file-forgets-the-shares",
+    "file": "src/systems/inputActions.js",
+    "old": "  if (store.sharedPrimary?.size) out.sharedActionKeyBinds",
+    "new": "  if (false) out.sharedActionKeyBinds",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-a-window-key-means-its-owner-alone",
+    "file": "src/systems/inputActions.js",
+    "old": "export const codeMeans = (store, code, action) => code != null && actionsForCode(store, code).includes(action);",
+    "new": "export const codeMeans = (store, code, action) => code != null && actionForCode(store, code) === action;",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-held-reads-the-owners-alone",
+    "file": "src/ui/input.js",
+    "old": "  for (const [code, a] of dictEntries(b, true)) if (a === action && codeDown(b, keys, code)) return true;   // UXB1-S: a shared key holds every action on it",
+    "new": "  for (const [code, a] of b.primary) if (a === action && codeDown(b, keys, code)) return true;",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-routeKey-dispatches-the-first-alone",
+    "file": "src/ui/input.js",
+    "old": "  for (const act of actionsOf(e, keys)) used = routeKeyAction(e, act, ctx, setPlayerPos) || used;",
+    "new": "  for (const act of actionsOf(e, keys).slice(0, 1)) used = routeKeyAction(e, act, ctx, setPlayerPos) || used;",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-the-world-ladder-runs-for-the-first-alone",
+    "file": "src/scenes/world.js",
+    "old": "    (acts.length ? acts : [null]).forEach((act, i) => { if (worldKeyAction(act, i === 0)) spent = true; });",
+    "new": "    [acts[0] ?? null].forEach((act, i) => { if (worldKeyAction(act, i === 0)) spent = true; });",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-a-shared-F10-flips-the-HUD-twice",
+    "file": "src/scenes/exterior.js",
+    "old": "      if (first && hudShortcutKey(e, keys)) { e.preventDefault(); return true; }",
+    "new": "      if (hudShortcutKey(e, keys)) { e.preventDefault(); return true; }",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js",
+      "test/audit64_hud.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-a-share-is-a-red-clash-again",
+    "file": "src/systems/controlsConfig.js",
+    "old": "  const internal = getDuplicates(distinct(currentDict(u).values()));",
+    "new": "  const internal = getDuplicates([...currentDict(u).values()]);",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js",
+      "test/controlswindow.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-the-apply-steals-from-a-staged-sharer",
+    "file": "src/systems/controlsConfig.js",
+    "old": "            if ((p ? u.primary : u.secondary).get(holder) !== code) dropBinding(store, code, holder, p);",
+    "new": "            dropBinding(store, code, holder, p);",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js",
+      "test/controlswindow.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-a-combo-clash-is-offered-as-a-share",
+    "file": "src/systems/controlsConfig.js",
+    "old": "    && holders.every((h) => h.action !== action && (h.primary ? u.primary : u.secondary).get(h.action) === code);",
+    "new": "    && holders.every((h) => h.action !== action);",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-a-port-row-yields-its-share",
+    "file": "src/systems/controlsConfig.js",
+    "old": "      if (code != null && [...kept].some((k) => k !== code && clashes(code, k))) dict.set(action, null);",
+    "new": "      if (code != null && [...kept].some((k) => clashes(code, k))) dict.set(action, null);",
+    "tests": [
+      "test/soc5_interact.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-the-page-never-offers-both",
+    "file": "src/ui/enhancedControls.js",
+    "old": "  if (prompt.kind === 'replace' && canShareKey(unsaved, prompt.action, prompt.code, prompt.holders)) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-the-grid-ignores-B",
+    "file": "src/ui/controlsWindow.js",
+    "old": "      const share = code === 'KeyB' && canShareKey(this.unsaved, r.action, r.code, r.holders);",
+    "new": "      const share = false;",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-a-shared-row-says-nothing",
+    "file": "src/ui/enhancedControls.js",
+    "old": "  if (also.length) main.append(el('div', 'row-sub ctl-alsos',",
+    "new": "  if (false) main.append(el('div', 'row-sub ctl-alsos',",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
   }
 ]

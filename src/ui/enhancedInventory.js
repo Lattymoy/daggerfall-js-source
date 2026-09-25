@@ -111,7 +111,7 @@ import { rarityAttr, rarityLines } from '../systems/lootRarity.js';   // LR1: th
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { repaintKeepingScroll } from './domRepaint.js';
-import { overlayAction, eventAction } from './input.js';   // MAC-C: and the REGISTRY's answer for the two window keys
+import { overlayAction, eventActions } from './input.js';   // MAC-C: and the REGISTRY's answer for the two window keys
 import { audio } from '../systems/audio.js';   // MAC-O6: the pack's own transfer cue - this window carried none at all
 import { SOUND } from '../systems/soundClips.js';
 
@@ -2534,8 +2534,8 @@ function onKey(e) {
   // world (A-F4). Escape ends the drag and keeps the window; a second
   // one closes it, as it always did.
   if (overlayAction(e) === 'back' && drag) { e.preventDefault(); e.stopPropagation(); dragStop(false); return; }
-  const act = eventAction(e);   // AUDIT KB1: the event's own read - a pack opened by a combo closes on it
-  if (act === 'CharacterSheet' && typeof deps?.openCharSheet === 'function') {
+  const acts = eventActions(e);   // AUDIT KB1: the event's own read - a pack opened by a combo closes on it; UXB1-S: every action a shared key carries
+  if (acts.includes('CharacterSheet') && typeof deps?.openCharSheet === 'function') {
     e.preventDefault();
     e.stopPropagation();
     if (e.repeat) return;   // AUDIT KB1: a held key's repeat is swallowed, not an open-shut flicker
@@ -2547,7 +2547,7 @@ function onKey(e) {
     openCharSheet();          // ...and this replaces the slot it just freed
     return;
   }
-  if (overlayAction(e) !== 'back' && act !== 'Inventory') return;
+  if (overlayAction(e) !== 'back' && !acts.includes('Inventory')) return;
   e.preventDefault();
   e.stopPropagation();
   if (!e.repeat) onExit();

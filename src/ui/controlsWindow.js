@@ -61,7 +61,8 @@ import {
   createUnsavedKeybinds, currentDict, setUnsavedBinding, checkDuplicates,
   applyUnsavedKeybinds, resetUnsavedToDefaults, buttonText, ELONGATED_TEXT,
   INTERNAL_DUPE_COLOR, CROSS_DUPE_COLOR, comboFromEvent, removeKeybindPromptRows,
-  bindingHolders, replaceKeybindPromptRows, stageReplace,
+  bindingHolders, stageReplace,
+  canShareKey, stageShare, replacePromptRows, SHARED_KEY_COLOR,
 } from '../systems/controlsConfig.js';
 import { ToolTip } from './toolTip.js';
 import { MouseControlsWindow } from './mouseControlsWindow.js';   // ROAD-G G6: the ADVANCED tab's destination
@@ -274,12 +275,16 @@ export class ControlsWindow {
     // after its capture (Escape, Y, N - all bindable) answered the prompt it had just raised.
     if (this.top && e?.repeat) return;
     if (this.top === 'replace') {
+      const r = this._replace;
       if (code === 'KeyY') {
         this._click();
-        stageReplace(this.unsaved, this._replace.action, this._replace.code, this._replace.holders);
+        stageReplace(this.unsaved, r.action, r.code, r.holders);
         this._refresh();
       }
-      if (code === 'KeyY' || code === 'KeyN' || code === 'Escape') { this.top = null; this._replace = null; }
+      // UXB1-S: B - "use it for both": the key lands here and stays where it is (the box says so when it may)
+      const share = code === 'KeyB' && canShareKey(this.unsaved, r.action, r.code, r.holders);
+      if (share) { this._click(); stageShare(this.unsaved, r.action, r.code); this._refresh(); }
+      if (code === 'KeyY' || code === 'KeyN' || code === 'Escape' || share) { this.top = null; this._replace = null; }
       return;
     }
     if (this.top === 'defaults') {
@@ -486,7 +491,7 @@ export class ControlsWindow {
       const code = dict.get(b.action);
       const label = this.capture === b.action ? '' : buttonText(code);
       const color = this.dupes.internal.has(code) ? INTERNAL_DUPE_COLOR
-        : this.dupes.cross.has(code) ? CROSS_DUPE_COLOR : TEXT_COLOR;
+        : this.dupes.cross.has(code) ? CROSS_DUPE_COLOR : this.dupes.shared?.has(code) ? SHARED_KEY_COLOR : TEXT_COLOR;   // UXB1-S: a share, in its own colour
       const lw = measureText(font.fnt, label);
       drawText(renderer, font, label,
         m.ox + (b.x + Math.round((KEY_BTN.w - lw) / 2)) * m.s,
@@ -508,7 +513,7 @@ export class ControlsWindow {
         : this.top === 'defaults' ? ['Are you sure you want to set default controls?']
           : this.top === 'remove'
             ? removeKeybindPromptRows(this._removeAction, currentDict(this.unsaved).get(this._removeAction))
-            : this.top === 'replace' ? replaceKeybindPromptRows(this._replace.action, this._replace.code, this._replace.holders, this.unsaved.usingPrimary)
+            : this.top === 'replace' ? replacePromptRows(this.unsaved, this._replace)
               : this._noteRows;
       const buttons = (this.top === 'defaults' || this.top === 'remove' || this.top === 'replace') ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : [];
       this._box = layoutMessageBox(font, rows, buttons);

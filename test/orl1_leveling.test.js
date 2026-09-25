@@ -714,7 +714,7 @@ test('ORL1: the level-up window spends by the mod\'s law and commits through the
   w.input('minus');
   assert.equal(w.deltas.strength, 4);
   assert.equal(w.purse, 8);
-  w.input('char:-');   // the OTHER spelling of the same key (ui/input.js:366)
+  w.input('char:-');   // the OTHER spelling of the same key (ui/input.js:378)
   assert.equal(w.deltas.strength, 3);
   // confirming with a purse left is refused, loudly, and changes nothing
   assert.equal(w.confirm(), false);

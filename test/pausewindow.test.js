@@ -155,7 +155,7 @@ test('I3: the wiring - four hosts, one Escape door each, art preloaded', () => {
     // ARENA2 at all, so gating it on OPTN00I0 would have left a player
     // with a failed art load holding a game with no pause menu, no
     // settings and no way out.
-    const arm = src.indexOf("if (act === 'Escape' && pauseDoorReady()) { hudCtx.togglePause(); return; }");
+    const arm = src.indexOf("if (act === 'Escape' && pauseDoorReady()) { hudCtx.togglePause(); return true; }");
     assert.ok(arm > gate, `${rel} opens on Escape, inside that gate`);
     // PX26: the door takes its own options now (the dial's north lands
     // on Stats). ONE door is the law and it is unchanged - the count

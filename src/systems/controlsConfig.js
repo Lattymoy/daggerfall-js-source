@@ -17,9 +17,9 @@
 // display face when one is wanted.
 
 import {
-  ACTIONS, getBinding, setBinding, addRemovedPrimaryAction, addRemovedSecondaryAction, resetDefaults,
+  ACTIONS, getBinding, addRemovedPrimaryAction, addRemovedSecondaryAction, resetDefaults,
   isCombo, getCombo, comboCode, actionLabel, actionLive, createBindings, serializeKeyBinds, loadKeyBinds,
-  MOD_ACTIONS, ACTION_GROUPS, codeForAction,
+  MOD_ACTIONS, ACTION_GROUPS, codeForAction, actionsAt, shareBinding, dropBinding, clearBinding,
 } from './inputActions.js';
 import { shortcutBinding, MOD } from './dialogShortcuts.js';   // UXB1-F: the keys this page names and cannot move
 
@@ -27,6 +27,9 @@ import { shortcutBinding, MOD } from './dialogShortcuts.js';   // UXB1-F: the ke
  *  inside the shown dict, the blue for one across the two. */
 export const INTERNAL_DUPE_COLOR = Object.freeze([1, 0, 0, 1]);
 export const CROSS_DUPE_COLOR = Object.freeze([0, 0.58, 1, 1]);
+/** UXB1-S: the port's own third colour - a key shared by choice (sharedStagedCodes), which blocks nothing. Green, so
+ *  it reads as neither of DFU's two clashes. */
+export const SHARED_KEY_COLOR = Object.freeze([0.44, 0.81, 0.54, 1]);
 
 /** The label cap under the classic font (:64 - the non-SDF arm) and
  *  the elongation stand-in (:56). */
@@ -139,12 +142,33 @@ export const internalDuplicatesExist = (u) =>
  *  passes no `yield` at all and sees DFU's law byte for byte. */
 export function checkDuplicates(u, { yield: yielded = [] } = {}) {
   if (yielded.length) yieldDuplicates(u, yielded);
-  const internal = getDuplicates([...currentDict(u).values()]);
-  const cross = getDuplicates([
-    ...new Set([...u.primary.values()].filter((c) => c != null)),
-    ...new Set([...u.secondary.values()].filter((c) => c != null)),
-  ]);
-  return { internal, cross, ok: internal.size === 0 && cross.size === 0 };
+  // UXB1-S: DFU's law over each set's DISTINCT codes. The same key on two actions is a SHARE now - chosen, kept, and
+  // answered by both (inputActions.js shareBinding) - so what the law still finds is the kind of clash no press can
+  // resolve: a combo against its own modifier bound bare (Shift+T and Shift), a combo'd key heading another combo.
+  const internal = getDuplicates(distinct(currentDict(u).values()));
+  const cross = getDuplicates(distinct([...u.primary.values(), ...u.secondary.values()]));
+  return { internal, cross, shared: sharedStagedCodes(u), ok: internal.size === 0 && cross.size === 0 };
+}
+const distinct = (codes) => [...new Set([...codes].filter((c) => c != null))];
+
+/** UXB1-S: THE SHARED KEYS in the staged sets - every code more than one ACTION holds, across both dicts (an action
+ *  on one key in both of its slots is the same action twice, not a share). The pages mark them. */
+export function sharedStagedCodes(u) {
+  const by = new Map();
+  for (const dict of [u.primary, u.secondary]) {
+    for (const [action, code] of dict) if (code != null) (by.get(code) ?? by.set(code, new Set()).get(code)).add(action);
+  }
+  return new Set([...by].filter(([, actions]) => actions.size > 1).map(([code]) => code));
+}
+/** UXB1-S: ...and who else a row's key answers - every OTHER action staged on `code`, in either dict, for the row's
+ *  "Also:" line. [] for a key that is not shared. */
+export function keySharers(u, action, code) {
+  if (code == null) return [];
+  const out = [];
+  for (const dict of [u.primary, u.secondary]) {
+    for (const [a, c] of dict) if (c === code && a !== action && !out.includes(a)) out.push(a);
+  }
+  return out;
 }
 
 /** The `yield` pass: in EACH staged dict on its own, a yielded action
@@ -160,7 +184,8 @@ function yieldDuplicates(u, yielded) {
     for (const [action, code] of dict) if (code != null && !give.has(action)) kept.add(code);
     for (const action of give) {
       const code = dict.get(action);
-      if (code != null && kept.has(code)) dict.set(action, null);
+      // UXB1-S: a SHARE blocks nothing, so it is never given up - only a combo clash, which still blocks the exit
+      if (code != null && [...kept].some((k) => k !== code && clashes(code, k))) dict.set(action, null);
     }
   }
 }
@@ -170,15 +195,14 @@ function yieldDuplicates(u, yielded) {
  *  from the live one - and an emptied PRIMARY slot is marked removed
  *  so the autofill pass cannot quietly restore its default.
  *
- *  THE CONTRACT, which is DFU's and not a port shortcut: this runs
- *  only on a DUPLICATE-FREE set. SetBinding steals a code from
- *  whoever holds it, so applying a set where two actions share one
- *  code is ORDER-DEPENDENT - the later action wins and the earlier
- *  ends up unbound. DFU never reaches that state because the window
- *  refuses to close while checkDuplicates reports either kind of
- *  clash (AllowCancel false), which is exactly why that gate blocks
- *  the exit rather than merely colouring the labels. Callers that
- *  bypass the window must run checkDuplicates themselves.
+ *  THE CONTRACT was DFU's: this ran only on a DUPLICATE-FREE set,
+ *  because SetBinding steals a code from whoever holds it and two
+ *  actions on one code came out ORDER-DEPENDENT - the later won, the
+ *  earlier ended up unbound. UXB1-S made the same code on two actions
+ *  a SHARE, so the apply no longer steals from anyone the staged
+ *  picture keeps on the key (below); the windows still refuse to close
+ *  on the clash DFU's law still finds (a combo against its modifier),
+ *  and callers that bypass them must run checkDuplicates themselves.
  *
  *  AUDIT KB1 F4: "differs from the live one" is read off the store AS IT
  *  STOOD BEFORE THE APPLY, not as the walk has left it. A code that
@@ -203,7 +227,17 @@ export function applyUnsavedKeybinds(store, u) {
       if (cur !== code) {
         if (primary && code == null) addRemovedPrimaryAction(store, action);
         if (!primary && code == null) addRemovedSecondaryAction(store, action);   // PAD1: a cleared pad row stays cleared
-        setBinding(store, code ?? null, action, primary);
+        if (code == null) { clearBinding(store, action, primary); continue; }
+        // UXB1-S: SetBinding's steal, kept for everyone the staged picture does NOT keep on this key - a holder staged
+        // elsewhere lets go of it here (whatever order the walk meets the two in), and one staged on it too keeps it:
+        // that is a share, and the bind lands beside it rather than taking it.
+        for (const p of [true, false]) {
+          for (const holder of actionsAt(store, code, p)) {
+            if (holder === action && p === primary) continue;
+            if ((p ? u.primary : u.secondary).get(holder) !== code) dropBinding(store, code, holder, p);
+          }
+        }
+        shareBinding(store, code, action, primary);
       }
     }
   }
@@ -454,6 +488,26 @@ export function replaceKeybindPromptRows(action, code, holders, usingPrimary = t
 export function stageReplace(u, action, code, holders) {
   for (const h of holders) (h.primary ? u.primary : u.secondary).set(h.action, null);
   currentDict(u).set(action, code);
+}
+
+/** UXB1-S: THE THIRD ANSWER - "use it for both". Offered when every holder holds exactly this key (a combo against its
+ *  own modifier is a clash no press resolves, still DFU's) and none of them is the action itself (its own other slot
+ *  is the key moving, AUDIT KB1 F6). */
+export function canShareKey(u, action, code, holders) {
+  return code != null && holders.length > 0
+    && holders.every((h) => h.action !== action && (h.primary ? u.primary : u.secondary).get(h.action) === code);
+}
+/** ...and its answer: the bind lands in the shown set, and every holder keeps the key. */
+export function stageShare(u, action, code) {
+  currentDict(u).set(action, code);
+}
+/** The words: the enhanced page's third button, and the classic box's line (its keyed answer is B). */
+export const SHARE_KEY_LABEL = 'Use for both';
+export const SHARE_KEY_ROW = 'Or press B to use it for both.';
+/** The classic windows' replace box: the question, and the B line where a share is offered. */
+export function replacePromptRows(u, { action, code, holders }) {
+  const rows = replaceKeybindPromptRows(action, code, holders, u.usingPrimary);
+  return canShareKey(u, action, code, holders) ? [...rows, SHARE_KEY_ROW] : rows;
 }
 
 /**

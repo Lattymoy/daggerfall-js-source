@@ -1833,6 +1833,12 @@ ${badgeCss()}
 .ctl-row.ctl-want .ctl-key { color: var(--brass); border-color: var(--brass); }
 .ctl-row.ctl-holder { box-shadow: inset 3px 0 0 var(--blood); }
 .ctl-row.ctl-holder .ctl-key { color: var(--blood); border-color: var(--blood); }
+/* UXB1-S: a SHARED key - one press, several actions, chosen - in its own
+   colour (a clash keeps the red and the blue), with the other actions it
+   answers named under the row. */
+.ctl-key.ctl-shared { color: #6fcf8a; border-color: #6fcf8a; }
+.ctl-alsos { color: #6fcf8a; }
+.ctl-prompt .ctl-share { border-color: #6fcf8a; }
 /* UXB1-F: the keys this page names and cannot move - drawn as a key's face,
    dashed and dim, so nobody reads one as a button to press. */
 .ctl-fixedkey { display: inline-block; min-width: 154px; padding: 8px 12px; text-align: center;

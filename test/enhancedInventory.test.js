@@ -406,8 +406,8 @@ test('U53: Escape and F6 close it, and F6 is claimed', () => {
   // Inventory used to open the pack on the player's key and close it
   // on Bethesda's. The law this pin states (decide, THEN claim) is
   // unchanged.
-  assert.match(onKey, /overlayAction\(e\) !== 'back' && act !== 'Inventory'/);
-  const testAt = onKey.indexOf("act !== 'Inventory'");
+  assert.match(onKey, /overlayAction\(e\) !== 'back' && !acts\.includes\('Inventory'\)/);   // UXB1-S: its key, shared or not
+  const testAt = onKey.indexOf("!acts.includes('Inventory')");
   const claimAt = onKey.lastIndexOf('e.preventDefault()');
   assert.ok(testAt > 0 && claimAt > testAt, 'decide it used the key before claiming it');
   // AUDIT INV2 A-F7: and ABOVE that decision sits the drag's abort - Escape

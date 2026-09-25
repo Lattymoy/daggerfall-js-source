@@ -26,7 +26,7 @@
 // a later U8 slice).
 
 import { statUp, statDown, allStatsMax } from './chargen.js';   // LV1's audit: DaggerfallStats.IsAllMax has ONE home now (and MAX_STAT_VALUE left with the copy that used it - this file's last reader was that copy)
-import { actionForCode } from '../systems/inputActions.js';   // MAC-C: the sheet's toggle key is the registry's
+import { codeMeans } from '../systems/inputActions.js';   // MAC-C: the sheet's toggle key is the registry's; UXB1-S: shared or not
 import { bindings } from './input.js';
 import { carriedWeight } from '../systems/inventory.js';   // AUDIT 17e F30; E4: PlayerEntity.CarriedWeight, one home
 import { totalGoldAmount } from '../systems/court.js';   // PlayerEntity.GetGoldAmount - coins plus letters of credit
@@ -143,9 +143,9 @@ export class LevelUpScreen {
     else if (action === 'plus') { audio.playOneShot(SOUND.ButtonClick, 1); const r = statUp(this.working[key], this.pool); this.working[key] = r.working; this.pool = r.pool; }   // freeEdit spinner (StatsRollout.cs:255)
     // AUDIT 58 (f3/input): + 'char:-'. This screen carries no
     // isChoiceWindow, so both hosts hand it overlayAction's answer
-    // (scenes/townTalk.js's keyed arm and ui/input.js:588-589) - and
+    // (scenes/townTalk.js's keyed arm and ui/input.js:599-600) - and
     // overlayAction can never answer 'minus', because its typed-
-    // character branch (ui/input.js:374) owns the hyphen. The bare
+    // character branch (ui/input.js:386) owns the hyphen. The bare
     // 'minus' arm stays: the SPINNER click (:405) and the sheet's own
     // code table (:196) both still produce it. Without this, a
     // level-up point could be spent from the keyboard and never taken
@@ -234,7 +234,7 @@ export const STATS_ROLLOUT_SPINNER = Object.freeze({ x: 176, y: 6, w: 15, h: 20,
  *  freeEdit OFF, so a moved stat draws green here. */
 export const STAT_MODIFIED_COLOR = Object.freeze([0, 1, 0, 1]);
 /** SelectStat + the spinner's two arrows, in both key vocabularies -
- *  the overlayAction names (ui/input.js:381-382) and the raw e.code a
+ *  the overlayAction names (ui/input.js:393-394) and the raw e.code a
  *  "native" window is handed. */
 const ROLLOUT_ACTIONS = Object.freeze({
   up: 'up', ArrowUp: 'up', down: 'down', ArrowDown: 'down',
@@ -546,18 +546,18 @@ export class CharSheet {
     // resolved here the way every host ladder resolves one - a player
     // who rebinds CharacterSheet gets a sheet that closes on their key
     // rather than on Bethesda's.
-    const bound = actionForCode(bindings(), action);
+    const bound = (a) => codeMeans(bindings(), action, a);
     // ...and the PACK key crosses over rather than doing nothing, which
     // is the same law the enhanced sheet takes (ui/charSheetDoor.js).
     // The hook is the sheet's own Items button; no hook, no key.
-    if (bound === 'Inventory' && this.hooks?.inventory) {
+    if (bound('Inventory') && this.hooks?.inventory) {
       if (!this._checkIfDoneLeveling()) return;   // the same gate the exit takes: no leaving with points owed
       this.done = true;
       this.hooks.inventory();
       return;
     }
     if (action === 'confirm' || action === 'back' || action === 'sheet'
-      || action === 'Enter' || action === 'Escape' || bound === 'CharacterSheet' || action === 'KeyE') {
+      || action === 'Enter' || action === 'Escape' || bound('CharacterSheet') || action === 'KeyE') {
       // CancelWindow / the toggle key / the exit button all run the
       // same gate (:241, :259, :944) - the sheet does not close while
       // bonus points are owed.

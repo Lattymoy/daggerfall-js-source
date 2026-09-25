@@ -18,7 +18,7 @@
 // It holds FUNCTIONS, never DOM: a registry that reached into windows
 // would be a second owner of them, and every one of these already
 // owns its own teardown.
-import { eventAction } from './input.js';   // KB1: the dial's key is the registry's QuickDial
+import { eventMeans } from './input.js';   // KB1: the dial's key is the registry's QuickDial
 
 const stack = [];
 
@@ -42,7 +42,7 @@ function onTab(e) {
   // the player has bound it (a literal Tab here kept answering after the dial moved, and the new key did nothing)
   // AUDIT KB1: the event's own read, so a dial bound to a combo closes on it (the old modifier refusal made that
   // impossible); the auto-repeat of the held key is swallowed below and closes nothing
-  if (e.metaKey || eventAction(e) !== 'QuickDial') return;
+  if (e.metaKey || !eventMeans(e, 'QuickDial')) return;   // UXB1-S: its key, shared or not
   // A text field owns Tab: the chronicle's note composer and the
   // spellbook's rename are both fields, and Tab in one of them is the
   // browser's own business.

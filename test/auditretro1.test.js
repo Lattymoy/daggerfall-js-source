@@ -313,7 +313,7 @@ test('AUDIT RETRO1 C1: Shift-F11 under an open window loads nothing - it is the 
   routeKey(ev(false), ctx, null, new Set());
   assert.equal(loads, 1, 'F11 under a window still loads (the death screen\'s hint)');
   const w = src('scenes/world.js');
-  assert.match(w, /actionForCode\(bindings\(\), e\.code\) === 'QuickLoad' && !retroToggleKey\(e, keys\)\) \{/, 'the exterior ladder\'s own arm');
+  assert.match(w, /codeMeans\(bindings\(\), e\.code, 'QuickLoad'\) && !retroToggleKey\(e, keys\)\) \{/, 'the exterior ladder\'s own arm (UXB1-S: its key, shared or not)');
   _resetRetroPostprocessing();
 });
 

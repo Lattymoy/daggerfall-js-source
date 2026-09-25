@@ -186,7 +186,7 @@ test('STATUS-LIVE by source: all four hosts reach the ONE composer, each with it
   // the yield, at every door a window key can come through
   assert.match(src('src/ui/input.js'), /if \(statusReadoutTakesAction\(action\)\) return true;/, 'routeAction, for the two modal hosts and the large HUD');
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(src(h), /if \(statusReadoutTakesAction\(act\)\) \{ e\.preventDefault\(\); return; \}/, `${h} runs its OWN ladder and owes the same call`);
+    assert.match(src(h), /if \(statusReadoutTakesAction\(act\)\) \{ e\.preventDefault\(\); return true; \}/, `${h} runs its OWN ladder and owes the same call`);
   }
   // ...and the module that carries it is a LEAF, which is the whole
   // reason it is not in ui/ beside the box (the TDZ crash its header

@@ -44,7 +44,7 @@
     "new": "",
     "tests": ["test/statuslive.test.js"] },
   { "name": "the-outdoor-ladder-never-asks-it", "file": "src/scenes/world.js",
-    "old": "    if (statusReadoutTakesAction(act)) { e.preventDefault(); return; }",
+    "old": "      if (statusReadoutTakesAction(act)) { e.preventDefault(); return true; }",
     "new": "",
     "tests": ["test/statuslive.test.js"] },
   { "name": "a-readout-left-under-a-window-never-closes-itself", "file": "src/ui/statusBox.js",

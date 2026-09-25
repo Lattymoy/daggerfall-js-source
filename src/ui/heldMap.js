@@ -124,7 +124,7 @@ import { createTownSheet } from './townSheet.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { quadPlacement } from './quadMap.js';   // MAP3: the sheet over the held paper's corners
 import { bindings } from './input.js';
-import { actionForCode } from '../systems/inputActions.js';
+import { actionsForCode } from '../systems/inputActions.js';   // UXB1-S: every action its key carries, shared or not
 import { smoothstep } from '../systems/mathf.js';   // MAP-FIELD7: the ONE easing, so the sheet travels like everything else in the port
 
 // ── THE SPRITE (Mac's, public/art/held-map.png) ──────────────────
@@ -635,8 +635,8 @@ export class HeldMapWindow {
     // this one now. Both actions, on every sheet, because the tabs mean
     // one window can be entered by either key and the player should not
     // have to remember which.
-    const _act = actionForCode(bindings(), code);
-    if (code === 'Escape' || _act === 'TravelMap' || _act === 'AutoMap') {
+    const _acts = actionsForCode(bindings(), code);
+    if (code === 'Escape' || _acts.includes('TravelMap') || _acts.includes('AutoMap')) {
       e?.preventDefault?.();
       if (this._phase !== 'map') return;      // the sheet is moving: let it land
       // the diseased box steps back to the PANEL, not out of it - the

@@ -52,7 +52,7 @@ test('JAN1 (1): the pack\'s CharacterSheet key closes the pack and opens the she
   });
   const s = rd('src/ui/enhancedInventory.js');
   assert.ok(s.includes("    const openCharSheet = deps.openCharSheet;\n    onExit();                 // the pack's own close law runs FIRST...\n    openCharSheet();"), 'by source: the hook is captured before onExit');
-  assert.ok(s.includes("if (act === 'CharacterSheet' && typeof deps?.openCharSheet === 'function') {"), 'and the arm asks for a function, not a truthy bag entry');
+  assert.ok(s.includes("if (acts.includes('CharacterSheet') && typeof deps?.openCharSheet === 'function') {"), 'and the arm asks for a function, not a truthy bag entry');
 });
 
 test('JAN1 (2): a save with no bank accounts restores the FULL table (and the house registry beside it), so every bank reader validates the region instead of throwing; a save with accounts keeps them; the classic ValidateRegion law is untouched', () => {

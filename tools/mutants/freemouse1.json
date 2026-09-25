@@ -75,8 +75,8 @@
   {
     "name": "the-reader-forgets-the-new-action",
     "file": "src/player/pointerLock.js",
-    "old": "    if (act !== FREE_MOUSE_ACTION && !(act === 'ActivateCursor' && !cursorKeyClaimed(e))) return;",
-    "new": "    if (!(act === 'ActivateCursor' && !cursorKeyClaimed(e))) return;",
+    "old": "    if (!acts.includes(FREE_MOUSE_ACTION) && !(acts.includes('ActivateCursor') && !cursorKeyClaimed(e))) return;",
+    "new": "    if (!(acts.includes('ActivateCursor') && !cursorKeyClaimed(e))) return;",
     "tests": [
       "test/freemouse.test.js",
       "test/kb1_keybinds.test.js"
@@ -85,8 +85,8 @@
   {
     "name": "the-reader-forgets-DFUs-own-action",
     "file": "src/player/pointerLock.js",
-    "old": "    if (act !== FREE_MOUSE_ACTION && !(act === 'ActivateCursor' && !cursorKeyClaimed(e))) return;",
-    "new": "    if (act !== FREE_MOUSE_ACTION) return;",
+    "old": "    if (!acts.includes(FREE_MOUSE_ACTION) && !(acts.includes('ActivateCursor') && !cursorKeyClaimed(e))) return;",
+    "new": "    if (!acts.includes(FREE_MOUSE_ACTION)) return;",
     "tests": [
       "test/freemouse.test.js",
       "test/kb1_keybinds.test.js"

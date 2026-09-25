@@ -585,7 +585,7 @@ test('S40 hosts: all four can now rest, and each supplies its own place', () => 
     // large HUD's rest panel posts through too. Pin the WHOLE arm and
     // the door behind it - matching the action NAME alone survives a
     // `false &&` in front of it, which leaves the key dead.
-    assert.match(s, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return; \}/, f);
+    assert.match(s, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return true; \}/, f);
     assert.match(s, /toggleRest: \(\) => toggleRest\(\),/, f);
     // ...and the door is DECLARED ONCE. A match is not enough here and
     // AUDIT 26 F055/F202/F203 is why: both hosts declared `toggleRest`

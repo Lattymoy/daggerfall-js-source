@@ -124,8 +124,8 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionOf = nu
     // one toggle, one flag, one place that can refuse it - a second
     // binding over `_cursorActive` is the bug PL3 spent a whole slice
     // on, in a new hat.
-    const act = actionOf(e);
-    if (act !== FREE_MOUSE_ACTION && !(act === 'ActivateCursor' && !cursorKeyClaimed(e))) return;   // KB1: online, ActivateCursor's key is the chat's - when the chat takes this press
+    const acts = [actionOf(e)].flat().filter(Boolean);   // UXB1-S: a host hands every action a shared key carries (actionsOf); one action reads the same
+    if (!acts.includes(FREE_MOUSE_ACTION) && !(acts.includes('ActivateCursor') && !cursorKeyClaimed(e))) return;   // KB1: online, ActivateCursor's key is the chat's - when the chat takes this press
     e.preventDefault();
     // PL1: "Don't allow activate cursor for 0.3 seconds after closing
     // an input message box" (PlayerMouseLook.cs:192-196).

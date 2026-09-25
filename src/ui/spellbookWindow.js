@@ -131,7 +131,7 @@ import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBox
 import { drawText } from './text.js';
 import { bindings } from './input.js';
 import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM6: the rename is a pushed DaggerfallInputMessageBox
-import { actionForCode } from '../systems/inputActions.js';
+import { codeMeans } from '../systems/inputActions.js';   // UXB1-S: its own key, shared or not
 import {
   preloadSpellIcons, drawSpellIcon, drawTargetIcon, drawElementIcon,
   TARGET_DESCRIPTIONS, ELEMENT_DESCRIPTIONS,
@@ -772,7 +772,7 @@ export class SpellbookWindow {
     if (this.top) { this.top = null; return; }   // the click-anywhere boxes
     // Update's toggle-closed binding is the CAST key (:158-161,
     // :205-214), and the back button closes too.
-    if (code === 'Escape' || actionForCode(bindings(), code) === 'CastSpell') { this._close(); return; }
+    if (code === 'Escape' || codeMeans(bindings(), code, 'CastSpell')) { this._close(); return; }
     switch (code) {
       case 'ArrowUp': this.selectPrevious(); return;
       case 'ArrowDown': this.selectNext(); return;
