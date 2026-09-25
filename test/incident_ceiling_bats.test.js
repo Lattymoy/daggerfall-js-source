@@ -230,7 +230,7 @@ test('bats review: every host passes centreOffset; the watch sizes its capsule t
   }
   // the dungeon save: stamped, and a pre-fix flyer entry judged
   assert.match(src('src/systems/spellcast.js'),
-    /if \(sphereOverlapsCapsule\(pos, radius, f\.ai\?\.feet, f\.ai\?\.height\)\) out\.push\(f\);/,
+    /if \(sphereOverlapsCapsule\(pos, radius, f\.ai\?\.feet, f\.ai\?\.height, f\.ai\?\.radius\)\) out\.push\(f\);/,
     "...and that site reads the foe's own capsule, feet and height both (ROAD-H H2)");
   assert.match(d, /feet: \[\.\.\.f\.ai\.feet\], yaw: f\.ai\.yaw, anchor: 1,/);
   assert.match(d, /if \(!keepRebuiltSpawn\(sf, f\.ai\.feet, f\.idleH, f\.mobile\?\.basics\?\.behaviour \?\? 'General', f\.marker \?\? null\)\) \{ f\.ai\.feet\[0\] = sf\.feet\[0\];/);

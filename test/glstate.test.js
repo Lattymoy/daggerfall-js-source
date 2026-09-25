@@ -139,8 +139,11 @@ test('EV6: the skies neither query CURRENT_PROGRAM nor restore - the hosts mark 
     // hosts one more, the wisps (drawn after the rain, on their own program)
     // WEATHER2d: and the sand, one more in both; BOLT: and the lightning's channels, one more in both
     // DUEL1: and the duel ring's wall, one more in the world host (the one that is online)
+    // WB2: and the Oblivion Gate's fire and beacon, one more in the world host (online again)
+    // WB4a: and the Burning Court boss's telegraph, one more in the world host (drawn in the dungeon arm)
+    // WB6a: and the Deadlands' sea and sky round the court, one more in the world host (the dungeon arm again)
     // DW-C: and Iliac Puddle No More's surfaces, one more in the world host (the carved sea is the streamed world's)
-    const want = host === 'src/scenes/world.js' ? 8 : 5;
+    const want = host === 'src/scenes/world.js' ? 11 : 5;
     assert.equal((s.match(/renderer\.markForeignPass\(\);/g) || []).length, want,
       `${host} marks its foreign seams (the sky, the rain, the sand, the wisps, the bolts${want === 6 ? ', and the grass' : ''})`);
   }

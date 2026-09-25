@@ -2,8 +2,8 @@
   {
     "name": "FS-touch-marks-dropped",
     "file": "src/scenes/hostMagic.js",
-    "old": "const marks = [...allyMarksFor(sp), ...duelMarksFor(sp)];",
-    "new": "const marks = [...duelMarksFor(sp)];",
+    "old": "const marks = [...allyMarksFor(sp), ...duelMarksFor(sp), ...bossMarksFor(sp)];",
+    "new": "const marks = [...duelMarksFor(sp), ...bossMarksFor(sp)];",
     "tests": [
       "test/friendlyspells.test.js"
     ]

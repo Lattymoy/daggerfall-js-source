@@ -261,11 +261,11 @@ test('audit24 wave46: every blow and every ARROW now owes all three', () => {
       assert.deepEqual(missed.billed, [], `${file} door ${i + 1}: and no health billed`);
     });
   }
-  // the dungeon's three sites are inline rather than properties (its
-  // melee resolution, its arrow arm and - AUDIT 64 F40 - the damage
-  // trap's sink), so they stay counted
+  // the dungeon's four sites are inline rather than properties (its
+  // melee resolution, its arrow arm, - AUDIT 64 F40 - the damage
+  // trap's sink and - WB4a - the Burning Court boss's blow, strikePlayer), so they stay counted
   const cries = (f) => rd(f).split('\n').filter((l) => l.trim().startsWith('playPlayerVoice(audio, playerPainVoice(')).length;
-  assert.equal(cries('src/scenes/dungeonContext.js'), 3, 'dungeon: the blow, the arrow AND the damage trap');
+  assert.equal(cries('src/scenes/dungeonContext.js'), 4, 'dungeon: the blow, the arrow, the damage trap AND the Burning Court boss\'s blow');
   // the two arrow-on-player sites, which had NONE of this
   const w = rd('src/scenes/world.js');
   const arrow = w.slice(w.indexOf('onPlayerHit: (m) =>'));

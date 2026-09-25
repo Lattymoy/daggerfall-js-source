@@ -662,7 +662,7 @@ rather than trusted from memory: `Billboard.SetRDBResourceData` writes
 `WaterLevel = -8 * SoundIndex` (10000 for a zero) off a start marker's
 flat resource, `DaggerfallDungeon.FindMarkers` takes `StartMarkers[0]`
 for every block, and `RDBLayout.AddWater` stands a plane the size of the
-block at `level * -1 * GlobalScale`. That is `world/rdbLayout.js:470-476`
+block at `level * -1 * GlobalScale`. That is `world/rdbLayout.js:471-477`
 and the quad `scenes/dungeonContext.js` mints, line for line, and R7's
 corpus pins (32 of 187 blocks watered, Maorn's Guard's three levels)
 have held it since August. The "2 Water" the console prints is the count

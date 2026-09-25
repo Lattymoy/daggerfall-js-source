@@ -1,0 +1,205 @@
+[
+  {
+    "name": "AUDWB-A1-the-silent-kept-seated",
+    "file": "server/src/index.js",
+    "old": "    if (this.state.getWebSockets().length >= cap) { this._unseatSilent(Date.now()); if (",
+    "new": "    if (this.state.getWebSockets().length >= cap) { if (",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A1-a-socket-unstamped",
+    "file": "server/src/index.js",
+    "old": "    server.serializeAttachment({ key, id: null, name: null, pose: null, at: Date.now() });",
+    "new": "    server.serializeAttachment({ key, id: null, name: null, pose: null });",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A1-the-talker-unseated",
+    "file": "server/src/index.js",
+    "old": "      if (a.id || a.replaced || this._dead.has(ws)) continue;",
+    "new": "      if (a.replaced || this._dead.has(ws)) continue;",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A1-an-old-socket-never-stamped",
+    "file": "server/src/index.js",
+    "old": "      if (!Number.isFinite(a.at)) { this._setAttach(ws, { ...a, at: now }); continue; }",
+    "new": "      if (!Number.isFinite(a.at)) continue;",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A1-the-wait-edge",
+    "file": "server/src/index.js",
+    "old": "      if (now - a.at < HELLO_WAIT_MS) continue;",
+    "new": "      if (now - a.at <= HELLO_WAIT_MS) continue;",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A1-closed-for-good",
+    "file": "server/src/index.js",
+    "old": "      try { ws.close(CLOSE_BUSY, 'no hello'); } catch { /* gone */ }",
+    "new": "      try { ws.close(CLOSE_POLICY, 'no hello'); } catch { /* gone */ }",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A1-one-seat-an-account-everywhere",
+    "file": "server/src/index.js",
+    "old": "      if (isGateRoom(a.key) && who.subject) for (const [other, b] of [...this._all()]) if (other !== ws && b.id && b.sub === who.subject)",
+    "new": "      if (who.subject) for (const [other, b] of [...this._all()]) if (other !== ws && b.id && b.sub === who.subject)",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A1-two-seats-an-account",
+    "file": "server/src/index.js",
+    "old": "      if (isGateRoom(a.key) && who.subject) for (const [other, b] of [...this._all()]) if (other !== ws && b.id && b.sub === who.subject)",
+    "new": "      if (false) for (const [other, b] of [...this._all()]) if (other !== ws && b.id && b.sub === who.subject)",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A1-nobody-present",
+    "file": "server/src/index.js",
+    "old": "      for (const [, b] of this._all()) if (b.id && b.sub) present.add(b.sub);",
+    "new": "",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A1-a-present-seat-freed",
+    "file": "src/net/gateBrain.js",
+    "old": "    if (present.has(sub) || p.dealt > 0 || p.stoodMs > 0) continue;",
+    "new": "    if (p.dealt > 0 || p.stoodMs > 0) continue;",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A1-a-strikers-seat-freed",
+    "file": "src/net/gateBrain.js",
+    "old": "    if (present.has(sub) || p.dealt > 0 || p.stoodMs > 0) continue;",
+    "new": "    if (present.has(sub) || p.stoodMs > 0) continue;",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A1-a-standers-seat-freed",
+    "file": "src/net/gateBrain.js",
+    "old": "    if (present.has(sub) || p.dealt > 0 || p.stoodMs > 0) continue;",
+    "new": "    if (present.has(sub) || p.dealt > 0) continue;",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A1-the-fraction-lost",
+    "file": "src/net/gateBrain.js",
+    "old": "    f.hp = f.max * frac;",
+    "new": "    f.hp = Math.min(f.hp, f.max);",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A1-the-target-kept",
+    "file": "src/net/gateBrain.js",
+    "old": "    if (f.target === sub) f.target = null;",
+    "new": "",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A1-never-freed",
+    "file": "src/net/gateBrain.js",
+    "old": "  if (Object.keys(f.players).length >= GATE_FIGHTERS_MAX && !freeSeat(f, present)) return false;",
+    "new": "  if (Object.keys(f.players).length >= GATE_FIGHTERS_MAX) return false;",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A8-the-late-burst",
+    "file": "src/net/gateBrain.js",
+    "old": "    bucket: fresh ? BUCKET_DEPTH_X * dpsRef(level) : 0,",
+    "new": "    bucket: BUCKET_DEPTH_X * dpsRef(level),",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A8-every-bucket-empty",
+    "file": "src/net/gateBrain.js",
+    "old": "  const fresh = frac >= 1;",
+    "new": "  const fresh = false;",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A3-a-write-a-frame",
+    "file": "server/src/index.js",
+    "old": "      if (joined) await this._gateSave(f, now, true);",
+    "new": "      await this._gateSave(f, now, true);",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A10-said-before-kept",
+    "file": "server/src/index.js",
+    "old": "    f.said = true;\n    await this._gateSave(f, now, true);\n    this._gateFan([{ k: 'fell', at: f.fell.at, top: f.fell.top, n: f.fell.n }]);",
+    "new": "    this._gateFan([{ k: 'fell', at: f.fell.at, top: f.fell.top, n: f.fell.n }]);\n    f.said = true;\n    await this._gateSave(f, now, true);",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A10-told-unanswered",
+    "file": "server/src/index.js",
+    "old": "    if (!(await this._gateTellHub({ d: f.day, at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc ?? {}) }))) return;",
+    "new": "    await this._gateTellHub({ d: f.day, at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc ?? {}) });",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A10-any-answer-an-ok",
+    "file": "server/src/index.js",
+    "old": "return !!res?.ok; }",
+    "new": "return true; }",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A10-no-beat-to-retry",
+    "file": "server/src/index.js",
+    "old": "    await this.state.storage.setAlarm(f.said && !f.told ? now + GATE_TELL_RETRY_MS : here",
+    "new": "    await this.state.storage.setAlarm(here",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A10-the-beat-never-retells",
+    "file": "server/src/index.js",
+    "old": "      else if (f.said && !f.told) await this._gateTellHubOnce(f, now);",
+    "new": "",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A4-the-receipts-not-kept",
+    "file": "server/src/index.js",
+    "old": "    for (let i = 0; i < keep.length; i += 128) await this.state.storage.put(Object.fromEntries(keep.slice(i, i + 128)));",
+    "new": "",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A4-the-hello-handed-nothing",
+    "file": "server/src/index.js",
+    "old": "        if (isSocialRoom(a.key) && who.subject) { try { await this._gateReceiptTo(ws, who.subject, now); }",
+    "new": "        if (false) { try { await this._gateReceiptTo(ws, who.subject, now); }",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A4-a-spent-receipt-handed",
+    "file": "server/src/index.js",
+    "old": "    if (!(Number.isFinite(kept.e) && now < kept.e * 1000) || typeof kept.r !== 'string') { await this.state.storage.delete(k); return; }",
+    "new": "    if (typeof kept.r !== 'string') { await this.state.storage.delete(k); return; }",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A4-a-spent-receipt-kept",
+    "file": "server/src/index.js",
+    "old": "    if (!(Number.isFinite(kept.e) && now < kept.e * 1000) || typeof kept.r !== 'string') { await this.state.storage.delete(k); return; }",
+    "new": "    if (!(Number.isFinite(kept.e) && now < kept.e * 1000) || typeof kept.r !== 'string') { return; }",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-C7-the-times-made-every-ask",
+    "file": "src/net/gateLaw.js",
+    "old": "  let t = _gateTimesOf.get(day);",
+    "new": "  let t = null;",
+    "tests": ["test/auditwb_relay.test.js"]
+  },
+  {
+    "name": "AUDWB-A1-the-wait-shortened",
+    "file": "src/net/wire.js",
+    "old": "export const HELLO_WAIT_MS = 10_000;",
+    "new": "export const HELLO_WAIT_MS = 1000;",
+    "tests": ["test/auditwb_relay.test.js"]
+  }
+]

@@ -104,6 +104,7 @@ import {
 import { DOT_SCALE } from './travelPathsOverlay.js';
 import { TRAVEL_OPTIONS_TEXT as TO_TEXT, format as toFormat } from '../systems/travelOptionsText.js';
 import { readPartyMarks, partyMarksKey, PARTY_DOT_RGB, PARTY_OFFLINE_DOT_RGB } from './partyMapMarks.js';   // SOC6: the party's marks, the one reading both maps share
+import { readGateMark, gateRingKey, gateRingTexels, GATE_DOT_RGB } from './gateMapMark.js';   // WB1: the Oblivion Gate's ring, on the open province's page
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
 import { ListPickerWindow, preloadListPickerArt, listPickerArtLoaded } from './listPicker.js';
@@ -515,6 +516,7 @@ export class TravelMapWindow {
     // only when a member's pixel, floor, name or presence changed.
     this._partyKey = '';
     this._partyPoll = 0;
+    this._gateKey = '';   // WB1: the ring the page last drew (its place alone - the page draws no words)
     // TO1: Travel Options' own state on this window. `_to` is the mod
     // itself (null when it is off), read ONCE per open the way DFU
     // reads `TravelOptionsMod.Instance` in the constructor
@@ -724,20 +726,27 @@ export class TravelMapWindow {
     const width5 = width * sc;
     const partyPx = packRGBA(PARTY_DOT_RGB[0], PARTY_DOT_RGB[1], PARTY_DOT_RGB[2], 255);
     const partyOffPx = packRGBA(PARTY_OFFLINE_DOT_RGB[0], PARTY_OFFLINE_DOT_RGB[1], PARTY_OFFLINE_DOT_RGB[2], 255);
-    const marks = readPartyMarks(this.deps.party, { width: MAP_WIDTH, height: MAP_HEIGHT });
-    this._partyKey = partyMarksKey(marks);
-    for (const m of marks) {
-      const x = m.px - originX, y = m.py - originY;
-      if (x < 0 || y < 0 || x >= width || y >= height) continue;
-      if (maps.getPoliticIndex(m.px, m.py) - 128 !== this.selectedRegion) continue;
+    /** One mark's texel (x, y in page coordinates) in colour `px` - on the open province's pixels alone. */
+    const plot = (x, y, px) => {
+      if (x < 0 || y < 0 || x >= width || y >= height) return;
+      if (maps.getPoliticIndex(originX + x, originY + y) - 128 !== this.selectedRegion) return;
       const offset = Math.trunc((((height - y - 1) * width) + x) * this.scale);
-      if (offset >= width * height) continue;
+      if (offset >= width * height) return;
       if (outlineOn) this._outlineBuf[offset] = outline;
-      const px = m.online ? partyPx : partyOffPx;
-      if (sc === 1) { this._dotsBuf[offset] = px; continue; }
+      if (sc === 1) { this._dotsBuf[offset] = px; return; }
       const offset5 = Math.trunc((((height - y - 1) * sc * width5) + (x * sc)) * this.scale);
       for (let yy = 1; yy < 4; yy++) for (let xx = 1; xx < 4; xx++) this._dotsBuf[offset5 + (yy * width5) + xx] = px;
+    };
+    // WB1: THE GATE'S RING, under the party - its edge band, the size of the places it stands among
+    const gate = readGateMark(this.deps.gate, { width: MAP_WIDTH, height: MAP_HEIGHT });
+    this._gateKey = gateRingKey(gate);
+    if (gate) {
+      const gatePx = packRGBA(GATE_DOT_RGB[0], GATE_DOT_RGB[1], GATE_DOT_RGB[2], 255);
+      for (const [x, y] of gateRingTexels(gate, originX, originY, width, height)) plot(x, y, gatePx);
     }
+    const marks = readPartyMarks(this.deps.party, { width: MAP_WIDTH, height: MAP_HEIGHT });
+    this._partyKey = partyMarksKey(marks);
+    for (const m of marks) plot(m.px - originX, m.py - originY, m.online ? partyPx : partyOffPx);
   }
 
   /** TO1: UpdateMapLocationDotsTextureWithPaths (:593-662) - the mod's
@@ -788,7 +797,8 @@ export class TravelMapWindow {
     if (this._partyPoll > 0) return false;
     this._partyPoll = PARTY_POLL_S;
     if (!this.regionSelected) return false;
-    if (partyMarksKey(readPartyMarks(this.deps.party, { width: MAP_WIDTH, height: MAP_HEIGHT })) === this._partyKey) return false;
+    if (partyMarksKey(readPartyMarks(this.deps.party, { width: MAP_WIDTH, height: MAP_HEIGHT })) === this._partyKey
+      && gateRingKey(readGateMark(this.deps.gate, { width: MAP_WIDTH, height: MAP_HEIGHT })) === this._gateKey) return false;   // WB1: or the ring came, went or moved
     this._updateMapLocationDotsTexture();
     return true;
   }

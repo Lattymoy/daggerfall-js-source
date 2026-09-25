@@ -53,6 +53,7 @@ on:
       - "src/net/homeLaw.js"
       - "src/net/decorLaw.js"
       - "src/net/guildLaw.js"
+      - "src/net/gateReceipt.js"
       - "src/net/wire.js"
       - "src/net/dice.js"
       - "src/world/mat4.js"

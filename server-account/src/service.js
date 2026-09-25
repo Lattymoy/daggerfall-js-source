@@ -29,7 +29,7 @@
  *  reason: a deploy that did not happen looks exactly like one that
  *  did. Kept in step with ACCOUNT_VERSION in wrangler.toml, which
  *  test/accountworker.test.js holds. */
-export const ACCOUNT_VERSION = 'acct10';   // acct10: RENOWN1's Renown, HOME1's online homes, DECOR1's decor and GUILD1's guilds (all unshipped, one deploy; acct9 on the branch - FOUNDER2 took acct9 first); acct8: DUEL1's duelling record; acct3: ACC3's titles and glyphs; acct4: ACC4's time played; acct5: MOD1's moderation; acct6: MAIL1's letters; acct7: TITLE-N's Dungeon Master and Patreon tiers; acct9: FOUNDER2's cutoff at 2026-09-25 (acct8 on its branch; DUEL1 took acct8 first)
+export const ACCOUNT_VERSION = 'acct11';   // acct11: WB5b's gates closed (the kill receipt's claim; acct10 on its branch - RENOWN1, HOME1, DECOR1 and GUILD1 took acct10 first); acct10: RENOWN1's Renown, HOME1's online homes, DECOR1's decor and GUILD1's guilds (all unshipped, one deploy; acct9 on the branch - FOUNDER2 took acct9 first); acct8: DUEL1's duelling record; acct3: ACC3's titles and glyphs; acct4: ACC4's time played; acct5: MOD1's moderation; acct6: MAIL1's letters; acct7: TITLE-N's Dungeon Master and Patreon tiers; acct9: FOUNDER2's cutoff at 2026-09-25 (acct8 on its branch; DUEL1 took acct8 first)
 
 /** A body bigger than this is not a request this service has. Read
  *  BEFORE the JSON is parsed, so a megabyte of nothing costs nothing. */
@@ -152,6 +152,9 @@ export const ROUTES = new Set([
   '/v1/guilds/mine', '/v1/guilds/invites', '/v1/guilds/found', '/v1/guilds/invite', '/v1/guilds/answer', '/v1/guilds/leave',
   '/v1/guilds/remove', '/v1/guilds/rank', '/v1/guilds/ranks', '/v1/guilds/deposit', '/v1/guilds/withdraw', '/v1/guilds/handover',
   '/v1/guilds/disband',
+  // WB5b: the gates closed - the kill receipt the relay signed, carried
+  // here by the account it names. Behind a session.
+  '/v1/gate/claim',
 ]);
 
 /** The routes a caller reaches WITHOUT a credential. Everything else

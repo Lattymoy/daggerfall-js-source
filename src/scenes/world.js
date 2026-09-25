@@ -80,7 +80,7 @@ import { preloadSpellbookArt } from '../ui/spellbookWindow.js';   // U42: the cl
 import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the book's one door
 import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
 import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flight probe's picker
-import { worldMinutes, setWorldMinutes, setSharedClock, sharedClockOn, alignEntityClocks, setWorldPriceTilt } from '../systems/worldTick.js';   // ECON1 / AUDIT ALL E1: the world's tilt off the file's base powers   // AUDIT 23 (C2): the ONE clock
+import { worldMinutes, setWorldMinutes, setSharedClock, sharedClockOn, sharedWallMs, alignEntityClocks, setWorldPriceTilt } from '../systems/worldTick.js';   // ECON1 / AUDIT ALL E1: the world's tilt off the file's base powers   // AUDIT 23 (C2): the ONE clock
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: DaggerfallTravelPopUp_OnPostFastTravel (EntityEffectBroker.cs:846-847)
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice, makeEnemiesHostile, isBowWeapon, enemyHeavyPainVoice } from './hostCombat.js';   // ROAD-B: GameManager.MakeEnemiesHostile
 import { flashPlayerDamage } from '../ui/damageFlash.js';
@@ -163,14 +163,28 @@ import { inflictDisease } from '../systems/diseases.js';   // SURV6: a foul pool
 import { createHunting } from './hunting.js';   // SURV6: hunting, foraging and the water search as real-time events
 import { alignSurvival, shiftSurvival } from '../systems/survival/needs.js';   // SURV7: the needs' markers at an arrival; AUDIT SURV-TIERS (the third pass): and across a clock correction
 import { liveLycanthropy } from '../systems/lycanthropy.js';   // SURV7: the env's lycanthrope and beast-form flags
-import { elementalResistanceChance, ELEMENTS, BODY_CAPSULE_RADIUS } from '../systems/spellcast.js';   // SURV7: the env's fire and frost resistances   // DW-E3: a foe's controller, as a fish's probe meets it
+import { elementalResistanceChance, ELEMENTS, BODY_CAPSULE_RADIUS, EFFECT_FLAGS, savingThrow } from '../systems/spellcast.js';   // SURV7: the env's fire and frost resistances; WB4: the saving throw a boss's fire meets   // DW-E3: a foe's controller, as a fish's probe meets it
 import { createTownWatch, runTownWatchFrame } from '../systems/townWatch.js';   // DISC19-F: the watch defends the town
 import { rollCampEncountersOnChunkLoad, amGroupRollOwner, campAnchorSpot, CAMP_SIGHT_RADIUS } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
 import { WORLD_SALT, spawnsDungeon, pathFreePixel, isEliteSpawn, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger, spawnedLocationCentreLocal, dungeonSightLine } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
+import { createGateOmen, insideGateRing, gateSceneXZ, fellLine, OMEN_SETTLE_MS } from '../systems/gateOmen.js';   // WB1 (Mac: "on the timer, a large area would be shown on the map, also in chat"): the Oblivion Gate's omen - its lines, its ring, its compass mark
+import { gateScanner, findGateSite } from '../systems/gateSite.js';   // WB1: where the day's gate stands, over the map files every client holds alike
+import { createGatePool, GATE_TEXT } from './gatePool.js';   // WB2: the gate the world stands - its stone, its fire and beacon, its collider and its door
+import { drawGateBanner } from '../ui/gateBanner.js';
+import { createGateLink, GATE_NO_TEXT } from '../net/gateLink.js'; import { readReceipt } from '../net/gateReceipt.js';   // AUDIT WB A2: a receipt's day, seed and account, for its spoils outside the court   // WB3b: what the client holds of a gate's fight - the relay's words, folded
+import { createGateClaims } from '../net/gateClaims.js';   // WB5b: the kill receipts, carried to the account service until counted
+import { createGateCourt } from './gateCourt.js';   // WB4: the fight on this screen - the boss drawn, heard and read, and his blows on me
+import { DeadlandsRenderer, skyGain, anchoredClock } from '../render/deadlands.js';   // WB6a: the Deadlands' sky and sea round the Burning Court
+import { createDeadlandsAir } from './deadlandsAir.js';   // WB6b: and their air - the wind, the fire, the thunder of the sky's strikes
+import { createGateVeil } from '../ui/gateVeil.js';   // WB6c: the step through the gate - a vortex of fire in and out
+import { gateScoreSongs, createCourtScore, GATE_SONGS, SCORE_SILENCE } from '../systems/gateScore.js';   // WB7: the Warden's score - the court's own music
+import { createSpoilsPool, spoilsStore, recoverSpoils, SPOILS_TEXT } from './spoilsPool.js';   // WB5: a fallen boss's spoils, spewed, glowing and taken
+import { gateRoomKey, isGateRoom, gateBossOf, gateTimes, gateAdmits, GATE_COLLAPSE_MS } from '../net/gateLaw.js';   // WB3b: the court's room, and its day's end
+import { gateLandingFor, courtRing, courtToDungeon, courtBraziers, COURT_TEXT, COURT_FOG, LAVA_Y } from '../world/gateArena.js';   // WB3b: the Burning Court's way home, its ring and its words   // WB2: the gate's countdown over the screen, near it
 import { isMainStoryDungeon } from '../world/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
 import { nearestSafeLocation, respawnFlavorText, reviveForPlay, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
-import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, saveKeysOfCharacter, saveInfoOf, requestScreenshot, capturePendingScreenshot, exitAutosaveNames } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end   // ONLINE-AUTOSAVE1: saveKeysOfCharacter/saveInfoOf - every slot this character already has, kept in sync on an online exit too
+import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, saveKeysOfCharacter, saveInfoOf, requestScreenshot, capturePendingScreenshot, exitAutosaveNames, enumerateSaves } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end   // ONLINE-AUTOSAVE1: saveKeysOfCharacter/saveInfoOf - every slot this character already has, kept in sync on an online exit too
 import { frameBegin, frameEnd, frameAbort } from '../systems/frameClock.js';   // PERF1: the frame's script time; AUDIT-WH2 L1-F4: and the door an early return takes
 import { frameCapSkip } from '../systems/frameCap.js';   // FPS-CAP1: DFU's TargetFrameRate - a held frame re-arms before the clock and the input frame
 import { frameInterval, lastBusy, lendFrame, framesBegun } from '../systems/frameClock.js';   // PERF-EXT24: the frame's period and its own script, and the stream's slices lent back - those no frame ran inside
@@ -297,7 +311,7 @@ import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady, sheetHolderOf, buildArmsFor } from '../combat/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does
 import { weaponPoseOf, applyWeaponPose, mergeWeaponPose, playerMeleeCanHit } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
-import { addItem, spendAmmoFor, carriedWeight } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
+import { addItem, addGoldPieces, spendAmmoFor, carriedWeight } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
 import { calculateAttackDamage } from '../combat/formulas.js';   // X2-slice: enemy-arrow impacts
 import { inflictPoison } from '../systems/poisons.js';   // X2-slice: poisoned enemy arrows
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
@@ -307,7 +321,7 @@ import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';   // AT2: Ambient Text's one component - this host claims it and feeds it the frame
 import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory
-import { accountTokenMinter, storedSession, accountPlayBeat, muteAccount, serviceBase, accountRefusalText, accountDuels, accountRenown, accountHomes, accountDecor } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4: and the beat that counts time played
+import { accountTokenMinter, storedSession, accountPlayBeat, muteAccount, serviceBase, accountRefusalText, accountDuels, accountRenown, accountHomes, accountDecor, accountGates } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4: and the beat that counts time played
 import { parseModCommand, runModCommand, mutedText, mutedNotices } from '../net/moderation.js';   // MOD1: /mute and /unmute, and the line a muted player reads
 import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, knocked from here and measured by the account service's clock
 import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/renown.js';   // RENOWN1: what a kill and a quest are worth, and the party's bonus (RENOWN3: read against my Renown)
@@ -357,7 +371,7 @@ import { createTradeManager, TRADE_RANGE_M, inTradeRange, tradeDistance } from '
 import { createTradePack } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack
 import { createPlayerTradeWindow, playerTradeReady } from '../ui/playerTradeDoor.js';   // TRADE1: the enhanced window two players share
 import { createSocialMenu, socialPlaqueRows, plaqueRowFor } from '../ui/socialMenu.js';   // SOC5: the F-menu over that body - Add friend, Invite to party
-import { createProfileWindow, profileView, profileDuelLine, profileRenown } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
+import { createProfileWindow, profileView, profileDuelLine, profileRenown, profileGateLine } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
 import { createDuelManager, DUEL_RADIUS_M, DUEL_RANGE_M, DUEL_COUNTDOWN_MS, ringCentre, validRingRecord } from '../net/duelSession.js';   // DUEL1: the duel's state machine (pure)
 import { createDuelRecords, duelUncountedText } from '../net/duelRecord.js';   // DUEL1: the Inspect card's duelling record, asked and kept
 import { createDuelPrompt } from '../ui/duelPrompt.js';   // DUEL1: the challenge, as the challenged player sees it
@@ -4234,6 +4248,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // Insertion order is priority, and it is the ACTIVATION ladder's own
   // order, so the plaque reads a tie the way the press resolves one.
   const _hoverNamers = [
+    (key) => gatePool?.hoverName(key) ?? null,   // WB2: the Oblivion Gate, and its countdown
     (key) => camps.hoverName?.(key) ?? null,
     (key) => droppedTorches.hoverName?.(key) ?? null,
     (key) => exteriorFoes.hoverName?.(key) ?? null,
@@ -4959,10 +4974,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2503 mounts the same one, gated on
+  // and dungeonContext.js:2511 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:6112
+  // that context through modes.dungeonCtx - so worldModes.js:6116
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -6499,6 +6514,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SetAnchor (:100-117): the outer host's world half, the mounted
    *  mode's inside half, one record. */
   function setRecallAnchor() {
+    if (modes?.gateArenaDay?.() != null) { setMidScreenText(COURT_TEXT.noMark); return; }   // WB3b: a mark in a place that ends with the day
     const inside = modes?.anchorContext?.() ?? { worldContext: WORLD_CONTEXT.Exterior, local: null, buildingKey: 0, interior: null };
     const pf = walkMode && playerSpawned ? player.pos : cam.pos;
     // A DUNGEON's local frame is its own, so its world coordinates
@@ -6845,6 +6861,31 @@ export async function bootWorld(canvas, renderer, params, status) {
     else modes?.clearDeath?.();
     townTalk.say(RESURRECT_TEXT.raised(rez.name));
   }
+  /** WB3b: the player stood before the gate outside, turned away from it (world/gateArena.js gateLandingFor) - the way
+   *  home's landing, for a death cast out of the court and a court that came apart. False off the built ground. */
+  function landBeforeGate(g) {
+    const l = gateLandingFor(g, { pixelTranslation: (px, py) => state.pixelTranslation(px, py), heightAt: (x, z) => heightAt(x, z) });
+    if (!l) return false;
+    player.spawn(l.pos[0], l.pos[1] + 0.15, l.pos[2]);
+    cam.yaw = Math.atan2(l.normal[0], l.normal[2]); cam.pitch = 0;
+    cam.pos = player.eyeAt();
+    return true;
+  }
+  /** WB3b: out of the court by force - its gate's day is over, or online is gone (the court is online's alone) - landed
+   *  before its gate, its state forgotten, the reason said. */
+  function ejectFromCourt(words) {
+    const g = modes?.gateArenaGate?.() ?? null;
+    if (!g) return;
+    // AUDIT WB B1: a player dead in the court when it is taken from them is cast out ALIVE, by the death's own door (the
+    // heal first - MAC-D3's order - then before the gate): landed at no health, the next frame's watcher would kill
+    // them again in Tamriel and send them to a temple
+    if (!(playerEntity.health > 0) || modes?.deathUp?.()) { respawnOnlinePlayer(); return; }
+    gateVeil?.flash();   // WB6c: the court comes apart in fire
+    modes?.forceExitToExterior?.();
+    landBeforeGate(g);
+    gateLink?.leave();
+    setMidScreenText(words);
+  }
   function respawnOnlinePlayer() {
     _rezSeen = null;
     _deadMark = null; _partyComposedAt = -Infinity;   // PCORPSE3   // RESURRECT1: armed fresh for the next death
@@ -6879,7 +6920,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     _deathWasOnline = null;   // armed fresh for the NEXT death
     const mode = modes?.mode ?? 'exterior';
     const wasInDungeon = mode === 'dungeon';
+    const courtGate = modes?.gateArenaGate?.() ?? null;   // WB3b: a death in the Burning Court is CAST OUT - before its gate, not at a temple
     Promise.resolve().then(async () => {
+      if (courtGate) {
+        modes?.forceExitToExterior();
+        if (landBeforeGate(courtGate)) { gateVeil?.flash(); townTalk.showOverlay(new ActionTextBox([COURT_TEXT.castOut])); return; }   // WB6c: cast out through the fire
+      }
       // Any mode but the open world is left FIRST - the cemetery
       // transfer's own order - and forceExitToExterior clears the
       // modal host's death screen with the rest of its slot (a
@@ -7163,7 +7209,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6380), so exterior mode and a
+    // composer, dungeonContext.js:6467), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -8034,6 +8080,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       // join or leave - both skins read it on their own refresh. The
       // host says WHERE and WHO; neither map is told what a party is.
       party: () => partyMarkers(),
+      // WB1: THE OBLIVION GATE'S RING - a function for the party's reason (the countdown moves while the map stands
+      // open); null offline and while no gate is marked, and both maps draw nothing
+      gate: () => gateOmen?.mapMark() ?? null,
       // HUB1: each region's hub, marked and named - online alone (systems/regionHubs.js); offline the map is DFU's
       hubAt: params.has('online') ? (summary) => hubAtMapId(regionHubs, summary?.mapID ?? summary?.mapId) : null,
       // TO1: the mod itself rides travelFareDeps (above); the reads its additions to this window need follow.
@@ -9261,7 +9310,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:9295-9359 -
+  // worldModes answers it in BOTH modes (worldModes.js:9397-9461 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -10903,6 +10952,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     };
     // DUEL1: A DUEL FRAME AT ME - the law decides (net/duelSession.js); `sub` the sender's account as the relay stamped it
     online.onDuel = (id, d, sub = null) => { duelMgr.onFrame(id, d, sub); };
+    online.onGate = (g) => gateLink?.word(g);   // WB3b: the court's room's word about its boss
     // JOURNAL1 (Addison Knox: "Player journals ... shared in-world for storytelling"): A PAGE HELD OUT TO ME. Held,
     // never opened over my game (net/journalPage.js PageOffers: a writer's newest replaces their last and waits
     // PAGE_HOLD_MS), under the name the room knows them by now, and said on the social tab once in a while per writer
@@ -11005,6 +11055,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       link.onRelay = onRelayVersion;
       if (tab.room) link.join(tab.room);   // CHAT-CHAN: the Region tab's room waits for the region and the relay (chatRegionFrame)
       chatLinks.set(tab.id, link);
+      if (tab.room === SOCIAL_ROOM) link.onGate = (g) => gateLink?.word(g);   // WB3b: the hub's word of a kill, and a fighter's receipt outside the court
       // ACC1d: the channel link mints too, and it is the link that most
       // needs to - the hub is where a name is READ, so an unsigned name
       // in chat is the impersonation this arc exists to make visible.
@@ -11629,12 +11680,221 @@ export async function bootWorld(canvas, renderer, params, status) {
   const withDuel = (peerId, v) => {
     _profileView = profileRenown(v, online?.renownOf?.(peerId) ?? null);   // AUDIT RENOWN1 UI-3: the Renown as the session knows it now
     v = _profileView;
-    return { ...v, duel: duelButtonFor(peerId), duels: _profileSub ? profileDuelLine(duelRecords.get(_profileSub)) : null };
+    const rec = _profileSub ? duelRecords.get(_profileSub) : null;
+    return { ...v, duel: duelButtonFor(peerId), duels: _profileSub ? profileDuelLine(rec) : null, gates: profileGateLine(rec) };   // WB5b: and the gates they closed, off the same answer
   };
   const repaintDuelProfile = () => {
     const id = profileWin?.isOpen() ? profileWin.peerId() : null;
     if (!id || !_profileView) return;
     profileWin.update(id, withDuel(id, _profileView));
+  };
+  // ═══ WB1: THE OBLIVION GATE'S OMEN ═════════════════════════════════════
+  // Mac: "at any point in the world, on the timer, a large area would be shown on the map, also in chat". Online only:
+  // the gate is a fact about the SHARED world (net/gateLaw.js - the shared clock's game day), found over the map files
+  // (systems/gateSite.js, scanned once, the first time a gate is marked) and said once a moment (systems/gateOmen.js).
+  // The clock is the relay's, through the welcome's offset, as the sky's is.
+  let _gateScan = null, _gateScanner = null;
+  /** AUDIT WB C7: THE SITE'S SCAN (systems/gateSite.js gateScanner) - begun in the browser's idle moments once the relay's
+   *  clock is read, a few rows a slice, so no frame pays for the half-million pixels; a site asked before it is done
+   *  finishes it there and then. A scan that throws is begun again from nothing, not resumed. */
+  const gateScanOf = (more) => {
+    if (_gateScan || !maps) return _gateScan;
+    try {
+      _gateScanner ??= gateScanner(maps, { spawnSalt: _spawnSalt, heightAt: (x, y) => woods.getHeightMapValue(x, y) });   // AUDIT WB C1: the height bytes say where the sea is - the climate page has been spread into it
+      return (_gateScan = _gateScanner.step(more));
+    } catch (e) { _gateScanner = null; throw e; }
+  };
+  let _gateWarming = false;
+  const warmGateScan = () => {
+    if (_gateScan || _gateWarming || !maps || typeof globalThis.requestIdleCallback !== 'function') return;
+    _gateWarming = true;
+    globalThis.requestIdleCallback(function slice(deadline) {
+      // a page that is never idle still gets there: a slice the timeout forced takes 4 ms of rows and asks again soon
+      const until = performance.now() + (deadline.didTimeout ? 4 : 0);
+      try { if (!gateScanOf(() => deadline.timeRemaining() > 2 || performance.now() < until)) { globalThis.requestIdleCallback(slice, { timeout: 250 }); return; } } catch (e) { console.warn('[gate] no site', e?.message ?? e); }
+      _gateWarming = false;
+    }, { timeout: 4000 });
+  };
+  const _gateTwo = (n) => String(n).padStart(2, '0');
+  /** WB3b: THE COURT'S LINK (net/gateLink.js) - the relay's words about a gate's fight, off the court's room and the hub:
+   *  the omen reads its word of a kill (a gate whose boss fell collapses on every screen), the chat says the kill. */
+  /** WB5b: THE RECEIPTS THIS DEVICE CARRIES TO THE ACCOUNT SERVICE (net/gateClaims.js) - each kill the relay signed for
+   *  me, kept on the device until the service has counted it (the spoils' own JSON-over-Storage door). */
+  /** AUDIT WB A6: ONE STORE FOR THE SPOILS AND THE RECEIPTS (scenes/spoilsPool.js spoilsStore) - its memory stands in
+   *  for a storage that refuses writes, so every reader is this one. */
+  const _spoilsStore = spoilsStore(appStorage());
+  /** AUDIT WB A9: the account service's door on this device - the claim, and whose receipts it may offer. */
+  const _accountGates = accountGates({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
+  const gateClaims = params.has('online') ? createGateClaims({
+    claim: _accountGates.claim,
+    me: _accountGates.me,
+    store: _spoilsStore,
+    say: (text) => chatNotice(text),
+  }) : null;
+  const gateLink = params.has('online') ? createGateLink({
+    now: () => Date.now() + _sharedOffsetMs,
+    say: (text) => setMidScreenText(text),
+    onFell: (day, f) => { const site = gateOmen?.current?.()?.site; chatNotice(fellLine({ near: site?.day === day ? site.near : 'the wilds', boss: gateBossOf(day).name, top: f.top })); },
+    onReceipt: (r) => { gateClaims?.add(r); grantSpoilsOutside(r); },   // WB5b: to the account service, kept until it is counted; AUDIT WB A2: and its spoils, when no court's floor will give them
+    onRefused: (why) => { if (modes?.gateArenaDay?.() != null) ejectFromCourt(GATE_NO_TEXT[why] ?? why); },   // AUDIT WB B5: the relay will not have me in this fight - out before the gate, not left in an empty court
+  }) : null;
+  let _gateInFor = -1;   // WB3b: the welcome my level claim was said for - once per welcome of the court's room
+  /** WB4: THE FIGHT ON THIS SCREEN (scenes/gateCourt.js) - the boss where the relay says he stands, his telegraphs, his
+   *  voice and his bar, and the player's own side of every attack: judged against these feet, taken through the
+   *  dungeon context's door as any foe's blow is. */
+  /** WB5: a spoil into the pack - the gold to the purse, an item to the items (the one door the spew, the gather and
+   *  a crash's recovery all take). */
+  const takeSpoil = (p) => { if (p.kind === 'gold') addGoldPieces(playerEntity, p.gold); else if (p.item) addItem(playerEntity.items, p.item); };
+  /** WB5: THE SPOILS ON THE COURT'S FLOOR (scenes/spoilsPool.js) - this player's alone, off their receipt's seed. */
+  const spoilsPool = gateLink ? createSpoilsPool({
+    renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio,
+    ray: (from, dir, len) => { const c = modes?.dungeonCtx?.collider; const h = c?.raycastHit ? c.raycastHit(from, dir, len) : { dist: c?.raycast?.(from, dir, len) ?? Infinity, normal: null }; return Number.isFinite(h?.dist) ? h : null; },
+    feet: () => (playerSpawned ? player.feetAt() : null),
+    now: () => Date.now() + _sharedOffsetMs,
+    take: takeSpoil,
+    say: (text) => setMidScreenText(text),
+    store: _spoilsStore,
+    who: () => characterIdOf(playerEntity),
+  }) : null;
+  /** AUDIT WB A2: THE SPOILS WITH NO FLOOR - a receipt that comes while this player is not in its court (cast out before
+   *  the kill, gone, handed it by the hub's next hello) is its spoils straight into the pack; in its court the burst
+   *  gives them. Once a receipt either way - the pool keeps which are spent. */
+  function grantSpoilsOutside(r) {
+    const c = readReceipt(r);
+    if (!c || !spoilsPool || modes?.gateArenaDay?.() === c.d) return;
+    try { spoilsPool.grant({ day: c.d, seed: c.c, level: playerEntity.level ?? 1, acct: c.s }); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); }
+  }
+  /** WB5: THE CRASH'S DOOR (scenes/spoilsPool.js recoverSpoils) - asked once for each character that stands up in this
+   *  session, online or not, before it can save: a boss's spoils no save of theirs holds are handed back. */
+  /** WB6a: THE DEADLANDS' SKY AND SEA (render/deadlands.js), built the first time a court is stood in - a pass that will
+   *  not build costs the court its sky, never the game. */
+  let _deadlands;   // undefined: not asked yet; null: would not build
+  const deadlandsPass = () => {
+    if (_deadlands !== undefined) return _deadlands;
+    try { _deadlands = new DeadlandsRenderer(renderer.gl); } catch (e) { console.warn('[gate] the Deadlands would not build', e?.message ?? e); _deadlands = null; }
+    return _deadlands;
+  };
+  /** WB6b: THE DEADLANDS' CLOCK - the relay's, in seconds (this page's monotonic clock carried onto it, so it never
+   *  steps back between two frames): the sky's churn, its strikes, the court's flash, the shards' drift and the thunder
+   *  are one moment on every screen in the court. AUDIT WB D7: ANCHORED ON THE WALL CLOCK - the page's clock is carried
+   *  from an anchor on Date.now() and the relay's offset, taken again when the two part by more than a second (a sleep
+   *  stops the page's clock and not the wall's, and timeOrigin + now() drifted from every other screen after one; an
+   *  offset that moved). Between anchors it runs on the page's clock alone, so it never steps back. */
+  const deadlandsSeconds = anchoredClock({ perf: () => performance.now(), wall: () => Date.now() + _sharedOffsetMs });
+  /** WB6b: the court's air (scenes/deadlandsAir.js) - the wind, the fire, the thunder, the beasts; the braziers' fire
+   *  beds in the dungeon's frame, where their loops burn. */
+  const deadlandsAir = createDeadlandsAir(audio);
+  /** AUDIT WB D10: what the court's passes are handed every frame, made once - its sea's and its centre's place, its
+   *  braziers, and the frame's fog (one object, filled from the renderer's own as it stands) */
+  const _courtSea = courtToDungeon(0, LAVA_Y, 0), _courtCentre = courtToDungeon(0, 0, 0);
+  const _courtBeds = courtBraziers().map(([, p]) => p);
+  const _courtFog = { mode: 0, density: 0, range: null, color: null, camPos: null };
+  const courtFogNow = () => { _courtFog.mode = renderer._fogMode; _courtFog.density = renderer._fogDensity; _courtFog.range = renderer._fogRange; _courtFog.color = renderer._fogColor; _courtFog.camPos = renderer._camPos; return _courtFog; };
+  const courtFireBeds = courtBraziers().map(([, p]) => courtToDungeon(p[0], 1.2, p[2]));
+  let _spoilsAskedFor = null;
+  const spoilsRecoverFrame = () => {
+    if (!playerSpawned) return;
+    const who = characterIdOf(playerEntity);
+    if (who === _spoilsAskedFor) return;
+    _spoilsAskedFor = who;
+    try { if (recoverSpoils(_spoilsStore, takeSpoil, { who, saves: enumerateSaves().info.values() })) setMidScreenText(SPOILS_TEXT.gathered); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); }
+  };
+  const gateCourt = gateLink ? createGateCourt({
+    renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio, link: gateLink, spoils: spoilsPool,
+    now: () => Date.now() + _sharedOffsetMs,
+    cam: () => cam.pos,
+    feet: () => (playerSpawned && modes?.gateArenaDay?.() != null ? player.feetAt() : null),
+    player: () => playerEntity,
+    save: (e) => savingThrow(ELEMENTS.Fire, EFFECT_FLAGS.Fire, e),
+    strike: (dmg, how) => modes?.dungeonCtx?.strikePlayer?.(dmg, how),
+    say: (text) => setMidScreenText(text),
+    hudHidden: () => gamePaused() || !!townTalk.hudHidden,
+    send: (hit) => !!online?.sendGate?.({ k: 'hit', ...hit }),   // WB4b: a blow of mine on him, to the court's room
+  }) : null;
+  let _omenClockAt = null;   // AUDIT WB C4: when the relay's clock was first read this session (the omen's fallback wait)
+  const gateOmen = params.has('online') ? createGateOmen({
+    now: () => Date.now() + _sharedOffsetMs,
+    site: (day) => {
+      if (!maps) return null;
+      try { const scan = gateScanOf(); return scan ? findGateSite(day, scan) : null; } catch (e) { console.warn('[gate] no site', e?.message ?? e); return null; }
+    },
+    say: (text) => chatNotice(text),
+    localTime: (minute) => { const ms = sharedWallMs(minute); if (ms == null) return null; const d = new Date(ms); return `${_gateTwo(d.getHours())}:${_gateTwo(d.getMinutes())}`; },
+    fellAt: (day) => gateLink?.fellAt(day) ?? null,   // WB3b: the relay's word of the kill
+    // AUDIT WB C4: nothing said and no gate stood before the relay's clock is read and the hub has welcomed this player
+    // (its word of a kill comes just behind) - or, a hub that never answers, eight seconds on the relay's clock alone
+    ready: () => { if (!online?.clockRead) { _omenClockAt = null; return false; } if (_omenClockAt == null) { _omenClockAt = performance.now(); warmGateScan(); } return !!socialLink()?.clockRead || performance.now() - _omenClockAt > 8000; },
+    settleMs: OMEN_SETTLE_MS,
+  }) : null;
+  /** WB1: the gate's frame - its line when a new moment comes. Runs before the death return, as the chat's does. */
+  const gateFrame = () => {
+    try { gateOmen?.frame(); } catch (e) { console.warn('[gate] frame', e?.message ?? e); }
+    gateClaims?.tick();   // WB5b: what the account service has not counted yet, offered again on its own clock
+    if (gatePool && (modes?.mode ?? 'exterior') !== 'exterior') drawGateBanner(null);   // WB2: the countdown is the street's; the pool's own frame runs there alone
+    // WB3b: the court stands until its gate's day is over - then it comes apart around whoever is in it, who land
+    // before the gate; out of it, its state is forgotten (its falls and receipts are kept)
+    const courtDay = modes?.gateArenaDay?.() ?? null;
+    if (courtDay != null && Date.now() + _sharedOffsetMs >= gateTimes(courtDay).wrathAt + GATE_COLLAPSE_MS) ejectFromCourt(COURT_TEXT.collapse);
+    else if (courtDay != null && online?.terminal) ejectFromCourt(GATE_NO_TEXT[online.error] ?? COURT_TEXT.lost);   // AUDIT WB B5: a socket closed for good (a hello refused - its own words - or replaced) holds no fight: its boss would stand frozen
+    else if (courtDay == null && gateLink && gateLink.state().day != null) gateLink.leave();
+    try { gateCourt?.frame(); } catch (e) { console.warn('[gate] court', e?.message ?? e); }   // WB4: the fight on this screen (out of the court it puts itself away)
+  };
+  /** WB6b: the Deadlands' air while the court stands under me - silent, and nothing left looping, the frame it does
+   *  not. Ticked on the main frame, online or not: the court's ways out include going offline, and the online frame
+   *  does not run then. */
+  /** WB7: THE WARDEN'S SCORE (systems/gateScore.js) - while the court stands under me its music is the fight's, not the
+   *  director's: the war song of his phase, his fall's fanfare, then quiet. The songs are made the first time a court
+   *  is stood in; the music is let go the frame the court is gone (the song stopped, so the director's next frame hears
+   *  it ended and plays its own). Answers whether the court holds the music this frame. */
+  let _scoreHeld = false, _scoreMade = false;
+  const _courtScore = createCourtScore();   // AUDIT WB D2: the fanfare played whole from its own start
+  const gateScoreFrame = () => {
+    if (modes?.gateArenaDay?.() == null) {
+      if (_scoreHeld) { _scoreHeld = false; music.stop(); }
+      return false;
+    }
+    if (!_scoreMade) { _scoreMade = true; for (const song of Object.values(gateScoreSongs())) music.registerSong(song.name, song); }
+    _scoreHeld = true;
+    const want = _courtScore.want(gateLink?.state?.() ?? null, Date.now() + _sharedOffsetMs) ?? GATE_SONGS.war1;   // the court before its fight's first word: the fight is there all the same
+    if (want === SCORE_SILENCE) { if (music.current !== null) music.fadeOut(); } else music.playSong(want);   // AUDIT WB D2: the quiet after the fanfare is its ending, faded - not a cut
+    return true;
+  };
+  const deadlandsAirFrame = () => { if (modes?.gateArenaDay?.() != null) deadlandsAir.frame(deadlandsSeconds(), cam.pos, courtFireBeds); else deadlandsAir.stop(); };
+  /** WB2: THE GATE THE WORLD STANDS (scenes/gatePool.js) - online alone, as the omen is; stood each exterior frame from
+   *  the omen's word, drawn in the world pass (the stone) and after the duel wall (the fire and the beacon). Its door
+   *  answers "not yet" until the relay can hold a gate's arena (WB3). */
+  /** WB6c: THE GATE'S VEIL (ui/gateVeil.js) - the fire the step through the gate is taken in, both ways (the mode
+   *  machine's stepThroughFire), and flashed over the screen when the court is taken from the player by force. Online
+   *  alone - the gate is. */
+  const gateVeil = gateOmen ? createGateVeil() : null;
+  /** AUDIT WB D5: the veil built ahead - in the browser's idle time the first frame a gate stands - so the first step
+   *  through it does not pay for its program as the fire begins to close. */
+  let _veilWarmed = false;
+  const warmGateVeil = () => {
+    if (_veilWarmed || !gateVeil) return;
+    _veilWarmed = true;
+    const idle = globalThis.requestIdleCallback ? (f) => globalThis.requestIdleCallback(f, { timeout: 4000 }) : (f) => setTimeout(f, 1500);
+    idle(() => { try { gateVeil.warm(); } catch { /* the step builds it then */ } });
+  };
+  const gatePool = gateOmen ? createGatePool({
+    renderer, gl: renderer.gl, collider: () => collider,
+    standing: () => gateOmen.standing(),
+    pixelTranslation: (px, py) => state.pixelTranslation(px, py),
+    heightAt: (x, z) => heightAt(x, z),
+    now: () => Date.now() + _sharedOffsetMs,
+    feet: () => (walkMode && playerSpawned ? player.feetAt() : null),
+    say: (text) => setMidScreenText(text),
+    banner: (text) => drawGateBanner(text, { hidden: gamePaused() || !!townTalk.hudHidden || !!gateVeil?.busy }),   // AUDIT WB C5: never over the step's fire
+    ready: () => !!online?.gateOk,   // WB3b: a relay that runs a gate's boss room (net/wire.js relaySupportsGate)
+    enter: (g) => { modes?.enterGateArena?.(g); },   // WB3b: into the Burning Court (scenes/worldModes.js)
+  }) : null;
+  /** WB1: the compass's mark - the gate's spot in THIS scene, while the gate stands and the player is in its ring. */
+  const gateCompassMark = () => {
+    const g = gateOmen?.standing();
+    const mark = g ? gateOmen.mapMark() : null;
+    if (!g || !mark || (modes?.mode ?? 'exterior') !== 'exterior') return null;
+    const p = playerTravelPixel();
+    return insideGateRing(mark, p.x, p.y) ? gateSceneXZ(g, state.pixelTranslation(g.px, g.py)) : null;
   };
   /** The duel's frame: the law's lapses, retries and ends, then the ring - the motor's clamp for my own body while a
    *  duel is live, in THIS scene's frame from the world frame every frame (a floating-origin shift moves the scene, not
@@ -11651,6 +11911,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       while (_duelTrail.length && tNow - _duelTrail[0].t > DUEL_TRAIL_MS) _duelTrail.shift();
     } else if (_duelTrail.length) _duelTrail.length = 0;
     player.arena = live && (modes?.mode ?? 'exterior') === 'exterior' ? { centre: campToScene(live.c), radius: DUEL_RADIUS_M } : null;
+    if (!player.arena && modes?.gateArenaDay?.() != null) player.arena = courtRing();   // WB3b: the court's floor is a ring the body cannot leave
     duelPrompt?.render();
   };
   /** DUEL1: THE RING I DUEL IN, FOR THE ONLOOKERS, on my foes frame (validRingRecord's shape): on every FULL frame while it
@@ -13106,6 +13367,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     profileFrame();   // INSPECT1: the card's ask retried and its wait timed - the trade's own kind of work, beside it
     pageFrame();   // JOURNAL1: a page whose writer left the room goes with them
     mail?.poll();   // MAIL1: a look at the letterbox when one is due - before the dead return, as the chat's heartbeat is
+    gateFrame();   // WB1: the Oblivion Gate's omen - its line when a new moment comes, before the dead return (the omen speaks to the dead too)
     renownTracker?.tick();   // RENOWN1: what this character earned, to the account service when a report is due
     // AUDIT ONLINE D12: the dead broadcast nothing and see no one
     if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.()) {
@@ -13139,6 +13401,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     let key;
     const mp = overworld ? worldCoordToMapPixel(wc.x, wc.z) : null;
     if (overworld) key = roomKeyFor({ host: 'world', mode, mapPixel: mp });
+    else if (modes?.roomIdentity?.()?.kind === 'gate') key = gateRoomKey(modes?.roomIdentity?.()?.day);   // WB3b: the court's room is its gate's own
     else {
       const ident = modes?.roomIdentity?.();
       const loc = _questLoc();   // the location under the player: an interior's room is named by it
@@ -13229,6 +13492,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // place - the hold bought nothing but a 500 ms strip with no socket in the cell I stood in); otherwise the hold
     else if (key !== online.room) { if (!online.room || isWorldRoom(key) || isWorldRoom(online.room) || (isCellRoom(key) && online.inRoom(key)) || now - _onlineKeySince >= ROOM_HOLD_MS) { online.setLook(composeLook(playerEntity)); online.join(key, { ...pose, ...arm }); } }   // the look re-composed: the next room's hello carries the gear worn now (PROFILE2: through setLook, so a halo the join PROMOTES - no hello of its own - is told too)
     else online.sendPose({ ...pose, ...arm });
+    // WB3b: THE COURT'S ROOM HEARS MY LEVEL CLAIM once per welcome (net/gateBrain.js - the health I bring into the fight
+    // and the bucket I may deal from); a reconnect's welcome says it again, and the relay keeps my first
+    if (gateLink && online.gateOk && isGateRoom(online.room) && online.welcomes !== _gateInFor && online.sendGate({ k: 'in', lv: Math.max(1, playerEntity.level | 0) })) _gateInFor = online.welcomes;
     // PERF11 (2026-09-19, Mac: "Online mode needs further performance
     // improvements"): ONE peersNear() A FRAME. The owner sweeps below -
     // the foes' prune and the camps' - each built the list from scratch
@@ -13415,7 +13681,32 @@ export async function bootWorld(canvas, renderer, params, status) {
     // now draws, which the enemy sprite gives way to, would be nothing at all indoors and underground
     // (and DISC23-B's walkers: a peer standing as their chosen set gives the class sprite way just the same, so the
     // merge of the two hands their batches here too)
-    extraBillboards: () => [...(remotePlayers?.batches() ?? []), ...(peerRiders?.batches() ?? []), ...(peerWalkers?.batches() ?? [])],
+    extraBillboards: () => [...(remotePlayers?.batches() ?? []), ...(peerRiders?.batches() ?? []), ...(peerWalkers?.batches() ?? []), ...(gateCourt?.batches() ?? [])],   // WB4: and the Burning Court's boss
+    gateCourtLights: () => gateCourt?.lights() ?? [],   // WB4: the glow on him, in the court's light channel
+    gateBoss: () => gateCourt?.target() ?? null,   // WB4b: him as a body my blows meet
+    onBossHit: (hit) => !!gateCourt?.hit(hit),   // WB4b: a blow's number on him, out to the room
+    // WB6a: the Deadlands' sea and sky, in the dungeon arm's world pass after the court's solid geometry - in the court's
+    // own air (the renderer's fog as it set it for the court, the sky's light following the lane's with the fog's colour)
+    drawGateBackdrop: ({ proj, view }) => {
+      const d = deadlandsPass();
+      if (d?.draw(proj, view, _courtSea, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, COURT_FOG.color))) renderer.markForeignPass();
+    },
+    // WB4: the telegraph on the court's floor, in the dungeon arm's world pass - fogged as the floor is; WB6b: and the
+    // air's life after it (the embers and the ash, render/deadlands.js drawLife), in the same air and the sky's light
+    drawGateCourt: ({ proj, view, eye }) => {
+      const fog = courtFogNow();
+      const told = gateCourt?.drawPass(proj, view, eye, performance.now() / 1000, fog);
+      const glow = skyGain(renderer._fogColor, COURT_FOG.color);
+      const lived = deadlandsPass()?.drawLife(proj, view, _courtCentre, deadlandsSeconds(), fog, glow, _courtBeds, renderer.worldViewportPx?.[3]);
+      if (told || lived) renderer.markForeignPass();
+    },
+    deadlandsSeconds: () => deadlandsSeconds(),   // WB6b: the court's flash and the shards' drift keep the sky's clock
+    gateVeil: () => gateVeil,   // WB6c: the step through the gate's fire, both ways
+    // AUDIT WB B5: why the gate's door refuses the step now it has closed, or null - no relay to hold the court, its
+    // master fallen, or sealed while the fire burned (the pool's own words where it has them)
+    gateRefusal: (g) => (!online?.gateOk || online?.terminal ? GATE_TEXT.notYet
+      : Number.isFinite(gateLink?.fellAt(g.day)) ? GATE_NO_TEXT['the gate is closing']
+        : !gateAdmits(g.day, Date.now() + _sharedOffsetMs) ? GATE_TEXT.sealed : null),
     drawPeerNames: ({ proj, view, eye }) => drawPeerNames(proj, view, eye),
     drawPeerBodies: ({ proj, view, eye }) => drawPeerBodies(proj, view, eye),   // MWBODY1: the others' bodies, after the player's own
     // PEER-PLAQUE1: the plaque names another player in a building and underground too - the SAME pick and the SAME
@@ -13720,6 +14011,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     // door. StartDungeonInterior(location)'s input, for the quest
     // teleport into the Mantellan Crux, the cemetery transfer and a new
     // game at a location whose exterior carries no entrance door.
+    // WB3b: the court's climate and region - its gate's pixel's (the omen's site, when it is that day's)
+    gateArenaSite: (g) => {
+      const ci = maps.getClimateIndex(g.px, g.py);
+      const climateType = getWorldClimateSettings(ci).climateType;
+      const site = gateOmen?.current?.()?.site;
+      const mine = site?.day === g.day;
+      return { climateBase: climateType, season: INTERIOR_SEASON, climate: { worldClimate: ci, climateType }, regionIndex: mine ? site.region : -1, regionName: mine ? site.regionName : '' };
+    },
+    gateLanding: (g) => gateLandingFor(g, { pixelTranslation: (px, py) => state.pixelTranslation(px, py), heightAt: (x, z) => heightAt(x, z) }),   // WB3b: the way home, before the gate
     dungeonStartSite: () => {
       const p = playerTravelPixel();
       const key = `${p.x},${p.y}`;
@@ -14167,7 +14467,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // node and this return is above the frame's hover call, so a name
     // that was on screen when the video took the canvas stayed there,
     // floating over an infection dream.
-    if (frameHeld()) { frameAbort(); hideWorldPlaque(); last = now; requestAnimationFrame(frame); return; }
+    // AUDIT WB C5: and the gate's countdown goes down with it - a DOM line over the video would stand frozen on it.
+    if (frameHeld()) { frameAbort(); hideWorldPlaque(); last = now; requestAnimationFrame(frame); drawGateBanner(null); return; }
     const dt = Math.min(0.1, (now - last) / 1000);
     // AUDIT 28 W7 + F-C1/F-C2 (self-audit 3): PlayerMouseLook.Update's
     // three answers - paused (:241-244) returns before ApplyLook and the
@@ -14229,7 +14530,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     }
     last = now;
     meterFor(renderer.gl)?.markCpu('online');   // PERF-CPU
-    if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); } else if (player.arena) player.arena = null;   // DUEL1: no online frame, no duel's law to hold the body - the ring is the live duel's alone   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
+    spoilsRecoverFrame();   // WB5: a boss's spoils no save holds, back to their character as it stands up - before it can save, online or not
+    if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); } else { if (!onlineOn && modes?.gateArenaDay?.() != null) ejectFromCourt(COURT_TEXT.collapse); if (player.arena) player.arena = modes?.gateArenaDay?.() != null ? courtRing() : null; }   // DUEL1: no online frame, no duel's law to hold the body - the ring is the live duel's alone; WB3b: the court's is its floor's, and offline there is no court   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
+    deadlandsAirFrame();   // WB6b: after the court's ways out have run, online or not - the frame it is gone is the frame its air falls silent
     meterFor(renderer.gl)?.markCpu('sim');   // PERF-CPU: everything between here and the next mark is the rest of the simulation
     lookGate(gamePaused());   // a window up frees the cursor; closing re-locks
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
@@ -14247,7 +14550,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // sunny outdoor track, and when that song ended nothing fed `songEnded`
     // so it fell silent for the rest of the visit. The whole interior and
     // dungeon music path was dead code in this host.
-    musicDirector.update({
+    if (!gateScoreFrame()) musicDirector.update({   // WB7: the court holds the music while it stands
       inside: false,
       inLocationRect: _musicInLocationRect(),
       locationType: _musicLocationType(),
@@ -14348,6 +14651,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       townTalk.frame(dt);
       renderer.resolveFrame();   // AUDIT RETRO1 E5/C8: a frame that drew no screen quad (the enhanced skin, a sheathed weapon) is shown NOW, not at the next beginFrame
       capturePendingScreenshot(canvas);   // SS1: a save armed from a modal mode still lands its shot
+      gateVeil?.frameDrawn();   // AUDIT WB D5: the step's fire holds shut on the frames the new place has drawn
       frameAbort();   // AUDIT-WH2 L1-F4: the frame never reached frameEnd - close the token, take no sample
       requestAnimationFrame(frame);
       return;
@@ -14890,6 +15194,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           const _campPick = pickActivatableHit(cam.pos, useFwd, camps.targets(), collider);   // SURV3: a camp's fire or tent, the same one ray
           const _hccPick = pickActivatableHit(cam.pos, useFwd, hcc.targets(), collider);   // HCC: the parked wagon's box, the following team's, the standing horse's (RegisterCustomActivation at 3.2), the same one ray
           const _springPick = pickActivatableHit(cam.pos, useFwd, springTargets(), collider);   // SURV3: a fountain, a well, a trough
+          const _gatePick = gatePool ? pickActivatableHit(cam.pos, useFwd, gatePool.targets(), collider) : null;   // WB2: an Oblivion Gate's fire
           // HARD2: the race is ONE law now (player/activationRace.js) - the
           // body against the pile, the torch against both and the door,
           // and the two rivals MC-2 split. It was written out by hand in
@@ -14904,6 +15209,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
             horseCart: _hccPick,   // HCC
             camp: _campPick,   // SURV3
             water: _springPick,   // SURV3
+            gate: _gatePick,   // WB2
             doorDistance: modes.exteriorActivationDistance(cam.pos, useFwd),
             personDistances: _livePersons.map((p) => rayPersonDistance(cam.pos, useFwd, p.pos)),
           });
@@ -14946,7 +15252,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
             const _torchNearest = _race.torchWins;
             // EOTB-IL: the mod's cart under the same ray (RegisterCustomActivation(41239, CheckWagon, 3.2)) - Info names it, any other mode opens the pack with the wagon
             // SURV3: a camp under the ray - Info and Talk name it, any other mode opens its menu; a water source fills the skins
-            if (_race.campWins) { if (_campPick.distance > _campPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else camps.activate(_campPick.key, getInteractionMode()); }
+            if (_race.gateWins) { if (_gatePick.distance > _gatePick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else gatePool.activate(_gatePick.key); }   // WB2: the gate's own door
+            else if (_race.campWins) { if (_campPick.distance > _campPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else camps.activate(_campPick.key, getInteractionMode()); }
             else if (_race.waterWins) { if (_springPick.distance > _springPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else drinkAtSpring(_springPick.key); }
             else if (_race.wagonWins) { if (_wagonPick.distance > _wagonPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else mwViewWagonActivate(getInteractionMode(), { say: (l) => townTalk.say(l), openInventoryWithWagon: () => { const w = makeInventoryWindow(EOTB_WAGON_PACK); if (w) townTalk.showOverlay(w); } }); }   // DISC10-E L3: a refused pack is null
             else if (_race.horseCartWins) { hcc.activate(_hccPick.key, _hccPick.distance, (l) => townTalk.say(l), () => setMidScreenText(TOO_FAR_AWAY_TEXT), plaqueActionFor(_hccPick.key)); }   // ACT-MENU: the verb the plaque lit, where it stands   // HCC: DeployedWagonActivator / FollowingWagonActivator / StationaryHorseActivator - the runtime's own reach test and refusals
@@ -15400,6 +15707,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     sky.renderer.fogColor = fogColor;
     sky.renderer.fogMix = fogNow.excludeSky ? 0 : 1 - fogFactor(fogNow, 800);
 
+    // WB2: the gate stood for this frame - before the lights (its fire lights the ground) and the world pass (its stone)
+    try { if (gatePool?.frame(dt)) warmGateVeil(); } catch (e) { console.warn('[gate] pool', e?.message ?? e); }   // AUDIT WB D5: a gate stands - the step's veil is built ahead
     // Lanterns on 17:00-08:00, flickering verbatim; pixel-local lights
     // placed under the current compensation, nearest 16 to the camera.
     // WOD2: the mod's lights burn at every hour and each carries its own
@@ -15431,7 +15740,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       const wodSel = wodLit ? _wodSelect(n, _wodFill(n)) : null;   // WOD2: the lanterns and the mod's lights, one selection
       // DW-D: UnderwaterPresentationEffects.SuppressPlayerTorch - EnablePlayerTorch's light dark under the fog (the fuel burns on, the light is the only thing it takes)
       const lit = withPlayerLights(wodSel ? wodSel.data : nearestLights(_sceneLights, cam.pos, renderer.maxPointLights, worldLightAnimator.ranges, null, 0, n),   // EL1: the installed set's cap (16 classic, 48 on the lane); PERF-LIGHTS: `n` is how much of the pool is live
-        magic?.candleLight(), _dwFogP?.under ? null : playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...camps.lights(), ...droppedTorches.lights());   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
+        magic?.candleLight(), _dwFogP?.under ? null : playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...(gatePool?.lights() ?? []), ...camps.lights(), ...droppedTorches.lights());   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
       if (wodSel) _wodSetLights(lit, wodSel);
       else renderer.setPointLights(lit, CITY_LIGHT_COLOR_F32);
     } else {
@@ -15442,7 +15751,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // WOD2: ...and the mod's lights, which burn at every hour.
       const wodSel = wodLit ? _wodSelect(0, _wodFill(0)) : null;
       const lit = withPlayerLights(wodSel ? wodSel.data : new Float32Array(0),
-        magic?.candleLight(), _dwFogP?.under ? null : playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...camps.lights(), ...droppedTorches.lights());   // HT1; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
+        magic?.candleLight(), _dwFogP?.under ? null : playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...(gatePool?.lights() ?? []), ...camps.lights(), ...droppedTorches.lights());   // HT1; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
       if (wodSel) _wodSetLights(lit, wodSel);
       else renderer.setPointLights(lit, CITY_LIGHT_COLOR_F32);
     }
@@ -15459,6 +15768,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: cam.yaw });   // DISC18: the body at the capsule's own feet, not the camera's smoothed ones
     drawPeerBodies(proj, view, mwv.eye);   // MWBODY1: the others' bodies, the same pass
     mwViewDrawWagon(renderer);   // EOTB-IL: the cart, when the transport is the cart
+    gatePool?.draw(renderer);   // WB2: the Oblivion Gate's stone
     camps.draw(renderer);   // SURV3: the tents, the cart's own pass
     hcc.draw(renderer);   // HCC: the trailing / parked / following wagon and its cargo, mine and the peers' (the horses ride the flats' pass)
 
@@ -16125,6 +16435,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         renderer.markForeignPass();
       }
     }
+    // WB2: THE GATE'S FIRE AND BEACON - after the duel wall, the same eye and fog; the stone went in the world pass, so
+    // the horns in front of the fire hide it
+    if (gatePool?.stands() && gatePool.drawPass(proj, view, new Float32Array(mwv.eye), now / 1000,   // AUDIT WB C7: its arguments built only when a gate stands
+      { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos })) renderer.markForeignPass();
     // C13: streaming-world arrows fly against the live pixel
     // collider (lost on geometry/terrain, as DFU misses are). Drawn
     // without a remap - the streaming pixels each carry their own,
@@ -16381,6 +16695,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
             horseCart: pickActivatableHit(cam.pos, _hd, hcc.targets(), collider),   // HCC
             camp: pickActivatableHit(cam.pos, _hd, camps.targets(), collider),
             water: pickActivatableHit(cam.pos, _hd, springTargets(), collider),
+            gate: gatePool ? pickActivatableHit(cam.pos, _hd, gatePool.targets(), collider) : null,   // WB2
             // WORLD-HOVER H2: the two the PRESS races in its own arms
             // above raceActivation - a live foe and a walking
             // townsperson. Without them the plaque named the shopfront
@@ -16406,6 +16721,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           windowCoversHud: townTalk.hudCovered || (modes?.hudCovered ?? false),
           hudHidden: townTalk.hudHidden,   // MAP-FIELD2: the held map takes the vitals and the status icons with it, on both skins
           detected: _detected, playerXZ: [enchantFeet()[0], enchantFeet()[2]],
+          gate: gateCompassMark(),   // WB1: the Oblivion Gate on the compass, while the player stands in its ring
           largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity),
           // AUDIT 39: the enhanced HUD's two hand plaques. Both values
           // are already this host's - the rig one argument over, the
@@ -16488,6 +16804,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         window.__shotReady = true;
       }
     }
+    gateVeil?.frameDrawn();   // AUDIT WB D5: the step's fire holds shut on the frames the new place has drawn
     meterFor(renderer.gl)?.stopCpu();   // PERF-READ1: the last span closes HERE, not at the next frame's first mark - the rAF wait is nobody's
     frameEnd();   // PERF1
     requestAnimationFrame(frame);

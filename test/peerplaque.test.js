@@ -110,5 +110,5 @@ test('PEER-PLAQUE1 hosts by source: the street races the F key\'s own pick and n
   assert.match(m, /cursorActive: overlayHeld \|\| !!host\.pointerSurfaceUp\?\.\(\),/);
   assert.match(m, /pointerSurfaceUp: \(\) => !!host\.pointerSurfaceUp\?\.\(\),/);
   assert.match(d, /cursorActive: dungeonPaused\(\) \|\| !!opts\.pointerSurfaceUp\?\.\(\),/);
-  assert.match(race, /return firmFirst\(\[camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe\], nearestInOrder\);/, 'between the townsperson and the foe');   // PR-WAGON1: the one order, raced firm-first   // HCC: the mod's activator stands after the cart
+  assert.match(race, /return firmFirst\(\[gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe\], nearestInOrder\);/, 'between the townsperson and the foe');   // PR-WAGON1: the one order, raced firm-first   // HCC: the mod's activator stands after the cart   // WB2: the gate's fire heads the list
 });

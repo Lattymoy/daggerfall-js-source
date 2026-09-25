@@ -103,7 +103,10 @@ test('ACC1b: the migration is the real schema, and applying it twice changes not
   // `guilds` (one row a guild), `guild_members` (one row a character in one),
   // `guild_invites` (one row an account asked to one) and `guild_ledger` (one
   // row a movement of a treasury).
-  assert.deepEqual(tables, ['duel_results', 'guild_invites', 'guild_ledger', 'guild_members', 'guilds', 'home_decor', 'homes', 'letters', 'players', 'rate_limits', 'renown_tracks', 'saves', 'sessions']);
+  // WB5b added `gate_kills` the same way (0014 - 0009 on its branch, before
+  // RENOWN1 took it): one row a gate an account closed, keyed (day, account),
+  // counted off it.
+  assert.deepEqual(tables, ['duel_results', 'gate_kills', 'guild_invites', 'guild_ledger', 'guild_members', 'guilds', 'home_decor', 'homes', 'letters', 'players', 'rate_limits', 'renown_tracks', 'saves', 'sessions']);
   // ACC1b IS IDENTITY ALONE, and the PLAYERS row still is: the save
   // arrived beside it, never inside it.
   const cols = db._raw.prepare('PRAGMA table_info(players)').all().map((c) => c.name);

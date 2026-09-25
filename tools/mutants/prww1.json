@@ -92,8 +92,8 @@
   {
     "name": "PRWW1-modal-hook-narrowed-back",
     "file": "src/scenes/world.js",
-    "old": "    extraBillboards: () => [...(remotePlayers?.batches() ?? []), ...(peerRiders?.batches() ?? []), ...(peerWalkers?.batches() ?? [])],\n",
-    "new": "    extraBillboards: () => remotePlayers?.batches() ?? [],\n",
+    "old": "    extraBillboards: () => [...(remotePlayers?.batches() ?? []), ...(peerRiders?.batches() ?? []), ...(peerWalkers?.batches() ?? []), ...(gateCourt?.batches() ?? [])],",
+    "new": "    extraBillboards: () => [...(remotePlayers?.batches() ?? []), ...(gateCourt?.batches() ?? [])],",
     "tests": [
       "test/prww1_werewolf.test.js"
     ]

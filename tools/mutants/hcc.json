@@ -464,8 +464,8 @@
   {
     "name": "HCC-race-ignores-horsecart",
     "file": "src/player/activationRace.js",
-    "old": "  return firmFirst([camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
-    "new": "  return firmFirst([camp, water, wagon, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "old": "  return firmFirst([gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "new": "  return firmFirst([gate, camp, water, wagon, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
     "tests": [
       "test/hcc_hosts.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "HCC-race-horsecart-before-cart",
     "file": "src/player/activationRace.js",
-    "old": "  return firmFirst([camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
-    "new": "  return firmFirst([camp, water, horseCart, wagon, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "old": "  return firmFirst([gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "new": "  return firmFirst([gate, camp, water, horseCart, wagon, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
     "tests": [
       "test/hcc_hosts.test.js"
     ]

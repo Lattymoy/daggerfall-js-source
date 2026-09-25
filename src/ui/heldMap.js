@@ -102,6 +102,7 @@ import { noticeHold, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE
 import { TRAVEL_OPTIONS_TEXT as TO_TEXT, format as toFormat } from '../systems/travelOptionsText.js';
 import { getDaggerfallDistance, MatchesCutOff } from '../systems/editDistance.js';
 import { checkLocationDiscovered } from './travelMapWindow.js';
+import { readGateMark, gateMarkKey, GATE_RING_CSS, GATE_LEGEND_TEXT } from './gateMapMark.js';   // WB1: the Oblivion Gate's ring, read as the party is
 import {
   buildInkModel, buildInkMarks, paintInkStatic, paintInkOverlay, zoomBand, clampView, scaleMinOf, SCALE_MAX,   // MAP-FIELD2: placeNames is inkMap's law still, but this sheet no longer inks the names
   viewCentredOn, zoomAt, toPaper, toMap, BAND_MARKS, PARTY_LABEL_STACK,
@@ -537,6 +538,9 @@ export class HeldMapWindow {
     this._party = [];
     this._partyKey = '';
     this._partyPoll = 0;
+    // WB1: the gate's ring - the host's `gate` read on the party's own poll; null while no gate is marked
+    this._gate = null;
+    this._gateKey = '';
     this._selected = null;  // { summary, name, x, y } - or { coords: true, ... } for a bare pixel (MAP2)
     this._panel = null;     // 'travel' | 'teleport' | null
     this._panelState = null;
@@ -1062,6 +1066,7 @@ export class HeldMapWindow {
             // offline is that green with the life out of it
             color: m.online ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS,
           })),
+          gate: this._gate,   // WB1
           pulse: env.pulse,
         });
       },
@@ -1491,9 +1496,15 @@ export class HeldMapWindow {
     // opened during a journey, the cross keeps up with the rings
     const p = this.deps.getPlayerPixel?.();
     if (p && (p.x !== this._player.x || p.y !== this._player.y)) { this._player = { x: p.x, y: p.y }; this._dirty = true; }
+    // WB1: the gate's ring rides the same poll - its words tick each second, so its key is its own and a changed
+    // ring repaints without touching the party's labels
+    const gate = readGateMark(this.deps.gate, this._size);
+    const gateKey = gateMarkKey(gate);
+    let gateMoved = false;
+    if (gateKey !== this._gateKey) { this._gateKey = gateKey; this._gate = gate; gateMoved = true; this._dirty = true; }
     const marks = readPartyMarks(this.deps.party, this._size);
     const key = partyMarksKey(marks);
-    if (key === this._partyKey) return false;
+    if (key === this._partyKey) { if (gateMoved) this._renderLegend(); return gateMoved; }
     this._partyKey = key;
     // AUDIT SOC D2: `stack` is how many members were already standing on
     // this member's map pixel - the i-th drops i labels further down, in
@@ -1517,10 +1528,17 @@ export class HeldMapWindow {
     const leg = this._chrome?.legend;
     if (!leg) return;
     leg.innerHTML = '';
-    if (!this._party.length) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
-    const dot = el('span', 'hmlegdot');
-    dot.style.background = this._party.some((m) => m.online) ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS;
-    leg.append(dot, el('span', 'hmlegtext', PARTY_LEGEND_TEXT));
+    if (!this._party.length && !this._gate) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
+    if (this._party.length) {
+      const dot = el('span', 'hmlegdot');
+      dot.style.background = this._party.some((m) => m.online) ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS;
+      leg.append(dot, el('span', 'hmlegtext', PARTY_LEGEND_TEXT));
+    }
+    if (this._gate) {   // WB1: the ring explains itself too, while there is one
+      const dot = el('span', 'hmlegdot');
+      dot.style.background = GATE_RING_CSS;
+      leg.append(dot, el('span', 'hmlegtext', GATE_LEGEND_TEXT));
+    }
     leg.classList.toggle('open', true);
     leg.style.display = 'flex';
   }

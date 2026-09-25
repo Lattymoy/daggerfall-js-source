@@ -158,7 +158,7 @@ test('MAIL1 law: a letter past its bound is REFUSED, never cut - one word each (
 
 test('MAIL1 service: four routes behind a session, none open; acct6; a GUEST can neither read nor write (mail-needs-account, 403) and cannot be written to; the wrong method is refused (mutants: the wall dropped; a route opened to strangers)', async () => {
   for (const r of ['/v1/mail/inbox', '/v1/mail/send', '/v1/mail/read', '/v1/mail/delete']) { assert.ok(ROUTES.has(r), r); assert.ok(!OPEN_ROUTES.has(r)); }
-  assert.equal(ACCOUNT_VERSION, 'acct10');   // acct6 was MAIL1's letters; TITLE-N's Dungeon Master and Patreon tiers moved it on (acct7); DUEL1's duelling record (acct8), FOUNDER2's cutoff again (acct9); RENOWN1's Renown, HOME1's homes, DECOR1's decor and GUILD1's guilds (acct10)
+  assert.equal(ACCOUNT_VERSION, 'acct11');   // acct6 was MAIL1's letters; TITLE-N's Dungeon Master and Patreon tiers moved it on (acct7); DUEL1's duelling record (acct8), FOUNDER2's cutoff again (acct9); RENOWN1's Renown, HOME1's homes, DECOR1's decor and GUILD1's guilds (acct10); WB5b's gates closed (acct11 - acct10 on its branch)
   const svc = await service();
   const ann = await svc.player('p_ann_0000000001', 'Ann');
   const guest = await svc.player('p_gst_0000000001', null);
@@ -566,5 +566,5 @@ test('MAIL1 host by source: the box is made with the panel over the ACCOUNT SERV
   assert.match(made, /ioOf: \(\) => \{\s*const st = appStorage\(\);\s*const s = storedSession\(st\);\s*return s \? \{ fetch: \(u, i\) => globalThis\.fetch\(u, i\), base: serviceBase\(st\), secret: s\.secret, storage: st \} : null;\s*\},/);
   assert.match(made, /onLetter: \(event\) => \{ chatLog\.push\(tab\.id, \{ text: mailNoticeText\(event\), system: true \}\); \},/);
   assert.match(w, /socialPanel = createSocialPanel\(\{\s*social,\s*mail,/);
-  assert.match(w, /const onlineFrame = \(now, dt\) => \{[\s\S]{0,700}?\n\s*mail\?\.poll\(\);[^\n]*\n[\s\S]{0,300}?if \(townTalk\.overlay instanceof DeathScreen/, 'polled before the dead return');
+  assert.match(w, /const onlineFrame = \(now, dt\) => \{[\s\S]{0,700}?\n\s*mail\?\.poll\(\);[^\n]*\n[\s\S]{0,500}?if \(townTalk\.overlay instanceof DeathScreen/, 'polled before the dead return');   // 500: WB1's gateFrame and RENOWN1's tick both stand between
 });

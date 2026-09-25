@@ -3295,6 +3295,32 @@ Pinned in `test/profile2_pause_profile.test.js` (9):
 `tools/mutants/profile2.json`, 22, all dead. Not verified in a browser
 (no probes).
 
+## WB5b — the gates closed (2026-09-25)
+
+Mac: "a gate of oblivion which takes place in a large boss arena with an oversized enemy", and Option B - the relay's
+object is the authority over the boss and signs a receipt for each account that earned the kill. The full design is
+`11-Multiplayer/World-Bosses.md` (sections 6 and 7). This is the service's part of it.
+
+- **Whose word it is.** The RELAY's - the one party that saw the kill. The relay signs with its own key
+  (`GATE_SIGNING_KEY`, a relay secret); this service holds only the public half (`GATE_PUBLIC_KEY`, a var in
+  `server-account/wrangler.toml`, because a public key verifies and cannot sign) and verifies every receipt with it -
+  the version, the signature, the claims, the week (`src/net/gateReceipt.js verifyReceipt`). The identity pair runs the
+  other way (this service signs, the relay verifies), and neither can pass for the other.
+- **One statement is the write.** Migration 0014 (0009 on its branch - RENOWN1 took 0009 first) adds `gate_kills` (day, account, boss, earned, at), primary key
+  (day, account), cascading with the account, no counter column. `claimGate` is one `INSERT OR IGNORE`: a second
+  claim of the same day's kill lands nothing and is answered `recorded: false, why: 'claimed'`. The receipt must name the
+  session's account (`not-yours`, 403); a receipt the relay did not sign is `receipt` (400); no public half is
+  `no-gate-key` (503). A guest is answered `guest` and not counted - AUDIT DUEL1 A1's law - and counts once it registers
+  under the same id.
+- **The routes.** `POST /v1/gate/claim { receipt }` behind a session; `GET /v1/account` carries `account.gates` and
+  `POST /v1/duel/record` answers `gates` beside the duels. The service is `acct11` (`acct10` on its branch - RENOWN1, HOME1, DECOR1 and GUILD1 took `acct10` first).
+- **The client** (`src/net/accountClient.js accountGates`, `src/net/gateClaims.js`): no session, no knock; the device
+  keeps each receipt until an answer settles it. The account card has a *Gates closed* row; the Inspect card a line.
+- **The keys.** `node tools/mintGateKeys.mjs` mints the pair in one run and writes nothing to disk. Not automated in a
+  workflow: the private half is set on the relay with `npx wrangler secret put GATE_SIGNING_KEY` from `server/`, and the
+  public half is committed into `server-account/wrangler.toml`. Until then receipts go out unsigned and are declined, and
+  the device keeps them for the week they carry.
+
 ## RENOWN1 — Renown, the level that exists only online (2026-09-24)
 
 Mac, bringing a friend's MMORPG pillars ("The Hybrid Leveling System ... a traditional EverQuest-style Adventuring

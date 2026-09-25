@@ -38,6 +38,7 @@ import {
   isWaterPixel, buildMarkerModel, traceChains, simplifyChain,
   TREELINE_BYTE, SNOWLINE_BYTE,
 } from './overworldModel.js';
+import { GATE_RING_CSS, GATE_FILL_CSS } from './gateMapMark.js';   // WB1: the Oblivion Gate's ring, in the omen's own colours
 
 // ── THE INK (skin): the pen and its washes ───────────────────────────────────────────────
 /** THE TWO GROUNDS EVERY COLOUR ON THIS SHEET IS MIXED FROM. The pen
@@ -953,6 +954,8 @@ export function paintInkOverlay(ctx, view, opts) {
   ctx.lineJoin = 'round';
   const { visible } = penOf(ctx, view, paperW, paperH);
   const pulse = opts.pulse ?? 0;
+  // WB1: the gate's ring under everything else that breathes - a party member standing in it reads over it
+  if (opts.gate && visible(opts.gate.cx, opts.gate.cy, opts.gate.r + 2)) paintGateRing(ctx, view, opts.gate, pulse);
   for (const m of opts.party ?? []) {
     if (!visible(m.x, m.y)) continue;
     const [x, y] = toPaper(view, m.x, m.y);
@@ -986,6 +989,38 @@ export function paintInkOverlay(ctx, view, opts) {
     ctx.beginPath(); ctx.arc(x, y, 3.2, 0, Math.PI * 2); ctx.stroke();
   }
 }
+/**
+ * WB1 (Mac: "a large area would be shown on the map"): THE OMEN'S RING - the area an Oblivion Gate will open in, a
+ * wash of fire inside a ring that breathes, and its words over its top (ui/gateMapMark.js, the mark's law). The
+ * ring's radius is in MAP pixels, so it is the same patch of land at every zoom; a floor of ten paper pixels keeps it
+ * findable when the whole bay is on the sheet.
+ * @param {CanvasRenderingContext2D} ctx @param {{ox:number, oy:number, scale:number}} view
+ * @param {{cx:number, cy:number, r:number, label?:string}} g @param {number} [pulse] 0..1
+ */
+export function paintGateRing(ctx, view, g, pulse = 0) {
+  const [x, y] = toPaper(view, g.cx, g.cy);
+  const r = Math.max(10, g.r * view.scale);
+  ctx.save();
+  ctx.setLineDash([]);
+  ctx.fillStyle = GATE_FILL_CSS;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = GATE_RING_CSS; ctx.lineWidth = 2.4;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+  // the inner ring breathes, broken like a fire's edge
+  ctx.globalAlpha = 0.45 + 0.45 * pulse; ctx.lineWidth = 1.3; ctx.setLineDash([4, 5]);
+  ctx.beginPath(); ctx.arc(x, y, r * 0.8 + pulse * 2, 0, Math.PI * 2); ctx.stroke();
+  ctx.setLineDash([]); ctx.globalAlpha = 1;
+  if (g.label) {
+    ctx.font = `600 12px ${NAME_FACE}`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = PEN.halo; ctx.lineWidth = 2 * HALO_PEN;
+    ctx.strokeText(g.label, x, y - r - 3);
+    ctx.fillStyle = GATE_RING_CSS;
+    ctx.fillText(g.label, x, y - r - 3);
+  }
+  ctx.restore();
+}
+
 /** The stack of party labels on ONE pixel: each member's name this
  *  much further down than the last (AUDIT SOC D2's law, on ink). */
 export const PARTY_LABEL_STACK = 13;

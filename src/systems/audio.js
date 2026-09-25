@@ -183,7 +183,7 @@ export class AudioEngine {
     setEquipSoundSink((clip) => this.playOneShot(clip));
     // NT1 (F215): the flag IS the promise - the sibling MusicService's
     // AUDIT 19 law ("a guard set before its own async work is not
-    // idempotence, it is a race with a flag on it", music.js:97-102).
+    // idempotence, it is a race with a flag on it", music.js:98-103).
     // The boolean version returned to a concurrent second caller BEFORE
     // init finished, so that caller's immediate one-shots dropped while
     // `enabled` was still false. Every caller now awaits the same boot.

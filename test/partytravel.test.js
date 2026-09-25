@@ -208,7 +208,7 @@ test('PARTY-TRAVEL wire: the relay\'s door projects the fields through (validPar
   assert.deepEqual(m.p.tv, { x: 300, y: 150, o: 2, at: NOW, go: null });
   assert.equal(m.p.tr, NOW - 5);
   assert.equal(m.p.wx, f.wx);
-  assert.equal(RELAY_VERSION, 'world112', 'PARTY-TRAVEL: the party pose\'s journey fields (world110 on its branch; EVENT1 and RENOWN1 took 110-111)');
+  assert.equal(RELAY_VERSION, 'world113', 'WB3 and AUDIT WB (the gate\'s boss room, world113) moved it on; PARTY-TRAVEL: the party pose\'s journey fields (world112 - world110 on its branch; EVENT1 and RENOWN1 took 110-111)');
   assert.equal(PARTY_TRAVEL_RELAY_MIN, 112);
   assert.equal(relaySupportsPartyTravel('world112'), true);
   assert.equal(relaySupportsPartyTravel('world113'), true);

@@ -4326,7 +4326,7 @@ room exists.
 
 **The boundary that makes that safe is `_layoutFoes`** - the dungeon
 host's index of where the layout's own run ends. Every foe past it "is
-this player's own" (`dungeonContext.js:1205`, AUDIT WORLD B2): a quest
+this player's own" (`dungeonContext.js:1209`, AUDIT WORLD B2): a quest
 foe is minted above it, never streamed, never puppet-ised by the room's
 authority switch, and never touched by a joiner's stream. So a joiner's
 quest foe really does spawn and really can be killed by the player whose
@@ -4695,7 +4695,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6640` read, on one physical line:
+`src/scenes/worldModes.js:6726` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4710,7 +4710,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:4348`). With the property missing that call is a
+(`dungeonContext.js:4432`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -4837,9 +4837,9 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4857` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4872` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
-  provenance argument `applySpellToFoe` hands them (`hostMagic.js:255`)
+  provenance argument `applySpellToFoe` hands them (`hostMagic.js:275`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
   Threading it touches four hosts.
 - **A building interior streams no foes at all.** `makeInteriorFoes`
@@ -7049,7 +7049,7 @@ answers that exact string in the object's sleep, no event, no wake. Only a
 CHANNEL session (chat, `presence: false`) used it. A presence session's
 liveness rode the pose.
 
-**Now (`src/net/wire.js:944`, `src/net/online.js:1841`):**
+**Now (`src/net/wire.js:947`, `src/net/online.js:1867`):**
 
 - `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
   before) or every 20 s standing, as the peers' proof of life and the silence
@@ -8163,6 +8163,116 @@ gated (DISC12's `lh`/`wb`, PCORPSE1's `dd`); an older relay's `validPose` drops 
 still rides nothing (MW-D51). Record: Handheld-Torches.md HT-WAIST ("Online: the others see it"). Pins:
 `test/htwaistnet_peers.test.js` - the door, the producer and its sender, a session through the real relay Room to the
 watcher's drawn pose, a peer's whole `createFpArm()` body hanging and hiding it, and its swing off the stub camera.
+
+## WB1 (2026-09-25, Mac: "a gate of oblivion which takes place in a large boss arena with an oversized enemy with telegraphed attacks") - the Oblivion Gate's omen; see 11-Multiplayer/World-Bosses.md
+
+The world boss arc's first slice, recorded on its own page (`11-Multiplayer/World-Bosses.md`, the design and a
+Shipped row a slice). A gate a game day on the shared clock - the omen at 17:00 with a ring on both maps and a line
+on every chat tab, the gate at 19:00, open 20:00-22:00, the wrath at midnight: HH:32:30 UTC every even hour - and its
+site a hash of the day over the map files, so the omen costs the relay nothing: no frame, no relay change, no
+`RELAY_VERSION` bump. The arena's room (`gate:<day>`) is written into the law now and admitted by no relay yet; WB3
+is the slice that teaches the relay it. Re-aimed: the two "before the dead return" source pins (`chat1`,
+`auditdrops`) take `gateFrame` into their list; `inspect1`'s ordering pin stands, the gate's frame runs after the mail.
+
+## WB2 (2026-09-25, Mac: "A gate model would be spawned with a timer that leads to a completely different area") - the Oblivion Gate stands in the world; see 11-Multiplayer/World-Bosses.md
+
+The arc's second slice: the gate's stone, fire and beacon, its pool on the world host, the countdown and the door -
+which says "not yet" until WB3 teaches the relay a gate's arena. Nothing crosses the wire: the gate is the clock's.
+Re-aimed: `peerplaque`'s tie-order pin and `worldhover`'s press-against-plaque differential take the `gate` family;
+`audit18`'s foreign-pass count is thirteen (the gate's fire and beacon, the world host alone).
+
+## WB3a (2026-09-25, Mac: "a gate of oblivion which takes place in a large boss arena with an oversized enemy with telegraphed attacks") - the gate's boss room on the relay; see 11-Multiplayer/World-Bosses.md
+
+Option B, built: the relay's object is the authority over the boss. `net/gateBrain.js` is the whole fight as pure law
+(a point, a facing, a health bar, a clock and the players' feet - the arena is a flat disc so the boss needs no game),
+stepped by the object's alarm every 250 ms while someone stands in the court and checkpointed every two seconds; a
+blow is the client's own formula, believed as far as its level claim's bucket and the socket's own pose allow; the kill
+is stamped once, each earning account gets a receipt (`net/gateReceipt.js`, the relay's first signature - unsigned
+until `GATE_SIGNING_KEY` is set) and the hub says it to everyone online through an internal door. The `gate:<day>` key
+is admitted only inside its day's window, at the Worker (no object minted) and at the hello (a newcomer while open, a
+fighter until the wrath's end). RELAY_VERSION world110 on its branch - world113 at the merge, past main's EVENT1 (world110), RENOWN1 (world111) and PARTY-TRAVEL (world112), with GATE_RELAY_MIN 113 - the bump drops every connected player once, and three files
+join the bundle. The client half so far is the session's (`gateOk`, `sendGate`, `onGate`); the arena place is WB3b.
+
+## WB3b (2026-09-25, Mac: "a gate of oblivion which takes place in a large boss arena") - the Burning Court; see 11-Multiplayer/World-Bosses.md
+
+The gate's door opens now: at a relay that runs a gate's boss room (world113; world110 on its branch), walking through the fire enters the
+Burning Court - the dungeon host's own arm with a level made in code (`world/gateArena.js`), not a fifth host. Its
+room is the gate's `gate:<day>`; the level claim goes out once per welcome; the court's words land in
+`net/gateLink.js`, which the world's gate reads for its collapse and the chat for the kill line. A death there is cast
+out before the gate, the day's end or going offline ends the court the same way, and the map, the rest, the save and
+the Recall mark are refused inside it. The boss is not drawn yet (WB4) - the relay runs him, and the court is where
+he will stand.
+
+## WB4a (2026-09-25, Mac: "an oversized enemy with telegraphed attacks (like wind ups, etc)") - the boss fights back; see 11-Multiplayer/World-Bosses.md
+
+Nothing new on the wire: the court's link already holds the relay's words, and this slice draws them. The boss stands
+where the relay says (his walk carried between its words, the charge down its lane), three times a Daedra Lord's size;
+the attack he winds up is drawn on the floor where it will land and said on his bar; and at its landing each client
+tests ITS OWN FEET against its shape - co-op's law, the struck player's machine (`net/gateStrike.js`) - and takes the
+blow through the dungeon context's own door. The relay never learns who was struck. The player's blows on him are
+WB4b.
+
+## WB4b (2026-09-25, Mac: "a large boss arena with an oversized enemy") - the boss is fought; see 11-Multiplayer/World-Bosses.md
+
+The other half of the same law: the striker's machine says the number, the room holds the health. A swing, a shaft or a
+harmful spell that meets the boss's body - his skin, his whole body, his own radius - is computed by the game's own
+formula against his stand-in, and the number goes to the court's room as the `hit` frame WB3a's relay already
+validates and caps (a sequence of its own, whole points, the kind). The ward turns a blow on this machine and nothing
+is sent. Nothing new on the wire.
+
+## WB5a (2026-09-25, Mac: "On death the boss would physically spew out per player loot") - the spoils; see 11-Multiplayer/World-Bosses.md
+
+The receipt WB3a's relay signs for an account that earned a kill carries a loot seed, and that seed is the whole of
+this player's spoils: the client rolls them (the game's own makers, Loot Rarity's own ladder), spews them out of the
+boss's chest with the thrown torch's own physics, stands each in its tier's glow and hands a piece over when the
+player walks over it - seen by this player alone, never sent. Leaving the court gathers the rest; the device keeps
+the pieces as rolled until a save of that character holds them, so a crash hands them over at the next boot, and it
+keeps the day spent, so a reconnect that re-sends the receipt spews nothing twice. Nothing new on the wire.
+
+## WB5b (2026-09-25, Mac, Option B: the relay "issues a signed kill record the account service honours") - the gates closed; see 11-Multiplayer/World-Bosses.md
+
+The receipt is carried to the account service by the account it names and counted there once
+(`server-account/src/accounts.js claimGate`, `POST /v1/gate/claim`, acct10): verified with the relay's public half
+(`GATE_PUBLIC_KEY`) and naming the session's own account, one row a (day, account). The device keeps each receipt the
+relay hands the socket until an answer settles it (`net/gateClaims.js`), offered at once and again on the gate frame no
+sooner than ten minutes after. The account card's *Gates closed* row and the Inspect card's line read the count.
+`tools/mintGateKeys.mjs` mints the pair; the relay's half is `GATE_SIGNING_KEY`. Nothing new on the wire.
+
+## WB6a (2026-09-25, Mac: "the transition and the arena needs to be an oblivion masterpiece") - the Deadlands; see 11-Multiplayer/World-Bosses.md
+
+The Burning Court's square sea and flat shell are gone: `render/deadlands.js` paints a Deadlands sky (a churning
+overcast, the vortex over the great tower with its beam, Daedric towers, jagged ranges with falls of fire, seeded
+lightning) and a disc of moving fire whose rim becomes the sky's horizon, and the court is lit as itself. Client
+only; nothing on the wire.
+
+## WB6b (2026-09-25, Mac: "Whole thing needs to feel alive") - the Deadlands' life; see 11-Multiplayer/World-Bosses.md
+
+Islands and spires out in the fire, the court's floor in floating shards, embers and ash in the air, a strike's light
+on the court and its thunder late by its distance, and the court's own air where the dungeon's drips were. The one
+online fact: the Deadlands keep the RELAY'S clock (`deadlandsSeconds` - the welcome's clock offset, WORLD5, over this
+page's monotonic clock), so every screen in the court sees and hears the same strike at the same moment. Client only;
+nothing on the wire.
+
+## WB6c (2026-09-25, Mac: "the transition and the arena needs to be an oblivion masterpiece") - the step through; see 11-Multiplayer/World-Bosses.md
+
+The gate's door and the court's way home are taken in fire - a vortex of flame closing over the screen, burning while
+the place beyond is built, opening onto it (`render/gateVeil.js`, `ui/gateVeil.js`); a court taken by force flashes.
+Online alone, as the gate is; client only; nothing on the wire.
+
+## WB7 (2026-09-25, Mac: "Proper boss audio during the boss fight") - his voice and his music; see 11-Multiplayer/World-Bosses.md
+
+The Burning Court's boss is heard - steps, growls, grunts, the ground's shock, thunder, his fall - and the court has its
+own score (`systems/gateScore.js`), chosen from the fight state the court's link already holds: his phase, the Wrath's
+time, his fall. Client only; nothing on the wire.
+
+## AUDIT WB (2026-09-25, Mac: "A proper audit on everything") - the relay's half; see 11-Multiplayer/World-Bosses.md section 11
+
+RELAY_VERSION world111 on its branch, world113 at the merge. A room's seat is a hello's now: a socket stamped as it opens, and a full room closes the ones
+silent past `HELLO_WAIT_MS` (busy, so a real client retries) before it refuses `room full`. A gate's court seats one
+socket an account, and a full fight frees the seat of an account that left without a blow or a moment stood. An `in`
+said again writes nothing; a newcomer to a fight already bled comes with an empty bucket. The kill is minted and
+written before it is said, and the hub is told until it answers; the hub keeps each account's receipt for its life and
+hands it to that account's next hello.
 
 ## PARTY-TRAVEL (2026-09-25) - to the leader, and together, world110
 

@@ -360,7 +360,7 @@
   {
     "name": "WORLD-HOVER-raceWinner-tie-order-inverted",
     "file": "src/player/activationRace.js",
-    "old": "  return firmFirst([camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "old": "  return firmFirst([gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
     "new": "  return firmFirst([foe, peer, person, ground, pile, corpse, torch, horseCart, wagon, water, camp], nearestInOrder);",
     "tests": [
       "test/worldhover.test.js"
@@ -495,8 +495,8 @@
   {
     "name": "WORLD-HOVER-a-foe-beats-a-townsperson-on-a-tie",
     "file": "src/player/activationRace.js",
-    "old": "  return firmFirst([camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
-    "new": "  return firmFirst([camp, water, wagon, horseCart, torch, corpse, pile, ground, foe, peer, person], nearestInOrder);",
+    "old": "  return firmFirst([gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "new": "  return firmFirst([gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, foe, peer, person], nearestInOrder);",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -504,8 +504,8 @@
   {
     "name": "WORLD-HOVER-a-townsperson-beats-the-door-on-a-tie",
     "file": "src/player/activationRace.js",
-    "old": "  return firmFirst([camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
-    "new": "  return firmFirst([camp, water, wagon, horseCart, torch, corpse, pile, person, peer, ground, foe], nearestInOrder);",
+    "old": "  return firmFirst([gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "new": "  return firmFirst([gate, camp, water, wagon, horseCart, torch, corpse, pile, person, peer, ground, foe], nearestInOrder);",
     "tests": [
       "test/worldhover.test.js"
     ]

@@ -681,3 +681,23 @@ The port departs, at Mac's word (Port-Ledger A, DISC20-B):
   at once, from the MIDI.BSA path and a music pack's alike.
 
 Pins: `test/disc20.test.js` (B), `tools/mutants/disc20.json`.
+
+## WB7 (2026-09-25): a song made in code - the Warden's score
+
+Mac: "Proper boss audio during the boss fight." Daggerfall has no fight music - its dungeon tracks are made to be
+walked through - so the Burning Court's is WRITTEN, as notes, in `systems/gateScore.js`: four songs in the shape an
+HMI song decodes to (tick-ordered events, one tempo, notes carrying their own durations), on the FM bank's own
+articulations (pizzicato strings, timpani, orchestra hit, brass, choir, church organ, tubular bells, the kit). The
+music service takes them by a door of its own, `MusicService.registerSong(name, song)`: a made song answers for its
+name before MIDI.BSA is asked, and from there it is any song - the same player, the same DISC20-B fades, the same
+MusicVolume, and a music pack replaces it by name as it replaces any song (M-EXT). The court holds the music while it
+stands (world.js `gateScoreFrame`, ahead of the music director: the director is not fed then) and lets it go stopped
+the frame it is gone, so the director's next frame hears its song ended and plays its own. What plays and when is
+`courtScoreFor` - see `11-Multiplayer/World-Bosses.md` section 5. `tools/gateScoreProbe.mjs` plays each song through
+the real song player into an OfflineAudioContext and measures it (every second sounding, no clipping, the war growing
+with his phases, the fall rung out in its time), and can write the renders as WAV for a person to hear.
+
+AUDIT WB (2026-09-25): the war songs are `seamless` - `SongPlayer` begins a seamless song's next pass on its bar line,
+to the tick, where DFU's rewind rings a second past a song's end first (the classic songs keep it); the fanfare is
+timed from when it began on this machine (`createCourtScore`) and ended by `MusicService.fadeOut` - DISC20-B's fade
+and then a stop, where `stop()` is a cut; and his grunt counts the loss since his last one.

@@ -1,0 +1,156 @@
+[
+  {
+    "name": "WB6c-the-corners-never-clear",
+    "file": "src/render/gateVeil.js",
+    "old": "export const VEIL_FRONT_OUT = 1.4;",
+    "new": "export const VEIL_FRONT_OUT = 1.1;",
+    "tests": ["test/wb6c_gate_veil.test.js"]
+  },
+  {
+    "name": "WB6c-the-centre-never-taken",
+    "file": "src/render/gateVeil.js",
+    "old": "export const VEIL_FRONT_IN = -0.55;",
+    "new": "export const VEIL_FRONT_IN = -0.2;",
+    "tests": ["test/wb6c_gate_veil.test.js"]
+  },
+  {
+    "name": "WB6c-the-opening-from-the-wrong-end",
+    "file": "src/render/gateVeil.js",
+    "old": "    front = f0 + (VEIL_FRONT_OUT - f0) * (1 - (1 - u) ** 2.2);",
+    "new": "    front = VEIL_FRONT_OUT - (VEIL_FRONT_OUT - f0) * (1 - (1 - u) ** 2.2);",
+    "tests": ["test/wb6c_gate_veil.test.js"]
+  },
+  {
+    "name": "WB6c-the-fire-dawdling-in",
+    "file": "src/render/gateVeil.js",
+    "old": "    front = VEIL_FRONT_OUT - span * u ** 1.6;",
+    "new": "    front = VEIL_FRONT_OUT - span * u ** 0.6;",
+    "tests": ["test/wb6c_gate_veil.test.js"]
+  },
+  {
+    "name": "WB6c-the-shaders-raggedness-not-the-laws",
+    "file": "src/render/gateVeil.js",
+    "old": "  float edge = uFront + (f1 - 0.5) * ${VEIL_RAG_BODY.toFixed(2)} +",
+    "new": "  float edge = uFront + (f1 - 0.5) * 0.9 +",
+    "tests": ["test/wb6c_gate_veil.test.js"]
+  },
+  {
+    "name": "WB6c-the-promise-before-the-fire-has-closed",
+    "file": "src/ui/gateVeil.js",
+    "old": "    if (phase === 'closing' && seconds(t) >= VEIL_CLOSE_S) { phase = 'shut'; at = t; settle(true); }",
+    "new": "    if (phase === 'closing' && seconds(t) >= 0) { phase = 'shut'; at = t; settle(true); }",
+    "tests": ["test/wb6c_gate_veil.test.js"]
+  },
+  {
+    "name": "WB6c-no-hold-for-the-first-frames",
+    "file": "src/ui/gateVeil.js",
+    "old": "      if (phase === 'shut') { wait = VEIL_OPEN_WAIT_TICKS; drawnAt = drawnN; kick(); }",
+    "new": "      if (phase === 'shut') { open(t, VEIL_FRONT_IN); kick(); }",
+    "tests": ["test/wb6c_gate_veil.test.js"]
+  },
+  {
+    "name": "WB6c-the-loop-left-running",
+    "file": "src/ui/gateVeil.js",
+    "old": "    if (phase === 'idle' || !canvas) { if (canvas) canvas.style.display = 'none'; return; }",
+    "new": "    if (phase === 'idle' || !canvas) { if (canvas) canvas.style.display = 'none'; }",
+    "tests": ["test/wb6c_gate_veil.test.js"]
+  },
+  {
+    "name": "WB6c-the-re-close-from-the-edge",
+    "file": "src/ui/gateVeil.js",
+    "old": "        const f = phase === 'opening' ? current(t).front : VEIL_FRONT_OUT;",
+    "new": "        const f = VEIL_FRONT_OUT;",
+    "tests": ["test/wb6c_gate_veil.test.js"]
+  },
+  {
+    "name": "WB6c-the-watchdog-dropped",
+    "file": "src/ui/gateVeil.js",
+    "old": "      } else if (seconds(t) >= VEIL_HOLD_MAX_S) open(t, VEIL_FRONT_IN);",
+    "new": "      } else if (false) open(t, VEIL_FRONT_IN);",
+    "tests": ["test/wb6c_gate_veil.test.js"]
+  },
+  {
+    "name": "WB6c-opened-before-it-shut-answers-true",
+    "file": "src/ui/gateVeil.js",
+    "old": "      else if (phase === 'closing') { open(t, current(t).front); settle(false); kick(); }",
+    "new": "      else if (phase === 'closing') { open(t, current(t).front); settle(true); kick(); }",
+    "tests": ["test/wb6c_gate_veil.test.js"]
+  },
+  {
+    "name": "WB6c-a-page-with-no-webgl2-asked-again",
+    "file": "src/ui/gateVeil.js",
+    "old": "      broken = true;\n",
+    "new": "",
+    "tests": ["test/wb6c_gate_veil.test.js"]
+  },
+  {
+    "name": "WB6c-silent-as-it-closes",
+    "file": "src/ui/gateVeil.js",
+    "old": "        cue('close');\n",
+    "new": "",
+    "tests": ["test/wb6c_gate_veil.test.js"]
+  },
+  {
+    "name": "WB6c-the-door-before-the-fire-has-closed",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (veil) await veil.cover();",
+    "new": "      if (veil) veil.cover();",
+    "tests": ["test/wb6c_gate_veil.test.js"]
+  },
+  {
+    "name": "WB6c-the-fire-never-opened",
+    "file": "src/scenes/worldModes.js",
+    "old": "      veil?.reveal();\n",
+    "new": "",
+    "tests": ["test/wb6c_gate_veil.test.js"]
+  },
+  {
+    "name": "WB6c-the-world-unchecked-after-the-fire",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (mode !== 'exterior' || !(playerEntity.health > 0)) return false;",
+    "new": "",
+    "tests": ["test/wb6c_gate_veil.test.js"]
+  },
+  {
+    "name": "WB6c-two-steps-at-once",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (_stepping) return false;\n",
+    "new": "",
+    "tests": ["test/wb6c_gate_veil.test.js"]
+  },
+  {
+    "name": "WB6c-the-way-home-unveiled",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (isGateArena(dungeonLoc)) { stepThroughFire(async () => { if (mode === 'dungeon' && isGateArena(dungeonLoc) && aliveUnder()) pendingDungeonExit = true; return true; }); return true; }",
+    "new": "",
+    "tests": ["test/wb6c_gate_veil.test.js"]
+  },
+  {
+    "name": "WB6c-a-deferred-exit-outliving-a-forced-one",
+    "file": "src/scenes/worldModes.js",
+    "old": "      pendingDungeonExit = false;   // WB6c: nor its exit",
+    "new": "      void 0;   // WB6c: nor its exit",
+    "tests": ["test/wb6c_gate_veil.test.js"]
+  },
+  {
+    "name": "WB6c-the-court-coming-apart-unveiled",
+    "file": "src/scenes/world.js",
+    "old": "    gateVeil?.flash();   // WB6c: the court comes apart in fire\n",
+    "new": "",
+    "tests": ["test/wb6c_gate_veil.test.js"]
+  },
+  {
+    "name": "WB6c-cast-out-unveiled",
+    "file": "src/scenes/world.js",
+    "old": "if (landBeforeGate(courtGate)) { gateVeil?.flash(); townTalk",
+    "new": "if (landBeforeGate(courtGate)) { townTalk",
+    "tests": ["test/wb6c_gate_veil.test.js", "test/wb3b_gate_arena.test.js"]
+  },
+  {
+    "name": "WB6c-the-veil-never-handed-over",
+    "file": "src/scenes/world.js",
+    "old": "    gateVeil: () => gateVeil,   // WB6c: the step through the gate's fire, both ways\n",
+    "new": "",
+    "tests": ["test/wb6c_gate_veil.test.js"]
+  }
+]

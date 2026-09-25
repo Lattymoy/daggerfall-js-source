@@ -13,6 +13,7 @@ import { markFoeStruck } from '../ui/hudFoeTarget.js';
 import { quickslotHand } from '../ui/quickslotTags.js';   // DISC21-C: an empty quickslot press reads the hand   // PX30
 import { lycanthropeAttackVoice, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V4: the beast's attack voice; LM1: the 4-20s move-sound loop; DISC10-E L3: the inventory refusal moved INTO the window door
 import { layoutDungeon } from '../world/dungeonLayout.js';
+import { isGateArena, COURT_TEXT } from '../world/gateArena.js';   // WB3b: the Burning Court - what the Deadlands will not allow
 import { expandMacros } from '../systems/talkSession.js';   // MACRO1: the global symbols every TEXT.RSC box passes through (MacroHelper)
 import { executeConsoleCommand } from '../systems/consoleCommands.js';   // E3: the probe door runs the real database
 import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, capsuleCentreFromEye, automapDungeonKey, SCAN_INTERVAL_S, recordTeleporterConnection, registerAutomapConsoleCommands } from '../systems/automap.js';   // A1; ROAD-C c2/S8 the teleport listener + the three console verbs, ROAD-E E3 on the command database
@@ -162,7 +163,10 @@ import { intermittentEnemySpawn, setEnemyAlert, decayEnemyAlert, areEnemiesNearb
 import { preloadRestArt } from '../ui/restWindow.js';   // D3: REST00I0/01I0/02I0
 import { createRestWindow } from '../ui/restDoor.js';   // the enhanced/native fork, same law as ui/tradeDoor.js
 import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects.js';
-import { enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies } from '../combat/formulas.js';   // C15: + knockback
+import { enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, reportPlayerAttack } from '../combat/formulas.js';   // C15: + knockback; WB4b: a spell's number on the court's boss pops as a blow's does
+import { HIT_KINDS } from '../net/gateBrain.js';   // WB4b: a blow on the court's boss says its kind
+import { bossReach } from '../world/gateBoss.js';   // WB4b: a swing meets the court's boss at his skin
+import { duelSpellOf } from '../combat/duelCombat.js';   // WB4b: the harmful families alone reach the court's boss, as they alone reach a duel opponent
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, composeSessionState, restoreSessionState , copyEffectEntry } from '../systems/save.js';   // B4: the ONE quest+talk composer
@@ -1710,7 +1714,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:10315 / exterior.js:3692), set
+  // host's own townTalk sink (world.js:10364 / exterior.js:3692), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2251,7 +2255,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1238,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1242,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2400,6 +2404,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     castAtAlly: (id, frame) => !!opts.castAtAlly?.(id, frame),
     fallenTarget: (eye, dir, reach) => opts.fallenTarget?.(eye, dir, reach) ?? null,   // RESURRECT1: the fallen bodies and the call's door, beside the ally pair
     raiseFallen: (f) => !!opts.raiseFallen?.(f),
+    // WB4b: the Burning Court's boss as a body my harmful spells meet (his own radius), and the door a spell that met him
+    // leaves through - computed here against his stand-in and sent (spellOnBoss); outside the court, nobody
+    bossMark: opts.gateBoss ? () => { const b = gateBossBody(); return b ? { feet: b.ai.feet, height: b.ai.height, radius: b.ai.radius } : null; } : null,
+    castAtBoss: opts.gateBoss ? (sp) => spellOnBoss(sp) : null,
     // A10: THE RECALL ARRIVAL, ROUTED. This used to be a stand-in line
     // saying the anchor machinery lived in the streaming host - true of
     // the machinery, false as a refusal: this context is the one the
@@ -2777,7 +2785,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1097 against :1127; worldModes.js:7120 against :7146).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1097 against :1127; worldModes.js:7215 against :7241).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3109,6 +3117,67 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (magic.interceptAttack(held)) return;   // the armed click casts, no swing
     weaponRig.attackInput(dx, dy, held);   // AUDIT 68 S09-sheathed-swing: the rig refuses the swing itself; a host-side sheath gate here ate the RELEASE
   }
+  // ═══ WB4b: THE BURNING COURT'S BOSS, MET ═══════════════════════════════════════════════════════════════════════
+  // (2026-09-25, Mac: "a large boss arena with an oversized enemy"). The outer host's word of him (`opts.gateBoss` -
+  // scenes/gateCourt.js target(): where he stands, his height and radius, his ward, his stand-in entity for the
+  // formulas) as a foe-shaped record, made each time it is asked; null outside the court. He is NEVER in `foes`: nothing
+  // here moves, ticks, kills or loots him - the relay runs him (net/gateBrain.js) - so every blow of mine that meets him
+  // is computed here by the game's own law and its number goes out (`opts.onBossHit`), the relay's caps deciding what
+  // lands. Co-op's law turned about: the striker's machine says the number, the room holds the health.
+  function gateBossBody() {
+    const b = opts.gateBoss?.() ?? null;
+    if (!b || !b.entity || !Array.isArray(b.feet) || !(b.height > 0) || !(b.radius > 0)) return null;
+    return {
+      boss: true, dead: false, entity: b.entity, mobileType: b.mobile ?? null, warded: !!b.warded,
+      ai: { feet: b.feet, yaw: b.yaw ?? 0, height: b.height, radius: b.radius, centreOffset: b.height / 2, isHostile: true },
+    };
+  }
+  /** How the swing sees him: the distance to his body's SURFACE (his axis is `radius` in and his middle `height/2` up - a
+   *  point-centre law would ask a swing to reach 3 m into him), in view at the nearest point of him, the way to it
+   *  clear. */
+  function bossSight(eye, inViewFn, boss) {
+    const { point: p, dist } = bossReach(eye, boss.ai);   // world/gateBoss.js: the nearest point of his surface, and the reach to it
+    const vx = p[0] - eye[0], vy = p[1] - eye[1], vz = p[2] - eye[2], ray = Math.hypot(vx, vy, vz), l = ray || 1;
+    const hit = collider.raycast(eye, [vx / l, vy / l, vz / l], ray);
+    return { dist, inView: inViewFn(p), losClear: !Number.isFinite(hit) || hit >= ray - 1e-3 };
+  }
+  /** His chest, where a blow on him sounds and splashes. */
+  const bossChest = (boss) => [boss.ai.feet[0], boss.ai.feet[1] + boss.ai.centreOffset, boss.ai.feet[2]];
+  /** The ward turns a blow: the parry's ring at him, nothing sent (the relay refuses a warded blow). */
+  function wardTurns(boss) { audio.play3d(SOUND.Parry6, bossChest(boss), ENEMY_HIT_VOLUME, { maxDistance: 24 }); }
+  /** A blow's number on him, out to the relay through the court's door; answers whether it went. */
+  function landOnBoss(boss, damage, r) {
+    if (boss.warded) { wardTurns(boss); return false; }
+    return !!opts.onBossHit?.({ d: damage, r });
+  }
+  /** A swing of mine that met him (resolveHit's own verdict and number): the ward's ring, a zero blow's parry - he parries
+   *  as his mobile does - or the hit's sound and splash at him and the number out; OnWeaponHitEntity either way. */
+  function swingOnBoss(boss, damage, lookDir) {
+    if (boss.warded) wardTurns(boss);
+    else if (damage <= 0) {
+      const snd = zeroDamageHitSound({ weapon: playerWeapon.strikingWeapon, arrowHit: false, parrySounds: !!ENEMY_BASICS[boss.mobileType]?.parrySounds, roll: Math.random() });
+      if (snd?.at === 'enemy') audio.play3d(snd.sound, bossChest(boss), 1.1, { maxDistance: 24 });
+      else if (snd) audio.playOneShot(snd.sound, 1.1);
+    } else {
+      audio.play3d(hitSoundFor(playerWeapon.strikingWeapon), bossChest(boss), ENEMY_HIT_VOLUME, { maxDistance: 24 });
+      hitEffects?.showBloodSplash(ENEMY_BASICS[boss.mobileType]?.bloodIndex ?? 0, bossChest(boss), null, bloodHit(damage, boss.entity, { fromPlayer: true, weapon: playerWeapon.strikingWeapon, swing: playerWeapon.machine?.state, forward: lookDir }));
+      landOnBoss(boss, damage, HIT_KINDS.Melee);
+    }
+    playerWeaponHitEntity(playerEntity, boss.entity, { mobileType: boss.mobileType });
+  }
+  /** A harmful spell of mine that met him (hostMagic's boss seam): its harmful families landed on his stand-in by the
+   *  one door every spell lands through (effects.js applySpell - the magnitude, his saving throw), the damage summed and
+   *  sent. Continuous families are not his to carry - the stand-in forgets them. */
+  function spellOnBoss(sp) {
+    const boss = gateBossBody(), harm = duelSpellOf(sp);
+    if (!boss || !harm) return false;
+    let dealt = 0;
+    const sinks = { hurt: (n) => { dealt += Math.max(0, n); }, heal() {}, drainFatigue() {}, restoreFatigue() {}, drainMagicka() {}, restoreMagicka() {} };
+    try { applySpell(harm, playerEntity.level, boss.entity, sinks, Math.random, { entity: playerEntity }); } finally { boss.entity.activeEffects = []; }
+    if (!(dealt >= 1)) return false;
+    reportPlayerAttack({ hit: true, damage: Math.round(dealt) });   // HN1: the number pops as a blow's does
+    return landOnBoss(boss, dealt, HIT_KINDS.Spell);
+  }
   function resolvePlayerHit(eye, inViewFn, playerFeet, lookDir) {
     // AUDIT 23 (combat-14): entity colliders resolve FIRST
     // (WeaponManager.cs:1048-1056 foreach over hitColliders);
@@ -3126,7 +3195,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // (FormulaHelper.cs:975-990 - the tally was ported nowhere).
     for (const f of foes) if (!f.dead) f._backFacing = foeDeps.isBackFacing(f.ai.yaw, f.ai.feet, playerFeet);
     const live = foes.filter((f) => !f.dead);
+    // WB4b: THE COURT'S BOSS, a body the swing meets as it meets a foe - the same resolveHit and formula, against his
+    // stand-in, by his body's SURFACE (bossSight); never in `foes`: what lands goes to the relay (landOnBoss)
+    const boss = gateBossBody();
+    if (boss) { boss._backFacing = foeDeps.isBackFacing(boss.ai.yaw, boss.ai.feet, playerFeet); live.push(boss); }
     const canSee = (f) => {
+      if (f === boss) return bossSight(eye, inViewFn, boss);
       const c = [f.ai.feet[0], f.ai.feet[1] + (f.ai.height ?? CAPSULE_HEIGHT) / 2, f.ai.feet[2]];   // foe center (mid-capsule) - ITS capsule (REVIEW 2026-09-05), the 0.9 was the player's
       const dx = c[0] - eye[0], dy = c[1] - eye[1], dz = c[2] - eye[2];
       const dist = Math.hypot(dx, dy, dz);
@@ -3144,6 +3218,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     { const v = lycanthropeAttackVoice(playerEntity, Math.random); if (v != null) audio.playOneShot(v, 1); }   // V4: OnWeaponHitEntity's transformed voice (10% attack / 20% bark)
     for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, Math.random, (f) => backstabChanceOf(playerEntity, !!f._backFacing), (l) => hudText.add(l),
       (f, pt) => poisonFoe(f, pt))) {   // C2-slice (combat-11): the player's poisoned blade infects its victim; WORLD6b-iii(e): through the one poison door (a puppet's rides the hit)
+      if (foe === boss) { hitEnemy = true; swingOnBoss(boss, damage, lookDir); continue; }   // WB4b: his own arm - nothing of a foe's door is his
       // WeaponDamage returns true for a CONNECTING swing even at zero
       // damage (WeaponManager.cs:617-637 falls through to
       // DecreaseHealth/HandleAttackFromSource and returns true), so
@@ -3356,14 +3431,23 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           continue;
         }
         if (m.fromPlayer) {
+          // WB4b: the court's boss meets a shaft with the whole of his body (his own radius) - the one player-arrow law
+          // against his stand-in, the number to the relay; the ward turns it
+          const boss = gateBossBody();
+          if (boss && missileHitsCapsule(m.pos, boss.ai.feet, boss.ai.height, boss.ai.radius)) {
+            if (boss.warded) wardTurns(boss);
+            else playerArrowHitFoe(m, boss, { playerEntity, playerWeapon, playerFeet, audio, hitEffects, say: (l) => hudText.add(l), dealDamage: (t, d) => landOnBoss(boss, d, HIT_KINDS.Shaft) });
+            retireMissile(m);
+            continue;
+          }
           for (const f of foes) {
             if (f.dead) continue;
             if (missileHitsFoe(m.pos, f)) {   // ROAD-H tail: DaggerfallMissile.cs:339's SphereCast meets the foe's CAPSULE (REVIEW 2026-09-05 had its centre as a point)
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:16176,
-              // exterior.js:5264 and worldModes.js:7778 already ran;
+              // playerArrowHitFoe is the one copy world.js:16490,
+              // exterior.js:5264 and worldModes.js:7880 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -5019,7 +5103,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (playerFeet) {
       breathTick(dt, playerFeet, playerHeight);
       const _surf = waterSurfaceYAt(playerFeet[0], playerFeet[2]);
-      sceneAmbience.update(dt, {
+      if (!isGateArena(dfLocation)) sceneAmbience.update(dt, {   // WB6b: the court has its own air (scenes/deadlandsAir.js) - no drip, no door, no bird in the Deadlands
         playerPos: [playerFeet[0], playerFeet[1] + playerHeight / 2, playerFeet[2]],   // the controller center (DFU transform.position)
         waterSurfaceY: _surf,
         submerged: _surf != null && playerFeet[1] + playerHeight / 2 + 76 * 0.025 - 0.95 < _surf,
@@ -6097,6 +6181,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // same signal through opts.dungeonOnline (worldModes.js), which
         // the standalone ?dungeon probe never sets, so it stays open there.
         loadingPrevented: () => !!opts.dungeonOnline?.(),
+        savingPrevented: () => isGateArena(dfLocation),   // WB3b: the pause's Save says why, in the court
         // SAV4: the slot window's seams over the same two verbs.
         playerName: () => playerEntity.name, playerId: () => playerEntity.characterId ?? null,
         saveAs: (saveName) => ctx.quickSave?.(saveName),
@@ -6117,6 +6202,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  idiom - an occupied slot refuses, the window closes itself). */
     toggleAutomap() {
       if (activeOverlay) return;
+      if (isGateArena(dfLocation)) { hudText.add(COURT_TEXT.noMap); return; }   // WB3b: an empty level, and no place to chart
       // EM3: THE SKIN FORK, at the one place this host builds the map.
       // The classic arm answers null without its native art and the
       // slot stays empty, exactly as before; the enhanced arm reads no
@@ -6287,6 +6373,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // DaggerfallRestWindow.Update :187-196 whole.
     toggleRest() {
       if (activeOverlay) return;
+      if (isGateArena(dfLocation)) { hudText.add(COURT_TEXT.noRest); return; }   // WB3b: an enemy is always near - the boss
       // S40: the gate itself moved to systems/restSession.js. It was
       // written out here because this was the only host that could
       // rest; three more can now, and DFU raises it from ONE
@@ -6405,6 +6492,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     reportMouse(dx, dy, locked) { _mouseState = `dx:${dx} dy:${dy} lock:${locked ? 'Y' : 'N'}`; },
     reportInput(keys, pitch) { _inputState = `keys:${keys} pitch:${pitch.toFixed(2)}`; },
     quickSave(saveName = QUICK_SAVE_NAME) {
+      // WB3b: a save made in the court would load into a place that no longer stands (the court is the day's alone)
+      if (isGateArena(dfLocation)) { hudText.add(COURT_TEXT.noSave); return false; }
       const snap = snapshotPlayer(playerEntity, {
         position: lastPlayerFeet, classicMinutes: classicMinutesRef.value,
         readiedSpellIndex: magic.readiedIndex(),
@@ -6651,6 +6740,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       return true;
     },
     locationKey: () => _locationKey,
+    /** WB4: a blow the Burning Court's boss landed on the player (scenes/gateCourt.js - the verdict is this machine's):
+     *  through the one door any foe's blow takes (resolveFoeMelee) with its three signs - the hit's sound, the flash,
+     *  the cry - and fire's burning in the hit's place, unflashed (DFU's spell damage does not flash, ui/damageFlash.js). */
+    strikePlayer(dmg, { fire = false } = {}) {
+      if (!(dmg > 0)) return;
+      audio.playOneShot(fire ? SOUND.Burning : hitSoundFor(null), PLAYER_HIT_VOLUME);
+      hurtPlayer(dmg);
+      if (!fire) flashPlayerDamage(dmg);
+      playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
+    },
     // WORLD2: one simulation per room - the stream out and in, the hit in, the seat
     foesFrame,
     applyFoes,

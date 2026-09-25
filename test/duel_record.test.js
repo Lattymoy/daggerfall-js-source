@@ -140,8 +140,8 @@ test('DUEL1 the worker: /v1/duel/loss and /v1/duel/record behind a session, neit
   const { call } = await stand();
   assert.ok(ROUTES.has('/v1/duel/loss') && ROUTES.has('/v1/duel/record'));
   assert.ok(!OPEN_ROUTES.has('/v1/duel/loss') && !OPEN_ROUTES.has('/v1/duel/record'));
-  assert.equal(ACCOUNT_VERSION, 'acct10');   // DUEL1 was acct8; FOUNDER2's cutoff moved it on (acct9); RENOWN1's Renown, HOME1's homes, DECOR1's decor and GUILD1's guilds, one deploy, moved it again (acct10 - acct9 on the branch)
-  assert.match(src('server-account/wrangler.toml'), /ACCOUNT_VERSION = "acct10"/);
+  assert.equal(ACCOUNT_VERSION, 'acct11');   // DUEL1 was acct8; FOUNDER2's cutoff moved it on (acct9); RENOWN1's Renown, HOME1's homes, DECOR1's decor and GUILD1's guilds, one deploy, moved it again (acct10 - acct9 on the branch); WB5b's gates closed again (acct11 - acct10 on its branch)
+  assert.match(src('server-account/wrangler.toml'), /ACCOUNT_VERSION = "acct11"/);
   const me = (await call('POST', '/v1/auth/guest', {})).body;
   const them = (await call('POST', '/v1/auth/guest', {})).body;
   // AUDIT DUEL1 A1: a guest's loss is fought, not counted - the record is between registered accounts
@@ -153,7 +153,7 @@ test('DUEL1 the worker: /v1/duel/loss and /v1/duel/record behind a session, neit
   assert.equal((await call('POST', '/v1/duel/record', { id: them.id })).status, 401);
   const r = await call('POST', '/v1/duel/loss', { winner: them.id, loser: them.id }, me.secret);
   assert.deepEqual(r.body, { recorded: true, wins: 0, losses: 1 }, 'the session is the loser, whatever the body says');
-  assert.deepEqual((await call('POST', '/v1/duel/record', { id: them.id }, me.secret)).body, { id: them.id, wins: 1, losses: 0 });
+  assert.deepEqual((await call('POST', '/v1/duel/record', { id: them.id }, me.secret)).body, { id: them.id, wins: 1, losses: 0, gates: { closed: 0 } }, 'WB5b: the gates closed ride the same answer');
   assert.equal((await call('POST', '/v1/duel/record', { id: 'nobody-here' }, me.secret)).status, 404);
   assert.equal((await call('POST', '/v1/duel/loss', { winner: me.id }, me.secret)).body.error, 'self');
   const acct = (await call('GET', '/v1/account', undefined, them.secret)).body.account;

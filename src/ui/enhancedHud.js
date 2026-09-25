@@ -221,6 +221,27 @@ function drawDetectMarkers(detected, playerXZ, heading01) {
   }
 }
 
+// WB1 (2026-09-25): THE OBLIVION GATE'S MARK - one diamond in the gate's own colour (ui/gateMapMark.js GATE_RING_CSS),
+// riding the Detect markers' bearing law (compassMarkerLerp, clamp and all), so a gate behind the player stands at the
+// strip's end on the side to turn toward. The host hands it only while the player is inside the omen's ring and the
+// gate stands (scenes/world.js gateCompassMark); otherwise it is hidden, never removed - the updated-not-rebuilt law.
+const gateMarkCss = () => 'position:absolute;top:50%;width:7px;height:7px;margin:-4px 0 0 -4px;transform:rotate(45deg);'
+  + 'background:#ff5a2a;box-shadow:0 0 6px 2px rgba(255,90,42,0.75);pointer-events:none';
+function drawGateMark(gate, playerXZ, heading01) {
+  if (!parts.gateMark) {
+    const node = el('i', 'hud-gate');
+    node.style.cssText = gateMarkCss();
+    parts.compass.append(node);
+    parts.gateMark = node;
+  }
+  const node = parts.gateMark;
+  if (!gate || !playerXZ) { if (node.style.display !== 'none') node.style.display = 'none'; return; }
+  if (node.style.display === 'none') node.style.display = '';
+  const at = Math.min(1, Math.max(0, compassMarkerLerp(gate, playerXZ, heading01)));
+  const l = `${(at * 100).toFixed(1)}%`;
+  if (node.style.left !== l) node.style.left = l;
+}
+
 /** The effects row: name, rounds left, and whether it is going. */
 export function effectRows(entity) {
   const { self, other } = activeSpellIcons(entity);
@@ -636,7 +657,7 @@ function build(doc) {
   cells.main.cell.addEventListener('pointerdown', tap(() => { liveOpts.quickSwitchHand?.(); }));
 
   doc.body.append(root);
-  return { root, compass, marks, detectMarks: [], foe, foeName, foeFill, foeGhost, foeChunks, foeBladeFull, magicka, health, fatigue, effects, needs,
+  return { root, compass, marks, detectMarks: [], gateMark: null, foe, foeName, foeFill, foeGhost, foeChunks, foeBladeFull, magicka, health, fatigue, effects, needs,
     breath, breathFill, readied, reticle, cross, centreWord, cornerWord,
     quick, quickCells: cells, quickTags: tags, hotDock,
     spellChip: { chip: spellChip, tag: spellTag, img: spellGlyph, text: spellText, name: spellName } };
@@ -748,6 +769,7 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
   }
   // ...and the Detect markers over the same strip.
   drawDetectMarkers(opts.detected ?? null, opts.playerXZ ?? null, heading01);
+  drawGateMark(opts.gate ?? null, opts.playerXZ ?? null, heading01);   // WB1
 
   // THE TARGET, when there is one.
   const t = foeTarget();

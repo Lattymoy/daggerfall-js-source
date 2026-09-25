@@ -61,7 +61,7 @@ test('AUDIT 28 W2c: the exit door asks first - cart + setting, TEXT.RSC 38, No e
   // dispatch.
   assert.match(fn, /onNo: \(\) => \{ pendingDungeonExit = true; return null; \}/);
   const modes = read('src/scenes/worldModes.js');
-  assert.match(modes, /if \(mode === 'dungeon'\) \{\s*\n\s*if \(pendingDungeonExit\) \{ pendingDungeonExit = false; exitDungeonNow\(\); return true; \}/);
+  assert.match(modes, /if \(mode === 'dungeon'\) \{\s*\n\s*if \(pendingDungeonExit\) \{ pendingDungeonExit = false; if \(aliveUnder\(\)\) \{ exitDungeonNow\(\); return true; \} \}/);
   assert.match(fn, /onEscape: \(\) => null,/);
   assert.match(fn, /return mountSpellWindow\(prompt\);/, 'the box goes into the dungeon slot and the activation returns');
   assert.match(fn, /\n    return exitDungeonNow\(\);\n/, 'no cart or no setting: the exit is immediate');

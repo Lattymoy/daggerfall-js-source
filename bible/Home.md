@@ -191,7 +191,7 @@ cited anywhere fails to resolve, that is why, and Mac holds the map.
 - `08-Audio/` - music (HMI/XMI), sound effects, audio state machine
 - `09-Testing/` - test doctrine, harnesses, data validation
 - `10-UI/` - HUD, menus, native Daggerfall UI reproduction
-- `11-Multiplayer/` - co-op: the three locked decisions, the architecture, the arc (the design the ONLINE arc grows into - presence, then chat, then the room's memory (WORLD1), then the room's simulation (WORLD2), then the room's events (WORLD3), then the room's loot (WORLD4) - `06-Systems/Online-Arc.md`)
+- `11-Multiplayer/` - co-op: the three locked decisions, the architecture, the arc (the design the ONLINE arc grows into - presence, then chat, then the room's memory (WORLD1), then the room's simulation (WORLD2), then the room's events (WORLD3), then the room's loot (WORLD4) - `06-Systems/Online-Arc.md`); and `World-Bosses.md` (WB, 2026-09-25) - the Oblivion Gate: a world boss on the shared clock, the relay's first authority over a foe
 - `01-Overview/Active-Arcs.md` - ACTIVE ARCS, one line per arc, each naming its own page (HARD5, 2026-09-15: moved out of this file, which was 291 KB)
 - `01-Overview/Audit-Log.md` - THE AUDIT LOG, newest first: every audit that has no page of its own (HARD5, same move)
 - `06-Systems/Morrowind-Assets.md` - THE MORROWIND ASSET LAYER's own page (opened by MW-LOAD, 2026-09-08, Mac: "improve the load time when Morrowind assets are enabled"): the load path from attach to the built arm, the measurements (a 300 MB archive cloned whole out of IndexedDB is 1-3 s; as a Blob its directory is 5 ms and an entry 1 ms), and the fix - archives stored as Blobs and opened by range, entries loaded when a reader needs them, the arm reporting its stage timings.
@@ -255,7 +255,7 @@ alone, flagged at its new site inside calculateAttackDamage. The
 combat line numbers below are refreshed with it.
 
 - `src/combat/fpsSpellCasting.js:101` - * FLAGGED: TextureReplacement.TryImportCifRci (:179) - the loose-file
-- `src/scenes/dungeonContext.js:1211` - REPORTS ARE THIS ONE LINE, and it is FLAGGED rather than fixed because the fix is a slice,
+- `src/scenes/dungeonContext.js:1215` - REPORTS ARE THIS ONE LINE, and it is FLAGGED rather than fixed because the fix is a slice,
 - `src/scenes/exterior.js:2262` - TP2 INTERIM - THE ONE ARM THIS HOST CANNOT TAKE: a jump to an anchor on ANOTHER map pixel. Teleport.cs:145-163 respawns at the anchor's world position, which is StreamingWorld's job (scenes/world.js's `_teleportToPixel`, the door `teleportPrompt -> teleportTo` opens); `?exterior` loads ONE fixed city and runs no streamer, so there is no arrival to build - and it says so instead of eating the cast, the way the standalone dungeon says so about its two windows.
 - `src/systems/playerTorch.js:12` - arm is FLAGGED here rather than guessed - see the note below.
 - `src/systems/playerTorch.js:51` - FLAGGED (blocked on data this reference tree does not carry): the
