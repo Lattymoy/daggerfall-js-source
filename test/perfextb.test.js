@@ -16,6 +16,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Renderer, WORLD_FRAME } from '../src/render/renderer.js';
 import { EL_LANE } from '../src/render/enhancedLighting.js';
+import { waterUniforms } from '../src/render/waterSurface.js';
 import * as flatDistance from '../src/world/flatDistance.js';   // a namespace: on the base the positional form is missing, and only its pins fail
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -331,4 +332,125 @@ test('PERF-EXT12: the positional rule IS the rule - over rings 0..6, heights 0 /
   assert.equal(drawn, 2 * 18 + 5 * (6 + 2 * 2), 'the two near rings draw all; beyond them the moving and the tall (2.5, 6)');
   const home = rd('src/world/flatDistance.js');
   assert.match(home, /export function farFlatVisible\(\{ ring, height, animated = false \}\) \{\n\s*return farFlatVisibleAt\(ring, height, animated\);\n\}/, 'the object form is a call to the one home');
+});
+
+// ── PERF-EXT13: one block ─────────────────────────────────────────────
+
+/** A fake GL that HOLDS state as GL does - the program, each program's uniforms, each unit's binding per target, the
+ *  VAO, the caps, depth mask and func, blend func and polygon offset - and snapshots all of it at every draw. */
+function stateGl() {
+  let ids = 0, calls = 0;
+  const S = { prog: null, vao: null, unit: 0, tex: new Map(), caps: new Map(), depthMask: true, depthFunc: 'LESS', blend: '', poly: '' };
+  const byName = {};
+  const draws = [];
+  const ser = (v) => (v && typeof v === 'object' && 'length' in v ? `[${Array.from(v).join(',')}]` : v && typeof v === 'object' ? `#${v.id}` : String(v));
+  const held = () => {
+    const p = S.prog;
+    const u = p ? [...p.u.entries()].sort().map(([k, v]) => `${k}=${v}`).join(';') : '';
+    const t = [...S.tex.entries()].sort().map(([k, v]) => `${k}:${ser(v)}`).join(',');
+    const caps = [...S.caps.entries()].sort().map(([k, v]) => `${k}${v ? '+' : '-'}`).join('');
+    return `prog=${p?.id}|vao=${ser(S.vao)}|caps=${caps}|dm=${S.depthMask}|df=${S.depthFunc}|bl=${S.blend}|po=${S.poly}|tex=${t}|u=${u}`;
+  };
+  const snap = (args) => { draws.push(`${held()}|args=${args.map(ser).join(',')}`); };
+  const impl = {
+    createProgram: () => ({ id: ++ids, u: new Map() }),
+    useProgram: (p) => { S.prog = p; },
+    bindVertexArray: (v) => { S.vao = v; },
+    activeTexture: (unit) => { S.unit = unit; },
+    bindTexture: (target, t) => { S.tex.set(`${S.unit}/${target}`, t); byName[`bindTexture:${S.unit}/${target}`] = (byName[`bindTexture:${S.unit}/${target}`] ?? 0) + 1; },
+    enable: (c) => S.caps.set(c, true), disable: (c) => S.caps.set(c, false),
+    depthMask: (b) => { S.depthMask = !!b; }, depthFunc: (f) => { S.depthFunc = f; },
+    blendFunc: (a, b) => { S.blend = `${a},${b}`; }, polygonOffset: (a, b) => { S.poly = `${a},${b}`; },
+    drawElements: (...a) => snap(a),
+  };
+  const gl = new Proxy({}, {
+    get(_, k) {
+      if (typeof k === 'string' && /^TEXTURE\d+$/.test(k)) return 1000 + Number(k.slice(7));
+      if (k === 'getProgramParameter' || k === 'getShaderParameter') return () => true;
+      if (k === 'getUniformLocation') return (p, n) => ({ p, n });
+      if (k === 'getAttribLocation') return () => 0;
+      if (k === 'getParameter') return () => new Float32Array(4);
+      if (typeof k === 'string' && k.startsWith('create') && k !== 'createProgram') return () => ({ id: ++ids });
+      if (typeof k === 'string' && k.toUpperCase() === k) return k;
+      if (typeof k === 'string' && k.startsWith('uniform')) {
+        return (loc, ...a) => { calls++; byName[k] = (byName[k] ?? 0) + 1; if (loc?.p) { loc.p.u.set(loc.n, (k.startsWith('uniformMatrix') ? a.slice(1) : a).map(ser).join(',')); (byName[`${k}:${loc.n}`] = (byName[`${k}:${loc.n}`] ?? 0) + 1); } };
+      }
+      const f = impl[k];
+      return (...a) => { calls++; byName[k] = (byName[k] ?? 0) + 1; return f ? f(...a) : undefined; };
+    },
+  });
+  const canvas = { getContext: () => gl, clientWidth: 320, clientHeight: 200, width: 320, height: 200 };
+  return { canvas, draws, byName, count: () => calls, state: () => `unit=${S.unit}|${held()}`, reset() { calls = 0; draws.length = 0; for (const k of Object.keys(byName)) delete byName[k]; } };
+}
+
+/** Ten water pixels the way the streaming host hands them over: each its own surface, matrix and tilemap; the ground
+ *  array in runs (two climates), the first pixel's array missing (unit 0 must still be bound for it, to nothing). */
+function waterScene(lane) {
+  const H = stateGl();
+  const r = new Renderer(H.canvas);
+  if (lane) r.setLightingLane(EL_LANE);
+  const P = new Float32Array([0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1]), N = new Float32Array([0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0]), IX = new Uint32Array([0, 2, 1, 1, 2, 3]);
+  const arrA = { id: 'arrA' }, arrB = { id: 'arrB' };
+  const arrays = [null, arrA, arrA, arrB, arrB, arrB, arrA, arrA, arrB, arrA];
+  const rows = arrays.map((arr, i) => {
+    const m = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, i * 819.2, 0, 0, 1]);
+    return [r.createWaterSurface(r.createTerrainSurface(P, N, IX), IX), m, arr, { id: `tilemap${i}` }];
+  });
+  r.setLighting(new Float32Array([0.3, 0.3, 0.35]), 0.8, new Float32Array([1, 0.9, 0.8]));
+  const lights = new Float32Array(20 * 4); for (let i = 0; i < 20; i++) lights.set([i, 3, -i, 12], i * 4);
+  r.setPointLights(lights, new Float32Array([1, 0.8, 0.5]));
+  r.beginFrame(I, I, new Float32Array([0.3, 0.8, 0.2]), WORLD_FRAME);
+  r.drawTerrain(r.createTerrainSurface(P, N, IX), I, { id: 'terrainArr' }, { id: 'terrainMap' }, 6.4);   // the ground before: unit 0 holds ITS array
+  const wu = waterUniforms({ seconds: 3, wind: [2, 1], rain: 0.2, sky: { zenith: [0.2, 0.3, 0.6], horizon: [0.6, 0.7, 0.8] } });
+  return { H, r, rows, wu };
+}
+
+test('PERF-EXT13: every visible pixel\'s water in ONE call - ten water pixels through drawWaterSurfaces upload uView, uProj, uTime, uLift, uSunScale and uOpacity ONCE each, set the polygon offset once, and uModel ten times, in at most 150 GL calls (the base: no list at all, and the one-surface path 70 a pixel)', () => {
+  assert.equal(typeof Renderer.prototype.drawWaterSurfaces, 'function', 'the list door exists');
+  for (const lane of [false, true]) {
+    const { H, r, rows, wu } = waterScene(lane);
+    H.reset();
+    r.drawWaterSurfaces(rows, rows.length, 6.4, wu);
+    const n = (k) => H.byName[k] ?? 0;
+    for (const u of ['uView', 'uProj']) assert.equal(n(`uniformMatrix4fv:${u}`), 1, `${lane ? 'lane' : 'classic'}: ${u} once`);
+    for (const u of ['uTime', 'uLift', 'uSunScale', 'uOpacity']) assert.equal(n(`uniform1f:${u}`), 1, `${lane ? 'lane' : 'classic'}: ${u} once`);
+    assert.equal(n('polygonOffset'), 1, 'the offset once');
+    assert.equal(n('uniformMatrix4fv:uModel'), 10, 'a matrix a pixel');
+    assert.equal(H.draws.length, 10, 'a draw a pixel');
+    assert.equal(n('bindTexture:1000/TEXTURE_2D_ARRAY'), 6, 'the ground array on unit 0 once a run of one climate (none, A A, B B B, A A, B, A)');
+    assert.equal(n('bindTexture:1002/TEXTURE_2D'), 10, 'a tilemap a pixel, on unit 2');
+    assert.ok(H.count() <= 150, `${lane ? 'lane' : 'classic'}: ${H.count()} GL calls for ten water pixels`);
+    H.reset();
+    r.drawWaterSurfaces(rows, 0, 6.4, wu);
+    assert.equal(H.count(), 0, 'no water in sight: not one GL call, as when no pixel called');
+  }
+  // and the host hands them over so: collected in the walk, ONE call after it, none inside it
+  const w = rd('src/scenes/world.js');
+  const pass = w.slice(w.indexOf('    if (waterOn) {\n      const wu = waterUniforms('), w.indexOf('renderer.drawBillboards(allBatches, camRight, UP_Y);'));
+  assert.equal((pass.match(/renderer\.drawWaterSurfaces\(/g) || []).length, 1, 'one list call a frame');
+  assert.doesNotMatch(pass, /renderer\.drawWaterSurface\(/, 'no pixel draws its own');
+  assert.match(pass, /for \(const p of built\.values\(\)\) \{[\s\S]*?\}\s*\n\s*renderer\.drawWaterSurfaces\(_waterRows, n, 6\.4, wu\);/, 'after the walk, not in it');
+});
+
+test('PERF-EXT13: the list draws what the pixels drew one by one - draw for draw, the same program, every uniform the program holds, every unit\'s texture, the VAO, the caps, the depth, blend and offset state and the arguments, in the same order; two climates\' arrays in runs and a first pixel with none (unit 0 bound for it all the same); classic and the lane (its shadow maps); and the state closed as before (the base: no list)', () => {
+  for (const lane of [false, true]) {
+    const one = waterScene(lane), list = waterScene(lane);
+    one.H.reset(); list.H.reset();
+    for (const w of one.rows) one.r.drawWaterSurface(w[0], w[1], w[2], w[3], 6.4, one.wu);
+    const before = one.H.draws.slice();
+    list.r.drawWaterSurfaces(list.rows, list.rows.length, 6.4, list.wu);
+    const after = list.H.draws.slice();
+    assert.equal(after.length, 10);
+    assert.deepEqual(after, before, `${lane ? 'lane' : 'classic'}: every water draw sees what it saw`);
+    assert.ok(list.H.count() * 4 < one.H.count(), `${lane ? 'lane' : 'classic'}: ${list.H.count()} calls against ${one.H.count()}`);
+    // what follows the pass finds the state it found before - the unit, the VAO, the caps, depth and blend closed
+    assert.equal(list.H.state(), one.H.state(), 'the pass leaves what it left');
+    // ...which is what the one-pixel draw always left: unit 0 selected, no VAO, blend and offset off, cull on, depth written and LESS
+    const closed = list.H.state();
+    assert.match(closed, /^unit=1000\|prog=\d+\|vao=null\|/,`${lane ? 'lane' : 'classic'}: unit 0 and no VAO - ${closed.slice(0, 40)}`);
+    assert.match(closed, /BLEND-/); assert.match(closed, /CULL_FACE\+/); assert.match(closed, /POLYGON_OFFSET_FILL-/); assert.match(closed, /\|dm=true\|df=LESS\|/);
+    const tail = (sc) => { sc.H.reset(); sc.r.drawBillboards([], RIGHT, UP); sc.r.drawTerrain(sc.rows[1][0], I, { id: 'next' }, { id: 'nextMap' }, 6.4); return sc.H.draws[0]; };
+    assert.equal(tail(list), tail(one), 'and the next draw after it sees the same state');
+    assert.deepEqual(one.r._waterOne, [[null, null, null, null]], 'the one-row door keeps no surface alive');
+  }
 });

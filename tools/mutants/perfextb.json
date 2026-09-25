@@ -216,5 +216,87 @@
     "tests": [
       "test/mac1_playreport.test.js"
     ]
+  },
+  {
+    "name": "PERF-EXT13-1-every-row-draws-with-the-first-rows-matrix",
+    "file": "src/render/renderer.js",
+    "old": "      gl.uniformMatrix4fv(L.model, false, row[1]);\n",
+    "new": "      if (i === 0) gl.uniformMatrix4fv(L.model, false, row[1]);\n",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT13-2-a-first-row-with-no-array-samples-the-grounds-left-bound",
+    "file": "src/render/renderer.js",
+    "old": "      if (i === 0 || arrayTex !== bound) {\n",
+    "new": "      if (arrayTex !== bound) {\n",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT13-3-the-array-is-bound-for-the-first-row-alone-and-another-climate-samples-the-first",
+    "file": "src/render/renderer.js",
+    "old": "      if (i === 0 || arrayTex !== bound) {\n",
+    "new": "      if (i === 0) {\n",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT13-4-the-array-bound-is-never-remembered-and-binds-every-row",
+    "file": "src/render/renderer.js",
+    "old": "        bound = arrayTex;\n        this.stats.texBinds++;\n",
+    "new": "        this.stats.texBinds++;\n",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT13-5-no-rows-still-sends-the-block",
+    "file": "src/render/renderer.js",
+    "old": "    if (!n) return;   // no water in sight: not a GL call, as when no pixel called\n",
+    "new": "",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT13-6-the-pass-leaves-unit-2-selected",
+    "file": "src/render/renderer.js",
+    "old": "      this.stats.draws++;\n    }\n    this._activeTexture(gl.TEXTURE0);\n    this._bindVao(null);\n    gl.depthFunc(gl.LESS);\n",
+    "new": "      this.stats.draws++;\n    }\n    this._bindVao(null);\n    gl.depthFunc(gl.LESS);\n",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT13-7-the-pass-leaves-the-last-water-vao-bound",
+    "file": "src/render/renderer.js",
+    "old": "    this._activeTexture(gl.TEXTURE0);\n    this._bindVao(null);\n    gl.depthFunc(gl.LESS);\n    gl.disable(gl.POLYGON_OFFSET_FILL);\n",
+    "new": "    this._activeTexture(gl.TEXTURE0);\n    gl.depthFunc(gl.LESS);\n    gl.disable(gl.POLYGON_OFFSET_FILL);\n",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT13-8-the-one-row-door-keeps-the-surface-alive",
+    "file": "src/render/renderer.js",
+    "old": "    row[0] = row[1] = row[2] = row[3] = null;   // a scratch keeps nothing alive past the call\n",
+    "new": "",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT13-9-the-host-draws-each-pixel-through-its-own-call-again",
+    "file": "src/scenes/world.js",
+    "old": "        row[0] = p.water; row[1] = p._pixelMatrix; row[2] = renderer.tileArrays.get(p.groundArchive); row[3] = p.tilemapTex;\n      }\n      renderer.drawWaterSurfaces(_waterRows, n, 6.4, wu);\n",
+    "new": "        row[0] = p.water; row[1] = p._pixelMatrix; row[2] = renderer.tileArrays.get(p.groundArchive); row[3] = p.tilemapTex;\n        renderer.drawWaterSurface(p.water, p._pixelMatrix, row[2], p.tilemapTex, 6.4, wu);\n      }\n",
+    "tests": [
+      "test/perfextb.test.js",
+      "test/water.test.js"
+    ]
   }
 ]

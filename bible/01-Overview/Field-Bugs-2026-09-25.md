@@ -110,6 +110,10 @@ told to disprove each win. The flats and the frame's CPU:
   an object for every flat batch of every pixel every frame: about
   70 KB less young garbage a frame (1,299 -> 1,074 scavenges over
   3,065 harness frames with a 1 MB young space).
+- **PERF-EXT13** - every visible pixel's water in one call: the frame's
+  water block goes up once, not once a water pixel - 34 pixels 2,421 ->
+  308 GL calls on the real renderer, every draw's state identical to
+  the base's (a coastal or lakeside view is where it pays).
 
 `07-Rendering/Performance-Exterior.md` has the measurements, the pins
 and the mutants. Not seen on a GPU - there is no game data in the

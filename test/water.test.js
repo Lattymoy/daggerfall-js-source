@@ -194,8 +194,11 @@ test('WATER1: the renderer - one program, the deck\'s shadow key, and a draw sta
   assert.match(r, /this\.waterSurfaceProgram = this\._buildProgram\(WATER_SURFACE_VS, waterSurfaceFs\(CLOUD_SHADOW_GLSL\)\);/, 'the same block the terrain interpolates');
   assert.match(r, /cloud: \[u\('uCloudShadowMap'\), u\('uCloudShadowRect'\)\],/, 'VC4\'s recorded gap, closed (EL7: in the one uniform table both water programs take)');
   assert.match(r, /this\._csLoc\.water = this\._ws\.cloud;/);
-  const draw = r.slice(r.indexOf('  drawWaterSurface(surface, modelMatrix, arrayTex, tilemapTex, tileSize, u, tileDim = 128) {'));
+  // PERF-EXT13: the pass's body is the LIST's - every visible pixel's water in one call - and drawWaterSurface
+  // hands it one row (the town host, the lab)
+  const draw = r.slice(r.indexOf('  drawWaterSurfaces(rows, n, tileSize, u, tileDim = 128) {'));
   const body = draw.slice(0, draw.indexOf('\n  }\n'));
+  assert.match(r, /  drawWaterSurface\(surface, modelMatrix, arrayTex, tilemapTex, tileSize, u, tileDim = 128\) \{\n\s*const one = this\._waterOne, row = one\[0\];\n\s*row\[0\] = surface; row\[1\] = modelMatrix; row\[2\] = arrayTex; row\[3\] = tilemapTex;\n\s*this\.drawWaterSurfaces\(one, 1, tileSize, u, tileDim\);/, 'the one-surface door is the list with one row');
   assert.match(body, /if \(!L\.maskUploaded\) \{ gl\.uniform4uiv\(L\.mask, packWaterMask\(WATER_DRAW_MASK_TABLE\)\); L\.maskUploaded = true; \}/, 'the table once per program (EL7: the lane\'s water program has its own) - WATER-DRAW1: and it is the DRAW\'s table that reaches the shader');
   assert.match(body, /this\._uploadCloudShadow\('water'\);/);
   assert.match(body, /this\._uploadFog\(this\._waterSurfaceFog\);/);
@@ -231,7 +234,9 @@ test('WATER1: both exterior hosts - the gate, the has-water skip, and the slot a
   assert.ok(slot < w.indexOf('renderer.drawBillboards(allBatches, camRight, UP_Y);'), 'before the first flat');
   assert.match(w, /const wu = waterUniforms\(\{ seconds: now \/ 1000, wind: windNow, rain: precipMode === 'rain' \|\| precipMode === 'storm' \? fx\.intensity : 0, sky: sky\.waterSky\(\) \}\);/,
     'the clock, the eased wind the mills take, the front\'s rain, the dome\'s colours');
-  assert.match(w, /if \(!p\._visible \|\| !p\.water\) continue;\s*\n\s*renderer\.drawWaterSurface\(p\.water, p\._pixelMatrix, renderer\.tileArrays\.get\(p\.groundArchive\), p\.tilemapTex, 6\.4, wu\);/);
+  // PERF-EXT13: the visible water pixels are collected - each pixel's water, its matrix, its ground array and its
+  // tilemap - and drawn in ONE call after the walk
+  assert.match(w, /if \(!p\._visible \|\| !p\.water\) continue;\s*\n\s*const row = _waterRows\[n\+\+\] \?\?= \[null, null, null, null\];\s*\n\s*row\[0\] = p\.water; row\[1\] = p\._pixelMatrix; row\[2\] = renderer\.tileArrays\.get\(p\.groundArchive\); row\[3\] = p\.tilemapTex;\s*\n\s*\}\s*\n\s*renderer\.drawWaterSurfaces\(_waterRows, n, 6\.4, wu\);/);
   const e = rd('src/scenes/exterior.js');
   assert.match(e, /const waterOn = waterSwitchOn\(\)[^\n]*\n\s*&& tilemapRectHasWater\(tilemapBytes, tilemapDim, loc\.width \* GROUND_TILE_DIM, loc\.height \* GROUND_TILE_DIM\);/, 'exterior: the one composition, and the town\'s own has-water question beside it (FT6)');
   const eslot = e.indexOf('    if (waterOn) {\n      renderer.drawWaterSurface(groundSurface, identityMatrix,');

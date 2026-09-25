@@ -5001,7 +5001,42 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     };
   }
 
+  /** PERF-EXT13: the one-row list drawWaterSurface hands drawWaterSurfaces, emptied after each call */
+  /** @type {Array<Array<any>>} */ _waterOne = [[null, null, null, null]];
+
+  /** WATER1's one surface - the town host's ground, the water lab's tiles: PERF-EXT13's list with one row. */
   drawWaterSurface(surface, modelMatrix, arrayTex, tilemapTex, tileSize, u, tileDim = 128) {
+    const one = this._waterOne, row = one[0];
+    row[0] = surface; row[1] = modelMatrix; row[2] = arrayTex; row[3] = tilemapTex;
+    this.drawWaterSurfaces(one, 1, tileSize, u, tileDim);
+    row[0] = row[1] = row[2] = row[3] = null;   // a scratch keeps nothing alive past the call
+  }
+
+  /**
+   * PERF-EXT13 (2026-09-25, the players' "fps issues in the exterior but
+   * fine in the interior"): EVERY VISIBLE PIXEL'S WATER IN ONE CALL. The
+   * streaming host drew each water pixel through its own drawWaterSurface,
+   * and each call sent the whole frame block again - the matrices, the
+   * clock and the wind, the sky, the fog, the shadow maps, the sun, the
+   * moon, the lamps, the samplers - and turned blend, depth-mask, cull,
+   * polygon offset and depth func on and off around its one draw: about 71
+   * GL calls a pixel, 2,415 for a city's 34, of which ~1,500 set a value
+   * already held. None of it can change between two pixels of one frame
+   * (the host hands every pixel the same `u`, and nothing runs between
+   * them). So the block goes up ONCE and the state goes on ONCE; per row,
+   * in the order given - the blend is order-dependent - only what is the
+   * pixel's own: its matrix, its tilemap on unit 2, its VAO, and the tile
+   * array on unit 0 when it differs from the row before (another climate's
+   * ground array), always for the first. Every draw samples the state it
+   * sampled before, in the same order. On Windows, where Chrome draws
+   * through ANGLE's D3D11 backend and a uniform call dirties its stage's
+   * whole block for the next draw (no value compare), the fragment stage's
+   * block goes up once a frame instead of once a water pixel.
+   * @param {Array<Array<any>>} rows  [surface, modelMatrix, arrayTex, tilemapTex] rows; the first `n` are drawn
+   * @param {number} n
+   */
+  drawWaterSurfaces(rows, n, tileSize, u, tileDim = 128) {
+    if (!n) return;   // no water in sight: not a GL call, as when no pixel called
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     const laneWater = !!(this._lane?.shadows && this.waterSurfaceProgramLane && this._shadows);   // EL7: the lane's water receives the sun map
@@ -5011,7 +5046,6 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (!L.maskUploaded) { gl.uniform4uiv(L.mask, packWaterMask(WATER_DRAW_MASK_TABLE)); L.maskUploaded = true; }   // WATER-DRAW1
     gl.uniformMatrix4fv(L.proj, false, this._proj);
     gl.uniformMatrix4fv(L.view, false, this._view);
-    gl.uniformMatrix4fv(L.model, false, modelMatrix);
     gl.uniform1f(L.lift, u.lift);
     gl.uniform1f(L.tileSize, tileSize);
     gl.uniform1i(L.tileDim, tileDim);
@@ -5050,13 +5084,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (count > 0) gl.uniform3fv(L.pointColors, this._pointColorData(count, true));
     gl.uniform4fv(L.indirect, this._indirect);
     gl.uniform3fv(L.indirectColor, this._indirectColor);
-    this._activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D_ARRAY, arrayTex);
     gl.uniform1i(L.tileArr, 0);
-    this._activeTexture(gl.TEXTURE2);
-    gl.bindTexture(gl.TEXTURE_2D, tilemapTex);
     gl.uniform1i(L.tilemap, 2);
-    this._activeTexture(gl.TEXTURE0);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);
@@ -5079,9 +5108,24 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.enable(gl.POLYGON_OFFSET_FILL);
     gl.polygonOffset(0, -2);
     gl.depthFunc(gl.LEQUAL);
-    this._bindVao(surface.vao);
-    gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);
-    this.stats.texBinds += 2; this.stats.draws++;
+    let bound = null;
+    for (let i = 0; i < n; i++) {
+      const row = rows[i], surface = row[0], arrayTex = row[2], tilemapTex = row[3];
+      gl.uniformMatrix4fv(L.model, false, row[1]);
+      if (i === 0 || arrayTex !== bound) {
+        this._activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D_ARRAY, arrayTex);
+        bound = arrayTex;
+        this.stats.texBinds++;
+      }
+      this._activeTexture(gl.TEXTURE2);
+      gl.bindTexture(gl.TEXTURE_2D, tilemapTex);
+      this.stats.texBinds++;
+      this._bindVao(surface.vao);
+      gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);
+      this.stats.draws++;
+    }
+    this._activeTexture(gl.TEXTURE0);
     this._bindVao(null);
     gl.depthFunc(gl.LESS);
     gl.disable(gl.POLYGON_OFFSET_FILL);

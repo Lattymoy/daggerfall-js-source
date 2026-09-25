@@ -187,3 +187,78 @@ wire pin (`test/mac1_playreport.test.js`) and SHADOW-REACH's gate pin
 (`test/shadowreach.test.js`) read the positional call now. Mutants 19-24,
 one of them run against the MAC1 pins alone: the tree line moved in the
 one home is seen through the object form.
+
+## PERF-EXT13 - every visible pixel's water in one call
+
+**What the frame paid.** Enhanced Water is on by default, and the
+streaming host drew each visible water pixel through its own
+`drawWaterSurface`. Each call sent the whole frame block again - the
+matrices, the clock and the wind, the sky, the fog, the shadow maps, the
+sun, the moon, the lamps, the sampler units - and turned blend, depth
+mask, cull, polygon offset and depth func on and off around its one draw:
+about 71 GL calls a pixel. The prover's census of a city at noon and at
+night: 34 water draws, 2,386 calls a frame, 12-14% of the frame's calls,
+1,319-1,324 of them uniforms re-set to the value already held. None of it
+can change between two pixels of one frame - the host hands every pixel
+the same `wu`, and nothing runs between them. On Windows, where Chrome
+draws through ANGLE's D3D11 backend and a uniform call dirties its
+stage's whole block with no value compare, that was also one fragment
+block rewrite a water pixel (the hunter's reading of
+`ProgramExecutableD3D.cpp` / `StateManager11.cpp`).
+
+AUDIT 65 had looked at this too and let it stand, reading the host
+comment "one uniform set a frame" as a claim about the `waterUniforms()`
+object and not about GL. The object was built once; the GL block was not.
+
+**The change.** `Renderer.drawWaterSurfaces(rows, n, tileSize, u,
+tileDim)`: the block ONCE and the state on ONCE; per row, in the order
+given (the blend is order-dependent), only the pixel's own - its matrix,
+its tilemap on unit 2, its VAO, and the tile array on unit 0 when it
+differs from the row before (another climate's ground array; always for
+the first row, even when it has none). The state is closed once, exactly
+as the one-pixel draw closed it (unit 0 selected, no VAO, blend and offset
+off, cull on, depth written and LESS). `drawWaterSurface` is the list
+with one row, for the town host and the water lab. `world.js` collects
+the visible water pixels into reused rows and makes one call; no water in
+sight is no call at all, as before. `stats.texBinds` counts the binds
+actually made.
+
+**Measured.** The hunter's `waterlist.mjs` on the real renderer and the
+lane: 34 water pixels, 2,421 calls one at a time (the base and the
+one-row door agree) -> 308 through the list. The hunter's `equiv.mjs`,
+rebuilt to load TWO trees (`equivX.mjs`: the base drawing each pixel
+through its own call against this tree's list, the whole frame - ground,
+statics, water, flats, the sun's cascades and the lanterns - snapshotted
+at every draw: program, every uniform the program holds, the texture on
+every sampler's unit, VAO, framebuffer, caps, depth, blend, offset, colour
+mask, arguments), with two climates' arrays in runs: per-draw state
+IDENTICAL over 9,205 draws at noon and 8,445 at night, 52 of them water,
+GL calls -786 a frame for 13 water pixels; its negative control (one
+water matrix nudged 1e-3) is caught at both. The hunter's game-side A/B
+(not re-run: no game data here) had the water pass at 1.87-2.62 -> 0.23
+ms a frame on SwiftShader, where the backed-up command ring charges the
+main thread; on a real GPU the portable part is ~2,100 fewer commands a
+frame for the GPU process in a coastal city, and about 5-250 fewer where
+there is less water.
+
+**Pinned** (`test/perfextb.test.js`, both failing on the base): ten water
+pixels through the list upload uView, uProj, uTime, uLift, uSunScale and
+uOpacity once each, set the offset once, a model matrix a pixel, the
+ground array once a RUN (six for none / A A / B B B / A A / B / A) and a
+tilemap a pixel, in at most 150 calls, classic and under the lane, and
+nothing at all for no rows; the host makes one list call after its walk
+and none inside it; and a STATE-HOLDING fake GL finds the list's ten draws
+identical, draw for draw, to the same pixels drawn one by one, the state
+it leaves identical and absolutely what the old draw left, and the
+one-row door holding no surface after. The equivalence against the BASE
+is `equivX.mjs` above - in the suite both paths run this tree's code.
+`test/water.test.js` reads the block off the list's body now and the host's
+collection and call. Mutants 25-33, all dead.
+
+**PERF-EXT10-13 together, against the base.** The same two-tree
+`equivX.mjs` with the base (`e9dd612e7`) on one side and all four slices
+on the other: per-draw state IDENTICAL over every draw of four frames at
+noon (9,205) and at night (8,445) - the flats' deduped uploads, the
+replays', the water's one block - with 32,992 -> 27,402 GL calls at noon
+and 30,600 -> 25,338 at night over the four frames. The picture does not
+move; the frame does less to draw it.
