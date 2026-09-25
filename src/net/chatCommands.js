@@ -16,7 +16,7 @@
 //   //text                  a line that starts with a slash, said as it stands on the active tab
 //
 // The commands the host has always handled itself - `/unstuck` (UNSTUCK1), `/red` (RED1), `/mute` and `/unmute`
-// (MOD1), `/ready` (PARTY-REST2) - are KNOWN here and answered `host`: the host tests them first, by the regexes their
+// (MOD1), `/ready` (PARTY-REST2), `/leader` and `/travel` (PARTY-TRAVEL) - are KNOWN here and answered `host`: the host tests them first, by the regexes their
 // own slices pin, so a known one never reaches this parser's `unknown` and the parser never needs their grammar.
 //
 // Not a DFU member: Daggerfall Unity has no chat. Ledger A row (ONLINE).
@@ -142,7 +142,7 @@ export const SHORTCODES = Object.freeze(Object.fromEntries(SHORTCODE_LIST));
 /** EMOTE1: every `:code:` the table knows, its emoji - the rest as typed. */
 export const expandShortcodes = (text) => String(text ?? '').replace(/:([a-z0-9_+-]{1,20}):/gi, (all, code) => SHORTCODES[code.toLowerCase()] ?? all);
 /** The commands the host handles itself, before this parser is asked (their own slices pin their grammar). */
-export const HOST_COMMANDS = Object.freeze(['unstuck', 'red', 'dm', 'mute', 'unmute', 'ready']);   // TITLE-N: /dm, the Dungeon Master's line
+export const HOST_COMMANDS = Object.freeze(['unstuck', 'red', 'dm', 'mute', 'unmute', 'ready', 'leader', 'travel']);   // TITLE-N: /dm, the Dungeon Master's line   // PARTY-TRAVEL: /leader and /travel, the party's journey
 /** CHAT-HELP (2026-09-23, Mac: "a non-intrusive greeting message that says something along the lines of (use /help
  *  for commands)"): the line the chat greets the player with each time they go online - theirs alone, never counted
  *  unread (net/chat.js push's `quiet`), so /help is found without being announced. */
@@ -156,6 +156,8 @@ export const HELP_LINES = Object.freeze([
   '/wave, /bow, /nod ... [name] - a gesture to those near you - /emotes lists them all',
   ':smile: :sword: :heart: ... - a shortcode is its emoji',
   '/ready - your vote on a party rest',
+  '/leader - travel to your party leader',
+  '/travel - ready up for the leader\'s journey (the leader: call it off)',
   '/unstuck - out through the door you came in by',
   '//text - a line that starts with a slash',
 ]);

@@ -4837,7 +4837,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4324` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4330` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:255`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -7049,7 +7049,7 @@ answers that exact string in the object's sleep, no event, no wake. Only a
 CHANNEL session (chat, `presence: false`) used it. A presence session's
 liveness rode the pose.
 
-**Now (`src/net/wire.js:896`, `src/net/online.js:1708`):**
+**Now (`src/net/wire.js:896`, `src/net/online.js:1710`):**
 
 - `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
   before) or every 20 s standing, as the peers' proof of life and the silence
@@ -8163,3 +8163,54 @@ gated (DISC12's `lh`/`wb`, PCORPSE1's `dd`); an older relay's `validPose` drops 
 still rides nothing (MW-D51). Record: Handheld-Torches.md HT-WAIST ("Online: the others see it"). Pins:
 `test/htwaistnet_peers.test.js` - the door, the producer and its sender, a session through the real relay Room to the
 watcher's drawn pose, a peer's whole `createFpArm()` body hanging and hiding it, and its swing off the stub camera.
+
+## PARTY-TRAVEL (2026-09-25) - to the leader, and together, world110
+
+Mac: "Implementing a prompt for online to travel to party leader and the option for party members to ready up and
+travel together". Online only - both arms ask for a party first, and the party is the hub's. PARTY-REST's shape,
+mirrored: the leader's proposal rides the leader's own party pose, a member's answer rides theirs, "gathered" is the
+rest law's own near (the same place and, outdoors, within PARTY_REST_RADIUS), an offline seat is nobody here, and a
+stale vote is refused - here by identity, since a vote names the round it answers. The law is
+`systems/partyTravelLaw.js`, its session `systems/partyTravel.js` (driven by the host's seams in `scenes/world.js`, so
+the pins RUN a leader and a member against each other rather than grep the closures).
+
+**To the leader.** A member on another map pixel than the leader is offered the journey to them: unasked when they
+first see the leader (they joined, or the lead passed) and whenever the leader's pixel jumps as a journey moves it, once
+per place - the Yes/No box (`ui/yesNoBox.js`, UXB1-M: DFU's parchment on the classic skin, the enhanced card on the
+other) when they are free, a chat line naming `/leader` when a window holds the slot; the SAME box when they open the
+travel map (the standing option on both maps; No opens the map and it asks no more for a minute); and `/leader` in the
+chat. It is the map's FAST travel, priced by the map's own popup made headless over the one dep bag both maps read
+(`travelFareDeps`, lifted out of the map's builder so the fare cannot drift): the fare with the player's own toggles,
+the two-sided gold gate, the disease line, and online no world time (WORLD5). The map door's refusals come first in
+their own words (an enemy or a duel near, the sunlight rungs), and the member must be outdoors - the map opens nowhere
+else ("Step outside to travel to your party leader."). Yes reads the leader again and goes to where they are then. In
+the open air the member lands BESIDE the leader: the leader's party pose carries their feet (`wx`,`wy`,`wz`, the world
+pose's own frame, never while a journey or a load is moving them), read after the destination pixel builds - they may
+walk on while it loads - taken only while they fall inside the pixel the journey paid for, and placed by the law (a
+side whose way is clear of walls at the chest and whose floor is the leader's own level, facing them; else the
+leader's own spot; else the place's door). A leader in a dungeon or a building is travelled to at its door; an offline
+leader is refused ("Your party leader is not online.").
+
+**Together.** The leader's Begin on either map, with members gathered, is a PROPOSAL: `tv` {destination, the popup's
+three toggles as `o`, the round's shared-clock stamp `at`, `go`} on the leader's pose, and nothing is paid. Each
+gathered member is asked - "Ann wants the party to travel to Wayrest. / The journey costs N gold. / Travel with the
+party?" - with THEIR fare under the leader's toggles; Yes rides back as `tr` = the round's `at`, No as `td` (stays
+behind), and a Yes the map door or the gold refuses is staying behind with its reason, so no member can hold the
+leader. The leader is told each answer by name ("Bran is ready to travel. (2/2 ready)"). When nobody gathered is still
+waiting the party sets out (`go`), the leader's own journey begins once the pose saying so is handed on (or after
+PARTY_TRIP_GO_MS), and each member who said yes and stood gathered at the round's last open reading FOLLOWS: they wait
+until the leader's pose stands in the destination's open air, then travel and land beside them - so the party arrives
+together. The round is off when the leader walks out of where they asked (PARTY-REST16's radius), goes inside, or
+nobody answers in PARTY_READY_TIMEOUT_MS; `/travel` answers (the leader: calls it off). A walked Travel Options trip is
+never a round (the party rides it on its own feet), and without a gathered member, or through a hub from before
+world110, the leader travels alone as always.
+
+**The wire and the relay: REDEPLOY NEEDED.** `validPartyPose` carries `tv`, `tr`, `td`, `wx`/`wy`/`wz`, each omitted
+when absent or out of its law and never refusing a pose - an older client ignores them and sends none. The relay
+projects every party pose through `validPartyPose` in `parseClient`, so the deployed relay STRIPS all of them until
+world110 ships: until then the leader's client opens no round (`partyTravelOk` off the hub's welcome,
+PARTY_TRAVEL_RELAY_MIN) and the journey to the leader lands at the place's door (its pixel is the pose's own `px`/`py`).
+RELAY_VERSION world110; the widest hub attachment with every field at its bound measured under the runtime's 2 KiB.
+
+Records: `test/partytravel.test.js` (26); `tools/mutants/party-travel.json` (71, 71 dead); Systems.md counts the two
+modules.

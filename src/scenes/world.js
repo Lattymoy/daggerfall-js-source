@@ -323,6 +323,12 @@ import { cellRoomOfWire } from '../net/wire.js';   // HCC-PARK: the cell a parke
 import { characterIdOf } from '../systems/characterId.js';   // AUDIT HCC-PARK: my parked team is my CHARACTER's (the relay keys it by the account and this)
 import { chooseTable, tableMoveSpeed } from '../player/eotbBillboard.js';   // AUDIT RIDE: the rider's gallop is the table the rider's own sprite shows
 import { PARTY_READY_TIMEOUT_MS, memberPresent, latestStamp, voteStands, snapshotCancels, cancelRequestFor, mirrorKey, cooldownStamp, stampOf } from '../systems/partyRestLaw.js';   // AUDIT PARTY-REST: the pure half of the party-rest mechanic, pinned by execution   // SOC2: the hub's room and the party pose's floor (a second wire import: AUDIT WORLD4 A1 pins the first as it stands)
+import { besideLandingOf, PARTY_TRAVEL_TEXT, BESIDE_LEVEL } from '../systems/partyTravelLaw.js';   // PARTY-TRAVEL: the party's journey - to the leader, and together
+import { createPartyTravel } from '../systems/partyTravel.js';   // PARTY-TRAVEL: its session, over this host's seams
+import { TravelPopUpWindow } from '../ui/travelPopUp.js';   // PARTY-TRAVEL: the map's own popup prices a party journey, headless
+import { YesNoBoxWindow } from '../ui/yesNoBox.js';   // PARTY-TRAVEL: the journey's prompts - UXB1-M's box, either skin
+import { guildFastTravel } from '../systems/guildVariants.js';   // PARTY-TRAVEL: the popup's own blessed minutes, handed over as it hands them
+import { travelMapPopUpState } from '../systems/travelMapState.js';   // PARTY-TRAVEL: the toggles my own map last left - my way of travelling to the leader
 import { createChatPanel } from '../ui/chatPanel.js';   // CHAT1: the enhanced skin's chat over the world
 import { makeVideoQueue } from '../systems/quest/videoQueue.js';   // CRUX1: the quest videos in turn
 import { createPartyPanel } from '../ui/partyPanel.js';   // SOC4: the party HUD - my party's portraits and their health / stamina / magicka
@@ -5528,6 +5534,20 @@ export async function bootWorld(canvas, renderer, params, status) {
   // terrain ten units past its edge can differ by far more on a steep site.
   const ARRIVAL_LIFT = 40;
   const ARRIVAL_REACH = 240;
+  /** PARTY-TRAVEL: where the way to a spot beside the leader is looked along - chest height over their feet. */
+  const PARTY_BESIDE_CHEST = 1;
+  /** PARTY-TRAVEL: the spot beside a leader whose feet stand at natives `w` (partyTravelLaw besideTargetOf's answer - in
+   *  the pixel being built, or null), through the law's two questions asked of this pixel's collider: is the way from
+   *  the leader to a spot clear at the chest (one ray), and what floor is under it (the arrival's own snap, reaching a
+   *  level either way). Null when there is no leader to stand beside. */
+  function partyBesideLanding(w) {
+    if (!w) return null;
+    const [lx, lz] = state.localFromWorld(w.x, w.z);
+    return besideLandingOf([lx, w.y + state.compensation[1], lz], {
+      clear: (from, dir, dist) => { const d = collider.raycast([from[0], from[1] + PARTY_BESIDE_CHEST, from[2]], dir, dist); return !Number.isFinite(d) || d >= dist; },
+      floor: (pos) => floorLanding(collider, pos, BESIDE_LEVEL * 2, BESIDE_LEVEL),
+    });
+  }
   // TL2: a floor this far ABOVE the location's flat is a roof, not the
   // ground - a step or a doorsill is under a unit; a house is many.
   const OBSTRUCTED_ABOVE = 3;
@@ -6355,6 +6375,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     }).finally(() => { _respawning = false; });
   }
 
+  /** PARTY-TRAVEL: a pick may carry `besideAt` - a follower's journey to the party leader lands beside them, read once
+   *  the core has built the pixel - and `besideText`, the arrival's line when it did. True once the journey arrived;
+   *  nothing (falsy) when it never left. */
   async function fastTravelTo(pick, opts, computed) {
     if (worldMoveBusy()) return;   // AUDIT 68 S22: before the gold goes
     if (_traveling) return;
@@ -6416,6 +6439,20 @@ export async function bootWorld(canvas, renderer, params, status) {
           reposition: REPOSITION.DirectionFromStartMarker,
           travelStart, modEvent: 'travel' });
       hccPostDue = false; hccRuntimeOn()?.handlePostFastTravel();   // HCC (AUDIT HCC H2): OnPostFastTravel [IL_a2b4] - the relocation is pending; the team re-stands behind the player once the world is up
+      // PARTY-TRAVEL (2026-09-25, Mac: "Implementing a prompt for online to travel to party leader"): A FOLLOWER LANDS
+      // BESIDE THE LEADER. The core has stood me at the place's own door on the pixel it just built; a party journey's
+      // pick carries `besideAt`, the leader's feet in natives read NOW (they may have walked on while the pixel built)
+      // and only while they stand in THIS pixel's open air (systems/partyTravelLaw.js besideTargetOf), and the law
+      // picks the spot over the pixel's collider (besideLandingOf: a side clear of walls on the leader's own floor, else
+      // the leader's own spot). Where it answers nothing - the leader indoors, gone on, swimming, flying - the door
+      // stands. Placed before any frame draws: the core's tail and this line run in one breath after its build, and
+      // before the following team re-stands (HCC's relocation is pending until the world is up).
+      const beside = walkMode && pick.besideAt ? partyBesideLanding(pick.besideAt()) : null;
+      if (beside) {
+        player.spawn(beside.pos[0], beside.pos[1], beside.pos[2]); playerSpawned = true;
+        cam.pos = [beside.pos[0], beside.pos[1], beside.pos[2]];
+        if (beside.yaw != null) cam.yaw = beside.yaw;   // facing the leader
+      }
       // cautious arrival heals in full; magicka honors NoRegenSpellPoints
       // AUDIT WORLD5 C14: the heal is the trip's NIGHTS - DFU's cautious traveller arrives rested because the days
       // passed - and online the trip takes no world time, so it heals nothing: with it, a cautious trip with camping
@@ -6524,11 +6561,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       // popup that never runs performFastTravel, so a guild teleport
       // keeps the crime in DFU too.
       setCrimeCommitted(playerEntity, CRIMES.None);
-      townTalk.say(`You arrive at ${pick.name}.`);
+      townTalk.say(beside && pick.besideText ? pick.besideText : `You arrive at ${pick.name}.`);
     } finally {
       if (hccPostDue) hccRuntimeOn()?.handlePostFastTravel();   // AUDIT HCC (branch audit): the journey threw - the team is released where it stands
       _traveling = false;
     }
+    return true;
   }
   // P-slice: the ABOVE-GROUND QUICKSAVE (F9/F11, the dungeon's
   // bindings). The envelope is the dungeon's snapshotPlayer - entity,
@@ -7078,7 +7116,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // TO1: the fork. `playerControlled` is the popup's own word for a
     // trip its three toggles say is WALKED (ui/travelPopUp.js
     // callFastTravelGoldCheck); everything else is DFU's fast travel.
+    // PARTY-TRAVEL (2026-09-25, Mac: "Implementing a prompt for online to travel to party leader"): a member away from
+    // the leader is asked first whether the journey is to the leader - No opens the map (systems/partyTravel.js mapOffer)
+    if (!gotoPlace && partyTravel?.mapOffer()) return;
     _travelMap = buildTravelMapWindow({ onTravel: (pick, opts, computed) => {
+      if (partyTravel?.propose(pick, opts, computed)) { hudFade.clearFade(); return; }   // PARTY-TRAVEL: "...the option for party members to ready up and travel together" - the leader's Begin with the party gathered asks them first (a walked trip is never a round: the session says no to it)
       if (opts?.playerControlled && beginAcceleratedTravel(pick, opts, { estimateMinutes: computed?.minutes ?? null })) return;   // AUDIT-TO1 L5: the popup's estimate rides along for the panel's ETA
       fastTravelTo(pick, opts, computed);
     } });
@@ -7314,31 +7356,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     return true;
   }
 
-  /** ONE construction for the map, because G5 gave it a second opener
-   *  and the dependency list is long enough that two copies would
-   *  drift (the ONE CONSTRUCTION SEAM rule). U61: the DOOR now forks
-   *  the skin inside this one seam - the host says what it HAS
-   *  (woods rides along for the overworld's relief) and never which
-   *  map that adds up to. */
-  function buildTravelMapWindow(extra = {}) {
-    // MAP-POV (2026-09-20, Mac: "If you're in 3rd person and decide to
-    // use the map, it should transition you to first person and then
-    // open the map. Both for the morrowind/non morrowind"): THE MAP IS
-    // READ IN THE HEAD. Every door into the map - the key, the journal's
-    // goto, the guild's teleport - reaches this builder, and only after
-    // its own refusals (enemies near, the sun, a pending offer), so the
-    // camera moves for a map that opens and never for a press that was
-    // refused. The seam picks the body (player/mwView.js).
-    mwViewFirstPerson();
-    return createTravelMapWindow({
-      maps, mapDict, woods,
-      roads: () => terrainGen.roads(),   // ROADS 7: the map draws the network
-      // GetPlayerTravelPosition, not PlayerGPS's raw pixel: DFU's travel
-      // map reads it for the crosshair (:864), the player's region
-      // (:1611) and the journey itself, and aboard a ship all three
-      // answer the boarding point.
-      getPlayerPixel: playerTravelOrigin,
-      getClimateIndex: (x, yy) => maps.getClimateIndex(x, yy),
+  /** PARTY-TRAVEL (2026-09-25): THE TRAVEL POPUP'S OWN DEP BAG - every read ui/travelPopUp.js prices a trip with and
+   *  its gold check asks, lifted out of buildTravelMapWindow's bag (which spreads it, so both maps read it as before)
+   *  so the party's journeys price a trip through the SAME popup without opening a map (partyTripFare). One bag: a
+   *  fare the map charges and a fare the party's prompt names cannot drift apart. */
+  function travelFareDeps() {
+    return {
       // TP1: the popup's GuildManager.FastTravel fold reads the
       // player's guild memberships off the entity.
       playerEntity: () => playerEntity,
@@ -7385,6 +7408,46 @@ export async function bootWorld(canvas, renderer, params, status) {
       diseaseCount: () => diseaseCount(playerEntity),
       poisonCount: () => poisonCount(playerEntity),
       noWorldTime: () => sharedClockOn(),   // OL2: online the trip takes no world time (WORLD5), and the popup says so
+      // TO1: the mod itself, and the six reads its additions to the
+      // map need. Every one is guarded on the other side - with
+      // Travel Options off `travelOptions` answers null and the map is
+      // DFU's own, whole.
+      travelOptions: () => travelOptions,
+      // AUDIT-TO1 D1: PlayerGPS.CurrentLocation's MapId (null in open
+      // wilderness, the C#'s !Loaded) and TransportManager.IsOnShip - the
+      // two reads IsNotAtPort / HasNoOceanTravel need and never had.
+      currentLocationMapId: () => _musicLoc?.mapTableData?.mapId ?? null,
+      isOnShip: () => isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()),
+    };
+  }
+  /** ONE construction for the map, because G5 gave it a second opener
+   *  and the dependency list is long enough that two copies would
+   *  drift (the ONE CONSTRUCTION SEAM rule). U61: the DOOR now forks
+   *  the skin inside this one seam - the host says what it HAS
+   *  (woods rides along for the overworld's relief) and never which
+   *  map that adds up to. */
+  function buildTravelMapWindow(extra = {}) {
+    // MAP-POV (2026-09-20, Mac: "If you're in 3rd person and decide to
+    // use the map, it should transition you to first person and then
+    // open the map. Both for the morrowind/non morrowind"): THE MAP IS
+    // READ IN THE HEAD. Every door into the map - the key, the journal's
+    // goto, the guild's teleport - reaches this builder, and only after
+    // its own refusals (enemies near, the sun, a pending offer), so the
+    // camera moves for a map that opens and never for a press that was
+    // refused. The seam picks the body (player/mwView.js).
+    mwViewFirstPerson();
+    return createTravelMapWindow({
+      maps, mapDict, woods,
+      roads: () => terrainGen.roads(),   // ROADS 7: the map draws the network
+      // GetPlayerTravelPosition, not PlayerGPS's raw pixel: DFU's travel
+      // map reads it for the crosshair (:864), the player's region
+      // (:1611) and the journey itself, and aboard a ship all three
+      // answer the boarding point.
+      getPlayerPixel: playerTravelOrigin,
+      getClimateIndex: (x, yy) => maps.getClimateIndex(x, yy),
+      // PARTY-TRAVEL: the popup's own reads - the fare, the gold, the transports, the Travel Options mod - one bag with
+      // the party's journeys, which price a trip through the same popup without a map (travelFareDeps, above).
+      ...travelFareDeps(),
       // SOC6 (Mac: "Party members should be able to be seen on the
       // world map, regardless of their location"): MY PARTY, AS MARKS.
       // A function and not a list, because the map may stand open for a
@@ -7392,11 +7455,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // join or leave - both skins read it on their own refresh. The
       // host says WHERE and WHO; neither map is told what a party is.
       party: () => partyMarkers(),
-      // TO1: the mod itself, and the six reads its additions to this
-      // window need. Every one is guarded on the other side - with
-      // Travel Options off `travelOptions` answers null and the map is
-      // DFU's own, whole.
-      travelOptions: () => travelOptions,
+      // TO1: the mod itself rides travelFareDeps (above); the reads its additions to this window need follow.
       // AUDIT-TO1 I4: ...and the door ACTS on the refusal it can still get
       // (the popup was minted before the online state could change).
       onTravelToCoords: (pick, opts) => { if (!beginAcceleratedTravel(pick, opts, { coords: true })) townTalk.say('You cannot travel there now.'); },
@@ -7412,11 +7471,6 @@ export async function bootWorld(canvas, renderer, params, status) {
       // door no longer has to. It still asks `beginAcceleratedTravel`'s
       // own question, because that is the function that would refuse.
       coordsAllowed: () => !!travelOptions,
-      // AUDIT-TO1 D1: PlayerGPS.CurrentLocation's MapId (null in open
-      // wilderness, the C#'s !Loaded) and TransportManager.IsOnShip - the
-      // two reads IsNotAtPort / HasNoOceanTravel need and never had.
-      currentLocationMapId: () => _musicLoc?.mapTableData?.mapId ?? null,
-      isOnShip: () => isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()),
       // TravelOptionsMapWindow.cs:472 - `GuildManager.GetGuild(MagesGuild).Rank`.
       magesGuildRank: () => joinedGuildOfGroup(activeMemberships(playerEntity), GUILD_GROUPS.MagesGuild)?.rank ?? 0,
       payTeleport: (cost) => { deductGold(playerEntity, cost); },
@@ -9787,6 +9841,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   let _partyRestReadyRound = null;   // PARTY-REST31: the leader's voteAt my (member's) ready was cast into - when that round ends, so does my vote
   let _partyRestStartWaived = false;   // PARTY-REST29: my own start stamp no longer blocks a new vote (my rest window closed with no rest) - it is still BROADCAST, so the members see the round was spent
   let _partyRestJustStartedAt = -Infinity;   // PARTY-REST21: the last time MY OWN rest actually started (for real or via mirror) - see toggleRest's own doc comment for what this closes
+  // PARTY-TRAVEL (2026-09-25): THE PARTY'S JOURNEY - systems/partyTravel.js's session over this host's seams (made beside
+  // partyRestFollowTick, once every seam it reads is bound). Declared here, among the party's other state, so a reader
+  // that runs before it is made finds it null rather than unbound.
+  let partyTravel = null;
   // SOC4 (Mac: "Theyre character portrait + health/stamins/magicia stats displayed on a new party UI element"): the
   // party HUD, made in socialStart beside `social` and driven from chatFrame. Null until there is a hub link to be
   // anyone on, and it hides itself whenever the party is empty of anyone but me.
@@ -10335,6 +10393,12 @@ export async function bootWorld(canvas, renderer, params, status) {
           chatLog.push(tabId, { text: _partyRestReady ? 'You are ready to rest.' : 'You are no longer marked ready.', system: true });
           return true;
         }
+        // PARTY-TRAVEL (2026-09-25, Mac: "Implementing a prompt for online to travel to party leader and the option for
+        // party members to ready up and travel together"): `/leader` offers the journey to the party's leader (the prompt
+        // a member away from them is given unasked), `/travel` answers the leader's journey - ready, or, ready already,
+        // staying behind - and from the leader calls it off. Local, never sent: the answer rides the party pose.
+        const trip = /^\/(leader|travel)$/i.exec(text.trim());
+        if (trip) { const line = partyTravel ? partyTravel.command(trip[1].toLowerCase()) : NO_PARTY_TEXT; if (line) chatLog.push(tabId, { text: line, system: true }); return true; }
         // CHAT-CHAN: EVERY OTHER SLASH IS A CHANNEL'S COMMAND, THE LIST, OR REFUSED IN WORDS (net/chatCommands.js) - a
         // mistyped `/pary hi` was said to everyone online, slash and all. A refusal keeps the line in the field to be
         // mended (B2's false); the list is lines to READ, so the field clears and the chat stays open ('read').
@@ -10979,8 +11043,19 @@ export async function bootWorld(canvas, renderer, params, status) {
       restStartedAt: Number.isFinite(_partyRestJustStartedAt) ? _partyRestJustStartedAt : null,
       ...(_rezOut && performance.now() < _rezOut.until ? { rz: { to: _rezOut.to, at: _rezOut.at } } : {}),
       ...(_deadMark ? { dd: _deadMark } : {}),   // PCORPSE3: my body, for a party member who missed the death   // RESURRECT1: my Resurrect's call, held a few sends
+      // PARTY-TRAVEL (2026-09-25, Mac: "...the option for party members to ready up and travel together"): the party's
+      // journey (net/wire.js validPartyPose, systems/partyTravelLaw.js), each field omitted when there is none - my
+      // proposal while I lead one (`tv`, the round's stamp and, once we set out, `go`), my answer to the leader's round
+      // (`tr` ready / `td` staying behind, naming its `at`), and, while I lead, where I stand in the open air (`wx`, `wy`,
+      // `wz`: the world pose's own frame) so a member travelling to me lands beside me - never while a journey, a load
+      // or a teleport is moving me, when the scene's frame is between two places.
+      ...(partyTravel?.poseFields() ?? {}),
+      ...(social?.leads?.() && mode === 'exterior' && walkMode && playerSpawned && !worldMoveBusy() ? partyFeetOf(player.pos) : {}),
     };
   };
+  /** PARTY-TRAVEL: my feet as the party pose says them - the world pose's own frame (MapsFile's X and Z, the height
+   *  with the floating origin's vertical shift shed), so a party mate's client puts them back in ITS scene. */
+  const partyFeetOf = (pos) => { const wc = state.worldCoords(pos); return { wx: wc.x, wy: pos[1] - state.compensation[1], wz: wc.z }; };
   /** PARTY-REST1: the wire's small numbers back to RestWindow's own mode strings - `partyRestModeCode`'s inverse,
    *  read on the way IN instead of the way out. */
   const partyRestModeFromCode = (code) => (code === 1 ? 'timed' : code === 2 ? 'full' : 'loiter');
@@ -11698,6 +11773,85 @@ export async function bootWorld(canvas, renderer, params, status) {
     _partyRestJustStartedAt = social.now();   // PARTY-REST21: see toggleRest's own doc comment for what this closes
     _partyRestStartWaived = false;   // PARTY-REST29: a real (mirrored) rest cools down again
   };
+  // ── PARTY-TRAVEL (2026-09-25, Mac: "Implementing a prompt for online to travel to party leader and the option for
+  // party members to ready up and travel together") ────────────────────────────────────────────────────────────
+  // The session is systems/partyTravel.js over the law in systems/partyTravelLaw.js (whose header carries the design);
+  // what is here is its seams, this host's own. ONLINE ONLY: every door in the session asks for a party first, and
+  // `social` is built by socialStart alone. PARTY-REST's shape, mirrored: the leader's proposal rides the leader's own
+  // party pose, a gathered member's answer rides theirs, "gathered" is the rest law's own near (nearPartyMembers), a
+  // seat the hub marked offline is nobody here. The prompts are ui/yesNoBox.js's box - DFU's parchment on the classic
+  // skin, the enhanced card on the other - in this host's overlay slot, only while it is free.
+  /** PARTY-TRAVEL: a place's name for the party's lines - the location on the pixel, else what the pose called it. */
+  const partyPlaceName = (to, fallback = '') => locationIndex.get(`${to.x},${to.y}`)?.name || fallback || 'the wilderness';
+  /** PARTY-TRAVEL: A FAST TRAVEL, PRICED AS THE MAP PRICES IT - the travel map's own popup (ui/travelPopUp.js), made
+   *  headless over the SAME dep bag both maps read (travelFareDeps): its refresh is calculateTravelTime, the Temple of
+   *  Akatosh's blessing, calculateTripCost and the Travel Options scale, and its enoughGoldCheck is the two-sided gold
+   *  gate - so a party journey costs what the map would have charged, to the piece. `opts` are the popup's three
+   *  toggles, through its own ship restriction. The walked arm (Travel Options' player-controlled trip) is not taken: a
+   *  party journey is the map's FAST travel, which is what lands beside a leader or with a party. */
+  function partyTripFare(to, opts) {
+    const pop = new TravelPopUpWindow({ x: to.x, y: to.y }, {
+      ...travelFareDeps(),
+      getPlayerPixel: playerTravelOrigin,
+      getClimateIndex: (x, yy) => maps.getClimateIndex(x, yy),
+      locationSummary: () => travelLocationSummaryAt(mapDict, to.x, to.y),
+    });
+    pop.speedCautious = !!opts?.speedCautious; pop.sleepModeInn = !!opts?.sleepModeInn; pop.travelShip = !!opts?.travelShip;
+    pop.enforceShipRestriction();
+    pop.refresh();
+    return {
+      opts: { speedCautious: pop.speedCautious, sleepModeInn: pop.sleepModeInn, travelShip: pop.travelShip },
+      computed: { ...pop.trip, minutes: guildFastTravel(playerEntity, pop.trip.minutes) },   // the popup's own hand-over: the blessed minutes
+      afford: pop.enoughGoldCheck(),
+      unwell: diseaseCount(playerEntity) + poisonCount(playerEntity) > 0,   // the popup's own warning, said on the prompt
+    };
+  }
+  /** PARTY-TRAVEL: THE MAP DOOR'S REFUSALS, for a journey that does not pass through the map - the rungs toggleTravelMap
+   *  asks before the map opens (an enemy or a duel near, the career's and the racial override's sunlight), with what a
+   *  journey begun off the map must also be: outdoors (the map opens nowhere else), alive, and not already moving.
+   *  The words are the door's own. Null when nothing refuses. */
+  function partyTravelRefusal() {
+    if ((modes?.mode ?? 'exterior') !== 'exterior') return PARTY_TRAVEL_TEXT.inside;
+    if (!(playerEntity.health > 0) || worldMoveBusy()) return PARTY_TRAVEL_TEXT.off;
+    if (duelEnemyNear() || areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes])) return CANNOT_TRAVEL_ENEMIES_TEXT;
+    const nowMin = Math.floor(worldMinutes());
+    if (careerSunDamage(playerEntity.career) && isDayFromMinutes(nowMin)) return SUNLIGHT_TRAVEL_TEXT;
+    return racialFastTravelBlock(playerEntity, nowMin)?.text ?? null;
+  }
+  /** PARTY-TRAVEL: the journey itself - the travel popup's own order (ui/travelPopUp.js tick): the screen smashed to
+   *  black, then fastTravelTo, whose arrival fades it back; a journey that did not go clears it. */
+  const partyTravelJourney = (pick, opts, computed) => {
+    hudFade.smashHUDToBlack();
+    return fastTravelTo(pick, opts, computed).then((went) => { if (!went) hudFade.clearFade(); return !!went; },
+      (e) => { console.error('[party-travel] the journey failed:', e); hudFade.clearFade(); return false; });
+  };
+  partyTravel = createPartyTravel({
+    social: () => social,
+    gathered: () => nearPartyMembers(),
+    nearLeader: (row) => nearAccount(row.acct, row.p),
+    here: () => playerTravelPixel(),
+    outdoors: () => (modes?.mode ?? 'exterior') === 'exterior',
+    alive: () => playerEntity.health > 0,
+    busy: () => gamePaused(),   // the pause's own question: a window holds the slot
+    moving: () => worldMoveBusy(),
+    refusal: () => partyTravelRefusal(),
+    fare: (to, opts) => partyTripFare(to, opts),
+    canAfford: (c) => totalGoldAmount(playerEntity) >= c.totalCost && goldAmount(playerEntity) >= (c.piecesCost ?? 0),
+    myToggles: () => travelMapPopUpState(),
+    // natives over the scene's own ratio: metres, in a frame the floating origin never moves
+    feet: () => { const wc = state.worldCoords(walkMode ? player.pos : cam.pos); return { x: wc.x / SCENE_MAP_RATIO, z: wc.z / SCENE_MAP_RATIO }; },
+    radius: PARTY_REST_RADIUS,   // PARTY-REST16's own "moved too far from where it started"
+    placeName: (to, fallback) => partyPlaceName(to, fallback),
+    prompt: (rows, onYes, onNo) => { const box = new YesNoBoxWindow({ rows, onYes, onNo }); townTalk.showOverlay(box); return box; },
+    closePrompt: (box) => { if (box.done) return; box.onYes = null; box.onNo = null; box.answer(false); },
+    say: (text) => chatNotice(text),
+    mid: (text) => setMidScreenText(text, PARTY_REST_FAR_SECONDS),
+    travel: (pick, opts, computed) => partyTravelJourney(pick, opts, computed),
+    openMap: () => toggleTravelMap(),
+    clock: () => performance.now(),
+    relayOk: () => !!socialLink()?.partyTravelOk,
+    poseDirty: () => { _partyComposedAt = -Infinity; },
+  });
   /** SOC6 (Mac: "Party members should be able to be seen on the world map, regardless of their location"): THE
    *  OTHER HALF OF THE POSE - what composePartyPose sends out, coming back in as something a map can draw. The
    *  members OTHER than me (my own seat is the player's own mark on both maps), each as the flat row the two travel
@@ -11731,6 +11885,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     _partyComposedAt = nowMs;
     _partyPose = composePartyPose();
     socialLink()?.sendParty(_partyPose);
+    partyTravel?.sent(_partyPose);   // PARTY-TRAVEL: once the pose saying we set out is handed to the link (it leaves within PARTY_SEND_MS), the leader's own journey may begin
   };
   // SRV-N (Mac: "a server restart notice whenever we push server
   // updates. Like a notice that pushes in the chat window"): A NOTICE
@@ -11888,6 +12043,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (socialPanel?.openLetters({ draft: _letterPending.draft })) _letterPending = null;
       else if (performance.now() - _letterPending.at > LETTER_PENDING_MS) { _letterPending = null; tradeSay('Your letters could not open - the page is still in your journal.'); }
     }
+    partyTravel?.tick();   // PARTY-TRAVEL: the party's journey - throttled inside to PARTY_TRIP_TICK_MS
     partyRestFollowTick();   // PARTY-REST1: every frame, not throttled to the send cadence - a few property reads, and a follower's own countdown should start and end as promptly as the leader's does
     partyFrame(performance.now());   // SOC2: my party pose rides the chat frame - before the dead return with it, so a dead member's card says so as their vitals read zero
     // SOC3: and the friends + party panel repaints on the same frame, under the same covering rule as the chat -
