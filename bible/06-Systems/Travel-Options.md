@@ -824,7 +824,8 @@ the body gets there this frame:
   anything it cannot. The terrain is not in the collider's buckets, so a
   level ray runs into a hill and passes under the house on top of it; the
   feelers follow the ground in eight-metre legs instead, and a face flatter
-  than the slope limit is a ramp to walk up, not a wall.
+  than the slope limit is a ramp to walk up, not a wall - RIDDEN, so it
+  hides nothing behind it (TRAVEL-NAV2, below).
 - **An open road is the mod's journey to the bit.** While the way wanted
   is open the drive leaves the steering exactly as the autopilot made it -
   the bearing, the force, every last bit - and costs three feelers.
@@ -866,10 +867,12 @@ the body gets there this frame:
   there with the clock racing.
 - **Stop, and say so.** No heading on either side with room (the other
   side is tried once), a detour that has walked two hundred metres without
-  getting past its obstacle, or a body that stops moving while the drive
+  getting past its obstacle, a body that stops moving while the drive
   asks it to (GRINDING - something the feelers cannot see; measured against
   the travel the host REALLY applied after its ground gate, so a drive held
-  for the streamer is not grinding) ends the journey the way the mod's own
+  for the streamer is not grinding), or one that walks four hundred metres
+  without once coming a metre nearer its target (NO HEADWAY, TRAVEL-NAV2,
+  below) ends the journey the way the mod's own
   stops do: last in its Update, the panel closed (InterruptTravel - the
   destination stays for the map's resume prompt), a message box in the
   mod's voice - *"Paused the journey since the way ahead is blocked."* or
@@ -878,24 +881,38 @@ the body gets there this frame:
   frame that stops it moves nothing.
 - **Cheap.** Three feelers a frame on an open road, about five in a
   detour's frame, never more than sixteen: a scan that would cast more is
-  resumed next frame with the body held for the one frame it waits. The
+  resumed next frame with the body held for the one frame it waits. A
+  feeler is not one ray (TRAVEL-NAV2's audit): the collider probe casts it
+  a leg at a time, so a feeler to a hitching x100's look-ahead is dozens of
+  `raycastHit` calls - measured over a forty-bucket town, 0.2 ms a frame at
+  the worst pace and 0.06 at an ordinary one. The
   input, the output, the frame's scratch and the probe's origin, direction
   and hit are made once and reused (`raycastHit` gained an optional `out`
-  for it - without one its answer is the one it always was).
+  for it - without one its answer is the one it always was). The walk over
+  the collider's buckets inside `raycastHit` is older than this and still
+  makes its Map iterator a ray; it is every ray caller's, not this one's.
 
 **The arrival stand-off, checked.** A named location's rect is its RMB
 footprint grown by `ARRIVAL_BUFFER` (800 world units, twenty metres), and
 every building of a location stands inside its footprint, so a journey
 that arrives in the buffer arrives outside the walls. A followed leg ends
 at the town's BORDER rect, one or two tiles outside its ground tiles. Both
-hold - with one hole, departure 19: the arrival question is asked only in
-the destination PIXEL, and a location eight blocks across fills its pixel
+hold for a location smaller than its pixel - with one hole, departure 19:
+the arrival question is asked only in the destination PIXEL, and a location
+eight blocks across fills its pixel
 (`getLocationTerrainTileOrigin` centres it at zero), so its buffer lies
 wholly in the neighbours and the traveller walked up to the walls, crossed
 into the pixel AT them and only then asked. With the switch on the buffer
-is an arrival wherever it lies (`TravelAutopilot`'s `edgeArrival`). Flown
-on the table: outside the walls at x1, x60 and a hitching x100, where the
-mod's own arm walks into the wall and never arrives.
+is an arrival wherever it lies (`TravelAutopilot`'s `edgeArrival`) for a
+NAMED destination. Flown on the table: outside the walls at x1, x60 and a
+hitching x100, where the mod's own arm walks into the wall and never
+arrives. A followed LEG into such a city is not given the same arm
+(TRAVEL-NAV2's audit, left so on purpose): a leg's arrival hands
+`SelectNextPath` the pixel the body stands in, and outside the city that
+is a neighbour with no location, whose road leads straight back in - a
+leg that arrived before it began, every frame. So a leg into a walled city
+of eight blocks arrives through its gate, and at a gate shut for the night
+the steering walks the wall and stops on its budget.
 
 **The facing the mod reads is its own.** In DFU the autopilot writes the
 camera's yaw every frame (`PlayerAutoPilot.cs:96-104`), so "the way the
@@ -927,7 +944,8 @@ five degrees in one update is an arrival) can end a LEG early while a
 detour turns hard close to its target at high acceleration; the next leg
 starts from where the body is, which is the mod's own answer.
 
-Pinned by execution in `test/travelnav.test.js` (19): every layout the
+Pinned by execution in `test/travelnav.test.js` (19 of its 22 - TRAVEL-NAV2
+added three): every layout the
 request named - a building across the line, a wall with no gap, a U-shaped
 pocket (and one deeper than the look-ahead), trunks across and along the
 line, a narrow gap on the line and one off it, a wall behind the arrival
@@ -944,8 +962,81 @@ wiring. Forty mutants in `tools/mutants/travelnav.json`, all dead; the
 first campaign left two survivors (the stand-off margin on a frame capped
 by clearance, and the goal cap) and the pins for them were written.
 
+## TRAVEL-NAV2 (2026-09-25) - the review before the merge
+
+Mac: *"Audit before we merge"*, of the slice above and its request -
+*"Improving travel options navigation to properly route around objects and
+stopping before running into buildings. Currently it could be so much
+better"*. The review flew the steering over some fifteen hundred fuzzed layouts
+(random buildings and trunks, every pace the mod allows, walking and
+mounted) beside the table flights, and cast its feelers through a real
+`Collider` at shapes the slice had not tried. Three things were wrong, and
+are fixed in `src/systems/travelSteer.js`:
+
+- **It could walk for ever.** In a tight layout - one building sending the
+  detour one way, a second building's corner and two trunks catching it -
+  a detour ended the moment the way wanted opened and a new one began a
+  frame later, each with a fresh budget; grinding never fired because the
+  body never stopped moving. The old steering walked the fuzzed case four
+  thousand detours at x1 and two hundred kilometres at x60 without
+  stopping, the clock racing the whole time. The slice's brief had named
+  exactly the missing check - stuck detection as the distance to the target
+  not shrinking over a window: now four hundred metres walked without once coming a metre
+  nearer the target (a leg at a time) stops the journey with the slice's
+  own *"Paused the journey since you're making no headway."* The budget
+  is twice the detour budget, so a detour honestly going round a long wall
+  still ends on its own budget and says *blocked*.
+- **A ramp hid the wall at its head.** A feeler that met a face it could
+  walk on gave up the rest of its eight-metre leg, so a wall standing at a
+  ramp's top, or a boulder's steep face above its gentle one, was never
+  seen and the body was driven into it at full force; and the next leg,
+  back at the ground's height, started INSIDE the deck the ramp led onto
+  and read the deck's far side as a wall 30 m out. The feeler now RIDES a
+  walkable face (on from it, 0.6 over it, to the leg's end, so the next leg
+  starts over the deck and meets its top again while it goes on) and goes
+  on UNDER a face met from beneath - four faces a leg, after which the
+  rest of the leg is taken as seen, which is all any face bought before.
+  The ride is not carried past the next leg, so a fence in the dip after a
+  mound is still met.
+- **A jump was read as a walk.** The travel map is a window the journey
+  runs under (`TravelOptionsMod.cs:1351`'s `DfTravelMapWindow` exception),
+  and a ship taken from it teleports the body with the autopilot still
+  set; the mod re-aims from the new pixel, but the steering kept its line
+  from the old one and pursued it - sideways, for as far as the ship had
+  carried the body - and a teleport mid-detour charged the whole distance
+  to the detour's budget and stopped the journey as blocked. A body that
+  moved further than 64 m and four times what the last frame could carry it
+  was put there: the line starts again from where it landed, and nothing
+  the jump covered counts as walked, grinding or headway.
+
+Checked and left as they are: the per-frame cost (above, **Cheap** - a
+feeler is a leg's worth of rays, and it is small); a followed leg into a
+walled city of eight blocks (above, the arrival stand-off - its arm is not
+the named destination's, on purpose); a gap barely wider than the corridor
+off to the side at speed (**Not done, and said**). A try at dropping the
+committed side when a detour begins again where the last one ended found
+the fuzzed case's route, and lost five others in eleven hundred layouts, so it
+was taken out again. The four hosts: the journey is wired in
+`scenes/world.js` alone (## The four hosts) - `scenes/exterior.js` has no
+travel map, and `scenes/worldModes.js` and `scenes/dungeonContext.js`
+never run a journey.
+
+Pinned in `test/travelnav.test.js` (three tests, each failing with
+`src/` set aside while the other nineteen pass): no headway on its own, a
+leg at a time, and the fuzzed layout flown at x1 and x10 (arrives or
+stops, never touches, never for ever); a jump - the mod's bearing from
+where it landed to the bit, the line started again, nothing charged, and a
+hitching x100 frame's 150 m still a walk; the feelers through a real
+`Collider` - a wall at a ramp's head, a closed ramp onto a deck read as
+clear, a rail on the deck met where it stands, a wall behind a face met
+from beneath and a low block on it met on the line, a fence after a mound,
+and the rides bounded. Fourteen mutants in `tools/mutants/travelnav2.json`,
+all dead; the forty of `tools/mutants/travelnav.json` re-run, all dead
+(`TN-ramps-are-walls` re-aimed by content at the probe's new wall test).
+
 ## Pins
 
 `test/to1_travelOptions.test.js`. `tools/mutants/to1.json`.
 `test/roadcrash.test.js`, `tools/mutants/roadcrash.json` (ROAD-CRASH).
-`test/travelnav.test.js`, `tools/mutants/travelnav.json` (TRAVEL-NAV).
+`test/travelnav.test.js`, `tools/mutants/travelnav.json` (TRAVEL-NAV),
+`tools/mutants/travelnav2.json` (TRAVEL-NAV2).
