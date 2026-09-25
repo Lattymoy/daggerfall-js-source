@@ -335,8 +335,8 @@
   {
     "name": "HOME1-credited-before-the-service-agrees",
     "file": "src/systems/onlineHomes.js",
-    "old": "  const r = await homes.release(mapId, buildingKey);\n  if (!r.ok) return r;\n  const refund = homeRefund(r.price);\n  credit(refund);\n",
-    "new": "  const r = await homes.release(mapId, buildingKey);\n  const refund = homeRefund(r.price);\n  credit(refund);\n  if (!r.ok) return r;\n",
+    "old": "  if (!r.ok) return r;\n  const refund = homeRefund(r.price);\n  const decorBack = r.decorBack ?? 0;   // DECOR1e: its placed pieces' half, as the service summed it\n  credit(refund + decorBack);\n",
+    "new": "  const refund = homeRefund(r.price);\n  const decorBack = r.decorBack ?? 0;   // DECOR1e: its placed pieces' half, as the service summed it\n  credit(refund + decorBack);\n  if (!r.ok) return r;\n",
     "tests": [
       "test/home1.test.js"
     ]

@@ -111,6 +111,9 @@ export function decorPrice(radiusMetres, scale = 1) {
 
 /** What removing a piece gives back: half of what it cost. */
 export const decorRefund = (paid) => Math.trunc((Number.isSafeInteger(paid) && paid > 0 ? paid : 0) / 2);
+/** DECOR1e: what a sold room's pieces give back - each one's half, as removing it would (the account service sums an
+ *  online home's the same way, server-account/src/homes.js releaseHome). */
+export const decorSaleBack = (pieces) => (Array.isArray(pieces) ? pieces : []).reduce((n, p) => n + decorRefund(p?.paid), 0);
 
 /**
  * A NEW SCALE for a placed piece: grown, the difference is paid; shrunk, half the difference comes back (as removing

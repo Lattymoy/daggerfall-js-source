@@ -257,7 +257,7 @@ import {
 } from '../systems/onlineHomes.js';
 import { HOME_ENTRIES, homePriceOk } from '../net/homeLaw.js';
 // DECOR1c: the pieces a room's owner placed (their law, and the pool that stands them in the room)
-import { decorPieceOf } from '../net/decorLaw.js';
+import { decorPieceOf, decorSaleBack } from '../net/decorLaw.js';
 import { createDecorRoom, decorIdOfKey } from './decorRoom.js';
 // DECOR1d: the decorator itself - the button, the panel, the free camera - and what its catalogue scan reads
 import { createDecorTool } from './decorTool.js';
@@ -272,6 +272,7 @@ import { accountRefusalText } from '../net/accountClient.js';
 import {
   createSceneCache, cacheScene, restoreCachedScene,
   interiorSceneName, worldSceneName, LOOT_CONTAINER_TYPES, containsPermanentScene, addPermanentScene, removePermanentScene,
+  takeSceneDecor,   // DECOR1e: a sold room's placed pieces
 } from '../systems/sceneCache.js';
 import { WORLD_CONTEXT } from '../systems/teleportAnchor.js';   // A10: SetAnchor's world context, one enum for the three hosts
 // S40: resting where the player has a claim - the rented-room finder
@@ -674,6 +675,7 @@ export function createWorldModes(host) {
     room: () => decorRoomHere(), scanDeps: () => decorScanDeps(),
     getGpuMesh, cpuModels, getTexture, uploadRecord, iconUrl: (a, r) => loadIcon(a, r, { scale: 1 }),
     collider: () => interiorCtx?.collider ?? null, origin: () => buildingOrigin(), eye: () => cam.pos,
+    stick: () => host.stickAxes?.() ?? null,   // DECOR1e: the finger's or the pad's stick, analog - it flies the eye
     actionOf: (e) => actionOf(e, keys),
     locked: () => typeof document !== 'undefined' && document.pointerLockElement === canvas, cursorOff: () => setCursorActive(false),
     wallet: () => decorWallet(), homeDecor: host.homeDecor ?? null, character: () => host.decorCharacter?.() ?? null,
@@ -3263,13 +3265,26 @@ export function createWorldModes(host) {
       },
     };
   }
-  /** DECOR1d: what a placement is paid with - the purse, then the region's bank account (HOME1's homes' own order). */
+  /** DECOR1e: A SOLD HOUSE'S OR SHIP'S PLACED PIECES (the save's - scene cache) go with it, and half of what each
+   *  cost comes back into the account the sale pays into, as removing each would give; said, when there were any. */
+  function decorSold(sceneName, region) {
+    const pieces = takeSceneDecor(sceneCache(), sceneName);
+    if (!pieces.length) return 0;
+    const back = decorSaleBack(pieces);
+    const account = homeAccount(region);
+    if (account && back > 0) account.accountGold += back;
+    say(`Its ${pieces.length} placed piece${pieces.length === 1 ? '' : 's'} went with it: ${back} gold to this region's bank account.`);
+    return back;
+  }
+  /** DECOR1d: what a placement is paid with - the purse, then the region's bank account (HOME1's homes' own order);
+   *  DECOR1e: and what a removal or a shrink gives back, into the purse. */
   function decorWallet() {
     const purse = bankPurse();
     const account = homeAccount(interiorBuilding?.regionIndex ?? buildingDirectory?.()?.regionIndex ?? 0);
     return {
       gold: purse.totalGold() + (account?.accountGold ?? 0),
       pay: (n) => { const short = purse.deductGold(n); if (account) account.accountGold -= short; },
+      credit: (n) => { purse.addGold(n); },
     };
   }
 
@@ -3461,7 +3476,7 @@ export function createWorldModes(host) {
         const owned = ownedHouseSummary();
         return sellHouse(playerEntity.bankAccounts, playerEntity.houses, region,
           { meshRadius: owned ? houseMeshRadius(owned) : 0, found: owned !== null }, {
-            removePermanentScene: (mapId, k) => removePermanentScene(sceneCache(), interiorSceneName(mapId, k)),
+            removePermanentScene: (mapId, k) => { decorSold(interiorSceneName(mapId, k), region); removePermanentScene(sceneCache(), interiorSceneName(mapId, k)); },   // DECOR1e: its placed pieces' half first
             // the deed named the building "<player>'s residence"; selling
             // takes that name back off the map
             undiscoverBuilding: (k) => {
@@ -3477,6 +3492,7 @@ export function createWorldModes(host) {
       // pair is exact rather than half a port.
       sellShip: () => sellShip(playerEntity.bankAccounts, bankRegion(), playerEntity, {
         removePermanentScene: (ship) => {
+          decorSold(interiorSceneName(SHIP_INTERIOR_MAP_IDS[ship], BUILDING_KEY_0), bankRegion());   // DECOR1e: its placed pieces' half first
           removePermanentScene(sceneCache(), worldSceneName(SHIP_COORDS[ship].x, SHIP_COORDS[ship].y));
           removePermanentScene(sceneCache(), interiorSceneName(SHIP_INTERIOR_MAP_IDS[ship], BUILDING_KEY_0));
         },
@@ -5619,7 +5635,7 @@ export function createWorldModes(host) {
     });
     if (!r.ok) { townTalk?.say?.(accountRefusalText(r.error)); return; }
     removePermanentScene(sceneCache(), homeSceneName(mapId, bd.buildingKey));
-    townTalk?.say?.(homeSoldLine(r.refund));
+    townTalk?.say?.(homeSoldLine(r.refund, r.decorBack));   // DECOR1e: and its placed pieces' half
   }
 
   /** ROAD-B: PlayerActivate.AttemptExteriorDoorBash (:1056-1079) - THE
@@ -7115,6 +7131,7 @@ export function createWorldModes(host) {
     const crouchPress = pressed(latch.edge, keys, 'Crouch');   // MWCROUCH: GetKeyDown, not a held-ring derivation - the levitate descent below still reads the HELD key
     const mv = moveHeld(keys);
     mv.analog = host.stickAxes?.() ?? null;   // TI2: the stick's throw, when the layer has one - MoveAxes' joystick arm takes it over the key impulse
+    if (decorTool.flying()) mv.analog = null;   // DECOR1e: the stick flies the decorator's eye - the body stands (its keys the decorator took)
     // AUDIT 28 W8: the axes advance only on frames the motor runs (a
     // held overlay is DFU's timeScale 0 - no climb, no friction).
     // AUDIT 64 F3: InputManager.cs:542-545 - `if (ToggleAutorun)
@@ -7630,7 +7647,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:9336's own wave-46 note); the interior
+          // a blow (world.js:9337's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -9965,7 +9982,11 @@ export function createWorldModes(host) {
     // TI1: the touch swipe indoors - the same mode-routed sink the RMB
     // mousemove above feeds (the dungeon context's entry, or the
     // interior rig behind the M2 cast gate).
-    attackInput(dx, dy, held) { modalAttackSink()?.(dx, dy, held); },
+    // DECOR1e: never a swing under the decorator's flight (the release
+    // still goes through - a swing held into it must let go).
+    attackInput(dx, dy, held) { if (held && decorTool.flying()) return; modalAttackSink()?.(dx, dy, held); },
+    /** DECOR1e: the decorator's camera flies - the hosts' finger taps activate nothing under it. */
+    decorFlying: () => decorTool.flying(),
     hover,
     wheel,
     /** A mode-owned window is up (the hosts' look gate reads this

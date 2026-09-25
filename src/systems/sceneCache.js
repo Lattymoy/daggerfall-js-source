@@ -146,6 +146,17 @@ export function restoreCachedScene(cache, sceneName) {
   return data;
 }
 
+/** DECOR1e: A SOLD ROOM'S PLACED PIECES, taken out of its scene and answered as they were - none of them stands again
+ *  and none is paid back twice (the offline house's and the ship's live here, DECOR1c). What they held stays in the
+ *  scene and goes with it at the next clearing, as a sold house's own containers' things do. */
+export function takeSceneDecor(cache, sceneName) {
+  const d = cache.scenes.get(sceneName);
+  if (!d?.decor?.length) return [];
+  const pieces = d.decor;
+  d.decor = [];
+  return pieces;
+}
+
 /** ClearSceneCache (:115-148). `start` is DFU's own parameter name
  *  and its default: TRUE is the new-game path and empties everything,
  *  FALSE keeps the permanent scenes' data - minus their corpse
@@ -202,7 +213,7 @@ export function restoreSceneCache(cache, snap) {
 // HOUSE deed's AddPermanentScene, which needed the building directory
 // to know which building was bought: H1/H2 shipped both halves -
 // banking.js:201 calls the hook inside allocateHouseToPlayer with the
-// bought building's own mapId and key, and worldModes.js:2695 supplies
+// bought building's own mapId and key, and worldModes.js:2697 supplies
 // it as addPermanentScene(sceneCache(), interiorSceneName(mapId, key)),
 // reached from the bank's buy arm (:2144-2148), the knightly gift
 // (:2752) and :4933, with sellHouse dropping the scene again (:2184). The

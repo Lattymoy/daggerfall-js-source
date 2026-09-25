@@ -68,14 +68,26 @@ export async function claimHome({ db, nowS }, player, { mapId, buildingKey, regi
 
 /**
  * GIVE ONE UP: the caller's own, whichever character holds it. Answers what it was bought for (the client pays back
- * Daggerfall's share of it).
+ * Daggerfall's share of it) and, DECOR1e, how many placed pieces went with it and half of what they cost.
  * @param {{db: any}} ctx
  */
 export async function releaseHome({ db }, player, { mapId, buildingKey } = {}) {
   if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey)) return { error: 'no-home' };
-  const row = await db.prepare('DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ? RETURNING price')
-    .bind(mapId, buildingKey, player.id).first();
-  return row ? { ok: true, price: row.price } : { error: 'no-home' };
+  // DECOR1e: the home's placed pieces go with it (decor.js - the cascade), and half of what each cost comes back, as
+  // removing it would give (net/decorLaw.js decorSaleBack: truncated, a piece at a time). Read in the SAME batch as
+  // the release, so no piece is placed between the sum and the going - and answered only when the release is the
+  // caller's; a record that is not JSON is no piece and counts nothing.
+  const [pieces, gone] = await db.batch([
+    db.prepare(`SELECT COALESCE(SUM(CASE WHEN json_valid(place) THEN 1 ELSE 0 END), 0) AS n,
+      COALESCE(SUM(CASE WHEN json_valid(place) THEN CAST(json_extract(place, '$.paid') AS INTEGER) / 2 ELSE 0 END), 0) AS back
+      FROM home_decor WHERE map_id = ? AND building_key = ?`).bind(mapId, buildingKey),
+    db.prepare('DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ? RETURNING price')
+      .bind(mapId, buildingKey, player.id),
+  ]);
+  const row = gone?.results?.[0];
+  if (!row) return { error: 'no-home' };
+  const d = pieces?.results?.[0];
+  return { ok: true, price: row.price, decorCount: Number(d?.n) || 0, decorBack: Math.max(0, Number(d?.back) || 0) };
 }
 
 /**

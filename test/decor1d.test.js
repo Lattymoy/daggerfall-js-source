@@ -13,85 +13,18 @@ import {
 } from '../src/systems/decorPlacer.js';
 import { createDecorButton, createDecorPanel, createDecorBar, decorWhyNot, decorRowSub, decorPriceText } from '../src/ui/decorPanel.js';
 import {
-  createDecorTool, flyStep, eyePoint, lookDir, DECOR_FLY_LEASH, DECOR_FLOAT_AT, DECOR_EYE_REACH, DECOR_FLY_SPEED, DECOR_FLY_FAST,
+  flyStep, eyePoint, lookDir, DECOR_FLY_LEASH, DECOR_FLOAT_AT, DECOR_EYE_REACH, DECOR_FLY_SPEED, DECOR_FLY_FAST,
   DECOR_FLY_ACTIONS, DECOR_REFUSAL_MS,
 } from '../src/scenes/decorTool.js';
-import { decorCatalogue, collectDecor } from '../src/systems/decorCatalogue.js';
 import { DECOR_CAP, DECOR_SCALE_MAX, DECOR_SCALE_MIN, decorPrice } from '../src/net/decorLaw.js';
 import { decorMatrix } from '../src/scenes/decorRoom.js';
-import { PROP_MODEL_TYPE } from '../src/world/interiorLayout.js';
+
+import {
+  settle, near, rmb, TOWN, DUNGEON, fakeBlocks, fakeDoc, fakeWin, all, one, text, chipNamed, catalogue, panelRig, rows, toolRig, placeFrom,
+} from './decorFakes.mjs';
 
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
-const settle = () => new Promise((r) => setTimeout(r, 0));
-const near = (a, b, eps = 1e-6) => Math.abs(a - b) < eps;
 
-// ─── fixtures ────────────────────────────────────────────────────────────────────────────────────────────────────────
-
-/** A parsed RMB block holding one room with `models` (ids) and `flats` ([a, r] pairs). */
-const rmb = (models = [], flats = []) => ({
-  rmbBlock: {
-    subRecords: [{
-      interior: {
-        block3dObjectRecords: models.map((id) => ({ objectType: PROP_MODEL_TYPE, modelIdNum: id })),
-        blockFlatObjectRecords: flats.map(([a, r]) => ({ textureArchive: a, textureRecord: r })),
-      },
-    }],
-  },
-});
-const TOWN = 1;
-const DUNGEON = 2;
-function fakeBlocks(list) {
-  return {
-    count: list.length,
-    getBlockType: (i) => list[i].type,
-    getBlock: (i) => { if (list[i].throws) throw new Error('bad block'); return list[i].block; },
-  };
-}
-
-function fakeNode(tag, doc) {
-  const n = {
-    tag, doc, children: [], attrs: {}, style: {}, dataset: {}, listeners: {}, className: '', textContent: '', id: '', disabled: false, value: '',
-    append(...cs) { for (const c of cs) if (c) n.children.push(c); },
-    replaceChildren(...cs) { n.children = []; n.append(...cs); },
-    setAttribute(k, v) { n.attrs[k] = String(v); }, getAttribute(k) { return n.attrs[k] ?? null; }, removeAttribute(k) { delete n.attrs[k]; },
-    addEventListener(t, fn) { (n.listeners[t] ??= []).push(fn); },
-    fire(t, ev = {}) { for (const fn of n.listeners[t] ?? []) fn({ stopPropagation() {}, preventDefault() {}, ...ev }); },
-    focus() {}, remove() { n.removed = true; },
-  };
-  return n;
-}
-function fakeDoc() {
-  const doc = {};
-  doc.createElement = (t) => fakeNode(t, doc);
-  doc.head = fakeNode('head', doc); doc.body = fakeNode('body', doc);
-  doc.getElementById = (id) => doc.head.children.find((c) => c.id === id) ?? null;
-  return doc;
-}
-function fakeWin() {
-  const on = {};
-  return {
-    on,
-    addEventListener(t, fn) { (on[t] ??= []).push(fn); },
-    removeEventListener(t, fn) { on[t] = (on[t] ?? []).filter((f) => f !== fn); },
-    /** Dispatch an event to the window's listeners; answers what they did to it. */
-    fire(t, ev = {}) {
-      const seen = { prevented: false, stopped: false };
-      const e = { type: t, preventDefault() { seen.prevented = true; }, stopImmediatePropagation() { seen.stopped = true; }, stopPropagation() {}, ...ev };
-      for (const fn of [...(on[t] ?? [])]) fn(e);
-      return seen;
-    },
-  };
-}
-const all = (n, cls, out = []) => { if (String(n.className).split(/\s+/).includes(cls)) out.push(n); for (const c of n.children ?? []) all(c, cls, out); return out; };
-const one = (n, cls) => all(n, cls)[0];
-const text = (n) => (n.textContent || '') + (n.children ?? []).map(text).join('');
-const chipNamed = (root, label) => all(root, 'dfdecor-chip').find((c) => c.textContent === label);
-
-/** A small catalogue: two chairs (a model kind), a chest (storage), a candle (a light flat), a book (a flat). */
-function catalogue() {
-  const collected = collectDecor([rmb([41000, 41000, 41001, 41811], [[210, 3], [209, 0]]), rmb([41000], [[209, 0]])]);
-  return decorCatalogue(collected);
-}
 
 // ─── THE SCAN ────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -190,24 +123,6 @@ test('DECOR1d where a new piece stands: a model lifted by its own bottom (turned
 
 // ─── THE SURFACES ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-function panelRig({ gold = 1000, count = 0, ready = true, entries = catalogue() } = {}) {
-  const doc = fakeDoc();
-  const win = fakeWin();
-  const placed = [];
-  let closed = 0;
-  const pointed = [];
-  const radius = new Map(entries.map((e, i) => [e.key, 0.3 + i * 0.4]));
-  const view = (over = {}) => ({
-    where: 'Your house', entries, progress: 1, ready, gold, count, cap: DECOR_CAP,
-    radiusOf: (e) => radius.get(e.key) ?? null, priceOf: (e) => (radius.has(e.key) ? decorPrice(radius.get(e.key), 1) : null), ...over,
-  });
-  const panel = createDecorPanel({
-    doc, win, onPlace: (e) => placed.push(e), onClose: () => { closed++; }, onPoint: (e) => pointed.push(e?.key ?? null),
-    thumbOf: async (e) => `data:${e.key}`,
-  });
-  return { doc, win, panel, view, placed, pointed, closed: () => closed, entries, radius };
-}
-const rows = (root) => all(root, 'dfdecor-row');
 
 test('DECOR1d the panel: it opens over the room as the host slot\'s window (it pauses; Escape through the slot or the window closes it, once), lists the catalogue with each piece\'s kind, size and price, filters by kind, words, size, holds-things and gives-light and sorts; a piece chosen shows its name, line and price, and Place stands idle with the reason when the size is unread, the room full or the gold short; placing closes the panel and names the piece; the foot says the count, the gold and the scan (mutants: a disabled Place placing, the cap unread, the gold unread)', async () => {
   const { panel, view, placed, closed, doc, win, entries } = panelRig({ gold: 1000 });
@@ -387,72 +302,6 @@ test('DECOR1d the free camera\'s arithmetic: forward along the look, sideways al
   assert.ok(DECOR_FLY_FAST > DECOR_FLY_SPEED);
 });
 
-/** The default bindings the rig's `actionOf` reads (systems/inputActions.js DEFAULT_BINDINGS, the ones a flight meets). */
-const ACTIONS = new Map([['KeyW', 'MoveForwards'], ['KeyS', 'MoveBackwards'], ['KeyA', 'MoveLeft'], ['KeyD', 'MoveRight'], ['Space', 'Jump'],
-  ['KeyC', 'Crouch'], ['ShiftLeft', 'Run'], ['ArrowLeft', 'TurnLeft'], ['ArrowRight', 'TurnRight'], ['PageUp', 'FloatUp'],
-  ['PageDown', 'FloatDown'], ['KeyE', 'Interact'], ['Escape', 'Escape'], ['KeyI', 'Status'], ['Enter', 'ActivateCursor']]);
-/** The tool over fakes of every seam the host hands it. */
-function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 1000, homeDecor = null, locked = true, touch = false } = {}) {
-  const doc = fakeDoc();
-  const win = fakeWin();
-  const entries = catalogue();
-  const standing = [];
-  const pool = { put: (p) => standing.push(p), size: () => standing.length };
-  const names = new Map();
-  const slots = [];
-  const said = [];
-  const w = { gold, paid: [] };
-  let visit = 1;
-  let cursorOff = 0;
-  const cpuModels = new Map(entries.filter((e) => e.model != null).map((e) => [e.model, { positions: new Float32Array([-0.5, -0.1, -0.5, 0.5, 0.9, 0.5]) }]));
-  const draws = [];
-  const renderer = {
-    drawMesh: (gpu, m, remap) => draws.push({ gpu, m, remap }),
-    createBillboardBatch: (a, r, size, centers) => ({ archive: a, record: r, size, centers, bounds: [0, 0, 0, 1] }),
-    destroyBillboardBatch: (b) => { b.destroyed = true; },
-    panelFrame: (opts, body) => { draws.push({ panel: opts }); body(); },
-    setFog() {}, setLighting() {},
-  };
-  const state = { room, locked };
-  const tool = createDecorTool({
-    doc, win, touch, renderer, pool, names,
-    canvas: { width: 1600, height: 900, getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 450 }) },
-    room: () => state.room,
-    scanDeps: () => ({
-      blocks: fakeBlocks([{ type: TOWN, block: rmb([41000, 41000, 41001, 41811], [[210, 3], [209, 0]]) }, { type: TOWN, block: rmb([41000], [[209, 0]]) }]),
-      isTownBlock: (t) => t === TOWN, modelRadius: () => 0.8, flatRadius: async () => 0.2,
-    }),
-    getGpuMesh: async (id) => ({ gpu: id }), cpuModels,
-    getTexture: async () => ({ recordCount: 30, getSize: () => ({ width: 16, height: 32 }), getScale: () => ({ width: 0, height: 0 }) }),
-    uploadRecord() {}, iconUrl: async () => null,
-    collider: () => ({ raycastHit: () => ({ dist: 2 }) }), origin: () => [10, 0, 10], eye: () => [10, 1.6, 10],
-    actionOf: (e) => ACTIONS.get(e.code) ?? null,
-    locked: () => state.locked, cursorOff: () => { cursorOff++; },
-    wallet: () => ({ gold: w.gold, pay: (n) => { w.paid.push(n); w.gold -= n; } }),
-    homeDecor, character: () => 'char-me', visit: () => visit,
-    openSlot: (o) => slots.push(['open', o]), closeSlot: (o) => slots.push(['close', o]),
-    say: (l) => said.push(l), refusal: (word) => `refused: ${word}`, now: () => 0,
-  });
-  const cam = { pos: [10, 1.6, 10], yaw: 0, pitch: 0 };
-  const frame = (over = {}) => tool.frame({ dt: 0.1, cam, overlayUp: false, interior: true, ...over });
-  return {
-    tool, doc, win, entries, standing, names, slots, said, w, cam, frame, draws, state,
-    setVisit: (v) => { visit = v; }, cursorOffs: () => cursorOff,
-  };
-}
-/** Open the panel, let the scan finish, choose `key` and press Place. */
-async function placeFrom(rig, key) {
-  rig.frame();
-  assert.equal(rig.tool.openPanel(), true);
-  for (let i = 0; i < 6; i++) { rig.frame({ overlayUp: true }); await settle(); }
-  const root = rig.doc.body.children.find((c) => c.className === 'dfdecor');
-  rows(root).find((r) => r.dataset.key === key).fire('click');
-  all(root, 'dfdecor-btn').find((b) => b.textContent === 'Place').fire('click');
-  rig.frame();
-  await settle();
-  rig.frame();
-  return root;
-}
 
 test('DECOR1d the tool: the button stands in a room the player may decorate and no other, and not under a window; the panel opens into the host\'s overlay slot and leaves it on its close; the scan runs while it is open and names every piece for the host\'s hover; a room with pieces names them for a visitor too (mutants: the button over a window, the slot never left, the names never filled)', async () => {
   const rig = toolRig();

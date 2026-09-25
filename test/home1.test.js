@@ -154,7 +154,7 @@ test('HOME1 the service: a town\'s homes are any session\'s to read (a guest\'s 
   const r1 = await call('POST', '/v1/homes/release', { mapId: home().mapId, buildingKey: home().buildingKey }, mara);
   assert.deepEqual([r1.status, r1.body.error], [404, 'no-home']);
   const r2 = await call('POST', '/v1/homes/release', { mapId: home().mapId, buildingKey: home().buildingKey }, aldric);
-  assert.deepEqual(r2.body, { ok: true, price: 42000 });
+  assert.deepEqual(r2.body, { ok: true, price: 42000, decorCount: 0, decorBack: 0 });   // DECOR1e: no pieces placed, none given back
   assert.equal((await call('POST', '/v1/homes/claim', home({ character: 'char-mara' }), mara)).status, 200, 'free again, and Mara\'s');
   // shapes
   assert.equal((await call('POST', '/v1/homes/claim', home({ buildingKey: 0 }), aldric)).body.error, 'bad-home');
@@ -327,7 +327,7 @@ test('HOME1 the client\'s registry: a town is asked once while its answer is out
   assert.equal(api.calls.filter((c) => c[0] === 'town').length, towns + 2, 'a taken claim reads the town again - the door should say whose');
   assert.deepEqual(await homes.setEntry(T, 5, 'public'), { ok: true, entry: 'public' });
   assert.equal(homes.homeAt(T, 5).entry, 'public');
-  assert.deepEqual(await homes.release(T, 5), { ok: true, price: 42000 });
+  assert.deepEqual(await homes.release(T, 5), { ok: true, price: 42000, decorCount: 0, decorBack: 0 });   // DECOR1e: the pieces' answer too
   assert.equal(homes.homeAt(T, 5), null, 'gone at once');
   // the door's bound: a town whose answer never comes is not waited on
   api.hold = new Promise((res) => { setTimeout(res, 1500); });   // the town answers, but long after a door should wait
@@ -367,7 +367,7 @@ test('HOME1 buying and selling: the purse is asked before the claim, the claim b
   assert.deepEqual(await sellOnlineHome(homes, { mapId: T, buildingKey: 9, credit: (n) => credited.push(n) }), { ok: false, error: 'no-home' });
   assert.deepEqual(credited, []);
   api.releaseAnswer = { ok: true, data: { ok: true, price: 30000 } };
-  assert.deepEqual(await sellOnlineHome(homes, { mapId: T, buildingKey: 9, credit: (n) => credited.push(n) }), { ok: true, refund: 25500 });
+  assert.deepEqual(await sellOnlineHome(homes, { mapId: T, buildingKey: 9, credit: (n) => credited.push(n) }), { ok: true, refund: 25500, decorBack: 0 });   // DECOR1e: no pieces, none back
   assert.deepEqual(credited, [25500], 'the service\'s price, at the deed\'s share');
 });
 

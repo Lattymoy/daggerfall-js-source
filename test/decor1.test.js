@@ -16,7 +16,7 @@ import { _resetKeyForTests } from '../server-account/src/signing.js';
 import { placeDecor } from '../server-account/src/decor.js';
 import {
   DECOR_CAP, DECOR_POS_MAX, DECOR_SCALE_MIN, DECOR_SCALE_MAX, DECOR_PRICE_MIN, DECOR_PRICE_MAX, DECOR_OPS_MAX,
-  decorWhatOf, decorLightOf, decorPlaceOf, decorPieceOf, decorPrice, decorRefund, decorRescale, mintDecorId,
+  decorWhatOf, decorLightOf, decorPlaceOf, decorPieceOf, decorPrice, decorRefund, decorRescale, mintDecorId, decorSaleBack,
 } from '../src/net/decorLaw.js';
 import { accountDecor, REFUSALS, SESSION_KEY } from '../src/net/accountClient.js';
 import { collectDecor, decorCatalogue, filterDecor, decorSize, decorKey, modelKind, flatKind, DECOR_KINDS } from '../src/systems/decorCatalogue.js';
@@ -186,6 +186,29 @@ test('DECOR1 the service: a home\'s pieces are any session\'s to read (a guest\'
   // the home released takes its pieces
   assert.equal((await call('POST', '/v1/homes/release', HOME, aldric)).status, 200);
   assert.equal(db.prepare('SELECT COUNT(*) AS n FROM home_decor').get().n, 0, 'CASCADE - the next owner walks into an empty house');
+});
+
+test('DECOR1e a home sold takes its placed pieces, and its release answers how many and half of what each cost - truncated a piece at a time, as removing each would give (the law\'s decorSaleBack, the client\'s own sum for a house or a ship), read in the same batch as the going; another player\'s release takes and answers nothing; a record that is not JSON is no piece; a home with none answers none (mutants: the half of the sum, the bad record counted, the sum read after the going)', async (t) => {
+  t.mock.method(Date, 'now', () => T0 * 1000);
+  const { env, call, registered } = await stand();
+  const aldric = await registered('Aldric');
+  const mara = await registered('Mara');
+  assert.equal((await call('POST', '/v1/homes/claim', home(), aldric)).status, 200);
+  const at = (extra = {}) => ({ ...HOME, character: 'char-aldric', ...extra });
+  const pieces = [piece({ id: 'a1', paid: 181 }), piece({ id: 'a2', paid: 41 }), piece({ id: 'a3', paid: 21 })];
+  for (const p of pieces) assert.equal((await call('POST', '/v1/homes/decor/place', at({ piece: p }), aldric)).status, 200);
+  const db = env.DB._raw;
+  db.prepare('INSERT INTO home_decor (map_id, building_key, id, model, flat_archive, flat_record, place, placed_at) VALUES (?, ?, ?, 41000, NULL, NULL, ?, ?)')
+    .run(HOME.mapId, HOME.buildingKey, 'broken', 'not json', T0);
+  const stranger = await call('POST', '/v1/homes/release', HOME, mara);
+  assert.deepEqual([stranger.status, stranger.body], [404, { error: 'no-home' }], 'another player\'s release answers no sum');
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM home_decor').get().n, 4, 'and takes nothing');
+  const sold = await call('POST', '/v1/homes/release', HOME, aldric);
+  assert.deepEqual(sold.body, { ok: true, price: 42000, decorCount: 3, decorBack: 90 + 20 + 10 }, 'each half truncated - never the half of the sum (121)');
+  assert.equal(sold.body.decorBack, decorSaleBack(pieces), 'the service\'s sum is the law\'s');
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM home_decor').get().n, 0, 'and they went with it');
+  assert.equal((await call('POST', '/v1/homes/claim', home(), aldric)).status, 200);
+  assert.deepEqual((await call('POST', '/v1/homes/release', HOME, aldric)).body, { ok: true, price: 42000, decorCount: 0, decorBack: 0 }, 'none placed, none back');
 });
 
 test('DECOR1 the client\'s door: every call rides the one session as a Bearer header to its route, and no session is a word, not a throw; every refusal the service can say has a sentence; the deploy bundles the law and its smoke reads a room and refuses a guest (mutants: a route misspelt, the secret in the body)', async () => {

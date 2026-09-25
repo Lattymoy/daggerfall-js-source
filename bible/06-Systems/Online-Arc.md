@@ -4689,7 +4689,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6530` read, on one physical line:
+`src/scenes/worldModes.js:6546` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -8623,3 +8623,46 @@ house or ship sold with pieces in it; flying the camera by touch.
 Pinned: `test/decor1d.test.js` (13) - the scan, the placer, the panel, the button and the bar over a fake
 document, the tool over fakes of the host's seams, and the host's wiring by source. `tools/mutants/decor1d.json`
 (39).
+
+**DECOR1e - the room's own pieces changed, a room sold with its pieces, and the flight by touch.**
+
+- **In this room.** The panel has two tabs: the catalogue, and "In this room" with the count of pieces placed. The
+  room's list names each piece with what it cost, whether it holds things (and whether anything is in it), whether
+  it gives light, and the half a removal gives back. A piece chosen shows four changes - Move, Light (saying
+  whether it is lit), Holds things (saying whether it does) and Remove. The panel opens again on whichever tab it
+  was left on.
+- **Move** (`src/scenes/decorTool.js`). The same free camera as a placement, starting from the piece's own turn and
+  scale; the ghost is the piece itself, and the eye looks through the piece's own collider, so a piece nudged where
+  it stands never lands on top of itself. Moving and turning are free; resized, it costs the difference when grown
+  and gives half the difference back when shrunk (the law's `decorRescale`). The bar says "Moving <piece>" and
+  what the change costs - free, the gold, or the gold back. Placed, it stands in its own place and the panel
+  returns to the room's list with it chosen; Back leaves it as it stood. A piece whose size the catalogue has not
+  read yet is priced from what it cost, so it can still be moved.
+- **Light and Holds things** are free. A piece lit takes its catalogue piece's own light (Daggerfall's, a candle's
+  or a lamp's) and otherwise a warm lamp's. A piece made to stop holding things never does while anything is in it.
+- **Remove** gives half of what the piece cost back to the purse. A piece that holds anything is never removed -
+  what it holds would go with it - and the panel says so: "It holds things - empty it first."
+- **Online.** Every change is written to the account service first, as the owning character, and the service's
+  answer is what stands. Refused, the bar or the line gives the service's word and nothing changes. A resize is
+  paid once the service has it: short of the gold before the write, the service is never asked; short once the
+  answer came, the piece's old place is written back and nothing is paid. A removal's half is of what the SERVICE
+  says the piece cost, never the client's word.
+- **A room sold** takes its placed pieces with it, and half of what each cost comes back - truncated a piece at a
+  time, as removing each would give (`src/net/decorLaw.js` `decorSaleBack`). An online home's release reads the
+  count and the half-sum in the same batch as the going (`server-account/src/homes.js`); the one credit into the
+  region's bank pays the home's share and the pieces' half together, the offer says the pieces go too, and the sale's
+  line says how much of it was for them. An offline house's or ship's pieces are taken out of its scene when the
+  bank sells it (`takeSceneDecor` - never paid back twice), each one's half going into the account the sale pays
+  into, before the scene is dropped; what they held goes with the scene, as anything left in a sold house does.
+- **By touch.** The stick flies the eye - its throw is the pace - and the body is handed none of it; the bar's Fly
+  up and Fly down are held as Jump and Crouch are, let go when the finger lifts or a window takes the bar. On a
+  touch screen the bar stands at the top, clear of the stick and the touch layer's buttons. A tap or a swipe does
+  nothing under the flight; the bar's Place places. A gamepad's stick flies it the same way.
+
+Not yet (DECOR2): placing real items, a furnisher's shop, weapon displays.
+
+Pinned: `test/decor1e.test.js` (8) - the room's view over a fake document; a move, a resize, a light, a hold and a
+removal through the tool over fakes of the host's seams, offline and online; the touch screen's flight; the sale's
+parts, and the host's wiring by source. `test/decor1.test.js` (+1) - the service's count and half-sum at a release.
+The decorator pins' fakes have one home, `test/decorFakes.mjs` (the DECOR1d rig's pool lacked the room's own
+list and remove - a fake that lies passes a pin production would fail). `tools/mutants/decor1e.json` (60).

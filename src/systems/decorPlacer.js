@@ -50,10 +50,11 @@ const snapTo = (v, step) => round(Math.round(v / step) * step, 3);
 
 /**
  * THE TOOL for one catalogue `entry`. `radius` its measured radius in metres (null: unmeasured), `box` a model's local
- * bounds [minX, minY, minZ, maxX, maxY, maxZ] (render/frustum.js localAabb), null for a flat.
+ * bounds [minX, minY, minZ, maxX, maxY, maxZ] (render/frustum.js localAabb), null for a flat. DECOR1e: `from` a placed
+ * piece being moved - the tool starts at its turn and its scale.
  */
-export function createDecorPlacer(entry, { radius = null, box = null } = {}) {
-  const s = { yaw: 0, raise: 0, scale: 1, snap: false };
+export function createDecorPlacer(entry, { radius = null, box = null, from = null } = {}) {
+  const s = { yaw: from ? wrapTurn(from.rot?.[0] ?? 0) : 0, raise: 0, scale: from?.scale ?? 1, snap: false };
 
   /** How far above a surface point the piece's origin stands, before the owner's own lift. */
   function lift() {

@@ -106,8 +106,11 @@ export const homeShortLine = (price) => `You need ${price} gold, in your purse a
 /** The owner's menu at their own door. */
 export const homeOwnerLines = (home) => ['This is your home.', homeEntryLine(home.entry)];
 export const homeEntryLine = (entry) => `Who may enter: ${HOME_ENTRY_WORDS[entry] ?? HOME_ENTRY_WORDS[HOME_ENTRY_DEFAULT]}.`;
-export const homeSaleLines = (refund) => [`Sell your home for ${refund} gold?`, "The gold goes to this region's bank account. Anything left inside is lost."];
-export const homeSoldLine = (refund) => `You sold your home. ${refund} gold went to this region's bank account.`;
+export const homeSaleLines = (refund) => [`Sell your home for ${refund} gold?`, "The gold goes to this region's bank account. Anything left inside is lost.",
+  'Its placed pieces go too, for half of what they cost.'];   // DECOR1e
+/** The sale said: the home's share, and (DECOR1e) its pieces' half, both into the region's account. */
+export const homeSoldLine = (refund, piecesBack = 0) => `You sold your home. ${refund + piecesBack} gold went to this region's bank account`
+  + (piecesBack > 0 ? `, ${piecesBack} of it for its placed pieces.` : '.');
 /** The bank's answer to Buy House online (Mac chose the door, not the bank - its list is the offline house). */
 export const HOME_BANK_LINES = Object.freeze(['Online, a home is bought', 'at its own front door.']);
 
@@ -210,7 +213,9 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
     const r = await api.release(id, buildingKey);
     if (r?.ok) {
       wrote(id, buildingKey, null);
-      return { ok: true, price: Number.isSafeInteger(r.data?.price) ? r.data.price : 0 };
+      const n = (v) => (Number.isSafeInteger(v) && v > 0 ? v : 0);
+      // DECOR1e: and its placed pieces, gone with it, and half of what they cost - the service's own sum
+      return { ok: true, price: n(r.data?.price), decorCount: n(r.data?.decorCount), decorBack: n(r.data?.decorBack) };
     }
     if (r?.error === 'no-home') ensure(id, { force: true });
     return { ok: false, error: r?.error ?? 'server' };
@@ -259,6 +264,7 @@ export async function sellOnlineHome(homes, { mapId, buildingKey, credit }) {
   const r = await homes.release(mapId, buildingKey);
   if (!r.ok) return r;
   const refund = homeRefund(r.price);
-  credit(refund);
-  return { ok: true, refund };
+  const decorBack = r.decorBack ?? 0;   // DECOR1e: its placed pieces' half, as the service summed it
+  credit(refund + decorBack);
+  return { ok: true, refund, decorBack };
 }

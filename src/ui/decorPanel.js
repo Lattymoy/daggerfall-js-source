@@ -37,6 +37,7 @@ import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS } from './pixelifyFive.js';
 import { isTextEntryTarget } from './input.js';
 import { registerOverlay } from './enhancedOverlays.js';   // PX28b: Tab puts it away, as it puts away every enhanced window
 import { DECOR_KINDS, DECOR_SIZES, decorSize, filterDecor } from '../systems/decorCatalogue.js';
+import { decorRefund } from '../net/decorLaw.js';
 
 export const DECOR_STYLE_ID = 'dagger-decor-style';
 export const DECOR_CSS = `
@@ -52,8 +53,12 @@ ${PIXELIFY_FIVE_FACE}
   pointer-events: none; ${PIXEL_FONT_CSS} color: var(--bone, #e9e4d9); }
 .dfdecor[data-state="open"] { display: flex; }
 .dfdecor-card { pointer-events: auto; width: min(920px, calc(100vw - 24px)); height: min(620px, calc(100vh - 24px));
-  display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; gap: 8px; box-sizing: border-box; padding: 12px 14px;
+  display: grid; grid-template-rows: auto auto auto minmax(0, 1fr) auto; gap: 8px; box-sizing: border-box; padding: 12px 14px;
   background: rgba(14, 16, 19, .95); border: 1px solid var(--iron, #2b323b); border-radius: 6px; }
+.dfdecor-card[data-mode="room"] { grid-template-rows: auto auto minmax(0, 1fr) auto; }
+.dfdecor-card[data-mode="room"] .dfdecor-filters, .dfdecor-card[data-mode="room"] .dfdecor-place { display: none; }
+.dfdecor-card[data-mode="catalogue"] .dfdecor-room-actions { display: none; }
+.dfdecor-room-actions { display: flex; flex-wrap: wrap; gap: 4px; }
 .dfdecor-head { display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid var(--iron, #2b323b); padding-bottom: 6px; }
 .dfdecor-title { font-size: 18px; }
 .dfdecor-where { font-size: 13px; color: var(--dim, #8b8578); flex: 1; min-width: 0; overflow-wrap: anywhere; }
@@ -106,7 +111,8 @@ ${PIXELIFY_FIVE_FACE}
 .dfdecor-bar-why:empty { display: none; }
 .dfdecor-bar-btns { display: flex; flex-wrap: wrap; gap: 4px; }
 .dfdecor-bar .dfdecor-chip, .dfdecor-bar .dfdecor-btn { pointer-events: auto; }
-.dfdecor-bar.touch .dfdecor-chip, .dfdecor-bar.touch .dfdecor-btn { min-height: 44px; min-width: 44px; }
+.dfdecor-bar.touch .dfdecor-chip, .dfdecor-bar.touch .dfdecor-btn { min-height: 44px; min-width: 44px; touch-action: none; }
+.dfdecor-bar.touch { bottom: auto; top: calc(8px + env(safe-area-inset-top, 0px)); max-width: calc(100vw - 272px); }
 @media (max-width: 640px) {
   .dfdecor-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
   .dfdecor-preview { min-height: 90px; max-height: 120px; }
@@ -129,6 +135,18 @@ export function decorWhyNot({ price, ready, gold, count, cap }) {
   if (count >= cap) return `This room already holds ${cap} pieces.`;
   if (price > gold) return `You need ${price - gold} more gold.`;
   return null;
+}
+
+/** WHY A PLACED PIECE CANNOT BE REMOVED, or stop holding things: what it holds would go with it. */
+export const DECOR_HOLDS_LINE = 'It holds things - empty it first.';
+
+/** What removing a piece gives back, as said (the law's half, net/decorLaw.js decorRefund). */
+export const decorRefundText = (paid) => `${decorRefund(paid)} gold`;
+
+/** What one placed piece's row says under its name. */
+export function decorPlacedSub({ piece, holds }) {
+  return [`placed for ${piece.paid} gold`, piece.storage ? (holds ? 'holds things (not empty)' : 'holds things') : null, piece.light ? 'gives light' : null]
+    .filter(Boolean).join(' - ');
 }
 
 /** What one catalogue row says under its name. */
@@ -186,17 +204,25 @@ export function createDecorButton({ onPress, touch = false, doc = document }) {
  *   progress  - 0..1, while the scan runs; ready - whether every size has been read
  *   radiusOf(entry), priceOf(entry) - the scan's measure and the law's price (null: not yet, or never)
  *   gold      - what the player can pay with (the purse and the bank); count, cap - the room's pieces and its limit
+ *   placed    - DECOR1e: the room's placed pieces, each `{ piece, name, entry, holds }` (its catalogue entry when read,
+ *               and whether it holds anything)
  * `onPlace(entry)` - the Place button; `onClose()` - the panel went (Close, Escape, or a placement began);
- * `onPoint(entry|null)` - the piece the preview shows changed; `thumbOf(entry)` - a Promise of a flat's picture (a URL).
+ * `onPoint(entry|null)` - the piece the preview shows changed; `thumbOf(entry)` - a Promise of a flat's picture (a URL);
+ * DECOR1e: `onMove(piece)`, `onRemove(piece)`, `onToggle(piece, 'light'|'storage')` - a placed piece's four changes.
  * @param {{ onPlace: (entry: any) => void, onClose?: () => void, onPoint?: (entry: any) => void,
- *   thumbOf?: (entry: any) => Promise<string|null>|null, doc?: any, win?: any }} opts
+ *   thumbOf?: (entry: any) => Promise<string|null>|null, onMove?: (piece: any) => void, onRemove?: (piece: any) => void,
+ *   onToggle?: (piece: any, what: string) => void, doc?: any, win?: any }} opts
  */
-export function createDecorPanel({ onPlace, onClose = () => {}, onPoint = () => {}, thumbOf = () => null, doc = document, win = globalThis }) {
+export function createDecorPanel({
+  onPlace, onClose = () => {}, onPoint = () => {}, thumbOf = () => null, onMove = () => {}, onRemove = () => {}, onToggle = () => {},
+  doc = document, win = globalThis,
+}) {
   injectStyle(doc);
   const el = maker(doc);
   const root = el('div', 'dfdecor');
   root.dataset.state = 'closed';
   const card = el('div', 'dfdecor-card');
+  card.dataset.mode = 'catalogue';
   card.setAttribute('role', 'dialog');
   card.setAttribute('aria-label', 'Decorate');
   root.append(card);
@@ -208,6 +234,8 @@ export function createDecorPanel({ onPlace, onClose = () => {}, onPoint = () => 
   close.type = 'button';
   head.append(el('div', 'dfdecor-title', 'Decorate'), where, close);
 
+  // DECOR1e: the two views - the catalogue to place from, and the pieces already in the room to change
+  const tabs = el('div', 'dfdecor-chips dfdecor-tabs');
   const filters = el('div', 'dfdecor-filters');
   const search = el('input', 'dfdecor-search');
   search.type = 'search';
@@ -231,10 +259,17 @@ export function createDecorPanel({ onPlace, onClose = () => {}, onPoint = () => 
   const pickName = el('div', 'dfdecor-pick-name');
   const pickLine = el('div', 'dfdecor-pick-line');
   const pickPrice = el('div', 'dfdecor-pick-price');
-  const place = el('button', 'dfdecor-btn', 'Place');
+  const place = el('button', 'dfdecor-btn dfdecor-place', 'Place');
   place.type = 'button';
+  const roomActions = el('div', 'dfdecor-room-actions');
+  const act = (label, fn) => { const b = el('button', 'dfdecor-btn', label); b.type = 'button'; b.addEventListener('click', fn); return b; };
+  const moveBtn = act('Move', () => { const it = placedSelected(); if (it && !moveBtn.disabled) { hide(); onMove(it.piece); } });
+  const lightBtn = act('Light', () => { const it = placedSelected(); if (it) onToggle(it.piece, 'light'); });
+  const storeBtn = act('Holds things', () => { const it = placedSelected(); if (it && !storeBtn.disabled) onToggle(it.piece, 'storage'); });
+  const removeBtn = act('Remove', () => { const it = placedSelected(); if (it && !removeBtn.disabled) onRemove(it.piece); });
+  roomActions.append(moveBtn, lightBtn, storeBtn, removeBtn);
   const pickWhy = el('div', 'dfdecor-pick-why');
-  side.append(preview, pickName, pickLine, pickPrice, place, pickWhy);
+  side.append(preview, pickName, pickLine, pickPrice, place, roomActions, pickWhy);
   body.append(list, side);
 
   const foot = el('div', 'dfdecor-foot');
@@ -243,7 +278,7 @@ export function createDecorPanel({ onPlace, onClose = () => {}, onPoint = () => 
   const footStatus = el('span', '');
   foot.append(footCount, footGold, footStatus);
 
-  card.append(head, filters, body, foot);
+  card.append(head, tabs, filters, body, foot);
   doc.body?.append(root);
 
   // ── state ────────────────────────────────────────────────────────
@@ -255,6 +290,8 @@ export function createDecorPanel({ onPlace, onClose = () => {}, onPoint = () => 
   const f = { kinds: new Set(), text: '', size: null, storage: null, light: null, sort: 'common' };
   let selectedKey = null;
   let hoverKey = null;
+  let mode = 'catalogue';     // DECOR1e: or 'room'
+  let placedId = null;        // the placed piece chosen in the room's view
   let listSig = '';           // what the list was last drawn from
   let pointedKey;             // the preview's piece, as last told to the host
   /** @type {Map<string, string|null>} */
@@ -291,7 +328,13 @@ export function createDecorPanel({ onPlace, onClose = () => {}, onPoint = () => 
     }, { root: list })
     : null;
 
-  const shown = () => (view?.entries ?? []).find((e) => e.key === (hoverKey ?? selectedKey)) ?? null;
+  const placedSelected = () => (view?.placed ?? []).find((it) => it.piece.id === placedId) ?? null;
+  /** What the preview shows for a placed piece: its catalogue entry, or the piece's own shape until the catalogue is read. */
+  const placedShape = (it) => it.entry ?? { key: `placed:${it.piece.id}`, model: it.piece.model, flat: it.piece.flat, kind: 'decor', name: it.name };
+  const shown = () => {
+    if (mode === 'room') { const it = placedSelected(); return it ? placedShape(it) : null; }
+    return (view?.entries ?? []).find((e) => e.key === (hoverKey ?? selectedKey)) ?? null;
+  };
   const selected = () => (view?.entries ?? []).find((e) => e.key === selectedKey) ?? null;
   const priceOf = (e) => (e && view?.priceOf ? view.priceOf(e) : null);
   const radiusOf = (e) => (e && view?.radiusOf ? view.radiusOf(e) : null);
@@ -302,6 +345,39 @@ export function createDecorPanel({ onPlace, onClose = () => {}, onPoint = () => 
     c.setAttribute('aria-pressed', pressed ? 'true' : 'false');
     c.addEventListener('click', onClick);
     return c;
+  }
+  function drawTabs() {
+    const n = view?.placed?.length ?? 0;
+    tabs.replaceChildren(chip('Catalogue', mode === 'catalogue', () => setMode('catalogue')), chip(`In this room (${n})`, mode === 'room', () => setMode('room')));
+  }
+  function setMode(m) {
+    if (mode === m) return;
+    mode = m;
+    card.dataset.mode = m;
+    hoverKey = null;
+    redraw();
+  }
+  function placedRow(it) {
+    const r = el('div', 'dfdecor-row');
+    r.setAttribute('role', 'option');
+    r.dataset.key = it.piece.id;
+    r.setAttribute('aria-selected', it.piece.id === placedId ? 'true' : 'false');
+    const thumb = el('span', 'dfdecor-thumb');
+    const shape = placedShape(it);
+    if (shape.flat && it.entry) {
+      const img = el('img', '');
+      img.setAttribute('alt', '');
+      thumb.append(img);
+      const known = thumbs.get(shape.key);
+      if (known) img.setAttribute('src', known); else askThumb(shape, img);
+    } else {
+      thumb.textContent = (DECOR_KINDS[shape.kind] ?? 'Decorations').slice(0, 2);
+    }
+    const main = el('span', '');
+    main.append(el('div', 'dfdecor-row-name', it.name), el('div', 'dfdecor-row-sub', decorPlacedSub(it)));
+    r.append(thumb, main, el('span', 'dfdecor-row-price', `${decorRefundText(it.piece.paid)} back`));
+    r.addEventListener('click', () => { placedId = it.piece.id; redraw(); });
+    return r;
   }
   function drawChips() {
     const present = new Set((view?.entries ?? []).map((e) => e.kind));
@@ -348,11 +424,16 @@ export function createDecorPanel({ onPlace, onClose = () => {}, onPoint = () => 
   /** The list, the chips and the side - drawn again when anything they read changed. */
   function redraw() {
     if (!view) return;
+    drawTabs();
     drawChips();
     const entries = view.entries;
     watcher?.disconnect();   // the rows it watched are gone
     waiting.clear();
-    if (!entries) {
+    if (mode === 'room') {
+      const placed = view.placed ?? [];
+      if (placedId && !placed.some((it) => it.piece.id === placedId)) placedId = null;   // removed, or gone from the room
+      list.replaceChildren(...(placed.length ? placed.map(placedRow) : [el('div', 'dfdecor-empty', 'Nothing placed in this room yet.')]));
+    } else if (!entries) {
       list.replaceChildren(el('div', 'dfdecor-empty', 'Reading the catalogue...'));
     } else {
       const shownEntries = filterDecor(entries, { kinds: f.kinds, text: f.text, size: f.size, storage: f.storage, light: f.light, sort: f.sort, radiusOf });
@@ -361,8 +442,10 @@ export function createDecorPanel({ onPlace, onClose = () => {}, onPoint = () => 
     listSig = signature();
     paintSide();
   }
-  /** Everything the list reads that the host can change under it. */
-  const signature = () => [view?.entries ? view.entries.length : -1, view?.ready ? 1 : 0, view?.gold ?? 0, view?.count ?? 0].join('|');
+  /** Everything the list reads that the host can change under it (the room's pieces: each one's id, cost, light,
+   *  storage and whether it holds anything). */
+  const signature = () => [view?.entries ? view.entries.length : -1, view?.ready ? 1 : 0, view?.gold ?? 0, view?.count ?? 0,
+    (view?.placed ?? []).map((it) => `${it.piece.id}:${it.piece.paid}:${it.piece.light ? 1 : 0}:${it.piece.storage ? 1 : 0}:${it.holds ? 1 : 0}`).join(',')].join('|');
 
   function paintSide() {
     const e = shown();
@@ -382,11 +465,36 @@ export function createDecorPanel({ onPlace, onClose = () => {}, onPoint = () => 
     }
     const model = e && e.model != null ? '1' : '0';
     if (preview.dataset.model !== model) preview.dataset.model = model;
-    const why = sel ? decorWhyNot({ price: priceOf(sel), ready: !!view?.ready, gold: view?.gold ?? 0, count: view?.count ?? 0, cap: view?.cap ?? 0 }) : null;
-    pickWhy.textContent = why ?? '';
-    place.disabled = !sel || why !== null;
+    if (mode === 'room') {
+      paintRoomSide();
+    } else {
+      const why = sel ? decorWhyNot({ price: priceOf(sel), ready: !!view?.ready, gold: view?.gold ?? 0, count: view?.count ?? 0, cap: view?.cap ?? 0 }) : null;
+      pickWhy.textContent = why ?? '';
+      place.disabled = !sel || why !== null;
+    }
     const key = e ? e.key : null;
     if (key !== pointedKey) { pointedKey = key; onPoint(e); }
+  }
+
+  /** DECOR1e: the chosen placed piece - its line, what it cost, and its four changes (a piece that holds anything is not
+   *  removed, nor made to stop holding things, out from under its contents). */
+  function paintRoomSide() {
+    const it = placedSelected();
+    if (!it) {
+      pickName.textContent = (view?.placed?.length ?? 0) ? 'Choose a placed piece' : 'Nothing placed in this room yet.';
+      pickLine.textContent = '';
+      pickPrice.textContent = '';
+    } else {
+      pickName.textContent = it.name;
+      pickLine.textContent = decorPlacedSub(it);
+      pickPrice.textContent = `Remove: ${decorRefundText(it.piece.paid)} back`;
+    }
+    lightBtn.textContent = it?.piece.light ? 'Light: on' : 'Light: off';
+    storeBtn.textContent = it?.piece.storage ? 'Holds things: yes' : 'Holds things: no';
+    for (const b of [moveBtn, lightBtn]) b.disabled = !it;
+    storeBtn.disabled = !it || (it.piece.storage && it.holds);
+    removeBtn.disabled = !it || it.holds;
+    pickWhy.textContent = it?.holds ? DECOR_HOLDS_LINE : '';
   }
 
   function paintFoot() {
@@ -471,6 +579,9 @@ export function createDecorPanel({ onPlace, onClose = () => {}, onPoint = () => 
     previewCanvas: () => previewGl,
     /** Choose a piece by its key (the host's reopen after a placement keeps the choice). */
     select(key) { selectedKey = key; if (open) redraw(); },
+    /** DECOR1e: which view - 'catalogue' or 'room' - and the placed piece chosen in the room's. */
+    mode: () => mode,
+    showRoom(id = null) { placedId = id ?? placedId; if (mode === 'room') redraw(); else setMode('room'); },
     selectedKey: () => selectedKey,
     destroy() {
       if (!alive) return;
@@ -485,9 +596,12 @@ export function createDecorPanel({ onPlace, onClose = () => {}, onPoint = () => 
 }
 
 /**
- * THE BAR, while a piece is being placed. `show(info)` / `hide()`; `info` is { name, price, why, snap }. The buttons are
- * the keys' twins: `on` holds place, back, turnLeft, turnRight, raise, lower, smaller, bigger, grid.
- * @param {{ on: Record<string, () => void>, touch?: boolean, doc?: any }} opts
+ * THE BAR, while a piece is being placed. `show(info)` / `hide()`; `info` is { name, price, why, snap } and, for a move
+ * (DECOR1e), `priceText` - free, or what a resize costs or gives back. The buttons are
+ * the keys' twins: `on` holds place, back, turnLeft, turnRight, raise, lower, smaller, bigger, grid - and, on a touch
+ * screen (DECOR1e), `fly(dir)`: Fly up (1) or Fly down (-1) held, 0 let go. A touch screen's bar stands at the top,
+ * clear of the stick and the layer's buttons along the bottom.
+ * @param {{ on: Record<string, (dir?: number) => void>, touch?: boolean, doc?: any }} opts
  */
 export function createDecorBar({ on, touch = false, doc = document }) {
   injectStyle(doc);
@@ -496,7 +610,7 @@ export function createDecorBar({ on, touch = false, doc = document }) {
   root.dataset.up = '0';
   const what = el('div', 'dfdecor-bar-what');
   const keys = el('div', 'dfdecor-bar-keys',
-    touch ? 'Move and look as you walk; the piece stands where you look.'
+    touch ? 'Fly: the stick, and hold Fly up or Fly down - Look: drag - the piece stands where you look.'
       : 'Fly: walk keys, Jump up, Crouch down, Run faster - Look: mouse - Turn: wheel or Turn Left/Right (Shift: fine) - Raise/lower: Float Up/Down - Size: - and = - Grid: / - Place: click or Interact - Back: right click or Escape');
   const why = el('div', 'dfdecor-bar-why');
   const btns = el('div', 'dfdecor-bar-btns');
@@ -507,25 +621,38 @@ export function createDecorBar({ on, touch = false, doc = document }) {
     return n;
   };
   const grid = b('Grid', 'grid');
+  // DECOR1e: THE FINGER'S UP AND DOWN - held, as Jump and Crouch are on a keyboard; let go when the finger lifts, is
+  // taken, or the bar goes (a window over the flight)
+  let flyDir = 0;
+  const flyTo = (dir) => { if (dir !== flyDir) { flyDir = dir; on.fly?.(dir); } };
+  const hold = (label, dir) => {
+    const n = el('button', 'dfdecor-chip', label);
+    n.type = 'button';
+    n.addEventListener('pointerdown', (e) => { try { n.setPointerCapture?.(e.pointerId); } catch { /* a pointer gone already */ } flyTo(dir); });
+    for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) n.addEventListener(t, () => { if (flyDir === dir) flyTo(0); });
+    return n;
+  };
   btns.append(b('Place', 'place', 'dfdecor-btn'), b('Turn left', 'turnLeft'), b('Turn right', 'turnRight'), b('Raise', 'raise'),
-    b('Lower', 'lower'), b('Smaller', 'smaller'), b('Bigger', 'bigger'), grid, b('Back', 'back'));
+    b('Lower', 'lower'), b('Smaller', 'smaller'), b('Bigger', 'bigger'), grid);
+  if (touch) btns.append(hold('Fly up', 1), hold('Fly down', -1));
+  btns.append(b('Back', 'back'));
   root.append(what, keys, why, btns);
   swallowPresses(root);
   doc.body?.append(root);
   let alive = true;
   return {
     root,
-    show({ name, price, why: whyText = null, snap = false }) {
+    show({ name, price, priceText = null, why: whyText = null, snap = false }) {
       if (!alive) return;
-      const w = `${name} - ${decorPriceText(price)}`;
+      const w = `${name} - ${priceText ?? decorPriceText(price)}`;
       if (what.textContent !== w) what.textContent = w;
       const y = whyText ?? '';
       if (why.textContent !== y) why.textContent = y;
       grid.setAttribute('aria-pressed', snap ? 'true' : 'false');
       if (root.dataset.up !== '1') root.dataset.up = '1';
     },
-    hide() { if (alive && root.dataset.up !== '0') root.dataset.up = '0'; },
+    hide() { flyTo(0); if (alive && root.dataset.up !== '0') root.dataset.up = '0'; },
     isUp: () => root.dataset.up === '1',
-    destroy() { if (!alive) return; alive = false; root.remove?.(); },
+    destroy() { if (!alive) return; flyTo(0); alive = false; root.remove?.(); },
   };
 }
