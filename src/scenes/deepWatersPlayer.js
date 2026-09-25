@@ -45,10 +45,9 @@
 // afloat line, player/motor.js afloatMessageStep, which the host runs while
 // forged), so the flag's other readers in the window - the city watch, the
 // ambient light's target, a window, a quest placement or a save taking the
-// sea for a dungeon - are not reached; the water terrain collider gate,
-// which the port's carved ground (heightAt's floor) makes unnecessary; and
-// the frame-spike guard, on a motor with a fixed clock (Port-Ledger A, the
-// Iliac Puddle No More row).
+// sea for a dungeon - are not reached; and the water terrain collider gate,
+// which the port's carved ground (heightAt's floor) makes unnecessary
+// (Port-Ledger A, the Iliac Puddle No More row).
 // ═══════════════════════════════════════════════════════════════════
 
 import {
@@ -65,6 +64,8 @@ const lerp = (a, b, t) => a + (b - a) * Math.min(1, Math.max(0, t));
 const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
 /** Restore's uncrouchAfterExitUntil: a crouch is stood up this long after the water is left. */
 export const UNCROUCH_AFTER_EXIT_SECONDS = 1.5;
+/** GuardSwimMotorFrameSpike's bar: `Time.deltaTime > 0.1f`. */
+export const FRAME_SPIKE_SECONDS = 0.1;
 
 /**
  * @param {object} deps
@@ -83,6 +84,7 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
   let suppressed = false;      // swimmingSuppressed
   let exteriorContext = false; // exteriorContextActive
   let lastDecision = null;
+  let spikeSuppressed = false; // suppressedSwimMotorForFrameSpike
   // PlayerEnterExit.blockWaterLevel and isPlayerSubmerged as the forge leaves them (ApplyWaterAudioState): the
   // readers past the motor - the ambient's water sounds, Temple.AvoidDeath, an aquatic foe's WaterMove - see these.
   // And PlayerMotor's onExteriorWaterMethod, written the same way (`method`, null on a frame the driver left it be):
@@ -204,9 +206,30 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
     p.forcedSwimCrouch = false;
     if ((p.isInWaterTile || p.heightAction === 'sink') && p.heightAction !== 'unsink') p.forceUnsink();
   }
+  /**
+   * GuardSwimMotorFrameSpike: a swimmer (not levitating) whose frame's Time.deltaTime - the real frame under the
+   * mod's own 0.1 s maximumDeltaTime (the hosts' frame clamp), times the time scale - passes 0.1 s has LevitateMotor
+   * disabled for it, so the frame moves them nothing; otherwise a disabled LevitateMotor is enabled again, whoever
+   * disabled it. Under the clamp only a raised time scale (Travel Options' accelerated journey) can pass the bar.
+   */
+  function guardFrameSpike(p, swimming, frameDelta) {
+    if (swimming && !p.levitating && frameDelta > FRAME_SPIKE_SECONDS) {
+      if (p.levitateMotorEnabled !== false) { p.levitateMotorEnabled = false; spikeSuppressed = true; }
+    } else if (p.levitateMotorEnabled === false) {
+      p.levitateMotorEnabled = true;
+      spikeSuppressed = false;
+    }
+  }
+  /** ReleaseSwimMotorFrameSpikeGuard: the guard's own disable undone (inside, suppressed, the state cleared). */
+  function releaseSpikeGuard(p) {
+    if (!spikeSuppressed) return;
+    if (p.levitateMotorEnabled === false) p.levitateMotorEnabled = true;
+    spikeSuppressed = false;
+  }
   /** SuppressOutdoorSwimming / the post phase's boat arm: ClearBoatSwimPose with it. */
   function suppress(p, now) {
     swim.resetHead(false);
+    releaseSpikeGuard(p);
     if (swim.forged) restore(p, now);
     clearAudio();
     p.isPlayerSwimming = false;
@@ -248,6 +271,7 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
       exteriorContext = false;
       clearState();
       lastDecision = null;
+      releaseSpikeGuard(p);
       if (swim.forged) restore(p, now);
     },
 
@@ -275,7 +299,8 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
 
     /**
      * OutdoorSwimDriver.Update, ahead of the motor. `f`: {now (s), player, cameraY, yaw, pitch, descend, ascend,
-     * onBoat, loadGrace, input: {forward}}. Returns the forge for the host's one motor flag write -
+     * onBoat, loadGrace, input: {forward}, frameDelta (Time.deltaTime: the frame's clamped seconds x the time scale)}.
+     * Returns the forge for the host's one motor flag write -
      * {swimming, waterSurfaceY} - or null (the plain per-frame clear).
      */
     beforeMove(f) {
@@ -288,6 +313,7 @@ export function createDeepWatersPlayer({ host, locate, seaY, terrainGroundAt, co
       const d = decide(p, f, oceanY);
       d.oceanY = oceanY;
       lastDecision = d;
+      guardFrameSpike(p, d.swimming, f.frameDelta ?? 0);
       if (d.swimming && p.riding) dismount();   // DismountForSwimming: off the horse or the cart
       // the shore exit - a swimmer near the surface, not diving, outside the load grace
       if (!f.descend && swimCheckY(centreOf(p)) >= oceanY - 0.75 && !f.loadGrace && d.swimming && tryMoveToShore(p, f, oceanY)) {

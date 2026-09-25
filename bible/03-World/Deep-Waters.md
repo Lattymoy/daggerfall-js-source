@@ -1,4 +1,4 @@
-# Deep Waters - Iliac Puddle No More (DW-A to DW-D, 2026-09-25)
+# Deep Waters - Iliac Puddle No More (DW-A to DW-E2, 2026-09-25)
 
 jet082's **Iliac Puddle No More 1.2.2** (Nexus 1304; its assembly calls
 itself *Deep Waters*), ported 1:1 off the compiled assembly - Mac,
@@ -18,7 +18,9 @@ flat sheet of water a hand deep over a flat seabed; the mod carves it out.
 | DW-B | THE FLOOR: the per-pixel tile data (the biome, the local edge), the bathymetry (`DeepBathymetry.SampleDepthMeters` - the edge distance's shelf, the climate's base depth, the noise), the floor mesh and its walls, the cap that hides a pure-ocean pixel's ground and clips a coastal pixel's water tiles, the surfaces | `world/deepWatersPixel.js`, `world/deepWaterTileData.js`, `world/deepBathymetry.js`, `world/deepWaterClassification.js`, `world/deepWaterFloor.js`, `world/deepWaterCap.js`, `world/deepWaterSurface.js`, `scenes/deepWatersHost.js` |
 | DW-C | THE LOOK: the seafloor's and the surfaces' own programs (read back to GLSL uniform for uniform), the scene tint, the underwater distance fog, the horizon under the water | `render/deepWatersRender.js`, `world/deepWaterLook.js`, `render/fogGlsl.js` (`uDwFog`) |
 | DW-D | THE SWIMMER: the swim driver in its two phases around the motor, the swim movement (the multiplier, the stroke, the floor clamp), the load grace, the public player API, the ear under the water, the breath | `scenes/deepWatersPlayer.js`, `scenes/deepWatersSwimMove.js`, `world/deepWaterSwim.js`, `world/deepWaterRuntime.js`, `systems/deepWaterPlayer.js` |
-| DW-E | the fish, the decorations, the deep's foes, the sunken loot, the fish items | (next) |
+| DW-E1 | THE RUNTIME'S OTHER HALF: the transient reset a load or a teleport sends every spawner, the post-transition refresh, the light and heavy work gates, the tracker a spawner keeps what it stood in | `world/deepWaterRuntime.js`, `world/deepWaterTransients.js` |
+| DW-E2 | THE DECORATIONS: the weed, coral, rock and dead sea life of the seafloor - the catalog, the per-pixel placement, the work's pacing, the three ways a batch stands, the edge clean, the program | `world/underwaterDecorations.js`, `scenes/deepWatersDecor.js`, `render/deepWatersRender.js` (`DECOR_VS`/`DECOR_FS`, `COLUMN_GLSL`) |
+| DW-E3 to E5 | the fish and the fish items, the deep's foes and the encounter pulse, the sunken loot | (next) |
 
 ## The coastline is rebuilt, not carried (DW-A)
 
@@ -114,11 +116,78 @@ motor (`beforeMove` / `afterMove`):
   four published flags, OnStateChanged announced once a frame with each
   listener isolated, the suppression event, TryGetWaterColumn.
 
+## The runtime's other half (DW-E1)
+
+- **The transient reset** (OnTransientReset): a save starting to load and a
+  teleport reset the transition state and tell every subscriber, in the
+  order it subscribed - the fish, the foes, the loot and the decorations
+  drop what they hold.
+- **The post-transition refresh**: a load landing or a teleport (the new
+  game's first stand is one - StartNewCharacter teleports the player)
+  leaves one pending; the first frame terrain may be touched again (no
+  grace, no terrain pass running) runs the decorations' RefreshPlayerArea.
+- **The work gates**: light work while the game plays (no window over it)
+  and no load is in progress; heavy work also waits out the grace's clock.
+- **The tracker** (`world/deepWaterTransients.js`, TransientObjectTracker):
+  the list a spawner keeps of what it stood - Clear (each destroyed now),
+  Release (each handed to the encounter pulse's destroy queue), Prune (the
+  dead dropped, the far destroyed, then the farthest until the cap).
+
+## The seafloor's decorations (DW-E2)
+
+- **The catalog.** Six pools of Daggerfall's own flats from archives 105,
+  106, 206, 211, 213, 253, 305, 306, 380, 501 and 502 - weed, coral, rocks,
+  dead sea life - one per water biome (the climate's, ClimateToBiome), each
+  a list with a record repeated as often as its weight. Archive 106 records
+  2-6 are animated, at 5 frames a second.
+- **The placement**, per map pixel and seeded by it: a pass count off the
+  Decoration Frequency (its fraction a roll; more in the open ocean, fewer
+  in the desert's); each pass walks the heightmap three samples at a time
+  with a jitter of up to two, keeps a sample under the sea and stands a
+  picked record on the floor mesh's own triangle there - at least 8 m of
+  water, at most 35 degrees of slope, a quarter metre clear of the floor
+  (three quarters for the animated), half a metre under the surface at 1.2x
+  the record's height, five metres from every other, until the per-pixel
+  cap (Max Decorations Per Tile); past the cap the list is shuffled and cut.
+- **The work**, as the mod paces it: the pixels within the Decoration
+  Populate Radius of the player's, re-enqueued when the player crosses into
+  a new pixel; one pixel placed and one placed batch stood a frame; heavy
+  work only, and not in a frame the floor's deferred builds already spent a
+  millisecond in (DeepWaterPromoteTiming - the mod flushes the timing at
+  the head of its Update, so a build made in the promote itself or in a
+  settings callback never counts); the player's own pixel keeps what it
+  has; a pixel is placed once its floor is built and again whenever the
+  floor is rebuilt.
+- **Three ways a batch stands** (UnderwaterDecorationBatchFactory.Spawn):
+  with no replacement art, DFU's billboard batch - the record's own scaled
+  size, its base on the point, a random start frame; with a replacement
+  picture, a material batch - the replacement's billboard size x a random
+  0.7 to 1.2, its base on the point; an animated record whose replacement
+  has frames, a billboard each - the same random scale, from its first
+  frame, turned as a DaggerfallBillboard turns (the camera's horizontal
+  facing, not the batch's), and its CENTRE on the point (the billboard's
+  pivot is its centre and the mod sets its position straight).
+- **The edge clean** (GetEdgeCleanedTexture): a flood from each picture's
+  four edges through its padding - alpha under 16, or every channel 12 or
+  less - clears what it reaches, so a flat's black outline against its
+  transparent surround goes and the sprite reads clean against the water.
+  Not an animated replacement's frames: its material is cleaned once, and
+  then the billboard's own animation (DaggerfallBillboard.AnimateBillboard)
+  sets every frame on it straight from the imported textures.
+- **The program** (DeepWaters/UnderwaterBillboardBatchUnlit): the quad
+  stood about the up vector, its right the cross of the view's third column
+  with the up (DFU's batches' own facing), the texel times 1.12, the cut-out
+  at 0.5, the scene tint, no Unity fog - the distance fog closes it - and,
+  seen from over the sea, the top's share of the water column over it, as
+  the floor takes it (`COLUMN_GLSL`): the mod's batches write the depth
+  texture the top reads.
+
 ## What is not ported, and why
 
-The Port-Ledger's section-A row for the mod (DW-A to DW-D) carries six
-departures - the coastline built rather than shipped, the fog per fragment,
-the water column's two draws, and these three of the swimmer's:
+The Port-Ledger's section-A row for the mod carries six departures - the
+coastline built rather than shipped, the fog per fragment, the water
+column's two draws, the peripheral-location skip (below), and these two of
+the swimmer's:
 
 - **The forge's `isPlayerInsideDungeon`.** The mod raises DFU's dungeon flag
   for the Update window of each forged frame to borrow the dungeon arm's
@@ -134,13 +203,22 @@ the water column's two draws, and these three of the swimmer's:
 - **The water terrain collider gate.** The mod turns the terrain's collider
   off over the sea so a swimmer can go under the vanilla ground; the port's
   carved `heightAt` already is the floor, on the floor mesh's own triangles.
-- **The frame-spike guard.** The mod stops a swimmer for any frame over
-  0.1 s; the port's motor steps on a fixed 1/60 clock under Unity's own
-  maximumDeltaTime cap, and a machine under ten frames a second would never
-  swim at all.
-
 `PlayerShipWaterlineFix` needs no port: the two ship pixels sample flat at
-the ocean elevation, so the ship's location already stands at the sea.
+the ocean elevation, so the ship's location already stands at the sea. The
+mod's install lowers Unity's `Time.maximumDeltaTime` to 0.1 s - the port's
+hosts clamp every frame there already - and under that clamp its frame-spike
+guard (a swimmer's frame past 0.1 s moves them nothing) fires only when a
+raised time scale (Travel Options' accelerated journey) lifts the frame past
+it; it is ported so (the motor's `levitateMotorEnabled`).
+
+- **The peripheral-location skip** (SkipPeripheralLocationUpdates,
+  PumpDeferredLocationRestore). While the player is in or over deep water,
+  or any streamed terrain is ocean-connected, the mod has StreamingWorld
+  skip building every location but the player's own pixel's (and an owned
+  ship's), and builds them once the player is clear of the sea. It is a cost
+  measure for DFU's streamed world; the port builds its locations in its own
+  pipeline, so a coast's neighbouring towns stand as they do without the
+  mod.
 
 ## Online
 
@@ -159,5 +237,10 @@ the shaders transcribed u_xlat for u_xlat as oracles), `test/dwd_swim.test.js`
 (the swimmer, through a real PlayerMotor over a real Collider: the forge,
 the one edge, the surfacing, the dive, the shore exit and the post phase's
 own, the grace, the suppression, the stroke, the API, the ear, the breath,
-the afloat line).
-Mutation records: `tools/mutants/dwa.json`, `tools/mutants/dwd.json`.
+the afloat line, the frame-spike guard), `test/dwe_runtime.test.js` (the
+transient reset, the post-transition refresh, the gates, the tracker),
+`test/dwe_decorations.test.js` (the catalog, the seeded placement against
+its C# line for line, the pacing through the real host, the three spawn
+paths, the edge clean, the program and the column's share).
+Mutation records: `tools/mutants/dwa.json`, `tools/mutants/dwd.json`,
+`tools/mutants/dwe.json`.

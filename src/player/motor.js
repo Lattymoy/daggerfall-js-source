@@ -451,6 +451,7 @@ export class PlayerMotor {
     // host sinks, which is the port's behaviour before this line.
     this.onExteriorWater = false;   this.isPlayerSwimming = false;   // XL-1: PlayerEnterExit.isPlayerSwimming (:44, :177-178) beside it - DFU's OTHER swim member, the HOST's. A plain FIELD: no setter, written by the hosts alone (UpdateSpeed's swim gate below is the one _step read DFU has, PlayerMotor.cs:387 - on this field since DW-D, which parted it from `sunk`), and it must never arm cancelMovement the way `swimming` (levitateMotor.IsSwimming, PlayerMotor.cs:149-152) does. The split, and which reader takes which member, is exteriorSurface.js's header.
     this.displayAfloatMessage = false;   // PlayerEnterExit.displayAfloatMessage (:50) - afloatMessageStep's latch
+    this.levitateMotorEnabled = true;   // LevitateMotor.enabled - a disabled component's Update never runs (DW-D: the frame-spike guard)
     this._camFrom = EYE_HEIGHT;   // PlayerHeightChanger.prevCamLevel / targetCamLevel
     this._camTo = EYE_HEIGHT;
     // PlayerEntity.IsParalyzed, as FrictionMotor.GroundedMovement
@@ -1548,6 +1549,9 @@ export class PlayerMotor {
       // - so grounded/groundKey deliberately keep their last values,
       // as Unity's isGrounded does when no Move is issued.
       if (this.paralyzed) return;
+      // DW-D: ...and a DISABLED LevitateMotor (Iliac Puddle No More's GuardSwimMotorFrameSpike) runs no Update at all -
+      // PlayerMotor's return above still zeroes and mirrors, as it does for every swimmer, and nothing moves.
+      if (!this.levitateMotorEnabled) return;
       // DW-D: LevitateMotor moves through groundMotor.MoveWithMovingPlatform - a bare CharacterController.Move, which
       // never pulls the capsule DOWN onto what is under it; the snap is AcrobatMotor's anti-bump, PlayerMotor's
       // grounded path alone. With it here a swimmer (or a levitator) passing within a step of anything under it was

@@ -24,7 +24,7 @@ import { PlayerMotor, afloatMessageStep, CANNOT_FLOAT_TEXT, CANNOT_FLOAT_HUD_SEC
 import { Collider } from '../src/player/collider.js';
 import { applyMotorEffectFlags } from '../src/scenes/shared.js';
 import { exteriorSwimming } from '../src/player/exteriorSurface.js';
-import { createDeepWatersPlayer, UNCROUCH_AFTER_EXIT_SECONDS } from '../src/scenes/deepWatersPlayer.js';
+import { createDeepWatersPlayer, UNCROUCH_AFTER_EXIT_SECONDS, FRAME_SPIKE_SECONDS } from '../src/scenes/deepWatersPlayer.js';
 import { createSwimMovement, clampAboveSeafloor } from '../src/scenes/deepWatersSwimMove.js';
 import {
   swimCheckY, headUnderwater, headClearOfSurface, worldYToBlockWaterLevel, blockWaterLevelToWorldY, NO_WATER_LEVEL,
@@ -85,12 +85,12 @@ function seaWorld(settings = {}, shore = SHORE, ocean = OCEAN) {
 }
 
 /** One world.js frame (its DW-D order), with the motor's LevitateMotor.IsSwimming changes counted. */
-function frame(w, { forward = 0, strafe = 0, ascend = false, descend = false, run = false, yaw = 0, pitch = 0, onBoat = false, loadGrace = false } = {}) {
+function frame(w, { forward = 0, strafe = 0, ascend = false, descend = false, run = false, yaw = 0, pitch = 0, onBoat = false, loadGrace = false, frameDelta = DT } = {}) {
   const m = w.m;
   w.t += DT;
   const swimBefore = m.swimming;
   const wasSwimming = !!m.isPlayerSwimming;   // read BEFORE the per-frame clear (OT1)
-  const forge = w.dw.beforeMove({ now: w.t, player: m, cameraY: m.eye[1], yaw, pitch, descend, ascend, onBoat, loadGrace, input: { forward: w.lastForward } });
+  const forge = w.dw.beforeMove({ now: w.t, player: m, cameraY: m.eye[1], yaw, pitch, descend, ascend, onBoat, loadGrace, input: { forward: w.lastForward }, frameDelta });
   applyMotorEffectFlags(m, w.entity, forge ?? undefined);
   if (forge) { const line = afloatMessageStep(m, m.waterWalking); if (line) w.hud.push(line); }   // the forged frame's dungeon arm
   const swimAtStep = m.swimming;
@@ -735,4 +735,44 @@ test('DW-D: the dungeon arm\'s afloat line - once per over-encumbered swim, the 
   assert.match(modes, /player\.waterWalking = dungeonCtx\.playerWaterWalking\(\);\n\s+const afloat = afloatMessageStep\(player, player\.waterWalking\);[^\n]*\n\s+if \(afloat\) dungeonCtx\.hudSay\(afloat, CANNOT_FLOAT_HUD_SECONDS\);/);
   const world = rd('src/scenes/world.js');
   assert.match(world, /applyMotorEffectFlags\(player, playerEntity, _dwForge \?\? undefined\);\n[^\n]*\n\s+if \(_dwForge\) \{ const afloat = afloatMessageStep\(player, player\.waterWalking\); if \(afloat\) townTalk\.say\(afloat, CANNOT_FLOAT_HUD_SECONDS\); \}/);
+});
+
+test('DW-D: GuardSwimMotorFrameSpike - a swimmer\'s frame whose Time.deltaTime passes 0.1 s moves them nothing (LevitateMotor disabled), the next ordinary frame enables it again; never a levitator; released inside and when suppressed (mutants: the bar, the levitation term, the release, the motor\'s return)', () => {
+  assert.equal(FRAME_SPIKE_SECONDS, 0.1, '`Time.deltaTime > 0.1f`');
+  const w = seaWorld();
+  w.m.spawn(50, OCEAN - 3, 0);
+  for (let i = 0; i < 10; i++) frame(w);
+  assert.equal(w.m.levitateMotorEnabled, true, 'an ordinary frame leaves LevitateMotor on');
+  // the host's own clamp holds the real frame at 0.1 s (the mod's maximumDeltaTime), so only a raised time scale passes
+  frame(w, { frameDelta: 0.1 });
+  assert.equal(w.m.levitateMotorEnabled, true, 'exactly 0.1 s is not past the bar');
+  const z0 = w.m.pos[2];
+  frame(w, { forward: 1, frameDelta: 0.1 * 50 });   // Travel Options' x50 journey
+  assert.equal(w.m.levitateMotorEnabled, false, 'past the bar: disabled for the frame');
+  assert.equal(w.m.pos[2], z0, 'and the frame moves the swimmer nothing');
+  assert.equal(w.m.swimming, true, 'still a swimmer (PlayerMotor returns for them all the same)');
+  frame(w, { forward: 1 });
+  assert.equal(w.m.levitateMotorEnabled, true, 'the next ordinary frame enables it again');
+  assert.ok(w.m.pos[2] > z0, 'and moves them');
+  // a levitator is never held
+  w.m.levitating = true;
+  const lev = w.dw.beforeMove({ now: w.t, player: w.m, cameraY: w.m.eye[1], yaw: 0, pitch: 0, descend: false, ascend: false, onBoat: false, loadGrace: false, input: { forward: 0 }, frameDelta: 5 });
+  assert.ok(lev, 'forged');
+  assert.equal(w.m.levitateMotorEnabled, true, '!IsLevitating is the guard\'s own term');
+  w.m.levitating = false;
+  // held, then released by the inside frame and by the suppression
+  frame(w, { frameDelta: 5 });
+  assert.equal(w.m.levitateMotorEnabled, false);
+  w.dw.insideFrame(w.m, w.t);
+  assert.equal(w.m.levitateMotorEnabled, true, 'IsPlayerInside: ReleaseSwimMotorFrameSpikeGuard');
+  w.m.spawn(50, OCEAN - 3, 0);
+  frame(w);
+  frame(w, { frameDelta: 5 });
+  assert.equal(w.m.levitateMotorEnabled, false);
+  frame(w, { onBoat: true });
+  assert.equal(w.m.levitateMotorEnabled, true, 'SuppressOutdoorSwimming: released');
+  // the host hands the driver Time.deltaTime
+  const world = rd('src/scenes/world.js');
+  assert.match(world, /frameDelta: dt \* worldTimeScale\(\),/, 'the frame\'s clamped seconds x Time.timeScale');
+  assert.match(world, /const dt = Math\.min\(0\.1, \(now - last\) \/ 1000\);/, 'and the frame is clamped at the mod\'s own 0.1 s');
 });

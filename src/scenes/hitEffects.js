@@ -165,7 +165,7 @@ export function createHitEffects({
       // which is the same knob asked the other way.
       //
       // THIS BRANCH NEVER RAN CORRECTLY. `billboardSize` answers a
-      // {w, h} RECORD (rmbFlats.js:155, and billboardXml's override
+      // {w, h} RECORD (rmbFlats.js:166, and billboardXml's override
       // keeps the shape), and neither arm of the old ternary was that:
       // an object is not an Array, so every scaled flat took
       // `entry.size * scale` - object times number, which is NaN. A

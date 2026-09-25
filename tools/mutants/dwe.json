@@ -1,0 +1,382 @@
+[
+  {
+    "name": "DW-E1-light-work-while-not-playing",
+    "file": "src/world/deepWaterRuntime.js",
+    "old": "export function canRunLightRuntimeWork(playing) { return !!playing && resumeAt !== Infinity; }",
+    "new": "export function canRunLightRuntimeWork(playing) { return resumeAt !== Infinity; }",
+    "tests": [
+      "test/dwe_runtime.test.js"
+    ]
+  },
+  {
+    "name": "DW-E1-landed-load-leaves-no-refresh",
+    "file": "src/world/deepWaterRuntime.js",
+    "old": "export function loadFinished(realSeconds) { resumeAt = realSeconds + LOAD_GRACE_SECONDS; refreshPending = true; }",
+    "new": "export function loadFinished(realSeconds) { resumeAt = realSeconds + LOAD_GRACE_SECONDS; }",
+    "tests": [
+      "test/dwe_runtime.test.js"
+    ]
+  },
+  {
+    "name": "DW-E1-refresh-during-a-terrain-pass",
+    "file": "src/world/deepWaterRuntime.js",
+    "old": "export function canMutateTerrainData(realSeconds, playing) { return !loadGraceActive(realSeconds, playing) && !terrainUpdating; }",
+    "new": "export function canMutateTerrainData(realSeconds, playing) { return !loadGraceActive(realSeconds, playing); }",
+    "tests": [
+      "test/dwe_runtime.test.js"
+    ]
+  },
+  {
+    "name": "DW-E1-reset-keeps-the-location-count",
+    "file": "src/world/deepWaterRuntime.js",
+    "old": "function resetTransition(at, pending) {\n  locationLoads = 0;\n",
+    "new": "function resetTransition(at, pending) {\n",
+    "tests": [
+      "test/dwe_runtime.test.js"
+    ]
+  },
+  {
+    "name": "DW-E1-prune-counts-height",
+    "file": "src/world/deepWaterTransients.js",
+    "old": "      const dx = p[0] - playerPos[0], dz = p[2] - playerPos[2];\n      return dx * dx + dz * dz;",
+    "new": "      const dx = p[0] - playerPos[0], dz = p[2] - playerPos[2], dy = p[1] - playerPos[1];\n      return dx * dx + dz * dz + dy * dy;",
+    "tests": [
+      "test/dwe_runtime.test.js"
+    ]
+  },
+  {
+    "name": "DW-E1-prune-cap-takes-the-nearest",
+    "file": "src/world/deepWaterTransients.js",
+    "old": "        if (d > farSq) { farSq = d; far = i; }",
+    "new": "        if (farSq < 0 || d < farSq) { farSq = d; far = i; }",
+    "tests": [
+      "test/dwe_runtime.test.js"
+    ]
+  },
+  {
+    "name": "DW-E1-clear-destroys-the-dead-again",
+    "file": "src/world/deepWaterTransients.js",
+    "old": "      if (o && !o.destroyed()) o.destroy();\n    }\n    this.objects.length = 0;\n  }\n\n  /**\n   * Release",
+    "new": "      if (o) o.destroy();\n    }\n    this.objects.length = 0;\n  }\n\n  /**\n   * Release",
+    "tests": [
+      "test/dwe_runtime.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-open-ocean-weight",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "  add(l, R(106, 2), 12); add(l, R(106, 3), 10);",
+    "new": "  add(l, R(106, 2), 11); add(l, R(106, 3), 10);",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-swamp-is-temperate",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "    case 228: return WATER_BIOME.Swamp;",
+    "new": "    case 228: return WATER_BIOME.Temperate;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-animation-stops-at-5",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "export const usesArchiveAnimation = (rec) => rec.archive === 106 && rec.record >= 2 && rec.record <= 6;",
+    "new": "export const usesArchiveAnimation = (rec) => rec.archive === 106 && rec.record >= 2 && rec.record < 6;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-seed-without-int32-wrap",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "export const tileDecorationSeed = (x, y) => Math.imul(x, 73856093) ^ Math.imul(y, 19349663);",
+    "new": "export const tileDecorationSeed = (x, y) => (x * 73856093) ^ (y * 19349663);",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ],
+    "equivalent": true,
+    "why": "JS's `^` takes each operand through ToInt32, which wraps an exactly-represented product modulo 2^32 just as Math.imul does; a map pixel's coordinates (under 1000) keep x * 73856093 far under 2^53, so the two forms agree on every pixel the world has."
+  },
+  {
+    "name": "DW-E2-pass-roll-inclusive",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "  if (rng.value() < f32(num - n)) n++;",
+    "new": "  if (rng.value() <= f32(num - n)) n++;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-open-ocean-passes-rounded",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "    case WATER_BIOME.OpenOcean: return Math.ceil(f32(passes * f32(1.35)));",
+    "new": "    case WATER_BIOME.OpenOcean: return Math.round(f32(passes * f32(1.35)));",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-spacing-inclusive",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "        if (dx * dx + dz * dz < minSq) return false;",
+    "new": "        if (dx * dx + dz * dz <= minSq) return false;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-shallower-floor",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "export const MINIMUM_SEAFLOOR_DEPTH = 8;",
+    "new": "export const MINIMUM_SEAFLOOR_DEPTH = 7;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-steeper-slope",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "export const MAX_DECORATION_SLOPE_DEGREES = 35;",
+    "new": "export const MAX_DECORATION_SLOPE_DEGREES = 37;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-no-surface-clearance",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "      if (y >= oceanLocalY || f32(y + vh) > f32(oceanLocalY - SURFACE_DECORATION_CLEARANCE)) continue;",
+    "new": "      if (y >= oceanLocalY || f32(y + vh) > oceanLocalY) continue;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-height-tested-at-1x",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "      const vh = f32(authored * Math.max(0.01, DECORATION_SCALE_MAX));",
+    "new": "      const vh = authored;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-animated-clearance-as-still",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "export const seafloorClearance = (rec) => (usesArchiveAnimation(rec) ? ANIMATED_DECORATION_SEAFLOOR_CLEARANCE : DECORATION_SEAFLOOR_CLEARANCE);",
+    "new": "export const seafloorClearance = (rec) => DECORATION_SEAFLOOR_CLEARANCE;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-shuffle-range-short",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "    const k = rng.range(0, i + 1);",
+    "new": "    const k = rng.range(0, i);",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-no-pass-is-an-empty-list",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "  if (passes <= 0) return null;",
+    "new": "  if (passes <= 0) return [];",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-padding-alpha-bar",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "  if (data[i + 3] < 16) return true;",
+    "new": "  if (data[i + 3] < 15) return true;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-padding-black-bar",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "  return data[i] <= 12 && data[i + 1] <= 12 && data[i + 2] <= 12;",
+    "new": "  return data[i] <= 11 && data[i + 1] <= 12 && data[i + 2] <= 12;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-fallback-for-105",
+    "file": "src/world/underwaterDecorations.js",
+    "old": "    else if (rec.archive === 106) h = BUBBLE_FALLBACK_VISUAL_HEIGHT;",
+    "new": "    else if (rec.archive === 105) h = BUBBLE_FALLBACK_VISUAL_HEIGHT;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-promote-budget-inclusive",
+    "file": "src/scenes/deepWatersDecor.js",
+    "old": "      if (!canRunHeavy() || promoteMs() > PROMOTE_BUDGET_MS || processPendingBatch()) return;",
+    "new": "      if (!canRunHeavy() || promoteMs() >= PROMOTE_BUDGET_MS + 0.02 || processPendingBatch()) return;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-player-tile-not-preserved",
+    "file": "src/scenes/deepWatersDecor.js",
+    "old": "    return batches.has(entry);\n  }",
+    "new": "    return false;\n  }",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-two-pixels-a-frame",
+    "file": "src/scenes/deepWatersDecor.js",
+    "old": "      while (workQueue.length > 0 && placed < 1) {",
+    "new": "      while (workQueue.length > 0 && placed < 2) {",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-animated-replacement-lifted",
+    "file": "src/scenes/deepWatersDecor.js",
+    "old": "          .billboards.push({ centre: [p.local[0], p.local[1], p.local[2]], width: w, height: h, start: 0 });",
+    "new": "          .billboards.push({ centre: [p.local[0], p.local[1] + h * 0.5, p.local[2]], width: w, height: h, start: 0 });",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-no-random-start-frame",
+    "file": "src/scenes/deepWatersDecor.js",
+    "old": "start: Math.floor(roll() * frames) });",
+    "new": "start: 0 });",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-suppression-ignored",
+    "file": "src/scenes/deepWatersDecor.js",
+    "old": "      if (drop) positions.splice(i, 1);",
+    "new": "      if (drop && false) positions.splice(i, 1);",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-view-column-sign",
+    "file": "src/render/deepWatersRender.js",
+    "old": "    gl.uniform3f(u.uViewCol2, -v[8], v[9], v[10]);",
+    "new": "    gl.uniform3f(u.uViewCol2, v[8], v[9], v[10]);",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-decor-no-column-share",
+    "file": "src/render/deepWatersRender.js",
+    "old": "vec3 col = dwColumn(t.xyz * uColor.xyz * tint, vWorldPos);",
+    "new": "vec3 col = t.xyz * uColor.xyz * tint;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-column-share-halved",
+    "file": "src/render/deepWatersRender.js",
+    "old": "float t = min(behind / max(uTopVision, 1.0), 1.0);",
+    "new": "float t = min(behind / max(uTopVision, 1.0), 1.0) * 0.5;",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-decor-pixel-origin-dropped",
+    "file": "src/render/deepWatersRender.js",
+    "old": "      gl.uniform3fv(u.uPixelOrigin, it.origin);\n      for (const g of groups) {",
+    "new": "      for (const g of groups) {",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-decor-column-uniforms-dropped",
+    "file": "src/render/deepWatersRender.js",
+    "old": "    gl.uniform1i(u.uFogMode, 0);\n    this._columnUniforms(u, frame);",
+    "new": "    gl.uniform1i(u.uFogMode, 0);",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-decor-frame-column-off",
+    "file": "src/scenes/world.js",
+    "old": "dwRender.drawDecorations(_dwDecorList, dwColumnFrame(f));",
+    "new": "dwRender.drawDecorations(_dwDecorList, { ...dwColumnFrame(f), columnOn: false });",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-animated-frames-cleaned",
+    "file": "src/scenes/deepWatersDecor.js",
+    "old": "    if (kind !== 'animated') for (const img of out) clearEdgeBlackPixels(img);   // GetEdgeCleanedTexture",
+    "new": "    for (const img of out) clearEdgeBlackPixels(img);   // GetEdgeCleanedTexture",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-animated-replacement-batch-facing",
+    "file": "src/scenes/deepWatersDecor.js",
+    "old": "Math.max(1, Math.round(TEXTURE_106_FPS)), 1)",
+    "new": "Math.max(1, Math.round(TEXTURE_106_FPS)), 0)",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-facing-uniform-unset",
+    "file": "src/render/deepWatersRender.js",
+    "old": "        gl.uniform1i(u.uFacing, g.facing);\n",
+    "new": "",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-refresh-build-timed",
+    "file": "src/scenes/deepWatersHost.js",
+    "old": "        if (!disposed && isCurrent(entry)) apply(entry, r, timed);",
+    "new": "        if (!disposed && isCurrent(entry)) apply(entry, r, true);",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-near-promote-timed",
+    "file": "src/scenes/deepWatersHost.js",
+    "old": "      if (result !== undefined) apply(entry, result);",
+    "new": "      if (result !== undefined) apply(entry, result, true);",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  },
+  {
+    "name": "DW-E2-deferred-promote-untimed",
+    "file": "src/scenes/deepWatersHost.js",
+    "old": "      const timed = promoteDeferred.delete(entry);",
+    "new": "      const timed = (promoteDeferred.delete(entry), false);",
+    "tests": [
+      "test/dwe_decorations.test.js"
+    ]
+  }
+]

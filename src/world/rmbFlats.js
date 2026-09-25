@@ -107,6 +107,17 @@ export function billboardSize(t, record) {
   const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
   return t?.archive != null && hasTextureReplacement(t.archive, record, 0) ? applyBillboardXml(t.archive, record, size) : size;
 }
+/**
+ * DW-E2: MeshReader.GetScaledBillboardSize - the CLASSIC record's scaled
+ * size, never an XML scale. Two readers want exactly that and no door
+ * would answer it: a DaggerfallBillboardBatch standing a record with no
+ * replacement (its atlas sizes are the TEXTURE file's), and Iliac Puddle
+ * No More's placement, which reserves a record's classic height under the
+ * surface whatever art stands there later (TryGetAuthoredDecorationVisualHeight).
+ */
+export function classicBillboardSize(t, record) {
+  return scaledBillboardSize(t.getSize(record), t.getScale(record));
+}
 
 /**
  * FIELD-GUN20 (2026-09-21, Mac: "The orb projectile that fires is still

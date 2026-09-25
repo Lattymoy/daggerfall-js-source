@@ -25,19 +25,27 @@
 // RefreshLoadedTiles(force), which its settings callback runs too.
 //
 // The mod's two geometry settings (Water Depth, Spawn Water Surfaces) are
-// read at each build; a change re-promotes every standing pixel, as the
-// mod's LoadSettings does. Its Enabled switch is the port's and is read
-// once, at the world's mount (a flip reaches the next world, as World of
-// Daggerfall's does).
+// read at each build. A change to ANY of its settings re-promotes every
+// standing pixel while heavy work may run - the mod's LoadSettings callback
+// runs RefreshLoadedTiles(force: true), and every floor it rebuilds is a
+// new build version the decorations follow (DW-E2). Its Enabled switch is
+// the port's and is read once, at the world's mount (a flip reaches the
+// next world, as World of Daggerfall's does).
+//
+// DW-E2: each floor built is a new BUILD VERSION (DeepWaterFloorMesh
+// .BuildVersion), announced (OnFloorRefreshed); and the frame's promote
+// work is timed (DeepWaterPromoteTiming) - the decorations stand down in a
+// frame it spent more than a millisecond in.
 // ═══════════════════════════════════════════════════════════════════
 
 import { openDeepWaters, deepWatersLocationRects } from '../world/deepWatersClient.js';
-import { modSetting, modSettingsGeneration } from '../systems/modSettings.js';
+import { modSetting, modSettingsGeneration, MOD_SETTINGS } from '../systems/modSettings.js';
 import { DeepWaterTileData } from '../world/deepWaterTileData.js';
 import { sampleMeshLocalY, HOLES_RESOLUTION, TILE_WORLD_SIZE } from '../world/deepWaterFloor.js';
 import { DW_OCEAN_LOCAL_Y } from '../world/deepWatersPixel.js';
 import { mapDataHasWater, isLocalPointWater } from '../world/deepWaterClassification.js';
 import { sampleDepthMeters } from '../world/deepBathymetry.js';
+import { scaledSliderValue } from '../world/deepWaterLook.js';   // DW-E2: GetScaledSliderValue, one home
 
 export const DEEP_WATERS_VENDOR = 'iliac-puddle-no-more';
 
@@ -54,6 +62,22 @@ const chebyshev = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
 export function deepWatersSwimSettings() {
   const get = (k) => modSetting(DEEP_WATERS_VENDOR, k);
   return { swimSpeedMultiplier: Number(get('General.SwimSpeedMultiplier')), enableSwimStroke: get('General.EnableSwimStroke') === true, argonianInfiniteBreath: get('General.ArgonianInfiniteBreath') === true };
+}
+
+/** DW-E2: DeepWaters.ApplySettings' decoration reads - the switch, the radius (clamped where read), the frequency (0.5 is 3.75 passes), the per-pixel cap (64..2304). */
+export function deepWatersDecorationSettings() {
+  const get = (k) => modSetting(DEEP_WATERS_VENDOR, k);
+  return {
+    spawn: get('General.SpawnUnderwaterDecorations') === true,
+    radius: Math.trunc(Number(get('General.DecorationPopulateRadius'))),
+    frequency: scaledSliderValue(get('General.DecorationFrequency'), 3.75),
+    maxPerTile: Math.min(2304, Math.max(64, Math.trunc(Number(get('General.MaxDecorationsPerTile'))))),
+  };
+}
+
+/** Every one of the mod's settings, as a comparable snapshot (a change to any is the LoadSettings callback). */
+export function deepWatersSettingsSnapshot() {
+  return JSON.stringify(Object.keys(MOD_SETTINGS[DEEP_WATERS_VENDOR]?.keys ?? {}).map((k) => modSetting(DEEP_WATERS_VENDOR, k)));
 }
 
 /** The settings a pixel's geometry is built from - DeepWaters.ApplySettings' two geometry reads. */
@@ -108,8 +132,12 @@ export function wallColliderIndices(floor) {
  * @param {(px: number, py: number, out: number[]) => number[]} deps.pixelTranslation
  * @param {object} deps.gpu - {create(entry, result) -> handle, destroy(handle), setTilemap(entry, bytes)}
  * @param {object} [deps.client] - test seam: an openDeepWaters-shaped client
+ * @param {() => boolean} [deps.canRunHeavy] - DeepWaterRuntime.CanRunHeavyRuntimeWork (the settings callback's rebuild gate)
+ * @param {(entry: object) => void} [deps.onFloorRefreshed] - DeepWaterFloorBuilder.OnFloorRefreshed
+ * @param {() => number} [deps.clock] - milliseconds (performance.now), for the promote timing
  */
-export function createDeepWatersHost({ woods, woodsBytes = null, locations = [], maps = null, blocks = null, built, climateAt, currentPixel, collider = null, pixelTranslation = null, gpu = null, client = null }) {
+export function createDeepWatersHost({ woods, woodsBytes = null, locations = [], maps = null, blocks = null, built, climateAt, currentPixel, collider = null, pixelTranslation = null, gpu = null, client = null,
+  canRunHeavy = () => true, onFloorRefreshed = null, clock = () => performance.now() }) {
   const dw = client ?? openDeepWaters({ woods, woodsBytes, rects: deepWatersLocationRects(woods, locations, maps, blocks) });
   let bake = null;
   let disposed = false;
@@ -117,6 +145,14 @@ export function createDeepWatersHost({ woods, woodsBytes = null, locations = [],
   let inFlight = null;          // the deferred key on the worker now
   let settingsGen = modSettingsGeneration();
   let geometry = deepWatersGeometrySettings();
+  let snapshot = deepWatersSettingsSnapshot();
+  let floorBuildVersion = 0;   // DeepWaterFloorMesh.BuildVersion's counter, one per floor built
+  let promoteMs = 0;           // DeepWaterPromoteTiming: this frame's promote work
+  // PumpDeferredBuilds' work is the one kind the decorations' budget sees: the mod
+  // flushes the timing at the head of its Update, so a build made inside
+  // StreamingWorld's promote (HandlePromote's near arm) or a settings callback
+  // (RefreshLoadedTiles) is gone before ProcessWorkQueue reads it
+  const promoteDeferred = new WeakSet();
 
   const keyOf = (e) => `${e.px},${e.py}`;
   const isCurrent = (e) => built.get(keyOf(e)) === e;
@@ -163,8 +199,13 @@ export function createDeepWatersHost({ woods, woodsBytes = null, locations = [],
     entry.deepWaters = null;
   }
 
-  /** Stand one result on its (still current) entry, replacing what stood there. */
-  function apply(entry, result) {
+  /** Stand one result on its (still current) entry, replacing what stood there - a deferred promote's timed as promote work. */
+  function apply(entry, result, timed = false) {
+    const t0 = timed ? clock() : 0;
+    try { applyNow(entry, result); } finally { if (timed) promoteMs += clock() - t0; }
+    if (entry.deepWaters?.floor) onFloorRefreshed?.(entry);
+  }
+  function applyNow(entry, result) {
     release(entry);
     // the cap: the patched TileMap, or the one the pixel streamed (DeepWaterTerrainCapRenderer.Restore)
     if (result?.cap?.tilemap) { gpu?.setTilemap?.(entry, result.cap.tilemap); entry._dwPatched = true; }
@@ -174,6 +215,7 @@ export function createDeepWatersHost({ woods, woodsBytes = null, locations = [],
       ocean: result.ocean, fallback: result.fallback, biomeClimateIndex: result.biomeClimateIndex,
       holes: result.holes, floor: result.floor, surface: result.surface,
       hide: !!result.cap?.hide,
+      floorVersion: result.floor ? ++floorBuildVersion : 0,
       gpu: null, bucket: null, _tile: null,
     };
     // the walls' collider, pixel-local through the live translation (the mod's MeshCollider over the floor mesh:
@@ -221,7 +263,7 @@ export function createDeepWatersHost({ woods, woodsBytes = null, locations = [],
     published(entry, result = undefined) {
       if (disposed) return;
       if (result !== undefined) apply(entry, result);
-      else if (bake) deferred.set(keyOf(entry), entry);
+      else if (bake) { deferred.set(keyOf(entry), entry); promoteDeferred.add(entry); }
     },
 
     /** destroyPixel: the pixel's Deep Waters leave with it (its texture goes with the pixel). */
@@ -231,19 +273,49 @@ export function createDeepWatersHost({ woods, woodsBytes = null, locations = [],
       entry._dwPatched = false;
     },
 
-    /** One frame's work: a settings change re-promotes everything; one deferred build goes out. */
+    /**
+     * One frame's work: a change to the mod's settings re-reads the geometry
+     * and, while heavy work may run, re-promotes everything (LoadSettings);
+     * one deferred build goes out. Returns true when the settings changed this
+     * frame (the callback's other half is the decorations' RefreshPlayerArea).
+     */
     pump() {
-      if (disposed) return;
+      if (disposed) return false;
+      let changed = false;
       const g = modSettingsGeneration();
       if (g !== settingsGen) {
         settingsGen = g;
-        const next = deepWatersGeometrySettings();
-        if (next.waterDepth !== geometry.waterDepth || next.spawnSurfaces !== geometry.spawnSurfaces) {
-          geometry = next;
-          if (bake) refreshAll();
+        const next = deepWatersSettingsSnapshot();
+        if (next !== snapshot) {
+          snapshot = next;
+          changed = true;
+          geometry = deepWatersGeometrySettings();
+          if (bake && canRunHeavy()) refreshAll();
         }
       }
-      if (!bake || inFlight || deferred.size === 0) return;
+      this._pumpBuild();
+      return changed;
+    },
+
+    /**
+     * The promote work since the last flush, in milliseconds
+     * (DeepWaterPromoteTiming.CurrentTotalMs) - PumpDeferredBuilds' builds
+     * only (promoteDeferred, above). The port's deferred builds land
+     * whenever their worker answers, so the window is the one between two
+     * frames' decoration passes; the host flushes it after each
+     * (DeepWaterPromoteTiming.Flush).
+     */
+    get promoteMs() { return promoteMs; },
+    flushPromoteTiming() { promoteMs = 0; },
+
+    /** The pixel's built floor for the decorations: its mesh, build version and biome climate, or null. */
+    floorOf(entry) {
+      const s = entry?.deepWaters;
+      return s?.floor ? { floor: s.floor, version: s.floorVersion, climateIndex: s.biomeClimateIndex } : null;
+    },
+
+    _pumpBuild() {
+      if (disposed || !bake || inFlight || deferred.size === 0) return;
       const here = currentPixel();
       let bestKey = null, best = Infinity;
       for (const [k, e] of deferred) {
@@ -255,9 +327,10 @@ export function createDeepWatersHost({ woods, woodsBytes = null, locations = [],
       const entry = deferred.get(bestKey);
       deferred.delete(bestKey);
       inFlight = bestKey;
+      const timed = promoteDeferred.delete(entry);   // a promote the event deferred, not a refresh
       promote(entry).then((r) => {
         if (inFlight === bestKey) inFlight = null;
-        if (!disposed && isCurrent(entry)) apply(entry, r);
+        if (!disposed && isCurrent(entry)) apply(entry, r, timed);
       }, () => { if (inFlight === bestKey) inFlight = null; });
     },
 

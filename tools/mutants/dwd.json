@@ -259,5 +259,41 @@
     "tests": [
       "test/dwd_swim.test.js"
     ]
+  },
+  {
+    "name": "DW-D-spike-bar-not-strict",
+    "file": "src/scenes/deepWatersPlayer.js",
+    "old": "    if (swimming && !p.levitating && frameDelta > FRAME_SPIKE_SECONDS) {",
+    "new": "    if (swimming && !p.levitating && frameDelta >= FRAME_SPIKE_SECONDS) {",
+    "tests": [
+      "test/dwd_swim.test.js"
+    ]
+  },
+  {
+    "name": "DW-D-spike-holds-a-levitator",
+    "file": "src/scenes/deepWatersPlayer.js",
+    "old": "    if (swimming && !p.levitating && frameDelta > FRAME_SPIKE_SECONDS) {",
+    "new": "    if (swimming && frameDelta > FRAME_SPIKE_SECONDS) {",
+    "tests": [
+      "test/dwd_swim.test.js"
+    ]
+  },
+  {
+    "name": "DW-D-spike-never-released-inside",
+    "file": "src/scenes/deepWatersPlayer.js",
+    "old": "      lastDecision = null;\n      releaseSpikeGuard(p);\n      if (swim.forged) restore(p, now);",
+    "new": "      lastDecision = null;\n      if (swim.forged) restore(p, now);",
+    "tests": [
+      "test/dwd_swim.test.js"
+    ]
+  },
+  {
+    "name": "DW-D-disabled-levitate-motor-still-moves",
+    "file": "src/player/motor.js",
+    "old": "      if (!this.levitateMotorEnabled) return;\n",
+    "new": "",
+    "tests": [
+      "test/dwd_swim.test.js"
+    ]
   }
 ]

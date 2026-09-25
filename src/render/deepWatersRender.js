@@ -43,6 +43,36 @@ import { buildProgram } from './glProgram.js';
 import { FOG_GLSL } from './fogGlsl.js';
 import { SURFACE_TEXTURE_TILING, SURFACE_SCROLL, FLOOR_TEXTURE_WORLD_SCALE, FLOOR_SHADER_DEFAULTS } from '../world/deepWaterLook.js';
 
+// THE COLUMN'S SHARE (the top's alpha, split - see above): what the top
+// covers, carried toward the top's colour by min(behind / vision, 1). The
+// floor takes it, and so does everything the mod draws under the sea that
+// writes the depth texture the top reads (DW-E's decorations), each at its
+// own fragment - the host's caller declares uCamPos and FOG_GLSL first.
+export const COLUMN_GLSL = `
+uniform sampler2D uSurfaceTex;
+uniform vec3 uCamFwd;
+uniform float uColumnOn;       // 1 while the camera is over the sea and the surfaces are drawn
+uniform float uSeaY;           // the surface's world height
+uniform vec4 uTopColor;        // the top's _Color (rgb tint, a alpha)
+uniform float uTopVision;      // the top's _WaterSurfaceVisionDistance
+uniform vec2 uSurfaceScroll;   // the top's texture offset now, in repeats
+uniform vec3 uPixelOrigin;     // this pixel's world origin (the surface's uv is pixel-local)
+vec3 dwColumn(vec3 col, vec3 worldPos) {
+  if (uColumnOn > 0.5 && worldPos.y < uSeaY && uCamPos.y > worldPos.y) {
+    // where the view ray crosses the sea, and the eye depth behind it
+    vec3 toFrag = worldPos - uCamPos;
+    float s = clamp((uSeaY - uCamPos.y) / min(toFrag.y, -1e-4), 0.0, 1.0);
+    vec3 entry = uCamPos + toFrag * s;
+    float behind = max(dot(worldPos - entry, uCamFwd), 0.0);
+    float t = min(behind / max(uTopVision, 1.0), 1.0);
+    vec2 uv = (entry.xz - uPixelOrigin.xz) / 819.2 * ${SURFACE_TEXTURE_TILING.toFixed(1)} + uSurfaceScroll;
+    vec3 st = texture(uSurfaceTex, uv).rgb * uTopColor.rgb;
+    st = mix(st, uTopColor.rgb * 0.32, 0.22);
+    col = mix(col, st, t);
+  }
+  return col;
+}`;
+
 export const FLOOR_VS = `#version 300 es
 layout(location = 0) in vec3 aPos;
 layout(location = 1) in vec4 aColor;
@@ -69,7 +99,6 @@ in vec4 vColor;
 in vec2 vUv;
 in vec3 vWorldPos;
 uniform sampler2D uMainTex;
-uniform sampler2D uSurfaceTex;
 uniform vec3 uSandColor;
 uniform vec3 uMidColor;
 uniform vec3 uDeepColor;
@@ -85,15 +114,9 @@ uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
-uniform vec3 uCamFwd;
-uniform float uColumnOn;       // 1 while the camera is over the sea and the surfaces are drawn
-uniform float uSeaY;           // the surface's world height
-uniform vec4 uTopColor;        // the top's _Color (rgb tint, a alpha)
-uniform float uTopVision;      // the top's _WaterSurfaceVisionDistance
-uniform vec2 uSurfaceScroll;   // the top's texture offset now, in repeats
-uniform vec3 uPixelOrigin;     // this pixel's world origin (the surface's uv is pixel-local)
 out vec4 outColor;
 ${FOG_GLSL}
+${COLUMN_GLSL}
 void main() {
   vec2 cw = clamp(vColor.xw, 0.0, 1.0);
   float depth = exp2(log2(cw.x) * uDepthGamma);
@@ -112,18 +135,7 @@ void main() {
   col *= uAmbientBoost;
   col *= mix(vec3(1.0), uSceneTint.rgb, uSceneTint.a);
   col = mix(uFogColor, col, fogFactorAt(vWorldPos));
-  if (uColumnOn > 0.5 && vWorldPos.y < uSeaY && uCamPos.y > vWorldPos.y) {
-    // where the view ray crosses the sea, and the eye depth behind it
-    vec3 toFrag = vWorldPos - uCamPos;
-    float s = clamp((uSeaY - uCamPos.y) / min(toFrag.y, -1e-4), 0.0, 1.0);
-    vec3 entry = uCamPos + toFrag * s;
-    float behind = max(dot(vWorldPos - entry, uCamFwd), 0.0);
-    float t = min(behind / max(uTopVision, 1.0), 1.0);
-    vec2 uv = (entry.xz - uPixelOrigin.xz) / 819.2 * ${SURFACE_TEXTURE_TILING.toFixed(1)} + uSurfaceScroll;
-    vec3 st = texture(uSurfaceTex, uv).rgb * uTopColor.rgb;
-    st = mix(st, uTopColor.rgb * 0.32, 0.22);
-    col = mix(col, st, t);
-  }
+  col = dwColumn(col, vWorldPos);
   outColor = vec4(dwWaterFog(col, vWorldPos), 1.0);   // the distance fog, as every world pass takes it (off unless the camera is under)
 }`;
 
@@ -220,6 +232,89 @@ void main() {
   outColor = vec4(dwWaterFog(col, vWorldPos), a);   // the distance fog over it: the surface and all it shows share one capped ray
 }`;
 
+// DW-E2: THE DECORATIONS (DeepWaters/UnderwaterBillboardBatchUnlit), u_xlat
+// for u_xlat. DFU's billboard-batch mesh layout: each billboard's four
+// vertices at its CENTRE, the tangent (width, height, corner u, corner v);
+// the vertex program stands the quad about the up vector, its right the
+// normalised cross of the view's third column (UNITY_MATRIX_V._m02_m12_m22,
+// DaggerfallBillboardBatch.shader's own "viewDirection") with the up - so it
+// faces the camera as DFU's batches do, pitch quirk and all. Unlit: the
+// texel times _Color (1.12), the cut-out, the scene tint; the forward pass
+// takes no Unity fog (its other two programs are the shadow caster, and the
+// decorations cast none), so the distance fog alone closes it (dwWaterFog).
+// Seen from over the sea it takes the column's share, as the floor does:
+// the batches write the depth texture the top reads (the mod's cut-out
+// queue), so the top covers a weed by the water between it and the surface.
+// The texture is an ARRAY - a record's frames its layers - and a billboard
+// draws layer (start + tick) mod frames: DaggerfallBillboardBatch's
+// per-billboard frame, advanced by its coroutine at FramesPerSecond.
+//
+// THE THREE FACINGS. The batches' is the program's own (above). The mod
+// also puts the same material on single billboards, whose meshes (MeshReader
+// .GetBillboardMesh) set no tangents - the object's own rotation is what
+// faces those, and the port stands them by it: a DaggerfallBillboard (an animated replacement)
+// turns to the camera's horizontal facing, the world's up kept (uFacing 1);
+// a FaceY billboard (DW-E3's fish, DeepWaterRendering.FaceMainCamera) turns
+// to the camera itself, its up the camera's (uFacing 2). The same corner
+// offsets stand every one of them.
+export const DECOR_VS = `#version 300 es
+layout(location = 0) in vec3 aPos;
+layout(location = 1) in vec4 aTangent;
+layout(location = 2) in float aStart;
+uniform mat4 uProj;
+uniform mat4 uView;
+uniform mat4 uModel;
+uniform vec3 uViewCol2;
+uniform vec3 uUpVector;
+uniform int uFacing;       // 0 the batch's, 1 a DaggerfallBillboard's, 2 FaceY's
+uniform vec3 uCamRight;    // the camera's right (horizontal - the camera has no roll)
+uniform vec3 uCamUp;       // the camera's up
+out vec2 vUv;
+out float vStart;
+out vec3 vWorldPos;
+void main() {
+  vec3 right = uFacing == 0 ? normalize(cross(uViewCol2, uUpVector)) : uCamRight;
+  vec3 up = uFacing == 2 ? uCamUp : uUpVector;
+  vec2 corner = aTangent.zw - vec2(0.5);
+  vec3 p = aPos + right * (corner.x * aTangent.x) + up * (corner.y * aTangent.y);
+  vec4 w = uModel * vec4(p, 1.0);
+  vWorldPos = w.xyz;
+  vUv = aTangent.zw;
+  vStart = aStart;
+  gl_Position = uProj * uView * w;
+}`;
+
+export const DECOR_FS = `#version 300 es
+precision highp float;
+precision highp sampler2DArray;
+in vec2 vUv;
+in float vStart;
+in vec3 vWorldPos;
+uniform sampler2DArray uMainTex;
+uniform vec4 uColor;
+uniform float uCutoff;
+uniform vec4 uSceneTint;
+uniform float uTick;
+uniform float uFrames;
+uniform vec3 uCamPos;
+uniform int uFogMode;
+uniform float uFogDensity;
+uniform vec2 uFogRange;
+out vec4 outColor;
+${FOG_GLSL}
+${COLUMN_GLSL}
+void main() {
+  vec4 t = texture(uMainTex, vec3(vUv, mod(vStart + uTick, uFrames)));
+  if (t.w * uColor.w - uCutoff < 0.0) discard;
+  vec3 tint = uSceneTint.www * (uSceneTint.xyz - vec3(1.0)) + vec3(1.0);
+  vec3 col = dwColumn(t.xyz * uColor.xyz * tint, vWorldPos);   // the top's share over it, as over the floor
+  outColor = vec4(dwWaterFog(col, vWorldPos), 1.0);
+}`;
+
+/** UnderwaterDecorationColor (1.12, 1.12, 1.12, 1) and the cut-out's default (the source material's _Cutoff where it has one). */
+export const DECORATION_COLOR = Object.freeze([1.12, 1.12, 1.12, 1]);
+export const DECORATION_CUTOFF = 0.5;
+
 // THE SKY'S SHARE OF THE DISTANCE FOG. The mod's post effect takes every
 // pixel of the camera's image, the sky included - where the depth read is
 // the far plane (>= 0.9999) the ray's length is the band's own reach,
@@ -281,6 +376,7 @@ export class DeepWatersRenderer {
     const topFar = buildProgram(gl, SURFACE_VS, TOP_FAR_FS, 'deep waters surface top (far plane)');
     const under = buildProgram(gl, SURFACE_VS, UNDERSIDE_FS, 'deep waters surface underside');
     const skyFog = buildProgram(gl, SKY_FOG_VS, SKY_FOG_FS, 'deep waters distance fog (sky)');
+    const decor = buildProgram(gl, DECOR_VS, DECOR_FS, 'deep waters decorations');
     this._programs = {
       floor: { p: floor, u: locs(gl, floor, ['uProj', 'uView', 'uModel', 'uMainTex', 'uSurfaceTex', 'uSandColor', 'uMidColor', 'uDeepColor', 'uSwampColor',
         'uTextureWorldScale', 'uTextureStrength', 'uShelfMix', 'uDepthGamma', 'uAmbientBoost', 'uSceneTint',
@@ -290,6 +386,9 @@ export class DeepWatersRenderer {
       under: { p: under, u: locs(gl, under, ['uProj', 'uView', 'uModel', 'uLiftY', 'uSurfaceScroll', 'uMainTex', 'uColor', 'uUnderwaterFogColor', 'uUndersideAlpha',
         'uHorizonColor', 'uFadeStart', 'uFadeEnd', 'uColumnFogStrength', 'uUnderwater', 'uCamPos', 'uDwFog']) },
       skyFog: { p: skyFog, u: locs(gl, skyFog, ['uRayC', 'uRayX', 'uRayY', 'uCamPos', 'uPass', 'uDwFog']) },
+      decor: { p: decor, u: locs(gl, decor, ['uProj', 'uView', 'uModel', 'uViewCol2', 'uUpVector', 'uMainTex', 'uColor', 'uCutoff', 'uSceneTint',
+        'uTick', 'uFrames', 'uCamPos', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog',
+        'uSurfaceTex', 'uCamFwd', 'uColumnOn', 'uSeaY', 'uTopColor', 'uTopVision', 'uSurfaceScroll', 'uPixelOrigin', 'uFacing', 'uCamRight', 'uCamUp']) },
       empty: gl.createVertexArray(),   // the sky pass's triangle is gl_VertexID's
     };
     return this._programs;
@@ -348,10 +447,28 @@ export class DeepWatersRenderer {
       gl.uniform1i(u.uFogMode, r._fogMode);
       gl.uniform1f(u.uFogDensity, r._fogDensity);
       gl.uniform2fv(u.uFogRange, r._fogRange);
-      const v = r._view;   // the camera's forward in world space: minus the view matrix's third row
-      this._fwd[0] = -v[2]; this._fwd[1] = -v[6]; this._fwd[2] = -v[10];
-      gl.uniform3fv(u.uCamFwd, this._fwd);
     }
+  }
+
+  /**
+   * COLUMN_GLSL's frame: the camera's forward, the top's colour, vision
+   * and scroll, and the surface texture on unit 1 (unit 0 is the caller's).
+   * @param {Record<string, WebGLUniformLocation>} u
+   * @param {{columnOn: boolean, seaY: number, topColor: number[], topVision: number, surfaceScroll: number[], surfaceTexture: ?WebGLTexture}} frame
+   */
+  _columnUniforms(u, frame) {
+    const gl = this.gl, v = this.renderer._view;
+    this._fwd[0] = -v[2]; this._fwd[1] = -v[6]; this._fwd[2] = -v[10];   // the camera's forward in world space: minus the view matrix's third row
+    gl.uniform3fv(u.uCamFwd, this._fwd);
+    gl.uniform1f(u.uColumnOn, frame.columnOn ? 1 : 0);
+    gl.uniform1f(u.uSeaY, frame.seaY);
+    gl.uniform4fv(u.uTopColor, frame.topColor);
+    gl.uniform1f(u.uTopVision, frame.topVision);
+    gl.uniform2fv(u.uSurfaceScroll, frame.surfaceScroll);
+    gl.uniform1i(u.uSurfaceTex, 1);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, frame.surfaceTexture ?? null);
+    gl.activeTexture(gl.TEXTURE0);
   }
 
   /**
@@ -371,16 +488,8 @@ export class DeepWatersRenderer {
     gl.uniform1f(u.uShelfMix, d.shelfMix);
     gl.uniform1f(u.uDepthGamma, d.depthGamma);
     gl.uniform4fv(u.uSceneTint, frame.sceneTint);
-    gl.uniform1f(u.uColumnOn, frame.columnOn ? 1 : 0);
-    gl.uniform1f(u.uSeaY, frame.seaY);
-    gl.uniform4fv(u.uTopColor, frame.topColor);
-    gl.uniform1f(u.uTopVision, frame.topVision);
-    gl.uniform2fv(u.uSurfaceScroll, frame.surfaceScroll);
+    this._columnUniforms(u, frame);
     gl.uniform1i(u.uMainTex, 0);
-    gl.uniform1i(u.uSurfaceTex, 1);
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, frame.surfaceTexture ?? null);
-    gl.activeTexture(gl.TEXTURE0);
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
     gl.depthMask(true);
@@ -462,6 +571,142 @@ export class DeepWatersRenderer {
     gl.bindVertexArray(null);
     gl.depthMask(true);
     gl.disable(gl.BLEND);
+    gl.enable(gl.CULL_FACE);
+    gl.depthFunc(gl.LESS);
+  }
+
+  /**
+   * DW-E2: a decoration texture - a record's frames as the layers of one
+   * array (every frame the record's own size; a frame of another size ends
+   * the array there), point-sampled over a mip chain as DFU's billboard
+   * atlas is. `frames`: [{width, height, data: RGBA rows}].
+   */
+  createDecorationTexture(frames) {
+    const gl = this.gl;
+    const w = frames[0].width, h = frames[0].height;
+    let n = 1;
+    while (n < frames.length && frames[n].width === w && frames[n].height === h) n++;
+    const bytes = new Uint8Array(w * h * 4 * n);
+    for (let i = 0; i < n; i++) bytes.set(frames[i].data.subarray(0, w * h * 4), i * w * h * 4);
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA, w, h, n, 0, gl.RGBA, gl.UNSIGNED_BYTE, bytes);
+    gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
+    this.renderer.markForeignPass?.();
+    return { tex, frames: n };
+  }
+
+  deleteDecorationTexture(t) { if (t?.tex) this.gl.deleteTexture(t.tex); }
+
+  /**
+   * DW-E2: one pixel's decorations on the GPU - a VAO per group, a group
+   * one texture: {texture: {tex, frames}, fps, born (s), facing (DECOR_VS's
+   * uFacing, 0 when absent), billboards: [{centre: [x, y, z] pixel-local,
+   * width, height, start}]}.
+   */
+  createDecorations(groups) {
+    const gl = this.gl;
+    const out = { groups: [] };
+    for (const g of groups) {
+      const n = g.billboards.length;
+      if (!n || !g.texture) continue;
+      const pos = new Float32Array(n * 12), tan = new Float32Array(n * 16), start = new Float32Array(n * 4);
+      const idx = new Uint32Array(n * 6);
+      const CORNERS = [[0, 1], [1, 1], [0, 0], [1, 0]];   // BuildMaterialBillboardBatchMesh's vertex order
+      for (let i = 0; i < n; i++) {
+        const b = g.billboards[i];
+        for (let k = 0; k < 4; k++) {
+          const v = i * 4 + k;
+          pos[v * 3] = b.centre[0]; pos[v * 3 + 1] = b.centre[1]; pos[v * 3 + 2] = b.centre[2];
+          tan[v * 4] = b.width; tan[v * 4 + 1] = b.height; tan[v * 4 + 2] = CORNERS[k][0]; tan[v * 4 + 3] = CORNERS[k][1];
+          start[v] = b.start;
+        }
+        const v0 = i * 4;
+        idx.set([v0, v0 + 1, v0 + 2, v0 + 3, v0 + 2, v0 + 1], i * 6);
+      }
+      const vao = gl.createVertexArray();
+      gl.bindVertexArray(vao);
+      const buffers = [];
+      for (const [loc, data, size] of [[0, pos, 3], [1, tan, 4], [2, start, 1]]) {
+        const b = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, b);
+        gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(loc);
+        gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, 0);
+        buffers.push(b);
+      }
+      const ebo = gl.createBuffer();
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idx, gl.STATIC_DRAW);
+      buffers.push(ebo);
+      gl.bindVertexArray(null);
+      out.groups.push({ vao, buffers, count: idx.length, texture: g.texture, fps: g.fps || 0, born: g.born || 0, facing: g.facing || 0 });
+    }
+    this.renderer.markForeignPass?.();
+    return out;
+  }
+
+  destroyDecorations(h) {
+    if (!h) return;
+    const gl = this.gl;
+    for (const g of h.groups) {
+      for (const b of g.buffers) gl.deleteBuffer(b);
+      gl.deleteVertexArray(g.vao);
+    }
+    h.groups = [];
+  }
+
+  /**
+   * DW-E2: the decorations, cut-out and depth-writing (the AlphaTest queue
+   * the mod's material takes), both faces.
+   * @param {Array<{h: any, model: Float32Array, origin: number[]}>} list
+   * @param {{sceneTint: number[], seconds: number, columnOn: boolean, seaY: number, topColor: number[], topVision: number, surfaceScroll: number[], surfaceTexture: ?WebGLTexture}} frame
+   */
+  drawDecorations(list, frame) {
+    if (!list.length) return;
+    const gl = this.gl, r = this.renderer;
+    const { decor } = this._ensure();
+    const u = decor.u, v = r._view;
+    gl.useProgram(decor.p);
+    this._frameUniforms(u, 'decor');
+    // Unity's view matrix is (right, up, back) by rows; the port's lookAt is (-right, up, back) - its third column then
+    gl.uniform3f(u.uViewCol2, -v[8], v[9], v[10]);
+    gl.uniform3f(u.uUpVector, 0, 1, 0);
+    gl.uniform3f(u.uCamRight, -v[0], -v[4], -v[8]);   // the lookAt's first row is minus the camera's right
+    gl.uniform3f(u.uCamUp, v[1], v[5], v[9]);
+    gl.uniform4fv(u.uColor, DECORATION_COLOR);
+    gl.uniform1f(u.uCutoff, DECORATION_CUTOFF);
+    gl.uniform4fv(u.uSceneTint, frame.sceneTint);
+    gl.uniform1i(u.uFogMode, 0);
+    this._columnUniforms(u, frame);
+    gl.uniform1i(u.uMainTex, 0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+    gl.disable(gl.CULL_FACE);   // Cull Off
+    for (const it of list) {
+      const groups = it.h?.groups;
+      if (!groups?.length) continue;
+      gl.uniformMatrix4fv(u.uModel, false, it.model);
+      gl.uniform3fv(u.uPixelOrigin, it.origin);
+      for (const g of groups) {
+        gl.uniform1i(u.uFacing, g.facing);
+        gl.bindTexture(gl.TEXTURE_2D_ARRAY, g.texture.tex);
+        gl.uniform1f(u.uFrames, g.texture.frames);
+        gl.uniform1f(u.uTick, g.fps > 0 ? Math.floor((frame.seconds - g.born) * g.fps) : 0);
+        gl.bindVertexArray(g.vao);
+        gl.drawElements(gl.TRIANGLES, g.count, gl.UNSIGNED_INT, 0);
+      }
+    }
+    gl.bindVertexArray(null);
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
     gl.enable(gl.CULL_FACE);
     gl.depthFunc(gl.LESS);
   }

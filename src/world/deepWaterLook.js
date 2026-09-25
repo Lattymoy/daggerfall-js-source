@@ -52,8 +52,8 @@ export function fogDistanceSliderToMultiplier(v) {
   return n <= 0.5 ? lerp(0.25, 1, n / 0.5) : lerp(1, 6, (n - 0.5) / 0.5);
 }
 
-/** GetScaledSliderValue. */
-export function scaledSliderValue(v, valueAtMidpoint) { return clamp01(v) * (valueAtMidpoint / 0.5); }
+/** GetScaledSliderValue, in the C#'s floats (the decorations' frequency splits into a pass count and a fraction rolled against). */
+export function scaledSliderValue(v, valueAtMidpoint) { return Math.fround(clamp01(Math.fround(Number(v) || 0)) * Math.fround(valueAtMidpoint / 0.5)); }
 
 /** UnderwaterVisionDistance. */
 export function underwaterVisionDistance(fogDistanceSlider) {
