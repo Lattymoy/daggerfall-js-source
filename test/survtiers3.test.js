@@ -471,8 +471,8 @@ test('CORPSE-FOOD (Mac: "It needs to be accessible with people with it on"): onl
   }
   // ...and the dungeon calls it on the stream's first death and on an arrival's body that came without the room's list
   const dc = read('src/scenes/dungeonContext.js');
-  assert.match(dc, /if \(r\.d === 1 && !f\.dead\) addCorpseFood\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\);\n\s*if \(r\.d === 1\) \{ if \(!f\.dead\)/, 'the stream\'s death: the joiner\'s copy rolls its own');
-  assert.match(dc, /if \(wire && sf\.dead && !f\.dead && sf\.items == null\) addCorpseFood\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\);/, 'an arrival\'s body without the room\'s list: its own roll, food and all');
+  assert.match(dc, /if \(r\.d === 1 && !f\.dead\) \{ addCorpseFood\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\); stampWonWeapons\(f\.entity\.items, f\._fightN \?\? 1\); \}[^\n]*\n\s*if \(r\.d === 1\) \{ if \(!f\.dead\)/, 'the stream\'s death: the joiner\'s copy rolls its own');
+  assert.match(dc, /if \(wire && sf\.dead && !f\.dead && sf\.items == null\) \{ addCorpseFood\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\);/, 'an arrival\'s body without the room\'s list: its own roll, food and all');
 });
 
 test('CORPSE-FOOD, mounted: the dungeon\'s own `applyFoeRecord` rolls a joiner\'s copy of the body its food on the stream\'s first word of the death - once, and never for a foe the word keeps alive', async () => {
@@ -489,7 +489,8 @@ test('CORPSE-FOOD, mounted: the dungeon\'s own `applyFoeRecord` rolls a joiner\'
     for (const k of Object.keys(n)) { const v = n[k]; if (Array.isArray(v)) v.forEach(walk); else if (v && typeof v.type === 'string') walk(v); }
   })(ast);
   assert.ok(fn, 'dungeonContext.js has applyFoeRecord');
-  const state = { validFoeRecord, addCorpseFood, liveStat: () => 50, playerEntity: {}, foes: [], _layoutFoes: 1, _retyping: new Set(), retypeFoe: async () => false, console, renownFoeDied };   // RENOWN1: the stream's death asks whether I fought it
+  const { stampWonWeapons } = await import('../src/systems/lootRarity.js');   // SIGIL1: the stream's death marks the copy's weapons too (offline: nothing)
+  const state = { validFoeRecord, addCorpseFood, stampWonWeapons, liveStat: () => 50, playerEntity: {}, foes: [], _layoutFoes: 1, _retyping: new Set(), retypeFoe: async () => false, console, renownFoeDied };   // RENOWN1: the stream's death asks whether I fought it
   const scope = new Proxy(state, { has: (t, k) => k !== '__s', get: (t, k) => (k === Symbol.unscopables ? undefined : (k in t ? t[k] : globalThis[k])) });
   const { applyFoeRecord } = new Function('__s', `with (__s) { const setFoeDead = (f, d) => { f.dead = !!d; }; ${fn} return { applyFoeRecord }; }`)(scope);
   const bear = { mobileType: MOBILE_TYPES.GrizzlyBear, dead: false, entity: { mobileType: MOBILE_TYPES.GrizzlyBear, basics: { affinity: 'Animal' }, health: 5, items: [] }, ai: { feet: [0, 0, 0], yaw: 0, moving: false, isHostile: true } };

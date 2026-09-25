@@ -462,7 +462,7 @@
   {
     "name": "SURVTIERS3-the-kit-cite-world-seed-rots",
     "file": "src/systems/equip.js",
-    "old": "(world.js:3101, exterior.js:1278)",
+    "old": "(world.js:3105, exterior.js:1278)",
     "new": "(world.js:2460, exterior.js:1278)",
     "tests": [
       "test/citedrift.test.js"
@@ -480,7 +480,7 @@
   {
     "name": "SURVTIERS3-the-gear-cite-world-seed-rots",
     "file": "src/systems/startingGear.js",
-    "old": "world.js:3101 and exterior.js:1278 seed it",
+    "old": "world.js:3105 and exterior.js:1278 seed it",
     "new": "world.js:2460 and exterior.js:1278 seed it",
     "tests": [
       "test/citedrift.test.js"
@@ -579,8 +579,8 @@
   {
     "name": "SURVTIERS3-corpse-food-a-joiner's-stream-rolls-none",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    if (r.d === 1 && !f.dead) addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') });\n",
-    "new": "",
+    "old": "if (r.d === 1 && !f.dead) { addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') }); stampWonWeapons(",
+    "new": "if (r.d === 1 && !f.dead) { stampWonWeapons(",
     "tests": [
       "test/survtiers3.test.js"
     ]
@@ -588,8 +588,8 @@
   {
     "name": "SURVTIERS3-corpse-food-an-arrival's-body-rolls-none",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    if (wire && sf.dead && !f.dead && sf.items == null) addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') });\n",
-    "new": "",
+    "old": "if (wire && sf.dead && !f.dead && sf.items == null) { addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') }); stampWonWeapons(",
+    "new": "if (wire && sf.dead && !f.dead && sf.items == null) { stampWonWeapons(",
     "tests": [
       "test/survtiers3.test.js"
     ]
@@ -597,8 +597,8 @@
   {
     "name": "SURVTIERS3-corpse-food-an-arrival-rolls-over-the-room's-list",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    if (wire && sf.dead && !f.dead && sf.items == null) addCorpseFood(",
-    "new": "    if (wire && sf.dead && !f.dead) addCorpseFood(",
+    "old": "    if (wire && sf.dead && !f.dead && sf.items == null) { addCorpseFood(",
+    "new": "    if (wire && sf.dead && !f.dead) { addCorpseFood(",
     "tests": [
       "test/survtiers3.test.js"
     ]
@@ -606,8 +606,8 @@
   {
     "name": "SURVTIERS3-corpse-food-a-joiner-rolls-every-frame",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    if (r.d === 1 && !f.dead) addCorpseFood(",
-    "new": "    if (r.d === 1) addCorpseFood(",
+    "old": "    if (r.d === 1 && !f.dead) { addCorpseFood(",
+    "new": "    if (r.d === 1) { addCorpseFood(",
     "tests": [
       "test/survtiers3.test.js"
     ]

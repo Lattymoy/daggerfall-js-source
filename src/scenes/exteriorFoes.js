@@ -53,6 +53,7 @@ import { createWeapon, bowDamageArrow } from '../combat/enemyEquipment.js';   //
 import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, corpseEntryFor, corpseContents, takeCorpseLoot, openCorpseLoot, pileBody, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
 import { renownFoeStruck, renownFoeDied } from '../net/renownTracker.js';   // RENOWN1: a foe the player fought pays its Renown XP when it dies, by any hand
 import { partyFoeLoses, partyFoeHits, partyFoeHeals, noteFighter, foeFighters, takeWholeBlow, PARTY_ME } from '../systems/partyScale.js';   // PSCALE1: a shared foe weighs whoever fights it
+import { stampWonWeapons } from '../systems/lootRarity.js';   // SIGIL1: a body's weapons won online
 import { corpseName, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js';   // WORLD-HOVER: "<who> (dead)", the mod's own word (.cs:526); H2: and a LIVE one's, when it is not hostile (.cs:304-312)
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // GetLocalizedEnemyName, the index law in one place
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
@@ -674,6 +675,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // ANOTHER foe never touches the player's alert (MT-ii).
       if (isLocalPlayerTarget(f.ai?.target) && f.ai?.detected) setEnemyAlert(playerEntity, false);   // WORLD6b-ii: mine, not a peer's (AUDIT WORLD3 C3)
       if (!peer) sayEnemyDied(say, f.mobileType);   // EnemyDeath:79-83, the kill notice - mine alone (AUDIT WORLD6b B2)
+      stampWonWeapons(f.entity.items, _sharedFoe(f) ? fightN(f) : 1, { rolls });   // SIGIL1: the body's Magic+ weapons won online may carry a sigil - here, where its list lives, whoever struck last; a bigger fight, better odds
       raiseEnemyDeath(f.entity, { rolls, luck: liveStat(playerEntity, 'luck') });   // UL1: OnEnemyDeath (:139) - the corpse's items are the entity's. AUDIT VC6: a handler that ROLLS (SURV2's food) takes this pool's own stream and the player's luck, as spawnEnemyLoot does
       // AUDIT 24 (wave 38): EnemyDeath.CompleteDeath, through the one
       // home. This pool minted the marker inline at f.ai.feet - so a
@@ -1789,7 +1791,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       else if (!cur || cur.templateIndex !== r.w[0] || (cur.material | 0) !== r.w[1]) f.entity.weapon = createWeapon(r.w[0], r.w[1], () => 0.5);
     }
     if (r.g !== undefined) p.target = r.g;   // WORLD6b-ii: whose blow this puppet's is
-    f._fightN = r.n ?? 1;   // AUDIT PSCALE1: the owner's count of who fights it (a record without one: its owner alone)
+    if (r.d !== 1) f._fightN = r.n ?? 1;   // AUDIT PSCALE1: the owner's count of who fights it (a record without one: its owner alone). SIGIL1: a LIVE record's - a body's carries none, and the fight it died in was the last live count (its Renown bonus, its sigils)
     if (r.o !== undefined) { p.o = r.o; if (r.o > 0 && !(f._closedN != null && (_owners.get(f.puppet)?.n ?? 0) <= f._closedN)) f.corpseDisabled = false; }   // WORLD6b-iii(c): the body's pile, its owner's word - a refilled word re-opens it; AUDIT WORLD6b-iii(c) A7: not a word OLDER than the grant that closed it (a frame in flight at the splice)
     if (r.y !== undefined) p.yaw = r.y;
     if (r.m !== undefined) p.moving = r.m === 1;

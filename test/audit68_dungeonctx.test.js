@@ -21,6 +21,7 @@ import { RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../src/player/activa
 import { CORPSE_ACTIVATION_DISTANCE } from '../src/scenes/hostCombat.js';
 import { renownFoeStruck, renownFoeDied } from '../src/net/renownTracker.js';   // RENOWN1: the kill door's stamps, in the harness's scope
 import { partyFoeLoses, noteFighter, foeFighters, takeWholeBlow, PARTY_ME } from '../src/systems/partyScale.js';
+import { stampWonWeapons } from '../src/systems/lootRarity.js';   // SIGIL1: the kill door's stamp, the real one (offline: nothing marked)
 import { registerFoeDoor } from '../src/systems/artifactEffects.js';   // AUDIT PSCALE1 DOORS-2: `stand` registers the foe's door   // PSCALE1: the kill door's weight - who fights it - in the harness's scope
 
 const D = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
@@ -93,7 +94,7 @@ function killHarness({ foes, foeDeps = null, getTexture = async () => ({ recordC
     partyFoeLoses, noteFighter, foeFighters, takeWholeBlow, PARTY_ME, registerFoeDoor,   // PSCALE1: the real weight - only my own blows land here, so every foe fights one and every blow lands whole
     damageShieldPool: (e, n) => n, attemptSoulTrap, fillEmptyTrap, isAzurasStarEquipped: () => false,
     hudText: { add: (l) => log.hud.push(l) }, SOUL_TRAP_TEXT: { trapSuccess: 'ok', trapFail: 'fail', trapNoneEmpty: 'none' },
-    setEnemyAlert, playRareDrop: () => { log.chimes++; }, raiseEnemyDeath: () => { log.deaths++; }, liveStat: () => 50,
+    setEnemyAlert, playRareDrop: () => { log.chimes++; }, raiseEnemyDeath: () => { log.deaths++; }, liveStat: () => 50, stampWonWeapons,
     audio: {}, ENEMY_BASICS, weaponKnockbackApplies: () => false, maxFatigue: () => 100, q2: (x) => x, q3: (x) => x,
     _wallNow: () => null, floorLanding: (c, p) => p, collider: null, getTexture,
     uploadRecord: () => {}, billboardSize: () => ({ w: 1, h: 1 }), armFlatAnim: () => {}, flatAnims: { remove: () => {} }, uploadRecordFrame: () => {},

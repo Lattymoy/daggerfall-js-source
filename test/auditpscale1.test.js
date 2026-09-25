@@ -241,7 +241,7 @@ test('AUDIT PSCALE1 the count\'s other readers: the outdoor roll counts the part
   assert.equal(size({ online: { status: 'open', room: 'dungeon:m7' }, partyNear: () => [] }), 1, 'a dungeon room counts no strangers - a fight there weighs its fighters');
   assert.equal(size({ online: { status: 'connecting', room: 'world:3,12' }, partyNear: () => mates }), 1, 'a room not open');
   assert.equal(size({ online: { status: 'open', room: 'world:3,12' }, partyNear: () => new Array(9).fill({ feet: [1, 0, 1] }) }), 8, 'never past the seats');
-  assert.match(strip(W), /setRenownKillHandler\(\(foe\) => \{ const party = 1 \+ \(partyNear\(\)\?\.length \?\? 0\); renownTracker\.earn\(renownPartyXp\(renownKillXp\(renownFoeLevel\(foe\), renownNow\), Number\.isInteger\(foe\?\._fightN\) \? Math\.min\(party, foe\._fightN\) : party\)\); \}\);/, 'PLAY-4: the bonus');
+  assert.match(strip(W), /setRenownKillHandler\(\(foe\) => \{ const party = 1 \+ \(partyNear\(\)\?\.length \?\? 0\); const xp = renownPartyXp\(renownKillXp\(renownFoeLevel\(foe\), renownNow\), Number\.isInteger\(foe\?\._fightN\) \? Math\.min\(party, foe\._fightN\) : party\); renownTracker\.earn\(xp\); sigilDrinks\(xp\); \}\);/, 'PLAY-4: the bonus');
   assert.ok(!/partySize: \(\) => partySize\(\)/.test(strip(W)), 'no pool or mode is handed the roll\'s count for a fight');
   assert.ok(!/partySize:/.test(strip(read('src/scenes/worldModes.js'))), 'nor the dungeon');
 });

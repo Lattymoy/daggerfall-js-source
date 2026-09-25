@@ -63,6 +63,7 @@ import { MobileUnit } from '../characters/mobileUnit.js';
 import { EnemyAI, withinYaw, isBackFacing } from '../characters/enemyMotor.js';
 import { runTargetMachine, isPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack, wireRecipient, bumpAtkCount, staticTeamOf } from '../characters/enemyTargets.js';   // AUDIT WATCH1: the wire's spellings, one home   // MT-ii   // ROAD-G G1: MakeEnemyHostileToAttacker's entity-side half, for the watch too
 import { applyDamageToNonPlayer, spawnEnemyLoot } from './hostCombat.js';   // MT-ii: EnemyAttack.ApplyDamageToNonPlayer
+import { stampWonWeapons } from '../systems/lootRarity.js';   // SIGIL1: a body's weapons won online
 import { EnemyAttack } from '../characters/enemyAttack.js';
 import { makeEnemyEntity } from '../characters/enemyEntity.js';
 import { ClassFile } from '../formats/classFile.js';
@@ -154,7 +155,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // with no Y test. The default keeps the two street pools as they were.
   playerInside = false,
   // ROAD-G G1: GameManager.MakeEnemiesHostile over the HOST's whole
-  // area, the encounter pool's dep to the line (exteriorFoes.js:126).
+  // area, the encounter pool's dep to the line (exteriorFoes.js:127).
   // DaggerfallEntityBehaviour.cs:255-258 fires it when a NON-hostile
   // enemy is struck by the player, and Knight_CityWatch is an
   // EnemyClass - one of the two EntityTypes that walk (:250). This
@@ -673,7 +674,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  which arrowFlight.js calls unconditionally (arrowFlight.js:316)
    *  because `dealDamage` is inside its own `dmg > 0` fork - so the
    *  door is PUBLIC (the returned surface below), exactly as the
-   *  encounter pool's is (exteriorFoes.js:2067). */
+   *  encounter pool's is (exteriorFoes.js:2069). */
   function handleAttackFromPlayer(g, playerFeet = null) {
     if (!g?.ai) return;
     // DISC19-F (AUDIT DISC19): A BLOW ON A DEFENDER IS ASSAULT. The
@@ -768,6 +769,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // already taking this pool's own `rand`. One kill in eight grew
       // two items nobody could predict, and the guard's rations ignored
       // the luck DFU rolls them against. Every pool hands both now.
+      stampWonWeapons(g.entity.items, 1, { rolls: rand });   // SIGIL1: a body's Magic+ weapons won online may carry a sigil (the watch is never a party's fight)
       raiseEnemyDeath(g.entity, { rolls: rand, luck: liveStat(playerEntity, 'luck') });
       // G4 (HandleAttackFromSource, verbatim): killing the city watch
       // IS Murder, and CG2 landed the second half -

@@ -16,7 +16,7 @@ import { WodSpawner, WOD_LOOT_LOCATION_INDEX, WOD_LOOT_ALIGN } from '../world/wo
 import { wodSiteId, yieldsTo } from '../world/wodShared.js';   // WOD7: a camp's marker, shared online
 import { alignBillboardToGround } from '../world/groundAlign.js';   // WOD3: SpawnLoot's drop
 import { PRIVATEERS_HOLD_BLOCK, HOLD_MODELS, HOLD_FLATS, holdModelMatrix, holdFireLights, rollHoldFoes } from '../world/wodPrivateersHold.js';   // WOD4: the camp at Privateer's Hold
-import { rollLootRarity, pileSource, dungeonRarityTier } from '../systems/lootRarity.js';   // WOD3: LR1 over the camps' piles
+import { rollLootRarity, pileSource, dungeonRarityTier, stampWonWeapons } from '../systems/lootRarity.js';   // WOD3: LR1 over the camps' piles; SIGIL1: their weapons' sigils
 import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05: one line, so the cites below it hold
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive, cursorActive } from '../player/pointerLock.js';   // U45: bindCursorToggle is PlayerMouseLook.cursorActive; releaseLook: the chat's open (AUDIT CHAT C2)
@@ -304,6 +304,8 @@ import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, kn
 import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/renown.js';   // RENOWN1: what a kill and a quest are worth, and the party's bonus (RENOWN3: read against my Renown)
 import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer, renownFoeCarry } from '../net/renownTracker.js';   // RENOWN1: what this character earns online, carried to the account service
 import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the level's health and magicka, on top of Daggerfall's while online
+import { setSigilOnline, setSigilRenown, drinkSigil, sigilRiseLine } from '../systems/sigil.js';   // SIGIL1: a weapon won online carries a sigil, woken by my Renown
+import { itemLongName } from '../systems/itemInfo.js';   // SIGIL1: the weapon's name as its tooltip reads it
 import { partySizeOf, partyExtraFoes, partyGroupMembers } from '../systems/partyScale.js';   // PSCALE1: a fight weighs the party - its count, and the foes more an outdoor encounter stands
 import { GROUP_ROLL_RADIUS } from '../systems/campEncounters.js';   // PSCALE1: outdoors, the party a roll stands for is the camp's own group
 import { SOLITARY_TYPES } from '../characters/mobileFactions.js';   // AUDIT PSCALE1 COUNT-2: a solitary foe meets a party alone
@@ -474,6 +476,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // season and the shared clock's turned it over on the first frame.
   let _sharedOffsetMs = 0;   // the relay's clock minus this machine's, heard when the session's welcome arrives
   if (params.has('online')) { setSharedClock(() => sharedClassicMinutes(Date.now() + _sharedOffsetMs), (m) => wallMsForClassicMinutes(m) - _sharedOffsetMs); setSharedWeather(true); }   // and the day picks the sky from here on (weatherSim); OL3: the inverse beside it, for the prices said in real time
+  setSigilOnline(params.has('online'));   // SIGIL1: this session plays online - before any list is minted (a pile rolls at a dungeon's build)
   // A1: THE TEXTURE SEASON IS THE CALENDAR'S, NOT A URL PARAM.
   // Every production site in the reference reads the world clock -
   // ClimateSwaps.cs:382-386, DaggerfallLocation.ApplyTimeAndSpace
@@ -1287,6 +1290,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const items = generateLootItems(lootKey, { level: playerEntity.level, gender: playerEntity.gender });
       addPileLootExtras(items, lootKey);
       rollLootRarity(items, pileSource(dungeonRarityTier(WOD_LOOT_LOCATION_INDEX)), { luck: liveStat(playerEntity, 'luck') });   // LR1: every list a host mints, at its source - GenerateLoot's dungeon type
+      stampWonWeapons(items, 1);   // SIGIL1: a pile found online, its weapons' sigils rolled at the mint
       // AUDIT BRANCH (WoD) m1: PIXEL-LOCAL until the art lands. The world
       // frame moves under a recentre, and a season or road rebuild swaps
       // the build object while the terrain lives on - the pile was left
@@ -2154,7 +2158,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT 26 (F019): the pixel's street StaticNPCs - identity inputs
     // + the billboard extent the activation ray needs, resolved the
     // way the interior host resolves its people's
-    // (interiorContext.js:420-440). FLATS.CFG is awaited because
+    // (interiorContext.js:421-441). FLATS.CFG is awaited because
     // SetLayoutData's exterior overload reads it for the gender
     // (StaticNPC.cs:185-194); loadFlats never throws and is warmed with
     // the scene, so this is a coalesced wait. The list rides the pixel,
@@ -4381,7 +4385,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // artifact affinity scans saw an empty room. Nothing threw and
   // nothing was logged - the enchantment simply had no effect where
   // the fighting is. The one ctx in play is this mount: no host passes
-  // an enchantCtx at the strike site (formulas.js:505 defaults it
+  // an enchantCtx at the strike site (formulas.js:506 defaults it
   // null), so mergeCtx folds this default under every dispatch.
   // The law itself is in shared.js, tested on its own - which pool is
   // live, and whose sinks a record from it must go through. This host
@@ -4437,11 +4441,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:415-420) never looks the record up in `foes`, and
+    // (exteriorFoes.js:416-421) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1483-1501) gives it -
+    // got exactly what removeGuard (cityGuards.js:1485-1503) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
-    // (cityGuards.js:939) and spliced out at the end of it (:1127).
+    // (cityGuards.js:941) and spliced out at the end of it (:1129).
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
     // teardown of its own records so the two can diverge safely, and
     // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
@@ -6489,7 +6493,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6340), so exterior mode and a
+    // composer, dungeonContext.js:6342), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -9894,6 +9898,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (renownNow !== null && level <= renownNow) return renownNow;
     renownNow = level;
     setRenownLayer(playerEntity, level);
+    setSigilRenown(level);   // SIGIL1: my Renown wakes the sigils - offline, and online until it is known, they sleep
     return renownNow;
   };
   const adoptIssued = (who) => {
@@ -9929,16 +9934,27 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT RENOWN1 UI-4: a refusal that ends reporting is SAID - the sentences were written and nothing ever showed them
     onStop: (error) => tradeSay(`${accountRefusalText(error)} This character is earning no Renown.`),
   }) : null;
+  // SIGIL1: THE DRINK - the weapon in my hand takes every point of Renown XP I earn with it (a kill, a quest), and a
+  // rise to a new stage is said (systems/sigil.js drinkSigil: nothing while my Renown is unknown). Past the hour's cap
+  // the service keeps nothing, and the sigil drinks nothing either - as the page last heard it.
+  const sigilDrinks = (xp) => {
+    if (_renownCapHour === Math.floor(Date.now() / 3_600_000)) return;
+    const held = weaponRig.playerWeapon?.strikingWeapon ?? null;
+    const rank = drinkSigil(held, xp);
+    if (rank != null) townTalk.say(sigilRiseLine(itemLongName(held), rank));
+  };
   if (renownTracker) {
     globalThis.addEventListener?.('pagehide', () => { renownTracker.leave(); });   // RENOWN1: what was earned since the last report goes as the page does. AUDIT RENOWN1 GAME-8: by `keepalive`, under the report's own id
-    setRenownKillHandler((foe) => { const party = 1 + (partyNear()?.length ?? 0); renownTracker.earn(renownPartyXp(renownKillXp(renownFoeLevel(foe), renownNow), Number.isInteger(foe?._fightN) ? Math.min(party, foe._fightN) : party)); });   // AUDIT PSCALE1 PLAY-4: a shared foe's bonus counts the partymates who FOUGHT it (its fighters, systems/partyScale.js) - a partymate idling in the cell pads nothing   // RENOWN3: read against my Renown, never above it by more than RENOWN_OVER_MAX
+    setRenownKillHandler((foe) => { const party = 1 + (partyNear()?.length ?? 0); const xp = renownPartyXp(renownKillXp(renownFoeLevel(foe), renownNow), Number.isInteger(foe?._fightN) ? Math.min(party, foe._fightN) : party); renownTracker.earn(xp); sigilDrinks(xp); });   // AUDIT PSCALE1 PLAY-4: a shared foe's bonus counts the partymates who FOUGHT it (its fighters, systems/partyScale.js) - a partymate idling in the cell pads nothing   // RENOWN3: read against my Renown, never above it by more than RENOWN_OVER_MAX
     const paid = new Set();
     renownQuestEnded = (q) => {
       if (!q?.questSuccess) return;
       const key = String(q.uid ?? q.questName ?? '');
       if (!key || paid.has(key)) return;   // a quest pays once, however its end is heard again
       paid.add(key);
-      renownTracker.earn(renownQuestXp(playerEntity.level, renownNow));   // RENOWN3: the quest's level read against my Renown too
+      const xp = renownQuestXp(playerEntity.level, renownNow);   // RENOWN3: the quest's level read against my Renown too
+      renownTracker.earn(xp);
+      sigilDrinks(xp);   // SIGIL1
     };
   }
   // ACC4 (Mac: "time played to the icon profile"): THE WORLD IS WHERE
@@ -15067,11 +15083,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:696-701), so this seam ROUTES by pool exactly
+        // (cityGuards.js:697-702), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:1214). DFU makes no pool distinction:
+        // (cityGuards.js:1216). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.

@@ -56,10 +56,11 @@
   {
     "name": "RENOWN3-quest-read-without-my-renown",
     "file": "src/scenes/world.js",
-    "old": "renownTracker.earn(renownQuestXp(playerEntity.level, renownNow));",
-    "new": "renownTracker.earn(renownQuestXp(playerEntity.level, 50));",
+    "old": "const xp = renownQuestXp(playerEntity.level, renownNow);",
+    "new": "const xp = renownQuestXp(playerEntity.level, 50);",
     "tests": [
-      "test/renown1.test.js"
+      "test/renown1.test.js",
+      "test/sigil1.test.js"
     ]
   }
 ]

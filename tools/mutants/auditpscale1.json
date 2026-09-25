@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-PSCALE1-outdoor-record-unread",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "    f._fightN = r.n ?? 1;   // AUDIT PSCALE1: the owner's count",
-    "new": "    f._fightN = 1;   // AUDIT PSCALE1: the owner's count",
+    "old": "if (r.d !== 1) f._fightN = r.n ?? 1;   // AUDIT PSCALE1: the owner's count",
+    "new": "if (r.d !== 1) f._fightN = 1;   // AUDIT PSCALE1: the owner's count",
     "tests": [
       "test/pscale1.test.js",
       "test/auditpscale1.test.js"

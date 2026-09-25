@@ -376,7 +376,7 @@ function host({ online = null, removeSiteFoes = () => {} } = {}) {
     collider: { surfaceHit: () => ({ dist: 1 }), removeBucket: () => {} },
     exteriorFoes: { spawnFoe: async () => null, removeFoe: () => {}, collectPixel: () => {}, removeSiteFoes },
     alignBillboardToGround, WOD_LOOT_ALIGN, WOD_LOOT_LOCATION_INDEX, DUNGEON_LOOT_KEYS: ['A', 'B', 'C', 'N'],
-    generateLootItems: () => [{ name: 'Gold' }], playerEntity: { level: 1, gender: 'male' }, addPileLootExtras: () => {}, rollLootRarity: () => {},
+    generateLootItems: () => [{ name: 'Gold' }], playerEntity: { level: 1, gender: 'male' }, addPileLootExtras: () => {}, rollLootRarity: () => {}, stampWonWeapons: () => 0,
     pileSource: () => 0, dungeonRarityTier: () => 0, liveStat: () => 50, getTexture, billboardSize: () => ({ w: 0.8, h: 0.6 }), droppedLoot,
     uploadRecord: () => {}, centredBase: (c) => c, renderer, flatBatchAabb: () => [0, 0, 0, 0, 0, 0], armFlatAnim: () => {}, uploadRecordFrame: () => {},
     _seasonStraightening: false, _loading: false, _recalling: false, rollHoldFoes: () => [], online, wodSiteId, yieldsTo, performance: { now: () => 0 },

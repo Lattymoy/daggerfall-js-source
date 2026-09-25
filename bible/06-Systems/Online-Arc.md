@@ -4704,7 +4704,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:4309`). With the property missing that call is a
+(`dungeonContext.js:4310`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -4831,7 +4831,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4246` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4250` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:255`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -8292,3 +8292,73 @@ Relay: wire.js is in the relay's bundle, so world108's row (unshipped) is rewrit
 moved (audit68_dungeonctx's harness, auditworld6b's divert and cap, exteriorfoes' sink, renown1's door and bonus).
 Mutants: `tools/mutants/auditpscale1.json`, `tools/mutants/pscale1.json` (re-aimed), and restx2camp's and watch1's
 records re-aimed by content.
+
+## SIGIL1 (2026-09-25, Mac: "After this is the new online weapon system that is incorporated into our rarity enhancement") - some weapons won online carry a sigil, and it grows
+
+Mac: "weapons obtained through online play recieve a sort of sigil power that is only effective online, which also
+scales with your renown. Sigil power does not work offline. I want this system to really enhance the fantasy but not
+be insanely overpowered. This links up with both elements we have so far with scaling and renown". Asked four things,
+Mac answered "Bonus damage", "Magic and up, found online", "Bigger fights, stronger sigils" and "Five named stages";
+then, of a sigil fixed at the drop ("Makes sigil a static element"; "What if the sigil is[n't] gaurenteed in of
+itself"), chose "Chance at the drop, then grows". Daggerfall Unity has neither online play nor Renown; this is a
+Ledger A departure (`Port-Ledger.md` section A, SOME WEAPONS WON ONLINE CARRY A SIGIL, AND IT GROWS), and what a sigil
+does is online's alone. The law is `src/systems/sigil.js`.
+
+- **What a sigil is.** `item.sigil = { power, party, xp }`, a declared item field (`systems/itemFields.js`): it rides
+  a save as the item does, and the wire's loot door checks it (`validLootItem` - a forged power or rank is no item at
+  all). `power` is the per cent of damage it adds at its full rank; `party` the size of the fight that won it; `xp`
+  what it has drunk.
+- **Who gets one** (`systems/lootRarity.js stampWonWeapons`). A Magic, Rare or Legendary weapon - never ammunition, an
+  artifact (its own tier has no band), a quest's item, armour, a Common weapon, or one already marked - in a list WON
+  ONLINE: a body's at its death (the outdoor owner's kill door, the dungeon host's and the watch's; a dungeon joiner's
+  own copy when the host's stream says it fell, at the host's count; a body the room's memory hands an arrival), and a
+  treasure pile's at its mint (a dungeon's, at the build and at the hour's respawn; a World of Daggerfall camp's; a
+  tavern's, the Thieves Guild's or the Dark Brotherhood's). Online is the page's `?online`, said to the law in the
+  boot's first lines (`setSigilOnline`), before any list is minted. Shop stock, quest rewards and anything won
+  offline never carry one; a weapon never gains one after it is won and never loses one.
+- **How often, how strong.** 200 per mille alone and 40 more a fighter past the first (480 for eight). The power is in
+  the tier's band - Magic 2-5, Rare 4-8, Legendary 7-12, under half each tier's own damage affix (5-12, 10-25, 20-40) -
+  from a floor that rises a seventh of the band a fighter past the first, so eight fighting always win the top. The
+  fight is the foe's FIGHTERS (PSCALE1's count, read at the death); a pile is a fight of one.
+- **The stages.** Faint, Kindled, Bright, Radiant, Ascendant: 20, 40, 60, 80 and 100% of the power. The sigil's own
+  rank opens at 0 / 5,000 / 12,500 / 22,500 / 37,500 xp; the wielder's Renown opens the same five at 1 / 10 / 20 / 30 /
+  40; the LOWER stands. A new character's Ascendant Legendary 12 gives 2.4% (held at Faint by Renown); a Renown 40
+  wielder's new sigil gives the same 2.4% until it has grown.
+- **The drink** (`drinkSigil`; world.js `sigilDrinks`, beside the Renown tracker's two earns). Every point of Renown
+  XP I earn with the weapon in my hand (the striking hand's item) - a kill's, the party's bonus included, so a bigger
+  fight feeds it faster; a quest's - goes into its xp, never past 37,500, and a rise is said: "The sigil on your
+  Longsword brightens: Kindled.", and when my Renown holds it lower, "Your Renown holds it at Faint until Renown
+  10.". A NEW record replaces the old and the old is never written - a save's or a stream's `{ ...it }` copy shares
+  its fields. Nothing is drunk offline, online before my Renown is known, or past the hour's Renown cap as the page
+  last heard the service say so.
+- **The blow** (`sigilBlow`, registered by `entityMods.registerWeaponBlowMod` and read at the tail of FormulaHelper's
+  weapon damage - after the strength, the material and the enemy-type term, and before DFU's mod hook, its last line,
+  so Roleplay Realism's draw scales a bow's sigil with the rest of the shot). My weapon's per cent of the whole blow at a foe,
+  the fraction carried on the weapon (Faint 2.4% on blows of 10 lands a point on the 5th and the 9th). Never a duel's
+  blow (the defender resolves it with a `peer` stub, at a player), never a blow at a player, never a foe's. Offline,
+  and online before my Renown is known (`setSigilRenown`, in `renownAdopt`), a sigil is DORMANT and adds nothing.
+- **The words** (`sigilLines`, under the tier and its affixes in `rarityLines` - both skins' tooltips; an
+  unidentified weapon shows its sigil at once, since it is the port's mark and not an enchantment): "Sigil (Kindled):
+  +3.2% damage, +8% at Ascendant", then "Kindled: 7,000 / 12,500 to Bright" or "Held at Kindled by your Renown (Bright
+  at Renown 20)", then "Won in a fight of 3"; offline, "Sigil (Dormant - wakes online, with your Renown): +8% at
+  Ascendant".
+
+**Found building it: a reader lost a body's fight** (AUDIT PSCALE1's). A foe's record carries its fighters' count
+(`n`) only while it lives, and both readers (`exteriorFoes` applyPuppetRecord, `dungeonContext` applyFoeRecord) wrote
+`f._fightN = r.n ?? 1` on every record - so the death record set it to one just before `renownFoeDied` read it, and a
+joiner's or a reader's Renown party bonus for a shared kill was capped at one (the host's and the owner's were right).
+The readers now take the count off LIVE records alone, and a body keeps the fight it died in - which a joiner's stamp
+reads too.
+
+**Known limits, taken knowingly.**
+- Each copy of a dungeon body or pile rolls its own sigils, as its list is its own roll (WORLD4); the room adopts the
+  first opener's list, sigils and all.
+- A sigil is the item's, carried in a save the player holds, and a forged save can carry a forged sigil as it can a
+  forged affix. What a sigil GIVES is held by the wielder's Renown, which the account service signs.
+- The weapon in my hand when a kill pays drinks its XP, whatever landed the last blow (a spell, an ally).
+
+No relay change and no version: the relay carries no item. Pinned: `test/sigil1.test.js` (7) - the law's numbers; the
+blow (the carry, every gate, FormulaHelper's tail); the stamp; the drink and the words; the item field on the wire;
+the outdoor pool driven (a fight of four marks the body's Magic sword at 3, a reader keeps the count through the body's
+record, offline marks nothing); the hosts, the drink mounted and every other door by source. The re-aimed pins:
+renown1's and auditpscale1's kill handler and quest earn. `tools/mutants/sigil1.json` (57, all dead).
