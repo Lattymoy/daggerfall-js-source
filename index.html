@@ -120,8 +120,7 @@
        page's only raster and a raster is what this site does not carry
        (BR3: the wordmark is type again, so the law is whole). The mark is
        Patreon's own two shapes on the page's 4px grid: a bar standing the
-       full height, and a round disc beside it - a filled 4x4 with its
-       corners cut, which is what a circle is at this size. */
+       full height, and a round disc beside it. */
     .patreon {
       position: absolute; top: 0; right: 0; z-index: 2;
       display: flex; align-items: center; gap: 14px;
@@ -133,15 +132,17 @@
     .patreon:hover, .patreon:focus-visible { outline: none; color: rgb(243,239,44); border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
     .pmark {
       /* One art pixel is 4css; the element is the bar's top pixel and the
-         box-shadows are the rest: the bar in the dim, four pixels down, and
-         the disc in the brass, a column of air clear of it. */
-      position: relative; width: 4px; height: 4px; margin-right: 24px; background: #7d7460;
+         box-shadows are the rest: the bar in the dim, five pixels tall, and
+         the disc in the brass, a column of air clear of it - five across
+         with its four corners cut, which is what a circle is at this size. */
+      position: relative; width: 4px; height: 4px; margin-right: 28px; background: #7d7460;
       box-shadow:
-        0 4px 0 #7d7460, 0 8px 0 #7d7460, 0 12px 0 #7d7460,
-        12px 0 0 var(--brass), 16px 0 0 var(--brass),
-        8px 4px 0 var(--brass), 12px 4px 0 var(--brass), 16px 4px 0 var(--brass), 20px 4px 0 var(--brass),
-        8px 8px 0 var(--brass), 12px 8px 0 var(--brass), 16px 8px 0 var(--brass), 20px 8px 0 var(--brass),
-        12px 12px 0 var(--brass), 16px 12px 0 var(--brass);
+        0 4px 0 #7d7460, 0 8px 0 #7d7460, 0 12px 0 #7d7460, 0 16px 0 #7d7460,
+        12px 0 0 var(--brass), 16px 0 0 var(--brass), 20px 0 0 var(--brass),
+        8px 4px 0 var(--brass), 12px 4px 0 var(--brass), 16px 4px 0 var(--brass), 20px 4px 0 var(--brass), 24px 4px 0 var(--brass),
+        8px 8px 0 var(--brass), 12px 8px 0 var(--brass), 16px 8px 0 var(--brass), 20px 8px 0 var(--brass), 24px 8px 0 var(--brass),
+        8px 12px 0 var(--brass), 12px 12px 0 var(--brass), 16px 12px 0 var(--brass), 20px 12px 0 var(--brass), 24px 12px 0 var(--brass),
+        12px 16px 0 var(--brass), 16px 16px 0 var(--brass), 20px 16px 0 var(--brass);
     }
     .patreon:hover .pmark, .patreon:focus-visible .pmark { background: rgb(243,239,44); }
 

@@ -458,13 +458,13 @@ test('U64 + PATREON1: the Patreon mark is a plaque with Patreon\'s mark drawn, n
   assert.match(css, /\.door \{ padding-bottom: 140px; padding-top: 84px; \}/, 'and the door makes room for it on a phone');
   // The mark is DRAWN: one box-shadow pixel list, in the skin's own brass
   // and dim, on the same 4px grid the rest of the page uses - Patreon's
-  // bar (the element and three pixels under it, in the dim) and its disc
-  // (twelve pixels in the brass, a column clear of the bar).
-  const mark = css.slice(css.indexOf('.pmark {'), css.indexOf('.pmark {') + 900);
+  // bar (the element and four pixels under it, in the dim) and its disc
+  // (a 5x5 with its corners cut - 21 pixels in the brass, a column clear of the bar).
+  const mark = css.slice(css.indexOf('.pmark {'), css.indexOf('}', css.indexOf('.pmark {')));
   assert.match(mark, /box-shadow:/);
   const px = (mark.match(/-?\d+(?:px)? -?\d+(?:px)? 0 (?:var\(--brass\)|#7d7460)/g) ?? []);
-  assert.equal(px.filter((p) => p.includes('#7d7460')).length, 3, 'the bar: three pixels under the element');
-  assert.equal(px.filter((p) => p.includes('--brass')).length, 12, 'the disc: twelve');
+  assert.equal(px.filter((p) => p.includes('#7d7460')).length, 4, 'the bar: four pixels under the element');
+  assert.equal(px.filter((p) => p.includes('--brass')).length, 21, 'the disc: twenty-one');
   for (const p of px) {
     const [x, y] = p.split(' ').slice(0, 2).map((v) => Math.abs(Number(v.replace('px', ''))));
     assert.equal(x % 4, 0, `${p}: on the grid`);

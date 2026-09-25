@@ -987,8 +987,8 @@ settings, which re-triggers provisioning.
 
 **PATREON1 (2026-09-25, Mac: "Replace website KOFI with patreon https://www.patreon.com/c/dfenhanced").** The corner
 plaque is Patreon's now: `<a class="patreon" href="https://www.patreon.com/c/dfenhanced">`, "Support on Patreon",
-and the drawn cup is Patreon's own mark on the same 4px grid (`.pmark`: the bar in the dim, four pixels tall, and a
-disc in the brass - a filled 4x4 with its corners cut). Still no image and no third-party script; still the page's
+and the drawn cup is Patreon's own mark on the same 4px grid (`.pmark`: the bar in the dim, five pixels tall, and a
+disc in the brass - a 5x5 with its corners cut). Still no image and no third-party script; still the page's
 only ask - Ko-fi is gone from the page, the README and SUPPORT.md. The Patreon tiers are the titles the account
 service grants (TITLE-N: Disciple, Apostle, Hierophant). Pinned in `test/landing.test.js` (U64 + PATREON1).
 
