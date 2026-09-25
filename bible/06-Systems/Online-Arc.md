@@ -4837,7 +4837,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4233` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4235` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:255`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -8160,3 +8160,13 @@ gated (DISC12's `lh`/`wb`, PCORPSE1's `dd`); an older relay's `validPose` drops 
 still rides nothing (MW-D51). Record: Handheld-Torches.md HT-WAIST ("Online: the others see it"). Pins:
 `test/htwaistnet_peers.test.js` - the door, the producer and its sender, a session through the real relay Room to the
 watcher's drawn pose, a peer's whole `createFpArm()` body hanging and hiding it, and its swing off the stub camera.
+
+## WB1 (2026-09-25, Mac: "a gate of oblivion which takes place in a large boss arena with an oversized enemy with telegraphed attacks") - the Oblivion Gate's omen; see 11-Multiplayer/World-Bosses.md
+
+The world boss arc's first slice, recorded on its own page (`11-Multiplayer/World-Bosses.md`, the design and a
+Shipped row a slice). A gate a game day on the shared clock - the omen at 17:00 with a ring on both maps and a line
+on every chat tab, the gate at 19:00, open 20:00-22:00, the wrath at midnight: HH:32:30 UTC every even hour - and its
+site a hash of the day over the map files, so the omen costs the relay nothing: no frame, no relay change, no
+`RELAY_VERSION` bump. The arena's room (`gate:<day>`) is written into the law now and admitted by no relay yet; WB3
+is the slice that teaches the relay it. Re-aimed: the two "before the dead return" source pins (`chat1`,
+`auditdrops`) take `gateFrame` into their list; `inspect1`'s ordering pin stands, the gate's frame runs after the mail.

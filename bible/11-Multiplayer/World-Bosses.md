@@ -67,8 +67,9 @@ Offline there is no gate: the schedule is a fact about the shared world, and a s
 The site is the client's to find and every client finds the same one: a hash of the day over the world's own data,
 spawned dungeons' law (`world/spawnedDungeons.js`: "every player rolls the same pixels ... No relay word is needed").
 
-- **The region**: `hash32(GATE_SALT, D, 1)` over the regions that hold enough suitable pixels, never the previous
-  day's.
+- **The region**: drawn from a SHUFFLE BAG over the regions that hold enough suitable pixels - every province takes
+  one gate, in an order each round's rolls shuffle, before any takes a second, and a round never opens on the province
+  the last one closed on. So no province holds two gates running and none is left dry for days.
 - **The pixel**: `hash32(GATE_SALT, D, 2)` over that region's suitable pixels - LAND (above the water line, not an
   ocean climate), NO LOCATION on it or its eight neighbours, and REACHABLE: 2 to 4 pixels from the nearest town a
   traveller can fast-travel to (online a trip arrives at once - OL2 - so the gate is a ride from a town, not a
@@ -369,3 +370,18 @@ ships in ONE slice.
 Each slice: pins in `test/` (pure law in node; the relay over its fake sockets and a fake clock; the passes' shaders
 built in headless Chromium, as the duel wall's), a mutant record in `tools/mutants/`, the Testing manifest, a Port
 Ledger section A row (an original online system, not a DFU member), and a row here.
+
+## Shipped
+
+**WB1 (2026-09-25) - the omen.** `net/gateLaw.js` (the schedule, the room's key and window, the rolls, the boss table,
+the chat's words), `systems/gateSite.js` (the site over the map files), `systems/gateOmen.js` (each moment's line once,
+the map's mark, the compass's), `ui/gateMapMark.js` with the ring on both maps (`ui/inkMap.js paintGateRing`, the held
+map's poll and legend, the classic page's texels on the open province), the compass's diamond (`ui/enhancedHud.js
+drawGateMark`), and `scenes/world.js` (`gateOmen`, `gateFrame` in the online frame before the dead return,
+`gateCompassMark`, the travel map's `gate`). Two changes from the page above, both the pins' finds: the province is a
+SHUFFLE BAG, not a bare roll (a bare roll's "never the day before's" repeated after its own bump), and the classic
+page's ring band is a whole pixel (0.75 left as few as four texels). No relay change. Pins
+`test/wb1_gate_omen.test.js` (13); mutants `tools/mutants/wb1.json` (30 dead, 1 equivalent). Not seen in a browser:
+this container has no ARENA2 and no relay session; the site's real-data behaviour (which provinces qualify, how many
+pixels each offers) is the first thing to look at on a live omen.
+

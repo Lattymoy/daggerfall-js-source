@@ -1,0 +1,283 @@
+[
+  {
+    "name": "WB1-the-omen-an-hour-early",
+    "file": "src/net/gateLaw.js",
+    "old": "export const GATE_OMEN_MINUTE = 17 * 60;",
+    "new": "export const GATE_OMEN_MINUTE = 16 * 60;",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-the-gate-a-day-late",
+    "file": "src/net/gateLaw.js",
+    "old": "  const base = day * GATE_DAY_MINUTES;\n",
+    "new": "  const base = (day + 1) * GATE_DAY_MINUTES;\n",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-yesterday-forgotten-while-it-sinks",
+    "file": "src/net/gateLaw.js",
+    "old": "if (isGateDay(day - 1) && nowMs < gateTimes(day - 1).wrathAt + GATE_COLLAPSE_MS)",
+    "new": "if (isGateDay(day - 1) && nowMs < gateTimes(day - 1).wrathAt)",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-the-seal-a-tick-late",
+    "file": "src/net/gateLaw.js",
+    "old": "  if (nowMs >= t.riseAt + GATE_RISE_MS) return 'sealed';",
+    "new": "  if (nowMs > t.riseAt + GATE_RISE_MS) return 'sealed';",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-a-fall-before-the-opening-counts",
+    "file": "src/net/gateLaw.js",
+    "old": "(fellAt) >= t.openAt ? Math.min",
+    "new": "(fellAt) >= 0 ? Math.min",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-the-countdown-rounded-down",
+    "file": "src/net/gateLaw.js",
+    "old": "const s = Math.max(0, Math.ceil((Number.isFinite(ms) ? ms : 0) / 1000));",
+    "new": "const s = Math.max(0, Math.floor((Number.isFinite(ms) ? ms : 0) / 1000));",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-a-padded-room-admitted",
+    "file": "src/net/gateLaw.js",
+    "old": "const GATE_ROOM = /^gate:(?:0|[1-9]\\d{0,8})$/;",
+    "new": "const GATE_ROOM = /^gate:\\d{1,9}$/;",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-admitted-at-the-seal",
+    "file": "src/net/gateLaw.js",
+    "old": "return isGateDay(day) && nowMs >= t.openAt && nowMs < t.sealAt; };",
+    "new": "return isGateDay(day) && nowMs >= t.openAt && nowMs <= t.sealAt; };",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-held-only-to-the-seal",
+    "file": "src/net/gateLaw.js",
+    "old": "nowMs < t.wrathAt + GATE_COLLAPSE_MS; };",
+    "new": "nowMs < t.sealAt; };",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-the-bag-seam-unchecked",
+    "file": "src/net/gateLaw.js",
+    "old": "  if (bag[0] === bagRound(round - 1, n)[n - 1]) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-two-provinces-never-alternate",
+    "file": "src/net/gateLaw.js",
+    "old": "  if (n <= 2) return regions[((g % n) + n) % n];",
+    "new": "  if (n <= 2) return regions[0];",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-the-spot-past-its-spread",
+    "file": "src/net/gateLaw.js",
+    "old": "r = Math.sqrt(unit(day, 4)) * GATE_SPOT_SPREAD_M;",
+    "new": "r = Math.sqrt(unit(day, 4)) * GATE_SPOT_SPREAD_M * 2;",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-north-down-the-map",
+    "file": "src/net/gateLaw.js",
+    "old": "const gx = px + spot[0] / PIXEL_M, gy = py + 1 - spot[1] / PIXEL_M;",
+    "new": "const gx = px + spot[0] / PIXEL_M, gy = py + spot[1] / PIXEL_M;",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-the-ring-shifted-off-its-gate",
+    "file": "src/net/gateLaw.js",
+    "old": "r = Math.sqrt(unit(day, 7)) * OMEN_RING_SHIFT_PIXELS;",
+    "new": "r = Math.sqrt(unit(day, 7)) * OMEN_RING_PIXELS * 1.5;",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-a-location-below-not-seen",
+    "file": "src/systems/gateSite.js",
+    "old": "      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {\n        const x = px + dx, y = py + dy;\n        if (x >= 0 && y >= 0 && x < W && y < H) near[y * W + x] = 1;",
+    "new": "      for (let dy = -1; dy <= 0; dy++) for (let dx = -1; dx <= 1; dx++) {\n        const x = px + dx, y = py + dy;\n        if (x >= 0 && y >= 0 && x < W && y < H) near[y * W + x] = 1;",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-a-gate-at-the-town-gate",
+    "file": "src/systems/gateSite.js",
+    "old": "        if (d < GATE_TOWN_MIN_PX) continue;\n",
+    "new": "",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ],
+    "equivalent": true,
+    "why": "At GATE_TOWN_MIN_PX 2 the skip is belt-and-braces: a town is a location, so its own pixel and its eight neighbours (Chebyshev 0 and 1, all the skip refuses) are already in the location mask and never suitable. It stands for the day the minimum is raised past 2, when it alone decides."
+  },
+  {
+    "name": "WB1-a-gate-at-sea",
+    "file": "src/systems/gateSite.js",
+    "old": "      if (maps.getClimateIndex(x, y) === CLIMATES.Ocean) continue;\n",
+    "new": "",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-a-gate-on-a-spawned-dungeon",
+    "file": "src/systems/gateSite.js",
+    "old": "      if (spawnsDungeon(spawnSalt, x, y)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-the-sea-coast-unclaimed",
+    "file": "src/systems/gateSite.js",
+    "old": "export const politicClaimed = (pol) => pol === 64 || (pol",
+    "new": "export const politicClaimed = (pol) => (pol",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-a-line-said-every-frame",
+    "file": "src/systems/gateOmen.js",
+    "old": "      if (line && said !== key && !(line === 'wrath'",
+    "new": "      if (line && true && !(line === 'wrath'",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-a-late-arrival-hears-the-opening",
+    "file": "src/systems/gateOmen.js",
+    "old": "const SAYS = Object.freeze({ omen: 'omen', rising: 'rise', sealed: 'rise',",
+    "new": "const SAYS = Object.freeze({ omen: 'omen', rising: 'rise', sealed: 'open',",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-a-fallen-boss-says-the-wrath",
+    "file": "src/systems/gateOmen.js",
+    "old": "&& !(line === 'wrath' && Number.isFinite(fell))",
+    "new": "&& true",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-the-compass-only-dead-centre",
+    "file": "src/systems/gateOmen.js",
+    "old": "<= mark.r + slack;",
+    "new": "<= mark.r;",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-the-spot-south-of-its-corner",
+    "file": "src/systems/gateOmen.js",
+    "old": "[t[0] + standing.spot[0], t[2] + standing.spot[1]]",
+    "new": "[t[0] + standing.spot[0], t[2] - standing.spot[1]]",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-an-off-map-ring-drawn",
+    "file": "src/ui/gateMapMark.js",
+    "old": "  if (cx + r < 0 || cy + r < 0 || cx - r > size.width || cy - r > size.height) return null;\n",
+    "new": "",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-the-page-rebuilt-for-the-words",
+    "file": "src/ui/gateMapMark.js",
+    "old": "export const gateRingKey = (m) => (m ? `${m.day}|${m.cx.toFixed(3)}|${m.cy.toFixed(3)}|${m.r}` : '');",
+    "new": "export const gateRingKey = (m) => (m ? `${m.day}|${m.cx.toFixed(3)}|${m.cy.toFixed(3)}|${m.r}|${m.label}` : '');",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-the-ring-broken-into-dots",
+    "file": "src/ui/gateMapMark.js",
+    "old": "export const GATE_RING_BAND = 1;",
+    "new": "export const GATE_RING_BAND = 0.5;",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-the-ring-lost-at-the-far-zoom",
+    "file": "src/ui/inkMap.js",
+    "old": "  const r = Math.max(10, g.r * view.scale);\n  ctx.save();",
+    "new": "  const r = g.r * view.scale;\n  ctx.save();",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-the-gate-offline",
+    "file": "src/scenes/world.js",
+    "old": "const gateOmen = params.has('online') ? createGateOmen({",
+    "new": "const gateOmen = true ? createGateOmen({",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-the-held-map-never-told",
+    "file": "src/ui/heldMap.js",
+    "old": "          gate: this._gate,   // WB1\n",
+    "new": "          gate: null,   // WB1\n",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  },
+  {
+    "name": "WB1-the-compass-never-told",
+    "file": "src/ui/enhancedHud.js",
+    "old": "  drawGateMark(opts.gate ?? null, opts.playerXZ ?? null, heading01);   // WB1\n",
+    "new": "  drawGateMark(null, opts.playerXZ ?? null, heading01);   // WB1\n",
+    "tests": [
+      "test/wb1_gate_omen.test.js"
+    ]
+  }
+]

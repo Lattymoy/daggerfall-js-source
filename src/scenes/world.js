@@ -79,7 +79,7 @@ import { preloadSpellbookArt } from '../ui/spellbookWindow.js';   // U42: the cl
 import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the book's one door
 import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
 import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flight probe's picker
-import { worldMinutes, setWorldMinutes, setSharedClock, sharedClockOn, alignEntityClocks, setWorldPriceTilt } from '../systems/worldTick.js';   // ECON1 / AUDIT ALL E1: the world's tilt off the file's base powers   // AUDIT 23 (C2): the ONE clock
+import { worldMinutes, setWorldMinutes, setSharedClock, sharedClockOn, sharedWallMs, alignEntityClocks, setWorldPriceTilt } from '../systems/worldTick.js';   // ECON1 / AUDIT ALL E1: the world's tilt off the file's base powers   // AUDIT 23 (C2): the ONE clock
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: DaggerfallTravelPopUp_OnPostFastTravel (EntityEffectBroker.cs:846-847)
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice, makeEnemiesHostile, isBowWeapon, enemyHeavyPainVoice } from './hostCombat.js';   // ROAD-B: GameManager.MakeEnemiesHostile
 import { flashPlayerDamage } from '../ui/damageFlash.js';
@@ -166,6 +166,8 @@ import { elementalResistanceChance, ELEMENTS } from '../systems/spellcast.js';  
 import { createTownWatch, runTownWatchFrame } from '../systems/townWatch.js';   // DISC19-F: the watch defends the town
 import { rollCampEncounterOnChunkLoad, amGroupRollOwner, campAnchorSpot } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
 import { WORLD_SALT, spawnsDungeon, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger, spawnedLocationCentreLocal, dungeonSightLine } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
+import { createGateOmen, insideGateRing, gateSceneXZ } from '../systems/gateOmen.js';   // WB1 (Mac: "on the timer, a large area would be shown on the map, also in chat"): the Oblivion Gate's omen - its lines, its ring, its compass mark
+import { scanGatePixels, findGateSite } from '../systems/gateSite.js';   // WB1: where the day's gate stands, over the map files every client holds alike
 import { isMainStoryDungeon } from '../world/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
 import { nearestSafeLocation, respawnFlavorText, reviveForPlay, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
@@ -7291,6 +7293,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       // join or leave - both skins read it on their own refresh. The
       // host says WHERE and WHO; neither map is told what a party is.
       party: () => partyMarkers(),
+      // WB1: THE OBLIVION GATE'S RING - a function for the party's reason (the countdown moves while the map stands
+      // open); null offline and while no gate is marked, and both maps draw nothing
+      gate: () => gateOmen?.mapMark() ?? null,
       // TO1: the mod itself, and the six reads its additions to this
       // window need. Every one is guarded on the other side - with
       // Travel Options off `travelOptions` answers null and the map is
@@ -10731,6 +10736,32 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!id || !_profileView) return;
     profileWin.update(id, withDuel(id, _profileView));
   };
+  // ═══ WB1: THE OBLIVION GATE'S OMEN ═════════════════════════════════════
+  // Mac: "at any point in the world, on the timer, a large area would be shown on the map, also in chat". Online only:
+  // the gate is a fact about the SHARED world (net/gateLaw.js - the shared clock's game day), found over the map files
+  // (systems/gateSite.js, scanned once, the first time a gate is marked) and said once a moment (systems/gateOmen.js).
+  // The clock is the relay's, through the welcome's offset, as the sky's is.
+  let _gateScan = null;
+  const _gateTwo = (n) => String(n).padStart(2, '0');
+  const gateOmen = params.has('online') ? createGateOmen({
+    now: () => Date.now() + _sharedOffsetMs,
+    site: (day) => {
+      if (!maps) return null;
+      try { _gateScan ??= scanGatePixels(maps, { spawnSalt: _spawnSalt }); return findGateSite(day, _gateScan); } catch (e) { console.warn('[gate] no site', e?.message ?? e); return null; }
+    },
+    say: (text) => chatNotice(text),
+    localTime: (minute) => { const ms = sharedWallMs(minute); if (ms == null) return null; const d = new Date(ms); return `${_gateTwo(d.getHours())}:${_gateTwo(d.getMinutes())}`; },
+  }) : null;
+  /** WB1: the gate's frame - its line when a new moment comes. Runs before the death return, as the chat's does. */
+  const gateFrame = () => { try { gateOmen?.frame(); } catch (e) { console.warn('[gate] frame', e?.message ?? e); } };
+  /** WB1: the compass's mark - the gate's spot in THIS scene, while the gate stands and the player is in its ring. */
+  const gateCompassMark = () => {
+    const g = gateOmen?.standing();
+    const mark = g ? gateOmen.mapMark() : null;
+    if (!g || !mark || (modes?.mode ?? 'exterior') !== 'exterior') return null;
+    const p = playerTravelPixel();
+    return insideGateRing(mark, p.x, p.y) ? gateSceneXZ(g, state.pixelTranslation(g.px, g.py)) : null;
+  };
   /** The duel's frame: the law's lapses, retries and ends, then the ring - the motor's clamp for my own body while a
    *  duel is live, in THIS scene's frame from the world frame every frame (a floating-origin shift moves the scene, not
    *  the ring) - and the prompt's countdown. Runs before the death return, so a dead duellist's duel ends. */
@@ -12076,6 +12107,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     profileFrame();   // INSPECT1: the card's ask retried and its wait timed - the trade's own kind of work, beside it
     pageFrame();   // JOURNAL1: a page whose writer left the room goes with them
     mail?.poll();   // MAIL1: a look at the letterbox when one is due - before the dead return, as the chat's heartbeat is
+    gateFrame();   // WB1: the Oblivion Gate's omen - its line when a new moment comes, before the dead return (the omen speaks to the dead too)
     // AUDIT ONLINE D12: the dead broadcast nothing and see no one
     if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.()) {
       if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room
@@ -15221,6 +15253,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           windowCoversHud: townTalk.hudCovered || (modes?.hudCovered ?? false),
           hudHidden: townTalk.hudHidden,   // MAP-FIELD2: the held map takes the vitals and the status icons with it, on both skins
           detected: _detected, playerXZ: [enchantFeet()[0], enchantFeet()[2]],
+          gate: gateCompassMark(),   // WB1: the Oblivion Gate on the compass, while the player stands in its ring
           largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity),
           // AUDIT 39: the enhanced HUD's two hand plaques. Both values
           // are already this host's - the rig one argument over, the

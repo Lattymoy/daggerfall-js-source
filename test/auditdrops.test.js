@@ -360,6 +360,6 @@ test('AUDIT DROPS F: the pose\'s fk is clamped 0-5, the quest frame has its own 
   assert.match(rd('src/net/social.js'), /if \(seated\) whyNotInvite = WHY_IN_PARTY;/);
   assert.equal(typeof st.actionsFor, 'function');
   // tradeFrame after chatFrame, before the dead return (lens 3 #5)
-  assert.match(rd('src/scenes/world.js'), /const onlineFrame = \(now, dt\) => \{\s*chatFrame\(\);[^\n]*\n\s*tradeFrame\(\);[^\n]*\n(?:\s*duelFrame\(\);[^\n]*\n)?(?:\s*profileFrame\(\);[^\n]*\n)?(?:\s*pageFrame\(\);[^\n]*\n)?(?:\s*mail\?\.poll\(\);[^\n]*\n)?(?:\s*\/\/[^\n]*\n)*\s*if \(townTalk\.overlay instanceof DeathScreen/);
+  assert.match(rd('src/scenes/world.js'), /const onlineFrame = \(now, dt\) => \{\s*chatFrame\(\);[^\n]*\n\s*tradeFrame\(\);[^\n]*\n(?:\s*duelFrame\(\);[^\n]*\n)?(?:\s*profileFrame\(\);[^\n]*\n)?(?:\s*pageFrame\(\);[^\n]*\n)?(?:\s*mail\?\.poll\(\);[^\n]*\n)?(?:\s*gateFrame\(\);[^\n]*\n)?(?:\s*\/\/[^\n]*\n)*\s*if \(townTalk\.overlay instanceof DeathScreen/);
   assert.ok(inRange);
 });
