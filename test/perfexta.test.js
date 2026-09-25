@@ -14,6 +14,7 @@ import { Renderer, WORLD_FRAME } from '../src/render/renderer.js';
 import { EL_LANE } from '../src/render/enhancedLighting.js';
 import * as bounds from '../src/render/bounds.js';   // a namespace: on the base the placement grid is missing, and only its pins fail
 import { sunCascadeMatrices, pointFaceMatrices, shadowFarFor, swayLean } from '../src/render/shadowPass.js';
+import { StaticBatchBuilder, keyResolver } from '../src/render/staticBatch.js';
 
 const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
 const RIGHT = new Float32Array([1, 0, 0]), UP = new Float32Array([0, 1, 0]);
@@ -354,4 +355,89 @@ test('PERF-EXT1: THE BOUND IS BB_VS\'S - a crown the lift alone carries into a l
   assert.ok(run(wide, [[25.05, 0, -100]], [0, 0, -100, 18], [-30, 0, 1, 1], 1.2) > 0, 'a quad the wind can lean into the cube holds the slot');
   assert.equal(run(wide, [[25.2, 0, -100]], [0, 0, -100, 18], [-30, 0, 1, 1], 1.2), 0, 'past the lean\'s reach it does not');
   assert.ok(Math.abs(swayLean(30, 1.2, 1) - 0.0702) < 1e-9, 'the lean this pin is built on');
+});
+
+// ── PERF-EXT2: a run of sub-meshes is one depth draw ──────────────────────
+
+/** A box of `s` at (x, y, z) in createMesh's CPU shape, one sub-mesh on (archive, record). */
+function box(x, y, z, s, archive, record) {
+  const positions = [], normals = [], uvs = [], indices = [];
+  for (let i = 0; i < 8; i++) { positions.push(x + (i & 1 ? s : -s), y + (i & 2 ? s : -s), z + (i & 4 ? s : -s)); normals.push(0, 1, 0); uvs.push(0, 0); }
+  for (const [a, b, c, d] of [[0, 1, 3, 2], [4, 6, 7, 5], [0, 4, 5, 1], [2, 3, 7, 6], [0, 2, 6, 4], [1, 5, 7, 3]]) indices.push(a, b, c, a, c, d);
+  return { positions: new Float32Array(positions), normals: new Float32Array(normals), uvs: new Float32Array(uvs), indices: new Uint32Array(indices), subMeshes: [{ textureArchive: archive, textureRecord: record, startIndex: 0, primitiveCount: 12 }] };
+}
+/** Every replay the pass makes, with the mesh draws it made: [count, byte offset] per drawElements on the mesh program. */
+function watchReplays(sp, g) {
+  const reps = [];
+  const replay = sp.replay.bind(sp);
+  sp.replay = (...a) => {
+    const at = g.draws.length;
+    const n = replay(...a);
+    reps.push({ vp: Float32Array.from(a[1]), light: a[2], minRadius: a[4], filter: a[6], mesh: g.draws.slice(at).filter((d) => d[0] === sp.programs.mesh.p).map((d) => [d[1], d[3], d[4]]) });
+    return n;
+  };
+  return reps;
+}
+
+test('PERF-EXT2: a pixel\'s static batch of thirty texture groups (StaticBatchBuilder, createMesh - the producer\'s own shape) is ONE depth draw a cascade over its whole index range from 0 (the base: thirty a cascade); with its middle group out of a cascade, two draws at the exact ranges either side', () => {
+  const { r, sp, g, frame } = stand({ sun: true });
+  const sb = new StaticBatchBuilder();
+  for (let k = 0; k < 30; k++) sb.add(box((k % 6) - 2.5, 0.5, Math.floor(k / 6) - 2, 0.3, 300, k), I, keyResolver(null));
+  const merged = sb.finish();
+  assert.equal(merged.subMeshes.length, 30, 'thirty groups, end to end');
+  const mesh = r.createMesh(merged);
+  const reps = watchReplays(sp, g);
+  const draw = () => r.drawMesh(mesh, I, null);
+  frame(draw); frame(draw);
+  const sun = reps.filter((x) => !x.light);
+  assert.ok(sun.length >= 2, `the cascades replayed (${sun.length})`);
+  for (const x of sun) assert.deepEqual(x.mesh.map((d) => [d[1], d[2]]), [[merged.triangles * 3, 0]], 'one draw, every index, from 0');
+  // three groups of 200 triangles, the middle one's sphere 1,000 off: two runs, [0, 600) and [1200, 1800)
+  const sub = (k, far) => ({ textureArchive: 300, textureRecord: k, startIndex: k * 600, primitiveCount: 200, _bounds: new Float32Array(far ? [1000, 0, 1000, 1] : [0, 1, 0, 1]) });
+  const gap = { vao: { id: 'vao-gap' }, buffers: [], bounds: new Float32Array([0, 1, 0, 2000]), subMeshes: [sub(0, false), sub(1, true), sub(2, false)] };
+  reps.length = 0;
+  const draw2 = () => r.drawMesh(gap, I, null);
+  frame(draw2); frame(draw2);
+  const gapSun = reps.filter((y) => !y.light && y.mesh.some((d) => d[0] === gap.vao));
+  assert.ok(gapSun.length >= 2, `the cascades replayed it (${gapSun.length})`);
+  for (const x of gapSun) assert.deepEqual(x.mesh.filter((d) => d[0] === gap.vao).map((d) => [d[1], d[2] / 4]), [[600, 0], [600, 1200]], 'the run breaks at the culled group, the ranges exact');
+});
+
+test('PERF-EXT2: EVERY REPLAY DRAWS EXACTLY THE VISIBLE SUB-MESHES\' TRIANGLES - over random meshes (runs that meet, gaps between them, empty groups, spheres in and out of each volume) replayed into the sun\'s cascades and eight lanterns\' faces, the triangles each replay drew are, as a multiset, the ones its visible sub-meshes hold; and in fewer draws than sub-meshes (the base: one a sub-mesh)', () => {
+  const rand = rng(8);
+  const { r, sp, g, frame } = stand({ sun: true });
+  const meshes = [];
+  for (let m = 0; m < 12; m++) {
+    const subs = [];
+    let at = 0;
+    for (let k = 0; k < 4 + Math.floor(rand() * 20); k++) {
+      if (rand() < 0.2) at += 3 * (1 + Math.floor(rand() * 5));   // a gap: this group does not start where the last ended
+      const prims = rand() < 0.1 ? 0 : 1 + Math.floor(rand() * 40);
+      const out = rand() < 0.3;
+      subs.push({ textureArchive: 300, textureRecord: k, startIndex: at, primitiveCount: prims, _bounds: new Float32Array([(rand() * 2 - 1) * (out ? 600 : 30), rand() * 4, (rand() * 2 - 1) * (out ? 600 : 30), 0.5 + rand() * 4]) });
+      at += prims * 3;
+    }
+    meshes.push({ vao: { id: `vao-r${m}` }, buffers: [], bounds: new Float32Array([0, 2, 0, 900]), subMeshes: subs });
+  }
+  const lights = new Float32Array(8 * 4);
+  for (let i = 0; i < 8; i++) lights.set([(rand() * 2 - 1) * 30, 1 + rand() * 3, (rand() * 2 - 1) * 30, 8 + rand() * 12], i * 4);
+  const reps = watchReplays(sp, g);
+  const draw = () => { for (const m of meshes) r.drawMesh(m, I, null); };
+  for (let f = 0; f < 3; f++) frame(draw, lights);
+  let checked = 0, drawn = 0, subsDrawn = 0;
+  for (const x of reps) {
+    if (x.filter === 2) continue;   // a lantern's live layers draw the movers; these meshes are still, the caches' and the cascades'
+    const planes = bounds.spherePlanes(x.vp);
+    for (const m of meshes) {
+      const rec = { bounded: true, sphere: m.bounds, subSpheres: new Float32Array(m.subMeshes.flatMap((s) => [...s._bounds])) };
+      const want = [];
+      if (bounds.sphereInPlanes(planes, 0, 2, 0, 900)) m.subMeshes.forEach((s, k) => { if (bounds.subMeshVisible(planes, rec, k)) { subsDrawn++; for (let t = 0; t < s.primitiveCount; t++) want.push(s.startIndex + t * 3); } });
+      const got = [];
+      for (const [vao, n, off] of x.mesh) if (vao === m.vao) { drawn++; for (let t = 0; t < n / 3; t++) got.push(off / 4 + t * 3); }
+      assert.deepEqual(got.sort((a, b) => a - b), want.sort((a, b) => a - b), `mesh ${m.vao.id}: the triangles drawn are the visible sub-meshes'`);
+      checked++;
+    }
+  }
+  assert.ok(checked > 100, `replays read (${checked} mesh-volume pairs)`);
+  assert.ok(drawn <= subsDrawn * 0.75, `and in fewer draws: ${drawn} for ${subsDrawn} visible sub-meshes`);
 });

@@ -1316,13 +1316,28 @@ export class ShadowPass {
         if (!mesh?.vao || mesh._dead || !mesh.subMeshes?.length) continue;
         let vaoBound = false;
         const subs = mesh.subMeshes;
+        // PERF-EXT2 (2026-09-25, the players' "fps issues in the exterior
+        // but fine in the interior"): A RUN OF SUB-MESHES IS ONE DEPTH DRAW.
+        // PERF4's static batch is one sub-mesh per texture, laid end to end
+        // from index 0 (StaticBatchBuilder.finish), each spanning the whole
+        // pixel - so nearly all of them pass every cascade and face, and a
+        // replay drew a 40-texture city pixel as 40 draws. One draw per
+        // texture is the LIT pass's minimum; a depth replay binds nothing
+        // between two sub-meshes (DEPTH_FS reads nothing, the model and the
+        // VAO are the record's), so a run of visible sub-meshes whose ranges
+        // meet is the same triangles in one drawElements, and depth is a
+        // per-texel minimum that no draw order can change. A culled one
+        // breaks the run by itself: the next visible starts past runEnd.
+        let runAt = -1, runEnd = -1;
         for (let k = 0; k < subs.length; k++) {
           if (!subMeshVisible(planes, r, k)) { this.stats.culled++; continue; }
           if (!vaoBound) { use(P.mesh); gl.uniformMatrix4fv(P.mesh.model, false, r.matrix); f.bindVao(mesh.vao); vaoBound = true; }
-          const sm = subs[k];
-          gl.drawElements(gl.TRIANGLES, sm.primitiveCount * 3, gl.UNSIGNED_INT, sm.startIndex * 4);
-          draws++;
+          const sm = subs[k], n = sm.primitiveCount * 3;
+          if (sm.startIndex === runEnd) { runEnd += n; continue; }
+          if (runAt >= 0) { gl.drawElements(gl.TRIANGLES, runEnd - runAt, gl.UNSIGNED_INT, runAt * 4); draws++; }
+          runAt = sm.startIndex; runEnd = runAt + n;
         }
+        if (runAt >= 0) { gl.drawElements(gl.TRIANGLES, runEnd - runAt, gl.UNSIGNED_INT, runAt * 4); draws++; }
       } else if (r.kind === REC_CHAR) {
         const mesh = r.mesh;
         if (!P.char || !mesh?.vao || mesh._dead) continue;

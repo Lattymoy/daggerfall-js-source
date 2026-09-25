@@ -433,3 +433,61 @@ and in calm. The provers' own pins pass on the tree and fail on the base
 (`pins.test.mjs` 1-2); their guards pass on both (`pins2.test.mjs`'s
 corner, `gibpin.test.mjs`). Mutants `tools/mutants/perfexta.json` 1-16,
 all dead. `test/hard3_types.test.js`: the literal mints 35.
+
+## PERF-EXT2 - a run of sub-meshes is one depth draw
+
+**What the frame paid.** PERF4 merges a pixel's block models into one
+static batch with one sub-mesh per texture, laid end to end from index 0
+(`StaticBatchBuilder.finish`), each spanning the whole pixel - so nearly
+all of them pass every cascade and every lantern face, and every replay
+drew a 40-texture city pixel as 40 draws. One draw per texture is the
+LIT pass's minimum (Rendering-Arc's PERF4 record says so, rightly, for
+that pass). A depth replay binds nothing between two sub-meshes: DEPTH_FS
+reads nothing, the model matrix and the VAO are the record's.
+
+**The change.** In the replay's mesh arm, a visible sub-mesh that starts
+where the run ends extends it; anything else draws the run and starts
+another, and the last run is drawn after the loop. The same triangles,
+and depth is a per-texel minimum no draw order can change. A culled
+sub-mesh breaks the run by itself (the next visible one starts past the
+run's end). The two lenses wrote the same thing two ways - the draw
+lens's look-ahead tested a culled neighbour's sphere twice; the shadow
+lens's run-and-flush, taken, tests each once.
+
+**Measured** (the same harnesses, on top of PERF-EXT1):
+
+| | PERF-EXT1 | PERF-EXT2 |
+|---|---|---|
+| town, draws a frame, day (mesh draws) | 182.6 (119.0) | 72.6 (9.0) |
+| town, dusk / night, max a frame | 532 / 274 | 156 / 36 |
+| real density, draws day (mesh) | 197.6 (118.2) | 88.9 (9.5) |
+| real density, dusk / night, max a frame | 537 / 257 | 168 / 23 |
+| GL calls a frame, town day / real day | 461 / 529 | 351 / 421 |
+
+The maxima are SC1's cache rebuilds - six faces of every visible
+sub-mesh - which is where the merge bites at night. A bare drawElements
+is about 0.05 us of Chrome's main thread (the shadow prover's
+`callcost.mjs`), so the saving is the GPU process's and the driver's
+per-draw cost, some 110 draws a frame by day - not measurable here. The
+draw lens's game-side census of the real city at noon: 358 sub-mesh
+draws over three frames collapse to 54 runs.
+
+**The picture.** The harness's VERIFY compared the triangle set every
+mesh replay drew with the per-sub-mesh base's: identical in 7,802 replays
+over six runs, no mismatch. The draw lens's prover read the three
+cascade layers back bit-identical on SwiftShader.
+
+**Pinned** (`test/perfexta.test.js`, both failing on the base): a pixel
+of thirty texture groups built by the real `StaticBatchBuilder` and
+`createMesh` is one draw a cascade over its whole range from 0, and with
+its middle group's sphere out of the cascade, two draws at exactly
+[0, 600) and [1200, 1800); and over random meshes - runs that meet, gaps,
+empty groups, spheres in and out - replayed into the sun's cascades and
+eight lanterns' caches, every replay's triangles are, as a multiset,
+its visible sub-meshes', in 380 draws for 529 visible sub-meshes (the
+base: 529). The count pins the merge moves by design are restated with
+their reason: `test/sc1_shadowcache.test.js` (five tests - the room's two
+sub-meshes meet, one run), `test/audit_lighting.test.js` (ONE MESH AT
+TWO PLACES), `test/el2_shadows.test.js` (the renderer builds the pass:
+3 x 3 sun draws, 6 x 2 face draws). Mutants `perfexta.json` 17-21, all
+dead; `perfextb.json`'s PERF-EXT11-9 re-aimed by content again.

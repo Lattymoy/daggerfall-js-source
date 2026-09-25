@@ -235,7 +235,7 @@ test('EL2: the renderer builds the pass with the lane, records the three draw ki
   const firstClear = calls.findIndex((c) => c[0] === 'clear' && c[1] === 16384 + 256);
   const depthClears = calls.filter((c, i) => c[0] === 'clear' && c[1] === 256 && i < firstClear);
   assert.equal(depthClears.length, 3, 'three cascades cleared before the frame\'s own clear (EL7)');
-  assert.equal(sp.kind, 'sun'); assert.equal(sp.stats.records, 3); assert.equal(sp.stats.sunDraws, 3 * (2 + 1 + 1), 'two sub-meshes, the terrain, the flat - per cascade');
+  assert.equal(sp.kind, 'sun'); assert.equal(sp.stats.records, 3); assert.equal(sp.stats.sunDraws, 3 * (1 + 1 + 1), 'two sub-meshes whose ranges meet (one run, PERF-EXT2), the terrain, the flat - per cascade');
   assert.equal(sp.count, 0, 'the records are spent'); assert.equal(sp.records[0].mesh, null, 'and released');
   assert.equal(sp.sunParams[3], 1); assert.deepEqual([...sp.shadowIndex], new Array(SHADOW_POINT_CASTERS).fill(-1)); assert.ok([...sp.pointParams].every((v) => v === 0)); assert.equal(sp.casters, 0, 'no lantern: no caster, sun or not');
   assert.ok(calls.some((c) => c[0] === 'colorMask' && c[1] === false), 'depth only'); assert.ok(calls.some((c) => c[0] === 'disable' && c[1] === 1), 'no culling under the light\'s projection');
@@ -266,7 +266,7 @@ test('EL2: the renderer builds the pass with the lane, records the three draw ki
   // so no shadow is clipped short. 14 -> 16.
   assert.deepEqual([...sp.pointParams], [6, 2, 1, shadowFarFor(14), ...new Array(4 * SHADOW_POINT_CASTERS - 4).fill(0)]); assert.equal(sp.casters, 1);
   assert.equal(shadowFarFor(14), 16, 'the quantum, by name and by value');
-  assert.equal(sp.stats.pointDraws, 6 * 3, 'six faces of the two sub-meshes and the terrain (the fake bundles carry no bounds: nothing is culled); EL6: the flat is a light flat (archive 210) and never casts from a lantern');
+  assert.equal(sp.stats.pointDraws, 6 * 2, 'six faces of the two sub-meshes (one run, PERF-EXT2) and the terrain (the fake bundles carry no bounds: nothing is culled); EL6: the flat is a light flat (archive 210) and never casts from a lantern');
   assert.equal(calls.filter((c) => c[0] === 'clear' && c[1] === 256).length, 6);
   assert.ok(calls.some((c) => c[0] === 'uniform1iv' && c[1] === 'uShadowIndex' && c[2][0] === 1 && c[2].length === SHADOW_POINT_CASTERS), 'EL5: the indices go up as one int array');
   assert.ok(calls.some((c) => c[0] === 'uniform4fv' && c[1] === 'uSunShadowParams' && c[2][3] === 0), 'and the sun map is off');

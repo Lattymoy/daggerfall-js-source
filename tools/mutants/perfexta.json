@@ -142,5 +142,50 @@
     "tests": [
       "test/perfexta.test.js"
     ]
+  },
+  {
+    "name": "PERF-EXT2-1-one-draw-a-sub-mesh-again",
+    "file": "src/render/shadowPass.js",
+    "old": "          if (sm.startIndex === runEnd) { runEnd += n; continue; }\n",
+    "new": "",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT2-2-a-run-reaches-over-a-gap",
+    "file": "src/render/shadowPass.js",
+    "old": "          if (sm.startIndex === runEnd) { runEnd += n; continue; }",
+    "new": "          if (runAt >= 0 && sm.startIndex >= runEnd) { runEnd = sm.startIndex + n; continue; }",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT2-3-the-last-run-is-never-drawn",
+    "file": "src/render/shadowPass.js",
+    "old": "        if (runAt >= 0) { gl.drawElements(gl.TRIANGLES, runEnd - runAt, gl.UNSIGNED_INT, runAt * 4); draws++; }\n      } else if (r.kind === REC_CHAR) {",
+    "new": "      } else if (r.kind === REC_CHAR) {",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT2-4-a-run-drawn-at-its-index-not-its-byte-offset",
+    "file": "src/render/shadowPass.js",
+    "old": "          if (runAt >= 0) { gl.drawElements(gl.TRIANGLES, runEnd - runAt, gl.UNSIGNED_INT, runAt * 4); draws++; }\n          runAt = sm.startIndex;",
+    "new": "          if (runAt >= 0) { gl.drawElements(gl.TRIANGLES, runEnd - runAt, gl.UNSIGNED_INT, runAt); draws++; }\n          runAt = sm.startIndex;",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT2-5-a-new-run-starts-at-the-last-ones-end",
+    "file": "src/render/shadowPass.js",
+    "old": "          runAt = sm.startIndex; runEnd = runAt + n;",
+    "new": "          runAt = runAt < 0 ? sm.startIndex : runEnd; runEnd = runAt + n;",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
   }
 ]

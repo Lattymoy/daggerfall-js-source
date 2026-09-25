@@ -159,3 +159,9 @@ cube maps (`07-Rendering/Performance-Exterior.md`, THE SHADOWS):
   beyond a clip plane (67.8 million of them). What moves: a walker
   leaving a lantern's reach loses its shadow the next frame, as it does
   in calm weather, not at the sway's next beat.
+- **PERF-EXT2** - a static batch's sub-meshes whose index ranges meet
+  are one depth draw: a pixel's merged block models were one draw per
+  texture in every cascade and every lantern face (40 in the harness's
+  city pixel). With PERF-EXT1, shadow draws a frame on the harness town
+  297 -> 8 at night, 568 -> 81 at dusk, 271 -> 73 by day (the night's
+  worst frame, a cache rebuild, 934 -> 36). The same triangles.
