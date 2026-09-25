@@ -207,7 +207,7 @@ import {
   MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID, DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID, CANNOT_BE_REPAIRED_TEXT,
   INTERRUPT_REPAIR_TEXT,
 } from '../systems/repairService.js';
-import { GuildServiceWindow, preloadGuildServiceArt, guildServiceArtLoaded } from '../ui/guildServiceWindow.js';
+import { GuildServiceWindow, preloadGuildServiceArt, guildServiceArtLoaded } from '../ui/guildServiceWindow.js';  import { enhancedWindow } from '../ui/enhancedPorts.js';   // PORT4: the service windows, in the enhanced skin
 import { preloadMerchantServiceArt } from '../ui/merchantServiceWindow.js';   // UI2: the merchant's own panel
 import { createMerchantServiceWindow, merchantServiceDoorReady } from '../ui/merchantServiceDoor.js';   // the enhanced/native fork, same law as ui/tradeDoor.js
 import { preloadMerchantRepairArt } from '../ui/merchantRepairWindow.js';   // AUDIT 58: the repair shop's four-button popup
@@ -3206,7 +3206,7 @@ export function createWorldModes(host) {
         drawModelPreview: drawBankModelPreview,   // H4: the live 3D panel
         showResult: (result, amount) => win._popup(result, amount),
         onClose: () => { if (interiorOverlay === pw) interiorOverlay = win; },
-      });
+      });  pw = enhancedWindow(pw, 'bankPurchase');   // PORT4: the enhanced skin's face; the classic window unchanged
       interiorOverlay = pw;
       return true;
     };
@@ -3341,7 +3341,7 @@ export function createWorldModes(host) {
       // PortTownAndUnknown in all of DFU. Non-zero is a port.
       isPortTown: () => (buildingDirectory?.()?.portTownAndUnknown ?? 0) !== 0,
       onClose: () => { if (interiorOverlay === win) interiorOverlay = null; },
-    });
+    });  win = enhancedWindow(win, 'bank');   // PORT4: the enhanced skin's face; the classic window unchanged
     interiorOverlay = win;
     return true;
   }
@@ -3653,7 +3653,7 @@ export function createWorldModes(host) {
         return { dispatched: true };
       },
       onClose: () => closeSpellWindow(win),
-    });
+    });  win = enhancedWindow(win, 'coven');   // PORT4: the enhanced skin's face; the classic window unchanged
     mountServiceWindow(win);
   }
 
@@ -3735,7 +3735,7 @@ export function createWorldModes(host) {
           buttons: 'YesNo',
           onYes: () => {
             joinGuild(memberships, guild, gameDate(), store);   // RR1: the store, for a mod's join floor
-            const welcome = new GuildServiceWindow(_welcomeHooks(guild, rows, () => welcome));
+            let welcome = new GuildServiceWindow(_welcomeHooks(guild, rows, () => welcome));  welcome = enhancedWindow(welcome, 'guild');   // PORT4: the enhanced skin's face; the classic window unchanged
             mountServiceWindow(welcome);
           },
         };
@@ -3777,7 +3777,7 @@ export function createWorldModes(host) {
         return { dispatched: true };
       },
       onClose: () => closeSpellWindow(win),
-    });
+    });  win = enhancedWindow(win, 'guild');   // PORT4: the enhanced skin's face; the classic window unchanged
     mountServiceWindow(win);
   }
 
@@ -4079,7 +4079,7 @@ export function createWorldModes(host) {
                   minDistance: 8, maxDistance: 64,
                 }),
                 onClose: () => closeSpellWindow(sw),
-              });
+              });  sw = enhancedWindow(sw, 'daedra');   // PORT4: the enhanced skin's face; the classic window unchanged
               if (!sw.flc.readyToPlay) { mountBoxes(); return; }
               mountServiceWindow(sw);
             }).catch(() => mountBoxes());
@@ -4204,7 +4204,7 @@ export function createWorldModes(host) {
         icons: { getTexture, uploadRecord, textures: renderer.textures },
         entity: playerEntity,
         onClose: () => closeSpellWindow(potionWin),
-      });
+      });  potionWin = enhancedWindow(potionWin, 'potionMaker');   // PORT4: the enhanced skin's face; the classic window unchanged
       mountServiceWindow(potionWin);
       return null;
     }
@@ -4221,7 +4221,7 @@ export function createWorldModes(host) {
         entity: playerEntity,
         onEnchanted: () => surfacePlayer(),
         onClose: () => closeSpellWindow(itemWin),
-      });
+      });  itemWin = enhancedWindow(itemWin, 'itemMaker');   // PORT4: the enhanced skin's face; the classic window unchanged
       mountServiceWindow(itemWin);
       return null;
     }
@@ -4282,7 +4282,7 @@ export function createWorldModes(host) {
         entity: playerEntity,
         rows,
         onClose: () => closeSpellWindow(makerWin),
-      });
+      });  makerWin = enhancedWindow(makerWin, 'spellMaker');   // PORT4: the enhanced skin's face; the classic window unchanged
       mountServiceWindow(makerWin);
       // The popup's onService reads the return value and answers "not
       // available yet" on a null, so this hands the window back the way
