@@ -16,6 +16,7 @@ import { PREF_DEFAULTS, getPref, _resetForTests } from '../src/systems/uiPrefs.j
 import { ONLINE_FORCED_PREFS, ONLINE_PLAYERS_OWN_PREFS, declareOnlinePrefs, onlineForcedPref } from '../src/systems/onlineLane.js';
 import '../src/world/landView.js';
 import '../src/world/outdoors.js';
+import '../src/systems/featureLanes.js';   // FT18: the wind, the quick slots and the blood lanes register themselves too
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -23,15 +24,19 @@ const read = (p) => readFileSync(join(root, p), 'utf8');
 test('RF4: every prefs row declares its switch, and the shelf and the lane derive theirs from the rows', () => {
   const prefsRows = FEATURES.filter((f) => f.control.store === 'prefs');
   assert.ok(prefsRows.length >= 8);
-  for (const f of prefsRows) {
-    assert.ok(f.control.initial !== undefined, `${f.id} declares initial`);
-    assert.ok([true, false, 'player'].includes(f.control.online), `${f.id} declares online`);
-    assert.equal(PREF_DEFAULTS[f.control.key], f.control.initial, `${f.id}: the shelf's default is the row's`);
-    if (f.control.online === 'player') { assert.ok(ONLINE_PLAYERS_OWN_PREFS.includes(f.control.key), `${f.id}: the player's online, by name`); assert.ok(!Object.hasOwn(ONLINE_FORCED_PREFS, f.control.key)); }
-    else assert.equal(ONLINE_FORCED_PREFS[f.control.key], f.control.online, `${f.id}: forced online as the row says`);
+  // FT18: a condensed row declares the prefs it covers too, on its `also` - the rows those keys had are gone, and the
+  // row that covers a key is its one declaration
+  const declared = prefsRows.flatMap((f) => [[f, f.control], ...(f.control.also ?? []).filter((a) => a.store === 'prefs').map((a) => [f, a])]);
+  assert.ok(declared.length > prefsRows.length, 'the covered prefs are declared');
+  for (const [f, c] of declared) {
+    assert.ok(c.initial !== undefined, `${f.id} declares ${c.key}'s initial`);
+    assert.ok([true, false, 'player'].includes(c.online), `${f.id} declares ${c.key}'s online answer`);
+    assert.equal(PREF_DEFAULTS[c.key], c.initial, `${f.id}: the shelf's default for ${c.key} is the row's`);
+    if (c.online === 'player') { assert.ok(ONLINE_PLAYERS_OWN_PREFS.includes(c.key), `${c.key}: the player's online, by name`); assert.ok(!Object.hasOwn(ONLINE_FORCED_PREFS, c.key)); }
+    else assert.equal(ONLINE_FORCED_PREFS[c.key], c.online, `${c.key}: forced online as the row says`);
   }
-  assert.deepEqual(FEATURE_PREF_DEFAULTS, Object.fromEntries(prefsRows.map((f) => [f.control.key, f.control.initial])));
-  assert.deepEqual(FEATURE_PREF_ONLINE, Object.fromEntries(prefsRows.map((f) => [f.control.key, f.control.online])));
+  assert.deepEqual(FEATURE_PREF_DEFAULTS, Object.fromEntries(declared.map(([, c]) => [c.key, c.initial])));
+  assert.deepEqual(FEATURE_PREF_ONLINE, Object.fromEntries(declared.map(([, c]) => [c.key, c.online])));
   // the two the registry has no row for stay the lane's own
   assert.equal(Object.hasOwn(ONLINE_FORCED_PREFS, 'skin'), false, 'OVH3: the skin is the player\'s online'); assert.equal(Object.hasOwn(ONLINE_FORCED_PREFS, 'mwArms'), false, 'MWA4: the arms\' switch is retired - the attached files are it');
   // and the shelf reads them live: loot rarity ON offline (LR5) and forced on online
@@ -41,10 +46,10 @@ test('RF4: every prefs row declares its switch, and the shelf and the lane deriv
   assert.equal(onlineForcedPref('grassDensity', '?online=1'), undefined, 'a dial is the player\'s');
   // the shelf carries no copy of a row's default any more
   const shelf = read('src/systems/uiPrefs.js');
-  for (const f of prefsRows) assert.doesNotMatch(shelf, new RegExp(`^  ${f.control.key}:`, 'm'), `${f.control.key} is declared on its row, not the shelf`);
+  for (const [, c] of declared) assert.doesNotMatch(shelf, new RegExp(`^  ${c.key}:`, 'm'), `${c.key} is declared on its row, not the shelf`);
   assert.match(shelf, /\.\.\.FEATURE_PREF_DEFAULTS,/);
   const lane = read('src/systems/onlineLane.js');
-  for (const f of prefsRows) assert.doesNotMatch(lane, new RegExp(`^  ${f.control.key}:`, 'm'), `${f.control.key}'s online answer is the row's, not the lane's list`);
+  for (const [, c] of declared) assert.doesNotMatch(lane, new RegExp(`^  ${c.key}:`, 'm'), `${c.key}'s online answer is the row's, not the lane's list`);
 });
 
 test('RF4: the lane door - true/false forces, \'player\' leaves it by name, idempotent and reversible', () => {

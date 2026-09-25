@@ -16,10 +16,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { repairCountdown, repairCountdownText, repairStatusLabel } from '../src/systems/repairService.js';
-import { OIL_TEMPLATE, GLASS_BOTTLE_TEMPLATE, splitsCleanly } from '../src/systems/inventory.js';
+import { OIL_TEMPLATE } from '../src/systems/inventory.js';
 import { NativeTradeWindow } from '../src/ui/nativeTrade.js';
-import { HOW_MANY_ITEMS, splitRequired } from '../src/ui/nativeInventory.js';
-import { planTake } from '../src/systems/itemTransfer.js';
+import { HOW_MANY_ITEMS } from '../src/ui/nativeInventory.js';
+import { planTake, splitRequired } from '../src/systems/itemTransfer.js';
 import { mountEnhancedTrade, repairReadyLine } from '../src/ui/enhancedTrade.js';
 import { withDom } from './invdrag.mjs';
 
@@ -125,10 +125,10 @@ test('UXB1-L: a stack only partly carried asks too, seeded with what fits - and 
   assert.equal(splitRequired(oil(12), 12, true), true, 'or Control');
   assert.equal(splitRequired(oil(1), 0, true), false, 'never a single item');
   assert.equal(splitRequired(oil(12), 12, false), false);
-  // one law, both windows (the pack and the counter)
+  // one law, both windows (the pack and the counter) - systems/itemTransfer.js's, since DISC25-F gave it one home
   assert.match(read('src/ui/nativeInventory.js'), /return splitRequired\(it, plan\.amount, this\._controlDown\);/);
   const trade = read('src/ui/nativeTrade.js');
-  assert.match(trade, /if \(splitRequired\(item, plan\.amount, this\._controlDown\)\) \{\n\s+this\.inputBox = splitInputBox\(plan\.amount, this\._controlDown,/);
+  assert.match(trade, /this\._split\(item, plan\.amount, \(amount\) => applyTransfer\(item, \{ \.\.\.plan, amount \}, this\.hooks\.shelfItems\(\), this\.basket\)\);/);
 });
 
 test('AUDIT UXB1 F4: a split lot put back on the classic shelf rejoins its stack - by the click back and by Clear', () => {
@@ -148,11 +148,11 @@ test('AUDIT UXB1 F4: a split lot put back on the classic shelf rejoins its stack
   assert.equal(w.basket.length, 0);
   assert.deepEqual(shelf.map((i) => i.stackCount), [12], '...and the shelf as it empties');
   const src = read('src/ui/nativeTrade.js');
-  assert.match(src, /if \(d\.kind === 'unstage'\) \{ this\._unstage\(item\); return; \}/);
+  assert.match(src, /if \(d\.kind === 'unstage'\) \{ this\._split\(item, amountOf\(item\), \(n\) => this\._unstage\(item, n\)\); return; \}/);
   assert.match(src, /while \(this\.basket\.length\) this\._unstage\(this\.basket\[0\]\);/);
 });
 
-// ── L: THE ENHANCED COUNTER'S COUNT ──────────────────────────────
+// ── THE ENHANCED COUNTER (DISC25-F's how-many field; this branch's merge on the way back) ──
 
 function mountShop(dom, shelf, extra = {}) {
   const host = dom.mk('div');
@@ -169,71 +169,31 @@ function mountShop(dom, shelf, extra = {}) {
 }
 const press = (n) => n.onclick({ timeStamp: 1e9 * Math.random() });
 
-test('UXB1-L: the enhanced counter carries a COUNT on a selected clean stack - seeded with all that fits, and Buy takes that many', () => {
+test('AUDIT UXB1 F4 on the enhanced counter: part of a stack bought through DISC25-F\'s how-many field comes back INTO its stack - by the basket row and by Clear', () => {
   withDom((dom) => {
     const shelf = [oil(12)];
     const shop = mountShop(dom, shelf);
-    try {
+    const qty = () => shop.q('.qtyfield')[0]?.children.find((c) => c.tagName === 'INPUT');
+    const buyTwo = () => {
       press(shop.rowOf('Oil'));
-      const field = shop.q('.trade-qtyin')[0];
-      assert.ok(field, 'the count, on the strip');
-      assert.equal(field.value, '12', 'seeded with DFU\'s maxAmount - all that fits');
+      const field = qty();
       field.value = '2';
       field.oninput();
-      const buy = shop.q('.trade-primary')[0];
-      assert.equal(buy.textContent, 'Buy 2', 'the footer names the count as it is typed, without a repaint under the press');
-      buy.onclick();
-      assert.equal(shelf.length, 1, 'the split lot left the shelf (SplitStack mints it there, then the transfer moves it)');
-      assert.equal(shelf[0].stackCount, 10, 'ten left on the shelf');
-      assert.match(shop.q('.trade-cost')[0].textContent, /^Cost: [1-9]\d*/, 'and two in the basket, costed');
-      // Clear puts it back - into its stack, as AddItem's merge does
+      shop.q('.act.primary')[0].onclick();
+    };
+    try {
+      buyTwo();
+      assert.deepEqual(shelf.map((i) => i.stackCount), [10], 'two in the basket');
+      // the basket row: its whole lot back (on Oil's own page - the local list is filtered by tab, tabAccepts)
+      shop.q('.packtab').find((b) => b.textContent === 'Clothing & Misc').onclick();
+      const basketRow = shop.q('.packcol')[0].querySelectorAll('.itemrow').find((r) => /Oil/.test(r.children.find((c) => c.className === 'itemname')?.children[0]?.textContent ?? ''));
+      press(basketRow);
+      shop.q('.act.primary')[0].onclick();
+      assert.deepEqual(shelf.map((i) => i.stackCount), [12], 'rejoined, not "Oil x10" beside "Oil x2"');
+      // and Clear
+      buyTwo();
       shop.q('.act').find((b) => b.textContent === 'Clear').onclick();
-      assert.equal(shelf.length, 1, 'rejoined, not a second row');
-      assert.equal(shelf[0].stackCount, 12);
-    } finally { shop.view.unmount(); }
-  });
-});
-
-test('UXB1-L: the stepper and All; no count for a single item or for a stack whose split is not clean (a potion keeps its recipe)', () => {
-  withDom((dom) => {
-    const potion = { group: 'UselessItems1', templateIndex: GLASS_BOTTLE_TEMPLATE, name: 'Potion', value: 20, stackCount: 5, potionRecipeKey: 1234 };
-    const sword = { group: 'Weapons', templateIndex: 113, name: 'Sword', value: 40 };
-    const shelf = [oil(12), potion, sword];
-    const shop = mountShop(dom, shelf);
-    try {
-      press(shop.rowOf('Oil'));
-      const minus = shop.q('.trade-qty')[0].querySelectorAll('.step')[0];
-      minus.onclick();
-      assert.equal(shop.q('.trade-qtyin')[0].value, '11');
-      shop.q('.trade-qtyall')[0].onclick();
-      assert.equal(shop.q('.trade-qtyin')[0].value, '12', 'All is all that fits');
-      press(shop.rowOf('Oil'));   // deselect
-      press(shop.rowOf('Potion'));
-      assert.equal(shop.q('.trade-qtyin').length, 0, 'a potion split would lose its recipe - no count offered');
-      press(shop.rowOf('Potion'));
-      press(shop.rowOf('Sword'));
-      assert.equal(shop.q('.trade-qtyin').length, 0, 'one item has no count');
-    } finally { shop.view.unmount(); }
-  });
-  assert.equal(splitsCleanly(oil(12)), true);
-  assert.equal(splitsCleanly(oil(1)), false);
-  assert.equal(splitsCleanly({ group: 'UselessItems1', templateIndex: GLASS_BOTTLE_TEMPLATE, stackCount: 3, potionRecipeKey: 9 }), false);
-  assert.equal(splitsCleanly({ group: 'Books', templateIndex: 0, stackCount: 3, message: 42 }), false);
-  assert.equal(splitsCleanly({ ...oil(12), material: 2 }), false, 'a material the fresh template would not carry');
-  assert.equal(splitsCleanly({ ...oil(12), timeForItemToDisappear: 5000 }), false, 'a conjured stack: the fresh item never expires');
-});
-
-test('UXB1-L: the count field\'s Return buys that many, not the window\'s confirm', () => {
-  withDom((dom) => {
-    const shelf = [oil(12)];
-    const shop = mountShop(dom, shelf);
-    try {
-      press(shop.rowOf('Oil'));
-      const field = shop.q('.trade-qtyin')[0];
-      field.value = '3';
-      dom.win.fire('keydown', { key: 'Enter', code: 'Enter', target: field, preventDefault() {}, stopPropagation() {} });
-      assert.equal(shelf[0].stackCount, 9, 'three moved');
-      assert.equal(shop.q('.sb-ask').length, 0, 'and no Buy confirmation was raised');
+      assert.deepEqual(shelf.map((i) => i.stackCount), [12], 'Clear too');
     } finally { shop.view.unmount(); }
   });
 });

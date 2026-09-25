@@ -100,6 +100,9 @@ export const PREF_DEFAULTS = Object.freeze({
   // front door, and on the classic skin no ANIM0001 splash before the title (main.js). ?nointro and ?novideo do the
   // same for one visit. Off by default: the film is how the game introduces itself.
   skipStartVideo: false,
+  // FT18 (Mac: "Add option to set all mods/enhancements off"): what the Features home's All off moved, tile id ->
+  // the segment it had, so Restore can put it back - across launches. null is nothing to restore.
+  featuresRestore: null,
   proceduralSky: true,   // LEGACY: read only by the migration in loadPrefs
   // RF4 (2026-09-14, Mac's refactor pass, the fourth): THE PORT'S OWN
   // FEATURE SWITCHES ARE DECLARED ONCE, ON THEIR ROWS. The Features

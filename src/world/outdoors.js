@@ -14,17 +14,19 @@
 // and writes the two stores the way that composition reads them. OFF
 // leaves the mod's switch as it was: a player who turns the outdoors
 // off and on again gets the sky they had. The mod's OTHER knobs (fog
-// density, pixel snow) are the mod's own and stay on the Mods page.
+// density, pixel snow) are the mod's own and open in this row's tile (FT14 took the Mods page away).
 
 import { getPref, setPref } from '../systems/uiPrefs.js';
 import { modSetting, setModSetting } from '../systems/modSettings.js';
 import { registerFeatureLane } from '../systems/features.js';   // RF4: the row's lane is this module's
 
-/** The row's tiers: value and label. */
+/** The row's tiers: value and label. FT18: the labels are a bar's segments now (FT14), and DISC23-C reads a switch
+ *  by the segment that SAYS Off - 'Off - Daggerfall’s outdoors' did not, so this tile never read off and never
+ *  took the Off fill. The note says what each is. */
 export const OUTDOORS_TIERS = Object.freeze([
-  ['off', 'Off - Daggerfall’s outdoors'],
-  ['dome', 'On, with the port’s own sky'],
-  ['dynamic', 'On, with Dynamic Skies'],
+  ['off', 'Off'],
+  ['dome', 'Port sky'],
+  ['dynamic', 'Dynamic Skies'],
 ]);
 /** Enhanced environments on (EE1) and every mod on (MO1): the mod's sky. */
 export const OUTDOORS_DEFAULT = 'dynamic';

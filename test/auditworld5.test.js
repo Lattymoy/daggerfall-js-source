@@ -295,7 +295,8 @@ test('AUDIT WORLD5 by source: the sentence refills nothing online (C9), exterior
   // which the client carried as the relay's clock.
   assert.match(rd('server/src/index.js'), /"now":\$\{Date\.now\(\)\},"v":/, 'C11: not the hello\'s start, four awaits earlier');
   assert.ok(relayVersionAtLeast(66), 'C11: the relay bumped, and has not gone backwards since (SRV-N: asked monotonically - five pins used to retype one moving number)');
-  assert.match(rd('src/ui/enhancedMenu.js'), /The clock and the sky are the world\\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, and the quest clocks stand still\./, 'C12');
+  // DISC25-D: the last clause ("the quest clocks stand still") had been false since WORLD7 - they count played time
+  assert.match(rd('src/ui/enhancedMenu.js'), /The clock and the sky are the world\\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, so a quest that waits for an hour of the day waits for that hour of the world\. Quest timers run while you play\./, 'C12');
   const w = rd('src/scenes/world.js');
   const install = w.indexOf("if (params.has('online')) { setSharedClock(() => sharedClassicMinutes(Date.now() + _sharedOffsetMs), (m) => wallMsForClassicMinutes(m) - _sharedOffsetMs); setSharedWeather(true); }");
   const boot = w.indexOf('export async function bootWorld(');

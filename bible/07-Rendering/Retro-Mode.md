@@ -83,7 +83,13 @@ and the lightning's minimum width (the world image's height,
   it (:140); the main camera's sets it null every frame (:47-50), and at
   one execution order Unity does not say which runs last (AUDIT RETRO1's
   second pass, H2), so DFU's own UI may not always be pillarboxed. Here
-  only the world is pillarboxed - so
+  only the world is pillarboxed - NARROWED by DISC25-B (2026-09-25,
+  kurkku: "hands on the enhanced map sprite go over the black bars in
+  retro mode"): the enhanced held map stands inside the pillarbox now,
+  its whole-window root inset to `retroScreenRect` (CustomScreenRect,
+  :139-140, cut from the world rect's own pillar) in the painted lane;
+  the Morrowind arm's lane keeps the canvas (C2). Everything else in the
+  2D layer still takes the whole canvas - so
   a docked bar is the canvas's width, taller than DFU's (its bar is the
   pillarbox's width * 46/320: at 1920x1080 in 4:3, 276 px against 207),
   and the world strip above it is wider for its height than DFU's

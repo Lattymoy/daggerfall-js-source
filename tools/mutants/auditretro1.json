@@ -396,8 +396,8 @@
   {
     "name": "AUDITRETRO1-D6-the-pillar-floored",
     "file": "src/systems/retroMode.js",
-    "old": "  const pillarWidth = Math.trunc((screenW - viewWidth) / 2);",
-    "new": "  const pillarWidth = (screenW - viewWidth) >> 1;",
+    "old": "  return Math.trunc((screenW - viewWidth) / 2);",
+    "new": "  return (screenW - viewWidth) >> 1;",
     "tests": [
       "test/auditretro1.test.js"
     ]

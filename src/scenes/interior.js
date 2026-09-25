@@ -43,6 +43,7 @@ import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: th
 import { swallowBrowserKey, actionsOf, keyboardLook } from '../ui/input.js';   // U47: F5/F6/F11 - one list, in ui/input.js; FIX-F: the automap through the registry, and the look keys off the same registry
 import { worldViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // AUDIT RETRO1 A8/C4: the lens and the world rect the other hosts take - the docked bar's, and retro mode's texture aspect and pillarbox
 import { hudShortcutKey } from '../ui/hudShortcuts.js';   // AUDIT RETRO1 C4: DaggerfallHUD's shortcuts, Shift-F11 among them, as in the other hosts
+import { frameCapSkip } from '../systems/frameCap.js';   // FPS-CAP1: DFU's TargetFrameRate, the fourth host's
 
 // Milestone 4 scene: one building interior, standalone at block-local origin.
 export async function bootInterior(canvas, renderer, params, status) {
@@ -320,6 +321,7 @@ export async function bootInterior(canvas, renderer, params, status) {
   let frames = 0;
   let last = performance.now();
   function frame(now) {
+    if (frameCapSkip(now)) { requestAnimationFrame(frame); return; }   // FPS-CAP1: held back to the Frame Rate Cap - `last` kept, so the next drawn frame's dt covers it
     const dt = Math.min(0.1, (now - last) / 1000);
     // AUDIT 28 W7 + F-C1/F-C2 (self-audit 3): PlayerMouseLook.Update's
     // three answers - paused (:241-244) returns before ApplyLook and the
@@ -386,7 +388,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // scan, for the reason DFU states on the gate (SetActive(false) on
     // the geometry would mess with the open map's rendering). Update's
     // own call at :1001 is the one-shot lazy init, not a per-frame
-    // driver. dungeon.js:786 and worldModes.js:6473/:6501 gate the same
+    // driver. dungeon.js:788 and worldModes.js:6473/:6501 gate the same
     // way; this is that gate for this host.
     lookGate(!!overlay);   // AUDIT-AMAP H8
     if (!gamePaused()) ctx.automapTick?.(dt, cam.pos, fwd);

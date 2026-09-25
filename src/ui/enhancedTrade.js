@@ -39,7 +39,7 @@
 import { itemLine, linePictureUrl } from './enhancedInventory.js';   // RF6/MW-D38: one item model, read by both packs
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';
-import { overlayAction, isTextEntryTarget } from './input.js';   // UXB1-L: the count field keeps its own keys
+import { overlayAction } from './input.js';
 import { audio } from '../systems/audio.js';
 import { enhancedSoundsOn } from '../systems/enhancedSounds.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -53,8 +53,10 @@ import {
   isBeingRepaired as itemIsBeingRepaired, isRepairFinished, collectRepaired,
   updateRepairTimes, repairCountdown, repairCountdownText,   // UXB1-K: when a job is ready
 } from '../systems/repairService.js';
-import { planTake, applyTransfer, clearLightSourceOnLeave, CANNOT_CARRY_TEXT } from '../systems/itemTransfer.js';
-import { isSummoned, carriedWeight, totalWeight, transferAll, addItem, splitsCleanly } from '../systems/inventory.js';
+import { planTake, applyTransfer, clearLightSourceOnLeave, CANNOT_CARRY_TEXT, HOW_MANY_ITEMS, parseSplitAmount } from '../systems/itemTransfer.js';
+import { howManyField } from './howManyField.js';   // DISC25-F: the counter's how-many field, the pack's own
+import { isTextEntryTarget } from './input.js';
+import { isSummoned, carriedWeight, totalWeight, transferAll, addItem } from '../systems/inventory.js';   // AUDIT UXB1 F4: addItem, a returning lot's merge
 import { getBool } from '../systems/settings.js';   // UXB1-K: InstantRepairs - no clock to count down
 import { dateFromClassicMinutes, dateString } from '../systems/gameDate.js';
 import { sharedRealTimeText } from '../systems/worldTick.js';   // UXB1-K: online, the ready time in the player's own clock
@@ -93,6 +95,9 @@ let staged = [];    // every other mode's staged lot (shown in the REMOTE column
 let usingWagon = false;
 let box = null;     // { rows, buttons: 'YesNo'|null, onYes }
 let selected = null;   // { item, side: 'local'|'remote' } - a single click's tooltip, not yet transferred
+// DISC25-F (Satranath and Starempire42 on Discord: "It doesn't appear possible to split stacks ... in shops when
+// making a purchase"): the tooltip's HOW MANY field - the item it was opened on, and its live text
+let qty = { item: null, text: '' };
 let unregisterOutside = () => {};
 // A manual double-click tracker. render() below tears down and rebuilds
 // EVERY row on EVERY click (even a plain single click, just to draw the
@@ -120,9 +125,6 @@ let unregisterOutside = () => {};
 let lastRowClick = { item: null, time: 0 };
 const DOUBLE_CLICK_MS = 500;
 let keyHandler = null;
-/** UXB1-L: how many of the selected shelf stack the footer's Buy takes - null is "all that fits" (DFU's plain
- *  click, TransferItem's maxAmount). Reset with the selection. */
-let buyCount = null;
 /** UXB1-K: the repair counter's estimates, one scheduler pass per paint (repairEstimatesNow). */
 let repairEst = null;
 
@@ -168,15 +170,13 @@ function cost() {
  *  selected, so previewing an item on the shelf, or one of your own
  *  that this window's quick-sell reaches for, answers a real number
  *  rather than the aggregate's 0. Same law, single-item pass. */
-function quotePriceFor(item, side, count = null) {
+function quotePriceFor(item, side) {
   const ctx = deps.priceCtx?.() ?? {};
   const quality = ctx.quality ?? 0; const skills = ctx.skills ?? {};
-  const priced = (m, it = item) => getTradePrice(m, tradeCost(m, [it], ctx).cost, quality, skills);
+  const priced = (m) => getTradePrice(m, tradeCost(m, [item], ctx).cost, quality, skills);
   if (side === 'remote') {
     // Buying: the shelf. Every other mode's remote pane is the STAGED
     // lot already, not something new to quote.
-    // UXB1-L: a chosen count is priced as that many (buyItemPrice multiplies by the stack, tradeModes.js).
-    if (inBuy() && count != null && count !== (item.stackCount ?? 1)) return { label: `Buy ${count} for`, price: priced('Buy', { ...item, stackCount: count }) };
     if (inBuy()) return { label: 'Buy for', price: priced('Buy') };
     return null;
   }
@@ -305,19 +305,74 @@ function pickLocal(item) {
   });
   if (d.kind === 'stage') {
     if (refuseTransfer(item)) return;
-    clearLightSourceOnLeave(item, deps.entity, true);
-    move(item, deps.packItems(), remoteItems());
+    const amount = chosenAmount(item, stackOf(item));   // DISC25-F: part of a stack goes on the counter
+    if (amount == null) return askAgain(item);
+    if (amount < stackOf(item)) applyTransfer(item, { amount }, deps.packItems(), remoteItems(), { entity: deps.entity, fromLocal: true });
+    else {
+      clearLightSourceOnLeave(item, deps.entity, true);
+      move(item, deps.packItems(), remoteItems());
+    }
+    qty = { item: null, text: '' };
     playTransferSound();
     render();
     return;
   }
-  if (d.kind === 'unstage') { unstageToShelf(item); playTransferSound(); render(); return; }
+  if (d.kind === 'unstage') {
+    const amount = chosenAmount(item, stackOf(item));   // DISC25-F: and part of it back off the basket
+    if (amount == null) return askAgain(item);
+    if (amount < stackOf(item)) applyTransfer(item, { amount }, basket, deps.shelfItems());
+    else unstageToShelf(item);   // AUDIT UXB1 F4: the whole lot rejoins its stack
+    qty = { item: null, text: '' };
+    playTransferSound();
+    render();
+    return;
+  }
   if (d.kind === 'refuse') refuse(d.refusal);
 }
 
-/** UXB1-L: goods put back on the shelf rejoin their stack - ItemCollection.AddItem's merge (inventory.js addItem),
- *  which DFU's ClearSelectedItems reaches through TransferAll. A split lot pushed back as its own row left "Oil ×2"
- *  beside "Oil ×10" on the shelf it came from. */
+/** DISC25-F: a stack's count - DFU's stackCount, one for a thing that does not stack. */
+const stackOf = (item) => item?.stackCount ?? 1;
+
+/** DISC25-F: how many a move of `item` takes - the tooltip's field where it was opened on this item, parsed as DFU
+ *  parses the split popup (1..max, else null: nothing moves), and `max` everywhere else (a double click reaches for
+ *  the whole, as it always has). */
+function chosenAmount(item, max) {
+  return qty.item === item ? parseSplitAmount(qty.text, max) : max;
+}
+
+/** DISC25-F: a count DFU's parse refuses moves nothing; the box says the popup's own question with its max. */
+function askAgain(item) {
+  box = { rows: [{ text: HOW_MANY_ITEMS(splitMaxOf(item, selected?.side ?? 'local') || stackOf(item)), center: true }], buttons: null };
+  render();
+}
+
+/**
+ * DISC25-F: the most one move of the selected item takes, or 0 where it takes nothing or cannot split. Off the
+ * shelf, what the pack can carry (planTake's own amount - CanCarryAmount, DaggerfallTradeWindow.cs:842 - asked as a
+ * DRY RUN, since the quest rung writes); onto the counter and back off it, the whole stack (DFU passes no maxAmount
+ * there, :795/:803, so only Control splits); nothing for a repair, which takes a thing whole.
+ */
+function splitMaxOf(item, side) {
+  if (!item || mode === 'Repair') return 0;
+  if (side === 'remote') {
+    if (!inBuy()) return stackOf(item);
+    const plan = planTake(item, { bag: [...deps.packItems(), ...basket], entity: deps.entity ?? null, dryRun: true });
+    return plan.ok && !plan.map ? plan.amount : 0;
+  }
+  const d = localClickDecision(mode, item, {
+    inBasket: (i) => basket.includes(i),
+    allowMagicRepairs: deps.allowMagicRepairs ?? false,
+    usingIdentifySpell: deps.usingIdentifySpell ?? false,
+    wagonLoaded: (deps.entity?.wagonItems ?? []).length > 0,
+    usedWagon: (deps.entity?.items ?? []).find(
+      (i) => i.group === 'Transportation' && i.templateIndex === SMALL_CART_TEMPLATE) ?? null,
+  });
+  return d.kind === 'stage' || d.kind === 'unstage' ? stackOf(item) : 0;
+}
+
+/** AUDIT UXB1 F4: goods put back on the shelf rejoin their stack - ItemCollection.AddItem's merge (inventory.js
+ *  addItem), which DFU's click-back (TransferItem) and ClearSelectedItems (TransferAll) both reach. A split lot is its
+ *  own record, and `move`'s push left "Oil ×2" beside "Oil ×10" on the shelf it came from. */
 function unstageToShelf(item) {
   const i = basket.indexOf(item);
   if (i >= 0) basket.splice(i, 1);
@@ -329,7 +384,7 @@ function takeItemFromRepair(item) {
   collectRepaired(item);
 }
 
-function pickRemote(item, count = null) {
+function pickRemote(item) {
   if (inBuy()) {
     const plan = planTake(item, { bag: [...deps.packItems(), ...basket], entity: deps.entity ?? null });
     if (!plan.ok) {
@@ -337,11 +392,10 @@ function pickRemote(item, count = null) {
       render();
       return;
     }
-    // UXB1-L: a count the player chose is TransferItem's split (DaggerfallInventoryWindow.cs:1509-1558) - never more
-    // than the carry gate's own amount, never less than one; with none chosen the whole amount moves, as a plain
-    // click does in DFU.
-    const amount = count == null ? plan.amount : Math.max(1, Math.min(plan.amount, Math.trunc(count)));
-    applyTransfer(item, amount === plan.amount ? plan : { ...plan, amount }, deps.shelfItems(), basket);
+    const amount = chosenAmount(item, plan.amount);   // DISC25-F: part of the shelf's stack into the basket
+    if (amount == null) return askAgain(item);
+    applyTransfer(item, { ...plan, amount }, deps.shelfItems(), basket);
+    qty = { item: null, text: '' };
     playTransferSound();
     render();
     return;
@@ -360,7 +414,11 @@ function pickRemote(item, count = null) {
     render();
     return;
   }
-  move(item, remoteItems(), deps.packItems());
+  const amount = chosenAmount(item, stackOf(item));   // DISC25-F: part of a staged stack back into the pack
+  if (amount == null) return askAgain(item);
+  if (amount < stackOf(item)) applyTransfer(item, { amount }, remoteItems(), deps.packItems());
+  else move(item, remoteItems(), deps.packItems());
+  qty = { item: null, text: '' };
   playTransferSound();
   render();
 }
@@ -371,7 +429,6 @@ function pickRemote(item, count = null) {
  *  clicking a different one just switches the tooltip to it. */
 function selectItem(item, side) {
   selected = (selected?.item === item) ? null : { item, side };
-  buyCount = null;   // UXB1-L: a new selection starts at "all that fits"
   render();
 }
 
@@ -381,43 +438,13 @@ function selectItem(item, side) {
 function transferSelected() {
   if (!selected) return;
   const { item, side } = selected;
-  const count = inBuy() && side === 'remote' ? buyCount : null;   // UXB1-L: the stack's chosen count
   selected = null;
-  buyCount = null;
-  if (side === 'local') pickLocal(item); else pickRemote(item, count);
-}
-
-/** UXB1-L (2026-09-25, the UX backlog: "Split stacks of items in shops (Shop sells 12 oil but you only want 2, for
- *  example)"): THE COUNT, FOR A SHELF STACK. DFU's trade window inherits TransferItem's split popup - "Pick how many
- *  items (max N)?", on a Control-click or when only part of the stack fits (DaggerfallInventoryWindow.cs:1509-1537) -
- *  and this counter had neither: a stack moved whole or silently shrank to what fits. So a selected shelf stack
- *  carries its count in the detail strip, seeded with DFU's own maxAmount (all that fits, planTake's amount), and
- *  the footer's Buy takes that many. Offered only where the split is clean (inventory.js splitsCleanly): SplitStack
- *  mints a FRESH template item, so a potion or a book split off its stack would lose what made it that potion. */
-function buyMax(item) {
-  if (buyMaxMemo?.has(item)) return buyMaxMemo.get(item);
-  const plan = planTake(item, { bag: [...deps.packItems(), ...basket], entity: deps.entity ?? null, dryRun: true });
-  const max = plan.ok ? plan.amount : 0;
-  buyMaxMemo?.set(item, max);
-  return max;
-}
-/** AUDIT UXB1 F7: one dry run per item per paint - the detail strip, its count and the footer each asked, three
- *  walks of pack and basket a paint. Live only while render() builds, so no handler reads a figure from before its
- *  own change. */
-let buyMaxMemo = null;
-function countOffered(item) {
-  return inBuy() && selected?.item === item && selected.side === 'remote' && (item.stackCount ?? 1) > 1 && splitsCleanly(item);
-}
-function chosenCount(item) {
-  const max = buyMax(item);
-  if (max < 1) return 0;
-  return buyCount == null ? max : Math.max(1, Math.min(max, buyCount));
+  if (side === 'local') pickLocal(item); else pickRemote(item);
 }
 
 function clear() {
   selected = null;
-  buyCount = null;
-  if (inBuy()) { while (basket.length) unstageToShelf(basket[0]); return; }
+  if (inBuy()) { while (basket.length) unstageToShelf(basket[0]); return; }   // AUDIT UXB1 F4: each lot rejoins its stack
   if (mode === 'Repair') {
     const now = deps.nowMinutes?.() ?? 0;
     for (const it of [...remoteList()]) {
@@ -742,12 +769,15 @@ function detailStrip() {
   if (line.hands != null) bits.push(line.hands);
   for (const t of line.survival ?? []) bits.push(t);
   info.append(el('p', 'meta', bits.filter(Boolean).join(' · ')));
-  // UXB1-L: a clean shelf stack carries its count
-  const counted = countOffered(selected.item);
-  const n = counted ? chosenCount(selected.item) : null;
-  if (counted && n > 0) info.append(countControl(selected.item, n));
-  const quote = quotePriceFor(selected.item, selected.side, counted && n > 0 ? n : null);
+  const quote = quotePriceFor(selected.item, selected.side);
   if (quote) info.append(el('p', 'trade-quote', `${quote.label} ${quote.price} gold`));
+  // DISC25-F: a stack more than one of which would move asks how many, here where the move is made
+  const item = selected.item;
+  const max = stackOf(item) > 1 ? splitMaxOf(item, selected.side) : 0;
+  if (max > 1) {
+    if (qty.item !== item) qty = { item, text: String(max) };
+    info.append(howManyField({ max, text: qty.text, onInput: (t) => { qty.text = t; } }));
+  }
   // UXB1-K: at the repair counter, when it is ready
   if (mode === 'Repair' && selected.side === 'remote') {
     const line = repairReadyLine(repairWhen(selected.item, deps.nowMinutes?.() ?? 0));
@@ -758,48 +788,6 @@ function detailStrip() {
   closeBtn.onclick = () => { selected = null; render(); };
   bar.append(closeBtn);
   return bar;
-}
-
-/** UXB1-L: the count - a stepper over a numeric field, and All (the whole amount that fits, DFU's pre-fill). The
- *  field is a real input; its Return buys that many, as the classic popup's does (SplitStackPopup_OnGotUserInput).
- *  TYPING DOES NOT REPAINT: a repaint on the field's blur would rebuild the Buy button under the very press that
- *  blurred it, and the press would land on nothing. So the typed count is kept as it is typed, and only the two
- *  words that name it - the quote and the footer's "Buy N" - are rewritten in place. */
-const clampCount = (v, max) => Math.max(1, Math.min(max, Math.trunc(Number(v) || 1)));
-function countControl(item, n) {
-  const max = buyMax(item);
-  const wrap = el('div', 'trade-qty');
-  wrap.append(el('span', 'trade-qtyk', 'How many'));
-  const set = (v) => { buyCount = clampCount(v, max); render(); };
-  const minus = el('button', 'step', '\u2212');
-  minus.setAttribute('aria-label', 'fewer');
-  minus.disabled = n <= 1;
-  minus.onclick = () => set(n - 1);
-  const field = el('input', 'trade-qtyin');
-  field.type = 'number';
-  field.min = '1';
-  field.max = String(max);
-  field.value = String(n);
-  field.inputMode = 'numeric';
-  field.setAttribute('aria-label', `How many (at most ${max})`);
-  field.oninput = () => {
-    buyCount = clampCount(field.value, max);
-    const quote = quotePriceFor(item, 'remote', buyCount);
-    const q = host?.querySelector?.('.trade-quote');
-    if (q && quote) q.textContent = `${quote.label} ${quote.price} gold`;
-    const act = host?.querySelector?.('.trade-primary');
-    if (act) act.textContent = `${MODE_LABEL[mode]} ${buyCount}`;
-  };
-  field.onchange = () => { field.value = String(buyCount ?? n); };   // a typed 99 reads back as the most that fits
-  const plus = el('button', 'step', '+');
-  plus.setAttribute('aria-label', 'more');
-  plus.disabled = n >= max;
-  plus.onclick = () => set(n + 1);
-  const all = el('button', 'act trade-qtyall', 'All');
-  all.disabled = n >= max;
-  all.onclick = () => set(max);
-  wrap.append(minus, field, plus, el('span', 'meta', `of ${item.stackCount ?? 1}`), all);
-  return wrap;
 }
 
 function footer() {
@@ -815,8 +803,7 @@ function footer() {
   const clearBtn = el('button', 'act', 'Clear');
   clearBtn.onclick = () => { clear(); render(); };
   bar.append(clearBtn);
-  const counted = selected && countOffered(selected.item) ? chosenCount(selected.item) : 0;   // UXB1-L: "Buy 2"
-  const action = el('button', 'act primary trade-primary', isQuickSellCandidate() ? 'Sell' : counted > 0 ? `${MODE_LABEL[mode]} ${counted}` : (MODE_LABEL[mode] ?? 'Trade'));
+  const action = el('button', 'act primary', isQuickSellCandidate() ? 'Sell' : (MODE_LABEL[mode] ?? 'Trade'));
   // A pending selection (a single click's tooltip) makes this button
   // reach for THAT item instead of the ordinary confirm - but only
   // when the item is one this button could actually do something with
@@ -860,10 +847,6 @@ function render() {
   // back to its top every time.
   const prevScroll = Array.from(host.querySelectorAll('.packcol')).map((c) => c.scrollTop);
   repairEst = repairEstimatesNow();   // UXB1-K: one scheduler pass for every row this paint draws
-  buyMaxMemo = new Map();   // AUDIT UXB1 F7
-  try { paint(prevScroll); } finally { buyMaxMemo = null; }
-}
-function paint(prevScroll) {
   host.innerHTML = '';
   const shell = el('div', 'px-home px-over trade-shell');
   const win = el('div', 'px-win trade-win');
@@ -900,12 +883,6 @@ function paint(prevScroll) {
 
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
-  // UXB1-L: the count field types its own digits; its Return buys that many (not the window's confirm), and only
-  // Escape leaves it for the window's back.
-  if (!box && isTextEntryTarget(e.target) && overlayAction(e) !== 'back') {
-    if (e.key === 'Enter') { e.preventDefault(); buyCount = Math.trunc(Number(e.target.value) || 1); transferSelected(); render(); }
-    return;
-  }
   if (box) {
     if (box.buttons === 'YesNo') {
       if (e.code === 'KeyY') { e.preventDefault(); dismissBox(true); }
@@ -914,6 +891,9 @@ function onKey(e) {
     return;
   }
   if (overlayAction(e) === 'back') { e.preventDefault(); close(); return; }
+  // DISC25-F: Enter in the how-many field is the popup's Return - it moves the selected item with that count, not
+  // the whole lot's confirm
+  if (e.key === 'Enter' && isTextEntryTarget(e.target) && e.target.closest?.('.qtyfield') && selected) { e.preventDefault(); transferSelected(); render(); return; }
   if (e.key === 'Enter') { e.preventDefault(); modeAction(); }
 }
 
@@ -935,7 +915,7 @@ export function mountEnhancedTrade(hostEl, hooks = {}) {
   usingWagon = false;
   box = null;
   selected = null;
-  buyCount = null;
+  qty = { item: null, text: '' };
   onExit = hooks.onExit ?? (() => {});
   render();
   keyHandler = onKey;

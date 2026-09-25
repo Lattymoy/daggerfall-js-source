@@ -127,7 +127,7 @@ import { setRacialQuestHost } from '../systems/racialQuests.js';   // V2d: the q
 import { setCrimeGuildQuestHost, setCrimeGuildClock } from '../systems/crimeGuilds.js';   // CG2
 import { randomCemeteryLocationIndex } from '../systems/infection.js';   // V2e: GetRandomCemetery's pick half
 import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: the vampire clan pool asks as a Member
-import { prepareQuestShare, receiveSharedQuest, SHARE_REFUSAL_TEXT } from '../systems/questShare.js';   // QUEST1: the chronicle's own Share button, and the party frame it answers
+import { prepareQuestShare, receiveSharedQuest, SHARE_REFUSAL_TEXT, shareRefusalText } from '../systems/questShare.js';   // QUEST1: the chronicle's own Share button, and the party frame it answers
 import { careerSunDamage } from '../systems/passiveSpecials.js';   // AUDIT 64 F20/F21: Career.DamageFromSunlight, the travel door's own rung and the arrival clamp's second arm
 import { buildMapDict, locationSummaryAt as travelLocationSummaryAt } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict; TO1: the junction map's own reads
 import { dilateCoastalClimate, smoothLocationNeighbourhood } from '../world/terrainHelper.js';   // AUDIT 58 F4
@@ -171,6 +171,7 @@ import { nearestSafeLocation, respawnFlavorText, reviveForPlay, undergroundWakeS
 import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, saveKeysOfCharacter, saveInfoOf, requestScreenshot, capturePendingScreenshot, exitAutosaveNames } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end   // ONLINE-AUTOSAVE1: saveKeysOfCharacter/saveInfoOf - every slot this character already has, kept in sync on an online exit too
 import { frameBegin, frameEnd, frameAbort } from '../systems/frameClock.js';   // PERF1: the frame's script time; AUDIT-WH2 L1-F4: and the door an early return takes
+import { frameCapSkip } from '../systems/frameCap.js';   // FPS-CAP1: DFU's TargetFrameRate - a held frame re-arms before the clock and the input frame
 import { arrivalClampMinutes, playerTravelPosition } from '../systems/travel.js';   // F-slice; F114: the ship-aware travel origin
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion, directionHintString } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it; SPAWNED-DUNGEONS2b: the same eight-word compass
@@ -7786,6 +7787,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // shop door as outside it (test/modalkeys.test.js red-proofs the
     // one gate that still stands, a typed name over the bindings).
     swallowBrowserKey(e);   // U47: F5/F6/F11 - one list, in ui/input.js
+    // DISC25-E: A TYPED FIELD'S KEY JOINS NO RING AND TAKES NO RUNG - dungeon.js's KB1 gate, which this host never
+    // had. A field outside every overlay (the social panel's letter) sent its letters down this ladder: W walked,
+    // space jumped, F shut the panel. The panel stops its own now; this is the host's half, for any field it did not.
+    if (isTextEntryTarget(e.target)) return;
     // ROAD-G G3 - THE RING IS FILLED BEFORE THE LADDER. InputManager
     // .PollInput (:1795-1809) rebuilds `heldKeys` every frame whatever
     // the dispatch does - `foreach (KeyCode k in KeyCodeList) if
@@ -8216,7 +8221,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:232, "a right-click on a window is the window's...
+  // (dungeon.js:233, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -10315,7 +10320,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (q) _questSyncSeen.set(quest.questName, q.getLogMessages()?.length ?? 0);
         return;
       }
-      const why = SHARE_REFUSAL_TEXT[result.reason];
+      const why = shareRefusalText(result);   // DISC25-D: a guild refusal names the guild
       setMidScreenText(why ? `${who} tried to share "${label}", but you ${why}` : `Could not receive the quest "${label}" from ${who}.`);
     };
     social.onNote = (note, text) => { if (text) chatLog.push(partyNoteTab(note, social, tab.id), { text, system: true }); };   // CHAT-CHAN: a party's own news on the Party tab, beside its conversation
@@ -12842,7 +12847,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:111, so the
+  // only reader of `load` in the whole tree is dungeon.js:112, so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a
@@ -13109,6 +13114,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // imported the door without ever calling it. A host that boots
     // after this one rebuilds the node on its first painted frame.
     if (!frameAlive(_frameToken)) { destroyWorldPlaque(); return; }   // P0: a later boot or an unwind killed this loop
+    if (frameCapSkip(now)) { requestAnimationFrame(frame); return; }   // FPS-CAP1: held back to the Frame Rate Cap - no stamp, no input frame, `last` kept
     frameBegin(now);   // PERF1: the script time (systems/frameClock.js)
     beginInputFrame(latch.edge);   // MWCROUCH
     // AUDIT 39 (#160): a full-screen video owns the canvas for its

@@ -47,8 +47,8 @@
   {
     "name": "D22G-openings-are-walls",
     "file": "src/systems/automapFloors.js",
-    "old": "        (open(ox, oy) ? openings : walls).push([x + 1, y, x + 1, y + 1]);",
-    "new": "        walls.push([x + 1, y, x + 1, y + 1]);",
+    "old": "    if (open(ox, oy)) openings.push(seg);\n    else if (!pass?.(ox, oy)) walls.push(seg);",
+    "new": "    walls.push(seg);",
     "tests": [
       "test/disc22g_automap.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "D22G-opens-on-floor-1",
     "file": "src/ui/automapSheet.js",
-    "old": "    index = here >= 0 ? here : Math.max(0, Math.min(frame.floors.length - 1, index));",
-    "new": "    index = Math.max(0, Math.min(frame.floors.length - 1, index));",
+    "old": "    index = here >= 0 ? here : Math.max(0, Math.min(frame.sheets.length - 1, index));",
+    "new": "    index = Math.max(0, Math.min(frame.sheets.length - 1, index));",
     "tests": [
       "test/disc22g_automap.test.js"
     ]
@@ -101,7 +101,7 @@
   {
     "name": "D22G-mark-does-nothing",
     "file": "src/ui/automapSheet.js",
-    "old": "      if (!lastView || !r?.notes || !f.floors.length || typeof deps.askText !== 'function') return false;",
+    "old": "      if (!lastView || !r?.notes || !f.sheets.length || typeof deps.askText !== 'function') return false;",
     "new": "      return false;",
     "tests": [
       "test/disc22g_automap.test.js"
@@ -146,7 +146,7 @@
   {
     "name": "D22G-no-other-storey-name",
     "file": "src/ui/automapSheet.js",
-    "old": "there >= 0 && there !== index ? `to ${f.floors[there].label}` : ''",
+    "old": "there >= 0 && there !== index ? `to ${f.sheets[there].label}` : ''",
     "new": "''",
     "tests": [
       "test/disc22g_automap.test.js"

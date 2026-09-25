@@ -66,8 +66,8 @@
   {
     "name": "RETRO1-pillar-not-integer",
     "file": "src/systems/retroMode.js",
-    "old": "  const pillarWidth = Math.trunc((screenW - viewWidth) / 2);",
-    "new": "  const pillarWidth = (screenW - viewWidth) / 2;",
+    "old": "  return Math.trunc((screenW - viewWidth) / 2);",
+    "new": "  return (screenW - viewWidth) / 2;",
     "tests": [
       "test/retro1.test.js"
     ]

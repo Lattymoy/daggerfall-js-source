@@ -2418,9 +2418,9 @@ beside them. Then the same shape turned up everywhere else:
 | `worldModes.js:7271` | the dungeon's flats, camps, torches and peers |
 | `worldModes.js:7453` | the interior's flats and peers |
 | `worldModes.js:7459-7524` | blood, torches, drops, foes, guards - **five separate uncut calls** |
-| `exterior.js:5286`, `world.js:14552` | the spell missiles |
-| `exterior.js:5362` | the fixed city's townspeople |
-| `interior.js:378`, `dungeon.js:1069` | the flats, the camps, the torches |
+| `exterior.js:5289`, `world.js:14558` | the spell missiles |
+| `exterior.js:5365` | the fixed city's townspeople |
+| `interior.js:380`, `dungeon.js:1071` | the flats, the camps, the torches |
 
 Seven call sites, and an eighth waiting to be written next year. **Fixing
 them one at a time is how this bug got to be in eight places.** The test
@@ -3212,3 +3212,57 @@ pin re-aimed by content, and VC3's two composite pins with it.
 those choices are the PORT'S, not the mod's - "1:1" covers the mod's
 shader, not the state the port synthesises to feed its own passes. The
 red line was in nobody's code and in one of our decisions.**
+
+## FPS-CAP1 - THE FRAME RATE CAP, LIVE (2026-09-25)
+
+Mac: *"Add FPS limiter to settings"*. The setting was already there - DFU's
+`Video/TargetFrameRate`, on the Video page as "Frame Rate Cap" since the
+settings screen shipped - and read by nothing: a stored-tier readout of "0".
+
+**THE LAW.** SettingsManager reads it `GetInt(sectionVideo,
+"TargetFrameRate", 0, 300)` (SettingsManager.cs:414) and
+StartGameBehaviour.ApplyStartSettings applies it only when it is 30 or more
+and VSync is off: "Default is 0 but anything below 30 is ignored and treated
+as disabled" (StartGameBehaviour.cs:244-250). `systems/frameCap.js` is that:
+`frameCapFps()` reads the store DFU's way (the clamp spelled out, so MENU T5
+reads it against the row), `frameCapRate` drops anything under 30.
+
+**ONE DEPARTURE (Ledger A).** Unity ignores `targetFrameRate` while
+`vSyncCount` is set, which is why DFU's rule turns the cap off under VSync.
+A page has no other mode - every rAF waits for the screen - so read DFU's
+way the cap could never act. It holds frames BACK instead, whatever VSync
+says: never faster than the screen, only slower. `Video/VSync` is
+unavailable now ("the browser always waits for the screen refresh"), and its
+help says to use the cap to run slower.
+
+**THE GATE.** Each of the four hosts asks `frameCapSkip(now)` at the top of
+its rAF callback - after the ownership guard, above PERF1's clock stamp and
+the input frame - and a held callback re-arms and returns: nothing is
+simulated or drawn, `last` does not move (the next drawn frame's dt covers
+the held time, under the hosts' 0.1 s clamp), no PERF1 sample is taken, and
+the input rings keep gathering, because `beginInputFrame` has not swapped
+them - a key pressed during a held frame is read on the next drawn one. A
+drawn frame books the next slot one interval on from its own slot, so an
+uneven screen still averages the cap (60 of a 144 Hz screen); a frame a whole
+interval late books from itself, so a hidden tab coming back does not race
+through the slots it missed. A 1 ms slack keeps a 60 cap on a 60 Hz screen
+from halving on a stamp that wobbles early.
+
+**THE COUNTER.** The FPS counter runs on its own rAF (FPS1: it measures the
+browser, not a host), so it would have gone on reading the screen's 144.
+Every callback of one browser frame is handed the same stamp, and the gate
+decides once per stamp - so the counter asks the same question and counts
+only the frames the game drew.
+
+**THE ROW.** `ui/settingsLaw.js` gave NUMBER_LAW `stops` and `offBelow`: the
+row walks Off, 30, 45, 60, 75, 90, 120, 144, 165, 240 and 300 (shift steps
+three), reads "Off" for any value under 30 and "60 fps" otherwise, and never
+offers 1-29, a cap DFU ignores. It is LIVE, so the pause menu's condensed
+settings carries it too.
+
+Pins: `test/fpscap1.test.js` (7 - the gate over 60 and 144 Hz stamps with
+and without a wobble, one decision a stamp and no burst after a gap, the
+store read DFU's way, the stepped row, VSync unavailable, the four hosts'
+placement, the counter driven over a capped second); `perf1` and
+`audit39_dungeonshared` re-aimed at the gate's line between the guard and
+the stamp.

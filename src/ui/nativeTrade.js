@@ -35,6 +35,8 @@ import { getBool } from '../systems/settings.js';   // AUDIT 64 F53: InstantRepa
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from './text.js';
 import { planTake, applyTransfer, clearLightSourceOnLeave, CANNOT_CARRY_TEXT } from '../systems/itemTransfer.js';   // AUDIT 26 F157/F158
+import { HOW_MANY_ITEMS, SPLIT_INPUT_MAX, parseSplitAmount, splitRequired } from '../systems/itemTransfer.js';   // DISC25-F: TransferItem's split popup, inherited
+import { InputMessageBoxWindow } from './inputMessageBox.js';   // DISC25-F: ...pushed as CM5 pushes it for the pack
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
@@ -57,7 +59,7 @@ import {
 } from './targetIconPanel.js';
 import { WAGON_KG_LIMIT } from '../systems/itemTransfer.js';   // ItemHelper.WagonKgLimit (:56)
 import { CANNOT_REMOVE_ITEM_TEXT } from '../systems/createItem.js';   // both TransferItem refusals speak it
-import { questTransferRefused, SMALL_CART_TEMPLATE, INV_RECTS, TABS, tabAccepts, splitRequired, splitInputBox, isControlCode } from './nativeInventory.js';   // DaggerfallTradeWindow EXTENDS the inventory window; MAC-N2: and INHERITS its four tab pages
+import { questTransferRefused, SMALL_CART_TEMPLATE, INV_RECTS, TABS, tabAccepts } from './nativeInventory.js';   // DaggerfallTradeWindow EXTENDS the inventory window; MAC-N2: and INHERITS its four tab pages
 import { expandGuildMacros } from '../systems/guildServiceActions.js';
 import { firstName } from '../systems/talkSession.js';   // MACRO-4: %pct's shop arm
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
@@ -257,8 +259,11 @@ export class NativeTradeWindow {
     // override (:635-647) is written against it rather than around it.
     this.usingWagon = false;
     this.box = null;             // the confirm / refusal box, when one is up
-    // UXB1-L: TransferItem's split popup, which this window INHERITS (DaggerfallTradeWindow extends the inventory
-    // window, and its Buy click is TransferItem, :842) - and the Control state that forces it (:1513).
+    // DISC25-F (Satranath and Starempire42 on Discord: "It doesn't appear possible to split stacks currently, either
+    // in inventory or in shops when making a purchase"): DaggerfallTradeWindow EXTENDS the inventory window (:31) and
+    // every click here goes through its TransferItem (:795, :803, :842) - so the how-many popup (:1515-1539) is this
+    // window's too: when a stack will not all fit, or under Control. The pushed box, and Control's held state,
+    // polled at the click as Input.GetKey is (CM5's own pair on the pack).
     this.inputBox = null;
     this._controlDown = false;
     this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);   // the shared scroller's warm cache
@@ -326,14 +331,9 @@ export class NativeTradeWindow {
 
   /** UXB1-L: the pointer seam's DOWN (the hosts' `pointer('down', ..., { ctrl, shift })`, worldModes.js) carries the
    *  click's own Control - Input.GetKey polled at the click (:1513), read off the event rather than a key latch that
-   *  a focus change can strand. */
+   *  a focus change can strand. DISC25-F's keydown/keyup pair is the other door. */
   pointer(phase, vx, vy, button = 0, mods = null) {
     if (phase === 'down' && mods) this._controlDown = !!mods.ctrl;
-  }
-
-  /** UXB1-L: ...and the key-up half, the pack's own (nativeInventory.js keyup). */
-  keyup(code, e = null) {
-    if (isControlCode(code, e)) this._controlDown = false;
   }
 
   /** MAC-N2: the release edge the hosts send on mouseup (ROAD-E E1) -
@@ -476,10 +476,11 @@ export class NativeTradeWindow {
   }
 
   /** AUDIT UXB1 F4: goods put back on the shelf rejoin their stack - ItemCollection.AddItem's merge (inventory.js
-   *  addItem), which DFU's click-back (TransferItem, :800-801) and ClearSelectedItems (TransferAll) both reach. Since
-   *  UXB1-L a split lot is its own record, and `_move`'s push left "Oil x2" beside "Oil x10" on the shelf it came
-   *  from; the enhanced counter's unstageToShelf already merged. */
-  _unstage(item) {
+   *  addItem), which DFU's click-back (TransferItem, :800-801) and ClearSelectedItems (TransferAll) both reach. A
+   *  split lot is its own record, and `_move`'s push left "Oil x2" beside "Oil x10" on the shelf it came from. `n`
+   *  short of the lot is DISC25-F's split back (applyTransfer, whose addItem merges too). */
+  _unstage(item, n = amountOf(item)) {
+    if (n < amountOf(item)) { applyTransfer(item, { amount: n }, this.basket, this.hooks.shelfItems()); return; }
     const i = this.basket.indexOf(item);
     if (i >= 0) this.basket.splice(i, 1);
     addItem(this.hooks.shelfItems(), item);
@@ -555,12 +556,34 @@ export class NativeTradeWindow {
       // AUDIT 26 F157: TransferItem :1506-1508 - staging a LIT torch
       // for sale douses it; from is localItems on every staging arm.
       clearLightSourceOnLeave(item, this.hooks.entity, true);
-      this._move(item, this.hooks.packItems(), this.remoteItems);
+      // DISC25-F: no maxAmount on this arm (:795), so only Control splits
+      this._split(item, amountOf(item), (n) => this._moveCount(item, n, this.hooks.packItems(), this.remoteItems));
       return;
     }
     // Buy: a basket item clicks back OUT to the shelf (:800-801)
-    if (d.kind === 'unstage') { this._unstage(item); return; }
+    if (d.kind === 'unstage') { this._split(item, amountOf(item), (n) => this._unstage(item, n)); return; }
     if (d.kind === 'refuse') this._refuse(d.refusal);
+  }
+
+  /** DISC25-F: TransferItem's tail with a count (SplitStackPopup_OnGotUserInput, :1546-1559) - the whole stack moves
+   *  as it always has; part of one is split off and moved (SplitStack, then DoTransferItem). */
+  _moveCount(item, n, from, to) {
+    if (n >= amountOf(item)) this._move(item, from, to);
+    else applyTransfer(item, { amount: n }, from, to);
+  }
+
+  /** DISC25-F: TransferItem's split gate (:1515-1539), CM5's own: a stack short of `max`, or any stack under
+   *  Control, pushes the how-many box seeded with the max ("0" under Control, :1525 - Return on it moves nothing);
+   *  everything else moves `max` at once. */
+  _split(item, max, perform) {
+    if (!splitRequired(item, max, this._controlDown)) { perform(max); return; }
+    this.inputBox = new InputMessageBoxWindow({
+      label: HOW_MANY_ITEMS(max),
+      value: this._controlDown ? '0' : String(max),
+      maxCharacters: SPLIT_INPUT_MAX,
+      numeric: true,
+      onSubmit: (text) => { const count = parseSplitAmount(text, max); if (count !== null) perform(count); },
+    });
   }
 
   /** RemoteItemListScroller_OnItemClick (:833-860). In Buy mode a
@@ -583,15 +606,8 @@ export class NativeTradeWindow {
         entity: this.hooks.entity ?? null,
       });
       if (!plan.ok) { this.box = { rows: [{ text: plan.refusal?.text ?? CANNOT_CARRY_TEXT, center: true }], buttons: null }; return; }
-      // UXB1-L (2026-09-25, the UX backlog: "Split stacks of items in shops"): TransferItem's split gate
-      // (DaggerfallInventoryWindow.cs:1512-1537) - a stack that only partly fits, or any stack Control-clicked,
-      // asks "how many" first, and the count the player gives is what moves (SplitStackPopup_OnGotUserInput).
-      if (splitRequired(item, plan.amount, this._controlDown)) {
-        this.inputBox = splitInputBox(plan.amount, this._controlDown,
-          (amount) => applyTransfer(item, { ...plan, amount }, this.hooks.shelfItems(), this.basket));
-        return;
-      }
-      applyTransfer(item, plan, this.hooks.shelfItems(), this.basket);
+      // DISC25-F: a partial fit, or Control, asks how many (:1515-1539) - the old arm took what fit, unasked
+      this._split(item, plan.amount, (amount) => applyTransfer(item, { ...plan, amount }, this.hooks.shelfItems(), this.basket));
       return;
     }
     // D7 - the REPAIR arm (:842-853). A job still under way is not
@@ -612,7 +628,7 @@ export class NativeTradeWindow {
       this._takeItemFromRepair(item);
       return;
     }
-    this._move(item, this.remoteItems, this.hooks.packItems());
+    this._split(item, amountOf(item), (n) => this._moveCount(item, n, this.remoteItems, this.hooks.packItems()));   // DISC25-F (:803)
   }
 
   /** TakeItemFromRepair (:857-862): the item comes back to the pack
@@ -792,7 +808,7 @@ export class NativeTradeWindow {
   }
 
   input(code, e = null) {
-    if (isControlCode(code, e)) this._controlDown = true;   // UXB1-L: the pack's own Control latch (:1513)
+    if (isControlCode(code, e)) this._controlDown = true;   // DISC25-F: Input.GetKey(Control)'s down edge; keyup is the other
     if (this.inputBox) {
       this.inputBox.input(code, e);   // the pushed box owns the keyboard
       if (this.inputBox.done) this.inputBox = null;
@@ -849,7 +865,7 @@ export class NativeTradeWindow {
   }
 
   click(vx, vy) {
-    if (this.inputBox) { this.inputBox.click(vx, vy); if (this.inputBox.done) this.inputBox = null; return true; }   // UXB1-L: modal
+    if (this.inputBox) { this.inputBox.click(vx, vy); if (this.inputBox.done) this.inputBox = null; return true; }   // DISC25-F: modal
     if (this.box) {
       if (this.box.buttons === 'YesNo') {
         const hit = this._boxLayout ? messageBoxHit(this._boxLayout, vx, vy) : null;
@@ -996,8 +1012,8 @@ export class NativeTradeWindow {
       this._boxLayout = layoutMessageBox(font, this.box.rows, buttons);
       drawMessageBox(renderer, m, font, this._boxLayout);
     } else this._boxLayout = null;
+    if (this.inputBox) this.inputBox.draw(renderer, canvas, font);   // DISC25-F: the pushed how-many box, over the panel
     this._tip.draw(renderer, m, font);   // D7: last, over the panel and the box
-    if (this.inputBox) this.inputBox.draw(renderer, canvas, font);   // UXB1-L: the pushed input box, over everything
   }
 
   /** UXB1-K: the misc label's text per remote item, in Repair mode - repairStatusLabel ("DONE" / "N days") over the
@@ -1011,4 +1027,17 @@ export class NativeTradeWindow {
     const est = updateRepairTimes(items, { commit: false, nowMinutes: now });
     return new Map(items.map((it) => [it, repairStatusLabel(it, now, est.get(it) ?? null)]));
   }
+
+  /** DISC25-F: Control's up edge (CM5's pair). */
+  keyup(code, e = null) {
+    if (isControlCode(code, e)) this._controlDown = false;
+  }
 }
+
+/** DISC25-F: a stack's count - one for a thing that does not stack. */
+const amountOf = (item) => item?.stackCount ?? 1;
+/** DISC25-F: either Control key - the code, or a key event's own code or key (CM5's reading). */
+const isControlCode = (code, e = null) =>
+  code === 'ControlLeft' || code === 'ControlRight'
+  || e?.code === 'ControlLeft' || e?.code === 'ControlRight'
+  || e?.key === 'Control';

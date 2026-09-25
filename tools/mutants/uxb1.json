@@ -108,15 +108,6 @@
     ]
   },
   {
-    "name": "UXB1-L-a-magic-stack-splits",
-    "file": "src/systems/inventory.js",
-    "old": "    && (item.material ?? 0) === 0 && (item.message ?? 0) === 0 && (item.potionRecipeKey ?? 0) === 0",
-    "new": "    && (item.message ?? 0) === 0 && (item.potionRecipeKey ?? 0) === 0",
-    "tests": [
-      "test/uxb1k_shops.test.js"
-    ]
-  },
-  {
     "name": "UXB1-M-Return-answers-Yes",
     "file": "src/ui/yesNoBox.js",
     "old": "    if (code === 'Enter' || code === 'NumpadEnter' || code === 'confirm') this.answer(false);",
@@ -435,17 +426,6 @@
     ]
   },
   {
-    "name": "AUDIT-UXB1-F7-every-ask-walks-the-pack",
-    "file": "src/ui/enhancedTrade.js",
-    "old": "  if (buyMaxMemo?.has(item)) return buyMaxMemo.get(item);\n",
-    "new": "",
-    "tests": [
-      "test/uxb1k_shops.test.js"
-    ],
-    "equivalent": true,
-    "why": "The memo saves two dry runs a paint and changes no figure - planTake is a direct ESM import, so no pin can count the walks without a spy the module does not offer. Kept alive on purpose; the finding was cost, not behaviour."
-  },
-  {
     "name": "AUDIT-UXB1-F10-the-note-forgets-the-third-answer",
     "file": "src/systems/controlsConfig.js",
     "old": "so the key does both as it is, without ${SHARE_KEY_LABEL}: answer No",
@@ -461,6 +441,24 @@
     "new": "doc.name.trim()",
     "tests": [
       "test/uxb1g_chargen.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UXB1-F4-the-enhanced-lot-back-beside-its-stack",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "    else unstageToShelf(item);   // AUDIT UXB1 F4: the whole lot rejoins its stack",
+    "new": "    else move(item, basket, deps.shelfItems());",
+    "tests": [
+      "test/uxb1k_shops.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-UXB1-F4-the-enhanced-clear-pushes",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "  if (inBuy()) { while (basket.length) unstageToShelf(basket[0]); return; }",
+    "new": "  if (inBuy()) { while (basket.length) move(basket[0], basket, deps.shelfItems()); return; }",
+    "tests": [
+      "test/uxb1k_shops.test.js"
     ]
   }
 ]

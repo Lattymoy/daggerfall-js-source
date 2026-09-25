@@ -79,7 +79,7 @@ import {
 // AUDIT 26's quest arm is a rung of it and travelled with it, so the
 // window no longer carries the settings or quest-resource imports it
 // needed to run that rung itself.
-import { planStore, planTake, applyTransfer, planDropGold, WAGON_KG_LIMIT as WAGON_KG_LIMIT_LOCAL } from '../systems/itemTransfer.js';
+import { planStore, planTake, applyTransfer, planDropGold, WAGON_KG_LIMIT as WAGON_KG_LIMIT_LOCAL, HOW_MANY_ITEMS, SPLIT_INPUT_MAX, parseSplitAmount, splitRequired } from '../systems/itemTransfer.js';
 // U57: which list is the remote one, and what opening and closing
 // this window decide.
 import {
@@ -249,38 +249,14 @@ export const isIngredientTemplate = (i) => i >= 0 && i <= 77;
 // (:1546-1560) performs the transfer, with the count the player typed.
 // An unparseable or over-large answer moves nothing (:1551-1552).
 
-/** TextManager's howManyItems, formatted (:1529). */
-export const HOW_MANY_ITEMS = (max) => `Pick how many items (max ${max})?`;
-/** mb.TextBox.MaxCharacters = 8 (:1533). */
-export const SPLIT_INPUT_MAX = 8;
+// DISC25-F: the popup's words, its cap, its parse and its gate have ONE HOME now, systems/itemTransfer.js - the
+// enhanced inventory and both trade windows split stacks too, and a law typed twice is two laws (17e).
+export { HOW_MANY_ITEMS, SPLIT_INPUT_MAX } from '../systems/itemTransfer.js';
 
-const amountOf = (item) => item?.stackCount ?? 1;
-export const isControlCode = (code, e = null) =>
+const isControlCode = (code, e = null) =>
   code === 'ControlLeft' || code === 'ControlRight'
   || e?.code === 'ControlLeft' || e?.code === 'ControlRight'
   || e?.key === 'Control';
-/** SplitStackPopup_OnGotUserInput's parse (:1549-1552): an integer in 1..max, else nothing moves. */
-const parsedAmount = (text, max) => {
-  const count = Number.parseInt(String(text), 10);
-  return Number.isInteger(count) && count >= 1 && count <= max ? count : null;
-};
-
-/** UXB1-L: TransferItem's split gate (:1512-1520) and its popup (:1523-1536), as ONE law for every window that
- *  inherits the member - this pack, and the trade window, whose Buy click IS TransferItem (DaggerfallTradeWindow.cs
- *  :842, `maxAmount = CanCarryAmount(item)`). The gate: a STACK whose carriable amount is short of it, or any stack
- *  under a held Control. The popup: howManyItems with the max, numeric, 8 characters, seeded with the max - or "0"
- *  under Control (:1525), which SplitStack(0) refuses (:1551), so Return on the seed moves nothing; `perform(count)`
- *  is SplitStackPopup_OnGotUserInput's transfer, reached only with a count in 1..max. */
-export const splitRequired = (it, amount, controlDown) => amountOf(it) > 1 && (amount < amountOf(it) || !!controlDown);
-export function splitInputBox(max, controlDown, perform) {
-  return new InputMessageBoxWindow({
-    label: HOW_MANY_ITEMS(max),
-    value: controlDown ? '0' : String(max),
-    maxCharacters: SPLIT_INPUT_MAX,
-    numeric: true,
-    onSubmit: (text) => { const count = parsedAmount(text, max); if (count !== null) perform(count); },
-  });
-}
 
 /** AUDIT 17e F36 - RefreshArmourValues' displayed number
  *  (PaperDoll.cs:159-173): (100 - armorValue) / 5, plus armorMod
@@ -939,7 +915,7 @@ export class NativeInventoryWindow {
   /** TransferItem's split gate (:1515-1519): the amount is short of the
    *  stack, or Control is held - and only for a stack (item.IsAStack(), :1519). */
   _splitRequired(it, plan) {
-    return splitRequired(it, plan.amount, this._controlDown);   // UXB1-L: the one gate, shared with the trade window
+    return splitRequired(it, plan.amount, this._controlDown);
   }
 
   /** The popup (:1523-1536): howManyItems with the max, numeric, 8
@@ -948,7 +924,13 @@ export class NativeInventoryWindow {
    *  nothing. `perform(count)` is SplitStackPopup_OnGotUserInput's
    *  transfer. */
   _openSplit(it, max, perform) {
-    this.inputBox = splitInputBox(max, this._controlDown, perform);   // UXB1-L: the one popup, shared with the trade window
+    this.inputBox = new InputMessageBoxWindow({
+      label: HOW_MANY_ITEMS(max),
+      value: this._controlDown ? '0' : String(max),
+      maxCharacters: SPLIT_INPUT_MAX,
+      numeric: true,
+      onSubmit: (text) => { const count = parseSplitAmount(text, max); if (count !== null) perform(count); },
+    });
   }
 
   /** U56: the port's half of a refusal. The LADDER decides whether a
