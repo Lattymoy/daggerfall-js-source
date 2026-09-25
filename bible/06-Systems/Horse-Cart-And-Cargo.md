@@ -191,9 +191,9 @@ killed by a mutant in `tools/mutants/hcc.json`.
 - O2: a fast travel's teardown (`clearLive`, which re-anchors the origin
   with no offset) kept the peers' teams; it clears them as `clearPuppets`
   does.
-- O3: a peer's parked wagon had no collider. It stands `hccWagon:<owner>`,
-  gone with the owner, the sweep or a change of kind, and the ray gives it
-  the surface pardon.
+- O3: a peer's parked wagon had no collider. It stood `hccWagon:<owner>`,
+  gone with the owner, the sweep or a change of kind, and the ray gave it
+  the surface pardon. **Reversed by PR-WAGON1 (2026-09-24)**, below.
 - O4: a peer's horse name passed control characters, bidi overrides and
   names the filter refuses. It rides the wire's label door
   (`sanitizeLabel`: printable ASCII, the name filter).
@@ -549,3 +549,34 @@ no other:
   first thing to look at in one is the trailing wagon behind the cart and
   the horse standing where you dismounted; online, a second client seeing a
   rider, the owned line, and a parked wagon after its owner goes indoors.
+
+## PR-WAGON1 - another player's wagon never blocks you (2026-09-24)
+
+A player's report, relayed by Mac: "Players can grief other players with the
+wagon by putting it in front of dungeon entryways and building entrances".
+Asked how, Mac chose: "Others' wagons don't block".
+
+O3 had stood a peer's parked wagon a box in my collider, and HCC-PARK keeps a
+parked team for 72 hours after its owner leaves - so a wagon left across a shop
+door or a dungeon's mouth walled it off for everyone, for days, and its box
+took the click from the door behind it besides.
+
+- **No wall.** Another player's wagon stands no collider in my world - their
+  live word or a cell's kept word, parked or moving (`scenes/horseCartPool.js`:
+  `standPeerCollider` and `peerWagonBucket` are gone; `groundPeer`'s ray skips
+  my box alone). My own parked wagon keeps the mod's BoxCollider
+  (`WAGON_BUCKET`): it is mine to move.
+- **It yields the ray.** Their wagon and their horse are targets that YIELD
+  (`yields: true`): `player/activate.js firmFirst` is the law's one home - the
+  nearest-hit law over the entrants that hold their ground first, and over the
+  yielding ones only when that found nothing. `pickActivatableHit` reads it
+  over a target list and `player/activationRace.js` over the families' picks
+  (`raceWinner`; `raceActivation`'s rivals ignore a yielding pick), so a door,
+  a dungeon's mouth, a body, a townsperson or a foe behind their team takes the
+  press and the plaque, and with nothing else on the ray their team is still
+  named ("Owned by ...") and pressed.
+
+Pins: `test/prwagon1.test.js` (6, every one failing on the base);
+`test/hcc_pool.test.js`'s O3 pin reversed; `test/disc20.test.js`'s kept team
+stands no box. Mutants: `tools/mutants/prwagon1.json` (7); `hcc.json` and
+`disc20.json` re-aimed, the three records on the removed box retired.

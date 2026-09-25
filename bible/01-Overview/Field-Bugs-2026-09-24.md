@@ -1330,3 +1330,32 @@ Mutants: `tools/mutants/disc24.json`, 30, all dead. Nine records re-aimed
 by content: `auditdisc7` C6, `auditlight` sc1-dyn-ignored, `deathloop1`'s
 two, `disc22` D22D (now the enhanced door's), `el8` cadence, `fieldgun16`,
 `perfon2` PERF-BASIS, `weeds1` the lantern replay, and `macd` MACD2.
+
+---
+
+# PR-WAGON1 — another player's wagon at a door (2026-09-24)
+
+**Report** (a player, relayed by Mac): "Players can grief other players with
+the wagon by putting it in front of dungeon entryways and building
+entrances". Mac's choice, asked how: "Others' wagons don't block".
+
+**Cause.** AUDIT HCC O3 stood another player's PARKED wagon a collider box in
+my world (`hccWagon:<owner>`), and HCC-PARK has the relay keep a parked team
+for 72 hours after its owner leaves. A wagon left across a shop door or a
+dungeon's mouth was a wall for everyone for days - and its activation box, the
+nearest thing on the ray, took the click from the door behind it too.
+
+**Fix.** Another player's wagon stands no collider, live or kept, parked or
+moving; mine keeps the mod's BoxCollider. Their wagon and horse YIELD the ray
+(`player/activate.js firmFirst`, read by `pickActivatableHit` and by
+`player/activationRace.js`): anything firm the ray meets behind them - a door,
+a dungeon's mouth, a body, a townsperson, a foe - takes the press and the
+plaque; with nothing else on the ray their team is still named and pressed.
+Horse-Cart-And-Cargo.md PR-WAGON1 has the law; Online-Arc.md's O3 bullet says
+it is reversed.
+
+**Pins.** `test/prwagon1.test.js` (6), every one failing on the base;
+`test/hcc_pool.test.js` (O3 reversed), `test/disc20.test.js`,
+`test/lootstack.test.js` (the source pin). Mutants `tools/mutants/prwagon1.json`
+(7 dead); `hcc.json` and `disc20.json` re-aimed.
+

@@ -5,7 +5,8 @@
 // shows (WagonCargoVisual's twelve), and the horse as an eight-orientation billboard off the mod's own 45 PNGs
 // (five drawn views, three mirrored - StationaryHorseBillboard). It also ANSWERS the runtime's physics
 // (Physics.RaycastAll / SphereCast over the port's collider, the threats off the foe pool), stands the parked
-// wagon's collider (the mod's non-trigger BoxCollider over the model's bounds), hands the hosts their activation
+// wagon's collider (the mod's non-trigger BoxCollider over the model's bounds - mine; another player's stands none,
+// PR-WAGON1), hands the hosts their activation
 // targets and hover names, and - HCC-ONLINE - draws every peer's wagon and horse off their `hv` records the way
 // camps.js draws a peer's camps.
 //
@@ -40,11 +41,9 @@ export const horseWalkRecord = (view, frame) => `w${view}#${frame}`;
 export const HORSE_BILLBOARD_WIDTH = HORSE_SPRITE_WIDTH * GLOBAL_SCALE;
 export const HORSE_BILLBOARD_HEIGHT = HORSE_SPRITE_HEIGHT * GLOBAL_SCALE;
 export const HORSE_WALK_BILLBOARD_HEIGHT = HORSE_WALK_SPRITE_HEIGHT * GLOBAL_SCALE;
-/** The parked wagon's collider bucket on the host's collider - skipped by the runtime's own ground probes. */
+/** The parked wagon's collider bucket on the host's collider - skipped by the runtime's own ground probes. MY wagon's
+ *  alone: PR-WAGON1 took AUDIT HCC O3's `hccWagon:<owner>` box away from another player's (targets(), below). */
 export const WAGON_BUCKET = 'hccWagon';
-/** AUDIT HCC O3: a peer's parked wagon stands a collider of its own - a physical thing to walk around, as mine is to
- *  them. Not in the runtime's skip list: the mod ignores its OWN wagon's colliders, and a peer's is any other box. */
-export const peerWagonBucket = (owner) => `${WAGON_BUCKET}:${owner}`;
 /** The activation keys the hosts race. */
 export const KEY_WAGON = 'hccWagon', KEY_FOLLOWING_WAGON = 'hccFollowingWagon', KEY_HORSE = 'hccHorse';
 export { WAGON_HOVER_TEXT, HORSE_BOX_CENTER, HORSE_BOX_SIZE };   // the pool's callers read them here (the pins do)
@@ -121,8 +120,8 @@ export function createHorseCartPool({
   // the billboards: mine and the peers'
   const _horseBatches = new Map();   // owner ('' mine) -> batch
   // the peers: owner -> { wire: { w, h } (the validated record, WIRE frame), toScene, wagon, horse (this frame's targets,
-  // SCENE frame), name, at, shownWagon, shownRotation, shownHorse, walk (the reader's own stride), bucketKey, ground
-  // (DISC20-C: where the word stands on my ground - groundPeer) }
+  // SCENE frame), name, at, shownWagon, shownRotation, shownHorse, walk (the reader's own stride), ground (DISC20-C:
+  // where the word stands on my ground - groundPeer) }
   const _peers = new Map();
   const _live = new Map();   // HCC-PARK: owner -> their live word { w, h, n, toScene, at } (the foes frame's `hv`)
   const _kept = new Map();   // HCC-PARK: `${room}|${k}` -> a cell's kept word { room, k, id, w, h, n, name, expires, toScene, seq } (the relay's memory; AUDIT HCC-PARK: per ROOM and per owner KEY, so one cell's word never unsays another's)
@@ -200,11 +199,6 @@ export function createHorseCartPool({
     return key;
   }
   function standWagonCollider(m) { _bucketKey = standBox(WAGON_BUCKET, m, _bucketKey); }
-  /** AUDIT HCC O3: a peer's PARKED wagon is a box to walk around, as mine is to them; any other kind takes it down. */
-  function standPeerCollider(owner, p) {
-    const m = p.wagon?.kind === HCC_WIRE_KIND.Deployed && _parts ? wagonMatrix(p.wagon.position, p.wagon.rotation) : null;
-    p.bucketKey = standBox(peerWagonBucket(owner), m, p.bucketKey);
-  }
 
   // ── matrices
   const wagonMatrix = (position, rotation) => mat4FromQuatPos(rotation, position);
@@ -271,7 +265,7 @@ export function createHorseCartPool({
     if (s?.deployed && _parts && s.wagon) standWagonCollider(wagonMatrix(s.wagon.position, s.wagon.rotation)); else standWagonCollider(null);
     if (s?.horse && _stillReady) { const b = horseBatch(''); if (b) poseHorseBatch(b, cameraPos, s.horse); } else dropHorseBatch('');
     for (const [owner, p] of _peers) {
-      groundPeer(owner, p);   // DISC20-C: a parked wagon and a standing horse, on MY ground
+      groundPeer(p);   // DISC20-C: a parked wagon and a standing horse, on MY ground
       retarget(p);   // AUDIT HCC O1: the wire frame, converted THIS frame - a rebase or a re-anchor of mine moves nothing of theirs
       if (p.horse) {
         const was = p.shownHorse;
@@ -283,7 +277,6 @@ export function createHorseCartPool({
         if (_stillReady) { const b = horseBatch(owner); if (b) poseHorseBatch(b, cameraPos, { ...p.horse, position: p.shownHorse, frame: p.walk.animationFrame }); }
       } else { dropHorseBatch(owner); p.walk = freshHorseWalk(); }
       if (p.wagon) { p.shownWagon = easeToward(p.shownWagon, p.wagon.position, dt); p.shownRotation = p.shownRotation ? quatSlerp(p.shownRotation, p.wagon.rotation, 1 - Math.exp(-12 * dt)) : [...p.wagon.rotation]; }
-      standPeerCollider(owner, p);
     }
     // HCC-ONLINE: a moved word asks for a frame (the host's stream reads `dirty`); a full frame carries it regardless.
     // AUDIT HCC O5: keyed in the WIRE frame, so my own rebase is not a word
@@ -311,10 +304,19 @@ export function createHorseCartPool({
     }
     if (s?.horse) out.push({ key: KEY_HORSE, aabb: aabbOf(horseBox(s.horse)), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });
     for (const [owner, p] of _peers) {
-      // AUDIT HCC O3: a parked peer wagon with its box standing HAS a surface (the wall pardon applies, as mine)
-      if (p.wagon && p.shownWagon && _parts) out.push({ key: peerKey(owner, 'w'), aabb: aabbOf(transformedAabb(_parts.box, wagonMatrix(p.shownWagon, p.shownRotation ?? p.wagon.rotation))), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: !p.bucketKey });
+      // PR-WAGON1 (2026-09-24, a player's report Mac relayed: "Players can grief other players with the wagon by
+      // putting it in front of dungeon entryways and building entrances"; Mac's choice: "Others' wagons don't
+      // block"): ANOTHER PLAYER'S TEAM NEVER STOPS ME. AUDIT HCC O3 stood a peer's parked wagon a box in my collider,
+      // and HCC-PARK keeps a parked team for 72 hours after its owner leaves - so a wagon left across a shop door or
+      // a dungeon's mouth walled it off for everyone for days, and shadowed the door from the ray besides. Their
+      // wagon and horse stand NO collider here, live or kept, parked or moving (mine keeps the mod's BoxCollider,
+      // WAGON_BUCKET: it is mine to move), so the wagon has no surface for the ray to meet either; and both are
+      // marked to YIELD the ray (player/activate.js firmFirst holds the law): the door, the body, the person behind
+      // them takes the click, and with nothing else on the ray they are still named and pressed (HCC-TIP's "Owned
+      // by ...").
+      if (p.wagon && p.shownWagon && _parts) out.push({ key: peerKey(owner, 'w'), aabb: aabbOf(transformedAabb(_parts.box, wagonMatrix(p.shownWagon, p.shownRotation ?? p.wagon.rotation))), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true, yields: true });
       // AUDIT HCC O9: a horse not drawn (its art still loading, or failed) is not named or pressed
-      if (p.horse && p.shownHorse && _stillReady) out.push({ key: peerKey(owner, 'h'), aabb: aabbOf(horseBox({ ...p.horse, position: p.shownHorse })), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });
+      if (p.horse && p.shownHorse && _stillReady) out.push({ key: peerKey(owner, 'h'), aabb: aabbOf(horseBox({ ...p.horse, position: p.shownHorse })), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true, yields: true });
     }
     return out;
   }
@@ -382,11 +384,7 @@ export function createHorseCartPool({
    *  theirs); the runtime keeps its own record (the mod's handlers). HCC-PARK: the kept records are the cell's and
    *  go with the cell (pruneKept), not with a room change's puppets. */
   function clearPeers() { const owners = [..._live.keys()]; _live.clear(); for (const owner of owners) syncPeer(owner); for (const key of [..._peers.keys()]) if (!isKeptKey(key)) dropPeer(key); }
-  function dropPeer(owner) {
-    const p = _peers.get(owner);
-    if (p?.bucketKey) collider()?.removeBucket?.(peerWagonBucket(owner));
-    dropHorseBatch(owner); _peers.delete(owner);
-  }
+  function dropPeer(owner) { dropHorseBatch(owner); _peers.delete(owner); }
   /** The switch off, a teardown: nothing of anyone's stands (the kept words stay as DATA, so the switch back on shows
    *  the cell's parked teams again without waiting on a welcome - HCC-PARK). */
   function destroyAll() { _live.clear(); for (const owner of [..._peers.keys()]) dropPeer(owner); dropHorseBatch(''); standWagonCollider(null); }
@@ -418,18 +416,17 @@ export function createHorseCartPool({
    *
    * So a PARKED wagon and a STANDING horse are stood on my ground by the mod's own law - the wagon by its two-wheel
    * solve (DeployedWagonVisual, the owner's heading), the horse by the stationary probe - once per word, from 1000 m
-   * over to 3000 m down, the surface nearest the word's height kept, the owner's box and mine left out of the ray (a
-   * re-stand must not land on the box it stood). Kept as a delta off the word, so my floating origin and a re-anchor
+   * over to 3000 m down, the surface nearest the word's height kept, my own wagon's box left out of the ray (the
+   * owner's stands none here since PR-WAGON1). Kept as a delta off the word, so my floating origin and a re-anchor
    * carry it; a word my ground is not under yet stands as said and tries again in GROUND_RETRY_SECONDS, and a pixel
    * built under it asks again at once (groundMoved). A moving team is its owner's live word and stands as said.
    */
-  function groundPeer(owner, p) {
+  function groundPeer(p) {
     let g = p.ground;
     if (!g || g.wire !== p.wire) g = p.ground = { wire: p.wire, dw: null, rot: null, dh: null, due: 0 };
     if (g.due === null || now() < g.due) return;   // stood, or waiting out its retry
     const col = collider();
-    const skip = [WAGON_BUCKET, peerWagonBucket(owner)];
-    const phys = { raycastAll: (o, d, m) => raycastAllOver(col, o, d, m, skip), log: null };
+    const phys = { raycastAll: (o, d, m) => raycastAllOver(col, o, d, m), log: null };   // raycastAllOver's own skip: my box
     let missing = false;
     const w = p.wire.w;
     if (w?.kind === HCC_WIRE_KIND.Deployed && !g.dw) {
@@ -469,7 +466,7 @@ export function createHorseCartPool({
   function showPeer(key, v) {
     if (!enabled || !v || (!v.w && !v.h)) { if (_peers.has(key)) dropPeer(key); return; }
     let p = _peers.get(key);
-    if (!p) { p = { wire: null, toScene: null, wagon: null, horse: null, name: '', ownerId: null, ownerName: '', at: 0, kept: false, shownWagon: null, shownHorse: null, shownRotation: null, walk: freshHorseWalk(), bucketKey: null, ground: null }; _peers.set(key, p); }
+    if (!p) { p = { wire: null, toScene: null, wagon: null, horse: null, name: '', ownerId: null, ownerName: '', at: 0, kept: false, shownWagon: null, shownHorse: null, shownRotation: null, walk: freshHorseWalk(), ground: null }; _peers.set(key, p); }
     p.wire = { w: v.w, h: v.h };
     p.toScene = v.toScene ?? ((q) => q);
     p.at = v.at ?? p.at;

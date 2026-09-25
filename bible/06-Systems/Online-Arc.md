@@ -7933,9 +7933,12 @@ is `06-Systems/Horse-Cart-And-Cargo.md` AUDIT HCC; pins in `test/hcc_pool.test.j
   the validated record and the host's `campToScene`, and converts every frame (horseCartWire's own header law:
   "a reader converts at landing and every frame after"); the foe pool's `destroy` takes the teams as
   `clearPuppets` does.
-- **The parked wagon is a box (O3).** A peer's Deployed wagon stands `hccWagon:<owner>` in my collider, re-stood
-  when its converted pose moves, gone with the owner, the sweep or a change of kind; with a box it takes the ray's
-  surface pardon.
+- **The parked wagon is a box (O3).** A peer's Deployed wagon stood `hccWagon:<owner>` in my collider, re-stood
+  when its converted pose moves, gone with the owner, the sweep or a change of kind; with a box it took the ray's
+  surface pardon. **Reversed by PR-WAGON1 (2026-09-24**, a player's report: "Players can grief other players with the
+  wagon by putting it in front of dungeon entryways and building entrances"; Mac: "Others' wagons don't block"):
+  another player's team stands no box and yields the ray (`player/activate.js firmFirst`) - Horse-Cart-And-Cargo.md
+  PR-WAGON1.
 - **The door cleans the name (O4).** `n` rides `sanitizeLabel` at the mod's 31 on both ends - printable ASCII and
   the name filter, the door a player's name and a party's place already go through.
 - **A standing horse is silent (O5).** The walk frame rode `h`, so the idle flicker (frames 5/6 at 2 fps) changed

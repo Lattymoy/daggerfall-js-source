@@ -2,8 +2,8 @@
   {
     "name": "PEER-PLAQUE1-peer-before-the-townsperson",
     "file": "src/player/activationRace.js",
-    "old": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
-    "new": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, peer, person, foe]) {",
+    "old": "  return firmFirst([camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "new": "  return firmFirst([camp, water, wagon, horseCart, torch, corpse, pile, ground, peer, person, foe], nearestInOrder);",
     "tests": [
       "test/peerplaque.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PEER-PLAQUE1-foe-before-the-peer",
     "file": "src/player/activationRace.js",
-    "old": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
-    "new": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, person, foe, peer]) {",
+    "old": "  return firmFirst([camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "new": "  return firmFirst([camp, water, wagon, horseCart, torch, corpse, pile, ground, person, foe, peer], nearestInOrder);",
     "tests": [
       "test/peerplaque.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PEER-PLAQUE1-peer-not-raced",
     "file": "src/player/activationRace.js",
-    "old": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
-    "new": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, person, foe]) {",
+    "old": "  return firmFirst([camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
+    "new": "  return firmFirst([camp, water, wagon, horseCart, torch, corpse, pile, ground, person, foe], nearestInOrder);",
     "tests": [
       "test/peerplaque.test.js"
     ]
