@@ -231,7 +231,7 @@ test('RENOWN1 the worker: /v1/renown/xp behind a session, the account the sessio
   const acct = (await call('GET', '/v1/account', undefined, me.secret)).body.account;
   assert.deepEqual(acct.renown.map((x) => [x.character, x.name, x.xp, x.level]), [['char-aaaa', 'Mara', 5001, 9]]);
   assert.equal(RENOWN_CARD_TRACKS, 5);
-  assert.match(src('server-account/wrangler.toml'), /ACCOUNT_VERSION = "acct9"/);
+  assert.match(src('server-account/wrangler.toml'), /ACCOUNT_VERSION = "acct10"/);   // acct9 on the branch; main's FOUNDER2 took acct9
   assert.match(src('.github/workflows/account-deploy.yml'), /- "src\/net\/renown\.js"/, 'the Worker bundles the curve, so a change to it deploys');
 });
 
@@ -277,10 +277,10 @@ test('RENOWN1 the wire: `badged` stamps `lv` beside the badge only within the bo
   assert.deepEqual(parseClient('{"t":"renown","order":"v1.a.b"}', { hasHello: false }), { error: 'renown before hello' });
   assert.deepEqual(parseClient('{"t":"renown"}', { hasHello: true }), { error: 'bad renown' });
   assert.deepEqual(parseClient(JSON.stringify({ t: 'renown', order: 'x'.repeat(1025) }), { hasHello: true }), { error: 'bad renown' });
-  assert.equal(RELAY_VERSION, 'world108');
-  assert.equal(RENOWN_RELAY_MIN, 108);
-  assert.equal(relaySupportsRenown('world108'), true);
-  assert.equal(relaySupportsRenown('world107'), false);
+  assert.equal(RELAY_VERSION, 'world111');   // world108 on the branch; main's HT-WAIST-NET, PROFILE2/SKIN2 and EVENT1 took world108-110
+  assert.equal(RENOWN_RELAY_MIN, 111);
+  assert.equal(relaySupportsRenown('world111'), true);
+  assert.equal(relaySupportsRenown('world110'), false);
   assert.equal(relaySupportsRenown(null), false);
   assert.equal(RENOWN_HZ_MAX, 1);
   const g1 = renownGate(null, 1000);
@@ -350,7 +350,7 @@ test('RENOWN1 the session: a peer\'s level off the welcome, the join and a renow
   s.join('world:2,12', { x: 1, y: 2, z: 3, yaw: 0, pitch: 0, mv: 0 });
   const ws = sockets[0];
   ws.open();
-  ws.receive({ t: 'welcome', id: 'mac-0001', peers: [{ id: 'bob-0002', name: 'Bob', lv: 12 }, { id: 'eve-0003', name: 'Eve', lv: 99 }], n: 3, v: 'world107' });
+  ws.receive({ t: 'welcome', id: 'mac-0001', peers: [{ id: 'bob-0002', name: 'Bob', lv: 12 }, { id: 'eve-0003', name: 'Eve', lv: 99 }], n: 3, v: 'world110' });
   assert.equal(s.renownOf('bob-0002'), 12);
   assert.equal(s.renownOf('eve-0003'), null, 'a level outside the bound is none');
   ws.receive({ t: 'renown', id: 'bob-0002', lv: 13 });
@@ -364,10 +364,10 @@ test('RENOWN1 the session: a peer\'s level off the welcome, the join and a renow
   assert.equal(s.adoptIdentity({ name: 'Mac', level: 4 }), true);
   assert.equal(s.renownOf('mac-0001'), 4);
   const renownSent = (w) => w.sent.map((x) => JSON.parse(x)).filter((m) => m.t === 'renown');
-  assert.equal(s.sendRenownOrder('v1.a.b', 5), false, 'a world107 relay would close the socket on the frame');
+  assert.equal(s.sendRenownOrder('v1.a.b', 5), false, 'a world110 relay would close the socket on the frame');
   assert.equal(s.renownOf('mac-0001'), 5, 'but the level is mine either way');
-  // AUDIT RENOWN1 WIRE-2/WIRE-3: the order was KEPT, and goes the moment this socket's own welcome names world108
-  ws.receive({ t: 'welcome', id: 'mac-0001', peers: [], n: 1, v: 'world108' });
+  // AUDIT RENOWN1 WIRE-2/WIRE-3: the order was KEPT, and goes the moment this socket's own welcome names world111
+  ws.receive({ t: 'welcome', id: 'mac-0001', peers: [], n: 1, v: 'world111' });
   assert.deepEqual(renownSent(ws), [{ t: 'renown', order: 'v1.a.b' }]);
   // a second rise inside the second: the gate holds it - it is not lost, it goes on a tick
   assert.equal(s.sendRenownOrder('v1.a.c', 6), false, 'one a second, as the relay takes them');
@@ -390,7 +390,7 @@ test('RENOWN1 the session: a peer\'s level off the welcome, the join and a renow
   halo.open();
   s.tick();
   assert.deepEqual(renownSent(halo), [], 'no word from this socket\'s relay yet');
-  halo.receive({ t: 'welcome', id: 'mac-0001', peers: [], n: 1, v: 'world108' });
+  halo.receive({ t: 'welcome', id: 'mac-0001', peers: [], n: 1, v: 'world111' });
   assert.deepEqual(renownSent(halo), [{ t: 'renown', order: 'v1.a.c' }], 'the rise this room never heard');
   // past its keeping the order is dropped, and nothing more is sent
   clock += 60_000; s.tick();

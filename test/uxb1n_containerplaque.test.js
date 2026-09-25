@@ -49,7 +49,7 @@ test('UXB1-N: the frame carries a namer\'s tone - and only a namer that says one
   const same = { ...priv, subs: [...priv.subs] };
   delete same.tone;
   assert.notEqual(frameSignature(priv), frameSignature(same), 'the repaint guard sees the tone');
-  assert.equal(frameSignature(plain), 'container:1|name|Chest|||0|', 'a toneless frame\'s signature is what it was');
+  assert.equal(frameSignature(plain), 'container:1|name||Chest|||0|', 'a toneless frame\'s signature is what it was (RENOWN1\'s empty Renown slot beside the kind)');
 });
 
 function fakeEl(tag, body) {
@@ -104,7 +104,7 @@ test('UXB1-N/O: the interior host names by the ONE ownership predicate the press
   const wm = read('src/scenes/worldModes.js');
   assert.match(wm, /return houseContainerHover\(t, \{ owned: ownsThisInterior\(b\), searched: stockSearched\(c, stockedToday\(\)\) \}\);/, 'the plaque');
   assert.match(wm, /const owned = ownsThisInterior\(b\);/, 'the press');
-  assert.equal((wm.match(/ownsShip\(playerEntity\)\)\n\s+\|\| isHouseOwned\(playerEntity\.houses/g) ?? []).length, 1, 'and the predicate is written once');
+  assert.equal((wm.match(/ownsShip\(playerEntity\)\)\n\s+\|\| \(interiorHome && b === interiorBuilding \? interiorHome\.own : isHouseOwned\(playerEntity\.houses/g) ?? []).length, 1, 'and the predicate is written once (HOME1: it knows the online home)');
   assert.match(wm, /if \(win && privateProperty\) c\.openedOn = c\.stockedDate;/, 'a stranger\'s container, opened: this stock is seen');
   assert.match(wm, /openedOn: c\.openedOn \?\? 0,/, 'the scene cache carries it out of the door');
   assert.match(wm, /if \(target && kind === 'container'\) target\.openedOn = c\.openedOn \?\? 0;/, '...and back in');

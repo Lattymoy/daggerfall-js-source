@@ -283,13 +283,13 @@ const renownSent = (w) => w.sent.map((x) => JSON.parse(x)).filter((m) => m.t ===
 
 test('AUDIT RENOWN1 WIRE-3: each socket is sent a renown order on ITS OWN welcome\'s word - a halo whose relay is a version behind is sent none while the primary\'s is sent it; a halo promoted to the primary keeps its own state; the order goes nowhere past its keeping (mutants: a session-wide flag; a socket\'s state lost on promotion)', () => {
   const { s, sockets, clock } = cell();
-  sockets[0].receive({ t: 'welcome', id: 'mac-0001', peers: [], n: 1, v: 'world108' });
+  sockets[0].receive({ t: 'welcome', id: 'mac-0001', peers: [], n: 1, v: 'world111' });
   s.setHalo(['world:3,12']);
   sockets[1].open();
-  sockets[1].receive({ t: 'welcome', id: 'mac-0001', peers: [], n: 1, v: 'world107' });   // a relay mid-deploy
+  sockets[1].receive({ t: 'welcome', id: 'mac-0001', peers: [], n: 1, v: 'world110' });   // a relay mid-deploy
   assert.equal(s.sendRenownOrder('v1.a.b', 7), true);
   assert.deepEqual(renownSent(sockets[0]), [{ t: 'renown', order: 'v1.a.b' }]);
-  assert.deepEqual(renownSent(sockets[1]), [], 'the world107 socket would be closed by the frame');
+  assert.deepEqual(renownSent(sockets[1]), [], 'the world110 socket would be closed by the frame');
   clock.t += 5000; s.tick();
   assert.deepEqual(renownSent(sockets[1]), [], 'and it stays unsent however long it waits');
   sockets[0].receive({ t: 'renown', id: 'mac-0001', lv: 7 });

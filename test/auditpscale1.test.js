@@ -287,7 +287,7 @@ test('AUDIT PSCALE1 a camp or a pack grows by its own members, mounted - one mor
   const camp = (n) => {
     const stood = [];
     const standCamp = mount('', {
-      placeFoeEnv: () => ({}), collider: {}, cam: { yaw: 0 }, fieldOfView: () => 1, entityOccupancy: () => () => false, _placingPool: () => [],
+      placeFoeEnv: () => ({}), collider: {}, cam: { yaw: 0 }, fieldOfView: () => 1, entityOccupancy: () => () => false, _placingPool: () => [], campAnchorSpot: () => ({ x: 20, y: 0, z: 0 }),   // CAMP-FAR: main's anchor, a hundred metres out
       LOOSE_FOE_PLACE_ATTEMPTS: 1, placeFoeFreely: () => ({ x: 1, y: 0, z: 1 }), _inAnyLocationRect: () => false, _nextCampId: 1,
       partyGroupMembers, partySize: () => n, ENEMY_BASICS: {},
       exteriorFoes: { spawnFoe: (mobileType) => { stood.push(mobileType); return Promise.resolve(null); } },
@@ -310,7 +310,7 @@ test('AUDIT PSCALE1 COUNT-3: a stand in flight holds its spot - the pool names t
   const a = W.indexOf('const _placingPool = () =>');
   const placing = mount(W.slice(a, W.indexOf(';', a) + 1), { exteriorFoePool: () => [{ ai: { feet: [1, 0, 1] } }], exteriorFoes: { pendingFeet: () => [[5, 0, 5]] } }, 'return _placingPool;');
   assert.deepEqual(placing().map((f) => f.ai?.feet ?? f.feet), [[1, 0, 1], [5, 0, 5]], 'the street and the spots in flight');
-  assert.equal((W.match(/entityOccupancy\(\(f\) => f\.ai\?\.feet \?\? f\.feet, _placingPool,/g) ?? []).length, 3, 'the wanderer, the camp\'s anchor and its members');
+  assert.equal((W.match(/entityOccupancy\(\(f\) => f\.ai\?\.feet \?\? f\.feet, _placingPool,/g) ?? []).length, 2, 'the wanderer and the camp\'s members (CAMP-FAR: the anchor stands on open terrain a hundred metres out, by campAnchorSpot)');
 });
 
 test('AUDIT PSCALE1 COUNT-4: a reader stands an owner\'s loose stand beside a camp of five grown by three - the allowance is the owner\'s encounter cap and CELL_LOOSE_PUPPETS more; `n` is a whole 2..8 on the wire (mutants: the allowance back at eight, n unvalidated)', async () => {
