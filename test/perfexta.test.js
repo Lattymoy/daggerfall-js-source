@@ -617,3 +617,44 @@ test('PERF-EXT3: THE SAME CACHE, FRAME FOR FRAME - a scripted night of 120 frame
   const rebuilds = a.filter((x) => Number(x.split('/')[0]) > 0).length;
   assert.ok(rebuilds >= 5, `the night rebuilt caches on ${rebuilds} frames (the lantern lit, the walker stopping, the wood, the crate, the free)`);
 });
+
+// ── PERF-EXT4: a recorded mesh's matrix scale, once ────────────────────────
+
+test('PERF-EXT4: A MATRIX\'S SCALE ONCE A RECORD - recording a mesh of forty bounded sub-meshes (and one without bounds) under a rotated, non-uniformly scaled, translated matrix takes exactly three Math.hypot (the base: three a sphere, 123), and its sphere and every sub-mesh\'s are, bit for bit, the base\'s transform (the centre through the matrix, the radius by the longest column, by Math.hypot)', () => {
+  const { sp } = stand();
+  const rand = rng(12);
+  // a rotation about an oblique axis, the columns scaled 0.8 / 2.5 / 1.3 (the y column the longest), a translation
+  const ax = [0.36, 0.48, 0.8], th = 0.7, c = Math.cos(th), s = Math.sin(th), t = 1 - c;
+  const R = [[t * ax[0] * ax[0] + c, t * ax[0] * ax[1] - s * ax[2], t * ax[0] * ax[2] + s * ax[1]], [t * ax[0] * ax[1] + s * ax[2], t * ax[1] * ax[1] + c, t * ax[1] * ax[2] - s * ax[0]], [t * ax[0] * ax[2] - s * ax[1], t * ax[1] * ax[2] + s * ax[0], t * ax[2] * ax[2] + c]];
+  const S = [0.8, 2.5, 1.3];
+  const m = new Float32Array(16);
+  for (let col = 0; col < 3; col++) for (let row = 0; row < 3; row++) m[col * 4 + row] = R[row][col] * S[col];
+  m[12] = 812.25; m[13] = -3.5; m[14] = -409.6; m[15] = 1;
+  const subMeshes = [];
+  for (let k = 0; k < 41; k++) subMeshes.push({ textureArchive: 300, textureRecord: k, startIndex: k * 36, primitiveCount: 12, _bounds: k === 17 ? undefined : new Float32Array([rand() * 40 - 20, rand() * 8, rand() * 40 - 20, 0.5 + rand() * 6]) });
+  const mesh = { vao: { id: 'vao-scaled' }, buffers: [], bounds: new Float32Array([0.5, 4, -1.25, 31.7]), subMeshes };
+  const hypot = Math.hypot;
+  let calls = 0;
+  Math.hypot = (...a) => { calls++; return hypot(...a); };
+  try { sp.recordMesh(mesh, m, null); } finally { Math.hypot = hypot; }
+  assert.equal(calls, 3, `one scale for the record's 41 spheres: ${calls} Math.hypot`);
+  const r = sp.records[sp.count - 1];
+  assert.equal(r.mesh, mesh);
+  // the base's transform, transcribed (bounds.js transformSphere before PERF-EXT4) - into float32, as the record keeps it
+  const base = (b) => {
+    const out = new Float32Array(4);
+    out[0] = m[0] * b[0] + m[4] * b[1] + m[8] * b[2] + m[12];
+    out[1] = m[1] * b[0] + m[5] * b[1] + m[9] * b[2] + m[13];
+    out[2] = m[2] * b[0] + m[6] * b[1] + m[10] * b[2] + m[14];
+    out[3] = b[3] * Math.max(Math.hypot(m[0], m[1], m[2]), Math.hypot(m[4], m[5], m[6]), Math.hypot(m[8], m[9], m[10]));
+    return out;
+  };
+  const same = (got, want, what) => { for (let k = 0; k < 4; k++) assert.ok(Object.is(got[k], want[k]), `${what}[${k}]: ${got[k]} is the base's ${want[k]}`); };
+  same(r.sphere, base(mesh.bounds), 'the mesh\'s sphere');
+  for (let i = 0; i < subMeshes.length; i++) {
+    if (!subMeshes[i]._bounds) { assert.equal(r.subSpheres[i * 4 + 3], -1, 'an unbounded sub-mesh is always drawn'); continue; }
+    same(r.subSpheres.subarray(i * 4, i * 4 + 4), base(subMeshes[i]._bounds), `sub-mesh ${i}`);
+  }
+  assert.ok(Math.abs(r.sphere[3] - 31.7 * 2.5) < 1e-3, `the radius took the longest column, y (${r.sphere[3]})`);
+  same(bounds.transformSphere(m, mesh.bounds, new Float32Array(4)), base(mesh.bounds), 'transformSphere itself');
+});

@@ -69,12 +69,26 @@ export function boundsOf(positions, indices = null, start = 0, count = -1, strid
 /** EL5: a local sphere through an affine matrix (column-major): the centre
  *  transformed, the radius scaled by the largest axis scale. */
 export function transformSphere(m, s, out, o = 0) {
+  return transformSphereScaled(m, s, matrixScale(m), out, o);
+}
+/** EL5's largest axis scale of an affine matrix (column-major) - the factor a sphere's radius takes through it.
+ *
+ *  PERF-EXT4 (2026-09-25, the players' "fps issues in the exterior but fine in the interior"): ASKED ONCE A MATRIX.
+ *  The shadow record's mesh arm put the mesh's sphere and EVERY sub-mesh's through one matrix, and each call took
+ *  the three column lengths again - 3 x (1 + sub-meshes) Math.hypot a record, some 1,800 a frame on the cpu lens's
+ *  town, at 40 ns apiece where the arithmetic around them is 3. A caller with many spheres under one matrix asks
+ *  this once and hands it to transformSphereScaled. Still Math.hypot, not a square root of the sum: the same
+ *  operations on the same values, so every radius keeps its bits. */
+export function matrixScale(m) {
+  return Math.max(Math.hypot(m[0], m[1], m[2]), Math.hypot(m[4], m[5], m[6]), Math.hypot(m[8], m[9], m[10]));
+}
+/** transformSphere with the matrix's scale already in hand (matrixScale) - the one home of the transform. */
+export function transformSphereScaled(m, s, sc, out, o = 0) {
   const x = s[0], y = s[1], z = s[2];
   out[o] = m[0] * x + m[4] * y + m[8] * z + m[12];
   out[o + 1] = m[1] * x + m[5] * y + m[9] * z + m[13];
   out[o + 2] = m[2] * x + m[6] * y + m[10] * z + m[14];
-  const sx = Math.hypot(m[0], m[1], m[2]), sy = Math.hypot(m[4], m[5], m[6]), sz = Math.hypot(m[8], m[9], m[10]);
-  out[o + 3] = s[3] * Math.max(sx, sy, sz);
+  out[o + 3] = s[3] * sc;
   return out;
 }
 

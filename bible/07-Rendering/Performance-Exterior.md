@@ -554,3 +554,42 @@ for slot, as a twin whose signatures are the base's walk lantern by
 lantern - the lantern lit drawing its own cache alone. Mutants
 `perfexta.json` 22-31, all dead; `perfexta.json`'s PERF-EXT1-7 and
 `el8.json`'s cadence-no-change-check re-aimed by content.
+
+## PERF-EXT4 - a recorded mesh's matrix scale, once
+
+**What the frame paid.** Every mesh the frame draws is recorded for the
+shadows (Enhanced Lighting's default), and the record puts the mesh's
+sphere and every sub-mesh's through the same matrix - each call to
+`transformSphere` taking the matrix's three column lengths again: three
+`Math.hypot` a sphere, 3 x (1 + sub-meshes) a record, over nine numbers
+that had not changed. A 3-argument `Math.hypot` is some 40 ns in V8
+where the sum of squares under a square root is 3 (the cpu lens's
+`hypot.mjs`).
+
+**The change.** `bounds.js` `matrixScale(m)`, the largest column length,
+and `transformSphereScaled(m, s, sc, out, o)`, the transform with the
+scale in hand; `transformSphere` is the one taking its own, so the
+transform has one home. `recordMesh` asks the scale once and hands it to
+the mesh's sphere and every sub-mesh's. Still `Math.hypot`: the same
+operations on the same values, every radius the same bits.
+
+**Measured** (the cpu lens's town, 800 frames, `ab.sh` median of 9
+alternating runs; the base is PERF-EXT3): `Math.hypot` calls a frame
+2,545 -> 1,100 by day and 1,989 -> 792 at night (counted over 300
+frames, the scene's build included, so the difference is the saving:
+1,445 and 1,197 a frame); the frame's `batches` zone, where the meshes
+are drawn and recorded, 0.441 -> 0.390 ms by day and 0.413 -> 0.377 at
+night. Small and free, and it grows with the sub-meshes in view and in
+shadow reach.
+
+**The picture.** Unchanged, bit for bit: the same spheres, so the same
+culls.
+
+**Pinned** (`test/perfexta.test.js`, failing on the base): a mesh of
+forty bounded sub-meshes and one without, recorded under a rotated,
+non-uniformly scaled (the y column the longest), translated matrix,
+takes exactly three `Math.hypot` (the base: 123), and its sphere and
+every sub-mesh's equal, `Object.is` float for float, the base's
+transform transcribed. Mutants `perfexta.json` 32-36, all dead;
+`el5.json`'s transform-scale-min and record-never-bounded re-aimed by
+content.

@@ -56,7 +56,7 @@
 //     the culling above is what makes 24 face replays cheap.
 
 import { lookAt, multiply, ortho, perspective } from '../world/mat4.js';
-import { spherePlanes, transformSphere, recordVisible, subMeshVisible, batchVisible, sphereInPlanes, batchSphere, ZERO_ORIGIN, placementRadius, placementsInCube, placementsInVolume } from './bounds.js';   // EL5: the cull; PERF-EXT1: and a batch's placements
+import { spherePlanes, transformSphere, matrixScale, transformSphereScaled, recordVisible, subMeshVisible, batchVisible, sphereInPlanes, batchSphere, ZERO_ORIGIN, placementRadius, placementsInCube, placementsInVolume } from './bounds.js';   // EL5: the cull; PERF-EXT1: and a batch's placements
 import { billboardKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-shadow-reach: re-keyed here, however the batch reached the records
 import { aabbOutside } from './frustum.js';   // SHADOW-REACH: a host's box against the cascades
 
@@ -1009,12 +1009,13 @@ export class ShadowPass {
     // EL5: the spheres, in the world, once per record (a mesh without bounds is drawn by every replay)
     r.bounded = !!mesh.bounds;
     if (r.bounded) {
-      transformSphere(matrix, mesh.bounds, r.sphere);
+      const sc = matrixScale(matrix);   // PERF-EXT4: the matrix's scale once, for the mesh's sphere and every sub-mesh's
+      transformSphereScaled(matrix, mesh.bounds, sc, r.sphere);
       const subs = mesh.subMeshes;
       if (r.subSpheres.length < subs.length * 4) r.subSpheres = new Float32Array(subs.length * 4);
       for (let i = 0; i < subs.length; i++) {
         const b = subs[i]._bounds;
-        if (b) transformSphere(matrix, b, r.subSpheres, i * 4); else r.subSpheres[i * 4 + 3] = -1;   // -1: unbounded, always drawn
+        if (b) transformSphereScaled(matrix, b, sc, r.subSpheres, i * 4); else r.subSpheres[i * 4 + 3] = -1;   // -1: unbounded, always drawn
       }
     }
   }

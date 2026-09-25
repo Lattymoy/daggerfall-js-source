@@ -277,5 +277,50 @@
     "tests": [
       "test/perfexta.test.js"
     ]
+  },
+  {
+    "name": "PERF-EXT4-1-every-sub-mesh-takes-the-matrixs-scale-again",
+    "file": "src/render/shadowPass.js",
+    "old": "if (b) transformSphereScaled(matrix, b, sc, r.subSpheres, i * 4);",
+    "new": "if (b) transformSphere(matrix, b, r.subSpheres, i * 4);",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT4-2-the-meshs-sphere-takes-the-matrixs-scale-again",
+    "file": "src/render/shadowPass.js",
+    "old": "      transformSphereScaled(matrix, mesh.bounds, sc, r.sphere);",
+    "new": "      transformSphere(matrix, mesh.bounds, r.sphere);",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT4-3-the-record-takes-no-scale",
+    "file": "src/render/shadowPass.js",
+    "old": "      const sc = matrixScale(matrix);",
+    "new": "      const sc = 1;",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT4-4-the-scale-forgets-the-y-column",
+    "file": "src/render/bounds.js",
+    "old": "  return Math.max(Math.hypot(m[0], m[1], m[2]), Math.hypot(m[4], m[5], m[6]), Math.hypot(m[8], m[9], m[10]));",
+    "new": "  return Math.max(Math.hypot(m[0], m[1], m[2]), Math.hypot(m[8], m[9], m[10]));",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT4-5-a-sphere-takes-the-scale-for-its-radius",
+    "file": "src/render/bounds.js",
+    "old": "  out[o + 3] = s[3] * sc;",
+    "new": "  out[o + 3] = sc;",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
   }
 ]

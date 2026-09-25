@@ -171,3 +171,7 @@ cube maps (`07-Rendering/Performance-Exterior.md`, THE SHADOWS):
   not anything changed. The pass's part of the harness town's night
   frame 0.48 -> 0.35 ms; the walks alone over 1,000 flat batches 0.25
   -> 0.09 ms. The same caches, drawn on the same frames.
+- **PERF-EXT4** - a recorded mesh's matrix scale is taken once, not
+  once for its sphere and again for every sub-mesh's: about 1,200-1,450
+  fewer `Math.hypot` a frame on the harness town, 0.04-0.05 ms. The same
+  spheres, bit for bit.
