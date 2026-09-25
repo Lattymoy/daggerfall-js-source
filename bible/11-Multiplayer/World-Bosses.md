@@ -71,9 +71,11 @@ spawned dungeons' law (`world/spawnedDungeons.js`: "every player rolls the same 
   one gate, in an order each round's rolls shuffle, before any takes a second, and a round never opens on the province
   the last one closed on. So no province holds two gates running and none is left dry for days.
 - **The pixel**: `hash32(GATE_SALT, D, 2)` over that region's suitable pixels - LAND (above the water line, not an
-  ocean climate), NO LOCATION on it or its eight neighbours, and REACHABLE: 2 to 4 pixels from the nearest town a
-  traveller can fast-travel to (online a trip arrives at once - OL2 - so the gate is a ride from a town, not a
-  march across a province). The town is named in the omen.
+  ocean climate: the held map's own water law, over the HEIGHT bytes as well as the climate - the boot spreads the
+  land climates two pixels into the sea, AUDIT WB C1), NO LOCATION on it or its eight neighbours, and REACHABLE: 2 to 4
+  pixels from the nearest town a traveller can fast-travel to (online a trip arrives at once - OL2 - so the gate is a
+  ride from a town, not a march across a province). The town is named in the omen, with its own province (AUDIT WB
+  C3: the nearest town can stand across a border).
 - **The spot**: the pixel's centre plus `hash32(GATE_SALT, D, 3)`'s offset, up to 200 m, on the ground the terrain
   sampler answers.
 
@@ -90,7 +92,10 @@ after `_drawPartyMarks`, when the site's region is the one open. Online data rea
 does - a function in the travel map's dependency bag - so neither map learns the net.
 
 **The chat.** Local system lines on the World tab (`ChatLog.push`, `system: true`), each client printing its own at
-the clock's moments - the relay sends none of them:
+the clock's moments - the relay sends none of them. Nothing is said, and no gate stands, until the relay's clock is
+read and the hub has welcomed the player (or eight seconds on the relay's clock alone), and then `OMEN_SETTLE_MS` more,
+so the hub's word of a kill lands first; a line is said only past the last one said for its day, so a clock that
+steps back never says one twice (AUDIT WB C4):
 
 | when | line |
 |---|---|
@@ -477,6 +482,21 @@ Each slice: pins in `test/` (pure law in node; the relay over its fake sockets a
 built in headless Chromium, as the duel wall's), a mutant record in `tools/mutants/`, the Testing manifest, a Port
 Ledger section A row (an original online system, not a DFU member), and a row here.
 
+## 11. The audit (AUDIT WB, 2026-09-25, Mac: "A proper audit on everything")
+
+Four readers went over the whole feature - the gate in the world, the court on the client, the relay's room, the spoils
+and the claims, the look and the sound - each finding checked against the code before it was fixed. The world's half:
+
+| # | what was wrong | now |
+|---|---|---|
+| C1 | the site's scan read the CLIMATE alone for water, and the boot spreads land climates two pixels into the sea (`dilateCoastalClimate`), so a gate could stand in the water; High Rock's sea-coast politic 64 counted as a province | the scan reads the height bytes too, by the held map's own law (`gateSeaPixel` = `isWaterPixel`); 64 claims nothing |
+| C2 | a fogged membrane faded its colour to black under an alpha that still hid the fogged world: a black hole in a fog bank | premultiplied, the fog colour stands in for the fire's |
+| C3 | the nearest town was named with the GATE's province, and it can stand across a border | the town's own province |
+| C4 | the omen spoke on the machine's clock before the relay's was read, and before the hub's word of a kill; a clock stepping back said lines again | ready on the relay's clock and the hub's welcome, a settle after, each line once past the last |
+| C5 | the countdown stood over the step's fire, and froze over a held frame | hidden under the veil, cleared over a held frame |
+| C6 | the vortex's angle was the clock times a rate that eased with the open: opening spun it through tens of turns in a second | the pool accumulates the spin at the rate; the shader turns by it |
+| C7 | the stone's matrix, the fire's box and empty lists made every frame, the pass's arguments built with no gate; the site's one scan (~40-75 ms) in the frame that first asked | made once or on change; the scan in slices, in the browser's idle time once the relay's clock is read |
+
 ## Shipped
 
 **WB1 (2026-09-25) - the omen.** `net/gateLaw.js` (the schedule, the room's key and window, the rolls, the boss table,
@@ -663,3 +683,12 @@ door of the music service (`registerSong`), holding the music while the court st
 `test/wb7_boss_audio.test.js` (7); mutants `tools/mutants/wb7.json` (19 dead); `tools/gateScoreProbe.mjs` plays the four
 songs through the real song player and measures them (11 checks: every second sounding, peaks near -12 dBFS, the war
 from -36 to -29 dBFS as the phases turn, the fall silent by 12 s). Heard only as offline renders; not yet in a fight.
+
+**AUDIT WB - the world's half (2026-09-25).** C1-C7 above: `systems/gateSite.js` (the height bytes, the sea coast, the
+town's province, `gateScanner`'s slices), `systems/gateOmen.js` (ready, the settle, each line once past the last),
+`render/gatePass.js` (the fog colour, the spin), `scenes/gatePool.js` (the spin accumulated, the matrix and box
+cached, one empty list, `stands()`), `scenes/world.js` (the scan warmed in idle slices, the omen's readiness, the
+banner under the veil and the held frame, the pass built only while a gate stands). Pins `test/auditwb_world.test.js`
+(10) and one in `test/wb1_gate_omen.test.js`; re-aimed: AUDIT 39's held-frame pin (the world host's countdown goes down
+on the plaque's line), four of WB1's mutant records (the scan's new shape; the sea coast's record now the audit's
+own, its law reversed); mutants `tools/mutants/auditwb_world.json` (20 dead, 1 equivalent).

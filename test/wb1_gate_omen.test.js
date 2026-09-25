@@ -10,14 +10,15 @@ import {
   gateSpotLocal, omenRing, gateBossOf, GATE_BOSSES, PIXEL_M, GATE_DAY_MINUTES, GATE_SPOT_SPREAD_M, OMEN_RING_PIXELS,
   GATE_RISE_MS, GATE_COLLAPSE_MS, GATE_EVERY_DAYS, omenLine, riseLine, openLine, sealLine, wrathLine,
 } from '../src/net/gateLaw.js';
-import { scanGatePixels, findGateSite, gateRegions, politicClaimed, GATE_TOWN_MIN_PX, GATE_TOWN_MAX_PX, GATE_TOWN_TYPES } from '../src/systems/gateSite.js';
+import { scanGatePixels, findGateSite, gateRegions, politicClaimed, gateSeaPixel, GATE_TOWN_MIN_PX, GATE_TOWN_MAX_PX, GATE_TOWN_TYPES } from '../src/systems/gateSite.js';
+import { isWaterPixel } from '../src/ui/overworldModel.js';
 import { createGateOmen, insideGateRing, gateSceneXZ } from '../src/systems/gateOmen.js';
 import { readGateMark, gateMarkKey, gateRingKey, gateRingTexels, GATE_RING_BAND } from '../src/ui/gateMapMark.js';
 import { paintGateRing } from '../src/ui/inkMap.js';
 import { hash32, spawnsDungeon, WORLD_SALT } from '../src/world/spawnedDungeons.js';
 import { TERRAIN_SIZE } from '../src/world/terrainSampler.js';
 import { MINUTES_PER_DAY } from '../src/systems/gameDate.js';
-import { CLIMATES, LOCATION_TYPES } from '../src/formats/mapsFile.js';
+import { CLIMATES, LOCATION_TYPES, REGION_NAMES } from '../src/formats/mapsFile.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const iso = (ms) => new Date(ms).toISOString();
@@ -200,11 +201,42 @@ test('WB1 the site: land, no location beside it, a town two to four pixels off, 
   assert.deepEqual(gateRegions(scan), [0, 1, 2]);
   const site = findGateSite(777, scan);
   assert.deepEqual(findGateSite(777, scan), site, 'every client finds the same site');
-  assert.ok(site.town && site.place === `${site.town.name}, ${site.regionName}` && site.near === site.town.name);
+  assert.ok(site.town && site.place === `${site.town.name}, ${REGION_NAMES[site.town.region]}` && site.near === site.town.name, 'the town named with its own province (AUDIT WB C3)');
   assert.equal(scan.byRegion.get(site.region).includes(site.py * 1000 + site.px), true);
-  // the politic bands the scan believes
-  assert.ok(politicClaimed(64) && politicClaimed(128) && politicClaimed(189) && politicClaimed(233));
-  assert.ok(!politicClaimed(0) && !politicClaimed(127) && !politicClaimed(190) && !politicClaimed(255));
+  // the politic bands the scan believes - AUDIT WB C1: not the sea coast's 64, the sea's own value
+  assert.ok(politicClaimed(128) && politicClaimed(189) && politicClaimed(233));
+  assert.ok(!politicClaimed(64) && !politicClaimed(0) && !politicClaimed(127) && !politicClaimed(190) && !politicClaimed(255));
+});
+
+test('AUDIT WB C1/C3 the site on a real coast: the boot spreads the land climates two pixels into the sea, and the height bytes are not spread - the scan reads them, so no gate stands in the water the climate page calls land; the water law is the held map\'s own; and a town across a border is named with its own province', () => {
+  // the ocean climate ends at x = COAST_END - 2 (the boot's spread), the sea's height bytes at COAST_END; the sea beside
+  // the coast carries its province's politic byte (test/heldmap.test.js's own coast), so only the height says sea there
+  const spread = (maps) => ({ ...maps, getClimateIndex: (x) => (x < COAST_END - 2 ? CLIMATES.Ocean : 231), getPoliticIndex: (x) => (x < COAST_END - 2 ? 0 : x < COAST_END ? 128 : maps.getPoliticIndex(x)), getRegionIndexAt: (x) => (x < COAST_END ? 0 : maps.getRegionIndexAt(x)) });
+  const heightAt = (x) => (x < COAST_END ? 2 : 40);
+  const locations = [{ region: 0, px: COAST_END + 2, py: 262, type: LOCATION_TYPES.TownVillage, name: 'Coastwatch' }];
+  const blind = scanGatePixels(spread(fakeMaps(locations)));
+  const seaIn = [...(blind.byRegion.get(0) ?? [])].filter((p) => p % 1000 < COAST_END).length;
+  const seeing = scanGatePixels(spread(fakeMaps(locations)), { heightAt });
+  const seaOut = [...seeing.byRegion.values()].flatMap((l) => [...l]).filter((p) => p % 1000 < COAST_END).length;
+  assert.equal(seaOut, 0, 'with the height bytes, never the sea');
+  assert.ok(seeing.byRegion.get(0)?.length > 0, 'and still the land');
+  assert.ok(seaIn > 0, `the climate alone put ${seaIn} gate pixels in the sea - the case the height bytes close`);
+  // the one water law, pinned equal to the held map's
+  for (const climate of [CLIMATES.Ocean, 224, 231, -1]) for (let byte = 0; byte < 64; byte++) assert.equal(gateSeaPixel(climate, byte), isWaterPixel(climate, byte), `${climate}/${byte}`);
+  // C3: a town in province 0 at the border (x = 400) - its ring reaches province 1, and a site there is named
+  // with the town's own province
+  const border = [{ region: 0, px: 399, py: 100, type: LOCATION_TYPES.TownCity, name: 'Borderton' }];
+  const scan = scanGatePixels(fakeMaps(border));
+  const across = [...(scan.byRegion.get(1) ?? [])];
+  assert.ok(across.length > 0, 'the town\'s ring crosses the border');
+  for (let day = 0; day < 400; day++) {
+    const site = findGateSite(day, scan);
+    if (!site || site.region !== 1) continue;
+    assert.equal(site.town.region, 0);
+    assert.equal(site.place, `Borderton, ${REGION_NAMES[0]}`, 'named with the town\'s own province, not the gate\'s');
+    return;
+  }
+  assert.fail('no day put the gate across the border');
 });
 
 /** A clock the test turns, and a chat the omen speaks into. */

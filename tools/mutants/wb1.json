@@ -128,8 +128,8 @@
   {
     "name": "WB1-a-location-below-not-seen",
     "file": "src/systems/gateSite.js",
-    "old": "      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {\n        const x = px + dx, y = py + dy;\n        if (x >= 0 && y >= 0 && x < W && y < H) near[y * W + x] = 1;",
-    "new": "      for (let dy = -1; dy <= 0; dy++) for (let dx = -1; dx <= 1; dx++) {\n        const x = px + dx, y = py + dy;\n        if (x >= 0 && y >= 0 && x < W && y < H) near[y * W + x] = 1;",
+    "old": "        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {\n          const x = px + dx, y = py + dy;\n          if (x >= 0 && y >= 0 && x < W && y < H) near[y * W + x] = 1;",
+    "new": "        for (let dy = -1; dy <= 0; dy++) for (let dx = -1; dx <= 1; dx++) {\n          const x = px + dx, y = py + dy;\n          if (x >= 0 && y >= 0 && x < W && y < H) near[y * W + x] = 1;",
     "tests": [
       "test/wb1_gate_omen.test.js"
     ]
@@ -148,7 +148,7 @@
   {
     "name": "WB1-a-gate-at-sea",
     "file": "src/systems/gateSite.js",
-    "old": "      if (maps.getClimateIndex(x, y) === CLIMATES.Ocean) continue;\n",
+    "old": "      if (gateSeaPixel(maps.getClimateIndex(x, y), heightAt ? heightAt(x, y) : 255)) continue;\n",
     "new": "",
     "tests": [
       "test/wb1_gate_omen.test.js"
@@ -164,10 +164,10 @@
     ]
   },
   {
-    "name": "WB1-the-sea-coast-unclaimed",
+    "name": "WB1-the-wrothgarian-value-unclaimed",
     "file": "src/systems/gateSite.js",
-    "old": "export const politicClaimed = (pol) => pol === 64 || (pol",
-    "new": "export const politicClaimed = (pol) => (pol",
+    "old": " || pol === 128 + 105;",
+    "new": ";",
     "tests": [
       "test/wb1_gate_omen.test.js"
     ]
@@ -175,7 +175,7 @@
   {
     "name": "WB1-a-line-said-every-frame",
     "file": "src/systems/gateOmen.js",
-    "old": "      if (line && said !== key && !(line === 'wrath'",
+    "old": "      if (line && (t.day !== saidDay || rank > saidRank) && !(line === 'wrath'",
     "new": "      if (line && true && !(line === 'wrath'",
     "tests": [
       "test/wb1_gate_omen.test.js"

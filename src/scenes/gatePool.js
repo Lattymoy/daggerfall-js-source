@@ -24,7 +24,7 @@
 // Not a DFU member. Ledger A (WB).
 import { buildGateModel, gateArchProfile, GATE_ARCHIVE, GATE_HEIGHT, PORTAL_CENTRE_Y, ARCH_Y0, ARCH_Y1, ARCH_PROFILE_N } from '../world/gateModel.js';
 import { gateArt } from '../world/gateArt.js';
-import { GatePassRenderer } from '../render/gatePass.js';
+import { GatePassRenderer, gateSpinRate } from '../render/gatePass.js';
 import { gateSceneXZ } from '../systems/gateOmen.js';
 import { gateYaw, gatePhase, gateCountdown, countdownText, GATE_RISE_MS, GATE_COLLAPSE_MS } from '../net/gateLaw.js';
 import { trs } from '../world/mat4.js';
@@ -41,6 +41,8 @@ export const GATE_LIGHT_UP = PORTAL_CENTRE_Y;
 export const GATE_LIGHT_RANGE = 24;
 /** How fast the fire eases between sealed and open (per second). */
 export const GATE_OPEN_EASE = 0.6;
+/** AUDIT WB C7: the one empty answer for no gate - the host asks for the lights and the targets every frame. */
+const NO_GATE = Object.freeze([]);
 /** A refusal said again no sooner than this (a player pressing at a sealed gate hears it once a while). */
 export const GATE_SAY_MS = 3000;
 /** How close to the fire's plane a step through it counts (metres either side). */
@@ -88,8 +90,8 @@ export function openingHalfWidth(profile, y) {
 
 /** The fire's slab as a box in the scene: its widest half-width, the arch's height, a metre deep - turned with the
  *  gate and boxed again (the eight corners' bounds). */
-export function fireBox(place, profile) {
-  const w = Math.max(...profile), c = Math.cos(place.yaw), s = Math.sin(place.yaw), o = place.origin;
+export function fireBox(place, profile, halfW = null) {
+  const w = halfW ?? Math.max(...profile), c = Math.cos(place.yaw), s = Math.sin(place.yaw), o = place.origin;
   const min = [Infinity, o[1] + ARCH_Y0, Infinity], max = [-Infinity, o[1] + ARCH_Y1, -Infinity];
   for (const lx of [-w, w]) for (const lz of [-0.5, 0.5]) {
     const x = o[0] + c * lx + s * lz, z = o[2] - s * lx + c * lz;
@@ -123,11 +125,17 @@ export function createGatePool({
   let pass = null, passTried = false;
   let place = null, g = null;
   let open = 0;
+  /** AUDIT WB C6: the vortex's turn, accumulated at the open's rate as it eases (a turn in [0, 1)) */
+  let spin = 0;
   let colliderAt = null;   // the matrix the collider's stone stands at, or null
   let lastLz = null;
   let saidAt = -Infinity;
 
-  const matrixOf = (p) => trs(p.origin[0], p.origin[1], p.origin[2], 0, (p.yaw * 180) / Math.PI, 0);
+  /** AUDIT WB C7: the stone's matrix, made again only when its place moves (the draw and the collider ask every frame) */
+  let _mat = null, _matKey = '';
+  const matrixOf = (p) => { const k = `${p.origin[0]},${p.origin[1]},${p.origin[2]},${p.yaw}`; if (k !== _matKey) { _matKey = k; _mat = trs(p.origin[0], p.origin[1], p.origin[2], 0, (p.yaw * 180) / Math.PI, 0); } return _mat; };
+  /** AUDIT WB C7: the fire's half-width, measured once (the box asks every frame) */
+  const fireHalfW = Math.max(...profile);
   const sameMatrix = (a, b) => { if (!a || !b) return false; for (let i = 0; i < 16; i++) if (Math.abs(a[i] - b[i]) >= 5e-4) return false; return true; };
 
   function ensureMesh() {
@@ -184,6 +192,7 @@ export function createGatePool({
       place = g ? gatePlacement(g, { pixelTranslation, heightAt, now: now() }) : null;
       const target = place?.phase === 'open' ? 1 : 0;
       open += Math.sign(target - open) * Math.min(Math.abs(target - open), GATE_OPEN_EASE * Math.max(0, dt));
+      spin = (spin + gateSpinRate(open) * Math.max(0, dt)) % 1;
       if (place) { ensureMesh(); ensurePass(); }
       standCollider();
       // the step through the fire: the feet crossing its plane inside the opening, while it stands open
@@ -207,22 +216,24 @@ export function createGatePool({
       r.drawMesh(mesh, matrixOf(place), texRemap);
       return 1;
     },
+    /** AUDIT WB C7: whether a gate stands to be drawn - the host builds the pass's arguments only then. */
+    stands: () => !!place && !!pass,
     /** The fire and the beacon: one foreign pass, after the world's (the duel wall's seat). */
     drawPass(proj, view, eye, seconds, fog = null) {
       if (!place || !pass) return 0;
-      pass.draw([{ origin: place.origin, yaw: place.yaw, open, fade: place.fade }], proj, view, eye, seconds, fog);
+      pass.draw([{ origin: place.origin, yaw: place.yaw, open, fade: place.fade, spin }], proj, view, eye, seconds, fog);
       return pass.drawn;
     },
     /** The fire's light over the threshold, for the host's list. */
     lights() {
-      if (!place || place.fade <= 0) return [];
+      if (!place || place.fade <= 0) return NO_GATE;
       return [{ x: place.origin[0], y: place.origin[1] + GATE_LIGHT_UP, z: place.origin[2], range: GATE_LIGHT_RANGE * place.fade * (0.5 + 0.5 * open) }];
     },
     /** The eye's box: the FIRE, not the stone - a player standing on the plinth is inside the gate's own bounds, and a
      *  box they stand in would win every press they made there. The opening's slab, turned with the gate. */
     targets() {
-      if (!place || !place.risen) return [];
-      return [{ key: `gate:${place.day}`, aabb: fireBox(place, profile), distance: RAY_DISTANCE, reach: GATE_REACH, noSurface: true }];
+      if (!place || !place.risen) return NO_GATE;
+      return [{ key: `gate:${place.day}`, aabb: fireBox(place, profile, fireHalfW), distance: RAY_DISTANCE, reach: GATE_REACH, noSurface: true }];
     },
     /** WORLD-HOVER: the gate's name and its countdown. */
     hoverName(key) {

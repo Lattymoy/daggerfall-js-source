@@ -166,8 +166,8 @@ import { elementalResistanceChance, ELEMENTS, EFFECT_FLAGS, savingThrow } from '
 import { createTownWatch, runTownWatchFrame } from '../systems/townWatch.js';   // DISC19-F: the watch defends the town
 import { rollCampEncounterOnChunkLoad, amGroupRollOwner, campAnchorSpot } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
 import { WORLD_SALT, spawnsDungeon, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger, spawnedLocationCentreLocal, dungeonSightLine } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
-import { createGateOmen, insideGateRing, gateSceneXZ, fellLine } from '../systems/gateOmen.js';   // WB1 (Mac: "on the timer, a large area would be shown on the map, also in chat"): the Oblivion Gate's omen - its lines, its ring, its compass mark
-import { scanGatePixels, findGateSite } from '../systems/gateSite.js';   // WB1: where the day's gate stands, over the map files every client holds alike
+import { createGateOmen, insideGateRing, gateSceneXZ, fellLine, OMEN_SETTLE_MS } from '../systems/gateOmen.js';   // WB1 (Mac: "on the timer, a large area would be shown on the map, also in chat"): the Oblivion Gate's omen - its lines, its ring, its compass mark
+import { gateScanner, findGateSite } from '../systems/gateSite.js';   // WB1: where the day's gate stands, over the map files every client holds alike
 import { createGatePool } from './gatePool.js';   // WB2: the gate the world stands - its stone, its fire and beacon, its collider and its door
 import { drawGateBanner } from '../ui/gateBanner.js';
 import { createGateLink } from '../net/gateLink.js';   // WB3b: what the client holds of a gate's fight - the relay's words, folded
@@ -10785,7 +10785,28 @@ export async function bootWorld(canvas, renderer, params, status) {
   // the gate is a fact about the SHARED world (net/gateLaw.js - the shared clock's game day), found over the map files
   // (systems/gateSite.js, scanned once, the first time a gate is marked) and said once a moment (systems/gateOmen.js).
   // The clock is the relay's, through the welcome's offset, as the sky's is.
-  let _gateScan = null;
+  let _gateScan = null, _gateScanner = null;
+  /** AUDIT WB C7: THE SITE'S SCAN (systems/gateSite.js gateScanner) - begun in the browser's idle moments once the relay's
+   *  clock is read, a few rows a slice, so no frame pays for the half-million pixels; a site asked before it is done
+   *  finishes it there and then. A scan that throws is begun again from nothing, not resumed. */
+  const gateScanOf = (more) => {
+    if (_gateScan || !maps) return _gateScan;
+    try {
+      _gateScanner ??= gateScanner(maps, { spawnSalt: _spawnSalt, heightAt: (x, y) => woods.getHeightMapValue(x, y) });   // AUDIT WB C1: the height bytes say where the sea is - the climate page has been spread into it
+      return (_gateScan = _gateScanner.step(more));
+    } catch (e) { _gateScanner = null; throw e; }
+  };
+  let _gateWarming = false;
+  const warmGateScan = () => {
+    if (_gateScan || _gateWarming || !maps || typeof globalThis.requestIdleCallback !== 'function') return;
+    _gateWarming = true;
+    globalThis.requestIdleCallback(function slice(deadline) {
+      // a page that is never idle still gets there: a slice the timeout forced takes 4 ms of rows and asks again soon
+      const until = performance.now() + (deadline.didTimeout ? 4 : 0);
+      try { if (!gateScanOf(() => deadline.timeRemaining() > 2 || performance.now() < until)) { globalThis.requestIdleCallback(slice, { timeout: 250 }); return; } } catch (e) { console.warn('[gate] no site', e?.message ?? e); }
+      _gateWarming = false;
+    }, { timeout: 4000 });
+  };
   const _gateTwo = (n) => String(n).padStart(2, '0');
   /** WB3b: THE COURT'S LINK (net/gateLink.js) - the relay's words about a gate's fight, off the court's room and the hub:
    *  the omen reads its word of a kill (a gate whose boss fell collapses on every screen), the chat says the kill. */
@@ -10858,15 +10879,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     hudHidden: () => gamePaused() || !!townTalk.hudHidden,
     send: (hit) => !!online?.sendGate?.({ k: 'hit', ...hit }),   // WB4b: a blow of mine on him, to the court's room
   }) : null;
+  let _omenClockAt = null;   // AUDIT WB C4: when the relay's clock was first read this session (the omen's fallback wait)
   const gateOmen = params.has('online') ? createGateOmen({
     now: () => Date.now() + _sharedOffsetMs,
     site: (day) => {
       if (!maps) return null;
-      try { _gateScan ??= scanGatePixels(maps, { spawnSalt: _spawnSalt }); return findGateSite(day, _gateScan); } catch (e) { console.warn('[gate] no site', e?.message ?? e); return null; }
+      try { const scan = gateScanOf(); return scan ? findGateSite(day, scan) : null; } catch (e) { console.warn('[gate] no site', e?.message ?? e); return null; }
     },
     say: (text) => chatNotice(text),
     localTime: (minute) => { const ms = sharedWallMs(minute); if (ms == null) return null; const d = new Date(ms); return `${_gateTwo(d.getHours())}:${_gateTwo(d.getMinutes())}`; },
     fellAt: (day) => gateLink?.fellAt(day) ?? null,   // WB3b: the relay's word of the kill
+    // AUDIT WB C4: nothing said and no gate stood before the relay's clock is read and the hub has welcomed this player
+    // (its word of a kill comes just behind) - or, a hub that never answers, eight seconds on the relay's clock alone
+    ready: () => { if (!online?.clockRead) { _omenClockAt = null; return false; } if (_omenClockAt == null) { _omenClockAt = performance.now(); warmGateScan(); } return !!socialLink()?.clockRead || performance.now() - _omenClockAt > 8000; },
+    settleMs: OMEN_SETTLE_MS,
   }) : null;
   /** WB1: the gate's frame - its line when a new moment comes. Runs before the death return, as the chat's does. */
   const gateFrame = () => {
@@ -10915,7 +10941,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     now: () => Date.now() + _sharedOffsetMs,
     feet: () => (walkMode && playerSpawned ? player.feetAt() : null),
     say: (text) => setMidScreenText(text),
-    banner: (text) => drawGateBanner(text, { hidden: gamePaused() || !!townTalk.hudHidden }),
+    banner: (text) => drawGateBanner(text, { hidden: gamePaused() || !!townTalk.hudHidden || !!gateVeil?.busy }),   // AUDIT WB C5: never over the step's fire
     ready: () => !!online?.gateOk,   // WB3b: a relay that runs a gate's boss room (net/wire.js relaySupportsGate)
     enter: (g) => { modes?.enterGateArena?.(g); },   // WB3b: into the Burning Court (scenes/worldModes.js)
   }) : null;
@@ -13360,7 +13386,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // node and this return is above the frame's hover call, so a name
     // that was on screen when the video took the canvas stayed there,
     // floating over an infection dream.
-    if (frameHeld()) { frameAbort(); hideWorldPlaque(); last = now; requestAnimationFrame(frame); return; }
+    // AUDIT WB C5: and the gate's countdown goes down with it - a DOM line over the video would stand frozen on it.
+    if (frameHeld()) { frameAbort(); hideWorldPlaque(); last = now; requestAnimationFrame(frame); drawGateBanner(null); return; }
     const dt = Math.min(0.1, (now - last) / 1000);
     // AUDIT 28 W7 + F-C1/F-C2 (self-audit 3): PlayerMouseLook.Update's
     // three answers - paused (:241-244) returns before ApplyLook and the
@@ -15186,7 +15213,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     }
     // WB2: THE GATE'S FIRE AND BEACON - after the duel wall, the same eye and fog; the stone went in the world pass, so
     // the horns in front of the fire hide it
-    if (gatePool && gatePool.drawPass(proj, view, new Float32Array(mwv.eye), now / 1000,
+    if (gatePool?.stands() && gatePool.drawPass(proj, view, new Float32Array(mwv.eye), now / 1000,   // AUDIT WB C7: its arguments built only when a gate stands
       { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos })) renderer.markForeignPass();
     // C13: streaming-world arrows fly against the live pixel
     // collider (lost on geometry/terrain, as DFU misses are). Drawn

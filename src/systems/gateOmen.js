@@ -30,15 +30,24 @@ export const fellLine = ({ near, boss, top }) => `${boss} has fallen at the Obli
 
 /** The phases that say a line on arrival, and the line each says. */
 const SAYS = Object.freeze({ omen: 'omen', rising: 'rise', sealed: 'rise', open: 'open', closed: 'seal', collapsing: 'wrath' });
+/** AUDIT WB C4: the lines in the order a gate lives them - a line is said only past the last one said for its day, so a
+ *  clock that steps back (the relay's offset arriving, a correction) never says one twice. */
+const LINE_ORDER = Object.freeze(['omen', 'rise', 'open', 'seal', 'wrath']);
+/** AUDIT WB C4: how long the omen holds its peace once its host is ready (the relay's clock read, the hub's welcome
+ *  come) - the hub's word of a kill arrives just behind its welcome, and a gate said open before it would be wrong. */
+export const OMEN_SETTLE_MS = 1500;
 
 /**
  * `now` the relay-clock ms; `site` the day's site (gateSite.findGateSite), or null when there is no map data; `say` a
  * line on the chat (the host's chatNotice); `localTime` the real time a classic minute falls at on THIS machine
- * ("14:32"); `fellAt` the relay's word of the kill (WB3), null until it is said.
- * @param {{now: () => number, site: (day: number) => any, say: (text: string) => void, localTime?: (classicMinutes: number) => (string|null), fellAt?: (day: number) => (number|null)}} deps
+ * ("14:32"); `fellAt` the relay's word of the kill (WB3), null until it is said. AUDIT WB C4: `ready` whether the host
+ * knows the relay's clock and has heard the hub (until then nothing is said and no gate stands - the machine's own
+ * clock is not the world's), and `settleMs` how long past that the omen still holds (OMEN_SETTLE_MS in the game).
+ * @param {{now: () => number, site: (day: number) => any, say: (text: string) => void, localTime?: (classicMinutes: number) => (string|null), fellAt?: (day: number) => (number|null), ready?: () => boolean, settleMs?: number}} deps
  */
-export function createGateOmen({ now, site, say, localTime = () => null, fellAt = () => null }) {
-  let said = null;           // `${day}:${line}` - the last line said
+export function createGateOmen({ now, site, say, localTime = () => null, fellAt = () => null, ready = () => true, settleMs = 0 }) {
+  let saidDay = null, saidRank = -1;   // the day the last line was said for, and how far through its lines
+  let readyAt = null, settled = false; // when the host was first ready (the relay's clock), and whether its settle is over
   let cache = { day: null, site: null };
   const siteOf = (day) => {
     if (cache.day !== day) cache = { day, site: site(day) ?? null };
@@ -50,6 +59,14 @@ export function createGateOmen({ now, site, say, localTime = () => null, fellAt 
   return {
     /** One frame: the gate's state now, and its line if a new one is due. */
     frame() {
+      if (!ready()) { readyAt = null; settled = false; current = null; return null; }
+      if (!settled) {
+        // a clock that steps back while the omen settles counts the wait from where it stands now; once settled, a
+        // step never silences the gate again - only the host's losing the relay does
+        if (readyAt == null || now() < readyAt) readyAt = now();
+        if (now() - readyAt < settleMs) { current = null; return null; }
+        settled = true;
+      }
       const t = gateAt(now());
       const fell = fellAt(t.day);
       const phase = gatePhase(t, now(), fell);
@@ -59,9 +76,9 @@ export function createGateOmen({ now, site, say, localTime = () => null, fellAt 
       if (!s) return current;
       const line = SAYS[phase];
       // a gate collapsing because its boss FELL says no wrath: the relay's own line (WB3) said the fall
-      const key = `${t.day}:${line}`;
-      if (line && said !== key && !(line === 'wrath' && Number.isFinite(fell))) {
-        said = key;
+      const rank = LINE_ORDER.indexOf(line);
+      if (line && (t.day !== saidDay || rank > saidRank) && !(line === 'wrath' && Number.isFinite(fell))) {
+        saidDay = t.day; saidRank = rank;
         const words = { place: s.place, near: s.near, boss: gateBossOf(t.day).name };
         if (line === 'omen') say(omenLine({ ...words, at: at(t.day, GATE_OPEN_MINUTE) }));
         else if (line === 'rise') say(riseLine({ ...words, left: countdownText(t.openAt - now()) }));

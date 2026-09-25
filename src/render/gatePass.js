@@ -82,6 +82,8 @@ uniform float uProfile[${ARCH_PROFILE_N}];
 uniform float uTime;    // gateClock's seconds
 uniform float uOpen;    // 0 sealed .. 1 open
 uniform float uFade;    // 0 gone .. 1 standing (the rise and the collapse)
+uniform float uSpin;    // AUDIT WB C6: the vortex's turn, in turns - accumulated by the host at the open's own rate
+uniform vec3 uFogColor; // AUDIT WB C2: the frame's fog colour - a fogged membrane becomes the fog, not a hole in it
 ${FOG_UNIFORMS}out vec4 o;
 ${FOG_FACTOR_GLSL}
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -105,8 +107,7 @@ void main() {
   // and the noise read at the turned point - an atan's branch cut would stand in the fire as a seam
   vec2 c = (vLocal - vec2(0.0, ${PORTAL_CENTRE_Y.toFixed(4)})) / vec2(1.0, 1.7);
   float r = length(c);
-  float turn = mix(${MEMBRANE_TURN_SEALED_HZ.toFixed(3)}, ${MEMBRANE_TURN_OPEN_HZ.toFixed(3)}, uOpen);
-  float ang = -uTime * turn * 6.283185307179586 + 2.2 / (0.6 + r);
+  float ang = -uSpin * 6.283185307179586 + 2.2 / (0.6 + r);   // AUDIT WB C6: never time x a rate that moves - the rate's change would spin it through turns at once
   vec2 q = mat2(cos(ang), -sin(ang), sin(ang), cos(ang)) * c;
   float n = fbm(q * 1.35 + vec2(0.0, -uTime * ${MEMBRANE_FLOW_HZ.toFixed(2)}));
   float rim = 1.0 - smoothstep(0.0, 1.1, inside);
@@ -117,7 +118,9 @@ void main() {
   float glow = mix(0.45, 1.25, uOpen);
   float alpha = mix(${MEMBRANE_ALPHA_SEALED.toFixed(2)}, ${MEMBRANE_ALPHA_OPEN.toFixed(2)}, uOpen) * (0.75 + 0.25 * n) * smoothstep(0.0, 0.25, inside);
   float f = fogFactorAt(vWorld);
-  o = vec4(col * glow * f * uFade, alpha * uFade);
+  // AUDIT WB C2: premultiplied, the fog takes the colour AND stands in for it - fading the colour alone left the alpha
+  // hiding the fogged world behind it, a black hole in a fog bank
+  o = vec4(mix(uFogColor * alpha, col * glow, f) * uFade, alpha * uFade);
 }`;
 
 // ── the beacon ───────────────────────────────────────────────────────
@@ -188,6 +191,12 @@ export function beaconVertices(segments = BEACON_SEGMENTS) {
 
 const NO_FOG_RANGE = new Float32Array([0, 1]);
 const WHITE = new Float32Array([1, 1, 1]);
+const NO_FOG_COLOR = new Float32Array([0, 0, 0]);
+/** The vortex's turn rate at `open` (turns a second). */
+export const gateSpinRate = (open) => MEMBRANE_TURN_SEALED_HZ + (MEMBRANE_TURN_OPEN_HZ - MEMBRANE_TURN_SEALED_HZ) * Math.max(0, Math.min(1, open));
+/** AUDIT WB C6: the turn a gate whose open has stood at `open` all along has made by `t` - a host with no spin of its own
+ *  (a test, a probe); a host that eases `open` accumulates the rate instead (scenes/gatePool.js). In [0, 1). */
+export const gateSpinAt = (t, open) => { const v = t * gateSpinRate(open); return v - Math.floor(v); };
 
 /** The gates' fire and beacons, one foreign pass. */
 export class GatePassRenderer {
@@ -196,7 +205,7 @@ export class GatePassRenderer {
     this.gl = gl;
     this.membrane = buildProgram(gl, MEMBRANE_VS, MEMBRANE_FS, 'gate membrane');
     this.beacon = buildProgram(gl, BEACON_VS, BEACON_FS, 'gate beacon');
-    const names = ['uVP', 'uOrigin', 'uEye', 'uYaw', 'uRadius', 'uProfile', 'uTime', 'uOpen', 'uFade', 'uColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos'];
+    const names = ['uVP', 'uOrigin', 'uEye', 'uYaw', 'uRadius', 'uProfile', 'uTime', 'uOpen', 'uFade', 'uSpin', 'uFogColor', 'uColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos'];
     this.mu = {}; this.bu = {};
     for (const n of names) { this.mu[n] = gl.getUniformLocation(this.membrane, n); this.bu[n] = gl.getUniformLocation(this.beacon, n); }
     const vao = (verts) => {
@@ -262,6 +271,7 @@ export class GatePassRenderer {
     gl.uniform1f(this.mu.uTime, t);
     gl.uniform1fv(this.mu.uProfile, this.profile);
     this._fog(this.mu, fog, eye);
+    gl.uniform3fv(this.mu.uFogColor, fog?.color ?? NO_FOG_COLOR);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.bindVertexArray(this.quad.vao);
     for (const g of list) {
@@ -269,6 +279,7 @@ export class GatePassRenderer {
       gl.uniform1f(this.mu.uYaw, g.yaw);
       gl.uniform1f(this.mu.uOpen, Math.max(0, Math.min(1, g.open ?? 0)));
       gl.uniform1f(this.mu.uFade, Math.min(1, g.fade));
+      gl.uniform1f(this.mu.uSpin, Number.isFinite(g.spin) ? g.spin : gateSpinAt(t, g.open ?? 0));
       gl.drawArrays(gl.TRIANGLES, 0, this.quad.count);
       this.drawn++;
     }
