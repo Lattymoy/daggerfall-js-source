@@ -510,8 +510,8 @@
   {
     "name": "DECOR2b-furniture-said-to-be-carried",
     "file": "src/ui/decorPanel.js",
-    "old": "el('div', 'dfdecor-row-sub', e.furnishing ? decorFurnishLine(e) : DECOR_OWN_LINE)",
-    "new": "el('div', 'dfdecor-row-sub', DECOR_OWN_LINE)",
+    "old": "const ownLine = (e) => (e.furnishing ? decorFurnishLine(e) : e.mount ? DECOR_MOUNT_LINE : DECOR_OWN_LINE);",
+    "new": "const ownLine = (e) => (e.mount ? DECOR_MOUNT_LINE : DECOR_OWN_LINE);",
     "tests": [
       "test/decor2b.test.js"
     ]

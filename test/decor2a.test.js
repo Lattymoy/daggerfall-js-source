@@ -104,7 +104,7 @@ test('DECOR2a what of the pack can stand, and as what: a statue, a painting, a g
   assert.equal(decorOwnEntry(ruby(), 0).icon.archive, 254, 'a gem with no pack picture draws its world one');
   const armbands = decorOwnEntry({ templateIndex: 142, group: 'MensClothing' }, 1);
   assert.deepEqual([armbands.flat, armbands.icon.archive !== armbands.flat[0], Number.isInteger(armbands.icon.dye)], [[204, 0], true, true], 'the pack\'s own picture, dye and all - not the world\'s');
-  assert.equal(decorOwnEntry({ templateIndex: 120, group: 'Weapons' }, 0), null);
+  assert.equal(decorOwnEntry({ templateIndex: 120, group: 'Weapons' }, 0)?.mount, true, 'a blade stands not - it hangs (DECOR2c)');
   assert.equal(decorOwnBackLine(1), 'One of your things that stood in it came back to your pack.');
   assert.equal(decorOwnBackLine(3), '3 of your things that stood in it came back to your pack.');
 });
@@ -222,7 +222,7 @@ test('DECOR2a setting one\'s own thing down offline: from "Your things" the same
   const fiery = { templateIndex: 0, group: 'Gems', stackCount: 1, name: '%it of Fire', isIdentified: true };
   rig.pack.push(s, { templateIndex: 120, group: 'Weapons' }, c, fiery);
   await openAll(rig);
-  assert.equal(tab(panelOf(rig), /^Your things/).textContent, 'Your things (3)', 'the blade is not a thing that stands');
+  assert.equal(tab(panelOf(rig), /^Your things/).textContent, 'Your things (4)', 'the blade is listed to hang (DECOR2c), not to stand');
   tab(panelOf(rig), /^Your things/).fire('click');
   const candleKey = rows(panelOf(rig)).find((r) => one(r, 'dfdecor-row-name').textContent.startsWith('Candle')).dataset.key;
   await setDown(rig, 'Small Statue');

@@ -112,7 +112,9 @@ export const ACTIONS = new Map([['KeyW', 'MoveForwards'], ['KeyS', 'MoveBackward
  * bucket filter. `radius(model)` the scan's measure of a model (null: unread). DECOR2a: `pack` the items carried -
  * packTake moves one of a stack out (a copy of one; the whole item when it is the last), packGive puts one back.
  * DECOR2b: `furnishings` the furniture delivered - where a piece of furniture lives, as the host's decorHome has it:
- * taken out whole, given back there, never to the pack.
+ * taken out whole, given back there, never to the pack. DECOR2c: `state.normal` the surface's normal the eye's ray
+ * answers (null: none, as before), and the renderer's decal pass and texture cache, faked - `decals` every batch made
+ * (its writes, its draws, whether it was destroyed), an icon upload answering the `#ui` variant.
  */
 export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 1000, homeDecor = null, locked = true, touch = false, radius = () => 0.8 } = {}) {
   const doc = fakeDoc();
@@ -145,14 +147,21 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
   let cursorOff = 0;
   const cpuModels = new Map(entries.filter((e) => e.model != null).map((e) => [e.model, { positions: new Float32Array([-0.5, -0.1, -0.5, 0.5, 0.9, 0.5]) }]));
   const draws = [];
+  const textures = new Map();   // DECOR2c: the renderer's cache, by the icon upload's key
+  const decals = [];            // DECOR2c: every decal batch made
   const renderer = {
+    textures,
+    createDecalBatch: (cap) => { const b = { cap, writes: [], draws: 0, destroyed: false }; decals.push(b); return b; },
+    writeDecalSlot: (b, slot, floats) => { b.writes.push([slot, Array.from(floats)]); return true; },
+    drawDecals: (b, tex) => { b.draws++; draws.push({ decal: b, tex }); },
+    destroyDecalBatch: (b) => { b.destroyed = true; },
     drawMesh: (gpu, m, remap) => draws.push({ gpu, m, remap }),
     createBillboardBatch: (a, r, size, centers) => ({ archive: a, record: r, size, centers, bounds: [0, 0, 0, 1] }),
     destroyBillboardBatch: (b) => { b.destroyed = true; },
     panelFrame: (opts, body) => { draws.push({ panel: opts }); body(); },
     setFog() {}, setLighting() {},
   };
-  const state = { room, locked };
+  const state = { room, locked, normal: null };
   const tool = createDecorTool({
     doc, win, touch, renderer, pool, names,
     canvas: { width: 1600, height: 900, getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 450 }) },
@@ -163,8 +172,13 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
     }),
     getGpuMesh: async (id) => ({ gpu: id }), cpuModels,
     getTexture: async () => ({ recordCount: 64, getSize: () => ({ width: 16, height: 32 }), getScale: () => ({ width: 0, height: 0 }) }),
-    uploadRecord() {}, iconUrl: async () => null,
-    collider: () => ({ raycastHit: (e, d, max, filter = null) => { rays.push(filter); return { dist: 2 }; } }), origin: () => [10, 0, 10], eye: () => [10, 1.6, 10],
+    uploadRecord: (a, r, opts = {}) => {   // DECOR2c: the icon arm answers its variant, as dataPipeline.js's does
+      if (opts.mips !== false) return undefined;
+      textures.set(`${a}_${r}#ui`, `tex:${a}.${r}`);
+      return '#ui';
+    },
+    iconUrl: async () => null,
+    collider: () => ({ raycastHit: (e, d, max, filter = null) => { rays.push(filter); return { dist: 2, normal: state.normal }; } }), origin: () => [10, 0, 10], eye: () => [10, 1.6, 10],
     stick: () => hand.stick,
     actionOf: (e) => ACTIONS.get(e.code) ?? null,
     locked: () => state.locked, cursorOff: () => { cursorOff++; },
@@ -186,7 +200,7 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
   const cam = { pos: [10, 1.6, 10], yaw: 0, pitch: 0 };
   const frame = (over = {}) => tool.frame({ dt: 0.1, cam, overlayUp: false, interior: true, ...over });
   return {
-    tool, doc, win, entries, standing, holds, owned, hand, rays, pack, furnishings, names, slots, said, w, cam, frame, draws, state,
+    tool, doc, win, entries, standing, holds, owned, hand, rays, pack, furnishings, names, slots, said, w, cam, frame, draws, state, decals, textures, renderer,
     setVisit: (v) => { visit = v; }, cursorOffs: () => cursorOff,
   };
 }

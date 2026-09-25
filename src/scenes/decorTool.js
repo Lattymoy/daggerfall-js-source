@@ -61,6 +61,12 @@
 // owner picks in the panel's look view - the look's shape, the
 // furniture's own name and numbers, free. Taken down, it is delivered
 // again: back among "Your things", never the pack.
+//
+// DECOR2c - THE MOUNTS. A weapon or a shield among "Your things" is
+// HUNG: the flight sets it flat on the surface the eye meets (the ray's
+// own normal - scenes/decorRoom.js frames it), the turn spins it there,
+// and the ghost is the picture itself, hanging where it will hang. No
+// surface in reach, nothing to hang it on.
 // ═══════════════════════════════════════════════════════════════════
 
 import { createDecorScan } from '../systems/decorScan.js';
@@ -71,7 +77,9 @@ import { decorKey, DECOR_KINDS, decorFlatLight } from '../systems/decorCatalogue
 import { decorOwnEntry, decorItemName } from '../systems/decorItems.js';
 import { decorFurnishingEntry, isFurnishing } from '../systems/decorFurnish.js';
 import { itemLongName } from '../systems/itemInfo.js';
-import { decorMatrix, decorKeyOf } from './decorRoom.js';
+import { decorMatrix, decorKeyOf, loadMountArt, decorMountQuad, decorMountFloats } from './decorRoom.js';
+import { decorIsMount } from '../net/decorLaw.js';
+import { decorMountDye } from '../systems/decorItems.js';
 import { localAabb } from '../render/frustum.js';
 import { billboardSize } from '../world/rmbFlats.js';
 import { lookAt, perspective, mirrorProjectionX, trs, multiply } from '../world/mat4.js';
@@ -88,6 +96,8 @@ export const DECOR_FLOAT_AT = 3;
 export const DECOR_PREVIEW_SPIN = 30;
 /** How long the service's refusal of a placement stays on the bar, milliseconds. */
 export const DECOR_REFUSAL_MS = 4000;
+/** DECOR2c: what the bar says while a mount has nothing to hang on. */
+export const DECOR_MOUNT_NO_SURFACE = 'Look at a wall to hang it on.';
 /** DECOR1e: the light a piece with none of its own is given when the owner lights it - a warm lamp's. */
 export const DECOR_DEFAULT_LIGHT = Object.freeze({ color: Object.freeze([1, 0.85, 0.6]), range: 6, intensity: 1 });
 
@@ -144,16 +154,19 @@ export function stickMove(a) {
 /**
  * The surface point the eye meets, or the point it hangs at when it meets none - `collider.raycastHit` (the room's
  * own, player/collider.js), within DECOR_EYE_REACH. DECOR1e: `skip` the collider's buckets the eye looks through - a
- * piece being moved is never a surface for itself.
+ * piece being moved is never a surface for itself. DECOR2c: `eyeHit` answers the surface's `normal` there too (the
+ * ray's own, facing the eye), or null when the eye met none.
  */
-export function eyePoint(collider, eye, dir, skip = null) {
+export function eyeHit(collider, eye, dir, skip = null) {
   let d = DECOR_FLOAT_AT;
+  let normal = null;
   try {
     const hit = collider?.raycastHit ? collider.raycastHit(eye, dir, DECOR_EYE_REACH, skip ? { skip } : null) : null;
-    if (hit && Number.isFinite(hit.dist)) d = hit.dist;
+    if (hit && Number.isFinite(hit.dist)) { d = hit.dist; normal = Array.isArray(hit.normal) ? [...hit.normal] : null; }
   } catch { /* no surface to meet */ }
-  return [eye[0] + dir[0] * d, eye[1] + dir[1] * d, eye[2] + dir[2] * d];
+  return { point: [eye[0] + dir[0] * d, eye[1] + dir[1] * d, eye[2] + dir[2] * d], normal };
 }
+export const eyePoint = (collider, eye, dir, skip = null) => eyeHit(collider, eye, dir, skip).point;
 
 /**
  * THE TOOL. `deps` (the host's - worldModes.js):
@@ -164,7 +177,8 @@ export function eyePoint(collider, eye, dir, skip = null) {
  *   room()           - where the player may decorate now: { kind: 'home'|'house'|'ship', where, mapId?, buildingKey? },
  *                      or null
  *   scanDeps()       - systems/decorScan.js's deps (the blocks, the two measures)
- *   getGpuMesh(id), cpuModels, getTexture(a), uploadRecord(a, r), iconUrl(a, r) - the pipeline's, and the DOM's door
+ *   getGpuMesh(id), cpuModels, getTexture(a), uploadRecord(a, r, opts), iconUrl(a, r) - the pipeline's, and the DOM's
+ *                      door (DECOR2c: uploadRecord's icon arm and the renderer's decal pass draw the mount's ghost)
  *   collider(), origin() - the room's collider and this visit's building origin; eye() - the camera's eye now
  *   stick()          - the analog stick's reading, or null (DECOR1e: the host's stickAxes - the finger's or the pad's)
  *   actionOf(e)      - the action a key event is bound to, or null (ui/input.js actionOf, the registry's)
@@ -260,7 +274,7 @@ export function createDecorTool(deps) {
     if (piece.item) {   // DECOR2b: furniture stands as a look - a model as often as a flat
       return {
         key: `own-piece:${piece.id}`, kind: 'own', model: piece.model ?? null, flat: piece.flat ?? null, item: piece.item, name: ownName(piece), count: 0,
-        storage: false, light: decorFlatLight(piece.flat),
+        storage: false, light: decorFlatLight(piece.flat), mount: decorIsMount(piece),   // DECOR2c: a hung one moves as it hangs
       };
     }
     const key = decorKey(piece);
@@ -342,10 +356,18 @@ export function createDecorTool(deps) {
     const eye = deps.eye?.() ?? [0, 0, 0];
     placing = {
       entry, radius, editing, free, placer: null, fly: [...eye], start: [...eye], id: editing ? editing.id : mintDecorId(), piece: null,
-      refused: null, busy: false, batch: null, flatSize: null, rise: 0,
+      refused: null, busy: false, batch: null, flatSize: null, rise: 0, art: null, decal: null,
     };
     deps.cursorOff?.();   // a cursor freed to press the button would hold the look off for the whole placement
-    if (entry.model == null) {
+    if (entry.mount) {   // DECOR2c: the picture itself hangs where it will hang
+      const p = placing;
+      Promise.resolve(loadMountArt({ getTexture: deps.getTexture, uploadRecord: deps.uploadRecord, renderer }, entry.flat[0], entry.flat[1], decorMountDye(entry.item))).then((art) => {
+        if (placing !== p || !art) return;
+        p.art = art;
+        p.decal = renderer?.createDecalBatch?.(1) ?? null;
+        p.placer = createDecorPlacer(entry, { radius, from: editing, free });
+      }, () => {});
+    } else if (entry.model == null) {
       const p = placing;
       Promise.resolve(deps.getTexture?.(entry.flat[0])).then((t) => {
         if (placing !== p || !t || !(entry.flat[1] < t.recordCount)) return;
@@ -378,6 +400,7 @@ export function createDecorTool(deps) {
     placing = null;
     flyHeld.clear();
     if (p?.batch) renderer?.destroyBillboardBatch?.(p.batch);
+    if (p?.decal) renderer?.destroyDecalBatch?.(p.decal);   // DECOR2c
     bar?.hide();
     listen(false);
   }
@@ -660,7 +683,12 @@ export function createDecorTool(deps) {
     p.fly = flyStep(p.fly, p.start, move, cam.yaw, cam.pitch, held('Run') ? DECOR_FLY_FAST : DECOR_FLY_SPEED, dt);
     const origin = deps.origin?.() ?? [0, 0, 0];
     const through = p.editing ? [decorKeyOf(p.editing.id)] : null;   // DECOR1e: a moved piece is no surface for itself
-    p.piece = p.placer ? p.placer.pieceAt(eyePoint(deps.collider?.(), p.fly, lookDir(cam.yaw, cam.pitch), through), origin, p.id) : null;
+    const hit = eyeHit(deps.collider?.(), p.fly, lookDir(cam.yaw, cam.pitch), through);
+    p.piece = p.placer ? p.placer.pieceAt(hit.point, origin, p.id, hit.normal, cam.yaw) : null;   // DECOR2c: a mount reads the surface
+    if (p.decal && p.art) {   // DECOR2c: the ghost hangs where the mount will - or, with nothing to hang on, nowhere
+      const quad = p.piece ? decorMountQuad(p.piece, origin, { w: p.art.w * p.piece.scale, h: p.art.h * p.piece.scale }) : null;
+      renderer?.writeDecalSlot?.(p.decal, 0, decorMountFloats(quad));
+    }
     const price = p.placer ? p.placer.price() : null;
     const edit = p.editing && p.placer ? decorEditPrice(p.radius, p.editing, p.placer.state().scale) : null;
     bar?.show({
@@ -680,7 +708,7 @@ export function createDecorTool(deps) {
   function placingWhy(p, price) {
     if (p.refused && now() - p.refused.at < DECOR_REFUSAL_MS) return p.refused.text;
     if (!p.placer) return 'Loading...';
-    if (!p.piece) return 'It cannot stand there.';
+    if (!p.piece) return p.entry.mount ? DECOR_MOUNT_NO_SURFACE : 'It cannot stand there.';
     if (p.editing) {   // a move is never refused for the room's count; a resize may be for the gold
       const { pay } = decorEditPrice(p.radius, p.editing, p.placer.state().scale);
       const gold = deps.wallet?.().gold ?? 0;
@@ -708,6 +736,13 @@ export function createDecorTool(deps) {
     return true;
   }
   const batches = () => (placing && !placing.suspended && placing.piece && placing.batch ? [placing.batch] : []);
+  /** DECOR2c: the mount being hung, on the host's decal pass (the room's own mounts' call). */
+  function drawMounts(r = renderer) {
+    const p = placing;
+    if (!p || p.suspended || !p.piece || !p.decal || !p.art) return false;
+    r?.drawDecals?.(p.decal, p.art.tex);
+    return true;
+  }
 
   /** THE PANEL'S PREVIEW: the pointed model, turning - drawn by the automap's and the bank's second camera pass
    *  (renderer.panelFrame) into the game canvas's rect under the preview's box, then copied into the preview's own
@@ -756,7 +791,7 @@ export function createDecorTool(deps) {
   }
 
   return {
-    frame, cameraOverride, draw, batches, drawPreview, close, openPanel, commit, back,
+    frame, cameraOverride, draw, batches, drawMounts, drawPreview, close, openPanel, commit, back,
     /** Whether the camera flies - the host hands the body no movement while it does. */
     flying: () => !!placing && !placing.suspended,
     panelOpen: () => !!panel?.isOpen(),

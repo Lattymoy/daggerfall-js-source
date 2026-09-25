@@ -166,6 +166,10 @@ export function decorPlacedSub({ piece, holds }) {
 }
 /** DECOR2a: what an item in the pack says under its name in the "Your things" list. */
 export const DECOR_OWN_LINE = 'yours - free to set down, and back to your pack when taken down';
+/** DECOR2c: and a weapon or a shield there - it hangs on a wall. */
+export const DECOR_MOUNT_LINE = 'yours - free to hang on a wall, and back to your pack when taken down';
+/** The line an own entry says - a delivered piece's, a mount's, or a thing's from the pack. */
+const ownLine = (e) => (e.furnishing ? decorFurnishLine(e) : e.mount ? DECOR_MOUNT_LINE : DECOR_OWN_LINE);
 /** DECOR2b: what a piece of delivered furniture says there - never carried; set down free as the piece of its kinds the
  *  owner chooses (or, a pillow, as itself), and back here when taken down. */
 export function decorFurnishLine(e) {
@@ -492,7 +496,7 @@ export function createDecorPanel({
     }
     const main = el('span', '');
     const count = (e.count ?? 1) > 1 ? ` (${e.count})` : '';
-    main.append(el('div', 'dfdecor-row-name', `${e.name}${count}`), el('div', 'dfdecor-row-sub', e.furnishing ? decorFurnishLine(e) : DECOR_OWN_LINE));
+    main.append(el('div', 'dfdecor-row-name', `${e.name}${count}`), el('div', 'dfdecor-row-sub', ownLine(e)));
     r.append(thumb, main, el('span', 'dfdecor-row-price', 'free'));
     r.addEventListener('click', () => { ownKey = e.key; redraw(); });
     r.addEventListener('mouseenter', () => { hoverKey = e.key; paintSide(); });
@@ -549,7 +553,7 @@ export function createDecorPanel({
       previewImg.removeAttribute?.('src');
     } else if (e.kind === 'own') {
       pickName.textContent = e.name;
-      pickLine.textContent = e.furnishing ? decorFurnishLine(e) : DECOR_OWN_LINE;
+      pickLine.textContent = ownLine(e);
       pickPrice.textContent = 'Free';
       if (!thumbs.has(e.key)) askThumb(e);
       const url = thumbs.get(e.key);

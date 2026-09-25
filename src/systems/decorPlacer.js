@@ -24,11 +24,18 @@
 // scale steps by a tenth, within the law's quarter to four times; the
 // price is the law's, by the scaled size - and a piece whose size the
 // scan could not read has no price and is never placed.
+//
+// DECOR2c: A MOUNT (a weapon or a shield of the owner's own) is set
+// ON the surface the eye meets, not above it: its heading and tilt are
+// the surface's (a floor's heading the eye's own, so the picture reads
+// upright from where the owner stands), the turn is its spin on the
+// surface, it hangs a hair off it, the grid snaps it across the surface
+// and the owner's lift moves it up the surface. No surface, no mount.
 // ═══════════════════════════════════════════════════════════════════
 
 import { trs } from '../world/mat4.js';
 import { transformedAabb } from '../render/frustum.js';
-import { decorPieceOf, decorPrice, DECOR_SCALE_MIN, DECOR_SCALE_MAX } from '../net/decorLaw.js';
+import { decorPieceOf, decorPrice, decorMountFrame, DECOR_SCALE_MIN, DECOR_SCALE_MAX, DECOR_MOUNT_LIFT } from '../net/decorLaw.js';
 
 export const DECOR_TURN_STEP = 15;
 export const DECOR_TURN_FINE = 1;
@@ -47,21 +54,48 @@ export function wrapTurn(deg) {
 }
 const round = (v, places) => { const k = 10 ** places; return Math.round(v * k) / k; };
 const snapTo = (v, step) => round(Math.round(v / step) * step, 3);
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const DEG = 180 / Math.PI;
 
 /**
  * THE TOOL for one catalogue `entry`. `radius` its measured radius in metres (null: unmeasured), `box` a model's local
  * bounds [minX, minY, minZ, maxX, maxY, maxZ] (render/frustum.js localAabb), null for a flat. DECOR1e: `from` a placed
  * piece being moved - the tool starts at its turn and its scale. DECOR2a: `free` - the player's own item, which costs
- * nothing whatever its size, and whose piece carries its descriptor (`entry.item`).
+ * nothing whatever its size, and whose piece carries its descriptor (`entry.item`). DECOR2c: an entry that is a `mount`
+ * is set on the surface, the turn its spin there.
  */
 export function createDecorPlacer(entry, { radius = null, box = null, from = null, free = false } = {}) {
-  const s = { yaw: from ? wrapTurn(from.rot?.[0] ?? 0) : 0, raise: 0, scale: from?.scale ?? 1, snap: false };
+  const mount = !!entry.mount;
+  const s = { yaw: from ? wrapTurn((mount ? from.rot?.[2] : from.rot?.[0]) ?? 0) : 0, raise: 0, scale: from?.scale ?? 1, snap: false };
 
   /** How far above a surface point the piece's origin stands, before the owner's own lift. */
   function lift() {
     if (entry.model == null || !box) return 0;
     const b = transformedAabb(box, trs(0, 0, 0, 0, s.yaw, 0, s.scale, s.scale, s.scale));
     return -b[1];
+  }
+
+  /** DECOR2c: THE MOUNT for a surface point and its `normal` (the eye's hit's, facing the eye), or null with no surface. */
+  function mountAt(hit, origin, id, normal, camYaw, paid) {
+    const len = normal ? Math.hypot(normal[0], normal[1], normal[2]) : 0;
+    if (!(len > 0)) return null;
+    const n = [normal[0] / len, normal[1] / len, normal[2] / len];
+    const level = Math.hypot(n[0], n[2]) > 1e-3;
+    const heading = level ? Math.atan2(n[0], n[2]) : (Number.isFinite(camYaw) ? camYaw : 0) + Math.PI;
+    const rot = [wrapTurn(round(heading * DEG, 1)), round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1), s.yaw];
+    const { right, up } = decorMountFrame([rot[0], rot[1], 0]);   // the surface's own axes, before the spin
+    let p = [hit[0] - origin[0], hit[1] - origin[1], hit[2] - origin[2]];
+    if (s.snap) {   // across the surface, never off it
+      const a = snapTo(dot(p, right), DECOR_GRID);
+      const b = snapTo(dot(p, up), DECOR_GRID);
+      const c = dot(p, n);
+      p = [0, 1, 2].map((i) => right[i] * a + up[i] * b + n[i] * c);
+    }
+    p = [0, 1, 2].map((i) => p[i] + up[i] * s.raise + n[i] * DECOR_MOUNT_LIFT);
+    return decorPieceOf({
+      id, model: null, flat: [entry.flat[0], entry.flat[1]], item: entry.item ?? null, pos: p, rot, scale: s.scale,
+      light: entry.light ? { ...entry.light, color: [...entry.light.color] } : null, storage: false, paid,
+    });
   }
 
   return {
@@ -85,14 +119,18 @@ export function createDecorPlacer(entry, { radius = null, box = null, from = nul
     },
     /**
      * THE PIECE for a surface point `hit` (the free camera's eye meeting the room, this visit's frame), measured from
-     * the building's `origin` - projected by the law, or null (unpriced, or outside what a piece may be).
+     * the building's `origin` - projected by the law, or null (unpriced, or outside what a piece may be). DECOR2c: a
+     * mount takes the surface's `normal` there, and the eye's `camYaw` for a floor's heading.
      * @param {number[]} hit
      * @param {number[]} origin
      * @param {string} id
+     * @param {number[]|null} [normal]
+     * @param {number} [camYaw]
      */
-    pieceAt(hit, origin, id) {
+    pieceAt(hit, origin, id, normal = null, camYaw = 0) {
       const paid = this.price();
       if (paid == null || !hit || !origin) return null;
+      if (mount) return mountAt(hit, origin, id, normal, camYaw, paid);
       const up = lift() + s.raise;
       let x = hit[0] - origin[0];
       let z = hit[2] - origin[2];

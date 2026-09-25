@@ -7776,6 +7776,8 @@ export function createWorldModes(host) {
     interiorArrows.draw(renderer, interiorCtx.texRemap);
     interiorDecor.draw(renderer, interiorCtx.texRemap);   // DECOR1c: the placed models, in the room's own climate
     decorTool.draw(renderer, interiorCtx.texRemap);   // DECOR1d: and the one being placed, where it will stand
+    interiorDecor.drawMounts(renderer);   // DECOR2c: the hung weapons and shields, on the decal pass, after the solid room
+    decorTool.drawMounts(renderer);   // DECOR2c: and the one being hung
     interiorCtx.flatAnims.tick(dt);   // FA1
     // BLOOD1 AUDIT (2026-09-20): THE INTERIOR'S OWN MARKS, and they
     // were missing. This host builds a pool like the other three,

@@ -87,7 +87,7 @@ test('DECOR1 the law: a piece is WHAT it is (one model, or one flat\'s archive a
   assert.equal(DECOR_OPS_MAX, 600);
   assert.deepEqual(decorWhatOf({ model: 41000 }), { model: 41000, flat: null });
   assert.deepEqual(decorWhatOf({ flat: [205, 3] }), { model: null, flat: [205, 3] });
-  for (const bad of [{ model: 41000, flat: [205, 3] }, {}, { model: 0 }, { model: 1_000_000 }, { model: 1.5 }, { flat: [512, 0] }, { flat: [205, 512] }, { flat: [205] }, { flat: [-1, 0] }]) {
+  for (const bad of [{ model: 41000, flat: [205, 3] }, {}, { model: 0 }, { model: 1_000_000 }, { model: 1.5 }, { flat: [1000, 0] }, { flat: [205, 512] }, { flat: [205] }, { flat: [-1, 0] }]) {
     assert.equal(decorWhatOf(bad), null, JSON.stringify(bad));
   }
   const pl = decorPlaceOf({ pos: [1.23456, -0.0004, DECOR_POS_MAX], rot: [179.96, -90.04, 0], scale: 1.23456, light: null, storage: true, paid: 55 });
@@ -257,6 +257,21 @@ test('DECOR2b a piece of furniture in an online home: the service keeps a model 
   assert.deepEqual(moved.body, { ok: true, piece: { ...bed, pos: [2, 0, 2], rot: [45, 0, 0] } }, 'moved, it is the same bed');
   const statue = piece({ id: 's1', model: 41001, flat: null, item: { t: 265, g: 10 }, paid: 0 });
   assert.equal((await call('POST', '/v1/homes/decor/place', at({ piece: statue }), aldric)).body.error, 'bad-decor', 'a statue is never a model');
+});
+
+test('DECOR2c a mount in an online home: the service keeps a weapon or shield hung as its own pack picture - the port\'s own archives past 511 among them - with its spin, read by every visitor; a picture past the law\'s bound is refused (mutants: the bound kept at 511)', async (t) => {
+  t.mock.method(Date, 'now', () => T0 * 1000);
+  const { call, registered } = await stand();
+  const aldric = await registered('Aldric');
+  const mara = await registered('Mara');
+  assert.equal((await call('POST', '/v1/homes/claim', home(), aldric)).status, 200);
+  const at = (extra = {}) => ({ ...HOME, character: 'char-aldric', ...extra });
+  const axe = piece({ id: 'w1', model: null, flat: [513, 2], item: { t: 513, g: 3, m: null, v: null, a: null, p: null }, rot: [180, 0, 15], paid: 0 });
+  const r = await call('POST', '/v1/homes/decor/place', at({ piece: axe }), aldric);
+  assert.deepEqual([r.status, r.body], [200, { ok: true, piece: axe }]);
+  assert.deepEqual((await call('POST', '/v1/homes/decor', HOME, mara)).body.pieces, [axe], 'every visitor reads it hung');
+  const past = piece({ id: 'w2', model: null, flat: [1000, 0], item: { t: 120, g: 3, m: null, v: null, a: null, p: null }, paid: 0 });
+  assert.equal((await call('POST', '/v1/homes/decor/place', at({ piece: past }), aldric)).body.error, 'bad-decor');
 });
 
 test('DECOR1 the client\'s door: every call rides the one session as a Bearer header to its route, and no session is a word, not a throw; every refusal the service can say has a sentence; the deploy bundles the law and its smoke reads a room and refuses a guest (mutants: a route misspelt, the secret in the body)', async () => {

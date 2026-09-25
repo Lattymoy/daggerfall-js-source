@@ -19,6 +19,14 @@
 // names from its own data.
 //
 // Weapons and armour are not stood: they are MOUNTED (DECOR2c).
+//
+// DECOR2c (2026-09-25) — THE MOUNTS. Mac: "a way to display your
+// weapons"; asked, "Mounted": a weapon (arrows aside) or a shield hangs
+// FLAT against the wall it is set on, as its detailed pack picture -
+// the list's own, the owner's body's (net/decorLaw.js decorIsMount;
+// scenes/decorRoom.js hangs it). Free, and back to the pack whole when
+// taken down, as every own thing is. Its dye is read off its numbers,
+// so every client wears it the same.
 // ═══════════════════════════════════════════════════════════════════
 
 import { templateByIndex, inventoryItemImage } from './itemTemplates.js';
@@ -27,7 +35,8 @@ import { getMagicItemTemplates, ITEM_GROUP_NAME_BY_CLASS } from './loot.js';
 import { TEMPLATES, isMap } from './useItem.js';
 import { isSummoned } from './inventory.js';
 import { decorFlatLight } from './decorCatalogue.js';
-import { decorItemOf, DECOR_ARCHIVE_MAX, DECOR_RECORD_MAX } from '../net/decorLaw.js';
+import { itemDyeColor } from './itemDye.js';
+import { decorItemOf, decorIsMount, DECOR_ARCHIVE_MAX, DECOR_RECORD_MAX } from '../net/decorLaw.js';
 
 /** The groups whose items never stand as themselves: weapons and armour are mounted (DECOR2c); a vehicle is no thing
  *  one carries, coin is a counter, and a deed or a quest's own item is not the player's to set down. */
@@ -82,6 +91,32 @@ export function decorStandOf(item) {
 }
 
 /**
+ * DECOR2c: WHAT A WEAPON OR A SHIELD HANGS AS - `{ flat, light: null, item }`, its pack picture (the list's own - the
+ * owner's body's, as the pack draws it) - or null: no weapon or shield (arrows neither), anything worn, a quest's, a
+ * summoned one, or a picture past what a piece may show.
+ */
+export function decorMountOf(item, identity = undefined) {
+  if (!item || item.questItem || item.equipSlot != null || isSummoned(item)) return null;
+  const descriptor = decorDescriptorOf(item);
+  if (!descriptor) return null;
+  const pic = inventoryItemImage(item, identity);
+  const flat = pic ? [pic.archive, pic.record] : null;
+  if (!flat || !decorIsMount({ model: null, flat, item: descriptor })) return null;
+  if (!Number.isSafeInteger(flat[0]) || flat[0] <= 0 || flat[0] > DECOR_ARCHIVE_MAX) return null;
+  if (!Number.isSafeInteger(flat[1]) || flat[1] < 0 || flat[1] > DECOR_RECORD_MAX) return null;
+  return { flat, light: null, item: descriptor };
+}
+
+/** DECOR2c: the dye a mount's picture wears - its material's, as the pack's (itemDye.js), read off its numbers alone
+ *  so every client wears it the same; an artifact's own colours are its own. */
+export function decorMountDye(d) {
+  const own = decorItemOf(d);
+  if (!own) return null;
+  const group = own.g != null ? ITEM_GROUP_NAME_BY_CLASS[own.g] ?? null : null;
+  return itemDyeColor({ templateIndex: own.t, group, material: own.m ?? 0, artifact: own.a != null });
+}
+
+/**
  * The name every client gives an own item's piece from its descriptor alone - so a visitor reads what the owner set
  * down: an artifact's own name (MAGIC.DEF, once it is read), a book's title, else the name the item lists under (a
  * plant's northern or southern, a material before a blade), else its template's. Null for nothing known.
@@ -104,17 +139,20 @@ export function decorItemName(d) {
 
 /**
  * The decorate panel's row for one item in the pack - `{ key, kind: 'own', own, name, flat, light, item, icon, ... }`,
- * `own` the item itself and `icon` its pack picture (the list's own, dye and all) - or null when it cannot stand.
- * `index` keys the row (the tool keys it by the item itself - scenes/decorTool.js ownEntries).
+ * `own` the item itself and `icon` its pack picture (the list's own, dye and all) - or null when it can neither stand
+ * nor (DECOR2c) hang: `mount` says it hangs. `index` keys the row (the tool keys it by the item itself -
+ * scenes/decorTool.js ownEntries).
  */
 export function decorOwnEntry(item, index, identity = undefined) {
   const stands = decorStandOf(item);
-  if (!stands) return null;
+  const hangs = stands ? null : decorMountOf(item, identity);
+  const as = stands ?? hangs;
+  if (!as) return null;
   const pic = inventoryItemImage(item, identity);
   return {
-    key: `own:${index}`, kind: 'own', own: item, name: itemLongName(item), model: null, flat: stands.flat,
-    light: stands.light, item: stands.item, storage: false, count: item.stackCount ?? 1,
-    icon: pic && (pic.archive > 0 || pic.record > 0) ? pic : { archive: stands.flat[0], record: stands.flat[1], dye: null },
+    key: `own:${index}`, kind: 'own', own: item, name: itemLongName(item), model: null, flat: as.flat,
+    light: as.light, item: as.item, storage: false, count: item.stackCount ?? 1, mount: !!hangs,
+    icon: pic && (pic.archive > 0 || pic.record > 0) ? pic : { archive: as.flat[0], record: as.flat[1], dye: null },
   };
 }
 

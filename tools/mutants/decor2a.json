@@ -184,8 +184,8 @@
   {
     "name": "DECOR2a-the-plant-unplaced",
     "file": "src/systems/decorItems.js",
-    "old": "const group = own.g != null ? ITEM_GROUP_NAME_BY_CLASS[own.g] ?? null : null;",
-    "new": "const group = null;",
+    "old": "  const group = own.g != null ? ITEM_GROUP_NAME_BY_CLASS[own.g] ?? null : null;\n  // the list's own naming",
+    "new": "  const group = null;\n  // the list's own naming",
     "tests": [
       "test/decor2a.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "DECOR2a-the-descriptor-left-off",
     "file": "src/systems/decorPlacer.js",
-    "old": "item: entry.item ?? null,",
-    "new": "item: null,",
+    "old": "id, model: entry.model ?? null, flat: entry.flat ? [entry.flat[0], entry.flat[1]] : null, item: entry.item ?? null,",
+    "new": "id, model: entry.model ?? null, flat: entry.flat ? [entry.flat[0], entry.flat[1]] : null, item: null,",
     "tests": [
       "test/decor2a.test.js"
     ]

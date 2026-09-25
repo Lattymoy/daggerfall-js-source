@@ -8737,3 +8737,32 @@ table).
 Pinned: `test/decor2b.test.js` (9), `test/decor1.test.js` (+1: the service keeps a model with the furniture's
 numbers). `tools/mutants/decor2b.json` (75, one equivalent: DFU's own skip kept for every other shop). Five older
 records re-aimed.
+
+**DECOR2c - weapons and shields mounted.**
+
+- **What hangs** (`src/systems/decorItems.js` decorMountOf, `src/net/decorLaw.js` decorIsMount). A weapon from the pack
+  (never the arrows) or one of the four shields hangs, as its own pack picture - the owner's body's, as the pack draws
+  it (a woman's weapons are Daggerfall's archive 233, a man's 234) - with its own numbers, free, and back into the pack
+  whole when taken down, as every own thing is. Never anything worn, a quest's or a summoned one. Every client reads
+  "a mount" off the item's own numbers, so a visitor sees it hang as the owner hung it; its dye is read off the same
+  numbers (an artifact's colours its own). The law's archive bound rises from 511 to 999 so the port's own pictures -
+  Roleplay & Realism's weapons at 513 and on - hang too.
+- **Hung ON a surface** (`src/systems/decorPlacer.js`). The flight sets it where the eye meets a wall - the ray's own
+  surface normal, facing the eye - flat against it: its heading and tilt are the surface's (on a floor or a table the
+  eye's own heading, so the picture reads upright from where the owner stands), the turn spins it clockwise on the
+  surface, the grid snaps it across the surface and never off it, and the owner's lift moves it up the surface. It
+  hangs two centimetres off the surface - the blood marks' own hair. With no surface in reach, the bar says to look at
+  a wall. Moved, it keeps its spin.
+- **Drawn flat, not turned to the eye** (`src/scenes/decorRoom.js`). A mount is the one flat that never turns to the
+  eye: one quad, centred at its place and framed by its turn (`decorLaw.js` decorMountFrame - the frame's right is its
+  viewer's right, so the picture never reads mirrored), drawn on the blood marks' own decal pass (a quad lying on a
+  surface, lit by that surface's light, its clear texels cut out), after the room's solid models. Its picture is
+  uploaded as the pack's own is (the cut-out, its dye), sized as a flat of its archive is and scaled. Its eye target
+  is the box round its corners; it has no collider. During the flight the ghost is the picture itself, hanging where
+  the mount will hang.
+
+Not yet: no one has seen a mount drawn - there is no GL and no ARENA2 in this container; the frame's handedness is
+reasoned from the billboard pass's own texture and camera conventions and pinned, and is the one-look question.
+
+Pinned: `test/decor2c.test.js` (6), `test/decor1.test.js` (+1: the service keeps a mount of the port's own archive).
+`tools/mutants/decor2c.json` (50). Five older records re-aimed.

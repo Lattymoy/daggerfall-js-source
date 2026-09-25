@@ -30,9 +30,11 @@
 export const DECOR_CAP = 200;
 /** A piece's id: the client mints it (the save and the service key on the same one). */
 export const DECOR_ID_RE = /^[A-Za-z0-9_-]{1,24}$/;
-/** ARCH3D model ids run to six digits; TEXTURE archives and records below 512. */
+/** ARCH3D model ids run to six digits; TEXTURE records below 512, and archives below 512 - DECOR2c: or the port's own
+ *  past them (Roleplay & Realism's weapons and armour, 513 to 526; Climates & Calories', 532 to 539), so a mounted
+ *  weapon of theirs shows its own picture. */
 export const DECOR_MODEL_MAX = 999_999;
-export const DECOR_ARCHIVE_MAX = 511;
+export const DECOR_ARCHIVE_MAX = 999;
 export const DECOR_RECORD_MAX = 511;
 /** How far from the building's origin a piece may stand, on each axis, in metres - wider than any interior. */
 export const DECOR_POS_MAX = 256;
@@ -79,6 +81,50 @@ export function decorItemOf(raw) {
 /** DECOR2b: Daggerfall's ItemGroups.Furniture - the furnisher's pieces, whose shape the owner chooses among the
  *  game's own models. */
 export const DECOR_FURNITURE_GROUP = 8;
+/** DECOR2c: Daggerfall's ItemGroups.Weapons and .Armor; the arrows (a weapon never hung) and the four shields (the
+ *  armour that is). */
+export const DECOR_WEAPONS_GROUP = 3;
+export const DECOR_ARMOR_GROUP = 2;
+export const DECOR_ARROW_TEMPLATE = 131;
+export const DECOR_SHIELD_TEMPLATES = Object.freeze(new Set([109, 110, 111, 112]));
+
+/**
+ * DECOR2c: A MOUNT - a piece whose item is one of the owner's weapons (arrows aside) or shields. It hangs FLAT against
+ * the surface it was set on, its picture turned as `rot` says - the surface's heading and tilt, then its own turn on
+ * it - where every other flat turns to the eye. Every client reads it off the item's own numbers, so a visitor sees
+ * it hang as the owner hung it.
+ */
+export function decorIsMount(piece) {
+  const it = piece?.item;
+  if (!it || piece.model != null || !Array.isArray(piece.flat)) return false;
+  return (it.g === DECOR_WEAPONS_GROUP && it.t !== DECOR_ARROW_TEMPLATE) || (it.g === DECOR_ARMOR_GROUP && DECOR_SHIELD_TEMPLATES.has(it.t));
+}
+
+/** DECOR2c: how far a mount hangs off its surface, in metres - the blood marks' own hair (combat/bloodDecals.js
+ *  SURFACE_LIFT), so it wins the depth test against the wall behind it. */
+export const DECOR_MOUNT_LIFT = 0.02;
+const RAD = Math.PI / 180;
+
+/**
+ * DECOR2c: A MOUNT'S FRAME from its turn [heading, tilt, spin], degrees: `normal` out of the surface toward whoever
+ * faces it (the eye's own lookDir: the heading about up, the tilt up from level), and `right` and `up` in the surface
+ * as that viewer reads the picture - right to their right, up the wall (up a floor, away from them) - both spun about
+ * the normal, a positive spin clockwise as they see it.
+ */
+export function decorMountFrame(rot) {
+  const [yaw, pitch, spin] = [0, 1, 2].map((i) => (Number.isFinite(rot?.[i]) ? rot[i] * RAD : 0));
+  const cp = Math.cos(pitch);
+  const normal = [Math.sin(yaw) * cp, Math.sin(pitch), Math.cos(yaw) * cp];
+  const r0 = [-Math.cos(yaw), 0, Math.sin(yaw)];
+  const u0 = [r0[1] * normal[2] - r0[2] * normal[1], r0[2] * normal[0] - r0[0] * normal[2], r0[0] * normal[1] - r0[1] * normal[0]];   // r0 x normal
+  const c = Math.cos(spin);
+  const s = Math.sin(spin);
+  return {
+    normal,
+    right: [r0[0] * c - u0[0] * s, r0[1] * c - u0[1] * s, r0[2] * c - u0[2] * s],
+    up: [u0[0] * c + r0[0] * s, u0[1] * c + r0[1] * s, u0[2] * c + r0[2] * s],
+  };
+}
 
 /** WHAT a piece is - `{ model, flat: null }` or `{ model: null, flat: [archive, record] }` - or null. DECOR2a: a flat
  *  may be the owner's own item, `item` its descriptor (decorItemOf), carried only when it is one. DECOR2b: a model may

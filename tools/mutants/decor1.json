@@ -416,8 +416,8 @@
   {
     "name": "DECOR1c-a-flat-target-solid",
     "file": "src/scenes/decorRoom.js",
-    "old": "reach: DECOR_REACH, noSurface: true });",
-    "new": "reach: DECOR_REACH, meshCollider: true });",
+    "old": "out.push({ key, aabb: { min: [p[0] - hw, p[1], p[2] - hw], max: [p[0] + hw, p[1] + e.size.h, p[2] + hw] }, distance: RAY_DISTANCE, reach: DECOR_REACH, noSurface: true });",
+    "new": "out.push({ key, aabb: { min: [p[0] - hw, p[1], p[2] - hw], max: [p[0] + hw, p[1] + e.size.h, p[2] + hw] }, distance: RAY_DISTANCE, reach: DECOR_REACH, meshCollider: true });",
     "tests": [
       "test/decor1.test.js"
     ]

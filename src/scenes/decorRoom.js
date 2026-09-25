@@ -23,6 +23,14 @@
 // own origin is and nothing is re-derived at a restore). A flat stands on
 // its base at `pos`, as every Daggerfall billboard does, and turns to the
 // eye whatever its record says (a flat has no turn of its own).
+//
+// DECOR2c: A MOUNT - one of the owner's weapons or shields
+// (net/decorLaw.js decorIsMount) - is the one flat that does NOT turn to
+// the eye. It hangs flat against the surface it was set on, CENTRED at
+// `pos` (a hair off the surface), its picture framed by `rot` - the
+// surface's heading and tilt, then its own spin on it - and drawn by the
+// blood marks' own pass (render/renderer.js drawDecals: a quad lying on
+// a surface, lit by that surface's light, its clear texels cut out).
 // ═══════════════════════════════════════════════════════════════════
 
 import { trs } from '../world/mat4.js';
@@ -31,6 +39,9 @@ import { RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../player/activate.js
 import { billboardSize } from '../world/rmbFlats.js';
 import { armFlatAnim } from '../render/flatAnimation.js';
 import { collectInteriorLights } from '../world/interiorLights.js';
+import { decorIsMount, decorMountFrame, DECOR_MOUNT_LIFT } from '../net/decorLaw.js';
+import { decorMountDye } from '../systems/decorItems.js';
+import { writeDecalQuad, clearDecalQuad, DECAL_FLOATS } from '../combat/bloodDecals.js';
 
 /** How far the eye reaches a placed piece - the room's own furniture's reach (a bed's, a shelf's: 128 units). */
 export const DECOR_REACH = DEFAULT_ACTIVATION_DISTANCE;
@@ -46,6 +57,42 @@ export function decorLightLift(piece, size) {
   return own ? own.y : size.h / 2;
 }
 
+/** DECOR2c: a mount's quad in THIS visit's frame - its centre, its frame, and its four corners (bottom-left first,
+ *  round as the decal pass writes them) for `size` {w, h}, the picture's scaled size. */
+export function decorMountQuad(piece, origin, size) {
+  const f = decorMountFrame(piece.rot);
+  const centre = [origin[0] + piece.pos[0], origin[1] + piece.pos[1], origin[2] + piece.pos[2]];
+  const hw = size.w / 2;
+  const hh = size.h / 2;
+  const at = (sx, sy) => [0, 1, 2].map((i) => centre[i] + f.right[i] * sx * hw + f.up[i] * sy * hh);
+  return { centre, ...f, w: size.w, h: size.h, corners: [at(-1, -1), at(-1, 1), at(1, 1), at(1, -1)] };
+}
+
+/** DECOR2c: the decal pass's floats for a mount's quad (bloodDecals.js writeDecalQuad - a square of `size` stretched
+ *  along `right`), untinted and dry; none for no quad. */
+export function decorMountFloats(quad) {
+  const out = new Float32Array(DECAL_FLOATS);
+  if (!quad || !(quad.w > 0) || !(quad.h > 0)) { clearDecalQuad(out, 0); return out; }
+  writeDecalQuad(out, 0, { pos: quad.centre, size: quad.h, stretch: quad.w / quad.h, right: quad.right, up: quad.up, wet: 0 });
+  return out;
+}
+
+/**
+ * DECOR2c: A MOUNT'S PICTURE - uploaded as the pack's own is (the cut-out and the dye: scenes/dataPipeline.js
+ * uploadRecord, the icons' door), sized as a flat of its archive is - answering `{ tex, w, h }`, or null (no such
+ * record, or no texture to be had). `deps` the room's or the tool's: getTexture, uploadRecord, renderer.
+ */
+export function loadMountArt({ getTexture, uploadRecord, renderer }, a, r, dye) {
+  return Promise.resolve(getTexture?.(a)).then((t) => {
+    if (!t || !(r < t.recordCount)) return null;
+    const variant = uploadRecord?.(a, r, { mips: false, removeMask: true, dye });
+    const tex = renderer?.textures?.get?.(`${a}_${r}${variant ?? '#ui'}`) ?? null;
+    if (!tex) return null;
+    const { w, h } = billboardSize(t, r);
+    return { tex, w, h };
+  }).catch(() => null);
+}
+
 /** The model matrix of a placed piece in THIS visit's frame. */
 export function decorMatrix(piece, origin) {
   const [x, y, z] = piece.pos;
@@ -56,7 +103,8 @@ export function decorMatrix(piece, origin) {
 /**
  * THE ROOM'S PLACED PIECES. `deps`:
  *   meshes    - { getGpuMesh(id) -> Promise<gpu>, cpuModels: Map<id, {positions, indices}> }
- *   renderer  - { createBillboardBatch, destroyBillboardBatch, drawMesh }
+ *   renderer  - { createBillboardBatch, destroyBillboardBatch, drawMesh } - DECOR2c: and the decal pass's four
+ *               (createDecalBatch, writeDecalSlot, drawDecals, destroyDecalBatch) and its `textures`, for the mounts
  *   getTexture(archive) -> Promise<TextureFile>, uploadRecord(archive, record), uploadRecordFrame(archive, record, frame)
  *                  - a flat is uploaded, sized and animated exactly as the room's own flats are (interiorContext.js)
  *   flatAnims()  - the room's own flat animator (FA1, which the host ticks), or null
@@ -69,10 +117,16 @@ export function decorMatrix(piece, origin) {
 export function createDecorRoom({
   meshes, renderer, getTexture, uploadRecord, uploadRecordFrame, flatAnims = () => null, collider, origin, roomLights = () => null,
 }) {
-  /** @type {Map<string, {piece: any, gpu: any, box: any, matrix: Float32Array, batch: any, anims: any, size: any, light: any}>} */
+  /** @type {Map<string, {piece: any, gpu: any, box: any, matrix: Float32Array, batch: any, anims: any, size: any, light: any, mount: any}>} */
   const standing = new Map();
   const models = new Map();   // model id -> Promise<{gpu, cpu, box}>
   const flats = new Map();    // "a.r" -> Promise<{t, w, h} | null>
+  const arts = new Map();     // DECOR2c: "a.r.dye" -> Promise<{tex, w, h} | null>, a mount's picture
+  const artOf = (a, r, dye) => {
+    const k = `${a}.${r}.${dye ?? '-'}`;
+    if (!arts.has(k)) arts.set(k, loadMountArt({ getTexture, uploadRecord, renderer }, a, r, dye));
+    return arts.get(k);
+  };
 
   function modelOf(id) {
     if (!models.has(id)) {
@@ -110,6 +164,7 @@ export function createDecorRoom({
   function unmount(entry) {
     if (!entry) return;
     collider?.()?.removeBucket?.(decorKeyOf(entry.piece.id));
+    if (entry.mount) { renderer?.destroyDecalBatch?.(entry.mount.batch); entry.mount = null; }   // DECOR2c
     if (entry.batch) {
       entry.anims?.remove?.(entry.batch);   // its FlatAnim goes with it (the room's animator outlives no batch)
       renderer?.destroyBillboardBatch?.(entry.batch);
@@ -127,9 +182,19 @@ export function createDecorRoom({
   function put(piece) {
     unmount(standing.get(piece.id));
     const o = origin?.() ?? [0, 0, 0];
-    const entry = { piece, gpu: null, box: null, matrix: decorMatrix(piece, o), batch: null, anims: null, size: null, light: null };
+    const entry = { piece, gpu: null, box: null, matrix: decorMatrix(piece, o), batch: null, anims: null, size: null, light: null, mount: null };
     standing.set(piece.id, entry);
-    if (piece.model != null) {
+    if (decorIsMount(piece)) {   // DECOR2c: hung flat on its surface, as its pack picture
+      const [a, r] = piece.flat;
+      artOf(a, r, decorMountDye(piece.item)).then((art) => {
+        if (standing.get(piece.id) !== entry || !art || !renderer?.createDecalBatch) return;
+        entry.size = { w: art.w * piece.scale, h: art.h * piece.scale };
+        const quad = decorMountQuad(piece, o, entry.size);
+        entry.mount = { batch: renderer.createDecalBatch(1), tex: art.tex, quad };
+        renderer.writeDecalSlot?.(entry.mount.batch, 0, decorMountFloats(quad));
+        mountLight(entry, o, 0);   // a lit one's light at its middle - the centre is where it stands
+      });
+    } else if (piece.model != null) {
       mountLight(entry, o, decorLightLift(piece, null));
       modelOf(piece.model).then((m) => {
         if (standing.get(piece.id) !== entry) return;   // moved or removed while it loaded
@@ -179,6 +244,12 @@ export function createDecorRoom({
   }
   /** The flats' batches, for the host's billboard pass. */
   const batches = () => [...standing.values()].map((e) => e.batch).filter(Boolean);
+  /** DECOR2c: the mounts, on the host's decal pass (after the room's solid geometry, as the blood marks go). */
+  function drawMounts(r = renderer) {
+    let n = 0;
+    for (const e of standing.values()) if (e.mount) { r?.drawDecals?.(e.mount.batch, e.mount.tex); n++; }
+    return n;
+  }
 
   /** The lights the lit pieces carry - the very objects in the room's list. */
   const lights = () => [...standing.values()].map((e) => e.light).filter(Boolean);
@@ -194,6 +265,11 @@ export function createDecorRoom({
         if (!e.box) continue;
         const b = transformedAabb(e.box, e.matrix);
         out.push({ key, aabb: { min: [b[0], b[1], b[2]], max: [b[3], b[4], b[5]] }, distance: RAY_DISTANCE, reach: DECOR_REACH, meshCollider: true });
+      } else if (e.mount) {   // DECOR2c: the box round its four corners, a hair thick either side of it
+        const cs = e.mount.quad.corners;
+        const min = [0, 1, 2].map((i) => Math.min(...cs.map((c) => c[i])) - DECOR_MOUNT_LIFT);
+        const max = [0, 1, 2].map((i) => Math.max(...cs.map((c) => c[i])) + DECOR_MOUNT_LIFT);
+        out.push({ key, aabb: { min, max }, distance: RAY_DISTANCE, reach: DECOR_REACH, noSurface: true });
       } else if (e.size) {
         const p = [o[0] + e.piece.pos[0], o[1] + e.piece.pos[1], o[2] + e.piece.pos[2]];
         const hw = e.size.w / 2;
@@ -268,7 +344,7 @@ export function createDecorRoom({
   const list = () => [...standing.values()].map((e) => e.piece);
 
   return {
-    put, remove, set, destroyAll, draw, batches, lights, targets, pieceOf, list, size: () => standing.size,
+    put, remove, set, destroyAll, draw, batches, drawMounts, lights, targets, pieceOf, list, size: () => standing.size,
     itemsOf, holdsAny, itemsSnapshot, setItems, keep, kept: () => kept,
     ownOf, keepOwn, takeOwn, ownSnapshot, setOwn, ownIds,
   };
