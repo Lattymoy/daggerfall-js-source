@@ -1,0 +1,38 @@
+[
+ {
+  "name": "PERF-EXT-C1-the-memo-is-never-written-so-every-field-sweeps-again",
+  "file": "src/render/labGrass.js",
+  "old": "  if (n === undefined) { n = discSweep(radius, cell, steps); _discMemo.set(key, n); }",
+  "new": "  if (n === undefined) { n = discSweep(radius, cell, steps); }",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C1-the-key-forgets-the-steps-so-a-coarse-sweep-answers-for-the-fine-one",
+  "file": "src/render/labGrass.js",
+  "old": "  const key = `${radius},${cell},${steps}`;",
+  "new": "  const key = `${radius},${cell}`;",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C1-the-key-forgets-the-cell",
+  "file": "src/render/labGrass.js",
+  "old": "  const key = `${radius},${cell},${steps}`;",
+  "new": "  const key = `${radius},${steps}`;",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C1-the-world-never-warms-it-so-the-first-crossing-frame-sweeps",
+  "file": "src/scenes/world.js",
+  "old": "  if (labGrass) discSlotCount(LAB_GRASS.span);",
+  "new": "  if (false) discSlotCount(LAB_GRASS.span);",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ }
+]

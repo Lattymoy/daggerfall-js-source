@@ -83,3 +83,24 @@ Pins: `test/perfscale.test.js` 10 (S5's string rule and both S7 pins fail
 with `src/` at the slice's commit; the counter and frameInfo pins guard
 code that commit already had). Mutants: `perfscale.json` 43 dead;
 `auditretro1.json`'s D5 re-aimed.
+
+# PERF-EXT, cluster C — the frames that freeze around a crossing (2026-09-25)
+
+**Report** (the same two players): "fps issues in the exterior but fine in
+the interior", "me too my friend.. don't know why. I got a RX6600". And
+Mac, after PERF-SCALE: "Why are you so avoidant when it comes to
+addressing performance issues? I am not getting another player to do the
+work that youre suppose to do".
+
+**Cause, this cluster's share.** The streaming world's work is paid on the
+frames around a map-pixel crossing and on the road into a town, and none
+of it shows in `?perf=cpu`, which measures the steady frame. An interior
+streams nothing, which is the "fine in the interior" half.
+
+**Fixes** (each proven by a find-and-prove pass before it was written,
+and re-measured on the change; `07-Rendering/Performance-Exterior.md`
+cluster C has the numbers and the laws):
+
+- **PERF-EXT-C1** - the grass field's slot count (an 11-33 ms sweep, paid
+  by every field built - every crossing, teleport and load) is swept once
+  and warmed at mount.

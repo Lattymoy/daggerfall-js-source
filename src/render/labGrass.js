@@ -627,8 +627,32 @@ export const cellKey = (cx, cz) => cx * 65536 + cz;
  *  edge are `0` for the eye's own column, `k * cell - o` to its right
  *  and `o + j * cell` to its left; at o = 0 the two series both yield 0,
  *  which is the degenerate double column the peak lives on.
- *  Pure, so a pin can hold it against the fill loop. */
+ *  Pure, so a pin can hold it against the fill loop.
+ *
+ *  PERF-EXT-C1 (2026-09-25, the players: "fps issues in the exterior
+ *  but fine in the interior", "me too my friend.. don't know why. I
+ *  got a RX6600"): AND IT IS SWEPT ONCE. The answer is a pure function
+ *  of its three arguments - 394 for the shipped span, every time - and
+ *  the sweep that finds it is 11-33 ms, paid by every createGrassField:
+ *  the boot, every teleport and quickload, and every pixel crossing, on
+ *  the crossing frame itself. The first call per (radius, cell, steps)
+ *  sweeps and the rest read the memo. The memo is this module's and
+ *  lives as long as it does - one entry per distinct question, and the
+ *  game asks one. The world warms it at mount, behind the loading
+ *  screen, so no frame pays even the first sweep. */
+const _discMemo = new Map();   // PERF-EXT-C1: `${radius},${cell},${steps}` -> the swept count
+let _discSweeps = 0;
+/** PERF-EXT-C1: how many times the sweep has actually run - the test seam. */
+export const discSweeps = () => _discSweeps;
 export function discSlotCount(radius, cell = GRASS_CELL, steps = 240) {
+  const key = `${radius},${cell},${steps}`;
+  let n = _discMemo.get(key);
+  if (n === undefined) { n = discSweep(radius, cell, steps); _discMemo.set(key, n); }
+  return n;
+}
+/** PERF10's sweep, verbatim - discSlotCount's answer when the memo has none. */
+function discSweep(radius, cell, steps) {
+  _discSweeps++;
   const r2 = radius * radius;
   const axes = [];
   for (let i = 0; i < steps; i++) {
