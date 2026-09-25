@@ -699,6 +699,12 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // the clamped value, whatever the hit rolled.
   damageEquipment(attacker, target, damage, weapon, struck, { rolls, say });
   }   // PCO1: the stock core ends here; the tail is the callers' law
+  // ELITE DUNGEONS: an elite foe's blows land at `damageScale` times (scenes/dungeonContext.js
+  // applyEliteScaling). After either core - stock or a mod's override - so the multiplier holds
+  // whichever formula rolled the hit; the concealment break and the HUD below see the real number.
+  if (!attacker.isPlayer && damage > 0 && Number.isFinite(attacker.damageScale) && attacker.damageScale !== 1) {
+    damage = Math.max(1, Math.round(damage * attacker.damageScale));
+  }
   // AUDIT 24 (wave 31) - A LANDED HIT ENDS THE ATTACKER'S NORMAL-POWER
   // CONCEALMENT, and it was unported at every door.
   //

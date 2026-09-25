@@ -402,8 +402,13 @@ export function actionDoorName(locked, lockValue) {
 export function staticDoorName(kind, {
   displayName = '', locationName = '', regionName = '',
   buildingType = BUILDING_TYPES.None, unlocked = true, quality = 0,
-  inTown = false,
+  inTown = false, elite = false,
 } = {}) {
+  // ELITE: the mouth of an elite spawned dungeon says so, in the plaque's title, with the way in beneath
+  if (kind === 'dungeonEntrance' && elite) {
+    const name = String(locationName ?? '').replace(/^Elite /, '');
+    return { title: 'Elite Dungeon', subs: name ? [`To ${name}`] : [] };
+  }
   if (kind === 'buildingExit' || kind === 'dungeonEntrance') {
     return locationName ? { title: `To\n${locationName}` } : null;
   }
