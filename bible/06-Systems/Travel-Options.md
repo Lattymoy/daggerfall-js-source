@@ -1034,9 +1034,33 @@ and the rides bounded. Fourteen mutants in `tools/mutants/travelnav2.json`,
 all dead; the forty of `tools/mutants/travelnav.json` re-run, all dead
 (`TN-ramps-are-walls` re-aimed by content at the probe's new wall test).
 
+## SPAWN-TRAVEL (2026-09-25) - the nearby pause beside a spawned dungeon
+
+A crash report from play online: *"Error finding location Daggerfall : The
+Jubul Monastery (208,189)"*, thrown out of the travel frame. The nearby
+pause (`LocationPause` "nearby", `:1391-1400`) discovers the location the
+autopilot stopped beside - `PlayerGPS.DiscoverLocation(CurrentRegionName,
+CurrentLocation.Name)` in the mod - and the world host filed it BY NAME,
+through the quest bridge's `discoverLocation`, which is C#'s throwing
+lookup over the MAPS tables. An online spawned dungeon
+(`world/spawnedDungeons.js`) is a template's clone named `"<name> (x,y)"`
+and stands in no MAPS table, so the name could never resolve and the
+throw took the frame down the moment the pause stopped beside one.
+
+In DFU the name only ever resolves back to the location the player
+stands in, and the hook already holds it (`currentLocation`, the music
+arm's location with its `mapId`). So the hook now files that location by
+its own id - `discovery.js` `discoverLocation(mapId, { regionName,
+locationName })`, the very write the pixel-entry discovery makes - which
+is the same record for every MAPS location and the right one for a
+spawned dungeon, whose id is its own (the salt over the pixel). The quest
+bridge's name path keeps its throw: a quest only ever names a MAPS
+location, and `map_reveallocation` catches it as DFU's console does.
+
 ## Pins
 
 `test/to1_travelOptions.test.js`. `tools/mutants/to1.json`.
 `test/roadcrash.test.js`, `tools/mutants/roadcrash.json` (ROAD-CRASH).
 `test/travelnav.test.js`, `tools/mutants/travelnav.json` (TRAVEL-NAV),
 `tools/mutants/travelnav2.json` (TRAVEL-NAV2).
+`test/spawntravel.test.js`, `tools/mutants/spawntravel.json` (SPAWN-TRAVEL).

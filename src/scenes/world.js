@@ -7895,7 +7895,13 @@ export async function bootWorld(canvas, renderer, params, status) {
         hasCustomPosition: hasCustomLocationPosition(loc),
       };
     },
-    discoverLocation: (loc) => { if (loc?.regionName && loc?.name) questWorld.discoverLocation(loc.regionName, loc.name); },
+    // SPAWN-TRAVEL (2026-09-25, a crash report: "Error finding location Daggerfall : The Jubul Monastery (208,189)"):
+    // PlayerGPS.DiscoverLocation(CurrentRegionName, CurrentLocation.Name) resolves the name back to the location the
+    // player stands in, which this hook already holds (currentLocation above), so it is filed by its own id - the
+    // write the pixel-entry discovery makes. By NAME, an online spawned dungeon (world/spawnedDungeons.js: a
+    // template's clone named "<name> (x,y)", in no MAPS table) threw C#'s "Error finding location" out of the
+    // travel frame the moment Travel Options' nearby pause stopped beside one.
+    discoverLocation: (loc) => { if (loc?.mapId != null) discoverLocation(loc.mapId, { regionName: loc.regionName, locationName: loc.name }); },
     roll100: () => Math.floor(Math.random() * 100) + 1,   // Dice100.SuccessRoll's Random.Range(1, 101)
     // AUDIT-TO1 H2: DisplayHelpInfo's two bindings (:1011) - TravelExit is
     // a DaggerfallShortcut (a dialog shortcut here), TravelMap an
