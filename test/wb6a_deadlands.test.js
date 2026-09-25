@@ -171,7 +171,7 @@ test('WB6a the pass: the sea solid (tested and written) and then the sky at the 
 
 test('WB6a the seams, by source: the court is lit as itself before the frame begins (the lane\'s dark on its trilight, as on its fog); the sea and sky drawn after the court\'s solid geometry and before its flats; the world host builds the pass once, lazily, a failure costing the sky and never the game, and marks the seam (mutants: each seam removed)', () => {
   const wm = src('src/scenes/worldModes.js');
-  const light = wm.indexOf('\n      if (isGateArena(dungeonLoc)) { const _cl = courtLighting(); const _ct = dungeonTrilight(!!renderer.lightingLane, _cl.tri); renderer.setLighting(new Float32Array(_ct.equator), 0, undefined, _ct); renderer.setMoonlight(_cl.key); }');
+  const light = wm.indexOf('\n      if (isGateArena(dungeonLoc)) { const _cl = courtLighting(deadlandsFlash(_deadS)); const _ct = dungeonTrilight(!!renderer.lightingLane, _cl.tri); renderer.setLighting(new Float32Array(_ct.equator), 0, undefined, _ct); renderer.setMoonlight(_cl.key); }');   // WB6b: with the strike lit now
   const dark = wm.indexOf('renderer.setMoonlight(null);');
   const begin = wm.indexOf('renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);');
   assert.ok(dark > 0 && dark < light && light < begin, 'after the dungeon\'s dark, before the frame reads it');
@@ -181,6 +181,6 @@ test('WB6a the seams, by source: the court is lit as itself before the frame beg
   const statics = wm.indexOf('if (dungeonCtx.staticBatch) renderer.drawMesh(dungeonCtx.staticBatch, BATCH_IDENTITY, null);');
   assert.ok(begin < statics && statics < dyn && dyn < back && back < flats, `after the solid geometry, before the flats: ${[begin, statics, dyn, back, flats]}`);
   const w = src('src/scenes/world.js');
-  assert.match(w, /drawGateBackdrop: \(\{ proj, view \}\) => \{\n\s+const d = deadlandsPass\(\);\n\s+if \(d\?\.draw\(proj, view, courtToDungeon\(0, LAVA_Y, 0\), performance\.now\(\) \/ 1000, \{ mode: renderer\._fogMode, density: renderer\._fogDensity, range: renderer\._fogRange, color: renderer\._fogColor, camPos: renderer\._camPos \}, skyGain\(renderer\._fogColor, COURT_FOG\.color\)\)\) renderer\.markForeignPass\(\);/);
+  assert.match(w, /drawGateBackdrop: \(\{ proj, view \}\) => \{\n\s+const d = deadlandsPass\(\);\n\s+if \(d\?\.draw\(proj, view, courtToDungeon\(0, LAVA_Y, 0\), deadlandsSeconds\(\), \{ mode: renderer\._fogMode, density: renderer\._fogDensity, range: renderer\._fogRange, color: renderer\._fogColor, camPos: renderer\._camPos \}, skyGain\(renderer\._fogColor, COURT_FOG\.color\)\)\) renderer\.markForeignPass\(\);/);
   assert.match(w, /if \(_deadlands !== undefined\) return _deadlands;\n\s+try \{ _deadlands = new DeadlandsRenderer\(renderer\.gl\); \} catch \(e\) \{ console\.warn\('\[gate\] the Deadlands would not build', e\?\.message \?\? e\); _deadlands = null; \}/);
 });

@@ -1,0 +1,247 @@
+[
+  {
+    "name": "WB6b-an-island-in-the-towers-window",
+    "file": "src/world/deadlandsLand.js",
+    "old": "    if (Math.abs(off) < TOWER_WINDOW) az = SIGIL_TOWER.az + Math.sign(off || 1) * (TOWER_WINDOW + 0.05);\n",
+    "new": "    if (Math.abs(off) < TOWER_WINDOW) az = SIGIL_TOWER.az + Math.sign(off || 1) * 0.02;\n",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-the-land-past-the-far-plane",
+    "file": "src/world/deadlandsLand.js",
+    "old": "export const ISLAND_FAR = 235;",
+    "new": "export const ISLAND_FAR = 470;",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-a-shard-in-the-towers-window",
+    "file": "src/world/deadlandsLand.js",
+    "old": "    if (Math.abs(offTower) < SHARD_WINDOW) az = SIGIL_TOWER.az + Math.sign(offTower || 1) * (SHARD_WINDOW + 0.1);",
+    "new": "    if (Math.abs(offTower) < SHARD_WINDOW) az = SIGIL_TOWER.az + Math.sign(offTower || 1) * 0.1;",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-a-shard-into-the-spires",
+    "file": "src/world/deadlandsLand.js",
+    "old": "export const SHARD_RING = Object.freeze([COURT_R + 11, COURT_R + 32]);",
+    "new": "export const SHARD_RING = Object.freeze([COURT_R + 5, COURT_R + 12]);",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-a-turn-off-the-whole",
+    "file": "src/world/deadlandsLand.js",
+    "old": "      bobTurns: 40 + Math.floor(rolls() * 40),",
+    "new": "      bobTurns: 40.5 + Math.floor(rolls() * 40),",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-the-shard-mirrored",
+    "file": "src/world/deadlandsLand.js",
+    "old": "  out.set([cy * k, 0, -sy * k, 0,",
+    "new": "  out.set([-cy * k, 0, sy * k, 0,",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-the-embers-from-under-the-floor",
+    "file": "src/render/deadlands.js",
+    "old": "export const EMBER_RING = Object.freeze([27, 95]);",
+    "new": "export const EMBER_RING = Object.freeze([4, 95]);",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-a-life-off-the-whole",
+    "file": "src/render/deadlands.js",
+    "old": "    float life = PERIOD / floor(${ASH_TURNS[0].toFixed(1)} + a * ${(ASH_TURNS[1] - ASH_TURNS[0]).toFixed(1)});",
+    "new": "    float life = PERIOD / (${ASH_TURNS[0].toFixed(1)} + a * ${(ASH_TURNS[1] - ASH_TURNS[0]).toFixed(1)});",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-the-life-written-into-depth",
+    "file": "src/render/deadlands.js",
+    "old": "    gl.enable(gl.DEPTH_TEST);\n    gl.depthMask(false);\n    gl.enable(gl.BLEND);",
+    "new": "    gl.enable(gl.DEPTH_TEST);\n    gl.depthMask(true);\n    gl.enable(gl.BLEND);",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-the-embers-laid-over",
+    "file": "src/render/deadlands.js",
+    "old": "    gl.blendFunc(gl.ONE, gl.ONE);\n    gl.uniform1i(L.uAsh, 0);",
+    "new": "    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);\n    gl.uniform1i(L.uAsh, 0);",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-the-blend-left-on",
+    "file": "src/render/deadlands.js",
+    "old": "    gl.depthMask(true);\n    gl.disable(gl.BLEND);\n    return true;",
+    "new": "    gl.depthMask(true);\n    return true;",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-the-slots-off-the-whole",
+    "file": "src/render/deadlands.js",
+    "old": "export const FLASH_SLOT_S = 7.5;",
+    "new": "export const FLASH_SLOT_S = 7;",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-the-key-never-swinging",
+    "file": "src/render/deadlands.js",
+    "old": "  const w = (s * FLASH_LIGHT.key) / (s * FLASH_LIGHT.key + COURT_KEY_LIGHT.scale);",
+    "new": "  const w = 0;",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-the-flash-dropped-from-the-court",
+    "file": "src/scenes/worldModes.js",
+    "old": "const _cl = courtLighting(deadlandsFlash(_deadS));",
+    "new": "const _cl = courtLighting(null);",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js",
+      "test/moonlight.test.js",
+      "test/wb6a_deadlands.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-the-thunder-on-the-flash",
+    "file": "src/scenes/deadlandsAir.js",
+    "old": "    const t = base + (f.at - s * FLASH_SLOT_S) + f.dist / SPEED_OF_SOUND;",
+    "new": "    const t = base + (f.at - s * FLASH_SLOT_S);",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-a-strike-unheard",
+    "file": "src/scenes/deadlandsAir.js",
+    "old": "  const lateMax = FLASH_DIST[1] / SPEED_OF_SOUND + FLASH_SLOT_S;",
+    "new": "  const lateMax = 0;",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-a-frames-events-heard-twice",
+    "file": "src/scenes/deadlandsAir.js",
+    "old": "    if (!(t > from && t <= to)) continue;\n    const far =",
+    "new": "    if (!(t >= from && t <= to)) continue;\n    const far =",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-the-backlog-played",
+    "file": "src/scenes/deadlandsAir.js",
+    "old": "        if (last != null && seconds > last && seconds - last <= AIR_BACKLOG_S) {",
+    "new": "        if (last != null && seconds > last) {",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-an-event-unheld",
+    "file": "src/scenes/deadlandsAir.js",
+    "old": "{ refDistance: THUNDER_SOURCE_M, pitch: e.pitch, far: true }",
+    "new": "{ refDistance: THUNDER_SOURCE_M, pitch: e.pitch, far: false }",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-stop-leaves-a-bed-looping",
+    "file": "src/scenes/deadlandsAir.js",
+    "old": "        engine.setLoop(AIR_SEA.loop, null);\n",
+    "new": "",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-the-air-never-stopped",
+    "file": "src/scenes/world.js",
+    "old": "deadlandsAir.frame(deadlandsSeconds(), cam.pos, courtFireBeds); else deadlandsAir.stop();",
+    "new": "deadlandsAir.frame(deadlandsSeconds(), cam.pos, courtFireBeds);",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-the-life-undrawn",
+    "file": "src/scenes/world.js",
+    "old": "      if (told || lived) renderer.markForeignPass();",
+    "new": "      if (told) renderer.markForeignPass();",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-the-land-never-stood",
+    "file": "src/scenes/worldModes.js",
+    "old": "    standDeadlands(ctx);   // WB6b: and the land round it, cut from the same stone",
+    "new": "",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-the-shards-never-moved",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (isGateArena(dungeonLoc)) for (const d of dungeonCtx.dynamicDraws) if (d.shard) shardMatrix(d.shard, _deadS, d.object.matrix);",
+    "new": "",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-the-dungeon-dripping-in-the-deadlands",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (!isGateArena(dfLocation)) sceneAmbience.update(dt, {",
+    "new": "      sceneAmbience.update(dt, {",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-the-air-on-the-online-frame-alone",
+    "file": "src/scenes/world.js",
+    "old": "    deadlandsAirFrame();   // WB6b: after the court's ways out have run, online or not - the frame it is gone is the frame its air falls silent\n",
+    "new": "",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  },
+  {
+    "name": "WB6b-the-air-outliving-its-loop",
+    "file": "src/scenes/deadlandsAir.js",
+    "old": "  _heard?.stop();\n",
+    "new": "",
+    "tests": [
+      "test/wb6b_deadlands_life.test.js"
+    ]
+  }
+]

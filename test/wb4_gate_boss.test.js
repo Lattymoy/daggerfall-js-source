@@ -450,7 +450,8 @@ test('WB4 the seams, by source: the world host makes the court on the link, fram
   assert.match(w, /try \{ gateCourt\?\.frame\(\); \} catch/);
   assert.match(w, /extraBillboards: \(\) => \[[^\n]*\.\.\.\(gateCourt\?\.batches\(\) \?\? \[\]\)\],/);
   assert.match(w, /gateCourtLights: \(\) => gateCourt\?\.lights\(\) \?\? \[\],/);
-  assert.match(w, /if \(gateCourt\?\.drawPass\(proj, view, eye, [^\n]*\)\) renderer\.markForeignPass\(\);/);
+  // WB6b: the telegraph's pass and the air's life share the hook - either drawn marks the seam, once
+  assert.match(w, /const told = gateCourt\?\.drawPass\(proj, view, eye, [^\n]*\);\n[^\n]*\n[^\n]*\n\s+if \(told \|\| lived\) renderer\.markForeignPass\(\);/);
   const wm = read('src/scenes/worldModes.js');
   assert.match(wm, /withCourtLights\(_dgLit, \[\.\.\.courtLights\(\), \.\.\.\(host\.gateCourtLights\?\.\(\) \?\? \[\]\)\]\)/);
   const bb = wm.indexOf('renderer.drawBillboards([...dungeonCtx.billboardBatches'), tg = wm.indexOf('if (isGateArena(dungeonLoc)) host.drawGateCourt?.({ proj, view, eye: mwv.eye });'), foes = wm.indexOf('dungeonCtx.drawFoes(dt, canvas');

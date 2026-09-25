@@ -174,9 +174,10 @@ import { createGateLink } from '../net/gateLink.js';   // WB3b: what the client 
 import { createGateClaims } from '../net/gateClaims.js';   // WB5b: the kill receipts, carried to the account service until counted
 import { createGateCourt } from './gateCourt.js';   // WB4: the fight on this screen - the boss drawn, heard and read, and his blows on me
 import { DeadlandsRenderer, skyGain } from '../render/deadlands.js';   // WB6a: the Deadlands' sky and sea round the Burning Court
+import { createDeadlandsAir } from './deadlandsAir.js';   // WB6b: and their air - the wind, the fire, the thunder of the sky's strikes
 import { createSpoilsPool, spoilsStore, recoverSpoils, SPOILS_TEXT } from './spoilsPool.js';   // WB5: a fallen boss's spoils, spewed, glowing and taken
 import { gateRoomKey, isGateRoom, gateBossOf, gateTimes, GATE_COLLAPSE_MS } from '../net/gateLaw.js';   // WB3b: the court's room, and its day's end
-import { gateLandingFor, courtRing, courtToDungeon, COURT_TEXT, COURT_FOG, LAVA_Y } from '../world/gateArena.js';   // WB3b: the Burning Court's way home, its ring and its words   // WB2: the gate's countdown over the screen, near it
+import { gateLandingFor, courtRing, courtToDungeon, courtBraziers, COURT_TEXT, COURT_FOG, LAVA_Y } from '../world/gateArena.js';   // WB3b: the Burning Court's way home, its ring and its words   // WB2: the gate's countdown over the screen, near it
 import { isMainStoryDungeon } from '../world/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
 import { nearestSafeLocation, respawnFlavorText, reviveForPlay, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
@@ -4350,7 +4351,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2470 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:5685
+  // that context through modes.dungeonCtx - so worldModes.js:5686
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -8512,7 +8513,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8883-8947 -
+  // worldModes answers it in BOTH modes (worldModes.js:8905-8969 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -10826,6 +10827,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     try { _deadlands = new DeadlandsRenderer(renderer.gl); } catch (e) { console.warn('[gate] the Deadlands would not build', e?.message ?? e); _deadlands = null; }
     return _deadlands;
   };
+  /** WB6b: THE DEADLANDS' CLOCK - the relay's, in seconds (this page's monotonic clock carried onto it, so it never
+   *  steps back between two frames): the sky's churn, its strikes, the court's flash, the shards' drift and the thunder
+   *  are one moment on every screen in the court. */
+  const deadlandsSeconds = () => (performance.timeOrigin + performance.now() + _sharedOffsetMs) / 1000;
+  /** WB6b: the court's air (scenes/deadlandsAir.js) - the wind, the fire, the thunder, the beasts; the braziers' fire
+   *  beds in the dungeon's frame, where their loops burn. */
+  const deadlandsAir = createDeadlandsAir(audio);
+  const courtFireBeds = courtBraziers().map(([, p]) => courtToDungeon(p[0], 1.2, p[2]));
   let _spoilsAskedFor = null;
   const spoilsRecoverFrame = () => {
     if (!playerSpawned) return;
@@ -10868,6 +10877,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     else if (courtDay == null && gateLink && gateLink.state().day != null) gateLink.leave();
     try { gateCourt?.frame(); } catch (e) { console.warn('[gate] court', e?.message ?? e); }   // WB4: the fight on this screen (out of the court it puts itself away)
   };
+  /** WB6b: the Deadlands' air while the court stands under me - silent, and nothing left looping, the frame it does
+   *  not. Ticked on the main frame, online or not: the court's ways out include going offline, and the online frame
+   *  does not run then. */
+  const deadlandsAirFrame = () => { if (modes?.gateArenaDay?.() != null) deadlandsAir.frame(deadlandsSeconds(), cam.pos, courtFireBeds); else deadlandsAir.stop(); };
   /** WB2: THE GATE THE WORLD STANDS (scenes/gatePool.js) - online alone, as the omen is; stood each exterior frame from
    *  the omen's word, drawn in the world pass (the stone) and after the duel wall (the fire and the beacon). Its door
    *  answers "not yet" until the relay can hold a gate's arena (WB3). */
@@ -12563,12 +12576,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     // own air (the renderer's fog as it set it for the court, the sky's light following the lane's with the fog's colour)
     drawGateBackdrop: ({ proj, view }) => {
       const d = deadlandsPass();
-      if (d?.draw(proj, view, courtToDungeon(0, LAVA_Y, 0), performance.now() / 1000, { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos }, skyGain(renderer._fogColor, COURT_FOG.color))) renderer.markForeignPass();
+      if (d?.draw(proj, view, courtToDungeon(0, LAVA_Y, 0), deadlandsSeconds(), { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos }, skyGain(renderer._fogColor, COURT_FOG.color))) renderer.markForeignPass();
     },
-    // WB4: the telegraph on the court's floor, in the dungeon arm's world pass - fogged as the floor is
+    // WB4: the telegraph on the court's floor, in the dungeon arm's world pass - fogged as the floor is; WB6b: and the
+    // air's life after it (the embers and the ash, render/deadlands.js drawLife), in the same air and the sky's light
     drawGateCourt: ({ proj, view, eye }) => {
-      if (gateCourt?.drawPass(proj, view, eye, performance.now() / 1000, { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos })) renderer.markForeignPass();
+      const fog = { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos };
+      const told = gateCourt?.drawPass(proj, view, eye, performance.now() / 1000, fog);
+      const glow = skyGain(renderer._fogColor, COURT_FOG.color);
+      const lived = deadlandsPass()?.drawLife(proj, view, courtToDungeon(0, 0, 0), deadlandsSeconds(), fog, glow, courtBraziers().map(([, p]) => p), renderer.worldViewportPx?.[3]);
+      if (told || lived) renderer.markForeignPass();
     },
+    deadlandsSeconds: () => deadlandsSeconds(),   // WB6b: the court's flash and the shards' drift keep the sky's clock
     drawPeerNames: ({ proj, view, eye }) => drawPeerNames(proj, view, eye),
     drawPeerBodies: ({ proj, view, eye }) => drawPeerBodies(proj, view, eye),   // MWBODY1: the others' bodies, after the player's own
     // PEER-PLAQUE1: the plaque names another player in a building and underground too - the SAME pick and the SAME
@@ -13381,6 +13400,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     meterFor(renderer.gl)?.markCpu('online');   // PERF-CPU
     spoilsRecoverFrame();   // WB5: a boss's spoils no save holds, back to their character as it stands up - before it can save, online or not
     if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); } else { if (!onlineOn && modes?.gateArenaDay?.() != null) ejectFromCourt(COURT_TEXT.collapse); if (player.arena) player.arena = modes?.gateArenaDay?.() != null ? courtRing() : null; }   // DUEL1: no online frame, no duel's law to hold the body - the ring is the live duel's alone; WB3b: the court's is its floor's, and offline there is no court   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
+    deadlandsAirFrame();   // WB6b: after the court's ways out have run, online or not - the frame it is gone is the frame its air falls silent
     meterFor(renderer.gl)?.markCpu('sim');   // PERF-CPU: everything between here and the next mark is the rest of the simulation
     lookGate(gamePaused());   // a window up frees the cursor; closing re-locks
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];

@@ -199,6 +199,35 @@ shows):
 
 Every rate the passes run is a whole number of cycles over DEAD_CLOCK_PERIOD, and the clock is handed wrapped.
 
+**The Deadlands' life (WB6b, 2026-09-25, the same ask - "Whole thing needs to feel alive").** What stands between the
+court and the painted horizon, what moves in the air over it, and what it sounds like:
+
+- **The land** (`world/deadlandsLand.js`): twelve islands of the gate's basalt rising out of the fire in a ring 75 to
+  235 m out - a jagged mound and a cluster of black spires leaning out of it, the further the larger, so they read
+  over the fog and give the eye a middle distance and parallax. The window over the great tower is left open: from
+  the arrival nothing of the land crosses the sightline to it. Every island stands on the sea before its rim fades into
+  the horizon, and inside the host's far plane from anywhere on the court.
+- **The floor's shards**: six broken pieces of the court's own floor hanging over the fire past its rim - flagstones on
+  top, the rock torn out under them, spikes hanging like roots - each bobbing and turning slowly, a whole number of
+  times a period, clear of the court's spires over the whole of it, out of the tower's window and off the bridge.
+- **The air's life** (`drawLife`, after the telegraph in the court's pass): embers rising off the sea from past the
+  court's edge (never up through its floor), a few off each brazier, cooling from gold to red as they climb and turning
+  with the drift of the air (`deadlandsWind`); ash falling through it all from high over the court to the sea. One
+  vertex a mote, every life a whole number a period; depth-tested and never written, the ash laid over, the embers
+  added.
+- **The strike's light**: a strike the sky draws lights the court the same moment - the trilight's sky flares, and the
+  key light swings toward the strike while it outshines the vortex (`courtLighting(flash)`).
+- **The air** (`scenes/deadlandsAir.js`): the deep moan of the wind over the fire, breathing on the clock; the sea's roar
+  (the fire's own clip pitched down); each brazier burning where it stands; the THUNDER of every strike the sky draws
+  (`flashOfSlot` - the same slot, the same quarter), late by its distance at the speed of sound, the thunder near and
+  the roll far; far-off roars of the Deadlands' beasts; and fire bursting on the sea below. Each event plays from a
+  stand-in in its quarter with its offset from the ear held (`far`), so it keeps its bearing as the player turns. The
+  dungeon's own ambience (drips, doors, a bird) is silent in the court.
+- **One clock**: the Deadlands keep the relay's (`deadlandsSeconds` in `scenes/world.js` - this page's monotonic clock
+  carried onto the relay's), so the sky's churn, a strike, its light, its thunder and the shards' drift are one moment
+  on every screen in the court. (WB6a's claim that the lightning was "the same on every screen" held only for the law:
+  the hosts handed it the page's own clock. WB6b made it true.)
+
 ## 5. The boss (WB3 relay, WB4 client)
 
 **Valkynaz Ruhn, Warden of the Burning Gate.** A Daedra Lord drawn at three times its size (~5.5 m), in Daggerfall's
@@ -398,7 +427,7 @@ ships in ONE slice.
 | **WB3** | the arena place and the relay's boss room: the room key and its window, `gateBrain.js`, the `gate` frame both ways, the hit ledger, the checkpoint, the receipt and its key, the hub's world line; `RELAY_VERSION` once | **yes** |
 | **WB4** | the boss on the client: the oversized body and its hit volume, the telegraph pass, the wind-up frames, glow and sounds, the boss bar, the player's side of every attack, cast out and back in - shipped in two: **WB4a** (he fights: the body, the telegraphs, the glow and voice, the bar, every blow he lands) and **WB4b** (he is fought: the swing, the shaft and the spell on his body) | no |
 | **WB5** | the spoils: the seeded roll, the spew's physics, the beams, halos and lights, the take and the gather, the device's record until a save holds them; the account service's claim (acct10) and the cards' line | account only |
-| **WB6** | the Deadlands made alive (Mac: "an oblivion masterpiece"): **WB6a** the sky and the sea and the court's own light; **WB6b** the life - islands and spires out in the fire, embers and ash, lightning's thunder, the ambience; **WB6c** the gate's transition, a vortex of fire in and out | no |
+| **WB6** | the Deadlands made alive (Mac: "an oblivion masterpiece"): **WB6a** the sky and the sea and the court's own light; **WB6b** the life - islands and spires out in the fire, the floor's floating shards, embers and ash, the strike's light and its thunder, the air's sound, one clock for every screen; **WB6c** the gate's transition, a vortex of fire in and out | no |
 
 Each slice: pins in `test/` (pure law in node; the relay over its fake sockets and a fake clock; the passes' shaders
 built in headless Chromium, as the duel wall's), a mutant record in `tools/mutants/`, the Testing manifest, a Port
@@ -559,3 +588,15 @@ after the court's solid geometry and before its flats. Pins `test/wb6a_deadlands
 `tools/mutants/wb6a.json` (20 dead); `tools/deadlandsProbe.mjs` compiles, links and draws the pass in a real WebGL2
 (11 checks). Seen headless from the arrival, looking up into the vortex, from the rim, over the court and low
 across the floor; not yet in the running game.
+
+**WB6b (2026-09-25) - the Deadlands' life.** The court had a sky and a sea and nothing between them or over it. Now
+(see "The Deadlands' life" in section 4): islands of basalt and leaning spires out in the fire, clear of the great
+tower's sightline; six shards of the court's floor hanging past its rim, bobbing and turning on the clock; embers off
+the sea and the braziers, turning with the air, and ash falling through it; a strike in the sky flares over the court
+the same moment; and the court has its own air - the wind, the sea's roar, the braziers, the thunder of every strike
+late by its distance, far roars, fire bursting below - where the dungeon's drips and doors were. The Deadlands' clock
+is the relay's now, so all of it is one moment on every screen (WB6a had handed the sky the page's own clock). The
+lightning's slots were made whole over the period (a 7 s slot left a 5 s stub at the wrap). Pins
+`test/wb6b_deadlands_life.test.js` (8); mutants `tools/mutants/wb6b.json` (27 dead); the probe now draws the land, the
+shards and the life too and links all three programs (15 checks). Seen headless from the arrival, low across the floor
+and at a strike's peak; not yet heard or seen in the running game.

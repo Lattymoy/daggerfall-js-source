@@ -6,6 +6,8 @@
 // the great tower, the fire of the sea under the rim, and no edge between the sea and the sky. So: the repo's own
 // modules served as they are (no bundler - every import in this chain is relative), the court drawn with its own art by
 // a stand-in shader, the pass drawn by its own class after it, and the frame read back.
+// WB6b: the land out in the fire and the floor's shards drawn with the court (world/deadlandsLand.js), and the air's
+// life after the pass (drawLife) - its program linked, and its embers lighting the air over the frame without it.
 //
 //     node tools/deadlandsProbe.mjs [--shots <dir>]     (writes arrive.png / up.png / over.png there when given)
 import { chromium } from 'playwright';
@@ -20,10 +22,26 @@ const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${
 const W = 640, H = 400;
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=${W} height=${H}></canvas><script type=module>
-import { buildCourtModel, courtToDungeon, COURT_FOG, LAVA_Y } from '/src/world/gateArena.js';
+import { buildCourtModel, courtToDungeon, courtBraziers, COURT_FOG, LAVA_Y } from '/src/world/gateArena.js';
 import { gateArt, courtArt } from '/src/world/gateArt.js';
 import { DeadlandsRenderer, SIGIL_TOWER, VORTEX_ELEV } from '/src/render/deadlands.js';
-const m = buildCourtModel();
+import { buildDeadlandsLand, buildShardModel, deadlandsShards, shardMatrix } from '/src/world/deadlandsLand.js';
+// the court, the land and each shard at its matrix, as one stand-in model (the host draws them as the court's draws)
+const merge = (parts) => {
+  const P = [], N = [], U = [], subMeshes = [];
+  for (const [mm, mat] of parts) for (const sm of mm.subMeshes) {
+    const startIndex = P.length / 3;
+    for (let i = sm.startIndex; i < sm.startIndex + sm.primitiveCount * 3; i++) {
+      let [x, y, z] = [mm.positions[i * 3], mm.positions[i * 3 + 1], mm.positions[i * 3 + 2]], [nx, ny, nz] = [mm.normals[i * 3], mm.normals[i * 3 + 1], mm.normals[i * 3 + 2]];
+      if (mat) { [x, y, z] = [mat[0] * x + mat[4] * y + mat[8] * z + mat[12], mat[1] * x + mat[5] * y + mat[9] * z + mat[13], mat[2] * x + mat[6] * y + mat[10] * z + mat[14]]; [nx, ny, nz] = [mat[0] * nx + mat[4] * ny + mat[8] * nz, mat[1] * nx + mat[5] * ny + mat[9] * nz, mat[2] * nx + mat[6] * ny + mat[10] * nz]; }
+      P.push(x, y, z); N.push(nx, ny, nz); U.push(mm.uvs[i * 2], mm.uvs[i * 2 + 1]);
+    }
+    subMeshes.push({ textureArchive: sm.textureArchive, textureRecord: sm.textureRecord, startIndex, primitiveCount: sm.primitiveCount });
+  }
+  return { positions: new Float32Array(P), normals: new Float32Array(N), uvs: new Float32Array(U), subMeshes };
+};
+const shard = buildShardModel();
+const m = merge([[buildCourtModel(), null], [buildDeadlandsLand(), null], ...deadlandsShards().map((s) => [shard, shardMatrix(s, 40)])]);
 const gl = document.getElementById('c').getContext('webgl2', { alpha: false, preserveDrawingBuffer: true });
 const vs = \`#version 300 es
 layout(location=0) in vec3 p; layout(location=1) in vec3 n; layout(location=2) in vec2 uv; uniform mat4 vp; out vec3 vn; out vec2 vuv;
@@ -43,10 +61,10 @@ try { pass = new DeadlandsRenderer(gl); } catch (e) { err = String(e.message ?? 
 const persp = (f, a, n, fa) => { const t = 1 / Math.tan(f / 2); return new Float32Array([t / a, 0, 0, 0, 0, t, 0, 0, 0, 0, (fa + n) / (n - fa), -1, 0, 0, 2 * fa * n / (n - fa), 0]); };
 const look = (e, c) => { const u = [0, 1, 0]; const z = [e[0] - c[0], e[1] - c[1], e[2] - c[2]]; let l = Math.hypot(...z); z.forEach((v, i) => { z[i] = v / l; }); const x = [u[1] * z[2] - u[2] * z[1], u[2] * z[0] - u[0] * z[2], u[0] * z[1] - u[1] * z[0]]; l = Math.hypot(...x); x.forEach((v, i) => { x[i] = v / l; }); const y = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]]; return new Float32Array([x[0], y[0], z[0], 0, x[1], y[1], z[1], 0, x[2], y[2], z[2], 0, -(x[0] * e[0] + x[1] * e[1] + x[2] * e[2]), -(y[0] * e[0] + y[1] * e[1] + y[2] * e[2]), -(z[0] * e[0] + z[1] * e[1] + z[2] * e[2]), 1]); };
 const mul = (a, b) => { const o = new Float32Array(16); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) o[c * 4 + r] += a[k * 4 + r] * b[c * 4 + k]; return o; };
-window.probe = { err, linked: pass ? [pass.sky, pass.sea].map((p) => gl.getProgramParameter(p, gl.LINK_STATUS)) : [] };
+window.probe = { err, linked: pass ? [pass.sky, pass.sea, pass.life].map((p) => gl.getProgramParameter(p, gl.LINK_STATUS)) : [] };
 // where on the screen a direction lands, for a camera at eye looking at c
 const project = (P, V, eye, d) => { const w = [eye[0] + d[0] * 1000, eye[1] + d[1] * 1000, eye[2] + d[2] * 1000, 1]; const m4 = mul(P, V); const c = [0, 1, 2, 3].map((r) => m4[r] * w[0] + m4[4 + r] * w[1] + m4[8 + r] * w[2] + m4[12 + r]); return [Math.round((c[0] / c[3] * 0.5 + 0.5) * ${W}), Math.round((0.5 - c[1] / c[3] * 0.5) * ${H})]; };
-window.draw = (eyeL, atL, t) => {
+window.draw = (eyeL, atL, t, life = false) => {
   const eye = courtToDungeon(...eyeL), at = courtToDungeon(...atL);
   gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LESS); gl.depthMask(true); gl.enable(gl.CULL_FACE); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   const P = persp(1.1, ${W} / ${H}, 0.1, 500), V = look(eye, at);
@@ -55,10 +73,12 @@ window.draw = (eyeL, atL, t) => {
   for (const s of m.subMeshes) { const tt = T.get(s.textureArchive + '/' + s.textureRecord); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tt.alb); gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, tt.emi); gl.drawArrays(gl.TRIANGLES, s.startIndex, s.primitiveCount * 3); }
   gl.bindVertexArray(null); gl.activeTexture(gl.TEXTURE0);
   pass.draw(P, V, courtToDungeon(0, LAVA_Y, 0), t, { mode: 2, density: COURT_FOG.density, range: [0, 1], color: COURT_FOG.color, camPos: eye }, 1);
+  if (life) pass.drawLife(P, V, courtToDungeon(0, 0, 0), t, { mode: 2, density: COURT_FOG.density, range: [0, 1], color: COURT_FOG.color, camPos: eye }, 1, courtBraziers().map(([, q]) => q), ${H});
   const px = (xy) => { const b = new Uint8Array(4); gl.readPixels(xy[0], ${H} - 1 - xy[1], 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, b); return Array.from(b); };
+  const whole = new Uint8Array(${W} * ${H} * 4); gl.readPixels(0, 0, ${W}, ${H}, gl.RGBA, gl.UNSIGNED_BYTE, whole);
   const dir = (az, el) => [Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)];
   const beamAt = project(P, V, eye, dir(SIGIL_TOWER.az, (SIGIL_TOWER.top + VORTEX_ELEV) / 2));
-  return { error: gl.getError(), drawn: pass.drawn, beamAt, beam: px(beamAt), sky: px([${W} / 2 | 0, 12]), top: px([40, 12]), floor: px([${W} / 2 | 0, ${H} - 20]), below: [0.05, 0.12, 0.19, 0.26, 0.74, 0.81, 0.88, 0.95].flatMap((fx) => [0.62, 0.72, 0.82, 0.92].map((fy) => px([Math.round(${W} * fx), Math.round(${H} * fy)]))), mid: px([${W} / 2 | 0, ${H} / 2 | 0]),
+  return { error: gl.getError(), drawn: pass.drawn, lifeDrawn: life ? pass.lifeDrawn : [], frame: Array.from(whole), beamAt, beam: px(beamAt), sky: px([${W} / 2 | 0, 12]), top: px([40, 12]), floor: px([${W} / 2 | 0, ${H} - 20]), below: [0.05, 0.12, 0.19, 0.26, 0.74, 0.81, 0.88, 0.95].flatMap((fx) => [0.62, 0.72, 0.82, 0.92].map((fy) => px([Math.round(${W} * fx), Math.round(${H} * fy)]))), mid: px([${W} / 2 | 0, ${H} / 2 | 0]),
     rim: [0.2, 0.35, 0.5, 0.65, 0.8].map((f) => px([Math.round(${W} * f), 8])) };
 };
 window.ready = true;
@@ -82,7 +102,7 @@ try {
   await page.waitForFunction(() => window.ready === true, null, { timeout: 60000 });
   const p = await page.evaluate(() => window.probe);
   check('the pass builds', !p.err, p.err ?? '');
-  check('both programs link in a real WebGL2', p.linked.length === 2 && p.linked.every(Boolean), JSON.stringify(p.linked));
+  check('all three programs link in a real WebGL2 (the sky, the sea, the air\'s life)', p.linked.length === 3 && p.linked.every(Boolean), JSON.stringify(p.linked));
   const lum = (c) => c[0] + c[1] + c[2];
   const red = (c) => c[0] > c[1] && c[0] > c[2];
   const arrive = await page.evaluate(() => window.draw([0, 1.7, 18], [0, 4, 0], 40));
@@ -102,6 +122,20 @@ try {
   // no edge: along the top of the overview, where the sea's rim meets the sky, the colour moves smoothly
   const steps = over.rim.map((c, i, a) => (i ? Math.abs(lum(c) - lum(a[i - 1])) : 0));
   check('the sea\'s rim meets the sky with no edge', Math.max(...steps) < 60, JSON.stringify(over.rim));
+  // WB6b: the air's life over the arrival's view - the same frame without it and with it
+  const bare = await page.evaluate(() => window.draw([0, 1.7, 18], [0, 4, 0], 40, false));
+  const lived = await page.evaluate(() => window.draw([0, 1.7, 18], [0, 4, 0], 40, true));
+  if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'life.png') });
+  check('no GL error drawing the air\'s life', lived.error === 0, `error ${lived.error}`);
+  check('the ash, then the embers', JSON.stringify(lived.lifeDrawn) === JSON.stringify(['ash', 'embers']), JSON.stringify(lived.lifeDrawn));
+  let sparks = 0, ashen = 0;
+  for (let i = 0; i < bare.frame.length; i += 4) {
+    const d = lived.frame[i] + lived.frame[i + 1] + lived.frame[i + 2] - (bare.frame[i] + bare.frame[i + 1] + bare.frame[i + 2]);
+    if (d > 40 && lived.frame[i] >= lived.frame[i + 1] && lived.frame[i + 1] >= lived.frame[i + 2]) sparks++;
+    if (d < -12) ashen++;
+  }
+  check('embers glow in the air - hot, orange to gold', sparks > 20, `${sparks} pixels lit`);
+  check('and ash darkens it here and there', ashen > 5, `${ashen} pixels darkened`);
   check('no page error', errs.length === 0, errs.join('; '));
 } finally {
   await browser.close();

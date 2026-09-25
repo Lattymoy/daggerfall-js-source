@@ -33,6 +33,13 @@
 // Colours are DISPLAY-encoded (the frame image the lit lane draws foreign passes into is 8-bit and display encoded -
 // duelWall.js), scaled by `gain` with the court's fog (the lane darkens a dungeon's fog, and the sky must meet it).
 //
+// WB6b (2026-09-25, the same ask - "Whole thing needs to feel alive"): THE AIR'S LIFE (`drawLife`) - embers rising off
+// the sea round the court and off its braziers, turning with the drift of the air (`deadlandsWind`), cooling as they
+// climb, and ash falling through it all - one vertex a mote, every life a whole number a period. And a strike LIGHTS
+// THE COURT (`courtLighting(flash)`): the trilight's sky flares and the key light swings toward the strike while it
+// outshines the vortex. The clock the hosts hand is the relay's (world.js deadlandsSeconds), so a strike, its light and
+// its thunder (scenes/deadlandsAir.js) are the same moment on every screen.
+//
 // Not a DFU member. Ledger A (WB).
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { buildProgram } from './glProgram.js';
@@ -80,9 +87,38 @@ export const SEA_R = 460;
 export const SEA_FADE = Object.freeze([260, 450]);
 export const SEA_RINGS = 36;
 export const SEA_SPOKES = 96;
-/** Lightning: a strike is due every FLASH_EVERY_S on average (seeded per slot), lights for FLASH_S, flickering. */
-export const FLASH_SLOT_S = 7;
+/** The sea's depth under the court's floor (world/gateArena.js LAVA_Y - pinned equal; render/ reads no world/ module). */
+export const DEAD_SEA_Y = -36;
+/** THE AIR'S LIFE: embers rising off the sea round the court (from past its edge, never up through its floor), a few
+ *  off each brazier, and ash falling over it all - how many, and how long each lives (whole cycles a period, so the
+ *  clock can wrap: a life is DEAD_CLOCK_PERIOD / turns). */
+export const SEA_EMBERS = 520;
+export const BRAZIER_EMBERS = 16;
+export const ASH_FLAKES = 280;
+export const EMBER_TURNS = Object.freeze([60, 110]);
+export const BRAZIER_EMBER_TURNS = Object.freeze([90, 150]);
+export const ASH_TURNS = Object.freeze([10, 16]);
+/** Where the sea's embers rise (metres from the court's centre) and how high the ash starts over the floor. */
+export const EMBER_RING = Object.freeze([27, 95]);
+export const ASH_TOP = 45;
+export const ASH_RADIUS = 60;
+/** The most braziers the pass takes (world/gateArena.js courtBraziers has five - the sixth is the bridge's gap). */
+export const LIFE_BRAZIERS_MAX = 6;
+/** The air's drift over the court: its speed (metres a second) and its turns round the compass a period. */
+export const WIND_SPEED = 1.4;
+export const WIND_TURNS = 2;
+/** The drift at `seconds`: `[x, z]` metres a second, turning WIND_TURNS times round a period (whole, so the clock wraps). */
+export function deadlandsWind(seconds) {
+  const a = (deadClock(seconds) / DEAD_CLOCK_PERIOD) * WIND_TURNS * 2 * Math.PI;
+  return [Math.cos(a) * WIND_SPEED, Math.sin(a) * WIND_SPEED];
+}
+/** Lightning: the period cut into FLASH_SLOTS slots of FLASH_SLOT_S (whole - WB6b: a 7 s slot left a 5 s stub at the
+ *  wrap), about half of them striking, each strike lit for FLASH_S, flickering. */
+export const FLASH_SLOT_S = 7.5;
+export const FLASH_SLOTS = DEAD_CLOCK_PERIOD / FLASH_SLOT_S;
 export const FLASH_S = 0.55;
+/** How far off a strike is (metres - its thunder's lateness at the speed of sound, and its loudness). */
+export const FLASH_DIST = Object.freeze([350, 2600]);
 /** THE COURT'S LIGHT - display-encoded, the dungeon host's own units. */
 export const COURT_TRILIGHT = Object.freeze({
   sky: Object.freeze([0.34, 0.1, 0.07]),
@@ -99,30 +135,59 @@ export const COURT_KEY_LIGHT = Object.freeze({
   color: Object.freeze([1.0, 0.46, 0.22]),
 });
 
-/** The court's lighting: the trilight and the key, for the dungeon host to set over its own. */
-export function courtLighting() {
-  return { tri: { sky: [...COURT_TRILIGHT.sky], equator: [...COURT_TRILIGHT.equator], ground: [...COURT_TRILIGHT.ground] }, key: { scale: COURT_KEY_LIGHT.scale, dir: [...COURT_KEY_LIGHT.dir], color: [...COURT_KEY_LIGHT.color] } };
+/** WB6b: A STRIKE'S LIGHT on the court at its full strength - what it adds to the trilight's sky and equator, what it
+ *  adds to the key (which swings toward it as it outshines the vortex), and its colour: the white heart of the
+ *  Deadlands' fire. */
+export const FLASH_LIGHT = Object.freeze({ sky: 0.62, equator: 0.3, key: 1.25, color: Object.freeze([1.0, 0.8, 0.64]) });
+
+/** The court's lighting: the trilight and the key, for the dungeon host to set over its own - fresh copies. WB6b:
+ *  `flash` the strike lit now (deadlandsFlash), or null. */
+export function courtLighting(flash = null) {
+  const s = Math.max(0, Math.min(1, Number(flash?.strength) || 0));
+  const lift = (c, k) => c.map((v, i) => v + s * k * FLASH_LIGHT.color[i]);
+  const tri = { sky: lift(COURT_TRILIGHT.sky, FLASH_LIGHT.sky), equator: lift(COURT_TRILIGHT.equator, FLASH_LIGHT.equator), ground: [...COURT_TRILIGHT.ground] };
+  if (!(s > 0) || !Number.isFinite(flash.az) || !Number.isFinite(flash.elev)) return { tri, key: { scale: COURT_KEY_LIGHT.scale, dir: [...COURT_KEY_LIGHT.dir], color: [...COURT_KEY_LIGHT.color] } };
+  // the key goes over to the strike by its share of the light: all the vortex's in the dark, most of the strike's at its peak
+  const w = (s * FLASH_LIGHT.key) / (s * FLASH_LIGHT.key + COURT_KEY_LIGHT.scale);
+  const to = [Math.sin(flash.az) * Math.cos(flash.elev), Math.sin(flash.elev), -Math.cos(flash.az) * Math.cos(flash.elev)];
+  const d = COURT_KEY_LIGHT.dir.map((v, i) => v + (to[i] - v) * w);
+  const l = Math.hypot(d[0], d[1], d[2]);
+  return { tri, key: { scale: COURT_KEY_LIGHT.scale + s * FLASH_LIGHT.key, dir: l > 1e-6 ? d.map((v) => v / l) : to, color: COURT_KEY_LIGHT.color.map((v, i) => v + (FLASH_LIGHT.color[i] - v) * w) } };
 }
 
 /** A small seeded hash, [0, 1). */
 const hash01 = (n) => { let x = Math.imul((n | 0) ^ 0x9e3779b9, 0x85ebca6b); x ^= x >>> 13; x = Math.imul(x, 0xc2b2ae35); x ^= x >>> 16; return (x >>> 0) / 4294967296; };
 
 /**
+ * A SLOT'S STRIKE, pure: the strike slot `n` of the period throws (wrapped to FLASH_SLOTS) - `{ slot, at, az, elev,
+ * dist }`: when it lights (seconds into the period), where on the sky, how far off (FLASH_DIST) - or null, as about
+ * half the slots are. WB6b: the one answer the sky's flash and the thunder (scenes/deadlandsAir.js) both read.
+ */
+export function flashOfSlot(n) {
+  const slot = ((Math.floor(n) % FLASH_SLOTS) + FLASH_SLOTS) % FLASH_SLOTS;
+  if (hash01(slot * 3 + 1) < 0.45) return null;
+  return {
+    slot,
+    at: slot * FLASH_SLOT_S + hash01(slot * 3 + 2) * (FLASH_SLOT_S - FLASH_S),
+    az: (hash01(slot * 3 + 3) * 2 - 1) * Math.PI,
+    elev: 0.25 + hash01(slot * 7 + 5) * 0.5,
+    dist: FLASH_DIST[0] + hash01(slot * 11 + 7) * (FLASH_DIST[1] - FLASH_DIST[0]),
+  };
+}
+
+/**
  * LIGHTNING, pure of everything but the clock: the strike lit at `seconds` (the Deadlands' clock, wrapped or not) -
- * `{ strength, az, elev, slot }` - or null. The period is cut into FLASH_SLOT_S slots; a slot strikes about half the
- * time, at a moment and a place its own hash says, and flickers twice as it dies. The same on every screen.
+ * `{ strength, az, elev, slot }` - or null. A slot's strike (flashOfSlot) flickers twice as it dies. The same on
+ * every screen the clock is.
  */
 export function deadlandsFlash(seconds) {
   const t = deadClock(seconds);
-  const slot = Math.floor(t / FLASH_SLOT_S);
-  if (hash01(slot * 3 + 1) < 0.45) return null;
-  const at = slot * FLASH_SLOT_S + hash01(slot * 3 + 2) * (FLASH_SLOT_S - FLASH_S);
-  const u = (t - at) / FLASH_S;
+  const f = flashOfSlot(t / FLASH_SLOT_S);
+  if (!f) return null;
+  const u = (t - f.at) / FLASH_S;
   if (u < 0 || u >= 1) return null;
   const flicker = u < 0.18 ? 1 : u < 0.3 ? 0.25 : u < 0.46 ? 0.8 : (1 - u) * 0.9;
-  const az = (hash01(slot * 3 + 3) * 2 - 1) * Math.PI;
-  const elev = 0.25 + hash01(slot * 7 + 5) * 0.5;
-  return { strength: Math.max(0, Math.min(1, flicker)), az, elev, slot };
+  return { strength: Math.max(0, Math.min(1, flicker)), az: f.az, elev: f.elev, slot: f.slot };
 }
 
 const HEAD = `#version 300 es
@@ -390,6 +455,99 @@ export function seaVertices(rings = SEA_RINGS, spokes = SEA_SPOKES, radius = SEA
   return new Float32Array(out);
 }
 
+// ── the air's life ───────────────────────────────────────────────────
+/** One vertex a mote: kind (0 an ember off the sea, 1 off a brazier, 2 ash), three draws in [0, 1). Seeded, pure:
+ *  the embers first, then the ash, so each is one draw of its own blend. */
+export function lifeVertices(seed = 0xe3be5, braziers = LIFE_BRAZIERS_MAX) {
+  let x = seed >>> 0;
+  const r = () => { x = (Math.imul(x, 1664525) + 1013904223) >>> 0; return x / 4294967296; };
+  const out = [];
+  for (let i = 0; i < SEA_EMBERS; i++) out.push(0, r(), r(), r());
+  for (let i = 0; i < BRAZIER_EMBERS * braziers; i++) out.push(1, (Math.floor(i / BRAZIER_EMBERS) + 0.5) / braziers, r(), r());
+  for (let i = 0; i < ASH_FLAKES; i++) out.push(2, r(), r(), r());
+  return new Float32Array(out);
+}
+export const DEAD_LIFE_VS = HEAD + `layout(location = 0) in vec4 aSeed;   // kind, three draws in [0, 1)
+uniform mat4 uVP;
+uniform vec3 uCentre;      // the court's centre on its floor, in the dungeon's frame
+uniform float uTime;       // deadClock's seconds
+uniform float uPxPerM;     // pixels a metre at one metre off (the viewport's height over the lens)
+uniform vec3 uBraziers[${LIFE_BRAZIERS_MAX}];   // the fire beds, the court's frame
+uniform int uBrazierCount;
+uniform vec2 uWind;        // the air's drift, metres a second (turning once round a period - deadlandsWind)
+out float vHeat;
+out float vAlpha;
+out vec3 vWorld;
+const float PERIOD = ${DEAD_CLOCK_PERIOD.toFixed(1)};
+const float TAU = 6.283185307179586;
+void main() {
+  float a = aSeed.y, b = aSeed.z, c = aSeed.w;
+  vec3 p; float size;
+  if (aSeed.x < 0.5) {
+    // an ember off the sea: from past the court's edge, rising and wandering, cooling as it goes
+    float life = PERIOD / floor(${EMBER_TURNS[0].toFixed(1)} + a * ${(EMBER_TURNS[1] - EMBER_TURNS[0]).toFixed(1)});
+    float age = mod(uTime + b * life, life), u = age / life;
+    float ang = c * TAU, rad = ${EMBER_RING[0].toFixed(1)} + pow(fract(a * 7.31 + b * 3.7), 0.8) * ${(EMBER_RING[1] - EMBER_RING[0]).toFixed(1)};
+    float rise = 3.0 + c * 4.0;
+    vec2 wander = vec2(sin(age * 1.3 + a * 20.0), cos(age * 1.1 + b * 20.0)) * (0.6 + age * 0.35) + uWind * age;
+    p = vec3(cos(ang) * rad + wander.x, ${DEAD_SEA_Y.toFixed(1)} + 1.0 + age * rise, sin(ang) * rad + wander.y);
+    size = 0.35 + 0.4 * b;
+    vHeat = 1.0 - u;
+    vAlpha = smoothstep(0.0, 0.08, u) * (1.0 - smoothstep(0.65, 1.0, u));
+  } else if (aSeed.x < 1.5) {
+    // an ember off a brazier: up out of its fire bed, a short life
+    int bi = int(floor(a * ${LIFE_BRAZIERS_MAX.toFixed(1)}));
+    float live = bi < uBrazierCount ? 1.0 : 0.0;
+    vec3 bed = uBraziers[min(bi, ${LIFE_BRAZIERS_MAX - 1})];
+    float life = PERIOD / floor(${BRAZIER_EMBER_TURNS[0].toFixed(1)} + b * ${(BRAZIER_EMBER_TURNS[1] - BRAZIER_EMBER_TURNS[0]).toFixed(1)});
+    float age = mod(uTime + c * life, life), u = age / life;
+    vec2 wander = vec2(sin(age * 2.1 + b * 30.0), cos(age * 1.7 + c * 30.0)) * (0.15 + age * 0.3) + uWind * age * 0.6;
+    p = bed + vec3(wander.x, 1.2 + age * (1.6 + b * 1.6), wander.y);
+    size = 0.14 + 0.14 * c;
+    vHeat = 1.0 - u * 0.8;
+    vAlpha = live * smoothstep(0.0, 0.1, u) * (1.0 - smoothstep(0.6, 1.0, u));
+  } else {
+    // ash: drifting down over the court from far above, swaying, to the sea below
+    float life = PERIOD / floor(${ASH_TURNS[0].toFixed(1)} + a * ${(ASH_TURNS[1] - ASH_TURNS[0]).toFixed(1)});
+    float age = mod(uTime + b * life, life), u = age / life;
+    float ang = c * TAU, rad = sqrt(fract(a * 13.7 + c)) * ${ASH_RADIUS.toFixed(1)};
+    vec2 sway = vec2(sin(age * 0.7 + a * 9.0), cos(age * 0.5 + b * 9.0)) * 2.5 + uWind * (age - life * 0.5) * 0.5;
+    p = vec3(cos(ang) * rad + sway.x, ${ASH_TOP.toFixed(1)} - u * ${(ASH_TOP - DEAD_SEA_Y).toFixed(1)}, sin(ang) * rad + sway.y);
+    size = 0.1 + 0.1 * b;
+    vHeat = 0.0;
+    vAlpha = smoothstep(0.0, 0.05, u) * (1.0 - smoothstep(0.9, 1.0, u));
+  }
+  vWorld = uCentre + p;
+  vec4 cp = uVP * vec4(vWorld, 1.0);
+  gl_Position = cp;
+  gl_PointSize = clamp(size * uPxPerM / max(cp.w, 0.1), 1.0, 40.0);
+}`;
+export const DEAD_LIFE_FS = HEAD + `in float vHeat;
+in float vAlpha;
+in vec3 vWorld;
+uniform int uAsh;          // 0 the embers (added), 1 the ash (laid over)
+uniform float uGain;
+uniform int uFogMode;
+uniform float uFogDensity;
+uniform vec2 uFogRange;
+uniform vec3 uCamPos;
+out vec4 o;
+${FOG_FACTOR_GLSL}
+void main() {
+  vec2 q = gl_PointCoord * 2.0 - 1.0;
+  float d = dot(q, q);
+  if (d > 1.0 || vAlpha <= 0.001) discard;
+  float f = fogFactorAt(vWorld);
+  if (uAsh == 1) {
+    float k = (1.0 - d) * 0.55 * vAlpha * f;
+    o = vec4(vec3(0.075, 0.06, 0.055) * uGain * k, k);   // premultiplied: a dark flake, the fog thinning it
+    return;
+  }
+  float core = exp(-d * 5.0), halo = exp(-d * 1.6) * 0.35;
+  vec3 hot = mix(vec3(0.9, 0.22, 0.04), vec3(1.0, 0.86, 0.5), vHeat * vHeat);
+  o = vec4(hot * (core * 1.4 + halo) * vAlpha * f * uGain, 1.0);
+}`;
+
 /** The camera's basis and lens off a view and a projection (column-major): what the sky's triangle turns into rays. */
 export function skyBasis(view, proj) {
   return {
@@ -442,9 +600,72 @@ export class DeadlandsRenderer {
     gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
     gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     gl.bindVertexArray(null);
+    // the air's life: one vertex a mote
+    this.life = buildProgram(gl, DEAD_LIFE_VS, DEAD_LIFE_FS);
+    this.ul = {};
+    for (const n of ['uVP', 'uCentre', 'uTime', 'uPxPerM', 'uBraziers', 'uBrazierCount', 'uWind', 'uAsh', 'uGain', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.ul[n] = gl.getUniformLocation(this.life, n);
+    const motes = lifeVertices();
+    this.emberCount = SEA_EMBERS + BRAZIER_EMBERS * LIFE_BRAZIERS_MAX;
+    this.ashCount = ASH_FLAKES;
+    this.lifeVao = gl.createVertexArray();
+    gl.bindVertexArray(this.lifeVao);
+    this.lifeVbo = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.lifeVbo);
+    gl.bufferData(gl.ARRAY_BUFFER, motes, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 16, 0);
+    gl.bindVertexArray(null);
     this._vp = new Float32Array(16);
-    /** what the last draw drew, for the stats and the tests: 'sky', 'sea' */
+    this._beds = new Float32Array(LIFE_BRAZIERS_MAX * 3);
+    /** what the last draw drew, for the stats and the tests: 'sky', 'sea' - and the life's: 'ash', 'embers' */
     this.drawn = [];
+    this.lifeDrawn = [];
+  }
+
+  /**
+   * THE AIR'S LIFE - the ash laid over the frame and the embers added onto it, depth-tested and never written: after
+   * the court's flats, beside its telegraph. `centre` the court's centre on its floor (the dungeon's frame),
+   * `braziers` the fire beds in the court's frame (world/gateArena.js courtBraziers), `viewH` the world image's height in
+   * pixels (RETRO1's - render/lightningBolts.js reads it the same way; the drawing buffer's when not handed).
+   */
+  drawLife(proj, view, centre, seconds, fog = null, gain = 1, braziers = [], viewH = 0) {
+    const gl = this.gl;
+    this.lifeDrawn = [];
+    if (!Array.isArray(centre) || centre.length !== 3 || !centre.every(Number.isFinite)) return false;
+    const L = this.ul;
+    gl.useProgram(this.life);
+    mat4Multiply(this._vp, proj, view);
+    gl.uniformMatrix4fv(L.uVP, false, this._vp);
+    gl.uniform3fv(L.uCentre, centre);
+    gl.uniform1f(L.uTime, deadClock(seconds));
+    gl.uniform2fv(L.uWind, deadlandsWind(seconds));
+    gl.uniform1f(L.uPxPerM, (Math.max(1, viewH || gl.drawingBufferHeight || 720) * proj[5]) / 2);   // proj[5] = 1 / tan(fov / 2): a metre at one metre off, in pixels
+    const beds = (Array.isArray(braziers) ? braziers : []).filter((p) => Array.isArray(p) && p.length === 3 && p.every(Number.isFinite)).slice(0, LIFE_BRAZIERS_MAX);
+    this._beds.fill(0);
+    beds.forEach((p, i) => this._beds.set(p, i * 3));
+    gl.uniform3fv(L.uBraziers, this._beds);
+    gl.uniform1i(L.uBrazierCount, beds.length);
+    gl.uniform1f(L.uGain, gain);
+    gl.uniform1i(L.uFogMode, fog ? fog.mode : 0);
+    gl.uniform1f(L.uFogDensity, fog?.density ?? 0);
+    gl.uniform2fv(L.uFogRange, fog?.range ?? [0, 1]);
+    gl.uniform3fv(L.uCamPos, fog?.camPos ?? [0, 0, 0]);
+    gl.bindVertexArray(this.lifeVao);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthMask(false);
+    gl.enable(gl.BLEND);
+    // the ash first, laid over (premultiplied); then the embers, added - light on whatever the ash left
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.uniform1i(L.uAsh, 1);
+    gl.drawArrays(gl.POINTS, this.emberCount, this.ashCount);
+    this.lifeDrawn.push('ash');
+    gl.blendFunc(gl.ONE, gl.ONE);
+    gl.uniform1i(L.uAsh, 0);
+    gl.drawArrays(gl.POINTS, 0, this.emberCount);
+    this.lifeDrawn.push('embers');
+    gl.bindVertexArray(null);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+    return true;
   }
 
   /**

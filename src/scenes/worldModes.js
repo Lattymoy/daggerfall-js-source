@@ -87,7 +87,8 @@ import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';
 import { betterAmbience, classicFootstepAllowed } from '../systems/betterAmbience.js';   // BA1: Better Ambience - the shake, the dungeon's fog and light, the reverb, the indoor rain, its own stride   // IF1: Immersive Footsteps owns the stride and the three landing sounds once its clips are in (DisableVanillaFootsteps)
 import { applyFog, DUNGEON_FOG } from '../render/underwaterFog.js';
 import { gateArenaLocation, gateArenaBlocks, isGateArena, buildCourtModel, courtFloorTris, courtLights, withCourtLights, courtExitDoor, COURT_ARCHIVE, COURT_FOG, COURT_TEXT } from '../world/gateArena.js';   // WB3b: the Burning Court - a level made in code on this host's dungeon arm
-import { courtLighting } from '../render/deadlands.js';   // WB6a: the court's own light - the Deadlands' red from above, the fire's from below, the vortex's from behind the boss
+import { courtLighting, deadlandsFlash } from '../render/deadlands.js';   // WB6a: the court's own light - the Deadlands' red from above, the fire's from below, the vortex's from behind the boss   // WB6b: and a strike's, flaring over it
+import { buildDeadlandsLand, buildShardModel, deadlandsShards, shardMatrix } from '../world/deadlandsLand.js';   // WB6b: the land out in the fire round the court, and the floor's broken shards over it
 import { gateArt, courtArt, GATE_ARCHIVE } from '../world/gateArt.js';   // WB3b: the court's own art, and the gate's stone it is cut from   // ROAD-B (b3): UnderwaterFog + WeatherManager.DungeonFogSettings
 import { createWeaponRig, envAttack, sheetHolderOf } from '../combat/weaponRig.js';   // MW-MAP1: the held map's holder, off the interior arm
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible interior arrows; AUDIT 39 (#64): and the shaft that LANDS
@@ -6033,6 +6034,9 @@ export function createWorldModes(host) {
   /** WB3b: the court's mesh - made once a session, with its art and the gate stone's - and the collider's bucket for
    *  its floor. */
   let _courtMesh = null;
+  /** WB6b: the islands out in the fire and the one shard every floating piece of the floor is drawn from - made with
+   *  the court, once a session. */
+  let _landMesh = null, _shardMesh = null;
   const COURT_BUCKET = 'wb:court';
   /** WB3b: the court stood into a built context, before the start marker is read: its mesh among the context's own
    *  draws, its floor on the collider (the spawn lands on it), the way home its exit door (the exit family's ray,
@@ -6046,6 +6050,7 @@ export function createWorldModes(host) {
       } catch (e) { console.warn('[gate] the court would not build', e?.message ?? e); _courtMesh = null; }
     }
     if (_courtMesh) ctx.dynamicDraws.push({ gpu: _courtMesh, object: { matrix: identity() } });
+    standDeadlands(ctx);   // WB6b: and the land round it, cut from the same stone
     const tris = courtFloorTris();
     const n = tris.length / 3;
     const idx = n > 65535 ? new Uint32Array(n) : new Uint16Array(n);
@@ -6053,6 +6058,21 @@ export function createWorldModes(host) {
     ctx.collider.addMesh(COURT_BUCKET, tris, idx, identity());
     ctx.exitDoors.push(courtExitDoor());   // the made block has no door: the membrane is the level's one exit
     ctx.addActivationNamer((key) => (typeof key === 'string' && key.startsWith('exit:') ? { title: COURT_TEXT.wayHome } : null));   // before the dungeon exit's own namer, so it answers first
+  }
+  /** WB6b: THE DEADLANDS' LAND stood into the court's context, after the court (whose art it is cut from): the islands
+   *  among its draws, and each of the floor's shards with a matrix of its own - moved every frame on the sky's clock
+   *  (the dungeon arm, before its draws), so the drift is the same on every screen. Made once a session; a land that
+   *  will not build costs the court its land, never the court. */
+  function standDeadlands(ctx) {
+    if (!_landMesh && renderer?.createMesh) {
+      try {
+        const land = buildDeadlandsLand(), shard = buildShardModel();
+        _landMesh = renderer.createMesh(land);
+        _shardMesh = renderer.createMesh(shard);
+      } catch (e) { console.warn('[gate] the Deadlands\' land would not build', e?.message ?? e); _landMesh = null; _shardMesh = null; }
+    }
+    if (_landMesh) ctx.dynamicDraws.push({ gpu: _landMesh, object: { matrix: identity() } });
+    if (_shardMesh) for (const s of deadlandsShards()) ctx.dynamicDraws.push({ gpu: _shardMesh, object: { matrix: shardMatrix(s, host.deadlandsSeconds?.() ?? 0) }, shard: s });
   }
   async function tryEnterDungeon(hit, entries, { preferEnterMarker = false } = {}) {
     return gatedTransition((live) => dungeonTransition(hit, entries, preferEnterMarker, live));   // AUDIT 68 X3-transition-build-race
@@ -7151,6 +7171,8 @@ export function createWorldModes(host) {
       if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:336's `if (!held)` - a paused game advances no movers
       if (!overlayHeld) dungeonCtx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes ride the same gate
       dungeonCtx.flicker.tick(dt);
+      const _deadS = isGateArena(dungeonLoc) ? (host.deadlandsSeconds?.() ?? performance.now() / 1000) : 0;   // WB6b: the sky's clock, for the court's flash and its shards
+      if (isGateArena(dungeonLoc)) for (const d of dungeonCtx.dynamicDraws) if (d.shard) shardMatrix(d.shard, _deadS, d.object.matrix);   // WB6b: the floor's shards, bobbing and turning where the sky's clock has them (before the frame's draws, which the shadows record)
       // AUDIT 26 F183: castle blocks and the one special area take
       // 0.58 where a plain dungeon takes 0.12 (PlayerAmbientLight.cs
       // :82-90) - Castle Daggerfall, Wayrest and Sentinel's non-hostile
@@ -7168,7 +7190,7 @@ export function createWorldModes(host) {
       // line below already learned to.
       renderer.setMoonlight(null);
       renderer.setIndirectLight(NO_INDIRECT_POS, 0, NO_INDIRECT_COLOR);
-      if (isGateArena(dungeonLoc)) { const _cl = courtLighting(); const _ct = dungeonTrilight(!!renderer.lightingLane, _cl.tri); renderer.setLighting(new Float32Array(_ct.equator), 0, undefined, _ct); renderer.setMoonlight(_cl.key); }   // WB6a: the court is no dungeon - lit red from the sky, orange from the fire under it, and by the vortex's fire from behind the boss (the moon's term: the one directional light a dungeon frame leaves dark); the lane's dark rides the trilight as the fog's does
+      if (isGateArena(dungeonLoc)) { const _cl = courtLighting(deadlandsFlash(_deadS)); const _ct = dungeonTrilight(!!renderer.lightingLane, _cl.tri); renderer.setLighting(new Float32Array(_ct.equator), 0, undefined, _ct); renderer.setMoonlight(_cl.key); }   // WB6a: the court is no dungeon - lit red from the sky, orange from the fire under it, and by the vortex's fire from behind the boss (the moon's term: the one directional light a dungeon frame leaves dark); the lane's dark rides the trilight as the fog's does   // WB6b: a strike in the sky flares over it, the moment the sky draws it
       // AUDIT 26 F001: a dungeon mesh is textured by SetDungeonTextures
       // (DaggerfallMesh.cs:153-169), which calls GetMaterial with NO
       // window style - so a dungeon's window records keep the colour a
@@ -7351,7 +7373,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:9354's own wave-46 note); the interior
+          // a blow (world.js:9355's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -9849,7 +9871,7 @@ export function createWorldModes(host) {
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
      *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3406-3428), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:6508). So an F9 pressed in a shop
+     *  unconditionally (world.js:6509). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -9888,7 +9910,7 @@ export function createWorldModes(host) {
       if (interiorOverlay instanceof DeathScreen) { interiorOverlay.restoreView(); interiorOverlay = null; }
     },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:6608)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:6609)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -9898,7 +9920,7 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:6775`
+     *  HARD2c: this used to spell them out, and named `world.js:6776`
      *  and `dungeonContext.js:6404` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
