@@ -1288,6 +1288,44 @@ test('MAP1 window: the selection - a click within 16 paper px of an inked mark s
   });
 });
 
+test('HUB1 window: online a region hub\'s mark reads "Region : Location (Hub)" - "(Capital)" for a kingdom\'s own - and the I box opens with its title, known or not; offline, and on any other town, the label and the box are DFU\'s own (mutants: the word unread, the title dropped, the title only for a known town)', () => {
+  withDocument(() => {
+    const mapDict = new Map();
+    const hubTown = summaryOf(3, 3, LOCATION_TYPES.TownCity);
+    const other = summaryOf(7, 7, LOCATION_TYPES.TownCity);
+    for (const s of [hubTown, other]) mapDict.set(s.id, s);
+    const maps = { regionCount: 1, getRegion: () => ({ mapNames: ['A', 'B', 'C', 'Wayrest'] }), getPoliticIndex: () => 128 };
+    const run = (hub) => {
+      const win = open(mkWin({ mapDict, maps, ...(hub ? { hubAt: (s) => (s.mapID === hubTown.mapID ? hub : null) } : {}) }));
+      win._sheet.ensure();
+      win._view.scale = 8;
+      const at = (x) => toPaper(win._view, x + 0.5, x + 0.5);
+      const label = (x) => win._hoverLabel(...at(x))?.label;
+      win._pickAt(...at(3));
+      win._displayLocationInfo();
+      const rows = win._info?.rows ?? [];
+      win._info = null;
+      win._pickAt(...at(7));
+      win._displayLocationInfo();
+      const otherRows = win._info?.rows ?? [];
+      const out = { hubLabel: label(3), otherLabel: label(7), rows, otherRows };
+      win.dispose();
+      return out;
+    };
+    const online = run({ name: 'Wayrest', regionName: 'Daggerfall', capital: false });
+    assert.equal(online.hubLabel, 'Daggerfall : Wayrest (Hub)');
+    assert.equal(online.otherLabel, 'Daggerfall : Wayrest', 'a town that is no hub reads as DFU reads it');
+    assert.equal(online.rows[0], 'Hub of Daggerfall', 'the box opens with what the place is to its region - even knowing none of its buildings');
+    assert.ok(!online.otherRows.includes('Hub of Daggerfall'));
+    const crown = run({ name: 'Wayrest', regionName: 'Daggerfall', capital: true });
+    assert.equal(crown.hubLabel, 'Daggerfall : Wayrest (Capital)');
+    assert.equal(crown.rows[0], 'Capital of the Kingdom of Daggerfall');
+    const offline = run(null);
+    assert.equal(offline.hubLabel, 'Daggerfall : Wayrest', 'offline no hub is named');
+    assert.deepEqual(offline.rows, offline.otherRows, 'and the box is the same for both towns');
+  });
+});
+
 test('MAP1 window: pan, wheel and keys move the VIEW under a clamp, the search glides to its pick, and the layout lays the sheet on PAPER of a 4:3 stage (mutants: pan-unclamped, zoom-not-at-cursor, layout-off-paper)', () => {
   withDocument(() => {
     globalThis.innerWidth = 1600; globalThis.innerHeight = 900;

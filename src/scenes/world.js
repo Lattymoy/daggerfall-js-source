@@ -16,7 +16,7 @@ import { WodSpawner, WOD_LOOT_LOCATION_INDEX, WOD_LOOT_ALIGN } from '../world/wo
 import { wodSiteId, yieldsTo } from '../world/wodShared.js';   // WOD7: a camp's marker, shared online
 import { alignBillboardToGround } from '../world/groundAlign.js';   // WOD3: SpawnLoot's drop
 import { PRIVATEERS_HOLD_BLOCK, HOLD_MODELS, HOLD_FLATS, holdModelMatrix, holdFireLights, rollHoldFoes } from '../world/wodPrivateersHold.js';   // WOD4: the camp at Privateer's Hold
-import { rollLootRarity, pileSource, dungeonRarityTier } from '../systems/lootRarity.js';   // WOD3: LR1 over the camps' piles
+import { rollLootRarity, pileSource, dungeonRarityTier, stampWonWeapons } from '../systems/lootRarity.js';   // WOD3: LR1 over the camps' piles; SIGIL1: their weapons' sigils
 import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05: one line, so the cites below it hold
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive, cursorActive } from '../player/pointerLock.js';   // U45: bindCursorToggle is PlayerMouseLook.cursorActive; releaseLook: the chat's open (AUDIT CHAT C2)
@@ -301,9 +301,19 @@ import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';   // AT2: Ambient Text's one component - this host claims it and feeds it the frame
 import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory
-import { accountTokenMinter, storedSession, accountPlayBeat, muteAccount, serviceBase, accountRefusalText, accountDuels } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4: and the beat that counts time played
+import { accountTokenMinter, storedSession, accountPlayBeat, muteAccount, serviceBase, accountRefusalText, accountDuels, accountRenown, accountHomes, accountDecor } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4: and the beat that counts time played
 import { parseModCommand, runModCommand, mutedText, mutedNotices } from '../net/moderation.js';   // MOD1: /mute and /unmute, and the line a muted player reads
 import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, knocked from here and measured by the account service's clock
+import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/renown.js';   // RENOWN1: what a kill and a quest are worth, and the party's bonus (RENOWN3: read against my Renown)
+import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer, renownFoeCarry } from '../net/renownTracker.js';   // RENOWN1: what this character earns online, carried to the account service
+import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the level's health and magicka, on top of Daggerfall's while online
+import { pickRegionHubs, hubAtMapId, hubArrivalLine } from '../systems/regionHubs.js';   // HUB1: every region's main city, its hub
+import { createOnlineHomes } from '../systems/onlineHomes.js';   // HOME1: the account service's homes, one town at a time
+import { setSigilOnline, setSigilRenown, drinkSigil, sigilRiseLine } from '../systems/sigil.js';   // SIGIL1: a weapon won online carries a sigil, woken by my Renown
+import { itemLongName } from '../systems/itemInfo.js';   // SIGIL1: the weapon's name as its tooltip reads it
+import { partySizeOf, partyExtraFoes, partyGroupMembers } from '../systems/partyScale.js';   // PSCALE1: a fight weighs the party - its count, and the foes more an outdoor encounter stands
+import { GROUP_ROLL_RADIUS } from '../systems/campEncounters.js';   // PSCALE1: outdoors, the party a roll stands for is the camp's own group
+import { SOLITARY_TYPES } from '../characters/mobileFactions.js';   // AUDIT PSCALE1 COUNT-2: a solitary foe meets a party alone
 import { appStorage } from '../systems/appStorage.js';   // ACC1d: where that session lives - the app's store, not the tab's (a second tab is the same player)
 import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
@@ -335,7 +345,7 @@ import { createTradeManager, TRADE_RANGE_M, inTradeRange, tradeDistance } from '
 import { createTradePack } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack
 import { createPlayerTradeWindow, playerTradeReady } from '../ui/playerTradeDoor.js';   // TRADE1: the enhanced window two players share
 import { createSocialMenu, socialPlaqueRows, plaqueRowFor } from '../ui/socialMenu.js';   // SOC5: the F-menu over that body - Add friend, Invite to party
-import { createProfileWindow, profileView, profileDuelLine } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
+import { createProfileWindow, profileView, profileDuelLine, profileRenown } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
 import { createDuelManager, DUEL_RADIUS_M, DUEL_RANGE_M, DUEL_COUNTDOWN_MS, ringCentre, validRingRecord } from '../net/duelSession.js';   // DUEL1: the duel's state machine (pure)
 import { createDuelRecords, duelUncountedText } from '../net/duelRecord.js';   // DUEL1: the Inspect card's duelling record, asked and kept
 import { createDuelPrompt } from '../ui/duelPrompt.js';   // DUEL1: the challenge, as the challenged player sees it
@@ -473,6 +483,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // season and the shared clock's turned it over on the first frame.
   let _sharedOffsetMs = 0;   // the relay's clock minus this machine's, heard when the session's welcome arrives
   if (params.has('online')) { setSharedClock(() => sharedClassicMinutes(Date.now() + _sharedOffsetMs), (m) => wallMsForClassicMinutes(m) - _sharedOffsetMs); setSharedWeather(true); }   // and the day picks the sky from here on (weatherSim); OL3: the inverse beside it, for the prices said in real time
+  setSigilOnline(params.has('online'));   // SIGIL1: this session plays online - before any list is minted (a pile rolls at a dungeon's build)
   // A1: THE TEXTURE SEASON IS THE CALENDAR'S, NOT A URL PARAM.
   // Every production site in the reference reads the world clock -
   // ClimateSwaps.cs:382-386, DaggerfallLocation.ApplyTimeAndSpace
@@ -683,16 +694,31 @@ export async function bootWorld(canvas, renderer, params, status) {
   // One location per map pixel game-wide (pinned corpus invariant).
   status('indexing locations');
   const locationIndex = new Map();
+  const _hubRows = [];   // HUB1: the game's own rows, whatever a mod's addition later stands on their pixel
   for (let r = 0; r < maps.regionCount; r++) {
     const region = maps.getRegion(r);
     if (!region) continue;
+    const baseCount = maps.baseLocationCount(r);
     for (let l = 0; l < region.locationCount; l++) {
       const loc = maps.getLocation(r, l);
       if (!loc || !loc.exterior || !loc.exterior.exteriorData) continue;
       const p = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude);
       locationIndex.set(`${p.x},${p.y}`, loc);
+      if (l < baseCount) _hubRows.push(loc);
     }
   }
+  // HUB1: every region's main city, one answer on every client (systems/regionHubs.js) - read online alone
+  const regionHubs = pickRegionHubs(_hubRows, { regionNameOf: (r) => maps.getRegionName(r) });
+  _hubRows.length = 0;
+  // HOME1 (Mac: "allowing online players to purchase housing in any location"): the online homes - the account
+  // service's registry as this page knows it, one town at a time (systems/onlineHomes.js). The mode machine's doors
+  // read it and the quest's residence filter asks it; offline it does not exist and every door is Daggerfall's. Read
+  // off `params`: `onlineOn` is declared far below, and a quest can be set up before it is.
+  const onlineHomes = params.has('online')
+    ? createOnlineHomes({ api: accountHomes({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }), character: () => characterIdOf(playerEntity) })
+    : null;
+  // DECOR1c: and an online home's placed pieces, the service's too - every visitor reads them, the owner writes them
+  const homeDecor = params.has('online') ? accountDecor({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }) : null;
 
   // SPAWNED-DUNGEONS1 (Lost, 2026-09-19: "one dungeon per loaded chunk when wandering around with a chance of 30% per
   // chunk ... online mode only for now"). ONE choke point - buildPixelNow, which every build reaches (boot, teleport,
@@ -1292,6 +1318,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const items = generateLootItems(lootKey, { level: playerEntity.level, gender: playerEntity.gender });
       addPileLootExtras(items, lootKey);
       rollLootRarity(items, pileSource(dungeonRarityTier(WOD_LOOT_LOCATION_INDEX)), { luck: liveStat(playerEntity, 'luck') });   // LR1: every list a host mints, at its source - GenerateLoot's dungeon type
+      stampWonWeapons(items, 1);   // SIGIL1: a pile found online, its weapons' sigils rolled at the mint
       // AUDIT BRANCH (WoD) m1: PIXEL-LOCAL until the art lands. The world
       // frame moves under a recentre, and a season or road rebuild swaps
       // the build object while the terrain lives on - the pile was left
@@ -2191,7 +2218,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT 26 (F019): the pixel's street StaticNPCs - identity inputs
     // + the billboard extent the activation ray needs, resolved the
     // way the interior host resolves its people's
-    // (interiorContext.js:420-440). FLATS.CFG is awaited because
+    // (interiorContext.js:421-441). FLATS.CFG is awaited because
     // SetLayoutData's exterior overload reads it for the gender
     // (StaticNPC.cs:185-194); loadFlats never throws and is warmed with
     // the scene, so this is a coalesced wait. The list rides the pixel,
@@ -3975,6 +4002,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     // and inside the preventEnemySpawns guard: the sweep below runs at
     // most once per Update, not once per caught-up minute.
     let _updatedGuards = false;
+    // PSCALE1 (Mac: "One roll per group"): ONLINE, THE PARTY ROLLS ITS WANDERERS ONCE. Every player rolled their own,
+    // so four standing together met four times the encounters (each streamed to the rest as puppets); now the camps'
+    // election (`amGroupRollOwner`, greedy by id - AUDIT PSCALE1 COUNT-5: a chain of players elects its lowest end AND
+    // everyone out of that roller's reach) runs over MY PARTYMATES (AUDIT PSCALE1 PLAY-2: a stranger never silences my
+    // roll - strangers roll their own), and that roll stands the party's extra foes (partyExtraFoes). A REST is always
+    // its rester's own roll (AUDIT PSCALE1 COUNT-1: a party's mirrors never roll, and a partymate with the lower id
+    // asleep in the mirror had left the whole night unrolled). Indoors nothing rolls here (a building's `hit` is null;
+    // a dungeon's rest is its own), so the gate has nothing to say there.
+    const _rollsForGroup = span <= 0 || !!playerEntity.isResting || amGroupRollOwner(online?.id ?? null, player.feetAt(), partyNear());
     for (let l = 0; l < span; l++) {
       // :488-491 - "Don't spawn encounters while player is swimming in
       // water or on ship (same as classic)" (ROAD-G TAIL: the gate had no
@@ -3997,7 +4033,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         climateIndex: maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y),
         playerLevel: playerEntity.level,
       });
-      if (hit) {
+      if (hit && _rollsForGroup) {   // PSCALE1: a roll that is not the group's stands nothing - the group's roller stands it for everyone
         // RE1: DFU's own placement. This used to walk eight compass
         // points at minDistance and take the first with ground under
         // it - so an encounter arrived due NORTH of the player unless
@@ -4008,7 +4044,8 @@ export async function bootWorld(canvas, renderer, params, status) {
         // function the quest arm and the enchantment arms already use.
         // The band and the line-of-sight flag ride in on the hit -
         // they are the spawner's arguments and differ per arm.
-        _standEncounterFoe(hit, playerFeet);
+        // PSCALE1: and the party's extra foes beside it - one more for every two players past the first, up to three
+        for (let k = 0, n = SOLITARY_TYPES.has(hit.mobileType) ? 1 : 1 + partyExtraFoes(partySize()); k < n; k++) _standEncounterFoe(hit, playerFeet);   // AUDIT PSCALE1 COUNT-2: a Lich, a Dragonling, a Giant is a singular 'uh oh' (mobileFactions.js SOLITARY_TYPES) - never a squad
         break;
       }
       // CAMP1 - GROUP ENCOUNTERS (camps and packs, systems/campEncounters.js):
@@ -4277,8 +4314,8 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  them, and so does the broker fan-out below - one set of doors per
    *  entity, exactly as one EntityEffectManager per entity. */
   const foeSinks = (g, fromPlayer = true) => ({   // AUDIT WORLD6b-iii(a) B2: the provenance the engine hands (AUDIT WORLD2 B7: a foe's spell is not the player's blow) - this host ignored it, so an enemy blast over a puppet went to its owner as MY hit
-    hurt: (n, o) => { const fp = o?.fromPlayer ?? fromPlayer; if (n > 0) (g._encounter ? exteriorFoes.damageFoe(g, n, player.pos, null, { fromPlayer: fp, kind: 'spell' }) : cityGuards.hurtGuard(g, n, player.pos, null, { fromPlayer: fp })); },   // AUDIT 68 review: a round's tick says whose it is (effects.js runEffectRound), as the dungeon's sink reads it   // X-slice: route by pool
-    heal: (n) => { if (n > 0) g.entity.health = Math.min(g.entity.maxHealth ?? Infinity, g.entity.health + n); },
+    hurt: (n, o) => { const fp = o?.fromPlayer ?? fromPlayer; if (n > 0) (g._encounter ? exteriorFoes.damageFoe(g, n, player.pos, null, { fromPlayer: fp, kind: 'spell', whole: !!o?.whole }) : cityGuards.hurtGuard(g, n, player.pos, null, { fromPlayer: fp })); },   // AUDIT 68 review: a round's tick says whose it is (effects.js runEffectRound), as the dungeon's sink reads it   // X-slice: route by pool
+    heal: (n) => { if (!(n > 0)) return; if (g._encounter) exteriorFoes.healFoe(g, n); else g.entity.health = Math.min(g.entity.maxHealth ?? Infinity, g.entity.health + n); },   // AUDIT PSCALE1 DOORS-5: an encounter foe's heal through its pool, weighed as its damage is
     drainMagicka: (n) => { if (n > 0) g.entity.magicka = Math.max(0, (g.entity.magicka ?? 0) - n); },
     restoreMagicka: (n) => { if (n > 0) g.entity.magicka = Math.min(g.entity.maxMagicka ?? Infinity, (g.entity.magicka ?? 0) + n); },
     drainFatigue: (n) => { if (n > 0) g.entity.fatigue = Math.max(0, (g.entity.fatigue ?? 0) - n); },
@@ -4432,10 +4469,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2462 mounts the same one, gated on
+  // and dungeonContext.js:2466 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:5682
+  // that context through modes.dungeonCtx - so worldModes.js:6109
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -4465,7 +4502,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // artifact affinity scans saw an empty room. Nothing threw and
   // nothing was logged - the enchantment simply had no effect where
   // the fighting is. The one ctx in play is this mount: no host passes
-  // an enchantCtx at the strike site (formulas.js:505 defaults it
+  // an enchantCtx at the strike site (formulas.js:506 defaults it
   // null), so mergeCtx folds this default under every dispatch.
   // The law itself is in shared.js, tested on its own - which pool is
   // live, and whose sinks a record from it must go through. This host
@@ -4512,6 +4549,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!nf?.entity) return;
       nf.entity.wabbajackActive = true;   // once per creature (WabbajackEffect:68)
       nf.entity.health -= missing;        // carry over damage (:94)
+      renownFoeCarry(f, nf);              // AUDIT RENOWN1 GAME-10: the Wabbajack's change is the same fight - my blows on it count
     };
     const host = enchantFoeHost(f, modes?.dungeonCtx ?? null, _insidePool);
     if (host === 'dungeon') { modes?.dungeonCtx.replaceFoe?.(targetEntity, mobileType); return; }   // wave 37: `modes?.` above the declaration, guarded on the OBJECT
@@ -4520,11 +4558,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:412-417) never looks the record up in `foes`, and
+    // (exteriorFoes.js:416-421) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1481-1499) gives it -
+    // got exactly what removeGuard (cityGuards.js:1485-1503) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
-    // (cityGuards.js:937) and spliced out at the end of it (:1125).
+    // (cityGuards.js:941) and spliced out at the end of it (:1129).
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
     // teardown of its own records so the two can diverge safely, and
     // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
@@ -4586,7 +4624,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
       playerYawRad: cam.yaw,
       fovDegrees: fieldOfView() * 180 / Math.PI,
-      isOccupied: entityOccupancy((f) => f.ai?.feet, () => exteriorFoePool(), feet),
+      isOccupied: entityOccupancy((f) => f.ai?.feet ?? f.feet, _placingPool, feet),   // AUDIT PSCALE1 COUNT-3: and the spots a stand in flight already holds
     });
     let spot = null;
     for (let i = 0; i < LOOSE_FOE_PLACE_ATTEMPTS && !spot; i++) {
@@ -4623,13 +4661,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!anchor) return;
     const campId = _nextCampId++;
     const anchorFeet = [anchor.x, anchor.y, anchor.z];
-    for (const mobileType of hit.mobileTypes) {
+    for (const mobileType of partyGroupMembers(hit.mobileTypes, partySize())) {   // PSCALE1: a camp or a pack grows with the party it meets
       const memberEnv = placeFoeEnv({
         collider,
         playerFeet: [anchorFeet[0], anchorFeet[1] + 0.9, anchorFeet[2]],
         playerYawRad: Math.random() * Math.PI * 2,
         fovDegrees: 0,
-        isOccupied: entityOccupancy((f) => f.ai?.feet, () => exteriorFoePool(), anchorFeet),
+        isOccupied: entityOccupancy((f) => f.ai?.feet ?? f.feet, _placingPool, anchorFeet),   // AUDIT PSCALE1 COUNT-3: a camp's members were placed in one loop and never saw each other (spawnFoe lands after its awaits)
       });
       let spot = null;
       for (let i = 0; i < LOOSE_FOE_PLACE_ATTEMPTS && !spot; i++) {
@@ -4706,6 +4744,9 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  pool's remover - one change, two consumers, and only one of them
    *  wanted it. */
   const exteriorFoePool = () => [...cityGuards.guards, ...exteriorFoes.foes];
+  /** AUDIT PSCALE1 COUNT-3: the street's foes AND the spots a stand still crossing spawnFoe's awaits already holds - a
+   *  wanderer's extras, a camp's members, placed in one synchronous loop, each saw none of the others. */
+  const _placingPool = () => [...exteriorFoePool(), ...exteriorFoes.pendingFeet().map((feet) => ({ feet }))];
   const detectFeed = createDetectFeed(playerEntity, {
     entities: () => exteriorFoePool().filter((f) => !f.dead && f.ai).map(foeNearbyRecord),
     // FX1 (F207): UpdateNearbyObjects walks EVERY active DaggerfallLoot
@@ -6476,7 +6517,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // and 6pm regardless of travel type"). The two are separately
         // sourced - the racial arm off the compound race, the career
         // arm off the class's own CFG bit - which is exactly how the
-        // per-round burn already reads them (passiveSpecials.js:120).
+        // per-round burn already reads them (passiveSpecials.js:121).
         sunAverse: !!playerEntity.racialOverride?.sunDamage || careerSunDamage(playerEntity.career),
       });
       if (clamp > 0 && !sharedClockOn()) { setSyntheticTimeIncrease(true); playerTicker.advance(clamp); }   // AUDIT 63 F13: the arrival clamp is inside DFU's one shielded Update too
@@ -6576,7 +6617,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6286), so exterior mode and a
+    // composer, dungeonContext.js:6342), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -7397,6 +7438,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       // join or leave - both skins read it on their own refresh. The
       // host says WHERE and WHO; neither map is told what a party is.
       party: () => partyMarkers(),
+      // HUB1: each region's hub, marked and named - online alone (systems/regionHubs.js); offline the map is DFU's
+      hubAt: params.has('online') ? (summary) => hubAtMapId(regionHubs, summary?.mapID ?? summary?.mapId) : null,
       // TO1: the mod itself, and the six reads its additions to this
       // window need. Every one is guarded on the other side - with
       // Travel Options off `travelOptions` answers null and the map is
@@ -8364,6 +8407,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the finger's ray - A8's gate fires it on the release. A finger in
     // the docked bar's strip is no world tap at all.
     tap: (x, y, opts = null) => {
+      if (modes?.decorFlying?.()) return;   // DECOR1e: under the decorator's flight a tap is no press - the bar's Place places
       if (!ndcFromScreen(x, y, canvas.clientWidth, canvas.clientHeight, worldViewportRect(canvas.clientWidth, canvas.clientHeight))) return;
       _tapPoint = [x, y]; _tapArmed = 2;   // AUDIT 62 F8: the arm IS the press - see _tapArmed at the gate below
       _tapLockOnly = !!opts?.lockOnly;   // TS1: touch.js's stick-half tap (TI1b) - the lock pick and nothing below it
@@ -8579,7 +8623,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8832-8896 -
+  // worldModes answers it in BOTH modes (worldModes.js:9280-9344 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -8727,6 +8771,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // DaggerfallBankManager.IsHouseOwned reads the CURRENT region's
     // owned-house slot (:140-148) - banking.js's own law, H1's home.
     isHouseOwned: (buildingKey) => isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey),
+    // HOME1: nor a player's online home - a quest must not send its player into a house its owner keeps shut. The
+    // towns this page has heard from (systems/onlineHomes.js); one not heard from yet answers no.
+    isPlayerHome: (mapId, buildingKey) => !!onlineHomes?.homeAt(mapId, buildingKey),
     // Place's _getBuildingName bag - townTalk's ONE name bag, so the
     // quest's generated names and the talk directory's cannot drift.
     buildingNameOpts: () => townTalk.nameOpts?.() ?? {},
@@ -9361,6 +9408,9 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  the symbol name, which for a quest item is exactly what DFU's UID
    *  lookup resolves. Object identity is still tried first, so a
    *  non-quest item (and the same-session case) behaves as before. */
+  // RENOWN1: a quest that ENDED IN SUCCESS pays its Renown XP online - the tracker is built with the online session
+  // below, so the bridge's hook reaches it through this door (null until then, and offline for good)
+  let renownQuestEnded = null;
   const _heldItemIndex = (dfItem) => {
     const items = playerEntity.items ?? [];
     const direct = items.indexOf(dfItem);
@@ -9423,6 +9473,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // moments, and the only one that does not wait for a location.
       if (initiated.length) revealMemberGuildHalls();
       escortQuestEnded(q);
+      renownQuestEnded?.(q);   // RENOWN1: a quest done online pays its Renown XP
     },
     // TK-i: the six rumor seams land in the mill (TalkManager's own
     // methods, 1:1)
@@ -9993,11 +10044,77 @@ export async function bootWorld(canvas, renderer, params, status) {
   // because the chat roster draws my own row from whichever link its
   // tab holds. `chatLinks` is read at the moment of the answer, not
   // captured here: the links are built after this and rebuilt on rejoin.
+  // ═══ RENOWN1 — THE RENOWN (Mac: "What if the leveling system was something seperate unique to online but
+  // compatible"; the health and magicka "On top", a "Grind", offline earning "No") ═══════════════════════════════════
+  // The level this page knows for its character: the token's word at each mint (the minter names the character, and
+  // the service signs its level in) and the service's after each report - ONLY EVER UPWARD, because a total never
+  // falls and a token minted a moment before a rise must not take it back. Each rise puts the layer on at the new
+  // level (systems/renownLayer.js: on top of Daggerfall's own maximums, never saved). Offline, none of this runs.
+  let renownNow = null;
+  const renownAdopt = (level) => {
+    if (!onlineOn || !Number.isSafeInteger(level) || level < 1) return renownNow;
+    if (renownNow !== null && level <= renownNow) return renownNow;
+    renownNow = level;
+    setRenownLayer(playerEntity, level);
+    setSigilRenown(level);   // SIGIL1: my Renown wakes the sigils - offline, and online until it is known, they sleep
+    return renownNow;
+  };
   const adoptIssued = (who) => {
+    who = { ...who, level: renownAdopt(who?.level) };   // RENOWN1: the highest level this page has known, never a stale token's lower one
     online?.adoptIdentity?.(who);
     for (const link of chatLinks?.values?.() ?? []) link.adoptIdentity?.(who);
   };
-  const identityMinter = accountTokenMinter({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage(), onIssued: adoptIssued });
+  const identityMinter = accountTokenMinter({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage(), onIssued: adoptIssued,
+    character: () => (onlineOn ? characterIdOf(playerEntity) : null) });   // RENOWN1: the character coming online, whose level the token carries
+  // RENOWN1: WHAT THIS CHARACTER EARNS - online only (the tracker is never built offline, and earns only while a session
+  // exists). A foe pays when it dies within RENOWN_ASSIST_MS of my own blow, whoever struck last (net/renownTracker.js - the
+  // one rule every kill door agrees on), with the party in my room counted (renownPartyXp); a quest pays on success, once.
+  // The report goes every RENOWN_REPORT_MS; the service's answer is the truth, and a rise is carried to my rooms.
+  const renownAccount = accountRenown({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
+  let _renownCapHour = null;
+  let renownSaid = null;   // AUDIT RENOWN1 UI-5: the highest level the page has announced - a rise is said against this, never against renownNow
+  const renownTracker = onlineOn ? createRenownTracker({
+    report: (c, xp, name, rid) => renownAccount.report(c, xp, name, rid),
+    leave: (c, xp, name, rid) => renownAccount.leave(c, xp, name, rid),   // AUDIT RENOWN1 GAME-8: the page's last word, finished by the browser
+    character: () => characterIdOf(playerEntity),
+    name: () => (typeof playerEntity?.name === 'string' ? playerEntity.name : null),
+    earning: () => !!online,
+    onAnswer: (data, sent) => {
+      const a = renownAnswer(data, sent, renownSaid);   // AUDIT RENOWN1: one pure plan (net/renownTracker.js), pinned there
+      renownAdopt(a.level);
+      if (a.order) online?.sendRenownOrder?.(a.order, a.level);   // the rooms I am in hear it now - and again until each answers
+      if (a.announce !== null) { renownSaid = a.announce; townTalk.say(`Your Renown is now ${a.announce}.`); }
+      if (a.capped) {
+        const hour = Math.floor(Date.now() / 3_600_000);
+        if (_renownCapHour !== hour) { _renownCapHour = hour; tradeSay('You have earned all the Renown XP one hour allows. Your fighting still counts toward your skills.'); }
+      }
+    },
+    // AUDIT RENOWN1 UI-4: a refusal that ends reporting is SAID - the sentences were written and nothing ever showed them
+    onStop: (error) => tradeSay(`${accountRefusalText(error)} This character is earning no Renown.`),
+  }) : null;
+  // SIGIL1: THE DRINK - the weapon in my hand takes every point of Renown XP I earn with it (a kill, a quest), and a
+  // rise to a new stage is said (systems/sigil.js drinkSigil: nothing while my Renown is unknown). Past the hour's cap
+  // the service keeps nothing, and the sigil drinks nothing either - as the page last heard it.
+  const sigilDrinks = (xp) => {
+    if (_renownCapHour === Math.floor(Date.now() / 3_600_000)) return;
+    const held = weaponRig.playerWeapon?.strikingWeapon ?? null;
+    const rank = drinkSigil(held, xp);
+    if (rank != null) townTalk.say(sigilRiseLine(itemLongName(held), rank));
+  };
+  if (renownTracker) {
+    globalThis.addEventListener?.('pagehide', () => { renownTracker.leave(); });   // RENOWN1: what was earned since the last report goes as the page does. AUDIT RENOWN1 GAME-8: by `keepalive`, under the report's own id
+    setRenownKillHandler((foe) => { const party = 1 + (partyNear()?.length ?? 0); const xp = renownPartyXp(renownKillXp(renownFoeLevel(foe), renownNow), Number.isInteger(foe?._fightN) ? Math.min(party, foe._fightN) : party); renownTracker.earn(xp); sigilDrinks(xp); });   // AUDIT PSCALE1 PLAY-4: a shared foe's bonus counts the partymates who FOUGHT it (its fighters, systems/partyScale.js) - a partymate idling in the cell pads nothing   // RENOWN3: read against my Renown, never above it by more than RENOWN_OVER_MAX
+    const paid = new Set();
+    renownQuestEnded = (q) => {
+      if (!q?.questSuccess) return;
+      const key = String(q.uid ?? q.questName ?? '');
+      if (!key || paid.has(key)) return;   // a quest pays once, however its end is heard again
+      paid.add(key);
+      const xp = renownQuestXp(playerEntity.level, renownNow);   // RENOWN3: the quest's level read against my Renown too
+      renownTracker.earn(xp);
+      sigilDrinks(xp);   // SIGIL1
+    };
+  }
   // ACC4 (Mac: "time played to the icon profile"): THE WORLD IS WHERE
   // TIME IS PLAYED, so the clock starts here and not at the menu - once,
   // because bootWorld runs once per page. Online or not: a signed-in
@@ -10845,7 +10962,8 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  (asked of the account service by the relay's stamp, `_profileSub`; no stamp, no line). The base view is kept, so
    *  the card is re-drawn with the duel's word alone when that moves (a challenge sent, a record landed). */
   const withDuel = (peerId, v) => {
-    _profileView = v;
+    _profileView = profileRenown(v, online?.renownOf?.(peerId) ?? null);   // AUDIT RENOWN1 UI-3: the Renown as the session knows it now
+    v = _profileView;
     return { ...v, duel: duelButtonFor(peerId), duels: _profileSub ? profileDuelLine(duelRecords.get(_profileSub)) : null };
   };
   const repaintDuelProfile = () => {
@@ -11130,9 +11248,35 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const m of social.others()) {
       const peer = near.find((p) => m.peers?.includes(p.id));
       if (!peer?.feet) continue;
-      out.push({ acct: m.acct, name: m.name, feet: [peer.feet[0], peer.feet[1], peer.feet[2]], yaw: online?.peers.get(peer.id)?.shown?.yaw ?? 0 });
+      out.push({ id: peer.id, acct: m.acct, name: m.name, feet: [peer.feet[0], peer.feet[1], peer.feet[2]], yaw: online?.peers.get(peer.id)?.shown?.yaw ?? 0 });   // AUDIT PSCALE1: the id, for the party's own roll election
     }
     return out;
+  };
+  /** PSCALE1 (Mac: "I want enemy difficulty, enemy numbers, etc to scale approriately with party size"): THE PARTY AN
+   *  OUTDOOR ROLL STANDS FOR (systems/partyScale.js partyExtraFoes) - me and the partymates within GROUP_ROLL_RADIUS, the
+   *  camp's own group, before any blow is struck; a town full of strangers is not my party. Offline, or with the room
+   *  not open, one. A FIGHT's weight is not this: it is the foe's own fighters (AUDIT PSCALE1, Mac: "Whoever fights
+   *  it"), counted by the pools at their doors. */
+  const partySize = () => {
+    if (!online || online.status !== 'open' || !online.room) return 1;
+    const me = player.feetAt?.();
+    if (!me) return 1;
+    const r2 = GROUP_ROLL_RADIUS * GROUP_ROLL_RADIUS;
+    let n = 1;
+    for (const m of partyNear()) { const dx = m.feet[0] - me[0], dz = m.feet[2] - me[2]; if (dx * dx + dz * dz <= r2) n++; }
+    return partySizeOf(n);
+  };
+  /** PDEATH-FOES + AUDIT PSCALE1 NET-3: MY LIVE FOES ARE THE SURVIVORS' - each to the one nearest it, as I see it (the
+   *  only true view of where my foes stand), named on a last frame; what nobody took stays mine. Said at a death, and at
+   *  a door out of the open country (the modes' pre-transition): the party's one roll stands every wanderer in the
+   *  roller's own pool, so one player stepping into a shop took the whole group's fight off every other screen.
+   *  Outdoors only, in a cell, with someone to take them. Answers how many went. */
+  const handOverFoes = () => {
+    const near = online?.room && isCellRoom(online.room) && (modes?.mode ?? 'exterior') === 'exterior' ? (peersNear() ?? []) : [];
+    if (!near.length) return 0;
+    const heirOf = (f) => { const at = f.ai?.feet; if (!at) return null; let id = null, best = Infinity; for (const q of near) { const d = Math.hypot(at[0] - q.feet[0], at[2] - q.feet[2]); if (d < best) { best = d; id = q.id; } } return id; };
+    const frame = exteriorFoes.handOverFrame(heirOf);
+    return frame && online.sendFoes(frame) ? exteriorFoes.dropOwnLive() : 0;
   };
   /** PARTY-REST2/3: true when `pose` (a party member's last broadcast pose) puts them in the SAME place as me
    *  (samePlace) AND within PARTY_REST_RADIUS meters for real (distanceToPartyAccount) - the one law both
@@ -11923,9 +12067,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   const _peerHeights = new Map();   // AUDIT WORLD6b-ii C5: a peer's height is the peer's - the doll answers 0 while it is not standing (a slot churn, a load), and the aim point flickered with it
   const peersNear = () => {
     if (!online || !online.room || online.status !== 'open') return null;
-    const now = performance.now(), out = [];
+    const out = [];
     for (const p of online.peers.values()) {
-      if (!online.visible(p, now)) continue;
+      if (!online.visible(p)) continue;   // AUDIT PSCALE1 NET-2: on the session's OWN clock (Date.now) - performance.now() against its stamps never timed a silent peer out
       const h = peerBodies?.heightOf(p.id) || 0;
       if (h > 0) _peerHeights.set(p.id, h);
       out.push({ id: p.id, feet: onlineToScene(p.shown), height: _peerHeights.get(p.id) });
@@ -11987,7 +12131,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     const reach = sp && social?.isPartyPeer(id) && allyCastable(sp) ? allyReachFor(sp.rangeType) : null;
     const pick = reach !== null ? (underground ? modes?.dungeonCtx?.allyInReach?.(cam.pos, socialFwd(), reach) : magic?.allyInReach?.(cam.pos, socialFwd(), reach)) ?? null : null;
     const cast = pick?.id === id ? allyCastPlaqueLine(sp.name, name) : null;
-    return { title: marks ? `${name} ${marks}` : name, subs: [cast, peerRelationText(acts)].filter(Boolean), actions: acts ? socialPlaqueRows(id, acts) : [], actionsUnlit: true };
+    const renown = online?.renownOf?.(id) ?? null;   // RENOWN1: their Renown, boxed left of the name as over their head (the plaque draws the box)
+    return { title: marks ? `${name} ${marks}` : name, renown, subs: [cast, peerRelationText(acts)].filter(Boolean), actions: acts ? socialPlaqueRows(id, acts) : [], actionsUnlit: true };
   };
   /** ALLY-CAST: THE PARTY MATE UNDER THE CROSSHAIR - the F key's own pick (player/socialPick.js pickPeerInFront over
    *  peersNear(), the ray the social menu casts) at the reach the spell's range type asks (systems/allyCast.js), a
@@ -12057,6 +12202,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
   /** INSPECT1: the profile's frame - an ask the gate held back goes when it can, and a wait that ran out is said. */
   const profileFrame = () => {
+    // AUDIT RENOWN1 UI-3: a card open on a player whose Renown ROSE is re-drawn with it - the box over their head moves
+    // on the renown frame, and the card kept the level it was opened with
+    if (_profileView && profileWin?.isOpen()) { const lv = renownText(online?.renownOf?.(profileWin.peerId()) ?? null); if (lv && lv !== _profileView.level) repaintDuelProfile(); }
     if (!_profileAsk) return;
     if (!_profileAsk.sent) _profileAsk.sent = online?.sendCard({ to: _profileAsk.peerId, ask: true }) === true;
     if (performance.now() - _profileAsk.at < CARD_WAIT_MS) return;
@@ -12198,6 +12346,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     profileFrame();   // INSPECT1: the card's ask retried and its wait timed - the trade's own kind of work, beside it
     pageFrame();   // JOURNAL1: a page whose writer left the room goes with them
     mail?.poll();   // MAIL1: a look at the letterbox when one is due - before the dead return, as the chat's heartbeat is
+    renownTracker?.tick();   // RENOWN1: what this character earned, to the account service when a report is due
     // AUDIT ONLINE D12: the dead broadcast nothing and see no one
     if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.()) {
       if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room
@@ -12205,15 +12354,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure
         _deadMark = online._pose ? { k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() } : null;
         _partyComposedAt = -Infinity;
-        // PDEATH-FOES, AUDIT CONTRIB P1: my foes are the survivors' now - each to the one nearest it, as I see it (the
-        // only true view of where my foes stand), named on my last frame BEFORE the death pose; what nobody took stays mine
-        const near = isCellRoom(online.room) && (modes?.mode ?? 'exterior') === 'exterior' ? (peersNear() ?? []) : [];
-        if (near.length) {
-          const heirOf = (f) => { const at = f.ai?.feet; if (!at) return null; let id = null, best = Infinity; for (const q of near) { const d = Math.hypot(at[0] - q.feet[0], at[2] - q.feet[2]); if (d < best) { best = d; id = q.id; } } return id; };
-          const frame = exteriorFoes.handOverFrame(heirOf);
-          const n = frame && online.sendFoes(frame) ? exteriorFoes.dropOwnLive() : 0;
-          console.info(`[foes] handed ${n} foe(s) to the survivors`);
-        }
+        // PDEATH-FOES, AUDIT CONTRIB P1: my foes are the survivors' now (handOverFoes), named on my last frame BEFORE the
+        // death pose; what nobody took stays mine
+        const _handed = handOverFoes();
+        if (_handed) console.info(`[foes] handed ${_handed} foe(s) to the survivors`);
         online.sendDeath?.();
       }
       if (online.room) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); _foesRoom = null; }
@@ -12690,6 +12834,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // from isPlayerInTown above.
     inTownLocation: () => isPlayerInTown(_musicLocationType()),
     questSceneCtx: () => ({ mapId: _questLoc()?.mapTableData?.mapId ?? 0, locationIndex: _questLoc()?.locationIndex ?? 0 }),
+    // HOME1: the online homes' registry (null offline), and my party's names as the relay signs them - a home its owner
+    // opened to their party opens to a player whose party holds the owner (net/homeLaw.js homeMayEnter)
+    onlineHomes,
+    homeDecor,   // DECOR1c: an online home's placed pieces (null offline - the house's and the ship's are the save's)
+    decorCharacter: () => characterIdOf(playerEntity),   // DECOR1d: the character an online home's placements are written as
+    partyNames: () => (social?.others?.() ?? []).map((m) => m.name).filter((n) => typeof n === 'string' && n.length > 0),
     npcSession,   // TK-iv: the questor door on a static-NPC click
     // B4: the dungeon context quicksaves through the same composer
     // this host does - the trio + the bridge ride to it, and a
@@ -12756,6 +12906,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // owns the motor, the animator and the mount's art together.
     setTransportMode: (mode) => setTransportModeHere(mode),
     horseCart: hccRuntimeOn,   // HCC: the runtime's transition handlers and storage-access word, when the mod is on
+    onPreTransition: () => { const n = handOverFoes(); if (n) console.info(`[foes] handed ${n} foe(s) at the door`); },   // AUDIT PSCALE1 NET-3: a door out of the open country hands my foes to the players outside
     horseCartSave: () => hccRuntime.getSaveData(),   // AUDIT HCC H3: the record a dungeon save carries (DFU's per-mod slot, whatever the switch says)
     horseCartLoad: (rec) => { hccRuntime.handleStartLoad(); if (rec) hccRuntime.restoreSaveData(rec); },   // AUDIT HCC H3: a same-dungeon load's OnStartLoad and RestoreSaveData
     // PX17c: the pause window's journal seams ride into the interior
@@ -12931,7 +13082,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         position: [m[12] - p.locOrigin[0], m[13] - p.locOrigin[1], m[14] - p.locOrigin[2]],
       }, { locationIndex: dfLoc.locationIndex ?? 0 });
       if (!d) return null;
-      return { ...d, regionIndex: dfLoc.regionIndex, name: townTalk.directory.find((e) => e.buildingKey === d.buildingKey)?.name ?? '' };
+      return { ...d, regionIndex: dfLoc.regionIndex, townMapId: (dfLoc.mapTableData?.mapId ?? 0) >>> 0, name: townTalk.directory.find((e) => e.buildingKey === d.buildingKey)?.name ?? '' };   // HOME1: the town the DOOR is in keys its home, not the one under the player
     },
   });
   // AT2: AMBIENT TEXT CLAIMS ITS HOST. The mod is one GameObject made
@@ -14746,6 +14897,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // (ThievesGuild.cs:197-206, handler :227-229), so the hall
         // reveal follows the member into every town.
         revealMemberGuildHalls();
+        // HUB1: walking into a region's hub says so, online - "Daggerfall, capital of the Kingdom of Daggerfall."
+        if (onlineOn) { const hub = hubAtMapId(regionHubs, _musicLoc?.mapTableData?.mapId); if (hub) townTalk.say(hubArrivalLine(hub), 5); }
+        onlineHomes?.ensure(_musicLoc?.mapTableData?.mapId);   // HOME1: the town's homes asked for as I walk in - its doors' names and prices are ready before I reach one
         // RR3: RoleplayRealism.PlayerGPS_OnEnterLocationRect (:259-267) - the master armorer's shop discovered under its own name
         if (rrEnabled()) {
           const arm = rrMasterArmorerDiscovery(_musicLoc, getBuildingVariant);
@@ -15103,11 +15257,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       onPlayerHit: (m) => {
         const shooter = m.shooterFoe;
         tallySkill(playerEntity, SKILLS.Dodging, 1);
-        const dmg = shooter && !shooter.dead ? calculateAttackDamage(shooter.entity, playerEntity, {
+        const dmg = shooter && !shooter.dead ? exteriorFoes.partyHit(calculateAttackDamage(shooter.entity, playerEntity, {
           weapon: m.weapon,
           onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(playerTicker.classicMinutes) }),
           say: (l) => townTalk.say(l),
-        }) : 0;
+        }), shooter) : 0;   // PSCALE1: a shared archer's arrow, harder for the party beside me
         if (dmg > 0) {
           hurtPlayer(playerEntity, dmg);
           audio.playOneShot(hitSoundFor(m.weapon), PLAYER_HIT_VOLUME);   // AUDIT 58: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1
@@ -15145,11 +15299,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:694-699), so this seam ROUTES by pool exactly
+        // (cityGuards.js:697-702), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:1212). DFU makes no pool distinction:
+        // (cityGuards.js:1216). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.

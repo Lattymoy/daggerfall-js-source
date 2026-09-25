@@ -1,0 +1,750 @@
+[
+  {
+    "name": "GUILD1-founding-cheaper",
+    "file": "src/net/guildLaw.js",
+    "old": "export const GUILD_FOUND_GOLD = 10_000;",
+    "new": "export const GUILD_FOUND_GOLD = 1_000;",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-founding-lower-renown",
+    "file": "src/net/guildLaw.js",
+    "old": "export const GUILD_FOUND_RENOWN = 10;",
+    "new": "export const GUILD_FOUND_RENOWN = 5;",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-bigger-guild",
+    "file": "src/net/guildLaw.js",
+    "old": "export const GUILD_MEMBERS_MAX = 50;",
+    "new": "export const GUILD_MEMBERS_MAX = 60;",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-an-officer-withdrawing",
+    "file": "src/net/guildLaw.js",
+    "old": "withdraw: Object.freeze([0]),",
+    "new": "withdraw: Object.freeze([0, 1]),",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-member-inviting",
+    "file": "src/net/guildLaw.js",
+    "old": "invite: Object.freeze([0, 1]),",
+    "new": "invite: Object.freeze([0, 1, 2]),",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-rename-by-an-officer",
+    "file": "src/net/guildLaw.js",
+    "old": "renameRanks: Object.freeze([0]),",
+    "new": "renameRanks: Object.freeze([0, 1]),",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-an-equal-outranked",
+    "file": "src/net/guildLaw.js",
+    "old": "guildRankOk(target) && actor < target;",
+    "new": "guildRankOk(target) && actor <= target;",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-rank-moved-to-its-movers",
+    "file": "src/net/guildLaw.js",
+    "old": "return guildOutranks(actor, from) && guildOutranks(actor, to);",
+    "new": "return guildOutranks(actor, from);",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-move-to-nothing",
+    "file": "src/net/guildLaw.js",
+    "old": "!guildRankOk(to) || from === to) return false;",
+    "new": "!guildRankOk(to)) return false;",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-name-key-keeping-case",
+    "file": "src/net/guildLaw.js",
+    "old": "String(name ?? '').toLowerCase().replace(/[^a-z0-9]/g, '')",
+    "new": "String(name ?? '').replace(/[^A-Za-z0-9]/g, '')",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-name-untidied",
+    "file": "src/net/guildLaw.js",
+    "old": "const s = raw.replace(/\\s+/g, ' ').trim();",
+    "new": "const s = raw.trim();",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-name-ending-in-a-mark",
+    "file": "src/net/guildLaw.js",
+    "old": "/^[A-Za-z0-9][A-Za-z0-9 '\\-]*[A-Za-z0-9]$/.test(s)",
+    "new": "/^[A-Za-z0-9 '\\-]+$/.test(s)",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-longer-name",
+    "file": "src/net/guildLaw.js",
+    "old": "s.length > GUILD_NAME_MAX)",
+    "new": "s.length > GUILD_NAME_MAX + 8)",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-tag-not-capitalised",
+    "file": "src/net/guildLaw.js",
+    "old": "const t = raw.trim().toUpperCase();",
+    "new": "const t = raw.trim();",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-two-ranks-one-name",
+    "file": "src/net/guildLaw.js",
+    "old": "return ok && new Set(out.map((n) => n.toLowerCase())).size === out.length ? out : null;",
+    "new": "return ok ? out : null;",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-longer-rank-name",
+    "file": "src/net/guildLaw.js",
+    "old": "n.length <= GUILD_RANK_NAME_MAX &&",
+    "new": "n.length <= GUILD_RANK_NAME_MAX + 5 &&",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-fraction-of-gold",
+    "file": "src/net/guildLaw.js",
+    "old": "Number.isSafeInteger(n) && n >= 1 && n <= GUILD_MOVE_MAX",
+    "new": "Number.isFinite(n) && n >= 1 && n <= GUILD_MOVE_MAX",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-no-gold-moved",
+    "file": "src/net/guildLaw.js",
+    "old": "Number.isSafeInteger(n) && n >= 1 && n <= GUILD_MOVE_MAX",
+    "new": "Number.isSafeInteger(n) && n >= 0 && n <= GUILD_MOVE_MAX",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-kind-swapped",
+    "file": "server-account/migrations/0013_guilds.sql",
+    "old": "CASE WHEN NEW.treasury > OLD.treasury THEN 'deposit' ELSE 'withdraw' END",
+    "new": "CASE WHEN NEW.treasury > OLD.treasury THEN 'withdraw' ELSE 'deposit' END",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-amount-signed",
+    "file": "server-account/migrations/0013_guilds.sql",
+    "old": "abs(NEW.treasury - OLD.treasury), NEW.treasury);",
+    "new": "NEW.treasury - OLD.treasury, NEW.treasury);",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-balance-before",
+    "file": "server-account/migrations/0013_guilds.sql",
+    "old": "abs(NEW.treasury - OLD.treasury), NEW.treasury);",
+    "new": "abs(NEW.treasury - OLD.treasury), OLD.treasury);",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-line-for-nothing",
+    "file": "server-account/migrations/0013_guilds.sql",
+    "old": "  WHEN NEW.treasury <> OLD.treasury\n",
+    "new": "",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-ledger-on-the-wrong-write",
+    "file": "server-account/migrations/0013_guilds.sql",
+    "old": "AFTER UPDATE OF treasury ON guilds",
+    "new": "AFTER UPDATE OF ranks ON guilds",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-two-guilds-a-name",
+    "file": "server-account/migrations/0013_guilds.sql",
+    "old": "  name_key    TEXT NOT NULL UNIQUE,",
+    "new": "  name_key    TEXT NOT NULL,",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-two-guilds-a-tag",
+    "file": "server-account/migrations/0013_guilds.sql",
+    "old": "  tag         TEXT NOT NULL UNIQUE,",
+    "new": "  tag         TEXT NOT NULL,",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-gone-account-still-a-member",
+    "file": "server-account/migrations/0013_guilds.sql",
+    "old": "  FOREIGN KEY (player) REFERENCES players(id) ON DELETE CASCADE,\n  FOREIGN KEY (guild_id) REFERENCES guilds(id) ON DELETE CASCADE\n);\n-- A guild's roster",
+    "new": "  FOREIGN KEY (player) REFERENCES players(id),\n  FOREIGN KEY (guild_id) REFERENCES guilds(id) ON DELETE CASCADE\n);\n-- A guild's roster",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-gone-guild-still-has-members",
+    "file": "server-account/migrations/0013_guilds.sql",
+    "old": "  FOREIGN KEY (guild_id) REFERENCES guilds(id) ON DELETE CASCADE\n);\n-- A guild's roster",
+    "new": "  FOREIGN KEY (guild_id) REFERENCES guilds(id)\n);\n-- A guild's roster",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-renown-unread",
+    "file": "server-account/src/guilds.js",
+    "old": "if ((track?.level ?? 1) < GUILD_FOUND_RENOWN) return { error: 'guild-renown' };",
+    "new": "if (false) return { error: 'guild-renown' };",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-founder-a-recruit",
+    "file": "server-account/src/guilds.js",
+    "old": "VALUES (?, ?, ?, ${GUILD_RANK_MASTER}, ?, ?)`)",
+    "new": "VALUES (?, ?, ?, ${GUILD_RANK_RECRUIT}, ?, ?)`)",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-an-orphaned-name-held",
+    "file": "server-account/src/guilds.js",
+    "old": "  await db.prepare('DELETE FROM guilds WHERE (name_key = ? OR tag = ?) AND NOT EXISTS (SELECT 1 FROM guild_members m WHERE m.guild_id = guilds.id)').bind(key, t).run();\n",
+    "new": "",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-living-guilds-name-taken",
+    "file": "server-account/src/guilds.js",
+    "old": "DELETE FROM guilds WHERE (name_key = ? OR tag = ?) AND NOT EXISTS (SELECT 1 FROM guild_members m WHERE m.guild_id = guilds.id)')",
+    "new": "DELETE FROM guilds WHERE (name_key = ? OR tag = ?)')",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-wrong-uniqueness-named",
+    "file": "server-account/src/guilds.js",
+    "old": "    if (await db.prepare('SELECT 1 FROM guilds WHERE name_key = ?').bind(key).first()) return { error: 'guild-name-taken' };",
+    "new": "    if (await db.prepare('SELECT 1 FROM guilds WHERE name_key = ?').bind(key).first()) return { error: 'guild-tag-taken' };",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-recruit-inviting",
+    "file": "server-account/src/guilds.js",
+    "old": "  if (!guildMay(a.me.rank, 'invite')) return { error: 'guild-rank' };\n",
+    "new": "",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-cap-unread-at-the-invite",
+    "file": "server-account/src/guilds.js",
+    "old": "if ((n?.n ?? 0) >= GUILD_MEMBERS_MAX) return { error: 'guild-full' };",
+    "new": "if ((n?.n ?? 0) > GUILD_MEMBERS_MAX) return { error: 'guild-full' };",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-sweep-taking-a-live-one",
+    "file": "server-account/src/guilds.js",
+    "old": "db.prepare('DELETE FROM guild_invites WHERE guild_id = ? AND at <= ?').bind(a.me.guild_id, nowS - GUILD_INVITE_TTL_S),",
+    "new": "db.prepare('DELETE FROM guild_invites WHERE guild_id = ? AND at <= ?').bind(a.me.guild_id, nowS),",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-sweep-dropped",
+    "file": "server-account/src/guilds.js",
+    "old": "    db.prepare('DELETE FROM guild_invites WHERE guild_id = ? AND at <= ?').bind(a.me.guild_id, nowS - GUILD_INVITE_TTL_S),\n",
+    "new": "",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-week-unread",
+    "file": "server-account/src/guilds.js",
+    "old": "  const live = nowS - GUILD_INVITE_TTL_S;",
+    "new": "  const live = 0;",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-declined-one-kept",
+    "file": "server-account/src/guilds.js",
+    "old": "const gone = await db.prepare('DELETE FROM guild_invites WHERE guild_id = ? AND player = ? AND at > ? RETURNING guild_id')",
+    "new": "const gone = await db.prepare('SELECT guild_id FROM guild_invites WHERE guild_id = ? AND player = ? AND at > ?')",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-bad-character-joining",
+    "file": "server-account/src/guilds.js",
+    "old": "  if (!charOk(character)) return { error: 'guild-character' };\n  const standing",
+    "new": "  const standing",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-an-invitation-answered-twice",
+    "file": "server-account/src/guilds.js",
+    "old": "  if (!(await standing())) return { error: 'no-invite' };\n",
+    "new": "",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-joiner-not-a-recruit",
+    "file": "server-account/src/guilds.js",
+    "old": "SELECT ?1, ?2, ?3, ${GUILD_RANK_RECRUIT}, ?4, ?5",
+    "new": "SELECT ?1, ?2, ?3, ${GUILD_RANK_OFFICER}, ?4, ?5",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-cap-unread-at-the-join",
+    "file": "server-account/src/guilds.js",
+    "old": "AND (SELECT COUNT(*) FROM guild_members WHERE guild_id = ?3) < ?7`)",
+    "new": "AND (SELECT COUNT(*) FROM guild_members WHERE guild_id = ?3) <= ?7`)",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-withdrawn-invitation-answered",
+    "file": "server-account/src/guilds.js",
+    "old": "WHERE EXISTS (SELECT 1 FROM guild_invites WHERE guild_id = ?3 AND player = ?1 AND at > ?6)\n          AND",
+    "new": "WHERE ?6 IS NOT NULL\n          AND",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-refused-join-spending-it",
+    "file": "server-account/src/guilds.js",
+    "old": "AND EXISTS (SELECT 1 FROM guild_members WHERE player = ?2 AND char_id = ?3 AND guild_id = ?1)')",
+    "new": "AND ?3 IS NOT NULL')",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-full-guild-said-gone",
+    "file": "server-account/src/guilds.js",
+    "old": "return { error: (await standing()) ? 'guild-full' : 'no-invite' };",
+    "new": "return { error: 'no-invite' };",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-guildmaster-walking-out-on-members",
+    "file": "server-account/src/guilds.js",
+    "old": "'DELETE FROM guilds WHERE id = ?1 AND treasury = 0 AND (SELECT COUNT(*) FROM guild_members WHERE guild_id = ?1) = 1'",
+    "new": "'DELETE FROM guilds WHERE id = ?1 AND treasury = 0 AND ?1 IS NOT NULL'",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-treasury-left-to-vanish",
+    "file": "server-account/src/guilds.js",
+    "old": "'DELETE FROM guilds WHERE id = ?1 AND treasury = 0 AND (SELECT COUNT(*) FROM guild_members WHERE guild_id = ?1) = 1'",
+    "new": "'DELETE FROM guilds WHERE id = ?1 AND (SELECT COUNT(*) FROM guild_members WHERE guild_id = ?1) = 1'",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-leaving-refusal-misnamed",
+    "file": "server-account/src/guilds.js",
+    "old": "return { error: (n?.n ?? 0) > 1 ? 'guild-master-leaves' : 'guild-treasury' };",
+    "new": "return { error: 'guild-treasury' };",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-removal-upward",
+    "file": "server-account/src/guilds.js",
+    "old": "if (!guildMay(a.me.rank, 'remove') || !guildOutranks(a.me.rank, t.rank)) return { error: 'guild-rank' };",
+    "new": "if (!guildMay(a.me.rank, 'remove')) return { error: 'guild-rank' };",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-removal-from-a-stale-rank",
+    "file": "server-account/src/guilds.js",
+    "old": "'DELETE FROM guild_members WHERE rowid = ? AND guild_id = ? AND rank = ?').bind(t.rid, a.me.guild_id, t.rank)",
+    "new": "'DELETE FROM guild_members WHERE rowid = ? AND guild_id = ? AND ? IS NOT NULL').bind(t.rid, a.me.guild_id, t.rank)",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-any-rank-moved",
+    "file": "server-account/src/guilds.js",
+    "old": "  if (!guildMayMove(a.me.rank, t.rank, rank)) return { error: 'guild-rank' };\n",
+    "new": "",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-move-from-a-stale-rank",
+    "file": "server-account/src/guilds.js",
+    "old": "'UPDATE guild_members SET rank = ? WHERE rowid = ? AND guild_id = ? AND rank = ?').bind(rank, t.rid, a.me.guild_id, t.rank)",
+    "new": "'UPDATE guild_members SET rank = ? WHERE rowid = ? AND guild_id = ? AND ? IS NOT NULL').bind(rank, t.rid, a.me.guild_id, t.rank)",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-rename-by-anyone",
+    "file": "server-account/src/guilds.js",
+    "old": "  if (!guildMay(a.me.rank, 'renameRanks')) return { error: 'guild-rank' };\n",
+    "new": "",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-bad-set-of-names-kept",
+    "file": "server-account/src/guilds.js",
+    "old": "  if (!names) return { error: 'bad-ranks' };\n",
+    "new": "",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-past-the-cap",
+    "file": "server-account/src/guilds.js",
+    "old": "WHERE id = ?2 AND treasury + ?1 <= ?3 RETURNING treasury')",
+    "new": "WHERE id = ?2 AND ?3 > 0 RETURNING treasury')",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-an-overdraft",
+    "file": "server-account/src/guilds.js",
+    "old": "WHERE id = ?2 AND treasury >= ?1 RETURNING treasury')",
+    "new": "WHERE id = ?2 RETURNING treasury')",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-an-officer-taking-gold",
+    "file": "server-account/src/guilds.js",
+    "old": "  if (!guildMay(a.me.rank, 'withdraw')) return { error: 'guild-rank' };\n",
+    "new": "",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-mover-unnamed",
+    "file": "server-account/src/guilds.js",
+    "old": ".bind(gold, me.guild_id, GUILD_TREASURY_MAX, who, nowS).first()",
+    "new": ".bind(gold, me.guild_id, GUILD_TREASURY_MAX, 'Someone', nowS).first()",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-moment-lost",
+    "file": "server-account/src/guilds.js",
+    "old": ".bind(gold, me.guild_id, who, nowS).first();",
+    "new": ".bind(gold, me.guild_id, who, 0).first();",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-an-officer-handing-it-on",
+    "file": "server-account/src/guilds.js",
+    "old": "  if (!guildMay(a.me.rank, 'handOver')) return { error: 'guild-rank' };\n",
+    "new": "",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-handed-to-oneself",
+    "file": "server-account/src/guilds.js",
+    "old": "if (!t || t.rid === a.me.rid) return { error: 'no-member' };",
+    "new": "if (!t) return { error: 'no-member' };",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-handed-on-by-one-who-no-longer-holds-it",
+    "file": "server-account/src/guilds.js",
+    "old": "WHERE rowid = ?1 AND guild_id = ?2\n      AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?3 AND guild_id = ?2 AND rank = ${GUILD_RANK_MASTER})`).bind(t.rid, a.me.guild_id, a.me.rid),",
+    "new": "WHERE rowid = ?1 AND guild_id = ?2\n      AND ?3 IS NOT NULL`).bind(t.rid, a.me.guild_id, a.me.rid),",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-giver-stepping-down-to-nobody",
+    "file": "server-account/src/guilds.js",
+    "old": "WHERE rowid = ?1 AND guild_id = ?2\n      AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?3 AND guild_id = ?2 AND rank = ${GUILD_RANK_MASTER})`).bind(a.me.rid, a.me.guild_id, t.rid),",
+    "new": "WHERE rowid = ?1 AND guild_id = ?2\n      AND ?3 IS NOT NULL`).bind(a.me.rid, a.me.guild_id, t.rid),",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-hand-over-said-done",
+    "file": "server-account/src/guilds.js",
+    "old": "return given?.meta?.changes ? { ok: true } : { error: 'no-member' };",
+    "new": "return { ok: true };",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-disband-by-an-officer",
+    "file": "server-account/src/guilds.js",
+    "old": "  if (!guildMay(a.me.rank, 'disband')) return { error: 'guild-rank' };\n",
+    "new": "",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-disband-with-gold-in-it",
+    "file": "server-account/src/guilds.js",
+    "old": "'DELETE FROM guilds WHERE id = ? AND treasury = 0').bind(a.me.guild_id)",
+    "new": "'DELETE FROM guilds WHERE id = ?').bind(a.me.guild_id)",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-succession-skipped",
+    "file": "server-account/src/guilds.js",
+    "old": "  await succeed(db, first.guild_id);\n",
+    "new": "",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-lowest-rank-succeeding",
+    "file": "server-account/src/guilds.js",
+    "old": "WHERE guild_id = ? ORDER BY rank, joined_at, rowid LIMIT 1)",
+    "new": "WHERE guild_id = ? ORDER BY rank DESC, joined_at, rowid LIMIT 1)",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-newest-succeeding",
+    "file": "server-account/src/guilds.js",
+    "old": "WHERE guild_id = ? ORDER BY rank, joined_at, rowid LIMIT 1)",
+    "new": "WHERE guild_id = ? ORDER BY rank, joined_at DESC, rowid LIMIT 1)",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-promoted-actor-read-stale",
+    "file": "server-account/src/guilds.js",
+    "old": "return { me: first.rank === GUILD_RANK_MASTER ? first : await memberRow(db, player.id, character) };",
+    "new": "return { me: first };",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-recruit-seeing-the-invitations",
+    "file": "server-account/src/guilds.js",
+    "old": "  const invites = guildMay(me.rank, 'invite')\n",
+    "new": "  const invites = true\n",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-both-characters-you",
+    "file": "server-account/src/guilds.js",
+    "old": "you: m.player === me.player && m.char_id === me.char_id,",
+    "new": "you: m.player === me.player,",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-ledger-oldest-first",
+    "file": "server-account/src/guilds.js",
+    "old": "ORDER BY seq DESC LIMIT ?').bind(guildId, GUILD_LEDGER_SHOWN)",
+    "new": "ORDER BY seq LIMIT ?').bind(guildId, GUILD_LEDGER_SHOWN)",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-roster-unranked",
+    "file": "server-account/src/guilds.js",
+    "old": "FROM guild_members WHERE guild_id = ? ORDER BY rank, joined_at, rowid')",
+    "new": "FROM guild_members WHERE guild_id = ? ORDER BY rowid')",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-stale-invitation-read",
+    "file": "server-account/src/guilds.js",
+    "old": ".bind(player.id, nowS - GUILD_INVITE_TTL_S).all();",
+    "new": ".bind(player.id, 0).all();",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-too-little-renown-a-conflict",
+    "file": "server-account/src/index.js",
+    "old": "'guilds-need-account': 403, 'guild-rank': 403, 'guild-renown': 403,",
+    "new": "'guilds-need-account': 403, 'guild-rank': 403, 'guild-renown': 409,",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-mine-refusal-unmapped",
+    "file": "server-account/src/index.js",
+    "old": "          return 'error' in r ? no(r.error, GUILD_STATUS[r.error] ?? 400, origin) : json(r, 200, origin);",
+    "new": "          return 'error' in r ? no(r.error, 400, origin) : json(r, 200, origin);",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-full-guild-a-bad-shape",
+    "file": "server-account/src/index.js",
+    "old": "'guild-tag-taken': 409, 'guild-full': 409,",
+    "new": "'guild-tag-taken': 409,",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-route-misspelt",
+    "file": "server-account/src/service.js",
+    "old": "'/v1/guilds/withdraw', '/v1/guilds/handover',",
+    "new": "'/v1/guilds/withdraw', '/v1/guilds/hand-over',",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-door-misspelt",
+    "file": "src/net/accountClient.js",
+    "old": "handOver: (character, member) => post('/v1/guilds/handover', { character, member }),",
+    "new": "handOver: (character, member) => post('/v1/guilds/handOver', { character, member }),",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-gold-misnamed",
+    "file": "src/net/accountClient.js",
+    "old": "deposit: (character, gold) => post('/v1/guilds/deposit', { character, gold }),",
+    "new": "deposit: (character, gold) => post('/v1/guilds/deposit', { character, amount: gold }),",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-a-refusal-unsaid",
+    "file": "src/net/accountClient.js",
+    "old": "  'guild-renown': `Founding a guild takes Renown ${GUILD_FOUND_RENOWN}.`,\n",
+    "new": "",
+    "tests": [
+      "test/guild1.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1-the-law-not-bundled",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "      - \"src/net/guildLaw.js\"\n",
+    "new": "",
+    "tests": [
+      "test/guild1.test.js",
+      "test/accountdeploy.test.js"
+    ]
+  }
+]

@@ -173,8 +173,8 @@ test('audit26 F158: the basket takes the CanCarryAmount gate and splits', () => 
   const t = rd('src/ui/nativeTrade.js');
   const arm = t.slice(t.indexOf('_pickRemote(slot)'), t.indexOf('_clear()'));
   assert.ok(arm.includes('planTake(item, {'), 'the Buy-mode remote click routes through the ladder');
-  assert.ok(arm.includes('bag: [...this.hooks.packItems(), ...this.basket]'),
-    'the bag under test is pack + basket - the player walks out with both');
+  assert.ok(arm.includes('bag: [...this.hooks.packItems(), ...this.basket.filter((x) => !isFurnishing(x))]'),
+    'the bag under test is pack + basket - the player walks out with both (DECOR2b: less the delivered furniture)');
   // DISC25-F: through the how-many popup now (TransferItem :1515-1539), whose count rides the plan
   assert.ok(arm.includes('this._split(item, plan.amount, (amount) => applyTransfer(item, { ...plan, amount }, this.hooks.shelfItems(), this.basket));'),
     'a partial fit splits through the same applyTransfer every screen uses');

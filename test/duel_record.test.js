@@ -140,8 +140,8 @@ test('DUEL1 the worker: /v1/duel/loss and /v1/duel/record behind a session, neit
   const { call } = await stand();
   assert.ok(ROUTES.has('/v1/duel/loss') && ROUTES.has('/v1/duel/record'));
   assert.ok(!OPEN_ROUTES.has('/v1/duel/loss') && !OPEN_ROUTES.has('/v1/duel/record'));
-  assert.equal(ACCOUNT_VERSION, 'acct9');   // DUEL1 was acct8; FOUNDER2's cutoff moved it on (acct9)
-  assert.match(src('server-account/wrangler.toml'), /ACCOUNT_VERSION = "acct9"/);
+  assert.equal(ACCOUNT_VERSION, 'acct10');   // DUEL1 was acct8; FOUNDER2's cutoff moved it on (acct9); RENOWN1's Renown, HOME1's homes, DECOR1's decor and GUILD1's guilds, one deploy, moved it again (acct10 - acct9 on the branch)
+  assert.match(src('server-account/wrangler.toml'), /ACCOUNT_VERSION = "acct10"/);
   const me = (await call('POST', '/v1/auth/guest', {})).body;
   const them = (await call('POST', '/v1/auth/guest', {})).body;
   // AUDIT DUEL1 A1: a guest's loss is fought, not counted - the record is between registered accounts

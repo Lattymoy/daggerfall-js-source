@@ -66,6 +66,13 @@ const GROUP_NAMES = Object.freeze({
   23: 'Transportation', 25: 'Jewellery',
 });
 
+/**
+ * DECOR2b: THE FURNISHER'S CHANCE. Daggerfall's stock law takes a (group, chance) pair for each kind of shop, and DFU's
+ * furniture store has no pair it ever reads (the Furniture group is skipped for every shop), so this one is the port's:
+ * fifty, the clothier's - a well-stocked store whose better pieces still wait on a better shop (systems/decorFurnish.js).
+ */
+export const FURNISHER_CHANCE = 0x32;
+
 // DaggerfallLootDataTables.itemGroups* - (groupId, chance) byte pairs.
 export const SHOP_ITEM_GROUPS = Object.freeze({
   [BUILDING_TYPES.Alchemist]: [0x0E, 0x1E, 0x0F, 0x32, 0x10, 0x32, 0x11, 0x1E, 0x12, 0x14, 0x13, 0x14, 0x14, 0x3C, 0x15, 0x28, 0x16, 0x1E],
@@ -76,6 +83,10 @@ export const SHOP_ITEM_GROUPS = Object.freeze({
   [BUILDING_TYPES.GeneralStore]: [0x03, 0x14, 0x06, 0x0A, 0x07, 0x0A, 0x09, 0x32, 0x17, 0x00, 0x0C, 0x0A, 0x04, 0x00],
   [BUILDING_TYPES.PawnShop]: [0x02, 0x0A, 0x03, 0x0A, 0x04, 0x0A, 0x07, 0x0A, 0x09, 0x14, 0x0D, 0x05, 0x0E, 0x0A, 0x19, 0x0A, 0x0A, 0x0A],
   [BUILDING_TYPES.WeaponSmith]: [0x02, 0x1E, 0x03, 0x46],
+  // DECOR2b: THE FURNISHER. Daggerfall's Furniture Stores stand with empty shelves - DFU's stock loop skips the
+  // Furniture group for every shop - and here they sell it, by the same law, at the port's own chance (a departure:
+  // systems/decorFurnish.js, delivered and never carried).
+  [BUILDING_TYPES.FurnitureStore]: [0x08, FURNISHER_CHANCE],
 });
 
 // E3: DaggerfallTradeWindow.storeBuysItemType, verbatim - the item
@@ -244,7 +255,7 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
     if (!group) continue;   // Maps/etc. groups outside the stocked set resolve to nothing
     if (group === 'MensClothing' && female) group = 'WomensClothing';
     if (group === 'WomensClothing' && !female) group = 'MensClothing';
-    if (group === 'Furniture' || group === 'UselessItems1') continue;
+    if ((group === 'Furniture' && buildingType !== BUILDING_TYPES.FurnitureStore) || group === 'UselessItems1') continue;   // DECOR2b: the furnisher's own
     if (group === 'MagicItems') {
       // AUDIT 26 F130: StockShopShelf creates ONE random magic item
       // for the MagicItems group (DaggerfallLoot.cs:240-243 -

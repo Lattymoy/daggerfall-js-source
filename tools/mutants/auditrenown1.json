@@ -1,0 +1,547 @@
+[
+  {
+    "name": "AUDIT-RENOWN1-hour-window-steps-back",
+    "file": "server-account/src/renownTracks.js",
+    "old": "         renown_hour = MAX(renown_hour, ?6)",
+    "new": "         renown_hour = ?6",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-late-report-own-window",
+    "file": "server-account/src/renownTracks.js",
+    "old": "  const room = 'CASE WHEN renown_hour >= ?6 THEN MAX(0, ?5 - renown_hour_xp) ELSE ?5 END';",
+    "new": "  const room = 'CASE WHEN renown_hour = ?6 THEN MAX(0, ?5 - renown_hour_xp) ELSE ?5 END';",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-rate-window-steps-back",
+    "file": "server-account/src/accounts.js",
+    "old": "      window_start = MAX(rate_limits.window_start, excluded.window_start)",
+    "new": "      window_start = excluded.window_start",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-rate-window-equality",
+    "file": "server-account/src/accounts.js",
+    "old": "      count = CASE WHEN rate_limits.window_start >= excluded.window_start THEN rate_limits.count + 1 ELSE 1 END,",
+    "new": "      count = CASE WHEN rate_limits.window_start = excluded.window_start THEN rate_limits.count + 1 ELSE 1 END,",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-repeat-credited",
+    "file": "server-account/src/renownTracks.js",
+    "old": "  const want = `CASE WHEN ${repeat} OR ${refused} THEN 0 ELSE",
+    "new": "  const want = `CASE WHEN ${refused} THEN 0 ELSE",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-rid-unread-at-route",
+    "file": "server-account/src/index.js",
+    "old": "name: body.name ?? null, rid: body.rid ?? null });",
+    "new": "name: body.name ?? null, rid: null });",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-empty-track-made",
+    "file": "server-account/src/renownTracks.js",
+    "old": "       WHERE id = ?1 AND renown_last_credit > 0\n",
+    "new": "       WHERE id = ?1\n",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-route-repeat-carries-no-order",
+    "file": "server-account/src/index.js",
+    "old": "        if (r.rose || (r.repeat && r.level > 1)) {",
+    "new": "        if (r.rose) {",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-relay-any-change-fanned",
+    "file": "server/src/index.js",
+    "old": "      if (!(r.claims.lv > (cur.lv ?? 0))) {",
+    "new": "      if (r.claims.lv === cur.lv) {",
+    "tests": [
+      "test/auditrenown1.test.js",
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-relay-channel-takes-renown",
+    "file": "server/src/index.js",
+    "old": "      if (!at?.id || isChatRoom(at.key) || isSocialRoom(at.key)) return;",
+    "new": "      if (!at?.id) return;",
+    "tests": [
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-relay-room-budget-unread",
+    "file": "server/src/index.js",
+    "old": "      if (!budget.pass) return;\n      this._roomRenown = budget.bucket;",
+    "new": "      this._roomRenown = budget.bucket;",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-relay-carrier-unanswered",
+    "file": "server/src/index.js",
+    "old": "        if (renownIssuable(cur.lv)) this._send(ws, JSON.stringify({ t: 'renown', id: cur.id, lv: cur.lv }));",
+    "new": "        void renownIssuable;",
+    "tests": [
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-room-budget-wide",
+    "file": "src/net/wire.js",
+    "old": "export const RENOWN_ROOM_HZ_MAX = 4;",
+    "new": "export const RENOWN_ROOM_HZ_MAX = 64;",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-session-flag-session-wide",
+    "file": "src/net/online.js",
+    "old": "      if (_rnWs) { this._rnOf(_rnWs).ok = relaySupportsRenown(relayV); this._flushRenown(now); }",
+    "new": "      if (_rnWs) { for (const w of [this._ws, ...[...this._halo.values()].map((h) => h.ws)]) if (w) this._rnOf(w).ok = relaySupportsRenown(relayV); this._flushRenown(now); }",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-session-welcome-sends-nothing",
+    "file": "src/net/online.js",
+    "old": "      if (_rnWs) { this._rnOf(_rnWs).ok = relaySupportsRenown(relayV); this._flushRenown(now); }",
+    "new": "      if (_rnWs) { this._rnOf(_rnWs).ok = relaySupportsRenown(relayV); }",
+    "tests": [
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-session-rise-lost-to-the-gate",
+    "file": "src/net/online.js",
+    "old": "      if (!gate.pass) return;\n      try { ws.send(frame);",
+    "new": "      if (!gate.pass) { this._rnOrder = null; return; }\n      try { ws.send(frame);",
+    "tests": [
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-session-answered-room-sent-again",
+    "file": "src/net/online.js",
+    "old": "      if (!st.ok || st.lv >= o.lv) return;",
+    "new": "      if (!st.ok) return;",
+    "tests": [
+      "test/auditrenown1.test.js",
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-session-resend-at-once",
+    "file": "src/net/online.js",
+    "old": "      if (st.sent >= o.lv && now - st.at < RENOWN_RESEND_MS) return;",
+    "new": "      if (st.sent >= o.lv && now - st.at < 0) return;",
+    "tests": [
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-session-tick-never-retries",
+    "file": "src/net/online.js",
+    "old": "    if (this._rnOrder) this._flushRenown(now);",
+    "new": "    void this._rnOrder;",
+    "tests": [
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-own-echo-steps-back",
+    "file": "src/net/online.js",
+    "old": "        if (lv > (this.lv ?? 0)) this.lv = lv;\n        return;",
+    "new": "        this.lv = lv;\n        return;",
+    "tests": [
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-peer-level-steps-back",
+    "file": "src/net/online.js",
+    "old": "      if (p && lv > (p.lv ?? 0)) p.lv = lv;",
+    "new": "      if (p) p.lv = lv;",
+    "tests": [
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-known-level-steps-back",
+    "file": "src/net/online.js",
+    "old": "      if (k && lv > (k.lv ?? 0)) k.lv = lv;",
+    "new": "      if (k) k.lv = lv;",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-known-level-unraised",
+    "file": "src/net/online.js",
+    "old": "      if (k && lv > (k.lv ?? 0)) k.lv = lv;",
+    "new": "      void k;",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-refresh-leaves-the-level",
+    "file": "src/net/online.js",
+    "old": "    p.lv = readRenown(m);   // RENOWN1: the newest hello's level, whatever it is - including none",
+    "new": "    void readRenown;",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-tracker-new-id-per-retry",
+    "file": "src/net/renownTracker.js",
+    "old": "    if (held) return held;",
+    "new": "    if (held) { held.rid = rid(); return held; }",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-tracker-no-backoff",
+    "file": "src/net/renownTracker.js",
+    "old": "  const waitMs = () => (refused ? Math.min(RENOWN_BACKOFF_MAX_MS, RENOWN_REPORT_MS * 2 ** (refused - 1)) : RENOWN_REPORT_MS);",
+    "new": "  const waitMs = () => RENOWN_REPORT_MS;",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-tracker-early-after-a-refusal",
+    "file": "src/net/renownTracker.js",
+    "old": "(!refused && held === null && pending >= RENOWN_XP_REPORT_MAX)",
+    "new": "(pending >= RENOWN_XP_REPORT_MAX)",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-tracker-backoff-ceiling",
+    "file": "src/net/renownTracker.js",
+    "old": "export const RENOWN_BACKOFF_MAX_MS = 15 * 60_000;",
+    "new": "export const RENOWN_BACKOFF_MAX_MS = 60 * 60_000;",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-tracker-leave-clears",
+    "file": "src/net/renownTracker.js",
+    "old": "      try { leave(h.character, h.xp, name?.() ?? null, h.rid); return true; } catch { return false; }",
+    "new": "      try { leave(h.character, h.xp, name?.() ?? null, h.rid); held = null; return true; } catch { return false; }",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-client-keepalive-dropped",
+    "file": "src/net/accountClient.js",
+    "old": "    leave: (character, xp, name = null, rid = null) => report(character, xp, name, rid, true),",
+    "new": "    leave: (character, xp, name = null, rid = null) => report(character, xp, name, rid, false),",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-answer-order-gated-on-rise",
+    "file": "src/net/renownTracker.js",
+    "old": "  const order = typeof data?.order === 'string' && data.order ? data.order : null;",
+    "new": "  const order = typeof data?.order === 'string' && data.order && data?.rose ? data.order : null;",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-answer-announced-once-ever",
+    "file": "src/net/renownTracker.js",
+    "old": "(said === null || level > said)",
+    "new": "(said === null)",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-answer-hour-line-at-the-cap",
+    "file": "src/net/renownTracker.js",
+    "old": "data.credited < sent && !data?.max && !data?.repeat;",
+    "new": "data.credited < sent && !data?.repeat;",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-answer-hour-line-for-a-repeat",
+    "file": "src/net/renownTracker.js",
+    "old": "data.credited < sent && !data?.max && !data?.repeat;",
+    "new": "data.credited < sent && !data?.max;",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-watch-pays",
+    "file": "src/net/renownTracker.js",
+    "old": "const neverPays = (foe) => foe.mobileType === KNIGHT_CITY_WATCH || foe.entity?.team",
+    "new": "const neverPays = (foe) => foe.entity?.team",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-ally-pays-once-turned",
+    "file": "src/net/renownTracker.js",
+    "old": "else _struck.set(foe, { at: now, paid: never });",
+    "new": "else _struck.set(foe, { at: now, paid: false });",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-carry-lost",
+    "file": "src/net/renownTracker.js",
+    "old": "  if (e) _struck.set(to, { at: e.at, paid: e.paid });",
+    "new": "  void e;",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-revived-keeps-its-pay",
+    "file": "src/net/renownTracker.js",
+    "old": "  if (foe && typeof foe === 'object') _struck.delete(foe);",
+    "new": "  void foe;",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-streamed-level-unread",
+    "file": "src/net/renownTracker.js",
+    "old": "  const l = foe?.streamedLevel ?? foe?.entity?.level ?? foe?.builtLevel;",
+    "new": "  const l = foe?.entity?.level ?? foe?.builtLevel;",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-dungeon-level-unstreamed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "f.entity.level <= FOE_LEVEL_MAX) r.l = f.entity.level;",
+    "new": "f.entity.level <= FOE_LEVEL_MAX) void r;",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-joiner-level-unkept",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (r.l !== undefined && f.mobileType >= 128) f.streamedLevel = r.l;",
+    "new": "    void r.l;",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-rebuild-forgets-my-blows",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (landed && !f.dead) renownFoeCarry(f, rec);",
+    "new": "      void landed;",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-undeath-keeps-the-pay",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    renownFoeRevived(f);   // AUDIT RENOWN1 GAME-10",
+    "new": "    void renownFoeRevived;   // AUDIT RENOWN1 GAME-10",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-street-wabbajack-forgets",
+    "file": "src/scenes/world.js",
+    "old": "      renownFoeCarry(f, nf);              // AUDIT RENOWN1 GAME-10",
+    "new": "      void renownFoeCarry;              // AUDIT RENOWN1 GAME-10",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-street-scripted-kill-mine",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "damageFoe(f, f.entity.health, null, null, { fromPlayer: false, bypassShield: true }); },   // AUDIT WORLD6b B9",
+    "new": "damageFoe(f, f.entity.health, null, null, { bypassShield: true }); },   // AUDIT WORLD6b B9",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-dungeon-scripted-kill-mine",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    zeroFoeHealth: (f) => { if (!f.dead) damageFoe(f, f.entity.health, null, null, { fromPlayer: false, bypassShield: true }); },",
+    "new": "    zeroFoeHealth: (f) => { if (!f.dead) damageFoe(f, f.entity.health, null, null, { bypassShield: true }); },",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-limiter-caps-the-layer",
+    "file": "src/systems/chargen.js",
+    "old": "      return own + renownHpOf(this);",
+    "new": "      return Math.min(stored + renownHpOf(this), limiter >= 1 ? limiter : Infinity);",
+    "tests": [
+      "test/auditrenown1.test.js",
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-urge-clamps-to-raw",
+    "file": "src/systems/lycanthropy.js",
+    "old": "    const ceiling = limit + renownHpOf(entity);",
+    "new": "    const ceiling = limit;",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-full-heal-to-raw",
+    "file": "src/systems/lycanthropy.js",
+    "old": "(entity?.maxHealthLimiter ?? Infinity) + renownHpOf(entity));",
+    "new": "(entity?.maxHealthLimiter ?? Infinity));",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-cure-to-raw",
+    "file": "src/systems/lycanthropy.js",
+    "old": "  entity.health = (entity.rawMaxHealth ?? entity.maxHealth ?? entity.health) + renownHpOf(entity);",
+    "new": "  entity.health = entity.rawMaxHealth ?? entity.maxHealth ?? entity.health;",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-magery-of-the-layer",
+    "file": "src/systems/passiveSpecials.js",
+    "old": "  const raw = Math.max(0, (entity.maxMagicka ?? 0) - renownMpOf(entity));",
+    "new": "  const raw = entity.maxMagicka ?? 0;",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-zero-maximum-holds-one",
+    "file": "src/systems/renownLayer.js",
+    "old": "  return Math.min(to, Math.max(1, Math.round((v * to) / from)));",
+    "new": "  return Math.max(1, Math.min(to, Math.round((v * to) / from)));",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-acct-value-unshrinking",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".acctval { flex: 0 1 auto; min-width: 0; overflow-wrap: anywhere; }",
+    "new": ".acctval { flex: 0 0 auto; }",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-cap-row-twice",
+    "file": "src/net/renown.js",
+    "old": "  if (p.level >= RENOWN_MAX) return 'the highest there is';",
+    "new": "  if (p.level >= RENOWN_MAX) return `Renown ${RENOWN_MAX} - the highest`;",
+    "tests": [
+      "test/auditrenown1.test.js",
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-chip-names-nobody",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "      chip.title = `Renown ${tracks[0].level}${typeof tracks[0].name === 'string' && tracks[0].name ? ` - ${tracks[0].name}` : ''}`;",
+    "new": "      chip.title = `Renown ${tracks[0].level}`;",
+    "tests": [
+      "test/auditrenown1.test.js",
+      "test/renown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-chip-on-every-stage",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "    const tracks = stage === 'in' && Array.isArray(flow.account?.renown) ? flow.account.renown : [];",
+    "new": "    const tracks = Array.isArray(flow.account?.renown) ? flow.account.renown : [];",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-card-level-frozen",
+    "file": "src/scenes/world.js",
+    "old": "    _profileView = profileRenown(v, online?.renownOf?.(peerId) ?? null);",
+    "new": "    _profileView = v;",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-card-renown-noop",
+    "file": "src/ui/profileWindow.js",
+    "old": "  return { ...v, level: text, levelTitle: `Renown ${lv}` };",
+    "new": "  return v;",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-bitmap-run-measured-short",
+    "file": "src/net/remotePlayers.js",
+    "old": "      const tw = measureText(font.fnt, run) * s;",
+    "new": "      const tw = measureText(font.fnt, marks ? `${n.name} ${marks}` : n.name) * s;",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RENOWN1-box-written-once",
+    "file": "src/ui/nameLayer.js",
+    "old": "        setText(tag.lv, renownText(p.lv) ?? '');   // RENOWN1: \"12\" in its box, or nothing",
+    "new": "        if (!tag.lv.textContent) setText(tag.lv, renownText(p.lv) ?? '');   // RENOWN1: \"12\" in its box, or nothing",
+    "tests": [
+      "test/auditrenown1.test.js"
+    ]
+  }
+]

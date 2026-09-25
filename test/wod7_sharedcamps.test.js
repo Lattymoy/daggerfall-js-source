@@ -12,7 +12,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { wodSiteId, validSites, validSiteTags, yieldsTo, WOD_SITES_MAX, WOD_CAMP_PUPPETS_MAX, WOD_CLAIM_WINDOW_MS, WOD_AGE_MAX } from '../src/world/wodShared.js';
-import { createExteriorFoes } from '../src/scenes/exteriorFoes.js';
+import { createExteriorFoes, MAX_ACTIVE_ENCOUNTER_FOES } from '../src/scenes/exteriorFoes.js';
 import { CELL_PUPPETS_MAX } from '../src/net/wire.js';
 import { isPeerTarget } from '../src/characters/enemyTargets.js';
 
@@ -153,7 +153,7 @@ test('WOD7: a reader stands an owner\'s camp under WOD_CAMP_PUPPETS_MAX, apart f
   A.setNet(netFor('aaaa-0001')); A.setOnSites(() => {}, () => [['3,12:99', 40]]);
   await camp(A, WOD_CAMP_PUPPETS_MAX + 4, '3,12:7');
   const enc = [];
-  for (let i = 0; i < CELL_PUPPETS_MAX; i++) enc.push(await A.spawnFoe(3, [10 + i, 0, 10], { feetGiven: true }));
+  for (let i = 0; i < MAX_ACTIVE_ENCOUNTER_FOES; i++) enc.push(await A.spawnFoe(3, [10 + i, 0, 10], { feetGiven: true }));   // AUDIT PSCALE1 COUNT-4: the owner's whole encounter load (the reader's allowance is that and CELL_LOOSE_PUPPETS more)
   const frame = JSON.parse(JSON.stringify(A.foesFrame(true)));   // through the wire's JSON
   const B = createExteriorFoes(poolRig());
   B.setNet(netFor('bbbb-0002'));
@@ -163,7 +163,8 @@ test('WOD7: a reader stands an owner\'s camp under WOD_CAMP_PUPPETS_MAX, apart f
   await flush();
   const pups = B.foes.filter((f) => f.puppet === 'aaaa-0001' && !f.dead);
   assert.equal(pups.filter((f) => f.site === '3,12:7').length, WOD_CAMP_PUPPETS_MAX, 'the camp, under its own allowance');
-  assert.equal(pups.filter((f) => !f.site).length, CELL_PUPPETS_MAX, 'and every encounter foe still stands beside it - the bug M1 kept the camps home for');
+  assert.equal(pups.filter((f) => !f.site).length, MAX_ACTIVE_ENCOUNTER_FOES, 'and every encounter foe still stands beside it - the bug M1 kept the camps home for');
+  assert.ok(MAX_ACTIVE_ENCOUNTER_FOES <= CELL_PUPPETS_MAX);
   assert.deepEqual(heard, [['aaaa-0001', [['3,12:7', WOD_AGE_MAX], ['3,12:99', 40]]]], 'the host is told both, with their ages: the camp it sees and the treasure it does not');
   // AUDIT WOD7: a camp the allowance refused whole is NOT spent here - B's allowance for A is full, so A's next camp stands
   // nowhere at B, and B's own marker for it must stay B's to spring

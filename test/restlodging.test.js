@@ -566,7 +566,7 @@ test('S40 hosts: all four can now rest, and each supplies its own place', () => 
   assert.match(wm, /return interiorRestPlace\(\{/);
   assert.match(wm, /room: findRentedRoom\(playerEntity\.rentedRooms/);
   // H1's ledger, which both rest lanes had to leave as a constant.
-  assert.match(wm, /houseOwned: isHouseOwned\(playerEntity\.houses/);
+  assert.match(wm, /houseOwned: interiorHome \? interiorHome\.own : isHouseOwned\(playerEntity\.houses/);   // HOME1 re-aim: my online home's bed is mine too
   assert.match(wm, /guildCanRest\(guild, membershipOf/);
   assert.match(wm, /m\.type === INTERIOR_MARKER\.REST/);
   assert.match(wm, /permanentScene: !!scene && containsPermanentScene\(sceneCache\(\), scene\)/);

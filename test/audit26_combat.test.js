@@ -37,8 +37,8 @@ test('F035/F041: every damage door takes a provenance flag, defaulting TRUE', ()
   // idiom for the same reason - Shield mitigates DAMAGE, and the
   // SetHealth(0) door is not damage (DaggerfallEntity.cs:313-328).
   assert.ok(src('scenes/cityGuards.js').includes('function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false, peer = false } = {})'));
-  assert.ok(src('scenes/exteriorFoes.js').includes("function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false, kind = 'melee', peer = false, peerId = null } = {})"));   // WORLD6b-ii: and the striker's id, as the dungeon's   // WORLD6b: the kind and the peer flag, as the dungeon's
-  assert.ok(src('scenes/dungeonContext.js').includes('function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true, bypassShield = false, kind = \'melee\', peer = false, peerId = null } = {})'));   // WORLD3: and the striker's id (the aggro turns on the peer); WORLD2: and the blow's kind, for the hit that goes to the host; AUDIT WORLD2 C4: and whether it is a peer's
+  assert.ok(src('scenes/exteriorFoes.js').includes("function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false, kind = 'melee', peer = false, peerId = null, whole = false } = {})"));   // WORLD6b-ii: and the striker's id, as the dungeon's   // WORLD6b: the kind and the peer flag, as the dungeon's
+  assert.ok(src('scenes/dungeonContext.js').includes('function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true, bypassShield = false, kind = \'melee\', peer = false, peerId = null, whole = false } = {})'));   // AUDIT PSCALE1 DOORS-1: and whether it is a kill   // WORLD3: and the striker's id (the aggro turns on the peer); WORLD2: and the blow's kind, for the hit that goes to the host; AUDIT WORLD2 C4: and whether it is a peer's
 });
 
 test('F035: the Murder crime is gated on the player being the source', () => {
@@ -127,17 +127,20 @@ test('F035/F041: the FALL arms - and MT-ii\'s foe-source door - pass fromPlayer 
     // never struck. The dungeon keeps its single fall arm (MT-iv).
     // MT-iv gave the dungeon its foe-source door too, so all THREE
     // pools now carry the pair (the fall arm and hurtFromFoe).
-    const expected = 2;
+    // AUDIT PSCALE1 DOORS-2 gave the watch a THIRD: the Ring of Namira's reflection through his own door, which is
+    // no blow of the player's either (it levies no crime, as the number it used to write levied none)
+    const expected = f === 'scenes/cityGuards.js' ? 3 : 2;
     assert.equal(hits.length, expected, `${f} has ${expected} sourceless caller(s)`);
     falseCalls += hits.length;
     // every one of them is either the FALL arm or the foe-source door
     for (const h of hits) {
       const before = s.slice(Math.max(0, h.index - 700), h.index);
-      assert.ok(before.includes('landedFall') || before.includes('hurtFromFoe'),
-        `${f}: a sourceless call is the FALL arm or the foe-source door`);
+      const line = s.slice(s.lastIndexOf('\n', h.index), h.index);
+      assert.ok(before.includes('landedFall') || before.includes('hurtFromFoe') || line.includes('registerFoeDoor(entity'),
+        `${f}: a sourceless call is the FALL arm, the foe-source door or the reflection's door`);
     }
   }
-  assert.equal(falseCalls, 6);
+  assert.equal(falseCalls, 7);
 });
 
 // ── F038 ──────────────────────────────────────────────────────────

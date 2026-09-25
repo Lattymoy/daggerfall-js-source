@@ -743,7 +743,7 @@ Main moved thirty commits while the arc was in review. Merged, not rebased; 106 
 - **Six of main's mutant records, re-aimed by content.** Each is aimed at the site its name gives, and each dies
   against a green baseline.
   - Four SURV-TIERS records mutate line cites in source comments, and the merge had moved those cites
-    (`world.js:3184` is `:3195` now).
+    (`world.js:3211` is `:3222` now).
   - MUT-AIM found two that name two sites each:
     - DISC10-D-H1's stamp, which the hit's defaults and the kill's share;
     - DISC9's heard word, which DISC11's rain gain repeats below it.

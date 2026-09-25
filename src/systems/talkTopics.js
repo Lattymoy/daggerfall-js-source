@@ -224,13 +224,20 @@ function blockInstanceOf(blocks, d) {
 }
 
 /** E2: one exterior door -> its MERGED building data + buildingKey
- *  (the interior host's shop identity: type/quality/seed/faction). */
+ *  (the interior host's shop identity: type/quality/seed/faction).
+ *  HOME1: and the building's MODEL (`modelIdNum`, locationBuildings'
+ *  own read below - the first 3D object of its subrecord), because a
+ *  house bought at its own door is priced off that model's radius
+ *  (banking.js housePrice, what Daggerfall's bank asks); the block's
+ *  building data carries no model, so the door's record had none and
+ *  every house read as unpriceable. */
 export function buildingDataForDoor(exteriorBuildings, blocks, door, { locationIndex = 0 } = {}) {
   const merged = mergeNamedBuildings(exteriorBuildings, blocks, { locationIndex });
   const inst = blockInstanceOf(blocks, door);
   const data = inst ? merged.get(inst)?.[door.recordIndex] : null;
   if (!data) return null;
-  return { ...data, buildingKey: makeBuildingKey(inst.x ?? 0, inst.y ?? 0, door.recordIndex) };
+  const model = inst.dfBlock?.rmbBlock?.subRecords?.[door.recordIndex]?.exterior?.block3dObjectRecords?.[0] ?? null;
+  return { ...data, buildingKey: makeBuildingKey(inst.x ?? 0, inst.y ?? 0, door.recordIndex), modelIdNum: model?.modelIdNum ?? null };
 }
 
 /**

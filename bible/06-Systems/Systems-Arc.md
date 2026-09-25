@@ -4572,7 +4572,7 @@ the true clause along with the false ones is in the campaign, because
 over-retiring is the equal and opposite failure.
 
 **And one delegation pointed at a flag nobody had ever written.**
-`world.js:2769` said the dungeon-mode enchant ctx was "FLAGGED there
+`world.js:2796` said the dungeon-mode enchant ctx was "FLAGGED there
 with the rest of its enchant wiring" in `dungeonContext.js`. It was
 not. `setDefaultEnchantCtx` had exactly **one** caller in the tree, so
 the standalone `?dungeon` host ran every arm that needs a host
@@ -4655,7 +4655,7 @@ affinity scans saw an empty room. Nothing threw and nothing was
 logged - the enchantment simply had no effect where the fighting is.
 
 And it really was the only ctx in play: **no host passes an
-`enchantCtx` at the strike site** (`formulas.js:505` defaults it
+`enchantCtx` at the strike site** (`formulas.js:506` defaults it
 `null`), so `mergeCtx` folds this one mount under every dispatch, in
 every mode. FS1 had just found the other half of the same hole - the
 standalone `?dungeon` host mounts no ctx at all - and that half is
@@ -5550,7 +5550,7 @@ to that cite and moves under the same content check; citeMerge had
 done this since CS2 and citeShift only reported them, so the two
 regexes are one law now, exported from citeShift (`ANY_CITE`,
 `CONTINUATION`) and imported by citeMerge. (2) A TEST'S ESCAPED
-LITERAL FOLLOWS THE ROW IT PINS: `world\.js:6010` in citedrift.test.js
+LITERAL FOLLOWS THE ROW IT PINS: `world\.js:6051` in citedrift.test.js
 is a quote of a Ledger row's text; the row is STRUCK and its number
 held, and the literal used to move anyway, parting the pin from its
 row at every shift. The CLI plans every doc first, learns which

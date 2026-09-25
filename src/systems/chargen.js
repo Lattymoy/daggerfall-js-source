@@ -3,6 +3,7 @@ import { spellPointsFor } from '../combat/formulas.js';   // U10
 import { mintCharacterId } from './characterId.js';   // CHARID1
 import { CLASSIC_GAME_START_TIME } from './gameDate.js';   // AUDIT 23: the skill-check anchor
 import { liveStat, STAT_KEYS_ORDER, FATIGUE_MULTIPLIER } from './statMods.js';   // wave 28: MaxMagicka reads LiveIntelligence
+import { renownHpOf, renownMpOf } from './renownLayer.js';   // RENOWN1: Renown's online health and magicka, on top of both live maximums
 
 // Character creation (Systems S3). Verbatim ports from DFU
 // StatsRollout.cs / SkillsRollout.cs / DaggerfallSkills.cs /
@@ -313,9 +314,15 @@ export function defineLiveMaxHealth(entity) {
     configurable: true,
     enumerable: true,
     get() {
+      // RENOWN1: Renown's online health ON TOP of the stored value (systems/renownLayer.js) - never in it, so a
+      // level-up (which adds to `rawMaxHealth`) and the save (which keeps it) never carry the layer.
+      // AUDIT RENOWN1 GAME-4: and on top of the LIMITER too. The limiter is computed off the raw value
+      // (lycanthropy.js), so capping raw + layer with it took the whole layer away the minute the urge began - a
+      // Renown 50 werewolf at 247 of 247 fell to 100 of 100. The limiter caps Daggerfall's own maximum; the layer
+      // rides above whatever Daggerfall allows ("On top").
       const limiter = this.maxHealthLimiter;
-      if (!(limiter >= 1)) return stored;   // "Limiter must be 1 or greater"
-      return limiter < stored ? limiter : stored;
+      const own = limiter >= 1 && limiter < stored ? limiter : stored;   // "Limiter must be 1 or greater"
+      return own + renownHpOf(this);
     },
     set(v) { stored = v; },
   });
@@ -364,7 +371,9 @@ export function defineLiveMaxMagicka(entity) {
         ? spellPoints(liveStat(this, 'intelligence'),
           spellPointMultiplier(career.abilityFlagsAndSpellPointsBitfield ?? 0x1000))
         : stored;
-      const effective = raw + (this.maxMagickaModifier ?? 0);
+      // RENOWN1: and Renown's online magicka, a term of the sum the magic round never rewrites
+      // (systems/renownLayer.js) - inside the floor, so a magery that makes the character unable still leaves 0
+      const effective = raw + (this.maxMagickaModifier ?? 0) + renownMpOf(this);
       return effective < 0 ? 0 : effective;
     },
     set(v) { stored = v; },

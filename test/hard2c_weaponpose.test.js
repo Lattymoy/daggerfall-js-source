@@ -12,7 +12,7 @@
 // bare fists. By the time it was found the two restore lines had
 // drifted six and thirteen lines apart inside their own hosts, and the
 // comment that pointed between them cited line numbers that no longer
-// existed (worldModes.js named `world.js:6810` and `dungeonContext
+// existed (worldModes.js named `world.js:6851` and `dungeonContext
 // .js:5451` for lines that live at :4418 and :5457).
 //
 // HARD2's three rules, and how this slice meets them:
@@ -55,10 +55,10 @@ const RIG = [{ sheathed: true, usingRightHand: true }, { sheathed: true, usingRi
   { sheathed: false, usingRightHand: true }, { sheathed: false, usingRightHand: false }];
 
 test('HARD2c: the WRITE differential - the old inline arithmetic, carried verbatim', () => {
-  // worldModes.js:9898 and dungeonContext.js:6286, character for
+  // worldModes.js:10351 and dungeonContext.js:6342, character for
   // character as they stood before this slice.
   const oldCompose = (w) => ({ weaponDrawn: !w.sheathed, usingRightHand: w.usingRightHand });
-  // world.js:6576's own, which is the MERGE - `wp` is the mode host's
+  // world.js:6617's own, which is the MERGE - `wp` is the mode host's
   // answer for the rig actually drawn, taken PER FIELD.
   const oldMerge = (wp, rig) => ({
     weaponDrawn: wp?.weaponDrawn ?? !rig.sheathed,
@@ -81,8 +81,8 @@ test('HARD2c: the WRITE differential - the old inline arithmetic, carried verbat
 });
 
 test('HARD2c: the RESTORE differential - all three copies were the same law', () => {
-  // world.js:6877/:6890, dungeonContext.js:6335/:6335 and
-  // worldModes.js:9896-9897 - three copies, one law, carried verbatim.
+  // world.js:6918/:6931, dungeonContext.js:6391/:6391 and
+  // worldModes.js:10349-10350 - three copies, one law, carried verbatim.
   const oldApply = (w, pose) => {
     if (!pose) return;
     if (pose.weaponDrawn != null) w.sheathed = !pose.weaponDrawn;
