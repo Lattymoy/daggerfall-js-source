@@ -310,8 +310,8 @@
  {
   "name": "AUDIT-GRASSPX-the-row-does-not-say-what-it-is-inert-without",
   "file": "src/systems/features.js",
-  "old": " Nothing to change unless '\n      + 'the enhanced outdoors are on and Grass density is above Off.',",
-  "new": "',",
+  "old": "    note: 'How much of the meadow grows under the enhanced outdoors - the heaviest thing outdoors, so try Half first if '",
+  "new": "    note: 'How much of the meadow grows - the heaviest thing outdoors, so try Half first if '",
   "tests": [
    "test/grasspx.test.js"
   ]

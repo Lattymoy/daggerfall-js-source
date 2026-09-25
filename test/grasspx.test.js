@@ -312,13 +312,16 @@ test('GRASS-PX: the renderer compiles the game\'s stages, uploads the sheet with
 });
 
 test('GRASS-PX: the row, its default, and the host reading it live', () => {
-  const ids = FEATURES.map((f) => f.id);
-  assert.equal(ids.indexOf('grass-style'), ids.indexOf('grass-density') + 1, 'beside the density dial');
+  // FT18: the style is a PART of the one grass row - its drawer, under the density's bar - so "beside the density
+  // dial" is structural now, and the inertness GRASS AUDIT 1 made the note say is where the control stands
   const world = read('src/scenes/world.js');
-  const row = FEATURES.find((f) => f.id === 'grass-style');
-  assert.deepEqual({ ...row.control, tiers: row.control.tiers.map((t) => [...t]) }, { store: 'prefs', key: 'grassStyle', initial: 'pixel', online: 'player', tiers: [['pixel', 'Pixel'], ['smooth', 'Smooth']] });
-  assert.equal(row.group, 'sight'); assert.deepEqual([...row.kinds], ['enhanced']); assert.equal(row.effect, 'Takes effect at once.');
-  assert.ok(row.note.includes('unless the enhanced outdoors are on and Grass density is above Off'), 'GRASS AUDIT 1: the row says what it is inert without, as FT7\'s law has its sibling say');
+  const row = FEATURES.find((f) => f.id === 'grass');
+  assert.equal(row.control.key, 'grassDensity', 'the bar is the density');
+  const part = row.control.parts.find((pt) => pt.key === 'grassStyle');
+  assert.deepEqual({ ...part, tiers: part.tiers.map((t) => [...t]) }, { key: 'grassStyle', label: 'Style', tiers: [['pixel', 'Pixel'], ['smooth', 'Smooth']] });
+  assert.deepEqual({ ...row.control.also.find((a) => a.key === 'grassStyle') }, { store: 'prefs', key: 'grassStyle', initial: 'pixel', online: 'player' });
+  assert.equal(row.group, 'sight'); assert.deepEqual([...row.kinds], ['enhanced']); assert.match(row.effect, /the style at once\.$/);
+  assert.ok(row.note.includes('under the enhanced outdoors'), 'GRASS AUDIT 1: the row says what it is inert without');
   assert.ok(world.includes('vertsPerBlade: labGrass._oneQuad ? labGrass.vertsFar : labGrass.verts'), 'GRASS AUDIT 1: the stats say which blade the frame drew');
   assert.equal(FEATURE_PREF_DEFAULTS.grassStyle, 'pixel', 'the shelf\'s default is the row\'s');
   assert.deepEqual(['pixel', 'smooth', undefined, 'junk'].map(pixelGrass), [true, false, true, true]);

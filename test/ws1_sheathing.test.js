@@ -388,7 +388,12 @@ test('WS1: the wiring, by source - the third-person build takes the addons and t
   // wire; the pose's `wd` carries a peer's drawn weapon either way.
   assert.match(feat, /control: Object\.freeze\(\{ store: 'prefs', key: 'mwSheathing', initial: true, online: 'player' \}\),/, 'RF4: the switch declared once, on its row, on by default, and the player\'s online');
   assert.ok(!/mwSheathing: (true|false),/.test(rd('src/systems/uiPrefs.js')), 'and not on the shelf');
-  assert.match(rd('src/ui/enhancedMenu.js'), /prefRow\('mwSheathing', 'Weapon sheathing',/);
+  // FT18: the card's own row drew NOTHING since FT13 (a moved key's prefRow answers null, and the bare append printed
+  // "null" on the card) - the switch is the tile, and the tile's write rebuilds the standing body, as the row did
+  const menu = rd('src/ui/enhancedMenu.js');
+  assert.doesNotMatch(menu, /prefRow\('mwSheathing'/, 'no second switch, and no null on the card');
+  assert.match(menu, /mwSheathing: async \(\) => \{\s*\n\s*if \(!getPref\('mwArms'\) \|\| !morrowindDataCount\(\)\) return;\s*\n\s*const \{ buildArmsFor \} = await import\('\.\.\/combat\/weaponRig\.js'\);\s*\n\s*await buildArmsFor\(playerEntity\);/, 'the tile rebuilds the holster into a standing body');
+  assert.match(menu, /set: \(i\) => \{ setPref\(c\.key, i === 1\); TILE_AFTER\[c\.key\]\?\.\(\); \} \};/, 'through the prefs switch\'s one write');
   const ds = rd('src/scenes/dataSource.js');
   const loosePush = ds.indexOf('archives.push(makeLooseArchive(loose));');
   const vendPush = ds.indexOf('archives.push(ws.weaponSheathingArchive());');
