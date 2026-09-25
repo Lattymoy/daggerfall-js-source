@@ -59,7 +59,7 @@ FM-bank audit. Audio.md also still disowns `ActivateLockUnlock = 316`
 (`:158` "NOT OURS... neither of which is ported") - it sits in
 `soundClips.js:10` with three consumers (R1) - and still claims
 `deps.inCastle` stays false (`:105`), live since AUDIT 21
-(`dungeonContext.js:2682`). This is the one page whose live-queue
+(`dungeonContext.js:2685`). This is the one page whose live-queue
 claims actively contradict the code, the Ledger, and the rest of the
 bible at once.
 
@@ -127,11 +127,11 @@ per arc:
   (`mysticism.test.js:225-239`). The doc, the pin's design, and
   `mysticism.js:53`'s header are all wrong the same way. Also stale:
   S24 "the port has neither the [Spell Absorption] effect nor the
-  state" (`effects.js:1098-1121` + `absorption.js:70-79` land it
+  state" (`effects.js:1104-1127` + `absorption.js:70-79` land it
   first-arm); S40's "house ledger is unported" flag
   (`banking.js:172 isHouseOwned` feeds the rest seam); S16's
   "monsters 0-42 still spawn as billboards" (C11 pivoted them to real
-  foes, `dungeonContext.js:824-875`); the mid-file Queue
+  foes, `dungeonContext.js:827-878`); the mid-file Queue
   (`:742-748`) still carries FreeAction / Create Item / enchantment
   value / rest-UI / "Later: guilds, shops, dialog, calendar" - all
   shipped, list actively maintained (it struck its fatigue line).

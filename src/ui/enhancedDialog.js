@@ -90,7 +90,9 @@ function build(doc, box) {
     if (key) btn.append(el(doc, 'span', 'dlg-key', key));
     btn.append(el(doc, 'span', 'dlg-label', BUTTON_LABELS[b.button]));
     btn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); });
-    btn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); press(b.button); });
+    // DROPS-AUDIT F2: ONE press per dialog - it is spent and put away at once, so a double-click's second press can
+    // never replay onto the window that is on top by then (the next frame builds it again if the box stands)
+    btn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); if (!active || active.spent) return; active.spent = true; press(b.button); closeEnhancedDialog(); });
     acts.append(btn);
   }
   win.append(body, acts);

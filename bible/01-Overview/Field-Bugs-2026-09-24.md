@@ -1068,12 +1068,12 @@ the scene the picture takes in:
 
 **Hosts.** Every Morrowind body in the port goes through `drawThird`. The
 local player's goes through `mwView.mwViewDrawBody` (`mwView.js:329`,
-`:339`), which four files call: `world.js:14643`, `exterior.js:5118`,
+`:339`), which four files call: `world.js:14652`, `exterior.js:5118`,
 `worldModes.js:7159` and `:7256` (the dungeon and the interior passes),
 and `dungeon.js:1066`. `dungeonContext.js`, the fourth motor host, builds
 the dungeon for those hosts and draws no body of its own. The other players'
 bodies go through `peerBodies.js:377` (`PeerBodies.draw`). The open world
-calls it at `world.js:14644`, and the modal passes reach it through
+calls it at `world.js:14653`, and the modal passes reach it through
 `host.drawPeerBodies` (`worldModes.js:7160`, `:7257`). The fix therefore
 sits in one place and reaches every host.
 
@@ -1098,7 +1098,7 @@ pins stand.
 
 **The portrait.** `fpArm.figure()` draws the enhanced inventory's model
 figure (`enhancedInventory.js:1472`), which is shown in a 110:184 cell with
-object-fit: contain (`enhancedStyle.js:3834`). It framed `meshBounds` over
+object-fit: contain (`enhancedStyle.js:3804`). It framed `meshBounds` over
 EVERY piece, then hid the unlit torch, the arrow off the string and the
 empty holster twin, so gear it did not show still moved the frame. Its width
 was the box's azimuth-safe diagonal, so a longsword pointing at the viewer,

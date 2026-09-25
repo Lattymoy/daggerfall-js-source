@@ -493,7 +493,7 @@ test('ROAD-G G2 review: the cast engine raises the two ready-spell doors into TH
   // for the interior mode, so while the mount passed neither key every
   // `cast X spell do` / `cast X effect do` on this route - and in every
   // shop entered from it - was permanently deaf. world.js:4396-4397 and
-  // dungeonContext.js:2275-2276 wire the identical pair.
+  // dungeonContext.js:2278-2279 wire the identical pair.
   const doorSrc = slice('    onNewReadySpell: (sp) => questBridge',
     '    // ROAD-G G2 (a): THE THREE-ARM SHAPE');
   // ...and they are keys of the ENGINE MOUNT, not of some other bag:
@@ -569,7 +569,7 @@ test('ROAD-G G2 review: the encounter pool\'s frame seams - the tick, the draw, 
   assert.match(senses, /candidates: \(\) => exteriorFoePool\(\)\.filter\(\(f\) => !f\.dead\),/,
     'the senses walk the UNNARROWED street database, live records only');
 
-  // world.js:14942-15011's arrow shape: an enemy shaft hunts a WALKING
+  // world.js:14951-15020's arrow shape: an enemy shaft hunts a WALKING
   // player (the fly camera has no capsule), and both live pools are
   // impact candidates. `playerFeet: null` is every enemy arrow passing
   // through the player - the whole enemy arm the lane shipped.

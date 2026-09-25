@@ -1873,8 +1873,8 @@ export const itemStatSuffix = (line) => {
 // tier, every stat - and no buttons; a right click opens the item's actions (wear, use, drop, store, take, the
 // quickslots) as a small menu at the pointer. Both float over the window on <body>, so a repaint of the lists does not
 // take them with it; a repaint, a scroll, Escape or a click elsewhere puts them away.
-let tipEl = null, menuEl = null, menuOff = null;
-function hideTip() { tipEl?.remove(); tipEl = null; }
+let tipEl = null, tipFor = null, menuEl = null, menuOff = null;   // DROPS-AUDIT F9: tipFor - the item the card is for
+function hideTip() { tipEl?.remove(); tipEl = null; tipFor = null; }
 function closeMenu() { menuEl?.remove(); menuEl = null; menuOff?.(); menuOff = null; }
 export function hidePlusFloaters() { hideTip(); closeMenu(); }
 function placeBeside(node, anchor, x, y) {
@@ -1892,8 +1892,10 @@ function placeBeside(node, anchor, x, y) {
 function showTip(item, from, row) {
   if (menuEl) return;
   hideTip();
-  const { c } = infoCard(item, from, () => { if (tipEl) showTip(item, from, row); });
+  // DROPS-AUDIT F9: a late picture redraws ITS item's card only - never over the card the pointer has moved on to
+  const { c } = infoCard(item, from, () => { if (tipEl && tipFor === item) showTip(item, from, row); });
   tipEl = el('div', 'inv-tip');
+  tipFor = item;
   tipEl.setAttribute('role', 'tooltip');
   tipEl.append(c);
   document.body.append(tipEl);
@@ -1989,7 +1991,7 @@ function itemRow(item, from = 'local') {
   if (isEnhancedPlus()) {   // PLUS7: hover for the card, right click for the actions
     row.onmouseenter = () => { if (getPref('plusItemHover') !== false) showTip(item, from, row); };
     row.onmouseleave = hideTip;
-    row.oncontextmenu = (e) => { e.preventDefault(); openMenu(item, from, e.clientX, e.clientY); };
+    row.oncontextmenu = (e) => { e.preventDefault(); if (drag) return; openMenu(item, from, e.clientX, e.clientY); };   // DROPS-AUDIT F10: a touch long-press mid-drag is the drag's, not the menu's
   }
   return row;
 }
@@ -2650,6 +2652,9 @@ function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+  // DROPS-AUDIT F5: Escape with the PLUS7 menu open puts the MENU away, not the pack - this handler hears the key
+  // first (window capture runs before the menu's own document listener), so it answers for the menu here
+  if (menuEl && e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeMenu(); return; }
   // AUDIT INV2 A-F7: A DRAG HAS AN ABORT, and it is the key every other
   // gesture aborts with. There was none: the only release that changed
   // nothing was one inside the windows, so a player who had picked up

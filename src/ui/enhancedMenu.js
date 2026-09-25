@@ -3167,7 +3167,7 @@ function pauseStats(body) {
   // Ascend, below) - and the one that never picked up the px-sys class its System-tab twin (below,
   // pauseSystem) carries. The kit's button role (enhancedFrame.js FRAME_ROLES) reads `.px-sys .act`,
   // so without it these four fell through to the bare, unpainted base .act under Plus.
-  const detail = el('div', 'px-qdetail px-sys');
+  const detail = el('div', `px-qdetail${isEnhancedPlus() ? ' px-sys' : ''}`);   // DROPS-AUDIT F3: the system-page dress is Plus's - plain Enhanced's Stats page keeps its own buttons and rows
   ({ character: statsCharacter, attributes: statsAttributes, skills: statsSkills, specials: statsSpecials, standing: statsStanding })[statsSec](detail, m);
   // PX25: THE DOORS THE F5 SHEET CARRIED. The classic character sheet
   // has four buttons down its side - Inventory, Spellbook, Logbook,

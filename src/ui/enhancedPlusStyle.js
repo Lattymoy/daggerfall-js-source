@@ -132,6 +132,15 @@ export const VITALS_CSS = `
 
 /** PLUS1: the Plus-only fixes that are not the kit's paint. */
 export const PLUS_FIX_CSS = `
+/* DROPS-AUDIT F4: the drop's PLUS4/PLUS5 edits to the held map's choices and the counter's columns landed in the
+   PLAIN sheet and changed plain Enhanced; they are Plus's, here. The choice itself reads in --bone with the labels'
+   shadow, the chosen one brighter on a brass tint; the shelf and basket columns carry a box and a heading rule; the
+   detail strip keeps the kit's square corner. */
+.hmpick { color: var(--bone); text-shadow: 1px 1px 0 rgba(0,0,0,0.85); }
+.hmpick.on { color: #f3cf86; text-shadow: 1px 1px 0 rgba(0,0,0,0.85); border-color: var(--brass); background: rgba(192,138,62,0.16); }
+.trade-shell .packcol { padding: 6px 10px 18px; border: 1px solid rgba(125,116,96,0.4); }
+.trade-shell .remotehead { border-bottom: 2px solid rgba(125,116,96,0.3); padding-bottom: 10px; }
+.trade-shell .trade-detail { border-radius: 0; }
 /* the pack's empty pages dim under their own class - the sheet's .empty is a dashed 26px component (ui/enhancedInventory.js) */
 .packtab.tabempty { opacity: 0.45; }
 /* PLUS1c: a page's COUNT reads as plainly as its name - the name's colour and size (the chosen page's yellow

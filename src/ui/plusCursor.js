@@ -18,6 +18,9 @@ export const CURSOR_CSS = `
    set their own cursor: pointer, which showed the system hand over them. The gauntlet is the one pointer Plus has. */
 html:not(.plus-nocursor), html:not(.plus-nocursor) *, html:not(.plus-nocursor) *::before, html:not(.plus-nocursor) *::after { cursor: ${curFallback(N1)} !important; cursor: ${cur(N1, N2)} !important; }
 html.plus-press:not(.plus-nocursor), html.plus-press:not(.plus-nocursor) *, html.plus-press:not(.plus-nocursor) *::before, html.plus-press:not(.plus-nocursor) *::after { cursor: ${curFallback(P1)} !important; cursor: ${cur(P1, P2)} !important; }
+/* DROPS-AUDIT F7: a controller hides the pointer on the canvas (gamepadInput.js: Cursor.visible = false) - the gauntlet
+   stands down there too, or it sat parked beside the controller's own cursor */
+html:not(.plus-nocursor) canvas[style*="cursor: none"] { cursor: none !important; }
 html:not(.plus-nocursor) input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]), html:not(.plus-nocursor) textarea, html:not(.plus-nocursor) [contenteditable="true"] { cursor: text !important; }
 `;
 

@@ -266,6 +266,9 @@ export function portWindow(win, spec, doc = globalThis.document) {
     host.addEventListener('click', (e) => {
       const b = e.target.closest?.('[data-a]');
       e.stopPropagation();
+      // DROPS-AUDIT F6: a click-anywhere notice the classic window holds (a box with no buttons) takes the first
+      // click, as the classic click does - dismissed there, and nothing under it acts
+      if (win.box && !win.box.buttons?.length && !win.picker) { win.click?.(-1, -1); return; }
       if (!b || b.disabled) return;
       const fn = acts[Number(b.dataset.a)];
       if (typeof fn === 'function') fn();
@@ -335,6 +338,9 @@ export function portWindow(win, spec, doc = globalThis.document) {
     watchdog = setTimeout(unmount, PORT_WATCHDOG_MS);
   };
 
+  // DROPS-AUDIT F11: a wrapped window paints nothing of its own - the purchase window's 3D preview goes to the canvas
+  // through a host door, past the quiet renderer, and showed beside the DOM window; it reads this and stands down
+  win.inPort = true;
   const proxy = new Proxy(win, {
     get(t, k, r) {
       if (k === 'draw') return draw;

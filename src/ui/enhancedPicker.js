@@ -65,7 +65,7 @@ function build(doc, picker, geo) {
     b.append(el(doc, 'span', 'pick-mark', '\u25c6'), el(doc, 'span', 'pick-label', String(label ?? '')));
     if (i < 9) b.append(el(doc, 'span', 'pick-num', String(i + 1)));
     b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); });
-    b.addEventListener('click', (e) => { e.stopPropagation(); if (active) pickRow(active, i, geo); });
+    b.addEventListener('click', (e) => { e.stopPropagation(); if (!active || active.spent) return; active.spent = true; pickRow(active, i, geo); closeEnhancedPicker(); });   // DROPS-AUDIT F2: one pick, then gone - a double-click's second press never replays onto the window beneath
     list.append(b);
     return b;
   });
@@ -76,7 +76,7 @@ function build(doc, picker, geo) {
     cancel.tabIndex = -1;
     cancel.append(el(doc, 'span', 'dlg-key', 'Esc'), el(doc, 'span', 'dlg-label', 'Cancel'));
     cancel.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); });
-    cancel.addEventListener('click', (e) => { e.stopPropagation(); if (active) replayClick(active.canvas, active.m, 1, 1); });
+    cancel.addEventListener('click', (e) => { e.stopPropagation(); if (!active || active.spent) return; active.spent = true; replayClick(active.canvas, active.m, 1, 1); closeEnhancedPicker(); });   // DROPS-AUDIT F2
     acts.append(cancel);
   }
   win.append(list, acts);

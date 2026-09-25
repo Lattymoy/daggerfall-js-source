@@ -4475,7 +4475,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2489 mounts the same one, gated on
+  // and dungeonContext.js:2492 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:5682
@@ -4563,7 +4563,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:412-417) never looks the record up in `foes`, and
+    // (exteriorFoes.js:416-421) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1481-1499) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
@@ -6655,7 +6655,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6314), so exterior mode and a
+    // composer, dungeonContext.js:6317), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -14412,7 +14412,16 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           preventEnemySpawns: playerEntity.preventEnemySpawns,
           gameMinutes: Math.floor(playerTicker.classicMinutes),
         }, Math.random, { fovDegrees: fieldOfView() * 180 / Math.PI });   // CAMP-RING: 50%, three groups round the player
-        if (chunkCampHits) for (const h of chunkCampHits) _standCampEncounter(h, player.feetAt());
+        // DROPS-AUDIT CAMP-CAP: the encounter cap is eight (and the wire carries eight puppets an owner, wire.js
+        // CELL_PUPPETS_MAX), and three groups ask ~10 - so a group stands WHOLE or not at all, never a one-foe remnant
+        if (chunkCampHits) {
+          let room = exteriorFoes.encounterRoom?.() ?? Infinity;
+          for (const h of chunkCampHits) {
+            if (h.mobileTypes.length > room) continue;
+            room -= h.mobileTypes.length;
+            _standCampEncounter(h, player.feetAt());
+          }
+        }
       }
     }
     pump();

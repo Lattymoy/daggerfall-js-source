@@ -93,6 +93,10 @@ const PUPPET_LEAP_SLACK = 2;   // the stream's x bit, decoded (no roll - the own
  *  (PlayerActivate's CorpseActivationDistance) with the pose's slack (the peer's pose is eased and a frame behind). */
 const CORPSE_TAKE_RANGE = CORPSE_ACTIVATION_DISTANCE + PUPPET_LEAP_SLACK;
 export const ENCOUNTER_CULL_DISTANCE = 120;
+/** DROPS-AUDIT CAMP-CULL: a wilderness camp's members are stood 100-150 m out (campEncounters.js
+ *  MAX_CAMP_SPAWN_DISTANCE) and see only 60 m, so the 120 m cull took most of CAMP-RING's groups on the
+ *  frame after they stood, never seen. A camp member is culled past this instead - the band and a margin. */
+export const CAMP_CULL_DISTANCE = 200;
 
 export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame,
   playerEntity, audio, onPlayerHurt, currentMinute, say = null, rolls = Math.random,
@@ -951,7 +955,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // until a load or a teleport sweeps them (clearLive, below), and
       // SerializableEnemy saves every one; a camp's bandits are still
       // there when you come back.
-      if (!f.placed && _playerDist > ENCOUNTER_CULL_DISTANCE && !(f.ai.detected && f.ai.targetIsLocalPlayer !== false)) {
+      if (!f.placed && _playerDist > (f.campId != null ? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE) && !(f.ai.detected && f.ai.targetIsLocalPlayer !== false)) {   // DROPS-AUDIT CAMP-CULL
         releaseFoeBatch(f);
         f.dead = true;
         f.questBehaviour?.notifyDestroyed();   // B1: Destroy(gameObject) - the resource uncouples
@@ -2025,8 +2029,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     _onHccClear?.();   // HCC-ONLINE: the peers' teams go with their puppets (a room change, a leave)
     _onDuelClear?.();   // DUEL1: and their rings
   }
+  /** DROPS-AUDIT CAMP-CAP: the encounter slots still free, the spawns in flight counted. */
+  const encounterRoom = () => MAX_ACTIVE_ENCOUNTER_FOES - activeCount() - spawning.filter((s) => s.capped).length;
 
-  return { foes, spawnFoe, damageFoe, handleAttackFromPlayer, attackFromPlayer, update, resolvePlayerHit, poisonFoe, batches, offsetAll, activeCount, lootTargets, hoverName, hoverContents, liveTargets, liveHoverName, takeLoot, pileBody: (key) => pileBody(corpseEntryFor(foes, key, 'foeCorpse', corpseLens)), snapshotWorld, restoreWorld, destroy,   // LOOT-STACK: a body as the loot window's tab
+  return { foes, spawnFoe, damageFoe, encounterRoom, handleAttackFromPlayer, attackFromPlayer, update, resolvePlayerHit, poisonFoe, batches, offsetAll, activeCount, lootTargets, hoverName, hoverContents, liveTargets, liveHoverName, takeLoot, pileBody: (key) => pileBody(corpseEntryFor(foes, key, 'foeCorpse', corpseLens)), snapshotWorld, restoreWorld, destroy,   // LOOT-STACK: a body as the loot window's tab
     /** AUDIT 39: CleanupUntrackedObjects' enemy half (StreamingWorld.cs
      *  :1624-1635), which a teleport reaches too through
      *  ClearStreamingWorld -> CollectLooseObjects(true) (:993-998) -

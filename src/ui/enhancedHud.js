@@ -379,10 +379,11 @@ function build(doc) {
   foeTrack.append(foeFill);
   // FRAME1: the foe's bar loses health the way yours does - a pale chunk
   // that holds and drains, and a piece that breaks off and falls.
-  const foeGhost = el('i', 'hud-ghost');
-  const foeChunks = [el('i', 'hud-chunk'), el('i', 'hud-chunk')];
-  foeTrack.append(foeGhost, ...foeChunks);
-  armChunks(foeChunks);
+  // DROPS-AUDIT F1: Plus's alone - built at all only under Plus, so plain Enhanced's tracks hold the nodes they always held
+  const plusLoss = isEnhancedPlus();
+  const foeGhost = plusLoss ? el('i', 'hud-ghost') : null;
+  const foeChunks = plusLoss ? [el('i', 'hud-chunk'), el('i', 'hud-chunk')] : null;
+  if (plusLoss) { foeTrack.append(foeGhost, ...foeChunks); armChunks(foeChunks); }
   // FOEBAR1 (2026-09-17, Mac, from a friend's two pictures): THE BLADE -
   // an alternate face for the same readout. Two pictures under the one
   // track: the dark twin-bladed shape with the skull hub is the empty
@@ -438,12 +439,12 @@ function build(doc) {
     // as how much it took rather than only where it left you. It sits
     // UNDER the fill by z-index (the track isolates), so the fill covers
     // all of it but the part that was lost.
-    const ghost = el('i', 'hud-ghost');
-    track.append(ghost);
+    // DROPS-AUDIT F1: under Plus only - plain Enhanced's sheet has no rule taking these out of the track's flex row,
+    // so three stray nodes pushed the percentage in from the bar's right edge
+    const ghost = plusLoss ? el('i', 'hud-ghost') : null;
     // FRAME1: the two pieces a loss breaks off, taken in turn (see dropChunk).
-    const chunks = [el('i', 'hud-chunk'), el('i', 'hud-chunk')];
-    track.append(...chunks);
-    armChunks(chunks);
+    const chunks = plusLoss ? [el('i', 'hud-chunk'), el('i', 'hud-chunk')] : null;
+    if (plusLoss) { track.append(ghost, ...chunks); armChunks(chunks); }
     wrap.append(track);
     bars.append(wrap);
     return { fill, num, ghost, chunks, wrap };

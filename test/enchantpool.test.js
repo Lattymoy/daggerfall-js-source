@@ -173,7 +173,7 @@ test('AUDIT 58: the WABBAJACK re-stands a foe in the pool that owns it', () => {
   // is two pools. `exteriorFoePool` is the watch AND the encounter
   // foes, and this arm handed both to the encounter pool's remover.
   // That was not a leak - removeFoe never looks the record up in `foes`
-  // (exteriorFoes.js:419-424) and both pools share the host's one
+  // (exteriorFoes.js:423-428) and both pools share the host's one
   // renderer - but the teardown of a watchman is the WATCH's to own,
   // and `removeFoe`'s `questBehaviour?.notifyDestroyed()` is an
   // encounter-pool term a guard has no business reaching, so the
@@ -335,7 +335,7 @@ test('AUDIT 58 (f2/hosts): the EXTERIOR host mounts the same body over its own p
     'no site inside the mount names a host pool directly');
   // and the reflection path travels with the player's OWN sinks, which
   // is why they are hoisted here rather than inlined into the cast
-  // engine (effects.js:885/:899 heals the caster through them).
+  // engine (effects.js:891/:905 heals the caster through them).
   assert.match(ext, /const playerSpellSinks = \{/);
   assert.match(ext, /^\s*playerSinks: playerSpellSinks,$/m, 'one object, both readers');
   assert.match(mount, /^\s*playerSpellSinks,$/m);

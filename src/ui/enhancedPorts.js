@@ -107,7 +107,7 @@ const bank = {
       ],
       foot: busy
         ? [{ label: 'Confirm', key: 'Enter', primary: true, act: () => w.input('Enter') },
-          { label: 'Cancel', key: 'Esc', act: () => { w.transactionType = TRANSACTION_TYPE.None; w.value = ''; } }]
+          { label: 'Cancel', act: () => { w.transactionType = TRANSACTION_TYPE.None; w.value = ''; } }]   // DROPS-AUDIT F8: no 'Esc' chip - Escape closes the bank, it does not cancel the entry
         : [{ label: 'Exit', act: press('exit') }],
     };
   },

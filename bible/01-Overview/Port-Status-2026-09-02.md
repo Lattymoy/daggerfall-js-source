@@ -625,7 +625,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **Added after this page's measurement, and counted here so the tally follows the tree.**
 
-- **`src/scenes/dungeonContext.js:1216`** - the dungeon's non-layout foe
+- **`src/scenes/dungeonContext.js:1219`** - the dungeon's non-layout foe
   run is private (ONLINE-DUNGEON-FOES, 2026-09-20). *Mac's two online
   reports - "non-reactive enemies in dungeons" and "the lysander ghost
   enemy isn't synced between players" - are one line. `_layoutFoes` is

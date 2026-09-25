@@ -32,10 +32,11 @@
    this block into that page at build; the rest of the skin stays a
    string the game pays for only when a screen is mounted. */
 import { PIXELIFY_FIVE_FACE, PIXEL_STACK } from './pixelifyFive.js';   // FIX-D: Silkscreen's five ahead of Pixelify Sans
-import { badgeCss } from './playerBadge.js';
-import { PLUS_CSS, PLUS_STYLE_ID, applyPlusTheme } from './enhancedPlusStyle.js';  import { installPlusCursor } from './plusCursor.js';   // PLUS1: the Enhanced Plus sheet, laid over this one
+import { badgeCss } from './playerBadge.js';   // ACC3c: one rule per title and per glyph, walked out of the vocabulary - the card writes a class and the skin carries the colour
+import { PLUS_CSS, PLUS_STYLE_ID, applyPlusTheme } from './enhancedPlusStyle.js';   // PLUS1: the Enhanced Plus sheet, laid over this one
+import { installPlusCursor } from './plusCursor.js';   // PLUS7: the gauntlet cursor
 import { installWindowMotion } from './windowMotion.js';   // PLUS1/WM1: windows unfold and fold - Enhanced Plus only
-import { isEnhancedPlus } from '../systems/uiSkin.js';   // ACC3c: one rule per title and per glyph, walked out of the vocabulary - the card writes a class and the skin carries the colour
+import { isEnhancedPlus } from '../systems/uiSkin.js';   // PLUS1: the Plus sheet is laid only under Plus
 
 /**
  * QUICK-LOOT-STATS: THE PLAQUE'S LAYOUT NUMBERS LIVE WITH THE DRESS.
@@ -1577,25 +1578,9 @@ ${badgeCss()}
 }
 .hmpick {
   flex: 1 1 auto; min-height: 44px; padding: 8px 6px; font-size: 13px;
-  /* PLUS5: this is the CHOICE ITSELF (Cautiously/By ship/At inns), not a caption - var(--dim)
-     is the deck's own de-emphasis tone (meant for meta text like .hmmeta), and reading the
-     player's actual options in that tone is the readability bug that was reported. --bone plus
-     the same black text-shadow every other enhanced label carries (.px-qrow, .px-stat) is what
-     makes those legible on any ground; this row gets the same two rules. */
-  color: var(--bone); text-shadow: 1px 1px 0 rgba(0,0,0,0.85);
-  background: transparent; border: 1px solid var(--iron);
+  color: var(--dim); background: transparent; border: 1px solid var(--iron);
 }
-/* PLUS4: a translucent brass tint, not a flat colour - #12161b read fine over the sprite's own
-   black ground but sat there through every Plus theme, never the stone the rest of the box wore.
-   A tint over whatever is behind it (the window's own themed ground, transparent otherwise) reads
-   right in all of them, the same law the pack's own .itemrow.picked already keeps. */
-/* PLUS5: the CHOSEN option's own word was still --brass (#c08a3e) with no shadow at all - against
-   this tint (or the sprite's own dark ground when Plus is off) that is the low-contrast, "struck
-   into pale stone" reading players flagged. Lifted to the bright --brass-hi tone every other kit
-   highlight uses (.hb-slot.hb-active etc.) and given the same dark text-shadow as the unselected
-   state, so the pick reads as BRIGHTER text, not just a different-coloured one at the same weight. */
-.hmpick.on { color: #f3cf86; text-shadow: 1px 1px 0 rgba(0,0,0,0.85);
-  border-color: var(--brass); background: rgba(192,138,62,0.16); }
+.hmpick.on { color: var(--brass); border-color: var(--brass); background: #12161b; }
 .hmtrip { margin: 12px 0 0; }
 /* the foot: the hint, the zoom band and (SOC6) the party legend in ONE
    row, so nothing floats at a guessed height (AUDIT SOC C10/D5's lesson) */
@@ -2861,18 +2846,7 @@ ${badgeCss()}
    block already covers .packlists unscoped). */
 .trade-shell .px-body { display: flex; flex-direction: column; overflow: hidden; padding: 18px 26px 0; }
 .trade-shell .packlists { margin: 0; flex: 1 1 auto; min-height: 0; }
-/* PLUS4: "On the shelf" and the basket beside it never carried a box of their own - packcol's base
-   rule is a flat background and nothing else, so under Plus (where a theme repaints panel/tile/
-   button but never invents a border on an element that had none) the whole column read as bare.
-   The border below is the line the kit's panel role (enhancedFrame.js) now has to colour; Plain
-   Enhanced, which never loads that role, keeps reading exactly as it did (a border this faint is
-   the same near-invisible line the packcol's own iron ground already wore). */
-.trade-shell .packcol { padding: 6px 10px 18px; overflow-y: auto; min-height: 0;
-  border: 1px solid rgba(125,116,96,0.4); }
-/* PLUS4: the shelf's own heading band ("On the shelf" / "18 items") - the same border-bottom a loot
-   window's remotehead already carries, so the kit's header role (enhancedFrame.js) has a line to
-   colour instead of the packremote's own flat #10141a underneath it. */
-.trade-shell .remotehead { border-bottom: 2px solid rgba(125,116,96,0.3); padding-bottom: 10px; }
+.trade-shell .packcol { padding: 0 2px 18px; overflow-y: auto; min-height: 0; }
 /* THE TABS. The base .packtab is flex: 1 1 auto in a wrapping row -
    fine at the pack's own full width (four tabs, one row, never wraps),
    but this column is half that wide: "Ingredients" alone wraps to its
@@ -2893,13 +2867,9 @@ ${badgeCss()}
    primary button reaching for this same pending pick, is the transfer.
    One row rather than enhancedInventory.js's sliding third column -
    this window is two columns, not three. */
-/* PLUS5: a rounded corner is the ONE thing nothing else in this pixel kit wears - .shell .card,
-   .act, .step and .swatch all explicitly zero it (border-radius: 0), because a soft corner inside
-   a hard, 9-sliced pixel frame is what reads as "a window inside the window" rather than one strip
-   of the same window. This is the strip that carried the leftover 2px radius. */
 .trade-shell .trade-detail { display: flex; align-items: center; gap: 14px;
   margin: 10px 0 0; padding: 10px 14px; background: rgba(0,0,0,0.28);
-  border: 1px solid rgba(125,116,96,0.4); border-radius: 0; flex: 0 0 auto; }
+  border: 1px solid rgba(125,116,96,0.4); border-radius: 2px; flex: 0 0 auto; }
 .trade-shell .trade-detail .tile { flex: 0 0 auto; }
 .trade-shell .trade-detail-info { flex: 1 1 auto; min-width: 0; }
 .trade-shell .trade-detail-info h4 { margin: 0 0 4px; font-size: 14px; font-weight: 400;
