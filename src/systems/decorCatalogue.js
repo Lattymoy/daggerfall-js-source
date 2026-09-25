@@ -77,12 +77,13 @@ export const decorKey = (what) => (what.model != null ? `m${what.model}` : `f${w
 /**
  * EVERY PIECE DAGGERFALL PUTS IN A ROOM, over `dfBlocks` (parsed RMB blocks, blocksFile.js's shape): each interior's
  * prop models and its flats, the editor's markers and the ladder left out. Answers a Map key -> `{ model, flat, count }`,
- * `count` how many times Daggerfall places it (the panel's "most common first").
+ * `count` how many times Daggerfall places it (the panel's "most common first"). `into` is a Map to add to - the scan
+ * (systems/decorScan.js) reads the blocks a few at a time into one.
  * @param {Iterable<any>} dfBlocks
+ * @param {Map<string, {model: number|null, flat: number[]|null, count: number}>} [into]
  */
-export function collectDecor(dfBlocks) {
-  /** @type {Map<string, {model: number|null, flat: number[]|null, count: number}>} */
-  const out = new Map();
+export function collectDecor(dfBlocks, into = new Map()) {
+  const out = into;
   const add = (what) => {
     const key = decorKey(what);
     const had = out.get(key);

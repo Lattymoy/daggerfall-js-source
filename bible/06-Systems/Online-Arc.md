@@ -4689,7 +4689,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6467` read, on one physical line:
+`src/scenes/worldModes.js:6530` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -8509,8 +8509,9 @@ Mac chose: the catalogue holds EVERYTHING DAGGERFALL FURNISHES - every piece Dag
 buildings, found in the game data and browsed with a turning preview, named where the game names them; a placement
 is priced BY SIZE (moving or turning a placed piece is free, removing one gives half back); the decorator opens from
 A CLICKABLE UI ELEMENT into a panel - "an intuitive scrolling menu with filters" - with a FREE CAMERA for placing; and
-it works in the OFFLINE house and ship too, kept in the save. The slice lands in three parts: DECOR1a the ground
-(below), DECOR1c the placed pieces in the room, DECOR1d the button, the panel and the free camera.
+it works in the OFFLINE house and ship too, kept in the save. The slice lands in four parts: DECOR1a the ground
+(below), DECOR1c the placed pieces in the room, DECOR1d the button, the panel and the free camera, DECOR1e the
+changes to a placed piece.
 
 **DECOR1a - the piece, the store and the catalogue** (nothing a player sees yet; the room and the panel stand on it).
 
@@ -8580,3 +8581,45 @@ DECOR1d's panel).
 
 Pinned: `test/decor1.test.js` (3 of its 7) - the pool over fakes of the host's own seams, the scene through the save
 and back, and the host's wiring. `tools/mutants/decor1.json` (54, DECOR1a's 32 among them).
+
+**DECOR1d - the decorator itself: the button, the panel, the free camera.**
+
+- **The button.** "Decorate", at the right edge of the screen, stands in a room the player may decorate - their
+  online home, or their own house or ship - whenever no window is up. With the pointer locked for looking, Enter
+  frees the cursor to press it, as every on-screen button asks.
+- **The panel** (`src/ui/decorPanel.js`). A window over the room: it sits in the room's own overlay slot (the
+  enhanced merchant panel's pattern), so it pauses the room and frees the pointer as every window does, and
+  Escape or Tab puts it away. The catalogue is read out of BLOCKS.BSA's town blocks a few blocks a frame the first
+  time the panel opens (`src/systems/decorScan.js`), and each piece's size is measured for its price: a model's
+  radius off its ARCH3D header, as the bank prices a house by its model; a flat's billboard, half its diagonal. A
+  piece whose size cannot be read has no price and is not offered. The list is filtered by kind, by words, by size,
+  by holds-things and by gives-light, and sorted most common first, cheapest first or by name. The piece pointed at
+  shows in the preview - a model turning (drawn by the renderer's second camera pass, the bank's and the
+  automap's, and copied into the panel's own canvas, the panel over the game being opaque), a flat as its own
+  picture (asked for as its row comes into view, never hundreds at once) - with its price and, when it cannot be placed, why: the gold short, the room full (200), or its size
+  still being read.
+- **Placing** (`src/scenes/decorTool.js`, `src/systems/decorPlacer.js`). Place closes the panel and flies the
+  camera. Every key press is the decorator's while it flies, read as the action it is bound to (the controls
+  registry's, so a rebinding holds), and none reaches the body, so the body stands still and nothing else fires
+  under a placement; a key's release still reaches the game, so a key held into the flight is let go of. The walk
+  keys move the eye - Jump up, Crouch down, Run faster - within 40 m of where it began, and the mouse looks, the
+  pointer locked again. The piece stands where the eye meets the room within 12 m, or hangs 3 m ahead: a model
+  lifted by its own bottom, a flat on its base. Turn Left/Right (the arrows) or the wheel turn it 15 degrees
+  (Shift: one), Float Up/Down (Page Up/Down) lift it 5 cm (Shift: one), - and = size it by a tenth, / snaps it to a
+  quarter-metre grid across the floor (the three keys no action is bound to), and a click or Interact places it and
+  pays. Escape or a right click goes back to the panel with the piece still chosen. The bar at the foot of the
+  screen says the piece, its price, why it cannot be placed now, and the keys, with a button for each. A window
+  over the flight suspends it; a press while the pointer is free only takes the pointer back and never places. In
+  third person the view is the free camera's too.
+- **Paying.** The purse first, then the region's bank account, as HOME1's homes are paid. An online home writes to
+  the account service first and pays once the service has the piece, asking the gold again after the answer: short
+  then, the piece is taken back out; refused, nothing is paid and the bar says the service's word for a few
+  seconds. The offline house and ship pay and stand the piece at once, and the room's scene carries it into the
+  save. Once the catalogue is read, every placed piece is named where the eye points at it, for a visitor too.
+
+Not yet (DECOR1e): moving, turning, resizing or removing a placed piece and the half back on removal; a home,
+house or ship sold with pieces in it; flying the camera by touch.
+
+Pinned: `test/decor1d.test.js` (13) - the scan, the placer, the panel, the button and the bar over a fake
+document, the tool over fakes of the host's seams, and the host's wiring by source. `tools/mutants/decor1d.json`
+(39).

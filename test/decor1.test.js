@@ -427,7 +427,7 @@ test('DECOR1c the room\'s host (worldModes.js): one pool on the room\'s own coll
   assert.ok(m.indexOf('loadHomeDecor();   // DECOR1c') > m.indexOf('restoreInteriorScene();\n      // AUDIT 63 F22'), 'after the restore, which latched the home and kept the save\'s record');
   assert.match(m, /const visit = _decorVisit;\n    Promise\.resolve\(host\.homeDecor\.list\(homeTownOf\(b\), b\.buildingKey\)\)\.then\(\(r\) => \{\n      if \(visit !== _decorVisit \|\| interiorBuilding !== b\) return;\n      if \(r\?\.ok && Array\.isArray\(r\.data\?\.pieces\)\) interiorDecor\.set\(r\.data\.pieces\.map\(decorPieceOf\)\.filter\(Boolean\)\);/);
   assert.match(m, /interiorArrows\.draw\(renderer, interiorCtx\.texRemap\);\n    interiorDecor\.draw\(renderer, interiorCtx\.texRemap\);/);
-  assert.match(m, /const _decorFlats = interiorDecor\.batches\(\);\n      if \(_decorFlats\.length\) renderer\.drawBillboards\(_decorFlats, camRight, UP_Y\);/);
+  assert.match(m, /const _decorFlats = \[\.\.\.interiorDecor\.batches\(\), \.\.\.decorTool\.batches\(\)\];[^\n]*\n      if \(_decorFlats\.length\) renderer\.drawBillboards\(_decorFlats, camRight, UP_Y\);/);
   assert.match(m, /targets\.push\(\.\.\.interiorDecor\.targets\(\)\);/);
   assert.match(m, /if \(key\.startsWith\('decor:'\)\) \{ activateDecor\(decorIdOfKey\(key\)\); return true; \}/);
   assert.match(m, /function decorOwnerHere\(\) \{\n    if \(interiorHome\) return interiorHome\.own;\n    const b = interiorBuilding;\n    if \(!b\) return false;\n    if \(b\.buildingType === BUILDING_TYPES\.Ship\) return ownsShip\(playerEntity\);\n    return isHouseOwned\(playerEntity\.houses \?\? \[\], b\.regionIndex \?\? 0, b\.buildingKey \?\? 0\);\n  \}/);

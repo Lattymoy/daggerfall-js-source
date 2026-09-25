@@ -259,6 +259,13 @@ import { HOME_ENTRIES, homePriceOk } from '../net/homeLaw.js';
 // DECOR1c: the pieces a room's owner placed (their law, and the pool that stands them in the room)
 import { decorPieceOf } from '../net/decorLaw.js';
 import { createDecorRoom, decorIdOfKey } from './decorRoom.js';
+// DECOR1d: the decorator itself - the button, the panel, the free camera - and what its catalogue scan reads
+import { createDecorTool } from './decorTool.js';
+import { BLOCK_TYPES } from '../formats/blocksFile.js';
+import { GLOBAL_SCALE } from '../world/meshReader.js';
+import { loadIcon } from '../ui/textureCanvas.js';
+import { isTouchDevice } from '../ui/touchDevice.js';
+import { setCursorActive } from '../player/pointerLock.js';
 import { decorKey } from '../systems/decorCatalogue.js';
 import { accountRefusalText } from '../net/accountClient.js';
 // P1: the scene cache - what an interior remembers across a visit.
@@ -657,6 +664,23 @@ export function createWorldModes(host) {
   let _decorVisit = 0;   // a visit's token: an online home's pieces landing after the visit ended stand nowhere
   /** @type {Map<string, string>} the catalogue's names by piece key, once the decorator has read the catalogue (DECOR1d) */
   const decorNames = new Map();
+  // DECOR1d: THE DECORATOR (scenes/decorTool.js) - Mac: "A UI element that can be clicked to open the decorate panel.
+  // Allows free cam mode for placement and an intuitive scrolling menu with filters". The button stands in a room the
+  // player may decorate, the panel sits in this host's own overlay slot (so it pauses the room and frees the pointer as
+  // every window does), and a placement flies the camera while the body stands still.
+  const decorTool = createDecorTool({
+    doc: typeof document !== 'undefined' ? document : null, win: typeof window !== 'undefined' ? window : null,
+    canvas, touch: isTouchDevice(), renderer, pool: interiorDecor, names: decorNames,
+    room: () => decorRoomHere(), scanDeps: () => decorScanDeps(),
+    getGpuMesh, cpuModels, getTexture, uploadRecord, iconUrl: (a, r) => loadIcon(a, r, { scale: 1 }),
+    collider: () => interiorCtx?.collider ?? null, origin: () => buildingOrigin(), eye: () => cam.pos,
+    actionOf: (e) => actionOf(e, keys),
+    locked: () => typeof document !== 'undefined' && document.pointerLockElement === canvas, cursorOff: () => setCursorActive(false),
+    wallet: () => decorWallet(), homeDecor: host.homeDecor ?? null, character: () => host.decorCharacter?.() ?? null,
+    visit: () => _decorVisit,
+    openSlot: (o) => { interiorOverlay = o; }, closeSlot: (o) => { if (interiorOverlay === o) interiorOverlay = null; },
+    say, refusal: (w) => accountRefusalText(w),
+  });
   const interiorHitEffects = createHitEffects({ renderer, getTexture, uploadRecordFrame, marks: interiorBloodMarks });
   /** PlayerMotor.FindGroundPosition, on the interior's own collider -
    *  the world host's `dropFeet` in this host's frame. */
@@ -3210,6 +3234,45 @@ export function createWorldModes(host) {
     if (win) interiorOverlay = win;
   }
 
+  /** DECOR1d: WHERE THE PLAYER MAY DECORATE - a room whose placed pieces are theirs (decorOwnerHere), and what kind of
+   *  room it is: their online home (the account service's), their house or their ship (the save's). */
+  function decorRoomHere() {
+    const b = interiorBuilding;
+    if (mode !== 'interior' || !b || !decorOwnerHere()) return null;
+    if (interiorHome) return { kind: 'home', where: 'Your home', mapId: homeTownOf(b), buildingKey: b.buildingKey };
+    if (b.buildingType === BUILDING_TYPES.Ship) return { kind: 'ship', where: 'Your ship' };
+    return { kind: 'house', where: 'Your house' };
+  }
+  /** DECOR1d: what the catalogue scan reads - the town blocks, a model's radius off its ARCH3D header (the house
+   *  price's own read, houseMeshRadius), a flat's billboard as the room stands it - in metres. */
+  function decorScanDeps() {
+    return {
+      blocks,
+      isTownBlock: (t) => t === BLOCK_TYPES.Rmb,
+      modelRadius: (id) => {
+        const rec = arch?.getRecordIndex?.(id);
+        if (rec == null || rec < 0) return null;
+        const r = arch.getMesh(rec)?.radius ?? 0;
+        return r > 0 ? r * GLOBAL_SCALE : null;
+      },
+      flatRadius: async (a, r) => {
+        const t = await getTexture(a);
+        if (!t || !(r < t.recordCount)) return null;
+        const size = billboardSize(t, r);
+        return Math.hypot(size.w, size.h) / 2;
+      },
+    };
+  }
+  /** DECOR1d: what a placement is paid with - the purse, then the region's bank account (HOME1's homes' own order). */
+  function decorWallet() {
+    const purse = bankPurse();
+    const account = homeAccount(interiorBuilding?.regionIndex ?? buildingDirectory?.()?.regionIndex ?? 0);
+    return {
+      gold: purse.totalGold() + (account?.accountGold ?? 0),
+      pay: (n) => { const short = purse.deductGold(n); if (account) account.accountGold -= short; },
+    };
+  }
+
   /** DECOR1c: AN ONLINE HOME'S PIECES are the account service's - the room its owner furnished, for everyone who walks
    *  in, the owner and the guests alike. Asked once a visit, after the restore; a visit that ends before the answer
    *  stands none of them (`_decorVisit` moves at every teardown). */
@@ -5664,7 +5727,7 @@ export function createWorldModes(host) {
       // sibling pile pool (interiorDropped) restored correctly beside
       // it. The sweep belongs here, where the transition is.
       interiorTorches.destroyAll();   // HT1: DestroyLightSources_OnTransition
-      interiorDecor.destroyAll(); _decorVisit++;   // DECOR1c: and the placed pieces go with the room
+      interiorDecor.destroyAll(); _decorVisit++; decorTool.close();   // DECOR1c: and the placed pieces go with the room
       interiorCamps.destroyAll(); interiorHearths.length = 0;   // HEARTH1: and the room's own fires - one building's hearth is not the next one's
       // E2/P1: the building's identity, resolved BEFORE the interior
       // stands. DFU's transition does the same three things in this
@@ -6266,7 +6329,7 @@ export function createWorldModes(host) {
     immersiveFootsteps.onTransitionExterior();   // IF1: UpdateFootsteps_OnTransitionExterior
     betterAmbience.onTransition(null);   // BA1: OnTransitionExterior
     interiorTorches.destroyAll();   // HT1: DestroyLightSources_OnTransition
-    interiorDecor.destroyAll(); _decorVisit++;   // DECOR1c: and the placed pieces go with the room
+    interiorDecor.destroyAll(); _decorVisit++; decorTool.close();   // DECOR1c: and the placed pieces go with the room
     questBridge?.onExteriorTransition();   // Q4-v: CreateFoe's pending-wave invalidation
     npcSession?.onWorldChanged();          // TK-v: OnTransitionToExterior (:3599-3603)
     unleveledLootExteriorTransition();     // UL1: OnTransitionExterior - the BUILDING exit alone clears the mod's dungeon
@@ -7027,6 +7090,7 @@ export function createWorldModes(host) {
       (mode === 'interior' && interiorPaused()) ||
       (mode === 'dungeon' && !!dungeonCtx?.uiOverlayActive);
     if (mode === 'interior') interiorLootSettle();   // WORLD6a: a container's window gone (the stack reconciled above) is the close's word
+    decorTool.frame({ dt, cam, overlayUp: overlayHeld, interior: mode === 'interior' });   // DECOR1d: the button, the panel's scan, the free camera
     // Q4-v: the quest layer's modal frame. Behaviours update every
     // frame (Unity Update runs whatever Time.timeScale is); the
     // machine's OWN tick freezes under a paused window - PauseGame
@@ -7263,6 +7327,7 @@ export function createWorldModes(host) {
     // DEATH3: and the enhanced fall's pitch, from whichever slot holds the death
     if (interiorOverlay instanceof DeathScreen) interiorOverlay.tiltView(cam);
     if (mode === 'dungeon') dungeonCtx?.deathTilt?.(cam);
+    if (mode === 'interior') decorTool.cameraOverride(cam);   // DECOR1d: the free camera's eye, while a piece is placed
     // A8 - POINTER PARITY, THE FLAG AT THIS LINE RETIRED. Mouse0 is
     // DFU's ActivateCenterObject: the readied spell fires on its
     // PRESS (EntityEffectManager.cs:250) and the world activation
@@ -7359,6 +7424,7 @@ export function createWorldModes(host) {
       raycast: (o, d, m) => player.collider?.raycast?.(o, d, m) ?? null,
       spherecast: (o, r, d, m) => { const h = player.collider?.sphereCast?.(o, r, d, m)?.dist; return Number.isFinite(h) ? h : null; },   // MAC-A: castSphere's seam beside the ray - the camera's two obstacle guards are sphere casts (camera.cpp:186, :200)
     });
+    if (decorTool.flying()) mwv.eye = cam.pos;   // DECOR1d: the free camera looks from its own eye, never over the body's shoulder
     const view = betterAmbience.view(lookAt(mwv.eye, [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]], [0, 1, 0]));   // BA1: the shaker sits between the follower and the camera
     host.reportFrame?.(proj, view);   // AUDIT 62 F16/F28: TI1's tap ray and lock dot ride the host's last frame, and only its EXTERIOR render wrote one
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
@@ -7610,6 +7676,7 @@ export function createWorldModes(host) {
     });
     interiorArrows.draw(renderer, interiorCtx.texRemap);
     interiorDecor.draw(renderer, interiorCtx.texRemap);   // DECOR1c: the placed models, in the room's own climate
+    decorTool.draw(renderer, interiorCtx.texRemap);   // DECOR1d: and the one being placed, where it will stand
     interiorCtx.flatAnims.tick(dt);   // FA1
     // BLOOD1 AUDIT (2026-09-20): THE INTERIOR'S OWN MARKS, and they
     // were missing. This host builds a pool like the other three,
@@ -7637,7 +7704,7 @@ export function createWorldModes(host) {
     }
     // DECOR1c: the placed flats, on the same axis
     {
-      const _decorFlats = interiorDecor.batches();
+      const _decorFlats = [...interiorDecor.batches(), ...decorTool.batches()];   // DECOR1d: and the flat being placed
       if (_decorFlats.length) renderer.drawBillboards(_decorFlats, camRight, UP_Y);
     }
     // ID1: the player's own piles, on the same axis and the same call
@@ -7761,6 +7828,7 @@ export function createWorldModes(host) {
       audio.playOneShot(swingSoundFor(interiorWeapon.playerWeapon.weapon), 1.1);
     }
     interiorWeapon.draw({ paralyzed });   // AUDIT 39r: ShowWeapons(false) - no viewmodel while frozen
+    decorTool.drawPreview(interiorCtx.texRemap);   // DECOR1d: the decorator's panel, its pointed model turning in the preview box
     // AUDIT 21 (hosts lane, F7): THE HUD, in a building. drawHud lives inside
     // dungeonContext.drawFoes, which the interior arm never calls - so the
     // whole classic status bar vanished the moment you stepped through a door
@@ -9803,7 +9871,7 @@ export function createWorldModes(host) {
         interiorTorches.destroyAll();   // AUDIT 66 F6: HT1's pool was the one that never joined this list - a quest teleport or a load out of a building left the room's torches lit, batched and burning in the ear
         interiorHitEffects.clear();   // HE1: the same
         interiorBloodMarks.clear();   // BLOOD1a (HARD1): and the same for the ring
-        interiorDecor.destroyAll(); _decorVisit++;   // DECOR1c: the placed pieces too, on the quest-teleport / load arm
+        interiorDecor.destroyAll(); _decorVisit++; decorTool.close();   // DECOR1c: the placed pieces too, on the quest-teleport / load arm
         interiorCamps.destroyAll(); interiorHearths.length = 0;   // HEARTH1: the same list, for the same reason
         // ...and the OnPop the comment above is about, on every window
         // the stack holds (ROAD-B B1).
