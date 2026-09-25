@@ -6,7 +6,7 @@ import { PIXEL_STACK } from './pixelifyFive.js';
  *  (ui/enhancedFrame.js lists .dlg-win, .dlg-btn and .dlg-acts). */
 export const DIALOG_CSS = `
 /* ── DLG1: THE DECISION BOX (ui/enhancedDialog.js) ───────────────── */
-.dlg-shell { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center;
+.dlg-shell { position: fixed; inset: 0; z-index: 38; display: flex; align-items: center; justify-content: center;
   padding: 24px; background: rgba(5,6,8,0.5); font-family: ${PIXEL_STACK};
   -webkit-font-smoothing: none; font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
   color: #d8cfae; }

@@ -58,7 +58,9 @@ export const TOAST_FADE_MS = 700;
 /** Which selectors play which role. Selectors are the screens' own, one
  *  per entry, exactly as their rules write them. */
 export const FRAME_ROLES = {
-  window: ['.dlg-win', '.px-win', '.pack-win', '.loot-win', '.px-about', '.px-profile', '.hmbox'],
+  window: ['.dlg-win', '.px-win', '.pack-win', '.loot-win', '.px-about', '.px-profile', '.hmbox',
+    // PLUS8: the journey's bar (ui/enhancedTravelControl.js) - carved stone, brass fittings, the theme's ground
+    '.travelpanel-bar'],
   // the talk panel is a .px-win whose own ground rule outweighs .px-win's
   windowGround: ['.talk-shell .talk-panel'],
   panel: ['.port-host .port-card', '.pack-shell .packdetail .card', '.pack-shell .card', '.hmcard', '.px-sys .card', '.px-sys .dcard',
@@ -97,7 +99,9 @@ export const FRAME_ROLES = {
     // centred and evenly sized but flat-outlined - the Close button the spellbook was reported with
     '.sb-shell .act', '.cr-shell .act',
     // PLUS6: the shop's category tabs are buttons now (the examples' stone buttons), the chosen one brass
-    '.trade-shell .packtab'],
+    '.trade-shell .packtab',
+    // PLUS8: the journey bar's Map / Camp / Exit and the time stepper's two presses
+    '.travelpanel-act', '.travelpanel-step'],
   primary: ['.lv-ok', '.hmroot .act'],
   tile: ['.port-host .port-tile', '.port-host .port-iconcell', '.pack-shell .itemrow', '.pack-shell .equipped .wornrow', '.wizard .racegrid button',
     '.wizard .facegrid button', '.shell .ft-tile', '.shell .ft-seg', '.shell .ft-mchip', '.shell .ft-tile-more',   // FT18: a condensed tile's parts toggle
@@ -113,7 +117,9 @@ export const FRAME_ROLES = {
   well: ['.trade-shell .packcol', '.shell .ft-search', '.shell .ft-tile-drawer',   // FT18: the Features search and a tile's opened drawer
     '.port-host .port-field', '.port-host .port-canvas', '.port-host .port-picture img', '.port-host .port-pictureword', '.wizard .namebox', '.sb-shell .sb-rename input', '.cr-shell .cr-compose input', '.hmsearch input',
     '.talk-face', '.pack-shell .figure-doll', '.pack-shell .wornmap-doll.noart', '.shell .look-pic',
-    '.shell .dcard code', '.px-setwrap .dcard code', '.px-meter', '.shell .swatch', '.px-setwrap .swatch'],
+    '.shell .dcard code', '.px-setwrap .dcard code', '.px-meter', '.shell .swatch', '.px-setwrap .swatch',
+    // PLUS8: the journey bar's time readout - the x40 sits in a socket between its two presses
+    '.travelpanel-accel'],
   input: ['.shell .ft-search', '.wizard .namebox', '.sb-shell .sb-rename input', '.cr-shell .cr-compose input', '.hmsearch input',
     'body .dfsocial-field', 'body .dfchat-input'],
   meterFill: ['.px-fill'],

@@ -11,7 +11,7 @@
 // file answers null, the window draws its words, and nothing throws.
 
 import { inventoryItemImage } from '../systems/itemTemplates.js';
-import { resolveItemName } from '../systems/itemInfo.js';
+import { itemLongName } from '../systems/itemInfo.js';   // RF6: the one resolver - the name every other enhanced list reads
 import { requestIcon } from './textureCanvas.js';
 import { SPELL_ICON_COUNT, SPELL_ICON_ROW_COUNT } from './spellIcons.js';
 
@@ -21,7 +21,7 @@ export function itemIconUrl(item, identity = undefined) {
   return img?.archive != null ? requestIcon(img.archive, img.record, { scale: 2, dye: img.dye }) : null;
 }
 export function itemName(item) {
-  try { return resolveItemName(item) || item?.name || 'Item'; } catch { return item?.name || 'Item'; }
+  try { return itemLongName(item) || 'Item'; } catch { return 'Item'; }
 }
 
 // ── A SHEET IMG, CUT ───────────────────────────────────────────────

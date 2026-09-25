@@ -2234,7 +2234,7 @@ function quickslotActs(item) {
 function infoCard(picked, side, ready = render) {
   const line = itemLine(picked, deps.entity);
   const c = el('div', 'card');
-  // The detail draws picked BIGGER - this is the one place there is room
+  // The detail draws it BIGGER - this is the one place there is room
   // to see what the thing actually looks like.
   const big = modelIconUrl(line.item, 192)
     || linePictureUrl(line, { scale: 4, onReady: ready });
@@ -2251,17 +2251,17 @@ function infoCard(picked, side, ready = render) {
   const meta = [line.material, line.stack ? `${line.stack} of them` : null].filter(Boolean).join(' · ');
   if (meta) c.append(el('p', 'meta', meta));
   // LR1: the tier, then each affix as a line, then the enchantment - or
-  // "Unidentified" until the Identify spell or the guild reads picked.
+  // "Unidentified" until the Identify spell or the guild reads it.
   { const lines = rarityLines(picked); if (lines.length) { const ul = el('ul', 'rarity'); for (const l of lines) ul.append(el('li', null, l)); c.append(ul); } }
   const dl = el('dl', 'stats');
   const pair = (k, v) => { if (v != null) dl.append(el('dt', null, k), el('dd', null, String(v))); };
   // MAC-M1: the headline stat FIRST - a player reading this card is
   // deciding whether to swing the thing, and weight is not that
-  // question. Only one of the two ever draws: an item is a weapon or picked
+  // question. Only one of the two ever draws: an item is a weapon or it
   // is armour, and `pair` skips a null.
   pair('Damage', line.damage);
   pair('Armour', line.armour);
-  // MAC-M2: under the damage, because picked is the same question - how the
+  // MAC-M2: under the damage, because it is the same question - how the
   // thing is swung - and above the weight, which is not. Null for
   // everything that is not a weapon, so no book grows an empty row.
   pair('Hands', line.hands);
@@ -2277,7 +2277,7 @@ function infoCard(picked, side, ready = render) {
   pair('Weight', `${line.weight.toFixed(2)} kg`);
   pair('Condition', line.condition != null ? `${line.word} · ${line.condition}%` : null);
   // HT2: a light source is never WORN - the honest line for one is
-  // whether picked is the lit one, which is the same fact the classic
+  // whether it is the lit one, which is the same fact the classic
   // list's gold row carries.
   if (side === 'local') {
     if (isLightSource(picked)) pair('Lit', line.lit ? 'yes' : 'no');
@@ -2300,9 +2300,9 @@ function itemActs(picked, side, { qty = true } = {}) {
     // HT2: the act is `localPrimaryAct`'s, label and all - a torch is
     // LIT here, not worn, because DFU's equip click on a light source
     // is a use (:1976-1985) and nothing in the equip table will ever
-    // take one. The button says which picked is doing.
+    // take one. The button says which it is doing.
     const act = localPrimaryAct(picked, deps.entity);
-    if (act) {   // null: nothing would wear picked (Mac: no WEAR on a waterskin)
+    if (act) {   // null: nothing would wear it (Mac: no WEAR on a waterskin)
       const b = el('button', 'act primary', act.label);
       b.onclick = act.kind === 'takeOff' ? () => takeOff(picked.equipSlot)
         : act.kind === 'wear' ? () => wear(picked)
@@ -2317,7 +2317,7 @@ function itemActs(picked, side, { qty = true } = {}) {
     // WORN ITEMS HAVE NO STOW. filterByTab IS FilterLocalItems, so an
     // equipped item is never in the list a Remove click can reach -
     // the classic window cannot transfer one and neither can this. The
-    // way out is Take off, which is the button beside picked.
+    // way out is Take off, which is the button beside it.
     if (!line.equipped && canStow(picked)) {
       const t = el('button', 'act', STOW_LABEL[remote.kind]);
       t.onclick = () => stow(picked);
@@ -2327,8 +2327,8 @@ function itemActs(picked, side, { qty = true } = {}) {
     }
   } else {
     // G6: taking ONE from a reward tray IS the claim, and the window
-    // goes with picked. The label says so rather than letting a player
-    // discover picked by pressing.
+    // goes with it. The label says so rather than letting a player
+    // discover it by pressing.
     const b = el('button', 'act primary',
       remote.kind === 'reward' ? 'Take this one' : 'Take');
     b.onclick = () => take(picked);
@@ -2341,14 +2341,14 @@ function itemActs(picked, side, { qty = true } = {}) {
   // for a thing with no use is its own "Nothing happens." A button that
   // appeared only for items this screen believed were usable would be
   // this screen making a judgement the law already makes. DFU offers
-  // picked on the REMOTE list too (:2048-2051), so this pane does.
+  // it on the REMOTE list too (:2048-2051), so this pane does.
   // Mac (2026-09-18): ...WAS. "Same for use for non-usables" - the law's own predicate (useItem.js usableItem)
   // says which items an arm would do something with; a sword or a gem gets no Use button.
   const u = el('button', 'act', 'Use');
   // THE COLLECTION IS THE LIVE LIST, not the model's. `useItem`
-  // CONSUMES out of what picked is handed (:2048-2051 - a potion drunk
+  // CONSUMES out of what it is handed (:2048-2051 - a potion drunk
   // from a corpse must leave the corpse), and `remoteModel.items` is a
-  // filtered COPY, so passing that would drink the potion and leave picked
+  // filtered COPY, so passing that would drink the potion and leave it
   // sitting in the pile. The bag travels separately for AUDIT 22 F4's
   // reason, inside `use`.
   if (usableItem(picked)) {
@@ -2359,8 +2359,8 @@ function itemActs(picked, side, { qty = true } = {}) {
   // QS2: ...and the quickslot buttons, LOCAL ONLY. A slot resolves against the
   // PACK every frame (quickslots resolveConsumable), so slotting something
   // that is still in a corpse would name a kind the player does not carry - a
-  // ghost from the moment picked was made. The remote side gets none; take picked
-  // first, then slot picked.
+  // ghost from the moment it was made. The remote side gets none; take it
+  // first, then slot it.
   if (side === 'local') for (const b of quickslotActs(picked)) acts.append(b);
   return acts;
 }

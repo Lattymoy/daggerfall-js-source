@@ -49,7 +49,7 @@ export const MOTION_CSS = `
 @keyframes wm-fade-out { from { opacity: 1; } to { opacity: 0; } }
 .wm-host-in { animation: wm-fade-in ${MOTION_IN_MS - 60}ms ease-out both; }
 .wm-in { animation: wm-unfold ${MOTION_IN_MS}ms steps(8, end) both; }
-.wm-ghost { pointer-events: none !important; z-index: 60 !important; }
+.wm-ghost { pointer-events: none !important; z-index: 39 !important; }   /* under the asset picker (dataSource.js ASSET_PICKER_Z, MWFIX 1) */
 .wm-ghost.wm-host-out { animation: wm-fade-out ${MOTION_OUT_MS}ms ease-in both; }
 .wm-ghost .wm-out, .wm-ghost.wm-out { animation: wm-fold ${MOTION_OUT_MS}ms steps(6, end) both; }
 @media (prefers-reduced-motion: reduce) {
@@ -118,13 +118,14 @@ function unfold(host) {
 
 /** Start watching <body>. Safe to call from every mount site. */
 export function installWindowMotion(doc = globalThis.document) {
-  if (!doc?.body || installed || typeof MutationObserver === 'undefined') return;
+  const Observer = (doc?.defaultView ?? globalThis).MutationObserver;
+  if (!doc?.body || installed || typeof Observer !== 'function') return;
   if (!motionEnabled(doc.defaultView ?? globalThis)) return;
   doc.addEventListener('scroll', (e) => {
     const t = e.target;
     if (t?.nodeType === 1) scrolls.set(t, { top: t.scrollTop, left: t.scrollLeft });
   }, { capture: true, passive: true });
-  installed = new MutationObserver((records) => {
+  installed = new Observer((records) => {
     const added = [], removed = [];
     for (const r of records) {
       for (const n of r.addedNodes) if (windowsIn(n).length && !n.classList?.contains('wm-ghost')) added.push(n);

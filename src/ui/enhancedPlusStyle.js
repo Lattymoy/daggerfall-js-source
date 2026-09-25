@@ -289,7 +289,7 @@ body .dfchat-form .dfchat-close { min-width: 32px; padding: 4px 8px; }
 
 /* PLUS7: THE INVENTORY'S HOVER CARD AND RIGHT-CLICK MENU (ui/enhancedInventory.js). They float on <body>, outside
    the pack's own sheet scope, so they carry their own face; the kit's panel role colours them per theme. */
-.inv-tip, .inv-menu { position: fixed; z-index: 60; font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;
+.inv-tip, .inv-menu { position: fixed; z-index: 39; font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;
   font-variant-ligatures: none; color: #d8cfae; }
 .inv-tip { pointer-events: none; width: min(290px, 80vw); }
 .inv-tip > .card { margin: 0; padding: 14px 16px 12px; border: 2px solid; }
@@ -322,8 +322,93 @@ body .dfchat-form .dfchat-close { min-width: 32px; padding: 4px 8px; }
 .px-qrail { background-color: rgba(15,17,22,0.4); }
 `;
 
+
+/** PLUS8 (2026-09-25): THE JOURNEY BAR (ui/enhancedTravelControl.js), dressed for Enhanced Plus. It was plain
+ *  Enhanced's slim brass-lined strip - the display serif, a hairline border, flat blue-grey buttons - and it stood
+ *  at top 14px, which is ON the compass (the HUD's top block starts at 18), so the compass's points showed through
+ *  it. Now it is a window of the kit: the carved stone frame with the brass fittings (window role), the theme's own
+ *  ground, the pixel face, the three sections parted by engraved rules, the time readout in a sunk socket between
+ *  two stone presses, and Map / Camp / Exit as the kit's stone buttons. It stands UNDER the compass and follows the
+ *  HUD scale down (the panel copies --hud-scale off the HUD's host), and steps further down while the foe's bar is
+ *  up under the compass, so neither is ever covered. The kit paints (enhancedFrame.js FRAME_ROLES: window, button,
+ *  well); these rules only place, size and letter. */
+export const TRAVEL_CSS = `
+/* ── PLUS8: THE JOURNEY BAR ── */
+.travelpanel { font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none; font-variant-ligatures: none;
+  font-feature-settings: 'liga' 0, 'clig' 0; color: #d8cfae;
+  /* the compass's foot: .hud-top at 18px, the strip 26px and its 2px rule, all times the HUD scale */
+  --tp-top: calc(18px + 28px * var(--hud-scale, 1) + 20px); }
+body:has(.hud-foe.on) .travelpanel { --tp-top: calc(18px + 28px * var(--hud-scale, 1) + 20px + 46px * var(--hud-scale, 1)); }
+body:has(.hud-foe.on.blade) .travelpanel { --tp-top: calc(18px + 28px * var(--hud-scale, 1) + 20px + 76px * var(--hud-scale, 1)); }
+.travelpanel-bar { top: var(--tp-top); min-width: min(720px, 92vw); max-width: calc(100vw - 32px); box-sizing: border-box;
+  border: 2px solid; border-radius: 0; align-items: stretch; }
+.travelpanel-dest { gap: 3px; padding: 10px 18px 10px 20px; }
+.travelpanel-label { font-size: 11px; letter-spacing: 0.2em; color: #a89f88; text-shadow: 1px 1px 0 #050608; }
+.travelpanel-name { font-family: inherit; font-size: 21px; line-height: 1.15; letter-spacing: 0.04em; color: #efe8d6;
+  text-shadow: 1px 1px 0 #050608, 2px 2px 0 rgba(0,0,0,0.5); }
+.travelpanel.following .travelpanel-name { color: ${FRAME_TONES.brassHi}; }
+.travelpanel-sub { font-size: 12px; letter-spacing: 0.06em; color: #c9bfa4; text-shadow: 1px 1px 0 #050608;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+/* the parting rules: a dark cut with the light catching beside it, the kit's engraved line stood on end */
+.travelpanel-speed, .travelpanel-acts { border-left: 2px solid rgba(5,6,8,0.55); box-shadow: inset 1px 0 0 rgba(163,152,128,0.18); }
+.travelpanel-speed { align-items: center; gap: 6px; padding: 8px 18px; }
+.travelpanel-speed > .travelpanel-label { text-indent: 0.2em; }
+.travelpanel-stepper { gap: 6px; }
+.travelpanel-step { width: 30px; height: 30px; padding: 0; display: grid; place-items: center; border: 2px solid; border-radius: 0;
+  font: inherit; font-size: 17px; line-height: 1; color: #e6dec6; text-shadow: 1px 1px 0 #050608; }
+.travelpanel-accel { min-width: 64px; height: 30px; box-sizing: border-box; display: grid; place-items: center; padding: 0 8px;
+  border: 2px solid; background: rgba(0,0,0,0.38); font-family: inherit; font-size: 17px; letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums; color: rgb(243,239,44); text-shadow: 1px 1px 0 rgb(93,77,12); }
+.travelpanel-acts { gap: 8px; padding: 8px 16px; }
+.travelpanel-act { min-width: 78px; min-height: 36px; padding: 6px 14px; border: 2px solid; border-radius: 0;
+  font-family: inherit; font-size: 13px; letter-spacing: 0.14em; text-indent: 0.14em; text-align: center; color: #e6dec6;
+  text-shadow: 1px 1px 0 #050608, 2px 2px 0 rgba(0,0,0,0.45); }
+.travelpanel-step:hover, .travelpanel-step:focus-visible, .travelpanel-act:hover, .travelpanel-act:focus-visible {
+  outline: none; color: rgb(243,239,44); text-shadow: 1px 1px 0 rgb(93,77,12); }
+/* the journey's word (a stop, a speed refused): outlined gold words under the bar, the HUD lines' own face */
+.travelpanel-msg { top: calc(var(--tp-top) + 104px); max-width: calc(100vw - 48px); text-align: center; font-size: 14px;
+  letter-spacing: 0.06em; color: rgb(243,239,44);
+  text-shadow: -1px 0 0 #050608, 1px 0 0 #050608, 0 -1px 0 #050608, 0 1px 0 #050608, 2px 2px 0 rgb(93,77,12); }
+/* the junction disc: a round socket - an outline, a stone ring lit from the top left, a brass lip, sunk inside */
+.travelpanel-junction { top: calc(var(--tp-top) + 112px); border: 0;
+  background: color-mix(in srgb, var(--ink) 84%, transparent);
+  box-shadow: inset 3px 3px 0 rgba(0,0,0,0.5), 0 0 0 2px ${FRAME_TONES.brass}, 0 0 0 3px ${FRAME_TONES.outline},
+    -2px -2px 0 4px ${FRAME_TONES.stoneLit}, 2px 2px 0 4px ${FRAME_TONES.stoneDark}, 0 0 0 6px ${FRAME_TONES.outline},
+    4px 4px 0 6px rgba(0,0,0,0.42); }
+/* while the disc stands alone (a junction stop) it takes the bar's place under the compass */
+.travelpanel.junction-only .travelpanel-junction { top: var(--tp-top); }
+/* a textured stone (Stone): the small labels are struck into the rock, the words keep their light */
+:root[data-plus-theme="stone"] .travelpanel-label { color: #15130f; text-shadow: 1px 1px 0 rgba(255,255,255,0.36); }
+:root[data-plus-theme="stone"] .travelpanel-sub { color: #e6dec6; }
+:root[data-plus-theme="stone"] .travelpanel-speed, :root[data-plus-theme="stone"] .travelpanel-acts {
+  border-left-color: rgba(5,6,8,0.5); box-shadow: inset 1px 0 0 rgba(255,255,255,0.16); }
+@media (max-width: 760px) {
+  .travelpanel-bar { min-width: 0; width: calc(100vw - 24px); }
+  .travelpanel-name { font-size: 17px; }
+  .travelpanel-dest { padding: 8px 12px; }
+  .travelpanel-speed { padding: 8px 10px; }
+  .travelpanel-acts { padding: 8px 10px; gap: 6px; }
+  .travelpanel-act { min-width: 0; padding: 6px 9px; font-size: 12px; letter-spacing: 0.1em; text-indent: 0.1em; }
+  .travelpanel-junction { width: 108px; height: 108px; right: 14px; }
+}
+/* a phone held upright: the destination takes the whole first row, the time and the three presses the second */
+@media (max-width: 560px) {
+  .travelpanel-bar { flex-wrap: wrap; }
+  .travelpanel-dest { flex: 1 1 100%; border-bottom: 2px solid rgba(5,6,8,0.55); box-shadow: 0 1px 0 rgba(163,152,128,0.18); }
+  .travelpanel-speed { flex-direction: row; padding: 8px 8px 8px 12px; border-left: 0; box-shadow: none; }
+  .travelpanel-speed > .travelpanel-label { display: none; }   /* the x40 in its socket says what it is; the row needs the room */
+  .travelpanel-accel { min-width: 52px; }
+  .travelpanel-acts { flex: 1 1 auto; padding: 8px 12px 8px 8px; }
+  .travelpanel-act { flex: 1 1 0; min-width: 0; padding: 6px 4px; }
+  .travelpanel-msg { top: calc(var(--tp-top) + 152px); }
+  .travelpanel-junction { top: calc(var(--tp-top) + 164px); }
+}
+@media (prefers-reduced-motion: reduce) { .travelpanel-msg { transition: none; } }
+`;
+
 export const PLUS_CSS = `${VITALS_CSS}
 ${PLUS_FIX_CSS}
+${TRAVEL_CSS}
 ${CURSOR_CSS}
 ${DIALOG_CSS}
 ${PORT_CSS}

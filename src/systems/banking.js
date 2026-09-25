@@ -744,7 +744,7 @@ export function bankingStatusRows(accounts, { regionName = () => '' } = {}) {
 //    DaggerfallBankPurchasePopUp is ui/bankPurchaseWindow.js
 //    (BankPurchaseWindow :102), mounted at scenes/worldModes.js:2793
 //    openPurchase with drawBankModelPreview (:1938) as the dedicated
-//    3D model panel, and ui/bankWindow.js:244-252 routes BUY HOUSE's
+//    3D model panel, and ui/bankWindow.js:246-254 routes BUY HOUSE's
 //    'pick' into it (a host without the window still falls back to
 //    DFU's own missing-directory answer, :433-434).
 //  - ReadNativeBankData (:584-614) IS PORTED, verbatim quirks and all:

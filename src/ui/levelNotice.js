@@ -331,7 +331,7 @@ let last = '';
 
 /**
  * WHERE IT HANGS - AUDIT LV2 F4, and QS3's rule read the right way
- * round (ui/enhancedHud.js:430-433): `.hud-bottom` is a CENTRED column
+ * round (ui/enhancedHud.js:535-538): `.hud-bottom` is a CENTRED column
  * anchored to the foot of the screen, so a centred thing that belongs
  * above the vitals goes IN it and rides it; only a CORNER block is
  * anchored to the HUD root and does the arithmetic itself, "because a
