@@ -3247,6 +3247,8 @@ ${badgeCss()}
   .skillpane.builder { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 26px;
     grid-template-areas: "skills attrs name" "skills attrs klass" "skills attrs acts" "io io io"; }
   .skillpane.builder > .b-name { align-self: start; width: 100%; box-sizing: border-box; }
+  /* a third of the pane: the name box's 20px would cut its own question short */
+  .wizard .skillpane.builder > .b-name { font-size: 16px; letter-spacing: 0.04em; }
   .skillpane.builder > .b-acts { justify-content: flex-start; flex-wrap: wrap; }
   /* the review's columns are narrow at 1280: the row gives its padding
      to the name, and a name that still does not fit ellipsizes rather

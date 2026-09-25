@@ -1340,7 +1340,7 @@ function summaryStage() {
 
   let cursor = 0;
   flow.skillRows().forEach(([group, ids], g) => {
-    const col = cols[Math.min(2, g + (g >= 2 ? 0 : 1))];   // primary and major share the middle column, minor the last
+    const col = cols[g < 2 ? 1 : 2];   // primary and major share the middle column, minor the last
     col.append(sectionHead(group[0].toUpperCase() + group.slice(1), flow.pools?.[group] ?? 0));
     for (const id of ids) {
       const at = cursor++;
