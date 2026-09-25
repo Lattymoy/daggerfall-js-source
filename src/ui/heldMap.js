@@ -126,6 +126,7 @@ import { quadPlacement } from './quadMap.js';   // MAP3: the sheet over the held
 import { bindings } from './input.js';
 import { actionForCode } from '../systems/inputActions.js';
 import { smoothstep } from '../systems/mathf.js';   // MAP-FIELD7: the ONE easing, so the sheet travels like everything else in the port
+import { hubMapWord, hubTitle } from '../systems/regionHubs.js';   // HUB1: a region hub's word on the label and its title in the box
 
 // ── THE SPRITE (Mac's, public/art/held-map.png) ──────────────────
 // THE SITE ROOT lives in systems/appRoot.js now (AUDIT-THUNDERLOCK
@@ -1269,6 +1270,7 @@ export class HeldMapWindow {
         isDiscovered: (s) => this._discovered(s),   // MAP2: the ports arm before DFU's own test
         isPort: (s) => hasPort(s?.mapID ?? s?.mapId),
         nameOf: (s) => this._summaryName(s),
+        hubAt: (s) => this.deps.hubAt?.(s) ?? null,   // HUB1: online, the region's hub flies its pennant
       });
     }
     return this._model;
@@ -1581,12 +1583,15 @@ export class HeldMapWindow {
       this.deps.discoveredBuildings?.(summary) ?? null,
       (t) => this.deps.buildingTypeName?.(t) ?? String(t));
     const title = this._selected.name;
+    // HUB1: what the place is to its region, online - known whether or not its buildings are
+    const hub = this.deps.hubAt?.(summary) ?? null;
+    const hubRows = hub ? [hubTitle(hub)] : [];
     if (!info) {
-      this._info = { title: '', rows: [toFormat(TO_TEXT.MsgNoKnowledge, title)], cells: [] };
+      this._info = { title: '', rows: [...hubRows, toFormat(TO_TEXT.MsgNoKnowledge, title)], cells: [] };
     } else {
       this._info = {
         title,
-        rows: info.guilds ? [info.guilds] : [],
+        rows: [...hubRows, ...(info.guilds ? [info.guilds] : [])],
         // :437-441 - two columns; the grid below is the sheet's own two
         cells: info.rows.map((r) => `${r.name}  ${r.count}`),
       };
@@ -2388,8 +2393,9 @@ export class HeldMapWindow {
     if (m) {
       const name = m.name || this._summaryName(m.summary);
       const region = REGION_NAMES[m.summary.regionIndex] ?? '';
-      // UpdateRegionLabel's own "Region : Location" reading
-      return { label: region && name ? `${region} : ${name}` : name, cursor: 'pointer' };
+      // UpdateRegionLabel's own "Region : Location" reading - HUB1: and a hub's word after it, online
+      const hub = m.hub ? ` (${hubMapWord(m.hub)})` : '';
+      return { label: (region && name ? `${region} : ${name}` : name) + hub, cursor: 'pointer' };
     }
     const [mx, my] = toMap(this._view, sx, sy);
     const px = Math.floor(mx), py = Math.floor(my);

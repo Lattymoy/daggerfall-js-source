@@ -101,8 +101,8 @@
   {
     "name": "info-ignores-guild-line",
     "file": "src/ui/heldMap.js",
-    "old": "        rows: info.guilds ? [info.guilds] : [],",
-    "new": "        rows: [],",
+    "old": "        rows: [...hubRows, ...(info.guilds ? [info.guilds] : [])],",
+    "new": "        rows: [...hubRows],",
     "tests": [
       "test/heldmap.test.js"
     ]

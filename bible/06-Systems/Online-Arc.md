@@ -4831,7 +4831,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4250` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4257` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:255`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -8362,3 +8362,64 @@ blow (the carry, every gate, FormulaHelper's tail); the stamp; the drink and the
 the outdoor pool driven (a fight of four marks the body's Magic sword at 3, a reader keeps the count through the body's
 record, offline marks nothing); the hosts, the drink mounted and every other door by source. The re-aimed pins:
 renown1's and auditpscale1's kill handler and quest earn. `tools/mutants/sigil1.json` (57, all dead).
+
+## THE HOLDINGS ARC (2026-09-25, Mac: "One big thing Im trying to brain storm is giving each region's main city a natural player hub and future ownership for online guilds along with allowing online players to purchase housing in any location. Along with taking the file attached and building our own unique version instead of porting") - hubs, homes, a decorator, guilds and seats
+
+The file was Kaedius's Decorator 0.2.2 (a Daggerfall Unity mod: furniture placed in a home or ship for gold, moved,
+turned, lit, made a container). Mac asked for our own, not a port. Asked four things, Mac answered: homes are
+EXCLUSIVE - one owner per building server-wide ("World is super large. Can revisit later if needed"); homes go
+EVERYWHERE, towns and open land ("Everything"); seat ownership ALL OUT ("Wanna go all out on this" - weekly
+influence, claims paid from a treasury, and sieges); decor is GOLD PER PLACEMENT, and "rare misc artifacts and other
+items in the world can also be placed, plus sold at shops not available in the world loot pool"; and "a way to
+display your weapons". Mac left RESPAWNING AT A HUB out ("That'll be a seperate idea"), and with it the gold lost on
+death (the original pillars 5 and 6); a CARRIAGE between hubs was dropped because online fast travel is already
+instant and camping out already costs nothing. Defaults taken ("You got this. Continue"): three town homes and one
+plot a character; no upkeep yet.
+
+The slices, in order: **HUB1** the hubs (below); **HOME1** exclusive homes in any town - a server registry (the
+account service's D1: one owner a building, the character's cap), the door and the map naming the owner, entry by
+the owner's word (private, party, guild, public), visitors in the owner's room, storage the owner's alone, selling
+back; **DECOR1** the decorator - a catalogue of Daggerfall's own furniture and decor for gold a placement, moved,
+turned, scaled, snapped, lit, kept on the server for an online home and in the save for the offline house and ship;
+**DECOR2** real items placed (rare misc artifacts, world items shown as they lie in the world), a furnisher selling
+decor the loot never drops (the Furniture Store building type stands with empty shelves today), and weapon racks,
+mounts and stands showing the player's own weapons in 3D (the character editor's voxel pieces, dyed by metal;
+Morrowind's meshes where the player has them), inspectable; **GUILD1** guilds - a server entity, a tag beside the
+name, a guild chat, ranks and a roster, a guild hall that is a guild-owned home, a treasury; **SEAT1** each hub a
+seat a guild can hold - weekly influence from members' Renown XP earned in the region, an unheld seat claimed with
+influence and a treasury fee, the holder's banners and colours in the city, the palace its hall, members' discounts,
+a share of the seat's fees, and the seat's circle on the map in the holder's colour; **SEAT2** sieges - the top
+challenger meets the holder in a scheduled team battle at the seat, built on the duel ring; **PLOT1** homesteads on
+open land, streamed to every player.
+
+## HUB1 (2026-09-25, Mac: the hub, "a color coded circle indicator or something along those lines for distinguishing") - every region's main city is its hub
+
+Daggerfall Unity has neither online play nor hubs; this is a Ledger A departure (`Port-Ledger.md` section A, EVERY
+REGION'S MAIN CITY IS ITS HUB), online's alone. The law is `src/systems/regionHubs.js`, pure.
+
+- **The rule** (`pickRegionHubs`), over each region's OWN rows. `MapsFile.baseLocationCount` is the count the
+  region's own MAPNAMES holds; a world-data mod's rows are appended past it and never count, so a player with
+  AssetInjection on and one with it off pick the same city. Among the settlements: the best KIND (a city over a town
+  over a village), then the one NAMED FOR ITS REGION (Daggerfall, Wayrest, Anticlere...), then the LARGEST by
+  exterior blocks, then buildings, then the lowest location index. A region with no settlement has no hub - 17 of
+  the 62 regions hold no location at all, so at most 45 stand. Daggerfall, Wayrest and Sentinel, each the city of
+  its own region, are CAPITALS. A hub is read off the boot's own pass over every location (`scenes/world.js`, the
+  game's rows collected as the location index is built), keyed by region and by the unsigned map id the room keys
+  already spell.
+- **The map** (the held map - online's own skin; the classic map is DFU's and unchanged). A hub's mark stands in a
+  COLOURED CIRCLE under its glyph (Mac: "a color coded circle indicator"): BLUE for a hub, PURPLE for a capital - the
+  colours the sheet does not already speak in (the selection's ring is gold, the player's mark red, the party's
+  green, Travel Options' mark yellow). The circle goes down before any glyph's halo, so the town reads ON the
+  colour, at every band that inks the place; names are set clear of it, and so are the neighbours' (`markReach`).
+  The label reads "Region : Location (Hub)" or "(Capital)", and the I box opens with "Hub of <region>" or "Capital
+  of the Kingdom of <region>", whether or not the player knows the town's buildings. The next slices colour more
+  circles: a player's own homes (HOME1), a held seat in its guild's colour (SEAT1).
+- **Arrival.** Walking into a hub - PlayerGPS's location-rect entry, the frame loop's own edge - says "Daggerfall,
+  capital of the Kingdom of Daggerfall." or "<City>, hub of <region>." for five seconds.
+
+Online only: offline the host hands the map no hubs and says nothing on arrival. **Known limits.** A world-data file
+that REPLACES one of the game's own rows (`location-<r>-<i>.json`) could change a size the rule reads; none ship.
+No relay change, no account change. Pinned: `test/hub1.test.js` (5) - the rule over every tie, the words, the base
+count, the ink (the circles' colours and their order under the glyphs, names and neighbours set clear), the host by
+source; `test/heldmap.test.js` HUB1 window (1) - the label and the box driven, online, capital and offline.
+`tools/mutants/hub1.json` (30).

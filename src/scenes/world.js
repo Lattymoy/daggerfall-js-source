@@ -304,6 +304,7 @@ import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, kn
 import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/renown.js';   // RENOWN1: what a kill and a quest are worth, and the party's bonus (RENOWN3: read against my Renown)
 import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer, renownFoeCarry } from '../net/renownTracker.js';   // RENOWN1: what this character earns online, carried to the account service
 import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the level's health and magicka, on top of Daggerfall's while online
+import { pickRegionHubs, hubAtMapId, hubArrivalLine } from '../systems/regionHubs.js';   // HUB1: every region's main city, its hub
 import { setSigilOnline, setSigilRenown, drinkSigil, sigilRiseLine } from '../systems/sigil.js';   // SIGIL1: a weapon won online carries a sigil, woken by my Renown
 import { itemLongName } from '../systems/itemInfo.js';   // SIGIL1: the weapon's name as its tooltip reads it
 import { partySizeOf, partyExtraFoes, partyGroupMembers } from '../systems/partyScale.js';   // PSCALE1: a fight weighs the party - its count, and the foes more an outdoor encounter stands
@@ -687,16 +688,22 @@ export async function bootWorld(canvas, renderer, params, status) {
   // One location per map pixel game-wide (pinned corpus invariant).
   status('indexing locations');
   const locationIndex = new Map();
+  const _hubRows = [];   // HUB1: the game's own rows, whatever a mod's addition later stands on their pixel
   for (let r = 0; r < maps.regionCount; r++) {
     const region = maps.getRegion(r);
     if (!region) continue;
+    const baseCount = maps.baseLocationCount(r);
     for (let l = 0; l < region.locationCount; l++) {
       const loc = maps.getLocation(r, l);
       if (!loc || !loc.exterior || !loc.exterior.exteriorData) continue;
       const p = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude);
       locationIndex.set(`${p.x},${p.y}`, loc);
+      if (l < baseCount) _hubRows.push(loc);
     }
   }
+  // HUB1: every region's main city, one answer on every client (systems/regionHubs.js) - read online alone
+  const regionHubs = pickRegionHubs(_hubRows, { regionNameOf: (r) => maps.getRegionName(r) });
+  _hubRows.length = 0;
 
   // SPAWNED-DUNGEONS1 (Lost, 2026-09-19: "one dungeon per loaded chunk when wandering around with a chance of 30% per
   // chunk ... online mode only for now"). ONE choke point - buildPixelNow, which every build reaches (boot, teleport,
@@ -7314,6 +7321,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       // join or leave - both skins read it on their own refresh. The
       // host says WHERE and WHO; neither map is told what a party is.
       party: () => partyMarkers(),
+      // HUB1: each region's hub, marked and named - online alone (systems/regionHubs.js); offline the map is DFU's
+      hubAt: params.has('online') ? (summary) => hubAtMapId(regionHubs, summary?.mapID ?? summary?.mapId) : null,
       // TO1: the mod itself, and the six reads its additions to this
       // window need. Every one is guarded on the other side - with
       // Travel Options off `travelOptions` answers null and the map is
@@ -14684,6 +14693,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // (ThievesGuild.cs:197-206, handler :227-229), so the hall
         // reveal follows the member into every town.
         revealMemberGuildHalls();
+        // HUB1: walking into a region's hub says so, online - "Daggerfall, capital of the Kingdom of Daggerfall."
+        if (onlineOn) { const hub = hubAtMapId(regionHubs, _musicLoc?.mapTableData?.mapId); if (hub) townTalk.say(hubArrivalLine(hub), 5); }
         // RR3: RoleplayRealism.PlayerGPS_OnEnterLocationRect (:259-267) - the master armorer's shop discovered under its own name
         if (rrEnabled()) {
           const arm = rrMasterArmorerDiscovery(_musicLoc, getBuildingVariant);
