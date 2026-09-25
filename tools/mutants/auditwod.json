@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-WOD-m2-site-forgotten",
     "file": "src/scenes/world.js",
-    "old": "      if (p.wodSite) _wodSiteWas.add(key);   // m2",
-    "new": "",
+    "old": "    if (labGrassField) {   // WOD2: a levelled camp moved the ground the same way; AUDIT BRANCH (WoD) m2: a rebuild that lost its site moved it back; PERF-EXT21: every publish re-reads it",
+    "new": "    if ((dfLocation || wodSite) && labGrassField) {   // WOD2: a levelled camp moved the ground the same way; AUDIT BRANCH (WoD) m2: a rebuild that lost its site moved it back; PERF-EXT21: every publish re-reads it",
     "tests": [
       "test/audit_wod_branch.test.js"
     ]

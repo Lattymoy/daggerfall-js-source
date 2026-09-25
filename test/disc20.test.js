@@ -507,7 +507,7 @@ test('DISC20-C: a crossing that leaves the parked wagon\'s pixel takes its box a
 test('DISC20-C: the world host asks the pool to re-stand over every pixel it builds, bound once the pool exists (the boot\'s first pixel builds before it)', () => {
   const s = rd('src/scenes/world.js');
   const decl = s.indexOf('let hccGroundMoved = null;');
-  const first = s.indexOf('const playerPixel = await buildPixel(first.px, first.py);');
+  const first = s.indexOf('const playerPixel = await awaitedBuild(first.px, first.py);');
   const pool = s.indexOf('const hcc = createHorseCartPool({');
   const bind = s.indexOf('hccGroundMoved = hcc.groundMoved;');
   assert.ok(decl > 0 && decl < first && first < pool && pool < bind, 'declared before the first build, bound after the pool');
