@@ -173,8 +173,8 @@
   {
     "name": "D23B2-press-writes-nothing",
     "file": "src/ui/skinCard.js",
-    "old": "      b.onclick = () => { setModSetting(VENDOR, key, s.index); paint(); };",
-    "new": "      b.onclick = () => { paint(); };",
+    "old": "      b.onclick = () => { setModSetting(VENDOR, key, s.index); open = null; paint(); };",
+    "new": "      b.onclick = () => { open = null; paint(); };",
     "tests": [
       "test/disc23b_eotb_sprites.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "D23B2-press-not-shown",
     "file": "src/ui/skinCard.js",
-    "old": "      b.onclick = () => { setModSetting(VENDOR, key, s.index); paint(); };",
-    "new": "      b.onclick = () => { setModSetting(VENDOR, key, s.index); };",
+    "old": "      b.onclick = () => { setModSetting(VENDOR, key, s.index); open = null; paint(); };",
+    "new": "      b.onclick = () => { setModSetting(VENDOR, key, s.index); open = null; };",
     "tests": [
       "test/disc23b_eotb_sprites.test.js"
     ]

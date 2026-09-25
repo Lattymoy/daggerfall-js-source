@@ -58,11 +58,25 @@ export function drawCharacterSprite(renderer, canvas, rig, rigMat, proj, view, e
  *  then draws at a place that does not depend on the box at all, so the
  *  box is only the window and its resolution. No anchor - the voxel rigs,
  *  whose box is the body - is exactly what stood. */
-export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW, halfH, anchor = null }, proj, view, eye, pixel = CHAR_PIXEL) {
+export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW, halfH: boxH, anchor = null }, proj, view, eye, pixel = CHAR_PIXEL) {
   const aim = anchor && Math.hypot(anchor[0] - eye[0], anchor[1] - eye[1], anchor[2] - eye[2]) > 1e-6 ? anchor : center;   // PR-BOW1: the ray the picture is taken along
   const dx = aim[0] - eye[0], dy = aim[1] - eye[1], dz = aim[2] - eye[2];
   const dist = Math.max(0.5, Math.hypot(dx, dy, dz));
   const camDir = [dx / dist, dy / dist, dz / dist];
+  // MWHEAD1 (2026-09-25, Mac: "The morrowind's model's head gets cut off in third person view" - the top sliced flat,
+  // the same at every zoom): THE WINDOW IS THE BOX AS THE PICTURE SEES IT. The picture is an ortho along camDir, and
+  // camDir is PITCHED - the third-person eye sits at the head (mwCamera FOCAL_HEIGHT) and looks down the ray to the
+  // body's middle. Tilted by p, a box point `v` above the centre and `h` further along the view draws at picture height
+  // v cos p + h sin p, so the box's far top corner stands above `halfH` whenever h sin p > halfH (1 - cos p). The
+  // window was the world half-height alone, so whatever stood far and high was cut: on the Morrowind body the head,
+  // which stands forward of a box centre that a sheathed longsword (PR-BOW1: y 2.9..59.5 from its grip) pulls back
+  // toward a camera behind it - a flat slice off the top of the head at every zoom. `halfW` is the box's
+  // azimuth-safe horizontal radius, so |h| <= halfW and the window below holds the whole box at any pitch; level
+  // (tilt 0) it is the world half-height, so a level look draws exactly what it did.
+  // The ray's own slope - off the true length, not `dist`: that is floored at 0.5 (an eye on the aim has no ray),
+  // which leaves camDir short of unit length for an eye closer than that, and read a close camera's pitch low.
+  const tilt = Math.min(1, Math.abs(dy) / (Math.hypot(dx, dy, dz) || 1));
+  const halfH = boxH * Math.sqrt(1 - tilt * tilt) + halfW * tilt;
   const rl = Math.hypot(camDir[0], camDir[2]) || 1;
   const right = [-camDir[2] / rl, 0, camDir[0] / rl];   // horizontal billboard right (classic Y-only rotation)
   const at = aim === center ? center : landAnchor(center, anchor, camDir, right);   // PR-BOW1: where the quad stands

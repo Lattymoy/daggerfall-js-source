@@ -106,6 +106,6 @@ test('PROFILE1: it is drawn as a portrait, not a button - no box, a round rimmed
   // because the Continue pane's tile may draw the same face on the same screen
   const menu = readFileSync(new URL('../src/ui/enhancedMenu.js', import.meta.url), 'utf8');
   const door = menu.slice(menu.indexOf('function profileMark()'), menu.indexOf('function profileMark()') + 500);
-  assert.match(door, /const save = portraitSave\(savedGames\(\)\);/);
+  assert.match(door, /const save = mode === 'pause' \? liveCharacter\(playerEntity\) : portraitSave\(savedGames\(\)\);/, 'the door: the newest finished save (PROFILE2: paused, the character being played)');
   assert.match(door, /face: save \? loadFace\(save, \{ scale: 2, copy: true \}\) : null,/);
 });

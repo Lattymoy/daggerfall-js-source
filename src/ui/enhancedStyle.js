@@ -2101,7 +2101,24 @@ ${badgeCss()}
    title does, so "on" reads the same way on both halves of the card. */
 .px-win.px-acctwin .card.skincard { border: 0; background: none; padding: 18px 0 0; margin: 18px 0 0;
   border-top: 1px solid var(--iron); text-align: center; }
-.card.skincard .fieldlabel { display: block; margin: 12px 0 6px; }
+/* SKIN2 (Mac: "2 single panels for unmounted/mount that can be opened
+   to view available skins"): each panel is closed to its worn skin - the
+   picture, the panel's name over the skin's - as one wide press, and
+   opens under itself to the grid; the open one takes the brass edge. */
+.card .skinpanel { margin: 10px 0 0; border: 1px solid var(--iron); border-radius: 2px; background: rgba(0,0,0,0.2); }
+.card .skinpanel.open { border-color: var(--brass); }
+.card button.skinhead { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px;
+  font: inherit; color: var(--bone); text-align: left; padding: 6px 12px; background: none; border: 0; cursor: pointer; }
+.card button.skinhead:hover { background: rgba(192,138,62,0.08); }
+.card button.skinhead:focus-visible { outline: 2px solid var(--brass); outline-offset: -2px; }
+.card button.skinhead .skinart { height: 56px; }
+.card .skinheadtext { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.card .skinheadtext .fieldlabel { display: block; margin: 0; }
+.card .skinheadtext .skinname { font-size: 14px; }
+.card .skinchev { color: var(--brass); font-size: 14px; }
+.card .skinbody { padding: 0 8px 8px; border-top: 1px solid var(--iron); }
+.card .skinbody > .skingrid:first-child { margin-top: 8px; }
+.card .skingroup { display: block; margin: 10px 0 6px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
 .card.skincard .skinhint { color: var(--brass); }
 .card.skincard .acts { justify-content: center; }
 .card .skingrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 6px; }
@@ -2125,6 +2142,15 @@ ${badgeCss()}
   color: rgb(243,239,44); border-color: var(--brass);
   text-shadow: 2px 2px 0 rgb(93,77,12); }
 
+/* PROFILE2 (Mac: "make the profile icon visible somehow on the pause
+   menu"): over the game the mark is a size smaller, so it stands in the
+   scrim above the pause window (74dvh tall, centred) rather than over
+   its tabs; and its window is centred - there is no wordmark to sit
+   under, which is what the door's deep top padding is for. */
+.px-over .px-profile { top: 10px; right: 12px; }
+.px-over .px-portrait { width: 48px; height: 48px; }
+.px-over .px-acctstage { padding: 24px 16px; grid-template-rows: 1fr; align-items: center; }
+.px-over .px-win.px-acctwin { align-self: center; max-height: min(640px, 86dvh); }
 @media (max-width: 480px) {
   /* On a phone the wordmark owns the top, so the mark loses its caption
      and keeps its portrait and gem - a 48px target, over the 44px floor. */
