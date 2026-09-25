@@ -2102,7 +2102,10 @@ export class Renderer {
    *  scale back at 100%) frees the image the last one drew - the RetroPass's
    *  image and depth, and the lane's image-sized frame - so a session that
    *  once tried 75% does not hold its framebuffers at 100% (a 4K canvas at
-   *  75% held 36 MiB classic, 89 MiB under the lane). The lane's canvas-sized
+   *  75% held 36 MiB classic, 89 MiB under the lane). The lane's frame is
+   *  the KEPT pass's, freed even when the lane went off in between (AUDIT
+   *  BRANCH-0925 PS-A2: `_air` is null then, the pass still holds its
+   *  frames, and this is the one drop there will be). The lane's canvas-sized
    *  frame stays under a scale frame: a menu, a map or a video over the world
    *  draws into it. Every screen-space kernel (the bloom's blur, the bolts'
    *  pixel width) is sized in the image's pixels, as in any window of the
@@ -2148,10 +2151,12 @@ export class Renderer {
   }
 
   /** PERF-SCALE (the review): free the world's image - the RetroPass's image and depth and the lane's image-sized
-   *  frame - once a world frame draws without one. Reached after the owed present (_beginLane presents first). */
+   *  frame - once a world frame draws without one. Reached after the owed present (_beginLane presents first).
+   *  AUDIT BRANCH-0925 PS-A2: the frame is the KEPT pass's (`_airPass`, built once), not the installed one's - with
+   *  the lane or the air off `_air` is null while the pass keeps its frames, and this is the one chance to free it. */
   _dropWorldImage() {
     this._retro?.dropTarget();
-    this._air?.dropFrame('retro');
+    this._airPass?.dropFrame('retro');
   }
 
   /** RETRO1: the RetroPass, built once. */

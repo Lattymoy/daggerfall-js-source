@@ -178,6 +178,7 @@ test('HCC pool: the targets, the names and the press - the parked wagon\'s box, 
   pool.attach(fakeRuntime({ moving: moving(), teamFollowing: true }));
   assert.deepEqual(pool.targets().map((x) => x.key), [KEY_FOLLOWING_WAGON]);
   assert.equal(pool.targets()[0].noSurface, true);
+  assert.equal(pool.targets()[0].yields, undefined, 'AUDIT BRANCH-0925 P1: my FOLLOWING team holds the ray too - it is mine');
   pool.attach(fakeRuntime({ moving: { ...moving(), interaction: false }, teamFollowing: true }));
   assert.equal(pool.targets().length, 0, 'the trailing wagon without its trigger box is not a target');
   assert.deepEqual(pool.hoverName(KEY_FOLLOWING_WAGON), { title: 'Wagon' });

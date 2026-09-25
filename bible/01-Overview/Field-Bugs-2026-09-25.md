@@ -231,8 +231,9 @@ renderer is made) and the frame's size (world image, canvas,
 `window.__fpsStats` for a probe. `07-Rendering/Rendering.md` PERF-SCALE has
 the law; Ledger A row PERF-SCALE.
 
-**What to tell the players.** Turn on the FPS counter (Enhanced pane) and
-send a screenshot: the `gpu` line says whether the browser is on the
+**What to tell the players.** Turn on the FPS counter (Settings >
+Interface > FPS counter, or add `?fps` to the address) and send a
+screenshot: the `gpu` line says whether the browser is on the
 card, and the size line says how many pixels the world costs. If the
 world is large, Features > Sight > Render scale at 75% is roughly half the
 per-pixel work; 50% a quarter.

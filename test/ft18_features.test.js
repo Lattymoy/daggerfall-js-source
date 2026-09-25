@@ -25,6 +25,7 @@ import { getPref, setPref, _resetForTests as resetPrefs } from '../src/systems/u
 import { _resetForTests as resetSettings } from '../src/systems/settings.js';
 import { _resetModSettings } from '../src/systems/modSettings.js';
 import { tileStates, classicSegment, allOffPlan, featuresAllOff, featuresRestore, featureTile, barReading, FEATURES_RESTORE_PREF, ALL_OFF_ASK } from '../src/ui/enhancedMenu.js';
+import { renderScaleSetting, _resetRenderScaleDoor } from '../src/systems/renderScale.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -159,12 +160,16 @@ test('FT18: All off - every switch to Off, a row with no Off to Daggerfall\'s ow
     tileStates(row('quick-slots')).set(2);
     tileStates(row('dungeon-wall-style')).set(3);
     tileStates(row('cloud-quality')).set(2);
+    tileStates(row('render-scale')).set(4);   // AUDIT BRANCH-0925 PS-A1: the world drawn at half the window's pixels
+    _resetRenderScaleDoor();
+    assert.equal(renderScaleSetting(), 0.5);
     const before = Object.fromEntries(FEATURES.map((f) => [f.id, tileStates(f) && label(f.id)]));
     assert.equal(before['dungeon-wall-style'], 'Random');
     // the plan: the land view goes to Daggerfall's 3, the walls to Classic, the clouds (a choice) nowhere
     assert.equal(classicSegment(row('land-view-distance'), tileStates(row('land-view-distance'))), tileStates(row('land-view-distance')).labels.findIndex((l) => /\(3\)/.test(l)));
     assert.equal(classicSegment(row('dungeon-wall-style'), tileStates(row('dungeon-wall-style'))), 0);
     assert.equal(classicSegment(row('cloud-quality'), tileStates(row('cloud-quality'))), -1);
+    assert.equal(classicSegment(row('render-scale'), tileStates(row('render-scale'))), 0, 'AUDIT BRANCH-0925 PS-A1: the render scale has no Off - Daggerfall\'s own frame is the whole window, 100%');
     assert.equal(classicSegment(row('grass'), tileStates(row('grass'))), 3, 'the Off that SAYS Off, wherever it stands');
     assert.ok(!allOffPlan().some((m) => m.f.id === 'cloud-quality'));
 
@@ -179,11 +184,13 @@ test('FT18: All off - every switch to Off, a row with no Off to Daggerfall\'s ow
     assert.equal(label('cloud-quality'), 'High', 'a choice keeps what it was');
     assert.equal(getPref('grassStyle'), 'pixel', 'and so does a choice in a drawer');
     assert.equal(label('dungeon-wall-style'), 'Classic');
+    assert.deepEqual([label('render-scale'), getPref('renderScale'), renderScaleSetting()], ['100%', 1, 1], 'the world drawn at the window\'s own size again - the renderer reads 100%');
     assert.equal(label('enhanced-environments'), 'Off', 'the outdoors bar says Off now, so All off can find it');
     assert.deepEqual(BLOOD_PARTS.map((k) => getPref(k)), [false, false, false]);
     const keep = getPref(FEATURES_RESTORE_PREF);
     assert.equal(keep.blood, 'Heavy');
     assert.equal(keep['quick-slots'], 'Hotbar');
+    assert.equal(keep['render-scale'], '50%');
 
     // a second press keeps the FIRST press's values - even for a tile turned back on in between
     tileStates(row('blood')).set(1);
@@ -193,8 +200,9 @@ test('FT18: All off - every switch to Off, a row with no Off to Daggerfall\'s ow
 
     featuresRestore();
     for (const f of FEATURES) if (before[f.id]) assert.equal(label(f.id), before[f.id], `${f.id} is back`);
+    assert.equal(renderScaleSetting(), 0.5, 'and the render scale with them');
     assert.equal(getPref(FEATURES_RESTORE_PREF), null, 'the keep is spent');
-  } finally { delete globalThis.location; fresh(); }
+  } finally { delete globalThis.location; fresh(); _resetRenderScaleDoor(); }
 });
 
 test('FT18: online, All off leaves the room\'s rows as the room has them (mutant: the lock ignored)', () => {

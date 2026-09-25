@@ -314,7 +314,14 @@ export function createHorseCartPool({
       // marked to YIELD the ray (player/activate.js firmFirst holds the law): the door, the body, the person behind
       // them takes the click, and with nothing else on the ray they are still named and pressed (HCC-TIP's "Owned
       // by ...").
-      if (p.wagon && p.shownWagon && _parts) out.push({ key: peerKey(owner, 'w'), aabb: aabbOf(transformedAabb(_parts.box, wagonMatrix(p.shownWagon, p.shownRotation ?? p.wagon.rotation))), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true, yields: true });
+      // AUDIT BRANCH-0925 PRW1-A: with no box of theirs the ray meets the wagon's OWN turned box (`obb`, DISC10 - as
+      // Eye Of The Beholder's cart, player/eotbWagon.js). The square box around a slanted wagon bulges past it at every
+      // corner, and an eye in a corner (a crouch beside it) read as INSIDE and was dropped by CASTLE1's no-surface
+      // rule - while from further off the corner's empty road was measured as the wagon.
+      if (p.wagon && p.shownWagon && _parts) {
+        const pm = wagonMatrix(p.shownWagon, p.shownRotation ?? p.wagon.rotation);
+        out.push({ key: peerKey(owner, 'w'), aabb: aabbOf(transformedAabb(_parts.box, pm)), obb: { m: pm, box: _parts.box }, distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true, yields: true });
+      }
       // AUDIT HCC O9: a horse not drawn (its art still loading, or failed) is not named or pressed
       if (p.horse && p.shownHorse && _stillReady) out.push({ key: peerKey(owner, 'h'), aabb: aabbOf(horseBox({ ...p.horse, position: p.shownHorse })), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true, yields: true });
     }

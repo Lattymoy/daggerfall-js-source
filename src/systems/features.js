@@ -436,7 +436,10 @@ export const FEATURES = Object.freeze([
       + 'takes its place.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'renderScale', initial: 1, online: 'player', tiers: Object.freeze([[1, '100%'], [0.85, '85%'], [0.75, '75%'], [0.67, '67%'], [0.5, '50%']]) }),
+    // AUDIT BRANCH-0925 PS-A1: `classic` - the row has no Off, and Daggerfall's own frame is the whole window
+    // (settings.js leaves DFU's resolution to the browser's canvas), so All off takes it to 100% (FT18's
+    // "to Daggerfall's own where a row has no Off"); without it All off left the world drawn at 50%
+    control: Object.freeze({ store: 'prefs', key: 'renderScale', initial: 1, online: 'player', classic: 1, tiers: Object.freeze([[1, '100%'], [0.85, '85%'], [0.75, '75%'], [0.67, '67%'], [0.5, '50%']]) }),
   }),
   // FT8 (2026-09-14): ENHANCED COMBAT VISUALS (ECV1) - what the enhanced
   // skin DRAWS for a concealed foe; the rules are DFU's either way. The

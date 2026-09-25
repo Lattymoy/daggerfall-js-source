@@ -967,8 +967,9 @@ PERF-SCALE generalises it rather than writing a second copy:
   that tried a smaller scale gives its memory back: the world frame that
   draws without an image (the scale back at 100%, or retro off) frees the
   image and its depth (`RetroPass.dropTarget`) and the lane's image-sized
-  frame (`AirPass.dropFrame('retro')`), after the owed present
-  (`Renderer._dropWorldImage`; S7). The lane's canvas-sized frame is kept
+  frame (`AirPass.dropFrame('retro')` on the renderer's KEPT pass, so the
+  frame goes even when the lane was turned off in between), after the owed
+  present (`Renderer._dropWorldImage`; S7). The lane's canvas-sized frame is kept
   under a scale frame - a menu, a map or a video over the world draws
   into it.
 - **Screen-space kernels are the image's.** The bloom's blur and the
@@ -996,7 +997,10 @@ PERF-SCALE generalises it rather than writing a second copy:
   `systems/renderScale.js` `renderScaleSetting` reads it (and a probe's
   `?renderscale=` door, once a page) and is the renderer's source
   (`setRenderScaleSource`, wired by `main.js` beside `setRetroSource`),
-  asked once per WORLD frame, so the tile's press lands on the next.
+  asked once per WORLD frame, so the tile's press lands on the next. The
+  row has no Off, and its `classic` is 100%: Daggerfall's own frame is the
+  whole window (DFU's resolution is the browser's canvas here), so FT18's
+  All off takes it there and Restore brings the player's tier back.
 
 **THE COUNTER NAMES THE GPU AND THE PIXELS.** `gpuNameOf` reads
 `WEBGL_debug_renderer_info`'s `UNMASKED_RENDERER_WEBGL` where the browser
@@ -1008,7 +1012,9 @@ counter (`ui/fpsCounter.js`) shows two more lines while it is on -
 `gpu <name>` and `world WxH  canvas WxH  dpr N  scale N%` - read once a
 second, never while hidden; `window.__fpsStats` adds `gpu`, `world`,
 `canvas`, `dpr`, `scale` and `retro` when a probe asks. So one screenshot
-of the counter answers "which GPU" and "how many pixels".
+of the counter answers "which GPU" and "how many pixels". The box is
+capped at the window less its margins, and a long line wraps inside it
+(the GPU name is shown whole; `tools/fpsCounterProbe.mjs` measures it).
 
 **Not done, and why.** The canvas is still sized in CSS pixels, not
 device pixels - the port never rendered at `devicePixelRatio`, so a HiDPI
@@ -1016,7 +1022,7 @@ screen was already spared 1.5-2x; the size line shows the ratio so a
 report can say so. No automatic scale: the dial is the player's, and a
 frame-time governor would move the picture under them. Ledger A row
 PERF-SCALE. Pinned: `test/perfscale.test.js` (10); `tools/mutants/perfscale.json`
-(43, all dead). Record: `01-Overview/Field-Bugs-2026-09-25.md`.
+(47, all dead). Record: `01-Overview/Field-Bugs-2026-09-25.md`.
 
 **The review (2026-09-25).** Seven findings; six fixed, one recorded. A
 return to 100% (or retro off) held the image and the lane's image-sized
@@ -1030,6 +1036,39 @@ frameInfo's host-rect arm, the probe's `retro`, the counter's
 "gpu unknown" and the dpr's rounding were unpinned - pinned. A paraphrase
 stood in quotation marks as the report - the report is quoted as
 written. Recorded, not changed: the screen-space kernels (above).
+
+**AUDIT BRANCH-0925 (2026-09-25, the pre-merge audit, Mac: "Audit before we
+merge").** Three findings, all fixed and pinned, each pin failing before
+its fix:
+
+- **PS-A1: All off left the render scale where it was.** The row had tiers
+  and no Off and no `classic`, so FT18's `classicSegment` answered -1 and All
+  off - "Every mod and enhancement goes to Off, or to Daggerfall's own where
+  a row has no Off" - skipped it: after All off the world was still drawn at
+  50% and stretched. The row's `classic` is 100% now (above, The setting),
+  and `test/ft18_features.test.js`'s All off test drives a 50% tile to 100%
+  and back on Restore, the renderer's source reading both.
+- **PS-A2: the lane's image-sized frame survived a lane turned off.** The
+  review's drop asked the INSTALLED air pass (`Renderer._air`), which is
+  null while the lane or the air is off, while the pass itself is kept
+  (`_airPass`, built once) with its frames. Enhanced Lighting on at 75%,
+  then off, then 100%: the 1440x810 frame (a colour image, two depths,
+  three framebuffers) was never freed, even after the lane came back, since
+  `_retroFrame` was null from then on. The drop asks the kept pass now; S7
+  walks it.
+- **PS-A4: the counter's box ran off a phone.** `white-space:pre` and no
+  width cap on a box anchored top-right: the report's own ANGLE name
+  ("ANGLE (NVIDIA, NVIDIA GeForce RTX 4060 Ti (0x00002803) Direct3D11
+  vs_5_0 ps_5_0, D3D11)") made it 728px wide - nine tenths of an 800px
+  window, 346px off a 390px phone's left edge, cutting off the "gpu" line's
+  start. Even the size line alone overflowed a phone. Capped and wrapping
+  now (S6 pins the style; `tools/fpsCounterProbe.mjs` measures twelve
+  window and GPU pairs in Chromium - four ran off the edge before, none
+  after).
+
+Also: `01-Overview/Field-Bugs-2026-09-25.md` sent players to an "Enhanced
+pane" that FT12 removed - the counter's row is Settings > Interface (or
+`?fps`).
 
 ## WIND5 - THE WIND'S FLOURISHES (2026-09-23)
 

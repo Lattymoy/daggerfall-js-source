@@ -20,7 +20,7 @@ import { createHorseCartPool, WAGON_BUCKET, KEY_WAGON, KEY_HORSE } from '../src/
 import { HCC_WIRE_KIND } from '../src/systems/horseCartWire.js';
 import { WAGON_MODEL_ID, ACTIVATION_REACH, HORSE_SPRITE_WIDTH, HORSE_SPRITE_HEIGHT } from '../src/systems/horseCartLaw.js';
 import { CARGO_DEFINITIONS } from '../src/systems/wagon41214.js';
-import { pickActivatableHit, liveFoeTargets, RAY_DISTANCE, DOOR_ACTIVATION_DISTANCE, MOBILE_NPC_ACTIVATION_DISTANCE } from '../src/player/activate.js';
+import { pickActivatableHit, liveFoeTargets, rayAabb, rayObb, RAY_DISTANCE, DOOR_ACTIVATION_DISTANCE, MOBILE_NPC_ACTIVATION_DISTANCE } from '../src/player/activate.js';
 import { raceActivation, raceWinner } from '../src/player/activationRace.js';
 import { bodyPile, resetBodyStack } from '../src/player/lootStack.js';
 import { corpseLootTargets } from '../src/scenes/corpseMarker.js';
@@ -28,6 +28,7 @@ import { doorWorldAabb } from '../src/player/enterExit.js';
 import { resolveHover } from '../src/systems/worldHover.js';
 import { Collider } from '../src/player/collider.js';
 import { syntheticWagon41214 } from './hccModel.mjs';
+import { mat4FromQuatPos } from '../src/world/quat.js';
 
 const settle = async (n = 12) => { for (let i = 0; i < n; i++) await new Promise((r) => setTimeout(r, 0)); };
 const Q90 = [0, Math.SQRT1_2, 0, Math.SQRT1_2];   // turned a quarter: the wagon lies ACROSS the door, its length along X
@@ -252,4 +253,45 @@ test('PR-WAGON1: a townsperson or a live foe behind another player\'s team takes
   const myPick = pickActivatableHit(eye, FWD, mine.pool.targets(), mine.col);
   assert.equal(myPick?.key, KEY_WAGON);
   assert.equal(raceActivation({ horseCart: myPick, personDistances: [personD] }).nonPersonRival, myPick.distance, 'my wagon before the townsperson still takes it');
+});
+
+test('AUDIT BRANCH-0925 PRW1-A: another player\'s wagon parked at a slant is met at its OWN turned box (DISC10, as Eye Of The Beholder\'s cart) - a crouched eye in a corner of the square box around it, outside the wagon, still names it "Owned by Ann" and presses it, and that corner\'s empty road names nothing from beyond the wagon\'s reach (mutant: the turned box dropped)', async () => {
+  const { pool, col, frame } = await world();
+  const Q45 = [0, Math.sin(Math.PI / 8), 0, Math.cos(Math.PI / 8)];   // an eighth turn: the square box around it bulges past the wagon at every corner
+  pool.applyOwner('p1', { w: [HCC_WIRE_KIND.Deployed, W[0], W[1], W[2], ...Q45, 25, 0] }, toScene, 1);
+  await settle(); frame(); frame();
+  const t = pool.targets().find((x) => x.key === 'hccPeer:p1:w');
+  assert.ok(t && t.noSurface === true && t.yields === true, 'no box of theirs, and it yields - PR-WAGON1');
+  const p = pool.peers.get('p1');
+  const m = mat4FromQuatPos(p.shownRotation, p.shownWagon), body = pool.parts.box;   // the wagon's own turned box, as it is drawn
+  const inBody = (e) => { const rx = e[0] - m[12], ry = e[1] - m[13], rz = e[2] - m[14]; const l = [rx * m[0] + ry * m[1] + rz * m[2], rx * m[4] + ry * m[5] + rz * m[6], rx * m[8] + ry * m[9] + rz * m[10]]; return l.every((v, i) => v >= body[i] && v <= body[i + 3]); };
+  const inAabb = (e) => e.every((v, i) => v >= t.aabb.min[i] && v <= t.aabb.max[i]);
+  // a crouched player (the motor's CROUCH_EYE_HEIGHT, below the wagon's top) at the square box's +X/-Z corner
+  const eye = [t.aabb.max[0] - 0.3, 0.8, t.aabb.min[2] + 0.3];
+  assert.ok(inAabb(eye) && !inBody(eye), 'the eye is inside the square box but outside the wagon');
+  const aim = [p.shownWagon[0] - eye[0], (t.aabb.min[1] + t.aabb.max[1]) / 2 - eye[1], p.shownWagon[2] - eye[2]];
+  const len = Math.hypot(...aim), dir = aim.map((v) => v / len);
+  const bodyD = rayObb(eye, dir, m, body);
+  assert.ok(bodyD > 1 && bodyD < ACTIVATION_REACH, `the wagon's side is ${bodyD.toFixed(2)} m ahead, within reach`);
+  const hit = pickActivatableHit(eye, dir, pool.targets(), col);
+  assert.equal(hit?.key, 'hccPeer:p1:w', 'named: the ray meets the wagon, not a box the eye stands in');
+  assert.ok(Math.abs(hit.distance - bodyD) < 1e-9, `at the wagon's own side (${hit.distance.toFixed(3)})`);
+  const word = plaque(pool, raceWinner({ horseCart: hit }));
+  assert.deepEqual(word && { title: word.title, subs: word.subs }, { title: 'Wagon', subs: ['Owned by Ann'] });
+  assert.equal(raceActivation({ horseCart: hit }).horseCartWins, true);
+  const said = [];
+  assert.equal(pool.activate(hit.key, hit.distance, (l) => said.push(l)), true);
+  assert.deepEqual(said, ['This wagon - owned by Ann.']);
+  // stood further back on the same line: the square box's corner is within reach, the wagon is not - the empty road
+  // there is no wagon to name
+  const back = eye.map((v, i) => v - dir[i] * 3.3);
+  const cornerD = rayAabb(back, dir, t.aabb), farBody = rayObb(back, dir, m, body);
+  assert.ok(cornerD < ACTIVATION_REACH && farBody > ACTIVATION_REACH, `the corner ${cornerD.toFixed(2)} m, the wagon ${farBody.toFixed(2)} m`);
+  const far = pickActivatableHit(back, dir, pool.targets(), col);
+  assert.ok(far && Math.abs(far.distance - farBody) < 1e-9, `measured to the wagon, not the corner (${far?.distance.toFixed(3)})`);
+  assert.equal(plaque(pool, far), null, 'out of reach: nothing is named');
+  // and an eye INSIDE the wagon itself still names nothing - CASTLE1: no surface of theirs to meet
+  const inside = [p.shownWagon[0], 0.8, p.shownWagon[2]];
+  assert.ok(inBody(inside));
+  assert.equal(pickActivatableHit(inside, dir, pool.targets(), col), null);
 });

@@ -471,6 +471,17 @@ test('U64 + PATREON1: the Patreon mark is a plaque with Patreon\'s mark drawn, n
     assert.equal(y % 4, 0, `${p}: on the grid`);
   }
   assert.doesNotMatch(css, /\.cup \{|\.kofi \{/, 'the cup and its rule are gone');
+  // AUDIT BRANCH-0925 PATREON1-F1: every ask is the ONE Patreon, the repository's own Sponsor button included -
+  // GitHub draws it in the header of every repo page (Install, Source and the issues link land there) from
+  // .github/FUNDING.yml, which still said `ko_fi: dfjs` beside a README that said Patreon. `custom` keeps Mac's /c/ URL.
+  const funding = read('.github/FUNDING.yml');
+  assert.equal(funding.trim(), 'custom: ["https://www.patreon.com/c/dfenhanced"]', 'the Sponsor button asks on Patreon');
+  assert.doesNotMatch(funding, /ko_fi|ko-fi/i);
+  for (const doc of ['README.md', 'SUPPORT.md']) {
+    const text = read(doc);
+    assert.ok(text.includes('https://www.patreon.com/c/dfenhanced'), `${doc} asks on the same Patreon`);
+    assert.doesNotMatch(text, /ko-fi|ko_fi|kofi/i, `${doc}: no Ko-fi left`);
+  }
 });
 
 test('DISC1: the Discord is front and centre - a plaque in the door\u2019s own row, one home, no new shape', () => {
