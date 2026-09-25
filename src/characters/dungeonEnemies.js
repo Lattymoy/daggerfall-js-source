@@ -183,3 +183,46 @@ export function collectDungeonEnemies(blockLayouts, { locationId, dungeonType, p
   return out;
 }
 
+
+// ---------------------------------------------------------------- ELITE DUNGEONS
+//
+// An elite spawned dungeon (world/spawnedDungeons.js isEliteSpawn) stands `copies` foes at every
+// enemy marker instead of one. The copies are the same record - same type, gender, reaction and
+// spawn band - offset a little around the marker so they do not stand inside one another. The
+// offsets are fixed (no RNG) and the wall check reads the dungeon's own geometry, so every peer
+// builds the SAME list in the SAME order: the online foe frame indexes the layout run by position.
+
+/** How far (metres) an extra copy stands from its marker, before the wall check shortens it. */
+export const ELITE_COPY_OFFSET = 0.9;
+/** Keep this much air between a copy and the wall it was pulled back from. */
+const ELITE_WALL_MARGIN = 0.45;
+
+/**
+ * Expand a collectDungeonEnemies list for an elite dungeon. Original records keep their order
+ * and fields; each is followed by its extra copies, marked `eliteCopy: true`. Every record in the
+ * output (originals included) carries `elite: true`, which buildFoeAt reads to scale the foe.
+ * @param {Array<object>} enemies collectDungeonEnemies output
+ * @param {{copies?:number, offset?:number,
+ *   clearance?:(from:number[], dir:number[], dist:number) => number}} o
+ *   clearance: metres of free space from `from` along the unit horizontal `dir`, up to `dist`
+ *   (the host answers it with a collider ray; omitted = open floor everywhere).
+ */
+export function expandEliteEnemies(enemies, { copies = 3, offset = ELITE_COPY_OFFSET, clearance = null } = {}) {
+  const n = Math.max(1, copies | 0);
+  const out = [];
+  for (const e of enemies) {
+    out.push({ ...e, elite: true });
+    for (let k = 1; k < n; k++) {
+      // spread the extras evenly round the marker, starting east, then west, ...
+      const a = ((k - 1) / (n - 1)) * 2 * Math.PI;
+      const dir = [Math.cos(a), 0, Math.sin(a)];
+      let d = offset;
+      if (clearance) {
+        const free = clearance([e.x, e.y, e.z], dir, offset + ELITE_WALL_MARGIN);
+        if (Number.isFinite(free)) d = Math.max(0, Math.min(offset, free - ELITE_WALL_MARGIN));
+      }
+      out.push({ ...e, x: e.x + dir[0] * d, z: e.z + dir[2] * d, elite: true, eliteCopy: true });
+    }
+  }
+  return out;
+}

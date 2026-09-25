@@ -169,8 +169,8 @@
   {
     "name": "CAMP1-the-world-host-rolls-without-asking-who-owns-the-group",
     "file": "src/scenes/world.js",
-    "old": "      if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {   // CAMP-REST: never while the player is resting or waiting",
-    "new": "      if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && getPref('wildernessCamps') !== false) {   // CAMP-REST: never while the player is resting or waiting",
+    "old": "      if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && !travelOptions?.isTravelActive && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {   // CAMP-REST: never while the player is resting or waiting; CAMP-TRAVEL (2026-09-25, Mac: \"it would stop players too often\"): nor while a Travel Options journey runs - the pixels a ride crosses roll no camps",
+    "new": "      if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && !travelOptions?.isTravelActive && getPref('wildernessCamps') !== false) {   // CAMP-REST: never while the player is resting or waiting; CAMP-TRAVEL (2026-09-25, Mac: \"it would stop players too often\"): nor while a Travel Options journey runs - the pixels a ride crosses roll no camps",
     "tests": [
       "test/camp1_groups.test.js"
     ]
@@ -178,8 +178,8 @@
   {
     "name": "CAMP1-the-chunk-roll-fires-from-inside-a-dungeon",
     "file": "src/scenes/world.js",
-    "old": "      if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {   // CAMP-REST: never while the player is resting or waiting",
-    "new": "      if (!playerEntity.isResting && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {",
+    "old": "      if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && !travelOptions?.isTravelActive && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {   // CAMP-REST: never while the player is resting or waiting; CAMP-TRAVEL (2026-09-25, Mac: \"it would stop players too often\"): nor while a Travel Options journey runs - the pixels a ride crosses roll no camps",
+    "new": "      if (!playerEntity.isResting && !travelOptions?.isTravelActive && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {",
     "tests": [
       "test/camp1_groups.test.js"
     ]

@@ -178,8 +178,9 @@ export const SOURCE_MULT = Object.freeze({ corpse: 1, pile: 1.3, boss: 2.5 });
 export const LUCK_PER_POINT = 2;
 
 /** The three thresholds, per mille, for one source at one luck. */
-export function rarityChances({ kind = 'corpse', tier = 0, boss = false, luck = 50 } = {}) {
-  const mult = boss ? SOURCE_MULT.boss : (SOURCE_MULT[kind] ?? 1);
+export function rarityChances({ kind = 'corpse', tier = 0, boss = false, luck = 50, qualityMult = 1 } = {}) {
+  // ELITE: `qualityMult` scales the whole ladder (1.2 = every tier 20% likelier), caps unchanged
+  const mult = (boss ? SOURCE_MULT.boss : (SOURCE_MULT[kind] ?? 1)) * (Number.isFinite(qualityMult) && qualityMult > 0 ? qualityMult : 1);
   const luckMod = (Math.max(0, Math.min(100, luck | 0)) - 50) * LUCK_PER_POINT;
   const at = (w) => Math.max(0, Math.min(w.cap, (w.base + w.perTier * Math.max(0, tier)) * mult + luckMod));
   const magic = at(RARITY_WEIGHTS.magic);
@@ -584,11 +585,11 @@ export function rollLootRarity(items, source, { rolls = Math.random, luck = 50 }
  *  roll runs over the items NOT on its table: the loot it carries, not
  *  the sword it swings - a Legendary in a Daedra Lord's hand would have
  *  struck the player with it. The source is corpseSource's. */
-export function rollCorpseLoot(entity, basics, { rolls = Math.random, luck = 50 } = {}) {
+export function rollCorpseLoot(entity, basics, { rolls = Math.random, luck = 50, qualityMult = 1 } = {}) {
   if (!lootRarityOn() || !entity) return entity?.items ?? [];
   const worn = new Set(entity.equip ? equipTableOf(entity).filter(Boolean) : []);
   const loot = (entity.items ?? []).filter((it) => it && !worn.has(it));
-  rollLootRarity(loot, corpseSource(basics, entity.level), { rolls, luck });
+  rollLootRarity(loot, { ...corpseSource(basics, entity.level), qualityMult }, { rolls, luck });
   return entity.items;
 }
 /** The best tier in a list (a corpse's, a pile's), for the drop sound

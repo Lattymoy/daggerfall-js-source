@@ -17,8 +17,32 @@ import { MINUTES_PER_DAY } from '../systems/gameDate.js';   // TTL1: a day is th
 import { TERRAIN_SIZE } from './terrainSampler.js';   // SPAWNED-DUNGEONS3: a pixel is 819.2 metres on a side
 import { getLocationTerrainTileOrigin, WORLD_MAP_TILE_DIM } from './terrainTiles.js';   // SPAWNED-DUNGEONS3: where a location stands in its pixel
 
-/** The chance a pixel holds a spawned dungeon. */
-export const SPAWN_CHANCE = 0.10;
+/** The chance a pixel holds a NORMAL spawned dungeon. */
+export const SPAWN_CHANCE = 0.30;
+
+// ---------------------------------------------------------------- ELITE DUNGEONS
+//
+// A spawned dungeon may be ELITE: the same template, the same look, but three foes stand at
+// every enemy marker and each foe has double health and deals double damage. Elite and normal
+// share ONE hash lane and split it: [0, SPAWN_CHANCE) is a normal dungeon, the next ELITE_CHANCE
+// is an elite one, the rest is empty land. So the rates are exactly 30% and 10%, a pixel never
+// holds both, every client agrees which spawns are elite, and a reload never flips one.
+
+/** The chance a pixel holds an ELITE spawned dungeon (on top of SPAWN_CHANCE, never the same pixel). */
+export const ELITE_CHANCE = 0.10;
+/** Either kind: the chance a pixel holds any spawned dungeon at all. */
+export const ANY_SPAWN_CHANCE = SPAWN_CHANCE + ELITE_CHANCE;
+/** Foes per enemy marker in an elite dungeon (a normal dungeon has one). */
+export const ELITE_FOE_MULTIPLIER = 3;
+/** Health multiplier for an elite dungeon's foes. */
+export const ELITE_HEALTH_SCALE = 2;
+/** Damage multiplier for an elite dungeon's foes. */
+export const ELITE_DAMAGE_SCALE = 2;
+/** Loot in an elite dungeon: item drop chance x1.2 (+20%), rarity odds x1.2 (+20%) - corpses and treasure piles. */
+export const ELITE_LOOT_DROP_MULT = 1.2;
+export const ELITE_LOOT_QUALITY_MULT = 1.2;
+/** Name prefix, so the automap, the sight line and the Where-is list all say so. */
+export const ELITE_NAME_PREFIX = 'Elite ';
 /** The salt fills the id's high 12 bits; 0 is left out so an id is never below 2^20. */
 export const SALT_MAX = 4095;
 /** The one salt every client rolls with. Changing it moves every spawned dungeon in the world (and their rooms). */
@@ -39,8 +63,17 @@ export function hash32(...ns) {
   return h >>> 0;
 }
 
-/** Does this pixel hold a spawned dungeon? Deterministic in (salt, px, py). */
-export const spawnsDungeon = (salt, px, py, chance = SPAWN_CHANCE) => hash32(salt, px, py, 1) / 4294967296 < chance;
+/** The pixel's spawn roll, [0, 1). Deterministic in (salt, px, py). */
+export const spawnRoll = (salt, px, py) => hash32(salt, px, py, 1) / 4294967296;
+
+/** Does this pixel hold a spawned dungeon of either kind? Deterministic in (salt, px, py). */
+export const spawnsDungeon = (salt, px, py, chance = ANY_SPAWN_CHANCE) => spawnRoll(salt, px, py) < chance;
+
+/** Is this pixel's spawned dungeon elite? The slice of the same roll just above the normal share. */
+export const isEliteSpawn = (salt, px, py, normal = SPAWN_CHANCE, elite = ELITE_CHANCE) => {
+  const r = spawnRoll(salt, px, py);
+  return r >= normal && r < normal + elite;
+};
 
 /** The spawned dungeon's MapId: salt in the high 12 bits, MapsFile.getMapPixelID in the low 20. */
 export function spawnedMapId(salt, px, py) {
@@ -63,12 +96,12 @@ export const pickTemplate = (templates, salt, px, py) => (templates?.length ? te
  * @param {object} template a real, non-main-story location with hasDungeon
  * @param {{salt:number, px:number, py:number, where?:{regionIndex?:number, regionName?:string, politic?:number, climate?:object}}} o
  */
-export function synthesizeDungeonLocation(template, { salt, px, py, where = {} }) {
+export function synthesizeDungeonLocation(template, { salt, px, py, where = {}, elite = false }) {
   const mapId = spawnedMapId(salt, px, py);
   const ll = mapPixelToLongitudeLatitude(px, py);
   return {
     ...template,
-    name: `${template.name} (${px},${py})`,
+    name: `${elite ? ELITE_NAME_PREFIX : ''}${template.name} (${px},${py})`,
     regionIndex: where.regionIndex ?? template.regionIndex,
     regionName: where.regionName ?? template.regionName,
     politic: where.politic ?? template.politic,
@@ -78,6 +111,7 @@ export function synthesizeDungeonLocation(template, { salt, px, py, where = {} }
     exterior: { ...template.exterior, exteriorData: { ...template.exterior?.exteriorData, locationId: mapId } },
     dungeon: { ...template.dungeon, recordElement: { ...template.dungeon?.recordElement, header: { ...template.dungeon?.recordElement?.header, locationId: mapId } } },
     spawned: true,
+    elite: !!elite,   // ELITE: dungeonContext triples the foes and scales them; nothing else reads it
   };
 }
 
@@ -140,9 +174,9 @@ export function spawnedLocationCentreLocal(loc) {
 }
 
 /** The line, with the distance to the nearest ten metres and the compass word the host resolved. */
-export function dungeonSightLine(metres, direction) {
+export function dungeonSightLine(metres, direction, elite = false) {
   const m = Math.max(10, Math.round(metres / 10) * 10);
-  return `You see a Dungeon ${m} metres to the ${direction}!`;
+  return `You see ${elite ? 'an Elite Dungeon' : 'a Dungeon'} ${m} metres to the ${direction}!`;
 }
 
 // ---------------------------------------------------------------- TTL1

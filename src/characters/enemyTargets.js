@@ -163,6 +163,9 @@ export function getTargets(self, candidates, playerFeet, {
     if (isPlayer && selfTeam === 'PlayerAlly') {
       continue;
     } else if (infighting && !self.entity?.suppressInfighting && targetEntity && !targetEntity.suppressInfighting) {
+      // CAMP-RIVALS (2026-09-25, Mac: "if not the same kind they attack each other"): two
+      // wilderness groups of the SAME kind (combat Team) keep the classic truce and never fight;
+      // groups of different kinds fight on sight through this ordinary infighting arm.
       if (targetEntity.team === selfTeam) continue;
       // CAMP2: campEncounters.js groups by THEME (mobileFactions.js), which can
       // straddle several combat Teams - a "vermin nest" is Spiders + Scorpions,
@@ -190,7 +193,7 @@ export function getTargets(self, candidates, playerFeet, {
     const sOff = ai.centreOffset ?? (ai.height ?? CAPSULE_HEIGHT) / 2;
     const dx = tFeet[0] - ai.feet[0], dy = (tFeet[1] + tOff) - (ai.feet[1] + sOff), dz = tFeet[2] - ai.feet[2];
     const distance = Math.hypot(dx, dy, dz);
-    const see = canSeeTarget(ai.collider, ai.feet, ai.yaw, ai.height, tFeet, tHeight, null, distance);
+    const see = canSeeTarget(ai.collider, ai.feet, ai.yaw, ai.height, tFeet, tHeight, null, distance, ai.sightRadius);   // CAMP-SIGHT
     // Neither visible nor in the area around the player (:824-825) -
     // foe candidates only; the player has no senses.
     if (targetAi && !targetAi.wouldBeSpawned && !see) continue;
@@ -426,12 +429,12 @@ export function runTargetMachine(self, candidates, playerFeet, classicDt, {
   // player so enemies who see the player will try to attack.
   let playerInSight = false;
   if (!ai.wouldBeSpawned && playerFeet) {
-    playerInSight = canSeeTarget(ai.collider, ai.feet, ai.yaw, ai.height, playerFeet, playerHeight);
+    playerInSight = canSeeTarget(ai.collider, ai.feet, ai.yaw, ai.height, playerFeet, playerHeight, null, null, ai.sightRadius);   // CAMP-SIGHT
     // WORLD3: a PEER in sight is a player in sight - the area DFU draws around the one player is drawn around
     // every player in the room, so a foe far from the host and beside a joiner still takes its targets
     if (!playerInSight) for (const c of candidates ?? []) {
       if (!isPeerTarget(c) || !c.feet) continue;
-      if (canSeeTarget(ai.collider, ai.feet, ai.yaw, ai.height, c.feet, c.height ?? playerHeight)) { playerInSight = true; break; }
+      if (canSeeTarget(ai.collider, ai.feet, ai.yaw, ai.height, c.feet, c.height ?? playerHeight, null, null, ai.sightRadius)) { playerInSight = true; break; }
     }
   }
   if (ai.classicTargetUpdateTimer > SENSES_INTERVAL_UNITS) {

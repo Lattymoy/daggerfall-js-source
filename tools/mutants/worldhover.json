@@ -729,7 +729,7 @@
   {
     "name": "WORLD-HOVER-the-dungeon-entrance-arm-loses-its-caller-again",
     "file": "src/scenes/worldModes.js",
-    "old": "      const entry = entries[key];\n      if (entry?.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE) {\n        return staticDoorName('dungeonEntrance', { locationName: currentLocationName() });\n      }\n",
+    "old": "      const entry = entries[key];\n      if (entry?.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE) {\n        return staticDoorName('dungeonEntrance', { locationName: currentLocationName(), elite: !!entry.dfLocation?.elite });   // ELITE: 'Elite Dungeon' over its mouth\n      }\n",
     "new": "",
     "tests": [
       "test/worldhover.test.js"
