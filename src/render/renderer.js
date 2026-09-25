@@ -1634,11 +1634,6 @@ export class Renderer {
     const gl = this.gl;
     return {
       fogColor: gl.getUniformLocation(program, 'uFogColor'),
-      // PERF-FOG: the lane's own, already decoded. A classic program does
-      // not declare it and a lane program that never calls elFinish has it
-      // optimised out, so this is null for both and the upload skips - the
-      // shader that wants linear fog is the one that asks for it.
-      fogColorLin: gl.getUniformLocation(program, 'uFogColorLin'),
       fogMode: gl.getUniformLocation(program, 'uFogMode'),
       clipY: gl.getUniformLocation(program, 'uClipY'),
       amMode: gl.getUniformLocation(program, 'uAutomapMode'),
@@ -1802,9 +1797,6 @@ export class Renderer {
       this._installWorldSet(this._classicSet);
     }
     this._lane = lane;
-    // PERF-FOG: the cached linear fog is the OLD lane's answer - a cache
-    // keyed on its input alone cannot see that the function changed.
-    if (this._fogLinFrom) this._fogLinFrom[0] = NaN;
     // EL2: the shadow pass rides a lane that asks for it; built once, kept
     if (lane?.shadows) {
       this._shadows = this._shadowPass ??= new ShadowPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS, terrain: TERRAIN_VS, char: CHAR_VS } });
@@ -3257,7 +3249,7 @@ void main() {
       pointColors: gl.getUniformLocation(P, 'uPointColors'),
       indirect: gl.getUniformLocation(P, 'uIndirect'),
       indirectColor: gl.getUniformLocation(P, 'uIndirectColor'),
-      ...this._fogLocs(P),   // MAC-BUG W6: the lane's decal wants uFogColorLin too, and _fogLocs is the one table that knows the whole set
+      ...this._fogLocs(P),   // MAC-BUG W6: the lane's decal wants the whole fog set too, and _fogLocs is the one table that knows it
     };
   }
 
@@ -4189,12 +4181,6 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   _uploadFog(prog) {
     const gl = this.gl;
     gl.uniform3fv(prog.fogColor, this._fogColor);
-    // PERF-FOG (2026-09-19): the lane's fog colour, decoded ONCE where the
-    // value changes rather than once per fragment in every lane shader
-    // there is. Cached against the display triple it was made from: the
-    // fog colour moves with the weather and the hour, which is a handful
-    // of times a minute, and this ran for every pixel of every frame.
-    if (prog.fogColorLin) gl.uniform3fv(prog.fogColorLin, this._fogColorLinear());
     gl.uniform1i(prog.fogMode, this._fogMode);
     gl.uniform1f(prog.fogDensity, this._fogDensity);
     gl.uniform2fv(prog.fogRange, this._fogRange);
@@ -4203,26 +4189,6 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (prog.amMode) gl.uniform1f(prog.amMode, this._automapMode);   // A2: and the automap presentation
     if (prog.amWaterLevel) gl.uniform1f(prog.amWaterLevel, this._automapWaterLevel);   // c2/S6: with its water tint
     if (prog.amWaterColor) gl.uniform4fv(prog.amWaterColor, this._automapWaterColor);
-  }
-
-  /** PERF-FOG: `_fogColor` in linear, decoded only when it MOVES.
-   *
-   *  Through the lane's own `decode3`, which is the curve `elDecode`
-   *  compiles into every lane shader - so there is no second copy of the
-   *  law here, only a place to keep its answer. The fog colour changes
-   *  with the weather and the hour; this used to be recomputed for every
-   *  pixel of every frame. Its own scratch, never `_c3`'s, because that
-   *  one is handed out to whoever asks next. */
-  _fogColorLinear() {
-    const c = this._fogColor;
-    const was = this._fogLinFrom ?? (this._fogLinFrom = new Float32Array([NaN, NaN, NaN]));
-    if (!this._fogLin) this._fogLin = new Float32Array(3);
-    if (was[0] !== c[0] || was[1] !== c[1] || was[2] !== c[2]) {
-      was[0] = c[0]; was[1] = c[1]; was[2] = c[2];
-      if (this._lane) this._lane.decode3(c, this._fogLin);
-      else this._fogLin.set(c);
-    }
-    return this._fogLin;
   }
 
   /** A1: the automap slice plane - fragments of the SOLID mesh pass
@@ -5221,7 +5187,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       // every flat in the world. This is the only site in the file that
       // holds more than one decoded colour live at once, which is why it
       // is the only one that could have it; found by the audit that had
-      // just pinned `_fogLin` against the same hazard one method away.
+      // just pinned PERF-FOG's decoded fog (gone since EL-DISTANCE) against the same hazard one method away.
       const am = this._c3(this._ambient, this._decA), mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decC);
       gl.uniform3f(
         this.bbUTint,

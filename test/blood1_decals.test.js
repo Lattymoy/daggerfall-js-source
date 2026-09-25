@@ -2066,7 +2066,7 @@ test('MAC-BUG W6 by source: the decal has a LANE TWIN, the flat’s model on the
   assert.match(r, /decal: elLocs\(set\.decal\)/, 'the decal’s lane uniforms are looked up with the set');
   assert.match(r, /this\._csLoc\.decal = \[gl\.getUniformLocation\(set\.decal, 'uCloudShadowMap'\), gl\.getUniformLocation\(set\.decal, 'uCloudShadowRect'\)\];/, 'and its cloud pair');
   assert.match(r, /this\.decalProgram = set\.decal;\s*\n\s*this\._decal = this\._decalLocs\(set\.decal\);/, 'the program and its table are the installed set’s');
-  assert.match(r, /\.\.\.this\._fogLocs\(P\),/, 'the fog table is the one that knows uFogColorLin - the lane’s finish blends the DECODED fog');
+  assert.match(r, /\.\.\.this\._fogLocs\(P\),/, 'the fog table is the one that knows the whole fog set the lane’s finish reads');
   // the classic program is untouched by all of this: no lane uniform in it
   const classicFs = r.slice(r.indexOf('const DECAL_FS = `'), r.indexOf('`;', r.indexOf('const DECAL_FS = `')));
   assert.ok(!/uELExposure|elFinish|elDecode/.test(classicFs), 'the classic decal stays classic');

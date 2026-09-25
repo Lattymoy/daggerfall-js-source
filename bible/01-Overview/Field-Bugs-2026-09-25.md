@@ -542,3 +542,19 @@ cluster D has the numbers and the laws):
   each read and without it, and the frame takes the pair for what it
   drew: the resolve 16-24% faster on SwiftShader by day, 8% at night with
   lanterns, the bright pass 40%, no pixel changed, no GL call added.
+
+---
+
+# EL-DISTANCE — Enhanced Lighting's grey veil on distant terrain (2026-09-25)
+
+**Report** (Mac): "Also to add with enhanced lighting. It almost gives this weird darkness/foggy look to distant
+terrian which I really dont like. Not sure what it is".
+
+**Cause.** The lane mixed the fog colour into its LINEAR surface and encoded the sum, where the classic lane mixes in
+display space: on the same fog ramp, distant ground reached the fog's colour far sooner - pale by day, dark at dusk
+and night. Not the AO (checked: no effect beyond 400 units), not the haze (about 2 luma).
+
+**Fix.** `elFinish` and the far ring blend the fog in display space; the lanterns' glow in the fog is still added in
+linear. Same hills, 7 am: 240-400 units 94.0 -> 72.7 (classic 73.3), 700-1200 144.1 -> 114.4 (classic 113.8). The
+PERF-FOG decoded fog uniform went with the linear blend. Rendering-Arc.md EL-DISTANCE has the numbers and pins.
+

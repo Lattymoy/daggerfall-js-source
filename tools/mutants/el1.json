@@ -184,7 +184,7 @@
   {
     "name": "glsl-fog-blend-raw",
     "file": "src/render/enhancedLighting.js",
-    "old": "  vec3 col = mix(uFogColorLin, tm, fogFactorAt(wp));",
+    "old": "  vec3 col = mix(uFogColor, elEncode(tm), fogFactorAt(wp));",
     "new": "  vec3 col = mix(uFogColor, tm, fogFactorAt(wp));",
     "tests": [
       "test/el1_enhancedlighting.test.js"
