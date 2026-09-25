@@ -170,7 +170,7 @@ carried only the first of the two lines, so a player fighting with the
 left-hand weapon loaded back holding the right hand's item, or bare
 fists. By the time it was found, the two restore lines had drifted six
 and thirteen lines apart inside their own hosts, and the comment in
-`worldModes.js` that pointed between them cited `world.js:6777` and
+`worldModes.js` that pointed between them cited `world.js:6884` and
 `dungeonContext.js:6371` - lines that had moved to `:5020` and `:6346`.
 *Three copies of a rule, and the signpost between them stale as well.*
 
@@ -218,8 +218,8 @@ for the drift this program's thesis predicts, and both came back clean;
 the honest result of an audit is sometimes that the work is not owed.
 
 **S1 - the two exterior hosts' draw ladders. THE HOSTS ARE NOT PEERS,
-and the record never said so.** `main.js:103` routes `?exterior`,
-`?region` and `?loc` to `bootExterior`; the front door (`main.js:221`)
+and the record never said so.** `main.js:107` routes `?exterior`,
+`?region` and `?loc` to `bootExterior`; the front door (`main.js:228`)
 boots `bootWorld`. main.js says it in its own words: *"Dev scenes stay
 one param away (?exterior/?world/etc)."* So this is a shipping ladder
 against a dev scene's ladder, not two live copies of one law - which is
@@ -232,7 +232,7 @@ has and `exterior.js` lacks is the streaming host's own (terrain pixels,
 riding, online peers). Everything `exterior.js` has and `world.js` lacks
 is a `?rig`/`?rigNear`/`?shot` probe rig, its own `refreshSeason` - whose
 streaming twin `tickSeason` is documented AND cites `refreshSeason` by
-name at `world.js:508` - and two math helpers in the shot path. **No
+name at `world.js:513` - and two math helpers in the shot path. **No
 drift.**
 
 **S2 - the mode-transition teardown order. Three candidate findings, all
@@ -249,11 +249,11 @@ three collapsed on verification.**
 2. *"`npcSession.onWorldChanged()` is on both door exits and not on the
    teleport/load path."* True, and correct: every caller of
    `forceExitToExterior` follows it with `_teleportToPixel`, and THAT
-   function owns the call (`world.js:5605`, DFU's `OnMapPixelChanged` /
+   function owns the call (`world.js:5712`, DFU's `OnMapPixelChanged` /
    `OnLoadEvent`). The quickload caller goes through
    `restoreSessionState` instead. Calling it in both places would be the
    redundancy, not the fix.
-3. *"`worldModes.js:10082` disposes the dungeon overlay that
+3. *"`worldModes.js:10091` disposes the dungeon overlay that
    `dungeonCtx.destroy()` disposes again - HARD1's double free."* Already
    known, already written down, at `dungeonContext.js:7173-7174`:
    *"dispose() is idempotent (A2), which is what makes the outer host's
@@ -543,7 +543,7 @@ The door list derived; the four arm names did not. It demanded `close`,
 which no host has ever called on a slot - the hosts free a window with
 `dispose?.()` - so that requirement was invented, and it passed only
 because the one door lacking `close` was also the one being skipped. And
-it omitted `tick`, which `interior.js:388` calls unguarded **every
+it omitted `tick`, which `interior.js:394` calls unguarded **every
 frame**.
 
 **F3 - it assumed the population was `ui/*Door.js`.** It is not. Twelve

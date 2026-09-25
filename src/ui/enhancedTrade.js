@@ -32,12 +32,11 @@
 // enhancedSpellbook.js ("this window reads no ARENA2"), a trade
 // counter reachable from a fresh install with no classic assets must
 // stand on its own - so this reads item icons the same OPTIONAL way
-// enhancedInventory's own item tile does (requestIcon over the item's
-// texture record), falling back to two letters when that record is
-// unavailable, and never blocks on it.
+// enhancedInventory's own item tile does (its linePictureUrl door over
+// the item's texture record, or the cart's model), falling back to two
+// letters when that picture is unavailable, and never blocks on it.
 
-import { itemLine } from './enhancedInventory.js';   // RF6/MW-D38: one item model, read by both packs
-import { requestIcon } from './textureCanvas.js';
+import { itemLine, linePictureUrl } from './enhancedInventory.js';   // RF6/MW-D38: one item model, read by both packs
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';
 import { overlayAction } from './input.js';
@@ -52,10 +51,16 @@ import {
 import {
   CANNOT_BE_REPAIRED_TEXT, INTERRUPT_REPAIR_TEXT,
   isBeingRepaired as itemIsBeingRepaired, isRepairFinished, collectRepaired,
+  updateRepairTimes, repairCountdown, repairCountdownText,   // UXB1-K: when a job is ready
 } from '../systems/repairService.js';
-import { planTake, applyTransfer, clearLightSourceOnLeave, CANNOT_CARRY_TEXT } from '../systems/itemTransfer.js';
-import { isSummoned, carriedWeight, totalWeight, transferAll } from '../systems/inventory.js';
+import { planTake, applyTransfer, clearLightSourceOnLeave, CANNOT_CARRY_TEXT, HOW_MANY_ITEMS, parseSplitAmount } from '../systems/itemTransfer.js';
+import { howManyField } from './howManyField.js';   // DISC25-F: the counter's how-many field, the pack's own
+import { isTextEntryTarget } from './input.js';
+import { isSummoned, carriedWeight, totalWeight, transferAll, addItem } from '../systems/inventory.js';   // AUDIT UXB1 F4: addItem, a returning lot's merge
 import { isFurnishing } from '../systems/decorFurnish.js';   // DECOR2b: furniture is delivered, never carried
+import { getBool } from '../systems/settings.js';   // UXB1-K: InstantRepairs - no clock to count down
+import { dateFromClassicMinutes, dateString } from '../systems/gameDate.js';
+import { sharedRealTimeText } from '../systems/worldTick.js';   // UXB1-K: online, the ready time in the player's own clock
 import { shopliftAttempt } from '../systems/theft.js';
 import { entityMaxEncumbrance } from '../combat/formulas.js';
 import { CANNOT_REMOVE_ITEM_TEXT } from '../systems/createItem.js';
@@ -91,6 +96,9 @@ let staged = [];    // every other mode's staged lot (shown in the REMOTE column
 let usingWagon = false;
 let box = null;     // { rows, buttons: 'YesNo'|null, onYes }
 let selected = null;   // { item, side: 'local'|'remote' } - a single click's tooltip, not yet transferred
+// DISC25-F (Satranath and Starempire42 on Discord: "It doesn't appear possible to split stacks ... in shops when
+// making a purchase"): the tooltip's HOW MANY field - the item it was opened on, and its live text
+let qty = { item: null, text: '' };
 let unregisterOutside = () => {};
 // A manual double-click tracker. render() below tears down and rebuilds
 // EVERY row on EVERY click (even a plain single click, just to draw the
@@ -118,6 +126,8 @@ let unregisterOutside = () => {};
 let lastRowClick = { item: null, time: 0 };
 const DOUBLE_CLICK_MS = 500;
 let keyHandler = null;
+/** UXB1-K: the repair counter's estimates, one scheduler pass per paint (repairEstimatesNow). */
+let repairEst = null;
 
 const inBuy = () => mode === 'Buy';
 const selling = () => mode === 'Sell' || mode === 'SellMagic';
@@ -303,14 +313,78 @@ function pickLocal(item) {
   });
   if (d.kind === 'stage') {
     if (refuseTransfer(item)) return;
-    clearLightSourceOnLeave(item, deps.entity, true);
-    move(item, deps.packItems(), remoteItems());
+    const amount = chosenAmount(item, stackOf(item));   // DISC25-F: part of a stack goes on the counter
+    if (amount == null) return askAgain(item);
+    if (amount < stackOf(item)) applyTransfer(item, { amount }, deps.packItems(), remoteItems(), { entity: deps.entity, fromLocal: true });
+    else {
+      clearLightSourceOnLeave(item, deps.entity, true);
+      move(item, deps.packItems(), remoteItems());
+    }
+    qty = { item: null, text: '' };
     playTransferSound();
     render();
     return;
   }
-  if (d.kind === 'unstage') { move(item, basket, deps.shelfItems()); playTransferSound(); render(); return; }
+  if (d.kind === 'unstage') {
+    const amount = chosenAmount(item, stackOf(item));   // DISC25-F: and part of it back off the basket
+    if (amount == null) return askAgain(item);
+    if (amount < stackOf(item)) applyTransfer(item, { amount }, basket, deps.shelfItems());
+    else unstageToShelf(item);   // AUDIT UXB1 F4: the whole lot rejoins its stack
+    qty = { item: null, text: '' };
+    playTransferSound();
+    render();
+    return;
+  }
   if (d.kind === 'refuse') refuse(d.refusal);
+}
+
+/** DISC25-F: a stack's count - DFU's stackCount, one for a thing that does not stack. */
+const stackOf = (item) => item?.stackCount ?? 1;
+
+/** DISC25-F: how many a move of `item` takes - the tooltip's field where it was opened on this item, parsed as DFU
+ *  parses the split popup (1..max, else null: nothing moves), and `max` everywhere else (a double click reaches for
+ *  the whole, as it always has). */
+function chosenAmount(item, max) {
+  return qty.item === item ? parseSplitAmount(qty.text, max) : max;
+}
+
+/** DISC25-F: a count DFU's parse refuses moves nothing; the box says the popup's own question with its max. */
+function askAgain(item) {
+  box = { rows: [{ text: HOW_MANY_ITEMS(splitMaxOf(item, selected?.side ?? 'local') || stackOf(item)), center: true }], buttons: null };
+  render();
+}
+
+/**
+ * DISC25-F: the most one move of the selected item takes, or 0 where it takes nothing or cannot split. Off the
+ * shelf, what the pack can carry (planTake's own amount - CanCarryAmount, DaggerfallTradeWindow.cs:842 - asked as a
+ * DRY RUN, since the quest rung writes); onto the counter and back off it, the whole stack (DFU passes no maxAmount
+ * there, :795/:803, so only Control splits); nothing for a repair, which takes a thing whole.
+ */
+function splitMaxOf(item, side) {
+  if (!item || mode === 'Repair') return 0;
+  if (side === 'remote') {
+    if (!inBuy()) return stackOf(item);
+    const plan = planTake(item, { bag: [...deps.packItems(), ...basket], entity: deps.entity ?? null, dryRun: true });
+    return plan.ok && !plan.map ? plan.amount : 0;
+  }
+  const d = localClickDecision(mode, item, {
+    inBasket: (i) => basket.includes(i),
+    allowMagicRepairs: deps.allowMagicRepairs ?? false,
+    usingIdentifySpell: deps.usingIdentifySpell ?? false,
+    wagonLoaded: (deps.entity?.wagonItems ?? []).length > 0,
+    usedWagon: (deps.entity?.items ?? []).find(
+      (i) => i.group === 'Transportation' && i.templateIndex === SMALL_CART_TEMPLATE) ?? null,
+  });
+  return d.kind === 'stage' || d.kind === 'unstage' ? stackOf(item) : 0;
+}
+
+/** AUDIT UXB1 F4: goods put back on the shelf rejoin their stack - ItemCollection.AddItem's merge (inventory.js
+ *  addItem), which DFU's click-back (TransferItem) and ClearSelectedItems (TransferAll) both reach. A split lot is its
+ *  own record, and `move`'s push left "Oil ×2" beside "Oil ×10" on the shelf it came from. */
+function unstageToShelf(item) {
+  const i = basket.indexOf(item);
+  if (i >= 0) basket.splice(i, 1);
+  addItem(deps.shelfItems(), item);
 }
 
 function takeItemFromRepair(item) {
@@ -326,7 +400,10 @@ function pickRemote(item) {
       render();
       return;
     }
-    applyTransfer(item, plan, deps.shelfItems(), basket);
+    const amount = chosenAmount(item, plan.amount);   // DISC25-F: part of the shelf's stack into the basket
+    if (amount == null) return askAgain(item);
+    applyTransfer(item, { ...plan, amount }, deps.shelfItems(), basket);
+    qty = { item: null, text: '' };
     playTransferSound();
     render();
     return;
@@ -345,7 +422,11 @@ function pickRemote(item) {
     render();
     return;
   }
-  move(item, remoteItems(), deps.packItems());
+  const amount = chosenAmount(item, stackOf(item));   // DISC25-F: part of a staged stack back into the pack
+  if (amount == null) return askAgain(item);
+  if (amount < stackOf(item)) applyTransfer(item, { amount }, remoteItems(), deps.packItems());
+  else move(item, remoteItems(), deps.packItems());
+  qty = { item: null, text: '' };
   playTransferSound();
   render();
 }
@@ -371,7 +452,7 @@ function transferSelected() {
 
 function clear() {
   selected = null;
-  if (inBuy()) { while (basket.length) move(basket[0], basket, deps.shelfItems()); return; }
+  if (inBuy()) { while (basket.length) unstageToShelf(basket[0]); return; }   // AUDIT UXB1 F4: each lot rejoins its stack
   if (mode === 'Repair') {
     const now = deps.nowMinutes?.() ?? 0;
     for (const it of [...remoteList()]) {
@@ -556,10 +637,39 @@ function close() {
 
 function setTab(t) { tab = t; render(); }
 
+// ── UXB1-K: THE REPAIR COUNTER'S CLOCK ─────────────────────────────
+// (2026-09-25, the UX backlog: "Countdown timer/estimate for repairs when not instant.") DFU labels every item at the
+// repair counter "DONE" or "%d days" (RepairItemLabelTextHandler :282-288, the remote scroller's LabelTextHandler
+// :244); the port had the law (repairService.js repairStatusLabel) and no skin drew it, so a player who left a sword
+// had no way to know when to come back. The estimate for an item only staged is the scheduler's own pass
+// (updateRepairTimes with commit false - FilterRemoteItems' :725), run once per paint; InstantRepairs has no clock.
+
+/** One scheduler pass over the counter, or null where there is no clock to read. */
+function repairEstimatesNow() {
+  if (mode !== 'Repair' || getBool('Controls', 'InstantRepairs')) return null;
+  return updateRepairTimes(remoteList(), { commit: false, nowMinutes: deps.nowMinutes?.() ?? 0 });
+}
+/** An item's countdown and its words, or null (instant repairs, or nothing owed). */
+function repairWhen(item, now) {
+  if (!repairEst) return null;
+  const c = repairCountdown(item, now, repairEst.get(item) ?? null);
+  return c ? { ...c, text: repairCountdownText(c) } : null;
+}
+const pad2 = (n) => String(n).padStart(2, '0');
+/** The detail strip's line: the hour and the day it is ready, and online the player's own clock beside it (the
+ *  bank's due date shape, worldModes.js dueDateText). */
+export function repairReadyLine(c) {
+  if (!c) return null;
+  if (c.done) return 'Ready to collect.';
+  const d = dateFromClassicMinutes(c.doneAt);
+  const real = sharedRealTimeText(c.doneAt);
+  return `${c.estimate ? 'Ready about' : 'Ready by'} ${pad2(d.hour)}:${pad2(d.minute)}, ${dateString(d)}${real ? ` (${real})` : ''}.`;
+}
+
 // ── ROWS ──────────────────────────────────────────────────────────
 
 function itemTile(line) {
-  const src = line.image ? requestIcon(line.image.archive, line.image.record, { scale: 2, dye: line.image.dye, onReady: render }) : null;   // DISC22-D: by the item's dye, as the pack asks (DW3)
+  const src = linePictureUrl(line, { scale: 2, onReady: render });   // DISC22-D / DISC24-B: the pack's own door - the item's dye, the cart's model
   if (src) {
     const tile = el('span', 'tile has-icon');
     const img = el('img');
@@ -587,6 +697,10 @@ function itemRow(item, from) {
     const now = deps.nowMinutes?.() ?? 0;
     const done = itemIsBeingRepaired(item) ? isRepairFinished(item, now) : true;
     row.classList.add(done ? 'on' : 'ghost');
+    // UXB1-K: RepairItemLabelTextHandler's misc label (DaggerfallTradeWindow.cs:282-288), which no skin drew - when
+    // the job is ready, counted down (repairService.js repairCountdown/Text)
+    const when = repairWhen(item, now);
+    if (when) row.append(el('span', `itemrepair${when.done ? ' done' : ''}`, when.text));
   }
   if (selected?.item === item) row.classList.add('picked');
   // A single click reads the item (the tooltip strip below the lists);
@@ -676,6 +790,18 @@ function detailStrip() {
   info.append(el('p', 'meta', bits.filter(Boolean).join(' · ')));
   const quote = quotePriceFor(selected.item, selected.side);
   if (quote) info.append(el('p', 'trade-quote', `${quote.label} ${quote.price} gold`));
+  // DISC25-F: a stack more than one of which would move asks how many, here where the move is made
+  const item = selected.item;
+  const max = stackOf(item) > 1 ? splitMaxOf(item, selected.side) : 0;
+  if (max > 1) {
+    if (qty.item !== item) qty = { item, text: String(max) };
+    info.append(howManyField({ max, text: qty.text, onInput: (t) => { qty.text = t; } }));
+  }
+  // UXB1-K: at the repair counter, when it is ready
+  if (mode === 'Repair' && selected.side === 'remote') {
+    const line = repairReadyLine(repairWhen(selected.item, deps.nowMinutes?.() ?? 0));
+    if (line) info.append(el('p', 'trade-quote trade-ready', line));
+  }
   bar.append(info);
   const closeBtn = el('button', 'act', 'Close');
   closeBtn.onclick = () => { selected = null; render(); };
@@ -739,6 +865,7 @@ function render() {
   // without this a click halfway down a long shelf snapped the view
   // back to its top every time.
   const prevScroll = Array.from(host.querySelectorAll('.packcol')).map((c) => c.scrollTop);
+  repairEst = repairEstimatesNow();   // UXB1-K: one scheduler pass for every row this paint draws
   host.innerHTML = '';
   const shell = el('div', 'px-home px-over trade-shell');
   const win = el('div', 'px-win trade-win');
@@ -783,6 +910,9 @@ function onKey(e) {
     return;
   }
   if (overlayAction(e) === 'back') { e.preventDefault(); close(); return; }
+  // DISC25-F: Enter in the how-many field is the popup's Return - it moves the selected item with that count, not
+  // the whole lot's confirm
+  if (e.key === 'Enter' && isTextEntryTarget(e.target) && e.target.closest?.('.qtyfield') && selected) { e.preventDefault(); transferSelected(); render(); return; }
   if (e.key === 'Enter') { e.preventDefault(); modeAction(); }
 }
 
@@ -804,6 +934,7 @@ export function mountEnhancedTrade(hostEl, hooks = {}) {
   usingWagon = false;
   box = null;
   selected = null;
+  qty = { item: null, text: '' };
   onExit = hooks.onExit ?? (() => {});
   render();
   keyHandler = onKey;

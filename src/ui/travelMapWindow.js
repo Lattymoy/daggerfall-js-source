@@ -113,7 +113,7 @@ import { drawText } from './text.js';
 import { bindings } from './input.js';
 import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM8: Find is a pushed DaggerfallInputMessageBox
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // AUDIT 64 F23: the DaggerfallShortcut table, IsUpWith's modifier mask and all
-import { actionForCode } from '../systems/inputActions.js';
+import { codeMeans } from '../systems/inputActions.js';   // UXB1-S: its own key, shared or not
 import { ImgFile } from '../formats/imgFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { TextRsc } from '../formats/textRsc.js';
@@ -316,7 +316,7 @@ let _art = null;
  *  (indices, not a texture - the region shapes are read out of it),
  *  the button sheets, the border, FMAP_PAL.COL and TEXT.RSC. */
 /** TO1: a PNG out of a vendored mod folder, in the shape `drawImg`
- *  reads. The precedent is systems/handheldTorches.js:787-792 -
+ *  reads. The precedent is systems/handheldTorches.js:820-825 -
  *  `toScreenOrder`, not `toColor32`, because this is drawn on a screen
  *  quad and the flip would stand it on its head. A file that is not
  *  there answers null and the caller draws nothing. */
@@ -1533,7 +1533,7 @@ export class TravelMapWindow {
     }
     // Update's own keys (:378-425)
     // Update's toggle-closed binding and the back button (:376-386)
-    if (code === 'Escape' || actionForCode(bindings(), code) === 'TravelMap') {
+    if (code === 'Escape' || codeMeans(bindings(), code, 'TravelMap')) {
       this.closeTravelWindows();
       return;
     }

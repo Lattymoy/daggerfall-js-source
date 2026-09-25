@@ -1201,8 +1201,10 @@ test('AUDIT-AIR1: the shadow reset is ONE HOME - six copies of a rule is five ch
   assert.doesNotMatch(after, /this\._tex0Bound = null; this\._activeUnit = null;/,
     'no site outside the helper clears the pair by hand');
   // and every seam that can lose the units calls it
-  assert.equal((src.match(/this\._forgetTextureShadows\(\);/g) || []).length, 7,
-    'the constructor, endWorldPass, _installWorldSet, markForeignPass, beginFrame, uploadEmissionTexture and the air resolve');
+  // RETRO1: an eighth - the retro present binds units 0..2, a program and a VAO of its own (render/retroPass.js), and
+  // it runs as the classic lane's resolve as well as after the air's, so it forgets for itself
+  assert.equal((src.match(/this\._forgetTextureShadows\(\);/g) || []).length, 8,
+    'the constructor, endWorldPass, _installWorldSet, markForeignPass, beginFrame, uploadEmissionTexture, the air resolve and the retro present');
   // the air resolve's call sits AFTER the composite, because the
   // composite is what invalidates them
   const air = src.slice(src.indexOf('_compositeAir() {'));

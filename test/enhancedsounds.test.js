@@ -32,7 +32,8 @@ test('ES1 the row: Enhanced sounds on the Features home where the wind row stood
   assert.equal(PREF_DEFAULTS.soundEnhancements, true, 'RF4: the shelf derives the default from the row');
   assert.ok(ONLINE_PLAYERS_OWN_PREFS.includes('soundEnhancements'), 'the lane leaves it to the player');
   assert.equal(FEATURES.find((f) => f.id === 'wind-sound'), undefined, 'the wind’s own row is gone - it IS this row');
-  assert.equal(FEATURES.findIndex((f) => f.id === 'enhanced-sounds'), FEATURES.findIndex((f) => f.id === 'wind-wisps') + 1, 'in the wind row’s place');
+  assert.equal(FEATURES.findIndex((f) => f.id === 'enhanced-sounds'), FEATURES.findIndex((f) => f.id === 'wind') + 1, 'in the wind row’s place (FT18: the wind seen is one row, `wind`)');
+  assert.equal(row.group, 'sound', 'FT18: under Sound, with what else is heard');
 });
 
 test('ES1 the switch: the enhanced skin and the pref; the wind rides it and keeps its own kill door (mutant: the skin gate dropped, or the wind reading a pref of its own)', () => {

@@ -40,7 +40,10 @@ import { makeFont } from '../ui/text.js';   // ROAD-C c2/S9: the map's status/ho
 import { FntFile } from '../formats/fntFile.js';   // ROAD-C c2/S9
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-tail: UserInterfaceManager's stack, and its PAUSE, for the fourth host
 import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
-import { swallowBrowserKey, actionOf, keyboardLook } from '../ui/input.js';   // U47: F5/F6/F11 - one list, in ui/input.js; FIX-F: the automap through the registry, and the look keys off the same registry
+import { swallowBrowserKey, actionsOf, keyboardLook } from '../ui/input.js';   // U47: F5/F6/F11 - one list, in ui/input.js; FIX-F: the automap through the registry, and the look keys off the same registry
+import { worldViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // AUDIT RETRO1 A8/C4: the lens and the world rect the other hosts take - the docked bar's, and retro mode's texture aspect and pillarbox
+import { hudShortcutKey } from '../ui/hudShortcuts.js';   // AUDIT RETRO1 C4: DaggerfallHUD's shortcuts, Shift-F11 among them, as in the other hosts
+import { frameCapSkip } from '../systems/frameCap.js';   // FPS-CAP1: DFU's TargetFrameRate, the fourth host's
 
 // Milestone 4 scene: one building interior, standalone at block-local origin.
 export async function bootInterior(canvas, renderer, params, status) {
@@ -191,10 +194,10 @@ export async function bootInterior(canvas, renderer, params, status) {
     // rollout enumerated four, so F5 in the ?interior route reloaded
     // the page and destroyed the session - the exact failure AUDIT 17e
     // F41 recorded for the others - and F11 went fullscreen. The law
-    // (ui/input.js:715-716) is "every host that registers a keydown
+    // (ui/input.js:866-867) is "every host that registers a keydown
     // calls this FIRST", and it is NOT conditional on the host having
     // a destination for the key. First, because every arm below
-    // returns before its own preventDefault - worldModes.js:8988 sits
+    // returns before its own preventDefault - worldModes.js:8997 sits
     // ahead of its arms for the same reason.
     swallowBrowserKey(e);
     // The open map owns the keyboard, exactly as it does in the three
@@ -219,7 +222,8 @@ export async function bootInterior(canvas, renderer, params, status) {
     // overlay gate, where DFU's Update returns before PollInput
     // (:487-503).
     keys.add(e.code);
-    if (actionOf(e, keys) === 'AutoMap') { toggleAutomap(); e.preventDefault(); return; }   // FIX-F: the registry's key, not a raw M - the one host that read the literal
+    if (hudShortcutKey(e, keys)) { e.preventDefault(); return; }   // AUDIT RETRO1 C4: below the window gate, as DaggerfallHUD.Update is
+    if (actionsOf(e, keys).includes('AutoMap')) { toggleAutomap(); e.preventDefault(); return; }   // UXB1-S: its key, shared or not   // FIX-F: the registry's key, not a raw M - the one host that read the literal
     // DFU parity: any keypress re-engages a dropped lock (no click-to-look mode).
     if (document.pointerLockElement !== canvas) requestLook(canvas);
   });
@@ -317,6 +321,7 @@ export async function bootInterior(canvas, renderer, params, status) {
   let frames = 0;
   let last = performance.now();
   function frame(now) {
+    if (frameCapSkip(now)) { requestAnimationFrame(frame); return; }   // FPS-CAP1: held back to the Frame Rate Cap - `last` kept, so the next drawn frame's dt covers it
     const dt = Math.min(0.1, (now - last) / 1000);
     // AUDIT 28 W7 + F-C1/F-C2 (self-audit 3): PlayerMouseLook.Update's
     // three answers - paused (:241-244) returns before ApplyLook and the
@@ -348,7 +353,8 @@ export async function bootInterior(canvas, renderer, params, status) {
     if (keys.has('KeyD')) for (let a = 0; a < 3; a++) cam.pos[a] += right[a] * speed;
 
     const target = [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]];
-    const proj = mirrorProjectionX(perspective(fieldOfView(), canvas.clientWidth / canvas.clientHeight, 0.05, 500));   // HANDEDNESS (mat4's law)
+    const proj = mirrorProjectionX(perspective(fieldOfView(), largeHudWorldAspect(canvas.clientWidth, canvas.clientHeight), 0.05, 500));   // HANDEDNESS (mat4's law); AUDIT RETRO1 A8: the hosts' one denominator
+    renderer.setWorldViewport(worldViewportRect(canvas.clientWidth, canvas.clientHeight));   // AUDIT RETRO1 A8/C4: ViewportChanger.Update, as the other hosts - the retro pillarbox too
     const view = lookAt(cam.pos, target, [0, 1, 0]);
 
     // LT1: per-light range AND colour x intensity - AddLight's whole
@@ -382,7 +388,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // scan, for the reason DFU states on the gate (SetActive(false) on
     // the geometry would mess with the open map's rendering). Update's
     // own call at :1001 is the one-shot lazy init, not a per-frame
-    // driver. dungeon.js:786 and worldModes.js:6898/:6926 gate the same
+    // driver. dungeon.js:788 and worldModes.js:6907/:6935 gate the same
     // way; this is that gate for this host.
     lookGate(!!overlay);   // AUDIT-AMAP H8
     if (!gamePaused()) ctx.automapTick?.(dt, cam.pos, fwd);
@@ -391,6 +397,7 @@ export async function bootInterior(canvas, renderer, params, status) {
       drainOverlay();
       if (overlay) overlay.draw(renderer, canvas, mapFont, 1);
     }
+    renderer.resolveFrame();   // AUDIT RETRO1 E5/C8: a frame that drew no screen quad (the enhanced skin, a sheathed weapon) is shown NOW, not at the next beginFrame
 
     frames++;
     if (shotMode && frames === 5) window.__shotReady = true;

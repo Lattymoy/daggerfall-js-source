@@ -68,8 +68,8 @@ finding and the move.
 | `cloudQuality` | Cloud quality | default | **MOVED (FT7, 2026-09-14)** - Enhanced; its tiers pinned as the march table's own keys |
 | `enhancedWater` | Enhanced water | on | **MOVED (FT6, 2026-09-14)** - Enhanced; the switch's composition given one home first |
 | `enhancedCombatVisuals` | Enhanced combat visuals | on | **MOVED (FT8, 2026-09-14)** - Enhanced; the Settings category it emptied is off the rail (FT12) |
-| `mwArms` | (no switch - a load/unload button under Morrowind data) | off | open. Needs a real switch on the list |
-| `hudScale`, `showFps`, `textScale`, `skin`, `touch*`, `online*` | scattered | - | NOT features. Settings, and they stay in Settings |
+| `mwArms` | (no switch - a load/unload button under Morrowind data) | off | **RETIRED (MWA4, 2026-09-25)** - the attached files are the switch: the assets card, at the head of the list, has Attach and Remove data alone |
+| `hudScale`, `showFps`, `skipStartVideo`, `textScale`, `skin`, `touch*`, `online*` | scattered | - | NOT features. Settings, and they stay in Settings (UXB1-A's `skipStartVideo` is Settings > Interface, on the main menu only) |
 
 ### Mod Authored (mod settings, `modSettings.js`) - today on the Mods rail section
 
@@ -203,7 +203,7 @@ switch operates nowhere but the home. On the home a settings switch's
 face toggles it (there is no help sheet there to open), as prefRow's
 face does.
 
-**Not done, by name.** The standalone dev host `scenes/dungeon.js:115`
+**Not done, by name.** The standalone dev host `scenes/dungeon.js:116`
 still reads the raw location - a probe door, sized by nothing, as the
 struck Ledger C row already says. Building on the feature (Mac's
 "genuine enhanced feature we can build on") is a design decision, not
@@ -949,3 +949,122 @@ lose the presses; the HUD reads it each frame, guarded, and toggles one
 class. The home holds 34 rows now: 13 Enhanced, 13 Mod Authored, 10 DFU
 Classic. Pins re-aimed: FT0's id list. `test/qs3_hud.test.js` pins the
 read and the rule.
+
+## FT18 - ALL OFF, THE SEARCH, AND THE HOME REORGANIZED (2026-09-25)
+
+Mac, four asks in one message: *"Add FPS limiter to settings"* (FPS-CAP1,
+`07-Rendering/Rendering-Arc.md`), *"Add option to set all mods/enhancements
+off"*, *"Add search bar to mods/enhancements in the ingame pause menu"* and
+*"Lets do a comprehensive reorganize and consolidation of our
+mod/enhancements. Determine toggles that dont need to exist anymore or ways
+to clean up, etc"*.
+
+### The audit first: nothing on the home is dead
+
+Every one of the 58 rows' keys was traced to its reader: all 29 prefs keys
+have a consumer, every mod's `Enabled` is read by its component, and every
+DFU Classic key is LIVE in the tier map. So no row was removed for being
+wired to nothing. What the home carried instead was OVERLAP - rows that were
+halves of one control:
+
+| Was | Is | Why |
+|---|---|---|
+| Grass density, Grass style | **Grass** - density the bar, style a part | the style did nothing until the density was above Off (GRASS AUDIT 1 made its note say so) |
+| Wind wisps, Trees sway | **Wind** - the bar is both, each a part | two tiles over one wind (WIND3's third, its sound, is Enhanced sounds since ES1) |
+| Quickslot diamond, Quickbar or hotbar | **Quick slots** - Off / Diamond / Hotbar | the diamond's switch did nothing while the hotbar was up (HB1 puts the diamond away) |
+| Blood stays, Overkill, Blood on the lens, Gore | **Blood** - Off / Light / Normal / Heavy / Abattoir, the three switches parts | four tiles over one system, and the gore dial had no Off: "blood or no blood" took three presses |
+
+Ten rows are four; the home holds 52 (21 Enhanced, 24 Mod Authored, 13 DFU
+Classic - a row wearing two kinds counts under both). No key, default or
+consumer changed: `bloodSwitch.js`, `enhancedHud.js`, `enhancedHotbar.js`,
+`windDrive.js` and `windWisps.js` read what they always read.
+
+**THE MODEL, two fields on a row's control.** `parts` - the prefs a row
+folded in, each drawn in the tile's drawer: a switch as a chip (the modules'
+shape), a choice as a bar (the tile's own). And a covered pref is DECLARED
+in the row's `also` with its `initial` and `online` - RF4's law, one row
+over: the row that covers a key is its one declaration, so the shelf and the
+online lane still derive every default and answer from the registry
+(`FEATURE_PREF_DEFAULTS` walks `also` now). The three bars that span keys
+are lanes over the shelf alone, `systems/featureLanes.js` ('wind',
+'quickSlots', 'blood'); `checkFeature` refuses an undeclared covered pref, a
+part that is not the row's own key, and a `classic` that is not one of the
+row's values.
+
+**TWO GROUPS MORE.** Sight had grown to sixteen tiles and a third of them
+were drawn OVER the world, not in it; the sounds were spread over three
+groups. Interface (the enhanced map, quick slots, World Tooltips, Ambient
+Text, Near Death Warning, Choose Guild Jobs) and Sound (Enhanced sounds,
+Immersive Footsteps, Combat Voices) now stand beside Sight, The world, Loot &
+items, Combat and Your character. Seasons of the Iliac Bay and Eye Of The
+Beholder moved to Sight (a look, a camera); the town watch to The world.
+
+### All off, and Restore
+
+One press, asked first: every switch goes to its Off, and a row with no Off
+goes to the value that is Daggerfall's own - declared on the row as
+`classic` (the land view's 3, the dungeon walls' Classic, the render
+scale's 100%). A CHOICE with neither (cloud quality, the grass's style)
+stays: it is not on or off. What
+each moved tile had been is kept in a pref (`featuresRestore`, by segment
+label) so Restore puts it back, across a relaunch; a second All off keeps
+the first press's values. Online, a row the room decides is not touched and
+not kept - its bar refuses the press too.
+
+### The search
+
+A field over the tiles: every word must be found, in any order, in the
+title, the note, the kind and group labels, the parts' labels, or a mod's
+title, author and vendor, with accents and curly quotes folded away
+(`featureSearchText`, `matchesFeatureQuery`). It hides tiles in place - a
+group left empty goes with them, its count says what shows - rather than
+repainting, so the field keeps the keys it is typed into; the menu's own key
+handler already stands down for a text field and DISC25-E's KB1 gate keeps
+typed keys from the game. The query is per mount.
+
+### What the audit found on the way
+
+- **The outdoors bar never read off.** Its segments said "Off - Daggerfall's
+  outdoors", "On, with the port's own sky", "On, with Dynamic Skies", and
+  DISC23-C reads a switch by the segment that SAYS Off - so Enhanced
+  environments was a CHOICE to the colour law: never red, never off. The
+  labels are `Off` / `Port sky` / `Dynamic Skies` now; the note says what
+  each is.
+- **The Morrowind card printed "null".** WS1's sheathing row appended
+  `prefRow('mwSheathing', ...)` bare; FT13 made a moved key's row answer
+  null, and `append(null)` writes the word. Every player with Morrowind
+  archives attached saw it. The row is gone (the tile is the switch).
+- **Weapon Sheathing's tile never rebuilt the holster** its effect line
+  promised "at once" - that was the dead row's `onChange`. The tile's write
+  runs it now (`enhancedMenu.js` `TILE_AFTER`), and the effect line names no
+  Mods page.
+
+### Not done, and why
+
+The Other players and Night sounds cards stay under the tiles. Their
+switches are not departures to turn off: silencing crickets or drawing a
+peer as a paperdoll is not Daggerfall's own behaviour, so All off must not
+reach them, and a tile's Off would say it did.
+
+**AUDIT BRANCH-0925 (2026-09-25, the pre-merge audit of the branch main was
+merged into).** The merge brought FT18 onto PERF-SCALE's new Sight row
+"Render scale" (100% to 50%, no Off) and bumped the row count, and did not
+decide what All off does with it: the row had no `classic`, so All off
+skipped it and a player at 50% stayed there - the one enhancement still
+redrawing every frame after "Every mod and enhancement goes to Off, or to
+Daggerfall's own". Decided: 100% is its `classic` - Daggerfall's own frame
+is the whole window (`systems/settings.js` leaves DFU's resolution to the
+browser's canvas), and 100% is today's frame call for call
+(`07-Rendering/Rendering.md` PERF-SCALE). The All off pin drives a 50%
+tile to 100% and back on Restore, the renderer's source reading both
+(`tools/mutants/perfscale.json`: the `classic` dropped, dead).
+
+Pins: `test/ft18_features.test.js` (12 - the groups, the condensed rows and
+what they still declare, the model's laws, each lane executed, the search,
+All off and Restore driven over the real stores, online locks, the outdoors
+labels, the drawer pressed through the real tile builder, the pane and the
+card by source); `features`, `blood1_decals`, `disc23c_features_colour`,
+`enhancedsounds`, `ft7_quality`, `ft8_combatvisuals`, `ft11_dfu_rest`,
+`grasspx`, `if1_immersivefootsteps`, `maptoggle`, `qs3_hud`,
+`rf4_featuredecl`, `weather2b_weatherfield`, `wind3_windworld` and
+`ws1_sheathing` re-aimed at the new rows. Mutants `tools/mutants/ft18.json`: 41 (FT18's 28 and FPS-CAP1's 13), all dead - the search's any-word mutant survived the first run and the every-word pin (`kamer windmills`) was written for it; seven older records the change moved out from under (blood1 2, grasspx 1, survtiers 1, survtiers3 3) re-aimed and re-run, all dead.

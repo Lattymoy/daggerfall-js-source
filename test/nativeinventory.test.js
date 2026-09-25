@@ -504,7 +504,7 @@ test('U47: the window is the guard, not its click method - and F11 no longer goe
   // destroyed the session (AUDIT 17e F41's own failure) and F11 went
   // fullscreen. A list a lane has to remember to extend is what let that
   // happen, so the pin now asks the tree which hosts register a keydown
-  // and holds every one of them to ui/input.js:715-716's "every host
+  // and holds every one of them to ui/input.js:866-867's "every host
   // that registers a keydown calls this FIRST".
   const SCENES = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'scenes');
   const hosts = readdirSync(SCENES).filter((f) => f.endsWith('.js')
@@ -525,6 +525,6 @@ test('U47: the window is the guard, not its click method - and F11 no longer goe
   const kd = body.slice(body.indexOf("\n  addEventListener('keydown', (e) => {"));
   assert.ok(kd.indexOf('swallowBrowserKey(e);') < kd.indexOf('if (overlay)'),
     'interior.js swallows BEFORE the overlay arm returns');
-  assert.ok(kd.indexOf('swallowBrowserKey(e);') < kd.indexOf("if (actionOf(e, keys) === 'AutoMap')"),   // FIX-F: the registry's key
+  assert.ok(kd.indexOf('swallowBrowserKey(e);') < kd.indexOf("if (actionsOf(e, keys).includes('AutoMap'))"),   // FIX-F: the registry's key; UXB1-S: shared or not
     'interior.js swallows BEFORE the automap arm returns');
 });

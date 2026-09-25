@@ -180,7 +180,7 @@ const SPENT_MAX = 4096;
 /** MOD1: the most accounts whose latest mute order one room remembers. */
 const ORDERS_MAX = 1024;
 
-import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, renownGate, renownRoomGate } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent } from './relay.js';
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
 // welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
@@ -292,6 +292,7 @@ export class Room {
     // budget against the others, and a room that went quiet had no others acting. The attachment keeps what a wake
     // must recompute: the key, who the socket is, where it stands, the hello's stamp and the room's marks.
     this._meters = new WeakMap();   // ws -> its meters (_meterOf)
+    this._event = undefined;        // EVENT1: the hub's live event, read once (_liveEvent) - undefined: not read yet
     try {
       // the runtime answers the client's ping while the object sleeps
       if (state.setWebSocketAutoResponse && typeof WebSocketRequestResponsePair === 'function') state.setWebSocketAutoResponse(new WebSocketRequestResponsePair('{"t":"ping"}', '{"t":"pong"}'));
@@ -429,6 +430,12 @@ export class Room {
     for (const k of keys) { const c = parts.get(k); if (typeof c !== 'string') return null; raw += c; }
     return raw;
   }
+  /** EVENT1: the live event staged now, or null - read from the hub's storage once per instance life and kept (a stage
+   *  writes both); anything stored that is not a live event this relay knows is none. */
+  async _liveEvent() {
+    if (this._event === undefined) { const e = await this.state.storage.get(EVENT_KEY); this._event = validLiveEvent(e) ? e : null; }
+    return this._event;
+  }
   /** The room forgets its looks and secrets (and its hello bucket) - never its world (WORLD1). */
   /** SOC1: and its parties - the hub drained, so nobody is online to hold one (a member back inside PARTY_OFFLINE_MS
    *  finds its record pointing at a party that is gone, and the hello clears it); never an account or its secret. */
@@ -525,6 +532,8 @@ export class Room {
    *  meters, and its strikes its OWN (`parkDrops`) - they were `pdrops`, the party meter's field, so a park frame's pass
    *  forgave a flood of party poses its strikes (CHAT-CHAN's `cdrops`/`castDrops` finding, again). */
   _meterPark(ws, a, now) { return this._spend(ws, now, parkGate, 'parkBucket', 'parkDrops', 'too many park frames') ? a : null; }
+  /** PROFILE2: the looks' own bucket (LOOK_HZ_MAX), the same strikes. */
+  _meterLook(ws, a, now) { return this._spend(ws, now, lookGate, 'lookBucket', 'lookDrops', 'too many looks') ? a : null; }
   /** HCC-PARK: this cell's parked teams (whole records - the relay's own view, `sub` included), the expired swept on
    *  the way (PARK_TTL_MS since their owner last said so) and SAID gone to whoever is here (AUDIT HCC-PARK D5: a
    *  reader kept drawing an expired team until it reconnected). */
@@ -931,7 +940,8 @@ export class Room {
         // read - the hello path stays as cheap as AUDIT CHAT A1 priced it); socket order, cut at CHAT_ROSTER_MAX, with
         // `n` the true count. The join below is said here too, with the name and nothing else.
         const named = others.slice(0, CHAT_ROSTER_MAX).map((b) => badged({ id: b.id, name: b.name, sub: b.sub }, b));   // MOD1: and the verified account - what /mute names   // ACC3: and whatever the token vouched for, beside it   // ACC1g: a name and nothing beside it - every name in this room was verified to get in, so a per-name verdict says the same thing about everybody
-        if (!this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: named, n: others.length + 1, v: RELAY_VERSION, now: Date.now() }))) return;   // AUDIT SOC B7: the relay's clock rides the channel's welcome too (WORLD5's `now`), so the hub link reads last-seen and an invite's lapse on the relay's time without waiting on the presence session's welcome
+        const ev = isSocialRoom(a.key) ? await this._liveEvent() : null;   // EVENT1: the hub says the live event staged now, so a player who joins mid-event sees it; no field is no event (an old client reads none)
+        if (!this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: named, n: others.length + 1, v: RELAY_VERSION, now: Date.now(), ...(ev ? { ev } : {}) }))) return;   // AUDIT SOC B7: the relay's clock rides the channel's welcome too (WORLD5's `now`), so the hub link reads last-seen and an invite's lapse on the relay's time without waiting on the presence session's welcome
         const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, sub: who.subject }, who));
         for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, said);
         // SOC1: the account, in the hub - after the welcome and the join, so a client's session has reset on the
@@ -1244,6 +1254,26 @@ export class Room {
       await this._parkRegister(k, cell, now);
       return;
     }
+    if (m.t === 'look') {
+      // PROFILE2: my look again, mid-session (a skin chosen on the pause screen, a coat put on) - the hello's look
+      // without the hello. On the looks' own bucket; a channel keeps no look (nobody is drawn from it). Stored where the
+      // hello stored it, so a later welcome's roster and a `who` answer say the new one; and fanned as the hello's JOIN
+      // to everyone hello'd here - the frame every client already reads as "this peer's look is now this" (online.js
+      // `_refresh`). The pose rides nothing: a join is said to the whole room, and the room's pose fan is the ranged
+      // one (the `who` answer's B2 law). The fan is a hello's fan, so it spends the room's HELLO budget, and over it
+      // the socket is refused busy exactly as a hello is - its reconnect's hello carries the new look.
+      const now = Date.now();
+      a = this._meterLook(ws, a, now); if (!a) return;
+      if (isChatRoom(a.key)) return;
+      const gate = tokenGate(await this.state.storage.get('hellos'), now, HELLO_HZ_MAX);
+      await this.state.storage.put('hellos', gate.bucket);
+      if (!gate.pass) { this._refuse(ws, 'busy', CLOSE_BUSY); return; }
+      await this.state.storage.put(lookKey(a.id), m.look); this._looks.set(a.id, m.look);
+      if (this._attach(ws)?.id !== a.id) return;   // replaced while the store was written: the new socket's hello said its own
+      const said = JSON.stringify(badged({ t: 'join', id: a.id, name: a.name, look: m.look, pose: null }, a));
+      for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, said);
+      return;
+    }
     if (m.t === 'act') {
       // WORLD3: a door, a lever or a platform moved - from anyone hello'd in a world room, on the actions' own
       // bucket, to everyone hello'd but its author, under the room's own budget (over it dropped, nobody struck)
@@ -1534,6 +1564,32 @@ export class Room {
       // its own FRAME TYPE, for /red's reason: the client marks the line from the type, which no player can send
       const said = JSON.stringify({ t: 'dm', text: m.text, at: now });
       for (const [other, b] of [...this._all()]) if (b.id) this._send(other, said);   // everyone in this room, the sender included
+    }
+    if (m.t === 'stage') {
+      // ═══ EVENT1 — A LIVE EVENT, STAGED FOR EVERYONE ONLINE ═════════
+      //
+      // Mac: "I wanna do a fun live event for the server ... turn the skies of Daggerfall into a detailed oblivion
+      // styled dread in prep for the world bosses."
+      //
+      // RED1'S AUTHORITY, AND NOTHING NEW TO HOLD IT: the dev glyph off the verified token. IN THE HUB ALONE - the one
+      // room every online player holds a socket to (CHAT_TABS' World link), so the hub's fan IS "everyone online",
+      // with no cross-room broadcast the relay does not have (it keeps no global state). Anywhere else it is junk: a
+      // correct client stages nowhere but the hub.
+      //
+      // KEPT IN THE HUB'S STORAGE until a dev ends it (EVENT_KEY, apart from every prefix a drain or the sweep
+      // deletes), so a player who joins an hour in reads it off the welcome, and a deploy or a quiet night does not end
+      // it. The relay carries a WORD (LIVE_EVENTS) and its stamp - never a colour, a rate or a text a stager could
+      // shape: what an event looks like is the client's.
+      const now = Date.now();
+      if (!this._spend(ws, now, eventGate, 'evbucket', 'evdrops', 'too many stages')) return;   // metered before the authority is asked (AUDIT 68)
+      if (!isSocialRoom(a.key)) { this._junk(ws); return; }
+      if (!Array.isArray(a.glyphs) || !a.glyphs.includes('dev')) return;   // silently, as RED1's
+      const ev = m.kind ? { kind: m.kind, at: now } : null;
+      if (ev) await this.state.storage.put(EVENT_KEY, ev); else await this.state.storage.delete(EVENT_KEY);
+      this._event = ev;
+      const said = JSON.stringify({ t: 'event', kind: m.kind, at: now });
+      for (const [other, b] of [...this._all()]) if (b.id) this._send(other, said);   // everyone in the hub, the stager included - that is the receipt
+      return;
     }
     if (m.t === 'mute') {
       // ═══ MOD1 — A MUTE ORDER, CARRIED IN ═══════════════════════════

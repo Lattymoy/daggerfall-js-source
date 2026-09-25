@@ -129,8 +129,8 @@
  {
   "name": "the-inverse-lookup-answers-the-secondary-first",
   "file": "src/systems/inputActions.js",
-  "old": "  for (const dict of [store?.primary, store?.secondary]) {",
-  "new": "  for (const dict of [store?.secondary, store?.primary]) {",
+  "old": "  for (const primary of [true, false]) {\n    if (!(primary ? store?.primary : store?.secondary)) continue;",
+  "new": "  for (const primary of [false, true]) {\n    if (!(primary ? store?.primary : store?.secondary)) continue;",
   "tests": [
    "test/levelNotice.test.js"
   ],

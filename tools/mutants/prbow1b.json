@@ -1,0 +1,104 @@
+[
+  {
+    "name": "pose-folds-no-piece-boxes",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "  assembly.bounds = pieces.length ? foldPieceBounds(pieces) : null;",
+    "new": "  assembly.bounds = pieces.length ? meshBounds(pieces) : null;",
+    "tests": [
+      "test/prbow1b_followups.test.js"
+    ]
+  },
+  {
+    "name": "piece-box-minted-per-pose",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "    const b = s.box || (s.box = { minX: 0, minY: 0, minZ: 0, maxX: 0, maxY: 0, maxZ: 0 });",
+    "new": "    const b = (s.box = { minX: 0, minY: 0, minZ: 0, maxX: 0, maxY: 0, maxZ: 0 });",
+    "tests": [
+      "test/prbow1b_followups.test.js"
+    ]
+  },
+  {
+    "name": "piece-box-top-is-its-bottom",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "    b.minX = aX; b.minY = aY; b.minZ = aZ; b.maxX = bX; b.maxY = bY; b.maxZ = bZ;",
+    "new": "    b.minX = aX; b.minY = aY; b.minZ = aZ; b.maxX = bX; b.maxY = bY; b.maxZ = aZ;",
+    "tests": [
+      "test/prbow1b_followups.test.js",
+      "test/prbow1_bow.test.js"
+    ]
+  },
+  {
+    "name": "union-drops-the-top",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "    if (aZ < minZ) minZ = aZ; if (bZ > maxZ) maxZ = bZ;",
+    "new": "    if (aZ < minZ) minZ = aZ;",
+    "tests": [
+      "test/prbow1b_followups.test.js"
+    ]
+  },
+  {
+    "name": "range-fold-walks-again",
+    "file": "src/combat/fpArm.js",
+    "old": "    const src = piece.box || meshBounds([piece]);",
+    "new": "    const src = meshBounds([piece]);",
+    "tests": [
+      "test/prbow1b_followups.test.js"
+    ]
+  },
+  {
+    "name": "portrait-counts-hidden",
+    "file": "src/combat/fpArm.js",
+    "old": "    const b = r.hidden ? null : r.box;",
+    "new": "    const b = r.box;",
+    "tests": [
+      "test/prbow1b_followups.test.js"
+    ]
+  },
+  {
+    "name": "portrait-body-takes-gear",
+    "file": "src/combat/fpArm.js",
+    "old": "  const body = visibleRangeBounds(ranges, bodyBox, CARRIED_SLOTS) || visibleRangeBounds(ranges, bodyBox);",
+    "new": "  const body = visibleRangeBounds(ranges, bodyBox);",
+    "tests": [
+      "test/prbow1b_followups.test.js"
+    ],
+    "equivalent": true,
+    "why": "Since the review's rewrite the body's box sets only the window's DEPTH (cz), which moves the portrait's orthographic eye along its own line of sight - the picture is the same; the width and height come from every shown range."
+  },
+  {
+    "name": "portrait-window-symmetric-about-the-axis",
+    "file": "src/combat/fpArm.js",
+    "old": "  return { center: [(loX + hiX) / 2, (loY + hiY) / 2, cz], halfW: (hiX - loX) / 2, halfH: (hiY - loY) / 2 };",
+    "new": "  return { center: [0, (loY + hiY) / 2, cz], halfW: Math.max(-loX, hiX), halfH: (hiY - loY) / 2 };",
+    "tests": [
+      "test/prbow1b_followups.test.js"
+    ]
+  },
+  {
+    "name": "portrait-height-ignores-reach",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (wy > hiY) hiY = wy;",
+    "new": "      if (wy > hiY && r.slot !== 'weapon') hiY = wy;",
+    "tests": [
+      "test/prbow1b_followups.test.js"
+    ]
+  },
+  {
+    "name": "portrait-unpadded",
+    "file": "src/combat/fpArm.js",
+    "old": "      const halfH = win.halfH * 1.06;",
+    "new": "      const halfH = win.halfH;",
+    "tests": [
+      "test/prbow1b_followups.test.js"
+    ]
+  },
+  {
+    "name": "portrait-square",
+    "file": "src/combat/fpArm.js",
+    "old": "      const halfW = win.halfW * 1.06;",
+    "new": "      const halfW = win.halfH * 1.06;",
+    "tests": [
+      "test/prbow1b_followups.test.js"
+    ]
+  }
+]

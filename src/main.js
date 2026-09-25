@@ -13,6 +13,8 @@
 
 import { crashText } from './ui/crashText.js';   // the crash line, pinned in its own module
 import { Renderer } from './render/renderer.js';
+import { retroFrameConfig } from './systems/retroMode.js';   // RETRO1: the renderer's retro source - the settings are read here, not in render/
+import { renderScaleSetting } from './systems/renderScale.js';   // PERF-SCALE: the renderer's render-scale source, read the same way
 import { windowEmissionRGB } from './render/windowEmission.js';
 // BOOT1 (2026-09-20, Mac: "overall performance improvements"): THE GAME
 // HOSTS ARE BEHIND A DOOR, NOT ON THE ENTRY. These four were static
@@ -51,6 +53,8 @@ import { staleChunkAction, RELOAD_KEY, STALE_CHUNK_TEXT } from './systems/staleC
 async function boot() {
   const canvas = document.getElementById('c');
   const renderer = new Renderer(canvas);
+  renderer.setRetroSource(retroFrameConfig);   // RETRO1: DFU's retro mode - asked once per world frame, so the settings screen's change lands on the next
+  renderer.setRenderScaleSource(renderScaleSetting);   // PERF-SCALE: the world's share of the window's pixels - asked once per world frame, and retro wins
   const params = new URLSearchParams(location.search);
   setScreenshotCanvas(canvas);   // KB1: once, beside the counter - the hosts' routeAction arm shoots it (AUDIT KB1: a window's F8 stays the window's)
   // AUDIT KB1 F3: the keybinding carry's report, told on the HUD the moment a scene can speak. Loaded OFF the entry's
@@ -59,7 +63,7 @@ async function boot() {
   Promise.all([import('./ui/input.js'), import('./systems/controlsConfig.js'), import('./systems/notify.js')])
     .then(([input, cfg, notify]) => input.setKeybindNoticeSink((report) => { for (const line of cfg.keybindCarryNotes(report)) notify.hudTextWhenShown(line, 12); }))
     .catch((err) => console.warn('[keybinds] the carry notice could not load:', err?.message ?? err));
-  mountFpsCounter({ enabled: () => params.has('fps') || !!getPref('showFps'), stats: () => renderer.stats });   // FPS1: over every host, on the pref or the probe door; PERF3: with the renderer's counts
+  mountFpsCounter({ enabled: () => params.has('fps') || !!getPref('showFps'), stats: () => renderer.stats, info: () => renderer.frameInfo });   // FPS1: over every host, on the pref or the probe door; PERF3: with the renderer's counts; PERF-SCALE: and its GPU and frame size
   const status = (msg) => {
     document.title = `Daggerfall Enhanced - ${msg}`;
   };
@@ -167,7 +171,10 @@ async function boot() {
       status('main menu');
       return runEnhancedMenu();
     }, {
-      skip: params.has('nointro'),
+      // UXB1-A: the player's own Skip start video (uiPrefs skipStartVideo), beside the probes' one-visit ?nointro -
+      // and only the player's skip keeps the menu's music, as the film's own Skip intro button does.
+      skip: params.has('nointro') || !!getPref('skipStartVideo'),
+      menuMusic: !params.has('nointro') && !!getPref('skipStartVideo'),
       debug: import.meta.env.DEV && params.has('introdebug'),
       freezeAt: freeze !== null && Number.isFinite(freeze) ? Math.max(0, freeze) : null,
     });
@@ -234,7 +241,8 @@ async function boot() {
   // game. ANIM0001 is named in dataSource's KEEP diet and a pin enforces
   // that, so the warn-and-skip here is a real fallback rather than the
   // AUDIT 18 F2 silent degradation it would otherwise be.
-  if (!params.has('novideo')) {
+  // UXB1-A: and the player's Skip start video is enableVideos off for the start splash alone (the pref, uiPrefs.js).
+  if (!params.has('novideo') && !getPref('skipStartVideo')) {
     try {
       const { playVideo } = await import('./ui/videoPlayer.js');
       const { ensureAudio } = await import('./scenes/shared.js');

@@ -742,7 +742,7 @@ export function bankingStatusRows(accounts, { regionName = () => '' } = {}) {
 //    the permanent-scene set, so housesForSale, allocateHouseToPlayer
 //    and sellHouse above are live; H2/H4 brought the BUY UI itself -
 //    DaggerfallBankPurchasePopUp is ui/bankPurchaseWindow.js
-//    (BankPurchaseWindow :102), mounted at scenes/worldModes.js:2865
+//    (BankPurchaseWindow :102), mounted at scenes/worldModes.js:2872
 //    openPurchase with drawBankModelPreview (:1938) as the dedicated
 //    3D model panel, and ui/bankWindow.js:244-257 routes BUY HOUSE's
 //    'pick' into it (a host without the window still falls back to

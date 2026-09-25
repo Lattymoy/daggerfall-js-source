@@ -16,6 +16,7 @@ import { createWindModel } from '../systems/wind.js';   // WIND1; WEATHER2b: the
 import { releaseUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: a door the game opened is not a door to warn about
 import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, moonlightTerm, WEATHER_EASE_MINUTES, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin; EV5: its moons light the world
 import { meterFor } from '../render/perfMeter.js';   // VC6d: `?perf=zones` - the sky's own span
+import { dreadGrade, DREAD_SKY_WORD } from '../world/dreadSky.js';   // EVENT1: the live event's grade and the sky it wears
 import { VolumetricClouds, QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome
 import { cloudsStateUnderMod, dynamicMoonState, dynamicMoonlight } from '../render/dynamicSkiesBridge.js';   // DS1/DS2: the mod's state in the port's shapes - the moons, the clouds, and the moons' own term (AUDIT 65 MC-3: the bridge's third export had no caller and this file carried its body inline)
 import { isEnhanced } from '../systems/uiSkin.js';
@@ -246,6 +247,10 @@ export function createSkyController(gl, params) {
   // door back to the mod's raw ceil, bug for bug.
   if (dynamicSky) dynamicSky.bandDither = params.get('bands') !== 'raw';
   const dynamic = dynamicOn ? new DynamicSkies(dynamicSkiesAssets(), modSettingsOf('dynamic-skies')) : null;   // no clock here: the first use() is Init's WorldTime.Now, and its tick runs ChangeLunarPhases first
+  let dreadW = 0;   // EVENT1: the live event's weight this frame (setDread) - 0 is no event, and nothing below changes
+  let dreadGlow = 0;   // EVENT1: and the red strikes' glow in the cloud deck this frame (the composite's flash, beside the storm's)
+  /** EVENT1: a reflected sky ({zenith, horizon}) under the dread - the water mirrors the sky it is under, on either lane. */
+  const dreaded = (ws) => (dreadW > 0 ? { zenith: dreadGrade(ws.zenith, dreadW), horizon: dreadGrade(ws.horizon, dreadW) } : ws);
   setLightCurve(dynamic ? dynamic.lightCurve : null);
   if (dynamicSky) {
     // the presets' textures land as they decode; a slot shows the
@@ -350,8 +355,17 @@ export function createSkyController(gl, params) {
      *  any other sky, SetSkyFogColor's law over the sky's own horizon,
      *  as before. */
     fogColorFor(fogNow) {
-      if (dynamic?.fogColor) return dynamic.fogColor;
-      return outdoorFogColor(fogNow, (enhancedSky ?? dynamicSky ?? sky).clearColor);
+      const c = dynamic?.fogColor ?? outdoorFogColor(fogNow, (enhancedSky ?? dynamicSky ?? sky).clearColor);
+      return dreadW > 0 ? dreadGrade(c, dreadW) : c;   // EVENT1: the land's haze is the sky's colour under the dread too
+    },
+    /** EVENT1: the live event's weight this frame, 0..1 (world/dreadSky.js createDread) - every pass that draws the sky
+     *  grades its colour by it, the fog above takes the same grade, and while it is above 0 the sky wears the storm
+     *  (DREAD_SKY_WORD) over the sim's own weather; `glow` is the red strikes' light in the deck (dreadCloudGlow),
+     *  added to the host's flash where the clouds take it. 0 is exactly the sky there was. */
+    setDread(w, glow = 0) {
+      dreadW = Math.max(0, Math.min(1, Number(w) || 0));
+      dreadGlow = dreadW > 0 ? Math.max(0, Math.min(1, Number(glow) || 0)) : 0;
+      for (const r of [sky, enhancedSky, dynamicSky, clouds]) if (r) r.dread = dreadW;
     },
     /** DS1: AmbientEffectsPlayer.OnPlayEffect reaches the mod's
      *  LightningFlashListener here (a no-op under any other sky). */
@@ -369,14 +383,14 @@ export function createSkyController(gl, params) {
      *  at the horizon and its dome fill above; null under the classic
      *  sky, which draws no water surface. */
     waterSky() {
-      if (enhancedSky?.state) return { zenith: enhancedSky.state.zenith, horizon: enhancedSky.state.horizon };
+      if (enhancedSky?.state) return dreaded({ zenith: enhancedSky.state.zenith, horizon: enhancedSky.state.horizon });
       if (dynamicSky) {
         // WATER-AUDIT (L3): the mod publishes ONE colour (its fog colour is
         // its clear colour is its fill), so a zenith is DERIVED from it -
         // darker and bluer, the way any day sky deepens overhead - rather
         // than a second copy of the horizon that made the reflection flat
         const h = dynamic?.fogColor ?? dynamicSky.clearColor;
-        return { zenith: [h[0] * 0.55, h[1] * 0.65, h[2] * 0.85], horizon: h };
+        return dreaded({ zenith: [h[0] * 0.55, h[1] * 0.65, h[2] * 0.85], horizon: h });   // EVENT1: graded under the dread on this lane too
       }
       return null;
     },
@@ -497,7 +511,11 @@ export function createSkyController(gl, params) {
         // are for the panorama - the world render gate uses it to put
         // the sky under overcast and read the ground beneath.
         const weatherName = params.get('weather') ?? extra?.weather ?? 'sunny';
-        const want = weatherRow(weatherName);
+        // EVENT1: under the dread the SKY wears the storm (DREAD_SKY_WORD) - its row, its clouds, the mod's preset - and
+        // walks back to the sim's own word as the dread lifts; the wind below keeps the sim's word, so the grass, the
+        // rain and the wind's voice are the weather's as they were
+        const skyWord = dreadW > 0 ? DREAD_SKY_WORD : weatherName;
+        const want = weatherRow(skyWord);
         // CLK1 (2026-09-08, Mac: "in sync with the world clock"): ONE
         // CLOCK. The presentation walks on GAME MINUTES - the host's
         // classicMinutes, the number the sun, the moons, the stars and
@@ -563,7 +581,7 @@ export function createSkyController(gl, params) {
           // calendar recompute stays for a caller that passes no `sun`.
           const winter = seasonValue(dateFromClassicMinutes(nowMinutes)) === SEASONS.Winter;
           const st = dynamic.tick({
-            minuteOfDay, classicMinutes: nowMinutes, weather: weatherName, seconds, dt: dtReal,
+            minuteOfDay, classicMinutes: nowMinutes, weather: skyWord, seconds, dt: dtReal,   // EVENT1: the sky's word
             weatherScale: extra?.sun ?? weatherSunlightScale(weatherName, winter),   // SunlightManager.ScaleFactor, as WeatherManager sets it
             playerPos: extra?.pos ?? null,   // FlashOnce reads playerTransform.position live (MODS AUDIT)
           });
@@ -574,16 +592,16 @@ export function createSkyController(gl, params) {
           // on the eased row, lit by the MOD's sun and moons, fading to
           // the MOD's horizon; and the ground's deck takes their shadow.
           if (clouds) {
-            const cb = cloudBaseOf(extra, weatherName, weatherRowNow);   // WEATHER3c
+            const cb = dreadW > 0 ? { word: skyWord, row: weatherRowNow } : cloudBaseOf(extra, weatherName, weatherRowNow);   // WEATHER3c; EVENT1: the dread's deck over the map's clear air
             clouds.setState(cloudsStateUnderMod(st, dynamicMoons, { minuteOfDay, weather: cb.word, classicMinutes: nowMinutes, seconds, drift: driftXZ, row: cb.row }),
-              cb.row, cb.word, easeDt, driftXZ, extra?.flash ?? 0, extra?.pos ?? null, extra?.cells ?? null);   // WEATHER2c: the field's cells
+              cb.row, cb.word, easeDt, driftXZ, (extra?.flash ?? 0) + dreadGlow, extra?.pos ?? null, extra?.cells ?? null);   // WEATHER2c: the field's cells; EVENT1: the red strikes' glow
             if (clouds.shadow) Object.assign(dynamicDeck, clouds.shadow);
           }
           return;
         }
         enhancedSky.setState(skyState({
           minuteOfDay,
-          weather: weatherName,
+          weather: skyWord,   // EVENT1
           classicMinutes: extra?.classicMinutes ?? 0,
           seconds,
           drift: driftXZ,   // WIND2
@@ -597,9 +615,9 @@ export function createSkyController(gl, params) {
           // every system is a cell over it, the player's own included, so the blue shows past a deck's edge and a
           // far cumulus is lit white while the storm overhead is dark by its own grey. The dome, the fog and the sun
           // keep the worn word, eased on the front. Off the lane the clouds take the dome's own state, as before.
-          const cb = cloudBaseOf(extra, weatherName, weatherRowNow);
+          const cb = dreadW > 0 ? { word: skyWord, row: weatherRowNow } : cloudBaseOf(extra, weatherName, weatherRowNow);   // EVENT1: as above
           const cloudSky = cb.row === weatherRowNow ? enhancedSky.state : skyState({ minuteOfDay, weather: cb.word, classicMinutes: extra?.classicMinutes ?? 0, seconds, drift: driftXZ, row: cb.row });
-          clouds.setState(cloudSky, cb.row, cb.word, easeDt, driftXZ, extra?.flash ?? 0, extra?.pos ?? null, extra?.cells ?? null);   // WEATHER2c: the field's cells
+          clouds.setState(cloudSky, cb.row, cb.word, easeDt, driftXZ, (extra?.flash ?? 0) + dreadGlow, extra?.pos ?? null, extra?.cells ?? null);   // WEATHER2c: the field's cells; EVENT1: the red strikes' glow
         }
         // VC4: the ground's deck carries the slab's own shadow map and its square
         if (clouds?.shadow) Object.assign(enhancedSky.cloudShadow, clouds.shadow);
@@ -1816,7 +1834,7 @@ export function wireInfectionVideos(renderer, { textAt = null, factionDict = nul
       // which answers { text, center } records - while dungeonContext
       // passes `textRsc.plainText(id)`, which answers strings. Both
       // windows this reaches iterate the STRING (ChoiceWindow
-      // talkWindow.js:60-61, ActionTextBox likewise), so "Death is not
+      // talkWindow.js:63-64, ActionTextBox likewise), so "Death is not
       // eternal" threw `TypeError: text is not iterable` on draw
       // everywhere above ground and worked only in a dungeon: the
       // four-hosts divergence this project keeps meeting. Flattened
@@ -1980,7 +1998,7 @@ export function createMusicDirector({ fm = null, play = null, stop = null, playi
  *  through to `cam.yaw += movementX` - so every swing inside a
  *  building or a dungeon turned the camera with it.
  *
- *  `dungeon.js:268`, the standalone host, has always had the right
+ *  `dungeon.js:269`, the standalone host, has always had the right
  *  shape: attack, then return. It has no modal sibling to share the
  *  drag with, which is why it never needed a mode in the test at all.
  *

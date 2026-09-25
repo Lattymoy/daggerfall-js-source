@@ -986,10 +986,20 @@ export function lightRecords(bytes) {
  *  attached archives carry, or a torch resolves to a mesh the build
  *  cannot read and the card says nothing useful. */
 export function pickTorchRecord(lights, { has = null } = {}) {
-  const cands = (lights ?? []).filter((l) => l && l.carry && l.model && /torch/.test(l.id)
+  return pickCarriedLight(lights, /torch/, 'torch', has);
+}
+/** HT-WAIST: WHICH LANTERN - pickTorchRecord's own shape for the lantern Handheld Torches' waist switch hangs at
+ *  the third-person body's hip: a CARRIABLE light whose id names a lantern, whose mesh the attached archives
+ *  carry, the shortest id first (the base over its coloured variants). No retail id is assumed - the pick is by
+ *  the same shape, and a master with none answers null and a note, never a torch in the lantern's place. */
+export function pickLanternRecord(lights, { has = null } = {}) {
+  return pickCarriedLight(lights, /lantern/, null, has);
+}
+function pickCarriedLight(lights, named, exactId, has) {
+  const cands = (lights ?? []).filter((l) => l && l.carry && l.model && named.test(l.id)
     && (!has || has(`meshes/${l.model}`)));
   if (!cands.length) return null;
-  const exact = cands.find((l) => l.id === 'torch');
+  const exact = exactId ? cands.find((l) => l.id === exactId) : null;
   if (exact) return exact;
   return cands.slice().sort((a, b) => a.id.length - b.id.length || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))[0];
 }
@@ -1774,6 +1784,37 @@ export function meshBounds(shapes) {
   return { minX, minY, minZ, maxX, maxY, maxZ };
 }
 
+/** PR-BOW1b (2026-09-24): meshBounds' fold, PIECE BY PIECE - poseAssembly's
+ *  one walk of the posed vertices. Each piece's own box is written onto the
+ *  piece (`p.box`: one object the piece owns, living and dying with it and
+ *  rewritten every pose, so a frame mints nothing), and the union is
+ *  answered exactly as meshBounds answers it (null when nothing is finite).
+ *  The third-person pass folds what it draws off these boxes
+ *  (fpArm.js foldRangeBoxes) - it walked every posed vertex a SECOND time,
+ *  per body per frame, the repeated walk AUDIT MWBODY A4 removed once. */
+export function foldPieceBounds(pieces) {
+  let minX = Infinity; let minY = Infinity; let minZ = Infinity;
+  let maxX = -Infinity; let maxY = -Infinity; let maxZ = -Infinity;
+  for (const s of pieces) {
+    const p = s.positions;
+    let aX = Infinity; let aY = Infinity; let aZ = Infinity;
+    let bX = -Infinity; let bY = -Infinity; let bZ = -Infinity;
+    for (let i = 0; i < p.length; i += 3) {
+      const x = p[i]; const y = p[i + 1]; const z = p[i + 2];
+      if (x < aX) aX = x; if (x > bX) bX = x;
+      if (y < aY) aY = y; if (y > bY) bY = y;
+      if (z < aZ) aZ = z; if (z > bZ) bZ = z;
+    }
+    const b = s.box || (s.box = { minX: 0, minY: 0, minZ: 0, maxX: 0, maxY: 0, maxZ: 0 });
+    b.minX = aX; b.minY = aY; b.minZ = aZ; b.maxX = bX; b.maxY = bY; b.maxZ = bZ;
+    if (aX < minX) minX = aX; if (bX > maxX) maxX = bX;
+    if (aY < minY) minY = aY; if (bY > maxY) maxY = bY;
+    if (aZ < minZ) minZ = aZ; if (bZ > maxZ) maxZ = bZ;
+  }
+  if (!Number.isFinite(minX)) return null;
+  return { minX, minY, minZ, maxX, maxY, maxZ };
+}
+
 /** Fit the bounds into a w x h box, front view (x across, z up, z flipped
  *  because canvas y grows downward). Returns a point mapper. Uniform
  *  scale - a per-axis fit would make a hand look correct while hiding
@@ -2087,6 +2128,7 @@ export function bindPartsInto(assembly, parts) {
         const mirror = nodeName.includes('Left');
         for (const batch of bound.attached) {
           pieces.push({ slot: part.slot, bone, kind: 'rigid', mirrored: mirror, tag: part.tag ?? null,   // WS1: a part's own tag (the quiver slot's index)
+            hang: part.hang ?? null,   // HT-WAIST: a part that HANGS from its bone (hangAffine) rather than riding it
             // MW-D16: a part instanced under a node INSIDE another part's
             // mesh (the arrow, under the bow's ArrowBone) carries that
             // node's whole chain. It is baked in ONCE here rather than
@@ -2166,7 +2208,7 @@ export function bindPartsInto(assembly, parts) {
         // particles would follow a bone this flattener does not track.
         for (const desc of bound.effects ?? []) {
           effects.push({
-            slot: part.slot, bone, mirrored: mirror, tag: part.tag ?? null,
+            slot: part.slot, bone, mirrored: mirror, tag: part.tag ?? null, hang: part.hang ?? null,   // HT-WAIST: a hanging part's flame hangs with it
             attachRef: bound.attachRef, boneOffset: bound.boneOffset || null, pre: part.preTransform || null,
             desc, material: desc.material,
           });
@@ -2397,7 +2439,7 @@ export function poseAssembly(assembly, { tracks = null, sampleTrack = null,
       fns.skinBatch(p.batch, skeleton, pose, mats, p.positions, null);
     } else {
       const at = fns.attachmentTransform(mats, p.attachRef);
-      placeAtBone(p.source, at, p.mirrored, p.positions, p.boneOffset);
+      placeAtBone(p.source, p.hang ? hangAffine(at, p.hang) : at, p.mirrored, p.positions, p.boneOffset);   // HT-WAIST
     }
   }
   assembly.pose = pose;
@@ -2405,8 +2447,86 @@ export function poseAssembly(assembly, { tracks = null, sampleTrack = null,
   // camera node's translation without re-posing the skeleton.
   assembly.mats = mats;
   assembly.time = time;
-  assembly.bounds = pieces.length ? meshBounds(pieces) : null;
+  assembly.bounds = pieces.length ? foldPieceBounds(pieces) : null;   // PR-BOW1b: and each piece's own box, in the same walk
   return assembly;
+}
+
+/**
+ * HT-WAIST: A PART THAT HANGS. Every other rigid part RIDES its bone - the bone's whole transform, rotation and
+ * all, is its placement (placeAtBone). A lantern hooked to a belt does not: it hangs PLUMB from the hook whatever
+ * the pelvis is doing, and swings about it. So a part carrying a `hang` takes, instead of the bone's affine:
+ *
+ *   the hook   - a point fixed to the bone (`hookLocal`, in the bone's own frame), so it follows the hip's walk
+ *   the anchor - the point of the part that hangs FROM the hook (`anchor`, in the part's placed coordinates:
+ *                after its attitude, the mirror and rule 14's offset - hangAnchor measures it once, at bind)
+ *   the attitude - `rot`, a rig-space 3x3 the part's owner writes each frame (plumb, times the swing)
+ *
+ * and the answer is an affine placeAtBone takes like any other: v -> rot * (v - anchor) + hook. The rig space is
+ * the actor's own (Z up), so plumb there is plumb in the world - the body only turns in yaw. The result is
+ * written into the hang's own scratch, so the per-frame path allocates nothing.
+ */
+export function hangAffine(at, hang) {
+  const out = hang._at ?? (hang._at = { a: hang.rot, t: [0, 0, 0] });
+  out.a = hang.rot;
+  const k = hang.hookLocal ?? ZERO3, n = hang.anchor ?? ZERO3, r = hang.rot, a = at.a;
+  const hx = a[0] * k[0] + a[1] * k[1] + a[2] * k[2] + at.t[0];
+  const hy = a[3] * k[0] + a[4] * k[1] + a[5] * k[2] + at.t[1];
+  const hz = a[6] * k[0] + a[7] * k[1] + a[8] * k[2] + at.t[2];
+  out.t[0] = hx - (r[0] * n[0] + r[1] * n[1] + r[2] * n[2]);
+  out.t[1] = hy - (r[3] * n[0] + r[4] * n[1] + r[5] * n[2]);
+  out.t[2] = hz - (r[6] * n[0] + r[7] * n[1] + r[8] * n[2]);
+  return out;
+}
+const ZERO3 = Object.freeze([0, 0, 0]);
+
+/** HT-WAIST: where a hanging part hangs FROM - the top of its placed shapes, centred: the ring a lantern's handle
+ *  ends in on any mesh authored Z-up, wherever its author put the origin. Measured over EVERY rigid piece the
+ *  part bound (they share the one `hang`), so its shapes hang as one. Writes `hang.anchor`; answers it. */
+export function hangAnchor(pieces, hang) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+  for (const p of pieces ?? []) {
+    if (p.hang !== hang || !p.source) continue;
+    const o = p.boneOffset;
+    for (let v = 0; v < p.source.length; v += 3) {
+      const x = (p.mirrored ? -p.source[v] : p.source[v]) + (o ? o[0] : 0);
+      const y = p.source[v + 1] + (o ? o[1] : 0);
+      const z = p.source[v + 2] + (o ? o[2] : 0);
+      if (x < minX) minX = x; if (x > maxX) maxX = x;
+      if (y < minY) minY = y; if (y > maxY) maxY = y;
+      if (z > maxZ) maxZ = z;
+    }
+  }
+  hang.anchor = Number.isFinite(maxZ) ? [(minX + maxX) / 2, (minY + maxY) / 2, maxZ] : [0, 0, 0];
+  return hang.anchor;
+}
+
+/** HT-WAIST: a rig-space offset from a bone's REST position, as the point fixed to that bone (hangAffine's
+ *  `hookLocal`) - so a hook placed "a hand's breadth out from the pelvis, in the actor's own axes" is written in
+ *  the axes a reader can check against the skeleton, and rides the bone's own frame from then on. Null when the
+ *  skeleton has no such bone. */
+export function hookOnBone(assembly, boneName, offset) {
+  const { fns, skeleton } = assembly ?? {};
+  const ref = skeleton?.byName?.get(String(boneName).toLowerCase());
+  if (!fns || ref === undefined) return null;
+  const rest = fns.skelMats(skeleton, fns.poseSkeleton(skeleton, null, null, 0, {}), GRAPH_ROOT).get(ref);
+  if (!rest) return null;
+  const inv = invert33(rest.a);
+  if (!inv) return null;
+  return [
+    inv[0] * offset[0] + inv[1] * offset[1] + inv[2] * offset[2],
+    inv[3] * offset[0] + inv[4] * offset[1] + inv[5] * offset[2],
+    inv[6] * offset[0] + inv[7] * offset[1] + inv[8] * offset[2],
+  ];
+}
+function invert33(m) {
+  const [a, b, c, d, e, f, g, h, i] = m;
+  const A = e * i - f * h, B = -(d * i - f * g), C = d * h - e * g;
+  const det = a * A + b * B + c * C;
+  if (!(Math.abs(det) > 1e-12)) return null;
+  const k = 1 / det;
+  return [A * k, -(b * i - c * h) * k, (b * f - c * e) * k,
+    B * k, (a * i - c * g) * k, -(a * f - c * d) * k,
+    C * k, -(a * h - b * g) * k, (a * e - b * d) * k];
 }
 
 /** MW-D6: one row per assembled piece, for the page's table and the

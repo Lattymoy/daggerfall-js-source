@@ -23,7 +23,7 @@
 // kinds to choose among instead of one.
 import { LOCATION_TYPES, DUNGEON_TYPES, longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
 import { cureAllOfKind } from './effects.js';   // DEATHLOOP1
-import { maxFatigue } from './statMods.js';   // AUDIT DISC19: the revival's fatigue floor
+import { maxFatigue, liveStat, STAT_KEYS_ORDER } from './statMods.js';   // AUDIT DISC19: the revival's fatigue floor; DISC24-D: its stat floor
 
 const SAFE_KINDS = Object.freeze([
   { kind: 'temple', match: (e) => e.locationType === LOCATION_TYPES.ReligionTemple },
@@ -163,7 +163,9 @@ export const undergroundWakeText = (kind) => WAKE_FLAVOR[kind] ?? WAKE_FLAVOR.ci
 //   KEPT - diseases, infections included. A disease's HEA column falls
 //   ONCE PER CLASSIC DAY (systems/diseases.js - `data.HEA && sinks.hurt`),
 //   so half of max health is days of walking, which is enough to reach
-//   the temple that cures it. And they must be kept for a second
+//   the temple that cures it. (DISC24-D: the disease stays, but its STAT
+//   damage may not hold a stat at zero across the revival - that kills
+//   every 0.2 seconds, not once a day. See liftZeroedStats below.) And they must be kept for a second
 //   reason that is not about rate at all: vampirism and lycanthropy
 //   are carried as `kind: 'disease'` entries (systems/infection.js),
 //   so a blanket cure here would let a player shake off an infection
@@ -233,6 +235,66 @@ export function endLethalExposure(entity) {
   return cleared;
 }
 
+/**
+ * DISC24-D (2026-09-24, Lynk on Discord, "Stuck in death loop": "After
+ * leveling up to 5 online and putting stats in my character had low
+ * health so I rested then when I woke up it was stuck in a constant
+ * death loop").
+ *
+ * A STAT AT ZERO KILLS EVERY 0.2 SECONDS, WHATEVER THE HEALTH. DFU's
+ * UpdateEntityMods tail (systems/statMods.js killIfAnyLiveStatZero)
+ * sets the health to 0 whenever any live stat is 0, and the revival
+ * never looked at the stats: it restored the health, kept the disease
+ * (rightly - see KEPT above) and kept the disease's accumulated
+ * negative statMods with it. A plague day that landed while the player
+ * slept (the rest itself runs no real seconds, so the kill waits for
+ * the first frame after waking) left a live 0; the player died on
+ * waking, stood up at half health with the same 0, and died again on
+ * the first frame - for ever. Offline the first death ends the run, as
+ * DFU's does; online the revival IS the next life, so it must not hand
+ * over the state that ends it.
+ *
+ * So every stat the revival finds at a live 0 is stood back up at the
+ * respawn fraction of its PERMANENT value - the health's own law - by
+ * trimming what holds it down, disease damage first (the course runs
+ * on; only today's hold on this stat is eased), then a drain. Nothing
+ * past that: a stat is lifted to the fraction and no further, the
+ * disease entry and its clock stay, and a stat that is not at zero is
+ * not touched. Answers the stats it stood up.
+ */
+export function liftZeroedStats(entity) {
+  const lifted = [];
+  for (const stat of STAT_KEYS_ORDER) {
+    const permanent = entity?.stats?.[stat];
+    if (permanent == null || liveStat(entity, stat) > 0) continue;
+    const target = respawnHealth(permanent);
+    for (const hold of holdsOn(entity, stat)) {
+      if (!(hold.get() < 0)) continue;
+      hold.set(0);
+      const live = liveStat(entity, stat);
+      if (live >= target) { hold.set(-(live - target)); break; }   // give back all but the lift
+    }
+    if (liveStat(entity, stat) > 0) lifted.push(stat);
+  }
+  return lifted;
+}
+
+/** What pushes a stat below its permanent value and may be eased: each
+ *  disease's accumulated statMods entry, then each drain or transfer on
+ *  that stat - as a signed contribution, got and set. (A poison's is
+ *  gone already - endLethalDrains; the needs' entry is capped by
+ *  liveStat itself.) */
+function holdsOn(entity, stat) {
+  const holds = [];
+  for (const a of entity.activeEffects ?? []) {
+    if (a?.kind === 'disease' && a.statMods) holds.push({ get: () => a.statMods[stat] ?? 0, set: (v) => { a.statMods[stat] = v; } });
+  }
+  for (const a of entity.activeEffects ?? []) {
+    if ((a?.kind === 'drainAttribute' || a?.kind === 'transferAttribute') && a.stat === stat) holds.push({ get: () => -(a.magnitude ?? 0), set: (v) => { a.magnitude = -v; } });
+  }
+  return holds;
+}
+
 /** THE ONE REVIVAL. Health back to the respawn fraction if they are at
  *  or below zero, and the fast drains ended - in that order, and
  *  together, because either alone is the bug: health with the poison
@@ -247,13 +309,20 @@ export function reviveForPlay(entity, { force = false } = {}) {
   if (!entity) return { revived: false, cleared: [] };
   const dead = !(entity.health > 0);
   if (dead || force) entity.health = respawnHealth(entity.maxHealth);
-  // AUDIT DISC19: ...and the fatigue, when there is none - a player who
-  // died of exhaustion stood up at zero, and the next drain collapsed
-  // them again beside the foes that had caught them. The same fraction
-  // and the same floor as the health.
-  if ((dead || force) && !(entity.fatigue > 0)) entity.fatigue = respawnHealth(maxFatigue(entity));
   // DEATHLOOP2: the effects AND the exposure. Either alone leaves a
   // loop - the poison one for a poisoned character, the cold one for a
   // freezing one, and the second is what a player actually reported.
-  return { revived: dead || force, cleared: endLethalDrains(entity), exposure: endLethalExposure(entity) };
+  const cleared = endLethalDrains(entity), exposure = endLethalExposure(entity);
+  // DISC24-D: ...and a stat held at zero, the loop Lynk reported - after
+  // the drains end, so a poison's own stat damage is gone before this
+  // measures what is left. On a living release too: a live 0 kills
+  // within 0.2 seconds, so handing one over is handing over the death.
+  const lifted = liftZeroedStats(entity);
+  // AUDIT DISC19: ...and the fatigue, when there is none - a player who
+  // died of exhaustion stood up at zero, and the next drain collapsed
+  // them again beside the foes that had caught them. The same fraction
+  // and the same floor as the health - LAST, because its ceiling is
+  // (live STR + live END) x 64 and the two lines above may raise both.
+  if ((dead || force) && !(entity.fatigue > 0)) entity.fatigue = respawnHealth(maxFatigue(entity));
+  return { revived: dead || force, cleared, exposure, lifted };
 }

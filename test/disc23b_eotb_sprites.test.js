@@ -19,7 +19,8 @@ import { skinCard, skinSets } from '../src/ui/skinCard.js';
 import { FEATURES, MOD_CURATED } from '../src/systems/features.js';
 import { MOD_SETTINGS, modSetting, setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
 import { composeLook } from '../src/net/remotePlayers.js';
-import { validLook, EOTB_FOOT_SETS } from '../src/net/wire.js';
+import { validLook, FOOT_SKINS } from '../src/net/wire.js';
+import { EOTB_FOOT_SET_COUNT } from '../src/player/classSkins.js';
 import { createPeerWalkers, createPeerRiders, createEotbArt, WALK_ONE_SHOTS } from '../src/net/peerRiders.js';
 import { ARCHIVE_FOOT, frameCount } from '../src/player/eotbBillboard.js';
 
@@ -54,7 +55,8 @@ test('DISC23-B: the sets are NAMED - sixteen on foot, five in the saddle, the ar
   const foot = MOD_SETTINGS[V].keys['Graphics.OnFoot'], horse = MOD_SETTINGS[V].keys['Graphics.OnHorse'];
   assert.equal(foot.labels.length, foot.max + 1, 'one name a set, and still the mod\'s own slider (0-15)');
   assert.equal(horse.labels.length, horse.max + 1);
-  assert.equal(foot.labels.length, EOTB_FOOT_SETS, 'the wire\'s bound is the same sixteen');
+  assert.equal(foot.labels.length, FOOT_SKINS, 'the wire\'s bound is the same count (SKIN2: the sixteen, and Daggerfall\'s classes after them)');
+  assert.equal(EOTB_FOOT_SET_COUNT, 16, 'the mod\'s own sets are the first sixteen');
   // the mod's own preset titles, and the art's own rule: every even set a woman, every odd set a man
   const presets = JSON.parse(src('vendor/eye-of-the-beholder/modpresets.json'));
   for (const p of presets) {
@@ -63,7 +65,7 @@ test('DISC23-B: the sets are NAMED - sixteen on foot, five in the saddle, the ar
     const kind = p.Title.replace(/ \(Default\)$/, '').replace(/s$/, '').replace(/ [FM]$/, '');
     assert.ok(foot.labels[i].startsWith(kind), `${p.Title} is set ${i}: ${foot.labels[i]}`);
   }
-  foot.labels.forEach((l, i) => assert.match(l, i % 2 ? /\(male\)$/ : /\(female\)$/));
+  foot.labels.slice(0, EOTB_FOOT_SET_COUNT).forEach((l, i) => assert.match(l, i % 2 ? /\(male\)$/ : /\(female\)$/));
   // Mac: "make it a choosable skin system in the menu player profile system itself instead of it being hidden in the
   // feature menu"
   assert.ok(!MOD_CURATED[V].includes('Graphics.OnFoot') && !MOD_CURATED[V].includes('Graphics.OnHorse'), 'not a tile\'s dial');
@@ -72,38 +74,45 @@ test('DISC23-B: the sets are NAMED - sixteen on foot, five in the saddle, the ar
 test('DISC23-B2: the PROFILE carries the skin - every set as its own picture, the worn one marked, a press worn at once', () => {
   _resetModSettings();
   const sets = skinSets();
-  assert.equal(sets.foot.length, 16); assert.equal(sets.horse.length, 5);
+  assert.equal(sets.foot.length, FOOT_SKINS); assert.equal(sets.horse.length, 5);   // SKIN2: the mod's sixteen and the classes
   assert.deepEqual(sets.foot.map((s) => s.name), MOD_SETTINGS[V].keys['Graphics.OnFoot'].labels);
   // each tile is the set's own front-on standing sprite, out of the bundle the body draws from
   // (the URL is the build's - node has no bundle - so the pin reads the key the build indexes by, against the file)
-  for (const s of [...sets.foot, ...sets.horse]) {
+  for (const s of [...sets.foot.slice(0, EOTB_FOOT_SET_COUNT), ...sets.horse]) {   // (the classes' art: skin2_class_skins)
     const [arch] = s.key.split('_');
     assert.ok(existsSync(new URL(`../vendor/eye-of-the-beholder/Textures/${arch}/${s.key}.png`, import.meta.url)), `${s.name}: ${s.key}`);
   }
   assert.equal(sets.foot[7].key, `${ARCHIVE_FOOT + 7}_0-0`, 'Mage (male)\'s own archive, front on and standing');
   assert.equal(sets.horse[3].key, '112385_0-0', 'the fourth rider, front on');
   withDoc(() => {
+    // SKIN2: the grids live behind the two panels now (test/skin2_class_skins.test.js pins the panels themselves) -
+    // open one to reach its tiles
     const card = skinCard(document);
+    const heads = () => find(card.root, hasClass('skinhead'));
     const tiles = () => find(card.root, hasClass('skintile'));
-    assert.equal(tiles().length, 21);
     const worn = () => tiles().filter((t) => t.attrs['aria-pressed'] === 'true').map((t) => find(t, hasClass('skinname'))[0].textContent);
-    assert.deepEqual(worn(), ['Light Fighter (female)', 'Light Fighter (female)'], 'the first set on foot and in the saddle');
+    const wornHeads = () => heads().map((h) => find(h, hasClass('skinname'))[0].textContent);
+    assert.deepEqual(wornHeads(), ['Light Fighter (female)', 'Light Fighter (female)'], 'the first set on foot and in the saddle');
     assert.equal(find(card.root, hasClass('skinhint')).length, 1, 'until one is chosen, the others see the class - and the card says so');
+    heads()[0].onclick();
+    assert.equal(tiles().length, sets.foot.length);
+    assert.deepEqual(worn(), ['Light Fighter (female)']);
     tiles()[11].onclick();   // Fighter Mage (male)
     assert.equal(modSetting(V, 'Graphics.OnFoot'), 11, 'the store the body reads and the look sends');
-    assert.deepEqual(worn(), ['Fighter Mage (male)', 'Light Fighter (female)']);
+    assert.deepEqual(wornHeads(), ['Fighter Mage (male)', 'Light Fighter (female)']);
     assert.equal(find(card.root, hasClass('skinhint')).length, 0, 'chosen');
     assert.equal(composeLook({ race: 'Nord', gender: 'male' }).eo, 11, 'and the look carries it');
-    tiles()[16 + 4].onclick();
+    heads()[1].onclick();
+    tiles()[4].onclick();
     assert.equal(modSetting(V, 'Graphics.OnHorse'), 4);
-    // the mod off: no grid to change nothing - the switch instead
+    // the mod off: no panels to change nothing - the switch instead
     setModSetting(V, 'Enabled', false);
     card.paint();
-    assert.equal(tiles().length, 0);
+    assert.equal(heads().length, 0);
     const on = find(card.root, (n) => n.textContent === 'Turn it on')[0];
     on.onclick();
     assert.equal(modSetting(V, 'Enabled'), true);
-    assert.equal(tiles().length, 21);
+    assert.equal(heads().length, 2);
   });
   // the profile window draws it, under the account card
   assert.match(src('src/ui/enhancedMenu.js'), /body\.append\(accountBody\(\)\);\s*\n\s*body\.append\(skinCard\(document\)\.root\);/);
@@ -123,7 +132,7 @@ test('DISC23-B: the look carries the set a player CHOSE - not the mod\'s default
   setModSetting(V, 'Enabled', false);
   assert.equal('eo' in composeLook(me), false, 'the mod off: no set');
   // the door: bounded, and an older look keeps its bytes
-  assert.equal(validLook({ ...look, eo: EOTB_FOOT_SETS + 40 }).eo, EOTB_FOOT_SETS - 1, 'clamped at the door, as every field is (uint)');
+  assert.equal(validLook({ ...look, eo: FOOT_SKINS + 40 }).eo, FOOT_SKINS - 1, 'clamped at the door, as every field is (uint)');
   assert.equal(validLook({ ...look, eo: -1 }).eo, undefined, 'and a set that is no set is no key');
   assert.equal(validLook({ ...look, eo: 'x' }).eo, undefined);
   const old = { race: 'Nord', gender: 'male', faceIndex: 2, class: 'Warrior', items: [] };

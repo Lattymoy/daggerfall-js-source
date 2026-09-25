@@ -28,13 +28,15 @@
 
 import { loadImg, nativeMetrics, drawImg, drawImgSub, shadowText } from './nativePanel.js';   // MAC-N2: drawImgSub, the selected tab's INVE01I0 cutout
 import { drawScreenDimBackdrop } from './chargenArt.js';
-import { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, ARROW_H, DOWN_ARROW_Y, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel,
+import { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, CELL_MARGIN, ARROW_H, DOWN_ARROW_Y, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel,
   preloadScrollerArrowArt, drawScrollerArrows, drawScrollerThumb, playScrollerArrowClick, makeSlotToolTip,
   itemBackgroundColour, drawCellBackground, beginScrollerDrag, dragScrollerIndex } from './itemScroller.js';   // MAC-N2: the thumb drag
 import { getBool } from '../systems/settings.js';   // AUDIT 64 F53: InstantRepairs, the repair tint's first arm
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from './text.js';
 import { planTake, applyTransfer, clearLightSourceOnLeave, CANNOT_CARRY_TEXT } from '../systems/itemTransfer.js';   // AUDIT 26 F157/F158
+import { HOW_MANY_ITEMS, SPLIT_INPUT_MAX, parseSplitAmount, splitRequired } from '../systems/itemTransfer.js';   // DISC25-F: TransferItem's split popup, inherited
+import { InputMessageBoxWindow } from './inputMessageBox.js';   // DISC25-F: ...pushed as CM5 pushes it for the pack
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
@@ -45,9 +47,9 @@ import {
   MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID, DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID,
 } from '../systems/tradeModes.js';
 import { CANNOT_BE_REPAIRED_TEXT, INTERRUPT_REPAIR_TEXT, isBeingRepaired as itemIsBeingRepaired,
-  isRepairFinished, collectRepaired } from '../systems/repairService.js';   // D7: the Repair mode's remote arm
+  isRepairFinished, collectRepaired, updateRepairTimes, repairStatusLabel } from '../systems/repairService.js';   // D7: the Repair mode's remote arm; UXB1-K: its misc label
 import { isFurnishing } from '../systems/decorFurnish.js';   // DECOR2b: furniture is delivered, never carried
-import { isSummoned, carriedWeight, totalWeight, transferAll } from '../systems/inventory.js';   // TransferItem's summoned guard; AUDIT 63 F48: transferAll is ItemCollection.TransferAll (:452), DoSteal's move
+import { isSummoned, carriedWeight, totalWeight, transferAll, addItem } from '../systems/inventory.js';   // TransferItem's summoned guard; AUDIT 63 F48: transferAll is ItemCollection.TransferAll (:452), DoSteal's move
 import { shopliftAttempt } from '../systems/theft.js';   // AUDIT 63 F48: DoSteal's decision (:909-916)
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // PlayerEntity.MaxEncumbrance
 // AUDIT 58: DaggerfallTradeWindow inherits the two target-icon panels
@@ -261,6 +263,13 @@ export class NativeTradeWindow {
     // override (:635-647) is written against it rather than around it.
     this.usingWagon = false;
     this.box = null;             // the confirm / refusal box, when one is up
+    // DISC25-F (Satranath and Starempire42 on Discord: "It doesn't appear possible to split stacks currently, either
+    // in inventory or in shops when making a purchase"): DaggerfallTradeWindow EXTENDS the inventory window (:31) and
+    // every click here goes through its TransferItem (:795, :803, :842) - so the how-many popup (:1515-1539) is this
+    // window's too: when a stack will not all fit, or under Control. The pushed box, and Control's held state,
+    // polled at the click as Input.GetKey is (CM5's own pair on the pack).
+    this.inputBox = null;
+    this._controlDown = false;
     this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);   // the shared scroller's warm cache
     // D7: the window's shared ToolTip - one tip, both lists, exactly
     // as ItemListScroller hands `toolTip` to every item button it
@@ -320,8 +329,15 @@ export class NativeTradeWindow {
         this[this._drag.which] = dragScrollerIndex(this._drag.latch, vy, len);
       }
     }
-    if (this.box || vx < 0 || vy < 0) { this._tip.hide(); return; }
+    if (this.box || this.inputBox || vx < 0 || vy < 0) { this._tip.hide(); return; }
     this._tip.show(this._itemAt(vx, vy), vx, vy, { getQuest: this.hooks.getQuest ?? null });
+  }
+
+  /** UXB1-L: the pointer seam's DOWN (the hosts' `pointer('down', ..., { ctrl, shift })`, worldModes.js) carries the
+   *  click's own Control - Input.GetKey polled at the click (:1513), read off the event rather than a key latch that
+   *  a focus change can strand. DISC25-F's keydown/keyup pair is the other door. */
+  pointer(phase, vx, vy, button = 0, mods = null) {
+    if (phase === 'down' && mods) this._controlDown = !!mods.ctrl;
   }
 
   /** MAC-N2: the release edge the hosts send on mouseup (ROAD-E E1) -
@@ -341,7 +357,7 @@ export class NativeTradeWindow {
    *  scrolled under it) - exactly nativeInventory's wheel, minus the
    *  info panel this screen does not draw. */
   wheel(dir, vx = -1, vy = -1) {
-    if (!dir || this.box) return;
+    if (!dir || this.box || this.inputBox) return;
     const kind = dir > 0 ? 'down' : 'up';
     const wheelable = (k) => k === 'slot' || k === 'thumb' || k === 'page-up' || k === 'page-down';
     for (const [rect, which, items] of [
@@ -428,16 +444,14 @@ export class NativeTradeWindow {
    *  repairJobsAt, character for character, so the host hands it in
    *  rather than the window growing a second copy.
    *
-   *  RECORDED: FilterRemoteItems ends with `UpdateRepairTimes(false)`
-   *  (:725), the ESTIMATE pass, and this does not run it. That pass
-   *  exists for exactly one reader - RepairItemLabelTextHandler's
-   *  "%d days" MISC LABEL (:282-288), which is an ItemListScroller
-   *  label template the port's shared scroller does not draw (icon,
-   *  stack count and tooltip only). Running it here would also run it
-   *  per FRAME rather than per Refresh, and its clamp never decreases,
-   *  so the estimate would ratchet. The keyed collect list computes
-   *  the same number on demand through repairStatusLabel; when the
-   *  misc label lands, it does the same. */
+   *  FilterRemoteItems ends with `UpdateRepairTimes(false)` (:725),
+   *  the ESTIMATE pass, which exists for exactly one reader -
+   *  RepairItemLabelTextHandler's "%d days" MISC LABEL (:282-288).
+   *  UXB1-K drew that label (draw, `_repairLabels`) and runs the pass
+   *  there, per frame: the port's pass with commit false is PURE - it
+   *  answers a Map and stamps nothing - so the ratchet DFU's stored
+   *  estimate would suffer per frame cannot happen, and this list
+   *  stays the filter alone. */
   remoteList() {
     if (this.mode === 'Buy') return this.hooks.shelfItems?.() ?? [];
     if (this.mode === 'Repair') return this.hooks.repairItems?.() ?? this.remoteItems;
@@ -463,6 +477,17 @@ export class NativeTradeWindow {
     const i = from.indexOf(item);
     if (i >= 0) from.splice(i, 1);
     to.push(item);
+  }
+
+  /** AUDIT UXB1 F4: goods put back on the shelf rejoin their stack - ItemCollection.AddItem's merge (inventory.js
+   *  addItem), which DFU's click-back (TransferItem, :800-801) and ClearSelectedItems (TransferAll) both reach. A
+   *  split lot is its own record, and `_move`'s push left "Oil x2" beside "Oil x10" on the shelf it came from. `n`
+   *  short of the lot is DISC25-F's split back (applyTransfer, whose addItem merges too). */
+  _unstage(item, n = amountOf(item)) {
+    if (n < amountOf(item)) { applyTransfer(item, { amount: n }, this.basket, this.hooks.shelfItems()); return; }
+    const i = this.basket.indexOf(item);
+    if (i >= 0) this.basket.splice(i, 1);
+    addItem(this.hooks.shelfItems(), item);
   }
 
   /** TEXT.RSC rows through the macro table. The trade records quote
@@ -535,12 +560,34 @@ export class NativeTradeWindow {
       // AUDIT 26 F157: TransferItem :1506-1508 - staging a LIT torch
       // for sale douses it; from is localItems on every staging arm.
       clearLightSourceOnLeave(item, this.hooks.entity, true);
-      this._move(item, this.hooks.packItems(), this.remoteItems);
+      // DISC25-F: no maxAmount on this arm (:795), so only Control splits
+      this._split(item, amountOf(item), (n) => this._moveCount(item, n, this.hooks.packItems(), this.remoteItems));
       return;
     }
     // Buy: a basket item clicks back OUT to the shelf (:800-801)
-    if (d.kind === 'unstage') { this._move(item, this.basket, this.hooks.shelfItems()); return; }
+    if (d.kind === 'unstage') { this._split(item, amountOf(item), (n) => this._unstage(item, n)); return; }
     if (d.kind === 'refuse') this._refuse(d.refusal);
+  }
+
+  /** DISC25-F: TransferItem's tail with a count (SplitStackPopup_OnGotUserInput, :1546-1559) - the whole stack moves
+   *  as it always has; part of one is split off and moved (SplitStack, then DoTransferItem). */
+  _moveCount(item, n, from, to) {
+    if (n >= amountOf(item)) this._move(item, from, to);
+    else applyTransfer(item, { amount: n }, from, to);
+  }
+
+  /** DISC25-F: TransferItem's split gate (:1515-1539), CM5's own: a stack short of `max`, or any stack under
+   *  Control, pushes the how-many box seeded with the max ("0" under Control, :1525 - Return on it moves nothing);
+   *  everything else moves `max` at once. */
+  _split(item, max, perform) {
+    if (!splitRequired(item, max, this._controlDown)) { perform(max); return; }
+    this.inputBox = new InputMessageBoxWindow({
+      label: HOW_MANY_ITEMS(max),
+      value: this._controlDown ? '0' : String(max),
+      maxCharacters: SPLIT_INPUT_MAX,
+      numeric: true,
+      onSubmit: (text) => { const count = parseSplitAmount(text, max); if (count !== null) perform(count); },
+    });
   }
 
   /** RemoteItemListScroller_OnItemClick (:833-860). In Buy mode a
@@ -564,7 +611,8 @@ export class NativeTradeWindow {
         entity: this.hooks.entity ?? null,
       });
       if (!plan.ok) { this.box = { rows: [{ text: plan.refusal?.text ?? CANNOT_CARRY_TEXT, center: true }], buttons: null }; return; }
-      applyTransfer(item, plan, this.hooks.shelfItems(), this.basket);
+      // DISC25-F: a partial fit, or Control, asks how many (:1515-1539) - the old arm took what fit, unasked
+      this._split(item, plan.amount, (amount) => applyTransfer(item, { ...plan, amount }, this.hooks.shelfItems(), this.basket));
       return;
     }
     // D7 - the REPAIR arm (:842-853). A job still under way is not
@@ -585,7 +633,7 @@ export class NativeTradeWindow {
       this._takeItemFromRepair(item);
       return;
     }
-    this._move(item, this.remoteItems, this.hooks.packItems());
+    this._split(item, amountOf(item), (n) => this._moveCount(item, n, this.remoteItems, this.hooks.packItems()));   // DISC25-F (:803)
   }
 
   /** TakeItemFromRepair (:857-862): the item comes back to the pack
@@ -611,7 +659,7 @@ export class NativeTradeWindow {
    *  on the floor of a collection nobody reads. */
   _clear() {
     if (this.mode === 'Buy') {
-      while (this.basket.length) this._move(this.basket[0], this.basket, this.hooks.shelfItems());
+      while (this.basket.length) this._unstage(this.basket[0]);
       return;
     }
     if (this.mode === 'Repair') {
@@ -775,6 +823,12 @@ export class NativeTradeWindow {
   }
 
   input(code, e = null) {
+    if (isControlCode(code, e)) this._controlDown = true;   // DISC25-F: Input.GetKey(Control)'s down edge; keyup is the other
+    if (this.inputBox) {
+      this.inputBox.input(code, e);   // the pushed box owns the keyboard
+      if (this.inputBox.done) this.inputBox = null;
+      return;
+    }
     if (this.box) {
       if (this.box.buttons === 'YesNo') {
         if (code === 'KeyY') this._dismissBox(MB_BUTTONS.Yes);
@@ -826,6 +880,7 @@ export class NativeTradeWindow {
   }
 
   click(vx, vy) {
+    if (this.inputBox) { this.inputBox.click(vx, vy); if (this.inputBox.done) this.inputBox = null; return true; }   // DISC25-F: modal
     if (this.box) {
       if (this.box.buttons === 'YesNo') {
         const hit = this._boxLayout ? messageBoxHit(this._boxLayout, vx, vy) : null;
@@ -938,8 +993,10 @@ export class NativeTradeWindow {
     drawTargetIconPanel(renderer, m, font, R.localTargetIcon, lti.container, lti.label);
     const rti = this._remoteTargetIcon();
     drawTargetIconPanel(renderer, m, font, R.remoteTargetIcon, rti.container, rti.label);
+    const remote = this.remoteList();
+    const repairLabels = this._repairLabels(remote);   // UXB1-K: one estimate pass per frame, over the list drawn
     for (const [rect, scroll, items] of [
-      [R.remoteList, this.remoteScroll, this.remoteList()],
+      [R.remoteList, this.remoteScroll, remote],
       [R.localList, this.localScroll, this.localList()],
     ]) {
       items.slice(scroll, scroll + LIST_SLOTS).forEach((it, s) => {
@@ -951,6 +1008,12 @@ export class NativeTradeWindow {
         drawCellBackground(renderer, m, rect, s, this._cellColour(it, rect === R.remoteList));
         this._drawIcon(renderer, m, it, rect, s);
         drawStackLabel(renderer, _art?.font4 ?? font, m, it, rect, s);
+        // UXB1-K: RepairItemLabelTextHandler's misc label (:282-288), set on the remote scroller in Repair mode
+        // (:244): ItemListScroller's miscLabelTemplate - Position zero, Left/Top in the button's margins
+        // (ItemListScroller.cs:211-217, :368-377), the default font (TextLabel.RefreshLayout's DefaultFont,
+        // FONT0003) in the default text colour and shadow (TextLabel's own defaults).
+        const label = rect === R.remoteList ? repairLabels?.get(it) : null;
+        if (label) shadowText(renderer, font, label, m, rect[0] + CELL_X + CELL_MARGIN, rect[1] + s * SLOT_H + CELL_MARGIN);
       });
       // ROAD-A7: the arrows' red/green states and the art thumb.
       drawScrollerArrows(renderer, m, rect, scroll, items.length);
@@ -964,6 +1027,32 @@ export class NativeTradeWindow {
       this._boxLayout = layoutMessageBox(font, this.box.rows, buttons);
       drawMessageBox(renderer, m, font, this._boxLayout);
     } else this._boxLayout = null;
+    if (this.inputBox) this.inputBox.draw(renderer, canvas, font);   // DISC25-F: the pushed how-many box, over the panel
     this._tip.draw(renderer, m, font);   // D7: last, over the panel and the box
   }
+
+  /** UXB1-K: the misc label's text per remote item, in Repair mode - repairStatusLabel ("DONE" / "N days") over the
+   *  scheduler's ESTIMATE pass (updateRepairTimes with commit false, FilterRemoteItems' :725). That pass is pure (it
+   *  answers a Map and stamps nothing), so running it per frame cannot ratchet the way DFU's stored
+   *  EstimatedRepairTime would. Null outside Repair, and under InstantRepairs, where DFU's pass returns before it
+   *  estimates anything (:516) and there is no clock to label. */
+  _repairLabels(items = this.remoteList()) {
+    if (this.mode !== 'Repair' || getBool('Controls', 'InstantRepairs')) return null;
+    const now = this.hooks.nowMinutes?.() ?? 0;
+    const est = updateRepairTimes(items, { commit: false, nowMinutes: now });
+    return new Map(items.map((it) => [it, repairStatusLabel(it, now, est.get(it) ?? null)]));
+  }
+
+  /** DISC25-F: Control's up edge (CM5's pair). */
+  keyup(code, e = null) {
+    if (isControlCode(code, e)) this._controlDown = false;
+  }
 }
+
+/** DISC25-F: a stack's count - one for a thing that does not stack. */
+const amountOf = (item) => item?.stackCount ?? 1;
+/** DISC25-F: either Control key - the code, or a key event's own code or key (CM5's reading). */
+const isControlCode = (code, e = null) =>
+  code === 'ControlLeft' || code === 'ControlRight'
+  || e?.code === 'ControlLeft' || e?.code === 'ControlRight'
+  || e?.key === 'Control';

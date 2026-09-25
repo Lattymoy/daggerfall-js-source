@@ -57,7 +57,7 @@ export const OWN_MW_MODELS = Object.freeze({
     bone: 'Weapon Bone',
     // THE ANIMATION IT BORROWS, and without this the rig plays HAND TO
     // HAND: `animWeaponType` turns MW_WEAPON_TYPE.None into HandToHand
-    // (fpArm.js:286), which is right for empty hands and absurd for a
+    // (fpArm.js:288), which is right for empty hands and absurd for a
     // man holding a dwemer firearm - the arms punch, and the gun goes
     // along for the ride.
     //

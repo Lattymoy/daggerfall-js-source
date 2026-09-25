@@ -24,7 +24,7 @@
  {"name": "WEATHER3d-bolt-aimed-flat", "file": "src/render/volumetricClouds.js",
   "old": "  return { dir: [dx / len, BOLT_HEIGHT / len, dz / len]", "new": "  return { dir: [dx / flat, 0, dz / flat]", "tests": ["test/weather3d_distantstorms.test.js"]},
  {"name": "WEATHER3d-bolt-whole-sky", "file": "src/render/volumetricClouds.js",
-  "old": "  outColor = vec4(c.rgb * (1.0 + uFlash * 2.0 + bolt * 3.0), c.a);", "new": "  outColor = vec4(c.rgb * (1.0 + uFlash * 2.0) + vec3(bolt), c.a);", "tests": ["test/weather3d_distantstorms.test.js"]},
+  "old": "  outColor = vec4(cloud * (1.0 + uFlash * 2.0 + bolt * 3.0), c.a);", "new": "  outColor = vec4(cloud * (1.0 + uFlash * 2.0) + vec3(bolt), c.a);", "tests": ["test/weather3d_distantstorms.test.js"]},
  {"name": "WEATHER3d-host-no-reset", "file": "src/scenes/world.js",
   "old": "    if (jump || weatherArrivalStamp() !== seenArrival) { distantStorms.reset(); stormLights.reset(); }   // AUDIT WEATHER3 R5: any landing", "new": "    // AUDIT WEATHER3 R5: any landing", "tests": ["test/weather3d_distantstorms.test.js"]},
  {"name": "WEATHER3d-thunder-at-the-ear", "file": "src/scenes/exterior.js",

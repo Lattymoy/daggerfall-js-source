@@ -121,9 +121,13 @@ test('HC1: owner access - house OR ship - opens loot-target storage, never stock
   // anchors on the ACTIVATION arm rather than the first match in the
   // file. lastIndexOf, because the namer is declared above the ladder.
   const arm = wm.slice(wm.lastIndexOf("if (key.startsWith('container:')) {"));
-  const guard = arm.indexOf("(b?.buildingType === BUILDING_TYPES.Ship && ownsShip(playerEntity))");
-  const houseGuard = arm.indexOf('|| (interiorHome ? interiorHome.own : isHouseOwned(playerEntity.houses ?? []');   // HOME1 re-aim: my online home's cupboards are my storage
+  // RE-AIMED at UXB1-N: the owned test is ONE predicate now, `ownsThisInterior`, which the plaque reads too - the arm
+  // calls it before either branch, and the predicate is the same OR of the ship and the house.
+  const pred = wm.slice(wm.indexOf('const ownsThisInterior = (b = interiorBuilding) =>'), wm.indexOf('const interiorHoverName = composeNamer(['));
+  const guard = pred.indexOf("(b?.buildingType === BUILDING_TYPES.Ship && ownsShip(playerEntity))");
+  const houseGuard = pred.indexOf('|| (interiorHome && b === interiorBuilding ? interiorHome.own : isHouseOwned(playerEntity.houses ?? []');   // HOME1: and my online home's cupboards are my storage
   assert.ok(guard >= 0 && houseGuard > guard, 'the ship arm (:905-906) rides the same OR as the house');
+  assert.ok(arm.indexOf('const owned = ownsThisInterior(b);') >= 0, 'and the activation arm asks it');
   const ownedLatch = arm.indexOf('c.items ??= [];');
   // PIN MOVED at A2, deliberately: the stranger arm's `??=` became the
   // stockedDate day comparison PlayerActivate actually makes (:911-915).
@@ -165,18 +169,21 @@ test('HC1: a stocked stranger\'s container - empty does NOTHING, full asks TEXT.
     '"If no contents, do nothing" (:917-918) - no box, no open');
   assert.ok(arm.includes('townTalk?.lines?.(PRIVATE_PROPERTY_TEXT_ID)'),
     'the question is record 37 through the host\'s TEXT.RSC');
-  assert.ok(arm.includes('This looks like private property. Do you still want to look through it?'),
-    'record 37\'s own two lines as the no-corpus fallback');
-  const yes = arm.indexOf("code: 'KeyY'");
-  const no = arm.indexOf("code: 'KeyN'");
+  // RE-AIMED at UXB1-M: the question is DFU's YesNo box now (ui/yesNoBox.js), not the keyed panel - so the fallback
+  // is record 37's own two rows (shopStock.js PRIVATE_PROPERTY_FALLBACK_ROWS) and the arms are the box's onYes/onNo.
+  assert.ok(arm.includes('privatePropertyRows(townTalk?.lines?.(PRIVATE_PROPERTY_TEXT_ID))'),
+    'record 37\'s own two lines as the no-corpus fallback, through the one helper');
+  assert.ok(arm.includes('new YesNoBoxWindow({'), 'DFU\'s YesNo box (PlayerActivate.cs:916-918)');
+  const yes = arm.indexOf('onYes:');
+  const no = arm.indexOf('onNo:');
   assert.ok(yes >= 0 && no > yes, 'Yes/No in DFU\'s button order');
-  assert.ok(arm.slice(yes, no).includes('action: () => openLoot(true)'),
+  assert.ok(arm.slice(yes, no).includes('onYes: () => openLoot(true),'),
     'Yes opens the same loot-target inventory (PrivateProperty_OnButtonClick :1090-1093)');
   // PT1: and it opens it in PRIVATE-PROPERTY mode, which is the whole
   // difference between this arm and the owned-house one above -
   // `loot.houseOwned` (:919) is set here and nowhere else.
   assert.ok(arm.slice(0, yes).includes('openLoot();'),
     'the OWNED arm opens the same window with the flag off');
-  assert.ok(arm.slice(no, no + 120).includes('action: () => {}'),
+  assert.ok(arm.slice(no, no + 40).includes('onNo: () => {},'),
     'No claims nothing - DFU just clears the LootTarget');
 });

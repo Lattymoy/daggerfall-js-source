@@ -182,8 +182,8 @@
   {
     "name": "LS-pick-bypasses-note",
     "file": "src/player/activate.js",
-    "old": "  return noteBodyStack(nearestActivatableHit(eye, dir, targets, collider), targets, (rest) => nearestActivatableHit(eye, dir, rest, collider));",
-    "new": "  return nearestActivatableHit(eye, dir, targets, collider);",
+    "old": "  return noteBodyStack(firmFirst(targets, nearest), targets, nearest);   // PR-WAGON1: another player's team yields",
+    "new": "  return firmFirst(targets, nearest);   // PR-WAGON1: another player's team yields",
     "tests": [
       "test/lootstack.test.js"
     ],

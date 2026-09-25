@@ -170,7 +170,7 @@ test('SPELLFX1/2: a peer\'s ranged cast is DRAWN as a missile that stops on a bo
 });
 
 test('SPELLFX1 wire (world98): the pose carries the cast\'s element (`ce`, 0..4) and the arrows loosed (`ar`); a pose from before them reads Magic and none (mutants: the fields dropped by the projection; an element past the table)', () => {
-  assert.equal(RELAY_VERSION, 'world108'); assert.equal(POSE_CAST_ELEMENTS, 5);   // RENOWN1 moved it on (world108), DUEL1 before it (world107), DISC23-B before it (world106), AUDIT 68's relay law (world105), TITLE-N before it (world104); world98 carried these fields; HCC-PARK + RIDE moved the version on (world99) with the park frame and the pose's mount, DISC7 (world100) with its half-speed bit, DISC12 (world101) with its hand and beast bits, and the community arc's frames and AUDIT ATTACH's meters (world102)
+  assert.equal(RELAY_VERSION, 'world111'); assert.equal(POSE_CAST_ELEMENTS, 5);   // RENOWN1's level and renown frame moved it on (world111 - world108 on its branch; main's HT-WAIST-NET, PROFILE2 and SKIN2, and EVENT1 took world108 to world110 first); DUEL1 moved it on (world107), DISC23-B before it (world106), AUDIT 68's relay law (world105), TITLE-N before it (world104); world98 carried these fields; HCC-PARK + RIDE moved the version on (world99) with the park frame and the pose's mount, DISC7 (world100) with its half-speed bit, DISC12 (world101) with its hand and beast bits, and the community arc's frames and AUDIT ATTACH's meters (world102)
   const base = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0 };
   assert.equal(validPose({ ...base, ce: 0, ar: 7 }).ce, 0); assert.equal(validPose({ ...base, ce: 0, ar: 7 }).ar, 7);
   assert.equal(validPose(base).ce, 4, 'an older pose: Magic'); assert.equal(validPose(base).ar, 0);

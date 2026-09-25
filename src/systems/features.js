@@ -73,8 +73,14 @@ export const GROUPS = Object.freeze({
   // what you BECOME, and filing it under any of the four would have
   // been filing it under the nearest one rather than the right one.
   character: Object.freeze({ label: 'Your character' }),
+  // FT18 (2026-09-25, Mac: "a comprehensive reorganize and consolidation of our mod/enhancements"): two more, because
+  // Sight had grown to sixteen tiles and a third of them were not things you see in the world - the HUD's quick slots,
+  // the map, the tooltips - and the sounds were spread over three groups. What is drawn OVER the world is the
+  // interface; what you hear is sound.
+  interface: Object.freeze({ label: 'Interface' }),
+  sound: Object.freeze({ label: 'Sound' }),
 });
-export const GROUP_ORDER = Object.freeze(['sight', 'world', 'loot', 'combat', 'character']);
+export const GROUP_ORDER = Object.freeze(['sight', 'interface', 'sound', 'world', 'loot', 'combat', 'character']);
 
 /** WM3: the Windmills pack's switch key. It is declared HERE with its
  *  row (RF4's law) rather than in `world/windmills.js`, because that
@@ -159,9 +165,10 @@ export const MOD_CURATED = Object.freeze({
   // KB1: a mod's KEYS are not dials. TORCH-BIND put the three TextKeys here because the hosts read them raw and
   // this was the only door left; they are the registry's actions now (systems/inputActions.js MOD_ACTIONS) and
   // are bound in Controls, under the mod's name, beside every other key - where a clash can be seen. The relaxed
-  // switch rides along: 3ARMS ships it off.
+  // switch rides along: 3ARMS ships it off. HT-WAIST: and the port's own lantern switch - a key the tile does not
+  // draw is a key nobody can reach (TORCH-BIND's lesson).
   'handheld-torches': Object.freeze([
-    'Handling.RelaxedTwoHandedWeapons', 'Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Bob.Length']),
+    'Handling.RelaxedTwoHandedWeapons', 'Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Handling.LanternsAtWaist', 'Bob.Length']),
   // HCC: the persistence switch and the distances a player reaches for (KB1: its two hotkeys are Controls').
   'horse-cart-and-cargo': Object.freeze(['Persistence.PhysicalPersistence',
     'Following.HorseFollowDistance', 'WagonAccess.InteriorAccessDistance', 'Following.AvoidCombat', 'Following.FollowFastTravel', 'Presentation.ShowTrailingWagon']),
@@ -275,6 +282,7 @@ export const FEATURES = Object.freeze([
     // Distance stays the 1:1 lane's 1..4. A dial: the player's online.
     control: Object.freeze({
       store: 'prefs', key: 'landViewDistance', initial: 5, online: 'player', lane: 'landView',   // the lane (world/landView.js) registers its tiers and its read/write
+      classic: 3,   // FT18: Daggerfall's own radius, what All off sets (the row has no Off - a radius is never none)
       also: Object.freeze([Object.freeze({ store: 'settings', key: 'Experimental/TerrainDistance' })]),   // written by landViewWrite, capped at 4
     }),
   }),
@@ -364,30 +372,23 @@ export const FEATURES = Object.freeze([
   // are inert unless the outdoors row above is on (world.js gates the
   // grass on enhancedEnvironments; the clouds ride the enhanced lane),
   // which each note now says. Enhanced, the port's own dials.
+  // FT18: GRASS, ONE ROW. FT7's density and GRASS-PX's style (2026-09-21, Mac: "turn the grass into a pixel art
+  // design") were two tiles over one field, and the style meant nothing until the density was above Off. The
+  // density is the bar; the style is a PART, drawn in the tile's drawer. Both keys, both defaults, unchanged.
   Object.freeze({
-    id: 'grass-density',
+    id: 'grass',
     group: 'sight',
-    title: 'Grass density',
-    note: 'How much of the meadow grows under the enhanced outdoors. The heaviest thing outdoors - try Half first if the '
-      + 'FPS counter says the frame is the GPU\u2019s.',
-    effect: 'Takes effect when the world next loads.',
+    title: 'Grass',
+    note: 'How much of the meadow grows under the enhanced outdoors - the heaviest thing outdoors, so try Half first if '
+      + 'the FPS counter says the frame is the GPU\u2019s. Its style opens here: Pixel draws hand-set tufts in four tones, '
+      + 'like the world\u2019s trees and people; Smooth, a tapered and gradient-lit blade.',
+    effect: 'The amount takes effect when the world next loads; the style at once.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'grassDensity', initial: 1, online: 'player', tiers: Object.freeze([[1, 'Full'], [0.5, 'Half'], [0.25, 'Quarter'], [0, 'Off']]) }),   // PERF1: a fraction of the lab's 1.2 million blades; a dial, the player's online
-  }),
-  // GRASS-PX (2026-09-21, Mac: "turn the grass into a pixel art design").
-  // The style is a uniform in the one grass program, so the row flips
-  // live. Pixel is the default: it is the style the rest of the world's
-  // flats are drawn in.
-  Object.freeze({
-    id: 'grass-style',
-    group: 'sight',
-    title: 'Grass style',
-    note: 'Pixel draws each tuft as a hand-set sprite in four tones with a dithered distance, the way '
-      + 'the world\u2019s trees and people are drawn; Smooth is the lab\u2019s tapered, gradient-lit blade. Nothing to change unless '
-      + 'the enhanced outdoors are on and Grass density is above Off.',
-    effect: 'Takes effect at once.',
-    kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'grassStyle', initial: 'pixel', online: 'player', tiers: Object.freeze([['pixel', 'Pixel'], ['smooth', 'Smooth']]) }),
+    control: Object.freeze({
+      store: 'prefs', key: 'grassDensity', initial: 1, online: 'player', tiers: Object.freeze([[1, 'Full'], [0.5, 'Half'], [0.25, 'Quarter'], [0, 'Off']]),   // PERF1: a fraction of the lab's 1.2 million blades; a dial, the player's online
+      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'grassStyle', initial: 'pixel', online: 'player' })]),   // GRASS-PX: a uniform in the one grass program, so it flips live
+      parts: Object.freeze([Object.freeze({ key: 'grassStyle', label: 'Style', tiers: Object.freeze([['pixel', 'Pixel'], ['smooth', 'Smooth']]) })]),
+    }),
   }),
   Object.freeze({
     id: 'cloud-quality',
@@ -420,6 +421,25 @@ export const FEATURES = Object.freeze([
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced', 'classic']),
     control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'default', online: 'player', tiers: Object.freeze([['off', 'Off'], ['default', 'Default (4x)'], ['max', 'Maximum']]) }),
+  }),
+  // PERF-SCALE (2026-09-25, two players via Mac: "One user is reporting fps issues in the exterior but fine in the
+  // interior ... GPU is NVIDIA GeForce RTX 4060 Ti", "me too my friend.. don't know why. I got a RX6600"): THE
+  // RENDER SCALE. The world was drawn at the window's whole size with no cap, so a large window paid two to four
+  // times the exterior's per-pixel work; this draws it smaller and presents it smooth (systems/renderScale.js
+  // carries the law). Retro Picture Mode wins over it. A dial, the player's own online: it is this screen's pixels.
+  Object.freeze({
+    id: 'render-scale',
+    group: 'sight',
+    title: 'Render scale',
+    note: 'Draws the world at a share of the window’s pixels and stretches it smooth to fit; the HUD and menus stay '
+      + 'sharp. Try 75% if the outdoors run slow on a large or high-resolution screen. Retro Picture Mode, when on, '
+      + 'takes its place.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    // AUDIT BRANCH-0925 PS-A1: `classic` - the row has no Off, and Daggerfall's own frame is the whole window
+    // (settings.js leaves DFU's resolution to the browser's canvas), so All off takes it to 100% (FT18's
+    // "to Daggerfall's own where a row has no Off"); without it All off left the world drawn at 50%
+    control: Object.freeze({ store: 'prefs', key: 'renderScale', initial: 1, online: 'player', classic: 1, tiers: Object.freeze([[1, '100%'], [0.85, '85%'], [0.75, '75%'], [0.67, '67%'], [0.5, '50%']]) }),
   }),
   // FT8 (2026-09-14): ENHANCED COMBAT VISUALS (ECV1) - what the enhanced
   // skin DRAWS for a concealed foe; the rules are DFU's either way. The
@@ -496,15 +516,22 @@ export const FEATURES = Object.freeze([
   // look and a sound, nothing the room shares), each read every frame
   // by the exterior hosts. Kill doors `?wisps=off`, `?windaudio=off`,
   // `?sway=off`.
+  // FT18: THE WIND SEEN, ONE ROW. WIND3's wisps and its sway were two tiles over one wind (the third, its sound, is
+  // Enhanced sounds since ES1). The bar is both at once (systems/featureLanes.js 'wind'); each opens on its own in
+  // the drawer. Both keys, both defaults, both kill doors (`?wisps=off`, `?sway=off`) unchanged.
   Object.freeze({
-    id: 'wind-wisps',
+    id: 'wind',
     group: 'sight',
-    title: 'Wind wisps',
-    note: 'Faint streaks of air riding the wind across the land under the enhanced outdoors, so you can see which way it '
-      + 'blows and how hard.',
+    title: 'Wind',
+    note: 'The wind, seen under the enhanced outdoors: trees and plants lean with it and a gust crosses a wood as one wave, '
+      + 'and faint wisps of air ride it across the land, so you can see which way it blows and how hard.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'windWisps', initial: true, online: 'player' }),   // WIND3: render/windWisps.js wispsOn
+    control: Object.freeze({
+      store: 'prefs', key: 'floraSway', initial: true, online: 'player', lane: 'wind',   // WIND3: systems/windDrive.js floraSwayOn; render/renderer.js BB_VS uSway
+      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'windWisps', initial: true, online: 'player' })]),   // WIND3: render/windWisps.js wispsOn
+      parts: Object.freeze([Object.freeze({ key: 'floraSway', label: 'Trees sway' }), Object.freeze({ key: 'windWisps', label: 'Wisps' })]),
+    }),
   }),
   // ES1 (2026-09-16, Mac: "lump this in as a new enhanced toggle. Enhanced
   // Sounds, add the wind noise to it"): WIND3's `wind-sound` row IS this
@@ -514,7 +541,7 @@ export const FEATURES = Object.freeze([
   // the wind alone.
   Object.freeze({
     id: 'enhanced-sounds',
-    group: 'world',
+    group: 'sound',   // FT18: was world
     title: 'Enhanced sounds',
     note: 'The sounds the port adds under the enhanced skin: a quiet wind outdoors from Daggerfall\u2019s own clips, '
       + 'rising and falling with its strength and silent indoors, and the gold clink and click when you take or '
@@ -552,23 +579,13 @@ export const FEATURES = Object.freeze([
   // map doors read this beside the skin now (ui/mapSkin.js heldMapWorn).
   Object.freeze({
     id: 'enhanced-map',
-    group: 'sight',
+    group: 'interface',   // FT18: was sight
     title: 'Enhanced map',
     note: 'The map is a parchment in your own hands: the world, the town and the dungeon on one sheet, panned and '
       + 'zoomed under the pen. Off is Daggerfall\u2019s own three map windows, as the classic skin draws them.',
     effect: 'Takes effect the next time a map is opened.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'heldMap', initial: true, online: 'player' }),   // the player's own: what THEIR map looks like
-  }),
-  Object.freeze({
-    id: 'flora-sway',
-    group: 'sight',
-    title: 'Trees sway',
-    note: 'Trees and plants lean with the wind under the enhanced outdoors, and a gust crosses a wood as one wave. Only the '
-      + 'flora: people, signs and lights stand still.',
-    effect: 'Takes effect at once.',
-    kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'floraSway', initial: true, online: 'player' }),   // WIND3: systems/windDrive.js floraSwayOn; render/renderer.js BB_VS uSway
   }),
   // WEATHER2b (2026-09-14, Mac: "a dynamic world space event system where
   // weather can be traveled out of and into"): THE WEATHER FIELD - the
@@ -616,7 +633,7 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['mod']),
     control: Object.freeze({ store: 'prefs', key: WINDMILLS_KEY, initial: true, online: 'player' }),
   }),
-  modFeature('seasons-iliac-bay', 'Takes effect when the world next loads.', 'world'),
+  modFeature('seasons-iliac-bay', 'Takes effect when the world next loads.', 'sight'),   // FT18: was world
   modFeature('roads-hazelnut', 'Takes effect when the world next loads.', 'world'),
   // TO1 (2026-09-17): TRAVEL OPTIONS - `world`, because what it changes
   // is how you cross it. The effect line is honest about the one half
@@ -643,7 +660,7 @@ export const FEATURES = Object.freeze([
   // off falls silent at once, and on hands the mod back a clock that
   // has been running the whole time (AT1 - the interval keeps running
   // while the mod is quiet, exactly as it does while you are indoors).
-  modFeature('ambient-text', 'Takes effect at once. The mod then speaks on its own clock.', 'world'),
+  modFeature('ambient-text', 'Takes effect at once. The mod then speaks on its own clock.', 'interface'),   // FT18: was world
   // EOTB0 (2026-09-15): EYE OF THE BEHOLDER - third person for a
   // player with no Morrowind data (Mac: "This is moreso for those who
   // opt out of using morrowind"). Filed under `world` rather than
@@ -652,12 +669,12 @@ export const FEATURES = Object.freeze([
   // not immediate - the view itself is the WHEEL's now (EOTB4), so
   // turning the row on does not move the camera until the player
   // scrolls.
-  modFeature('eye-of-the-beholder', 'Takes effect at once. Scroll out to leave first person.', 'world'),
+  modFeature('eye-of-the-beholder', 'Takes effect at once. Scroll out to leave first person.', 'sight'),   // FT18: was world
   // IF1 (2026-09-16): IMMERSIVE FOOTSTEPS - the component reads its
   // switches every frame; the stride is the mod's the moment its clips are
   // decoded (a fetch here, where the mod's LoadAudio is synchronous).
-  modFeature('immersive-footsteps', 'Takes effect at once.', 'world'),
-  modFeature('world-tooltips', 'Takes effect at once.', 'world'),   // WORLD-HOVER: the hover reads the switch on the frame it draws
+  modFeature('immersive-footsteps', 'Takes effect at once.', 'sound'),   // FT18: was world
+  modFeature('world-tooltips', 'Takes effect at once.', 'interface'),   // FT18: was world   // WORLD-HOVER: the hover reads the switch on the frame it draws
   // BA1 (2026-09-16): BETTER AMBIENCE - read every frame; the dungeon's fog
   // and light are rolled at the door, so those two land on the next dungeon.
   modFeature('better-ambience', 'Takes effect at once. A dungeon\u2019s fog and light are rolled at its door.', 'world'),
@@ -686,7 +703,7 @@ export const FEATURES = Object.freeze([
     title: 'Weapon Sheathing',
     note: 'With Morrowind assets on, a sheathed weapon stays on the body - on the hip or the back, in the scabbard Greatness7\u2019s Weapon '
       + 'Sheathing ships for it, with a quiver for a bow. Off, a lowered weapon vanishes as in vanilla Morrowind.',
-    effect: 'Takes effect when the Morrowind body next builds; the Mods page\u2019s switch rebuilds it at once.',
+    effect: 'Takes effect at once while the Morrowind body is up; otherwise when it next builds.',   // FT18: the Mods page it named is gone - the tile rebuilds it (enhancedMenu.js TILE_AFTER)
     kinds: Object.freeze(['mod']),
     control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: 'player' }),
   }),
@@ -742,7 +759,7 @@ export const FEATURES = Object.freeze([
   // are settings, not features, and stay in Settings.
   Object.freeze({
     id: 'combat-voices',
-    group: 'combat',
+    group: 'sound',   // FT18: was combat
     title: 'Combat Voices',
     note: 'You and the people you fight grunt on a swing and cry out when hit - sounds Daggerfall carries but never plays. '
       + 'Daggerfall Unity ships it on.',
@@ -752,7 +769,7 @@ export const FEATURES = Object.freeze([
   }),
   Object.freeze({
     id: 'near-death-warning',
-    group: 'combat',
+    group: 'interface',   // FT18: was combat
     title: 'Near Death Warning',
     note: 'The screen throbs as your health falls - slow under two fifths, a fast burst under a fifth. Daggerfall Unity '
       + 'ships it on.',
@@ -772,7 +789,7 @@ export const FEATURES = Object.freeze([
   }),
   Object.freeze({
     id: 'choose-guild-jobs',
-    group: 'world',
+    group: 'interface',   // FT18: was world
     title: 'Choose Guild Jobs',
     note: 'A guild\u2019s quest-giver offers the jobs you are eligible for as a list, instead of one drawn at random. '
       + 'Daggerfall Unity ships it off.',
@@ -789,7 +806,7 @@ export const FEATURES = Object.freeze([
       + 'Random Only do not. Daggerfall Unity ships it Classic.',
     effect: 'Takes effect on the next dungeon you enter.',
     kinds: Object.freeze(['classic']),
-    control: Object.freeze({ store: 'settings', key: 'Video/RandomDungeonTextures' }),
+    control: Object.freeze({ store: 'settings', key: 'Video/RandomDungeonTextures', classic: 0 }),   // FT18: Classic, what All off sets - a choice with no Off
   }),
   // QS (2026-09-17, Mac: the Demon's Souls diamond, "slots for the
   // mainhand/secondhand, consumable"): THE QUICKSLOT DIAMOND's switch.
@@ -797,32 +814,22 @@ export const FEATURES = Object.freeze([
   // slot buttons keep working, because a player who turns the picture off
   // has not asked to lose the presses. Enhanced skin only; the classic HUD
   // never drew one.
+  // FT18: QUICK SLOTS, ONE ROW. QS's diamond switch and HB1's quickbar-or-hotbar were two tiles over one corner of
+  // the HUD, and the diamond's switch did nothing while the hotbar was up (HB1 puts the diamond away). Three states,
+  // one bar (systems/featureLanes.js 'quickSlots'): Off is QS's - the diamond hidden, its keys still working.
   Object.freeze({
-    id: 'quickslot-diamond',
-    group: 'sight',
-    title: 'Quickslot diamond',
-    note: 'The enhanced HUD\u2019s bottom-left diamond: weapon, off hand and two consumable slots filled from the '
-      + 'inventory tooltip, each with its key. Off hides the diamond; the keys still work.',
+    id: 'quick-slots',
+    group: 'interface',
+    title: 'Quick slots',
+    note: 'Diamond is the enhanced HUD\u2019s bottom-left diamond - weapon, off hand and two consumables, filled from the '
+      + 'inventory tooltip; Hotbar is ten slots over the vitals on keys 1-9 and 0, filled by dragging from the pack and '
+      + 'the spellbook. Off hides the diamond, and its keys still work.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'quickslots', initial: true, online: 'player' }),
-  }),
-  // HB1 (2026-09-23, Discord: "an enhanced hotbar alongside keeping the
-  // current quickbar ... togglable so ppl can choose the lightweight
-  // quickbar or hotbar - both at the same time are too much clutter"):
-  // WHICH bar the enhanced HUD wears. ONE OR THE OTHER, never both: the
-  // hotbar hides the diamond and takes keys 1-9 and 0 while it is up.
-  // Enhanced skin only, online included - it is the player's own view.
-  Object.freeze({
-    id: 'quickbar-style',
-    group: 'sight',
-    title: 'Quickbar or hotbar',
-    note: 'Quickbar is the bottom-left diamond. Hotbar is ten slots over the vitals on keys 1-9 and 0, filled by dragging '
-      + 'weapons, potions, torches and spells onto it from the pack and the spellbook.',
-    effect: 'Takes effect at once.',
-    kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'quickbarStyle', initial: 'quickbar', online: 'player',
-      tiers: Object.freeze([['quickbar', 'Quickbar'], ['hotbar', 'Hotbar']]) }),
+    control: Object.freeze({
+      store: 'prefs', key: 'quickbarStyle', initial: 'quickbar', online: 'player', lane: 'quickSlots',   // HB1: ui/enhancedHotbar.js HOTBAR_PREF
+      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'quickslots', initial: true, online: 'player' })]),   // QS: ui/enhancedHud.js hides the diamond on false
+    }),
   }),
   // CAMP1 (2026-09-17, Mac: camps and roaming packs in the wilderness):
   // an original addition, not a DFU classic feature - the classic game
@@ -847,7 +854,7 @@ export const FEATURES = Object.freeze([
   // inside a town. Off is DFU's watch alone.
   Object.freeze({
     id: 'town-watch',
-    group: 'combat',
+    group: 'world',   // FT18: was combat
     title: 'The watch defends the town',
     note: 'When a monster hunts you inside a town and you are not wanted, the city watch comes to fight it on your side, '
       + 'and walks away once the town is quiet. Commit a crime and they turn on you like any watch. Off keeps the classic '
@@ -880,65 +887,31 @@ export const FEATURES = Object.freeze([
   // ON by default: the splash has always played, and the mark is what a
   // player expects to still be there when they walk back through.
   Object.freeze({
-    id: 'blood-marks',
+    id: 'blood',
     group: 'combat',
-    title: 'Blood stays',
-    note: 'Blood marks the floor and the walls where it landed, and stays there. A glancing blow leaves a spatter and a '
-      + 'near-lethal one a pool; a bloodless foe leaves nothing. The marks are a fixed set that recycles oldest-first, so '
-      + 'they cost the same whether you have fought once or all day. Off keeps the classic splash, which plays and goes.',
-    effect: 'Takes effect at once. The marks already laid stay until the room changes.',
+    title: 'Blood',
+    note: 'Marks on the floor and walls where it lands, which stay; a killing blow of nearly twice a body\u2019s health '
+      + 'throws it far wider, and a hit that takes a real share of yours throws a few drops on the lens. The bar is how '
+      + 'much - Light to Abattoir - and Off keeps the classic splash, which plays and goes.',
+    effect: 'Takes effect at once; how many marks the world keeps, when the game is next reloaded (a dungeon takes it on entry).',
     kinds: Object.freeze(['enhanced']),
-    // ONLINE IT IS THE PLAYER'S. A mark is a local picture with no
-    // gameplay in it - nobody else's floor changes - so unlike the
-    // survival row, which the room has to agree on, this one every
-    // player answers for themselves.
-    control: Object.freeze({ store: 'prefs', key: 'blood-marks', initial: true, online: 'player' }),
-  }),
-  // BLOOD1b: the killing blow's own row. 175% of a body's health in
-  // one hit is a blow an ordinary fight never lands, so what this
-  // really turns off is the spectacle - which is why it is its own
-  // row and not a second meaning for the one above.
-  Object.freeze({
-    id: 'blood-overkill',
-    group: 'combat',
-    title: 'Overkill',
-    note: 'A blow that takes nearly twice a body\u2019s whole health throws blood far wider than an ordinary kill, and a '
-      + 'warhammer throws it wider still. Off, a killing blow bleeds like any other hit. The marks it leaves are the same '
-      + 'set as every other mark, so this costs nothing extra to keep on.',
-    effect: 'Takes effect at once. Blood already thrown stays where it landed.',
-    kinds: Object.freeze(['enhanced']),
-    // the same reading as the row above: a mark is a local picture
-    // with no gameplay in it, so every player answers for themselves.
-    control: Object.freeze({ store: 'prefs', key: 'blood-overkill', initial: true, online: 'player' }),
-  }),
-  // BLOOD2e: the lens. The one piece of blood that is in the player's
-  // face rather than on the floor, so it is its own row - a player who
-  // wants the marks and not the face gets exactly that.
-  Object.freeze({
-    id: 'blood-screen',
-    group: 'combat',
-    title: 'Blood on the lens',
-    note: 'A blow that takes a real share of your health throws a few drops onto the screen, which slide and fade in a '
-      + 'couple of seconds. Off, the screen stays clean and the floor still bleeds.',
-    effect: 'Takes effect at once.',
-    kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'blood-screen', initial: true, online: 'player' }),
-  }),
-  // BLOOD2g: THE GORE DIAL - the one question a player asks, stepped.
-  // A tier is two numbers under one name (combat/bloodSwitch.js
-  // GORE_TIERS): how much of a blow's blood reaches the floor, and how
-  // many marks the world keeps before the oldest is reused.
-  Object.freeze({
-    id: 'blood-gore',
-    group: 'combat',
-    title: 'Gore',
-    note: 'How much blood there is. Light halves what a blow throws and keeps a few hundred marks; Normal keeps six '
-      + 'hundred; Heavy and Abattoir keep more of it on the floor for longer, at the cost of the memory the marks take.',
-    effect: 'The amount takes effect at once; how many marks the world keeps, when the game is next reloaded (a dungeon takes it on entry).',
-    kinds: Object.freeze(['enhanced']),
+    // FT18: BLOOD, ONE ROW. BLOOD1's marks, BLOOD1b's overkill, BLOOD2e's lens and BLOOD2g's gore were four tiles over
+    // one system, and the gore dial had no Off: the one question a player asks - blood or no blood - took three
+    // presses. The bar is the gore dial with an Off in front (systems/featureLanes.js 'blood'); the three switches
+    // are PARTS, each its own in the drawer. ONLINE THEY ARE THE PLAYER'S: a mark is a local picture with no
+    // gameplay in it, so every player answers for themselves.
     control: Object.freeze({
-      store: 'prefs', key: 'blood-gore', initial: 'normal', online: 'player',
-      tiers: Object.freeze([['light', 'Light'], ['normal', 'Normal'], ['heavy', 'Heavy'], ['abattoir', 'Abattoir']]),
+      store: 'prefs', key: 'blood-gore', initial: 'normal', online: 'player', lane: 'blood',   // BLOOD2g: combat/bloodSwitch.js GORE_TIERS
+      also: Object.freeze([
+        Object.freeze({ store: 'prefs', key: 'blood-marks', initial: true, online: 'player' }),
+        Object.freeze({ store: 'prefs', key: 'blood-overkill', initial: true, online: 'player' }),
+        Object.freeze({ store: 'prefs', key: 'blood-screen', initial: true, online: 'player' }),
+      ]),
+      parts: Object.freeze([
+        Object.freeze({ key: 'blood-marks', label: 'Marks stay' }),
+        Object.freeze({ key: 'blood-overkill', label: 'Overkill' }),
+        Object.freeze({ key: 'blood-screen', label: 'On the lens' }),
+      ]),
     }),
   }),
   Object.freeze({
@@ -1002,12 +975,15 @@ export function resolveControl(f) {
   if (!c || typeof c !== 'object' || !c.lane) return c;
   return { ...c, ...(_lanes.get(c.lane) ?? {}) };
 }
+/** Every prefs-store switch a row declares: its own control, and (FT18) the prefs a condensed row covers - a
+ *  covered pref is declared on the row that covers it, `initial` and `online` beside its key, because the row it had
+ *  of its own is gone and RF4's law is that the row is the one declaration. */
+const declaredPrefs = (list) => list.flatMap((f) => [f.control, ...(f.control?.also ?? [])])
+  .filter((c) => c?.store === 'prefs' && c.initial !== undefined);
 /** The prefs-store keys the rows declare: key -> the shelf's default. */
-export const FEATURE_PREF_DEFAULTS = Object.freeze(Object.fromEntries(
-  FEATURES.filter((f) => f.control?.store === 'prefs').map((f) => [f.control.key, f.control.initial])));
+export const FEATURE_PREF_DEFAULTS = Object.freeze(Object.fromEntries(declaredPrefs(FEATURES).map((c) => [c.key, c.initial])));
 /** ...and key -> the online lane's answer (true/false forced, 'player'). */
-export const FEATURE_PREF_ONLINE = Object.freeze(Object.fromEntries(
-  FEATURES.filter((f) => f.control?.store === 'prefs').map((f) => [f.control.key, f.control.online])));
+export const FEATURE_PREF_ONLINE = Object.freeze(Object.fromEntries(declaredPrefs(FEATURES).map((c) => [c.key, c.online])));
 declareOnlinePrefs(FEATURE_PREF_ONLINE);
 
 /** The row whose control is this store's key, or null. The settings
@@ -1066,7 +1042,30 @@ export function checkFeature(f) {
     else for (const a of c.also) {
       if (!a || !STORES.includes(a.store)) out.push(`also: unknown store '${a?.store}'`);
       else if (!storeHas(a)) out.push(`also: ${a.store} has no key '${a.store === 'mods' ? `${a.vendor}/` : ''}${a.key}'`);
+      else if (a.store === 'prefs') {
+        // FT18: a covered pref is declared where it is covered - RF4's law, one row over
+        if (a.initial === undefined) out.push(`also: the covered pref '${a.key}' declares its initial value`);
+        if (!(a.online === true || a.online === false || a.online === 'player')) out.push(`also: the covered pref '${a.key}' declares its online answer`);
+      }
     }
+  }
+  if (c && typeof c === 'object' && c.parts !== undefined) {
+    // FT18: a PART is one of the row's own prefs, drawn in its tile's drawer - the row's key or one it covers, a
+    // label, and tiers when it is a choice rather than a switch
+    const own = new Set([c.key, ...(Array.isArray(c.also) ? c.also.filter((a) => a?.store === 'prefs').map((a) => a.key) : [])]);
+    if (c.store !== 'prefs') out.push('parts are prefs, on a prefs row');
+    if (!Array.isArray(c.parts) || !c.parts.length) out.push('parts is not a list');
+    else for (const pt of c.parts) {
+      if (!pt || !own.has(pt.key)) out.push(`part '${pt?.key}' is not the row's key or one it covers`);
+      if (typeof pt?.label !== 'string' || !pt.label) out.push(`part '${pt?.key}' has no label`);
+      if (pt?.tiers !== undefined && (!Array.isArray(pt.tiers) || pt.tiers.length < 2)) out.push(`part '${pt?.key}': tiers is not a list`);
+    }
+  }
+  if (c && typeof c === 'object' && c.classic !== undefined) {
+    // FT18: the value that is Daggerfall's own, on a row with no Off - one of its own tiers, or an index of its enum
+    const ok = c.store === 'prefs' ? Array.isArray(c.tiers) && c.tiers.some(([v]) => String(v) === String(c.classic))
+      : c.store === 'settings' && Number.isInteger(c.classic) && c.classic >= 0;
+    if (!ok) out.push(`classic '${c.classic}' is not one of the row's values`);
   }
   if (c && typeof c === 'object') {
     // FT2: a condensed row's read and write are functions or absent - never one without the other
@@ -1098,6 +1097,24 @@ export function checkFeatures(list) {
     }
   });
   return out;
+}
+
+/** FT18 (Mac: "Add search bar to mods/enhancements in the ingame pause menu"): the words a row is found by - its
+ *  title, its note, its labels and group, its parts, and a mod's vendor and author - folded to lower case with the
+ *  accents and curly quotes a player will not type taken out. */
+const fold = (t) => String(t ?? '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[\u2018\u2019]/g, "'").toLowerCase();
+export function featureSearchText(f) {
+  const c = f?.control ?? {};
+  const mod = c.store === 'mods' ? MOD_SETTINGS[c.vendor] : null;
+  return fold([f?.title, f?.note, GROUPS[f?.group]?.label, ...(f?.kinds ?? []).map((k) => KINDS[k]?.label),
+    ...(c.parts ?? []).map((pt) => pt.label), mod?.title, mod?.author, c.vendor].filter(Boolean).join(' \n '));
+}
+/** Does a row answer this query? Every word must be found (in any order); an empty query finds everything. */
+export function matchesFeatureQuery(f, query) {
+  const words = fold(query).split(/\s+/).filter(Boolean);
+  if (!words.length) return true;
+  const text = featureSearchText(f);
+  return words.every((w) => text.includes(w));
 }
 
 /** The rows wearing `kind`; every row when kind is null. */

@@ -1,0 +1,84 @@
+[
+  {
+    "name": "HTWN-door-drops-hl",
+    "file": "src/net/wire.js",
+    "old": "    ...(uint(hl, 1) ? { hl: 1 } : {}),\n",
+    "new": "",
+    "tests": [
+      "test/htwaistnet_peers.test.js"
+    ]
+  },
+  {
+    "name": "HTWN-edge-waits-for-the-heartbeat",
+    "file": "src/net/wire.js",
+    "old": "    || (a.hl | 0) !== (b.hl | 0);",
+    "new": "    || false;",
+    "tests": [
+      "test/htwaistnet_peers.test.js"
+    ]
+  },
+  {
+    "name": "HTWN-lerp-drops-hl",
+    "file": "src/net/online.js",
+    "old": "    ...(to.hl ? { hl: 1 } : {}),",
+    "new": "",
+    "tests": [
+      "test/htwaistnet_peers.test.js"
+    ]
+  },
+  {
+    "name": "HTWN-bit-for-any-light",
+    "file": "src/systems/playerTorch.js",
+    "old": "(lanternAtWaist(light) ? 1 : undefined)",
+    "new": "(light ? 1 : undefined)",
+    "tests": [
+      "test/htwaistnet_peers.test.js"
+    ]
+  },
+  {
+    "name": "HTWN-bit-zero-not-absent",
+    "file": "src/systems/playerTorch.js",
+    "old": "(lanternAtWaist(light) ? 1 : undefined)",
+    "new": "(lanternAtWaist(light) ? 1 : 0)",
+    "tests": [
+      "test/htwaistnet_peers.test.js"
+    ]
+  },
+  {
+    "name": "HTWN-sender-sends-nothing",
+    "file": "src/scenes/world.js",
+    "old": "      hl: waistLanternPoseBit(playerEntity.lightSource),",
+    "new": "      hl: waistLanternPoseBit && undefined,",
+    "tests": [
+      "test/htwaistnet_peers.test.js"
+    ]
+  },
+  {
+    "name": "HTWN-peer-body-never-asks",
+    "file": "src/net/peerBodies.js",
+    "old": "    b.rig.setHipLight?.(!!shown.hl);\n",
+    "new": "",
+    "tests": [
+      "test/htwaistnet_peers.test.js",
+      "test/htwaist_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "HTWN-peer-bit-inverted",
+    "file": "src/net/peerBodies.js",
+    "old": "b.rig.setHipLight?.(!!shown.hl);",
+    "new": "b.rig.setHipLight?.(!shown.hl);",
+    "tests": [
+      "test/htwaistnet_peers.test.js"
+    ]
+  },
+  {
+    "name": "HTWN-peer-camera-fed-no-walk",
+    "file": "src/net/peerBodies.js",
+    "old": "  c.move.forward = moving ? 1 : 0;",
+    "new": "  c.move.forward = 0;",
+    "tests": [
+      "test/htwaistnet_peers.test.js"
+    ]
+  }
+]

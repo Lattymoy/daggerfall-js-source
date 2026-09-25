@@ -21,6 +21,11 @@ const results = [], errors = [];
 const check = (name, ok, detail = null) => { results.push({ name, ok: !!ok, detail }); console.log(`${ok ? 'ok' : 'FAIL'} ${name}`, detail ?? ''); };
 const ready = async (page) => page.waitForFunction(() => !document.querySelector('.intro-begin')?.disabled && window.__intro?.state.landscapeReady !== undefined, null, { timeout: 30000 });
 const shot = (page, name) => page.screenshot({ path: `${out}/${name}.png` });
+/** ACC1: the first-run account prompt stands over the doors on a fresh profile - put it away (overhaulsProbe's own). */
+const closeAccount = async (page) => {
+  const close = page.locator('.px-acctstage button', { hasText: /^close$/i });
+  if (await close.count()) { await close.first().click(); await page.waitForSelector('.px-acctstage', { state: 'detached' }); }
+};
 const follow = (page) => page.on('pageerror', e => errors.push(e.message));
 const seek = async (page, time) => {
   const n = await page.evaluate(t => window.__intro.seek(t), time);
@@ -87,6 +92,7 @@ try {
   await page.evaluate(async () => { const { setValue } = await import('/src/systems/settings.js'); setValue('Controls', 'MusicVolume', 0); });
   await page.waitForFunction(() => window.__intro.theme.gain.gain.value < 0.001);
   check('menu music obeys live volume settings', true);
+  await closeAccount(page);
   await page.locator('.px-menu button').filter({ hasText: /New Game/ }).first().click();
   await page.locator('#enhanced-menu .act.primary', { hasText: 'Begin' }).click();
   await page.waitForSelector('#pick');

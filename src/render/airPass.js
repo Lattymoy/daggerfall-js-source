@@ -441,8 +441,9 @@ void main() {
   outColor = vec4(vec3(clamp(v, 0.0, 1.0)), 1.0);
 }`;
 
-/** EL4: the bright pass - what the decoded frame holds above the threshold, over the world rect. */
-const BRIGHT_FS = `#version 300 es
+/** EL4: the bright pass - what the decoded frame holds above the threshold, over the world rect. PERF-EXT31: built
+ *  with the glow's read and without it, as the resolve is (resolveFs says why). */
+const brightFs = (glow) => `#version 300 es
 precision highp float;
 in vec2 vUV;
 uniform sampler2D uFrame;
@@ -454,15 +455,25 @@ ${CODEC_GLSL}
 out vec4 outColor;
 void main() {
   vec2 uv = (uRect.xy + vUV * uRect.zw) / uCanvas;
-  vec3 c = airDecode(texture(uFrame, uv).rgb) + airDecode(texture(uVol, vUV).rgb);
+  vec3 c = airDecode(texture(uFrame, uv).rgb)${glow ? ' + airDecode(texture(uVol, vUV).rgb)' : ''};
   float lum = dot(c, vec3(0.2126, 0.7152, 0.0722));
   float k = smoothstep(uThreshold, 1.0, lum);
   outColor = vec4(c * k, 1.0);
 }`;
 
 /** EL4: THE RESOLVE - the frame to the canvas: decoded, the bloom and the
- *  shafts added over the world rect, the vignette, the contrast, encoded. */
-const RESOLVE_FS = `#version 300 es
+ *  shafts added over the world rect, the vignette, the contrast, encoded.
+ *
+ *  PERF-EXT31 (2026-09-25; two players via Mac, "fps issues in the exterior but fine in the interior" and "me too my
+ *  friend.. don't know why. I got a RX6600"): BUILT FOR WHAT THE FRAME DREW. The glow is cleared black on every frame
+ *  it was not marched (no lantern lit - every day outside without a torch - the door shut, a frame the pass was not
+ *  prepared for), and the shafts on every frame with neither the beams nor the haze (every night). A black read adds
+ *  exactly nothing - airDecode(0) is 0, and 0 * uGrade.y is 0 - yet every world pixel paid a tap and a decode (three
+ *  pows) for the glow and a tap for the shafts. So the pass is built with each read and without it, and composite()
+ *  takes the one for the images the frame holds; with both (glow 1, shafts 1) it is the text it always was. NOT a
+ *  uniform `if`: measured on SwiftShader a gate that small is flattened and the read paid anyway (the resolve 4% faster
+ *  gated, 16% with the read compiled out), and a GPU's compiler is as free to flatten it. */
+const resolveFs = (glow, shafts) => `#version 300 es
 precision highp float;
 in vec2 vUV;
 uniform sampler2D uFrame;
@@ -482,9 +493,8 @@ void main() {
   vec2 wuv = (vUV * uCanvas - uRect.xy) / uRect.zw;
   if (wuv.x >= 0.0 && wuv.x <= 1.0 && wuv.y >= 0.0 && wuv.y <= 1.0) {
     c *= mix(1.0, texture(uAO, wuv).r, uAOMix);   // EL6: the crevice loses its light here, once, whole
-    c += texture(uBloom, wuv).rgb * uGrade.x + texture(uShaft, wuv).rgb * uGrade.y;
-    c += airDecode(texture(uVol, wuv).rgb);   // VOL1: what elFinish added per fragment, once per pixel and shadowed
-    float r = length((wuv - 0.5) * 2.0);
+    c += texture(uBloom, wuv).rgb * uGrade.x${shafts ? ' + texture(uShaft, wuv).rgb * uGrade.y' : ''};
+${glow ? '    c += airDecode(texture(uVol, wuv).rgb);   // VOL1: what elFinish added per fragment, once per pixel and shadowed\n' : ''}    float r = length((wuv - 0.5) * 2.0);
     c *= 1.0 - uGrade.z * smoothstep(0.55, 1.35, r);
   }
   // EL5: THE CONTRAST IS IN DISPLAY SPACE. Around 0.18 in linear light it sent
@@ -1006,8 +1016,9 @@ export class AirPass {
       // EL4
       lum: P(QUAD_VS, LUM_FS, ['uFrame', 'uPrev', 'uRect', 'uCanvas', 'uVol']),   // AUDIT VOL1: the eye sees the glow
       adapt: P(QUAD_VS, ADAPT_FS, ['uPrev', 'uLum', 'uAdaptParams', 'uAdaptRates']),
-      bright: P(QUAD_VS, BRIGHT_FS, ['uFrame', 'uRect', 'uCanvas', 'uThreshold', 'uVol']),   // AUDIT VOL1: the glow's core blooms
-      resolve: P(QUAD_VS, RESOLVE_FS, ['uFrame', 'uBloom', 'uShaft', 'uRect', 'uCanvas', 'uGrade', 'uAO', 'uAOMix', 'uVol']),   // VOL1
+      // PERF-EXT31: by what the frame drew - bright[glow], resolve[glow][shafts]; bright[1] and resolve[1][1] read it all
+      bright: [0, 1].map((glow) => P(QUAD_VS, brightFs(glow), ['uFrame', 'uRect', 'uCanvas', 'uThreshold', 'uVol'])),   // AUDIT VOL1: the glow's core blooms
+      resolve: [0, 1].map((glow) => [0, 1].map((shafts) => P(QUAD_VS, resolveFs(glow, shafts), ['uFrame', 'uBloom', 'uShaft', 'uRect', 'uCanvas', 'uGrade', 'uAO', 'uAOMix', 'uVol']))),   // VOL1
       volBlur: P(QUAD_VS, VOLBLUR_FS, ['uSrc', 'uTexel', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas']),   // VOL1: the tile's average, by depth
       vol: null, volTone: null,   // VOL1: built below, only with the lane's GLSL in hand
     };
@@ -1067,6 +1078,11 @@ export class AirPass {
     this.targets = null;
     // EL4: the frame image (canvas-sized), the luminance image and the two adaptation images
     this.frame = null;
+    // RETRO1: the frame images by slot - the canvas's, and a retro world frame's (render/retroPass.js), which is
+    // the retro image's size. A retro world frame and a full-size one (a video or a map over the world) can
+    // alternate inside one presented frame; each keeps its own image rather than reallocating the other's
+    this._frames = { canvas: null, retro: null };
+    this.resolveTo = null;   // RETRO1: { fbo, w, h } - where the resolve writes instead of the canvas (the retro image)
     this.lum = null;
     this.adapt = null;      // [a, b], this.adaptIndex the current
     this.adaptIndex = 0;
@@ -1075,6 +1091,7 @@ export class AirPass {
     this.adaptRates = new Float32Array([AIR_ADAPT_OPEN, AIR_ADAPT_CLOSE]);
     this.canvas = new Float32Array(2);
     this.rect = new Float32Array(4);
+    this._fullRect = new Float32Array(4);   // AUDIT RETRO1 B4: an unprepared frame's rect - its whole image
     this._lastResolve = 0;
     this.measured = false;   // AUDIT-EL F10
     this._now = opts.now ?? (() => (globalThis.performance?.now?.() ?? Date.now()));
@@ -1128,10 +1145,14 @@ export class AirPass {
    *  TEXTURE (EL6: the AO, the glares, the emitters and the shafts read it
    *  at the resolve - the frame's own depth, no replay), (re)allocated when
    *  the canvas changes size. */
-  _ensureFrame(W, H) {
+  _ensureFrame(W, H, slot = 'canvas') {
     const gl = this.gl;
-    if (this.frame && this.frame.w === W && this.frame.h === H) return this.frame;
-    if (this.frame) { gl.deleteTexture(this.frame.tex); for (const d of this.frame.depths) gl.deleteTexture(d); for (const f of this.frame.depthFbos) gl.deleteFramebuffer(f); gl.deleteFramebuffer(this.frame.fbo); }
+    const kept = this._frames[slot];
+    if (kept && kept.w === W && kept.h === H) {
+      if (this.frame !== kept) { this.frame = kept; this.prevValid = false; }   // RETRO1: the other slot's image - its previous depth is not this frame's previous
+      return kept;
+    }
+    if (kept) this._deleteFrame(kept);
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
@@ -1166,10 +1187,25 @@ export class AirPass {
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, depths[0], 0);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindTexture(gl.TEXTURE_2D, null);
-    this.frame = { tex, depths, depthFbos, depthIndex: 0, depth: depths[0], prevDepth: depths[1], fbo, w: W, h: H };
+    this.frame = this._frames[slot] = { tex, depths, depthFbos, depthIndex: 0, depth: depths[0], prevDepth: depths[1], fbo, w: W, h: H };
     this.prevValid = false;   // a new frame image: the previous depth is the far plane
     if (!this.lum) this._ensureAdapt();
     return this.frame;
+  }
+  /** A frame image's texture, its two depths and their framebuffers, deleted. */
+  _deleteFrame(k) {
+    const gl = this.gl;
+    gl.deleteTexture(k.tex); for (const d of k.depths) gl.deleteTexture(d); for (const f of k.depthFbos) gl.deleteFramebuffer(f); gl.deleteFramebuffer(k.fbo);
+  }
+  /** PERF-SCALE (the review): free a slot's frame image - the world stopped drawing into an image of its own (retro
+   *  off, the render scale back at 100%; Renderer._dropWorldImage), so the image-sized frame is not held for the rest
+   *  of the session. The frame it was is no frame now: its previous depth is nothing's previous. */
+  dropFrame(slot) {
+    const kept = this._frames[slot];
+    if (!kept) return;
+    this._deleteFrame(kept);
+    this._frames[slot] = null;
+    if (this.frame === kept) { this.frame = null; this.prevValid = false; }
   }
   /** EL4: the luminance image with its mip chain and the two 1x1
    *  adaptation images, the current one starting at a multiplier of 1. */
@@ -1208,10 +1244,12 @@ export class AirPass {
   get adaptTexture() { return this.adapt ? this.adapt[this.adaptIndex].tex : null; }
 
   /** EL4: bind the frame image for the world pass of a W x H canvas, and
-   *  make it the frame target every pass restores to. Returns its fbo. */
-  beginFrameTarget(W, H) {
+   *  make it the frame target every pass restores to. Returns its fbo.
+   *  RETRO1: `slot` 'retro' for a retro world frame, whose W x H is the
+   *  retro image's. */
+  beginFrameTarget(W, H, slot = 'canvas') {
     if (!(W > 0 && H > 0)) return null;   // AUDIT-EL F18
-    const f = this._ensureFrame(W, H);
+    const f = this._ensureFrame(W, H, slot);
     const gl = this.gl;
     // EL8: this frame writes the other depth; the one just written is the previous
     f.depthIndex ^= 1;
@@ -1528,7 +1566,7 @@ export class AirPass {
   /** EL4: THE RESOLVE. Called by the frame's first screen-space draw; a
    *  no-op until a render is owed. Measures the frame (the luminance image,
    *  the adaptation step), finishes the bloom (the bright pass, the blur),
-   *  then draws the frame to the canvas through RESOLVE_FS and releases the
+   *  then draws the frame to the canvas through resolveFs and releases the
    *  frame target. Leaves the canvas bound at the full canvas viewport. */
   composite() {
     if (!this.pending || !this.targets || !this.frame) return;
@@ -1558,8 +1596,17 @@ export class AirPass {
     if (prepared) this._images();
     else { this._blank(quad); this.measured = false; }
     this.fresh = false;
+    // PERF-EXT31: the passes built for what the images hold, final now that _images or _blank has run - the glow marched
+    // or cleared black, the shafts drawn (the beams or the haze) or cleared black (resolveFs says why). The luminance
+    // image reads the glow either way: sixteen taps a texel of a 32x32 image is 16,384 a frame, nothing to save.
+    const glow = this.stats.vol ? 1 : 0, shafts = this.stats.shafts || this.stats.haze ? 1 : 0;
+    const PB = P.bright[glow], PR = P.resolve[glow][shafts];
     gl.disable(gl.BLEND);
     gl.bindVertexArray(this.quadVao);
+    // AUDIT RETRO1 B4: and an unprepared frame is its WHOLE image - `this.rect` is the last world frame's, which under
+    // retro mode is 320x200 of a 1280x720 menu frame, and the bright pass and the resolve's vignette read it
+    if (!prepared) { this._fullRect[2] = F.w; this._fullRect[3] = F.h; }
+    const rect = prepared ? this.rect : this._fullRect;
     // 1. the luminance image and its mean - AUDIT-EL F10: not off a frame the
     // world never drew (the passes saw no records): the eye would adapt to
     // the clear colour behind a video or a menu and swing back on return
@@ -1570,7 +1617,7 @@ export class AirPass {
     gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, T.volOut.tex); gl.uniform1i(P.lum.uVol, 2); gl.activeTexture(gl.TEXTURE0);   // AUDIT VOL1: the eye adapts to the glow it will see
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, this.adapt[this.adaptIndex].tex); gl.uniform1i(P.lum.uPrev, 1);   // AUDIT-EL F16
     gl.activeTexture(gl.TEXTURE0);
-    gl.uniform4fv(P.lum.uRect, this.rect);
+    gl.uniform4fv(P.lum.uRect, rect);
     gl.uniform2fv(P.lum.uCanvas, this.canvas);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.bindTexture(gl.TEXTURE_2D, this.lum.tex);
@@ -1588,15 +1635,15 @@ export class AirPass {
     this.adaptIndex = 1 - this.adaptIndex;
     }
     // 3. the bright pass joins the emitters and the glares, then the blur, twice
-    quad(P.bright, T.bloom);
+    quad(PB, T.bloom);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE);
     gl.bindTexture(gl.TEXTURE_2D, F.tex);
-    gl.uniform1i(P.bright.uFrame, 0);
-    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, T.volOut.tex); gl.uniform1i(P.bright.uVol, 2); gl.activeTexture(gl.TEXTURE0);   // AUDIT VOL1: a halo's core blooms
-    gl.uniform4fv(P.bright.uRect, this.rect);
-    gl.uniform2fv(P.bright.uCanvas, this.canvas);
-    gl.uniform1f(P.bright.uThreshold, AIR_BRIGHT_THRESHOLD);
+    gl.uniform1i(PB.uFrame, 0);
+    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, T.volOut.tex); gl.uniform1i(PB.uVol, 2); gl.activeTexture(gl.TEXTURE0);   // AUDIT VOL1: a halo's core blooms
+    gl.uniform4fv(PB.uRect, rect);
+    gl.uniform2fv(PB.uCanvas, this.canvas);
+    gl.uniform1f(PB.uThreshold, AIR_BRIGHT_THRESHOLD);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.disable(gl.BLEND);
     for (let pass = 0; pass < 2; pass++) {
@@ -1610,21 +1657,21 @@ export class AirPass {
       gl.uniform2f(P.gauss.uDir, 0, 1 / T.bloom.h);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
-    // 4. the frame to the canvas
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    // 4. the frame to the canvas - RETRO1: or into the retro image, the frame's own size, which the renderer presents next
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.resolveTo?.fbo ?? null);
     setFrameTarget(null);
     gl.viewport(0, 0, F.w, F.h);
-    gl.useProgram(P.resolve.p);
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, F.tex); gl.uniform1i(P.resolve.uFrame, 0);
-    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, T.bloom.tex); gl.uniform1i(P.resolve.uBloom, 1);
-    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, T.shaft.tex); gl.uniform1i(P.resolve.uShaft, 2);
-    gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, T.aoBlur.tex); gl.uniform1i(P.resolve.uAO, 3);   // EL6
-    gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, T.volOut.tex); gl.uniform1i(P.resolve.uVol, 4);   // VOL1: the blurred, tonemapped glow
-    gl.uniform1f(P.resolve.uAOMix, prepared ? AIR_AO_RESOLVE : 0);
+    gl.useProgram(PR.p);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, F.tex); gl.uniform1i(PR.uFrame, 0);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, T.bloom.tex); gl.uniform1i(PR.uBloom, 1);
+    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, T.shaft.tex); gl.uniform1i(PR.uShaft, 2);
+    gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, T.aoBlur.tex); gl.uniform1i(PR.uAO, 3);   // EL6
+    gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, T.volOut.tex); gl.uniform1i(PR.uVol, 4);   // VOL1: the blurred, tonemapped glow
+    gl.uniform1f(PR.uAOMix, prepared ? AIR_AO_RESOLVE : 0);
     gl.activeTexture(gl.TEXTURE0);
-    gl.uniform4fv(P.resolve.uRect, this.rect);
-    gl.uniform2fv(P.resolve.uCanvas, this.canvas);
-    gl.uniform4fv(P.resolve.uGrade, this.grade);
+    gl.uniform4fv(PR.uRect, rect);
+    gl.uniform2fv(PR.uCanvas, this.canvas);
+    gl.uniform4fv(PR.uGrade, this.grade);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.bindVertexArray(null);
     gl.depthMask(true);

@@ -41,6 +41,7 @@ import { ONLINE_FORCED_PREFS } from '../src/systems/onlineLane.js';
 import { FEATURES, checkFeatures } from '../src/systems/features.js';
 import '../src/world/landView.js';   // RF4: the condensed rows' lanes register themselves; checkFeatures reads them
 import '../src/world/outdoors.js';
+import '../src/systems/featureLanes.js';   // FT18: the wind, the quick slots and the blood lanes register themselves too
 import * as LR from '../src/systems/lootRarity.js';
 import { createRandomWeapon, createRandomArmor, LOOT_ARRAY_FIELDS, validLootItem, validLootList } from '../src/systems/loot.js';   // AUDIT-LR: a container's whole list, the shape both online doors send
 import { createWeapon } from '../src/combat/enemyEquipment.js';

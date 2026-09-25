@@ -41,7 +41,7 @@
 // row draws in ListBox's selectedTextColor with no shadow.
 // ET1-AUDIT F1: THE KEYBOARD IS DFU'S. This header used to say "DFU
 // has no keyboard here", and it does: DialogShortcuts.txt binds all
-// twelve of this window's buttons (systems/dialogShortcuts.js:331-336
+// twelve of this window's buttons (systems/dialogShortcuts.js:340-345
 // - A Tell me about, W Where is, L/P/T/J the four categories, O ask,
 // G goodbye, C copy, F1/F2/F3 the tones), and input() walks them
 // FIRST through firstHotkey, landing on press(name) like a click. The
@@ -920,7 +920,7 @@ export class NativeTalkWindow {
    *  AUDIT 65 UI-1: the third and fourth slots are the HOST's, not
    *  this window's. Every overlay slot dispatches
    *  `click(vx, vy, right, middle)` - townTalk.js:1241,
-   *  worldModes.js:9347, dungeonContext.js:6683 - so the clock that
+   *  worldModes.js:9356, dungeonContext.js:6683 - so the clock that
    *  used to sit in the fourth arrived as `e.button === 1`, a boolean,
    *  and `false ?? Date.now()` kept the `false`: every second click in
    *  the topic list picked. The THIRD slot is really read - it is the

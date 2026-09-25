@@ -705,7 +705,7 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   assert.equal((panel.match(/win\.addEventListener\(/g) ?? []).length, 1, 'and no other on the window (D5)');
   assert.match(panel, /e\.isTrusted !== false/, 'the touch layer\'s synthesized Enter opens nothing');
   assert.match(panel, /if \(e\.isComposing \|\| e\.keyCode === 229\) \{ e\.stopPropagation\(\); return; \}/, 'the IME\'s Enter (C3)');
-  assert.match(panel, /export const actionOfKey = \(e\) => actionForCode\(bindings\(\), e\.code\);/, 'the open key through the registry (C4)');
+  assert.match(panel, /export const actionOfKey = \(e\) => \(codeMeans\(bindings\(\), e\.code, CHAT_OPEN_ACTION\) \? CHAT_OPEN_ACTION : actionForCode\(bindings\(\), e\.code\)\);/, 'the open key through the registry (C4; UXB1-S: a shared key that carries it opens it)');
   const online = rd('src/net/online.js');
   assert.match(online, /if \(!this\.presence && this\.status === 'open' && now - this\._lastSentAt >= HEARTBEAT_MS && this\._send\(\{ t: 'ping' \}\)\) this\._lastSentAt = now;/, 'the channel heartbeat is a ping the runtime answers in its sleep');
   const room = rd('server/src/index.js');

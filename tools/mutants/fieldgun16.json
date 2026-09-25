@@ -11,8 +11,8 @@
   {
     "name": "FIELD-GUN16-2-a-small-icon-is-blown-up-to-fill-the-cell",
     "file": "src/ui/itemScroller.js",
-    "old": "    const fit = Math.min(1, (CELL_W - CELL_MARGIN * 2) / size.width, (SLOT_H - CELL_MARGIN * 2) / size.height);",
-    "new": "    const fit = Math.min((CELL_W - CELL_MARGIN * 2) / size.width, (SLOT_H - CELL_MARGIN * 2) / size.height);",
+    "old": "  const fit = Math.min(1, (CELL_W - CELL_MARGIN * 2) / size.width, (SLOT_H - CELL_MARGIN * 2) / size.height);",
+    "new": "  const fit = Math.min((CELL_W - CELL_MARGIN * 2) / size.width, (SLOT_H - CELL_MARGIN * 2) / size.height);",
     "tests": [
       "test/nativetrade.test.js"
     ]

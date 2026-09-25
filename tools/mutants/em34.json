@@ -101,8 +101,8 @@
   {
     "name": "EM3-11-the-floor-strip-is-TOP-storey-at-the-bottom",
     "file": "src/ui/inkAutomap.js",
-    "old": "    const f = shown[shown.length - 1 - i];    // top of the paper is the TOP storey",
-    "new": "    const f = shown[i];",
+    "old": "  for (let i = win.shown.length - 1; i >= 0; i--) {\n    const f = win.shown[i];    // top of the paper is the TOP floor",
+    "new": "  for (let i = 0; i < win.shown.length; i++) {\n    const f = win.shown[i];    // top of the paper is the TOP floor",
     "tests": [
       "test/inkautomap.test.js"
     ]
@@ -120,7 +120,7 @@
   {
     "name": "EM3-13-a-tower-runs-off-the-paper",
     "file": "src/ui/inkAutomap.js",
-    "old": "  if (all.length <= FLOOR_STRIP_MAX) return all;",
+    "old": "  if (all.length <= max) return all;",
     "new": "  return all;",
     "tests": [
       "test/inkautomap.test.js"
@@ -129,7 +129,7 @@
   {
     "name": "EM3-14-the-capped-strip-loses-the-storey-you-are-on",
     "file": "src/ui/inkAutomap.js",
-    "old": "  lo = Math.max(0, Math.min(all.length - FLOOR_STRIP_MAX, lo));",
+    "old": "  lo = Math.max(0, Math.min(all.length - max, lo));",
     "new": "  lo = Math.max(0, lo);",
     "tests": [
       "test/inkautomap.test.js"
@@ -198,7 +198,7 @@
   {
     "name": "EM3-21-a-mark-is-drawn-on-every-storey",
     "file": "src/ui/automapSheet.js",
-    "old": "    const mine = (y) => floorAt(f.floors, y) === index;",
+    "old": "    const mine = (y) => sheetAt(f, y) === index;",
     "new": "    const mine = () => true;",
     "tests": [
       "test/automapsheet.test.js"
@@ -208,7 +208,7 @@
   {
     "name": "EM3-22-the-caret-is-drawn-on-a-floor-the-player-is-not-on",
     "file": "src/ui/automapSheet.js",
-    "old": "    if (floorAt(f.floors, feet[1]) !== index) return null;",
+    "old": "    if (sheetAt(f, feet[1]) !== index) return null;",
     "new": "",
     "tests": [
       "test/automapsheet.test.js"
@@ -218,8 +218,8 @@
   {
     "name": "EM3-23-the-way-in-is-drawn-before-it-is-found",
     "file": "src/ui/automapSheet.js",
-    "old": "    if (!sm || !r?.entranceDiscovered || !f.floors.length) return null;",
-    "new": "    if (!sm || !f.floors.length) return null;",
+    "old": "    if (!sm || !r?.entranceDiscovered || !f.sheets.length) return null;",
+    "new": "    if (!sm || !f.sheets.length) return null;",
     "tests": [
       "test/automapsheet.test.js"
     ]
@@ -227,7 +227,7 @@
   {
     "name": "EM3-24-the-storey-can-be-stepped-off-the-level",
     "file": "src/ui/automapSheet.js",
-    "old": "    const want = Math.max(0, Math.min(f.floors.length - 1, next));",
+    "old": "    const want = Math.max(0, Math.min(f.sheets.length - 1, next));",
     "new": "    const want = next;",
     "tests": [
       "test/automapsheet.test.js"

@@ -44,7 +44,8 @@ test('FT11: the four booleans - DFU Classic, live, titled as Settings titles the
 test('FT11: dungeon wall style - the one choice, its five modes the settings law\'s enum, Classic by default', () => {
   const key = 'Video/RandomDungeonTextures';
   const f = FEATURES.find((x) => x.id === 'dungeon-wall-style');
-  assert.ok(f); assert.deepEqual(f.control, { store: 'settings', key }); assert.equal(f.title, labelOf(key));
+  assert.ok(f); assert.deepEqual(f.control, { store: 'settings', key, classic: 0 }); assert.equal(f.title, labelOf(key));
+  assert.equal(ENUM_LAW[key].values[f.control.classic], 'Classic', 'FT18: what All off sets on a choice with no Off - Daggerfall\'s own table');
   assert.equal(widgetFor(key), 'enum', 'the home draws it as the settings law\'s stepper');
   assert.deepEqual(ENUM_LAW[key].values, ['Classic', 'Climate', 'Climate Only', 'Random', 'Random Only']);
   assert.equal(DEFAULTS.Video.RandomDungeonTextures, '0', 'Classic');

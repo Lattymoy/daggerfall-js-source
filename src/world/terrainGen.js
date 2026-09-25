@@ -98,7 +98,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   // a real location starts from its own mean (MapData.averageHeight is
   // only ever computed there), every other from 0.
   const wodResult = wod && wod.picks.length ? applyPicks(samples, wod.picks, hasLocation ? avg : 0) : null;
-  const grid = buildTerrainGrid(samples, stride, ghostSampler(woods, px, py));
+  const grid = restrideGrid({ woods, px, py, stride, samples });   // PERF-EXT26: the one grid law, the restride's too
   const tilemapBytes = convertTilemap(tilemap);
   const nature = layoutNature(samples, tilemap, {
     mapPixelX: px,
@@ -119,4 +119,20 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     withRoads: !!roads,
     wodAverages: wodResult ? wodResult.averages : null,   // WOD2: per pick, the normalized average its objects stand on
   };
+}
+
+/**
+ * PERF-EXT26 (2026-09-25, the players: "fps issues in the exterior but
+ * fine in the interior", "me too my friend.. don't know why. I got a
+ * RX6600"): A PIXEL'S GRID AT A STRIDE, from its samples as the pixel
+ * keeps them (post-blend, post-smoothing) and the ghost rows off the woods
+ * for its edge normals (EV4). The build above, the world host's ring-class
+ * swap (STREAM1's restride) and the terrain worker's `grid` job all run
+ * this one law, so a promotion built on the worker is the bytes one built
+ * on the main thread is, by construction.
+ * @param {{ woods: object, px: number, py: number, stride?: number, samples: Float32Array }} job
+ * @returns {{ positions: Float32Array, normals: Float32Array }}
+ */
+export function restrideGrid({ woods, px, py, stride = 1, samples }) {
+  return buildTerrainGrid(samples, stride, ghostSampler(woods, px, py));
 }

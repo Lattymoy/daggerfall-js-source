@@ -493,6 +493,16 @@ const BUNDLE_ART = new Map([
   ['public/art/dfu-icons/',
     { manifest: 'vendor/dfu-icons/dfu-icons.files.json',
       why: "THIRD-PARTY - Daggerfall Unity (Daggerfall Workshop, MIT); HUDInteractionModeIcon's four icon sets (icon, classic, colour, mono - steal, grab, info, talk), byte for byte from Assets/Resources/Icons at the commit the listing pins (see vendor/dfu-icons/README.md)" }],
+  // SKIN2 (2026-09-25, Mac: "Implement these as new skin options"): Mac's ExistingClasses archive, twenty redrawn
+  // enemy-class sheets worn as on-foot skins. A LOOSE-FILE pack (no .dfmod), so GrimoireUI's way: the listing
+  // generated from the archive is the authority - and these names were changed on the way in (three port archive
+  // numbers, a gap renumbered, a stray underscore), so the listing maps each file to its archive path and
+  // tools/classSkinsListing.mjs proves the bytes. The first cut of this slice ran the suite BEFORE `git add` and
+  // shipped without this row - AUDIT-TO1 F3's trap again; the art is not ARENA2's (redrawn at twice the size, under
+  // archive numbers past TEXTURE.511 that the mods' art uses).
+  ['vendor/class-skins/Textures/',
+    { manifest: 'vendor/class-skins/class-skins.files.json',
+      why: "THIRD-PARTY - Daggerfall class skins (Mac's ExistingClasses archive; the artists unnamed but the bounty hunter's, Kamer); twenty redrawn enemy-class sprite sheets, byte for byte from the archive under the names class-skins.files.json maps (see vendor/class-skins/README.md for the open permission record)" }],
   ['public/art/diverse-weapons/',
     { manifest: 'vendor/diverse-weapons/diverse-weapons.dfmod.json',
       why: "THIRD-PARTY - Diverse Weapons 1.7.3 (RealAKP); the mod's own first-person weapon sprites - eighteen weapons x ten metals, plain and enchanted, every record and frame, Weapon Widget's double-scale idles and the icons - re-encoded from the bundle's Texture2D objects by tools/diverseWeaponsExtract.mjs as indexed PNG where the picture fits one (lossless for every drawn pixel; see the vendor README)" }],

@@ -1450,7 +1450,7 @@ and every enemy-side call passes 16. The data diet's whole fetch
 surface (literal + variable-name sites: HUD art, palette indirection
 incl. MAP.PAL/NIGHTSKY.COL, NITE images, TEXTURE templates) passes
 KEEP on both diets; SKY-on-lean is the designed gradient. (AUDIT 18
-correction: NIGHTSKY.COL really is fetched - scenes/shared.js:64 loads
+correction: NIGHTSKY.COL really is fetched - scenes/shared.js:65 loads
 it through `img.paletteName` - but MAP.PAL is NOT. Its only namer is
 ImgFile.paletteName for TMAP00I0.IMG, and the one loader of that file,
 chargenArt.js loadOne, draws it with the shared ART_PAL and never
@@ -1510,7 +1510,7 @@ out of it and hold for all future work:
      exists so evidence, not theory, drives the next fix.
 
 **2026-07-07 - the crash-class audit (no-undef joins the gate).** Mac's second live crash (Y1@407:239805) mapped through the
-deterministic bundle to characterSprite.js:57 calling trs() WITHOUT
+deterministic bundle to characterSprite.js:94 calling trs() WITHOUT
 importing it - unbound since C8 E3d; vite emits unknown identifiers
 as presumed globals, so node --check, the build, and the headless
 suite all pass while the first real viewmodel frame throws

@@ -263,8 +263,8 @@
   {
     "name": "BLOOD1a-the-row-is-forced-for-the-room-online",
     "file": "src/systems/features.js",
-    "old": "    control: Object.freeze({ store: 'prefs', key: 'blood-marks', initial: true, online: 'player' }),",
-    "new": "    control: Object.freeze({ store: 'prefs', key: 'blood-marks', initial: true, online: true }),",
+    "old": "        Object.freeze({ store: 'prefs', key: 'blood-marks', initial: true, online: 'player' }),",
+    "new": "        Object.freeze({ store: 'prefs', key: 'blood-marks', initial: true, online: true }),",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -770,7 +770,7 @@
   {
     "name": "BLOOD1b-a-moved-batch-keeps-the-sphere-it-was-born-in",
     "file": "src/render/renderer.js",
-    "old": "    bounds[0] = cx; bounds[1] = cy; bounds[2] = cz;\n    bounds[3] = Math.hypot(hi0 - cx, hi1 - cy, hi2 - cz) + Math.hypot(batch.size.w, batch.size.h) * 0.5;",
+    "old": "    bounds[0] = cx; bounds[1] = cy; bounds[2] = cz;\n    bounds[3] = Math.hypot(hi0 - cx, hi1 - cy, hi2 - cz) + quadHalfDiagonal(batch.size);",
     "new": "    return true;",
     "tests": [
       "test/blood1_decals.test.js"
@@ -779,7 +779,7 @@
   {
     "name": "BLOOD1b-a-moved-batch-s-sphere-forgets-the-quad-s-own-size",
     "file": "src/render/renderer.js",
-    "old": "    bounds[3] = Math.hypot(hi0 - cx, hi1 - cy, hi2 - cz) + Math.hypot(batch.size.w, batch.size.h) * 0.5;",
+    "old": "    bounds[3] = Math.hypot(hi0 - cx, hi1 - cy, hi2 - cz) + quadHalfDiagonal(batch.size);",
     "new": "    bounds[3] = Math.hypot(hi0 - cx, hi1 - cy, hi2 - cz);",
     "tests": [
       "test/blood1_decals.test.js"
@@ -1159,8 +1159,8 @@
   {
     "name": "AUDIT-a-moved-batch-s-sphere-forgets-the-centres",
     "file": "src/render/renderer.js",
-    "old": "    bounds[3] = Math.hypot(hi0 - cx, hi1 - cy, hi2 - cz) + Math.hypot(batch.size.w, batch.size.h) * 0.5;",
-    "new": "    bounds[3] = Math.hypot(batch.size.w, batch.size.h) * 0.5;",
+    "old": "    bounds[3] = Math.hypot(hi0 - cx, hi1 - cy, hi2 - cz) + quadHalfDiagonal(batch.size);",
+    "new": "    bounds[3] = quadHalfDiagonal(batch.size);",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -2559,9 +2559,9 @@
   },
   {
     "name": "BLOOD2g-the-row-forgets-a-tier",
-    "file": "src/systems/features.js",
-    "old": "tiers: Object.freeze([['light', 'Light'], ['normal', 'Normal'], ['heavy', 'Heavy'], ['abattoir', 'Abattoir']]),",
-    "new": "tiers: Object.freeze([['light', 'Light'], ['normal', 'Normal'], ['heavy', 'Heavy']]),",
+    "file": "src/systems/featureLanes.js",
+    "old": "['heavy', 'Heavy'], ['abattoir', 'Abattoir']]);",
+    "new": "['heavy', 'Heavy']]);",
     "tests": [
       "test/blood1_decals.test.js"
     ]

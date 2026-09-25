@@ -10,6 +10,7 @@
 
 import { appStorage } from './appStorage.js';   // the one storage seam - localStorage lives there alone
 import { onlineForcedModSetting } from './onlineLane.js';   // MODS-ONLINE-2: online, the room's ground is forced and every other switch is the player's
+import { FOOT_SKIN_COUNT, CLASS_SKINS, classSkinLabel } from '../player/classSkins.js';   // SKIN2: the class skins past the mod's sixteen
 
 const STORE_KEY = 'dfjs-mod-settings';
 
@@ -472,6 +473,22 @@ export const MOD_SETTINGS = Object.freeze({
       'Handling.StowWhenSwimming': Object.freeze({ default: true, description: 'Swimming stows the light: no free hand.' }),
       'Handling.RelaxedTwoHandedWeapons': Object.freeze({ default: false, description: 'Two-handed weapons will only occupy your off-hand when attacking' }),   // 3ARMS: the mod ships true; the port ships false - see the departure in Handheld-Torches.md
       'Handling.RelaxedLanterns': Object.freeze({ default: false, description: 'If enabled, will not stow lanterns when both hands are occupied' }),
+      // HT-WAIST (2026-09-24, Mac: "Let the lantern item be able to be hung
+      // at the waist instead of having to be held" - and, asked how, a
+      // switch on THIS pane, off by default; HT-WAIST-ON, the same day: "Have
+      // the lantern change on by default" - it ships ON): A DEPARTURE ON THIS PANE, AND
+      // THE FIRST KEY THE MOD DOES NOT SHIP AT ALL. Every earlier one
+      // (MODS-ON Sprite, HT4 Tab, SOC5 F, HT5 Bob, HT7 OnStow, 3ARMS) moves
+      // a shipped default; this one is the port's own switch, sitting beside the
+      // mod's RelaxedLanterns because it is that switch taken the rest of
+      // the way. Relaxed keeps a lantern lit when both hands are busy; ON,
+      // this hangs it at the waist - it never needs a free hand, is never
+      // stowed for a two-hander, a bow, a spell, a climb or a swim, the
+      // first-person hand never holds it, and the light shines from the hip
+      // (systems/playerTorch.js lanternAtWaist). Torches and candles are
+      // still held. The vendored modsettings.json is untouched; the pane's
+      // pin names this key as the port's (test/ht1_handheldtorches.test.js).
+      'Handling.LanternsAtWaist': Object.freeze({ default: true, description: 'If enabled, lanterns hang at your waist instead of being held: they never need a free hand, are never stowed, and light you from the hip. Torches and candles are still held. (This port’s own switch - the mod has none.)' }),
       'Throwing.ThrowTorchInput': Object.freeze({ default: "X", text: true, description: 'Hold to wind up a throw, release to throw a torch.' }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'Throwing.ThrowStrength': Object.freeze({ default: 1.0, min: 0.0, max: 10.0, float: true, step: 0.25, description: 'Multiplier on the throw\u2019s speed (25 at full Strength).' }),
       'Throwing.GravityStrength': Object.freeze({ default: 1.0, min: 0.0, max: 10.0, float: true, step: 0.25, description: 'Multiplier on the thrown torch\u2019s fall.' }),
@@ -647,11 +664,14 @@ export const MOD_SETTINGS = Object.freeze({
       // Heavy Fighter F 4 and M 5, Mage F 6 and M 7, Thief Mage 8/9, Fighter Mage 10/11, Thief 12/13, Fighter Thief
       // 14/15), and the art says the rest: every even set is a woman and every odd set a man, and the five riders are
       // the fighters by their helms and boots (green-booted women, cyan-booted men - the on-foot sets' own colours).
-      'Graphics.OnFoot': Object.freeze({ default: 0, min: 0, max: 15, description: 'Sprite when on foot',
+      // SKIN2 (2026-09-25, Mac: "Implement these as new skin options"): Daggerfall's own classes follow the mod's
+      // sixteen as 16 onwards (player/classSkins.js) - the mod's range kept as its own, the port's past it.
+      'Graphics.OnFoot': Object.freeze({ default: 0, min: 0, max: FOOT_SKIN_COUNT - 1, description: 'Sprite when on foot',
         labels: Object.freeze(['Light Fighter (female)', 'Light Fighter (male)', 'Medium Fighter (female)', 'Medium Fighter (male)',
           'Heavy Fighter (female)', 'Heavy Fighter (male)', 'Mage (female)', 'Mage (male)',
           'Thief Mage (female)', 'Thief Mage (male)', 'Fighter Mage (female)', 'Fighter Mage (male)',
-          'Thief (female)', 'Thief (male)', 'Fighter Thief (female)', 'Fighter Thief (male)']) }),
+          'Thief (female)', 'Thief (male)', 'Fighter Thief (female)', 'Fighter Thief (male)',
+          ...CLASS_SKINS.map(classSkinLabel)]) }),
       'Graphics.OnHorse': Object.freeze({ default: 0, min: 0, max: 4, description: 'Sprite when riding a horse',
         labels: Object.freeze(['Light Fighter (female)', 'Medium Fighter (male)', 'Medium Fighter (female)', 'Heavy Fighter (male)', 'Heavy Fighter (female)']) }),
       'Graphics.ReadyStance': Object.freeze({ default: 2, options: Object.freeze(['Never', 'When Idle', 'When Idle or Moving']), description: 'Whether the sprite will change states when readying a weapon or spell' }),

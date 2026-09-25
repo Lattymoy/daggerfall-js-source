@@ -425,8 +425,10 @@ test('AUDIT 58 talk: the dungeon host carries the same two halves', () => {
   // claim is the REGISTRY, not the argument list, so both are pinned
   // for what they mean: the read goes through MODE_ACTIONS/actionOf,
   // and it still hands the Set in.
-  assert.match(d, /const im = MODE_ACTIONS\[actionOf\(e(?:, keys)?\)\];/, 'the registry, not e.code');
-  assert.ok(d.includes('MODE_ACTIONS[actionOf(e, keys)]'),
+  // UXB1-S re-aimed it once more, for the same reason: a SHARED key carries several actions, so the read is every one
+  // of them (`actionsOf`) and the mode is the first that names one - still the registry, still the Set.
+  assert.match(d, /const im = actionsOf\(e(?:, keys)?\)\.map\(\(a\) => MODE_ACTIONS\[a\]\)\.find\(Boolean\);/, 'the registry, not e.code');
+  assert.ok(d.includes('actionsOf(e, keys).map((a) => MODE_ACTIONS[a])'),
     'the mode-key read dropped the held-keys Set the combo arm needs');
   assert.ok(d.includes('if (!ctx.uiOverlayActive && im !== getInteractionMode())'),
     'and no mode change under an open window');

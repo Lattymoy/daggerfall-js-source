@@ -45,8 +45,9 @@ const IDENTITY_VIEW = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 
 /** The mod's own shipped defaults, as ht6_offhand's harness takes them - a
  *  hand-written subset would be readTorchSettings reading undefined. */
-const MOD_DEFAULTS = () => Object.fromEntries(
-  Object.entries(MOD_SETTINGS[HANDHELD_TORCHES_VENDOR].keys).map(([k, d]) => [k, d.default]));
+const MOD_DEFAULTS = () => ({ ...Object.fromEntries(
+  Object.entries(MOD_SETTINGS[HANDHELD_TORCHES_VENDOR].keys).map(([k, d]) => [k, d.default])),
+  'Handling.LanternsAtWaist': false });   // the mod's own hand (HT-WAIST-ON ships the port's waist switch on)
 /** The component, its sprites loaded, with a renderer that RECORDS its draws. */
 async function torchRig() {
   const drawn = [];

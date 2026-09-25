@@ -237,11 +237,18 @@ export function labelOf(key) {
   return bare.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/_/g, ' ').trim();
 }
 
+/** AUDIT RETRO1 C7: DFU's words that live outside GameSettings.txt -
+ *  RetroModeConfigPage's one tip (RetroModeConfigPage.cs:36, the
+ *  Internal_Strings `retroModeTip`), on the setting its page is for. */
+const PAGE_TIPS = Object.freeze({
+  'Video/RetroRenderingMode': 'Renders world at lower resolutions',
+});
+
 /** The explanation, in DFU's own words where DFU wrote one. Empty
  *  string when it did not - the screen then shows the status line
  *  alone rather than inventing a sentence. */
 export function helpOf(key) {
-  return SETTINGS_INFO[dfuTextKey(key)] ?? '';
+  return SETTINGS_INFO[dfuTextKey(key)] ?? PAGE_TIPS[key] ?? '';
 }
 
 /** MENU: what a NOT-AVAILABLE row prints where its control would be.
@@ -261,6 +268,7 @@ export const READOUT = Object.freeze({
   'Video/ResolutionHeight': 'your window',
   'Video/ExclusiveFullscreen': 'browser',
   'Video/Fullscreen': 'browser',
+  'Video/VSync': 'always',
 });
 
 /** The sentence that says what you get INSTEAD - shown in the detail
@@ -278,6 +286,7 @@ export const INSTEAD = Object.freeze({
   'Video/ResolutionHeight': 'The picture already fills the window you give it.',
   'Video/ExclusiveFullscreen': "Use your browser's own fullscreen - F11 on a desktop.",
   'Video/Fullscreen': "Use your browser's own fullscreen - F11 on a desktop.",
+  'Video/VSync': 'Frames always wait for your screen. To run slower than it, set a Frame Rate Cap.',
 });
 
 /** The one-line status a row's tier earns, shown in the help panel. */

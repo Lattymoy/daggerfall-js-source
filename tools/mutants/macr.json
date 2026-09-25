@@ -51,8 +51,8 @@
   {
     "name": "MACR2-the-world-host-routes-the-repeat",
     "file": "src/scenes/world.js",
-    "old": "{ if (!e.repeat && routeAction(act, hudCtx)) { e.preventDefault(); return; } if (e.repeat) { e.preventDefault(); return; } }   // MAC-R2",
-    "new": "{ if (routeAction(act, hudCtx)) { e.preventDefault(); return; } }   // MAC-R2",
+    "old": "{ if (!e.repeat && routeAction(act, hudCtx)) { e.preventDefault(); return true; } if (e.repeat) { e.preventDefault(); return true; } }   // MAC-R2",
+    "new": "{ if (routeAction(act, hudCtx)) { e.preventDefault(); return true; } }   // MAC-R2",
     "tests": [
       "test/macr_fixes.test.js"
     ]

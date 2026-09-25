@@ -1652,7 +1652,7 @@ test('AUDIT-TO1 (mutant): a pixel carrying BOTH a road and a track shows the ROA
 // Mac: "boot failed: can't access lexical declaration 'yn' before
 // initialization". The mod was a `const` three and a half thousand lines
 // below the stream that reads it, and the boot's OWN first build -
-// `await buildPixel(first.px, first.py)` - runs the pixel builder, whose
+// `await awaitedBuild(first.px, first.py)` - runs the pixel builder, whose
 // AUDIT-TO1 B3 hook says `travelOptions?.initLocationRects(...)`. A const
 // is in its temporal dead zone until its declaration RUNS, and optional
 // chaining does not soften that: `a?.b` evaluates `a` and throws exactly
@@ -1668,7 +1668,7 @@ test('BOOT-TDZ: every Travel Options binding the STREAM reads is declared above 
     return i + 1;
   };
   // the statement the whole bug hung on: the boot awaits the first build
-  const firstBuild = at(/^ {2}const playerPixel = await buildPixel\(first\.px, first\.py\);/, 'the boot\'s first pixel build');
+  const firstBuild = at(/^ {2}const playerPixel = await awaitedBuild\(first\.px, first\.py\);/, 'the boot\'s first pixel build');
   // ...and these two readers run INSIDE it, above where the mod is built
   const hook = at(/if \(travelOptions && dfLocation\) \{/, 'the B3 location-rect hook');
   assert.ok(hook < firstBuild, `the B3 hook (line ${hook}) is inside the builder the boot awaits (line ${firstBuild})`);

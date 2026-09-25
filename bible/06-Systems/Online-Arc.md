@@ -286,9 +286,9 @@ is keyed by content and shared by design. So a peer is one more
   (`host.drawPeerBodies`). A peer in a body draws no doll; its name
   rides the doll pass's own list, at the capsule's head by the race's
   height scale (MW-D34).
-- **The gate** is the host's: the enhanced skin, the player's own arms
-  switch (MWA1's `mwArms` pref - the layer is on when the arms are)
-  and Morrowind data attached. Off, every body is released and every
+- **The gate** is the host's: the enhanced skin and Morrowind data
+  attached (MWA4 retired MWA1's `mwArms` switch that stood between -
+  the files are the switch). Off, every body is released and every
   peer is a doll. The name rides the doll pass's list at the body's own
 
 ## AUDIT MWBODY (2026-09-12)
@@ -2096,7 +2096,11 @@ Stamped as the welcome is built. `RELAY_VERSION` is `world51`.
 Online pane's copy the law of what is shared; WORLD5 shared the clock
 and the sky and said nothing. One sentence: the clock and the sky are
 the world's and run on real time; a rest, a trip, a sentence or a
-lesson takes none of it; the quest clocks stand still.
+lesson takes none of it; the quest clocks stand still. [DISC25-D, 2026-09-25:
+that last clause had been false since WORLD7, which charges quest clocks
+with played time online; the pane says so now - "so a quest that waits for
+an hour of the day waits for that hour of the world. Quest timers run while
+you play."]
 
 **C13 - THE INSTALL SAT BELOW THE SEASON READS.** `bootWorld` read
 `worldMinutes()` for the climate season and the mod's four-valued one
@@ -2189,7 +2193,9 @@ the skin override is.
 `enhancedCombatVisuals`, `enhancedWater`, `pixelatedSky`; `mwArms` (the
 Morrowind arms build at boot where the archives are attached -
 `autoBuildArms` guards the data, so a machine without them wears the
-doll as offline); and every vendored mod's `Enabled` (Dynamic Skies,
+doll as offline - until MWA4 retired the switch: the attached files are
+it now, online and off, so there is nothing left to force); and every
+vendored mod's `Enabled` (Dynamic Skies,
 Seasons of the Iliac Bay, Basic Roads, Meaner Monsters, the Physical
 Combat And Armor Overhaul, Unleveled Loot). Enhanced AI is the one that
 was OFF by default as the port's opt-in departure from DFU's classic
@@ -4689,7 +4695,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6628` read, on one physical line:
+`src/scenes/worldModes.js:6637` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4831,7 +4837,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4267` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4367` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:255`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -7043,7 +7049,7 @@ answers that exact string in the object's sleep, no event, no wake. Only a
 CHANNEL session (chat, `presence: false`) used it. A presence session's
 liveness rode the pose.
 
-**Now (`src/net/wire.js:924`, `src/net/online.js:1766`):**
+**Now (`src/net/wire.js:944`, `src/net/online.js:1839`):**
 
 - `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
   before) or every 20 s standing, as the peers' proof of life and the silence
@@ -7933,9 +7939,12 @@ is `06-Systems/Horse-Cart-And-Cargo.md` AUDIT HCC; pins in `test/hcc_pool.test.j
   the validated record and the host's `campToScene`, and converts every frame (horseCartWire's own header law:
   "a reader converts at landing and every frame after"); the foe pool's `destroy` takes the teams as
   `clearPuppets` does.
-- **The parked wagon is a box (O3).** A peer's Deployed wagon stands `hccWagon:<owner>` in my collider, re-stood
-  when its converted pose moves, gone with the owner, the sweep or a change of kind; with a box it takes the ray's
-  surface pardon.
+- **The parked wagon is a box (O3).** A peer's Deployed wagon stood `hccWagon:<owner>` in my collider, re-stood
+  when its converted pose moves, gone with the owner, the sweep or a change of kind; with a box it took the ray's
+  surface pardon. **Reversed by PR-WAGON1 (2026-09-24**, a player's report: "Players can grief other players with the
+  wagon by putting it in front of dungeon entryways and building entrances"; Mac: "Others' wagons don't block"):
+  another player's team stands no box and yields the ray (`player/activate.js firmFirst`) - Horse-Cart-And-Cargo.md
+  PR-WAGON1.
 - **The door cleans the name (O4).** `n` rides `sanitizeLabel` at the mod's 31 on both ends - printable ASCII and
   the name filter, the door a player's name and a party's place already go through.
 - **A standing horse is silent (O5).** The walk frame rode `h`, so the idle flicker (frames 5/6 at 2 fps) changed
@@ -8138,6 +8147,42 @@ place socket's frames. Main's RIDE and DISC7 put the mount on the pose (`rd`, `r
 them at their bounds and the widest place attachment measures 566 bytes. `tools/mutants/auditattach.json`: 8, 8 dead
 (the new one puts the park strikes back on `pdrops`). Main's HCC-PARK tests refilled the park bucket by writing the
 attachment, which no longer holds it; they refill the instance's meter (`_meterOf`), as every other re-aimed pin does.
+
+## HT-WAIST-NET (2026-09-24) - the others see your lantern at the waist, world108
+
+HT-WAIST hung a lit lantern at the waist (Handheld Torches' port-own `Handling.LanternsAtWaist`) and drew it swinging
+at the hip of your own Morrowind body and Eye Of The Beholder sprite; Mac asked for it to be seen on the character, and
+the others draw you in the Morrowind body (MWBODY1), so it rides the pose now. `hl` 1 while your lit light is a lantern
+hung at the waist (`systems/playerTorch.js waistLanternPoseBit`, `lanternAtWaist`'s answer), OMITTED otherwise - a pose
+without one keeps its bytes (`validPose`, validLook's `class` law); `poseChanged` sends its edge at once (a lantern lit
+or put out is never a keepalive for the relay to tier); `lerpPose` carries it. The sender is `scenes/world.js`'s pose
+arm, the one pose sender (the interiors and dungeons are its modes; `exterior.js` holds no session). A peer's body takes
+it in `PeerBodies._arm` through the rig's own `setHipLight` - bound once at the pelvis, hidden when put out, the fast
+path after, queued mid-build - and swings it off that body's stub camera. No RELAY_MIN: a pose field has never been
+gated (DISC12's `lh`/`wb`, PCORPSE1's `dd`); an older relay's `validPose` drops it and nothing closes. The HELD torch
+still rides nothing (MW-D51). Record: Handheld-Torches.md HT-WAIST ("Online: the others see it"). Pins:
+`test/htwaistnet_peers.test.js` - the door, the producer and its sender, a session through the real relay Room to the
+watcher's drawn pose, a peer's whole `createFpArm()` body hanging and hiding it, and its swing off the stub camera.
+
+## EVENT1 (2026-09-25, Mac: "I wanna do a fun live event for the server. Wanna setup the infastructure for this without breaking anything. We have a lot of major updates today, but I want to turn the skies of Daggerfall into a detailed oblivion styled dread in prep for the world bosses. Red lightning and such") - a live event, staged for everyone online: the dread, world110
+
+Asked two things first: how it is switched (Mac: **a staff command** - `/event dread on|off`, the dev glyph, as /red) and who sees it (Mac: **online players only**).
+
+**The infrastructure - one word, carried by the hub.** The relay keeps no global state and fans nothing across rooms (the constructor's own note); the one room every online player holds a socket to is the hub (`chat:world`, CHAT_TABS' World link). So a live event lives there:
+
+- **Staged** by `{t:'stage', kind}` (net/wire.js: `kind` one of `LIVE_EVENTS` - `['dread']`, appended and never renamed - or `''` to end). RED1's law exactly: `parseClient` checks the shape; the relay asks the dev glyph off the VERIFIED token (a player, or a hello that types the glyph, is ignored in silence); metered on its own bucket (`eventGate`, EVENT_HZ_MAX 1) before the authority is asked; anywhere but the hub it is junk.
+- **Kept** in the hub's storage under `EVENT_KEY` (`event:live`, `{kind, at}`) - a prefix apart from every one a drain or the hub's sweep deletes, so an event outlives a quiet night and a deploy, and ends when a dev ends it. Read once per instance (`_liveEvent`); a stored word this relay does not know is none.
+- **Said** to every hub socket as `{t:'event', kind, at}` (the stager's own receipt included), and to a late joiner on the hub welcome's `ev` (absent: none; never on a region channel or a place room).
+- **The client** (`OnlineSession`): the hub's word handed on through one door (`_setEvent`, once per change) - a welcome's WHOLE (the player did not watch it come), a frame's LIVE; a hub welcome without one ends it; `leave()` ends it (online's alone). `sendStage` goes only to a relay that knows the frame (`EVENT_RELAY_MIN` 110 - an older relay CLOSES the socket on an unknown type) and only on the hub. world.js hears the event from the hub link alone and parses `/event` beside `/red`, never guarded (the relay asks the token); a relay too old is said in words.
+- **Without breaking anything:** an old client ignores the unknown frame and the welcome's extra field (its `_receive` has no final else), so it sees no event; a new client against an old relay never sends the frame and reads none. Offline, nothing is reached and every path below is its input untouched.
+
+**The dread - world/dreadSky.js.** The port draws its sky three ways (the classic panorama, its own dome, Dynamic Skies - the default) with the volumetric clouds over the last two, each keeping its colour in its own shape. So the dread is ONE COLOUR GRADE where each writes its pixel: a colour's luminance, dimmed (DREAD_DIM), read along a crimson ramp - black-maroon, blood, burning orange (DREAD_RAMP). The zenith comes out dark, the horizon glows, lit cloud edges burn, and it holds at any hour and under any weather because it reads the sky's own light. `dreadGrade` is the law; `DREAD_GLSL` is the same law generated from the same numbers, graded by each pass's `uDread` (skyRenderer, enhancedSky, dynamicSkiesRenderer, the clouds' composite - the cloud's own colour, un-premultiplied, its opacity put back). The controller (`createSkyController().setDread(w, glow)`) sets every pass's weight, grades the fog and the water's reflection on either lane, and while the dread is up the SKY wears the storm (`DREAD_SKY_WORD` 'thunder' - the dome's row, the clouds' profile, the mod's preset) while the sim's weather, the wind, the rain and their sound go on as they were. The host grades the land's key and ambient light (`dreadLight`) and dims the key by DREAD_KEY_DIM.
+
+**The red storm.** Strikes on the SHARED clock (WORLD5): slots of DREAD_SLOT_MS, each holding a strike with DREAD_STRIKE_CHANCE x the weight, its moment, place and kind read from the slot's seed - so every player online sees a strike in the same second, each around themselves, and a frame rate changes nothing; the first tick fires no backlog and a long gap walks only its last DREAD_SLOTS_MAX slots. They ride systems/lightning.js' own bolt field as the distant storms' do, with their colours on them (`color` the channel's, `flashColor` its light - the field and `createStormLights` carry both, the renderer draws each colour apart, `boltGroups`); the burning red strikes light the cloud deck (`dreadCloudGlow`, through `setDread`'s glow - the host's flash stays the storm's). Their thunder arrives its distance over the speed of sound later (`thunderOf`), from its side (`thunderSourceAt`), on both skins; the channels on the enhanced lane, as every bolt.
+
+**It fades.** `createDread`: a change the player watched walks over DREAD_FADE_S (12 s) each way; a welcome's word is whole. Interiors and dungeons draw no sky, so the dread is outside, where the sky is.
+
+**Records.** test/event1_live_event.test.js (18); tools/mutants/event1.json (44, all dead). RELAY_VERSION world110 (`test/relayversion.test.js` row); the exact-version pins moved to it; the source pins of the sky seam re-aimed to the graded forms (audit18, clockArc, DS2, VC3, WATER1, ES1c); mutant records re-aimed where their text moved (B7's welcome, WEATHER3d's composite, DISC17-B now names its one site, SURVTIERS3's two cites). DISC17-B's mutant SURVIVED the re-aim once: its pins matched ANY thunder line of the host's shape, and the dread's own line stood in for the distant storms' - so the pins now hold EVERY thunder line far from the ear, one assertion a line (disc17), and the distant storms' line by its own loop (WEATHER3d); the mutant dies. Deploying world110 drops every connected player once (the relay's own law).
 
 ## PSCALE1 (2026-09-25, Mac: "So to add onto this, I want enemy difficulty, enemy numbers, etc to scale approriately with party size") - a fight weighs what the party weighs
 

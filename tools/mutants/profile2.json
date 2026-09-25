@@ -1,0 +1,201 @@
+[
+  {
+    "name": "P2-live-portrait-is-the-newest-save",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "const save = mode === 'pause' ? liveCharacter(playerEntity) : portraitSave(savedGames());",
+    "new": "const save = portraitSave(savedGames());",
+    "tests": [
+      "test/profile2_pause_profile.test.js",
+      "test/profile1_badge.test.js"
+    ]
+  },
+  {
+    "name": "P2-live-character-without-race",
+    "file": "src/ui/profileBadge.js",
+    "old": "if (!entity || typeof entity.race !== 'string' || !entity.race) return null;",
+    "new": "if (!entity) return null;",
+    "tests": [
+      "test/profile2_pause_profile.test.js"
+    ]
+  },
+  {
+    "name": "P2-no-mark-at-pause",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "    home.append(profileMark());\n    if (accountOpen) {",
+    "new": "    if (accountOpen) {",
+    "tests": [
+      "test/profile2_pause_profile.test.js"
+    ]
+  },
+  {
+    "name": "P2-window-left-open-across-visits",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  // open on the door (or on the last pause) must not be standing over the next one before the player asks for it\n  accountOpen = false;\n",
+    "new": "  // open on the door (or on the last pause) must not be standing over the next one before the player asks for it\n",
+    "tests": [
+      "test/profile2_pause_profile.test.js"
+    ]
+  },
+  {
+    "name": "P2-look-before-hello",
+    "file": "src/net/wire.js",
+    "old": "    if (!hasHello) return { error: 'look before hello' };\n",
+    "new": "",
+    "tests": [
+      "test/profile2_pause_profile.test.js"
+    ]
+  },
+  {
+    "name": "P2-look-unvalidated",
+    "file": "src/net/wire.js",
+    "old": "    const look = validLook(m.look);\n    return look ? { t: 'look', look } : { error: 'bad look' };",
+    "new": "    return { t: 'look', look: m.look };",
+    "tests": [
+      "test/profile2_pause_profile.test.js"
+    ]
+  },
+  {
+    "name": "P2-old-relay-sent-the-frame",
+    "file": "src/net/wire.js",
+    "old": "export const LOOK_RELAY_MIN = 109;",
+    "new": "export const LOOK_RELAY_MIN = 108;",
+    "tests": [
+      "test/profile2_pause_profile.test.js"
+    ]
+  },
+  {
+    "name": "P2-relay-look-not-stored",
+    "file": "server/src/index.js",
+    "old": "      await this.state.storage.put(lookKey(a.id), m.look); this._looks.set(a.id, m.look);\n      if (this._attach(ws)?.id !== a.id) return;",
+    "new": "      if (this._attach(ws)?.id !== a.id) return;",
+    "tests": [
+      "test/profile2_pause_profile.test.js"
+    ]
+  },
+  {
+    "name": "P2-relay-look-back-to-sender",
+    "file": "server/src/index.js",
+    "old": "      for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, said);\n      return;\n    }\n    if (m.t === 'act') {",
+    "new": "      for (const [other, b] of [...this._all()]) if (b.id) this._send(other, said);\n      return;\n    }\n    if (m.t === 'act') {",
+    "tests": [
+      "test/profile2_pause_profile.test.js"
+    ]
+  },
+  {
+    "name": "P2-relay-look-carries-position",
+    "file": "server/src/index.js",
+    "old": "look: m.look, pose: null }, a));",
+    "new": "look: m.look, pose: a.pose ?? null }, a));",
+    "tests": [
+      "test/profile2_pause_profile.test.js"
+    ]
+  },
+  {
+    "name": "P2-relay-look-unmetered",
+    "file": "server/src/index.js",
+    "old": "      a = this._meterLook(ws, a, now); if (!a) return;\n",
+    "new": "",
+    "tests": [
+      "test/profile2_pause_profile.test.js"
+    ]
+  },
+  {
+    "name": "P2-relay-look-free-of-hello-budget",
+    "file": "server/src/index.js",
+    "old": "      if (!gate.pass) { this._refuse(ws, 'busy', CLOSE_BUSY); return; }\n      await this.state.storage.put(lookKey(a.id), m.look);",
+    "new": "      await this.state.storage.put(lookKey(a.id), m.look);",
+    "tests": [
+      "test/profile2_pause_profile.test.js"
+    ]
+  },
+  {
+    "name": "P2-relay-channel-keeps-looks",
+    "file": "server/src/index.js",
+    "old": "      a = this._meterLook(ws, a, now); if (!a) return;\n      if (isChatRoom(a.key)) return;\n",
+    "new": "      a = this._meterLook(ws, a, now); if (!a) return;\n",
+    "tests": [
+      "test/profile2_pause_profile.test.js"
+    ]
+  },
+  {
+    "name": "P2-session-same-look-resent",
+    "file": "src/net/online.js",
+    "old": "    if (!v || JSON.stringify(v) === JSON.stringify(validLook(this.look))) return false;",
+    "new": "    if (!v) return false;",
+    "tests": [
+      "test/profile2_pause_profile.test.js"
+    ]
+  },
+  {
+    "name": "P2-session-look-not-kept",
+    "file": "src/net/online.js",
+    "old": "    this.look = v;\n    this._lookDirty = true;",
+    "new": "    this._lookDirty = true;",
+    "tests": [
+      "test/profile2_pause_profile.test.js"
+    ]
+  },
+  {
+    "name": "P2-session-halos-untold",
+    "file": "src/net/online.js",
+    "old": "    for (const [, h] of this._halo) if (h.lookOk && h.status === 'open' && h.ws) socks.push(h.ws);\n",
+    "new": "",
+    "tests": [
+      "test/profile2_pause_profile.test.js"
+    ]
+  },
+  {
+    "name": "P2-session-ungated",
+    "file": "src/net/online.js",
+    "old": "    if (!gate.pass) return;   // held: the tick tries again\n",
+    "new": "",
+    "tests": [
+      "test/profile2_pause_profile.test.js"
+    ]
+  },
+  {
+    "name": "P2-session-held-look-never-flushed",
+    "file": "src/net/online.js",
+    "old": "    this._flushLook();   // PROFILE2: a look the gate held back\n",
+    "new": "",
+    "tests": [
+      "test/profile2_pause_profile.test.js"
+    ]
+  },
+  {
+    "name": "P2-session-halo-support-unread",
+    "file": "src/net/online.js",
+    "old": "      else { const h = this._halo.get(room); if (h) h.lookOk = relaySupportsLook(relayV); }   // PROFILE2: a halo says for itself\n",
+    "new": "",
+    "tests": [
+      "test/profile2_pause_profile.test.js"
+    ]
+  },
+  {
+    "name": "P2-session-dirty-lingers",
+    "file": "src/net/online.js",
+    "old": "    if (!socks.length) { this._lookDirty = false; return; }",
+    "new": "    if (!socks.length) return;",
+    "tests": [
+      "test/profile2_pause_profile.test.js"
+    ]
+  },
+  {
+    "name": "P2-host-no-cadence",
+    "file": "src/scenes/world.js",
+    "old": "    if (now - _onlineLookAt >= ONLINE_LOOK_CHECK_MS) { _onlineLookAt = now; online.setLook(composeLook(playerEntity)); }\n",
+    "new": "",
+    "tests": [
+      "test/profile2_pause_profile.test.js"
+    ]
+  },
+  {
+    "name": "P2-body-set-change-not-preloaded",
+    "file": "src/player/eotbBody.js",
+    "old": "    if (renderer && (was.onFoot !== cfg.onFoot || was.onHorse !== cfg.onHorse)) preload();\n",
+    "new": "",
+    "tests": [
+      "test/profile2_pause_profile.test.js"
+    ]
+  }
+]

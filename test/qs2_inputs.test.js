@@ -327,7 +327,7 @@ test('QS2 + QS7: the two self-routing hosts answer the dispatchable quickslots i
   // modal ladder; what changed is which ladder holds it.
   // test/qs7_one_dispatch.test.js drives the flip and proves the doors.
   // MAC-R2 (2026-09-17): the arm routes the press edge alone and eats a held key's auto-repeat - test/macr_fixes.test.js
-  const wArm = /if \(!townTalk\.overlayActive && \(modes\?\.mode \?\? 'exterior'\) === 'exterior' && QUICKSLOT_ACTIONS\.has\(act\) && !POLLED_ACTIONS\.has\(act\) && socialMenuCanOpen\(\)\) \{ if \(!e\.repeat && routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return; \} if \(e\.repeat\) \{ e\.preventDefault\(\); return; \} \}/;
+  const wArm = /if \(!townTalk\.overlayActive && \(modes\?\.mode \?\? 'exterior'\) === 'exterior' && QUICKSLOT_ACTIONS\.has\(act\) && !POLLED_ACTIONS\.has\(act\) && socialMenuCanOpen\(\)\) \{ if \(!e\.repeat && routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return true; \} if \(e\.repeat\) \{ e\.preventDefault\(\); return true; \} \}/;
   assert.match(w, wArm);
   const social = w.indexOf("act === 'SocialInteract' && socialMenuCanOpen()");
   const mine = w.search(wArm);
@@ -340,7 +340,7 @@ test('QS2 + QS7: the two self-routing hosts answer the dispatchable quickslots i
   assert.ok(!/\(modes\?\.mode \?\? 'exterior'\) === 'exterior'/.test(socialLine), 'F still answers inside');
   // scenes/exterior.js: the same place, its own gate words.
   const x = rd('src/scenes/exterior.js');
-  const xArm = /if \(!townTalk\.overlayActive && \(modes\?\.mode \?\? 'exterior'\) === 'exterior' && QUICKSLOT_ACTIONS\.has\(act\) && !POLLED_ACTIONS\.has\(act\) && !gamePaused\(\)\) \{ if \(!e\.repeat && routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return; \} if \(e\.repeat\) \{ e\.preventDefault\(\); return; \} \}/;   // MAC-R2
+  const xArm = /if \(!townTalk\.overlayActive && \(modes\?\.mode \?\? 'exterior'\) === 'exterior' && QUICKSLOT_ACTIONS\.has\(act\) && !POLLED_ACTIONS\.has\(act\) && !gamePaused\(\)\) \{ if \(!e\.repeat && routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return true; \} if \(e\.repeat\) \{ e\.preventDefault\(\); return true; \} \}/;   // MAC-R2
   assert.match(x, xArm);
   // The two hosts that call routeKey need no arm at all - routeKey's own
   // overlay branch and its routeAction tail are the gate and the door.

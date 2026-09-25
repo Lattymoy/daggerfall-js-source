@@ -33,7 +33,7 @@ record was merged into the other; they are two different audits that
 briefly shared a name.
 
 **Why the findings are numbered from F3.** The tree cites `AUDIT 58 F3`,
-`F4` and `F5` by number **37 times across 14 files** - `src/world/terrainGenClient.js:144`,
+`F4` and `F5` by number **37 times across 14 files** - `src/world/terrainGenClient.js:147`,
 `src/world/terrainGenWorker.js:45`, `src/world/terrainHelper.js:2`,
 `src/world/roadsCache.js:17`, `src/scenes/world.js:132`,
 `src/formats/woodsFile.js:93`, `test/modsettings.test.js`,
@@ -168,14 +168,14 @@ now has a name per host.
 readers asked one.** `interiorFoes` and `interiorGuards` are both live
 inside a building; the senses feed, the enchant pool and the rest refusal
 each walked only the first, so the indoor city watch was invisible to all
-three (`src/scenes/worldModes.js:1070-1143`). **The exterior host mounted no
+three (`src/scenes/worldModes.js:1071-1144`). **The exterior host mounted no
 enchant ctx at all** - the session has ONE, and that host set none, so
 every enchantment payload that needs a foe idled in the host a player
 spends most of their time in (`setDefaultEnchantCtx` is imported at
-`src/scenes/exterior.js:63` now, and the pool it answers with is the
+`src/scenes/exterior.js:64` now, and the pool it answers with is the
 live one). **`scenes/interior.js` registered a keydown listener and never
 called `swallowBrowserKey`**, so F5 inside a building reloaded the page
-and destroyed the session - against `src/ui/input.js:680-702`'s own law,
+and destroyed the session - against `src/ui/input.js:699-721`'s own law,
 "one list, because there is one keyboard, and every host has to use it."
 **The large HUD's sheath panel answered only in the dungeon**, three
 hosts inert. The interior ray had no quest-foe click arm, so `clicked foe`
@@ -269,7 +269,7 @@ host, once by the mode machine it builds - and `bindCursorToggle` installs
 a listener per call over a module-global flag, so one Enter press flipped
 twice and netted zero. **Key combos never reached the keydown dispatch:**
 `actionOf(e, keys)` resolves a combo only when a held-keys Set is handed
-in (`src/ui/input.js:268-289`) and no production call site supplied one,
+in (`src/ui/input.js:269-290`) and no production call site supplied one,
 so every rebind to a combo was dead in every host. `townTalk`'s F1-F4
 interaction-mode branch sat ABOVE its own overlay gate, so the mode
 changed under an open window, and the four modes were dispatched off

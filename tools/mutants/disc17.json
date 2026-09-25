@@ -59,8 +59,8 @@
   {
     "name": "DISC17-B-the-world-plays-it-near",
     "file": "src/scenes/world.js",
-    "old": "maxDistance: THUNDER_SOURCE_M * 8, far: true });",
-    "new": "maxDistance: THUNDER_SOURCE_M * 8 });",
+    "old": "maxDistance: THUNDER_SOURCE_M * 8, far: true }); }   // DISC17-B",
+    "new": "maxDistance: THUNDER_SOURCE_M * 8 }); }   // DISC17-B",
     "tests": [
       "test/disc17.test.js",
       "test/weather3d_distantstorms.test.js"

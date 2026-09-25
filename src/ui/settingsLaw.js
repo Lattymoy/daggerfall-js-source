@@ -23,6 +23,7 @@
 // for the player who wants it.
 import { DEFAULTS, tierOf, UNAVAILABLE } from '../systems/settings.js';
 import { READOUT } from './settingsCopy.js';
+import { FRAME_CAP_FLOOR, FRAME_CAP_STOPS } from '../systems/frameCap.js';   // FPS-CAP1: the cap's floor and the rates its row walks
 
 /** DFU's own value names, in DFU's order. `encode:'index'` means the
  *  store holds the position; `'token'` means it holds the word. */
@@ -37,9 +38,16 @@ export const ENUM_LAW = Object.freeze({
   'GUI/GUIFilterMode': { values: ['Point', 'Bilinear', 'Trilinear'], encode: 'index', cite: 'AdvancedSettings:360-379' },
   'GUI/VideoFilterMode': { values: ['Point', 'Bilinear', 'Trilinear'], encode: 'index', cite: 'AdvancedSettings:360-379' },
   'GUI/HelmAndShieldMaterialDisplay': { values: ['Off', 'No Leather Chain', 'No Leather', 'On'], encode: 'index', cite: 'AdvancedSettings:309-321' },
+  // RETRO1: RetroModeConfigPage's three controls, in its own words (Internal_Strings retroMode*, posterization*,
+  // palettization*, FourThree/SixteenTen - the CSV's "4:03" is a spreadsheet's reading of 4:3)
+  'Video/RetroRenderingMode': { values: ['Off', '320x200', '640x400'], encode: 'index', cite: 'RetroModeConfigPage:39-47' },
+  'Video/PostProcessingInRetroMode': { values: ['Off', 'Posterization (full)', 'Posterization (-sky)', 'Palettization (full)', 'Palettization (-sky)'], encode: 'index', cite: 'RetroModeConfigPage:51-62' },
+  'Video/RetroModeAspectCorrection': { values: ['Off', '4:3', '16:10'], encode: 'index', cite: 'RetroModeConfigPage:64-73 (RetroModeAspects)' },
 });
 
-/** {min,max,step,coarse,format,source}. format: pct | mult | a unit. */
+/** {min,max,step,coarse,format,source}. format: pct | mult | a unit.
+ *  FPS-CAP1: `stops` makes the control walk those values instead of the range (step = one stop, coarse = that
+ *  many), and `offBelow` reads any value under it as Off - DFU's own reading of it, not a label over a number. */
 export const NUMBER_LAW = Object.freeze({
   // AUDIT 28 SELF-AUDIT (F-A1): the key went LIVE in W1 and the screen
   // still showed a dead readout - a number with no stated range stays
@@ -57,6 +65,10 @@ export const NUMBER_LAW = Object.freeze({
   'Enhancements/DungeonAmbientLightScale': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU (:333-341)' },
   'Enhancements/NightAmbientLightScale': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU (:333-341)' },
   'Enhancements/PlayerTorchLightScale': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU (:333-341)' },
+  'Video/PalettizationLUTShift': { min: 0, max: 7, step: 1, coarse: 1, source: 'DFU GetInt, no range (SettingsManager:412) - RETRO1 clamps it; AUDIT RETRO1 C7: 0..7, since 8 is a one-texel LUT (256 >> 8) that paints the world black' },
+  // FPS-CAP1: GetInt(0, 300), and under 30 is off (StartGameBehaviour:246-247) - so the row walks Off and the rates a
+  // screen runs at, and never offers 1-29, a cap DFU ignores.
+  'Video/TargetFrameRate': { min: 0, max: 300, step: 1, coarse: 3, stops: FRAME_CAP_STOPS, offBelow: FRAME_CAP_FLOOR, format: 'fps', source: 'DFU GetInt(0,300) (SettingsManager:414); under 30 is off (StartGameBehaviour:246-247)' },
 });
 
 /** RRGGBBAA - the alpha is load-bearing (ToolTipBackgroundColor ships 404040D2). */
@@ -91,6 +103,7 @@ export function blockedReason(key) {
 }
 
 const fmtNumber = (n, law) => {
+  if (law.offBelow !== undefined && n < law.offBelow) return 'Off';   // FPS-CAP1
   if (law.format === 'raw') return String(+n.toFixed(4));   // AUDIT 28 W11: a thousandths ratio (0.005) must not round to "0.01"
   if (law.format === 'pct') return `${Math.round(n * 100)}%`;
   if (law.format === 'mult') return `x${n.toFixed(1)}`;
@@ -132,6 +145,18 @@ export function formatValue(key, raw) {
   return s === '' ? 'default' : s;   // DFU's own substitution for an empty SoundFont (:264-267)
 }
 
+/** FPS-CAP1: a stepped row's next value - the first stop past the value in that direction, then (coarse) more.
+ *  A value between stops (a hand-edited 100) steps to its neighbours, 90 or 120. */
+function stepStops(law, raw, dir, coarse) {
+  const stops = law.stops;
+  const cur = Number.isFinite(Number(raw)) ? Number(raw) : law.min;
+  const extra = (coarse ? law.coarse : law.step) - 1;
+  let i = dir > 0 ? stops.findIndex((v) => v > cur) : stops.findLastIndex((v) => v < cur);
+  if (i < 0) i = dir > 0 ? stops.length - 1 : 0;
+  else i += dir > 0 ? extra : -extra;
+  return String(stops[Math.min(stops.length - 1, Math.max(0, i))]);
+}
+
 /** The next value in a direction. Returns the STRING the store holds,
  *  or null when the control cannot move. */
 export function stepValue(key, raw, dir, coarse = false) {
@@ -150,6 +175,7 @@ export function stepValue(key, raw, dir, coarse = false) {
   }
   if (w === 'number') {
     const law = NUMBER_LAW[key];
+    if (law.stops) return stepStops(law, raw, dir, coarse);   // FPS-CAP1
     const stepBy = coarse ? law.coarse : law.step;
     const cur = Number.isFinite(Number(raw)) ? Number(raw) : law.min;
     let next = cur + dir * stepBy;

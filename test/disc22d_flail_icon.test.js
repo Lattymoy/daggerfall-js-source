@@ -50,7 +50,7 @@ test('DISC22-D: the classic list draws the Steel Light Flail, with the icons obj
     drawScreenQuad(tex) { drawn.push(tex.k); },
   };
   const pipe = createDataPipeline({ renderer, arch: null, palette: null, fetch: async (n) => { throw new Error(`no ARENA2 here: ${n}`); } });
-  // world.js:4848, exterior.js:2544, dungeonContext.js:1605/2280, worldModes.js:2347/4442/4458 - no preload hook
+  // world.js:4905, exterior.js:2542, dungeonContext.js:1601/2276, worldModes.js:2277/4202/4218 - no preload hook
   const draw = makeIconDrawer({ getTexture: pipe.getTexture, uploadRecord: pipe.uploadRecord, textures: renderer.textures });
   const m = { ox: 0, oy: 0, s: 1 };
   draw(renderer, m, flail(), [0, 0, 60, 200], 0);
@@ -76,7 +76,10 @@ test('DISC22-D: the enhanced door draws it too - this record, by its metal (a Da
 });
 
 test('DISC22-D: the two enhanced trade screens ask by the item\'s metal, as the pack does', () => {
+  // DISC24-B: every enhanced list asks through the pack's ONE picture door, and that door asks by the dye
   for (const f of ['src/ui/enhancedTrade.js', 'src/ui/enhancedPlayerTrade.js']) {
-    assert.match(readFileSync(join(ROOT, f), 'utf8'), /requestIcon\(line\.image\.archive, line\.image\.record, \{ scale: 2, dye: line\.image\.dye,/, f);
+    assert.match(readFileSync(join(ROOT, f), 'utf8'), /linePictureUrl\(line, \{ scale: 2, onReady:/, f);
   }
+  assert.match(readFileSync(join(ROOT, 'src/ui/enhancedInventory.js'), 'utf8'),
+    /if \(line\.image\) return requestIcon\(line\.image\.archive, line\.image\.record, \{ scale, dye: line\.image\.dye, onReady \}\);/);
 });

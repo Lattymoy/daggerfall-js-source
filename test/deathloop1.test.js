@@ -49,10 +49,13 @@ test('DEATHLOOP1: a revival ends the drains that were emptying the bar', () => {
   assert.ok(health > 0, 'and the player is still alive twelve rounds later');
 });
 
-test('DEATHLOOP1: a disease is KEPT - it is not what makes the loop, and curing it would be the cheapest cure in the game', () => {
+test('DEATHLOOP1: a disease is KEPT - curing it would be the cheapest cure in the game (its stat hold is eased: DISC24-D)', () => {
   // Diseases fall once per CLASSIC DAY (systems/diseases.js, the HEA
   // column through `sinks.hurt`), so half of max health is days of
-  // walking - enough to reach the temple that cures them. And
+  // walking - enough to reach the temple that cures them. (Their STAT
+  // damage can hold a stat at zero, which kills every 0.2 seconds -
+  // that one DID loop, and the revival eases it: test/disc24d_stat_
+  // zero_loop.test.js. The entry itself stays, as here.) And
   // vampirism and lycanthropy are carried as `kind: 'disease'`
   // (systems/infection.js), so a blanket cure here would let a player
   // shake an infection by dying on purpose, for free, at a graveyard.

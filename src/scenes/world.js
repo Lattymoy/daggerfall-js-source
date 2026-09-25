@@ -31,14 +31,14 @@ import { settlementsOf, loadModRoads, basicRoadsPathsPoint } from '../world/road
 import { modSetting, modSettingsOf } from '../systems/modSettings.js';   // ROADS 24; HCC: the mod's eight switches
 import { hasPort } from '../systems/travelPorts.js';   // AUDIT-RR2 G22: Travel Options' port list for RR's ship gate
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
-import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH, surfaceHeightAt } from '../world/terrainSurface.js';
+import { buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH, surfaceHeightAt } from '../world/terrainSurface.js';
 import { waterUniforms, buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the pixel's own grid; WATER-AUDIT: its own index set
 import { waterCorners, WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // GRASS-WET1: the one table that says which of a tile's corners stand in water - the DRAW's, because a blade in a puddle is a picture, not a physics
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { isHearthFlat, HEARTH_NEAR } from '../systems/survival/hearth.js';   // HEARTH1: which of those lanterns is a fire you could cook on, and how far one can matter
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
-import { playerTorchLight } from '../systems/playerTorch.js';   // T1
+import { playerTorchLight, waistLanternPoseBit } from '../systems/playerTorch.js';   // T1; HT-WAIST-NET: the pose's lantern at the waist
 import { thunderlockMuzzleLight } from '../systems/thunderlock.js';   // FIELD-GUN13: the muzzle flash is a light the player carries, the torch's own shape
 import { applyClimate, getTerrainGroundArchive, getNatureArchive, SEASON, climateSeasonFromMinutes, INTERIOR_SEASON } from '../world/climateSwaps.js';   // A1: the season is the calendar's, and an interior's is Summer whatever the date
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
@@ -52,7 +52,7 @@ import { collectBlockFlats, billboardSize, mobileBillboardSize, centredBase } fr
 import { SeasonHelper } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper
 import { loadSeasonsTextures, seasonsInstalled } from '../systems/seasonsIliacBayAssets.js';   // SIB1: its textures, from the player's own copy of the mod
 import { createSeasonReskin } from '../world/seasonReskin.js';
-import { farFlatVisible } from '../world/flatDistance.js';   // MAC1: the far rings draw the trees and the flats that move, and nothing small   // ROAD-H H3: which pixels a season re-skin rebuilds - RefreshLoadedNatureBatches' per-batch decision, per KEY
+import { farFlatVisibleAt } from '../world/flatDistance.js';   // MAC1: the far rings draw the trees and the flats that move, and nothing small   // ROAD-H H3: which pixels a season re-skin rebuilds - RefreshLoadedNatureBatches' per-batch decision, per KEY
 import { isBulletinBoard, isCityGate, CITY_GATE_OPEN_MODEL_ID, CITY_GATE_CLOSED_MODEL_ID } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears; :1007-1011 - the two a city gate wears
 import { makeCityGate, updateCityGate } from '../world/cityGate.js';   // AUDIT 64 F14: DaggerfallCityGate
 import { staticBuildingBox, staticBuildingWorldAabb } from '../world/staticBuildings.js';   // AUDIT 64 F11: RMBLayout's StaticBuilding array
@@ -127,7 +127,7 @@ import { setRacialQuestHost } from '../systems/racialQuests.js';   // V2d: the q
 import { setCrimeGuildQuestHost, setCrimeGuildClock } from '../systems/crimeGuilds.js';   // CG2
 import { randomCemeteryLocationIndex } from '../systems/infection.js';   // V2e: GetRandomCemetery's pick half
 import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: the vampire clan pool asks as a Member
-import { prepareQuestShare, receiveSharedQuest, SHARE_REFUSAL_TEXT } from '../systems/questShare.js';   // QUEST1: the chronicle's own Share button, and the party frame it answers
+import { prepareQuestShare, receiveSharedQuest, SHARE_REFUSAL_TEXT, shareRefusalText } from '../systems/questShare.js';   // QUEST1: the chronicle's own Share button, and the party frame it answers
 import { careerSunDamage } from '../systems/passiveSpecials.js';   // AUDIT 64 F20/F21: Career.DamageFromSunlight, the travel door's own rung and the arrival clamp's second arm
 import { buildMapDict, locationSummaryAt as travelLocationSummaryAt } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict; TO1: the junction map's own reads
 import { dilateCoastalClimate, smoothLocationNeighbourhood } from '../world/terrainHelper.js';   // AUDIT 58 F4
@@ -144,10 +144,10 @@ import { immersiveFootsteps, reportModCompatibilityIssues } from '../systems/imm
 import { betterAmbience, classicFootstepAllowed } from '../systems/betterAmbience.js';   // BA1: Better Ambience - the shake, the dungeon's fog and light, the reverb, the indoor rain, its own stride   // IF1: Immersive Footsteps owns the stride and the three landing sounds once its clips are in (DisableVanillaFootsteps)
 import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
 import { StaticBatchBuilder, keyResolver } from '../render/staticBatch.js';   // PERF4: a pixel's static models as one mesh
-import { createBreather } from '../systems/buildBreather.js';   // PERF7: the stream build yields to the frame
+import { createBreather, frameFitBudget } from '../systems/buildBreather.js';   // PERF7: the stream build yields to the frame; PERF-EXT24: a slice of what the frame left
 import { pieceIndex } from '../render/labGrass.js';   // PERF8: the piece under a point, by arithmetic
 import { meterFor } from '../render/perfMeter.js';   // GRASS2: the field gets a zone of its own - it was inside the world's
-import { LabGrassRenderer, createGrassField, grassRecordsOf, tileMeanColour, LAB_GRASS, LAB_DIM } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte
+import { LabGrassRenderer, createGrassField, grassRecordsOf, tileMeanColour, discSlotCount, LAB_GRASS, LAB_DIM } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte; PERF-EXT20: the field's slot count, warmed at mount
 import { windDrive, floraSwayOf, floraSwayOn } from '../systems/windDrive.js';   // WIND3: the one wind in every consumer's units; the flats' sway
 import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program
 import { createWindAudio, windSoundOn } from '../systems/windAudio.js';   // WIND3: the wind, heard
@@ -164,13 +164,15 @@ import { alignSurvival, shiftSurvival } from '../systems/survival/needs.js';   /
 import { liveLycanthropy } from '../systems/lycanthropy.js';   // SURV7: the env's lycanthrope and beast-form flags
 import { elementalResistanceChance, ELEMENTS } from '../systems/spellcast.js';   // SURV7: the env's fire and frost resistances
 import { createTownWatch, runTownWatchFrame } from '../systems/townWatch.js';   // DISC19-F: the watch defends the town
-import { rollCampEncounterOnChunkLoad, amGroupRollOwner } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
-import { WORLD_SALT, spawnsDungeon, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
+import { rollCampEncounterOnChunkLoad, amGroupRollOwner, campAnchorSpot } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
+import { WORLD_SALT, spawnsDungeon, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger, spawnedLocationCentreLocal, dungeonSightLine } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
 import { isMainStoryDungeon } from '../world/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
 import { nearestSafeLocation, respawnFlavorText, reviveForPlay, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, saveKeysOfCharacter, saveInfoOf, requestScreenshot, capturePendingScreenshot, exitAutosaveNames } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end   // ONLINE-AUTOSAVE1: saveKeysOfCharacter/saveInfoOf - every slot this character already has, kept in sync on an online exit too
 import { frameBegin, frameEnd, frameAbort } from '../systems/frameClock.js';   // PERF1: the frame's script time; AUDIT-WH2 L1-F4: and the door an early return takes
+import { frameCapSkip } from '../systems/frameCap.js';   // FPS-CAP1: DFU's TargetFrameRate - a held frame re-arms before the clock and the input frame
+import { frameInterval, lastBusy, lendFrame, framesBegun } from '../systems/frameClock.js';   // PERF-EXT24: the frame's period and its own script, and the stream's slices lent back - those no frame ran inside
 import { arrivalClampMinutes, playerTravelPosition } from '../systems/travel.js';   // F-slice; F114: the ship-aware travel origin
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion, directionHintString } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it; SPAWNED-DUNGEONS2b: the same eight-word compass
@@ -229,7 +231,7 @@ import { preloadTransportArt } from '../ui/transportWindow.js';   // TR3: the pi
 import { TRANSPORT_MODES } from '../systems/transport.js';   // TR3: what the rows offer
 import { shipTransition, REPOSITION, isOnShip, shipMemory, shipRestorePos } from '../systems/ship.js';   // TR4: board and disembark; AUDIT-TO1 D1: TransportManager.IsOnShip for the popup; AUDIT 68 S22: the memory's height, compensation-free
 import { createMountRig } from '../player/mountRig.js';   // MAC-K3: the mount surface, one home for this host and the fixed-city one
-import { largeHudViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass
+import { worldViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass (RETRO1: and retro mode's aspect correction pillarboxes it)
 import { createLockOn, LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // TI1: touch lock-on
 import { rayDirFromScreen, projectToScreen, ndcFromScreen } from '../player/tapRay.js';   // TI1: the finger's ray and the dot
 import { isRiding } from '../systems/transport.js';   // TR2: is there a mount under us
@@ -257,7 +259,8 @@ import { totalWeight } from '../systems/inventory.js';   // HCC: PlayerEntity.Wa
 import { WAGON_KG_LIMIT } from '../systems/itemTransfer.js';   // HCC: ItemHelper.WagonKgLimit
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name (DaggerfallInputMessageBox)
 import { getBool, getInt, getFloat } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
-import { STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, ghostSampler } from '../world/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water   // EV4: ghost rows for chunk-edge normals (the restride's own)
+import { STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION } from '../world/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water
+import { restrideGrid } from '../world/terrainGen.js';   // PERF-EXT26: the restride's grid - the kernel's own law (EV4's ghost rows), on the worker or here
 import { getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
 // The start-marker arm (StreamingWorld's PositionPlayerToLocation), the
 // law and its two location-type reads. AUDIT 64 F18/F19: DFU reaches it
@@ -411,6 +414,8 @@ import { setWeather, setHeardWeather, heardWeather, currentWeather, currentWeath
 import { createDistantStorms, thunderSourceAt, THUNDER_SOURCE_M } from '../systems/distantStorms.js';   // WEATHER3d: the storms at a distance
 import { createStormLights } from '../systems/lightning.js';   // BOLT: the strikes themselves - their channels and their light
 import { LightningBoltsRenderer } from '../render/lightningBolts.js';   // BOLT: the channels, drawn
+import { createDread, createDreadStorm, dreadLight, dreadCloudGlow, DREAD_KEY_DIM, DREAD_FLASH_COLOR } from '../world/dreadSky.js';   // EVENT1: the live event's sky and its red storm
+import { parseEventCommand } from '../net/chatCommands.js';   // EVENT1: /event, a dev's live event
 import { fieldFromNative, nativeFromField, fieldOfPixelLocal } from '../systems/weatherField.js';   // WEATHER2b: the field's metres from the streaming world's natives, and back
 import { cellOfField } from '../render/volumetricClouds.js';   // WEATHER2c: the field's cells as the clouds' cells   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
 import { classicSaveToSnapshot, takePendingClassicSave, peekPendingClassicSave } from '../systems/classicSave.js';   // SAV3: the classic-save import arm
@@ -422,10 +427,10 @@ import { CameraRecoiler } from '../player/cameraRecoiler.js';   // AUDIT 28 W9: 
 import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBobbing
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
-import { keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released, actionOf, held, moveHeld, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings, routeAction, installContextMenuGuard, POLLED_ACTIONS, QUICKSLOT_ACTIONS, swingKeyHeld } from '../ui/input.js';
+import { keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released, actionsOf, held, moveHeld, swallowBrowserKey, mouseCode, isSwingButton, keyboardLook, isTextEntryTarget, bindings, routeAction, installContextMenuGuard, POLLED_ACTIONS, QUICKSLOT_ACTIONS, swingKeyHeld } from '../ui/input.js';
 import { armUnloadGuard, releaseUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game; AUDIT-MACL F3: ...and down for a door the game opened itself
-import { actionForCode, getBinding } from '../systems/inputActions.js';   // AUDIT-TO1 H2: the help's TravelMap binding, read through the store's own accessor   // FIX-E: the overlay's QuickLoad read, off the code alone   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
-import { hudShortcutKey } from '../ui/hudShortcuts.js';   // AUDIT 64 F36/F37: DaggerfallHUD.Update's LargeHUDToggle / HUDToggle arms
+import { codeMeans, getBinding } from '../systems/inputActions.js';   // AUDIT-TO1 H2: the help's TravelMap binding, read through the store's own accessor   // FIX-E: the overlay's QuickLoad read, off the code alone   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
+import { hudShortcutKey, retroToggleKey } from '../ui/hudShortcuts.js';   // AUDIT 64 F36/F37: DaggerfallHUD.Update's LargeHUDToggle / HUDToggle arms
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady, pauseOpts } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin; MAC-L1: pauseOpts is the ONE reader of the door's options
 import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: the mills are an enhanced-only addition
@@ -722,37 +727,39 @@ export async function bootWorld(canvas, renderer, params, status) {
   // any location. The page flag is read off `params`, not `onlineOn` - that const is declared far below this build.
   // Wrapped: a failure here costs one pixel its dungeon, never the stream.
   const _spawnSalt = WORLD_SALT;   // one salt for every client: the same pixels, the same dungeons, the same rooms
-  // SPAWNED-DUNGEONS2b (Lost's package, 2026-09-19): NEARBY, WITH A
-  // DIRECTION, AND ONE LINE PER CROSSING.
+  // SPAWNED-DUNGEONS3 (2026-09-24, Mac): THE PLAYER'S OWN PIXEL, IN METRES.
   //
-  // A crossing can put several unannounced spawns inside the radius at
-  // once - the search covers a 5x5 block of pixels - and a line per hit
-  // stacked them up the log back to back. Every pixel found this
-  // crossing is still marked announced, so none of them nags again
-  // later; only the CLOSEST is ever actually said.
+  // SPAWNED-DUNGEONS2b searched a 5x5 block of pixels around the one
+  // entered and named the closest with a compass word - so the player
+  // was told of dungeons two pixels (a mile and more) away, and "nearby"
+  // meant anything inside that block. The line is now about the pixel
+  // the player has just walked into and nothing else: if IT holds a
+  // spawn, the player is told once how far and which way, in metres,
+  // from where they stand to the dungeon's centre. A spawn on a
+  // neighbouring pixel is announced when THAT pixel is entered.
   //
-  // The compass word is talk.js's own eight-band `directionHintString`,
-  // off the map-pixel delta. `px` is east-positive already; `py` is
-  // SOUTH-positive (mapsFile.js longitudeLatitudeToMapPixel writes
-  // `y = 499 - lat/128`), so north needs the sign flipped on the way in.
+  // THE DISTANCE is in the scene's own frame: the pixel's translation
+  // (state.pixelTranslation) plus the location's centre in the pixel
+  // (spawnedDungeons.js spawnedLocationCentreLocal - centred, as every
+  // location is), less the player's feet, on the frame of the crossing,
+  // after the recentre has moved both. Scene x runs east and scene z
+  // runs NORTH (pixelTranslation negates py), which is the (east, north)
+  // pair talk.js's eight-band `directionHintString` takes - no sign to
+  // flip here, unlike the map-pixel delta 2b fed it. The spawn stands
+  // centred in an 819.2 m pixel, so a walk-in is always 300+ metres
+  // from it; spawnedDungeons.js keeps that by the template's clearance.
   const _announcedSpawnPixels = new Set();
-  const SPAWN_NEARBY_RADIUS = 2;
   const _capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-  function announceNearbySpawns(px, py) {
-    const found = [];
-    for (let dy = -SPAWN_NEARBY_RADIUS; dy <= SPAWN_NEARBY_RADIUS; dy++) {
-      for (let dx = -SPAWN_NEARBY_RADIUS; dx <= SPAWN_NEARBY_RADIUS; dx++) {
-        const key = `${px + dx},${py + dy}`;
-        if (_announcedSpawnPixels.has(key) || !locationIndex.get(key)?.spawned) continue;
-        found.push({ key, dx, dy, d2: dx * dx + dy * dy });
-      }
-    }
-    if (!found.length) return;
-    found.sort((a, b) => a.d2 - b.d2);   // closest first
-    for (const f of found) _announcedSpawnPixels.add(f.key);   // every hit this crossing is spent, even the ones left unsaid
-    const nearest = found[0];
-    if (nearest.dx === 0 && nearest.dy === 0) { townTalk.say('You see a Dungeon nearby!'); return; }
-    townTalk.say(`You see a Dungeon nearby, in the ${_capitalize(directionHintString(nearest.dx, -nearest.dy))}!`);
+  const _announceT = [0, 0, 0];
+  function announceNearbySpawns(px, py, feet) {
+    const key = `${px},${py}`;
+    const loc = locationIndex.get(key);
+    if (!loc?.spawned || _announcedSpawnPixels.has(key)) return;   // the player's own pixel, once
+    _announcedSpawnPixels.add(key);
+    const t = state.pixelTranslation(px, py, _announceT);
+    const [lx, lz] = spawnedLocationCentreLocal(loc);
+    const dx = t[0] + lx - feet[0], dz = t[2] + lz - feet[2];   // east, north
+    townTalk.say(dungeonSightLine(Math.hypot(dx, dz), _capitalize(directionHintString(dx, dz))));
   }
   let _spawnTemplates = null;
   // TTL1: what this client has met, and when. The roll above is a pure
@@ -926,6 +933,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const labGrass = isEnhanced() && getPref('enhancedEnvironments') && grassDensity > 0 && new URLSearchParams(globalThis.location?.search ?? '').get('grass') !== 'off'
     ? new LabGrassRenderer(renderer.gl) : null;
   let labGrassField = null;   // GR5: the world-anchored field, filled a cell or two a frame
+  if (labGrass) discSlotCount(LAB_GRASS.span);   // PERF-EXT20: the field's one sweep, paid here behind the loading screen - every createGrassField after reads the memo
   let hccGroundMoved = null;   // DISC20-C: the horse-cart pool's re-stand over a pixel just built - bound once the pool is (the boot's first pixel builds before it)
   // WATER1: the water surface - enhanced skin, its own switch, `?water=off`
   // the kill door. A draw only: nothing here tells the game where water is.
@@ -937,6 +945,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // will not build costs the wall, never the game (the duel's clamp holds the body either way)
   const duelWall = (() => { try { return new DuelWallRenderer(renderer.gl); } catch (e) { console.warn('[duel] the ring wall could not be built', e); return null; } })();
   let boltFrame = { bolts: [], flash: null };   // BOLT: this frame's burning channels and the light a near ground strike throws
+  // EVENT1: THE LIVE EVENT - the hub link's word (chatStart: onEvent) walked into a weight each exterior frame, and the
+  // red storm it brings. Offline there is no hub link, nothing sets it, and the weight stays 0: nothing below changes.
+  const dread = createDread();
+  const dreadStorm = createDreadStorm();
   let seenArrival = 0;   // AUDIT WEATHER3 R5: the sim's arrival stamp at the last frame
   let lightning = weather === 'thunder'
     ? new LightningPlayer(Number(params.get('wseed')) || 1) : null;
@@ -1047,7 +1059,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // The pixel builder below calls `travelOptions?.initLocationRects`
   // (AUDIT-TO1 B3's second hook) and the topic sync reads
   // `_travelRegionSeen`, and BOTH run inside the boot's own first build
-  // - `const playerPixel = await buildPixel(first.px, first.py)` - which
+  // - `const playerPixel = await awaitedBuild(first.px, first.py)` - which
   // happens three and a half thousand lines before the mod itself is
   // constructed. A `const` is in its TEMPORAL DEAD ZONE until its own
   // declaration RUNS, and optional chaining does not soften that:
@@ -1147,7 +1159,6 @@ export async function bootWorld(canvas, renderer, params, status) {
   // the build was in flight is heard.
   const wodCarry = new Map();   // pixel key -> { spawners: Map(centre -> [{spawner, flat}]), hold, piles, life }
   const wodSlots = new TerrainSlots();   // AUDIT BRANCH (WoD) L1-3
-  const _wodSiteWas = new Set();   // AUDIT BRANCH (WoD) m2: pixels torn down for a rebuild while a site levelled them
   const _wodT = [0, 0, 0];
   const _DOWN = [0, -1, 0];
   // WOD6: THE ARRIVAL'S OWN ORDER, AS DFU RUNS IT. InitWorld stands the
@@ -1537,6 +1548,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     inFlight.set(key, flying);
     return flying;
   }
+  // PERF-EXT24 (the review, 2026-09-25): A BUILD SOMETHING WAITS ON IS
+  // SAID BY THE ONE WAITING. The awaited arm was inferred from an idle
+  // pump (`_streamSince == null`), and a teleport's build is never alone:
+  // the frame loop keeps pumping while it is awaited, the queue
+  // `state.init` has just filled starts the new ring, and every slice
+  // after the arrival's first was sized for the stream - 3 ms on a 144 Hz
+  // display, the arrival up to twice as late. The boot and the teleport
+  // build through here now, and while one is in flight every slice on the
+  // one breather has the whole 6 ms, whichever build is breathing - the
+  // flat slice PERF7 gave all of them, for the moments nobody is playing.
+  let _awaitedBuilds = 0;   // builds in flight that something waits on - this door's, and only its
+  async function awaitedBuild(px, py) {
+    _awaitedBuilds++;
+    try { return await buildPixel(px, py); }
+    finally { _awaitedBuilds--; }
+  }
   // BUILD-FAIL1: WHAT A BUILD THAT THROWS LEAVES BEHIND. A build makes
   // things that outlive it - GPU surfaces and batches, its collider
   // bucket and its gates', its doors in the E-target list - and it hands
@@ -1569,7 +1596,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
   }
 
-  const breather = createBreather();   // PERF7: one slice clock for the stream; each build resets it
+  // PERF-EXT24 (2026-09-25, the players: "fps issues in the exterior but
+  // fine in the interior", "me too my friend.. don't know why. I got a
+  // RX6600"): THE SLICE IS WHAT THE FRAME LEFT (systems/buildBreather.js
+  // frameFitBudget). A build the pump runs - the stream - lends the frame
+  // interval less the frame's own script less a margin, 3 to 6 ms, and the
+  // whole 6 again once the stream has run two seconds; a build something
+  // awaits (the boot's first pixel, a teleport's - awaitedBuild, above)
+  // lends the whole slice. Each slice the breather can vouch for is lent
+  // to the frame clock and the `?perf=cpu` meter as `build`: until now
+  // neither saw the stream at all.
+  let _streamSince = null;   // PERF-EXT24: when the pump's current run of builds began; null while it is idle
+  const breather = createBreather({   // PERF7: one slice clock for the stream; each build resets it
+    budget: () => frameFitBudget({ intervalMs: frameInterval(), busyMs: lastBusy(), streamingMs: _streamSince == null ? 0 : performance.now() - _streamSince, awaited: _awaitedBuilds > 0 }),
+    onSlice: (ms) => { lendFrame(ms); meterFor(renderer.gl)?.addCpu('build', ms); },
+    frames: framesBegun,   // PERF-EXT24 (the review): a slice a frame ran inside held a wait, and is not lent
+  });
   async function buildPixelNow(px, py, { roadsRetry = false } = {}) {
     breather.reset();   // PERF7
     const key = `${px},${py}`;
@@ -2129,6 +2171,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const batches = [];
     made.batches = batches;   // BUILD-FAIL1
     for (const [k, centers] of groups) {
+      await breather.breathe();   // PERF-EXT23: a flat group a breath - its texture is a cached promise, a microtask, and gave no frame back
       const [archive, record] = k.split('_').map(Number);
       const t = await getTexture(archive);
       if (record >= t.recordCount) continue;
@@ -2201,8 +2244,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     // EV6: the pixel's models sort by MESH at build - one archetype's
     // placements draw back to back and the VAO shadow skips the rebind.
     models.sort((a, b) => a._order - b._order);
-    const staticMerged = staticBuilder.finish();   // PERF4
-    const staticBatch = staticMerged ? renderer.createMesh(staticMerged) : null;
+    // PERF-EXT23 (2026-09-25, the players: "fps issues in the exterior but
+    // fine in the interior", "me too my friend.. don't know why. I got a
+    // RX6600"): THE TAIL BREATHES TOO. The merge and createMesh's spheres ran
+    // after the last breath above in one piece - on a synthetic city pixel
+    // 45-60 ms of ONE frame, on a town 6-26 ms, for every town, city and WoD
+    // pixel streamed in. The merge now yields a model's copy, a range of the
+    // sphere's passes and a texture group at a time, and hands createMesh the
+    // spheres it measured, so createMesh walks nothing again. Same arrays,
+    // same spheres, byte for byte; the pixel publishes a few frames later.
+    const staticMerged = await staticBuilder.finishSliced(() => breather.breathe());   // PERF4
+    const staticBatch = staticMerged ? renderer.createMesh(staticMerged, { bounds: staticMerged.bounds }) : null;
     made.staticBatch = staticBatch;   // BUILD-FAIL1
 
     // AUDIT-TO1 B3: StreamingWorld.OnUpdateLocationGameObject
@@ -2260,8 +2312,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the blend never reaches past the pixel that carries the location -
     // so the next grass update() re-reads `keep`/`ground` fresh here and
     // only here.
-    const hadWodSite = _wodSiteWas.delete(key);   // AUDIT BRANCH (WoD) m2: a rebuild that lost its site moved the ground back
-    if ((dfLocation || wodSite || hadWodSite) && labGrassField) {   // WOD2: a levelled camp moved the ground the same way
+    //
+    // PERF-EXT21: AND FOR EVERY PIXEL NOW, not only a location's or a
+    // site's. A pixel crossing used to throw the whole field away, and
+    // that was quietly the heal for every other way a cell goes stale: a
+    // cell placed at the boot or after a teleport while its neighbour
+    // pixel was not built yet (its blades over the gap refused), a
+    // pixel rebuilt under it - the road network arriving, a season's
+    // re-skin, a late World of Daggerfall pack, a site a rebuild lost.
+    // The crossing keeps the field now, so each of those says so itself,
+    // at the one moment they all share: the pixel being published. A
+    // far pixel's rect holds no live cell and costs a few hundred Map
+    // reads; a near one re-reads exactly the cells that read it wrong.
+    if (labGrassField) {   // WOD2: a levelled camp moved the ground the same way; AUDIT BRANCH (WoD) m2: a rebuild that lost its site moved it back; PERF-EXT21: every publish re-reads it
       const t = state.pixelTranslation(px, py);
       labGrassField.invalidate(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE);
     }
@@ -2440,6 +2503,21 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  while it waited is dropped without building anything. */
   function spendRestrides() {
     if (!restridePending.size) return;
+    // PERF-EXT26 (2026-09-25, the players: "fps issues in the exterior but
+    // fine in the interior", "me too my friend.. don't know why. I got a
+    // RX6600"): WITH THE TERRAIN WORKER UP, EVERY PROMOTION GOES TO IT AT
+    // ONCE. A crossing promotes five pixels, and this queue paid them one a
+    // frame here - ~1.8 ms of grid a frame for five frames, for every
+    // enhanced-skin player. The worker already runs this very grid for
+    // every build (terrainGen.js restrideGrid), so it answers the same
+    // bytes; the surface swaps when the reply lands. Without a worker (none
+    // in the host, `?terrainthread=off`, one that died) the queue below is
+    // what it always was.
+    if (terrainGen.threaded) {
+      for (const p of restridePending.values()) promoteOffThread(p);
+      restridePending.clear();
+      return;
+    }
     let budget = RESTRIDE_PER_FRAME;
     const want = [...restridePending.values()]
       .sort((a, b) => (Math.abs(a.px - state.current.x) + Math.abs(a.py - state.current.y))
@@ -2455,8 +2533,24 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
   }
 
-  function restrideTerrain(p, stride) {
-    const grid = buildTerrainGrid(p.samples, stride, ghostSampler(woods, p.px, p.py));
+  /** PERF-EXT26: a promotion's grid, built on the terrain worker. The
+   *  reply swaps the surface only if the pixel it was asked for still
+   *  stands and still wants stride 1 - an eviction, a rebuild or a walk
+   *  back out while it was away drops it, and a pixel already promoted
+   *  keeps what it has. Nothing is made for a dropped reply, so nothing
+   *  is left to free. */
+  function promoteOffThread(p) {
+    const key = `${p.px},${p.py}`;
+    if (built.get(key) !== p) return;                  // evicted while it waited
+    if (strideFor(p.px, p.py) === p._stride) return;   // walked back out of the near ring
+    terrainGen.grid({ px: p.px, py: p.py, stride: 1, samples: p.samples }).then((grid) => {
+      if (built.get(key) !== p) return;                              // evicted, or rebuilt, while the worker built it
+      if (strideFor(p.px, p.py) !== 1 || p._stride === 1) return;   // walked back out, or promoted meanwhile
+      restrideTerrain(p, 1, grid);
+    }).catch((e) => console.error(`[terrain] promotion of ${key} failed:`, e));
+  }
+
+  function restrideTerrain(p, stride, grid = restrideGrid({ woods, px: p.px, py: p.py, stride, samples: p.samples })) {   // PERF-EXT26: or the grid the worker built
     if (p.water) { renderer.destroyWaterSurface(p.water); p.water = null; }
     renderer.destroyMesh(p.terrain);
     p.terrain = renderer.createTerrainSurface(grid.positions, grid.normals,
@@ -2464,6 +2558,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     const waterIndices = waterOn ? buildWaterIndices(p.tilemapBytes, stride) : null;
     p.water = waterIndices ? renderer.createWaterSurface(p.terrain, waterIndices) : null;
     p._stride = stride;
+    // PERF-EXT21: a promotion is the other way a pixel joins the grass
+    // (its near pieces are the stride-1 ones), and the crossing no longer
+    // rebuilds the field behind it - so the cells over it re-read it.
+    if (stride === 1 && labGrassField) {
+      const t = state.pixelTranslation(p.px, p.py);
+      labGrassField.invalidate(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE);
+    }
   }
 
   /** @param {{collectLoose?:boolean}} [opts] - A1: a season re-skin
@@ -2505,7 +2606,6 @@ export async function bootWorld(canvas, renderer, params, status) {
         carryWodSite(p, key, { piles });
       }
     } else {
-      if (p.wodSite) _wodSiteWas.add(key);   // m2
       if (p.wodSpawners || p.privateersHold) carryWodSite(p, key, { hold: p.privateersHold?.state ?? null });
     }
     // P2-slice (items-2): a loose pile dies WITH its pixel - the
@@ -2668,7 +2768,7 @@ export async function bootWorld(canvas, renderer, params, status) {
 
   status(`building player pixel ${startPixel.x},${startPixel.y}`);
   const first = queue.shift();
-  const playerPixel = await buildPixel(first.px, first.py);
+  const playerPixel = await awaitedBuild(first.px, first.py);
 
   // Camera: at the start location's origin, or the pixel centre.
   const cam = { pos: [TERRAIN_SIZE / 2, playerPixel.centerHeight + 40, TERRAIN_SIZE / 2], yaw: Math.PI, pitch: -0.1 };
@@ -4372,7 +4472,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2466 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:6100
+  // that context through modes.dungeonCtx - so worldModes.js:6109
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -4548,16 +4648,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   // the player places several near a point, with no new geometry code.
   let _nextCampId = 1;
   const _standCampEncounter = (hit, feet) => {
-    const anchorEnv = placeFoeEnv({
-      collider,
-      playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
-      playerYawRad: cam.yaw,
-      fovDegrees: fieldOfView() * 180 / Math.PI,
-      isOccupied: entityOccupancy((f) => f.ai?.feet ?? f.feet, _placingPool, feet),   // AUDIT PSCALE1 COUNT-3
-    });
+    // CAMP-FAR: the anchor stands a hundred to a hundred and fifty metres
+    // out, just outside the view, on the TERRAIN's own floor
+    // (campEncounters.js campAnchorSpot says why the ring law cannot
+    // reach that far). The members below still stand around it by the
+    // ring law, at the group's spacing.
     let anchor = null;
     for (let i = 0; i < LOOSE_FOE_PLACE_ATTEMPTS && !anchor; i++) {
-      anchor = placeFoeFreely(anchorEnv, { minDistance: hit.minDistance, maxDistance: hit.maxDistance, lineOfSightCheck: true });
+      anchor = campAnchorSpot({ feet, yawRad: cam.yaw, fovDegrees: fieldOfView() * 180 / Math.PI, groundAt: collider.heightAt, minDistance: hit.minDistance, maxDistance: hit.maxDistance });
       if (anchor && _inAnyLocationRect([anchor.x, anchor.y, anchor.z])) anchor = null;   // DISC19-F: a camp is a wilderness thing - never pitched in a town's rect from a player standing at its edge
     }
     if (!anchor) return;
@@ -5527,6 +5625,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     lockOn.unlock();   // AUDIT 62 F16: destroy()/removeFoe empties the pool WITHOUT flagging `dead`, so lockOn's death break never fires on the orphan the lock still holds
     magic.clearMissiles();
     arrows.arrows.length = 0;   // the flights own no GL objects - the mesh is the host's cache
+    // PERF-EXT21: AND THE GRASS FIELD. `state.init` below re-anchors the
+    // scene with no offset to ride, so a field kept across it would stand
+    // the old place's blades - at the old place's heights - wherever they
+    // fell in the new one. It always did: this sweep never reached the
+    // field, and the first pixel crossing after the arrival was what threw
+    // it away. The crossing keeps its field now (shiftOrigin), so the new
+    // world's empty field is said here, and the next frame starts one.
+    labGrassField = null;
     // BLOOD1 AUDIT 2 (2026-09-20): THE BLOOD GOES WITH THE WORLD. The
     // ring, the chunks in the air and the ceilings' drips are all in
     // SCENE space, and `state.init` below starts a NEW scene frame -
@@ -5568,11 +5674,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // and the cache is invalid because the ORIGIN moved, which is the
     // reason, rather than because a splice happened to run first.
     doorGeneration += 1;   // WORLD-HOVER: the origin was re-anchored, so every door's WORLD matrix moved with it
+    _streamSince = null;   // PERF-EXT24 (the review): the sweep ended the old world's stream - the new one's two seconds start at its first pump
     const first = queue.shift();
     if (seasonsActive && modEvent === 'travel') await seasons.onPostFastTravel().catch((e) => console.warn('[seasons] travel:', e?.message ?? e));   // SIB1: OnPostFastTravel, off the arrival month (SIB2: the travel popup's arm alone)
     if (seasonsActive && modEvent === 'load') await seasons.onLoad().catch((e) => console.warn('[seasons] load:', e?.message ?? e));   // SIB2: SaveLoadManager.OnLoad - the forced apply now, the unforced one next frame (seasons.tick)
     let dest;   // `finally`: a throwing build must not leave the poll off
-    try { dest = await buildPixel(first.px, first.py); }
+    try { dest = await awaitedBuild(first.px, first.py); }
     finally { _seasonStraightening = false; }
     if (seasonsActive && modEvent === 'travel') seasons.onUpdateTerrainsEnd();   // SIB1: StreamingWorld.OnUpdateTerrainsEnd's after-travel refresh (nothing stale stands, so it asks for no rebuild)
     // TeleportToMapPixel STORES the reposition method and calls
@@ -7557,6 +7664,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (building || queue.length === 0) return;
     building = true;
     const next = queue.shift();
+    _streamSince ??= performance.now();   // PERF-EXT24: a run of streamed builds begins
     try {
       await buildPixel(next.px, next.py);
       // AUDIT 24 (the seven-slice sweep): the streamer can unload this
@@ -7579,6 +7687,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       state.release(next.px, next.py);
     }
     building = false;
+    if (!queue.length) _streamSince = null;   // PERF-EXT24: and ends with the queue
   }
 
   const keys = new Set();
@@ -7633,20 +7742,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     toggleAutomap: () => toggleExteriorAutomap(),
     openTravelMap: () => toggleTravelMap(),
     /** AUDIT 58 (f2/hosts): THE SHEATH PANEL'S DOOR - the eleventh
-     *  panel of the large HUD (ui/hudLarge.js:232), which until now
+     *  panel of the large HUD (ui/hudLarge.js:234), which until now
      *  answered in ONE host of four. HUDLarge.cs:477-484's
      *  SheathPanel_OnMouseClick calls
      *  GameManager.Instance.WeaponManager.ToggleSheath() - a SINGLETON
      *  call with no scene gate at all, registered for both buttons at
      *  :211-212, so the panel is live on every screen the bar is drawn
-     *  on. Here routeAction's arm is optional (ui/input.js:778) and
+     *  on. Here routeAction's arm is optional (ui/input.js:809) and
      *  only dungeonContext.js carried the door, so above ground, in
      *  ?exterior and inside a building the click was swallowed by
      *  routeLargeHudClick's unconditional `return true` and nothing
      *  drew or sheathed - while Z kept working everywhere, which is
      *  why it read as "only the panel is dead". THE FOUR HOSTS RULE.
      *  No double-fire from the keyboard: routeKey declines
-     *  POLLED_ACTIONS (ui/input.js:633), so a Z press reaches the
+     *  POLLED_ACTIONS (ui/input.js:652), so a Z press reaches the
      *  frame's edge latch and nothing else. */
     toggleSheath: () => weaponRig.toggleSheath(),
     // QS2: the diamond's three presses, beside the sheath panel's door and for
@@ -7804,7 +7913,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // is still the field's (CG2). Read off the code alone: the ring is
     // filled below the overlay gate (G3), and a key under a window
     // joins none - so no combo, as DFU's Update returns before PollInput.
-    if (townTalk.overlayActive && !isTextEntryTarget(e.target) && (modes?.mode ?? 'exterior') === 'exterior' && actionForCode(bindings(), e.code) === 'QuickLoad') {
+    // AUDIT RETRO1 C1: but Shift-F11 - the retro toggle's chord on this key - is no load.
+    if (townTalk.overlayActive && !isTextEntryTarget(e.target) && (modes?.mode ?? 'exterior') === 'exterior' && codeMeans(bindings(), e.code, 'QuickLoad') && !retroToggleKey(e, keys)) {   // UXB1-S: its key, shared or not
       e.preventDefault();
       // D-ONLINE1 (Mac, 2026-09-17: "you should just respawn in this case"): F11 on the death screen used to
       // always quickload - the player back at their last save, mobs included. Online, respawn IS the answer to
@@ -7828,6 +7938,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // shop door as outside it (test/modalkeys.test.js red-proofs the
     // one gate that still stands, a typed name over the bindings).
     swallowBrowserKey(e);   // U47: F5/F6/F11 - one list, in ui/input.js
+    // DISC25-E: A TYPED FIELD'S KEY JOINS NO RING AND TAKES NO RUNG - dungeon.js's KB1 gate, which this host never
+    // had. A field outside every overlay (the social panel's letter) sent its letters down this ladder: W walked,
+    // space jumped, F shut the panel. The panel stops its own now; this is the host's half, for any field it did not.
+    if (isTextEntryTarget(e.target)) return;
     // ROAD-G G3 - THE RING IS FILLED BEFORE THE LADDER. InputManager
     // .PollInput (:1795-1809) rebuilds `heldKeys` every frame whatever
     // the dispatch does - `foreach (KeyCode k in KeyCodeList) if
@@ -7866,7 +7980,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     // AUDIT 58 (f3/input) - THE COMBO ARM'S MISSING ARGUMENT.
     // actionOf resolves a COMBO code only when it is handed the host's
-    // held-keys Set (ui/input.js:268-289), and no host passed one - so
+    // held-keys Set (ui/input.js:269-290), and no host passed one - so
     // GetUnaryKey's combo branch (InputManager.cs:1666-1712) was live
     // for the POLLED actions, which read through held(), and dead for
     // every DISPATCHED one. A player who bound Inventory to Shift+I in
@@ -7875,179 +7989,199 @@ export async function bootWorld(canvas, renderer, params, status) {
     // press included, and actionOf reads it through the held-first
     // LATCH (G3/GR); it carries the suppression half too (:1681-1685,
     // "space is jump, LeftShift+Space opens inventory: ignore it").
-    const act = actionOf(e, keys);   // I2: the registry owns the code -> action read
-    // STATUS-LIVE: THE READOUT YIELDS HERE TOO. This host runs its own
-    // key ladder rather than routeKey's, so its Escape arm (and its
-    // quickslot and window arms) never reach ui/input.js's routeAction
-    // - where the one copy of this law lives. Same call, same answer:
-    // an action that wants the slot closes the readout first, and
-    // Escape is SPENT by the close.
-    if (statusReadoutTakesAction(act)) { e.preventDefault(); return; }
-    // AUDIT SOC B4/D1: F ON A BODY WORKS INSIDE TOO. The social door sat under the exterior gate below, and the
-    // interior and dungeon modes' own contexts (scenes/worldModes.js interiorKeyCtx, dungeonCtx) carry no
-    // `socialInteract`, so in a tavern or a dungeon - where two players meet as often as in a street - F did nothing
-    // at all. It answers here, above the mode gate and under the same overlay and window gates the F-menu opens by
-    // (socialMenuCanOpen): the door itself says false on a page with no account, and the ladder falls through.
-    if (!townTalk.overlayActive && act === 'SocialInteract' && socialMenuCanOpen() && socialInteract()) { e.preventDefault(); return; }
-    // QUICK-LOOT B4: THE TWO KEYS, HERE FOR SOC5's OWN REASON. This
-    // sits above the mode gate beside SocialInteract and the
-    // quickslots, so it answers in a street, a shop and a dungeon
-    // alike - the modal modes run under this host's listener, and a
-    // fourth gate invented for loot would be the thing that arm was
-    // written to stop. `quickLootArm` refuses unless something is
-    // HIGHLIGHTED, so with no list under the crosshair the ladder falls
-    // through and P and J are whatever else wants them.
-    //
-    // It arms a mode and fires the host's own one-frame activate
-    // (`_tapArmed`, the same latch the touch tap uses), because the key
-    // is known here and only the FRAME has the ray, the pick and the
-    // pools that own the container.
-    if (!townTalk.overlayActive && socialMenuCanOpen() && quickLootArm(act)) { _tapArmed = 2; e.preventDefault(); return; }
-    // QS2: THE SAME PLACE, FOR THE SAME REASON. A quickslot is worth more in a
-    // dungeon than it is on a road, so these three answered above the mode gate
-    // too - under the same overlay and pause gates (socialMenuCanOpen is
-    // `not paused and no window over the HUD`, which is exactly the door a
-    // gameplay key takes here) rather than a fourth gate invented for them.
-    // (QS7 below RETIRED that placement: the modal ctxs answer these keys
-    // themselves now, so the quickslot is still live in a dungeon and in a
-    // tavern - through ONE ladder instead of two.)
-    // QS6: EXCEPT THE THREE THAT HOLD. QuickUse1, QuickUse2 and QuickSpell are
-    // POLLED_ACTIONS now (ui/input.js): a tap performs the slot and a hold
-    // cycles it, and only the frame can tell those apart - so this ladder must
-    // decline them here exactly as routeKey's own `POLLED_ACTIONS.has(act)`
-    // arm does, or the down edge would drink the potion the hold was about to
-    // choose. This is WEAPON-VIS2's lesson at a second door.
-    // QS7 (2026-09-17, Mac: "if you go into a tavern with a lit torch, pressing 4
-    // does not actually make it go out, it just goes thru the 'douse' and
-    // 'ignite' motions"). AND THE MODE GATE IS BACK ON THIS ARM, because what
-    // it was written to reach now answers for itself. QS2 put the quickslots
-    // ABOVE the gate when the modal contexts carried no quickslot doors at
-    // all; QS4 gave `interiorKeyCtx` and `dungeonCtx` the whole set, and
-    // worldModes' own ladder (U43's one dispatch) routes the same ui/input.js
-    // table over them. Two ladders, both live on the same window, both
-    // reaching the ONE handheld-torches mod - so a single Digit4 in a tavern
-    // pressed `toggleLightPress` TWICE: douse, then ignite, net nothing, with
-    // both clips played. That is WEAPON-VIS2's double-fire exactly, at a third
-    // door, and the fix is the same one: whoever owns the mode owns the key.
-    // (The SocialInteract arm above stays ungated - AUDIT SOC B4/D1's whole
-    // finding is that the modal contexts carry NO socialInteract, so there is
-    // no second answer to collide with.)
-    if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && socialMenuCanOpen()) { if (!e.repeat && routeAction(act, hudCtx)) { e.preventDefault(); return; } if (e.repeat) { e.preventDefault(); return; } }   // MAC-R2: the press edge alone - a held key's auto-repeat is nothing (ui/input.js routeKey has the law)
-    // U45 - THE ONE DOOR PER DESTINATION: this ladder and the large
-    // HUD's eleven panels open the same windows, so they read the same
-    // object. It is the same law U43 applied to the interior arm, one
-    // host over. QuickLoad keeps its own arm below because it is the
-    // one action that works with a window UP (the death screen's F11).
-    if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
-      // PX17b (Mac: "tab isn't working in-game"): THE BELL NOBODY
-      // RANG. PX15 hung toggleDial on hudCtx and trusted routeKey's
-      // Tab arm to ring it - but THIS host never calls routeKey; like
-      // exterior it runs its own ladder, and only exterior got the
-      // inline arm. So the world's rose was wired and unreachable -
-      // the drawn-door-that-opens-nothing bug, inverted. The arm now
-      // lives here, behind the same overlay/mode gate as every
-      // sibling door; preventDefault only when the dial answers, so
-      // classic Tab keeps its default.
-      // TO1's travel panel keys are taken ABOVE the ring now (KB1) - see the arm at the ring's fill.
-      if (act === 'QuickDial' && hudCtx.toggleDial()) { e.preventDefault(); return; }   // KB1: the registry's QuickDial, not a literal Tab
-      // AUDIT 64 F36/F37 - THE HUD'S OWN SHORTCUTS (DaggerfallHUD.cs
-      // :308-318). This host runs its own ladder and never calls
-      // routeKey, which is where the other two hosts take these keys,
-      // so the arm lives here too or F10/Shift-F10 would work in a
-      // dungeon and not in the street - the FOUR HOSTS trap. It stays
-      // INSIDE the mode gate: an interior or dungeon mode is mounted
-      // by scenes/worldModes.js, whose own routeKey call already
-      // answers these keys, and two live arms would flip the setting
-      // twice per press and cancel out.
-      if (hudShortcutKey(e, keys)) { e.preventDefault(); return; }
-      if (act === 'CharacterSheet') { hudCtx.toggleCharSheet(); return; }
-      // U43: LogBook (L) and NoteBook (N) - two of GameManager's own
-      // dispatch chain (:541-548) that the port bound at I1 and then
-      // read NOWHERE, while ui/questJournal.js sat built with all four
-      // of its pages. The interior and dungeon hosts answer them too.
-      if (act === 'LogBook') { e.preventDefault(); hudCtx.toggleLogbook(); return; }
-      if (act === 'NoteBook') { e.preventDefault(); hudCtx.toggleNotebook(); return; }
-      // U8d: F6 opens the classic inventory (DFU's default Inventory
-      // binding; same host rule as F5).
-      if (act === 'Inventory' && inventoryDoorReady()) { hudCtx.toggleInventory(); return; }
-      // M2/I2: the CastSpell action opens the spellbook
-      // (GameManager.cs:550-553); the cast is the attack click.
-      if (act === 'CastSpell') { e.preventDefault(); hudCtx.toggleSpellbook(); return; }
-      // FIX-F: Q readies the last spell cast, E drops the readied one
-      // (EntityEffectManager.cs:257-270) - bound since I1, read by nothing.
-      if (act === 'RecastSpell') { e.preventDefault(); magic.recastSpell(); return; }
-      if (act === 'AbortSpell') { e.preventDefault(); magic.abortReadySpell(); return; }
-      // V5: Rest, the last dead binding above ground. It was routed in
-      // the DUNGEON's chain and nowhere else, so KeyR outdoors did
-      // nothing at all - and with it comes CanRest's town half: the
-      // camping refusal, the Vagrancy charge and the watch.
-      // S40: the key is R (InputManager.cs:997, SetupDefaults) and
-      // GameManager's dispatch (GameManager.cs:534-537) carries no
-      // scene gate at all; this ladder's gate is the U43 flag still
-      // standing over these lines. ROAD-H H5: a byte-identical SECOND
-      // arm stood fourteen lines below, unreachable behind this one,
-      // and was deleted - this is the arm that fires.
-      if (act === 'Rest') { e.preventDefault(); hudCtx.toggleRest(); return; }
-      // P-slice: the classic quicksave bindings (F9 save, F11 load -
-      // InputManager.SetupDefaults), above ground at last.
-      if (act === 'QuickSave') { e.preventDefault(); hudCtx.quickSave(); return; }
-      // F-slice: the travel map (V - InputManager.SetupDefaults:1028).
-      if (act === 'TravelMap') { hudCtx.openTravelMap(); return; }
-      // A2: the exterior automap (Actions.AutoMap outdoors,
-      // DaggerfallUI.cs:633-650 - the town-map half of the dispatch).
-      // I2: through the registry, so M is rebindable like every other
-      // action rather than a second hardcoded literal.
-      if (act === 'AutoMap') { hudCtx.toggleAutomap(); return; }
-      // I3: Escape with no overlay opens the pause screen; it closes
-      // itself on the same key. U51: WHICH screen is ui/pauseDoor.js's
-      // decision - the classic OPTN00I0 panel, or the enhanced menu in
-      // pause mode - and pauseDoorReady is that fork's own gate, since
-      // only one of the two needs art before it can draw a word.
-      if (act === 'Escape' && pauseDoorReady()) { hudCtx.togglePause(); return; }
-      // AUDIT-MACK F1: THE FALL-THROUGH - see the long note at the
-      // same place in `scenes/exterior.js`. `ui/input.js`'s
-      // `routeAction` dispatches ten actions onto ctx doors; this
-      // ladder had arms for five of them, and `Transport`, `Status`,
-      // `UseMagicItem` and the two mode cycles were reachable only by
-      // CLICKING the large HUD panel. Mac reported the one he uses.
-      // The tail is the table now, so a door on `hudCtx` is reachable
-      // by its own action the moment it exists.
-      //
-      // MAC-L1: AND IT IS THE TAIL. AUDIT-MACK wrote it ABOVE the
-      // Escape arm just above, so `routeAction` claimed Escape first
-      // and that arm became unreachable - which is how MAC-L1's crash
-      // reached a player: the table's Escape case hands the door its
-      // options, the arm above hands it none, and only the table's
-      // route was live. A tail that is not last is not a tail; it is an
-      // arm that silently outranks every arm below it. `test/mack_bugs`
-      // gates the position now, not just the presence.
-      // WEAPON-VIS2: this ladder never calls routeKey (the comment
-      // above the Escape arm says so directly), so routeKey's own
-      // `POLLED_ACTIONS.has(act)` decline (ui/input.js:737) never
-      // touched this door. hudCtx carries toggleSheath (AUDIT 58, for
-      // the large HUD's sheath panel), so 'ReadyWeapon' - Z - reached
-      // routeAction from BOTH here AND the frame's own poll below
-      // (MWCROUCH's `pressed(latch.edge, keys, 'ReadyWeapon')`, the
-      // `zNowW && !zPrevW` latch at the time) on every single press: drawn, then
-      // sheathed straight back, net nothing, every time. A player
-      // could equip a weapon, see it confirmed in the inventory, hear
-      // a sheathe click on every press, and never once see it on
-      // screen - `toggleSheathCalls` climbing by exactly 2 a press
-      // (WEAPON-VIS1) is what actually caught it, not a guess. The
-      // same exclusion routeKey already uses closes this door too.
-      if (POLLED_ACTIONS.has(act)) { /* the frame's poll owns it */ }
-      else if (e.repeat) { e.preventDefault(); return; }   // AUDIT KB1: the press edge alone - routeKey's law (ui/input.js), so a held F8/F9 is one shot, one save
-      else if (routeAction(act, hudCtx)) { e.preventDefault(); return; }
+    // UXB1-S (2026-09-25, the UX backlog: "So you wont add multiple key bindings even when asked?"): A SHARED KEY DOES
+    // ALL IT WAS GIVEN. A key a player put on more than one action (inputActions.js shareBinding - the Controls pages'
+    // "use for both") answers each of them, owner first, and the ladder - `worldKeyAction` below, word for word, each `return`
+    // now the press being used - runs once per action. A key with none runs it once with null: the HUD's own shortcuts are
+    // keys, not actions, and they answer on the first pass alone, so a shared F10 cannot flip the large HUD twice.
+    const acts = retroToggleKey(e, keys) ? [] : actionsOf(e, keys);   // I2: the registry owns the code -> action read; AUDIT RETRO1 G3: Shift-F11 is the HUD's (below), never QuickLoad's - routeKey's hosts take it first too
+    // AUDIT UXB1 F1: ...until a WINDOW comes up - a pausing one (bindCursorToggle's own predicate) or a pointer surface
+    // (the chat, the friends panel, the F-menu: they pause nothing, and take keys). The keys are its from there: a key
+    // shared by two windows' doors opens the first, not both stacked, and nothing after a door is done behind it.
+    const windowUp = () => gamePaused() || (modes?.modalWindowUp?.() ?? false) || pointerSurfaces.size > 0;
+    const upBefore = windowUp();
+    const pass = acts.length ? acts : [null];
+    let spent = false;
+    for (let i = 0; i < pass.length; i++) {
+      if (worldKeyAction(pass[i], i === 0)) spent = true;
+      if (!upBefore && windowUp()) break;
     }
-    if (act === 'QuickLoad' && (modes?.mode ?? 'exterior') === 'exterior') {
-      e.preventDefault();
-      hudCtx.quickLoad();
-      return;
-    }
+    if (spent) return;
     if (e.code === 'AltLeft') e.preventDefault();
     // DFU parity: mouselook is the resting state - any gameplay
     // keypress re-engages a dropped lock (no click-to-look mode).
     if (!gamePaused() && !pointerSurfaces.size && document.pointerLockElement !== canvas) requestLook(canvas);   // AUDIT SOC B6: never under an open chat, friends panel or F-menu - a key there is the surface's, and a relock under it is a dead panel
+    function worldKeyAction(act, first) {
+      // STATUS-LIVE: THE READOUT YIELDS HERE TOO. This host runs its own
+      // key ladder rather than routeKey's, so its Escape arm (and its
+      // quickslot and window arms) never reach ui/input.js's routeAction
+      // - where the one copy of this law lives. Same call, same answer:
+      // an action that wants the slot closes the readout first, and
+      // Escape is SPENT by the close.
+      if (statusReadoutTakesAction(act)) { e.preventDefault(); return true; }
+      // AUDIT SOC B4/D1: F ON A BODY WORKS INSIDE TOO. The social door sat under the exterior gate below, and the
+      // interior and dungeon modes' own contexts (scenes/worldModes.js interiorKeyCtx, dungeonCtx) carry no
+      // `socialInteract`, so in a tavern or a dungeon - where two players meet as often as in a street - F did nothing
+      // at all. It answers here, above the mode gate and under the same overlay and window gates the F-menu opens by
+      // (socialMenuCanOpen): the door itself says false on a page with no account, and the ladder falls through.
+      if (!townTalk.overlayActive && act === 'SocialInteract' && socialMenuCanOpen() && socialInteract()) { e.preventDefault(); return true; }
+      // QUICK-LOOT B4: THE TWO KEYS, HERE FOR SOC5's OWN REASON. This
+      // sits above the mode gate beside SocialInteract and the
+      // quickslots, so it answers in a street, a shop and a dungeon
+      // alike - the modal modes run under this host's listener, and a
+      // fourth gate invented for loot would be the thing that arm was
+      // written to stop. `quickLootArm` refuses unless something is
+      // HIGHLIGHTED, so with no list under the crosshair the ladder falls
+      // through and P and J are whatever else wants them.
+      //
+      // It arms a mode and fires the host's own one-frame activate
+      // (`_tapArmed`, the same latch the touch tap uses), because the key
+      // is known here and only the FRAME has the ray, the pick and the
+      // pools that own the container.
+      if (!townTalk.overlayActive && socialMenuCanOpen() && quickLootArm(act)) { _tapArmed = 2; e.preventDefault(); return true; }
+      // QS2: THE SAME PLACE, FOR THE SAME REASON. A quickslot is worth more in a
+      // dungeon than it is on a road, so these three answered above the mode gate
+      // too - under the same overlay and pause gates (socialMenuCanOpen is
+      // `not paused and no window over the HUD`, which is exactly the door a
+      // gameplay key takes here) rather than a fourth gate invented for them.
+      // (QS7 below RETIRED that placement: the modal ctxs answer these keys
+      // themselves now, so the quickslot is still live in a dungeon and in a
+      // tavern - through ONE ladder instead of two.)
+      // QS6: EXCEPT THE THREE THAT HOLD. QuickUse1, QuickUse2 and QuickSpell are
+      // POLLED_ACTIONS now (ui/input.js): a tap performs the slot and a hold
+      // cycles it, and only the frame can tell those apart - so this ladder must
+      // decline them here exactly as routeKey's own `POLLED_ACTIONS.has(act)`
+      // arm does, or the down edge would drink the potion the hold was about to
+      // choose. This is WEAPON-VIS2's lesson at a second door.
+      // QS7 (2026-09-17, Mac: "if you go into a tavern with a lit torch, pressing 4
+      // does not actually make it go out, it just goes thru the 'douse' and
+      // 'ignite' motions"). AND THE MODE GATE IS BACK ON THIS ARM, because what
+      // it was written to reach now answers for itself. QS2 put the quickslots
+      // ABOVE the gate when the modal contexts carried no quickslot doors at
+      // all; QS4 gave `interiorKeyCtx` and `dungeonCtx` the whole set, and
+      // worldModes' own ladder (U43's one dispatch) routes the same ui/input.js
+      // table over them. Two ladders, both live on the same window, both
+      // reaching the ONE handheld-torches mod - so a single Digit4 in a tavern
+      // pressed `toggleLightPress` TWICE: douse, then ignite, net nothing, with
+      // both clips played. That is WEAPON-VIS2's double-fire exactly, at a third
+      // door, and the fix is the same one: whoever owns the mode owns the key.
+      // (The SocialInteract arm above stays ungated - AUDIT SOC B4/D1's whole
+      // finding is that the modal contexts carry NO socialInteract, so there is
+      // no second answer to collide with.)
+      if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && socialMenuCanOpen()) { if (!e.repeat && routeAction(act, hudCtx)) { e.preventDefault(); return true; } if (e.repeat) { e.preventDefault(); return true; } }   // MAC-R2: the press edge alone - a held key's auto-repeat is nothing (ui/input.js routeKey has the law)
+      // U45 - THE ONE DOOR PER DESTINATION: this ladder and the large
+      // HUD's eleven panels open the same windows, so they read the same
+      // object. It is the same law U43 applied to the interior arm, one
+      // host over. QuickLoad keeps its own arm below because it is the
+      // one action that works with a window UP (the death screen's F11).
+      if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+        // PX17b (Mac: "tab isn't working in-game"): THE BELL NOBODY
+        // RANG. PX15 hung toggleDial on hudCtx and trusted routeKey's
+        // Tab arm to ring it - but THIS host never calls routeKey; like
+        // exterior it runs its own ladder, and only exterior got the
+        // inline arm. So the world's rose was wired and unreachable -
+        // the drawn-door-that-opens-nothing bug, inverted. The arm now
+        // lives here, behind the same overlay/mode gate as every
+        // sibling door; preventDefault only when the dial answers, so
+        // classic Tab keeps its default.
+        // TO1's travel panel keys are taken ABOVE the ring now (KB1) - see the arm at the ring's fill.
+        if (act === 'QuickDial' && hudCtx.toggleDial()) { e.preventDefault(); return true; }   // KB1: the registry's QuickDial, not a literal Tab
+        // AUDIT 64 F36/F37 - THE HUD'S OWN SHORTCUTS (DaggerfallHUD.cs
+        // :308-318). This host runs its own ladder and never calls
+        // routeKey, which is where the other two hosts take these keys,
+        // so the arm lives here too or F10/Shift-F10 would work in a
+        // dungeon and not in the street - the FOUR HOSTS trap. It stays
+        // INSIDE the mode gate: an interior or dungeon mode is mounted
+        // by scenes/worldModes.js, whose own routeKey call already
+        // answers these keys, and two live arms would flip the setting
+        // twice per press and cancel out.
+        if (first && hudShortcutKey(e, keys)) { e.preventDefault(); return true; }
+        if (act === 'CharacterSheet') { hudCtx.toggleCharSheet(); return true; }
+        // U43: LogBook (L) and NoteBook (N) - two of GameManager's own
+        // dispatch chain (:541-548) that the port bound at I1 and then
+        // read NOWHERE, while ui/questJournal.js sat built with all four
+        // of its pages. The interior and dungeon hosts answer them too.
+        if (act === 'LogBook') { e.preventDefault(); hudCtx.toggleLogbook(); return true; }
+        if (act === 'NoteBook') { e.preventDefault(); hudCtx.toggleNotebook(); return true; }
+        // U8d: F6 opens the classic inventory (DFU's default Inventory
+        // binding; same host rule as F5).
+        if (act === 'Inventory' && inventoryDoorReady()) { hudCtx.toggleInventory(); return true; }
+        // M2/I2: the CastSpell action opens the spellbook
+        // (GameManager.cs:550-553); the cast is the attack click.
+        if (act === 'CastSpell') { e.preventDefault(); hudCtx.toggleSpellbook(); return true; }
+        // FIX-F: Q readies the last spell cast, E drops the readied one
+        // (EntityEffectManager.cs:257-270) - bound since I1, read by nothing.
+        if (act === 'RecastSpell') { e.preventDefault(); magic.recastSpell(); return true; }
+        if (act === 'AbortSpell') { e.preventDefault(); magic.abortReadySpell(); return true; }
+        // V5: Rest, the last dead binding above ground. It was routed in
+        // the DUNGEON's chain and nowhere else, so KeyR outdoors did
+        // nothing at all - and with it comes CanRest's town half: the
+        // camping refusal, the Vagrancy charge and the watch.
+        // S40: the key is R (InputManager.cs:997, SetupDefaults) and
+        // GameManager's dispatch (GameManager.cs:534-537) carries no
+        // scene gate at all; this ladder's gate is the U43 flag still
+        // standing over these lines. ROAD-H H5: a byte-identical SECOND
+        // arm stood fourteen lines below, unreachable behind this one,
+        // and was deleted - this is the arm that fires.
+        if (act === 'Rest') { e.preventDefault(); hudCtx.toggleRest(); return true; }
+        // P-slice: the classic quicksave bindings (F9 save, F11 load -
+        // InputManager.SetupDefaults), above ground at last.
+        if (act === 'QuickSave') { e.preventDefault(); hudCtx.quickSave(); return true; }
+        // F-slice: the travel map (V - InputManager.SetupDefaults:1028).
+        if (act === 'TravelMap') { hudCtx.openTravelMap(); return true; }
+        // A2: the exterior automap (Actions.AutoMap outdoors,
+        // DaggerfallUI.cs:633-650 - the town-map half of the dispatch).
+        // I2: through the registry, so M is rebindable like every other
+        // action rather than a second hardcoded literal.
+        if (act === 'AutoMap') { hudCtx.toggleAutomap(); return true; }
+        // I3: Escape with no overlay opens the pause screen; it closes
+        // itself on the same key. U51: WHICH screen is ui/pauseDoor.js's
+        // decision - the classic OPTN00I0 panel, or the enhanced menu in
+        // pause mode - and pauseDoorReady is that fork's own gate, since
+        // only one of the two needs art before it can draw a word.
+        if (act === 'Escape' && pauseDoorReady()) { hudCtx.togglePause(); return true; }
+        // AUDIT-MACK F1: THE FALL-THROUGH - see the long note at the
+        // same place in `scenes/exterior.js`. `ui/input.js`'s
+        // `routeAction` dispatches ten actions onto ctx doors; this
+        // ladder had arms for five of them, and `Transport`, `Status`,
+        // `UseMagicItem` and the two mode cycles were reachable only by
+        // CLICKING the large HUD panel. Mac reported the one he uses.
+        // The tail is the table now, so a door on `hudCtx` is reachable
+        // by its own action the moment it exists.
+        //
+        // MAC-L1: AND IT IS THE TAIL. AUDIT-MACK wrote it ABOVE the
+        // Escape arm just above, so `routeAction` claimed Escape first
+        // and that arm became unreachable - which is how MAC-L1's crash
+        // reached a player: the table's Escape case hands the door its
+        // options, the arm above hands it none, and only the table's
+        // route was live. A tail that is not last is not a tail; it is an
+        // arm that silently outranks every arm below it. `test/mack_bugs`
+        // gates the position now, not just the presence.
+        // WEAPON-VIS2: this ladder never calls routeKey (the comment
+        // above the Escape arm says so directly), so routeKey's own
+        // `POLLED_ACTIONS.has(act)` decline (ui/input.js:768) never
+        // touched this door. hudCtx carries toggleSheath (AUDIT 58, for
+        // the large HUD's sheath panel), so 'ReadyWeapon' - Z - reached
+        // routeAction from BOTH here AND the frame's own poll below
+        // (MWCROUCH's `pressed(latch.edge, keys, 'ReadyWeapon')`, the
+        // `zNowW && !zPrevW` latch at the time) on every single press: drawn, then
+        // sheathed straight back, net nothing, every time. A player
+        // could equip a weapon, see it confirmed in the inventory, hear
+        // a sheathe click on every press, and never once see it on
+        // screen - `toggleSheathCalls` climbing by exactly 2 a press
+        // (WEAPON-VIS1) is what actually caught it, not a guess. The
+        // same exclusion routeKey already uses closes this door too.
+        if (POLLED_ACTIONS.has(act)) { /* the frame's poll owns it */ }
+        else if (e.repeat) { e.preventDefault(); return true; }   // AUDIT KB1: the press edge alone - routeKey's law (ui/input.js), so a held F8/F9 is one shot, one save
+        else if (routeAction(act, hudCtx)) { e.preventDefault(); return true; }
+      }
+      if (act === 'QuickLoad' && (modes?.mode ?? 'exterior') === 'exterior') {
+        e.preventDefault();
+        hudCtx.quickLoad();
+        return true;
+      }
+      return false;
+    }
   });
   // D4: the overlay's KEY-UP edge. This listener has drained the
   // movement Set since the first host and never told the open window
@@ -8060,7 +8194,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // AUDIT 58 (f3/input) - THE ONE READER. This host builds the mode
   // machine unconditionally, and that machine used to register a
   // SECOND bindCursorToggle over the same module-global flag
-  // (player/pointerLock.js:57-171), so ONE Enter flipped it twice and
+  // (player/pointerLock.js:57-174), so ONE Enter flipped it twice and
   // `cursorActive()` could never rise here at all - the large HUD's
   // eleven panels were unreachable by mouse in this host, and the
   // second flip fired a releaseLook/requestLook pair inside one event.
@@ -8070,7 +8204,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // (scenes/worldModes.js's modalWindowUp, published on the object).
   // `modes` is the hoisted var this file's other listeners already
   // read through `?.`, so the closure reaches it once it is built.
-  bindCursorToggle(canvas, () => gamePaused() || (modes?.modalWindowUp?.() ?? false), (e) => actionOf(e, keys));   // KB1: the host's held Set, so a combo'd FreeMouse resolves
+  bindCursorToggle(canvas, () => gamePaused() || (modes?.modalWindowUp?.() ?? false), (e) => actionsOf(e, keys));   // KB1: the host's held Set, so a combo'd FreeMouse resolves
   // AUDIT 24 (wave 37) - THE LIVE CRASH. `modes` is a VAR, deliberately
   // hoisted so these two listeners can be installed HERE and still reach
   // the mode machine that is not built until ~600 lines below. `var`
@@ -8238,7 +8372,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:232, "a right-click on a window is the window's...
+  // (dungeon.js:233, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -8274,7 +8408,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the docked bar's strip is no world tap at all.
     tap: (x, y, opts = null) => {
       if (modes?.decorFlying?.()) return;   // DECOR1e: under the decorator's flight a tap is no press - the bar's Place places
-      if (!ndcFromScreen(x, y, canvas.clientWidth, canvas.clientHeight, largeHudViewportRect(canvas.clientHeight))) return;
+      if (!ndcFromScreen(x, y, canvas.clientWidth, canvas.clientHeight, worldViewportRect(canvas.clientWidth, canvas.clientHeight))) return;
       _tapPoint = [x, y]; _tapArmed = 2;   // AUDIT 62 F8: the arm IS the press - see _tapArmed at the gate below
       _tapLockOnly = !!opts?.lockOnly;   // TS1: touch.js's stick-half tap (TI1b) - the lock pick and nothing below it
     },
@@ -8489,7 +8623,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:9271-9335 -
+  // worldModes answers it in BOTH modes (worldModes.js:9280-9344 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -9683,7 +9817,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   if (onlineOn) townTalk.ensureFactions?.().then(() => { if (townTalk.factionDict) setWorldPriceTilt(worldPriceTiltOf(townTalk.factionDict)); }).catch(() => {});
   let peerRiders = null;   // RIDE: another player in the saddle, drawn as Eye Of The Beholder's mounted sprite (net/peerRiders.js)
   let peerWalkers = null;   // DISC23-B: another player on foot, drawn as the Eye Of The Beholder set they chose (net/peerRiders.js)
-  let online = null, remotePlayers = null, peerBodies = null, nameLayer = null, nameSight = null, _onlineLast = null, _onlineKey = null, _onlineKeySince = 0, _onlineMovingUntil = 0;
+  let online = null, remotePlayers = null, peerBodies = null, nameLayer = null, nameSight = null, _onlineLast = null, _onlineKey = null, _onlineKeySince = 0, _onlineMovingUntil = 0, _onlineLookAt = -Infinity;
   let _hsLatch = false;   // AUDIT DISC7 B2: the motor's half-speed flag off the last frame that MOVED - a stop reads it true (standing), and the move hold must not send that as a slow trot
   // D-ONLINE1 (2026-09-17, a player: "still see you have died then main menu"): `onlineFrame` LEAVES the room the
   // instant the death screen goes up (AUDIT ONLINE D12: the dead broadcast nothing and see no one), every frame,
@@ -9898,6 +10032,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const dungeonAuthority = (now = performance.now()) => !(online?.room && isWorldRoom(online.room) && online.status === 'open' && online.host && !online.isHost() && now - _foesInAt < FOES_STALE_MS);
   let onlineToScene = (p) => [p.x, p.y, p.z];
   const ROOM_HOLD_MS = 500;   // AUDIT ONLINE D11: a room key holds this long before the socket moves - a cell edge is not a churn
+  const ONLINE_LOOK_CHECK_MS = 1000;   // PROFILE2: how often my look is re-composed and compared with what the rooms were told
   const ONLINE_MOVE_HOLD_MS = 250;   // ONLINE-MVFLICKER1: see the outgoing `mv` computation's own header - debounces a single stray zero-delta sample
   // ACC1d: ONE minter, shared by the presence session and every channel
   // link - it holds no token and caches nothing, so a shared minter is
@@ -10134,7 +10269,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     remotePlayers = new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture, uploadRecordFrame, audio } });   // 2026-09-17: uploadRecordFrame added for the class-enemy billboard path (net/remotePlayers.js _buildMobile/_syncMobilePeer) - the doll path never touches it
     // MWBODY1: the enhanced skin with Morrowind data attached puts every peer in a body of its own; otherwise the doll
     const enhanced = isEnhanced();   // the skin cannot change without a reload (switchSkin), so it is read once, not per frame
-    peerBodies = new PeerBodies({ renderer, enabled: () => enhanced && !!getPref('mwArms') && morrowindDataCount() > 0, generation: morrowindDataGeneration });
+    peerBodies = new PeerBodies({ renderer, enabled: () => enhanced && morrowindDataCount() > 0, generation: morrowindDataGeneration });   // MWA4: attached is on
     const eotbArt = createEotbArt({ renderer });   // DISC23-B: one store for the riders' and the walkers' art
     peerRiders = createPeerRiders({ renderer, art: eotbArt });   // RIDE: the others in the saddle
     peerWalkers = createPeerWalkers({ renderer, art: eotbArt, enabled: () => getPref('peerClassSprites') !== false });   // DISC23-B: the others on foot, as the set they chose - the 'Other players' card's sprite side
@@ -10225,6 +10360,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // does (net/online.js _helloFrame) - and set here rather than in the constructor call because CHAT1's pin
       // holds the five lines above as they stand.
       if (tab.room === SOCIAL_ROOM) { link.acct = accountId(); link.asecret = accountSecret(); }
+      if (tab.room === SOCIAL_ROOM) link.onEvent = (ev, o) => dread.set(ev, o);   // EVENT1: the hub - the one room every online player holds - says the live event
     }
     // SRV-N: the PRESENCE session hears the relay too, and it is usually
     // the first back after a deploy. Both arms run the same detector,
@@ -10266,7 +10402,19 @@ export async function bootWorld(canvas, renderer, params, status) {
         // it did not sign for, and nothing is echoed back, so a player
         // who tries learns nothing from the silence.
         const red = /^\/red\s+([\s\S]+)$/i.exec(text.trim());
-        if (red) return chatLinks.get('world')?.sendRed(red[1]) ?? false;   // CHAT-CHAN: from any tab, on the World channel - the one room every player online is in
+        if (red) return chatLinks.get('world')?.sendRed(red[1]) ?? false;
+        // EVENT1 (Mac: "a fun live event for the server"): /event dread, /event off - /red's law, on the same World
+        // link: never guarded here (the relay asks the token; a stranger is ignored in silence, and the sky that
+        // changes for everyone is the stager's receipt). A relay too old to know the frame would CLOSE the socket on
+        // it, so that one is said in words instead of sent.
+        const staged = parseEventCommand(text);
+        if (staged) {
+          const say = (line) => { chatLog.push(tabId, { text: line, system: true }); return true; };
+          if ('error' in staged) return say(staged.error);
+          const hub = chatLinks.get('world');
+          if (!hub?.eventOk) return say('The server cannot stage live events yet.');
+          return hub.sendStage(staged.kind);
+        }   // CHAT-CHAN: from any tab, on the World channel - the one room every player online is in
         // MOD1 (Mac: "moderator chat commands"): /mute and /unmute. NOT
         // GUARDED HERE either, for /red's reason: whether this player may
         // is the account service's question, and its refusal comes back
@@ -10411,7 +10559,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (q) _questSyncSeen.set(quest.questName, q.getLogMessages()?.length ?? 0);
         return;
       }
-      const why = SHARE_REFUSAL_TEXT[result.reason];
+      const why = shareRefusalText(result);   // DISC25-D: a guild refusal names the guild
       setMidScreenText(why ? `${who} tried to share "${label}", but you ${why}` : `Could not receive the quest "${label}" from ${who}.`);
     };
     social.onNote = (note, text) => { if (text) chatLog.push(partyNoteTab(note, social, tab.id), { text, system: true }); };   // CHAT-CHAN: a party's own news on the Party tab, beside its conversation
@@ -12278,6 +12426,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     const moved = now < _onlineMovingUntil;
     _onlineLast = [player.pos[0], player.pos[1], player.pos[2]];
     if (key !== _onlineKey) { _onlineKey = key; _onlineKeySince = now; }
+    // PROFILE2 (Mac: "make the profile icon visible somehow on the pause menu and allow changes"): MY LOOK, KEPT CURRENT.
+    // A skin chosen on the pause screen or a coat put on is a look changed mid-session, and the look rode the hello
+    // alone - the others drew the old one until the next room. Re-composed once a second (the equip table and one
+    // store read) and handed to the session, which says it again only when it changed (net/online.js setLook).
+    if (now - _onlineLookAt >= ONLINE_LOOK_CHECK_MS) { _onlineLookAt = now; online.setLook(composeLook(playerEntity)); }
     // AUDIT RIDE: in the saddle the run bit is the GALLOP, and the motor never runs a mount (canRunUnlessRiding) - so
     // the bit is what the rider's own sprite shows: EOTB's chooseTable over the same motion bag (a speed past
     // GALLOP_SPEED), and the others draw the table this player sees
@@ -12308,12 +12461,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       // the person). Both absent rather than 0, the wire's omission law.
       lh: rig.playerWeapon.usingRightHand ? undefined : 1,
       wb: (() => { const l = liveLycanthropy(playerEntity); return l?.isTransformed ? (l.infectionType | 0) || undefined : undefined; })(),
+      hl: waistLanternPoseBit(playerEntity.lightSource),   // HT-WAIST-NET: a lit lantern hung at the waist, so the others' Morrowind bodies hang it at the hip - absent otherwise, the wire's omission law
     };   // the wire's move bit: 1 walking, 2 running (the peers' bodies pick the clip off it)
     if (!key) { if (online.room) online.leave(); }   // AUDIT ONLINE D4: a place the host cannot name is no room, not the old one in the wrong frame
     // AUDIT WORLD2 C8: a world room's edge is never a churn - the hold delayed every handover and let one dungeon's stream land in another
     // AUDIT WORLD6b-iii(b) B1/B8: a cell crossing is joined the moment the cell is HELD (the halo's socket promotes in
     // place - the hold bought nothing but a 500 ms strip with no socket in the cell I stood in); otherwise the hold
-    else if (key !== online.room) { if (!online.room || isWorldRoom(key) || isWorldRoom(online.room) || (isCellRoom(key) && online.inRoom(key)) || now - _onlineKeySince >= ROOM_HOLD_MS) { online.look = composeLook(playerEntity); online.join(key, { ...pose, ...arm }); } }   // the look re-composed: the next room's hello carries the gear worn now
+    else if (key !== online.room) { if (!online.room || isWorldRoom(key) || isWorldRoom(online.room) || (isCellRoom(key) && online.inRoom(key)) || now - _onlineKeySince >= ROOM_HOLD_MS) { online.setLook(composeLook(playerEntity)); online.join(key, { ...pose, ...arm }); } }   // the look re-composed: the next room's hello carries the gear worn now (PROFILE2: through setLook, so a halo the join PROMOTES - no hello of its own - is told too)
     else online.sendPose({ ...pose, ...arm });
     // PERF11 (2026-09-19, Mac: "Online mode needs further performance
     // improvements"): ONE peersNear() A FRAME. The owner sweeps below -
@@ -12334,7 +12488,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // posed into, so a peer a pixel across the edge is in my room and I in theirs (D9); a crossing promotes the halo
     const wantHalo = mp && isCellRoom(online.room) ? cellHaloFor(mp.x, mp.y, { current: online.haloRooms() }) : [];
     if (mp && isCellRoom(online.room) && isCellRoom(key) && key !== online.room) wantHalo.push(key);   // AUDIT WORLD6b-iii(b) B1: the cell I STAND in, until the join promotes it - the list is the new pixel's, which names neither the old cell (my own) nor the new one (the pixel's), so the crossing frame CLOSED the halo the promotion was for
-    if (wantHalo.some((r) => !online.haloRooms().includes(r))) online.look = composeLook(playerEntity);   // AUDIT WORLD6b-iii(b) C5: a halo about to open hellos with the gear worn NOW (a promotion sends no hello of its own)
+    if (wantHalo.some((r) => !online.haloRooms().includes(r))) online.setLook(composeLook(playerEntity));   // AUDIT WORLD6b-iii(b) C5: a halo about to open hellos with the gear worn NOW (a promotion sends no hello of its own)
     online.setHalo(wantHalo);
     online.tick();
     // WORLD6b: a room change leaves every puppet in the old cell; a peer gone from the room takes its puppets with it.
@@ -12356,8 +12510,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     peerCastVisuals(drawable);   // SPELLFX1: a peer's new cast, drawn once
     // RIDE (2026-09-23, Mac: "ensure over people see others riding on horses"): a peer in the saddle is drawn as the
     // rider FIRST, so the body and the doll below stand nothing for them and their name rides over the rider
+    // PR-WW1 (2026-09-24, player report: "Werewolf morrowind sprite not showing online"): and a peer in BEAST FORM the
+    // same way - Eye Of The Beholder's lycanthrope, the one the transformed player sees on themselves (net/peerRiders.js).
+    // `cam.pos` is the live eye in every mode: worldModes shares this `cam` and sets it each modal frame
     peerRiders.sync(drawable, onlineToScene, { eye: cam.pos, right: [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)], dt });
-    const afoot = drawable.filter((d) => !peerRiders.isRiding(d.id) && !d.shown?.wb);   // DISC12: a beast wears no Morrowind body - it stands as the beast's own sprite (remotePlayers)
+    const afoot = drawable.filter((d) => !peerRiders.isRiding(d.id) && !d.shown?.wb);   // DISC12: a beast wears no Morrowind body; PR-WW1: it stands as EOTB's lycanthrope (peerRiders), or - while that art is not up - as the beast's enemy sprite (remotePlayers)
     peerBodies.sync(afoot, onlineToScene, dt, player.pos, { priority: (id) => !!social?.isPartyPeer(id) });   // the nearest first, the far ones asleep; AUDIT PARTY8: a party mate before a stranger
     // DISC23-B: a peer on foot who stands in no Morrowind body here stands as the Eye Of The Beholder set they chose -
     // after the bodies (a Morrowind player's own choice for everyone they meet), before the class sprite and the doll
@@ -12410,7 +12567,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     if (_castSeen.size > (online?.peers.size ?? 0) + 16) for (const [id, v] of _castSeen) if (v.frame !== _castFrame) _castSeen.delete(id);
   }
-  const drawPeerBodies = (proj, view, eye) => { if (peerBodies) peerBodies.draw(canvas, { proj, view, eye }); };
+  const drawPeerBodies = (proj, view, eye) => { if (peerBodies) peerBodies.draw(canvas, { proj, view, eye }); peerWalkers?.drawLanterns(); };   // HT-WAIST-BACK: the walkers' lanterns, each on its own tilted basis, beside the bodies - every mode's pass calls this after the player's own body (the exterior here, the dungeon and the interior through host.drawPeerBodies)
   /** FONT1 (2026-09-16, Mac: "Especially the new online interfaces font use our enhanced font"): THE SOCKET'S OWN
    *  WORD, IN THE SKIN'S FACE. The online lane is the enhanced lane whole (systems/onlineLane.js), so this line -
    *  connecting, reconnecting, refused - was the one online surface still drawn in the classic bitmap font while
@@ -12448,7 +12605,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       proj, view, eye, toScene: onlineToScene, covered,
       w: nameLayer ? canvas.clientWidth : canvas.width,
       h: nameLayer ? canvas.clientHeight : canvas.height,
-      rect: largeHudViewportRect(canvas.clientHeight),
+      rect: worldViewportRect(canvas.clientWidth, canvas.clientHeight),
       layer: nameLayer, log: chatLog, colorOf: (id) => social?.colorOf(id) ?? null, blocked,
       renderer, font: townTalk.font, scale, hudScale: enhancedHudScale(),
     });
@@ -12492,7 +12649,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // way onEnemyBreak already is - see checkCanceledByFollower's own doc comment.
     canceledByFollower: () => checkCanceledByFollower(),
     // ONLINE1: the peers in a modal mode - their billboards on the mode's own pass, their names after its HUD
-    extraBillboards: () => remotePlayers?.batches() ?? [],
+    // PR-WW1 (2026-09-24, player report: "Werewolf morrowind sprite not showing online"): AND the peerRiders layer's -
+    // a beast walks into a building or a dungeon (a rider never does: a door dismounts), and the modal passes
+    // (worldModes' dungeon and interior billboard runs) draw only this hook - without it the lycanthrope that layer
+    // now draws, which the enemy sprite gives way to, would be nothing at all indoors and underground
+    // (and DISC23-B's walkers: a peer standing as their chosen set gives the class sprite way just the same, so the
+    // merge of the two hands their batches here too)
+    extraBillboards: () => [...(remotePlayers?.batches() ?? []), ...(peerRiders?.batches() ?? []), ...(peerWalkers?.batches() ?? [])],
     drawPeerNames: ({ proj, view, eye }) => drawPeerNames(proj, view, eye),
     drawPeerBodies: ({ proj, view, eye }) => drawPeerBodies(proj, view, eye),   // MWBODY1: the others' bodies, after the player's own
     // PEER-PLAQUE1: the plaque names another player in a building and underground too - the SAME pick and the SAME
@@ -12583,7 +12746,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     reportFrame: (proj, view) => {
       _lastProj = proj; _lastView = view;
       if (touch) {
-        const _dp = _lockChest ? projectToScreen(_lockChest, canvas.clientWidth, canvas.clientHeight, proj, view, largeHudViewportRect(canvas.clientHeight)) : null;
+        const _dp = _lockChest ? projectToScreen(_lockChest, canvas.clientWidth, canvas.clientHeight, proj, view, worldViewportRect(canvas.clientWidth, canvas.clientHeight)) : null;
         touch.setLockDot(_dp && _dp.front ? _dp.x : null, _dp?.y);
       }
     },
@@ -12962,7 +13125,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:111, so the
+  // only reader of `load` in the whole tree is dungeon.js:112, so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a
@@ -13131,6 +13294,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let _lastPlayerPos = null, _playerStill = false;   // T2: the politeness still-tracker
 const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first - a scratch, refilled per frame
   const _camRight = new Float32Array(3);   // EV2: the billboard right axis, refilled per frame
+  const _waterRows = [];   // PERF-EXT13: the frame's water pixels, one reused row each, handed to drawWaterSurfaces
   // EV3: THE FRUSTUM. The hatch reads once at build (?cull=off, the
   // ?sky=classic shape - a wrong bound in the field is a URL away from
   // proof); the planes refill per frame from the SAME proj*view the
@@ -13229,6 +13393,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // imported the door without ever calling it. A host that boots
     // after this one rebuilds the node on its first painted frame.
     if (!frameAlive(_frameToken)) { destroyWorldPlaque(); return; }   // P0: a later boot or an unwind killed this loop
+    if (frameCapSkip(now)) { requestAnimationFrame(frame); return; }   // FPS-CAP1: held back to the Frame Rate Cap - no stamp, no input frame, `last` kept
     frameBegin(now);   // PERF1: the script time (systems/frameClock.js)
     beginInputFrame(latch.edge);   // MWCROUCH
     // AUDIT 39 (#160): a full-screen video owns the canvas for its
@@ -13281,7 +13446,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // ray is built through the frame the finger saw, and the gate fires
     // the activation on that release. The frame after clears the ray.
     if (_tapArmed > 0 && --_tapArmed === 0) {
-      _tapDir = (_tapPoint && _lastProj) ? rayDirFromScreen(_tapPoint[0], _tapPoint[1], canvas.clientWidth, canvas.clientHeight, _lastProj, _lastView, cam.pos, largeHudViewportRect(canvas.clientHeight)) : null;
+      _tapDir = (_tapPoint && _lastProj) ? rayDirFromScreen(_tapPoint[0], _tapPoint[1], canvas.clientWidth, canvas.clientHeight, _lastProj, _lastView, cam.pos, worldViewportRect(canvas.clientWidth, canvas.clientHeight)) : null;
     } else if (_tapArmed === 0 && _tapPoint) { _tapPoint = null; _tapDir = null; _tapLockOnly = false; }
     // AUDIT 28 W9: CameraRecoiler.Update - the reel from a hit, on the
     // detector's loss from the vitals rig, same paused gate (:50-51).
@@ -13414,6 +13579,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // townTalk always draws.
       hccTick(dt, now);   // AUDIT HCC H1: the runtime's LateUpdate indoors too - the hotkeys' "outdoors only", the settings, the switch
       townTalk.frame(dt);
+      renderer.resolveFrame();   // AUDIT RETRO1 E5/C8: a frame that drew no screen quad (the enhanced skin, a sheathed weapon) is shown NOW, not at the next beginFrame
       capturePendingScreenshot(canvas);   // SS1: a save armed from a modal mode still lands its shot
       frameAbort();   // AUDIT-WH2 L1-F4: the frame never reached frameEnd - close the token, take no sample
       requestAnimationFrame(frame);
@@ -14076,7 +14242,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       doorGeneration += 1;   // WORLD-HOVER: the floating origin moved, so every door's WORLD matrix did
       cityGuards.offsetAll(r.offset);
       exteriorFoes.offsetAll(r.offset);   // X-slice
-      labGrassField = null;   // AUDIT 49 F2 / GR5: the field is baked in world coordinates - a new world starts empty
+      labGrassField?.shiftOrigin(r.offset);   // PERF-EXT21: the field keeps its own origin and follows this one - every cell stays where it grew (AUDIT 49 F2 / GR5 threw it away here and regrew it for three seconds)
       droppedLoot.offsetAll(r.offset);
       droppedTorches.offsetAll(r.offset);   // HT1: the torches too
       camps.offsetAll(r.offset);   // SURV3: and the camps
@@ -14128,7 +14294,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         clearSceneCache(playerEntity.sceneCache, { start: false });
       }
       queue.push(...r.load);
-      announceNearbySpawns(r.current.x, r.current.y);   // SPAWNED-DUNGEONS2: said on ENTERING the pixel, not when it is rolled (that is three pixels ahead)
+      announceNearbySpawns(r.current.x, r.current.y, walkMode ? player.pos : cam.pos);   // SPAWNED-DUNGEONS2: said on ENTERING the pixel, not when it is rolled (that is three pixels ahead); SPAWNED-DUNGEONS3: from where the player stands, in metres
       // WOD5: PlayerGPS raises OnRegionIndexChanged on the frame the
       // region changes, and it changes only on a crossing - so the loader
       // hears it here as well as at a build: a visit shorter than a build
@@ -14165,6 +14331,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         if (want === 1) restridePending.set(`${p.px},${p.py}`, p);   // the dear way round
         else { restridePending.delete(`${p.px},${p.py}`); restrideTerrain(p, want); }
       }
+      if (terrainGen.threaded) spendRestrides();   // PERF-EXT26: the promotions reach the worker on the crossing frame, ahead of the new pixels' jobs
       console.log(`stream: entered ${r.current.x},${r.current.y} (load ${r.load.length}, unload ${r.unload.length})`);
       // CAMP1 - GROUP ENCOUNTERS ON CHUNK LOAD (Mac, 2026-09-17: "this
       // should always happen when loading world chunks if it works like
@@ -14209,7 +14376,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const view = betterAmbience.view(lookAt(mwv.eye, [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]], [0, 1, 0]));   // BA1: the shaker sits between the follower and the camera
     _lastProj = proj; _lastView = view;   // TI1: the tap ray unprojects through the frame the finger saw
     if (touch) {   // TI1: the lock-on dot over the foe's chest, hidden behind the camera
-      const _dp = _lockChest ? projectToScreen(_lockChest, canvas.clientWidth, canvas.clientHeight, proj, view, largeHudViewportRect(canvas.clientHeight)) : null;
+      const _dp = _lockChest ? projectToScreen(_lockChest, canvas.clientWidth, canvas.clientHeight, proj, view, worldViewportRect(canvas.clientWidth, canvas.clientHeight)) : null;
       touch.setLockDot(_dp && _dp.front ? _dp.x : null, _dp?.y);
     }
     // World clock (R5): sun, ambient, window style, sky frame by time.
@@ -14278,6 +14445,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // absolute intensity on that separate light, not the sun). The
     // player ticks on both skins: the clip schedule is the Audio arc's.
     const strobeNow = lightning ? lightning.tick(dt) : 1;   // the player keeps ticking on both skins - the schedule is its own
+    // EVENT1: the live event's weight this frame (0 offline, and with no event) - the sky, the fog, the key light and
+    // the red storm below all read this one number
+    const dreadW = dread.tick(dt);
     // WX2a (AUDIT 57): under the front the FLASH waits for the storm to be
     // HERE. The player was built at the sim's cut, so the strobe lit a
     // sky that was still mostly clear for the whole three-hour lead, and
@@ -14306,19 +14476,29 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       for (const s of ds.sounds) { const h = hostOf(s.x, s.z); audio.play3d(s.clip, thunderSourceAt(cam.pos, h[0], h[1]), s.volume, { refDistance: THUNDER_SOURCE_M, maxDistance: THUNDER_SOURCE_M * 8, far: true }); }   // DISC17-B: held at its bearing from the ear, so walking or a recentre never cuts it off
       for (const s of ds.strikes) { const h = hostOf(s.x, s.z); struckFar.push({ x: h[0], z: h[1], seed: s.seed, kind: s.kind, strength: s.strength }); }
     }
+    // EVENT1: THE RED STORM - the dread's strikes on the shared clock (every player online sees one in the same
+    // second, each around themselves), their channels and light through the same field as the weather's, in the
+    // event's colours; the thunder on both skins, its distance over the speed of sound later, from its side
+    if (jump) dreadStorm.reset();
+    {
+      const ds = dreadStorm.tick({ sharedMs: Date.now() + _sharedOffsetMs, eye: mwv.eye, weight: dreadW });
+      if (isEnhanced()) for (const s of ds.strikes) struckFar.push({ ...s, flashColor: DREAD_FLASH_COLOR });
+      for (const s of ds.sounds) audio.play3d(s.clip, thunderSourceAt(cam.pos, s.x, s.z), s.volume, { refDistance: THUNDER_SOURCE_M, maxDistance: THUNDER_SOURCE_M * 8, far: true });
+    }
     // BOLT: THE STRIKES THEMSELVES - a ground strike's channel from its cloud's base to the land, far or overhead, and
     // the light a near one throws on it (systems/lightning.js). Enhanced only. Under Dynamic Skies too: the mod draws no
     // channel, and its own flash keeps the light (setFlashLight below takes the mod's first).
     boltFrame = isEnhanced()
       ? stormLights.frame({ seconds: now / 1000, eye: mwv.eye, distant: struckFar, player: lightning, shown: !!lightningShown, test: Number(params.get('bolttest')) || 0 })
       : { bolts: [], flash: null };
+    sky.setDread(dreadW, dreadCloudGlow(boltFrame.bolts));   // EVENT1: the sky's grade, and the red strikes' glow in its deck
     // EV5: the moons light the night - the masser as a second key, the
     // secunda folded into the ambient. null by day and under classic.
     const moonNow = sky.moonlight();
     renderer.setMoonlight(moonNow);
     renderer.setLighting(
-      withMoonAmbient(exteriorAmbient(minute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), wxNow.sun), moonNow), sunScale(minute) * wxNow.sun * flash * sky.sunFactor(),   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground); WX2: the scale is the front's
-      new Float32Array(SUN_RIG_COLOR));
+      dreadLight(withMoonAmbient(exteriorAmbient(minute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), wxNow.sun), moonNow), dreadW), sunScale(minute) * wxNow.sun * flash * sky.sunFactor() * (1 - DREAD_KEY_DIM * dreadW),   // EVENT1: the land under the dread's light   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground); WX2: the scale is the front's
+      dreadLight(SUN_RIG_COLOR, dreadW));
     // R12: the player-following indirect light rides the camera in
     // the streaming world (walk mode keeps cam at the player's eye).
     {
@@ -14406,7 +14586,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     hccTick(dt, now);   // AUDIT HCC H1: LateUpdate - after the motor and the recentre, before the world pass draws the wagon
     renderer.setClearColor(SKY_CLEAR);   // INCIDENT 2026-09-04 / REVIEW 2026-09-05: this frame is the EXTERIOR's (the mode frames returned above and clear black in worldModes) - CameraClearManager.cs:51-57
     renderer.setFlashLight(sky.lightningLight() ?? boltFrame.flash);   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored; BOLT: else a near ground strike's own light, from where it struck
-    renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
+    renderer.setWorldViewport(worldViewportRect(canvas.clientWidth, canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute), WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one
     meterFor(renderer.gl)?.markCpu('bodies');   // PERF-ZONE2: the Morrowind bodies - the player's, every peer's - the wagon and the camps, which the renderer's own 'world' mark used to swallow
     // MW-D24: the player's own body, in third person only.
@@ -14599,7 +14779,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       if (pixelVisible || pixelCasts) for (const b of p.batches) {
         const off = !pixelVisible || (cullOn && aabbOutside(_planes, b._box, t[0], t[1], t[2]));   // EV3
         if (off && !renderer.shadowReach(b._box, t[0], t[1], t[2])) continue;   // SHADOW-REACH: off screen and out of every shadow's reach
-        if (!farFlatVisible({ ring, height: b.size?.h ?? 0, animated: b.frame != null })) continue;   // MAC1 (a far flat the rule drops casts nothing either)
+        if (!farFlatVisibleAt(ring, b.size?.h ?? 0, b.frame != null)) continue;   // MAC1 (a far flat the rule drops casts nothing either); PERF-EXT12: positional, no object a batch a frame (flatDistance.js)
         b.origin = t;
         (off ? castBatches : allBatches).push(b);   // SHADOW-REACH: the maps alone, or the frame
       }
@@ -14670,10 +14850,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // the dome's own two colours to reflect.
     if (waterOn) {
       const wu = waterUniforms({ seconds: now / 1000, wind: windNow, rain: precipMode === 'rain' || precipMode === 'storm' ? fx.intensity : 0, sky: sky.waterSky() });
+      let n = 0;   // PERF-EXT13: collected, then ONE call - the frame's block once, not once a pixel (renderer.js)
       for (const p of built.values()) {
         if (!p._visible || !p.water) continue;
-        renderer.drawWaterSurface(p.water, p._pixelMatrix, renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4, wu);
+        const row = _waterRows[n++] ??= [null, null, null, null];
+        row[0] = p.water; row[1] = p._pixelMatrix; row[2] = renderer.tileArrays.get(p.groundArchive); row[3] = p.tilemapTex;
       }
+      renderer.drawWaterSurfaces(_waterRows, n, 6.4, wu);
+      for (let i = 0; i < n; i++) _waterRows[i].fill(null);   // a scratch keeps no evicted pixel's surface alive
     }
     meterFor(renderer.gl)?.markCpu('flats');   // PERF-CPU: submitting the billboards - the draws themselves, from JS. ABOVE setFlatWind, not between it and the draw: WIND3 pins the two as ADJACENT, and the wind is part of this phase anyway.
     bloodMarks.draw(camRight, UP_Y);   // BLOOD1a: the marks go down BEFORE the billboards, so a body standing in its own blood is over it and not under it. ABOVE setFlatWind for the reason its own neighbour gives: WIND3 pins the wind and the draw as ADJACENT.
@@ -14904,7 +15088,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // BOLT: the burning channels, over what the world drew and behind what stands in front of them - from the eye the
     // view was built from (mwv.eye: a third-person camera stands metres off the head, cam.pos)
     if (boltsGl && boltFrame.bolts.length) {
-      boltsGl.draw(boltFrame.bolts, proj, view, new Float32Array(mwv.eye));
+      boltsGl.draw(boltFrame.bolts, proj, view, new Float32Array(mwv.eye), undefined, renderer.worldViewportPx?.[3]);   // RETRO1: the world image's own pixel
       renderer.markForeignPass();
     }
     // GR1: THE LAB'S GRASS. The scatter is the lab's 1,200,000 candidates
@@ -15407,6 +15591,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       }
     }
     townTalk.frame(dt);   // T3b: HUD lines + the talk overlay, above everything
+    renderer.resolveFrame();   // AUDIT RETRO1 E5/C8: a frame that drew no screen quad (the enhanced skin, a sheathed weapon) is shown NOW, not at the next beginFrame
     // SS1: the frame's LAST draw is behind us - deliver a pending save
     // screenshot while the buffer is still this task's to read
     // (preserveDrawingBuffer false clears it after compositing).

@@ -71,6 +71,7 @@ import { conditionPercentage } from '../systems/itemInfo.js';   // SW1: the cond
 import { isShieldTemplate } from '../systems/armorMaterials.js';   // SW1: GetShieldProtectedBodyParts' own test
 import { rriNativeMaterialValue } from '../systems/rriItems.js';   // AUDIT 68 S09-v-shield-material-ignored: the port's one NativeMaterialValue
 import { createHandheldTorches, isHeldLight } from '../systems/handheldTorches.js';   // HT1: Handheld Torches' component, one per rig beside the widget; TORCH-VIS: and its own light test
+import { lanternAtWaist } from '../systems/playerTorch.js';   // HT-WAIST: a lantern hung at the waist is in no hand - the ladder, the Morrowind body and the sprite ask the one question
 import { isTransformedLycanthrope, liveLycanthropy } from '../systems/lycanthropy.js';   // WW1: Weapon Widget's FPSWeaponClone, beside the machine; AUDIT-EOTB2: the sprite's form
 import { concealmentFlags } from '../systems/effects.js';   // EOTB-IL: PlayerBillboard.UpdateMaterial reads the player's own IsInvisible / IsAShade / IsBlending
 import { getBool, getInt } from '../systems/settings.js';   // EOTB-IL: PlayerBillboard.LateUpdate reads DaggerfallUnity.Settings.BowDrawback
@@ -109,6 +110,7 @@ export function armBuildOptsOf(entity) {
     hasAmmo: hasAmmoFor(entity.items, worn),
     ammoCount: ammoCountFor(entity.items, worn),   // WS1: the quiver
     torch: isLitTorch(entity.lightSource),   // MW-D51: the lit light, in the left hand
+    hipLight: lanternAtWaist(entity.lightSource),   // HT-WAIST: the lit lantern, hung at the hip of the third-person body
     sheathing: getPref('mwSheathing'),   // WS1: the holster on the third-person body
   };
 }
@@ -165,15 +167,16 @@ export function armsStandFor(entity, { ready = () => fpArm.ready(), builtFor = (
  *  not work on first launch" - only the test room built them at boot;
  *  a normal game had the arms only after the Enhanced pane's Build
  *  button, and the module singleton dies with the tab, so every launch
- *  began bare. The pane's Build now sets the `mwArms` pref and Unload
- *  clears it, and each host that owns a rig calls this once the entity
+ *  began bare. Each host that owns a rig calls this once the entity
  *  is a made character - at its rig's creation for a continuing
  *  session, after the wizard for a new one, after a restore for a
  *  load. A refusal is logged, never thrown: the arms are a departure
  *  the classic sprite stands in for. Returns the build's result, or
  *  null when nothing was asked for. */
-export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), dataCount = morrowindDataCount, measure = registerMorrowindData, measured = morrowindDataFingerprint, standing = armsStandFor } = {}) {
-  if (!entity?.chargenDone || !wanted() || !(dataCount() > 0) || standing(entity)) return null;
+export async function autoBuildArms(entity, { dataCount = morrowindDataCount, measure = registerMorrowindData, measured = morrowindDataFingerprint, standing = armsStandFor } = {}) {
+  // MWA4: the attached files are the switch - MWA1's `mwArms` pref (and MWA2's On/Off row over it) is retired, and
+  // Remove data is the off (ui/enhancedMenu.js morrowindCard)
+  if (!entity?.chargenDone || !(dataCount() > 0) || standing(entity)) return null;
   // AUDIT 65 XL-6: the boot menu only COUNTS the store now (names, no
   // sizes), so this can run before the host bootstrap's fingerprint
   // lands - and fpArm keys its kept face verdict on that print. Measure
@@ -196,8 +199,8 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
  *                     (dungeonContext.js:2875), townTalk.say
- *                     (exterior.js:2136, world.js:4209) and
- *                     worldModes' own interior sink (worldModes.js:451,
+ *                     (exterior.js:2134, world.js:4309) and
+ *                     worldModes' own interior sink (worldModes.js:452,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
  *                     is unreached,
@@ -226,7 +229,7 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  */
 export function muzzleRay(drawn, fovRad, forward = MUZZLE_FORWARD) {
   if (!drawn?.muzzle) return null;
-  const { rect, canvasW, canvasH, muzzle, flip, viewport = null } = drawn;
+  const { rect, canvasW, canvasH, muzzle, flip, viewport = null, aspect = null } = drawn;
   if (!(canvasW > 0) || !(canvasH > 0) || !(fovRad > 0)) return null;
   // the mirror flips the whole composite about the rect's own centre,
   // so the muzzle goes with it (gunFrameRect's own law)
@@ -261,7 +264,10 @@ export function muzzleRay(drawn, fovRad, forward = MUZZLE_FORWARD) {
   const r = worldRectPx(viewport, canvasW, canvasH);
   if (!(r.w > 0) || !(r.h > 0)) return null;
   const tanY = Math.tan(fovRad / 2);
-  const tanX = tanY * (r.w / r.h);   // the WORLD STRIP's aspect - the same one the host's own perspective() takes (hudLarge.largeHudWorldAspect)
+  // the WORLD STRIP's aspect - the same one the host's own perspective() takes (hudLarge.largeHudWorldAspect). RETRO1:
+  // unless the frame says otherwise - a retro world is projected at its texture's shape and stretched over the strip,
+  // so the lens's own aspect (Renderer.worldProjAspect) is the one a strip pixel maps through
+  const tanX = tanY * (aspect > 0 ? aspect : r.w / r.h);
   return {
     right: (((px - r.x) / r.w) * 2 - 1) * tanX * forward,
     up: (1 - ((py - r.y) / r.h) * 2) * tanY * forward,   // screen y counts DOWN, camera up counts UP
@@ -504,6 +510,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     swingHeld: _held,
     liveSpeed: entity ? liveStat(entity, 'speed') : 50,
     concealment: entity ? concealmentFlags(entity) : null,
+    hipLantern: !!entity && lanternAtWaist(entity.lightSource),   // HT-WAIST: the lit lantern hangs at the sprite's hip, and swings as it walks
   });
   const bindBody = () => eotbBody.attach(renderer, eotbState);
   bindBody();
@@ -910,7 +917,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // world object. `worldViewportRect` outlives endWorldPass for
     // exactly this reader; null is the full canvas, which is what
     // every host without a docked large HUD hands back.
-    _tlDrawn = { rect, canvasW: canvas.width, canvasH: canvas.height, muzzle: art.muzzle ?? null, flip: handedFlip(), viewport: renderer.worldViewportRect ?? null };
+    _tlDrawn = { rect, canvasW: canvas.width, canvasH: canvas.height, muzzle: art.muzzle ?? null, flip: handedFlip(), viewport: renderer.worldViewportRect ?? null, aspect: renderer.worldProjAspect ?? null };   // RETRO1: and the lens's aspect
     // FIELD-GUN13 (Mac: "The muzzle flash itself shouldn't be affected
     // by the darkening lighting").
     //
@@ -1243,7 +1250,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *             "does not toggle / toggles twice / gets stuck", and
      *             it is why Handheld Torches misbehaved with it: the
      *             mod's UpdateFreeHand reads WeaponManager.Sheathed
-     *             LIVE (handheldTorches.js:301), so a flag flipped to
+     *             LIVE (handheldTorches.js:308), so a flag flipped to
      *             "drawn" with no weapon on screen stows the torch.
      *   :268      `!isAttacking` - the hand already had this gate
      *             (switchHand below); the sheath did not, so Z
@@ -1388,6 +1395,10 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // lit by use, stowed when no hand is free) hands the Morrowind
         // arm its torch; setTorch's fast path is one boolean compare.
         fpArm.setTorch(isLitTorch(entity?.lightSource));
+        // HT-WAIST: AND THE LANTERN AT THE WAIST, the same read beside it - hung at the third-person body's hip
+        // (the first-person arms have no hip to hang it on), swinging as the body moves. The fast path is one
+        // boolean compare, as setTorch's is.
+        fpArm.setHipLight(lanternAtWaist(entity?.lightSource));
         // MW-D39: THE SPELL IS A STANCE. spellArmed() is already the
         // rig's own per-frame read (WeaponManager's HasReadySpell leg
         // above); the Morrowind arm rides the same one, and its fast
@@ -1665,7 +1676,8 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // behaviour and is why this note does not claim otherwise.
       const torchOnly = !shown() && !spellArmed() && !fpsSpellCasting.isPlayingAnim
         && (entity?.equipCountdown ?? 0) <= 0 && isHeldLight(entity?.lightSource)
-        && (!fpArm.active() || fpArm.torchShown());
+        && (!fpArm.active() || fpArm.torchShown())
+        && !lanternAtWaist(entity?.lightSource);   // HT-WAIST: the gate opens only where a hand paints - a lantern at the waist is in none
       // MAP-FIELD (2026-09-18, Mac: "the morrowind doesn't even hold the
       // map"): A HELD SHEET IS NOT A WEAPON EITHER. `shown()` is the
       // WEAPON's predicate - TORCH-VIS above says so for the light, and

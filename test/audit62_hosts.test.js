@@ -277,11 +277,18 @@ test('AUDIT 62 F15: both of world.js\'s placement arms test the watch too', () =
   // watchman's capsule is a collider, so the quest arm may not ask the
   // encounter pool alone.
   const w = src('src/scenes/world.js');
-  // AUDIT PSCALE1 COUNT-3: the encounter arm and the anchor ask the placing pool - the whole street AND the spots a stand
-  // in flight holds
+  // AUDIT PSCALE1 COUNT-3: the encounter arm asks the placing pool - the whole street AND the spots a stand in flight
+  // holds - and so do a camp's members, around their anchor
   assert.match(w, /const _placingPool = \(\) => \[\.\.\.exteriorFoePool\(\), \.\.\.exteriorFoes\.pendingFeet\(\)/);
-  assert.equal((w.match(/isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet(?: \?\? f\.feet)?, (?:\(\) => exteriorFoePool\(\)|_placingPool), feet\)/g) ?? []).length, 3,
-    'the encounter arm, the quest arm and CAMP1\'s group anchor all ask the whole street (the members ask it around the anchor - test/camp1_groups.test.js)');
+  // CAMP-FAR (2026-09-24): the group's ANCHOR no longer asks here - it
+  // stands a hundred metres out by campEncounters.js campAnchorSpot,
+  // where a capsule at the player's feet is not in question; the
+  // members still ask the whole street around the anchor
+  // (test/camp1_groups.test.js pins that env).
+  assert.equal((w.match(/isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet(?: \?\? f\.feet)?, (?:\(\) => exteriorFoePool\(\)|_placingPool), feet\)/g) ?? []).length, 2,
+    'the encounter arm and the quest arm ask the whole street at the player\'s feet');
+  assert.match(w, /isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet(?: \?\? f\.feet)?, (?:\(\) => exteriorFoePool\(\)|_placingPool), anchorFeet\)/,
+    'and CAMP1\'s members ask it around the anchor');
   assert.equal(/exteriorFoes\.foes, feet\)/.test(w), false, 'neither asks the encounter pool alone');
   assert.match(src('src/scenes/exterior.js'), /isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet, exteriorFoePool, feet\)/,
     'the ?exterior twin already asked it');

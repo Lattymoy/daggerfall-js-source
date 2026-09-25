@@ -66,7 +66,7 @@ test('seams 1: the pipeline uploads MESH materials opaque and flats as cutouts, 
   const p = src('src/scenes/dataPipeline.js');
   assert.match(p, /const uploadRecord = \(archive, record, \{ opaque = false, mips, removeMask = false, dye = null \} = \{\}\) =>/);   // REVIEW 2026-09-05: + the icon door's mips opt-out
   assert.match(p, /const color32 = swap \?\? t\.getColor32\(removeMask \? changeMask\(bitmap\) : bitmap, opaque \? -1 : 0\);/);
-  assert.match(p, /renderer\.uploadTexture\(archive, record, color32, variant !== undefined \? \{ opaque, mips, variant \} : \{ opaque, mips \}\);/);
+  assert.match(p, /renderer\.uploadTexture\(archive, record, color32, variant !== undefined \? \{ opaque, mips, variant, replacement \} : \{ opaque, mips, replacement \}\);/);
   // every sub-mesh upload asks for the opaque material
   const meshSites = [...p.matchAll(/uploadRecord\(sm\.textureArchive, sm\.textureRecord(, \{ opaque: true \})?\)/g)];
   assert.ok(meshSites.length >= 2, `the pipeline uploads sub-mesh textures at ${meshSites.length} sites`);
@@ -229,5 +229,5 @@ test('seams review 2: item icons are UI art - the icon door uploads a world arch
     assert.match(src(f), /icons\.uploadRecord\(img\.archive, img\.record, \{ mips: false, removeMask: true, dye: img\.dye \}\);/, `${f} asks for the UI variant (HM1: with the mask stripped)`);
     assert.match(src(f), /icons\.textures\.get\(glKeys\.get\(key\) \?\? `\$\{img\.archive\}_\$\{img\.record\}#ui`\)/, `${f} reads it back (DW3: by the variant the upload answered, the shared #ui when none)`);
   }
-  assert.match(src('src/scenes/dataPipeline.js'), /renderer\.uploadTexture\(archive, record, color32, variant !== undefined \? \{ opaque, mips, variant \} : \{ opaque, mips \}\);/, 'the door forwards it');
+  assert.match(src('src/scenes/dataPipeline.js'), /renderer\.uploadTexture\(archive, record, color32, variant !== undefined \? \{ opaque, mips, variant, replacement \} : \{ opaque, mips, replacement \}\);/, 'the door forwards it');
 });

@@ -123,12 +123,13 @@ test('FIX-E: F11 reaches the world host’s quickload from UNDER the death scree
   const w = read('src/scenes/world.js');
   // D-ONLINE1 (2026-09-17): the arm grew a respawn door for an online death - F11 on the death screen respawns
   // where it used to quickload - and kept its place above the rung; test/donline1_respawn.test.js holds the door.
-  const arm = w.indexOf("if (townTalk.overlayActive && !isTextEntryTarget(e.target) && (modes?.mode ?? 'exterior') === 'exterior' && actionForCode(bindings(), e.code) === 'QuickLoad') {\n      e.preventDefault();");
+  // AUDIT RETRO1 C1: and Shift-F11 - the retro toggle's chord on F11's key - is not a load
+  const arm = w.indexOf("if (townTalk.overlayActive && !isTextEntryTarget(e.target) && (modes?.mode ?? 'exterior') === 'exterior' && codeMeans(bindings(), e.code, 'QuickLoad') && !retroToggleKey(e, keys)) {");   // UXB1-S: its key, shared or not
   assert.ok(w.slice(arm, arm + 900).includes('else hudCtx.quickLoad();'), 'and quickload is still what F11 does when the death was not online');
   const gate = w.indexOf('if (townTalk.keydown(e, keys)) return;');   // KB1: the rung hands its mode keys the held Set
   assert.ok(arm > 0 && gate > arm, 'the arm stands above the townTalk rung');
   // the same law routeKey has carried for the dungeon and interior hosts
-  assert.match(read('src/ui/input.js'), /if \(actionOf\(e, keys\) === 'QuickLoad'\) \{ ctx\.quickLoad\?\.\(setPlayerPos\); return true; \}/);
+  assert.match(read('src/ui/input.js'), /if \(actionsOf\(e, keys\)\.includes\('QuickLoad'\) && !retroToggleKey\(e, keys\)\) \{ ctx\.quickLoad\?\.\(setPlayerPos\); return true; \}/);
 });
 
 test('FIX-E: the interior slot releases what it overwrites, and the fixed city offers no F11 it cannot honour', () => {

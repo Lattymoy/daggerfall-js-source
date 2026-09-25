@@ -40,7 +40,7 @@
 import { dice100 } from '../combat/formulas.js';
 import { rand } from '../formats/dfRandom.js';   // F209: StockHouseContainer's one classic-stream draw
 import { randomMaterial, randomArmorMaterial, createWeapon } from '../combat/enemyEquipment.js';
-import { groupTemplates, GROUP_TEMPLATE_INDICES, itemBaseValue, ITEM_TEMPLATES, mintCondition, rollPaintingMessage, setItemFields, templateByIndex } from './itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
+import { groupTemplates, GROUP_TEMPLATE_INDICES, itemBaseValue, ITEM_TEMPLATES, mintCondition, rollPaintingMessage, setItemFields, templateByIndex, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from './itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
 import { customItemsForGroup } from './rriItems.js';   // AUDIT-RR F3: GetCustomItemsForGroup - the shelf's second loop (DaggerfallLoot.cs:255-287)
 import { createRandomBook } from './books.js';   // B1; A2: CreateRandomBook whole, priced off the book FILE
 import { isLeather, isPlate } from './armorMaterials.js';
@@ -128,8 +128,9 @@ export const CONTAINER_MODEL_OFFSET = 41000;
 export const SHOP_SHELF_MODEL_INDICES = Object.freeze(new Set([5, 6, 11, 12, 13, 14, 15, 16, 17, 18, 19, 26, 28, 29, 31, 35, 36, 37, 40, 41, 42, 44, 46, 47, 48, 49, 808]));
 export const isShopShelfModel = (modelId) => SHOP_SHELF_MODEL_INDICES.has(modelId - CONTAINER_MODEL_OFFSET);
 
-export const TRANSPORT_HORSE = 94;        // Transportation.Horse (template)
-export const TRANSPORT_SMALL_CART = 93;   // Transportation.Small_cart
+// DISC24-B: the two transport templates' one home is itemTemplates.js now (its item picture reads them, and it
+// cannot import this module, which imports it); re-exported here for the readers that have always asked here.
+export { TRANSPORT_HORSE, TRANSPORT_SMALL_CART };
 // F104: GetItemTemplate(MagicItems, 0). MagicItemSubTypes has ONE
 // name (ItemEnums.cs:233-236) and its value is 0, so the shelf's
 // rarity/chance gates read template 0 - the Ruby's row - for a magic
@@ -197,6 +198,12 @@ export const createStockedDate = (date) => ((date?.year ?? 0) * 1000) + dayOfYea
 /** PlayerActivate's own comparison (:882, :911), spelled once so the
  *  three activation arms in the host cannot drift apart. */
 export const needsRestock = (container, today) => (container?.stockedDate ?? 0) < today;
+/** UXB1-O (2026-09-25, the UX backlog: "flag objects with generated loot ... 'your character' would know which ones
+ *  have open lids"): this character has looked at THIS stock - opened (`openedOn`, stamped with the stock's own day
+ *  when the window opens) and neither rolled again since nor due to be. The day's restock closes the lid again, as it
+ *  refills the drawer: a searched container is only ever the stock the player saw. */
+export const stockSearched = (container, today) => Number.isFinite(container?.openedOn) && container.openedOn > 0
+  && container.openedOn === container.stockedDate && !needsRestock(container, today);
 
 /** StockShopShelf, verbatim. Returns the item list; every item
  *  carries value = its DaggerfallUnityItem base value.
@@ -448,6 +455,17 @@ export const PRIVATE_PROPERTY_MODELS_15_AND_UP = Object.freeze([
 /** HC1 - PlayerActivate's PrivatePropertyId (:94): the TEXT.RSC 37
  *  Yes/No question a stocked house container asks before opening. */
 export const PRIVATE_PROPERTY_TEXT_ID = 37;
+/** UXB1-M: the question as DFU's box sets it - SetTextTokens(37) keeps each row's own centring
+ *  (DaggerfallMessageBox.cs:432-441), which the keyed panel's flattening threw away - with record 37's own two
+ *  lines, centred, when there is no TEXT.RSC to read. Blank rows are the record's layout and stay. */
+export const PRIVATE_PROPERTY_FALLBACK_ROWS = Object.freeze([
+  Object.freeze({ text: 'This looks like private property. Do you', center: true }),
+  Object.freeze({ text: 'still want to look through it?', center: true }),
+]);
+export function privatePropertyRows(rows) {
+  const out = (rows ?? []).map((r) => (typeof r === 'string' ? { text: r, center: true } : { text: String(r?.text ?? ''), center: r?.center !== false }));
+  return out.some((r) => r.text.trim() !== '') ? out : PRIVATE_PROPERTY_FALLBACK_ROWS.map((r) => ({ ...r }));
+}
 
 export function stockHouseContainer({ buildingType, record }, playerEntity = {}, { rolls = Math.random, contRand = rand } = {}) {
   const items = [];

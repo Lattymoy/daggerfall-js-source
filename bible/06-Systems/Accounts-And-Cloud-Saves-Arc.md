@@ -2354,7 +2354,7 @@ ENUMERATED** applied to the one place a grant is usually a row:
 
 | | held when |
 |---|---|
-| **Founder** | `registered_at <= FOUNDER_UNTIL` (1790121600 — 2026-09-23T00:00:00Z) |
+| **Founder** | `registered_at <= FOUNDER_UNTIL` (1790294400 — 2026-09-25T00:00:00Z since FOUNDER2; it was 1790121600, 2026-09-23T00:00:00Z) |
 | **Developer** | the handle is in `env.DEVELOPER_HANDLES` |
 | **sprout** | `nowS - created_at < SPROUT_S` (two weeks) |
 | **dev** | the same list as the Developer title |
@@ -3090,8 +3090,8 @@ patreon titles. These also recieve their own unique glyphs. The account Dutchess
   has its own shape (a d20, a flame, an open book, a crown) and a classic mark. `src/ui/enhancedAccount.js` names each
   one on the card.
 - **The grants** (`server-account/src/titles.js`, `TIER_LISTS`): each title is a handle list in `wrangler.toml`, which
-  is the developers' own law. `DUNGEON_MASTER_HANDLES = "SquidKamer"` and `DISCIPLE_HANDLES = "Dutchess,Satranath,Skibbster"` (Mac added Satranath the same day, and Skibbster after it: "Skibbster needs to be a disciple ingame"); Apostle
-  and Hierophant are empty. A list grants its title and its glyph, and never to a guest. A lapsed Patreon tier is a
+  is the developers' own law. `DUNGEON_MASTER_HANDLES = "SquidKamer"` and `DISCIPLE_HANDLES = "Dutchess,Satranath,Skibbster"` (Mac added Satranath the same day, and Skibbster after it: "Skibbster needs to be a disciple ingame"); `APOSTLE_HANDLES = "SirMcMobdon"`
+  (2026-09-25, Mac: "Add SirMcMobdon as an Apostle ingame title/glyph"), and Hierophant is empty. A list grants its title and its glyph, and never to a guest. A lapsed Patreon tier is a
   handle taken off the list, and it disappears from that player's next token. The service is `acct7`.
 - **/dm** is RED1's law, one glyph over. The client sends `{t:'narrate', text}` on the World link, and only from a
   world104 relay (`DM_RELAY_MIN`, since an older one closes the socket on the frame).
@@ -3105,6 +3105,12 @@ patreon titles. These also recieve their own unique glyphs. The account Dutchess
 - **Founder** is closed. It was already derived from `registered_at <= FOUNDER_UNTIL` (2026-09-23T00:00Z), so no
   account registered since then could obtain it, and every account that holds it keeps it, both held and worn. A pin
   now holds both halves.
+- **FOUNDER2 (2026-09-24, Mac: "I want to grant all current accounts the founder title if they dont have it
+  already").** The same derived grant, asked again at a later moment: `FOUNDER_UNTIL` moves to the end of the day it
+  was asked, 2026-09-25T00:00Z, so every account registered since TITLE-R closed it holds Founder too - no row is
+  written, as ACC3 designed - and past the new cutoff the title is closed again. Guests still hold none. The account
+  service is `acct9` (acct8 on its branch; DUEL1 took acct8 first), and it takes effect on that deploy. `test/founder2.test.js`, `tools/mutants/founder2.json`
+  (2 dead); TITLE-R's and ACC3's pins read the new date.
 - `test/titlen.test.js` has 8 pins. `tools/mutants/titlen.json` has 17 mutants, all dead. The relay is world104.
 
 ## DUEL1 — the duelling record (2026-09-24)
@@ -3159,6 +3165,135 @@ five guests gave one account fifty wins in a quarter of an hour, with no duel.
 - A refused report says which bound: `why` is 'guest', 'draw', 'gap', 'pair' or 'winner', and the client's line says
   it (`net/duelRecord.js duelUncountedText`; a draw says nothing more, the duel said it).
 - Pinned in `test/duel_record.test.js` over the real migrations; `tools/mutants/auditduel1.json` A1/B5.
+
+## PROFILE1 — the profile mark is a portrait (2026-09-25)
+
+Mac: *"I kinda wanna make the menu profile icon more relevant, more like
+a profile icon less like a button"*. Asked what its picture should be
+(your worn skin, the last character's face, or the title glyph as a
+crest), he chose **the last character's face**.
+
+ACC1f drew the door's top-right mark as a bordered box holding a gem and
+a word. In the corner of a menu of buttons it read as one more button.
+
+- **A portrait** (`ui/profileBadge.js`, called by `enhancedMenu.js`
+  `profileMark`):
+  - a round well rimmed in brass over the iron ring;
+  - the face drawn at its own pixels (the save tiles' law);
+  - no panel and no box around it.
+- **The face** is the most recent FINISHED character's (`portraitSave`),
+  drawn through TILE1's `loadFace`, the save tiles' one home:
+  - it skips a save still in chargen, which has no face chosen yet;
+  - it skips a save from before S3c/U9, which stored no race.
+    `loadFace` would draw a Breton default for it, a stranger's face.
+  - it asks for a COPY, because the Continue pane's tile may draw the
+    same face on the same screen.
+- **Never traps:**
+  - the face is a promise, and the portrait is on screen before it lands;
+  - a hooded silhouette stands in until then;
+  - the silhouette stays for good with no character yet, no game data,
+    or a face that would not draw.
+- **The gem stays**, as a jewel on the rim: filled with a session, hollow
+  without. This keeps ACC1f's at-a-glance "am I signed in".
+- **The caption** sits beside the portrait:
+  - the account's name, or "Sign in";
+  - under it, whose face it is ("Mithriil · level 5"), or "No character
+    yet".
+  - On a phone the caption goes and the portrait (48px) keeps the target.
+- The window it opens is unchanged.
+
+Pinned in `test/profile1_badge.test.js` (4):
+- the pick;
+- the face replacing the silhouette;
+- the signed-out, null-face and refused-face arms;
+- the frame's cascade and the door's read.
+
+`test/nameadopt.test.js`'s pin on the mark reading the store is re-aimed
+at the session the door hands the badge. Mutants:
+`tools/mutants/profile1.json`, 13, all dead.
+
+## PROFILE2 — the profile on the pause menu, and a change that reaches the room (2026-09-25)
+
+Mac: *"Go ahead and make the profile icon visible somehow on the pause
+menu and allow changes"*.
+
+**The mark over the game** (`ui/enhancedMenu.js` renderHome's pause
+branch):
+- The pause screen wears PROFILE1's portrait top-right, a size smaller
+  (48px, `.px-over .px-profile`) so it stands above the pause window.
+- It shows the character being PLAYED (`liveCharacter(playerEntity)`,
+  `ui/profileBadge.js`), not the newest save. Paused, the newest save may
+  be another character's.
+- A press opens the same window the door opens: the account card and the
+  Skin card, centred over the pause window (no wordmark to sit under).
+- The window is innermost:
+  - a tap outside it closes it and leaves the pause window standing (its
+    own `closeOnOutsideTap`, `.px-acctwin`);
+  - Escape closes it first, through the one back stack;
+  - otherwise the scrim resumes as before, with the mark counted inside.
+- It is a visit's: `mountEnhancedMenu` closes it, so a window left open on
+  the door does not stand over the next pause.
+- The classic (canvas) pause window is DFU's OPTN00I0 panel and is not
+  changed.
+
+**The change reaches your own body at once.** The Skin card writes the
+mod's store, which the body re-reads. A changed set is now fetched whole
+(`player/eotbBody.js` reload -> `preload`), as the mod's LoadSettings ->
+Initialize -> InitializeTextures does. Before, each new frame was fetched
+when first drawn and its slot drew the old set's frame meanwhile, so a
+skin changed mid-walk showed two people for a second.
+
+**The change reaches the room.** This was the real gap. A look rode the
+HELLO alone (`net/online.js` `_member` already said so), so a skin chosen
+mid-session stayed on this screen and nobody else's until the next room.
+- **The `look` frame** (`net/wire.js`):
+  - it is the hello's look without the hello: after a hello only, through
+    `validLook`;
+  - per socket it is gated at `LOOK_HZ_MAX` (0.5 a second, one whole
+    token);
+  - clients send it only to a relay at `LOOK_RELAY_MIN` (world109) or
+    later, since an older relay closes the socket on an unknown frame.
+- **The relay** (`server/src/index.js`, the look arm):
+  - stores the look where the hello did, so a later welcome's roster and a
+    `who` answer say the new one;
+  - fans the hello's JOIN to everyone else in the room, which every
+    client already reads as "this peer's look is now this" (`_refresh`);
+  - sends no pose with it, because the join goes to the whole room and
+    the pose fan is the ranged one;
+  - skips channels, which keep no look;
+  - spends the room's hello budget, since the fan is a hello's fan. Past
+    that budget the socket is refused busy, as a hello is, and its
+    reconnect's hello carries the look.
+- **The session** (`OnlineSession.setLook`):
+  - keeps the new look, so every later hello carries it;
+  - sends it down every socket already hello'd that knows the frame: the
+    primary and each open halo (`h.lookOk`, from the halo's own welcome);
+  - holds it while the gate is shut and flushes it on the tick, sending
+    the LATEST, so trying skin after skin sends one frame;
+  - with nothing open, owes nothing.
+- **The host** (`scenes/world.js`):
+  - hands the session `composeLook(playerEntity)` once a second
+    (`ONLINE_LOOK_CHECK_MS`);
+  - also hands it at every join and halo it opens. Those two sites used to
+    write `online.look` directly, which told no socket already open,
+    including a halo a crossing promotes (it sends no hello of its own).
+  - A coat put on reaches the room the same way.
+- RELAY_VERSION stays world109 (SKIN2's deploy, not yet shipped); its law
+  row is re-hashed.
+
+Pinned in `test/profile2_pause_profile.test.js` (9):
+- the live character;
+- the pause face's wiring and cascade;
+- the wire door;
+- the relay's store, fan, meter, busy refusal and channel;
+- the session's primary, halo, gate, latest-wins and old relay;
+- a session drawing the new look through the real relay;
+- the hosts.
+
+`test/outsideTap.test.js` names the third scrim;
+`test/profile1_badge.test.js` reads the door's paused arm. Mutants:
+`tools/mutants/profile2.json`, 22, all dead. Not verified in a browser
+(no probes).
 
 ## RENOWN1 — Renown, the level that exists only online (2026-09-24)
 

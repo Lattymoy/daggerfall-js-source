@@ -803,6 +803,10 @@ export class RemotePlayers {
       // DISC12 (Mac: werewolves "not wired correctly"): A PEER IN BEAST FORM IS THE BEAST. The pose's `wb` says which
       // (LycanthropyTypes 1 werewolf, 2 wereboar); the sprite is the enemy's own (MobileTypes 9 / 14), puppeted off the
       // pose like any class sprite - whatever the 'Other players' card says, since a person drawn there is a lie.
+      // PR-WW1 (2026-09-24, player report: "Werewolf morrowind sprite not showing online"): THE FALLBACK now. A beast
+      // is drawn as Eye Of The Beholder's lycanthrope by net/peerRiders.js - the art the transformed player sees on
+      // themselves - and reaches here only while that art is not up (loading, failed, or a build without it), when
+      // `bodyHeight` answers 0: the enemy sprite stands for them then, so a beast is never nothing
       const beast = peer.shown.wb | 0;
       // AUDIT CONTRIB S1: a peer with NO LOOK yet (heard by pose before its introduction - first contact, a SLAM recall)
       // keeps the doll path until the look lands: classMobileType's Thief is for a look with no class or one this build

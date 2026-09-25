@@ -68,12 +68,16 @@ test('PERF-ON2 / PERF-CROWD: the host culls the peers AND the live crowd, by the
   assert.match(w, /const billboardOutside = \(b\) => !batchVisible\(_planes, b\);/, 'the host delegates, it does not hand-roll the sphere');
   assert.doesNotMatch(w, /sphereInPlanes\(_planes/, 'no second copy of the test in the host');
   const bounds = read('src/render/bounds.js');
-  assert.match(bounds, /s\[1\] \+ \(o \? o\[1\] : 0\) \+ \(b\.size\?\.h \?\? 0\) \* 0\.5/, 'the sphere centre is lifted half a height, in batchVisible');
+  // PERF-EXT (2026-09-25, the review of the shadows): the lift has ONE home,
+  // batchLift, which the sphere and the shadow pass's placement queries take.
+  assert.match(bounds, /s\[1\] \+ \(o \? o\[1\] : 0\) \+ batchLift\(b\)/, 'the sphere centre is lifted, in batchVisible');
+  assert.match(bounds, /export function batchLift\(b\) \{\n\s*return \(b\.size\?\.h \?\? 0\) \* 0\.5;/, '...by half a height, at the lift\'s one home');
   assert.match(bounds, /const s = b\.bounds;\n\s*if \(!s\) return null;/, 'a batch with no bounds has no sphere');
   assert.match(bounds, /return !c \|\| sphereInPlanes\(planes, c\[0\], c\[1\], c\[2\], c\[3\]\);/, '...and is always drawn');
   const r = read('src/render/renderer.js');
   assert.match(r, /\+ uUp \* \(\(aCorner\.y \+ 0\.5\) \* uSize\.y\)/, 'the VS stands the quad from the placement point UP - which is why the lift exists');
-  assert.match(r, /bounds\[3\] \+= Math\.hypot\(size\.w, size\.h\) \* 0\.5;/, 'and the stored radius already covers hypot(w, h) / 2, which is what the lifted centre needs');
+  assert.match(r, /bounds\[3\] \+= quadHalfDiagonal\(size\);/, 'and the stored radius already covers hypot(w, h) / 2, which is what the lifted centre needs');
+  assert.match(bounds, /export function quadHalfDiagonal\(size\) \{\n\s*return Math\.hypot\(size\.w, size\.h\) \* 0\.5;/, '...from the half-diagonal\'s one home (the review)');
 });
 
 test('PERF-ON2 / PERF-CROWD: the lifted sphere really does contain the sprite, and the unlifted one does not', async () => {
@@ -221,7 +225,8 @@ test('PERF-BASIS: the shadow replay uploads the basis once, not once a flat - an
   // suite that could fail this, which is why it is stated here.
   assert.match(sp, /if \(perBatchRight\) \{[\s\S]{0,400}?this\._right\[0\] = dz \/ l; this\._right\[1\] = 0; this\._right\[2\] = -dx \/ l;\n\s*gl\.uniform3fv\(P\.bb\.right, this\._right\);/,
     'the lantern arm recomputes the basis per flat AND uploads it');
-  assert.equal((sp.match(/gl\.uniform3fv\(P\.bb\.right/g) ?? []).length, 2, 'two uploads in the file: the hoisted one and the lantern\u2019s');
+  assert.equal((sp.match(/gl\.uniform3fv\(P\.bb\.right/g) ?? []).length, 3, 'three uploads in the file: the hoisted one, the lantern\u2019s, and the player\u2019s own card\u2019s (DISC24-C: cast as drawn)');
+  assert.match(sp, /if \(perBatchRight && b\.selfCard\) \{\n\s*gl\.uniform3fv\(P\.bb\.right, r\.right\);/, 'DISC24-C: the self card takes its recorded basis, per flat, in the lantern replay');
   // and the bind skips its repeats, as the main pass's has since PERF3
   assert.match(sp, /if \(tex !== lastTex\) \{ gl\.bindTexture\(gl\.TEXTURE_2D, tex\); lastTex = tex; \}/, 'a run of flats sharing a record binds once');
   assert.match(sp, /let lastTex = null;/, 'reset per record, so a record cannot inherit the last one\u2019s texture');

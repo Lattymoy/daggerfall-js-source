@@ -90,12 +90,12 @@
  {
   "name": "GRASS2-the-tint-is-per-blade-noise-again-so-the-field-is-a-flat-carpet",
   "file": "src/render/labGrass.js",
-  "old": "    const tint = bakedTint(tRnd, x, z);   // GRASS6: pulled toward the patch it stands in;",
+  "old": "    const tint = bakedTint(tRnd, fx, fz);   // GRASS6: pulled toward the patch it stands in;",
   "new": "    const tint = tRnd;   // GRASS6: pulled toward the patch it stands in;",
   "tests": [
    "test/labGrass.test.js"
   ],
-  "why": "GRASS AUDIT 1 re-aimed by content: the bake moved after keep()."
+  "why": "GRASS AUDIT 1 re-aimed by content: the bake moved after keep(). PERF-EXT21 re-aimed it again: the cell placer bakes at the field\u0027s coordinates, fx/fz."
  },
  {
   "name": "GRASS2-the-blade-is-the-labs-height-again",

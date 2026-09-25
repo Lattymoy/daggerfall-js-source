@@ -299,18 +299,36 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
 }
 
 /** The single integration seam used by main.js. Every exit releases audio,
- * including a failed menu, classic Begin, online and the game-data picker. */
-export async function runCinematicFrontDoor(openMenu, { skip = false, doc = document, debug = false, freezeAt = null } = {}) {
-  const theme = new IntroTheme();
+ * including a failed menu, classic Begin, online and the game-data picker.
+ *
+ * UXB1-A: `menuMusic` is the player's Skip start video (uiPrefs
+ * skipStartVideo) - the film skipped, the menu's music kept. It is what the
+ * film's own Skip intro button starts (enterMenu: the theme at
+ * MENU_THEME_GAIN), held for the first gesture on the menu because a browser
+ * plays nothing before one. ?nointro skips without it, as it always has.
+ * `theme` is the tests' seam; main.js never passes one. */
+export async function runCinematicFrontDoor(openMenu, { skip = false, menuMusic = false, doc = document, debug = false, freezeAt = null, theme = new IntroTheme() } = {}) {
   let menu = null;
   const reveal = () => { menu ??= openMenu(); };
   const onVisibility = () => {
     if (doc.hidden) void theme.pause().catch(() => {});
     else if (theme.source) void theme.unlock();
   };
-  const onGesture = () => { if (theme.source && theme.context?.state !== 'running') void theme.unlock(); };
+  let menuThemeAsked = false;
+  const startMenuTheme = () => {
+    if (menuThemeAsked || theme.disposed) return;
+    menuThemeAsked = true;
+    void Promise.all([theme.unlock(), theme.prepare()]).then(([ok, loaded]) => {
+      if (ok && loaded && !theme.disposed) { theme.setLevel(MENU_THEME_GAIN, 0); theme.start(); }
+    });
+  };
+  const onGesture = () => {
+    if (theme.source && theme.context?.state !== 'running') void theme.unlock();
+    else if (skip && menuMusic && !theme.source) startMenuTheme();
+  };
   doc.addEventListener('visibilitychange', onVisibility);
   doc.addEventListener('pointerdown', onGesture);
+  doc.addEventListener('keydown', onGesture);
   try {
     if (!skip) {
       try { await runIntro({ theme, onReveal: reveal, doc, freezeAt, debug }); }
@@ -321,6 +339,7 @@ export async function runCinematicFrontDoor(openMenu, { skip = false, doc = docu
   } finally {
     doc.removeEventListener('visibilitychange', onVisibility);
     doc.removeEventListener('pointerdown', onGesture);
+    doc.removeEventListener('keydown', onGesture);
     await theme.dispose();
     if (debug && doc.defaultView.__intro) doc.defaultView.__intro.state.phase = 'disposed';
   }
