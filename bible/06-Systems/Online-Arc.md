@@ -4689,7 +4689,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6390` read, on one physical line:
+`src/scenes/worldModes.js:6467` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4831,7 +4831,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4265` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4267` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:255`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -8509,7 +8509,7 @@ Mac chose: the catalogue holds EVERYTHING DAGGERFALL FURNISHES - every piece Dag
 buildings, found in the game data and browsed with a turning preview, named where the game names them; a placement
 is priced BY SIZE (moving or turning a placed piece is free, removing one gives half back); the decorator opens from
 A CLICKABLE UI ELEMENT into a panel - "an intuitive scrolling menu with filters" - with a FREE CAMERA for placing; and
-it works in the OFFLINE house and ship too, kept in the save. The slice lands in four parts: DECOR1a the ground
+it works in the OFFLINE house and ship too, kept in the save. The slice lands in three parts: DECOR1a the ground
 (below), DECOR1c the placed pieces in the room, DECOR1d the button, the panel and the free camera.
 
 **DECOR1a - the piece, the store and the catalogue** (nothing a player sees yet; the room and the panel stand on it).
@@ -8518,7 +8518,7 @@ it works in the OFFLINE house and ship too, kept in the save. The slice lands in
   Daggerfall's own models (an ARCH3D id) or one of its flats (a TEXTURE archive and record), never both - never
   changes once placed. WHERE it stands: its position from the building's own origin (the door matrix's translation,
   the scene cache's 'building' frame - the same for every client and every visit), within 256 m on each axis,
-  rounded to the millimetre; its turn in degrees (a tenth of one); its scale, a quarter to four times; an optional
+  rounded to the millimetre; its turn in degrees, yaw, pitch and roll (a tenth of one); its scale, a quarter to four times; an optional
   light (a colour, a range of 1 to 30 m, an intensity up to 4); whether it holds things; and the gold it cost. A
   home holds 200 pieces. THE PRICE is by size, as Daggerfall prices a house by its model's size: 150 gold a metre of
   the piece's scaled radius, between 20 and 400; removing a piece gives half of what it cost back; a new scale pays
@@ -8544,5 +8544,39 @@ it works in the OFFLINE house and ship too, kept in the save. The slice lands in
   (every word in the name or the kind), a size band (small under half a metre of radius, large from a metre and a
   quarter), holds-things, gives-light; most common first, cheapest first, or by name.
 
-Pinned: `test/decor1.test.js` (4) - the law, the store through the real Worker with every migration applied, the
-client's door and the deploy, the catalogue and its filters. `tools/mutants/decor1.json` (32).
+Pinned: `test/decor1.test.js` (4 of its 7) - the law, the store through the real Worker with every migration
+applied, the client's door and the deploy, the catalogue and its filters.
+
+**DECOR1c - the placed pieces in the room** (a room whose record holds pieces now stands them; placing them is
+DECOR1d's panel).
+
+- **Standing** (`src/scenes/decorRoom.js`, one pool per room, held by the building host `src/scenes/worldModes.js`
+  and emptied with the room at all three of its teardowns). A model stands with its origin at the building's origin
+  plus its place, turned by yaw, pitch and roll, and scaled. It is its own collider bucket and its own eye target
+  under one key, `decor:<id>`, so the ray is decided by the piece's own triangles, at the reach of the room's own
+  furniture (3.2 m). It is drawn in the room's own climate. A flat is uploaded, sized (its record's own scale, and a
+  texture pack's) and animated exactly as the room's own flats are. It stands on its base, as every Daggerfall
+  billboard does, and answers the ray by its box alone (a flat has no collider). A lit piece's light joins the
+  room's own light list, sorted with the room's lamps by distance and capped by the renderer, so placed candles never
+  push out the lamps nearest the player. A TEXTURE.210 light hangs where the room's own light of that record hangs
+  (the flame, not the foot); any other flat's light hangs at its middle, a model's at its origin. A move or a
+  removal takes the old bucket, batch, animation and light with it at once. A piece moved or removed while it was
+  still loading never stands.
+- **Whose pieces stand.** An online home's are the account service's. They are asked for once a visit, after the
+  room is restored, and every visitor sees the room its owner furnished; an answer that lands after the visit ended
+  stands nothing. The offline house's and ship's are the save's. They are written into the room's scene (in the
+  building's frame, like every piece), carried through the save as copies, and stood again on the next visit; a scene
+  written before DECOR1 reads as a room with nothing placed. Online, a building the service names as a home never
+  writes its pieces into the save. The save's own record for that building is kept through the visit and written
+  back as it came, because the building can be this character's own offline house ("The offline house keeps working
+  offline").
+- **What they hold.** A storage piece opens its owner's inventory window, two-way, like a house container in an
+  owned house: never restocked, never a theft. The owner is the online home's character; elsewhere the owner of
+  Daggerfall's own house, or of a ship. Anyone else is refused, and a visitor in an online home is told whose it is,
+  as HOME1's cupboards do. What a piece holds is always the owner's save's (for an online home, under HOME1's own
+  scene for it), written to the scene as copies of the lists that hold something.
+- **Named.** Pointed at, a storage model reads as the house container's own word. Every other piece is named once
+  the decorator has read the catalogue (DECOR1d).
+
+Pinned: `test/decor1.test.js` (3 of its 7) - the pool over fakes of the host's own seams, the scene through the save
+and back, and the host's wiring. `tools/mutants/decor1.json` (54, DECOR1a's 32 among them).

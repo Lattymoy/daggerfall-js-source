@@ -286,5 +286,203 @@
     "tests": [
       "test/decor1.test.js"
     ]
+  },
+  {
+    "name": "DECOR1c-the-turn-misread",
+    "file": "src/scenes/decorRoom.js",
+    "old": "  const [yaw, pitch, roll] = piece.rot;",
+    "new": "  const [pitch, yaw, roll] = piece.rot;",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-a-moved-bucket-left",
+    "file": "src/scenes/decorRoom.js",
+    "old": "    unmount(standing.get(piece.id));\n",
+    "new": "    standing.get(piece.id);\n",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-a-stale-load-standing",
+    "file": "src/scenes/decorRoom.js",
+    "old": "        if (standing.get(piece.id) !== entry) return;   // moved or removed while it loaded",
+    "new": "        if (!standing.has(piece.id)) return;   // moved or removed while it loaded",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-the-light-left-burning",
+    "file": "src/scenes/decorRoom.js",
+    "old": "      if (i >= 0) lights.splice(i, 1);",
+    "new": "      if (i >= 0) void i;",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-the-flame-at-the-floor",
+    "file": "src/scenes/decorRoom.js",
+    "old": "        mountLight(entry, o, decorLightLift(piece, entry.size));",
+    "new": "        mountLight(entry, o, 0);",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-a-flat-sunk-to-its-middle",
+    "file": "src/scenes/decorRoom.js",
+    "old": "entry.batch = renderer.createBillboardBatch(a, r, entry.size, [[o[0] + piece.pos[0], o[1] + piece.pos[1], o[2] + piece.pos[2]]]);",
+    "new": "entry.batch = renderer.createBillboardBatch(a, r, entry.size, [[o[0] + piece.pos[0], o[1] + piece.pos[1] - entry.size.h / 2, o[2] + piece.pos[2]]]);",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-a-flat-unanimated",
+    "file": "src/scenes/decorRoom.js",
+    "old": "        if (armFlatAnim(entry.batch, f.t, a, r, anims, uploadRecordFrame ?? null)) entry.anims = anims;",
+    "new": "        if (armFlatAnim(entry.batch, f.t, a, r, null, uploadRecordFrame ?? null)) entry.anims = anims;",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-an-animation-outliving-its-batch",
+    "file": "src/scenes/decorRoom.js",
+    "old": "      entry.anims?.remove?.(entry.batch);",
+    "new": "      void entry.anims;",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-a-flat-at-the-raw-size",
+    "file": "src/scenes/decorRoom.js",
+    "old": "        const { w, h } = billboardSize(t, r);",
+    "new": "        const { width: w, height: h } = t.getSize(r);",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-the-items-shared",
+    "file": "src/scenes/decorRoom.js",
+    "old": "    for (const [id, list] of held) if (list.length) out[id] = list.map((it) => ({ ...it }));",
+    "new": "    for (const [id, list] of held) if (list.length) out[id] = list;",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-empty-lists-written",
+    "file": "src/scenes/decorRoom.js",
+    "old": "    for (const [id, list] of held) if (list.length) out[id] = list.map((it) => ({ ...it }));",
+    "new": "    for (const [id, list] of held) out[id] = list.map((it) => ({ ...it }));",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-the-teardown-keeps-the-items",
+    "file": "src/scenes/decorRoom.js",
+    "old": "  function destroyAll() { set([]); held = new Map(); kept = []; }",
+    "new": "  function destroyAll() { set([]); kept = []; }",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-the-teardown-keeps-the-kept",
+    "file": "src/scenes/decorRoom.js",
+    "old": "  function destroyAll() { set([]); held = new Map(); kept = []; }",
+    "new": "  function destroyAll() { set([]); held = new Map(); }",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-the-reach-lost",
+    "file": "src/scenes/decorRoom.js",
+    "old": "distance: RAY_DISTANCE, reach: DECOR_REACH, meshCollider: true });",
+    "new": "distance: RAY_DISTANCE, meshCollider: true });",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-a-flat-target-solid",
+    "file": "src/scenes/decorRoom.js",
+    "old": "reach: DECOR_REACH, noSurface: true });",
+    "new": "reach: DECOR_REACH, meshCollider: true });",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-the-scene-drops-the-items",
+    "file": "src/systems/sceneCache.js",
+    "old": "  decorItems: Object.fromEntries(Object.entries(d.decorItems ?? {}).map(([id, list]) => [id, (list ?? []).map((it) => ({ ...it }))])),",
+    "new": "  decorItems: {},",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-a-shallow-scene-copy",
+    "file": "src/systems/sceneCache.js",
+    "old": "    ...p, pos: [...(p.pos ?? [])], rot: [...(p.rot ?? [])], flat: p.flat ? [...p.flat] : null,",
+    "new": "    ...p, rot: [...(p.rot ?? [])], flat: p.flat ? [...p.flat] : null,",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-the-kept-record-wiped",
+    "file": "src/scenes/worldModes.js",
+    "old": "    const decor = interiorHome ? interiorDecor.kept() : interiorDecor.list();",
+    "new": "    const decor = interiorHome ? [] : interiorDecor.list();",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-a-late-answer-standing",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (visit !== _decorVisit || interiorBuilding !== b) return;",
+    "new": "      if (interiorBuilding !== b) return;",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-a-visitor-opens-a-piece",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!decorOwnerHere()) {\n",
+    "new": "    if (false) {\n",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-offline-reads-the-service",
+    "file": "src/scenes/world.js",
+    "old": "  const homeDecor = params.has('online') ? accountDecor(",
+    "new": "  const homeDecor = true ? accountDecor(",
+    "tests": [
+      "test/decor1.test.js"
+    ]
+  },
+  {
+    "name": "DECOR1c-a-stale-flat-standing",
+    "file": "src/scenes/decorRoom.js",
+    "old": "        if (standing.get(piece.id) !== entry || !f || !renderer?.createBillboardBatch) return;",
+    "new": "        if (!f || !renderer?.createBillboardBatch) return;",
+    "tests": [
+      "test/decor1.test.js"
+    ]
   }
 ]

@@ -99,6 +99,15 @@ const copySceneEntry = (d) => ({
   // on the floor - a torch left on a pixel never came back with it. The camps came with the fix.
   droppedTorches: (d.droppedTorches ?? []).map((t) => ({ ...t, position: [...(t.position ?? [])] })),
   camps: (d.camps ?? []).map((c) => ({ ...c, pos: [...(c.pos ?? [])] })),
+  // DECOR1c: what an owner placed in the offline house or ship (net/decorLaw.js's pieces, the building's frame -
+  // an online home's are the account service's and are not written here), and what the storage pieces hold (by
+  // piece id, the online home's too - the owner's things are the owner's save's). A record written before DECOR1
+  // carries neither and reads as a room with nothing placed.
+  decor: (d.decor ?? []).map((p) => ({
+    ...p, pos: [...(p.pos ?? [])], rot: [...(p.rot ?? [])], flat: p.flat ? [...p.flat] : null,
+    light: p.light ? { ...p.light, color: [...(p.light.color ?? [])] } : null,
+  })),
+  decorItems: Object.fromEntries(Object.entries(d.decorItems ?? {}).map(([id, list]) => [id, (list ?? []).map((it) => ({ ...it }))])),
   // TERRAIN-SCALE1: `frame` names what the positions above are measured from ('building': the interior's own
   // building, as DFU's SerializableLootContainer restores an interior container by its localPosition; null: the
   // writer's own frame), and `terrainScale` the ground an exterior height stood on - absent on an entry written
@@ -193,7 +202,7 @@ export function restoreSceneCache(cache, snap) {
 // HOUSE deed's AddPermanentScene, which needed the building directory
 // to know which building was bought: H1/H2 shipped both halves -
 // banking.js:201 calls the hook inside allocateHouseToPlayer with the
-// bought building's own mapId and key, and worldModes.js:2647 supplies
+// bought building's own mapId and key, and worldModes.js:2671 supplies
 // it as addPermanentScene(sceneCache(), interiorSceneName(mapId, key)),
 // reached from the bank's buy arm (:2144-2148), the knightly gift
 // (:2752) and :4933, with sellHouse dropping the scene again (:2184). The

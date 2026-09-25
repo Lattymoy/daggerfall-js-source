@@ -81,7 +81,7 @@ export function decorLightOf(raw) {
 
 /**
  * WHERE a piece stands and what it cost - the half a move may change - projected and rounded (a millimetre, a tenth
- * of a degree), or null. `light` null is no light; `storage` whether it holds things.
+ * of a degree; `rot` is [yaw, pitch, roll]), or null. `light` null is no light; `storage` whether it holds things.
  */
 export function decorPlaceOf(raw) {
   if (!raw || typeof raw !== 'object') return null;

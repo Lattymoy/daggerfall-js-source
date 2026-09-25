@@ -3,8 +3,9 @@
 // can be clicked to open the decorate panel. Allows free cam mode for placement and an intuitive scrolling menu with
 // filters", and "kept in the save" offline): A PIECE OF DECOR. The law both ends read (net/decorLaw.js), the account
 // service's store of an online home's pieces driven through the real Worker over node:sqlite with every migration
-// applied (server-account/src/decor.js), the client's door to it, and the deploy's wiring. `06-Systems/Online-Arc.md`
-// DECOR1.
+// applied (server-account/src/decor.js), the client's door to it, and the deploy's wiring; DECOR1c: the pieces standing
+// in a room (scenes/decorRoom.js), the scene that keeps them, and the host that stands them (worldModes.js).
+// `06-Systems/Online-Arc.md` DECOR1.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -19,6 +20,14 @@ import {
 } from '../src/net/decorLaw.js';
 import { accountDecor, REFUSALS, SESSION_KEY } from '../src/net/accountClient.js';
 import { collectDecor, decorCatalogue, filterDecor, decorSize, decorKey, modelKind, flatKind, DECOR_KINDS } from '../src/systems/decorCatalogue.js';
+import { createDecorRoom, decorMatrix, decorKeyOf, decorIdOfKey, decorLightLift, DECOR_REACH } from '../src/scenes/decorRoom.js';
+import { trs } from '../src/world/mat4.js';
+import { localAabb, transformedAabb } from '../src/render/frustum.js';
+import { RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../src/player/activate.js';
+import { billboardSize } from '../src/world/rmbFlats.js';
+import { FlatAnimator } from '../src/render/flatAnimation.js';
+import { collectInteriorLights } from '../src/world/interiorLights.js';
+import { createSceneCache, cacheScene, restoreCachedScene, snapshotSceneCache, restoreSceneCache } from '../src/systems/sceneCache.js';
 
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const { subtle } = globalThis.crypto;
@@ -111,7 +120,7 @@ test('DECOR1 the law: a piece is WHAT it is (one model, or one flat\'s archive a
   assert.equal(id.slice(0, 3), '0iz', 'floor(rand x 36) in base 36');
 });
 
-test('DECOR1 the service: a home\'s pieces are any session\'s to read (a guest\'s too), nobody\'s without one; placing is the owner\'s CHARACTER\'s alone - a guest is refused, another player and the owner\'s other character find no home; a placement lands, one sent again is answered as the placement, another piece under its id is refused; a move changes where it stands and never what it is; a removal answers the piece as it stood; the cap; the hour\'s writes; the home released, its pieces go with it (mutants: the read closed to guests, a stranger placing, the owner\'s other character placing, a move turning one piece into another, a removal of another\'s, the cap unread, the repeat refused, the cascade)', async (t) => {
+test('DECOR1 the service: a home\'s pieces are any session\'s to read (a guest\'s too), nobody\'s without one; placing is the owner\'s CHARACTER\'s alone - a guest is refused, another player and the owner\'s other character find no home; a placement lands, one sent again is answered as the placement, another piece under its id is refused; a move changes where it stands and never what it is; a removal answers the piece as it stood; the cap; the hour\'s writes; the home released, its pieces go with it (mutants: the read closed to guests, a stranger placing, a stranger naming the owner\'s character, the owner\'s other character placing, a move turning one piece into another, a removal of another\'s, the cap unread, the repeat refused, the cascade)', async (t) => {
   t.mock.method(Date, 'now', () => T0 * 1000);
   const { env, call, registered } = await stand();
   for (const r of ['/v1/homes/decor', '/v1/homes/decor/place', '/v1/homes/decor/move', '/v1/homes/decor/remove']) {
@@ -131,6 +140,9 @@ test('DECOR1 the service: a home\'s pieces are any session\'s to read (a guest\'
   // placing
   const noHome = await call('POST', '/v1/homes/decor/place', { ...HOME, character: 'char-mara', piece: piece() }, mara);
   assert.deepEqual([noHome.status, noHome.body.error], [404, 'no-home'], 'another player\'s home is no home to place in');
+  // a character id is the client's own word - another player can NAME the owner's; the account is the service's
+  const named = await call('POST', '/v1/homes/decor/place', at({ piece: piece() }), mara);
+  assert.deepEqual([named.status, named.body.error], [404, 'no-home'], 'another player naming the owner\'s character owns nothing');
   const otherChar = await call('POST', '/v1/homes/decor/place', at({ character: 'char-second', piece: piece() }), aldric);
   assert.deepEqual([otherChar.status, otherChar.body.error], [404, 'no-home'], 'the owner\'s OTHER character does not own it');
   const p1 = await call('POST', '/v1/homes/decor/place', at({ piece: piece() }), aldric);
@@ -150,11 +162,13 @@ test('DECOR1 the service: a home\'s pieces are any session\'s to read (a guest\'
   assert.deepEqual(moved.body, { ok: true, piece: piece({ pos: [3, 0, 3], rot: [0, 0, 0], storage: true }) }, 'the model is its own column - a move cannot turn a bed into a statue');
   const strangerMove = await call('POST', '/v1/homes/decor/move', { ...HOME, character: 'char-mara', id: 'p1', place: piece() }, mara);
   assert.deepEqual([strangerMove.status, strangerMove.body.error], [404, 'no-decor']);
+  assert.equal((await call('POST', '/v1/homes/decor/move', at({ id: 'p1', place: piece() }), mara)).body.error, 'no-decor', 'nor by naming the owner\'s character');
   assert.equal((await call('POST', '/v1/homes/decor/move', at({ id: 'nope', place: piece() }), aldric)).body.error, 'no-decor');
   assert.equal((await call('POST', '/v1/homes/decor/move', at({ id: 'p1', place: { ...piece(), scale: 9 } }), aldric)).body.error, 'bad-decor');
   // removing
   const strangerRemove = await call('POST', '/v1/homes/decor/remove', { ...HOME, character: 'char-mara', id: 'p1' }, mara);
   assert.deepEqual([strangerRemove.status, strangerRemove.body.error], [404, 'no-decor']);
+  assert.equal((await call('POST', '/v1/homes/decor/remove', at({ id: 'p1' }), mara)).body.error, 'no-decor', 'nor by naming the owner\'s character');
   const removed = await call('POST', '/v1/homes/decor/remove', at({ id: 'p2' }), aldric);
   assert.deepEqual(removed.body, { ok: true, piece: flat }, 'the piece as it stood - its cost among it');
   assert.equal((await call('POST', '/v1/homes/decor/remove', at({ id: 'p2' }), aldric)).body.error, 'no-decor', 'gone');
@@ -256,3 +270,170 @@ test('DECOR1 the catalogue - "Everything Daggerfall furnishes": every interior P
   assert.deepEqual([decorSize(0.2), decorSize(0.5), decorSize(1.25), decorSize(null)], ['small', 'medium', 'large', null]);
   assert.equal(Object.keys(DECOR_KINDS).length, 12);
 });
+
+// DECOR1c: a room's pool over fakes of the host's own seams - the pipeline's meshes and textures, the renderer, the room's
+// collider, light list and flat animator - so what the pool does with each is read back exactly.
+function decorRoomRig({ origin = [100, 10, -50] } = {}) {
+  const log = [];
+  const buckets = new Map();
+  const adds = [];   // every addMesh, by key - the real collider APPENDS to a bucket it already holds
+  const lights = [{ x: 0, y: 3, z: 0, range: 5, intensity: 1, color: [1, 1, 1] }];   // the room's own lamp
+  const anims = new FlatAnimator();
+  const uploads = [];
+  const CUBE = { positions: new Float32Array([-0.5, 0, -0.5, 0.5, 0, -0.5, 0.5, 1, 0.5, -0.5, 1, 0.5]), indices: new Uint32Array([0, 1, 2, 0, 2, 3]) };
+  const tex = { recordCount: 30, getSize: () => ({ width: 16, height: 32 }), getScale: () => ({ width: 0, height: 0 }), getFrameCount: (r) => (r === 4 ? 3 : 1) };
+  const pool = createDecorRoom({
+    meshes: { getGpuMesh: async (id) => ({ gpu: id }), cpuModels: new Map([[41000, CUBE]]) },
+    renderer: {
+      createBillboardBatch: (archive, record, size, centers) => { log.push(['batch', archive, record]); return { archive, record, size, centers, frame: null }; },
+      destroyBillboardBatch: (b) => { b.destroyed = true; },
+      drawMesh: (gpu, m, remap) => log.push(['draw', gpu, m, remap]),
+    },
+    getTexture: async (a) => (a === 210 || a === 205 ? tex : null),
+    uploadRecord: (a, r) => uploads.push(`${a}_${r}`),
+    uploadRecordFrame: (a, r, f) => uploads.push(`${a}_${r}#${f}`),
+    flatAnims: () => anims,
+    collider: () => ({ addMesh: (k, _p, _i, m) => { adds.push(k); buckets.set(k, m); }, removeBucket: (k) => buckets.delete(k) }),
+    origin: () => origin,
+    roomLights: () => lights,
+  });
+  return { pool, log, buckets, adds, lights, anims, uploads, tex, CUBE };
+}
+const settle = () => new Promise((r) => setTimeout(r, 0));
+
+test('DECOR1c the room\'s placed pieces: a model stands on the building\'s origin plus its place, turned [yaw, pitch, roll], in its own collider bucket keyed as its eye target (`decor:<id>`, the collider\'s surface deciding) at the room\'s own reach, drawn in the room\'s climate; a flat is uploaded, sized and animated as the room\'s own flats are, stands on its base, answers the ray by its box alone; a lit piece\'s light joins the room\'s own list where the room\'s light of that record hangs; a move or a removal takes the old bucket, batch, animation and light with it, and a piece gone while it loaded never stands; what a storage piece holds is a live list, written to the scene as copies of the non-empty; the save\'s own record for a room standing another\'s is kept unstood; the room\'s teardown forgets all of it (mutants: the turn misread, a moved bucket left, a stale load standing, the light left burning, the flame at the floor, a flat sunk to its middle, a flat unanimated, an animation outliving its batch, the items shared, empty lists written, the teardown keeping the items or the kept record, the reach lost, a flat target solid)', async () => {
+  const { pool, log, buckets, adds, lights, anims, uploads, tex, CUBE } = decorRoomRig();
+  assert.equal(DECOR_REACH, DEFAULT_ACTIVATION_DISTANCE, 'the room\'s own furniture\'s reach');
+  assert.equal(decorKeyOf('abc'), 'decor:abc');
+  assert.deepEqual([decorIdOfKey('decor:abc'), decorIdOfKey('container:3'), decorIdOfKey(null)], ['abc', null, null]);
+  // a model
+  const chair = piece();   // 41000 at [1.5, 0, -2.25], turned 90 degrees
+  const at = trs(101.5, 10, -52.25, 0, 90, 0, 1, 1, 1);
+  assert.deepEqual([...decorMatrix(chair, [100, 10, -50])], [...at], 'yaw is the first of the three');
+  pool.put(chair);
+  assert.equal(buckets.size, 0, 'not yet loaded');
+  await settle();
+  assert.deepEqual([...buckets.get('decor:p1')], [...at], 'its own bucket, keyed as its target is');
+  const box = transformedAabb(localAabb(CUBE.positions), at);
+  assert.deepEqual(pool.targets(), [{ key: 'decor:p1', aabb: { min: [box[0], box[1], box[2]], max: [box[3], box[4], box[5]] }, distance: RAY_DISTANCE, reach: DECOR_REACH, meshCollider: true }]);
+  assert.equal(pool.draw(undefined, 'remap'), 1);
+  assert.deepEqual(log.at(-1), ['draw', { gpu: 41000 }, at, 'remap'], 'drawn in the room\'s own climate');
+  // a lit, animated flat, twice its size
+  const lamp = piece({ id: 'p2', model: null, flat: [210, 4], pos: [0, 1, 0], scale: 2, light: { color: [1, 0.8, 0.5], range: 6, intensity: 1 } });
+  pool.put(lamp);
+  assert.equal(lights.length, 1, 'a flat\'s light waits for its size');
+  await settle();
+  const size = billboardSize(tex, 4);
+  const [batch] = pool.batches();
+  assert.deepEqual([batch.archive, batch.record, batch.size, batch.centers], [210, 4, { w: size.w * 2, h: size.h * 2 }, [[100, 11, -50]]],
+    'sized as the room\'s flats are, scaled, and standing on its BASE - the renderer bottom-anchors every batch');
+  assert.ok(['210_4', '210_4#0', '210_4#1', '210_4#2'].every((k) => uploads.includes(k)), 'uploaded as the room\'s flats are, every frame of an animated one');
+  assert.deepEqual(anims.entries.map((e) => e.batch), [batch], 'and its flame moves as the room\'s own do (FA1)');
+  const [own] = collectInteriorLights([{ archive: 210, record: 4, x: 0, y: 0, z: 0 }], () => ({ w: size.w * 2, h: size.h * 2 }));
+  assert.deepEqual(lights[1], { x: 100, y: 11 + own.y, z: -50, range: 6, intensity: 1, color: [1, 0.8, 0.5], decor: 'p2' },
+    'its light joins the room\'s own list - where the room\'s light of that record hangs, the piece\'s own colour and reach');
+  assert.ok(own.y > 0 && pool.lights()[0] === lights[1], 'above the floor, and the very object in the room\'s list');
+  assert.deepEqual(pool.targets().find((t) => t.key === 'decor:p2'),
+    { key: 'decor:p2', aabb: { min: [100 - size.w, 11, -50 - size.w], max: [100 + size.w, 11 + size.h * 2, -50 + size.w] }, distance: RAY_DISTANCE, reach: DECOR_REACH, noSurface: true },
+    'a flat has no collider: its box answers the ray alone');
+  assert.equal(decorLightLift(chair, null), 0, 'a model\'s light hangs at its origin');
+  assert.equal(decorLightLift(lamp, null), null, 'a flat\'s waits for its size');
+  assert.equal(decorLightLift(piece({ model: null, flat: [205, 1] }), { w: 1, h: 3 }), 1.5, 'any other flat\'s at its middle');
+  // moved: the old goes at once, the new stands where it was moved
+  pool.put({ ...lamp, pos: [2, 1, 0] });
+  assert.ok(batch.destroyed, 'the old batch goes');
+  assert.equal(anims.entries.some((e) => e.batch === batch), false, 'its animation with it');
+  assert.equal(lights.length, 1, 'and its light, until the new one stands');
+  await settle();
+  assert.deepEqual([lights.length, lights[1].x], [2, 102]);
+  pool.put({ ...chair, pos: [0, 0, 0] });
+  assert.equal(buckets.has('decor:p1'), false, 'a moved model\'s old bucket goes at once');
+  await settle();
+  assert.equal(buckets.get('decor:p1')[12], 100, 'the new one where it was moved');
+  // a model's light is at once; a piece gone while it loaded never stands
+  pool.put(piece({ id: 'p5', light: { color: [1, 1, 1], range: 4, intensity: 2 } }));
+  assert.deepEqual(lights.at(-1), { x: 101.5, y: 10, z: -52.25, range: 4, intensity: 2, color: [1, 1, 1], decor: 'p5' });
+  const stool = piece({ id: 'p3' });
+  pool.put(stool);
+  assert.equal(pool.remove('p3'), stool, 'a removal answers the piece as it stood');
+  pool.put(piece({ id: 'p6', model: null, flat: [999, 0], light: { color: [1, 1, 1], range: 4, intensity: 2 } }));
+  await settle();
+  assert.equal(buckets.has('decor:p3'), false, 'a piece removed while its model loaded never stands a collider');
+  // moved while it loaded: only the move stands (the collider would take both sets of triangles into one bucket)
+  pool.put(piece({ id: 'p7' }));
+  pool.put(piece({ id: 'p7', pos: [4, 0, 4] }));
+  const batchesMade = log.filter((e) => e[0] === 'batch').length;
+  pool.put(piece({ id: 'p8', model: null, flat: [205, 1] }));
+  pool.remove('p8');
+  await settle();
+  assert.deepEqual([adds.filter((k) => k === 'decor:p7').length, buckets.get('decor:p7')[12]], [1, 104], 'one bucket, where it was moved to');
+  assert.equal(log.filter((e) => e[0] === 'batch').length, batchesMade, 'a flat removed while it loaded never makes a batch');
+  pool.remove('p7');
+  assert.equal(pool.targets().some((t) => t.key === 'decor:p6') || lights.some((l) => l.decor === 'p6'), false, 'a flat the archive lacks stands nothing and lights nothing');
+  const movedLamp = pool.pieceOf('p2');
+  assert.deepEqual([movedLamp.pos, pool.remove('p2'), pool.pieceOf('p2')], [[2, 1, 0], movedLamp, null], 'gone');
+  assert.equal(lights.some((l) => l.decor === 'p2'), false, 'removed, its light leaves the room\'s list');
+  // what a storage piece holds
+  const chest = pool.itemsOf('p1');
+  chest.push({ name: 'Silver', value: 5 });
+  assert.equal(pool.itemsOf('p1'), chest, 'the live list the inventory window binds to');
+  assert.deepEqual([pool.holdsAny('p1'), pool.holdsAny('p9')], [true, false]);
+  pool.itemsOf('p9');   // opened, left empty
+  const snap = pool.itemsSnapshot();
+  assert.deepEqual(snap, { p1: [{ name: 'Silver', value: 5 }] }, 'the scene keeps only what holds something');
+  snap.p1[0].value = 99;
+  assert.equal(chest[0].value, 5, 'as copies - the scene cannot reach into the chest');
+  pool.setItems({ p4: [{ name: 'Gold' }], bad: 'x' });
+  assert.deepEqual(pool.itemsSnapshot(), { p4: [{ name: 'Gold' }] }, 'restored from the scene, a malformed list read as none');
+  pool.setItems(undefined);
+  assert.deepEqual(pool.itemsSnapshot(), {}, 'a scene written before DECOR1 holds nothing');
+  // the save's own record for a room standing another's
+  pool.keep([lamp]);
+  assert.deepEqual([pool.kept(), pool.pieceOf('p2')], [[lamp], null], 'kept, never stood');
+  // the teardown
+  pool.setItems({ p1: [{ name: 'Silver' }] });
+  pool.destroyAll();
+  assert.deepEqual([pool.size(), buckets.size, lights.length], [0, 0, 1], 'every piece, bucket and light gone - the room\'s own lamp alone');
+  assert.deepEqual([pool.itemsSnapshot(), pool.kept()], [{}, []], 'what they held and the kept record forgotten - the scene already wrote them');
+  pool.set([chair, lamp]);
+  pool.set([lamp]);
+  await settle();
+  assert.deepEqual([pool.list(), buckets.size, pool.batches().length], [[lamp], 0, 1], 'a set replaces every piece');
+});
+
+test('DECOR1c the scene keeps a room\'s pieces and what they hold: detached from the caller at the store, through the save and back; a scene written before DECOR1 reads as a room with nothing placed (mutants: the items dropped, a shallow copy)', () => {
+  const c = createSceneCache();
+  const lamp = () => piece({ id: 'p2', model: null, flat: [210, 4], light: { color: [1, 0.8, 0.5], range: 6, intensity: 1 } });
+  const entry = { decor: [piece(), lamp()], decorItems: { p1: [{ name: 'Silver', value: 5 }] } };
+  cacheScene(c, 'House', entry);
+  entry.decor[0].pos[0] = 99; entry.decor[0].rot[0] = 1; entry.decor[1].flat[1] = 0; entry.decor[1].light.color[0] = 0; entry.decorItems.p1[0].value = 0;
+  const back = createSceneCache();
+  restoreSceneCache(back, JSON.parse(JSON.stringify(snapshotSceneCache(c))));
+  const got = restoreCachedScene(back, 'House');
+  assert.deepEqual([got.decor, got.decorItems], [[piece(), lamp()], { p1: [{ name: 'Silver', value: 5 }] }], 'the caller\'s later changes never reach the store');
+  cacheScene(c, 'Old', { lootContainers: [] });
+  const old = restoreCachedScene(c, 'Old');
+  assert.deepEqual([old.decor, old.decorItems], [[], {}]);
+});
+
+test('DECOR1c the room\'s host (worldModes.js): one pool on the room\'s own collider, origin, light list and animator, emptied at all three teardowns; the save writes the offline house\'s and ship\'s pieces and never an online home\'s (the save\'s own record kept through it), and what the pieces hold either way; the restore stands the save\'s, or keeps them where an online home stands; an online home\'s come from the service after the restore, once a visit, and a late answer stands none; drawn, targeted, pressed; a storage piece opens for the room\'s owner alone - the online home\'s, else the house\'s or ship\'s - and is named; world.js builds the service\'s door online alone (mutants: the kept record wiped, a late answer standing, a visitor opening a piece)', () => {
+  const m = src('src/scenes/worldModes.js');
+  const w = src('src/scenes/world.js');
+  assert.match(m, /const interiorDecor = createDecorRoom\(\{\n    meshes: \{ getGpuMesh, cpuModels \}, renderer, getTexture, uploadRecord, uploadRecordFrame, flatAnims: \(\) => interiorCtx\?\.flatAnims \?\? null,\n    collider: \(\) => interiorCtx\?\.collider \?\? null, origin: \(\) => buildingOrigin\(\), roomLights: \(\) => interiorCtx\?\.lights \?\? null,\n  \}\);/);
+  assert.equal([...m.matchAll(/interiorDecor\.destroyAll\(\); _decorVisit\+\+;/g)].length, 3, 'the entry sweep, the exit and the quest-teleport / load arm');
+  assert.match(m, /const decor = interiorHome \? interiorDecor\.kept\(\) : interiorDecor\.list\(\);\n    const decorItems = interiorDecor\.itemsSnapshot\(\);/);
+  assert.match(m, /const placed = \(data\.decor \?\? \[\]\)\.map\(decorPieceOf\)\.filter\(Boolean\);\n    if \(interiorHome\) interiorDecor\.keep\(placed\); else interiorDecor\.set\(placed\);\n    interiorDecor\.setItems\(data\.decorItems\);/);
+  assert.match(m, /mountQuestResources\(\);\n      loadHomeDecor\(\);/);
+  assert.ok(m.indexOf('loadHomeDecor();   // DECOR1c') > m.indexOf('restoreInteriorScene();\n      // AUDIT 63 F22'), 'after the restore, which latched the home and kept the save\'s record');
+  assert.match(m, /const visit = _decorVisit;\n    Promise\.resolve\(host\.homeDecor\.list\(homeTownOf\(b\), b\.buildingKey\)\)\.then\(\(r\) => \{\n      if \(visit !== _decorVisit \|\| interiorBuilding !== b\) return;\n      if \(r\?\.ok && Array\.isArray\(r\.data\?\.pieces\)\) interiorDecor\.set\(r\.data\.pieces\.map\(decorPieceOf\)\.filter\(Boolean\)\);/);
+  assert.match(m, /interiorArrows\.draw\(renderer, interiorCtx\.texRemap\);\n    interiorDecor\.draw\(renderer, interiorCtx\.texRemap\);/);
+  assert.match(m, /const _decorFlats = interiorDecor\.batches\(\);\n      if \(_decorFlats\.length\) renderer\.drawBillboards\(_decorFlats, camRight, UP_Y\);/);
+  assert.match(m, /targets\.push\(\.\.\.interiorDecor\.targets\(\)\);/);
+  assert.match(m, /if \(key\.startsWith\('decor:'\)\) \{ activateDecor\(decorIdOfKey\(key\)\); return true; \}/);
+  assert.match(m, /function decorOwnerHere\(\) \{\n    if \(interiorHome\) return interiorHome\.own;\n    const b = interiorBuilding;\n    if \(!b\) return false;\n    if \(b\.buildingType === BUILDING_TYPES\.Ship\) return ownsShip\(playerEntity\);\n    return isHouseOwned\(playerEntity\.houses \?\? \[\], b\.regionIndex \?\? 0, b\.buildingKey \?\? 0\);\n  \}/);
+  assert.match(m, /if \(!piece\?\.storage\) return;\n    if \(!decorOwnerHere\(\)\) \{\n      if \(interiorHome\) say\(homeBelongsLine\(interiorHome\)\);\n      return;\n    \}\n    const win = interiorInventory\(\{ loot: \{ items: \(\) => interiorDecor\.itemsOf\(id\) \} \}\);/);
+  assert.match(m, /const t = decorNames\.get\(decorKey\(piece\)\) \?\? \(piece\.storage && piece\.model != null \? houseContainerName\(piece\.model\) : null\);/);
+  assert.match(w, /const homeDecor = params\.has\('online'\) \? accountDecor\(\{ fetch: \(u, i\) => globalThis\.fetch\(u, i\), storage: appStorage\(\) \}\) : null;/);
+  assert.match(w, /\n    homeDecor,   \/\/ DECOR1c/);
+});
+

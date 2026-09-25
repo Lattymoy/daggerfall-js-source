@@ -335,8 +335,8 @@
   {
     "name": "TS1-interior-unframed",
     "file": "src/scenes/worldModes.js",
-    "old": "droppedTorches, frame: 'building', terrainScale: STREAMING_TERRAIN_SCALE };",
-    "new": "droppedTorches };",
+    "old": "decorItems, frame: 'building', terrainScale: STREAMING_TERRAIN_SCALE };",
+    "new": "decorItems };",
     "tests": [
       "test/terrainscale1.test.js"
     ]

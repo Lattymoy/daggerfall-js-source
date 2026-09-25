@@ -256,6 +256,10 @@ import {
   homeSoldLine, homeRefund, HOME_ENTRY_WORDS, HOME_BANK_LINES, buyOnlineHome, sellOnlineHome,
 } from '../systems/onlineHomes.js';
 import { HOME_ENTRIES, homePriceOk } from '../net/homeLaw.js';
+// DECOR1c: the pieces a room's owner placed (their law, and the pool that stands them in the room)
+import { decorPieceOf } from '../net/decorLaw.js';
+import { createDecorRoom, decorIdOfKey } from './decorRoom.js';
+import { decorKey } from '../systems/decorCatalogue.js';
 import { accountRefusalText } from '../net/accountClient.js';
 // P1: the scene cache - what an interior remembers across a visit.
 import {
@@ -642,6 +646,17 @@ export function createWorldModes(host) {
   // BLOOD1a: an interior bleeds too, and the ring is its own binding
   // (HARD1: the splash pool is a hand-off and must not own GL).
   const interiorBloodMarks = createBloodMarks({ renderer, collider: () => player.collider, settings: bloodDecalDeps });
+  // DECOR1c: THE PIECES A ROOM'S OWNER PLACED (scenes/decorRoom.js) - an online home's from the account service (every
+  // visitor sees the room its owner furnished), the offline house's and ship's from the save; their own colliders and
+  // eye targets (`decor:<id>`), their lights among the room's own, and what the storage pieces hold always the owner's
+  // save's. One pool, emptied with the room at all three teardowns, as the torches and the piles are.
+  const interiorDecor = createDecorRoom({
+    meshes: { getGpuMesh, cpuModels }, renderer, getTexture, uploadRecord, uploadRecordFrame, flatAnims: () => interiorCtx?.flatAnims ?? null,
+    collider: () => interiorCtx?.collider ?? null, origin: () => buildingOrigin(), roomLights: () => interiorCtx?.lights ?? null,
+  });
+  let _decorVisit = 0;   // a visit's token: an online home's pieces landing after the visit ended stand nowhere
+  /** @type {Map<string, string>} the catalogue's names by piece key, once the decorator has read the catalogue (DECOR1d) */
+  const decorNames = new Map();
   const interiorHitEffects = createHitEffects({ renderer, getTexture, uploadRecordFrame, marks: interiorBloodMarks });
   /** PlayerMotor.FindGroundPosition, on the interior's own collider -
    *  the world host's `dropFeet` in this host's frame. */
@@ -1869,6 +1884,7 @@ export function createWorldModes(host) {
     });
     targets.push(...interiorDropped.lootTargets());   // ID1: the player's own piles, the dungeon's key vocabulary
     targets.push(...interiorTorches.targets());   // HT1: the dropped torches
+    targets.push(...interiorDecor.targets());   // DECOR1c: the pieces the room's owner placed
     targets.push(...interiorCamps.targets());   // HEARTH1: the room's own fires - there is never a camp in this pool to add beside them
     // INTERIOR-BODIES (AUDIT-WH2 L2-F4, Mac: "Do it"): ...AND THE BODIES.
     //
@@ -1971,6 +1987,14 @@ export function createWorldModes(host) {
         return isShop(b?.buildingType) ? { title: SHOP_SHELF_TEXT } : null;
       }
       if (key.startsWith('ladder:')) return { title: LADDER_TEXT };   // .cs:473-476
+      // DECOR1c: a placed piece, by the catalogue's name once the decorator has read it (DECOR1d), a storage model by
+      // the house container's own word until then; any other piece stays unnamed until the catalogue can name it
+      if (key.startsWith('decor:')) {
+        const piece = interiorDecor.pieceOf(decorIdOfKey(key));
+        if (!piece) return null;
+        const t = decorNames.get(decorKey(piece)) ?? (piece.storage && piece.model != null ? houseContainerName(piece.model) : null);
+        return t ? { title: t } : null;
+      }
       // .cs:304-312 - a LIVE entity is `Entity.Name`, and only when
       // its motor says it is not hostile.
       if (key.startsWith('mobileFoe:')) {
@@ -3072,7 +3096,13 @@ export function createWorldModes(host) {
     const o = buildingOrigin();
     const droppedPiles = interiorDropped.snapshotScene().map((p) => ({ ...p, pos: [p.pos[0] - o[0], p.pos[1] - o[1], p.pos[2] - o[2]] }));
     const droppedTorches = interiorTorches.snapshot((p) => [p[0] - o[0], p[1] - o[1], p[2] - o[2]]);   // HT1: HandheldTorchesSaveData, with the room
-    return { lootContainers, actionDoors, droppedPiles, droppedTorches, frame: 'building', terrainScale: STREAMING_TERRAIN_SCALE };
+    // DECOR1c: what the owner placed - the offline house's and ship's are the save's (already in the building's frame);
+    // an online home's are the account service's and are never written here, and a visit to one writes back the save's
+    // own record for the building exactly as it came (the pool's `kept`) - and what the storage pieces hold, the owner's
+    // own either way
+    const decor = interiorHome ? interiorDecor.kept() : interiorDecor.list();
+    const decorItems = interiorDecor.itemsSnapshot();
+    return { lootContainers, actionDoors, droppedPiles, droppedTorches, decor, decorItems, frame: 'building', terrainScale: STREAMING_TERRAIN_SCALE };
   }
   /** TERRAIN-SCALE1: the entered building's origin in this visit's scene frame - the translation of the matrix the
    *  interior is parented at (P8: every door of a building carries the building's own matrix). */
@@ -3148,6 +3178,49 @@ export function createWorldModes(host) {
       : (p) => [p[0], host.restandSceneHeight ? host.restandSceneHeight(p[1], p[0], p[2], was) : p[1], p[2]];
     interiorDropped.restorePiles(data.droppedPiles ? data.droppedPiles.map((p) => ({ ...p, pos: place(p.pos) })) : data.droppedPiles);
     interiorTorches.restore(data.droppedTorches, place);   // HT1: a scene cached before this shipped carries none - cleared, as the piles are
+    // DECOR1c: what the owner placed in the offline house or ship (the building's frame, as every piece is - the pool
+    // stands it on this visit's origin), projected by the law on the way in; and what the storage pieces hold. An online
+    // home's pieces come from the account service after the restore (loadHomeDecor), and the save's own record for the
+    // building is kept, unstood, to be written back as it came; what the pieces hold is this save's.
+    const placed = (data.decor ?? []).map(decorPieceOf).filter(Boolean);
+    if (interiorHome) interiorDecor.keep(placed); else interiorDecor.set(placed);
+    interiorDecor.setItems(data.decorItems);
+  }
+
+  /** DECOR1c: WHO OWNS THE ROOM'S PLACED PIECES - the character whose online home it is; else (offline, or a building
+   *  no online home names) the owner of Daggerfall's own house, or of the ship. */
+  function decorOwnerHere() {
+    if (interiorHome) return interiorHome.own;
+    const b = interiorBuilding;
+    if (!b) return false;
+    if (b.buildingType === BUILDING_TYPES.Ship) return ownsShip(playerEntity);
+    return isHouseOwned(playerEntity.houses ?? [], b.regionIndex ?? 0, b.buildingKey ?? 0);
+  }
+  /** DECOR1c: A PLACED PIECE PRESSED. A storage piece opens for its owner - what it holds is the owner's save's, as a
+   *  house container's is, never restocked and never a theft - and is shut to anyone else, as HOME1's cupboards are.
+   *  Any other piece is furniture and does nothing when pressed. */
+  function activateDecor(id) {
+    const piece = interiorDecor.pieceOf(id);
+    if (!piece?.storage) return;
+    if (!decorOwnerHere()) {
+      if (interiorHome) say(homeBelongsLine(interiorHome));
+      return;
+    }
+    const win = interiorInventory({ loot: { items: () => interiorDecor.itemsOf(id) } });
+    if (win) interiorOverlay = win;
+  }
+
+  /** DECOR1c: AN ONLINE HOME'S PIECES are the account service's - the room its owner furnished, for everyone who walks
+   *  in, the owner and the guests alike. Asked once a visit, after the restore; a visit that ends before the answer
+   *  stands none of them (`_decorVisit` moves at every teardown). */
+  function loadHomeDecor() {
+    const b = interiorBuilding;
+    if (!interiorHome || !host.homeDecor || !b) return;
+    const visit = _decorVisit;
+    Promise.resolve(host.homeDecor.list(homeTownOf(b), b.buildingKey)).then((r) => {
+      if (visit !== _decorVisit || interiorBuilding !== b) return;
+      if (r?.ok && Array.isArray(r.data?.pieces)) interiorDecor.set(r.data.pieces.map(decorPieceOf).filter(Boolean));
+    }).catch(() => {});
   }
 
   /** AUDIT 63 F22: AddFlats' RandomTreasure arm (DaggerfallInterior
@@ -5591,6 +5664,7 @@ export function createWorldModes(host) {
       // sibling pile pool (interiorDropped) restored correctly beside
       // it. The sweep belongs here, where the transition is.
       interiorTorches.destroyAll();   // HT1: DestroyLightSources_OnTransition
+      interiorDecor.destroyAll(); _decorVisit++;   // DECOR1c: and the placed pieces go with the room
       interiorCamps.destroyAll(); interiorHearths.length = 0;   // HEARTH1: and the room's own fires - one building's hearth is not the next one's
       // E2/P1: the building's identity, resolved BEFORE the interior
       // stands. DFU's transition does the same three things in this
@@ -5804,6 +5878,7 @@ export function createWorldModes(host) {
       // AddQuestResourceObjects moment - the walk runs once the site's
       // buildingKey is known).
       mountQuestResources();
+      loadHomeDecor();   // DECOR1c: an online home's pieces, from the account service - after the restore, which kept the save's
       // Music is NOT started here any more. AUDIT 19's 1:1 pass moved it
       // to the SongManager: the host feeds a context every frame and the
       // manager decides when the song changes, which is the only way to
@@ -5966,6 +6041,7 @@ export function createWorldModes(host) {
         return true;
       }
       if (key.startsWith('droppedTorch:')) { interiorTorches.activate(key, getInteractionMode()); return true; }   // HT1: PickUpLightSource
+      if (key.startsWith('decor:')) { activateDecor(decorIdOfKey(key)); return true; }   // DECOR1c: a placed piece - its storage opens for its owner
       // INTERIOR-BODIES: ...AND THE PRESS ARM THE BODIES NEVER HAD.
       //
       // The same door the street opens (world.js / exterior.js) and the
@@ -6190,6 +6266,7 @@ export function createWorldModes(host) {
     immersiveFootsteps.onTransitionExterior();   // IF1: UpdateFootsteps_OnTransitionExterior
     betterAmbience.onTransition(null);   // BA1: OnTransitionExterior
     interiorTorches.destroyAll();   // HT1: DestroyLightSources_OnTransition
+    interiorDecor.destroyAll(); _decorVisit++;   // DECOR1c: and the placed pieces go with the room
     questBridge?.onExteriorTransition();   // Q4-v: CreateFoe's pending-wave invalidation
     npcSession?.onWorldChanged();          // TK-v: OnTransitionToExterior (:3599-3603)
     unleveledLootExteriorTransition();     // UL1: OnTransitionExterior - the BUILDING exit alone clears the mod's dungeon
@@ -7487,7 +7564,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:9334's own wave-46 note); the interior
+          // a blow (world.js:9336's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -7532,6 +7609,7 @@ export function createWorldModes(host) {
       }),
     });
     interiorArrows.draw(renderer, interiorCtx.texRemap);
+    interiorDecor.draw(renderer, interiorCtx.texRemap);   // DECOR1c: the placed models, in the room's own climate
     interiorCtx.flatAnims.tick(dt);   // FA1
     // BLOOD1 AUDIT (2026-09-20): THE INTERIOR'S OWN MARKS, and they
     // were missing. This host builds a pool like the other three,
@@ -7556,6 +7634,11 @@ export function createWorldModes(host) {
     {
       const _torches = interiorTorches.batches();
       if (_torches.length) renderer.drawBillboards(_torches, camRight, UP_Y);
+    }
+    // DECOR1c: the placed flats, on the same axis
+    {
+      const _decorFlats = interiorDecor.batches();
+      if (_decorFlats.length) renderer.drawBillboards(_decorFlats, camRight, UP_Y);
     }
     // ID1: the player's own piles, on the same axis and the same call
     // the dungeon host makes for its droppedLoot.
@@ -9720,6 +9803,7 @@ export function createWorldModes(host) {
         interiorTorches.destroyAll();   // AUDIT 66 F6: HT1's pool was the one that never joined this list - a quest teleport or a load out of a building left the room's torches lit, batched and burning in the ear
         interiorHitEffects.clear();   // HE1: the same
         interiorBloodMarks.clear();   // BLOOD1a (HARD1): and the same for the ring
+        interiorDecor.destroyAll(); _decorVisit++;   // DECOR1c: the placed pieces too, on the quest-teleport / load arm
         interiorCamps.destroyAll(); interiorHearths.length = 0;   // HEARTH1: the same list, for the same reason
         // ...and the OnPop the comment above is about, on every window
         // the stack holds (ROAD-B B1).
@@ -9980,7 +10064,7 @@ export function createWorldModes(host) {
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
      *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3387-3409), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:6508). So an F9 pressed in a shop
+     *  unconditionally (world.js:6510). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -10019,7 +10103,7 @@ export function createWorldModes(host) {
       if (interiorOverlay instanceof DeathScreen) { interiorOverlay.restoreView(); interiorOverlay = null; }
     },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:6608)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:6610)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -10029,7 +10113,7 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:6775`
+     *  HARD2c: this used to spell them out, and named `world.js:6777`
      *  and `dungeonContext.js:6371` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
