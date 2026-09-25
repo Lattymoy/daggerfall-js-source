@@ -71,6 +71,7 @@ import { conditionPercentage } from '../systems/itemInfo.js';   // SW1: the cond
 import { isShieldTemplate } from '../systems/armorMaterials.js';   // SW1: GetShieldProtectedBodyParts' own test
 import { rriNativeMaterialValue } from '../systems/rriItems.js';   // AUDIT 68 S09-v-shield-material-ignored: the port's one NativeMaterialValue
 import { createHandheldTorches, isHeldLight } from '../systems/handheldTorches.js';   // HT1: Handheld Torches' component, one per rig beside the widget; TORCH-VIS: and its own light test
+import { lanternAtWaist } from '../systems/playerTorch.js';   // HT-WAIST: a lantern hung at the waist is in no hand - the ladder, the Morrowind body and the sprite ask the one question
 import { isTransformedLycanthrope, liveLycanthropy } from '../systems/lycanthropy.js';   // WW1: Weapon Widget's FPSWeaponClone, beside the machine; AUDIT-EOTB2: the sprite's form
 import { concealmentFlags } from '../systems/effects.js';   // EOTB-IL: PlayerBillboard.UpdateMaterial reads the player's own IsInvisible / IsAShade / IsBlending
 import { getBool, getInt } from '../systems/settings.js';   // EOTB-IL: PlayerBillboard.LateUpdate reads DaggerfallUnity.Settings.BowDrawback
@@ -109,6 +110,7 @@ export function armBuildOptsOf(entity) {
     hasAmmo: hasAmmoFor(entity.items, worn),
     ammoCount: ammoCountFor(entity.items, worn),   // WS1: the quiver
     torch: isLitTorch(entity.lightSource),   // MW-D51: the lit light, in the left hand
+    hipLight: lanternAtWaist(entity.lightSource),   // HT-WAIST: the lit lantern, hung at the hip of the third-person body
     sheathing: getPref('mwSheathing'),   // WS1: the holster on the third-person body
   };
 }
@@ -507,6 +509,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     swingHeld: _held,
     liveSpeed: entity ? liveStat(entity, 'speed') : 50,
     concealment: entity ? concealmentFlags(entity) : null,
+    hipLantern: !!entity && lanternAtWaist(entity.lightSource),   // HT-WAIST: the lit lantern hangs at the sprite's hip, and swings as it walks
   });
   const bindBody = () => eotbBody.attach(renderer, eotbState);
   bindBody();
@@ -1246,7 +1249,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *             "does not toggle / toggles twice / gets stuck", and
      *             it is why Handheld Torches misbehaved with it: the
      *             mod's UpdateFreeHand reads WeaponManager.Sheathed
-     *             LIVE (handheldTorches.js:301), so a flag flipped to
+     *             LIVE (handheldTorches.js:308), so a flag flipped to
      *             "drawn" with no weapon on screen stows the torch.
      *   :268      `!isAttacking` - the hand already had this gate
      *             (switchHand below); the sheath did not, so Z
@@ -1391,6 +1394,10 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // lit by use, stowed when no hand is free) hands the Morrowind
         // arm its torch; setTorch's fast path is one boolean compare.
         fpArm.setTorch(isLitTorch(entity?.lightSource));
+        // HT-WAIST: AND THE LANTERN AT THE WAIST, the same read beside it - hung at the third-person body's hip
+        // (the first-person arms have no hip to hang it on), swinging as the body moves. The fast path is one
+        // boolean compare, as setTorch's is.
+        fpArm.setHipLight(lanternAtWaist(entity?.lightSource));
         // MW-D39: THE SPELL IS A STANCE. spellArmed() is already the
         // rig's own per-frame read (WeaponManager's HasReadySpell leg
         // above); the Morrowind arm rides the same one, and its fast
@@ -1668,7 +1675,8 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // behaviour and is why this note does not claim otherwise.
       const torchOnly = !shown() && !spellArmed() && !fpsSpellCasting.isPlayingAnim
         && (entity?.equipCountdown ?? 0) <= 0 && isHeldLight(entity?.lightSource)
-        && (!fpArm.active() || fpArm.torchShown());
+        && (!fpArm.active() || fpArm.torchShown())
+        && !lanternAtWaist(entity?.lightSource);   // HT-WAIST: the gate opens only where a hand paints - a lantern at the waist is in none
       // MAP-FIELD (2026-09-18, Mac: "the morrowind doesn't even hold the
       // map"): A HELD SHEET IS NOT A WEAPON EITHER. `shown()` is the
       // WEAPON's predicate - TORCH-VIS above says so for the light, and

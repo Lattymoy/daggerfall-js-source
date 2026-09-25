@@ -1400,7 +1400,7 @@ hand and the butt 5.1 behind it.
 
 This is the one that "it attaches to the right bone" hides completely.
 `resolveWeaponParts` returned `MW_WEAPON_TYPE.None`, and
-`animWeaponType` turns None into **HandToHand** (`fpArm.js:286`) —
+`animWeaponType` turns None into **HandToHand** (`fpArm.js:288`) —
 correct for empty hands, absurd for a man holding a dwemer firearm. The
 rig played unarmed stances and the gun went along for the ride:
 `composeWeaponGroup` returned no group at all, `weaponShortGroup` the
