@@ -13,13 +13,13 @@ import { readFileSync } from 'node:fs';
 import {
   gateArenaLocation, gateArenaBlocks, gateArenaBlock, isGateArena, buildCourtModel, courtFloorTris, courtLights, courtBraziers,
   courtExitDoor, withCourtLights, courtRing, courtToDungeon, gateLandingFor, COURT_ARCHIVE, COURT_FLOOR_RECORD, COURT_RUNE_RECORD, COURT_LAVA_RECORD,
-  COURT_MEMBRANE_RECORD, COURT_SKY_RECORD, GATE_ARENA_BLOCK, GATE_ARENA_BLOCK_INDEX, GATE_ARENA_LOCATION_ID, GATE_BLOCK_SIDE, ARRIVE_Z, EXIT_Z,
-  EXIT_HALF_W, EXIT_H, RUNE_HALF_W, LAVA_Y, LAVA_HALF, COURT_FOG, SKY_R, SKY_TOP, BRAZIER_COLOR, BRAZIER_RANGE, GATE_LANDING_M, COURT_TEXT,
+  COURT_MEMBRANE_RECORD, GATE_ARENA_BLOCK, GATE_ARENA_BLOCK_INDEX, GATE_ARENA_LOCATION_ID, GATE_BLOCK_SIDE, ARRIVE_Z, EXIT_Z,
+  EXIT_HALF_W, EXIT_H, RUNE_HALF_W, LAVA_Y, COURT_FOG, BRAZIER_COLOR, BRAZIER_RANGE, GATE_LANDING_M, COURT_TEXT,
 } from '../src/world/gateArena.js';
 import { GATE_ARCHIVE } from '../src/world/gateModel.js';
 import { doorWorldAabb, doorWorldNormal, doorWorldPosition } from '../src/player/enterExit.js';
 import { withPlayerLights } from '../src/scenes/magicCandle.js';
-import { courtArt, courtFloorArt, courtLavaArt, courtMembraneArt, courtRuneArt, courtSkyArt, GATE_ART_SIZE } from '../src/world/gateArt.js';
+import { courtArt, courtFloorArt, courtLavaArt, courtMembraneArt, courtRuneArt, GATE_ART_SIZE } from '../src/world/gateArt.js';
 import { COURT_CENTRE, COURT_R, BOSS_REACH_R } from '../src/net/gateBrain.js';
 import { layoutDungeon } from '../src/world/dungeonLayout.js';
 import { RDB_SIDE } from '../src/world/rdbLayout.js';
@@ -66,7 +66,7 @@ test('WB3b the made level: the court\'s location and its one block, laid by the 
   assert.ok(GATE_ARENA_LOCATION_ID > 0xffffff);
 });
 
-test('WB3b the court: renderer.createMesh\'s shape; the floor faces up and stands CLEAR - nothing of the court rises from it inside its edge but the way home\'s arch; the rune ring sits on BOSS_REACH_R; the lava lies under it all; the braziers light it, clear of the bridge; the way home is an exit door by the arrival, facing in; the collider\'s floor covers the disc and the motor\'s ring is its edge (mutants: a floor face wound down; a spire stood on the floor; the ring off the boss\'s reach)', () => {
+test('WB3b the court: renderer.createMesh\'s shape; the floor faces up and stands CLEAR - nothing of the court rises from it inside its edge but the way home\'s arch; the rune ring sits on BOSS_REACH_R; the rock it stands on goes down into the fire; the braziers light it, clear of the bridge; the way home is an exit door by the arrival, facing in; the collider\'s floor covers the disc and the motor\'s ring is its edge (mutants: a floor face wound down; a spire stood on the floor; the ring off the boss\'s reach)', () => {
   const m = buildCourtModel();
   const n = m.positions.length / 3;
   assert.equal(m.subMeshes.reduce((s, sm) => s + sm.primitiveCount * 3, 0), n, 'every vertex in a sub-mesh');
@@ -81,9 +81,8 @@ test('WB3b the court: renderer.createMesh\'s shape; the floor faces up and stand
     const onFloor = vs.every((v) => Math.abs(v[1]) < 1e-4 && Math.hypot(v[0], v[2]) <= COURT_R + 1e-3);
     if (sm.textureArchive === COURT_ARCHIVE && sm.textureRecord === COURT_FLOOR_RECORD && onFloor) { assert.ok(N[t * 3 + 1] > 0.99, 'a flagstone faces up'); floorUp++; }
     // the clear floor: above it and inside its edge, only the rune ring's hair and the way home
-    const isSky = sm.textureArchive === COURT_ARCHIVE && sm.textureRecord === COURT_SKY_RECORD;
     for (const v of vs) {
-      if (v[1] <= 0.05 || isSky) continue;   // the sky's shell is no obstacle
+      if (v[1] <= 0.05) continue;
       const r = Math.hypot(v[0], v[2]);
       const wayHome = Math.abs(v[0]) <= EXIT_HALF_W + 1.2 && v[2] >= EXIT_Z - 1;
       if (r < COURT_R - 0.5 && !wayHome) assert.fail(`something stands on the floor at ${v.map((x) => x.toFixed(2))} (${sm.textureArchive}/${sm.textureRecord})`);
@@ -92,10 +91,14 @@ test('WB3b the court: renderer.createMesh\'s shape; the floor faces up and stand
       const r = Math.hypot(v[0], v[2]);
       assert.ok(r >= BOSS_REACH_R - RUNE_HALF_W - 1e-3 && r <= BOSS_REACH_R + RUNE_HALF_W + 1e-3, `a rune off the ring: ${r}`);
     }
-    if (sm.textureArchive === COURT_ARCHIVE && sm.textureRecord === COURT_LAVA_RECORD && vs.every((v) => Math.abs(v[1] - LAVA_Y) < 1e-3)) assert.ok(N[t * 3 + 1] > 0.99, 'the sea of fire faces up');
+    // WB6a: no sea of fire in the court's mesh (render/deadlands.js draws it) - the lava's art is the braziers' beds alone
+    if (sm.textureArchive === COURT_ARCHIVE && sm.textureRecord === COURT_LAVA_RECORD) for (const v of vs) assert.ok(v[1] > 0.5, `lava only in a brazier's bed: ${v[1].toFixed(2)}`);
   }
   assert.ok(floorUp >= 48, `the floor's flagstones: ${floorUp}`);
-  assert.ok(LAVA_Y < -20 && LAVA_HALF > 200);
+  assert.ok(LAVA_Y < -20);
+  let deepest = 0;
+  for (let i = 1; i < P.length; i += 3) deepest = Math.min(deepest, P[i] - COURT_CENTRE[1]);
+  assert.ok(deepest < LAVA_Y, `the rock goes down into the fire: ${deepest.toFixed(1)}`);
   const tris = courtFloorTris();
   assert.equal(tris.length % 9, 0);
   let area = 0;
@@ -123,15 +126,10 @@ test('WB3b the court: renderer.createMesh\'s shape; the floor faces up and stand
   assert.deepEqual(doorWorldNormal(door), [0, 0, -1], 'its face into the court');
   assert.equal(COURT_FOG.mode, 'exp');
   assert.ok(COURT_FOG.color[0] > COURT_FOG.color[1] && COURT_FOG.color[0] > COURT_FOG.color[2], 'the Deadlands\' red');
-  // the sky: a shell the fog paints - far enough to be all fog, inside the host's 500 m far plane, facing in
-  const sky = m.subMeshes.find((sm) => sm.textureArchive === COURT_ARCHIVE && sm.textureRecord === COURT_SKY_RECORD);
-  assert.ok(sky, 'a sky');
-  assert.ok(Math.exp(-COURT_FOG.density * SKY_R) < 0.05, 'nine parts in ten fog, and more');
-  assert.ok(Math.hypot(SKY_R, SKY_TOP) < 500, 'inside the far plane');
-  for (let t = sky.startIndex; t < sky.startIndex + sky.primitiveCount * 3; t += 3) {
-    const c = [0, 1, 2].map((k) => local(t + k)).reduce((a, v) => [a[0] + v[0] / 3, a[1] + v[1] / 3, a[2] + v[2] / 3], [0, 0, 0]);
-    assert.ok(N[t * 3] * c[0] + N[t * 3 + 1] * (c[1] - 50) + N[t * 3 + 2] * c[2] < 0, 'the shell faces in');
-  }
+  // WB6a: no sky shell either - nothing of the court's mesh reaches past its spires (the Deadlands' own passes stand there)
+  let far = 0;
+  for (let i = 0; i < P.length; i += 3) far = Math.max(far, Math.hypot(P[i] - COURT_CENTRE[0], P[i + 2] - COURT_CENTRE[2]));
+  assert.ok(far < COURT_R + 20, `the court's mesh ends at its spires: ${far.toFixed(1)} m`);
 });
 
 test('WB3b the braziers join the frame\'s lights after the player\'s own: the paired shape in and out, the torch keeping its slot and its carried mask (it casts no shadow), the braziers in their own fire\'s colour and none of them carried (mutants: the braziers carried; the torch\'s mask dropped)', () => {
@@ -167,16 +165,15 @@ test('WB3b the way home lands before the gate, on its fire\'s side (the gate\'s 
 
 test('WB3b the court\'s art: 64 square, the same every run, its fire on its emission twin alone - the floor\'s in a few joints, the rune ring\'s in its glyphs, the sea of fire nearly whole, the way home\'s all of it (mutants: every joint burning; the membrane dark)', () => {
   const art = courtArt();
-  assert.deepEqual(art.map(([r]) => r), [COURT_FLOOR_RECORD, COURT_RUNE_RECORD, COURT_LAVA_RECORD, COURT_MEMBRANE_RECORD, COURT_SKY_RECORD]);
+  assert.deepEqual(art.map(([r]) => r), [COURT_FLOOR_RECORD, COURT_RUNE_RECORD, COURT_LAVA_RECORD, COURT_MEMBRANE_RECORD]);   // WB6a: the sky's shell is gone, and its art with it
   assert.deepEqual(courtFloorArt().albedo.colors, courtFloorArt().albedo.colors, 'deterministic');
   const lit = (img) => { let k = 0; for (let i = 0; i < img.colors.length; i += 4) if (img.colors[i] + img.colors[i + 1] + img.colors[i + 2] > 0) k++; return k / (img.width * img.height); };
   for (const [, a] of art) { assert.equal(a.albedo.width, GATE_ART_SIZE); assert.equal(a.emission.width, GATE_ART_SIZE); }
   const floor = lit(courtFloorArt().emission), rune = lit(courtRuneArt().emission), lava = lit(courtLavaArt().emission), memb = lit(courtMembraneArt().emission);
   assert.ok(floor > 0 && floor < 0.08, `the floor burns in a few joints: ${floor}`);
   assert.ok(rune > 0.1 && rune < 0.5, `the ring in its glyphs and its edges: ${rune}`);
-  assert.ok(lava > 0.6, `the sea of fire nearly whole: ${lava}`);
+  assert.ok(lava > 0.6, `a brazier's bed nearly all fire: ${lava}`);
   assert.equal(memb, 1, 'the way home all of it');
-  assert.equal(lit(courtSkyArt().emission), 0, 'nothing of the sky burns - it would glow through the fog');
 });
 
 test('WB3b the link: the relay\'s words folded into one state - a whole state starts a fight and nothing else does; a walk, an attack (superseding the one in flight), the health, a phase, the wrath and the kill each move their own; the boss is drawn along his walk between words; a kill is kept by day and said once, a refusal said in words, a receipt kept by the day it names (mutants: a word before the state starting a fight; an attack not superseding; a kill said twice)', async () => {

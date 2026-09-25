@@ -141,7 +141,8 @@ test('EV6: the skies neither query CURRENT_PROGRAM nor restore - the hosts mark 
     // DUEL1: and the duel ring's wall, one more in the world host (the one that is online)
     // WB2: and the Oblivion Gate's fire and beacon, one more in the world host (online again)
     // WB4a: and the Burning Court boss's telegraph, one more in the world host (drawn in the dungeon arm)
-    const want = host === 'src/scenes/world.js' ? 9 : 5;
+    // WB6a: and the Deadlands' sea and sky round the court, one more in the world host (the dungeon arm again)
+    const want = host === 'src/scenes/world.js' ? 10 : 5;
     assert.equal((s.match(/renderer\.markForeignPass\(\);/g) || []).length, want,
       `${host} marks its foreign seams (the sky, the rain, the sand, the wisps, the bolts${want === 6 ? ', and the grass' : ''})`);
   }

@@ -4695,7 +4695,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6242` read, on one physical line:
+`src/scenes/worldModes.js:6243` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4837,7 +4837,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4244` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4245` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:275`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -8234,3 +8234,10 @@ The receipt is carried to the account service by the account it names and counte
 relay hands the socket until an answer settles it (`net/gateClaims.js`), offered at once and again on the gate frame no
 sooner than ten minutes after. The account card's *Gates closed* row and the Inspect card's line read the count.
 `tools/mintGateKeys.mjs` mints the pair; the relay's half is `GATE_SIGNING_KEY`. Nothing new on the wire.
+
+## WB6a (2026-09-25, Mac: "the transition and the arena needs to be an oblivion masterpiece") - the Deadlands; see 11-Multiplayer/World-Bosses.md
+
+The Burning Court's square sea and flat shell are gone: `render/deadlands.js` paints a Deadlands sky (a churning
+overcast, the vortex over the great tower with its beam, Daedric towers, jagged ranges with falls of fire, seeded
+lightning) and a disc of moving fire whose rim becomes the sky's horizon, and the court is lit as itself. Client
+only; nothing on the wire.

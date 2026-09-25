@@ -72,15 +72,6 @@
     ]
   },
   {
-    "name": "WB3b-the-lava-faces-down",
-    "file": "src/world/gateArena.js",
-    "old": "    f.quad(COURT_LAVA_RECORD, a, d, c, b, uv(a), uv(d), uv(c), uv(b));",
-    "new": "    f.quad(COURT_LAVA_RECORD, a, b, c, d, uv(a), uv(b), uv(c), uv(d));",
-    "tests": [
-      "test/wb3b_gate_arena.test.js"
-    ]
-  },
-  {
     "name": "WB3b-a-brazier-in-the-bridge",
     "file": "src/world/gateArena.js",
     "old": "    if (Math.abs(Math.atan2(Math.cos(a), Math.sin(a))) <= 0.35) continue;\n    out.push(",
@@ -128,8 +119,8 @@
   {
     "name": "WB3b-the-membrane-dark",
     "file": "src/world/gateArt.js",
-    "old": "    put(albedo, x, y, col); put(emission, x, y, col);\n  }\n  return { albedo, emission };\n}\n\n/** The sky's shell",
-    "new": "    put(albedo, x, y, col); put(emission, x, y, [0, 0, 0]);\n  }\n  return { albedo, emission };\n}\n\n/** The sky's shell",
+    "old": "    put(albedo, x, y, col); put(emission, x, y, col);\n  }\n  return { albedo, emission };\n}\n\n/** Every texture the court wear",
+    "new": "    put(albedo, x, y, col); put(emission, x, y, [0, 0, 0]);\n  }\n  return { albedo, emission };\n}\n\n/** Every texture the court wear",
     "tests": [
       "test/wb3b_gate_arena.test.js"
     ]

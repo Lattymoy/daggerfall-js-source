@@ -163,7 +163,7 @@ test('PERF2 grass: the field hands the renderer cells through the same doors, so
 });
 
 test('PERF2 pins: the sky passes, the clouds\' composite and the ring sit AT the far plane and depth-test LEQUAL with the mask off; both hosts draw the sky after the ground and before the water (mutant: any pass back to a depth-blind first draw)', () => {
-  for (const f of ['src/render/enhancedSky.js', 'src/render/dynamicSkiesRenderer.js']) {
+  for (const f of ['src/render/enhancedSky.js', 'src/render/dynamicSkiesRenderer.js', 'src/render/deadlands.js']) {   // WB6a: and the Deadlands' sky round the Burning Court
     const s = read(f);
     assert.match(s, /gl_Position = vec4\(aPos, 1\.0, 1\.0\); \}`;/, `${f}: z at the far plane`);
     assert.match(s, /gl\.depthMask\(false\);\n\s+gl\.enable\(gl\.DEPTH_TEST\); gl\.depthFunc\(gl\.LEQUAL\);/, `${f}: tested, not written`);
@@ -187,7 +187,7 @@ test('PERF2 pins: the sky passes, the clouds\' composite and the ring sit AT the
   const waterAt = w.indexOf('if (waterOn) {');
   const billAt = w.indexOf('renderer.drawBillboards(allBatches, camRight, UP_Y);');
   assert.ok(terrainAt > 0 && terrainAt < skyAt && skyAt < ringAt && ringAt < waterAt && waterAt < billAt, `world: terrain ${terrainAt} < sky ${skyAt} < ring ${ringAt} < water ${waterAt} < flats ${billAt}`);
-  assert.equal((w.match(/renderer\.markForeignPass\(\);/g) || []).length, 9, 'moved, not added (DUEL1 added the ring wall\'s seam, WB2 the gate\'s fire, WB4a the court\'s telegraph, counted in glstate too): glstate counts the seams (WIND3 added the wisps\' seam, WEATHER2d the sand\'s, BOLT the bolts\', counted there too)');
+  assert.equal((w.match(/renderer\.markForeignPass\(\);/g) || []).length, 10, 'moved, not added (DUEL1 added the ring wall\'s seam, WB2 the gate\'s fire, WB4a the court\'s telegraph, WB6a the Deadlands\' sea and sky, counted in glstate too): glstate counts the seams (WIND3 added the wisps\' seam, WEATHER2d the sand\'s, BOLT the bolts\', counted there too)');
   const e = read('src/scenes/exterior.js');
   const eTerrain = e.indexOf('renderer.drawTerrain(groundSurface, identityMatrix,');
   const eSky = e.indexOf('sky.draw(Math.atan2(dx, dz), Math.atan2(dy, horiz)');

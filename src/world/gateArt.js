@@ -16,7 +16,7 @@
 //
 // Not a DFU member. Ledger A (WB).
 import { GATE_ARCHIVE, GATE_STONE_RECORD, GATE_PLINTH_RECORD } from './gateModel.js';
-import { COURT_ARCHIVE, COURT_FLOOR_RECORD, COURT_RUNE_RECORD, COURT_LAVA_RECORD, COURT_MEMBRANE_RECORD, COURT_SKY_RECORD } from './gateArena.js';   // WB3b: the court's own
+import { COURT_ARCHIVE, COURT_FLOOR_RECORD, COURT_RUNE_RECORD, COURT_LAVA_RECORD, COURT_MEMBRANE_RECORD } from './gateArena.js';   // WB3b: the court's own
 
 export { GATE_ARCHIVE, GATE_STONE_RECORD, GATE_PLINTH_RECORD, COURT_ARCHIVE };
 /** A texture's side, texels. */
@@ -251,18 +251,9 @@ export function courtMembraneArt(seed = 0x0c23) {
   return { albedo, emission };
 }
 
-/** The sky's shell: a dark smoke, nothing of it burning - the fog paints it (a burning shell would glow through). */
-export function courtSkyArt(seed = 0x0c2c) {
-  const S = GATE_ART_SIZE;
-  const albedo = image(), emission = image();
-  const n = noiseField(seed, 8);
-  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { put(albedo, x, y, mix([26, 6, 4], [48, 12, 6], n(x, y))); put(emission, x, y, [0, 0, 0]); }
-  return { albedo, emission };
-}
-
 /** Every texture the court wears, by record: `[record, { albedo, emission }]`.
  *  @returns {Array<[number, ReturnType<typeof gateStoneArt>]>} */
 export const courtArt = () => [
   [COURT_FLOOR_RECORD, courtFloorArt()], [COURT_RUNE_RECORD, courtRuneArt()],
-  [COURT_LAVA_RECORD, courtLavaArt()], [COURT_MEMBRANE_RECORD, courtMembraneArt()], [COURT_SKY_RECORD, courtSkyArt()],
+  [COURT_LAVA_RECORD, courtLavaArt()], [COURT_MEMBRANE_RECORD, courtMembraneArt()],
 ];

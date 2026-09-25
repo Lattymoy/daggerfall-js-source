@@ -173,9 +173,10 @@ import { drawGateBanner } from '../ui/gateBanner.js';
 import { createGateLink } from '../net/gateLink.js';   // WB3b: what the client holds of a gate's fight - the relay's words, folded
 import { createGateClaims } from '../net/gateClaims.js';   // WB5b: the kill receipts, carried to the account service until counted
 import { createGateCourt } from './gateCourt.js';   // WB4: the fight on this screen - the boss drawn, heard and read, and his blows on me
+import { DeadlandsRenderer, skyGain } from '../render/deadlands.js';   // WB6a: the Deadlands' sky and sea round the Burning Court
 import { createSpoilsPool, spoilsStore, recoverSpoils, SPOILS_TEXT } from './spoilsPool.js';   // WB5: a fallen boss's spoils, spewed, glowing and taken
 import { gateRoomKey, isGateRoom, gateBossOf, gateTimes, GATE_COLLAPSE_MS } from '../net/gateLaw.js';   // WB3b: the court's room, and its day's end
-import { gateLandingFor, courtRing, COURT_TEXT } from '../world/gateArena.js';   // WB3b: the Burning Court's way home, its ring and its words   // WB2: the gate's countdown over the screen, near it
+import { gateLandingFor, courtRing, courtToDungeon, COURT_TEXT, COURT_FOG, LAVA_Y } from '../world/gateArena.js';   // WB3b: the Burning Court's way home, its ring and its words   // WB2: the gate's countdown over the screen, near it
 import { isMainStoryDungeon } from '../world/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
 import { nearestSafeLocation, respawnFlavorText, reviveForPlay, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
@@ -4349,7 +4350,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2470 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:5684
+  // that context through modes.dungeonCtx - so worldModes.js:5685
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -8511,7 +8512,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8880-8944 -
+  // worldModes answers it in BOTH modes (worldModes.js:8883-8947 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -10817,6 +10818,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   }) : null;
   /** WB5: THE CRASH'S DOOR (scenes/spoilsPool.js recoverSpoils) - asked once for each character that stands up in this
    *  session, online or not, before it can save: a boss's spoils no save of theirs holds are handed back. */
+  /** WB6a: THE DEADLANDS' SKY AND SEA (render/deadlands.js), built the first time a court is stood in - a pass that will
+   *  not build costs the court its sky, never the game. */
+  let _deadlands;   // undefined: not asked yet; null: would not build
+  const deadlandsPass = () => {
+    if (_deadlands !== undefined) return _deadlands;
+    try { _deadlands = new DeadlandsRenderer(renderer.gl); } catch (e) { console.warn('[gate] the Deadlands would not build', e?.message ?? e); _deadlands = null; }
+    return _deadlands;
+  };
   let _spoilsAskedFor = null;
   const spoilsRecoverFrame = () => {
     if (!playerSpawned) return;
@@ -12550,6 +12559,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     gateCourtLights: () => gateCourt?.lights() ?? [],   // WB4: the glow on him, in the court's light channel
     gateBoss: () => gateCourt?.target() ?? null,   // WB4b: him as a body my blows meet
     onBossHit: (hit) => !!gateCourt?.hit(hit),   // WB4b: a blow's number on him, out to the room
+    // WB6a: the Deadlands' sea and sky, in the dungeon arm's world pass after the court's solid geometry - in the court's
+    // own air (the renderer's fog as it set it for the court, the sky's light following the lane's with the fog's colour)
+    drawGateBackdrop: ({ proj, view }) => {
+      const d = deadlandsPass();
+      if (d?.draw(proj, view, courtToDungeon(0, LAVA_Y, 0), performance.now() / 1000, { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos }, skyGain(renderer._fogColor, COURT_FOG.color))) renderer.markForeignPass();
+    },
     // WB4: the telegraph on the court's floor, in the dungeon arm's world pass - fogged as the floor is
     drawGateCourt: ({ proj, view, eye }) => {
       if (gateCourt?.drawPass(proj, view, eye, performance.now() / 1000, { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos })) renderer.markForeignPass();

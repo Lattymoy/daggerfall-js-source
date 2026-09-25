@@ -157,7 +157,8 @@ level made in code:
   and spires to the collider by `collider.addMesh`, its braziers to the light list. The court is built once per
   context and destroyed with it.
 - **The sky and the fire below** are passes of their own (the duel wall's law), and the dungeon's fog and clear
-  colour turn the red of the Deadlands for as long as the context stands.
+  colour turn the red of the Deadlands for as long as the context stands. WB6a made them the Deadlands proper - see
+  "The Deadlands" below.
 - **The edge** keeps the player on the disc with the motor's own clamp (`motor.arena` - DUEL1's `_keepInArena`,
   which exists for exactly this: a ring the body cannot leave that stops no arrow and no spell) at the court's
   radius; the fire below is never reached.
@@ -171,6 +172,32 @@ level made in code:
   a place that ends in twenty minutes), the dungeon's automap (an empty level), and saving inside it - a save made in
   the court would load into a place that no longer exists. A load of such a save is refused by the gate's own check
   and lands the player at the gate's spot.
+
+**The Deadlands (WB6a, 2026-09-25, Mac: "the transition and the arena needs to be an oblivion masterpiece ... the
+outside bounds arent a perfect square, maybe somehow introduce distant skybox design or some other ambient detail.
+Whole thing needs to feel alive").** WB3b stood the court on a SQUARE of fire 520 m across under a shell of flat
+fog-red; the fog hid the square's middle and never its edge. Both are gone from the court's mesh. `render/deadlands.js`
+draws what stands in their place, in the dungeon arm's world pass after the court's solid geometry and before its flats
+(PERF2's law: the sea is depth-tested, the sky tested at the far plane and never written, so each burns only where it
+shows):
+
+- **The sky**, painted per pixel on one triangle: a churning overcast of smoke lit from below (domain-warped value
+  noise on a cloud deck, drifting round a closed loop so the clock can wrap); Oblivion's own sign, the **vortex**, a
+  whirl in the clouds over the great tower that turns whole (no shear piles up as the clock runs) and pours inward
+  (two layers at a doubling scale, half a cycle apart - the endless zoom), its eye a furnace; the **beam**, a column of
+  fire from the tower's crown up into the eye; the **towers**, black Daedric spires with horns from the waist and a
+  crown of claws - the great one behind the boss as the players arrive, four lesser round the horizon; three rings of
+  **jagged ridges**, far to near, hazier the further, lit at the crest, glowing at the foot, the near range with
+  **falls of fire** pouring from notches into glowing pools; and **lightning** in the deck at seeded moments
+  (`deadlandsFlash` - the same on every screen).
+- **The sea**, a disc of moving fire round the court (crust plates drifting on molten channels, fine cracks glowing
+  in the plates, hot rims where melt meets crust, a slow pulse), fogged by the frame's own fog, whose rim becomes
+  exactly the sky's horizon - one GLSL function both passes read - so no edge is ever seen: not a square, not a circle.
+- **The light**: the court is no dungeon. `courtLighting` gives it a trilight red from above and fire-orange from
+  below, and the vortex's fire as a key light from behind the boss (the moon's term, the one directional light a
+  dungeon frame leaves dark); the lane's dark rides the trilight as it rides the fog.
+
+Every rate the passes run is a whole number of cycles over DEAD_CLOCK_PERIOD, and the clock is handed wrapped.
 
 ## 5. The boss (WB3 relay, WB4 client)
 
@@ -371,6 +398,7 @@ ships in ONE slice.
 | **WB3** | the arena place and the relay's boss room: the room key and its window, `gateBrain.js`, the `gate` frame both ways, the hit ledger, the checkpoint, the receipt and its key, the hub's world line; `RELAY_VERSION` once | **yes** |
 | **WB4** | the boss on the client: the oversized body and its hit volume, the telegraph pass, the wind-up frames, glow and sounds, the boss bar, the player's side of every attack, cast out and back in - shipped in two: **WB4a** (he fights: the body, the telegraphs, the glow and voice, the bar, every blow he lands) and **WB4b** (he is fought: the swing, the shaft and the spell on his body) | no |
 | **WB5** | the spoils: the seeded roll, the spew's physics, the beams, halos and lights, the take and the gather, the device's record until a save holds them; the account service's claim (acct10) and the cards' line | account only |
+| **WB6** | the Deadlands made alive (Mac: "an oblivion masterpiece"): **WB6a** the sky and the sea and the court's own light; **WB6b** the life - islands and spires out in the fire, embers and ash, lightning's thunder, the ambience; **WB6c** the gate's transition, a vortex of fire in and out | no |
 
 Each slice: pins in `test/` (pure law in node; the relay over its fake sockets and a fake clock; the passes' shaders
 built in headless Chromium, as the duel wall's), a mutant record in `tools/mutants/`, the Testing manifest, a Port
@@ -434,7 +462,7 @@ the player on the floor; a death is cast out before the gate; the day's end or g
 way; the map, the rest, the save and the Recall mark are refused inside it. What moved from the page above: the way
 home stands at the floor's edge (the motor's ring is a circle; a bridge beyond it is scenery), and the court stands
 for its fighters until the gate's day ends rather than collapsing with the kill (the spoils need the time - WB5).
-Pins `test/wb3b_gate_arena.test.js` (7); mutants `tools/mutants/wb3b.json` (38 dead). Seen headless with a stand-in
+Pins `test/wb3b_gate_arena.test.js` (7); mutants `tools/mutants/wb3b.json` (38 dead; 37 since WB6a took the square sea away). Seen headless with a stand-in
 shader (the floor, the ring, the spires and braziers, the sea of fire); not yet in the game with ARENA2 and a live
 relay, where the arrival, the fog and the braziers' light are the first look. The boss is not drawn yet (WB4).
 
@@ -520,3 +548,14 @@ relay's secret (`npx wrangler secret put GATE_SIGNING_KEY` from `server/`), the 
 `server-account/wrangler.toml`; nothing is written to disk. Until both are set the relay's receipts go out unsigned and
 the spoils still roll; only the record waits. Pins `test/wb5b_gate_claim.test.js` (9); mutants
 `tools/mutants/wb5b.json` (25 dead). Not run against a deployed service.
+
+**WB6a (2026-09-25) - the Deadlands.** Mac walked the court and asked for "an oblivion masterpiece", and saw its
+square edge. The square sea and the flat shell are gone from the court's mesh; `render/deadlands.js` draws a sky and
+a sea in their place (see "The Deadlands" in section 4): the churning overcast, the vortex over the great tower
+turning whole and pouring inward, the beam into its eye, the Daedric towers, three ranges with their falls of fire,
+seeded lightning; and a disc of moving fire whose rim becomes the sky's own horizon. The court is lit as itself -
+red from above, fire from below, the vortex's key light from behind the boss. One foreign pass in the dungeon arm,
+after the court's solid geometry and before its flats. Pins `test/wb6a_deadlands.test.js` (8); mutants
+`tools/mutants/wb6a.json` (20 dead); `tools/deadlandsProbe.mjs` compiles, links and draws the pass in a real WebGL2
+(11 checks). Seen headless from the arrival, looking up into the vortex, from the rim, over the court and low
+across the floor; not yet in the running game.

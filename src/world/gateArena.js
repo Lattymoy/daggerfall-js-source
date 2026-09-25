@@ -13,10 +13,11 @@
 //     but its start marker (the editor flat 199.10) - no model, no door, no foe marker, no water. Every system that
 //     walks the level walks an empty one.
 //   - THE COURT ITSELF (`buildCourtModel`): the floor, the rune ring the boss never crosses, the spires and braziers
-//     round the edge, the broken bridge the players came by and the way home, and the sea of fire under it all - the
-//     port's own geometry and art (pseudo-archive COURT_ARCHIVE), added to the context the way the runtime pools add
-//     theirs, its floor to the collider (`courtFloorTris`), its braziers to the light list (`courtLights`,
-//     `withCourtLights`), the way home to the exit doors (`courtExitDoor`).
+//     round the edge, the broken bridge the players came by and the way home - the port's own geometry and art
+//     (pseudo-archive COURT_ARCHIVE), added to the context the way the runtime pools add theirs, its floor to the
+//     collider (`courtFloorTris`), its braziers to the light list (`courtLights`, `withCourtLights`), the way home to
+//     the exit doors (`courtExitDoor`). WB6a: the sea of fire under it and the sky over it are not its mesh - the
+//     Deadlands' own passes draw both, first in the frame (render/deadlands.js).
 //
 // THE FRAME. Metres, the dungeon's own: the one block at the grid's origin (RDB_SIDE 51.2 across), the court's centre at
 // its middle (net/gateBrain.js COURT_CENTRE - the relay reads poses in the same place), the floor's top at y 0, the
@@ -33,7 +34,6 @@ export const COURT_FLOOR_RECORD = 0;
 export const COURT_RUNE_RECORD = 1;
 export const COURT_LAVA_RECORD = 2;
 export const COURT_MEMBRANE_RECORD = 3;
-export const COURT_SKY_RECORD = 4;
 
 /** The made block's name - no classic block is called this (they are eight characters and `.RDB`). */
 export const GATE_ARENA_BLOCK = 'GATECOURT.RDB';
@@ -64,21 +64,14 @@ export const RUNE_HALF_W = 0.45;
 export const SPIRES = 10;
 export const BRAZIERS = 6;
 export const RIM_OUT = COURT_R + 2.2;
-/** The sea of fire: this far under the floor, this wide, a tile this many metres. */
+/** The sea of fire: this far under the floor (render/deadlands.js draws it, a disc going on to the horizon). */
 export const LAVA_Y = -36;
-export const LAVA_HALF = 260;
-export const LAVA_TILE_M = 40;
 /** The rock the court stands on: a spire narrowing from the floor's rim down into the fire. */
 export const ROOT_SIDES = 12;
 export const ROOT_FOOT_R = 5;
-/** The Deadlands' air: the fog the court stands in (the dungeon's own black replaced), and the SKY - a shell far out
- *  that the fog paints its colour (the dungeon host clears to black, and a sky of the fog's red is the shell's, never
- *  the clear colour's), inside the host's far plane (worldModes.js's 500 m). */
+/** The Deadlands' air: the fog the court stands in (the dungeon's own black replaced) - the haze the sky's horizon
+ *  meets (render/deadlands.js HORIZON_GLSL). */
 export const COURT_FOG = Object.freeze({ mode: 'exp', density: 0.009, color: Object.freeze([0.32, 0.05, 0.02]) });
-export const SKY_R = 380;
-export const SKY_TOP = 240;
-export const SKY_BOTTOM = -140;
-export const SKY_SIDES = 24;
 /** The court's words: the way home's name on the plaque, and the refusals of the things the Deadlands will not allow. */
 export const COURT_TEXT = Object.freeze({
   wayHome: 'The way back to Tamriel',
@@ -150,8 +143,8 @@ export function gateArenaBlocks(real) {
 
 /**
  * THE COURT, WHOLE: renderer.createMesh's model shape in the DUNGEON's frame - the floor (flagstones over its skirt of
- * the gate's basalt), the rune ring, the sea of fire, the spires and braziers round the edge, the broken bridge and the
- * way home's arch and membrane. Sub-meshes by (archive, record): the court's own four and the gate's stone.
+ * the gate's basalt), the rune ring, the spires and braziers round the edge, the broken bridge and the way home's arch
+ * and membrane. Sub-meshes by (archive, record): the court's own four and the gate's stone.
  */
 export function buildCourtModel() {
   const f = faces();
@@ -159,7 +152,7 @@ export function buildCourtModel() {
   const C = (x, y, z) => courtToDungeon(x, y, z);
   const STONE = GATE_STONE_RECORD + 1000;   // the gate's basalt, told apart from the court's own records below
   byArchive.set(STONE, [GATE_ARCHIVE, GATE_STONE_RECORD]);
-  for (const rec of [COURT_FLOOR_RECORD, COURT_RUNE_RECORD, COURT_LAVA_RECORD, COURT_MEMBRANE_RECORD, COURT_SKY_RECORD]) byArchive.set(rec, [COURT_ARCHIVE, rec]);
+  for (const rec of [COURT_FLOOR_RECORD, COURT_RUNE_RECORD, COURT_LAVA_RECORD, COURT_MEMBRANE_RECORD]) byArchive.set(rec, [COURT_ARCHIVE, rec]);
   const uvFloor = (p) => [(p[0] - COURT_CENTRE[0]) / FLOOR_TILE_M, (p[2] - COURT_CENTRE[2]) / FLOOR_TILE_M];
   // the floor: a fan of flagstones (wound to face up), and its skirt down into the dark
   for (let k = 0; k < FLOOR_SIDES; k++) {
@@ -186,20 +179,7 @@ export function buildCourtModel() {
     const o0 = C(Math.cos(a0) * rr1, y, Math.sin(a0) * rr1), o1 = C(Math.cos(a1) * rr1, y, Math.sin(a1) * rr1);
     f.quad(COURT_RUNE_RECORD, i0, i1, o1, o0, [u0, 0], [u1, 0], [u1, 1], [u0, 1]);
   }
-  // the sea of fire, far below, tiled every 16 m
-  {
-    const h = LAVA_HALF, uv = (p) => [(p[0] - COURT_CENTRE[0]) / LAVA_TILE_M, (p[2] - COURT_CENTRE[2]) / LAVA_TILE_M];
-    const a = C(-h, LAVA_Y, -h), b = C(h, LAVA_Y, -h), c = C(h, LAVA_Y, h), d = C(-h, LAVA_Y, h);
-    f.quad(COURT_LAVA_RECORD, a, d, c, b, uv(a), uv(d), uv(c), uv(b));
-  }
-  // the sky: a shell far out, wound to face in, dark - the fog paints it the Deadlands' red
-  for (let k = 0; k < SKY_SIDES; k++) {
-    const a0 = (k / SKY_SIDES) * Math.PI * 2, a1 = ((k + 1) / SKY_SIDES) * Math.PI * 2;
-    const b0 = C(Math.cos(a0) * SKY_R, SKY_BOTTOM, Math.sin(a0) * SKY_R), b1 = C(Math.cos(a1) * SKY_R, SKY_BOTTOM, Math.sin(a1) * SKY_R);
-    const t0 = C(Math.cos(a0) * SKY_R, SKY_TOP, Math.sin(a0) * SKY_R), t1 = C(Math.cos(a1) * SKY_R, SKY_TOP, Math.sin(a1) * SKY_R);
-    f.quad(COURT_SKY_RECORD, b1, t1, t0, b0, [1, 0], [1, 1], [0, 1], [0, 0]);   // wound to face IN - it is seen from inside
-    f.tri(COURT_SKY_RECORD, C(0, SKY_TOP, 0), t0, t1, [0.5, 0.5], [0, 0], [1, 0]);
-  }
+  // WB6a: the sea of fire and the sky are not the court's mesh - render/deadlands.js draws both, first in the pass
   // the spires round the edge, rising out of the fire and leaning out; the braziers between them; the bridge's gap
   // (the +z side the players came by) left clear
   const clearOfBridge = (a) => Math.abs(Math.atan2(Math.cos(a), Math.sin(a))) > 0.35;   // +z is a = PI/2
