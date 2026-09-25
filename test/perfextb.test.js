@@ -170,3 +170,132 @@ test('PERF-EXT10: every field src/ writes on a billboard batch is one the factor
   assert.ok(seen > 100, `only ${seen} batch writes found - the sweep stopped matching`);
   assert.deepEqual([...new Set(stray)], [], 'written on a batch after birth, and not minted in createBillboardBatch\'s literal');
 });
+
+// ── PERF-EXT11: one upload ────────────────────────────────────────────
+
+/** Walk the recorded calls as GL would: uniforms are held PER PROGRAM until the next upload to that program. At every
+ *  drawElements under a billboard program - the main pass's (classic or the lane's) or the shadow replay's - the held
+ *  uSize and uOrigin must be the drawn batch's own. Returns how many draws it checked. */
+function assertEveryFlatDrawSeesItsOwn(calls, programs, batches) {
+  const byVao = new Map(batches.map((b) => [b.vao, b]));
+  const held = new Map();
+  let cur = null, vao = null, checked = 0;
+  const bad = [];
+  for (const c of calls) {
+    if (c[0] === 'useProgram') { cur = c[1]; if (!held.has(cur)) held.set(cur, new Map()); }
+    else if (c[0] === 'uniform2f' || c[0] === 'uniform3f') held.get(cur)?.set(c[1], c.slice(2));
+    else if (c[0] === 'bindVertexArray') vao = c[1];
+    else if (c[0] === 'drawElements' && programs.includes(cur) && byVao.has(vao)) {
+      const b = byVao.get(vao), u = held.get(cur), o = b.origin || [0, 0, 0];
+      checked++;
+      const size = u.get('uSize'), origin = u.get('uOrigin');
+      if (!size || size[0] !== b.size.w || size[1] !== b.size.h) bad.push(`${b.archive}_${b.record}: drew with uSize ${size} for ${b.size.w},${b.size.h}`);
+      if (!origin || origin[0] !== o[0] || origin[1] !== o[1] || origin[2] !== o[2]) bad.push(`${b.archive}_${b.record}: drew with uOrigin ${origin} for ${[...o]}`);
+    }
+  }
+  assert.deepEqual(bad, [], 'a flat drew with another flat\'s size or origin');
+  return checked;
+}
+
+/** A town's flats in the world.js shape: five pixels, one origin ARRAY a pixel, shared by its four batches. Pixel 3
+ *  differs from pixel 2 in z alone and pixel 4 from pixel 3 in y alone. */
+function town(r) {
+  const ts = [[-0.2, 0, 0], [-0.1, 0, 0], [0, 0, 0], [0, 0, 0.1], [0, 0.05, 0.1]];
+  const out = [];
+  for (const t of ts) {
+    for (let k = 0; k < 4; k++) {
+      const b = r.createBillboardBatch(504, 1, { w: 1, h: 2 }, [[0, 0, 0]]);
+      b.origin = t;
+      out.push(b);
+    }
+  }
+  return out;
+}
+
+test('PERF-EXT11: the main pass uploads a flat\'s size when it changes and its origin when it changes - twenty batches of one record from five pixels: ONE uSize and FIVE uOrigin (the base: twenty of each), the draws unchanged', () => {
+  const { calls, canvas } = recordingGl();
+  const r = new Renderer(canvas);
+  r.textures.set('504_1', { id: 't' });
+  r.setLighting(new Float32Array([0.3, 0.3, 0.3]), 1);
+  r.beginFrame(I, I, new Float32Array([0.3, 0.8, 0.2]), WORLD_FRAME);
+  const batches = town(r);
+  calls.length = 0;
+  r.drawBillboards(batches, RIGHT, UP);
+  const n = (name, loc) => calls.filter((c) => c[0] === name && c[1] === loc).length;
+  assert.equal(n('uniform2f', 'uSize'), 1, 'one record, one size');
+  assert.equal(n('uniform3f', 'uOrigin'), 5, 'five pixels, five origins');
+  assert.equal(calls.filter((c) => c[0] === 'drawElements').length, 20, 'every flat still drawn');
+  assert.equal(assertEveryFlatDrawSeesItsOwn(calls, [r.bbProgram], batches), 20);
+});
+
+test('PERF-EXT11: the shadow replay uploads a flat\'s origin and size when they change - twenty flats of one pixel\'s origin array, recorded, then replayed into the sun\'s cascades: one uOrigin and one uSize a record a cascade (the base: twenty) - the replay half of the shadow lens\'s origin dedupe', () => {
+  const { calls, canvas } = recordingGl();
+  const r = new Renderer(canvas);
+  r.setLightingLane(EL_LANE);
+  r.textures.set('504_1', { id: 't' });
+  r.setLighting(new Float32Array([0.3, 0.3, 0.3]), 1);
+  const t = [0, 0, 0];
+  const batches = [];
+  for (let k = 0; k < 20; k++) { const b = r.createBillboardBatch(504, 1, { w: 1, h: 3 }, [[k * 0.02, 0, 0]]); b.origin = t; batches.push(b); }
+  const sun = new Float32Array([0.45, 0.8, 0.35]);
+  r.beginFrame(I, I, sun, WORLD_FRAME);
+  r.drawBillboards(batches, RIGHT, UP);
+  r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 });
+  calls.length = 0;
+  r.beginFrame(I, I, sun, WORLD_FRAME);   // the replay of the frame just drawn
+  const P = r.shadows.programs.bb;
+  let inBb = false, origins = 0, sizes = 0, records = 0, draws = 0;
+  for (const c of calls) {
+    if (c[0] === 'useProgram') inBb = c[1] === P.p;
+    else if (inBb && c[0] === 'uniform3f' && c[1] === 'uOrigin') origins++;
+    else if (inBb && c[0] === 'uniform2f' && c[1] === 'uSize') sizes++;
+    else if (inBb && c[0] === 'uniform4fv' && c[1] === 'uFlatWind') records++;   // once a record a replay
+    else if (inBb && c[0] === 'drawElements') draws++;
+  }
+  assert.ok(records >= 1 && draws >= 20 * records, `the record was replayed (${records} replays, ${draws} flat draws)`);
+  assert.equal(origins, records, 'one origin a record a replay');
+  assert.equal(sizes, records, 'one size a record a replay');
+  assert.ok(assertEveryFlatDrawSeesItsOwn(calls, [P.p], batches) >= 20);
+});
+
+test('PERF-EXT11: no flat ever draws with a stale size or origin - GL walked as GL holds uniforms (per program), over two calls in a frame, the opaque and the blended phase, a flipped walker (the sign of w), records that differ only in h, pixels that differ only in y or z, a lane swapped between two calls (a new program owes its own uploads), and the sun\'s and eight lanterns\' replays', () => {
+  const { calls, canvas } = recordingGl();
+  const r = new Renderer(canvas);
+  for (const k of ['504_1', '504_2', '357_0#1']) r.textures.set(k, { id: k });
+  r.setLighting(new Float32Array([0.3, 0.3, 0.3]), 1);
+  r.beginFrame(I, I, new Float32Array([0.3, 0.8, 0.2]), WORLD_FRAME);
+  const flats = town(r);
+  const tall = r.createBillboardBatch(504, 2, { w: 1, h: 3 }, [[0, 0, 0]]);   // the same w as 504_1, sorted right after it
+  tall.origin = flats[flats.length - 1].origin;
+  const walker = r.createBillboardBatch(357, '0#1', { w: 0.9, h: 1.8 }, [[0, 0, 0]]);
+  walker.origin = [0.1, 0, 0.1];
+  const turned = r.createBillboardBatch(357, '0#1', { w: 0.9, h: 1.8 }, [[0, 0, 0]]);
+  turned.size = { w: -0.9, h: 1.8 }; turned.origin = [0.1, 0, 0.1];   // the walker turned about: the flip is the sign
+  const ghost = r.createBillboardBatch(357, '0#1', { w: 0.9, h: 1.8 }, [[0, 0, 0]]);
+  ghost.origin = [0.2, 0, 0.1]; ghost.conceal = { mode: 1, alpha: 0.5, t: 0, phase: 0 };   // the blended phase
+  const all = [...flats, tall, walker, turned, ghost];
+  calls.length = 0;
+  r.drawBillboards([...flats, tall, ghost], RIGHT, UP);
+  r.drawBillboards([walker, turned], RIGHT, UP);   // a second call: its lasts start over
+  r.drawBillboards([turned, walker], RIGHT, UP);
+  const classic = r.bbProgram;
+  r.setLightingLane(EL_LANE);   // a new program between two calls holds none of the old one's values
+  r.beginFrame(I, I, new Float32Array([0.3, 0.8, 0.2]), WORLD_FRAME);
+  r.drawBillboards([walker, ...flats, tall], RIGHT, UP);   // recorded in this order for the replays: z alone, y alone, h alone
+  const lane = r.bbProgram;
+  assert.notEqual(lane, classic);
+  // and the replays: the sun's, and eight lanterns' faces (the basis turns to each lantern flat by flat)
+  const lights = new Float32Array(8 * 4);
+  for (let k = 0; k < 8; k++) { lights[k * 4] = k * 0.25 - 1; lights[k * 4 + 1] = 0.5; lights[k * 4 + 2] = 0.2; lights[k * 4 + 3] = 12; }
+  r.setPointLights(lights, new Float32Array([1, 1, 1]));
+  r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 });
+  r.beginFrame(I, I, new Float32Array([0.3, 0.8, 0.2]), WORLD_FRAME);
+  const checked = assertEveryFlatDrawSeesItsOwn(calls, [classic, lane, r.shadows.programs.bb.p], all);
+  assert.ok(checked >= 2 * (flats.length + 4), `the walk checked ${checked} flat draws`);
+  // ...with the skip really on across all of it (the base uploads both, every draw)
+  const draws = calls.filter((c) => c[0] === 'drawElements').length;
+  for (const loc of ['uSize', 'uOrigin']) {
+    const ups = calls.filter((c) => (c[0] === 'uniform2f' || c[0] === 'uniform3f') && c[1] === loc).length;
+    assert.ok(ups * 2 < checked, `${loc}: ${ups} uploads for ${checked} flat draws (${draws} draws in all)`);
+  }
+});

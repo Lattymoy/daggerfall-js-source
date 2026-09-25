@@ -82,3 +82,63 @@ memory, by receiver (`batch.`, `x.batch.`, `xBatch.`) for every host -
 to the literal, because the next producer to add a field after birth
 splits the shape again without any test noticing. Mutants
 `tools/mutants/perfextb.json` 1-9.
+
+## PERF-EXT11 - a flat's size and origin go up when they change
+
+**What the frame paid.** `drawBillboards` uploaded `uSize` and `uOrigin`
+for every flat it drew, and the shadow replay did the same for every flat
+it replayed into every sun cascade and every lantern face. Neither changes
+between most pairs. The main pass is SORTED by texture key (PERF3), so one
+record's batches - which share its size - stand together; a replay walks a
+record in pixel order, and a pixel's batches share ONE origin array
+(`world.js`: `b.origin = t`). The sway and the texture already skipped
+their repeats (WIND3, PERF3, PERF-BASIS); these two did not.
+
+**The change.** Five lasts beside the sway's, NaN at the top of each call
+(the main pass) and of each record (the replay), and an upload only when
+the value moved; a flip is the sign of `w`, compared by value. Exact,
+because a uniform belongs to the PROGRAM and holds until the next upload
+to it: `drawBillboards` binds its program once and nothing between two
+flats binds another (the opaque phase, the blended phase and the
+`uSpectral`/`uConceal` uploads between them all run on it), the replay
+binds `P.bb` once a record, and only these loops write these uniforms.
+The lasts belong to the call, never carried to the next - a lane swapped
+between two calls is a new program that holds none of the old one's
+values. This is also the replay half of the shadow lens's
+`h-origin-upload-dedup` (the same skip, found twice).
+
+**Measured** (the hunter's `townFrame.mjs`, 300 frames, GL calls a frame;
+draws unchanged at 1,159):
+
+| | PERF-EXT10 | PERF-EXT11 |
+|---|---|---|
+| all GL calls, day | 6,243 | 5,279 |
+| all GL calls, night | 4,992 | 4,265 |
+| the flats' `uniform2f` (size) | 783 | 65 |
+| the sun replay's `uniform3f` (origin) / `uniform2f` (size) | 234 / 234 | 44 / 187 |
+
+The main pass's origin stays at 785: sorted neighbours are different
+pixels' batches. What a call is worth: the prover timed them in headless
+Chromium with the command buffer drained first (`glcall.mjs`, 150 samples
+x 3 launches) at 37-49 ns a `uniform2f`/`uniform3f` on the main thread,
+and a frame-shaped 783-flat pass at 0.152-0.174 ms with a size a flat
+against 0.126-0.134 ms with a size on change (`glcost3.mjs`). So about
+0.03-0.05 ms a frame of main thread, plus ~960 fewer commands for the GPU
+process to decode and validate - NOT the 0.5-1.2 ms the hunter first
+claimed, which came from 20,000 back-to-back calls throttled by
+SwiftShader's full command ring. Node's no-op GL shows no time change,
+which is expected.
+
+**Pinned** (`test/perfextb.test.js`, each failing on the base): twenty
+batches of one record from five pixels upload ONE size and FIVE origins
+(the base: twenty of each) with every flat still drawn; twenty flats of
+one pixel, recorded and replayed into the sun's three cascades, upload one
+origin and one size a record a cascade (the base: 60 of each); and a WALK
+of the recorded calls as GL holds uniforms - per program - checks that
+every flat draw, 1,168 of them across two calls in a frame, the blended
+phase, a flipped walker, records that differ only in `h`, pixels that
+differ only in `y` or `z`, a lane swapped between two calls, and the sun's
+and eight lanterns' replays, sees its own size and origin, with the skip
+really on. Mutants 10-18; one (the replay's reset hoisted to once a
+replay) is recorded EQUIVALENT: only that loop writes `P.bb`'s two
+uniforms, so the reset a record is belt and braces.

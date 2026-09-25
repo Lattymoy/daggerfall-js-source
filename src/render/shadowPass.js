@@ -1347,6 +1347,16 @@ export class ShadowPass {
         // pass's has since PERF3 - a run of flats sharing a record bound
         // the same texture once apiece.
         let lastTex = null;
+        // PERF-EXT11 (2026-09-25, the players' "fps issues in the exterior
+        // but fine in the interior"): and the origin and the size skip
+        // theirs. A record is one host call's list in pixel order, and a
+        // pixel's batches share ONE origin array (world.js: `b.origin = t`),
+        // so the origin changed about one flat in five on the harness town
+        // (234 uploads a sun replay, 44 after). Exact for the reason the
+        // sway's skip is: P.bb is bound once for the record and nothing in
+        // this loop binds another, and only this loop writes these two.
+        // Reset per record, beside the sway's and the texture's.
+        let lastW = NaN, lastH = NaN, lastOx = NaN, lastOy = NaN, lastOz = NaN;
         for (const b of r.batches) {
           if (!b?.vao || b._dead || b.conceal || f.isSpectral(b.archive)) continue;   // a concealed foe and a ghost cast nothing
           if (filter !== REPLAY_ALL && (filter === REPLAY_STATIC) === !!b._shDyn) continue;   // SC1: by the batch's own word
@@ -1382,8 +1392,9 @@ export class ShadowPass {
             this._right[0] = dz / l; this._right[1] = 0; this._right[2] = -dx / l;
             gl.uniform3fv(P.bb.right, this._right);
           }
-          gl.uniform3f(P.bb.origin, o[0], o[1], o[2]);
-          gl.uniform2f(P.bb.size, b.size.w, b.size.h);
+          if (o[0] !== lastOx || o[1] !== lastOy || o[2] !== lastOz) { gl.uniform3f(P.bb.origin, o[0], o[1], o[2]); lastOx = o[0]; lastOy = o[1]; lastOz = o[2]; }   // PERF-EXT11
+          const w = b.size.w, h = b.size.h;
+          if (w !== lastW || h !== lastH) { gl.uniform2f(P.bb.size, w, h); lastW = w; lastH = h; }   // PERF-EXT11
           const sw = b.sway || 0;
           if (sw !== lastSway) { gl.uniform1f(P.bb.sway, sw); lastSway = sw; }
           if (tex !== lastTex) { gl.bindTexture(gl.TEXTURE_2D, tex); lastTex = tex; }   // PERF-BASIS

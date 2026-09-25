@@ -5177,6 +5177,20 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // order and only skips the repeats it happens to have.
     let lastKey = null;
     let lastSway = null;   // WIND3
+    // PERF-EXT11 (2026-09-25, the players' "fps issues in the exterior but
+    // fine in the interior"): THE SIZE AND THE ORIGIN GO UP WHEN THEY
+    // CHANGE, as the sway and the key's textures already did. Both were
+    // uploaded for every flat, and neither changes between most pairs:
+    // the sort below puts one record's batches together, and they share
+    // its size (783 size uploads a frame on the harness town, 65 after).
+    // Exact, because a uniform is the PROGRAM's and holds until the next
+    // upload to it: this call binds bbProgram once and nothing between
+    // two flats - the opaque phase, the blended one, the uSpectral and
+    // uConceal between them - binds another. The lasts are this CALL's
+    // (NaN matches nothing), never carried to the next, which may run
+    // another program (a lane swapped between two calls). A flip is the
+    // sign of `w`, compared by value like the rest.
+    let lastW = NaN, lastH = NaN, lastOx = NaN, lastOy = NaN, lastOz = NaN;
     const drawOne = (b) => {
       const key = billboardKey(b);   // FA1/MAC4: the key follows every field it is made of (billboardKey.js)
       const tex = this.textures.get(key);
@@ -5191,9 +5205,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
         this.stats.texBinds += 2;
         lastKey = key;
       }
-      gl.uniform2f(this.bbUSize, b.size.w, b.size.h);
+      const w = b.size.w, h = b.size.h;
+      if (w !== lastW || h !== lastH) { gl.uniform2f(this.bbUSize, w, h); lastW = w; lastH = h; }   // PERF-EXT11
       const o = b.origin || ZERO_ORIGIN;
-      gl.uniform3f(this.bbUOrigin, o[0], o[1], o[2]);
+      if (o[0] !== lastOx || o[1] !== lastOy || o[2] !== lastOz) { gl.uniform3f(this.bbUOrigin, o[0], o[1], o[2]); lastOx = o[0]; lastOy = o[1]; lastOz = o[2]; }   // PERF-EXT11
       const sw = b.sway || 0;   // WIND3: the batch's share of the lean, uploaded when it changes between batches
       if (sw !== lastSway) { gl.uniform1f(this.bbUSway, sw); lastSway = sw; }
       this._bindVao(b.vao);

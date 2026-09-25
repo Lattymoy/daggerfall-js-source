@@ -102,6 +102,10 @@ told to disprove each win. The flats and the frame's CPU:
   per-flat loops stop paying polymorphic lookups. Render-side JS on the
   harness 1.62 -> 1.20 ms a frame by day, 2.28 -> 1.41 at night (node,
   relative; the picture cannot change - no computed value does).
+- **PERF-EXT11** - a flat's size and origin are uploaded when they
+  change, in the flats pass and in every shadow replay: 6,243 -> 5,279
+  GL calls a frame by day and 4,992 -> 4,265 at night on the harness,
+  every draw seeing the same values.
 
 `07-Rendering/Performance-Exterior.md` has the measurements, the pins
 and the mutants. Not seen on a GPU - there is no game data in the
