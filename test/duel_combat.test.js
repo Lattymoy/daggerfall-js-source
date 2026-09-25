@@ -177,7 +177,7 @@ test('DUEL1 hosts by source: the swing reaches my opponent before any pool and i
   const m = rd('src/scenes/worldModes.js');
   assert.match(m, /if \(!isBash && \(hit\.door\.doorType === DOOR_TYPE\.DUNGEON_ENTRANCE \|\| hit\.door\.doorType === DOOR_TYPE\.BUILDING\) && host\.duelHolds\?\.\(\)\) \{ setMidScreenText\(DUEL_DOOR_TEXT\); return true; \}/, 'no door out of the ring');
   const h = rd('src/scenes/hostMagic.js');
-  assert.match(h, /const marks = \[\.\.\.allyMarksFor\(sp\), \.\.\.duelMarksFor\(sp\)\];/, 'a touch');
+  assert.match(h, /const marks = \[\.\.\.allyMarksFor\(sp\), \.\.\.duelMarksFor\(sp\)(?:, \.\.\.bossMarksFor\(sp\))?\];/, 'a touch');   // WB4b: the court's boss joins the marks beside the opponent
   assert.match(h, /else if \(t\?\.duel\) giveToDuel\(t, sp\);/);
   assert.match(h, /for \(const t of sweepFoes\(eye, EXPLOSION_RADIUS, duelMarksFor\(sp\)\)\) giveToDuel\(t, sp\);/, 'an area around me');
   assert.match(h, /if \(duel && caster\?\.entity === playerEntity\) for \(const t of sweepFoes\(pos, EXPLOSION_RADIUS, duelMarksFor\(spell\)\)\) giveToDuel\(t, spell\);/, 'a blast');

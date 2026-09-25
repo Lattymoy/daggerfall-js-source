@@ -214,6 +214,8 @@ export const EXPLOSION_RADIUS = 4.0;
  *  sphere pushed 3.0 units ALONG THE AIM. */
 export const TOUCH_SPHERE_CAST_RADIUS = 0.25;
 export const TOUCH_RANGE = 3.0;
+/** WB4b: the step the touch's sphere is swept down its aim by, for a body that states its own radius (pickTouchTarget). */
+export const TOUCH_STEP = 0.05;
 
 /** GetEntityTargetInTouchRange (DaggerfallMissile.cs:409-425, L2-slice
  *  AUDIT 23 magic-7): ByTouch targets by SPHERE-CAST along the aim
@@ -227,6 +229,18 @@ export function pickTouchTarget(eye, dir, foes, losClear = () => true) {
   let best = null, bestT = Infinity;
   for (const f of foes) {
     if (f.dead) continue;
+    // WB4b: A BODY THAT STATES ITS OWN RADIUS (the Burning Court's boss, 1.8 of it, his middle 2.8 m up) is met as the
+    // sphere cast meets any collider: the cast's sphere swept down the aim, the first step of it that overlaps the
+    // capsule - a point-centre law would have the hands pass through all of him that is not his middle
+    if (Number.isFinite(f.ai?.radius)) {
+      for (let t = 0; t <= TOUCH_RANGE + 1e-9 && t < bestT; t += TOUCH_STEP) {
+        const p = [eye[0] + dir[0] * t, eye[1] + dir[1] * t, eye[2] + dir[2] * t];
+        if (!sphereOverlapsCapsule(p, TOUCH_SPHERE_CAST_RADIUS, f.ai.feet, f.ai.height, f.ai.radius)) continue;
+        if (losClear(p, t)) { best = f; bestT = t; }
+        break;
+      }
+      continue;
+    }
     const c = [f.ai.feet[0], f.ai.feet[1] + (f.ai.height ?? 1.8) / 2, f.ai.feet[2]];   // REVIEW 2026-09-05: the foe's own capsule centre
     const rx = c[0] - eye[0], ry = c[1] - eye[1], rz = c[2] - eye[2];
     const t = Math.max(0, Math.min(TOUCH_RANGE, rx * dir[0] + ry * dir[1] + rz * dir[2]));
@@ -255,7 +269,7 @@ export function sweepFoes(pos, radius, foes) {
   const out = [];
   for (const f of foes) {
     if (f.dead) continue;
-    if (sphereOverlapsCapsule(pos, radius, f.ai?.feet, f.ai?.height)) out.push(f);
+    if (sphereOverlapsCapsule(pos, radius, f.ai?.feet, f.ai?.height, f.ai?.radius)) out.push(f);   // WB4b: a body's own radius, where it states one
   }
   return out;
 }
@@ -357,7 +371,7 @@ export function missileReach(dir, step) {
 
 /** The same test against a foe's controller (enemyAnchor's height). */
 export function missileHitsFoe(pos, foe) {
-  return missileHitsCapsule(pos, foe?.ai?.feet, foe?.ai?.height);
+  return missileHitsCapsule(pos, foe?.ai?.feet, foe?.ai?.height, foe?.ai?.radius);   // WB4b: a body's own radius, where it states one
 }
 
 /** ROAD-H H1c: GetAimPosition's PLAYER ARROW offsets

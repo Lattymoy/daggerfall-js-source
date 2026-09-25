@@ -23,12 +23,50 @@ import {
   MOVE_ANIM_SPEED, IDLE_ANIM_SPEED, PRIMARY_ATTACK_ANIM_SPEED,
 } from '../characters/mobileUnit.js';
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
+import { makeEnemyEntity } from '../characters/enemyEntity.js';
 import { courtToDungeon } from './gateArena.js';
 
 /** Each boss's look, by its id (net/gateLaw.js GATE_BOSSES): the mobile whose sprite he wears, and how many times its
  *  size he stands (BOSS_H is the body the blows are measured against - three Daedra Lords tall). */
 export const BOSS_LOOKS = Object.freeze({ ruhn: Object.freeze({ mobile: 31, scale: 3 }) });
 export const bossLookOf = (id) => BOSS_LOOKS[id] ?? BOSS_LOOKS.ruhn;
+
+/**
+ * WB4b: THE ENTITY A BLOW ON HIM IS COMPUTED AGAINST - on the striker's machine, by the port's own formulas (a swing's
+ * and a shaft's calculateAttackDamage, a spell's applySpell), the number sent and the relay's caps deciding what lands
+ * (net/gateBrain.js applyHit). His look's own mobile's entity (characters/enemyEntity.js makeEnemyEntity) with three
+ * things set for the fight: EVERY METAL BITES (a Daedra Lord's own needs Mithril - no level-1 player could touch him),
+ * his armour a knight's in plate rather than a Daedra Lord's (BOSS_ARMOR: against his own dodging, a level-1 iron
+ * longsword lands more than half its swings and a level-20 blade nearly all - bible section 5's numbers, measured in the
+ * pins), and a health nothing here
+ * can empty (the relay holds his real one). Named for the numbers and the lines a blow says.
+ */
+export const BOSS_ARMOR = 60;
+export function bossStandIn(look, name) {
+  const e = makeEnemyEntity(look.mobile, ENEMY_BASICS[look.mobile], null, 1, () => 0.5);
+  e.minMetalToHit = 0;
+  e.armor = BOSS_ARMOR;
+  e.armorValues = new Array(7).fill(BOSS_ARMOR);
+  e.maxHealth = e.health = 1e9;
+  e.name = name;
+  return e;
+}
+
+/**
+ * WB4b: WHERE A SWING MEETS HIM - the nearest point of his body's surface to an eye (his axis `radius` in from it, level
+ * with the eye where his height allows) and the eye's distance to that surface. A point-centre law (a foe's: its middle,
+ * its capsule's 0.45) would ask a swing to reach 1.8 m into him and 2.8 m up; the reach is measured to his skin.
+ * @param {number[]} eye @param {{feet: number[], height: number, radius: number}} body
+ */
+export function bossReach(eye, body) {
+  const { feet, height, radius } = body;
+  const y = Math.min(Math.max(eye[1], feet[1] + radius), feet[1] + height - radius);
+  const dx = feet[0] - eye[0], dz = feet[2] - eye[2], flat = Math.hypot(dx, dz) || 1;
+  return {
+    point: [feet[0] - (dx / flat) * radius, y, feet[2] - (dz / flat) * radius],
+    dist: Math.max(0, Math.hypot(dx, y - eye[1], dz) - radius),
+  };
+}
 
 /** The charge's run on the walk's frames, frames a second (the walk's own is MOVE_ANIM_SPEED). */
 export const RUN_ANIM_SPEED = 14;

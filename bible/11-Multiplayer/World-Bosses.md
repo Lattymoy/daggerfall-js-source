@@ -457,3 +457,16 @@ hit's sound, the flash, the cry; fire burns unflashed), fire through the game's 
 and Dagon's Wrath through nothing. Pins `test/wb4_gate_boss.test.js` (14); mutants `tools/mutants/wb4.json` (40 dead).
 The telegraph's shader seen headless over the court for every attack (`tools/gateTelegraphProbe.mjs` holds it: 9
 checks); the sprite not yet seen with ARENA2 and a live relay. The player's blows on him are WB4b.
+
+**WB4b (2026-09-25) - the boss is fought.** A swing, a shaft or a harmful spell that meets him is computed on the
+striker's machine by the game's own law - the same resolveHit and calculateAttackDamage a foe's blow runs, the one
+player-arrow law, applySpell's own magnitudes - against his stand-in (`world/gateBoss.js bossStandIn`: his own mobile's
+entity, every metal biting where a Daedra Lord's needs Mithril, a knight's armour where his is a wall: a level-1 iron
+longsword lands more than half its swings for about nine, a level-20 blade nearly all), and its number goes to the
+court's room as the `hit` frame (`scenes/gateCourt.js hit` - whole points, a sequence of its own, the kind), where the
+relay's caps decide what lands. His body is met where it is: a swing by his skin (`bossReach` - a foe's centre law would
+ask it to reach 1.8 m into him and 2.8 m up), a shaft and a missile by his whole capsule, a touch's sphere swept down
+its aim, a blast at his flank (`systems/spellcast.js` measures a body that states its own radius by it; a foe that
+states none is measured as it always was). He parries as his mobile does, a blow sounds and splashes at his chest and
+the damage number pops as any; the ward turns a blow with the parry's ring and nothing is sent; each blow makes him
+flinch. Pins `test/wb4b_gate_blows.test.js` (5); mutants `tools/mutants/wb4b.json` (22 dead).

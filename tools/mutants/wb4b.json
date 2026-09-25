@@ -1,0 +1,200 @@
+[
+  {
+    "name": "WB4b-the-daedra-lords-metal-kept",
+    "file": "src/world/gateBoss.js",
+    "old": "  e.minMetalToHit = 0;",
+    "new": "  e.minMetalToHit = ENEMY_BASICS[look.mobile].minMetalToHit;",
+    "tests": [
+      "test/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "WB4b-his-own-armour-kept",
+    "file": "src/world/gateBoss.js",
+    "old": "  e.armorValues = new Array(7).fill(BOSS_ARMOR);",
+    "new": "  e.armorValues = new Array(7).fill(ENEMY_BASICS[look.mobile].armorValue * 5);",
+    "tests": [
+      "test/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "WB4b-the-reach-to-his-axis",
+    "file": "src/world/gateBoss.js",
+    "old": "    dist: Math.max(0, Math.hypot(dx, y - eye[1], dz) - radius),",
+    "new": "    dist: Math.hypot(dx, y - eye[1], dz),",
+    "tests": [
+      "test/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "WB4b-the-sweep-without-his-radius",
+    "file": "src/systems/spellcast.js",
+    "old": "    if (sphereOverlapsCapsule(pos, radius, f.ai?.feet, f.ai?.height, f.ai?.radius)) out.push(f);",
+    "new": "    if (sphereOverlapsCapsule(pos, radius, f.ai?.feet, f.ai?.height)) out.push(f);",
+    "tests": [
+      "test/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "WB4b-the-missile-without-his-radius",
+    "file": "src/systems/spellcast.js",
+    "old": "  return missileHitsCapsule(pos, foe?.ai?.feet, foe?.ai?.height, foe?.ai?.radius);",
+    "new": "  return missileHitsCapsule(pos, foe?.ai?.feet, foe?.ai?.height);",
+    "tests": [
+      "test/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "WB4b-the-touchs-sweep-cut-short",
+    "file": "src/systems/spellcast.js",
+    "old": "for (let t = 0; t <= TOUCH_RANGE + 1e-9 && t < bestT; t += TOUCH_STEP) {",
+    "new": "for (let t = 0; t <= TOUCH_RANGE / 2 && t < bestT; t += TOUCH_STEP) {",
+    "tests": [
+      "test/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "WB4b-a-warded-blow-sent",
+    "file": "src/scenes/gateCourt.js",
+    "old": "      if (t < s.shieldUntil) return false;",
+    "new": "      if (false) return false;",
+    "tests": [
+      "test/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "WB4b-the-sequence-not-advancing",
+    "file": "src/scenes/gateCourt.js",
+    "old": "send({ q: ++blowSeq, d: dmg, r })",
+    "new": "send({ q: blowSeq, d: dmg, r })",
+    "tests": [
+      "test/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "WB4b-the-number-unrounded",
+    "file": "src/scenes/gateCourt.js",
+    "old": "      const dmg = Math.round(d);",
+    "new": "      const dmg = d;",
+    "tests": [
+      "test/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "WB4b-the-swing-blind-to-him",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (boss) { boss._backFacing = foeDeps.isBackFacing(boss.ai.yaw, boss.ai.feet, playerFeet); live.push(boss); }",
+    "new": "    if (false) { boss._backFacing = foeDeps.isBackFacing(boss.ai.yaw, boss.ai.feet, playerFeet); live.push(boss); }",
+    "tests": [
+      "test/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "WB4b-the-swing-sees-his-middle",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (f === boss) return bossSight(eye, inViewFn, boss);",
+    "new": "      if (false) return bossSight(eye, inViewFn, boss);",
+    "tests": [
+      "test/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "WB4b-a-shaft-passes-through-him",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "          if (boss && missileHitsCapsule(m.pos, boss.ai.feet, boss.ai.height, boss.ai.radius)) {",
+    "new": "          if (false) {",
+    "tests": [
+      "test/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "WB4b-the-door-shut",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    return !!opts.onBossHit?.({ d: damage, r });",
+    "new": "    return false;",
+    "tests": [
+      "test/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "WB4b-no-spell-reaches-him",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    castAtBoss: opts.gateBoss ? (sp) => spellOnBoss(sp) : null,",
+    "new": "    castAtBoss: null,",
+    "tests": [
+      "test/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "WB4b-a-swing-said-a-shaft",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      landOnBoss(boss, damage, HIT_KINDS.Melee);",
+    "new": "      landOnBoss(boss, damage, HIT_KINDS.Shaft);",
+    "tests": [
+      "test/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "WB4b-a-heal-reaches-him",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (!bossMark || !castAtBoss || !sp || !duelSpellOf(sp)) return [];",
+    "new": "    if (!bossMark || !castAtBoss || !sp) return [];",
+    "tests": [
+      "test/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "WB4b-the-touch-passes-him",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      else if (t?.boss) giveToBoss(t, sp);",
+    "new": "      else if (false) giveToBoss(t, sp);",
+    "tests": [
+      "test/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "WB4b-the-blast-misses-him",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (duel && caster?.entity === playerEntity) for (const t of sweepFoes(pos, EXPLOSION_RADIUS, bossMarksFor(spell))) giveToBoss(t, spell);",
+    "new": "    if (false) for (const t of sweepFoes(pos, EXPLOSION_RADIUS, bossMarksFor(spell))) giveToBoss(t, spell);",
+    "tests": [
+      "test/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "WB4b-the-missile-meets-a-thin-him",
+    "file": "src/scenes/hostMagic.js",
+    "old": "missileHitsCapsule(m.pos, p.ai.feet, p.ai.height, p.ai.radius));",
+    "new": "missileHitsCapsule(m.pos, p.ai.feet, p.ai.height, PLAYER_BODY_RADIUS));",
+    "tests": [
+      "test/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "WB4b-the-dungeon-arm-blind",
+    "file": "src/scenes/worldModes.js",
+    "old": "          gateBoss: () => host.gateBoss?.() ?? null,",
+    "new": "          gateBoss: () => null,",
+    "tests": [
+      "test/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "WB4b-nothing-sent",
+    "file": "src/scenes/world.js",
+    "old": "    send: (hit) => !!online?.sendGate?.({ k: 'hit', ...hit }),",
+    "new": "    send: () => false,",
+    "tests": [
+      "test/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "WB4b-the-host-drops-the-blow",
+    "file": "src/scenes/world.js",
+    "old": "    onBossHit: (hit) => !!gateCourt?.hit(hit),",
+    "new": "    onBossHit: () => false,",
+    "tests": [
+      "test/wb4b_gate_blows.test.js"
+    ]
+  }
+]

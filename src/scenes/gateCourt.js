@@ -16,10 +16,10 @@
 // has already cued, landed and judged, and the host's doors.
 //
 // Not a DFU member. Ledger A (WB).
-import { ATTACK_BY_ID, ATTACKS, COURT_CENTRE } from '../net/gateBrain.js';
+import { ATTACK_BY_ID, ATTACKS, BOSS_H, BOSS_R, COURT_CENTRE, HIT_KINDS } from '../net/gateBrain.js';
 import { strikeVerdict, blowOf, strikeDamage, fireShare } from '../net/gateStrike.js';
 import { GATE_BOSSES, gateBossOf } from '../net/gateLaw.js';
-import { bossAct, bossFrame, bossGlow, bossPlace, bossLookOf, BOSS_CUES } from '../world/gateBoss.js';
+import { bossAct, bossFrame, bossGlow, bossPlace, bossLookOf, bossStandIn, BOSS_CUES } from '../world/gateBoss.js';
 import { courtToDungeon } from '../world/gateArena.js';
 import { GateTelegraphRenderer, telegraphShape } from '../render/gateTelegraph.js';
 import { bossBarModel, drawGateBossBar } from '../ui/gateBossBar.js';
@@ -49,12 +49,13 @@ export const bossOf = (s) => GATE_BOSSES.find((b) => b.id === s?.boss) ?? gateBo
  *   strike?: (dmg: number, how: { fire: boolean, name: string }) => void,
  *   say?: (text: string) => void,
  *   hudHidden?: () => boolean,
+ *   send?: (hit: { q: number, d: number, r: number }) => boolean,
  * }} deps
  */
 export function createGateCourt({
   renderer = null, gl = null, getTexture = null, uploadRecordFrame = null, audio = null,
   link, now, cam = () => null, feet = () => null, player = () => null, save = () => 100,
-  strike = () => {}, say = () => {}, hudHidden = () => false,
+  strike = () => {}, say = () => {}, hudHidden = () => false, send = () => false,
 }) {
   let pass = null;
   try { if (gl) pass = new GateTelegraphRenderer(gl); } catch (e) { console.warn('[gate] the telegraph would not build', e?.message ?? e); pass = null; }
@@ -63,10 +64,12 @@ export function createGateCourt({
   /** the fight this driver is on (its day), and what it has done with its attacks */
   let day = null, judgedI = -1, cuedI = -1, landedI = -1, phaseHeard = 0, fellCued = false, wrathLanded = false;
   let prevT = -Infinity, hurtAt = -Infinity, shape = null;
+  /** WB4b: his stand-in for the formulas (made once a fight), and my blows' sequence (the wire's `q`) */
+  let standIn = null, blowSeq = 0;
 
   function reset(d) {
     day = d; judgedI = -1; cuedI = -1; landedI = -1; phaseHeard = 0; fellCued = false; wrathLanded = false;
-    prevT = -Infinity; hurtAt = -Infinity; shape = null;
+    prevT = -Infinity; hurtAt = -Infinity; shape = null; standIn = null;
   }
 
   function sound(cue, s, t, atk) {
@@ -160,7 +163,33 @@ export function createGateCourt({
       drawGateBossBar(bossBarModel(s, t, bossOf(s)), { hidden: hudHidden() });
       prevT = t;
     },
-    /** A blow of mine landed on him: he flinches (WB4b's blows call it). */
+    /**
+     * WB4b: HIM AS A BODY MY BLOWS MEET, or null (no fight, or he has fallen): his feet in the dungeon's frame, his
+     * facing, his height and radius (net/gateBrain.js - the relay measures a melee blow from the same body), whether
+     * his ward stands, and his stand-in for the formulas (world/gateBoss.js bossStandIn).
+     */
+    target() {
+      const s = link.state(), t = now();
+      if (!s || s.day === null || s.fell || bossAct(s, t).act === 'gone') return null;
+      standIn ??= bossStandIn(bossLookOf(s.boss), bossOf(s).name);
+      const [x, z] = bossPlace(s, t);
+      return { feet: courtToDungeon(x, 0, z), yaw: s.yaw, height: BOSS_H, radius: BOSS_R, warded: t < s.shieldUntil, entity: standIn, mobile: bossLookOf(s.boss).mobile };
+    },
+    /**
+     * WB4b: A BLOW OF MINE MET HIM - `d` the formula's number on this machine, `r` its kind (net/gateBrain.js
+     * HIT_KINDS). Out to the relay as the wire's hit (whole points, a sequence of its own), and he flinches. The ward
+     * turns it (nothing sent - the relay would refuse it); a blow under one point is none. Answers whether it went.
+     */
+    hit({ d, r }) {
+      const s = link.state(), t = now();
+      if (!s || s.day === null || s.fell || !Object.values(HIT_KINDS).includes(r)) return false;
+      if (t < s.shieldUntil) return false;
+      const dmg = Math.round(d);
+      if (!(dmg >= 1)) return false;
+      hurtAt = t;
+      return !!send({ q: ++blowSeq, d: dmg, r });
+    },
+    /** A blow of mine landed on him: he flinches. */
     struck() { hurtAt = now(); },
     /** The body, for the host's billboard pass. */
     batches: () => (batch && !batch.hidden ? [batch] : []),

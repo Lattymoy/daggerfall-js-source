@@ -853,7 +853,7 @@ test('BLOOD1b: EVERY splash site hands its blow over, so the rate ladder actuall
   // rrRidingContacts) - the civilian's own rung, LETHAL_HIT.
   // AUDIT-RR F15 moved the trample's site into both outdoor hosts' deps (world.js, exterior.js): thirteen.
   // DUEL1: the fourteenth - a strike of mine that landed on my duel opponent (world.js duelResultIn), the striker's blood.
-  assert.equal(sites.length, 14, `fourteen splash sites across six files (found ${sites.length})`);
+  assert.equal(sites.length, 15, `fifteen splash sites across six files - WB4b: the Burning Court boss's swing is the fifteenth (found ${sites.length})`);
   for (const [f, args] of sites) {
     assert.ok(/bloodHit\(|LETHAL_HIT/.test(args),
       `${f}: a splash site that hands over no blow - the ladder would read it as a graze`);
@@ -1114,8 +1114,9 @@ test('BLOOD1b: a site that knows nothing about the swing says so, and gets the o
     }
   }
   // the player's four: a melee swing in each of the three foe pools,
-  // and the shaft that all three share
-  assert.equal(claimed, 4, 'exactly the four sites that ARE the player’s own blow');
+  // and the shaft that all three share - and WB4b's fifth, the swing on
+  // the Burning Court's boss (his shaft is the shared shaft's)
+  assert.equal(claimed, 5, 'exactly the five sites that ARE the player’s own blow');
 });
 
 test('BLOOD1b: the gib law - ten chunks thrown UP, falling at three times gravity, landing for good', () => {
@@ -1686,7 +1687,7 @@ test('BLOOD1b by source: the three melee sites hand the swing over, and the shaf
       if (/swing:/.test(argsAt(s, m.index + m[0].length - 1) ?? '')) swung++;
     }
   }
-  assert.equal(swung, 3, 'exactly the three sites that ARE a player’s melee swing');
+  assert.equal(swung, 4, 'exactly the four sites that ARE a player’s melee swing (WB4b: the fourth, on the Burning Court’s boss)');
 });
 
 test('BLOOD1 AUDIT: dispose is TERMINAL, the art may arrive after the throw, and an empty list is not a full one', () => {
@@ -3044,7 +3045,7 @@ test('MAC-BUG W5: the ground outside is heightAt, and surfaceHit is the ray that
     'no surface overhead when the "surface" is the ground you are under');
   assert.equal(outside.surfaceHit([0, -3, 0], [0, 1, 0], 8).normal, null);
 
-  // A DUNGEON IS UNCHANGED. dungeonContext.js:303 hands `-Infinity`,
+  // A DUNGEON IS UNCHANGED. dungeonContext.js:306 hands `-Infinity`,
   // so there is no floor to find and the answer is the bucket ray's,
   // byte for byte - which is what keeps this a second door rather
   // than a change to the first.
