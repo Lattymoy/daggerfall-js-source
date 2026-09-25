@@ -70,6 +70,7 @@ import { SKILL_NAMES, SKILL_COUNT } from './skills.js';
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';
 import { enchantmentName, enchantmentParamName } from './enchantmentCatalogue.js';
 import { rollSigil, sigilLines, sigilOnline, SIGIL_BANDS } from './sigil.js';   // SIGIL1: a weapon won online may carry a sigil
+import { ROLLED_TIERS } from './rarityTier.js';   // RARE-BREAK1: the rolled tiers' one home
 
 export const LOOT_RARITY_KEY = 'lootRarity';
 /** The switch. Read at every seam, so a press takes effect on the next
@@ -87,7 +88,7 @@ export const RARITIES = Object.freeze({
   legendary: Object.freeze({ rank: 3, label: 'Legendary', colour: '#e07a2e', tint: Object.freeze([0.85, 0.42, 0.10, 0.50]) }),
   artifact:  Object.freeze({ rank: 4, label: 'Artifact',  colour: '#b57bee', tint: Object.freeze([0.60, 0.35, 0.85, 0.50]) }),
 });
-export const ROLLED_TIERS = Object.freeze(['magic', 'rare', 'legendary']);
+export { ROLLED_TIERS };   // RARE-BREAK1: its one home is the leaf (rarityTier.js), so a formula can ask it without the ladder
 
 const enchanted = (item) => !!(item?.enchantments?.length || item?.customEnchantments?.length);
 

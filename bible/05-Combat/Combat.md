@@ -1438,6 +1438,21 @@ has the list.
 
 **MM1 (2026-09-12).** Meaner Monsters vendored (`04-Characters/Meaner-Monsters.md`), and Mac's rule - no compatibility switches between mods: the overhaul's `meanerMonsters` and `rolePlayRealismArchery` switches are gone; its two derived arms read the other mods' own switches (`modSettingIfDeclared`), and Ralzar's row lands before the overhaul's edit at mint, as DFU Awakes the dependency first.
 
+
+**RARE-BREAK1 (2026-09-25, a port departure from the mod's Fading Enchanted Items).**
+A player's report: "I've lost my boots and legs, both rare (yellow) rarity ... blue
+items break, yellow items disappear. is this intended?" It was the mod's own
+module - "Enchanted Weapons and Armor will be destroyed upon breaking from
+physical combat", on by default and forced whole online with the rest of PCAAO -
+meeting the port's rarity ladder (`systems/lootRarity.js`, LR1): a Rare or
+Legendary carries ONE DFU catalogue enchantment as its flavour, so the module
+read it as an enchanted item and took it from the pack, while a Magic (numeric
+affixes, no enchantment) broke and stayed. Mac: "Rarity loot breaks, not
+destroyed". `pcaao.js pcaaoFades` leaves any piece that rolled a tier on the
+ladder out of the fade: it breaks and stays, repairable. DFU's own enchanted
+loot (MAGIC.DEF, made and soul-bound items - no rolled tier) still fades as the
+mod says. Pinned in `test/pcaao.test.js`, mutants in
+`tools/mutants/rarebreak1.json`.
 ## WW1 - WEAPON WIDGET, THE MOD, 1:1, AND THE MORROWIND ARMS (2026-09-14, Mac's call) - SHIPPED
 
 Mac: "This is our next mod I want to add 1:1 while also having it work

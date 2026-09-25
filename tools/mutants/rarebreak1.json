@@ -1,0 +1,23 @@
+[
+  {
+    "name": "RARE-BREAK1-rolled-tiers-fade-again",
+    "file": "src/combat/pcaao.js",
+    "old": "export const pcaaoFades = (item) => isEnchantedItem(item) && !rolledTier(item);",
+    "new": "export const pcaaoFades = (item) => isEnchantedItem(item);",
+    "tests": ["test/pcaao.test.js"]
+  },
+  {
+    "name": "RARE-BREAK1-nothing-fades",
+    "file": "src/combat/pcaao.js",
+    "old": "export const pcaaoFades = (item) => isEnchantedItem(item) && !rolledTier(item);",
+    "new": "export const pcaaoFades = (item) => false && isEnchantedItem(item);",
+    "tests": ["test/pcaao.test.js"]
+  },
+  {
+    "name": "RARE-BREAK1-wear-ignores-the-exemption",
+    "file": "src/combat/pcaao.js",
+    "old": "isPlayer(owner) && pcaaoFades(item) ? (owner.items ?? null) : null;",
+    "new": "isPlayer(owner) && isEnchantedItem(item) ? (owner.items ?? null) : null;",
+    "tests": ["test/pcaao.test.js"]
+  }
+]
