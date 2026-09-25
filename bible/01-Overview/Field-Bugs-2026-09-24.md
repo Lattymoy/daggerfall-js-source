@@ -978,9 +978,9 @@ else saw Daggerfall's pixel werewolf. A transformed rider was worse: the
 rider layer ran first and drew a person on a horse (112382 + the rider's
 set), where the player saw their beast.
 
-The wire was never at fault. `wb` goes out on its edge (`wire.js:1003`),
+The wire was never at fault. `wb` goes out on its edge (`wire.js:1023`),
 through the door (`:1051`) and the easing (`online.js:206`), from the sender
-at `world.js:12198`.
+at `world.js:12217`.
 
 **Fix.** `peerRiders.js` takes a peer whose pose says `wb`, as it takes a
 rider:
@@ -1001,7 +1001,7 @@ still stands for them. A beast is never nothing.
 The modal passes (`worldModes.js:7166` the dungeon, `:7358` the interior)
 draw only `host.extraBillboards`. That was `remotePlayers.batches()` alone,
 so a beast drawn by the rider layer would have been nothing indoors and
-underground. It hands over both layers' batches now (`world.js:12363`). A
+underground. It hands over both layers' batches now (`world.js:12382`). A
 rider never reaches those passes: a door dismounts. The eye the layer turns
 its sprites to (`cam.pos`) is live in every mode, because worldModes shares
 world.js's `cam` and sets it each modal frame.
@@ -1068,12 +1068,12 @@ the scene the picture takes in:
 
 **Hosts.** Every Morrowind body in the port goes through `drawThird`. The
 local player's goes through `mwView.mwViewDrawBody` (`mwView.js:329`,
-`:339`), which four files call: `world.js:14307`, `exterior.js:5117`,
+`:339`), which four files call: `world.js:14339`, `exterior.js:5117`,
 `worldModes.js:7159` and `:7256` (the dungeon and the interior passes),
 and `dungeon.js:1066`. `dungeonContext.js`, the fourth motor host, builds
 the dungeon for those hosts and draws no body of its own. The other players'
 bodies go through `peerBodies.js:377` (`PeerBodies.draw`). The open world
-calls it at `world.js:14308`, and the modal passes reach it through
+calls it at `world.js:14340`, and the modal passes reach it through
 `host.drawPeerBodies` (`worldModes.js:7160`, `:7257`). The fix therefore
 sits in one place and reaches every host.
 

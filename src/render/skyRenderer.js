@@ -32,6 +32,7 @@
 // south and is CENTRED on map east at u = 0.25. Documented equivalence.
 
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
+import { DREAD_GLSL } from '../world/dreadSky.js';   // EVENT1: the live event's grade, the sky's last word
 
 export const SKY_ANGLE_PER_PIXEL = Math.PI / 512;
 
@@ -168,7 +169,9 @@ uniform float uAspect;
 uniform float uVSpan; // elevation covered by the strip, radians
 uniform float uFogMix; // 0 = clear sky, 1 = fully fogged (heavy fog)
 uniform vec3 uFogColor;
+uniform float uDread;  // EVENT1: the live event's grade, 0 = none
 out vec4 outColor;
+${DREAD_GLSL}
 void main() {
   // View ray from the fragment, rotated by pitch (about X) then yaw (about Y)
   // to match the scene camera (fwd = (sin yaw * cos pitch, sin pitch,
@@ -184,7 +187,7 @@ void main() {
   float u = fract(azimuth / 6.28318530718);
   float v = elevation / uVSpan;
   vec3 color = v > 1.0 ? uClear : texture(uSky, vec2(u, clamp(v, 0.0, 1.0))).rgb;  // uClear = fillColor
-  outColor = vec4(mix(color, uFogColor, uFogMix), 1.0);
+  outColor = vec4(dreadGrade(mix(color, uFogColor, uFogMix), uDread), 1.0);
 }`;
 
 export class SkyRenderer {
@@ -201,7 +204,10 @@ export class SkyRenderer {
     this.uVSpan = gl.getUniformLocation(prog, 'uVSpan');
     this.uFogMix = gl.getUniformLocation(prog, 'uFogMix');
     this.uFogColor = gl.getUniformLocation(prog, 'uFogColor');
+    this.uDread = gl.getUniformLocation(prog, 'uDread');
     this.fogMix = 0;
+    /** EVENT1: the live event's grade over the panorama, 0..1 (world/dreadSky.js) - the host's. */
+    this.dread = 0;
     this.fogColor = new Float32Array([0.5, 0.5, 0.5]);
 
     // Fullscreen triangle pair.
@@ -267,6 +273,7 @@ export class SkyRenderer {
     gl.uniform1f(this.uAspect, aspect);
     gl.uniform1f(this.uVSpan, this.vSpan);
     gl.uniform1f(this.uFogMix, this.fogMix);
+    gl.uniform1f(this.uDread, this.dread);   // EVENT1
     gl.uniform3fv(this.uFogColor, this.fogColor);
     // HANDEDNESS: the fullscreen triangle winds CCW and the renderer
     // runs frontFace(CW) - without culling off, the whole sky culls

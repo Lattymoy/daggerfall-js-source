@@ -60,6 +60,7 @@
 import { DITHER_GLSL, BAYER_MEAN } from './orderedDither.js';   // PS2: the port's retro pass, shared with the dome and the clouds
 import { MATERIAL_DEFAULTS, TEXTURE_SLOTS, TEXTURE_IMPORTS, SLOT_DEFAULT_TEXEL, srgbToLinear } from '../systems/dynamicSkies.js';
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
+import { DREAD_GLSL } from '../world/dreadSky.js';   // EVENT1: the live event's grade, the sky's last word
 
 /** Which material properties are COLOURS (SetColor -> linearised at
  *  upload under linear colour space). Every other vec4 is SetVector. */
@@ -93,7 +94,7 @@ const ST_PROPERTIES = TEXTURE_SLOTS.map((s) => s + '_ST');
  *  read by the shader and fetched by nobody, so its upload was a silent
  *  no-op and the mod's red-only boost never happened). Pinned against
  *  the FS's own declarations in test/dynamicSkies.test.js. */
-export const UNIFORM_NAMES = Object.freeze(['uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uBandDither', '_WorldSpaceLightPos0', '_LightColor0',
+export const UNIFORM_NAMES = Object.freeze(['uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uBandDither', 'uDread', '_WorldSpaceLightPos0', '_LightColor0',
   '_CloudTopColorBoost',   // the float3-fed-by-a-float quirk, uploaded apart from the float list
   ...FLOAT_PROPERTIES, ...COLOR_PROPERTIES, ...VEC4_RAW, ...VEC3_RAW, ...TEXTURE_SLOTS, ...ST_PROPERTIES]);
 
@@ -111,6 +112,8 @@ out vec4 outColor;
 // the host's view (the same ray the enhanced sky builds)
 uniform float uYaw, uPitch, uTanHalfFov, uAspect;
 uniform float uBandDither;  // PS3: 1 = the mod's colour reduction gets an ordered dither; 0 = its raw ceil, 1:1
+uniform float uDread;       // EVENT1: the live event's grade over the encoded dome, 0 = none
+${DREAD_GLSL}
 // Unity's per-frame light globals for the skybox pass
 uniform vec3 _WorldSpaceLightPos0;   // toward the sun (SunlightManager's rotation, unclamped)
 uniform vec3 _LightColor0;           // SunLight colour x intensity, linear
@@ -727,7 +730,7 @@ void main() {
   // apply it to.
   vec3 lin = clamp(col.rgb, 0.0, 1.0);
   vec3 enc = vec3(linearToSrgb(lin.r), linearToSrgb(lin.g), linearToSrgb(lin.b));
-  outColor = vec4(enc, 1.0);
+  outColor = vec4(dreadGrade(enc, uDread), 1.0);   // EVENT1: graded where the port's own dome grades - on the colour shown
 }`;
 
 /** The pass. Textures arrive through `setTexture(name, image)` as the
@@ -761,6 +764,8 @@ export class DynamicSkiesRenderer {
     gl.bindTexture(gl.TEXTURE_2D, null);
     /** the vendored textures by file name, once uploaded */
     this.textures = new Map();
+    /** EVENT1: the live event's grade over the dome, 0..1 (world/dreadSky.js) - the host's. */
+    this.dread = 0;
     this.bandDither = true;                            // PS3: the ordered dither over the mod's own colour reduction; false is its raw ceil, 1:1
     this.cloudsExternal = false;                       // DS2: the volumetric clouds are drawn over this pass - its two cloud sheets stand down (the dome's cloudsExternal, one pass over)
     this.fogMix = 0;                                   // written by the host on every pass; unread here - the mod's skybox takes no fog (see the FS)
@@ -833,6 +838,7 @@ export class DynamicSkiesRenderer {
     gl.uniform1f(u.uYaw, yaw); gl.uniform1f(u.uPitch, pitch);
     gl.uniform1f(u.uTanHalfFov, Math.tan(fovY / 2)); gl.uniform1f(u.uAspect, aspect);
     gl.uniform1f(u.uBandDither, this.bandDither ? 1 : 0);   // PS3
+    gl.uniform1f(u.uDread, this.dread);   // EVENT1
     gl.uniform3f(u._WorldSpaceLightPos0, s.sunDir[0], s.sunDir[1], s.sunDir[2]);
     gl.uniform3f(u._LightColor0, s.lightColor[0], s.lightColor[1], s.lightColor[2]);
     for (const name of FLOAT_PROPERTIES) gl.uniform1f(u[name], this.cloudsExternal && (name === '_CloudTopOpacity' || name === '_CloudOpacity') ? 0 : (mat[name] ?? MATERIAL_DEFAULTS[name] ?? 0));   // DS2: opacity 0 to the shader under the volumetric clouds; the material keeps the preset's

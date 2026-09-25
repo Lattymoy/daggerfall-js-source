@@ -402,6 +402,8 @@ import { setWeather, setHeardWeather, heardWeather, currentWeather, currentWeath
 import { createDistantStorms, thunderSourceAt, THUNDER_SOURCE_M } from '../systems/distantStorms.js';   // WEATHER3d: the storms at a distance
 import { createStormLights } from '../systems/lightning.js';   // BOLT: the strikes themselves - their channels and their light
 import { LightningBoltsRenderer } from '../render/lightningBolts.js';   // BOLT: the channels, drawn
+import { createDread, createDreadStorm, dreadLight, dreadCloudGlow, DREAD_KEY_DIM, DREAD_FLASH_COLOR } from '../world/dreadSky.js';   // EVENT1: the live event's sky and its red storm
+import { parseEventCommand } from '../net/chatCommands.js';   // EVENT1: /event, a dev's live event
 import { fieldFromNative, nativeFromField, fieldOfPixelLocal } from '../systems/weatherField.js';   // WEATHER2b: the field's metres from the streaming world's natives, and back
 import { cellOfField } from '../render/volumetricClouds.js';   // WEATHER2c: the field's cells as the clouds' cells   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
 import { classicSaveToSnapshot, takePendingClassicSave, peekPendingClassicSave } from '../systems/classicSave.js';   // SAV3: the classic-save import arm
@@ -914,6 +916,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // will not build costs the wall, never the game (the duel's clamp holds the body either way)
   const duelWall = (() => { try { return new DuelWallRenderer(renderer.gl); } catch (e) { console.warn('[duel] the ring wall could not be built', e); return null; } })();
   let boltFrame = { bolts: [], flash: null };   // BOLT: this frame's burning channels and the light a near ground strike throws
+  // EVENT1: THE LIVE EVENT - the hub link's word (chatStart: onEvent) walked into a weight each exterior frame, and the
+  // red storm it brings. Offline there is no hub link, nothing sets it, and the weight stays 0: nothing below changes.
+  const dread = createDread();
+  const dreadStorm = createDreadStorm();
   let seenArrival = 0;   // AUDIT WEATHER3 R5: the sim's arrival stamp at the last frame
   let lightning = weather === 'thunder'
     ? new LightningPlayer(Number(params.get('wseed')) || 1) : null;
@@ -10135,6 +10141,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // does (net/online.js _helloFrame) - and set here rather than in the constructor call because CHAT1's pin
       // holds the five lines above as they stand.
       if (tab.room === SOCIAL_ROOM) { link.acct = accountId(); link.asecret = accountSecret(); }
+      if (tab.room === SOCIAL_ROOM) link.onEvent = (ev, o) => dread.set(ev, o);   // EVENT1: the hub - the one room every online player holds - says the live event
     }
     // SRV-N: the PRESENCE session hears the relay too, and it is usually
     // the first back after a deploy. Both arms run the same detector,
@@ -10176,7 +10183,19 @@ export async function bootWorld(canvas, renderer, params, status) {
         // it did not sign for, and nothing is echoed back, so a player
         // who tries learns nothing from the silence.
         const red = /^\/red\s+([\s\S]+)$/i.exec(text.trim());
-        if (red) return chatLinks.get('world')?.sendRed(red[1]) ?? false;   // CHAT-CHAN: from any tab, on the World channel - the one room every player online is in
+        if (red) return chatLinks.get('world')?.sendRed(red[1]) ?? false;
+        // EVENT1 (Mac: "a fun live event for the server"): /event dread, /event off - /red's law, on the same World
+        // link: never guarded here (the relay asks the token; a stranger is ignored in silence, and the sky that
+        // changes for everyone is the stager's receipt). A relay too old to know the frame would CLOSE the socket on
+        // it, so that one is said in words instead of sent.
+        const staged = parseEventCommand(text);
+        if (staged) {
+          const say = (line) => { chatLog.push(tabId, { text: line, system: true }); return true; };
+          if ('error' in staged) return say(staged.error);
+          const hub = chatLinks.get('world');
+          if (!hub?.eventOk) return say('The server cannot stage live events yet.');
+          return hub.sendStage(staged.kind);
+        }   // CHAT-CHAN: from any tab, on the World channel - the one room every player online is in
         // MOD1 (Mac: "moderator chat commands"): /mute and /unmute. NOT
         // GUARDED HERE either, for /red's reason: whether this player may
         // is the account service's question, and its refusal comes back
@@ -14171,6 +14190,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // absolute intensity on that separate light, not the sun). The
     // player ticks on both skins: the clip schedule is the Audio arc's.
     const strobeNow = lightning ? lightning.tick(dt) : 1;   // the player keeps ticking on both skins - the schedule is its own
+    // EVENT1: the live event's weight this frame (0 offline, and with no event) - the sky, the fog, the key light and
+    // the red storm below all read this one number
+    const dreadW = dread.tick(dt);
     // WX2a (AUDIT 57): under the front the FLASH waits for the storm to be
     // HERE. The player was built at the sim's cut, so the strobe lit a
     // sky that was still mostly clear for the whole three-hour lead, and
@@ -14199,19 +14221,29 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       for (const s of ds.sounds) { const h = hostOf(s.x, s.z); audio.play3d(s.clip, thunderSourceAt(cam.pos, h[0], h[1]), s.volume, { refDistance: THUNDER_SOURCE_M, maxDistance: THUNDER_SOURCE_M * 8, far: true }); }   // DISC17-B: held at its bearing from the ear, so walking or a recentre never cuts it off
       for (const s of ds.strikes) { const h = hostOf(s.x, s.z); struckFar.push({ x: h[0], z: h[1], seed: s.seed, kind: s.kind, strength: s.strength }); }
     }
+    // EVENT1: THE RED STORM - the dread's strikes on the shared clock (every player online sees one in the same
+    // second, each around themselves), their channels and light through the same field as the weather's, in the
+    // event's colours; the thunder on both skins, its distance over the speed of sound later, from its side
+    if (jump) dreadStorm.reset();
+    {
+      const ds = dreadStorm.tick({ sharedMs: Date.now() + _sharedOffsetMs, eye: mwv.eye, weight: dreadW });
+      if (isEnhanced()) for (const s of ds.strikes) struckFar.push({ ...s, flashColor: DREAD_FLASH_COLOR });
+      for (const s of ds.sounds) audio.play3d(s.clip, thunderSourceAt(cam.pos, s.x, s.z), s.volume, { refDistance: THUNDER_SOURCE_M, maxDistance: THUNDER_SOURCE_M * 8, far: true });
+    }
     // BOLT: THE STRIKES THEMSELVES - a ground strike's channel from its cloud's base to the land, far or overhead, and
     // the light a near one throws on it (systems/lightning.js). Enhanced only. Under Dynamic Skies too: the mod draws no
     // channel, and its own flash keeps the light (setFlashLight below takes the mod's first).
     boltFrame = isEnhanced()
       ? stormLights.frame({ seconds: now / 1000, eye: mwv.eye, distant: struckFar, player: lightning, shown: !!lightningShown, test: Number(params.get('bolttest')) || 0 })
       : { bolts: [], flash: null };
+    sky.setDread(dreadW, dreadCloudGlow(boltFrame.bolts));   // EVENT1: the sky's grade, and the red strikes' glow in its deck
     // EV5: the moons light the night - the masser as a second key, the
     // secunda folded into the ambient. null by day and under classic.
     const moonNow = sky.moonlight();
     renderer.setMoonlight(moonNow);
     renderer.setLighting(
-      withMoonAmbient(exteriorAmbient(minute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), wxNow.sun), moonNow), sunScale(minute) * wxNow.sun * flash * sky.sunFactor(),   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground); WX2: the scale is the front's
-      new Float32Array(SUN_RIG_COLOR));
+      dreadLight(withMoonAmbient(exteriorAmbient(minute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), wxNow.sun), moonNow), dreadW), sunScale(minute) * wxNow.sun * flash * sky.sunFactor() * (1 - DREAD_KEY_DIM * dreadW),   // EVENT1: the land under the dread's light   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground); WX2: the scale is the front's
+      dreadLight(SUN_RIG_COLOR, dreadW));
     // R12: the player-following indirect light rides the camera in
     // the streaming world (walk mode keeps cam at the player's eye).
     {

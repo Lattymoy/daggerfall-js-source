@@ -4837,7 +4837,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4233` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4239` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:255`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -7049,7 +7049,7 @@ answers that exact string in the object's sleep, no event, no wake. Only a
 CHANNEL session (chat, `presence: false`) used it. A presence session's
 liveness rode the pose.
 
-**Now (`src/net/wire.js:896`, `src/net/online.js:1708`):**
+**Now (`src/net/wire.js:916`, `src/net/online.js:1746`):**
 
 - `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
   before) or every 20 s standing, as the peers' proof of life and the silence
@@ -8160,3 +8160,23 @@ gated (DISC12's `lh`/`wb`, PCORPSE1's `dd`); an older relay's `validPose` drops 
 still rides nothing (MW-D51). Record: Handheld-Torches.md HT-WAIST ("Online: the others see it"). Pins:
 `test/htwaistnet_peers.test.js` - the door, the producer and its sender, a session through the real relay Room to the
 watcher's drawn pose, a peer's whole `createFpArm()` body hanging and hiding it, and its swing off the stub camera.
+
+## EVENT1 (2026-09-25, Mac: "I wanna do a fun live event for the server. Wanna setup the infastructure for this without breaking anything. We have a lot of major updates today, but I want to turn the skies of Daggerfall into a detailed oblivion styled dread in prep for the world bosses. Red lightning and such") - a live event, staged for everyone online: the dread, world110
+
+Asked two things first: how it is switched (Mac: **a staff command** - `/event dread on|off`, the dev glyph, as /red) and who sees it (Mac: **online players only**).
+
+**The infrastructure - one word, carried by the hub.** The relay keeps no global state and fans nothing across rooms (the constructor's own note); the one room every online player holds a socket to is the hub (`chat:world`, CHAT_TABS' World link). So a live event lives there:
+
+- **Staged** by `{t:'stage', kind}` (net/wire.js: `kind` one of `LIVE_EVENTS` - `['dread']`, appended and never renamed - or `''` to end). RED1's law exactly: `parseClient` checks the shape; the relay asks the dev glyph off the VERIFIED token (a player, or a hello that types the glyph, is ignored in silence); metered on its own bucket (`eventGate`, EVENT_HZ_MAX 1) before the authority is asked; anywhere but the hub it is junk.
+- **Kept** in the hub's storage under `EVENT_KEY` (`event:live`, `{kind, at}`) - a prefix apart from every one a drain or the hub's sweep deletes, so an event outlives a quiet night and a deploy, and ends when a dev ends it. Read once per instance (`_liveEvent`); a stored word this relay does not know is none.
+- **Said** to every hub socket as `{t:'event', kind, at}` (the stager's own receipt included), and to a late joiner on the hub welcome's `ev` (absent: none; never on a region channel or a place room).
+- **The client** (`OnlineSession`): the hub's word handed on through one door (`_setEvent`, once per change) - a welcome's WHOLE (the player did not watch it come), a frame's LIVE; a hub welcome without one ends it; `leave()` ends it (online's alone). `sendStage` goes only to a relay that knows the frame (`EVENT_RELAY_MIN` 110 - an older relay CLOSES the socket on an unknown type) and only on the hub. world.js hears the event from the hub link alone and parses `/event` beside `/red`, never guarded (the relay asks the token); a relay too old is said in words.
+- **Without breaking anything:** an old client ignores the unknown frame and the welcome's extra field (its `_receive` has no final else), so it sees no event; a new client against an old relay never sends the frame and reads none. Offline, nothing is reached and every path below is its input untouched.
+
+**The dread - world/dreadSky.js.** The port draws its sky three ways (the classic panorama, its own dome, Dynamic Skies - the default) with the volumetric clouds over the last two, each keeping its colour in its own shape. So the dread is ONE COLOUR GRADE where each writes its pixel: a colour's luminance, dimmed (DREAD_DIM), read along a crimson ramp - black-maroon, blood, burning orange (DREAD_RAMP). The zenith comes out dark, the horizon glows, lit cloud edges burn, and it holds at any hour and under any weather because it reads the sky's own light. `dreadGrade` is the law; `DREAD_GLSL` is the same law generated from the same numbers, graded by each pass's `uDread` (skyRenderer, enhancedSky, dynamicSkiesRenderer, the clouds' composite - the cloud's own colour, un-premultiplied, its opacity put back). The controller (`createSkyController().setDread(w, glow)`) sets every pass's weight, grades the fog and the water's reflection on either lane, and while the dread is up the SKY wears the storm (`DREAD_SKY_WORD` 'thunder' - the dome's row, the clouds' profile, the mod's preset) while the sim's weather, the wind, the rain and their sound go on as they were. The host grades the land's key and ambient light (`dreadLight`) and dims the key by DREAD_KEY_DIM.
+
+**The red storm.** Strikes on the SHARED clock (WORLD5): slots of DREAD_SLOT_MS, each holding a strike with DREAD_STRIKE_CHANCE x the weight, its moment, place and kind read from the slot's seed - so every player online sees a strike in the same second, each around themselves, and a frame rate changes nothing; the first tick fires no backlog and a long gap walks only its last DREAD_SLOTS_MAX slots. They ride systems/lightning.js' own bolt field as the distant storms' do, with their colours on them (`color` the channel's, `flashColor` its light - the field and `createStormLights` carry both, the renderer draws each colour apart, `boltGroups`); the burning red strikes light the cloud deck (`dreadCloudGlow`, through `setDread`'s glow - the host's flash stays the storm's). Their thunder arrives its distance over the speed of sound later (`thunderOf`), from its side (`thunderSourceAt`), on both skins; the channels on the enhanced lane, as every bolt.
+
+**It fades.** `createDread`: a change the player watched walks over DREAD_FADE_S (12 s) each way; a welcome's word is whole. Interiors and dungeons draw no sky, so the dread is outside, where the sky is.
+
+**Records.** test/event1_live_event.test.js (18); tools/mutants/event1.json (44, all dead). RELAY_VERSION world110 (`test/relayversion.test.js` row); the exact-version pins moved to it; the source pins of the sky seam re-aimed to the graded forms (audit18, clockArc, DS2, VC3, WATER1, ES1c); mutant records re-aimed where their text moved (B7's welcome, WEATHER3d's composite, DISC17-B now names its one site, SURVTIERS3's two cites). DISC17-B's mutant SURVIVED the re-aim once: its pins matched ANY thunder line of the host's shape, and the dread's own line stood in for the distant storms' - so the pins now hold EVERY thunder line far from the ear, one assertion a line (disc17), and the distant storms' line by its own loop (WEATHER3d); the mutant dies. Deploying world110 drops every connected player once (the relay's own law).

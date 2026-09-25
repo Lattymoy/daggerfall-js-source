@@ -222,8 +222,8 @@
   {
     "name": "B7-channel-welcome-without-the-clock",
     "file": "server/src/index.js",
-    "old": "n: others.length + 1, v: RELAY_VERSION, now: Date.now() }",
-    "new": "n: others.length + 1, v: RELAY_VERSION }",
+    "old": "n: others.length + 1, v: RELAY_VERSION, now: Date.now(), ...(ev",
+    "new": "n: others.length + 1, v: RELAY_VERSION, ...(ev",
     "tests": [
       "test/chat1.test.js",
       "test/world5.test.js"

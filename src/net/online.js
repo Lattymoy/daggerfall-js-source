@@ -72,7 +72,7 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, dmGate, relaySupportsDm, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questInGate, validQuestFrame, QUEST_SEND_MS, QUEST_HUB_MIN_MS, PARTY_MAX, tokenGate, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, parkGate, relaySupportsPark, PARK_CELL_MAX, PARK_KEY_RE, PARK_TTL_MS, relaySupportsChannels, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote, validCardData, cardGate, cardInGate, CARD_FRAME_MAX, CARD_IN_HZ_MAX, relaySupportsCard, validPageData, pageGate, pageInGate, PAGE_FRAME_MAX, PAGE_IN_HZ_MAX, relaySupportsPage, validDuelData, duelGate, duelInGate, DUEL_FRAME_MAX, DUEL_IN_HZ_MAX, relaySupportsDuel, lookGate, relaySupportsLook } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
+import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, dmGate, relaySupportsDm, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questInGate, validQuestFrame, QUEST_SEND_MS, QUEST_HUB_MIN_MS, PARTY_MAX, tokenGate, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, parkGate, relaySupportsPark, PARK_CELL_MAX, PARK_KEY_RE, PARK_TTL_MS, relaySupportsChannels, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote, validCardData, cardGate, cardInGate, CARD_FRAME_MAX, CARD_IN_HZ_MAX, relaySupportsCard, validPageData, pageGate, pageInGate, PAGE_FRAME_MAX, PAGE_IN_HZ_MAX, relaySupportsPage, validDuelData, duelGate, duelInGate, DUEL_FRAME_MAX, DUEL_IN_HZ_MAX, relaySupportsDuel, lookGate, relaySupportsLook, relaySupportsEvent, eventGate, validLiveEvent, LIVE_EVENTS, isSocialRoom } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -289,6 +289,9 @@ export class OnlineSession {
     this.onRed = null;            // RED1: (line) => void: the SERVER's own line - {text, at}, no id and no name, because nobody is speaking it
     this.onDm = null;             // TITLE-N: (line) => void: the Dungeon Master's line - {text, at}, as the server's: a voice over the game, not a player in it
     this.dmOk = false;            // TITLE-N: the relay that welcomed this socket carries /dm (relaySupportsDm) - an older one CLOSES the socket on the frame
+    this.onEvent = null;          // EVENT1: (ev, {live}) => void - the server-wide live event now ({kind, at}) or null; live: it changed while I watched (a welcome's word is not)
+    this.eventOk = false;         // EVENT1: the relay that welcomed this socket knows the `stage` frame (relaySupportsEvent) - an older one CLOSES the socket on it
+    this.liveEvent = null;        // EVENT1: the hub's live event as last said - {kind, at} or null
     this.onMuted = null;          // MOD1: ({until}) => void - the relay says I am muted until then (epoch seconds), or 0: lifted
     this.onFoes = null;           // WORLD2: (id, data) => void - the host's live foes in (a non-host's, from the room's host alone)
     this.tradeOk = false;         // TRADE1: the relay that welcomed this socket routes trade frames (relaySupportsTrade) - an older one CLOSES the socket on the frame, so nothing is sent to it
@@ -365,6 +368,7 @@ export class OnlineSession {
     this._cbucket = null;      // the client's own chat gate (AUDIT CHAT A8): the relay's law, run first
     this._rbucket = null;      // RED1: and the server line's own, well under it - the relay's law again, run first
     this._dbucket = null;      // TITLE-N: the Dungeon Master's line's own - dmGate, the relay's law run first
+    this._ebucket = null;      // EVENT1: the stage's own - eventGate, the relay's law run first
     this._mbucket = null;      // MOD1: and a mute order's, the same way
     // CHAT-G: the gate on lines COMING IN, one bucket per room because
     // that is the unit the relay spends by. Room -> bucket; a room let go
@@ -451,6 +455,7 @@ export class OnlineSession {
     this._who.clear();   // AUDIT WORLD6b-iii(e) B4: the asked list goes with the room - a stranger asked here is asked at once in the next
     this.status = 'closed';
     this._setHost(null);   // AUDIT WORLD2 C2: through the one door, so the world host hears the seat go with the room
+    this._setEvent(null, false);   // EVENT1: a player who leaves the server leaves its event - it is online's alone
   }
 
   /** WORLD6b-iii(b): the HALO - the neighbouring cell rooms to hold besides my own (wire.cellHaloFor's list): a room
@@ -1148,6 +1153,27 @@ export class OnlineSession {
     return true;
   }
 
+  /** EVENT1: stage a live event for everyone online (`kind` one of LIVE_EVENTS), or end the one staged ('') - asked of
+   *  the HUB alone, the one room every online player holds, and of a relay that knows the frame (an older one CLOSES
+   *  the socket on it). Whether this player may is the relay's question, asked of the token; a refusal is silence. */
+  sendStage(kind) {
+    if (kind !== '' && !LIVE_EVENTS.includes(kind)) return false;
+    if (!this.eventOk || !isSocialRoom(this.room ?? '')) return false;
+    const gate = eventGate(this._ebucket, this._now());
+    if (!gate.pass) return false;
+    if (!this._send({ t: 'stage', kind })) return false;
+    this._ebucket = gate.bucket;
+    return true;
+  }
+
+  /** EVENT1: the one door the live event changes through - said once per change, so a repeat welcome says nothing. */
+  _setEvent(ev, live) {
+    const cur = this.liveEvent;
+    if (cur === ev || (cur && ev && cur.kind === ev.kind && cur.at === ev.at)) return;
+    this.liveEvent = ev;
+    this._deliver('event', () => this.onEvent?.(ev, { live }));
+  }
+
   /** MOD1: carry a mute order the account service signed into this
    *  room. The room checks the signature; this checks only that there is
    *  one to carry, and the rate, as the relay will. False when nothing went. */
@@ -1365,6 +1391,11 @@ export class OnlineSession {
       if (primary) this.parkOk = relaySupportsPark(relayV);   // HCC-PARK: the same law for the park frame
       if (primary) this.lookOk = relaySupportsLook(relayV);   // PROFILE2
       else { const h = this._halo.get(room); if (h) h.lookOk = relaySupportsLook(relayV); }   // PROFILE2: a halo says for itself
+      if (primary) this.eventOk = relaySupportsEvent(relayV);   // EVENT1
+      // EVENT1: THE HUB SAYS THE LIVE EVENT ON ITS WELCOME (`ev`), and says nothing when there is none - so a hub
+      // welcome without one ENDS any event this session held (a relay restarted without it, or an old relay that
+      // knows none). Another room's welcome carries none and says nothing about it.
+      if (primary && isSocialRoom(room)) this._setEvent(validLiveEvent(m.ev) ? { kind: m.ev.kind, at: m.ev.at } : null, false);
       // merged, not wiped: a peer already known keeps where it is drawn
       const keep = new Set();
       for (const p of Array.isArray(m.peers) ? m.peers : []) {
@@ -1566,6 +1597,13 @@ export class OnlineSession {
       if (!text) return;
       if (!this._lineIn(room, null, now)) return;
       this._deliver('chat', () => this.onRed?.({ text, at: Number.isFinite(m.at) ? m.at : now }));
+    } else if (m.t === 'event') {
+      // EVENT1: THE LIVE EVENT STAGED OR ENDED, by the hub alone - known by the frame type, as the server's line is. A
+      // word this build does not know is no event (LIVE_EVENTS: a new one is safe against an old build).
+      if (!primary || !isSocialRoom(room)) return;
+      if (m.kind === '') { this._setEvent(null, true); return; }
+      const ev = { kind: m.kind, at: m.at };
+      if (validLiveEvent(ev)) this._setEvent(ev, true);
     } else if (m.t === 'dm') {
       // TITLE-N: THE DUNGEON MASTER SPEAKING - the red arm's law: known by the FRAME TYPE, no id and no name on it to
       // forge, and gated coming in on the chat line's own bucket, because the relay is the player's own choice.

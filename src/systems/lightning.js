@@ -172,14 +172,15 @@ export function createBoltField() {
       for (const b of live) {
         const bright = flickerAt(b.strike, seconds - b.at) * (b.strength ?? 1);
         if (bright <= 0) continue;
-        if (b.segs) bolts.push({ segs: b.segs, bright });
+        if (b.segs) bolts.push(b.color ? { segs: b.segs, bright, color: b.color } : { segs: b.segs, bright });   // EVENT1: a strike's own colour rides to its channel
         if (b.strike.kind !== 'cg' || !eye) continue;
         const d = Math.hypot(b.x - eye[0], b.z - eye[2]);
         const reach = bright * (1 - d / FLASH_REACH_M);
         if (reach > best) {
           best = reach;
           const k = 3 * reach, t = Math.min(d, FLASH_TOWARD_M) / Math.max(d, 1e-6);
-          flash = { x: eye[0] + (b.x - eye[0]) * t, y: eye[1] + FLASH_UP_M, z: eye[2] + (b.z - eye[2]) * t, range: FLASH_RANGE_M, color: [FLASH_COLOR[0] * k, FLASH_COLOR[1] * k, FLASH_COLOR[2] * k] };
+          const fc = b.flashColor ?? FLASH_COLOR;   // EVENT1: and to the light it throws
+          flash = { x: eye[0] + (b.x - eye[0]) * t, y: eye[1] + FLASH_UP_M, z: eye[2] + (b.z - eye[2]) * t, range: FLASH_RANGE_M, color: [fc[0] * k, fc[1] * k, fc[2] * k] };
         }
       }
       return { bolts, flash };
@@ -227,7 +228,8 @@ export const STORM_BASE_M = 500;
 /**
  * The hosts' one call a frame: the strikes to add and the light to draw. `frame({ seconds, eye, eyeHeight,
  * distant, player, shown })` - `distant` the distant storms' strikes fired this frame in HOST metres
- * (`[{ x, z, seed, kind, strength }]`, distantStorms.js's `strikes` moved into the host's frame), `player` the
+ * (`[{ x, z, seed, kind, strength, color?, flashColor? }]`, distantStorms.js's `strikes` moved into the host's frame;
+ * EVENT1: the dread's red strikes ride the same list, their colours on them - the channel's and its light's), `player` the
  * storm overhead's LightningPlayer and `shown` whether its storm is the one shown (a strike it throws while it is
  * not is not seen - its count is still followed, so one shown later does not fire the backlog). `test` (the
  * `?bolttest=<metres>` door, for shots): one ground strike that far east of the eye, held at its first stroke's
@@ -244,7 +246,7 @@ export function createStormLights() {
       }
       for (const s of distant) {
         const c = strikeColumn(eye, s.x, s.z, STORM_BASE_M, eyeHeight);
-        field.add({ x: s.x, z: s.z, ...c, seed: s.seed, kind: s.kind, strength: s.strength ?? 1, at: seconds });
+        field.add({ x: s.x, z: s.z, ...c, seed: s.seed, kind: s.kind, strength: s.strength ?? 1, at: seconds, ...(s.color ? { color: s.color } : {}), ...(s.flashColor ? { flashColor: s.flashColor } : {}) });   // EVENT1: a coloured strike (the dread's) keeps its colours
       }
       const count = player?.strikes ?? null;
       if (count !== null && seen !== null && count !== seen && shown) {
