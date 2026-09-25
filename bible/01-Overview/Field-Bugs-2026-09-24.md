@@ -1359,6 +1359,8 @@ it is reversed.
 `test/lootstack.test.js` (the source pin). Mutants `tools/mutants/prwagon1.json`
 (7 dead); `hcc.json` and `disc20.json` re-aimed.
 
+---
+
 # WISPS-RETURN — the wind wisps are streaks again (2026-09-25)
 
 **Request** (Mac): "I want to return to the original wind wisps before our
