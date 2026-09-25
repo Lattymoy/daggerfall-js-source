@@ -2096,7 +2096,11 @@ Stamped as the welcome is built. `RELAY_VERSION` is `world51`.
 Online pane's copy the law of what is shared; WORLD5 shared the clock
 and the sky and said nothing. One sentence: the clock and the sky are
 the world's and run on real time; a rest, a trip, a sentence or a
-lesson takes none of it; the quest clocks stand still.
+lesson takes none of it; the quest clocks stand still. [DISC25-D, 2026-09-25:
+that last clause had been false since WORLD7, which charges quest clocks
+with played time online; the pane says so now - "so a quest that waits for
+an hour of the day waits for that hour of the world. Quest timers run while
+you play."]
 
 **C13 - THE INSTALL SAT BELOW THE SEASON READS.** `bootWorld` read
 `worldMinutes()` for the climate season and the mod's four-valued one

@@ -983,6 +983,14 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
   font: inherit; font-size: 15px; font-variant-numeric: tabular-nums;
 }
 .goldfield input:focus-visible { outline: none; border-color: var(--brass); }
+/* DISC25-F: the card's how-many field - a stack's split, beside the button that moves it */
+.qtyfield { display: inline-flex; align-items: center; gap: 6px; color: var(--dim); font-size: 12px; }
+.qtyfield input {
+  width: 64px; min-height: 36px; padding: 0 8px;
+  background: #0b0e12; border: 1px solid var(--iron); color: var(--bone);
+  font: inherit; font-size: 14px; font-variant-numeric: tabular-nums;
+}
+.qtyfield input:focus-visible { outline: none; border-color: var(--brass); }
 /* ONLINE1: the Online card's two fields */
 .card label.field { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
 /* ACC1e F1: THIS SAID var(--ash) AND NOTHING HAS EVER DEFINED --ash.
