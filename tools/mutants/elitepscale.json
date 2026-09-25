@@ -1,0 +1,23 @@
+[
+  {
+    "name": "EPS-the-melee-hit-is-not-weighed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const dmg = _weighHit(f, foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {",
+    "new": "const dmg = ((_f, d) => d)(f, foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {",
+    "tests": ["test/elitepscale.test.js"]
+  },
+  {
+    "name": "EPS-elite-copies-are-not-shared",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    return i >= 0 && i < _layoutFoes;",
+    "new": "    return i >= 0 && i < _layoutFoes && !f.entity?.elite;",
+    "tests": ["test/elitepscale.test.js"]
+  },
+  {
+    "name": "EPS-camp-room-asks-the-ungrown-group",
+    "file": "src/scenes/world.js",
+    "old": "            const size = partyGroupMembers(h.mobileTypes, partySize()).length;",
+    "new": "            const size = h.mobileTypes.length;",
+    "tests": ["test/elitepscale.test.js"]
+  }
+]

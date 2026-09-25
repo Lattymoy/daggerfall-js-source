@@ -203,7 +203,7 @@ test('H1: the four consumers are wired, and each goes through the law', () => {
   // The point of the lane. A rule per consumer, because three of the
   // four are host code with no node coverage.
   const modes = code('scenes/worldModes.js');
-  assert.match(modes, /houseOwned: isHouseOwned\(/, 'CanRest sleeps in a house you own (V5 left this false)');
+  assert.match(modes, /houseOwned: interiorHome \? interiorHome\.own : isHouseOwned\(/, 'CanRest sleeps in a house you own (V5 left this false)');   // HOME1 re-aim: online, in my online home too
   assert.match(modes, /isHouseOwned: \(key\) => isHouseOwned\(/, 'the lock ladder knows your own front door');
   assert.match(modes, /ownsHouse: \(\) => ownsHouse\(/, 'the bank window asks the registry');
   assert.match(code('scenes/world.js'), /isHouseOwned: \(buildingKey\) => isHouseOwned\(/,

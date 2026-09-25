@@ -398,8 +398,11 @@ export function itemLine(item, identity = undefined) {
     lit: !!item && identity?.lightSource === item,
     broken: isBrokenItem(item),
     // The address only. Fetching is the view's business, because a
-    // model has no repaint to schedule.
-    image: img,
+    // model has no repaint to schedule. DECOR2b: archive 0 is NO picture,
+    // the classic drawer's own law (nativeInventory.js `!img.archive`) -
+    // a piece of furniture (the group has none but the pillows') shows
+    // its initials, not TEXTURE.000's solid colour.
+    image: img?.archive ? img : null,
     // DISC24-B: the model an item with no art of its own is pictured by
     // (the Small Cart's wagon) - the classic lists' fallback, the same one.
     model: img ? null : inventoryItemModel(item),

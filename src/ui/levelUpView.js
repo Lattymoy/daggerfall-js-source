@@ -128,7 +128,7 @@ export const ATTRIBUTE_BLURB = Object.freeze({
   // that promises a penalty the game does not apply is teaching a
   // player to spend a point on nothing.
   strength: 'Adds to every blow you land, and to the weight your pack will hold.',
-  // systems/chargen.js:263 - spellPoints(intelligence, multiplier) is the whole magicka pool.
+  // systems/chargen.js:264 - spellPoints(intelligence, multiplier) is the whole magicka pool.
   intelligence: 'Sets your pool of spell points, by your class\'s own multiplier.',
   // systems/spellcast.js:158 - `saving += magicResist(liveStat(target,
   // 'willpower'))`, the CONSUMER of DFU's MagicResist. The first cut
@@ -147,7 +147,7 @@ export const ATTRIBUTE_BLURB = Object.freeze({
   agility: 'Rides every swing: a tenth of the gap between your agility and your foe\'s.',
   // systems/chargen.js hitPointsPerLevelUp reads hitPointsModifier = floor(endurance / 10) - 5.
   endurance: 'Rolls into the health you gain at every level from here on.',
-  // combat/formulas.js:836 - merchant reaction takes personality / 5; systems/court.js:435 takes it again.
+  // combat/formulas.js:837 - merchant reaction takes personality / 5; systems/court.js:435 takes it again.
   personality: 'Warms merchants, judges and anyone else weighing what you are worth.',
   // player/motor.js:482 walkSpeed(stats.speed) is how fast you move;
   // combat/weaponRig.js:420 reads liveStat speed for the swing.

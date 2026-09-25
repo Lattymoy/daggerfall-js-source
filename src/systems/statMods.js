@@ -139,7 +139,7 @@ export function killIfAnyLiveStatZero(entity, sinks, dt = 0) {
     // of them on their first frame.
     if (entity.stats?.[stat] == null) continue;
     if (liveStat(entity, stat) !== 0) continue;
-    sinks?.hurt?.(entity.health);
+    sinks?.hurt?.(entity.health, { whole: true });   // AUDIT PSCALE1 DOORS-1: DFU's CurrentHealth = 0 - a kill, never divided by a party's toughness
     return true;
   }
   return false;

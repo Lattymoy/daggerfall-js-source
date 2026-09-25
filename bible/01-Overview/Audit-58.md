@@ -168,7 +168,7 @@ now has a name per host.
 readers asked one.** `interiorFoes` and `interiorGuards` are both live
 inside a building; the senses feed, the enchant pool and the rest refusal
 each walked only the first, so the indoor city watch was invisible to all
-three (`src/scenes/worldModes.js:1015-1088`). **The exterior host mounted no
+three (`src/scenes/worldModes.js:1071-1144`). **The exterior host mounted no
 enchant ctx at all** - the session has ONE, and that host set none, so
 every enchantment payload that needs a foe idled in the host a player
 spends most of their time in (`setDefaultEnchantCtx` is imported at
@@ -279,7 +279,7 @@ hardcoded F1-F4 literals that the controls window could not rebind.
 
 **`cacheScene()` discarded `droppedPiles`.** `currentSceneState()` builds
 three fields, `restoreInteriorScene()` reads three back, and the store
-between them destructured two (`src/systems/sceneCache.js:110-114`), so
+between them destructured two (`src/systems/sceneCache.js:122-126`), so
 `restorePiles(undefined)` killed every live pile and restored nothing:
 interior dropped loot never cached, never rode the save, and was
 destroyed on every exit. **The Ledger recorded the opposite** - the
@@ -521,7 +521,7 @@ Left, deliberately, each recorded at its site or here:
   a zero-damage arrow into a pacified watchman turned nobody while the
   identical SWING turned the area. `handleAttackFromPlayer` is on the
   pool's public surface now (as the encounter pool's has always been,
-  `exteriorFoes.js:1982`) and all three seams route by pool membership.
+  `exteriorFoes.js:2022`) and all three seams route by pool membership.
 - ~~The indoor WATCH refuses the Wabbajack: DFU transforms any
   `EnemyEntity` and `Knight_CityWatch` is one, but the guard pool exposes
   no remove/spawn pair. The refusal and its reason are written into the

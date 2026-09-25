@@ -253,18 +253,21 @@ export function resolveHover(hit, { name = null, contents = null } = {}) {
   // is still said - and `name` carries the reason, so the painted text and the repaint guard see the same thing.
   // `actionsUnlit` (a player's list) starts with nothing lit: a plain click on a player is not a request sent.
   const acts = Array.isArray(named.actions) ? named.actions.filter((a) => a?.id != null && a.label) : [];
+  // RENOWN1: a player's Renown rides the frame BESIDE the title, never in its text - the plaque boxes it left of the name
+  // (ui/worldPlaque.js), as the name over their head does, and the signature below sees it
+  const renowned = (f) => { if (Number.isSafeInteger(named.renown) && named.renown > 0) f.renown = named.renown; return f; };
   if (acts.length) {
     const f = frame(key, 'actions', named.title, named.subs ?? [], acts.map((a) => ({
       name: a.disabled ? `${a.label} (${a.why || 'not now'})` : a.label, id: a.id, disabled: !!a.disabled, stack: 0, rarity: null, item: null,
     })));
     if (named.actionsUnlit) f.startUnlit = true;
-    return f;
+    return renowned(f);
   }
   const f = frame(key, 'name', named.title, named.subs ?? []);
   // UXB1-N: a namer's TONE - how the title is coloured (worldTooltips.js houseContainerHover's `private`). Carried only
   // when a namer says one, so every other frame keeps its shape.
   if (typeof named.tone === 'string' && named.tone) f.tone = named.tone;
-  return f;
+  return renowned(f);
 }
 
 /**
@@ -337,5 +340,5 @@ export function selectedRow(sel, frame) {
 export function frameSignature(f) {
   if (!f) return null;
   const rows = f.rows.map((r) => `${r.name}\u0002${r.stack}\u0002${r.rarity ?? ''}`).join('\u001f');
-  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}${f.tone ? `|${f.tone}` : ''}`;   // UXB1-N: a tone that changes repaints
+  return `${f.key}|${f.kind}|${f.renown ?? ''}|${f.title}|${f.subs.join('\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}${f.tone ? `|${f.tone}` : ''}`;   // RENOWN1: the boxed Renown is painted, so it is signed; UXB1-N: a tone that changes repaints
 }

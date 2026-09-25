@@ -99,6 +99,18 @@ const copySceneEntry = (d) => ({
   // on the floor - a torch left on a pixel never came back with it. The camps came with the fix.
   droppedTorches: (d.droppedTorches ?? []).map((t) => ({ ...t, position: [...(t.position ?? [])] })),
   camps: (d.camps ?? []).map((c) => ({ ...c, pos: [...(c.pos ?? [])] })),
+  // DECOR1c: what an owner placed in the offline house or ship (net/decorLaw.js's pieces, the building's frame -
+  // an online home's are the account service's and are not written here), and what the storage pieces hold (by
+  // piece id, the online home's too - the owner's things are the owner's save's). A record written before DECOR1
+  // carries neither and reads as a room with nothing placed.
+  decor: (d.decor ?? []).map((p) => ({
+    ...p, pos: [...(p.pos ?? [])], rot: [...(p.rot ?? [])], flat: p.flat ? [...p.flat] : null,
+    light: p.light ? { ...p.light, color: [...(p.light.color ?? [])] } : null,
+  })),
+  decorItems: Object.fromEntries(Object.entries(d.decorItems ?? {}).map(([id, list]) => [id, (list ?? []).map((it) => ({ ...it }))])),
+  // DECOR2a: the owner's own items standing in the room, by piece id - the save's in every room, the online home's
+  // too (its piece is the service's, the thing itself the owner's). A record written before DECOR2 carries none.
+  decorOwn: Object.fromEntries(Object.entries(d.decorOwn ?? {}).map(([id, item]) => [id, { ...item }])),
   // TERRAIN-SCALE1: `frame` names what the positions above are measured from ('building': the interior's own
   // building, as DFU's SerializableLootContainer restores an interior container by its localPosition; null: the
   // writer's own frame), and `terrainScale` the ground an exterior height stood on - absent on an entry written
@@ -135,6 +147,26 @@ export function restoreCachedScene(cache, sceneName) {
   const data = cache.scenes.get(sceneName) ?? null;
   cache.scenes.delete(sceneName);
   return data;
+}
+
+/** DECOR1e: A SOLD ROOM'S PLACED PIECES, taken out of its scene and answered as they were - none of them stands again
+ *  and none is paid back twice (the offline house's and the ship's live here, DECOR1c). What they held stays in the
+ *  scene and goes with it at the next clearing, as a sold house's own containers' things do. */
+export function takeSceneDecor(cache, sceneName) {
+  const d = cache.scenes.get(sceneName);
+  if (!d?.decor?.length) return [];
+  const pieces = d.decor;
+  d.decor = [];
+  return pieces;
+}
+
+/** DECOR2a: A SOLD ROOM'S OWN ITEMS - the owner's things that stood in it - taken out of its scene for the pack (Mac:
+ *  "Back to pack"), and answered as they were; none comes back twice. */
+export function takeSceneOwn(cache, sceneName) {
+  const d = cache.scenes.get(sceneName);
+  const items = Object.values(d?.decorOwn ?? {});
+  if (d) d.decorOwn = {};
+  return items;
 }
 
 /** ClearSceneCache (:115-148). `start` is DFU's own parameter name
@@ -193,7 +225,7 @@ export function restoreSceneCache(cache, snap) {
 // HOUSE deed's AddPermanentScene, which needed the building directory
 // to know which building was bought: H1/H2 shipped both halves -
 // banking.js:201 calls the hook inside allocateHouseToPlayer with the
-// bought building's own mapId and key, and worldModes.js:2641 supplies
+// bought building's own mapId and key, and worldModes.js:2720 supplies
 // it as addPermanentScene(sceneCache(), interiorSceneName(mapId, key)),
 // reached from the bank's buy arm (:2144-2148), the knightly gift
 // (:2752) and :4933, with sellHouse dropping the scene again (:2184). The

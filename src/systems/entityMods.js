@@ -62,6 +62,18 @@ export const entityFoldNames = () => [...(_folds.keys())];
 const _weaponMods = new Map();
 /** Register a weapon-damage modifier by name: `fn(weapon, damage) -> damage`. */
 export function registerWeaponDamageMod(name, fn) { if (typeof fn === 'function') _weaponMods.set(name, fn); else _weaponMods.delete(name); }
+const _blowMods = new Map();
+/** SIGIL1: register a modifier over a WEAPON BLOW's whole damage - `fn(weapon, damage, attacker, target) -> damage`,
+ *  read at the tail of FormulaHelper's weapon damage (after the strength, the material and the enemy-type term, before
+ *  DFU's mod hook, its last line), where the
+ *  attacker and the target are known: the online sigil (systems/sigil.js) is the one that needs them. */
+export function registerWeaponBlowMod(name, fn) { if (typeof fn === 'function') _blowMods.set(name, fn); else _blowMods.delete(name); }
+/** The blow's damage through every registered blow modifier, in registration order. */
+export function weaponBlowMods(weapon, damage, attacker, target) {
+  let d = damage;
+  for (const fn of _blowMods.values()) d = fn(weapon, d, attacker, target);
+  return d;
+}
 
 /** Run every fold and sum the channels onto `entity._mods`. Called at
  *  every equip change and every magic round; cheap for an entity that

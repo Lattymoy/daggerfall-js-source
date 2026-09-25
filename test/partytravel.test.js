@@ -208,12 +208,12 @@ test('PARTY-TRAVEL wire: the relay\'s door projects the fields through (validPar
   assert.deepEqual(m.p.tv, { x: 300, y: 150, o: 2, at: NOW, go: null });
   assert.equal(m.p.tr, NOW - 5);
   assert.equal(m.p.wx, f.wx);
-  assert.equal(RELAY_VERSION, 'world110', 'PARTY-TRAVEL: the party pose\'s journey fields');
-  assert.equal(PARTY_TRAVEL_RELAY_MIN, 110);
-  assert.equal(relaySupportsPartyTravel('world110'), true);
-  assert.equal(relaySupportsPartyTravel('world111'), true);
-  assert.equal(relaySupportsPartyTravel('world109'), false, 'the live relay before this deploy strips the round - no leader waits on answers that cannot come');
-  for (const v of [null, '', 'world', 'World110', 110]) assert.equal(relaySupportsPartyTravel(v), false);
+  assert.equal(RELAY_VERSION, 'world112', 'PARTY-TRAVEL: the party pose\'s journey fields (world110 on its branch; EVENT1 and RENOWN1 took 110-111)');
+  assert.equal(PARTY_TRAVEL_RELAY_MIN, 112);
+  assert.equal(relaySupportsPartyTravel('world112'), true);
+  assert.equal(relaySupportsPartyTravel('world113'), true);
+  assert.equal(relaySupportsPartyTravel('world111'), false, 'the relay before this deploy (RENOWN1\'s, and EVENT1\'s before it) strips the round - no leader waits on answers that cannot come');
+  for (const v of [null, '', 'world', 'World112', 112]) assert.equal(relaySupportsPartyTravel(v), false);
   // the hub link reads it off its welcome
   const link = (v) => {
     const { FakeWS, sockets } = fakeSocketClass();
@@ -223,8 +223,8 @@ test('PARTY-TRAVEL wire: the relay\'s door projects the fields through (validPar
     sockets[0].receive({ t: 'welcome', id: 'peer-me', peers: [], n: 1, v });
     return s.partyTravelOk;
   };
-  assert.equal(link('world110'), true);
-  assert.equal(link('world109'), false);
+  assert.equal(link('world112'), true);
+  assert.equal(link('world111'), false);
 });
 
 test('PARTY-TRAVEL relay: the real Room fans a member\'s journey fields to the party - the leader\'s round and feet reach the member, the member\'s answer reaches the leader - and the widest hub attachment still fits the runtime\'s 2 KiB', () => quiet(async () => {

@@ -69,6 +69,8 @@
 //                                buildingType, factionId} } |
 //                                { dungeon: {dungeonType} } | null
 //   isHouseOwned(buildingKey)  - DaggerfallBankManager (default false)
+//   isPlayerHome(mapId, key)   - HOME1: a player's online home, which no
+//                                quest may pick (default false)
 //   buildingNameOpts()         - generateBuildingName's resolver
 //                                bundle (nameBank/ruler/faction...)
 //   playerPixel()              - the player's current MAP PIXEL
@@ -1449,7 +1451,7 @@ export class QuestMachine {
    *  faction ("This effectively shuts down several named NPCs during
    *  main quest") - and TalkManager.cs does not contain the word
    *  Listener at all. The port already ships that reader, at
-   *  src/scenes/worldModes.js:2710. A pending marker over shipped work
+   *  src/scenes/worldModes.js:2789. A pending marker over shipped work
    *  is worse than no marker: it sends the next reader looking for
    *  work that is done, in a file that never had it. */
   addFactionListener(factionID, owner) {

@@ -1120,7 +1120,14 @@ ${badgeCss()}
   flex: 0 0 96px; font-size: 10.5px; letter-spacing: 0.16em;
   text-transform: uppercase; color: var(--dim);
 }
-.card ul.acctfacts .acctval { flex: 1 1 auto; min-width: 0; color: var(--bone); font-size: 15px; }
+.card ul.acctfacts .acctval { flex: 1 1 auto; min-width: 0; color: var(--bone); font-size: 15px; overflow-wrap: anywhere; }
+/* RENOWN1 - THE RENOWN, LEFT OF THE NAME on the account card: the
+   plate the name over a head wears (ui/nameLayer.js .dfname-renown), at the
+   heading's scale. */
+.card h3 .acctrenown { display: inline-block; vertical-align: middle; font-size: 0.6em; line-height: 1.2;
+  padding: 1px 5px; border-radius: 2px; min-width: 1.4em; text-align: center; font-variant-numeric: tabular-nums;
+  color: #f2c46b; background: rgba(242, 196, 107, 0.1); border: 1px solid rgba(242, 196, 107, 0.8); margin-right: 0.35em; }
+.card h3 .acctrenown:empty { display: none; }   /* AUDIT RENOWN1 UI-8: an empty box is never drawn, whatever the script above it does */
 
 /* ═══ THE RECOVERY CODE ═══════════════════════════════════════════
    THE ONE MOMENT THIS STRING EXISTS. Email is completely optional
@@ -2090,8 +2097,11 @@ ${badgeCss()}
 .px-win.px-acctwin .card.acct label.field { align-items: center; }
 .px-win.px-acctwin .card.acct label.field input { text-align: center; width: 100%; }
 .px-win.px-acctwin .card.acct ul.acctfacts li { justify-content: center; }
-.px-win.px-acctwin .card.acct ul.acctfacts .acctkey,
-.px-win.px-acctwin .card.acct ul.acctfacts .acctval { flex: 0 0 auto; }
+/* AUDIT RENOWN1 UI-1: the KEY keeps its width and the VALUE may shrink and wrap. Both were "0 0 auto", and the
+   Renown rows were the first long values this list held - "Mara Venn - Renown 10, 490 / 2,150 XP to Renown 11"
+   ran off both sides of a phone's window, the key and the name cut away where nothing could scroll to them. */
+.px-win.px-acctwin .card.acct ul.acctfacts .acctkey { flex: 0 0 auto; }
+.px-win.px-acctwin .card.acct ul.acctfacts .acctval { flex: 0 1 auto; min-width: 0; overflow-wrap: anywhere; }
 /* The card inside brings its own frame, and a box inside a box reads
    as a mistake - the window IS the frame here. */
 .px-win.px-acctwin .card.acct { border: 0; background: none; padding: 0; margin: 0; }
@@ -4032,6 +4042,11 @@ ${badgeCss()}
 .wplaque.on { display: block; }
 .wplaque-title { font-size: 15px; line-height: 1.4; text-align: center; color: #d8cfae; }
 .wplaque-titleline { display: block; }
+/* RENOWN1 - a player's Renown on the plaque: the number in the box it wears over their head (ui/nameLayer.js
+   .dfname-renown), left of the name on the title's first line. */
+.wplaque-renown { display: inline-block; margin-right: 0.4em; padding: 0 0.3em; min-width: 1.2em; text-align: center;
+  font-size: 0.85em; line-height: 1.3; vertical-align: 1px; font-variant-numeric: tabular-nums;
+  color: #f2c46b; background: rgba(14, 16, 19, 0.6); border: 1px solid rgba(242, 196, 107, 0.8); border-radius: 2px; }
 .wplaque-sub { font-size: 12px; line-height: 1.4; text-align: center; color: #7d7460; }
 /* UXB1-N (2026-09-25, the UX backlog): somebody else's container - its
    title in the ember a warning wears, its "Private property" line under

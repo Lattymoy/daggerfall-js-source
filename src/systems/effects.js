@@ -966,7 +966,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       }
       const left = target?.health ?? 0;
       out.disintegrated = (out.disintegrated ?? 0) + 1;
-      if (left > 0 && sinks.hurt) { out.damage += left; sinks.hurt(left); }
+      if (left > 0 && sinks.hurt) { out.damage += left; sinks.hurt(left, { whole: true }); }   // AUDIT PSCALE1 DOORS-1: a Disintegrate is a kill - no fighters' toughness divides it
       continue;
     }
     if (isFortifyAttribute(e)) {

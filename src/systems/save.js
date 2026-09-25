@@ -45,6 +45,7 @@ import { isOnlinePage } from './onlineLane.js';   // ONLINE-DEATH-FIX: the page 
 import { STREAMING_TERRAIN_SCALE } from '../world/terrainSampler.js';   // TERRAIN-SCALE1: the scale every saved exterior height stands on
 import { reviveForPlay } from './deathRespawn.js';   // ONLINE-DEATH-FIX: the SAME half-health an online respawn leaves
 import { setLightSource } from './lightSource.js';   // DISC7: the light in hand's one door
+import { renownHpOf, renownMpOf, offlineVitals } from './renownLayer.js';   // RENOWN1: the online layer never reaches a save
 
 /** One membership book, rows copied (GuildMembership_v1's shape). */
 const copyMembershipBook = (book) => Object.fromEntries(
@@ -269,6 +270,10 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // unsated urge, rebuilt by the next magic round; saving it would make the
   // ceiling permanent.
   if ('rawMaxHealth' in entity) snap.maxHealth = entity.rawMaxHealth;
+  // RENOWN1: AND NOTHING OF THE ONLINE LAYER. Renown's health and magicka sit on top of the live maximums
+  // while online (systems/renownLayer.js); a save keeps the vitals as they would stand without it, each at the same
+  // fraction of its maximum, so a save written online is the one the character would have written offline.
+  if (renownHpOf(entity) || renownMpOf(entity)) Object.assign(snap, offlineVitals(entity));
   snap.stats = { ...entity.stats };
   // SURV1: the needs record (survival/needs.js) - its markers are classic
   // minutes and its counters plain numbers; the note throttles are not
@@ -292,6 +297,8 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // W-slice: the cart's own 750kg collection (PlayerEntity.WagonItems
   // - SerializablePlayer carries wagonItems beside items).
   snap.wagonItems = (entity.wagonItems ?? []).map((it) => ({ ...it }));
+  // DECOR2b: what the furnisher delivered and is not standing in a room - the character's own, never carried
+  snap.furnishings = (entity.furnishings ?? []).map((it) => ({ ...it }));
   // R1: PlayerEntity.OtherItems - the in-repair collection
   // (SerializablePlayer.cs:132/:300; each item's repairData rides the
   // plain spread, present only while a job runs).
@@ -593,6 +600,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.career = snap.career ? { ...snap.career } : entity.career;
   entity.items = snap.items.map((it) => setItemFields(it));   // JAN1: SetItem's two writes on every item in (a copy, as before)
   entity.wagonItems = (snap.wagonItems ?? []).map((it) => setItemFields(it));   // W-slice (pre-W saves restore empty); JAN1: set on the way in
+  entity.furnishings = (snap.furnishings ?? []).map((it) => setItemFields(it));   // DECOR2b: a save written before holds none
   entity.otherItems = (snap.otherItems ?? []).map((it) => setItemFields(it));   // R1: the in-repair collection (pre-R1 saves restore empty); JAN1: set on the way in
   // DISC21-A: a biography item was minted with no condition until DISC21, and Roleplay & Realism wore the questions'
   // ebony dagger to 20% of nothing - broken, and undamaged to the repairer. Minted now, by the law it missed.

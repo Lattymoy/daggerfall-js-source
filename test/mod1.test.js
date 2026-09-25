@@ -176,7 +176,7 @@ test('MOD1: /v1/mod/mute answers a SIGNED order, and the muted player\'s every l
   const r = await call('POST', '/v1/mod/mute', { target: troll.id, minutes: 30 }, mod.secret);
   assert.equal(r.status, 200);
   assert.ok(r.body.until >= nowS + 30 * 60 - 2 && r.body.until <= nowS + 30 * 60 + 2);
-  const order = await verifyOrder(r.body.order, pub, { subtle, nowS });
+  const order = await verifyOrder(r.body.order, pub, { subtle, nowS, kind: 'mute' });
   assert.ok(order.ok, order.why);
   assert.deepEqual({ o: order.claims.o, s: order.claims.s, mu: order.claims.mu }, { o: 'mute', s: troll.id, mu: r.body.until });
 
@@ -207,8 +207,8 @@ test('MOD1: an ORDER can never pass as an IDENTITY, nor an identity as an order 
   const order = await mintOrder({ s: 'acct-troll', mu: nowS + 600 }, kp.privateKey, { subtle, nowS });
   const ident = await mintToken({ s: 'acct-troll', n: 'Troll', k: 'guest' }, kp.privateKey, { subtle, nowS });
   assert.equal((await verifyToken(order, kp.publicKey, { subtle, nowS })).why, 'claims', 'an order presented at the door is not a hello');
-  assert.equal((await verifyOrder(ident, kp.publicKey, { subtle, nowS })).why, 'claims', 'a hello presented as an order mutes nobody');
-  assert.ok((await verifyOrder(order, kp.publicKey, { subtle, nowS })).ok);
+  assert.equal((await verifyOrder(ident, kp.publicKey, { subtle, nowS, kind: 'mute' })).why, 'claims', 'a hello presented as an order mutes nobody');
+  assert.ok((await verifyOrder(order, kp.publicKey, { subtle, nowS, kind: 'mute' })).ok);
   // the order's own shape
   const base = { o: 'mute', s: 'acct-troll', mu: 0, i: nowS, e: nowS + 30 };
   assert.ok(orderValid(base), 'mu 0 is an UNMUTE, and valid');
@@ -216,7 +216,7 @@ test('MOD1: an ORDER can never pass as an IDENTITY, nor an identity as an order 
   assert.equal(orderValid({ ...base, n: 'Troll' }), false);
   assert.equal(orderValid({ ...base, mu: -1 }), false);
   assert.equal(orderValid({ ...base, e: nowS + ORDER_TTL_S + 1 }), false, 'an order lives a minute and no more');
-  assert.equal((await verifyOrder(order, kp.publicKey, { subtle, nowS: nowS + ORDER_TTL_S })).why, 'expired');
+  assert.equal((await verifyOrder(order, kp.publicKey, { subtle, nowS: nowS + ORDER_TTL_S, kind: 'mute' })).why, 'expired');
   // and the identity's `mu`
   const id = { s: 'acct-troll', n: 'Troll', k: 'guest', i: nowS, e: nowS + 60 };
   assert.ok(claimsValid({ ...id, mu: nowS + 1 }));

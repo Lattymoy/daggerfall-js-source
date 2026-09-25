@@ -53,6 +53,10 @@
 // DUEL1, the duelling record. The caller of `loss` is the loser:
 //   POST /v1/duel/loss   { winner }       -> { recorded, wins, losses }
 //   POST /v1/duel/record { id }           -> { id, wins, losses }
+// RENOWN1, Renown. The caller's own character, by the id its
+// save carries; the level rides the token when the mint names one:
+//   POST /v1/renown/xp { character, xp, name?, rid? } -> { character, xp, level, credited, rose, order, max?, repeat? }
+//   POST /v1/auth/token { character? }    -> { ..., level }
 //
 // ACC2, and every one of them needs a REGISTERED account (the wall):
 //   GET    /v1/saves                                   -> { saves[] }
@@ -97,12 +101,19 @@ import {
   duelRecordOf, reportDuelLoss,
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
-import { mintToken, mintOrder, MAX_TTL_S, TOKEN_V, ID_RE } from '../../src/net/identityToken.js';
+import { mintToken, mintOrder, mintRenownOrder, MAX_TTL_S, TOKEN_V, ID_RE } from '../../src/net/identityToken.js';
 import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, savePathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES } from './service.js';
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
 import { signingKey } from './signing.js';
 import { titleWorn, glyphsOf } from './titles.js';
 import { sendLetter, inboxOf, readLetter, deleteLetter } from './letters.js';   // MAIL1: the letters' routes
+import { reportRenownXp, renownTrackOf, renownTracksOf, renownCharacterOk } from './renownTracks.js';   // RENOWN1: Renown's track
+import { claimHome, releaseHome, setHomeEntry, homesInTown, homesOf } from './homes.js';   // HOME1: the online homes' routes
+import {
+  foundGuild, guildOf, invitesOf, inviteToGuild, answerInvite, leaveGuild, removeFromGuild, rankGuildMember, renameGuildRanks,
+  depositToGuild, withdrawFromGuild, handOverGuild, disbandGuild,
+} from './guilds.js';   // GUILD1: the guilds' routes
+import { decorOf, placeDecor, moveDecor, removeDecor } from './decor.js';   // DECOR1: an online home's decor
 
 // THIS MODULE EXPORTS `default` AND NOTHING ELSE, and that is a
 // runtime requirement rather than a preference: in a module Worker
@@ -125,6 +136,15 @@ const json = (body, status = 200, origin = '*') => new Response(JSON.stringify(b
 /** Every refusal is one word and the same shape. A client learns that
  *  it failed and not why somebody else's secret is wrong. */
 const no = (why, status, origin) => json({ error: why }, status, origin);
+/** GUILD1: each guild refusal's status - a bad shape 400 (the default), the wrong rank or too little Renown 403, a
+ *  thing that is not there 404, a conflict with what is 409, the hour's writes spent 429. */
+const GUILD_STATUS = Object.freeze({
+  'guilds-need-account': 403, 'guild-rank': 403, 'guild-renown': 403,
+  'no-guild': 404, 'no-invite': 404, 'no-member': 404, 'no-player': 404,
+  'guild-already': 409, 'guild-name-taken': 409, 'guild-tag-taken': 409, 'guild-full': 409, 'guild-master-leaves': 409,
+  'guild-treasury': 409, 'guild-treasury-full': 409, 'guild-treasury-short': 409,
+  'guild-rate': 429,
+});
 
 /** A body's bytes, or null past `max` - refused on the length it
  *  ANNOUNCES before a byte is read, and on the bytes that ARRIVE as
@@ -315,8 +335,14 @@ export default {
         // every room reads it off the signature at the hello. Only while
         // it runs: a mute that has ended is simply absent.
         const mu = isMuted(who.player, nowS) ? mutedUntil(who.player) : undefined;
+        // RENOWN1: AND THE LEVEL, when the client names the character it is
+        // bringing online - that character's, derived from its track now
+        // (1 for a character that has earned nothing yet). The client's
+        // word is only WHICH of its own characters; the number is this
+        // service's. A mint naming none (an older build) carries none.
+        const lv = renownCharacterOk(body.character) ? ((await renownTrackOf(ctx, who.player.id, body.character))?.level ?? 1) : undefined;
         const token = await mintToken(
-          { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe, mu },
+          { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe, mu, lv },
           key, { subtle, nowS },
         );
         return json({
@@ -326,6 +352,7 @@ export default {
           title: wardrobe.t ?? null,
           glyphs: wardrobe.g,
           mutedUntil: mu ?? 0,
+          level: lv ?? null,
           expiresAt: nowS + MAX_TTL_S,
         }, 200, origin);
       }
@@ -345,7 +372,8 @@ export default {
         // service's config and clock, which is why it alone takes env.
         return json({
           // DUEL1: and the duelling record, counted off the results (the profile card's K/D)
-          account: { ...accountView(who.player, nowS), duels: await duelRecordOf(ctx, who.player.id) },
+          // RENOWN1: and Renown's tracks, the most recently earned first (the card's level and its row)
+          account: { ...accountView(who.player, nowS), duels: await duelRecordOf(ctx, who.player.id), renown: await renownTracksOf(ctx, who.player.id) },
           wardrobe: accountWardrobe(who.player, env, nowS),
           devices: await devicesOf(ctx, who.player.id),
         }, 200, origin);
@@ -370,6 +398,92 @@ export default {
         const known = await db.prepare('SELECT 1 AS x FROM players WHERE id = ?1').bind(body.id).first();
         if (!known) return no('no-player', 404, origin);
         return json({ id: body.id, ...(await duelRecordOf(ctx, body.id)) }, 200, origin);
+      }
+
+      if (path === '/v1/renown/xp' && request.method === 'POST') {
+        // RENOWN1: WHAT ONE OF THE CALLER'S CHARACTERS EARNED ONLINE. The
+        // account is the session's, never the body's; the bounds are all
+        // in renownTracks.js `reportRenownXp`. A level that ROSE comes back
+        // with a signed order the client carries to the rooms it is in,
+        // so the level beside its name moves there now rather than at its
+        // next connection - and a service with no key still credits, it
+        // just cannot vouch for the new level until then.
+        // AUDIT RENOWN1 DATA-4: `rid` the report's own id, so a report sent again because its answer was lost is
+        // answered again (`repeat`) rather than credited twice - and a repeat carries an order too, since the
+        // answer that was lost may have been the one with the rise in it.
+        const r = await reportRenownXp(ctx, who.player, { character: body.character, xp: body.xp, name: body.name ?? null, rid: body.rid ?? null });
+        if (r.error) return no(r.error, r.error === 'renown-full' ? 409 : 400, origin);
+        let order = null;
+        if (r.rose || (r.repeat && r.level > 1)) {
+          const key = await signingKey(env, subtle);
+          if (key) order = await mintRenownOrder({ s: who.player.id, lv: r.level }, key, { subtle, nowS });
+        }
+        return json({ ...r, order }, 200, origin);
+      }
+
+      // ═══ HOME1: THE ONLINE HOMES ═════════════════════════════════
+      //
+      // A town's homes are anyone's to READ - a guest's session too, since
+      // every door says whose a home is. Owning one is an account's: the
+      // same wall as the letters' and the saves', with its own word (a
+      // guest is a device, and a home held by one a cleared browser loses
+      // is a building gone from the world). homes.js holds the bounds.
+      if (path.startsWith('/v1/homes/')) {
+        if (request.method !== 'POST') return no('method', 405, origin);
+        if (path === '/v1/homes/town') {
+          const r = await homesInTown(ctx, who.player, body);
+          return 'error' in r ? no(r.error, 400, origin) : json(r, 200, origin);
+        }
+        if (path === '/v1/homes/mine') return json(await homesOf(ctx, who.player), 200, origin);
+        if (path === '/v1/homes/decor') {
+          const r = await decorOf(ctx, who.player, body);
+          return 'error' in r ? no(r.error, 400, origin) : json(r, 200, origin);
+        }
+        if (accountKind(who.player) !== 'linked') return no('homes-need-account', 403, origin);
+        if (path.startsWith('/v1/homes/decor/')) {
+          // DECOR1: a piece placed, moved or removed - the owner's character's alone (decor.js)
+          const r = path === '/v1/homes/decor/place' ? await placeDecor(ctx, who.player, body)
+            : path === '/v1/homes/decor/move' ? await moveDecor(ctx, who.player, body)
+              : await removeDecor(ctx, who.player, body);
+          if (!('error' in r)) return json(r, 200, origin);
+          const status = r.error === 'decor-cap' || r.error === 'decor-taken' ? 409
+            : r.error === 'decor-rate' ? 429
+              : r.error === 'no-home' || r.error === 'no-decor' ? 404 : 400;
+          return no(r.error, status, origin);
+        }
+        if (path === '/v1/homes/claim') {
+          const r = await claimHome(ctx, who.player, body);
+          if (!('error' in r)) return json(r, 200, origin);
+          const status = r.error === 'home-taken' || r.error === 'home-cap' ? 409 : r.error === 'home-rate' ? 429 : 400;
+          return no(r.error, status, origin);
+        }
+        const r = path === '/v1/homes/release' ? await releaseHome(ctx, who.player, body) : await setHomeEntry(ctx, who.player, body);
+        return 'error' in r ? no(r.error, r.error === 'bad-entry' ? 400 : 404, origin) : json(r, 200, origin);
+      }
+
+      // ═══ GUILD1: THE GUILDS ═════════════════════════════════════
+      //
+      // A character's own guild and the account's invitations are read by
+      // any session (a guest's reads none); every change is an account's -
+      // guilds.js asks again, and holds the bounds.
+      if (path.startsWith('/v1/guilds/')) {
+        if (request.method !== 'POST') return no('method', 405, origin);
+        if (path === '/v1/guilds/mine') {
+          const r = await guildOf(ctx, who.player, body);
+          return 'error' in r ? no(r.error, GUILD_STATUS[r.error] ?? 400, origin) : json(r, 200, origin);
+        }
+        if (path === '/v1/guilds/invites') return json(await invitesOf(ctx, who.player), 200, origin);
+        if (accountKind(who.player) !== 'linked') return no('guilds-need-account', 403, origin);
+        const act = {
+          '/v1/guilds/found': foundGuild, '/v1/guilds/invite': inviteToGuild, '/v1/guilds/answer': answerInvite,
+          '/v1/guilds/leave': leaveGuild, '/v1/guilds/remove': removeFromGuild, '/v1/guilds/rank': rankGuildMember,
+          '/v1/guilds/ranks': renameGuildRanks, '/v1/guilds/deposit': depositToGuild, '/v1/guilds/withdraw': withdrawFromGuild,
+          '/v1/guilds/handover': handOverGuild, '/v1/guilds/disband': disbandGuild,
+        }[path];
+        if (!act) return no('not-found', 404, origin);
+        const r = await act(ctx, who.player, body);
+        if (!('error' in r)) return json(r, 200, origin);
+        return no(r.error, GUILD_STATUS[r.error] ?? 400, origin);
       }
 
       if (path === '/v1/account/title' && request.method === 'POST') {

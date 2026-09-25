@@ -48,6 +48,7 @@ import {
 } from '../systems/tradeModes.js';
 import { CANNOT_BE_REPAIRED_TEXT, INTERRUPT_REPAIR_TEXT, isBeingRepaired as itemIsBeingRepaired,
   isRepairFinished, collectRepaired, updateRepairTimes, repairStatusLabel } from '../systems/repairService.js';   // D7: the Repair mode's remote arm; UXB1-K: its misc label
+import { isFurnishing } from '../systems/decorFurnish.js';   // DECOR2b: furniture is delivered, never carried
 import { isSummoned, carriedWeight, totalWeight, transferAll, addItem } from '../systems/inventory.js';   // TransferItem's summoned guard; AUDIT 63 F48: transferAll is ItemCollection.TransferAll (:452), DoSteal's move
 import { shopliftAttempt } from '../systems/theft.js';   // AUDIT 63 F48: DoSteal's decision (:909-916)
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // PlayerEntity.MaxEncumbrance
@@ -222,6 +223,9 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && 
  *   crimeTheft()           -> CrimeCommitted = Crimes.Theft (:927)
  *   spawnCityGuards(flag)  -> SpawnCityGuards(true) (:928)
  *   say(line, seconds)     -> AddHUDText(text, 2) (:918, :925)
+ *   deliver(items)         -> DECOR2b: furniture stolen off the shelf,
+ *                             to the host's delivery, as bought furniture
+ *                             goes (never the pack; decorFurnish.js)
  *
  *   getQuest(uid)  -> QuestMachine.GetQuest, for TransferItem's quest
  *                     arm. UNWIRED: no host passes one yet, and DFU
@@ -601,8 +605,9 @@ export class NativeTradeWindow {
       // no gate, so a player could stage and buy past MaxEncumbrance
       // through the shop screen. The bag under test is pack + basket -
       // the player walks out with both.
-      const plan = planTake(item, {
-        bag: [...this.hooks.packItems(), ...this.basket],
+      // DECOR2b: a piece of furniture is delivered, never carried - no room to find for it, and none it takes
+      const plan = isFurnishing(item) ? { ok: true, amount: item.stackCount ?? 1 } : planTake(item, {
+        bag: [...this.hooks.packItems(), ...this.basket.filter((x) => !isFurnishing(x))],
         entity: this.hooks.entity ?? null,
       });
       if (!plan.ok) { this.box = { rows: [{ text: plan.refusal?.text ?? CANNOT_CARRY_TEXT, center: true }], buttons: null }; return; }
@@ -706,6 +711,7 @@ export class NativeTradeWindow {
     this.hooks.tallyPickpocket?.(1);
     if (!out.caught) {
       this.hooks.say?.(STEAL_SUCCESS_TEXT, 2);
+      this._deliverFurniture(this.basket);   // DECOR2b
       transferAll(this.basket, this.hooks.packItems());
       this.hooks.tallyCrimeGuild?.(true, 1);
     } else {
@@ -714,6 +720,15 @@ export class NativeTradeWindow {
       this.hooks.spawnCityGuards?.(true);
     }
     this._close();
+  }
+
+  /** DECOR2b: STOLEN FURNITURE IS DELIVERED, as bought furniture is - never carried (it was staged with no room found
+   *  for it): the basket's furniture to the host's delivery. A host with none carries it as before. */
+  _deliverFurniture(list) {
+    if (!this.hooks.deliver) return;
+    const going = list.filter(isFurnishing);
+    for (const it of going) list.splice(list.indexOf(it), 1);
+    if (going.length) this.hooks.deliver(going);
   }
 
   /** CloseWindow -> OnPop (:404-407). Every exit from this screen is
@@ -907,7 +922,7 @@ export class NativeTradeWindow {
    *  + basketItems.GetWeight()` - what the player walks out with, not
    *  what is in the pack right now. */
   _carriedWeight() {
-    return carriedWeight(this.hooks.entity ?? {}) + totalWeight(this.basket);
+    return carriedWeight(this.hooks.entity ?? {}) + totalWeight(this.basket.filter((x) => !isFurnishing(x)));   // DECOR2b: delivered, not carried
   }
   /** UpdateLocalTargetIcon override (:635-647): the wagon's picture
    *  and its 750kg line while UsingWagon, else the base window's

@@ -508,7 +508,8 @@ export const FEATURES = Object.freeze([
     note: 'A Diablo-style ladder over Daggerfall\u2019s loot: a weapon, a piece of armour or a piece of jewellery may roll '
       + 'Magic, Rare or Legendary, with affixes you can read and compare. The odds follow the source - the dead '
       + 'thing\u2019s level, the dungeon\u2019s kind, your luck - never your level. A Rare or Legendary drops '
-      + 'unidentified until it is read. Off is Daggerfall\u2019s loot exactly.',
+      + 'unidentified until it is read. Off is Daggerfall\u2019s loot exactly. Online, some weapons you win carry a '
+      + 'sigil that grows with your Renown.',   // SIGIL1
     effect: 'Takes effect on the next roll; worn affixes follow within a magic round.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'lootRarity', initial: true, online: true }),   // LR5: ON by default (Mac) - the ladder is the port's own game, not an opt-in; the lane forces it on online as it always did

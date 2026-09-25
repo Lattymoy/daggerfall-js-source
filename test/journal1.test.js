@@ -130,7 +130,7 @@ test('JOURNAL1 wire: a page is a player\'s words with their lines - the letter\'
   assert.ok(widest.length <= PAGE_FRAME_MAX, `and its frame fits: ${widest.length} of ${PAGE_FRAME_MAX}`);
   assert.ok(PAGE_FRAME_MAX < MAX_FRAME_BYTES);
   assert.ok(PAGE_LINE_MAX >= MAX_LINE_LENGTH + 1, 'a notebook line, with DFU\'s leading space, is a page line - the relay imports no game module, so this pin holds the two apart');
-  assert.equal(RELAY_VERSION, 'world110');   // PARTY-TRAVEL's party pose fields (world110); DUEL1's duel frame (world107); DISC23-B's look (world106); AUDIT 68's relay law (world105); TITLE-N's dm frame (world104); the contributor's dd/rz moved it past the arc's world102; the page frame stays gated at 102
+  assert.equal(RELAY_VERSION, 'world112');   // PARTY-TRAVEL's party pose fields moved it on (world112 - world110 on its branch); RENOWN1's level and renown frame moved it on (world111 - world108 on its branch; main's HT-WAIST-NET, PROFILE2 and SKIN2, and EVENT1 took world108 to world110 first); DUEL1's duel frame (world107); DISC23-B's look (world106); AUDIT 68's relay law (world105); TITLE-N's dm frame (world104); the contributor's dd/rz moved it past the arc's world102; the page frame stays gated at 102
   assert.equal(PAGE_RELAY_MIN, 102);
   assert.equal(relaySupportsPage('world102'), true);
   assert.equal(relaySupportsPage('world101'), false);

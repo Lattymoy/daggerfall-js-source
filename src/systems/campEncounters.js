@@ -198,24 +198,34 @@ export function campGroupBearings(fovDegrees, n = CAMP_GROUPS_ON_CHUNK_LOAD) {
  *  including players outside this scene's own streamed cell (`peers`
  *  is `peersNear()`'s list, `{id, feet}` each, already converted into
  *  THIS frame's coordinates). The pick is deterministic and needs no
- *  message of its own: everyone in range computes the same comparison
- *  over the same roster and agrees on the same one lowest id, so
- *  exactly one of them proceeds and the rest return null before
- *  spending a roll at all. Offline (`myId` null, or no peers) always
- *  answers true - there is no one to defer to. */
+ *  message of its own: greedy by id over everyone this client can place
+ *  (AUDIT PSCALE1 COUNT-5) - the lowest id rolls, and each next id rolls
+ *  unless a roller already chosen stands within `radius` of it - so a
+ *  group within reach of one another agrees on its one lowest id, and a
+ *  chain elects its lowest end AND whoever stands out of that roller's
+ *  reach. PSCALE1's lone-wanderer roll passes the partymates alone
+ *  (world.js runEncounterTick); the camps pass every peer. Offline
+ *  (`myId` null, or no peers) always answers true - there is no one to
+ *  defer to. */
 export const GROUP_ROLL_RADIUS = 100;
 export function amGroupRollOwner(myId, myFeet, peers, radius = GROUP_ROLL_RADIUS) {
   if (myId == null || !myFeet || !peers?.length) return true;
   const r2 = radius * radius;
-  let lowest = String(myId);
-  for (const p of peers) {
-    if (p?.id == null || p.id === myId || !p.feet) continue;
-    const dx = p.feet[0] - myFeet[0], dz = p.feet[2] - myFeet[2];
-    if (dx * dx + dz * dz > r2) continue;
-    const pid = String(p.id);
-    if (pid < lowest) lowest = pid;
+  const me = String(myId);
+  const near = (a, b) => { const dx = a[0] - b[0], dz = a[2] - b[2]; return dx * dx + dz * dz <= r2; };
+  // AUDIT PSCALE1 COUNT-5: GREEDY BY ID, over everyone this client can place. The lowest id rolls; each next id rolls
+  // unless a roller already chosen stands within `radius` of it. Deferring to ANY lower id within reach let a chain
+  // (A, B, C sixty apart, ids ascending) elect A alone, and C - 120 from A - met nothing: A's wanderers stand at A.
+  const all = [{ id: me, feet: myFeet }];
+  for (const p of peers) if (p?.id != null && String(p.id) !== me && Array.isArray(p.feet)) all.push({ id: String(p.id), feet: p.feet });
+  all.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const rollers = [];
+  for (const p of all) {
+    const taken = rollers.some((r) => near(r.feet, p.feet));
+    if (p.id === me) return !taken;
+    if (!taken) rollers.push(p);
   }
-  return lowest === String(myId);
+  return true;
 }
 
 /** The composition a hit rolls, shared by both entry points below -

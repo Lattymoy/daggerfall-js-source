@@ -56,7 +56,7 @@
   {
     "name": "DA-CAMP-CAP-remnant-groups",
     "file": "src/scenes/world.js",
-    "old": "            if (h.mobileTypes.length > room) continue;\n",
+    "old": "            if (size > room) continue;\n",
     "new": "",
     "tests": [
       "test/dropsaudit.test.js"

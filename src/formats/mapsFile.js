@@ -430,6 +430,13 @@ export class MapsFile {
     return this._regions[region].dfRegion;
   }
 
+  /** HUB1: how many locations the region's own MAPNAMES holds - a world-data mod's additions are appended past it
+   *  (formats/worldDataReplacement.js), so a row below this count is the game's own. 0 for an empty region. */
+  baseLocationCount(region) {
+    if (!this.loadRegion(region)) return 0;
+    return this._readLocationCount(region);
+  }
+
   /** DFRegion by name (null on failure). */
   getRegionByName(name) {
     const region = this.getRegionIndex(name);

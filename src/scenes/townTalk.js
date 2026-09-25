@@ -1104,7 +1104,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   // U8b: the answer STRING, shared by the native talk window and the
   // fallback chain (the T3c-T3f pipeline unchanged).
   function answerText(building) {
-    const a = whereIsAnswer(topics.playerPos(), building, playerEntity.stats?.personality != null ? liveStat(playerEntity, 'personality') : 50, _talkNpc?._talkSeed ?? 0, 0, { tier: tierNow() });   // AUDIT 63 F4: LivePersonality here too, though this caller always supplies `tier` so talkTopics.js:472 never consumes it
+    const a = whereIsAnswer(topics.playerPos(), building, playerEntity.stats?.personality != null ? liveStat(playerEntity, 'personality') : 50, _talkNpc?._talkSeed ?? 0, 0, { tier: tierNow() });   // AUDIT 63 F4: LivePersonality here too, though this caller always supplies `tier` so talkTopics.js:479 never consumes it
     const raw = randomVariant(a.textId, '%hnt');
     // T4: %hnt is WHERE DFU rolls the reveal (GetKeySubjectBuildingHint
     // rides MacroHelper's %hnt), so the fork runs only when the record

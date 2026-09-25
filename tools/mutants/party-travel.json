@@ -218,8 +218,8 @@
   {
     "name": "PT-relay-min-old",
     "file": "src/net/wire.js",
-    "old": "export const PARTY_TRAVEL_RELAY_MIN = 110;",
-    "new": "export const PARTY_TRAVEL_RELAY_MIN = 109;",
+    "old": "export const PARTY_TRAVEL_RELAY_MIN = 112;",
+    "new": "export const PARTY_TRAVEL_RELAY_MIN = 111;",
     "tests": [
       "test/partytravel.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "PT-chat-travel-not-host",
     "file": "src/net/chatCommands.js",
-    "old": "'ready', 'leader', 'travel']);",
-    "new": "'ready', 'leader']);",
+    "old": "'ready', 'leader', 'travel', 'event']);",
+    "new": "'ready', 'leader', 'event']);",
     "tests": [
       "test/partytravel.test.js"
     ]

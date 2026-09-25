@@ -64,7 +64,7 @@ test('CAMP-CULL and CAMP-CAP: a camp member outlives the 100-150 m band it stand
   const foes = rd('src/scenes/exteriorFoes.js');
   assert.match(foes, /if \(!f\.placed && _playerDist > \(f\.campId != null \? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE\) && /);
   assert.match(foes, /const encounterRoom = \(\) => MAX_ACTIVE_ENCOUNTER_FOES - activeCount\(\) - spawning\.filter\(\(s\) => s\.capped\)\.length;\n\n\s*return \{ foes, spawnFoe, damageFoe, encounterRoom,/);
-  assert.match(rd('src/scenes/world.js'), /let room = exteriorFoes\.encounterRoom\?\.\(\) \?\? Infinity;\n\s*for \(const h of chunkCampHits\) \{\n\s*if \(h\.mobileTypes\.length > room\) continue;\n\s*room -= h\.mobileTypes\.length;\n\s*_standCampEncounter\(h, player\.feetAt\(\)\);/);
+  assert.match(rd('src/scenes/world.js'), /let room = exteriorFoes\.encounterRoom\?\.\(\) \?\? Infinity;\n\s*for \(const h of chunkCampHits\) \{\n(?:\s*\/\/[^\n]*\n)*\s*const size = partyGroupMembers\(h\.mobileTypes, partySize\(\)\)\.length;\n\s*if \(size > room\) continue;\n\s*room -= size;\n\s*_standCampEncounter\(h, player\.feetAt\(\)\);/, 'the room is asked for the group as it will stand - grown by the party (PSCALE1)');
 });
 
 test('F1 F3 F4: plain Enhanced keeps its own face - no loss nodes in its HUD tracks, no system dress on its Stats page, its sheet\'s rules as they were (Plus\'s edits in the Plus sheet)', () => {
