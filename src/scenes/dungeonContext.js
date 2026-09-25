@@ -34,6 +34,7 @@ import { WATER_SCROLL_TILES_PER_SEC } from '../render/waterSurface.js';   // WAT
 import { enemyControllerHeight, idleSpriteHeight, feetFromCentre, centreFromFeet, spriteOriginY, keepRebuiltSpawn } from '../characters/enemyAnchor.js';   // INCIDENT 2026-09-04 (ceiling bats): SetupDemoEnemy.cs:103-115 capsule + DaggerfallMobileUnit.cs:398-411 anchor
 import { MobileUnit, MOBILE_DAEDRA_SEDUCER, SeducerTransformBehaviour } from '../characters/mobileUnit.js';   // C11: classic sprite monsters   // A5: the Seducer transform pair + its trigger
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
+import { customModelFor, emptyModel } from '../world/customModels.js';   // DS1: models no ARCH3D carries, and GetModelData's false
 import { RDB_SIDE, MOVE_ACTION_FLAGS, ACTION_FLAGS } from '../world/rdbLayout.js';   // WAVE D: the move family - an acting FLAT tweens like the model beside it
 import { NPC_CONTEXT } from '../characters/staticNpc.js';   // AUDIT 64 F13: StaticNPC.SetLayoutData(RdbObject) stamps Context.Dungeon
 import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, isActionDoorObject, hasActionCollision, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT, DOOR_TEXT_HUD_DELAY_S, sharedRecord, validActionRecord } from '../world/actionSystem.js';   // AUDIT WORLD3 B1: the shared half of a record - the picker's latch stays home; AUDIT WORLD34 C2: and the memory's records projected like an act's
@@ -274,9 +275,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const preModels = new Map();
   const getModelPre = (id) => {
     if (!preModels.has(id)) {
-      const index = arch.getRecordIndex(id);
-      if (index === -1) throw new Error(`model not found: ${id}`);
-      preModels.set(id, dfMeshToModel(arch.getMesh(index), () => ({ width: 1, height: 1 })));
+      const custom = customModelFor(id);   // DS1: a registered model (world/customModels.js), asked before ARCH3D
+      const index = custom ? -1 : arch.getRecordIndex(id);
+      if (custom) preModels.set(id, custom);
+      else if (index === -1) {
+        // DS1: GetModelData answers false (RDBLayout.cs:634-638) - nothing drawn, no door taken - a world-data
+        // block naming a model no one supplies is DFU's logged miss, never a thrown dungeon
+        console.warn(`[dungeon] model ${id}: not in ARCH3D and no mod supplies it - nothing stands there, as in DFU`);
+        preModels.set(id, emptyModel());
+      } else preModels.set(id, dfMeshToModel(arch.getMesh(index), () => ({ width: 1, height: 1 })));
     }
     return preModels.get(id);
   };
@@ -1669,7 +1676,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:9497 / exterior.js:3665), set
+  // host's own townTalk sink (world.js:9497 / exterior.js:3669), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -3319,7 +3326,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
               // playerArrowHitFoe is the one copy world.js:14969,
-              // exterior.js:5236 and worldModes.js:7316 already ran;
+              // exterior.js:5240 and worldModes.js:7316 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that

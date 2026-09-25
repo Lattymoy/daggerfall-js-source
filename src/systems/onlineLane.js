@@ -258,6 +258,14 @@ export const ONLINE_ROOM_MOD_KEYS = Object.freeze({
   // through each other's boulders - the roads' own reason, word for
   // word. Its one switch is the room's.
   'world-of-daggerfall': Object.freeze({ Enabled: true }),
+  // DS1 (2026-09-25): the third floor. Every owner's ship stands at the SAME
+  // map pixel - (2,2) for the small, (5,5) for the large (banking.js
+  // SHIP_COORDS) - so a room's sailors share one deck, and Detailed Ships
+  // stands collidable railings, crates, tenders and rigging on it. Two
+  // players who disagree would walk two decks and pass through each
+  // other's crates; the switch is the room's. (Below decks opens no room -
+  // worldModes' ship interior is the player's own.)
+  'detailed-ships': Object.freeze({ Enabled: true }),
   // MODS-ONLINE-4: the host's foes are the party's foes.
   meanerMonsters: Object.freeze({ Enabled: true }),
   pcaao: Object.freeze({ Enabled: true }),

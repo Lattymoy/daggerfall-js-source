@@ -171,7 +171,7 @@ left-hand weapon loaded back holding the right hand's item, or bare
 fists. By the time it was found, the two restore lines had drifted six
 and thirteen lines apart inside their own hosts, and the comment in
 `worldModes.js` that pointed between them cited `world.js:6736` and
-`dungeonContext.js:6315` - lines that had moved to `:4964` and `:6290`.
+`dungeonContext.js:6322` - lines that had moved to `:4971` and `:6297`.
 *Three copies of a rule, and the signpost between them stale as well.*
 
 The pair lives in `src/combat/playerWeapon.js` now - `weaponPoseOf`,
@@ -255,7 +255,7 @@ three collapsed on verification.**
    redundancy, not the fix.
 3. *"`worldModes.js:9629` disposes the dungeon overlay that
    `dungeonCtx.destroy()` disposes again - HARD1's double free."* Already
-   known, already written down, at `dungeonContext.js:7117-7118`:
+   known, already written down, at `dungeonContext.js:7124-7125`:
    *"dispose() is idempotent (A2), which is what makes the outer host's
    call harmless."* The tree had the answer before the audit asked.
 
@@ -543,7 +543,7 @@ The door list derived; the four arm names did not. It demanded `close`,
 which no host has ever called on a slot - the hosts free a window with
 `dispose?.()` - so that requirement was invented, and it passed only
 because the one door lacking `close` was also the one being skipped. And
-it omitted `tick`, which `interior.js:392` calls unguarded **every
+it omitted `tick`, which `interior.js:394` calls unguarded **every
 frame**.
 
 **F3 - it assumed the population was `ui/*Door.js`.** It is not. Twelve

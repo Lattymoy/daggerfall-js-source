@@ -1,0 +1,39 @@
+{
+    "ModTitle": "Detailed Ships",
+    "ModVersion": "1.0.0",
+    "ModAuthor": "Cliffworms",
+    "DFUnity_Version": "1.1.1",
+    "ModDescription": "Revamps the interior and exterior of player ships.",
+    "GUID": "9d7ff75b-ff75-4306-b6a6-607456d5d7fb",
+    "Files": [
+        "Assets/Game/Mods/DetailedShips/Textures/1210_12-0.png",
+        "Assets/Game/Mods/DetailedShips/Textures/1210_17-0.png",
+        "Assets/Game/Mods/DetailedShips/Textures/1210_10-0.png",
+        "Assets/Game/Mods/DetailedShips/Textures/1210_8-0.png",
+        "Assets/Game/Mods/DetailedShips/Textures/1210_20-0.png",
+        "Assets/Game/Mods/DetailedShips/Textures/1230_30-0.xml",
+        "Assets/Game/Mods/DetailedShips/Textures/1210_19-0.png",
+        "Assets/Game/Mods/DetailedShips/Textures/1210_9-0.png",
+        "Assets/Game/Mods/DetailedShips/Textures/1210_18-0.png",
+        "Assets/Game/Mods/DetailedShips/Textures/1230_30-0.png",
+        "Assets/Game/Mods/DetailedShips/Textures/1210_11-0.png",
+        "Assets/Game/Mods/DetailedShips/WorldData/SHIPAA01.RMB-630-building0.json",
+        "Assets/Game/Mods/DetailedShips/WorldData/SHIPAA00.RMB-390-building0.json",
+        "Assets/Game/Mods/DetailedShips/Textures/1210_3-0.xml",
+        "Assets/Game/Mods/DetailedShips/Textures/1210_1-0.xml",
+        "Assets/Game/Mods/DetailedShips/Textures/1210_4-0.xml",
+        "Assets/Game/Mods/DetailedShips/Textures/1210_17-0.xml",
+        "Assets/Game/Mods/DetailedShips/Textures/1210_4-0.PNG",
+        "Assets/Game/Mods/DetailedShips/Textures/1210_1-0.PNG",
+        "Assets/Game/Mods/DetailedShips/Textures/1210_3-0.PNG",
+        "Assets/Game/Mods/DetailedShips/Textures/1210_18-0.xml"
+    ],
+    "Dependencies": [
+        {
+            "Name": "daggerfall expanded textures",
+            "IsOptional": false,
+            "IsPeer": true,
+            "Version": "1.2.0"
+        }
+    ]
+}

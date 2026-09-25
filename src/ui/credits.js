@@ -316,5 +316,15 @@ export const CREDITS = Object.freeze({
       vendor: Object.freeze(['aquatic-sprites']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/276',
     }),
+    Object.freeze({
+      title: 'Detailed Ships',
+      version: '1.0.0',
+      author: 'Cliffworms',
+      what: 'The two ships you can own, revamped inside and out (DS1): rigging, crates and barrels, tenders, rudders and railings on deck; your quarters, the crew’s, a kitchen, a cargo hold, an armory and a shrine to Kynareth below, with sailors to talk to. The Kynareth statue is King of Worms’ and Zoran’s, as the author’s readme credits it; the pieces the mod borrows from Ninelan’s Daggerfall Expanded Textures are the port’s own stand-ins.',
+      terms: 'Distributed under the author’s own terms, which ask only for credit: “The mod may be distributed/translated without my authorization as long as I am credited as the author.” The author’s edits and drawings are vendored; the ships and the classic pictures are rebuilt from your own game files - see vendor/detailed-ships/README.md for the permission record.',
+      contact: 'Cliffworms, through the Nexus page (daggerfallunity mod 1080)',
+      vendor: Object.freeze(['detailed-ships']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/1080',
+    }),
   ]),
 });

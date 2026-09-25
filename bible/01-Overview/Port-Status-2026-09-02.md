@@ -332,7 +332,7 @@ reference surface absent · **Departure** = deliberate, ledgered.
 **The pause primitive, precisely.** ROAD-B B1 built the stack DFU's
 `UserInterfaceManager` has, with `PauseWhileOpen` as a real latch
 (`ui/windowStack.js:122`, `:116`, `:294`). It is mounted in the two hosts
-that own overlay slots - `worldModes.js:83` and `dungeonContext.js:45` -
+that own overlay slots - `worldModes.js:83` and `dungeonContext.js:46` -
 and `world.js:279` reaches it by mounting `worldModes`. But `grep -rn
 "paused()" src/` returns exactly one hit, the definition at
 `windowStack.js:279`: **no host reads the primitive.** Every host still
@@ -420,7 +420,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **Blocked - host scope.**
 
-- **`src/scenes/exterior.js:2255`** - Recall pends here; the anchor
+- **`src/scenes/exterior.js:2259`** - Recall pends here; the anchor
   machinery lives in the streaming `?world` host. *(The triage measured
   this row at `:1033`; RE-RESOLVED onto the live refusal at ROAD-G G7,
   because this is the one row in the two lists that is still OPEN - a
@@ -625,7 +625,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **Added after this page's measurement, and counted here so the tally follows the tree.**
 
-- **`src/scenes/dungeonContext.js:1189`** - the dungeon's non-layout foe
+- **`src/scenes/dungeonContext.js:1196`** - the dungeon's non-layout foe
   run is private (ONLINE-DUNGEON-FOES, 2026-09-20). *Mac's two online
   reports - "non-reactive enemies in dungeons" and "the lysander ghost
   enemy isn't synced between players" - are one line. `_layoutFoes` is

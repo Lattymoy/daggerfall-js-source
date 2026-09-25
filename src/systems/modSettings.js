@@ -142,6 +142,20 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
+  // DS1 (2026-09-25): DETAILED SHIPS 1.0.0 (Cliffworms). No modsettings of
+  // its own - two building records and thirteen pictures - so one switch.
+  'detailed-ships': Object.freeze({
+    title: 'Detailed Ships',
+    author: 'Cliffworms',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Cliffworms’ Detailed Ships 1.0.0, 1:1: “Revamps the interior and exterior of player ships.” Rigging, '
+          + 'crates and barrels, tenders, rudders and railings outside; below decks, quarters for you and the crew, a '
+          + 'kitchen, a cargo hold, an armory and a shrine to Kynareth, with sailors to talk to.',
+      }),
+    }),
+  }),
   // MM1: MEANER MONSTERS 1.5.2 (Ralzar). No modsettings of its own -
   // `Enabled` alone (DFU enables a mod by listing it). Listed BEFORE
   // the overhaul because the overhaul names it as a dependency and so

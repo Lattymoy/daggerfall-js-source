@@ -77,7 +77,7 @@ test('MODS-ONLINE-2: every vendored mod is classified, and the only keys the lan
   }
 });
 
-test('MODS-ONLINE-4: every mod switch is the player\'s online, except the twenty the room owns', () => {
+test('MODS-ONLINE-4: every mod switch is the player\'s online, except the twenty-one the room owns', () => {
   for (const [vendor, def] of Object.entries(MOD_SETTINGS)) {
     for (const key of Object.keys(def.keys)) {
       const room = ONLINE_ROOM_MOD_KEYS[vendor] && Object.hasOwn(ONLINE_ROOM_MOD_KEYS[vendor], key);
@@ -90,7 +90,7 @@ test('MODS-ONLINE-4: every mod switch is the player\'s online, except the twenty
   // The whole shelf, counted, so a mod quietly re-forced shows up as a
   // number rather than as a player's complaint.
   const forced = Object.values(ONLINE_ROOM_MOD_KEYS).reduce((n, keys) => n + Object.keys(keys).length, 0);
-  assert.equal(forced, 20, 'the lane forces twenty mod switches in the whole shelf');   // MODS-ONLINE-5: one ruleset per room - RR's six combat overrides and its intensive training   // RRI1/RR1 (merged 2026-09-23): five of Roleplay & Realism: Items' (the items that change hands) and two of Roleplay & Realism's (the location, the host's foes)   // WOD1: World of Daggerfall's Enabled, the second floor
+  assert.equal(forced, 21, 'the lane forces twenty-one mod switches in the whole shelf');   // DS1: Detailed Ships' Enabled, the ships' shared deck   // MODS-ONLINE-5: one ruleset per room - RR's six combat overrides and its intensive training   // RRI1/RR1 (merged 2026-09-23): five of Roleplay & Realism: Items' (the items that change hands) and two of Roleplay & Realism's (the location, the host's foes)   // WOD1: World of Daggerfall's Enabled, the second floor
   // MODS-ONLINE-4 (Mac: "What about player balance?"): the two GROUND
   // switches, and the three that spend somebody else's evening - the
   // host's dungeon foes (meaner monsters, the overhaul) and a roll that
@@ -98,8 +98,8 @@ test('MODS-ONLINE-4: every mod switch is the player\'s online, except the twenty
   // switch, World of Daggerfall's, which levels camp sites into the same
   // terrain the road beds are smoothed into.
   assert.deepEqual(Object.keys(ONLINE_ROOM_MOD_KEYS).sort(),
-    ['meanerMonsters', 'pcaao', 'roads-hazelnut', 'roleplay-realism', 'roleplay-realism-items', 'unleveledLoot', 'world-of-daggerfall']);
-  assert.equal(ONLINE_PLAYERS_OWN_MODS.length, Object.keys(MOD_SETTINGS).length - 7);
+    ['detailed-ships', 'meanerMonsters', 'pcaao', 'roads-hazelnut', 'roleplay-realism', 'roleplay-realism-items', 'unleveledLoot', 'world-of-daggerfall']);
+  assert.equal(ONLINE_PLAYERS_OWN_MODS.length, Object.keys(MOD_SETTINGS).length - 8);
 });
 
 test('MODS-ONLINE-2: a declared key is an OWN key - the lane and the store both refuse a name off Object.prototype', () => {
@@ -188,8 +188,8 @@ test('MODS-ONLINE-2: the lock, the pane and the door all say the same true thing
   // GROUND's reason, so they do not wear the ground's words.
   assert.match(menu, /const ONLINE_SHARED_NOTE = '[^']*belong to whoever is hosting it[^']*';/, 'the shared lock has its own words');
   assert.match(menu, /if \(ground !== undefined\) lockOnline\(b, null, \{ note: onlineLockNote\(vendor, key\), value: ground \}\);/);
-  // WOD1: the ground's words go to the two vendors that write terrain heights, and only them.
-  assert.match(menu, /const ONLINE_GROUND_VENDORS = Object\.freeze\(\['roads-hazelnut', 'world-of-daggerfall'\]\);/);
+  // WOD1: the ground's words go to the two vendors that write terrain heights, and only them. DS1: and the ships' shared deck.
+  assert.match(menu, /const ONLINE_GROUND_VENDORS = Object\.freeze\(\['roads-hazelnut', 'world-of-daggerfall', 'detailed-ships'\]\);/);
   // MODS-ONLINE-5: the ruleset's reason is its own words, and only RR's seven wear them
   assert.match(menu, /const ONLINE_RULESET_NOTE = '[^']*one ruleset[^']*';/, 'the ruleset lock has its own words');
   assert.match(menu, /const onlineLockNote = \(vendor, key\) => \(ONLINE_GROUND_VENDORS\.includes\(vendor\) \? ONLINE_GROUND_NOTE : ONLINE_RULESET_KEYS\[vendor\]\?\.includes\(key\) \? ONLINE_RULESET_NOTE : ONLINE_SHARED_NOTE\);/);

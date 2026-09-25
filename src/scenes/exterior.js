@@ -307,7 +307,10 @@ export async function bootExterior(canvas, renderer, params, status) {
   const questPack = await loadQuestPack();
 
   // Assemble the location.
-  const dfLocation = maps.getLocationByName(regionName, locationName);
+  // DS1: `locindex` picks a location by index where two share a name (the two "Your Ship" of region 31)
+  const dfLocation = params.has('locindex')
+    ? maps.getLocation(maps.getRegionIndex(regionName), Number(params.get('locindex')))
+    : maps.getLocationByName(regionName, locationName);
   if (!dfLocation) throw new Error(`location not found: ${regionName}/${locationName}`);
   status(`laying out ${locationName}`);
   // AUDIT 39 (#18): the skin reaches the layout, because the mill's
@@ -1016,6 +1019,7 @@ export async function bootExterior(canvas, renderer, params, status) {
 
   // Camera.
   const shotMode = params.has('shot');
+  let _shotPosed = false;   // DS1: set by window.__pose - the scout's fixed framing gives way to the posed camera
   // P1: grounded first-person is the default; ?fly restores the fly cam.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), enhancedJumping: () => isEnhancedJumping(playerEntity), carriedWeight: () => carriedWeight(playerEntity), climbing: climbingDeps(playerEntity, (l) => townTalk?.say(l)) });   // AcrobatMotor skill jump (P14) + M3 climbing; motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
@@ -2381,7 +2385,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // instance indoors, in every shop entered from it - `cast X spell do`
     // and `cast X effect do` could never latch and never fire. The other
     // two engine-owning hosts wire the identical pair (world.js:4109-4110,
-    // dungeonContext.js:2248-2249); `questBridge` is assigned below this
+    // dungeonContext.js:2255-2256); `questBridge` is assigned below this
     // mount, so the chain is optional both ways.
     onNewReadySpell: (sp) => questBridge?.machine?.notifyNewReadySpell?.(sp),
     onCastReadySpell: (sp) => questBridge?.machine?.notifyCastReadySpell?.(sp),
@@ -2631,7 +2635,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // (chronicleDoor.js:110 `if (!questJournalArtLoaded()) return null`),
     // so a readiness test placed AHEAD of the preload that satisfies it
     // made the classic skin answer null for ever - the warm behind the
-    // gate could never run. dungeonContext.js:1452-1457 is the shape:
+    // gate could never run. dungeonContext.js:1459-1464 is the shape:
     // warm, then let the door refuse.
     preloadQuestJournalArt({ renderer, fetchBytes, palette });
     return createChronicleWindow({
@@ -4145,7 +4149,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       cam.yaw = yaw; cam.pitch = pitch;
       // walk mode: the camera FOLLOWS the motor - move the player
       // (a bare cam.pos write is overwritten next frame; T1 probe fix)
-      if (walkMode) player.spawn(x, y, z); else cam.pos = [x, y, z];
+      if (walkMode) player.spawn(x, y, z); else { cam.pos = [x, y, z]; _shotPosed = true; }   // DS1: a posed fly camera leaves the scout's fixed framing (tools/shotPoses.mjs)
     };
     modes.installShotProbes();
     window.__magic = () => JSON.stringify({ mp: playerEntity.magicka, readied: magic.readied()?.name ?? null, armed: magic.spellArmed(), missiles: magic.missileCount(), mode: modes?.mode ?? 'exterior', book: (playerEntity.spells ?? []).map((sp) => ({ name: sp.name, range: sp.rangeType })) });   // M5 cast probe
@@ -4911,12 +4915,12 @@ export async function bootExterior(canvas, renderer, params, status) {
           raycast: (o, d, m) => collider.raycast(o, d, m),
           spherecast: (o, r, d, m) => { const h = collider.sphereCast(o, r, d, m).dist; return Number.isFinite(h) ? h : null; } })   // MAC-A: castSphere's seam beside the ray - the camera's two obstacle guards are sphere casts (camera.cpp:186, :200)
       : { eye: cam.pos, thirdPerson: false };
-    const target = shotMode && !walkMode
+    const target = shotMode && !walkMode && !_shotPosed
       ? [extentX * 0.46, 6, extentZ * 0.5]
       : riding
         ? [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]]
         : [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]];   // MW-D25: ahead of the machine's eye
-    const eye = shotMode && !walkMode
+    const eye = shotMode && !walkMode && !_shotPosed
       ? [extentX * 0.565, 11, extentZ * 0.72]
       : riding
         ? [cam.pos[0] - fwd[0] * TP_DIST, cam.pos[1] - fwd[1] * TP_DIST, cam.pos[2] - fwd[2] * TP_DIST]

@@ -1537,11 +1537,11 @@ const ONLINE_LOCK_NOTE = 'On while online - the shared world is the enhanced lan
 /** MODS-ONLINE-2: the Mods pane's own line. The lane's note (above)
  *  is about the PORT's switches and was wrong over the tiles the
  *  moment a mod stopped being forced. */
-const ONLINE_MODS_NOTE = 'Most of your mods are yours online: turn them on or off as you like. Twenty switches are the room\u2019s - Basic Roads and World of Daggerfall (both shape the terrain, so everyone stands on the same ground); Meaner Monsters, the Combat and Armor Overhaul, Unleveled Loot and Roleplay & Realism: Items\u2019 item switches, because a dungeon\u2019s foes are its host\u2019s and loot changes hands; and Roleplay & Realism\u2019s combat rules, because a room plays one ruleset.';
-const ONLINE_GROUND_NOTE = 'Set while online - it shapes the terrain itself (road beds smoothed in, camp sites levelled), so every player in a room has to stand on the same ground. Your own choice returns when you play offline.';
+const ONLINE_MODS_NOTE = 'Most of your mods are yours online: turn them on or off as you like. Twenty-one switches are the room\u2019s - Basic Roads and World of Daggerfall (both shape the terrain, so everyone stands on the same ground), Detailed Ships (every owner\u2019s ship stands at one place, so its deck is shared); Meaner Monsters, the Combat and Armor Overhaul, Unleveled Loot and Roleplay & Realism: Items\u2019 item switches, because a dungeon\u2019s foes are its host\u2019s and loot changes hands; and Roleplay & Realism\u2019s combat rules, because a room plays one ruleset.';
+const ONLINE_GROUND_NOTE = 'Set while online - it shapes the ground itself (road beds smoothed in, camp sites levelled, the one deck every owner\u2019s ship shares), so every player in a room has to stand on the same ground. Your own choice returns when you play offline.';
 /** WOD1: the vendors whose room-owned switch is the GROUND's - the two
  *  that write terrain heights (roads' beds, World of Daggerfall's sites). */
-const ONLINE_GROUND_VENDORS = Object.freeze(['roads-hazelnut', 'world-of-daggerfall']);
+const ONLINE_GROUND_VENDORS = Object.freeze(['roads-hazelnut', 'world-of-daggerfall', 'detailed-ships']);   // DS1: the ships' shared deck
 /** MODS-ONLINE-4: the other three, and their reason is not the ground -
  *  it is that this switch would be spending somebody else's evening. */
 const ONLINE_SHARED_NOTE = 'On while online - a dungeon\u2019s monsters belong to whoever is hosting it and loot passes between players, so a room has to agree on this one. Your own choice returns when you play offline.';

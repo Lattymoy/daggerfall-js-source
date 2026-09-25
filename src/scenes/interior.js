@@ -304,6 +304,8 @@ export async function bootInterior(canvas, renderer, params, status) {
   const gamepad = attachGamepad(canvas, inputHooks);   // GP1: null without the Gamepad API
 
   const shotMode = params.has('shot');
+  // DS1: the probe surface the exterior host carries - place the fly camera by script (tools/screenshot.mjs SHOT_EVAL)
+  if (shotMode) window.__pose = (x, y, z, yaw, pitch) => { cam.pos = [x, y, z]; cam.yaw = yaw; cam.pitch = pitch; };
   // E3: the console's door. This host mounts no window that registers a
   // command, but the database is one static class in DFU - every
   // command registered anywhere is reachable from any scene - and the

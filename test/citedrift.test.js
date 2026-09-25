@@ -508,7 +508,7 @@ const AF = 'src/combat/arrowFlight.js';   // ROAD-H tail (review)
 // WM3 (2026-09-15): A LITERAL IN THE PICK REGEX IS NOT A CHECK.
 //
 // These entries used to bake the OTHER half of a cite pair into the
-// pick - `/exterior\.js:(\d+)\/:1547/`, `/exterior\.js:946\/:(\d+)/` -
+// pick - `/exterior\.js:(\d+)\/:1547/`, `/exterior\.js:949\/:(\d+)/` -
 // and that number asserts nothing: nothing reads it against the target,
 // it only decides whether the regex MATCHES AT ALL. So when citeShift
 // correctly moved the cite, the pin stopped matching and this file
@@ -700,7 +700,7 @@ const SOURCE_CITES = [
   // and the table captured ONE, with a sixth number baked into the pick - so
   // citeMerge bumped the LITERAL at the BOX1/TI3 merge and left the doc, and
   // four of the five had been stale for waves (`worldModes.js:6890` for a line
-  // that is 5921, `world.js:12959` for 8836, `interior.js:322` for 329,
+  // that is 5921, `world.js:12959` for 8836, `interior.js:324` for 329,
   // `dungeon.js:951` for 959). Every one is captured now, against the
   // projection each host really builds.
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:\d+`/, EX, /^ {6}fieldOfView\(\),$/],
@@ -760,7 +760,7 @@ const SOURCE_CITES = [
   // ROAD-G G1 (review): BOTH ends, because the half-shifted range is
   // exactly the defect this file exists to catch - the leading number
   // was re-resolved and the trailing one left where it was, leaving a
-  // range that cannot exist (`exterior.js:1731-1395`).
+  // range that cannot exist (`exterior.js:1735-1399`).
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-\d+` build `createDetectFeed`/,
     EX, /const detectFeed = createDetectFeed\(playerEntity, \{/],
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:\d+-(\d+)` build `createDetectFeed`/,
