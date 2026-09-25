@@ -1953,22 +1953,61 @@ ${badgeCss()}
    own face rather than a new one, because two corner buttons that
    look unrelated read as two different kinds of thing. */
 .px-profile {
-  position: absolute; top: 18px; right: 18px; z-index: 4;
-  display: flex; align-items: center; gap: 10px;
-  font: inherit; font-size: 15px; letter-spacing: 0.12em;
-  text-transform: uppercase; color: #d8cfae; cursor: pointer;
-  min-height: 44px; padding: 8px 16px;
-  background: rgba(10,12,17,0.55); border: 2px solid #7d7460;
+  /* PROFILE1 (Mac: "more like a profile icon less like a button"): NO BOX.
+     The portrait is the mark and the caption sits beside it on the
+     picture, the way a name sits beside a face - a bordered rectangle
+     in the corner read as one more menu button. */
+  position: absolute; top: 16px; right: 18px; z-index: 4;
+  display: flex; flex-direction: row-reverse; align-items: center; gap: 12px;
+  font: inherit; color: #d8cfae; cursor: pointer; text-align: right;
+  min-height: 44px; padding: 0; background: none; border: 0;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8);
 }
-.px-profile:hover, .px-profile:focus-visible { outline: none;
-  color: rgb(243,239,44); border-color: var(--brass);
-  text-shadow: 2px 2px 0 rgb(93,77,12); }
-/* The gem is FILLED when there is a session and HOLLOW when there is
-   not - the same two glyphs the rail uses for on and off, so "am I
-   signed in" is answerable at a glance without reading the word. */
-.px-profileicon { font-size: 12px; line-height: 1; }
-.px-profilename { max-width: 14ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.px-profile:focus-visible { outline: none; }
+/* THE PORTRAIT: a round well rimmed in brass over the iron ring, the
+   face inside at its own pixels. */
+.px-portrait {
+  position: relative; flex: none; width: 58px; height: 58px; border-radius: 50%;
+  background: radial-gradient(circle at 50% 38%, #1b2029 0%, #0a0c11 72%);
+  border: 3px solid var(--brass);
+  box-shadow: 0 0 0 2px var(--iron), 0 3px 10px rgba(0,0,0,0.65);
+  transition: border-color 120ms, box-shadow 120ms, transform 120ms;
+}
+.px-portrait canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%;
+  object-fit: cover; object-position: 50% 20%;
+  /* THE PIXELS, AS THEY ARE - the save tiles' law (.svface canvas). */
+  image-rendering: pixelated;
+}
+/* No character yet, no game data, or a face that would not draw: a
+   hooded head and shoulders in iron, never an empty ring. */
+.px-silhouette { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; }
+.px-silhouette::before { content: ''; position: absolute; left: 31%; top: 16%; width: 38%; height: 40%;
+  border-radius: 48% 48% 44% 44%; background: #3a424d; }
+.px-silhouette::after { content: ''; position: absolute; left: 12%; top: 58%; width: 76%; height: 60%;
+  border-radius: 50% 50% 0 0; background: #3a424d; }
+/* The gem on the rim: FILLED with a session, HOLLOW without (ACC1f's
+   at-a-glance "am I signed in", kept). */
+.px-profilegem {
+  position: absolute; right: -4px; bottom: -3px; font-size: 13px; line-height: 1;
+  color: var(--iron); text-shadow: 0 0 2px #000, 1px 1px 0 #000;
+}
+.px-profilegem.on { color: var(--brass); }
+.px-profile:hover .px-portrait, .px-profile:focus-visible .px-portrait {
+  border-color: rgb(243,239,44); box-shadow: 0 0 0 2px var(--iron), 0 0 14px rgba(243,239,44,0.35);
+  transform: translateY(-1px);
+}
+.px-profiletext { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.px-profilename {
+  max-width: 14ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 15px; letter-spacing: 0.12em; text-transform: uppercase;
+}
+.px-profilesub {
+  max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 12px; letter-spacing: 0.04em; color: #9d957f;
+}
+.px-profile:hover .px-profilename, .px-profile:focus-visible .px-profilename {
+  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
 
 /* THE WINDOW is the pause window's frame with the account card inside
    it, so the door has ONE kind of modal rather than two. It is
@@ -2043,10 +2082,11 @@ ${badgeCss()}
   text-shadow: 2px 2px 0 rgb(93,77,12); }
 
 @media (max-width: 480px) {
-  /* On a phone the wordmark owns the top, so the mark loses its word
-     and keeps its gem - a 44px target either way. */
-  .px-profile { top: 10px; right: 10px; padding: 8px 12px; }
-  .px-profilename { display: none; }
+  /* On a phone the wordmark owns the top, so the mark loses its caption
+     and keeps its portrait and gem - a 48px target, over the 44px floor. */
+  .px-profile { top: 10px; right: 10px; }
+  .px-portrait { width: 48px; height: 48px; }
+  .px-profiletext { display: none; }
 }
 @media (max-width: 480px) {
   .px-wordmark { font-size: 60px; }

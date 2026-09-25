@@ -1,0 +1,93 @@
+[
+  {
+    "name": "P1-portrait-of-an-unfinished-character",
+    "file": "src/ui/profileBadge.js",
+    "old": "s && s.chargenDone !== false && typeof s.race === 'string' && s.race",
+    "new": "s && typeof s.race === 'string' && s.race",
+    "tests": ["test/profile1_badge.test.js"]
+  },
+  {
+    "name": "P1-portrait-of-a-raceless-save-draws-a-stranger",
+    "file": "src/ui/profileBadge.js",
+    "old": "s && s.chargenDone !== false && typeof s.race === 'string' && s.race",
+    "new": "s && s.chargenDone !== false",
+    "tests": ["test/profile1_badge.test.js"]
+  },
+  {
+    "name": "P1-silhouette-never-gives-way",
+    "file": "src/ui/profileBadge.js",
+    "old": "    stand.remove();\n",
+    "new": "",
+    "tests": ["test/profile1_badge.test.js"]
+  },
+  {
+    "name": "P1-a-null-face-empties-the-ring",
+    "file": "src/ui/profileBadge.js",
+    "old": "    if (!art) return;\n",
+    "new": "",
+    "tests": ["test/profile1_badge.test.js"]
+  },
+  {
+    "name": "P1-a-refused-face-throws",
+    "file": "src/ui/profileBadge.js",
+    "old": ".then(show).catch(() => {});",
+    "new": ".then(show);",
+    "tests": ["test/profile1_badge.test.js"]
+  },
+  {
+    "name": "P1-gem-always-filled",
+    "file": "src/ui/profileBadge.js",
+    "old": "session ? '\\u25c6' : '\\u25c7'",
+    "new": "'\\u25c6'",
+    "tests": ["test/profile1_badge.test.js"]
+  },
+  {
+    "name": "P1-caption-drops-the-character",
+    "file": "src/ui/profileBadge.js",
+    "old": "  words.append(el('span', 'px-profilesub', characterLine(save)));\n",
+    "new": "",
+    "tests": ["test/profile1_badge.test.js"]
+  },
+  {
+    "name": "P1-mark-opens-nothing",
+    "file": "src/ui/profileBadge.js",
+    "old": "  b.onclick = () => onOpen();\n",
+    "new": "",
+    "tests": ["test/profile1_badge.test.js"]
+  },
+  {
+    "name": "P1-the-box-comes-back",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  min-height: 44px; padding: 0; background: none; border: 0;",
+    "new": "  min-height: 44px; padding: 8px 16px; background: rgba(10,12,17,0.55); border: 2px solid #7d7460;",
+    "tests": ["test/profile1_badge.test.js"]
+  },
+  {
+    "name": "P1-square-portrait",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  position: relative; flex: none; width: 58px; height: 58px; border-radius: 50%;",
+    "new": "  position: relative; flex: none; width: 58px; height: 58px;",
+    "tests": ["test/profile1_badge.test.js"]
+  },
+  {
+    "name": "P1-face-smoothed",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  object-fit: cover; object-position: 50% 20%;\n  /* THE PIXELS, AS THEY ARE - the save tiles' law (.svface canvas). */\n  image-rendering: pixelated;",
+    "new": "  object-fit: cover; object-position: 50% 20%;",
+    "tests": ["test/profile1_badge.test.js"]
+  },
+  {
+    "name": "P1-door-shares-the-tile-canvas",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "face: save ? loadFace(save, { scale: 2, copy: true }) : null,",
+    "new": "face: save ? loadFace(save, { scale: 2 }) : null,",
+    "tests": ["test/profile1_badge.test.js"]
+  },
+  {
+    "name": "P1-door-reads-no-session",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "    session: who,\n",
+    "new": "    session: null,\n",
+    "tests": ["test/profile1_badge.test.js", "test/nameadopt.test.js"]
+  }
+]
