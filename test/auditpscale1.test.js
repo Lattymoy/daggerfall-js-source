@@ -205,7 +205,8 @@ test('AUDIT PSCALE1 the dungeon, mounted: a layout foe is as tough as the player
   d.door(lf, 3, true, false); assert.equal(lf.entity.health, 85, 'a SetHealth(0) whole');
   noteFighter(ambush, 'bob-0002', now); noteFighter(ambush, PARTY_ME, now);
   d.door(ambush, 5, false, false); assert.equal(ambush.entity.health, 95, 'past the layout, never');
-  d.door(ally, 5, false, false); assert.equal(ally.entity.health, 95, 'my ally, never');
+  for (const who of [PARTY_ME, 'bob-0002', 'carl-0003', 'dave-0004']) noteFighter(ally, who, now);
+  d.door(ally, 5, false, false); assert.equal(ally.entity.health, 95, 'an ally inside the layout, never - even struck by four');
   assert.equal(d._weighHit(lf, 10), 13, 'a layout foe\'s blow on me at four: 13 for 10');
   assert.equal(d._weighHit(ambush, 10), 10, 'past the layout: 10');
   assert.equal(d._weighHit(null, 0), 0);
@@ -276,6 +277,27 @@ test('AUDIT PSCALE1 the party\'s one roll, mounted: the lowest id among my PARTY
   assert.equal(amGroupRollOwner('c-03', at(120), [{ id: 'a-01', feet: at(0) }, { id: 'b-02', feet: at(60) }]), true, 'COUNT-5: out of the roller\'s reach - rolls (it deferred to B, who deferred to A)');
   assert.equal(amGroupRollOwner('c-03', at(20), [{ id: 'a-01', feet: at(0) }, { id: 'b-02', feet: at(10) }]), false, 'a huddle: the lowest alone');
   assert.equal(amGroupRollOwner('c-03', at(0), []), true, 'nobody to defer to');
+});
+
+test('AUDIT PSCALE1 a camp or a pack grows by its own members, mounted - one more for every two partymates past the first, from its own in order, each placed against the spots in flight (mutants: the camp not growing, a camp grown by strangers\' kinds)', () => {
+  const t = strip(read('src/scenes/world.js'));
+  const at = t.indexOf('const _standCampEncounter = (hit, feet) => {');
+  assert.ok(at > 0, 'the camp stand is found');
+  const fn = balanced(t, at + 'const _standCampEncounter = '.length, '{', '}');
+  const camp = (n) => {
+    const stood = [];
+    const standCamp = mount('', {
+      placeFoeEnv: () => ({}), collider: {}, cam: { yaw: 0 }, fieldOfView: () => 1, entityOccupancy: () => () => false, _placingPool: () => [],
+      LOOSE_FOE_PLACE_ATTEMPTS: 1, placeFoeFreely: () => ({ x: 1, y: 0, z: 1 }), _inAnyLocationRect: () => false, _nextCampId: 1,
+      partyGroupMembers, partySize: () => n, ENEMY_BASICS: {},
+      exteriorFoes: { spawnFoe: (mobileType) => { stood.push(mobileType); return Promise.resolve(null); } },
+    }, `return (hit, feet) => ${fn.slice(fn.indexOf('{'))};`);
+    standCamp({ mobileTypes: [10, 11, 12], minDistance: 14, maxDistance: 26, spacing: 3, alertRadius: 9 }, [0, 0, 0]);
+    return stood;
+  };
+  assert.deepEqual(camp(1), [10, 11, 12], 'alone, the camp as it rolled');
+  assert.deepEqual(camp(5), [10, 11, 12, 10, 11], 'five: two more, from its own in order');
+  assert.deepEqual(camp(8), [10, 11, 12, 10, 11, 12], 'eight: three more');
 });
 
 test('AUDIT PSCALE1 COUNT-3: a stand in flight holds its spot - the pool names the feet crossing spawnFoe\'s awaits, and the camp and the wanderer place against them (mutants: the pending feet unexported, the placing pool without them)', async () => {

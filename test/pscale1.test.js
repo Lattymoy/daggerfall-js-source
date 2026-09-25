@@ -117,7 +117,7 @@ test('PSCALE1 outdoors, driven: a shared foe (one that rides the stream, or anot
   assert.equal(camp.entity.health, 98, 'a placed foe with a site is the shared camp\'s: five against four is two');
   assert.equal(pool.partyHit(10, { mobileType: 0, puppet: 'bob-0002', _fightN: 4, entity: {} }), 13, 'another player\'s foe, fought by four, hits harder');
   assert.equal(pool.partyHit(10, { mobileType: KNIGHT_CITY_WATCH, puppet: 'bob-0002', _fightN: 4, entity: {} }), 10, 'never the watch');
-  assert.equal(pool.partyHit(10, { mobileType: 0, _fightN: 4, entity: { team: 'PlayerAlly' } }), 10, 'never my own ally');
+  assert.equal(pool.partyHit(10, { mobileType: 0, puppet: 'bob-0002', _fightN: 4, entity: { team: 'PlayerAlly' } }), 10, 'never an ally, even one fought by four');
   assert.equal(pool.partyHit(10, { mobileType: 0, _fightN: 4, entity: {}, isQuestFoe: true }), 10, 'never a quest\'s foe');
   const indoors = createExteriorFoes(rig());   // a building's pool: no stream
   const mouse = await indoors.spawnFoe(0, [10, 0, 10], { feetGiven: true });

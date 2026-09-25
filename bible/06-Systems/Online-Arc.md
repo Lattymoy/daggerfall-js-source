@@ -8288,7 +8288,7 @@ reach an offline copy).
 - A heal on a joiner's or a reader's COPY is written unweighed until the next record carries the authority's.
 
 Relay: wire.js is in the relay's bundle, so world108's row (unshipped) is rewritten in place; the relay reads none of
-`n`. Pinned: `test/auditpscale1.test.js` (9), `test/pscale1.test.js` (4, re-aimed), and the older pins the change
+`n`. Pinned: `test/auditpscale1.test.js` (10), `test/pscale1.test.js` (4, re-aimed), and the older pins the change
 moved (audit68_dungeonctx's harness, auditworld6b's divert and cap, exteriorfoes' sink, renown1's door and bonus).
 Mutants: `tools/mutants/auditpscale1.json`, `tools/mutants/pscale1.json` (re-aimed), and restx2camp's and watch1's
 records re-aimed by content.
