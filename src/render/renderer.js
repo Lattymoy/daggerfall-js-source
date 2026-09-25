@@ -4551,8 +4551,21 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // They are born UNDEFINED, not with typed defaults: the readers take
     // undefined for "absent" (`_bbKey == null`, `_shSeen === true`,
     // `_shMovedAt != null`, `_shId ??=`), and nothing in the tree tells a
-    // missing field from an undefined one. A field a batch gains anywhere
-    // in src/ belongs here too - test/perfextb.test.js sweeps the writes.
+    // missing field from an undefined one. ALL BUT THREE (the review): the
+    // shadow record's origin, `_shOx`/`_shOy`/`_shOz`, is born NaN. V8
+    // keeps a field in the representation of the first value it holds,
+    // and undefined is not a number - a field born undefined is a TAGGED
+    // slot, and every fractional origin recordBillboards writes into it,
+    // every batch every frame, was a fresh heap number (~40 bytes a batch
+    // a frame, 3,000 flats about 120 KB of young garbage a frame, which
+    // the base never made: its fields were born with their first double).
+    // Born NaN they are DOUBLE slots, written in place. NaN is never read
+    // as a place: every reader asks `_shSeen === true` first, and the
+    // static signature folds only batches the record has written. What the
+    // frame writes into the rest is Smis, booleans, strings or objects,
+    // which need no box (`sway`'s fraction is written once, by the host).
+    // A field a batch gains anywhere in src/ belongs here too -
+    // test/perfextb.test.js sweeps the writes, and weighs the record.
     // PERF-EXT1 (2026-09-25, the same players): `_place`, the placements on
     // a grid (bounds.js placementGrid), for a static batch of more than one
     // flat - a pixel-wide wood's sphere reaches every shadow in its pixel,
@@ -4562,7 +4575,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       _place: count > 1 && !dynamic ? placementGrid(centers) : null,
       _box: undefined, sway: undefined, conceal: undefined, noShadow: undefined, selfCard: undefined, _dead: undefined, _moveScratch: undefined,
       _bbKey: undefined, _bbKeyRecord: undefined, _bbKeyFrame: undefined, _bbKeyArchive: undefined,
-      _shGen: undefined, _shSeen: undefined, _shOx: undefined, _shOy: undefined, _shOz: undefined, _shFrame: undefined,
+      _shGen: undefined, _shSeen: undefined, _shOx: NaN, _shOy: NaN, _shOz: NaN, _shFrame: undefined,
       _shRec: undefined, _shFlip: undefined, _shDyn: undefined, _shSway: undefined, _shMovedAt: undefined, _shId: undefined,
     };
   }

@@ -173,6 +173,56 @@ test('PERF-EXT10: every field src/ writes on a billboard batch is one the factor
   assert.deepEqual([...new Set(stray)], [], 'written on a batch after birth, and not minted in createBillboardBatch\'s literal');
 });
 
+test('PERF-EXT10 (the review): the shadow record writes every batch\'s fractional origin every frame and ALLOCATES NOTHING for it - `_shOx`/`_shOy`/`_shOz` are born NaN, a double slot written in place; born undefined they were a tagged slot, and every store a fresh heap number (the tip before the review: ~42 bytes a batch a frame in this child, where the base\'s fields, born with their first double, made none). Measured in a child with a 64 MB young space against a control of the same stores into undefined-born fields, which must allocate - or this pin says nothing', () => {
+  const url = (p) => pathToFileURL(join(ROOT, p)).href;
+  const script = `
+    const { Renderer } = await import(${JSON.stringify(url('src/render/renderer.js'))});
+    const { EL_LANE } = await import(${JSON.stringify(url('src/render/enhancedLighting.js'))});
+    let ids = 0;
+    const gl = new Proxy({}, { get(o, k) { if (k in o) return o[k]; if (typeof k !== 'string') return undefined; let v;
+      if (k === 'getProgramParameter' || k === 'getShaderParameter') v = () => true; else if (k === 'getUniformLocation') v = (_p, n) => n;
+      else if (k === 'getParameter') v = () => new Float32Array(4); else if (k.startsWith('create')) v = () => ({ id: ++ids });
+      else if (k.toUpperCase() === k) v = 1; else v = () => {}; o[k] = v; return v; } });
+    const r = new Renderer({ getContext: () => gl, clientWidth: 320, clientHeight: 200, width: 320, height: 200 });
+    r.setLightingLane(EL_LANE);
+    // a streamed town's flats as world.js dresses them: 121 pixels 819.2 m apart, one origin ARRAY a pixel, ten batches each
+    const batches = [], control = [];
+    for (let p = 0; p < 121; p++) {
+      const t = [((p % 11) - 5.5) * 819.2, 0.25, (Math.floor(p / 11) - 5.5) * 819.2];
+      for (let i = 0; i < 10; i++) {
+        const b = r.createBillboardBatch(504, i, { w: 2, h: 6 }, [[i, 0, i]]);
+        b._box = [0, 0, 0, 1, 6, 1]; b.sway = 0.5; b.origin = t;
+        batches.push(b);
+        control.push({ o: t, x: undefined, y: undefined, z: undefined });
+      }
+    }
+    const sp = r.shadows, wind = new Float32Array(4), R = new Float32Array([1, 0, 0]), U = new Float32Array([0, 1, 0]);
+    const record = () => { sp.recordBillboards(batches, wind, R, U); sp.discard(); };
+    const store = () => { for (const c of control) { const o = c.o; c.x = o[0]; c.y = o[1]; c.z = o[2]; } };
+    const bytes = (fn) => {
+      for (let f = 0; f < 300; f++) fn();
+      globalThis.gc(); globalThis.gc();
+      const h0 = process.memoryUsage().heapUsed;
+      for (let f = 0; f < 100; f++) fn();
+      return (process.memoryUsage().heapUsed - h0) / 100 / batches.length;
+    };
+    const perControl = bytes(store), perBatch = bytes(record);
+    const b = batches[batches.length - 1];
+    console.log(JSON.stringify({ perControl, perBatch, seen: b._shSeen, at: [b._shOx, b._shOy, b._shOz], origin: b.origin }));
+  `;
+  const out = spawnSync(process.execPath, ['--expose-gc', '--min-semi-space-size=64', '--max-semi-space-size=64', '--input-type=module', '-e', script], { encoding: 'utf8' });
+  assert.equal(out.status, 0, out.stderr);
+  const m = JSON.parse(out.stdout.trim().split('\n').pop());
+  // the record really wrote the triple, and wrote the origin
+  assert.equal(m.seen, true, 'the shadow pass recorded the batch');
+  assert.deepEqual(m.at, m.origin, 'the triple holds the origin it was recorded at');
+  // the control is three stores of the same fractional values into fields born undefined: a heap number each (12 bytes
+  // compressed, 16 not; node here reads ~42) - if it shows less, the measure cannot see this garbage, and a pass below
+  // would mean nothing
+  assert.ok(m.perControl >= 20, `the control allocated ${m.perControl.toFixed(2)} bytes an object a frame - the measure is blind`);
+  assert.ok(m.perBatch < 2, `the shadow record allocated ${m.perBatch.toFixed(2)} bytes a batch a frame (the control: ${m.perControl.toFixed(2)})`);
+});
+
 // ── PERF-EXT11: one upload ────────────────────────────────────────────
 
 /** Walk the recorded calls as GL would: uniforms are held PER PROGRAM until the next upload to that program. At every

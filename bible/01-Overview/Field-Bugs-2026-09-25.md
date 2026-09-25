@@ -119,6 +119,31 @@ told to disprove each win. The flats and the frame's CPU:
 and the mutants. Not seen on a GPU - there is no game data in the
 container.
 
+## AUDIT PERF-EXT10-13 (the review)
+
+One finding from the adversarial read of the flats and the frame's CPU,
+reproduced in node on the real Renderer and ShadowPass before it was
+changed.
+
+- **R1: the one shape made the shadow record allocate.** PERF-EXT10
+  minted the shadow record's origin, `_shOx`/`_shOy`/`_shOz`, as
+  undefined with the other twenty. V8 keeps a field in the
+  representation of the first value it holds, and undefined is not a
+  number, so the three were tagged slots, and every fractional origin
+  `recordBillboards` stored - every batch, every frame - was a new heap
+  number: about 120 KB of young garbage a frame over 3,000 flats, which
+  the base (its fields born with their first double) never made. On the
+  producer-mix harness it gave back most of what the one shape had saved
+  in scavenges. The triple is born NaN now, a double slot written in
+  place; nothing reads it before `_shSeen`, so no value changes and the
+  picture cannot. Producer mix, scavenges with a 1 MB young space over
+  3,000 frames (two runs' mean), the first cut -> now: 1,298 -> 1,210 by
+  day, 1,244 -> 1,172 at night (the base's 1,297 and 1,304).
+
+Pins: `test/perfextb.test.js` 11 (the new one weighs the record against
+a control and fails with `src/` at `1d05f5374`). Mutants:
+`perfextb.json` 36 - 35 dead, 1 recorded equivalent; its 5 re-aimed.
+
 ## PERF-EXT1-5 - the shadows
 
 The Enhanced Lighting shadow pass, the sun's cascades and the lanterns'

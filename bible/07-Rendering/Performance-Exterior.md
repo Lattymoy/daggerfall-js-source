@@ -46,9 +46,11 @@ read its batches through polymorphic property lookups.
 undefined for "absent" (`_bbKey == null`, `_shSeen === true`,
 `_shMovedAt != null`, `o._shId ??=`), and nothing in the tree tells a
 missing field from an undefined one (no `in`, `hasOwn`, `Object.keys`,
-spread or JSON on a batch). No value any code computes changes, so the
-picture cannot. `contract.js` declares the 23 (HARD3 holds the mint and
-the typedef to one list).
+spread or JSON on a batch). All but three: the shadow record's origin,
+`_shOx`/`_shOy`/`_shOz`, is born `NaN` (the review, below) - a double
+slot from birth, which `recordBillboards` writes in place every frame.
+No value any code computes changes, so the picture cannot. `contract.js`
+declares the 23 (HARD3 holds the mint and the typedef to one list).
 
 **Measured** (`perfhunt/js/h/townFrame.mjs`, `ab.sh`, median of 9
 alternating runs of 800 frames; the base is `e9dd612e7`):
@@ -66,8 +68,38 @@ alternating runs of 800 frames; the base is `e9dd612e7`):
 
 The prover's own run (the literal alone against the same tree with its
 instrumentation, 9 runs): 1.702 -> 1.343 by day, 2.375 -> 1.470 at
-night. Memory: 23 more slots on ~3,300 batches, about 300 KB; the heap
-delta a frame did not grow (44-51 -> 34-36 KB with `ALLOC=1`).
+night. Memory: 23 more slots on ~3,300 batches, about 300 KB. The young
+garbage a frame is counted in scavenges with a 1 MB young space
+(`--min-semi-space-size=1 --max-semi-space-size=1 --trace-gc`, 3,000
+frames of the producer mix, two runs each): the base 1,298 / 1,296 by
+day and 1,304 / 1,304 at night; with the reviewed mint 1,209 / 1,212 and
+1,176 / 1,168. This line first quoted `ALLOC=1`'s heap delta (44-51 ->
+34-36 KB a frame), which is not a measure: scavenges run inside its
+window and take the garbage with them, and it missed what the review
+found.
+
+**The review.** The first cut minted the origin triple `undefined` with
+the rest, and V8 keeps a field in the representation of the first value
+it holds. Undefined is not a number, so the three were TAGGED slots
+(`--trace-generalization`: born `h{Any}`, where the base's, added with
+their first double, were `d`), and every fractional origin the record
+stored into them - every batch, every frame - was a fresh heap number:
+118,867 bytes a frame for the record alone over 3,025 batches (39 a
+batch; the base 67 in all), and 407-413 scavenges over 3,000 frames of
+it with a 1 MB young space where the base made 18-24. On the producer
+mix it gave back what the one shape saved in garbage - all of it by day
+(1,301 / 1,294 scavenges at the first cut, the base's 1,298 / 1,296) and
+half at night (1,239 / 1,248, the base's 1,304 / 1,304). Born `NaN` they
+are doubles again (`d{Any}` from birth): the record 67 bytes a frame,
+16-18 scavenges, and the numbers above. `NaN` is never read as a place -
+every reader asks `_shSeen === true` first, and the static signature
+folds only batches the record has written - and what the frame writes
+into the other twenty is Smis, booleans, strings and objects, which need
+no box (`sway`'s fraction is written once, by the host). Node's ms a
+frame did not move past its noise (`abReal.sh`, first cut -> reviewed, 7
+runs: 1.284 -> 1.242 by day, 1.497 -> 1.547 at night; `ab.sh` on the
+hunter's town, 9 runs: 1.252 -> 1.287 and 1.465 -> 1.460); the point is
+the garbage.
 
 **Pinned** (`test/perfextb.test.js`, every one failing on the base):
 a batch of every producer - a tree, a town flat, a walker, a loot pile,
@@ -80,8 +112,14 @@ producers' batches on one map (`%HaveSameMap`); and a SOURCE SWEEP holds
 every field `src/` writes on a batch - by name for the renderer's own
 memory, by receiver (`batch.`, `x.batch.`, `xBatch.`) for every host -
 to the literal, because the next producer to add a field after birth
-splits the shape again without any test noticing. Mutants
-`tools/mutants/perfextb.json` 1-9.
+splits the shape again without any test noticing. And the review's pin,
+which fails on the first cut: in a child with a 64 MB young space the
+shadow record, writing 1,210 batches' fractional origins for 100 frames,
+allocates under 2 bytes a batch a frame (the first cut: 42), weighed
+against a control of the same stores into fields born undefined that
+must show at least 20 - or the measure is blind. Mutants
+`tools/mutants/perfextb.json` 1-9 and 34-36 (the triple born undefined,
+one of it undefined, one born null); 5 re-aimed at the reviewed line.
 
 ## PERF-EXT11 - a flat's size and origin go up when they change
 

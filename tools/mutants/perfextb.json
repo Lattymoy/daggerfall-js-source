@@ -38,7 +38,7 @@
   {
     "name": "PERF-EXT10-5-the-shadow-records-memory-is-gained-at-the-first-record",
     "file": "src/render/renderer.js",
-    "old": "      _shGen: undefined, _shSeen: undefined, _shOx: undefined, _shOy: undefined, _shOz: undefined, _shFrame: undefined,\n",
+    "old": "      _shGen: undefined, _shSeen: undefined, _shOx: NaN, _shOy: NaN, _shOz: NaN, _shFrame: undefined,\n",
     "new": "",
     "tests": [
       "test/perfextb.test.js"
@@ -297,6 +297,33 @@
     "tests": [
       "test/perfextb.test.js",
       "test/water.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT10-10-the-shadow-origin-is-born-undefined-a-tagged-slot-and-every-record-boxes-it",
+    "file": "src/render/renderer.js",
+    "old": " _shOx: NaN, _shOy: NaN, _shOz: NaN,",
+    "new": " _shOx: undefined, _shOy: undefined, _shOz: undefined,",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT10-11-one-of-the-three-is-born-undefined-and-a-third-of-the-garbage-is-back",
+    "file": "src/render/renderer.js",
+    "old": " _shOz: NaN, _shFrame: undefined,",
+    "new": " _shOz: undefined, _shFrame: undefined,",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT10-12-the-origin-is-born-null-another-tagged-slot",
+    "file": "src/render/renderer.js",
+    "old": " _shOx: NaN, _shOy: NaN,",
+    "new": " _shOx: null, _shOy: NaN,",
+    "tests": [
+      "test/perfextb.test.js"
     ]
   }
 ]

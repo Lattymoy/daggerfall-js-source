@@ -31,7 +31,10 @@
  *
  * PERF-EXT10 (2026-09-25): and every field below is MINTED at birth, the
  * ones nobody has written yet as undefined, so a batch has one hidden
- * class for life (renderer.js createBillboardBatch says why). The last
+ * class for life (renderer.js createBillboardBatch says why) - all but
+ * the shadow record's origin, `_shOx`/`_shOy`/`_shOz`, born NaN (the
+ * review): a field born undefined is a tagged slot, and every fractional
+ * origin stored into it every frame was a fresh heap number. The last
  * block is the renderer's own bookkeeping - the key's memory
  * (billboardKey.js) and the shadow pass's (shadowPass.js recordBillboards
  * and the static signature) - declared so the mint and this list stay one.
@@ -62,7 +65,7 @@
  * @property {number} [_bbKeyArchive]                 ...the archive
  * @property {number} [_shGen]                        SC1: the floating origin's generation the pass last saw it in
  * @property {boolean} [_shSeen]                      SC1: recorded at least once
- * @property {number} [_shOx]                         SC1: the origin it was last recorded at, x
+ * @property {number} [_shOx]                         SC1: the origin it was last recorded at, x (NaN until then - a double from birth, read only once `_shSeen`)
  * @property {number} [_shOy]                         ...y
  * @property {number} [_shOz]                         ...z
  * @property {number} [_shFrame]                      AUDIT SC1: the frame it was last recorded on (-1 for a still flat)
