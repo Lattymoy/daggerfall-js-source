@@ -33,6 +33,7 @@
 import { TRANSPORT_MODES, isRiding, hasHorse, hasCart } from '../systems/transport.js';
 import { RidingAnimator, loadRidingArt, ridingRect, RIDING_VOLUME_SCALE } from '../systems/riding.js';
 import { TransportWindow, transportArtLoaded } from '../ui/transportWindow.js';
+import { enhancedWindow } from '../ui/enhancedPorts.js';   // PORT4: the transport picker, in the enhanced skin
 import { ownsShip } from '../systems/banking.js';
 import { horseOffsetHeight, dockedLargeHudHeight } from '../ui/hudLarge.js';   // ROAD-D D10: LargeHUDOffsetHorse; AUDIT-RR F25: EnhancedRiding's own arm asks LargeHUDDocked (EnhancedRiding.cs:256-257)
 import { mwViewHides } from './mwView.js';   // AUDIT-EOTB2: the sprite body on screen hides the FPV horse (Eye Of The Beholder's ToggleBillboard)
@@ -147,7 +148,7 @@ export function createMountRig({
       // across the map cannot be mounted from here), and a click goes through TryUseTransport rather than the
       // direct set - the runtime walks the player to the team, or says why not.
       const rt = horseCart?.() ?? null;
-      showOverlay(new TransportWindow({
+      showOverlay(enhancedWindow(new TransportWindow({
         hasHorse: rt ? !!rt.canMountHorseFromTransportWindow() : hasHorse(playerEntity.items ?? []),
         hasCart: rt ? !!rt.canUseCartFromTransportWindow() : hasCart(playerEntity.items ?? []),
         // TR4: the row is live when a ship is owned - AND when this
@@ -159,7 +160,7 @@ export function createMountRig({
           if (rt && (mode === TRANSPORT_MODES.Horse || mode === TRANSPORT_MODES.Cart)) { rt.tryUseTransport(mode); return; }   // HCC: HandleHorseTransportButton / HandleCartTransportButton [IL_b170, IL_b1ac]
           setMode(mode);   // HC1: the art loads with the mode, in the one place
         },
-      }));
+      }), 'transport'));
     },
 
     /**

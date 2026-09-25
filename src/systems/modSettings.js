@@ -872,6 +872,14 @@ export const MOD_SETTINGS = Object.freeze({
       'GeneralOptions.AllowWeather': Object.freeze({ default: false, description: "Allows weather effects during time accelerated travel" }),
       'GeneralOptions.AllowAnnoyingSounds': Object.freeze({ default: false, description: "Allows footstep and hoof sounds during time accelerated travel" }),
       'GeneralOptions.AllowRealGrass': Object.freeze({ default: false, description: "Allows the Real Grass mod to run during time accelerated travel" }),
+      // TRAVEL-NAV1 (2026-09-25, Mac: "Improving travel options navigation
+      // to properly route around objects and stopping before running into
+      // buildings"): THE PORT'S OWN KEY on the mod's pane, as HT-WAIST's is
+      // on Handheld Torches' - the vendored modsettings.json does not carry
+      // it and its words say so. ON: a journey steers round buildings,
+      // walls and rocks and pauses short of what it cannot pass
+      // (systems/travelSteer.js). OFF: the mod's own beeline, exactly.
+      'GeneralOptions.AvoidObstacles': Object.freeze({ default: true, description: 'Steers time accelerated travel around buildings, walls and rocks, and pauses the journey before walking into one it cannot get round. (This port’s own switch - the mod has none.)' }),
       'TimeAcceleration.DefaultStartingAcceleration': Object.freeze({ default: 4, options: Object.freeze(["1", "2", "3", "5", "10", "15", "20", "25", "30", "40", "50"]), description: "The initial time acceleration used after starting the game" }),
       'TimeAcceleration.AlwaysUseStartingAcceleration': Object.freeze({ default: false, description: "Always uses the default starting acceleration when initiating a journey, rather than value from the previous journey" }),
       'TimeAcceleration.AccelerationLimit': Object.freeze({ default: 60, min: 10, max: 100, description: "The maximum limit allowed for time acceleration, road following is limited to half this amount" }),

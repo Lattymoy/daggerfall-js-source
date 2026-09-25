@@ -185,9 +185,13 @@ export const MOD_CURATED = Object.freeze({
   // and (KB1: in Controls now, as FollowPaths) which key follows a road. Everything else - the fourteen dot
   // colours, the junction map's placement, the fare scaling - stays in
   // the mod's own pane.
+  // TRAVEL-NAV1: and the port's own steering switch, on the tile so it is
+  // REACHABLE (TORCH-BIND's lesson, HT-WAIST's pin) - a key the drawer does
+  // not draw is a key nobody can turn.
   'travel-options': Object.freeze([
     'CautiousTravel.PlayerControlledCautiousTravel', 'ShipTravel.OnlyFromPorts',
     'GeneralOptions.LocationPause', 'TimeAcceleration.AccelerationLimit',
+    'GeneralOptions.AvoidObstacles',
   ]),
   'ambient-text': Object.freeze(['textChance', 'interval', 'postTextInterval', 'textDisplayTime']),   // AT0: all four it ships - the mod is small enough that curation would only hide something
   // EOTB0: the mod ships FIFTY-FOUR keys across nine sections, so this

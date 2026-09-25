@@ -44,6 +44,7 @@
 // was not received (ui/enhancedChunk.js's whole header).
 // ═══════════════════════════════════════════════════════════════════
 
+import { isEnhancedPlus } from '../systems/uiSkin.js';   // PLUS1: the Ascend's clicks and marks are Enhanced Plus's
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { drawPixelGround } from './pixelGround.js';
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab, which this screen refuses while a point is unspent
@@ -84,6 +85,8 @@ export function crownTitle(crown) {
 /** What the window ASKS, which is the sentence Skyrim puts in the
  *  middle of the sky. Ours is plural because Daggerfall's pool is. */
 export const ASK_ONE = 'Choose what rises';
+/** LV2: how the stars take a click, under the ask. */
+export const STAR_HOWTO = 'Click a star to choose it \u00b7 click again to add a point \u00b7 right-click to take one back';
 export const ASK_DONE = 'The stars are set';
 /** ASCEND-ANYTIME: ...and what it asks when it is asking nothing. The
  *  window is a VIEW here - the player opened their own sky to look at
@@ -199,6 +202,9 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
   const plateRefuse = el('p', 'lv-refuse');
   const plateHint = el('p', 'lv-hint');
   plate.append(plateCount, plateKey, plateRefuse, plateHint);
+  // LV2: how the stars take a click - said once, beside the pool, where it
+  // takes no room from the figure (positioned out of the band's flow)
+  if (!screen?.viewOnly && isEnhancedPlus()) plate.append(el('p', 'lv-howto', STAR_HOWTO));   // PLUS1
   root.append(plate);
 
   // ── THE FIGURE ───────────────────────────────────────────────
@@ -234,18 +240,62 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
     const val = el('span', 'lv-val');
     const delta = el('span', 'lv-delta');
     b.append(gem, name, val, delta);
-    // A CLICK IS SELECT-THEN-PRESS, through the screen's own input -
-    // the two moves the keyboard makes, in that order. A star that
-    // cannot take a point still takes the FOCUS, so the description
-    // and the two presses below it still answer for it.
-    b.onclick = () => {
-      focusAt(screen, key);
-      if (raiseAt(screen, key)) refused = false;
-      paint();
-    };
+    // LV2: SELECT, THEN SPEND. The first click on a star only CHOOSES
+    // it - the description and the two presses below answer for it -
+    // and a point is spent only by clicking the chosen star again, so
+    // a stray click on the figure never costs a point. A right click
+    // takes a point back from that star. Both go through the screen's
+    // own raiseAt / lowerAt, exactly as the + and - presses do.
+    if (isEnhancedPlus()) {   // PLUS1: the select-then-spend stars are Enhanced Plus's
+      b.onclick = () => starPress(key, 1);
+      b.oncontextmenu = (e) => { e.preventDefault(); starPress(key, -1); };
+      b.title = 'Click to choose - click again to add a point - right-click to take one back';
+    } else {
+      // Enhanced: A CLICK IS SELECT-THEN-PRESS, through the screen's own input - the two moves the keyboard makes.
+      b.onclick = () => {
+        focusAt(screen, key);
+        if (raiseAt(screen, key)) refused = false;
+        paint();
+      };
+    }
     figure.append(b);
     return { key, node: b, val, delta, gem };
   });
+
+  /** LV2: one press on a star. `dir` +1 is a left click, -1 a right one. */
+  function starPress(key, dir) {
+    if (dead) return;
+    const chosen = focusedKey(screen) === key;
+    focusAt(screen, key);
+    let fx = 'no';
+    if (dir < 0) {
+      if (lowerAt(screen, key)) { refused = false; fx = 'down'; }
+    } else if (!chosen) fx = 'pick';
+    else if (raiseAt(screen, key)) { refused = false; fx = 'up'; }
+    paint();
+    starFx(key, fx);
+  }
+
+  /** LV2: the small effect a press leaves on its star - a ring when it is
+   *  chosen, a rising +1 and a flash when a point lands, a falling -1 when
+   *  one is taken back, a shake when the star cannot move. Stepped, like
+   *  every state in this skin; the sheet stands them all down under
+   *  reduced motion. */
+  function starFx(key, kind) {
+    if (!isEnhancedPlus()) return;   // PLUS1: plain Enhanced leaves no effect
+    const s = stars.find((x) => x.key === key);
+    if (!s) return;
+    const n = s.node;
+    for (const c of ['fx-pick', 'fx-up', 'fx-down', 'fx-no']) n.classList.remove(c);
+    void n.offsetWidth;   // restart the animation on a repeat press
+    n.classList.add(`fx-${kind}`);
+    if (kind === 'up' || kind === 'down') {
+      const pop = el('span', `lv-pop ${kind}`, kind === 'up' ? '+1' : '\u22121');
+      pop.setAttribute('aria-hidden', 'true');
+      n.append(pop);
+      setTimeout(() => pop.remove(), 700);
+    }
+  }
   stage.append(figure);
   root.append(stage);
 
@@ -297,8 +347,9 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
   };
   prev.onclick = () => step(-1);
   next.onclick = () => step(1);
-  plus.onclick = () => { if (raiseAt(screen, focusedKey(screen))) refused = false; paint(); };
-  minus.onclick = () => { if (lowerAt(screen, focusedKey(screen))) refused = false; paint(); };
+  // LV2: the two presses leave the same mark on the chosen star as a click on it would
+  plus.onclick = () => { const k = focusedKey(screen); const ok = raiseAt(screen, k); if (ok) refused = false; paint(); starFx(k, ok ? 'up' : 'no'); };
+  minus.onclick = () => { const k = focusedKey(screen); const ok = lowerAt(screen, k); if (ok) refused = false; paint(); starFx(k, ok ? 'down' : 'no'); };
 
   // ── THE RIBBON ───────────────────────────────────────────────
   const ribbonWrap = el('div', 'lv-ribbonwrap');

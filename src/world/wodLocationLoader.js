@@ -162,10 +162,14 @@ export class LocationSession {
  * @param {?(x:number, y:number) => number} pathsPoint - Basic Roads'
  *   getPathsPoint (road | track mask at the map pixel); null when the
  *   mod is absent, and the static then keeps its 0.
+ * @param {?(prefabName:string, prefab:object, rect:object) => boolean} siteClear -
+ *   ROADS-CLEAR (a port departure, world/roadClearance.js): false refuses
+ *   the instance as the road test above does - `continue`, so a later
+ *   instance naming the pixel may still take it. Null is the mod exactly.
  * @returns {Array<{index:number, prefab:object, flatten:boolean,
  *   rect:{x:number,y:number,width:number,height:number}}>}
  */
-export function pickLocations(tile, session, getPrefab, pathsPoint = null) {
+export function pickLocations(tile, session, getPrefab, pathsPoint = null, siteClear = null) {
   const out = [];
   let hasLocation = !!tile.hasLocation;
   const ocean = WOD_OCEAN_REGIONS.includes(tile.mapRegionIndex) && tile.worldHeight <= 2;
@@ -200,11 +204,15 @@ export function pickLocations(tile, session, getPrefab, pathsPoint = null) {
     // terrainY with its WIDTH here, the transpose of the rect below.
     if ((tx + prefab.height > 128 || ty + prefab.width > 128)) continue;
     if ((tx + prefab.height > 127 || ty + prefab.width > 127)) continue;
+    const rect = { x: tx, y: ty, width: prefab.width, height: prefab.height };
+    // ROADS-CLEAR (2026-09-25, Mac: "Camps, mountains from WOD, shouldnt be placed on roads"): the mod asks only
+    // this pixel's byte (:146-151), and a site's pieces reach into the next pixel's road - the port asks the site
+    if (siteClear && !siteClear(session.prefab[i], prefab, rect)) continue;
     // :175-230 - types 0 and 2 run the identical smoothing arm and set
     // hasLocation; any other type places its objects unsmoothed.
     const flatten = t === 0 || t === 2;
     if (flatten) hasLocation = true;
-    out.push({ index: i, prefab, flatten, rect: { x: tx, y: ty, width: prefab.width, height: prefab.height } });
+    out.push({ index: i, prefab, flatten, rect });
   }
   return out;
 }

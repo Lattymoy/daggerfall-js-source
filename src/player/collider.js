@@ -356,8 +356,15 @@ export class Collider {
    * bucket (which raycastHit AND _resolveSphere would then walk for
    * movement, senses, activation and arrows). Strictly additive: with
    * no filter the walk is byte-for-byte what it was.
+   *
+   * TRAVEL-NAV1: and an OPTIONAL `out` - { dist, key, normal: [x, y, z] },
+   * the caller's own - which is written and returned in place of a fresh
+   * result, the normal into the caller's array ([0, 0, 0] on a miss).
+   * The travel steering casts a dozen feelers a frame through here
+   * (systems/travelSteer.js createColliderProbe) and owns one result for
+   * all of them. Without it the answer is the one it always was.
    */
-  raycastHit(origin, dir, maxDist, filter = null) {
+  raycastHit(origin, dir, maxDist, filter = null, out = null) {
     let best = Infinity;
     let bestKey = null;
     let bestTri = null;   // M3 climbing: the hit surface's normal rides the result
@@ -428,15 +435,21 @@ export class Collider {
     // best triangle's unit normal, oriented to FACE the ray - both
     // faces hit (as above), so the sign follows the approach side.
     let normal = null;
+    let nx = 0, ny = 0, nz = 0;
     if (bestTri) {
       const [a, b, c] = bestTri;
-      let nx = (b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]);
-      let ny = (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]);
-      let nz = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+      nx = (b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]);
+      ny = (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]);
+      nz = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
       const l = Math.hypot(nx, ny, nz) || 1;
       nx /= l; ny /= l; nz /= l;
       if (nx * dir[0] + ny * dir[1] + nz * dir[2] > 0) { nx = -nx; ny = -ny; nz = -nz; }
-      normal = [nx, ny, nz];
+      if (!out) normal = [nx, ny, nz];
+    }
+    if (out) {   // TRAVEL-NAV1: the caller's own result, written in place
+      out.dist = best; out.key = bestKey;
+      out.normal[0] = nx; out.normal[1] = ny; out.normal[2] = nz;
+      return out;
     }
     return { dist: best, key: bestKey, normal };
   }

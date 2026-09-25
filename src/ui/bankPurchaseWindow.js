@@ -389,7 +389,7 @@ export class BankPurchaseWindow {
     // own record. SelectNone still shows an empty panel either way.
     const sel = this.items()[this.selected];
     const modelIdNum = sel == null ? null : (this.isShips ? shipModelId(sel) : sel.modelIdNum ?? null);
-    if (modelIdNum != null) {
+    if (modelIdNum != null && !this.inPort) {   // DROPS-AUDIT F11: not while ported (enhancedPort.js) - the DOM window has no hole for it
       const [dx, dy, dw, dh] = PURCHASE_RECTS.display;
       this.hooks.drawModelPreview?.(modelIdNum, {
         x: m.ox + (PURCHASE_PANEL_X + dx) * m.s,

@@ -11,7 +11,7 @@
 // why an accelerated trip is a REAL walk across real terrain rather
 // than a fade to black: the port does the same through
 // `player.update(dt, { forward, ... }, cam.yaw, cam.pitch)`
-// (scenes/world.js:13479-13501).
+// (scenes/world.js:13706-13728).
 //
 // PURE: it holds its own state and takes the player's position as
 // numbers. No DOM, no renderer, no world reads - which is what lets
@@ -50,6 +50,16 @@ export function rectContains(rect, x, z) {
   return x >= rect.xMin && x < rect.xMax && z >= rect.zMin && z < rect.zMax;
 }
 
+/** TRAVEL-NAV1: how far (x, z) stands from the rect - zero inside or on
+ *  it. The steering (travelSteer.js) reads it so a town's walls BEHIND
+ *  the arrival buffer are no reason to turn away from the town: the way
+ *  only has to be clear as far as the rect the journey arrives in. */
+export function rectDistance(rect, x, z) {
+  const dx = Math.max(rect.xMin - x, 0, x - rect.xMax);
+  const dz = Math.max(rect.zMin - z, 0, z - rect.zMax);
+  return Math.hypot(dx, dz);
+}
+
 /** A rect from a corner and a size, the shape `new Rect(x, y, w, h)`
  *  makes. The mod builds the plain path-target rect this way
  *  (TravelOptionsMod.cs:506, :700). */
@@ -77,8 +87,10 @@ export class TravelAutopilot {
    *  0.8 cautious by default). `grow` adds the arrival buffer, which is
    *  what the location-summary constructor does and the rect
    *  constructor does not. */
-  constructor(targetPixel, targetRect, speedMultiplier = 1, { grow = false, isLocation = false } = {}) {
+  constructor(targetPixel, targetRect, speedMultiplier = 1, { grow = false, isLocation = false, edgeArrival = false } = {}) {
     this.isLocation = !!isLocation;   // :155 - only a LOCATION destination turns the look at arrival
+    // TRAVEL-NAV1: the arrival buffer across a pixel edge (see update).
+    this.edgeArrival = !!edgeArrival;
     this.onArrival = null;
     // AUDIT-TO1 K1: yawVector is a FIELD initialiser (:33, `new Vector3(0,
     // 0, 0)`), zeroed once when the object is made and never by
@@ -122,6 +134,20 @@ export class TravelAutopilot {
    *  happens only when the pixel under the player changed; then the
    *  orientation and the force, every frame. */
   update({ worldX, worldZ, mapPixelX, mapPixelY }) {
+    // TRAVEL-NAV1: THE BUFFER THAT CROSSES A PIXEL EDGE. The arrival test
+    // runs only in the destination PIXEL (:80), and a location eight
+    // blocks across fills its pixel (terrainTiles.js
+    // getLocationTerrainTileOrigin centres it: (128 - 8 * 16) / 2 = 0), so
+    // its ARRIVAL_BUFFER lies wholly in the neighbours - a traveller came
+    // up to the walls, crossed into the pixel AT them, and only then asked
+    // whether it had arrived. With the port's steering on, the grown rect
+    // is also an arrival outside the pixel - plain containment, no
+    // overshoot arm (the bearing latch belongs to the pixel test).
+    if (this.edgeArrival && !this.inDestinationMapPixel && rectContains(this.destinationWorldRect, worldX, worldZ)) {
+      if (this.isLocation) this.mouseLookAtDestination();
+      this.onArrival?.();
+      return { yaw: this.yaw, pitch: this.pitch, forward: 0, arrived: true };
+    }
     if (this.inDestinationMapPixel && this.isPlayerInArrivalRect(worldX, worldZ)) {
       // :155-157 - the look turns to the destination only for a real
       // location (`destinationSummary.ID != 0`), never for a path leg

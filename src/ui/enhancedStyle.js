@@ -33,6 +33,10 @@
    string the game pays for only when a screen is mounted. */
 import { PIXELIFY_FIVE_FACE, PIXEL_STACK } from './pixelifyFive.js';   // FIX-D: Silkscreen's five ahead of Pixelify Sans
 import { badgeCss } from './playerBadge.js';   // ACC3c: one rule per title and per glyph, walked out of the vocabulary - the card writes a class and the skin carries the colour
+import { PLUS_CSS, PLUS_STYLE_ID, applyPlusTheme } from './enhancedPlusStyle.js';   // PLUS1: the Enhanced Plus sheet, laid over this one
+import { installPlusCursor } from './plusCursor.js';   // PLUS7: the gauntlet cursor
+import { installWindowMotion } from './windowMotion.js';   // PLUS1/WM1: windows unfold and fold - Enhanced Plus only
+import { isEnhancedPlus } from '../systems/uiSkin.js';   // PLUS1: the Plus sheet is laid only under Plus
 
 /**
  * QUICK-LOOT-STATS: THE PLAQUE'S LAYOUT NUMBERS LIVE WITH THE DRESS.
@@ -4997,6 +5001,16 @@ export function injectEnhancedStyle(doc = document) {
   el.id = STYLE_ID;
   el.textContent = ENHANCED_CSS;
   doc.head.append(el);
+  // PLUS1: ENHANCED PLUS is this sheet with the refresh laid over it - a second sheet, after this one, so its rules
+  // win by order - and the window motion with it. Plain Enhanced gets neither and is untouched.
+  if (isEnhancedPlus() && !doc.getElementById(PLUS_STYLE_ID)) {
+    const plus = doc.createElement('style');
+    plus.id = PLUS_STYLE_ID;
+    plus.textContent = PLUS_CSS;
+    doc.head.append(plus);
+    installWindowMotion(doc);  installPlusCursor(doc);   // PLUS7: the gauntlet presses while a button is held
+    applyPlusTheme(doc);   // PLUS2: the stored colour
+  }
   // SND1: every enhanced surface is styled through here once, so the UI's
   // click sound is installed with it. Loaded late, so this sheet (which
   // node tests import for its CSS alone) never pulls the audio engine in.
