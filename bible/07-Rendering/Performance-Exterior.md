@@ -244,3 +244,56 @@ purpose: `perf4.test.js` ("uploaded once at the end") and
 `wod4_privateershold.test.js` (the camp is batched before the merge).
 Mutants: `perfextc.json` C4 x13, all dead; `el5.json`'s two createMesh
 records re-aimed by content.
+
+### PERF-EXT-C5 — the build slice is what the frame left, and the meter sees it
+
+**Before.** The stream's breather (PERF7) lent a flat 6 ms slice a frame.
+It resumes inside its own animation-frame callback, which the browser runs
+in the SAME rendering opportunity as the frame's (60 of 60 resumptions
+carried the frame's timestamp - the hunter's `sliceProbe.mjs`, headless
+Chromium), so the slice sat on top of the frame: any frame over ~8.7 ms
+of script missed vsync while a pixel built. And it ran after the frame's
+`frameEnd` and after `?perf=cpu`'s `stopCpu`, so the FPS counter's script
+ms, `frameCpu` and `?perf=cpu` had never once seen the stream -
+PERF-TOWN1 read `sim` as steady and the stream as harmless for that
+reason.
+
+**After.** `createBreather` takes a `budget` asked once a slice, and the
+world host sizes it with `frameFitBudget`: the frame clock's median frame
+interval (`frameInterval`, off the rAF stamps - 16.7 at 60 Hz, 6.9 at
+144, measured rather than assumed) less the last frame's own script
+(`lastBusy`) less 2.5 ms, between 3 ms (the prover's floor, not the
+hunter's 1) and 6. A build the pump did not start - the boot's first
+pixel, a teleport's - lends the whole 6, and so does a stream that has
+run two seconds. Every slice that ends in a yield is lent back:
+`lendFrame` folds it into the next frame-clock sample (so the counter's
+script ms includes it; `lastBusy` does not, or the slice would starve
+itself) and `?perf=cpu` shows it as a `build` span (`PerfMeter.addCpu`).
+
+**THE TRADE-OFF, stated - Mac should weigh it.** Nothing about what is
+built changes. But while the frame's script is over ~11 ms a streamed
+pixel builds at up to half the pace, bounded by the two-second guard: a
+crossing's new pixels arrive up to twice as late. The far ring punches
+its hole for the whole streamed rect at the crossing (`farRing.js`
+`punchHole`), so in clear weather the notch at the fog's edge over an
+unbuilt pixel stays open that much longer. That is visible, and it is
+not claimed away. `BUILD_SLICE_FLOOR_MS` and `BUILD_STREAM_AGE_MS`
+(`systems/buildBreather.js`) are the two knobs.
+
+| `sliceTree.mjs` (headless Chromium, relative only) | frame JS 9 ms | 12 ms | 14 ms | 18 ms |
+|---|---|---|---|---|
+| no build | 60 fps | 60 | 59.7 | 55.0 |
+| before: the flat 6 ms slice | 60 (4.9 ms built a frame) | 54.9 (4.97) | 49.5 (4.96) | 41.4 (4.99) |
+| after: what the frame left | 59.4 (4.3) | 60 (2.48) | 57.7 (2.48) | 47.0 (2.50) |
+
+Pins: `test/buildslice.test.js` (5) - frameFitBudget's arithmetic, its
+floor, its ceiling, 144 and 30 Hz, the age guard at 1,999/2,001 ms, the
+awaited build and a NaN; the breather asks once a slice, yields at the
+budget and not before, reports each slice, and without a budget keeps
+PERF7's slice; the frame clock's median interval ignores a hitch,
+lastBusy excludes a lent slice, a lent slice lands in ONE sample, a
+negative one is not lent; the CPU meter's `build` bucket and the GPU
+meter's silence; the host's budget, lend and pump. Re-stated on purpose:
+`perf7.test.js`'s host pin and `terrainscale1.test.js`'s slice marker
+(the breather takes options). Mutants: `perfextc.json` C5 x18, all dead;
+`terrainscale1.json`'s two BF1 records re-aimed by content.

@@ -203,7 +203,7 @@ test('TERRAIN-SCALE1: an interior caches its floor in the BUILDING\'s frame - DF
 
 function pump({ publish = false } = {}) {
   const i = WORLD.indexOf('  const inFlight = new Map();');
-  const j = WORLD.indexOf('  const breather = createBreather();', i);
+  const j = WORLD.indexOf('  const breather = createBreather(', i);   // PERF-EXT-C5: the breather takes options now
   assert.ok(i > 0 && j > i);
   const freed = [];
   const renderer = {

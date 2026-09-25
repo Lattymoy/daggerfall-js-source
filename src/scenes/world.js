@@ -144,7 +144,7 @@ import { immersiveFootsteps, reportModCompatibilityIssues } from '../systems/imm
 import { betterAmbience, classicFootstepAllowed } from '../systems/betterAmbience.js';   // BA1: Better Ambience - the shake, the dungeon's fog and light, the reverb, the indoor rain, its own stride   // IF1: Immersive Footsteps owns the stride and the three landing sounds once its clips are in (DisableVanillaFootsteps)
 import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
 import { StaticBatchBuilder, keyResolver } from '../render/staticBatch.js';   // PERF4: a pixel's static models as one mesh
-import { createBreather } from '../systems/buildBreather.js';   // PERF7: the stream build yields to the frame
+import { createBreather, frameFitBudget } from '../systems/buildBreather.js';   // PERF7: the stream build yields to the frame; PERF-EXT-C5: a slice of what the frame left
 import { pieceIndex } from '../render/labGrass.js';   // PERF8: the piece under a point, by arithmetic
 import { meterFor } from '../render/perfMeter.js';   // GRASS2: the field gets a zone of its own - it was inside the world's
 import { LabGrassRenderer, createGrassField, grassRecordsOf, tileMeanColour, discSlotCount, LAB_GRASS, LAB_DIM } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte; PERF-EXT-C1: the field's slot count, warmed at mount
@@ -171,6 +171,7 @@ import { nearestSafeLocation, respawnFlavorText, reviveForPlay, undergroundWakeS
 import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, saveKeysOfCharacter, saveInfoOf, requestScreenshot, capturePendingScreenshot, exitAutosaveNames } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end   // ONLINE-AUTOSAVE1: saveKeysOfCharacter/saveInfoOf - every slot this character already has, kept in sync on an online exit too
 import { frameBegin, frameEnd, frameAbort } from '../systems/frameClock.js';   // PERF1: the frame's script time; AUDIT-WH2 L1-F4: and the door an early return takes
+import { frameInterval, lastBusy, lendFrame } from '../systems/frameClock.js';   // PERF-EXT-C5: the frame's period and its own script, and the stream's slices lent back
 import { arrivalClampMinutes, playerTravelPosition } from '../systems/travel.js';   // F-slice; F114: the ship-aware travel origin
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion, directionHintString } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it; SPAWNED-DUNGEONS2b: the same eight-word compass
@@ -1545,7 +1546,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
   }
 
-  const breather = createBreather();   // PERF7: one slice clock for the stream; each build resets it
+  // PERF-EXT-C5 (2026-09-25, the players: "fps issues in the exterior but
+  // fine in the interior", "me too my friend.. don't know why. I got a
+  // RX6600"): THE SLICE IS WHAT THE FRAME LEFT (systems/buildBreather.js
+  // frameFitBudget). A build the pump runs - the stream - lends the frame
+  // interval less the frame's own script less a margin, 3 to 6 ms, and the
+  // whole 6 again once the stream has run two seconds; a build something
+  // awaits (the boot's first pixel, a teleport's) is not the pump's and
+  // lends the whole slice. Each slice is lent to the frame clock and the
+  // `?perf=cpu` meter as `build`: until now neither saw the stream at all.
+  let _streamSince = null;   // PERF-EXT-C5: when the pump's current run of builds began; null while it is idle
+  const breather = createBreather({   // PERF7: one slice clock for the stream; each build resets it
+    budget: () => frameFitBudget({ intervalMs: frameInterval(), busyMs: lastBusy(), streamingMs: _streamSince == null ? 0 : performance.now() - _streamSince, awaited: _streamSince == null }),
+    onSlice: (ms) => { lendFrame(ms); meterFor(renderer.gl)?.addCpu('build', ms); },
+  });
   async function buildPixelNow(px, py, { roadsRetry = false } = {}) {
     breather.reset();   // PERF7
     const key = `${px},${py}`;
@@ -7552,6 +7566,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (building || queue.length === 0) return;
     building = true;
     const next = queue.shift();
+    _streamSince ??= performance.now();   // PERF-EXT-C5: a run of streamed builds begins
     try {
       await buildPixel(next.px, next.py);
       // AUDIT 24 (the seven-slice sweep): the streamer can unload this
@@ -7574,6 +7589,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       state.release(next.px, next.py);
     }
     building = false;
+    if (!queue.length) _streamSince = null;   // PERF-EXT-C5: and ends with the queue
   }
 
   const keys = new Set();

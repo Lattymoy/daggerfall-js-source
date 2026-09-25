@@ -428,5 +428,168 @@
   "tests": [
    "test/publishtail.test.js"
   ]
+ },
+ {
+  "name": "PERF-EXT-C5-the-slice-is-flat-again-whatever-the-frame-spent",
+  "file": "src/systems/buildBreather.js",
+  "old": "  return Math.max(BUILD_SLICE_FLOOR_MS, Math.min(BUILD_SLICE_MS, left));",
+  "new": "  return BUILD_SLICE_MS;",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C5-no-floor-so-a-heavy-frame-starves-the-stream",
+  "file": "src/systems/buildBreather.js",
+  "old": "  return Math.max(BUILD_SLICE_FLOOR_MS, Math.min(BUILD_SLICE_MS, left));",
+  "new": "  return Math.max(0, Math.min(BUILD_SLICE_MS, left));",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C5-the-hunters-1-ms-floor",
+  "file": "src/systems/buildBreather.js",
+  "old": "export const BUILD_SLICE_FLOOR_MS = 3;",
+  "new": "export const BUILD_SLICE_FLOOR_MS = 1;",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C5-no-margin-for-the-browser",
+  "file": "src/systems/buildBreather.js",
+  "old": "  const left = intervalMs - busyMs - BUILD_SLICE_MARGIN_MS;",
+  "new": "  const left = intervalMs - busyMs;",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C5-an-old-stream-is-never-given-the-whole-slice-back",
+  "file": "src/systems/buildBreather.js",
+  "old": "  if (awaited || streamingMs > BUILD_STREAM_AGE_MS) return BUILD_SLICE_MS;",
+  "new": "  if (awaited) return BUILD_SLICE_MS;",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C5-an-awaited-build-is-sliced-like-the-stream",
+  "file": "src/systems/buildBreather.js",
+  "old": "  if (awaited || streamingMs > BUILD_STREAM_AGE_MS) return BUILD_SLICE_MS;",
+  "new": "  if (streamingMs > BUILD_STREAM_AGE_MS) return BUILD_SLICE_MS;",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C5-a-NaN-stalls-the-stream",
+  "file": "src/systems/buildBreather.js",
+  "old": "  if (Number.isNaN(left)) return BUILD_SLICE_MS;",
+  "new": "  if (Number.isNaN(left)) return 0;",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C5-the-budget-is-asked-once-and-never-again",
+  "file": "src/systems/buildBreather.js",
+  "old": "      sliceStart = now();\n      sliceBudget = budget ? budget() : sliceMs;",
+  "new": "      sliceStart = now();",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C5-no-slice-is-reported",
+  "file": "src/systems/buildBreather.js",
+  "old": "      onSlice?.(spent);",
+  "new": "      void spent;",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C5-the-lent-slice-is-dropped-not-sampled",
+  "file": "src/systems/frameClock.js",
+  "old": "  const busy = lastOwn + lent;",
+  "new": "  const busy = lastOwn;",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C5-the-lent-slice-sizes-the-next-slice-too",
+  "file": "src/systems/frameClock.js",
+  "old": "  lastOwn = Math.max(0, now - open);",
+  "new": "  lastOwn = Math.max(0, now - open) + lent;",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C5-a-lent-slice-is-counted-in-every-sample-after",
+  "file": "src/systems/frameClock.js",
+  "old": "  lent = 0;\n  open = null;",
+  "new": "  open = null;",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C5-the-interval-is-the-mean-a-hitch-drags",
+  "file": "src/systems/frameClock.js",
+  "old": "  return s[intervalCount >> 1];",
+  "new": "  return s.reduce((a, b) => a + b, 0) / intervalCount;",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C5-the-meter-drops-the-build-span",
+  "file": "src/render/perfMeter.js",
+  "old": "  addCpu(name, ms) { if (this.cpu && ms > 0) this.cpuZones.set(name, (this.cpuZones.get(name) ?? 0) + ms); }",
+  "new": "  addCpu(name, ms) { void name; void ms; }",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C5-the-host-keeps-the-flat-slice",
+  "file": "src/scenes/world.js",
+  "old": "    budget: () => frameFitBudget({",
+  "new": "    budget0: () => frameFitBudget({",
+  "tests": [
+   "test/buildslice.test.js",
+   "test/perf7.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C5-the-host-never-lends-the-slice-back",
+  "file": "src/scenes/world.js",
+  "old": "    onSlice: (ms) => { lendFrame(ms); meterFor(renderer.gl)?.addCpu('build', ms); },",
+  "new": "    onSlice: (ms) => { meterFor(renderer.gl)?.addCpu('build', ms); },",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C5-the-stream-never-begins-so-every-build-gets-the-whole-slice",
+  "file": "src/scenes/world.js",
+  "old": "    _streamSince ??= performance.now();   // PERF-EXT-C5: a run of streamed builds begins",
+  "new": "    // PERF-EXT-C5: a run of streamed builds begins",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C5-the-stream-never-ends-so-its-age-guard-trips-at-once-next-time",
+  "file": "src/scenes/world.js",
+  "old": "    if (!queue.length) _streamSince = null;   // PERF-EXT-C5: and ends with the queue",
+  "new": "    // PERF-EXT-C5: and ends with the queue",
+  "tests": [
+   "test/buildslice.test.js"
+  ]
  }
 ]

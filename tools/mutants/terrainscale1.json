@@ -398,8 +398,8 @@
   {
     "name": "BF1-bucket-kept",
     "file": "src/scenes/world.js",
-    "old": "    collider.removeBucket(key);\n    for (let i = buildingDoors.length - 1; i >= 0; i--) {\n      if (buildingDoors[i].pixelKey === key) { buildingDoors.splice(i, 1); doorGeneration += 1; }\n    }\n  }\n\n  const breather",
-    "new": "    for (let i = buildingDoors.length - 1; i >= 0; i--) {\n      if (buildingDoors[i].pixelKey === key) { buildingDoors.splice(i, 1); doorGeneration += 1; }\n    }\n  }\n\n  const breather",
+    "old": "    collider.removeBucket(key);\n    for (let i = buildingDoors.length - 1; i >= 0; i--) {\n      if (buildingDoors[i].pixelKey === key) { buildingDoors.splice(i, 1); doorGeneration += 1; }\n    }\n  }\n\n  // PERF-EXT-C5 (2026-09-25, the players",
+    "new": "    for (let i = buildingDoors.length - 1; i >= 0; i--) {\n      if (buildingDoors[i].pixelKey === key) { buildingDoors.splice(i, 1); doorGeneration += 1; }\n    }\n  }\n\n  // PERF-EXT-C5 (2026-09-25, the players",
     "tests": [
       "test/terrainscale1.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "BF1-doors-kept",
     "file": "src/scenes/world.js",
-    "old": "      if (buildingDoors[i].pixelKey === key) { buildingDoors.splice(i, 1); doorGeneration += 1; }\n    }\n  }\n\n  const breather",
-    "new": "    }\n  }\n\n  const breather",
+    "old": "      if (buildingDoors[i].pixelKey === key) { buildingDoors.splice(i, 1); doorGeneration += 1; }\n    }\n  }\n\n  // PERF-EXT-C5 (2026-09-25, the players",
+    "new": "    }\n  }\n\n  // PERF-EXT-C5 (2026-09-25, the players",
     "tests": [
       "test/terrainscale1.test.js"
     ]

@@ -124,3 +124,12 @@ cluster C has the numbers and the laws):
   ms on a town. The merge yields between models, sphere ranges and
   texture groups now (no unit over ~0.3 ms warm) and hands createMesh the
   spheres, byte for byte the same.
+- **PERF-EXT-C5** - the stream's build slice is what the frame left. A
+  flat 6 ms slice sat on top of the frame in the same rendering
+  opportunity, so every streaming frame over ~8.7 ms of script missed
+  vsync (12 ms of script ran at 55 fps while a pixel built, 18 ms at 41);
+  it lends the frame interval less the frame's script less 2.5 ms now,
+  3-6 ms (60 and 47 fps), and the counter and `?perf=cpu` see the stream
+  for the first time. The trade-off, for Mac: a heavy frame builds at up
+  to half pace for at most two seconds, so the far ring's notch over a
+  pixel still building stays open longer in clear weather.
