@@ -19,7 +19,7 @@
 import { ATTACK_BY_ID, ATTACKS, BOSS_H, BOSS_R, COURT_CENTRE, HIT_KINDS } from '../net/gateBrain.js';
 import { strikeVerdict, blowOf, strikeDamage, fireShare } from '../net/gateStrike.js';
 import { GATE_BOSSES, gateBossOf } from '../net/gateLaw.js';
-import { bossAct, bossFrame, bossGlow, bossPlace, bossLookOf, bossStandIn, BOSS_CUES, GLOW_UP } from '../world/gateBoss.js';
+import { bossAct, bossFrame, bossGlow, bossPlace, bossLookOf, bossStandIn, BOSS_CUES, GLOW_UP, BOSS_STRIDE_M, GROWL_EVERY_MS, HURT_GAP_MS, HURT_SHARE, QUAKE_ON, THUD_AT_MS } from '../world/gateBoss.js';
 import { courtToDungeon } from '../world/gateArena.js';
 import { GateTelegraphRenderer, telegraphShape } from '../render/gateTelegraph.js';
 import { bossBarModel, drawGateBossBar } from '../ui/gateBossBar.js';
@@ -57,12 +57,13 @@ export const bossOf = (s) => GATE_BOSSES.find((b) => b.id === s?.boss) ?? gateBo
  *   say?: (text: string) => void,
  *   hudHidden?: () => boolean,
  *   send?: (hit: { q: number, d: number, r: number }) => boolean,
+ *   rng?: () => number,
  * }} deps
  */
 export function createGateCourt({
   renderer = null, gl = null, getTexture = null, uploadRecordFrame = null, audio = null,
   link, spoils = null, now, cam = () => null, feet = () => null, player = () => null, save = () => 100,
-  strike = () => {}, say = () => {}, hudHidden = () => false, send = () => false,
+  strike = () => {}, say = () => {}, hudHidden = () => false, send = () => false, rng = Math.random,
 }) {
   let pass = null;
   try { if (gl) pass = new GateTelegraphRenderer(gl); } catch (e) { console.warn('[gate] the telegraph would not build', e?.message ?? e); pass = null; }
@@ -75,10 +76,15 @@ export function createGateCourt({
   let standIn = null, blowSeq = 0;
   /** WB5: whether this fight's spoils have left him, and whether their absence has been said */
   let spewed = false, spoilsSaid = false;
+  /** WB7: his body's sounds - where he stood last frame and how far he has come since his last step, when he growls
+   *  next, the health last heard and his last grunt, the landing that shook the ground, the phase the thunder has
+   *  answered, and whether his body has met the floor */
+  let stepFrom = null, strideRun = 0, growlAt = null, hpHeard = null, gruntAt = -Infinity, quakedI = -1, thunderPhase = 0, thudCued = false;
 
   function reset(d) {
     day = d; judgedI = -1; cuedI = -1; landedI = -1; phaseHeard = 0; fellCued = false; wrathLanded = false;
     prevT = -Infinity; hurtAt = -Infinity; shape = null; standIn = null; spewed = false; spoilsSaid = false;
+    stepFrom = null; strideRun = 0; growlAt = null; hpHeard = null; gruntAt = -Infinity; quakedI = -1; thunderPhase = 0; thudCued = false;
   }
 
   function sound(cue, s, t, atk) {
@@ -120,8 +126,33 @@ export function createGateCourt({
     const atk = s.atk, A = atk ? ATTACK_BY_ID[atk.a] : null;
     if (A && atk.i !== cuedI) { cuedI = atk.i; if (t < atk.at) sound(BOSS_CUES.windup[A.key], s, t, atk); }
     if (A && atk.i !== landedI && t >= atk.at) { landedI = atk.i; if (t < atk.at + Math.max(A.active, 1) + 400) sound(BOSS_CUES.land[A.key], s, t, atk); }
+    if (A && atk.i !== quakedI && t >= atk.at && QUAKE_ON.includes(A.key)) { quakedI = atk.i; if (t < atk.at + Math.max(A.active, 1) + 400) sound(BOSS_CUES.quake, s, t, atk); }   // WB7: the ground's shock under a heavy landing
+    if (s.phase > thunderPhase) { if (thunderPhase > 0) sound(BOSS_CUES.thunder, s, t, null); thunderPhase = s.phase; }   // WB7: thunder over his roar as a phase turns
     if (s.phase > phaseHeard) { if (phaseHeard > 0) sound(BOSS_CUES.roar, s, t, null); phaseHeard = s.phase; }
     if (s.fell && !fellCued) { fellCued = true; sound(BOSS_CUES.fall, s, t, null); }
+    bodySounds(s, t, A);
+  }
+
+  /** WB7: HIS BODY, heard - a step each stride he walks or charges; a growl now and then while he is not striking; a
+   *  grunt when a share of his health goes (no closer together than HURT_GAP_MS); his body meeting the floor. */
+  function bodySounds(s, t, A) {
+    if (s.fell) {
+      if (!thudCued && t >= s.fell.at + THUD_AT_MS) { thudCued = true; if (t < s.fell.at + THUD_AT_MS + 1000) sound(BOSS_CUES.thud, s, t, null); }
+      return;
+    }
+    const [x, z] = bossPlace(s, t);
+    if (stepFrom) {
+      strideRun += Math.hypot(x - stepFrom[0], z - stepFrom[1]);
+      if (strideRun >= BOSS_STRIDE_M) { strideRun %= BOSS_STRIDE_M; sound(BOSS_CUES.step, s, t, null); }
+    }
+    stepFrom = [x, z];
+    const striking = !!A && t < s.atk.at + Math.max(A.active, 1) + 1500;
+    const nextGrowl = () => t + GROWL_EVERY_MS[0] + rng() * (GROWL_EVERY_MS[1] - GROWL_EVERY_MS[0]);
+    if (growlAt === null) growlAt = nextGrowl();
+    else if (striking) growlAt = Math.max(growlAt, t + 3000);
+    else if (t >= growlAt) { sound(BOSS_CUES.growl, s, t, null); growlAt = nextGrowl(); }
+    if (hpHeard !== null && s.max > 0 && hpHeard - s.hp >= s.max * HURT_SHARE && t - gruntAt >= HURT_GAP_MS) { gruntAt = t; sound(BOSS_CUES.hurt, s, t, null); }
+    hpHeard = s.hp;
   }
 
   /** WB5: THE BURST - SPEW_AT_MS into his fall, this player's spoils leave his chest toward them, off the seed of the

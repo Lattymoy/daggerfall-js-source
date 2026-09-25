@@ -181,6 +181,8 @@ export function bossGlow(s, now) {
 const B = ENEMY_BASICS[31];
 const voice = (clip, pitch, volume = 1.3) => Object.freeze({ clip, pitch, volume, reach: 60, at: 'him' });
 export const BURNING = 420;   // systems/soundClips.js SOUND.Burning
+export const BODY_FALL = 15;   // systems/soundClips.js SOUND.BodyFall - a body meeting the floor (WB7)
+export const THUNDER_ROLL = 350;   // systems/ambientEffects.js AMBIENT_SOUNDS.storm's ThunderRoll (WB7)
 export const FIRE_CAST_ID = 352;   // systems/enemySpells.js SPELL_CAST_SOUND[0], the fire's
 export const BOSS_CUES = Object.freeze({
   windup: Object.freeze({
@@ -201,4 +203,23 @@ export const BOSS_CUES = Object.freeze({
   }),
   roar: voice(B.barkSound, 0.5, 1.8),
   fall: voice(B.barkSound, 0.4, 1.8),
+  // WB7 (Mac: "Proper boss audio during the boss fight"): HIS BODY. A stride's weight on the stone as he walks and
+  // charges; a growl now and then while he is not striking; a grunt when he is hurt; the ground's shock under his
+  // heavy landings; thunder over his roar when a phase turns; and his body meeting the floor, a moment into his fall.
+  // The clips are Daggerfall's own - a body's fall and the storm's roll, pitched down for his size.
+  step: Object.freeze({ clip: BODY_FALL, pitch: 0.42, volume: 1.0, reach: 45, at: 'him' }),
+  growl: voice(B.barkSound, 0.36, 0.75),
+  hurt: voice(B.barkSound, 0.62, 0.9),
+  quake: Object.freeze({ clip: BODY_FALL, pitch: 0.3, volume: 1.8, reach: 70, at: 'him' }),
+  thunder: Object.freeze({ clip: THUNDER_ROLL, pitch: 0.62, volume: 1.4, reach: 140, at: 'him' }),
+  thud: Object.freeze({ clip: BODY_FALL, pitch: 0.26, volume: 2.0, reach: 90, at: 'him' }),
 });
+/** WB7: his stride (metres of his walk or his charge between two steps), how often he growls between his attacks
+ *  (ms, the next drawn in this span), the least time between two grunts, the least share of his health a grunt
+ *  needs, which landings shake the ground, and when in his fall his body meets the floor (ms). */
+export const BOSS_STRIDE_M = 2.8;
+export const GROWL_EVERY_MS = Object.freeze([7000, 13000]);
+export const HURT_GAP_MS = 1400;
+export const HURT_SHARE = 0.004;
+export const QUAKE_ON = Object.freeze(['slam', 'charge', 'nova', 'wrath']);
+export const THUD_AT_MS = 1500;

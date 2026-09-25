@@ -49,6 +49,7 @@ export class MusicService {
     this._booted = null;
     this._current = null;
     this._switch = null;   // DISC20-B: { from, to, timer } while a song fades out before the next
+    this._made = new Map();   // WB7: songs made in code (systems/gateScore.js), by their own names beside MIDI.BSA's
     this._later = (fn, ms) => setTimeout(fn, ms);   // DISC20-B: the fade's clock, a seam for the tests
     this._cancelLater = (id) => clearTimeout(id);
     // 2026-08-27: the MusicVolume setting is LIVE in fact, not just in
@@ -117,6 +118,15 @@ export class MusicService {
       this.bootError = e?.message ?? String(e);
     }
     if (typeof window !== 'undefined') this.attachGestureStart();
+  }
+
+  /** WB7: A SONG MADE IN CODE, by a name of its own - the HMI song's shape (formats/hmiFile.js: tick-ordered `events`,
+   *  `secondsPerTick`, `durationTicks`), played by the same player, faded by the same law and replaceable by a music
+   *  pack by the same name as any song. Asked for by name like one (playSong); MIDI.BSA is never asked for it. */
+  registerSong(name, song) {
+    if (typeof name !== 'string' || !name || !Array.isArray(song?.events) || !(song.secondsPerTick > 0)) return false;
+    this._made.set(name, song);
+    return true;
   }
 
   /** A host asks for a song while the page is still silent - there is no
@@ -230,19 +240,21 @@ export class MusicService {
     const player = this._ensurePlayer();
     if (!player) return false;
     this._audio?.stop();   // a replacement must not sound underneath
-    const index = this.archive.getSongIndex(name);
-    if (index === null || index === undefined || index < 0) {
-      console.warn(`[music] no song named ${name} in MIDI.BSA`);
-      return false;
-    }
-    let song;
-    try {
-      song = this.archive.getSong(index);
-    } catch (e) {
-      // The reader throws with song and offset on anything it cannot
-      // decode. One bad song must not take the music layer down.
-      console.warn(`[music] ${name} would not decode:`, e?.message ?? e);
-      return false;
+    let song = this._made.get(name) ?? null;   // WB7: a song made in code answers for its own name
+    if (!song) {
+      const index = this.archive.getSongIndex(name);
+      if (index === null || index === undefined || index < 0) {
+        console.warn(`[music] no song named ${name} in MIDI.BSA`);
+        return false;
+      }
+      try {
+        song = this.archive.getSong(index);
+      } catch (e) {
+        // The reader throws with song and offset on anything it cannot
+        // decode. One bad song must not take the music layer down.
+        console.warn(`[music] ${name} would not decode:`, e?.message ?? e);
+        return false;
+      }
     }
     this._current = name;
     const fresh = !(player.playing && player.song === song);

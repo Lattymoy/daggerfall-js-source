@@ -397,9 +397,9 @@ test('WB4 the court\'s driver, the voice and the body: the wind-up cued at the w
   await tick(h, 9500);
   assert.equal(h.sounds.length, 1, 'once');
   await tick(h, 10001);
-  assert.deepEqual(h.sounds.map((s) => s[1]), [BOSS_CUES.windup.slam.clip, BOSS_CUES.land.slam.clip]);
+  assert.deepEqual(h.sounds.map((s) => s[1]), [BOSS_CUES.windup.slam.clip, BOSS_CUES.land.slam.clip, BOSS_CUES.quake.clip], 'WB7: and the ground\'s shock under a slam');
   await tick(h, 10100);
-  assert.equal(h.sounds.length, 2, 'the landing once');
+  assert.equal(h.sounds.length, 3, 'the landing once');
   await tick(h, 11000, state({ atk: null, x: 4, z: -2, phase: 3, shieldUntil: 14000 }));
   assert.equal(h.sounds.at(-1)[1], BOSS_CUES.roar.clip, 'the roar of a phase crossed');
   const hf = W('hellfire', { i: 8, at: 21000, tg: [[1, 1], [-5, 6]] });

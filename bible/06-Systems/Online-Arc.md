@@ -4837,7 +4837,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4247` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4248` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:275`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -8255,3 +8255,9 @@ nothing on the wire.
 The gate's door and the court's way home are taken in fire - a vortex of flame closing over the screen, burning while
 the place beyond is built, opening onto it (`render/gateVeil.js`, `ui/gateVeil.js`); a court taken by force flashes.
 Online alone, as the gate is; client only; nothing on the wire.
+
+## WB7 (2026-09-25, Mac: "Proper boss audio during the boss fight") - his voice and his music; see 11-Multiplayer/World-Bosses.md
+
+The Burning Court's boss is heard - steps, growls, grunts, the ground's shock, thunder, his fall - and the court has its
+own score (`systems/gateScore.js`), chosen from the fight state the court's link already holds: his phase, the Wrath's
+time, his fall. Client only; nothing on the wire.

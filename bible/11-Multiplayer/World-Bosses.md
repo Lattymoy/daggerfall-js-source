@@ -343,6 +343,28 @@ A player killed in the arena is CAST OUT: they stand up outside the gate with ha
 door with the gate's spot as the landing, not the nearest temple), keep what they dealt, and may step back through
 while the gate is open. After it seals, the fallen watch from outside.
 
+### His voice and his music (WB7, 2026-09-25, Mac: "Proper boss audio during the boss fight")
+
+**His body, heard** (`scenes/gateCourt.js`, the cues in `world/gateBoss.js BOSS_CUES`): beside WB4's voice - the bark at
+each word, the blow at each landing, the fire's cast and burning, the roar at a phase and the cry at his fall - a STEP
+at his feet each BOSS_STRIDE_M of his walk or his charge, a body's fall pitched down to his weight; a GROWL now and then
+between his attacks (every 7 to 13 s, never while he strikes); a GRUNT when a share of his health goes (no closer than
+HURT_GAP_MS); the ground's SHOCK under a slam, a charge, a nova and the Wrath; THUNDER over his roar as a phase turns;
+and his body MEETING THE FLOOR a moment and a half into his fall. Daggerfall's own clips, pitched for his size.
+
+**His music** (`systems/gateScore.js`): Daggerfall has no fight music, so the court's is written, as notes, for the
+game's own player and FM bank (`08-Audio/Audio.md` WB7), in D minor:
+
+| song | when | what |
+|---|---|---|
+| GATEWAR1 - he wakes | phase one | 132 BPM; i-VI-iv-V under a pizzicato ostinato on every eighth, the timpani on each downbeat and the kit's low end; brass stabs join, then the Warden's theme on the brass, then the choir under it |
+| GATEWAR2 - the ward breaks | phase two | 138 BPM; the choir from the first bar, the kit busier and rolling into every fourth bar, the theme dotted and high |
+| GATEWAR3 - his wrath | phase three, and the last minute before the Wrath at any phase | 150 BPM; the Neapolitan Eb against D, the kick on every beat, crashes every other bar, the tritone tolled, the theme at the top of the brass |
+| GATEFELL - he falls | his fall, for 12.5 s | a timpani roll into D major - fanfare, choir, bells - then quiet: the court is the Deadlands' air alone |
+
+Nothing plays over the Wrath once it has landed. The court holds the music while it stands and lets it go the frame it
+is gone; a music pack can replace any of the four by name.
+
 ## 6. The fall - the relay stamps the kill (WB3)
 
 At zero the room stamps the kill once: `{k:'fell', at, top}` to everyone inside, the hub's world line, and to each
@@ -449,6 +471,7 @@ ships in ONE slice.
 | **WB4** | the boss on the client: the oversized body and its hit volume, the telegraph pass, the wind-up frames, glow and sounds, the boss bar, the player's side of every attack, cast out and back in - shipped in two: **WB4a** (he fights: the body, the telegraphs, the glow and voice, the bar, every blow he lands) and **WB4b** (he is fought: the swing, the shaft and the spell on his body) | no |
 | **WB5** | the spoils: the seeded roll, the spew's physics, the beams, halos and lights, the take and the gather, the device's record until a save holds them; the account service's claim (acct10) and the cards' line | account only |
 | **WB6** | the Deadlands made alive (Mac: "an oblivion masterpiece"): **WB6a** the sky and the sea and the court's own light; **WB6b** the life - islands and spires out in the fire, the floor's floating shards, embers and ash, the strike's light and its thunder, the air's sound, one clock for every screen; **WB6c** the gate's transition, a vortex of fire in and out | no |
+| **WB7** | his voice and his music (Mac: "Proper boss audio during the boss fight"): the body's steps, growls, grunts, the ground's shock, thunder and his fall to the floor; the court's own score, written as notes - three war songs by his phase and a fanfare at his fall | no |
 
 Each slice: pins in `test/` (pure law in node; the relay over its fake sockets and a fake clock; the passes' shaders
 built in headless Chromium, as the duel wall's), a mutant record in `tools/mutants/`, the Testing manifest, a Port
@@ -631,3 +654,12 @@ load overtook would have walked the player out of the next dungeon on its first 
 `test/wb6c_gate_veil.test.js` (4); mutants `tools/mutants/wb6c.json` (22 dead); `tools/gateVeilProbe.mjs` compiles,
 links and draws the veil in a real WebGL2 at the law's moments and steps the real layer through a real page (13
 checks). Seen headless over the court's own frame and over a plain one; not yet taken in the running game.
+
+**WB7 (2026-09-25) - his voice and his music.** The fight is heard now (see "His voice and his music" in section 5): his
+steps, his growls between attacks, a grunt when he is hurt, the ground's shock under his heavy landings, thunder over
+his roar, his body meeting the floor; and the court's own music, written as notes (`systems/gateScore.js` - three war
+songs that grow with his phases and a fanfare at his fall, then quiet), played by the game's own player through a new
+door of the music service (`registerSong`), holding the music while the court stands. Pins
+`test/wb7_boss_audio.test.js` (7); mutants `tools/mutants/wb7.json` (19 dead); `tools/gateScoreProbe.mjs` plays the four
+songs through the real song player and measures them (11 checks: every second sounding, peaks near -12 dBFS, the war
+from -36 to -29 dBFS as the phases turn, the fall silent by 12 s). Heard only as offline renders; not yet in a fight.

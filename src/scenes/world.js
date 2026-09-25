@@ -176,6 +176,7 @@ import { createGateCourt } from './gateCourt.js';   // WB4: the fight on this sc
 import { DeadlandsRenderer, skyGain } from '../render/deadlands.js';   // WB6a: the Deadlands' sky and sea round the Burning Court
 import { createDeadlandsAir } from './deadlandsAir.js';   // WB6b: and their air - the wind, the fire, the thunder of the sky's strikes
 import { createGateVeil } from '../ui/gateVeil.js';   // WB6c: the step through the gate - a vortex of fire in and out
+import { gateScoreSongs, courtScoreFor, GATE_SONGS, SCORE_SILENCE } from '../systems/gateScore.js';   // WB7: the Warden's score - the court's own music
 import { createSpoilsPool, spoilsStore, recoverSpoils, SPOILS_TEXT } from './spoilsPool.js';   // WB5: a fallen boss's spoils, spewed, glowing and taken
 import { gateRoomKey, isGateRoom, gateBossOf, gateTimes, GATE_COLLAPSE_MS } from '../net/gateLaw.js';   // WB3b: the court's room, and its day's end
 import { gateLandingFor, courtRing, courtToDungeon, courtBraziers, COURT_TEXT, COURT_FOG, LAVA_Y } from '../world/gateArena.js';   // WB3b: the Burning Court's way home, its ring and its words   // WB2: the gate's countdown over the screen, near it
@@ -10882,6 +10883,22 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** WB6b: the Deadlands' air while the court stands under me - silent, and nothing left looping, the frame it does
    *  not. Ticked on the main frame, online or not: the court's ways out include going offline, and the online frame
    *  does not run then. */
+  /** WB7: THE WARDEN'S SCORE (systems/gateScore.js) - while the court stands under me its music is the fight's, not the
+   *  director's: the war song of his phase, his fall's fanfare, then quiet. The songs are made the first time a court
+   *  is stood in; the music is let go the frame the court is gone (the song stopped, so the director's next frame hears
+   *  it ended and plays its own). Answers whether the court holds the music this frame. */
+  let _scoreHeld = false, _scoreMade = false;
+  const gateScoreFrame = () => {
+    if (modes?.gateArenaDay?.() == null) {
+      if (_scoreHeld) { _scoreHeld = false; music.stop(); }
+      return false;
+    }
+    if (!_scoreMade) { _scoreMade = true; for (const song of Object.values(gateScoreSongs())) music.registerSong(song.name, song); }
+    _scoreHeld = true;
+    const want = courtScoreFor(gateLink?.state?.() ?? null, Date.now() + _sharedOffsetMs) ?? GATE_SONGS.war1;   // the court before its fight's first word: the fight is there all the same
+    if (want === SCORE_SILENCE) { if (music.current !== null) music.stop(); } else music.playSong(want);
+    return true;
+  };
   const deadlandsAirFrame = () => { if (modes?.gateArenaDay?.() != null) deadlandsAir.frame(deadlandsSeconds(), cam.pos, courtFireBeds); else deadlandsAir.stop(); };
   /** WB2: THE GATE THE WORLD STANDS (scenes/gatePool.js) - online alone, as the omen is; stood each exterior frame from
    *  the omen's word, drawn in the world pass (the stone) and after the duel wall (the fire and the beacon). Its door
@@ -13425,7 +13442,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // sunny outdoor track, and when that song ended nothing fed `songEnded`
     // so it fell silent for the rest of the visit. The whole interior and
     // dungeon music path was dead code in this host.
-    musicDirector.update({
+    if (!gateScoreFrame()) musicDirector.update({   // WB7: the court holds the music while it stands
       inside: false,
       inLocationRect: _musicInLocationRect(),
       locationType: _musicLocationType(),
