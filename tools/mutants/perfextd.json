@@ -97,5 +97,122 @@
     "tests": [
       "test/perfextd.test.js"
     ]
+  },
+  {
+    "name": "perfext31-resolve-glow-read-always",
+    "file": "src/render/airPass.js",
+    "old": "${glow ? '    c += airDecode(texture(uVol, wuv).rgb);",
+    "new": "${1 ? '    c += airDecode(texture(uVol, wuv).rgb);",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
+  },
+  {
+    "name": "perfext31-resolve-glow-read-never",
+    "file": "src/render/airPass.js",
+    "old": "${glow ? '    c += airDecode(texture(uVol, wuv).rgb);",
+    "new": "${0 ? '    c += airDecode(texture(uVol, wuv).rgb);",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
+  },
+  {
+    "name": "perfext31-resolve-shafts-read-always",
+    "file": "src/render/airPass.js",
+    "old": "${shafts ? ' + texture(uShaft, wuv).rgb * uGrade.y' : ''}",
+    "new": "${1 ? ' + texture(uShaft, wuv).rgb * uGrade.y' : ''}",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
+  },
+  {
+    "name": "perfext31-resolve-shafts-term-respelled",
+    "file": "src/render/airPass.js",
+    "old": "${shafts ? ' + texture(uShaft, wuv).rgb * uGrade.y' : ''}",
+    "new": "${shafts ? ' + texture(uShaft, wuv).rgb * uGrade.y' : ' + vec3(0.0) * uGrade.y'}",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
+  },
+  {
+    "name": "perfext31-bright-glow-read-always",
+    "file": "src/render/airPass.js",
+    "old": "${glow ? ' + airDecode(texture(uVol, vUV).rgb)' : ''}",
+    "new": "${1 ? ' + airDecode(texture(uVol, vUV).rgb)' : ''}",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
+  },
+  {
+    "name": "perfext31-glow-choice-stuck-on",
+    "file": "src/render/airPass.js",
+    "old": "const glow = this.stats.vol ? 1 : 0,",
+    "new": "const glow = 1,",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
+  },
+  {
+    "name": "perfext31-glow-choice-stuck-off",
+    "file": "src/render/airPass.js",
+    "old": "const glow = this.stats.vol ? 1 : 0,",
+    "new": "const glow = 0,",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
+  },
+  {
+    "name": "perfext31-shafts-choice-haze-dropped",
+    "file": "src/render/airPass.js",
+    "old": "shafts = this.stats.shafts || this.stats.haze ? 1 : 0;",
+    "new": "shafts = this.stats.shafts ? 1 : 0;",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
+  },
+  {
+    "name": "perfext31-shafts-choice-stuck-off",
+    "file": "src/render/airPass.js",
+    "old": "shafts = this.stats.shafts || this.stats.haze ? 1 : 0;",
+    "new": "shafts = 0;",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
+  },
+  {
+    "name": "perfext31-choice-made-before-the-images",
+    "file": "src/render/airPass.js",
+    "old": "    const prepared = !!this.f && this.fresh;\n    if (prepared) this._images();\n    else { this._blank(quad); this.measured = false; }\n    this.fresh = false;\n    // PERF-EXT31: the passes built for what the images hold, final now that _images or _blank has run - the glow marched\n    // or cleared black, the shafts drawn (the beams or the haze) or cleared black (resolveFs says why). The luminance\n    // image reads the glow either way: sixteen taps a texel of a 32x32 image is 16,384 a frame, nothing to save.\n    const glow = this.stats.vol ? 1 : 0, shafts = this.stats.shafts || this.stats.haze ? 1 : 0;\n",
+    "new": "    const glow = this.stats.vol ? 1 : 0, shafts = this.stats.shafts || this.stats.haze ? 1 : 0;\n    const prepared = !!this.f && this.fresh;\n    if (prepared) this._images();\n    else { this._blank(quad); this.measured = false; }\n    this.fresh = false;\n    // PERF-EXT31: the passes built for what the images hold, final now that _images or _blank has run - the glow marched\n    // or cleared black, the shafts drawn (the beams or the haze) or cleared black (resolveFs says why). The luminance\n    // image reads the glow either way: sixteen taps a texel of a 32x32 image is 16,384 a frame, nothing to save.\n",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
+  },
+  {
+    "name": "perfext31-bright-always-full",
+    "file": "src/render/airPass.js",
+    "old": "const PB = P.bright[glow],",
+    "new": "const PB = P.bright[1],",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
+  },
+  {
+    "name": "perfext31-resolve-always-full",
+    "file": "src/render/airPass.js",
+    "old": "PR = P.resolve[glow][shafts];",
+    "new": "PR = P.resolve[1][1];",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
+  },
+  {
+    "name": "perfext31-resolve-shafts-ignored",
+    "file": "src/render/airPass.js",
+    "old": "PR = P.resolve[glow][shafts];",
+    "new": "PR = P.resolve[glow][1];",
+    "tests": [
+      "test/perfextd.test.js"
+    ]
   }
 ]

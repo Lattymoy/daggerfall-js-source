@@ -357,7 +357,7 @@ test('AUDIT RETRO1 I6: the half-pinned fixes - a replacement\'s emission map pas
     try {
       r.beginFrame(I, I, L, WORLD_FRAME); r.drawScreenQuad(null, Q);
       r.beginFrame(I, I, L); r.drawScreenQuad(null, Q);
-      assert.deepEqual(r.air.programs.bright.p.values.uRect, [0, 0, 1280, 720]);
+      assert.deepEqual(r.air.programs.bright[0].p.values.uRect, [0, 0, 1280, 720]);   // PERF-EXT31: the bright pass built for no glow - a menu frame's
     } finally { setFrameTarget(null); }
   }
   // (d) the span over a docked strip, and a texel never 0 for a fine pixel on a tall canvas

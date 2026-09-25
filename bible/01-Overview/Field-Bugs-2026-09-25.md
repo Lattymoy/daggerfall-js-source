@@ -110,3 +110,10 @@ cluster D has the numbers and the laws):
   arithmetic, or forty hashes, per sky pixel, for nothing. Each is
   skipped when its weight is 0: the default sky's pass 6-9% faster on
   SwiftShader, the dome's 11-16%, no pixel changed.
+- **PERF-EXT31** - the air pass's resolve stops reading images that were
+  not drawn. The lanterns' glow is black on every day outside and the
+  sun's shafts on every night, and the resolve read and decoded them on
+  every pixel to add 0. The resolve and the bright pass are built with
+  each read and without it, and the frame takes the pair for what it
+  drew: the resolve 16-24% faster on SwiftShader by day, 8% at night with
+  lanterns, the bright pass 40%, no pixel changed, no GL call added.

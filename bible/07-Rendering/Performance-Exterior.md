@@ -112,3 +112,85 @@ no zero softness. Both tests fail with `src/` at `e9dd612e7`.
 0, crossed onto the other sheet or closed before its mix; the locals put
 back inside the first sheet; the opacity not zeroed under the clouds; an
 fbm weight raised; a deck given a bias.
+
+### PERF-EXT31 — the resolve stops reading images that were not drawn
+
+**What the frame paid.** The air pass's last draws read two images the
+frame may never have drawn. The lanterns' glow (VOL1) is cleared black on
+every frame it is not marched - no lantern lit, which is every day
+outside without a torch, the door shut, or a frame the pass was not
+prepared for - and the shafts' image on every frame with neither the
+beams nor the haze, which is every night. The resolve still read both on
+every world pixel (a tap and an sRGB decode, three `pow`s, for the glow; a
+tap for the shafts), and the bright pass read the glow on every
+quarter-resolution pixel - to add exactly 0: `airDecode(0)` is 0 and
+`0 * uGrade.y` is 0.
+
+**The change.** The two passes are built for what the frame drew:
+`bright[glow]` and `resolve[glow][shafts]`, each the full pass less
+exactly the reads of the images it is not given; `bright[1]` and
+`resolve[1][1]` are `e9dd612e7`'s texts character for character.
+`composite()` picks them after `_images()` or `_blank()` has run, from the
+flags that decided the draws - `stats.vol` (the glow marched) and
+`stats.shafts || stats.haze` (the beams or the haze drew into the shafts'
+image) - so a lantern's glow is never gated off. The luminance image
+reads the glow either way (sixteen taps a texel of a 32x32 image, 16,384
+a frame: nothing to save). No uniform is added, so the frame's GL calls
+are the base's to the call (199 by day, 352 at night with thirty
+lanterns). Six programs where there were two, built once with the rest of
+the pass, which the renderer keeps for its life.
+
+**Not a uniform `if`.** The provers' form was `if (uVolOn > 0.5)` around
+each read, and it was built and measured first: SwiftShader flattens a
+branch that small and pays the read anyway - the resolve 4-6% faster by
+day and nothing at night, against 16% with the read compiled out - and a
+GPU's compiler is as free to predicate a four-instruction block. So the
+reads are compiled out instead.
+
+**What could differ.** The arithmetic is exact: a black read adds +0 and
+the shorter pass computes the same sum without it, and SwiftShader gave
+0 of 2,073,600 bytes different in every case. A driver that fuses the
+shorter sum differently from the longer one (an FMA where there was a
+multiply and an add) could move a float by an ulp - below a byte of the
+encoded output except where it sits on a rounding edge. It was never
+seen.
+
+**Measured** (SwiftShader, 960x540; A is the full pass - the base's -
+and B the one the frame takes, 40 rotating full-screen draws with real
+textures at the pass's sizes; then the whole synthetic exterior frame,
+A drawing through the full passes every frame as the base did):
+
+| case | resolve, median A -> B | min A -> B | bytes differ |
+|---|---|---|---|
+| day: glow black, shafts drawn | 27.9 -> 23.4 ms (-16.1%) | 25.7 -> 22.2 (-13.6%) | 0 of 2,073,600 |
+| night, lanterns: glow drawn, shafts black | 27.8 -> 25.5 (-8.3%) | 26.1 -> 23.8 (-8.8%) | 0 |
+| neither drawn | 27.9 -> 21.2 (-24.0%) | 26.4 -> 20.2 (-23.5%) | 0 |
+| both drawn (control: the same program) | 27.9 -> 27.7 (-0.7%) | 25.3 -> 24.0 | 0 |
+
+In the frame, by day: the resolve 31.1 -> 23.8 ms (-23.5%; min -22.1%),
+the bright pass 1.2 -> 0.7 (-42%), 0 of 518,400 pixels different, 199
+GL calls both. At night with thirty lanterns: the resolve's min 17.8 ->
+16.5 (-7.3%), the glow drawn and 0 pixels different, 352 calls both. The
+provers' run on the base with the reads removed: the resolve -17.4%, the
+bright pass -27%, 0 pixels. On the cards: about 2 million taps and 12
+million transcendental ops a frame at 1080p by day, some 15 us on a 4060
+Ti and 25 us on an RX 6600, and a tap a pixel more at night.
+
+**Pinned** (`test/perfextd.test.js`, two more): the six fragment sources
+as the renderer links them - each variant is the full pass less exactly
+its reads, the full pass carries both - RUN in float32 over every frame
+the pass can make (each image drawn or black): a variant reads the glow
+and the shafts only where they were drawn, and its pixel is the full
+pass's to the bit; and on the fake GL, the passes each frame draws
+through - a lantern in fog the glow's, a day with no light the bare
+ones, the beams or the haze the shafts' resolve, a night the glow's
+without the shafts, a menu's frame the bare ones. Both fail with `src/`
+at `e9dd612e7`. `tools/mutants/perfextd.json` 13 more, all dead: a read
+always in or never in, the shafts' term re-spelled, the choice stuck,
+made before the images, blind to the haze, or always the full pass. Re-
+aimed by content: `vol1_glow.test.js`'s bright-pass and resolve-bind
+pins, `el3_air.test.js`'s program count (seventeen),
+`auditretro1.test.js` and `auditretro2.test.js`'s rect reads (the bare
+passes those frames take), and the records in `vol1.json`, `el3.json`,
+`el4.json`, `el6.json`, `auditretro2.json` and `audit68_render_a.json`
+that name the renamed lines (175 dead across the six).

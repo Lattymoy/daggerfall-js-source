@@ -1,16 +1,21 @@
-// PERF-EXT30 (2026-09-25; two players via Mac, "fps issues in the exterior but fine in the interior" and "me too my
-// friend.. don't know why. I got a RX6600"; Mac: "I am not getting another player to do the work that youre suppose
-// to do"). THE SHADERS STOP PAYING FOR WORK THEIR OUTPUT MULTIPLIES BY NOTHING.
+// PERF-EXT30 / PERF-EXT31 (2026-09-25; two players via Mac, "fps issues in the exterior but fine in the interior"
+// and "me too my friend.. don't know why. I got a RX6600"; Mac: "I am not getting another player to do the work that
+// youre suppose to do"). THE SHADERS STOP PAYING FOR WORK THEIR OUTPUT MULTIPLIES BY NOTHING.
 //
 //   - PERF-EXT30, the sky. Under the volumetric clouds (the default) both skies are told to stand their own clouds
 //     down, and both went on computing them to weight 0: Dynamic Skies (the default sky) blended two sheets at
 //     opacity 0 - eight taps and the normals' arithmetic per sky pixel - and the port's dome ran two fbm decks at
 //     cover 0, which cannot answer anything but 0. Each is skipped now when its weight is 0.
+//   - PERF-EXT31, the air resolve. The lanterns' glow and the shafts are cleared black on every frame they were not
+//     drawn (the glow on every day outside, the shafts on every night), and the resolve and the bright pass still
+//     read and decoded them per pixel. They are built with each read and without it now, and the frame draws through
+//     the one for the images it drew.
 //
-// THE PICTURE IS THE SAME, AND THAT IS WHAT IS PINNED FIRST: each changed shader is RUN (test/glsl.mjs, in float32) on
-// the uniforms the real renderers upload, against the same text with the skip taken out, and the two must agree to
-// the bit; and the skipping one must not read the texture (or call the noise) it is there to skip. Real-GPU
-// equivalence and the timings are the harnesses' (bible/07-Rendering/Performance-Exterior.md, cluster D).
+// THE PICTURE IS THE SAME, AND THAT IS WHAT IS PINNED FIRST: each changed shader is RUN (test/glsl.mjs, in float32) -
+// the skies on the uniforms the real renderers upload - against the same text with the skip taken out (the gate
+// removed; the full pass), and the two must agree to the bit; and the skipping one must not read the texture (or call
+// the noise) it is there to skip. Real-GPU equivalence and the timings are the harnesses'
+// (bible/07-Rendering/Performance-Exterior.md, cluster D).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -19,8 +24,12 @@ import { FS as DS_FS, DynamicSkiesRenderer } from '../src/render/dynamicSkiesRen
 import { DynamicSkies } from '../src/systems/dynamicSkiesRuntime.js';
 import { MINUTES_PER_DAY } from '../src/systems/gameDate.js';
 import { EnhancedSkyRenderer, skyState, fbm, WEATHER_SKY } from '../src/render/enhancedSky.js';
+import { Renderer, WORLD_FRAME } from '../src/render/renderer.js';
+import { EL_LANE } from '../src/render/enhancedLighting.js';
+import { perspective } from '../src/world/mat4.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
+const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
 
 /** A GL that records every call and hands back each uniform's NAME as its location - so an upload names its uniform. */
 function recordingGl() {
@@ -251,4 +260,119 @@ test('PERF-EXT30: the port\'s dome at cover 0 calls no noise and draws what the 
   assert.ok(max < 0.96875, `the JS twin over 20,000 points peaks at ${max.toFixed(4)}`);
   for (const [w, row] of Object.entries(WEATHER_SKY)) assert.ok(row.soft > 0, `${w}: soft ${row.soft}`);
   assert.match(fs, /gl\.uniform1f\(u\.uCloudCover, this\.cloudsExternal \? 0 : s\.cloudCover\);/, 'VC3: the cover the gate reads');
+});
+
+// ── PERF-EXT31: THE AIR RESOLVE ───────────────────────────────────────────────────────────────────────────────────────
+/** The air pass's bright and resolve programs as the renderer builds them - bright[glow], resolve[glow][shafts] - and
+ *  the fragment source each one linked (the fake GL pairs a program with its shaders through attachShader). */
+function airPasses() {
+  const { calls, canvas } = recordingGl();
+  const r = new Renderer(canvas);
+  r.setLightingLane(EL_LANE); r.setAir(true);
+  const P = r.air.programs;
+  const text = new Map(calls.filter((c) => c[0] === 'shaderSource').map((c) => [c[1], c[2]]));
+  const fsOf = (o) => calls.filter((c) => c[0] === 'attachShader' && c[1] === o.p).map((c) => text.get(c[2])).find((t) => !t.includes('gl_Position'));
+  return { bright: [0, 1].map((g) => fsOf(P.bright[g])), resolve: [0, 1].map((g) => [0, 1].map((sh) => fsOf(P.resolve[g][sh]))) };
+}
+/** One fragment through a pass: its output and the samplers it read. `img` answers a sampler's texel. */
+function runPass(src, u, img) {
+  const reads = [];
+  const f = glslFunctions(src, {
+    uRect: [0, 0, 320, 200], uCanvas: [320, 200], uGrade: [0.6, 0.8, 0.25, 1.04], uAOMix: 0.9, uThreshold: 0.85, ...u,
+    texture: (name, uv) => { reads.push(name); return img(name, uv); },
+  }, { fp32: true });
+  f.main();
+  return { out: f.globals.outColor.slice(), reads };
+}
+
+test('PERF-EXT31: the resolve and the bright pass are built for what the frame drew - each variant is the full pass less exactly the reads of the images it is not given, reads nothing else, and with those images black draws the full pass\'s pixel to the bit; the full pass is the one that reads everything (mutants: a read left in, a read dropped from the full pass, the shafts\' term re-spelled)', () => {
+  const { bright, resolve } = airPasses();
+  const full = resolve[1][1];
+  const GLOW = '    c += airDecode(texture(uVol, wuv).rgb);   // VOL1: what elFinish added per fragment, once per pixel and shadowed\n';
+  const SHAFTS = ' + texture(uShaft, wuv).rgb * uGrade.y';
+  assert.ok(full.includes(`    c += texture(uBloom, wuv).rgb * uGrade.x${SHAFTS};\n${GLOW}`), 'the full resolve: the bloom and the shafts in one sum, then the glow');
+  assert.equal(resolve[0][1], full.replace(GLOW, ''), 'no glow: that line out and nothing else');
+  assert.equal(resolve[1][0], full.replace(SHAFTS, ''), 'no shafts: that term out and nothing else');
+  assert.equal(resolve[0][0], full.replace(GLOW, '').replace(SHAFTS, ''), 'neither');
+  const BRIGHT_GLOW = ' + airDecode(texture(uVol, vUV).rgb)';
+  assert.ok(bright[1].includes(`vec3 c = airDecode(texture(uFrame, uv).rgb)${BRIGHT_GLOW};`), 'the full bright pass');
+  assert.equal(bright[0], bright[1].replace(BRIGHT_GLOW, ''), 'and the bright pass without the glow');
+  let n = 0;
+  for (let k = 0; k < 24; k++) {
+    const frame = f32([rnd(), rnd(), rnd()]), bloom = f32([rnd() * 0.3, rnd() * 0.3, rnd() * 0.3]), ao = Math.fround(0.5 + rnd() * 0.5);
+    const glow = f32([rnd() * 0.5, rnd() * 0.4, rnd() * 0.2]), shaft = f32([rnd() * 0.3, rnd() * 0.3, rnd() * 0.2]);
+    const at = { vUV: [0.05 + rnd() * 0.9, 0.05 + rnd() * 0.9], gl_FragCoord: [1 + Math.floor(rnd() * 300) + 0.5, 1 + Math.floor(rnd() * 180) + 0.5, 0, 1] };
+    const img = (lit) => (name) => (name === 'uFrame' ? [...frame, 1] : name === 'uBloom' ? [...bloom, 1] : name === 'uAO' ? [ao, 0, 0, 1]
+      : name === 'uVol' ? (lit.vol ? [...glow, 1] : [0, 0, 0, 1]) : name === 'uShaft' ? (lit.shaft ? [...shaft, 1] : [0, 0, 0, 1]) : [0, 0, 0, 1]);
+    // every frame the pass can make: the images it drew are lit, the ones it did not are cleared black
+    for (const g of [0, 1]) {
+      for (const sh of [0, 1]) {
+        const lit = img({ vol: !!g, shaft: !!sh });
+        const v = runPass(resolve[g][sh], at, lit), f = runPass(full, at, lit);
+        assert.equal(v.reads.includes('uVol'), !!g, `the glow is read only where it was marched (glow ${g})`);
+        assert.equal(v.reads.includes('uShaft'), !!sh, `the shafts only where they drew (shafts ${sh})`);
+        assert.ok(f.reads.includes('uVol') && f.reads.includes('uShaft'), 'the full pass reads both on every world pixel - the work saved');
+        assert.deepEqual(v.out, f.out, `the full pass's pixel, to the bit (glow ${g}, shafts ${sh})`);
+      }
+      const lit = img({ vol: !!g, shaft: false });
+      const b = runPass(bright[g], at, lit), bf = runPass(bright[1], at, lit);
+      assert.equal(b.reads.includes('uVol'), !!g, 'the bright pass reads the glow only where it was marched');
+      assert.deepEqual(b.out, bf.out, 'and its pixel is the full pass\'s, to the bit');
+    }
+    // built without a read the frame DID draw, a pass would drop that light - which is why the choice is the draws' own
+    const drawn = img({ vol: true, shaft: true });
+    const all = runPass(full, at, drawn).out, none = runPass(resolve[0][0], at, drawn).out;
+    assert.ok(all.some((v, i) => v > none[i]), 'the glow and the shafts add light where they drew');
+    n++;
+  }
+  assert.equal(n, 24);
+});
+
+// One world frame on the fake GL through to the resolve, as vol1_glow.test.js and vc7b_shafts.test.js drive it; which
+// bright and resolve it drew through, by the programs' own handles.
+function airFrame({ lights = null, deck = null, sun = [0, 0.42, 0.9], proj = I, fog = ['linear', 0, 0, 2400], key = null, world = true } = {}) {
+  const { calls, canvas } = recordingGl();
+  const r = new Renderer(canvas);
+  r.setLightingLane(EL_LANE); r.setAir(true);
+  if (key != null) r.setLighting(new Float32Array([0.1, 0.1, 0.1]), key, new Float32Array([1, 0.9, 0.8]));
+  r.setFog(fog[0], fog[1], fog[2], fog[3], new Float32Array([0.6, 0.65, 0.7]));
+  r.textures.set('1_1', { id: 't' });
+  const mesh = { vao: { id: 'vao' }, buffers: [], bounds: new Float32Array([0, 1, 0, 4]), subMeshes: [{ textureArchive: 1, textureRecord: 1, startIndex: 0, primitiveCount: 2 }] };
+  const one = (kind) => {
+    if (lights) r.setPointLights(new Float32Array(lights), new Float32Array([1, 0.8, 0.5]));
+    r.beginFrame(proj, I, new Float32Array(sun), kind);
+    r.setCloudShadow(deck);
+    if (kind === WORLD_FRAME) r.drawMesh(mesh, I, null);
+    calls.length = 0;
+    r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 });   // the resolve
+  };
+  one(WORLD_FRAME);
+  if (!world) one(0);   // a menu's or a video's frame, after a world frame (the pass's images exist)
+  const P = r.air.programs;
+  const used = new Set(calls.filter((c) => c[0] === 'useProgram').map((c) => c[1]));
+  const brights = [0, 1].filter((g) => used.has(P.bright[g].p));
+  const resolves = [[0, 0], [0, 1], [1, 0], [1, 1]].filter(([g, sh]) => used.has(P.resolve[g][sh].p));
+  assert.equal(brights.length, 1, 'one bright pass a frame'); assert.equal(resolves.length, 1, 'one resolve a frame');
+  return { ap: r.air, bright: brights[0], resolve: resolves[0] };
+}
+
+test('PERF-EXT31: the frame draws through the passes built for what it drew, chosen after the images - a lantern in fog marches the glow and takes the glow\'s passes, a day with no light takes the ones without; the beams or the haze take the shafts\' resolve, neither the one without; a frame the pass was not prepared for takes the bare ones (mutants: the choice stuck, made before the images, the haze\'s arm dropped, the bright pass or the resolve always full)', () => {
+  const lantern = airFrame({ lights: [0, 2, -3, 12], fog: ['exp', 0.03, 60, 180] });
+  assert.equal(lantern.ap.stats.vol, true, 'marched (else this is vacuous)');
+  assert.deepEqual([lantern.bright, lantern.resolve], [1, [1, 0]], 'the glow read by the bright pass and the resolve');
+  const day = airFrame({ lights: [] });
+  assert.equal(day.ap.stats.vol, false, 'no lantern: nothing marched, the image cleared black');
+  assert.deepEqual([day.bright, day.resolve], [0, [0, 0]], 'neither reads it');
+  // the shafts: the beams (the sun on screen), the haze (a deck, the sun up but behind), both off
+  const beams = airFrame({ sun: [0, 0.3, -0.954], proj: perspective(Math.PI / 3, 1.6, 0.1, 400) });
+  assert.equal(beams.ap.stats.shafts, true); assert.equal(beams.ap.stats.haze, false);
+  assert.deepEqual(beams.resolve, [0, 1], 'the beams drew: the resolve reads them');
+  const haze = airFrame({ deck: { map: { id: 'shadowMap' }, rect: [-500, -500, 1 / 1000, 1] } });
+  assert.equal(haze.ap.stats.shafts, false); assert.equal(haze.ap.stats.haze, true);
+  assert.deepEqual(haze.resolve, [0, 1], 'the haze alone drew into the same image: read');
+  const night = airFrame({ key: 0, lights: [0, 2, -3, 12], fog: ['exp', 0.03, 60, 180] });
+  assert.equal(night.ap.stats.shafts, false); assert.equal(night.ap.stats.haze, false);
+  assert.deepEqual([night.bright, night.resolve], [1, [1, 0]], 'no sun: the shafts\' image is black and not read, while the lanterns\' glow is');
+  const menu = airFrame({ lights: [0, 2, -3, 12], fog: ['exp', 0.03, 60, 180], world: false });
+  assert.deepEqual([menu.bright, menu.resolve], [0, [0, 0]], 'a frame the pass was not prepared for: black images, the bare passes');
 });
