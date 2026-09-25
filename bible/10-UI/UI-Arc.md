@@ -866,7 +866,7 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:2197 (the factory) and :1904 (a
+                        worldModes.js:2204 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
                         dungeonContext.js:1073, world.js:2718,
@@ -8608,7 +8608,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:3020 as a second book built by hand 342 lines below the
+worldModes.js:3027 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -9318,7 +9318,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:6758` and `dungeonContext.js:1630` answer the same
+`worldModes.js:6767` and `dungeonContext.js:1630` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -10607,7 +10607,7 @@ c2 flight 2 caught the same pair driving the town map's chrome.
   row 0.
 
 **THE FIX.** `vy >= 0 &&` in front of the `update` call in both hovers
-- the arm `ui/chargen.js:1123` and `ui/spellbookWindow.js:442` already
+- the arm `ui/chargen.js:1153` and `ui/spellbookWindow.js:442` already
 carry. (The third guarded sibling is not the same arm:
 `ui/spellIconPickerWindow.js:227` tests `vx >= 0 && vy >= 0`, and
 `test/citedrift.test.js`'s CD8c pins that two-part shape by name.)
@@ -10650,7 +10650,7 @@ mutants - the guard deleted from either new window, "ALL THREE" restored
 to the Ledger, "both" restored to Testing.md - all go red.
 
 **AND THE THREE SIBLINGS ARE NOT ONE ARM.** The first draft of the
-section above called `ui/chargen.js:1123`, `ui/spellbookWindow.js:442`
+section above called `ui/chargen.js:1153`, `ui/spellbookWindow.js:442`
 and `ui/spellIconPickerWindow.js:227` "the same arm". They are not:
 the icon picker tests `vx >= 0 && vy >= 0`, the two-part shape CD8c
 pins by regex, while the other two test `vy` alone. The two new guards
@@ -17024,7 +17024,7 @@ UNDER the strip rather than at a box that now contains it. All four new
 checks fail against the shipped code.
 
 **F5 - THE ROW NAMED A KEY CALLED NONE.** `buttonText(null)` is
-KeyCode.None's own string (`systems/controlsConfig.js:294`), so a
+KeyCode.None's own string (`systems/controlsConfig.js:322`), so a
 player who CLEARED the character-sheet binding was handed a plate
 reading A LEVEL AWAITS / NONE - an instruction to press a key that does
 not exist, which is the bug the registry lookup was there to prevent
@@ -18109,3 +18109,60 @@ AUDIT DISC7 (2026-09-23, Mac: "Do an audit before we merge"): a player's list st
 (`plaqueLightFirst`), the lit verb follows its row by id when the list changes, the card's refused acts are listed in
 italics with their reason (`.wplaque-row.off`) and a press on one says it, a single lit verb leaves the wheel to the
 camera, and every door that takes the plaque down folds its highlight away. Pins: `test/auditdisc7.test.js`.
+
+## UXB1 - THE UX BACKLOG (2026-09-25, a contributor's list: "if someone else wants to do any of these first go for it")
+
+Fifteen items in five groups, each answered on both skins where both have the screen. The section A row is
+`01-Overview/Port-Ledger.md`'s THE UX BACKLOG; the controls half is written into `10-UI/Controls.md`.
+
+- **A - Skip Start Video** (off by default): the pref `skipStartVideo`, Settings > Interface on the main menu only. `main.js`
+  reads it at both front doors - the enhanced door's INTRO2 film and the classic ANIM0001 splash - beside the probes'
+  one-visit `?nointro`/`?novideo`. A skip by the pref starts the menu's theme on the first press, at the menu's level (a
+  browser plays nothing before a gesture); `?nointro` stays silent. The player's own online (it is read before any room).
+- **B - Continue is Confirm** on the enhanced Controls page, head and foot: the button commits, and says so.
+- **C - the ✕ and the right-click clear at once**, staged like every edit ("Having to scroll back to your key is bad").
+  The classic grid keeps DFU's PromptRemoveKeybindMessage.
+- **D - "Is there a reason you cannot have multiple keys bound to the same action such as jump+swim-up? If so,
+  highlight conflicting keybinds."** The reason is KB1's law 3/4 (one key, one action - DFU's own duplicate law), and the
+  case in the question needs no second binding: Jump and Crouch already raise and lower a swimming or levitating body
+  (LevitateMotor.cs:86-89; every motor host passes the pair). So the page says it - Float up and Float down carry "Jump
+  (SPACE) rises too while you swim or levitate", in the live keys - and giving Jump's key to Float up is answered "you
+  need neither". The conflict itself is highlighted where it is decided: the replace question stands in the sticky head
+  over the list it no longer replaces, the row the key would go to edged in brass and the row that holds it in red.
+- **E - Sync from server**: `systems/onlineSync.js`, a card under the Online pane's rules. THERE IS NO HOST TO ASK: a relay
+  serves the wire and /health and publishes no rules, because the rules are the online lane's - this build's, the same on
+  every server. So the sync copies the lane into the offline stores (every forced pref, DFU setting and room mod key,
+  and Smaller Dungeons off, since online every dungeon is full size), lists what differs before the press, and keeps
+  what it replaced for Undo. `mwArms` is left to its Build. On a default shelf the one difference is Enhanced AI.
+- **F - keys a feature uses and no screen moves**: the Controls page ends with "Keys that do not move" (the HUD's three
+  DaggerfallShortcuts and the Transport window's F/H/C/S behind the Transport key - how the game itself summons a horse
+  or a cart), and a mod's Features tile names its keys (Drop the light, Summon horse and wagon...) read-only, with one
+  press through to Controls. Every key is READ off the registry or the shortcut table.
+- **G - what an attribute does**: the level-up screen's own lines (`ATTRIBUTE_BLURB`, each annotated with the formula it
+  is true of) as every attribute row's hover, and the selected one's line beside the list - the rolled stats, the
+  builder and the review.
+- **H - a class to a file and back**: `customClassDoc`/`parseCustomClassDoc` and `ChargenFlow.customImport` - the clipboard
+  and a `.dfclass.json` each way, every value through the builder's own laws, the special picks through the windows'
+  own gates, and the Create gates untouched (an unbalanced class loads and is refused as a hand-built one would be).
+- **I - the difficulty dagger**: a gauge where the bare tally stood - DFU's track on its side, the mark at `daggerY`
+  normalised, the band Create allows, the advancement multiplier the dagger costs, red outside the band; the special
+  picks' pane carries it too.
+- **J - 16:9 without scrolling**: measured in a browser at 1920x1080, 1600x900, 1366x768 and 1280x720 - the class list,
+  the skills, the review and the builder scrolled at every size (the review by 613px at 1080). A desk block (1100px and a
+  fine pointer; the finger keeps its 44px floor) gives the long lists the width a desk has - the class list two columns,
+  the skills and the review three, the builder three (skills, attributes, the class under its name) - and every stage
+  fits at all four sizes.
+- **K - a countdown for repairs that are not instant**: the classic counter draws DFU's own misc label ("DONE" / "N
+  days", RepairItemLabelTextHandler) that it had never drawn; the enhanced counter counts each job down on its row,
+  days while a day or more is left and hours under one, an estimate while staged.
+- **L - splitting a shop's stack** ("12 oil, I want 2"): the classic counter asks DFU's "how many" on a Control-click and
+  when a stack only partly fits (TransferItem's gate); the enhanced counter carries a count on a clean stack.
+- **M - the private-property question, clickable**: the keyed panel's click rows sat one row above their labels (a click
+  on "Y - yes" answered No) - mended for every keyed menu - and the question is DFU's YesNo box now (`ui/yesNoBox.js`):
+  the parchment and BUTTONS.RCI on the classic skin, a two-button card on the enhanced one, No the default, no Escape.
+- **N/O - a stranger's container, and one already searched**: the plaque names a house container "Private property" in
+  its own tone, and "Searched" once its window opened on this stock (stamped with the stock's day, shut by the restock).
+  The enhanced plaque only: the classic HUD line has no second line to carry it.
+
+Pins: `test/uxb1*.test.js` (42), with `enhancedControls.test.js` (22), `ccrep`, `housecontainers` and `macro7_gate`
+re-aimed. Mutants: `tools/mutants/uxb1.json`, 18, all dead; `worldhover.json`'s four signature records re-aimed by content.

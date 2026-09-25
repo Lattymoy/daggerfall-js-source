@@ -229,7 +229,21 @@ buttons on its fixed art, Slide's among them, unbound.
 
 - Every group above, a vendored mod's only while the mod is on.
 - A row's button arms a capture; the next key or mouse button binds (Ctrl, Shift or Alt held binds the combo).
-- A held key asks (law 4). Right-click or the row's ✕ removes a binding.
-- **Defaults is staged**, as the page's own sentence says ("Nothing is saved until you press Continue"): DFU's
-  SetDefaults reset the live registry and saved on the spot; here Continue commits the reset (with its joystick
-  tail and removal marks) and any edit made after it. Leaving the page drops everything staged.
+- A held key asks (law 4). The question stands in the page's sticky head, over the list it leaves in place: the row
+  the key would go to is edged in brass, the row that holds it in red, and the list is inert until it is answered
+  (UXB1-D, 2026-09-25 - it used to replace the list, and a player lost their place in 60 rows).
+- Right-click or the row's ✕ CLEARS a binding at once - no question, staged like every other edit, so leaving the
+  page still drops it (UXB1-C, 2026-09-25, the UX backlog: "Having to scroll back to your key is bad"). The classic
+  grid keeps DFU's own remove prompt.
+- ONE KEY, ONE ACTION (law 3/4) stands, and the page answers the case that asked about it ("jump+swim-up"): Float up
+  and Float down say, in the live keys, that Jump and Crouch already raise and lower a swimming or levitating body
+  (LevitateMotor.cs:86-89), and giving Jump's key to Float up is answered "you need neither" (`floatHint`,
+  `sharedFloatNote`).
+- **Defaults is staged**, as the page's own sentence says ("Nothing is saved until you press Confirm"): DFU's
+  SetDefaults reset the live registry and saved on the spot; here Confirm commits the reset (with its joystick
+  tail and removal marks) and any edit made after it. Leaving the page drops everything staged. (The button read
+  Continue until UXB1-B, 2026-09-25: it commits, and says so.)
+- **Keys that do not move** close the page (UXB1-F): DaggerfallShortcut's HUD three (Large HUD, HUD, Retro Mode's
+  post-processing) and the Transport window's letters - F, H, C, S behind the Transport key - read off the shortcut
+  table, as words and keys with no buttons. A mod's own keys are named on its Features tile too, read-only, with one
+  press through to this page.

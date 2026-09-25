@@ -1,0 +1,164 @@
+[
+  {
+    "name": "UXB1-A-the-film-ignores-the-pref",
+    "file": "src/main.js",
+    "old": "  if (!params.has('novideo') && !getPref('skipStartVideo')) {",
+    "new": "  if (!params.has('novideo')) {",
+    "tests": [
+      "test/uxb1a_startvideo.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-D-clear-asks-nothing-and-clears-nothing",
+    "file": "src/ui/enhancedControls.js",
+    "old": "  setUnsavedBinding(unsaved, action, null);\n  refresh();\n  repaint();\n}\n\nfunction answerPrompt(yes) {",
+    "new": "  refresh();\n  repaint();\n}\n\nfunction answerPrompt(yes) {",
+    "tests": [
+      "test/enhancedControls.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-E-the-sync-copies-the-arms-build",
+    "file": "src/systems/onlineSync.js",
+    "old": "    if (Object.hasOwn(ONLINE_SYNC_SKIPPED_PREFS, key)) continue;",
+    "new": "    if (false) continue;",
+    "tests": [
+      "test/uxb1e_onlinesync.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-E-the-full-size-dungeon-is-not-copied",
+    "file": "src/systems/onlineSync.js",
+    "old": "  for (const table of [ONLINE_FORCED_SETTINGS, ONLINE_LAYOUT_SETTINGS]) {",
+    "new": "  for (const table of [ONLINE_FORCED_SETTINGS]) {",
+    "tests": [
+      "test/uxb1e_onlinesync.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-E-the-sync-writes-what-already-agrees",
+    "file": "src/systems/onlineSync.js",
+    "old": "  const changed = (plan ?? []).filter((r) => !r.same);",
+    "new": "  const changed = plan ?? [];",
+    "tests": [
+      "test/uxb1e_onlinesync.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-E-the-synced-settings-are-never-saved",
+    "file": "src/systems/onlineSync.js",
+    "old": "  if (changed.some((r) => r.store === 'settings')) saveSettings();",
+    "new": "",
+    "tests": [
+      "test/uxb1e_onlinesync.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-E-an-online-page-reads-the-room-as-the-player",
+    "file": "src/systems/onlineSync.js",
+    "old": "  if (isOnlinePage(search)) return null;",
+    "new": "",
+    "tests": [
+      "test/uxb1e_onlinesync.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-H-a-skill-twice-is-taken",
+    "file": "src/systems/customClass.js",
+    "old": "  if (new Set(chosen).size !== chosen.length) return fail('A skill can only be chosen once.');",
+    "new": "",
+    "tests": [
+      "test/uxb1g_chargen.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-H-the-exclusive-pairs-gate-is-skipped",
+    "file": "src/systems/customClass.js",
+    "old": "        || cannotAdd(item, list, other)) { skipped.push(e); continue; }",
+    "new": "        ) { skipped.push(e); continue; }",
+    "tests": [
+      "test/uxb1g_chargen.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-H-the-imported-pool-reads-balanced",
+    "file": "src/ui/chargen.js",
+    "old": "    c.statPool = STAT_DEFAULT * STAT_KEYS_ORDER.length - STAT_KEYS_ORDER.reduce((n, k) => n + c.stats[k], 0);",
+    "new": "    c.statPool = 0;",
+    "tests": [
+      "test/uxb1g_chargen.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-I-the-gauge-is-a-straight-line",
+    "file": "src/systems/customClass.js",
+    "old": "export const daggerFraction = (points) => (DAGGER_Y_MAX - daggerY(points)) / (DAGGER_Y_MAX - DAGGER_Y_MIN);",
+    "new": "export const daggerFraction = (points) => Math.min(1, Math.max(0, (points + 12) / 52));",
+    "tests": [
+      "test/uxb1g_chargen.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-J-major-falls-into-the-last-column",
+    "file": "src/ui/enhancedChargen.js",
+    "old": "    const col = cols[g < 2 ? 1 : 2];",
+    "new": "    const col = cols[Math.min(2, g + (g >= 2 ? 0 : 1))];",
+    "tests": [
+      "test/uxb1g_chargen.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-K-hours-read-as-days",
+    "file": "src/systems/repairService.js",
+    "old": "  const span = c.minutesLeft >= MINUTES_PER_DAY ? `${days} day${days === 1 ? '' : 's'}` : `${hours} hour${hours === 1 ? '' : 's'}`;",
+    "new": "  const span = `${days} day${days === 1 ? '' : 's'}`;",
+    "tests": [
+      "test/uxb1k_shops.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-L-a-magic-stack-splits",
+    "file": "src/systems/inventory.js",
+    "old": "    && (item.material ?? 0) === 0 && (item.message ?? 0) === 0 && (item.potionRecipeKey ?? 0) === 0",
+    "new": "    && (item.message ?? 0) === 0 && (item.potionRecipeKey ?? 0) === 0",
+    "tests": [
+      "test/uxb1k_shops.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-M-Return-answers-Yes",
+    "file": "src/ui/yesNoBox.js",
+    "old": "    if (code === 'Enter' || code === 'NumpadEnter' || code === 'confirm') this.answer(false);",
+    "new": "    if (code === 'Enter' || code === 'NumpadEnter' || code === 'confirm') this.answer(true);",
+    "tests": [
+      "test/uxb1m_privateproperty.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-M-the-click-rows-sit-a-row-high-again",
+    "file": "src/ui/talkWindow.js",
+    "old": "y0: ty - ROW_LEAD * s, y1: ty - ROW_LEAD * s + lineH });",
+    "new": "y0: ty - lineH, y1: ty });",
+    "tests": [
+      "test/uxb1m_privateproperty.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-N-the-signature-stops-seeing-the-tone",
+    "file": "src/systems/worldHover.js",
+    "old": "${f.empty ? 'e' : ''}${f.tone ? `|${f.tone}` : ''}`;",
+    "new": "${f.empty ? 'e' : ''}`;",
+    "tests": [
+      "test/uxb1n_containerplaque.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-O-yesterdays-lid-stays-searched",
+    "file": "src/systems/shopStock.js",
+    "old": "  && container.openedOn === container.stockedDate && !needsRestock(container, today);",
+    "new": "  && container.openedOn === container.stockedDate;",
+    "tests": [
+      "test/uxb1n_containerplaque.test.js"
+    ]
+  }
+]

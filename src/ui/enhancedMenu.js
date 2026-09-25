@@ -45,7 +45,7 @@
 // reload. Classic works that way because classic is a DOS program with
 // a fixed 320x200 screen. Neither reason survives here.
 //
-// This is ONE screen, under BOTH skins (main.js:116-224, FD1: the
+// This is ONE screen, under BOTH skins (main.js:116-227, FD1: the
 // launcher and its settings window are deleted; the classic rail is
 // Begin, which leads into the splash and PICK03I0 exactly as before).
 // Every destination is a press away from every other, settings
@@ -139,6 +139,7 @@ import { modKeyRows } from '../systems/controlsConfig.js';   // UXB1-F: a mod's 
 import { MOD_SETTINGS, modSetting, setModSetting, isIntKey, isFloatKey, isChoiceKey, isTextKey, isTupleKey } from '../systems/modSettings.js';
 import { keyCodeForDomCode, KEYCODE_NONE } from '../systems/keyCodes.js';   // HT1: a TextKey's capture spells the key as Unity would
 import { isOnlinePage, onlineForcedPref, onlineForcedModSetting, onlineForcedSetting } from '../systems/onlineLane.js';   // OL1: online is the enhanced lane, whole - a forced switch is shown locked   // ROADS 24; DS1: the integer keys; UL1: the choice keys
+import { onlineSyncPlan, applyOnlineSync, lastOnlineSync, undoOnlineSync } from '../systems/onlineSync.js';   // UXB1-E: the room's rules, copied home
 import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 // FIX-F (Mac: "changing keybinds in classic/enhanced do not work"): the
 // rebinding pane. The enhanced skin is the DEFAULT and had no door to
@@ -889,6 +890,7 @@ function paneOnline(body) {
   }
   if (!saves.length) {
     body.append(empty('No saved games', 'Online brings a saved character in. Save a game and every slot of it appears here.'));
+    body.append(onlineSyncCard());   // UXB1-E: the rules can come home before a character goes out
     return;
   }
   // TILE2 (Mac: "a detailed tile based design for your saves"): the
@@ -927,6 +929,50 @@ function paneOnline(body) {
   foot.append(el('p', 'meta', 'Everyone brings their own save; you see each other everywhere and can talk. A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers. A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers. Towns and the open country share who is there and the creatures that find you: what one player meets, everyone nearby sees and fights - and its creatures can hurt you too. The clock and the sky are the world\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, and the quest clocks stand still. The shared world is the enhanced lane: every enhancement the port owns in the world is on for everyone. The screens you play through are your own - your UI Overhaul, with the chat, your friends, the party and trading in their own panels over it. Most of your mods stay yours - turn them on or off online as you like. Six switches are the room\u2019s: Basic Roads and World of Daggerfall, because both shape the terrain and a room shares one ground, and Meaner Monsters, the Combat and Armor Overhaul and Unleveled Loot, because a dungeon\u2019s foes belong to whoever hosts it and loot changes hands.'));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door
   foot.append(field('Relay', 'onlineServer', DEFAULT_SERVER, 200));
   body.append(foot);
+  body.append(onlineSyncCard());   // UXB1-E: under the rules it copies
+}
+
+// UXB1-E (2026-09-25, the UX backlog: "Add a 'sync from server' option so players can ensure their offline play
+// matches the host they prefer to play on if they want."): THE ROOM'S RULES, OFFLINE. The copy and its undo are
+// systems/onlineSync.js's; this is the card - what differs, the one press, and the way back. Every relay plays by
+// the same rules (they are this build's, not the server's), so there is no host to pick: the card says so.
+export const ONLINE_SYNC_TITLE = 'Sync from server';
+export const ONLINE_SYNC_NOTE = 'Play offline by the rules every online room plays by. Online, some switches are the room\u2019s whatever yours say; this sets yours the same way. They are this version\u2019s rules, the same on every server. Everything else stays yours.';
+export const ONLINE_SYNC_SAME = 'Your offline game already plays by the online rules.';
+const syncWord = (v) => (v === true || /^true$/i.test(String(v)) ? 'On' : v === false || /^false$/i.test(String(v)) ? 'Off' : String(v));
+export function onlineSyncCard() {
+  const card = el('div', 'card svsync');
+  card.append(el('h3', null, ONLINE_SYNC_TITLE));
+  card.append(el('p', 'meta', ONLINE_SYNC_NOTE));
+  const plan = onlineSyncPlan() ?? [];
+  const differ = plan.filter((r) => !r.same);
+  const acts = el('div', 'acts');
+  if (differ.length) {
+    const list = el('ul', 'svsync-list');
+    for (const r of differ) {
+      const li = el('li', 'svsync-row');
+      li.append(el('span', 'svsync-name', r.label), el('span', 'svsync-was', syncWord(r.offline)),
+        el('span', 'svsync-arrow', '\u2192'), el('span', 'svsync-to', syncWord(r.online)));
+      list.append(li);
+    }
+    card.append(list);
+    const go = el('button', 'act primary svsync-go', `Sync ${differ.length} setting${differ.length === 1 ? '' : 's'}`);
+    go.type = 'button';
+    go.onclick = () => { applyOnlineSync(plan); render(); };
+    acts.append(go);
+  } else {
+    card.append(el('p', 'meta svsync-same', ONLINE_SYNC_SAME));
+  }
+  const last = lastOnlineSync();
+  if (last?.rows?.length) {
+    const undo = el('button', 'act svsync-undo', 'Undo sync');
+    undo.type = 'button';
+    undo.title = `Puts back the ${last.rows.length} setting${last.rows.length === 1 ? '' : 's'} the last sync changed`;
+    undo.onclick = () => { undoOnlineSync(); render(); };
+    acts.append(undo);
+  }
+  if (acts.children.length) card.append(acts);
+  return card;
 }
 
 function paneLoad(body) {

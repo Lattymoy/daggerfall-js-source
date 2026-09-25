@@ -998,7 +998,7 @@ The hand-off is RIDE's: `isRiding` is true only once the art is up, so while
 it loads or has failed, and in a build without it, DISC12's enemy sprite
 still stands for them. A beast is never nothing.
 
-The modal passes (`worldModes.js:7157` the dungeon, `:7349` the interior)
+The modal passes (`worldModes.js:7166` the dungeon, `:7358` the interior)
 draw only `host.extraBillboards`. That was `remotePlayers.batches()` alone,
 so a beast drawn by the rider layer would have been nothing indoors and
 underground. It hands over both layers' batches now (`world.js:12332`). A
@@ -1069,12 +1069,12 @@ the scene the picture takes in:
 **Hosts.** Every Morrowind body in the port goes through `drawThird`. The
 local player's goes through `mwView.mwViewDrawBody` (`mwView.js:329`,
 `:339`), which four files call: `world.js:14275`, `exterior.js:5094`,
-`worldModes.js:7150` and `:7247` (the dungeon and the interior passes),
+`worldModes.js:7159` and `:7256` (the dungeon and the interior passes),
 and `dungeon.js:1064`. `dungeonContext.js`, the fourth motor host, builds
 the dungeon for those hosts and draws no body of its own. The other players'
 bodies go through `peerBodies.js:377` (`PeerBodies.draw`). The open world
 calls it at `world.js:14276`, and the modal passes reach it through
-`host.drawPeerBodies` (`worldModes.js:7151`, `:7248`). The fix therefore
+`host.drawPeerBodies` (`worldModes.js:7160`, `:7257`). The fix therefore
 sits in one place and reaches every host.
 
 The pins are `test/prbow1_bow.test.js`: seven tests, all failing on the
@@ -1098,7 +1098,7 @@ pins stand.
 
 **The portrait.** `fpArm.figure()` draws the enhanced inventory's model
 figure (`enhancedInventory.js:1427`), which is shown in a 110:184 cell with
-object-fit: contain (`enhancedStyle.js:3557`). It framed `meshBounds` over
+object-fit: contain (`enhancedStyle.js:3709`). It framed `meshBounds` over
 EVERY piece, then hid the unlit torch, the arrow off the string and the
 empty holster twin, so gear it did not show still moved the frame. Its width
 was the box's azimuth-safe diagonal, so a longsword pointing at the viewer,

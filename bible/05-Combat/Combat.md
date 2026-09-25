@@ -797,7 +797,7 @@ is a `baseWeight` assignment here, as it is in C#, and the monster arm
 is the pin this file was written for; the campaign's first mutant is
 exactly that plausible wrong fix.
 
-`totalWeight` (inventory.js:339) IS `ItemCollection.GetWeight`, so the
+`totalWeight` (inventory.js:351) IS `ItemCollection.GetWeight`, so the
 only arithmetic added is the x4 and C#'s truncating `(int)` cast. Four
 pools call the formula (dungeon foes, the shared host-combat arm, the
 city watch, exterior foes) and all four now hand the foe's own list
@@ -1368,11 +1368,11 @@ review had to apply to `pauseWindow`/`restWindow`. And `listPicker.js`'s
 which was a router — the round bumped the dungeon's `:4112` to `:4113`
 mechanically, and a wrong number moved by the right offset is still
 wrong. All three are resolved by content (`townTalk.js:1241`,
-`worldModes.js:8899`, `dungeonContext.js:6629`) and pinned as a set.
+`worldModes.js:8908`, `dungeonContext.js:6629`) and pinned as a set.
 
 The `worldModes.js` fix inserts one line, so cites into that host past
-it move by one: the dungeon's `worldModes.js:7415` and
-`chargenSession.js`'s `worldModes.js:9012` are bumped and pinned. Four
+it move by one: the dungeon's `worldModes.js:7424` and
+`chargenSession.js`'s `worldModes.js:9021` are bumped and pinned. Four
 `worldModes.js` cites elsewhere (`interior.js`, `world.js`,
 `tradeModes.js`, `saveWindow.js`) and `UI-Arc.md`'s notebook trio were
 ALREADY stale before this round and are left as found rather than

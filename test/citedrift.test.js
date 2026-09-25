@@ -8,7 +8,7 @@
 //
 //   - `ui/spellMakerWindow.js` declared "RECORDED DEPARTURES" and closed
 //     the first with "Ledger A carries the widget row already
-//     (Port-Ledger.md:814)". Section A carried no widget row at all -
+//     (Port-Ledger.md:815)". Section A carried no widget row at all -
 //     the AUDIT 17m / F7 shape, a claim of approval standing in for one -
 //     and :686 was the stat-colour NIT row by then. The row exists now
 //     (Ledger A, TB1) and the sites cite it BY NAME.
@@ -699,7 +699,7 @@ const SOURCE_CITES = [
   // AUDIT QS6 F1, a fifth time and at a second door: this row names FIVE hosts
   // and the table captured ONE, with a sixth number baked into the pick - so
   // citeMerge bumped the LITERAL at the BOX1/TI3 merge and left the doc, and
-  // four of the five had been stale for waves (`worldModes.js:6890` for a line
+  // four of the five had been stale for waves (`worldModes.js:6899` for a line
   // that is 5921, `world.js:12955` for 8836, `interior.js:322` for 329,
   // `dungeon.js:951` for 959). Every one is captured now, against the
   // projection each host really builds.
@@ -975,7 +975,7 @@ test('CD6: every `src/` line Port-Status cites is the line it describes', () => 
 // The G1 lane re-resolved ~180 `:NNN` cites after moving code in four
 // hosts, and the pass advanced only the LEADING number of every
 // multi-number citation: `cityGuards.js:925-832`, `world.js:8483-8457`,
-// `worldModes.js:1298 against :1079`. Forty of them came out as ranges
+// `worldModes.js:1299 against :1080`. Forty of them came out as ranges
 // that cannot exist, and every pin in this file was green throughout,
 // because each one resolves a single number a human chose to list.
 //

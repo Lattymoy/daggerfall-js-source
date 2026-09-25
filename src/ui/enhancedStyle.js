@@ -226,6 +226,16 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .card.slot .meta { margin-bottom: 10px; }
 .card h3 { font-family: var(--display); font-weight: 400; font-size: 22px; margin: 0 0 4px; }
 .card .meta { color: var(--dim); font-size: 13px; margin: 0 0 16px; }
+/* UXB1-E (2026-09-25, the UX backlog): the online rules, offline - what
+   differs as name, now, arrow, then; the room's value in brass. */
+.svsync-list { list-style: none; margin: 0 0 16px; padding: 0; }
+.svsync-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 8px; align-items: baseline;
+  padding: 6px 0; border-bottom: 1px solid rgba(125,116,96,0.25); font-size: 14px; }
+.svsync-row:last-child { border-bottom: 0; }
+.svsync-was { color: var(--dim); }
+.svsync-arrow { color: var(--dim); }
+.svsync-to { color: var(--brass); }
+.svsync .acts { display: flex; flex-wrap: wrap; gap: 10px; }
 .stats { display: grid; grid-template-columns: auto 1fr; gap: 7px 18px; margin: 0 0 18px; }
 .stats dt { color: var(--dim); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
 .stats dd { margin: 0; font-variant-numeric: tabular-nums; }
@@ -1808,7 +1818,8 @@ ${badgeCss()}
 .ctl-group h3 { margin-bottom: 2px; }
 /* TORCH-BIND (2026-09-22, a player: "Keybind changes do not stick?" - they
    had not found Continue, 53 rows above): the head card with Continue stays
-   in view while the list scrolls, and a second Continue closes the list. */
+   in view while the list scrolls, and a second Continue closes the list.
+   (The button reads Confirm since UXB1-B.) */
 .ctl-head { position: sticky; top: 0; z-index: 2; }
 .ctl-foot { display: flex; justify-content: flex-end; }
 .ctl-row:last-child { border-bottom: 0; }
@@ -2971,7 +2982,8 @@ ${badgeCss()}
      tools/enhancedMenuProbe.mjs had been red since FT14 and so nobody
      saw it. Sized here rather than in the FT block below, because this
      is where the law lives and the next control added must find it. */
-  .ft-segb, .ft-mchip, .ft-tile-more, .ft-keys-to { min-height: 44px; }   /* UXB1-F: the keys' door is a control too */
+  .ft-segb, .ft-mchip, .ft-tile-more { min-height: 44px; }
+  .ft-keys-to { min-height: 44px; }   /* UXB1-F: the keys' door is a control too */
 }
 .shell .step { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; background: none;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }

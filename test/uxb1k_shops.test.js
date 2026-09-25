@@ -197,6 +197,8 @@ test('UXB1-L: the stepper and All; no count for a single item or for a stack who
   assert.equal(splitsCleanly(oil(1)), false);
   assert.equal(splitsCleanly({ group: 'UselessItems1', templateIndex: GLASS_BOTTLE_TEMPLATE, stackCount: 3, potionRecipeKey: 9 }), false);
   assert.equal(splitsCleanly({ group: 'Books', templateIndex: 0, stackCount: 3, message: 42 }), false);
+  assert.equal(splitsCleanly({ ...oil(12), material: 2 }), false, 'a material the fresh template would not carry');
+  assert.equal(splitsCleanly({ ...oil(12), timeForItemToDisappear: 5000 }), false, 'a conjured stack: the fresh item never expires');
 });
 
 test('UXB1-L: the count field\'s Return buys that many, not the window\'s confirm', () => {

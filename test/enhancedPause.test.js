@@ -272,7 +272,7 @@ test('U51: the host arms are no-ops BY DESIGN, and say so', () => {
 
 test('U51: Escape closes the pause door, through the shared table', () => {
   const src = read('src/ui/enhancedMenu.js');
-  assert.match(src, /import \{ overlayAction \} from '\.\/input\.js'/,
+  assert.match(src, /import \{ overlayAction(?:, bindings)? \} from '\.\/input\.js'/,   // UXB1-F: and the live bindings a Features tile names
     'not a second key map - the same table every other window answers through');
   const onKey = src.slice(src.indexOf('function onKey(e)'), src.indexOf('function releaseLock()'));
   assert.match(onKey, /overlayAction\(e\) !== 'back'/, 'Escape and nothing else');
