@@ -25,6 +25,9 @@ export const insideGateRing = (mark, px, py, slack = 1) => !!mark && Math.hypot(
  *  south-west corner) plus the spot, [east, north] metres - spawned dungeons' own sum (scenes/world.js, the sight line). */
 export const gateSceneXZ = (standing, t) => [t[0] + standing.spot[0], t[2] + standing.spot[1]];
 
+/** WB3b: the kill, said to everyone online (the hub's word): who stood where, and who struck hardest. */
+export const fellLine = ({ near, boss, top }) => `${boss} has fallen at the Oblivion Gate near ${near}${top?.length ? ` - struck down by ${top.length > 1 ? `${top.slice(0, -1).join(', ')} and ${top[top.length - 1]}` : top[0]}` : ''}. The gate collapses.`;
+
 /** The phases that say a line on arrival, and the line each says. */
 const SAYS = Object.freeze({ omen: 'omen', rising: 'rise', sealed: 'rise', open: 'open', closed: 'seal', collapsing: 'wrath' });
 

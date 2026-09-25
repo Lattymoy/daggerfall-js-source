@@ -227,8 +227,8 @@
   {
     "name": "WB2-the-door-open-before-the-relay",
     "file": "src/scenes/world.js",
-    "old": "    ready: () => false,   // WB3: the relay's word that it can hold a gate's arena",
-    "new": "    ready: () => true,   // WB3: the relay's word that it can hold a gate's arena",
+    "old": "    ready: () => !!online?.gateOk,   // WB3b: a relay that runs a gate's boss room (net/wire.js relaySupportsGate)",
+    "new": "    ready: () => true,   // WB3b: a relay that runs a gate's boss room (net/wire.js relaySupportsGate)",
     "tests": [
       "test/wb2_gate.test.js"
     ]

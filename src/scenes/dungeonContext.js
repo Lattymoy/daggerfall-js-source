@@ -13,6 +13,7 @@ import { markFoeStruck } from '../ui/hudFoeTarget.js';
 import { quickslotHand } from '../ui/quickslotTags.js';   // DISC21-C: an empty quickslot press reads the hand   // PX30
 import { lycanthropeAttackVoice, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V4: the beast's attack voice; LM1: the 4-20s move-sound loop; DISC10-E L3: the inventory refusal moved INTO the window door
 import { layoutDungeon } from '../world/dungeonLayout.js';
+import { isGateArena, COURT_TEXT } from '../world/gateArena.js';   // WB3b: the Burning Court - what the Deadlands will not allow
 import { expandMacros } from '../systems/talkSession.js';   // MACRO1: the global symbols every TEXT.RSC box passes through (MacroHelper)
 import { executeConsoleCommand } from '../systems/consoleCommands.js';   // E3: the probe door runs the real database
 import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, capsuleCentreFromEye, automapDungeonKey, SCAN_INTERVAL_S, recordTeleporterConnection, registerAutomapConsoleCommands } from '../systems/automap.js';   // A1; ROAD-C c2/S8 the teleport listener + the three console verbs, ROAD-E E3 on the command database
@@ -1669,7 +1670,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:9526 / exterior.js:3686), set
+  // host's own townTalk sink (world.js:9555 / exterior.js:3686), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2210,7 +2211,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1174,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1176,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2735,7 +2736,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1082 against :1112; worldModes.js:7116 against :7140).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1069 against :1110; worldModes.js:7208 against :7232).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3318,8 +3319,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:15060,
-              // exterior.js:5258 and worldModes.js:7325 already ran;
+              // playerArrowHitFoe is the one copy world.js:15119,
+              // exterior.js:5258 and worldModes.js:7370 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -6003,6 +6004,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // same signal through opts.dungeonOnline (worldModes.js), which
         // the standalone ?dungeon probe never sets, so it stays open there.
         loadingPrevented: () => !!opts.dungeonOnline?.(),
+        savingPrevented: () => isGateArena(dfLocation),   // WB3b: the pause's Save says why, in the court
         // SAV4: the slot window's seams over the same two verbs.
         playerName: () => playerEntity.name, playerId: () => playerEntity.characterId ?? null,
         saveAs: (saveName) => ctx.quickSave?.(saveName),
@@ -6023,6 +6025,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  idiom - an occupied slot refuses, the window closes itself). */
     toggleAutomap() {
       if (activeOverlay) return;
+      if (isGateArena(dfLocation)) { hudText.add(COURT_TEXT.noMap); return; }   // WB3b: an empty level, and no place to chart
       // EM3: THE SKIN FORK, at the one place this host builds the map.
       // The classic arm answers null without its native art and the
       // slot stays empty, exactly as before; the enhanced arm reads no
@@ -6193,6 +6196,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // DaggerfallRestWindow.Update :187-196 whole.
     toggleRest() {
       if (activeOverlay) return;
+      if (isGateArena(dfLocation)) { hudText.add(COURT_TEXT.noRest); return; }   // WB3b: an enemy is always near - the boss
       // S40: the gate itself moved to systems/restSession.js. It was
       // written out here because this was the only host that could
       // rest; three more can now, and DFU raises it from ONE
@@ -6311,6 +6315,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     reportMouse(dx, dy, locked) { _mouseState = `dx:${dx} dy:${dy} lock:${locked ? 'Y' : 'N'}`; },
     reportInput(keys, pitch) { _inputState = `keys:${keys} pitch:${pitch.toFixed(2)}`; },
     quickSave(saveName = QUICK_SAVE_NAME) {
+      // WB3b: a save made in the court would load into a place that no longer stands (the court is the day's alone)
+      if (isGateArena(dfLocation)) { hudText.add(COURT_TEXT.noSave); return false; }
       const snap = snapshotPlayer(playerEntity, {
         position: lastPlayerFeet, classicMinutes: classicMinutesRef.value,
         readiedSpellIndex: magic.readiedIndex(),

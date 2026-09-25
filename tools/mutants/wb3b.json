@@ -1,0 +1,344 @@
+[
+  {
+    "name": "WB3b-the-marker-says-water",
+    "file": "src/world/gateArena.js",
+    "old": "flags: 0, magnitude: 0, soundIndex: 0, factionOrMobileId: 0,",
+    "new": "flags: 0, magnitude: 0, soundIndex: 1, factionOrMobileId: 0,",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-the-marker-says-castle",
+    "file": "src/world/gateArena.js",
+    "old": "flags: 0, magnitude: 0, soundIndex: 0, factionOrMobileId: 0,",
+    "new": "flags: 0, magnitude: 1, soundIndex: 0, factionOrMobileId: 0,",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-the-made-name-missed",
+    "file": "src/world/gateArena.js",
+    "old": "getBlockIndex: (name) => (name === GATE_ARENA_BLOCK ? GATE_ARENA_BLOCK_INDEX",
+    "new": "getBlockIndex: (name) => (name === 'X' ? GATE_ARENA_BLOCK_INDEX",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-the-marker-off-the-arrival",
+    "file": "src/world/gateArena.js",
+    "old": "  const [x, , z] = courtToDungeon(0, 0, ARRIVE_Z);",
+    "new": "  const [x, , z] = courtToDungeon(0, 0, 0);",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-a-real-location-read-as-the-court",
+    "file": "src/world/gateArena.js",
+    "old": "export const isGateArena = (loc) => Number.isSafeInteger(loc?.gate) && loc?.dungeon?.recordElement?.header?.locationId === GATE_ARENA_LOCATION_ID;",
+    "new": "export const isGateArena = (loc) => Number.isSafeInteger(loc?.gate);",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-a-flagstone-wound-down",
+    "file": "src/world/gateArena.js",
+    "old": "    f.tri(COURT_FLOOR_RECORD, c, p1, p0, uvFloor(c), uvFloor(p1), uvFloor(p0));",
+    "new": "    f.tri(COURT_FLOOR_RECORD, c, p0, p1, uvFloor(c), uvFloor(p0), uvFloor(p1));",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-a-spire-on-the-floor",
+    "file": "src/world/gateArena.js",
+    "old": "    const r = RIM_OUT + 1.5 + (k % 3) * 0.8;",
+    "new": "    const r = 10 + (k % 3) * 0.8;",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-the-ring-off-his-reach",
+    "file": "src/world/gateArena.js",
+    "old": "  const RING_SIDES = 96, rr0 = BOSS_REACH_R - RUNE_HALF_W, rr1 = BOSS_REACH_R + RUNE_HALF_W, y = 0.02;",
+    "new": "  const RING_SIDES = 96, rr0 = COURT_R - 3 - RUNE_HALF_W, rr1 = COURT_R - 3 + RUNE_HALF_W, y = 0.02;",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-the-lava-faces-down",
+    "file": "src/world/gateArena.js",
+    "old": "    f.quad(COURT_LAVA_RECORD, a, d, c, b, uv(a), uv(d), uv(c), uv(b));",
+    "new": "    f.quad(COURT_LAVA_RECORD, a, b, c, d, uv(a), uv(b), uv(c), uv(d));",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-a-brazier-in-the-bridge",
+    "file": "src/world/gateArena.js",
+    "old": "    if (Math.abs(Math.atan2(Math.cos(a), Math.sin(a))) <= 0.35) continue;\n    out.push(",
+    "new": "    out.push(",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-the-collider-half-a-disc",
+    "file": "src/world/gateArena.js",
+    "old": "  for (let k = 0; k < FLOOR_SIDES; k++) {\n    const a0 = (k / FLOOR_SIDES) * Math.PI * 2, a1 = ((k + 1) / FLOOR_SIDES) * Math.PI * 2;\n    out.push(",
+    "new": "  for (let k = 0; k < FLOOR_SIDES / 2; k++) {\n    const a0 = (k / FLOOR_SIDES) * Math.PI * 2, a1 = ((k + 1) / FLOOR_SIDES) * Math.PI * 2;\n    out.push(",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-the-landing-behind-the-gate",
+    "file": "src/world/gateArena.js",
+    "old": "  const x = t[0] + g.spot[0] + dx * out, z = t[2] + g.spot[1] + dz * out;",
+    "new": "  const x = t[0] + g.spot[0] - dx * out, z = t[2] + g.spot[1] - dz * out;",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-the-landing-off-the-ground-kept",
+    "file": "src/world/gateArena.js",
+    "old": "  return Number.isFinite(y) ? { pos: [x, y, z], normal: [dx, 0, dz] } : null;",
+    "new": "  return { pos: [x, y, z], normal: [dx, 0, dz] };",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-every-joint-burning",
+    "file": "src/world/gateArt.js",
+    "old": "      const hot = tone(x, y) > 0.7;",
+    "new": "      const hot = tone(x, y) > 0;",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-the-membrane-dark",
+    "file": "src/world/gateArt.js",
+    "old": "    put(albedo, x, y, col); put(emission, x, y, col);\n  }\n  return { albedo, emission };\n}\n\n/** The sky's shell",
+    "new": "    put(albedo, x, y, col); put(emission, x, y, [0, 0, 0]);\n  }\n  return { albedo, emission };\n}\n\n/** The sky's shell",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-a-word-before-the-state-starts-a-fight",
+    "file": "src/net/gateLink.js",
+    "old": "  if (s.day === null) return s;   // nothing but a whole state starts a fight",
+    "new": "  if (s.day === undefined) return s;   // nothing but a whole state starts a fight",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-the-attack-does-not-supersede",
+    "file": "src/net/gateLink.js",
+    "old": "    case 'atk': return { ...s, atk: { i: g.i,",
+    "new": "    case 'atk': return s.atk ? s : { ...s, atk: { i: g.i,",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-a-kill-said-twice",
+    "file": "src/net/gateLink.js",
+    "old": "        if (Number.isSafeInteger(day) && !falls.has(day)) {",
+    "new": "        if (Number.isSafeInteger(day)) {",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-another-days-kill-taken",
+    "file": "src/net/gateLink.js",
+    "old": "    case 'fell': return g.d !== undefined && g.d !== s.day ? s :",
+    "new": "    case 'fell': return false ? s :",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-the-walk-past-its-goal",
+    "file": "src/net/gateLink.js",
+    "old": "  const along = Math.min(len, (Math.max(0, now - m.at) / 1000) * m.v);\n  return [",
+    "new": "  const along = (Math.max(0, now - m.at) / 1000) * m.v;\n  return [",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-the-court-stood-after-the-marker",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (hit.gateArena) standCourt(ctx);   // WB3b: the court, before the start marker is read and before any namer\n",
+    "new": "\n",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-the-way-home-at-a-door",
+    "file": "src/scenes/worldModes.js",
+    "old": "  const returnLanding = () => (dungeonReturn.gate ? host.gateLanding?.(dungeonReturn.gate) ?? null : dungeonEntranceLanding(",
+    "new": "  const returnLanding = () => (false ? host.gateLanding?.(dungeonReturn.gate) ?? null : dungeonEntranceLanding(",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-the-court-in-a-dungeon-room",
+    "file": "src/scenes/worldModes.js",
+    "old": "    roomIdentity: () => (mode === 'dungeon' ? (isGateArena(dungeonLoc) ? { kind: 'gate', day: dungeonLoc.gate } :",
+    "new": "    roomIdentity: () => (mode === 'dungeon' ? (false ? { kind: 'gate', day: dungeonLoc.gate } :",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-the-map-in-the-court",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (isGateArena(dfLocation)) { hudText.add(COURT_TEXT.noMap); return; }",
+    "new": "      void COURT_TEXT;",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-rest-in-the-court",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (isGateArena(dfLocation)) { hudText.add(COURT_TEXT.noRest); return; }",
+    "new": "      void 0;",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-a-save-in-the-court",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (isGateArena(dfLocation)) { hudText.add(COURT_TEXT.noSave); return false; }",
+    "new": "      void 0;",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-the-door-says-not-yet-for-ever",
+    "file": "src/scenes/world.js",
+    "old": "    ready: () => !!online?.gateOk,",
+    "new": "    ready: () => false,",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-no-level-claim",
+    "file": "src/scenes/world.js",
+    "old": "online.welcomes !== _gateInFor && online.sendGate({ k: 'in',",
+    "new": "online.welcomes !== _gateInFor && false && online.sendGate({ k: 'in',",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-no-ring-in-the-court",
+    "file": "src/scenes/world.js",
+    "old": "    if (!player.arena && modes?.gateArenaDay?.() != null) player.arena = courtRing();",
+    "new": "    if (!player.arena && false) player.arena = courtRing();",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-a-death-at-a-temple",
+    "file": "src/scenes/world.js",
+    "old": "    const courtGate = modes?.gateArenaGate?.() ?? null;",
+    "new": "    const courtGate = null;",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-a-mark-in-the-court",
+    "file": "src/scenes/world.js",
+    "old": "    if (modes?.gateArenaDay?.() != null) { setMidScreenText(COURT_TEXT.noMark); return; }",
+    "new": "    void COURT_TEXT;",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-the-court-outlives-its-day",
+    "file": "src/scenes/world.js",
+    "old": "    if (courtDay != null && Date.now() + _sharedOffsetMs >= gateTimes(courtDay).wrathAt + GATE_COLLAPSE_MS) ejectFromCourt(COURT_TEXT.collapse);",
+    "new": "    if (courtDay != null && false) ejectFromCourt(COURT_TEXT.collapse);",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-the-omen-deaf-to-the-kill",
+    "file": "src/scenes/world.js",
+    "old": "    fellAt: (day) => gateLink?.fellAt(day) ?? null,   // WB3b: the relay's word of the kill",
+    "new": "    fellAt: () => null,   // WB3b: the relay's word of the kill",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-the-fall-line-drops-the-last",
+    "file": "src/systems/gateOmen.js",
+    "old": "`${top.slice(0, -1).join(', ')} and ${top[top.length - 1]}`",
+    "new": "`${top.slice(0, -1).join(', ')}`",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-the-braziers-carried",
+    "file": "src/world/gateArena.js",
+    "old": "  lights.forEach((l, i) => { data.set([l.x, l.y, l.z, l.range], (n + i) * 4); colors.set(l.color, (n + i) * 3); });",
+    "new": "  lights.forEach((l, i) => { data.set([l.x, l.y, l.z, l.range], (n + i) * 4); colors.set(l.color, (n + i) * 3); carried[n + i] = 1; });",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-the-torchs-mask-dropped",
+    "file": "src/world/gateArena.js",
+    "old": "  if (lit.data.carried) carried.set(lit.data.carried.subarray(0, n));",
+    "new": "  if (false) carried.set(lit.data.carried.subarray(0, n));",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-the-way-home-faces-out",
+    "file": "src/world/gateArena.js",
+    "old": "    normal: { x: 0, y: 0, z: -1 },",
+    "new": "    normal: { x: 0, y: 0, z: 1 },",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  },
+  {
+    "name": "WB3b-the-way-home-no-exit-door",
+    "file": "src/scenes/worldModes.js",
+    "old": "    ctx.exitDoors.push(courtExitDoor());",
+    "new": "    [courtExitDoor()];",
+    "tests": [
+      "test/wb3b_gate_arena.test.js"
+    ]
+  }
+]

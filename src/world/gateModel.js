@@ -80,8 +80,9 @@ const norm = (v) => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] 
  *  its own axis, the plinth against its centre). */
 export const GATE_PART = Object.freeze({ Plinth: 0, Horn: 1, Spike: 2 });
 
-/** A builder of flat-shaded triangles, gathered by texture record, each tagged with its part. */
-function faces() {
+/** A builder of flat-shaded triangles, gathered by texture record, each tagged with its part. WB3b: the Burning
+ *  Court's builder too (world/gateArena.js) - the court is cut from the gate's own stone. */
+export function faces() {
   const byRec = new Map();
   let part = GATE_PART.Plinth;
   const tri = (rec, a, b, c, ua, ub, uc) => {
@@ -180,7 +181,7 @@ function plinth(f) {
 
 /** A four-sided spike from a base square (centre `b`, half-size `w`, in the plane its axis `ax` leaves) to `tip` -
  *  the spines', the claws' and the rim spires' one shape, wound outward whatever way it points. */
-function spike(f, b, w, tip) {
+export function spike(f, b, w, tip) {
   f.as(GATE_PART.Spike);
   const ax = norm(sub(tip, b));
   const up = Math.abs(ax[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];

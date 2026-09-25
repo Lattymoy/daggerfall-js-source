@@ -416,3 +416,22 @@ PKCS8 in base64, `npx wrangler secret put GATE_SIGNING_KEY` in `server/`) - unti
 the spoils roll the same, and WB5's account service will decline them. Pins `test/wb3_gate_room.test.js` (21);
 mutants `tools/mutants/wb3.json` (60 dead). The arena place (WB3b) is next; until it lands the gate's door still
 answers "not yet".
+
+**WB3b (2026-09-25) - the Burning Court.** The gate's door opens at a relay that runs its room (world110): walking
+through the fire enters the court - the dungeon host's own arm with a level made in code (`world/gateArena.js`), not
+a fifth host. A made location and a blocks file answering one made block holding nothing but its start marker, laid
+by the port's own `layoutDungeon`; the court stood into the built context before the marker is read - a 48 m floor of
+black flagstones (a few joints glowing) on a spire of rock over a sea of fire, the rune ring 16 m out, spires and five
+braziers round the edge, the broken bridge the players came by and the way home's membrane at the floor's edge (the
+level's one exit door, so the exit's own ray, ladder and wagon word take it; the plaque says *The way back to Tamriel*) - with its own art (`world/gateArt.js`), its floor on the collider, the
+Deadlands' red fog over a far shell of sky (the dungeon host's clear colour left alone) and the braziers' own light
+(after the player's own lights, the torch's mask kept). The room is `gate:<day>`; the level claim goes out
+once per welcome; the relay's words land in `net/gateLink.js`, which the world's gate reads for its collapse and the
+chat for the kill line (*Valkynaz Ruhn has fallen at the Oblivion Gate near ... - struck down by ...*). The motor keeps
+the player on the floor; a death is cast out before the gate; the day's end or going offline ends the court the same
+way; the map, the rest, the save and the Recall mark are refused inside it. What moved from the page above: the way
+home stands at the floor's edge (the motor's ring is a circle; a bridge beyond it is scenery), and the court stands
+for its fighters until the gate's day ends rather than collapsing with the kill (the spoils need the time - WB5).
+Pins `test/wb3b_gate_arena.test.js` (7); mutants `tools/mutants/wb3b.json` (38 dead). Seen headless with a stand-in
+shader (the floor, the ring, the spires and braziers, the sea of fire); not yet in the game with ARENA2 and a live
+relay, where the arrival, the fog and the braziers' light are the first look. The boss is not drawn yet (WB4).
