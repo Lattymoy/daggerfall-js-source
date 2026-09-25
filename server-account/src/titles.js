@@ -54,8 +54,17 @@ import { TITLES, GLYPHS } from '../../src/net/identityToken.js';
  *  "all current players" is a statement about a MOMENT. Everyone who
  *  had registered when Mac asked for this holds it; nobody who
  *  registers after does, and no migration had to walk a table to say
- *  so. 2026-09-23T00:00:00Z - the end of the day he asked. */
-export const FOUNDER_UNTIL = 1_790_121_600;
+ *  so. 2026-09-23T00:00:00Z - the end of the day he asked.
+ *
+ *  FOUNDER2 (2026-09-24, Mac: "I want to grant all current accounts the
+ *  founder title if they dont have it already"): the SAME statement made
+ *  again at a later moment, so the cutoff moves to the end of THIS day -
+ *  2026-09-25T00:00:00Z - and every account registered since TITLE-R
+ *  closed it is a founder too, with no row written. After it the title is
+ *  closed again (TITLE-R's law). A guest still holds none: nothing to
+ *  compare, and a founding title on a row one storage clear from gone was
+ *  never anybody's. */
+export const FOUNDER_UNTIL = 1_790_294_400;
 
 /** How long the sprout stays on a new account: two weeks, in seconds,
  *  spelled as the arithmetic rather than as 1209600 so a reader can

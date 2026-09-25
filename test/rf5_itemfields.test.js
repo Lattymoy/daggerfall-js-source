@@ -41,6 +41,7 @@ import { LOOK_ITEM_FIELDS } from '../src/net/wire.js';
 import { setPref, _resetForTests } from '../src/systems/uiPrefs.js';
 import '../src/world/landView.js';
 import '../src/world/outdoors.js';
+import '../src/systems/featureLanes.js';   // FT18: the wind, the quick slots and the blood lanes register themselves too
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');

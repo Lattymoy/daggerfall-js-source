@@ -150,7 +150,7 @@
     "tests": [
       "test/titlen.test.js"
     ],
-    "old": "export const FOUNDER_UNTIL = 1_790_121_600;",
-    "new": "export const FOUNDER_UNTIL = 1_790_208_000;"
+    "old": "export const FOUNDER_UNTIL = 1_790_294_400;",
+    "new": "export const FOUNDER_UNTIL = 1_790_380_800;"
   }
 ]

@@ -93,8 +93,8 @@ test('AUDIT 65 UI-5: the notch carries its own point, so the pack scrolls before
 
 test('AUDIT 65 UI-5: every host wheel seam hands the window the live point', () => {
   const POINT = /wheel\?\.\(Math\.sign\(e\.deltaY\), v \? v\[0\] : -1, v \? v\[1\] : -1\);/;
-  // townTalk.js is the seam for BOTH outdoor hosts (world.js:8005 and
-  // exterior.js:3185 hand it the raw event).
+  // townTalk.js is the seam for BOTH outdoor hosts (world.js:8010 and
+  // exterior.js:3187 hand it the raw event).
   assert.match(read('src/scenes/townTalk.js'), POINT, 'townTalk.js');
   // worldModes.js: BOTH arms - the interior slot and the mounted
   // dungeon context's.

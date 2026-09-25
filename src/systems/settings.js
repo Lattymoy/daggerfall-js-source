@@ -288,6 +288,9 @@ export const LIVE = Object.freeze({
   'Video/UseMipMapsInRetroMode': 'src/systems/retroMode.js',
   'Video/RetroModeAspectCorrection': 'src/systems/retroMode.js',
   'Video/PalettizationLUTShift': 'src/systems/retroMode.js',
+  // FPS-CAP1 (Mac: "Add FPS limiter to settings"): the Frame Rate Cap, stored-tier since the settings screen shipped.
+  // StartGameBehaviour's two lines (:244-250), read by the four hosts' frame gate and the FPS counter every frame.
+  'Video/TargetFrameRate': 'src/systems/frameCap.js',
 });
 /** unavailable: meaningless in a browser, or the port implements only
  *  ONE side of the branch. The launcher shows these disabled WITH the
@@ -306,6 +309,9 @@ export const UNAVAILABLE = Object.freeze({
   'Video/ResolutionHeight': 'the browser sizes its own canvas',
   'Video/Fullscreen': 'the browser owns fullscreen',
   'Video/ExclusiveFullscreen': 'the browser owns fullscreen',
+  // FPS-CAP1: a page's frames always wait for the screen - there is no other mode to switch to. The Frame Rate Cap
+  // holds under it (systems/frameCap.js: DFU's cap does nothing under VSync, which here would be never).
+  'Video/VSync': 'the browser always waits for the screen refresh',
 });
 /** The tier of one "Section/Key". Everything not named above is
  *  STORED - it round-trips but nothing reads it yet. */

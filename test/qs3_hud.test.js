@@ -564,9 +564,10 @@ test('QS the switch: the features row hides the DIAMOND alone - the caption and 
   // ...and the rule hides the diamond, not the block: the mode word lives in the caption.
   assert.match(CSS, /\.hud-quick\.nodiamond \.hud-qdiamond \{ display: none; \}/);
   assert.doesNotMatch(CSS, /\.hud-quick\.nodiamond \{ display: none/);
-  // The row exists, on the prefs shelf, on by default, the player's own online.
+  // The switch exists, on the prefs shelf, on by default, the player's own online - FT18: as the Off of the one Quick
+  // slots row, which covers the key (its lane writes it; test/ft18_features.test.js drives the three states).
   const F = read('src/systems/features.js');
-  assert.match(F, /id: 'quickslot-diamond',[\s\S]*?control: Object\.freeze\(\{ store: 'prefs', key: 'quickslots', initial: true, online: 'player' \}\)/);
+  assert.match(F, /id: 'quick-slots',[\s\S]*?lane: 'quickSlots',[\s\S]*?also: Object\.freeze\(\[Object\.freeze\(\{ store: 'prefs', key: 'quickslots', initial: true, online: 'player' \}\)\]\)/);
 });
 
 // AUDIT QS6 F3 + F4, both DRIVEN: two defects a source pin could not see.

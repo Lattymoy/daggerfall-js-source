@@ -47,6 +47,7 @@ import { CAPSULE_HEIGHT } from '../player/motor.js';
 import { peerStubEntity, lookKey } from './remotePlayers.js';
 import { POSE_STRIKES } from './wire.js';   // MAC7 #1: the swing's kind, by the wire's index
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
+import { JUMP_UNITS, stepPeerPace } from './peerPace.js';   // HT-WAIST-BACK: the pace law, lifted - the walkers' lanterns swing off it too
 
 
 /** The most peers in a Morrowind body at once; the rest keep the paperdoll. */
@@ -57,8 +58,8 @@ export const BODY_RETRY_MS = 30000;
 export const BODY_LINGER_MS = 15000;
 /** Past this distance from the player (scene units) the rig sleeps and the doll stands. */
 export const BODY_RANGE = 120;
-/** A drawn pose farther than this from the last (scene units) is a jump, not a stride: the pace resets. */
-export const JUMP_UNITS = 5;
+/** A drawn pose farther than this from the last (scene units) is a jump, not a stride: the pace resets (net/peerPace.js). */
+export { JUMP_UNITS };
 /** A body farther than this factor beyond a bodiless nearer peer gives up its slot. */
 export const SWAP_MARGIN = 1.25;
 /** A peer's look change within this of its body's build keeps the body (a rebuild is seconds; a rejoin with new gear every second is not). */
@@ -254,12 +255,8 @@ export class PeerBodies {
   /** A body's feet, pace, range and camera for this frame. */
   _place(b, peer, toScene, dt, near) {
     const f = toScene(peer.shown);
-    if (b.feet) {
-      const d = Math.hypot(f[0] - b.feet[0], f[2] - b.feet[2]);
-      // the ground speed off the drawn pose, eased; a jump (a snap, a recenter missed) resets it rather than reading as a sprint
-      if (d > JUMP_UNITS) b.speed = 0;
-      else if (dt > 0) b.speed = b.speed * 0.8 + (d / dt) * 0.2;
-    } else b.speed = 0;
+    // the ground speed off the drawn pose, eased; a jump (a snap, a recenter missed) resets it rather than reading as a sprint
+    b.speed = stepPeerPace(b.speed, b.feet, f, dt);   // HT-WAIST-BACK: net/peerPace.js, the one home
     b.feet = f;
     // the yaw eased toward the pose's (AUDIT MWBODY A8): the rig reads turning off the yaw's change frame to frame,
     // and a pose eased over one send interval stops between arrivals, so the turn clip stuttered
@@ -319,6 +316,12 @@ export class PeerBodies {
     const am = shown.am ? 1 : 0;
     if (b.weapon && b.ammo !== am && (b.rig.upperBodyReady?.() ?? true) && b.rig.setWeapon?.(b.weapon, { hasAmmo: !!am }) !== false) b.ammo = am;
     b.rig.readySpell?.(!!shown.sr);
+    // HT-WAIST-NET (2026-09-24): THE LANTERN AT THE WAIST, off the pose's `hl` - the rig's own door, the local body's
+    // (weaponRig hands the player's the same boolean every frame): the fast path one compare, the first lit binds the
+    // lantern at this body's pelvis once, a light arriving mid-build is queued. It swings off this body's own camera
+    // (peerCamera's `move` and eased yaw, the walk clip's phase), as the local one swings off the motor's. No held
+    // light rides the wire (MW-D51) - this one is in no hand.
+    b.rig.setHipLight?.(!!shown.hl);
     const an = shown.an | 0, cn = shown.cn | 0;
     if (b.swing == null) { b.swing = an; b.cast = cn; }
     else {

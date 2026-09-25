@@ -149,9 +149,10 @@ import { paneControls, discardControlsStaging, captureArmed, controlsPromptOpen,
 // FT0: the features home - one list over the three stores, filtered by kind
 import { OVERHAUL_PANELS, currentOption } from '../systems/overhauls.js';   // OVH1: the three looks
 import { UI_PACKS, packUrl } from '../systems/uiPack.js';   // OVH2: a pack's own picture on its card
-import { FEATURES, KINDS, KIND_ORDER, GROUPS, GROUP_ORDER, filterFeatures, featureCounts, featureForControl, resolveControl, modModules, modDials } from '../systems/features.js';   // FT14: the groups and each mod's curated keys
+import { FEATURES, KINDS, KIND_ORDER, GROUPS, GROUP_ORDER, filterFeatures, featureCounts, featureForControl, resolveControl, modModules, modDials, matchesFeatureQuery } from '../systems/features.js';   // FT14: the groups and each mod's curated keys
 import '../world/landView.js';   // RF4: the land-view lane registers itself with the registry
 import '../world/outdoors.js';   // RF4: the outdoors lane too
+import '../systems/featureLanes.js';   // FT18: the wind, the quick slots and the blood
 // ACC1e: the account card at the head of the Online pane - the flow
 // thinks (ui/accountFlow.js, node-drivable), this draws it
 import { AccountFlow } from './accountFlow.js';
@@ -221,6 +222,7 @@ const RAIL_ACTS = Object.freeze({ resume: 'resume' });
 // second visit must not inherit the first one's open sheet.
 let section = 'continue';
 let featureKind = null;   // FT0: the chip - null is All, else a KINDS id; per mount like the rest
+let featureQuery = '';   // FT18: the Features search - what the player typed, per mount
 let category = CATEGORIES[0].id;
 let pickedKey = null;
 let sheetOpen = false;   // the help pane is a sheet on a phone
@@ -926,7 +928,7 @@ function paneOnline(body) {
   // agreeing to are still on the surface they enter through, where a
   // page in the bible cannot reach them.
   const foot = el('div', 'card svonlinefoot');
-  foot.append(el('p', 'meta', 'Everyone brings their own save; you see each other everywhere and can talk. A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers. A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers. Towns and the open country share who is there and the creatures that find you: what one player meets, everyone nearby sees and fights - and its creatures can hurt you too. The clock and the sky are the world\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, and the quest clocks stand still. The shared world is the enhanced lane: every enhancement the port owns in the world is on for everyone. The screens you play through are your own - your UI Overhaul, with the chat, your friends, the party and trading in their own panels over it. Most of your mods stay yours - turn them on or off online as you like. Six switches are the room\u2019s: Basic Roads and World of Daggerfall, because both shape the terrain and a room shares one ground, and Meaner Monsters, the Combat and Armor Overhaul and Unleveled Loot, because a dungeon\u2019s foes belong to whoever hosts it and loot changes hands.'));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door
+  foot.append(el('p', 'meta', 'Everyone brings their own save; you see each other everywhere and can talk. A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers. A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers. Towns and the open country share who is there and the creatures that find you: what one player meets, everyone nearby sees and fights - and its creatures can hurt you too. The clock and the sky are the world\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, so a quest that waits for an hour of the day waits for that hour of the world. Quest timers run while you play. The shared world is the enhanced lane: every enhancement the port owns in the world is on for everyone. The screens you play through are your own - your UI Overhaul, with the chat, your friends, the party and trading in their own panels over it. Most of your mods stay yours - turn them on or off online as you like. Six switches are the room\u2019s: Basic Roads and World of Daggerfall, because both shape the terrain and a room shares one ground, and Meaner Monsters, the Combat and Armor Overhaul and Unleveled Loot, because a dungeon\u2019s foes belong to whoever hosts it and loot changes hands.'));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door
   foot.append(field('Relay', 'onlineServer', DEFAULT_SERVER, 200));
   body.append(foot);
 }
@@ -1987,16 +1989,9 @@ function morrowindCard() {
       + 'Off: the classic weapon sprites, and Eye Of The Beholder for third person. Turning it on builds the body '
       + '(a few seconds, once); the archives stay attached either way.',
       { onChange: (on) => { toggleMorrowind(on); }, home: true }));
-    // WS1: the holster - rebuilt into the standing body when the switch moves.
-    mw.append(prefRow('mwSheathing', 'Weapon sheathing',
-      'A sheathed weapon stays on the body - on the hip or the back, in the scabbard Weapon Sheathing '
-      + '(Greatness7 and the artists it credits) ships for it, with a quiver for a bow. Off: a lowered weapon vanishes, as in vanilla Morrowind.',
-      { onChange: async () => {
-        if (!getPref('mwArms') || !count) { render(); return; }
-        const { buildArmsFor } = await import('../combat/weaponRig.js');
-        await buildArmsFor(playerEntity);
-        render();
-      } }));
+    // WS1's holster switch is the Features home's Weapon Sheathing tile (FT18: its rebuild is TILE_AFTER's). The row
+    // that stood here drew nothing since FT13 moved the key - `prefRow` answers null for a moved key - and a bare
+    // `append(null)` printed the word "null" on this card for every player with Morrowind archives attached.
   }
   const armActions = [
     { label: 'Attach data', primary: !count, onClick: async () => {
@@ -2291,7 +2286,7 @@ function modRow(vendor, key, def, { name = null, note = null, home = false } = {
  *  a colour, a free number - is not given a bar; `null` sends the row
  *  back to its own builder, which is how the panel stays honest about
  *  the controls it has not learned yet. */
-function tileStates(f) {
+export function tileStates(f) {   // FT18: exported for the All off pins, which read and press the bars through it
   const c = resolveControl(f);
   if (c.store === 'prefs') {
     const locked = onlineForcedPref(c.key) !== undefined;
@@ -2306,7 +2301,7 @@ function tileStates(f) {
         set: (i) => (c.write ?? ((v) => setPref(c.key, v)))(c.tiers[i][0]) };
     }
     return { labels: ['Off', 'On'], at: getPref(c.key) ? 1 : 0, locked,
-      set: (i) => setPref(c.key, i === 1) };
+      set: (i) => { setPref(c.key, i === 1); TILE_AFTER[c.key]?.(); } };
   }
   if (c.store === 'settings') {
     const [sec, k] = c.key.split('/');
@@ -2333,6 +2328,31 @@ function tileStates(f) {
 
 /** DISC23-C: the segment that turns a feature off is the one that SAYS so. */
 export const OFF_LABEL = 'Off';
+
+/** FT18: the segment All off presses on a tile - the row's declared `classic` (Daggerfall's own, on a row with no
+ *  Off: the land's radius, the dungeon walls' Classic), else the segment that says Off; -1 for a CHOICE with neither,
+ *  which All off leaves as it is (a grass style is not on or off). */
+export function classicSegment(f, st) {
+  const c = resolveControl(f);
+  if (c?.classic !== undefined) {
+    const i = c.store === 'settings' ? c.classic : (c.tiers ?? []).findIndex(([v]) => String(v) === String(c.classic));
+    return i >= 0 && i < st.labels.length ? i : -1;
+  }
+  return st.labels.indexOf(OFF_LABEL);
+}
+
+/** FT18: what a prefs switch does besides writing itself, when a tile moves it. WS1's holster is rebuilt into the
+ *  standing body: the Morrowind card's own row that did it stopped drawing at FT13 (the key moved here, and
+ *  `prefRow` answers nothing for a moved key), so since then the tile wrote the pref and the body kept the old
+ *  holster until the next build - while the row's effect line promised it at once. */
+const TILE_AFTER = Object.freeze({
+  mwSheathing: async () => {
+    if (!getPref('mwArms') || !morrowindDataCount()) return;
+    const { buildArmsFor } = await import('../combat/weaponRig.js');
+    await buildArmsFor(playerEntity);
+    render();
+  },
+});
 
 /**
  * DISC23-C (Skeptikali on Discord: "if a feature would be enabled, the ON button would turn Green, and if a feature
@@ -2384,6 +2404,7 @@ export function featureTile(f) {
   const c = resolveControl(f);
   const st = tileStates(f);
   const t = el('div', `ft-tile${featureSel === f.id ? ' sel' : ''}`);
+  t.dataset.fid = f.id;   // FT18: the search hides tiles by it
   t.dataset.on = st && barReading(st).on ? '1' : '0';
   if (st?.locked) t.dataset.locked = '1';
   t.tabIndex = 0;
@@ -2429,7 +2450,95 @@ export function featureTile(f) {
       if (open) t.append(featureDrawer(vendor, mods, dials));
     }
   }
+  // FT18: a condensed row's PARTS - the switches and the choice it folded in (the blood's three, the wind's two, the
+  // grass's style), each its own in the drawer, so nothing a tile used to offer was lost when the tiles merged.
+  const parts = c.store === 'prefs' && Array.isArray(c.parts) ? c.parts : [];
+  if (parts.length) {
+    const open = featureOpen === f.id;
+    const b = el('button', 'ft-tile-more');
+    b.type = 'button';
+    b.setAttribute('aria-expanded', String(open));
+    b.append(el('span', `ft-tile-car${open ? ' open' : ''}`, '\u203a'), document.createTextNode(` ${parts.map((pt) => pt.label).join(' \u00b7 ')}`));
+    b.onclick = (e) => { e.stopPropagation(); featureOpen = open ? null : f.id; render(); };
+    t.append(b);
+    if (open) t.append(featurePartsDrawer(parts));
+  }
   return t;
+}
+
+/** FT18: what a condensed row's tile opens - its switch parts as chips (the modules' shape), its choice parts as
+ *  bars (the tile's own shape). Each writes its own pref, as the row it came from did. */
+function featurePartsDrawer(parts) {
+  const d = el('div', 'ft-tile-drawer');
+  d.onclick = (e) => e.stopPropagation();
+  const chips = parts.filter((pt) => !pt.tiers);
+  if (chips.length) {
+    const box = el('div', 'ft-chipset');
+    for (const pt of chips) {
+      const on = getPref(pt.key) !== false;
+      const b = el('button', 'ft-mchip', pt.label);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(on));
+      if (onlineForcedPref(pt.key) !== undefined) { b.disabled = true; b.title = ONLINE_LOCK_NOTE; }
+      else b.onclick = () => { setPref(pt.key, !on); render(); };
+      box.append(b);
+    }
+    d.append(box);
+  }
+  for (const pt of parts.filter((x) => x.tiers)) {
+    d.append(el('div', 'ft-drawer-label', pt.label));
+    const cur = String(getPref(pt.key));
+    d.append(segBar({ labels: pt.tiers.map(([, l]) => l), at: Math.max(0, pt.tiers.findIndex(([v]) => String(v) === cur)),
+      locked: onlineForcedPref(pt.key) !== undefined, set: (i) => setPref(pt.key, pt.tiers[i][0]) }, pt.label));
+  }
+  return d;
+}
+
+// ── FT18: ALL OFF, AND BACK (Mac: "Add option to set all mods/enhancements off") ──
+// One press sets every tile to Off - or, on a row with no Off, to the value that is Daggerfall's own - and keeps
+// what each tile it moved had been, so Restore puts it back. The keep is a PREF, not this screen's memory: a player
+// who turns everything off, plays, and quits comes back to a Restore that still knows. A tile the online room
+// decides is not touched (its bar refuses the press too), and a CHOICE with neither Off nor a classic value stays.
+export const FEATURES_RESTORE_PREF = 'featuresRestore';
+export const ALL_OFF_ASK = 'Every mod and enhancement goes to Off, or to Daggerfall\u2019s own where a row has no Off. '
+  + 'Restore puts back what you had. Choices that are never off, like the grass\u2019s style, stay as they are, and '
+  + 'online the rows the room decides stay on.';
+/** The moves All off makes: every tile not already at its classic segment and not locked. */
+export function allOffPlan(list = FEATURES) {
+  const plan = [];
+  for (const f of list) {
+    const st = tileStates(f);
+    if (!st || st.locked) continue;
+    const to = classicSegment(f, st);
+    if (to >= 0 && to !== st.at) plan.push({ f, st, to });
+  }
+  return plan;
+}
+/** All off. A second press keeps the FIRST press's values, so Restore always goes back to before the first. */
+export function featuresAllOff(list = FEATURES) {
+  const plan = allOffPlan(list);
+  const saved = getPref(FEATURES_RESTORE_PREF);
+  const keep = saved && typeof saved === 'object' ? { ...saved } : {};
+  for (const { f, st } of plan) if (!Object.hasOwn(keep, f.id)) keep[f.id] = st.labels[st.at];
+  for (const { st, to } of plan) st.set(to);
+  if (Object.keys(keep).length) setPref(FEATURES_RESTORE_PREF, keep);
+  return plan.length;
+}
+/** Restore: every kept tile back to the segment it had, by its label; the keep is spent. */
+export function featuresRestore(list = FEATURES) {
+  const keep = getPref(FEATURES_RESTORE_PREF);
+  let n = 0;
+  if (keep && typeof keep === 'object') {
+    for (const f of list) {
+      if (!Object.hasOwn(keep, f.id)) continue;
+      const st = tileStates(f);
+      if (!st || st.locked) continue;
+      const i = st.labels.indexOf(keep[f.id]);
+      if (i >= 0 && i !== st.at) { st.set(i); n++; }
+    }
+  }
+  setPref(FEATURES_RESTORE_PREF, null);
+  return n;
 }
 
 /** FT14: what a mod's tile opens - its modules as chips, its curated
@@ -2502,6 +2611,22 @@ function paneFeatures(body) {
   chips.append(chip(null, 'All', counts.all));
   for (const k of KIND_ORDER) chips.append(chip(k, KINDS[k].label, counts[k]));
   body.append(chips);
+  // FT18: the search (Mac: "Add search bar to mods/enhancements in the ingame pause menu") and All off beside it.
+  // The search hides tiles in place rather than repainting, so the field keeps the keys it is typed into; the menu's
+  // own key handler stands down for a text field, and the hosts' KB1 gate keeps its keys from the game.
+  const tools = el('div', 'ft-tools');
+  const search = el('input', 'ft-search');
+  search.type = 'search';
+  search.placeholder = 'Search features';
+  search.setAttribute('aria-label', 'Search features');
+  search.value = featureQuery;
+  tools.append(search);
+  const kept = getPref(FEATURES_RESTORE_PREF);
+  tools.append(acts([
+    { label: 'All off', onClick: () => ask('Turn Everything Off', ALL_OFF_ASK, 'All off', () => { featuresAllOff(); }) },
+    ...(kept && typeof kept === 'object' ? [{ label: 'Restore', onClick: () => { featuresRestore(); render(); } }] : []),
+  ]));
+  body.append(tools);
   if (!FEATURES.length) {
     body.append(empty('Nothing here yet',
       'Every enhanceable feature is moving here, one at a time, each audited before it moves. '
@@ -2521,16 +2646,37 @@ function paneFeatures(body) {
   body.classList.add('wide');   // FT14: .body is capped at 720px for READING; a tile grid is scanned, not read
   const panes = el('div', 'ft-panes');
   const main = el('div', 'ft-main');
+  const shownGroups = [];   // FT18: what the search walks
   for (const g of GROUP_ORDER) {
     const items = rows.filter((f) => f.group === g);
     if (!items.length) continue;
     const head = el('div', 'ft-grouphead');
-    head.append(el('h2', null, GROUPS[g].label), el('span', 'ft-gn', String(items.length)), el('span', 'ft-gline'));
+    const gn = el('span', 'ft-gn', String(items.length));
+    head.append(el('h2', null, GROUPS[g].label), gn, el('span', 'ft-gline'));
     main.append(head);
     const grid = el('div', 'ft-grid');
-    for (const f of items) grid.append(featureTile(f));
+    const tiles = items.map((f) => [f, featureTile(f)]);
+    for (const [, t] of tiles) grid.append(t);
     main.append(grid);
+    shownGroups.push({ head, grid, gn, tiles });
   }
+  const none = el('p', 'meta ft-none', 'Nothing here matches that. Try a shorter word, or the mod\u2019s author.');
+  main.append(none);
+  /** FT18: hide what the query does not find - a tile, and a group left with none; the group's count is what shows. */
+  const applyQuery = () => {
+    let shown = 0;
+    for (const g of shownGroups) {
+      let n = 0;
+      for (const [f, t] of g.tiles) { const hit = matchesFeatureQuery(f, featureQuery); t.hidden = !hit; if (hit) n++; }
+      g.head.hidden = !n;
+      g.grid.hidden = !n;
+      g.gn.textContent = String(n);
+      shown += n;
+    }
+    none.hidden = shown > 0;
+  };
+  search.oninput = () => { featureQuery = search.value; applyQuery(); };
+  applyQuery();
   const rail = el('aside', 'ft-rail');
   rail.id = 'ft-rail';
   rail.setAttribute('aria-live', 'polite');
@@ -3650,6 +3796,7 @@ export function mountEnhancedMenu(host, {
   pickedKey = null;
   sheetOpen = false;
   confirming = null;
+  featureQuery = '';   // FT18: a fresh visit searches nothing
   discardControlsStaging();   // FIX-F: a second visit never inherits the first one's staged binds
   _eff = null;
   render();

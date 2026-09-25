@@ -175,7 +175,8 @@ test('audit26 F158: the basket takes the CanCarryAmount gate and splits', () => 
   assert.ok(arm.includes('planTake(item, {'), 'the Buy-mode remote click routes through the ladder');
   assert.ok(arm.includes('bag: [...this.hooks.packItems(), ...this.basket]'),
     'the bag under test is pack + basket - the player walks out with both');
-  assert.ok(arm.includes('applyTransfer(item, plan, this.hooks.shelfItems(), this.basket)'),
+  // DISC25-F: through the how-many popup now (TransferItem :1515-1539), whose count rides the plan
+  assert.ok(arm.includes('this._split(item, plan.amount, (amount) => applyTransfer(item, { ...plan, amount }, this.hooks.shelfItems(), this.basket));'),
     'a partial fit splits through the same applyTransfer every screen uses');
   // and the split law itself: 3 fit of a 5-stack
   const stack = { group: 'Weapons', templateIndex: 128, stackCount: 5 };   // War Axe, 7.5kg each (the template's own weight)

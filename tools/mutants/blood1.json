@@ -263,8 +263,8 @@
   {
     "name": "BLOOD1a-the-row-is-forced-for-the-room-online",
     "file": "src/systems/features.js",
-    "old": "    control: Object.freeze({ store: 'prefs', key: 'blood-marks', initial: true, online: 'player' }),",
-    "new": "    control: Object.freeze({ store: 'prefs', key: 'blood-marks', initial: true, online: true }),",
+    "old": "        Object.freeze({ store: 'prefs', key: 'blood-marks', initial: true, online: 'player' }),",
+    "new": "        Object.freeze({ store: 'prefs', key: 'blood-marks', initial: true, online: true }),",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -2559,9 +2559,9 @@
   },
   {
     "name": "BLOOD2g-the-row-forgets-a-tier",
-    "file": "src/systems/features.js",
-    "old": "tiers: Object.freeze([['light', 'Light'], ['normal', 'Normal'], ['heavy', 'Heavy'], ['abattoir', 'Abattoir']]),",
-    "new": "tiers: Object.freeze([['light', 'Light'], ['normal', 'Normal'], ['heavy', 'Heavy']]),",
+    "file": "src/systems/featureLanes.js",
+    "old": "['heavy', 'Heavy'], ['abattoir', 'Abattoir']]);",
+    "new": "['heavy', 'Heavy']]);",
     "tests": [
       "test/blood1_decals.test.js"
     ]

@@ -172,7 +172,7 @@ const alive = async (where) => {
 begin('1 chargen');
 await page.goto('http://localhost:5222/play/?world&shot&classic&novideo&play');
 // NOT __shotReady: that flag waits for the EXTERIOR stream queue to
-// drain (world.js:15267), and the classic start spends its first
+// drain (world.js:15283), and the classic start spends its first
 // minutes inside a dungeon with the world still building behind it -
 // the first run sat here past five minutes with the host long since
 // up. The host being up is __mode answering, which is exactly what
@@ -556,7 +556,7 @@ if (inShop) {
     // DFU'S TRADE WINDOW IS TWO GESTURES, NOT ONE. A click on the
     // shelf STAGES the item into the basket and moves the COST; the
     // MODE ACTION button ("BUY") commits the lot and takes the gold
-    // (nativeTrade.js:13, :277-297). The first draft of this stage
+    // (nativeTrade.js:13, :286-306). The first draft of this stage
     // clicked once, saw the purse unmoved, and was about to report
     // that buying was broken - the screenshot settled it: COST had
     // gone 0 -> 348 and the goods were sitting in the basket. The

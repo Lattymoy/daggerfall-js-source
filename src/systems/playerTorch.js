@@ -62,6 +62,7 @@ import { templateByIndex } from './itemTemplates.js';
 import { isLightSource, expandItemMacro } from './useItem.js';
 import { getBool } from './settings.js';   // T1: EnablePlayerTorch reads its own setting, inside Update
 import { setLightSource } from './lightSource.js';   // DISC7: the light in hand's one door
+import { modSetting } from './modSettings.js';   // HT-WAIST: the lantern-at-the-waist switch, on Handheld Torches' pane
 
 /** tickTimeInterval (:26) - REAL seconds, not game minutes. */
 export const TORCH_TICK_SECONDS = 20;
@@ -177,7 +178,10 @@ export function playerTorchLight(entity, feet, yaw = 0) {
   const sy = Math.sin(yaw), cy = Math.cos(yaw);
   const f = [sy, 0, cy];              // forward
   const r = [cy, 0, -sy];             // right; DFU's -0.3 x is the player's LEFT
-  const o = _offsetOverride ?? TORCH_OFFSET;
+  // HT-WAIST: a lantern hung at the waist lights you from the HIP, and that beats both writers of the override
+  // below (Handheld Torches' flip, which puts a HELD lantern low in the hand, and Eye Of The Beholder's
+  // TorchOffset) - decided per frame from the item, so a torch lit a moment later never inherits the hip.
+  const o = lanternAtWaist(entity?.lightSource) ? (_waistOverride ?? LANTERN_HIP) : (_offsetOverride ?? TORCH_OFFSET);
   return {
     x: feet[0] - r[0] * o.left + f[0] * o.forward,
     y: feet[1] + o.up,
@@ -202,3 +206,42 @@ export function playerTorchLight(entity, feet, yaw = 0) {
 let _offsetOverride = null;
 export function setPlayerTorchOffsetOverride(o) { _offsetOverride = o ? { left: +o.left || 0, up: +o.up || 0, forward: +o.forward || 0 } : null; }
 export const playerTorchOffsetOverride = () => _offsetOverride;
+
+// HT-WAIST (2026-09-24, Mac: "Let the lantern item be able to be hung at the waist instead of having to be held"):
+// THE LANTERN AT THE WAIST - the port's own switch on Handheld Torches' pane (`Handling.LanternsAtWaist`, off by
+// default; Ledger A). No new state: the lit lantern is still PlayerEntity.LightSource, burning through the tick
+// above and saved as it always was. "At the waist" is DERIVED - the light in hand is a lantern, the mod is on and
+// the switch is on - so the hand law, the first-person hand, the Morrowind body, the Eye Of The Beholder sprite
+// and the light below all ask ONE question and cannot disagree about it. The component reads the same switch off
+// its own settings frame (`readTorchSettings().lanternsAtWaist`), so its pins can drive it through a store.
+
+/** The light at the hip, in the offset words above (left, up, forward off the feet, yaw frame): the RIGHT hip -
+ *  clear of the one-handed scabbard Weapon Sheathing hangs on the left - at the height the Morrowind body's hook
+ *  hangs the lantern (fpArm.js HIP_LANTERN_HOOK: a hand's breadth above the pelvis, less the lantern's own drop),
+ *  a little forward. Port-own numbers: DFU has no lantern at the waist to take them from. */
+export const LANTERN_HIP = Object.freeze({ left: -0.2, up: 1.0, forward: 0.1 });
+
+/** Is this light a lantern hung at the waist - the lantern template, with Handheld Torches on and its waist
+ *  switch on. Torches and candles are always held. */
+export function lanternAtWaist(item) {
+  if (!item || item.templateIndex !== LANTERN_TEMPLATE) return false;
+  return modSetting('handheld-torches', 'Enabled') === true && modSetting('handheld-torches', 'Handling.LanternsAtWaist') === true;
+}
+
+/** HT-WAIST-NET (2026-09-24): the pose's `hl` bit (net/wire.js validPose) - 1 while the lit light is a lantern hung
+ *  at the waist (the one question above, asked of PlayerEntity.LightSource), ABSENT otherwise (the wire's omission
+ *  law: a pose without one keeps the bytes it always had). The others' Morrowind bodies hang it at the hip off it
+ *  (net/peerBodies.js); world.js puts it on every pose it sends. */
+export const waistLanternPoseBit = (light) => (lanternAtWaist(light) ? 1 : undefined);
+
+/** Where a body that DRAWS the hanging lantern puts it, when that is not the yaw-frame hip above: Eye Of The
+ *  Beholder's sprite faces the way it walks, not the camera's yaw, so it hands the drawn lantern's point in
+ *  here (player/eotbBody.js) and clears it when it stops drawing. `null`: LANTERN_HIP. */
+let _waistOverride = null;
+const _waistPoint = { left: 0, up: 0, forward: 0 };   // written in place: its writer runs every frame the lantern is drawn
+export function setPlayerWaistLightOverride(o) {
+  if (!o) { _waistOverride = null; return; }
+  _waistPoint.left = +o.left || 0; _waistPoint.up = +o.up || 0; _waistPoint.forward = +o.forward || 0;
+  _waistOverride = _waistPoint;
+}
+export const playerWaistLightOverride = () => _waistOverride;
