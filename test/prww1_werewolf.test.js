@@ -255,7 +255,7 @@ test('PR-WW1 the local body: the lycan sprite is the LIVE form\'s - a wereboar s
 
 test('PR-WW1 hosts: the modal passes draw the lycanthrope too - world.js\'s extraBillboards hands worldModes the peerRiders batches beside remotePlayers\', and worldModes\' dungeon and interior runs draw that hook alone; the beast still takes no Morrowind body (mutant: the hook narrowed back)', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /extraBillboards: \(\) => \[\.\.\.\(remotePlayers\?\.batches\(\) \?\? \[\]\), \.\.\.\(peerRiders\?\.batches\(\) \?\? \[\]\), \.\.\.\(peerWalkers\?\.batches\(\) \?\? \[\]\)\],/);   // and DISC23-B's walkers (the merge)
+  assert.match(w, /extraBillboards: \(\) => \[\.\.\.\(remotePlayers\?\.batches\(\) \?\? \[\]\), \.\.\.\(peerRiders\?\.batches\(\) \?\? \[\]\), \.\.\.\(peerWalkers\?\.batches\(\) \?\? \[\]\), \.\.\.\(gateCourt\?\.batches\(\) \?\? \[\]\)\],/);   // and DISC23-B's walkers (the merge); WB4a: and the Burning Court's boss
   assert.match(w, /const afoot = drawable\.filter\(\(d\) => !peerRiders\.isRiding\(d\.id\) && !d\.shown\?\.wb\);/, 'a beast takes no body while its art loads either');
   assert.match(w, /peerRiders\.sync\(drawable, onlineToScene, \{ eye: cam\.pos,/);
   const m = rd('src/scenes/worldModes.js');

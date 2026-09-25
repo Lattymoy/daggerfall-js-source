@@ -367,7 +367,7 @@ ships in ONE slice.
 | **WB1** | `gateLaw.js` (the schedule, the site pick's pure half, the room key's window), the omen's chat lines, the map ring (both maps), the compass marker | no |
 | **WB2** | the gate in the exterior: the model and its textures, the membrane and the beacon passes, its states and countdown, the plaque and the banner, the enter door (answered *not yet* until WB3's relay is live) | no |
 | **WB3** | the arena place and the relay's boss room: the room key and its window, `gateBrain.js`, the `gate` frame both ways, the hit ledger, the checkpoint, the receipt and its key, the hub's world line; `RELAY_VERSION` once | **yes** |
-| **WB4** | the boss on the client: the oversized body and its hit volume, the telegraph pass, the wind-up frames, glow and sounds, the boss bar, the player's side of every attack, cast out and back in | no |
+| **WB4** | the boss on the client: the oversized body and its hit volume, the telegraph pass, the wind-up frames, glow and sounds, the boss bar, the player's side of every attack, cast out and back in - shipped in two: **WB4a** (he fights: the body, the telegraphs, the glow and voice, the bar, every blow he lands) and **WB4b** (he is fought: the swing, the shaft and the spell on his body) | no |
 | **WB5** | the spoils: the seeded roll, the spew's physics, the beams, halos and lights, the take and the gather, the save's `gateSpoils`; the account service's claim (acct9) and the cards' line | account only |
 
 Each slice: pins in `test/` (pure law in node; the relay over its fake sockets and a fake clock; the passes' shaders
@@ -435,3 +435,25 @@ for its fighters until the gate's day ends rather than collapsing with the kill 
 Pins `test/wb3b_gate_arena.test.js` (7); mutants `tools/mutants/wb3b.json` (38 dead). Seen headless with a stand-in
 shader (the floor, the ring, the spires and braziers, the sea of fire); not yet in the game with ARENA2 and a live
 relay, where the arrival, the fog and the braziers' light are the first look. The boss is not drawn yet (WB4).
+
+**WB4a (2026-09-25) - the boss fights back.** Valkynaz Ruhn stands in the court where the relay says - his walk carried
+between its words, the charge carried down its lane and held at its end as the brain holds him - in the Daedra
+Lord's own sprite at three times its size (`world/gateBoss.js`): a wind-up holds the attack clip's first frame and,
+from half way, its second (the raise), and the landing plays the rest at the clip's own ten a second; the charge runs
+on the walk's frames; a blow of mine makes him flinch but never breaks a wind-up; at his fall the hurt frames play
+slowly and he is gone (the spoils spill there - WB5). A light at his chest rides the court's channel beside the
+braziers: the attack's colour climbing through its wind-up and flaring at the landing, gold while the ward stands, a
+low ember otherwise. His voice is his own mobile's, pitched down and heard across the floor: the bark at a
+wind-up, the attack at a landing, the fire's cast by its sound ID and the burning under each Hellfire target, a roar
+for a phase crossed. On the floor (`render/gateTelegraph.js`, the duel wall's law): one quad and the shape as the
+fragment's question - dim at the word, filling toward the edge as the wind-up runs, bright at the landing, gone after
+- the same law a struck player's feet are tested by, held to it point for point. His bar (`ui/gateBossBar.js`) says
+his name and title over his health with the two phase marks, the ward's gold, the attack coming in its colour, and
+the Wrath's countdown in the last five minutes. AND THE BLOW LANDS ON THE STRUCK PLAYER'S MACHINE (`net/gateStrike.js`,
+`scenes/gateCourt.js`): at the first frame on the landing - never judged late - its feet against the shape; the
+charge strikes the ground he runs over between two frames, so the lane ahead of him is safe until he gets there; a
+hit takes its share of the player's own maximum health through the dungeon context's own door (`strikePlayer` - the
+hit's sound, the flash, the cry; fire burns unflashed), fire through the game's saving throw (a full resist is said)
+and Dagon's Wrath through nothing. Pins `test/wb4_gate_boss.test.js` (14); mutants `tools/mutants/wb4.json` (40 dead).
+The telegraph's shader seen headless over the court for every attack (`tools/gateTelegraphProbe.mjs` holds it: 9
+checks); the sprite not yet seen with ARENA2 and a live relay. The player's blows on him are WB4b.

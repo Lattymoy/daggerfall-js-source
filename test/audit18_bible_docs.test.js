@@ -630,7 +630,7 @@ test('AUDIT 39r: the foreign-pass count is the real call-site count', () => {
   // channels are a pass of their own on both exterior hosts - eleven across seven.
   const hosts = ['src/scenes/world.js', 'src/scenes/exterior.js']
     .reduce((n, f) => n + read(f).split('renderer.markForeignPass();').length - 1, 0);
-  assert.equal(hosts, 13, 'thirteen host call sites across the nine passes (DUEL1: the duel ring\'s wall, the world host alone; WB2: the Oblivion Gate\'s fire and beacon, the world host alone; GR1: the lab\'s grass; WIND3: the wisps, WEATHER2d: the sand, BOLT: the lightning\'s channels, one seam per exterior host each; the overworld map\'s seam went with it in MAP1)');
+  assert.equal(hosts, 14, 'fourteen host call sites across the ten passes (DUEL1: the duel ring\'s wall, the world host alone; WB2: the Oblivion Gate\'s fire and beacon, the world host alone; WB4a: the Burning Court boss\'s telegraph, the world host alone, drawn in the dungeon arm; GR1: the lab\'s grass; WIND3: the wisps, WEATHER2d: the sand, BOLT: the lightning\'s channels, one seam per exterior host each; the overworld map\'s seam went with it in MAP1)');
   const ev = read('bible/07-Rendering/Enhanced-Visuals-Arc.md').replace(/\s+/g, ' ');
   assert.ok(!ev.includes('three passes change programs behind the renderer\'s back'),
     'the EV arc is counting three passes again');

@@ -162,7 +162,7 @@ import { inflictDisease } from '../systems/diseases.js';   // SURV6: a foul pool
 import { createHunting } from './hunting.js';   // SURV6: hunting, foraging and the water search as real-time events
 import { alignSurvival, shiftSurvival } from '../systems/survival/needs.js';   // SURV7: the needs' markers at an arrival; AUDIT SURV-TIERS (the third pass): and across a clock correction
 import { liveLycanthropy } from '../systems/lycanthropy.js';   // SURV7: the env's lycanthrope and beast-form flags
-import { elementalResistanceChance, ELEMENTS } from '../systems/spellcast.js';   // SURV7: the env's fire and frost resistances
+import { elementalResistanceChance, ELEMENTS, EFFECT_FLAGS, savingThrow } from '../systems/spellcast.js';   // SURV7: the env's fire and frost resistances; WB4: the saving throw a boss's fire meets
 import { createTownWatch, runTownWatchFrame } from '../systems/townWatch.js';   // DISC19-F: the watch defends the town
 import { rollCampEncounterOnChunkLoad, amGroupRollOwner, campAnchorSpot } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
 import { WORLD_SALT, spawnsDungeon, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger, spawnedLocationCentreLocal, dungeonSightLine } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
@@ -171,6 +171,7 @@ import { scanGatePixels, findGateSite } from '../systems/gateSite.js';   // WB1:
 import { createGatePool } from './gatePool.js';   // WB2: the gate the world stands - its stone, its fire and beacon, its collider and its door
 import { drawGateBanner } from '../ui/gateBanner.js';
 import { createGateLink } from '../net/gateLink.js';   // WB3b: what the client holds of a gate's fight - the relay's words, folded
+import { createGateCourt } from './gateCourt.js';   // WB4: the fight on this screen - the boss drawn, heard and read, and his blows on me
 import { gateRoomKey, isGateRoom, gateBossOf, gateTimes, GATE_COLLAPSE_MS } from '../net/gateLaw.js';   // WB3b: the court's room, and its day's end
 import { gateLandingFor, courtRing, COURT_TEXT } from '../world/gateArena.js';   // WB3b: the Burning Court's way home, its ring and its words   // WB2: the gate's countdown over the screen, near it
 import { isMainStoryDungeon } from '../world/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
@@ -8508,7 +8509,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8877-8941 -
+  // worldModes answers it in BOTH modes (worldModes.js:8878-8942 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -10786,6 +10787,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     onFell: (day, f) => { const site = gateOmen?.current?.()?.site; chatNotice(fellLine({ near: site?.day === day ? site.near : 'the wilds', boss: gateBossOf(day).name, top: f.top })); },
   }) : null;
   let _gateInFor = -1;   // WB3b: the welcome my level claim was said for - once per welcome of the court's room
+  /** WB4: THE FIGHT ON THIS SCREEN (scenes/gateCourt.js) - the boss where the relay says he stands, his telegraphs, his
+   *  voice and his bar, and the player's own side of every attack: judged against these feet, taken through the
+   *  dungeon context's door as any foe's blow is. */
+  const gateCourt = gateLink ? createGateCourt({
+    renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio, link: gateLink,
+    now: () => Date.now() + _sharedOffsetMs,
+    cam: () => cam.pos,
+    feet: () => (playerSpawned && modes?.gateArenaDay?.() != null ? player.feetAt() : null),
+    player: () => playerEntity,
+    save: (e) => savingThrow(ELEMENTS.Fire, EFFECT_FLAGS.Fire, e),
+    strike: (dmg, how) => modes?.dungeonCtx?.strikePlayer?.(dmg, how),
+    say: (text) => setMidScreenText(text),
+    hudHidden: () => gamePaused() || !!townTalk.hudHidden,
+  }) : null;
   const gateOmen = params.has('online') ? createGateOmen({
     now: () => Date.now() + _sharedOffsetMs,
     site: (day) => {
@@ -10805,6 +10820,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const courtDay = modes?.gateArenaDay?.() ?? null;
     if (courtDay != null && Date.now() + _sharedOffsetMs >= gateTimes(courtDay).wrathAt + GATE_COLLAPSE_MS) ejectFromCourt(COURT_TEXT.collapse);
     else if (courtDay == null && gateLink && gateLink.state().day != null) gateLink.leave();
+    try { gateCourt?.frame(); } catch (e) { console.warn('[gate] court', e?.message ?? e); }   // WB4: the fight on this screen (out of the court it puts itself away)
   };
   /** WB2: THE GATE THE WORLD STANDS (scenes/gatePool.js) - online alone, as the omen is; stood each exterior frame from
    *  the omen's word, drawn in the world pass (the stone) and after the duel wall (the fire and the beacon). Its door
@@ -12493,7 +12509,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // now draws, which the enemy sprite gives way to, would be nothing at all indoors and underground
     // (and DISC23-B's walkers: a peer standing as their chosen set gives the class sprite way just the same, so the
     // merge of the two hands their batches here too)
-    extraBillboards: () => [...(remotePlayers?.batches() ?? []), ...(peerRiders?.batches() ?? []), ...(peerWalkers?.batches() ?? [])],
+    extraBillboards: () => [...(remotePlayers?.batches() ?? []), ...(peerRiders?.batches() ?? []), ...(peerWalkers?.batches() ?? []), ...(gateCourt?.batches() ?? [])],   // WB4: and the Burning Court's boss
+    gateCourtLights: () => gateCourt?.lights() ?? [],   // WB4: the glow on him, in the court's light channel
+    // WB4: the telegraph on the court's floor, in the dungeon arm's world pass - fogged as the floor is
+    drawGateCourt: ({ proj, view, eye }) => {
+      if (gateCourt?.drawPass(proj, view, eye, performance.now() / 1000, { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos })) renderer.markForeignPass();
+    },
     drawPeerNames: ({ proj, view, eye }) => drawPeerNames(proj, view, eye),
     drawPeerBodies: ({ proj, view, eye }) => drawPeerBodies(proj, view, eye),   // MWBODY1: the others' bodies, after the player's own
     // PEER-PLAQUE1: the plaque names another player in a building and underground too - the SAME pick and the SAME

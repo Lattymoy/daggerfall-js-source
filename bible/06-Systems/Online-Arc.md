@@ -4837,7 +4837,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4241` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4242` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:255`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -8199,3 +8199,12 @@ room is the gate's `gate:<day>`; the level claim goes out once per welcome; the 
 out before the gate, the day's end or going offline ends the court the same way, and the map, the rest, the save and
 the Recall mark are refused inside it. The boss is not drawn yet (WB4) - the relay runs him, and the court is where
 he will stand.
+
+## WB4a (2026-09-25, Mac: "an oversized enemy with telegraphed attacks (like wind ups, etc)") - the boss fights back; see 11-Multiplayer/World-Bosses.md
+
+Nothing new on the wire: the court's link already holds the relay's words, and this slice draws them. The boss stands
+where the relay says (his walk carried between its words, the charge down its lane), three times a Daedra Lord's size;
+the attack he winds up is drawn on the floor where it will land and said on his bar; and at its landing each client
+tests ITS OWN FEET against its shape - co-op's law, the struck player's machine (`net/gateStrike.js`) - and takes the
+blow through the dungeon context's own door. The relay never learns who was struck. The player's blows on him are
+WB4b.

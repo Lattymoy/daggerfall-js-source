@@ -231,7 +231,7 @@ test('WB3b the seams, by source: the dungeon host enters the court through its o
   assert.match(wm, /const returnLanding = \(\) => \(dungeonReturn\.gate \? host\.gateLanding\?\.\(dungeonReturn\.gate\) \?\? null : dungeonEntranceLanding\(/);
   assert.match(wm, /const landing = returnLanding\(\);/);
   assert.match(wm, /if \(isGateArena\(dungeonLoc\)\) applyFog\(renderer, dungeonFog\(!!renderer\.lightingLane, COURT_FOG\)\);/);
-  assert.match(wm, /if \(isGateArena\(dungeonLoc\)\) \{ const _court = withCourtLights\(_dgLit, courtLights\(\)\); renderer\.setPointLights\(_court\.data, null, _court\.colors\); \}/);
+  assert.match(wm, /if \(isGateArena\(dungeonLoc\)\) \{ const _court = withCourtLights\(_dgLit, \[\.\.\.courtLights\(\), [^\n]*\]\); renderer\.setPointLights\(_court\.data, null, _court\.colors\); \}/);   // WB4a: the boss's glow joins them
   assert.match(wm, /function standCourt\(ctx\) \{[\s\S]{0,1600}ctx\.exitDoors\.push\(courtExitDoor\(\)\);[^\n]*\n\s*ctx\.addActivationNamer\(\(key\) => \(typeof key === 'string' && key\.startsWith\('exit:'\) \? \{ title: COURT_TEXT\.wayHome \} : null\)\);/, 'the way home is the exit family\'s own door, and named the way home');
   assert.match(wm, /isGateArena\(dungeonLoc\) \? \{ kind: 'gate', day: dungeonLoc\.gate \}/);
   assert.match(wm, /ctx\.collider\.addMesh\(COURT_BUCKET, tris, idx, identity\(\)\);/);
