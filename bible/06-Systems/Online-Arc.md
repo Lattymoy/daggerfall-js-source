@@ -8214,3 +8214,34 @@ RELAY_VERSION world110; the widest hub attachment with every field at its bound 
 
 Records: `test/partytravel.test.js` (26); `tools/mutants/party-travel.json` (71, 71 dead); Systems.md counts the two
 modules.
+
+**AUDIT PARTY-TRAVEL (2026-09-25, the pre-merge review; Mac: "Audit before we merge").** Six faults found in the
+feature above, each closed with a pin that fails without it:
+- *The leader set out before "we set out" had left.* `partyFrame` handed the session every pose it COMPOSED, and
+  `sendParty` refuses one within PARTY_SEND_MS of the last - so a leader walking about (a pose a second) began the
+  journey with the pose unsent. Now only a pose the link sent counts (`world.js` partyFrame).
+- *A member who said yes and never moved was left behind.* The pose saying "we set out" rides the hub link while the
+  leader's body leaves the scene on the world link - two sockets, no order - so the last open reading could find no
+  body and call the member "too far". Gathered is now lost by WALKING AWAY: a member who stays within the radius of
+  where they were last read gathered is gathered still (the leader cannot stray from where they asked while the round
+  is open).
+- *The door was not asked again as the journey began.* Between `go` and the start the leader could step through a door
+  and be flown off the map from a building's floor. The start asks outdoors, alive and the door's refusals; a refused
+  start takes the round with it, so nobody follows. "The journey is off." is said once, not twice, when it is the
+  refusal itself.
+- *The unasked offer fired on every jump.* A Travel Options ride at its default 60x on a horse jumps two pixels a party
+  pose, and every jump was a box (or a chat line) a second. The offer is now made once the leader's pixel has held
+  still LEADER_SETTLE_MS (5 s), is kept due while the member's own journey moves them (a jump seen while loading was
+  lost), and is never made over a Travel Options walk the member is steering; a follower left behind is not offered
+  twice.
+- *A slow build told the party "did not set out".* The round left the leader's pose TRIP_FOLLOW_MS after `go` whatever
+  the leader's own journey was doing; it now stays until that journey has arrived.
+- *The party arrived inside one another.* Every follower tried the leader's east side first. Eight spots now ring the
+  leader, and each follower's seat (their place among the members who are not the leader, in the hub's order) is where
+  their search starts.
+Not changed, recorded for the owner: a gathered member who never answers still holds the round for its minute and then
+calls it off (PARTY-REST's own "cannot start until all are ready", which the task mirrors) - the leader walks away from
+them or `/travel`s it off; and a leader's client could open rounds as fast as its poses leave (the rest vote has a
+cooldown, PARTY-REST21; this has none) - the member's answer is leaving the party. No wire change: the relay deploy is
+still world110's. Records: `test/partytravel.test.js` 26 -> 32; `tools/mutants/auditpartytravel.json` (21, 21 dead),
+four `party-travel.json` records re-aimed.
