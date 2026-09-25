@@ -3159,3 +3159,49 @@ five guests gave one account fifty wins in a quarter of an hour, with no duel.
 - A refused report says which bound: `why` is 'guest', 'draw', 'gap', 'pair' or 'winner', and the client's line says
   it (`net/duelRecord.js duelUncountedText`; a draw says nothing more, the duel said it).
 - Pinned in `test/duel_record.test.js` over the real migrations; `tools/mutants/auditduel1.json` A1/B5.
+
+## PROFILE1 — the profile mark is a portrait (2026-09-25)
+
+Mac: *"I kinda wanna make the menu profile icon more relevant, more like
+a profile icon less like a button"*. Asked what its picture should be
+(your worn skin, the last character's face, or the title glyph as a
+crest), he chose **the last character's face**.
+
+ACC1f drew the door's top-right mark as a bordered box holding a gem and
+a word. In the corner of a menu of buttons it read as one more button.
+
+- **A portrait** (`ui/profileBadge.js`, called by `enhancedMenu.js`
+  `profileMark`):
+  - a round well rimmed in brass over the iron ring;
+  - the face drawn at its own pixels (the save tiles' law);
+  - no panel and no box around it.
+- **The face** is the most recent FINISHED character's (`portraitSave`),
+  drawn through TILE1's `loadFace`, the save tiles' one home:
+  - it skips a save still in chargen, which has no face chosen yet;
+  - it skips a save from before S3c/U9, which stored no race.
+    `loadFace` would draw a Breton default for it, a stranger's face.
+  - it asks for a COPY, because the Continue pane's tile may draw the
+    same face on the same screen.
+- **Never traps:**
+  - the face is a promise, and the portrait is on screen before it lands;
+  - a hooded silhouette stands in until then;
+  - the silhouette stays for good with no character yet, no game data,
+    or a face that would not draw.
+- **The gem stays**, as a jewel on the rim: filled with a session, hollow
+  without. This keeps ACC1f's at-a-glance "am I signed in".
+- **The caption** sits beside the portrait:
+  - the account's name, or "Sign in";
+  - under it, whose face it is ("Mithriil · level 5"), or "No character
+    yet".
+  - On a phone the caption goes and the portrait (48px) keeps the target.
+- The window it opens is unchanged.
+
+Pinned in `test/profile1_badge.test.js` (4):
+- the pick;
+- the face replacing the silhouette;
+- the signed-out, null-face and refused-face arms;
+- the frame's cascade and the door's read.
+
+`test/nameadopt.test.js`'s pin on the mark reading the store is re-aimed
+at the session the door hands the badge. Mutants:
+`tools/mutants/profile1.json`, 13, all dead.
