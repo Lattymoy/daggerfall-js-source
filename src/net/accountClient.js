@@ -430,12 +430,14 @@ export function forgetSession(storage) {
  * RENOWN1: `character` answers the id of the character being brought
  * online (systems/characterId.js), read at EACH mint - the service signs
  * that character's Renown into the token, and `who.level`
- * carries it back. A getter that answers nothing mints as before.
+ * carries it back - RENOWN4: and `who.xp` the track's total, which the
+ * answer carries beside the token and never in it. A getter that
+ * answers nothing mints as before.
  *
  * @param {object} io
  * @param {(url: string, init: object) => Promise<any>} io.fetch
  * @param {any} io.storage  appStorage() in the app, a Map in a test
- * @param {((who: {name: string, kind: string, title: string|null, glyphs: string[], level: number|null}) => void)|null} [io.onIssued]
+ * @param {((who: {name: string, kind: string, title: string|null, glyphs: string[], level: number|null, xp: number|null}) => void)|null} [io.onIssued]
  * @param {(() => string|null)|null} [io.character]
  * @returns {() => Promise<string|null>}
  */
@@ -449,7 +451,8 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
     if (answer.ok) {
       const token = typeof answer.data?.token === 'string' ? answer.data.token : null;
       if (token) {
-        const who = { name: answer.data.name, kind: answer.data.kind, title: answer.data.title ?? null, glyphs: Array.isArray(answer.data.glyphs) ? answer.data.glyphs : [], level: Number.isSafeInteger(answer.data.level) ? answer.data.level : null };
+        const who = { name: answer.data.name, kind: answer.data.kind, title: answer.data.title ?? null, glyphs: Array.isArray(answer.data.glyphs) ? answer.data.glyphs : [], level: Number.isSafeInteger(answer.data.level) ? answer.data.level : null,
+          xp: Number.isSafeInteger(answer.data.xp) && answer.data.xp >= 0 ? answer.data.xp : null };   // RENOWN4: the track's total, for the page's own bar - none from a service before acct11
         adoptIdentity(storage, who);
         // A THROW HERE IS THE HOST'S AND IS NOT THE PLAYER'S. The token
         // is good and the connection is the thing that matters; a

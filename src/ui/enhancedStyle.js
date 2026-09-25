@@ -2505,6 +2505,21 @@ ${badgeCss()}
 .hud-health .hud-fill { background: #d98074; }
 .hud-magicka .hud-fill { background: #6f8fd9; }
 .hud-fatigue .hud-fill { background: #74d9a0; }
+/* RENOWN4: MY RENOWN, under the vitals and as wide as their row (three tracks and two gaps) - the box every name
+   wears (ui/nameLayer.js .dfname-renown) in this HUD's square 2px frame, a thin bar in the box's own gold with what
+   is earned and not yet answered faint after the fill, and the numbers. Online only: \`.on\` while the page knows my
+   level; \`.nobar\` while it knows the level and not yet the total (a service before acct11), the box alone. */
+.hud-renown { display: none; align-items: center; gap: 8px; width: calc(3 * min(190px, 23vw) + 28px); }
+.hud-renown.on { display: flex; }
+.hud-renownbox { flex: 0 0 auto; min-width: 1.6em; padding: 1px 5px; text-align: center;
+  font-size: 13px; line-height: 1.2; font-variant-numeric: tabular-nums;
+  color: #f2c46b; background: rgba(14,16,19,0.78); border: 2px solid rgba(242,196,107,0.8); }
+.hud-renown .hud-renowntrack { flex: 1 1 auto; width: auto; height: 8px; }
+.hud-renown .hud-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; height: auto; background: #f2c46b; }
+.hud-renownghost { position: absolute; left: 0; top: 0; bottom: 0; width: 0; display: block; background: rgba(242,196,107,0.35); }
+.hud-renownnum { flex: 0 0 auto; font-size: 11px; letter-spacing: 0.04em; font-variant-numeric: tabular-nums;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.9); }
+.hud-renown.nobar .hud-renowntrack, .hud-renown.nobar .hud-renownnum { display: none; }
 
 /* PX30b: THE BREATH, above the vitals - drawn only while held, and
    red below DFU's own short-on-breath line. */
@@ -2776,6 +2791,7 @@ ${badgeCss()}
   .hud-bottom { bottom: 12px; gap: 8px; }
   .hud-bars { gap: 10px; }
   .hud-vital .hud-track { width: 26vw; }
+  .hud-renown { width: calc(78vw + 20px); }   /* RENOWN4: the vitals' row here - three 26vw tracks and two 10px gaps */
   /* QS3: the diamond shrinks with everything else - one number, and
      the four placements follow it. MEASURED against the touch layer's
      bottom-right column and the vitals above it at 860x400 and

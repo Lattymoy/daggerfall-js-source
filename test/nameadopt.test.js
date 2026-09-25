@@ -156,7 +156,7 @@ test('NAME-ADOPT: every mint ADOPTS what the answer says and hands it to the hos
   assert.equal(tok, 'v1.abc.def');
   // ...but the answer is no longer thrown away.
   assert.equal(storedSession(st).name, 'Lattymoy', 'the store learned it');
-  assert.deepEqual(seen, [{ name: 'Lattymoy', kind: 'linked', title: 'developer', glyphs: ['dev'], level: null }], 'and so did the host (RENOWN1: with the level the token was signed with - none from a mint that named no character)');
+  assert.deepEqual(seen, [{ name: 'Lattymoy', kind: 'linked', title: 'developer', glyphs: ['dev'], level: null, xp: null }], 'and so did the host (RENOWN1: with the level the token was signed with - none from a mint that named no character; RENOWN4: nor a total)');
 
   // A HOST THAT THROWS DOES NOT COST THE HELLO ITS WORD. The token is
   // good and the connection is what matters; a display seam that breaks

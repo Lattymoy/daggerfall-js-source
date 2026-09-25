@@ -128,8 +128,8 @@
   {
     "name": "RENOWN1-token-level-off-the-body",
     "file": "server-account/src/index.js",
-    "old": "        const lv = renownCharacterOk(body.character) ? ((await renownTrackOf(ctx, who.player.id, body.character))?.level ?? 1) : undefined;",
-    "new": "        const lv = renownCharacterOk(body.character) ? (body.level ?? (await renownTrackOf(ctx, who.player.id, body.character))?.level ?? 1) : undefined;",
+    "old": "        const lv = track ? track.level : undefined;",
+    "new": "        const lv = track ? (body.level ?? track.level) : undefined;",
     "tests": [
       "test/renown1.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "RENOWN1-level-dropped-from-the-answer",
     "file": "src/net/accountClient.js",
-    "old": "level: Number.isSafeInteger(answer.data.level) ? answer.data.level : null };",
-    "new": "level: null };",
+    "old": "level: Number.isSafeInteger(answer.data.level) ? answer.data.level : null,",
+    "new": "level: null,",
     "tests": [
       "test/renown1.test.js"
     ]

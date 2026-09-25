@@ -3525,3 +3525,28 @@ read at most three levels above the character's Renown, Mac said "Yes".
   (`scenes/world.js renownNow` - the token's word and the service's since). XP is the client's word in any case (the
   service bounds it by the report and the hour); the ceiling is the pace an honest client keeps.
 - Pinned: `test/renown3.test.js` (2), the RENOWN1 rules and wiring pins it moved. `tools/mutants/renown3.json`.
+
+## RENOWN4 — your Renown on your own HUD, with its bar (2026-09-25)
+
+Mac: "Also why is there no way to view my renown ingame?" - and "Plus XP bar". RENOWN1 put the level in the box
+beside every name, on the main menu, the profile and Inspect, and the account card's row said how far the track had
+come; the one face that never showed it was the player's own while playing.
+
+- **The row** (`src/ui/hudRenown.js renownHudView`, drawn by `src/ui/enhancedHud.js`). Under the three vitals and as
+  wide as them: the box every name wears ("12", in the name's gold), a thin bar to the next level, and "490 / 2,150
+  XP" into the level ("Highest" at the cap). Online only - the online lane is the enhanced lane, so the classic HUD
+  never needs one - and only once the page knows the level. The bar draws only for a total that is that level's; a
+  total a level behind is one the service has moved on from, and the box stands alone until the next word.
+- **The fill is the service's, the ghost is the page's.** The fill is what the service has credited. A report goes
+  once a minute, so what is earned and not yet answered (the tracker's `pending`) is drawn faint after the fill: a
+  kill shows at once, and the report turns it solid. It never pushes the fill, so a report the hour's bound cut short
+  takes the ghost back and never the bar; in an hour the page was told is spent, no ghost is drawn at all.
+- **Where the total comes from.** The mint's answer carries the named character's track total beside its level
+  (`xp`: 0 before it earns; none for a mint naming no character) - beside the token and never in it, since a room
+  needs the level alone (the minter signs a fixed claim list). The minter hands it on (`who.xp`), and every report's
+  answer carries it through `renownAnswer`'s `xp`. The page (`scenes/world.js renownXpAdopt`) takes it only upward and
+  only online, and from a mint before the level, so no frame draws the new level over the old total.
+- **The service is acct11** (the mint's answer). A service before it answers no total: the box alone until the page's
+  first report is answered.
+- Pinned: `test/renown4.test.js` (7). `tools/mutants/renown4.json` (28, all dead; a total signed into the token was
+  dropped as equivalent - `mintToken` signs a fixed claim list).

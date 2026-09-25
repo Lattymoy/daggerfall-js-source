@@ -393,7 +393,7 @@ test('AUDIT RENOWN1 GAME-8: the page\'s last word - `leave` sends the held repor
 });
 
 test('AUDIT RENOWN1 UI-5/UI-7/WIRE-2c: the answer\'s plan - the order carried WHENEVER the service signed one, a rise announced against what was SAID (never against the page\'s level, which a token may have raised first), the hour\'s line only for a report the hour cut short (never at the cap, never for a repeat) (mutants: the order gated on the page\'s level; the announcement against the page\'s level; the cap line at the cap; the cap line for a repeat)', () => {
-  assert.deepEqual(renownAnswer({ level: 6, rose: true, order: 'v1.o.s', credited: 500 }, 500, 5), { level: 6, order: 'v1.o.s', announce: 6, capped: false });
+  assert.deepEqual(renownAnswer({ level: 6, rose: true, order: 'v1.o.s', credited: 500 }, 500, 5), { level: 6, order: 'v1.o.s', announce: 6, capped: false, xp: null });   // RENOWN4: xp null for an answer without a total
   assert.deepEqual(renownAnswer({ level: 6, rose: true, order: 'v1.o.s', credited: 500 }, 500, null).announce, 6, 'nothing said yet');
   assert.equal(renownAnswer({ level: 6, rose: true, order: 'v1.o.s', credited: 500 }, 500, 6).announce, null, 'said already');
   assert.equal(renownAnswer({ level: 6, rose: false, order: null, credited: 500 }, 500, 5).announce, null, 'no rise, nothing said');
@@ -401,7 +401,7 @@ test('AUDIT RENOWN1 UI-5/UI-7/WIRE-2c: the answer\'s plan - the order carried WH
   assert.equal(renownAnswer({ level: 6, rose: false, repeat: true, order: 'v1.o.s', credited: 0 }, 500, 5).capped, false, 'a repeat is not the hour');
   assert.equal(renownAnswer({ level: 9, credited: 100 }, 500, 9).capped, true, 'the hour cut it short');
   assert.equal(renownAnswer({ level: 50, credited: 0, max: true }, 500, 50).capped, false, 'at the cap there is no hour to speak of');
-  assert.deepEqual(renownAnswer(null, 10, null), { level: null, order: null, announce: null, capped: false });
+  assert.deepEqual(renownAnswer(null, 10, null), { level: null, order: null, announce: null, capped: false, xp: null });
   const w = src('src/scenes/world.js');
   assert.match(w, /const a = renownAnswer\(data, sent, renownSaid\);/);
   assert.match(w, /if \(a\.order\) online\?\.sendRenownOrder\?\.\(a\.order, a\.level\);/, 'the order carried on the plan\'s word alone');

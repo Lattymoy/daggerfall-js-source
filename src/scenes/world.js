@@ -307,6 +307,7 @@ import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, kn
 import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/renown.js';   // RENOWN1: what a kill and a quest are worth, and the party's bonus (RENOWN3: read against my Renown)
 import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer, renownFoeCarry } from '../net/renownTracker.js';   // RENOWN1: what this character earns online, carried to the account service
 import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the level's health and magicka, on top of Daggerfall's while online
+import { setHudRenown } from '../ui/hudRenown.js';   // RENOWN4: my own Renown and its bar, under the vitals
 import { pickRegionHubs, hubAtMapId, hubArrivalLine } from '../systems/regionHubs.js';   // HUB1: every region's main city, its hub
 import { createOnlineHomes } from '../systems/onlineHomes.js';   // HOME1: the account service's homes, one town at a time
 import { setSigilOnline, setSigilRenown, drinkSigil, sigilRiseLine } from '../systems/sigil.js';   // SIGIL1: a weapon won online carries a sigil, woken by my Renown
@@ -10053,6 +10054,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // falls and a token minted a moment before a rise must not take it back. Each rise puts the layer on at the new
   // level (systems/renownLayer.js: on top of Daggerfall's own maximums, never saved). Offline, none of this runs.
   let renownNow = null;
+  // RENOWN4: and the track's TOTAL, for my own bar (ui/hudRenown.js) - the mint's answer and every report's carry it,
+  // and like the level it only rises: a total never falls, and an answer that arrives late must not take one back.
+  let renownXp = null;
+  const renownXpAdopt = (xp) => {
+    if (onlineOn && Number.isSafeInteger(xp) && xp >= 0 && (renownXp === null || xp > renownXp)) renownXp = xp;
+  };
   const renownAdopt = (level) => {
     if (!onlineOn || !Number.isSafeInteger(level) || level < 1) return renownNow;
     if (renownNow !== null && level <= renownNow) return renownNow;
@@ -10062,6 +10069,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     return renownNow;
   };
   const adoptIssued = (who) => {
+    renownXpAdopt(who?.xp);   // RENOWN4: the total, before the level - so no frame draws the new level over the old total
     who = { ...who, level: renownAdopt(who?.level) };   // RENOWN1: the highest level this page has known, never a stale token's lower one
     online?.adoptIdentity?.(who);
     for (const link of chatLinks?.values?.() ?? []) link.adoptIdentity?.(who);
@@ -10083,6 +10091,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     earning: () => !!online,
     onAnswer: (data, sent) => {
       const a = renownAnswer(data, sent, renownSaid);   // AUDIT RENOWN1: one pure plan (net/renownTracker.js), pinned there
+      renownXpAdopt(a.xp);   // RENOWN4: the track's total, for my bar
       renownAdopt(a.level);
       if (a.order) online?.sendRenownOrder?.(a.order, a.level);   // the rooms I am in hear it now - and again until each answers
       if (a.announce !== null) { renownSaid = a.announce; townTalk.say(`Your Renown is now ${a.announce}.`); }
@@ -10104,6 +10113,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (rank != null) townTalk.say(sigilRiseLine(itemLongName(held), rank));
   };
   if (renownTracker) {
+    // RENOWN4 (Mac: "why is there no way to view my renown ingame?" and "Plus XP bar"): MY RENOWN ON MY HUD - the level,
+    // the total as the service last said it, and what is earned and not yet answered (drawn faint after the fill; none
+    // in an hour the bound has spent, since nothing earned then counts). Built only online, like the tracker.
+    setHudRenown(() => ({ level: renownNow, xp: renownXp, pending: _renownCapHour === Math.floor(Date.now() / 3_600_000) ? 0 : renownTracker.pending() }));
     globalThis.addEventListener?.('pagehide', () => { renownTracker.leave(); });   // RENOWN1: what was earned since the last report goes as the page does. AUDIT RENOWN1 GAME-8: by `keepalive`, under the report's own id
     setRenownKillHandler((foe) => { const party = 1 + (partyNear()?.length ?? 0); const xp = renownPartyXp(renownKillXp(renownFoeLevel(foe), renownNow), Number.isInteger(foe?._fightN) ? Math.min(party, foe._fightN) : party); renownTracker.earn(xp); sigilDrinks(xp); });   // AUDIT PSCALE1 PLAY-4: a shared foe's bonus counts the partymates who FOUGHT it (its fighters, systems/partyScale.js) - a partymate idling in the cell pads nothing   // RENOWN3: read against my Renown, never above it by more than RENOWN_OVER_MAX
     const paid = new Set();

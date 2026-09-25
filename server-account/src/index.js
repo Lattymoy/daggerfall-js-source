@@ -56,7 +56,7 @@
 // RENOWN1, Renown. The caller's own character, by the id its
 // save carries; the level rides the token when the mint names one:
 //   POST /v1/renown/xp { character, xp, name?, rid? } -> { character, xp, level, credited, rose, order, max?, repeat? }
-//   POST /v1/auth/token { character? }    -> { ..., level }
+//   POST /v1/auth/token { character? }    -> { ..., level, xp }   (RENOWN4: xp, the track's total)
 //
 // ACC2, and every one of them needs a REGISTERED account (the wall):
 //   GET    /v1/saves                                   -> { saves[] }
@@ -340,7 +340,10 @@ export default {
         // (1 for a character that has earned nothing yet). The client's
         // word is only WHICH of its own characters; the number is this
         // service's. A mint naming none (an older build) carries none.
-        const lv = renownCharacterOk(body.character) ? ((await renownTrackOf(ctx, who.player.id, body.character))?.level ?? 1) : undefined;
+        // RENOWN4: and the track's TOTAL beside it in the answer (never in the token - a room needs the level, not the
+        // XP): the page's own bar is drawn from it the moment the character comes online (ui/hudRenown.js).
+        const track = renownCharacterOk(body.character) ? ((await renownTrackOf(ctx, who.player.id, body.character)) ?? { xp: 0, level: 1 }) : null;
+        const lv = track ? track.level : undefined;
         const token = await mintToken(
           { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe, mu, lv },
           key, { subtle, nowS },
@@ -353,6 +356,7 @@ export default {
           glyphs: wardrobe.g,
           mutedUntil: mu ?? 0,
           level: lv ?? null,
+          xp: track ? track.xp : null,
           expiresAt: nowS + MAX_TTL_S,
         }, 200, origin);
       }
