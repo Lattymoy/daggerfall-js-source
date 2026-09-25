@@ -453,10 +453,10 @@ export function groundSharpnessTier(search = globalThis.location?.search ?? '') 
 }
 /** PERF-SCALE (2026-09-25): THE GPU THE BROWSER DRAWS ON, as its driver names it - WEBGL_debug_renderer_info's
  *  UNMASKED_RENDERER_WEBGL where the browser hands it out, gl.RENDERER otherwise (a browser that masks it answers
- *  a generic name there). A laptop's browser on its integrated GPU, or on SwiftShader, is the first thing a
- *  "fine inside, slow outside" report has to rule out, and nothing on screen said which it was. Read ONCE, by the
- *  Renderer's constructor: a getParameter is a round trip to the GPU process, never a per-frame call. Null when
- *  neither answers a string. */
+ *  a generic name there). A laptop's browser on its integrated GPU, or on SwiftShader, is the first thing a report
+ *  of "fps issues in the exterior but fine in the interior" has to rule out, and nothing on screen said which it
+ *  was. Read ONCE, by the Renderer's constructor: a getParameter is a round trip to the GPU process, never a
+ *  per-frame call. Null when neither answers a string. */
 export function gpuNameOf(gl) {
   try {
     const ext = gl.getExtension('WEBGL_debug_renderer_info');
@@ -2096,7 +2096,18 @@ export class Renderer {
    *  LINEAR and effect-free (RetroPass.present `smooth`). Retro wins - its
    *  config is asked first and a retro frame never reads the scale. At a
    *  scale of 1 there is no frame: the world draws straight to the canvas
-   *  (or the lane's canvas-sized frame) as it always did. */
+   *  (or the lane's canvas-sized frame) as it always did.
+   *
+   *  THE REVIEW: the world frame that goes back to no image (retro off, the
+   *  scale back at 100%) frees the image the last one drew - the RetroPass's
+   *  image and depth, and the lane's image-sized frame - so a session that
+   *  once tried 75% does not hold its framebuffers at 100% (a 4K canvas at
+   *  75% held 36 MiB classic, 89 MiB under the lane). The lane's canvas-sized
+   *  frame stays under a scale frame: a menu, a map or a video over the world
+   *  draws into it. Every screen-space kernel (the bloom's blur, the bolts'
+   *  pixel width) is sized in the image's pixels, as in any window of the
+   *  image's size: X% of a canvas looks like 100% of a window X% as large
+   *  (a 1080p window's glow is already twice a 4K one's on screen). */
   _retroBegin() {
     const cfg = this._retroSource?.() ?? null;
     this._applyRetroMips(cfg ? cfg.mipmaps : true);
@@ -2105,6 +2116,7 @@ export class Renderer {
     const width = scaled ? scaled.width : docked ? cfg?.hudWidth : cfg?.width, height = scaled ? scaled.height : docked ? cfg?.hudHeight : cfg?.height;
     if (!(cfg || scaled) || !(width > 0) || !(height > 0)) {
       if (this._retroFrame) this._restoreWorldViewport();   // the frame retro mode goes off on: an owed present just took the viewport to the full canvas
+      if (this._retroFrame) this._dropWorldImage();   // PERF-SCALE (the review): and the image it drew into is freed, the present being made
       this._retroFrame = null;
       this._retro?.dropLut();
       return null;
@@ -2121,11 +2133,25 @@ export class Renderer {
    *  pixels (the whole canvas when it set none) x the scale, rounded - or null at 1 (or a source that answers no
    *  scale below it), or over an empty rect. */
   _scaledImage() {
-    const scale = Number(this._scaleSource?.() ?? 1);
-    if (!(scale > 0 && scale < 1)) return null;
+    const scale = this._scaleOn();
+    if (scale === null) return null;
     const p = this._worldViewportPx ?? [0, 0, this.canvas.width, this.canvas.height];
     if (!(p[2] > 0 && p[3] > 0)) return null;
     return { scale, width: Math.max(1, Math.round(p[2] * scale)), height: Math.max(1, Math.round(p[3] * scale)) };
+  }
+
+  /** PERF-SCALE: THE ONE READING OF "THE SCALE IS ON" - the source's answer when it is a scale above 0 and below 1,
+   *  else null (100%). The frame's image (_scaledImage) and the warm's program (_warmRetro) both ask it. */
+  _scaleOn() {
+    const scale = Number(this._scaleSource?.() ?? 1);
+    return scale > 0 && scale < 1 ? scale : null;
+  }
+
+  /** PERF-SCALE (the review): free the world's image - the RetroPass's image and depth and the lane's image-sized
+   *  frame - once a world frame draws without one. Reached after the owed present (_beginLane presents first). */
+  _dropWorldImage() {
+    this._retro?.dropTarget();
+    this._air?.dropFrame('retro');
   }
 
   /** RETRO1: the RetroPass, built once. */
@@ -2459,7 +2485,7 @@ export class Renderer {
   /** AUDIT RETRO1 E7: the retro present's program, built by the warm when retro mode is on at load rather than inside
    *  the first retro frame. The build binds a program and a VAO of its own, so the shadows are dropped after it. */
   _warmRetro() {
-    if (!this._retroSource?.() && !(Number(this._scaleSource?.() ?? 1) < 1)) return;
+    if (!this._retroSource?.() && this._scaleOn() === null) return;
     this._retroPass()._program();
     this._lastProgram = null; this._lastVao = null;
   }

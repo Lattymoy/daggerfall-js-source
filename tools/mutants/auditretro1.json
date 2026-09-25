@@ -369,11 +369,12 @@
   {
     "name": "AUDITRETRO1-D5-a-menu-frees-the-retro-slot",
     "file": "src/render/airPass.js",
-    "old": "    if (kept) { gl.deleteTexture(kept.tex); for (const d of kept.depths) gl.deleteTexture(d); for (const f of kept.depthFbos) gl.deleteFramebuffer(f); gl.deleteFramebuffer(kept.fbo); }",
-    "new": "    { const k = this.frame; if (k) { gl.deleteTexture(k.tex); for (const d of k.depths) gl.deleteTexture(d); for (const f of k.depthFbos) gl.deleteFramebuffer(f); gl.deleteFramebuffer(k.fbo); } }",
+    "old": "    if (kept) this._deleteFrame(kept);",
+    "new": "    { const k = this.frame; if (k) this._deleteFrame(k); }",
     "tests": [
       "test/auditretro1.test.js"
-    ]
+    ],
+    "note": "PERF-SCALE (the review) re-aimed BY CONTENT: the deletion is AirPass._deleteFrame now, shared with dropFrame; same law, same killer."
   },
   {
     "name": "AUDITRETRO1-D5-the-slot-swap-keeps-a-previous",

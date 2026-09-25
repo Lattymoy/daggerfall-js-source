@@ -26,6 +26,9 @@
 //       read per world frame through main.js's wire
 //   S6  the counter names the GPU (read once, at the renderer's birth) and
 //       the frame's size, and costs nothing while hidden
+//   S7  (the review) the world frame that goes back to no image frees the
+//       image and the lane's image-sized frame; one reading of "the scale
+//       is on" for the frame and the warm
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -108,6 +111,20 @@ test('PERF-SCALE S1: at 100% nothing changes - no image, no framebuffer, no pres
       assert.equal(full.mid.fbo, null, 'the world draws straight to the canvas');
       assert.equal(full.mid.target, null);
     }
+  }
+  // the review: at 100% under a host's docked strip the counter's world is the STRIP, not the canvas
+  {
+    const { canvas } = stateGl(1280, 720);
+    const r = new Renderer(canvas);
+    r.setRenderScaleSource(() => 1);
+    r.setWorldViewport({ x: 0, y: 0.25, w: 1, h: 0.75 });
+    try {
+      r.beginFrame(I, I, L, WORLD_FRAME);
+      assert.equal(r.retroFrame, null);
+      assert.deepEqual(r.frameInfo.world, [1280, 540], 'the host\'s world rect, in canvas pixels');
+      assert.deepEqual(r.frameInfo.canvas, [1280, 720]);
+      r.drawScreenQuad(null, Q);
+    } finally { setFrameTarget(null); }
   }
   // a source that answers no scale below 1 is 100% too
   for (const bad of [0, -1, 2, NaN, null]) {
@@ -332,6 +349,8 @@ test('PERF-SCALE S5: the setting - a Sight row with its five tiers, 100% the def
   assert.equal(renderScaleOf(0.75), 0.75);
   assert.equal(renderScaleOf('0.5'), 0.5);
   for (const bad of [0.3, 2, 'x', '', null, undefined]) assert.equal(renderScaleOf(bad), null, String(bad));
+  // the review: a tier is matched by its STRING, as the tile matches it - a value the tile shows as 100% never runs scaled
+  for (const odd of ['0.750', ' 0.5 ', '.5', '5e-1', '0.50']) assert.equal(renderScaleOf(odd), null, `${JSON.stringify(odd)} is no tier on the tile, so none here`);
   // the shelf, and the tile that writes it
   let store = new Map();
   const prevLs = globalThis.localStorage;
@@ -361,6 +380,9 @@ test('PERF-SCALE S5: the setting - a Sight row with its five tiers, 100% the def
     assert.equal(segs.find((b) => b.attrs['aria-pressed'] === 'true').textContent, '75%');
     setPref('renderScale', 0.42);
     assert.equal(renderScaleSetting(), 1, 'a shelf value that names no tier is 100%');
+    setPref('renderScale', '0.750');
+    assert.equal(tile().find((b) => b.attrs['aria-pressed'] === 'true').textContent, '100%', 'the tile reads "0.750" as no tier');
+    assert.equal(renderScaleSetting(), 1, 'and so does the renderer\'s source');
     // the door, read once a page
     const prevLoc = globalThis.location;
     globalThis.location = { search: '?renderscale=0.5' };
@@ -369,6 +391,9 @@ test('PERF-SCALE S5: the setting - a Sight row with its five tiers, 100% the def
       assert.equal(renderScaleSetting(), 0.5, 'the probe\'s door wins');
       globalThis.location = { search: '' };
       assert.equal(renderScaleSetting(), 0.5, 'read once');
+      globalThis.location = { search: '?renderscale=.5' };
+      _resetRenderScaleDoor();
+      assert.equal(renderScaleSetting(), 1, 'a door that names no tier by its string is none');
     } finally { globalThis.location = prevLoc; _resetRenderScaleDoor(); }
   } finally { globalThis.localStorage = prevLs; resetPrefs(); }
   // the wire: main.js hands the renderer the source beside retro's
@@ -442,6 +467,22 @@ test('PERF-SCALE S6: the counter shows the GPU line and the size line while on, 
     assert.ok(lines.includes('world 960x540  canvas 1280x720  dpr 1.5  scale 75%'), `the size line: ${JSON.stringify(lines)}`);
     assert.equal(g.asked.filter((p) => p === UNMASKED_RENDERER_WEBGL).length, 1, 'the counter\'s seconds never ask the GPU again');
     c.dispose();
+    // the review: under retro the probe's read says so; a GPU no browser would name reads "unknown"
+    const rr = new Renderer(stateGl(1280, 720).canvas);
+    rr.setRetroSource(() => retroCfg());
+    rr.setRenderScaleSource(() => 0.75);
+    rr.beginFrame(I, I, L, WORLD_FRAME); rr.drawScreenQuad(null, Q);
+    assert.equal(rr.gpuName, null, 'the fake GL names no GPU');
+    let shown = true;
+    const c2 = mountFpsCounter({ enabled: () => shown, raf: null, stats: () => rr.stats, info: () => rr.frameInfo });
+    for (let t = 0; t <= 1020; t += 1000 / 60) c2.tick(t);
+    const st2 = globalThis.window.__fpsStats();
+    assert.deepEqual([st2.retro, st2.scale, st2.world], [true, 1, [320, 200]], 'retro, and the scale it took is none');
+    const lines2 = c2.el.textContent.split('\n');
+    assert.ok(lines2.includes('gpu unknown'), `the GPU line still stands: ${JSON.stringify(lines2)}`);
+    assert.ok(lines2.includes('world 320x200  canvas 1280x720  dpr 1.5  scale retro'), JSON.stringify(lines2));
+    shown = false;
+    c2.dispose();
   } finally {
     setFrameTarget(null);
     globalThis.document = prev.d; globalThis.window = prev.w; globalThis.devicePixelRatio = prev.dpr;
@@ -449,4 +490,111 @@ test('PERF-SCALE S6: the counter shows the GPU line and the size line while on, 
   assert.equal(sizeLine({ world: [320, 200], canvas: [1920, 1080], dpr: 1, scale: 1, retro: true }), 'world 320x200  canvas 1920x1080  dpr 1  scale retro');
   assert.equal(sizeLine({ world: [2560, 1440], canvas: [2560, 1440], dpr: 2, scale: 1 }), 'world 2560x1440  canvas 2560x1440  dpr 2  scale 100%');
   assert.equal(sizeLine(null), null);
+  // a browser zoomed to 90% answers a float's 0.9 - the line shows two places, not the float
+  assert.equal(sizeLine({ world: [1280, 720], canvas: [1280, 720], dpr: 0.8999999761581421, scale: 1 }), 'world 1280x720  canvas 1280x720  dpr 0.9  scale 100%');
+});
+
+// ── S7: the review ──────────
+
+test('PERF-SCALE S7 (the review): the world frame that goes back to no image frees the image and its depth, and under the lane the image-sized frame, while a menu\'s canvas-sized frame stays; retro off frees them too', () => {
+  for (const lane of [false, true]) {
+    const { canvas } = stateGl(1920, 1080);
+    const r = new Renderer(canvas);
+    if (lane) { r.setLightingLane(EL_LANE); r.setAir(true); }
+    let scale = 0.75;
+    r.setRenderScaleSource(() => scale);
+    try {
+      r.beginFrame(I, I, L); r.drawScreenQuad({ id: 'ui' }, Q);   // a menu first: the lane's canvas slot
+      for (let k = 0; k < 3; k++) { r.beginFrame(I, I, L, WORLD_FRAME); r.drawScreenQuad({ id: 'ui' }, Q); }
+      const img = r.retro.target;
+      assert.deepEqual([img.w, img.h], [1440, 810]);
+      const slot = lane ? r.air._frames.retro : null, canvasSlot = lane ? r.air._frames.canvas : null;
+      if (lane) assert.deepEqual([slot.w, slot.h, canvasSlot.w], [1440, 810, 1920], 'the lane\'s image-sized frame beside its canvas one');
+      scale = 1;
+      r.beginFrame(I, I, L, WORLD_FRAME);
+      assert.equal(r.retro.target, null, `${lane ? 'the lane' : 'the classic set'}: the image is let go at 100%`);
+      assert.deepEqual([img.tex.deleted, img.depth.deleted, img.fbo.deleted], [true, true, true], 'its texture, its depth and its framebuffer');
+      if (lane) {
+        assert.equal(r.air._frames.retro, null, 'the lane\'s image-sized frame too');
+        assert.ok(slot.tex.deleted && slot.depths.every((d) => d.deleted) && slot.depthFbos.every((f) => f.deleted) && slot.fbo.deleted);
+        assert.equal(r.air._frames.canvas, canvasSlot, 'the canvas-sized frame the world draws into now is kept');
+        assert.ok(!canvasSlot.tex.deleted);
+        assert.equal(r.air.frame, canvasSlot);
+      }
+      r.drawScreenQuad({ id: 'ui' }, Q);
+      for (let k = 0; k < 3; k++) { r.beginFrame(I, I, L, WORLD_FRAME); r.drawScreenQuad({ id: 'ui' }, Q); }
+      assert.equal(r.retro.target, null, 'and stays let go');
+      // back to 75%: a fresh image, Point until the present smooths it
+      scale = 0.75;
+      r.beginFrame(I, I, L, WORLD_FRAME);
+      const img2 = r.retro.target;
+      assert.ok(img2 && img2 !== img, 'allocated afresh');
+      r.drawScreenQuad({ id: 'ui' }, Q);
+      assert.equal(img2.tex.params[E.TEXTURE_MAG_FILTER], E.LINEAR);
+      // retro off (the scale at 100%) frees retro's image the same way
+      scale = 1;
+      let cfg = retroCfg();
+      r.setRetroSource(() => cfg);
+      r.beginFrame(I, I, L, WORLD_FRAME); r.drawScreenQuad({ id: 'ui' }, Q);
+      const rimg = r.retro.target;
+      assert.deepEqual([rimg.w, rimg.h], [320, 200]);
+      cfg = null;
+      r.beginFrame(I, I, L, WORLD_FRAME);
+      assert.equal(r.retro.target, null);
+      assert.equal(rimg.tex.deleted, true);
+      r.drawScreenQuad({ id: 'ui' }, Q);
+    } finally { setFrameTarget(null); }
+  }
+  // the lane's drop leaves no frame pointing at what it freed (the image-sized frame is the lane's live one after its resolve)
+  {
+    const { canvas } = stateGl(1280, 720);
+    const r = new Renderer(canvas);
+    r.setLightingLane(EL_LANE); r.setAir(true);
+    r.setRenderScaleSource(() => 0.5);
+    try {
+      r.beginFrame(I, I, L, WORLD_FRAME); r.drawScreenQuad(null, Q);
+      const slot = r.air._frames.retro;
+      assert.equal(r.air.frame, slot);
+      r.air.dropFrame('retro');
+      assert.deepEqual([r.air.frame, r.air._frames.retro, slot.tex.deleted], [null, null, true]);
+      assert.doesNotThrow(() => r.air.dropFrame('retro'), 'twice is nothing');
+    } finally { setFrameTarget(null); }
+  }
+  // an owed image is presented BEFORE it is freed: the frame with no quad, then 100%
+  {
+    const { canvas, s } = stateGl(1280, 720);
+    const r = new Renderer(canvas);
+    let scale = 0.5;
+    r.setRenderScaleSource(() => scale);
+    try {
+      r.beginFrame(I, I, L, WORLD_FRAME);   // no quad: owed
+      const img = r.retro.target;
+      scale = 1;
+      s.draws.length = 0;
+      r.beginFrame(I, I, L, WORLD_FRAME);
+      const [p] = presents(s);
+      assert.ok(p, 'the owed image presented');
+      assert.equal(p.units[0][E.TEXTURE_2D], img.tex, 'from the live image');
+      assert.equal(img.tex.deleted, true, 'then freed');
+      r.drawScreenQuad(null, Q);
+    } finally { setFrameTarget(null); }
+  }
+});
+
+test('PERF-SCALE S7 (the review): ONE reading of "the scale is on" - a source answering 0 or less, 1 or more, or no number builds nothing in the warm, as the frame takes no image for it', () => {
+  for (const v of [0, -1, 1, 2, NaN, 'x']) {
+    const { canvas } = stateGl(1280, 720);
+    const r = new Renderer(canvas);
+    r.setRenderScaleSource(() => v);
+    for (const step of r.warmSteps()) step();
+    assert.equal(r.retro, null, `a source answering ${String(v)} warms no present`);
+    try { r.beginFrame(I, I, L, WORLD_FRAME); assert.equal(r.retroFrame, null); r.drawScreenQuad(null, Q); } finally { setFrameTarget(null); }
+  }
+  for (const v of [0.5, 0.99]) {
+    const { canvas } = stateGl(1280, 720);
+    const r = new Renderer(canvas);
+    r.setRenderScaleSource(() => v);
+    for (const step of r.warmSteps()) step();
+    assert.ok(r.retro?.P, `${v}: warmed`);
+  }
 });

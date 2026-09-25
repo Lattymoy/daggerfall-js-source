@@ -45,3 +45,41 @@ per-pixel work; 50% a quarter.
 `test/mwarms_fps.test.js` (main.js's mount). Mutants
 `tools/mutants/perfscale.json` (29 dead); `retro1.json` and
 `auditretro1.json` re-aimed.
+
+## AUDIT PERF-SCALE (the review)
+
+Seven findings from the adversarial read; each was reproduced in node on
+the real Renderer and the fake GL before it was changed.
+
+- **R1: 100% after 75% kept the memory.** The world frame that went back
+  to no image freed only retro's LUT; the image, its depth and the lane's
+  image-sized frame stayed for the session (on a 4K canvas at 75%, 36 MiB
+  classic, 89 MiB under the lane). That frame frees them now, after the
+  owed present (`Renderer._dropWorldImage`), and retro off does the same.
+  The lane's canvas-sized frame is kept: menus, maps and videos draw into
+  it.
+- **R2: a stored "0.750" ran at 75% under a tile showing 100%.**
+  `renderScaleOf` matched a tier by its number; the Features tile matches
+  by its string. It matches by the string now, so the two can't disagree.
+- **R3, recorded and not changed: below 100% the glow spreads wider.** The
+  bloom's blur and the bolts' minimum width are sized in the image's
+  pixels, so 50% of a canvas looks like a half-size window stretched. That
+  is how the renderer already treats window size: a 1080p window's glow is
+  twice as wide on screen as a 4K one's. Sizing the kernels in canvas
+  pixels would leave gaps between a quarter-size bloom's taps and put a
+  bolt under one image pixel. `07-Rendering/Rendering.md` PERF-SCALE says
+  so.
+- **R4, R5: the counter's details were unpinned.** No pin covered
+  frameInfo's host-rect arm (the docked strip at 100%), the probe's `retro`,
+  "gpu unknown" or the dpr's rounding. All four are pinned now.
+- **R6: two readings of "the scale is on."** The warm built the present
+  for a source answering 0, which the frame refused. Both ask
+  `Renderer._scaleOn` now. The comments name one home for the law,
+  `_retroBegin`.
+- **R7: a paraphrase in quotation marks.** The comment and the bible quote
+  the report as written.
+
+Pins: `test/perfscale.test.js` 10 (S5's string rule and both S7 pins fail
+with `src/` at the slice's commit; the counter and frameInfo pins guard
+code that commit already had). Mutants: `perfscale.json` 43 dead;
+`auditretro1.json`'s D5 re-aimed.

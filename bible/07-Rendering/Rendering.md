@@ -806,9 +806,10 @@ directory by `test/audit18_bible_docs.test.js`:
   up front, a z-slab at a time (`texStorage3D` + `texSubImage3D`), a
   failed allocation caught through getError and retried when the shift
   or retro mode changes. See `07-Rendering/Retro-Mode.md`. PERF-SCALE
-  (2026-09-25): the render scale's image is this pass's too - one home for
-  a world drawn smaller and shown - presented `smooth` (LINEAR, unsnapped,
-  no effect); retro wins. See PERF-SCALE below.
+  (2026-09-25): the render scale's image is this pass's too, presented
+  `smooth` (LINEAR, unsnapped, no effect); retro wins. The law of a world
+  drawn smaller and shown is `Renderer._retroBegin`'s - see PERF-SCALE
+  below.
 - `volumetricClouds.js` - VC3 THE VOLUMETRIC CLOUDS: a raymarched slab between
   two altitudes, shaped by the VC2 volumes, lit by the sun (the moon at night)
   with a short light march, driven by the eased weather row, a per-weather
@@ -933,7 +934,8 @@ pixels, a 4K or ultrawide one 2 to 4 times, and so is a browser zoomed
 below 100% or a driver's DSR/VSR; the exterior is where the per-pixel
 work is, the interior is small and dark. And nothing on screen said
 which GPU the browser drew on - a laptop's browser on its integrated
-chip, or on SwiftShader, reads exactly like "fine inside, slow outside".
+chip, or on SwiftShader, reads exactly like "fps issues in the exterior
+but fine in the interior".
 
 **THE LAW: ONE HOME FOR A WORLD DRAWN SMALLER AND SHOWN.** RETRO1's image
 path already drew the world into a small image and presented it
@@ -961,7 +963,22 @@ PERF-SCALE generalises it rather than writing a second copy:
   LUT is freed, as retro off always freed it).
 - **100% IS TODAY'S FRAME.** No image, no framebuffer, no pass, no
   present: at a scale of 1 the frame's GL calls are the frame with no
-  scale source, call for call (`test/perfscale.test.js` S1).
+  scale source, call for call (`test/perfscale.test.js` S1). A session
+  that tried a smaller scale gives its memory back: the world frame that
+  draws without an image (the scale back at 100%, or retro off) frees the
+  image and its depth (`RetroPass.dropTarget`) and the lane's image-sized
+  frame (`AirPass.dropFrame('retro')`), after the owed present
+  (`Renderer._dropWorldImage`; S7). The lane's canvas-sized frame is kept
+  under a scale frame - a menu, a map or a video over the world draws
+  into it.
+- **Screen-space kernels are the image's.** The bloom's blur and the
+  bolts' minimum width are sized in the image's pixels (the AO's radius is
+  in world units and moves with nothing), as in any window of the image's
+  size: X% of a canvas looks like a window X% as large at 100%,
+  stretched. At 50% the glow spreads twice as far on screen
+  as at 100% on the same canvas - exactly as a 1080p window's glow already
+  spread twice a 4K one's. Sizing them in canvas pixels would put a 2-tap
+  gap into a quarter-size bloom and a bolt under one image pixel.
 - **The UI is not scaled.** The HUD, the menus, the windows and the
   first-person overlay are the 2D pass's, drawn after the present on the
   canvas at its own size. Everything that maps a canvas pixel into the
@@ -998,8 +1015,21 @@ device pixels - the port never rendered at `devicePixelRatio`, so a HiDPI
 screen was already spared 1.5-2x; the size line shows the ratio so a
 report can say so. No automatic scale: the dial is the player's, and a
 frame-time governor would move the picture under them. Ledger A row
-PERF-SCALE. Pinned: `test/perfscale.test.js` (8); `tools/mutants/perfscale.json`
-(29, all dead). Record: `01-Overview/Field-Bugs-2026-09-25.md`.
+PERF-SCALE. Pinned: `test/perfscale.test.js` (10); `tools/mutants/perfscale.json`
+(43, all dead). Record: `01-Overview/Field-Bugs-2026-09-25.md`.
+
+**The review (2026-09-25).** Seven findings; six fixed, one recorded. A
+return to 100% (or retro off) held the image and the lane's image-sized
+frame for the session (36 MiB classic, 89 MiB under the lane, on a 4K
+canvas at 75%) - freed now, above. `renderScaleOf` matched a tier by its
+NUMBER while the Features tile matches by its STRING, so a stored
+"0.750" ran at 75% under a tile showing 100% - it matches by the string
+now. The warm had its own copy of "the scale is on" and built the present
+for a source answering 0 - both ask `Renderer._scaleOn` now. The
+frameInfo's host-rect arm, the probe's `retro`, the counter's
+"gpu unknown" and the dpr's rounding were unpinned - pinned. A paraphrase
+stood in quotation marks as the report - the report is quoted as
+written. Recorded, not changed: the screen-space kernels (above).
 
 ## WIND5 - THE WIND'S FLOURISHES (2026-09-23)
 

@@ -17,8 +17,9 @@
 // takes `renderScaleSetting` as its source (main.js wires the two, as it
 // wires systems/retroMode.js's retroFrameConfig) and draws the world
 // into an image of the world rect x the scale, presented LINEAR to the
-// full rect - render/retroPass.js's image and present, the one home for
-// "the world drawn smaller and shown". RETRO WINS: with Retro Picture
+// full rect - render/retroPass.js's image and present, under the one law
+// for "the world drawn smaller and shown", whose home is
+// Renderer._retroBegin. RETRO WINS: with Retro Picture
 // Mode on, its own 320x200 or 640x400 image is the world's and this
 // scale is not read (Renderer._retroBegin). The HUD, the menus and the
 // first-person overlay are the 2D pass's, drawn after the present at the
@@ -27,7 +28,10 @@
 // THE OPTIONS are the row's (systems/features.js 'render-scale': RF4,
 // one declaration), 100% the default - at 100% the renderer takes no
 // image, no pass and no present: the frame is today's, call for call.
-// A value that names no tier (a hand-edited shelf, a door typo) is 100%.
+// A value that names no tier (a hand-edited shelf, a door typo) is 100%,
+// and a tier is matched by its STRING, as the Features tile matches it
+// (enhancedMenu.js tileStates): "0.750" or ".5" is no tier, so the game
+// never runs at a scale the tile shows as 100% (the review).
 // A dial, the player's own online: it is this screen's pixels, nothing
 // the room agrees on. Read once per WORLD frame, so the Features tile's
 // press lands on the next frame.
@@ -38,11 +42,10 @@ import { featureForControl } from './features.js';
 export const RENDER_SCALES = Object.freeze(
   (/** @type {any} */ (featureForControl('prefs', 'renderScale'))?.control?.tiers ?? [[1, '100%']]).map(([v]) => Number(v)));
 
-/** A stored or door value as a render scale, or null when it names no tier. */
+/** A stored or door value as a render scale, or null when it names no tier - matched by its string, the tile's rule. */
 export function renderScaleOf(v) {
   if (v === null || v === undefined || v === '') return null;
-  const n = Number(v);
-  return RENDER_SCALES.includes(n) ? n : null;
+  return RENDER_SCALES.find((t) => String(t) === String(v)) ?? null;
 }
 
 /** `?renderscale=0.5` - a probe's door, read once a page (the URL does not change under a running game). */

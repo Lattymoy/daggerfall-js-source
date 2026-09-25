@@ -311,4 +311,8 @@ The render scale (`07-Rendering/Rendering.md` PERF-SCALE) draws the world
 into this same image at the world rect x the scale and presents it LINEAR
 (`RetroPass.present({ smooth: true })`). Retro wins: with Retro Picture
 Mode on the scale is not read, and the image, its Point present and its
-effect are retro's as above.
+effect are retro's as above. Its review: the world frame that draws
+without an image - retro off, or the scale back at 100% - frees the image
+and its depth and the lane's image-sized frame, as retro off always freed
+the LUT (`Renderer._dropWorldImage`, `RetroPass.dropTarget`,
+`AirPass.dropFrame`).

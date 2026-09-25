@@ -20,11 +20,12 @@
   {
     "name": "PERF-SCALE-100-takes-an-image",
     "file": "src/render/renderer.js",
-    "old": "    if (!(scale > 0 && scale < 1)) return null;",
-    "new": "    if (!(scale > 0 && scale <= 1)) return null;",
+    "old": "    return scale > 0 && scale < 1 ? scale : null;",
+    "new": "    return scale > 0 && scale <= 1 ? scale : null;",
     "tests": [
       "test/perfscale.test.js"
-    ]
+    ],
+    "note": "the review re-aimed BY CONTENT: the test moved into _scaleOn, the one reading of \"the scale is on\"; same law, same killer."
   },
   {
     "name": "PERF-SCALE-the-canvas-not-the-host-rect",
@@ -110,11 +111,12 @@
   {
     "name": "PERF-SCALE-the-warm-skips-the-scale",
     "file": "src/render/renderer.js",
-    "old": "    if (!this._retroSource?.() && !(Number(this._scaleSource?.() ?? 1) < 1)) return;",
+    "old": "    if (!this._retroSource?.() && this._scaleOn() === null) return;",
     "new": "    if (!this._retroSource?.()) return;",
     "tests": [
       "test/perfscale.test.js"
-    ]
+    ],
+    "note": "the review re-aimed BY CONTENT: the warm asks _scaleOn now; same law, same killer."
   },
   {
     "name": "PERF-SCALE-the-image-left-point-filtered",
@@ -256,6 +258,134 @@
     "file": "src/systems/features.js",
     "old": "key: 'renderScale', initial: 1, online: 'player'",
     "new": "key: 'renderScale', initial: 1, online: true",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-review-the-warm-its-own-reading",
+    "file": "src/render/renderer.js",
+    "old": "    if (!this._retroSource?.() && this._scaleOn() === null) return;",
+    "new": "    if (!this._retroSource?.() && !(Number(this._scaleSource?.() ?? 1) < 1)) return;",
+    "tests": [
+      "test/perfscale.test.js"
+    ],
+    "note": "the review: the warm's own copy of the test, which built the present for a source answering 0 or less"
+  },
+  {
+    "name": "PERF-SCALE-review-the-image-kept-at-100",
+    "file": "src/render/renderer.js",
+    "old": "      if (this._retroFrame) this._dropWorldImage();",
+    "new": "      if (false) this._dropWorldImage();",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-review-the-image-kept",
+    "file": "src/render/renderer.js",
+    "old": "    this._retro?.dropTarget();\n",
+    "new": "",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-review-the-lane-slot-kept",
+    "file": "src/render/renderer.js",
+    "old": "    this._air?.dropFrame('retro');\n",
+    "new": "",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-review-the-slot-freed-in-name-only",
+    "file": "src/render/airPass.js",
+    "old": "    this._deleteFrame(kept);\n    this._frames[slot] = null;",
+    "new": "    this._frames[slot] = null;",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-review-the-slot-held",
+    "file": "src/render/airPass.js",
+    "old": "    this._frames[slot] = null;\n",
+    "new": "",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-review-a-freed-frame-still-the-frame",
+    "file": "src/render/airPass.js",
+    "old": "    if (this.frame === kept) { this.frame = null; this.prevValid = false; }\n",
+    "new": "",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-review-the-depth-kept",
+    "file": "src/render/retroPass.js",
+    "old": "    gl.deleteTexture(t.tex); gl.deleteTexture(t.depth); gl.deleteFramebuffer(t.fbo);\n    this.target = null;",
+    "new": "    gl.deleteTexture(t.tex); gl.deleteFramebuffer(t.fbo);\n    this.target = null;",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-review-the-target-held",
+    "file": "src/render/retroPass.js",
+    "old": " gl.deleteFramebuffer(t.fbo);\n    this.target = null;",
+    "new": " gl.deleteFramebuffer(t.fbo);",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-review-a-tier-by-its-number",
+    "file": "src/systems/renderScale.js",
+    "old": "  return RENDER_SCALES.find((t) => String(t) === String(v)) ?? null;",
+    "new": "  return RENDER_SCALES.includes(Number(v)) ? Number(v) : null;",
+    "tests": [
+      "test/perfscale.test.js"
+    ],
+    "note": "the review: the first cut's rule - \"0.750\" ran at 75% under a tile showing 100%"
+  },
+  {
+    "name": "PERF-SCALE-review-frameInfo-host-rect-arm-dropped",
+    "file": "src/render/renderer.js",
+    "old": "      world: f ? [f.width, f.height] : p ? [p[2], p[3]] : [c.width, c.height],",
+    "new": "      world: f ? [f.width, f.height] : [c.width, c.height],",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-review-the-probe-never-says-retro",
+    "file": "src/ui/fpsCounter.js",
+    "old": "retro: !!i.retro }",
+    "new": "retro: false }",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-review-no-gpu-no-line",
+    "file": "src/ui/fpsCounter.js",
+    "old": "(i ? `\\ngpu ${i.gpu ?? 'unknown'}` : '')",
+    "new": "(i?.gpu ? `\\ngpu ${i.gpu}` : '')",
+    "tests": [
+      "test/perfscale.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SCALE-review-the-dpr-unrounded",
+    "file": "src/ui/fpsCounter.js",
+    "old": "  const dpr = Math.round((Number(i.dpr) || 1) * 100) / 100;",
+    "new": "  const dpr = Number(i.dpr) || 1;",
     "tests": [
       "test/perfscale.test.js"
     ]

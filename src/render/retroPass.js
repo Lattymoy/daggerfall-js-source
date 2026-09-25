@@ -83,14 +83,15 @@
 // reads that unit. A live screen scissor is lifted for the clear and
 // the quad and put back.
 //
-// THE RENDER SCALE'S IMAGE (PERF-SCALE, 2026-09-25) is this pass's too:
-// one home for a world drawn smaller and shown. Two players' "fps issues
-// in the exterior but fine in the interior" (an RTX 4060 Ti, an RX 6600)
-// were a window drawn at its full size with no dial; with retro off and
-// the scale below 1 the renderer draws the world into this same image at
-// the world rect x the scale, and `present({ smooth: true })` shows it
-// LINEAR, unsnapped and without an effect. Retro wins: a retro frame
-// never reads the scale (Renderer._retroBegin, systems/renderScale.js).
+// THE RENDER SCALE'S IMAGE (PERF-SCALE, 2026-09-25) is this pass's too.
+// Two players' "fps issues in the exterior but fine in the interior" (an
+// RTX 4060 Ti, an RX 6600) were a window drawn at its full size with no
+// dial; with retro off and the scale below 1 the renderer draws the world
+// into this same image at the world rect x the scale, and
+// `present({ smooth: true })` shows it LINEAR, unsnapped and without an
+// effect. The law of a world drawn smaller and shown - which image, when,
+// and retro winning - has one home, Renderer._retroBegin; this pass holds
+// the image and draws the present.
 //
 // THE MIP CHAINS are the renderer's (Renderer._applyRetroMips):
 // TextureReader builds no mip chain in retro mode unless
@@ -379,7 +380,7 @@ export class RetroPass {
   _ensureTarget(W, H) {
     const gl = this.gl;
     if (this.target && this.target.w === W && this.target.h === H) return this.target;
-    if (this.target) { gl.deleteTexture(this.target.tex); gl.deleteTexture(this.target.depth); gl.deleteFramebuffer(this.target.fbo); }
+    if (this.target) this.dropTarget();
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
@@ -401,6 +402,17 @@ export class RetroPass {
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, depth, 0);
     this.target = { fbo, tex, depth, w: W, h: H };
     return this.target;
+  }
+
+  /** PERF-SCALE (the review): free the image and its depth - the world
+   *  frame that draws without one (retro off, the render scale back at
+   *  100%; Renderer._dropWorldImage), and a resize. The next image frame
+   *  allocates afresh, Point-filtered. */
+  dropTarget() {
+    const gl = this.gl, t = this.target;
+    if (!t) return;
+    gl.deleteTexture(t.tex); gl.deleteTexture(t.depth); gl.deleteFramebuffer(t.fbo);
+    this.target = null;
   }
 
   /** The classic lane's frame: bind the image for the world pass and make

@@ -1141,7 +1141,7 @@ export class AirPass {
       if (this.frame !== kept) { this.frame = kept; this.prevValid = false; }   // RETRO1: the other slot's image - its previous depth is not this frame's previous
       return kept;
     }
-    if (kept) { gl.deleteTexture(kept.tex); for (const d of kept.depths) gl.deleteTexture(d); for (const f of kept.depthFbos) gl.deleteFramebuffer(f); gl.deleteFramebuffer(kept.fbo); }
+    if (kept) this._deleteFrame(kept);
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
@@ -1180,6 +1180,21 @@ export class AirPass {
     this.prevValid = false;   // a new frame image: the previous depth is the far plane
     if (!this.lum) this._ensureAdapt();
     return this.frame;
+  }
+  /** A frame image's texture, its two depths and their framebuffers, deleted. */
+  _deleteFrame(k) {
+    const gl = this.gl;
+    gl.deleteTexture(k.tex); for (const d of k.depths) gl.deleteTexture(d); for (const f of k.depthFbos) gl.deleteFramebuffer(f); gl.deleteFramebuffer(k.fbo);
+  }
+  /** PERF-SCALE (the review): free a slot's frame image - the world stopped drawing into an image of its own (retro
+   *  off, the render scale back at 100%; Renderer._dropWorldImage), so the image-sized frame is not held for the rest
+   *  of the session. The frame it was is no frame now: its previous depth is nothing's previous. */
+  dropFrame(slot) {
+    const kept = this._frames[slot];
+    if (!kept) return;
+    this._deleteFrame(kept);
+    this._frames[slot] = null;
+    if (this.frame === kept) { this.frame = null; this.prevValid = false; }
   }
   /** EL4: the luminance image with its mip chain and the two 1x1
    *  adaptation images, the current one starting at a multiplier of 1. */
