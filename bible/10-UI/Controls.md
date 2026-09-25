@@ -22,15 +22,23 @@ THE KEYBINDING STANDARD records every departure from DFU's table.
    while it is up. They answer only while their window is the top one, so they share nothing with the world's
    keys. A window that closes on "its own key" closes on that action's BINDING (the pause on Escape's, the pack on
    Inventory's, the spellbook on CastSpell's), plus the back button, as DFU's toggle-closed binding does.
-3. **One key, one action.** No default code ships twice. The hotbar's slots 1-4 are the diamond's own four actions,
-   so a pad's d-pad reaches them too; what they do follows which bar is in force (`uiSkin.js hotbarInForce`).
+3. **One key, one action - unless the player puts it on more.** No default code ships twice. The hotbar's slots 1-4
+   are the diamond's own four actions, so a pad's d-pad reaches them too; what they do follows which bar is in force
+   (`uiSkin.js hotbarInForce`). UXB1-S (2026-09-25, a contributor: "I dont care if it goes against daggerfall"): a
+   player may SHARE a key between actions (law 4's third answer), and the key then does all of them - every poll
+   (`held`, `pressed`, `released`) sees each, and every dispatch (`routeKey`, the two self-routing hosts' ladders, a
+   window's own-key close) runs each, the key's first holder first. A departure from DFU, recorded in Ledger A's UXB1
+   row; the store keeps DFU's code -> action orientation for the owner and lists the sharers beside it.
 4. **A held key is asked for, never taken.** Binding a key another action holds opens "X is used by Y. Give it to
-   Z instead?" in every controls window - Yes stages every holder unbound, No (or Escape) stages nothing. "Holds" is
+   Z instead?" in every controls window - Yes stages every holder unbound, No (or Escape) stages nothing, and USE FOR
+   BOTH (the enhanced page's third button, B in the classic grid and its ADVANCED popup) keeps every holder and puts
+   the key here too, wherever every holder holds this very key. "Holds" is
    DFU's own clash law (`getDuplicates`): a combo against a bare modifier is asked for too, and a key moving between
    an action's own two slots says so. A key's auto-repeat answers no prompt. Yes stays Yes across a reboot: the
-   apply reads "changed" off the registry as it stood before it (AUDIT KB1 F4). DFU's duplicate law still colours
-   and blocks what only a hand-edited file can carry in.
-5. **Every key is read through the registry, live.** `held`, `pressed`, `released` and `actionOf` resolve codes,
+   apply reads "changed" off the registry as it stood before it (AUDIT KB1 F4), and it writes a staged share as one.
+   DFU's duplicate law now finds only a combo against its own modifier bound bare - still red or blue, still
+   blocking, never offered as a share; the same key twice is a share, drawn green.
+5. **Every key is read through the registry, live.** `held`, `pressed`, `released` and `actionsOf` resolve codes,
    combos included, against the player's bindings at the moment of the read, so a rebind applies at once. A mod
    switched off answers nothing on its keys (`actionLive`, at the one gate every reader takes); its keys stay bound
    for when it is switched back on. No gameplay code reads a bound key by its raw code except the reservations the
@@ -235,10 +243,12 @@ buttons on its fixed art, Slide's among them, unbound.
 - Right-click or the row's ✕ CLEARS a binding at once - no question, staged like every other edit, so leaving the
   page still drops it (UXB1-C, 2026-09-25, the UX backlog: "Having to scroll back to your key is bad"). The classic
   grid keeps DFU's own remove prompt.
-- ONE KEY, ONE ACTION (law 3/4) stands, and the page answers the case that asked about it ("jump+swim-up"): Float up
+- A key can do more than one thing (law 3, UXB1-S): the held-key question's third answer, USE FOR BOTH, keeps the
+  holder and adds the key here; a shared key is green on every row it answers, and each row names what else it does
+  ("Also: Jump"). The case that asked for it ("jump+swim-up") needs no share at all, and the page says so: Float up
   and Float down say, in the live keys, that Jump and Crouch already raise and lower a swimming or levitating body
-  (LevitateMotor.cs:86-89), and giving Jump's key to Float up is answered "you need neither" (`floatHint`,
-  `sharedFloatNote`).
+  (LevitateMotor.cs:86-89), and giving Jump's key to Float up adds "you need neither" (`floatHint`,
+  `sharedFloatNote`) beside the three answers.
 - **Defaults is staged**, as the page's own sentence says ("Nothing is saved until you press Confirm"): DFU's
   SetDefaults reset the live registry and saved on the spot; here Confirm commits the reset (with its joystick
   tail and removal marks) and any edit made after it. Leaving the page drops everything staged. (The button read

@@ -259,7 +259,16 @@ test('UXB1-S: the enhanced page - a key in use offers "Use for both"; the answer
     delete globalThis.document;
     setBindings(null);
   }
-  assert.match(read('src/ui/enhancedStyle.js'), /\.ctl-key\.ctl-shared \{ color: #6fcf8a;/, 'its own colour, neither of DFU\'s two');
+  const css = read('src/ui/enhancedStyle.js');
+  assert.match(css, /\.ctl-key\.ctl-shared \{ color: #6fcf8a;/, 'its own colour, neither of DFU\'s two');
+  // ...and it READS in both faces: the door's `.shell .act` outranked the bare two-class rule, so on the main menu's
+  // Settings even DFU's red clash drew as a plain key (measured in a browser: the key's computed colour was the bone)
+  for (const st of ['ctl-dupe', 'ctl-cross', 'ctl-shared']) {
+    assert.match(css, new RegExp(`\\.shell \\.ctl-key\\.${st}, \\.px-sys \\.ctl-key\\.${st} \\{`), `${st} wins in both faces`);
+  }
+  // ...and the question the key raised stands in a head backed SOLID - the cards are a 35% wash, and a sticky one was
+  // read with the rows scrolling under it printed through its words
+  assert.match(css, /\.shell \.card\.ctl-head, \.px-sys \.card\.ctl-head \{ background: #0d1014; \}/);
 });
 
 test('UXB1-S: the classic grid - its replace box takes B for "both", draws the share in its own colour, and closes on it', () => {

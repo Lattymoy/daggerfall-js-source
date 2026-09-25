@@ -1837,6 +1837,12 @@ ${badgeCss()}
    colour (a clash keeps the red and the blue), with the other actions it
    answers named under the row. */
 .ctl-key.ctl-shared { color: #6fcf8a; border-color: #6fcf8a; }
+/* ...and the three states read in BOTH faces: the door's .shell .act and
+   the pause face's button rules outrank a bare two-class selector, so on
+   the main menu's Settings even DFU's red clash drew as a plain key. */
+.shell .ctl-key.ctl-dupe, .px-sys .ctl-key.ctl-dupe { color: var(--blood); border-color: var(--blood); }
+.shell .ctl-key.ctl-cross, .px-sys .ctl-key.ctl-cross { color: #4a9ae8; border-color: #4a9ae8; }
+.shell .ctl-key.ctl-shared, .px-sys .ctl-key.ctl-shared { color: #6fcf8a; border-color: #6fcf8a; }
 .ctl-alsos { color: #6fcf8a; }
 .ctl-prompt .ctl-share { border-color: #6fcf8a; }
 /* UXB1-F: the keys this page names and cannot move - drawn as a key's face,
@@ -1857,6 +1863,11 @@ ${badgeCss()}
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 .px-sys .ctl-notice.bad { color: var(--blood); }
 .px-sys .ctl-head .acts { flex-wrap: wrap; }
+/* UXB1-S: the page's cards are a 35% wash (the door's .shell and the pause
+   face's .px-sys alike), and a STICKY one is read over
+   the rows scrolling under it - the question and its answers came out
+   printed across a row's words. The head alone is backed solid. */
+.shell .card.ctl-head, .px-sys .card.ctl-head { background: #0d1014; }
 @media (max-width: 480px) {
   .ctl-key, .px-sys .ctl-key { min-width: 104px; }
 }

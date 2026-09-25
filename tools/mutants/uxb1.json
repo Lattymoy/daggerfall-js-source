@@ -325,5 +325,23 @@
     "tests": [
       "test/uxb1s_sharedkeys.test.js"
     ]
+  },
+  {
+    "name": "UXB1-S-the-key-states-lose-to-the-shell",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".shell .ctl-key.ctl-shared, .px-sys .ctl-key.ctl-shared { color: #6fcf8a; border-color: #6fcf8a; }\n",
+    "new": "",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
+  },
+  {
+    "name": "UXB1-S-the-sticky-head-shows-the-rows-through",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".shell .card.ctl-head, .px-sys .card.ctl-head { background: #0d1014; }\n",
+    "new": "",
+    "tests": [
+      "test/uxb1s_sharedkeys.test.js"
+    ]
   }
 ]

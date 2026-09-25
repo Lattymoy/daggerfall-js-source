@@ -18129,6 +18129,19 @@ Fifteen items in five groups, each answered on both skins where both have the sc
   (SPACE) rises too while you swim or levitate", in the live keys - and giving Jump's key to Float up is answered "you
   need neither". The conflict itself is highlighted where it is decided: the replace question stands in the sticky head
   over the list it no longer replaces, the row the key would go to edged in brass and the row that holds it in red.
+- **S - and then: "So you wont add multiple key bindings even when asked? I dont care if it goes against daggerfall."**
+  So it is added, and recorded as a departure. The held-key question has a third answer, USE FOR BOTH (a button on the
+  enhanced page, B in the classic grid and its ADVANCED popup), offered wherever every holder holds this very key: the
+  key stays and lands on the new action too, and a press does all of them. The store keeps DFU's code -> action
+  orientation for a key's OWNER and lists its sharers beside it (`inputActions.js` shareBinding, dictEntries,
+  actionsForCode), saved only where there are any; every per-frame poll sees each action and every dispatch runs each
+  (`ui/input.js` actionsOf, routeKey; `world.js` and `exterior.js` run their ladder once per action, the HUD's own
+  shortcut keys on the first pass alone; every window's own-key close asks "does this key mean me"). DFU's duplicate law
+  now finds only the clash no press resolves - a combo against its own modifier bound bare - still red or blue and still
+  blocking; a share is green, and each of its rows names what else the key does. Measured in a browser on the way:
+  the page's key-state colours had never drawn on the main menu's Settings (the door's `.shell .act` outranked them, so
+  even DFU's red clash was a plain key), and the sticky head the question stands in was a 35% wash with the rows
+  printed through it - both fixed (`enhancedStyle.js`, the UXB1-S rules).
 - **E - Sync from server**: `systems/onlineSync.js`, a card under the Online pane's rules. THERE IS NO HOST TO ASK: a relay
   serves the wire and /health and publishes no rules, because the rules are the online lane's - this build's, the same on
   every server. So the sync copies the lane into the offline stores (every forced pref, DFU setting and room mod key,
@@ -18164,5 +18177,7 @@ Fifteen items in five groups, each answered on both skins where both have the sc
   its own tone, and "Searched" once its window opened on this stock (stamped with the stock's day, shut by the restock).
   The enhanced plaque only: the classic HUD line has no second line to carry it.
 
-Pins: `test/uxb1*.test.js` (42), with `enhancedControls.test.js` (22), `ccrep`, `housecontainers` and `macro7_gate`
-re-aimed. Mutants: `tools/mutants/uxb1.json`, 18, all dead; `worldhover.json`'s four signature records re-aimed by content.
+Pins: `test/uxb1*.test.js` (52), with `enhancedControls.test.js` (22), `ccrep`, `housecontainers` and `macro7_gate`
+re-aimed, and for S every pin that stated one key, one action re-aimed to the shared-key law (the I4 duplicate and apply
+pins, SOC D3's yield, the hosts' ladder and window-key source pins). Mutants: `tools/mutants/uxb1.json`, 38, all dead;
+`worldhover.json`'s four signature records and thirty-one records S moved re-aimed by content.
