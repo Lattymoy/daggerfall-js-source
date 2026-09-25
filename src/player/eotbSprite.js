@@ -35,7 +35,7 @@ const URLS = IN_BROWSER
   ? {
     ...import.meta.glob('../../vendor/eye-of-the-beholder/Textures/*/*.png', { eager: true, query: '?url', import: 'default' }),
     // SKIN2: the class skins, keyed the same way (`<archive>_<record>-<frame>`) - their archives (1504-1541) are not the mod's (112364-112386)
-    ...import.meta.glob('../../vendor/class-skins/*/*.png', { eager: true, query: '?url', import: 'default' }),
+    ...import.meta.glob('../../vendor/class-skins/Textures/*/*.png', { eager: true, query: '?url', import: 'default' }),
   }
   : {};
 

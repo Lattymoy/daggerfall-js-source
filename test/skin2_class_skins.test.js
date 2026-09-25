@@ -26,7 +26,7 @@ import { skinCard, skinSets, FOOT_GROUPS } from '../src/ui/skinCard.js';
 import { ENHANCED_CSS } from '../src/ui/enhancedStyle.js';
 
 const V = 'eye-of-the-beholder';
-const png = (key) => new URL(`../vendor/class-skins/${key.split('_')[0]}/${key}.png`, import.meta.url);
+const png = (key) => new URL(`../vendor/class-skins/Textures/${key.split('_')[0]}/${key}.png`, import.meta.url);
 const skin = (name, gender) => CLASS_SKINS.find((s) => s.name === name && s.gender === gender);
 const indexOf = (s) => EOTB_FOOT_SET_COUNT + CLASS_SKINS.indexOf(s);
 
@@ -36,7 +36,7 @@ test('SKIN2: the twenty class sheets are vendored, and the manifest counts every
   for (const s of CLASS_SKINS) {
     assert.ok(s.archive < ARCHIVE_FOOT, `${classSkinLabel(s)}: a Daggerfall archive, never one of the mod's (${s.archive})`);
     assert.equal(s.frames.length, s.bow ? 30 : 25, `${classSkinLabel(s)}: five groups, six with a bow`);
-    const files = readdirSync(new URL(`../vendor/class-skins/${s.archive}/`, import.meta.url));
+    const files = readdirSync(new URL(`../vendor/class-skins/Textures/${s.archive}/`, import.meta.url));
     assert.equal(files.length, s.frames.reduce((a, b) => a + b, 0), `${classSkinLabel(s)}: the manifest is the folder`);
     s.frames.forEach((n, rec) => {
       assert.ok(n >= 1, `${s.archive} record ${rec} has a frame`);
@@ -47,7 +47,7 @@ test('SKIN2: the twenty class sheets are vendored, and the manifest counts every
   // the pack is not uniform, and the manifest says so rather than assuming the layout
   assert.equal(skin('Healer', 'female').frames[20], 5, 'the female healer casts in five');
   assert.equal(skin('Bounty Hunter', 'male').frames[24], 2, 'the bounty hunter\'s last ranged record is two');
-  assert.equal(skin('Pirate', 'male').frames[3], 3, 'a pirate walk record of three');
+  assert.equal(skin('Pirate', 'male').frames[3], 4, 'the pirate\'s record 3 walks in four - its 3-1 shipped as `1529_3-1_.png`, an underscore that is a typo, not a withdrawn frame');
   assert.deepEqual(CLASS_SKINS.filter((s) => s.bow).map(classSkinLabel), ['Assassin (male)', 'Assassin (female)', 'Nightblade (male)', 'Nightblade (female)']);
   assert.equal(classSkinLabel(skin('Dark Acolyte', null)), 'Dark Acolyte', 'no sex named, none printed');
   assert.ok(Object.isFrozen(CLASS_SKINS) && Object.isFrozen(CLASS_SKINS[0].frames));

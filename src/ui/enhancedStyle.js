@@ -2098,6 +2098,15 @@ ${badgeCss()}
   color: rgb(243,239,44); border-color: var(--brass);
   text-shadow: 2px 2px 0 rgb(93,77,12); }
 
+/* PROFILE2 (Mac: "make the profile icon visible somehow on the pause
+   menu"): over the game the mark is a size smaller, so it stands in the
+   scrim above the pause window (74dvh tall, centred) rather than over
+   its tabs; and its window is centred - there is no wordmark to sit
+   under, which is what the door's deep top padding is for. */
+.px-over .px-profile { top: 10px; right: 12px; }
+.px-over .px-portrait { width: 48px; height: 48px; }
+.px-over .px-acctstage { padding: 24px 16px; grid-template-rows: 1fr; align-items: center; }
+.px-over .px-win.px-acctwin { align-self: center; max-height: min(640px, 86dvh); }
 @media (max-width: 480px) {
   /* On a phone the wordmark owns the top, so the mark loses its caption
      and keeps its portrait and gem - a 48px target, over the 44px floor. */

@@ -160,7 +160,7 @@ import { accountCard } from './enhancedAccount.js';
 import { skinCard } from './skinCard.js';   // DISC23-B2: the skin, on the profile
 import { saveTile, cloudStateOf, saveFromCard } from './saveTile.js';   // TILE1 (Mac: "a detailed tile based design for your saves... showing your portrait and character information"), and ACC2c's card-shaped save
 import { loadFace } from './facePortrait.js';
-import { profileBadge, portraitSave } from './profileBadge.js';   // PROFILE1: the mark is the last character's portrait   // TILE1: the character's face, the one home chargen also reads
+import { profileBadge, portraitSave, liveCharacter } from './profileBadge.js';   // PROFILE1: the mark is the last character's portrait   // TILE1: the character's face, the one home chargen also reads
 import { cloudIo, cloudList, pushSlot, pullSlot, removeCloudSlot, cloudOnly, slotKeyOf, cloudRefusalText } from '../systems/cloudSaves.js';   // ACC2: the backup a tile can offer, AUDIT-312 F1's delete, and ACC2c's download of a save that is only up there
 import { serviceBase, storedSession } from '../net/accountClient.js';
 
@@ -817,7 +817,8 @@ const signedIn = () => !!storedSession(appStorage());
  *  asked for as a promise so the door never waits on a CIF read. */
 function profileMark() {
   const who = storedSession(appStorage());
-  const save = portraitSave(savedGames());
+  // PROFILE2: paused, the portrait is the character being PLAYED (the newest save may be another's)
+  const save = mode === 'pause' ? liveCharacter(playerEntity) : portraitSave(savedGames());
   return profileBadge(document, {
     session: who,
     save,
@@ -2920,10 +2921,24 @@ function renderHome() {
     const stage = el('div', 'px-stage');
     stage.append(pauseWindow());
     home.append(stage);
+    // PROFILE2 (Mac, 2026-09-25: "make the profile icon visible somehow on the pause menu and allow changes"): THE
+    // PROFILE MARK OVER THE GAME TOO. The same portrait the door wears, top-right - the character being played - and
+    // the same window it opens: the account and the Skin card. A skin worn here is worn at once (the body re-reads the
+    // mod's store) and told to the room (scenes/world.js hands the new look to net/online.js setLook). The window is
+    // innermost: a tap outside it, or Escape, closes IT and leaves the pause window standing - never the game resumed
+    // from under a half-made choice.
+    home.append(profileMark());
+    if (accountOpen) {
+      const acct = el('div', 'px-stage px-acctstage');
+      acct.append(accountWindow());
+      home.append(acct);
+      closeOnOutsideTap(home, '.px-acctwin', () => { accountOpen = false; render(); });
+    }
     // OT1 (Mac: "tapping outside of any UI closes the UI"): a tap on the
     // scrim - outside the window, the clock and the foot - resumes,
     // the way Escape does; the front door has no scrim and no resume.
-    closeOnOutsideTap(home, '.px-win, .px-clock, .px-foot', () => onAction('resume'));
+    // PROFILE2: the mark is inside too (a press on it opens the window), and with the window open the tap is its.
+    else closeOnOutsideTap(home, '.px-win, .px-clock, .px-foot, .px-profile', () => onAction('resume'));
     // PX4 (Mac): NO FOOT AT PAUSE - no skin toggle, no About plaque;
     // About is a System-tab row instead, and the skin switch stays on
     // the boot face and the settings shell.
@@ -3741,6 +3756,9 @@ export function mountEnhancedMenu(host, {
   mode = m === 'pause' ? 'pause' : 'boot';
   hooks = h ?? {};
   questRepairSaid = null;   // QREPAIR: a repair's line is that visit's
+  // PROFILE2: and the profile window is a visit's too - the pause screen mounts this module again, and a window left
+  // open on the door (or on the last pause) must not be standing over the next one before the player asks for it
+  accountOpen = false;
   // MAC1 (Mac, 2026-09-10: "after exiting game and then going back to
   // enhanced settings, the Build and Switch Arms options are gone and
   // require me to reattach the files"). The Morrowind store is COUNTED

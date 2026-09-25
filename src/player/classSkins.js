@@ -30,11 +30,12 @@
 // sixteen - so the body, the preload, the peers and the Skin card all
 // draw a class skin through the one door they already use.
 //
-// THE ART is vendored under `vendor/class-skins/<archive>/` with a
+// THE ART is vendored under `vendor/class-skins/Textures/<archive>/` with a
 // manifest of every record's real frame count (`skins.json`, written
 // when the archive was unpacked: the pack is not uniform - the female
-// healer's cast is five frames, the bounty hunter's last record two, a
-// walk record of the pirate's three).
+// healer's cast is five frames, the bounty hunter's last record two).
+// `class-skins.files.json` beside it is the art's authority: every file's
+// archive path, generated and byte-checked by tools/classSkinsListing.mjs.
 // ═══════════════════════════════════════════════════════════════════
 
 import manifest from '../../vendor/class-skins/skins.json' with { type: 'json' };

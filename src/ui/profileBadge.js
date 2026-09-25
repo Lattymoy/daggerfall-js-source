@@ -35,6 +35,19 @@ export function portraitSave(saves) {
   return (saves ?? []).find((s) => s && s.chargenDone !== false && typeof s.race === 'string' && s.race) ?? null;
 }
 
+/**
+ * PROFILE2: the character the portrait shows ON THE PAUSE SCREEN - the one being played, not the newest save. Paused,
+ * the newest save may be another character's (a second character saved from the door, a load of an older one), and
+ * the player in the game is the one whose skin the card changes. The live entity carries the same identity fields a
+ * save does (race, gender, faceIndex, name, level - net/remotePlayers.js composeLook reads the first three off it);
+ * with no race it is no character yet, and the silhouette stands.
+ * @param {{race?: string|null, gender?: string, faceIndex?: number, name?: string, level?: number}|null|undefined} entity
+ */
+export function liveCharacter(entity) {
+  if (!entity || typeof entity.race !== 'string' || !entity.race) return null;
+  return { name: entity.name, level: entity.level, race: entity.race, gender: entity.gender, faceIndex: entity.faceIndex };
+}
+
 /** The caption's second line: whose face this is. */
 export function characterLine(save) {
   if (!save) return 'No character yet';

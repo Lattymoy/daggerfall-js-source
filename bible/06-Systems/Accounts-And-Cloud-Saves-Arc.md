@@ -3211,3 +3211,86 @@ Pinned in `test/profile1_badge.test.js` (4):
 `test/nameadopt.test.js`'s pin on the mark reading the store is re-aimed
 at the session the door hands the badge. Mutants:
 `tools/mutants/profile1.json`, 13, all dead.
+
+## PROFILE2 — the profile on the pause menu, and a change that reaches the room (2026-09-25)
+
+Mac: *"Go ahead and make the profile icon visible somehow on the pause
+menu and allow changes"*.
+
+**The mark over the game** (`ui/enhancedMenu.js` renderHome's pause
+branch):
+- The pause screen wears PROFILE1's portrait top-right, a size smaller
+  (48px, `.px-over .px-profile`) so it stands above the pause window.
+- It shows the character being PLAYED (`liveCharacter(playerEntity)`,
+  `ui/profileBadge.js`), not the newest save. Paused, the newest save may
+  be another character's.
+- A press opens the same window the door opens: the account card and the
+  Skin card, centred over the pause window (no wordmark to sit under).
+- The window is innermost:
+  - a tap outside it closes it and leaves the pause window standing (its
+    own `closeOnOutsideTap`, `.px-acctwin`);
+  - Escape closes it first, through the one back stack;
+  - otherwise the scrim resumes as before, with the mark counted inside.
+- It is a visit's: `mountEnhancedMenu` closes it, so a window left open on
+  the door does not stand over the next pause.
+- The classic (canvas) pause window is DFU's OPTN00I0 panel and is not
+  changed.
+
+**The change reaches your own body at once.** The Skin card writes the
+mod's store, which the body re-reads. A changed set is now fetched whole
+(`player/eotbBody.js` reload -> `preload`), as the mod's LoadSettings ->
+Initialize -> InitializeTextures does. Before, each new frame was fetched
+when first drawn and its slot drew the old set's frame meanwhile, so a
+skin changed mid-walk showed two people for a second.
+
+**The change reaches the room.** This was the real gap. A look rode the
+HELLO alone (`net/online.js` `_member` already said so), so a skin chosen
+mid-session stayed on this screen and nobody else's until the next room.
+- **The `look` frame** (`net/wire.js`):
+  - it is the hello's look without the hello: after a hello only, through
+    `validLook`;
+  - per socket it is gated at `LOOK_HZ_MAX` (0.5 a second, one whole
+    token);
+  - clients send it only to a relay at `LOOK_RELAY_MIN` (world109) or
+    later, since an older relay closes the socket on an unknown frame.
+- **The relay** (`server/src/index.js`, the look arm):
+  - stores the look where the hello did, so a later welcome's roster and a
+    `who` answer say the new one;
+  - fans the hello's JOIN to everyone else in the room, which every
+    client already reads as "this peer's look is now this" (`_refresh`);
+  - sends no pose with it, because the join goes to the whole room and
+    the pose fan is the ranged one;
+  - skips channels, which keep no look;
+  - spends the room's hello budget, since the fan is a hello's fan. Past
+    that budget the socket is refused busy, as a hello is, and its
+    reconnect's hello carries the look.
+- **The session** (`OnlineSession.setLook`):
+  - keeps the new look, so every later hello carries it;
+  - sends it down every socket already hello'd that knows the frame: the
+    primary and each open halo (`h.lookOk`, from the halo's own welcome);
+  - holds it while the gate is shut and flushes it on the tick, sending
+    the LATEST, so trying skin after skin sends one frame;
+  - with nothing open, owes nothing.
+- **The host** (`scenes/world.js`):
+  - hands the session `composeLook(playerEntity)` once a second
+    (`ONLINE_LOOK_CHECK_MS`);
+  - also hands it at every join and halo it opens. Those two sites used to
+    write `online.look` directly, which told no socket already open,
+    including a halo a crossing promotes (it sends no hello of its own).
+  - A coat put on reaches the room the same way.
+- RELAY_VERSION stays world109 (SKIN2's deploy, not yet shipped); its law
+  row is re-hashed.
+
+Pinned in `test/profile2_pause_profile.test.js` (9):
+- the live character;
+- the pause face's wiring and cascade;
+- the wire door;
+- the relay's store, fan, meter, busy refusal and channel;
+- the session's primary, halo, gate, latest-wins and old relay;
+- a session drawing the new look through the real relay;
+- the hosts.
+
+`test/outsideTap.test.js` names the third scrim;
+`test/profile1_badge.test.js` reads the door's paused arm. Mutants:
+`tools/mutants/profile2.json`, 22, all dead. Not verified in a browser
+(no probes).

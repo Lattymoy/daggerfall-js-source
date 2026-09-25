@@ -1005,12 +1005,24 @@ diagonal, the side view its negative case), `test/htwaistback.test.js`. Not veri
 Mac, with an archive of redrawn Daggerfall class sprites (ExistingClasses): *"1. Implement these as new skin options
 2. Reorganize the skin selector as 2 single panels for unmounted/mount that can be opened to view available skins"*.
 
-**The art.** Twenty sheets, vendored under `vendor/class-skins/<archive>/<archive>_<record>-<frame>.png` (1,682
+**The art.** Twenty sheets, vendored under `vendor/class-skins/Textures/<archive>/<archive>_<record>-<frame>.png` (1,683
 pictures, 8.2 MB), with `skins.json` listing each skin's archive, name, sex, whether it carries a bow, and every
 record's real frame count. The pack is not uniform, so the manifest counts the files rather than assuming the layout:
-the female healer casts in five frames, the bounty hunter's last ranged record has two, and one pirate walk record has
-three. Two records whose frames were numbered with a gap (the vanilla adventurer's record 3, the pirate's record 3)
-were renumbered in order when unpacked. `vendor/class-skins/README.md` has the provenance and the archive numbers.
+the female healer casts in five frames and the bounty hunter's last ranged record has two. The vanilla adventurer's
+record 3 was numbered with a gap (0, 1, 2, 4) and was renumbered in order when unpacked. `vendor/class-skins/README.md`
+has the provenance and the archive numbers.
+
+**The art's authority, and a frame the first cut lost** (found when the PNGs were first tracked and the raster
+doctrine, `test/doctrine.test.js`, reddened on them: the suite had run before `git add`, the AUDIT-TO1 trap). The
+pack is a loose-file archive with no manifest of its own, so its authority is a listing generated from the archive,
+GrimoireUI's way: `vendor/class-skins/class-skins.files.json`, every vendored file mapped to the archive path it came
+from, the archive's sha256 beside it, and `tools/classSkinsListing.mjs` proving each vendored file is that path's
+bytes. The art moved under `Textures/` (the doctrine's directory rows hold art alone, as Eye of the Beholder's do),
+and the row is `vendor/class-skins/Textures/`. Building the listing turned up the pirate's `1529_3-1_.png`: SKIN2's
+first cut skipped it as a stray and renumbered record 3's 0, 2, 3 into three frames, and it is the walk's passing
+step between the strides 3-0 and 3-2 (checked on a contact sheet against record 2's 2-0..2-3), its underscore a
+typo. It is frame 3-1 now; the pirate's back three-quarter walks in four frames like every other record, and the
+pack is 1,683 pictures.
 
 **The layout is not the mod's.** EOTB draws a player from twelve on-foot tables of five records each. A class sheet is
 Daggerfall's enemy-class shape: 0-4 walk (4 frames), 5-9 attack (6), 10-14 hurt (1), 15-19 idle (1), 20-24 ranged or
