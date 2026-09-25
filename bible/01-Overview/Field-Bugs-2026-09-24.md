@@ -1359,3 +1359,22 @@ it is reversed.
 `test/lootstack.test.js` (the source pin). Mutants `tools/mutants/prwagon1.json`
 (7 dead); `hcc.json` and `disc20.json` re-aimed.
 
+# WISPS-RETURN — the wind wisps are streaks again (2026-09-25)
+
+**Request** (Mac): "I want to return to the original wind wisps before our
+current design".
+
+**What changed.** WIND5's swirl (2026-09-23: each wisp a calligraphic
+flourish, a ribbon ending in a curl, drawn on and off along its path) is
+retired, and each wisp is WIND3's straight streak along the wind again -
+its quad, its length and its fade. DISC17-A's count (120 at a gale, 10 in a
+calm) and its doubled opacity stand: those asks were about how many and how
+dark, not about the shape. A streak at its darkest is 0.44 in a gale and
+0.20 in a calm. The sandstorm is unchanged. The record, and why, is
+`07-Rendering/Rendering.md` WISPS-RETURN.
+
+**Pins.** `test/wispsreturn.test.js` (3), every one failing on the base;
+`test/disc17.test.js`, `test/wind3_windworld.test.js` and
+`test/weather2d_sandstorm.test.js` follow;
+`test/wind5_swirls.test.js` RETIRED. Mutants `tools/mutants/wispsreturn.json`
+(13 dead); `wind5.json` retired; `auditvc7.json` re-aimed.

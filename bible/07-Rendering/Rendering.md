@@ -853,7 +853,71 @@ See `Seasons-Iliac-Bay.md` for SIB1: RosyTheRascal's Seasons of the Iliac Bay mo
 
 `EE9-Surface-Field-Design.md` is the surface field's design - snow that builds, deforms and melts, on the chunker's own grid - written before its code, per the arc's law.
 
+## WISPS-RETURN - THE WIND WISPS ARE STREAKS AGAIN (2026-09-25)
+
+Mac, 2026-09-25: *"I want to return to the original wind wisps before
+our current design."*
+
+- **The design goes back to WIND3's.** "Our current design" was WIND5's
+  flourish (below): each wisp a 40-segment ribbon along an arched or S
+  stroke that ended in a tightening curl, swelling and thinning like a
+  pen, soft across like ink, drawn on and off along its path. "The
+  original" is the streak WIND3 shipped and WIND4 thinned: one thin quad
+  stretched along the wind's velocity, faced to the eye, faint at its
+  tail and brightest toward its head, fading in and out whole on its own
+  clock. `render/windWisps.js` draws that streak again - WIND3's two
+  stages, its six-corner quad and its streak length (`WISP_LOOK.len`
+  1.6 m plus up to 2.4, times a half plus the strength, where WIND5 took
+  2.6 plus up to 2.0 to hold a curl).
+- **WIND5's swirl is retired whole, not kept beside it.** Mac asked for
+  the design back, not for a choice, so there is one design in one
+  program, as WIND3 had: `swirl()`, the pen, the ink, the draw-on,
+  `ribbon()`, the `uCurl` uniform, the looks' `curl` and the nine
+  WISP_SEGMENTS to WISP_DRAW_TAIL constants are gone from the tree.
+- **Kept, because they were not the design.** DISC17-A's two numbers were
+  Mac's asks about the amount and the visibility, made while the
+  flourish stood but not about its shape: `WISP_MAX` 120 at a gale and
+  10 in a calm (WIND4's streaks were 650 and 52), and `WISP_LOOK`'s alpha
+  0.20/0.24, twice WIND3's. A streak at its darkest is therefore 0.44 in
+  a gale and 0.20 in a calm - WIND4's were 0.22 and 0.10; the flourish's
+  ink peaked at 0.70 on a thinner, soft-edged line. The later fixes stay
+  too: AUDIT-VC7 (G6)'s whole clock (the wobble and the life's rate in
+  whole cycles over `WISP_CLOCK_PERIOD`, the clock handed wrapped), AUDIT
+  68's exact wrap (the gust in whole 1/`WISP_GUST_DIV` steps, the travel
+  wrapped at the box times `WISP_GUST_DIV`) and its one compile and link
+  (`buildProgram`). The sandstorm's grains were always the straight quad
+  (WIND5 gave them a curl of 0) and draw exactly as they did.
+- **Pinned** by `test/wispsreturn.test.js` (3, each failing on the
+  base), on the real renderer's uploads run through both shaders' own
+  main()s (`test/wispShade.mjs`): a wisp's whole length on one line down
+  a diagonal wind at its look's length for the strength, one width end
+  to end, square to the wind and to the eye's ray, in the wind's look and
+  the sand's; WIND3's fade along it, whole across its width, times the
+  look's alpha and the life; one six-corner draw a wisp, every declared
+  uniform uploaded and nothing else, the flourish's exports gone.
+  `disc17.test.js` reads DISC17-A's darkest through the same pipeline;
+  `wind3_windworld.test.js` has its streak and clock lines back and holds
+  AUDIT-VC7's clock and the count's ramp, moved from the retired
+  `wind5_swirls.test.js`; `weather2d_sandstorm.test.js` holds the looks
+  without a curl. Mutants: `tools/mutants/wispsreturn.json` (13, all
+  dead); `wind5.json` retired; `auditvc7.json`'s six swirl records
+  retired with the code they mutated and its seven other wisp records
+  re-aimed at the suites that hold their laws now. Drawn on a real GPU by
+  `tools/wispStreakProbe.mjs` (WIND5's probe, renamed, its checks the
+  streak's: one quad a wisp, ink at a gale and less in a calm, moving,
+  and running along the wind). On SwiftShader, 7/7: a gale's ink runs
+  34.6 px along the wind to 1.5 px up it. A calm's ten wisps in the 90 m
+  box are often out of one view at one moment - over four headings and
+  three moments they laid 482 px against a gale's 9747 - so if a calm
+  should read at a glance, `WISP_FLOOR` is the dial. Not seen in the game
+  here (no game data in the container).
+
 ## WIND5 - THE WIND'S FLOURISHES (2026-09-23)
+
+**Retired 2026-09-25 by WISPS-RETURN (above).** The design below is no
+longer in the tree; this is the record of what was drawn. Its suite,
+mutant list and probe went with it or were re-aimed there, and
+DISC17-A's count and alpha stand.
 
 Mac, with a sheet of calligraphic wind flourishes: "lets reduce the
 amount of wind streaks and change their design to be more swirly like
@@ -884,10 +948,10 @@ the image".
   before. Its alpha is the look's own (doubled by DISC17-A).
 - **The sand keeps its streak.** A look carries `curl`; the sandstorm's
   is 0, so its 7000 grains are one straight quad each, as they were.
-- Pinned by `test/wind5_swirls.test.js` (the path mirrored term for term:
+- Pinned by `test/wind5_swirls.test.js` (RETIRED by WISPS-RETURN; the path mirrored term for term:
   continuous and level at the join, heading down the wind on both sides,
-  the curl's turns and tightening measured; `tools/mutants/wind5.json`
-  19/19 dead), and drawn on a real GPU by `tools/wind5SwirlProbe.mjs`
+  the curl's turns and tightening measured; `tools/mutants/wind5.json` (RETIRED)
+  19/19 dead), and drawn on a real GPU by `tools/wind5SwirlProbe.mjs` (RETIRED: renamed `tools/wispStreakProbe.mjs`)
   (6/6: compiles and links, the ribbon's vertex count drawn, a gale's
   ink, a calm's lighter, the sand's one quad, the flourishes moving;
   `--bold` for a picture of the shape).
