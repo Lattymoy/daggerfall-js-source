@@ -218,7 +218,7 @@ test('WB3b the link: the relay\'s words folded into one state - a whole state st
 
 test('WB3b the seams, by source: the dungeon host enters the court through its own transition (the made level whole, its blocks file, the court stood before the marker is read, the way home its exit door and landing before the gate), wears the Deadlands\' air and braziers there, and names its room the gate\'s; the context refuses the map, the rest and the save; the world host opens the door at a relay that runs the room, keys the court\'s room, says the level claim once per welcome, holds the ring, casts a death out before the gate, refuses the mark, and ends the court with its day or with online (mutants: each seam removed)', () => {
   const wm = read('src/scenes/worldModes.js');
-  assert.match(wm, /async function enterGateArena\(g\) \{[\s\S]{0,900}return gatedTransition\(\(live\) => dungeonTransition\(hit, \[\], true, live\)\);/);
+  assert.match(wm, /async function enterGateArena\(g\) \{[\s\S]{0,1500}return gatedTransition\(\(live\) => dungeonTransition\(hit, \[\], true, live\)\);/);   // AUDIT WB B3/B5: the door's two checks after the fire widened it
   assert.match(wm, /const dfLocation = dungeonLocationFor\(hit\.dfLocation, /, 'the court\'s one block passes the sizing law whole');
   assert.match(wm, /dfLocation, hit\.blocksFile \?\? blocks, dfLocation\.climate\.climateType, \{/);
   const stood = wm.indexOf('if (hit.gateArena) standCourt(ctx);'), marker = wm.indexOf('const spawn = ctx.startSpawn({ preferEnterMarker });');

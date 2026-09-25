@@ -107,7 +107,7 @@
   {
     "name": "WB6c-the-world-unchecked-after-the-fire",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (mode !== 'exterior') return false;   // WB6c: a door, a death or a load taken while the fire closed\n",
+    "old": "      if (mode !== 'exterior' || !(playerEntity.health > 0)) return false;",
     "new": "",
     "tests": ["test/wb6c_gate_veil.test.js"]
   },
@@ -121,7 +121,7 @@
   {
     "name": "WB6c-the-way-home-unveiled",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (isGateArena(dungeonLoc)) { stepThroughFire(async () => { if (mode === 'dungeon' && isGateArena(dungeonLoc)) pendingDungeonExit = true; return true; }); return true; }",
+    "old": "    if (isGateArena(dungeonLoc)) { stepThroughFire(async () => { if (mode === 'dungeon' && isGateArena(dungeonLoc) && aliveUnder()) pendingDungeonExit = true; return true; }); return true; }",
     "new": "",
     "tests": ["test/wb6c_gate_veil.test.js"]
   },

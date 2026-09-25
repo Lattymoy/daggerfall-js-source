@@ -70,11 +70,13 @@ export const GATE_NO_TEXT = Object.freeze({
 
 /**
  * The link: the state, the falls by day, the receipts by day, and the words said.
- * @param {{now: () => number, say?: (text: string) => void, onFell?: (day: number, fell: {at: number, top: string[], n: number}) => void, onReceipt?: (receipt: string) => void}} deps
+ * @param {{now: () => number, say?: (text: string) => void, onFell?: (day: number, fell: {at: number, top: string[], n: number}) => void, onReceipt?: (receipt: string) => void, onRefused?: (why: string) => void}} deps
  *   `onReceipt` is told every receipt the relay hands this socket - the same one again after a reconnect or from the hub
- *   (WB5b: net/gateClaims.js carries it to the account service, and keeps one a day).
+ *   (WB5b: net/gateClaims.js carries it to the account service, and keeps one a day). AUDIT WB B5: `onRefused` is told
+ *   the relay's refusal of my `in` (its word, net/wire.js GATE_NO_WORDS) - the court this player stands in is not theirs
+ *   to fight in, and the host takes them out of it.
  */
-export function createGateLink({ now, say = () => {}, onFell = () => {}, onReceipt = () => {} }) {
+export function createGateLink({ now, say = () => {}, onFell = () => {}, onReceipt = () => {}, onRefused = () => {} }) {
   /** @type {Readonly<GateState>} */
   let state = GATE_STATE_EMPTY;
   const falls = new Map();     // day -> {at, top, n}
@@ -84,7 +86,7 @@ export function createGateLink({ now, say = () => {}, onFell = () => {}, onRecei
      *  moves the court for a kill of its own day alone. */
     word(g) {
       if (!g) return;
-      if (g.k === 'no') { say(GATE_NO_TEXT[g.m] ?? g.m); return; }
+      if (g.k === 'no') { say(GATE_NO_TEXT[g.m] ?? g.m); onRefused(g.m); return; }
       if (g.k === 'rcpt') { const c = readReceipt(g.r); if (c) { receipts.set(c.d, g.r); onReceipt(g.r); } return; }   // one a day: the receipt says which
       if (g.k === 'fell') {
         const day = g.d ?? state.day;

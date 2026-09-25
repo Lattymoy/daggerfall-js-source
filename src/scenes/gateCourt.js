@@ -36,6 +36,16 @@ export const COURT_STRIKE_TEXT = Object.freeze({
  *  a receipt not come this long after it never will. */
 export const SPEW_AT_MS = 500;
 export const RECEIPT_WAIT_MS = 4000;
+/** AUDIT WB B7: his death cry is heard only this near his fall - a player who comes to the court (or back to it) after
+ *  he fell hears the thud's own late rule, not a cry from minutes ago. */
+export const FALL_CRY_LATE_MS = 1500;
+
+/** AUDIT WB B4: AN ATTACK IS ITS NUMBER AND ITS MOMENT. The relay numbers a fight's attacks, and a room woken from its
+ *  checkpoint numbers them from there again - the next attack would wear the number of one this screen already judged,
+ *  cued and landed, and pass unheard and unfelt. */
+const noMark = () => ({ i: -1, at: NaN });
+const marked = (m, atk) => m.i === atk.i && m.at === atk.at;
+const setMark = (m, atk) => { m.i = atk.i; m.at = atk.at; };
 
 /** The boss by his id (the relay's word), or the day's (net/gateLaw.js). */
 export const bossOf = (s) => GATE_BOSSES.find((b) => b.id === s?.boss) ?? gateBossOf(s?.day ?? 0);
@@ -70,7 +80,7 @@ export function createGateCourt({
   /** the sprite: its texture once loaded (or the promise, or a failure), its batch while drawn */
   let body = null, loading = null, batch = null;
   /** the fight this driver is on (its day), and what it has done with its attacks */
-  let day = null, judgedI = -1, cuedI = -1, landedI = -1, phaseHeard = 0, fellCued = false, wrathLanded = false;
+  let day = null, judged = noMark(), cued = noMark(), landed = noMark(), phaseHeard = 0, fellCued = false, wrathLanded = false;
   let prevT = -Infinity, hurtAt = -Infinity, shape = null;
   /** WB4b: his stand-in for the formulas (made once a fight), and my blows' sequence (the wire's `q`) */
   let standIn = null, blowSeq = 0;
@@ -79,12 +89,12 @@ export function createGateCourt({
   /** WB7: his body's sounds - where he stood last frame and how far he has come since his last step, when he growls
    *  next, the health last heard and his last grunt, the landing that shook the ground, the phase the thunder has
    *  answered, and whether his body has met the floor */
-  let stepFrom = null, strideRun = 0, growlAt = null, hpHeard = null, gruntAt = -Infinity, quakedI = -1, thunderPhase = 0, thudCued = false;
+  let stepFrom = null, strideRun = 0, growlAt = null, hpHeard = null, gruntAt = -Infinity, quaked = noMark(), thunderPhase = 0, thudCued = false;
 
   function reset(d) {
-    day = d; judgedI = -1; cuedI = -1; landedI = -1; phaseHeard = 0; fellCued = false; wrathLanded = false;
+    day = d; judged = noMark(); cued = noMark(); landed = noMark(); phaseHeard = 0; fellCued = false; wrathLanded = false;
     prevT = -Infinity; hurtAt = -Infinity; shape = null; standIn = null; spewed = false; spoilsSaid = false;
-    stepFrom = null; strideRun = 0; growlAt = null; hpHeard = null; gruntAt = -Infinity; quakedI = -1; thunderPhase = 0; thudCued = false;
+    stepFrom = null; strideRun = 0; growlAt = null; hpHeard = null; gruntAt = -Infinity; quaked = noMark(); thunderPhase = 0; thudCued = false;
   }
 
   function sound(cue, s, t, atk) {
@@ -111,10 +121,10 @@ export function createGateCourt({
     const atk = s.atk;
     const f = feet(), e = player();
     const standing = !!f && !!e && e.health > 0;
-    if (atk && atk.i !== judgedI && standing) {
+    if (atk && !marked(judged, atk) && standing) {
       const v = strikeVerdict(atk, f[0] - COURT_CENTRE[0], f[2] - COURT_CENTRE[2], t, prevT);
       if (v !== 'wait') {
-        judgedI = atk.i;
+        setMark(judged, atk);
         if (v === 'hit') { if (ATTACK_BY_ID[atk.a] === ATTACKS.wrath) wrathLanded = true; land(atk); }
       }
     }
@@ -124,12 +134,12 @@ export function createGateCourt({
 
   function cue(s, t) {
     const atk = s.atk, A = atk ? ATTACK_BY_ID[atk.a] : null;
-    if (A && atk.i !== cuedI) { cuedI = atk.i; if (t < atk.at) sound(BOSS_CUES.windup[A.key], s, t, atk); }
-    if (A && atk.i !== landedI && t >= atk.at) { landedI = atk.i; if (t < atk.at + Math.max(A.active, 1) + 400) sound(BOSS_CUES.land[A.key], s, t, atk); }
-    if (A && atk.i !== quakedI && t >= atk.at && QUAKE_ON.includes(A.key)) { quakedI = atk.i; if (t < atk.at + Math.max(A.active, 1) + 400) sound(BOSS_CUES.quake, s, t, atk); }   // WB7: the ground's shock under a heavy landing
+    if (A && !marked(cued, atk)) { setMark(cued, atk); if (t < atk.at) sound(BOSS_CUES.windup[A.key], s, t, atk); }
+    if (A && !marked(landed, atk) && t >= atk.at) { setMark(landed, atk); if (t < atk.at + Math.max(A.active, 1) + 400) sound(BOSS_CUES.land[A.key], s, t, atk); }
+    if (A && !marked(quaked, atk) && t >= atk.at && QUAKE_ON.includes(A.key)) { setMark(quaked, atk); if (t < atk.at + Math.max(A.active, 1) + 400) sound(BOSS_CUES.quake, s, t, atk); }   // WB7: the ground's shock under a heavy landing
     if (s.phase > thunderPhase) { if (thunderPhase > 0) sound(BOSS_CUES.thunder, s, t, null); thunderPhase = s.phase; }   // WB7: thunder over his roar as a phase turns
     if (s.phase > phaseHeard) { if (phaseHeard > 0) sound(BOSS_CUES.roar, s, t, null); phaseHeard = s.phase; }
-    if (s.fell && !fellCued) { fellCued = true; sound(BOSS_CUES.fall, s, t, null); }
+    if (s.fell && !fellCued) { fellCued = true; if (t < s.fell.at + FALL_CRY_LATE_MS) sound(BOSS_CUES.fall, s, t, null); }   // AUDIT WB B7: never a cry from long ago
     bodySounds(s, t, A);
   }
 
@@ -229,7 +239,8 @@ export function createGateCourt({
      */
     target() {
       const s = link.state(), t = now();
-      if (!s || s.day === null || s.fell || bossAct(s, t).act === 'gone') return null;
+      // AUDIT WB B6: nor once the Wrath has come - the relay judges no blow after it, and he is no one's to strike
+      if (!s || s.day === null || s.fell || s.wrath != null || bossAct(s, t).act === 'gone') return null;
       standIn ??= bossStandIn(bossLookOf(s.boss), bossOf(s).name);
       const [x, z] = bossPlace(s, t);
       return { feet: courtToDungeon(x, 0, z), yaw: s.yaw, height: BOSS_H, radius: BOSS_R, warded: t < s.shieldUntil, entity: standIn, mobile: bossLookOf(s.boss).mobile };
@@ -241,7 +252,7 @@ export function createGateCourt({
      */
     hit({ d, r }) {
       const s = link.state(), t = now();
-      if (!s || s.day === null || s.fell || !Object.values(HIT_KINDS).includes(r)) return false;
+      if (!s || s.day === null || s.fell || s.wrath != null || !Object.values(HIT_KINDS).includes(r)) return false;   // AUDIT WB B6
       if (t < s.shieldUntil) return false;
       const dmg = Math.round(d);
       if (!(dmg >= 1)) return false;
@@ -262,7 +273,7 @@ export function createGateCourt({
       return (!!shape && !!pass) || lit;
     },
     /** What the driver holds, for the tests and the stats. */
-    state: () => ({ day, judgedI, cuedI, landedI, phaseHeard, fellCued, wrathLanded, body: !!body?.tex, batch: !!batch && !batch.hidden, shape }),
+    state: () => ({ day, judgedI: judged.i, cuedI: cued.i, landedI: landed.i, phaseHeard, fellCued, wrathLanded, body: !!body?.tex, batch: !!batch && !batch.hidden, shape }),
     /** Out of the court: the body put away, the bar hidden, the fight forgotten (the texture is kept - the next court wears it). */
     leave() {
       spoils?.gather();   // WB5: whatever is still on the floor goes into the pack - never lost to a door, a death or the day's end

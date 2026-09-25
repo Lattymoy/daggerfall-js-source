@@ -6027,7 +6027,11 @@ export function createWorldModes(host) {
   async function enterGateArena(g) {
     if (mode !== 'exterior' || !g || !Number.isSafeInteger(g.day)) return false;
     return stepThroughFire(async () => {
-      if (mode !== 'exterior') return false;   // WB6c: a door, a death or a load taken while the fire closed
+      if (mode !== 'exterior' || !(playerEntity.health > 0)) return false;   // WB6c: a door, a death or a load taken while the fire closed; AUDIT WB B3: a death in the exterior's own frame raises no mode
+      // AUDIT WB B5: the door asked again once the fire has closed - the gate can seal, its master fall and the relay go
+      // while it burns, and a court the relay will not admit to is a room with no fight in it
+      const no = host.gateRefusal?.(g) ?? null;
+      if (no) { setMidScreenText(no); return false; }
       const site = host.gateArenaSite?.(g) ?? null;
       const dfLocation = gateArenaLocation({ day: g.day, near: g.near ?? '', regionIndex: site?.regionIndex ?? -1, regionName: site?.regionName ?? '', climate: site?.climate ?? undefined });
       const hit = { dfLocation, blocksFile: gateArenaBlocks(blocks), gateArena: g, climateBase: site?.climateBase ?? 2, season: site?.season ?? 0, group: `gate:${g.day}`, door: null, dfBlock: null, recordIndex: -1 };
@@ -6622,7 +6626,7 @@ export function createWorldModes(host) {
       dungeonCtx.actions.activate(key, { steal: getInteractionMode() === 'steal', doorSpell: doorSpellFor(playerEntity) });   // X1
       return true;
     }
-    if (isGateArena(dungeonLoc)) { stepThroughFire(async () => { if (mode === 'dungeon' && isGateArena(dungeonLoc)) pendingDungeonExit = true; return true; }); return true; }   // WB6c: the way home is through the fire, as the way in was - taken at the top of the frame after it has closed (F-A5's deferral); and no wagon: it waits in Tamriel
+    if (isGateArena(dungeonLoc)) { stepThroughFire(async () => { if (mode === 'dungeon' && isGateArena(dungeonLoc) && aliveUnder()) pendingDungeonExit = true; return true; }); return true; }   // WB6c: the way home is through the fire, as the way in was - taken at the top of the frame after it has closed (F-A5's deferral); and no wagon: it waits in Tamriel
     // AUDIT 28 W2c: THE EXIT-DOOR WAGON PROMPT (PlayerActivate.cs
     // :649-664). A dungeon exit with a Small_cart in the pack and
     // Settings.DungeonExitWagonPrompt raises TEXT.RSC 38 as a YesNo
@@ -6659,6 +6663,8 @@ export function createWorldModes(host) {
     return exitDungeonNow();
   }
   let pendingDungeonExit = false;   // F-A5: the wagon prompt's No, taken a frame later
+  /** AUDIT WB B2: the player alive underground - health, and no death screen standing in the dungeon's slot. */
+  const aliveUnder = () => playerEntity.health > 0 && !dungeonCtx?.deathUp?.();
   let pendingDungeonWagonOpen = false;   // DISC21-B: its Yes, taken a frame later, once the box has left the slot
   let pendingInteriorExit = false;   // UNSTUCK1: exitInteriorNow's own deferral, F-A5's twin - see unstuck() below
   /** TransitionDungeonExterior(true): the exit itself, split from the
@@ -7186,7 +7192,7 @@ export function createWorldModes(host) {
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
 
     if (mode === 'dungeon') {
-      if (pendingDungeonExit) { pendingDungeonExit = false; exitDungeonNow(); return true; }   // F-A5: outside any overlay dispatch
+      if (pendingDungeonExit) { pendingDungeonExit = false; if (aliveUnder()) { exitDungeonNow(); return true; } }   // F-A5: outside any overlay dispatch; AUDIT WB B2: a death taken since is the death's to resolve (the court's casts out before its gate) - never a dead player walked out
       if (pendingDungeonWagonOpen) { pendingDungeonWagonOpen = false; dungeonCtx.openInventoryWithWagon(); }   // DISC21-B: the box is off the slot now
       if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:336's `if (!held)` - a paused game advances no movers
       if (!overlayHeld) dungeonCtx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes ride the same gate
@@ -7393,7 +7399,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:9358's own wave-46 note); the interior
+          // a blow (world.js:9362's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -9892,7 +9898,7 @@ export function createWorldModes(host) {
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
      *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3406-3428), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:6512). So an F9 pressed in a shop
+     *  unconditionally (world.js:6516). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -9931,7 +9937,7 @@ export function createWorldModes(host) {
       if (interiorOverlay instanceof DeathScreen) { interiorOverlay.restoreView(); interiorOverlay = null; }
     },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:6612)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:6616)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -9941,7 +9947,7 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:6779`
+     *  HARD2c: this used to spell them out, and named `world.js:6783`
      *  and `dungeonContext.js:6404` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */

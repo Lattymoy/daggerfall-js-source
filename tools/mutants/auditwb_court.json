@@ -1,0 +1,128 @@
+[
+  {
+    "name": "AUDWB-B4-an-attack-by-its-number-alone",
+    "file": "src/scenes/gateCourt.js",
+    "old": "const marked = (m, atk) => m.i === atk.i && m.at === atk.at;",
+    "new": "const marked = (m, atk) => m.i === atk.i;",
+    "tests": ["test/auditwb_court.test.js"]
+  },
+  {
+    "name": "AUDWB-B4-the-moment-never-kept",
+    "file": "src/scenes/gateCourt.js",
+    "old": "const setMark = (m, atk) => { m.i = atk.i; m.at = atk.at; };",
+    "new": "const setMark = (m, atk) => { m.i = atk.i; };",
+    "tests": ["test/auditwb_court.test.js"]
+  },
+  {
+    "name": "AUDWB-B4-the-cue-by-its-number-alone",
+    "file": "src/scenes/gateCourt.js",
+    "old": "    if (A && !marked(cued, atk)) { setMark(cued, atk);",
+    "new": "    if (A && atk.i !== cued.i) { setMark(cued, atk);",
+    "tests": ["test/auditwb_court.test.js"]
+  },
+  {
+    "name": "AUDWB-B4-the-quake-by-its-number-alone",
+    "file": "src/scenes/gateCourt.js",
+    "old": "    if (A && !marked(quaked, atk) && t >= atk.at",
+    "new": "    if (A && atk.i !== quaked.i && t >= atk.at",
+    "tests": ["test/auditwb_court.test.js"]
+  },
+  {
+    "name": "AUDWB-B6-a-body-after-the-wrath",
+    "file": "src/scenes/gateCourt.js",
+    "old": "      if (!s || s.day === null || s.fell || s.wrath != null || bossAct(s, t).act === 'gone') return null;",
+    "new": "      if (!s || s.day === null || s.fell || bossAct(s, t).act === 'gone') return null;",
+    "tests": ["test/auditwb_court.test.js"]
+  },
+  {
+    "name": "AUDWB-B6-a-blow-sent-after-the-wrath",
+    "file": "src/scenes/gateCourt.js",
+    "old": "      if (!s || s.day === null || s.fell || s.wrath != null || !Object.values(HIT_KINDS).includes(r)) return false;",
+    "new": "      if (!s || s.day === null || s.fell || !Object.values(HIT_KINDS).includes(r)) return false;",
+    "tests": ["test/auditwb_court.test.js"]
+  },
+  {
+    "name": "AUDWB-B7-a-cry-from-long-ago",
+    "file": "src/scenes/gateCourt.js",
+    "old": "if (t < s.fell.at + FALL_CRY_LATE_MS) sound(BOSS_CUES.fall, s, t, null);",
+    "new": "sound(BOSS_CUES.fall, s, t, null);",
+    "tests": ["test/auditwb_court.test.js"]
+  },
+  {
+    "name": "AUDWB-B7-the-cry-edge",
+    "file": "src/scenes/gateCourt.js",
+    "old": "if (t < s.fell.at + FALL_CRY_LATE_MS) sound(BOSS_CUES.fall, s, t, null);",
+    "new": "if (t <= s.fell.at + FALL_CRY_LATE_MS) sound(BOSS_CUES.fall, s, t, null);",
+    "tests": ["test/auditwb_court.test.js"]
+  },
+  {
+    "name": "AUDWB-B5-the-refusal-kept-from-the-host",
+    "file": "src/net/gateLink.js",
+    "old": "      if (g.k === 'no') { say(GATE_NO_TEXT[g.m] ?? g.m); onRefused(g.m); return; }",
+    "new": "      if (g.k === 'no') { say(GATE_NO_TEXT[g.m] ?? g.m); return; }",
+    "tests": ["test/auditwb_court.test.js"]
+  },
+  {
+    "name": "AUDWB-B5-a-refused-in-left-in-the-court",
+    "file": "src/scenes/world.js",
+    "old": "    onRefused: (why) => { if (modes?.gateArenaDay?.() != null) ejectFromCourt(GATE_NO_TEXT[why] ?? why); },",
+    "new": "",
+    "tests": ["test/auditwb_court.test.js"]
+  },
+  {
+    "name": "AUDWB-B5-a-dead-relay-left-standing",
+    "file": "src/scenes/world.js",
+    "old": "    else if (courtDay != null && online?.terminal) ejectFromCourt(GATE_NO_TEXT[online.error] ?? COURT_TEXT.lost);",
+    "new": "",
+    "tests": ["test/auditwb_court.test.js"]
+  },
+  {
+    "name": "AUDWB-B5-the-door-not-asked-again",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (no) { setMidScreenText(no); return false; }",
+    "new": "      if (no) { setMidScreenText(no); }",
+    "tests": ["test/auditwb_court.test.js"]
+  },
+  {
+    "name": "AUDWB-B5-sealed-while-it-burned",
+    "file": "src/scenes/world.js",
+    "old": "        : !gateAdmits(g.day, Date.now() + _sharedOffsetMs) ? GATE_TEXT.sealed : null),",
+    "new": "        : null),",
+    "tests": ["test/auditwb_court.test.js"]
+  },
+  {
+    "name": "AUDWB-B1-the-dead-landed-at-no-health",
+    "file": "src/scenes/world.js",
+    "old": "    if (!(playerEntity.health > 0) || modes?.deathUp?.()) { respawnOnlinePlayer(); return; }\n    gateVeil?.flash();",
+    "new": "    gateVeil?.flash();",
+    "tests": ["test/auditwb_court.test.js", "test/wb6c_gate_veil.test.js"]
+  },
+  {
+    "name": "AUDWB-B2-the-dead-walk-home",
+    "file": "src/scenes/worldModes.js",
+    "old": "isGateArena(dungeonLoc) && aliveUnder()) pendingDungeonExit = true;",
+    "new": "isGateArena(dungeonLoc)) pendingDungeonExit = true;",
+    "tests": ["test/auditwb_court.test.js", "test/wb6c_gate_veil.test.js"]
+  },
+  {
+    "name": "AUDWB-B2-a-pending-exit-walked-by-the-dead",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (pendingDungeonExit) { pendingDungeonExit = false; if (aliveUnder()) { exitDungeonNow(); return true; } }",
+    "new": "      if (pendingDungeonExit) { pendingDungeonExit = false; exitDungeonNow(); return true; }",
+    "tests": ["test/auditwb_court.test.js"]
+  },
+  {
+    "name": "AUDWB-B2-the-death-screen-not-death",
+    "file": "src/scenes/worldModes.js",
+    "old": "  const aliveUnder = () => playerEntity.health > 0 && !dungeonCtx?.deathUp?.();",
+    "new": "  const aliveUnder = () => playerEntity.health > 0;",
+    "tests": ["test/auditwb_court.test.js"]
+  },
+  {
+    "name": "AUDWB-B3-the-dead-step-through",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (mode !== 'exterior' || !(playerEntity.health > 0)) return false;",
+    "new": "      if (mode !== 'exterior') return false;",
+    "tests": ["test/auditwb_court.test.js", "test/wb6c_gate_veil.test.js"]
+  }
+]

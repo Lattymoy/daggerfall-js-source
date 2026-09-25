@@ -168,9 +168,9 @@ import { rollCampEncounterOnChunkLoad, amGroupRollOwner, campAnchorSpot } from '
 import { WORLD_SALT, spawnsDungeon, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger, spawnedLocationCentreLocal, dungeonSightLine } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
 import { createGateOmen, insideGateRing, gateSceneXZ, fellLine, OMEN_SETTLE_MS } from '../systems/gateOmen.js';   // WB1 (Mac: "on the timer, a large area would be shown on the map, also in chat"): the Oblivion Gate's omen - its lines, its ring, its compass mark
 import { gateScanner, findGateSite } from '../systems/gateSite.js';   // WB1: where the day's gate stands, over the map files every client holds alike
-import { createGatePool } from './gatePool.js';   // WB2: the gate the world stands - its stone, its fire and beacon, its collider and its door
+import { createGatePool, GATE_TEXT } from './gatePool.js';   // WB2: the gate the world stands - its stone, its fire and beacon, its collider and its door
 import { drawGateBanner } from '../ui/gateBanner.js';
-import { createGateLink } from '../net/gateLink.js';   // WB3b: what the client holds of a gate's fight - the relay's words, folded
+import { createGateLink, GATE_NO_TEXT } from '../net/gateLink.js';   // WB3b: what the client holds of a gate's fight - the relay's words, folded
 import { createGateClaims } from '../net/gateClaims.js';   // WB5b: the kill receipts, carried to the account service until counted
 import { createGateCourt } from './gateCourt.js';   // WB4: the fight on this screen - the boss drawn, heard and read, and his blows on me
 import { DeadlandsRenderer, skyGain } from '../render/deadlands.js';   // WB6a: the Deadlands' sky and sea round the Burning Court
@@ -178,7 +178,7 @@ import { createDeadlandsAir } from './deadlandsAir.js';   // WB6b: and their air
 import { createGateVeil } from '../ui/gateVeil.js';   // WB6c: the step through the gate - a vortex of fire in and out
 import { gateScoreSongs, courtScoreFor, GATE_SONGS, SCORE_SILENCE } from '../systems/gateScore.js';   // WB7: the Warden's score - the court's own music
 import { createSpoilsPool, spoilsStore, recoverSpoils, SPOILS_TEXT } from './spoilsPool.js';   // WB5: a fallen boss's spoils, spewed, glowing and taken
-import { gateRoomKey, isGateRoom, gateBossOf, gateTimes, GATE_COLLAPSE_MS } from '../net/gateLaw.js';   // WB3b: the court's room, and its day's end
+import { gateRoomKey, isGateRoom, gateBossOf, gateTimes, gateAdmits, GATE_COLLAPSE_MS } from '../net/gateLaw.js';   // WB3b: the court's room, and its day's end
 import { gateLandingFor, courtRing, courtToDungeon, courtBraziers, COURT_TEXT, COURT_FOG, LAVA_Y } from '../world/gateArena.js';   // WB3b: the Burning Court's way home, its ring and its words   // WB2: the gate's countdown over the screen, near it
 import { isMainStoryDungeon } from '../world/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
 import { nearestSafeLocation, respawnFlavorText, reviveForPlay, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
@@ -6205,6 +6205,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   function ejectFromCourt(words) {
     const g = modes?.gateArenaGate?.() ?? null;
     if (!g) return;
+    // AUDIT WB B1: a player dead in the court when it is taken from them is cast out ALIVE, by the death's own door (the
+    // heal first - MAC-D3's order - then before the gate): landed at no health, the next frame's watcher would kill
+    // them again in Tamriel and send them to a temple
+    if (!(playerEntity.health > 0) || modes?.deathUp?.()) { respawnOnlinePlayer(); return; }
     gateVeil?.flash();   // WB6c: the court comes apart in fire
     modes?.forceExitToExterior?.();
     landBeforeGate(g);
@@ -8516,7 +8520,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8925-8989 -
+  // worldModes answers it in BOTH modes (worldModes.js:8931-8995 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -10822,6 +10826,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     say: (text) => setMidScreenText(text),
     onFell: (day, f) => { const site = gateOmen?.current?.()?.site; chatNotice(fellLine({ near: site?.day === day ? site.near : 'the wilds', boss: gateBossOf(day).name, top: f.top })); },
     onReceipt: (r) => { gateClaims?.add(r); },   // WB5b: to the account service, kept until it is counted
+    onRefused: (why) => { if (modes?.gateArenaDay?.() != null) ejectFromCourt(GATE_NO_TEXT[why] ?? why); },   // AUDIT WB B5: the relay will not have me in this fight - out before the gate, not left in an empty court
   }) : null;
   let _gateInFor = -1;   // WB3b: the welcome my level claim was said for - once per welcome of the court's room
   /** WB4: THE FIGHT ON THIS SCREEN (scenes/gateCourt.js) - the boss where the relay says he stands, his telegraphs, his
@@ -10903,6 +10908,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // before the gate; out of it, its state is forgotten (its falls and receipts are kept)
     const courtDay = modes?.gateArenaDay?.() ?? null;
     if (courtDay != null && Date.now() + _sharedOffsetMs >= gateTimes(courtDay).wrathAt + GATE_COLLAPSE_MS) ejectFromCourt(COURT_TEXT.collapse);
+    else if (courtDay != null && online?.terminal) ejectFromCourt(GATE_NO_TEXT[online.error] ?? COURT_TEXT.lost);   // AUDIT WB B5: a socket closed for good (a hello refused - its own words - or replaced) holds no fight: its boss would stand frozen
     else if (courtDay == null && gateLink && gateLink.state().day != null) gateLink.leave();
     try { gateCourt?.frame(); } catch (e) { console.warn('[gate] court', e?.message ?? e); }   // WB4: the fight on this screen (out of the court it puts itself away)
   };
@@ -12638,6 +12644,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     deadlandsSeconds: () => deadlandsSeconds(),   // WB6b: the court's flash and the shards' drift keep the sky's clock
     gateVeil: () => gateVeil,   // WB6c: the step through the gate's fire, both ways
+    // AUDIT WB B5: why the gate's door refuses the step now it has closed, or null - no relay to hold the court, its
+    // master fallen, or sealed while the fire burned (the pool's own words where it has them)
+    gateRefusal: (g) => (!online?.gateOk || online?.terminal ? GATE_TEXT.notYet
+      : Number.isFinite(gateLink?.fellAt(g.day)) ? GATE_NO_TEXT['the gate is closing']
+        : !gateAdmits(g.day, Date.now() + _sharedOffsetMs) ? GATE_TEXT.sealed : null),
     drawPeerNames: ({ proj, view, eye }) => drawPeerNames(proj, view, eye),
     drawPeerBodies: ({ proj, view, eye }) => drawPeerBodies(proj, view, eye),   // MWBODY1: the others' bodies, after the player's own
     // PEER-PLAQUE1: the plaque names another player in a building and underground too - the SAME pick and the SAME

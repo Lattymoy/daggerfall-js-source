@@ -497,6 +497,18 @@ and the claims, the look and the sound - each finding checked against the code b
 | C6 | the vortex's angle was the clock times a rate that eased with the open: opening spun it through tens of turns in a second | the pool accumulates the spin at the rate; the shader turns by it |
 | C7 | the stone's matrix, the fire's box and empty lists made every frame, the pass's arguments built with no gate; the site's one scan (~40-75 ms) in the frame that first asked | made once or on change; the scan in slices, in the browser's idle time once the relay's clock is read |
 
+The court's half, on the client:
+
+| # | what was wrong | now |
+|---|---|---|
+| B1 | a player dead in the court when it came apart (its day over, online gone) was landed before the gate at NO health - the next frame's death watcher killed them again in Tamriel and sent them to a temple | cast out alive by the death's own door (the heal first, then before the gate) |
+| B2 | a way home asked through the fire was walked the frame after it closed even by a player killed while it burned | a pending exit is dropped for the dead - the death resolves it (the court's casts out before the gate) |
+| B3 | a player killed in the exterior while the gate's fire closed stepped into the court dead | the door refuses the dead |
+| B4 | the court knew an attack by its NUMBER, and a room woken from its checkpoint numbers its attacks from there again - the next one passed unjudged and unheard | an attack is its number and its moment |
+| B5 | the door was asked once, before the fire: a gate that sealed (or whose master fell, or whose relay went) while it burned let the player into an empty court; a refused `in` and a court socket closed for good left them there, the Warden frozen | the door asked again after the fire; a refusal and a dead relay take the player out before the gate, in the relay's own words |
+| B6 | after the Wrath the Warden was still a body blows met, and blows were sent the relay would never judge | no body and no blow after it |
+| B7 | a player who came to the court after he fell heard his death cry then, minutes late | the cry only within `FALL_CRY_LATE_MS` of his fall, as the thud has its own |
+
 ## Shipped
 
 **WB1 (2026-09-25) - the omen.** `net/gateLaw.js` (the schedule, the room's key and window, the rolls, the boss table,
@@ -692,3 +704,11 @@ banner under the veil and the held frame, the pass built only while a gate stand
 (10) and one in `test/wb1_gate_omen.test.js`; re-aimed: AUDIT 39's held-frame pin (the world host's countdown goes down
 on the plaque's line), four of WB1's mutant records (the scan's new shape; the sea coast's record now the audit's
 own, its law reversed); mutants `tools/mutants/auditwb_world.json` (20 dead, 1 equivalent).
+
+**AUDIT WB - the court's half (2026-09-25).** B1-B7 above: `scenes/gateCourt.js` (an attack's number and moment, no
+body after the Wrath, the late cry), `net/gateLink.js` (`onRefused`), `scenes/worldModes.js` (the door asked again after
+the fire, no step, way home or pending exit for the dead), `scenes/world.js` (the dead cast out alive, a refused `in`
+and a closed socket taking the player out, the door's refusal), `world/gateArena.js` (`COURT_TEXT.lost`). Pins
+`test/auditwb_court.test.js` (7); re-aimed: WB3b's door window, WB6c's door, way-home and flash pins, AUDIT 28 W2c's and
+DISC21-B's pending-exit line, five mutant records of WB4, WB6c and WB7 (the marks' new shape, the door's new line);
+mutants `tools/mutants/auditwb_court.json` (18 dead).

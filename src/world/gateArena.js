@@ -81,6 +81,7 @@ export const COURT_TEXT = Object.freeze({
   noMark: 'The Deadlands will not hold your mark.',
   castOut: 'You are cast out of the Burning Court.',
   collapse: 'The Burning Court comes apart around you.',
+  lost: 'The Burning Court slips away from you - the way through is lost.',   // AUDIT WB B5: the relay's link gone for good
 });
 /** A brazier's fire: its colour and reach. */
 export const BRAZIER_COLOR = Object.freeze([1.0, 0.45, 0.16]);

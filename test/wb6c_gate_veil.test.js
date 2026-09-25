@@ -165,8 +165,8 @@ test('WB6c asked again mid-way: to close while it opens, it closes from where it
 test('WB6c the seams, by source: the gate\'s door closes the fire before the world is left and opens it on the court; the way home is through the fire too, and offers no wagon (it waits in Tamriel); one step at a time; a forced exit clears the exit it defers; the world host makes the veil online, hands it to the mode machine, and flashes it when the court is taken by force - come apart, offline, a death cast out (mutants: each seam removed)', () => {
   const wm = src('src/scenes/worldModes.js');
   assert.match(wm, /async function stepThroughFire\(go\) \{\n\s+const veil = host\.gateVeil\?\.\(\) \?\? null;\n\s+if \(_stepping\) return false;\n\s+_stepping = true;\n\s+try \{\n\s+if \(veil\) await veil\.cover\(\);\n\s+return await go\(\);\n\s+\} finally \{\n\s+_stepping = false;\n\s+veil\?\.reveal\(\);\n\s+\}\n\s+\}/);
-  assert.match(wm, /return stepThroughFire\(async \(\) => \{\n\s+if \(mode !== 'exterior'\) return false;/, 'the door: through the fire, the world checked again after it has closed');
-  const exit = wm.indexOf("\n    if (isGateArena(dungeonLoc)) { stepThroughFire(async () => { if (mode === 'dungeon' && isGateArena(dungeonLoc)) pendingDungeonExit = true; return true; }); return true; }");
+  assert.match(wm, /return stepThroughFire\(async \(\) => \{\n\s+if \(mode !== 'exterior' \|\| !\(playerEntity\.health > 0\)\) return false;/, 'the door: through the fire, the world checked again after it has closed (AUDIT WB B3: and the player alive)');
+  const exit = wm.indexOf("\n    if (isGateArena(dungeonLoc)) { stepThroughFire(async () => { if (mode === 'dungeon' && isGateArena(dungeonLoc) && aliveUnder()) pendingDungeonExit = true; return true; }); return true; }");   // AUDIT WB B2: never walked by the dead
   const wagon = wm.indexOf("if (hasCart(playerEntity.items ?? []) && getBool('GUI', 'DungeonExitWagonPrompt')) {");
   assert.ok(exit > 0 && exit < wagon, 'the way home through the fire, before the wagon\'s prompt');
   // the exit it defers never outlives a forced exit (a death, a collapse or a load overtaking it)
@@ -174,6 +174,6 @@ test('WB6c the seams, by source: the gate\'s door closes the fire before the wor
   const w = src('src/scenes/world.js');
   assert.match(w, /const gateVeil = gateOmen \? createGateVeil\(\) : null;/);
   assert.match(w, /\n    gateVeil: \(\) => gateVeil,/);
-  assert.match(w, /function ejectFromCourt\(words\) \{\n\s+const g = modes\?\.gateArenaGate\?\.\(\) \?\? null;\n\s+if \(!g\) return;\n\s+gateVeil\?\.flash\(\);/);
+  assert.match(w, /function ejectFromCourt\(words\) \{\n\s+const g = modes\?\.gateArenaGate\?\.\(\) \?\? null;\n\s+if \(!g\) return;\n(?:\s*\/\/[^\n]*\n)*\s+if \(!\(playerEntity\.health > 0\) \|\| modes\?\.deathUp\?\.\(\)\) \{ respawnOnlinePlayer\(\); return; \}\n\s+gateVeil\?\.flash\(\);/, 'come apart in fire (AUDIT WB B1: the dead cast out by the death\'s own door, which flashes it too)');
   assert.match(w, /if \(landBeforeGate\(courtGate\)\) \{ gateVeil\?\.flash\(\); townTalk\.showOverlay/);
 });

@@ -100,8 +100,8 @@
   {
     "name": "WB7-every-landing-quaking",
     "file": "src/scenes/gateCourt.js",
-    "old": "t >= atk.at && QUAKE_ON.includes(A.key)) { quakedI = atk.i;",
-    "new": "t >= atk.at) { quakedI = atk.i;",
+    "old": "t >= atk.at && QUAKE_ON.includes(A.key)) { setMark(quaked, atk);",
+    "new": "t >= atk.at) { setMark(quaked, atk);",
     "tests": ["test/wb7_boss_audio.test.js"]
   },
   {

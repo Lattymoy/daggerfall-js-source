@@ -236,7 +236,7 @@
   {
     "name": "WB4-an-attack-judged-twice",
     "file": "src/scenes/gateCourt.js",
-    "old": "    if (atk && atk.i !== judgedI && standing) {",
+    "old": "    if (atk && !marked(judged, atk) && standing) {",
     "new": "    if (atk && standing) {",
     "tests": [
       "test/wb4_gate_boss.test.js"
@@ -263,7 +263,7 @@
   {
     "name": "WB4-the-landing-cued-twice",
     "file": "src/scenes/gateCourt.js",
-    "old": "    if (A && atk.i !== landedI && t >= atk.at) {",
+    "old": "    if (A && !marked(landed, atk) && t >= atk.at) {",
     "new": "    if (A && t >= atk.at) {",
     "tests": [
       "test/wb4_gate_boss.test.js"
