@@ -544,6 +544,7 @@ directory by `test/audit18_bible_docs.test.js`:
   in both styles, no fog is the old picture to the bit and each fog mode
   is exactly the terrain's blend (`test/disc20.test.js`).
 - `grassPixelArt.js` - GRASS-PX THE TUFT SHEET: eight 8x16 tufts (GRASS-PX4; 16x32 until 2026-09-22, and the laws are written as fractions of the tuft so the old size still builds through `buildTuftSheet({ w, h })`) built at boot from a seed (one-texel stalks bending as height squared, four tones with one highlight texel, alpha 0 or 255), their coverage mip chain (max alpha per block, never an average, down to 1x1), the pixel style's numbers (8 Hz sway, 24 lean steps, 3x tuft width, 8-step ramp, 4 tint bands) and `pixelGrass()`, the row's word; the shader edits themselves are `GRASSPX_VS_EDITS` / `GRASSPX_FS_EDITS` in labGrass.js.
+- `spoilsGlow.js` - WB5: a fallen boss's spoils at rest, each in a BEAM of its tier's colour rising from a HALO on the floor (Loot Rarity's own colours - the first place a rarity is drawn in the world), a Legendary's and an Artifact's taller and pulsing. One foreign pass drawn beside the Burning Court's telegraph (the same seam), on the duel wall's law: fixed geometry placed by uniforms, added onto the frame, no depth written, fogged.
 - `systems/wind.js` - **WIND1 (2026-09-02) THE WIND IS ITS OWN THING.**
   Mac: "wind should be something different from the weather. Imagine a
   time-lapse, seeing a storm rolling in as the wind kicks up, and the

@@ -19,17 +19,23 @@
 import { ATTACK_BY_ID, ATTACKS, BOSS_H, BOSS_R, COURT_CENTRE, HIT_KINDS } from '../net/gateBrain.js';
 import { strikeVerdict, blowOf, strikeDamage, fireShare } from '../net/gateStrike.js';
 import { GATE_BOSSES, gateBossOf } from '../net/gateLaw.js';
-import { bossAct, bossFrame, bossGlow, bossPlace, bossLookOf, bossStandIn, BOSS_CUES } from '../world/gateBoss.js';
+import { bossAct, bossFrame, bossGlow, bossPlace, bossLookOf, bossStandIn, BOSS_CUES, GLOW_UP } from '../world/gateBoss.js';
 import { courtToDungeon } from '../world/gateArena.js';
 import { GateTelegraphRenderer, telegraphShape } from '../render/gateTelegraph.js';
 import { bossBarModel, drawGateBossBar } from '../ui/gateBossBar.js';
+import { readReceipt } from '../net/gateReceipt.js';
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { mobileBillboardSize } from '../world/rmbFlats.js';
 
-/** The words a strike says that the hurt itself does not. */
+/** The words a strike says that the hurt itself does not; and the fall's, to a player the receipt never came for. */
 export const COURT_STRIKE_TEXT = Object.freeze({
   resisted: (name) => `You resist the flames of the ${name}.`,
+  noSpoils: (name) => `${name}'s spoils are not yours - you did not stand the fight.`,
 });
+/** WB5: his body bursts this long into his fall, and the spoils leave it (world/gateBoss.js FALL_MS is the whole fall);
+ *  a receipt not come this long after it never will. */
+export const SPEW_AT_MS = 500;
+export const RECEIPT_WAIT_MS = 4000;
 
 /** The boss by his id (the relay's word), or the day's (net/gateLaw.js). */
 export const bossOf = (s) => GATE_BOSSES.find((b) => b.id === s?.boss) ?? gateBossOf(s?.day ?? 0);
@@ -40,7 +46,8 @@ export const bossOf = (s) => GATE_BOSSES.find((b) => b.id === s?.boss) ?? gateBo
  *   getTexture?: ((archive: number) => Promise<any>)|null,
  *   uploadRecordFrame?: ((archive: number, record: number, frame: number) => void)|null,
  *   audio?: any,
- *   link: { state: () => any },
+ *   link: { state: () => any, receipt?: (day: number) => string|null },
+ *   spoils?: any,
  *   now: () => number,
  *   cam?: () => number[]|null,
  *   feet?: () => number[]|null,
@@ -54,7 +61,7 @@ export const bossOf = (s) => GATE_BOSSES.find((b) => b.id === s?.boss) ?? gateBo
  */
 export function createGateCourt({
   renderer = null, gl = null, getTexture = null, uploadRecordFrame = null, audio = null,
-  link, now, cam = () => null, feet = () => null, player = () => null, save = () => 100,
+  link, spoils = null, now, cam = () => null, feet = () => null, player = () => null, save = () => 100,
   strike = () => {}, say = () => {}, hudHidden = () => false, send = () => false,
 }) {
   let pass = null;
@@ -66,10 +73,12 @@ export function createGateCourt({
   let prevT = -Infinity, hurtAt = -Infinity, shape = null;
   /** WB4b: his stand-in for the formulas (made once a fight), and my blows' sequence (the wire's `q`) */
   let standIn = null, blowSeq = 0;
+  /** WB5: whether this fight's spoils have left him, and whether their absence has been said */
+  let spewed = false, spoilsSaid = false;
 
   function reset(d) {
     day = d; judgedI = -1; cuedI = -1; landedI = -1; phaseHeard = 0; fellCued = false; wrathLanded = false;
-    prevT = -Infinity; hurtAt = -Infinity; shape = null; standIn = null;
+    prevT = -Infinity; hurtAt = -Infinity; shape = null; standIn = null; spewed = false; spoilsSaid = false;
   }
 
   function sound(cue, s, t, atk) {
@@ -113,6 +122,23 @@ export function createGateCourt({
     if (A && atk.i !== landedI && t >= atk.at) { landedI = atk.i; if (t < atk.at + Math.max(A.active, 1) + 400) sound(BOSS_CUES.land[A.key], s, t, atk); }
     if (s.phase > phaseHeard) { if (phaseHeard > 0) sound(BOSS_CUES.roar, s, t, null); phaseHeard = s.phase; }
     if (s.fell && !fellCued) { fellCued = true; sound(BOSS_CUES.fall, s, t, null); }
+  }
+
+  /** WB5: THE BURST - SPEW_AT_MS into his fall, this player's spoils leave his chest toward them, off the seed of the
+   *  receipt the relay signed for them (net/gateReceipt.js `c`); no receipt by RECEIPT_WAIT_MS, and none is coming - said
+   *  once. */
+  function burst(s, t) {
+    if (!spoils || !s.fell || spewed || t < s.fell.at + SPEW_AT_MS) return;
+    const r = link.receipt?.(s.day) ?? null, claims = r ? readReceipt(r) : null;
+    if (!claims) {
+      if (!spoilsSaid && t >= s.fell.at + RECEIPT_WAIT_MS) { spoilsSaid = true; say(COURT_STRIKE_TEXT.noSpoils(bossOf(s).name)); }
+      return;
+    }
+    spewed = true;
+    const [x, z] = bossPlace(s, s.fell.at);
+    const at = courtToDungeon(x, GLOW_UP, z), f = feet();
+    const bearing = f ? Math.atan2(f[0] - at[0], f[2] - at[2]) : s.yaw;
+    spoils.spew({ day: s.day, seed: claims.c, level: player()?.level ?? 1, at, bearing });
   }
 
   function loadBody(s) {
@@ -159,6 +185,8 @@ export function createGateCourt({
       judge(s, t);
       cue(s, t);
       drawBody(s, t);
+      burst(s, t);
+      spoils?.frame();
       shape = s.fell ? null : telegraphShape(s.atk, s.phase, t);
       drawGateBossBar(bossBarModel(s, t, bossOf(s)), { hidden: hudHidden() });
       prevT = t;
@@ -191,16 +219,22 @@ export function createGateCourt({
     },
     /** A blow of mine landed on him: he flinches. */
     struck() { hurtAt = now(); },
-    /** The body, for the host's billboard pass. */
-    batches: () => (batch && !batch.hidden ? [batch] : []),
-    /** The glow on him, for the court's light channel (world/gateArena.js withCourtLights). */
-    lights() { const s = link.state(); const g = s && s.day !== null ? bossGlow(s, now()) : null; return g ? [g] : []; },
-    /** The telegraph, in the host's world pass (after the court and the billboards, before the foes' screen quads). */
-    drawPass(proj, view, eye, seconds, fog = null) { pass?.draw(shape, proj, view, eye, seconds, fog); return !!shape && !!pass; },
+    /** The body and the spoils, for the host's billboard pass. */
+    batches: () => [...(batch && !batch.hidden ? [batch] : []), ...(spoils?.batches() ?? [])],
+    /** The glow on him and on the spoils, for the court's light channel (world/gateArena.js withCourtLights). */
+    lights() { const s = link.state(); const g = s && s.day !== null ? bossGlow(s, now()) : null; return [...(g ? [g] : []), ...(spoils?.lights() ?? [])]; },
+    /** The telegraph and the spoils' glow, in the host's world pass (after the court and the billboards, before the
+     *  foes' screen quads). Answers whether either drew (the host marks the foreign pass). */
+    drawPass(proj, view, eye, seconds, fog = null) {
+      pass?.draw(shape, proj, view, eye, seconds, fog);
+      const lit = !!spoils?.drawPass(proj, view, eye, seconds, fog);
+      return (!!shape && !!pass) || lit;
+    },
     /** What the driver holds, for the tests and the stats. */
     state: () => ({ day, judgedI, cuedI, landedI, phaseHeard, fellCued, wrathLanded, body: !!body?.tex, batch: !!batch && !batch.hidden, shape }),
     /** Out of the court: the body put away, the bar hidden, the fight forgotten (the texture is kept - the next court wears it). */
     leave() {
+      spoils?.gather();   // WB5: whatever is still on the floor goes into the pack - never lost to a door, a death or the day's end
       if (batch) { renderer?.destroyBillboardBatch?.(batch); batch = null; }
       drawGateBossBar(null);
       reset(null);

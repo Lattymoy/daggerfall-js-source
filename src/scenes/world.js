@@ -172,12 +172,13 @@ import { createGatePool } from './gatePool.js';   // WB2: the gate the world sta
 import { drawGateBanner } from '../ui/gateBanner.js';
 import { createGateLink } from '../net/gateLink.js';   // WB3b: what the client holds of a gate's fight - the relay's words, folded
 import { createGateCourt } from './gateCourt.js';   // WB4: the fight on this screen - the boss drawn, heard and read, and his blows on me
+import { createSpoilsPool, spoilsStore, recoverSpoils, SPOILS_TEXT } from './spoilsPool.js';   // WB5: a fallen boss's spoils, spewed, glowing and taken
 import { gateRoomKey, isGateRoom, gateBossOf, gateTimes, GATE_COLLAPSE_MS } from '../net/gateLaw.js';   // WB3b: the court's room, and its day's end
 import { gateLandingFor, courtRing, COURT_TEXT } from '../world/gateArena.js';   // WB3b: the Burning Court's way home, its ring and its words   // WB2: the gate's countdown over the screen, near it
 import { isMainStoryDungeon } from '../world/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
 import { nearestSafeLocation, respawnFlavorText, reviveForPlay, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
-import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, saveKeysOfCharacter, saveInfoOf, requestScreenshot, capturePendingScreenshot, exitAutosaveNames } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end   // ONLINE-AUTOSAVE1: saveKeysOfCharacter/saveInfoOf - every slot this character already has, kept in sync on an online exit too
+import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, saveKeysOfCharacter, saveInfoOf, requestScreenshot, capturePendingScreenshot, exitAutosaveNames, enumerateSaves } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end   // ONLINE-AUTOSAVE1: saveKeysOfCharacter/saveInfoOf - every slot this character already has, kept in sync on an online exit too
 import { frameBegin, frameEnd, frameAbort } from '../systems/frameClock.js';   // PERF1: the frame's script time; AUDIT-WH2 L1-F4: and the door an early return takes
 import { frameCapSkip } from '../systems/frameCap.js';   // FPS-CAP1: DFU's TargetFrameRate - a held frame re-arms before the clock and the input frame
 import { arrivalClampMinutes, playerTravelPosition } from '../systems/travel.js';   // F-slice; F114: the ship-aware travel origin
@@ -297,7 +298,7 @@ import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady, sheetHolderOf, buildArmsFor } from '../combat/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does
 import { weaponPoseOf, applyWeaponPose, mergeWeaponPose, playerMeleeCanHit } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
-import { addItem, spendAmmoFor, carriedWeight } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
+import { addItem, addGoldPieces, spendAmmoFor, carriedWeight } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
 import { calculateAttackDamage } from '../combat/formulas.js';   // X2-slice: enemy-arrow impacts
 import { inflictPoison } from '../systems/poisons.js';   // X2-slice: poisoned enemy arrows
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
@@ -10790,8 +10791,32 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** WB4: THE FIGHT ON THIS SCREEN (scenes/gateCourt.js) - the boss where the relay says he stands, his telegraphs, his
    *  voice and his bar, and the player's own side of every attack: judged against these feet, taken through the
    *  dungeon context's door as any foe's blow is. */
+  /** WB5: a spoil into the pack - the gold to the purse, an item to the items (the one door the spew, the gather and
+   *  a crash's recovery all take). */
+  const takeSpoil = (p) => { if (p.kind === 'gold') addGoldPieces(playerEntity, p.gold); else if (p.item) addItem(playerEntity.items, p.item); };
+  /** WB5: THE SPOILS ON THE COURT'S FLOOR (scenes/spoilsPool.js) - this player's alone, off their receipt's seed. */
+  const spoilsPool = gateLink ? createSpoilsPool({
+    renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio,
+    ray: (from, dir, len) => { const c = modes?.dungeonCtx?.collider; const h = c?.raycastHit ? c.raycastHit(from, dir, len) : { dist: c?.raycast?.(from, dir, len) ?? Infinity, normal: null }; return Number.isFinite(h?.dist) ? h : null; },
+    feet: () => (playerSpawned ? player.feetAt() : null),
+    now: () => Date.now() + _sharedOffsetMs,
+    take: takeSpoil,
+    say: (text) => setMidScreenText(text),
+    store: spoilsStore(appStorage()),
+    who: () => characterIdOf(playerEntity),
+  }) : null;
+  /** WB5: THE CRASH'S DOOR (scenes/spoilsPool.js recoverSpoils) - asked once for each character that stands up in this
+   *  session, online or not, before it can save: a boss's spoils no save of theirs holds are handed back. */
+  let _spoilsAskedFor = null;
+  const spoilsRecoverFrame = () => {
+    if (!playerSpawned) return;
+    const who = characterIdOf(playerEntity);
+    if (who === _spoilsAskedFor) return;
+    _spoilsAskedFor = who;
+    try { if (recoverSpoils(spoilsStore(appStorage()), takeSpoil, { who, saves: enumerateSaves().info.values() })) setMidScreenText(SPOILS_TEXT.gathered); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); }
+  };
   const gateCourt = gateLink ? createGateCourt({
-    renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio, link: gateLink,
+    renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio, link: gateLink, spoils: spoilsPool,
     now: () => Date.now() + _sharedOffsetMs,
     cam: () => cam.pos,
     feet: () => (playerSpawned && modes?.gateArenaDay?.() != null ? player.feetAt() : null),
@@ -13328,6 +13353,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     }
     last = now;
     meterFor(renderer.gl)?.markCpu('online');   // PERF-CPU
+    spoilsRecoverFrame();   // WB5: a boss's spoils no save holds, back to their character as it stands up - before it can save, online or not
     if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); } else { if (!onlineOn && modes?.gateArenaDay?.() != null) ejectFromCourt(COURT_TEXT.collapse); if (player.arena) player.arena = modes?.gateArenaDay?.() != null ? courtRing() : null; }   // DUEL1: no online frame, no duel's law to hold the body - the ring is the live duel's alone; WB3b: the court's is its floor's, and offline there is no court   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
     meterFor(renderer.gl)?.markCpu('sim');   // PERF-CPU: everything between here and the next mark is the rest of the simulation
     lookGate(gamePaused());   // a window up frees the cursor; closing re-locks

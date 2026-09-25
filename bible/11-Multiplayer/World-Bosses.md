@@ -306,7 +306,8 @@ player's roll is its own.
   - minted with the game's own makers (`createRandomWeapon`, `createRandomArmor`, jewellery) on
   `rolls = seededRng(c)` (`systems/wind.js`), then laddered through Loot Rarity's `applyRarity` from a source of the
   gate's own kind: `SOURCE_MULT.gate` over the boss's 2.5, a Legendary chance of 10%, the ladder's own caps otherwise.
-  And a **Sigil Stone**: the gate's trophy, a gem the port names, worth a small fortune, one a kill.
+  And a **Sigil Stone**: the gate's trophy - its own item row, a gem by group but no ingredient, so it never stacks away
+  its name - worth a small fortune, one a kill.
 - **The spew**: at the kill the boss's body bursts and each piece leaves his chest on its own arc - out and up toward
   the player's side of him, the seed choosing each angle and speed - and falls, bounces and comes to rest with the
   thrown torch's own physics (`droppedTorches.js stepProjectile`: the fixed 0.02 s step, gravity, the collider's ray,
@@ -318,8 +319,9 @@ player's roll is its own.
   Rare chime (`playRareDrop`) plays when a Rare or better comes to rest.
 - **The take**: activate a piece, or walk over it, and it goes into the pack through `addItem` (gold through
   `addGoldPieces`), the name said in its colour. Leaving the arena with pieces still on the floor GATHERS them into
-  the pack - a boss's reward is never lost to a door, a disconnect or a death. The pieces not yet taken ride the save
-  (`gateSpoils: {day, pieces}`), so a crash between the spew and the take loses nothing either.
+  the pack - a boss's reward is never lost to a door, a disconnect or a death. The spoils ride a record on the device
+  from the burst until a save holds them (the court refuses the save - WB5a), so a crash between the spew and the next
+  save loses nothing either.
 
 ## 8. The wire
 
@@ -368,7 +370,7 @@ ships in ONE slice.
 | **WB2** | the gate in the exterior: the model and its textures, the membrane and the beacon passes, its states and countdown, the plaque and the banner, the enter door (answered *not yet* until WB3's relay is live) | no |
 | **WB3** | the arena place and the relay's boss room: the room key and its window, `gateBrain.js`, the `gate` frame both ways, the hit ledger, the checkpoint, the receipt and its key, the hub's world line; `RELAY_VERSION` once | **yes** |
 | **WB4** | the boss on the client: the oversized body and its hit volume, the telegraph pass, the wind-up frames, glow and sounds, the boss bar, the player's side of every attack, cast out and back in - shipped in two: **WB4a** (he fights: the body, the telegraphs, the glow and voice, the bar, every blow he lands) and **WB4b** (he is fought: the swing, the shaft and the spell on his body) | no |
-| **WB5** | the spoils: the seeded roll, the spew's physics, the beams, halos and lights, the take and the gather, the save's `gateSpoils`; the account service's claim (acct9) and the cards' line | account only |
+| **WB5** | the spoils: the seeded roll, the spew's physics, the beams, halos and lights, the take and the gather, the device's record until a save holds them; the account service's claim (acct9) and the cards' line | account only |
 
 Each slice: pins in `test/` (pure law in node; the relay over its fake sockets and a fake clock; the passes' shaders
 built in headless Chromium, as the duel wall's), a mutant record in `tools/mutants/`, the Testing manifest, a Port
@@ -470,3 +472,31 @@ its aim, a blast at his flank (`systems/spellcast.js` measures a body that state
 states none is measured as it always was). He parries as his mobile does, a blow sounds and splashes at his chest and
 the damage number pops as any; the ward turns a blow with the parry's ring and nothing is sent; each blow makes him
 flinch. Pins `test/wb4b_gate_blows.test.js` (5); mutants `tools/mutants/wb4b.json` (22 dead).
+
+**WB5a (2026-09-25) - the spoils.** Half a second into his fall his body bursts, and this player's spoils leave his
+chest toward them one at a time (`scenes/gateCourt.js`): rolled off the seed of the receipt the relay signed for them
+(`systems/gateSpoils.js` - gold by the level, three pieces by the game's own makers laddered by Loot Rarity's own
+`applyRarity`: one Rare or better, a tenth of the time Legendary, and two Magic or better by a boss's chances, each
+with SetItem's condition and KNOWN - the name the floor says is the pack's; and the Sigil Stone, the gate's trophy, worth
+five thousand), flying the thrown torch's own flight (`world/gateSpew.js` -
+gravity by the torch's drag, the bounce at its bounciness, rest under a fifth of the throw: a few metres off him in
+about a second), each clattering where it lands in the treasure flat the seed dresses it in (`scenes/spoilsPool.js`).
+At rest each stands in a beam of its tier's colour over a halo (`render/spoilsGlow.js`) - blue, gold, orange, the
+Sigil Stone the Artifact's purple, a Legendary's taller and pulsing - and a Rare or better rings the rare chime and
+carries a light. Walk over a piece and it is in the pack, its name said with its tier. What departs from the page
+above, and why: a piece is taken by walking over it, not by activating it (the dungeon host's three activation
+families are a law, and walking over is the whole of it); and the spoils ride a record on the device, not the save -
+the court refuses the save (WB3b) - holding THE PIECES AS ROLLED (the roll reads the player's world as well as the
+seed - the Unleveled Loot formula, the registered custom pieces - so a re-roll is not the same spoils), whose they are
+and when, from the burst until a save of that character holds them: at each boot, online or not, a record no later
+save of its character holds is handed over whole again, and one a later save holds is cleared. Beside it the device
+keeps the day whose spoils left him, because the relay answers a fighter who comes back after the kill - a reconnect,
+a second door - with his fall and the receipt again: a day already spent spews nothing. The Sigil Stone is its own
+template row (570, past the Thunderlock's 560/561): a gem by group, so the gem stores and the pawn shops buy it, and no
+ingredient - every classic gem is one, an ingredient stacks, and a renamed Ruby would have merged into the Ruby in the
+pack and lost its name and its price; the hosts' shared module registers it, so a save carrying one loads in any host.
+Leaving the court - by the way home, a death or the day's end - gathers what is still on its floor. No receipt (a
+player who neither dealt their share nor stood half the fight), and it is said the spoils are not theirs. Pins
+`test/wb5_gate_spoils.test.js` (10); mutants `tools/mutants/wb5.json` (34 dead). The glow
+seen headless over the court; the flats and the flight not yet with ARENA2 and a live relay. The account's record of
+gates closed is WB5b.

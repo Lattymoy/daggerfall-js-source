@@ -4837,7 +4837,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4242` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4243` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:275`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -8216,3 +8216,12 @@ harmful spell that meets the boss's body - his skin, his whole body, his own rad
 formula against his stand-in, and the number goes to the court's room as the `hit` frame WB3a's relay already
 validates and caps (a sequence of its own, whole points, the kind). The ward turns a blow on this machine and nothing
 is sent. Nothing new on the wire.
+
+## WB5a (2026-09-25, Mac: "On death the boss would physically spew out per player loot") - the spoils; see 11-Multiplayer/World-Bosses.md
+
+The receipt WB3a's relay signs for an account that earned a kill carries a loot seed, and that seed is the whole of
+this player's spoils: the client rolls them (the game's own makers, Loot Rarity's own ladder), spews them out of the
+boss's chest with the thrown torch's own physics, stands each in its tier's glow and hands a piece over when the
+player walks over it - seen by this player alone, never sent. Leaving the court gathers the rest; the device keeps
+the pieces as rolled until a save of that character holds them, so a crash hands them over at the next boot, and it
+keeps the day spent, so a reconnect that re-sends the receipt spews nothing twice. Nothing new on the wire.
