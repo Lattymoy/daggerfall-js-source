@@ -1,10 +1,9 @@
 // PSCALE1 (2026-09-25, Mac: "I want enemy difficulty, enemy numbers, etc to scale approriately with party size";
-// asked: "+50% HP, +10% dmg", "One roll per group", "Everyone in it"): A FIGHT WEIGHS WHAT THE PARTY WEIGHS
-// (systems/partyScale.js). The law's numbers; the outdoor pool driven - a shared foe's toughness at its owner's
-// damage door with the remainder carried, the foes nobody else can help with left alone, a shared foe's hit on me
-// harder; and the hosts by source - the count (everyone in a dungeon's room, the partymates within the camp's radius
-// outdoors), the dungeon's shared foes (its layout's), the group's one roll and the foes more it stands.
-// `06-Systems/Online-Arc.md` PSCALE1.
+// asked: "+50% HP, +10% dmg", "One roll per group", "Everyone in it" - and at AUDIT PSCALE1, "Whoever fights it"):
+// A FIGHT WEIGHS WHAT ITS FIGHTERS WEIGH (systems/partyScale.js). The law's numbers; the outdoor pool driven - a
+// shared foe's toughness at its owner's damage door by the players striking it, the remainder carried, the foes
+// nobody else can help with left alone, a shared foe's hit on me harder; and the hosts by source. The audit's own
+// pins, mounted and driven, are test/auditpscale1.test.js. `06-Systems/Online-Arc.md` PSCALE1, AUDIT PSCALE1.
 import './modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -86,70 +85,59 @@ const rig = (extra = {}) => ({
 });
 const netted = (pool) => pool.setNet({ selfId: () => 'mac-0001', room: () => 'world:3,12', peers: () => [], now: () => 1000, onPeerHit: () => true, toWire: (f) => [f[0], f[1], f[2]], toScene: (p) => [p[0], p[1], p[2]] });
 
-test('PSCALE1 outdoors, driven: a shared foe (one that rides the stream, or another player\'s puppet) takes the party\'s toughness at its owner\'s damage door, the remainder carried; a SetHealth(0) still kills; a quest\'s foe, the watch, my own ally and a pool with no stream (a building\'s) are never weighed; a shared foe\'s hit on me is the party\'s damage (mutants: the toughness unread at the door; the SetHealth door weighed; a quest foe weighed; the watch weighed; a pool without a stream weighed)', async () => {
+test('PSCALE1 outdoors, driven: a shared foe (one that rides the stream, or another player\'s puppet) takes its fighters\' toughness at its owner\'s damage door, the remainder carried; a SetHealth(0) still kills; a quest\'s foe, a placed foe with no site, the watch, my own ally and a pool with no stream (a building\'s) are never weighed; a shared foe\'s hit on me is its fighters\' damage (mutants: the toughness unread at the door; the SetHealth door weighed; a quest foe weighed; the watch weighed; a pool without a stream weighed)', async () => {
   _resetPartyScaleForTests();
-  let n = 4;
-  const pool = createExteriorFoes(rig({ partySize: () => n }));
+  const pool = createExteriorFoes(rig());
   netted(pool);
+  const four = (f) => { for (const id of ['bob-0002', 'carl-0003', 'dave-0004']) pool.damageFoe(f, 0, null, null, { fromPlayer: true, peer: true, peerId: id }); };
   const rat = await pool.spawnFoe(0, [10, 0, 10], { feetGiven: true });
   assert.ok(rat && !rat.puppet && !rat.isQuestFoe, 'my own wanderer, which rides the stream');
   rat.entity.health = 100;
-  for (let k = 0; k < 5; k++) pool.damageFoe(rat, 3, null, null, { fromPlayer: false });
-  assert.equal(rat.entity.health, 94, 'fifteen damage against four is six - 2.5 times the health');
-  n = 1;
-  pool.damageFoe(rat, 3, null, null, { fromPlayer: false });
-  assert.equal(rat.entity.health, 91, 'alone again: the blow itself');
-  n = 8;
+  four(rat);
+  for (let k = 0; k < 5; k++) pool.damageFoe(rat, 3, null, null, { fromPlayer: true });
+  assert.equal(rat.entity.health, 94, 'fifteen damage against its four fighters is six - 2.5 times the health');
   pool.damageFoe(rat, rat.entity.health, null, null, { fromPlayer: false, bypassShield: true });
-  assert.ok(rat.dead, 'a scripted kill is no blow, and kills whatever the party');
+  assert.ok(rat.dead, 'a scripted kill is no blow, and kills whatever fights it');
   const quest = await pool.spawnFoe(0, [12, 0, 12], { feetGiven: true });
   quest.questBehaviour = { isFoeDead: false, notifyDestroyed() {} };   // what bindQuestFoeHost hangs on a quest's foe
   assert.ok(quest.isQuestFoe);
   quest.entity.health = 100;
-  pool.damageFoe(quest, 9, null, null, { fromPlayer: false });
+  four(quest);
+  pool.damageFoe(quest, 9, null, null, { fromPlayer: true });
   assert.equal(quest.entity.health, 91, 'a quest\'s foe is every member\'s own copy: nobody can help, nothing weighs');
-  n = 4;
   const lone = await pool.spawnFoe(0, [14, 0, 14], { feetGiven: true, placed: true });   // a World of Daggerfall foe with no site: every client stands its own
   lone.entity.health = 100;
-  pool.damageFoe(lone, 9, null, null, { fromPlayer: false });
+  four(lone);
+  pool.damageFoe(lone, 9, null, null, { fromPlayer: true });
   assert.equal(lone.entity.health, 91, 'a placed foe with no site rides no stream: mine alone, never weighed');
   const camp = await pool.spawnFoe(0, [16, 0, 16], { feetGiven: true, placed: true, site: 'wod:3,12:0' });   // WOD7: a site's foe is the shared camp's, and rides
   camp.entity.health = 100;
-  pool.damageFoe(camp, 5, null, null, { fromPlayer: false });
+  four(camp);
+  pool.damageFoe(camp, 5, null, null, { fromPlayer: true });
   assert.equal(camp.entity.health, 98, 'a placed foe with a site is the shared camp\'s: five against four is two');
-  assert.equal(pool.partyHit(10, { mobileType: 0, puppet: 'bob-0002', entity: {} }), 13, 'another player\'s foe, stood here, hits the party harder');
-  assert.equal(pool.partyHit(10, { mobileType: KNIGHT_CITY_WATCH, puppet: 'bob-0002', entity: {} }), 10, 'never the watch');
-  assert.equal(pool.partyHit(10, { mobileType: 0, entity: { team: 'PlayerAlly' } }), 10, 'never my own ally');
-  assert.equal(pool.partyHit(10, { mobileType: 0, entity: {}, isQuestFoe: true }), 10, 'never a quest\'s foe');
-  const indoors = createExteriorFoes(rig({ partySize: () => 8 }));   // a building's pool: no stream
+  assert.equal(pool.partyHit(10, { mobileType: 0, puppet: 'bob-0002', _fightN: 4, entity: {} }), 13, 'another player\'s foe, fought by four, hits harder');
+  assert.equal(pool.partyHit(10, { mobileType: KNIGHT_CITY_WATCH, puppet: 'bob-0002', _fightN: 4, entity: {} }), 10, 'never the watch');
+  assert.equal(pool.partyHit(10, { mobileType: 0, _fightN: 4, entity: { team: 'PlayerAlly' } }), 10, 'never my own ally');
+  assert.equal(pool.partyHit(10, { mobileType: 0, _fightN: 4, entity: {}, isQuestFoe: true }), 10, 'never a quest\'s foe');
+  const indoors = createExteriorFoes(rig());   // a building's pool: no stream
   const mouse = await indoors.spawnFoe(0, [10, 0, 10], { feetGiven: true });
   mouse.entity.health = 100;
-  indoors.damageFoe(mouse, 9, null, null, { fromPlayer: false });
-  assert.equal(mouse.entity.health, 91, 'a foe nobody else can see is never weighed');
-  assert.equal(indoors.partyHit(10, mouse), 10);
-  const x = src('src/scenes/exteriorFoes.js');
-  assert.match(x, /const dmg = partyHit\(calculateAttackDamage\(f\.entity, playerEntity, \{/, 'the owner\'s foe\'s blow and a puppet\'s alike reach me weighed');
-  assert.match(x, /\}\), f\);   \/\/ PSCALE1: harder for the party beside me/);
+  for (const id of ['bob-0002', 'carl-0003', 'dave-0004']) indoors.damageFoe(mouse, 0, null, null, { fromPlayer: true, peer: true, peerId: id });
+  indoors.damageFoe(mouse, 9, null, null, { fromPlayer: true });
+  assert.equal(mouse.entity.health, 91, 'a pool with no stream weighs nothing');
+  assert.equal(indoors.partyHit(10, { ...mouse, _fightN: 4 }), 10);
 });
 
-test('PSCALE1 the hosts, by source: the count - everyone in a dungeon\'s room, the partymates within the camp\'s radius outdoors, one offline; the dungeon\'s shared foes are its layout\'s and weigh at its damage door, its blows and its arrows; outdoors the group rolls its wanderers once and stands the foes more, and a camp or a pack grows by its own members; a shared archer\'s arrow is weighed (mutants: strangers counted outdoors; the dungeon counting only the party; every player rolling; no foes more; a camp not growing)', () => {
-  const w = src('src/scenes/world.js');
-  assert.match(w, /if \(String\(online\.room\)\.startsWith\('dungeon:'\)\) return partySizeOf\(1 \+ \(peersNear\(\)\?\.length \?\? 0\)\);/, 'a dungeon counts everyone in its room ("Everyone in it")');
-  assert.match(w, /for \(const m of partyNear\(\)\) \{ const dx = m\.feet\[0\] - me\[0\], dz = m\.feet\[2\] - me\[2\]; if \(dx \* dx \+ dz \* dz <= r2\) n\+\+; \}/, 'outdoors, my partymates within the radius alone');
-  assert.match(w, /const r2 = GROUP_ROLL_RADIUS \* GROUP_ROLL_RADIUS;/);
-  assert.equal(GROUP_ROLL_RADIUS, 100);
-  assert.match(w, /const _rollsForGroup = _mOuter !== 'exterior' \|\| span <= 0 \|\| amGroupRollOwner\(online\?\.id \?\? null, player\.feetAt\(\), peersNear\(\)\);/, '"One roll per group"');
-  assert.match(w, /if \(hit && _rollsForGroup\) \{/);
-  assert.match(w, /for \(let k = 0, n = 1 \+ partyExtraFoes\(partySize\(\)\); k < n; k\+\+\) _standEncounterFoe\(hit, playerFeet\);/, 'the wanderer and the party\'s foes more');
-  assert.match(w, /for \(const mobileType of partyGroupMembers\(hit\.mobileTypes, partySize\(\)\)\) \{/, 'a camp or a pack grows by its own');
-  assert.match(w, /exteriorFoes\.partyHit\(calculateAttackDamage\(shooter\.entity, playerEntity, \{/, 'a shared archer\'s arrow');
-  assert.match(w, /partySize: \(\) => partySize\(\),   \/\/ PSCALE1: the party the streamed foes weigh/, 'the outdoor pool is handed the count');
-  assert.match(w, /partySize: \(\) => partySize\(\),   \/\/ PSCALE1: the party a fight here weighs - the dungeon's shared foes read it/, 'and the mode host');
-  assert.match(src('src/scenes/worldModes.js'), /partySize: host\.partySize \? \(\) => host\.partySize\(\) : null,/, 'the dungeon is handed it, and a standalone dungeon (no host) weighs nothing');
-  const d = src('src/scenes/dungeonContext.js');
-  assert.match(d, /function _sharedFoe\(f\) \{\n\s*if \(!opts\.partySize \|\| !f \|\| f\.entity\?\.team === 'PlayerAlly'\) return false;\n\s*const i = foes\.indexOf\(f\);\n\s*return i >= 0 && i < _layoutFoes;\n\s*\}/, 'a dungeon\'s shared foes are its layout\'s - a rest\'s ambush or a quest\'s wave is mine alone');
-  assert.match(d, /foe\.entity\.health -= !bypassShield && _sharedFoe\(foe\) \? partyFoeLoses\(foe, healthDamage, _partyN\(\)\) : healthDamage;/, 'the host\'s damage door');
-  assert.match(d, /hurtPlayer\(_sharedFoe\(f\) \? partyFoeHits\(dmg, _partyN\(\)\) : dmg\);   \/\/ PSCALE1/, 'a blow at me');
-  assert.match(d, /hurtPlayer\(shooter && _sharedFoe\(shooter\) \? partyFoeHits\(dmg, _partyN\(\)\) : dmg\);   \/\/ PSCALE1/, 'an arrow at me');
-  assert.match(src('src/scenes/exteriorFoes.js'), /f\.entity\.health -= !bypassShield && _sharedFoe\(f\) \? partyFoeLoses\(f, healthDamage, _partyN\(\)\) : healthDamage;/, 'the owner\'s damage door');
+test('PSCALE1 the hosts, by source (AUDIT PSCALE1: the rest is mounted and driven in auditpscale1.test.js): the owner\'s door names every player\'s blow a fighter and weighs by them; the count rides the record and a reader reads it; a shared foe\'s blow and a shared archer\'s arrow at me are weighed by the foe\'s own fighters; the dungeon\'s door the same (mutants: the fighter unnoted, the door unweighed, the count unstreamed or unread)', () => {
+  const strip = (t) => t.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
+  const x = strip(src('src/scenes/exteriorFoes.js'));
+  assert.match(x, /if \(fromPlayer\) noteFighter\(f, peer \? peerId : PARTY_ME, _now\(\)\);\s*f\.entity\.health -= !bypassShield && !_whole && _sharedFoe\(f\) \? partyFoeLoses\(f, healthDamage, fightN\(f\)\) : healthDamage;/, 'the owner\'s damage door');
+  assert.match(x, /const dmg = partyHit\(calculateAttackDamage\(f\.entity, playerEntity, \{/, 'the owner\'s foe\'s blow and a puppet\'s alike reach me weighed');
+  assert.match(x, /const partyHit = \(dmg, f\) => \(_sharedFoe\(f\) \? partyFoeHits\(dmg, fightN\(f\), playerEntity\) : dmg\);/, 'by the foe\'s own fighters, the remainder on me');
+  assert.match(x, /if \(!onWatch && !f\.dead && _sharedFoe\(f\)\) \{ const n = fightN\(f\); if \(n > 1\) r\.n = n; \}/, 'the record carries the count');
+  assert.match(x, /f\._fightN = r\.n \?\? 1;/, 'a reader reads it');
+  const w = strip(src('src/scenes/world.js'));
+  assert.match(w, /exteriorFoes\.partyHit\(calculateAttackDamage\(shooter\.entity, playerEntity, \{[\s\S]{0,700}?\}\), shooter\) : 0;/, 'a shared archer\'s arrow, weighed by its own shooter');
+  const d = strip(src('src/scenes/dungeonContext.js'));
+  assert.match(d, /foe\.entity\.health -= !bypassShield && !_whole && _sharedFoe\(foe\) \? partyFoeLoses\(foe, healthDamage, fightN\(foe\)\) : healthDamage;/, 'the host\'s damage door');
 });

@@ -20,7 +20,8 @@ import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 import { RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../src/player/activate.js';
 import { CORPSE_ACTIVATION_DISTANCE } from '../src/scenes/hostCombat.js';
 import { renownFoeStruck, renownFoeDied } from '../src/net/renownTracker.js';   // RENOWN1: the kill door's stamps, in the harness's scope
-import { partyFoeLoses } from '../src/systems/partyScale.js';   // PSCALE1: the kill door's party weight, in the harness's scope
+import { partyFoeLoses, noteFighter, foeFighters, takeWholeBlow, PARTY_ME } from '../src/systems/partyScale.js';
+import { registerFoeDoor } from '../src/systems/artifactEffects.js';   // AUDIT PSCALE1 DOORS-2: `stand` registers the foe's door   // PSCALE1: the kill door's weight - who fights it - in the harness's scope
 
 const D = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
 const AST = acorn.parse(D, { ecmaVersion: 'latest', sourceType: 'module' });
@@ -89,7 +90,7 @@ function killHarness({ foes, foeDeps = null, getTexture = async () => ({ recordC
     foes, foeDeps, _authority: true, _layoutFoes: foes.length, opts: {}, lastPlayerFeet: [0, 0, 0], _ecvT: 0, _ctxDead: false,
     playerEntity: { isPlayer: true, items: [], luck: 50 },
     markFoeStruck: () => {}, markConcealedHit: () => {}, makeEnemiesHostile: () => {}, peerCandidate: () => null, renownFoeStruck, renownFoeDied,   // RENOWN1: the kill door's two stamps, the real ones (no handler: nothing paid)
-    partyFoeLoses,   // PSCALE1: the real weight - `opts` hands no count here, so no foe is shared and every blow lands whole
+    partyFoeLoses, noteFighter, foeFighters, takeWholeBlow, PARTY_ME, registerFoeDoor,   // PSCALE1: the real weight - only my own blows land here, so every foe fights one and every blow lands whole
     damageShieldPool: (e, n) => n, attemptSoulTrap, fillEmptyTrap, isAzurasStarEquipped: () => false,
     hudText: { add: (l) => log.hud.push(l) }, SOUL_TRAP_TEXT: { trapSuccess: 'ok', trapFail: 'fail', trapNoneEmpty: 'none' },
     setEnemyAlert, playRareDrop: () => { log.chimes++; }, raiseEnemyDeath: () => { log.deaths++; }, liveStat: () => 50,
@@ -107,7 +108,7 @@ function killHarness({ foes, foeDeps = null, getTexture = async () => ({ recordC
     ${declSrc('foeSinks')}
     ${fnSrc('handleAttackFromPlayer')}
     ${fnSrc('_sharedFoe')}
-    ${fnSrc('_partyN')}
+    ${fnSrc('fightN')}
     ${fnSrc('damageFoe')}
     ${fnSrc('spawnCorpse')}
     ${fnSrc('spawnCorpseNow')}

@@ -492,7 +492,7 @@ test('RENOWN1 the tracker: nothing is earned while not earning (offline); a repo
   // the world host's wiring (pinned by source: the host is not driveable in node)
   const w = src('src/scenes/world.js');
   assert.match(w, /const renownTracker = onlineOn \? createRenownTracker\(/, 'never built offline');
-  assert.match(w, /setRenownKillHandler\(\(foe\) => \{ renownTracker\.earn\(renownPartyXp\(renownKillXp\(renownFoeLevel\(foe\), renownNow\), 1 \+ \(partyNear\(\)\?\.length \?\? 0\)\)\); \}\);/, 'a kill with my party in the room counted');
+  assert.match(w, /setRenownKillHandler\(\(foe\) => \{ const party = 1 \+ \(partyNear\(\)\?\.length \?\? 0\); renownTracker\.earn\(renownPartyXp\(renownKillXp\(renownFoeLevel\(foe\), renownNow\), Number\.isInteger\(foe\?\._fightN\) \? Math\.min\(party, foe\._fightN\) : party\)\); \}\);/, 'a kill with my party in the room counted - AUDIT PSCALE1 PLAY-4: no more of it than fought a shared foe');
   assert.match(w, /renownTracker\.earn\(renownQuestXp\(playerEntity\.level, renownNow\)\)/, 'a quest by the character\'s level (RENOWN3: read against its Renown)');
   assert.match(w, /renownQuestEnded\?\.\(q\);/, 'the bridge\'s end reaches it');
   assert.match(w, /if \(!q\?\.questSuccess\) return;/, 'a failure pays nothing');

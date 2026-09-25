@@ -5,7 +5,8 @@
     "old": "export const PARTY_SCALE_HP_PCT = 50;",
     "new": "export const PARTY_SCALE_HP_PCT = 40;",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
@@ -14,7 +15,8 @@
     "old": "export const PARTY_SCALE_DAMAGE_PCT = 10;",
     "new": "export const PARTY_SCALE_DAMAGE_PCT = 20;",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
@@ -23,7 +25,8 @@
     "old": "export const PARTY_SCALE_EXTRA_EVERY = 2;",
     "new": "export const PARTY_SCALE_EXTRA_EVERY = 1;",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
@@ -32,7 +35,8 @@
     "old": "export const PARTY_SCALE_EXTRA_MAX = 3;",
     "new": "export const PARTY_SCALE_EXTRA_MAX = 4;",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
@@ -41,43 +45,48 @@
     "old": "Math.max(1, Math.min(PARTY_MAX, Math.floor(n)))",
     "new": "Math.max(1, Math.floor(n))",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-remainder-dropped",
     "file": "src/systems/partyScale.js",
-    "old": "if (key) _carry.set(key, Math.max(0, exact - whole));",
-    "new": "if (key) _carry.set(key, 0);",
+    "old": "  if (key) carry.set(key, Math.max(0, exact - whole));",
+    "new": "  if (key) carry.set(key, 0);",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-remainder-lost-to-a-double",
     "file": "src/systems/partyScale.js",
-    "old": "const whole = Math.floor(exact + 1e-9);",
-    "new": "const whole = Math.floor(exact);",
+    "old": "  const whole = Math.floor(exact + 1e-9);   // 1.2 + 0.8",
+    "new": "  const whole = Math.floor(exact);   // 1.2 + 0.8",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-health-not-whole",
     "file": "src/systems/partyScale.js",
-    "old": "const whole = Math.floor(exact + 1e-9);",
-    "new": "const whole = exact;",
+    "old": "  const whole = Math.floor(exact + 1e-9);   // 1.2 + 0.8",
+    "new": "  const whole = exact;   // 1.2 + 0.8",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-hit-weighed-alone",
     "file": "src/systems/partyScale.js",
-    "old": "return Math.round(damage * partyDamageFactor(n));",
-    "new": "return Math.round(damage * partyDamageFactor(n + 1));",
+    "old": "  if (!key) return Math.round(damage * f);",
+    "new": "  if (!key) return Math.round(damage * partyDamageFactor(n + 1));",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
@@ -86,25 +95,28 @@
     "old": "for (let k = 0; k < more && own.length; k++) out.push(own[k % own.length]);",
     "new": "for (let k = 0; k < more && own.length; k++) out.push(own[0]);",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-outdoor-door-unweighed",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "f.entity.health -= !bypassShield && _sharedFoe(f) ? partyFoeLoses(f, healthDamage, _partyN()) : healthDamage;",
-    "new": "f.entity.health -= healthDamage;",
+    "old": "    f.entity.health -= !bypassShield && !_whole && _sharedFoe(f) ? partyFoeLoses(f, healthDamage, fightN(f)) : healthDamage;",
+    "new": "    f.entity.health -= healthDamage;",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-outdoor-scripted-kill-weighed",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "f.entity.health -= !bypassShield && _sharedFoe(f) ?",
-    "new": "f.entity.health -= _sharedFoe(f) ?",
+    "old": "    f.entity.health -= !bypassShield && !_whole && _sharedFoe(f) ?",
+    "new": "    f.entity.health -= !_whole && _sharedFoe(f) ?",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
@@ -113,7 +125,8 @@
     "old": "!!f && f.mobileType !== KNIGHT_CITYWATCH_ID && f.entity?.team !== 'PlayerAlly'",
     "new": "!!f && f.entity?.team !== 'PlayerAlly'",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
@@ -122,7 +135,8 @@
     "old": "!!f && f.mobileType !== KNIGHT_CITYWATCH_ID && f.entity?.team !== 'PlayerAlly'",
     "new": "!!f && f.mobileType !== KNIGHT_CITYWATCH_ID",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
@@ -131,7 +145,8 @@
     "old": "(!!f.puppet || (!f.isQuestFoe && !(f.placed && !f.site)))",
     "new": "(!!f.puppet || !(f.placed && !f.site))",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
@@ -140,7 +155,8 @@
     "old": "(!!f.puppet || (!f.isQuestFoe && !(f.placed && !f.site)))",
     "new": "(!!f.puppet || !f.isQuestFoe)",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
@@ -149,16 +165,18 @@
     "old": "(!!f.puppet || (!f.isQuestFoe && !(f.placed && !f.site)))",
     "new": "(!!f.puppet || (!f.isQuestFoe && !f.placed))",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-outdoor-no-stream-weighed",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "const _sharedFoe = (f) => !!partySize && !!_net && !!f &&",
-    "new": "const _sharedFoe = (f) => !!partySize && !!f &&",
+    "old": "  const _sharedFoe = (f) => !!_net && !!f &&",
+    "new": "  const _sharedFoe = (f) => !!f &&",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
@@ -167,7 +185,8 @@
     "old": "(!!f.puppet || (!f.isQuestFoe && !(f.placed && !f.site)))",
     "new": "(!f.puppet && !f.isQuestFoe && !(f.placed && !f.site))",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
@@ -176,88 +195,88 @@
     "old": "const dmg = partyHit(calculateAttackDamage(f.entity, playerEntity, {",
     "new": "const dmg = ((d) => d)(calculateAttackDamage(f.entity, playerEntity, {",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-outdoor-hit-unexported",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "return { foes, spawnFoe, damageFoe, partyHit, handleAttackFromPlayer,",
-    "new": "return { foes, spawnFoe, damageFoe, partyHit: (d) => d, handleAttackFromPlayer,",
+    "old": "  return { foes, spawnFoe, damageFoe, partyHit, healFoe,",
+    "new": "  return { foes, spawnFoe, damageFoe, partyHit: (d) => d, healFoe,",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-dungeon-door-unweighed",
     "file": "src/scenes/dungeonContext.js",
-    "old": "foe.entity.health -= !bypassShield && _sharedFoe(foe) ? partyFoeLoses(foe, healthDamage, _partyN()) : healthDamage;",
-    "new": "foe.entity.health -= healthDamage;",
+    "old": "    foe.entity.health -= !bypassShield && !_whole && _sharedFoe(foe) ? partyFoeLoses(foe, healthDamage, fightN(foe)) : healthDamage;",
+    "new": "    foe.entity.health -= healthDamage;",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-dungeon-scripted-kill-weighed",
     "file": "src/scenes/dungeonContext.js",
-    "old": "foe.entity.health -= !bypassShield && _sharedFoe(foe) ?",
-    "new": "foe.entity.health -= _sharedFoe(foe) ?",
+    "old": "    foe.entity.health -= !bypassShield && !_whole && _sharedFoe(foe) ?",
+    "new": "    foe.entity.health -= !_whole && _sharedFoe(foe) ?",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-dungeon-past-the-layout-weighed",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    return i >= 0 && i < _layoutFoes;\n  }\n  function _partyN()",
-    "new": "    return i >= 0;\n  }\n  function _partyN()",
+    "old": "    const i = foes.indexOf(f);\n    return i >= 0 && i < _layoutFoes;\n  }\n  /** AUDIT PSCALE1",
+    "new": "    const i = foes.indexOf(f);\n    return i >= 0;\n  }\n  /** AUDIT PSCALE1",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-dungeon-ally-weighed",
     "file": "src/scenes/dungeonContext.js",
-    "old": "if (!opts.partySize || !f || f.entity?.team === 'PlayerAlly') return false;",
-    "new": "if (!opts.partySize || !f) return false;",
+    "old": "    if (!f || f.entity?.team === 'PlayerAlly') return false;\n    const i = foes.indexOf(f);",
+    "new": "    if (!f) return false;\n    const i = foes.indexOf(f);",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-dungeon-blow-unweighed",
     "file": "src/scenes/dungeonContext.js",
-    "old": "hurtPlayer(_sharedFoe(f) ? partyFoeHits(dmg, _partyN()) : dmg);",
-    "new": "hurtPlayer(dmg);",
+    "old": "    const dmg = _weighHit(f, foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {",
+    "new": "    const dmg = ((x, d) => d)(f, foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-dungeon-arrow-unweighed",
     "file": "src/scenes/dungeonContext.js",
-    "old": "hurtPlayer(shooter && _sharedFoe(shooter) ? partyFoeHits(dmg, _partyN()) : dmg);",
-    "new": "hurtPlayer(dmg);",
+    "old": "_weighHit(shooter, foeDeps.calculateAttackDamage(shooter.entity, playerEntity, {",
+    "new": "((x, d) => d)(shooter, foeDeps.calculateAttackDamage(shooter.entity, playerEntity, {",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
-    "name": "PSCALE1-dungeon-never-handed-the-count",
-    "file": "src/scenes/worldModes.js",
-    "old": "partySize: host.partySize ? () => host.partySize() : null,",
-    "new": "partySize: null,",
+    "name": "PSCALE1-dungeon-hit-by-nobody",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  function _weighHit(f, dmg) { return f && _sharedFoe(f) ? partyFoeHits(dmg, fightN(f), playerEntity) : dmg; }",
+    "new": "  function _weighHit(f, dmg) { return dmg; }",
     "tests": [
-      "test/pscale1.test.js"
-    ]
-  },
-  {
-    "name": "PSCALE1-dungeon-counts-the-party-alone",
-    "file": "src/scenes/world.js",
-    "old": "if (String(online.room).startsWith('dungeon:')) return partySizeOf(1 + (peersNear()?.length ?? 0));",
-    "new": "if (String(online.room).startsWith('dungeon:')) return partySizeOf(1 + (partyNear()?.length ?? 0));",
-    "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
@@ -266,7 +285,8 @@
     "old": "if (dx * dx + dz * dz <= r2) n++; }",
     "new": "n++; }",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
@@ -275,25 +295,18 @@
     "old": "if (hit && _rollsForGroup) {",
     "new": "if (hit) {",
     "tests": [
-      "test/pscale1.test.js"
-    ]
-  },
-  {
-    "name": "PSCALE1-group-gate-indoors-too",
-    "file": "src/scenes/world.js",
-    "old": "const _rollsForGroup = _mOuter !== 'exterior' || span <= 0 || amGroupRollOwner(",
-    "new": "const _rollsForGroup = span <= 0 || amGroupRollOwner(",
-    "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
     "name": "PSCALE1-no-foes-more-a-wanderer",
     "file": "src/scenes/world.js",
-    "old": "for (let k = 0, n = 1 + partyExtraFoes(partySize()); k < n; k++)",
-    "new": "for (let k = 0, n = 1; k < n; k++)",
+    "old": "n = SOLITARY_TYPES.has(hit.mobileType) ? 1 : 1 + partyExtraFoes(partySize());",
+    "new": "n = 1;",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
@@ -302,7 +315,8 @@
     "old": "for (const mobileType of partyGroupMembers(hit.mobileTypes, partySize())) {",
     "new": "for (const mobileType of hit.mobileTypes) {",
     "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   },
   {
@@ -311,25 +325,8 @@
     "old": "exteriorFoes.partyHit(calculateAttackDamage(shooter.entity, playerEntity, {",
     "new": "((d) => d)(calculateAttackDamage(shooter.entity, playerEntity, {",
     "tests": [
-      "test/pscale1.test.js"
-    ]
-  },
-  {
-    "name": "PSCALE1-pool-never-handed-the-count",
-    "file": "src/scenes/world.js",
-    "old": "partySize: () => partySize(),   // PSCALE1: the party the streamed foes weigh",
-    "new": "partySize: null,   // PSCALE1: the party the streamed foes weigh",
-    "tests": [
-      "test/pscale1.test.js"
-    ]
-  },
-  {
-    "name": "PSCALE1-modes-never-handed-the-count",
-    "file": "src/scenes/world.js",
-    "old": "partySize: () => partySize(),   // PSCALE1: the party a fight here weighs",
-    "new": "partySize: null,   // PSCALE1: the party a fight here weighs",
-    "tests": [
-      "test/pscale1.test.js"
+      "test/pscale1.test.js",
+      "test/auditpscale1.test.js"
     ]
   }
 ]

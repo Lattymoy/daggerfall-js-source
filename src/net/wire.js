@@ -736,10 +736,15 @@ export const whoIdOf = (m) => (m && typeof m.id === 'string' && ID_RE.test(m.id)
  *  into a layout every client built (`i >= _layoutFoes` refuses the rest); a cell's comes from anyone and MINTS a
  *  foe per record it names, so a record is projected like a pose (validPose's own bounds on the feet) and a frame
  *  carries at most CELL_FRAME_RECORDS_MAX records (the owner's live cap plus the corpses still riding), and a
- *  reader stands at most CELL_PUPPETS_MAX live puppets per owner (MAX_ACTIVE_ENCOUNTER_FOES - the only number a
- *  legitimate owner can exceed is by quest foes, which never ride). */
+ *  reader stands at most CELL_PUPPETS_MAX live puppets per owner: the owner's encounter cap
+ *  (MAX_ACTIVE_ENCOUNTER_FOES, 8) and CELL_LOOSE_PUPPETS more. AUDIT PSCALE1 COUNT-4: the cap was the encounter cap
+ *  alone, on the reading that only quest foes (which never ride) pass it - but a LOOSE stand (a SoulBound's release,
+ *  the Sanguine Rose's Daedroth, Roleplay & Realism's squad) and a Wabbajack's replacement are outside the owner's cap
+ *  and DO ride, and a camp of five grown by a party's three more fills the eight exactly, so the reader dropped them
+ *  unseen. */
 export const CELL_FRAME_RECORDS_MAX = 64;
-export const CELL_PUPPETS_MAX = 8;
+export const CELL_LOOSE_PUPPETS = 4;
+export const CELL_PUPPETS_MAX = 8 + CELL_LOOSE_PUPPETS;
 /** AUDIT WATCH1 A1: THE WATCH HAS ITS OWN ALLOWANCE. A criminal's frame is its encounter foes AND its watch, and the
  *  watch rides behind the foes - so under one cap of eight a criminal carrying a full encounter roll streamed a watch
  *  no reader ever stood (the cap counts standing puppets, so no later frame could get one in). The watch is counted
@@ -786,6 +791,8 @@ export function validFoeRecord(r) {
   // WORLD6b-iii(c): `o` how many items the corpse's pile holds (0 a live foe, an emptied body) - a peer's body is a loot
   // target while it says more than none; the pile itself travels in the owner's GRANT (a hit frame), never here
   if (r.o !== undefined) { if (!Number.isInteger(r.o) || r.o < 0 || r.o > 255) return null; out.o = r.o; }
+  // AUDIT PSCALE1: `n` how many players fight the foe (systems/partyScale.js foeFighters) - 2..PARTY_MAX, absent for one
+  if (r.n !== undefined) { if (!Number.isInteger(r.n) || r.n < 2 || r.n > PARTY_MAX) return null; out.n = r.n; }
   // AUDIT CONTRIB P1: `e` the HEIR - on a dying owner's last frame, the survivor that owner names to take this foe over
   if (r.e !== undefined) { if (typeof r.e !== 'string' || !ID_RE.test(r.e)) return null; out.e = r.e; }
   if (r.w !== undefined) {

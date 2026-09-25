@@ -2,8 +2,8 @@
 // place). These initial values are the PRE-CHARGEN state only:
 // createCharacter (systems/chargen) rolls the real career the first
 // time a chargen-running context boots, and every host runs it
-// through systems/chargenSession.js - dungeonContext.js:2133,
-// world.js:3275, exterior.js:1384 and applyHeadlessChargen for the
+// through systems/chargenSession.js - dungeonContext.js:2134,
+// world.js:3276, exterior.js:1384 and applyHeadlessChargen for the
 // test room (AUDIT 23).
 //
 // NOT A GAP (recorded): the stand-ins below - flat skills 30,
@@ -68,7 +68,7 @@ export const playerEntity = {
   // after a boot load or a classic import and the eleven-wide
   // guarantee AUDIT 63 F6 bought had to come from the constructor
   // instead. The three `??=` mints downstream (enchantments.js:674
-  // and :825, artifactEffects.js:150) and talk.js's
+  // and :825, artifactEffects.js:151) and talk.js's
   // ensureReactionState stay as the belt to this brace.
   reactionMods: new Array(SOCIAL_GROUP_COUNT).fill(0),
 

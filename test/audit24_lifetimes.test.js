@@ -55,7 +55,7 @@ test('audit24 lifetimes: an encounter foe frees its billboard batch on BOTH ends
   // spares corpses), so the batch would be unreachable and undead
   // AUDIT 26 F035/F041 grew the header: the door takes a provenance
   // flag (fromPlayer), defaulting true.
-  const dmg = bodyOf(src, "function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false, kind = 'melee', peer = false, peerId = null } = {})");   // WORLD6b: the blow's kind and a peer's provenance, the dungeon door's own
+  const dmg = bodyOf(src, "function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false, kind = 'melee', peer = false, peerId = null, whole = false } = {})");   // WORLD6b: the blow's kind and a peer's provenance, the dungeon door's own
   // The window is a PROXIMITY bound, not a law - it exists so the
   // release cannot drift out of the death branch entirely. X5 put the
   // Soul Trap intercept between the two points (the trap can refuse
@@ -89,7 +89,7 @@ test('audit24 lifetimes: a city guard frees its batch on both death paths, and t
   // per-frame walk over `guards` paid for them. DFU destroys the
   // walk-away watch outright (EnemyEntity.cs:184-191) and keeps only
   // the killed body. So the key is the guard's own id now, and the
-  // prune is the encounter pool's (exteriorFoes.js:1028).
+  // prune is the encounter pool's (exteriorFoes.js:1046).
   // AUDIT-WH H2 moved the spelling, not the law: the id function is
   // one const now, read by the corpse lens AND by the live-foe
   // producer the plaque races, so a guard and the body it becomes

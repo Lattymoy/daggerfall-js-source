@@ -4320,7 +4320,7 @@ room exists.
 
 **The boundary that makes that safe is `_layoutFoes`** - the dungeon
 host's index of where the layout's own run ends. Every foe past it "is
-this player's own" (`dungeonContext.js:1167`, AUDIT WORLD B2): a quest
+this player's own" (`dungeonContext.js:1168`, AUDIT WORLD B2): a quest
 foe is minted above it, never streamed, never puppet-ised by the room's
 authority switch, and never touched by a joiner's stream. So a joiner's
 quest foe really does spawn and really can be killed by the player whose
@@ -4689,7 +4689,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6195` read, on one physical line:
+`src/scenes/worldModes.js:6196` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4704,7 +4704,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:4306`). With the property missing that call is a
+(`dungeonContext.js:4309`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -4831,7 +4831,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4245` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4246` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:255`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -7043,7 +7043,7 @@ answers that exact string in the object's sleep, no event, no wake. Only a
 CHANNEL session (chat, `presence: false`) used it. A presence session's
 liveness rode the pose.
 
-**Now (`src/net/wire.js:917`, `src/net/online.js:1766`):**
+**Now (`src/net/wire.js:924`, `src/net/online.js:1766`):**
 
 - `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
   before) or every 20 s standing, as the peers' proof of life and the silence
@@ -8145,9 +8145,11 @@ Asked three things, Mac answered: "+50% HP, +10% dmg" a player past the first; o
 dungeon "Everyone in it" counts. Daggerfall Unity has no other players, so every foe is sized for one; this is a
 Ledger A departure (`Port-Ledger.md` section A, A FIGHT WEIGHS WHAT THE PARTY WEIGHS), and it is online's alone -
 offline the party is one and every number is DFU's. The law is `src/systems/partyScale.js`, pure, the count an
-argument.
+argument. **AUDIT PSCALE1 (below) changed who counts**: a fight's weight is now its FOE'S FIGHTERS - the players who
+struck it within thirty seconds (Mac: "Whoever fights it") - and the notes marked so below are corrected there.
 
-- **Who the party is** (`scenes/world.js partySize`, 1 to PARTY_MAX 8). In a dungeon, everyone in that dungeon's room -
+- **Who the party is** (`scenes/world.js partySize`, 1 to PARTY_MAX 8; AUDIT PSCALE1: now the outdoor roll's count
+  alone - a fight weighs its foe's fighters). In a dungeon, everyone in that dungeon's room -
   its layout foes are every player's there, partymates and strangers alike, so everyone who can strike them counts.
   Outdoors, me and the partymates whose feet are within GROUP_ROLL_RADIUS (100 units, the camps' own group) - a town
   full of strangers is not my party. Offline, or with no open room, one.
@@ -8184,16 +8186,109 @@ argument.
   and harder instead.
 - A foe's SPELLS are not weighed: their damage runs through the spell engine's effect bundles, which tick on long after
   the cast and are shared with players' own spells.
-- A player resting beside an awake player who owns the group's roll is not woken by a wanderer (CAMP1-REST's cost,
-  now the lone encounter's too): someone is on watch. The election is the camps' own, over every player within the
+- ~~A player resting beside an awake player who owns the group's roll is not woken by a wanderer (CAMP1-REST's cost,
+  now the lone encounter's too): someone is on watch.~~ PAID at AUDIT PSCALE1 (COUNT-1): a rest is always its rester's
+  own roll. The election is the camps' own, over every player within the
   radius, partymate or stranger - players standing together meet one wanderer roll between them, and the foes more
   are sized by the roller's own party.
 - The count is read at the moment it is needed - a blow landing, a hit struck, a roll standing - so a partymate who
   walks off mid-fight makes the next blow count for fewer; nothing already dealt is re-weighed.
 
-No relay change and no version: nothing on the wire moves, and each client weighs its own blows. Pinned:
+No relay change and no version: nothing on the wire moves (AUDIT PSCALE1 carried the fighters' count on the foe
+record, `n`); the authority weighs every blow on its foes, a peer's included, and each client weighs only the hits it
+takes (AUDIT PSCALE1 REC-10: this read "each client weighs its own blows", which is backwards). Pinned:
 `test/pscale1.test.js` (4): the law's numbers and bounds (the widest camp with its extras inside both caps); the
 outdoor pool driven - a shared foe at N 4 loses five blows of 3 as 6 (health 94), alone a blow of 3 as 3, a scripted
 kill whole, a quest foe and a placed foe with no site unweighed and a site's camp foe weighed, a puppet's hit 13 for 10 and the watch's, an ally's and a quest foe's 10, an indoor pool's foe
 unweighed; and the wiring in world.js, worldModes.js, dungeonContext.js and exteriorFoes.js by source.
 `tools/mutants/pscale1.json`.
+
+## AUDIT PSCALE1 (2026-09-25, Mac: "Lets audit this") - five lenses, thirty-two findings (twenty-nine distinct), and the count is whoever fights it
+
+Five lenses over PSCALE1 - the damage doors, the network, the count and the encounters, the records, play and balance
+- each finding reproduced by the lens (scripts that drive the real pools, the real placement law, the real election)
+and again before its fix. One of them was the design: "Everyone in it" counted every player anywhere in a dungeon, so
+**seven strangers idling in Privateer's Hold - where every new character starts - made a solo player's rats 4.5 times
+as tough and 1.7 times as hard-hitting**, and an AFK crowd could do it on purpose. Asked who should count, Mac
+answered **"Whoever fights it"**.
+
+**The count (PLAY-1, PLAY-4, NET-1, REC-10).** A foe's FIGHTERS are the players who struck it within
+PARTY_FIGHT_WINDOW_MS (thirty seconds, Renown's own assist window), strangers and partymates alike, one to eight
+(`partyScale.js noteFighter`/`foeFighters`). They are counted where every blow lands - the authority's damage door
+hears its own player's and every peer's (applyHit) - and ride the foe's record as `n` (wire.js validFoeRecord, a whole
+2..8, absent for one), so every client weighs a foe's hits by the same number. It pays four findings at once: a player
+idling across the dungeon or a silent tab never struck the foe (PLAY-1, and NET-2's effect on the count); an archer a
+hundred paces off who shoots it counts (PLAY-4 - three archers at 101 units had switched the scaling off and kept
+the Renown bonus); a dungeon split while its host is silent only ever hears my blows on my copy (NET-1 - each joiner
+had fought a private copy weighed for the whole room); and every client reads the owner's count, not its own
+(REC-10). A shared foe's Renown bonus counts no more partymates than fought it (PLAY-4's other half). The outdoor
+ROLL keeps its own count - the partymates within GROUP_ROLL_RADIUS, before any blow (`world.js partySize`, the
+dungeon arm gone); no pool or mode is handed it any more.
+
+**The doors.**
+- DOORS-1 (medium): a KILL is not a blow. Disintegrate (`sinks.hurt(left, { whole: true })`), a stat drained to zero
+  (the same flag, statMods.js) and Mehrunes' Razor's whole-health strike (`markWholeBlow`, spent at the first door) were
+  divided by the toughness - Disintegrate left a foe at 34-78 health, a zero stat took up to 4.2 s to kill. A kill
+  skips the division at both pools' doors and crosses the divert as `z: 1`, which the owner's and the host's applyHit
+  honour.
+- DOORS-2: the Ring of Namira wrote `attacker.health` straight - no toughness, no death check (a foe left at -2,
+  alive), and on a puppet a copy the next record overwrote. Each pool registers the foe's own door by entity
+  (`registerFoeDoor`); the reflection goes through it (a watchman's crime-free, as before). The reflection is the blow
+  as rolled, DFU's number - the fighters' weight on my side of it is not reflected.
+- DOORS-3: underground the flash and the pain cry read the unweighed hit while health took the weighed one; the blow
+  and the arrow are weighed once, where the damage is declared (`_weighHit`).
+- DOORS-4: `partyFoeHits` rounded with no carry, so a hit of 1-4 against a pair was never harder and a rat's 1 was
+  doubled for six to eight; the remainder is carried per victim now.
+- DOORS-5 / PLAY-6: a heal on a shared foe (the Seducer's Vampiric Touch) restored its whole amount of a pool the party
+  fights at 2.5-4.5 times; it is weighed as the damage is (`partyFoeHeals`, its own remainder).
+
+**The roll and the extras.**
+- COUNT-1 (high): the one-roll gate had no rest exemption, and a party rest's mirrors never roll - so whenever a
+  partymate with the lower id slept in the mirror, nobody rolled the whole night (a four's eight-hour rest broken 18%
+  of the time, 75% before). A rest is always its rester's own roll; the documented "awake owner" limit is gone with it.
+- PLAY-2 / PLAY-3: the vote ran over every player within reach, so a stranger with a lower id (or a hand-chosen `----`
+  id) silenced mine and set the level and the extras of mine. It runs over my PARTYMATES (`partyNear`, now with ids);
+  strangers roll their own.
+- COUNT-5 / REC-7: deferring to any lower id within reach let a chain (A, B, C sixty apart) elect A alone - C met
+  nothing. `amGroupRollOwner` is greedy by id: the lowest rolls, and each next rolls unless a chosen roller stands within
+  the radius (the camps' election too; a huddle still elects its one lowest).
+- COUNT-2 (medium): the extras copied the wanderer, so a party of eight could meet four Liches, each 4.5 times as tough.
+  A SOLITARY_TYPES foe (mobileFactions.js) stands alone, whatever the party.
+- COUNT-3: extras and a camp's members were placed in one synchronous loop and never saw each other (spawnFoe lands
+  after its awaits) - in 44% of a party of eight's wanderer encounters a foe stood inside another, in 98% of a grown
+  camp's. The pool
+  names the feet in flight (`pendingFeet`); the placing pool (`_placingPool`) tests them.
+- COUNT-4: the reader's allowance was the owner's encounter cap alone, and a camp of five and three more fills it - an
+  uncapped stand (a SoulBound's release, the Rose's Daedroth, RR's squad, a Wabbajack's change) rode and was dropped
+  unseen. CELL_PUPPETS_MAX is the cap and CELL_LOOSE_PUPPETS (4) more.
+- NET-2 (medium, older than PSCALE1): `peersNear` passed `performance.now()` to a session that stamps with
+  `Date.now()`, so a silent peer never timed out - it kept the roll and the count for as long as its socket lived. It
+  reads the session's own clock.
+- NET-3: the party's one roll stands every wanderer in the roller's pool, so one player stepping into a shop took the
+  whole fight off every other screen. A door out of the open country hands my live foes to the players outside
+  (`handOverFoes`, PDEATH-FOES's handover, now said at the modes' pre-transition too).
+
+**The records (REC-1..13).** Eleven behavioural mutants survived the shipped pins (the dungeon's count, door and blow;
+the three count hand-offs; the archer; the outdoor count; the gate; the melee swing; the remainder) - every one is
+killed by `test/auditpscale1.test.js`, which MOUNTS the host slices from comment-stripped source (the dungeon's
+helpers and door, the count, the gate and the extras, the camp, the placing pool, peersNear, the handover, the arrow
+handler) and drives the pools. The docs' misstatements are corrected: the damage rule is 10% a fighter past the
+first; the pinprick example is the 5th and 9th blows; the offline comments name the real mechanism (only my blows
+reach an offline copy).
+
+**Known limits, taken knowingly.**
+- A dungeon's count is its map's markers and does not grow; a foe's spells on a player are not weighed.
+- The first blows of a fight count only the players who have struck so far - four striking at once converge on four
+  within their first swings.
+- The party's roller's own place decides its roll: swimming, standing in a town's widened rect by day, or with a window
+  open, it stands no wanderer for a partner just outside (PLAY-2's roller-context half); the roller's level sets the
+  wanderers' band (PLAY-3's level half) - a peer's Daggerfall level is not on the wire.
+- The damage numbers (HN1) show the blow as rolled - the formula's readout, its own law; a shared foe loses it over its
+  fighters' toughness.
+- A heal on a joiner's or a reader's COPY is written unweighed until the next record carries the authority's.
+
+Relay: wire.js is in the relay's bundle, so world108's row (unshipped) is rewritten in place; the relay reads none of
+`n`. Pinned: `test/auditpscale1.test.js` (9), `test/pscale1.test.js` (4, re-aimed), and the older pins the change
+moved (audit68_dungeonctx's harness, auditworld6b's divert and cap, exteriorfoes' sink, renown1's door and bonus).
+Mutants: `tools/mutants/auditpscale1.json`, `tools/mutants/pscale1.json` (re-aimed), and restx2camp's and watch1's
+records re-aimed by content.

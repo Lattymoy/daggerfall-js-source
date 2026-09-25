@@ -155,7 +155,7 @@ test('ROAD-G G1(a): the door is gated on the PLAYER being the source (F035\'s la
   // it. The gate is DFU's `sourceEntityBehaviour ==
   // PlayerEntityBehaviour` (DaggerfallEntityBehaviour.cs:203) wrapping
   // the whole aggro block at :250-261: a watchman struck by a rat
-  // (the cross-pool `hurtFromFoe` minted at cityGuards.js:313) or
+  // (the cross-pool `hurtFromFoe` minted at cityGuards.js:314) or
   // killed by a fall (EnemyMotor.ApplyFallDamage calls DecreaseHealth
   // and nothing else, :1398-1401) must turn NOBODY.
   //
@@ -230,7 +230,7 @@ test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', (
 
 test('ROAD-G G1(a): all three arrow hosts ROUTE the hostility seam by pool', () => {
   // The door is PUBLIC now, as the encounter pool's has always been
-  // (exteriorFoes.js:1996), so every host can reach it.
+  // (exteriorFoes.js:2016), so every host can reach it.
   const cg = read('src/scenes/cityGuards.js');
   assert.match(cg, /restoreWorld, removeGuard, handleAttackFromPlayer,/,
     'the watch exports its hostility pair on the returned surface');
@@ -319,8 +319,8 @@ test('ROAD-G G1(b): both hosts route the transform by POOL MEMBERSHIP', () => {
   // (exteriorFoes.js:426-431) never looks a record up in `foes` and
   // both pools share the host's one renderer, so the old arm tore a
   // watchman down exactly as `removeGuard` does - batch freed,
-  // `dead = true`, no corpse, skipped by cityGuards.js:937 and spliced
-  // at :1125 in that same pass. The router is an OWNERSHIP fix, not a
+  // `dead = true`, no corpse, skipped by cityGuards.js:939 and spliced
+  // at :1127 in that same pass. The router is an OWNERSHIP fix, not a
   // leak fix, and no page may say otherwise again.
   // (the halves are joined at runtime so this very file does not carry
   // the sentence it bans)

@@ -38,6 +38,7 @@ import { equipTableOf } from './equip.js';   // AUDIT 58: no lowerCondition - th
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';   // the FallExe enum at its V3 home - never through enchantments.js (cycle)
 import { MOBILE_TYPES } from '../characters/mobileTypes.js';
 import { liveStat as liveStatOf, increaseDrainMagnitude } from './statMods.js';
+import { markWholeBlow } from './partyScale.js';   // AUDIT PSCALE1 DOORS-1: the Razor's strike is a kill
 import { SOCIAL_GROUP_COUNT } from '../formats/factionFile.js';   // AUDIT 63 F6: the Masque raises ALL eleven groups (MasqueOfClavicusEffect.cs:39-43 over FactionFile.cs:552-566)
 
 /** ItemEnums.ArtifactsSubTypes (:238-262), the payload-bearing nine
@@ -160,6 +161,7 @@ const HANDLERS = new Map([
       if (!target || !item) return null;
       if (savingThrow(ELEMENTS.Magic, EFFECT_FLAGS.Magic, target, 0, rolls) !== 0) {
         const healthRemoved = target.health ?? 0;
+        markWholeBlow(target);   // AUDIT PSCALE1 DOORS-1: the whole health, whole - the foe's door takes it undivided, and so does its owner's
         return { strikesModulateDamage: healthRemoved, durabilityLoss: healthRemoved };
       }
       return null;
@@ -353,6 +355,14 @@ export function artifactHook(hookName) {
  * points through lowerCondition, so a run of bounced Undead blows
  * could BREAK and unequip an artifact DFU keeps pristine.
  */
+/** AUDIT PSCALE1 DOORS-2: a foe's damage door by its ENTITY, registered by the pool that stands it (exteriorFoes,
+ *  dungeonContext) - the reflection had written `attacker.health` straight, so it ran no death check (a foe left at
+ *  -2, alive), ignored the toughness every other blow on a shared foe takes, and on a puppet changed a copy the next
+ *  record overwrote. A WeakMap: a foe gone is a door gone. The reflection is the blow as rolled (DFU's number, the
+ *  formula's tail); the party's weight on MY side of it is not reflected. */
+const _foeDoors = new WeakMap();
+export function registerFoeDoor(entity, door) { if (entity && typeof entity === 'object' && typeof door === 'function') _foeDoors.set(entity, door); }
+
 export function onPlayerStruckByEnemy(attacker, target, damage) {
   if (!target?.isPlayer || !attacker || damage <= 0) return;
   if (!isWearingArtifact(target, ARTIFACTS.RingOfNamira)) return;   // AUDIT 68 S24-namira-duplicate-reader: the one hardened scan, not a copy of it
@@ -366,7 +376,11 @@ export function onPlayerStruckByEnemy(attacker, target, damage) {
     case 'Undead': reflected = damage * 2; break;
     default: reflected = damage; break;
   }
-  attacker.health = (attacker.health ?? 0) - reflected;
+  // AUDIT PSCALE1 DOORS-2: through the attacker's OWN door when its pool gave it one - its death, the weight of the
+  // players fighting it, a puppet's owner (the blow goes there) - and onto its number only when nothing did
+  const door = _foeDoors.get(attacker);
+  if (door) door(reflected);
+  else attacker.health = (attacker.health ?? 0) - reflected;
   // NO condition bill: sourceItem is null and the results are dropped
   // (FormulaHelper.cs:707/:712-716) - see the header.
 }
