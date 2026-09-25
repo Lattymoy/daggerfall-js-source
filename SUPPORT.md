@@ -31,7 +31,7 @@ These are suggested support levels, not access tiers. No gameplay, source code, 
 
 ## Support
 
-**Ko-fi:** https://ko-fi.com/dfjs
+**Patreon:** https://www.patreon.com/c/dfenhanced
 
 If you want to support the project but cannot contribute financially, testing builds, reporting reproducible bugs, contributing code, documenting behavior, and helping other players are all useful.
 

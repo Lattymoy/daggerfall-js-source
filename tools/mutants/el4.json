@@ -166,8 +166,8 @@
   {
     "name": "resolve-no-threshold",
     "file": "src/render/airPass.js",
-    "old": "    gl.uniform1f(P.bright.uThreshold, AIR_BRIGHT_THRESHOLD);",
-    "new": "    gl.uniform1f(P.bright.uThreshold, 0.0);",
+    "old": "    gl.uniform1f(PB.uThreshold, AIR_BRIGHT_THRESHOLD);",
+    "new": "    gl.uniform1f(PB.uThreshold, 0.0);",
     "tests": [
       "test/el4_frame.test.js"
     ]

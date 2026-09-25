@@ -101,8 +101,8 @@
   {
     "name": "glsl-ao-off-dark",
     "file": "src/render/airPass.js",
-    "old": "    gl.uniform1f(P.resolve.uAOMix, prepared ? AIR_AO_RESOLVE : 0);",
-    "new": "    gl.uniform1f(P.resolve.uAOMix, prepared ? 1 : 0);",
+    "old": "    gl.uniform1f(PR.uAOMix, prepared ? AIR_AO_RESOLVE : 0);",
+    "new": "    gl.uniform1f(PR.uAOMix, prepared ? 1 : 0);",
     "tests": [
       "test/el3_air.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "composite-alpha-blend",
     "file": "src/render/airPass.js",
-    "old": "    quad(P.bright, T.bloom);\n    gl.enable(gl.BLEND);\n    gl.blendFunc(gl.ONE, gl.ONE);",
-    "new": "    quad(P.bright, T.bloom);\n    gl.enable(gl.BLEND);\n    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);",
+    "old": "    quad(PB, T.bloom);\n    gl.enable(gl.BLEND);\n    gl.blendFunc(gl.ONE, gl.ONE);",
+    "new": "    quad(PB, T.bloom);\n    gl.enable(gl.BLEND);\n    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);",
     "tests": [
       "test/el3_air.test.js"
     ]

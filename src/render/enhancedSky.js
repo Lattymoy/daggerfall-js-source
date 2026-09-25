@@ -613,7 +613,18 @@ void main() {
   // parts go to the shade colour. The lighting fades out at night with
   // the palette's own sun colour, which is black below the horizon.
   float cloud = 0.0;
-  if (dir.y > 0.0) {
+  // PERF-EXT30 (2026-09-25; "fps issues in the exterior but fine in the
+  // interior", "me too my friend.. don't know why. I got a RX6600"): NO
+  // COVER, NO DECKS. VC3 hands the dome a cover of 0 whenever the
+  // volumetric clouds draw over it, and with cover 0 each deck is
+  // smoothstep(1, 1 + soft, fbm) - but fbm never reaches 1 (five octaves
+  // of a hash in [0, 1), weighted 1/2 down to 1/32, sum under 0.96875),
+  // and soft is never 0 (0.18 at its least), so both decks answer 0,
+  // cloud is 0 and the colour below is mixed by nothing. Every pixel
+  // above the horizon still ran both: forty hashes, ten noise blends and
+  // the rim's pows. The gate skips exactly that, so the picture is the
+  // same to the byte; a real cover takes the path it always took.
+  if (dir.y > 0.0 && uCloudCover > 0.0) {
     float near = smoothstep(0.28, 0.0, dir.y);
     vec2 hi = deck(dir, 0.95, uDrift * 0.55, uCloudCover * 0.75, uCloudSoft * 1.5, 0.0);
     vec2 lo = deck(dir, 1.9, uDrift, uCloudCover, uCloudSoft, 0.0);

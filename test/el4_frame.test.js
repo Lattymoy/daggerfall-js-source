@@ -157,7 +157,7 @@ test('EL4: the eye in the shaders - every lane shader and the far ring multiply 
   assert.ok(EL_GLSL.includes(AIR_ADAPT_GLSL), 'the lane\'s block carries the eye');
   for (const [name, fs] of [['mesh', EL_MESH_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS], ['bb', EL_BB_FS]]) {
     assert.match(fs, /float ex = uELExposure \* elAdapt\(\);   \/\/ EL4/, `${name}: the eye rides the exposure`);
-    assert.match(fs, /vec3 tm = elTonemapRGB\(lit \* ex\);/); assert.match(fs, /col \+= elTonemapRGB\(elInScatter\(wp\) \* ex\);/);   // HQ1: the colour through the curve
+    assert.match(fs, /vec3 tm = elTonemapRGB\(lit \* ex\);/); assert.match(fs, /vec3 glow = elTonemapRGB\(elInScatter\(wp\) \* ex\);/);   // HQ1: the colour through the curve (EL-DISTANCE: the glow is added over the fogged surface)
     assert.ok(!/lit \* uELExposure/.test(fs), `${name}: no bare exposure left`);
   }
   assert.match(EL_FAR_RING_FS, /float ex = uELExposure \* elAdapt\(\);/); assert.match(EL_FAR_RING_FS, /elTonemapRGB\(lit \* ex\)/);   // HQ1

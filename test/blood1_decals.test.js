@@ -1431,9 +1431,12 @@ test('BLOOD1b by source: a moved batch moves its BOUNDS, and the corner table ha
   assert.match(fn, /bounds\[0\] = cx; bounds\[1\] = cy; bounds\[2\] = cz;/, 'the sphere is rewritten');
   // BOTH TERMS. The extent of the centres AND the quad's own
   // half-diagonal - a radius that forgot the first would cull a
-  // spread-out flight the moment its centre left the frustum.
-  assert.match(fn, /bounds\[3\] = Math\.hypot\(hi0 - cx, hi1 - cy, hi2 - cz\) \+ Math\.hypot\(batch\.size\.w, batch\.size\.h\) \* 0\.5;/,
+  // spread-out flight the moment its centre left the frustum. PERF-EXT
+  // (2026-09-25, the review of the shadows): the half-diagonal from its
+  // one home, bounds.js quadHalfDiagonal, which the birth takes it from too.
+  assert.match(fn, /bounds\[3\] = Math\.hypot\(hi0 - cx, hi1 - cy, hi2 - cz\) \+ quadHalfDiagonal\(batch\.size\);/,
     'the centres’ extent plus the quad’s own half-diagonal, as the birth does');
+  assert.match(r, /bounds\[3\] \+= quadHalfDiagonal\(size\);/, 'the birth\'s, from the same home');
   // BLOOD1 AUDIT: and IN PLACE. This runs every frame of every flight,
   // so the box is walked here rather than packed into a flat list for
   // `boundsOf` to unpack, and the sphere is written into the batch's
@@ -2063,7 +2066,7 @@ test('MAC-BUG W6 by source: the decal has a LANE TWIN, the flat’s model on the
   assert.match(r, /decal: elLocs\(set\.decal\)/, 'the decal’s lane uniforms are looked up with the set');
   assert.match(r, /this\._csLoc\.decal = \[gl\.getUniformLocation\(set\.decal, 'uCloudShadowMap'\), gl\.getUniformLocation\(set\.decal, 'uCloudShadowRect'\)\];/, 'and its cloud pair');
   assert.match(r, /this\.decalProgram = set\.decal;\s*\n\s*this\._decal = this\._decalLocs\(set\.decal\);/, 'the program and its table are the installed set’s');
-  assert.match(r, /\.\.\.this\._fogLocs\(P\),/, 'the fog table is the one that knows uFogColorLin - the lane’s finish blends the DECODED fog');
+  assert.match(r, /\.\.\.this\._fogLocs\(P\),/, 'the fog table is the one that knows the whole fog set the lane’s finish reads');
   // the classic program is untouched by all of this: no lane uniform in it
   const classicFs = r.slice(r.indexOf('const DECAL_FS = `'), r.indexOf('`;', r.indexOf('const DECAL_FS = `')));
   assert.ok(!/uELExposure|elFinish|elDecode/.test(classicFs), 'the classic decal stays classic');

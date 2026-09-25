@@ -17,7 +17,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 
-import { WISP_MAX, WISP_FLOOR, WISP_LOOK, WISP_FS, WindWispsRenderer, wispCount } from '../src/render/windWisps.js';
+import { WISP_MAX, WISP_FLOOR, WISP_LOOK, WISP_RATE_STEPS, WindWispsRenderer, wispCount } from '../src/render/windWisps.js';
+import { drawOnce, shade } from './wispShade.mjs';
 import { AudioEngine } from '../src/systems/audio.js';
 import { THUNDER_SOURCE_M, thunderSourceAt } from '../src/systems/distantStorms.js';
 import { HeldMapWindow } from '../src/ui/heldMap.js';
@@ -27,17 +28,26 @@ import { _resetForTests } from '../src/systems/uiPrefs.js';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
-test('DISC17-A: half the wisps, each twice as dark - 120 at a gale and 10 in a calm, the ink\'s heart 0.70 at a gale where it was 0.35 (mutants: the count back at 240; the alpha back at WIND3\'s)', () => {
+test('DISC17-A: half the wisps, each twice as dark - 120 at a gale and 10 in a calm; a streak at its darkest 0.44 in a gale and 0.20 in a calm, twice WIND3\'s (WISPS-RETURN: the flourish\'s ink heart was 0.70) (mutants: the count back at 240; the alpha back at WIND3\'s)', () => {
   assert.equal(WISP_MAX, 120);
   assert.deepEqual([wispCount(1), wispCount(0)], [120, 10], 'a gale and a dead calm (the floor is the same share)');
   assert.equal(WISP_FLOOR, 0.08);
   assert.deepEqual([...WISP_LOOK.alpha], [0.20, 0.24]);
-  // the flourish's line at the heart of its ink, mid-life: the shader's own factor times the look's alpha
-  const heart = Number(WISP_FS.match(/a = mix\(a, drawn \* ink \* ([\d.]+), uCurl\);/)[1]);
-  const gale = heart * (WISP_LOOK.alpha[0] + WISP_LOOK.alpha[1]), calm = heart * WISP_LOOK.alpha[0];
-  assert.ok(Math.abs(gale - 0.704) < 1e-9 && Math.abs(calm - 0.32) < 1e-9, `a gale ${gale}, a calm ${calm}`);
-  assert.ok(gale >= 2 * heart * 0.22 - 1e-9, 'twice WIND5\'s gale');
-  // drawn: a gale puts up 120 flourishes with the new alpha
+  // WISPS-RETURN (2026-09-25): a wisp is a streak again, and its darkest is the look's own alpha at the strength - read
+  // off a frame the renderer draws, through both shaders' main()s, at the height of a wisp's life, over its length and
+  // across its width
+  const fract = (x) => x - Math.floor(x);
+  const darkest = (strength01) => {
+    const seed = 0.37, rate = 0.35 + Math.floor(fract(seed * 5.3) * WISP_RATE_STEPS) * (0.25 / WISP_RATE_STEPS);
+    const { uploads } = drawOnce(WISP_LOOK, { on: true, strength01, windV: [3, 0], step: [0, 0] }, { seconds: (0.5 - fract(seed * 7) + 3) / rate });
+    let m = 0;
+    for (let t = 0; t <= 1.0001; t += 0.05) for (const x of [0, 0.5, 1]) m = Math.max(m, shade(uploads, [x, t], seed).alpha);
+    return m;
+  };
+  const gale = darkest(1), calm = darkest(0);
+  assert.ok(Math.abs(gale - 0.44) < 1e-6 && Math.abs(calm - 0.20) < 1e-6, `a gale ${gale}, a calm ${calm}`);
+  assert.ok(Math.abs(gale - 2 * (0.10 + 0.12)) < 1e-6 && Math.abs(calm - 2 * 0.10) < 1e-6, 'twice WIND3\'s streak');
+  // drawn: a gale puts up 120 streaks with the new alpha
   const calls = [];
   const gl = new Proxy({}, {
     get(_, k) {

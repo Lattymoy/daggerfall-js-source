@@ -18,6 +18,8 @@
 // across the build's own awaits), and `finish()` regroups the index
 // ranges by texture into the shape `renderer.createMesh` takes.
 
+import { boundsOf, boundsSteps } from './bounds.js';   // PERF-EXT23: the spheres createMesh takes, measured in the merge's own slices - a leaf, no GL
+
 /** The rotation part of a TRS matrix applied to a normal. The block
  *  matrices are rotations and translations (rmbLayout's trs, scale 1),
  *  so the upper 3x3 is orthonormal and the result is renormalised
@@ -92,6 +94,41 @@ export class StaticBatchBuilder {
 
   /** The merged mesh in createMesh's shape, or null when nothing was added. */
   finish() {
+    const it = this._merge(false);
+    let r = it.next();
+    while (!r.done) r = it.next();
+    return r.value;
+  }
+
+  /**
+   * PERF-EXT23 (2026-09-25, the players: "fps issues in the exterior but
+   * fine in the interior", "me too my friend.. don't know why. I got a
+   * RX6600"): THE MERGE, A UNIT AT A TIME. A streamed pixel's build breathes
+   * between its models (PERF7), and then ran its whole tail in one piece:
+   * this merge, and createMesh's bounds - the whole mesh's sphere and one
+   * per texture group, two passes over every vertex each. A synthetic city
+   * pixel (3,000 models, 600k vertices, 160 groups) put 45-60 ms of that on
+   * ONE frame; a town 6-26 ms. The same merge awaits `breathe()` after each
+   * model's copy, each range of the sphere's two passes (bounds.js
+   * boundsSteps) and each group's copy and sphere, so no unit is over ~0.6
+   * ms, and it hands the spheres over (`bounds`) so createMesh does not
+   * walk the vertices again. The arrays and every sphere are the bytes
+   * finish() and createMesh make. The interior and the dungeon merge once,
+   * at their first frame, and keep finish().
+   * @param {() => Promise<void>} breathe the build's breather
+   */
+  async finishSliced(breathe) {
+    const it = this._merge(true);
+    for (let r = it.next(); ; r = it.next()) {
+      if (r.done) return r.value;
+      await breathe();
+    }
+  }
+
+  /** PERF4's merge, once: a generator that yields between units (PERF-EXT23) - finish() runs it straight
+   *  through, finishSliced() a breath at a time. With `withBounds` it also measures the spheres createMesh
+   *  would (boundsOf's own passes) and returns them as `bounds: { whole, subs }`. */
+  *_merge(withBounds) {
     if (!this.vertexCount || !this.triangles) return null;
     const positions = new Float32Array(this.vertexCount * 3);
     const normals = new Float32Array(this.vertexCount * 3);
@@ -100,17 +137,24 @@ export class StaticBatchBuilder {
     for (const c of this.chunks) {
       positions.set(c.positions, v * 3); normals.set(c.normals, v * 3); uvs.set(c.uvs, v * 2);
       v += c.positions.length / 3;
+      yield;
     }
+    const whole = withBounds ? yield* boundsSteps(positions) : null;
     const indices = new Uint32Array(this.triangles * 3);
+    yield;   // the index array's allocation is a unit of its own (3.6 MB on a synthetic city)
     const subMeshes = [];
+    const subs = [];
     let at = 0;
     for (const [key, runs] of this.groups) {
       const start = at;
       for (const run of runs) { indices.set(run, at); at += run.length; }
       const [archive, record] = key.split('_').map(Number);   // the resolved key is `${archive}_${record}`, drawMesh's own spelling
       subMeshes.push({ textureArchive: archive, textureRecord: record, startIndex: start, primitiveCount: (at - start) / 3 });
+      if (withBounds) { subs.push(boundsOf(positions, indices, start, at - start)); yield; }
     }
-    return { positions, normals, uvs, indices, subMeshes, vertexCount: this.vertexCount, triangles: this.triangles, models: this.models };
+    const merged = /** @type {any} */ ({ positions, normals, uvs, indices, subMeshes, vertexCount: this.vertexCount, triangles: this.triangles, models: this.models });
+    if (withBounds) merged.bounds = { whole, subs };
+    return merged;
   }
 }
 

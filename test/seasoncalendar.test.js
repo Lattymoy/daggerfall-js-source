@@ -400,11 +400,11 @@ test('R1 CLOSEOUT: the frame cannot poll the straightened season away while the 
   const core = tp.slice(0, tp.indexOf('\n  }'));
   const straighten = core.indexOf('refreshSeason(arriveMinutes ?? worldMinutes());');
   const raise = core.indexOf('_seasonStraightening = true;');
-  const build2 = core.indexOf('await buildPixel(first.px, first.py);');
+  const build2 = core.indexOf('await awaitedBuild(first.px, first.py);');
   const clear = core.indexOf('finally { _seasonStraightening = false; }');
   assert.ok(straighten > 0 && raise > straighten, 'the latch goes up with the straightening');
   assert.ok(build2 > raise, '...before the destination build yields');
   assert.ok(clear > build2, '...and comes down only once it has landed');
-  assert.match(core, /try \{ dest = await buildPixel\(first\.px, first\.py\); \}\n\s*finally \{ _seasonStraightening = false; \}/,
+  assert.match(core, /try \{ dest = await awaitedBuild\(first\.px, first\.py\); \}\n\s*finally \{ _seasonStraightening = false; \}/,
     'in a `finally`, so a throwing build cannot leave the frame poll off');
 });
