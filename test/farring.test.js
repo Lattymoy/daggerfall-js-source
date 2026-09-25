@@ -181,6 +181,6 @@ test('EV8: the wiring - enhanced-gated, weather-gated, inside the sky\'s foreign
     'one translation places the whole mesh - recenters are free');
   assert.ok(span.includes('farRing.needsRebuild(state.current.x, state.current.y)'),
     'the grid follows the walk');
-  assert.equal((world.match(/renderer\.markForeignPass\(\);/g) || []).length, 7,   // DUEL1: the duel ring's wall
+  assert.equal((world.match(/renderer\.markForeignPass\(\);/g) || []).length, 8,   // DUEL1: the duel ring's wall; WB2: the gate's fire and beacon
     'the ring shares the sky\'s seam - the EV6 count stands (GR1 added the grass, the third; WIND3 the wisps, the fourth; WEATHER2d the sand, the fifth; BOLT the bolts, the sixth)');
 });

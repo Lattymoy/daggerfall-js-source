@@ -4837,7 +4837,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4235` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4238` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:255`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -8170,3 +8170,11 @@ site a hash of the day over the map files, so the omen costs the relay nothing: 
 `RELAY_VERSION` bump. The arena's room (`gate:<day>`) is written into the law now and admitted by no relay yet; WB3
 is the slice that teaches the relay it. Re-aimed: the two "before the dead return" source pins (`chat1`,
 `auditdrops`) take `gateFrame` into their list; `inspect1`'s ordering pin stands, the gate's frame runs after the mail.
+
+## WB2 (2026-09-25, Mac: "A gate model would be spawned with a timer that leads to a completely different area") - the Oblivion Gate stands in the world; see 11-Multiplayer/World-Bosses.md
+
+The arc's second slice: the gate's stone, fire and beacon, its pool on the world host, the countdown and the door -
+which says "not yet" until WB3 teaches the relay a gate's arena. Nothing crosses the wire: the gate is the clock's.
+Re-aimed: `peerplaque`'s tie-order pin and `worldhover`'s press-against-plaque differential take the `gate` family;
+`audit18`'s foreign-pass count is thirteen (the gate's fire and beacon, the world host alone).
+

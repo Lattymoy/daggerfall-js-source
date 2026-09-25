@@ -139,7 +139,8 @@ test('EV6: the skies neither query CURRENT_PROGRAM nor restore - the hosts mark 
     // hosts one more, the wisps (drawn after the rain, on their own program)
     // WEATHER2d: and the sand, one more in both; BOLT: and the lightning's channels, one more in both
     // DUEL1: and the duel ring's wall, one more in the world host (the one that is online)
-    const want = host === 'src/scenes/world.js' ? 7 : 5;
+    // WB2: and the Oblivion Gate's fire and beacon, one more in the world host (online again)
+    const want = host === 'src/scenes/world.js' ? 8 : 5;
     assert.equal((s.match(/renderer\.markForeignPass\(\);/g) || []).length, want,
       `${host} marks its foreign seams (the sky, the rain, the sand, the wisps, the bolts${want === 6 ? ', and the grass' : ''})`);
   }

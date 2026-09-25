@@ -188,6 +188,9 @@ export function gateSpotLocal(day) {
   return [PIXEL_M / 2 + Math.cos(a) * r, PIXEL_M / 2 + Math.sin(a) * r];
 }
 
+/** WB2: the way the gate faces, radians about y - the day's roll, so every client stands it turned alike. */
+export const gateYaw = (day) => unit(day, 8) * 2 * Math.PI;
+
 /** The omen's ring on the map: this many map pixels across its radius (~1.6 km)... */
 export const OMEN_RING_PIXELS = 2;
 /** ...its centre pulled up to this far off the gate, so the ring says where to go and the land says where exactly. */

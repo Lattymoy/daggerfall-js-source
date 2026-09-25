@@ -257,7 +257,10 @@ test('WB1 the map\'s mark and the compass: the ring while marked, its words coun
   assert.equal(omen.standing(), null, 'the omen marks the land before the gate stands on it');
   clock.now = t.openAt + 2000; omen.frame();
   assert.match(omen.mapMark().label, /^Oblivion Gate - seals in 9:58$/);
-  assert.deepEqual(omen.standing(), { day: 604, px: 400, py: 200, spot: [409.6, 409.6], phase: 'open' });
+  const st = omen.standing();
+  assert.deepEqual({ day: st.day, px: st.px, py: st.py, spot: st.spot, phase: st.phase, near: st.near }, { day: 604, px: 400, py: 200, spot: [409.6, 409.6], phase: 'open', near: 'Copperham' });
+  assert.deepEqual(st.t, t, 'its times, for the pool\'s rise and collapse (WB2)');
+  assert.equal(st.fellAt, null, 'no fall said');
   // the compass: inside the ring (with a pixel's slack), and the spot added to the pixel's corner, north +z
   assert.ok(insideGateRing(m, 400, 200) && insideGateRing(m, 402, 202) && !insideGateRing(m, 404, 200));
   assert.deepEqual(gateSceneXZ({ spot: [10, 20] }, [100, 5, -300]), [110, -280]);

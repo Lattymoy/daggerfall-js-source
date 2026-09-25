@@ -1,0 +1,254 @@
+[
+  {
+    "name": "WB2-a-spire-in-the-way-in",
+    "file": "src/world/gateModel.js",
+    "old": "export const RIM_SPIRE_ANGLES = Object.freeze([0, 38, 142, 180, 218, 322]);",
+    "new": "export const RIM_SPIRE_ANGLES = Object.freeze([0, 38, 90, 180, 218, 322]);",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-a-spike-wound-inward",
+    "file": "src/world/gateModel.js",
+    "old": "    if (n[0] * mid[0] + n[1] * mid[1] + n[2] * mid[2] >= 0) f.tri(GATE_STONE_RECORD, a, c, tip,",
+    "new": "    if (n[0] * mid[0] + n[1] * mid[1] + n[2] * mid[2] < 0) f.tri(GATE_STONE_RECORD, a, c, tip,",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-the-right-horn-inside-out",
+    "file": "src/world/gateModel.js",
+    "old": "      else f.quad(GATE_STONE_RECORD, A.ring[k], B.ring[k], B.ring[k2], A.ring[k2],",
+    "new": "      else f.quad(GATE_STONE_RECORD, A.ring[k], A.ring[k2], B.ring[k2], B.ring[k],",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-the-fire-over-the-stone",
+    "file": "src/world/gateModel.js",
+    "old": "out[k] = Number.isFinite(out[k]) ? Math.max(0, out[k] - margin) : 0;",
+    "new": "out[k] = Number.isFinite(out[k]) ? Math.max(0, out[k] + margin) : 0;",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-the-root-band-unclamped",
+    "file": "src/world/gateModel.js",
+    "old": "  out[0] = Math.min(out[0], out[1]);\n",
+    "new": "",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-a-wall-of-fire",
+    "file": "src/world/gateArt.js",
+    "old": "export const GATE_VEINS = 4;",
+    "new": "export const GATE_VEINS = 40;",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-the-veins-never-burn",
+    "file": "src/world/gateArt.js",
+    "old": "    if (heart[i]) { put(albedo, x, y, VEIN_HEART); put(emission, x, y, VEIN_HEART); }",
+    "new": "    if (heart[i]) { put(albedo, x, y, VEIN_HEART); put(emission, x, y, [0, 0, 0]); }",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-the-fire-added-not-covering",
+    "file": "src/render/gatePass.js",
+    "old": "    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);",
+    "new": "    gl.blendFunc(gl.ONE, gl.ONE);",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-the-fire-writes-depth",
+    "file": "src/render/gatePass.js",
+    "old": "    gl.blendFunc(gl.ONE, gl.ONE);\n    gl.bindVertexArray(this.column.vao);",
+    "new": "    gl.blendFunc(gl.ONE, gl.ONE);\n    gl.depthMask(true);\n    gl.bindVertexArray(this.column.vao);",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-a-faded-gate-drawn",
+    "file": "src/render/gatePass.js",
+    "old": "&& Number.isFinite(g.yaw) && g.fade > 0.001).slice(0, GATE_PASS_MAX);",
+    "new": "&& Number.isFinite(g.yaw) && g.fade >= 0).slice(0, GATE_PASS_MAX);",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-the-gates-uncapped",
+    "file": "src/render/gatePass.js",
+    "old": "&& Number.isFinite(g.yaw) && g.fade > 0.001).slice(0, GATE_PASS_MAX);",
+    "new": "&& Number.isFinite(g.yaw) && g.fade > 0.001);",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-the-beacon-a-hair-far-off",
+    "file": "src/render/gatePass.js",
+    "old": "  float rad = max(uRadius, length(uEye.xz - uOrigin.xz) * ${BEACON_WIDEN.toFixed(4)});",
+    "new": "  float rad = uRadius;",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-the-vortex-off-its-clock",
+    "file": "src/render/gatePass.js",
+    "old": "export const MEMBRANE_TURN_OPEN_HZ = 0.25;",
+    "new": "export const MEMBRANE_TURN_OPEN_HZ = 0.26;",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-the-arch-never-handed",
+    "file": "src/render/gatePass.js",
+    "old": "    gl.uniform1fv(this.mu.uProfile, this.profile);\n",
+    "new": "",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-a-collider-while-it-rises",
+    "file": "src/scenes/gatePool.js",
+    "old": "    const want = place?.risen ? matrixOf(place) : null;",
+    "new": "    const want = place ? matrixOf(place) : null;",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-the-collider-stood-every-frame",
+    "file": "src/scenes/gatePool.js",
+    "old": "    if (want ? sameMatrix(want, colliderAt) : colliderAt === null) return;",
+    "new": "    if (false) return;",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-it-never-rises",
+    "file": "src/scenes/gatePool.js",
+    "old": "  return { day: g.day, phase, origin: [x, ground - (1 - eased) * GATE_HEIGHT, z],",
+    "new": "  return { day: g.day, phase, origin: [x, ground, z],",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-a-gate-on-no-ground",
+    "file": "src/scenes/gatePool.js",
+    "old": "  const ground = heightAt(x, z);\n  if (!Number.isFinite(ground)) return null;\n",
+    "new": "  const ground = heightAt(x, z);\n",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-entered-without-a-relay",
+    "file": "src/scenes/gatePool.js",
+    "old": "      if (!ready()) { refuse(GATE_TEXT.notYet); return false; }\n",
+    "new": "",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-the-refusal-every-press",
+    "file": "src/scenes/gatePool.js",
+    "old": "    if (t - saidAt < GATE_SAY_MS) return;\n",
+    "new": "",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-walked-in-past-the-horns",
+    "file": "src/scenes/gatePool.js",
+    "old": "        const inside = Math.abs(lx) < openingHalfWidth(profile, Math.max(ARCH_Y0 + 0.05, ly + 0.9)) && Math.abs(lz) < GATE_STEP_M;",
+    "new": "        const inside = Math.abs(lz) < GATE_STEP_M;",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-the-banner-from-afar",
+    "file": "src/scenes/gatePool.js",
+    "old": "Math.hypot(f[0] - place.origin[0], f[2] - place.origin[2]) <= GATE_BANNER_M) {",
+    "new": "Math.hypot(f[0] - place.origin[0], f[2] - place.origin[2]) <= GATE_BANNER_M * 10) {",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-any-key-opens-the-gate",
+    "file": "src/scenes/gatePool.js",
+    "old": "    activate(key) { return typeof key === 'string' && key.startsWith('gate:') ? tryEnter() : false; },",
+    "new": "    activate(key) { return typeof key === 'string' ? tryEnter() : false; },",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-the-gate-never-wins",
+    "file": "src/player/activationRace.js",
+    "old": "    gateWins: is(gate),   // WB2",
+    "new": "    gateWins: false,   // WB2",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-the-gate-loses-its-ties",
+    "file": "src/player/activationRace.js",
+    "old": "  for (const p of [gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
+    "new": "  for (const p of [camp, gate, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-the-door-open-before-the-relay",
+    "file": "src/scenes/world.js",
+    "old": "    ready: () => false,   // WB3: the relay's word that it can hold a gate's arena",
+    "new": "    ready: () => true,   // WB3: the relay's word that it can hold a gate's arena",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-the-banner-follows-indoors",
+    "file": "src/scenes/world.js",
+    "old": "    if (gatePool && (modes?.mode ?? 'exterior') !== 'exterior') drawGateBanner(null);",
+    "new": "    if (false) drawGateBanner(null);",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  },
+  {
+    "name": "WB2-the-banner-rewritten-every-frame",
+    "file": "src/ui/gateBanner.js",
+    "old": "  if (want === shown) return;\n",
+    "new": "",
+    "tests": [
+      "test/wb2_gate.test.js"
+    ]
+  }
+]

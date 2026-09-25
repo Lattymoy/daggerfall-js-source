@@ -78,10 +78,11 @@ export function createGateOmen({ now, site, say, localTime = () => null, fellAt 
       const label = cd ? `Oblivion Gate - ${cd.to === 'open' ? 'opens' : 'seals'} in ${countdownText(cd.ms)}` : 'Oblivion Gate';
       return { day: c.t.day, cx: c.site.ring.cx, cy: c.site.ring.cy, r: c.site.ring.r, label, phase: c.phase };
     },
-    /** Where the gate stands, for the compass and the gate's own pool (WB2): its pixel and its spot in it, while it stands. */
+    /** Where the gate stands, for the compass and the gate's own pool (WB2): its pixel and its spot in it, its phase,
+     *  its times and the relay's word of its fall (the pool times the rise and the collapse by them), while it stands. */
     standing() {
       const c = current;
-      return c?.site && gateStands(c.phase) ? { day: c.t.day, px: c.site.px, py: c.site.py, spot: c.site.spot, phase: c.phase } : null;
+      return c?.site && gateStands(c.phase) ? { day: c.t.day, px: c.site.px, py: c.site.py, spot: c.site.spot, phase: c.phase, t: c.t, fellAt: fellAt(c.t.day), near: c.site.near } : null;
     },
   };
 }

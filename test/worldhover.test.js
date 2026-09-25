@@ -1024,9 +1024,9 @@ test('WORLD-HOVER: ONE precedence - the press DERIVES from raceWinner, driven ov
   // THE TIE ORDER IS THE HOSTS' ARM LADDER: camp, water, wagon, torch,
   // body, pile, ground. Driven at EXACT ties, the only distance at
   // which a precedence is observable at all.
-  const all = { camp: p('camp', 2), water: p('water', 2), wagon: p('wagon', 2), torch: p('torch', 2), corpse: p('body', 2), pile: p('pile', 2), ground: p('door', 2) };
-  const order = ['camp', 'water', 'wagon', 'torch', 'body', 'pile', 'door'];
-  const byKey = { camp: 'camp', water: 'water', wagon: 'wagon', torch: 'torch', body: 'corpse', pile: 'pile', door: 'ground' };
+  const all = { gate: p('gate', 2), camp: p('camp', 2), water: p('water', 2), wagon: p('wagon', 2), torch: p('torch', 2), corpse: p('body', 2), pile: p('pile', 2), ground: p('door', 2) };
+  const order = ['gate', 'camp', 'water', 'wagon', 'torch', 'body', 'pile', 'door'];   // WB2: the gate's fire heads the ladder
+  const byKey = { gate: 'gate', camp: 'camp', water: 'water', wagon: 'wagon', torch: 'torch', body: 'corpse', pile: 'pile', door: 'ground' };
   for (let i = 0; i < order.length; i++) {
     const bag = {};
     for (const k of order.slice(i)) bag[byKey[k]] = all[byKey[k]];
@@ -1036,7 +1036,7 @@ test('WORLD-HOVER: ONE precedence - the press DERIVES from raceWinner, driven ov
   // ── THE DIFFERENTIAL ──────────────────────────────────────────
   // The hosts' ladder, transcribed from world.js / exterior.js: camp,
   // water, wagon, torch, then the body, then the pile, then the door.
-  const pressOpens = (r) => (r.campWins ? 'camp' : r.waterWins ? 'water' : r.wagonWins ? 'wagon'
+  const pressOpens = (r) => (r.gateWins ? 'gate' : r.campWins ? 'camp' : r.waterWins ? 'water' : r.wagonWins ? 'wagon'
     : r.torchWins ? 'torch' : r.loot ? r.loot.key : r.drop ? r.drop.key : 'ground');
   let seed = 1;
   const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
@@ -1046,7 +1046,7 @@ test('WORLD-HOVER: ONE precedence - the press DERIVES from raceWinner, driven ov
   const one = (k) => { const d = D[(rnd() * D.length) | 0]; return d === Infinity ? null : { key: k, distance: d, reach: 3.2 }; };
   const bad = [];
   for (let i = 0; i < 20000; i++) {
-    const c = { corpse: one('body'), pile: one('pile'), torch: one('torch'), wagon: one('wagon'), camp: one('camp'), water: one('water') };
+    const c = { corpse: one('body'), pile: one('pile'), torch: one('torch'), wagon: one('wagon'), camp: one('camp'), water: one('water'), gate: one('gate') };
     const dd = D[(rnd() * D.length) | 0];
     const press = pressOpens(raceActivation({ ...c, doorDistance: dd }));
     const won = raceWinner({ ...c, ground: Number.isFinite(dd) ? { key: GROUND_KEY, distance: dd } : null });

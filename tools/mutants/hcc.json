@@ -464,8 +464,8 @@
   {
     "name": "HCC-race-ignores-horsecart",
     "file": "src/player/activationRace.js",
-    "old": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
-    "new": "  for (const p of [camp, water, wagon, torch, corpse, pile, ground, person, peer, foe]) {",
+    "old": "  for (const p of [gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
+    "new": "  for (const p of [gate, camp, water, wagon, torch, corpse, pile, ground, person, peer, foe]) {",
     "tests": [
       "test/hcc_hosts.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "HCC-race-horsecart-before-cart",
     "file": "src/player/activationRace.js",
-    "old": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
-    "new": "  for (const p of [camp, water, horseCart, wagon, torch, corpse, pile, ground, person, peer, foe]) {",
+    "old": "  for (const p of [gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
+    "new": "  for (const p of [gate, camp, water, horseCart, wagon, torch, corpse, pile, ground, person, peer, foe]) {",
     "tests": [
       "test/hcc_hosts.test.js"
     ]

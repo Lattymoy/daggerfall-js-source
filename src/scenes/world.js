@@ -168,6 +168,8 @@ import { rollCampEncounterOnChunkLoad, amGroupRollOwner, campAnchorSpot } from '
 import { WORLD_SALT, spawnsDungeon, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger, spawnedLocationCentreLocal, dungeonSightLine } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
 import { createGateOmen, insideGateRing, gateSceneXZ } from '../systems/gateOmen.js';   // WB1 (Mac: "on the timer, a large area would be shown on the map, also in chat"): the Oblivion Gate's omen - its lines, its ring, its compass mark
 import { scanGatePixels, findGateSite } from '../systems/gateSite.js';   // WB1: where the day's gate stands, over the map files every client holds alike
+import { createGatePool } from './gatePool.js';   // WB2: the gate the world stands - its stone, its fire and beacon, its collider and its door
+import { drawGateBanner } from '../ui/gateBanner.js';   // WB2: the gate's countdown over the screen, near it
 import { isMainStoryDungeon } from '../world/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
 import { nearestSafeLocation, respawnFlavorText, reviveForPlay, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
@@ -3627,6 +3629,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // Insertion order is priority, and it is the ACTIVATION ladder's own
   // order, so the plaque reads a tie the way the press resolves one.
   const _hoverNamers = [
+    (key) => gatePool?.hoverName(key) ?? null,   // WB2: the Oblivion Gate, and its countdown
     (key) => camps.hoverName?.(key) ?? null,
     (key) => droppedTorches.hoverName?.(key) ?? null,
     (key) => exteriorFoes.hoverName?.(key) ?? null,
@@ -10753,7 +10756,25 @@ export async function bootWorld(canvas, renderer, params, status) {
     localTime: (minute) => { const ms = sharedWallMs(minute); if (ms == null) return null; const d = new Date(ms); return `${_gateTwo(d.getHours())}:${_gateTwo(d.getMinutes())}`; },
   }) : null;
   /** WB1: the gate's frame - its line when a new moment comes. Runs before the death return, as the chat's does. */
-  const gateFrame = () => { try { gateOmen?.frame(); } catch (e) { console.warn('[gate] frame', e?.message ?? e); } };
+  const gateFrame = () => {
+    try { gateOmen?.frame(); } catch (e) { console.warn('[gate] frame', e?.message ?? e); }
+    if (gatePool && (modes?.mode ?? 'exterior') !== 'exterior') drawGateBanner(null);   // WB2: the countdown is the street's; the pool's own frame runs there alone
+  };
+  /** WB2: THE GATE THE WORLD STANDS (scenes/gatePool.js) - online alone, as the omen is; stood each exterior frame from
+   *  the omen's word, drawn in the world pass (the stone) and after the duel wall (the fire and the beacon). Its door
+   *  answers "not yet" until the relay can hold a gate's arena (WB3). */
+  const gatePool = gateOmen ? createGatePool({
+    renderer, gl: renderer.gl, collider: () => collider,
+    standing: () => gateOmen.standing(),
+    pixelTranslation: (px, py) => state.pixelTranslation(px, py),
+    heightAt: (x, z) => heightAt(x, z),
+    now: () => Date.now() + _sharedOffsetMs,
+    feet: () => (walkMode && playerSpawned ? player.feetAt() : null),
+    say: (text) => setMidScreenText(text),
+    banner: (text) => drawGateBanner(text, { hidden: gamePaused() || !!townTalk.hudHidden }),
+    ready: () => false,   // WB3: the relay's word that it can hold a gate's arena
+    enter: () => {},      // WB3: the arena's door
+  }) : null;
   /** WB1: the compass's mark - the gate's spot in THIS scene, while the gate stands and the player is in its ring. */
   const gateCompassMark = () => {
     const g = gateOmen?.standing();
@@ -13820,6 +13841,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           const _campPick = pickActivatableHit(cam.pos, useFwd, camps.targets(), collider);   // SURV3: a camp's fire or tent, the same one ray
           const _hccPick = pickActivatableHit(cam.pos, useFwd, hcc.targets(), collider);   // HCC: the parked wagon's box, the following team's, the standing horse's (RegisterCustomActivation at 3.2), the same one ray
           const _springPick = pickActivatableHit(cam.pos, useFwd, springTargets(), collider);   // SURV3: a fountain, a well, a trough
+          const _gatePick = gatePool ? pickActivatableHit(cam.pos, useFwd, gatePool.targets(), collider) : null;   // WB2: an Oblivion Gate's fire
           // HARD2: the race is ONE law now (player/activationRace.js) - the
           // body against the pile, the torch against both and the door,
           // and the two rivals MC-2 split. It was written out by hand in
@@ -13834,6 +13856,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
             horseCart: _hccPick,   // HCC
             camp: _campPick,   // SURV3
             water: _springPick,   // SURV3
+            gate: _gatePick,   // WB2
             doorDistance: modes.exteriorActivationDistance(cam.pos, useFwd),
             personDistances: _livePersons.map((p) => rayPersonDistance(cam.pos, useFwd, p.pos)),
           });
@@ -13876,7 +13899,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
             const _torchNearest = _race.torchWins;
             // EOTB-IL: the mod's cart under the same ray (RegisterCustomActivation(41239, CheckWagon, 3.2)) - Info names it, any other mode opens the pack with the wagon
             // SURV3: a camp under the ray - Info and Talk name it, any other mode opens its menu; a water source fills the skins
-            if (_race.campWins) { if (_campPick.distance > _campPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else camps.activate(_campPick.key, getInteractionMode()); }
+            if (_race.gateWins) { if (_gatePick.distance > _gatePick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else gatePool.activate(_gatePick.key); }   // WB2: the gate's own door
+            else if (_race.campWins) { if (_campPick.distance > _campPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else camps.activate(_campPick.key, getInteractionMode()); }
             else if (_race.waterWins) { if (_springPick.distance > _springPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else drinkAtSpring(_springPick.key); }
             else if (_race.wagonWins) { if (_wagonPick.distance > _wagonPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else mwViewWagonActivate(getInteractionMode(), { say: (l) => townTalk.say(l), openInventoryWithWagon: () => { const w = makeInventoryWindow(EOTB_WAGON_PACK); if (w) townTalk.showOverlay(w); } }); }   // DISC10-E L3: a refused pack is null
             else if (_race.horseCartWins) { hcc.activate(_hccPick.key, _hccPick.distance, (l) => townTalk.say(l), () => setMidScreenText(TOO_FAR_AWAY_TEXT), plaqueActionFor(_hccPick.key)); }   // ACT-MENU: the verb the plaque lit, where it stands   // HCC: DeployedWagonActivator / FollowingWagonActivator / StationaryHorseActivator - the runtime's own reach test and refusals
@@ -14277,6 +14301,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     sky.renderer.fogColor = fogColor;
     sky.renderer.fogMix = fogNow.excludeSky ? 0 : 1 - fogFactor(fogNow, 800);
 
+    // WB2: the gate stood for this frame - before the lights (its fire lights the ground) and the world pass (its stone)
+    try { gatePool?.frame(dt); } catch (e) { console.warn('[gate] pool', e?.message ?? e); }
     // Lanterns on 17:00-08:00, flickering verbatim; pixel-local lights
     // placed under the current compensation, nearest 16 to the camera.
     // WOD2: the mod's lights burn at every hour and each carries its own
@@ -14307,7 +14333,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       }
       const wodSel = wodLit ? _wodSelect(n, _wodFill(n)) : null;   // WOD2: the lanterns and the mod's lights, one selection
       const lit = withPlayerLights(wodSel ? wodSel.data : nearestLights(_sceneLights, cam.pos, renderer.maxPointLights, worldLightAnimator.ranges, null, 0, n),   // EL1: the installed set's cap (16 classic, 48 on the lane); PERF-LIGHTS: `n` is how much of the pool is live
-        magic?.candleLight(), playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...camps.lights(), ...droppedTorches.lights());   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
+        magic?.candleLight(), playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...(gatePool?.lights() ?? []), ...camps.lights(), ...droppedTorches.lights());   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
       if (wodSel) _wodSetLights(lit, wodSel);
       else renderer.setPointLights(lit, CITY_LIGHT_COLOR_F32);
     } else {
@@ -14318,7 +14344,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // WOD2: ...and the mod's lights, which burn at every hour.
       const wodSel = wodLit ? _wodSelect(0, _wodFill(0)) : null;
       const lit = withPlayerLights(wodSel ? wodSel.data : new Float32Array(0),
-        magic?.candleLight(), playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...camps.lights(), ...droppedTorches.lights());   // HT1; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
+        magic?.candleLight(), playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...(gatePool?.lights() ?? []), ...camps.lights(), ...droppedTorches.lights());   // HT1; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
       if (wodSel) _wodSetLights(lit, wodSel);
       else renderer.setPointLights(lit, CITY_LIGHT_COLOR_F32);
     }
@@ -14333,6 +14359,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: cam.yaw });   // DISC18: the body at the capsule's own feet, not the camera's smoothed ones
     drawPeerBodies(proj, view, mwv.eye);   // MWBODY1: the others' bodies, the same pass
     mwViewDrawWagon(renderer);   // EOTB-IL: the cart, when the transport is the cart
+    gatePool?.draw(renderer);   // WB2: the Oblivion Gate's stone
     camps.draw(renderer);   // SURV3: the tents, the cart's own pass
     hcc.draw(renderer);   // HCC: the trailing / parked / following wagon and its cargo, mine and the peers' (the horses ride the flats' pass)
 
@@ -14972,6 +14999,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         renderer.markForeignPass();
       }
     }
+    // WB2: THE GATE'S FIRE AND BEACON - after the duel wall, the same eye and fog; the stone went in the world pass, so
+    // the horns in front of the fire hide it
+    if (gatePool && gatePool.drawPass(proj, view, new Float32Array(mwv.eye), now / 1000,
+      { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos })) renderer.markForeignPass();
     // C13: streaming-world arrows fly against the live pixel
     // collider (lost on geometry/terrain, as DFU misses are). Drawn
     // without a remap - the streaming pixels each carry their own,
@@ -15228,6 +15259,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
             horseCart: pickActivatableHit(cam.pos, _hd, hcc.targets(), collider),   // HCC
             camp: pickActivatableHit(cam.pos, _hd, camps.targets(), collider),
             water: pickActivatableHit(cam.pos, _hd, springTargets(), collider),
+            gate: gatePool ? pickActivatableHit(cam.pos, _hd, gatePool.targets(), collider) : null,   // WB2
             // WORLD-HOVER H2: the two the PRESS races in its own arms
             // above raceActivation - a live foe and a walking
             // townsperson. Without them the plaque named the shopfront

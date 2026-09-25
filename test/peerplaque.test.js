@@ -109,5 +109,5 @@ test('PEER-PLAQUE1 hosts by source: the street races the F key\'s own pick and n
   assert.match(m, /cursorActive: overlayHeld \|\| !!host\.pointerSurfaceUp\?\.\(\),/);
   assert.match(m, /pointerSurfaceUp: \(\) => !!host\.pointerSurfaceUp\?\.\(\),/);
   assert.match(d, /cursorActive: dungeonPaused\(\) \|\| !!opts\.pointerSurfaceUp\?\.\(\),/);
-  assert.match(race, /for \(const p of \[camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe\]\) \{/, 'between the townsperson and the foe');   // HCC: the mod's activator stands after the cart
+  assert.match(race, /for \(const p of \[gate, camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe\]\) \{/, 'between the townsperson and the foe');   // HCC: the mod's activator stands after the cart   // WB2: the gate's fire heads the list
 });

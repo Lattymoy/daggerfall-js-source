@@ -385,3 +385,16 @@ page's ring band is a whole pixel (0.75 left as few as four texels). No relay ch
 this container has no ARENA2 and no relay session; the site's real-data behaviour (which provinces qualify, how many
 pixels each offers) is the first thing to look at on a live omen.
 
+**WB2 (2026-09-25) - the gate.** `world/gateModel.js` and `world/gateArt.js` (the stone and its art, all made in code -
+two ridged horns rising 16 m from a stepped plinth, spines down their backs, claws gripping the step, lesser spires
+round the rim clear of the ways in, basalt split by veins of fire and a ring of runes under the threshold),
+`render/gatePass.js` (the fire in the arch - an ember sealed, a blaze open, masked to the opening measured off the
+mesh - and the beacon from its crown, widening with distance so it still stands on the sky a kilometre off),
+`scenes/gatePool.js` (the gate stood each exterior frame where the omen says, rising and sinking with the clock, its
+collider once risen, its light, the eye's box on the fire alone, the door and the walk through the fire, the countdown
+over the screen within 60 m - `ui/gateBanner.js`), the activation race's `gate` family, and the world host's seams.
+The door answers *The gate will not open to you yet.* until WB3's relay. Pins `test/wb2_gate.test.js` (13); mutants
+`tools/mutants/wb2.json` (28 dead); `tools/gatePassProbe.mjs` compiles, links and draws the pass in a real WebGL2 (9
+checks). Seen in a headless browser with its own stand-in lighting (the stone, its art, the fire and the beacon); not
+yet in the game with ARENA2, where the renderer's own lighting, fog and the terrain under it are the next look.
+
