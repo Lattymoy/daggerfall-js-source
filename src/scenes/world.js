@@ -249,6 +249,7 @@ import { buildingDataForDoor, locationBuildings, BUILDING_KEY_0 } from '../syste
 import { hitSoundFor, swingSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME } from '../systems/soundClips.js';   // AUDIT 58: DFU's two hit volumes
 import { isInvisible, entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39: the S19 gate is host-agnostic in DFU
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
+import { boxNearPath, pointNearPath, wodSiteClear, UNITS_PER_METRE, WOD_PIECE_ROAD_CLEAR, CAMP_ROAD_CLEAR_M } from '../world/roadClearance.js';   // ROADS-CLEAR: WoD sites and pieces, and the camps, off the painted roads
 import { StreamingWorldState, TerrainSlots, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords, SCENE_MAP_RATIO, nearestFirstFrom } from '../world/streamingWorld.js';   // HCC: StreamingWorld.SceneMapRatio; AUDIT BRANCH (WoD) L1-3: DFU's terrain array; AUDIT 68 S22: the load list's one order
 import { horseNameTooltip } from '../ui/horseNameTooltip.js';   // AUDIT HCC U6: the mod's HUD label, both skins
 import { createHorseCartPool } from './horseCartPool.js';
@@ -1646,7 +1647,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           // location alone: -1 on a pixel without one.
           mapRegionIndex: dfLocation ? dfLocation.regionIndex : -1,
           worldHeight: woods.getHeightMapValue(px, py),
-        }, wodPathsPoint);
+        }, wodPathsPoint, (name, prefab, rect) => wodSiteClear(terrainGen.roads(), px, py, name, prefab, rect));   // ROADS-CLEAR: a camp, fort, shrine or ruin whose pieces reach a road is not stood (world/roadClearance.js)
         if (picks.length) wodPicks = picks;
       } catch (e) {
         console.warn(`[wod] pixel ${key}: the loader failed here, and the pixel stands without its site: ${e?.message ?? e}`);
@@ -2063,6 +2064,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     let wodSpawners = null;
     if (wodPicks && wodAverages) {
       const place = wod.placements(wodPicks, wodAverages);
+      const _roadsNow = terrainGen.roads();   // ROADS-CLEAR: null until the network lands - the roads sweep rebuilds this pixel then
+      let _wodOffRoad = 0;
       if (place.stopped) console.warn(`[wod] pixel ${key}: a negative model name stopped the loader here, as uint.Parse throws in the C#`);
       const wodBucket = ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]);   // BLOOD1 AUDIT 3: one array a bucket
       for (const m of place.models) {
@@ -2070,6 +2073,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (!gpu) continue;   // a model ARCH3D does not carry stands empty in DFU (no mesh, no collider)
         const cpu = cpuModels.get(m.modelId);
         const box = transformedAabb(archAabb(m.modelId, cpu.positions), m.matrix);
+        // ROADS-CLEAR (2026-09-25, Mac: "Camps, mountains from WOD, shouldnt be placed on roads"): a piece whose own
+        // mesh box reaches a road - here or in the pixel it spills into - is not stood: no mesh, no collider. The rock
+        // fields and mountains lose the pieces over the road and keep the rest; a whole site was asked at its pick.
+        if (boxNearPath(_roadsNow, px, py, box[0] * UNITS_PER_METRE, box[2] * UNITS_PER_METRE, box[3] * UNITS_PER_METRE, box[5] * UNITS_PER_METRE, WOD_PIECE_ROAD_CLEAR)) { _wodOffRoad++; continue; }
         unionBox(box);
         const entry = { gpu, local: m.matrix, _box: box, _order: m.modelId };
         models.push(entry);
@@ -2078,6 +2085,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         await breather.breathe();
       }
       for (const f of place.flats) {
+        if (pointNearPath(_roadsNow, px, py, f.base[0] * UNITS_PER_METRE, f.base[2] * UNITS_PER_METRE, WOD_PIECE_ROAD_CLEAR)) { _wodOffRoad++; continue; }   // ROADS-CLEAR: and a flat on one
         if (f.scale.x === 1 && f.scale.y === 1) addFlat(f.archive, f.record, f.base[0], f.base[1], f.base[2]);
         else addScaledFlat(f.archive, f.record, f.scale, f.base[0], f.base[1], f.base[2]);
       }
@@ -2112,6 +2120,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           wodSpawners.push({ spawner: new WodSpawner(s), centre, flat: null, restand: false, oid: s.objectID, oidN: n });   // WOD7: oid (and its index among the pixel's alike) - the marker's site with the pixel   // a carried one replaces it at publish (m4)
         }
       }
+      if (_wodOffRoad) console.log(`[wod] pixel ${key}: ${_wodOffRoad} piece(s) kept off the road`);   // ROADS-CLEAR
       const site = [...wodPicks].reverse().find((p) => p.flatten);
       if (site) wodSite = { xMin: site.rect.x, xMax: site.rect.x + site.rect.width, yMin: site.rect.y, yMax: site.rect.y + site.rect.height };
     }
@@ -3031,6 +3040,17 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  syncTopics last resolved, which on the very frame a new pixel is
    *  entered - the camp roll's frame - is still the old pixel's, and it
    *  says nothing about where the group is put 14-26 units away. */
+  /** ROADS-CLEAR (2026-09-25, Mac: "Camps ... shouldnt be placed on roads"): is a scene position within `radiusM`
+   *  metres of a road or track's painted band (world/roadClearance.js), in its pixel or the next? False until the
+   *  network lands - a camp rolled that early stands where it rolled. */
+  const _nearRoad = (pos, radiusM) => {
+    const net = terrainGen.roads();
+    if (!net) return false;
+    const wc = state.worldCoords(pos);
+    const p = worldCoordToMapPixel(wc.x, wc.z);
+    const o = mapPixelToWorldCoords(p.x, p.y);
+    return pointNearPath(net, p.x, p.y, wc.x - o.x, wc.z - o.z, radiusM * UNITS_PER_METRE);
+  };
   const _inAnyLocationRect = (pos) => {
     const wc = state.worldCoords(pos);
     const px = worldCoordToMapPixel(wc.x, wc.z);
@@ -4642,6 +4662,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (let i = 0; i < LOOSE_FOE_PLACE_ATTEMPTS && !anchor; i++) {
       anchor = campAnchorSpot({ feet, yawRad: cam.yaw, fovDegrees: fieldOfView() * 180 / Math.PI, groundAt: collider.heightAt, minDistance: hit.minDistance, maxDistance: hit.maxDistance, bearingDegrees: hit.bearingDegrees });   // CAMP-RING: each group on its own bearing
       if (anchor && _inAnyLocationRect([anchor.x, anchor.y, anchor.z])) anchor = null;   // DISC19-F: a camp is a wilderness thing - never pitched in a town's rect from a player standing at its edge
+      if (anchor && _nearRoad([anchor.x, anchor.y, anchor.z], (hit.spacing ?? 0) + CAMP_ROAD_CLEAR_M)) anchor = null;   // ROADS-CLEAR: pitched off the road, its whole ring clear of it
     }
     if (!anchor) return;
     const campId = _nextCampId++;
@@ -4662,6 +4683,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // point that is not the player.
         spot = placeFoeFreely(memberEnv, { minDistance: 1, maxDistance: hit.spacing, lineOfSightCheck: false });
         if (spot && _inAnyLocationRect([spot.x, spot.y, spot.z])) spot = null;   // DISC19-F: nor a member over its line
+        if (spot && _nearRoad([spot.x, spot.y, spot.z], CAMP_ROAD_CLEAR_M)) spot = null;   // ROADS-CLEAR: nor on a road
       }
       if (!spot) continue;
       const fly = (ENEMY_BASICS[mobileType]?.behaviour ?? 'General') === 'Flying';
