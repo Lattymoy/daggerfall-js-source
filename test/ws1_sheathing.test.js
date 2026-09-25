@@ -388,7 +388,9 @@ test('WS1: the wiring, by source - the third-person build takes the addons and t
   // wire; the pose's `wd` carries a peer's drawn weapon either way.
   assert.match(feat, /control: Object\.freeze\(\{ store: 'prefs', key: 'mwSheathing', initial: true, online: 'player' \}\),/, 'RF4: the switch declared once, on its row, on by default, and the player\'s online');
   assert.ok(!/mwSheathing: (true|false),/.test(rd('src/systems/uiPrefs.js')), 'and not on the shelf');
-  assert.match(rd('src/ui/enhancedMenu.js'), /prefRow\('mwSheathing', 'Weapon sheathing',/);
+  // MWA4: the assets card's copy of the switch is gone - the tile above is its one door, and says when it lands
+  assert.doesNotMatch(rd('src/ui/enhancedMenu.js'), /prefRow\('mwSheathing'/);
+  assert.match(feat, /effect: 'Takes effect when the Morrowind body next builds\.',/);
   const ds = rd('src/scenes/dataSource.js');
   const loosePush = ds.indexOf('archives.push(makeLooseArchive(loose));');
   const vendPush = ds.indexOf('archives.push(ws.weaponSheathingArchive());');

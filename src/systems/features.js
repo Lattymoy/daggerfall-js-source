@@ -686,7 +686,7 @@ export const FEATURES = Object.freeze([
     title: 'Weapon Sheathing',
     note: 'With Morrowind assets on, a sheathed weapon stays on the body - on the hip or the back, in the scabbard Greatness7\u2019s Weapon '
       + 'Sheathing ships for it, with a quiver for a bow. Off, a lowered weapon vanishes as in vanilla Morrowind.',
-    effect: 'Takes effect when the Morrowind body next builds; the Mods page\u2019s switch rebuilds it at once.',
+    effect: 'Takes effect when the Morrowind body next builds.',   // MWA4: the assets card's copy of this switch is gone - this tile is its one door
     kinds: Object.freeze(['mod']),
     control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: 'player' }),
   }),

@@ -18,15 +18,6 @@
     ]
   },
   {
-    "name": "UXB1-E-the-sync-copies-the-arms-build",
-    "file": "src/systems/onlineSync.js",
-    "old": "    if (Object.hasOwn(ONLINE_SYNC_SKIPPED_PREFS, key)) continue;",
-    "new": "    if (false) continue;",
-    "tests": [
-      "test/uxb1e_onlinesync.test.js"
-    ]
-  },
-  {
     "name": "UXB1-E-the-full-size-dungeon-is-not-copied",
     "file": "src/systems/onlineSync.js",
     "old": "  for (const table of [ONLINE_FORCED_SETTINGS, ONLINE_LAYOUT_SETTINGS]) {",

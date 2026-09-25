@@ -18146,7 +18146,7 @@ Fifteen items in five groups, each answered on both skins where both have the sc
   serves the wire and /health and publishes no rules, because the rules are the online lane's - this build's, the same on
   every server. So the sync copies the lane into the offline stores (every forced pref, DFU setting and room mod key,
   and Smaller Dungeons off, since online every dungeon is full size), lists what differs before the press, and keeps
-  what it replaced for Undo. `mwArms` is left to its Build. On a default shelf the one difference is Enhanced AI.
+  what it replaced for Undo. `mwArms` is left to its Build (and MWA4 retired it). On a default shelf the one difference is Enhanced AI.
 - **F - keys a feature uses and no screen moves**: the Controls page ends with "Keys that do not move" (the HUD's three
   DaggerfallShortcuts and the Transport window's F/H/C/S behind the Transport key - how the game itself summons a horse
   or a cart), and a mod's Features tile names its keys (Drop the light, Summon horse and wagon...) read-only, with one
@@ -18222,3 +18222,33 @@ Pins: `uxb1e` +1, `uxb1k` +1, `uxb1s` +1 and a secondary-share poll, `uxb1g`'s n
 rest-window cite record re-aimed with the cite. Cites: 114 moved by `tools/citeShift.mjs`, ten struck Ledger and
 Settings-Screen-Spec cites CD4 reads moved by hand, and the Ledger's gamepad-note cite re-resolved (it had run two lines
 past the end of `inputActions.js` since UXB1-S).
+
+## MWA4 - THE MORROWIND ASSETS CARD, ATTACH AND REMOVE (2026-09-25, before the merge: "Can you reorganize the marrowind attachment selector, remove the on and off button (defunct) and only keep attach and remove data buttons. Only reduce the amount of over explaining text and put it at the top of the feature list")
+
+**Attached is on.** MWA2's "Use Morrowind assets" On/Off row switched `mwArms`, a pref the online lane forced on at
+every boot - so online it never stuck, and offline a player who attached the files and never found the row played
+without them. The switch is retired with its row: the attached files are the arms' switch, online and off.
+`weaponRig.js autoBuildArms` gates on a made character, the data and the standing arm; the peer bodies (`world.js`) on
+the enhanced skin and the data; the lane forces nothing (`onlineLane.js`), so the sync's skip table for it went too
+(`onlineSync.js`). Attach builds the body for a character in play (a front-door attach leaves it to the next door),
+and Remove data - unload, then clear the store - is the off.
+
+**The card** (`enhancedMenu.js morrowindCard`) heads the feature list, above the tiles, on the All and Mod Authored
+filters. It is a title, one line of what the files do (`MW_CARD_LINE`), the two readings that matter (Data; Arms once
+attached: On, "Builds when you play", or the refusal's reason), and Attach data / Remove data. It dropped the two
+paragraphs, the switch's own paragraph, the Weapon / Torch / Arms mode / Body stats, the Face, Worn and ESM readout,
+the look-lag switch and the viewer's and inspector's doors (the pages stand at their addresses). What did not work
+still says why, and only then (`morrowindTroubleLines`: the missing pieces, a refused third person, a race the files
+lack) - MWDIAG's law that the reason belongs on the card.
+
+**Two consequences, handled.** Weapon Sheathing's switch was on the card twice over - it has its own tile, which is its
+one door now (its effect line no longer points at the card). And the look-lag button was the only way out of the mode
+it stored, so the key is bumped again (`fpArm.js`, `dagger.mwArmsFollowCamera3`): every player lands on the fixed
+default, and the look-lag path stays in the rig for the probe.
+
+Pins: `mwarms_fps.test.js` +1 (the card RENDERED in three states through its own function - nothing attached,
+attached and standing, a build that did not stand - and the attach/remove wiring by source) and MWA1/MWA2's pins
+re-aimed; `fparm`, `mwtorch`, `features`, `settingsUI`, `ws1_sheathing`, `mwattach`, `mwbody1`, `rf4_featuredecl`
+and `uxb1e_onlinesync` re-aimed to the card and the retired switch; `mac1_playreport`'s measure-before-build pin moved
+to the attach pick, which registers what it stored. Mutants: `tools/mutants/mwa4.json`, 11, all
+dead; `uxb1.json`'s record on the sync's arms-switch skip retired with the skip (51).

@@ -286,9 +286,9 @@ is keyed by content and shared by design. So a peer is one more
   (`host.drawPeerBodies`). A peer in a body draws no doll; its name
   rides the doll pass's own list, at the capsule's head by the race's
   height scale (MW-D34).
-- **The gate** is the host's: the enhanced skin, the player's own arms
-  switch (MWA1's `mwArms` pref - the layer is on when the arms are)
-  and Morrowind data attached. Off, every body is released and every
+- **The gate** is the host's: the enhanced skin and Morrowind data
+  attached (MWA4 retired MWA1's `mwArms` switch that stood between -
+  the files are the switch). Off, every body is released and every
   peer is a doll. The name rides the doll pass's list at the body's own
 
 ## AUDIT MWBODY (2026-09-12)
@@ -2189,7 +2189,9 @@ the skin override is.
 `enhancedCombatVisuals`, `enhancedWater`, `pixelatedSky`; `mwArms` (the
 Morrowind arms build at boot where the archives are attached -
 `autoBuildArms` guards the data, so a machine without them wears the
-doll as offline); and every vendored mod's `Enabled` (Dynamic Skies,
+doll as offline - until MWA4 retired the switch: the attached files are
+it now, online and off, so there is nothing left to force); and every
+vendored mod's `Enabled` (Dynamic Skies,
 Seasons of the Iliac Bay, Basic Roads, Meaner Monsters, the Physical
 Combat And Armor Overhaul, Unleveled Loot). Enhanced AI is the one that
 was OFF by default as the port's opt-in departure from DFU's classic

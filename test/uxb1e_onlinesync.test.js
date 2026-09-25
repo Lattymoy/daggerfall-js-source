@@ -12,7 +12,7 @@ import { readFileSync } from 'node:fs';
 const store = new Map();
 globalThis.localStorage = { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: (k) => store.delete(k) };
 
-const { onlineSyncPlan, applyOnlineSync, undoOnlineSync, lastOnlineSync, ONLINE_SYNC_STORE_KEY, ONLINE_SYNC_SKIPPED_PREFS, ONLINE_LAYOUT_SETTINGS } = await import('../src/systems/onlineSync.js');
+const { onlineSyncPlan, applyOnlineSync, undoOnlineSync, lastOnlineSync, ONLINE_SYNC_STORE_KEY, ONLINE_LAYOUT_SETTINGS } = await import('../src/systems/onlineSync.js');
 const { ONLINE_FORCED_PREFS, ONLINE_FORCED_SETTINGS, ONLINE_ROOM_MOD_KEYS } = await import('../src/systems/onlineLane.js');
 const { getPref, setPref, _resetForTests: resetPrefs } = await import('../src/systems/uiPrefs.js');
 const { getString, getBool, setValue, saveSettings, _resetForTests: resetSettings } = await import('../src/systems/settings.js');
@@ -25,19 +25,19 @@ function fresh() {
   resetPrefs(); resetSettings(); _resetModSettings();
 }
 
-test('UXB1-E: the plan is the lane\'s tables, whole - every forced pref but the arms build\'s, every forced setting, the full-size dungeon, every key the room owns - and nothing on an online page', () => {
+test('UXB1-E: the plan is the lane\'s tables, whole - every forced pref, every forced setting, the full-size dungeon, every key the room owns - and nothing on an online page', () => {
   fresh();
   const plan = onlineSyncPlan({ search: '' });
   const ids = plan.map((r) => r.id);
   assert.equal(new Set(ids).size, ids.length, 'one row a rule');
   const want = [
-    ...Object.keys(ONLINE_FORCED_PREFS).filter((k) => !Object.hasOwn(ONLINE_SYNC_SKIPPED_PREFS, k)).map((k) => `prefs:${k}`),
+    ...Object.keys(ONLINE_FORCED_PREFS).map((k) => `prefs:${k}`),
     ...[ONLINE_FORCED_SETTINGS, ONLINE_LAYOUT_SETTINGS].flatMap((t) => Object.entries(t).flatMap(([s, keys]) => Object.keys(keys).map((k) => `settings:${s}/${k}`))),
     ...Object.entries(ONLINE_ROOM_MOD_KEYS).flatMap(([v, keys]) => Object.keys(keys).map((k) => `mods:${v}/${k}`)),
   ];
   assert.deepEqual(ids, want);
   assert.ok(ids.includes('prefs:enhancedAI'), 'the registry\'s `online: true` rows are in the lane\'s table by the time the plan reads it');
-  assert.ok(!ids.includes('prefs:mwArms'), 'the arms build\'s switch is its Build\'s to write');
+  assert.ok(!ids.includes('prefs:mwArms'), 'MWA4: the arms\' switch is retired - the attached files are it, so there is nothing to copy');
   assert.ok(ids.includes('settings:Experimental/SmallerDungeons'), 'online every dungeon is full size (useSmallerDungeon)');
   assert.equal(ONLINE_LAYOUT_SETTINGS.Experimental.SmallerDungeons, 'False');
   assert.match(read('src/world/smallerDungeons.js'), /if \(online\) return false;/, '...which is the law the row copies');

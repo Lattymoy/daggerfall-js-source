@@ -6124,6 +6124,10 @@ owner to look-lag and persisted it - overriding every later default
 and making three rounds of fixes look unshipped. The storage key is
 bumped (dagger.mwArmsFollowCamera2 - the v1 value is abandoned), the
 button names the ACTION, and the current mode sits on the stats block.
+MWA4 (2026-09-25) took the button and the mode row off the assets card
+(it keeps Attach and Remove data alone) and bumped the key again
+(dagger.mwArmsFollowCamera3), so no player is left in a mode no switch
+can leave; the look-lag path stays in the rig for the probe.
 
 IG6c - ZERO IN, ZERO OUT. The field still held "not screen fixed"
 past the key bump, and the remaining suspect class is one this bench

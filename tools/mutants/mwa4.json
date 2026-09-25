@@ -1,0 +1,102 @@
+[
+  {
+    "name": "MWA4-the-remove-door-with-nothing-to-remove",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  if (count) {\n    actions.push({ label: 'Remove data',",
+    "new": "  if (true) {\n    actions.push({ label: 'Remove data',",
+    "tests": [
+      "test/mwarms_fps.test.js"
+    ]
+  },
+  {
+    "name": "MWA4-attach-urged-when-already-attached",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "{ label: 'Attach data', primary: !count, onClick: attach }",
+    "new": "{ label: 'Attach data', primary: true, onClick: attach }",
+    "tests": [
+      "test/mwarms_fps.test.js"
+    ]
+  },
+  {
+    "name": "MWA4-a-standing-third-person-reads-as-trouble",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "if (armState?.third && !armState.third.ok) out.push(",
+    "new": "if (armState?.third) out.push(",
+    "tests": [
+      "test/mwarms_fps.test.js"
+    ]
+  },
+  {
+    "name": "MWA4-the-race-line-while-the-race-is-there",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "if (e && !e.raceIsThere) out.push(",
+    "new": "if (e) out.push(",
+    "tests": [
+      "test/mwarms_fps.test.js"
+    ]
+  },
+  {
+    "name": "MWA4-not-built-reads-raw",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "return reason === 'not built' || reason === 'unloaded' ? 'Builds when you play' : reason;",
+    "new": "return reason;",
+    "tests": [
+      "test/mwarms_fps.test.js"
+    ]
+  },
+  {
+    "name": "MWA4-the-card-off-the-head-of-the-list",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  if (featureKind == null || featureKind === 'mod') body.append(morrowindCard());   // MWA4: the assets card heads the list\n",
+    "new": "",
+    "tests": [
+      "test/features.test.js"
+    ]
+  },
+  {
+    "name": "MWA4-attach-builds-on-the-front-door",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "    if (n > 0 && playerEntity?.chargenDone) {",
+    "new": "    if (n > 0) {",
+    "tests": [
+      "test/mwarms_fps.test.js"
+    ]
+  },
+  {
+    "name": "MWA4-remove-leaves-the-arms-standing",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "      async () => {\n        fpArm.unload();\n        const ds = await import('../scenes/dataSource.js');\n        await ds.clearStoredMorrowind();",
+    "new": "      async () => {\n        const ds = await import('../scenes/dataSource.js');\n        await ds.clearStoredMorrowind();",
+    "tests": [
+      "test/mwarms_fps.test.js"
+    ]
+  },
+  {
+    "name": "MWA4-the-peer-bodies-without-the-data",
+    "file": "src/scenes/world.js",
+    "old": "enabled: () => enhanced && morrowindDataCount() > 0, generation: morrowindDataGeneration });   // MWA4: attached is on",
+    "new": "enabled: () => enhanced, generation: morrowindDataGeneration });   // MWA4: attached is on",
+    "tests": [
+      "test/mwbody1.test.js",
+      "test/mwarms_fps.test.js"
+    ]
+  },
+  {
+    "name": "MWA4-the-boot-build-without-the-data",
+    "file": "src/combat/weaponRig.js",
+    "old": "  if (!entity?.chargenDone || !(dataCount() > 0) || standing(entity)) return null;",
+    "new": "  if (!entity?.chargenDone || standing(entity)) return null;",
+    "tests": [
+      "test/mwarms_fps.test.js"
+    ]
+  },
+  {
+    "name": "MWA4-look-lag-kept-with-no-switch",
+    "file": "src/combat/fpArm.js",
+    "old": "const FOLLOW_CAMERA_KEY = 'dagger.mwArmsFollowCamera3';",
+    "new": "const FOLLOW_CAMERA_KEY = 'dagger.mwArmsFollowCamera2';",
+    "tests": [
+      "test/fparm.test.js"
+    ]
+  }
+]

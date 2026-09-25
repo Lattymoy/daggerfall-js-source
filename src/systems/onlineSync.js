@@ -15,10 +15,9 @@
 //   - every mod key the room owns (ONLINE_ROOM_MOD_KEYS),
 //   - and the one layout rule that is not in a table: online a dungeon is always the whole dungeon
 //     (world/smallerDungeons.js useSmallerDungeon, AUDIT WORLD34 B2), so Smaller Dungeons is set off.
-// WHAT IT DOES NOT COPY: `mwArms` - forced on online, but it is the Morrowind arms BUILD's switch (enhancedMenu.js's
-// Build writes it once the archives are measured, and a refused build leaves it off), and a switch without its build
-// stands nothing; the rules that are not switches at all (the real-time clock, the rest and the journey that spend
-// none of it); and everything the lane leaves to the player.
+// WHAT IT DOES NOT COPY: the rules that are not switches at all (the real-time clock, the rest and the journey that
+// spend none of it), and everything the lane leaves to the player. (It skipped `mwArms`, the Morrowind arms' switch,
+// until MWA4 retired that switch: the attached files are the arms' switch now, the same online and off.)
 //
 // Undoable: the values it replaced are kept in the storage seam, and Undo writes them back - every sync's since the
 // last Undo (AUDIT UXB1 F2).
@@ -31,11 +30,6 @@ import { appStorage } from './appStorage.js';
 import { labelOf } from '../ui/settingsCopy.js';
 
 export const ONLINE_SYNC_STORE_KEY = 'dagger.onlineSync.v1';
-
-/** The prefs the lane forces that the sync leaves alone, and why. */
-export const ONLINE_SYNC_SKIPPED_PREFS = Object.freeze({
-  mwArms: 'the Morrowind arms build’s own switch - its Build writes it once the archives are measured',
-});
 
 /** The layout rule the lane keeps in code rather than a table: online every dungeon is full size. DFU's strings. */
 export const ONLINE_LAYOUT_SETTINGS = Object.freeze({
@@ -68,7 +62,6 @@ export function onlineSyncPlan({ search } = /** @type {{ search?: string }} */ (
   /** @type {SyncRow[]} */
   const rows = [];
   for (const [key, online] of Object.entries(ONLINE_FORCED_PREFS)) {
-    if (Object.hasOwn(ONLINE_SYNC_SKIPPED_PREFS, key)) continue;
     const offline = getPref(key);
     rows.push({ id: `prefs:${key}`, store: 'prefs', key, label: featureForControl('prefs', key)?.title ?? key, online, offline, same: offline === online });
   }

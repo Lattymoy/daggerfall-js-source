@@ -73,19 +73,14 @@ export const PREF_DEFAULTS = Object.freeze({
   touchGyroSensitivity: 1,   // 1 = a degree of phone is a degree of camera
   touchHaptics: true,        // a short vibration on a button, an armed swipe and a lock
   touchFullscreen: true,     // the first touch asks for fullscreen and a landscape lock where the browser allows it
-  // MWA1 (2026-09-11, RookieG via Mac: "morrowind arms did not work on
-  // first launch"). Only the test room ever built the arms at boot; a
-  // normal game had them only after the Enhanced pane's Build button,
-  // and the rig is a module singleton that dies with the tab. This is
-  // the switch that button flips: Build sets it, Unload clears it, and
-  // every host that owns a weapon rig builds at boot while it is on and
-  // the archives are attached (combat/weaponRig.js autoBuildArms).
-  mwArms: false,
+  // MWA4 (2026-09-25): `mwArms` (MWA1's arms switch) is retired - the attached Morrowind files are the switch, and
+  // Remove data the off (combat/weaponRig.js autoBuildArms, ui/enhancedMenu.js morrowindCard). A stored value is
+  // read by nothing.
   // 2026-09-17 (per-request): a peer without a Morrowind body is drawn as their class's animated sprite by default
   // (net/remotePlayers.js classMobileType/_syncMobilePeer) - the same billboard a hostile Warrior/Mage/etc. already
   // is, puppeted by their pose instead of AI. Off returns to the flat paperdoll every peer used to be drawn as.
-  // Defaults ON, unlike mwArms above: this needs no attached data and no build step, so there is nothing to opt
-  // INTO the way Morrowind assets are - only a look a player might prefer to opt OUT of.
+  // Defaults ON: this needs no attached data and no build step, so there is nothing to opt INTO the way Morrowind
+  // assets are - only a look a player might prefer to opt OUT of.
   peerClassSprites: true,
   peerAttackSounds: true,   // PEER-FS2: other players' swing sounds - on by default
   peerFootsteps: true,   // PEER-FS1: other players' footstep sounds - on by default
