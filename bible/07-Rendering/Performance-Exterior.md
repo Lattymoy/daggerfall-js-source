@@ -341,3 +341,57 @@ every triangle (the soup walked whole - true by design on the base too,
 it is the picture's guard); the key's formula, its one-to-one-ness at the
 corners of its range, and no template literal or corner array left.
 Mutants: `perfextc.json` C6 x8, all dead.
+
+### PERF-EXT-C7 — STREAM1's promotions are built on the terrain worker
+
+**Before.** A crossing moves the near ring (LOD_NEAR 3), and five pixels
+go from stride 4 to stride 1. STREAM1 took them off the crossing frame
+onto a queue spent ONE A FRAME on the main thread (`spendRestrides`,
+inside the frame): `buildTerrainGrid` over the pixel's samples with its
+ghost rows, ~1.8 ms here (3.1 on STREAM1's machine), for five frames after
+every crossing - every enhanced-skin player.
+
+**After.** The terrain worker already builds exactly this grid for every
+pixel it generates, so the grid is one law now - `terrainGen.js`
+`restrideGrid` (the kernel's build, the worker's new `grid` job and the
+host's restride all call it) - and with the worker up `spendRestrides`
+sends every waiting promotion to it at once, on the crossing frame itself
+(ahead of the new pixels' jobs). The job carries the pixel's samples as a
+CLONE (the pixel keeps its own) and answers by id, beside the jobs' FIFO,
+its two arrays transferred back; the swap - `restrideTerrain(p, 1, grid)`,
+the same one - happens when the reply lands, and only if the pixel still
+stands, is still the entry that asked, and still wants stride 1. Nothing
+is made for a dropped reply, so nothing is left to free. A worker error
+answers under the id and that grid is built on the main thread; a dead
+worker's grids are built there too, and the host falls back to STREAM1's
+one-a-frame queue (no Worker, `?terrainthread=off`, a dead one) as it
+always was. Demotions stay inline (0.21 ms each, and a late one would
+leave stride-1 geometry in the far ring).
+
+What moves on the screen: a promoted pixel keeps its stride-4 surface for
+one worker round trip instead of up to five frames in the queue - the
+same heightfield, 819 m or more away.
+
+| harness | before (base) | after (this tree) |
+|---|---|---|
+| `restride.mjs` - a stride-1 grid, the real ghost | median 1.81 ms, 9.0 ms per crossing over 5 frames | (the same work, on the worker) |
+| `restrideMain.mjs` - a promotion's main-thread cost | grid + water 1.83-1.95 ms (four runs) | the post (samples cloned) 0.04 ms + the reply's water 0.11 ms = 0.15-0.16 ms |
+| the same - per crossing | 9.2-9.7 ms over five frames | 0.74-0.78 ms |
+
+The GPU upload of the new surface (`createTerrainSurface`, 390 KB) is on
+the landing frame either way; node cannot time it.
+
+Pins: `test/restrideworker.test.js` (4) - restrideGrid is buildTerrainGrid
+with the woods' ghost rows at strides 1 and 4 and the kernel builds with
+it; the REAL worker shell, initialised with a synthetic WOODS.WLD the real
+reader loads, answers a grid job by id with the main thread's bytes and
+both arrays transferred, says `gridError` under the id before init, and
+answers a grid at once while the road network is still being fetched; the
+client sends grids by id with the samples cloned, answers out of order
+beside a pixel job in the FIFO, builds a failed grid and a dead worker's
+grids on its own thread, and answers at once with no worker; the host's
+spend, its landing checks, the one swap and the crossing frame's send.
+Re-stated on purpose: `distantland.test.js` (the restride reads the ghost
+rows through the kernel's law now - its comment said the restride "keeps
+its own", which is no longer true) and `water.test.js`'s restride slice.
+Mutants: `perfextc.json` C7 x16, all dead.

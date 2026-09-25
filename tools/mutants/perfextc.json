@@ -699,5 +699,150 @@
    "test/arrowflight.test.js",
    "test/disc8.test.js"
   ]
+ },
+ {
+  "name": "PERF-EXT-C7-the-promotions-stay-on-the-main-thread-queue",
+  "file": "src/scenes/world.js",
+  "old": "    if (terrainGen.threaded) {\n      for (const p of restridePending.values()) promoteOffThread(p);",
+  "new": "    if (false) {\n      for (const p of restridePending.values()) promoteOffThread(p);",
+  "tests": [
+   "test/restrideworker.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C7-the-queue-is-sent-and-kept-so-each-promotion-is-built-twice",
+  "file": "src/scenes/world.js",
+  "old": "      restridePending.clear();\n      return;\n    }\n    let budget = RESTRIDE_PER_FRAME;",
+  "new": "      return;\n    }\n    let budget = RESTRIDE_PER_FRAME;",
+  "tests": [
+   "test/restrideworker.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C7-a-reply-lands-on-an-evicted-pixel",
+  "file": "src/scenes/world.js",
+  "old": "      if (built.get(key) !== p) return;                              // evicted, or rebuilt, while the worker built it",
+  "new": "      // evicted, or rebuilt, while the worker built it",
+  "tests": [
+   "test/restrideworker.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C7-a-reply-lands-on-a-pixel-that-walked-back-out",
+  "file": "src/scenes/world.js",
+  "old": "      if (strideFor(p.px, p.py) !== 1 || p._stride === 1) return;   // walked back out, or promoted meanwhile",
+  "new": "      if (p._stride === 1) return;   // walked back out, or promoted meanwhile",
+  "tests": [
+   "test/restrideworker.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C7-the-reply-is-thrown-away-and-built-again-here",
+  "file": "src/scenes/world.js",
+  "old": "      restrideTerrain(p, 1, grid);",
+  "new": "      restrideTerrain(p, 1);",
+  "tests": [
+   "test/restrideworker.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C7-the-crossing-frame-sends-nothing",
+  "file": "src/scenes/world.js",
+  "old": "      if (terrainGen.threaded) spendRestrides();   // PERF-EXT-C7",
+  "new": "      // PERF-EXT-C7",
+  "tests": [
+   "test/restrideworker.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C7-the-worker-waits-for-the-roads-before-a-grid",
+  "file": "src/world/terrainGenWorker.js",
+  "old": "    if (m.t === 'grid') { answerGrid(m); return; }",
+  "new": "    if (m.t === 'grid' && !pendingRoads) { answerGrid(m); return; }",
+  "tests": [
+   "test/restrideworker.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C7-the-worker-copies-the-grid-back-instead-of-transferring",
+  "file": "src/world/terrainGenWorker.js",
+  "old": "    globalThis.postMessage({ t: 'grid', id: m.id, positions, normals }, [positions.buffer, normals.buffer]);",
+  "new": "    globalThis.postMessage({ t: 'grid', id: m.id, positions, normals });",
+  "tests": [
+   "test/restrideworker.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C7-a-failed-grid-answers-through-the-jobs-FIFO",
+  "file": "src/world/terrainGenWorker.js",
+  "old": "    globalThis.postMessage({ t: 'gridError', id: m.id, message: e?.message ?? String(e) });",
+  "new": "    globalThis.postMessage({ t: 'error', message: e?.message ?? String(e) });",
+  "tests": [
+   "test/restrideworker.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C7-the-worker-builds-a-different-grid",
+  "file": "src/world/terrainGenWorker.js",
+  "old": "    const { positions, normals } = restrideGrid({ ...m, woods });",
+  "new": "    const { positions, normals } = restrideGrid({ ...m, woods, stride: 4 });",
+  "tests": [
+   "test/restrideworker.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C7-the-client-routes-a-grid-reply-into-the-FIFO",
+  "file": "src/world/terrainGenClient.js",
+  "old": "        if (m.t === 'grid' || m.t === 'gridError') { this._gridAnswer(m); return; }",
+  "new": "        if (m.t === 'gridError') { this._gridAnswer(m); return; }",
+  "tests": [
+   "test/restrideworker.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C7-the-client-transfers-the-pixels-own-samples",
+  "file": "src/world/terrainGenClient.js",
+  "old": "      this._worker.postMessage({ t: 'grid', id, ...job });",
+  "new": "      this._worker.postMessage({ t: 'grid', id, ...job }, [job.samples.buffer]);",
+  "tests": [
+   "test/restrideworker.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C7-a-failed-grid-is-left-unbuilt",
+  "file": "src/world/terrainGenClient.js",
+  "old": "      g.resolve(restrideGrid({ woods: this._woods, ...g.job }));\n      return;",
+  "new": "      g.resolve(null);\n      return;",
+  "tests": [
+   "test/restrideworker.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C7-a-dead-worker-strands-its-grids",
+  "file": "src/world/terrainGenClient.js",
+  "old": "    for (const g of grids) g.resolve(restrideGrid({ woods: this._woods, ...g.job }));",
+  "new": "    void grids;",
+  "tests": [
+   "test/restrideworker.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C7-every-grid-shares-one-id",
+  "file": "src/world/terrainGenClient.js",
+  "old": "    const id = ++this._gridId;",
+  "new": "    const id = this._gridId;",
+  "tests": [
+   "test/restrideworker.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C7-the-grid-law-drops-the-ghost-rows",
+  "file": "src/world/terrainGen.js",
+  "old": "  return buildTerrainGrid(samples, stride, ghostSampler(woods, px, py));",
+  "new": "  return buildTerrainGrid(samples, stride, () => 0);",
+  "tests": [
+   "test/restrideworker.test.js",
+   "test/terrainworker.test.js"
+  ]
  }
 ]

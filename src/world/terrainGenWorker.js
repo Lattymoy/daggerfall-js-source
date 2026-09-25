@@ -14,7 +14,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { WoodsFile } from '../formats/woodsFile.js';
-import { generatePixelTerrain } from './terrainGen.js';
+import { generatePixelTerrain, restrideGrid } from './terrainGen.js';   // PERF-EXT-C7: and a built pixel's grid at another stride
 import { buildRoadsFromSettlements } from './roadsProducer.js';   // AUDIT ROADS F2
 import { cachedNetwork, roadsCacheKey } from './roadsCache.js';   // ROADS 19
 
@@ -70,6 +70,9 @@ function handle(m) {
       }
       return;
     }
+    // PERF-EXT-C7: a promotion's grid needs no network, so it never waits
+    // behind one, and it answers by its id - never through the jobs' FIFO.
+    if (m.t === 'grid') { answerGrid(m); return; }
     // ROADS 19: a job that arrives while the network is still loading
     // waits for it, so no chunk is ever generated roadless.
     if (m.t === 'job' && pendingRoads) { pendingRoads.then(() => handle(m)); return; }
@@ -85,5 +88,20 @@ function handle(m) {
     globalThis.postMessage({ t: 'done', ...out }, transfer);
   } catch (e) {
     globalThis.postMessage({ t: 'error', message: e?.message ?? String(e) });
+  }
+}
+
+/** PERF-EXT-C7: STREAM1's promotion, off the frame - {id, px, py, stride,
+ *  samples} in (the samples a clone: the main thread keeps its own), the
+ *  grid's two arrays TRANSFERRED back under the same id. A failure answers
+ *  `gridError` under the id, and the client builds that one on its own
+ *  thread - the fallback, never a hole. */
+function answerGrid(m) {
+  try {
+    if (!woods) throw new Error('terrain worker got a grid before init');
+    const { positions, normals } = restrideGrid({ ...m, woods });
+    globalThis.postMessage({ t: 'grid', id: m.id, positions, normals }, [positions.buffer, normals.buffer]);
+  } catch (e) {
+    globalThis.postMessage({ t: 'gridError', id: m.id, message: e?.message ?? String(e) });
   }
 }

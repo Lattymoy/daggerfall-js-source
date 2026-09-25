@@ -31,7 +31,7 @@ import { settlementsOf, loadModRoads, basicRoadsPathsPoint } from '../world/road
 import { modSetting, modSettingsOf } from '../systems/modSettings.js';   // ROADS 24; HCC: the mod's eight switches
 import { hasPort } from '../systems/travelPorts.js';   // AUDIT-RR2 G22: Travel Options' port list for RR's ship gate
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
-import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH, surfaceHeightAt } from '../world/terrainSurface.js';
+import { buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH, surfaceHeightAt } from '../world/terrainSurface.js';
 import { waterUniforms, buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the pixel's own grid; WATER-AUDIT: its own index set
 import { waterCorners, WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // GRASS-WET1: the one table that says which of a tile's corners stand in water - the DRAW's, because a blade in a puddle is a picture, not a physics
 import { windowEmissionRGB } from '../render/windowEmission.js';
@@ -258,7 +258,8 @@ import { totalWeight } from '../systems/inventory.js';   // HCC: PlayerEntity.Wa
 import { WAGON_KG_LIMIT } from '../systems/itemTransfer.js';   // HCC: ItemHelper.WagonKgLimit
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name (DaggerfallInputMessageBox)
 import { getBool, getInt, getFloat } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
-import { STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, ghostSampler } from '../world/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water   // EV4: ghost rows for chunk-edge normals (the restride's own)
+import { STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION } from '../world/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water
+import { restrideGrid } from '../world/terrainGen.js';   // PERF-EXT-C7: the restride's grid - the kernel's own law (EV4's ghost rows), on the worker or here
 import { getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
 // The start-marker arm (StreamingWorld's PositionPlayerToLocation), the
 // law and its two location-type reads. AUDIT 64 F18/F19: DFU reaches it
@@ -2452,6 +2453,21 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  while it waited is dropped without building anything. */
   function spendRestrides() {
     if (!restridePending.size) return;
+    // PERF-EXT-C7 (2026-09-25, the players: "fps issues in the exterior but
+    // fine in the interior", "me too my friend.. don't know why. I got a
+    // RX6600"): WITH THE TERRAIN WORKER UP, EVERY PROMOTION GOES TO IT AT
+    // ONCE. A crossing promotes five pixels, and this queue paid them one a
+    // frame here - ~1.8 ms of grid a frame for five frames, for every
+    // enhanced-skin player. The worker already runs this very grid for
+    // every build (terrainGen.js restrideGrid), so it answers the same
+    // bytes; the surface swaps when the reply lands. Without a worker (none
+    // in the host, `?terrainthread=off`, one that died) the queue below is
+    // what it always was.
+    if (terrainGen.threaded) {
+      for (const p of restridePending.values()) promoteOffThread(p);
+      restridePending.clear();
+      return;
+    }
     let budget = RESTRIDE_PER_FRAME;
     const want = [...restridePending.values()]
       .sort((a, b) => (Math.abs(a.px - state.current.x) + Math.abs(a.py - state.current.y))
@@ -2467,8 +2483,24 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
   }
 
-  function restrideTerrain(p, stride) {
-    const grid = buildTerrainGrid(p.samples, stride, ghostSampler(woods, p.px, p.py));
+  /** PERF-EXT-C7: a promotion's grid, built on the terrain worker. The
+   *  reply swaps the surface only if the pixel it was asked for still
+   *  stands and still wants stride 1 - an eviction, a rebuild or a walk
+   *  back out while it was away drops it, and a pixel already promoted
+   *  keeps what it has. Nothing is made for a dropped reply, so nothing
+   *  is left to free. */
+  function promoteOffThread(p) {
+    const key = `${p.px},${p.py}`;
+    if (built.get(key) !== p) return;                  // evicted while it waited
+    if (strideFor(p.px, p.py) === p._stride) return;   // walked back out of the near ring
+    terrainGen.grid({ px: p.px, py: p.py, stride: 1, samples: p.samples }).then((grid) => {
+      if (built.get(key) !== p) return;                              // evicted, or rebuilt, while the worker built it
+      if (strideFor(p.px, p.py) !== 1 || p._stride === 1) return;   // walked back out, or promoted meanwhile
+      restrideTerrain(p, 1, grid);
+    }).catch((e) => console.error(`[terrain] promotion of ${key} failed:`, e));
+  }
+
+  function restrideTerrain(p, stride, grid = restrideGrid({ woods, px: p.px, py: p.py, stride, samples: p.samples })) {   // PERF-EXT-C7: or the grid the worker built
     if (p.water) { renderer.destroyWaterSurface(p.water); p.water = null; }
     renderer.destroyMesh(p.terrain);
     p.terrain = renderer.createTerrainSurface(grid.positions, grid.normals,
@@ -14080,6 +14112,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         if (want === 1) restridePending.set(`${p.px},${p.py}`, p);   // the dear way round
         else { restridePending.delete(`${p.px},${p.py}`); restrideTerrain(p, want); }
       }
+      if (terrainGen.threaded) spendRestrides();   // PERF-EXT-C7: the promotions reach the worker on the crossing frame, ahead of the new pixels' jobs
       console.log(`stream: entered ${r.current.x},${r.current.y} (load ${r.load.length}, unload ${r.unload.length})`);
       // CAMP1 - GROUP ENCOUNTERS ON CHUNK LOAD (Mac, 2026-09-17: "this
       // should always happen when loading world chunks if it works like

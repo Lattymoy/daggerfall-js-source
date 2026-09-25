@@ -241,9 +241,10 @@ test('EV4: the wiring - fog seam, far ring, restride, and the per-set index buff
   assert.ok(world.includes('const lodOn = isEnhanced()'), 'the 1:1 lane keeps full resolution');
   assert.ok(world.includes('restrideTerrain(p, want)'), 'ring-class changes swap the surface in place');
   // EV7 moved buildPixel's kernel call into terrainGen.js whole; the
-  // ghost-row law now lives there, and the RESTRIDE (main-thread by
-  // design - rare, cheap, and reading cached samples) keeps its own.
-  assert.ok(world.includes('ghostSampler(woods, p.px, p.py)'), 'the restride reads the neighbor pixels');
+  // ghost-row law lives there, and since PERF-EXT-C7 the RESTRIDE reads
+  // it too (terrainGen.js restrideGrid) - on the terrain worker when one
+  // is up, on this thread when not.
+  assert.ok(world.includes('restrideGrid({ woods, px: p.px, py: p.py, stride, samples: p.samples })'), 'the restride reads the neighbor pixels');
   assert.ok(readFileSync('src/world/terrainGen.js', 'utf8').includes('ghostSampler(woods, px, py)'),
     'the kernel reads them for every build');
   // the renderer keeps one shared buffer PER index set, not one total

@@ -138,3 +138,14 @@ cluster C has the numbers and the laws):
   query read; the key is one exact multiply-add now, and the insert of a
   synthetic city pixel's 300,000 triangles fell from ~1.07 s to ~0.76 s
   of main thread (-27-30%), every answer the same bits.
+- **PERF-EXT-C7** - the five terrain promotions every crossing makes are
+  built on the terrain worker. They were ~1.8 ms of grid a frame for five
+  frames on the main thread; now the post and the reply's water are ~0.15
+  ms each, the grid the same bytes, and the one-a-frame queue is the
+  fallback when no worker runs.
+
+**Records.** `07-Rendering/Performance-Exterior.md` cluster C. Pins:
+`test/grassshift.test.js`, `test/publishtail.test.js`,
+`test/buildslice.test.js`, `test/colliderkeys.test.js`,
+`test/restrideworker.test.js`, every new pin failing on the tree before
+its slice. Mutants: `tools/mutants/perfextc.json`, 89, all dead.
