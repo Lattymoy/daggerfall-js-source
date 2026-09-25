@@ -47,7 +47,12 @@ import { lastOnlineText, PARTY_GREEN_CSS, FRIEND_CSS } from '../net/social.js';
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS } from './pixelifyFive.js';   // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five
 import { accountRefusalText, handleShapeOk, HANDLE_MAX_LEN } from '../net/accountClient.js';   // MAIL1: the service's sentences, and a handle's shape
 import { letterAgeText, replySubject } from '../net/mail.js';   // MAIL1: the box the Letters tab draws
-import { LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTER_LINES_MAX, cleanBody } from '../net/letterLaw.js';   // MAIL1: the form's caps are the service's
+import { LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTER_LINES_MAX, cleanBody } from '../net/letterLaw.js';
+import {
+  GUILD_FOUND_GOLD, GUILD_FOUND_RENOWN, GUILD_MEMBERS_MAX, GUILD_NAME_MAX, GUILD_RANK_NAME_MAX, GUILD_RANK_NAMES,
+  guildMay, guildMayMove, guildOutranks, guildNameOf, guildTagOf, guildRankNamesOf,
+} from '../net/guildLaw.js';   // GUILD1b: the Guild tab's rules are the service's
+import { GUILD_DEPOSIT_UNSURE } from '../net/guildBook.js';   // MAIL1: the form's caps are the service's
 import { glyphBadges, glyphSvgNode } from './playerBadge.js';   // MAIL1: a sender's glyphs, in the one drawing every DOM face uses
 
 export const SOCIAL_STYLE_ID = 'dagger-social-style';
@@ -82,6 +87,18 @@ export const LETTERS_SIGNED_OUT_TEXT = 'Sign in to an account to send and read l
 export const LETTERS_LOOKING_TEXT = 'Looking for letters...';
 /** How recent a look the Letters tab trusts when it opens; older, and opening it looks again. */
 export const LETTERS_FRESH_MS = 30_000;
+/** GUILD1b: the Guild tab's own sentences. */
+export const GUILD_SIGNED_OUT_TEXT = 'Sign in to an account to found or join a guild.';
+export const GUILD_LOOKING_TEXT = 'Looking for your guild...';
+export const GUILD_NONE_TEXT = 'This character belongs to no guild. Accept an invitation, or found one.';
+export const GUILD_FOUND_COST_TEXT = `Founding a guild costs ${GUILD_FOUND_GOLD.toLocaleString('en-US')} gold - from your purse, then this region's bank account - and Renown ${GUILD_FOUND_RENOWN}.`;
+export const GUILD_GOLD_SHORT_TEXT = 'You do not have that much gold, even with this region\'s bank account.';
+/** GUILD1b: a guild act's answer in words - the service's sentence (REFUSALS), or the tab's own for the purse. */
+export function guildWordText(error) {
+  if (error === 'gold') return GUILD_GOLD_SHORT_TEXT;
+  if (error === 'guild-unsure') return GUILD_DEPOSIT_UNSURE;
+  return accountRefusalText(error);
+}
 
 /** The panel's sheet: the enhanced tokens (enhancedStyle.js) where they exist, a fallback where the skin's sheet is
  *  not loaded - the same bargain ui/chatPanel.js strikes.
@@ -277,7 +294,7 @@ export function friendOrder(friends) {
  * a panel with something above it IGNORES the key (does not close, does not stop it), and the one that handles it
  * calls `stopImmediatePropagation` so no other window listener - the host's pause door included - sees that press.
  */
-export function createSocialPanel({ social, send = null, mail = null, keepLetter = null, canOpen = () => true, onOpen = null, onClose = null, above = () => false, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice() } = {}) {
+export function createSocialPanel({ social, send = null, mail = null, guild = null, keepLetter = null, canOpen = () => true, onOpen = null, onClose = null, above = () => false, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice() } = {}) {
   injectSocialStyle(doc);
   const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
 
@@ -300,14 +317,15 @@ export function createSocialPanel({ social, send = null, mail = null, keepLetter
   const tabBtns = new Map();
   tabs.setAttribute('role', 'tablist');
   // MAIL1: the third tab, where the host has a letterbox to hand (net/mail.js) - a panel without one is the two it was
-  for (const [id, label] of [['friends', 'Friends'], ['party', 'Party'], ...(mail ? [['letters', 'Letters']] : [])]) {
+  // GUILD1b: and the fourth, where the host has a guild book (net/guildBook.js)
+  for (const [id, label] of [['friends', 'Friends'], ['party', 'Party'], ...(mail ? [['letters', 'Letters']] : []), ...(guild ? [['guild', 'Guild']] : [])]) {
     const b = el('button', 'dfsocial-tab', label);
     b.type = 'button'; b.dataset.tab = id;
     b.setAttribute('role', 'tab');                    // AUDIT SOC C21: a tab that says it is one...
     b.setAttribute('aria-selected', id === 'friends' ? 'true' : 'false');   // ...and which one is up (Friends opens)
     const badge = el('span', 'dfsocial-badge');
     b.append(badge);
-    b.addEventListener('click', () => { if (tab === id) return; tab = id; confirm = null; ui++; if (id === 'letters') lookAtLetters(); if (open) repaint(); });
+    b.addEventListener('click', () => { if (tab === id) return; tab = id; confirm = null; ui++; if (id === 'letters') lookAtLetters(); if (id === 'guild') lookAtGuild(); if (open) repaint(); });
     tabs.append(b);
     tabBtns.set(id, { b, badge });
   }
@@ -331,7 +349,7 @@ export function createSocialPanel({ social, send = null, mail = null, keepLetter
   let confirm = null, confirmAt = -Infinity;   // the account whose Remove is armed, and when it was armed
   let noteMsg = '', noteAt = -Infinity;
   let ui = 0;                                  // the panel's OWN version - a tab, a confirm, an act just sent
-  let painted = -1, paintedUi = -1, paintedMail = -1;
+  let painted = -1, paintedUi = -1, paintedMail = -1, paintedGuild = -1;
   let ticking = [];                            // [{ el, expires }] - the countdowns drawn right now
   let liveSubs = [];                           // [{ el, of() }] - the sub-texts that go stale on the CLOCK alone (B8)
   let toasted = null;                          // the invitation the toast is showing, or null
@@ -344,6 +362,11 @@ export function createSocialPanel({ social, send = null, mail = null, keepLetter
    *  box's own clock, not the relay's (`social.now()`): `at` is stamped by it. What the look finds repaints on the
    *  next frame, off `mail.version`, like everything else here. */
   const lookAtLetters = () => { if (mail && (!mail.at || mail.now() - mail.at > LETTERS_FRESH_MS)) mail.refresh(); };
+  // GUILD1b: the Guild tab's own state - the words of the last act (`word`, `bad` when it was a refusal), the forms'
+  // drafts kept on every keystroke as the letter's are, and the one dangerous act armed (`arm`: 'leave', 'disband',
+  // 'remove:<member>', 'hand:<member>') - the first press arms it, the second does it, SOCIAL_CONFIRM_MS disarms it
+  const guildUi = { word: '', bad: false, draft: { name: '', tag: '', handle: '', gold: '', ranks: null }, arm: null, armAt: -Infinity };
+  const lookAtGuild = () => { if (guild?.stale?.()) guild.refresh(); };
 
   /** One act out. A refusal that is the RATE GATE's (`send` answered false) is not the player's fault and not the
    *  row's: the button stays as it was and the note says so, because the act was right and the moment was not. */
@@ -673,24 +696,191 @@ export function createSocialPanel({ social, send = null, mail = null, keepLetter
 
   const lettersBody = () => (letters.mode === 'write' ? writeBody() : letters.mode === 'read' ? readBody() : listBody());
 
+  // ═══ GUILD1b: THE GUILD TAB ═══════════════════════════════════════
+  // Every rule it shows is net/guildLaw.js's and every answer the service's (net/guildBook.js): a button the character's
+  // rank cannot press is DISABLED AND SAYS WHY, as every button here does; one it may press goes to the book, and what
+  // comes back is written under the header in the service's own sentence.
+  const guildField = (form, label, value, max, onInput) => {
+    const f = doc.createElement('input');
+    f.className = 'dfsocial-field';
+    f.type = 'text';
+    f.maxLength = max;
+    f.value = value;
+    f.setAttribute('aria-label', label);
+    f.setAttribute('autocomplete', 'off');
+    f.setAttribute('spellcheck', 'false');
+    f.addEventListener('input', () => onInput(f.value));
+    form.append(el('div', 'dfsocial-label', label), f);
+    return f;
+  };
+  /** An act through the book: its words land under the header, and the tab repaints off the book's version. */
+  const guildDo = (promise, okWord = '', after = null) => {
+    guildUi.word = ''; guildUi.arm = null; ui++;
+    Promise.resolve(promise).then((r) => {
+      guildUi.bad = !r?.ok;
+      guildUi.word = r?.ok ? okWord : guildWordText(r?.error);
+      if (r?.ok) after?.(r);
+      ui++;
+    });
+  };
+  /** The two-press acts: the first press arms, the second does it. */
+  const armed = (key) => guildUi.arm === key;
+  const arm = (key) => { guildUi.arm = key; guildUi.armAt = social.now(); ui++; if (open) repaint(); };
+  const rankName = (g, r) => (Array.isArray(g.ranks) ? g.ranks[r] : null) ?? GUILD_RANK_NAMES[r] ?? String(r);
+
+  /** No guild: the invitations standing for this account, and the founding form. */
+  const guildJoinBody = (g) => {
+    const out = [el('div', 'dfsocial-empty', GUILD_NONE_TEXT)];
+    const busy = g.busy;
+    if (g.invites.length) {
+      out.push(el('div', 'dfsocial-sec', 'Invitations'));
+      for (const inv of g.invites) {
+        const r = personRow({ name: `${inv.name} [${inv.tag}]`, sub: `invited by ${inv.by}` });
+        r.append(btn('Join', { enabled: !busy, why: 'a moment', run: () => guildDo(g.answer(inv.guild, true), `You joined ${inv.name}.`) }),
+          btn('Decline', { enabled: !busy, why: 'a moment', run: () => guildDo(g.answer(inv.guild, false), 'Invitation declined.') }));
+        out.push(r);
+      }
+    }
+    out.push(el('div', 'dfsocial-sec', 'Found a guild'));
+    const d = guildUi.draft;
+    const form = el('div', 'dfsocial-form');
+    guildField(form, 'Guild name', d.name, GUILD_NAME_MAX, (v) => { d.name = v; });
+    guildField(form, 'Tag', d.tag, 4, (v) => { d.tag = v; });
+    form.append(el('div', 'dfsocial-empty', GUILD_FOUND_COST_TEXT));
+    out.push(form);
+    const acts = el('div', 'dfsocial-acts');
+    const shapeOk = !!guildNameOf(d.name) && !!guildTagOf(d.tag);
+    acts.append(btn('Found', { enabled: !busy && shapeOk, why: busy ? 'a moment' : 'a name of 3 to 32 characters and a tag of 2 to 4 letters or digits',
+      run: () => guildDo(g.found(d.name, d.tag), 'Your guild is founded.', () => { d.name = ''; d.tag = ''; }) }));
+    out.push(acts);
+    return out;
+  };
+
+  /** In a guild: its header, its roster with what my rank may do to each, its invitations out, its treasury and
+   *  ledger, its rank names, and leaving or disbanding. */
+  const guildMemberBody = (g, v) => {
+    const out = [];
+    const me = v.rank;
+    const busy = g.busy;
+    const wait = { enabled: !busy, why: 'a moment' };
+    const head = el('div', 'dfsocial-letterhead');
+    head.append(el('div', 'dfsocial-subject', `${v.name} [${v.tag}]`),
+      el('div', 'dfsocial-sub', `You are ${rankName(v, me)} - the treasury holds ${Number(v.treasury).toLocaleString('en-US')} gold`));
+    out.push(head);
+    // THE ROSTER
+    out.push(el('div', 'dfsocial-sec', `Members (${v.members.length}/${GUILD_MEMBERS_MAX})`));
+    for (const m of v.members) {
+      const r = personRow({ name: m.you ? `${m.name} (you)` : m.name, sub: rankName(v, m.rank) });
+      if (!m.you) {
+        if (guildMayMove(me, m.rank, m.rank - 1)) r.append(btn('Promote', { ...wait, run: () => guildDo(g.rank(m.member, m.rank - 1), `${m.name} is ${rankName(v, m.rank - 1)} now.`) }));
+        if (guildMayMove(me, m.rank, m.rank + 1)) r.append(btn('Demote', { ...wait, run: () => guildDo(g.rank(m.member, m.rank + 1), `${m.name} is ${rankName(v, m.rank + 1)} now.`) }));
+        if (guildMay(me, 'remove') && guildOutranks(me, m.rank)) {
+          const k = `remove:${m.member}`;
+          r.append(armed(k) ? btn('Sure?', { warn: true, ...wait, run: () => guildDo(g.remove(m.member), `${m.name} is no longer in the guild.`) })
+            : btn('Remove', { ...wait, run: () => arm(k) }));
+        }
+        if (guildMay(me, 'handOver')) {
+          const k = `hand:${m.member}`;
+          r.append(armed(k) ? btn('Sure?', { warn: true, ...wait, run: () => guildDo(g.handOver(m.member), `${m.name} leads the guild now.`) })
+            : btn('Make guildmaster', { ...wait, run: () => arm(k) }));
+        }
+      }
+      out.push(r);
+    }
+    const d = guildUi.draft;
+    // INVITE
+    if (guildMay(me, 'invite')) {
+      out.push(el('div', 'dfsocial-sec', 'Invite'));
+      const form = el('div', 'dfsocial-form');
+      guildField(form, 'Username', d.handle, HANDLE_MAX_LEN, (x) => { d.handle = x; });
+      out.push(form);
+      const acts = el('div', 'dfsocial-acts');
+      acts.append(btn('Invite', { enabled: !busy && handleShapeOk(d.handle.trim()), why: busy ? 'a moment' : 'a username',
+        run: () => { const h = d.handle.trim(); guildDo(g.invite(h), `${h} is invited.`, () => { d.handle = ''; }); } }));
+      out.push(acts);
+      for (const inv of v.invites ?? []) out.push(personRow({ name: inv.name, sub: `invited by ${inv.by}` }));
+    }
+    // THE TREASURY
+    out.push(el('div', 'dfsocial-sec', 'Treasury'));
+    const tform = el('div', 'dfsocial-form');
+    guildField(tform, 'Gold', d.gold, 7, (x) => { d.gold = x; });
+    out.push(tform);
+    const n = /^\d{1,7}$/.test(d.gold.trim()) ? Number(d.gold.trim()) : 0;
+    const tacts = el('div', 'dfsocial-acts');
+    tacts.append(btn('Deposit', { enabled: !busy && n > 0, why: busy ? 'a moment' : 'an amount', run: () => guildDo(g.deposit(n), `${n.toLocaleString('en-US')} gold put in.`, () => { d.gold = ''; }) }));
+    tacts.append(btn('Withdraw', { enabled: !busy && n > 0 && guildMay(me, 'withdraw'), why: guildMay(me, 'withdraw') ? (busy ? 'a moment' : 'an amount') : 'the guildmaster\'s alone',
+      run: () => guildDo(g.withdraw(n), `${n.toLocaleString('en-US')} gold taken out.`, () => { d.gold = ''; }) }));
+    out.push(tacts);
+    for (const l of v.ledger ?? []) {
+      out.push(personRow({ name: `${l.who} ${l.kind === 'withdraw' ? 'took out' : 'put in'} ${Number(l.amount).toLocaleString('en-US')}`, sub: `balance ${Number(l.balance).toLocaleString('en-US')}` }));
+    }
+    // THE RANK NAMES
+    if (guildMay(me, 'renameRanks')) {
+      out.push(el('div', 'dfsocial-sec', 'Rank names'));
+      if (!Array.isArray(d.ranks)) d.ranks = [...(v.ranks ?? GUILD_RANK_NAMES)];
+      const rform = el('div', 'dfsocial-form');
+      d.ranks.forEach((name, i) => guildField(rform, `Rank ${i + 1}`, name, GUILD_RANK_NAME_MAX, (x) => { d.ranks[i] = x; }));
+      out.push(rform);
+      const racts = el('div', 'dfsocial-acts');
+      racts.append(btn('Rename ranks', { enabled: !busy && !!guildRankNamesOf(d.ranks), why: busy ? 'a moment' : 'four different names',
+        run: () => guildDo(g.renameRanks(d.ranks), 'The ranks are renamed.', () => { d.ranks = null; }) }));
+      out.push(racts);
+    }
+    // LEAVING
+    const acts = el('div', 'dfsocial-acts');
+    const alone = v.members.length === 1;
+    const master = guildMay(me, 'disband');
+    const leaveWhy = master && !alone ? 'hand the guild on first' : master && v.treasury > 0 ? 'take the gold out first' : 'a moment';
+    const canLeave = !busy && (!master || (alone && v.treasury === 0));
+    acts.append(armed('leave') ? btn('Sure?', { warn: true, enabled: canLeave, why: leaveWhy, run: () => guildDo(g.leave(), 'You left the guild.') })
+      : btn('Leave', { enabled: canLeave, why: leaveWhy, run: () => arm('leave') }));
+    if (master) {
+      const why = v.treasury > 0 ? 'take the gold out first' : 'a moment';
+      const can = !busy && v.treasury === 0;
+      acts.append(armed('disband') ? btn('Sure?', { warn: true, enabled: can, why, run: () => guildDo(g.disband(), 'The guild is disbanded.') })
+        : btn('Disband', { warn: true, enabled: can, why, run: () => arm('disband') }));
+    }
+    out.push(acts);
+    return out;
+  };
+
+  const guildBody = () => {
+    const g = guild;
+    if (g.state === 'signed-out') return [el('div', 'dfsocial-empty', GUILD_SIGNED_OUT_TEXT)];
+    if (g.state === 'guest') return [el('div', 'dfsocial-empty', accountRefusalText('guilds-need-account'))];
+    if (g.state === 'unknown') return [el('div', 'dfsocial-empty', GUILD_LOOKING_TEXT)];
+    const out = [];
+    if (guildUi.word) out.push(el('div', guildUi.bad ? 'dfsocial-err' : 'dfsocial-empty', guildUi.word));
+    if (g.state === 'error') {
+      out.push(el('div', 'dfsocial-err', guildWordText(g.error)));
+      const acts = el('div', 'dfsocial-acts');
+      acts.append(btn('Try again', { run: () => { g.refresh(); } }));
+      out.push(acts);
+      return out;
+    }
+    return [...out, ...(g.guild ? guildMemberBody(g, g.guild) : guildJoinBody(g))];
+  };
+
   /** What a tab's badge should say right now: requests waiting on Friends, invitations standing on Party, letters
    *  unopened on Letters (MAIL1). ONE reading, because the live pass and the repaint must never disagree about the
    *  number (AUDIT SOC C5). */
   const badgeText = (id) => {
-    const n = id === 'friends' ? (social.in?.length ?? 0) : id === 'letters' ? (mail?.unread ?? 0) : social.liveInvites().length;
+    // GUILD1b: the Guild tab's badge is the invitations waiting on a character in none
+    const n = id === 'friends' ? (social.in?.length ?? 0) : id === 'letters' ? (mail?.unread ?? 0)
+      : id === 'guild' ? (guild && !guild.guild ? (guild.invites?.length ?? 0) : 0) : social.liveInvites().length;
     return n > 0 ? String(n) : '';
   };
 
   /** The whole body, and the tab badges over it. */
   const repaint = () => {
-    painted = social.version; paintedUi = ui; paintedMail = mail?.version ?? 0;
+    painted = social.version; paintedUi = ui; paintedMail = mail?.version ?? 0; paintedGuild = guild?.version ?? 0;
     ticking = []; liveSubs = [];
     for (const [id, t] of tabBtns) {
       t.b.className = `dfsocial-tab${id === tab ? ' active' : ''}`;
       t.b.setAttribute('aria-selected', id === tab ? 'true' : 'false');   // C21
       t.badge.textContent = badgeText(id);
     }
-    body.replaceChildren(...(tab === 'party' ? partyBody() : tab === 'letters' ? lettersBody() : friendsBody()));
+    body.replaceChildren(...(tab === 'party' ? partyBody() : tab === 'letters' ? lettersBody() : tab === 'guild' ? guildBody() : friendsBody()));
     paintLive();
   };
 
@@ -707,6 +897,7 @@ export function createSocialPanel({ social, send = null, mail = null, keepLetter
     const now = social.now();
     if (confirm && now - confirmAt > SOCIAL_CONFIRM_MS) { confirm = null; ui++; }
     if (letters.del && now - letters.delAt > SOCIAL_CONFIRM_MS) { letters.del = null; ui++; }   // MAIL1: Delete disarms as Remove does
+    if (guildUi.arm && now - guildUi.armAt > SOCIAL_CONFIRM_MS) { guildUi.arm = null; ui++; }   // GUILD1b: and the guild's two-press acts
     if (noteMsg && now - noteAt > SOCIAL_NOTE_MS) noteMsg = '';
     const e = social.lastError ? String(social.lastError) : '';
     if (err.textContent !== e) err.textContent = e;
@@ -827,6 +1018,14 @@ export function createSocialPanel({ social, send = null, mail = null, keepLetter
     },
     /** MAIL1: which view the Letters tab is on - for the pins. */
     lettersView: () => letters.mode,
+    /** GUILD1b: the panel open on the Guild tab, a fresh look taken if the last one is old. False without a guild book. */
+    openGuild() {
+      if (!guild) return false;
+      tab = 'guild'; confirm = null; ui++;
+      lookAtGuild();
+      if (open) { repaint(); return true; }
+      return openPanel();
+    },
     /**
      * Once a frame, from the host's chat frame.
      *
@@ -847,7 +1046,9 @@ export function createSocialPanel({ social, send = null, mail = null, keepLetter
       if (open) {
         // MAIL1: the Letters tab is drawn from the BOX, not the social picture - and the form from neither, so a presence
         // frame or a poll landing while a player types rebuilds nothing under their caret
-        const moved = tab !== 'letters' ? social.version !== painted : letters.mode !== 'write' && (mail?.version ?? 0) !== paintedMail;
+        // GUILD1b: the Guild tab from the BOOK, as Letters is from the box
+        const moved = tab === 'guild' ? (guild?.version ?? 0) !== paintedGuild
+          : tab !== 'letters' ? social.version !== painted : letters.mode !== 'write' && (mail?.version ?? 0) !== paintedMail;
         if (moved || ui !== paintedUi) repaint();
         // a countdown that just hit zero raises the panel's version from inside `paintLive`, and the row it belongs
         // to has to go on THIS pass rather than the next one - `liveInvites` has already shed it by now

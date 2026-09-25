@@ -1,0 +1,281 @@
+[
+  {
+    "name": "GUILD1b-the-fee-unchecked",
+    "file": "src/net/guildBook.js",
+    "old": "    if (this.wallet().gold() < GUILD_FOUND_GOLD) return { ok: false, error: 'gold' };\n    return this._act(",
+    "new": "    return this._act(",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-paid-before-the-answer",
+    "file": "src/net/guildBook.js",
+    "old": "      const r = await this.door.found({ character, name, tag });",
+    "new": "      this.wallet().pay(GUILD_FOUND_GOLD);\n      const r = await this.door.found({ character, name, tag });",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-the-short-founder-keeping-the-guild",
+    "file": "src/net/guildBook.js",
+    "old": "        await this.door.disband(character);\n        return { ok: false, error: 'gold' };",
+    "new": "        return { ok: false, error: 'gold' };",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-a-refund-on-a-lost-answer",
+    "file": "src/net/guildBook.js",
+    "old": "      if (guildRefused(r?.error)) { w.credit(gold); return r; }\n      return { ok: false, error: 'guild-unsure' };",
+    "new": "      w.credit(gold); return r;",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-no-refund-on-a-refusal",
+    "file": "src/net/guildBook.js",
+    "old": "      if (guildRefused(r?.error)) { w.credit(gold); return r; }",
+    "new": "      if (guildRefused(r?.error)) { return r; }",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-a-deposit-past-the-purse",
+    "file": "src/net/guildBook.js",
+    "old": "    if (w.gold() < gold) return { ok: false, error: 'gold' };\n",
+    "new": "",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-a-withdrawal-credited-first",
+    "file": "src/net/guildBook.js",
+    "old": "      const r = await this.door.withdraw(character, gold);\n      if (r?.ok) this.wallet().credit(gold);",
+    "new": "      this.wallet().credit(gold);\n      const r = await this.door.withdraw(character, gold);",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-a-withdrawal-credited-unanswered",
+    "file": "src/net/guildBook.js",
+    "old": "      if (r?.ok) this.wallet().credit(gold);",
+    "new": "      this.wallet().credit(gold);",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-offline-read-as-a-refusal",
+    "file": "src/net/guildBook.js",
+    "old": "  'guild-treasury-full', 'auth',\n",
+    "new": "  'guild-treasury-full', 'auth', 'offline',\n",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-no-look-after-an-act",
+    "file": "src/net/guildBook.js",
+    "old": "      await this.refresh();\n      this._changed();",
+    "new": "      this._changed();",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-the-guest-read-as-an-error",
+    "file": "src/net/guildBook.js",
+    "old": "    if (error === 'guilds-need-account') {",
+    "new": "    if (error === 'guilds-need-account-x') {",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-a-look-always-moving-the-version",
+    "file": "src/net/guildBook.js",
+    "old": "    if (JSON.stringify([this.state, this.guild, this.invites]) !== was) this._changed();",
+    "new": "    this._changed();",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-any-truthy-answer-accepting",
+    "file": "src/net/guildBook.js",
+    "old": "accept: accept === true",
+    "new": "accept: !!accept",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-the-look-never-stale",
+    "file": "src/net/guildBook.js",
+    "old": "nowMs - this.at >= GUILD_FRESH_MS",
+    "new": "nowMs - this.at >= GUILD_FRESH_MS * 10",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-asked-as-another-character",
+    "file": "src/net/guildBook.js",
+    "old": "this.door.mine(character), this.door.invites()",
+    "new": "this.door.mine('char-x'), this.door.invites()",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-busy-never-raised",
+    "file": "src/net/guildBook.js",
+    "old": "    this.busy = true; this._changed();",
+    "new": "    this._changed();",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-the-tab-without-a-book",
+    "file": "src/ui/socialPanel.js",
+    "old": "...(guild ? [['guild', 'Guild']] : [])",
+    "new": "...[['guild', 'Guild']]",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-found-on-a-bad-shape",
+    "file": "src/ui/socialPanel.js",
+    "old": "const shapeOk = !!guildNameOf(d.name) && !!guildTagOf(d.tag);",
+    "new": "const shapeOk = true;",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-join-answering-no",
+    "file": "src/ui/socialPanel.js",
+    "old": "run: () => guildDo(g.answer(inv.guild, true), ",
+    "new": "run: () => guildDo(g.answer(inv.guild, false), ",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-the-badge-lost",
+    "file": "src/ui/socialPanel.js",
+    "old": ": id === 'guild' ? (guild && !guild.guild ? (guild.invites?.length ?? 0) : 0)",
+    "new": ": id === 'guild' ? 0",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-promote-offered-to-any",
+    "file": "src/ui/socialPanel.js",
+    "old": "if (guildMayMove(me, m.rank, m.rank - 1)) r.append(btn('Promote'",
+    "new": "if (m.rank > 0) r.append(btn('Promote'",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-remove-in-one-press",
+    "file": "src/ui/socialPanel.js",
+    "old": "r.append(armed(k) ? btn('Sure?', { warn: true, ...wait, run: () => guildDo(g.remove(m.member)",
+    "new": "r.append(true ? btn('Sure?', { warn: true, ...wait, run: () => guildDo(g.remove(m.member)",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-remove-upward",
+    "file": "src/ui/socialPanel.js",
+    "old": "if (guildMay(me, 'remove') && guildOutranks(me, m.rank)) {",
+    "new": "if (guildMay(me, 'remove')) {",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-withdraw-offered-to-an-officer",
+    "file": "src/ui/socialPanel.js",
+    "old": "enabled: !busy && n > 0 && guildMay(me, 'withdraw')",
+    "new": "enabled: !busy && n > 0",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-a-disband-with-gold-in-it",
+    "file": "src/ui/socialPanel.js",
+    "old": "      const can = !busy && v.treasury === 0;",
+    "new": "      const can = !busy;",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-the-guildmaster-walking-out",
+    "file": "src/ui/socialPanel.js",
+    "old": "const canLeave = !busy && (!master || (alone && v.treasury === 0));",
+    "new": "const canLeave = !busy;",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-a-rename-offered-to-nobody",
+    "file": "src/ui/socialPanel.js",
+    "old": "    if (guildMay(me, 'renameRanks')) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-the-tab-never-repainted",
+    "file": "src/ui/socialPanel.js",
+    "old": "const moved = tab === 'guild' ? (guild?.version ?? 0) !== paintedGuild",
+    "new": "const moved = tab === 'guild' ? false",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-the-draft-lost",
+    "file": "src/ui/socialPanel.js",
+    "old": "guildField(form, 'Guild name', d.name, GUILD_NAME_MAX, (v) => { d.name = v; });",
+    "new": "guildField(form, 'Guild name', '', GUILD_NAME_MAX, (v) => { d.name = v; });",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-the-book-unhanded",
+    "file": "src/scenes/world.js",
+    "old": "      mail,\n      guild: guildBook,",
+    "new": "      mail,",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  },
+  {
+    "name": "GUILD1b-the-bank-before-the-purse",
+    "file": "src/scenes/world.js",
+    "old": "pay: (n) => { const short = deductGold(playerEntity, n); if (account && short > 0) account.accountGold -= short; },",
+    "new": "pay: (n) => { if (account) account.accountGold -= n; },",
+    "tests": [
+      "test/guild1b.test.js"
+    ]
+  }
+]

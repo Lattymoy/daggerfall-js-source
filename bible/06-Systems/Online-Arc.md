@@ -4837,7 +4837,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4367` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4368` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:255`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -8889,9 +8889,37 @@ guild's chat (through the token and the relay), **GUILD1d** the guild hall, a gu
   account. The client's door is `accountGuilds` (`src/net/accountClient.js`), every answer `call`'s shape and no
   session a word, not a throw.
 
-Not yet: nothing in the game calls the door - GUILD1b's window is the first, and it pays the founding fee, keeps the
-deposit's refund to a refusal's word, and puts a withdrawal in the purse. Migration 0013 is applied by the deploy
+Not yet, at GUILD1a: nothing in the game called the door - GUILD1b's window is the first (below). Migration 0013 is applied by the deploy
 (ACC1-CI); its trigger is the migrations' first, and wrangler's statement splitter keeps a trigger's `BEGIN ... END`
 whole (a port of SQLite's own `sqlite3_complete`, read in wrangler 4.140's source) - not yet run against a real D1.
 
 Pinned: `test/guild1.test.js` (9), `test/accountworker.test.js` (the tables). `tools/mutants/guild1.json` (83).
+
+**GUILD1b - the Guild tab.**
+
+- **Where**: the Social panel's fourth tab, "Guild", beside Friends, Party and Letters (`ui/socialPanel.js`), present
+  wherever the host hands the panel a guild book - online, as the Letters tab is where it has a letterbox. It opens on a
+  fresh look when the last is older than GUILD_FRESH_MS (30 s), and draws the book, never the relay's picture.
+- **The book** (`net/guildBook.js` GuildBook, made in `scenes/world.js` beside the letterbox): the character's guild as
+  the service last answered it and the account's invitations, one look at a time; no session reads as signed out and a
+  guest as a guest, each its own sentence; every act goes through GUILD1a's door as the character playing, holds the
+  tab `busy`, and ends in a fresh look, so the tab draws the service's word and never a guess.
+- **The gold's order**, the law GUILD1a set down: FOUNDING asks the purse for the fee first, lets the service found,
+  then pays - the purse, then the bank account of the region the player stands in (HOME1's order) - and a purse
+  emptied while the answer was out disbands the guild it just founded and pays nothing. A DEPOSIT leaves the purse
+  first and comes back only on the service's REFUSAL WORD; a lost answer (`offline`, `server`) may have landed, so the
+  gold does not come back and the tab says to read the ledger. A WITHDRAWAL is the treasury's first and the purse's
+  after.
+- **In no guild**: the invitations standing for the account, each joined or declined as this character (the tab's
+  badge counts them), and the founding form - a name and a tag, its cost in words, Found disabled until both are the
+  law's shape.
+- **In a guild**: its name and tag, the character's rank and the treasury; the roster, each member with what the
+  character's rank may do to them (promote or demote within the ranks below, remove, make guildmaster - the dangerous
+  ones two presses, disarmed after SOCIAL_CONFIRM_MS); invite by username and the invitations out; deposit and
+  withdraw, the ledger newest first; the rank names, the guildmaster's to change; leave, and disband. A button the rank
+  cannot press is disabled and says why - "the guildmaster's alone", "take the gold out first", "hand the guild on
+  first". Every form keeps its words across a repaint.
+
+Not yet: the tag beside the name and the guild chat (GUILD1c), and the guild hall (GUILD1d).
+
+Pinned: `test/guild1b.test.js` (10). `tools/mutants/guild1b.json` (31).
