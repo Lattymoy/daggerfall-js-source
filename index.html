@@ -89,7 +89,7 @@
        Discord for the people - the same plaque, side by side, wrapping
        to a stack on a phone.
 
-       DISCORD WEARS THE PLAQUE AND NOT THE KO-FI MARK (Mac, 2026-09-15:
+       DISCORD WEARS THE PLAQUE AND NOT THE PATREON MARK (Mac, 2026-09-15:
        "Can you add our discord ... Front and center"). The page has
        exactly two box shapes and that is the whole of its discipline:
        the plaque is what you PRESS, the corner mark is the one ASK.
@@ -113,15 +113,16 @@
     .doorlinks { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 10px 26px; justify-content: center; }
     .doorlinks a { border: 0; }
 
-    /* THE KO-FI MARK (U64). Top right of the door, the ONE thing above
-       the wordmark - a small plaque with a CUP drawn in box-shadow
-       pixels beside the word, because an <img> would be the page's only
-       raster and a raster is what this site does not carry (BR3: the
-       wordmark is type again, so the law is whole). The cup is
-       nine pixels: a body, a lip, a handle and a curl of steam that is
-       simply two more pixels; at 3px a piece it reads at a glance and it
-       is the same square pixel as everything else on the page. */
-    .kofi {
+    /* THE PATREON MARK (U64's corner; PATREON1, 2026-09-25, Mac:
+       "Replace website KOFI with patreon"). Top right of the door, the ONE
+       thing above the wordmark - a small plaque with Patreon's mark drawn
+       in box-shadow pixels beside the word, because an <img> would be the
+       page's only raster and a raster is what this site does not carry
+       (BR3: the wordmark is type again, so the law is whole). The mark is
+       Patreon's own two shapes on the page's 4px grid: a bar standing the
+       full height, and a round disc beside it - a filled 4x4 with its
+       corners cut, which is what a circle is at this size. */
+    .patreon {
       position: absolute; top: 0; right: 0; z-index: 2;
       display: flex; align-items: center; gap: 14px;
       margin: 16px; padding: 10px 16px; min-height: 44px;
@@ -129,22 +130,20 @@
       color: #d8cfae; background: rgba(10,12,17,0.55); border: 2px solid #7d7460;
       text-shadow: 2px 2px 0 rgba(0,0,0,0.8);
     }
-    .kofi:hover, .kofi:focus-visible { outline: none; color: rgb(243,239,44); border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
-    .cup {
-      /* One art pixel is 4css; the element is the top-left pixel and the
-         box-shadows are the rest. A FILLED body - the first draft was a
-         ring and read as an 'o' - with a lip, a handle and two pixels of
-         steam rising off-centre. */
-      position: relative; width: 4px; height: 4px; margin-right: 20px; background: var(--brass);
+    .patreon:hover, .patreon:focus-visible { outline: none; color: rgb(243,239,44); border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
+    .pmark {
+      /* One art pixel is 4css; the element is the bar's top pixel and the
+         box-shadows are the rest: the bar in the dim, four pixels down, and
+         the disc in the brass, a column of air clear of it. */
+      position: relative; width: 4px; height: 4px; margin-right: 24px; background: #7d7460;
       box-shadow:
-        4px 0 0 var(--brass), 8px 0 0 var(--brass),
-        0 4px 0 var(--brass), 4px 4px 0 var(--brass), 8px 4px 0 var(--brass),
-        0 8px 0 var(--brass), 4px 8px 0 var(--brass), 8px 8px 0 var(--brass),
-        4px 12px 0 var(--brass),
-        12px 4px 0 var(--brass), 12px 8px 0 var(--brass),
-        4px -8px 0 #7d7460, 8px -14px 0 #7d7460;
+        0 4px 0 #7d7460, 0 8px 0 #7d7460, 0 12px 0 #7d7460,
+        12px 0 0 var(--brass), 16px 0 0 var(--brass),
+        8px 4px 0 var(--brass), 12px 4px 0 var(--brass), 16px 4px 0 var(--brass), 20px 4px 0 var(--brass),
+        8px 8px 0 var(--brass), 12px 8px 0 var(--brass), 16px 8px 0 var(--brass), 20px 8px 0 var(--brass),
+        12px 12px 0 var(--brass), 16px 12px 0 var(--brass);
     }
-    .kofi:hover .cup, .kofi:focus-visible .cup { background: rgb(243,239,44); }
+    .patreon:hover .pmark, .patreon:focus-visible .pmark { background: rgb(243,239,44); }
 
     /* THE FOOT: the home face's three zones, at the foot of the door. */
     .foot {
@@ -195,8 +194,8 @@
       .cols, .grid { grid-template-columns: 1fr; }
       .qa { grid-template-columns: 1fr; gap: 4px 0; }
       .qa dd { margin-bottom: 16px; }
-      .door { padding-bottom: 140px; padding-top: 84px; }   /* the Ko-fi plaque's room */
-      .kofi { margin: 12px; font-size: 13px; }
+      .door { padding-bottom: 140px; padding-top: 84px; }   /* the Patreon plaque's room */
+      .patreon { margin: 12px; font-size: 13px; }
       /* PX1b's own phone rule: three zones wrap the middle one into the
          build line, so the foot stacks. */
       .foot { grid-template-columns: 1fr; justify-items: center; gap: 8px; text-align: center; }
@@ -210,8 +209,8 @@
   <a class="skip" href="#main">Skip to content</a>
 
   <header class="door">
-    <a class="kofi" href="https://ko-fi.com/dfjs" rel="noopener">
-      <i class="cup" aria-hidden="true"></i>Support on Ko-fi
+    <a class="patreon" href="https://www.patreon.com/c/dfenhanced" rel="noopener">
+      <i class="pmark" aria-hidden="true"></i>Support on Patreon
     </a>
     <h1 class="wordmark">Daggerfall<small>Enhanced</small></h1>
     <div class="rule"><i class="gem"></i></div>

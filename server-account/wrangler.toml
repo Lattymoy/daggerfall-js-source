@@ -94,7 +94,8 @@ DUNGEON_MASTER_HANDLES = "SquidKamer"
 # title and its glyph. Dutchess and Satranath are the first Disciples (Mac); a tier that
 # lapses is a handle taken off, gone from that player's next token.
 DISCIPLE_HANDLES = "Dutchess,Satranath,Skibbster"
-APOSTLE_HANDLES = ""
+# 2026-09-25, Mac: "Add SirMcMobdon as an Apostle ingame title/glyph".
+APOSTLE_HANDLES = "SirMcMobdon"
 HIEROPHANT_HANDLES = ""
 
 [[d1_databases]]
