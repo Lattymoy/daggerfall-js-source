@@ -442,9 +442,10 @@ import { createSwimMovement } from './deepWatersSwimMove.js';   // DW-D: Outdoor
 import { setColumnSource as dwSetColumnSource, flushStateChange as dwFlushStateChange } from '../systems/deepWaterPlayer.js';   // DW-D: the mod's public player API
 import { loadGraceActive, teleported as dwTeleported, loadStarted as dwLoadStarted, loadFinished as dwLoadFinished, locationLoadBegan as dwLocationLoadBegan, locationLoadEnded as dwLocationLoadEnded, terrainUpdateBegan as dwTerrainUpdateBegan, terrainUpdateEnded as dwTerrainUpdateEnded, pumpDeepWaterRuntime, canRunLightRuntimeWork, canRunHeavyRuntimeWork, onTransientReset, setPostTransitionRefresh } from '../world/deepWaterRuntime.js';
 import { createUnderwaterDecorations, createDecorTextureSource } from './deepWatersDecor.js';
-import { createDeepWatersFish, createFishPictures, FISH_KEY_PREFIX } from './deepWatersFish.js';
+import { createDeepWatersFish, createFishPictures, FISH_KEY_PREFIX } from './deepWatersFish.js';   // DW-E3: the fish
 import { createEnemySpawner, ENEMY_ATTEMPTS_PER_PIXEL_PER_TICK } from './deepWatersEncounters.js';   // DW-E4: the deep's foes
-import { mustSpawnOnFloor, alignFloorEnemyY } from '../world/underwaterEnemies.js';   // DW-E4: where the mod sets a foe's transform   // DW-E3: the fish
+import { mustSpawnOnFloor, alignFloorEnemyY } from '../world/underwaterEnemies.js';   // DW-E4: where the mod sets a foe's transform
+import { markPuddleWater, puddleWetAt, PUDDLE_RECORDS } from '../world/puddleMask.js';   // WATER-PUDDLE: the puddle is the art's
 import { rayUprightCapsule } from '../world/passiveFish.js';   // DW-E3: a fish's probe meets the player's capsule
 import { installDeepWatersFishIcons, createFishItem, normalizeFishItems, fishPictureUrl, fishIconArchive } from '../systems/deepWatersFishItems.js';   // DW-E3: the fish as items
 import { clearEdgeBlackPixels } from '../world/underwaterDecorations.js';   // DW-E3: a fish's picture, edge-cleaned   // DW-E2: the seafloor's decorations   // DW-D: DeepWaterRuntime's load grace
@@ -920,6 +921,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // 420m window around the eye, kept where the tiles are grass, rebuilt when
   // the eye leaves the window's middle. Enhanced skin and switch only.
   const grassRecords = new Map();   // archive -> Set of grass records
+  const groundPuddles = new Map();   // WATER-PUDDLE: archive -> its layers, each puddle record's water in its alpha (the pass's own mask)
   const groundMeanColour = new Map();   // GR4: archive -> [record] -> mean rgb 0..1
   // PERF1: the density pref is a fraction of the lab's field; 0 is the
   // same as ?grass=off - no renderer, no field, nothing drawn.
@@ -2036,7 +2038,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (let r = 0; r < groundTex.recordCount; r++) {
         layers.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));
       }
-      renderer.uploadTileArray(groundArchive, layers);
+      renderer.uploadTileArray(groundArchive, markPuddleWater(layers));   // WATER-PUDDLE: a puddle record's water in its layer's alpha
     }
     renderer.applyGroundSharpness();   // GRAIN AUDIT 1: the ground-sharpness tier lands on THIS load, on every cached archive - the cache outlives the scene
     // GR1: which of this archive's records are GRASS, from its own texels -
@@ -2049,6 +2051,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const layers = [];
       for (let r = 0; r < groundTex.recordCount; r++) layers.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));
       grassRecords.set(groundArchive, grassRecordsOf(layers));
+      groundPuddles.set(groundArchive, markPuddleWater(layers));   // WATER-PUDDLE: the blades ask the mask the pass draws by
       // GR4: each record's MEAN colour, for the grass root that stands on
       // it - averaged once, rather than sampled per blade. AUDIT 68 S17:
       // learned here, beside grassRecords (the tile cache outlives the
@@ -8764,9 +8767,27 @@ export async function bootWorld(canvas, renderer, params, status) {
         pixel: `${p.px},${p.py}`, tile: `${tx},${tz}`, archive: p.groundArchive,
         record: byte >> 2, transform: byte & 3, byte,
         drawnWet: waterCorners(byte, WATER_DRAW_MASK_TABLE), feetWet: waterCorners(byte),
+        // WATER-PUDDLE: a puddle record draws only where its art is water - is it, under the eye?
+        artWet: PUDDLE_RECORDS.includes(byte >> 2) && groundPuddles.get(p.groundArchive)?.[byte >> 2]
+          ? puddleWetAt(groundPuddles.get(p.groundArchive)[byte >> 2], byte, (cam.pos[0] - t[0]) / 6.4 - tx, (cam.pos[2] - t[2]) / 6.4 - tz) : null,
         path: p.paths?.[tz * TERRAIN_TILE_DIM + tx] ? 1 : 0,   // GRASS-PATH1
         location: p.location ?? null,
       });
+    };
+    // WATER-PUDDLE probe: every tile of these records in the built pixels, as world centres on the ground
+    window.__findTiles = (records, max = 40) => {
+      const want = new Set(records), out = [];
+      for (const p of built.values()) {
+        if (!p.tilemapBytes) continue;
+        const t = state.pixelTranslation(p.px, p.py);
+        for (let i = 0; i < p.tilemapBytes.length && out.length < max; i++) {
+          const byte = p.tilemapBytes[i];
+          if (!want.has(byte >> 2)) continue;
+          const x = t[0] + ((i % TERRAIN_TILE_DIM) + 0.5) * 6.4, z = t[2] + (Math.floor(i / TERRAIN_TILE_DIM) + 0.5) * 6.4;
+          out.push({ pixel: `${p.px},${p.py}`, record: byte >> 2, byte, x: +x.toFixed(2), y: +heightAt(x, z).toFixed(2), z: +z.toFixed(2) });
+        }
+      }
+      return out;
     };
     // M3 probe surface: the live climb state (the wall probe + the
     // check machine ride the real collider and the real skill rolls).
@@ -15457,7 +15478,13 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // as water. The corner table (world/waterCorners.js) is the one
         // law for that question; the water pass and the player's feet
         // already read it, and now the grass does too.
-        if (waterCorners(byte, WATER_DRAW_MASK_TABLE)) return null;
+        // WATER-PUDDLE (2026-09-25): a puddle record is wet only where
+        // its own art is water - the pass draws it so now, and a blade
+        // refused the whole tile left its dry ground bald.
+        if (waterCorners(byte, WATER_DRAW_MASK_TABLE)) {
+          const puddle = PUDDLE_RECORDS.includes(rec) ? groundPuddles.get(p.groundArchive)?.[rec] : null;
+          if (!puddle || puddleWetAt(puddle, byte, lx / 6.4 - tx, lz / 6.4 - tz)) return null;
+        }
         // GRASS3: the height of the surface that is DRAWN, not a
         // bilinear patch over the same samples - the terrain is cut into
         // triangles and bilinear is a different surface. On real grades

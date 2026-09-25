@@ -98,7 +98,7 @@ test('GRASS-PATH1: the mask is null on a roadless pixel and the painter is uncha
 test('GRASS-PATH1 / GRASS-WET1: the host keeps no blade on a painted tile or a tile with a water corner', () => {
   const w = read('src/scenes/world.js');
   assert.match(w, /if \(p\.paths\?\.\[ti\]\) return null;/, 'a painted tile grows nothing');
-  assert.match(w, /if \(waterCorners\(byte, WATER_DRAW_MASK_TABLE\)\) return null;/, 'nor does a tile with any corner in water');
+  assert.match(w, /if \(waterCorners\(byte, WATER_DRAW_MASK_TABLE\)\) \{\n\s+const puddle = [^\n]*\n\s+if \(!puddle \|\| [^\n]*\) return null;\n\s+\}/, 'nor does a tile with any corner in water - save a puddle record\'s dry ground (WATER-PUDDLE, test/waterpuddle.test.js)');
   assert.match(w, /import \{ waterCorners, WATER_DRAW_MASK_TABLE \} from '\.\.\/world\/waterCorners\.js';/, 'from the one table that owns the question');
   assert.match(w, /^\s+paths,\s+\/\/ GRASS-PATH1/m, 'the mask rides the built pixel');
 });
@@ -306,7 +306,7 @@ test('WATER-DRAW1: the draw and the feet ask different questions, and only the d
   assert.match(read('src/player/exteriorSurface.js'), /import \{ waterCorners, waterCoverage \} from '\.\.\/world\/waterCorners\.js';/, 'the feet keep the default, which is the law’s');
   assert.match(read('src/world/cityNavigation.js'), /WATER_MASK_TABLE\[\(record << 2\) \| t\]/, 'and so does the town’s navigation');
   // the grass asks the EYE's question - a blade in a puddle is a picture
-  assert.match(read('src/scenes/world.js'), /if \(waterCorners\(byte, WATER_DRAW_MASK_TABLE\)\) return null;/);
+  assert.match(read('src/scenes/world.js'), /if \(waterCorners\(byte, WATER_DRAW_MASK_TABLE\)\) \{\n\s+const puddle = /);
 });
 
 test('WATER-DRAW1: the tile probe names the record under the player', () => {

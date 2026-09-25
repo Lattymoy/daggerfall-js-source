@@ -58,7 +58,7 @@
  {
   "name": "GRASS-WET1-a-blade-stands-in-the-water-again",
   "file": "src/scenes/world.js",
-  "old": "        if (waterCorners(byte, WATER_DRAW_MASK_TABLE)) return null;",
+  "old": "        if (waterCorners(byte, WATER_DRAW_MASK_TABLE)) {\n          const puddle = PUDDLE_RECORDS.includes(rec) ? groundPuddles.get(p.groundArchive)?.[rec] : null;\n          if (!puddle || puddleWetAt(puddle, byte, lx / 6.4 - tx, lz / 6.4 - tz)) return null;\n        }",
   "new": "",
   "tests": [
    "test/grasspath.test.js"
@@ -67,8 +67,8 @@
  {
   "name": "GRASS-WET1-the-grass-asks-the-FEET-question-instead-of-the-eyes",
   "file": "src/scenes/world.js",
-  "old": "        if (waterCorners(byte, WATER_DRAW_MASK_TABLE)) return null;",
-  "new": "        if (waterCorners(byte)) return null;",
+  "old": "        if (waterCorners(byte, WATER_DRAW_MASK_TABLE)) {",
+  "new": "        if (waterCorners(byte)) {",
   "tests": [
    "test/grasspath.test.js"
   ]

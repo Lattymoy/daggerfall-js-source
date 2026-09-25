@@ -186,8 +186,8 @@ export const MOD_SETTINGS = Object.freeze({
         default: true,
         description: 'jet082’s Iliac Puddle No More 1.2.2, 1:1: “The Iliac Puddle is now the Iliac Bay.” The sea is carved out '
           + 'under the water - a seafloor that falls away from every coast, as deep as 250 metres - with a surface you see '
-          + 'from above and below, open-water swimming and your breath to watch, fish, weed and coral, wrecks and sunken '
-          + 'loot, and what lives in the deep.',
+          + 'from above and below, open-water swimming and your breath to watch, fish, weed and coral, and what lives in '
+          + 'the deep.',
       }),
       'General.WaterDepth': Object.freeze({ default: 250.0, min: 5.0, max: 250.0, float: true, step: 1, description: 'Maximum water depth' }),
       'General.SpawnWaterSurfaces': Object.freeze({ default: true, description: 'Render visible water surfaces' }),
