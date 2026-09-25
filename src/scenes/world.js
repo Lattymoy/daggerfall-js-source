@@ -57,7 +57,7 @@ import { farFlatVisible } from '../world/flatDistance.js';   // MAC1: the far ri
 import { isBulletinBoard, isCityGate, CITY_GATE_OPEN_MODEL_ID, CITY_GATE_CLOSED_MODEL_ID } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears; :1007-1011 - the two a city gate wears
 import { makeCityGate, updateCityGate } from '../world/cityGate.js';   // AUDIT 64 F14: DaggerfallCityGate
 import { staticBuildingBox, staticBuildingWorldAabb } from '../world/staticBuildings.js';   // AUDIT 64 F11: RMBLayout's StaticBuilding array
-import { targetAimPoint, missileAimDirection, isLocalPlayerTarget } from '../characters/enemyTargets.js';   // AUDIT WORLD6b-iii(a) C3: the ONE aim law for an enemy missile (the peer's transform, mine otherwise); HCC: CollectThreats' `senses.Target == player`
+import { targetAimPoint, missileAimDirection, isLocalPlayerTarget, PLAYER_TARGET } from '../characters/enemyTargets.js';   // AUDIT WORLD6b-iii(a) C3: the ONE aim law for an enemy missile (the peer's transform, mine otherwise); HCC: CollectThreats' `senses.Target == player`
 import { collectExteriorNpcs, exteriorNpcRecord, setupExteriorQuestStaticNpcs } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs; E3: their quest pass
 import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
 import { registerTravelMapConsoleCommands } from '../ui/travelMapWindow.js';   // E3: TravelMapConsoleCommands
@@ -431,7 +431,7 @@ import { RIDING_VOLUME_SCALE } from '../systems/riding.js';   // AUDIT-RR F16: t
 import { setRrHostSeams, rrEnabled } from '../systems/rrInstall.js';   // RR2: what the riding component reads off the scene
 import { rrFortProximityLines, rrMasterArmorerDiscovery } from '../systems/rrQuestLine.js';   // RR3: the two PlayerGPS subscribers
 import { getBuildingVariant, setLastLocationKeyTo } from '../systems/worldDataVariants.js';   // RR3: the shop variant the quest set
-import { createDeepWatersHost, deepWatersOn, DEEP_WATERS_VENDOR, deepWatersDecorationSettings, deepWatersFishSettings } from './deepWatersHost.js';   // DW-B: Iliac Puddle No More (jet082) - the deep bay
+import { createDeepWatersHost, deepWatersOn, DEEP_WATERS_VENDOR, deepWatersDecorationSettings, deepWatersFishSettings, deepWatersEnemySettings } from './deepWatersHost.js';   // DW-B: Iliac Puddle No More (jet082) - the deep bay
 import { DeepWatersRenderer, surfaceScrollAt } from '../render/deepWatersRender.js';   // DW-C: its seafloor and its surface
 import { clippedTerrainIndices } from '../world/deepWaterCap.js';   // DW-C: the clip, as the ground's own index set
 import { lookSettings, surfaceLook, sceneTint, seafloorTexture, seafloorTextureStrength, seafloorPalette, seafloorAmbientBoost, daylightFactor, SURFACE_TEXTURE, horizonAmbientColor, distanceFogUniforms, underwaterVisionDistance, topSurfaceOpaqueFadeEnd } from '../world/deepWaterLook.js';   // DW-C
@@ -442,7 +442,9 @@ import { createSwimMovement } from './deepWatersSwimMove.js';   // DW-D: Outdoor
 import { setColumnSource as dwSetColumnSource, flushStateChange as dwFlushStateChange } from '../systems/deepWaterPlayer.js';   // DW-D: the mod's public player API
 import { loadGraceActive, teleported as dwTeleported, loadStarted as dwLoadStarted, loadFinished as dwLoadFinished, locationLoadBegan as dwLocationLoadBegan, locationLoadEnded as dwLocationLoadEnded, terrainUpdateBegan as dwTerrainUpdateBegan, terrainUpdateEnded as dwTerrainUpdateEnded, pumpDeepWaterRuntime, canRunLightRuntimeWork, canRunHeavyRuntimeWork, onTransientReset, setPostTransitionRefresh } from '../world/deepWaterRuntime.js';
 import { createUnderwaterDecorations, createDecorTextureSource } from './deepWatersDecor.js';
-import { createDeepWatersFish, createFishPictures, FISH_KEY_PREFIX } from './deepWatersFish.js';   // DW-E3: the fish
+import { createDeepWatersFish, createFishPictures, FISH_KEY_PREFIX } from './deepWatersFish.js';
+import { createEnemySpawner, ENEMY_ATTEMPTS_PER_PIXEL_PER_TICK } from './deepWatersEncounters.js';   // DW-E4: the deep's foes
+import { mustSpawnOnFloor, alignFloorEnemyY } from '../world/underwaterEnemies.js';   // DW-E4: where the mod sets a foe's transform   // DW-E3: the fish
 import { rayUprightCapsule } from '../world/passiveFish.js';   // DW-E3: a fish's probe meets the player's capsule
 import { installDeepWatersFishIcons, createFishItem, normalizeFishItems, fishPictureUrl, fishIconArchive } from '../systems/deepWatersFishItems.js';   // DW-E3: the fish as items
 import { clearEdgeBlackPixels } from '../world/underwaterDecorations.js';   // DW-E3: a fish's picture, edge-cleaned   // DW-E2: the seafloor's decorations   // DW-D: DeepWaterRuntime's load grace
@@ -1487,6 +1489,35 @@ export async function bootWorld(canvas, renderer, params, status) {
     decode: decodePng, clean: clearEdgeBlackPixels, createTexture: (frames) => dwRender.createDecorationTexture(frames),
   }) : null;
   let _dwFishInventoryAt = 0;   // PassiveFishResources' FishItemGroupMigrationInterval clock
+  // DW-E4: THE DEEP'S FOES - the pulse's other lane (UnderwaterEnemySpawner), each foe the exterior pool's own
+  const dwEnemies = deepWaters ? createEnemySpawner({
+    settings: deepWatersEnemySettings,
+    pixelOrigin: (e) => state.pixelTranslation(e.px, e.py, [0, 0, 0]),
+    spawnEnemy: (req, failed) => dwStandFoe(req, failed),
+  }) : null;
+  /**
+   * DW-E4: SpawnEnemy (and SpawnTreasureGuardEnemy, a team given) through the exterior pool: CreateEnemy's hostile foe,
+   * its transform then set straight (ConfigureSpawnedEnemy - a floor-bound one first dropped by AlignFloorEnemyController),
+   * made hostile to the player, on the team given, saved by nothing (no LoadID). The tracker's entry is answered at once;
+   * the foe stands when its career and picture load, and one that never does calls `failed`.
+   */
+  function dwStandFoe({ pos, type, team = null }, failed = () => {}) {
+    const o = { foe: null, gone: false };
+    const drop = () => { o.gone = true; if (o.foe) exteriorFoes.removeFoe(o.foe); };
+    const floor = mustSpawnOnFloor(type);
+    exteriorFoes.spawnFoe(type, pos, { yaw: 0, loose: true, transient: true, managed: true, team, transformY: (h) => (floor ? alignFloorEnemyY(pos[1], h) : pos[1]) }).then((f) => {
+      if (!f) { o.gone = true; failed(); return; }
+      if (o.gone) { exteriorFoes.removeFoe(f); return; }   // released while it stood
+      o.foe = f;
+      f.ai.makeEnemyHostileToAttacker?.(PLAYER_TARGET, walkMode ? [...player.pos] : null);
+    }, () => { o.gone = true; failed(); });
+    return {
+      destroyed: () => o.gone || !!o.foe?.dead,
+      position: () => (o.foe ? centreFromFeet(o.foe.ai.feet, o.foe.idleH) : pos),
+      destroy: drop,
+      hide: drop,   // SetActive(false): gone from the scene now; the queue's Destroy finds nothing left
+    };
+  }
   const dwFish = deepWaters ? createDeepWatersFish({
     settings: deepWatersFishSettings,
     canRunHeavy: () => canRunHeavyRuntimeWork(performance.now() / 1000, dwPlaying()),
@@ -1499,6 +1530,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     climateIndexOf: (e) => e.deepWaters?.biomeClimateIndex ?? 0,
     pictures: dwFishPictures,
     makeItem: createFishItem,
+    enemies: dwEnemies ? { spawner: dwEnemies, canPopulate: dwEnemies.canPopulate, attempts: ENEMY_ATTEMPTS_PER_PIXEL_PER_TICK } : null,   // DW-E4
     updateInventoryState: () => {
       if (_dwFishTime < _dwFishInventoryAt) return;
       _dwFishInventoryAt = _dwFishTime + 2;
@@ -4213,6 +4245,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     playerSinks: playerTicker.sinks,   // AUDIT 24 (wave 30): OnMonsterHit's fatigue rider drains through the host's one set of doors
     regionIndex: () => _questRegionIndex(),   // DISC10-D V3: PlayerGPS.CurrentRegionIndex, for the vampire's bite
     makeAreaHostile: _makeEnemiesHostile,   // ROAD-B: DaggerfallEntityBehaviour.cs:255-258
+    waterLevelY: () => dwPlayer?.waterLevelY ?? null,   // DW-E4: blockWaterLevel as the deep's swim driver leaves it - every aquatic foe's WaterMove reads it
     say: (l) => townTalk.say(l),
     onPlayerHurt: (dmg, wpn) => {
       if (dmg <= 0) return;
@@ -4827,7 +4860,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:412-417) never looks the record up in `foes`, and
+    // (exteriorFoes.js:428-433) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1481-1499) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
@@ -8763,6 +8796,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       const e = walkMode ? player.pos : cam.pos, d = (o) => Math.hypot(o.fish.position[0] - e[0], o.fish.position[1] - e[1], o.fish.position[2] - e[2]);
       return { ...dwFish.debug, near: [...dwFish.fishes].sort((a, b) => d(a) - d(b)).slice(0, 6).map((o) => ({ key: o.key, s: o.species.itemName, p: o.fish.position.map((v) => +v.toFixed(2)), d: +d(o).toFixed(1), vis: o.fish.visible, size: [+o.size.w.toFixed(2), +o.size.h.toFixed(2)] })) };
     };
+    // DW-E4 probe: the deep's foes - the lane's counts, and each foe stood with where it is
+    window.__dwFoes = () => (dwEnemies ? {
+      live: dwEnemies.liveCount, pending: dwEnemies.pendingCount, level: dwPlayer?.waterLevelY ?? null,
+      foes: exteriorFoes.foes.filter((f) => f.transient && !f.dead).map((f) => ({ t: f.mobileType, team: f.entity.team, feet: f.ai.feet.map((v) => +v.toFixed(2)), hostile: !!f.ai.isHostile })),
+    } : null);
     // DW-E3 probe: the pile arm's window on a fish (a fish flees the reach before a shot's key lands)
     window.__dwFishLoot = (key) => {
       const o = dwFish?.fishFor(key);

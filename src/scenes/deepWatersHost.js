@@ -85,6 +85,17 @@ export function deepWatersFishSettings() {
   };
 }
 
+/** DW-E4: DeepWaters.ApplySettings' foe reads: SpawnUnderwaterEnemies, EnemyFrequency (0.5 at the slider's midpoint), MaxLiveEnemies (0 and up), WaterDepth. */
+export function deepWatersEnemySettings() {
+  const get = (k) => modSetting(DEEP_WATERS_VENDOR, k);
+  return {
+    on: get('General.SpawnUnderwaterEnemies') === true,
+    frequency: scaledSliderValue(get('General.EnemyFrequency'), 0.5),
+    maxLive: Math.max(0, Math.trunc(Number(get('General.MaxLiveEnemies')))),
+    waterDepth: Math.fround(Number(get('General.WaterDepth'))),
+  };
+}
+
 /** Every one of the mod's settings, as a comparable snapshot (a change to any is the LoadSettings callback). */
 export function deepWatersSettingsSnapshot() {
   return JSON.stringify(Object.keys(MOD_SETTINGS[DEEP_WATERS_VENDOR]?.keys ?? {}).map((k) => modSetting(DEEP_WATERS_VENDOR, k)));

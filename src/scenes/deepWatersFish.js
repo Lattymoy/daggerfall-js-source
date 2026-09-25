@@ -48,8 +48,9 @@ export const FISH_KEY_PREFIX = 'dwFish:';
  * @param {(species: object) => ?object} deps.makeItem - TryCreateFishItem
  * @param {() => void} [deps.updateInventoryState] - PassiveFishResources.UpdateInventoryState
  * @param {() => number} [deps.roll] - the unseeded UnityEngine.Random (Port-Ledger A, the engine-PRNG rule)
+ * @param {?{spawner: any, canPopulate: () => boolean, attempts: number}} [deps.enemies] - DW-E4: the pulse's other lane, the deep's foes
  */
-export function createDeepWatersFish({ settings, canRunHeavy, exteriorWaterContext, playerPosition, loadedPixels, isWaterPixel, pixelOrigin, keyOf, climateIndexOf, pictures, makeItem, updateInventoryState = () => {}, roll = Math.random }) {
+export function createDeepWatersFish({ settings, canRunHeavy, exteriorWaterContext, playerPosition, loadedPixels, isWaterPixel, pixelOrigin, keyOf, climateIndexOf, pictures, makeItem, updateInventoryState = () => {}, roll = Math.random, enemies = null }) {
   /** @type {Array<{id: number, key: string, fish: PassiveFish, species: object, size: {w: number, h: number}, active: boolean, gone: boolean}>} */
   const fishes = [];
   const byKey = new Map();
@@ -95,6 +96,7 @@ export function createDeepWatersFish({ settings, canRunHeavy, exteriorWaterConte
   const pulse = createEncounterPulse({
     canRunHeavy, exteriorWaterContext, playerPosition, loadedPixels, isWaterPixel, pixelOrigin, keyOf, updateInventoryState,
     fish: { spawner, canPopulate: () => settings().frequency > 0 && pictures.spawnable().length > 0, attempts: FISH_ATTEMPTS_PER_PIXEL_PER_TICK },
+    enemies,
   });
 
   return {

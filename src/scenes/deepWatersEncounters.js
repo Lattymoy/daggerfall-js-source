@@ -5,6 +5,9 @@
 // of UnderwaterPassiveFishSpawner.cs, over the port's pixels. The laws a
 // fish lives and is placed by are world/passiveFish.js; what a fish IS in
 // the world (its picture, its loot, its click) is the host's `makeFish`.
+// DW-E4 (the same day): the foes' lane - UnderwaterEnemySpawner.cs's host
+// half beside the fish's, its laws world/underwaterEnemies.js, the foe
+// itself the host's `spawnEnemy` (the exterior pool's spawnFoe).
 //
 // THE PULSE, every frame: a dozen of the queued destroys; five of the
 // fish's queued spawns (the deep's foes' one, DW-E4); then, a tenth of a
@@ -24,14 +27,25 @@
 // stand a frame. The live count counts the queued; a pixel's group leaves
 // with its pixel. Its draws are the unseeded UnityEngine.Random and ride
 // the frame's roll (Port-Ledger A, the engine-PRNG rule).
+//
+// THE FOES' SPAWNER, per pixel: 96 attempts x the enemy frequency / 0.5,
+// spent four a tick; an attempt draws a point, a column 4 m deep between
+// the floor's 2.5 m and the surface's 3, a foe for the column's depth and
+// its place there; one stands a frame; Max Live Enemies caps them, and a
+// foe that dies keeps its count until its pixel's group leaves.
 // ═══════════════════════════════════════════════════════════════════
 
 import { TransientObjectTracker } from '../world/deepWaterTransients.js';
 import {
   PassiveFishSchool, pickSpecies, resolveFishPosition, pickSchoolmatePosition, schoolRadius, scaledAttemptsPerPixel,
-  rangeInt, MAX_PENDING_FISH_SPAWNS_PER_FRAME, MAX_LIVE_FISH_LIMIT,
+  rangeInt, rangeFloat, MAX_PENDING_FISH_SPAWNS_PER_FRAME, MAX_LIVE_FISH_LIMIT,
 } from '../world/passiveFish.js';
 import { TILE_WORLD_SIZE } from '../world/deepWaterFloor.js';
+import {
+  resolveSpawnColumn, pickEnemyForDepth, pickEnemyPosition, pickTreasureGuardType, scaledEnemyAttemptsPerPixel, rollTreasureGuardCount,
+  pickRingDistance, isOutsideImmediateView, MAX_PENDING_ENEMY_SPAWNS_PER_FRAME, TREASURE_GUARD_DISTANCE, TREASURE_GUARD_BOSS_CHANCE,
+  TREASURE_GUARD_TEAM, SPAWN_VIEWPORT_MARGIN,
+} from '../world/underwaterEnemies.js';
 
 export const TICK_INTERVAL = 0.1;
 export const POPULATE_RADIUS = 200;
@@ -286,6 +300,166 @@ export function createEncounterPulse({ canRunHeavy, exteriorWaterContext, player
       clearEverything();
     },
   };
+}
+
+/**
+ * UnderwaterEnemySpawner's host half. A foe stands asynchronously in the
+ * port (its career and its picture load first): `spawnEnemy` hands back
+ * its tracker entry at once and calls `failed()` if it never stands - the
+ * mod's failed SpawnEnemy, whose count is given back. A foe that dies
+ * keeps its count until its pixel's group leaves: the mod's live count
+ * falls there alone.
+ * @param {object} deps
+ * @param {() => {on: boolean, frequency: number, maxLive: number, waterDepth: number}} deps.settings - SpawnUnderwaterEnemies, EnemyFrequency (scaled), MaxLiveEnemies, WaterDepth
+ * @param {(o: {pos: number[], type: number, team: ?string}, failed: () => void) => ?object} deps.spawnEnemy - SpawnEnemy (a team: SpawnTreasureGuardEnemy)
+ * @param {(entry: object) => number[]} deps.pixelOrigin - the pixel's world origin (its south-west corner)
+ */
+export function createEnemySpawner({ settings, spawnEnemy, pixelOrigin }) {
+  /** @type {Map<string, {enemies: TransientObjectTracker, attemptsRemaining: number, liveOrPending: number, active: boolean}>} */
+  const groups = new Map();
+  /** @type {Array<{group: any, pos: number[], type: number}>} */
+  const pending = [];
+  let liveCount = 0;
+
+  function clearAll() {
+    for (const g of groups.values()) { g.active = false; g.enemies.clear(); }
+    groups.clear();
+    pending.length = 0;
+    liveCount = 0;
+  }
+
+  /** ReserveEnemySpawn: queued and counted; a column with no terrain under it, no spawn. */
+  function reserve(group, pos, type, column) {
+    if (!group?.active || !column) return false;
+    pending.push({ group, pos, type });
+    group.liveOrPending++;
+    liveCount++;
+    return true;
+  }
+
+  return {
+    get liveCount() { return liveCount; },
+    get pendingCount() { return pending.length; },
+    groupOf: (key) => groups.get(key) ?? null,
+    clearAll,
+    /** CanPopulate: the switch on and a frequency above nothing. */
+    canPopulate: () => { const s = settings(); return !!s.on && s.frequency > 0; },
+
+    /** PumpPendingSpawns: one a frame; a spawn whose group left is dropped, one that fails un-counted. */
+    pumpPendingSpawns() {
+      let n = MAX_PENDING_ENEMY_SPAWNS_PER_FRAME;
+      while (n > 0 && pending.length) {
+        n--;
+        const r = pending.shift();
+        if (!r.group?.active) continue;
+        const g = r.group;
+        let counted = true;
+        // the group's count given back once - and not after the group left, whose release gave it all back already
+        const giveBack = () => {
+          if (!counted || !g.active) return;
+          counted = false;
+          g.liveOrPending = Math.max(0, g.liveOrPending - 1);
+          liveCount = Math.max(0, liveCount - 1);
+        };
+        const foe = spawnEnemy({ pos: r.pos, type: r.type, team: null }, giveBack);
+        if (foe) g.enemies.add(foe);
+        else giveBack();
+      }
+    },
+
+    /** TickDespawn: a group whose pixel is not kept releases its foes to the destroy queue, and its count. */
+    tickDespawn(keepKeys, queueDestroy) {
+      for (const [key, g] of [...groups]) {
+        if (keepKeys.has(key)) continue;
+        g.active = false;
+        liveCount = Math.max(0, liveCount - g.liveOrPending);
+        g.enemies.release(queueDestroy);
+        groups.delete(key);
+      }
+    },
+
+    /**
+     * TickPopulate: the pixel's attempts, while the tick's budget lasts -
+     * a point on the pixel, its column, a foe for the column's depth, its
+     * place there.
+     * @param {import('../world/passiveFish.js').FishFrame} f
+     * @param {object} entry - the pixel (DaggerfallTerrain)
+     * @param {{n: number}} budget
+     */
+    tickPopulate(f, entry, key, budget) {
+      if (budget.n <= 0 || !entry) return;
+      let g = groups.get(key);
+      if (!g) {
+        g = { enemies: new TransientObjectTracker(), attemptsRemaining: scaledEnemyAttemptsPerPixel(settings().frequency), liveOrPending: 0, active: true };
+        groups.set(key, g);
+      }
+      if (g.attemptsRemaining <= 0) return;
+      const s = settings();
+      const cap = s.maxLive;
+      const origin = pixelOrigin(entry);
+      while (budget.n > 0 && g.attemptsRemaining > 0) {
+        if (liveCount >= cap) { g.attemptsRemaining = 0; break; }
+        budget.n--;
+        g.attemptsRemaining--;
+        const x = origin[0] + f.roll() * TILE_WORLD_SIZE;
+        const z = origin[2] + f.roll() * TILE_WORLD_SIZE;
+        const c = resolveSpawnColumn(f, x, z, s.waterDepth);
+        if (!c) continue;
+        const type = pickEnemyForDepth(c.depthFraction, f.roll);
+        reserve(g, pickEnemyPosition(x, z, c.floorY, c.surfaceY, type, c.depthFraction, f.roll), type, c.column);
+      }
+    },
+  };
+}
+
+/**
+ * TrySpawnRareEnemiesNearTreasureCluster (DW-E5's clusters call it): the
+ * guards, rare foes on the Undead's team - their count off the enemy
+ * frequency, one of them a boss two times in a hundred - on a ring 8 to
+ * 30 m round the cluster, outside the player's immediate view, 8 tries a
+ * guard and 15 more; none placed, one at the centre if it is out of view.
+ * They join no pixel's group and no count: the mod never tracks them.
+ * `spawnGuard` answers at once (a foe that fails later is not taken back
+ * from the count this returns - the port's asynchronous stand).
+ * @param {object} o
+ * @param {import('../world/passiveFish.js').FishFrame} o.f - the columns and the roll
+ * @param {number[]} o.centre
+ * @param {{on: boolean, frequency: number, waterDepth: number}} o.settings
+ * @param {boolean} o.canRunHeavy
+ * @param {?number[]} o.playerPos - TryGetPlayerPosition
+ * @param {number} o.vision - UnderwaterVisionDistance
+ * @param {?{forward: number[], viewport: (p: number[]) => number[], revealDistance: number}} o.view - the camera
+ * @param {(o: {pos: number[], type: number, team: string}) => ?object} o.spawnGuard - SpawnTreasureGuardEnemy
+ * @returns {number} how many stood
+ */
+export function trySpawnTreasureGuards({ f, centre, settings, canRunHeavy, playerPos, vision, view, spawnGuard }) {
+  if (!settings.on || !canRunHeavy || !playerPos) return 0;
+  const boss = f.roll() < TREASURE_GUARD_BOSS_CHANCE;
+  let count = rollTreasureGuardCount(settings.frequency, f.roll);
+  if (boss) count = Math.max(1, count);
+  if (count <= 0) return 0;
+  let spawned = 0, tries = 0, bossSpawned = false;
+  const stand = (x, z) => {
+    const c = resolveSpawnColumn(f, x, z, settings.waterDepth);
+    if (!c) return null;
+    const type = pickTreasureGuardType(boss, bossSpawned, f.roll);
+    const pos = pickEnemyPosition(x, z, c.floorY, c.surfaceY, type, c.depthFraction, f.roll);
+    return { pos, type, outside: isOutsideImmediateView(pos, playerPos, vision, SPAWN_VIEWPORT_MARGIN, view) };
+  };
+  while (spawned < count && tries < 8 * count + 15) {
+    tries++;
+    const angle = rangeFloat(0, Math.fround(Math.PI * 2), f.roll);
+    const d = pickRingDistance(TREASURE_GUARD_DISTANCE[0], TREASURE_GUARD_DISTANCE[1], f.roll);
+    const s = stand(centre[0] + Math.cos(angle) * d, centre[2] + Math.sin(angle) * d);
+    if (!s || !s.outside || !spawnGuard({ pos: s.pos, type: s.type, team: TREASURE_GUARD_TEAM })) continue;
+    if (boss && !bossSpawned) bossSpawned = true;
+    spawned++;
+  }
+  if (spawned === 0) {
+    const s = stand(centre[0], centre[2]);
+    if (s?.outside) spawned = spawnGuard({ pos: s.pos, type: s.type, team: TREASURE_GUARD_TEAM }) ? 1 : 0;
+  }
+  return spawned;
 }
 
 /** MaxLiveFish, clamped as ApplySettings clamps it. */

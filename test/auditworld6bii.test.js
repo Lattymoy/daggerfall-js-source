@@ -256,7 +256,7 @@ test('AUDIT WORLD6b-ii by source: the Seducer transforms for ME in both pools (A
   assert.match(rd('src/ui/enhancedMenu.js'), /everyone nearby sees and fights - and its creatures can hurt you too\./, 'C3');
   assert.match(w, /const h = peerBodies\?\.heightOf\(p\.id\) \|\| 0;\s*if \(h > 0\) _peerHeights\.set\(p\.id, h\);\s*out\.push\(\{ id: p\.id, feet: onlineToScene\(p\.shown\), height: _peerHeights\.get\(p\.id\) \}\);/, 'C5');
   assert.match(w, /\{ const ids = ownerIds\(\); if \(ids\) exteriorFoes\.pruneOwners\(ids, now\); \}/, 'C2: the prune reads the same list');
-  assert.match(x, /if \(!f\.placed && _playerDist > ENCOUNTER_CULL_DISTANCE && !\(f\.ai\.detected && f\.ai\.targetIsLocalPlayer !== false\)\) \{/, 'A2');   // WOD3: a mod-placed foe is never culled
+  assert.match(x, /if \(!f\.placed && !f\.managed && _playerDist > ENCOUNTER_CULL_DISTANCE && !\(f\.ai\.detected && f\.ai\.targetIsLocalPlayer !== false\)\) \{/, 'A2');   // WOD3: a mod-placed foe is never culled; DW-E4: nor a spawner-managed one
   assert.match(x, /f\.ai\.targetIsLocalPlayer = f\._pupMine;\s*if \(f\._pupMine\) \{\s*f\.ai\._senses\?\.\(playerFeet, null\);/, 'A6/B8');
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /## AUDIT WORLD6b-ii \(2026-09-14\)/, 'the record');
 });

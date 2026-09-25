@@ -21,7 +21,8 @@ flat sheet of water a hand deep over a flat seabed; the mod carves it out.
 | DW-E1 | THE RUNTIME'S OTHER HALF: the transient reset a load or a teleport sends every spawner, the post-transition refresh, the light and heavy work gates, the tracker a spawner keeps what it stood in | `world/deepWaterRuntime.js`, `world/deepWaterTransients.js` |
 | DW-E2 | THE DECORATIONS: the weed, coral, rock and dead sea life of the seafloor - the catalog, the per-pixel placement, the work's pacing, the three ways a batch stands, the edge clean, the program | `world/underwaterDecorations.js`, `scenes/deepWatersDecor.js`, `render/deepWatersRender.js` (`DECOR_VS`/`DECOR_FS`, `COLUMN_GLSL`) |
 | DW-E3 | THE FISH: the seven species and their items, the school, the fish's laws, the encounter pulse and the fish's spawner, the fish as loot, the icons, the draw | `world/passiveFish.js`, `scenes/deepWatersEncounters.js`, `scenes/deepWatersFish.js`, `systems/deepWatersFishItems.js`, `render/deepWatersRender.js` (`streamDecorations`), `tools/iliacPuddleAssets.mjs` |
-| DW-E4, E5 | the deep's foes on the pulse, the sunken loot | (next) |
+| DW-E4 | THE DEEP'S FOES: the depth table, the rare and the boss rosters, the column and the place, the foes' lane on the pulse, the treasure guards, the one water level every foe's WaterMove reads | `world/underwaterEnemies.js`, `scenes/deepWatersEncounters.js` (`createEnemySpawner`, `trySpawnTreasureGuards`), `scenes/exteriorFoes.js` (`transformY`, `team`, `transient`, `managed`, `waterLevelY`) |
+| DW-E5 | the sunken loot | (next) |
 
 ## The coastline is rebuilt, not carried (DW-A)
 
@@ -252,6 +253,51 @@ motor (`beforeMove` / `afterMove`):
   decorations' are; a species spawns once its picture is in.
 - **The clock** is the game's: a pause holds every fish.
 
+## The deep's foes (DW-E4)
+
+- **The roster** (UnderwaterEnemySpawner): eleven types, each with a
+  weight and the band of the sea's depth it keeps to - the Slaughterfish
+  (60, the top 0.7), the Lamia (18) and the Nymph (10) in the shallows,
+  the Dreugh (25) past 0.15, and under them the dead and the cold: the
+  Zombie, the Skeletal Warrior, the Ghost, the Wraith, the Ice Atronach,
+  the Vampire and, past 0.85, the Lich. A type's weight falls off over
+  0.18 of the depth past either edge of its band, the fish's softness.
+  Past 0.6 of the depth, one foe in a hundred is a boss instead - the
+  Ancient Lich or the Vampire Ancient.
+- **The lane**, beside the fish's on the pulse: 96 attempts a pixel x the
+  Enemy Frequency / 0.5, spent four a tick; an attempt draws a point, a
+  column at least 4 m deep between the floor's 2.5 m and the surface's 3,
+  a foe for the column's depth, and its place - the walkers (the Nymph,
+  the undead, the Atronach, the vampires and the liches) on the floor, the
+  swimmers anywhere in the column, and past 0.55 of the depth leaning into
+  its lowest 0.35. One stands a frame, up to Max Live Enemies; a foe that
+  dies keeps its count until its pixel's group leaves.
+- **A foe is the exterior pool's own**, stood as CreateEnemy stands it and
+  then set where the mod sets it: the transform straight on its point (a
+  floor-bound one first dropped so its capsule sits on the floor -
+  AlignFloorEnemyController), hostile to the player from the start,
+  facing north, saved by nothing (the mod's foes have no LoadID). It
+  stands a few frames after its spawn is pumped, when its career and
+  picture have loaded; one that never does gives its count back. The
+  pool's own 120 m relevance cull - the port's allocation guard for the
+  encounter pool, which DFU does not have - passes it by: it stands until
+  the mod's spawner releases it, as DFU's loose enemies do.
+- **The water it swims in.** DFU's EnemyMotor.WaterMove moves an aquatic
+  foe only under PlayerEnterExit.blockWaterLevel, and outdoors that level
+  is no water - except while the mod's swim driver holds the sea's forged
+  level. Every exterior foe reads that one level (`waterLevelY`), so the
+  Slaughterfish, the Dreugh and the Lamia swim while the player is in the
+  sea's water context and hang where they are once the driver lets go, as
+  under the mod.
+- **The treasure guards** (TrySpawnRareEnemiesNearTreasureCluster, which
+  DW-E5's clusters call): the rare roster on the Undead's team, their
+  count off the enemy frequency (five at 0.6 and up), a boss first two
+  times in a hundred, on a ring 8 - 30 m round the cluster and outside the
+  player's immediate view (DeepWaterWorld.IsOutsideImmediateView: not
+  behind the heading, off screen or past the reveal distance), 8 tries a
+  guard and 15 more, and one at the centre when none stood. No group and
+  no count holds them.
+
 ## What is not ported, and why
 
 The Port-Ledger's section-A row for the mod carries seven departures - the
@@ -323,6 +369,9 @@ paths, the edge clean, the program and the column's share),
 the school, the fish's flee, cruise, clamp, distant step and probe, the
 placement, the icon's aspect, the spawner and the pulse in the mod's order,
 the items and their icons, the host, the pictures, the capsule, the world's
-wiring).
+wiring), `test/dwe_enemies.test.js` (the table and the rosters, the weights
+and the boss, the column and the place, the attempts and the counts, the
+view test, the spawner, the pulse's two lanes, the treasure guards, a foe
+stood by the real exterior pool, the world's wiring).
 Mutation records: `tools/mutants/dwa.json`, `tools/mutants/dwd.json`,
 `tools/mutants/dwe.json`.

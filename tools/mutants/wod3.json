@@ -301,8 +301,8 @@
   {
     "name": "the-aligned-foe-takes-the-walker-lift",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "(feetGiven || groundAlign ? 0 : 0.1)",
-    "new": "(feetGiven ? 0 : 0.1)",
+    "old": "(feetGiven || groundAlign || transformY ? 0 : 0.1)",
+    "new": "(feetGiven || transformY ? 0 : 0.1)",
     "tests": [
       "test/wod3_spawner.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "the-placed-foe-is-culled",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "if (!f.placed && _playerDist > ENCOUNTER_CULL_DISTANCE",
-    "new": "if (_playerDist > ENCOUNTER_CULL_DISTANCE",
+    "old": "if (!f.placed && !f.managed && _playerDist > ENCOUNTER_CULL_DISTANCE",
+    "new": "if (!f.managed && _playerDist > ENCOUNTER_CULL_DISTANCE",
     "tests": [
       "test/wod3_spawner.test.js"
     ]
