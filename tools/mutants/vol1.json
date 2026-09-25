@@ -29,7 +29,7 @@
   {
     "name": "vol-resolve-not-adding",
     "file": "src/render/airPass.js",
-    "old": "    c += airDecode(texture(uVol, wuv).rgb);   // VOL1: what elFinish added per fragment, once per pixel and shadowed\n",
+    "old": "${glow ? '    c += airDecode(texture(uVol, wuv).rgb);   // VOL1: what elFinish added per fragment, once per pixel and shadowed\\n' : ''}",
     "new": "",
     "tests": [
       "test/vol1_glow.test.js"
@@ -119,7 +119,7 @@
   {
     "name": "vol-core-does-not-bloom",
     "file": "src/render/airPass.js",
-    "old": "  vec3 c = airDecode(texture(uFrame, uv).rgb) + airDecode(texture(uVol, vUV).rgb);",
+    "old": "  vec3 c = airDecode(texture(uFrame, uv).rgb)${glow ? ' + airDecode(texture(uVol, vUV).rgb)' : ''};",
     "new": "  vec3 c = airDecode(texture(uFrame, uv).rgb);",
     "tests": [
       "test/vol1_glow.test.js"
