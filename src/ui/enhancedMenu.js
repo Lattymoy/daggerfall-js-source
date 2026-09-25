@@ -134,7 +134,8 @@ import { enhancedHudScale as hudScaleNow, HUD_SCALE_MIN, HUD_SCALE_MAX } from '.
 import { playerEntity } from '../characters/playerEntity.js';
 // PX6: the Stats page's skill labels - the one home (systems/skills.js).
 import { SKILLS, SKILL_NAMES } from '../systems/skills.js';
-import { overlayAction } from './input.js';   // U51: Escape, through the shared table
+import { overlayAction, bindings } from './input.js';   // U51: Escape, through the shared table; UXB1-F: the live keys a tile names
+import { modKeyRows } from '../systems/controlsConfig.js';   // UXB1-F: a mod's keys, read-only on its tile
 import { MOD_SETTINGS, modSetting, setModSetting, isIntKey, isFloatKey, isChoiceKey, isTextKey, isTupleKey } from '../systems/modSettings.js';
 import { keyCodeForDomCode, KEYCODE_NONE } from '../systems/keyCodes.js';   // HT1: a TextKey's capture spells the key as Unity would
 import { isOnlinePage, onlineForcedPref, onlineForcedModSetting, onlineForcedSetting } from '../systems/onlineLane.js';   // OL1: online is the enhanced lane, whole - a forced switch is shown locked   // ROADS 24; DS1: the integer keys; UL1: the choice keys
@@ -1782,8 +1783,16 @@ function portRowsInterface({ pause = false } = {}) {
   out.push(prefRow('showFps', 'FPS counter',
     'Frames a second in the top-right corner, with the frame\u2019s milliseconds and the slowest frame of the '
     + 'last second. Takes effect at once. ?fps in the address bar forces it on for a probe.'));
+  if (!pause) out.push(prefRow('skipStartVideo', SKIP_START_VIDEO_NAME, SKIP_START_VIDEO_NOTE));   // UXB1-A: read at launch, so the front door's alone - as the skin's
   return out.filter(Boolean);   // FT13
 }
+
+/** UXB1-A (2026-09-25, the UX backlog: '"Skip Start Video" in the options ... Disabled by default, of course.'):
+ *  the row's words. The switch is uiPrefs' skipStartVideo, read by main.js at the front door. */
+export const SKIP_START_VIDEO_NAME = 'Skip start video';
+export const SKIP_START_VIDEO_NOTE = 'Open straight onto the main menu, without the opening film (on the classic skin, '
+  + 'without the splash video before the title too). The menu\u2019s music still plays. Takes effect the next time '
+  + 'the game starts.';
 
 /** QREPAIR (2026-09-24, Mac: "Add a quest refresh option to settings" - "Repair active quests"): THE GAME CATEGORY'S
  *  PORT ROW. The repair runs over a game in play, so its door is the PAUSE's settings (the host hands
@@ -2413,28 +2422,58 @@ export function featureTile(f) {
   if (vendor) {
     const mods = modModules(vendor);
     const dials = modDials(vendor);
-    if (mods.length || dials.length) {
+    const keys = modKeyRows(vendor, bindings());   // UXB1-F
+    if (mods.length || dials.length || keys.length) {
       const open = featureOpen === f.id;
       const b = el('button', 'ft-tile-more');
       b.type = 'button';
       b.setAttribute('aria-expanded', String(open));
       b.append(el('span', `ft-tile-car${open ? ' open' : ''}`, '\u203a'), document.createTextNode(' '
-        + [mods.length ? `${mods.length} modules` : '', dials.length ? `${dials.length} dials` : '']
+        + [mods.length ? `${mods.length} modules` : '', dials.length ? `${dials.length} dials` : '',
+          keys.length ? `${keys.length} keys` : '']
           .filter(Boolean).join(' \u00b7 ')));
       b.onclick = (e) => { e.stopPropagation(); featureOpen = open ? null : f.id; render(); };
       t.append(b);
-      if (open) t.append(featureDrawer(vendor, mods, dials));
+      if (open) t.append(featureDrawer(vendor, mods, dials, keys));
     }
   }
   return t;
 }
 
+/** UXB1-F (2026-09-25, the UX backlog: "Show keybinds for game features, even if they cannot be changed there (Drop
+ *  torch/summon horse/summon cart)"): the tile's door to where its keys ARE changed - Settings, Controls. */
+export const FEATURE_KEYS_NOTE = 'Keys are changed in Settings \u203a Controls.';
+function openControls() {
+  category = 'controls';
+  go('settings');
+}
+
 /** FT14: what a mod's tile opens - its modules as chips, its curated
  *  dials as the same `modRow` the Mods pane drew. The keys NOT here
  *  keep the values the mod ships (features.js MOD_CURATED says why). */
-function featureDrawer(vendor, mods, dials) {
+function featureDrawer(vendor, mods, dials, keys = []) {
   const d = el('div', 'ft-tile-drawer');
   d.onclick = (e) => e.stopPropagation();
+  // UXB1-F: a mod's keys, first - read-only here (KB1 bound them in Controls, where a clash can be seen), in the live
+  // bindings, with the one press that goes to where they change.
+  if (keys.length) {
+    d.append(el('div', 'ft-drawer-label', 'Keys'));
+    for (const k of keys) {
+      const row = el('div', 'row ft-keyrow');
+      const main = el('div', 'row-main');
+      main.append(el('div', 'row-name', k.label));
+      row.append(main);
+      const ctl = el('div', 'ctl');
+      ctl.append(el('span', 'val ft-key', k.key));
+      row.append(ctl);
+      d.append(row);
+    }
+    const to = el('button', 'act ft-keys-to', 'Change in Controls');
+    to.type = 'button';
+    to.title = FEATURE_KEYS_NOTE;
+    to.onclick = () => openControls();
+    d.append(to);
+  }
   if (mods.length) {
     d.append(el('div', 'ft-drawer-label', 'Modules'));
     const box = el('div', 'ft-chipset');
@@ -2481,6 +2520,9 @@ function paintRail(rail = document.getElementById('ft-rail')) {
     const n = Object.keys(MOD_SETTINGS[rv].keys).length;
     const shown = 1 + modModules(rv).length + modDials(rv).length;
     pair('Settings', `${shown} of ${n} shown \u2013 the rest keep the mod\u2019s own values`);
+    // UXB1-F: and its keys, where a player reading about the mod is already looking
+    const keys = modKeyRows(rv, bindings());
+    if (keys.length) pair('Keys', `${keys.map((k) => `${k.label}: ${k.key}`).join(' \u00b7 ')} \u2013 ${FEATURE_KEYS_NOTE}`);
   }
   rail.append(kv);
 }

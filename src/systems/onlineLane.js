@@ -121,6 +121,7 @@ export function declareOnlinePrefs(table) {
 export const ONLINE_PLAYERS_OWN_PREFS = [
   'touchAnalogStick', 'touchGyroLook', 'touchHaptics', 'touchFullscreen',   // TI2: how this phone is held
   'showFps',          // FPS1: a diagnostic over the game
+  'skipStartVideo',   // UXB1-A: whether THIS player sits through the opening film - read at the front door, before any room
   'chatHidden',       // CHAT-R2: whether THIS player wants the chat on screen - the room does not get a say in what someone looks at
   'peerClassSprites', // 2026-09-17: how OTHER players are drawn on THIS machine (animated class sprite vs paperdoll) -
                        // purely a local rendering choice, same shape as chatHidden above; it changes nothing the room agrees on

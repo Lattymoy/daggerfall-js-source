@@ -19,7 +19,9 @@
 import {
   ACTIONS, getBinding, setBinding, addRemovedPrimaryAction, addRemovedSecondaryAction, resetDefaults,
   isCombo, getCombo, comboCode, actionLabel, actionLive, createBindings, serializeKeyBinds, loadKeyBinds,
+  MOD_ACTIONS, ACTION_GROUPS, codeForAction,
 } from './inputActions.js';
+import { shortcutBinding, MOD } from './dialogShortcuts.js';   // UXB1-F: the keys this page names and cannot move
 
 /** internalDupeColor / crossDupeColor (:44-45): red for a clash
  *  inside the shown dict, the blue for one across the two. */
@@ -288,6 +290,32 @@ export function swingHint(code, mode, readyCode) {
   return readyCode == null ? how : `${how} Draw your weapon first with ${buttonText(readyCode, true)} (Ready Weapon).`;
 }
 
+/** UXB1-D (2026-09-25, the UX backlog: "Is there a reason you cannot have multiple keys bound to the same action
+ *  such as jump+swim-up?"): THE TWO ROWS WHOSE KEY IS NOT THE ONLY ONE THAT MOVES YOU. LevitateMotor.Update rises on
+ *  Jump OR FloatUp and sinks on Crouch OR FloatDown (LevitateMotor.cs:86-89), and every host passes the pair
+ *  (`up: jumpHeld || held(keys, 'FloatUp')`) - so the swim-up a player wanted Space for is already Space's. One key,
+ *  one action (Controls.md law 3) is why Space cannot be bound to both; this line is why it never needs to be. Null
+ *  for every other row, and when the partner action is unbound. `dict` is the shown set. */
+const FLOAT_PARTNERS = Object.freeze({
+  FloatUp: Object.freeze({ partner: 'Jump', name: 'Jump', verb: 'rises' }),
+  FloatDown: Object.freeze({ partner: 'Crouch', name: 'Crouch', verb: 'sinks' }),
+});
+export function floatHint(action, dict) {
+  const f = FLOAT_PARTNERS[action];
+  const code = f ? dict?.get(f.partner) : null;
+  if (code == null) return null;
+  return `${f.name} (${buttonText(code, true)}) ${f.verb} too while you swim or levitate.`;
+}
+
+/** UXB1-D: ...and the replace prompt's answer for that pair. Binding Jump's key onto Float up (Crouch's onto Float
+ *  down) asks like any held key, but the honest answer is "you need neither": the key already does both. Every holder
+ *  must be the partner - a key someone else also holds is an ordinary clash - and the line names the key. */
+export function sharedFloatNote(action, holders, usingPrimary = true) {
+  const f = FLOAT_PARTNERS[action];
+  if (!f || !holders?.length || !holders.every((h) => h.action === f.partner)) return null;
+  return `${f.name} already ${f.verb} while you swim or levitate, so the key does both as it is: answer No to keep it on ${f.name}${usingPrimary ? '' : ' (secondary)'}.`;
+}
+
 /** GetButtonText + FormatButtonText. `full` skips the length cap
  *  (the tooltip/full-string arm). */
 export function buttonText(code, full = false) {
@@ -426,6 +454,63 @@ export function replaceKeybindPromptRows(action, code, holders, usingPrimary = t
 export function stageReplace(u, action, code, holders) {
   for (const h of holders) (h.primary ? u.primary : u.secondary).set(h.action, null);
   currentDict(u).set(action, code);
+}
+
+/**
+ * UXB1-F (2026-09-25, the UX backlog: "Show keybinds for game features, even if they cannot be changed there (Drop
+ * torch/summon horse/summon cart)"): THE KEYS THE CONTROLS PAGE CANNOT MOVE, NAMED ON IT ANYWAY.
+ *
+ * Two kinds reach a player in play and stood on no screen at all. The HUD's own three - DaggerfallHUD.Update's
+ * LargeHUDToggle and HUDToggle arms and RetroRenderer's post-processing toggle (ui/hudShortcuts.js), which DFU reads
+ * off its DaggerfallShortcut table and gives no rebinding screen either. And the Transport window's letters: in the
+ * game itself (no mod) a horse or a cart is not summoned by a key of its own, it is chosen in that window - Transport,
+ * then H or C. Both are read OFF the shortcut table (systems/dialogShortcuts.js shortcutBinding), so the page names
+ * the key the game answers, never a copy of it.
+ */
+export const FIXED_KEY_ROWS = Object.freeze([
+  Object.freeze({ button: 'LargeHUDToggle', label: 'Large HUD on or off' }),
+  Object.freeze({ button: 'HUDToggle', label: 'Hide or show the HUD' }),
+  Object.freeze({ button: 'ToggleRetroPP', label: 'Retro Mode\u2019s post-processing on or off' }),
+]);
+export const TRANSPORT_KEY_ROWS = Object.freeze([
+  Object.freeze({ button: 'TransportFoot', label: 'Transport: go on foot' }),
+  Object.freeze({ button: 'TransportHorse', label: 'Transport: ride your horse' }),
+  Object.freeze({ button: 'TransportCart', label: 'Transport: drive your cart' }),
+  Object.freeze({ button: 'TransportShip', label: 'Transport: sail your ship' }),
+]);
+
+/** A DaggerfallShortcut's key in this page's own words: buttonText's names, a modifier joined the way a combo is
+ *  ("SHIFT + F10"). HotkeySequence.ToString (:96-128) orders Ctrl, Alt, Shift; so does this. */
+export function shortcutKeyText(button) {
+  const seq = shortcutBinding(button);
+  if (!seq?.code) return buttonText(null);
+  const mods = [];
+  if (seq.modifiers & (MOD.Ctrl | MOD.LeftCtrl | MOD.RightCtrl)) mods.push('CTRL');
+  if (seq.modifiers & (MOD.Alt | MOD.LeftAlt | MOD.RightAlt)) mods.push('ALT');
+  if (seq.modifiers & (MOD.Shift | MOD.LeftShift | MOD.RightShift)) mods.push('SHIFT');
+  return [...mods, buttonText(seq.code, true)].join(' + ');
+}
+
+/** The rows the page draws for them: the HUD's three as they are, and each Transport letter behind the key that opens
+ *  that window ("T, then H") - the whole gesture, since the letter alone does nothing. `transport` is the Transport
+ *  action's code wherever the caller reads it (the registry's codeForAction, or a staged set's own dict). */
+export function fixedKeyRows(transport) {
+  const opener = transport == null ? 'Transport (unbound)' : buttonText(transport, true);
+  return [
+    ...FIXED_KEY_ROWS.map((r) => ({ label: r.label, key: shortcutKeyText(r.button) })),
+    ...TRANSPORT_KEY_ROWS.map((r) => ({ label: r.label, key: `${opener}, then ${shortcutKeyText(r.button)}` })),
+  ];
+}
+
+/** UXB1-F: a vendored mod's keys, named for its Features tile - read-only there, because they are BOUND in Controls
+ *  (KB1: one registry, where a clash can be seen). Each row is the action's own label on the Controls page, and the
+ *  key that answers it now (codeForAction: the primary, else the secondary - the order actionForCode resolves in). */
+export function modKeyRows(vendor, store) {
+  const labels = new Map(ACTION_GROUPS.flatMap((g) => g.rows.map((r) => [r.action, r.label])));
+  return (MOD_ACTIONS[vendor] ?? []).map(({ action }) => {
+    const code = codeForAction(store, action);
+    return { action, label: labels.get(action) ?? actionLabel(action), key: buttonText(code, true) };
+  });
 }
 
 /**

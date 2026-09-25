@@ -100,6 +100,11 @@ export const PREF_DEFAULTS = Object.freeze({
   // on for a probe; this is the player's own switch on the Enhanced
   // pane. Off by default - a number over the game is a diagnostic.
   showFps: false,
+  // UXB1-A (2026-09-25, the UX backlog: '"Skip Start Video" in the options. Watching it once is great, having to skip
+  // it every time is tedious. Disabled by default, of course.'): open straight onto the menu - no INTRO2 film at the
+  // front door, and on the classic skin no ANIM0001 splash before the title (main.js). ?nointro and ?novideo do the
+  // same for one visit. Off by default: the film is how the game introduces itself.
+  skipStartVideo: false,
   proceduralSky: true,   // LEGACY: read only by the migration in loadPrefs
   // RF4 (2026-09-14, Mac's refactor pass, the fourth): THE PORT'S OWN
   // FEATURE SWITCHES ARE DECLARED ONCE, ON THEIR ROWS. The Features

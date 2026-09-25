@@ -28,7 +28,7 @@
 
 import { loadImg, nativeMetrics, drawImg, drawImgSub, shadowText } from './nativePanel.js';   // MAC-N2: drawImgSub, the selected tab's INVE01I0 cutout
 import { drawScreenDimBackdrop } from './chargenArt.js';
-import { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, ARROW_H, DOWN_ARROW_Y, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel,
+import { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, CELL_MARGIN, ARROW_H, DOWN_ARROW_Y, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel,
   preloadScrollerArrowArt, drawScrollerArrows, drawScrollerThumb, playScrollerArrowClick, makeSlotToolTip,
   itemBackgroundColour, drawCellBackground, beginScrollerDrag, dragScrollerIndex } from './itemScroller.js';   // MAC-N2: the thumb drag
 import { getBool } from '../systems/settings.js';   // AUDIT 64 F53: InstantRepairs, the repair tint's first arm
@@ -45,7 +45,7 @@ import {
   MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID, DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID,
 } from '../systems/tradeModes.js';
 import { CANNOT_BE_REPAIRED_TEXT, INTERRUPT_REPAIR_TEXT, isBeingRepaired as itemIsBeingRepaired,
-  isRepairFinished, collectRepaired } from '../systems/repairService.js';   // D7: the Repair mode's remote arm
+  isRepairFinished, collectRepaired, updateRepairTimes, repairStatusLabel } from '../systems/repairService.js';   // D7: the Repair mode's remote arm; UXB1-K: its misc label
 import { isSummoned, carriedWeight, totalWeight, transferAll } from '../systems/inventory.js';   // TransferItem's summoned guard; AUDIT 63 F48: transferAll is ItemCollection.TransferAll (:452), DoSteal's move
 import { shopliftAttempt } from '../systems/theft.js';   // AUDIT 63 F48: DoSteal's decision (:909-916)
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // PlayerEntity.MaxEncumbrance
@@ -57,7 +57,7 @@ import {
 } from './targetIconPanel.js';
 import { WAGON_KG_LIMIT } from '../systems/itemTransfer.js';   // ItemHelper.WagonKgLimit (:56)
 import { CANNOT_REMOVE_ITEM_TEXT } from '../systems/createItem.js';   // both TransferItem refusals speak it
-import { questTransferRefused, SMALL_CART_TEMPLATE, INV_RECTS, TABS, tabAccepts } from './nativeInventory.js';   // DaggerfallTradeWindow EXTENDS the inventory window; MAC-N2: and INHERITS its four tab pages
+import { questTransferRefused, SMALL_CART_TEMPLATE, INV_RECTS, TABS, tabAccepts, splitRequired, splitInputBox, isControlCode } from './nativeInventory.js';   // DaggerfallTradeWindow EXTENDS the inventory window; MAC-N2: and INHERITS its four tab pages
 import { expandGuildMacros } from '../systems/guildServiceActions.js';
 import { firstName } from '../systems/talkSession.js';   // MACRO-4: %pct's shop arm
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
@@ -257,6 +257,10 @@ export class NativeTradeWindow {
     // override (:635-647) is written against it rather than around it.
     this.usingWagon = false;
     this.box = null;             // the confirm / refusal box, when one is up
+    // UXB1-L: TransferItem's split popup, which this window INHERITS (DaggerfallTradeWindow extends the inventory
+    // window, and its Buy click is TransferItem, :842) - and the Control state that forces it (:1513).
+    this.inputBox = null;
+    this._controlDown = false;
     this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);   // the shared scroller's warm cache
     // D7: the window's shared ToolTip - one tip, both lists, exactly
     // as ItemListScroller hands `toolTip` to every item button it
@@ -316,8 +320,20 @@ export class NativeTradeWindow {
         this[this._drag.which] = dragScrollerIndex(this._drag.latch, vy, len);
       }
     }
-    if (this.box || vx < 0 || vy < 0) { this._tip.hide(); return; }
+    if (this.box || this.inputBox || vx < 0 || vy < 0) { this._tip.hide(); return; }
     this._tip.show(this._itemAt(vx, vy), vx, vy, { getQuest: this.hooks.getQuest ?? null });
+  }
+
+  /** UXB1-L: the pointer seam's DOWN (the hosts' `pointer('down', ..., { ctrl, shift })`, worldModes.js) carries the
+   *  click's own Control - Input.GetKey polled at the click (:1513), read off the event rather than a key latch that
+   *  a focus change can strand. */
+  pointer(phase, vx, vy, button = 0, mods = null) {
+    if (phase === 'down' && mods) this._controlDown = !!mods.ctrl;
+  }
+
+  /** UXB1-L: ...and the key-up half, the pack's own (nativeInventory.js keyup). */
+  keyup(code, e = null) {
+    if (isControlCode(code, e)) this._controlDown = false;
   }
 
   /** MAC-N2: the release edge the hosts send on mouseup (ROAD-E E1) -
@@ -337,7 +353,7 @@ export class NativeTradeWindow {
    *  scrolled under it) - exactly nativeInventory's wheel, minus the
    *  info panel this screen does not draw. */
   wheel(dir, vx = -1, vy = -1) {
-    if (!dir || this.box) return;
+    if (!dir || this.box || this.inputBox) return;
     const kind = dir > 0 ? 'down' : 'up';
     const wheelable = (k) => k === 'slot' || k === 'thumb' || k === 'page-up' || k === 'page-down';
     for (const [rect, which, items] of [
@@ -424,16 +440,14 @@ export class NativeTradeWindow {
    *  repairJobsAt, character for character, so the host hands it in
    *  rather than the window growing a second copy.
    *
-   *  RECORDED: FilterRemoteItems ends with `UpdateRepairTimes(false)`
-   *  (:725), the ESTIMATE pass, and this does not run it. That pass
-   *  exists for exactly one reader - RepairItemLabelTextHandler's
-   *  "%d days" MISC LABEL (:282-288), which is an ItemListScroller
-   *  label template the port's shared scroller does not draw (icon,
-   *  stack count and tooltip only). Running it here would also run it
-   *  per FRAME rather than per Refresh, and its clamp never decreases,
-   *  so the estimate would ratchet. The keyed collect list computes
-   *  the same number on demand through repairStatusLabel; when the
-   *  misc label lands, it does the same. */
+   *  FilterRemoteItems ends with `UpdateRepairTimes(false)` (:725),
+   *  the ESTIMATE pass, which exists for exactly one reader -
+   *  RepairItemLabelTextHandler's "%d days" MISC LABEL (:282-288).
+   *  UXB1-K drew that label (draw, `_repairLabels`) and runs the pass
+   *  there, per frame: the port's pass with commit false is PURE - it
+   *  answers a Map and stamps nothing - so the ratchet DFU's stored
+   *  estimate would suffer per frame cannot happen, and this list
+   *  stays the filter alone. */
   remoteList() {
     if (this.mode === 'Buy') return this.hooks.shelfItems?.() ?? [];
     if (this.mode === 'Repair') return this.hooks.repairItems?.() ?? this.remoteItems;
@@ -559,6 +573,14 @@ export class NativeTradeWindow {
         entity: this.hooks.entity ?? null,
       });
       if (!plan.ok) { this.box = { rows: [{ text: plan.refusal?.text ?? CANNOT_CARRY_TEXT, center: true }], buttons: null }; return; }
+      // UXB1-L (2026-09-25, the UX backlog: "Split stacks of items in shops"): TransferItem's split gate
+      // (DaggerfallInventoryWindow.cs:1512-1537) - a stack that only partly fits, or any stack Control-clicked,
+      // asks "how many" first, and the count the player gives is what moves (SplitStackPopup_OnGotUserInput).
+      if (splitRequired(item, plan.amount, this._controlDown)) {
+        this.inputBox = splitInputBox(plan.amount, this._controlDown,
+          (amount) => applyTransfer(item, { ...plan, amount }, this.hooks.shelfItems(), this.basket));
+        return;
+      }
       applyTransfer(item, plan, this.hooks.shelfItems(), this.basket);
       return;
     }
@@ -760,6 +782,12 @@ export class NativeTradeWindow {
   }
 
   input(code, e = null) {
+    if (isControlCode(code, e)) this._controlDown = true;   // UXB1-L: the pack's own Control latch (:1513)
+    if (this.inputBox) {
+      this.inputBox.input(code, e);   // the pushed box owns the keyboard
+      if (this.inputBox.done) this.inputBox = null;
+      return;
+    }
     if (this.box) {
       if (this.box.buttons === 'YesNo') {
         if (code === 'KeyY') this._dismissBox(MB_BUTTONS.Yes);
@@ -811,6 +839,7 @@ export class NativeTradeWindow {
   }
 
   click(vx, vy) {
+    if (this.inputBox) { this.inputBox.click(vx, vy); if (this.inputBox.done) this.inputBox = null; return true; }   // UXB1-L: modal
     if (this.box) {
       if (this.box.buttons === 'YesNo') {
         const hit = this._boxLayout ? messageBoxHit(this._boxLayout, vx, vy) : null;
@@ -923,6 +952,7 @@ export class NativeTradeWindow {
     drawTargetIconPanel(renderer, m, font, R.localTargetIcon, lti.container, lti.label);
     const rti = this._remoteTargetIcon();
     drawTargetIconPanel(renderer, m, font, R.remoteTargetIcon, rti.container, rti.label);
+    const repairLabels = this._repairLabels();   // UXB1-K: one estimate pass per frame, for the misc label below
     for (const [rect, scroll, items] of [
       [R.remoteList, this.remoteScroll, this.remoteList()],
       [R.localList, this.localScroll, this.localList()],
@@ -936,6 +966,12 @@ export class NativeTradeWindow {
         drawCellBackground(renderer, m, rect, s, this._cellColour(it, rect === R.remoteList));
         this._drawIcon(renderer, m, it, rect, s);
         drawStackLabel(renderer, _art?.font4 ?? font, m, it, rect, s);
+        // UXB1-K: RepairItemLabelTextHandler's misc label (:282-288), set on the remote scroller in Repair mode
+        // (:244): ItemListScroller's miscLabelTemplate - Position zero, Left/Top in the button's margins
+        // (ItemListScroller.cs:211-217, :368-377), the default font (TextLabel.RefreshLayout's DefaultFont,
+        // FONT0003) in the default text colour and shadow (TextLabel's own defaults).
+        const label = rect === R.remoteList ? repairLabels?.get(it) : null;
+        if (label) shadowText(renderer, font, label, m, rect[0] + CELL_X + CELL_MARGIN, rect[1] + s * SLOT_H + CELL_MARGIN);
       });
       // ROAD-A7: the arrows' red/green states and the art thumb.
       drawScrollerArrows(renderer, m, rect, scroll, items.length);
@@ -950,5 +986,19 @@ export class NativeTradeWindow {
       drawMessageBox(renderer, m, font, this._boxLayout);
     } else this._boxLayout = null;
     this._tip.draw(renderer, m, font);   // D7: last, over the panel and the box
+    if (this.inputBox) this.inputBox.draw(renderer, canvas, font);   // UXB1-L: the pushed input box, over everything
+  }
+
+  /** UXB1-K: the misc label's text per remote item, in Repair mode - repairStatusLabel ("DONE" / "N days") over the
+   *  scheduler's ESTIMATE pass (updateRepairTimes with commit false, FilterRemoteItems' :725). That pass is pure (it
+   *  answers a Map and stamps nothing), so running it per frame cannot ratchet the way DFU's stored
+   *  EstimatedRepairTime would. Null outside Repair, and under InstantRepairs, where DFU's pass returns before it
+   *  estimates anything (:516) and there is no clock to label. */
+  _repairLabels() {
+    if (this.mode !== 'Repair' || getBool('Controls', 'InstantRepairs')) return null;
+    const now = this.hooks.nowMinutes?.() ?? 0;
+    const items = this.remoteList();
+    const est = updateRepairTimes(items, { commit: false, nowMinutes: now });
+    return new Map(items.map((it) => [it, repairStatusLabel(it, now, est.get(it) ?? null)]));
   }
 }

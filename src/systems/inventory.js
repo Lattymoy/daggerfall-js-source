@@ -242,6 +242,18 @@ export function stacksWith(a, b) {
     (a.timeForItemToDisappear ?? 0) === (b.timeForItemToDisappear ?? 0);
 }
 
+/** UXB1-L (2026-09-25): WHETHER SPLITSTACK'S MINT IS STILL THIS THING. SplitStack (below) hands the picked count a
+ *  FRESH template item (ItemCollection.cs:267, ItemBuilder.CreateItem) - material 0, message 0 (a painting rolls
+ *  its own), no recipe, no expiry - so it is the same thing as the stack it leaves only when none of the identity
+ *  terms stacksWith compares lives in the record: oil, arrows, ingredients, gold, rations. A potion (its recipe), a
+ *  book (its id), a conjured arrow (its expiry) would come out of the split as something else - DFU's own quirk,
+ *  kept where DFU's gesture reaches it; the enhanced shop's count is offered only where the split is clean. */
+export function splitsCleanly(item) {
+  return !!item && (item.stackCount ?? 1) > 1 && isStackable(item) && item.group !== 'Paintings'
+    && (item.material ?? 0) === 0 && (item.message ?? 0) === 0 && (item.potionRecipeKey ?? 0) === 0
+    && (item.timeForItemToDisappear ?? 0) === 0;
+}
+
 /** ItemCollection.AddItem (ItemCollection.cs:217-252): merge into an
  *  existing stack or place the record at `position`.
  *

@@ -26,7 +26,7 @@ import { QUESTION_COUNT, NO_CLASS_INDEX, displayQuestion, pickQuestionIndices, a
 const QANIM_STUCK_MIN_MS = 2000;
 const QANIM_STUCK_PAD_MS = 1000;
 import { ADVANTAGE_KEYS, DISADVANTAGE_KEYS, ONLY_ONE_KEYS, MAX_ITEMS, secondaryListFor, advDisAdjustment, cannotAdd, totalAdjust, parseCareerData } from '../systems/specialAdvantages.js';   // U20b
-import { HP_MIN, HP_MAX, HP_DEFAULT, DIFFICULTY_MIN, DIFFICULTY_MAX, FREE_EDIT_MIN, FREE_EDIT_MAX, STAT_DEFAULT, difficultyPoints, availableSkills, buildCustomCareer, classAffinityIndex, repClick, repStep, repPointsToDistribute, HELP_TOPICS } from '../systems/customClass.js';   // U20a
+import { HP_MIN, HP_MAX, HP_DEFAULT, DIFFICULTY_MIN, DIFFICULTY_MAX, FREE_EDIT_MIN, FREE_EDIT_MAX, STAT_DEFAULT, difficultyPoints, availableSkills, buildCustomCareer, classAffinityIndex, repClick, repStep, repPointsToDistribute, HELP_TOPICS, parseCustomClassDoc } from '../systems/customClass.js';   // U20a; UXB1-H: the class document
 import { damageModifier, maxEncumbrance, magicResist, toHitModifier, hitPointsModifier, healingRateModifier } from '../combat/formulas.js';   // U10: the derived block
 import { tagEffect, biographySkillBonuses, digestRepChanges } from '../systems/biography.js';   // S3e
 import { fullName, getNameBank, GENDERS } from '../characters/nameHelper.js';   // U15
@@ -958,6 +958,36 @@ export class ChargenFlow {
     const c = this.custom;
     if (c.sub === 'advantage') c.advantageAdjust = totalAdjust(c.advantages);
     else c.disadvantageAdjust = totalAdjust(c.disadvantages);
+  }
+
+  /** UXB1-H (2026-09-25, the UX backlog: "Export/Import class from file/clipboard."): A CLASS DOCUMENT LOADED INTO
+   *  THE BUILDER - the one door, so the view never writes `custom` (systems/customClass.js parseCustomClassDoc has
+   *  put every value through the builder's own laws first). What the windows DERIVE is derived here, never read
+   *  from the file: the freeEdit pool (the zero-sum ledger - the eight at the default 50 are a balanced 400), each
+   *  pick's difficulty and the two adjust totals (UpdateDifficultyAdjustment), and the reputation ledger. The name
+   *  meets the name box's own cap. Any open picker, window or box is closed: the builder shows the class whole. The
+   *  exit gates are untouched - an unbalanced pool or a dagger in the red loads, and Create refuses it as ever.
+   *  Answers the parse's result: `{ ok, skipped }` or `{ ok: false, error }`. */
+  customImport(input) {
+    const c = this.custom;
+    if (!c) return { ok: false, error: 'Open the class builder first.' };
+    const parsed = parseCustomClassDoc(input);
+    if (!parsed.ok) return parsed;
+    const v = parsed.value;
+    c.className = v.name.slice(0, NAME_MAX_CHARACTERS);
+    c.hp = v.hp;
+    c.skills = [...v.skills];
+    c.stats = { ...v.stats };
+    c.statPool = STAT_DEFAULT * STAT_KEYS_ORDER.length - STAT_KEYS_ORDER.reduce((n, k) => n + c.stats[k], 0);
+    c.statCursor = 0;
+    c.reps = { ...v.reps };
+    c.repPoints = repPointsToDistribute(c.reps);
+    c.advantages = v.advantages.map((x) => ({ ...x }));
+    c.disadvantages = v.disadvantages.map((x) => ({ ...x }));
+    c.advantageAdjust = totalAdjust(c.advantages);
+    c.disadvantageAdjust = totalAdjust(c.disadvantages);
+    c.sub = null; c.pickList = null; c.pickPrimary = null; c.pickSlot = null; c.box = null;
+    return { ok: true, skipped: parsed.skipped };
   }
 
   /** ExitButton_OnMouseClick (:462-465) - CloseWindow, nothing gated. */

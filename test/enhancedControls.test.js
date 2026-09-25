@@ -31,7 +31,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   paneControls, discardControlsStaging, captureArmed, controlsStaging, controlsPromptOpen, dismissControlsPrompt,
-  controlsDuplicates, shownGroups, MULTIPLE_ASSIGNMENTS, DEFAULTS_PROMPT,
+  controlsDuplicates, shownGroups, MULTIPLE_ASSIGNMENTS, DEFAULTS_PROMPT, CONFIRM_LABEL, promptMarks,
 } from '../src/ui/enhancedControls.js';
 import { CATEGORY_IDS } from '../src/ui/settingsMap.js';   // AUDIT FT16 CTRL-a: the door the bindings live behind
 import { SYSTEM_PANES } from '../src/ui/enhancedMenu.js';
@@ -41,7 +41,7 @@ import {
   ACTIONS, createBindings, resetDefaults, getBinding, setBinding, onSavedKeyBinds, comboCode, ACTION_GROUPS, HIDDEN_ACTIONS,
 } from '../src/systems/inputActions.js';
 import { setModSetting, modSetting } from '../src/systems/modSettings.js';   // KB1: a mod's group follows its switch
-import { currentDict, buttonText, removeKeybindPromptRows } from '../src/systems/controlsConfig.js';
+import { currentDict, buttonText, floatHint, sharedFloatNote } from '../src/systems/controlsConfig.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
@@ -568,24 +568,19 @@ test('FIX-F: leaving without CONTINUE discards', () => {
     'leaving the controls CATEGORY still discards');
 });
 
-test('FIX-F: the ✕ prompts to remove, refuses an unbound slot, and Yes stages null', () => {
-  withPane(({ view }) => {
+test('UXB1-C: the ✕ and the right-click CLEAR AT ONCE - no question, staged like every edit, refused on an unbound slot', () => {
+  // DFU asks (PromptRemoveKeybindMessage :290-320) and FIX-F asked with it, in a card drawn in place of the whole
+  // list - so every answer threw the player back to the top of the page. The clear is staged like every other edit
+  // (nothing reaches the registry until Confirm, and leaving drops it), so the question guarded nothing.
+  withPane(({ view, store, render }) => {
     clearBtn(view, 'MoveForwards').onclick();
-    const lines = textOf(one(view.body, 'ctl-prompt'));
-    for (const row of removeKeybindPromptRows('MoveForwards', 'KeyW')) {
-      assert.ok(lines.includes(row), `the prompt is PromptRemoveKeybindMessage’s: ${row}`);
-    }
-    // No leaves it bound; Yes stages the clear.
-    find(view.body, 'act').find((b) => b.textContent === 'No').onclick();
-    assert.equal(currentDict(controlsStaging()).get('MoveForwards'), 'KeyW');
-
-    clearBtn(view, 'MoveForwards').onclick();
-    find(view.body, 'act').find((b) => b.textContent === 'Yes').onclick();
-    assert.equal(currentDict(controlsStaging()).get('MoveForwards'), null);
+    assert.equal(one(view.body, 'ctl-prompt'), undefined, 'no question is asked');
+    assert.equal(controlsPromptOpen(), false);
+    assert.equal(currentDict(controlsStaging()).get('MoveForwards'), null, 'the clear is staged at once');
     assert.equal(keyBtn(view, 'MoveForwards').textContent, 'NONE');
+    assert.equal(getBinding(store, 'MoveForwards', true), 'KeyW', 'and ONLY staged: the registry holds W until Confirm');
 
-    // PromptRemoveKeybindMessage refuses on a slot that carries
-    // nothing (:292) - the pane must stay the pane.
+    // PromptRemoveKeybindMessage's refusal on a slot that carries nothing (:292) - the pane stays the pane.
     clearBtn(view, 'MoveForwards').onclick();
     assert.equal(one(view.body, 'ctl-prompt'), undefined);
     assert.ok(one(view.body, 'ctl-head'), 'no prompt, no state change');
@@ -594,8 +589,101 @@ test('FIX-F: the ✕ prompts to remove, refuses an unbound slot, and Yes stages 
     const e = { prevented: false, preventDefault() { e.prevented = true; } };
     keyBtn(view, 'Jump').oncontextmenu(e);
     assert.equal(e.prevented, true, 'the browser menu must not open over the pane');
-    assert.ok(one(view.body, 'ctl-prompt'), 'a right-click prompts exactly as the grid does');
+    assert.equal(one(view.body, 'ctl-prompt'), undefined, 'a right-click asks nothing either');
+    assert.equal(currentDict(controlsStaging()).get('Jump'), null);
+
+    // Leaving drops the clears - the undo the question was standing in for.
+    discardControlsStaging();
+    render();
+    assert.equal(currentDict(controlsStaging()).get('MoveForwards'), 'KeyW');
+    assert.equal(currentDict(controlsStaging()).get('Jump'), getBinding(store, 'Jump', true));
   });
+  // The classic grid and its ADVANCED popup keep DFU's question: the departure is this pane's alone.
+  for (const f of ['src/ui/controlsWindow.js', 'src/ui/mouseControlsWindow.js']) {
+    assert.match(read(f), /removeKeybindPromptRows\(this\._removeAction/, `${f} still asks`);
+  }
+});
+
+test('UXB1-B: the commit button says Confirm, head and foot, and the page says to press it', () => {
+  withPane(({ view }) => {
+    const conts = find(view.body, 'ctl-continue');
+    assert.equal(conts.length, 2, 'head and foot');
+    for (const b of conts) assert.equal(b.textContent, CONFIRM_LABEL);
+    assert.equal(CONFIRM_LABEL, 'Confirm');
+    assert.ok(textOf(one(view.body, 'ctl-head')).some((t) => t.includes('Nothing is saved until you press Confirm, Defaults included.')));
+    assert.ok(!textOf(view.body).some((t) => /\bContinue\b/.test(t)), 'the old word is nowhere on the page');
+  });
+});
+
+test('UXB1-D: a replace prompt stands in the HEAD over the list it leaves in place, marks the rows it is about, and the list is inert under it', () => {
+  withPane(({ doc, view, store }) => {
+    const rowOf = (action) => find(view.body, 'ctl-row').find((r) => one(r, 'ctl-key').dataset.action === action);
+    const classes = (n) => n.className.split(/\s+/);
+    keyBtn(view, 'MoveForwards').onclick();
+    doc.listeners[0].fn(keyEvent('KeyS'));   // MoveBackwards' default
+    const head = one(view.body, 'ctl-head');
+    assert.ok(one(head, 'ctl-prompt'), 'the question is inside the sticky head');
+    assert.ok(classes(head).includes('ctl-asking'));
+    assert.ok(keyBtn(view, 'MoveForwards'), 'and the list is still drawn under it, so the scroll has somewhere to stay');
+    assert.ok(classes(rowOf('MoveForwards')).includes('ctl-want'), 'the row the key would go to is marked');
+    assert.ok(classes(rowOf('MoveBackwards')).includes('ctl-holder'), 'the row that holds it now is marked');
+    assert.equal(find(view.body, 'ctl-holder').length, 1, 'and no other');
+    assert.equal(find(view.body, 'ctl-want').length, 1);
+
+    // Inert: a key and a ✕ under the question do nothing.
+    keyBtn(view, 'Jump').onclick();
+    assert.equal(captureArmed(), null, 'no capture arms under a prompt');
+    clearBtn(view, 'Jump').onclick();
+    assert.equal(currentDict(controlsStaging()).get('Jump'), getBinding(store, 'Jump', true), 'no clear lands under a prompt');
+    assert.equal(controlsPromptOpen(), true, 'the question still stands');
+
+    answer(view, false);
+    assert.equal(find(view.body, 'ctl-holder').length, 0, 'answered: the marks go with it');
+    assert.equal(find(view.body, 'ctl-want').length, 0);
+    assert.equal(one(view.body, 'ctl-prompt'), undefined);
+  });
+  // a holder in the OTHER set is named by the prompt, not marked on a page that does not show it
+  const marks = promptMarks({ kind: 'replace', action: 'Jump', holders: [{ action: 'Run', primary: false }, { action: 'Sneak', primary: true }] }, true);
+  assert.equal(marks.want, 'Jump');
+  assert.deepEqual([...marks.holders], ['Sneak']);
+  assert.deepEqual([...promptMarks({ kind: 'defaults' }, true).holders], []);
+});
+
+test('UXB1-D: Float up and Float down say Jump and Crouch move you too, in the live keys - and giving Jump\'s key to Float up says neither is needed', () => {
+  withPane(({ doc, view, store }) => {
+    const rowText = (action) => textOf(find(view.body, 'ctl-row').find((r) => one(r, 'ctl-key').dataset.action === action));
+    const jump = buttonText(getBinding(store, 'Jump', true), true);
+    const crouch = buttonText(getBinding(store, 'Crouch', true), true);
+    assert.ok(rowText('FloatUp').includes(`Jump (${jump}) rises too while you swim or levitate.`));
+    assert.ok(rowText('FloatDown').includes(`Crouch (${crouch}) sinks too while you swim or levitate.`));
+    assert.ok(!rowText('Jump').some((t) => /swim or levitate/.test(t)), 'only the two float rows carry it');
+
+    keyBtn(view, 'FloatUp').onclick();
+    doc.listeners[0].fn(keyEvent(getBinding(store, 'Jump', true)));
+    const lines = textOf(one(view.body, 'ctl-prompt'));
+    assert.ok(lines.includes(`${jump} is used by Jump.`));
+    assert.ok(lines.includes(sharedFloatNote('FloatUp', [{ action: 'Jump', primary: true }], true)), 'the prompt says the key already does both');
+    answer(view, false);
+
+    // an ordinary clash carries no such line
+    keyBtn(view, 'FloatUp').onclick();
+    doc.listeners[0].fn(keyEvent('KeyS'));
+    assert.ok(!textOf(one(view.body, 'ctl-prompt')).some((l) => /already rises/.test(l)));
+    answer(view, false);
+  });
+  const dict = new Map([['Jump', 'Space'], ['Crouch', null]]);
+  assert.equal(floatHint('FloatDown', dict), null, 'an unbound partner says nothing');
+  assert.equal(floatHint('Jump', dict), null);
+  assert.equal(sharedFloatNote('FloatUp', [{ action: 'Jump', primary: true }, { action: 'Run', primary: true }]), null,
+    'a key someone else holds too is an ordinary clash');
+  assert.equal(sharedFloatNote('FloatDown', [{ action: 'Jump', primary: true }]), null, 'Jump is not Float down\'s partner');
+  assert.match(sharedFloatNote('FloatDown', [{ action: 'Crouch', primary: false }], false), /Crouch already sinks .* keep it on Crouch \(secondary\)\./);
+  // the hint is the motor's law, in every host that drives the levitate motor (LevitateMotor.cs:86-89)
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeon.js']) {
+    const src = read(host);
+    assert.match(src, /up: jumpHeld \|\| held\(keys, 'FloatUp'\),/, `${host} rises on Jump`);
+    assert.match(src, /down: crouchHeld \|\| held\(keys, 'FloatDown'\),/, `${host} sinks on Crouch`);
+  }
 });
 
 test('FIX-F / KB1: DEFAULTS resets behind a confirm, through the registry’s own law - STAGED, as the page says, and committed by Continue', () => {

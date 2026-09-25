@@ -123,6 +123,7 @@ import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 // E2: the shop shelf browse/buy layer (node-pure laws in shopStock.js)
 import { ChoiceWindow } from '../ui/talkWindow.js';
+import { YesNoBoxWindow } from '../ui/yesNoBox.js';   // UXB1-M: DFU's YesNo box - the private-property question
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
@@ -134,10 +135,10 @@ import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque } from '../ui/worl
 import { quickLootTake } from '../systems/quickLoot.js';   // QUICK-LOOT B4: the take, through the window's own door
 import { lootPile } from '../player/lootStack.js';   // LOOT-STACK: the pile under the reticle, as the loot window's tabs
 import { staticDoorName, npcHoverName, questResourceName, worldTooltipsOn, hideInteractTooltip,
-  houseContainerName, actionName, actionDoorName, lootPileName,
+  houseContainerName, houseContainerHover, actionName, actionDoorName, lootPileName,
   BOOKSHELF_TEXT, SHOP_SHELF_TEXT, LADDER_TEXT, BULLETIN_BOARD_TEXT, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js';   // WORLD-HOVER: the mod's ladder for the families THIS host stands   // WORLD-HOVER: the mod's ladder for the families THIS host stands
 import { LOCATION_TYPES } from '../formats/mapsFile.js';   // WORLD-HOVER: .cs:777-782 - a dungeon exit names its town, or the region   // WORLD-HOVER: the texture record is DERIVED at its one reader, off the stored model id
-import { isShop, isRepairShop, stockShopShelf, stockHouseContainer, PRIVATE_PROPERTY_TEXT_ID, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions, createStockedDate, needsRestock } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves; A2: the daily restock
+import { isShop, isRepairShop, stockShopShelf, stockHouseContainer, PRIVATE_PROPERTY_TEXT_ID, privatePropertyRows, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions, createStockedDate, needsRestock, stockSearched } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves; A2: the daily restock
 import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll; F067: its magicka refusal
 import { liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // X10: the Dispel Magic picker
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // X10
@@ -1911,6 +1912,11 @@ export function createWorldModes(host) {
    * port's own departure and predate its arrival, so they answer
    * whether the mod is switched on or off.
    */
+  /** HC1's owned-interior test - PlayerActivate.cs:904-906, the house, or ANY ship while the player owns one ("not
+   *  distinguishing between ships"). UXB1-N: ONE predicate, read by the container arm of the activation ladder and by
+   *  the plaque, so what the plaque calls private property is exactly what the press treats as someone else's. */
+  const ownsThisInterior = (b = interiorBuilding) => (b?.buildingType === BUILDING_TYPES.Ship && ownsShip(playerEntity))
+    || isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, b?.buildingKey);
   const interiorHoverName = composeNamer([
     (key) => {
       // AUDIT-WH2 L2-F5: C1's guard, on this ladder too. The exterior
@@ -1948,7 +1954,8 @@ export function createWorldModes(host) {
       if (key.startsWith('container:')) {
         const c = interiorCtx.containers[Number(key.split(':')[1])];
         const t = c && houseContainerName(c.modelIdNum);   // AUDIT-WH M3: the knob guards the ACTION arm's <Interact> and only that one (.cs:465-466); the container default has no guard
-        return t ? { title: t } : null;
+        // UXB1-N/O: somebody else's is private property, in its own colour, and says when this character has searched it
+        return houseContainerHover(t, { owned: ownsThisInterior(b), searched: stockSearched(c, stockedToday()) });
       }
       // .cs:549-551 vs :476-480 - one model, two things, and the port
       // already had the law that tells them apart (DaggerfallInterior
@@ -3022,6 +3029,7 @@ export function createWorldModes(host) {
       ...(ctx.containers ?? []).map((c, i) => ({
         containerType: LOOT_CONTAINER_TYPES.HouseContainers, key: `container:${i}`, items: c.items ?? null,
         stockedDate: c.stockedDate ?? 0,
+        openedOn: c.openedOn ?? 0,   // UXB1-O: the searched lid survives the walk out of the door, as the stock does
       })),
     ];
     // AUDIT 39 (#32): the whole door record, not the state word alone.
@@ -3109,6 +3117,7 @@ export function createWorldModes(host) {
       // stockedDate is DFU's own 0 - "never stocked" - so such a shelf
       // restocks once and then behaves.
       if (target) target.stockedDate = c.stockedDate ?? 0;
+      if (target && kind === 'container') target.openedOn = c.openedOn ?? 0;   // UXB1-O: a record cached before it carries none - never searched
     }
     // #32: through the system's own restore, which settles the matrix
     // and the collider bucket (syncRestored) - a door restored open
@@ -5883,10 +5892,10 @@ export function createWorldModes(host) {
                 }
               },
             });
+            if (win && privateProperty) c.openedOn = c.stockedDate;   // UXB1-O: this character has seen this stock (shopStock.js stockSearched)
             if (win) { interiorOverlay = win; if (!owned) interiorLootOpened(key, win, { fresh }); }   // WORLD6a: a stranger's cupboard is the room's from the open
           };
-          const owned = (b?.buildingType === BUILDING_TYPES.Ship && ownsShip(playerEntity))
-            || isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, b?.buildingKey);
+          const owned = ownsThisInterior(b);   // UXB1-N: the one predicate the plaque reads too
           if (owned) {
             // ":907 - loot.stockedDate = 1; // Ensure it gets
             // serialized". A literal 1 is below any real
@@ -5908,12 +5917,12 @@ export function createWorldModes(host) {
               fresh = true;   // AUDIT WORLD6a A5: said at the window's mount, after the prompt - No claims nothing
             }
             if (c.items.length === 0) return true;   // "If no contents, do nothing"
-            interiorOverlay = new ChoiceWindow({
-              lines: _rowsText(townTalk?.lines?.(PRIVATE_PROPERTY_TEXT_ID) ?? [], 'This looks like private property. Do you still want to look through it?'),
-              options: [
-                { code: 'KeyY', label: 'Y - yes', action: () => openLoot(true) },
-                { code: 'KeyN', label: 'N - no', action: () => {} },
-              ],
+            // UXB1-M: DFU's own box (PlayerActivate.cs:916-918: CommonMessageBoxButtons.YesNo, PrivatePropertyId) -
+            // Yes and No a mouse presses, on the parchment or the enhanced card; Y, N and Return (No) as DFU's.
+            interiorOverlay = new YesNoBoxWindow({
+              rows: privatePropertyRows(townTalk?.lines?.(PRIVATE_PROPERTY_TEXT_ID)),
+              onYes: () => openLoot(true),   // PrivateProperty_OnButtonClick (:1085-1093): the loot-target inventory
+              onNo: () => {},                // ...else LootTarget = null - nothing is claimed
             });
           }
         }
