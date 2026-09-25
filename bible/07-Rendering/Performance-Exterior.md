@@ -297,3 +297,47 @@ meter's silence; the host's budget, lend and pump. Re-stated on purpose:
 `perf7.test.js`'s host pin and `terrainscale1.test.js`'s slice marker
 (the breather takes options). Mutants: `perfextc.json` C5 x18, all dead;
 `terrainscale1.json`'s two BF1 records re-aimed by content.
+
+### PERF-EXT-C6 — a collider cell's key is a number
+
+**Before.** Every triangle a streamed pixel files into the collider
+(`player/collider.js` `addMesh`, per model of every pixel, both skins)
+minted a template string per covered cell - `${gx},${gz}` - to hash, look
+up and drop, and a fourth array a triangle (`for (const v of [a, b, c])`)
+to grow the bucket's bounds; every point query and ray minted a string per
+cell it read. On the synthetic city pixel (3,000 models, 300,000
+triangles) the insert was ~1.07 s of main thread across the build.
+
+**After.** `cellKey(gx, gz) = (gx + 2^20) * 2^21 + (gz + 2^20)`, exact in a
+double and one-to-one for |g| < 2^20 cells (two million units on the fine
+grid, sixty-seven million on the coarse; a bucket's coordinates are
+pixel-local, in the thousands), used by the two filings and the four
+lookups; the corners are walked by index. The grid is a BROAD phase: two
+cells that shared a key could only hand a query more triangles for the
+narrow phase to refuse, never fewer - and none do. Every answer is the
+same bits.
+
+**Not done: V2, the Float64Array triangle store.** The prover measured it
+only as the hunter's INSERT-ONLY prototype (`colliderProto.mjs` VAR=2,
+which never ran a query), and stated that it rewrites every narrow phase
+(`raycastHit` and its best triangle, `_resolveSphere`, `capsuleCast`,
+`sphereOverlaps`, navBake's reader) and needs the full differential before
+it could land. Collision is a 1:1 port surface; unproven, it is not
+built.
+
+| harness | before (base) | after (this tree) |
+|---|---|---|
+| `colliderInsert.mjs` - 300,000 triangles, two runs | insert 1,067-1,073 ms; per model median 0.191-0.194 ms | 743-783 ms; 0.089-0.100 ms |
+| the same - GC during the insert | 60-61 collections, 395-432 ms | 51-52 collections, 419-428 ms (the pauses are noise) |
+| `tools/guardCostProbe.mjs 5 1200 12` - five guards, three runs | mean 0.891-1.005 ms, median 0.662-0.702 | mean 0.823-0.929 ms, median 0.588-0.653 (the query side, ~7-10% - the prover read no change) |
+
+Pins: `test/colliderkeys.test.js` (3) - every bucket of a scene with fine,
+coarse-filed and short-listed triangles, at positive and negative cells,
+holds cell for cell (decoded) the triangle lists of the OLD string-keyed
+filing, kept verbatim in the test with collider.js's constants read from
+it; every overlap on a lattice across coarse boundaries either side of
+zero, and every ray, answers exactly as a twin whose every cell holds
+every triangle (the soup walked whole - true by design on the base too,
+it is the picture's guard); the key's formula, its one-to-one-ness at the
+corners of its range, and no template literal or corner array left.
+Mutants: `perfextc.json` C6 x8, all dead.

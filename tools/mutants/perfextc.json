@@ -591,5 +591,113 @@
   "tests": [
    "test/buildslice.test.js"
   ]
+ },
+ {
+  "name": "PERF-EXT-C6-the-key-folds-so-far-cells-share-it",
+  "file": "src/player/collider.js",
+  "old": "const cellKey = (gx, gz) => (gx + 0x100000) * 0x200000 + (gz + 0x100000);",
+  "new": "const cellKey = (gx, gz) => (gx + 0x100000) * 0x100 + (gz + 0x100000);",
+  "tests": [
+   "test/colliderkeys.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C6-a-wide-triangle-is-filed-under-the-transposed-coarse-cell",
+  "file": "src/player/collider.js",
+  "old": "      const k = cellKey(gx, gz);   // PERF-EXT-C6\n      let cell = bucket.coarse.get(k);",
+  "new": "      const k = cellKey(gz, gx);   // PERF-EXT-C6\n      let cell = bucket.coarse.get(k);",
+  "tests": [
+   "test/colliderkeys.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C6-a-triangle-is-filed-under-the-transposed-fine-cell",
+  "file": "src/player/collider.js",
+  "old": "          const k = cellKey(gx, gz);   // PERF-EXT-C6\n          let cell = bucket.grid.get(k);",
+  "new": "          const k = cellKey(gz, gx);   // PERF-EXT-C6\n          let cell = bucket.grid.get(k);",
+  "tests": [
+   "test/colliderkeys.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C6-the-bounds-miss-a-triangles-third-corner",
+  "file": "src/player/collider.js",
+  "old": "      for (let j = 0; j < 3; j++) {   // PERF-EXT-C6",
+  "new": "      for (let j = 0; j < 2; j++) {   // PERF-EXT-C6",
+  "tests": [
+   "test/colliderkeys.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C6-the-point-query-reads-the-wrong-fine-row",
+  "file": "src/player/collider.js",
+  "old": "      const cell = bucket.grid.get(cellKey(gx + ox, gz + oz));   // PERF-EXT-C6",
+  "new": "      const cell = bucket.grid.get(cellKey(gx + ox, gz + ox));   // PERF-EXT-C6",
+  "tests": [
+   "test/colliderkeys.test.js",
+   "test/perfcol1.test.js",
+   "test/name1_bubbles.test.js",
+   "test/audit_wod_branch.test.js",
+   "test/motorStairs.test.js",
+   "test/climbing.test.js",
+   "test/player.test.js",
+   "test/ph1_physics.test.js",
+   "test/arrowflight.test.js",
+   "test/disc8.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C6-the-point-query-reads-one-coarse-column",
+  "file": "src/player/collider.js",
+  "old": "        const cell = bucket.coarse.get(cellKey(cx + ox, cz + oz));   // PERF-EXT-C6",
+  "new": "        const cell = bucket.coarse.get(cellKey(cx, cz + oz));   // PERF-EXT-C6",
+  "tests": [
+   "test/colliderkeys.test.js",
+   "test/perfcol1.test.js",
+   "test/name1_bubbles.test.js",
+   "test/audit_wod_branch.test.js",
+   "test/motorStairs.test.js",
+   "test/climbing.test.js",
+   "test/player.test.js",
+   "test/ph1_physics.test.js",
+   "test/arrowflight.test.js",
+   "test/disc8.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C6-the-rays-coarse-walk-reads-transposed-cells",
+  "file": "src/player/collider.js",
+  "old": "      const cell = bucket.coarse.get(cellKey(cx, cz));   // PERF-EXT-C6",
+  "new": "      const cell = bucket.coarse.get(cellKey(cz, cx));   // PERF-EXT-C6",
+  "tests": [
+   "test/colliderkeys.test.js",
+   "test/perfcol1.test.js",
+   "test/name1_bubbles.test.js",
+   "test/audit_wod_branch.test.js",
+   "test/motorStairs.test.js",
+   "test/climbing.test.js",
+   "test/player.test.js",
+   "test/ph1_physics.test.js",
+   "test/arrowflight.test.js",
+   "test/disc8.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C6-the-rays-fine-walk-reads-transposed-cells",
+  "file": "src/player/collider.js",
+  "old": "        const cell = bucket.grid.get(cellKey(cx, cz));   // PERF-EXT-C6",
+  "new": "        const cell = bucket.grid.get(cellKey(cz, cx));   // PERF-EXT-C6",
+  "tests": [
+   "test/colliderkeys.test.js",
+   "test/perfcol1.test.js",
+   "test/name1_bubbles.test.js",
+   "test/audit_wod_branch.test.js",
+   "test/motorStairs.test.js",
+   "test/climbing.test.js",
+   "test/player.test.js",
+   "test/ph1_physics.test.js",
+   "test/arrowflight.test.js",
+   "test/disc8.test.js"
+  ]
  }
 ]

@@ -133,3 +133,8 @@ cluster C has the numbers and the laws):
   for the first time. The trade-off, for Mac: a heavy frame builds at up
   to half pace for at most two seconds, so the far ring's notch over a
   pixel still building stays open longer in clear weather.
+- **PERF-EXT-C6** - a collider cell's key is a number. The collider
+  minted a string per cell a streamed triangle covered and per cell a
+  query read; the key is one exact multiply-add now, and the insert of a
+  synthetic city pixel's 300,000 triangles fell from ~1.07 s to ~0.76 s
+  of main thread (-27-30%), every answer the same bits.
