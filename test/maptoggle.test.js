@@ -55,10 +55,10 @@ test('MAP-TOGGLE, driven: with a document and the switch on, the doors hand out 
   } finally { delete globalThis.document; globalThis.window = prevW; }
 });
 
-test('MAP-TOGGLE by source: the Features row - sight, enhanced-only, the player\'s own prefs switch, on by default, said in one or two sentences', () => {
+test('MAP-TOGGLE by source: the Features row - interface (FT18; sight before), enhanced-only, the player\'s own prefs switch, on by default, said in one or two sentences', () => {
   const row = FEATURES.find((f) => f.id === 'enhanced-map');
   assert.ok(row, 'the row exists');
-  assert.equal(row.group, 'sight'); assert.deepEqual([...row.kinds], ['enhanced']);
+  assert.equal(row.group, 'interface'); assert.deepEqual([...row.kinds], ['enhanced']);   // FT18: a map is drawn over the world, not in it
   assert.deepEqual({ ...row.control }, { store: 'prefs', key: 'heldMap', initial: true, online: 'player' });
   assert.match(row.note, /Off is Daggerfall/, 'the note says what off is');
   const gate = rd('src/ui/mapSkin.js');

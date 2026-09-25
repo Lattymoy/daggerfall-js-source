@@ -173,7 +173,7 @@ test('WEATHER2b the switch: the enhanced skin, Enhanced Environments and the wea
   const row = FEATURES.find((f) => f.id === 'weather-events');
   assert.ok(row); assert.equal(row.control.key, 'weatherEvents'); assert.equal(row.control.initial, true); assert.equal(row.control.online, true);
   assert.equal(PREF_DEFAULTS.weatherEvents, true); assert.equal(ONLINE_FORCED_PREFS.weatherEvents, true, 'one field for every player');
-  assert.equal(FEATURES.findIndex((f) => f.id === 'weather-events'), FEATURES.findIndex((f) => f.id === 'flora-sway') + 1);
+  assert.equal(FEATURES.findIndex((f) => f.id === 'weather-events'), FEATURES.findIndex((f) => f.id === 'enhanced-map') + 1, 'FT18: where the sway row stood - the sway is the wind row\'s part now');
   assert.match(rd('src/systems/weatherSim.js'), /get\('wxfield'\) !== 'off'/, 'the kill door');
 });
 

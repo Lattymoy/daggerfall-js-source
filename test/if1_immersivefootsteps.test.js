@@ -128,7 +128,7 @@ test('IF1: the Mods pane entry is the shipped modsettings.json - every key, its 
   const row = FEATURES.find((f) => f.id === 'mod-immersive-footsteps');
   assert.ok(row, 'FT9: a Mod Authored row over the switch');
   assert.equal(row.control.store, 'mods'); assert.equal(row.control.key, 'Enabled'); assert.match(JSON.stringify(row.control), /immersive-footsteps/);
-  assert.equal(row.effect, 'Takes effect at once.'); assert.equal(row.group, 'world');
+  assert.equal(row.effect, 'Takes effect at once.'); assert.equal(row.group, 'sound');   // FT18: under Sound
   for (const k of MOD_CURATED[V]) assert.ok(m.keys[k], `curated ${k} is a real key`);
   const credit = CREDITS.mods.find((c) => c.vendor.includes(V));
   assert.ok(credit, 'credited on the About screen');

@@ -268,6 +268,7 @@ export const READOUT = Object.freeze({
   'Video/ResolutionHeight': 'your window',
   'Video/ExclusiveFullscreen': 'browser',
   'Video/Fullscreen': 'browser',
+  'Video/VSync': 'always',
 });
 
 /** The sentence that says what you get INSTEAD - shown in the detail
@@ -285,6 +286,7 @@ export const INSTEAD = Object.freeze({
   'Video/ResolutionHeight': 'The picture already fills the window you give it.',
   'Video/ExclusiveFullscreen': "Use your browser's own fullscreen - F11 on a desktop.",
   'Video/Fullscreen': "Use your browser's own fullscreen - F11 on a desktop.",
+  'Video/VSync': 'Frames always wait for your screen. To run slower than it, set a Frame Rate Cap.',
 });
 
 /** The one-line status a row's tier earns, shown in the help panel. */

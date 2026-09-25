@@ -2945,7 +2945,7 @@ ${badgeCss()}
      tools/enhancedMenuProbe.mjs had been red since FT14 and so nobody
      saw it. Sized here rather than in the FT block below, because this
      is where the law lives and the next control added must find it. */
-  .ft-segb, .ft-mchip, .ft-tile-more { min-height: 44px; }
+  .ft-segb, .ft-mchip, .ft-tile-more, .ft-search { min-height: 44px; }   /* FT18: the search is a thumb's target too */
 }
 .shell .step { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; background: none;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
@@ -4078,6 +4078,15 @@ ${badgeCss()}
    alone. A CHOICE (no Off segment) keeps the grey block: it has no
    off to be red about. A forced switch keeps its fill - the brass
    edge and the "online" tag say it is forced. */
+/* FT18: the search and All off, one row over the tiles; a tile, a grid or a group head the search took away is
+   gone whatever display its own rule gives it (the UA's [hidden] loses to a class's display). */
+.ft-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: -4px 0 16px; }
+.ft-tools .acts { margin: 0; }
+.ft-search { flex: 1 1 220px; min-width: 0; min-height: 46px; padding: 0 12px; background: var(--ink);
+  border: 1px solid var(--iron); color: var(--bone); font: inherit; font-size: 14px; }
+.ft-search::placeholder { color: var(--dim); }
+.ft-search:focus-visible { outline: none; border-color: var(--brass); }
+.ft-tile[hidden], .ft-grid[hidden], .ft-grouphead[hidden], .ft-none[hidden] { display: none; }
 .ft-panes { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 22px; align-items: start; }
 .ft-main { min-width: 0; }
 .ft-grouphead { display: flex; align-items: baseline; gap: 10px; margin: 18px 0 8px; }
@@ -4179,6 +4188,7 @@ ${badgeCss()}
 .shell .ft-segb[aria-pressed="true"] { background: rgba(0,0,0,0.45); }
 .shell .ft-mchip { background: rgba(0,0,0,0.3); border: 2px solid rgba(125,116,96,0.35); }
 .shell .ft-mchip[aria-pressed="true"] { border-color: var(--verdigris); }
+.shell .ft-search { background: rgba(0,0,0,0.3); border: 2px solid rgba(125,116,96,0.35); }   /* FT18: the search, in the shell's paint */
 .shell .ft-tile-drawer { border-top: 2px solid rgba(125,116,96,0.3); }
 .shell .ft-rail { background: rgba(10,12,17,0.55); border: 2px solid rgba(125,116,96,0.35); }
 .shell .ft-rail-kv { border-top: 2px solid rgba(125,116,96,0.3); }

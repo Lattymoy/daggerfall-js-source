@@ -751,10 +751,13 @@ test('BLOOD1a: the feature row owns the key and the default, and online it is th
   const { FEATURES } = await import('../src/systems/features.js');
   const { BLOOD_PREF, bloodMarksOn, bloodCapacity, bloodDensity, BLOOD_CAPACITY_DEFAULT, BLOOD_CAPACITY_MIN, BLOOD_CAPACITY_MAX } =
     await import('../src/combat/bloodSwitch.js');
-  const row = FEATURES.find((f) => f.id === 'blood-marks');
+  // FT18: the four blood rows are ONE - the marks are a part of the `blood` row, declared in its `also` (RF4's law, one
+  // row over: the row that covers a key is the one declaration of it)
+  const row = FEATURES.find((f) => f.id === 'blood');
   assert.ok(row, 'the row exists');
-  assert.equal(row.control.key, BLOOD_PREF, 'RF4: the row owns the key the switch reads');
-  assert.equal(row.control.initial, true, 'on by default - the splash always played, and the mark is what a player expects to still be there');
+  const marks = row.control.also.find((a) => a.key === BLOOD_PREF);
+  assert.ok(marks && row.control.parts.some((pt) => pt.key === BLOOD_PREF), 'RF4: the row owns the key the switch reads - FT18: as a part it covers');
+  assert.equal(marks.initial, true, 'on by default - the splash always played, and the mark is what a player expects to still be there');
   // AN ENHANCED ROW, NOT A MOD ROW: no mod is vendored for this, so
   // there is no author's name to carry in the title the way every
   // `modFeature` row does.
@@ -762,7 +765,8 @@ test('BLOOD1a: the feature row owns the key and the default, and online it is th
   assert.ok(!/by /i.test(row.title), 'no author in the title - it is the port’s own');
   // ONLINE IT IS THE PLAYER'S: a mark is a local picture with no
   // gameplay in it, unlike the survival row the room has to agree on.
-  assert.equal(row.control.online, 'player');
+  assert.equal(marks.online, 'player');
+  assert.equal(row.control.online, 'player', 'and the gore dial the row stands on');
 
   // the defaults hold with nothing stored
   assert.equal(bloodMarksOn(), true);
@@ -3016,7 +3020,7 @@ import { Collider } from '../src/player/collider.js';
 const IDENTITY = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 
 test('MAC-BUG W5: the ground outside is heightAt, and surfaceHit is the ray that knows it', () => {
-  // exterior.js:568 - `new Collider(() => GROUND_OFFSET * 0.025)`,
+  // exterior.js:569 - `new Collider(() => GROUND_OFFSET * 0.025)`,
   // and not one triangle under the player's feet.
   const outside = new Collider(() => 0);
   assert.equal(outside.raycastHit([0, 2, 0], [0, -1, 0], 8).dist, Infinity,
@@ -3519,9 +3523,10 @@ test('BLOOD2e: blood on the lens - a real blow throws drops that slide and fade,
   assert.equal(lens.draw(renderer, canvas, null), 0);
 
   // the row, on by default, the player's own online
-  const row = E_FEATURES.find((f) => f.id === 'blood-screen');
+  const row = E_FEATURES.find((f) => f.id === 'blood');   // FT18: a part of the one blood row now
   assert.ok(row && row.group === 'combat' && row.kinds.includes('enhanced'));
-  assert.deepEqual(row.control, { store: 'prefs', key: 'blood-screen', initial: true, online: 'player' });
+  assert.deepEqual(row.control.also.find((a) => a.key === 'blood-screen'), { store: 'prefs', key: 'blood-screen', initial: true, online: 'player' });
+  assert.ok(row.control.parts.some((pt) => pt.key === 'blood-screen'), 'its own switch, in the tile\'s drawer');
   assert.match(a4Read('src/combat/bloodSwitch.js'), /export const bloodScreenOn = \(\) => getPref\(BLOOD_SCREEN_PREF\) !== false;/);
   // the HUD's one call: spattered off the detector CameraRecoiler reads, ticked and drawn above the `!art` return
   const hud = a4Read('src/ui/hud.js');
@@ -3633,11 +3638,14 @@ test('BLOOD2g: the gore dial - one tier sets the amount and the count, the row n
   assert.equal(GORE_TIERS.abattoir.capacity, BLOOD_CAPACITY_MAX, 'the ceiling');
   assert.equal(GORE_DEFAULT, 'normal');
   // the row: a tiered prefs row over the same key, every tier named, the default among them
-  const row = E_FEATURES.find((f) => f.id === 'blood-gore');
+  const row = E_FEATURES.find((f) => f.id === 'blood');   // FT18: the gore dial is the one blood row's bar
   assert.ok(row && row.group === 'combat' && row.kinds.includes('enhanced'));
   assert.equal(row.control.key, BLOOD_GORE_PREF); assert.equal(row.control.initial, GORE_DEFAULT); assert.equal(row.control.online, 'player');
-  assert.deepEqual(row.control.tiers.map(([v]) => v), Object.keys(GORE_TIERS), 'every tier, in order');
-  assert.ok(row.control.tiers.every(([v, l]) => typeof l === 'string' && l.toLowerCase() === v), 'named as itself');
+  await import('../src/systems/featureLanes.js');
+  const { resolveControl } = await import('../src/systems/features.js');
+  const tiers = resolveControl(row).tiers;
+  assert.deepEqual(tiers.map(([v]) => v), ['off', ...Object.keys(GORE_TIERS)], 'Off, then every tier, in order (FT18: the bar\'s Off is the three parts off)');
+  assert.ok(tiers.every(([v, l]) => typeof l === 'string' && l.toLowerCase() === v), 'named as itself');
   // the dep bag reads the tier live: a pool built after the shelf changes is sized by it
   const restore = () => setPref(BLOOD_GORE_PREF, undefined);
   try {
@@ -3752,7 +3760,7 @@ test('BLOOD AUDIT 5: by source - the menu shows a row’s default for a stored v
   assert.match(menu, /const found = c\.tiers\.findIndex\(\(\[v\]\) => String\(v\) === cur\);\s*\n\s*const at = found >= 0 \? found : fallback;/, 'the tile');
   assert.match(menu, /const fallback = Math\.max\(0, c\.tiers\.findIndex\(\(\[v\]\) => String\(v\) === String\(c\.default \?\? c\.initial\)\)\);/);
   assert.match(menu, /const found = tiers\.findIndex\(\(\[v\]\) => String\(v\) === cur\);\s*\n\s*const at = found >= 0 \? found : Math\.max\(0, tiers\.findIndex/, 'the chooser');
-  const row = E_FEATURES.find((f) => f.id === 'blood-gore');
+  const row = E_FEATURES.find((f) => f.id === 'blood');   // FT18
   assert.match(row.effect, /when the game is next reloaded \(a dungeon takes it on entry\)/, 'three pools live a page; only the dungeon rebuilds on entry');
 });
 
