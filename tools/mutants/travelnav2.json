@@ -1,0 +1,100 @@
+[
+  {
+    "name": "TN2-no-headway",
+    "file": "src/systems/travelSteer.js",
+    "old": "    if (s.noGain > P.headwayBudget) return stopWith(out, inp, 'stuck');",
+    "new": "    if (false) return stopWith(out, inp, 'stuck');",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN2-headway-never-regained",
+    "file": "src/systems/travelSteer.js",
+    "old": "    if (toGo < s.bestDist - P.headwayGain) { s.bestDist = toGo; s.noGain = 0; }",
+    "new": "    if (toGo < s.bestDist - P.headwayGain) { s.bestDist = toGo; }",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN2-headway-counts-nothing",
+    "file": "src/systems/travelSteer.js",
+    "old": "    else s.noGain += moved;",
+    "new": "    else s.noGain += 0;",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN2-headway-spans-legs",
+    "file": "src/systems/travelSteer.js",
+    "old": "      s.bestDist = Infinity; s.noGain = 0;   // TRAVEL-NAV2: headway is measured a leg at a time",
+    "new": "",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN2-headway-is-the-detour-budget",
+    "file": "src/systems/travelSteer.js",
+    "old": "  headwayBudget: 400,",
+    "new": "  headwayBudget: 200,",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN2-jump-is-a-walk",
+    "file": "src/systems/travelSteer.js",
+    "old": "      if (moved > Math.max(P.jumpMin, P.jumpReaches * s.lastReach)) {",
+    "new": "      if (false) {",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN2-jump-keeps-the-old-line",
+    "file": "src/systems/travelSteer.js",
+    "old": "        s.ox = inp.x; s.oz = inp.z;\n        endEpisode();",
+    "new": "        endEpisode();",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN2-jump-counted-as-walked",
+    "file": "src/systems/travelSteer.js",
+    "old": "        moved = 0;\n        s.ox = inp.x;",
+    "new": "        s.ox = inp.x;",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN2-jump-ignores-the-frame-reach",
+    "file": "src/systems/travelSteer.js",
+    "old": "s.lastZ = inp.z; s.lastReach = Math.max(0, inp.reach);",
+    "new": "s.lastZ = inp.z;",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN2-walkable-face-ends-the-leg",
+    "file": "src/systems/travelSteer.js",
+    "old": "        if (rides >= FEELER_RIDES || along + RIDE_NUDGE >= b) break;   // the rest of the leg taken as seen",
+    "new": "        break;   // the rest of the leg taken as seen",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN2-rides-unbounded",
+    "file": "src/systems/travelSteer.js",
+    "old": "        if (rides >= FEELER_RIDES || along + RIDE_NUDGE >= b) break;   // the rest of the leg taken as seen",
+    "new": "        if (along + RIDE_NUDGE >= b) break;   // the rest of the leg taken as seen",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN2-ride-drops-back-to-the-ground",
+    "file": "src/systems/travelSteer.js",
+    "old": "          if (y1 < oy) y1 = oy;",
+    "new": "",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN2-underside-ridden",
+    "file": "src/systems/travelSteer.js",
+    "old": "        if (hit.normal[1] > 0) {",
+    "new": "        if (true) {",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN2-underside-ends-the-leg",
+    "file": "src/systems/travelSteer.js",
+    "old": "          ox = hx + d[0] * RIDE_NUDGE; oy = hy + d[1] * RIDE_NUDGE; oz = hz + d[2] * RIDE_NUDGE;",
+    "new": "          break;",
+    "tests": ["test/travelnav.test.js"]
+  }
+]

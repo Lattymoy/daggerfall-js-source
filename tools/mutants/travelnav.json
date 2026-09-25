@@ -163,8 +163,8 @@
   {
     "name": "TN-ramps-are-walls",
     "file": "src/systems/travelSteer.js",
-    "old": "        if (hit.dist <= span && Math.abs(hit.normal[1]) < WALKABLE_NY) {",
-    "new": "        if (hit.dist <= span) {",
+    "old": "        if (Math.abs(hit.normal[1]) < WALKABLE_NY) return along;   // a wall",
+    "new": "        return along;   // a wall",
     "tests": ["test/travelnav.test.js"]
   },
   {

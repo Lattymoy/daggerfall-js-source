@@ -59,12 +59,18 @@
 //   TRAVEL_NAV_TEXT) - before contact, never after. And if the body stops
 //   moving while the drive asks it to (something the feelers cannot see:
 //   a sill under the knee, a post between two feelers), GRINDING is
-//   measured against what the host really applied and stops it too.
+//   measured against what the host really applied and stops it too; and
+//   if it moves and gets nowhere - HEADWAY_BUDGET metres without once
+//   coming a metre nearer the target (TRAVEL-NAV2) - that stops it too.
 //
 // CHEAP. Three feelers a frame on an open road; a detour's frame is
 // usually five (the way wanted's centre, one closer offset, the held
 // corridor); and no frame casts more than MAX_FEELERS - a scan that would
-// is resumed next frame with the body held for the one it waits.
+// is resumed next frame with the body held for the one it waits. A FEELER
+// IS NOT ONE RAY (TRAVEL-NAV2's audit): the collider probe casts it in
+// FEELER_LEG legs, so a feeler to the look-ahead at a hitching x100 is
+// dozens of raycastHit calls - measured over a forty-bucket town, 0.2 ms
+// a frame at the worst pace and 0.06 at an ordinary one.
 //
 // PURE, like the autopilot: it takes numbers and a probe function and
 // answers numbers. No collider, no DOM, no world reads - which is what lets
@@ -128,6 +134,17 @@ export const TRAVEL_STEER = Object.freeze({
   grindRatio: 0.25,
   /** ...this many windows running. */
   grindWindows: 3,
+  /** TRAVEL-NAV2: metres walked without once getting HEADWAY_GAIN nearer
+   *  the target is no headway, and a stop - twice the detour budget, so a
+   *  detour that is honestly going round ends on its own budget first. */
+  headwayBudget: 400,
+  /** ...a metre nearer is headway. */
+  headwayGain: 1,
+  /** TRAVEL-NAV2: a body that moved further than this between two frames
+   *  (and further than JUMP_REACHES of what the last frame could carry
+   *  it) was put there, not walked there. */
+  jumpMin: 64,
+  jumpReaches: 4,
 });
 
 /** How far the motor can carry the body THIS frame at a forward force of
@@ -164,6 +181,9 @@ export function createTravelSteer(params = TRAVEL_STEER) {
     walked: 0,              // metres walked since
     commitSide: 0, commitLeft: 0,
     winAsked: 0, winMoved: 0, grind: 0,
+    bestDist: Infinity,     // TRAVEL-NAV2: the nearest this leg has come to its target
+    noGain: 0,              // ...and the metres walked since it came a metre nearer
+    lastReach: 0,           // TRAVEL-NAV2: the most the last frame could carry the body
     probes: 0,              // feelers cast this frame
     episodes: 0, flips: 0, holds: 0,   // counted, for the pins
   };
@@ -183,6 +203,7 @@ export function createTravelSteer(params = TRAVEL_STEER) {
     endEpisode(); s.flipped = false; s.walked = 0;
     s.commitSide = 0; s.commitLeft = 0;
     s.winAsked = 0; s.winMoved = 0; s.grind = 0;
+    s.bestDist = Infinity; s.noGain = 0;
   }
 
   /** One feeler, counted, clamped to `dist`. */
@@ -282,13 +303,28 @@ export function createTravelSteer(params = TRAVEL_STEER) {
     if (inp.tx !== s.tx || inp.tz !== s.tz) {
       s.tx = inp.tx; s.tz = inp.tz; s.ox = inp.x; s.oz = inp.z;
       endEpisode();
+      s.bestDist = Infinity; s.noGain = 0;   // TRAVEL-NAV2: headway is measured a leg at a time
     }
 
     // 1. WHAT THE LAST FRAME DID. `asked` is the travel the host really
     // applied last frame (after its own ground gate), so a drive held for
     // the streamer is not read as a body that will not move.
+    let moved = 0;
     if (s.hasLast) {
-      const moved = Math.hypot(inp.x - s.lastX, inp.z - s.lastZ);
+      moved = Math.hypot(inp.x - s.lastX, inp.z - s.lastZ);
+      if (moved > Math.max(P.jumpMin, P.jumpReaches * s.lastReach)) {
+        // TRAVEL-NAV2: A JUMP IS NOT A WALK. The travel map is a window the
+        // journey runs under (TravelOptionsMod.cs:1351's DfTravelMapWindow
+        // exception), and a fast travel taken from it teleports the body
+        // with the autopilot still set - the mod re-aims from the new
+        // pixel, and a line kept from the old one sent the body sideways
+        // after it, mile upon mile. The line starts again from here, and
+        // nothing the jump covered counts as walked, grinding or headway.
+        moved = 0;
+        s.ox = inp.x; s.oz = inp.z;
+        endEpisode();
+        s.commitLeft = 0; s.winAsked = 0; s.winMoved = 0; s.bestDist = Infinity; s.noGain = 0;
+      }
       if (s.episode) s.walked += moved;
       s.commitLeft -= moved;
       s.winAsked += inp.asked;
@@ -298,8 +334,19 @@ export function createTravelSteer(params = TRAVEL_STEER) {
         s.winAsked = 0; s.winMoved = 0;
       }
     }
-    s.hasLast = true; s.lastX = inp.x; s.lastZ = inp.z;
+    s.hasLast = true; s.lastX = inp.x; s.lastZ = inp.z; s.lastReach = Math.max(0, inp.reach);
     if (s.grind >= P.grindWindows) return stopWith(out, inp, 'stuck');
+    // TRAVEL-NAV2: NO HEADWAY. Grinding asks whether the body MOVES; this
+    // asks whether it gets anywhere. A detour that ends and begins again
+    // every frame or two (a pocket's mouth at a horse's pace, backing out
+    // and walking in) starts a fresh budget each time, and the fuzzed
+    // layouts found bodies circling for ever with the clock racing. The
+    // slice's brief named it: stuck detection as the distance to the
+    // target not shrinking over a window.
+    const toGo = Math.hypot(s.tx - inp.x, s.tz - inp.z);
+    if (toGo < s.bestDist - P.headwayGain) { s.bestDist = toGo; s.noGain = 0; }
+    else s.noGain += moved;
+    if (s.noGain > P.headwayBudget) return stopWith(out, inp, 'stuck');
 
     // 2. THE LINE. From where the leg began to the target's centre; the
     // progress along it and the signed distance off it (right positive).
@@ -472,6 +519,20 @@ export const WALKABLE_NY = Math.cos(SLOPE_LIMIT_DEG * DEG);
 /** Stood this far over the terrain the body is on a structure, and its
  *  feelers run level from the feet rather than following the ground. */
 const ON_STRUCTURE = 0.5;
+/** TRAVEL-NAV2: A FACE THAT IS WALKED ON HIDES NOTHING. A feeler that met
+ *  a ramp used to give up the rest of its leg, so a wall standing at the
+ *  ramp's head - or a boulder's steep face above its gentle one - inside
+ *  the same eight metres was never seen, and the body was driven into it
+ *  at full force; and the next leg, back at the ground's height, started
+ *  INSIDE the deck the ramp led onto and read its far side as a wall. Now
+ *  the feeler RIDES the face (on from it, FEELER_HEIGHT over it, as the
+ *  body will be, to the leg's end - so the next leg starts over the deck
+ *  and meets its top again while it goes on) or, meeting one from beneath,
+ *  goes on under it - this many faces a leg, after which the rest of the
+ *  leg is taken as seen, which is all any face bought before. */
+export const FEELER_RIDES = 4;
+/** How far on from a face the next cast starts, so it does not meet it again. */
+const RIDE_NUDGE = 0.01;
 
 /** A probe over a real collider (player/collider.js): `feet()` the body's
  *  feet in scene space. Each feeler starts FEELER_HEIGHT over the feet,
@@ -480,9 +541,10 @@ const ON_STRUCTURE = 0.5;
  *  (`collider.heightAt`) - so a house on a rise ahead is met at its wall,
  *  not passed under by a level ray that went into the hill (the terrain
  *  is not in the collider's buckets, so a ray passes through it). A hit on
- *  a face flatter than the slope limit is a ramp and is walked on. The
- *  origin, the direction and the hit are this probe's own, reused every
- *  call (collider.raycastHit's `out`). */
+ *  a face flatter than the slope limit is a ramp and is walked on - and
+ *  RIDDEN, so it hides nothing behind it (FEELER_RIDES). The origin, the
+ *  direction and the hit are this probe's own, reused every call
+ *  (collider.raycastHit's `out`). */
 export function createColliderProbe({ collider, feet, height = FEELER_HEIGHT, leg = FEELER_LEG }) {
   const o = [0, 0, 0];
   const d = [0, 0, 0];
@@ -496,21 +558,36 @@ export function createColliderProbe({ collider, feet, height = FEELER_HEIGHT, le
     let a = 0;
     while (a < maxDist) {
       const b = Math.min(maxDist, a + leg);
-      const x0 = sx + dirX * a, z0 = sz + dirZ * a;
       const x1 = sx + dirX * b, z1 = sz + dirZ * b;
       let y1 = y0;
       if (!level) {
         const g1 = collider.heightAt(x1, z1);
         if (Number.isFinite(g1)) y1 = g1 + height;
       }
-      const ex = x1 - x0, ey = y1 - y0, ez = z1 - z0;
-      const span = Math.hypot(ex, ey, ez);
-      if (span > 1e-9) {
-        o[0] = x0; o[1] = y0; o[2] = z0;
+      // the leg, from `a` - or on from the last face it rode - to `b`
+      let ox = sx + dirX * a, oy = y0, oz = sz + dirZ * a;
+      for (let rides = 0; ; rides++) {
+        const ex = x1 - ox, ey = y1 - oy, ez = z1 - oz;
+        const span = Math.hypot(ex, ey, ez);
+        if (!(span > 1e-9)) break;
+        o[0] = ox; o[1] = oy; o[2] = oz;
         d[0] = ex / span; d[1] = ey / span; d[2] = ez / span;
         collider.raycastHit(o, d, span, null, hit);
-        if (hit.dist <= span && Math.abs(hit.normal[1]) < WALKABLE_NY) {
-          return a + (b - a) * (hit.dist / span);
+        if (!(hit.dist <= span)) break;   // clear to the leg's end
+        const hx = ox + d[0] * hit.dist, hy = oy + d[1] * hit.dist, hz = oz + d[2] * hit.dist;
+        const along = (hx - sx) * dirX + (hz - sz) * dirZ;   // metres out along the feeler, level
+        if (Math.abs(hit.normal[1]) < WALKABLE_NY) return along;   // a wall
+        if (rides >= FEELER_RIDES || along + RIDE_NUDGE >= b) break;   // the rest of the leg taken as seen
+        if (hit.normal[1] > 0) {
+          // ground facing up the feeler: ride on it, FEELER_HEIGHT over it,
+          // to the leg's end - where the next leg starts, and meets the
+          // face's top again if the structure goes on
+          oy = hy + height;
+          if (y1 < oy) y1 = oy;
+          ox = hx + dirX * RIDE_NUDGE; oz = hz + dirZ * RIDE_NUDGE;
+        } else {
+          // a face met from beneath: on under it, along the same line
+          ox = hx + d[0] * RIDE_NUDGE; oy = hy + d[1] * RIDE_NUDGE; oz = hz + d[2] * RIDE_NUDGE;
         }
       }
       a = b; y0 = y1;

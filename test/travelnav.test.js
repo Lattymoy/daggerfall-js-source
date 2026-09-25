@@ -24,6 +24,7 @@ import { readFileSync } from 'node:fs';
 import {
   createTravelSteer, steerDrive, travelFrameReach, createColliderProbe, TRAVEL_STEER, FEELER_HEIGHT, WALKABLE_NY,
 } from '../src/systems/travelSteer.js';
+import * as STEER from '../src/systems/travelSteer.js';   // TRAVEL-NAV2: read by name, so a pin on a constant the base lacks fails as an assertion
 import { TravelAutopilot, calculateYaw, rectDistance, ARRIVAL_BUFFER } from '../src/systems/travelAutopilot.js';
 import { readTravelOptionsSettings, createTravelOptions } from '../src/systems/travelOptions.js';
 import { TRAVEL_OPTIONS_TEXT, TRAVEL_NAV_TEXT } from '../src/systems/travelOptionsText.js';
@@ -406,6 +407,97 @@ test('TRAVEL-NAV1 GRINDING: a body that stops moving while the drive asks it to 
   assert.equal(r.stop, null);
 });
 
+test('TRAVEL-NAV2 NO HEADWAY: a body that keeps moving and gets no nearer is stopped - the fuzzed pocket where a detour ended and began again for ever, the clock racing - and the budget is twice the detour\'s, so an honest detour ends on its own', () => {
+  // THE RULE, on its own: an open road, and a body driven round a ring ten
+  // metres across, a metre a frame, never nearer the target than forty -
+  // it moves every frame (so it is not grinding) and gets nowhere
+  const steer = createTravelSteer();
+  const inp = steer.input;
+  const open = () => Infinity;
+  Object.assign(inp, { key: {}, x: 0, z: 40, tx: 0, tz: 100, yaw: 0, goal: 50, reach: 1, quantum: 0.07, asked: 0 });
+  let out = steer.step(inp, open, steer.output);
+  let walked = 0, lastGain = 0, best = Infinity;
+  for (let i = 1; i < 3000 && !out.stop; i++) {
+    const t = i / 10;
+    const x = 10 * Math.sin(t), z = 50 - 10 * Math.cos(t);
+    const step = Math.hypot(x - inp.x, z - inp.z);
+    walked += step;
+    inp.x = x; inp.z = z; inp.asked = step;   // what was asked is what moved: no grinding
+    const toGo = Math.hypot(x, 100 - z);
+    if (toGo < best - P.headwayGain) { best = toGo; lastGain = walked; }
+    out = steer.step(inp, open, steer.output);
+  }
+  assert.equal(out.stop, 'stuck', 'no headway is a stop - "Paused the journey since you\'re making no headway."');
+  assert.equal(P.headwayBudget, 2 * P.detourBudget, 'twice the detour budget: a detour honestly going round ends on its own budget first (the wall above stops as blocked, not stuck)');
+  assert.ok(walked - lastGain > P.headwayBudget && walked - lastGain <= P.headwayBudget + 1.01, `stopped the frame it walked the budget past its last metre of headway (${(walked - lastGain).toFixed(2)} m)`);
+  assert.equal(out.forward, 0, 'and the frame that stops it moves nothing');
+  // a leg is its own: a new target starts the count again
+  const legs = createTravelSteer();
+  Object.assign(legs.input, { key: {}, x: 0, z: 0, tx: 0, tz: 100, yaw: 0, goal: 90, reach: 1, quantum: 0.07, asked: 1 });
+  legs.step(legs.input, open, legs.output);
+  for (let i = 1; i <= 300; i++) { legs.input.x = (i % 2) * 1; legs.step(legs.input, open, legs.output); }
+  assert.ok(legs.state.noGain > 250, 'three hundred metres of no headway on this leg');
+  legs.input.tz = 200;
+  legs.step(legs.input, open, legs.output);
+  assert.equal(legs.state.noGain, 0, '...and none on the next');
+  // THE FLIGHT the fuzz found (seed 29, trial 151, cut down to the four
+  // that make it): a building across the line sends the detour left, and
+  // two trunks by a second building's corner catch it - each detour ended
+  // as soon as the way wanted opened and a new one began a frame later with
+  // a fresh budget, so the old steering walked this for ever (four
+  // thousand detours at x1, a hundred kilometres at x60) and never stopped
+  const fuzzed = [box(-5.2, 32.6, 15.4, 46.6), box(-10.8, 68, -2.5, 86.1), trunk(-0.7, 77.7, 0.5), trunk(-1.9, 78.6, 0.5)];
+  for (const scale of [1, 10]) {
+    const r = fly({ obs: fuzzed, scale });
+    assert.ok(r.arrived || r.stop === 'stuck', `x${scale}: arrived, or stopped for no headway (${r.stop}, ${r.frames} frames, ${r.path.toFixed(0)} m)`);
+    assert.equal(r.touched, false, `x${scale}: never touched`);
+    assert.ok(r.path < 100 + 2 * P.headwayBudget, `x${scale}: within the budget, not for ever (${r.path.toFixed(0)} m)`);
+  }
+});
+
+test('TRAVEL-NAV2 A JUMP IS NOT A WALK: a fast travel taken from the map mid-journey starts the line again from where the body lands - the mod\'s own bearing, not a pursuit back to a line miles away - and charges nothing to the detour, grinding or headway', () => {
+  const steer = createTravelSteer();
+  const inp = steer.input;
+  const open = () => Infinity;
+  Object.assign(inp, { key: {}, x: 0, z: 0, tx: 0, tz: 1000, yaw: 0, goal: 990, reach: 0.15, quantum: 0.07, asked: 0 });
+  steer.step(inp, open, steer.output);   // the line runs up x = 0
+  for (let i = 1; i <= 30; i++) { inp.z = i * 0.1; inp.asked = 0.1; steer.step(inp, open, steer.output); }
+  // the travel map opened over the journey, a ship taken from it: the body
+  // is put down 500 m east, and the mod re-aims from the new pixel
+  inp.x = 500; inp.z = 3; inp.yaw = calculateYaw(500, 3, 0, 1000) * DEG;
+  const out = steer.step(inp, open, steer.output);
+  assert.equal(out.deflected, false, 'the mod\'s own bearing from where it landed');
+  assert.equal(out.yaw, inp.yaw, '...to the bit - not a pursuit point on the old line, 500 m west');
+  assert.equal(out.forward, 1);
+  assert.deepEqual([steer.state.ox, steer.state.oz], [500, 3], 'the line starts again from here');
+  assert.equal(steer.state.winMoved, 0, 'the jump is not travel for the grinding check');
+  assert.equal(steer.state.noGain, 0, '...nor for headway');
+  // and walking on from there, the line is the new one
+  for (let i = 1; i <= 20; i++) {
+    inp.x = 500 + Math.sin(inp.yaw) * i * 0.1; inp.z = 3 + Math.cos(inp.yaw) * i * 0.1;
+    assert.equal(steer.step(inp, open, steer.output).deflected, false, 'on the new line');
+  }
+  // a jump mid-detour ends the detour; nothing it covered is walked
+  const det = createTravelSteer();
+  const wall = (dx, dz) => (dz > 0.9 ? 3 : Infinity);
+  Object.assign(det.input, { key: {}, x: 0, z: 0, tx: 0, tz: 1000, yaw: 0, goal: 990, reach: 0.15, quantum: 0.07, asked: 0 });
+  det.step(det.input, wall, det.output);
+  assert.equal(det.state.episode, true, 'a detour is running');
+  det.input.x = 2000; det.input.yaw = calculateYaw(2000, 0, 0, 1000) * DEG;
+  const landed = det.step(det.input, open, det.output);
+  assert.equal(landed.stop, null, 'the journey goes on from where it landed - two kilometres are not a detour over its budget');
+  assert.equal(det.state.episode, false, 'the jump ended it');
+  assert.equal(det.state.walked, 0, 'and walked none of it');
+  // A FRAME THE MOTOR COULD HAVE CARRIED IS A WALK: a hitching x100 frame
+  // whose reach was 200 m moves the body 150 m - the line stays
+  const fast = createTravelSteer();
+  Object.assign(fast.input, { key: {}, x: 0, z: 0, tx: 0, tz: 5000, yaw: 0, goal: 4990, reach: 200, quantum: 7, asked: 0 });
+  fast.step(fast.input, open, fast.output);
+  fast.input.x = 1; fast.input.z = 150; fast.input.asked = 150;
+  fast.step(fast.input, open, fast.output);
+  assert.deepEqual([fast.state.ox, fast.state.oz], [0, 0], 'a walk, however fast, keeps its line');
+});
+
 // ─── the arrival buffer ─────────────────────────────────────────────────
 
 test('TRAVEL-NAV1 THE ARRIVAL STAND-OFF: a city that fills its pixel is arrived at OUTSIDE its walls - its buffer lies wholly in the neighbours, so it is an arrival there; the mod\'s own pixel-gated arm walks into the wall', () => {
@@ -680,6 +772,63 @@ test('TRAVEL-NAV1 THE FEELERS ARE THE COLLIDER\'S: a wall is met at its distance
   for (let k = 0; k < 5; k++) sp(Math.sin(k), Math.cos(k), k - 2, 40);
   assert.ok(seen.calls >= 25, 'legs of eight metres');
   assert.equal(seen.o.size, 1); assert.equal(seen.d.size, 1); assert.equal(seen.out.size, 1);
+});
+
+test('TRAVEL-NAV2 A FACE THAT IS WALKED ON HIDES NOTHING: a wall at a ramp\'s head, a deck\'s rail and a wall behind a face met from beneath are all seen - a deck the ramp leads onto is not read as a wall from inside it - and the ride is bounded and follows the ground again after', () => {
+  const feet = [0, 0, 0];
+  const probeOver = (c) => createColliderProbe({ collider: c, feet: () => feet });
+  const wedgeTris = new Uint32Array([0, 1, 2, 0, 2, 3, 0, 4, 5, 0, 5, 1, 4, 3, 2, 4, 2, 5, 0, 3, 4, 1, 5, 2]);
+  // A WALL AT THE RAMP'S HEAD, inside the first eight-metre leg: the
+  // feeler meets the ramp at ~2 m, and used to give up the rest of the leg
+  const r1 = new Collider(() => 0);
+  const rise = Math.tan(20 * DEG) * 4.5;
+  r1.addMesh('ramp', new Float32Array([-5, 0, 0.5, 5, 0, 0.5, 5, rise, 5, -5, rise, 5]), new Uint32Array([0, 1, 2, 0, 2, 3]), IDENTITY);
+  const w1 = boxMesh(-5, 0, 6, 5, 4, 7);
+  r1.addMesh('wall', w1.p, w1.i, IDENTITY);
+  assert.ok(Math.abs(probeOver(r1)(0, 1, 0, 24) - 6) < 1e-4, `the wall at 6 m is seen past the ramp (${probeOver(r1)(0, 1, 0, 24)})`);
+  // A CLOSED WEDGE onto a DECK longer than a leg: the next leg used to
+  // start back at the ground's height, INSIDE the deck, and read its far
+  // side from within as a wall 30 m out
+  const h = Math.tan(20 * DEG) * 4;
+  const wedge = new Float32Array([-3, 0, 2, 3, 0, 2, 3, h, 6, -3, h, 6, -3, 0, 6, 3, 0, 6]);
+  const deck = boxMesh(-3, 0, 6, 3, h, 30);
+  const d1 = new Collider(() => 0);
+  d1.addMesh('wedge', wedge, wedgeTris, IDENTITY);
+  d1.addMesh('deck', deck.p, deck.i, IDENTITY);
+  assert.equal(probeOver(d1)(0, 1, 0, 40), Infinity, 'up the ramp and along the deck: nothing in the way');
+  const rail = boxMesh(-3, h, 20, 3, h + 3, 21);
+  d1.addMesh('rail', rail.p, rail.i, IDENTITY);
+  assert.ok(Math.abs(probeOver(d1)(0, 1, 0, 40) - 20) < 1e-4, `a wall ON the deck is met where it stands (${probeOver(d1)(0, 1, 0, 40)})`);
+  // A FACE MET FROM BENEATH: rising ground carries the feeler up through a
+  // slab's underside; a wall standing on the slab in the same leg is seen
+  const u1 = new Collider((x, z) => 0.25 * z);
+  u1.addMesh('slab', new Float32Array([-5, 1.5, 2, 5, 1.5, 2, 5, 1.5, 12, -5, 1.5, 12]), new Uint32Array([0, 1, 2, 0, 2, 3]), IDENTITY);
+  const w2 = boxMesh(-5, 1.5, 6, 5, 5, 7);
+  u1.addMesh('wall', w2.p, w2.i, IDENTITY);
+  assert.ok(Math.abs(probeOver(u1)(0, 1, 0, 24) - 6) < 1e-4, `the wall behind the underside at 6 m (${probeOver(u1)(0, 1, 0, 24)})`);
+  // ...and it is gone on under, along the same line - not RIDDEN (nothing
+  // walks on an underside): a low block on the slab is met where the line
+  // meets it, which a feeler lifted over the underside would pass above
+  const u2 = new Collider((x, z) => 0.25 * z);
+  u2.addMesh('slab', new Float32Array([-5, 1.5, 2, 5, 1.5, 2, 5, 1.5, 12, -5, 1.5, 12]), new Uint32Array([0, 1, 2, 0, 2, 3]), IDENTITY);
+  const low = boxMesh(-5, 1.5, 5, 5, 2.0, 5.5);
+  u2.addMesh('low', low.p, low.i, IDENTITY);
+  assert.ok(Math.abs(probeOver(u2)(0, 1, 0, 24) - 5) < 1e-4, `the low block on the slab at 5 m (${probeOver(u2)(0, 1, 0, 24)})`);
+  // THE RIDE IS NOT STICKY: over a mound and down again, the next leg
+  // comes back to the ground and meets a fence a metre high in the dip
+  const m1 = new Collider(() => 0);
+  const mh = Math.tan(20 * DEG) * 4;
+  m1.addMesh('mound', new Float32Array([-5, 0, 2, 5, 0, 2, 5, mh, 6, -5, mh, 6, -5, mh, 8, 5, mh, 8]), new Uint32Array([0, 1, 2, 0, 2, 3, 3, 2, 5, 3, 5, 4]), IDENTITY);
+  const fence = boxMesh(-5, 0, 15, 5, 1, 15.2);
+  m1.addMesh('fence', fence.p, fence.i, IDENTITY);
+  assert.ok(Math.abs(probeOver(m1)(0, 1, 0, 24) - 15) < 1e-4, `the fence past the mound (${probeOver(m1)(0, 1, 0, 24)})`);
+  // BOUNDED: a collider that answers a walkable face at every cast is
+  // asked at most FEELER_RIDES + 1 times a leg
+  assert.equal(STEER.FEELER_RIDES, 4, 'four faces a leg');
+  let calls = 0;
+  const floors = { heightAt: () => 0, raycastHit(o, dd, max, filter, out) { calls++; out.dist = Math.min(0.5, max); out.key = 'f'; out.normal[0] = 0; out.normal[1] = 1; out.normal[2] = 0; return out; } };
+  assert.equal(probeOver(floors)(0, 1, 0, 16), Infinity, 'faces to walk on, all the way');
+  assert.ok(calls <= 2 * (STEER.FEELER_RIDES + 1), `two legs, ${calls} casts`);
 });
 
 test('TRAVEL-NAV1 raycastHit\'s `out`: the caller\'s own result, written and returned in place - the normal into the caller\'s array - and without it the answer it always was', () => {
