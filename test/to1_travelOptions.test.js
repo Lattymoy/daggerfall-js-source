@@ -91,10 +91,12 @@ test('TO1: the settings are the mod\'s own modsettings.json, key for key, type f
   assert.equal(Object.keys(ours)[0], 'Enabled');
   assert.equal(ours.Enabled.default, true, 'MO1: every vendored mod ships on');
   let n = 0;
+  const shippedNames = new Set();
   for (const section of shipped.Sections) {
     for (const k of section.Keys) {
       n++;
       const key = `${section.Name}.${k.Name}`;
+      shippedNames.add(key);
       const def = ours[key];
       assert.ok(def, `${key} is declared`);
       assert.equal(def.description, k.Description, `${key}'s description is the mod's own`);
@@ -138,7 +140,12 @@ test('TO1: the settings are the mod\'s own modsettings.json, key for key, type f
     }
   }
   assert.equal(n, 51, 'the mod ships fifty-one keys across twelve sections');
-  assert.equal(Object.keys(ours).length, n + 1, 'and the port declares them all, plus Enabled');
+  // TRAVEL-NAV1: plus the port's own steering switch - a key the mod does
+  // not ship (HT-WAIST's shape on Handheld Torches), named so a third
+  // cannot ride in unnoticed
+  assert.equal(Object.keys(ours).length, n + 2, 'and the port declares them all, plus Enabled and its own AvoidObstacles');
+  assert.deepEqual(Object.keys(ours).filter((k) => !shippedNames.has(k)).sort(), ['Enabled', 'GeneralOptions.AvoidObstacles'],
+    'the port\'s two keys, and nothing else');
   // the five unnamed spacer sections carry no keys and are not declared
   assert.deepEqual(shipped.Sections.filter((s) => !s.Keys.length).map((s) => s.Name), ['__', '-', '_', '--', '.']);
 });
@@ -199,7 +206,7 @@ test('TO1: LoadSettings - the speed penalty is a multiplier, the fatigue floor i
   const base = {
     'GeneralOptions.AllowTargetingMapCoordinates': true, 'GeneralOptions.AllowWeather': false,
     'GeneralOptions.AllowAnnoyingSounds': false, 'GeneralOptions.AllowRealGrass': false,
-    'GeneralOptions.LocationPause': 1,
+    'GeneralOptions.LocationPause': 1, 'GeneralOptions.AvoidObstacles': true,   // TRAVEL-NAV1: the port's own
     'CautiousTravel.PlayerControlledCautiousTravel': true, 'CautiousTravel.SpeedPenalty': 20,
     'CautiousTravel.MaxChanceToAvoidEncounter': 95, 'CautiousTravel.HealthMinimumPercentage': 5,
     'CautiousTravel.FatigueMinimumValue': 5,
@@ -239,6 +246,8 @@ test('TO1: LoadSettings - the speed penalty is a multiplier, the fatigue floor i
   assert.equal(s.defaultStartingAccel, START_ACCEL_VALUES[4], ':221 - the CHOICE indexes the eleven values');
   assert.equal(s.defaultStartingAccel, 10);
   assert.equal(s.locationPause, LOC_PAUSE_NEAR);
+  assert.equal(s.avoidObstacles, true, 'TRAVEL-NAV1: the port\'s steering switch rides the same bag');
+  assert.equal(readTravelOptionsSettings(reader({ 'GeneralOptions.AvoidObstacles': false })).avoidObstacles, false, '...and off is off');
   // KB1: the follow key is the registry's FollowPaths action, not a setting - :224-232's six and the custom bind are
   // read once, by the carry into the registry (systems/inputActions.js migrateKeyBinds, test/kb1_keybinds.test.js).
   assert.equal(s.followKey, undefined, 'no key field');

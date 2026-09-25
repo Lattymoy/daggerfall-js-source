@@ -47,6 +47,7 @@ and the journey runs to the next junction on its own.
 |---|---|
 | `src/systems/travelOptions.js` | `TravelOptionsMod.cs` - the settings, the state, the journey machine and the Update loop in its own order |
 | `src/systems/travelAutopilot.js` | `PlayerAutoPilot.cs` (Jedidia) - the steering: a yaw and a forward force per frame, and the arrival test |
+| `src/systems/travelSteer.js` | **the port's own** (TRAVEL-NAV, below) - the walk round what stands in the way: the feelers through the collider, the fan, the stand-off, the stop |
 | `src/systems/travelPaths.js` | the compass, the map-pixel bands and the direction arithmetic - a leaf, no DOM and no world |
 | `src/systems/travelPorts.js` | `portLocationIds`, the 417-entry hand-written table of harbours |
 | `src/systems/travelOptionsText.js` | `TravelOptionsModData.csv`, restated; the vendored file is the record and a pin holds them equal |
@@ -406,12 +407,23 @@ must be assigned there, never re-declared. Mutants
     active" (`:1273`), so a ring walked after any stopped journey ran
     under a stale name - the one condition that keeps `InitLocationRects`
     refreshing the rects mid-journey (`:606-612`). The port's arm
-    forgets the name as the other two do (`travelOptions.js:512`).
+    forgets the name as the other two do (`travelOptions.js:533`).
 17. **The recovery walk's give-up is a junction** (`:727-1050`, ROAD-CRASH
     below). When `SelectNextPath`'s nine shifts narrow nothing, the mod
     hands `GetTargetPixel` a multi-bit mask whose `default` arm is the
     pixel the player stands in: a leg arrived before it starts, forever.
-    The port stops at a junction instead (`travelOptions.js:579`).
+    The port stops at a junction instead (`travelOptions.js:600`).
+18. **The journey steers round what is in its way, and stops short of what
+    it cannot pass** (TRAVEL-NAV, below). The mod's autopilot beelines and
+    its body grinds against whatever stands on the line. The port's own
+    steering sits between the autopilot and the motor, on the port's own
+    switch on the mod's pane (`GeneralOptions.AvoidObstacles`, on); off,
+    the journey is the mod's beeline exactly.
+19. **The arrival buffer is an arrival across a pixel edge** (TRAVEL-NAV,
+    with the switch). `PlayerAutoPilot.Update` asks about the destination
+    rect only inside the destination pixel (`PlayerAutoPilot.cs:80`); a location eight blocks
+    across fills its pixel, so its whole buffer lies in the neighbours and
+    the traveller came up to the walls before the question was asked.
 
 ## AUDIT-TO1 (2026-09-18) - the audit of TO1, and what it found
 
@@ -636,7 +648,7 @@ third was a thing the port never said out loud.
   (`PlayerEntity.cs:402-418`, and `systems/worldTick.js` verbatim), so
   the journey's vanilla drain IS DFU's - and Travel Options watches that
   very number with its own cautious stop (`TravelOptionsMod.cs:1079`,
-  ported at `travelOptions.js:783`). The NEEDS are this port's own
+  ported at `travelOptions.js:804`). The NEEDS are this port's own
   addition, from a mod Travel Options has never heard of, and they
   charged on top of it on a traveller who by construction never stops to
   eat, drink or sleep. An accelerated journey is sat as `resting` now -
@@ -730,16 +742,16 @@ options"*. No crash text came with it; the whole follow path was read
 for a throw the frame loop cannot survive, and there is one.
 
 **The throw.** `FollowPath`'s third arm walks the border ring of a town
-(`:658-664`; `travelOptions.js:495-515`). Unlike the two path arms
+(`:658-664`; `travelOptions.js:516-536`). Unlike the two path arms
 before it, it never forgot the named destination, and `InterruptTravel`
 "leaves current destination active" (`:1273`) - so a ring walked after
 ANY stopped journey (a foe, low fatigue, CAMP, the map's own stop near
 a town) ran with that name still set. That is the one condition under
 which `InitLocationRects` keeps refreshing the rects MID-journey
 (`:606-612`, `autopilot == null || destinationName != null`;
-`travelOptions.js:443-446`). A town's ring reaches into its neighbour
+`travelOptions.js:464-467`). A town's ring reaches into its neighbour
 pixels; the crossing fired `OnMapPixelChanged`, the host's
-`locationTileRect` answered null for the neighbour (world.js:7230 -
+`locationTileRect` answered null for the neighbour (world.js:7246 -
 null both for a pixel not yet built and for one with no location),
 `SetLocationRects` nulled both rects (`:602-604`), and the walk's own
 `OnArrival` (`circumnavigateLocation`, `:753-797`) read
@@ -748,7 +760,7 @@ is a NullReferenceException logged per frame and the mod stalls with
 the panel up; this host's frame loop dies on it, and `main.js`'s
 overlay prints the stack in red. Three fixes, at the root:
 
-- **The ring arm forgets the name** (`travelOptions.js:512`), as the
+- **The ring arm forgets the name** (`travelOptions.js:533`), as the
   two path arms do. With the name gone the rects hold for the whole
   walk exactly as they do for every path leg, and everything else that
   reads `destinationName` now reads the walk as the followed path it
@@ -756,14 +768,14 @@ overlay prints the stack in red. Three fixes, at the root:
   resumes IT rather than the old named journey (`:1210`), the
   LocationPause "nearby" arm stays out of it, and `isPathFollowing` is
   true. Departure 16.
-- **The walk guards its rects** (`travelOptions.js:609-613`) - the
+- **The walk guards its rects** (`travelOptions.js:630-634`) - the
   seam's own guard for a state the mod cannot survive either. A walk
   whose rects are gone ends where it stands, as a junction's does
   (`:1063`, CloseWindow, whose host onClose is InterruptTravel; a host
   whose panel is already down is interrupted outright), and the follow
   key asked again answers "no path here" through `FollowPath`'s own
   rect test.
-- **The recovery walk's give-up is a junction** (`travelOptions.js:579`).
+- **The recovery walk's give-up is a junction** (`travelOptions.js:600`).
   `nextPathDirection` returns the mod's RAW mask when its nine shifts
   narrow nothing (the reset at zero is not a rotate: from north the
   walk visits only N, NW and W, so a pixel with E and SE faced from the
@@ -784,7 +796,156 @@ two-edge carry-on untouched. Four mutants in `tools/mutants/roadcrash.json`
 (`RC-ring-keeps-the-name`, `RC-walk-reads-null-rects`,
 `RC-guard-closes-but-leaves-the-leg`, `RC-giveup-is-a-leg`), all dead.
 
+## TRAVEL-NAV (2026-09-25) - the walk goes round, and stops short
+
+Mac, before the merge: *"Improving travel options navigation to properly
+route around objects and stopping before running into buildings.
+Currently it could be so much better"*.
+
+**What was there.** The autopilot answers ONE bearing - to the centre of
+the target rect, latched at each pixel crossed - and the mod pushes the
+body along it at up to a hundred times walking pace. Nothing between the
+two knew anything stood in the way: a house, a city wall, a well or a
+World of Daggerfall boulder on the line was walked into, and the body
+ground against it with the clock racing until the player noticed. DFU's
+CharacterController slides along the face, so the mod's own journeys do
+the same, and this port's collider honours that controller's contract.
+
+**What is there now** - `src/systems/travelSteer.js`, the port's own,
+between the autopilot and the motor. The mod still decides where the
+journey is going and when it has arrived; the steering decides only how
+the body gets there this frame:
+
+- **The feelers are the collider's.** A heading is a CORRIDOR: three
+  feelers, the centre and two edges 0.45 either side (the capsule's 0.35
+  and a hand's breadth), each cast through the host's own collider
+  (`createColliderProbe`, `collider.raycastHit`) from the feet the motor
+  moves, 0.6 over the ground - over any step the motor climbs, under
+  anything it cannot. The terrain is not in the collider's buckets, so a
+  level ray runs into a hill and passes under the house on top of it; the
+  feelers follow the ground in eight-metre legs instead, and a face flatter
+  than the slope limit is a ramp to walk up, not a wall.
+- **An open road is the mod's journey to the bit.** While the way wanted
+  is open the drive leaves the steering exactly as the autopilot made it -
+  the bearing, the force, every last bit - and costs three feelers.
+- **Round it.** When the way closes a DETOUR begins: a side is chosen (the
+  nearer edge, found by trying both sides a step at a time; or the last
+  detour's side for forty metres, so a row of trunks is passed on ONE side
+  and not threaded left-right-left), and a fan of headings is laid out
+  from the way wanted AS IT WAS - a fan that turned with the moving target
+  swung the body back into the wall it was walking round, which is what
+  the first cut did in the simulation. Each frame the steering tries the
+  way the detour began (which is how a gap is found as the body passes in
+  front of it, and a corner turned), then one offset closer, then keeps
+  the offset it holds while that still has room for the frame (half its
+  reach, never less than a step past the stand-off), and only then scans
+  outward. Opening needs the whole look-ahead and keeping only that room:
+  the gap between the two is the hysteresis.
+- **The pocket.** A heading that closes on the line must be seen clear
+  PAST the face that blocked it (the Bug2 leave rule), and a detour ends
+  only on a view that really reaches past it - a heading so shallow that
+  the cap stood in for the distance has seen nothing, and the first cut's
+  long wall restarted its detour budget for ever on exactly that. Inside a
+  U the way wanted is open for the depth of the U and no further, so the
+  walk backs out and goes round the arm, once.
+- **Back on the line.** The mod's bearing is latched until the next pixel,
+  so a body left beside the line after a detour walked parallel to the
+  road it was following. The steering keeps the line itself - where the
+  leg began, to the target's centre - and pursues a point eight metres
+  along it until the body is back within a quarter-metre, then hands the
+  mod its own bearing back.
+- **Short, at every acceleration.** A frame's reach is a BOUND
+  (`travelFrameReach`: speed x scale x the frame clamped to Unity's
+  maximumDeltaTime, plus the one fixed step the accumulator can carry),
+  the feelers are cast that far, and the force is capped so the frame
+  cannot carry the body past a metre short of what its corridor saw -
+  at x100 a hitching frame moves a horse a hundred metres. The way wanted
+  only has to be clear as far as the ARRIVAL RECT (`rectDistance`), so a
+  town's walls behind its buffer are no reason to turn away from the town,
+  and never less than a step past the stand-off, so a body can never park
+  there with the clock racing.
+- **Stop, and say so.** No heading on either side with room (the other
+  side is tried once), a detour that has walked two hundred metres without
+  getting past its obstacle, or a body that stops moving while the drive
+  asks it to (GRINDING - something the feelers cannot see; measured against
+  the travel the host REALLY applied after its ground gate, so a drive held
+  for the streamer is not grinding) ends the journey the way the mod's own
+  stops do: last in its Update, the panel closed (InterruptTravel - the
+  destination stays for the map's resume prompt), a message box in the
+  mod's voice - *"Paused the journey since the way ahead is blocked."* or
+  *"...since you're making no headway."* (`TRAVEL_NAV_TEXT`, kept out of
+  the mod's CSV table, whose pin says nothing was invented in it) - and the
+  frame that stops it moves nothing.
+- **Cheap.** Three feelers a frame on an open road, about five in a
+  detour's frame, never more than sixteen: a scan that would cast more is
+  resumed next frame with the body held for the one frame it waits. The
+  input, the output, the frame's scratch and the probe's origin, direction
+  and hit are made once and reused (`raycastHit` gained an optional `out`
+  for it - without one its answer is the one it always was).
+
+**The arrival stand-off, checked.** A named location's rect is its RMB
+footprint grown by `ARRIVAL_BUFFER` (800 world units, twenty metres), and
+every building of a location stands inside its footprint, so a journey
+that arrives in the buffer arrives outside the walls. A followed leg ends
+at the town's BORDER rect, one or two tiles outside its ground tiles. Both
+hold - with one hole, departure 19: the arrival question is asked only in
+the destination PIXEL, and a location eight blocks across fills its pixel
+(`getLocationTerrainTileOrigin` centres it at zero), so its buffer lies
+wholly in the neighbours and the traveller walked up to the walls, crossed
+into the pixel AT them and only then asked. With the switch on the buffer
+is an arrival wherever it lies (`TravelAutopilot`'s `edgeArrival`). Flown
+on the table: outside the walls at x1, x60 and a hitching x100, where the
+mod's own arm walks into the wall and never arrives.
+
+**The facing the mod reads is its own.** In DFU the autopilot writes the
+camera's yaw every frame (`PlayerAutoPilot.cs:96-104`), so "the way the
+player faces" during a journey IS the bearing, and the mod leans on that:
+a leg's arrival picks the next edge by it (`SelectNextPath`,
+`TravelOptionsMod.cs:722-751`), the ring walk its next corner, the
+junction disc its pip. The steering turns the camera with the body, so on
+a frame it did, `yawDeg` reads the autopilot's own bearing - otherwise a
+leg that arrived while the body was backing out of a pocket read the
+turned camera and sent the journey back the way it came.
+
+**The switch.** `GeneralOptions.AvoidObstacles` is the port's own key on
+the mod's pane (HT-WAIST's shape on Handheld Torches: the vendored
+`modsettings.json` does not carry it, its words say so), ON by default,
+curated onto the mod's tile so it is reachable, read at boot with the rest
+of the mod's settings (the tile's "Takes effect when the world next
+loads"). Off, the journey is the mod's beeline and its pixel-gated arrival,
+exactly.
+
+**Not done, and said.** A gap barely wider than the corridor is threaded
+when it is on the line, or found while the detour walks past it at a
+stroll; at speed a body can step past a narrow gap to the side in one
+frame, and the detour then goes round the wall or stops on its budget.
+The feelers run at one height, so an overhang between chest and head is
+not seen (grinding catches what it stops). The walking townsfolk, the
+foes and the horses are not in the collider, so they are not steered
+round - as before. And the mod's own overshoot arm (a bearing that swings
+five degrees in one update is an arrival) can end a LEG early while a
+detour turns hard close to its target at high acceleration; the next leg
+starts from where the body is, which is the mod's own answer.
+
+Pinned by execution in `test/travelnav.test.js` (19): every layout the
+request named - a building across the line, a wall with no gap, a U-shaped
+pocket (and one deeper than the look-ahead), trunks across and along the
+line, a narrow gap on the line and one off it, a wall behind the arrival
+rect - flown on a table with a motor that steps as `motor.js` steps, at x1
+to x100 and a hitching frame, walking and mounted; each flight asks
+whether it arrived or stopped where it should, whether it EVER touched,
+whether it dithered, and what each frame cost. Then the flip and the
+dead-end stop, the tie toward the line, the committed side, grinding and
+the host's held drive, the arrival stand-off with the real autopilot, the
+door (`steerDrive`), the mod's stop and switch and facing on the mod's own
+rig, the feelers through a REAL collider (a wall, a step, a ramp, a house
+on a rise, a deck), `raycastHit`'s `out`, the switch's key, and the host's
+wiring. Forty mutants in `tools/mutants/travelnav.json`, all dead; the
+first campaign left two survivors (the stand-off margin on a frame capped
+by clearance, and the goal cap) and the pins for them were written.
+
 ## Pins
 
 `test/to1_travelOptions.test.js`. `tools/mutants/to1.json`.
 `test/roadcrash.test.js`, `tools/mutants/roadcrash.json` (ROAD-CRASH).
+`test/travelnav.test.js`, `tools/mutants/travelnav.json` (TRAVEL-NAV).

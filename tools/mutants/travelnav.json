@@ -1,0 +1,282 @@
+[
+  {
+    "name": "TN-open-road-pursues",
+    "file": "src/systems/travelSteer.js",
+    "old": "    if (s.episode || Math.abs(f.lat) > P.onLine) {",
+    "new": "    if (true) {",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-no-standoff-cap",
+    "file": "src/systems/travelSteer.js",
+    "old": "    out.forward = reach > 0 ? Math.max(0, Math.min(1, (clear - P.standoff) / reach)) : 1;",
+    "new": "    out.forward = 1;",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-standoff-ignored",
+    "file": "src/systems/travelSteer.js",
+    "old": "    out.forward = reach > 0 ? Math.max(0, Math.min(1, (clear - P.standoff) / reach)) : 1;",
+    "new": "    out.forward = reach > 0 ? Math.max(0, Math.min(1, clear / reach)) : 1;",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-reach-drops-the-carried-step",
+    "file": "src/systems/travelSteer.js",
+    "old": "(Math.min(Math.max(0, dt), maxFrameDt) + fixedDt);",
+    "new": "(Math.min(Math.max(0, dt), maxFrameDt));",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-reach-unclamped-frame",
+    "file": "src/systems/travelSteer.js",
+    "old": "(Math.min(Math.max(0, dt), maxFrameDt) + fixedDt);",
+    "new": "(Math.max(0, dt) + fixedDt);",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-fan-turns-with-the-pursuit",
+    "file": "src/systems/travelSteer.js",
+    "old": "    return k === REF ? s.ref : s.ref + side * P.offsets[k] * DEG;",
+    "new": "    return k === REF ? f.want : f.want + side * P.offsets[k] * DEG;",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-cap-stands-in-for-a-view-past",
+    "file": "src/systems/travelSteer.js",
+    "old": "    if (d > P.pastCap) return leaving ? Infinity : P.pastCap;",
+    "new": "    if (d > P.pastCap) return P.pastCap;",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-sideways-leaves-the-detour",
+    "file": "src/systems/travelSteer.js",
+    "old": "    if (fwd <= 0.05) return leaving ? Infinity : 0;",
+    "new": "    if (fwd <= 0.05) return 0;",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-no-pocket-rule-in-the-fan",
+    "file": "src/systems/travelSteer.js",
+    "old": "    const req = Math.max(f.reachFan, past(h, false));\n    const c = corridor(h, req, req);\n    return c >= req ? c : -1;",
+    "new": "    const req = f.reachFan;\n    const c = corridor(h, req, req);\n    return c >= req ? c : -1;",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-ref-never-tried",
+    "file": "src/systems/travelSteer.js",
+    "old": "      if (s.k !== REF) {",
+    "new": "      if (false) {",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-no-other-side",
+    "file": "src/systems/travelSteer.js",
+    "old": "      if (s.flipped) return stopWith(out, inp, 'blocked');",
+    "new": "      return stopWith(out, inp, 'blocked');",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-no-detour-budget",
+    "file": "src/systems/travelSteer.js",
+    "old": "    if (s.walked - (f.along - s.sStart) > P.detourBudget) return stopWith(out, inp, 'blocked');",
+    "new": "    if (false) return stopWith(out, inp, 'blocked');",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-grinding-never-stops",
+    "file": "src/systems/travelSteer.js",
+    "old": "    if (s.grind >= P.grindWindows) return stopWith(out, inp, 'stuck');",
+    "new": "    if (false) return stopWith(out, inp, 'stuck');",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-grinding-weighs-its-own-ask",
+    "file": "src/systems/travelSteer.js",
+    "old": "      s.winAsked += inp.asked;",
+    "new": "      s.winAsked += inp.reach;",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-no-commit",
+    "file": "src/systems/travelSteer.js",
+    "old": "        if (s.commitLeft > 0 && s.commitSide) {",
+    "new": "        if (false) {",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-tie-ignores-the-line",
+    "file": "src/systems/travelSteer.js",
+    "old": "          s.side = r >= 0 && l >= 0 ? (f.lat > P.onLine ? -1 : 1) : (r >= 0 ? 1 : -1);",
+    "new": "          s.side = r >= 0 && l >= 0 ? 1 : (r >= 0 ? 1 : -1);",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-parks-at-the-standoff",
+    "file": "src/systems/travelSteer.js",
+    "old": "      const openWant = Math.max(lookWant, leaveNeed, pass);",
+    "new": "      const openWant = Math.max(lookWant, leaveNeed);",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-goal-ignored",
+    "file": "src/systems/travelSteer.js",
+    "old": "    const lookWant = Math.min(look, Math.max(0, inp.goal) + P.standoff);",
+    "new": "    const lookWant = look;",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-feeler-cap-ignored",
+    "file": "src/systems/travelSteer.js",
+    "old": "        if (s.probes + 3 > P.maxFeelers) return hold(out, inp);\n        const k = s.scanNext,",
+    "new": "        if (false) return hold(out, inp);\n        const k = s.scanNext,",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-side-scan-cap-ignored",
+    "file": "src/systems/travelSteer.js",
+    "old": "        if (s.probes + 6 > P.maxFeelers) return hold(out, inp);",
+    "new": "        if (false) return hold(out, inp);",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-door-always-writes-the-yaw",
+    "file": "src/systems/travelSteer.js",
+    "old": "  if (out.deflected) drive.yaw = out.yaw / DEG;",
+    "new": "  drive.yaw = out.yaw / DEG;",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-door-reach-at-full-force",
+    "file": "src/systems/travelSteer.js",
+    "old": "  inp.reach = travelFrameReach(frame.speed, frame.dt, frame.scale) * force;",
+    "new": "  inp.reach = travelFrameReach(frame.speed, frame.dt, frame.scale);",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-feelers-run-level",
+    "file": "src/systems/travelSteer.js",
+    "old": "        if (Number.isFinite(g1)) y1 = g1 + height;",
+    "new": "        if (false) y1 = g1 + height;",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-ramps-are-walls",
+    "file": "src/systems/travelSteer.js",
+    "old": "        if (hit.dist <= span && Math.abs(hit.normal[1]) < WALKABLE_NY) {",
+    "new": "        if (hit.dist <= span) {",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-structure-follows-the-ground",
+    "file": "src/systems/travelSteer.js",
+    "old": "    const level = !(at[1] - g0 <= ON_STRUCTURE);",
+    "new": "    const level = false;",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-collider-out-ignored",
+    "file": "src/player/collider.js",
+    "old": "    if (out) {   // TRAVEL-NAV1: the caller's own result, written in place",
+    "new": "    if (false) {   // TRAVEL-NAV1: the caller's own result, written in place",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-edge-arrival-gone",
+    "file": "src/systems/travelAutopilot.js",
+    "old": "    if (this.edgeArrival && !this.inDestinationMapPixel && rectContains(this.destinationWorldRect, worldX, worldZ)) {",
+    "new": "    if (false && this.edgeArrival && !this.inDestinationMapPixel && rectContains(this.destinationWorldRect, worldX, worldZ)) {",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-rect-distance-ignores-z",
+    "file": "src/systems/travelAutopilot.js",
+    "old": "  const dz = Math.max(rect.zMin - z, 0, z - rect.zMax);\n  return Math.hypot(dx, dz);",
+    "new": "  const dz = 0;\n  return Math.hypot(dx, dz);",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-resume-without-edge-arrival",
+    "file": "src/systems/travelOptions.js",
+    "old": "{ grow: true, isLocation: true, edgeArrival: st.settings.avoidObstacles });",
+    "new": "{ grow: true, isLocation: true, edgeArrival: false });",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-switch-not-read-at-the-step",
+    "file": "src/systems/travelOptions.js",
+    "old": "      if (st.autopilot && drive && !drive.arrived && st.settings.avoidObstacles && deps.steer) {",
+    "new": "      if (st.autopilot && drive && !drive.arrived && deps.steer) {",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-stop-words-swapped",
+    "file": "src/systems/travelOptions.js",
+    "old": "stop === 'stuck' ? TRAVEL_NAV_TEXT.MsgStuck : TRAVEL_NAV_TEXT.MsgBlocked",
+    "new": "stop === 'stuck' ? TRAVEL_NAV_TEXT.MsgBlocked : TRAVEL_NAV_TEXT.MsgStuck",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-stop-leaves-a-panelless-journey-running",
+    "file": "src/systems/travelOptions.js",
+    "old": "          stopTravelWithMessage(stop === 'stuck' ? TRAVEL_NAV_TEXT.MsgStuck : TRAVEL_NAV_TEXT.MsgBlocked);\n          if (st.autopilot) interruptTravel();",
+    "new": "          stopTravelWithMessage(stop === 'stuck' ? TRAVEL_NAV_TEXT.MsgStuck : TRAVEL_NAV_TEXT.MsgBlocked);",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-facing-reads-the-camera",
+    "file": "src/systems/travelOptions.js",
+    "old": "    st.autopilot && st.steeredBy === st.autopilot ? st.autopilot.yaw : (deps.yaw?.() ?? 0), invert);",
+    "new": "    (deps.yaw?.() ?? 0), invert);",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-steered-always",
+    "file": "src/systems/travelOptions.js",
+    "old": "        st.steeredBy = drive.yaw !== st.autopilot.yaw ? st.autopilot : null;",
+    "new": "        st.steeredBy = st.autopilot;",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-switch-hardwired-on",
+    "file": "src/systems/travelOptions.js",
+    "old": "    avoidObstacles: !!get('GeneralOptions.AvoidObstacles'),",
+    "new": "    avoidObstacles: true,",
+    "tests": ["test/to1_travelOptions.test.js"]
+  },
+  {
+    "name": "TN-switch-ships-off",
+    "file": "src/systems/modSettings.js",
+    "old": "      'GeneralOptions.AvoidObstacles': Object.freeze({ default: true,",
+    "new": "      'GeneralOptions.AvoidObstacles': Object.freeze({ default: false,",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-switch-off-the-tile",
+    "file": "src/systems/features.js",
+    "old": "    'GeneralOptions.LocationPause', 'TimeAcceleration.AccelerationLimit',\n    'GeneralOptions.AvoidObstacles',\n  ]),",
+    "new": "    'GeneralOptions.LocationPause', 'TimeAcceleration.AccelerationLimit',\n  ]),",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-host-feels-from-the-camera",
+    "file": "src/scenes/world.js",
+    "old": "  const travelNavProbe = createColliderProbe({ collider, feet: () => (walkMode && playerSpawned ? player.pos : cam.pos) });",
+    "new": "  const travelNavProbe = createColliderProbe({ collider, feet: () => cam.pos });",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-host-no-frame-dt",
+    "file": "src/scenes/world.js",
+    "old": "          travelNavFrame.dt = dt;   // TRAVEL-NAV1: the frame the steering's reach is measured over\n",
+    "new": "",
+    "tests": ["test/travelnav.test.js"]
+  },
+  {
+    "name": "TN-host-asks-before-the-gate",
+    "file": "src/scenes/world.js",
+    "old": "          ? axes.forward * player.speed * worldTimeScale() * Math.min(dt, MAX_FRAME_DT) : 0;",
+    "new": "          ? _travelDrive.forward * player.speed * worldTimeScale() * Math.min(dt, MAX_FRAME_DT) : 0;",
+    "tests": ["test/travelnav.test.js"]
+  }
+]

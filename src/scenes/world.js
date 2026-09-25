@@ -282,6 +282,7 @@ import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dis
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
 import { PlayerMotor, startRestGroundedCheck, motionBagOf, MAX_FRAME_DT, CAPSULE_HEIGHT, RIDE_EYE_HEIGHT } from '../player/motor.js';   // SPELLFX1: a peer's eye when its body has not said its height
 import { travelDriveForward, travelLookaheadFor } from '../systems/travelAutopilot.js';   // TO-FIELD / AUDIT-FIELD F8: the journey's ground gate, pure so the pins can drive it   // StartRestGroundedCheck's ONE home; WW2: the one motion bag
+import { createTravelSteer, createColliderProbe, steerDrive } from '../systems/travelSteer.js';   // TRAVEL-NAV1: the journey goes round what is in its way, and stops short of what it cannot
 import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exteriorSwimming } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods; OT1: IsPlayerSwimming above ground
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
 import { floorLanding } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27)
@@ -7152,6 +7153,21 @@ export async function bootWorld(canvas, renderer, params, status) {
     onCancel: () => travelOptions?.clearTravelDestination(), // :377 - EXIT: forget it
     onTimeAccelerationChanged: (n) => setWorldTimeScale(n),  // :379 -> SetTimeScale
   }) : null;
+  /** TRAVEL-NAV1 (2026-09-25, Mac: "Improving travel options navigation to
+   *  properly route around objects and stopping before running into
+   *  buildings"): THE JOURNEY'S STEERING (systems/travelSteer.js), made
+   *  once with its feelers, which are cast through THIS host's collider
+   *  from the feet the motor moves - the same triangles, the same terrain
+   *  floor. The mod calls it last in its own Update (`steer` below) with
+   *  the autopilot's drive; `travelNavFrame` is the frame it reads: `dt`
+   *  set just before the mod's update, `speed` and the scale read live at
+   *  the call, and `asked` written after the motor runs, so the next
+   *  frame's grinding check weighs what really moved against what the
+   *  motor was really asked for (the ground gate below can hold a drive).
+   *  Its switch is the mod pane's own `GeneralOptions.AvoidObstacles`. */
+  const travelNav = createTravelSteer();
+  const travelNavProbe = createColliderProbe({ collider, feet: () => (walkMode && playerSpawned ? player.pos : cam.pos) });
+  const travelNavFrame = { speed: 0, dt: 0, scale: 1, asked: 0, ratio: SCENE_MAP_RATIO };
   /** TO1: the mod itself. Null while its switch is off, and every call
    *  site guards - a player who turns Travel Options off has the
    *  classic travel map and classic fast travel, whole. */
@@ -7252,6 +7268,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     text: (key) => (key === 'cannotTravelWithEnemiesNearby' ? CANNOT_TRAVEL_ENEMIES_TEXT : ''),
     pushWindow: (ui) => { ui.show(); },
+    // TRAVEL-NAV1: the way ahead - the drive turned and capped in place, a stop answered by name
+    steer: (drive, worldX, worldZ, autopilot) => {
+      travelNavFrame.speed = player.speed;
+      travelNavFrame.scale = worldTimeScale();
+      return steerDrive(travelNav, drive, worldX, worldZ, autopilot, travelNavFrame, travelNavProbe);
+    },
     setWeatherEnabled: (on) => { _travelWeatherOff = !on; },
     setTravelSoundsEnabled: (on) => { _travelSoundsOff = !on; },
     setRealGrassEnabled: () => { /* Real Grass is not a mod the port has - recorded in bible/06-Systems/Travel-Options.md */ },
@@ -13534,6 +13556,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         _travelDrive = null;
         if (travelOptions) {
           const followDown = travelFollowPressed();
+          travelNavFrame.dt = dt;   // TRAVEL-NAV1: the frame the steering's reach is measured over
           const report = travelOptions.update({
             topWindowIsTravelUI: !!travelControlUI?.isShowing && !townTalk.overlayActive,
             topWindowAllowsTravel: townTalk.overlay === _travelMap,   // the mod's `DfTravelMapWindow` exception (:1351)
@@ -13688,6 +13711,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           down: crouchHeld || held(keys, 'FloatDown'),
           crouch: crouchPress,
         }, cam.yaw, cam.pitch);
+        // TRAVEL-NAV1: the travel the motor was really asked for this frame - after the ground gate, and
+        // nothing on a held or paralysed frame - which the steering's grinding check weighs next frame.
+        travelNavFrame.asked = _travelDrive && !_overlayHeld && !_seasonHeld && !paralyzed
+          ? axes.forward * player.speed * worldTimeScale() * Math.min(dt, MAX_FRAME_DT) : 0;
         // C9: ReadyWeapon (Z) - the sheathe toggle, host parity.
         if (pressed(latch.edge, keys, 'ReadyWeapon')) weaponRig.readyWeapon();   // MAC-O1: the KEY takes WeaponManager.Update's arm (:229-269), not HUDLarge's raw ToggleSheath
         // a12: SwitchHand (H) - WeaponManager.cs:272 reads it through
