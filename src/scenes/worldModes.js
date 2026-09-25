@@ -28,7 +28,7 @@ import { createBloodMarks } from '../combat/bloodMarks.js';   // BLOOD1a
 import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY } from '../player/enterExit.js';
 import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
 import { STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE } from '../world/terrainSampler.js';   // TERRAIN-SCALE1: the interior cache's frame and the ground its legacy heights stood on
-import { startRestGroundedCheck, TELEPORT_FREEZE_S, motionBagOf } from '../player/motor.js';   // S40: the rest gate's grounded input; A6: DaggerfallAction.Teleport's physics settle; WW2: the one motion bag
+import { startRestGroundedCheck, TELEPORT_FREEZE_S, motionBagOf, afloatMessageStep, CANNOT_FLOAT_HUD_SECONDS } from '../player/motor.js';   // S40: the rest gate's grounded input; A6: DaggerfallAction.Teleport's physics settle; WW2: the one motion bag; DW-D: the dungeon arm's afloat line
 import { signalAutomapReset } from '../ui/automapWindow.js';   // ROAD-C c2/S9: the M window inside a building
 import { createAutomapWindow, preloadAutomapArt, automapDoorReady } from '../ui/automapDoor.js';   // EM3: the skin fork
 import { automapDungeonKey, getDungeonAutomap } from '../systems/automap.js';   // ROAD-C c2/S9: Automap.cs:2362-2379's read of the dungeon dictionary
@@ -289,6 +289,9 @@ import { onShopShelfStocked } from '../systems/rriKits.js';   // RRI2: the mod's
 import { bedSleepingOn, rrDouseOnDungeonExit, rrRefinedTrainingOn, rrSetting } from '../systems/rrRealism.js';   // RR1: the bed's activation gate, the douse on leaving a dungeon; RR2: the refined training window's switches
 import { rrVariantPerson } from '../systems/rrVariants.js';   // RR2: the variant keepers and residents
 import { setRrHostSeams } from '../systems/rrInstall.js';   // RR1: the host's foe-spawner seam for the underworld guilds' squad
+import { createSwimMovement } from './deepWatersSwimMove.js';   // DW-D: Iliac Puddle No More's swim movement - the dungeon's water too (IsAnySwimming)
+import { deepWatersOn, deepWatersSwimSettings } from './deepWatersHost.js';
+import { loadGraceActive as dwLoadGraceActive } from '../world/deepWaterRuntime.js';
 let _charT0 = (typeof performance !== 'undefined' ? performance.now() : 0);
 let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off (window.__anim)
 
@@ -6451,7 +6454,7 @@ export function createWorldModes(host) {
     // AUDIT 62 F16/F28: TI1's tap-to-lock - see tryExit's twin. This is
     // the ladder the classic start into Privateer's Hold runs through,
     // so it is the one the feature was most missing from; the arm is
-    // scenes/dungeon.js:246's, line for line, over this context's pool.
+    // scenes/dungeon.js:249's, line for line, over this context's pool.
     if (host.activateDir?.() && dungeonCtx) {
       const f = pickFoe(eye, dir, dungeonCtx.foes, dungeonCtx.collider, LOCK_PICK_DISTANCE);
       if (f) { host.lockToggle?.(f); return true; }
@@ -6483,7 +6486,7 @@ export function createWorldModes(host) {
         // never drawn, ticked, keyed or clicked in dungeon mode, so a
         // box mounted there orphaned until the next building entry and
         // a line said there opened a second popup column over the
-        // dungeon's own. scenes/dungeon.js:260-261 is the same pair.
+        // dungeon's own. scenes/dungeon.js:263-264 is the same pair.
         hud: (t) => dungeonCtx.hudSay(t),
         modal: (t) => dungeonCtx.hudBox(String(t).split('\n')),
         makeEnemiesHostile: () => makeEnemiesHostile(dungeonCtx.foes.filter((f) => !f.dead)),
@@ -6627,6 +6630,7 @@ export function createWorldModes(host) {
   // The modal frame: player update + E + the whole render pipeline for
   // the active context. Returns true when a mode consumed the frame -
   // the host's exterior path (streaming, sky, weather) must not run.
+  const _dwSwimMove = createSwimMovement({ settings: deepWatersSwimSettings, collider: () => player.collider });   // DW-D
   function frame(dt, now) {
     if (mode === 'exterior') return false;
     // E2: modal frames advance the shot-mode frame counter too - the
@@ -6693,6 +6697,8 @@ export function createWorldModes(host) {
       player.isPlayerSwimming = player.swimming = surf != null && player.pos[1] + player.height / 2 + 50 * 0.025 - 0.95 < surf;   // XL-1 (THE FOUR HOSTS): PlayerEnterExit.cs:384-392's dungeon arm writes BOTH members off the one blockWaterLevel test - isPlayerSwimming AND levitateMotor.IsSwimming - and only the else arm (:415-421) splits them. The outer host's host-flag readers run ABOVE this modal frame and so read it in a dungeon too: the encounter roll (world.js's runEncounterTick, PlayerEntity.cs:489), CollapseFromExhaustion (:2406/:2426), the rest refusal (DaggerfallUI.cs:661) and HeadBobber (:101/:215). Without the host flag here all four go dead underground. (This host's own fatigue tally rides reportActivity's `player.swimming` below, which this same line writes.)
       player.levitating = dungeonCtx.playerLevitating();
       player.waterWalking = dungeonCtx.playerWaterWalking();
+      const afloat = afloatMessageStep(player, player.waterWalking);   // DW-D: the arm's afloat line (PlayerEnterExit.cs:395-404), on the swim it just wrote
+      if (afloat) dungeonCtx.hudSay(afloat, CANNOT_FLOAT_HUD_SECONDS);
     } else {
       // AUDIT 18 HOST GAP: these four flags were written ONLY in the
       // branch above and never cleared, so a player who left a dungeon
@@ -6728,7 +6734,7 @@ export function createWorldModes(host) {
     // the movers kept travelling - all of it under the open menu.
     // DFU UserInterfaceManager.AddWindow (:179-184) calls
     // PauseGame(true) for any PauseWhileOpen window (the default),
-    // which is what dungeon.js:334's `held` already implements.
+    // which is what dungeon.js:337's `held` already implements.
     // AUDIT 39 (#28): and the OUTER host's slot with them. AddWindow
     // pauses for the window, not for the slot it was pushed into -
     // and townTalk's slot really does hold one in these modes: this
@@ -6801,7 +6807,7 @@ export function createWorldModes(host) {
     // jump while the player still falls), and it was standing in for
     // both: a fall opened under a menu completed under it and
     // applyFallLanding charged the damage, a swimmer kept sinking, and
-    // the crouch edge still toggled. dungeon.js:560 is this same gate
+    // the crouch edge still toggled. dungeon.js:563 is this same gate
     // ("no movers, no motor").
     if (!overlayHeld) {
       // Audit F3: crouch stays live while paralyzed (DFU gates movement/jump only)
@@ -6829,6 +6835,16 @@ export function createWorldModes(host) {
         down: crouchHeld || held(keys, 'FloatDown'),
         crouch: crouchPress,
       }, cam.yaw, cam.pitch);
+      // DW-D: OutdoorSwimMovementController runs wherever the motor swims (IsAnySwimming is LevitateMotor.IsSwimming
+      // indoors) - the multiplier and the stroke in a dungeon's water; the floor clamp is the carved sea's alone
+      if (deepWatersOn()) {
+        _dwSwimMove.update({
+          now: now / 1000, dt, player, entity: playerEntity, loadGrace: dwLoadGraceActive(performance.now() / 1000),
+          outdoorSwimming: false, anySwimming: !player.waterWalking && !!player.swimming,
+          input: { forward: paralyzed ? 0 : axes.forward, strafe: paralyzed ? 0 : axes.strafe, up: jumpHeld || held(keys, 'FloatUp'), down: crouchHeld || held(keys, 'FloatDown'), run: held(keys, 'Run') },
+          yaw: cam.yaw, pitch: cam.pitch, lookDir: fwd, cameraY: cam.pos[1], oceanY: null, seafloorY: () => null,
+        });
+      } else _dwSwimMove.reset(player);
       // FS-slice: PlayerFootsteps - buildings walk on wood, dungeons on
       // stone with the water arms (shallow = the LIVE capsule centre
       // 0.57 under the block water line - AUDIT 64 F4).
@@ -6913,7 +6929,7 @@ export function createWorldModes(host) {
       if (!overlayHeld) dungeonCtx.reportActivity?.({ running: player.isRunning && !player.standing, runningTally: player.isRunning && !player.riding, swimming: player.swimming, climbing: !!player.climb?.isClimbing, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing (AUDIT 26 F083: + the climbing arm)
       // PlayerMotor.StartRestGroundedCheck (:184-194) reads the LIVE
       // grounded state; dungeonContext's `_grounded` is host-fed and
-      // only dungeon.js:403 fed it, so in a world-hosted dungeon the
+      // only dungeon.js:406 fed it, so in a world-hosted dungeon the
       // rest gate read the initialiser `true` for the whole session
       // and R mid-fall opened the window DFU refuses (TEXT.RSC 355).
       if (!overlayHeld) dungeonCtx.reportMotor?.(player.grounded, player.velY, cam.yaw);
@@ -6928,10 +6944,9 @@ export function createWorldModes(host) {
       });
       // F117: take the avoid-death consult back from the dungeon too -
       // its hook closed over the dungeon's submersion marker. Above
-      // ground there is no submersion model, so this is the plain
-      // Stendarr consult, same as the boot host's.
+      // ground the one model is the sea's forge (DW-D), as at boot.
       setAvoidDeathHook(() => {
-        if (!avoidDeath(activeMemberships(playerEntity))) return false;
+        if (!avoidDeath(activeMemberships(playerEntity), { submerged: !!host.exteriorSubmerged?.() })) return false;
         say(AVOID_DEATH_TEXT);
         return true;
       });
@@ -7093,7 +7108,7 @@ export function createWorldModes(host) {
     if (mode === 'dungeon') {
       if (pendingDungeonExit) { pendingDungeonExit = false; exitDungeonNow(); return true; }   // F-A5: outside any overlay dispatch
       if (pendingDungeonWagonOpen) { pendingDungeonWagonOpen = false; dungeonCtx.openInventoryWithWagon(); }   // DISC21-B: the box is off the slot now
-      if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:335's `if (!held)` - a paused game advances no movers
+      if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:338's `if (!held)` - a paused game advances no movers
       if (!overlayHeld) dungeonCtx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes ride the same gate
       dungeonCtx.flicker.tick(dt);
       // AUDIT 26 F183: castle blocks and the one special area take
@@ -7291,7 +7306,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:9309's own wave-46 note); the interior
+          // a blow (world.js:9533's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -7978,7 +7993,7 @@ export function createWorldModes(host) {
     // V4 (the first-hour playthrough probe): THE WORLD HOST'S DUNGEON
     // MODE HAD NO COMBAT OR LOOT SURFACE AT ALL. worldModes mounts a
     // real dungeonContext but installed none of the hooks
-    // scenes/dungeon.js:420-474 carries, so a probe could take the
+    // scenes/dungeon.js:423-477 carries, so a probe could take the
     // classic start into Privateer's Hold and then see nothing inside
     // it - no foes, no vitals, no corpses. Same names and same shapes
     // as the standalone host's, so one probe reads either.
@@ -8204,7 +8219,7 @@ export function createWorldModes(host) {
     // for it is now the real invariant: one feeder per Set, and every
     // reader on a fed one (test/mack_bugs.test.js).
     // I4: a right-click on a window is the WINDOW's (the remove
-    // gesture), never a swing - dungeon.js:244 and both exterior slots
+    // gesture), never a swing - dungeon.js:247 and both exterior slots
     // have always said so, and this host's modal arm had no gate at
     // all. DFU pauses the game under any PauseWhileOpen window
     // (UserInterfaceManager.cs:179-185), so the click never reaches
@@ -9784,7 +9799,7 @@ export function createWorldModes(host) {
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
      *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3389-3411), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:6490). So an F9 pressed in a shop
+     *  unconditionally (world.js:6699). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -9823,7 +9838,7 @@ export function createWorldModes(host) {
       if (interiorOverlay instanceof DeathScreen) { interiorOverlay.restoreView(); interiorOverlay = null; }
     },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:6590)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:6799)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -9833,7 +9848,7 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:6757`
+     *  HARD2c: this used to spell them out, and named `world.js:6967`
      *  and `dungeonContext.js:6322` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */

@@ -1,0 +1,216 @@
+{
+    "Version": "1.2.2",
+    "Sections": [
+        {
+            "Name": "General",
+            "Description": "Iliac Puddle No More core settings",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Min": 5.0,
+                    "Max": 250.0,
+                    "Value": 250.0,
+                    "Name": "WaterDepth",
+                    "Description": "Maximum water depth",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "SpawnWaterSurfaces",
+                    "Description": "Render visible water surfaces",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "SpawnUnderwaterEnemies",
+                    "Description": "Spawn underwate enemies",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Min": 0.0,
+                    "Max": 1.0,
+                    "Value": 0.3,
+                    "Name": "EnemyFrequency",
+                    "Description": "Enemy frequency rate",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+                {
+                    "Min": 0,
+                    "Max": 256,
+                    "Value": 128,
+                    "Name": "MaxLiveEnemies",
+                    "Description": "Maximum live underwater enemies",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Min": 0.0,
+                    "Max": 1.0,
+                    "Value": 0.8,
+                    "Name": "PassiveFishFrequency",
+                    "Description": "Fish frequency rate",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+                {
+                    "Min": 0,
+                    "Max": 1080,
+                    "Value": 720,
+                    "Name": "MaxLiveFish",
+                    "Description": "Maximum live passive fish",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "SpawnUnderwaterDecorations",
+                    "Description": "Decorate the seafloor",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Min": 1,
+                    "Max": 3,
+                    "Value": 2,
+                    "Name": "DecorationPopulateRadius",
+                    "Description": "Decoration spawning radius in map pixels (3 = full loaded ring, no pop-in)",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Min": 0.0,
+                    "Max": 1.0,
+                    "Value": 0.3,
+                    "Name": "DecorationFrequency",
+                    "Description": "Decoration rate",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+                {
+                    "Min": 64,
+                    "Max": 2160,
+                    "Value": 1080,
+                    "Name": "MaxDecorationsPerTile",
+                    "Description": "Max decorations per map pixel (lower = better performance)",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Min": 0.0,
+                    "Max": 1.0,
+                    "Value": 0.5,
+                    "Name": "SeafloorLootRate",
+                    "Description": "Random loot rate",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+                {
+                    "Min": 0,
+                    "Max": 256,
+                    "Value": 192,
+                    "Name": "MaxLiveLootObjects",
+                    "Description": "Maximum isolated loot objects",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Min": 0.0,
+                    "Max": 1.0,
+                    "Value": 0.3,
+                    "Name": "TreasureClusterRate",
+                    "Description": "Wreckage treasure rate",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+                {
+                    "Min": 0,
+                    "Max": 32,
+                    "Value": 12,
+                    "Name": "MaxLiveTreasureClusters",
+                    "Description": "Maximum wrecks",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Value": false,
+                    "Name": "TreasureCove",
+                    "Description": "Increased loot multipliers + loot quality",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Min": 0.0,
+                    "Max": 1.0,
+                    "Value": 0.7,
+                    "Name": "WaterSurfaceTopTransparency",
+                    "Description": "Water surface transparency from above",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+                {
+                    "Min": 0.0,
+                    "Max": 1.0,
+                    "Value": 0.2,
+                    "Name": "WaterSurfaceBottomTransparency",
+                    "Description": "Water surface transparency from below",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+                {
+                    "Min": 0.0,
+                    "Max": 1.0,
+                    "Value": 0.0,
+                    "Name": "DarkerSurfaceWater",
+                    "Description": "Darker surface water tint",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+                {
+                    "Min": 0.0,
+                    "Max": 1.0,
+                    "Value": 0.5,
+                    "Name": "UnderwaterFogStrength",
+                    "Description": "Underwater fog strength",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+                {
+                    "Min": 0.0,
+                    "Max": 1.0,
+                    "Value": 0.3,
+                    "Name": "UnderwaterFogDistance",
+                    "Description": "Underwater fog view distance",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+                {
+                    "Min": 0.25,
+                    "Max": 30.0,
+                    "Value": 1.0,
+                    "Name": "SwimSpeedMultiplier",
+                    "Description": "Multiplier for outdoor swimming movement speed",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "EnableSwimStroke",
+                    "Description": "Press Run while swimming for a burst of speed",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "ArgonianInfiniteBreath",
+                    "Description": "Argonians never drown",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                }
+            ]
+        }
+    ]
+}

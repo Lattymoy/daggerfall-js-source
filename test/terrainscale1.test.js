@@ -215,7 +215,9 @@ function pump({ publish = false } = {}) {
   const built = new Map();
   const buildingDoors = [{ pixelKey: '1,1' }, { pixelKey: '2,2' }, { pixelKey: '1,1' }];
   const hums = [];
-  const env = { built, renderer, collider, buildingDoors, doorGeneration: 0, hums };
+  const env = { built, renderer, collider, buildingDoors, doorGeneration: 0, hums,
+    // DW-D: DeepWaterRuntime's location-load count rides a location's build - none here
+    locationIndex: new Map(), spawnedDungeonAt: () => null, dwLocationLoadBegan: () => {}, dwLocationLoadEnded: () => {} };
   const body = `${WORLD.slice(i, j)}
     async function buildPixelNow(px, py) {
       const key = px + ',' + py;

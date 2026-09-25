@@ -452,7 +452,7 @@ vec3 elFinish(vec3 lit, vec3 wp) {
   // second copy of the law, only a place to keep the answer.
   vec3 col = mix(uFogColorLin, tm, fogFactorAt(wp));
   col += elTonemapRGB(elInScatter(wp) * ex);   // HQ1
-  return elEncode(col) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it
+  return dwWaterFog(elEncode(col), wp) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it   // DW-C: the sea's distance fog on the DISPLAY colour - the mod's post effect reads the camera's finished image
 }
 `;
 

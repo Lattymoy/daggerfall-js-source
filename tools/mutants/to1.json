@@ -926,8 +926,8 @@
   {
     "name": "j1-rain-falls-through-the-journey",
     "file": "src/scenes/world.js",
-    "old": "      if (!_travelWeatherOff) {\n        precip.draw(precipShown, proj, view, new Float32Array(cam.pos), camRight, now / 1000);",
-    "new": "      {\n        precip.draw(precipShown, proj, view, new Float32Array(cam.pos), camRight, now / 1000);",
+    "old": "      if (!_travelWeatherOff && !_dwPrecipOff) {\n        precip.draw(precipShown, proj, view, new Float32Array(cam.pos), camRight, now / 1000);",
+    "new": "      if (!_dwPrecipOff) {\n        precip.draw(precipShown, proj, view, new Float32Array(cam.pos), camRight, now / 1000);",
     "tests": [
       "test/to1_travelOptions.test.js"
     ]

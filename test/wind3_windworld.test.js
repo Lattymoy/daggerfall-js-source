@@ -248,7 +248,7 @@ test('WIND3 the hosts: both exterior hosts read the one wind once a frame, feed 
     one(/precip\.windV\[0\] = wd\.windV\[0\]; precip\.windV\[1\] = wd\.windV\[1\];/g, 'the rain\'s rate');
     one(/precip\.windOff\[0\] \+= wd\.step\[0\]; precip\.windOff\[1\] \+= wd\.step\[1\];/g, 'the rain\'s travel');
     assert.ok(!/_lastNow|labWindSlider|Math\.sin\(tsec \* 0\.31\)/.test(s), `${host}: no copy of the mapping, no private rain clock`);
-    const wisp = s.indexOf('if (wisps && wd.on && wispsOn()) {');
+    const wisp = s.search(/if \(wisps && wd\.on && wispsOn\(\)(?: && !_dwAirOff)?\) \{/);   // DW-C: the world host's wisps are the distance fog's while it is on
     assert.ok(wisp > 0 && wisp > s.indexOf('precip.draw(precipShown, proj, view'), `${host}: the wisps after the rain`);
     assert.ok(s.slice(wisp, wisp + 300).includes(`wisps.draw(wd, proj, view, new Float32Array(${eye}), now / 1000);\n      renderer.markForeignPass();`), `${host}: their own program is a foreign pass`);
     one(/const wisps = sky\.enhanced \? new WindWispsRenderer\(renderer\.gl\) : null;/g, 'built on the enhanced lane at boot');

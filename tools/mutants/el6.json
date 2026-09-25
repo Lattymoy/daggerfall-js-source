@@ -182,8 +182,8 @@
   {
     "name": "lane-no-dither",
     "file": "src/render/enhancedLighting.js",
-    "old": "  return elEncode(col) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it",
-    "new": "  return elEncode(col);",
+    "old": "  return dwWaterFog(elEncode(col), wp) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;",
+    "new": "  return dwWaterFog(elEncode(col), wp);",
     "tests": [
       "test/el6_field.test.js"
     ]

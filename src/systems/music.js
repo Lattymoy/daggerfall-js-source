@@ -151,7 +151,7 @@ export class MusicService {
     if (!this.enabled) return null;
     if (this.player) return this.player;
     if (!audio.ctx) return null;
-    this.player = new SongPlayer(audio.ctx, null, audio.reverbSend?.() ?? null);
+    this.player = new SongPlayer(audio.ctx, audio.listenerBus?.() ?? null, audio.reverbSend?.() ?? null);   // DW-D: through the listener, so a filter on it takes the music too
     return this.player;
   }
 

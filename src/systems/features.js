@@ -172,6 +172,12 @@ export const MOD_CURATED = Object.freeze({
   unleveledLoot: Object.freeze(['Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril',
     'Adamantium', 'Ebony', 'Orcish', 'Daedric']),
   'roads-hazelnut': Object.freeze(['SmoothRoads', 'RiversAndStreams']),
+  // DW-D: twenty-four keys in one section, and these six are what a player
+  // reaches for first - how far the sea lets you see and how thick it is,
+  // how much of it shows through from above, the swim's burst and speed,
+  // and whether the deep is hostile. The rest stay in the mod's own pane.
+  'iliac-puddle-no-more': Object.freeze(['General.UnderwaterFogDistance', 'General.UnderwaterFogStrength',
+    'General.WaterSurfaceTopTransparency', 'General.EnableSwimStroke', 'General.SwimSpeedMultiplier', 'General.SpawnUnderwaterEnemies']),
   // TO1: the mod ships FIFTY-ONE keys across twelve sections, so this
   // one is curated hard. The five are what a player reaches for first:
   // whether a cautious trip is walked, whether a ship needs a port,
@@ -640,6 +646,11 @@ export const FEATURES = Object.freeze([
   // hook reads the switch as a journey starts; an ambush already at sea
   // finishes either way.
   modFeature('warm-ashes-ships', 'Takes effect on your next sea voyage.', 'world'),
+  // DW-A to DW-D (2026-09-25): ILIAC PUDDLE NO MORE - `world`, the sea itself. The
+  // world host builds the deep bay (its host, its renderer, its swimmer) at
+  // the world's mount, so the switch reaches the next world; its looks and
+  // its swim read their dials every frame.
+  modFeature('iliac-puddle-no-more', 'Takes effect when the world next loads.', 'world'),
   modFeature('meanerMonsters', 'Takes effect on monsters spawned after the switch.', 'combat'),
   modFeature('pcaao', 'Takes effect at once.', 'combat'),
   modFeature('unleveledLoot', 'Takes effect on the next roll.', 'loot'),

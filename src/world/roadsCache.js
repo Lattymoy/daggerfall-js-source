@@ -45,13 +45,16 @@ export function roadsCacheKey({ settlements, woodsLength, dials = {} }) {
   return `roads:v${GENERATOR_VERSION}:${settlements.length}:${sum}:${woodsLength}:${JSON.stringify(d)}`;
 }
 
-/** The IndexedDB store. Every method answers null on any failure. */
-export function idbStore(indexedDBRef = globalThis.indexedDB) {
+/** The IndexedDB store. Every method answers null on any failure.
+ *  DW-A: the database and store names are arguments (the roads' by default),
+ *  so Iliac Puddle No More's coastline keeps its own cache through this one
+ *  door rather than a second copy of it (deepWatersBakeCache.js). */
+export function idbStore(indexedDBRef = globalThis.indexedDB, { db: dbName = DB, store: storeName = STORE } = {}) {
   if (!indexedDBRef) return null;
   const open = () => new Promise((resolve) => {
     try {
-      const req = indexedDBRef.open(DB, 1);
-      req.onupgradeneeded = () => { try { req.result.createObjectStore(STORE); } catch { /* exists */ } };
+      const req = indexedDBRef.open(dbName, 1);
+      req.onupgradeneeded = () => { try { req.result.createObjectStore(storeName); } catch { /* exists */ } };
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => resolve(null);
       req.onblocked = () => resolve(null);
@@ -59,8 +62,8 @@ export function idbStore(indexedDBRef = globalThis.indexedDB) {
   });
   const tx = (db, mode, fn) => new Promise((resolve) => {
     try {
-      const t = db.transaction(STORE, mode);
-      const req = fn(t.objectStore(STORE));
+      const t = db.transaction(storeName, mode);
+      const req = fn(t.objectStore(storeName));
       req.onsuccess = () => resolve(req.result ?? null);
       req.onerror = () => resolve(null);
     } catch { resolve(null); }

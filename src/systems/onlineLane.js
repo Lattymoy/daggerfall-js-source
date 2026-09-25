@@ -266,6 +266,23 @@ export const ONLINE_ROOM_MOD_KEYS = Object.freeze({
   // other's crates; the switch is the room's. (Below decks opens no room -
   // worldModes' ship interior is the player's own.)
   'detailed-ships': Object.freeze({ Enabled: true }),
+  // DW-A to DW-D (2026-09-25): the fourth floor, and more than a floor. Iliac
+  // Puddle No More carves the sea out from under the terrain - the switch
+  // and the depth decide where the seafloor stands, so two players who
+  // disagree would swim over two floors (one walking on water where the
+  // other dives). Its deep-sea foes and its sunken loot are the host's
+  // foes and a roll that leaves the roller's hands (MODS-ONLINE-4's two
+  // reasons), and its swim multiplier, its stroke and the Argonians'
+  // unbounded breath are rules a room plays by (MODS-ONLINE-5): a 30x swim
+  // is a player outrunning the party's foes. Its looks - the surfaces, the
+  // fog, the fish and the weed - are each player's own.
+  'iliac-puddle-no-more': Object.freeze({
+    Enabled: true, 'General.WaterDepth': 250.0,
+    'General.SpawnUnderwaterEnemies': true, 'General.EnemyFrequency': 0.3, 'General.MaxLiveEnemies': 128,
+    'General.SeafloorLootRate': 0.5, 'General.MaxLiveLootObjects': 192, 'General.TreasureClusterRate': 0.3,
+    'General.MaxLiveTreasureClusters': 12, 'General.TreasureCove': false,
+    'General.SwimSpeedMultiplier': 1.0, 'General.EnableSwimStroke': true, 'General.ArgonianInfiniteBreath': true,
+  }),
   // MODS-ONLINE-4: the host's foes are the party's foes.
   meanerMonsters: Object.freeze({ Enabled: true }),
   pcaao: Object.freeze({ Enabled: true }),

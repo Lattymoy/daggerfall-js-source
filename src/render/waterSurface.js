@@ -341,5 +341,5 @@ void main() {
   float mspec = pow(max(dot(n, Hm), 0.0), 220.0) * uMoonScale;
   col += uSunColor * (1.6 * spec) + uMoonColor * (0.7 * mspec);
   float alpha = (uOpacity + (1.0 - uOpacity) * F) * edge;
-  outColor = vec4(mix(uFogColor, col, fogFactorAt(vWorldPos)), alpha);
+  outColor = vec4(dwWaterFog(mix(uFogColor, col, fogFactorAt(vWorldPos)), vWorldPos), alpha);   // DW-C: the sea's distance fog
 }`;

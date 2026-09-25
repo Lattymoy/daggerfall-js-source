@@ -62,7 +62,8 @@ test('EL6: the constants and the shader laws - the lights archive, the emitter s
   const dither = `(bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0`;
   for (const [name, fs] of [['mesh', EL_MESH_FS], ['bb', EL_BB_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS]]) {
     assert.ok(fs.includes(BAYER_GLSL), `${name} carries the Bayer`);
-    assert.ok(fs.includes(`return elEncode(col) + ${dither};`), `${name}: the lane's encode dithers, zero-mean`);
+    // DW-C: the Deep Waters distance fog rides the DISPLAY colour, inside the dither (the mod's post effect reads the finished image)
+    assert.ok(fs.includes(`return elEncode(col) + ${dither};`) || fs.includes(`return dwWaterFog(elEncode(col), wp) + ${dither};`), `${name}: the lane's encode dithers, zero-mean`);
   }
   assert.ok(EL_FAR_RING_FS.includes(BAYER_GLSL));
   assert.ok(EL_FAR_RING_FS.includes(`outColor = vec4(elEncode(col) + ${dither}, 1.0);`), 'the ring\'s sky gradient dithers too');

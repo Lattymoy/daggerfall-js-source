@@ -76,8 +76,8 @@
   {
     "name": "MAC-BUG-W5-9-the-gradient-loses-its-sign-so-a-hill-leans-the-wrong-way",
     "file": "src/player/collider.js",
-    "old": "    const nx = (-hx / (2 * h)) || 0, nz = (-hz / (2 * h)) || 0;",
-    "new": "    const nx = (hx / (2 * h)) || 0, nz = (hz / (2 * h)) || 0;",
+    "old": "    const nx = (-minmod((xp - c) / h, (c - xm) / h)) || 0, nz = (-minmod((zp - c) / h, (c - zm) / h)) || 0;",
+    "new": "    const nx = (minmod((xp - c) / h, (c - xm) / h)) || 0, nz = (minmod((zp - c) / h, (c - zm) / h)) || 0;",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "MAC-BUG-W5-10-the-central-difference-forgets-to-halve-the-span",
     "file": "src/player/collider.js",
-    "old": "    const nx = (-hx / (2 * h)) || 0, nz = (-hz / (2 * h)) || 0;",
-    "new": "    const nx = (-hx / h) || 0, nz = (-hz / h) || 0;",
+    "old": "    const nx = (-minmod((xp - c) / h, (c - xm) / h)) || 0, nz = (-minmod((zp - c) / h, (c - zm) / h)) || 0;",
+    "new": "    const nx = (-minmod((xp - c) / (2 * h), (c - xm) / (2 * h))) || 0, nz = (-minmod((zp - c) / (2 * h), (c - zm) / (2 * h))) || 0;",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -94,17 +94,19 @@
   {
     "name": "MAC-BUG-W5-11-a-NaN-sampler-builds-a-NaN-normal",
     "file": "src/player/collider.js",
-    "old": "    if (!Number.isFinite(hx) || !Number.isFinite(hz)) return [0, 1, 0];",
-    "new": "    if (hx == null || hz == null) return [0, 1, 0];",
+    "old": "    if (!Number.isFinite(xp - xm) || !Number.isFinite(zp - zm) || !Number.isFinite(c)) return [0, 1, 0];",
+    "new": "    if (xp == null || zp == null) return [0, 1, 0];",
     "tests": [
       "test/blood1_decals.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "DW-D made the normal's grade the gentler one-sided difference (restFloor's minmod), and minmod plus the `|| 0` already answer flat for every non-finite sample: a NaN comparison falls through to the NaN side, which `|| 0` zeroes; an infinite side against a finite one has a product that is infinite or NaN, and the finite side (or 0) is taken. The finite guard stays because it says WHY an edge reads flat - no ground to read a grade from - where the arithmetic would do the same job silently."
   },
   {
     "name": "MAC-BUG-W5-12-the-gradient-keeps-minus-zero-over-flat-ground",
     "file": "src/player/collider.js",
-    "old": "    const nx = (-hx / (2 * h)) || 0, nz = (-hz / (2 * h)) || 0;",
-    "new": "    const nx = -hx / (2 * h), nz = -hz / (2 * h);",
+    "old": "    const nx = (-minmod((xp - c) / h, (c - xm) / h)) || 0, nz = (-minmod((zp - c) / h, (c - zm) / h)) || 0;",
+    "new": "    const nx = -minmod((xp - c) / h, (c - xm) / h), nz = -minmod((zp - c) / h, (c - zm) / h);",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -116,6 +118,8 @@
     "new": "    if (!col?.raycastHit) return null;",
     "tests": [
       "test/blood1_decals.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "Every collider the hosts hand the marks is a Collider, and Collider carries both surfaceHit and raycastHit, so the gate answers the same either way in the port and in every rig. Kept on surfaceHit because that is the door the drip actually knocks on (MAC-BUG W5: the ground outside is heightAt, not a mesh), and a collider-shaped stand-in without it must be refused rather than half-served. (Survived on HEAD before DW-D too - recorded here, found by DW-D's re-aim run.)"
   }
 ]

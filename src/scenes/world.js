@@ -28,7 +28,7 @@ import { loadModWorldData } from './modWorldData.js';   // RR3b
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES, CLIMATES, REGION_NAMES } from '../formats/mapsFile.js';   // SPAWNED-DUNGEONS1: the ocean gate and the synthesized location's region name
 import { settlementsOf, loadModRoads, basicRoadsPathsPoint } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT ROADS F2 / ROADS 22; WOD2: Basic Roads' getPathsPoint, the question World of Daggerfall's loader asks
-import { modSetting, modSettingsOf } from '../systems/modSettings.js';   // ROADS 24; HCC: the mod's eight switches
+import { modSetting, modSettingsOf, modSettingsGeneration } from '../systems/modSettings.js';   // ROADS 24; HCC: the mod's eight switches
 import { hasPort } from '../systems/travelPorts.js';   // AUDIT-RR2 G22: Travel Options' port list for RR's ship gate
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH, surfaceHeightAt } from '../world/terrainSurface.js';
@@ -40,7 +40,7 @@ import { isHearthFlat, HEARTH_NEAR } from '../systems/survival/hearth.js';   // 
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
 import { playerTorchLight, waistLanternPoseBit } from '../systems/playerTorch.js';   // T1; HT-WAIST-NET: the pose's lantern at the waist
 import { thunderlockMuzzleLight } from '../systems/thunderlock.js';   // FIELD-GUN13: the muzzle flash is a light the player carries, the torch's own shape
-import { applyClimate, getTerrainGroundArchive, getNatureArchive, SEASON, climateSeasonFromMinutes, INTERIOR_SEASON } from '../world/climateSwaps.js';   // A1: the season is the calendar's, and an interior's is Summer whatever the date
+import { applyClimate, getTerrainGroundArchive, groundIsSnowy, getNatureArchive, SEASON, climateSeasonFromMinutes, INTERIOR_SEASON } from '../world/climateSwaps.js';   // A1: the season is the calendar's, and an interior's is Summer whatever the date
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, trs, identity, UP_Y, wrapAngle } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // GHOST1: the plane extraction comes through bounds.js's `spherePlanes` now - `_planes` serves the sphere test too
@@ -270,7 +270,7 @@ import { preloadPrisonScreenArt, preloadCourtScreenArt } from '../ui/prisonScree
 import { TerrainGenClient } from '../world/terrainGenClient.js';   // EV7: the pixel kernel, off the main thread (samples/blend/tiles/grid/nature moved whole to terrainGen.js)
 import { getPref } from '../systems/uiPrefs.js';
 import { landViewRead } from '../world/landView.js';   // LV1: the enhanced lane's own streamed radius; FT2: the read is the module's
-import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
+import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, daylightScale, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { dungeonLocationFor } from '../world/smallerDungeons.js';   // AUDIT 28 F-B2: the quest layer sees the sized dungeon
 import { audio, QuestAudioSource } from '../systems/audio.js';   // E6: the QuestMachine's own DaggerfallAudioSource (PlaySound's busy-skip)
 import { music } from '../systems/music.js';
@@ -279,7 +279,7 @@ import { createWeatherFront, blendTerms, soundWeather } from '../systems/weather
 import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router; AUDIT 58: the membership question the Wabbajack door asks too
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
-import { PlayerMotor, startRestGroundedCheck, motionBagOf, MAX_FRAME_DT, CAPSULE_HEIGHT, RIDE_EYE_HEIGHT } from '../player/motor.js';   // SPELLFX1: a peer's eye when its body has not said its height
+import { PlayerMotor, startRestGroundedCheck, motionBagOf, MAX_FRAME_DT, CAPSULE_HEIGHT, RIDE_EYE_HEIGHT, afloatMessageStep, CANNOT_FLOAT_HUD_SECONDS } from '../player/motor.js';   // SPELLFX1: a peer's eye when its body has not said its height
 import { travelDriveForward, travelLookaheadFor } from '../systems/travelAutopilot.js';   // TO-FIELD / AUDIT-FIELD F8: the journey's ground gate, pure so the pins can drive it   // StartRestGroundedCheck's ONE home; WW2: the one motion bag
 import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exteriorSwimming } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods; OT1: IsPlayerSwimming above ground
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
@@ -429,6 +429,20 @@ import { RIDING_VOLUME_SCALE } from '../systems/riding.js';   // AUDIT-RR F16: t
 import { setRrHostSeams, rrEnabled } from '../systems/rrInstall.js';   // RR2: what the riding component reads off the scene
 import { rrFortProximityLines, rrMasterArmorerDiscovery } from '../systems/rrQuestLine.js';   // RR3: the two PlayerGPS subscribers
 import { getBuildingVariant, setLastLocationKeyTo } from '../systems/worldDataVariants.js';   // RR3: the shop variant the quest set
+import { createDeepWatersHost, deepWatersOn, DEEP_WATERS_VENDOR } from './deepWatersHost.js';   // DW-B: Iliac Puddle No More (jet082) - the deep bay
+import { DeepWatersRenderer, surfaceScrollAt } from '../render/deepWatersRender.js';   // DW-C: its seafloor and its surface
+import { clippedTerrainIndices } from '../world/deepWaterCap.js';   // DW-C: the clip, as the ground's own index set
+import { lookSettings, surfaceLook, sceneTint, seafloorTexture, seafloorTextureStrength, seafloorPalette, seafloorAmbientBoost, daylightFactor, SURFACE_TEXTURE, horizonAmbientColor, distanceFogUniforms } from '../world/deepWaterLook.js';   // DW-C
+import { SURFACE_RENDER_Y_OFFSET } from '../world/deepWaterSurface.js';   // DW-C: the surface stands 3 cm over the sea
+import { createDeepWatersPlayer } from './deepWatersPlayer.js';   // DW-D: the swimmer in the carved sea
+import { SwimSoundOdometer, SWIM_SOUND_CLIP, SWIM_SOUND_VOLUME, UNDERWATER_CUTOFF_HZ, isBoatEffectBundle } from '../world/deepWaterSwim.js';   // DW-D: UnderwaterPresentationEffects' ear; IsBoatEffectBundle
+import { createSwimMovement } from './deepWatersSwimMove.js';   // DW-D: OutdoorSwimMovementController
+import { setColumnSource as dwSetColumnSource, flushStateChange as dwFlushStateChange } from '../systems/deepWaterPlayer.js';   // DW-D: the mod's public player API
+import { loadGraceActive, teleported as dwTeleported, loadStarted as dwLoadStarted, loadFinished as dwLoadFinished, locationLoadBegan as dwLocationLoadBegan, locationLoadEnded as dwLocationLoadEnded } from '../world/deepWaterRuntime.js';   // DW-D: DeepWaterRuntime's load grace
+import { carvedFloorLocalY } from './deepWatersHost.js';   // DW-D: the shore probes see no terrain over a carved cell
+import { breathStep, setWaterBreathingRule } from '../systems/breath.js';   // DW-D: the dungeon's breath law, on the open sea; ApplyArgonianInfiniteBreath
+import { CLASSIC_UPDATE_INTERVAL } from '../characters/weaponStates.js';   // DW-D: PlayerEntity's classic cadence, the dungeon's import
+import { RACES } from '../systems/races.js';   // DW-D: ArgonianInfiniteBreath
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -1364,7 +1378,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // origin under compensation - is the one streaming.test.js:139 fuzz
   // pins over 2000 crossings.
   const _htT = [0, 0, 0];
-  const heightAt = (x, z) => {
+  /** @param {boolean} [terrainOnly] - DW-D: a carved cell's seafloor is no DaggerfallTerrain (DeepWaterFloorMesh), so
+   *  the surface model's down probe asks for the terrain alone and reads the carved sea as nothing (-Infinity) */
+  const heightAt = (x, z, terrainOnly = false) => {
     const c = state.compensation;
     const px = state.mapOrigin.x + Math.floor((x - c[0]) / TERRAIN_SIZE);
     const py = state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE);
@@ -1374,6 +1390,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const lx = x - t[0];
       const lz = z - t[2];
       if (lx < 0 || lz < 0 || lx >= TERRAIN_SIZE || lz >= TERRAIN_SIZE) return -Infinity;
+      if (p.deepWaters) { const f = deepWaters.floorLocalY(p, lx, lz); if (f != null) return terrainOnly ? -Infinity : f + t[1]; }   // DW-B: a carved cell's ground is the seafloor
       const fx = lx / heightCell;
       const fz = lz / heightCell;
       const ix = Math.min(HEIGHTMAP_DIMENSION - 2, Math.floor(fx));
@@ -1407,9 +1424,184 @@ export async function bootWorld(canvas, renderer, params, status) {
     const t = state.pixelTranslation(p.px, p.py, _stT);
     const lx = x - t[0], lz = z - t[2];
     if (lx < 0 || lz < 0 || lx >= TERRAIN_SIZE || lz >= TERRAIN_SIZE) return -Infinity;
+    if (p.deepWaters) { const f = deepWaters.floorLocalY(p, lx, lz); if (f != null) return f + t[1]; }   // DW-B: the floor is drawn there
     return surfaceHeightAt(p.samples, lx, lz, p._stride ?? 1) + t[1];
   };
   const collider = new Collider(heightAt, surfaceAt);
+  // DW-B: ILIAC PUDDLE NO MORE 1.2.2 (jet082, vendor/iliac-puddle-no-more/)
+  // - the sea carved out of the streamed ground (deepWatersHost.js says
+  // how). Opened as the world mounts, its switch read once: the bake
+  // starts building at once on its own worker, and every pixel promoted
+  // from here asks it for its seafloor, its cap and its surface. The floor
+  // is `heightAt`'s in a carved cell (above), the walls a collider bucket.
+  const dwRender = deepWatersOn() ? new DeepWatersRenderer(renderer) : null;
+  const deepWaters = dwRender ? createDeepWatersHost({
+    woods, woodsBytes,
+    locations: [...locationIndex].map(([k, loc]) => { const i = k.indexOf(','); return [+k.slice(0, i), +k.slice(i + 1), loc]; }),
+    maps, blocks, built,
+    climateAt: (x, y) => maps.getClimateIndex(x, y),
+    currentPixel: () => state.current,
+    collider, pixelTranslation: (px, py, o) => state.pixelTranslation(px, py, o),
+    gpu: { create: (entry, result) => dwCreate(entry, result), destroy: (h) => dwRender.destroy(h), setTilemap: dwSetTilemap },
+  }) : null;
+  /** DW-C: a pixel's floor and surface on the GPU, with the floor's material (DeepWaterFloorMaterial.GetMaterial) - its texture loads behind. */
+  function dwCreate(entry, result) {
+    const h = dwRender.create(result);
+    // EV3: the pixel's culling box reaches down to its seafloor, or a floor looked down on would cull with the ground above it
+    const pos = result.floor?.positions;
+    if (pos && entry._box) for (let i = 1; i < pos.length; i += 3) if (pos[i] < entry._box[1]) entry._box[1] = pos[i];
+    const climate = result.biomeClimateIndex;
+    const settings = getWorldClimateSettings(climate);
+    const tex = seafloorTexture(climate, settings, groundIsSnowy(settings, entry.season ?? season));
+    h.material = { texture: null, strength: seafloorTextureStrength(climate), palette: seafloorPalette(climate) };
+    dwTexture(tex.archive, tex.record).then((t) => { if (h.material) h.material.texture = t; });
+    return h;
+  }
+  const _dwTextures = new Map();
+  /** DW-C: a TEXTURE.nnn record on the GPU as the mod reads it (GetTexture2D: point, repeat) - null when the archive cannot load. */
+  function dwTexture(archive, record) {
+    const k = `${archive}_${record}`;
+    let t = _dwTextures.get(k);
+    if (!t) {
+      t = getTexture(archive).then(() => { uploadRecord(archive, record, { opaque: true }); return renderer.textures.get(`${archive}_${record}#opaque`) ?? null; }).catch(() => null);
+      _dwTextures.set(k, t);
+    }
+    return t;
+  }
+  /** DW-B: the cap's TileMap into the pixel's texture - and the clipped tiles out of the ground's index set (DW-C). */
+  function dwSetTilemap(entry, bytes) {
+    renderer.writeTilemapTexture(entry.tilemapTex, bytes, TERRAIN_TILE_DIM);
+    entry._dwBytes = bytes === entry.tilemapBytes ? null : bytes;
+    dwClipTerrain(entry);
+  }
+  function dwClipTerrain(p) {
+    if (p.dwTerrain) { renderer.destroyWaterSurface(p.dwTerrain); p.dwTerrain._dead = true; p.dwTerrain = null; }
+    const idx = p._dwBytes ? clippedTerrainIndices(p._dwBytes, p._stride ?? 1) : null;
+    if (idx) { p.dwTerrain = renderer.createWaterSurface(p.terrain, idx); p.dwTerrain.bounds = p.terrain.bounds; }
+  }
+  // DW-C: THE FRAME'S LOOK - the mod's settings (read again only when the
+  // store moves), its daylight factor, the sea's height in the scene.
+  let _dwLookGen = -1, _dwLook = null;
+  const _dwT = [0, 0, 0];
+  function dwFrameLook(minute) {
+    const g = modSettingsGeneration();
+    if (g !== _dwLookGen) { _dwLookGen = g; _dwLook = lookSettings((k) => modSetting(DEEP_WATERS_VENDOR, k)); }
+    const daylight = daylightFactor({ night: isNight(minute), daylightScale: daylightScale(minute), weatherScale: wxNow.sun });
+    const seaY = deepWaters.oceanLocalY + state.pixelTranslation(state.current.x, state.current.y, _dwT)[1];
+    const camY = cam.pos[1];
+    // DW-C: the surfaces' _DeepWatersUnderwater is the distance fog's presentation (UnderwaterDistanceFog.LateUpdate
+    // sets both from TryGetUnderwaterPresentation), not the swimmer's - a camera a quarter metre over the sea has neither face
+    const underwater = !!_dwFogP?.under;
+    // GetPlayerShallowWaterFactor: the water under the player object (TryGetWaterColumn's depth) sets the underside's fades
+    const col = walkMode && dwPlayer ? dwPlayer.rawColumnAt(player.pos[0], player.pos[2]) : null;
+    const look = surfaceLook(_dwLook, { daylight, columnDepth: col ? col.depth : null });
+    if (underwater) look.horizonColor = horizonAmbientColor(_dwLook, { daylight, cameraY: camY, oceanY: _dwFogP.oceanY });   // LateUpdate's SetHorizonColor, while under
+    return { s: _dwLook, daylight, seaY, camY, underwater, look };
+  }
+  let _dwFrame = null;
+  /** DW-C: the frame's look and its distance fog, after beginFrame (which clears the fog - it is a frame's). */
+  function beginDeepWatersFrame(minute) {
+    const f = _dwFrame = dwFrameLook(minute);
+    if (f.underwater) renderer.setWaterFog(distanceFogUniforms(f.s, { daylight: f.daylight, cameraY: f.camY, oceanY: _dwFogP.oceanY }, _dwFogU));
+  }
+  const _dwFloorList = [];
+  function drawDeepWatersFloors(visible) {
+    const f = _dwFrame;
+    if (!f) return;
+    _dwFloorList.length = 0;
+    const boost = seafloorAmbientBoost(f.daylight);
+    for (const p of visible) {
+      const h = p.deepWaters?.gpu;
+      if (!h?.floor) continue;
+      h.material.ambientBoost = boost;
+      _dwFloorList.push({ h, model: p._pixelMatrix, origin: state.pixelTranslation(p.px, p.py, h.origin ??= [0, 0, 0]), material: h.material });
+    }
+    if (!_dwFloorList.length) return;
+    dwRender.drawFloors(_dwFloorList, {
+      sceneTint: sceneTint(f.s.darker, f.daylight, f.camY > f.seaY),
+      columnOn: f.s.spawnSurfaces && !f.underwater,   // the top's share: none while its _DeepWatersUnderwater discards it
+      seaY: f.seaY + SURFACE_RENDER_Y_OFFSET,
+      topColor: f.look.topColor, topVision: f.look.topVision,
+      surfaceScroll: surfaceScrollAt(_dwNowMs / 1000),   // the surface's own offset this frame - the column's colour is the texel the top draws
+      surfaceTexture: _dwSurfaceTex,
+    });
+  }
+  let _dwNowMs = 0;
+  let _dwSurfaceTex = null;
+  if (deepWaters) dwTexture(SURFACE_TEXTURE.archive, SURFACE_TEXTURE.record).then((t) => { _dwSurfaceTex = t; });
+  // DW-D: the swimmer. `dwLocate` is heightAt's own arithmetic answering the pixel and its local point.
+  const _dwLocT = [0, 0, 0];
+  function dwLocate(x, z) {
+    const c = state.compensation;
+    const px = state.mapOrigin.x + Math.floor((x - c[0]) / TERRAIN_SIZE);
+    const py = state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE);
+    const p = built.get(`${px},${py}`);
+    if (!p) return null;
+    const t = state.pixelTranslation(p.px, p.py, _dwLocT);
+    const lx = x - t[0], lz = z - t[2];
+    if (lx < 0 || lz < 0 || lx >= TERRAIN_SIZE || lz >= TERRAIN_SIZE) return null;
+    return { entry: p, lx, lz, baseY: t[1] };
+  }
+  let _dwSettingsGen = -1, _dwSettings = null;
+  const dwSettings = () => {
+    const g = modSettingsGeneration();
+    if (g !== _dwSettingsGen) {
+      _dwSettingsGen = g;
+      const get = (k) => modSetting(DEEP_WATERS_VENDOR, k);
+      _dwSettings = { ...lookSettings(get), swimSpeedMultiplier: Number(get('General.SwimSpeedMultiplier')), enableSwimStroke: get('General.EnableSwimStroke') === true, argonianInfiniteBreath: get('General.ArgonianInfiniteBreath') === true };
+    }
+    return _dwSettings;
+  };
+  const dwPlayer = deepWaters ? createDeepWatersPlayer({
+    host: deepWaters, locate: dwLocate,
+    seaY: () => deepWaters.oceanLocalY + state.pixelTranslation(state.current.x, state.current.y, _dwT)[1],
+    // the drawn ground without the seafloor: a carved cell has no terrain the mod's rays can stand on
+    terrainGroundAt: (x, z) => {
+      const at = dwLocate(x, z);
+      if (!at) return -Infinity;
+      if (carvedFloorLocalY(at.entry.deepWaters, at.lx, at.lz) != null) return -Infinity;
+      return surfaceHeightAt(at.entry.samples, at.lx, at.lz, at.entry._stride ?? 1) + at.baseY;
+    },
+    collider, settings: dwSettings,
+    dismount: () => setTransportModeHere(TRANSPORT_MODES.Foot),
+  }) : null;
+  let _dwBreathTimer = 0;
+  let _dwLastForward = 0;   // DW-D: last frame's InputManager.Vertical, for the driver's shore exit
+  const dwSwimMove = createSwimMovement({ settings: dwSettings, collider });
+  // DW-D: ApplyArgonianInfiniteBreath - IsWaterBreathing for an Argonian player every frame, wherever the player is
+  if (dwPlayer) setWaterBreathingRule((e) => e === playerEntity && dwSettings().argonianInfiniteBreath && e.raceId === RACES.Argonian);
+  // DW-D: DeepWaterPlayer.TryGetWaterColumn - the player's own column while the exterior context is live
+  if (dwPlayer) dwSetColumnSource(() => {
+    if (!dwPlayer.exteriorContext || !walkMode) return null;
+    const c = dwPlayer.playerWaterColumn(player, cam.yaw);
+    return c ? { terrain: c.entry, surfaceY: c.oceanY, seafloorY: c.seafloorY, depth: c.depth } : null;
+  });
+  /** DW-D: TryGetSwimmableSeafloorWorldY at a world point, or null. */
+  const dwSwimmableSeafloorY = (x, z) => { const at = dwLocate(x, z); return at && deepWaters ? deepWaters.swimmableSeafloorY(at.entry, at.lx, at.lz, at.baseY) : null; };
+  /** DW-D: ClampAboveVanillaTerrain's ground - the drawn terrain (Terrain.SampleHeight) of a pixel with a distance field, else null. */
+  const dwVanillaGroundY = (x, z) => {
+    const at = dwLocate(x, z);
+    if (!at || !deepWaters?.tileOf(at.entry)?.hasDistanceField) return null;
+    return surfaceHeightAt(at.entry.samples, at.lx, at.lz, at.entry._stride ?? 1) + at.baseY;
+  };
+  const _dwSwimSound = new SwimSoundOdometer();   // DW-D: UpdateSwimSfx's odometer
+  let _dwUnderFog = null;   // DW-D: the frame's underwater fog, while the presentation is under the sea
+  let _dwFogP = null;       // DW-C: UnderwaterDistanceFog's presentation this frame - {under, oceanY}
+  const _dwFogU = new Float32Array(20);
+  const _dwBreathState = { tally: 0 };
+  const _dwSurfaceList = [];
+  function drawDeepWatersSurfaces(nowMs) {
+    const f = _dwFrame;
+    if (!f || !f.s.spawnSurfaces) return;
+    _dwSurfaceList.length = 0;
+    for (const p of built.values()) {
+      const h = p.deepWaters?.gpu;
+      if (p._visible && h?.surface) _dwSurfaceList.push({ h, model: p._pixelMatrix });
+    }
+    if (!_dwSurfaceList.length) return;
+    dwRender.drawSurfaces(_dwSurfaceList, { ...f.look, underwater: f.underwater, liftY: deepWaters.oceanLocalY + SURFACE_RENDER_Y_OFFSET, surfaceScroll: surfaceScrollAt(nowMs / 1000), surfaceTexture: _dwSurfaceTex });
+    renderer.markForeignPass();   // EV6: the surfaces' programs ran behind the shadows' back
+  }
   // TERRAIN-SCALE1: A HEIGHT WRITTEN UNDER ANOTHER TERRAIN SCALE, STOOD
   // AGAIN ON TODAY'S GROUND. Every exterior height a save (or a scene
   // cache, or an anchor) carries is compensation-free and stood on
@@ -1487,12 +1679,12 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  AUDIT-FIELD F7: A FLOOR, NOT THE WHOLE DISTANCE. The first cut
    *  called 64 "more than the fastest accelerated step", which is true
    *  of a fixed physics STEP and false of a FRAME: the motor moves
-   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:1074),
+   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:1140),
    *  and the frame that hitches is exactly the frame in which the
    *  streamer is behind. A horse at the shipped default limit of sixty
    *  covers ~65 units in a 10 fps frame and ~120 at the mod's ceiling of
    *  a hundred - past a 64-unit probe, off the built world, and once the
-   *  motor is airborne `airControl` is false (motor.js:1632) so zeroing
+   *  motor is airborne `airControl` is false (motor.js:1705) so zeroing
    *  the drive on the NEXT frame no longer steers: the fall is already
    *  paid for. `travelLookahead` measures the frame that is about to
    *  run instead, and keeps 64 as its floor. */
@@ -1508,9 +1700,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (built.has(key)) return built.get(key);
     let flying = inFlight.get(key);
     if (flying) return flying;
+    const _dwLoc = !!(locationIndex.get(key) || spawnedDungeonAt(px, py));   // DW-D: DeepWaterRuntime's activeLocationLoads - OnCreateLocationGameObject ...
+    if (_dwLoc) dwLocationLoadBegan(performance.now() / 1000);
     flying = buildPixelNow(px, py)
       .catch((e) => { releaseFailedBuild(key); throw e; })   // BUILD-FAIL1
-      .finally(() => inFlight.delete(key));
+      .finally(() => inFlight.delete(key))
+      .finally(() => { if (_dwLoc) dwLocationLoadEnded(); });   // ... OnUpdateLocationGameObject (the build settled, either way)
     inFlight.set(key, flying);
     return flying;
   }
@@ -1601,6 +1796,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!dfLocation, climateType: climateBase,
       wod: wodPicks ? { picks: wodPicks.map((p) => ({ flatten: p.flatten, rect: p.rect })) } : null,   // WOD2: the smoothing arms run in the kernel
     });
+    // DW-B: HandlePromote's synchronous arm - a pixel beside the player's is
+    // promoted now, on the Deep Waters worker while this build lays out, and
+    // published with its seafloor (awaited below); every other one is
+    // deferred to the pump, nearest first.
+    const dwNear = deepWaters ? deepWaters.promoteNear({ px, py, samples, tilemap, tilemapBytes }) : null;
     // WM3: this pixel's climate law, bound once - the one argument the
     // shared remap seam takes that differs between the climate hosts
     // and the dungeon.
@@ -2190,6 +2390,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT BRANCH (WoD) m4: the carry is adopted HERE, with nothing
     // awaited between it and built.set - a sweep during the build has
     // cleared it, so a stale roll never stands in the new world.
+    const dwResult = dwNear ? await dwNear.catch(() => null) : undefined;   // DW-B: before the carry, which nothing may await past (AUDIT BRANCH (WoD) m4)
     const wodKept = adoptWodCarry(key, wodSpawners, privateersHold);
     const wodLife = wodKept.life ?? {};   // L1-3: this terrain's identity - kept across a rebuild or a pool, new on a promote
     if (!wodKept.life) wodForgetPeerSites(key);   // AUDIT WOD7: a fresh promote's markers are its own again
@@ -2225,6 +2426,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       centerHeight: samples[64 * HEIGHTMAP_DIMENSION + 64] * worldHeight,
       avgY: dfLocation ? avg * worldHeight : 0,
     });
+    if (deepWaters) deepWaters.published(built.get(key), dwResult);   // DW-B: the near promote stands with the pixel, or the pixel waits its turn
     for (const pile of wodKept.piles ?? []) standWodPile(key, wodLife, pile);   // AUDIT BRANCH (WoD) L1-3: the pooled terrain's piles, where they lay
     // GRASS-STALE1 (2026-09-19, Discord: "grass is flying and not on the
     // ground" around graveyards and other POIs): this pixel's own
@@ -2435,12 +2637,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   function restrideTerrain(p, stride) {
     const grid = buildTerrainGrid(p.samples, stride, ghostSampler(woods, p.px, p.py));
     if (p.water) { renderer.destroyWaterSurface(p.water); p.water = null; }
+    if (p.dwTerrain) { renderer.destroyWaterSurface(p.dwTerrain); p.dwTerrain._dead = true; p.dwTerrain = null; }   // DW-C
     renderer.destroyMesh(p.terrain);
     p.terrain = renderer.createTerrainSurface(grid.positions, grid.normals,
       stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
     const waterIndices = waterOn ? buildWaterIndices(p.tilemapBytes, stride) : null;
     p.water = waterIndices ? renderer.createWaterSurface(p.terrain, waterIndices) : null;
     p._stride = stride;
+    if (p._dwBytes) dwClipTerrain(p);   // DW-C: the clip, at the new ring class
   }
 
   /** @param {{collectLoose?:boolean}} [opts] - A1: a season re-skin
@@ -2458,6 +2662,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer.gl.deleteTexture(p.tilemapTex);
     for (const b of p.batches) renderer.destroyBatch(b);
     for (const w of p.windmills ?? []) { w.hum?.stop(); w.hum = null; }   // WM4c: the mill's hum leaves with its pixel
+    if (deepWaters) deepWaters.destroyed(p);   // DW-B: the seafloor, its walls and the surface leave with the pixel
+    if (p.dwTerrain) { renderer.destroyWaterSurface(p.dwTerrain); p.dwTerrain._dead = true; p.dwTerrain = null; }   // DW-C: the clip's own index set and VAO (the ground's buffers it read went above)
     if (p.personBatches) for (const b of p.personBatches.values()) renderer.destroyBatch(b);   // T2
     collider.removeBucket(key);
     // AUDIT 64 F14: a gate's own collider bucket leaves with its pixel.
@@ -2863,10 +3069,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
   });
   // F117: Stendarr's rank-in-fifty, consulted by the door before the
-  // presenter. This host has no submersion model, so submerged is the
-  // default false - which is also true of every death it can present.
+  // presenter. This host has no submersion model of its own, so submerged
+  // is false on land - DW-D: and the carved sea's forge where it holds
+  // (Iliac Puddle No More writes PlayerEnterExit.isPlayerSubmerged, which
+  // Temple.AvoidDeath reads: a Stendarr priest drowning at sea is not saved).
   setAvoidDeathHook(() => {
-    if (!avoidDeath(activeMemberships(playerEntity))) return false;
+    if (!avoidDeath(activeMemberships(playerEntity), { submerged: !!dwPlayer?.submerged })) return false;
     townTalk.say(AVOID_DEATH_TEXT);
     return true;
   });
@@ -4339,7 +4547,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2469 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:5673
+  // that context through modes.dungeonCtx - so worldModes.js:5676
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -5373,7 +5581,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       waterWalking: !!player.waterWalking,   // PlayerEntity.IsWaterWalking (:590)
       probe: downProbe({
         centreY: cy,
-        terrainY: heightAt(player.pos[0], player.pos[2]),
+        terrainY: heightAt(player.pos[0], player.pos[2], true),   // DW-D: GetOnExteriorGroundMethod wants a DaggerfallTerrain - never the carved sea's floor (and the mod gates the terrain collider off over it)
         meshDist: collider.raycast([player.pos[0], cy, player.pos[2]], _SURFACE_DOWN, rayDistance * 2),
         rayDistance,
       }),
@@ -5456,6 +5664,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the sway does not ride a fast travel, a teleport or a load's
     // landing to the new place.
     cameraRecoiler.reset();
+    dwTeleported(performance.now() / 1000);   // DW-D: OnTeleportToCoordinates' grace
     modes?.abortTransition?.();   // AUDIT 68 X3-transition-build-race: a door build still in flight lands in the world being left - it frees itself instead of publishing
     // A1: a fast travel is where the calendar jumps WEEKS - straighten
     // the season BEFORE the destination pixel builds, or the arrival
@@ -6647,6 +6856,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // incoming character does not inherit the old one's reel.
       cameraRecoiler.reset();
       resetVitalsDetector();   // BLOOD AUDIT 5: nor the difference between the two healths as a blow (VitalsChangeDetector.cs:139-158)
+      dwLoadStarted();   // DW-D: DeepWaterRuntime.OnStartLoad (SaveLoadManager raises it once a load is under way) - no swim hand until OnLoad
       // IS1: a load never runs UNDER a mounted mode - RespawnPlayer
       // destroys the standing interior first (PlayerEnterExit
       // .cs:453-459). The dying scene is NOT cached on the way out:
@@ -6786,6 +6996,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // Immersive Footsteps' ModCompatibilityWarning_OnLoadSave.
       betterAmbience.onLoad();
       reportModCompatibilityIssues({ showText: (lines) => messageBox(lines) });   // ENH-NOTICE3: through the one door - still a PUSH over what is open, which is the seam's default and B5's law for every DaggerfallUI.MessageBox
+      dwLoadFinished(performance.now() / 1000);   // DW-D: DeepWaterRuntime.OnLoad - 1.5 s more (a load that throws raises none, as DFU's does not)
     } finally {
       _loading = false;
     }
@@ -8217,7 +8428,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:232, "a right-click on a window is the window's...
+  // (dungeon.js:235, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -8349,6 +8560,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     }));
     window.__frame = 0;
     window.__renderer = renderer;   // EV2: the probe surface every host carries now (the dungeon's U38 precedent) - draw counts land against renderer.stats
+    window.__playerEntity = playerEntity;   // DW-D: the probe's entity - a shot's stub has no Endurance, so a dive drowns it at once unless the probe hands it breath
+    // DW-B: Deep Waters' probe - the bake, the promotes still owed, and what each standing pixel carries
+    window.__dwStat = () => ({
+      on: !!deepWaters, bake: !!deepWaters?.bake, pending: deepWaters?.pendingCount ?? 0, queue: queue.length, building, built: built.size,
+      floors: [...built.values()].filter((p) => p.deepWaters?.floor).length, hidden: [...built.values()].filter((p) => p.deepWaters?.hide).length,
+      clipped: [...built.values()].filter((p) => p.dwTerrain).length, surfaces: [...built.values()].filter((p) => p.deepWaters?.surface).length,
+      cur: state.current,
+      swim: dwPlayer?.decision ? { ...dwPlayer.decision } : null, feet: walkMode ? player.pos.map((v) => +v.toFixed(2)) : null, swimming: !!player.isPlayerSwimming, motorSwim: !!player.swimming, breath: playerEntity.currentBreath ?? 0, health: playerEntity.health, endurance: liveStat(playerEntity, 'endurance'), race: playerEntity.raceId,
+      motor: { sunk: !!player.sunk, toggleSink: !!player.toggleSink, ha: player.heightAction, height: +(player.height ?? 0).toFixed(2), grounded: !!player.grounded, cancel: !!player.cancelMovement, surf: player.waterSurfaceY == null ? null : +player.waterSurfaceY.toFixed(2), onExt: !!player.onExteriorWater, speed: +(player.speed ?? 0).toFixed(2) },
+      fog: _dwFogP ? { under: _dwFogP.under, oceanY: +_dwFogP.oceanY.toFixed(2), cam: +cam.pos[1].toFixed(2), dfu: _dwUnderFog ? { mode: _dwUnderFog.mode, density: _dwUnderFog.density } : null } : null,
+      probe: (() => { const q = built.get(`${state.current.x},${state.current.y}`); const t = state.pixelTranslation(state.current.x, state.current.y); return { t, loc: q?.locOrigin, box: q?._box, h: [0, 200, 400, 600, 800].map((z) => +(heightAt(t[0] + 409.6, t[2] + z)).toFixed(1)) }; })(),
+      pixels: [...built.values()].map((p) => `${p.px},${p.py}:${p.deepWaters ? (p.deepWaters.floor ? 'F' : '') + (p.deepWaters.hide ? 'H' : '') + (p.dwTerrain ? 'C' : '') + (p.deepWaters.surface ? 'S' : '') : '-'}`).join(' '),
+    });
   }
 
   // T2: the townsfolk probe surface - aggregated over built pixels,
@@ -8467,7 +8691,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8823-8887 -
+  // worldModes answers it in BOTH modes (worldModes.js:8838-8902 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -12443,6 +12667,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // exactly as it always did offline.
     duelHolds: () => duelEnemyNear(),   // DUEL1: a live duel holds its duellist - no door out of the ring
     onlineRespawn: () => { if (!(_deathWasOnline ?? _onlineWorldSession())) return false; respawnOnlinePlayer(); return true; },   // ONLINE-DEATH-FIX: a reset that beats the frame's backstop (Enter on the first frame) has no snapshot yet - ask the live answer rather than read null as offline
+    exteriorSubmerged: () => !!dwPlayer?.submerged,   // DW-D: the sea's forged isPlayerSubmerged, for the router's avoid-death consult
     activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
     activateLockOnly: () => _tapLockOnly,   // TS1: the stick-half tap - the modal ladders stop after the lock pick
     currentRegionIndex: () => _questRegionIndex(),   // UL1: PlayerGPS.CurrentRegionIndex for the mode machine's mods
@@ -12862,7 +13087,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:111, so the
+  // only reader of `load` in the whole tree is dungeon.js:114, so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a
@@ -13298,6 +13523,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // front's 0.15) louder in a tavern than in the street - the Discord report itself - and a dungeon 6.7x.
       ambience.setPreset(presetForExterior(heardWeather(), isNight(minuteNow())));   // DISC9: the word the street last heard - the one truth Better Ambience's indoor rain reads too
       ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.rainPlaying() });
+      if (dwPlayer) { audio.setListenerLowPass(0); _dwSwimSound.reset(); dwPlayer.insideFrame(player, now / 1000); dwFlushStateChange(); }   // DW-D: IsPlayerInside - RemoveAudioFilter, ResetSwimTracking, the driver's inside arm
       // AUDIT F2-I1: the modal frame RETURNS, so an overlay held in the
       // townTalk slot got neither its clock nor its draw while the
       // player was inside a building or a dungeon - chargen mounts
@@ -13502,7 +13728,19 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // false outdoors (no blockWaterLevel - PlayerEnterExit) until
         // the surface model below re-derives it (OT1).
         const _wasSwimming = !!player.isPlayerSwimming;   // OT1: the value the frame - or the dungeon exit - arrived with, read BEFORE the clear
-        applyMotorEffectFlags(player, playerEntity);
+        // DW-D: OutdoorSwimDriver.Update, ahead of the motor as its execution order puts it - the carved sea's swim
+        // decision, and its forge ridden on the ONE motor flag write below (a clear and a forge after it would change
+        // LevitateMotor.IsSwimming twice a frame, and each change cancels a step). A boat's live effect bundle
+        // suppresses it (IsPlayerOnBoat), and so does any subscriber (systems/deepWaterPlayer.js). The forward axis is
+        // last frame's - InputManager.Update against the driver's Update is DFU's own script-order toss (AUDIT 64 F3).
+        const _dwForge = dwPlayer && playerSpawned ? dwPlayer.beforeMove({
+          now: now / 1000, player, cameraY: cam.pos[1], yaw: cam.yaw, pitch: cam.pitch,
+          descend: crouchHeld || held(keys, 'FloatDown'), ascend: jumpHeld || held(keys, 'FloatUp'),
+          onBoat: (playerEntity.activeEffects ?? []).some((e) => isBoatEffectBundle(e?.bundleName)), loadGrace: loadGraceActive(performance.now() / 1000), input: { forward: _dwLastForward },
+        }) : null;
+        applyMotorEffectFlags(player, playerEntity, _dwForge ?? undefined);
+        // DW-D: the forge holds PlayerEnterExit's dungeon arm open for the frame, and the arm's afloat line with it
+        if (_dwForge) { const afloat = afloatMessageStep(player, player.waterWalking); if (afloat) townTalk.say(afloat, CANNOT_FLOAT_HUD_SECONDS); }
         const mv = moveHeld(keys);
         mv.analog = touch?.axes() ?? gamepad?.axes() ?? null;   // TI2: the stick's throw, when the layer has one - MoveAxes' joystick arm takes it over the key impulse; GP1: the pad's stick when no finger
         // AUDIT 28 W8: the axes advance only on frames the motor runs (a
@@ -13577,6 +13815,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // through the paralysis fired a synthetic press on the frame it lifted.
         // ROAD-Ar (R0): ...and the season hold stops the motor dead,
         // because there is no floor under it while the re-skin runs.
+        _dwLastForward = paralyzed ? 0 : axes.forward;   // DW-D: the shore exit's InputManager.Vertical, for the next frame's driver
         if (_overlayHeld || _seasonHeld) player.holdFrame();   // DISC8-G: a held motor reports no landing and no jump
         if (!_overlayHeld && !_seasonHeld) player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak'), jump: false, up: false, down: false, crouch: crouchPress } : {
           forward: axes.forward,   // TO1: the autopilot's force while a journey runs, else the player's own   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
@@ -13642,7 +13881,36 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // edge (DoUnsinking's write is the motor's 'unsink' heightAction) and the tile-0 clearing rule,
         // one helper. Before this the flag was the clear alone: a sea swim never suppressed the encounter
         // roll (:488-491) or refused a rest (355), and a dungeon exit onto open water lost the carry.
-        player.isPlayerSwimming = exteriorSwimming({ wasSwimming: _wasSwimming, sunk: !!player.sunk, unsunk: player.heightAction === 'unsink', tileIndex: _surf.tileIndex });   // XL-1: PlayerEnterExit.isPlayerSwimming, NOT levitateMotor.IsSwimming - :421 clears the motor's flag outdoors with no tile test and applyMotorEffectFlags above IS that clear, so writing this into `player.swimming` armed PlayerMotor.CancelMovement on both edges of every frame and the fixed step spent it: the exterior swimmer travelled 0 at 60 Hz
+        player.isPlayerSwimming = exteriorSwimming({ wasSwimming: _wasSwimming, sunk: !!player.sunk, unsunk: player.heightAction === 'unsink', tileIndex: _surf.tileIndex });
+        // DW-D: the forged flags over the tile model's, the ascent clamp, the shore exit, the stroke - and the breath,
+        // the dungeon's law on the head-under test (PlayerEntity reads IsPlayerSubmerged, which the mod forges)
+        if (dwPlayer && playerSpawned) {
+          const _dwUp = jumpHeld || held(keys, 'FloatUp'), _dwDown = crouchHeld || held(keys, 'FloatDown');
+          dwPlayer.afterMove({ now: now / 1000, player, cameraY: cam.pos[1], descend: _dwDown, ascend: _dwUp, onBoat: (playerEntity.activeEffects ?? []).some((e) => isBoatEffectBundle(e?.bundleName)) });
+          // OutdoorSwimMovementController: the multiplier, the stroke, the floor - on the carved sea (IsOutdoorSwimming) or
+          // any water the motor swims (IsAnySwimming), never a water walker's, never in the load grace
+          const _dwOutdoor = !player.waterWalking && ((dwPlayer.waterMethod ?? _surf.water) === ON_EXTERIOR_WATER.Swimming || !!player.isPlayerSwimming || dwPlayer.swim.presentationUnderwater(dwPlayer.seaY(), cam.pos[1], player.pos[1] + player.height / 2));
+          dwFlushStateChange();   // OutdoorSwimDriverAfter: PostPhaseRestore, then FlushStateChange
+          dwSwimMove.update({
+            now: now / 1000, dt, player, entity: playerEntity, loadGrace: loadGraceActive(performance.now() / 1000),
+            outdoorSwimming: _dwOutdoor, anySwimming: _dwOutdoor || (!player.waterWalking && !!player.swimming),
+            input: { forward: paralyzed ? 0 : axes.forward, strafe: paralyzed ? 0 : axes.strafe, up: _dwUp, down: _dwDown, run: held(keys, 'Run') },
+            yaw: cam.yaw, pitch: cam.pitch, lookDir: fwd, cameraY: cam.pos[1], oceanY: dwPlayer.seaY(),
+            seafloorY: dwSwimmableSeafloorY, vanillaGroundY: dwVanillaGroundY,
+          });
+          _dwBreathTimer += dt;
+          while (_dwBreathTimer >= CLASSIC_UPDATE_INTERVAL) {
+            _dwBreathTimer -= CLASSIC_UPDATE_INTERVAL;
+            if (breathStep(playerEntity, dwPlayer.submerged, _dwBreathState) === 'drowned') hurtPlayer(playerEntity, playerEntity.health, { bypassShield: true });   // SetHealth(0): drowned
+          }
+          // UnderwaterPresentationEffects: the listener's low-pass while the presentation is under the sea
+          // (UpdateAudioFilter - the swimmer's own IsPresentationUnderwater), and the swim's splash every 2.5 m a
+          // swimmer travels, never a water walker (UpdateSwimSfx - the player object, the capsule's centre)
+          const _dwCentre = centreFromFeet(player.pos, player.height);
+          audio.setListenerLowPass(dwPlayer.swim.presentationUnderwater(dwPlayer.seaY(), cam.pos[1], _dwCentre[1]) ? UNDERWATER_CUTOFF_HZ : 0);
+          if (player.isPlayerSwimming && !player.waterWalking) { if (_dwSwimSound.step(_dwCentre)) audio.playOneShot(SWIM_SOUND_CLIP, SWIM_SOUND_VOLUME); }
+          else _dwSwimSound.reset();
+        }   // XL-1: PlayerEnterExit.isPlayerSwimming, NOT levitateMotor.IsSwimming - :421 clears the motor's flag outdoors with no tile test and applyMotorEffectFlags above IS that clear, so writing this into `player.swimming` armed PlayerMotor.CancelMovement on both edges of every frame and the fixed step spent it: the exterior swimmer travelled 0 at 60 Hz
         // FS-slice: PlayerFootsteps - the exterior stride (snow by
         // season + CLIMATE.PAK; the path/water/static-geometry arms
         // ride the surface model above).
@@ -13651,7 +13919,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           // PlayerFootsteps.cs:116 - "Play splash footsteps whether
           // player is walking on or swimming in exterior water", so
           // BOTH non-None methods feed this one boolean.
-          const _onWater = _surf.water !== ON_EXTERIOR_WATER.None;
+          // DW-D: the value PlayerFootsteps' FixedUpdate reads is the one the sea's forge left after the motor
+          // (OutdoorSwimDriverAfter re-applies it), PlayerMotor.Update's own only on a frame the driver wrote none
+          const _onWater = (dwPlayer?.waterMethod ?? _surf.water) !== ON_EXTERIOR_WATER.None;
           // AUDIT-TO1 J1: `PlayerFootsteps.enabled = false` for the journey
           // (:1225) - the component does not RUN, which is what a disabled
           // MonoBehaviour is; the one-gate line below stays the hosts' literal.
@@ -13966,6 +14236,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
 
     // Streaming step: recentre, enqueue new pixels, drop far ones.
     spendRestrides();   // STREAM1: a promoted pixel's grid, one a frame, off the crossing's own frame
+    if (deepWaters) deepWaters.pump();   // DW-B: PumpDeferredBuilds - one deferred promote out at a time, the nearest first
     const wasMapPixel = { x: state.current.x, y: state.current.y };   // state.update overwrites it; PlayerGPS's lastMapPixelX/Y
     const r = state.update(cam.pos);
     if (r.offset) {
@@ -14007,6 +14278,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       betterAmbience.rebase();   // BA1: the same anchor, the mod's own machine
       remotePlayers?.rebaseFootsteps?.();   // PEER-BUZZ: and every peer's - their strides are measured in scene units now, so they recentre with the rest
       remotePlayers?.rebaseSounds?.(r.offset);   // AUDIT DISC7 B6: and the riders' loops, in the frame the listener moves in
+      _dwSwimSound.rebase(r.offset);   // DW-D: the swim's odometer too - a recentre is not a stroke
       if (_partyRestVoteOrigin) { _partyRestVoteOrigin[0] += r.offset[0]; _partyRestVoteOrigin[1] += r.offset[1]; _partyRestVoteOrigin[2] += r.offset[2]; }   // AUDIT PARTY-REST: PARTY-REST16's origin is a scene point too - unshifted, a crossing read as a 819-unit walk and cancelled the vote
       mwViewRebase(r.offset);   // EOTB-IL: FloatingOrigin.OnPositionUpdate - the sprite camera's smoothing follows the origin
       if (_lastPlayerPos) { _lastPlayerPos[0] += r.offset[0]; _lastPlayerPos[1] += r.offset[1]; _lastPlayerPos[2] += r.offset[2]; }
@@ -14176,7 +14448,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     setHeardWeather(ambientWord, enhancedFront ? fx.intensity : 1);   // DISC9/DISC11: what the street hears - word AND level - is what every indoor ear hears through the walls
     ambience.setPreset(presetForExterior(ambientWord, isNight(minute)));
     ambience.rainGain = enhancedFront ? fx.intensity : 1;
-    ambience.update(dt, { playerPos: cam.pos, inside: false, underground: modes?.mode === 'dungeon' });   // CRICKET-DUNGEON: no crickets under the ground   // AUDIT 58: `!playerEnterExit.IsPlayerInside` (:154-162), stated rather than left undefined - this tick is the exterior's
+    // DW-D: the water arm reads the sea's forged blockWaterLevel and isPlayerSubmerged - WaterGentle at the line, the bubbles under it
+    ambience.update(dt, { playerPos: cam.pos, inside: false, underground: modes?.mode === 'dungeon', waterSurfaceY: dwPlayer?.waterLevelY ?? null, submerged: !!dwPlayer?.submerged });   // CRICKET-DUNGEON: no crickets under the ground   // AUDIT 58: `!playerEnterExit.IsPlayerInside` (:154-162), stated rather than left undefined - this tick is the exterior's
     windAudio.update(wd, dt, windSoundOn());   // WIND3: the wind loop, beside DFU's ambience and never inside it
     animalAmbience.update(dt, cam.pos);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     // Storm lightning strobe. AUDIT 39 (#14): ENHANCED-SKIN ONLY -
@@ -14227,10 +14500,18 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     renderer.setLighting(
       withMoonAmbient(exteriorAmbient(minute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), wxNow.sun), moonNow), sunScale(minute) * wxNow.sun * flash * sky.sunFactor(),   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground); WX2: the scale is the front's
       new Float32Array(SUN_RIG_COLOR));
+    // DW-C: the distance fog's own "under" (UnderwaterDistanceFog.TryGetUnderwaterPresentation) - the surfaces'
+    // _DeepWatersUnderwater and UnderwaterPresentationEffects' light suppression read it too, so it is taken
+    // here, before the lights, from this frame's camera and capsule
+    if (dwPlayer) {
+      const _centre = walkMode ? centreFromFeet(player.pos, player.height) : cam.pos;
+      _dwFogP = dwPlayer.fogPresentation({ camera: cam.pos, centre: _centre, swimming: walkMode && (!!player.isPlayerSwimming || !!player.swimming || !!player.onExteriorWater) });
+    }
     // R12: the player-following indirect light rides the camera in
     // the streaming world (walk mode keeps cam at the player's eye).
     {
-      const iScale = indirectLightScale(minute) * wxNow.sun;   // WX2: the front's scale
+      // DW-D: UnderwaterPresentationEffects.SuppressPlayerIndirectLight - its intensity 0 under the fog, back after
+      const iScale = _dwFogP?.under ? 0 : indirectLightScale(minute) * wxNow.sun;   // WX2: the front's scale
       renderer.setIndirectLight(cam.pos, INDIRECT_LIGHT_RANGE, new Float32Array([
         INDIRECT_LIGHT_COLOR[0] * iScale, INDIRECT_LIGHT_COLOR[1] * iScale, INDIRECT_LIGHT_COLOR[2] * iScale,
       ]));
@@ -14263,6 +14544,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const fogColor = sky.fogColorFor(fogNow);   // DS1: the mod's own RenderSettings.fogColor while it is the sky; SetSkyFogColor over the horizon otherwise, as before
     renderer.setFog(fogNow.mode,
       fogNow.density, fogNow.start, fogNow.end, fogColor);
+    if (dwPlayer) {   // DW-D: ApplyUnderwaterPresentation - DFU's own UnderwaterFog, the mod's range and colour, over the sky's
+      const _uw = dwPlayer.fog({ mode: fogNow.mode, density: fogNow.density, start: fogNow.start, end: fogNow.end, color: [...fogColor] }, cam.pos[1], daylightFactor({ night: isNight(minute), daylightScale: daylightScale(minute), weatherScale: wxNow.sun }));
+      if (_uw) renderer.setFog(_uw.mode, _uw.density, _uw.start, _uw.end, new Float32Array(_uw.color));
+      _dwUnderFog = _uw;
+    }
     sky.renderer.fogColor = fogColor;
     sky.renderer.fogMix = fogNow.excludeSky ? 0 : 1 - fogFactor(fogNow, 800);
 
@@ -14295,8 +14581,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         }
       }
       const wodSel = wodLit ? _wodSelect(n, _wodFill(n)) : null;   // WOD2: the lanterns and the mod's lights, one selection
+      // DW-D: UnderwaterPresentationEffects.SuppressPlayerTorch - EnablePlayerTorch's light dark under the fog (the fuel burns on, the light is the only thing it takes)
       const lit = withPlayerLights(wodSel ? wodSel.data : nearestLights(_sceneLights, cam.pos, renderer.maxPointLights, worldLightAnimator.ranges, null, 0, n),   // EL1: the installed set's cap (16 classic, 48 on the lane); PERF-LIGHTS: `n` is how much of the pool is live
-        magic?.candleLight(), playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...camps.lights(), ...droppedTorches.lights());   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
+        magic?.candleLight(), _dwFogP?.under ? null : playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...camps.lights(), ...droppedTorches.lights());   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
       if (wodSel) _wodSetLights(lit, wodSel);
       else renderer.setPointLights(lit, CITY_LIGHT_COLOR_F32);
     } else {
@@ -14307,7 +14594,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // WOD2: ...and the mod's lights, which burn at every hour.
       const wodSel = wodLit ? _wodSelect(0, _wodFill(0)) : null;
       const lit = withPlayerLights(wodSel ? wodSel.data : new Float32Array(0),
-        magic?.candleLight(), playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...camps.lights(), ...droppedTorches.lights());   // HT1; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
+        magic?.candleLight(), _dwFogP?.under ? null : playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...camps.lights(), ...droppedTorches.lights());   // HT1; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
       if (wodSel) _wodSetLights(lit, wodSel);
       else renderer.setPointLights(lit, CITY_LIGHT_COLOR_F32);
     }
@@ -14318,6 +14605,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     renderer.setWorldViewport(worldViewportRect(canvas.clientWidth, canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute), WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one
     meterFor(renderer.gl)?.markCpu('bodies');   // PERF-ZONE2: the Morrowind bodies - the player's, every peer's - the wagon and the camps, which the renderer's own 'world' mark used to swallow
+    if (deepWaters) { _dwNowMs = now; beginDeepWatersFrame(minute); }   // DW-C: the look and the distance fog - a frame's, so after the clear of both
     // MW-D24: the player's own body, in third person only.
     renderer.setCloudShadow(sky?.cloudShadow ?? null);   // VC4: the frame's deck, for the body and everything before the pixel loop
     mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: cam.yaw });   // DISC18: the body at the capsule's own feet, not the camera's smoothed ones
@@ -14455,7 +14743,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       } else if (pixelCasts) {
         // SHADOW-REACH: the whole pixel is off screen but inside a shadow's reach - its ground, its merged statics
         // and its odd models go to the maps and nowhere else
-        renderer.recordShadowTerrain(p.terrain, pixelMatrix, renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4);
+        if (!p.deepWaters?.hide) renderer.recordShadowTerrain(p.dwTerrain ?? p.terrain, pixelMatrix, renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4);   // DW-C: a pure-ocean pixel's ground is not drawn; a clipped one casts as it draws
         if (p.staticBatch) renderer.recordShadowMesh(p.staticBatch, pixelMatrix, null);
         for (const m of p.models) {
           if (m._batched || !renderer.shadowReach(m._box, t[0], t[1], t[2])) continue;
@@ -14519,10 +14807,12 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // and the flats are cut-outs blended over it.
     renderer.setCloudShadow(sky?.cloudShadow ?? null);
     for (const p of groundQueue) {
+      if (p.deepWaters?.hide) continue;   // DW-C: DeepWaterTerrainCapRenderer.Apply - a pure-ocean pixel's drawHeightmap = false
       const pixelMatrix = p._pixelMatrix;
-      renderer.drawTerrain(p.terrain, pixelMatrix,
+      renderer.drawTerrain(p.dwTerrain ?? p.terrain, pixelMatrix,   // DW-C: the clipped tiles are out of the index set
         renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4);
     }
+    if (deepWaters) drawDeepWatersFloors(groundQueue);   // DW-C: the seafloor, opaque, under the ground's holes (the sky's foreign span, below, covers it)
     _camRight[0] = Math.cos(cam.yaw); _camRight[1] = 0; _camRight[2] = -Math.sin(cam.yaw);
     const camRight = _camRight;   // EV2: one scratch, refilled - not three allocations a frame
     // PERF2 (2026-09-11, RookieG via Mac: "its like 45fps on the outside"):
@@ -14570,6 +14860,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         fovY: fieldOfView(), aspect: worldAspect,
       });
     }
+    if (deepWaters) dwRender.drawSkyFog();   // DW-C: the distance fog over the sky's pixels (and the ring's), before anything blends over them - a no-op while it is off
     renderer.markForeignPass();   // EV6: the sky (and EV8's ring) changed programs behind the shadows' back
     // WATER1: THE WATER, after every pixel's opaque ground and models and
     // before the first flat - so the surface blends over the land it lies
@@ -14580,7 +14871,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (waterOn) {
       const wu = waterUniforms({ seconds: now / 1000, wind: windNow, rain: precipMode === 'rain' || precipMode === 'storm' ? fx.intensity : 0, sky: sky.waterSky() });
       for (const p of built.values()) {
-        if (!p._visible || !p.water) continue;
+        if (!p._visible || !p.water || p.deepWaters?.hide) continue;   // DW-C: a hidden cap takes its water with it
         renderer.drawWaterSurface(p.water, p._pixelMatrix, renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4, wu);
       }
     }
@@ -14709,6 +15000,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // is the EXTERIOR arm of the cadence loop (AUDIT 62 F11: the modal
     // modes ring the same function through the mode machine, above the
     // modal return, so no minute is ever banked for the door).
+    // DW-D: SuppressVanillaWaterEncounters (DeepWaters.Update) - the deep has its own, so the vanilla roll stands down
+    if (dwPlayer && dwPlayer.inOrAboveDeepWater(walkMode && playerSpawned ? player.pos : cam.pos, cam.pos[1], 0.25)) playerEntity.preventEnemySpawns = true;
     const _pf = walkMode && playerSpawned ? player.pos : cam.pos;
     if (!townTalk.overlayActive) runEncounterTick(_pf);
     if ((modes?.mode ?? 'exterior') === 'exterior') {
@@ -14762,6 +15055,13 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     }
     if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, UP_Y);
     if (castBatches.length) renderer.recordShadowBillboards(castBatches, camRight, UP_Y);   // SHADOW-REACH: the flats the view cull rejected, for the maps alone (the wind is the frame's, set above)
+    if (deepWaters) drawDeepWatersSurfaces(now);   // DW-C: the sea's surface - the mod's Transparent queue, after every opaque thing and every cut-out flat
+    // DW-D: UnderwaterPresentationEffects.UpdateWeatherParticles - a swimmer outdoors (never a water walker) has no
+    // rain or snow about them (the port's sand is the same kind of particle volume, and goes with them); DW-C: and
+    // under the distance fog the air's own effects - the sand, the wisps, the bolts, none of which writes a depth the
+    // mod's post effect would fog it by, so all of which it closes to the fog colour - are the fog's
+    const _dwAirOff = !!_dwFogP?.under;
+    const _dwPrecipOff = _dwAirOff || (!!dwPlayer && walkMode && !!player.isPlayerSwimming && !player.waterWalking);
     // WX2: what falls is what the front SHOWS - under the enhanced sky the
     // outgoing rain tapers after the sim has cleared and the incoming
     // holds off until the deck is in. Classic: the sim's mode, as W1.
@@ -14769,7 +15069,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (precipShown === 'sand') {
       // WEATHER2d: THE SANDSTORM'S SAND - the wisps' program in the sand's look, the front's intensity its
       // strength, on the one wind's rate and travel; the rain program never draws it
-      if (sand) {
+      if (sand && !_dwPrecipOff) {
         sand.draw({ on: true, strength01: fx.intensity, windV: wd.windV, step: wd.step, gust: wd.gust }, proj, view, new Float32Array(cam.pos), now / 1000);
         renderer.markForeignPass();
       }
@@ -14795,7 +15095,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // for the journey (:1218-1223) and restores them at its end; the sim,
       // the front and the wind carry on underneath, which is what the mod's
       // `PlayerWeather` disable leaves running too.
-      if (!_travelWeatherOff) {
+      if (!_travelWeatherOff && !_dwPrecipOff) {
         precip.draw(precipShown, proj, view, new Float32Array(cam.pos), camRight, now / 1000);
         renderer.markForeignPass();   // EV6: so did the rain
       }
@@ -14803,13 +15103,13 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // WIND3: THE WISPS - the wind, seen (render/windWisps.js). After the
     // rain and before the grass, on the same integrated wind; a foreign
     // pass like the rain. Their row is read every frame.
-    if (wisps && wd.on && wispsOn()) {
+    if (wisps && wd.on && wispsOn() && !_dwAirOff) {
       wisps.draw(wd, proj, view, new Float32Array(cam.pos), now / 1000);
       renderer.markForeignPass();
     }
     // BOLT: the burning channels, over what the world drew and behind what stands in front of them - from the eye the
     // view was built from (mwv.eye: a third-person camera stands metres off the head, cam.pos)
-    if (boltsGl && boltFrame.bolts.length) {
+    if (boltsGl && boltFrame.bolts.length && !_dwAirOff) {
       boltsGl.draw(boltFrame.bolts, proj, view, new Float32Array(mwv.eye), undefined, renderer.worldViewportPx?.[3]);   // RETRO1: the world image's own pixel
       renderer.markForeignPass();
     }
@@ -14940,7 +15240,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // SCALE is what sets with the sun, and the moon is what is left
         // when it has. The same fields render/renderer.js hands its own
         // programs.
-        { fog: { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos },   // DISC20-A: the fog the ground took this frame, from the view's own eye
+        { fog: { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos, dw: renderer._dwFog },   // DISC20-A: the fog the ground took this frame, from the view's own eye; DW-C: and the sea's
           sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, dim: wxNow.dim,
           sunScale: renderer._sunScale, moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonCol: renderer._moonColor },   // WX2: the dim crosses on the front
         { dir: wd.dir, speed: wd.slider * wd.gust, windV: wd.windV },
@@ -14958,7 +15258,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       const rings = duelRingsNow(dt);
       if (rings.length) {
         duelWall.draw(rings, proj, view, new Float32Array(mwv.eye), now / 1000,
-          { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos });
+          { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos, dw: renderer._dwFog });   // DW-C: the sea's fog with the frame's
         renderer.markForeignPass();
       }
     }

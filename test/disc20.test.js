@@ -26,6 +26,7 @@ function bladeColour(fs, { d, fog = { mode: 0, density: 0, range: [0, 1] }, pixe
     uAmb: [0.4, 0.4, 0.45], uSunCol: [1, 0.95, 0.85], uMoonCol: [0.2, 0.2, 0.3], uDim: 1, uSunScale: 1, uMoonScale: 0,
     uPixel: pixel, uPxSteps: 8, uPxVariants: 4, uPxTintBands: 4,
     uFogColor: [0.6, 0.62, 0.66], uFogMode: fog.mode, uFogDensity: fog.density, uFogRange: fog.range, uCamPos: [0, 0, 0],
+    uDwFog: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],   // DW-C: the carved sea's distance fog, off
     gl_FragCoord: [3, 5, 0.5, 1], o: [0, 0, 0, 0],
     texture: () => [3 / 4, 0.9, 0.5, 1],
   };
@@ -66,7 +67,7 @@ test('DISC20-A: the grass\'s fog is the terrain\'s - its fogFactorAt is TERRAIN_
   const grass = rd('src/render/labGrass.js');
   for (const n of ['uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) assert.ok(grass.includes(`'${n}'`), `${n} is looked up`);
   assert.match(grass, /gl\.uniform1i\(u\.uFogMode, fog \? fog\.mode : 0\);/, 'no fog handed, mode 0 - the lab\'s picture');
-  assert.match(rd('src/scenes/world.js'), /\{ fog: \{ mode: renderer\._fogMode, density: renderer\._fogDensity, range: renderer\._fogRange, color: renderer\._fogColor, camPos: renderer\._camPos \},/);
+  assert.match(rd('src/scenes/world.js'), /\{ fog: \{ mode: renderer\._fogMode, density: renderer\._fogDensity, range: renderer\._fogRange, color: renderer\._fogColor, camPos: renderer\._camPos, dw: renderer\._dwFog \},/);   // DW-C: the sea's fog rides with the frame's
 });
 
 // ── DISC20-E: "The weapon widget default toggle under diverse weapons should be set to off by default" ──

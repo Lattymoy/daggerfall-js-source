@@ -338,5 +338,15 @@ export const CREDITS = Object.freeze({
       vendor: Object.freeze(['warm-ashes-ships']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/985',
     }),
+    Object.freeze({
+      title: 'Iliac Puddle No More',
+      version: '1.2.2',
+      author: 'jet082',
+      what: 'The Iliac Puddle made the Iliac Bay (DW-A to DW-D): the sea carved out under its water, a seafloor falling away from every coast to as deep as 250 metres, a surface you see from above and below, and open-water swimming - diving, surfacing, a stroke for a burst of speed, a shore to climb out onto and your breath to watch - with the deep\u2019s own fog and light. Ported 1:1 off the mod\u2019s compiled assembly.',
+      terms: 'Ported 1:1 from the shipped bundle, read off its compiled assembly; the coastline it bakes from Daggerfall\u2019s own files is rebuilt from yours - see vendor/iliac-puddle-no-more/README.md for the permission record.',
+      contact: 'jet082, through the Nexus page (daggerfallunity mod 1304)',
+      vendor: Object.freeze(['iliac-puddle-no-more']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/1304',
+    }),
   ]),
 });
