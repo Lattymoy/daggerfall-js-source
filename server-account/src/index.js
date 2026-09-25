@@ -109,6 +109,10 @@ import { titleWorn, glyphsOf } from './titles.js';
 import { sendLetter, inboxOf, readLetter, deleteLetter } from './letters.js';   // MAIL1: the letters' routes
 import { reportRenownXp, renownTrackOf, renownTracksOf, renownCharacterOk } from './renownTracks.js';   // RENOWN1: Renown's track
 import { claimHome, releaseHome, setHomeEntry, homesInTown, homesOf } from './homes.js';   // HOME1: the online homes' routes
+import {
+  foundGuild, guildOf, invitesOf, inviteToGuild, answerInvite, leaveGuild, removeFromGuild, rankGuildMember, renameGuildRanks,
+  depositToGuild, withdrawFromGuild, handOverGuild, disbandGuild,
+} from './guilds.js';   // GUILD1: the guilds' routes
 import { decorOf, placeDecor, moveDecor, removeDecor } from './decor.js';   // DECOR1: an online home's decor
 
 // THIS MODULE EXPORTS `default` AND NOTHING ELSE, and that is a
@@ -132,6 +136,15 @@ const json = (body, status = 200, origin = '*') => new Response(JSON.stringify(b
 /** Every refusal is one word and the same shape. A client learns that
  *  it failed and not why somebody else's secret is wrong. */
 const no = (why, status, origin) => json({ error: why }, status, origin);
+/** GUILD1: each guild refusal's status - a bad shape 400 (the default), the wrong rank or too little Renown 403, a
+ *  thing that is not there 404, a conflict with what is 409, the hour's writes spent 429. */
+const GUILD_STATUS = Object.freeze({
+  'guilds-need-account': 403, 'guild-rank': 403, 'guild-renown': 403,
+  'no-guild': 404, 'no-invite': 404, 'no-member': 404, 'no-player': 404,
+  'guild-already': 409, 'guild-name-taken': 409, 'guild-tag-taken': 409, 'guild-full': 409, 'guild-master-leaves': 409,
+  'guild-treasury': 409, 'guild-treasury-full': 409, 'guild-treasury-short': 409,
+  'guild-rate': 429,
+});
 
 /** A body's bytes, or null past `max` - refused on the length it
  *  ANNOUNCES before a byte is read, and on the bytes that ARRIVE as
@@ -446,6 +459,31 @@ export default {
         }
         const r = path === '/v1/homes/release' ? await releaseHome(ctx, who.player, body) : await setHomeEntry(ctx, who.player, body);
         return 'error' in r ? no(r.error, r.error === 'bad-entry' ? 400 : 404, origin) : json(r, 200, origin);
+      }
+
+      // ═══ GUILD1: THE GUILDS ═════════════════════════════════════
+      //
+      // A character's own guild and the account's invitations are read by
+      // any session (a guest's reads none); every change is an account's -
+      // guilds.js asks again, and holds the bounds.
+      if (path.startsWith('/v1/guilds/')) {
+        if (request.method !== 'POST') return no('method', 405, origin);
+        if (path === '/v1/guilds/mine') {
+          const r = await guildOf(ctx, who.player, body);
+          return 'error' in r ? no(r.error, GUILD_STATUS[r.error] ?? 400, origin) : json(r, 200, origin);
+        }
+        if (path === '/v1/guilds/invites') return json(await invitesOf(ctx, who.player), 200, origin);
+        if (accountKind(who.player) !== 'linked') return no('guilds-need-account', 403, origin);
+        const act = {
+          '/v1/guilds/found': foundGuild, '/v1/guilds/invite': inviteToGuild, '/v1/guilds/answer': answerInvite,
+          '/v1/guilds/leave': leaveGuild, '/v1/guilds/remove': removeFromGuild, '/v1/guilds/rank': rankGuildMember,
+          '/v1/guilds/ranks': renameGuildRanks, '/v1/guilds/deposit': depositToGuild, '/v1/guilds/withdraw': withdrawFromGuild,
+          '/v1/guilds/handover': handOverGuild, '/v1/guilds/disband': disbandGuild,
+        }[path];
+        if (!act) return no('not-found', 404, origin);
+        const r = await act(ctx, who.player, body);
+        if (!('error' in r)) return json(r, 200, origin);
+        return no(r.error, GUILD_STATUS[r.error] ?? 400, origin);
       }
 
       if (path === '/v1/account/title' && request.method === 'POST') {

@@ -99,8 +99,11 @@ test('ACC1b: the migration is the real schema, and applying it twice changes not
   // the same way (0010): one row a building someone owns, keyed by the
   // building - the registry that makes a home one owner's. DECOR1 added
   // `home_decor` the same way (0011): one row a piece standing in an online
-  // home, keyed by the home and the piece's own id.
-  assert.deepEqual(tables, ['duel_results', 'home_decor', 'homes', 'letters', 'players', 'rate_limits', 'renown_tracks', 'saves', 'sessions']);
+  // home, keyed by the home and the piece's own id. GUILD1 added four (0013):
+  // `guilds` (one row a guild), `guild_members` (one row a character in one),
+  // `guild_invites` (one row an account asked to one) and `guild_ledger` (one
+  // row a movement of a treasury).
+  assert.deepEqual(tables, ['duel_results', 'guild_invites', 'guild_ledger', 'guild_members', 'guilds', 'home_decor', 'homes', 'letters', 'players', 'rate_limits', 'renown_tracks', 'saves', 'sessions']);
   // ACC1b IS IDENTITY ALONE, and the PLAYERS row still is: the save
   // arrived beside it, never inside it.
   const cols = db._raw.prepare('PRAGMA table_info(players)').all().map((c) => c.name);

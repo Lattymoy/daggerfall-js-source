@@ -43,6 +43,9 @@ import { MUTE_RANGE_TEXT } from './moderation.js';   // AUDIT 68 S14-mute-range-
 import { RENOWN_TRACKS_MAX } from './renown.js';   // RENOWN1: the tracks' bound, in its refusal's own sentence
 import { HOME_CAP } from './homeLaw.js';   // HOME1: the cap a refusal names
 import { DECOR_CAP } from './decorLaw.js';   // DECOR1: the cap its refusal names
+import {
+  GUILD_FOUND_RENOWN, GUILD_MEMBERS_MAX, GUILD_NAME_MIN, GUILD_NAME_MAX, GUILD_RANK_NAME_MAX, GUILD_MOVE_MAX,
+} from './guildLaw.js';   // GUILD1: the bounds its refusals name
 
 /** WHERE THE SERVICE IS. Its own constant beside the relay's
  *  DEFAULT_SERVER (net/online.js), because they are two Workers and
@@ -167,6 +170,26 @@ export const REFUSALS = Object.freeze({
   'decor-rate': 'You have placed and moved a great deal this hour. Try again later.',
   'no-decor': 'That piece is not in your home any more.',
   'bad-decor': 'The account service could not read that piece.',
+  // GUILD1: the guilds (server-account/src/guilds.js)
+  'guilds-need-account': 'Guilds need a username and a password. Give this account one and you can found or join one.',
+  'guild-character': 'The account service could not tell which character that is.',
+  'bad-guild': `A guild's name is ${GUILD_NAME_MIN} to ${GUILD_NAME_MAX} letters, digits, spaces, apostrophes or hyphens, and its tag 2 to 4 capitals or digits.`,
+  'guild-rate': 'You have changed a great deal in your guild this hour. Try again later.',
+  'guild-renown': `Founding a guild takes Renown ${GUILD_FOUND_RENOWN}.`,
+  'guild-already': 'This character already belongs to a guild.',
+  'guild-name-taken': 'Another guild already bears that name.',
+  'guild-tag-taken': 'Another guild already bears that tag.',
+  'no-guild': 'This character belongs to no guild.',
+  'guild-rank': 'Your rank in the guild cannot do that.',
+  'guild-full': `The guild already holds ${GUILD_MEMBERS_MAX} members.`,
+  'no-invite': 'That invitation is no longer open.',
+  'guild-master-leaves': 'Hand the guild on to another member before you leave it.',
+  'guild-treasury': 'Take the gold out of the treasury first.',
+  'no-member': 'That member is no longer in the guild.',
+  'bad-ranks': `Each rank needs a name of its own, 1 to ${GUILD_RANK_NAME_MAX} letters, digits, spaces, apostrophes or hyphens.`,
+  'bad-gold': `Gold goes in or out 1 to ${GUILD_MOVE_MAX} at a time.`,
+  'guild-treasury-full': 'The treasury can hold no more.',
+  'guild-treasury-short': 'The treasury does not hold that much.',
   server: 'The account service had a problem. Try again.',
   offline: 'Could not reach the account service. Check your connection.',
 });
@@ -544,6 +567,29 @@ export function accountDecor({ fetch, storage }) {
     place: ({ mapId, buildingKey, character, piece }) => post('/v1/homes/decor/place', { mapId, buildingKey, character, piece }),
     move: ({ mapId, buildingKey, character, id, place }) => post('/v1/homes/decor/move', { mapId, buildingKey, character, id, place }),
     remove: ({ mapId, buildingKey, character, id }) => post('/v1/homes/decor/remove', { mapId, buildingKey, character, id }),
+  };
+}
+
+/**
+ * GUILD1: THE GUILDS (server-account/src/guilds.js) through the one door - the character's guild, the account's
+ * invitations, and every change to one. Every answer is `call`'s shape; no session is `no-session`, never a throw.
+ */
+export function accountGuilds({ fetch, storage }) {
+  const post = sessionPost({ fetch, storage });
+  return {
+    mine: (character) => post('/v1/guilds/mine', { character }),
+    invites: () => post('/v1/guilds/invites', {}),
+    found: ({ character, name, tag }) => post('/v1/guilds/found', { character, name, tag }),
+    invite: (character, handle) => post('/v1/guilds/invite', { character, handle }),
+    answer: ({ character, guild, accept }) => post('/v1/guilds/answer', { character, guild, accept }),
+    leave: (character) => post('/v1/guilds/leave', { character }),
+    remove: (character, member) => post('/v1/guilds/remove', { character, member }),
+    rank: (character, member, rank) => post('/v1/guilds/rank', { character, member, rank }),
+    ranks: (character, ranks) => post('/v1/guilds/ranks', { character, ranks }),
+    deposit: (character, gold) => post('/v1/guilds/deposit', { character, gold }),
+    withdraw: (character, gold) => post('/v1/guilds/withdraw', { character, gold }),
+    handOver: (character, member) => post('/v1/guilds/handover', { character, member }),
+    disband: (character) => post('/v1/guilds/disband', { character }),
   };
 }
 

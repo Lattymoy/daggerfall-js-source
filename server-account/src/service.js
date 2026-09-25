@@ -147,6 +147,11 @@ export const ROUTES = new Set([
   // DECOR1: an online home's decor (decor.js). Its pieces are read by every session (the room is the same room to
   // every visitor); the three that change one are its owner's.
   '/v1/homes/decor', '/v1/homes/decor/place', '/v1/homes/decor/move', '/v1/homes/decor/remove',
+  // GUILD1: the guilds (guilds.js) - a character's own guild and the account's invitations read by any session (a
+  // guest's reads nothing); the rest change one, an account's alone.
+  '/v1/guilds/mine', '/v1/guilds/invites', '/v1/guilds/found', '/v1/guilds/invite', '/v1/guilds/answer', '/v1/guilds/leave',
+  '/v1/guilds/remove', '/v1/guilds/rank', '/v1/guilds/ranks', '/v1/guilds/deposit', '/v1/guilds/withdraw', '/v1/guilds/handover',
+  '/v1/guilds/disband',
 ]);
 
 /** The routes a caller reaches WITHOUT a credential. Everything else

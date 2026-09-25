@@ -52,6 +52,7 @@ on:
       - "src/net/renown.js"
       - "src/net/homeLaw.js"
       - "src/net/decorLaw.js"
+      - "src/net/guildLaw.js"
       - "src/net/wire.js"
       - "src/net/dice.js"
       - "src/world/mat4.js"

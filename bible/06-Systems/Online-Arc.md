@@ -8382,10 +8382,12 @@ the owner's word (private, party, guild, public), visitors in the owner's room, 
 back; **DECOR1** the decorator - a catalogue of Daggerfall's own furniture and decor for gold a placement, moved,
 turned, scaled, snapped, lit, kept on the server for an online home and in the save for the offline house and ship;
 **DECOR2** real items placed (rare misc artifacts, world items shown as they lie in the world), a furnisher selling
-decor the loot never drops (the Furniture Store building type stands with empty shelves today), and weapon racks,
-mounts and stands showing the player's own weapons in 3D (the character editor's voxel pieces, dyed by metal;
-Morrowind's meshes where the player has them), inspectable; **GUILD1** guilds - a server entity, a tag beside the
-name, a guild chat, ranks and a roster, a guild hall that is a guild-owned home, a treasury; **SEAT1** each hub a
+decor the loot never drops (the Furniture Store building type stands with empty shelves today), and a way to
+display the player's own weapons (asked, Mac chose "Mounted" over racks and stands in 3D: a weapon or a shield
+hangs flat on the wall as its own pack picture, DECOR2c); **GUILD1** guilds - a server entity, a tag beside the
+name, a guild chat, ranks and a roster, a guild hall that is a guild-owned home, a treasury (asked, Mac chose
+founding by "Gold and Renown", membership "Per character", ranks "Four, renamed by the guildmaster", and the
+treasury "Guildmaster only" to take from - GUILD1 below); **SEAT1** each hub a
 seat a guild can hold - weekly influence from members' Renown XP earned in the region, an unheld seat claimed with
 influence and a treasury fee, the holder's banners and colours in the city, the palace its hall, members' discounts,
 a share of the seat's fees, and the seat's circle on the map in the holder's colour; **SEAT2** sieges - the top
@@ -8766,3 +8768,85 @@ reasoned from the billboard pass's own texture and camera conventions and pinned
 
 Pinned: `test/decor2c.test.js` (6), `test/decor1.test.js` (+1: the service keeps a mount of the port's own archive).
 `tools/mutants/decor2c.json` (50). Five older records re-aimed.
+
+
+## GUILD1 (2026-09-25, Mac: "future ownership for online guilds"; asked, founding takes "Gold and Renown", a guild is joined "Per character", its ranks are "Four, renamed by the guildmaster", and the treasury is the "Guildmaster only" to take from) - a guild the players found, and the service keeps
+
+Daggerfall's own guilds - the Fighters and Mages Guilds, the temples, the knightly orders - are the game's and are
+untouched. A guild of players is a Ledger A departure (`Port-Ledger.md` section A, A GUILD IS ITS PLAYERS'), online's
+alone. Mac's four answers: founding takes "Gold and Renown" ("10,000 gold (purse, then bank) and Renown 10 - keeps
+out throwaway guilds while any serious player can found one."); a guild is joined "Per character" ("Each character
+joins its own guild, as homes are a character's; your other characters are free to join others."); its ranks are
+"Four, renamed by the guildmaster" ("The same four tiers and powers, but the guildmaster names each rank."); and the
+treasury is "Guildmaster only" ("Any member may deposit; only the Guildmaster withdraws; every movement is logged on
+the roster."). The defaults the arc took, told to Mac: a tag of 2 to 4 capitals or digits beside the name, 50 members
+a guild, a guild chat channel.
+
+Four parts: **GUILD1a** the service (this), **GUILD1b** the guild window, **GUILD1c** the tag beside the name and the
+guild's chat (through the token and the relay), **GUILD1d** the guild hall, a guild-owned home.
+
+**GUILD1a - the guild, as the service keeps it.**
+
+- **The law** (`src/net/guildLaw.js`, which the service and the client both read). The bounds: 10,000 gold and
+  Renown 10 to found, 50 members, a name of 3 to 32 letters, digits, spaces, apostrophes and hyphens (tidied, and one
+  guild a name whatever its case or spaces - `guildNameKey`), a tag of 2 to 4 capitals or digits (upper-cased). FOUR
+  RANKS, highest first - Guildmaster (0), Officer (1), Member (2), Recruit (3) - whose POWERS are fixed: an officer
+  or the guildmaster invites, removes and moves members; any member deposits; the guildmaster alone withdraws,
+  renames the ranks, hands the guild on and disbands it. A rank acts ONLY ON RANKS BELOW ITS OWN, and a move lands
+  below its mover too and changes something (`guildMayMove`) - so an officer moves members and recruits between those
+  two and never makes an officer; a new guildmaster is made only by handing the guild on. The four rank names are the
+  guildmaster's: four different names of 1 to 20 plain characters. Gold moves 1 to 1,000,000 at a time; a treasury
+  holds at most 1,000,000,000.
+- **The store** (`server-account/src/guilds.js` over `migrations/0013_guilds.sql`). A GUILD is its id, name, name
+  key, tag (both keys UNIQUE), rank names and treasury. A MEMBER is one CHARACTER of one account - the id its save
+  carries, as Renown's tracks and the homes key on - so `(player, char_id)` is the primary key and a character is in
+  at most one guild while the account's other characters are free. The roster names each member by the account's
+  handle and by its row (`m<rowid>`), never the character's save id. An INVITATION is to an ACCOUNT: whichever of its
+  characters answers it joins. An account gone takes its memberships and invitations; a guild gone takes everything
+  of it (CASCADE).
+- **Registered accounts only**, MAIL1's and HOME1's reading: a guild held by an account nobody can sign back into is
+  a name and a tag taken out of the world. A guest reads no invitations and no guild, and every change refuses it.
+- **Founding** asks the character's Renown of the service's OWN track (`renownTracks.js`), never the client's word;
+  the character must be in no guild, the name and the tag free. The founder is the guildmaster, the rank names the
+  defaults, the treasury empty - the fee is a fee, not a deposit. The GOLD is the client's, the economy being the
+  save's: the service writes first and the client pays after, the purse then the bank (HOME1's order), and a founder
+  short of it disbands the guild it just founded (GUILD1b). A guild nobody is left in (its last member's account
+  gone) holds its name and tag for no one, and the next founder of either takes them.
+- **Invitations**: an officer or the guildmaster invites an account by its handle, while the guild has room. It stands
+  a week; the invited account reads it, and its officers see what the guild has out (a recruit or a member does not).
+  Declined, it goes. Accepted, the character joins as a RECRUIT while the guild holds fewer than 50 and the invitation
+  still stands - ONE statement - and the invitation goes with the join and only with it: a join refused (the
+  character already in a guild, the guild full) leaves it standing, for another of the account's characters or a free
+  place. A guild's invitations a week old are swept by its next one.
+- **The treasury**: any member puts gold in, the guildmaster alone takes it out, never more than it holds and never
+  past its cap - one UPDATE each. THE LEDGER IS THE SCHEMA'S: a trigger on the treasury writes every movement's line
+  (who, in or out, how much, the balance after) in the same statement as the move, from the mover and the moment the
+  move names on the guild's row - so no write, now or later, moves gold without its line, and a move that names
+  nobody is refused by the line's NOT NULL and the gold stays. The roster shows the latest fifty, newest first. A
+  DEPOSIT is the client's first: it takes the gold from the purse, then asks, and puts it back on a refusal - on a
+  refusal's WORD only, never on a lost answer, since the service may have taken it (GUILD1b). A WITHDRAWAL is the
+  service's first, then the purse's.
+- **Leaving, handing on, succession, disbanding.** A member leaves. The guildmaster leaves only a guild nobody else is
+  in, and only once its treasury is empty - and that guild goes; one with members is handed on first: the new
+  guildmaster rises and the old one becomes an officer. A guild whose guildmaster's account went is given its highest
+  rank's longest-standing member before any read or write of it. The guildmaster disbands it once the treasury is
+  empty, and everything of it goes.
+- **Every write decides on what it read.** A rank moves, and a member goes, only from the rank read (two officers
+  racing move a member once, and a member made an officer meanwhile is not an officer's to touch); a join lands only
+  while its invitation stands and the guild has room; the guildmaster's leaving counts and goes in one statement; a
+  guild is handed on only while its giver still holds it, and the giver steps down only once the new guildmaster
+  stands. Nothing reads `changes()` - each guard is the state itself.
+- **The wire**: thirteen routes (`/v1/guilds/` mine, invites, found, invite, answer, leave, remove, rank, ranks,
+  deposit, withdraw, handover, disband), POST, every one behind a session; the two reads answer any session, every
+  change refuses a guest (403). A refusal is a word, its status the kind of refusal (a bad shape 400, the wrong rank
+  or too little Renown 403, a thing not there 404, a conflict with what is 409, the hour's writes spent 429), and the
+  client says each in a sentence naming its bound (`src/net/accountClient.js` REFUSALS). 300 guild writes an hour an
+  account. The client's door is `accountGuilds` (`src/net/accountClient.js`), every answer `call`'s shape and no
+  session a word, not a throw.
+
+Not yet: nothing in the game calls the door - GUILD1b's window is the first, and it pays the founding fee, keeps the
+deposit's refund to a refusal's word, and puts a withdrawal in the purse. Migration 0013 is applied by the deploy
+(ACC1-CI); its trigger is the migrations' first, and wrangler's statement splitter keeps a trigger's `BEGIN ... END`
+whole (a port of SQLite's own `sqlite3_complete`, read in wrangler 4.140's source) - not yet run against a real D1.
+
+Pinned: `test/guild1.test.js` (9), `test/accountworker.test.js` (the tables). `tools/mutants/guild1.json` (83).
