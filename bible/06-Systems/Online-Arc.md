@@ -8500,3 +8500,49 @@ entry, release, the cascade), the rate, the client's door to it, the client's la
 the room without loot, the bank online, the door's model, the wiring by source; re-aimed by content in `test/auditworld6a.test.js`,
 `test/world6.test.js`, `test/housecontainers.test.js`, `test/houses.test.js`, `test/restlodging.test.js`,
 `test/worldhover.test.js`. `tools/mutants/home1.json`.
+
+## DECOR1 (2026-09-25, Mac: "building our own unique version instead of porting" Kaedius's Decorator; decor "Gold per placement"; asked, the catalogue "Everything Daggerfall furnishes", priced "By size", opened from "A UI element that can be clicked to open the decorate panel. Allows free cam mode for placement and an intuitive scrolling menu with filters", offline "kept in the save") - the decorator, from the ground up
+
+Daggerfall Unity has no decorator; Kaedius's Decorator 0.2.2 (a Daggerfall Unity mod: furniture placed in a home or
+ship for gold, moved, turned, lit, made a container) was the file Mac attached, and Mac asked for our own. Asked,
+Mac chose: the catalogue holds EVERYTHING DAGGERFALL FURNISHES - every piece Daggerfall itself places inside its
+buildings, found in the game data and browsed with a turning preview, named where the game names them; a placement
+is priced BY SIZE (moving or turning a placed piece is free, removing one gives half back); the decorator opens from
+A CLICKABLE UI ELEMENT into a panel - "an intuitive scrolling menu with filters" - with a FREE CAMERA for placing; and
+it works in the OFFLINE house and ship too, kept in the save. The slice lands in four parts: DECOR1a the ground
+(below), DECOR1c the placed pieces in the room, DECOR1d the button, the panel and the free camera.
+
+**DECOR1a - the piece, the store and the catalogue** (nothing a player sees yet; the room and the panel stand on it).
+
+- **The piece** (`src/net/decorLaw.js`, read by the account service and the client). WHAT it is - one of
+  Daggerfall's own models (an ARCH3D id) or one of its flats (a TEXTURE archive and record), never both - never
+  changes once placed. WHERE it stands: its position from the building's own origin (the door matrix's translation,
+  the scene cache's 'building' frame - the same for every client and every visit), within 256 m on each axis,
+  rounded to the millimetre; its turn in degrees (a tenth of one); its scale, a quarter to four times; an optional
+  light (a colour, a range of 1 to 30 m, an intensity up to 4); whether it holds things; and the gold it cost. A
+  home holds 200 pieces. THE PRICE is by size, as Daggerfall prices a house by its model's size: 150 gold a metre of
+  the piece's scaled radius, between 20 and 400; removing a piece gives half of what it cost back; a new scale pays
+  the difference when it grows and gives half the difference back when it shrinks.
+- **The store** (`server-account/src/decor.js` over `migrations/0011_home_decor.sql`). An online home's pieces live
+  on the account service so every visitor walks into the room its owner furnished. Any session reads a home's
+  pieces, a guest's too; placing, moving and removing are the owning CHARACTER's alone (the account and the
+  character, named in each write's own WHERE, so another's piece is as absent as none), one piece a write (a body far
+  inside the service's 4 KiB however full the room, and two of the owner's tabs cannot overwrite each other), 600
+  writes an hour. A placement lands only while the home holds fewer than 200; one sent again after a lost answer is
+  answered as the placement. WHAT a piece is lives in its own columns and no move touches them - a move cannot turn a
+  stool into a statue. The home released (sold, or its account deleted) takes its pieces with it. Routes
+  `/v1/homes/decor` (read) and `/v1/homes/decor/place|move|remove`; the client's door `net/accountClient.js
+  accountDecor`; the deploy's smoke reads a room and refuses a guest's placement.
+- **The catalogue** (`src/systems/decorCatalogue.js`). Every PROP model and flat Daggerfall lays out inside its town
+  blocks' buildings (BLOCKS.BSA's RMB interiors), counted, the editor's markers (TEXTURE.199) and the ladder (placed,
+  it would not be climbed) left out. Kinds by the game's own sets: beds, shop shelves, house containers, other
+  furniture, and the flat archives (lights 210, clothing 204, boxes and bottles 205, arms and armour 207, books and
+  scrolls 209, odds and ends 211, treasure 216, any other a decoration). Names are the game's where it has them - the
+  house containers (Wardrobe, Chest, Dresser...), the beds, the lights of TEXTURE.210 as Daggerfall Unity's light
+  table names them - and otherwise the kind numbered in id order. A house container holds things by default; a light
+  carries Daggerfall's own light (its range, intensity and colour). The panel's filters are here too: kinds, words
+  (every word in the name or the kind), a size band (small under half a metre of radius, large from a metre and a
+  quarter), holds-things, gives-light; most common first, cheapest first, or by name.
+
+Pinned: `test/decor1.test.js` (4) - the law, the store through the real Worker with every migration applied, the
+client's door and the deploy, the catalogue and its filters. `tools/mutants/decor1.json` (32).

@@ -51,6 +51,7 @@ on:
       - "src/net/playClock.js"
       - "src/net/renown.js"
       - "src/net/homeLaw.js"
+      - "src/net/decorLaw.js"
       - "src/net/wire.js"
       - "src/net/dice.js"
       - "src/world/mat4.js"
@@ -452,6 +453,23 @@ jobs:
           echo "homes/claim as a guest -> $code"
           if [ "$code" != "403" ] || ! grep -q '"homes-need-account"' /tmp/claim.json; then
             echo "::error::/v1/homes/claim did not refuse a guest as homes-need-account ($code)"; cat /tmp/claim.json || true; exit 1
+          fi
+          # DECOR1: AN ONLINE HOME'S DECOR IS LIVE. A home's pieces are any
+          # session's to read, so a home nobody owns answers 200 with an empty
+          # list (a 500 is the migration that did not apply); and a guest's
+          # placement is refused as homes-need-account (a 404 is a route that
+          # did not deploy). Nothing is placed: a guest owns no home to place in.
+          code=$(curl -sS --max-time 15 -o /tmp/decor.json -w '%{http_code}' -X POST "$base/v1/homes/decor" \
+            -H 'content-type: application/json' -d "{\"secret\":\"$secret\",\"mapId\":1,\"buildingKey\":1}")
+          echo "homes/decor -> $code"
+          if [ "$code" != "200" ] || ! grep -q '"pieces":\[' /tmp/decor.json; then
+            echo "::error::/v1/homes/decor did not answer a home's pieces ($code)"; cat /tmp/decor.json || true; exit 1
+          fi
+          code=$(curl -sS --max-time 15 -o /tmp/place.json -w '%{http_code}' -X POST "$base/v1/homes/decor/place" \
+            -H 'content-type: application/json' -d "{\"secret\":\"$secret\",\"mapId\":1,\"buildingKey\":1,\"character\":\"deploy-smoke\",\"piece\":{}}")
+          echo "homes/decor/place as a guest -> $code"
+          if [ "$code" != "403" ] || ! grep -q '"homes-need-account"' /tmp/place.json; then
+            echo "::error::/v1/homes/decor/place did not refuse a guest as homes-need-account ($code)"; cat /tmp/place.json || true; exit 1
           fi
 
           handle="smoke$(date +%s | tail -c 7)"

@@ -109,6 +109,7 @@ import { titleWorn, glyphsOf } from './titles.js';
 import { sendLetter, inboxOf, readLetter, deleteLetter } from './letters.js';   // MAIL1: the letters' routes
 import { reportRenownXp, renownTrackOf, renownTracksOf, renownCharacterOk } from './renownTracks.js';   // RENOWN1: Renown's track
 import { claimHome, releaseHome, setHomeEntry, homesInTown, homesOf } from './homes.js';   // HOME1: the online homes' routes
+import { decorOf, placeDecor, moveDecor, removeDecor } from './decor.js';   // DECOR1: an online home's decor
 
 // THIS MODULE EXPORTS `default` AND NOTHING ELSE, and that is a
 // runtime requirement rather than a preference: in a module Worker
@@ -421,7 +422,22 @@ export default {
           return 'error' in r ? no(r.error, 400, origin) : json(r, 200, origin);
         }
         if (path === '/v1/homes/mine') return json(await homesOf(ctx, who.player), 200, origin);
+        if (path === '/v1/homes/decor') {
+          const r = await decorOf(ctx, who.player, body);
+          return 'error' in r ? no(r.error, 400, origin) : json(r, 200, origin);
+        }
         if (accountKind(who.player) !== 'linked') return no('homes-need-account', 403, origin);
+        if (path.startsWith('/v1/homes/decor/')) {
+          // DECOR1: a piece placed, moved or removed - the owner's character's alone (decor.js)
+          const r = path === '/v1/homes/decor/place' ? await placeDecor(ctx, who.player, body)
+            : path === '/v1/homes/decor/move' ? await moveDecor(ctx, who.player, body)
+              : await removeDecor(ctx, who.player, body);
+          if (!('error' in r)) return json(r, 200, origin);
+          const status = r.error === 'decor-cap' || r.error === 'decor-taken' ? 409
+            : r.error === 'decor-rate' ? 429
+              : r.error === 'no-home' || r.error === 'no-decor' ? 404 : 400;
+          return no(r.error, status, origin);
+        }
         if (path === '/v1/homes/claim') {
           const r = await claimHome(ctx, who.player, body);
           if (!('error' in r)) return json(r, 200, origin);

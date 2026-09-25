@@ -42,6 +42,7 @@ import { LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTER_LINES_MAX, LETTERS_SENT_MAX
 import { MUTE_RANGE_TEXT } from './moderation.js';   // AUDIT 68 S14-mute-range-text-duplicated: the mute's bound in the refusal's sentence, from its home
 import { RENOWN_TRACKS_MAX } from './renown.js';   // RENOWN1: the tracks' bound, in its refusal's own sentence
 import { HOME_CAP } from './homeLaw.js';   // HOME1: the cap a refusal names
+import { DECOR_CAP } from './decorLaw.js';   // DECOR1: the cap its refusal names
 
 /** WHERE THE SERVICE IS. Its own constant beside the relay's
  *  DEFAULT_SERVER (net/online.js), because they are two Workers and
@@ -160,6 +161,12 @@ export const REFUSALS = Object.freeze({
   'home-character': 'The account service could not tell which character is buying.',
   'bad-entry': 'The account service does not know that setting. The game may need updating.',
   'no-session': 'You are not signed in to an account.',
+  // DECOR1: an online home's decor (server-account/src/decor.js)
+  'decor-cap': `A home holds at most ${DECOR_CAP} pieces. Remove one to place another.`,
+  'decor-taken': 'Another piece already stands under that name. Place it again.',
+  'decor-rate': 'You have placed and moved a great deal this hour. Try again later.',
+  'no-decor': 'That piece is not in your home any more.',
+  'bad-decor': 'The account service could not read that piece.',
   server: 'The account service had a problem. Try again.',
   offline: 'Could not reach the account service. Check your connection.',
 });
@@ -501,21 +508,42 @@ export function accountRenown({ fetch, storage }) {
   };
 }
 
+/** A POST through `call` on this device's stored session - `no-session` when there is none, never a throw. The homes'
+ *  and the decor's doors (HOME1, DECOR1) both speak through it. */
+function sessionPost({ fetch, storage }) {
+  return async (path, body) => {
+    const s = storedSession(storage);
+    return s ? call({ fetch, base: serviceBase(storage), secret: s.secret }, path, body) : { ok: false, error: 'no-session' };
+  };
+}
+
 /**
  * HOME1: THE ONLINE HOMES (server-account/src/homes.js) through the one door - a town's homes, the caller's own, and
  * the three that change one. Every answer is `call`'s shape; no session is `no-session`, never a throw.
  */
 export function accountHomes({ fetch, storage }) {
-  const post = async (path, body) => {
-    const s = storedSession(storage);
-    return s ? call({ fetch, base: serviceBase(storage), secret: s.secret }, path, body) : { ok: false, error: 'no-session' };
-  };
+  const post = sessionPost({ fetch, storage });
   return {
     town: (mapId) => post('/v1/homes/town', { mapId }),
     mine: () => post('/v1/homes/mine', {}),
     claim: ({ mapId, buildingKey, region, character, price }) => post('/v1/homes/claim', { mapId, buildingKey, region, character, price }),
     release: (mapId, buildingKey) => post('/v1/homes/release', { mapId, buildingKey }),
     entry: (mapId, buildingKey, entry) => post('/v1/homes/entry', { mapId, buildingKey, entry }),
+  };
+}
+
+/**
+ * DECOR1: AN ONLINE HOME'S DECOR (server-account/src/decor.js) through the one door - the pieces standing in a home,
+ * and the three writes, one piece each, that change them. Every answer is `call`'s shape; no session is `no-session`,
+ * never a throw.
+ */
+export function accountDecor({ fetch, storage }) {
+  const post = sessionPost({ fetch, storage });
+  return {
+    list: (mapId, buildingKey) => post('/v1/homes/decor', { mapId, buildingKey }),
+    place: ({ mapId, buildingKey, character, piece }) => post('/v1/homes/decor/place', { mapId, buildingKey, character, piece }),
+    move: ({ mapId, buildingKey, character, id, place }) => post('/v1/homes/decor/move', { mapId, buildingKey, character, id, place }),
+    remove: ({ mapId, buildingKey, character, id }) => post('/v1/homes/decor/remove', { mapId, buildingKey, character, id }),
   };
 }
 
