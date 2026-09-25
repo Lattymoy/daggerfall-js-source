@@ -505,6 +505,11 @@ const BUNDLE_ART = new Map([
   ['public/art/diverse-weapons/',
     { manifest: 'vendor/diverse-weapons/diverse-weapons.dfmod.json',
       why: "THIRD-PARTY - Diverse Weapons 1.7.3 (RealAKP); the mod's own first-person weapon sprites - eighteen weapons x ten metals, plain and enchanted, every record and frame, Weapon Widget's double-scale idles and the icons - re-encoded from the bundle's Texture2D objects by tools/diverseWeaponsExtract.mjs as indexed PNG where the picture fits one (lossless for every drawn pixel; see the vendor README)" }],
+  // DW-E3: Iliac Puddle No More's seven fish - the author's own pictures (no classic record covers any: the
+  // extractor measures each against every TEXTURE file, DS1's search, and refuses one a record covers).
+  ['vendor/iliac-puddle-no-more/Flats/',
+    { manifest: 'vendor/iliac-puddle-no-more/iliac-puddle-no-more.dfmod.json',
+      why: "THIRD-PARTY - Iliac Puddle No More 1.2.2 (jet082); the mod's own seven fish, decoded from the bundle's Texture2D objects (DXT5, the first mip - the pixels the game samples) by tools/iliacPuddleAssets.mjs (see the vendor README)" }],
 ]);
 /** The basenames each bundle manifest names, lowercased. Memoised: the
  *  membership test runs once per tracked raster and the manifest is

@@ -66,8 +66,8 @@
   {
     "name": "WORLD-HOVER-corpse-prefix-stops-itemising",
     "file": "src/systems/worldHover.js",
-    "old": "export const ITEMISED_KEYS = Object.freeze(['loot:', 'corpse:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:']);",
-    "new": "export const ITEMISED_KEYS = Object.freeze(['loot:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:']);",
+    "old": "export const ITEMISED_KEYS = Object.freeze(['loot:', 'corpse:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:', 'dwFish:']);",
+    "new": "export const ITEMISED_KEYS = Object.freeze(['loot:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:', 'dwFish:']);",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -468,8 +468,8 @@
   {
     "name": "WORLD-HOVER-the-streaming-host-lists-piles-alone",
     "file": "src/scenes/world.js",
-    "old": "    (key) => exteriorFoes.hoverContents?.(key) ?? null,\n    (key) => cityGuards.hoverContents?.(key) ?? null,\n  ]);",
-    "new": "  ]);",
+    "old": "    (key) => exteriorFoes.hoverContents?.(key) ?? null,\n    (key) => cityGuards.hoverContents?.(key) ?? null,\n    (key) => (typeof key === 'string' && key.startsWith(FISH_KEY_PREFIX)",
+    "new": "    (key) => (typeof key === 'string' && key.startsWith(FISH_KEY_PREFIX)",
     "tests": [
       "test/worldhover.test.js"
     ]

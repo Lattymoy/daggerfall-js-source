@@ -49,7 +49,7 @@ import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda ri
 import { FarRingRenderer, ringDisabled } from '../render/farRing.js';   // EV8: the province's mountains on the horizon
 import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js';   // EL1: the Enhanced Lighting lane, installed at mount
 import { collectBlockFlats, billboardSize, mobileBillboardSize, centredBase, classicBillboardSize } from '../world/rmbFlats.js';
-import { textureReplacementEnabled, hasTextureReplacement, preloadTextureRecord } from '../systems/textureReplacement.js';   // DW-E2: a decoration's replacement (UnderwaterDecorationReplacementCache)
+import { textureReplacementEnabled, hasTextureReplacement, preloadTextureRecord, decodePng, decodedTextureTopDown } from '../systems/textureReplacement.js';   // DW-E2: a decoration's replacement (UnderwaterDecorationReplacementCache)
 import { SeasonHelper } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper
 import { loadSeasonsTextures, seasonsInstalled } from '../systems/seasonsIliacBayAssets.js';   // SIB1: its textures, from the player's own copy of the mod
 import { createSeasonReskin } from '../world/seasonReskin.js';
@@ -163,7 +163,7 @@ import { inflictDisease } from '../systems/diseases.js';   // SURV6: a foul pool
 import { createHunting } from './hunting.js';   // SURV6: hunting, foraging and the water search as real-time events
 import { alignSurvival, shiftSurvival } from '../systems/survival/needs.js';   // SURV7: the needs' markers at an arrival; AUDIT SURV-TIERS (the third pass): and across a clock correction
 import { liveLycanthropy } from '../systems/lycanthropy.js';   // SURV7: the env's lycanthrope and beast-form flags
-import { elementalResistanceChance, ELEMENTS } from '../systems/spellcast.js';   // SURV7: the env's fire and frost resistances
+import { elementalResistanceChance, ELEMENTS, BODY_CAPSULE_RADIUS } from '../systems/spellcast.js';   // SURV7: the env's fire and frost resistances   // DW-E3: a foe's controller, as a fish's probe meets it
 import { createTownWatch, runTownWatchFrame } from '../systems/townWatch.js';   // DISC19-F: the watch defends the town
 import { rollCampEncounterOnChunkLoad, amGroupRollOwner, campAnchorSpot } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
 import { WORLD_SALT, spawnsDungeon, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger, spawnedLocationCentreLocal, dungeonSightLine } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
@@ -238,6 +238,7 @@ import { useItem } from '../systems/useItem.js';   // UI1: MagicItemPicker_OnIte
 import { isEnchanted } from '../systems/inventory.js';   // UI1: the use path's enchanted test
 import { useQuickslot, swapQuickslot, offHandQuickslot, spellQuickslotPress, offHandOffersSwap, tickQuickslotHold } from '../systems/quickslots.js';   // QS2: the diamond's two performers - the window's own use ladder, and the one equipItem   // QS6: the spell slot's press, the off hand's swap question, and the hold machine the frame drives
 import { createDroppedLoot, droppedLootHooks, containerDropPos } from './droppedLoot.js';   // U8e: the ground piles; G5: the pile's DaggerfallLoot identity
+import { CONTAINER_IMAGES } from '../ui/targetIconPanel.js';   // DW-E3: a fish's DaggerfallLoot keeps the field's default picture (Chest) under its icon
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
 import { seedStartingEquipment } from '../systems/equip.js';   // U8h: the worn-weapon binding
 import { createChargenFlow, createChargenWindow, finishChargen, loadSpellIndex, applyHeadlessChargen } from '../systems/chargenSession.js';   // S3c/U9
@@ -280,7 +281,7 @@ import { createWeatherFront, blendTerms, soundWeather } from '../systems/weather
 import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router; AUDIT 58: the membership question the Wabbajack door asks too
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
-import { PlayerMotor, startRestGroundedCheck, motionBagOf, MAX_FRAME_DT, CAPSULE_HEIGHT, RIDE_EYE_HEIGHT, afloatMessageStep, CANNOT_FLOAT_HUD_SECONDS } from '../player/motor.js';   // SPELLFX1: a peer's eye when its body has not said its height
+import { PlayerMotor, startRestGroundedCheck, motionBagOf, MAX_FRAME_DT, CAPSULE_HEIGHT, CAPSULE_RADIUS, RIDE_EYE_HEIGHT, afloatMessageStep, CANNOT_FLOAT_HUD_SECONDS } from '../player/motor.js';   // SPELLFX1: a peer's eye when its body has not said its height
 import { travelDriveForward, travelLookaheadFor } from '../systems/travelAutopilot.js';   // TO-FIELD / AUDIT-FIELD F8: the journey's ground gate, pure so the pins can drive it   // StartRestGroundedCheck's ONE home; WW2: the one motion bag
 import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exteriorSwimming } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods; OT1: IsPlayerSwimming above ground
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
@@ -430,17 +431,21 @@ import { RIDING_VOLUME_SCALE } from '../systems/riding.js';   // AUDIT-RR F16: t
 import { setRrHostSeams, rrEnabled } from '../systems/rrInstall.js';   // RR2: what the riding component reads off the scene
 import { rrFortProximityLines, rrMasterArmorerDiscovery } from '../systems/rrQuestLine.js';   // RR3: the two PlayerGPS subscribers
 import { getBuildingVariant, setLastLocationKeyTo } from '../systems/worldDataVariants.js';   // RR3: the shop variant the quest set
-import { createDeepWatersHost, deepWatersOn, DEEP_WATERS_VENDOR, deepWatersDecorationSettings } from './deepWatersHost.js';   // DW-B: Iliac Puddle No More (jet082) - the deep bay
+import { createDeepWatersHost, deepWatersOn, DEEP_WATERS_VENDOR, deepWatersDecorationSettings, deepWatersFishSettings } from './deepWatersHost.js';   // DW-B: Iliac Puddle No More (jet082) - the deep bay
 import { DeepWatersRenderer, surfaceScrollAt } from '../render/deepWatersRender.js';   // DW-C: its seafloor and its surface
 import { clippedTerrainIndices } from '../world/deepWaterCap.js';   // DW-C: the clip, as the ground's own index set
-import { lookSettings, surfaceLook, sceneTint, seafloorTexture, seafloorTextureStrength, seafloorPalette, seafloorAmbientBoost, daylightFactor, SURFACE_TEXTURE, horizonAmbientColor, distanceFogUniforms } from '../world/deepWaterLook.js';   // DW-C
+import { lookSettings, surfaceLook, sceneTint, seafloorTexture, seafloorTextureStrength, seafloorPalette, seafloorAmbientBoost, daylightFactor, SURFACE_TEXTURE, horizonAmbientColor, distanceFogUniforms, underwaterVisionDistance, topSurfaceOpaqueFadeEnd } from '../world/deepWaterLook.js';   // DW-C
 import { SURFACE_RENDER_Y_OFFSET } from '../world/deepWaterSurface.js';   // DW-C: the surface stands 3 cm over the sea
 import { createDeepWatersPlayer } from './deepWatersPlayer.js';   // DW-D: the swimmer in the carved sea
 import { SwimSoundOdometer, SWIM_SOUND_CLIP, SWIM_SOUND_VOLUME, UNDERWATER_CUTOFF_HZ, isBoatEffectBundle } from '../world/deepWaterSwim.js';   // DW-D: UnderwaterPresentationEffects' ear; IsBoatEffectBundle
 import { createSwimMovement } from './deepWatersSwimMove.js';   // DW-D: OutdoorSwimMovementController
 import { setColumnSource as dwSetColumnSource, flushStateChange as dwFlushStateChange } from '../systems/deepWaterPlayer.js';   // DW-D: the mod's public player API
 import { loadGraceActive, teleported as dwTeleported, loadStarted as dwLoadStarted, loadFinished as dwLoadFinished, locationLoadBegan as dwLocationLoadBegan, locationLoadEnded as dwLocationLoadEnded, terrainUpdateBegan as dwTerrainUpdateBegan, terrainUpdateEnded as dwTerrainUpdateEnded, pumpDeepWaterRuntime, canRunLightRuntimeWork, canRunHeavyRuntimeWork, onTransientReset, setPostTransitionRefresh } from '../world/deepWaterRuntime.js';
-import { createUnderwaterDecorations, createDecorTextureSource } from './deepWatersDecor.js';   // DW-E2: the seafloor's decorations   // DW-D: DeepWaterRuntime's load grace
+import { createUnderwaterDecorations, createDecorTextureSource } from './deepWatersDecor.js';
+import { createDeepWatersFish, createFishPictures, FISH_KEY_PREFIX } from './deepWatersFish.js';   // DW-E3: the fish
+import { rayUprightCapsule } from '../world/passiveFish.js';   // DW-E3: a fish's probe meets the player's capsule
+import { installDeepWatersFishIcons, createFishItem, normalizeFishItems, fishPictureUrl, fishIconArchive } from '../systems/deepWatersFishItems.js';   // DW-E3: the fish as items
+import { clearEdgeBlackPixels } from '../world/underwaterDecorations.js';   // DW-E3: a fish's picture, edge-cleaned   // DW-E2: the seafloor's decorations   // DW-D: DeepWaterRuntime's load grace
 import { carvedFloorLocalY } from './deepWatersHost.js';   // DW-D: the shore probes see no terrain over a carved cell
 import { breathStep, setWaterBreathingRule } from '../systems/breath.js';   // DW-D: the dungeon's breath law, on the open sea; ApplyArgonianInfiniteBreath
 import { CLASSIC_UPDATE_INTERVAL } from '../characters/weaponStates.js';   // DW-D: PlayerEntity's classic cadence, the dungeon's import
@@ -1475,6 +1480,101 @@ export async function bootWorld(canvas, renderer, params, status) {
     onTransientReset(() => dwDecor.reset());   // UnderwaterDecorations.ResetRuntimeState
     setPostTransitionRefresh(() => dwDecor.refreshPlayerArea());   // PumpPostTransitionRefresh -> RefreshPlayerArea
   }
+  // DW-E3: THE FISH - the pulse that stands and clears them, their laws, their loot; their pictures the mod's own
+  // (vendored), their items' icons on the texture door
+  const dwFishPictures = deepWaters ? createFishPictures({
+    fetchBytes: async (name) => { const res = await fetch(fishPictureUrl(name)); if (!res.ok) throw new Error(`${name}: ${res.status}`); return new Uint8Array(await res.arrayBuffer()); },
+    decode: decodePng, clean: clearEdgeBlackPixels, createTexture: (frames) => dwRender.createDecorationTexture(frames),
+  }) : null;
+  let _dwFishInventoryAt = 0;   // PassiveFishResources' FishItemGroupMigrationInterval clock
+  const dwFish = deepWaters ? createDeepWatersFish({
+    settings: deepWatersFishSettings,
+    canRunHeavy: () => canRunHeavyRuntimeWork(performance.now() / 1000, dwPlaying()),
+    exteriorWaterContext: () => dwPlaying() && !_dwFishInside,   // IsPlayerInExteriorWaterContext: playing and outside
+    playerPosition: () => (dwPlaying() ? dwPlayerObjectPosition() : null),   // TryGetPlayerPosition
+    loadedPixels: () => built.values(),
+    isWaterPixel: (e) => { const t = deepWaters.tileOf(e); return !!t && t.isOceanConnected && t.hasDistanceField; },
+    pixelOrigin: (e) => state.pixelTranslation(e.px, e.py, [0, 0, 0]),
+    keyOf: (e) => `${e.px},${e.py}`,
+    climateIndexOf: (e) => e.deepWaters?.biomeClimateIndex ?? 0,
+    pictures: dwFishPictures,
+    makeItem: createFishItem,
+    updateInventoryState: () => {
+      if (_dwFishTime < _dwFishInventoryAt) return;
+      _dwFishInventoryAt = _dwFishTime + 2;
+      normalizeFishItems(playerEntity.items ?? []);
+      normalizeFishItems(playerEntity.wagonItems ?? []);
+    },
+  }) : null;
+  if (dwFish) {
+    dwFishPictures.start();
+    installDeepWatersFishIcons();
+    onTransientReset(() => dwFish.reset());   // UnderwaterEncounterPulse.ResetState (the spawner's ClearAll with it)
+  }
+  let _dwFishTime = 0, _dwFishFrameCount = 0, _dwFishInside = false;
+  const _dwFishT = [0, 0, 0];
+  /** PlayerObject.transform.position: the player's capsule CENTRE (the motor keeps its feet). */
+  const dwPlayerObjectPosition = () => (walkMode ? [player.pos[0], player.pos[1] + (player.height ?? CAPSULE_HEIGHT) / 2, player.pos[2]] : cam.pos);
+  /** DW-E3: the fish's frame - Time.time and Time.deltaTime (the game's, held by a pause), the columns, the ray. */
+  function dwFishFrame(dt) {
+    const gdt = gamePaused() ? 0 : dt * worldTimeScale();
+    _dwFishTime += gdt;
+    _dwFishFrameCount++;
+    const look = lookSettings((k) => modSetting(DEEP_WATERS_VENDOR, k));
+    const vision = underwaterVisionDistance(look.fogDistance);
+    const seaY = deepWaters.oceanLocalY + state.pixelTranslation(state.current.x, state.current.y, _dwFishT)[1];
+    return {
+      time: _dwFishTime, dt: gdt, frame: _dwFishFrameCount, roll: Math.random,
+      playerPos: dwPlayerObjectPosition(),
+      column: (x, z) => dwPlayer?.rawColumnAt(x, z) ?? null,
+      renderedSeafloorY: (col, x, z) => dwRenderedSeafloorY(col, x, z),
+      // UpdateDistanceVisibility's reach: the top surface's opaque fade from over the sea, else the vision x 1.1
+      visibleDistance: cam.pos[1] < seaY - 0.05 ? vision * 1.1 : topSurfaceOpaqueFadeEnd(vision),
+      raycast: (o, d, reach) => dwFishRay(o, d, reach),
+    };
+  }
+  /**
+   * DW-E3: a fish's obstacle probe (Physics.Raycast, every layer, triggers ignored) as the port's world meets it: the
+   * collider's meshes (the models, the buildings, the floor's walls), the ground under the ray - the carved floor where
+   * the sea is (the mod's floor MeshCollider), the terrain where it is not (its collider, the gate open) - and the
+   * player's capsule and every standing foe's and guard's (their CharacterControllers; a billboard's box, a fish's
+   * own among them, is a trigger). The probe is under a metre, so the ground is walked in 5 cm steps. The normal
+   * faces the ray.
+   */
+  function dwFishRay(o, d, reach) {
+    let best = null;
+    const h = collider.raycastHit(o, d, reach);
+    if (Number.isFinite(h.dist)) best = { dist: h.dist, normal: h.normal };
+    const steps = Math.max(2, Math.ceil(reach / 0.05));
+    for (let i = 1; i <= steps; i++) {
+      const t = (reach * i) / steps;
+      if (best && t >= best.dist) break;
+      const x = o[0] + d[0] * t, y = o[1] + d[1] * t, z = o[2] + d[2] * t;
+      const g = heightAt(x, z);
+      if (Number.isFinite(g) && y < g) { best = { dist: t, normal: collider.groundNormal(x, z) }; break; }
+    }
+    if (walkMode) {
+      const c = rayUprightCapsule(o, d, reach, player.pos, CAPSULE_RADIUS, player.height ?? CAPSULE_HEIGHT);
+      if (c && (!best || c.dist < best.dist)) best = c;
+    }
+    for (const pool of [exteriorFoes.foes, cityGuards.guards]) {
+      for (const f of pool) {
+        const feet = f.dead ? null : f.ai?.feet;
+        if (!feet || Math.abs(feet[0] - o[0]) > reach + 4 || Math.abs(feet[2] - o[2]) > reach + 4) continue;
+        const c = rayUprightCapsule(o, d, reach, feet, BODY_CAPSULE_RADIUS, f.ai.height ?? CAPSULE_HEIGHT);
+        if (c && (!best || c.dist < best.dist)) best = c;
+      }
+    }
+    return best ? { normal: best.normal } : null;
+  }
+  /** TryGetRenderedSeafloorWorldY: the column's pixel's floor mesh at the point, else the column's own seafloor. */
+  function dwRenderedSeafloorY(col, x, z) {
+    const e = col?.entry;
+    if (!e) return col?.seafloorY ?? 0;
+    const t = state.pixelTranslation(e.px, e.py, _dwFishT);
+    const y = deepWaters.renderedFloorLocalY(e, x - t[0], z - t[2]);
+    return y == null ? col.seafloorY : t[1] + y;
+  }
   /** DW-C: a pixel's floor and surface on the GPU, with the floor's material (DeepWaterFloorMaterial.GetMaterial) - its texture loads behind. */
   function dwCreate(entry, result) {
     const h = dwRender.create(result);
@@ -1574,6 +1674,44 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     if (!_dwDecorList.length) return;
     dwRender.drawDecorations(_dwDecorList, dwColumnFrame(f));
+  }
+  const _dwIdentity = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  const _dwFishOrigin = [0, 0, 0];
+  /** The loot containers the one ray races as piles: the player's dropped piles, and (DW-E3) the fish. */
+  function dwLootTargets() {
+    const piles = droppedLoot.lootTargets();
+    if (!dwFish?.count) return piles;
+    const y = cam.yaw, pch = cam.pitch;
+    const right = [Math.cos(y), 0, -Math.sin(y)];
+    const back = [-Math.sin(y) * Math.cos(pch), -Math.sin(pch), -Math.cos(y) * Math.cos(pch)];
+    const up = [back[1] * right[2] - back[2] * right[1], back[2] * right[0] - back[0] * right[2], back[0] * right[1] - back[1] * right[0]].map((c) => -c);
+    return [...piles, ...dwFish.lootTargets(right, up, back)];
+  }
+  const _dwFishIcons = new Map();
+  /** DW-E3: what the loot window reads of a fish - DaggerfallLoot's defaults, and its icon (FishLootIcon) once the texture door has it. */
+  function dwFishLootHooks(o) {
+    return dwFish.lootHooks(o, {
+      containerImage: () => CONTAINER_IMAGES.Chest,
+      iconImage: (sp) => {
+        const a = fishIconArchive(sp.templateIndex);
+        if (_dwFishIcons.has(a)) return _dwFishIcons.get(a);
+        // UI art is uploaded TOP-DOWN (the panel's drawImgCrop samples row 0 at the top); the texture door holds color32, bottom-up
+        const td = decodedTextureTopDown(a, 0);
+        if (!td) { preloadTextureRecord(a, 0); return null; }
+        const img = { tex: renderer.uploadTexture('img', `dwfish:${a}`, { width: td.width, height: td.height, colors: td.rgba }), w: td.width, h: td.height };
+        _dwFishIcons.set(a, img);
+        return img;
+      },
+    });
+  }
+  /** DW-E3: the visible fish, streamed - their centres are the world's, the model the identity; the surface's uv origin any pixel's (a repeat is a whole number of them). */
+  function drawDeepWatersFish() {
+    const f = _dwFrame;
+    if (!f) return;
+    const groups = dwFish.drawGroups((s) => dwFishPictures.texture(s));
+    if (!groups.length) return;
+    const h = dwRender.streamDecorations(groups);
+    dwRender.drawDecorations([{ h, model: _dwIdentity, origin: state.pixelTranslation(state.current.x, state.current.y, _dwFishOrigin) }], dwColumnFrame(f));
   }
   let _dwNowMs = 0;
   let _dwSurfaceTex = null;
@@ -3898,6 +4036,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // fallback and read a word the mod does not have.
     (key) => (typeof key === 'string' && key.startsWith('droppedLoot:')
       ? { title: lootPileName(droppedLoot.contents?.(key) ?? null) } : null),
+    // DW-E3: a fish is a DaggerfallLoot of one item - the mod's pile word names it by that item
+    (key) => (typeof key === 'string' && key.startsWith(FISH_KEY_PREFIX)
+      ? { title: lootPileName(dwFish?.fishFor(key)?.loot.items ?? null) } : null),
     // AUDIT-WH M6: ...and the two families the press has raced since
     // SURV3/EOTB-IL with no word anywhere in the tree - a water source
     // and the cart. Each named by the module that STANDS it, as the
@@ -3973,6 +4114,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     (key) => (typeof key === 'string' && key.startsWith('droppedLoot:') ? (droppedLoot.contents?.(key) ?? null) : null),   // AUDIT-WH2 L2-F5: C1's guard - the CONTENTS ladder is handed every key the namer is
     (key) => exteriorFoes.hoverContents?.(key) ?? null,
     (key) => cityGuards.hoverContents?.(key) ?? null,
+    (key) => (typeof key === 'string' && key.startsWith(FISH_KEY_PREFIX) ? (dwFish?.fishFor(key)?.loot.items ?? null) : null),   // DW-E3: the fish's one item
   ]);
 
   /**
@@ -8616,6 +8758,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     window.__playerEntity = playerEntity;   // DW-D: the probe's entity - a shot's stub has no Endurance, so a dive drowns it at once unless the probe hands it breath
     // DW-B: Deep Waters' probe - the bake, the promotes still owed, and what each standing pixel carries
     window.__dwDecorDebug = () => dwDecor?.debug ?? null;   // DW-E2 probe
+    window.__dwFishDebug = () => {   // DW-E3 probe: the counts, and the fish nearest the eye
+      if (!dwFish) return null;
+      const e = walkMode ? player.pos : cam.pos, d = (o) => Math.hypot(o.fish.position[0] - e[0], o.fish.position[1] - e[1], o.fish.position[2] - e[2]);
+      return { ...dwFish.debug, near: [...dwFish.fishes].sort((a, b) => d(a) - d(b)).slice(0, 6).map((o) => ({ key: o.key, s: o.species.itemName, p: o.fish.position.map((v) => +v.toFixed(2)), d: +d(o).toFixed(1), vis: o.fish.visible, size: [+o.size.w.toFixed(2), +o.size.h.toFixed(2)] })) };
+    };
+    // DW-E3 probe: the pile arm's window on a fish (a fish flees the reach before a shot's key lands)
+    window.__dwFishLoot = (key) => {
+      const o = dwFish?.fishFor(key);
+      if (!o) return null;
+      const w = makeInventoryWindow({ onClose: () => droppedLoot.releaseEmptied(), loot: dwFishLootHooks(o) });
+      if (w) townTalk.showOverlay(w);
+      return !!w;
+    };
     window.__dwStat = () => ({
       on: !!deepWaters, bake: !!deepWaters?.bake, pending: deepWaters?.pendingCount ?? 0, queue: queue.length, building, built: built.size,
       decor: dwDecor ? { playing: dwPlaying(), light: canRunLightRuntimeWork(dwPlaying()), heavy: canRunHeavyRuntimeWork(performance.now() / 1000, dwPlaying()), tex: dwDecor.texturesReady, pend: dwDecor.pendingBatchCount, promoteMs: +deepWaters.promoteMs.toFixed(2), work: dwDecor.pendingWorkCount, batches: [...built.values()].filter((p) => dwDecor.batchOf(p)).length, billboards: [...built.values()].reduce((n, p) => n + (dwDecor.batchOf(p)?.groups ?? []).reduce((m, g) => m + g.count / 6, 0), 0) } : null,   // DW-E2
@@ -13578,7 +13733,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // front's 0.15) louder in a tavern than in the street - the Discord report itself - and a dungeon 6.7x.
       ambience.setPreset(presetForExterior(heardWeather(), isNight(minuteNow())));   // DISC9: the word the street last heard - the one truth Better Ambience's indoor rain reads too
       ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.rainPlaying() });
-      if (dwPlayer) { audio.setListenerLowPass(0); _dwSwimSound.reset(); dwPlayer.insideFrame(player, now / 1000); dwFlushStateChange(); }   // DW-D: IsPlayerInside - RemoveAudioFilter, ResetSwimTracking, the driver's inside arm
+      if (dwPlayer) { audio.setListenerLowPass(0); _dwSwimSound.reset(); dwPlayer.insideFrame(player, now / 1000); dwFlushStateChange(); }   // DW-D: IsPlayerInside - RemoveAudioFilter, ResetSwimTrack
+      if (dwFish) { _dwFishInside = true; dwFish.pulse.pump(dwFishFrame(dt)); }   // DW-E3: indoors the exterior (and its fish) is inactive; the mod's pulse runs on - out of the water context, cleared two seconds oning, the driver's inside arm
       // AUDIT F2-I1: the modal frame RETURNS, so an overlay held in the
       // townTalk slot got neither its clock nor its draw while the
       // player was inside a building or a dungeon - chargen mounts
@@ -14130,7 +14286,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           // until this wave the host never asked the encounter pool
           // at all, so its corpses could not be opened by anyone.
           const corpseTargets = [...cityGuards.lootTargets(), ...exteriorFoes.lootTargets()];
-          const _corpsePick = pickActivatableHit(cam.pos, useFwd, corpseTargets, collider), _pilePick = pickActivatableHit(cam.pos, useFwd, droppedLoot.lootTargets(), collider);   // AUDIT 65 MC-2: BOTH picks run now, because DFU fires ONE ray (:314) and the nearest hit is THE hit.
+          const _corpsePick = pickActivatableHit(cam.pos, useFwd, corpseTargets, collider), _pilePick = pickActivatableHit(cam.pos, useFwd, dwLootTargets(), collider);   // AUDIT 65 MC-2: BOTH picks run now, because DFU fires ONE ray (:314) and the nearest hit is THE hit.
           const _torchPick = pickActivatableHit(cam.pos, useFwd, droppedTorches.targets(), collider);   // HT1: the mod's RegisterCustomActivation over its six records, the same one ray
           const _wagonPick = pickActivatableHit(cam.pos, useFwd, mwViewWagonTargets(RAY_DISTANCE), collider);   // EOTB-IL: Eye Of The Beholder's cart, RegisterCustomActivation(41239, 3.2), the same one ray
           const _campPick = pickActivatableHit(cam.pos, useFwd, camps.targets(), collider);   // SURV3: a camp's fire or tent, the same one ray
@@ -14240,7 +14396,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           else if (dropKey && inventoryDoorReady()) {
               // U8e: a pile under the ray opens the inventory WITH the
               // pile as the remote target (Remove defaults - the OnPush law)
-              const pile = droppedLoot.pileFor(dropKey);
+              const _fish = dwFish?.fishFor(dropKey) ?? null;   // DW-E3: a fish is a DaggerfallLoot the one ray meets as it meets a pile
+              const pile = _fish ? null : droppedLoot.pileFor(dropKey);
               // LOOT-GONE1 (2026-09-24, the contributor's report): pileFor answers null for a pile that went between the
               // hover and the press (a peer took it, a rebuild emptied it), and droppedLootHooks(null) threw inside this
               // frame - an uncaught throw in a rAF callback ends the loop as surely as a return. A pile that is gone
@@ -14249,8 +14406,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
               // frame() - the return left before requestAnimationFrame(frame) at its foot, so a take or its refusal ("You
               // cannot carry any more stuff.") stopped the game loop: no look, no walk, no foes. A handled press opens no
               // window and the frame runs on (worldModes' own negated take). test/ql_frame.test.js holds every return.
-              if (pile) {
-                const _hooks = droppedLootHooks(pile);
+              if (pile || _fish) {
+                const _hooks = _fish ? dwFishLootHooks(_fish) : droppedLootHooks(pile);
                 // QUICK-LOOT B4: the same door, on the player's own pile -
                 // the hooks this arm was already building for the window.
                 if (!quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) {   // AUDIT QL-WEIGHT1
@@ -14300,6 +14457,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       if (deepWaters.pump() && dwDecor) dwDecor.refreshPlayerArea();   // DW-B: PumpDeferredBuilds - one deferred promote out at a time, the nearest first; DW-E2: LoadSettings' RefreshPlayerArea
       pumpDeepWaterRuntime(performance.now() / 1000, dwPlaying());   // DW-E1: DeepWaterRuntime.Pump - the post-transition refresh
       if (dwDecor) { dwDecor.process(); deepWaters.flushPromoteTiming(); }   // DW-E2: UnderwaterDecorations.ProcessWorkQueue, then DeepWaterPromoteTiming.Flush
+      if (dwFish) { _dwFishInside = false; dwFish.pump(dwFishFrame(dt)); }   // DW-E3: UnderwaterEncounterPulse.Pump, then PassiveFishBehaviour.PumpAll
     }
     const wasMapPixel = { x: state.current.x, y: state.current.y };   // state.update overwrites it; PlayerGPS's lastMapPixelX/Y
     const r = state.update(cam.pos);
@@ -14321,6 +14479,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       exteriorFoes.offsetAll(r.offset);   // X-slice
       labGrassField = null;   // AUDIT 49 F2 / GR5: the field is baked in world coordinates - a new world starts empty
       droppedLoot.offsetAll(r.offset);
+      dwFish?.offsetAll(r.offset);   // DW-E3: the fish and their schools' centres (Port-Ledger A, the Iliac Puddle row)
       droppedTorches.offsetAll(r.offset);   // HT1: the torches too
       camps.offsetAll(r.offset);   // SURV3: and the camps
       hcc.offsetAll(r.offset);   // HCC: FloatingOrigin.OnPositionUpdate - every scene point the runtime holds, the peers' teams, the parked wagon's collider
@@ -14879,6 +15038,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     }
     if (deepWaters) drawDeepWatersFloors(groundQueue);   // DW-C: the seafloor, opaque, under the ground's holes (the sky's foreign span, below, covers it)
     if (dwDecor) drawDeepWatersDecorations(groundQueue);   // DW-E2: the decorations, cut-out (the AlphaTest queue), on the floors they stand on
+    if (dwFish) drawDeepWatersFish();   // DW-E3: the fish - the same material, their own facing (FaceY) and cut-out (0.1)
     _camRight[0] = Math.cos(cam.yaw); _camRight[1] = 0; _camRight[2] = -Math.sin(cam.yaw);
     const camRight = _camRight;   // EV2: one scratch, refilled - not three allocations a frame
     // PERF2 (2026-09-11, RookieG via Mac: "its like 45fps on the outside"):
@@ -15578,7 +15738,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           cursorActive: gamePaused() || pointerSurfaces.size > 0,
           pick: () => modes.exteriorHoverPick(cam.pos, _hd, {
             corpse: pickActivatableHit(cam.pos, _hd, [...cityGuards.lootTargets(), ...exteriorFoes.lootTargets()], collider),
-            pile: pickActivatableHit(cam.pos, _hd, droppedLoot.lootTargets(), collider),
+            pile: pickActivatableHit(cam.pos, _hd, dwLootTargets(), collider),
             torch: pickActivatableHit(cam.pos, _hd, droppedTorches.targets(), collider),
             wagon: pickActivatableHit(cam.pos, _hd, mwViewWagonTargets(RAY_DISTANCE), collider),
             horseCart: pickActivatableHit(cam.pos, _hd, hcc.targets(), collider),   // HCC

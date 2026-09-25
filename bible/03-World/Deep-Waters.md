@@ -20,7 +20,8 @@ flat sheet of water a hand deep over a flat seabed; the mod carves it out.
 | DW-D | THE SWIMMER: the swim driver in its two phases around the motor, the swim movement (the multiplier, the stroke, the floor clamp), the load grace, the public player API, the ear under the water, the breath | `scenes/deepWatersPlayer.js`, `scenes/deepWatersSwimMove.js`, `world/deepWaterSwim.js`, `world/deepWaterRuntime.js`, `systems/deepWaterPlayer.js` |
 | DW-E1 | THE RUNTIME'S OTHER HALF: the transient reset a load or a teleport sends every spawner, the post-transition refresh, the light and heavy work gates, the tracker a spawner keeps what it stood in | `world/deepWaterRuntime.js`, `world/deepWaterTransients.js` |
 | DW-E2 | THE DECORATIONS: the weed, coral, rock and dead sea life of the seafloor - the catalog, the per-pixel placement, the work's pacing, the three ways a batch stands, the edge clean, the program | `world/underwaterDecorations.js`, `scenes/deepWatersDecor.js`, `render/deepWatersRender.js` (`DECOR_VS`/`DECOR_FS`, `COLUMN_GLSL`) |
-| DW-E3 to E5 | the fish and the fish items, the deep's foes and the encounter pulse, the sunken loot | (next) |
+| DW-E3 | THE FISH: the seven species and their items, the school, the fish's laws, the encounter pulse and the fish's spawner, the fish as loot, the icons, the draw | `world/passiveFish.js`, `scenes/deepWatersEncounters.js`, `scenes/deepWatersFish.js`, `systems/deepWatersFishItems.js`, `render/deepWatersRender.js` (`streamDecorations`), `tools/iliacPuddleAssets.mjs` |
+| DW-E4, E5 | the deep's foes on the pulse, the sunken loot | (next) |
 
 ## The coastline is rebuilt, not carried (DW-A)
 
@@ -182,12 +183,81 @@ motor (`beforeMove` / `afterMove`):
   the floor takes it (`COLUMN_GLSL`): the mod's batches write the depth
   texture the top reads.
 
+## The fish (DW-E3)
+
+- **The species** (PassiveFishSpeciesCatalog): seven, each one of the
+  mod's items (templates 9001-9007, UselessItems2, the mod's own
+  `ItemTemplates.json` verbatim) - the Longnose Butterflyfish, the
+  Largemouth Bass, the Canary Rockfish, the Crucian Carp, the Mackerel, the
+  White Zebra Angelfish and the Juvenile Finulon (30 kg). Each has a spawn
+  weight, a billboard height (x a random factor from its own band) and
+  aspect, a school size, the water biomes it lives in and the band of the
+  sea's depth it keeps to; its weight falls off over 0.18 of the depth past
+  either edge of the band.
+- **The pulse** (UnderwaterEncounterPulse), every frame: a dozen of the
+  queued destroys, five of the queued spawns, then - a tenth of a second
+  apart - the tick. No heavy work: everything cleared. Otherwise the fish
+  items put back in their group every two seconds
+  (NormalizeFishItemCollection); the player outside the outdoor water
+  context, or the Passive Fish Frequency at zero, and two seconds of that
+  clear the lane; else the loaded pixels within 300 m of the player (the
+  nearest edge) are kept, the rest release their fish to the destroy queue,
+  and every water pixel within 200 m - ocean-connected, with a distance
+  field - gets two attempts, the nearest first. Indoors the pulse still runs
+  (its clearing and its destroys); the fish do not.
+- **The spawner**, per pixel: 90 attempts x the frequency / 3, spent two a
+  tick. An attempt draws a point on the pixel, a species for the pixel's
+  climate and the column's depth over the sea's Water Depth (by weight), a
+  place in the column - at least 8 m of water, 1.2 m off the floor and
+  1.4 m under the surface (half the tallest fish the species draws, if
+  more), a depth inside the species' band, leaning to the floor's 35 m past
+  0.55 of the depth - and a school of Range(min, max + 1) held under Max
+  Live Fish (0 to 1,080); the first fish at the point, its schoolmates on a
+  ring 1.2 m to the school's radius round it, 2.2 m apart. A spawn is
+  queued and counted; five stand a frame.
+- **The school** (PassiveFishSchool): a centre that cruises at 0.95 m/s x
+  the species' multiplier, on a heading held 2.2-4.4 s and flattened to
+  0.15 of its climb; a threat turns it from the player at 1.45 m/s x the
+  flee multiplier for three seconds. It keeps 1.2 m off the floor and 1.4 m
+  under the surface and turns back from water under 2 m deep.
+- **The fish** (PassiveFishBehaviour): cruises at 1.2 m/s x its
+  multiplier, with its school (steering for its place in it) or alone (a
+  new heading every 5-9 s); within 8 m of the player it flees at 3.5 m/s x
+  its flee multiplier, darting 35-75 degrees off the line away and holding
+  each dart for the species' own hold. It keeps 0.8 m off the floor and
+  1.4 m under the surface, and a fish that meets water under 2 m deep goes
+  back where it was and turns round. Past 160 m it moves every quarter
+  second; within 60 m it probes ahead every fifth frame (Physics.Raycast,
+  every layer, triggers ignored - the port's collider meshes, the ground,
+  the player's capsule and every standing foe's) and turns off what it
+  meets. It is drawn only within the visible distance - the vision x 1.1
+  under the sea, the top surface's opaque fade from over it.
+- **A fish is a loot container** (SpawnPassiveFish): a DaggerfallLoot with
+  its species' item, a trigger box of its size (a quarter of its width
+  deep, at least 0.35 m) turned with the billboard, taken through the loot
+  container's reach (3.2 m); the loot window shows the fish's own icon
+  (FishLootIcon) over whatever the window drew, and once its item is taken
+  the fish is gone.
+- **The icons** (PassiveFishResources): each fish's picture with its shape
+  given back (RestoreIconAspect - Unity's import rounded every picture to
+  powers of two; a point Blit to round(height x aspect) wide). The mod
+  writes them into ItemHelper's cache under TEXTURE.216 records 41-47; the
+  port gives each template an archive of its own (its index, record 0),
+  which every item picture reads the same (the Ledger's row says why that
+  is no departure).
+- **The draw**: a billboard turned to the camera, pitch and all (FaceY),
+  in the decorations' program - the tint, the fog, the column's share -
+  at the fish's own cut-out (0.1), streamed each frame. The pictures are
+  the author's (`vendor/iliac-puddle-no-more/Flats/`), edge-cleaned as the
+  decorations' are; a species spawns once its picture is in.
+- **The clock** is the game's: a pause holds every fish.
+
 ## What is not ported, and why
 
-The Port-Ledger's section-A row for the mod carries six departures - the
+The Port-Ledger's section-A row for the mod carries seven departures - the
 coastline built rather than shipped, the fog per fragment, the water
-column's two draws, the peripheral-location skip (below), and these two of
-the swimmer's:
+column's two draws, the peripheral-location skip (below), the recentre that
+carries the schools (below), and these two of the swimmer's:
 
 - **The forge's `isPlayerInsideDungeon`.** The mod raises DFU's dungeon flag
   for the Update window of each forged frame to borrow the dungeon arm's
@@ -219,6 +289,13 @@ it; it is ported so (the motor's `levitateMotorEnabled`).
   measure for DFU's streamed world; the port builds its locations in its own
   pipeline, so a coast's neighbouring towns stand as they do without the
   mod.
+- **The recentre carries the schools.** DFU's FloatingOrigin moves the
+  world a map pixel's width when the player crosses into a new pixel, and a
+  fish, parented to its terrain, moves with it; the mod answers no such
+  event, so a school's centre and a fish's last safe place stay in the old
+  world's coordinates - the school's fish swim for a point 819.2 m off, and
+  a fish that meets shallow water jumps back to where the old world had
+  it. The port moves both with the world.
 
 ## Online
 
@@ -241,6 +318,11 @@ the afloat line, the frame-spike guard), `test/dwe_runtime.test.js` (the
 transient reset, the post-transition refresh, the gates, the tracker),
 `test/dwe_decorations.test.js` (the catalog, the seeded placement against
 its C# line for line, the pacing through the real host, the three spawn
-paths, the edge clean, the program and the column's share).
+paths, the edge clean, the program and the column's share),
+`test/dwe_fish.test.js` (the species and the depth weight, Unity's Slerp,
+the school, the fish's flee, cruise, clamp, distant step and probe, the
+placement, the icon's aspect, the spawner and the pulse in the mod's order,
+the items and their icons, the host, the pictures, the capsule, the world's
+wiring).
 Mutation records: `tools/mutants/dwa.json`, `tools/mutants/dwd.json`,
 `tools/mutants/dwe.json`.

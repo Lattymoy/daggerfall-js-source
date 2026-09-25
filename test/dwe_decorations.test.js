@@ -429,7 +429,7 @@ test('DW-E2: the decoration program is the mod\'s - the right vector off the vie
   assert.match(renderSrc, /gl\.uniform3f\(u\.uCamRight, -v\[0\], -v\[4\], -v\[8\]\);/);
   assert.match(renderSrc, /gl\.uniform3f\(u\.uCamUp, v\[1\], v\[5\], v\[9\]\);/);
   assert.match(renderSrc, /gl\.uniform1i\(u\.uFacing, g\.facing\);/, 'each group its own facing');
-  assert.match(renderSrc, /facing: g\.facing \|\| 0 \}\);/, 'a group with none is a batch');
+  assert.match(renderSrc, /facing: g\.facing \|\| 0, cutoff: g\.cutoff \?\? DECORATION_CUTOFF \}\);/, 'a group with none is a batch, at the decorations\' cut-out unless it names its own (DW-E3: the fish\'s 0.1)');
 });
 
 test('DW-E2: seen from over the sea a decoration takes the top\'s column share, as the floor does - the split sum is the mod\'s depth-read alpha over its fragment (the arithmetic + pins)', () => {

@@ -32,6 +32,19 @@ archive carries no licence text and no readme.**
   law is this assembly, read back to C#, and the port's modules cite the
   C# by class and member name (`OutdoorSwimDriver.PostPhaseRestore`,
   `DeepBathymetry.SampleDepthMeters`...).
+- `Flats/<name>.png` - the seven fish (DW-E3), the author's own pictures:
+  the bundle's Texture2D (DXT5, as Unity imported the author's PNGs, each
+  rounded to a power of two - which is why the mod restores the icon's
+  aspect at run time) decoded at its first mip, every pixel the game
+  samples. None is a classic record: `tools/iliacPuddleAssets.mjs`
+  measures each against every record of every TEXTURE file by the search
+  Detailed Ships' pictures went through, and refuses to write one a record
+  covers.
+- `ItemTemplates.json` - the mod's seven item templates (9001-9007, the
+  fish as items), the bundle's text verbatim (DW-E3).
+
+`node tools/iliacPuddleAssets.mjs "<iliac puddle no more.dfmod>" --arena2 <ARENA2>`
+writes both from the shipped bundle.
 
 ## What is NOT here, and why
 
@@ -49,8 +62,5 @@ archive carries no licence text and no readme.**
   renderer (`src/render/deepWatersRender.js`, `src/render/fogGlsl.js`),
   uniform for uniform - the decorations' program with the slice that
   places them (DW-E); the compiled blobs are not carried.
-- **The fish art and the fish items** (seven PNGs under `Flats/`,
-  `Assets/ItemTemplates.json`) - they arrive with the slice that ports the
-  fish (DW-E), not before anything reads them.
 
 The page for the whole port is `bible/03-World/Deep-Waters.md`.

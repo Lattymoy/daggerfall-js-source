@@ -75,6 +75,16 @@ export function deepWatersDecorationSettings() {
   };
 }
 
+/** DW-E3: DeepWaters.ApplySettings' fish reads: PassiveFishFrequency (3 at the slider's midpoint), MaxLiveFish (0 .. 1080), WaterDepth. */
+export function deepWatersFishSettings() {
+  const get = (k) => modSetting(DEEP_WATERS_VENDOR, k);
+  return {
+    frequency: scaledSliderValue(get('General.PassiveFishFrequency'), 3),
+    maxLive: Math.min(1080, Math.max(0, Math.trunc(Number(get('General.MaxLiveFish'))))),
+    waterDepth: Math.fround(Number(get('General.WaterDepth'))),
+  };
+}
+
 /** Every one of the mod's settings, as a comparable snapshot (a change to any is the LoadSettings callback). */
 export function deepWatersSettingsSnapshot() {
   return JSON.stringify(Object.keys(MOD_SETTINGS[DEEP_WATERS_VENDOR]?.keys ?? {}).map((k) => modSetting(DEEP_WATERS_VENDOR, k)));
@@ -336,6 +346,9 @@ export function createDeepWatersHost({ woods, woodsBytes = null, locations = [],
 
     /** The floor's local height at a carved cell of `entry`, or null. */
     floorLocalY(entry, lx, lz) { return carvedFloorLocalY(entry?.deepWaters, lx, lz); },
+
+    /** DW-E3: TryGetRenderedSeafloorLocalY's mesh arm - the floor mesh's height at any point of `entry` (TrySampleMeshLocalY), or null. */
+    renderedFloorLocalY(entry, lx, lz) { const s = entry?.deepWaters; return s?.floor ? sampleMeshLocalY(s.floor, lx, lz) : null; },
 
     /**
      * DeepWaterWorld.TryGetWaterColumn + OutdoorSwimDriver.TryGetAuthoritativeWaterColumn:

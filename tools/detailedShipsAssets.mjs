@@ -59,8 +59,8 @@ function coverage(pic, src, ax, ay) {
   return same;
 }
 
-/** Every classic record, frame 0..n, as RGBA - the search space. */
-function* classicRecords(arena2, palette) {
+/** Every classic record, frame 0..n, as RGBA - the search space (DW-E3's fish go through it too). */
+export function* classicRecords(arena2, palette) {
   for (const f of readdirSync(arena2).filter((n) => /^TEXTURE\.\d{3}$/i.test(n)).sort()) {
     const t = new TextureFile();
     if (!t.load(new Uint8Array(readFileSync(join(arena2, f))), f.toUpperCase(), palette)) continue;

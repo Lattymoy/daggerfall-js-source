@@ -366,6 +366,7 @@ export class DeepWatersRenderer {
     this.gl = renderer.gl;
     this._programs = null;
     this._fwd = new Float32Array(3);
+    this._stream = null;   // DW-E3: the moving billboards' streamed buffers
   }
 
   _ensure() {
@@ -646,7 +647,7 @@ export class DeepWatersRenderer {
       gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idx, gl.STATIC_DRAW);
       buffers.push(ebo);
       gl.bindVertexArray(null);
-      out.groups.push({ vao, buffers, count: idx.length, texture: g.texture, fps: g.fps || 0, born: g.born || 0, facing: g.facing || 0 });
+      out.groups.push({ vao, buffers, count: idx.length, texture: g.texture, fps: g.fps || 0, born: g.born || 0, facing: g.facing || 0, cutoff: g.cutoff ?? DECORATION_CUTOFF });
     }
     this.renderer.markForeignPass?.();
     return out;
@@ -660,6 +661,56 @@ export class DeepWatersRenderer {
       gl.deleteVertexArray(g.vao);
     }
     h.groups = [];
+  }
+
+  /**
+   * DW-E3: billboards that MOVE (the fish) - the same program, the same
+   * groups, their centres in the world and written again every frame into
+   * one set of streamed buffers (the pattern's indices kept, grown as the
+   * count does). Returns a handle drawDecorations draws with an identity
+   * model; valid until the next call.
+   */
+  streamDecorations(groups) {
+    const gl = this.gl;
+    let n = 0;
+    for (const g of groups) if (g.texture) n += g.billboards.length;
+    const st = this._stream ??= { vao: gl.createVertexArray(), pos: gl.createBuffer(), tan: gl.createBuffer(), start: gl.createBuffer(), ebo: gl.createBuffer(), cap: 0, handle: { groups: [] } };
+    st.handle.groups = [];
+    if (!n) return st.handle;
+    gl.bindVertexArray(st.vao);
+    if (n > st.cap) {
+      st.cap = Math.max(n, st.cap * 2, 64);
+      const idx = new Uint32Array(st.cap * 6);
+      for (let i = 0; i < st.cap; i++) { const v0 = i * 4; idx.set([v0, v0 + 1, v0 + 2, v0 + 3, v0 + 2, v0 + 1], i * 6); }
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, st.ebo);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idx, gl.STATIC_DRAW);
+      st.posData = new Float32Array(st.cap * 12); st.tanData = new Float32Array(st.cap * 16); st.startData = new Float32Array(st.cap * 4);
+    } else gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, st.ebo);
+    const CORNERS = [[0, 1], [1, 1], [0, 0], [1, 0]];
+    let b = 0;
+    for (const g of groups) {
+      if (!g.texture || !g.billboards.length) continue;
+      const first = b;
+      for (const bb of g.billboards) {
+        for (let k = 0; k < 4; k++) {
+          const v = b * 4 + k;
+          st.posData[v * 3] = bb.centre[0]; st.posData[v * 3 + 1] = bb.centre[1]; st.posData[v * 3 + 2] = bb.centre[2];
+          st.tanData[v * 4] = bb.width; st.tanData[v * 4 + 1] = bb.height; st.tanData[v * 4 + 2] = CORNERS[k][0]; st.tanData[v * 4 + 3] = CORNERS[k][1];
+          st.startData[v] = bb.start ?? 0;
+        }
+        b++;
+      }
+      st.handle.groups.push({ vao: st.vao, count: (b - first) * 6, offset: first * 6 * 4, texture: g.texture, fps: g.fps || 0, born: g.born || 0, facing: g.facing || 0, cutoff: g.cutoff ?? DECORATION_CUTOFF });
+    }
+    for (const [loc, buf, data, size] of [[0, st.pos, st.posData, 3], [1, st.tan, st.tanData, 4], [2, st.start, st.startData, 1]]) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, data.subarray(0, n * 4 * size), gl.STREAM_DRAW);
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, 0);
+    }
+    gl.bindVertexArray(null);
+    this.renderer.markForeignPass?.();
+    return st.handle;
   }
 
   /**
@@ -681,7 +732,6 @@ export class DeepWatersRenderer {
     gl.uniform3f(u.uCamRight, -v[0], -v[4], -v[8]);   // the lookAt's first row is minus the camera's right
     gl.uniform3f(u.uCamUp, v[1], v[5], v[9]);
     gl.uniform4fv(u.uColor, DECORATION_COLOR);
-    gl.uniform1f(u.uCutoff, DECORATION_CUTOFF);
     gl.uniform4fv(u.uSceneTint, frame.sceneTint);
     gl.uniform1i(u.uFogMode, 0);
     this._columnUniforms(u, frame);
@@ -698,11 +748,12 @@ export class DeepWatersRenderer {
       gl.uniform3fv(u.uPixelOrigin, it.origin);
       for (const g of groups) {
         gl.uniform1i(u.uFacing, g.facing);
+        gl.uniform1f(u.uCutoff, g.cutoff ?? DECORATION_CUTOFF);   // DW-E3: a fish's is 0.1
         gl.bindTexture(gl.TEXTURE_2D_ARRAY, g.texture.tex);
         gl.uniform1f(u.uFrames, g.texture.frames);
         gl.uniform1f(u.uTick, g.fps > 0 ? Math.floor((frame.seconds - g.born) * g.fps) : 0);
         gl.bindVertexArray(g.vao);
-        gl.drawElements(gl.TRIANGLES, g.count, gl.UNSIGNED_INT, 0);
+        gl.drawElements(gl.TRIANGLES, g.count, gl.UNSIGNED_INT, g.offset ?? 0);
       }
     }
     gl.bindVertexArray(null);
@@ -754,6 +805,11 @@ export class DeepWatersRenderer {
 
   dispose() {
     const gl = this.gl;
+    if (this._stream) {
+      for (const b of [this._stream.pos, this._stream.tan, this._stream.start, this._stream.ebo]) gl.deleteBuffer(b);
+      gl.deleteVertexArray(this._stream.vao);
+      this._stream = null;
+    }
     if (this._programs) {
       for (const k of Object.keys(this._programs)) if (this._programs[k]?.p) gl.deleteProgram(this._programs[k].p);
       gl.deleteVertexArray(this._programs.empty);

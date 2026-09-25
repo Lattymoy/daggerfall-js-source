@@ -505,6 +505,14 @@ export class NativeInventoryWindow {
    *  identity; it carries DaggerfallLoot's own three fields now
    *  (playerOwned, TextureArchive, TextureRecord). */
   _remoteTargetIcon() {
+    const shown = this._remoteTargetIconShown();
+    // DW-E3: Iliac Puddle No More's UpdateFishLootIcon (LateUpdate) - a loot target carrying a FishLootIcon has
+    // the remote panel's picture set to the fish's own icon over whatever the window drew there, its label kept
+    const own = this.hooks.loot?.remoteImage?.();
+    return own ? { image: own, label: shown.label } : shown;
+  }
+
+  _remoteTargetIconShown() {
     if (this.usingWagon) {
       return {
         container: CONTAINER_IMAGES.Wagon,

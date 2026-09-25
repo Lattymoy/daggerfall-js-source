@@ -151,8 +151,9 @@ test('WORLD-HOVER: only the loot keys itemise - everything else is a name', () =
   // These are PREFIXES of the keys the hosts' own *Targets() producers
   // mint, never strings written out here. `foeCorpse:`/`guardCorpse:`
   // are the two above-ground bodies, which PX21c could not reach.
-  assert.deepEqual([...ITEMISED_KEYS], ['loot:', 'corpse:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:']);
-  for (const k of ['loot:0', 'corpse:3', 'droppedLoot:9', 'foeCorpse:abc', 'guardCorpse:x']) {
+  // DW-E3: `dwFish:` is Iliac Puddle No More's fish, a DaggerfallLoot of one item.
+  assert.deepEqual([...ITEMISED_KEYS], ['loot:', 'corpse:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:', 'dwFish:']);
+  for (const k of ['loot:0', 'corpse:3', 'droppedLoot:9', 'foeCorpse:abc', 'guardCorpse:x', 'dwFish:12']) {
     assert.equal(keyItemises(k), true, k);
   }
   for (const k of ['door:2', 'person:1', 'act:1:2', 'exit:0', 'container:4', 'eotbWagon', '17', null, undefined]) {
