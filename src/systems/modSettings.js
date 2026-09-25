@@ -156,6 +156,21 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
+  // WA1 (2026-09-25): WARM ASHES - SHIPS 1.1 (Kamer). No modsettings of its
+  // own - a travel hook, a quest action and six world-data variants - so
+  // one switch.
+  'warm-ashes-ships': Object.freeze({
+    title: 'Warm Ashes - Ships',
+    author: 'Kamer',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Kamer\u2019s Warm Ashes - Ships 1.1, 1:1: \u201cEncounters on Ships and Ocean Fast Travel.\u201d Cross the sea by ship '
+          + 'and one voyage in four is ambushed: you are put on your ship\u2019s deck with your crew as pirate vessels close in '
+          + '(a ship is lent if you own none), and once the boarders are beaten you are set ashore where you were bound.',
+      }),
+    }),
+  }),
   // MM1: MEANER MONSTERS 1.5.2 (Ralzar). No modsettings of its own -
   // `Enabled` alone (DFU enables a mod by listing it). Listed BEFORE
   // the overhaul because the overhaul names it as a dependency and so

@@ -140,7 +140,7 @@ test('HCC hosts: world.js - the frame, the draw, the origin, the ray, the plaque
     /else if \(_race\.horseCartWins\) \{ hcc\.activate\(_hccPick\.key, _hccPick\.distance, \(l\) => townTalk\.say\(l\), \(\) => setMidScreenText\(TOO_FAR_AWAY_TEXT\), plaqueActionFor\(_hccPick\.key\)\); \}/,   // ACT-MENU: and the verb the plaque lit
     /\(key\) => hcc\.hoverName\(key\),/, /horseCart: pickActivatableHit\(cam\.pos, _hd, hcc\.targets\(\), collider\),/,
     // AUDIT HCC H3: DFU's per-mod slot on every save; OnStartLoad before any await, RestoreSaveData once the place stands
-    /modData: \{ \[HCC_VENDOR\]: hccRuntime\.getSaveData\(\) \},/,
+    /modData: \{ \[HCC_VENDOR\]: hccRuntime\.getSaveData\(\), \.\.\.modSaveRecords\(\) \},/,   // WA1: every registered mod's record beside it
     /autoBuildArms\(playerEntity\);[^\n]*\n\s+hccRuntime\.handleStartLoad\(\);/,
     /const hccRecord = extras\.modData\?\.\[HCC_VENDOR\] \?\? null;\n\s+if \(hccRecord\) hccRuntime\.restoreSaveData\(hccRecord\);/,
     /horseCartSave: \(\) => hccRuntime\.getSaveData\(\),/, /horseCartLoad: \(rec\) => \{ hccRuntime\.handleStartLoad\(\); if \(rec\) hccRuntime\.restoreSaveData\(rec\); \},/,

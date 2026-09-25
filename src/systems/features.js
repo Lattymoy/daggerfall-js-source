@@ -636,6 +636,10 @@ export const FEATURES = Object.freeze([
   // DS1 (2026-09-25): DETAILED SHIPS - `world`, the two ships you can own.
   // Their building records are read through the door once per load.
   modFeature('detailed-ships', 'Takes effect when the game next loads.', 'world'),
+  // WA1 (2026-09-25): WARM ASHES - SHIPS - `world`, the sea voyage. The travel
+  // hook reads the switch as a journey starts; an ambush already at sea
+  // finishes either way.
+  modFeature('warm-ashes-ships', 'Takes effect on your next sea voyage.', 'world'),
   modFeature('meanerMonsters', 'Takes effect on monsters spawned after the switch.', 'combat'),
   modFeature('pcaao', 'Takes effect at once.', 'combat'),
   modFeature('unleveledLoot', 'Takes effect on the next roll.', 'loot'),

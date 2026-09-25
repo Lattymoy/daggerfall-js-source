@@ -1,0 +1,35 @@
+{
+    "Contributes": {
+        "QuestLists": [
+            "WA_Ships"
+        ],
+        "LooseQuestsList": [
+            "WAQ_SHIP_RAID",
+            "WAQ_SHIP_ATTACK_PIRATE",
+            "WAQ_SHIP_BASE",
+            "WAQ_SHIP_SMALLRAID"
+        ]
+    },
+    "ModTitle": "Warm Ashes - Ships",
+    "ModVersion": "1.1",
+    "ModAuthor": "Kamer",
+    "ContactInfo": "DFU Discord",
+    "DFUnity_Version": "1.1.0",
+    "ModDescription": "Encounters on Ships and Ocean Fast Travel",
+    "GUID": "5e2ce334-65ae-4ddd-ada6-00c6dd4344fd",
+    "Files": [
+        "Assets/Game/Mods/WarmAshesShips/WarmAshesShips.cs",
+        "Assets/Game/Mods/WarmAshesShips/Quests/WAQ_SHIP_RAID.txt",
+        "Assets/Game/Mods/WarmAshesShips/Quests/WAQ_SHIP_ATTACK_PIRATE.txt",
+        "Assets/Game/Mods/WarmAshesShips/Quests/WAQ_SHIP_BASE.txt",
+        "Assets/Game/Mods/WarmAshesShips/Quests/QuestList-WA_Ships.txt",
+        "Assets/Game/Mods/WarmAshesShips/WorldData/SHIPAA00.RMB_raid.json",
+        "Assets/Game/Mods/WarmAshesShips/WorldData/SHIPAA00.RMB_smallraid.json",
+        "Assets/Game/Mods/WarmAshesShips/Quests/WAQ_SHIP_SMALLRAID.txt",
+        "Assets/Game/Mods/WarmAshesShips/WorldData/SHIPAA00.RMB_base.json",
+        "Assets/Game/Mods/WarmAshesShips/LeaveShip.cs",
+        "Assets/Game/Mods/WarmAshesShips/WorldData/SHIPAA01.RMB_base.json",
+        "Assets/Game/Mods/WarmAshesShips/WorldData/SHIPAA01.RMB_smallraid.json",
+        "Assets/Game/Mods/WarmAshesShips/WorldData/SHIPAA01.RMB_raid.json"
+    ]
+}

@@ -317,6 +317,11 @@ export function assignShipToPlayer(player, shipType, { addPermanentScene = null 
   return shipType;
 }
 
+/** ResetShip (:128) - `ownedShip = ShipType.None` and nothing else: the
+ *  permanent scenes stay listed, as they do in DFU. WA1: Warm Ashes -
+ *  Ships takes back the ship it lends with this. */
+export function resetShip(player) { player.ownedShip = SHIP_TYPES.None; }
+
 /**
  * PurchaseShip (:467-486). The ladder is PurchaseHouse's, with one
  * difference worth keeping in view: the ship price is a FLAT table

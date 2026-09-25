@@ -1825,7 +1825,7 @@ test('S40: the quest machine ticks THROUGH a rest, which is what the sub-tick is
     'the fixed-city host no longer refuses the sub-tick');
   // ...and the ordinary tick really is gated on the overlay, which is
   // what made this reachable.
-  assert.match(src('src/scenes/world.js'), /if \(!townTalk\.overlayActive && !_loading\) questBridge\.tick\(dt\);/);
+  assert.match(src('src/scenes/world.js'), /if \(!townTalk\.overlayActive && !worldMoveBusy\(\) && !hudFade\.fadeInProgress\) questBridge\.tick\(dt\);/);   // WA1: the fade and world-move gate beside the overlay's
   assert.match(src('src/scenes/worldModes.js'), /if \(!overlayHeld\) questBridge\?\.tick\(dt\);/);
   assert.match(src('src/scenes/exterior.js'), /if \(!_overlayHeld\) questBridge\?\.tick\(dt\);/);
 });

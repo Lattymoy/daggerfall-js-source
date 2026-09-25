@@ -120,7 +120,7 @@ test('AUDIT WORLD7/8 A3/A6: CreateFoe - a marker ahead of the world online is a 
 
 test('AUDIT WORLD7/8 A4/A10/C7/C9: the records and the residue - the machine ticks off the frame loop (a hidden tab runs no frames and charges one step on return), the record and the constant say so; the stand-down wording is gone or stamped superseded; the pre-WORLD8 memory sentence and the Ledger\'s WORLD5 sentence corrected', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /if \(!townTalk\.overlayActive && !_loading\) questBridge\.tick\(dt\);/, 'the quest tick is the frame\'s');
+  assert.match(w, /if \(!townTalk\.overlayActive && !worldMoveBusy\(\) && !hudFade\.fadeInProgress\) questBridge\.tick\(dt\);/, 'the quest tick is the frame\'s');   // WA1: and held while the world moves and the HUD fades (QuestMachine.Update :310-316) - worldMoveBusy() carries the load gate
   assert.equal(/visibilitychange/.test(w), false, 'no hidden-tab timer drives it');
   assert.match(rd('src/systems/quest/clock.js'), /a hidden tab runs no frames and charges one step\s*\n\s*\* {2}when it comes back/, 'the constant\'s note');
   const arc = rd('bible/06-Systems/Online-Arc.md');
@@ -135,7 +135,7 @@ test('AUDIT WORLD7/8 A4/A10/C7/C9: the records and the residue - the machine tic
 test('AUDIT WORLD7/8 B1/B4/C2: the stamp is the RELAY\'s millisecond - under an installed offset the wire\'s inverse over the shared minute answers the relay\'s instant, where sharedWallMs answers this machine\'s (right for a display, wrong for a stamp two machines compare); a stamp ahead of now is clamped at both readers by source', () => {
   const off = 2 * 3600 * 1000;   // this machine two hours from the relay
   const t0 = Date.now();
-  setSharedClock(() => sharedClassicMinutes(Date.now() + off), (m) => wallMsForClassicMinutes(m) - off);   // world.js:467's own install
+  setSharedClock(() => sharedClassicMinutes(Date.now() + off), (m) => wallMsForClassicMinutes(m) - off);   // world.js:469's own install
   try {
     assert.equal(sharedClockOn(), true);
     const relay = wallMsForClassicMinutes(worldMinutes());

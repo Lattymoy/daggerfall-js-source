@@ -412,7 +412,7 @@ export const DOESNT_NEED_IDENTIFY = 'This does not need to be identified.';
 //  - the LETTER OF CREDIT is tender and bankable: minted at systems/
 //    inventory.js:69, summed by creditAmount at systems/court.js:207,
 //    spent letters-before-coins by deductGold at court.js:249, and
-//    moved at systems/banking.js:485 depositAllLetters / :476
+//    moved at systems/banking.js:490 depositAllLetters / :481
 //    withdrawLetter.
 //  - SellMagic's "fencing base price" TODO is DFU's own
 //    (DaggerfallTradeWindow.cs:464 carries it verbatim), so it is

@@ -1676,7 +1676,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:9497 / exterior.js:3669), set
+  // host's own townTalk sink (world.js:9514 / exterior.js:3669), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -3325,7 +3325,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:14969,
+              // playerArrowHitFoe is the one copy world.js:15013,
               // exterior.js:5240 and worldModes.js:7316 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
@@ -6354,7 +6354,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         world: collectWorld(),
         // AUDIT HCC H3: DFU's per-mod save data rides a dungeon save too - Horse Cart and Cargo's record (the horse,
         // its name, the parked wagon, the entrance it waits at) from the world host that runs the mod
-        modData: opts.horseCartSave ? { 'horse-cart-and-cargo': opts.horseCartSave() } : null,
+        // WA1: DFU's per-mod slot - HCC's record through its own seam (AUDIT HCC H3), every mod after it through the
+        // host's registry (systems/modSaveData.js); null only when the host hands neither
+        modData: opts.horseCartSave || opts.modSaveRecords ? { ...(opts.horseCartSave ? { 'horse-cart-and-cargo': opts.horseCartSave() } : {}), ...(opts.modSaveRecords?.() ?? {}) } : null,
       });
       const r = saveSlot(playerEntity.name, saveName, snap);
       // SS1: arm the deferred shot; the HOST's frame loop delivers it
@@ -6395,6 +6397,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
       const extras = restorePlayer(playerEntity, snap, spellsByIndex);
       if (!extras) { hudText.add('Save version mismatch.'); return; }
+      opts.modSaveLoad?.(extras.modData ?? null);   // WA1: the registered mods' records (or their NewSaveData), as a world load restores them
       opts.horseCartLoad?.(extras.modData?.['horse-cart-and-cargo'] ?? null);   // AUDIT HCC H3: OnStartLoad, then RestoreSaveData - the same-dungeon load is a load too
       this.restoreSaved(extras, setPlayerPos);
     },

@@ -17,8 +17,14 @@ const tableFiles = import.meta.glob('../../vendor/dfu-quests/Tables/*.txt', { qu
 const questFiles = import.meta.glob('../../vendor/dfu-quests/Quests/*.txt', { query: '?raw', import: 'default' });
 // RR3: a vendored mod's Quests/ folder - its QuestList-<name>.txt lands
 // with the tables (the registered list's seam) and its quest sources
-// with the pack's (GetQuest checks the mod's folder the same way)
-const modQuestFiles = import.meta.glob('../../vendor/roleplay-realism/Quests/*.txt', { query: '?raw', import: 'default' });
+// with the pack's (GetQuest checks the mod's folder the same way).
+// WA1: Warm Ashes - Ships' too - its list and its four loose quests
+// (the manifest's LooseQuestsList: DFU's GetQuest finds a loaded mod's
+// quest by name, AnyModContainsQuest; the source seam here is that).
+const modQuestFiles = {
+  ...import.meta.glob('../../vendor/roleplay-realism/Quests/*.txt', { query: '?raw', import: 'default' }),
+  ...import.meta.glob('../../vendor/warm-ashes-ships/Quests/*.txt', { query: '?raw', import: 'default' }),
+};
 
 const stripBom = (s) => s.replace(/^﻿/, '');
 const baseName = (path) => path.split('/').pop().replace(/\.txt$/, '');

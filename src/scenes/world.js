@@ -98,7 +98,7 @@ import { maxFatigue, FATIGUE_MULTIPLIER, liveStat } from '../systems/statMods.js
 // finished since U7; what was missing was a host outside the dungeon
 // that opens one, and CanRest's whole town half.
 import { restDecision, getPreventedRestMessage, REST_TEXT } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window   // ROAD-B B5: GetPreventedRestMessage   // PARTY-REST5: enemiesNearby's own textId, for a follower's own relayed break
-import { isHouseOwned, shipCoords, ownsShip, assignShipToPlayer, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup   // AUDIT 58: AssignShipToPlayer's permanent half, which the classic import owed
+import { isHouseOwned, shipCoords, ownsShip, assignShipToPlayer, resetShip, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup   // AUDIT 58: AssignShipToPlayer's permanent half, which the classic import owed
 import {
   clearSceneCache,           // P1: SaveLoadManager.ClearSceneCache, at PlayerGPS's map-pixel seam
   createSceneCache, cacheScene, restoreCachedScene, worldSceneName, LOOT_CONTAINER_TYPES,   // A10: the ship arm's Cache/RestoreCachedScene pair (TransportManager.cs:382-398)
@@ -252,6 +252,8 @@ import { horseNameTooltip } from '../ui/horseNameTooltip.js';   // AUDIT HCC U6:
 import { createHorseCartPool } from './horseCartPool.js';
 import { createPeerRiders, createPeerWalkers, createEotbArt } from '../net/peerRiders.js';   // RIDE: another player in the saddle   // HCC: Horse Cart and Cargo's presentation - the wagon's five pieces, the horse's eight views, the peers' teams
 import { createHorseCartRuntime } from '../systems/horseCart.js';   // HCC: TrailingWagonRuntime over this host's seams
+import { warmAshesOn, LeaveShip, setWarmAshesHost, onPreFastTravel as warmAshesPreTravel, onPostFastTravel as warmAshesPostTravel, frame as warmAshesFrame } from '../systems/warmAshesShips.js';   // WA1: Warm Ashes - Ships, the ambush at sea
+import { modSaveRecords, restoreModSaveRecords, newGameModSaveRecords } from '../systems/modSaveData.js';   // WA1: DFU's per-mod save slot, for the mods after HCC
 import { isQualifyingThreatState } from '../systems/horseFollow.js';   // HCC: CollectThreats' qualification, the mod's own five-term test
 import { totalWeight } from '../systems/inventory.js';   // HCC: PlayerEntity.WagonWeight
 import { WAGON_KG_LIMIT } from '../systems/itemTransfer.js';   // HCC: ItemHelper.WagonKgLimit
@@ -5735,6 +5737,19 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** TR4: TransportManager's ship arm (:360-402). The decision is
    *  systems/ship.js; this is the host half - the teleport, the
    *  remembered position, and the fade DFU smashes to black. */
+  /** AssignShipToPlayer's two permanent scenes (DaggerfallBankManager.cs:494-495) - the deck's and the hold's. */
+  const shipPermanentScenes = (s) => {
+    addPermanentScene(playerEntity.sceneCache, worldSceneName(SHIP_COORDS[s].x, SHIP_COORDS[s].y));
+    addPermanentScene(playerEntity.sceneCache, interiorSceneName(SHIP_INTERIOR_MAP_IDS[s], BUILDING_KEY_0));
+  };
+  /** WA1: `TransportManager.TransportMode = Ship` from CODE - Warm Ashes' ambush boards you, its "Leave Ship" puts you
+   *  ashore. The picker's Ship row is outdoors-only, so this door was only ever knocked on from the street; a quest
+   *  action can run below decks. DFU's UpdateMode would teleport the streaming world out from under a player still
+   *  inside - the port leaves the building first, as every teleport here does (forceExitToExterior), then sails. */
+  function shipTransportMode() {
+    if ((modes?.mode ?? 'exterior') !== 'exterior') modes?.forceExitToExterior();
+    return boardOrDisembark();
+  }
   async function boardOrDisembark() {
     if (worldMoveBusy()) return;   // AUDIT 68 S22
     const here = playerTravelPixel();
@@ -5793,6 +5808,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // LootContainerTypes.DroppedLoot (:558-566). NATIVE coordinates,
     // because a pile that came back in local ones would land wherever
     // the floating origin happened to be.
+    hudFade.smashHUDToBlack();   // WA1: UpdateMode's ship arm opens black (TransportManager.cs:364) - and the quest machine holds while it fades back (QuestMachine.Update)
     cacheExteriorScene(here);
     await _teleportToPixel(t.go.x, t.go.y, localPos, { reposition: t.reposition, grounded: legacy });
     // TERRAIN-SCALE1 (audit): a deck remembered by a save from before the stamp stood on the prefab's 1.5 - the
@@ -5807,6 +5823,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (t.restore) cam.yaw = t.restore.yaw;
     playerEntity.boardShipPosition = t.boardShipPosition;
     setTransportModeHere(t.mode);
+    hudFade.fadeHUDFromBlack();   // WA1: ...and closes on FadeHUDFromBlack (:401), the arrival awaited, as teleportTo's is
   }
 
   // ---- A10 - THE RECALL ANCHOR, ACROSS CONTEXTS.
@@ -6268,6 +6285,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       // credit - "Taverns only accept gold pieces".
       deductGoldPieces(playerEntity, computed.piecesCost ?? 0);
       deductGold(playerEntity, computed.totalCost - (computed.piecesCost ?? 0));
+      // WA1: RaiseOnPreFastTravelEvent (DaggerfallTravelPopUp.cs:328) - after DeductFastTravelGold, before the teleport:
+      // Warm Ashes' OnPreFastTravel reads the journey's ocean pixels and the ship toggle
+      if (warmAshesOn()) warmAshesPreTravel({ oceanPixels: computed.oceanPixels ?? 0, travelShip: !!opts.travelShip });
       // ROAD-Ar (R1): the ARRIVAL minute rides the teleport. RaiseTime
       // is below, exactly where performFastTravel puts it (:344, after
       // TeleportToCoordinates at :333) - so the core is handed the
@@ -6423,6 +6443,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // keeps the crime in DFU too.
       setCrimeCommitted(playerEntity, CRIMES.None);
       townTalk.say(`You arrive at ${pick.name}.`);
+      if (warmAshesOn()) warmAshesPostTravel();   // WA1: RaiseOnPostFastTravelEvent (:383) - Warm Ashes' CheckforEncounters arms its 0.05s coroutine
     } finally {
       if (hccPostDue) hccRuntimeOn()?.handlePostFastTravel();   // AUDIT HCC (branch audit): the journey threw - the team is released where it stands
       _traveling = false;
@@ -6505,7 +6526,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // port stores the POSITIVE sense because PlayerWeapon holds
       // `usingRightHand`; it is the same bit.
       pose: { yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching, ...mergeWeaponPose(wp, weaponPoseOf(weaponRig.playerWeapon)), camera: mwCamera.state(), transport: player.transportMode },   // SL-2: the pair off the LIVE rig (the mode seam above), else this host's own - PER FIELD, which is mergeWeaponPose's whole job
-      modData: { [HCC_VENDOR]: hccRuntime.getSaveData() },   // AUDIT HCC H3: the mod's own record (WagonSaveData, GetSaveData [IL_9354]) in DFU's per-mod slot - written whatever the switch says, so a save taken with the mod off keeps the horse's name and the parked wagon for when it comes back on
+      modData: { [HCC_VENDOR]: hccRuntime.getSaveData(), ...modSaveRecords() },   // WA1: every registered mod's record beside it (systems/modSaveData.js)   // AUDIT HCC H3: the mod's own record (WagonSaveData, GetSaveData [IL_9354]) in DFU's per-mod slot - written whatever the switch says, so a save taken with the mod off keeps the horse's name and the parked wagon for when it comes back on
       locationKey: 'world',
       world: {
         pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
@@ -6752,6 +6773,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // at a temple alike; a save without the record stays the fresh start OnStartLoad made above
       const hccRecord = extras.modData?.[HCC_VENDOR] ?? null;
       if (hccRecord) hccRuntime.restoreSaveData(hccRecord);
+      restoreModSaveRecords(extras.modData);   // WA1: SaveLoadManager's mod loop (:1524-1535) - the save's record, else the mod's NewSaveData
       // AUDIT 26 F222/F223/F101: the pose lands with the position -
       // RestorePosition sets yaw/pitch/isCrouching and
       // Sheathed = !weaponDrawn (:420-421). Presence-gated: an old
@@ -6872,12 +6894,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // DFU's too: NewCharacterCleanup's ClearSceneCache(true) (:468)
     // runs first and the ship's scenes are added after (:616), which
     // here is after restorePlayer has minted the cache.
-    assignShipToPlayer(playerEntity, playerEntity.ownedShip, {
-      addPermanentScene: (s) => {
-        addPermanentScene(playerEntity.sceneCache, worldSceneName(SHIP_COORDS[s].x, SHIP_COORDS[s].y));
-        addPermanentScene(playerEntity.sceneCache, interiorSceneName(SHIP_INTERIOR_MAP_IDS[s], BUILDING_KEY_0));
-      },
-    });
+    assignShipToPlayer(playerEntity, playerEntity.ownedShip, { addPermanentScene: shipPermanentScenes });
     setWorldMinutes(extras.classicMinutes ?? worldMinutes());
     // The quest machine's 64 classic globals, SET in place -
     // machine.hooks captured the Map reference at construction, so
@@ -9563,6 +9580,23 @@ export async function bootWorld(canvas, renderer, params, status) {
     midDateTimeString: () => midDateTimeString(dateFromClassicMinutes(playerTicker.classicMinutes)),
     cityName: () => _questLoc()?.name ?? questWorld.currentRegionName(),
   }, { label: 'world.js' });
+  // WA1: Warm Ashes - Ships' quest action, registered as its Awake registers it [IL_0303] - on the machine this host
+  // builds, before any save's quests are restored (a restored "Leave Ship" resolves its type through the registry).
+  // WHATEVER THE SWITCH SAYS: only the mod's own quests say "Leave Ship", so the template is inert without them - and
+  // an ambush already at sea (armed by the switch, a ship lent) must still be able to put you ashore if the switch
+  // goes off before its last pirate falls, or a save carrying one loads with the mod off.
+  questBridge.machine.registerAction(new LeaveShip(null));
+  // WA1: the mod's reaches into GameManager and DaggerfallBankManager, answered by this host (systems/warmAshesShips.js)
+  setWarmAshesHost({
+    random: Math.random,   // UnityEngine.Random.Range - THE ENGINE-PRNG RULE
+    ownsShip: () => ownsShip(playerEntity),
+    assignShip: (shipType) => assignShipToPlayer(playerEntity, shipType, { addPermanentScene: shipPermanentScenes }),
+    resetShip: () => resetShip(playerEntity),
+    getQuest: (name, factionId) => questBridge.questLists.getQuest(name, factionId),
+    startQuest: (quest) => questBridge.machine.startQuestImmediate(quest),
+    setTransportModeShip: () => shipTransportMode(),
+    currentRegionIndex: () => _questRegionIndex(),
+  });
   // E3: the pixels this host laid BEFORE the bridge existed - the start
   // pixel is built during init, above - get RMBLayout's third act now.
   // QuestMachine is a scene singleton in DFU, so its layout never has
@@ -12610,6 +12644,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     horseCart: hccRuntimeOn,   // HCC: the runtime's transition handlers and storage-access word, when the mod is on
     horseCartSave: () => hccRuntime.getSaveData(),   // AUDIT HCC H3: the record a dungeon save carries (DFU's per-mod slot, whatever the switch says)
     horseCartLoad: (rec) => { hccRuntime.handleStartLoad(); if (rec) hccRuntime.restoreSaveData(rec); },   // AUDIT HCC H3: a same-dungeon load's OnStartLoad and RestoreSaveData
+    modSaveRecords: () => modSaveRecords(),   // WA1: the records a dungeon save carries beside HCC's
+    modSaveLoad: (modData) => restoreModSaveRecords(modData),   // WA1: ...and a same-dungeon load hands back
     // PX17c: the pause window's journal seams ride into the interior
     // arm - the SAME expressions the world's own pause hands over
     // (PX3/PX4/PX5), so a pause inside a tavern shows the same rail,
@@ -12863,6 +12899,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // a boot that loaded nothing is a new game, wherever it starts
   if (!_loadedGame) mwViewNewGame((modes?.mode ?? 'exterior') !== 'exterior');
   if (!_loadedGame) hccRuntime.handleNewGame();   // HCC: StartGameBehaviour.OnNewGame [IL_98c0]
+  if (!_loadedGame) newGameModSaveRecords();   // WA1: a new character starts from every mod's NewSaveData (systems/modSaveData.js - a recorded departure)
   // E3 - THE CONSOLE. ExteriorAutomap.Start (:417) and
   // DaggerfallTravelMapWindow's ctor (:229) each register their own
   // console commands; both surfaces are THIS host's, so both
@@ -13276,6 +13313,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // rig's `say` was a console.warn and the interior ticker's was a
       // console.log. Drawn ABOVE the modal render, which is where
       // townTalk always draws.
+      warmAshesFrame(gamePaused() ? 0 : dt * worldTimeScale());   // WA1: the mod's coroutine clock, in every mode (a MonoBehaviour's Time.deltaTime)
       hccTick(dt, now);   // AUDIT HCC H1: the runtime's LateUpdate indoors too - the hotkeys' "outdoors only", the settings, the switch
       townTalk.frame(dt);
       renderer.resolveFrame();   // AUDIT RETRO1 E5/C8: a frame that drew no screen quad (the enhanced skin, a sheathed weapon) is shown NOW, not at the next beginFrame
@@ -13293,7 +13331,12 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // deltaTime 0) through the same overlay gate as the clock, and by
     // the load gate (QuestMachine.cs:310-316 refuses to tick while
     // SaveLoadManager.LoadInProgress - no popups mid-restore).
-    if (!townTalk.overlayActive && !_loading) questBridge.tick(dt);
+    // WA1: and the FADE and world-move gate beside it - QuestMachine.Update's own (:310-316, "Do not tick while HUD
+    // fading or load in progress ... to prevent quest popups or other actions while player/world unavailable"): a
+    // quest started on the eve of a teleport (Warm Ashes' ambush, then the boarding) placed its first foes around a
+    // player the world was still being built under. worldMoveBusy() is the port's "unavailable" (a travel, a
+    // teleport, a recall, a respawn, a load - each awaited here where DFU's is one frame and a fade).
+    if (!townTalk.overlayActive && !worldMoveBusy() && !hudFade.fadeInProgress) questBridge.tick(dt);
     questSyncTick();   // QUEST1: the live-sync watch, at most every QUEST_SYNC_CHECK_MS - see its own definition above
     // AUDIT 63 F2: the STREET StaticNPCs' QuestResourceBehaviours, the
     // exterior half of the loop worldModes drives for interior people.
@@ -14268,6 +14311,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       if (wodSel) _wodSetLights(lit, wodSel);
       else renderer.setPointLights(lit, CITY_LIGHT_COLOR_F32);
     }
+    warmAshesFrame(gamePaused() ? 0 : dt * worldTimeScale());   // WA1: TransportToShipWithDelay's WaitForSeconds, held by a pause, scaled with the world
     hccTick(dt, now);   // AUDIT HCC H1: LateUpdate - after the motor and the recentre, before the world pass draws the wagon
     renderer.setClearColor(SKY_CLEAR);   // INCIDENT 2026-09-04 / REVIEW 2026-09-05: this frame is the EXTERIOR's (the mode frames returned above and clear black in worldModes) - CameraClearManager.cs:51-57
     renderer.setFlashLight(sky.lightningLight() ?? boltFrame.flash);   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored; BOLT: else a near ground strike's own light, from where it struck

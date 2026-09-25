@@ -1679,10 +1679,12 @@ test('AUDIT 58 (SAV3): the classic import runs AssignShipToPlayer WHOLE - the de
   const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
   const boot = world.slice(world.indexOf('async function classicLoadBoot()'));
   const body = boot.slice(0, boot.indexOf('const toggleTravelMap'));
-  assert.match(body, /assignShipToPlayer\(playerEntity, playerEntity\.ownedShip, \{/,
+  assert.match(body, /assignShipToPlayer\(playerEntity, playerEntity\.ownedShip, \{ addPermanentScene: shipPermanentScenes \}\);/,
     'the import goes through the port\'s AssignShipToPlayer, not a raw field write');
-  assert.match(body, /addPermanentScene\(playerEntity\.sceneCache, worldSceneName\(SHIP_COORDS\[s\]\.x, SHIP_COORDS\[s\]\.y\)\)/);
-  assert.match(body, /addPermanentScene\(playerEntity\.sceneCache, interiorSceneName\(SHIP_INTERIOR_MAP_IDS\[s\], BUILDING_KEY_0\)\)/);
+  // WA1: the two scenes are ONE helper now - the import and Warm Ashes' lent ship both hand it over
+  const helper = world.slice(world.indexOf('const shipPermanentScenes = (s) => {'), world.indexOf('};', world.indexOf('const shipPermanentScenes = (s) => {')));
+  assert.match(helper, /addPermanentScene\(playerEntity\.sceneCache, worldSceneName\(SHIP_COORDS\[s\]\.x, SHIP_COORDS\[s\]\.y\)\)/);
+  assert.match(helper, /addPermanentScene\(playerEntity\.sceneCache, interiorSceneName\(SHIP_INTERIOR_MAP_IDS\[s\], BUILDING_KEY_0\)\)/);
   // DFU's ORDER: NewCharacterCleanup's ClearSceneCache(true) (:468)
   // runs first, the ship's scenes are added after (:616) - here that
   // means after restorePlayer has minted the cache.

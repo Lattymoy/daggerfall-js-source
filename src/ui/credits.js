@@ -326,5 +326,17 @@ export const CREDITS = Object.freeze({
       vendor: Object.freeze(['detailed-ships']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/1080',
     }),
+    // WA1: Kamer's third - after the mill and the wilderness, which the CR1
+    // gate finds first by his name.
+    Object.freeze({
+      title: 'Warm Ashes - Ships',
+      version: '1.1',
+      author: 'Kamer',
+      what: 'Encounters on ships and ocean fast travel (WA1): a voyage by ship across the sea can be ambushed by pirates - you are put on your ship\u2019s deck with your crew, a ship lent if you own none, the raiders\u2019 vessels standing off - and once they are beaten you are set ashore where you were bound. His four quests and six ship-block variants, and his quest action, ported 1:1 off the mod\u2019s compiled script.',
+      terms: 'Ported 1:1 from the shipped bundle - the quests verbatim, the ship blocks as his edit over your own game files, the script read off its IL - see vendor/warm-ashes-ships/README.md for the permission record.',
+      contact: 'DFU Discord',
+      vendor: Object.freeze(['warm-ashes-ships']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/985',
+    }),
   ]),
 });
