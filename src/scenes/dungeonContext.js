@@ -192,7 +192,8 @@ import { trs, multiply, identity, UP_Y } from '../world/mat4.js';
 import { StaticBatchBuilder, keyResolver } from '../render/staticBatch.js';   // PERF5: the level's static models as one mesh
 import { Collider } from '../player/collider.js';
 import { ActionSystem } from '../world/actionSystem.js';
-import { collectDungeonEnemies } from '../characters/dungeonEnemies.js';
+import { collectDungeonEnemies, expandEliteEnemies } from '../characters/dungeonEnemies.js';
+import { ELITE_FOE_MULTIPLIER, ELITE_HEALTH_SCALE, ELITE_DAMAGE_SCALE, ELITE_LOOT_DROP_MULT, ELITE_LOOT_QUALITY_MULT } from '../world/spawnedDungeons.js';   // ELITE: an elite spawn's foe count and strength
 import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemyBasics.js';
 import { bloodDecalDeps } from '../combat/bloodSwitch.js';   // BLOOD1a
 import { createBloodMarks } from '../combat/bloodMarks.js';   // BLOOD1a: HARD1 - the ring is this context's to own and to end
@@ -250,7 +251,7 @@ const q3 = (v) => Math.round(v * 1000) / 1000; const GENDER_BIT = ['male', 'fema
 const HIT_POS_MAX = 1e6;
 // AUDIT FOES FOE5: the most damage one peer's blow may claim. The host TRUSTS the number (it never recomputes - the
 // striker's own calc is the game's), so without a bound any joiner could one-shot every foe in the room and empty it
-// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:2018); the dungeon
+// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:2022); the dungeon
 // had none. Past anything a legal swing, shaft or blast can roll.
 const HIT_DMG_MAX = 10000;
 /** AUDIT WORLD3 E3: can the ONE build chain actually stand this species? Both of buildFoeAt's branches need a truthy
@@ -784,7 +785,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // Classic billboards join the flat batches (RDB raw-pivot rule);
   // gender picks the archive; record 0 is the standing frame (no AI -
   // Characters C5 rigs replace these).
-  const enemies = collectDungeonEnemies(
+  const _layoutEnemies = collectDungeonEnemies(
     dungeon.blocks.map((b) => ({
       markers: b.layout.markers, waterLevel: b.layout.waterLevel,
       originX: b.originX, originZ: b.originZ,
@@ -794,6 +795,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       dungeonType: dfLocation.mapTableData.dungeonType,
       playerLevel: playerEntity.level,   // ChooseRandomEnemyType bands on the LIVE level (wired audit 2026-08-16; was stuck at the default 1)
     });
+  // ELITE DUNGEONS: an elite spawned dungeon stands ELITE_FOE_MULTIPLIER foes at every marker.
+  // The extras are pulled back from walls by a ray through this dungeon's own collider (every
+  // peer has the same geometry, so every peer builds the same list - the foe frame's index law).
+  // The ray starts at chest height so a step or a floor seam does not read as a wall.
+  const enemies = dfLocation?.elite
+    ? expandEliteEnemies(_layoutEnemies, {
+      copies: ELITE_FOE_MULTIPLIER,
+      clearance: (from, dir, dist) => collider.raycast([from[0], from[1] + 0.9, from[2]], dir, dist),
+      // DROPS-AUDIT ELITE-LEDGE: and the floor under a copy - a ray down from a metre over the marker's height, so a
+      // copy off a walkway's edge (or onto a crate) reads as another floor and turns to the next bearing
+      floor: (at) => { const d = collider.raycast([at[0], at[1] + 1, at[2]], [0, -1, 0], 3); return Number.isFinite(d) ? at[1] + 1 - d : null; },
+    })
+    : _layoutEnemies;
   // C8 E1 (?foes): CLASS enemies (mobileType > 43, human morphology)
   // spawn as canonical rigs instead of their C3 billboards - one rig
   // per enemy (individual animation state), floor-snapped through the
@@ -986,6 +1000,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
   }
 
+  /** ELITE DUNGEONS: a foe minted from an elite record stands with ELITE_HEALTH_SCALE times its
+   *  rolled health and hits for ELITE_DAMAGE_SCALE times the damage (combat/formulas.js
+   *  calculateAttackDamage reads `damageScale` at the tail, so every blow door - melee, bow,
+   *  foe-on-foe - is covered). The record's `elite` rides `src`, so a respawn or a retype keeps it. */
+  function eliteLootOpts(e) {
+    return e?.elite ? { lootDropMult: ELITE_LOOT_DROP_MULT, lootQualityMult: ELITE_LOOT_QUALITY_MULT } : {};
+  }
+  function applyEliteScaling(entity, e) {
+    if (!e?.elite || !entity) return;
+    entity.maxHealth = Math.max(1, Math.round(entity.maxHealth * ELITE_HEALTH_SCALE));
+    entity.health = entity.maxHealth;
+    entity.damageScale = ELITE_DAMAGE_SCALE;
+    entity.elite = true;
+  }
   async function buildFoeAt(e, fallbackFlat = true, { at = -1 } = {}) {
     const basics = ENEMY_BASICS[e.mobileType];
     if (!basics) return;
@@ -1035,13 +1063,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const cf = new D.ClassFile();
       cf.load(await D.fetchBytes(`CLASS${String(careerIndex).padStart(2, '0')}.CFG`));
       const entity = D.makeEnemyEntity(e.mobileType, basics, cf.career, D.playerEntity.level);
+      applyEliteScaling(entity, e);   // ELITE: double health, double damage
       // S1/E4b/AUDIT 18/AUDIT 24/LR1: SetEnemyCareer's whole loot chain -
       // the table on the PLAYER's level and gender, the equipment
       // appended and put on, the map/potion/recipe trio, the port's
       // rarity roll over the carried loot - ONE seam (RF2:
       // hostCombat.spawnEnemyLoot); the loot rides the entity and the
       // corpse carries it on death.
-      spawnEnemyLoot(entity, e.mobileType, basics, D.playerEntity);
+      spawnEnemyLoot(entity, e.mobileType, basics, D.playerEntity, eliteLootOpts(e));   // ELITE: +20% drops, +20% quality
       const ai = new (getPref('enhancedAI') ? D.EnhancedEnemyAI : D.EnemyAI)(collider, pos, yawDeg * Math.PI / 180, {   // ENHANCED AI 4: the switch chooses the motor; the bake is read per step
         nav: () => enhancedNav.chf, navWorld: enhancedNav.world, navSeed: (yawDeg * 1000) | 0,
         // AUDIT 39: a THUNK, not a snapshot - TakeAction re-reads
@@ -1114,7 +1143,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const yawDeg = ((e.mobileType * 73 + Math.round(e.x + e.z)) % 8) * 45;   // deterministic facing (Ledger A rule)
       const career = await D.loadMonsterCareer(e.mobileType, D.fetchBytes);
       const entity = D.makeEnemyEntity(e.mobileType, basics, career, D.playerEntity.level);
-      spawnEnemyLoot(entity, e.mobileType, basics, D.playerEntity);   // RF2: SetEnemyCareer's whole loot chain, one seam (the table, the kit, the trio, the port's roll)
+      applyEliteScaling(entity, e);   // ELITE: double health, double damage
+      spawnEnemyLoot(entity, e.mobileType, basics, D.playerEntity, eliteLootOpts(e));   // ELITE: +20% drops, +20% quality. RF2: SetEnemyCareer's whole loot chain, one seam (the table, the kit, the trio, the port's roll)
       // C12: the behaviour motors - flying/spectral pursue in 3D at
       // the face with no gravity, aquatic ride WaterMove against the
       // block water surface (beached = frozen, verbatim).
@@ -1673,7 +1703,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:9677 / exterior.js:3686), set
+  // host's own townTalk sink (world.js:9799 / exterior.js:3687), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2775,9 +2805,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   /** WORLD8: ONE HOME for a treasure pile's roll - the build's and the hour's respawn's (LootTables.cs:229/:237 on the
    *  PLAYER's level and gender, the pile trio, the rarity roll at the dungeon's tier). */
   function rollPileItems() {
-    const items = generateLootItems(lootKey, { level: playerEntity.level, gender: playerEntity.gender });
+    const elite = !!dfLocation?.elite;   // ELITE: the piles get the same +20% drops and +20% quality as the foes
+    const items = generateLootItems(lootKey, { level: playerEntity.level, gender: playerEntity.gender }, undefined, elite ? { itemChanceScale: ELITE_LOOT_DROP_MULT } : {});
     addPileLootExtras(items, lootKey);
-    rollLootRarity(items, pileSource(dungeonRarityTier(dfLocation.mapTableData.dungeonType)), { luck: liveStat(playerEntity, 'luck') });
+    rollLootRarity(items, { ...pileSource(dungeonRarityTier(dfLocation.mapTableData.dungeonType)), qualityMult: elite ? ELITE_LOOT_QUALITY_MULT : 1 }, { luck: liveStat(playerEntity, 'luck') });
     stampWonWeapons(items, 1);   // SIGIL1: a pile found online, its weapons' sigils rolled at the mint
     return items;
   }
@@ -3324,8 +3355,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:15291,
-              // exterior.js:5258 and worldModes.js:7763 already ran;
+              // playerArrowHitFoe is the one copy world.js:15535,
+              // exterior.js:5259 and worldModes.js:7763 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3711,7 +3742,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!_authority || !data || typeof data !== 'object') return false;
     const i = data.i | 0, dmg = Number(data.dmg);
     const f = foes[i];
-    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:2018). The number is a peer's
+    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:2022). The number is a peer's
     // word and the host trusts it without recomputing, so an unbounded one let any joiner one-shot every foe in the
     // room - and, through the kill door, empty it. 10000 is past anything a legal swing, shaft or blast can roll.
     if (!f || i >= _layoutFoes || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > HIT_DMG_MAX) return false;
@@ -4208,7 +4239,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:1590's restoreWorld goes through
+    // construction (exteriorFoes.js:1594's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law

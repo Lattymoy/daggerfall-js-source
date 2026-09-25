@@ -3196,7 +3196,7 @@ collapse is a bare `RaiseTime(1 * SecondsPerHour)` (`:2429`) that
 returns; `Update` is not re-entered.
 
 The port's hosts implement that same RaiseTime as
-`playerTicker.advance(60)` (`exterior.js:1066`, `world.js:1470`), fired
+`playerTicker.advance(60)` (`exterior.js:1066`, `world.js:1527`), fired
 from inside `sinks.drainFatigue` - so it re-enters `tickPlayerMinutes`
 from inside that function's own fatigue band. The nested tick wrote the
 marker an hour ahead, the outer frame's own `setWorldMinutes` then
@@ -4572,7 +4572,7 @@ the true clause along with the false ones is in the campaign, because
 over-retiring is the equal and opposite failure.
 
 **And one delegation pointed at a flag nobody had ever written.**
-`world.js:2796` said the dungeon-mode enchant ctx was "FLAGGED there
+`world.js:2834` said the dungeon-mode enchant ctx was "FLAGGED there
 with the rest of its enchant wiring" in `dungeonContext.js`. It was
 not. `setDefaultEnchantCtx` had exactly **one** caller in the tree, so
 the standalone `?dungeon` host ran every arm that needs a host
@@ -5550,7 +5550,7 @@ to that cite and moves under the same content check; citeMerge had
 done this since CS2 and citeShift only reported them, so the two
 regexes are one law now, exported from citeShift (`ANY_CITE`,
 `CONTINUATION`) and imported by citeMerge. (2) A TEST'S ESCAPED
-LITERAL FOLLOWS THE ROW IT PINS: `world\.js:6051` in citedrift.test.js
+LITERAL FOLLOWS THE ROW IT PINS: `world\.js:6118` in citedrift.test.js
 is a quote of a Ledger row's text; the row is STRUCK and its number
 held, and the literal used to move anyway, parting the pin from its
 row at every shift. The CLI plans every doc first, learns which
@@ -8118,3 +8118,23 @@ and both windows by content. 15 mutants, 15 dead.
 
 **The lesson: a name is what a player types, and a player types the
 same thing twice. Identity that can be typed is not identity.**
+
+### SPAWN-ROADS - NO RUIN ON A ROAD (2026-09-25)
+
+Mac: "Anyway to have things avoid being on a road?" - asked when the audit of the
+EliteDungeons drop counted what its rate did to the roads: with spawned dungeons on 40%
+of empty pixels (30% normal + 10% elite), 7,547 road pixels, 9,553 track pixels and
+1,160 river or stream pixels held a ruin's flattened plateau at their centre (1,921
+road pixels at the old 10%). Every path in the network runs from its pixel's CENTRE to
+the edges its compass byte names, and the centre is where a ruin stands, so the whole
+question is the pixel's own byte: `spawnedDungeons.js pathFreePixel` refuses a pixel
+with any road, track, river or stream bit, and a pixel with none has no path inside it.
+Deterministic online: the lane forces Basic Roads (`onlineLane.js`
+ONLINE_ROOM_MOD_KEYS), so every client reads the same four arrays; the generated
+fallback network has no water arrays and its roads and tracks still count. THE ONE
+TIMING SEAM: a pixel can be built before the network lands (the roads sweep exists for
+exactly that). A ruin minted then is PROVISIONAL (`_spawnUnroaded`), and
+`sweepRoadless` first takes back every provisional ruin a path crosses - its index
+entry and its TTL clock, never the one the player is standing in (TTL1's own
+exception) - then rebuilds the pixels, which ask again. Pinned in
+`test/spawnroads.test.js`, mutants in `tools/mutants/spawnroads.json`.

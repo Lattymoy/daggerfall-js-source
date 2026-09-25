@@ -46,6 +46,12 @@ export const PREF_DEFAULTS = Object.freeze({
   // OVH2 (2026-09-24): the UI pack worn over the CLASSIC skin - 'none' or a systems/uiPack.js UI_PACKS id
   // (GrimoireUI). Read it through uiPack.js activeUiPack, which answers the URL and the skin on top of it.
   uiPack: 'none',
+  // PLUS1 (2026-09-25): Enhanced Plus - the refreshed dress over the enhanced skin (systems/uiSkin.js isEnhancedPlus).
+  // Off by default: Enhanced stays the default look; the UI Overhaul panel is where a player picks Plus.
+  enhancedPlus: false,
+  // PLUS2: Enhanced Plus's colours - a ui/enhancedFrame.js PLUS_THEMES id; 'slate' is the kit as it ships.
+  plusTheme: 'slate',  plusCursor: true,   // PLUS6: the gauntlet cursor - off gives the system pointer back
+  plusItemHover: true,   // PLUS7: the inventory's hover card - off keeps the right-click menu, drops the card
   // ONLINE1 (2026-09-12): the Online door's two fields - the name over the
   // player's head and the relay to join (net/online.js DEFAULT_SERVER when empty).
   onlineServer: '',

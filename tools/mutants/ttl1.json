@@ -38,7 +38,7 @@
     "old": "        if (typeof k === 'string' && Number.isFinite(seen))", "new": "        if (true)",
     "tests": ["test/spawneddungeons.test.js"] },
   { "name": "the creator's rule: never while the player is in it", "file": "src/scenes/world.js",
-    "old": "&& !_insideSpawn(key)) {", "new": "&& true) {",
+    "old": "if (_spawnLedger.expired(key, _spawnClock()) && !_insideSpawn(key)) {", "new": "if (_spawnLedger.expired(key, _spawnClock()) && true) {",
     "tests": ["test/spawneddungeons.test.js"] },
   { "name": "an expired spawn leaves the location index too", "file": "src/scenes/world.js",
     "old": "        locationIndex.delete(key);\n        return null;", "new": "        return null;",

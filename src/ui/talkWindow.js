@@ -8,7 +8,9 @@
 import { drawText, measureText } from './text.js';
 import { nativeMetrics } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded } from './messageBox.js';
-import { noticeDraw, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE1: the no-options box on the enhanced skin
+import { noticeDraw, noticeRelease } from './enhancedNotice.js';
+import { isEnhancedPlus } from '../systems/uiSkin.js';   // PLUS1
+import { drawEnhancedChoice, closeEnhancedChoice } from './enhancedDialog.js';   // DLG2: a keyed menu as the enhanced dialog   // ENH-NOTICE1: the no-options box on the enhanced skin
 
 const PANEL = [0.05, 0.05, 0.09, 0.92];
 /** UXB1-M: a clickable row's band starts this far (native px) above its glyphs' top - half the 12 px line's lead
@@ -60,7 +62,7 @@ export class ChoiceWindow {
       return;
     }
     const opt = this.options.find((o) => o.code === code);
-    if (opt) { this.done = true; opt.action?.(); }
+    if (opt) { this.done = true; closeEnhancedChoice(this); opt.action?.(); }
   }
 
   /** AUDIT (mouse): the box was keyboard-only - a mouse-driven player
@@ -102,6 +104,9 @@ export class ChoiceWindow {
       if (drawMessageBox(renderer, m, font, box)) return;
     }
 
+    // DLG2: a keyed menu is a decision - on the enhanced skin it is the
+    // stone-and-brass dialog with real buttons, not the flat canvas panel.
+    if (this.options.length && isEnhancedPlus() && drawEnhancedChoice(this, this.lines, this.options)) return;
     const wrapped = this.lines.flatMap((l) => (l === '' ? [''] : wrapText(font.fnt, l, 280)));
     const optLines = this.options.filter((o) => o.label);
     const bodyCount = wrapped.length + 1;   // +1 for the blank spacer row below the text

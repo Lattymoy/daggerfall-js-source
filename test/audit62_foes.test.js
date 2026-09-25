@@ -301,7 +301,7 @@ test('AUDIT 62 F23: the senses context carries the LIVE player capsule, and ever
   const t = src('src/characters/enemyTargets.js');
   assert.match(t, /playerHeight = CAPSULE_HEIGHT,/);
   assert.match(t, /const tHeight = isPlayer \? \(c\.height \?\? playerHeight\) : targetAi\.height;/, 'WORLD3: a peer at its own capsule, the player at the live one'); assert.match(t, /const tOff = isPlayer \? tHeight \/ 2 :/);
-  assert.match(t, /tFeet, tHeight, null, distance\)/);
+  assert.match(t, /tFeet, tHeight, null, distance, ai\.sightRadius\)/);
   for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/cityGuards.js', 'src/scenes/exteriorFoes.js']) {
     assert.match(src(f), /playerHeight: (?:sn|senses)\.playerHeight,/, `${f}: the targeting closure forwards it`);
   }
@@ -368,6 +368,6 @@ test("AUDIT 62 F23 (review): the OUT-OF-BAND player-LOS check reads the live cap
   // and the wiring: the out-of-band check is its OWN call site, not
   // getTargets' - the parameter declaration alone pinned nothing here.
   assert.match(src('src/characters/enemyTargets.js'),
-    /playerInSight = canSeeTarget\(ai\.collider, ai\.feet, ai\.yaw, ai\.height, playerFeet, playerHeight\);/,
+    /playerInSight = canSeeTarget\(ai\.collider, ai\.feet, ai\.yaw, ai\.height, playerFeet, playerHeight, null, null, ai\.sightRadius\);/,
     'the :377-383 LOS check takes the live player height');
 });

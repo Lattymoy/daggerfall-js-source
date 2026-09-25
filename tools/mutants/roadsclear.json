@@ -1,0 +1,110 @@
+[
+  {
+    "name": "ROADS-CLEAR-a-piece-over-a-road-still-stands",
+    "file": "src/scenes/world.js",
+    "old": "        if (boxNearPath(_roadsNow, px, py, box[0] * UNITS_PER_METRE, box[2] * UNITS_PER_METRE, box[3] * UNITS_PER_METRE, box[5] * UNITS_PER_METRE, WOD_PIECE_ROAD_CLEAR)) { _wodOffRoad++; continue; }\n",
+    "new": "",
+    "tests": [
+      "test/roadsclear.test.js"
+    ]
+  },
+  {
+    "name": "ROADS-CLEAR-a-flat-over-a-road-still-stands",
+    "file": "src/scenes/world.js",
+    "old": "        if (pointNearPath(_roadsNow, px, py, f.base[0] * UNITS_PER_METRE, f.base[2] * UNITS_PER_METRE, WOD_PIECE_ROAD_CLEAR)) { _wodOffRoad++; continue; }",
+    "new": "        // gone",
+    "tests": [
+      "test/roadsclear.test.js"
+    ]
+  },
+  {
+    "name": "ROADS-CLEAR-the-site-is-never-asked",
+    "file": "src/scenes/world.js",
+    "old": "}, wodPathsPoint, (name, prefab, rect) => wodSiteClear(terrainGen.roads(), px, py, name, prefab, rect));",
+    "new": "}, wodPathsPoint);",
+    "tests": [
+      "test/roadsclear.test.js"
+    ]
+  },
+  {
+    "name": "ROADS-CLEAR-a-camp-pitched-on-the-road",
+    "file": "src/scenes/world.js",
+    "old": "      if (anchor && _nearRoad([anchor.x, anchor.y, anchor.z], (hit.spacing ?? 0) + CAMP_ROAD_CLEAR_M)) anchor = null;",
+    "new": "      // gone",
+    "tests": [
+      "test/roadsclear.test.js"
+    ]
+  },
+  {
+    "name": "ROADS-CLEAR-a-member-on-the-road",
+    "file": "src/scenes/world.js",
+    "old": "        if (spot && _nearRoad([spot.x, spot.y, spot.z], CAMP_ROAD_CLEAR_M)) spot = null;",
+    "new": "        // gone",
+    "tests": [
+      "test/roadsclear.test.js"
+    ]
+  },
+  {
+    "name": "ROADS-CLEAR-the-camp-frame-flips-north",
+    "file": "src/scenes/world.js",
+    "old": "wc.x - o.x, wc.z - o.z, radiusM * UNITS_PER_METRE",
+    "new": "wc.x - o.x, o.z - wc.z, radiusM * UNITS_PER_METRE",
+    "tests": [
+      "test/roadsclear.test.js"
+    ]
+  },
+  {
+    "name": "ROADS-CLEAR-the-loader-ignores-the-verdict",
+    "file": "src/world/wodLocationLoader.js",
+    "old": "    if (siteClear && !siteClear(session.prefab[i], prefab, rect)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/roadsclear.test.js"
+    ]
+  },
+  {
+    "name": "ROADS-CLEAR-north-is-the-row-below",
+    "file": "src/world/roadClearance.js",
+    "old": "pathsDataPoint(net, px + ix, py - iz)",
+    "new": "pathsDataPoint(net, px + ix, py + iz)",
+    "tests": [
+      "test/roadsclear.test.js"
+    ]
+  },
+  {
+    "name": "ROADS-CLEAR-the-band-has-no-width",
+    "file": "src/world/roadClearance.js",
+    "old": "  const g = PATH_HALF_WIDTH + clearance;",
+    "new": "  const g = clearance;",
+    "tests": [
+      "test/roadsclear.test.js"
+    ]
+  },
+  {
+    "name": "ROADS-CLEAR-the-cave-is-a-rock-field",
+    "file": "src/world/roadClearance.js",
+    "old": "/^WOD_(?:Rocks_(?!Cave)|Mountain_)/",
+    "new": "/^WOD_(?:Rocks_|Mountain_)/",
+    "tests": [
+      "test/roadsclear.test.js"
+    ]
+  },
+  {
+    "name": "ROADS-CLEAR-a-site-is-always-clear",
+    "file": "src/world/roadClearance.js",
+    "old": "    if (pointNearPath(net, px, py, x, z, r)) return false;",
+    "new": "    if (false) return false;",
+    "tests": [
+      "test/roadsclear.test.js"
+    ]
+  },
+  {
+    "name": "ROADS-CLEAR-a-parallel-segment-always-crosses",
+    "file": "src/world/roadClearance.js",
+    "old": "    if (p === 0) return q >= 0;",
+    "new": "    if (p === 0) return true;",
+    "tests": [
+      "test/roadsclear.test.js"
+    ]
+  }
+]

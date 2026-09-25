@@ -81,12 +81,12 @@ test('CAMP1: the timer roll - gated on the wilderness (not inside, not the town 
   assert.equal(rollCampEncounter({ ...WILD, gameMinutes: t, climateIndex: 9999 }, scripted([...SEED, 0.1, 0.5])), null, 'an unknown climate has no table: nothing to spawn - the seed roll itself comes back empty');
 });
 
-test('CAMP1: the chunk-load roll - the same gate and composition, no time gate at all, and its own 15% chance', () => {
-  assert.equal(CAMP_CHANCE_ON_CHUNK_LOAD, 0.15);
-  assert.equal(rollCampChanceOnChunkLoad(0.149), true);
-  assert.equal(rollCampChanceOnChunkLoad(0.15), false);
-  assert.equal(rollCampEncounterOnChunkLoad({ ...WILD, gameMinutes: 181 }, rollsOf([0.2])), null, 'roll 0.2: no group this pixel');
-  const hit = rollCampEncounterOnChunkLoad({ ...WILD, gameMinutes: 181 }, scripted([0.1, ...SEED, 0.1, 0.5]));   // the 15% chance roll first, then the seed, then kind and size
+test('CAMP1: the chunk-load roll - the same gate and composition, no time gate at all, and its own 50% chance', () => {
+  assert.equal(CAMP_CHANCE_ON_CHUNK_LOAD, 0.50);
+  assert.equal(rollCampChanceOnChunkLoad(0.499), true);
+  assert.equal(rollCampChanceOnChunkLoad(0.5), false);
+  assert.equal(rollCampEncounterOnChunkLoad({ ...WILD, gameMinutes: 181 }, rollsOf([0.6])), null, 'roll 0.6: no group this pixel');
+  const hit = rollCampEncounterOnChunkLoad({ ...WILD, gameMinutes: 181 }, scripted([0.1, ...SEED, 0.1, 0.5]));   // the 50% chance roll first, then the seed, then kind and size
   assert.ok(hit && hit.kind === 'camp', 'roll 0.1 on a CLOSED minute: a group - the pixel crossing is the cadence');
   assert.equal(rollCampEncounterOnChunkLoad({ ...WILD, gameMinutes: 181, inLocationRect: true }, rollsOf([0.1])), null, 'the town gate holds here too');
   // the timer's own 5% is kept for a lower-than-guaranteed rate later, and is not consulted by the timer path
@@ -127,7 +127,7 @@ test('CAMP1 by source: both exterior hosts roll it after the single roll comes b
     assert.doesNotMatch(fn, /const campHit = rollCampEncounter\(/, 'world.js: no live timer roll left in the per-minute tick');
   }
   assert.doesNotMatch(w, /import \{ rollCampEncounter,/, 'world.js: the unused timer entry point is dropped from the import');
-  assert.match(w, /import \{ rollCampEncounterOnChunkLoad, amGroupRollOwner, campAnchorSpot \} from '\.\.\/systems\/campEncounters\.js';/, 'world.js: only the chunk-load twin, the ownership guard and the far anchor are imported now');
+  assert.match(w, /import \{ rollCampEncountersOnChunkLoad, amGroupRollOwner, campAnchorSpot, CAMP_SIGHT_RADIUS \} from '\.\.\/systems\/campEncounters\.js';/, 'world.js: only the chunk-load twin, the ownership guard and the far anchor are imported now');
   for (const [name, h] of [['exterior.js', e]]) {
     const i = h.indexOf('function runEncounterTick(');
     const fn = h.slice(i, h.indexOf('\n  }\n', i));
@@ -142,7 +142,7 @@ test('CAMP1 by source: both exterior hosts roll it after the single roll comes b
     // CAMP-FAR (2026-09-24): the anchor is no longer the ring law's - that law probes four units down from the
     // player's own height and cannot find ground a hundred metres out on any real grade. The far law takes the
     // group's band, the player's yaw and view, and the collider's own terrain sampler for its floor.
-    assert.match(stand, /anchor = campAnchorSpot\(\{ feet, yawRad: cam\.yaw, fovDegrees: fieldOfView\(\) \* 180 \/ Math\.PI, groundAt: collider\.heightAt, minDistance: hit\.minDistance, maxDistance: hit\.maxDistance \}\);/, `${name}: the anchor stands by the far law - the group's band, out of view, on the terrain's floor`);
+    assert.match(stand, /anchor = campAnchorSpot\(\{ feet, yawRad: cam\.yaw, fovDegrees: fieldOfView\(\) \* 180 \/ Math\.PI, groundAt: collider\.heightAt, minDistance: hit\.minDistance, maxDistance: hit\.maxDistance(, bearingDegrees: hit\.bearingDegrees)? \}\);/, `${name}: the anchor stands by the far law - the group's band, out of view, on the terrain's floor`);
     assert.doesNotMatch(stand, /placeFoeFreely\(anchorEnv/, `${name}: the ring law no longer places the anchor`);
     assert.match(stand, /playerFeet: \[anchorFeet\[0\], anchorFeet\[1\] \+ 0\.9, anchorFeet\[2\]\],\s*\n\s*playerYawRad: Math\.random\(\) \* Math\.PI \* 2,\s*\n\s*fovDegrees: 0,/, `${name}: each member's env is centred on the ANCHOR, any bearing`);
     assert.match(stand, /spot = placeFoeFreely\(memberEnv, \{ minDistance: 1, maxDistance: hit\.spacing, lineOfSightCheck: false \}\);/, `${name}: within the group's spacing, no player-relative view test`);
@@ -171,9 +171,9 @@ test('CAMP1 by source: both exterior hosts roll it after the single roll comes b
   // the chunk-load twin, on the stream's own "entered" event, outdoors only
   const ci = w.indexOf('stream: entered ${r.current.x}');
   const chunk = w.slice(ci, w.indexOf('\n    pump();', ci));
-  assert.match(chunk, /if \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior' && !playerEntity\.isResting && getPref\('wildernessCamps'\) !== false && amGroupRollOwner\(online\?\.id \?\? null, player\.feetAt\(\), peersNear\(\)\)\) \{/, 'outdoors, not resting, switched on, and mine to roll');
-  assert.match(chunk, /const chunkCampHit = rollCampEncounterOnChunkLoad\(\{\s*\n\s*inside: false, inLocationRect: _inAnyLocationRect\(walkMode \? player\.pos : cam\.pos\),[^\n]*\n\s*climateIndex: maps\.getClimateIndex\(r\.current\.x, r\.current\.y\),/, 'the entered pixel\'s own climate');
-  assert.match(chunk, /if \(chunkCampHit\) _standCampEncounter\(chunkCampHit, player\.feetAt\(\)\);/);
+  assert.match(chunk, /if \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior' && !playerEntity\.isResting && !travelOptions\?\.isTravelActive && getPref\('wildernessCamps'\) !== false && amGroupRollOwner\(online\?\.id \?\? null, player\.feetAt\(\), peersNear\(\)\)\) \{/, 'outdoors, not resting, switched on, and mine to roll');
+  assert.match(chunk, /const chunkCampHits = rollCampEncountersOnChunkLoad\(\{\s*\n\s*inside: false, inLocationRect: _inAnyLocationRect\(walkMode \? player\.pos : cam\.pos\),[^\n]*\n\s*climateIndex: maps\.getClimateIndex\(r\.current\.x, r\.current\.y\),/, 'the entered pixel\'s own climate');
+  assert.match(chunk, /if \(chunkCampHits\) \{\n\s*let room = exteriorFoes\.encounterRoom\?\.\(\) \?\? Infinity;\n\s*for \(const h of chunkCampHits\) \{[\s\S]{0,420}?_standCampEncounter\(h, player\.feetAt\(\)\);/, 'CAMP-RING: every group of the hit stands that fits the encounter cap whole (DROPS-AUDIT CAMP-CAP)');
   // the shout across the camp
   const ef = read('src/scenes/exteriorFoes.js');
   assert.match(ef, /targeting: \(ai, pf, cdt\) => \{\s*\n\s*const hadTarget = !!ai\.target;[\s\S]*?const result = runTargetMachine\(f, \[\.\.\.senses\.candidates\(\), PLAYER_TARGET, \.\.\.\(f\.placed && !f\.site \? \[\] : peerCandidates\(\)\)\], pf, cdt, \{/, 'the machine runs as it did, with the before-state remembered');

@@ -101,8 +101,8 @@
   {
     "name": "AIWATER-the-spawn-rate-drifts-from-what-the-test-measures",
     "file": "src/world/spawnedDungeons.js",
-    "old": "export const SPAWN_CHANCE = 0.10;",
-    "new": "export const SPAWN_CHANCE = 0.3;",
+    "old": "export const SPAWN_CHANCE = 0.30;",
+    "new": "export const SPAWN_CHANCE = 0.1;",
     "tests": [
       "test/spawneddungeons.test.js"
     ]

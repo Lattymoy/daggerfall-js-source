@@ -164,8 +164,8 @@ import { alignSurvival, shiftSurvival } from '../systems/survival/needs.js';   /
 import { liveLycanthropy } from '../systems/lycanthropy.js';   // SURV7: the env's lycanthrope and beast-form flags
 import { elementalResistanceChance, ELEMENTS } from '../systems/spellcast.js';   // SURV7: the env's fire and frost resistances
 import { createTownWatch, runTownWatchFrame } from '../systems/townWatch.js';   // DISC19-F: the watch defends the town
-import { rollCampEncounterOnChunkLoad, amGroupRollOwner, campAnchorSpot } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
-import { WORLD_SALT, spawnsDungeon, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger, spawnedLocationCentreLocal, dungeonSightLine } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
+import { rollCampEncountersOnChunkLoad, amGroupRollOwner, campAnchorSpot, CAMP_SIGHT_RADIUS } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
+import { WORLD_SALT, spawnsDungeon, pathFreePixel, isEliteSpawn, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger, spawnedLocationCentreLocal, dungeonSightLine } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
 import { isMainStoryDungeon } from '../world/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
 import { nearestSafeLocation, respawnFlavorText, reviveForPlay, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
@@ -249,6 +249,7 @@ import { buildingDataForDoor, locationBuildings, BUILDING_KEY_0 } from '../syste
 import { hitSoundFor, swingSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME } from '../systems/soundClips.js';   // AUDIT 58: DFU's two hit volumes
 import { isInvisible, entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39: the S19 gate is host-agnostic in DFU
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
+import { boxNearPath, pointNearPath, wodSiteClear, UNITS_PER_METRE, WOD_PIECE_ROAD_CLEAR, CAMP_ROAD_CLEAR_M } from '../world/roadClearance.js';   // ROADS-CLEAR: WoD sites and pieces, and the camps, off the painted roads
 import { StreamingWorldState, TerrainSlots, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords, SCENE_MAP_RATIO, nearestFirstFrom } from '../world/streamingWorld.js';   // HCC: StreamingWorld.SceneMapRatio; AUDIT BRANCH (WoD) L1-3: DFU's terrain array; AUDIT 68 S22: the load list's one order
 import { horseNameTooltip } from '../ui/horseNameTooltip.js';   // AUDIT HCC U6: the mod's HUD label, both skins
 import { createHorseCartPool } from './horseCartPool.js';
@@ -282,6 +283,7 @@ import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dis
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
 import { PlayerMotor, startRestGroundedCheck, motionBagOf, MAX_FRAME_DT, CAPSULE_HEIGHT, RIDE_EYE_HEIGHT } from '../player/motor.js';   // SPELLFX1: a peer's eye when its body has not said its height
 import { travelDriveForward, travelLookaheadFor } from '../systems/travelAutopilot.js';   // TO-FIELD / AUDIT-FIELD F8: the journey's ground gate, pure so the pins can drive it   // StartRestGroundedCheck's ONE home; WW2: the one motion bag
+import { createTravelSteer, createColliderProbe, steerDrive } from '../systems/travelSteer.js';   // TRAVEL-NAV1: the journey goes round what is in its way, and stops short of what it cannot
 import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exteriorSwimming } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods; OT1: IsPlayerSwimming above ground
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
 import { floorLanding } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27)
@@ -333,6 +335,12 @@ import { cellRoomOfWire } from '../net/wire.js';   // HCC-PARK: the cell a parke
 import { characterIdOf } from '../systems/characterId.js';   // AUDIT HCC-PARK: my parked team is my CHARACTER's (the relay keys it by the account and this)
 import { chooseTable, tableMoveSpeed } from '../player/eotbBillboard.js';   // AUDIT RIDE: the rider's gallop is the table the rider's own sprite shows
 import { PARTY_READY_TIMEOUT_MS, memberPresent, latestStamp, voteStands, snapshotCancels, cancelRequestFor, mirrorKey, cooldownStamp, stampOf } from '../systems/partyRestLaw.js';   // AUDIT PARTY-REST: the pure half of the party-rest mechanic, pinned by execution   // SOC2: the hub's room and the party pose's floor (a second wire import: AUDIT WORLD4 A1 pins the first as it stands)
+import { besideLandingOf, PARTY_TRAVEL_TEXT, BESIDE_LEVEL } from '../systems/partyTravelLaw.js';   // PARTY-TRAVEL: the party's journey - to the leader, and together
+import { createPartyTravel } from '../systems/partyTravel.js';   // PARTY-TRAVEL: its session, over this host's seams
+import { TravelPopUpWindow } from '../ui/travelPopUp.js';   // PARTY-TRAVEL: the map's own popup prices a party journey, headless
+import { YesNoBoxWindow } from '../ui/yesNoBox.js';   // PARTY-TRAVEL: the journey's prompts - UXB1-M's box, either skin
+import { guildFastTravel } from '../systems/guildVariants.js';   // PARTY-TRAVEL: the popup's own blessed minutes, handed over as it hands them
+import { travelMapPopUpState } from '../systems/travelMapState.js';   // PARTY-TRAVEL: the toggles my own map last left - my way of travelling to the leader
 import { createChatPanel } from '../ui/chatPanel.js';   // CHAT1: the enhanced skin's chat over the world
 import { makeVideoQueue } from '../systems/quest/videoQueue.js';   // CRUX1: the quest videos in turn
 import { createPartyPanel } from '../ui/partyPanel.js';   // SOC4: the party HUD - my party's portraits and their health / stamina / magicka
@@ -623,6 +631,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let roadsSweepDue = false;
   function rebuildRoadless() { roadsSweepDue = true; }
   function sweepRoadless() {
+    _dropRoadedSpawns();   // SPAWN-ROADS: before the rebuild, so a crossed pixel comes back without its ruin
     const again = [];
     for (const [, p] of [...built]) if (!p.withRoads) again.push({ px: p.px, py: p.py });
     if (!again.length) return;
@@ -759,7 +768,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const t = state.pixelTranslation(px, py, _announceT);
     const [lx, lz] = spawnedLocationCentreLocal(loc);
     const dx = t[0] + lx - feet[0], dz = t[2] + lz - feet[2];   // east, north
-    townTalk.say(dungeonSightLine(Math.hypot(dx, dz), _capitalize(directionHintString(dx, dz))));
+    townTalk.say(dungeonSightLine(Math.hypot(dx, dz), _capitalize(directionHintString(dx, dz)), !!loc.elite));
   }
   let _spawnTemplates = null;
   // TTL1: what this client has met, and when. The roll above is a pure
@@ -799,10 +808,30 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!locationIndex.get(key)?.spawned) return;
     _spawnLedger.clear(key, _spawnClock());
   };
+  const _spawnUnroaded = new Set();   // SPAWN-ROADS: spawned keys decided before the road network landed
+  /** SPAWN-ROADS: the roads sweep's first act - a ruin decided before the network landed that a path crosses
+   *  is taken back (the index and its TTL clock), unless the player stands in it (TTL1's own exception); its
+   *  pixel was built without roads, so the sweep rebuilds it and the stream asks spawnedDungeonAt again. */
+  function _dropRoadedSpawns() {
+    const net = terrainGen.roads();
+    if (!net) return;
+    for (const key of _spawnUnroaded) {
+      const [px, py] = key.split(',').map(Number);
+      if (!pathFreePixel(net, px, py) && !_insideSpawn(key)) { locationIndex.delete(key); _spawnLedger.forget(key); }
+    }
+    _spawnUnroaded.clear();
+  }
   const spawnedDungeonAt = (px, py) => {
     if (!params.has('online')) return null;
     try {
       if (!spawnsDungeon(_spawnSalt, px, py) || maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;
+      // SPAWN-ROADS (2026-09-25, Mac: "Anyway to have things avoid being on a road?"): no ruin on a pixel a road,
+      // track, river or stream crosses (spawnedDungeons.js pathFreePixel). Online the network is the room's (the
+      // lane forces Basic Roads, onlineLane.js ONLINE_ROOM_MOD_KEYS), so every client asks the same bytes. Asked
+      // BEFORE the network lands, the answer is PROVISIONAL: the ruin stands for now and its key is kept, and the
+      // roads sweep (sweepRoadless) takes back every provisional one a path crosses before it rebuilds the pixels.
+      const net = terrainGen.roads();
+      if (net && !pathFreePixel(net, px, py)) return null;
       // TTL1: ...AND NOT WHILE THE PLAYER IS IN IT. The creator's rule
       // says so twice ("when there is no player in it"), and this is
       // where it is kept: a pixel is only rebuilt from the overworld, so
@@ -820,8 +849,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       const regionIndex = maps.getRegionIndexAt(px, py);
       const loc = synthesizeDungeonLocation(template, { salt: _spawnSalt, px, py, where: {
         regionIndex, regionName: REGION_NAMES[regionIndex], politic: maps.getPoliticIndex(px, py), climate: getWorldClimateSettings(maps.getClimateIndex(px, py)),
-      } });
+      }, elite: isEliteSpawn(_spawnSalt, px, py) });   // ELITE: the same hash on every client
       locationIndex.set(key, loc);
+      if (!net) _spawnUnroaded.add(key);   // SPAWN-ROADS: decided without the network - the sweep asks again
       _spawnLedger.note(key, _spawnClock());   // TTL1: first sight starts the seven-day clock
       return loc;
     } catch (e) { console.warn('[spawned dungeons]', px, py, e?.message ?? e); return null; }
@@ -1650,7 +1680,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           // location alone: -1 on a pixel without one.
           mapRegionIndex: dfLocation ? dfLocation.regionIndex : -1,
           worldHeight: woods.getHeightMapValue(px, py),
-        }, wodPathsPoint);
+        }, wodPathsPoint, (name, prefab, rect) => wodSiteClear(terrainGen.roads(), px, py, name, prefab, rect));   // ROADS-CLEAR: a camp, fort, shrine or ruin whose pieces reach a road is not stood (world/roadClearance.js)
         if (picks.length) wodPicks = picks;
       } catch (e) {
         console.warn(`[wod] pixel ${key}: the loader failed here, and the pixel stands without its site: ${e?.message ?? e}`);
@@ -2067,6 +2097,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     let wodSpawners = null;
     if (wodPicks && wodAverages) {
       const place = wod.placements(wodPicks, wodAverages);
+      const _roadsNow = terrainGen.roads();   // ROADS-CLEAR: null until the network lands - the roads sweep rebuilds this pixel then
+      let _wodOffRoad = 0;
       if (place.stopped) console.warn(`[wod] pixel ${key}: a negative model name stopped the loader here, as uint.Parse throws in the C#`);
       const wodBucket = ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]);   // BLOOD1 AUDIT 3: one array a bucket
       for (const m of place.models) {
@@ -2074,6 +2106,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (!gpu) continue;   // a model ARCH3D does not carry stands empty in DFU (no mesh, no collider)
         const cpu = cpuModels.get(m.modelId);
         const box = transformedAabb(archAabb(m.modelId, cpu.positions), m.matrix);
+        // ROADS-CLEAR (2026-09-25, Mac: "Camps, mountains from WOD, shouldnt be placed on roads"): a piece whose own
+        // mesh box reaches a road - here or in the pixel it spills into - is not stood: no mesh, no collider. The rock
+        // fields and mountains lose the pieces over the road and keep the rest; a whole site was asked at its pick.
+        if (boxNearPath(_roadsNow, px, py, box[0] * UNITS_PER_METRE, box[2] * UNITS_PER_METRE, box[3] * UNITS_PER_METRE, box[5] * UNITS_PER_METRE, WOD_PIECE_ROAD_CLEAR)) { _wodOffRoad++; continue; }
         unionBox(box);
         const entry = { gpu, local: m.matrix, _box: box, _order: m.modelId };
         models.push(entry);
@@ -2082,6 +2118,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         await breather.breathe();
       }
       for (const f of place.flats) {
+        if (pointNearPath(_roadsNow, px, py, f.base[0] * UNITS_PER_METRE, f.base[2] * UNITS_PER_METRE, WOD_PIECE_ROAD_CLEAR)) { _wodOffRoad++; continue; }   // ROADS-CLEAR: and a flat on one
         if (f.scale.x === 1 && f.scale.y === 1) addFlat(f.archive, f.record, f.base[0], f.base[1], f.base[2]);
         else addScaledFlat(f.archive, f.record, f.scale, f.base[0], f.base[1], f.base[2]);
       }
@@ -2116,6 +2153,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           wodSpawners.push({ spawner: new WodSpawner(s), centre, flat: null, restand: false, oid: s.objectID, oidN: n });   // WOD7: oid (and its index among the pixel's alike) - the marker's site with the pixel   // a carried one replaces it at publish (m4)
         }
       }
+      if (_wodOffRoad) console.log(`[wod] pixel ${key}: ${_wodOffRoad} piece(s) kept off the road`);   // ROADS-CLEAR
       const site = [...wodPicks].reverse().find((p) => p.flatten);
       if (site) wodSite = { xMin: site.rect.x, xMax: site.rect.x + site.rect.width, yMin: site.rect.y, yMax: site.rect.y + site.rect.height };
     }
@@ -3035,6 +3073,17 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  syncTopics last resolved, which on the very frame a new pixel is
    *  entered - the camp roll's frame - is still the old pixel's, and it
    *  says nothing about where the group is put 14-26 units away. */
+  /** ROADS-CLEAR (2026-09-25, Mac: "Camps ... shouldnt be placed on roads"): is a scene position within `radiusM`
+   *  metres of a road or track's painted band (world/roadClearance.js), in its pixel or the next? False until the
+   *  network lands - a camp rolled that early stands where it rolled. */
+  const _nearRoad = (pos, radiusM) => {
+    const net = terrainGen.roads();
+    if (!net) return false;
+    const wc = state.worldCoords(pos);
+    const p = worldCoordToMapPixel(wc.x, wc.z);
+    const o = mapPixelToWorldCoords(p.x, p.y);
+    return pointNearPath(net, p.x, p.y, wc.x - o.x, wc.z - o.z, radiusM * UNITS_PER_METRE);
+  };
   const _inAnyLocationRect = (pos) => {
     const wc = state.worldCoords(pos);
     const px = worldCoordToMapPixel(wc.x, wc.z);
@@ -4469,7 +4518,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2466 mounts the same one, gated on
+  // and dungeonContext.js:2496 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:6109
@@ -4558,7 +4607,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:416-421) never looks the record up in `foes`, and
+    // (exteriorFoes.js:420-425) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1485-1503) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
@@ -4655,8 +4704,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // ring law, at the group's spacing.
     let anchor = null;
     for (let i = 0; i < LOOSE_FOE_PLACE_ATTEMPTS && !anchor; i++) {
-      anchor = campAnchorSpot({ feet, yawRad: cam.yaw, fovDegrees: fieldOfView() * 180 / Math.PI, groundAt: collider.heightAt, minDistance: hit.minDistance, maxDistance: hit.maxDistance });
+      anchor = campAnchorSpot({ feet, yawRad: cam.yaw, fovDegrees: fieldOfView() * 180 / Math.PI, groundAt: collider.heightAt, minDistance: hit.minDistance, maxDistance: hit.maxDistance, bearingDegrees: hit.bearingDegrees });   // CAMP-RING: each group on its own bearing
       if (anchor && _inAnyLocationRect([anchor.x, anchor.y, anchor.z])) anchor = null;   // DISC19-F: a camp is a wilderness thing - never pitched in a town's rect from a player standing at its edge
+      if (anchor && _nearRoad([anchor.x, anchor.y, anchor.z], (hit.spacing ?? 0) + CAMP_ROAD_CLEAR_M)) anchor = null;   // ROADS-CLEAR: pitched off the road, its whole ring clear of it
     }
     if (!anchor) return;
     const campId = _nextCampId++;
@@ -4677,6 +4727,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // point that is not the player.
         spot = placeFoeFreely(memberEnv, { minDistance: 1, maxDistance: hit.spacing, lineOfSightCheck: false });
         if (spot && _inAnyLocationRect([spot.x, spot.y, spot.z])) spot = null;   // DISC19-F: nor a member over its line
+        if (spot && _nearRoad([spot.x, spot.y, spot.z], CAMP_ROAD_CLEAR_M)) spot = null;   // ROADS-CLEAR: nor on a road
       }
       if (!spot) continue;
       const fly = (ENEMY_BASICS[mobileType]?.behaviour ?? 'General') === 'Flying';
@@ -4685,6 +4736,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       }).then((f) => {
         if (f) {
           f.campId = campId; f.campAlertRadius = hit.alertRadius;
+          if (f.ai) f.ai.sightRadius = CAMP_SIGHT_RADIUS;   // CAMP-SIGHT: a camp sees 60 m, not 102.4
           // CAMP2: campEncounters.js groups by THEME (mobileFactions.js),
           // not by the game's own combat Team (enemyBasics.js), so a
           // themed group can still mix several Teams - a "vermin nest"
@@ -5574,6 +5626,21 @@ export async function bootWorld(canvas, renderer, params, status) {
   // terrain ten units past its edge can differ by far more on a steep site.
   const ARRIVAL_LIFT = 40;
   const ARRIVAL_REACH = 240;
+  /** PARTY-TRAVEL: where the way to a spot beside the leader is looked along - chest height over their feet. */
+  const PARTY_BESIDE_CHEST = 1;
+  /** PARTY-TRAVEL: the spot beside a leader whose feet stand at natives `w` (partyTravelLaw besideTargetOf's answer - in
+   *  the pixel being built, or null), through the law's two questions asked of this pixel's collider: is the way from
+   *  the leader to a spot clear at the chest (one ray), and what floor is under it (the arrival's own snap, reaching a
+   *  level either way). Null when there is no leader to stand beside. AUDIT PARTY-TRAVEL: `seat` is where in the ring
+   *  the search starts (the pick's besideSeat, systems/partyTravel.js followerSeatOf), so followers stand apart. */
+  function partyBesideLanding(w, seat = 0) {
+    if (!w) return null;
+    const [lx, lz] = state.localFromWorld(w.x, w.z);
+    return besideLandingOf([lx, w.y + state.compensation[1], lz], {
+      clear: (from, dir, dist) => { const d = collider.raycast([from[0], from[1] + PARTY_BESIDE_CHEST, from[2]], dir, dist); return !Number.isFinite(d) || d >= dist; },
+      floor: (pos) => floorLanding(collider, pos, BESIDE_LEVEL * 2, BESIDE_LEVEL),
+    }, seat);
+  }
   // TL2: a floor this far ABOVE the location's flat is a roof, not the
   // ground - a step or a doorsill is under a unit; a house is many.
   const OBSTRUCTED_ABOVE = 3;
@@ -6401,6 +6468,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     }).finally(() => { _respawning = false; });
   }
 
+  /** PARTY-TRAVEL: a pick may carry `besideAt` - a follower's journey to the party leader lands beside them, read once
+   *  the core has built the pixel - and `besideText`, the arrival's line when it did. True once the journey arrived;
+   *  nothing (falsy) when it never left. */
   async function fastTravelTo(pick, opts, computed) {
     if (worldMoveBusy()) return;   // AUDIT 68 S22: before the gold goes
     if (_traveling) return;
@@ -6462,6 +6532,20 @@ export async function bootWorld(canvas, renderer, params, status) {
           reposition: REPOSITION.DirectionFromStartMarker,
           travelStart, modEvent: 'travel' });
       hccPostDue = false; hccRuntimeOn()?.handlePostFastTravel();   // HCC (AUDIT HCC H2): OnPostFastTravel [IL_a2b4] - the relocation is pending; the team re-stands behind the player once the world is up
+      // PARTY-TRAVEL (2026-09-25, Mac: "Implementing a prompt for online to travel to party leader"): A FOLLOWER LANDS
+      // BESIDE THE LEADER. The core has stood me at the place's own door on the pixel it just built; a party journey's
+      // pick carries `besideAt`, the leader's feet in natives read NOW (they may have walked on while the pixel built)
+      // and only while they stand in THIS pixel's open air (systems/partyTravelLaw.js besideTargetOf), and the law
+      // picks the spot over the pixel's collider (besideLandingOf: a side clear of walls on the leader's own floor, else
+      // the leader's own spot). Where it answers nothing - the leader indoors, gone on, swimming, flying - the door
+      // stands. Placed before any frame draws: the core's tail and this line run in one breath after its build, and
+      // before the following team re-stands (HCC's relocation is pending until the world is up).
+      const beside = walkMode && pick.besideAt ? partyBesideLanding(pick.besideAt(), pick.besideSeat) : null;
+      if (beside) {
+        player.spawn(beside.pos[0], beside.pos[1], beside.pos[2]); playerSpawned = true;
+        cam.pos = [beside.pos[0], beside.pos[1], beside.pos[2]];
+        if (beside.yaw != null) cam.yaw = beside.yaw;   // facing the leader
+      }
       // cautious arrival heals in full; magicka honors NoRegenSpellPoints
       // AUDIT WORLD5 C14: the heal is the trip's NIGHTS - DFU's cautious traveller arrives rested because the days
       // passed - and online the trip takes no world time, so it heals nothing: with it, a cautious trip with camping
@@ -6570,11 +6654,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       // popup that never runs performFastTravel, so a guild teleport
       // keeps the crime in DFU too.
       setCrimeCommitted(playerEntity, CRIMES.None);
-      townTalk.say(`You arrive at ${pick.name}.`);
+      townTalk.say(beside && pick.besideText ? pick.besideText : `You arrive at ${pick.name}.`);
     } finally {
       if (hccPostDue) hccRuntimeOn()?.handlePostFastTravel();   // AUDIT HCC (branch audit): the journey threw - the team is released where it stands
       _traveling = false;
     }
+    return true;
   }
   // P-slice: the ABOVE-GROUND QUICKSAVE (F9/F11, the dungeon's
   // bindings). The envelope is the dungeon's snapshotPlayer - entity,
@@ -6617,7 +6702,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6342), so exterior mode and a
+    // composer, dungeonContext.js:6373), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -7124,7 +7209,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // TO1: the fork. `playerControlled` is the popup's own word for a
     // trip its three toggles say is WALKED (ui/travelPopUp.js
     // callFastTravelGoldCheck); everything else is DFU's fast travel.
+    // PARTY-TRAVEL (2026-09-25, Mac: "Implementing a prompt for online to travel to party leader"): a member away from
+    // the leader is asked first whether the journey is to the leader - No opens the map (systems/partyTravel.js mapOffer)
+    if (!gotoPlace && partyTravel?.mapOffer()) return;
     _travelMap = buildTravelMapWindow({ onTravel: (pick, opts, computed) => {
+      if (partyTravel?.propose(pick, opts, computed)) { hudFade.clearFade(); return; }   // PARTY-TRAVEL: "...the option for party members to ready up and travel together" - the leader's Begin with the party gathered asks them first (a walked trip is never a round: the session says no to it)
       if (opts?.playerControlled && beginAcceleratedTravel(pick, opts, { estimateMinutes: computed?.minutes ?? null })) return;   // AUDIT-TO1 L5: the popup's estimate rides along for the panel's ETA
       fastTravelTo(pick, opts, computed);
     } });
@@ -7198,6 +7287,21 @@ export async function bootWorld(canvas, renderer, params, status) {
     onCancel: () => travelOptions?.clearTravelDestination(), // :377 - EXIT: forget it
     onTimeAccelerationChanged: (n) => setWorldTimeScale(n),  // :379 -> SetTimeScale
   }) : null;
+  /** TRAVEL-NAV1 (2026-09-25, Mac: "Improving travel options navigation to
+   *  properly route around objects and stopping before running into
+   *  buildings"): THE JOURNEY'S STEERING (systems/travelSteer.js), made
+   *  once with its feelers, which are cast through THIS host's collider
+   *  from the feet the motor moves - the same triangles, the same terrain
+   *  floor. The mod calls it last in its own Update (`steer` below) with
+   *  the autopilot's drive; `travelNavFrame` is the frame it reads: `dt`
+   *  set just before the mod's update, `speed` and the scale read live at
+   *  the call, and `asked` written after the motor runs, so the next
+   *  frame's grinding check weighs what really moved against what the
+   *  motor was really asked for (the ground gate below can hold a drive).
+   *  Its switch is the mod pane's own `GeneralOptions.AvoidObstacles`. */
+  const travelNav = createTravelSteer();
+  const travelNavProbe = createColliderProbe({ collider, feet: () => (walkMode && playerSpawned ? player.pos : cam.pos) });
+  const travelNavFrame = { speed: 0, dt: 0, scale: 1, asked: 0, ratio: SCENE_MAP_RATIO };
   /** TO1: the mod itself. Null while its switch is off, and every call
    *  site guards - a player who turns Travel Options off has the
    *  classic travel map and classic fast travel, whole. */
@@ -7298,6 +7402,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     text: (key) => (key === 'cannotTravelWithEnemiesNearby' ? CANNOT_TRAVEL_ENEMIES_TEXT : ''),
     pushWindow: (ui) => { ui.show(); },
+    // TRAVEL-NAV1: the way ahead - the drive turned and capped in place, a stop answered by name
+    steer: (drive, worldX, worldZ, autopilot) => {
+      travelNavFrame.speed = player.speed;
+      travelNavFrame.scale = worldTimeScale();
+      return steerDrive(travelNav, drive, worldX, worldZ, autopilot, travelNavFrame, travelNavProbe);
+    },
     setWeatherEnabled: (on) => { _travelWeatherOff = !on; },
     setTravelSoundsEnabled: (on) => { _travelSoundsOff = !on; },
     setRealGrassEnabled: () => { /* Real Grass is not a mod the port has - recorded in bible/06-Systems/Travel-Options.md */ },
@@ -7360,31 +7470,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     return true;
   }
 
-  /** ONE construction for the map, because G5 gave it a second opener
-   *  and the dependency list is long enough that two copies would
-   *  drift (the ONE CONSTRUCTION SEAM rule). U61: the DOOR now forks
-   *  the skin inside this one seam - the host says what it HAS
-   *  (woods rides along for the overworld's relief) and never which
-   *  map that adds up to. */
-  function buildTravelMapWindow(extra = {}) {
-    // MAP-POV (2026-09-20, Mac: "If you're in 3rd person and decide to
-    // use the map, it should transition you to first person and then
-    // open the map. Both for the morrowind/non morrowind"): THE MAP IS
-    // READ IN THE HEAD. Every door into the map - the key, the journal's
-    // goto, the guild's teleport - reaches this builder, and only after
-    // its own refusals (enemies near, the sun, a pending offer), so the
-    // camera moves for a map that opens and never for a press that was
-    // refused. The seam picks the body (player/mwView.js).
-    mwViewFirstPerson();
-    return createTravelMapWindow({
-      maps, mapDict, woods,
-      roads: () => terrainGen.roads(),   // ROADS 7: the map draws the network
-      // GetPlayerTravelPosition, not PlayerGPS's raw pixel: DFU's travel
-      // map reads it for the crosshair (:864), the player's region
-      // (:1611) and the journey itself, and aboard a ship all three
-      // answer the boarding point.
-      getPlayerPixel: playerTravelOrigin,
-      getClimateIndex: (x, yy) => maps.getClimateIndex(x, yy),
+  /** PARTY-TRAVEL (2026-09-25): THE TRAVEL POPUP'S OWN DEP BAG - every read ui/travelPopUp.js prices a trip with and
+   *  its gold check asks, lifted out of buildTravelMapWindow's bag (which spreads it, so both maps read it as before)
+   *  so the party's journeys price a trip through the SAME popup without opening a map (partyTripFare). One bag: a
+   *  fare the map charges and a fare the party's prompt names cannot drift apart. */
+  function travelFareDeps() {
+    return {
       // TP1: the popup's GuildManager.FastTravel fold reads the
       // player's guild memberships off the entity.
       playerEntity: () => playerEntity,
@@ -7431,6 +7522,46 @@ export async function bootWorld(canvas, renderer, params, status) {
       diseaseCount: () => diseaseCount(playerEntity),
       poisonCount: () => poisonCount(playerEntity),
       noWorldTime: () => sharedClockOn(),   // OL2: online the trip takes no world time (WORLD5), and the popup says so
+      // TO1: the mod itself, and the six reads its additions to the
+      // map need. Every one is guarded on the other side - with
+      // Travel Options off `travelOptions` answers null and the map is
+      // DFU's own, whole.
+      travelOptions: () => travelOptions,
+      // AUDIT-TO1 D1: PlayerGPS.CurrentLocation's MapId (null in open
+      // wilderness, the C#'s !Loaded) and TransportManager.IsOnShip - the
+      // two reads IsNotAtPort / HasNoOceanTravel need and never had.
+      currentLocationMapId: () => _musicLoc?.mapTableData?.mapId ?? null,
+      isOnShip: () => isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()),
+    };
+  }
+  /** ONE construction for the map, because G5 gave it a second opener
+   *  and the dependency list is long enough that two copies would
+   *  drift (the ONE CONSTRUCTION SEAM rule). U61: the DOOR now forks
+   *  the skin inside this one seam - the host says what it HAS
+   *  (woods rides along for the overworld's relief) and never which
+   *  map that adds up to. */
+  function buildTravelMapWindow(extra = {}) {
+    // MAP-POV (2026-09-20, Mac: "If you're in 3rd person and decide to
+    // use the map, it should transition you to first person and then
+    // open the map. Both for the morrowind/non morrowind"): THE MAP IS
+    // READ IN THE HEAD. Every door into the map - the key, the journal's
+    // goto, the guild's teleport - reaches this builder, and only after
+    // its own refusals (enemies near, the sun, a pending offer), so the
+    // camera moves for a map that opens and never for a press that was
+    // refused. The seam picks the body (player/mwView.js).
+    mwViewFirstPerson();
+    return createTravelMapWindow({
+      maps, mapDict, woods,
+      roads: () => terrainGen.roads(),   // ROADS 7: the map draws the network
+      // GetPlayerTravelPosition, not PlayerGPS's raw pixel: DFU's travel
+      // map reads it for the crosshair (:864), the player's region
+      // (:1611) and the journey itself, and aboard a ship all three
+      // answer the boarding point.
+      getPlayerPixel: playerTravelOrigin,
+      getClimateIndex: (x, yy) => maps.getClimateIndex(x, yy),
+      // PARTY-TRAVEL: the popup's own reads - the fare, the gold, the transports, the Travel Options mod - one bag with
+      // the party's journeys, which price a trip through the same popup without a map (travelFareDeps, above).
+      ...travelFareDeps(),
       // SOC6 (Mac: "Party members should be able to be seen on the
       // world map, regardless of their location"): MY PARTY, AS MARKS.
       // A function and not a list, because the map may stand open for a
@@ -7440,11 +7571,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       party: () => partyMarkers(),
       // HUB1: each region's hub, marked and named - online alone (systems/regionHubs.js); offline the map is DFU's
       hubAt: params.has('online') ? (summary) => hubAtMapId(regionHubs, summary?.mapID ?? summary?.mapId) : null,
-      // TO1: the mod itself, and the six reads its additions to this
-      // window need. Every one is guarded on the other side - with
-      // Travel Options off `travelOptions` answers null and the map is
-      // DFU's own, whole.
-      travelOptions: () => travelOptions,
+      // TO1: the mod itself rides travelFareDeps (above); the reads its additions to this window need follow.
       // AUDIT-TO1 I4: ...and the door ACTS on the refusal it can still get
       // (the popup was minted before the online state could change).
       onTravelToCoords: (pick, opts) => { if (!beginAcceleratedTravel(pick, opts, { coords: true })) townTalk.say('You cannot travel there now.'); },
@@ -7460,11 +7587,6 @@ export async function bootWorld(canvas, renderer, params, status) {
       // door no longer has to. It still asks `beginAcceleratedTravel`'s
       // own question, because that is the function that would refuse.
       coordsAllowed: () => !!travelOptions,
-      // AUDIT-TO1 D1: PlayerGPS.CurrentLocation's MapId (null in open
-      // wilderness, the C#'s !Loaded) and TransportManager.IsOnShip - the
-      // two reads IsNotAtPort / HasNoOceanTravel need and never had.
-      currentLocationMapId: () => _musicLoc?.mapTableData?.mapId ?? null,
-      isOnShip: () => isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()),
       // TravelOptionsMapWindow.cs:472 - `GuildManager.GetGuild(MagesGuild).Rank`.
       magesGuildRank: () => joinedGuildOfGroup(activeMemberships(playerEntity), GUILD_GROUPS.MagesGuild)?.rank ?? 0,
       payTeleport: (cost) => { deductGold(playerEntity, cost); },
@@ -9843,6 +9965,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   let _partyRestReadyRound = null;   // PARTY-REST31: the leader's voteAt my (member's) ready was cast into - when that round ends, so does my vote
   let _partyRestStartWaived = false;   // PARTY-REST29: my own start stamp no longer blocks a new vote (my rest window closed with no rest) - it is still BROADCAST, so the members see the round was spent
   let _partyRestJustStartedAt = -Infinity;   // PARTY-REST21: the last time MY OWN rest actually started (for real or via mirror) - see toggleRest's own doc comment for what this closes
+  // PARTY-TRAVEL (2026-09-25): THE PARTY'S JOURNEY - systems/partyTravel.js's session over this host's seams (made beside
+  // partyRestFollowTick, once every seam it reads is bound). Declared here, among the party's other state, so a reader
+  // that runs before it is made finds it null rather than unbound.
+  let partyTravel = null;
   // SOC4 (Mac: "Theyre character portrait + health/stamins/magicia stats displayed on a new party UI element"): the
   // party HUD, made in socialStart beside `social` and driven from chatFrame. Null until there is a hub link to be
   // anyone on, and it hides itself whenever the party is empty of anyone but me.
@@ -10470,6 +10596,12 @@ export async function bootWorld(canvas, renderer, params, status) {
           chatLog.push(tabId, { text: _partyRestReady ? 'You are ready to rest.' : 'You are no longer marked ready.', system: true });
           return true;
         }
+        // PARTY-TRAVEL (2026-09-25, Mac: "Implementing a prompt for online to travel to party leader and the option for
+        // party members to ready up and travel together"): `/leader` offers the journey to the party's leader (the prompt
+        // a member away from them is given unasked), `/travel` answers the leader's journey - ready, or, ready already,
+        // staying behind - and from the leader calls it off. Local, never sent: the answer rides the party pose.
+        const trip = /^\/(leader|travel)$/i.exec(text.trim());
+        if (trip) { const line = partyTravel ? partyTravel.command(trip[1].toLowerCase()) : NO_PARTY_TEXT; if (line) chatLog.push(tabId, { text: line, system: true }); return true; }
         // CHAT-CHAN: EVERY OTHER SLASH IS A CHANNEL'S COMMAND, THE LIST, OR REFUSED IN WORDS (net/chatCommands.js) - a
         // mistyped `/pary hi` was said to everyone online, slash and all. A refusal keeps the line in the field to be
         // mended (B2's false); the list is lines to READ, so the field clears and the chat stays open ('read').
@@ -11115,8 +11247,19 @@ export async function bootWorld(canvas, renderer, params, status) {
       restStartedAt: Number.isFinite(_partyRestJustStartedAt) ? _partyRestJustStartedAt : null,
       ...(_rezOut && performance.now() < _rezOut.until ? { rz: { to: _rezOut.to, at: _rezOut.at } } : {}),
       ...(_deadMark ? { dd: _deadMark } : {}),   // PCORPSE3: my body, for a party member who missed the death   // RESURRECT1: my Resurrect's call, held a few sends
+      // PARTY-TRAVEL (2026-09-25, Mac: "...the option for party members to ready up and travel together"): the party's
+      // journey (net/wire.js validPartyPose, systems/partyTravelLaw.js), each field omitted when there is none - my
+      // proposal while I lead one (`tv`, the round's stamp and, once we set out, `go`), my answer to the leader's round
+      // (`tr` ready / `td` staying behind, naming its `at`), and, while I lead, where I stand in the open air (`wx`, `wy`,
+      // `wz`: the world pose's own frame) so a member travelling to me lands beside me - never while a journey, a load
+      // or a teleport is moving me, when the scene's frame is between two places.
+      ...(partyTravel?.poseFields() ?? {}),
+      ...(social?.leads?.() && mode === 'exterior' && walkMode && playerSpawned && !worldMoveBusy() ? partyFeetOf(player.pos) : {}),
     };
   };
+  /** PARTY-TRAVEL: my feet as the party pose says them - the world pose's own frame (MapsFile's X and Z, the height
+   *  with the floating origin's vertical shift shed), so a party mate's client puts them back in ITS scene. */
+  const partyFeetOf = (pos) => { const wc = state.worldCoords(pos); return { wx: wc.x, wy: pos[1] - state.compensation[1], wz: wc.z }; };
   /** PARTY-REST1: the wire's small numbers back to RestWindow's own mode strings - `partyRestModeCode`'s inverse,
    *  read on the way IN instead of the way out. */
   const partyRestModeFromCode = (code) => (code === 1 ? 'timed' : code === 2 ? 'full' : 'loiter');
@@ -11860,6 +12003,85 @@ export async function bootWorld(canvas, renderer, params, status) {
     _partyRestJustStartedAt = social.now();   // PARTY-REST21: see toggleRest's own doc comment for what this closes
     _partyRestStartWaived = false;   // PARTY-REST29: a real (mirrored) rest cools down again
   };
+  // ── PARTY-TRAVEL (2026-09-25, Mac: "Implementing a prompt for online to travel to party leader and the option for
+  // party members to ready up and travel together") ────────────────────────────────────────────────────────────
+  // The session is systems/partyTravel.js over the law in systems/partyTravelLaw.js (whose header carries the design);
+  // what is here is its seams, this host's own. ONLINE ONLY: every door in the session asks for a party first, and
+  // `social` is built by socialStart alone. PARTY-REST's shape, mirrored: the leader's proposal rides the leader's own
+  // party pose, a gathered member's answer rides theirs, "gathered" is the rest law's own near (nearPartyMembers), a
+  // seat the hub marked offline is nobody here. The prompts are ui/yesNoBox.js's box - DFU's parchment on the classic
+  // skin, the enhanced card on the other - in this host's overlay slot, only while it is free.
+  /** PARTY-TRAVEL: a place's name for the party's lines - the location on the pixel, else what the pose called it. */
+  const partyPlaceName = (to, fallback = '') => locationIndex.get(`${to.x},${to.y}`)?.name || fallback || 'the wilderness';
+  /** PARTY-TRAVEL: A FAST TRAVEL, PRICED AS THE MAP PRICES IT - the travel map's own popup (ui/travelPopUp.js), made
+   *  headless over the SAME dep bag both maps read (travelFareDeps): its refresh is calculateTravelTime, the Temple of
+   *  Akatosh's blessing, calculateTripCost and the Travel Options scale, and its enoughGoldCheck is the two-sided gold
+   *  gate - so a party journey costs what the map would have charged, to the piece. `opts` are the popup's three
+   *  toggles, through its own ship restriction. The walked arm (Travel Options' player-controlled trip) is not taken: a
+   *  party journey is the map's FAST travel, which is what lands beside a leader or with a party. */
+  function partyTripFare(to, opts) {
+    const pop = new TravelPopUpWindow({ x: to.x, y: to.y }, {
+      ...travelFareDeps(),
+      getPlayerPixel: playerTravelOrigin,
+      getClimateIndex: (x, yy) => maps.getClimateIndex(x, yy),
+      locationSummary: () => travelLocationSummaryAt(mapDict, to.x, to.y),
+    });
+    pop.speedCautious = !!opts?.speedCautious; pop.sleepModeInn = !!opts?.sleepModeInn; pop.travelShip = !!opts?.travelShip;
+    pop.enforceShipRestriction();
+    pop.refresh();
+    return {
+      opts: { speedCautious: pop.speedCautious, sleepModeInn: pop.sleepModeInn, travelShip: pop.travelShip },
+      computed: { ...pop.trip, minutes: guildFastTravel(playerEntity, pop.trip.minutes) },   // the popup's own hand-over: the blessed minutes
+      afford: pop.enoughGoldCheck(),
+      unwell: diseaseCount(playerEntity) + poisonCount(playerEntity) > 0,   // the popup's own warning, said on the prompt
+    };
+  }
+  /** PARTY-TRAVEL: THE MAP DOOR'S REFUSALS, for a journey that does not pass through the map - the rungs toggleTravelMap
+   *  asks before the map opens (an enemy or a duel near, the career's and the racial override's sunlight), with what a
+   *  journey begun off the map must also be: outdoors (the map opens nowhere else), alive, and not already moving.
+   *  The words are the door's own. Null when nothing refuses. */
+  function partyTravelRefusal() {
+    if ((modes?.mode ?? 'exterior') !== 'exterior') return PARTY_TRAVEL_TEXT.inside;
+    if (!(playerEntity.health > 0) || worldMoveBusy()) return PARTY_TRAVEL_TEXT.off;
+    if (duelEnemyNear() || areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes])) return CANNOT_TRAVEL_ENEMIES_TEXT;
+    const nowMin = Math.floor(worldMinutes());
+    if (careerSunDamage(playerEntity.career) && isDayFromMinutes(nowMin)) return SUNLIGHT_TRAVEL_TEXT;
+    return racialFastTravelBlock(playerEntity, nowMin)?.text ?? null;
+  }
+  /** PARTY-TRAVEL: the journey itself - the travel popup's own order (ui/travelPopUp.js tick): the screen smashed to
+   *  black, then fastTravelTo, whose arrival fades it back; a journey that did not go clears it. */
+  const partyTravelJourney = (pick, opts, computed) => {
+    hudFade.smashHUDToBlack();
+    return fastTravelTo(pick, opts, computed).then((went) => { if (!went) hudFade.clearFade(); return !!went; },
+      (e) => { console.error('[party-travel] the journey failed:', e); hudFade.clearFade(); return false; });
+  };
+  partyTravel = createPartyTravel({
+    social: () => social,
+    gathered: () => nearPartyMembers(),
+    nearLeader: (row) => nearAccount(row.acct, row.p),
+    here: () => playerTravelPixel(),
+    outdoors: () => (modes?.mode ?? 'exterior') === 'exterior',
+    alive: () => playerEntity.health > 0,
+    busy: () => gamePaused(),   // the pause's own question: a window holds the slot
+    moving: () => worldMoveBusy() || !!travelControlUI?.isShowing,   // AUDIT PARTY-TRAVEL: and a Travel Options walk under way - no unasked box over a journey the player is steering
+    refusal: () => partyTravelRefusal(),
+    fare: (to, opts) => partyTripFare(to, opts),
+    canAfford: (c) => totalGoldAmount(playerEntity) >= c.totalCost && goldAmount(playerEntity) >= (c.piecesCost ?? 0),
+    myToggles: () => travelMapPopUpState(),
+    // natives over the scene's own ratio: metres, in a frame the floating origin never moves
+    feet: () => { const wc = state.worldCoords(walkMode ? player.pos : cam.pos); return { x: wc.x / SCENE_MAP_RATIO, z: wc.z / SCENE_MAP_RATIO }; },
+    radius: PARTY_REST_RADIUS,   // PARTY-REST16's own "moved too far from where it started"
+    placeName: (to, fallback) => partyPlaceName(to, fallback),
+    prompt: (rows, onYes, onNo) => { const box = new YesNoBoxWindow({ rows, onYes, onNo }); townTalk.showOverlay(box); return box; },
+    closePrompt: (box) => { if (box.done) return; box.onYes = null; box.onNo = null; box.answer(false); },
+    say: (text) => chatNotice(text),
+    mid: (text) => setMidScreenText(text, PARTY_REST_FAR_SECONDS),
+    travel: (pick, opts, computed) => partyTravelJourney(pick, opts, computed),
+    openMap: () => toggleTravelMap(),
+    clock: () => performance.now(),
+    relayOk: () => !!socialLink()?.partyTravelOk,
+    poseDirty: () => { _partyComposedAt = -Infinity; },
+  });
   /** SOC6 (Mac: "Party members should be able to be seen on the world map, regardless of their location"): THE
    *  OTHER HALF OF THE POSE - what composePartyPose sends out, coming back in as something a map can draw. The
    *  members OTHER than me (my own seat is the player's own mark on both maps), each as the flat row the two travel
@@ -11892,7 +12114,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!social.party || nowMs - _partyComposedAt < PARTY_SEND_MS / 2) return;
     _partyComposedAt = nowMs;
     _partyPose = composePartyPose();
-    socialLink()?.sendParty(_partyPose);
+    // PARTY-TRAVEL: once the pose saying we set out has LEFT, the leader's own journey may begin. AUDIT PARTY-TRAVEL: only a
+    // pose the link sent - sendParty refuses one within PARTY_SEND_MS of the last (and a repeat, and one its gate holds),
+    // and the session was told of every pose composed, so a leader walking about (a pose a second) set out before the
+    // members had read "we set out", and a member whose last open reading found the leader's body gone was left behind.
+    if (socialLink()?.sendParty(_partyPose)) partyTravel?.sent(_partyPose);
   };
   // SRV-N (Mac: "a server restart notice whenever we push server
   // updates. Like a notice that pushes in the chat window"): A NOTICE
@@ -12050,6 +12276,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (socialPanel?.openLetters({ draft: _letterPending.draft })) _letterPending = null;
       else if (performance.now() - _letterPending.at > LETTER_PENDING_MS) { _letterPending = null; tradeSay('Your letters could not open - the page is still in your journal.'); }
     }
+    partyTravel?.tick();   // PARTY-TRAVEL: the party's journey - throttled inside to PARTY_TRIP_TICK_MS
     partyRestFollowTick();   // PARTY-REST1: every frame, not throttled to the send cadence - a few property reads, and a follower's own countdown should start and end as promptly as the leader's does
     partyFrame(performance.now());   // SOC2: my party pose rides the chat frame - before the dead return with it, so a dead member's card says so as their vitals read zero
     // SOC3: and the friends + party panel repaints on the same frame, under the same covering rule as the chat -
@@ -13703,6 +13930,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         _travelDrive = null;
         if (travelOptions) {
           const followDown = travelFollowPressed();
+          travelNavFrame.dt = dt;   // TRAVEL-NAV1: the frame the steering's reach is measured over
           const report = travelOptions.update({
             topWindowIsTravelUI: !!travelControlUI?.isShowing && !townTalk.overlayActive,
             topWindowAllowsTravel: townTalk.overlay === _travelMap,   // the mod's `DfTravelMapWindow` exception (:1351)
@@ -13857,6 +14085,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           down: crouchHeld || held(keys, 'FloatDown'),
           crouch: crouchPress,
         }, cam.yaw, cam.pitch);
+        // TRAVEL-NAV1: the travel the motor was really asked for this frame - after the ground gate, and
+        // nothing on a held or paralysed frame - which the steering's grinding check weighs next frame.
+        travelNavFrame.asked = _travelDrive && !_overlayHeld && !_seasonHeld && !paralyzed
+          ? axes.forward * player.speed * worldTimeScale() * Math.min(dt, MAX_FRAME_DT) : 0;
         // C9: ReadyWeapon (Z) - the sheathe toggle, host parity.
         if (pressed(latch.edge, keys, 'ReadyWeapon')) weaponRig.readyWeapon();   // MAC-O1: the KEY takes WeaponManager.Update's arm (:229-269), not HUDLarge's raw ToggleSheath
         // a12: SwitchHand (H) - WeaponManager.cs:272 reads it through
@@ -14342,15 +14574,27 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // same online group-ownership guard; and only with the player
       // actually OUTDOORS - a pixel crossed by a dungeon's own streaming
       // is not a chunk the player walked into.
-      if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {   // CAMP-REST: never while the player is resting or waiting
-        const chunkCampHit = rollCampEncounterOnChunkLoad({
+      if ((modes?.mode ?? 'exterior') === 'exterior' && !playerEntity.isResting && !travelOptions?.isTravelActive && getPref('wildernessCamps') !== false && amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear())) {   // CAMP-REST: never while the player is resting or waiting; CAMP-TRAVEL (2026-09-25, Mac: "it would stop players too often"): nor while a Travel Options journey runs - the pixels a ride crosses roll no camps
+        const chunkCampHits = rollCampEncountersOnChunkLoad({
           inside: false, inLocationRect: _inAnyLocationRect(walkMode ? player.pos : cam.pos),   // DISC19-F: the pixel just entered, not the one syncTopics last resolved
           climateIndex: maps.getClimateIndex(r.current.x, r.current.y),
           playerLevel: playerEntity.level,
           preventEnemySpawns: playerEntity.preventEnemySpawns,
           gameMinutes: Math.floor(playerTicker.classicMinutes),
-        });
-        if (chunkCampHit) _standCampEncounter(chunkCampHit, player.feetAt());
+        }, Math.random, { fovDegrees: fieldOfView() * 180 / Math.PI });   // CAMP-RING: 50%, three groups round the player
+        // DROPS-AUDIT CAMP-CAP: the encounter cap is eight (and the wire carries eight puppets an owner, wire.js
+        // CELL_PUPPETS_MAX), and three groups ask ~10 - so a group stands WHOLE or not at all, never a one-foe remnant
+        if (chunkCampHits) {
+          let room = exteriorFoes.encounterRoom?.() ?? Infinity;
+          for (const h of chunkCampHits) {
+            // PSCALE1 x CAMP-CAP: the group as it will STAND - _standCampEncounter grows it by the party it meets
+            // (partyGroupMembers), so the room is asked for the grown count, or a party's third group was cut short
+            const size = partyGroupMembers(h.mobileTypes, partySize()).length;
+            if (size > room) continue;
+            room -= size;
+            _standCampEncounter(h, player.feetAt());
+          }
+        }
       }
     }
     pump();

@@ -25,7 +25,7 @@
 // mode-action button and nothing staged, exactly as DFU's own
 // FoodAndDrink_OnItemPicked never stages either.
 
-import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
+import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';  import { isEnhancedPlus } from '../systems/uiSkin.js';   // PLUS6
 import { noticeHold, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE3: this window's own click-anywhere box, as the enhanced panel
 import { closeOnOutsideTap } from './enhancedOverlays.js';
 import { overlayAction } from './input.js';
@@ -308,7 +308,7 @@ function foodMenu() {
   const wrap = el('div', 'packcol tavern-menu');
   const list = el('div', 'tavern-menu-list');
   menu.rows.forEach((r, i) => {
-    if (r.kind === 'header') { list.append(el('p', 'tavern-menu-header', r.text)); return; }
+    if (r.kind === 'header') { list.append(el('p', 'tavern-menu-header', isEnhancedPlus() ? String(r.text).replace(/^[\s-]+|[\s-]+$/g, '') : r.text)); return; }   // PLUS6: Plus draws the rules itself
     const row = el('button', 'itemrow tavern-row');
     row.append(el('span', 'itemname', r.name));
     row.append(el('span', 'itemwt tavern-price', `${r.price} gp`));

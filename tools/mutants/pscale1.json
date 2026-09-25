@@ -202,8 +202,8 @@
   {
     "name": "PSCALE1-outdoor-hit-unexported",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "  return { foes, spawnFoe, damageFoe, partyHit, healFoe,",
-    "new": "  return { foes, spawnFoe, damageFoe, partyHit: (d) => d, healFoe,",
+    "old": "  return { foes, spawnFoe, damageFoe, encounterRoom, partyHit, healFoe,",
+    "new": "  return { foes, spawnFoe, damageFoe, encounterRoom, partyHit: (d) => d, healFoe,",
     "tests": [
       "test/pscale1.test.js",
       "test/auditpscale1.test.js"

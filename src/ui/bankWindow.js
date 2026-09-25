@@ -91,6 +91,8 @@ const OPENS = Object.freeze({
 export const CANNOT_CARRY_GOLD = 'You cannot carry that much gold.';
 
 let _art = null;
+/** BOX1's seam, as every other art-gated window carries it. */
+export function _setBankArtForTests(art) { _art = art; }
 export async function preloadBankArt(deps) {
   if (_art) return;
   try {

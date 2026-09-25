@@ -223,12 +223,12 @@ export function turnTowards(yaw, dx, dz, maxDeg = CLASSIC_TURN_DEG) {
  * EnemySenses.CanSeeTarget:912-918 records an action door the sight
  * ray strikes first, which is what OpenDoors later consumes.
  */
-export function canSeeTarget(collider, feet, yaw, height, targetFeet, targetHeight = CAPSULE_HEIGHT, blockerOut = null, distIn = null) {
+export function canSeeTarget(collider, feet, yaw, height, targetFeet, targetHeight = CAPSULE_HEIGHT, blockerOut = null, distIn = null, sightRadius = SIGHT_RADIUS) {
   const dx = targetFeet[0] - feet[0], dz = targetFeet[2] - feet[2];
   // REVIEW 2026-09-05: the radius gate is distanceToTarget (EnemySenses.cs:881),
   // transform to transform - the caller's own measure when it has one.
   const dist = distIn ?? Math.hypot(dx, (targetFeet[1] + targetHeight / 2) - (feet[1] + height / 2), dz);
-  const radius = SIGHT_RADIUS;   // P13: the S8 half-sight chameleon interim retired - concealment is the illusion gate now
+  const radius = Number.isFinite(sightRadius) && sightRadius > 0 ? sightRadius : SIGHT_RADIUS;   // CAMP-SIGHT: a per-foe override (wilderness camps), else DFU's own. P13: the S8 half-sight chameleon interim retired - concealment is the illusion gate now
   if (dist >= radius) return false;
   if (!withinYaw(yaw, dx, dz, FIELD_OF_VIEW / 2)) return false;
   const eye = [feet[0], feet[1] + height * EYE_FRAC, feet[2]];
@@ -606,7 +606,7 @@ export class EnemyAI {
     // WORLD3 left unpatched, so the ray to a PEER was aimed at the LOCAL player's live capsule (0.9 crouched) planted
     // on the peer's feet, while _dist beside it already measured the peer's own.
     const _targetHeight = this._targetHeight();
-    this.inSight = canSeeTarget(this.collider, this.feet, this.yaw, this.height, playerFeet, _targetHeight, _blocker, this._dist);   // the sight-radius gate (:881) reads distanceToTarget
+    this.inSight = canSeeTarget(this.collider, this.feet, this.yaw, this.height, playerFeet, _targetHeight, _blocker, this._dist, this.sightRadius);   // CAMP-SIGHT: undefined = SIGHT_RADIUS   // the sight-radius gate (:881) reads distanceToTarget
     this.doorKey = _blocker.key;
     // AUDIT 24 (the re-read): DFU's NON-HOSTILE MODE is a TARGET drop,
     // not an action skip. EnemySenses.Update:321-327 nulls `target`

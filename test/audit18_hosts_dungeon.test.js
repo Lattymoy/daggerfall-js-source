@@ -534,7 +534,7 @@ test('audit18 sweep: enemy cast cost is priced off the PLAYER skills', () => {
 test('audit18 sweep: enemy loot rolls the PLAYER gender at both dungeon spawn sites', () => {
   // RF2: both arms hand the PLAYER entity to the one seam, whose table roll reads its gender
   const src = hostSrc('dungeonContext.js');
-  assert.equal((src.match(/spawnEnemyLoot\(entity, e\.mobileType, basics, D\.playerEntity\)/g) ?? []).length, 2);
+  assert.equal((src.match(/spawnEnemyLoot\(entity, e\.mobileType, basics, D\.playerEntity, eliteLootOpts\(e\)\)/g) ?? []).length, 2);
   assert.equal(/generateItems\([^)]*gender: e\.gender/.test(src), false);
   assert.match(hostSrc('hostCombat.js'), /generateItems\(enemyLootTableKey\(mobileType, basics\?\.lootTableKey \?\? '-'\), \{ level: player\.level, gender: player\.gender \}, undefined, \{ itemChanceScale, mobileType \}\)/, 'the PLAYER\'s gender, LootTables.cs:212/:229/:237');
 });

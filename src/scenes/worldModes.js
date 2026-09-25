@@ -207,7 +207,7 @@ import {
   MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID, DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID, CANNOT_BE_REPAIRED_TEXT,
   INTERRUPT_REPAIR_TEXT,
 } from '../systems/repairService.js';
-import { GuildServiceWindow, preloadGuildServiceArt, guildServiceArtLoaded } from '../ui/guildServiceWindow.js';
+import { GuildServiceWindow, preloadGuildServiceArt, guildServiceArtLoaded } from '../ui/guildServiceWindow.js';  import { enhancedWindow } from '../ui/enhancedPorts.js';   // PORT4: the service windows, in the enhanced skin
 import { preloadMerchantServiceArt } from '../ui/merchantServiceWindow.js';   // UI2: the merchant's own panel
 import { createMerchantServiceWindow, merchantServiceDoorReady } from '../ui/merchantServiceDoor.js';   // the enhanced/native fork, same law as ui/tradeDoor.js
 import { preloadMerchantRepairArt } from '../ui/merchantRepairWindow.js';   // AUDIT 58: the repair shop's four-button popup
@@ -456,7 +456,7 @@ export function createWorldModes(host) {
    *
    * AUDIT-WH H5. Three hover arms wrote `.Name` - the C# property, as
    * the mod's own source spells it (.cs:764, :725, :777) - and the
-   * record these hosts mint spells it `name` (exterior.js:3762 hands
+   * record these hosts mint spells it `name` (exterior.js:3763 hands
    * `dfLocation`, world.js hands `_questLoc()`; both are the port's
    * location record). `.Name` on it is `undefined`, so all three arms
    * fell to `''`, and `staticDoorName` answers NULL on an empty
@@ -1143,7 +1143,7 @@ export function createWorldModes(host) {
    *  This host owned two pools and ran NO fan-out at all - no
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
    *  (worldTick.js:389-390), and no killIfAnyLiveStatZero. Both pools
-   *  READ the effect list every frame (exteriorFoes.js:939-943 and
+   *  READ the effect list every frame (exteriorFoes.js:943-947 and
    *  cityGuards.js:949-955 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
@@ -1492,10 +1492,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1827 states), so the same visual
+   *  the C11 law dungeonContext.js:1857 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1712, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1742, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -3453,7 +3453,7 @@ export function createWorldModes(host) {
         drawModelPreview: drawBankModelPreview,   // H4: the live 3D panel
         showResult: (result, amount) => win._popup(result, amount),
         onClose: () => { if (interiorOverlay === pw) interiorOverlay = win; },
-      });
+      });  pw = enhancedWindow(pw, 'bankPurchase');   // PORT4: the enhanced skin's face; the classic window unchanged
       interiorOverlay = pw;
       return true;
     };
@@ -3590,7 +3590,7 @@ export function createWorldModes(host) {
       // PortTownAndUnknown in all of DFU. Non-zero is a port.
       isPortTown: () => (buildingDirectory?.()?.portTownAndUnknown ?? 0) !== 0,
       onClose: () => { if (interiorOverlay === win) interiorOverlay = null; },
-    });
+    });  win = enhancedWindow(win, 'bank');   // PORT4: the enhanced skin's face; the classic window unchanged
     interiorOverlay = win;
     return true;
   }
@@ -3902,7 +3902,7 @@ export function createWorldModes(host) {
         return { dispatched: true };
       },
       onClose: () => closeSpellWindow(win),
-    });
+    });  win = enhancedWindow(win, 'coven');   // PORT4: the enhanced skin's face; the classic window unchanged
     mountServiceWindow(win);
   }
 
@@ -3984,7 +3984,7 @@ export function createWorldModes(host) {
           buttons: 'YesNo',
           onYes: () => {
             joinGuild(memberships, guild, gameDate(), store);   // RR1: the store, for a mod's join floor
-            const welcome = new GuildServiceWindow(_welcomeHooks(guild, rows, () => welcome));
+            let welcome = new GuildServiceWindow(_welcomeHooks(guild, rows, () => welcome));  welcome = enhancedWindow(welcome, 'guild');   // PORT4: the enhanced skin's face; the classic window unchanged
             mountServiceWindow(welcome);
           },
         };
@@ -4026,7 +4026,7 @@ export function createWorldModes(host) {
         return { dispatched: true };
       },
       onClose: () => closeSpellWindow(win),
-    });
+    });  win = enhancedWindow(win, 'guild');   // PORT4: the enhanced skin's face; the classic window unchanged
     mountServiceWindow(win);
   }
 
@@ -4328,7 +4328,7 @@ export function createWorldModes(host) {
                   minDistance: 8, maxDistance: 64,
                 }),
                 onClose: () => closeSpellWindow(sw),
-              });
+              });  sw = enhancedWindow(sw, 'daedra');   // PORT4: the enhanced skin's face; the classic window unchanged
               if (!sw.flc.readyToPlay) { mountBoxes(); return; }
               mountServiceWindow(sw);
             }).catch(() => mountBoxes());
@@ -4453,7 +4453,7 @@ export function createWorldModes(host) {
         icons: { getTexture, uploadRecord, textures: renderer.textures },
         entity: playerEntity,
         onClose: () => closeSpellWindow(potionWin),
-      });
+      });  potionWin = enhancedWindow(potionWin, 'potionMaker');   // PORT4: the enhanced skin's face; the classic window unchanged
       mountServiceWindow(potionWin);
       return null;
     }
@@ -4470,7 +4470,7 @@ export function createWorldModes(host) {
         entity: playerEntity,
         onEnchanted: () => surfacePlayer(),
         onClose: () => closeSpellWindow(itemWin),
-      });
+      });  itemWin = enhancedWindow(itemWin, 'itemMaker');   // PORT4: the enhanced skin's face; the classic window unchanged
       mountServiceWindow(itemWin);
       return null;
     }
@@ -4531,7 +4531,7 @@ export function createWorldModes(host) {
         entity: playerEntity,
         rows,
         onClose: () => closeSpellWindow(makerWin),
-      });
+      });  makerWin = enhancedWindow(makerWin, 'spellMaker');   // PORT4: the enhanced skin's face; the classic window unchanged
       mountServiceWindow(makerWin);
       // The popup's onService reads the return value and answers "not
       // available yet" on a null, so this hands the window back the way
@@ -5153,7 +5153,7 @@ export function createWorldModes(host) {
       // recognisable label and it never drew once.
       const entry = entries[key];
       if (entry?.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE) {
-        return staticDoorName('dungeonEntrance', { locationName: currentLocationName() });
+        return staticDoorName('dungeonEntrance', { locationName: currentLocationName(), elite: !!entry.dfLocation?.elite });   // ELITE: 'Elite Dungeon' over its mouth
       }
       // .cs:684-762, GetStaticDoorText's building arm. The mod
       // DISCOVERS the building to read its name, and Mac's call was to
@@ -6642,7 +6642,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:6362), so the OUTER host's one rides in.
+          // (dungeonContext.js:6393), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:841 -> the
@@ -7738,7 +7738,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:9471's own wave-46 note); the interior
+          // a blow (world.js:9593's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -8647,7 +8647,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:3824`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:3825`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -10244,9 +10244,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3406-3428), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3407-3429), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:6617). So an F9 pressed in a shop
+     *  unconditionally (world.js:6702). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -10285,7 +10285,7 @@ export function createWorldModes(host) {
       if (interiorOverlay instanceof DeathScreen) { interiorOverlay.restoreView(); interiorOverlay = null; }
     },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:6717)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:6802)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -10295,8 +10295,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:6884`
-     *  and `dungeonContext.js:6371` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:6969`
+     *  and `dungeonContext.js:6402` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

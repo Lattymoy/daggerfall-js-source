@@ -13,6 +13,7 @@
 // draws whatever it reports.
 
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
+import { isEnhancedPlus } from '../systems/uiSkin.js';   // PLUS6
 import { RestSession, MAX_REST_HOURS, PROMPT_INITIAL, canRest, illegalRestWarning, ILLEGAL_REST_WARNING, REST_TEXT, loiterLimitHours, cannotLoiterLines, CANNOT_REST_MORE_THAN_99_HOURS_ID } from '../systems/restSession.js';
 import { normalizeCode } from '../systems/dialogShortcuts.js';   // AUDIT PARTY-REST: the Rest key, read as restWindow.js reads it
 import { getBinding } from '../systems/inputActions.js';
@@ -307,10 +308,20 @@ export function mountEnhancedRest(hostEl, deps, ignoreAllocatedBed = false) {
     const frac = overlay.mode === 'full' ? ((vit?.maxHealth ?? 0) > 0 ? (vit.health ?? 0) / vit.maxHealth : 0) : done / total;
     _restingRefs.fill.style.width = `${Math.max(0, Math.min(100, frac * 100))}%`;
     _restingRefs.vitalsLine.textContent = vit ? `Health ${vit.health}/${vit.maxHealth}  Fatigue ${vit.fatigue}  Magicka ${vit.magicka}` : '';
+    if (vit && isEnhancedPlus()) _restingRefs.vitalsLine.replaceChildren(...plusVitals(vit));   // PLUS6: the same three numbers as three readouts under Plus
+  }
+
+  /** PLUS6: the resting line's three numbers, one readout each. */
+  function plusVitals(vit) {
+    return [['Health', `${vit.health}/${vit.maxHealth}`], ['Fatigue', vit.fatigue], ['Magicka', vit.magicka]].map(([k, v]) => {
+      const b = el('span', 'rv');
+      b.append(el('span', 'rv-k', k), el('span', 'rv-v', String(v)));
+      return b;
+    });
   }
 
   function endedCard() {
-    const c = el('div', 'card');
+    const c = el('div', 'card wake');   // ONE PANE: the wake-up, centred, in the window's own frame
     for (const line of overlay._endLines ?? []) c.append(el('p', null, line));
     const acts = el('div', 'acts');
     const ok = el('button', 'act', 'OK');
