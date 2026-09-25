@@ -281,3 +281,138 @@ Pins: `test/perfscale.test.js` 10 (S5's string rule and both S7 pins fail
 with `src/` at the slice's commit; the counter and frameInfo pins guard
 code that commit already had). Mutants: `perfscale.json` 43 dead;
 `auditretro1.json`'s D5 re-aimed.
+
+# PERF-EXT — the same report, answered in code (2026-09-25)
+
+**Report** (the same two players): "fps issues in the exterior but fine
+in the interior", "me too my friend.. don't know why. I got a RX6600".
+Mac, after PERF-SCALE: "Why are you so avoidant when it comes to
+addressing performance issues? I am not getting another player to do the
+work that youre suppose to do".
+
+**What changed.** The exterior's own cost, found by hunters on a harness
+(the real renderer and shadow pass over a counting GL, driven by
+`world.js`'s frame walk on a synthetic town) and re-measured by provers
+told to disprove each win. The flats and the frame's CPU:
+
+- **PERF-EXT10** - every flat batch is born with every field it will
+  carry, so the world's flats share ONE hidden class instead of 3-15; the
+  per-flat loops stop paying polymorphic lookups. Render-side JS on the
+  harness 1.62 -> 1.20 ms a frame by day, 2.28 -> 1.41 at night (node,
+  relative; the picture cannot change - no computed value does).
+- **PERF-EXT11** - a flat's size and origin are uploaded when they
+  change, in the flats pass and in every shadow replay: 6,243 -> 5,279
+  GL calls a frame by day and 4,992 -> 4,265 at night on the harness,
+  every draw seeing the same values.
+- **PERF-EXT12** - the far-flat rule is asked with three numbers, not
+  an object for every flat batch of every pixel every frame: about
+  70 KB less young garbage a frame (1,299 -> 1,074 scavenges over
+  3,065 harness frames with a 1 MB young space).
+- **PERF-EXT13** - every visible pixel's water in one call: the frame's
+  water block goes up once, not once a water pixel - 34 pixels 2,421 ->
+  308 GL calls on the real renderer, every draw's state identical to
+  the base's (a coastal or lakeside view is where it pays).
+
+`07-Rendering/Performance-Exterior.md` has the measurements, the pins
+and the mutants. Not seen on a GPU - there is no game data in the
+container.
+
+## AUDIT PERF-EXT10-13 (the review)
+
+One finding from the adversarial read of the flats and the frame's CPU,
+reproduced in node on the real Renderer and ShadowPass before it was
+changed.
+
+- **R1: the one shape made the shadow record allocate.** PERF-EXT10
+  minted the shadow record's origin, `_shOx`/`_shOy`/`_shOz`, as
+  undefined with the other twenty. V8 keeps a field in the
+  representation of the first value it holds, and undefined is not a
+  number, so the three were tagged slots, and every fractional origin
+  `recordBillboards` stored - every batch, every frame - was a new heap
+  number: about 120 KB of young garbage a frame over 3,000 flats, which
+  the base (its fields born with their first double) never made. On the
+  producer-mix harness it gave back most of what the one shape had saved
+  in scavenges. The triple is born NaN now, a double slot written in
+  place; nothing reads it before `_shSeen`, so no value changes and the
+  picture cannot. Producer mix, scavenges with a 1 MB young space over
+  3,000 frames (two runs' mean), the first cut -> now: 1,298 -> 1,210 by
+  day, 1,244 -> 1,172 at night (the base's 1,297 and 1,304).
+
+Pins: `test/perfextb.test.js` 11 (the new one weighs the record against
+a control and fails with `src/` at `1d05f5374`). Mutants:
+`perfextb.json` 36 - 35 dead, 1 recorded equivalent; its 5 re-aimed.
+
+## PERF-EXT1-5 - the shadows
+
+The Enhanced Lighting shadow pass, the sun's cascades and the lanterns'
+cube maps (`07-Rendering/Performance-Exterior.md`, THE SHADOWS):
+
+- **PERF-EXT1** - a pixel-wide flat batch (a wood, a climate's flora
+  record) reaches a shadow by its PLACEMENTS, not its 400-unit sphere: a
+  lantern is no longer held on the sway's beat by trees none of which
+  stand in its reach, and the near cascades skip a wood with no tree in
+  them. Shadow draws a frame on the harness town 297 -> 10 at night,
+  568 -> 193 at dusk, 271 -> 183 by day (at real density 616 -> 5,
+  983 -> 201, 373 -> 198), every quad of every skipped batch proven
+  beyond a clip plane (67.8 million of them). What moves: a walker
+  leaving a lantern's reach loses its shadow the next frame, as it does
+  in calm weather, not at the sway's next beat.
+- **PERF-EXT2** - a static batch's sub-meshes whose index ranges meet
+  are one depth draw: a pixel's merged block models were one draw per
+  texture in every cascade and every lantern face (40 in the harness's
+  city pixel). With PERF-EXT1, shadow draws a frame on the harness town
+  297 -> 8 at night, 568 -> 81 at dusk, 271 -> 73 by day (the night's
+  worst frame, a cache rebuild, 934 -> 36). The same triangles.
+- **PERF-EXT3** - every lantern's static signature (SC1's "is this
+  cache still good") in ONE walk of the frame's records, not one walk a
+  lantern: eight lanterns at night were eight walks a frame whether or
+  not anything changed. The pass's part of the harness town's night
+  frame 0.48 -> 0.35 ms; the walks alone over 1,000 flat batches 0.25
+  -> 0.09 ms. The same caches, drawn on the same frames.
+- **PERF-EXT4** - a recorded mesh's matrix scale is taken once, not
+  once for its sphere and again for every sub-mesh's: about 1,200-1,450
+  fewer `Math.hypot` a frame on the harness town, 0.04-0.05 ms. The same
+  spheres, bit for bit.
+- **PERF-EXT5** - the sun shadow's soft kernel (every tree by day, and
+  the near ground) is four hardware taps instead of nine: the same
+  texels with the same weights, five fetches a pixel fewer. What moves:
+  the card's own rounding of each tap's position, under one 255th of the
+  sun's light in a penumbra - 2 pixels of 518,400 by one step on the
+  software rasteriser.
+
+The five together, on the real game (headless Chromium, SwiftShader,
+Daggerfall city, a copy of ARENA2 in the session's scratch): at noon
+6,598 -> 4,091 GL calls and 1,338 -> 794 draws a frame, the lanterns'
+279 face draws to none; at 22:00 13,011 -> 3,627 calls and 2,298 -> 634
+draws, the lanterns' 1,712 face draws to 12; the shadow pass's main
+thread 2.51 -> 1.97 ms at noon and 2.66 -> 1.96 at night (relative).
+Not seen on the players' cards.
+
+## AUDIT PERF-EXT1-5 (the review)
+
+Three findings from the adversarial read of the shadows, each
+reproduced in node on the real Renderer and ShadowPass before it was
+changed (`07-Rendering/Performance-Exterior.md`, THE REVIEW OF THE
+SHADOWS).
+
+- **R1: PERF-EXT1 made the shadow pass dearer in buildings** - the half
+  of "fps issues in the exterior but fine in the interior" that was
+  fine. DISC15's lo tier asks every lamp's static signature every frame
+  (a still room never spends its rebuild budget), and each ask ran
+  PERF-EXT1's cube query for every multi-flat batch its sphere touched:
+  `beginFrame` in a 40-lamp room 0.193 -> 0.466 ms a frame. A room its
+  host draws whole now folds batches by their spheres in both walks, as
+  before - never a stale map, at worst a rebuild within the budget - and
+  the streets keep their quads: 0.200 ms. The quad's half-diagonal is
+  taken once a size, not at every ask (the harnesses' pass JS at real
+  density by day 0.139 -> 0.114 ms, the base's 0.12). The same draws
+  and the same VERIFY totals outdoors.
+- **R2: two margins of the quad's bound had no pin** - the float pad
+  and the lean by |h| (an upside-down flame's sign). Both pinned.
+- **R3: the flat's lift and half-diagonal had grown copies** - one home
+  each now (`batchLift`, `quadHalfDiagonal`), the same bits.
+
+Pins: `test/perfexta.test.js` 20 (four new; the room's, the
+half-diagonal's and the one home's fail on the first cut `dfe366f2c`,
+all four on the base `1d05f5374`). Mutants: `perfexta.json` 54 - 13 new,
+all dead; 13 records re-aimed across perfexta, ghost1, blood1 and el5.

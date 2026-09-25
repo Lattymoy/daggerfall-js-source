@@ -88,11 +88,17 @@ Refuted by both:
   measured at 0.2 ns per call over five million calls; V8 scalar-
   replaces a destructured literal that never escapes. EV2's law is
   about `Float32Array`s that escape into a model's matrix.
+  OVERTURNED 2026-09-25 by PERF-EXT12 (`07-Rendering/Performance-Exterior.md`):
+  in the frame V8 did not scalar-replace it - about 70 KB of young garbage
+  a frame on the harness town, gone with a positional call.
 - **`drawWaterSurface` re-uploads pass constants per pixel** (render) -
   the counts are real (34 uniform calls a surface) but the host comment
   the finding read as a law ('one uniform set a frame') describes the
   `waterUniforms()` object built once outside the loop, which is what
   the code does; `drawTerrain` has the same shape and always has.
+  OVERTURNED 2026-09-25 by PERF-EXT13 (`07-Rendering/Performance-Exterior.md`):
+  the object was built once, the GL block was not - ~71 calls a water
+  pixel, ~1,300 of a city frame's re-setting held values; one call now.
 - **Per-frame scratch objects in the deck chain** (render) - eight
   small objects a frame, and the proposed `gen` counter would have
   replaced the identity stamp `setCloudShadow` depends on with a second

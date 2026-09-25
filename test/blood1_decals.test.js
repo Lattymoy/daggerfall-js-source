@@ -1431,9 +1431,12 @@ test('BLOOD1b by source: a moved batch moves its BOUNDS, and the corner table ha
   assert.match(fn, /bounds\[0\] = cx; bounds\[1\] = cy; bounds\[2\] = cz;/, 'the sphere is rewritten');
   // BOTH TERMS. The extent of the centres AND the quad's own
   // half-diagonal - a radius that forgot the first would cull a
-  // spread-out flight the moment its centre left the frustum.
-  assert.match(fn, /bounds\[3\] = Math\.hypot\(hi0 - cx, hi1 - cy, hi2 - cz\) \+ Math\.hypot\(batch\.size\.w, batch\.size\.h\) \* 0\.5;/,
+  // spread-out flight the moment its centre left the frustum. PERF-EXT
+  // (2026-09-25, the review of the shadows): the half-diagonal from its
+  // one home, bounds.js quadHalfDiagonal, which the birth takes it from too.
+  assert.match(fn, /bounds\[3\] = Math\.hypot\(hi0 - cx, hi1 - cy, hi2 - cz\) \+ quadHalfDiagonal\(batch\.size\);/,
     'the centres’ extent plus the quad’s own half-diagonal, as the birth does');
+  assert.match(r, /bounds\[3\] \+= quadHalfDiagonal\(size\);/, 'the birth\'s, from the same home');
   // BLOOD1 AUDIT: and IN PLACE. This runs every frame of every flight,
   // so the box is walked here rather than packed into a flat list for
   // `boundsOf` to unpack, and the sphere is written into the batch's

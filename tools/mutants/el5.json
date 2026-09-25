@@ -47,8 +47,8 @@
   {
     "name": "transform-scale-min",
     "file": "src/render/bounds.js",
-    "old": "  out[o + 3] = s[3] * Math.max(sx, sy, sz);",
-    "new": "  out[o + 3] = s[3] * Math.min(sx, sy, sz);",
+    "old": "  return Math.max(Math.hypot(m[0], m[1], m[2]), Math.hypot(m[4], m[5], m[6]), Math.hypot(m[8], m[9], m[10]));",
+    "new": "  return Math.min(Math.hypot(m[0], m[1], m[2]), Math.hypot(m[4], m[5], m[6]), Math.hypot(m[8], m[9], m[10]));",
     "tests": [
       "test/el5_field.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "record-never-bounded",
     "file": "src/render/shadowPass.js",
-    "old": "    r.bounded = !!mesh.bounds;\n    if (r.bounded) {\n      transformSphere(matrix, mesh.bounds, r.sphere);",
-    "new": "    r.bounded = false;\n    if (r.bounded) {\n      transformSphere(matrix, mesh.bounds, r.sphere);",
+    "old": "    r.bounded = !!mesh.bounds;\n    if (r.bounded) {\n      const sc = matrixScale(matrix);",
+    "new": "    r.bounded = false;\n    if (r.bounded) {\n      const sc = matrixScale(matrix);",
     "tests": [
       "test/el5_field.test.js"
     ]
@@ -274,7 +274,7 @@
   {
     "name": "bb-bounds-no-flat",
     "file": "src/render/renderer.js",
-    "old": "    bounds[3] += Math.hypot(size.w, size.h) * 0.5;\n",
+    "old": "    bounds[3] += quadHalfDiagonal(size);\n",
     "new": "",
     "tests": [
       "test/el5_field.test.js"

@@ -396,7 +396,7 @@ void main() {
 
 import { createClusterSpace, buildLightClusters, CLUSTER_GRID_W, CLUSTER_GRID_H, CLUSTER_LIST_W, CLUSTER_LIST_ROWS, CLUSTER_X, CLUSTER_Y, CLUSTER_NEAR, CLUSTER_Z_SCALE, CLUSTER_GRID_UNIT, CLUSTER_LIST_UNIT } from './lightClusters.js';   // LC1: the lantern loop's grid
 import { ShadowPass, SHADOW_GLSL } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
-import { boundsOf, spherePlanes, batchVisible, batchSphere, ZERO_ORIGIN } from './bounds.js';
+import { boundsOf, spherePlanes, batchVisible, batchSphere, ZERO_ORIGIN, placementGrid, quadHalfDiagonal } from './bounds.js';   // PERF-EXT1: and a batch's placement grid; the review: and the half-diagonal's one home
 import { billboardKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-shadow-reach: the batch's texture key - one home with the two replays
 import { cullDisabled } from './frustum.js';   // PERF-CROWD2: the billboard pass culls for every host, so no host can forget to
 import { getPref } from '../systems/uiPrefs.js';   // GRAIN2: the ground-sharpness dial, read where the tile array is built
@@ -4534,8 +4534,50 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // EL5: the batch's sphere about its origin - the centres' box, plus a
     // flat's own half-diagonal (a flat is drawn about its centre, any facing)
     const bounds = boundsOf(centers.flat());
-    bounds[3] += Math.hypot(size.w, size.h) * 0.5;
-    return { vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null, frame: null, bounds, _quads: count, _dyn: !!dynamic };
+    bounds[3] += quadHalfDiagonal(size);
+    // PERF-EXT10 (2026-09-25, two players via Mac: "fps issues in the
+    // exterior but fine in the interior", "me too my friend.. don't know
+    // why. I got a RX6600"): A BATCH IS BORN WITH EVERY FIELD IT WILL EVER
+    // CARRY. This literal minted eleven, and the rest arrived later in
+    // whatever order a path first touched them - a producer's `_box`,
+    // `sway`, `conceal`, `noShadow`, `selfCard`; the shadow record's ten
+    // `_sh*`; the key's four `_bbKey*`; the signature's `_shId`; a move's
+    // `_shMovedAt`; a gib's `_moveScratch`; a free's `_dead`. Every order is
+    // its own hidden class to V8: three by day and five at night in the
+    // synthetic town, twelve to fifteen with the game's mix of producers. So every
+    // per-flat loop (the draw, its sort, the shadow record, the replay,
+    // the static signature) read its batches through polymorphic property
+    // lookups. Born with all of them, a batch keeps ONE shape for life.
+    // They are born UNDEFINED, not with typed defaults: the readers take
+    // undefined for "absent" (`_bbKey == null`, `_shSeen === true`,
+    // `_shMovedAt != null`, `_shId ??=`), and nothing in the tree tells a
+    // missing field from an undefined one. ALL BUT THREE (the review): the
+    // shadow record's origin, `_shOx`/`_shOy`/`_shOz`, is born NaN. V8
+    // keeps a field in the representation of the first value it holds,
+    // and undefined is not a number - a field born undefined is a TAGGED
+    // slot, and every fractional origin recordBillboards writes into it,
+    // every batch every frame, was a fresh heap number (~40 bytes a batch
+    // a frame, 3,000 flats about 120 KB of young garbage a frame, which
+    // the base never made: its fields were born with their first double).
+    // Born NaN they are DOUBLE slots, written in place. NaN is never read
+    // as a place: every reader asks `_shSeen === true` first, and the
+    // static signature folds only batches the record has written. What the
+    // frame writes into the rest is Smis, booleans, strings or objects,
+    // which need no box (`sway`'s fraction is written once, by the host).
+    // A field a batch gains anywhere in src/ belongs here too -
+    // test/perfextb.test.js sweeps the writes, and weighs the record.
+    // PERF-EXT1 (2026-09-25, the same players): `_place`, the placements on
+    // a grid (bounds.js placementGrid), for a static batch of more than one
+    // flat - a pixel-wide wood's sphere reaches every shadow in its pixel,
+    // its trees do not. Never for one built dynamic: its centres move.
+    return {
+      vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null, frame: null, bounds, _quads: count, _dyn: !!dynamic,
+      _place: count > 1 && !dynamic ? placementGrid(centers) : null,
+      _box: undefined, sway: undefined, conceal: undefined, noShadow: undefined, selfCard: undefined, _dead: undefined, _moveScratch: undefined,
+      _bbKey: undefined, _bbKeyRecord: undefined, _bbKeyFrame: undefined, _bbKeyArchive: undefined,
+      _shGen: undefined, _shSeen: undefined, _shOx: NaN, _shOy: NaN, _shOz: NaN, _shFrame: undefined,
+      _shRec: undefined, _shFlip: undefined, _shDyn: undefined, _shSway: undefined, _shMovedAt: undefined, _shId: undefined,
+    };
   }
 
   /**
@@ -4574,6 +4616,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, batch.buffers[0]);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, verts, 0, count * 20);
+    // PERF-EXT1: the placements the shadow pass asks are the ones it was
+    // BORN with - moved, they speak for nothing, and a batch tested where
+    // it was built casts nothing where it is (the draw lens's prover: a
+    // gib's shadow gone in a cascade and three lantern faces). A batch that
+    // moves is judged by its sphere, which follows it below.
+    batch._place = null;
     // THE SPHERE, WITHOUT BUILDING A FLAT ARRAY TO ASK FOR IT. This
     // runs every frame of every flight, and `boundsOf` wants one
     // packed list - so the box is walked here and the sphere written
@@ -4589,7 +4637,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const cx = (lo0 + hi0) * 0.5, cy = (lo1 + hi1) * 0.5, cz = (lo2 + hi2) * 0.5;
     const bounds = (batch.bounds && batch.bounds.length === 4) ? batch.bounds : (batch.bounds = new Float32Array(4));
     bounds[0] = cx; bounds[1] = cy; bounds[2] = cz;
-    bounds[3] = Math.hypot(hi0 - cx, hi1 - cy, hi2 - cz) + Math.hypot(batch.size.w, batch.size.h) * 0.5;
+    bounds[3] = Math.hypot(hi0 - cx, hi1 - cy, hi2 - cz) + quadHalfDiagonal(batch.size);
     return true;
   }
 
@@ -4599,6 +4647,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const gl = this.gl;
     if (!batch) return;
     batch._dead = true;   // EL2: a shadow record from the last frame may still hold it
+    batch._place = null;   // PERF-EXT1: the placement grid is the batch's, and goes with it
     if (batch.vao) gl.deleteVertexArray(batch.vao);
     for (const b of batch.buffers || []) gl.deleteBuffer(b);
     batch.vao = null;
@@ -4977,7 +5026,42 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     };
   }
 
+  /** PERF-EXT13: the one-row list drawWaterSurface hands drawWaterSurfaces, emptied after each call */
+  /** @type {Array<Array<any>>} */ _waterOne = [[null, null, null, null]];
+
+  /** WATER1's one surface - the town host's ground, the water lab's tiles: PERF-EXT13's list with one row. */
   drawWaterSurface(surface, modelMatrix, arrayTex, tilemapTex, tileSize, u, tileDim = 128) {
+    const one = this._waterOne, row = one[0];
+    row[0] = surface; row[1] = modelMatrix; row[2] = arrayTex; row[3] = tilemapTex;
+    this.drawWaterSurfaces(one, 1, tileSize, u, tileDim);
+    row[0] = row[1] = row[2] = row[3] = null;   // a scratch keeps nothing alive past the call
+  }
+
+  /**
+   * PERF-EXT13 (2026-09-25, the players' "fps issues in the exterior but
+   * fine in the interior"): EVERY VISIBLE PIXEL'S WATER IN ONE CALL. The
+   * streaming host drew each water pixel through its own drawWaterSurface,
+   * and each call sent the whole frame block again - the matrices, the
+   * clock and the wind, the sky, the fog, the shadow maps, the sun, the
+   * moon, the lamps, the samplers - and turned blend, depth-mask, cull,
+   * polygon offset and depth func on and off around its one draw: about 71
+   * GL calls a pixel, 2,415 for a city's 34, of which ~1,500 set a value
+   * already held. None of it can change between two pixels of one frame
+   * (the host hands every pixel the same `u`, and nothing runs between
+   * them). So the block goes up ONCE and the state goes on ONCE; per row,
+   * in the order given - the blend is order-dependent - only what is the
+   * pixel's own: its matrix, its tilemap on unit 2, its VAO, and the tile
+   * array on unit 0 when it differs from the row before (another climate's
+   * ground array), always for the first. Every draw samples the state it
+   * sampled before, in the same order. On Windows, where Chrome draws
+   * through ANGLE's D3D11 backend and a uniform call dirties its stage's
+   * whole block for the next draw (no value compare), the fragment stage's
+   * block goes up once a frame instead of once a water pixel.
+   * @param {Array<Array<any>>} rows  [surface, modelMatrix, arrayTex, tilemapTex] rows; the first `n` are drawn
+   * @param {number} n
+   */
+  drawWaterSurfaces(rows, n, tileSize, u, tileDim = 128) {
+    if (!n) return;   // no water in sight: not a GL call, as when no pixel called
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     const laneWater = !!(this._lane?.shadows && this.waterSurfaceProgramLane && this._shadows);   // EL7: the lane's water receives the sun map
@@ -4987,7 +5071,6 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (!L.maskUploaded) { gl.uniform4uiv(L.mask, packWaterMask(WATER_DRAW_MASK_TABLE)); L.maskUploaded = true; }   // WATER-DRAW1
     gl.uniformMatrix4fv(L.proj, false, this._proj);
     gl.uniformMatrix4fv(L.view, false, this._view);
-    gl.uniformMatrix4fv(L.model, false, modelMatrix);
     gl.uniform1f(L.lift, u.lift);
     gl.uniform1f(L.tileSize, tileSize);
     gl.uniform1i(L.tileDim, tileDim);
@@ -5026,13 +5109,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (count > 0) gl.uniform3fv(L.pointColors, this._pointColorData(count, true));
     gl.uniform4fv(L.indirect, this._indirect);
     gl.uniform3fv(L.indirectColor, this._indirectColor);
-    this._activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D_ARRAY, arrayTex);
     gl.uniform1i(L.tileArr, 0);
-    this._activeTexture(gl.TEXTURE2);
-    gl.bindTexture(gl.TEXTURE_2D, tilemapTex);
     gl.uniform1i(L.tilemap, 2);
-    this._activeTexture(gl.TEXTURE0);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);
@@ -5055,9 +5133,24 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.enable(gl.POLYGON_OFFSET_FILL);
     gl.polygonOffset(0, -2);
     gl.depthFunc(gl.LEQUAL);
-    this._bindVao(surface.vao);
-    gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);
-    this.stats.texBinds += 2; this.stats.draws++;
+    let bound = null;
+    for (let i = 0; i < n; i++) {
+      const row = rows[i], surface = row[0], arrayTex = row[2], tilemapTex = row[3];
+      gl.uniformMatrix4fv(L.model, false, row[1]);
+      if (i === 0 || arrayTex !== bound) {
+        this._activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D_ARRAY, arrayTex);
+        bound = arrayTex;
+        this.stats.texBinds++;
+      }
+      this._activeTexture(gl.TEXTURE2);
+      gl.bindTexture(gl.TEXTURE_2D, tilemapTex);
+      this.stats.texBinds++;
+      this._bindVao(surface.vao);
+      gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);
+      this.stats.draws++;
+    }
+    this._activeTexture(gl.TEXTURE0);
     this._bindVao(null);
     gl.depthFunc(gl.LESS);
     gl.disable(gl.POLYGON_OFFSET_FILL);
@@ -5153,6 +5246,20 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // order and only skips the repeats it happens to have.
     let lastKey = null;
     let lastSway = null;   // WIND3
+    // PERF-EXT11 (2026-09-25, the players' "fps issues in the exterior but
+    // fine in the interior"): THE SIZE AND THE ORIGIN GO UP WHEN THEY
+    // CHANGE, as the sway and the key's textures already did. Both were
+    // uploaded for every flat, and neither changes between most pairs:
+    // the sort below puts one record's batches together, and they share
+    // its size (783 size uploads a frame on the harness town, 65 after).
+    // Exact, because a uniform is the PROGRAM's and holds until the next
+    // upload to it: this call binds bbProgram once and nothing between
+    // two flats - the opaque phase, the blended one, the uSpectral and
+    // uConceal between them - binds another. The lasts are this CALL's
+    // (NaN matches nothing), never carried to the next, which may run
+    // another program (a lane swapped between two calls). A flip is the
+    // sign of `w`, compared by value like the rest.
+    let lastW = NaN, lastH = NaN, lastOx = NaN, lastOy = NaN, lastOz = NaN;
     const drawOne = (b) => {
       const key = billboardKey(b);   // FA1/MAC4: the key follows every field it is made of (billboardKey.js)
       const tex = this.textures.get(key);
@@ -5167,9 +5274,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
         this.stats.texBinds += 2;
         lastKey = key;
       }
-      gl.uniform2f(this.bbUSize, b.size.w, b.size.h);
+      const w = b.size.w, h = b.size.h;
+      if (w !== lastW || h !== lastH) { gl.uniform2f(this.bbUSize, w, h); lastW = w; lastH = h; }   // PERF-EXT11
       const o = b.origin || ZERO_ORIGIN;
-      gl.uniform3f(this.bbUOrigin, o[0], o[1], o[2]);
+      if (o[0] !== lastOx || o[1] !== lastOy || o[2] !== lastOz) { gl.uniform3f(this.bbUOrigin, o[0], o[1], o[2]); lastOx = o[0]; lastOy = o[1]; lastOz = o[2]; }   // PERF-EXT11
       const sw = b.sway || 0;   // WIND3: the batch's share of the lean, uploaded when it changes between batches
       if (sw !== lastSway) { gl.uniform1f(this.bbUSway, sw); lastSway = sw; }
       this._bindVao(b.vao);
