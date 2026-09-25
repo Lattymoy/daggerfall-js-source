@@ -491,3 +491,66 @@ sub-meshes meet, one run), `test/audit_lighting.test.js` (ONE MESH AT
 TWO PLACES), `test/el2_shadows.test.js` (the renderer builds the pass:
 3 x 3 sun draws, 6 x 2 face draws). Mutants `perfexta.json` 17-21, all
 dead; `perfextb.json`'s PERF-EXT11-9 re-aimed by content again.
+
+## PERF-EXT3 - every lantern's static signature in one walk
+
+**What the frame paid.** SC1 decides whether a lantern's static cache is
+still good by folding every still caster in its reach into a signature,
+and the rank loop asked for it once a CASTER - each ask a whole walk of
+the frame's records and batches (the filter chain, the no-cast Set,
+batchSphere, the touch, the fold), made even when every cache was valid
+and nothing was drawn. Eight lanterns in a town at night were eight
+walks a frame: the cpu lens measured them at 0.74 ms a frame on the
+harness town before PERF-EXT10's one shape, 0.2 ms after it.
+
+**The change.** `_staticSignatures(cp, nC, out)`: before the rank loop,
+every ranked caster's (x, y, z, far) - the pos and the shadow's far the
+loop itself takes - and ONE walk that filters each item and takes its
+sphere once, then tests it against each caster (PERF-EXT1's cube
+included) and folds it into that caster's (hash, count) on a touch; the
+loop reads them by rank. The same items into the same folds:
+`foldSignature` is a sum, blind to order, and nothing the walk reads can
+change in the replays between two ranks. What differs is when an item
+is NAMED - `shId` mints on an item's first touch of any caster, item by
+item, where the walks minted caster by caster - and an id is a name held
+for the item's life that a cache compares only against its own last
+answer. DISC15's lo tier, which asks light by light and stops at its
+rebuild budget, asks the same walk for one (`_staticSignature`), so the
+signature has one home. The cpu lens's extension - per-caster candidate
+lists for the face replays - was neither prototyped nor measured, and is
+not here.
+
+**Measured.** The cpu lens's town (`townFrame.mjs --night`, 800 frames,
+`ab.sh` median of 9 alternating runs; the base is PERF-EXT2):
+`beginFrame`, where the pass runs, 0.477 -> 0.352 ms a frame. By day
+the harness lights no lantern and the walk does not run (0.271 -> 0.255,
+noise). The walks alone over one frame's records (the prover's
+`sigBench` rebuilt on this tree: eight lanterns, the real renderer's
+records, a third of the batches pixel-wide woods with their placements;
+3 runs, median of 5 each): 1,000 batches and 100 meshes 245-266 -> 82-90
+us a frame, 2,000 and 150 528-538 -> 186-194. Towns at night and
+anywhere else lanterns cast into the cache.
+
+**The picture.** Unchanged: the same caches are drawn on the same
+frames. The cpu lens's prover compared 1,528 signatures of 400 random
+frames against the per-caster walk, 0 differing; the suite does the same
+(below) and replays a scripted night through a twin that walks per
+lantern.
+
+**Pinned** (`test/perfexta.test.js`, every one failing on the base): on
+a still night with every cache valid, the pass reads each still flat's
+bounds as often under eight lanterns as under one (the base: once a
+lantern); over 200 random frames of records - still, moving, swaying,
+dead, noShadow, concealed, no-cast and light flats, unbounded batches,
+woods with their placements, still, moving and unbounded meshes, terrain
+- and one to eight random lanterns, each lantern's (hash, count) from one
+call equals the base's walk of that lantern alone, transcribed, over the
+same items (887 signatures, 4,217 folds); and a scripted night of 120
+frames (a walker crossing and stopping, a lantern lit nearest of all -
+rank 0 in the last slot, a wood hidden and shown, a crate shoved, a batch
+freed) asks once a frame for every lit lantern, each at its own light
+and the shadow's far, and draws the same caches on the same frames, slot
+for slot, as a twin whose signatures are the base's walk lantern by
+lantern - the lantern lit drawing its own cache alone. Mutants
+`perfexta.json` 22-31, all dead; `perfexta.json`'s PERF-EXT1-7 and
+`el8.json`'s cadence-no-change-check re-aimed by content.

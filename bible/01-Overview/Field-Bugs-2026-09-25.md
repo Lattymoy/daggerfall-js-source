@@ -165,3 +165,9 @@ cube maps (`07-Rendering/Performance-Exterior.md`, THE SHADOWS):
   city pixel). With PERF-EXT1, shadow draws a frame on the harness town
   297 -> 8 at night, 568 -> 81 at dusk, 271 -> 73 by day (the night's
   worst frame, a cache rebuild, 934 -> 36). The same triangles.
+- **PERF-EXT3** - every lantern's static signature (SC1's "is this
+  cache still good") in ONE walk of the frame's records, not one walk a
+  lantern: eight lanterns at night were eight walks a frame whether or
+  not anything changed. The pass's part of the harness town's night
+  frame 0.48 -> 0.35 ms; the walks alone over 1,000 flat batches 0.25
+  -> 0.09 ms. The same caches, drawn on the same frames.

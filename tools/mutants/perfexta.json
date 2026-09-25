@@ -56,8 +56,8 @@
   {
     "name": "PERF-EXT1-7-the-static-signature-counts-the-woods-sphere",
     "file": "src/render/shadowPass.js",
-    "old": "          if (b._place && !placementsInCube(b, quadRadius(wl, b), pos[0], pos[1], pos[2], far)) continue;\n          h = foldSignature(h, shId(b));",
-    "new": "          h = foldSignature(h, shId(b));",
+    "old": "            if (b._place) { if (rad < 0) rad = quadRadius(wl, b); if (!placementsInCube(b, rad, x, y, z, far)) continue; }\n",
+    "new": "",
     "tests": [
       "test/perfexta.test.js"
     ]
@@ -184,6 +184,96 @@
     "file": "src/render/shadowPass.js",
     "old": "          runAt = sm.startIndex; runEnd = runAt + n;",
     "new": "          runAt = runAt < 0 ? sm.startIndex : runEnd; runEnd = runAt + n;",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT3-1-a-frames-signatures-fold-onto-the-last-ones",
+    "file": "src/render/shadowPass.js",
+    "old": "    for (let k = 0; k < nC; k++) { out[k * 2] = 0; out[k * 2 + 1] = 0; }\n",
+    "new": "",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT3-2-a-flat-out-of-one-lanterns-reach-is-out-of-every-later-ones",
+    "file": "src/render/shadowPass.js",
+    "old": "            if (c && !spheresTouch(c[0], c[1], c[2], c[3], x, y, z, far)) continue;",
+    "new": "            if (c && !spheresTouch(c[0], c[1], c[2], c[3], x, y, z, far)) break;",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT3-3-a-wood-with-no-tree-in-one-cube-is-in-no-later-one",
+    "file": "src/render/shadowPass.js",
+    "old": "if (!placementsInCube(b, rad, x, y, z, far)) continue; }",
+    "new": "if (!placementsInCube(b, rad, x, y, z, far)) break; }",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT3-4-the-cube-forgets-the-quads-reach",
+    "file": "src/render/shadowPass.js",
+    "old": "if (rad < 0) rad = quadRadius(wl, b);",
+    "new": "if (rad < 0) rad = 0;",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT3-5-a-mesh-out-of-one-lanterns-reach-is-out-of-every-later-ones",
+    "file": "src/render/shadowPass.js",
+    "old": "cp[k * 4], cp[k * 4 + 1], cp[k * 4 + 2], cp[k * 4 + 3])) continue;",
+    "new": "cp[k * 4], cp[k * 4 + 1], cp[k * 4 + 2], cp[k * 4 + 3])) break;",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT3-6-a-mesh-is-folded-at-its-first-lanterns-place-alone",
+    "file": "src/render/shadowPass.js",
+    "old": "        out[k * 2] = foldSignature(foldSignature(out[k * 2], id), at); out[k * 2 + 1]++;\n      }\n    }\n  }",
+    "new": "        out[0] = foldSignature(foldSignature(out[0], id), at); out[1]++;\n      }\n    }\n  }",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT3-7-the-ranks-ask-at-the-lanterns-live-range-not-the-shadows-far",
+    "file": "src/render/shadowPass.js",
+    "old": "cp[rank * 4 + 3] = shadowFarFor(L[i * 4 + 3]);",
+    "new": "cp[rank * 4 + 3] = L[i * 4 + 3];",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT3-8-the-ranks-ask-in-the-lights-order-not-the-picks",
+    "file": "src/render/shadowPass.js",
+    "old": "        const i = casters[rank];\n        cp[rank * 4] = L[i * 4];",
+    "new": "        const i = rank;\n        cp[rank * 4] = L[i * 4];",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT3-9-a-slot-reads-the-signature-of-its-own-index-not-its-lights-rank",
+    "file": "src/render/shadowPass.js",
+    "old": "const sigHash = this._sigOut[rank * 2], sigCount = this._sigOut[rank * 2 + 1];",
+    "new": "const sigHash = this._sigOut[k * 2], sigCount = this._sigOut[k * 2 + 1];",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT3-10-the-signatures-are-asked-for-the-first-caster-alone",
+    "file": "src/render/shadowPass.js",
+    "old": "      this._staticSignatures(cp, casters.length, this._sigOut);",
+    "new": "      this._staticSignatures(cp, 1, this._sigOut);",
     "tests": [
       "test/perfexta.test.js"
     ]

@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import { Renderer, WORLD_FRAME } from '../src/render/renderer.js';
 import { EL_LANE } from '../src/render/enhancedLighting.js';
 import * as bounds from '../src/render/bounds.js';   // a namespace: on the base the placement grid is missing, and only its pins fail
-import { sunCascadeMatrices, pointFaceMatrices, shadowFarFor, swayLean } from '../src/render/shadowPass.js';
+import { sunCascadeMatrices, pointFaceMatrices, shadowFarFor, swayLean, spheresTouch, foldSignature, SHADOW_LIGHT_FLATS, SHADOW_NO_CAST_ARCHIVES } from '../src/render/shadowPass.js';
 import { StaticBatchBuilder, keyResolver } from '../src/render/staticBatch.js';
 
 const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
@@ -440,4 +440,180 @@ test('PERF-EXT2: EVERY REPLAY DRAWS EXACTLY THE VISIBLE SUB-MESHES\' TRIANGLES -
   }
   assert.ok(checked > 100, `replays read (${checked} mesh-volume pairs)`);
   assert.ok(drawn <= subsDrawn * 0.75, `and in fewer draws: ${drawn} for ${subsDrawn} visible sub-meshes`);
+});
+
+// ── PERF-EXT3: every lantern's static signature in one walk ───────────────
+
+/** THE BASE'S WALK, one lantern at a time - SC1's static signature with PERF-EXT1's cube, transcribed: the oracle the
+ *  one walk must answer as. `name` gives an item its id, as the pass's shId does on the item's first fold. */
+function signatureAlone(sp, x, y, z, far, name) {
+  let h = 0, n = 0;
+  const c = new Float64Array(4);
+  for (let i = 0; i < sp.count; i++) {
+    const r = sp.records[i];
+    if (r.kind === 2) {   // REC_BB
+      const wl = Math.hypot(r.flatWind[0], r.flatWind[1]);
+      for (const b of r.batches) {
+        if (!b?.vao || b._dead || b._shDyn || b.noShadow || b.conceal || b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive)) continue;
+        const s = bounds.batchSphere(b, c);
+        if (s && !spheresTouch(s[0], s[1], s[2], s[3], x, y, z, far)) continue;
+        if (b._place) { const bh = b.size.h; if (!bounds.placementsInCube(b, bounds.placementRadius(b.size, b.sway > 0 ? swayLean(wl, b.sway, bh < 0 ? -bh : bh) : 0), x, y, z, far)) continue; }
+        h = foldSignature(h, name(b)); h = foldSignature(h, Math.round(b._shOx * 64) + Math.round(b._shOz * 64) * 7919); n++;
+      }
+      continue;
+    }
+    if (r.dynamic) continue;
+    const m = r.kind === 1 ? r.surface : r.mesh;   // REC_TERRAIN
+    if (!m?.vao || m._dead) continue;
+    if (r.bounded && !spheresTouch(r.sphere[0], r.sphere[1], r.sphere[2], r.sphere[3], x, y, z, far)) continue;
+    h = foldSignature(h, name(m)); h = foldSignature(h, Math.round(r.matrix[12] * 64) + Math.round(r.matrix[14] * 64) * 7919 + Math.round(r.matrix[13] * 64) * 104729); n++;
+  }
+  return [h, n];
+}
+/** A mesh bundle of one bounded sub-mesh (the replay needs a VAO and a range). */
+const meshAt = (id, radius) => ({ vao: { id }, buffers: [], bounds: radius > 0 ? new Float32Array([0, 1, 0, radius]) : null, subMeshes: [{ textureArchive: 300, textureRecord: 0, startIndex: 0, primitiveCount: 12, _bounds: radius > 0 ? new Float32Array([0, 1, 0, radius]) : undefined }] });
+/** `b.bounds` behind a getter that counts, while `on()` says so. */
+function countBounds(b, on, counter) {
+  let v = b.bounds;
+  Object.defineProperty(b, 'bounds', { get() { if (on()) counter.n++; return v; }, set(x) { v = x; }, configurable: true, enumerable: true });
+}
+
+test('PERF-EXT3: EIGHT LANTERNS, ONE WALK - on a still night with every cache valid, the shadow pass reads each still flat\'s bounds as often under eight lanterns as under one (the base: once a lantern - eight whole walks of the records a frame), and the eight slots still answer from their caches', () => {
+  const run = (nLights) => {
+    const { r, sp, frame } = stand();
+    const rand = rng(9);
+    const flats = [];
+    for (let i = 0; i < 60; i++) {
+      const b = r.createBillboardBatch(504, 1 + (i % 3), { w: 1, h: 2 }, [[(rand() * 2 - 1) * 20, 0, (rand() * 2 - 1) * 20]]);
+      b.origin = [0, 0, 0];
+      flats.push(b);
+    }
+    let inPass = false;
+    const counter = { n: 0 };
+    for (const b of flats) countBounds(b, () => inPass, counter);
+    const render = sp.render.bind(sp);
+    sp.render = (f) => { inPass = true; try { return render(f); } finally { inPass = false; } };
+    const lights = new Float32Array(nLights * 4);
+    for (let k = 0; k < nLights; k++) lights.set([(k % 4) * 6 - 9, 2, Math.floor(k / 4) * 6 - 3, 12], k * 4);
+    const draw = () => r.drawBillboards(flats, RIGHT, UP);
+    for (let f = 0; f < 6; f++) frame(draw, lights);
+    counter.n = 0;
+    const st = frame(draw, lights);
+    return { reads: counter.n, st };
+  };
+  const one = run(1), eight = run(8);
+  assert.equal(one.st.cachedSlots, 1); assert.equal(eight.st.cachedSlots, 8, 'eight lanterns, every one served from its cache');
+  assert.equal(eight.st.staticFaces, 0, 'nothing redrawn');
+  assert.ok(one.reads >= 60, `one lantern: every still flat's sphere asked (${one.reads})`);
+  assert.equal(eight.reads, one.reads, `eight lanterns read the flats' bounds ${eight.reads} times, one lantern ${one.reads}: one walk`);
+});
+
+test('PERF-EXT3: THE ONE WALK ANSWERS AS THE WALK A LANTERN - over 200 random frames of records (still, moving, swaying, dead, noShadow, concealed, no-cast and light flats, unbounded batches, pixel-wide woods with their placements; still, moving and unbounded meshes and terrain) and one to eight random lanterns, every lantern\'s (hash, count) from ONE call is exactly the base\'s walk of that lantern alone, over the same items (the walk names every item the oracle folds)', () => {
+  const { r, sp } = stand();
+  const rand = rng(10);
+  const flats = [];
+  for (let i = 0; i < 160; i++) {
+    const n = i % 5 === 0 ? 20 + Math.floor(rand() * 40) : 1;
+    const cs = n > 1 ? wood(rand, n, 60) : [[rand() * 80 - 40, 0, rand() * 80 - 40]];
+    const b = r.createBillboardBatch([504, 182, 210, 216, 504][i % 5 === 0 ? 0 : i % 5], i % 9, { w: 1 + rand() * 3, h: (i % 13 === 0 ? -1 : 1) * (1 + rand() * 6) }, cs);
+    b.origin = [rand() * 10, 0, rand() * 10];
+    if (i % 3 === 0) b.sway = rand();
+    if (i % 17 === 0) b.noShadow = true;
+    if (i % 23 === 0) b.conceal = { mode: 1, alpha: 0.5, t: 0, phase: 0 };
+    if (i % 29 === 0) b._dead = true;
+    if (i % 7 === 3) b.bounds = null;
+    flats.push(b);
+  }
+  const meshes = [];
+  for (let i = 0; i < 50; i++) { const m = meshAt(`vao-m${i}`, i % 11 === 0 ? 0 : 2 + rand() * 10); const at = I.slice(); at[12] = rand() * 80 - 40; at[13] = rand() * 4; at[14] = rand() * 80 - 40; meshes.push({ m, at }); }
+  const tile = { vao: { id: 'vao-tile' }, indexCount: 6, bounds: new Float32Array([0, 0, 0, 30]) };
+  const cp = new Float64Array(32), out = new Int32Array(16);
+  let compared = 0, folded = 0;
+  for (let frame = 0; frame < 200; frame++) {
+    sp.discard(); sp.frameNo++;
+    const lists = [[], [], []];
+    for (const b of flats) if (rand() < 0.8) lists[Math.floor(rand() * 3)].push(b);
+    for (const b of flats) if (rand() < 0.05) b.origin[0] += 0.5;   // a few move
+    for (const L of lists) sp.recordBillboards(L, rand() < 0.5 ? new Float32Array([rand() * 12, rand() * 4, 1, 1]) : null, RIGHT, UP);
+    for (const { m, at } of meshes) if (rand() < 0.7) { if (rand() < 0.1) at[12] += 0.3; sp.recordMesh(m, at, null); }
+    if (rand() < 0.5) sp.recordTerrain(tile, I, null, null, 6.4);
+    const nC = 1 + Math.floor(rand() * 8);
+    for (let k = 0; k < nC; k++) cp.set([rand() * 80 - 40, rand() * 5, rand() * 80 - 40, shadowFarFor(4 + rand() * 20)], k * 4);
+    sp._staticSignatures(cp, nC, out);
+    for (let k = 0; k < nC; k++) {
+      const [h, n] = signatureAlone(sp, cp[k * 4], cp[k * 4 + 1], cp[k * 4 + 2], cp[k * 4 + 3], (o) => { assert.ok(o._shId > 0, 'an item the lantern folds was named by the walk'); return o._shId; });
+      assert.equal(out[k * 2 + 1], n, `frame ${frame}, lantern ${k}: the count`);
+      assert.equal(out[k * 2], h, `frame ${frame}, lantern ${k}: the hash`);
+      compared++; folded += n;
+    }
+  }
+  assert.ok(compared > 700 && folded > 3000, `${compared} signatures compared over ${folded} folds`);
+});
+
+test('PERF-EXT3: THE SAME CACHE, FRAME FOR FRAME - a scripted night of 120 frames (a walker crossing the lamps and stopping, a lantern lit nearest of all - rank 0 in the last slot, a wood hidden and shown, a crate moved, a batch freed) replayed through the pass - which asks ONCE a frame, for every lit lantern (the base: once a lantern) - and through a twin whose signatures are the base\'s walk, lantern by lantern: every frame\'s static faces, dynamic faces, blits, cached slots, point draws and the slots whose caches were drawn agree', () => {
+  const build = () => {
+    const { r, sp, frame } = stand();
+    const rand = rng(11);
+    const flats = [];
+    for (let i = 0; i < 40; i++) { const b = r.createBillboardBatch(504, 1 + (i % 3), { w: 1, h: 2 }, [[rand() * 50 - 25, 0, rand() * 50 - 25]]); b.origin = [0, 0, 0]; flats.push(b); }
+    const still = r.createBillboardBatch(504, 1, { w: 3, h: 7 }, wood(rand, 60, 200, 0));
+    still.origin = [0, 0, 0];
+    const sway = r.createBillboardBatch(504, 2, { w: 3, h: 7 }, wood(rand, 60, 200, 0));
+    sway.sway = 1; sway.origin = [0, 0, 0];
+    const walker = r.createBillboardBatch(182, 1, { w: 0.9, h: 1.8 }, [[0, 0, 0]]);
+    walker.origin = [-30, 0, 2];
+    const room = meshAt('vao-room', 12), crate = meshAt('vao-crate', 1);
+    const crateAt = I.slice(); crateAt[12] = 3; crateAt[14] = 3;
+    return { r, sp, frame, flats, still, sway, walker, room, crate, crateAt };
+  };
+  const script = (w) => {
+    const lamps = [[-12, 3, -8], [0, 3, -8], [12, 3, -8], [-12, 3, 8], [0, 3, 8], [12, 3, 8], [24, 3, 0], [2, 3, -1]];   // the eighth, lit late, the nearest: rank 0 in slot 7 - a rank is no slot
+    const out = [];
+    for (let f = 0; f < 120; f++) {
+      const lit = f < 40 ? 7 : 8;   // a lantern lit at frame 40
+      const lights = new Float32Array(lit * 4);
+      for (let k = 0; k < lit; k++) lights.set([...lamps[k], 14], k * 4);
+      if (f >= 10 && f < 50) w.walker.origin = [-30 + (f - 10) * 1.2, 0, 2];   // crosses, then stands (the hold, then the cache)
+      if (f >= 55 && f < 60) w.crateAt[12] += 0.5;   // the crate shoved
+      if (f === 100) w.r.destroyBillboardBatch(w.flats[5]);
+      const hidden = f >= 70 && f < 90;   // the wood culled away and back
+      const draw = () => {
+        w.r.setFlatWind([6, 2, 1, 1]);
+        w.r.drawMesh(w.room, I, null); w.r.drawMesh(w.crate, w.crateAt, null);
+        w.r.drawBillboards([...w.flats.filter((b) => !b._dead), ...(hidden ? [] : [w.still]), w.sway, w.walker], RIGHT, UP);
+      };
+      const st = w.frame(draw, lights);
+      const rebuilt = new Set();   // the slots whose cache was drawn: a static face's framebuffer bound as the target
+      for (const c of st.calls) if (c[0] === 'bindFramebuffer' && c[1] === 36160 && w.sp.cacheFbos.includes(c[2])) rebuilt.add(Math.floor(w.sp.cacheFbos.indexOf(c[2]) / 6));
+      out.push([st.staticFaces, st.dynFaces, st.blits, st.cachedSlots, st.pointDraws, [...rebuilt].join('+')].join('/'));
+    }
+    return out;
+  };
+  const w = build(), twin = build();
+  // the twin asks as the base did: each ranked caster's own light (DISC6's held list is this frame's casters in rank
+  // order) at the shadow's far - never the pass's gathered (x, y, z, far)
+  let twinIds = 1e6;
+  twin.sp._staticSignatures = function (_cp, nC, sig) {
+    const held = this._heldCasters;
+    for (let k = 0; k < nC; k++) {
+      const [h, n] = signatureAlone(this, held[k * 4], held[k * 4 + 1], held[k * 4 + 2], shadowFarFor(14), (o) => (o._shId ??= ++twinIds));
+      sig[k * 2] = h; sig[k * 2 + 1] = n;
+    }
+  };
+  const asks = [];
+  const ask = w.sp._staticSignatures.bind(w.sp);
+  w.sp._staticSignatures = (cp, nC, sig) => {
+    asks.push(nC);
+    for (let k = 0; k < nC; k++) assert.deepEqual([...cp.subarray(k * 4, k * 4 + 4)], [...w.sp._heldCasters.subarray(k * 4, k * 4 + 3), shadowFarFor(14)], 'each rank asked at its own light and the shadow\'s far');
+    return ask(cp, nC, sig);
+  };
+  const a = script(w), b = script(twin);
+  assert.deepEqual(asks, [...new Array(39).fill(7), ...new Array(80).fill(8)], 'one ask a frame, for every lit lantern at once (the first frame has no records to replay)');
+  assert.deepEqual(a, b, 'the one walk and the walk a lantern keep the same caches');
+  // and what the twin cannot say, sharing the rank loop: the lantern lit nearest of all takes rank 0 in the last slot,
+  // and ITS cache alone is drawn - each slot reads its own light's signature, not the one at its index
+  const [lit0, , , , , litSlots] = a[40].split('/');
+  assert.equal(`${lit0} ${litSlots}`, '6 7', `the frame the lantern is lit, its own slot's six faces alone (${a[40]})`);
+  const rebuilds = a.filter((x) => Number(x.split('/')[0]) > 0).length;
+  assert.ok(rebuilds >= 5, `the night rebuilt caches on ${rebuilds} frames (the lantern lit, the walker stopping, the wood, the crate, the free)`);
 });

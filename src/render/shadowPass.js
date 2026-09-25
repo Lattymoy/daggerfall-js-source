@@ -736,7 +736,12 @@ export class ShadowPass {
     this._heldCasters = new Float64Array(4 * SHADOW_POINT_CASTERS);   // DISC6: last frame's casters, by position (Float64: an exact copy of whatever the host sent, so the match by position holds)
     this._heldCasterN = 0;
     this._slotTakenScratch = new Uint8Array(SHADOW_POINT_CASTERS);
-    this._sig = { hash: 0, count: 0 };
+    // PERF-EXT3: the static signatures' inputs and answers - (x, y, z, far) and (hash, count) per ranked caster, one
+    // walk filling all of them (_staticSignatures); and one light's, for DISC15's lo tier (_staticSignature)
+    this._sigCasters = new Float64Array(4 * SHADOW_POINT_CASTERS);
+    this._sigOut = new Int32Array(2 * SHADOW_POINT_CASTERS);
+    this._sigOne = new Float64Array(4);
+    this._sigOneOut = new Int32Array(2);
     this._sunPlanes = SHADOW_CASCADES.map(() => new Float32Array(24));   // SHADOW-REACH: the cascades' frusta, for the hosts' reach test
     this._sunPlanesFrame = -1;
     this._shiftGen = 0;                 // AUDIT SC1: the floating origin's generation (shiftOrigin)
@@ -832,11 +837,11 @@ export class ShadowPass {
       let sig = null, draw = fresh;
       if (!fresh && rebuilds > 0) {
         sig = this._staticSignature(pos, far);
-        if (this._loSlotSig[j * 2] !== sig.hash || this._loSlotSig[j * 2 + 1] !== sig.count) { draw = true; rebuilds--; }
+        if (this._loSlotSig[j * 2] !== sig[0] || this._loSlotSig[j * 2 + 1] !== sig[1]) { draw = true; rebuilds--; }
       }
       if (draw) {
         if (!sig) sig = this._staticSignature(pos, far);
-        this._loSlotSig[j * 2] = sig.hash; this._loSlotSig[j * 2 + 1] = sig.count;
+        this._loSlotSig[j * 2] = sig[0]; this._loSlotSig[j * 2 + 1] = sig[1];
         pointFaceMatrices(pos, far, this.faceVP);
         for (let face = 0; face < 6; face++) {
           gl.bindFramebuffer(gl.FRAMEBUFFER, this._loFbos[j * 6 + face]);
@@ -1106,6 +1111,16 @@ export class ShadowPass {
     this._heldCasterN = holdCasters(this._heldCasters, f.pointLights, casters);
     if (this.cacheOn && casters.length) this._ensureCache();   // AUDIT SC1
     const L = f.pointLights;
+    if (this.cacheOn && casters.length) {
+      // PERF-EXT3: every ranked caster's static signature in ONE walk, before the loop that reads them - with the
+      // pos and the shadow's far the loop takes (below), so a signature is the one its own walk would have folded
+      const cp = this._sigCasters;
+      for (let rank = 0; rank < casters.length; rank++) {
+        const i = casters[rank];
+        cp[rank * 4] = L[i * 4]; cp[rank * 4 + 1] = L[i * 4 + 1]; cp[rank * 4 + 2] = L[i * 4 + 2]; cp[rank * 4 + 3] = shadowFarFor(L[i * 4 + 3]);
+      }
+      this._staticSignatures(cp, casters.length, this._sigOut);
+    }
     // MAC-T1: the hand's light is -2 in the caster table - no slot, and no contact march either (enhancedLighting reads
     // the same table): F3's "never for the light in the hand", said by name rather than by distance from the camera
     if (f.carried) for (let i = 0, m = Math.min(L.length >> 2, SHADOW_CASTER_TABLE); i < m; i++) if (f.carried[i]) this.casterOf[i] = -2;
@@ -1158,8 +1173,8 @@ export class ShadowPass {
         this._slotCached[k] = 0; this._slotLiveDyn[k] = 0;
       } else {
         // SC1: the static cache, drawn only when the light or the static set in its reach changed
-        const sig = this._staticSignature(pos, far);
-        const staticStale = changed || !this._slotCached[k] || this._slotSig[k * 2] !== sig.hash || this._slotSig[k * 2 + 1] !== sig.count;
+        const sigHash = this._sigOut[rank * 2], sigCount = this._sigOut[rank * 2 + 1];   // PERF-EXT3: folded above
+        const staticStale = changed || !this._slotCached[k] || this._slotSig[k * 2] !== sigHash || this._slotSig[k * 2 + 1] !== sigCount;
         let matrices = false;
         if (staticStale) {
           pointFaceMatrices(pos, far, this.faceVP); matrices = true;
@@ -1170,7 +1185,7 @@ export class ShadowPass {
             this.stats.pointDraws += this.replay(f, this.faceVP[face], pos, false, 0, 0, REPLAY_STATIC);
           }
           this.stats.facesDrawn += 6; this.stats.staticFaces += 6;
-          this._slotCached[k] = 1; this._slotSig[k * 2] = sig.hash; this._slotSig[k * 2 + 1] = sig.count;
+          this._slotCached[k] = 1; this._slotSig[k * 2] = sigHash; this._slotSig[k * 2 + 1] = sigCount;
         } else this.stats.cachedSlots++;
         // the dynamics on top: the cache blitted into the live layers, then the moving casters alone, at the cadence
         const dynNear = this._dynamicNear(pos, far, f.isSpectral, near);   // 0 none, 1 sway alone, 2 a mover
@@ -1205,9 +1220,20 @@ export class ShadowPass {
   }
 
   /** SC1: the static signature of a lantern's reach - every static record (and static batch) whose sphere touches
-   *  the light's, folded by identity and position, order-free. An unbounded record touches everything. */
-  _staticSignature(pos, far) {
-    let h = 0, n = 0;
+   *  the light's, folded by identity and position, order-free. An unbounded record touches everything.
+   *
+   *  PERF-EXT3 (2026-09-25, the players' "fps issues in the exterior but fine in the interior"): EVERY CASTER'S IN ONE
+   *  WALK. The rank loop asked this once a caster, and each ask walked every record and every batch of the frame -
+   *  the filter chain, the archive Set, batchSphere, the touch, the fold - even when every cache was valid and nothing
+   *  was drawn: eight lanterns in a town at night were eight whole walks a frame, 0.2 ms of the harness town's frame
+   *  (the cpu lens's `townFrame.mjs --night`; 0.74 ms before PERF-EXT10's one shape). Now each item is filtered and
+   *  its sphere taken ONCE, then tested against each of the `nC` casters in `cp` (x, y, z, far), and folded into
+   *  that caster's (hash, count) in `out` on a touch - the same items into the same folds, so the same answers:
+   *  foldSignature is a sum, blind to the order, and nothing here is read that the replays between two ranks could
+   *  change. An item's id is minted on its first touch of ANY caster, item by item where the walks minted caster by
+   *  caster; an id is a name, held for the item's life, and a cache compares only its own last answer. */
+  _staticSignatures(cp, nC, out) {
+    for (let k = 0; k < nC; k++) { out[k * 2] = 0; out[k * 2 + 1] = 0; }
     for (let i = 0; i < this.count; i++) {
       const r = this.records[i];
       if (r.kind === REC_BB) {
@@ -1215,22 +1241,37 @@ export class ShadowPass {
         for (const b of r.batches) {
           if (!b?.vao || b._dead || b._shDyn || b.noShadow || b.conceal || b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive)) continue;
           const c = batchSphere(b, this._bSphere);   // AUDIT 68 S16-batch-sphere-dup: the replays' own sphere
-          if (c && !spheresTouch(c[0], c[1], c[2], c[3], pos[0], pos[1], pos[2], far)) continue;
-          // PERF-EXT1: ...and a pixel-wide batch by its QUADS, in the cube its six faces tile. One with none in it puts
-          // nothing in this cache, so whatever it does is no reason to rebuild it.
-          if (b._place && !placementsInCube(b, quadRadius(wl, b), pos[0], pos[1], pos[2], far)) continue;
-          h = foldSignature(h, shId(b)); h = foldSignature(h, Math.round(b._shOx * 64) + Math.round(b._shOz * 64) * 7919); n++;
+          let id = 0, at = 0, rad = -1;
+          for (let k = 0; k < nC; k++) {
+            const x = cp[k * 4], y = cp[k * 4 + 1], z = cp[k * 4 + 2], far = cp[k * 4 + 3];
+            if (c && !spheresTouch(c[0], c[1], c[2], c[3], x, y, z, far)) continue;
+            // PERF-EXT1: ...and a pixel-wide batch by its QUADS, in the cube its six faces tile. One with none in it puts
+            // nothing in this cache, so whatever it does is no reason to rebuild it.
+            if (b._place) { if (rad < 0) rad = quadRadius(wl, b); if (!placementsInCube(b, rad, x, y, z, far)) continue; }
+            if (id === 0) { id = shId(b); at = Math.round(b._shOx * 64) + Math.round(b._shOz * 64) * 7919; }
+            out[k * 2] = foldSignature(foldSignature(out[k * 2], id), at); out[k * 2 + 1]++;
+          }
         }
         continue;
       }
       if (r.dynamic) continue;
       const m = r.kind === REC_TERRAIN ? r.surface : r.mesh;
       if (!m?.vao || m._dead) continue;
-      if (r.bounded && !spheresTouch(r.sphere[0], r.sphere[1], r.sphere[2], r.sphere[3], pos[0], pos[1], pos[2], far)) continue;
-      h = foldSignature(h, shId(m)); h = foldSignature(h, Math.round(r.matrix[12] * 64) + Math.round(r.matrix[14] * 64) * 7919 + Math.round(r.matrix[13] * 64) * 104729); n++;
+      let id = 0, at = 0;
+      for (let k = 0; k < nC; k++) {
+        if (r.bounded && !spheresTouch(r.sphere[0], r.sphere[1], r.sphere[2], r.sphere[3], cp[k * 4], cp[k * 4 + 1], cp[k * 4 + 2], cp[k * 4 + 3])) continue;
+        if (id === 0) { id = shId(m); at = Math.round(r.matrix[12] * 64) + Math.round(r.matrix[14] * 64) * 7919 + Math.round(r.matrix[13] * 64) * 104729; }
+        out[k * 2] = foldSignature(foldSignature(out[k * 2], id), at); out[k * 2 + 1]++;
+      }
     }
-    this._sig.hash = h; this._sig.count = n;
-    return this._sig;
+  }
+  /** DISC15: one light's signature, (hash, count), for the lo tier - which asks light by light and stops at
+   *  SHADOW_LO_REBUILDS; the walk is _staticSignatures'. */
+  _staticSignature(pos, far) {
+    const cp = this._sigOne;
+    cp[0] = pos[0]; cp[1] = pos[1]; cp[2] = pos[2]; cp[3] = far;
+    this._staticSignatures(cp, 1, this._sigOneOut);
+    return this._sigOneOut;
   }
   /** SC1: is any dynamic caster in the lantern's reach.
    *  AUDIT SC1: a dynamic the replay would not DRAW is no reason to replay - the first cut counted a moving flame
