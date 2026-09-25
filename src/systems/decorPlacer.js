@@ -51,9 +51,10 @@ const snapTo = (v, step) => round(Math.round(v / step) * step, 3);
 /**
  * THE TOOL for one catalogue `entry`. `radius` its measured radius in metres (null: unmeasured), `box` a model's local
  * bounds [minX, minY, minZ, maxX, maxY, maxZ] (render/frustum.js localAabb), null for a flat. DECOR1e: `from` a placed
- * piece being moved - the tool starts at its turn and its scale.
+ * piece being moved - the tool starts at its turn and its scale. DECOR2a: `free` - the player's own item, which costs
+ * nothing whatever its size, and whose piece carries its descriptor (`entry.item`).
  */
-export function createDecorPlacer(entry, { radius = null, box = null, from = null } = {}) {
+export function createDecorPlacer(entry, { radius = null, box = null, from = null, free = false } = {}) {
   const s = { yaw: from ? wrapTurn(from.rot?.[0] ?? 0) : 0, raise: 0, scale: from?.scale ?? 1, snap: false };
 
   /** How far above a surface point the piece's origin stands, before the owner's own lift. */
@@ -77,8 +78,11 @@ export function createDecorPlacer(entry, { radius = null, box = null, from = nul
     },
     /** The grid, on or off; answers which. */
     toggleSnap() { s.snap = !s.snap; return s.snap; },
-    /** The price at this scale (the law's), or null for a piece the scan could not measure. */
-    price() { return radius != null && radius > 0 ? decorPrice(radius, s.scale) : null; },
+    /** The price at this scale (the law's), or null for a piece the scan could not measure; nothing for one's own. */
+    price() {
+      if (free) return 0;
+      return radius != null && radius > 0 ? decorPrice(radius, s.scale) : null;
+    },
     /**
      * THE PIECE for a surface point `hit` (the free camera's eye meeting the room, this visit's frame), measured from
      * the building's `origin` - projected by the law, or null (unpriced, or outside what a piece may be).
@@ -94,7 +98,7 @@ export function createDecorPlacer(entry, { radius = null, box = null, from = nul
       let z = hit[2] - origin[2];
       if (s.snap) { x = snapTo(x, DECOR_GRID); z = snapTo(z, DECOR_GRID); }
       return decorPieceOf({
-        id, model: entry.model ?? null, flat: entry.flat ? [entry.flat[0], entry.flat[1]] : null,
+        id, model: entry.model ?? null, flat: entry.flat ? [entry.flat[0], entry.flat[1]] : null, item: entry.item ?? null,
         pos: [x, hit[1] - origin[1] + up, z], rot: [s.yaw, 0, 0], scale: s.scale,
         light: entry.light ? { ...entry.light, color: [...entry.light.color] } : null,
         storage: !!entry.storage, paid,

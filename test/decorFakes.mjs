@@ -108,7 +108,8 @@ export const ACTIONS = new Map([['KeyW', 'MoveForwards'], ['KeyS', 'MoveBackward
  * The tool over fakes of every seam the host hands it. The pool is the room's own shape (scenes/decorRoom.js): a piece
  * put again by its id stands in its place, `holds` the ids of the pieces holding something. The wallet pays from and
  * credits `w.gold`, `hand.stick` is the host's stickAxes reading (null: no stick in hand), and `rays` each eye ray's
- * bucket filter. `radius(model)` the scan's measure of a model (null: unread).
+ * bucket filter. `radius(model)` the scan's measure of a model (null: unread). DECOR2a: `pack` the items carried -
+ * packTake moves one of a stack out (a copy of one; the whole item when it is the last), packGive puts one back.
  */
 export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 1000, homeDecor = null, locked = true, touch = false, radius = () => 0.8 } = {}) {
   const doc = fakeDoc();
@@ -116,18 +117,24 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
   const entries = catalogue();
   const standing = [];
   const holds = new Set();
+  const owned = new Map();   // DECOR2a: the owner's own items by piece id (scenes/decorRoom.js keepOwn and its kin)
   const pool = {
     put: (p) => { const i = standing.findIndex((x) => x.id === p.id); if (i >= 0) standing[i] = p; else standing.push(p); },
     remove: (id) => { const i = standing.findIndex((x) => x.id === id); if (i >= 0) standing.splice(i, 1); },
     list: () => standing.map((p) => ({ ...p })),
     size: () => standing.length,
     holdsAny: (id) => holds.has(id),
+    ownOf: (id) => owned.get(id) ?? null,
+    keepOwn: (id, item) => { if (item) owned.set(id, item); },
+    takeOwn: (id) => { const it = owned.get(id) ?? null; owned.delete(id); return it; },
+    ownIds: () => [...owned.keys()],
   };
   const names = new Map();
   const slots = [];
   const said = [];
   const w = { gold, paid: [], credited: [] };
   const hand = { stick: null };
+  const pack = [];   // DECOR2a: the items carried - packTake moves one of a stack out, as a drop does
   const rays = [];   // each eye ray's bucket filter (player/collider.js raycastHit's fourth), or null
   let visit = 1;
   let cursorOff = 0;
@@ -150,7 +157,7 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
       isTownBlock: (t) => t === TOWN, modelRadius: radius, flatRadius: async () => 0.2,
     }),
     getGpuMesh: async (id) => ({ gpu: id }), cpuModels,
-    getTexture: async () => ({ recordCount: 30, getSize: () => ({ width: 16, height: 32 }), getScale: () => ({ width: 0, height: 0 }) }),
+    getTexture: async () => ({ recordCount: 64, getSize: () => ({ width: 16, height: 32 }), getScale: () => ({ width: 0, height: 0 }) }),
     uploadRecord() {}, iconUrl: async () => null,
     collider: () => ({ raycastHit: (e, d, max, filter = null) => { rays.push(filter); return { dist: 2 }; } }), origin: () => [10, 0, 10], eye: () => [10, 1.6, 10],
     stick: () => hand.stick,
@@ -158,13 +165,22 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
     locked: () => state.locked, cursorOff: () => { cursorOff++; },
     wallet: () => ({ gold: w.gold, pay: (n) => { w.paid.push(n); w.gold -= n; }, credit: (n) => { w.credited.push(n); w.gold += n; } }),
     homeDecor, character: () => 'char-me', visit: () => visit,
+    pack: () => pack, identity: () => null, packHas: (item) => pack.includes(item),
+    packTake: (item) => {
+      const i = pack.indexOf(item);
+      if (i < 0) return null;
+      if ((item.stackCount ?? 1) > 1) { item.stackCount -= 1; return { ...item, stackCount: 1 }; }
+      pack.splice(i, 1);
+      return item;
+    },
+    packGive: (item) => { pack.push(item); },
     openSlot: (o) => slots.push(['open', o]), closeSlot: (o) => slots.push(['close', o]),
     say: (l) => said.push(l), refusal: (word) => `refused: ${word}`, now: () => 0,
   });
   const cam = { pos: [10, 1.6, 10], yaw: 0, pitch: 0 };
   const frame = (over = {}) => tool.frame({ dt: 0.1, cam, overlayUp: false, interior: true, ...over });
   return {
-    tool, doc, win, entries, standing, holds, hand, rays, names, slots, said, w, cam, frame, draws, state,
+    tool, doc, win, entries, standing, holds, owned, hand, rays, pack, names, slots, said, w, cam, frame, draws, state,
     setVisit: (v) => { visit = v; }, cursorOffs: () => cursorOff,
   };
 }

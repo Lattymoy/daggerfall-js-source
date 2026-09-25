@@ -87,11 +87,11 @@ test('P1: only loot, doors and the player\'s own piles are cached - enemies are 
   // since HT1 and DROPPED here, because the store kept three keys) and the camps
   // TERRAIN-SCALE1: and the entry names what its positions are measured from, and the ground they stood on
   // DECOR1c: and what an owner placed in the offline house or ship, and what its storage pieces hold
-  assert.deepEqual(Object.keys(back).sort(), ['actionDoors', 'camps', 'decor', 'decorItems', 'droppedPiles', 'droppedTorches', 'frame', 'lootContainers', 'terrainScale']);
+  assert.deepEqual(Object.keys(back).sort(), ['actionDoors', 'camps', 'decor', 'decorItems', 'decorOwn', 'droppedPiles', 'droppedTorches', 'frame', 'lootContainers', 'terrainScale']);   // DECOR2a: the owner's own things, the save's
   assert.equal(back.enemies, undefined, 'an enemy list handed in is not carried');
   // an empty cache call is legal and stores empty arrays
   cacheScene(c, s);
-  assert.deepEqual(restoreCachedScene(c, s), { frame: null, terrainScale: null, lootContainers: [], actionDoors: [], droppedPiles: [], droppedTorches: [], camps: [], decor: [], decorItems: {} });   // SURV3: five arrays now; TERRAIN-SCALE1: no frame or scale named
+  assert.deepEqual(restoreCachedScene(c, s), { frame: null, terrainScale: null, lootContainers: [], actionDoors: [], droppedPiles: [], droppedTorches: [], camps: [], decor: [], decorItems: {}, decorOwn: {} });   // SURV3: five arrays now; TERRAIN-SCALE1: no frame or scale named; DECOR2a: no own things
 });
 
 test('AUDIT 58 (ID1): the player\'s DROPPED PILES ride the store, the save and the world move', () => {

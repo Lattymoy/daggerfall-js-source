@@ -166,8 +166,9 @@ export function createDecorRoom({
     for (const p of pieces ?? []) put(p);
   }
 
-  /** The room goes: every piece unmounted, what they hold and the kept record forgotten (the scene already wrote them). */
-  function destroyAll() { set([]); held = new Map(); kept = []; }
+  /** The room goes: every piece unmounted, what they hold, the owner's own items and the kept record forgotten (the
+   *  scene already wrote them). */
+  function destroyAll() { set([]); held = new Map(); own = new Map(); kept = []; }
 
   /** The models, in the host's interior world pass - the room's texture remap, so a piece wears the climate the
    *  room's own furniture wears. */
@@ -227,6 +228,35 @@ export function createDecorRoom({
     for (const [id, list] of Object.entries(record)) if (Array.isArray(list)) held.set(id, list.map((it) => ({ ...it })));
   }
 
+  // DECOR2a: THE OWNER'S OWN ITEMS STANDING HERE, by the piece's id - the save's, always (an online home's piece is
+  // the service's, the thing itself the owner's), restored with the room's scene and written back with it; the item
+  // leaves this record only to go back into the pack.
+  /** @type {Map<string, any>} */
+  let own = new Map();
+  /** The item a piece of the owner's own is, or null. */
+  const ownOf = (id) => own.get(id) ?? null;
+  /** A piece is the owner's own item - kept here while it stands. */
+  function keepOwn(id, item) { if (item) own.set(id, item); }
+  /** The item taken back out of the record (for the pack), or null. */
+  function takeOwn(id) {
+    const item = own.get(id) ?? null;
+    own.delete(id);
+    return item;
+  }
+  /** The scene's record of the owner's own items - copies. */
+  function ownSnapshot() {
+    const out = {};
+    for (const [id, item] of own) out[id] = { ...item };
+    return out;
+  }
+  /** Restore the owner's own items from a scene's record (a record written before DECOR2 holds none). */
+  function setOwn(record) {
+    own = new Map();
+    if (!record || typeof record !== 'object') return;
+    for (const [id, item] of Object.entries(record)) if (item && typeof item === 'object') own.set(id, { ...item });
+  }
+  const ownIds = () => [...own.keys()];
+
   // THE SAVE'S PIECES FOR A ROOM STANDING ANOTHER'S. An online home is the service's room (HOME1: "Online, the server's
   // list is the only truth"), and the same building can be this character's own OFFLINE house, whose pieces are this
   // save's under the very scene a visitor's visit writes: held here untouched and written back as they came, so a
@@ -240,5 +270,6 @@ export function createDecorRoom({
   return {
     put, remove, set, destroyAll, draw, batches, lights, targets, pieceOf, list, size: () => standing.size,
     itemsOf, holdsAny, itemsSnapshot, setItems, keep, kept: () => kept,
+    ownOf, keepOwn, takeOwn, ownSnapshot, setOwn, ownIds,
   };
 }

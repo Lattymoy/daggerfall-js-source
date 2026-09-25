@@ -81,10 +81,10 @@ test('DECOR1e the panel\'s room view: two tabs - the catalogue and "In this room
   const card = one(root, 'dfdecor-card');
   const tabs = () => all(one(root, 'dfdecor-tabs'), 'dfdecor-chip').map((t) => [t.textContent, t.getAttribute('aria-pressed')]);
   assert.equal(panel.mode(), 'catalogue');
-  assert.deepEqual(tabs(), [['Catalogue', 'true'], ['In this room (2)', 'false']]);
+  assert.deepEqual(tabs(), [['Catalogue', 'true'], ['In this room (2)', 'false'], ['Your things (0)', 'false']], 'DECOR2a: the pack\'s own list the third');
   roomTab(root).fire('click');
   assert.deepEqual([panel.mode(), card.dataset.mode], ['room', 'room'], 'the card wears the view (the filters and Place hidden by it)');
-  assert.deepEqual(tabs(), [['Catalogue', 'false'], ['In this room (2)', 'true']]);
+  assert.deepEqual(tabs(), [['Catalogue', 'false'], ['In this room (2)', 'true'], ['Your things (0)', 'false']]);
   const line = (r) => [one(r, 'dfdecor-row-name').textContent, one(r, 'dfdecor-row-sub').textContent, one(r, 'dfdecor-row-price').textContent];
   assert.deepEqual(rows(root).map((r) => r.dataset.key), ['c1', 'k1'], 'the room\'s pieces, not the catalogue');
   assert.deepEqual(rows(root).map(line), [
@@ -484,7 +484,7 @@ test('DECOR1e a room sold takes its placed pieces: online, the service\'s count 
   assert.deepEqual(credited, [homeRefund(42000) + 120], 'one credit, the home\'s share and the pieces\' half');
   assert.equal(homeSoldLine(25500, 120), 'You sold your home. 25620 gold went to this region\'s bank account, 120 of it for its placed pieces.');
   assert.equal(homeSoldLine(25500), 'You sold your home. 25500 gold went to this region\'s bank account.', 'none placed: the sentence it always was');
-  assert.equal(homeSaleLines(25500)[2], 'Its placed pieces go too, for half of what they cost.');
+  assert.equal(homeSaleLines(25500)[2], 'Its placed pieces go too, for half of what they cost; your own things come back to your pack.', 'DECOR2a: and the owner\'s own things');
   // offline: the scene's pieces, taken once
   const p = (id, paid) => ({ id, model: 41000, flat: null, pos: [0, 0, 0], rot: [0, 0, 0], scale: 1, light: null, storage: true, paid });
   const cache = createSceneCache();
@@ -496,9 +496,9 @@ test('DECOR1e a room sold takes its placed pieces: online, the service\'s count 
   assert.deepEqual([takeSceneDecor(cache, 'Nowhere'), decorSaleBack(null), decorSaleBack([{ paid: -4 }, {}])], [[], 0, 0]);
   // the host's hooks
   const m = src('src/scenes/worldModes.js');
-  assert.match(m, /function decorSold\(sceneName, region\) \{\n\s*const pieces = takeSceneDecor\(sceneCache\(\), sceneName\);\n\s*if \(!pieces\.length\) return 0;\n\s*const back = decorSaleBack\(pieces\);\n\s*const account = homeAccount\(region\);\n\s*if \(account && back > 0\) account\.accountGold \+= back;/);
+  assert.match(m, /const pieces = takeSceneDecor\(sceneCache\(\), sceneName\)\.filter\(\(p\) => !p\?\.item\);[^\n]*\n\s*if \(!pieces\.length\) return 0;\n\s*const back = decorSaleBack\(pieces\);\n\s*const account = homeAccount\(region\);\n\s*if \(account && back > 0\) account\.accountGold \+= back;/, 'DECOR2a: the bought pieces alone - the owner\'s own were never bought');
   assert.match(m, /removePermanentScene: \(mapId, k\) => \{ decorSold\(interiorSceneName\(mapId, k\), region\); removePermanentScene\(sceneCache\(\), interiorSceneName\(mapId, k\)\); \},/, 'the house: its pieces\' half before its scene is dropped');
   assert.match(m, /removePermanentScene: \(ship\) => \{\n\s*decorSold\(interiorSceneName\(SHIP_INTERIOR_MAP_IDS\[ship\], BUILDING_KEY_0\), bankRegion\(\)\);/, 'the ship: its interior\'s');
-  assert.match(m, /townTalk\?\.say\?\.\(homeSoldLine\(r\.refund, r\.decorBack\)\);/, 'the online sale says both');
+  assert.match(m, /townTalk\?\.say\?\.\(homeSoldLine\(r\.refund, r\.decorBack\) \+ /, 'the online sale says both');
   assert.match(m, /credit: \(n\) => \{ purse\.addGold\(n\); \},/, 'a removal\'s or a shrink\'s half into the purse');
 });

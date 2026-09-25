@@ -211,6 +211,37 @@ test('DECOR1e a home sold takes its placed pieces, and its release answers how m
   assert.deepEqual((await call('POST', '/v1/homes/release', HOME, aldric)).body, { ok: true, price: 42000, decorCount: 0, decorBack: 0 }, 'none placed, none back');
 });
 
+test('DECOR2a an own item\'s piece in an online home: the service keeps WHICH item it is - the game\'s own numbers, beside what the piece is - read back by every visitor and never rewritten by a move; an own piece that says it cost gold or holds things is refused at the placing and at a move (the move leaves it as it stood), as is a bad descriptor or one on a model; a release counts it and owes nothing for it (mutants: the descriptor dropped, a move rewriting it, a cost or a hold moved onto it)', async (t) => {
+  t.mock.method(Date, 'now', () => T0 * 1000);
+  const { env, call, registered } = await stand();
+  const aldric = await registered('Aldric');
+  const mara = await registered('Mara');
+  assert.equal((await call('POST', '/v1/homes/claim', home(), aldric)).status, 200);
+  const at = (extra = {}) => ({ ...HOME, character: 'char-aldric', ...extra });
+  const statue = piece({ id: 'o1', model: null, flat: [202, 5], item: { t: 265, g: 10, m: null, v: null, a: null, p: null }, paid: 0 });
+  const r1 = await call('POST', '/v1/homes/decor/place', at({ piece: statue }), aldric);
+  assert.deepEqual([r1.status, r1.body], [200, { ok: true, piece: statue }]);
+  assert.deepEqual((await call('POST', '/v1/homes/decor', HOME, mara)).body.pieces, [statue], 'every visitor reads which item it is');
+  const moved = await call('POST', '/v1/homes/decor/move', at({ id: 'o1', place: { ...statue, pos: [2, 0, 2], item: { t: 0, g: 14 } } }), aldric);
+  assert.deepEqual(moved.body, { ok: true, piece: { ...statue, pos: [2, 0, 2] } }, 'where it stands moves; which item it is never does');
+  const costly = await call('POST', '/v1/homes/decor/move', at({ id: 'o1', place: { ...statue, paid: 40 } }), aldric);
+  assert.deepEqual([costly.status, costly.body.error], [400, 'bad-decor'], 'an own piece never comes to cost gold');
+  const holding = await call('POST', '/v1/homes/decor/move', at({ id: 'o1', place: { ...statue, storage: true } }), aldric);
+  assert.deepEqual([holding.status, holding.body.error], [400, 'bad-decor'], 'nor to hold things');
+  assert.deepEqual((await call('POST', '/v1/homes/decor', HOME, mara)).body.pieces, [{ ...statue, pos: [2, 0, 2] }], 'and stands as it stood');
+  assert.equal((await call('POST', '/v1/homes/decor/move', at({ id: 'nope', place: { ...statue, paid: 40 } }), aldric)).body.error, 'no-decor');
+  const bad = [
+    piece({ id: 'o2', model: null, flat: [202, 5], item: { t: 265 }, paid: 40 }),
+    piece({ id: 'o3', model: null, flat: [202, 5], item: { t: -1 }, paid: 0 }),
+    piece({ id: 'o4', item: { t: 265 }, paid: 0 }),
+  ];
+  for (const b of bad) assert.equal((await call('POST', '/v1/homes/decor/place', at({ piece: b }), aldric)).body.error, 'bad-decor', b.id);
+  assert.equal((await call('POST', '/v1/homes/decor/place', at({ piece: piece({ id: 'c1', paid: 181 }) }), aldric)).status, 200);
+  const sold = await call('POST', '/v1/homes/release', HOME, aldric);
+  assert.deepEqual(sold.body, { ok: true, price: 42000, decorCount: 2, decorBack: 90 }, 'the own piece counted, and nothing owed for it');
+  assert.equal(env.DB._raw.prepare('SELECT COUNT(*) AS n FROM home_decor').get().n, 0);
+});
+
 test('DECOR1 the client\'s door: every call rides the one session as a Bearer header to its route, and no session is a word, not a throw; every refusal the service can say has a sentence; the deploy bundles the law and its smoke reads a room and refuses a guest (mutants: a route misspelt, the secret in the body)', async () => {
   const seen = [];
   const fetch = async (url, init) => { seen.push({ url, init }); return { ok: true, status: 200, json: async () => ({ ok: true }) }; };
@@ -448,7 +479,7 @@ test('DECOR1c the room\'s host (worldModes.js): one pool on the room\'s own coll
   assert.match(m, /const placed = \(data\.decor \?\? \[\]\)\.map\(decorPieceOf\)\.filter\(Boolean\);\n    if \(interiorHome\) interiorDecor\.keep\(placed\); else interiorDecor\.set\(placed\);\n    interiorDecor\.setItems\(data\.decorItems\);/);
   assert.match(m, /mountQuestResources\(\);\n      loadHomeDecor\(\);/);
   assert.ok(m.indexOf('loadHomeDecor();   // DECOR1c') > m.indexOf('restoreInteriorScene();\n      // AUDIT 63 F22'), 'after the restore, which latched the home and kept the save\'s record');
-  assert.match(m, /const visit = _decorVisit;\n    Promise\.resolve\(host\.homeDecor\.list\(homeTownOf\(b\), b\.buildingKey\)\)\.then\(\(r\) => \{\n      if \(visit !== _decorVisit \|\| interiorBuilding !== b\) return;\n      if \(r\?\.ok && Array\.isArray\(r\.data\?\.pieces\)\) interiorDecor\.set\(r\.data\.pieces\.map\(decorPieceOf\)\.filter\(Boolean\)\);/);
+  assert.match(m, /const visit = _decorVisit;\n    Promise\.resolve\(host\.homeDecor\.list\(homeTownOf\(b\), b\.buildingKey\)\)\.then\(\(r\) => \{\n      if \(visit !== _decorVisit \|\| interiorBuilding !== b\) return;\n      if \(!r\?\.ok \|\| !Array\.isArray\(r\.data\?\.pieces\)\) return;\n      const pieces = r\.data\.pieces\.map\(decorPieceOf\)\.filter\(Boolean\);\n      interiorDecor\.set\(pieces\);/);   // DECOR2a: the pieces kept for the strays' reckoning
   assert.match(m, /interiorArrows\.draw\(renderer, interiorCtx\.texRemap\);\n    interiorDecor\.draw\(renderer, interiorCtx\.texRemap\);/);
   assert.match(m, /const _decorFlats = \[\.\.\.interiorDecor\.batches\(\), \.\.\.decorTool\.batches\(\)\];[^\n]*\n      if \(_decorFlats\.length\) renderer\.drawBillboards\(_decorFlats, camRight, UP_Y\);/);
   assert.match(m, /targets\.push\(\.\.\.interiorDecor\.targets\(\)\);/);

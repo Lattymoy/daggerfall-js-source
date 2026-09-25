@@ -115,19 +115,23 @@ export function collectDecor(dfBlocks, into = new Map()) {
  * house container does), the light it carries by default (a TEXTURE.210 light does, with Daggerfall's own settings),
  * and `radius` null until the host measures it. Ordered by kind, then most common first.
  */
+/** The light a flat carries by default - a TEXTURE.210 light's, with Daggerfall's own settings, within the piece
+ *  law's bounds - or null (any other flat). DECOR2a: a candle of the player's own is lit as the catalogue's is. */
+export function decorFlatLight(flat) {
+  if (!Array.isArray(flat) || flat[0] !== LIGHTS_ARCHIVE) return null;
+  const p = interiorLightProperties(flat[1]);
+  return {
+    color: (p.color ?? [1, 0.95, 0.8]).map((v) => Math.min(1, Math.max(0, v))),
+    range: Math.min(30, Math.max(1, p.range)),
+    intensity: Math.min(4, Math.max(0.05, p.intensity)),
+  };
+}
+
 export function decorCatalogue(collected) {
   const entries = [];
   for (const [key, c] of collected ?? []) {
     const kind = c.model != null ? modelKind(c.model) : flatKind(c.flat[0]);
-    let light = null;
-    if (c.flat && c.flat[0] === LIGHTS_ARCHIVE) {
-      const p = interiorLightProperties(c.flat[1]);
-      light = {
-        color: (p.color ?? [1, 0.95, 0.8]).map((v) => Math.min(1, Math.max(0, v))),
-        range: Math.min(30, Math.max(1, p.range)),
-        intensity: Math.min(4, Math.max(0.05, p.intensity)),
-      };
-    }
+    const light = c.flat ? decorFlatLight(c.flat) : null;
     const own = c.model != null
       ? (kind === 'storage' ? HOUSE_CONTAINER_NAMES[c.model] : kind === 'bed' ? 'Bed' : null)
       : (kind === 'light' ? LIGHT_NAMES[c.flat[1]] : null);

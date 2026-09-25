@@ -36,15 +36,21 @@ import { DECOR_CAP, DECOR_ID_RE, DECOR_OPS_MAX, DECOR_OPS_WINDOW_S, decorPieceOf
 const OWNS = 'EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND char_id = ?)';
 const placeJson = ({ pos, rot, scale, light, storage, paid }) => JSON.stringify({ pos, rot, scale, light, storage, paid });
 
-/** A stored row as a piece - projected again on the way out, so a row the law would refuse is never handed out. */
+/** A stored row as a piece - projected again on the way out, so a row the law would refuse is never handed out.
+ *  DECOR2a: `item` (migration 0012) is the owner's own item's descriptor, or NULL. */
 function pieceOfRow(row) {
   let place = null;
+  let item = null;
   try { place = JSON.parse(row.place); } catch { place = null; }
   if (!place || typeof place !== 'object') return null;
+  if (row.item != null) {
+    try { item = JSON.parse(row.item); } catch { return null; }
+  }
   return decorPieceOf({
     ...place, id: row.id,
     model: row.model ?? null,
     flat: row.model == null ? [row.flat_archive, row.flat_record] : null,
+    item,
   });
 }
 
@@ -80,9 +86,9 @@ export async function placeDecor(ctx, player, { mapId, buildingKey, character, p
   const p = decorPieceOf(piece);
   if (!p) return { error: 'bad-decor' };
   const { db, nowS } = ctx;
-  const r = await db.prepare(`INSERT OR IGNORE INTO home_decor (map_id, building_key, id, model, flat_archive, flat_record, place, placed_at)
-    SELECT ?, ?, ?, ?, ?, ?, ?, ? WHERE ${OWNS} AND (SELECT COUNT(*) FROM home_decor WHERE map_id = ? AND building_key = ?) < ?`)
-    .bind(mapId, buildingKey, p.id, p.model, p.flat?.[0] ?? null, p.flat?.[1] ?? null, placeJson(p), nowS,
+  const r = await db.prepare(`INSERT OR IGNORE INTO home_decor (map_id, building_key, id, model, flat_archive, flat_record, place, placed_at, item)
+    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${OWNS} AND (SELECT COUNT(*) FROM home_decor WHERE map_id = ? AND building_key = ?) < ?`)
+    .bind(mapId, buildingKey, p.id, p.model, p.flat?.[0] ?? null, p.flat?.[1] ?? null, placeJson(p), nowS, p.item ? JSON.stringify(p.item) : null,
       mapId, buildingKey, player.id, character, mapId, buildingKey, DECOR_CAP).run();
   if (r?.meta?.changes) return { ok: true, piece: p };
   const owns = await db.prepare(`SELECT ${OWNS} AS owns`).bind(mapId, buildingKey, player.id, character).first();
@@ -107,11 +113,18 @@ export async function moveDecor(ctx, player, { mapId, buildingKey, character, id
   const pl = decorPlaceOf(place);
   if (!pl) return { error: 'bad-decor' };
   const { db } = ctx;
+  const row = await db.prepare(`SELECT * FROM home_decor WHERE map_id = ? AND building_key = ? AND id = ? AND ${OWNS}`)
+    .bind(mapId, buildingKey, id, mapId, buildingKey, player.id, character).first();
+  if (!row) return { error: 'no-decor' };
+  // DECOR2a: the moved piece must be one the law takes, as a placed one must - the owner's own item never comes to cost
+  // gold or hold things (a piece the law refuses reads as nothing, and its cost would be owed at a sale)
+  const was = pieceOfRow(row);
+  if (!was || !decorPieceOf({ ...was, ...pl })) return { error: 'bad-decor' };
   const r = await db.prepare(`UPDATE home_decor SET place = ? WHERE map_id = ? AND building_key = ? AND id = ? AND ${OWNS}`)
     .bind(placeJson(pl), mapId, buildingKey, id, mapId, buildingKey, player.id, character).run();
   if (!r?.meta?.changes) return { error: 'no-decor' };
-  const row = await db.prepare('SELECT * FROM home_decor WHERE map_id = ? AND building_key = ? AND id = ?').bind(mapId, buildingKey, id).first();
-  const piece = row ? pieceOfRow(row) : null;
+  const now = await db.prepare('SELECT * FROM home_decor WHERE map_id = ? AND building_key = ? AND id = ?').bind(mapId, buildingKey, id).first();
+  const piece = now ? pieceOfRow(now) : null;
   return piece ? { ok: true, piece } : { error: 'no-decor' };
 }
 

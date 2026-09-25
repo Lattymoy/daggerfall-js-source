@@ -58,14 +58,38 @@ const round = (v, places) => {
 };
 const triple = (a, max) => Array.isArray(a) && a.length === 3 && a.every((v) => fin(v) && Math.abs(v) <= max);
 
-/** WHAT a piece is - `{ model, flat: null }` or `{ model: null, flat: [archive, record] }` - or null. */
+/** DECOR2a: item template ids run below ten thousand (Daggerfall's 288, the port's own above them). */
+export const DECOR_TEMPLATE_MAX = 9_999;
+
+/**
+ * DECOR2a: THE OWNER'S OWN ITEM a piece shows - never free text, only the game's own numbers, which every client names
+ * and draws from its own data: the template `t`, and what makes it that item - its group `g` (Daggerfall's ItemGroups
+ * number: a plant's name hangs on it), its material `m`, variant `v`, artifact `a` and message `p` (a painting's
+ * picture, a book's title) - each null when it has none. Or null.
+ */
+export function decorItemOf(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const { t, g = null, m = null, v = null, a = null, p = null } = raw;
+  const small = (x, max) => x === null || (Number.isSafeInteger(x) && x >= 0 && x <= max);
+  if (!Number.isSafeInteger(t) || t < 0 || t > DECOR_TEMPLATE_MAX) return null;
+  if (!small(g, 63) || !small(m, 0xffff) || !small(v, 255) || !small(a, 255) || !small(p, 0xffff)) return null;
+  return { t, g, m, v, a, p };
+}
+
+/** WHAT a piece is - `{ model, flat: null }` or `{ model: null, flat: [archive, record] }` - or null. DECOR2a: a flat
+ *  may be the owner's own item, `item` its descriptor (decorItemOf), carried only when it is one. */
 export function decorWhatOf(raw) {
   const model = raw?.model ?? null;
   const flat = raw?.flat ?? null;
-  if (flat === null && Number.isSafeInteger(model) && model > 0 && model <= DECOR_MODEL_MAX) return { model, flat: null };
+  const item = raw?.item ?? null;
+  if (flat === null && item === null && Number.isSafeInteger(model) && model > 0 && model <= DECOR_MODEL_MAX) return { model, flat: null };
   if (model === null && Array.isArray(flat) && flat.length === 2
     && Number.isSafeInteger(flat[0]) && flat[0] >= 0 && flat[0] <= DECOR_ARCHIVE_MAX
-    && Number.isSafeInteger(flat[1]) && flat[1] >= 0 && flat[1] <= DECOR_RECORD_MAX) return { model: null, flat: [flat[0], flat[1]] };
+    && Number.isSafeInteger(flat[1]) && flat[1] >= 0 && flat[1] <= DECOR_RECORD_MAX) {
+    if (item === null) return { model: null, flat: [flat[0], flat[1]] };
+    const own = decorItemOf(item);
+    return own ? { model: null, flat: [flat[0], flat[1]], item: own } : null;
+  }
   return null;
 }
 
@@ -95,12 +119,15 @@ export function decorPlaceOf(raw) {
   return { pos: pos.map((v) => round(v, 3)), rot: rot.map((v) => round(v, 1)), scale: round(scale, 3), light: lit, storage, paid };
 }
 
-/** A WHOLE piece - its id, what it is, where it stands - projected, or null. */
+/** A WHOLE piece - its id, what it is, where it stands - projected, or null. DECOR2a: the owner's own item costs
+ *  nothing to stand (Mac: "Free and can be picked back up") and holds nothing - it IS a thing, not a place to keep
+ *  things - so one that says it cost gold (half of it would come back at a sale) or holds things is no piece. */
 export function decorPieceOf(raw) {
   if (typeof raw?.id !== 'string' || !DECOR_ID_RE.test(raw.id)) return null;
   const what = decorWhatOf(raw);
   const place = decorPlaceOf(raw);
-  return what && place ? { id: raw.id, ...what, ...place } : null;
+  if (!what || !place || (what.item && (place.paid !== 0 || place.storage))) return null;
+  return { id: raw.id, ...what, ...place };
 }
 
 /** THE PRICE: by the piece's size - its radius in metres, times its scale - bounded; 0 for a size nobody can read. */

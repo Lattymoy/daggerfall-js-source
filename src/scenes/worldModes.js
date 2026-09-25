@@ -217,7 +217,9 @@ import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass 
 import { preloadMessageBoxArt } from '../ui/messageBox.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
-import { questLetterName } from '../systems/itemInfo.js';   // ResolveItemLongName's quest-letter arm
+import { questLetterName, itemLongName } from '../systems/itemInfo.js';   // ResolveItemLongName's quest-letter arm; DECOR2a: an own item's name
+import { applyTransfer } from '../systems/itemTransfer.js';   // DECOR2a: one's own item leaves the pack as a drop does
+import { decorItemName, decorOwnBackLine } from '../systems/decorItems.js';   // DECOR2a: an own item's piece named from its numbers
 import { goldAmount, totalGoldAmount, deductGold, addGold, setCrimeCommitted, CRIMES } from '../systems/court.js';   // PT1: the ONE crime write (V4's SuppressCrime gate rides it)
 // Q4-v: the quest layer's host wiring. The BRIDGE (scenes/questBridge.js)
 // is created by the outer host (world.js) and rides in; this machine owns
@@ -273,6 +275,7 @@ import {
   createSceneCache, cacheScene, restoreCachedScene,
   interiorSceneName, worldSceneName, LOOT_CONTAINER_TYPES, containsPermanentScene, addPermanentScene, removePermanentScene,
   takeSceneDecor,   // DECOR1e: a sold room's placed pieces
+  takeSceneOwn,     // DECOR2a: and the owner's own things that stood in it
 } from '../systems/sceneCache.js';
 import { WORLD_CONTEXT } from '../systems/teleportAnchor.js';   // A10: SetAnchor's world context, one enum for the three hosts
 // S40: resting where the player has a claim - the rented-room finder
@@ -673,12 +676,15 @@ export function createWorldModes(host) {
     doc: typeof document !== 'undefined' ? document : null, win: typeof window !== 'undefined' ? window : null,
     canvas, touch: isTouchDevice(), renderer, pool: interiorDecor, names: decorNames,
     room: () => decorRoomHere(), scanDeps: () => decorScanDeps(),
-    getGpuMesh, cpuModels, getTexture, uploadRecord, iconUrl: (a, r) => loadIcon(a, r, { scale: 1 }),
+    getGpuMesh, cpuModels, getTexture, uploadRecord, iconUrl: (a, r, dye = null) => loadIcon(a, r, { scale: 1, dye }),
     collider: () => interiorCtx?.collider ?? null, origin: () => buildingOrigin(), eye: () => cam.pos,
     stick: () => host.stickAxes?.() ?? null,   // DECOR1e: the finger's or the pad's stick, analog - it flies the eye
     actionOf: (e) => actionOf(e, keys),
     locked: () => typeof document !== 'undefined' && document.pointerLockElement === canvas, cursorOff: () => setCursorActive(false),
     wallet: () => decorWallet(), homeDecor: host.homeDecor ?? null, character: () => host.decorCharacter?.() ?? null,
+    // DECOR2a: the player's own things - what is carried, one of it out, one back
+    pack: () => playerEntity.items ?? [], identity: () => playerEntity,
+    packHas: (item) => (playerEntity.items ?? []).includes(item), packTake: (item) => decorPackTake(item), packGive: (item) => decorPackGive(item),
     visit: () => _decorVisit,
     openSlot: (o) => { interiorOverlay = o; }, closeSlot: (o) => { if (interiorOverlay === o) interiorOverlay = null; },
     say, refusal: (w) => accountRefusalText(w),
@@ -2018,6 +2024,11 @@ export function createWorldModes(host) {
       if (key.startsWith('decor:')) {
         const piece = interiorDecor.pieceOf(decorIdOfKey(key));
         if (!piece) return null;
+        if (piece.item) {   // DECOR2a: an own thing - the owner's own record names it in full, anyone else its numbers
+          const kept = interiorDecor.ownOf(piece.id);
+          const n = (kept ? itemLongName(kept) : null) || decorItemName(piece.item);
+          return n ? { title: n } : null;
+        }
         const t = decorNames.get(decorKey(piece)) ?? (piece.storage && piece.model != null ? houseContainerName(piece.model) : null);
         return t ? { title: t } : null;
       }
@@ -3128,7 +3139,8 @@ export function createWorldModes(host) {
     // own either way
     const decor = interiorHome ? interiorDecor.kept() : interiorDecor.list();
     const decorItems = interiorDecor.itemsSnapshot();
-    return { lootContainers, actionDoors, droppedPiles, droppedTorches, decor, decorItems, frame: 'building', terrainScale: STREAMING_TERRAIN_SCALE };
+    const decorOwn = interiorDecor.ownSnapshot();   // DECOR2a: the owner's own things standing here - the save's, in every room
+    return { lootContainers, actionDoors, droppedPiles, droppedTorches, decor, decorItems, decorOwn, frame: 'building', terrainScale: STREAMING_TERRAIN_SCALE };
   }
   /** TERRAIN-SCALE1: the entered building's origin in this visit's scene frame - the translation of the matrix the
    *  interior is parented at (P8: every door of a building carries the building's own matrix). */
@@ -3211,6 +3223,7 @@ export function createWorldModes(host) {
     const placed = (data.decor ?? []).map(decorPieceOf).filter(Boolean);
     if (interiorHome) interiorDecor.keep(placed); else interiorDecor.set(placed);
     interiorDecor.setItems(data.decorItems);
+    interiorDecor.setOwn(data.decorOwn);   // DECOR2a
   }
 
   /** DECOR1c: WHO OWNS THE ROOM'S PLACED PIECES - the character whose online home it is; else (offline, or a building
@@ -3268,13 +3281,42 @@ export function createWorldModes(host) {
   /** DECOR1e: A SOLD HOUSE'S OR SHIP'S PLACED PIECES (the save's - scene cache) go with it, and half of what each
    *  cost comes back into the account the sale pays into, as removing each would give; said, when there were any. */
   function decorSold(sceneName, region) {
-    const pieces = takeSceneDecor(sceneCache(), sceneName);
+    const own = takeSceneOwn(sceneCache(), sceneName);   // DECOR2a: Mac - "Back to pack"
+    for (const item of own) decorPackGive(item);
+    if (own.length) say(decorOwnBackLine(own.length));
+    const pieces = takeSceneDecor(sceneCache(), sceneName).filter((p) => !p?.item);   // the owner's own were never bought
     if (!pieces.length) return 0;
     const back = decorSaleBack(pieces);
     const account = homeAccount(region);
     if (account && back > 0) account.accountGold += back;
     say(`Its ${pieces.length} placed piece${pieces.length === 1 ? '' : 's'} went with it: ${back} gold to this region's bank account.`);
     return back;
+  }
+  /** DECOR2a: ONE OF THE PLAYER'S OWN THINGS OUT OF THE PACK, to stand in a room - one of a stack, moved as a drop
+   *  moves it (itemTransfer.js applyTransfer: a lit torch stops lighting the player, a stack splits one off) - or null
+   *  when it is no longer carried. */
+  function decorPackTake(item) {
+    const pack = playerEntity.items ?? [];
+    if (!pack.includes(item)) return null;
+    return applyTransfer(item, { ok: true, amount: 1 }, pack, [], { entity: playerEntity, fromLocal: true }) ?? null;
+  }
+  /** DECOR2a: one of the player's own things back into the pack - taken down, or its room sold. */
+  function decorPackGive(item) {
+    playerEntity.items ??= [];
+    addItem(playerEntity.items, item);
+  }
+  /** DECOR2a: THE OWNER'S OWN THINGS THE ONLINE HOME NO LONGER STANDS - taken down while the answer was out, or the
+   *  service's piece lost - back to the pack, and said; the thing is the save's, never the room's. */
+  function decorReturnStrays(pieces) {
+    const standing = new Set(pieces.map((p) => p.id));
+    let n = 0;
+    for (const id of interiorDecor.ownIds()) {
+      if (standing.has(id)) continue;
+      const item = interiorDecor.takeOwn(id);
+      if (item) { decorPackGive(item); n++; }
+    }
+    if (n) say(n === 1 ? 'One of your things no longer stood here, and came back to your pack.' : `${n} of your things no longer stood here, and came back to your pack.`);
+    return n;
   }
   /** DECOR1d: what a placement is paid with - the purse, then the region's bank account (HOME1's homes' own order);
    *  DECOR1e: and what a removal or a shrink gives back, into the purse. */
@@ -3297,7 +3339,10 @@ export function createWorldModes(host) {
     const visit = _decorVisit;
     Promise.resolve(host.homeDecor.list(homeTownOf(b), b.buildingKey)).then((r) => {
       if (visit !== _decorVisit || interiorBuilding !== b) return;
-      if (r?.ok && Array.isArray(r.data?.pieces)) interiorDecor.set(r.data.pieces.map(decorPieceOf).filter(Boolean));
+      if (!r?.ok || !Array.isArray(r.data?.pieces)) return;
+      const pieces = r.data.pieces.map(decorPieceOf).filter(Boolean);
+      interiorDecor.set(pieces);
+      if (interiorHome?.own) decorReturnStrays(pieces);   // DECOR2a: the owner's own things the room no longer stands
     }).catch(() => {});
   }
 
@@ -5634,8 +5679,10 @@ export function createWorldModes(host) {
       credit: (n) => { const a = homeAccount(region); if (a) a.accountGold += n; },
     });
     if (!r.ok) { townTalk?.say?.(accountRefusalText(r.error)); return; }
+    const own = takeSceneOwn(sceneCache(), homeSceneName(mapId, bd.buildingKey));   // DECOR2a: the owner's own things - "Back to pack"
+    for (const item of own) decorPackGive(item);
     removePermanentScene(sceneCache(), homeSceneName(mapId, bd.buildingKey));
-    townTalk?.say?.(homeSoldLine(r.refund, r.decorBack));   // DECOR1e: and its placed pieces' half
+    townTalk?.say?.(homeSoldLine(r.refund, r.decorBack) + (own.length ? ` ${decorOwnBackLine(own.length)}` : ''));   // DECOR1e: and its placed pieces' half
   }
 
   /** ROAD-B: PlayerActivate.AttemptExteriorDoorBash (:1056-1079) - THE

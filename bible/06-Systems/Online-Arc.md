@@ -4689,7 +4689,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6546` read, on one physical line:
+`src/scenes/worldModes.js:6593` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -8666,3 +8666,40 @@ removal through the tool over fakes of the host's seams, offline and online; the
 parts, and the host's wiring by source. `test/decor1.test.js` (+1) - the service's count and half-sum at a release.
 The decorator pins' fakes have one home, `test/decorFakes.mjs` (the DECOR1d rig's pool lacked the room's own
 list and remove - a fake that lies passes a pin production would fail). `tools/mutants/decor1e.json` (60).
+
+## DECOR2 (2026-09-25, Mac: "rare misc artifacts and other items in the world can also be placed, plus sold at shops not available in the world loot pool. Also want to add a way to display your weapons"; asked, one's own item is placed "Free and can be picked back up", a room sold with them standing gives them "Back to pack", the furnisher sells Daggerfall's own furniture "delivered", and weapons are "Mounted") - the player's own things
+
+Three parts: DECOR2a the player's own things in a room, DECOR2b the furnisher, DECOR2c weapons and shields mounted.
+
+**DECOR2a - your own things in a room.**
+
+- **What can stand** (`src/systems/decorItems.js`). An item from the pack stands in a room as the picture Daggerfall
+  itself gives it in the world - the item's own picture first (an artifact's, a potion's own bottle), else its
+  template's: a statue, a painting, a gem, a book, a plant, a lit candle or torch (lit as the catalogue's are). Never
+  anything worn, a quest's item, a summoned thing, a map, coin, a vehicle, a deed, a letter of credit or the spellbook
+  (set down in a home it would be out of reach wherever the player went); weapons and armour are mounted, not stood
+  (DECOR2c); and nothing without a picture of its own.
+- **The panel** gains a third tab, "Your things", listing what in the pack can stand, each with its pack picture and
+  its count, free. Place flies the same free camera; the bar says it is free. Set down, the thing leaves the pack -
+  one of a stack, moved as a drop moves it (a lit torch stops lighting the player) - and the panel is the pack's list
+  again. In the room's list it says it is yours, and its fourth change is "Take down": back into the pack, whole.
+  Moved, turned or resized it stays free; it never holds things.
+- **The thing itself** is the save's the whole time it stands: the room keeps it by the piece's id
+  (`scenes/decorRoom.js`) and the scene carries it (`systems/sceneCache.js` decorOwn), as what a storage piece holds
+  is kept. The piece is only how the room shows it. So an online home's piece carries no free text: `item` is the
+  game's own numbers for which item it is - its template, group, material, variant, artifact and message
+  (`src/net/decorLaw.js` decorItemOf) - which the account service keeps beside what the piece is
+  (`server-account/migrations/0012_decor_items.sql`; no move rewrites it) and every visitor's client names from its
+  own data: an artifact's own name, a book's title, a plant's northern or southern. The owner reads the thing's own
+  full name ("Ruby of Fire"). The law answers no piece for an own item that costs gold or holds things, and the
+  service's move checks the whole moved piece against it, so neither can be written in.
+- **Online** the service has the piece first, and only then does the thing leave the pack: refused, it never leaves;
+  the room left or the thing gone from the pack while the service was asked, the piece is taken back out. Taken down,
+  the service lets it go first. An owner walking into their online home gets back, into the pack, any thing whose
+  piece the room no longer stands (taken down while an answer was out, or lost); a visitor never touches the save's
+  own record for a building.
+- **Sold**: a home, house or ship sold gives the owner's own things back to the pack (Mac: "Back to pack") and pays
+  half back only for the bought pieces; the offer and the sale say so.
+
+Pinned: `test/decor2a.test.js` (7), `test/decor1.test.js` (+1: the service's half). `tools/mutants/decor2a.json`
+(59).

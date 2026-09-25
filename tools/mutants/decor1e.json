@@ -11,8 +11,8 @@
   {
     "name": "DECOR1e-a-full-piece-unheld",
     "file": "src/ui/decorPanel.js",
-    "old": "    storeBtn.disabled = !it || (it.piece.storage && it.holds);",
-    "new": "    storeBtn.disabled = !it;",
+    "old": "    storeBtn.disabled = !it || !!it.piece.item || (it.piece.storage && it.holds);",
+    "new": "    storeBtn.disabled = !it || !!it.piece.item;",
     "tests": [
       "test/decor1e.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "DECOR1e-the-move-from-the-default-turn",
     "file": "src/scenes/decorTool.js",
-    "old": "      if (m) p.placer = createDecorPlacer(p.entry, { radius: p.radius, box: m.box, from: p.editing });",
-    "new": "      if (m) p.placer = createDecorPlacer(p.entry, { radius: p.radius, box: m.box, from: null });",
+    "old": "      if (m) p.placer = createDecorPlacer(p.entry, { radius: p.radius, box: m.box, from: p.editing, free: p.free });",
+    "new": "      if (m) p.placer = createDecorPlacer(p.entry, { radius: p.radius, box: m.box, from: null, free: p.free });",
     "tests": [
       "test/decor1e.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "DECOR1e-the-bar-whole-price",
     "file": "src/scenes/decorTool.js",
-    "old": "priceText: edit ? decorEditText(edit) : null,",
-    "new": "priceText: null,",
+    "old": "priceText: edit ? decorEditText(edit) : p.free ? 'free' : null,",
+    "new": "priceText: p.free ? 'free' : null,",
     "tests": [
       "test/decor1e.test.js"
     ]

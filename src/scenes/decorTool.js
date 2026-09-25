@@ -46,13 +46,22 @@
 // too, and the body handed none of it), the bar's Fly up and Fly down
 // are held as Jump and Crouch are, and a tap or a swipe does nothing
 // under the flight - the bar's Place places.
+//
+// DECOR2a - THE PLAYER'S OWN THINGS. The panel's "Your things" lists
+// what in the pack can stand (systems/decorItems.js); one is set down
+// by the same flight, free, as its own world picture, and the thing
+// itself leaves the pack into the room's keeping (by the piece's id) -
+// online only once the account service has the piece. "Take down" puts
+// it back in the pack, whole. Moved or resized it stays free.
 // ═══════════════════════════════════════════════════════════════════
 
 import { createDecorScan } from '../systems/decorScan.js';
 import { createDecorPlacer, DECOR_TURN_STEP, DECOR_TURN_FINE, DECOR_RAISE_STEP, DECOR_RAISE_FINE } from '../systems/decorPlacer.js';
 import { createDecorButton, createDecorPanel, createDecorBar, decorWhyNot } from '../ui/decorPanel.js';
 import { DECOR_CAP, DECOR_PRICE_PER_METRE, decorPrice, decorPieceOf, decorRefund, decorRescale, mintDecorId } from '../net/decorLaw.js';
-import { decorKey, DECOR_KINDS } from '../systems/decorCatalogue.js';
+import { decorKey, DECOR_KINDS, decorFlatLight } from '../systems/decorCatalogue.js';
+import { decorOwnEntry, decorItemName } from '../systems/decorItems.js';
+import { itemLongName } from '../systems/itemInfo.js';
 import { decorMatrix, decorKeyOf } from './decorRoom.js';
 import { localAabb } from '../render/frustum.js';
 import { billboardSize } from '../world/rmbFlats.js';
@@ -74,8 +83,9 @@ export const DECOR_REFUSAL_MS = 4000;
 export const DECOR_DEFAULT_LIGHT = Object.freeze({ color: Object.freeze([1, 0.85, 0.6]), range: 6, intensity: 1 });
 
 /** DECOR1e: A PLACED PIECE'S CHANGE, priced - moved or turned it is free; resized, the law's difference (decorRescale:
- *  grown, paid; shrunk, half back). */
+ *  grown, paid; shrunk, half back). DECOR2a: the player's own item is free whatever is done to it. */
 export function decorEditPrice(radius, was, scale) {
+  if (was?.item) return { pay: 0, refund: 0, paid: 0 };
   return decorRescale(radius, was.paid, scale);
 }
 /** What a placed piece's change says on the bar: free, what it costs, or what comes back. */
@@ -146,6 +156,9 @@ export function eyePoint(collider, eye, dir, skip = null) {
  *                      (Enter), so the look can lock again when a placement begins
  *   now()            - the clock, milliseconds
  *   wallet()         - { gold, pay(n), credit(n) } - paid from the purse, then the region's bank; given back to the purse
+ *   pack(), identity() - DECOR2a: the items carried, and who carries them (a worn item's picture reads the body)
+ *   packHas(item), packTake(item), packGive(item) - whether it is still carried; one of it out of the pack (the
+ *                      moved record, as a drop moves it - or null); an item back in
  *   homeDecor, character() - the account service's door and the character that writes (online homes)
  *   visit()          - the host's visit token (a room left between a write and its answer is not stood in)
  *   openSlot(o), closeSlot(o) - put the panel in the room's overlay slot, and take it out
@@ -185,7 +198,10 @@ export function createDecorTool(deps) {
       doc, win,
       onPlace: (entry) => beginPlacing(entry),
       onClose: () => { const s = slot; slot = null; if (s) deps.closeSlot?.(s); },
-      thumbOf: (entry) => (entry.flat ? deps.iconUrl?.(entry.flat[0], entry.flat[1]) ?? null : null),
+      thumbOf: (entry) => {
+        if (entry.icon) return deps.iconUrl?.(entry.icon.archive, entry.icon.record, entry.icon.dye ?? null) ?? null;   // DECOR2a: the pack's own picture
+        return entry.flat ? deps.iconUrl?.(entry.flat[0], entry.flat[1]) ?? null : null;
+      },
       onMove: (piece) => beginPlacing(entryOf(piece), piece),
       onRemove: (piece) => { removePiece(piece); },
       onToggle: (piece, what) => { togglePiece(piece, what); },
@@ -213,8 +229,21 @@ export function createDecorTool(deps) {
     named = true;
   }
 
-  /** A placed piece's catalogue entry - or, until the catalogue is read, the piece's own shape as one. */
+  /** DECOR2a: a piece of the owner's own - named by the item the room keeps for it (the owner's own view), else by its
+   *  descriptor (what any client can name). */
+  const ownName = (piece) => {
+    const kept = pool.ownOf?.(piece.id) ?? null;
+    return (kept ? itemLongName(kept) : null) || decorItemName(piece.item) || DECOR_KINDS.decor;
+  };
+  /** A placed piece's catalogue entry - or, until the catalogue is read, the piece's own shape as one. DECOR2a: a piece
+   *  of the owner's own is its own entry, free. */
   function entryOf(piece) {
+    if (piece.item) {
+      return {
+        key: `own-piece:${piece.id}`, kind: 'own', model: null, flat: piece.flat, item: piece.item, name: ownName(piece), count: 0,
+        storage: false, light: decorFlatLight(piece.flat),
+      };
+    }
     const key = decorKey(piece);
     const e = scan?.entries()?.find((x) => x.key === key);
     if (e) return e;
@@ -224,14 +253,39 @@ export function createDecorTool(deps) {
     };
   }
 
+  /** DECOR2a: the pack's rows, each item's worked out once (the frame asks every frame while the panel is up) and
+   *  again only when its count, whether it is worn or whether it is known (its name) changes. Keyed by the ITEM, not its
+   *  place in the pack: the panel keeps each row's picture by its key, and a thing set down moves every place after it. */
+  /** @type {WeakMap<object, {id: number, n: number, slot: any, known: any, entry: any}>} */
+  const ownCache = new WeakMap();
+  let ownSeq = 0;
+  function ownEntries() {
+    const out = [];
+    const pack = deps.pack?.() ?? [];
+    for (let i = 0; i < pack.length; i++) {
+      const item = pack[i];
+      if (!item || typeof item !== 'object') continue;
+      const n = item.stackCount ?? 1;
+      let c = ownCache.get(item);
+      if (!c || c.n !== n || c.slot !== item.equipSlot || c.known !== item.isIdentified) {
+        c = { id: c?.id ?? ++ownSeq, n, slot: item.equipSlot, known: item.isIdentified, entry: decorOwnEntry(item, i, deps.identity?.() ?? undefined) };
+        ownCache.set(item, c);
+      }
+      if (c.entry) out.push({ ...c.entry, key: `own:${c.id}`, count: n });
+    }
+    return out;
+  }
+
   function view() {
     const r = deps.room?.();
     const s = ensureScan();
     return {
       placed: pool.list().map((piece) => {
         const entry = entryOf(piece);
-        return { piece, entry: entry.count ? entry : null, name: entry.name, holds: !!pool.holdsAny?.(piece.id) };
+        return { piece, entry: entry.count ? entry : null, name: entry.name, holds: !!pool.holdsAny?.(piece.id), own: !!piece.item };
       }),
+      // DECOR2a: what in the pack can stand here - free, and back to the pack when taken down
+      own: ownEntries(),
       where: r?.where ?? '',
       entries: s.entries(),
       progress: s.progress(),
@@ -260,11 +314,12 @@ export function createDecorTool(deps) {
   function beginPlacing(catalogueEntry, editing = null) {
     const s = ensureScan();
     const entry = editing ? { ...catalogueEntry, light: editing.light ?? null, storage: !!editing.storage } : catalogueEntry;
-    const radius = s.radiusOf(catalogueEntry) ?? (editing ? editing.paid / (DECOR_PRICE_PER_METRE * editing.scale) : null);
+    const free = entry.kind === 'own';   // DECOR2a: the player's own item - no price, whatever its size
+    const radius = free ? null : s.radiusOf(catalogueEntry) ?? (editing ? editing.paid / (DECOR_PRICE_PER_METRE * editing.scale) : null);
     const eye = deps.eye?.() ?? [0, 0, 0];
     placing = {
-      entry, radius, editing, placer: null, fly: [...eye], start: [...eye], id: editing ? editing.id : mintDecorId(), piece: null, refused: null,
-      busy: false, batch: null, flatSize: null, rise: 0,
+      entry, radius, editing, free, placer: null, fly: [...eye], start: [...eye], id: editing ? editing.id : mintDecorId(), piece: null,
+      refused: null, busy: false, batch: null, flatSize: null, rise: 0,
     };
     deps.cursorOff?.();   // a cursor freed to press the button would hold the look off for the whole placement
     if (entry.model == null) {
@@ -273,7 +328,7 @@ export function createDecorTool(deps) {
         if (placing !== p || !t || !(entry.flat[1] < t.recordCount)) return;
         deps.uploadRecord?.(entry.flat[0], entry.flat[1]);
         p.flatSize = billboardSize(t, entry.flat[1]);
-        p.placer = createDecorPlacer(entry, { radius, from: editing });
+        p.placer = createDecorPlacer(entry, { radius, from: editing, free });
         if (renderer?.createBillboardBatch) p.batch = renderer.createBillboardBatch(entry.flat[0], entry.flat[1], { ...p.flatSize }, [[0, 0, 0]]);
       }, () => {});
     }
@@ -281,13 +336,15 @@ export function createDecorTool(deps) {
   }
 
   /** Back to the panel (Escape, a right press, the Back button) - the piece chosen stays chosen; a move goes back to
-   *  the room's view, the piece untouched. */
+   *  the room's view, the piece untouched; DECOR2a: one's own item back to the pack's list, still chosen. */
   function back() {
     const key = placing?.entry?.key ?? null;
     const moved = placing?.editing ?? null;
+    const own = !moved && placing?.entry?.kind === 'own';
     endPlacing();
     if (!openPanel()) return;
     if (moved) panel.showRoom(moved.id);
+    else if (own) panel.showOwn(key);
     else if (key) panel.select(key);
   }
 
@@ -307,6 +364,7 @@ export function createDecorTool(deps) {
     const r = deps.room?.();
     if (!r) { endPlacing(); return false; }
     if (p.editing) return commitMove(p, r);
+    if (p.entry.kind === 'own') return commitOwn(p, r);
     const price = p.piece.paid;
     if (decorWhyNot({ price, ready: true, gold: deps.wallet().gold, count: pool.size(), cap: DECOR_CAP })) return false;   // the bar says why
     p.busy = true;
@@ -334,6 +392,39 @@ export function createDecorTool(deps) {
     } finally {
       p.busy = false;
     }
+  }
+
+  /** DECOR2a: SET ONE'S OWN ITEM DOWN where the ghost shows it - free. Online the account service has the piece first
+   *  and only then does the item leave the pack; the room gone, or the item gone from the pack, while the service was
+   *  asked, the piece is taken back out and the item never leaves. One item, one piece: then back to the pack's list. */
+  async function commitOwn(p, r) {
+    const item = p.entry.own;
+    if (pool.size() >= DECOR_CAP || !deps.packHas?.(item)) return false;   // the bar says why
+    p.busy = true;
+    p.refused = null;
+    const piece = p.piece;
+    const online = r.kind === 'home';
+    const at = online ? { mapId: r.mapId, buildingKey: r.buildingKey, character: deps.character?.() } : null;
+    const undo = async () => { if (online) await deps.homeDecor.remove?.({ ...at, id: piece.id }); };
+    let stood = piece;
+    try {
+      if (online) {
+        const visit = deps.visit?.();
+        const res = await deps.homeDecor?.place?.({ ...at, piece });
+        if (!res?.ok) { p.refused = { text: deps.refusal?.(res?.error) ?? 'It could not be set down.', at: now() }; return false; }
+        if (deps.visit?.() !== visit || !deps.packHas?.(item)) { await undo(); return false; }
+        stood = decorPieceOf(res.data?.piece) ?? piece;
+      }
+      const moved = deps.packTake?.(item);
+      if (!moved) { await undo(); return false; }
+      pool.put(stood);
+      pool.keepOwn(stood.id, moved);
+      deps.say?.(`${p.entry.name} set down.`);
+    } finally {
+      p.busy = false;
+    }
+    if (placing === p) { endPlacing(); if (openPanel()) panel.showOwn(); }
+    return true;
   }
 
   /** The place half of a piece - what a move rewrites (net/decorLaw.js decorPlaceOf; what it IS never changes). */
@@ -378,6 +469,7 @@ export function createDecorTool(deps) {
    *  says so): what it holds would go with it. */
   async function removePiece(piece) {
     const r = deps.room?.();
+    if (piece.item) return takeDown(piece, r);
     if (!r || pool.holdsAny?.(piece.id)) return false;
     const visit = deps.visit?.();
     let paid = piece.paid;
@@ -393,6 +485,25 @@ export function createDecorTool(deps) {
     return true;
   }
 
+  /** DECOR2a: TAKE ONE'S OWN ITEM DOWN - back into the pack, whole (online the account service lets the piece go first).
+   *  A piece whose item this save does not hold (a save older than the placing) is only taken down. The room gone
+   *  before the answer, the item waits in the room's record, and the next visit gives it back (worldModes.js). */
+  async function takeDown(piece, r) {
+    if (!r) return false;
+    const name = ownName(piece);
+    const visit = deps.visit?.();
+    if (r.kind === 'home') {
+      const res = await deps.homeDecor?.remove?.({ mapId: r.mapId, buildingKey: r.buildingKey, character: deps.character?.(), id: piece.id });
+      if (!res?.ok) { deps.say?.(deps.refusal?.(res?.error) ?? 'It could not be taken down.'); return false; }
+    }
+    if (deps.visit?.() !== visit) return false;
+    pool.remove(piece.id);
+    const item = pool.takeOwn?.(piece.id) ?? null;
+    if (item) deps.packGive?.(item);
+    deps.say?.(item ? `${name} is back in your pack.` : `${name} taken down.`);
+    return true;
+  }
+
   /** DECOR1e: A PLACED PIECE LIT OR PUT OUT, or made to hold things or not - free. Its light, lit, is its catalogue
    *  piece's own (Daggerfall's), else a warm lamp's; one that holds anything goes on holding it. */
   async function togglePiece(piece, what) {
@@ -402,7 +513,7 @@ export function createDecorTool(deps) {
     if (what === 'light') {
       const own = entryOf(piece).light;
       next = decorPieceOf({ ...piece, light: piece.light ? null : (own ?? DECOR_DEFAULT_LIGHT) });
-    } else if (what === 'storage') {
+    } else if (what === 'storage') {   // DECOR2a: the law answers no piece for one's own item made to hold things
       if (piece.storage && pool.holdsAny?.(piece.id)) return false;
       next = decorPieceOf({ ...piece, storage: !piece.storage });
     }
@@ -510,7 +621,7 @@ export function createDecorTool(deps) {
     const p = placing;
     if (p.entry.model != null && !p.placer) {
       const m = modelFor(p.entry.model);
-      if (m) p.placer = createDecorPlacer(p.entry, { radius: p.radius, box: m.box, from: p.editing });
+      if (m) p.placer = createDecorPlacer(p.entry, { radius: p.radius, box: m.box, from: p.editing, free: p.free });
     }
     const held = (a) => flyHeld.has(a);
     const stick = stickMove(deps.stick?.() ?? null);   // DECOR1e: an analog stick in hand is read over the walk keys
@@ -526,7 +637,7 @@ export function createDecorTool(deps) {
     const price = p.placer ? p.placer.price() : null;
     const edit = p.editing && p.placer ? decorEditPrice(p.radius, p.editing, p.placer.state().scale) : null;
     bar?.show({
-      name: p.editing ? `Moving ${p.entry.name}` : p.entry.name, price, priceText: edit ? decorEditText(edit) : null,
+      name: p.editing ? `Moving ${p.entry.name}` : p.entry.name, price, priceText: edit ? decorEditText(edit) : p.free ? 'free' : null,
       snap: !!p.placer?.state().snap, why: placingWhy(p, price),
     });
     if (p.batch && p.piece && p.flatSize) {
@@ -549,6 +660,7 @@ export function createDecorTool(deps) {
       if (pay > gold) return `You need ${pay - gold} more gold.`;
       return !deps.touch && !deps.locked?.() ? 'Click to look around again.' : null;
     }
+    if (p.free && !deps.packHas?.(p.entry.own)) return 'It is no longer in your pack.';   // DECOR2a
     const why = decorWhyNot({ price, ready: true, gold: deps.wallet?.().gold ?? 0, count: pool.size(), cap: DECOR_CAP });
     if (why) return why;
     return !deps.touch && !deps.locked?.() ? 'Click to look around again.' : null;

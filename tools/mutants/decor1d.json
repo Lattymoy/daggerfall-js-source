@@ -83,8 +83,8 @@
   {
     "name": "DECOR1d-the-price-at-one-scale",
     "file": "src/systems/decorPlacer.js",
-    "old": "decorPrice(radius, s.scale) : null; },",
-    "new": "decorPrice(radius, 1) : null; },",
+    "old": "      return radius != null && radius > 0 ? decorPrice(radius, s.scale) : null;",
+    "new": "      return radius != null && radius > 0 ? decorPrice(radius, 1) : null;",
     "tests": [
       "test/decor1d.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "DECOR1d-paying-on-a-refusal",
     "file": "src/scenes/decorTool.js",
-    "old": "at: now() }; return false; }",
-    "new": "at: now() }; deps.wallet().pay(price); return false; }",
+    "old": "?? 'The piece could not be placed.', at: now() }; return false; }",
+    "new": "?? 'The piece could not be placed.', at: now() }; deps.wallet().pay(price); return false; }",
     "tests": [
       "test/decor1d.test.js"
     ]

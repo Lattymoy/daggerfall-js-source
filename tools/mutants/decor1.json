@@ -11,8 +11,8 @@
   {
     "name": "DECOR1-a-model-and-a-flat-at-once",
     "file": "src/net/decorLaw.js",
-    "old": "if (flat === null && Number.isSafeInteger(model)",
-    "new": "if (Number.isSafeInteger(model)",
+    "old": "if (flat === null && item === null && Number.isSafeInteger(model)",
+    "new": "if (item === null && Number.isSafeInteger(model)",
     "tests": [
       "test/decor1.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "DECOR1-a-light-dark-by-default",
     "file": "src/systems/decorCatalogue.js",
-    "old": "    if (c.flat && c.flat[0] === LIGHTS_ARCHIVE) {",
-    "new": "    if (false) {",
+    "old": "  if (!Array.isArray(flat) || flat[0] !== LIGHTS_ARCHIVE) return null;",
+    "new": "  if (true) return null;",
     "tests": [
       "test/decor1.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "DECOR1c-the-teardown-keeps-the-items",
     "file": "src/scenes/decorRoom.js",
-    "old": "  function destroyAll() { set([]); held = new Map(); kept = []; }",
-    "new": "  function destroyAll() { set([]); kept = []; }",
+    "old": "  function destroyAll() { set([]); held = new Map(); own = new Map(); kept = []; }",
+    "new": "  function destroyAll() { set([]); own = new Map(); kept = []; }",
     "tests": [
       "test/decor1.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "DECOR1c-the-teardown-keeps-the-kept",
     "file": "src/scenes/decorRoom.js",
-    "old": "  function destroyAll() { set([]); held = new Map(); kept = []; }",
-    "new": "  function destroyAll() { set([]); held = new Map(); }",
+    "old": "  function destroyAll() { set([]); held = new Map(); own = new Map(); kept = []; }",
+    "new": "  function destroyAll() { set([]); held = new Map(); own = new Map(); }",
     "tests": [
       "test/decor1.test.js"
     ]

@@ -108,6 +108,9 @@ const copySceneEntry = (d) => ({
     light: p.light ? { ...p.light, color: [...(p.light.color ?? [])] } : null,
   })),
   decorItems: Object.fromEntries(Object.entries(d.decorItems ?? {}).map(([id, list]) => [id, (list ?? []).map((it) => ({ ...it }))])),
+  // DECOR2a: the owner's own items standing in the room, by piece id - the save's in every room, the online home's
+  // too (its piece is the service's, the thing itself the owner's). A record written before DECOR2 carries none.
+  decorOwn: Object.fromEntries(Object.entries(d.decorOwn ?? {}).map(([id, item]) => [id, { ...item }])),
   // TERRAIN-SCALE1: `frame` names what the positions above are measured from ('building': the interior's own
   // building, as DFU's SerializableLootContainer restores an interior container by its localPosition; null: the
   // writer's own frame), and `terrainScale` the ground an exterior height stood on - absent on an entry written
@@ -155,6 +158,15 @@ export function takeSceneDecor(cache, sceneName) {
   const pieces = d.decor;
   d.decor = [];
   return pieces;
+}
+
+/** DECOR2a: A SOLD ROOM'S OWN ITEMS - the owner's things that stood in it - taken out of its scene for the pack (Mac:
+ *  "Back to pack"), and answered as they were; none comes back twice. */
+export function takeSceneOwn(cache, sceneName) {
+  const d = cache.scenes.get(sceneName);
+  const items = Object.values(d?.decorOwn ?? {});
+  if (d) d.decorOwn = {};
+  return items;
 }
 
 /** ClearSceneCache (:115-148). `start` is DFU's own parameter name
@@ -213,7 +225,7 @@ export function restoreSceneCache(cache, snap) {
 // HOUSE deed's AddPermanentScene, which needed the building directory
 // to know which building was bought: H1/H2 shipped both halves -
 // banking.js:201 calls the hook inside allocateHouseToPlayer with the
-// bought building's own mapId and key, and worldModes.js:2697 supplies
+// bought building's own mapId and key, and worldModes.js:2708 supplies
 // it as addPermanentScene(sceneCache(), interiorSceneName(mapId, key)),
 // reached from the bank's buy arm (:2144-2148), the knightly gift
 // (:2752) and :4933, with sellHouse dropping the scene again (:2184). The

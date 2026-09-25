@@ -107,7 +107,7 @@ export const homeShortLine = (price) => `You need ${price} gold, in your purse a
 export const homeOwnerLines = (home) => ['This is your home.', homeEntryLine(home.entry)];
 export const homeEntryLine = (entry) => `Who may enter: ${HOME_ENTRY_WORDS[entry] ?? HOME_ENTRY_WORDS[HOME_ENTRY_DEFAULT]}.`;
 export const homeSaleLines = (refund) => [`Sell your home for ${refund} gold?`, "The gold goes to this region's bank account. Anything left inside is lost.",
-  'Its placed pieces go too, for half of what they cost.'];   // DECOR1e
+  'Its placed pieces go too, for half of what they cost; your own things come back to your pack.'];   // DECOR1e; DECOR2a
 /** The sale said: the home's share, and (DECOR1e) its pieces' half, both into the region's account. */
 export const homeSoldLine = (refund, piecesBack = 0) => `You sold your home. ${refund + piecesBack} gold went to this region's bank account`
   + (piecesBack > 0 ? `, ${piecesBack} of it for its placed pieces.` : '.');
