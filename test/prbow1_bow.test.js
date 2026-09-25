@@ -217,7 +217,12 @@ test('PR-BOW1: drawRigSpriteBox\'s anchor - the picture is taken along the eye\'
   assert.ok(crossLen(lookDir(a1.c.ov), sub(anchor, eye)) < 1e-6, 'the picture is taken along the eye\'s ray to the anchor');
   const boxInView = transformPoint(a1.c.ov, ...box.center);
   assert.ok(Math.abs(boxInView[0]) < 1e-6 && Math.abs(boxInView[1]) < 1e-6, 'and centred on the box - the gear stays in the window');
-  assert.deepEqual([...a1.c.op], [...plain.c.op], 'through the same ortho');
+  // MWHEAD1: through the box's own window as THIS ray sees it - the same width; a height that holds the box pitched
+  // along the ray to the anchor (test/mwhead1_window.test.js pins the window itself)
+  const tiltTo = (p) => Math.abs(sub(p, eye)[1]) / Math.hypot(...sub(p, eye));
+  const winH = (t) => box.halfH * Math.sqrt(1 - t * t) + box.halfW * t;
+  assert.ok(Math.abs(a1.c.op[0] - plain.c.op[0]) < 1e-6, 'the same width');
+  assert.ok(Math.abs(1 / a1.c.op[5] - winH(tiltTo(anchor))) < 1e-6 && Math.abs(1 / plain.c.op[5] - winH(tiltTo(box.center))) < 1e-6, 'each ray\'s own window');
   assert.ok(near3(place(a1.c, anchor), anchor, 1e-6), 'the anchor draws on itself');
   assert.deepEqual(diag.center, a1.c.center, 'and the diagnostics say where the quad is');
   // the box is only the window: another box about the same anchor draws every point in the same place
@@ -227,10 +232,12 @@ test('PR-BOW1: drawRigSpriteBox\'s anchor - the picture is taken along the eye\'
     assert.ok(near3(place(a1.c, p), place(a2.c, p), 1e-6), `${p} draws in one place whatever the box`);
   }
   // the resolution: read where the quad is drawn, so a texel stays `pixel` screen pixels
-  const there = rec();
-  drawRigSpriteBox(there, canvas, null, id, { ...box, center: a1.c.center }, proj, view, eye, 3);
-  assert.equal(a1.c.ph, there.c.ph);
-  assert.equal(a1.c.pw, there.c.pw);
+  // (MWHEAD1: the window is the ray's own now, so the law is asserted as the law - the quad's height on screen over
+  // its rows is `pixel` to the rounding - rather than as equality with another box whose ray tilts differently)
+  const pv = multiply(proj, view);
+  const quadPx = Math.abs(ndc(pv, [a1.c.center[0], a1.c.center[1] + a1.c.hh, a1.c.center[2]])[1] - ndc(pv, [a1.c.center[0], a1.c.center[1] - a1.c.hh, a1.c.center[2]])[1]) * canvas.clientHeight / 2;
+  assert.ok(Math.abs(quadPx / a1.c.ph - 3) < 3 / a1.c.ph + 1e-9, `a texel is 3 screen pixels where the quad stands (${quadPx / a1.c.ph})`);
+  assert.ok(Math.abs(a1.c.pw / a1.c.ph - a1.c.hw / a1.c.hh) < 1 / a1.c.ph + 1e-9, 'and square');
   // an anchor AT the eye has no ray: what stood
   const atEye = rec();
   drawRigSpriteBox(atEye, canvas, null, id, { ...box, anchor: eye }, proj, view, eye, 3);

@@ -9658,7 +9658,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   if (onlineOn) townTalk.ensureFactions?.().then(() => { if (townTalk.factionDict) setWorldPriceTilt(worldPriceTiltOf(townTalk.factionDict)); }).catch(() => {});
   let peerRiders = null;   // RIDE: another player in the saddle, drawn as Eye Of The Beholder's mounted sprite (net/peerRiders.js)
   let peerWalkers = null;   // DISC23-B: another player on foot, drawn as the Eye Of The Beholder set they chose (net/peerRiders.js)
-  let online = null, remotePlayers = null, peerBodies = null, nameLayer = null, nameSight = null, _onlineLast = null, _onlineKey = null, _onlineKeySince = 0, _onlineMovingUntil = 0;
+  let online = null, remotePlayers = null, peerBodies = null, nameLayer = null, nameSight = null, _onlineLast = null, _onlineKey = null, _onlineKeySince = 0, _onlineMovingUntil = 0, _onlineLookAt = -Infinity;
   let _hsLatch = false;   // AUDIT DISC7 B2: the motor's half-speed flag off the last frame that MOVED - a stop reads it true (standing), and the move hold must not send that as a slow trot
   // D-ONLINE1 (2026-09-17, a player: "still see you have died then main menu"): `onlineFrame` LEAVES the room the
   // instant the death screen goes up (AUDIT ONLINE D12: the dead broadcast nothing and see no one), every frame,
@@ -9873,6 +9873,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const dungeonAuthority = (now = performance.now()) => !(online?.room && isWorldRoom(online.room) && online.status === 'open' && online.host && !online.isHost() && now - _foesInAt < FOES_STALE_MS);
   let onlineToScene = (p) => [p.x, p.y, p.z];
   const ROOM_HOLD_MS = 500;   // AUDIT ONLINE D11: a room key holds this long before the socket moves - a cell edge is not a churn
+  const ONLINE_LOOK_CHECK_MS = 1000;   // PROFILE2: how often my look is re-composed and compared with what the rooms were told
   const ONLINE_MOVE_HOLD_MS = 250;   // ONLINE-MVFLICKER1: see the outgoing `mv` computation's own header - debounces a single stray zero-delta sample
   // ACC1d: ONE minter, shared by the presence session and every channel
   // link - it holds no token and caches nothing, so a shared minter is
@@ -12160,6 +12161,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     const moved = now < _onlineMovingUntil;
     _onlineLast = [player.pos[0], player.pos[1], player.pos[2]];
     if (key !== _onlineKey) { _onlineKey = key; _onlineKeySince = now; }
+    // PROFILE2 (Mac: "make the profile icon visible somehow on the pause menu and allow changes"): MY LOOK, KEPT CURRENT.
+    // A skin chosen on the pause screen or a coat put on is a look changed mid-session, and the look rode the hello
+    // alone - the others drew the old one until the next room. Re-composed once a second (the equip table and one
+    // store read) and handed to the session, which says it again only when it changed (net/online.js setLook).
+    if (now - _onlineLookAt >= ONLINE_LOOK_CHECK_MS) { _onlineLookAt = now; online.setLook(composeLook(playerEntity)); }
     // AUDIT RIDE: in the saddle the run bit is the GALLOP, and the motor never runs a mount (canRunUnlessRiding) - so
     // the bit is what the rider's own sprite shows: EOTB's chooseTable over the same motion bag (a speed past
     // GALLOP_SPEED), and the others draw the table this player sees
@@ -12196,7 +12202,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT WORLD2 C8: a world room's edge is never a churn - the hold delayed every handover and let one dungeon's stream land in another
     // AUDIT WORLD6b-iii(b) B1/B8: a cell crossing is joined the moment the cell is HELD (the halo's socket promotes in
     // place - the hold bought nothing but a 500 ms strip with no socket in the cell I stood in); otherwise the hold
-    else if (key !== online.room) { if (!online.room || isWorldRoom(key) || isWorldRoom(online.room) || (isCellRoom(key) && online.inRoom(key)) || now - _onlineKeySince >= ROOM_HOLD_MS) { online.look = composeLook(playerEntity); online.join(key, { ...pose, ...arm }); } }   // the look re-composed: the next room's hello carries the gear worn now
+    else if (key !== online.room) { if (!online.room || isWorldRoom(key) || isWorldRoom(online.room) || (isCellRoom(key) && online.inRoom(key)) || now - _onlineKeySince >= ROOM_HOLD_MS) { online.setLook(composeLook(playerEntity)); online.join(key, { ...pose, ...arm }); } }   // the look re-composed: the next room's hello carries the gear worn now (PROFILE2: through setLook, so a halo the join PROMOTES - no hello of its own - is told too)
     else online.sendPose({ ...pose, ...arm });
     // PERF11 (2026-09-19, Mac: "Online mode needs further performance
     // improvements"): ONE peersNear() A FRAME. The owner sweeps below -
@@ -12217,7 +12223,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // posed into, so a peer a pixel across the edge is in my room and I in theirs (D9); a crossing promotes the halo
     const wantHalo = mp && isCellRoom(online.room) ? cellHaloFor(mp.x, mp.y, { current: online.haloRooms() }) : [];
     if (mp && isCellRoom(online.room) && isCellRoom(key) && key !== online.room) wantHalo.push(key);   // AUDIT WORLD6b-iii(b) B1: the cell I STAND in, until the join promotes it - the list is the new pixel's, which names neither the old cell (my own) nor the new one (the pixel's), so the crossing frame CLOSED the halo the promotion was for
-    if (wantHalo.some((r) => !online.haloRooms().includes(r))) online.look = composeLook(playerEntity);   // AUDIT WORLD6b-iii(b) C5: a halo about to open hellos with the gear worn NOW (a promotion sends no hello of its own)
+    if (wantHalo.some((r) => !online.haloRooms().includes(r))) online.setLook(composeLook(playerEntity));   // AUDIT WORLD6b-iii(b) C5: a halo about to open hellos with the gear worn NOW (a promotion sends no hello of its own)
     online.setHalo(wantHalo);
     online.tick();
     // WORLD6b: a room change leaves every puppet in the old cell; a peer gone from the room takes its puppets with it.
