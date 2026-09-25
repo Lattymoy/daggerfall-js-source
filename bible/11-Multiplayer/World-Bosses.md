@@ -228,6 +228,27 @@ court and the painted horizon, what moves in the air over it, and what it sounds
   on every screen in the court. (WB6a's claim that the lightning was "the same on every screen" held only for the law:
   the hosts handed it the page's own clock. WB6b made it true.)
 
+**The step through (WB6c, 2026-09-25, Mac: "the transition and the arena needs to be an oblivion masterpiece").** The
+door had been a cut: the street one frame, the court the next. Now the step is taken in fire (`render/gateVeil.js`, the
+law and the shader; `ui/gateVeil.js`, the canvas, its loop and its sounds):
+
+- **Closing**: flame tongues come in from past the screen's corners, spiralling toward the middle; what they have not
+  taken reddens; the fire's cast roars, pitched down, over the deep wind. In 1.2 s the screen is all fire - a vortex of
+  flame arms pouring into a white-hot eye, embers streaking with them.
+- **Shut**: the eye breathes while the place beyond is built, however long that takes (a build that never answers is
+  given 20 s, then the veil opens on whatever stands).
+- **Opening**: held shut for the new place's first two frames (its programs are built on first sight, and must not eat
+  the opening), then the eye widens from the middle and the new place is seen through it, the fire swept off past the
+  edges over 1.7 s, to a roll of thunder and the fire's own sound.
+
+Both ways: the gate's door into the court (`stepThroughFire` in the mode machine - the world checked again once the fire
+has closed: a door, a death or a load taken in that second and the step is off) and the way home out of it (taken at
+the top of the frame after the fire has closed; and no wagon prompt at the way home - the wagon waits in Tamriel). A
+court taken from the player by force - come apart at its day's end, online gone, a death cast out - is a FLASH: the fire
+at once, then open. One step at a time. The veil is a canvas of its own over the game's (over the world and its HUD,
+under the chat, never a pointer): it needs nothing of the world's frame, so it rides no pass of the renderer's. No
+WebGL2 for it, and the step is taken unveiled.
+
 ## 5. The boss (WB3 relay, WB4 client)
 
 **Valkynaz Ruhn, Warden of the Burning Gate.** A Daedra Lord drawn at three times its size (~5.5 m), in Daggerfall's
@@ -600,3 +621,13 @@ lightning's slots were made whole over the period (a 7 s slot left a 5 s stub at
 `test/wb6b_deadlands_life.test.js` (8); mutants `tools/mutants/wb6b.json` (27 dead); the probe now draws the land, the
 shards and the life too and links all three programs (15 checks). Seen headless from the arrival, low across the floor
 and at a strike's peak; not yet heard or seen in the running game.
+
+**WB6c (2026-09-25) - the step through.** The gate's door and the court's way home are taken in fire now (see "The step
+through" in section 4): a vortex of flame closing over the screen from its corners, burning while the place beyond is
+built, opening from its middle onto the new one - with the fire's roar and the deep wind closing, thunder and fire
+opening; a court taken by force flashes into fire and opens. The way home offers no wagon (it waits in Tamriel), and a
+forced exit now clears a dungeon exit still pending (a way home, or a wagon prompt's No, that a death, a collapse or a
+load overtook would have walked the player out of the next dungeon on its first frame). Pins
+`test/wb6c_gate_veil.test.js` (4); mutants `tools/mutants/wb6c.json` (22 dead); `tools/gateVeilProbe.mjs` compiles,
+links and draws the veil in a real WebGL2 at the law's moments and steps the real layer through a real page (13
+checks). Seen headless over the court's own frame and over a plain one; not yet taken in the running game.

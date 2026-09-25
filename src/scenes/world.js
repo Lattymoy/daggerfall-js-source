@@ -175,6 +175,7 @@ import { createGateClaims } from '../net/gateClaims.js';   // WB5b: the kill rec
 import { createGateCourt } from './gateCourt.js';   // WB4: the fight on this screen - the boss drawn, heard and read, and his blows on me
 import { DeadlandsRenderer, skyGain } from '../render/deadlands.js';   // WB6a: the Deadlands' sky and sea round the Burning Court
 import { createDeadlandsAir } from './deadlandsAir.js';   // WB6b: and their air - the wind, the fire, the thunder of the sky's strikes
+import { createGateVeil } from '../ui/gateVeil.js';   // WB6c: the step through the gate - a vortex of fire in and out
 import { createSpoilsPool, spoilsStore, recoverSpoils, SPOILS_TEXT } from './spoilsPool.js';   // WB5: a fallen boss's spoils, spewed, glowing and taken
 import { gateRoomKey, isGateRoom, gateBossOf, gateTimes, GATE_COLLAPSE_MS } from '../net/gateLaw.js';   // WB3b: the court's room, and its day's end
 import { gateLandingFor, courtRing, courtToDungeon, courtBraziers, COURT_TEXT, COURT_FOG, LAVA_Y } from '../world/gateArena.js';   // WB3b: the Burning Court's way home, its ring and its words   // WB2: the gate's countdown over the screen, near it
@@ -6203,6 +6204,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   function ejectFromCourt(words) {
     const g = modes?.gateArenaGate?.() ?? null;
     if (!g) return;
+    gateVeil?.flash();   // WB6c: the court comes apart in fire
     modes?.forceExitToExterior?.();
     landBeforeGate(g);
     gateLink?.leave();
@@ -6246,7 +6248,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     Promise.resolve().then(async () => {
       if (courtGate) {
         modes?.forceExitToExterior();
-        if (landBeforeGate(courtGate)) { townTalk.showOverlay(new ActionTextBox([COURT_TEXT.castOut])); return; }
+        if (landBeforeGate(courtGate)) { gateVeil?.flash(); townTalk.showOverlay(new ActionTextBox([COURT_TEXT.castOut])); return; }   // WB6c: cast out through the fire
       }
       // Any mode but the open world is left FIRST - the cemetery
       // transfer's own order - and forceExitToExterior clears the
@@ -8513,7 +8515,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8905-8969 -
+  // worldModes answers it in BOTH modes (worldModes.js:8925-8989 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -10884,6 +10886,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** WB2: THE GATE THE WORLD STANDS (scenes/gatePool.js) - online alone, as the omen is; stood each exterior frame from
    *  the omen's word, drawn in the world pass (the stone) and after the duel wall (the fire and the beacon). Its door
    *  answers "not yet" until the relay can hold a gate's arena (WB3). */
+  /** WB6c: THE GATE'S VEIL (ui/gateVeil.js) - the fire the step through the gate is taken in, both ways (the mode
+   *  machine's stepThroughFire), and flashed over the screen when the court is taken from the player by force. Online
+   *  alone - the gate is. */
+  const gateVeil = gateOmen ? createGateVeil() : null;
   const gatePool = gateOmen ? createGatePool({
     renderer, gl: renderer.gl, collider: () => collider,
     standing: () => gateOmen.standing(),
@@ -12588,6 +12594,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (told || lived) renderer.markForeignPass();
     },
     deadlandsSeconds: () => deadlandsSeconds(),   // WB6b: the court's flash and the shards' drift keep the sky's clock
+    gateVeil: () => gateVeil,   // WB6c: the step through the gate's fire, both ways
     drawPeerNames: ({ proj, view, eye }) => drawPeerNames(proj, view, eye),
     drawPeerBodies: ({ proj, view, eye }) => drawPeerBodies(proj, view, eye),   // MWBODY1: the others' bodies, after the player's own
     // PEER-PLAQUE1: the plaque names another player in a building and underground too - the SAME pick and the SAME

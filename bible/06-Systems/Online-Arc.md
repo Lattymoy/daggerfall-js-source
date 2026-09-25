@@ -4695,7 +4695,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6263` read, on one physical line:
+`src/scenes/worldModes.js:6282` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4837,7 +4837,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4246` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4247` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:275`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -8249,3 +8249,9 @@ on the court and its thunder late by its distance, and the court's own air where
 online fact: the Deadlands keep the RELAY'S clock (`deadlandsSeconds` - the welcome's clock offset, WORLD5, over this
 page's monotonic clock), so every screen in the court sees and hears the same strike at the same moment. Client only;
 nothing on the wire.
+
+## WB6c (2026-09-25, Mac: "the transition and the arena needs to be an oblivion masterpiece") - the step through; see 11-Multiplayer/World-Bosses.md
+
+The gate's door and the court's way home are taken in fire - a vortex of flame closing over the screen, burning while
+the place beyond is built, opening onto it (`render/gateVeil.js`, `ui/gateVeil.js`); a court taken by force flashes.
+Online alone, as the gate is; client only; nothing on the wire.

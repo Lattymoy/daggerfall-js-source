@@ -6026,10 +6026,29 @@ export function createWorldModes(host) {
    *  climate and region at its pixel. Online alone - the gate is. */
   async function enterGateArena(g) {
     if (mode !== 'exterior' || !g || !Number.isSafeInteger(g.day)) return false;
-    const site = host.gateArenaSite?.(g) ?? null;
-    const dfLocation = gateArenaLocation({ day: g.day, near: g.near ?? '', regionIndex: site?.regionIndex ?? -1, regionName: site?.regionName ?? '', climate: site?.climate ?? undefined });
-    const hit = { dfLocation, blocksFile: gateArenaBlocks(blocks), gateArena: g, climateBase: site?.climateBase ?? 2, season: site?.season ?? 0, group: `gate:${g.day}`, door: null, dfBlock: null, recordIndex: -1 };
-    return gatedTransition((live) => dungeonTransition(hit, [], true, live));
+    return stepThroughFire(async () => {
+      if (mode !== 'exterior') return false;   // WB6c: a door, a death or a load taken while the fire closed
+      const site = host.gateArenaSite?.(g) ?? null;
+      const dfLocation = gateArenaLocation({ day: g.day, near: g.near ?? '', regionIndex: site?.regionIndex ?? -1, regionName: site?.regionName ?? '', climate: site?.climate ?? undefined });
+      const hit = { dfLocation, blocksFile: gateArenaBlocks(blocks), gateArena: g, climateBase: site?.climateBase ?? 2, season: site?.season ?? 0, group: `gate:${g.day}`, door: null, dfBlock: null, recordIndex: -1 };
+      return gatedTransition((live) => dungeonTransition(hit, [], true, live));
+    });
+  }
+  /** WB6c: THE STEP THROUGH THE FIRE (ui/gateVeil.js) - the veil closed over the screen, then `go` (the place changed
+   *  under it), then the veil opened on whatever stands, whatever `go` answered or threw. One step at a time: a second
+   *  asked while one is under way is refused. No veil (offline, a page with no WebGL2) - the step unveiled. */
+  let _stepping = false;
+  async function stepThroughFire(go) {
+    const veil = host.gateVeil?.() ?? null;
+    if (_stepping) return false;
+    _stepping = true;
+    try {
+      if (veil) await veil.cover();
+      return await go();
+    } finally {
+      _stepping = false;
+      veil?.reveal();
+    }
   }
   /** WB3b: the court's mesh - made once a session, with its art and the gate stone's - and the collider's bucket for
    *  its floor. */
@@ -6603,6 +6622,7 @@ export function createWorldModes(host) {
       dungeonCtx.actions.activate(key, { steal: getInteractionMode() === 'steal', doorSpell: doorSpellFor(playerEntity) });   // X1
       return true;
     }
+    if (isGateArena(dungeonLoc)) { stepThroughFire(async () => { if (mode === 'dungeon' && isGateArena(dungeonLoc)) pendingDungeonExit = true; return true; }); return true; }   // WB6c: the way home is through the fire, as the way in was - taken at the top of the frame after it has closed (F-A5's deferral); and no wagon: it waits in Tamriel
     // AUDIT 28 W2c: THE EXIT-DOOR WAGON PROMPT (PlayerActivate.cs
     // :649-664). A dungeon exit with a Small_cart in the pack and
     // Settings.DungeonExitWagonPrompt raises TEXT.RSC 38 as a YesNo
@@ -7373,7 +7393,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:9355's own wave-46 note); the interior
+          // a blow (world.js:9357's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -9627,6 +9647,7 @@ export function createWorldModes(host) {
         dungeonCtx.destroy(); dungeonCtx = null; dungeonLoc = null;
         pendingDungeonWagonOpen = false;   // DISC21-B: nor a loaded or teleported player's next dungeon's
       }
+      pendingDungeonExit = false;   // WB6c: nor its exit - a way home asked through the fire (or a wagon prompt's No) that a death, a collapse or a load overtook would have walked the player out of the NEXT dungeon on its first frame
       player.collider = baseCollider();
       host.horseCart?.()?.handleExteriorTransition();   // HCC: a load or a teleport out is an exterior transition too
       setMode('exterior');
@@ -9871,7 +9892,7 @@ export function createWorldModes(host) {
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
      *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3406-3428), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:6509). So an F9 pressed in a shop
+     *  unconditionally (world.js:6511). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -9910,7 +9931,7 @@ export function createWorldModes(host) {
       if (interiorOverlay instanceof DeathScreen) { interiorOverlay.restoreView(); interiorOverlay = null; }
     },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:6609)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:6611)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -9920,7 +9941,7 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:6776`
+     *  HARD2c: this used to spell them out, and named `world.js:6778`
      *  and `dungeonContext.js:6404` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
