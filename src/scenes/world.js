@@ -2236,8 +2236,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the blend never reaches past the pixel that carries the location -
     // so the next grass update() re-reads `keep`/`ground` fresh here and
     // only here.
-    const hadWodSite = _wodSiteWas.delete(key);   // AUDIT BRANCH (WoD) m2: a rebuild that lost its site moved the ground back
-    if ((dfLocation || wodSite || hadWodSite) && labGrassField) {   // WOD2: a levelled camp moved the ground the same way
+    //
+    // PERF-EXT-C2: AND FOR EVERY PIXEL NOW, not only a location's or a
+    // site's. A pixel crossing used to throw the whole field away, and
+    // that was quietly the heal for every other way a cell goes stale: a
+    // cell placed at the boot or after a teleport while its neighbour
+    // pixel was not built yet (its blades over the gap refused), a
+    // pixel rebuilt under it - the road network arriving, a season's
+    // re-skin, a late World of Daggerfall pack, a site a rebuild lost.
+    // The crossing keeps the field now, so each of those says so itself,
+    // at the one moment they all share: the pixel being published. A
+    // far pixel's rect holds no live cell and costs a few hundred Map
+    // reads; a near one re-reads exactly the cells that read it wrong.
+    _wodSiteWas.delete(key);   // AUDIT BRANCH (WoD) m2: a rebuild that lost its site moved the ground back - the publish below re-reads it as it re-reads every pixel
+    if (labGrassField) {   // WOD2: a levelled camp moved the ground the same way; PERF-EXT-C2: and so does every other publish
       const t = state.pixelTranslation(px, py);
       labGrassField.invalidate(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE);
     }
@@ -2440,6 +2452,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     const waterIndices = waterOn ? buildWaterIndices(p.tilemapBytes, stride) : null;
     p.water = waterIndices ? renderer.createWaterSurface(p.terrain, waterIndices) : null;
     p._stride = stride;
+    // PERF-EXT-C2: a promotion is the other way a pixel joins the grass
+    // (its near pieces are the stride-1 ones), and the crossing no longer
+    // rebuilds the field behind it - so the cells over it re-read it.
+    if (stride === 1 && labGrassField) {
+      const t = state.pixelTranslation(p.px, p.py);
+      labGrassField.invalidate(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE);
+    }
   }
 
   /** @param {{collectLoose?:boolean}} [opts] - A1: a season re-skin
@@ -5487,6 +5506,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     lockOn.unlock();   // AUDIT 62 F16: destroy()/removeFoe empties the pool WITHOUT flagging `dead`, so lockOn's death break never fires on the orphan the lock still holds
     magic.clearMissiles();
     arrows.arrows.length = 0;   // the flights own no GL objects - the mesh is the host's cache
+    // PERF-EXT-C2: AND THE GRASS FIELD. `state.init` below re-anchors the
+    // scene with no offset to ride, so a field kept across it would stand
+    // the old place's blades - at the old place's heights - wherever they
+    // fell in the new one. It always did: this sweep never reached the
+    // field, and the first pixel crossing after the arrival was what threw
+    // it away. The crossing keeps its field now (shiftOrigin), so the new
+    // world's empty field is said here, and the next frame starts one.
+    labGrassField = null;
     // BLOOD1 AUDIT 2 (2026-09-20): THE BLOOD GOES WITH THE WORLD. The
     // ring, the chunks in the air and the ceilings' drips are all in
     // SCENE space, and `state.init` below starts a NEW scene frame -
@@ -13938,7 +13965,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       doorGeneration += 1;   // WORLD-HOVER: the floating origin moved, so every door's WORLD matrix did
       cityGuards.offsetAll(r.offset);
       exteriorFoes.offsetAll(r.offset);   // X-slice
-      labGrassField = null;   // AUDIT 49 F2 / GR5: the field is baked in world coordinates - a new world starts empty
+      labGrassField?.shiftOrigin(r.offset);   // PERF-EXT-C2: the field keeps its own origin and follows this one - every cell stays where it grew (AUDIT 49 F2 / GR5 threw it away here and regrew it for three seconds)
       droppedLoot.offsetAll(r.offset);
       droppedTorches.offsetAll(r.offset);   // HT1: the torches too
       camps.offsetAll(r.offset);   // SURV3: and the camps

@@ -644,7 +644,8 @@ test('AUDIT BRANCH (WoD) m2: a rebuild of a pixel that had a site re-reads its g
   h.publish(100, 100, [[10, 5, 10]], { wodSite: { xMin: 1, xMax: 2, yMin: 1, yMax: 2 } });
   h.destroyPixel(100, 100, { collectLoose: false });
   assert.ok(h.siteWas.has('100,100'), 'the teardown remembers the site');
-  assert.match(WORLD, /const hadWodSite = _wodSiteWas\.delete\(key\);[^\n]*\n    if \(\(dfLocation \|\| wodSite \|\| hadWodSite\) && labGrassField\) \{/, 'and the publish re-reads the grass for it');
+  // PERF-EXT-C2: the publish re-reads the grass over EVERY pixel now (the crossing that used to heal a stale cell keeps its field), which covers a site a rebuild lost
+  assert.match(WORLD, /    _wodSiteWas\.delete\(key\);[^\n]*\n    if \(labGrassField\) \{[^\n]*\n      const t = state\.pixelTranslation\(px, py\);\n      labGrassField\.invalidate\(t\[0\], t\[2\], t\[0\] \+ TERRAIN_SIZE, t\[2\] \+ TERRAIN_SIZE\);/, 'and the publish re-reads the grass for it');
 });
 
 test('AUDIT BRANCH (WoD) L1-3: the host steps DFU\'s array on every crossing and at every world\'s start, and the Hold does not ride the pool', () => {

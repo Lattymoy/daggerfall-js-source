@@ -104,3 +104,11 @@ cluster C has the numbers and the laws):
 - **PERF-EXT-C1** - the grass field's slot count (an 11-33 ms sweep, paid
   by every field built - every crossing, teleport and load) is swept once
   and warmed at mount.
+- **PERF-EXT-C2** - the grass field survives the floating-origin shift.
+  Every map-pixel crossing threw it away and regrew it: the grass
+  vanished (2 slots of 357 drawn on the crossing frame), regrew
+  nearest-first over ~3 s at +5-7.5 ms a frame and came back reshuffled.
+  The field has an origin of its own now and follows the scene's in
+  place (0.2-0.3 ms, no upload); every stale-cell heal the rebuild gave
+  by accident is said on purpose (every publish, every promotion), and a
+  teleport or a load - which never emptied the field - does.

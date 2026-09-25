@@ -152,8 +152,8 @@
  {
   "name": "PERF10-the-free-sweep-measures-from-the-cells-centre-not-its-nearest-point",
   "file": "src/render/labGrass.js",
-  "old": "  const nearSq = (cx, cz, ex, ez) => {\n    const dx = Math.max(cx * cell - ex, 0, ex - (cx + 1) * cell);\n    const dz = Math.max(cz * cell - ez, 0, ez - (cz + 1) * cell);\n    return dx * dx + dz * dz;\n  };",
-  "new": "  const nearSq = (cx, cz, ex, ez) => {\n    const dx = (cx + 0.5) * cell - ex;\n    const dz = (cz + 0.5) * cell - ez;\n    return dx * dx + dz * dz;\n  };",
+  "old": "  const nearSq = (cx, cz, ex, ez) => {\n    const dx = Math.max(cx * cell + gx - ex, 0, ex - ((cx + 1) * cell + gx));\n    const dz = Math.max(cz * cell + gz - ez, 0, ez - ((cz + 1) * cell + gz));\n    return dx * dx + dz * dz;\n  };",
+  "new": "  const nearSq = (cx, cz, ex, ez) => {\n    const dx = (cx + 0.5) * cell + gx - ex;\n    const dz = (cz + 0.5) * cell + gz - ez;\n    return dx * dx + dz * dz;\n  };",
   "tests": [
    "test/grasspath.test.js",
    "test/labGrass.test.js"

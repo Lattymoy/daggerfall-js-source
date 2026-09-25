@@ -308,7 +308,10 @@ test('U41: the world host mounts the art window and keeps performFastTravel\'s o
   // 5800 -> 6600: the camps go through natives across the re-anchored
   // frame - their snapshot and teardown, with their own note, above the
   // needles - beside WoD's own arrival lines.
-  const core = src.slice(k, k + 6600);
+  // PIN MOVED (PERF-EXT-C2), 6600 -> 7400: the sweep empties the grass
+  // field too - a crossing no longer does - with its own note, above the
+  // needles.
+  const core = src.slice(k, k + 7400);
   for (const needle of ['destroyPixel(bx, by)', 'state.init(px, py)', 'buildPixel(first.px']) {
     assert.ok(core.includes(needle), `the core carries ${needle}`);
   }

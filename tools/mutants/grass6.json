@@ -94,8 +94,8 @@
  {
   "name": "AUDIT-GRASS6-the-noise-is-paid-before-keep-decides",
   "file": "src/render/labGrass.js",
-  "old": "    const tRnd = rnd();   // GRASS6: the lab's tint random, drawn HERE so the stream is the lab's\n    const w = 0.052 + rnd() * 0.055;\n    const y = keep(x, z);\n    if (y === null || y === undefined) continue;\n    const tint = bakedTint(tRnd, x, z);",
-  "new": "    const tint = bakedTint(rnd(), x, z);\n    const w = 0.052 + rnd() * 0.055;\n    const y = keep(x, z);\n    if (y === null || y === undefined) continue;",
+  "old": "    const tRnd = rnd();   // GRASS6: the lab's tint random, drawn HERE so the stream is the lab's\n    const w = 0.052 + rnd() * 0.055;\n    const y = keep(x, z);\n    if (y === null || y === undefined) continue;\n    const tint = bakedTint(tRnd, fx, fz);",
+  "new": "    const tint = bakedTint(rnd(), fx, fz);\n    const w = 0.052 + rnd() * 0.055;\n    const y = keep(x, z);\n    if (y === null || y === undefined) continue;",
   "tests": [
    "test/labGrass.test.js"
   ]

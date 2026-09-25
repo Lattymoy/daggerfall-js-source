@@ -634,12 +634,12 @@ export const cellKey = (cx, cz) => cx * 65536 + cz;
  *  got a RX6600"): AND IT IS SWEPT ONCE. The answer is a pure function
  *  of its three arguments - 394 for the shipped span, every time - and
  *  the sweep that finds it is 11-33 ms, paid by every createGrassField:
- *  the boot, every teleport and quickload, and every pixel crossing, on
- *  the crossing frame itself. The first call per (radius, cell, steps)
- *  sweeps and the rest read the memo. The memo is this module's and
- *  lives as long as it does - one entry per distinct question, and the
- *  game asks one. The world warms it at mount, behind the loading
- *  screen, so no frame pays even the first sweep. */
+ *  the boot, every teleport and quickload, and until PERF-EXT-C2 every
+ *  pixel crossing, on the crossing frame itself. The first call per
+ *  (radius, cell, steps) sweeps and the rest read the memo. The memo is
+ *  this module's and lives as long as it does - one entry per distinct
+ *  question, and the game asks one. The world warms it at mount, behind
+ *  the loading screen, so no frame pays even the first sweep. */
 const _discMemo = new Map();   // PERF-EXT-C1: `${radius},${cell},${steps}` -> the swept count
 let _discSweeps = 0;
 /** PERF-EXT-C1: how many times the sweep has actually run - the test seam. */
@@ -788,13 +788,14 @@ export const grassPerCell = (density = LAB_GRASS.density, span = LAB_GRASS.densi
  * neighbouring blades were as different as distant ones and the sward
  * read as a flat carpet of noise past a few metres - the eye needs
  * correlation to see a field rather than a texture. GRASS2 pulled the
- * tint toward a low-frequency value noise in the SCENE's frame (the
- * floating origin's: a corner of the player's map pixel, so a patch
- * belongs to the ground until the next pixel crossing re-anchors the
- * whole field with it - GRASS AUDIT 1 corrected the word "world" here;
- * the GPU read the same frame, so nothing moved), two octaves, tens of
- * metres across: the mean unchanged, the variance moved from
- * blade-to-blade to patch-to-patch.
+ * tint toward a low-frequency value noise in the FIELD's frame (GRASS
+ * AUDIT 1 corrected the word "world" here, and PERF-EXT-C2 the word
+ * "scene": the field's frame is the scene's as it stood when the field
+ * was made, and the field keeps it across every floating-origin shift
+ * since, so a patch belongs to the ground for the field's whole life -
+ * it re-anchored at every pixel crossing while the crossing rebuilt the
+ * field), two octaves, tens of metres across: the mean unchanged, the
+ * variance moved from blade-to-blade to patch-to-patch.
  *
  * GRASS2 did it in the vertex stage, and that was the wrong stage. The
  * clump is a function of the root's world position and nothing else; a
@@ -840,8 +841,15 @@ export const bakedTint = (rnd, x, z) => Math.max(0, Math.min(1, rnd + (grassClum
 /**
  * One cell's blades, padded to `perCell` with zero-height blades so the
  * slot is always full. The laws are placeLabGrassSteps' own, per blade.
+ *
+ * PERF-EXT-C2: `originX`/`originZ` are where the field's cell (0, 0)
+ * stands in the scene - 0 until the floating origin first moves under a
+ * field, and at 0 every lane is byte for byte what it was. A blade is
+ * placed in the FIELD's frame exactly as before (the same doubles, so
+ * the same GRASS6 tint), and only its scene position - what keep() and
+ * ground() are asked about, and what the slot stores - adds the origin.
  */
-export function placeLabGrassCell(cx, cz, { keep, ground = null, perCell, height = LAB_GRASS.height, seed = LAB_GRASS.seed, cell = GRASS_CELL }) {
+export function placeLabGrassCell(cx, cz, { keep, ground = null, perCell, height = LAB_GRASS.height, seed = LAB_GRASS.seed, cell = GRASS_CELL, originX = 0, originZ = 0 }) {
   const inst = new Float32Array(perCell * 4); const inst2 = new Float32Array(perCell * 4);
   const rootY = new Float32Array(perCell); const groundCol = new Float32Array(perCell * 3);
   let s = grassCellSeed(cx, cz, seed);
@@ -851,7 +859,8 @@ export function placeLabGrassCell(cx, cz, { keep, ground = null, perCell, height
   for (let i = 0; i < perCell; i++) {
     const px = rnd() * cell, pz = rnd() * cell;
     const a = rnd() * 6.283, rr = rnd() * rnd() * 0.55;
-    const x = ox + px + Math.cos(a) * rr, z = oz + pz + Math.sin(a) * rr;
+    const fx = ox + px + Math.cos(a) * rr, fz = oz + pz + Math.sin(a) * rr;   // PERF-EXT-C2: in the field's frame
+    const x = fx + originX, z = fz + originZ;   // PERF-EXT-C2: in the scene's
     const h = (0.22 + rnd() * 0.42) * (height / 34);
     const phase = rnd() * 6.283;
     const lx = (rnd() - 0.5) * 0.5, lz = (rnd() - 0.5) * 0.5;
@@ -859,7 +868,7 @@ export function placeLabGrassCell(cx, cz, { keep, ground = null, perCell, height
     const w = 0.052 + rnd() * 0.055;
     const y = keep(x, z);
     if (y === null || y === undefined) continue;
-    const tint = bakedTint(tRnd, x, z);   // GRASS6: pulled toward the patch it stands in; GRASS AUDIT 1: only for a blade that STANDS - the noise is 0.43 ms a cell and a road cell refuses most of its candidates
+    const tint = bakedTint(tRnd, fx, fz);   // GRASS6: pulled toward the patch it stands in; GRASS AUDIT 1: only for a blade that STANDS - the noise is 0.43 ms a cell and a road cell refuses most of its candidates; PERF-EXT-C2: the FIELD's patch, which no shift moves
     inst[n * 4] = x; inst[n * 4 + 1] = z; inst[n * 4 + 2] = h; inst[n * 4 + 3] = phase;
     inst2[n * 4] = lx; inst2[n * 4 + 1] = lz; inst2[n * 4 + 2] = tint; inst2[n * 4 + 3] = w;
     rootY[n] = y;
@@ -907,15 +916,47 @@ export function createGrassField(renderer, { keep, ground = null, span = LAB_GRA
   const live = new Map();     // cellKey -> { slot, cx, cz }
   const free = [];
   for (let i = 0; i < slots; i++) free.push(i);
+  // PERF-EXT-C2 (2026-09-25, the players: "fps issues in the exterior
+  // but fine in the interior", "me too my friend.. don't know why. I got
+  // a RX6600"): THE FIELD HAS AN ORIGIN OF ITS OWN. The host threw the
+  // field away at every floating-origin shift - every map-pixel crossing
+  // - because its cells were keyed on SCENE coordinates, and 819.2 is not
+  // a whole number of 30 m cells. So every crossing re-specified the
+  // three buffers (38.6 MB), drew 2 slots of 357 on the crossing frame,
+  // and re-placed, re-packed and re-uploaded ~355 cells over the next
+  // ~176 frames: 0.9-1.35 s of main thread on the prover's Xeon, +5-7.5
+  // ms a frame for three seconds, the grass visibly vanishing and
+  // regrowing nearest-first, every blade reshuffled (0 of 352 slots came
+  // back where they were). Once every ~3 minutes on foot and oftener on
+  // a horse, outdoors only, which is the report exactly.
+  //
+  // (gx, gz) is where the field's cell (0, 0) stands in the scene. It
+  // starts at the scene's own 0 and moves with the scene at a shift, so
+  // a cell's key, its seed and its blades are the field's for as long
+  // as the field lives, and the scene is only ever the frame the
+  // questions arrive in. Doubles, and only these two grow: the slots
+  // store scene positions that stay scene-bounded, shifted in place.
+  let gx = 0, gz = 0;
   /** PERF10: the square distance from the eye to a cell's nearest point -
-   *  _drawVisibleSlots' own test, so what is filled is what is drawn. */
+   *  _drawVisibleSlots' own test, so what is filled is what is drawn.
+   *  PERF-EXT-C2: the cell's edges stood in the field's frame, the eye
+   *  in the scene's. */
   const nearSq = (cx, cz, ex, ez) => {
-    const dx = Math.max(cx * cell - ex, 0, ex - (cx + 1) * cell);
-    const dz = Math.max(cz * cell - ez, 0, ez - (cz + 1) * cell);
+    const dx = Math.max(cx * cell + gx - ex, 0, ex - ((cx + 1) * cell + gx));
+    const dz = Math.max(cz * cell + gz - ez, 0, ez - ((cz + 1) * cell + gz));
     return dx * dx + dz * dz;
   };
   return {
     perCell, slots, live,
+    /** PERF-EXT-C2: the floating origin moved by `offset` (streamingWorld's
+     *  [dx, dy, dz], the one every other scene position in the host rides).
+     *  The field's cell grid moves with it and every standing slot's frame
+     *  and box are moved in place - O(slots), no placement, no upload: the
+     *  packed lanes are cell-local and never knew where the scene was. */
+    shiftOrigin(offset) {
+      gx += offset[0]; gz += offset[2];
+      renderer.shiftSlots(offset);
+    },
     // GRASS-STALE1 (2026-09-19, Discord: "grass is flying and not on the
     // ground" around graveyards and other POIs): a cell, once placed, is
     // never rebuilt unless it leaves render range entirely (the loop
@@ -940,9 +981,9 @@ export function createGrassField(renderer, { keep, ground = null, span = LAB_GRA
     // that is DRAWN rather than on a bilinear guess, which is about
     // WHICH height a cell reads; this is about WHEN, and a cell that
     // read the right surface at the wrong moment is wrong either way.
-    invalidate(x0, z0, x1, z1) {
-      const cx0 = Math.floor(x0 / cell), cx1 = Math.floor(x1 / cell);
-      const cz0 = Math.floor(z0 / cell), cz1 = Math.floor(z1 / cell);
+    invalidate(x0, z0, x1, z1) {   // PERF-EXT-C2: a SCENE rect, asked of the field's grid
+      const cx0 = Math.floor((x0 - gx) / cell), cx1 = Math.floor((x1 - gx) / cell);
+      const cz0 = Math.floor((z0 - gz) / cell), cz1 = Math.floor((z1 - gz) / cell);
       for (let cz = cz0; cz <= cz1; cz++) for (let cx = cx0; cx <= cx1; cx++) {
         const key = cellKey(cx, cz);
         const held = live.get(key);
@@ -956,7 +997,7 @@ export function createGrassField(renderer, { keep, ground = null, span = LAB_GRA
       const keepR2 = span * span;      // PERF10: held out to here
       const fillR2 = range * range;    // PERF10: placed only inside here
       const k = Math.ceil(range / cell) + 1;
-      const ecx = Math.floor(ex / cell), ecz = Math.floor(ez / cell);
+      const ecx = Math.floor((ex - gx) / cell), ecz = Math.floor((ez - gz) / cell);   // PERF-EXT-C2: the eye's cell on the field's grid
       // free what fell out of range. PERF10: cx/cz ride the entry, so
       // this sweep - which runs over every live cell every frame and
       // usually frees nothing - allocates nothing at all.
@@ -998,7 +1039,7 @@ export function createGrassField(renderer, { keep, ground = null, span = LAB_GRA
           renderer.clearSlot(far.slot); live.delete(farKey); slot = far.slot;
         }
         budget--;
-        renderer.writeSlot(slot, placeLabGrassCell(cx, cz, { keep: keepNow, ground: groundNow, perCell, height, seed, cell }));
+        renderer.writeSlot(slot, placeLabGrassCell(cx, cz, { keep: keepNow, ground: groundNow, perCell, height, seed, cell, originX: gx, originZ: gz }));   // PERF-EXT-C2
         live.set(key, { slot, cx, cz });
       }
       // AUDIT PERF10 F5: what was MISSING when this update began - not
@@ -1249,7 +1290,10 @@ export class LabGrassRenderer {
     this.slotCount = new Int32Array(slots);       // GRASS2: every slot starts empty, so every slot starts at zero blades
     // GRASS5: the per-slot frame a packed blade is decoded against -
     // origin x, origin z, the cell's height floor and its height span.
-    this.slotFrame = new Float32Array(slots * 4);
+    // PERF-EXT-C2: doubles, so a frame moved by shiftSlots is moved
+    // exactly and rounds to float32 once, at the upload - where every
+    // frame rounded before. Written unshifted, it uploads the same bits.
+    this.slotFrame = new Float64Array(slots * 4);
     this.slotSpan = new Float32Array(slots);   // GRASS5: the cell's own xz extent, which is NOT the cell size
     this._packA = new Uint16Array(perCell * 4);   // the scratch a cell is packed through, reused
     this._packB = new Uint8Array(perCell * 4);
@@ -1318,6 +1362,21 @@ export class LabGrassRenderer {
       gl.bufferSubData(gl.ARRAY_BUFFER, slot * p * this._lanes[k].bytes, this._packs[k]);
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
+  }
+
+  /** PERF-EXT-C2: the floating origin moved by `offset` - every standing
+   *  slot's decode frame and culling box move with it, in place. The
+   *  packed lanes are cell-local and are not touched, so nothing is
+   *  uploaded; a cleared slot's frame moves too and is never read. */
+  shiftSlots(offset) {
+    if (!this.slotFrame) return;
+    const dx = offset[0], dy = offset[1], dz = offset[2];
+    const F = this.slotFrame;
+    for (let s = 0; s < this.slots; s++) {
+      F[s * 4] += dx; F[s * 4 + 1] += dz; F[s * 4 + 2] += dy;
+      const b = this.slotBox[s];
+      if (b) { b[0] += dx; b[1] += dy; b[2] += dz; b[3] += dx; b[4] += dy; b[5] += dz; }
+    }
   }
 
   /** GR5: a cell leaves - its heights go to zero, and h=0 draws nothing. */

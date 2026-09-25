@@ -34,5 +34,144 @@
   "tests": [
    "test/grassshift.test.js"
   ]
+ },
+ {
+  "name": "PERF-EXT-C2-the-shift-block-throws-the-field-away-again",
+  "file": "src/scenes/world.js",
+  "old": "      labGrassField?.shiftOrigin(r.offset);   // PERF-EXT-C2",
+  "new": "      labGrassField = null;   // PERF-EXT-C2",
+  "tests": [
+   "test/grassshift.test.js",
+   "test/labGrass.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C2-the-grid-moves-but-the-slots-stay",
+  "file": "src/render/labGrass.js",
+  "old": "      renderer.shiftSlots(offset);",
+  "new": "      void renderer;",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C2-the-grid-does-not-follow-the-origin-east-west",
+  "file": "src/render/labGrass.js",
+  "old": "      gx += offset[0]; gz += offset[2];",
+  "new": "      gz += offset[2];",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C2-the-grid-does-not-follow-the-origin-north-south",
+  "file": "src/render/labGrass.js",
+  "old": "      gx += offset[0]; gz += offset[2];",
+  "new": "      gx += offset[0];",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C2-a-vertical-recentre-leaves-the-height-floor-behind",
+  "file": "src/render/labGrass.js",
+  "old": "      F[s * 4] += dx; F[s * 4 + 1] += dz; F[s * 4 + 2] += dy;",
+  "new": "      F[s * 4] += dx; F[s * 4 + 1] += dz;",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C2-the-culling-boxes-stay-where-the-cells-were",
+  "file": "src/render/labGrass.js",
+  "old": "      if (b) { b[0] += dx; b[1] += dy; b[2] += dz; b[3] += dx; b[4] += dy; b[5] += dz; }",
+  "new": "      if (b) { b[1] += dy; b[4] += dy; }",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C2-the-slot-frames-round-to-float32-at-every-shift-and-a-journey-drifts",
+  "file": "src/render/labGrass.js",
+  "old": "    this.slotFrame = new Float64Array(slots * 4);",
+  "new": "    this.slotFrame = new Float32Array(slots * 4);",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C2-invalidate-asks-the-scene-rect-of-the-field-grid-unconverted",
+  "file": "src/render/labGrass.js",
+  "old": "      const cx0 = Math.floor((x0 - gx) / cell), cx1 = Math.floor((x1 - gx) / cell);",
+  "new": "      const cx0 = Math.floor(x0 / cell), cx1 = Math.floor(x1 / cell);",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C2-the-eye-is-found-on-the-scene-grid-not-the-fields",
+  "file": "src/render/labGrass.js",
+  "old": "      const ecx = Math.floor((ex - gx) / cell), ecz = Math.floor((ez - gz) / cell);",
+  "new": "      const ecx = Math.floor(ex / cell), ecz = Math.floor(ez / cell);",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C2-a-blade-is-asked-about-at-its-field-position-not-its-scene-one",
+  "file": "src/render/labGrass.js",
+  "old": "    const x = fx + originX, z = fz + originZ;   // PERF-EXT-C2: in the scene's",
+  "new": "    const x = fx, z = fz;   // PERF-EXT-C2: in the scene's",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C2-the-tint-is-the-scenes-patch-so-a-crossing-recolours-the-field",
+  "file": "src/render/labGrass.js",
+  "old": "    const tint = bakedTint(tRnd, fx, fz);",
+  "new": "    const tint = bakedTint(tRnd, x, z);",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C2-the-field-places-its-cells-at-the-scene-origin",
+  "file": "src/render/labGrass.js",
+  "old": "seed, cell, originX: gx, originZ: gz }));   // PERF-EXT-C2",
+  "new": "seed, cell }));   // PERF-EXT-C2",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C2-only-a-location-publish-re-reads-the-grass-again",
+  "file": "src/scenes/world.js",
+  "old": "    if (labGrassField) {   // WOD2: a levelled camp moved the ground the same way; PERF-EXT-C2: and so does every other publish",
+  "new": "    if ((dfLocation || wodSite) && labGrassField) {   // WOD2: a levelled camp moved the ground the same way; PERF-EXT-C2: and so does every other publish",
+  "tests": [
+   "test/grassshift.test.js",
+   "test/audit_wod_branch.test.js",
+   "test/wod2_loader.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C2-a-promotion-to-the-near-ring-re-reads-nothing",
+  "file": "src/scenes/world.js",
+  "old": "    if (stride === 1 && labGrassField) {",
+  "new": "    if (false && labGrassField) {",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C2-a-teleport-keeps-the-old-worlds-field",
+  "file": "src/scenes/world.js",
+  "old": "    labGrassField = null;\n    // BLOOD1 AUDIT 2",
+  "new": "    // BLOOD1 AUDIT 2",
+  "tests": [
+   "test/grassshift.test.js",
+   "test/labGrass.test.js"
+  ]
  }
 ]
