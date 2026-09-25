@@ -162,5 +162,59 @@
     ],
     "equivalent": true,
     "why": "belt and braces, left alive on purpose: P.bb's uOrigin and uSize are written by this loop alone and a uniform is the program's until the next upload, so one reset a replay is exact too - the reset a record keeps the lasts beside the sway's and the texture's, where a future program switch inside a record would need them"
+  },
+  {
+    "name": "PERF-EXT12-1-the-pixel-walk-builds-the-object-again",
+    "file": "src/scenes/world.js",
+    "old": "        if (!farFlatVisibleAt(ring, b.size?.h ?? 0, b.frame != null)) continue;",
+    "new": "        if (!(({ ring: r0, height: h0, animated: a0 }) => farFlatVisibleAt(r0, h0, a0))({ ring, height: b.size?.h ?? 0, animated: b.frame != null })) continue;",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT12-2-the-pixel-walk-passes-the-height-as-the-ring",
+    "file": "src/scenes/world.js",
+    "old": "        if (!farFlatVisibleAt(ring, b.size?.h ?? 0, b.frame != null)) continue;",
+    "new": "        if (!farFlatVisibleAt(b.size?.h ?? 0, ring, b.frame != null)) continue;",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT12-3-the-object-form-drops-animated",
+    "file": "src/world/flatDistance.js",
+    "old": "  return farFlatVisibleAt(ring, height, animated);",
+    "new": "  return farFlatVisibleAt(ring, height);",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT12-4-the-positional-form-defaults-to-moving",
+    "file": "src/world/flatDistance.js",
+    "old": "export function farFlatVisibleAt(ring, height, animated = false) {",
+    "new": "export function farFlatVisibleAt(ring, height, animated = true) {",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT12-5-the-object-form-keeps-a-second-copy-of-the-rule-that-drifts",
+    "file": "src/world/flatDistance.js",
+    "old": "  return farFlatVisibleAt(ring, height, animated);",
+    "new": "  if (ring < FAR_FLAT_RING) return true;\n  if (animated) return true;\n  return height > TALL_FLAT_HEIGHT;",
+    "tests": [
+      "test/perfextb.test.js"
+    ]
+  },
+  {
+    "name": "PERF-EXT12-6-the-one-home-moves-the-tree-line-and-the-mac1-pins-see-it-through-the-object-form",
+    "file": "src/world/flatDistance.js",
+    "old": "  return height >= TALL_FLAT_HEIGHT;\n}\n\n/**\n * The same rule",
+    "new": "  return height > TALL_FLAT_HEIGHT;\n}\n\n/**\n * The same rule",
+    "tests": [
+      "test/mac1_playreport.test.js"
+    ]
   }
 ]

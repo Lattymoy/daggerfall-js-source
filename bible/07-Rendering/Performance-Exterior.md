@@ -142,3 +142,48 @@ and eight lanterns' replays, sees its own size and origin, with the skip
 really on. Mutants 10-18; one (the replay's reset hoisted to once a
 replay) is recorded EQUIVALENT: only that loop writes `P.bb`'s two
 uniforms, so the reset a record is belt and braces.
+
+## PERF-EXT12 - the far-flat rule is asked without an object
+
+**What the frame paid.** The streaming host's pixel walk asks MAC1's
+far-flat rule of every flat batch of every pixel it can see or reach,
+every frame - 1,131 times a frame on the harness town - and asked it as
+`farFlatVisible({ ring, height, animated })`, an object literal a call.
+AUDIT 65 had looked at exactly this and let it stand: "measured at 0.2 ns
+per call over five million calls; V8 scalar-replaces a destructured
+literal that never escapes". In a microbenchmark it does. In the frame it
+does not: with a 1 MB young space (`--min-semi-space-size=1
+--max-semi-space-size=1 --trace-gc`) over 3,065 harness frames the literal
+cost about 225 scavenges more than the positional call - about 70 KB of
+young garbage a frame, ~4 MB a second at 60 fps, for the scavenger
+PERF-TOWN1 already named as the cause of the frame's swings. The rule
+written out inline scavenges no less than the positional call (1,082
+against 1,075), so the garbage was the object, not the call.
+
+**The change.** `flatDistance.js` exports `farFlatVisibleAt(ring, height,
+animated = false)` as the rule's ONE home; `farFlatVisible({...})` stays
+as a call to it, because the MAC1 behaviour pins speak the object form.
+`world.js` calls the positional one. The same boolean for the same
+inputs.
+
+**Measured** (the hunter's `townFrame.mjs` with its far-flat call taken
+from the tree under test, `townFrameTree.mjs`):
+
+| | PERF-EXT11 | PERF-EXT12 |
+|---|---|---|
+| scavenges, 1 MB young space, 3,065 frames (3 runs) | 1,296 / 1,299 / 1,301 | 1,073 / 1,074 / 1,078 |
+| the `batches` zone, ms/frame (7 runs x 800, median) | 0.406 | 0.386 |
+
+The prover's run on the same harness: 1,228 against 1,003-1,013
+scavenges, the batches zone 0.392 -> 0.353 ms. About 0.02-0.04 ms of CPU
+a frame; the point is the garbage.
+
+**Pinned** (`test/perfextb.test.js`, both failing on the base): the pixel
+walk's call is positional and nothing in `src/` builds an object to ask
+the rule; and over rings 0-6, six heights and `animated` false, true and
+left out, `farFlatVisibleAt` answers what `farFlatVisible({...})` answers
+(86 of 126 draw), with the object form nothing but a call to it. MAC1's
+wire pin (`test/mac1_playreport.test.js`) and SHADOW-REACH's gate pin
+(`test/shadowreach.test.js`) read the positional call now. Mutants 19-24,
+one of them run against the MAC1 pins alone: the tree line moved in the
+one home is seen through the object form.

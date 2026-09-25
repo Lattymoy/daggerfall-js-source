@@ -16,6 +16,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Renderer, WORLD_FRAME } from '../src/render/renderer.js';
 import { EL_LANE } from '../src/render/enhancedLighting.js';
+import * as flatDistance from '../src/world/flatDistance.js';   // a namespace: on the base the positional form is missing, and only its pins fail
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -298,4 +299,36 @@ test('PERF-EXT11: no flat ever draws with a stale size or origin - GL walked as 
     const ups = calls.filter((c) => (c[0] === 'uniform2f' || c[0] === 'uniform3f') && c[1] === loc).length;
     assert.ok(ups * 2 < checked, `${loc}: ${ups} uploads for ${checked} flat draws (${draws} draws in all)`);
   }
+});
+
+// ── PERF-EXT12: no object ─────────────────────────────────────────────
+
+test('PERF-EXT12: the streaming host asks the far-flat rule POSITIONALLY - no `{ ring, height, animated }` built for every flat batch of every pixel in sight or reach, every frame (the base: an object literal at the call); nothing in src/ builds one for it', () => {
+  const w = rd('src/scenes/world.js');
+  assert.match(w, /if \(!farFlatVisibleAt\(ring, b\.size\?\.h \?\? 0, b\.frame != null\)\) continue;/, 'the pixel walk\'s call');
+  assert.match(w, /import \{ farFlatVisibleAt \} from '\.\.\/world\/flatDistance\.js'/);
+  const objectCalls = [];
+  const walk = (d) => { for (const e of readdirSync(join(ROOT, d))) { const p = `${d}/${e}`; if (statSync(join(ROOT, p)).isDirectory()) walk(p); else if (p.endsWith('.js') && /(?<!function )farFlatVisible\(\s*\{/.test(rd(p))) objectCalls.push(p); } };
+  walk('src');
+  assert.deepEqual(objectCalls, [], 'an object built to ask the rule');
+});
+
+test('PERF-EXT12: the positional rule IS the rule - over rings 0..6, heights 0 / 0.4 / 1.8 / 2.49 / 2.5 / 6 and animated false / true / left out, farFlatVisibleAt answers what farFlatVisible({...}) answers, and the object form is only a call to it (one home: the MAC1 pins, which speak the object form, hold the positional one)', () => {
+  const { farFlatVisibleAt, farFlatVisible } = flatDistance;
+  assert.equal(typeof farFlatVisibleAt, 'function', 'the positional home exists');
+  let asked = 0, drawn = 0;
+  for (let ring = 0; ring <= 6; ring++) {
+    for (const height of [0, 0.4, 1.8, 2.49, 2.5, 6]) {
+      for (const animated of [false, true, undefined]) {
+        const p = animated === undefined ? farFlatVisibleAt(ring, height) : farFlatVisibleAt(ring, height, animated);
+        const o = animated === undefined ? farFlatVisible({ ring, height }) : farFlatVisible({ ring, height, animated });
+        assert.equal(p, o, `ring ${ring}, height ${height}, animated ${animated}`);
+        asked++; if (p) drawn++;
+      }
+    }
+  }
+  assert.equal(asked, 126);
+  assert.equal(drawn, 2 * 18 + 5 * (6 + 2 * 2), 'the two near rings draw all; beyond them the moving and the tall (2.5, 6)');
+  const home = rd('src/world/flatDistance.js');
+  assert.match(home, /export function farFlatVisible\(\{ ring, height, animated = false \}\) \{\n\s*return farFlatVisibleAt\(ring, height, animated\);\n\}/, 'the object form is a call to the one home');
 });

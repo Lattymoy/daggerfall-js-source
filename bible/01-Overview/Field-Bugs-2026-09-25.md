@@ -106,6 +106,10 @@ told to disprove each win. The flats and the frame's CPU:
   change, in the flats pass and in every shadow replay: 6,243 -> 5,279
   GL calls a frame by day and 4,992 -> 4,265 at night on the harness,
   every draw seeing the same values.
+- **PERF-EXT12** - the far-flat rule is asked with three numbers, not
+  an object for every flat batch of every pixel every frame: about
+  70 KB less young garbage a frame (1,299 -> 1,074 scavenges over
+  3,065 harness frames with a 1 MB young space).
 
 `07-Rendering/Performance-Exterior.md` has the measurements, the pins
 and the mutants. Not seen on a GPU - there is no game data in the
