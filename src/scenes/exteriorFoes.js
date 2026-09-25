@@ -52,6 +52,7 @@ import { WEAPON_REACH } from '../combat/playerWeapon.js';   // AUDIT WATCH1 B2: 
 import { createWeapon, bowDamageArrow } from '../combat/enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all   // AUDIT WORLD6b-ii B2: a puppet's weapon is its owner's word, rebuilt from the descriptor   // AUDIT WORLD6b B3/C2: a cell's record projected and its puppets capped, the wire's law
 import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, corpseEntryFor, corpseContents, takeCorpseLoot, openCorpseLoot, pileBody, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
 import { renownFoeStruck, renownFoeDied } from '../net/renownTracker.js';   // RENOWN1: a foe the player fought pays its Renown XP when it dies, by any hand
+import { partyFoeLoses, partyFoeHits } from '../systems/partyScale.js';   // PSCALE1: a shared foe weighs the party
 import { corpseName, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js';   // WORLD-HOVER: "<who> (dead)", the mod's own word (.cs:526); H2: and a LIVE one's, when it is not hostile (.cs:304-312)
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // GetLocalizedEnemyName, the index law in one place
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
@@ -103,6 +104,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   spellsByIndex = null,   // X3-slice: () => the SPELLS.STD map (null until loaded) - casters need it
   hitEffects = null,   // AUDIT 24 (wave 39): the host's one blood/effect pool
   playerWeaponSheathed = () => false,   // AUDIT 24 (wave 42): CalculateEnemyPacification's -25 / +10 arm
+  partySize = null,   // PSCALE1: () => the party this pool's fights weigh (systems/partyScale.js) - null offline and indoors, where every foe is one player's
   // GameObjectHelper.CreateEnemyCorpseMarker (:836-839): a corpse
   // dropped OUTSIDE is handed to StreamingWorld.TrackLooseObject,
   // which stamps it with the streamer's CURRENT map pixel (:462-476)
@@ -562,6 +564,15 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (!peer) resetAllyTeamOnPlayerAttack(f.ai, f.entity, f.mobileType);
   }
 
+  /** PSCALE1: a SHARED foe - one other players can see and strike (it rides this pool's stream, or it is another
+   *  player's, stood here as a puppet). Never a quest's (every member's own copy), never the watch (a crime's answer,
+   *  not a party's) and never my own summoned ally; never anything without a stream at all. */
+  const _sharedFoe = (f) => !!partySize && !!_net && !!f && f.mobileType !== KNIGHT_CITYWATCH_ID && f.entity?.team !== 'PlayerAlly'
+    && (!!f.puppet || (!f.isQuestFoe && !(f.placed && !f.site)));
+  const _partyN = () => { try { return partySize?.() ?? 1; } catch { return 1; } };
+  /** PSCALE1: a shared foe's weapon or arrow hit on me, weighed by the party beside me (partyFoeHits). */
+  const partyHit = (dmg, f) => (_sharedFoe(f) ? partyFoeHits(dmg, _partyN()) : dmg);
+
   function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true, bypassShield = false, kind = 'melee', peer = false, peerId = null } = {}) {
     if (f.dead) return;   // AUDIT 68 S20-foe-dies-twice: a corpse takes no blow - a magic round after the killing one re-ran the whole death (notice, loot handlers, corpse)
     if (fromPlayer && !peer) renownFoeStruck(f);   // RENOWN1: MY blow - a puppet's too, before the divert sends it to the owner
@@ -612,7 +623,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     // HandleAttackFromSource runs after it unconditionally (:630), so
     // a fully absorbed blow still knocks back and still turns the foe.
     const healthDamage = bypassShield ? damage : damageShieldPool(f.entity, damage);
-    f.entity.health -= healthDamage;
+    // PSCALE1: a shared foe fights the party with more health - its damage over the party's toughness, here where the
+    // owner applies every blow (a SetHealth(0) is no blow, and stands as it was)
+    f.entity.health -= !bypassShield && _sharedFoe(f) ? partyFoeLoses(f, healthDamage, _partyN()) : healthDamage;
     if (f.entity.health <= 0) {
       // X5: the SOUL TRAP intercept, where EnemyEntity.SetHealth's
       // override sits (:157-177) - before the death, every source alike.
@@ -785,7 +798,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     const mid = [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]];
     if (meleeHitConnects(f.ai._dist, f.ai.inSight, withinYaw(f.ai.yaw, hdx, hdz, MELEE_HIT_YAW_DEG))) {
       tallySkill(playerEntity, SKILLS.Dodging, 1);
-      const dmg = calculateAttackDamage(f.entity, playerEntity, {
+      const dmg = partyHit(calculateAttackDamage(f.entity, playerEntity, {
         weapon: wpn,
         // AUDIT 24 (wave 30): THE SPECIAL-ATTACK RIDER, which this
         // pool never passed. FormulaHelper's monster branch calls
@@ -811,11 +824,12 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         }),
         onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(currentMinute()) }),
         say,
-      });
+      }), f);   // PSCALE1: harder for the party beside me
       // AUDIT 24 (wave 39): EnemyAttack.cs:406 -
       // `PlayerObject.SendMessage("RemoveHealth", damage)` - which
       // is ShowPlayerDamage.Flash's trigger. An enemy's BLOW
       // flashes the screen; the poison it carries does not.
+      // PSCALE1: `dmg` is the blow already weighed for the party beside me (partyHit, where it is declared above).
       if (dmg > 0) { onPlayerHurt?.(dmg, wpn); flashPlayerDamage(dmg); }
       // C2-slice (combat-9): a connected attack that LOST the
       // roll rings the miss sound (ApplyDamageToPlayer's else)
@@ -2030,7 +2044,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     _onDuelClear?.();   // DUEL1: and their rings
   }
 
-  return { foes, spawnFoe, damageFoe, handleAttackFromPlayer, attackFromPlayer, update, resolvePlayerHit, poisonFoe, batches, offsetAll, activeCount, lootTargets, hoverName, hoverContents, liveTargets, liveHoverName, takeLoot, pileBody: (key) => pileBody(corpseEntryFor(foes, key, 'foeCorpse', corpseLens)), snapshotWorld, restoreWorld, destroy,   // LOOT-STACK: a body as the loot window's tab
+  return { foes, spawnFoe, damageFoe, partyHit, handleAttackFromPlayer, attackFromPlayer, update, resolvePlayerHit, poisonFoe, batches, offsetAll, activeCount, lootTargets, hoverName, hoverContents, liveTargets, liveHoverName, takeLoot, pileBody: (key) => pileBody(corpseEntryFor(foes, key, 'foeCorpse', corpseLens)), snapshotWorld, restoreWorld, destroy,   // LOOT-STACK: a body as the loot window's tab
     /** AUDIT 39: CleanupUntrackedObjects' enemy half (StreamingWorld.cs
      *  :1624-1635), which a teleport reaches too through
      *  ClearStreamingWorld -> CollectLooseObjects(true) (:993-998) -

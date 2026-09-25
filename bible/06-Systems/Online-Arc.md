@@ -4320,7 +4320,7 @@ room exists.
 
 **The boundary that makes that safe is `_layoutFoes`** - the dungeon
 host's index of where the layout's own run ends. Every foe past it "is
-this player's own" (`dungeonContext.js:1166`, AUDIT WORLD B2): a quest
+this player's own" (`dungeonContext.js:1167`, AUDIT WORLD B2): a quest
 foe is minted above it, never streamed, never puppet-ised by the room's
 authority switch, and never touched by a joiner's stream. So a joiner's
 quest foe really does spawn and really can be killed by the player whose
@@ -4689,7 +4689,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6194` read, on one physical line:
+`src/scenes/worldModes.js:6195` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4704,7 +4704,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:4305`). With the property missing that call is a
+(`dungeonContext.js:4306`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -4831,7 +4831,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4233` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4245` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:255`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -8138,3 +8138,62 @@ place socket's frames. Main's RIDE and DISC7 put the mount on the pose (`rd`, `r
 them at their bounds and the widest place attachment measures 566 bytes. `tools/mutants/auditattach.json`: 8, 8 dead
 (the new one puts the park strikes back on `pdrops`). Main's HCC-PARK tests refilled the park bucket by writing the
 attachment, which no longer holds it; they refill the instance's meter (`_meterOf`), as every other re-aimed pin does.
+
+## PSCALE1 (2026-09-25, Mac: "So to add onto this, I want enemy difficulty, enemy numbers, etc to scale approriately with party size") - a fight weighs what the party weighs
+
+Asked three things, Mac answered: "+50% HP, +10% dmg" a player past the first; outdoors "One roll per group"; in a
+dungeon "Everyone in it" counts. Daggerfall Unity has no other players, so every foe is sized for one; this is a
+Ledger A departure (`Port-Ledger.md` section A, A FIGHT WEIGHS WHAT THE PARTY WEIGHS), and it is online's alone -
+offline the party is one and every number is DFU's. The law is `src/systems/partyScale.js`, pure, the count an
+argument.
+
+- **Who the party is** (`scenes/world.js partySize`, 1 to PARTY_MAX 8). In a dungeon, everyone in that dungeon's room -
+  its layout foes are every player's there, partymates and strangers alike, so everyone who can strike them counts.
+  Outdoors, me and the partymates whose feet are within GROUP_ROLL_RADIUS (100 units, the camps' own group) - a town
+  full of strangers is not my party. Offline, or with no open room, one.
+- **Tougher.** A SHARED foe loses its damage over `partyToughness` (1 + 0.5 a player past the first: 1.5 for two, 2.5
+  for four, 4.5 for eight), taken at the damage door rather than written into the foe's maximum. The maximum is the one
+  number every client, the room's memory and a save already agree on (each rolls its own; the stream carries only the
+  health), so a toughness kept there would have leaked into a save loaded alone and a room visited by fewer. Only the
+  foe's AUTHORITY takes damage - the dungeon's host, an outdoor foe's owner; every other client's blow on a puppet is
+  sent there and returns before the door - so only the authority reads this, with its own count. The remainder is
+  carried per foe in a WeakMap (never a field a stream or a save could carry), so a party of eight's pinpricks still
+  kill: nine blows of 1 at 4.5 take two points. A quest's scripted kill (SetHealth(0), `bypassShield`) is no blow and
+  is never divided.
+- **Harder.** A SHARED foe's weapon hit and arrow on me is `partyDamageFactor` the blow (1 + 0.1 a player past the
+  first, rounded: 1.3 for four, 1.7 for eight). A hit is resolved on the victim's machine from its own copy of the
+  foe, so the victim reads it with its own count - the host's in a dungeon (everyone in the room sees the same room),
+  the owner's partymates' outdoors; a stranger passing someone else's fight is not struck harder for that party's size.
+- **More.** Outdoors every player rolled their own wanderers, so four standing together met four times the encounters
+  (each streamed to the rest as puppets). The lone encounter is now gated like the camps (`amGroupRollOwner` - the
+  lowest id among the players within the radius, which each of them computes alike): only the group's roller stands
+  it, and every lone encounter, camp and pack stands `partyExtraFoes` more (one for every two players past the first,
+  at most three: none for two, one for four, three for eight). A lone wanderer brings more of its own kind; a camp or
+  a pack draws its extras from its own members in order (`partyGroupMembers`) - a bandit gang grows by bandits. The
+  owner's spawner already refuses past MAX_ACTIVE_ENCOUNTER_FOES (8), the same number each reader stands per owner
+  (CELL_PUPPETS_MAX), so the extras never outgrow what the stream carries: the widest camp, five and three more, is
+  exactly the bound, and a group already holding foes stands fewer.
+- **Shared, and never weighed.** In a dungeon a shared foe is a layout foe (index under `_layoutFoes`, the ones
+  `foesFrame` streams) that is not my summoned ally. Outdoors it is a foe of the streamed pool (`_net` set): a
+  puppet, or my own that is not a quest's and not placed without a site; the city watch (mobile 146) answers a crime,
+  not a party, and is never weighed. A foe only I can see - a quest's wave, a dungeon rest's ambush or any other foe
+  past the layout, a building's (the interior pool has no net) - is never weighed, since nobody can help me with it.
+
+**Known limits, taken knowingly.**
+- A dungeon's count is its map's markers, shared by index with every client, and does not grow; its foes are tougher
+  and harder instead.
+- A foe's SPELLS are not weighed: their damage runs through the spell engine's effect bundles, which tick on long after
+  the cast and are shared with players' own spells.
+- A player resting beside an awake player who owns the group's roll is not woken by a wanderer (CAMP1-REST's cost,
+  now the lone encounter's too): someone is on watch. The election is the camps' own, over every player within the
+  radius, partymate or stranger - players standing together meet one wanderer roll between them, and the foes more
+  are sized by the roller's own party.
+- The count is read at the moment it is needed - a blow landing, a hit struck, a roll standing - so a partymate who
+  walks off mid-fight makes the next blow count for fewer; nothing already dealt is re-weighed.
+
+No relay change and no version: nothing on the wire moves, and each client weighs its own blows. Pinned:
+`test/pscale1.test.js` (4): the law's numbers and bounds (the widest camp with its extras inside both caps); the
+outdoor pool driven - a shared foe at N 4 loses five blows of 3 as 6 (health 94), alone a blow of 3 as 3, a scripted
+kill whole, a quest foe and a placed foe with no site unweighed and a site's camp foe weighed, a puppet's hit 13 for 10 and the watch's, an ally's and a quest foe's 10, an indoor pool's foe
+unweighed; and the wiring in world.js, worldModes.js, dungeonContext.js and exteriorFoes.js by source.
+`tools/mutants/pscale1.json`.

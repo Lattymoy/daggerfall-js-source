@@ -304,6 +304,8 @@ import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, kn
 import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/renown.js';   // RENOWN1: what a kill and a quest are worth, and the party's bonus (RENOWN3: read against my Renown)
 import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer, renownFoeCarry } from '../net/renownTracker.js';   // RENOWN1: what this character earns online, carried to the account service
 import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the level's health and magicka, on top of Daggerfall's while online
+import { partySizeOf, partyExtraFoes, partyGroupMembers } from '../systems/partyScale.js';   // PSCALE1: a fight weighs the party - its count, and the foes more an outdoor encounter stands
+import { GROUP_ROLL_RADIUS } from '../systems/campEncounters.js';   // PSCALE1: outdoors, the party a fight weighs is the camp's own group
 import { appStorage } from '../systems/appStorage.js';   // ACC1d: where that session lives - the app's store, not the tab's (a second tab is the same player)
 import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
@@ -3803,6 +3805,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // LIVE. Same damage door shape as the guards; no crime machinery.
   const exteriorFoes = createExteriorFoes({
     renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, hitEffects,
+    partySize: () => partySize(),   // PSCALE1: the party the streamed foes weigh (declared with the party's reads below; asked only in play)
     playerWeaponSheathed: () => !!weaponRig.playerWeapon.sheathed,   // AUDIT 24 (wave 42): pacification's drawn-weapon penalty
     currentMinute: () => Math.floor(playerTicker.classicMinutes),
     currentPixelKey: () => `${playerTravelPixel().x},${playerTravelPixel().y}`,   // TrackLooseObject's stamp
@@ -3878,6 +3881,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     // and inside the preventEnemySpawns guard: the sweep below runs at
     // most once per Update, not once per caught-up minute.
     let _updatedGuards = false;
+    // PSCALE1 (Mac: "One roll per group"): ONLINE, THE GROUP ROLLS ITS WANDERERS ONCE. Every player rolled their own,
+    // so four standing together met four times the encounters (each streamed to the rest as puppets); now the camps'
+    // own election (`amGroupRollOwner` - the lowest id among the players within 100 units, which every one of them
+    // computes alike) decides who rolls, and that roll stands the party's extra foes (partyExtraFoes). Outdoors only:
+    // inside, nothing rolls here but a rest, and a rest is its own. The cost, taken knowingly (CAMP1-REST's): a player
+    // resting beside an awake player who owns the roll is not woken by a wanderer - someone is on watch.
+    const _mOuter = modes?.mode ?? 'exterior';
+    const _rollsForGroup = _mOuter !== 'exterior' || span <= 0 || amGroupRollOwner(online?.id ?? null, player.feetAt(), peersNear());
     for (let l = 0; l < span; l++) {
       // :488-491 - "Don't spawn encounters while player is swimming in
       // water or on ship (same as classic)" (ROAD-G TAIL: the gate had no
@@ -3900,7 +3911,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         climateIndex: maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y),
         playerLevel: playerEntity.level,
       });
-      if (hit) {
+      if (hit && _rollsForGroup) {   // PSCALE1: a roll that is not the group's stands nothing - the group's roller stands it for everyone
         // RE1: DFU's own placement. This used to walk eight compass
         // points at minDistance and take the first with ground under
         // it - so an encounter arrived due NORTH of the player unless
@@ -3911,7 +3922,8 @@ export async function bootWorld(canvas, renderer, params, status) {
         // function the quest arm and the enchantment arms already use.
         // The band and the line-of-sight flag ride in on the hit -
         // they are the spawner's arguments and differ per arm.
-        _standEncounterFoe(hit, playerFeet);
+        // PSCALE1: and the party's extra foes beside it - one more for every two players past the first, up to three
+        for (let k = 0, n = 1 + partyExtraFoes(partySize()); k < n; k++) _standEncounterFoe(hit, playerFeet);
         break;
       }
       // CAMP1 - GROUP ENCOUNTERS (camps and packs, systems/campEncounters.js):
@@ -4335,7 +4347,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2464 mounts the same one, gated on
+  // and dungeonContext.js:2465 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:5673
@@ -4424,7 +4436,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:413-418) never looks the record up in `foes`, and
+    // (exteriorFoes.js:415-420) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1481-1499) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
@@ -4529,7 +4541,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!anchor) return;
     const campId = _nextCampId++;
     const anchorFeet = [anchor.x, anchor.y, anchor.z];
-    for (const mobileType of hit.mobileTypes) {
+    for (const mobileType of partyGroupMembers(hit.mobileTypes, partySize())) {   // PSCALE1: a camp or a pack grows with the party it meets
       const memberEnv = placeFoeEnv({
         collider,
         playerFeet: [anchorFeet[0], anchorFeet[1] + 0.9, anchorFeet[2]],
@@ -6473,7 +6485,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6303), so exterior mode and a
+    // composer, dungeonContext.js:6316), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -8449,7 +8461,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8823-8887 -
+  // worldModes answers it in BOTH modes (worldModes.js:8824-8888 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -11049,6 +11061,21 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     return out;
   };
+  /** PSCALE1 (Mac: "I want enemy difficulty, enemy numbers, etc to scale approriately with party size"; asked, "Everyone
+   *  in it" counts in a dungeon): THE PARTY A FIGHT HERE WEIGHS (systems/partyScale.js). In a dungeon, everyone in its
+   *  room - its foes are everyone's there, partymates and strangers alike; outdoors, me and the partymates within
+   *  GROUP_ROLL_RADIUS, the camp's own group - a town full of strangers is not my party. Offline, or with the room not
+   *  open, one. */
+  const partySize = () => {
+    if (!online || online.status !== 'open' || !online.room) return 1;
+    if (String(online.room).startsWith('dungeon:')) return partySizeOf(1 + (peersNear()?.length ?? 0));
+    const me = player.feetAt?.();
+    if (!me) return 1;
+    const r2 = GROUP_ROLL_RADIUS * GROUP_ROLL_RADIUS;
+    let n = 1;
+    for (const m of partyNear()) { const dx = m.feet[0] - me[0], dz = m.feet[2] - me[2]; if (dx * dx + dz * dz <= r2) n++; }
+    return partySizeOf(n);
+  };
   /** PARTY-REST2/3: true when `pose` (a party member's last broadcast pose) puts them in the SAME place as me
    *  (samePlace) AND within PARTY_REST_RADIUS meters for real (distanceToPartyAccount) - the one law both
    *  nearPartyMembers (the consensus gate, over every member) and partyRestFollowTick (the mirror, over the
@@ -12444,6 +12471,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     onLootClaimed: () => { _worldPublishedAt = -Infinity; },
     peers: peersNear,
     partyNear: () => partyNear(),   // DISC23-A: the party's bodies, for the dungeon's and the building's plans
+    partySize: () => partySize(),   // PSCALE1: the party a fight here weighs - the dungeon's shared foes read it
     allyMarks: () => allyMarksNear(),   // AID1 onto ALLY-CAST: the dungeon's own cast engine gives to the same mates
     selfId: () => online?.id ?? null,
     dungeonAuthority,   // WORLD2: a dungeon built while another hosts starts as puppets
@@ -14987,11 +15015,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       onPlayerHit: (m) => {
         const shooter = m.shooterFoe;
         tallySkill(playerEntity, SKILLS.Dodging, 1);
-        const dmg = shooter && !shooter.dead ? calculateAttackDamage(shooter.entity, playerEntity, {
+        const dmg = shooter && !shooter.dead ? exteriorFoes.partyHit(calculateAttackDamage(shooter.entity, playerEntity, {
           weapon: m.weapon,
           onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(playerTicker.classicMinutes) }),
           say: (l) => townTalk.say(l),
-        }) : 0;
+        }), shooter) : 0;   // PSCALE1: a shared archer's arrow, harder for the party beside me
         if (dmg > 0) {
           hurtPlayer(playerEntity, dmg);
           audio.playOneShot(hitSoundFor(m.weapon), PLAYER_HIT_VOLUME);   // AUDIT 58: PlayerFootsteps.cs:330-344 - the blow that lands ON the player is volumeScale 1, not EnemySounds' 1.1

@@ -219,6 +219,7 @@ import { NavClient } from '../ai/navClient.js';   // ENHANCED AI 3b
 import { getPref } from '../systems/uiPrefs.js';   // ENHANCED AI 3b: the Enhanced tab's switch
 import { raiseEnemyDeath, playRareDrop, pileBody } from './corpseMarker.js';   // UL1: OnEnemyDeath; LR3: the drop chime; LOOT-STACK: a body as the loot window's tab
 import { FOE_LEVEL_MAX } from '../net/wire.js';   // AUDIT RENOWN1 GAME-3: the stream's bound on a class foe's level
+import { partyFoeLoses, partyFoeHits } from '../systems/partyScale.js';   // PSCALE1: a shared foe weighs the party
 import { renownFoeStruck, renownFoeDied, renownFoeCarry, renownFoeRevived } from '../net/renownTracker.js';   // RENOWN1: a foe the player fought pays its Renown XP when it dies, by any hand   // AUDIT RENOWN1 GAME-10: a rebuilt foe keeps my blows, a revived one forgets them
 import { lootPile } from '../player/lootStack.js';   // LOOT-STACK: the pile under the reticle, as the loot window's tabs
 import { rollLootRarity, pileSource, dungeonRarityTier } from '../systems/lootRarity.js';   // LR1: the item ladder over every list this host mints (a foe's through hostCombat.spawnEnemyLoot, RF2)
@@ -249,7 +250,7 @@ const q3 = (v) => Math.round(v * 1000) / 1000; const GENDER_BIT = ['male', 'fema
 const HIT_POS_MAX = 1e6;
 // AUDIT FOES FOE5: the most damage one peer's blow may claim. The host TRUSTS the number (it never recomputes - the
 // striker's own calc is the game's), so without a bound any joiner could one-shot every foe in the room and empty it
-// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1982); the dungeon
+// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1996); the dungeon
 // had none. Past anything a legal swing, shaft or blast can roll.
 const HIT_DMG_MAX = 10000;
 /** AUDIT WORLD3 E3: can the ONE build chain actually stand this species? Both of buildFoeAt's branches need a truthy
@@ -1671,7 +1672,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:9500 / exterior.js:3667), set
+  // host's own townTalk sink (world.js:9512 / exterior.js:3667), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2738,7 +2739,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1080 against :1109; worldModes.js:7107 against :7131).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1080 against :1109; worldModes.js:7108 against :7132).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3321,8 +3322,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:15021,
-              // exterior.js:5237 and worldModes.js:7316 already ran;
+              // playerArrowHitFoe is the one copy world.js:15049,
+              // exterior.js:5237 and worldModes.js:7317 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3423,7 +3424,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),   // S19b: poisoned arrows
               say: (l) => hudText.add(l),   // C-slice
             }) : 0;
-            hurtPlayer(dmg);
+            hurtPlayer(shooter && _sharedFoe(shooter) ? partyFoeHits(dmg, _partyN()) : dmg);   // PSCALE1: an arrow as a blow is
             // AUDIT 24 (wave 46): an enemy ARROW reaches the player
             // through BowDamage -> ApplyDamageToPlayer ->
             // SendDamageToPlayer, exactly as a melee blow does - so it
@@ -3706,7 +3707,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!_authority || !data || typeof data !== 'object') return false;
     const i = data.i | 0, dmg = Number(data.dmg);
     const f = foes[i];
-    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1982). The number is a peer's
+    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1996). The number is a peer's
     // word and the host trusts it without recomputing, so an unbounded one let any joiner one-shot every foe in the
     // room - and, through the kill door, empty it. 10000 is past anything a legal swing, shaft or blast can roll.
     if (!f || i >= _layoutFoes || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > HIT_DMG_MAX) return false;
@@ -4203,7 +4204,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:1556's restoreWorld goes through
+    // construction (exteriorFoes.js:1570's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
@@ -4333,6 +4334,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   /** AUDIT 26 F035/F041: `fromPlayer` is this door's provenance flag,
    *  the third pool's copy of the same law - see exteriorFoes. */
   let _ecvT = 0;   // ECV1: the foe pass's clock (seconds), for the shimmer and the hit reveal - declared above its first reader
+  /** PSCALE1: a SHARED foe - one of the layout's, which every client in the room holds by index and the host
+   *  simulates for all of them. A foe past the layout (a rest's ambush, a quest's wave, a Wabbajack's change) is only
+   *  mine to see, and my own summoned ally is nobody's to weigh. Online only: offline there is no party size. */
+  function _sharedFoe(f) {
+    if (!opts.partySize || !f || f.entity?.team === 'PlayerAlly') return false;
+    const i = foes.indexOf(f);
+    return i >= 0 && i < _layoutFoes;
+  }
+  function _partyN() { try { return opts.partySize?.() ?? 1; } catch { return 1; } }
+
   function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true, bypassShield = false, kind = 'melee', peer = false, peerId = null } = {}) {
     // AUDIT 68 S19-damagefoe-dead-reentry: a corpse takes no blow. EnemyDeath runs once; the round sinks tick on
     // after the killing tick inside one window, and each re-ran the whole death arm (trap, chime, OnEnemyDeath).
@@ -4423,7 +4434,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // HandleAttackFromSource runs after it unconditionally (:630), so
     // a fully absorbed blow still knocks back and still turns the foe.
     const healthDamage = bypassShield ? damage : damageShieldPool(foe.entity, damage);
-    foe.entity.health -= healthDamage;
+    // PSCALE1: a shared foe fights the party with more health - its damage over the party's toughness, here where the
+    // host applies every blow (a SetHealth(0) is no blow, and stands as it was)
+    foe.entity.health -= !bypassShield && _sharedFoe(foe) ? partyFoeLoses(foe, healthDamage, _partyN()) : healthDamage;
     if (foe.entity.health <= 0) {
       // X5: SOUL TRAP intercepts the kill, exactly where DFU's
       // EnemyEntity.SetHealth override does (:157-177) - before the
@@ -4587,7 +4600,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // C2-slice (combat-9): a connected attack that LOST the roll
     // rings the miss sound too (ApplyDamageToPlayer's else arm).
     else audio.play3d(enemyMissSound(wpn), [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
-    hurtPlayer(dmg);
+    hurtPlayer(_sharedFoe(f) ? partyFoeHits(dmg, _partyN()) : dmg);   // PSCALE1: harder for the party in the room
     // AUDIT 24 (wave 39/46): EnemyAttack.cs:406 SENDS RemoveHealth, and
     // Unity's SendMessage reaches every component - so the same blow
     // drives ShowPlayerDamage's flash AND PlayerFootsteps' 40% cry.
