@@ -5539,14 +5539,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** PARTY-TRAVEL: the spot beside a leader whose feet stand at natives `w` (partyTravelLaw besideTargetOf's answer - in
    *  the pixel being built, or null), through the law's two questions asked of this pixel's collider: is the way from
    *  the leader to a spot clear at the chest (one ray), and what floor is under it (the arrival's own snap, reaching a
-   *  level either way). Null when there is no leader to stand beside. */
-  function partyBesideLanding(w) {
+   *  level either way). Null when there is no leader to stand beside. AUDIT PARTY-TRAVEL: `seat` is where in the ring
+   *  the search starts (the pick's besideSeat, systems/partyTravel.js followerSeatOf), so followers stand apart. */
+  function partyBesideLanding(w, seat = 0) {
     if (!w) return null;
     const [lx, lz] = state.localFromWorld(w.x, w.z);
     return besideLandingOf([lx, w.y + state.compensation[1], lz], {
       clear: (from, dir, dist) => { const d = collider.raycast([from[0], from[1] + PARTY_BESIDE_CHEST, from[2]], dir, dist); return !Number.isFinite(d) || d >= dist; },
       floor: (pos) => floorLanding(collider, pos, BESIDE_LEVEL * 2, BESIDE_LEVEL),
-    });
+    }, seat);
   }
   // TL2: a floor this far ABOVE the location's flat is a roof, not the
   // ground - a step or a doorsill is under a unit; a house is many.
@@ -6447,7 +6448,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // the leader's own spot). Where it answers nothing - the leader indoors, gone on, swimming, flying - the door
       // stands. Placed before any frame draws: the core's tail and this line run in one breath after its build, and
       // before the following team re-stands (HCC's relocation is pending until the world is up).
-      const beside = walkMode && pick.besideAt ? partyBesideLanding(pick.besideAt()) : null;
+      const beside = walkMode && pick.besideAt ? partyBesideLanding(pick.besideAt(), pick.besideSeat) : null;
       if (beside) {
         player.spawn(beside.pos[0], beside.pos[1], beside.pos[2]); playerSpawned = true;
         cam.pos = [beside.pos[0], beside.pos[1], beside.pos[2]];
@@ -11833,7 +11834,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     outdoors: () => (modes?.mode ?? 'exterior') === 'exterior',
     alive: () => playerEntity.health > 0,
     busy: () => gamePaused(),   // the pause's own question: a window holds the slot
-    moving: () => worldMoveBusy(),
+    moving: () => worldMoveBusy() || !!travelControlUI?.isShowing,   // AUDIT PARTY-TRAVEL: and a Travel Options walk under way - no unasked box over a journey the player is steering
     refusal: () => partyTravelRefusal(),
     fare: (to, opts) => partyTripFare(to, opts),
     canAfford: (c) => totalGoldAmount(playerEntity) >= c.totalCost && goldAmount(playerEntity) >= (c.piecesCost ?? 0),
@@ -11884,8 +11885,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!social.party || nowMs - _partyComposedAt < PARTY_SEND_MS / 2) return;
     _partyComposedAt = nowMs;
     _partyPose = composePartyPose();
-    socialLink()?.sendParty(_partyPose);
-    partyTravel?.sent(_partyPose);   // PARTY-TRAVEL: once the pose saying we set out is handed to the link (it leaves within PARTY_SEND_MS), the leader's own journey may begin
+    // PARTY-TRAVEL: once the pose saying we set out has LEFT, the leader's own journey may begin. AUDIT PARTY-TRAVEL: only a
+    // pose the link sent - sendParty refuses one within PARTY_SEND_MS of the last (and a repeat, and one its gate holds),
+    // and the session was told of every pose composed, so a leader walking about (a pose a second) set out before the
+    // members had read "we set out", and a member whose last open reading found the leader's body gone was left behind.
+    if (socialLink()?.sendParty(_partyPose)) partyTravel?.sent(_partyPose);
   };
   // SRV-N (Mac: "a server restart notice whenever we push server
   // updates. Like a notice that pushes in the chat window"): A NOTICE

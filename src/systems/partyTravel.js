@@ -23,6 +23,24 @@ export const PARTY_TRIP_TICK_MS = 250;
 export const PARTY_TRIP_GO_MS = 3000;
 /** After a No at the travel map's own offer, the map opens without asking for this long. */
 export const LEADER_MAP_QUIET_MS = 60_000;
+/** AUDIT PARTY-TRAVEL: how long the leader's pixel must hold still before the unasked offer is made. A journey's jump is
+ *  only known once it ENDS: a Travel Options walk at its default 60x on a horse crosses a pixel a second or faster, so
+ *  its party poses (one a second at most, PARTY_SEND_MS) jump two pixels at a time - and every such jump was offered, a
+ *  box or a chat line a second for as long as the leader rode. A fast travel's arrival holds still at once. */
+export const LEADER_SETTLE_MS = 5000;
+
+/** AUDIT PARTY-TRAVEL: where in the ring beside the leader I try first (partyTravelLaw besideLandingOf's `first`) - my
+ *  place among the party's members who are not its leader, in seat order: the hub's order, the same on every client,
+ *  so no two followers of one leader start from the same spot. */
+export function followerSeatOf(party, me) {
+  let seat = 0;
+  for (const m of party?.members ?? []) {
+    if (m.acct === party.leader) continue;
+    if (m.acct === me) return seat;
+    seat++;
+  }
+  return 0;
+}
 
 /**
  * The session over `host`'s seams:
@@ -31,7 +49,7 @@ export const LEADER_MAP_QUIET_MS = 60_000;
  *   nearLeader(row)     whether I stand gathered with the leader's seat row (world.js nearAccount)
  *   here()              my travel pixel {x, y};  outdoors()  in the open air;  alive()  on my feet
  *   busy()              a window holds this host's slot - a prompt waits, a departure waits
- *   moving()            a journey, a load or a teleport is moving me (world.js worldMoveBusy)
+ *   moving()            a journey, a load or a teleport is moving me (world.js worldMoveBusy), or a Travel Options walk
  *   refusal()           the map door's refusals in words, or null (world.js partyTravelRefusal)
  *   fare(to, opts)      {opts, computed, afford, unwell} - the map's own popup, priced headless
  *   canAfford(computed) the popup's two-sided gold gate over a fare already priced
@@ -40,24 +58,28 @@ export const LEADER_MAP_QUIET_MS = 60_000;
  *   placeName(to, fb)   a place's name for the lines
  *   prompt(rows, yes, no) -> handle   a Yes/No box shown;  closePrompt(handle)  taken down unanswered, no arm run
  *   say(text)           a line in the chat;  mid(text)  the HUD's centred label
- *   travel(pick, opts, computed) -> Promise<boolean>   the map's fast travel (a pick may carry besideAt / besideText)
+ *   travel(pick, opts, computed) -> Promise<boolean>   the map's fast travel (a pick may carry besideAt / besideText /
+ *                       besideSeat)
  *   openMap()           the travel map, after a No at its own offer
  *   clock()             a monotonic clock, ms (performance.now);  relayOk()  the hub carries the round's fields
  *   poseDirty()         compose my party pose again on the next frame
  */
 export function createPartyTravel(host) {
-  /** @type {any} */ let trip = null;   // leader: my round - {at, x, y, o, name, pick, opts, computed, origin, go, goSent, started, heard}
+  /** @type {any} */ let trip = null;   // leader: my round - {at, x, y, o, name, pick, opts, computed, origin, go, goSent, started, arrived, heard}
   /** @type {number|null} */ let vote = null;   // member: the round (`at`) I am ready for - `tr` on my pose
   /** @type {number|null} */ let decline = null;   // member: the round I stay behind from - `td` on my pose
   /** @type {number|null} */ let asked = null;   // member: the round I was asked about - once
   /** @type {number|null} */ let told = null;   // member: the round I was told of while busy - once
   /** @type {number|null} */ let near = null;   // member: the round I last read OPEN while gathered - the departure reads this, never the leader's pose mid-journey
+  /** @type {{x: number, z: number}|null} */ let nearFrom = null;   // member: where I stood when I last read the leader gathered with me - `near` holds while I stay within the radius of it
   /** @type {any} */ let follow = null;   // member: {at, x, y, o, acct, name, since} - the journey I follow once the leader set out
   /** @type {{x: number, y: number}|null} */ let stay = null;   // member: where I chose to stay behind from - not offered again
   /** @type {{x: number, y: number}|null} */ let bound = null;   // member: where my last journey to the leader went - their arrival there is not offered to me
   /** @type {any} */ let prompt = null;   // the box standing for the journey
   /** @type {number|string|null} */ let promptFor = null;   // what it asks: a round's `at`, or 'leader'
   /** @type {{acct: string, px: number, py: number}|null} */ let leaderSeen = null;   // member: the leader's pixel last read
+  let offerDue = false;   // member: a first sight or a journey of the leader's waits to be offered, once their pixel holds still
+  let settledAt = -Infinity;   // member: when the leader's pixel last changed (host.clock)
   let mapQuietUntil = -Infinity;   // member: the map's own offer rests after a No
   let mapPending = false;   // member: a No at the map's offer opens the map once the box has left the slot
   let tickAt = -Infinity;
@@ -99,6 +121,7 @@ export function createPartyTravel(host) {
       pixel: { x: to.x, y: to.y }, name,
       besideAt: () => { const row = social()?.party?.members.find((m) => m.acct === leadAcct); return row && memberPresent(row) ? besideTargetOf(row.p, to.x, to.y) : null; },
       besideText: `You join ${leadName || 'your leader'} at ${name}.`,
+      besideSeat: followerSeatOf(social()?.party, social()?.acct),   // AUDIT PARTY-TRAVEL: a spot of my own beside them
     };
     bound = { x: to.x, y: to.y };
     host.travel(pick, fare.opts, fare.computed);
@@ -138,7 +161,7 @@ export function createPartyTravel(host) {
     if (!gathered.length) return false;
     trip = {
       at: Math.round(s.now()), x: pick.pixel.x, y: pick.pixel.y, o: tripBits(opts), name: pick.name || host.placeName(pick.pixel),
-      pick, opts, computed, origin: host.feet(), go: null, goSent: false, started: false, heard: new Set(),
+      pick, opts, computed, origin: host.feet(), go: null, goSent: false, started: false, arrived: false, heard: new Set(),
     };
     const count = tripCountText(tripTally(gathered, trip.at));
     host.say(`You ask the party to travel to ${trip.name}. (${count})`);
@@ -146,6 +169,8 @@ export function createPartyTravel(host) {
     host.poseDirty();
     return true;
   }
+  /** A refusal and the journey called off, said once - the door's `off` (a journey or a load moving me) is both. */
+  const offWith = (why) => (why === PARTY_TRAVEL_TEXT.off ? why : `${why} ${PARTY_TRAVEL_TEXT.off}`);
   function cancel(text) {
     if (!trip) return;
     trip = null;
@@ -155,8 +180,9 @@ export function createPartyTravel(host) {
   /** THE LEADER'S SIDE: off when I go inside or fall, walk out of where I asked (PARTY-REST16's radius), or it lapses
    *  unanswered; each answer said once, by name (the leader sees who is ready); when nobody gathered is still waiting
    *  the party sets out (`go` on my pose) and, once that pose has left - or PARTY_TRIP_GO_MS - my own journey is the
-   *  popup's, as I chose it. The round stays on my pose TRIP_FOLLOW_MS after, for the followers; one that never left
-   *  takes its round with it, so nobody follows me where I did not go. */
+   *  popup's, as I chose it. The round stays on my pose TRIP_FOLLOW_MS after, for the followers, and until I have
+   *  arrived; one that never left (or that the door refused as it began) takes its round with it, so nobody follows me
+   *  where I did not go. */
   function leaderTick() {
     const t = trip;
     if (!t) return;
@@ -173,7 +199,7 @@ export function createPartyTravel(host) {
       for (const n of tally.declined) if (!t.heard.has(`d:${n}`)) { t.heard.add(`d:${n}`); host.say(`${n} stays behind.`); }
       if (!tripSetsOut(tally) || host.busy()) return;   // a window of mine up: the party sets out when it closes
       const refusal = host.refusal() ?? (host.canAfford(t.computed) ? null : fareText(t.computed, false));
-      if (refusal) { cancel(`${refusal} ${PARTY_TRAVEL_TEXT.off}`); return; }
+      if (refusal) { cancel(offWith(refusal)); return; }
       t.go = Math.max(t.at, Math.round(now));
       host.poseDirty();
       host.say(tally.ready.length ? `The party sets out for ${t.name}.` : `Nobody else is coming - you set out for ${t.name} alone.`);
@@ -181,15 +207,24 @@ export function createPartyTravel(host) {
     }
     if (!t.started) {
       if (!t.goSent && now - t.go < PARTY_TRIP_GO_MS) return;
+      // AUDIT PARTY-TRAVEL: the door's refusals asked AGAIN as the journey begins - between `go` and here (a pose's
+      // leaving, up to PARTY_TRIP_GO_MS) the leader may have stepped through a door, and fastTravelTo asks none of them:
+      // a leader inside a building was flown off the map from its floor. A refused start takes the round with it, so
+      // no follower goes where the leader did not (followTick's "did not set out").
+      const why = !host.outdoors() || !host.alive() ? PARTY_TRAVEL_TEXT.off : host.refusal();
+      if (why) { trip = null; host.poseDirty(); host.say(offWith(why)); return; }
       t.started = true;
       Promise.resolve(host.travel(t.pick, t.opts, t.computed)).then((went) => {
-        if (went) return;
+        if (went) { t.arrived = true; return; }
         if (trip === t) trip = null;
         host.say(PARTY_TRAVEL_TEXT.off);
       });
       return;
     }
-    if (now - t.go > TRIP_FOLLOW_MS) trip = null;
+    // AUDIT PARTY-TRAVEL: and not before my own journey has ARRIVED - a follower who sees me mid-journey without the
+    // round reads a leader who did not set out (followTick), so a build slower than TRIP_FOLLOW_MS (a big city, a slow
+    // machine) sent the whole party home with "did not set out" while I was still on the road.
+    if (t.arrived && now - t.go > TRIP_FOLLOW_MS) trip = null;
   }
 
   /** MY ANSWER TO THE LEADER'S ROUND `at`: Yes is ready - the map door's refusals and the gold gate asked first, and one
@@ -230,7 +265,15 @@ export function createPartyTravel(host) {
     if (decline != null && decline !== round.at) decline = null;
     const dest = host.placeName(round);
     if (round.go == null) {
-      near = host.nearLeader(lead) ? round.at : null;
+      // AUDIT PARTY-TRAVEL: GATHERED IS LOST BY WALKING AWAY, not by the leader's body going. The leader's journey begins a
+      // moment after the pose saying "we set out" leaves on the HUB link, and their body leaves my scene on the WORLD link
+      // - two sockets, no order between them - so the last open reading could find no body beside me and turn a member
+      // who said yes and never moved into one "too far from the leader". While the round is open the leader stands within
+      // the radius of where they asked (the leader's own rung), so a member who stays within the radius of where they were
+      // last read gathered is gathered still.
+      const f = host.feet();
+      if (host.nearLeader(lead)) { near = round.at; nearFrom = f; }
+      else if (near !== round.at || !nearFrom || Math.hypot(f.x - nearFrom.x, f.z - nearFrom.z) > host.radius) near = null;
       if (near === null || asked === round.at || vote === round.at || decline === round.at || !host.alive()) return;
       if (host.busy()) {
         if (told !== round.at) { told = round.at; host.say(`${lead.name || 'The leader'} wants the party to travel to ${dest}. Type /travel to come along.`); }
@@ -264,7 +307,7 @@ export function createPartyTravel(host) {
     if (p && !there && p.tv?.at !== f.at) { follow = null; host.say(`${f.name || 'The leader'} did not set out. ${PARTY_TRAVEL_TEXT.off}`); return; }
     const waited = host.clock() - f.since;
     if (host.busy()) {
-      if (waited >= 2 * TRIP_FOLLOW_MS) { follow = null; host.say(`The party went on without you. Type /leader to travel to ${f.name || 'your leader'}.`); }
+      if (waited >= 2 * TRIP_FOLLOW_MS) { follow = null; offerDue = false; host.say(`The party went on without you. Type /leader to travel to ${f.name || 'your leader'}.`); }   // AUDIT PARTY-TRAVEL: the line names /leader - their journey is not offered twice
       return;
     }
     const arrived = !!besideTargetOf(p, f.x, f.y) || (there && p.in !== 0);
@@ -275,17 +318,24 @@ export function createPartyTravel(host) {
 
   /** THE UNASKED OFFER: when I first see my leader (I joined, or the lead passed) and whenever their pixel jumps as a
    *  journey moves it, a member elsewhere is offered the journey to them - once per place by construction, since only
-   *  a first sight or a jump offers and each is read once - the box when I am free to take it, a line naming `/leader`
-   *  when I am not. Not while I follow them or am already on my way (moving, or bound for the very place they arrived
-   *  at), and not to the place I chose to stay behind from. */
+   *  a first sight or a jump makes an offer due and each is spent once - the box when I am free to take it, a line
+   *  naming `/leader` when I am not. AUDIT PARTY-TRAVEL: made once the leader's pixel has held still LEADER_SETTLE_MS
+   *  (a ride that jumps pixel after pixel is one journey, offered where it ends), and kept due while I follow them or
+   *  a journey of my own is moving me (a jump seen while I loaded was lost). Not to where I stand, nor where I am
+   *  already bound, nor the place I chose to stay behind from. */
   function watch(lead) {
     if (!lead || !memberPresent(lead)) return;
     const p = lead.p;
-    const first = !leaderSeen || leaderSeen.acct !== lead.acct;
-    const moved = !first && leaderJourneyed(leaderSeen, p);
-    if (first) leaderSeen = { acct: lead.acct, px: p.px, py: p.py };
-    else { leaderSeen.px = p.px; leaderSeen.py = p.py; }
-    if ((!first && !moved) || follow || host.moving()) return;
+    const now = host.clock();
+    if (!leaderSeen || leaderSeen.acct !== lead.acct) {
+      leaderSeen = { acct: lead.acct, px: p.px, py: p.py };
+      offerDue = true; settledAt = now;
+    } else if (p.px !== leaderSeen.px || p.py !== leaderSeen.py) {
+      if (leaderJourneyed(leaderSeen, p)) offerDue = true;
+      leaderSeen.px = p.px; leaderSeen.py = p.py; settledAt = now;   // any step restarts the stillness
+    }
+    if (!offerDue || now - settledAt < LEADER_SETTLE_MS || follow || host.moving()) return;
+    offerDue = false;
     const here = host.here();
     if (bound && here.x === bound.x && here.y === bound.y) bound = null;   // arrived where I was bound
     if (p.px === here.x && p.py === here.y) return;
@@ -298,7 +348,8 @@ export function createPartyTravel(host) {
   function reset() {
     if (prompt) closePrompt();
     if (follow) host.say(PARTY_TRAVEL_TEXT.off);
-    trip = null; vote = null; decline = null; near = null; follow = null; stay = null; bound = null; leaderSeen = null;
+    trip = null; vote = null; decline = null; near = null; nearFrom = null; follow = null; stay = null; bound = null; leaderSeen = null;
+    offerDue = false;
   }
 
   return {

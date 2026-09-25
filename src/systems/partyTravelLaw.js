@@ -148,15 +148,24 @@ export const BESIDE_STEP = 1.5;
 export const BESIDE_REACH = 0.5;
 export const BESIDE_LEVEL = 1;
 /** The spots tried, in order: either side, then ahead and behind (the pose carries no facing, so "either side" is the
- *  map's east and west). */
-export const BESIDE_OFFSETS = Object.freeze([[BESIDE_STEP, 0], [-BESIDE_STEP, 0], [0, BESIDE_STEP], [0, -BESIDE_STEP]].map((o) => Object.freeze(o)));
+ *  map's east and west), then the four between them - all BESIDE_STEP from the leader. AUDIT PARTY-TRAVEL: eight, not
+ *  four, so a whole party (PARTY_MAX 8: the leader and seven) that follows one leader lands on seven different spots. */
+const BESIDE_DIAG = BESIDE_STEP / Math.SQRT2;
+export const BESIDE_OFFSETS = Object.freeze([[BESIDE_STEP, 0], [-BESIDE_STEP, 0], [0, BESIDE_STEP], [0, -BESIDE_STEP],
+  [BESIDE_DIAG, BESIDE_DIAG], [-BESIDE_DIAG, -BESIDE_DIAG], [-BESIDE_DIAG, BESIDE_DIAG], [BESIDE_DIAG, -BESIDE_DIAG]].map((o) => Object.freeze(o)));
 
 /** Where a follower lands beside the leader's feet `at` (the scene frame): the first offset whose way from the leader
  *  is clear at the chest and whose floor is the leader's own level, facing the leader; else the leader's own spot, on
  *  its floor; null when even that floor is not the leader's level - the arrival is then the place's own. `probe` is the
- *  host's collider: `clear(from, dir, dist)` whether nothing stands in the way, `floor(pos)` the floor under a spot. */
-export function besideLandingOf(at, probe, offsets = BESIDE_OFFSETS) {
-  for (const [dx, dz] of offsets) {
+ *  host's collider: `clear(from, dir, dist)` whether nothing stands in the way, `floor(pos)` the floor under a spot.
+ *  AUDIT PARTY-TRAVEL: `first` is where in the ring the search STARTS - the follower's own seat (partyTravel.js
+ *  followerSeatOf) - so the members who follow one leader each try a spot of their own first; every client went to the
+ *  east side, and a party that set out together arrived standing inside one another. */
+export function besideLandingOf(at, probe, first = 0, offsets = BESIDE_OFFSETS) {
+  const n = offsets.length;
+  const start = Number.isInteger(first) && first > 0 ? first % n : 0;
+  for (let i = 0; i < n; i++) {
+    const [dx, dz] = offsets[(start + i) % n];
     const d = Math.hypot(dx, dz);
     if (!(d > 0) || !probe.clear(at, [dx / d, 0, dz / d], d + BESIDE_REACH)) continue;
     const f = probe.floor([at[0] + dx, at[1], at[2] + dz]);
