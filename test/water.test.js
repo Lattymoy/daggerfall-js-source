@@ -254,8 +254,8 @@ test('WATER1: the switch, the row, the sky\'s colours, the lab, the probe and th
   assert.match(rd('src/systems/features.js'), /key: 'enhancedWater', initial: true, online: true/, 'on by default like the other enhanced visuals (RF4: declared on its row; the shelf derives it)');
   assert.ok(!/prefRow\('enhancedWater'/.test(rd('src/ui/enhancedMenu.js')), 'FT6: the row is the Features home\'s (systems/features.js)');
   const shared = rd('src/scenes/shared.js');
-  assert.match(shared, /waterSky\(\) \{\s*\n\s*if \(enhancedSky\?\.state\) return \{ zenith: enhancedSky\.state\.zenith, horizon: enhancedSky\.state\.horizon \};/, 'the dome\'s own state');
-  assert.match(shared, /const h = dynamic\?\.fogColor \?\? dynamicSky\.clearColor;\s*\n\s*return \{ zenith: \[h\[0\] \* 0\.55, h\[1\] \* 0\.65, h\[2\] \* 0\.85\], horizon: h \};/, 'the mod\'s one colour, with a zenith derived from it (WATER-AUDIT L3: the mod\'s fill IS its clear IS its fog - a copy made the reflection flat)');
+  assert.match(shared, /waterSky\(\) \{\s*\n\s*if \(enhancedSky\?\.state\) return dreaded\(\{ zenith: enhancedSky\.state\.zenith, horizon: enhancedSky\.state\.horizon \}\);/, 'the dome\'s own state');
+  assert.match(shared, /const h = dynamic\?\.fogColor \?\? dynamicSky\.clearColor;\s*\n\s*return dreaded\(\{ zenith: \[h\[0\] \* 0\.55, h\[1\] \* 0\.65, h\[2\] \* 0\.85\], horizon: h \}\);/, 'the mod\'s one colour, with a zenith derived from it (WATER-AUDIT L3: the mod\'s fill IS its clear IS its fog - a copy made the reflection flat)');
   assert.match(shared, /return null;\s*\n\s*\},\s*\n/, 'null under the classic sky');
   const lab = rd('src/tools/waterLab.js');
   assert.match(lab, /mirrorProjectionX\(perspective\(/, 'HANDEDNESS: the lab draws under the hosts\' mirrored projection (unmirrored, every ground face is culled - the lab\'s first day)');

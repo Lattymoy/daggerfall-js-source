@@ -99,8 +99,9 @@ test('WEATHER3c: THE CLOUDS STAND ON CLEAR AIR on the map\'s lane - its row whol
   assert.equal(currentCloudBase(), null);
   // the controller's two paths hand the clouds the base's state and row; the dome keeps its own
   const shared = rd('src/scenes/shared.js');
-  assert.equal((shared.match(/const cb = cloudBaseOf\(extra, weatherName, weatherRowNow\);/g) || []).length, 2, 'the dome path and the mod path');
-  assert.match(shared, /enhancedSky\.setState\(skyState\(\{\s*\n\s*minuteOfDay,\s*\n\s*weather: weatherName,/, 'the dome itself is the worn word\'s');
+  assert.equal((shared.match(/const cb = dreadW > 0 \? \{ word: skyWord, row: weatherRowNow \} : cloudBaseOf\(extra, weatherName, weatherRowNow\);/g) || []).length, 2, 'the dome path and the mod path (EVENT1: the live event\'s deck over it while the dread is up)');
+  assert.match(shared, /enhancedSky\.setState\(skyState\(\{\s*\n\s*minuteOfDay,\s*\n\s*weather: skyWord,/, 'the dome itself is the worn word\'s (EVENT1: the storm\'s while the dread is up)');
+  assert.match(shared, /const skyWord = dreadW > 0 \? DREAD_SKY_WORD : weatherName;/, 'the worn word but under the live event');
 });
 
 test('WEATHER3c: THE WIND OF WHAT IS COMING - the storm\'s violence, at its envelope, from its edge to nothing APPROACH_M out; a floor under the fronts', () => {

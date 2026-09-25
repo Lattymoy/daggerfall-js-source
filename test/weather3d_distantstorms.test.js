@@ -121,7 +121,7 @@ test('WEATHER3d: THE BOLT lights its own cloud - aimed at the storm\'s middle, a
   assert.equal(boltOf({ x: 1, z: 0, r: 5000, strength: 3 }, [0, 0]).strength, 1, 'clamped');
   assert.ok(COMPOSITE_UNIFORMS.includes('uBolt') && COMPOSITE_UNIFORMS.includes('uBoltCos'));
   assert.match(COMPOSITE_FS, /float bolt = uBolt\.w \* smoothstep\(uBoltCos, mix\(uBoltCos, 1\.0, 0\.6\), dot\(dir, uBolt\.xyz\)\);/);
-  assert.match(COMPOSITE_FS, /outColor = vec4\(c\.rgb \* \(1\.0 \+ uFlash \* 2\.0 \+ bolt \* 3\.0\), c\.a\);/, 'on the cloud\'s own radiance - clear sky that way stays dark');
+  assert.match(COMPOSITE_FS, /vec3 cloud = op > 1e-4 \? dreadGrade\(c\.rgb \/ op, uDread\) \* op : c\.rgb;\s*\n\s*outColor = vec4\(cloud \* \(1\.0 \+ uFlash \* 2\.0 \+ bolt \* 3\.0\), c\.a\);/, 'on the cloud\'s own radiance - clear sky that way stays dark (EVENT1: the radiance graded by the live event, c.rgb itself without one)');
   const vc = rd('src/render/volumetricClouds.js');
   assert.match(vc, /gl\.uniform4f\(u\.uBolt, b \? b\.dir\[0\] : 0, b \? b\.dir\[1\] : 1, b \? b\.dir\[2\] : 0, b \? b\.strength : 0\); gl\.uniform1f\(u\.uBoltCos, b \? b\.cos : 1\);/, 'no strike, no light');
   assert.match(vc, /setBolt\(b\) \{ this\.bolt = b \? boltOf\(b, this\.cam\) : null; \}/);
@@ -133,7 +133,7 @@ test('WEATHER3d: the hosts - the scheduler on the map\'s systems, reset on a jum
     assert.match(h, /const distantStorms = createDistantStorms\(\);/, host);
     assert.match(h, /if \(jump \|\| weatherArrivalStamp\(\) !== seenArrival\) \{ distantStorms\.reset\(\); stormLights\.reset\(\); \}[^\n]*\n\s*seenArrival = weatherArrivalStamp\(\);\s*\n\s*const struckFar = \[\];[^\n]*\n\s*if \(isEnhanced\(\) && !weatherOverride\) \{\s*\n\s*const ds = distantStorms\.tick\(\{ systems: currentMapSystems\(\), at: [^\n]*, minutes: playerTicker\.classicMinutes, seconds: now \/ 1000, ground: mapGroundHere \}\);/, `${host}: enhanced only, never under a pin, reset on any landing, the ground law passed`);
     assert.match(h, /sky\.distantBolt\?\.\(bh \? \{ x: bh\[0\], z: bh\[1\], r: ds\.bolt\.r, strength: ds\.bolt\.strength \} : null\);/, `${host}: the bolt, in the host's metres`);
-    assert.match(h, /audio\.play3d\(s\.clip, thunderSourceAt\([^)]*\), s\.volume, \{ refDistance: THUNDER_SOURCE_M, maxDistance: THUNDER_SOURCE_M \* 8, far: true \}\);/, `${host}: the thunder at its own volume, from its side (DISC17-B: held there from the ear)`);
+    assert.match(h, /for \(const s of ds\.sounds\) \{ const h = [^;]+; audio\.play3d\(s\.clip, thunderSourceAt\([\w.]+, h\[0\], h\[1\]\), s\.volume, \{ refDistance: THUNDER_SOURCE_M, maxDistance: THUNDER_SOURCE_M \* 8, far: true \}\); \}/, `${host}: the distant storms' thunder at its own volume, from its side (DISC17-B: held there from the ear)`);
   }
   assert.match(rd('src/scenes/shared.js'), /distantBolt\(b\) \{ clouds\?\.setBolt\(b\); \},/);
   assert.match(rd('src/systems/weatherSim.js'), /export const currentMapSystems = \(\) => \(weatherMapOn\(\) \? _mapNear : \[\]\);/, 'nothing off the map\'s lane');

@@ -127,7 +127,11 @@ test('DISC17-B: a far shot is let go when its clip has run out - its panner no l
   // the storm overhead is DFU's AmbientEffectsPlayer, placed at PlaySomewhereOnHorizon's 3000 m minimum - untouched
   assert.match(rd('src/systems/ambientEffects.js'), /const d = this\.engine\.play3d\(index, pos, 1, \{ refDistance: minDistance, maxDistance: minDistance \* 8 \}\);/);
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(rd(host), /audio\.play3d\(s\.clip, thunderSourceAt\([^)]*\), s\.volume, \{ refDistance: THUNDER_SOURCE_M, maxDistance: THUNDER_SOURCE_M \* 8, far: true \}\);/, host);
+    // EVERY thunder the host plays from a strike's side is held there from the ear - the distant storms' and (EVENT1,
+    // world.js) the dread's alike: one pin per line, so a second thunder line cannot stand in for the first
+    const thunder = rd(host).match(/audio\.play3d\(s\.clip, thunderSourceAt\([^)]*\), s\.volume, \{[^}]*\}\);/g) ?? [];
+    assert.ok(thunder.length >= 1, host);
+    for (const line of thunder) assert.match(line, /\{ refDistance: THUNDER_SOURCE_M, maxDistance: THUNDER_SOURCE_M \* 8, far: true \}\);$/, `${host}: ${line}`);
   }
 });
 
