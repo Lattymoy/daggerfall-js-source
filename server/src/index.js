@@ -189,9 +189,9 @@ const ORDERS_MAX = 1024;
 // identityToken.js, already here). bible/11-Multiplayer/World-Bosses.md sections 5, 6 and 8.
 import { isGateRoom, gateDayOfRoom, gateAdmits, gateHolds, gateTimes, gateBossOf, GATE_COLLAPSE_MS } from '../../src/net/gateLaw.js';
 import { newFight, joinFight, applyHit, stepBrain, stateOf, earned, earnedBy, COURT_CENTRE, BRAIN_TICK_MS, CHECKPOINT_MS, GATE_FIGHTERS_MAX } from '../../src/net/gateBrain.js';
-import { mintReceipt, importReceiptKey } from '../../src/net/gateReceipt.js';
+import { mintReceipt, importReceiptKey, readReceipt } from '../../src/net/gateReceipt.js';
 
-import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, gateGate, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, lookGate } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, gateGate, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, lookGate, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey } from './relay.js';
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
 // welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
@@ -326,7 +326,12 @@ export class Room {
     if (path === PARK_INTERNAL_REG || path === PARK_INTERNAL_DROP) return this._parkInternal(path, request);
     if (path === GATE_INTERNAL_FELL) return this._gateFellInternal(request);   // WB3: a gate's kill, said to the hub
     const key = roomOf(new URL(request.url).pathname);
-    if (this.state.getWebSockets().length >= (isChatRoom(key) ? CHAT_SOCKETS_MAX : SOCKETS_MAX)) return json({ error: 'room full' }, 503);
+    // AUDIT WB A1: A SEAT IS A HELLO'S. A socket that opened and never said hello kept its seat for as long as it stood
+    // open, so one page's loop could fill a room with silence and every player after it was refused 'room full' - a
+    // gate's court included, for its whole day. Each socket is stamped as it opens; a full room first closes the silent
+    // ones past HELLO_WAIT_MS (busy - a real client retries), and is full only if it still is.
+    const cap = isChatRoom(key) ? CHAT_SOCKETS_MAX : SOCKETS_MAX;
+    if (this.state.getWebSockets().length >= cap) { this._unseatSilent(Date.now()); if (this.state.getWebSockets().length >= cap) return json({ error: 'room full' }, 503); }   // the runtime drops a socket the object closed from the list at once (AUDIT WORLD34 D1)
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
     // hibernation API: the object may sleep between messages; every
@@ -334,9 +339,21 @@ export class Room {
     // included - and the look sits in storage under the id (its meters
     // are the instance's: AUDIT ATTACH)
     this.state.acceptWebSocket(server);
-    server.serializeAttachment({ key, id: null, name: null, pose: null });
+    server.serializeAttachment({ key, id: null, name: null, pose: null, at: Date.now() });   // AUDIT WB A1: when it opened
     this._idx = null;
     return new Response(null, { status: 101, webSocket: client });
+  }
+  /** AUDIT WB A1: every socket past HELLO_WAIT_MS with no hello closed, busy (a slow client retries and says it); a socket
+   *  from before the stamp (an older build's, awake across a deploy) counts from now. */
+  _unseatSilent(now) {
+    for (const [ws, a] of [...this._all()]) {
+      if (a.id || a.replaced || this._dead.has(ws)) continue;
+      if (!Number.isFinite(a.at)) { this._setAttach(ws, { ...a, at: now }); continue; }
+      if (now - a.at < HELLO_WAIT_MS) continue;
+      this._forget(ws);
+      try { ws.close(CLOSE_BUSY, 'no hello'); } catch { /* gone */ }
+      this._dead.add(ws);
+    }
   }
 
   /** Every socket with its attachment, read once. */
@@ -942,6 +959,10 @@ export class Room {
         // last-seen, no presence, no `away` stamp, a seat that could never lapse. Its account leaves here.
         if (isSocialRoom(a.key) && b.acct && b.acct !== m.acct) { try { await this._leaveAccount(other, b, now); } catch (e) { console.warn('[hub] replaced leave failed', e?.message ?? e); } }
       }
+      // AUDIT WB A1: ONE SEAT AN ACCOUNT in a gate's court. The fight is the account's (net/gateBrain.js - its players by
+      // account, the newest socket speaking for it), so a second socket is never a second fighter, only a seat the court
+      // cannot give anyone else: the older goes, replaced, its leave said.
+      if (isGateRoom(a.key) && who.subject) for (const [other, b] of [...this._all()]) if (other !== ws && b.id && b.sub === who.subject) this._refuse(other, 'replaced', CLOSE_REPLACED);
       const others = [];
       for (const [other, b] of this._all()) if (other !== ws && b.id) others.push(b);
       if (!others.length) { try { await this._sweep(); } catch (e) { console.warn('[room] sweep failed', e?.message ?? e); } await this.state.storage.put('hellos', gate.bucket); }   // an empty room forgets every look and secret an unclean close left behind - not its hello gate (AUDIT SOC A2: contained - a failed list here made every first hello into an empty hub throw before its welcome)
@@ -967,6 +988,8 @@ export class Room {
         if (isSocialRoom(a.key) && m.acct) { try { await this._helloAccount(ws, m, now); } catch (e) { console.warn('[hub] account hello failed', e?.message ?? e); } }   // AUDIT SOC A2: contained, as the acts and the leave are
         // WB3: a gate's kill said while this player was away, while that gate still stands - so it collapses on their screen too
         if (isSocialRoom(a.key)) { try { const g = await this._gateFellOf(); if (g && gateHolds(g.d, now)) this._send(ws, JSON.stringify({ t: 'gate', ...g })); } catch (e) { console.warn('[hub] gate word failed', e?.message ?? e); } }
+        // AUDIT WB A4: and this account's receipt, while it is good (spent, it goes)
+        if (isSocialRoom(a.key) && who.subject) { try { await this._gateReceiptTo(ws, who.subject, now); } catch (e) { console.warn('[hub] gate receipt failed', e?.message ?? e); } }
         return;
       }
       // SLAM5 (2026-09-16, AUDIT SLAM): THE ROSTER IS CHOSEN BEFORE THE LOOKS ARE READ, and this was a hard wall.
@@ -1713,7 +1736,10 @@ export class Room {
     let f = await this._gateFightOf();
     if (m.k === 'in') {
       if (!f) f = this._fight = newFight(day, now, gateTimes(day).wrathAt, gateBossOf(day).id);
-      if (!joinFight(f, a.sub, a.name ?? '', m.lv, now, gateAdmits(day, now))) {
+      const joined = !f.players[a.sub];   // AUDIT WB A3: a newcomer - an `in` again (every welcome says one) changes nothing to keep
+      const present = new Set();   // AUDIT WB A1: the accounts in the court now - a full fight frees an idle seat, never theirs
+      for (const [, b] of this._all()) if (b.id && b.sub) present.add(b.sub);
+      if (!joinFight(f, a.sub, a.name ?? '', m.lv, now, gateAdmits(day, now), present)) {
         const no = f.fell || f.wrath ? 'the gate is closing' : Object.keys(f.players).length >= GATE_FIGHTERS_MAX ? 'the court is full' : 'the gate is sealed';
         this._send(ws, JSON.stringify({ t: 'gate', k: 'no', m: no }));
         return;
@@ -1721,7 +1747,7 @@ export class Room {
       this._send(ws, JSON.stringify({ t: 'gate', ...stateOf(f) }));
       const r = f.rc?.[a.sub];
       if (r) this._send(ws, JSON.stringify({ t: 'gate', k: 'rcpt', r }));
-      await this._gateSave(f, now, true);
+      if (joined) await this._gateSave(f, now, true);   // AUDIT WB A3: at once for a newcomer alone - a reconnect storm was a write a frame
       if (!f.fell && !f.wrath) await this._gateArm(now);
       return;
     }
@@ -1743,17 +1769,20 @@ export class Room {
     try {
       this._gateFan(stepBrain(f, now, this._gateBodies(f), rand01));
       if (f.fell && !f.said) await this._gateFall(f, now);
+      else if (f.said && !f.told) await this._gateTellHubOnce(f, now);   // AUDIT WB A10: the hub told until it answers
       await this._gateSave(f, now, false);
     } catch (e) { console.warn('[gate] beat failed', e?.message ?? e); }
     const here = [...this._all()].some(([, b]) => b.id);
-    await this.state.storage.setAlarm(here && !f.fell && !f.wrath ? now + BRAIN_TICK_MS : end);
+    await this.state.storage.setAlarm(f.said && !f.told ? now + GATE_TELL_RETRY_MS : here && !f.fell && !f.wrath ? now + BRAIN_TICK_MS : end);
     return true;
   }
   /** THE KILL, SAID ONCE: `fell` to everyone in the court, a receipt to each account that earned one (bible section 6 -
-   *  one per account, the seed the relay's own), the fight checkpointed with them, and the hub's world line. */
+   *  one per account, the seed the relay's own), the fight checkpointed with them, and the hub's world line.
+   *  AUDIT WB A10: KEPT BEFORE IT IS SAID - the receipts minted and the fight checkpointed with them and its `said`, THEN
+   *  the fall fanned and each receipt handed over. Said first, an eviction before the write told the court of a kill
+   *  storage never kept (the wake resumed a living Warden) and minted every receipt again on new seeds. The hub is told
+   *  until it answers (`told`, kept with the fight; a beat tells it again). */
   async _gateFall(f, now) {
-    f.said = true;
-    this._gateFan([{ k: 'fell', at: f.fell.at, top: f.fell.top, n: f.fell.n }]);
     const key = await this._receiptKeyOf();
     const nowS = Math.floor(now / 1000);
     f.rc = {};
@@ -1762,9 +1791,18 @@ export class Room {
       try { f.rc[sub] = await mintReceipt({ d: f.day, b: f.boss, s: sub, c: rand32(), x: earnedBy(f, sub) }, key, { subtle: crypto.subtle, nowS }); }
       catch (e) { console.warn('[gate] receipt refused', e?.message ?? e); }
     }
-    for (const [ws, b] of [...this._all()]) { const r = b.id && b.sub ? f.rc[b.sub] : null; if (r) this._send(ws, JSON.stringify({ t: 'gate', k: 'rcpt', r })); }
+    f.said = true;
     await this._gateSave(f, now, true);
-    await this._gateTellHub({ d: f.day, at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc) });
+    this._gateFan([{ k: 'fell', at: f.fell.at, top: f.fell.top, n: f.fell.n }]);
+    for (const [ws, b] of [...this._all()]) { const r = b.id && b.sub ? f.rc[b.sub] : null; if (r) this._send(ws, JSON.stringify({ t: 'gate', k: 'rcpt', r })); }
+    await this._gateTellHubOnce(f, now);
+  }
+  /** AUDIT WB A10: the hub told of the kill, and it kept - once it has answered. */
+  async _gateTellHubOnce(f, now) {
+    if (f.told || !f.fell) return;
+    if (!(await this._gateTellHub({ d: f.day, at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc ?? {}) }))) return;
+    f.told = true;
+    await this._gateSave(f, now, true);
   }
   /** The relay's signing key, imported once (a CryptoKey cannot be stored; a deploy is a new object). */
   async _receiptKeyOf() {
@@ -1775,12 +1813,22 @@ export class Room {
     return this._receiptKey;
   }
   /** The hub's door: the kill and its receipts, to the one room every player online is in. A relay built without the
-   *  binding (a harness, a local dev worker) keeps the court's own word. */
+   *  binding (a harness, a local dev worker) keeps the court's own word. Answers whether the word is where it goes
+   *  (AUDIT WB A10: the hub's own `ok`; no binding is nothing to retry). */
   async _gateTellHub(body) {
     const rooms = this.env?.ROOMS;
-    if (!rooms?.idFromName || !rooms?.get) return;
-    try { await rooms.get(rooms.idFromName(SOCIAL_ROOM)).fetch(new Request(`https://relay.internal${GATE_INTERNAL_FELL}`, { method: 'POST', body: JSON.stringify(body) })); }
-    catch (e) { console.warn('[gate] hub', e?.message ?? e); }
+    if (!rooms?.idFromName || !rooms?.get) return true;
+    try { const res = await rooms.get(rooms.idFromName(SOCIAL_ROOM)).fetch(new Request(`https://relay.internal${GATE_INTERNAL_FELL}`, { method: 'POST', body: JSON.stringify(body) })); return !!res?.ok; }
+    catch (e) { console.warn('[gate] hub', e?.message ?? e); return false; }
+  }
+  /** AUDIT WB A4: the hub hands an account's kept receipt to its hello while the receipt is good, and forgets a spent
+   *  one. The client keeps one a day and the account service counts each once, so a receipt said again is harmless. */
+  async _gateReceiptTo(ws, sub, now) {
+    const k = gateReceiptKey(sub);
+    const kept = await this.state.storage.get(k);
+    if (!kept || typeof kept !== 'object') return;
+    if (!(Number.isFinite(kept.e) && now < kept.e * 1000) || typeof kept.r !== 'string') { await this.state.storage.delete(k); return; }
+    this._send(ws, JSON.stringify({ t: 'gate', k: 'rcpt', r: kept.r }));
   }
   /** The hub's last word of a kill (null for none) - the instance's, else storage's. */
   async _gateFellOf() {
@@ -1803,6 +1851,12 @@ export class Room {
       const r = Array.isArray(e) && typeof e[0] === 'string' ? validGateOut({ k: 'rcpt', r: e[1] }) : null;
       if (r) rc.set(e[0], r);
     }
+    // AUDIT WB A4: EACH ACCOUNT'S RECEIPT IS KEPT, for its own life (its `e`), and handed to that account's next hello -
+    // a fighter who was not online when the kill was said (cast out and gone, a dropped link) had it only if they
+    // walked back into the court while it held. One key an account, its latest receipt; 128 a write (storage's own bound)
+    const keep = [];
+    for (const [sub, r] of rc) { const c = readReceipt(r.r); if (c && c.s === sub) keep.push([gateReceiptKey(sub), { d: fell.d, r: r.r, e: c.e }]); }
+    for (let i = 0; i < keep.length; i += 128) await this.state.storage.put(Object.fromEntries(keep.slice(i, i + 128)));
     for (const [ws, b] of [...this._all()]) {
       if (!b.id) continue;
       this._send(ws, said);

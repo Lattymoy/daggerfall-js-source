@@ -407,8 +407,8 @@
   {
     "name": "WB3-the-peer-id-credited",
     "file": "server/src/index.js",
-    "old": "      if (!joinFight(f, a.sub, a.name ?? '', m.lv, now, gateAdmits(day, now))) {",
-    "new": "      if (!joinFight(f, a.id, a.name ?? '', m.lv, now, gateAdmits(day, now))) {",
+    "old": "      if (!joinFight(f, a.sub, a.name ?? '', m.lv, now, gateAdmits(day, now), present)) {",
+    "new": "      if (!joinFight(f, a.id, a.name ?? '', m.lv, now, gateAdmits(day, now), present)) {",
     "tests": [
       "test/wb3_gate_room.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "WB3-the-hub-told-nothing",
     "file": "server/src/index.js",
-    "old": "    await this._gateTellHub({ d: f.day, at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc) });",
-    "new": "    void this._gateTellHub;",
+    "old": "    if (!(await this._gateTellHub({ d: f.day, at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc ?? {}) }))) return;",
+    "new": "    if (!(await this._gateTellHub(null))) return;",
     "tests": [
       "test/wb3_gate_room.test.js"
     ]

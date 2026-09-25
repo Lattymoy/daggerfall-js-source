@@ -509,6 +509,17 @@ The court's half, on the client:
 | B6 | after the Wrath the Warden was still a body blows met, and blows were sent the relay would never judge | no body and no blow after it |
 | B7 | a player who came to the court after he fell heard his death cry then, minutes late | the cry only within `FALL_CRY_LATE_MS` of his fall, as the thud has its own |
 
+The relay's half (RELAY_VERSION world111):
+
+| # | what was wrong | now |
+|---|---|---|
+| A1 | a room's seat was any open socket's: sockets that never said hello filled a court's 256 seats for as long as they stood open, and every player after them was refused `room full`; one account could hold many seats of the court; and the fight counted every account that ever joined, so 256 who came and went filled it for its day | a full room first closes the sockets silent past `HELLO_WAIT_MS` (busy - a real client retries); one seat an account in a court; a full fight frees the seat of one who left without a blow or a moment stood (`freeSeat`), their share leaving the health at his fraction |
+| A3 | every `in` - and every welcome says one - forced a storage write | only a newcomer's is written at once |
+| A4 | the hub handed a receipt only to a fighter connected at the moment of the kill; one away heard of it only by walking back into the court while it held | the hub keeps each account's receipt for its life and hands it to that account's next hello |
+| A8 | a newcomer to a fight already bled came with a full damage bucket - a string of late joiners could each spend one at once | an empty bucket after the first blow |
+| A10 | the kill was fanned before it was written: an eviction between them told the court of a kill storage never kept (the wake resumed a living Warden) and re-minted every receipt on new seeds; the hub was told once, and a failed tell was never retried | minted, written, then said; the hub told until it answers (`told`, a beat every `GATE_TELL_RETRY_MS`) |
+| C7 | (the client's) a day's gate times made again every frame | made once and frozen (`net/gateLaw.js` is in the relay's bundle, so it rides this version) |
+
 ## Shipped
 
 **WB1 (2026-09-25) - the omen.** `net/gateLaw.js` (the schedule, the room's key and window, the rolls, the boss table,
@@ -712,3 +723,12 @@ and a closed socket taking the player out, the door's refusal), `world/gateArena
 `test/auditwb_court.test.js` (7); re-aimed: WB3b's door window, WB6c's door, way-home and flash pins, AUDIT 28 W2c's and
 DISC21-B's pending-exit line, five mutant records of WB4, WB6c and WB7 (the marks' new shape, the door's new line);
 mutants `tools/mutants/auditwb_court.json` (18 dead).
+
+**AUDIT WB - the relay's half (2026-09-25).** A1, A3, A4, A8, A10 and C7's times above: `server/src/index.js` (the
+socket's stamp and the silent unseated, one seat an account in a court, the court's present accounts, a newcomer's `in`
+alone written, the kill kept before it is said and the hub told until it answers, the hub's kept receipts and
+`_gateReceiptTo`), `net/gateBrain.js` (`freeSeat`, the empty bucket), `net/gateLaw.js` (a day's times made once),
+`net/wire.js` (`HELLO_WAIT_MS`, `GATE_TELL_RETRY_MS`, `gateReceiptKey`). RELAY_VERSION world111 - no file joins the
+bundle; the bump drops every connected player once. Pins `test/auditwb_relay.test.js` (9); re-aimed: the exact-version
+pins and soc1's version record, two WB3 mutant records (the join's `present`, the hub's answer); mutants
+`tools/mutants/auditwb_relay.json` (29 dead).

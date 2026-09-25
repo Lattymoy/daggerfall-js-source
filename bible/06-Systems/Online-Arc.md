@@ -7049,7 +7049,7 @@ answers that exact string in the object's sleep, no event, no wake. Only a
 CHANNEL session (chat, `presence: false`) used it. A presence session's
 liveness rode the pose.
 
-**Now (`src/net/wire.js:896`, `src/net/online.js:1734`):**
+**Now (`src/net/wire.js:899`, `src/net/online.js:1734`):**
 
 - `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
   before) or every 20 s standing, as the peers' proof of life and the silence
@@ -8261,3 +8261,12 @@ Online alone, as the gate is; client only; nothing on the wire.
 The Burning Court's boss is heard - steps, growls, grunts, the ground's shock, thunder, his fall - and the court has its
 own score (`systems/gateScore.js`), chosen from the fight state the court's link already holds: his phase, the Wrath's
 time, his fall. Client only; nothing on the wire.
+
+## AUDIT WB (2026-09-25, Mac: "A proper audit on everything") - the relay's half; see 11-Multiplayer/World-Bosses.md section 11
+
+RELAY_VERSION world111. A room's seat is a hello's now: a socket stamped as it opens, and a full room closes the ones
+silent past `HELLO_WAIT_MS` (busy, so a real client retries) before it refuses `room full`. A gate's court seats one
+socket an account, and a full fight frees the seat of an account that left without a blow or a moment stood. An `in`
+said again writes nothing; a newcomer to a fight already bled comes with an empty bucket. The kill is minted and
+written before it is said, and the hub is told until it answers; the hub keeps each account's receipt for its life and
+hands it to that account's next hello.

@@ -43,10 +43,17 @@ export const isGateDay = (day) => Number.isSafeInteger(day) && day >= 0 && day %
  * @param {number} day
  */
 export function gateTimes(day) {
+  let t = _gateTimesOf.get(day);   // AUDIT WB C7: a day's instants made once - the client's clock asks for them every frame
+  if (t) return t;
   const base = day * GATE_DAY_MINUTES;
   const at = (minute) => Math.round(wallMsForClassicMinutes(base + minute));
-  return Object.freeze({ day, omenAt: at(GATE_OMEN_MINUTE), riseAt: at(GATE_RISE_MINUTE), openAt: at(GATE_OPEN_MINUTE), sealAt: at(GATE_SEAL_MINUTE), wrathAt: at(GATE_WRATH_MINUTE) });
+  t = Object.freeze({ day, omenAt: at(GATE_OMEN_MINUTE), riseAt: at(GATE_RISE_MINUTE), openAt: at(GATE_OPEN_MINUTE), sealAt: at(GATE_SEAL_MINUTE), wrathAt: at(GATE_WRATH_MINUTE) });
+  if (_gateTimesOf.size >= 8) _gateTimesOf.delete(_gateTimesOf.keys().next().value);
+  _gateTimesOf.set(day, t);
+  return t;
 }
+/** The days' instants already made (frozen, so one answer serves every asker). */
+const _gateTimesOf = new Map();
 
 /**
  * The gate the clock is about at `nowMs`: yesterday's while it is still sinking (its wrath is today's midnight),

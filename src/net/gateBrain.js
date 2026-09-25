@@ -160,25 +160,52 @@ export function newFight(day, now, wrathAt, boss) {
 /**
  * A player steps into the fight. A newcomer brings BOSS_TTK_S seconds of their reference damage as health - at the
  * boss's CURRENT fraction, so a late arrival does not heal him - and only while `admits` (the gate is open) and the
- * fight has room. A player already in keeps their FIRST claim: a second `in` cannot raise a cap. A fight that is over
- * takes nobody new.
+ * fight has room (AUDIT WB A1: a full fight frees an idle seat - freeSeat - over `present`, the accounts in the court).
+ * A player already in keeps their FIRST claim: a second `in` cannot raise a cap. A fight that is over takes nobody new.
+ * @param {Set<string>|null} [present]
  * @returns {boolean} whether they are in the fight
  */
-export function joinFight(f, sub, name, lv, now, admits) {
+export function joinFight(f, sub, name, lv, now, admits, present = null) {
   const known = f.players[sub];
   if (known) { if (typeof name === 'string' && name) known.name = name.slice(0, 24); return true; }
   if (f.fell || f.wrath || !admits) return false;
-  if (Object.keys(f.players).length >= GATE_FIGHTERS_MAX) return false;
+  if (Object.keys(f.players).length >= GATE_FIGHTERS_MAX && !freeSeat(f, present)) return false;
   const level = clampLv(lv);
   const share = BOSS_TTK_S * dpsRef(level);
   const frac = f.max > 0 ? f.hp / f.max : 1;
+  // AUDIT WB A8: a newcomer to a fight already bled comes with an EMPTY bucket - its share joins the health at the
+  // fraction he stands at, and a full bucket on top of it let a string of late joiners each spend BUCKET_DEPTH_X
+  // seconds of damage at once: a kill faster than any claim is meant to buy
+  const fresh = frac >= 1;
   f.max += share;
   f.hp += share * frac;
   f.players[sub] = {
     name: String(name ?? '').slice(0, 24), lv: level, share, dealt: 0, clipped: 0,
-    bucket: BUCKET_DEPTH_X * dpsRef(level), bucketAt: now, rate: GATE_HIT_HZ_MAX, rateAt: now, stoodMs: 0, joinedAt: now,
+    bucket: fresh ? BUCKET_DEPTH_X * dpsRef(level) : 0, bucketAt: now, rate: GATE_HIT_HZ_MAX, rateAt: now, stoodMs: 0, joinedAt: now,
   };
   return true;
+}
+
+/**
+ * AUDIT WB A1: THE COURT IS FULL OF ITS FIGHTERS, NOT OF EVERYONE WHO EVER CAME. A full fight frees the seat of one who
+ * joined and left without a blow struck or a moment stood (`present` the accounts in the court now - none freed without
+ * it): nothing earned is lost, and their share leaves the boss's health at the fraction he stands at, as it came.
+ * Answers whether a seat was freed.
+ * @param {ReturnType<typeof newFight>} f @param {Set<string>|null} present
+ */
+export function freeSeat(f, present) {
+  if (!present) return false;
+  for (const [sub, p] of Object.entries(f.players)) {
+    if (present.has(sub) || p.dealt > 0 || p.stoodMs > 0) continue;
+    const frac = f.max > 0 ? f.hp / f.max : 1;
+    f.max = Math.max(0, f.max - p.share);
+    f.hp = f.max * frac;
+    delete f.players[sub];
+    delete f.threat[sub];
+    if (f.target === sub) f.target = null;
+    return true;
+  }
+  return false;
 }
 
 /**
