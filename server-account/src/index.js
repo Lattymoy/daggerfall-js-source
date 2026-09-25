@@ -52,7 +52,9 @@
 //   POST /v1/mod/mute { target, minutes } -> { ok, target, name, until, order }
 // DUEL1, the duelling record. The caller of `loss` is the loser:
 //   POST /v1/duel/loss   { winner }       -> { recorded, wins, losses }
-//   POST /v1/duel/record { id }           -> { id, wins, losses }
+//   POST /v1/duel/record { id }           -> { id, wins, losses, gates }
+// WB5b, the gates closed. The caller is the account the receipt names:
+//   POST /v1/gate/claim  { receipt }      -> { recorded, closed }
 //
 // ACC2, and every one of them needs a REGISTERED account (the wall):
 //   GET    /v1/saves                                   -> { saves[] }
@@ -94,13 +96,13 @@ import {
   devicesOf, accountView, displayName, accountKind,
   register, login, recover, changePassword, setEmail, overRate,
   accountWardrobe, equipTitle, creditPlay, muteAccount, isMuted, mutedUntil,
-  duelRecordOf, reportDuelLoss,
+  duelRecordOf, reportDuelLoss, gateRecordOf, claimGate,
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
 import { mintToken, mintOrder, MAX_TTL_S, TOKEN_V, ID_RE } from '../../src/net/identityToken.js';
 import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, savePathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES } from './service.js';
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
-import { signingKey } from './signing.js';
+import { signingKey, gatePublicKey } from './signing.js';
 import { titleWorn, glyphsOf } from './titles.js';
 import { sendLetter, inboxOf, readLetter, deleteLetter } from './letters.js';   // MAIL1: the letters' routes
 
@@ -344,8 +346,8 @@ export default {
         // view is the row; a wardrobe is the row read against this
         // service's config and clock, which is why it alone takes env.
         return json({
-          // DUEL1: and the duelling record, counted off the results (the profile card's K/D)
-          account: { ...accountView(who.player, nowS), duels: await duelRecordOf(ctx, who.player.id) },
+          // DUEL1: and the duelling record, counted off the results (the profile card's K/D); WB5b: and the gates closed
+          account: { ...accountView(who.player, nowS), duels: await duelRecordOf(ctx, who.player.id), gates: await gateRecordOf(ctx, who.player.id) },
           wardrobe: accountWardrobe(who.player, env, nowS),
           devices: await devicesOf(ctx, who.player.id),
         }, 200, origin);
@@ -369,7 +371,21 @@ export default {
         if (typeof body.id !== 'string' || !ID_RE.test(body.id)) return no('no-player', 404, origin);
         const known = await db.prepare('SELECT 1 AS x FROM players WHERE id = ?1').bind(body.id).first();
         if (!known) return no('no-player', 404, origin);
-        return json({ id: body.id, ...(await duelRecordOf(ctx, body.id)) }, 200, origin);
+        // WB5b: the gates closed ride the same answer - the Inspect card asks once and says both
+        return json({ id: body.id, ...(await duelRecordOf(ctx, body.id)), gates: await gateRecordOf(ctx, body.id) }, 200, origin);
+      }
+
+      if (path === '/v1/gate/claim' && request.method === 'POST') {
+        // WB5b: THE ACCOUNT THE RECEIPT NAMES CARRIES IT HERE. The
+        // relay signed it at the kill (src/net/gateReceipt.js); the
+        // session says who is asking, never the body, and accounts.js
+        // `claimGate` holds the rest - the signature, the account, the
+        // one row a (day, account). No public half here yet is the
+        // service's own gap, not the player's: 503, and the client keeps
+        // the receipt for the week it carries.
+        const r = await claimGate(ctx, who.player, body.receipt, await gatePublicKey(env, subtle));
+        if (r.error) return no(r.error, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);
+        return json(r, 200, origin);
       }
 
       if (path === '/v1/account/title' && request.method === 'POST') {

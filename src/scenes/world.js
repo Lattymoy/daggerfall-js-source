@@ -171,6 +171,7 @@ import { scanGatePixels, findGateSite } from '../systems/gateSite.js';   // WB1:
 import { createGatePool } from './gatePool.js';   // WB2: the gate the world stands - its stone, its fire and beacon, its collider and its door
 import { drawGateBanner } from '../ui/gateBanner.js';
 import { createGateLink } from '../net/gateLink.js';   // WB3b: what the client holds of a gate's fight - the relay's words, folded
+import { createGateClaims } from '../net/gateClaims.js';   // WB5b: the kill receipts, carried to the account service until counted
 import { createGateCourt } from './gateCourt.js';   // WB4: the fight on this screen - the boss drawn, heard and read, and his blows on me
 import { createSpoilsPool, spoilsStore, recoverSpoils, SPOILS_TEXT } from './spoilsPool.js';   // WB5: a fallen boss's spoils, spewed, glowing and taken
 import { gateRoomKey, isGateRoom, gateBossOf, gateTimes, GATE_COLLAPSE_MS } from '../net/gateLaw.js';   // WB3b: the court's room, and its day's end
@@ -308,7 +309,7 @@ import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';   // AT2: Ambient Text's one component - this host claims it and feeds it the frame
 import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory
-import { accountTokenMinter, storedSession, accountPlayBeat, muteAccount, serviceBase, accountRefusalText, accountDuels } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4: and the beat that counts time played
+import { accountTokenMinter, storedSession, accountPlayBeat, muteAccount, serviceBase, accountRefusalText, accountDuels, accountGates } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4: and the beat that counts time played
 import { parseModCommand, runModCommand, mutedText, mutedNotices } from '../net/moderation.js';   // MOD1: /mute and /unmute, and the line a muted player reads
 import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, knocked from here and measured by the account service's clock
 import { appStorage } from '../systems/appStorage.js';   // ACC1d: where that session lives - the app's store, not the tab's (a second tab is the same player)
@@ -342,7 +343,7 @@ import { createTradeManager, TRADE_RANGE_M, inTradeRange, tradeDistance } from '
 import { createTradePack } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack
 import { createPlayerTradeWindow, playerTradeReady } from '../ui/playerTradeDoor.js';   // TRADE1: the enhanced window two players share
 import { createSocialMenu, socialPlaqueRows, plaqueRowFor } from '../ui/socialMenu.js';   // SOC5: the F-menu over that body - Add friend, Invite to party
-import { createProfileWindow, profileView, profileDuelLine } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
+import { createProfileWindow, profileView, profileDuelLine, profileGateLine } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
 import { createDuelManager, DUEL_RADIUS_M, DUEL_RANGE_M, DUEL_COUNTDOWN_MS, ringCentre, validRingRecord } from '../net/duelSession.js';   // DUEL1: the duel's state machine (pure)
 import { createDuelRecords, duelUncountedText } from '../net/duelRecord.js';   // DUEL1: the Inspect card's duelling record, asked and kept
 import { createDuelPrompt } from '../ui/duelPrompt.js';   // DUEL1: the challenge, as the challenged player sees it
@@ -10766,7 +10767,8 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  the card is re-drawn with the duel's word alone when that moves (a challenge sent, a record landed). */
   const withDuel = (peerId, v) => {
     _profileView = v;
-    return { ...v, duel: duelButtonFor(peerId), duels: _profileSub ? profileDuelLine(duelRecords.get(_profileSub)) : null };
+    const rec = _profileSub ? duelRecords.get(_profileSub) : null;
+    return { ...v, duel: duelButtonFor(peerId), duels: _profileSub ? profileDuelLine(rec) : null, gates: profileGateLine(rec) };   // WB5b: and the gates they closed, off the same answer
   };
   const repaintDuelProfile = () => {
     const id = profileWin?.isOpen() ? profileWin.peerId() : null;
@@ -10782,10 +10784,18 @@ export async function bootWorld(canvas, renderer, params, status) {
   const _gateTwo = (n) => String(n).padStart(2, '0');
   /** WB3b: THE COURT'S LINK (net/gateLink.js) - the relay's words about a gate's fight, off the court's room and the hub:
    *  the omen reads its word of a kill (a gate whose boss fell collapses on every screen), the chat says the kill. */
+  /** WB5b: THE RECEIPTS THIS DEVICE CARRIES TO THE ACCOUNT SERVICE (net/gateClaims.js) - each kill the relay signed for
+   *  me, kept on the device until the service has counted it (the spoils' own JSON-over-Storage door). */
+  const gateClaims = params.has('online') ? createGateClaims({
+    claim: accountGates({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }).claim,
+    store: spoilsStore(appStorage()),
+    say: (text) => chatNotice(text),
+  }) : null;
   const gateLink = params.has('online') ? createGateLink({
     now: () => Date.now() + _sharedOffsetMs,
     say: (text) => setMidScreenText(text),
     onFell: (day, f) => { const site = gateOmen?.current?.()?.site; chatNotice(fellLine({ near: site?.day === day ? site.near : 'the wilds', boss: gateBossOf(day).name, top: f.top })); },
+    onReceipt: (r) => { gateClaims?.add(r); },   // WB5b: to the account service, kept until it is counted
   }) : null;
   let _gateInFor = -1;   // WB3b: the welcome my level claim was said for - once per welcome of the court's room
   /** WB4: THE FIGHT ON THIS SCREEN (scenes/gateCourt.js) - the boss where the relay says he stands, his telegraphs, his
@@ -10840,6 +10850,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** WB1: the gate's frame - its line when a new moment comes. Runs before the death return, as the chat's does. */
   const gateFrame = () => {
     try { gateOmen?.frame(); } catch (e) { console.warn('[gate] frame', e?.message ?? e); }
+    gateClaims?.tick();   // WB5b: what the account service has not counted yet, offered again on its own clock
     if (gatePool && (modes?.mode ?? 'exterior') !== 'exterior') drawGateBanner(null);   // WB2: the countdown is the street's; the pool's own frame runs there alone
     // WB3b: the court stands until its gate's day is over - then it comes apart around whoever is in it, who land
     // before the gate; out of it, its state is forgotten (its falls and receipts are kept)

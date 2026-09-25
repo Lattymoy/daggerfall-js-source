@@ -155,8 +155,8 @@
   {
     "name": "WB5-no-record-kept",
     "file": "src/scenes/world.js",
-    "old": "    store: spoilsStore(appStorage()),",
-    "new": "    store: null,",
+    "old": "    store: spoilsStore(appStorage()),\n    who: () => characterIdOf(playerEntity),",
+    "new": "    who: () => characterIdOf(playerEntity),",
     "tests": [
       "test/wb5_gate_spoils.test.js"
     ]

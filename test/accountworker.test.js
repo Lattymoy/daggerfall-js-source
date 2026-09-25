@@ -94,7 +94,9 @@ test('ACC1b: the migration is the real schema, and applying it twice changes not
   // way (0007): its own table beside the row, never a column on it.
   // DUEL1 added `duel_results` the same way (0008): one row a duel that
   // named a loser - the record is COUNTED off it, no column on the row.
-  assert.deepEqual(tables, ['duel_results', 'letters', 'players', 'rate_limits', 'saves', 'sessions']);
+  // WB5b added `gate_kills` the same way (0009): one row a gate an
+  // account closed, keyed (day, account), counted off it.
+  assert.deepEqual(tables, ['duel_results', 'gate_kills', 'letters', 'players', 'rate_limits', 'saves', 'sessions']);
   // ACC1b IS IDENTITY ALONE, and the PLAYERS row still is: the save
   // arrived beside it, never inside it.
   const cols = db._raw.prepare('PRAGMA table_info(players)').all().map((c) => c.name);

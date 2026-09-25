@@ -291,7 +291,7 @@ only, non-extractable - `server-account/src/signing.js`'s shape); the account se
 (`GATE_PUBLIC_KEY`), and the deploy checks the pair as it checks the identity pair. A relay with no key still runs
 the fight and the loot - the receipt is then unsigned and the account service declines it, and nothing else changes.
 
-**The account service** (acct9): migration 0009 `gate_kills (day, account, boss, earned, at)`, primary key
+**The account service** (acct10): migration 0009 `gate_kills (day, account, boss, earned, at)`, primary key
 `(day, account)`, so a receipt counts once whatever happens to it. `POST /v1/gate/claim { receipt }` behind a session
 whose account is the receipt's `s`. `/v1/account` carries the count, and the main menu's account card and the Inspect
 card say *Gates closed: 3*. Guests fight and loot; the record is registered accounts', as the duel's is (AUDIT DUEL1
@@ -370,7 +370,7 @@ ships in ONE slice.
 | **WB2** | the gate in the exterior: the model and its textures, the membrane and the beacon passes, its states and countdown, the plaque and the banner, the enter door (answered *not yet* until WB3's relay is live) | no |
 | **WB3** | the arena place and the relay's boss room: the room key and its window, `gateBrain.js`, the `gate` frame both ways, the hit ledger, the checkpoint, the receipt and its key, the hub's world line; `RELAY_VERSION` once | **yes** |
 | **WB4** | the boss on the client: the oversized body and its hit volume, the telegraph pass, the wind-up frames, glow and sounds, the boss bar, the player's side of every attack, cast out and back in - shipped in two: **WB4a** (he fights: the body, the telegraphs, the glow and voice, the bar, every blow he lands) and **WB4b** (he is fought: the swing, the shaft and the spell on his body) | no |
-| **WB5** | the spoils: the seeded roll, the spew's physics, the beams, halos and lights, the take and the gather, the device's record until a save holds them; the account service's claim (acct9) and the cards' line | account only |
+| **WB5** | the spoils: the seeded roll, the spew's physics, the beams, halos and lights, the take and the gather, the device's record until a save holds them; the account service's claim (acct10) and the cards' line | account only |
 
 Each slice: pins in `test/` (pure law in node; the relay over its fake sockets and a fake clock; the passes' shaders
 built in headless Chromium, as the duel wall's), a mutant record in `tools/mutants/`, the Testing manifest, a Port
@@ -500,3 +500,23 @@ player who neither dealt their share nor stood half the fight), and it is said t
 `test/wb5_gate_spoils.test.js` (10); mutants `tools/mutants/wb5.json` (34 dead). The glow
 seen headless over the court; the flats and the flight not yet with ARENA2 and a live relay. The account's record of
 gates closed is WB5b.
+
+**WB5b (2026-09-25) - the gates closed.** The receipt the relay signed at the kill is carried to the account service by
+the account it names and counted there once (`server-account/src/accounts.js claimGate`, acct10): verified with the
+relay's public half (`GATE_PUBLIC_KEY`, a var in `server-account/wrangler.toml`, imported once per isolate) - the
+version, the signature, the claims, the week - and naming the session's own account, so nobody claims another's; one
+row a (day, account) in migration 0009's `gate_kills`, so a second claim - another device, a lost answer, a replay -
+lands nothing and is answered `claimed`. A guest fights and loots and is answered `guest`; it keeps its id when it
+registers, so its receipt counts then, inside the week. No public half and every claim is declined `no-gate-key` (503),
+the service's gap and not the player's. `POST /v1/gate/claim` is behind a session; the count rides `/v1/account` and
+`/v1/duel/record` beside the duels, so the Inspect card asks once. On the device (`net/gateClaims.js`) each receipt the
+relay hands the socket (`net/gateLink.js onReceipt` - again after a reconnect, and from the hub) is kept, one a day, and
+offered at once; an answer that settles it lets it go (counted - said in chat with the count; counted before; not a
+receipt the gate signed; another's), anything else keeps it (no session, no key, the network, a guest - told once) and
+it is offered again on the gate frame no sooner than ten minutes after; an unsigned or expired receipt is never kept.
+The main menu's account card has a *Gates closed* row (the count, or "None yet"), and the Inspect card says *Gates
+closed: N* when there is one to say. `tools/mintGateKeys.mjs` mints the pair in one run: the private half is the
+relay's secret (`npx wrangler secret put GATE_SIGNING_KEY` from `server/`), the public half goes into
+`server-account/wrangler.toml`; nothing is written to disk. Until both are set the relay's receipts go out unsigned and
+the spoils still roll; only the record waits. Pins `test/wb5b_gate_claim.test.js` (9); mutants
+`tools/mutants/wb5b.json` (25 dead). Not run against a deployed service.

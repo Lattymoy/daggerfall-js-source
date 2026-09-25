@@ -95,6 +95,11 @@ export function profileDuelLine(record) {
   const t = duelRecordText(record);
   return t ? `Duels: ${t}` : null;
 }
+/** WB5b: their gates closed, off the same record - said only once there is one to say (a stranger's none is not news). */
+export function profileGateLine(record) {
+  const n = record && typeof record === 'object' ? record.gates?.closed : null;
+  return Number.isSafeInteger(n) && n > 0 ? `Gates closed: ${n}` : null;
+}
 export function profileView({ name = null, peer = null, look = null, card = null, state = 'asking', duel = null, record = null } = {}) {
   const who = (typeof name === 'string' && name) ? name : 'Someone';
   const worn = card?.look ?? look ?? null;
@@ -116,6 +121,7 @@ export function profileView({ name = null, peer = null, look = null, card = null
     // service's count, read by the account the relay stamped on their card (net/duelRecord.js), never the card's word
     duel: duel && typeof duel.label === 'string' ? { label: duel.label, enabled: !!duel.enabled, why: duel.enabled ? null : (duel.why ?? null) } : null,
     duels: profileDuelLine(record),
+    gates: profileGateLine(record),
   };
 }
 
@@ -201,6 +207,7 @@ export function createProfileWindow({ canOpen = () => true, onOpen = null, onClo
     head.append(nm);
     if (v.line) head.append(el('div', 'dfprofile-line', v.line));
     if (v.duels) head.append(el('div', 'dfprofile-line dfprofile-duels', v.duels));   // DUEL1: their duelling record
+    if (v.gates) head.append(el('div', 'dfprofile-line dfprofile-gates', v.gates));   // WB5b: the gates they closed
     card.append(head);
     const body = el('div', 'dfprofile-body');
     const sheet = el('div', 'dfprofile-sheet');

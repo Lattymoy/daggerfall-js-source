@@ -143,6 +143,11 @@ export const REFUSALS = Object.freeze({
   'no-body': 'A letter needs some words.',
   'body-long': `A letter is at most ${LETTER_BODY_MAX} characters.`,
   'body-lines': `A letter is at most ${LETTER_LINES_MAX} lines.`,
+  // WB5b: a gate's kill receipt carried to the service. net/gateClaims.js says nothing of these to the player - it keeps
+  // what they do not settle and lets go of what they do - but a word the service can say is a word with a sentence.
+  'no-gate-key': 'The account service cannot check a gate\'s receipt right now. It is kept and tried again.',
+  receipt: 'That gate\'s receipt was not signed by the gate, or it has run out.',
+  'not-yours': 'That gate\'s receipt names another account.',
   server: 'The account service had a problem. Try again.',
   offline: 'Could not reach the account service. Check your connection.',
 });
@@ -448,6 +453,24 @@ export function accountDuels({ fetch, storage }) {
   return {
     lost: async (winner) => { const i = io(); return i ? reportDuelLoss(i, winner) : { ok: false, error: 'no-session' }; },
     record: async (id) => { const i = io(); return i ? readDuelRecord(i, id) : { ok: false, error: 'no-session' }; },
+  };
+}
+
+/** WB5b: the kill receipt the relay signed for this account, carried to
+ *  the service - `{ recorded, closed }`, or `{ recorded: false, why }`
+ *  (`claimed`, `guest`). */
+export const claimGateReceipt = (io, receipt) => call(io, '/v1/gate/claim', { receipt });
+
+/**
+ * WB5b: THE GATES' ONE CALL, bound to this device's stored session (read
+ * at each call, as the duels' are). With no session there is no account
+ * to claim for: `{ ok: false, error: 'no-session' }`, never a knock - and
+ * net/gateClaims.js keeps the receipt for when there is one.
+ */
+export function accountGates({ fetch, storage }) {
+  const io = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
+  return {
+    claim: async (receipt) => { const i = io(); return i ? claimGateReceipt(i, receipt) : { ok: false, error: 'no-session' }; },
   };
 }
 

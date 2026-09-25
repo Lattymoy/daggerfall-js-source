@@ -4837,7 +4837,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4243` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4244` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:275`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -8225,3 +8225,12 @@ boss's chest with the thrown torch's own physics, stands each in its tier's glow
 player walks over it - seen by this player alone, never sent. Leaving the court gathers the rest; the device keeps
 the pieces as rolled until a save of that character holds them, so a crash hands them over at the next boot, and it
 keeps the day spent, so a reconnect that re-sends the receipt spews nothing twice. Nothing new on the wire.
+
+## WB5b (2026-09-25, Mac, Option B: the relay "issues a signed kill record the account service honours") - the gates closed; see 11-Multiplayer/World-Bosses.md
+
+The receipt is carried to the account service by the account it names and counted there once
+(`server-account/src/accounts.js claimGate`, `POST /v1/gate/claim`, acct10): verified with the relay's public half
+(`GATE_PUBLIC_KEY`) and naming the session's own account, one row a (day, account). The device keeps each receipt the
+relay hands the socket until an answer settles it (`net/gateClaims.js`), offered at once and again on the gate frame no
+sooner than ten minutes after. The account card's *Gates closed* row and the Inspect card's line read the count.
+`tools/mintGateKeys.mjs` mints the pair; the relay's half is `GATE_SIGNING_KEY`. Nothing new on the wire.
