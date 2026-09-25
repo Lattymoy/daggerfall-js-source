@@ -481,7 +481,7 @@
   {
     "name": "D25F-pack-no-field",
     "file": "src/ui/enhancedInventory.js",
-    "old": "      if (max > 1) acts.append(qtyField(picked, max));   // DISC25-F\n    }\n  } else {",
+    "old": "      if (qty && max > 1) acts.append(qtyField(picked, max));   // DISC25-F\n    }\n  } else {",
     "new": "    }\n  } else {",
     "tests": [
       "test/disc25f_stack_split.test.js"

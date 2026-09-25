@@ -78,6 +78,8 @@ import { clampScrollIndex, thumbSpan, drawScrollThumb } from './verticalScrollBa
 import { decodePng } from '../systems/textureReplacement.js';   // RR2: a mod's button PNGs
 import { packTexture } from './packArt.js';   // OVH2: the worn UI pack's buttons
 import { packCifRciUrl } from '../systems/uiPack.js';
+import { isEnhancedPlus } from '../systems/uiSkin.js';   // PLUS1: the Yes/No dialog is Enhanced Plus's
+import { drawEnhancedDialog } from './enhancedDialog.js';   // DLG1: a box that asks, in the enhanced skin
 
 /** MessageBoxButtons (DaggerfallMessageBox.cs:67-90) - the value IS
  *  the BUTTONS.RCI record. */
@@ -431,6 +433,9 @@ function drawFrame(renderer, m, box) {
 export function drawMessageBox(renderer, m, font, box, {
   textColor = undefined, image = null, highlightColor = DEFAULT_HIGHLIGHT_COLOR,
 } = {}) {
+  // DLG1: under the enhanced skin a box with buttons is a decision, and is
+  // drawn as the enhanced dialog - the owning window still answers it.
+  if (typeof document !== 'undefined' && isEnhancedPlus() && drawEnhancedDialog(renderer, m, box, { image })) return true;
   if (!_art || !font) return false;
   drawFrame(renderer, m, box);
   // The IMAGE PANEL, under the label - the paintings' arm. It draws

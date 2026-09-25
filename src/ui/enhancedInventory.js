@@ -56,6 +56,7 @@
 // inventory slice's first job.
 // ═══════════════════════════════════════════════════════════════════
 
+import { isEnhancedPlus } from '../systems/uiSkin.js'; import { getPref } from '../systems/uiPrefs.js';   // PLUS1; PLUS7: getPref, the hover card's switch
 import { USE_PENDING } from './nativeInventory.js';
 import { PACK_PAGES, PAGE_IDS, pageOf, filterByPage } from './packPages.js';   // PX31: the pack's nine pages (the classic keeps DFU's four)
 import { useItem, isLightSource, usableItem } from '../systems/useItem.js';   // HT2: the light source's own act; Mac: Use only where the law has an arm
@@ -1868,6 +1869,59 @@ export const itemStatSuffix = (line) => {
   return stat ? ` (${stat})` : '';
 };
 
+// PLUS7: HOVER AND RIGHT CLICK (Enhanced Plus only). Hovering an item shows its whole card beside it - picture, name,
+// tier, every stat - and no buttons; a right click opens the item's actions (wear, use, drop, store, take, the
+// quickslots) as a small menu at the pointer. Both float over the window on <body>, so a repaint of the lists does not
+// take them with it; a repaint, a scroll, Escape or a click elsewhere puts them away.
+let tipEl = null, menuEl = null, menuOff = null;
+function hideTip() { tipEl?.remove(); tipEl = null; }
+function closeMenu() { menuEl?.remove(); menuEl = null; menuOff?.(); menuOff = null; }
+export function hidePlusFloaters() { hideTip(); closeMenu(); }
+function placeBeside(node, anchor, x, y) {
+  const vw = window.innerWidth, vh = window.innerHeight, r = node.getBoundingClientRect();
+  let left, top;
+  if (anchor) {
+    const a = anchor.getBoundingClientRect();
+    left = a.right + 10; top = a.top;
+    if (left + r.width > vw - 8) left = a.left - r.width - 10;
+  } else { left = x + 2; top = y + 2; }
+  if (left + r.width > vw - 8) left = vw - r.width - 8;
+  if (top + r.height > vh - 8) top = vh - r.height - 8;
+  node.style.left = `${Math.max(8, left)}px`; node.style.top = `${Math.max(8, top)}px`;
+}
+function showTip(item, from, row) {
+  if (menuEl) return;
+  hideTip();
+  const { c } = infoCard(item, from, () => { if (tipEl) showTip(item, from, row); });
+  tipEl = el('div', 'inv-tip');
+  tipEl.setAttribute('role', 'tooltip');
+  tipEl.append(c);
+  document.body.append(tipEl);
+  placeBeside(tipEl, row);
+}
+function openMenu(item, from, x, y) {
+  hideTip(); closeMenu();
+  const acts = itemActs(item, from, { qty: false });
+  const buttons = [...acts.querySelectorAll('button')];
+  if (!buttons.length) return;
+  menuEl = el('div', 'inv-menu');
+  menuEl.setAttribute('role', 'menu');
+  menuEl.append(el('p', 'inv-menu-head', itemLine(item, deps.entity).name));
+  for (const b of buttons) {
+    b.className = 'inv-menu-item';
+    b.setAttribute('role', 'menuitem');
+    const run = b.onclick;
+    b.onclick = (e) => { e.stopPropagation(); closeMenu(); run?.(e); };
+    menuEl.append(b);
+  }
+  document.body.append(menuEl);
+  placeBeside(menuEl, null, x, y);
+  const away = (e) => { if (!menuEl?.contains(e.target)) closeMenu(); };
+  const key = (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeMenu(); } };
+  setTimeout(() => { if (!menuEl) return; document.addEventListener('pointerdown', away, true); document.addEventListener('keydown', key, true); }, 0);
+  menuOff = () => { document.removeEventListener('pointerdown', away, true); document.removeEventListener('keydown', key, true); };
+}
+
 function itemRow(item, from = 'local') {
   const line = itemLine(item, deps.entity);
   const row = el('button', `itemrow${picked === item && side === from ? ' on' : ''}`);
@@ -1932,6 +1986,11 @@ function itemRow(item, from = 'local') {
     pickedAt = from === 'remote' ? 'loot' : 'dock';
     side = from; notice = null; render();
   };
+  if (isEnhancedPlus()) {   // PLUS7: hover for the card, right click for the actions
+    row.onmouseenter = () => { if (getPref('plusItemHover') !== false) showTip(item, from, row); };
+    row.onmouseleave = hideTip;
+    row.oncontextmenu = (e) => { e.preventDefault(); openMenu(item, from, e.clientX, e.clientY); };
+  }
   return row;
 }
 
@@ -2085,6 +2144,9 @@ function catsCol() {
   for (const { tab: t, label, items: rows } of model.tabs) {
     const n = rows.length;
     const b = el('button', `packtab${t === tab ? ' on' : ''}${n ? '' : ' empty'}`, label);
+    // PLUS1: under Enhanced Plus an empty page dims under its own class - the sheet's .empty (a dashed box with 26px of
+    // padding) landed on the zero tabs and pushed them out of the three-by-three grid.
+    if (!n && isEnhancedPlus()) b.classList.replace('empty', 'tabempty');
     b.append(el('span', 'count', String(n)));
     b.onclick = () => { tab = t; picked = null; render(); };
     tabs.append(b);
@@ -2168,24 +2230,14 @@ function quickslotActs(item) {
   return [];
 }
 
-function detailCol() {
-  const col = el('section', `packcol packdetail${picked ? ' open' : ''}`);
-  // PX16c: the plaque wears the pause window's own corners - one
-  // frame language across every enhanced surface.
-  for (const c of ['tl', 'tr', 'bl', 'br']) col.append(el('span', `px-gem px-corner px-${c}`));
-  const close = el('button', 'sheet-close', 'Close');
-  close.onclick = () => { picked = null; render(); };
-  col.append(close);
-  if (!picked) {
-    col.append(el('p', 'packempty', 'Pick something to read it.'));
-    return col;
-  }
+/** PLUS7: the item's card WITHOUT its buttons - the detail column's, the hover card's. */
+function infoCard(picked, side, ready = render) {
   const line = itemLine(picked, deps.entity);
   const c = el('div', 'card');
   // The detail draws it BIGGER - this is the one place there is room
   // to see what the thing actually looks like.
   const big = modelIconUrl(line.item, 192)
-    || linePictureUrl(line, { scale: 4, onReady: render });
+    || linePictureUrl(line, { scale: 4, onReady: ready });
   if (big) {
     const fig = el('div', 'bigicon');
     const img = el('img');
@@ -2233,6 +2285,12 @@ function detailCol() {
   }
   else pair('Where', remote.title);
   c.append(dl);
+  return { c, line, big };
+}
+
+/** PLUS7: the item's actions as buttons - the detail column's row, the right-click menu's list. */
+function itemActs(picked, side, { qty = true } = {}) {
+  const line = itemLine(picked, deps.entity);
   const acts = el('div', 'acts');
   if (side === 'local') {
     // REACHABLE, unlike a badge on a row: the selection survives the
@@ -2265,7 +2323,7 @@ function detailCol() {
       t.onclick = () => stow(picked);
       acts.append(t);
       const max = (picked.stackCount ?? 1) > 1 ? splitMax(picked, 'store') : 0;
-      if (max > 1) acts.append(qtyField(picked, max));   // DISC25-F
+      if (qty && max > 1) acts.append(qtyField(picked, max));   // DISC25-F
     }
   } else {
     // G6: taking ONE from a reward tray IS the claim, and the window
@@ -2276,7 +2334,7 @@ function detailCol() {
     b.onclick = () => take(picked);
     acts.append(b);
     const max = (picked.stackCount ?? 1) > 1 ? splitMax(picked, 'take') : 0;
-    if (max > 1) acts.append(qtyField(picked, max));   // DISC25-F
+    if (qty && max > 1) acts.append(qtyField(picked, max));   // DISC25-F
   }
   // USE is offered for EVERYTHING, exactly as the classic window's Use
   // mode is: `useItem` has an arm for every group and the honest answer
@@ -2304,6 +2362,23 @@ function detailCol() {
   // ghost from the moment it was made. The remote side gets none; take it
   // first, then slot it.
   if (side === 'local') for (const b of quickslotActs(picked)) acts.append(b);
+  return acts;
+}
+
+function detailCol() {
+  const col = el('section', `packcol packdetail${picked ? ' open' : ''}`);
+  // PX16c: the plaque wears the pause window's own corners - one
+  // frame language across every enhanced surface.
+  for (const c of ['tl', 'tr', 'bl', 'br']) col.append(el('span', `px-gem px-corner px-${c}`));
+  const close = el('button', 'sheet-close', 'Close');
+  close.onclick = () => { picked = null; render(); };
+  col.append(close);
+  if (!picked) {
+    col.append(el('p', 'packempty', 'Pick something to read it.'));
+    return col;
+  }
+  const { c, line, big } = infoCard(picked, side);
+  const acts = itemActs(picked, side);
   c.append(acts);
   col.append(c);
   // The address, for the player who wants it and the developer who
@@ -2318,6 +2393,7 @@ function detailCol() {
 }
 
 function render() {
+  hidePlusFloaters();   // PLUS7: the floating card and menu belong to the rows being replaced
   // JAN2: UNMOUNTED - nothing to paint into. `unmount` nulls `host`,
   // and the repaints that can land after it are not all async: the
   // book reader's failure report renders after `onExit` by design
@@ -2702,6 +2778,7 @@ export function mountEnhancedInventory(hostEl, d = {}) {
      *  window going is the door's event, not this module's. */
     dropped: () => dropped,
     unmount() {
+      hidePlusFloaters();   // PLUS7
       // EVERY LISTENER HAS AN OWNER, and this one claims F6 - an orphan
       // eats the key that opens the pack, for the rest of the session.
       if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });

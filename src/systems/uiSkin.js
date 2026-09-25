@@ -56,6 +56,20 @@ export function uiSkin(search) {
 /** The predicate every mount site should call. */
 export const isEnhanced = (search) => uiSkin(search) === 'enhanced';
 
+/** PLUS1 (2026-09-25): ENHANCED PLUS - the enhanced skin with the refreshed dress over it (the stone-and-brass kit,
+ *  the Yes/No dialogs, the ported service windows, the vitals' lost chunk, the fading HUD lines, the one-frame rest
+ *  window, the Ascend clicks). It is NOT a third skin: every mount site keeps asking isEnhanced(), and Plus answers
+ *  yes there, so nothing Enhanced does can be missing from Plus. Only the refresh's own seams ask isEnhancedPlus(),
+ *  and plain Enhanced - the default - stays exactly as it was. `?plus=1` / `?plus=0` answer for one page load, like
+ *  `?skin=`, and write nothing. */
+export function plusOverride(search = globalThis.location?.search ?? '') {
+  const v = new URLSearchParams(search).get('plus');
+  return v === '1' || v === 'true' ? true : v === '0' || v === 'false' ? false : null;
+}
+export const isEnhancedPlus = (search) => isEnhanced(search) && (plusOverride(search) ?? getPref('enhancedPlus') === true);
+/** Store the Plus choice; null when the shelf refused (SKIN-CARRY's law - the caller carries it on the URL). */
+export function setEnhancedPlus(on) { return setPref('enhancedPlus', !!on) === false ? null : !!on; }
+
 /** AUDIT CONTRIB H1: THE HOTBAR IS IN FORCE - the enhanced skin with the hotbar chosen (systems/features.js
  *  'quickbar-style') - and the quickslot diamond is put AWAY, not hidden: its actions (a pad's d-pad, a rebound key)
  *  and its hold machine stand down, so nothing reaches slots the player cannot see. On the classic skin the pref is

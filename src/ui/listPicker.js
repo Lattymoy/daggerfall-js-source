@@ -33,7 +33,7 @@ import { loadImg, nativeMetrics, drawImg, shadowText, DEFAULT_TEXT_COLOR } from 
 import { drawMenuBackdrop, DOUBLE_CLICK_DELAY_MS } from './chargenArt.js';
 import { VerticalScrollBar, drawScrollThumb } from './verticalScrollBar.js';
 import { FntFile } from '../formats/fntFile.js';   // AUDIT 58: FONT0002, DaggerfallUI.SmallFont
-import { makeFont } from './text.js';
+import { makeFont } from './text.js';  import { isEnhancedPlus } from '../systems/uiSkin.js';  import { drawEnhancedPicker } from './enhancedPicker.js';   // PORT3: the list, in the enhanced skin
 
 /** pickerPanel.Size = the texture's size (:73), Center/Middle (:74-75). */
 export const PICKER_W = 200, PICKER_H = 128;
@@ -374,7 +374,8 @@ export class ListPickerWindow {
     return true;
   }
 
-  draw(renderer, canvas, font) {
+  draw(renderer, canvas, font) {   // PORT3: under the enhanced skin the list is its own DOM window (the font latched first - the replayed click measures rows by it)
+    if (typeof document !== 'undefined' && isEnhancedPlus() && ((this._font = this.pickerFont ?? font), this._clampScroll(), drawEnhancedPicker(this, renderer, canvas, { x: PICKER_X, y: PICKER_Y, list: PICKER_RECTS.list }))) return;
     // No art, no window. A picker that cannot be cancelled still has to
     // go away here or it would hold the host for ever showing nothing -
     // so this bypasses AllowCancel deliberately, and says so.

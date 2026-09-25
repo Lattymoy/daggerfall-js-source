@@ -89,7 +89,8 @@ test('OL1 - THE FUTURE HALF: every boolean switch the port declares is either fo
   for (const k of ONLINE_PLAYERS_OWN_PREFS) assert.ok(Object.hasOwn(PREF_DEFAULTS, k), `${k} is a uiPrefs key`);
   // OL-LIGHT (2026-09-24, Mac: "Can we let people disable it online"): the one enhancement left to the player online -
   // lighting is what this screen draws, and nothing the room agrees on reads it (features.js's row says why)
-  const PLAYERS_ENHANCEMENTS = ['enhancedLighting'];
+  // PLUS1: and Enhanced Plus - a dress over the enhanced skin, which OVH3 already left to the player
+  const PLAYERS_ENHANCEMENTS = ['enhancedLighting', 'enhancedPlus'];
   for (const k of booleans.filter((k) => /^enhanced/.test(k) && !PLAYERS_ENHANCEMENTS.includes(k))) assert.equal(ONLINE_FORCED_PREFS[k], true, `${k} is an enhancement and the lane forces it`);
   for (const k of PLAYERS_ENHANCEMENTS) {
     assert.equal(Object.hasOwn(ONLINE_FORCED_PREFS, k), false, `${k} is not forced online`);

@@ -107,7 +107,7 @@ import {
 import { mostRecentRestorable, restorableSaves, deleteSave, QUICK_SAVE_NAME } from '../systems/saveSlots.js';
 import { exportSavesZip, collectSlots, importSlots, entriesFromFiles, slotPathOf, TRANSFER_ZIP_NAME } from '../systems/saveTransfer.js';   // SP1: saves move between the website and the app
 import { appStorage } from '../systems/appStorage.js';   // SP1: the store under this build - the browser's on the site, the file store in the app   // SAV4: the slot store; SLOTS1: every slot
-import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES, isEnhanced } from '../systems/uiSkin.js';   // FD1: which boot rail
+import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES, isEnhanced, isEnhancedPlus } from '../systems/uiSkin.js';   // FD1: which boot rail
 import { getPref, setPref, isOpen, setOpen } from '../systems/uiPrefs.js';
 import { DEFAULT_SERVER } from '../net/online.js';   // ONLINE1: the relay this port hosts, the field's placeholder   // R7: the port's own switches; SO1: the folded tiers' memory
 import { replacementCount } from '../systems/musicReplacement.js';   // M-EXT: the packs card reports what the pick covers
@@ -149,7 +149,9 @@ import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 // dicts, neither of which belongs in a screen that repaints itself.
 import { paneControls, discardControlsStaging, captureArmed, controlsPromptOpen, dismissControlsPrompt } from './enhancedControls.js';
 // FT0: the features home - one list over the three stores, filtered by kind
-import { OVERHAUL_PANELS, currentOption } from '../systems/overhauls.js';   // OVH1: the three looks
+import { OVERHAUL_PANELS, currentOption } from '../systems/overhauls.js';
+import { PLUS_THEMES } from './enhancedFrame.js';   // PLUS2: Enhanced Plus's colours
+import { plusTheme, setPlusTheme } from './enhancedPlusStyle.js';  import { plusCursorOn, setPlusCursor } from './plusCursor.js';   // OVH1: the three looks
 import { UI_PACKS, packUrl } from '../systems/uiPack.js';   // OVH2: a pack's own picture on its card
 import { FEATURES, KINDS, KIND_ORDER, GROUPS, GROUP_ORDER, filterFeatures, featureCounts, featureForControl, resolveControl, modModules, modDials, matchesFeatureQuery } from '../systems/features.js';   // FT14: the groups and each mod's curated keys
 import '../world/landView.js';   // RF4: the land-view lane registers itself with the registry
@@ -2714,6 +2716,53 @@ function overhaulPanel(p) {
   mid.append(dots);
   nav.append(arrow(-1, '‹', 'Previous'), mid, arrow(1, '›', 'Next'));
   card.append(nav, el('p', 'look-blurb', o.blurb));
+  // PLUS2: ENHANCED PLUS'S COLOURS - offered on its own card while it is the look in use (they are its surfaces, and
+  // they change at once, no reload). One swatch per stone; the chosen one is pressed.
+  if (p.id === 'ui' && o.id === 'enhanced-plus' && o === cur) {
+    const row = el('div', 'look-colours');
+    row.setAttribute('role', 'group');
+    row.setAttribute('aria-label', 'Enhanced Plus colour');
+    row.append(el('span', 'look-colours-label', 'Colour'));
+    const now = plusTheme();
+    for (const [id, th] of Object.entries(PLUS_THEMES)) {
+      const b = el('button', 'look-colour');
+      b.type = 'button';
+      b.title = th.name;
+      b.setAttribute('aria-pressed', String(id === now));
+      const chip = el('i', 'look-colour-chip');
+      chip.style.background = th.swatch;
+      b.append(chip, el('span', null, th.name));
+      b.onclick = (e) => { e.stopPropagation(); setPlusTheme(id); render(); };
+      row.append(b);
+    }
+    card.append(row);
+    // PLUS6: the gauntlet cursor, on or off - worn at once
+    const crow = el('div', 'look-colours');
+    crow.setAttribute('role', 'group');
+    crow.setAttribute('aria-label', 'Enhanced Plus cursor');
+    crow.append(el('span', 'look-colours-label', 'Cursor'));
+    for (const [on, label] of [[true, 'Gauntlet'], [false, 'System']]) {
+      const b = el('button', 'look-colour', label);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(plusCursorOn() === on));
+      b.onclick = (e) => { e.stopPropagation(); setPlusCursor(on); render(); };
+      crow.append(b);
+    }
+    card.append(crow);
+    // PLUS7: the inventory's hover card, on or off (the right-click menu stays either way)
+    const hrow = el('div', 'look-colours');
+    hrow.setAttribute('role', 'group');
+    hrow.setAttribute('aria-label', 'Item info on hover');
+    hrow.append(el('span', 'look-colours-label', 'Item info on hover'));
+    for (const [on, label] of [[true, 'On'], [false, 'Off']]) {
+      const b = el('button', 'look-colour', label);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String((getPref('plusItemHover') !== false) === on));
+      b.onclick = (e) => { e.stopPropagation(); setPref('plusItemHover', on); render(); };
+      hrow.append(b);
+    }
+    card.append(hrow);
+  }
   const use = el('button', 'act primary look-use', o === cur ? 'In use' : `Use ${o.name}`);
   use.type = 'button';
   use.disabled = o === cur;
@@ -2776,7 +2825,7 @@ function paneAbout(body) {
   c.append(el('p', 'meta', 'An open-source reimplementation of The Elder Scrolls II: Daggerfall.'));
   c.append(stats([
     ['Build', BUILD_TAG],
-    ['Interface', SKIN_NAMES[uiSkin()]],
+    ['Interface', isEnhancedPlus() ? 'Enhanced Plus' : SKIN_NAMES[uiSkin()]],   // PLUS1
     ['Settings', `${Object.values(DEFAULTS).reduce((n, s2) => n + Object.keys(s2).length, 0)} keys`],
   ]));
   body.append(c);
@@ -3114,7 +3163,11 @@ function pauseStats(body) {
     rail.append(b);
   }
   wrap.append(rail);
-  const detail = el('div', 'px-qdetail');
+  // PLUS4: the ONE other detail pane on this rail with buttons on it (Pack/Spellbook/Chronicle/
+  // Ascend, below) - and the one that never picked up the px-sys class its System-tab twin (below,
+  // pauseSystem) carries. The kit's button role (enhancedFrame.js FRAME_ROLES) reads `.px-sys .act`,
+  // so without it these four fell through to the bare, unpainted base .act under Plus.
+  const detail = el('div', 'px-qdetail px-sys');
   ({ character: statsCharacter, attributes: statsAttributes, skills: statsSkills, specials: statsSpecials, standing: statsStanding })[statsSec](detail, m);
   // PX25: THE DOORS THE F5 SHEET CARRIED. The classic character sheet
   // has four buttons down its side - Inventory, Spellbook, Logbook,
