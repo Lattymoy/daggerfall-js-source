@@ -309,12 +309,13 @@ maps, SC1's static caches - on the same kind of harness (the real
 `Renderer`, the real `ShadowPass` and the lane over a counting GL; the
 shadow lens's `harness.mjs` town and its `harness2.mjs` at layoutNature's
 real density, 31 records over 128 x 128 tiles), and the draw lens's
-census of the REAL game over a real ARENA2 in the provers' scratch (not
-in this container). Where the two lenses found the same win in two forms,
+census of the REAL game over a copy of ARENA2 in the session's scratch
+(not in the repo). Where the two lenses found the same win in two forms,
 the slice says which form it took and on what measurement. Every number
 under "Measured" was re-run on the committed tree against the base
 (`1d05f5374`, PERF-EXT10-13 in); the provers' game-side numbers are
-quoted as theirs.
+quoted as theirs, and the five slices together were measured on the game
+itself, before and after (THE SHADOWS, MEASURED WHOLE, below).
 
 ## PERF-EXT1 - a flat batch reaches a shadow by its placements
 
@@ -656,3 +657,67 @@ the nine to 1e-12 with exact weights, within a 255th with 8-bit ones.
 `test/perfsun_fragment.test.js` (PERF-SUN1, the kernel after the cheap
 tap) restated on the four-tap text. Mutants `perfexta.json` 37-41, all
 dead; `perfsun.json`'s PERF-SUN1 cheap-tap mutant re-aimed by content.
+
+## THE SHADOWS, MEASURED WHOLE - before and after, on the harnesses and the game
+
+The five slices together against the cluster's base (`55e63ea6f`, the
+flats and the frame's CPU in, PERF-EXT10-13 and their review), each
+harness run on both trees.
+
+**The shadow lens's harnesses** (`harness.mjs` town, `harness2.mjs` at
+real density; 300 frames walking and turning; draws a frame, the
+frame's worst in brackets, and GL calls a frame, both exact):
+
+| | base | PERF-EXT1-5 |
+|---|---|---|
+| town day, draws (max) / GL calls | 270.6 (353) / 817 | 72.6 (120) / 351 |
+| town dusk | 567.9 (1,287) / 2,669 | 80.6 (156) / 558 |
+| town night | 297.3 (934) / 1,859 | 8.0 (36) / 214 |
+| real density day | 373.3 (508) / 1,279 | 88.9 (157) / 421 |
+| real density dusk | 982.8 (2,007) / 4,549 | 90.7 (168) / 519 |
+| real density night | 615.5 (1,514) / 3,299 | 2.0 (23) / 107 |
+| lantern faces redrawn a night frame, town / real | 18.6 / 13.2 | 9.5 / 5.3 |
+
+VERIFY on the committed tree (six runs: day, dusk and night, walking,
+and turning in a 30 m/s wind): 7,802 mesh replays drew the base's
+triangle set exactly; 475,095 batch-replays skipped, their 67,759,760
+quads each proven wholly beyond one clip plane, none unproven, no draw
+the base did not make.
+
+**The pass's JavaScript with a free GL** (the same harnesses, `PLAIN=1`:
+a plain object of no-op GL methods, so node times the pass and not a
+trap; three alternating runs, ms a frame): at real density by day
+0.120-0.122 -> 0.126-0.131, at night 0.428-0.460 -> 0.284-0.298, at dusk
+0.520-0.592 -> 0.435-0.470; the town by day 0.074-0.081 -> 0.079-0.108,
+at night 0.277-0.302 -> 0.211-0.225, at dusk 0.361-0.389 -> 0.321-0.392.
+By day the placement tests cost about what the dropped draws' JS saved;
+at night the lanterns' redraws and the eight walks were the frame's.
+On the cpu lens's whole-frame town (`townFrame.mjs`, a counting GL, 800
+frames, `ab.sh` median of 9): `beginFrame`, where the pass runs, 0.358
+-> 0.322 ms at night and 0.206 -> 0.245 by day - there the node side of
+the cascades' placement tests (0.013 of it in the far cascade, measured
+by skipping it) is not repaid, because a counting GL charges almost
+nothing for the ~900 calls a frame they save. The game's own main
+thread, below, is where those calls are paid.
+
+**The game** (`gameab.mjs`, the draw lens's `abref.mjs` instrument on one
+tree a run: the real game in headless Chromium on SwiftShader over a
+copy of ARENA2 in the session's scratch - not in the repo - Daggerfall
+city at 640 x 360, every WebGL2 call counted, `ShadowPass.render` timed
+on the main thread; 48 frames after the boot settles; counts exact,
+times relative):
+
+| Daggerfall city | noon, base | noon, PERF-EXT1-5 | 22:00, base | 22:00, PERF-EXT1-5 |
+|---|---|---|---|---|
+| GL calls a frame | 6,598 | 4,091 | 13,011 | 3,627 |
+| draws a frame | 1,338 | 794 | 2,298 | 634 |
+| sun cascade draws | 495.4 | 212.8 | 0 | 0 |
+| lantern face draws | 279.0 | 0 | 1,711.7 | 11.8 |
+| lantern faces redrawn / depth blits | 10.8 / 10.8 | 0 / 0 | 24.5 / 24.5 | 16.9 / 16.9 |
+| `ShadowPass.render`, main thread | 2.51 ms | 1.97 ms | 2.66 ms | 1.96 ms |
+
+(casters 7.1 at noon and 8.2 at night on both; the wind 14.5-14.8 m/s
+in every run.) The players' cards run the same calls through ANGLE's
+D3D11 back end, where each removed flat draw also removes a vertex-stage
+constant-buffer rewrite; the per-draw GPU-process and driver cost is not
+measurable here, and the fps they will see is not claimed.

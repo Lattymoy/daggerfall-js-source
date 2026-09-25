@@ -181,3 +181,11 @@ cube maps (`07-Rendering/Performance-Exterior.md`, THE SHADOWS):
   the card's own rounding of each tap's position, under one 255th of the
   sun's light in a penumbra - 2 pixels of 518,400 by one step on the
   software rasteriser.
+
+The five together, on the real game (headless Chromium, SwiftShader,
+Daggerfall city, a copy of ARENA2 in the session's scratch): at noon
+6,598 -> 4,091 GL calls and 1,338 -> 794 draws a frame, the lanterns'
+279 face draws to none; at 22:00 13,011 -> 3,627 calls and 2,298 -> 634
+draws, the lanterns' 1,712 face draws to 12; the shadow pass's main
+thread 2.51 -> 1.97 ms at noon and 2.66 -> 1.96 at night (relative).
+Not seen on the players' cards.
