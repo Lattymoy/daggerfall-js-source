@@ -1054,7 +1054,7 @@ the scene the picture takes in:
 - `drawRigSpriteBox` takes an optional `anchor`. The picture is taken along
   the eye's ray to the anchor, still centred on the box so the gear stays in
   it. The quad stands where the anchor's own image lands on the anchor
-  (`characterSprite.js:95` `landAnchor`). Every point then draws at a place
+  (`characterSprite.js:109` `landAnchor`). Every point then draws at a place
   that does not depend on the box. The voxel rigs pass no anchor and draw as
   they did.
 - `drawThird` (`fpArm.js:4644`) anchors on the actor's own axis (MW x = y =

@@ -32,7 +32,7 @@
 //     framebuffer, so there is nothing to be clipped by.
 //
 // MW-D10: the framing constants this pass USED to borrow from the voxel
-// viewmodel (render/characterSprite.js:118-130) are gone with the mapper
+// viewmodel (render/characterSprite.js:132-144) are gone with the mapper
 // that needed them. Rule 54 places the camera inside the rig, so there
 // is no distance to push, no drop to apply and no scale to solve - and
 // the viewmodel's two hard-won laws do not transfer either: its camera
