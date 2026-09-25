@@ -57,6 +57,7 @@ export const PLAN_PEN = Object.freeze({
   mark: PEN.soft,      // a door, a teleporter
   open: PEN.soft,      // DISC22-G: an edge onto floor not yet seen - a way on, not a wall
   note: PEN.name,      // what the player wrote down
+  stair: PEN.line,     // DISC25-A: a stair onto another floor - the wall's own pen, because it is where the wall opens
   halo: PEN.halo,
 });
 
@@ -300,17 +301,30 @@ export function paintPlanOverlay(ctx, view, opts) {
   }
 }
 
+/** DISC25-A: the least the strip shows however little clear paper the hands leave - the live floor and one either
+ *  side, or a chevron where there are more. */
+export const FLOOR_STRIP_MIN = 3;
+
 /**
- * The floor strip: one row per storey down the paper's right edge,
- * BOTTOM STOREY AT THE BOTTOM, because that is where it is. The live
+ * The floor strip: one row per floor down the paper's right edge,
+ * BOTTOM FLOOR AT THE BOTTOM, because that is where it is. The live
  * one is the pen at full weight with a rule under it, exactly as a tab
  * is - a reader who has learnt the tabs has learnt this.
  *
  * `measure(text, fontPx)` is the canvas's own where there is one.
  *
- * @param {Array<{index:number, label:string}>} floors - bottom first, as deriveFloors answers
+ * DISC25-A: THE STRIP STOPS ABOVE THE RIGHT GAUNTLET. On a real dungeon (Privateer's Hold was thirteen floors) it
+ * ran down the whole edge and three rows sat under the thumb - EM5's own finding, that the paper's rectangle is
+ * not the part a player can see, which `hands` (the window's reserveHands, paper px) now answers. Where the floors
+ * do not fit, the strip shows the live one and its neighbours with a CHEVRON at the end that has more (`more`: +1
+ * above, -1 below), which is itself a row: pressing it takes the next floor that way. And three marks: `you` (the
+ * floor the player stands on), `exit` (the floor the way out is on, once found), and `seen` (the floors anything
+ * has been revealed on - the rest are written faint, so a press on one is not a surprise).
+ *
+ * @param {Array<{index:number, label:string}>} floors - bottom first, as the sheet answers
  * @param {number} live
- * @param {{paperW?:number, paperH?:number, measure?:Function|null, reserveTop?:number}} [opts]
+ * @param {{paperW?:number, paperH?:number, measure?:Function|null, reserveTop?:number,
+ *          hands?:Array<{x0:number,x1:number,y0:number,y1:number}>|null, you?:number, exit?:number, seen?:Set<number>|null}} [opts]
  */
 export function floorStripLayout(floors, live, opts = {}) {
   const { paperW = STRIP.refPaper, measure = null } = opts;
@@ -321,34 +335,64 @@ export function floorStripLayout(floors, live, opts = {}) {
   const padX = FLOOR_STRIP.padX * scale;
   const padY = FLOOR_STRIP.padY * scale;
   const width = (t) => (measure ? measure(t, fontPx) : t.length * fontPx * 0.52);
-  const shown = visibleFloors(floors, live);
-  const rows = [];
   // TOP-ANCHORED, under whatever band the caller reserves (the tab
-  // strip's). The stack still reads top storey first, so Floor 1 is
+  // strip's). The stack still reads top floor first, so Floor 1 is
   // lowest - it is where the paper is clear that changed, not the order.
   const top = (opts.reserveTop ?? 0) + padY;
-  for (let i = 0; i < shown.length; i++) {
-    const f = shown[shown.length - 1 - i];    // top of the paper is the TOP storey
+  const all = floors ?? [];
+  const widest = all.reduce((m, f) => Math.max(m, width(f.label)), 0);
+  const left = paperW - padX - widest;
+  // DISC25-A: the room above the right hand, in rows
+  let max = FLOOR_STRIP_MAX;
+  for (const h of opts.hands ?? []) {
+    if (h.x1 <= left || h.x0 >= paperW || h.y0 <= top) continue;
+    max = Math.min(max, Math.floor((h.y0 - padY - top + gap) / (rowH + gap)));
+  }
+  max = Math.max(FLOOR_STRIP_MIN, max);
+  const win = stripWindow(all, live, max);
+  const rows = [];
+  const push = (row) => rows.push({ ...row, h: rowH, y: top + rows.length * (rowH + gap) });
+  const chevron = fontPx * 1.1;
+  if (win.above >= 0) push({ index: win.above, label: '', more: 1, w: chevron, x: paperW - padX - chevron, live: false });
+  for (let i = win.shown.length - 1; i >= 0; i--) {
+    const f = win.shown[i];    // top of the paper is the TOP floor
     const w = width(f.label);
-    rows.push({
-      index: f.index, label: f.label, w, h: rowH,
-      x: paperW - padX - w, y: top + i * (rowH + gap),
+    push({
+      index: f.index, label: f.label, w,
+      x: paperW - padX - w,
       live: f.index === live,
+      you: f.index === opts.you,
+      exit: f.index === opts.exit,
+      faint: !!opts.seen && !opts.seen.has(f.index) && f.index !== live,
     });
   }
+  if (win.below >= 0) push({ index: win.below, label: '', more: -1, w: chevron, x: paperW - padX - chevron, live: false });
   return { scale, fontPx, rows };
 }
 
+/** DISC25-A: the floors the strip shows in `max` rows, and the floor each chevron leads to (-1 for none): the live
+ *  floor and its neighbours, a chevron taking a row wherever floors are hidden. */
+function stripWindow(all, live, max) {
+  if (all.length <= max) return { shown: all, above: -1, below: -1 };
+  const shown = visibleFloors(all, live, Math.max(1, max - 2));
+  const lo = all.indexOf(shown[0]), hi = all.indexOf(shown[shown.length - 1]);
+  return {
+    shown,
+    above: hi < all.length - 1 ? all[hi + 1].index : -1,
+    below: lo > 0 ? all[lo - 1].index : -1,
+  };
+}
+
 /** Which storeys the strip shows. Everything, until there are more than
- *  `FLOOR_STRIP_MAX` - then the live one and as many neighbours as fit,
- *  so the strip stays on the paper. */
-export function visibleFloors(floors, live) {
+ *  `max` (FLOOR_STRIP_MAX unless the caller has less room) - then the
+ *  live one and as many neighbours as fit, so the strip stays on the paper. */
+export function visibleFloors(floors, live, max = FLOOR_STRIP_MAX) {
   const all = floors ?? [];
-  if (all.length <= FLOOR_STRIP_MAX) return all;
+  if (all.length <= max) return all;
   const at = Math.max(0, all.findIndex((f) => f.index === live));
-  let lo = at - (FLOOR_STRIP_MAX >> 1);
-  lo = Math.max(0, Math.min(all.length - FLOOR_STRIP_MAX, lo));
-  return all.slice(lo, lo + FLOOR_STRIP_MAX);
+  let lo = at - (max >> 1);
+  lo = Math.max(0, Math.min(all.length - max, lo));
+  return all.slice(lo, lo + max);
 }
 
 /** Which storey a paper point hits, or null. The tab strip's own grab
@@ -361,21 +405,30 @@ export function floorStripHit(layout, px, py) {
   return i < 0 ? null : rows[i].index;
 }
 
+/** DISC25-A: how faint a floor nothing has been revealed on is written, against the soft pen of the others. */
+export const FLOOR_UNSEEN_ALPHA = 0.45;
+
 /** Ink the floor strip. Same hand as the tabs: haloed, the live row at
- *  full weight with a rule, the rest soft. */
+ *  full weight with a rule, the rest soft. DISC25-A: a floor with nothing
+ *  revealed on it faint; a chevron where more floors are hidden; and after
+ *  the word, a caret where the player stands and a ring where the way out is. */
 export function paintFloorStrip(ctx, layout, { font = null } = {}) {
   if (!ctx?.save || !layout?.rows?.length) return;
   ctx.save();
   ctx.font = font ?? `${Math.round(layout.fontPx)}px ${NAME_FACE}`;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
+  const s = layout.scale ?? 1;
   for (const r of layout.rows) {
+    if (r.more) { paintStripChevron(ctx, r, s); continue; }
     ctx.lineWidth = 2 * HALO_PEN;
     ctx.strokeStyle = PEN.halo;
     ctx.lineJoin = 'round';
+    if (r.faint) ctx.globalAlpha = FLOOR_UNSEEN_ALPHA;
     ctx.strokeText(r.label, r.x, r.y);
     ctx.fillStyle = r.live ? PEN.name : PEN.soft;
     ctx.fillText(r.label, r.x, r.y);
+    if (r.faint) ctx.globalAlpha = 1;
     if (r.live) {
       ctx.lineWidth = FLOOR_STRIP.rule * layout.scale;
       ctx.strokeStyle = PEN.line;
@@ -384,8 +437,123 @@ export function paintFloorStrip(ctx, layout, { font = null } = {}) {
       ctx.lineTo(r.x + r.w, r.y + r.h);
       ctx.stroke();
     }
+    // the marks after the word, in the pad between it and the paper's edge
+    let mx = r.x + r.w + FLOOR_MARK.gap * s;
+    const my = r.y + r.h / 2;
+    if (r.you) {
+      const k = FLOOR_MARK.r * s;
+      ctx.beginPath();
+      ctx.moveTo(mx, my);
+      ctx.lineTo(mx + k * 1.6, my - k);
+      ctx.lineTo(mx + k * 1.6, my + k);
+      ctx.closePath();
+      ctx.lineWidth = 2 * HALO_PEN;
+      ctx.strokeStyle = PEN.halo;
+      ctx.stroke();
+      ctx.fillStyle = PLAN_PEN.caret;
+      ctx.fill();
+      mx += k * 1.6 + FLOOR_MARK.gap * s;
+    }
+    if (r.exit) {
+      const k = FLOOR_MARK.r * s;
+      ctx.beginPath();
+      ctx.arc(mx + k, my, k, 0, Math.PI * 2);
+      ctx.lineWidth = 1.6 * s;
+      ctx.strokeStyle = PLAN_PEN.beacon;
+      ctx.stroke();
+    }
   }
   ctx.restore();
+}
+
+/** DISC25-A: the marks a floor wears after its word on the strip, in strip units. */
+export const FLOOR_MARK = Object.freeze({ r: 3, gap: 4 });
+
+/** DISC25-A: a chevron row - more floors that way - drawn as ink, not a glyph a face may not carry. */
+function paintStripChevron(ctx, r, s) {
+  const cx = r.x + r.w / 2, cy = r.y + r.h / 2, k = r.h * 0.28;
+  ctx.beginPath();
+  ctx.moveTo(cx - k * 1.4, cy + r.more * k * 0.6);
+  ctx.lineTo(cx, cy - r.more * k * 0.6);
+  ctx.lineTo(cx + k * 1.4, cy + r.more * k * 0.6);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = 2 * HALO_PEN + 1.4 * s;
+  ctx.strokeStyle = PEN.halo;
+  ctx.stroke();
+  ctx.lineWidth = 1.4 * s;
+  ctx.strokeStyle = PEN.soft;
+  ctx.stroke();
+}
+
+/** DISC25-A: a stair's mark, in paper px - three treads across the way it goes and a head pointing along it. */
+export const STAIR_GLYPH = Object.freeze({ tread: 4.5, step: 3, head: 4, label: 11 });
+
+/**
+ * DISC25-A: THE STAIRS - where the floor climbs from one storey to the next, which the plan had drawn as nothing
+ * (or, where the next storey was on another sheet, as a WALL across the stair's middle). Each is three treads across
+ * the way it goes and a head pointing along it, the way a plan draws a flight: toward the far side it climbs onto.
+ * A stair onto another floor is in the wall's full pen and names the floor it reaches ("up to Floor 3") beyond its
+ * head, unless the word would land under a hand (EM5: a sheet lays no word there); a stair inside this floor is in
+ * the soft pen, points up it, and is left unnamed.
+ * @param {*} ctx
+ * @param {{ox:number, oy:number, scale:number}} view
+ * @param {Array<{x:number, z:number, dx:number, dz:number, cross?:boolean, name?:string}>} stairs - plan units
+ * @param {{hands?:Array<{x0:number,x1:number,y0:number,y1:number}>|null}} [opts]
+ */
+export function paintStairs(ctx, view, stairs, opts = {}) {
+  if (!ctx?.setTransform || !stairs?.length) return;
+  const G = STAIR_GLYPH;
+  const under = (x, y) => (opts.hands ?? []).some((h) => x >= h.x0 && x <= h.x1 && y >= h.y0 && y <= h.y1);
+  // a name that would land on one already written is left to the hover: two flights side by side, one up and one
+  // down, wrote their words through each other in the first real-dungeon shot
+  const placed = [];
+  ctx.save?.();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  for (const s of stairs) {
+    const [x, y] = toPaper(view, s.x, s.z);
+    let dx = s.dx ?? 0, dy = s.dz ?? 0;
+    const len = Math.hypot(dx, dy);
+    if (len > 1e-6) { dx /= len; dy /= len; } else { dx = 0; dy = -1; }
+    const nx = -dy, ny = dx;
+    const pen = s.cross ? PLAN_PEN.stair : PLAN_PEN.mark;
+    // the halo under the whole mark, then the ink over it
+    for (const pass of ['halo', 'ink']) {
+      ctx.strokeStyle = pass === 'halo' ? PLAN_PEN.halo : pen;
+      ctx.lineWidth = pass === 'halo' ? 2 * HALO_PEN + 1.2 : 1.2;
+      ctx.beginPath();
+      for (const t of [-G.step, 0, G.step]) {
+        const cx = x + dx * t, cy = y + dy * t;
+        ctx.moveTo(cx - nx * G.tread, cy - ny * G.tread);
+        ctx.lineTo(cx + nx * G.tread, cy + ny * G.tread);
+      }
+      const hx = x + dx * (G.step + G.head + 1.5), hy = y + dy * (G.step + G.head + 1.5);
+      ctx.moveTo(hx - dx * G.head - nx * G.head * 0.8, hy - dy * G.head - ny * G.head * 0.8);
+      ctx.lineTo(hx, hy);
+      ctx.lineTo(hx - dx * G.head + nx * G.head * 0.8, hy - dy * G.head + ny * G.head * 0.8);
+      ctx.stroke();
+    }
+    if (s.cross && s.name) {
+      const lx = x + dx * (G.step + G.head + 5), ly = y + dy * (G.step + G.head + 5);
+      if (under(lx, ly)) continue;
+      ctx.font = `${G.label}px ${NAME_FACE}`;
+      ctx.textAlign = Math.abs(dx) < 0.35 ? 'center' : (dx > 0 ? 'left' : 'right');
+      ctx.textBaseline = Math.abs(dy) < 0.35 ? 'middle' : (dy > 0 ? 'top' : 'bottom');
+      const tw = ctx.measureText?.(s.name)?.width ?? s.name.length * G.label * 0.5;
+      const bx = ctx.textAlign === 'center' ? lx - tw / 2 : (ctx.textAlign === 'left' ? lx : lx - tw);
+      const by = ctx.textBaseline === 'middle' ? ly - G.label / 2 : (ctx.textBaseline === 'top' ? ly : ly - G.label);
+      const box = { x0: bx - 2, y0: by - 1, x1: bx + tw + 2, y1: by + G.label + 1 };
+      if (placed.some((b) => b.x0 < box.x1 && box.x0 < b.x1 && b.y0 < box.y1 && box.y0 < b.y1)) continue;
+      placed.push(box);
+      ctx.lineWidth = 2 * HALO_PEN;
+      ctx.strokeStyle = PLAN_PEN.halo;
+      ctx.strokeText(s.name, lx, ly);
+      ctx.fillStyle = PLAN_PEN.stair;
+      ctx.fillText(s.name, lx, ly);
+    }
+  }
+  ctx.restore?.();
 }
 
 /** DISC23-A: the dot a storey wears on the strip while a party member stands on it, in strip units. */
@@ -397,7 +565,7 @@ export const FLOOR_PARTY_DOT = Object.freeze({ r: 3, gap: 5 });
  * strip answers it: a dot in the party's green beside every storey a member stands on, so the next press is the right
  * one. On the overlay, not the kept layer, because members change storeys while the plan under them does not.
  * @param {*} ctx
- * @param {{scale:number, rows:Array<{index:number, x:number, y:number, h:number}>}|null} layout
+ * @param {{scale:number, rows:Array<{index:number, x:number, y:number, h:number, more?:number}>}|null} layout
  * @param {Set<number>} storeys
  * @param {string} fill
  */
@@ -405,7 +573,7 @@ export function paintFloorStripParty(ctx, layout, storeys, fill) {
   if (!ctx?.beginPath || !layout?.rows?.length || !storeys?.size) return;
   const r = FLOOR_PARTY_DOT.r * layout.scale, gap = FLOOR_PARTY_DOT.gap * layout.scale;
   for (const row of layout.rows) {
-    if (!storeys.has(row.index)) continue;
+    if (row.more || !storeys.has(row.index)) continue;   // DISC25-A: a chevron is not a floor
     const x = row.x - gap - r, y = row.y + row.h / 2;
     ctx.lineWidth = 2 * HALO_PEN;
     ctx.strokeStyle = PLAN_PEN.halo;

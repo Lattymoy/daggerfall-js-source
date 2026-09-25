@@ -611,3 +611,18 @@ key's travel map. The holder is combat/weaponRig.js's `sheetHolderOf`
 now and every door on every host with a rig passes it; the record is
 Held-Map-Arc.md's MW-MAP1 section.
 
+---
+
+## DISC25-A (2026-09-25) - the floors are sheets, and the stairs are drawn
+
+Tannim and kurkku on Discord ("the plane you are on + stairs going down",
+"clicking stairs to move up or down a level is good"), and Mac: comprehensive
+improvements. Run over REAL dungeons for the first time, the floor model
+derived thirteen storeys for Privateer's Hold and walled every stair across
+its middle. A floor of the map is a SHEET now - a run of storeys none of which
+lies over another (`groupSheets`) - a cell is on the storey its own surface
+is nearest (`surfaceY`), the stairs between storeys are found
+(`levelField`, `storeyLinks`), drawn and taken with a press, the strip stops
+above the thumb and marks you and the way out, and the foot says the keys.
+The record is `01-Overview/Field-Bugs-2026-09-25.md` DISC25-A.
+

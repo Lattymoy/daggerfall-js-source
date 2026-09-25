@@ -31,6 +31,7 @@
 // the DOM half runs against the same stub document AUDIT 62 built.
 
 import { frameCpu } from '../systems/frameClock.js';   // PERF1: the hosts' script time
+import { frameCapSkip } from '../systems/frameCap.js';   // FPS-CAP1: the frames the cap held back are not counted
 
 const PERIOD_MS = 1000;
 
@@ -84,6 +85,9 @@ export function mountFpsCounter({ enabled = () => true, raf = (typeof requestAni
   let handle = 0;
   let live = true;
   function tick(now) {
+    // FPS-CAP1: a callback the Frame Rate Cap held back drew nothing, so it is not a frame. The host asked the same
+    // question with the same stamp (one decision per stamp, systems/frameCap.js), so this counts what the game drew.
+    if (frameCapSkip(now)) { if (live && raf) handle = raf(tick); return; }
     stamps.push(now);
     const st = stats?.();   // PERF3: one complete frame's counts, whichever side of the host's callback this tick fell
     if (st) { sumDraws += st.draws; sumBinds += st.texBinds; samples++; }

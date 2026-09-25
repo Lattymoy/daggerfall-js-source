@@ -230,17 +230,26 @@ test('WIND3 clips: the five wind records by name, the indices DFU draws as dunge
   for (const i of [65, 66, 70, 71, 72]) assert.ok(AMBIENT_SOUNDS.dungeon.includes(i), `${i} is one of DFU's dungeon ambients`);
 });
 
-test('WIND3 rows and switches: three rows on the Features home, on by default, the player\'s own online; each switch is the enhanced skin, its pref, and its kill door', () => {
+test('WIND3 rows and switches: three switches on the Features home (FT18: two rows - the wind, and Enhanced sounds), on by default, the player\'s own online; each switch is the enhanced skin, its pref, and its kill door', () => {
   // ES1: the wind's own row became the Enhanced sounds row - same place, same shape, the loot cues beside the loop.
-  const rows = ['wind-wisps', 'enhanced-sounds', 'flora-sway'].map((id) => FEATURES.find((f) => f.id === id));
-  assert.deepEqual(rows.map((r) => r?.control.key), ['windWisps', 'soundEnhancements', 'floraSway']);
-  for (const r of rows) {
-    assert.deepEqual(r.kinds, ['enhanced']); assert.equal(r.control.store, 'prefs'); assert.equal(r.control.initial, true); assert.equal(r.control.online, 'player');
+  // FT18: the wisps and the sway are ONE row, `wind` - its bar is both, each its own part in the drawer; the sway is its
+  // key and the wisps are declared in its `also`, so the three switches are still three keys, three defaults, three
+  // online answers, each declared on a row.
+  const wind = FEATURES.find((f) => f.id === 'wind');
+  const sounds = FEATURES.find((f) => f.id === 'enhanced-sounds');
+  const declared = [wind.control, wind.control.also.find((a) => a.key === 'windWisps'), sounds.control];
+  assert.deepEqual(declared.map((c) => c?.key), ['floraSway', 'windWisps', 'soundEnhancements']);
+  assert.deepEqual(wind.control.parts.map((pt) => pt.key), ['floraSway', 'windWisps'], 'each its own in the drawer');
+  for (const r of [wind, sounds]) {
+    assert.deepEqual(r.kinds, ['enhanced']);
     assert.equal(r.effect, 'Takes effect at once.'); assert.ok(r.note.length > 80);
-    assert.equal(PREF_DEFAULTS[r.control.key], true, 'the shelf derives the default from the row (RF4)');
-    assert.ok(ONLINE_PLAYERS_OWN_PREFS.includes(r.control.key), 'the lane leaves it to the player (RF4)');
   }
-  assert.equal(FEATURES.findIndex((f) => f.id === 'wind-wisps'), FEATURES.findIndex((f) => f.id === 'loot-rarity') + 1, 'after LR1, before the packs');
+  for (const c of declared) {
+    assert.equal(c.store, 'prefs'); assert.equal(c.initial, true); assert.equal(c.online, 'player');
+    assert.equal(PREF_DEFAULTS[c.key], true, 'the shelf derives the default from the row (RF4)');
+    assert.ok(ONLINE_PLAYERS_OWN_PREFS.includes(c.key), 'the lane leaves it to the player (RF4)');
+  }
+  assert.equal(FEATURES.findIndex((f) => f.id === 'wind'), FEATURES.findIndex((f) => f.id === 'loot-rarity') + 1, 'after LR1, before the packs');
   const skin = uiSkin();
   const doors = [[wispsOn, 'windWisps', 'wisps'], [windSoundOn, 'soundEnhancements', 'windaudio'], [floraSwayOn, 'floraSway', 'sway']];
   try {

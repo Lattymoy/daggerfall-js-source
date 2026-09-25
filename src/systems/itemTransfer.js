@@ -287,6 +287,38 @@ export function planTake(item, {
   };
 }
 
+// ─── THE SPLIT POPUP (CM5; DISC25-F one home) ─────────────────────────
+//
+// TransferItem (DaggerfallInventoryWindow.cs:1515-1539): when the amount the plan would move is short of the stack -
+// or either Control is held (Input.GetKey, a STATE, polled at the click) - it pushes a DaggerfallInputMessageBox
+// labelled howManyItems, numeric, MaxCharacters 8, and only SplitStackPopup_OnGotUserInput (:1546-1560) performs the
+// transfer, with the count the player typed. An unparseable or over-large answer moves nothing (:1551-1552).
+// DaggerfallTradeWindow inherits the member (DaggerfallTradeWindow.cs:31), so a basket takes part of a shelf's stack
+// and a sale part of the pack's (:795, :803, :842). The classic windows push the box; the enhanced windows write the
+// same question as a field on the item's own card (DISC25-F).
+
+/** TextManager's howManyItems, formatted (:1529). */
+export const HOW_MANY_ITEMS = (max) => `Pick how many items (max ${max})?`;
+/** mb.TextBox.MaxCharacters = 8 (:1533). */
+export const SPLIT_INPUT_MAX = 8;
+
+/** SplitStackPopup_OnGotUserInput's parse (:1549-1552): `int.TryParse`, then 1..max - else null, and nothing moves.
+ *  TryParse takes an optional sign and the surrounding white space and nothing else, so "3x" is no count (the classic
+ *  box admits digits alone, TextBox.Numeric; the enhanced field is a plain input, DISC25-F, and must read the same). */
+export function parseSplitAmount(text, max) {
+  const t = String(text ?? '').trim();
+  if (!/^[+-]?\d+$/.test(t)) return null;
+  const count = Number(t);
+  return Number.isInteger(count) && count >= 1 && count <= max ? count : null;
+}
+
+/** TransferItem's gate (:1515-1519): a STACK (item.IsAStack(), :1519) whose planned amount is short of it, or any
+ *  stack under Control. */
+export function splitRequired(item, amount, controlDown = false) {
+  const stack = item?.stackCount ?? 1;
+  return stack > 1 && (amount < stack || !!controlDown);
+}
+
 /**
  * Perform a planned move. The SPLIT is law rather than presentation:
  * a partial take leaves the remainder in the source stack and mints a

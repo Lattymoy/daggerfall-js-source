@@ -38,18 +38,35 @@
 // (+Z up the panel). Everything crossing the seam converts in one place
 // (`toPlan`), and the chains, the walked wash, the caret, the beacons
 // and the notes all land in it, so nothing needs a second transform.
+//
+// DISC25-A: A FLOOR OF THIS MAP IS A SHEET, NOT A STOREY. The strip, the
+// floor keys, the caret, the marks and the plan all count in SHEETS
+// (automapFloors `groupSheets`: a run of storeys none of which lies over
+// another), and the storeys stay underneath as the heights things are
+// sorted by. The STAIRS between storeys are drawn: inside a sheet as a
+// flight pointing up it, and onto another sheet as a flight named for
+// the floor it reaches, which a press follows there.
 // ═══════════════════════════════════════════════════════════════════
 
 import {
-  floorTriangles, deriveFloors, floorAt, planBounds, floorPlan, storeyOccupancy, PLAN_CELL,
+  floorTriangles, deriveFloors, floorAt, planBounds, floorPlan, PLAN_CELL,
+  levelField, storeyLinks, groupSheets, sheetOfStorey, fieldOccupancy,
 } from '../systems/automapFloors.js';
 import { boundarySegments, linkSegments, fitView, toPaper, toMap, viewCentredOn, scaleMinOf, FIT_MARGIN as INK_FIT_MARGIN } from './inkMap.js';
 import { tryAddOrEditUserNote, setUserNote } from '../systems/automap.js';
 import { readPartyBodies, PARTY_MARK_CSS } from './partyMapMarks.js';   // DISC23-A: the party's bodies, in this frame
 import {
-  paintPlanStatic, paintPlanOverlay, floorStripLayout, floorStripHit, paintFloorStrip, paintFloorStripParty,
+  paintPlanStatic, paintPlanOverlay, floorStripLayout, floorStripHit, paintFloorStrip, paintFloorStripParty, paintStairs,
 } from './inkAutomap.js';
 import { stripFont } from './mapStrip.js';
+
+/** DISC25-A: the dungeon sheet's own keys, said on the window's foot while it is up - the floor keys were there
+ *  since EM3 and nothing on the paper said so (tannim: "had the ability to press down to advance the plane"). */
+export const AUTOMAP_HINT = 'drag to pan · scroll to zoom · PgUp/PgDn floors · click a stair to take it · Esc to close';
+
+/** DISC25-A: two marks of one stair onto the same sheet nearer than this (metres) are drawn as one - a wide flight
+ *  whose cells the grid splits, or a ramp that crosses two storey lines on its way to one floor. */
+export const STAIR_MERGE = 6;
 
 /** The fit at rest has ONE HOME in ui/inkMap.js - re-exported so a
  *  pin that has this sheet does not also have to reach for it. */
@@ -67,7 +84,7 @@ export const READABLE_SCALE = 4;
 /** DISC22-G: THE LEVEL'S FRAME, SHARED BY EVERY OPEN. The held window builds a fresh sheet each time M is pressed,
  *  and each sheet re-derived every triangle in the level - so the cost of the floor model was paid on every open.
  *  The rows array is the reveal index's own, built once per level, so it keys the frame. */
-const _frames = new WeakMap();   // rows -> { bounds, floors, full: Map<storey, occupancy> }
+const _frames = new WeakMap();   // rows -> { bounds, floors, field, links, sheets, sheetOf, full, pass }
 
 /**
  * @typedef {{revealed?: Set<string>, visitedThisRun?: Set<string>, entranceDiscovered?: boolean,
@@ -86,11 +103,11 @@ const _frames = new WeakMap();   // rows -> { bounds, floors, full: Map<storey, 
  * }} deps
  */
 export function createAutomapSheet(deps = {}) {
-  /** the LEVEL's frame and storey list, derived once per index */
-  let frame = null;        // { model, bounds, floors, origin }
-  /** the cut plan, rebuilt when the storey or the reveal sets move */
-  let cut = null;          // { key, plan, walked }
-  let index = 0;           // which storey is up
+  /** the LEVEL's frame, storey list and sheets, derived once per index */
+  let frame = null;        // { model, rows, bounds, floors, sheets, sheetOf, field, links, full, pass, origin }
+  /** the cut plan, rebuilt when the sheet or the reveal sets move */
+  let cut = null;          // { key, plan, walked, stairs, seen }
+  let index = 0;           // which SHEET is up (DISC25-A)
   let strip = null;        // the floor strip's layout, in paper px
   let lastPaper = 0;
   let lastView = null;     // the view the sheet was last painted through
@@ -119,8 +136,8 @@ export function createAutomapSheet(deps = {}) {
     at: (x, y) => o.at(x, o.h - 1 - y),
   } : o);
 
-  /** The level's frame and storey list, over EVERY row (the header's
-   *  first law). Rebuilt only when the index itself changes.
+  /** The level's frame, storey list and sheets, over EVERY row (the
+   *  header's first law). Rebuilt only when the index itself changes.
    *
    *  KEYED ON THE ROWS, NOT THE BAG. `deps.model()` is a function, and a
    *  host is free to hand back a fresh wrapper each call - two of the
@@ -137,31 +154,57 @@ export function createAutomapSheet(deps = {}) {
     let base = _frames.get(rows);
     if (!base) {
       const tris = floorTriangles(rows);
-      base = { bounds: planBounds(tris, PLAN_CELL), floors: deriveFloors(tris), full: new Map() };
+      const bounds = planBounds(tris, PLAN_CELL);
+      const floors = deriveFloors(tris);
+      // DISC25-A: the level read once more, a cell at a time - the stairs and the sheets come off it
+      const field = bounds && floors.length ? levelField(rows, floors, { bounds }) : null;
+      const sheets = groupSheets(field, floors);
+      base = {
+        bounds, floors, field, sheets,
+        links: storeyLinks(field),
+        sheetOf: sheetOfStorey(sheets, floors.length),
+        keyIndex: new Map(rows.map((r, i) => [/** @type {{key?: string}} */ (r).key, i])),
+        full: new Map(), pass: new Map(),
+      };
       if (rows.length) _frames.set(rows, base);
     }
     frame = {
       model,
       rows,
-      bounds: base.bounds,
-      floors: base.floors,
-      full: base.full,
+      ...base,
       origin: base.bounds ? [base.bounds.x0, base.bounds.z1] : [0, 0],   // the west and NORTH edges: see toPlan
     };
     cut = null;
     // DISC22-G: A NEW LEVEL OPENS ON THE PLAYER'S STOREY. `index` started at 0 and nothing set it, so a player on
-    // Floor 3 opened the map on Floor 1 - no caret, and a plan of somewhere else.
+    // Floor 3 opened the map on Floor 1 - no caret, and a plan of somewhere else. DISC25-A: on their SHEET.
     const feet = deps.player?.()?.feet;
-    const here = feet && frame.floors.length ? floorAt(frame.floors, feet[1]) : -1;
-    index = here >= 0 ? here : Math.max(0, Math.min(frame.floors.length - 1, index));
+    const here = feet ? sheetAt(frame, feet[1]) : -1;
+    index = here >= 0 ? here : Math.max(0, Math.min(frame.sheets.length - 1, index));
     return frame;
   }
 
-  /** DISC22-G: the storey's whole floor on the frame's grid, revealed or not - once per level and storey. */
+  /** DISC25-A: the sheet a height is on - the storey it is nearest, and that storey's sheet; -1 with none. */
+  function sheetAt(f, y) {
+    const s = floorAt(f.floors, y);
+    return s >= 0 ? f.sheetOf[s] : -1;
+  }
+
+  /** DISC22-G: the sheet's whole floor on the frame's grid, revealed or not - once per level and sheet. */
   function fullFloor(f, i) {
-    if (!f.bounds) return null;
-    if (!f.full.has(i)) f.full.set(i, storeyOccupancy(f.rows, f.floors, i, f.bounds));
+    if (!f.field || !f.sheets[i]) return null;
+    if (!f.full.has(i)) f.full.set(i, fieldOccupancy(f.field, f.sheets[i].storeys));
     return f.full.get(i);
+  }
+
+  /** DISC25-A: the far sides of the stairs that leave this sheet for another, as cells of the frame's grid - the
+   *  edges the plan must leave open. Once per level and sheet. */
+  function passCells(f, i) {
+    if (!f.pass.has(i)) {
+      const out = new Set();
+      for (const l of f.links) if (f.sheetOf[l.from] === i && f.sheetOf[l.to] !== i) for (const k of l.far) out.add(k);
+      f.pass.set(i, out);
+    }
+    return f.pass.get(i);
   }
 
   /** World (x, z) from the sheet's own space - toPlan's inverse. */
@@ -185,52 +228,107 @@ export function createAutomapSheet(deps = {}) {
    *  storey change drops the cache and `staticKey` would then answer
    *  "none" - and the window's kept ink layer is keyed on this, so a
    *  key that forgets what it is describing shows the old storey under
-   *  the new storey's rule. */
+   *  the new storey's rule. DISC25-A: and the player's own sheet, which
+   *  the strip marks. */
   function cutKey() {
+    const you = youSheet();   // the frame first: building it is what sets the sheet a new level opens on
     const r = rec();
     const walked = walkedKeys(r);
     return [index, r?.revealed?.size ?? -1, walked?.size ?? -1, r?.entranceDiscovered ? 1 : 0,
-      r?.notes?.size ?? 0, r?.teleporters?.size ?? 0].join('|');
+      r?.notes?.size ?? 0, r?.teleporters?.size ?? 0, you].join('|');
   }
 
   function ensure() {
     const f = ensureFrame();
     const r = rec();
     const model = f.model;
-    if (!model?.rows?.length || !f.floors.length) return null;
+    if (!model?.rows?.length || !f.sheets.length) return null;
     const seen = r?.revealed ?? null;
     const walked = walkedKeys(r);
     const key = cutKey();
     if (cut?.key === key) return cut;
-    const plan = floorPlan(rowsIn(model, seen), index, {
+    const storeys = f.sheets[index].storeys;
+    const plan = floorPlan(rowsIn(model, seen), storeys, {
       segments: boundarySegments, link: linkSegments, floors: f.floors, bounds: f.bounds,
       full: fullFloor(f, index),   // DISC22-G: the ways on - an edge onto floor not yet seen is not a wall
+      pass: passCells(f, index),   // DISC25-A: ...and an edge onto a stair's far side, on another sheet, is neither
     });
     const tint = walked?.size
-      ? floorPlan(rowsIn(model, walked), index, {
+      ? floorPlan(rowsIn(model, walked), storeys, {
         segments: boundarySegments, link: linkSegments, floors: f.floors, bounds: f.bounds,
       })
       : null;
+    // DISC25-A: the stairs this sheet has SEEN - read on the world grid, before the plan moves into plan units
+    const stairs = stairsOn(f, plan.occupancy);
     // the chains and both grids arrive in WORLD units; the sheet's space
     // is plan units, north up - through the one seam
     for (const chain of [...plan.chains, ...(plan.openChains ?? [])]) for (const p of chain) [p.x, p.y] = toPlan(p.x, p.y);
     plan.occupancy = occToPlan(plan.occupancy, f.bounds);
     if (tint) tint.occupancy = occToPlan(tint.occupancy, f.bounds);
-    cut = { key, plan, walked: tint };
+    cut = { key, plan, walked: tint, stairs, seen: seenSheets(f, seen) };
     return cut;
   }
 
-  /** Every mark this storey carries, in plan units: the notes the
+  /**
+   * DISC25-A: THE STAIRS ON THIS SHEET, in plan units - those whose own side the player has revealed (`occ`, the
+   * revealed plan on the world grid). A stair onto ANOTHER sheet is named for the floor it reaches, `up` or down,
+   * and a press takes it; a stair between two storeys of THIS sheet is drawn once, from its lower end, pointing up
+   * it. Marks of one flight onto one sheet are drawn as one (STAIR_MERGE).
+   */
+  function stairsOn(f, occ) {
+    const out = [];
+    if (!occ?.covered) return out;
+    const sheets = f.sheets;
+    for (const l of f.links) {
+      if (f.sheetOf[l.from] !== index) continue;
+      const to = f.sheetOf[l.to];
+      const inside = to === index;
+      if (inside && l.from > l.to) continue;   // the lower end draws a flight inside the sheet
+      let seen = false;
+      for (const k of l.cells) if (occ.covered[k]) { seen = true; break; }
+      if (!seen) continue;
+      const [x, z] = toPlan(l.x, l.z);
+      const up = inside ? true : to > index;
+      if (out.some((s) => s.to === to && s.up === up && Math.hypot(s.x - x, s.z - z) < STAIR_MERGE)) continue;
+      out.push({
+        x, z, dx: l.dx, dz: -l.dz,   // plan y runs south, world z north
+        up, to, cross: !inside,
+        name: inside ? '' : `${up ? 'up' : 'down'} to ${sheets[to]?.label ?? ''}`,
+      });
+    }
+    return out;
+  }
+
+  /** DISC25-A: the sheets the player has revealed anything on - the strip draws the others faint. */
+  function seenSheets(f, keys) {
+    const out = new Set();
+    if (!f.field || !keys?.size) return out;
+    const mask = new Uint8Array(f.rows.length);
+    for (const k of keys) { const i = f.keyIndex.get(k); if (i != null) mask[i] = 1; }
+    const { storey, row, count } = f.field;
+    for (let e = 0; e < count; e++) if (mask[row[e]]) out.add(f.sheetOf[storey[e]]);
+    return out;
+  }
+
+  /** DISC25-A: the sheet the player stands on, or -1. */
+  function youSheet() {
+    const f = ensureFrame();
+    const feet = deps.player?.()?.feet;
+    return feet && f.sheets.length ? sheetAt(f, feet[1]) : -1;
+  }
+
+  /** Every mark this sheet carries, in plan units: the notes the
    *  player wrote and the teleporters they have stepped through, each
    *  bucketed onto the storey NEAREST its own height - a note sits 0.7
    *  off whatever surface it was stuck to, so it is never on the floor
-   *  plane and must not be assumed to be. */
+   *  plane and must not be assumed to be - and so onto that storey's
+   *  sheet. */
   function marksHere() {
     const f = ensureFrame();
     const r = rec();
     const out = [];
-    if (!f.floors.length || !r) return out;
-    const mine = (y) => floorAt(f.floors, y) === index;
+    if (!f.sheets.length || !r) return out;
+    const mine = (y) => sheetAt(f, y) === index;
     for (const [id, n] of r.notes ?? []) {
       const p = n?.position;
       if (!p || !mine(p[1])) continue;
@@ -242,24 +340,24 @@ export function createAutomapSheet(deps = {}) {
       ends.forEach((p, i) => {
         if (!p || !mine(p[1])) return;
         const [x, z] = toPlan(p[0], p[2]);
-        // DISC22-G: an end whose partner is on ANOTHER storey says which
+        // DISC22-G: an end whose partner is on ANOTHER sheet says which
         const other = ends[1 - i];
-        const there = other ? floorAt(f.floors, other[1]) : -1;
-        out.push({ x, z, kind: 'teleporter', name: there >= 0 && there !== index ? `to ${f.floors[there].label}` : '' });
+        const there = other ? sheetAt(f, other[1]) : -1;
+        out.push({ x, z, kind: 'teleporter', name: there >= 0 && there !== index ? `to ${f.sheets[there].label}` : '' });
       });
     }
     return out;
   }
 
-  /** DISC22-G: the teleporter pairs with BOTH ends on this storey, as lines in plan units. */
+  /** DISC22-G: the teleporter pairs with BOTH ends on this sheet, as lines in plan units. */
   function linksHere() {
     const f = ensureFrame();
     const r = rec();
     const out = [];
-    if (!f.floors.length || !r) return out;
+    if (!f.sheets.length || !r) return out;
     for (const [, t] of r.teleporters ?? []) {
       const a = t?.entrance?.pos, b = t?.exit?.pos;
-      if (!a || !b || floorAt(f.floors, a[1]) !== index || floorAt(f.floors, b[1]) !== index) continue;
+      if (!a || !b || sheetAt(f, a[1]) !== index || sheetAt(f, b[1]) !== index) continue;
       const [x0, z0] = toPlan(a[0], a[2]);
       const [x1, z1] = toPlan(b[0], b[2]);
       out.push({ x0, z0, x1, z1 });
@@ -267,7 +365,7 @@ export function createAutomapSheet(deps = {}) {
     return out;
   }
 
-  /** DISC22-G: the revealed floor's extent on this storey, in plan units, or null. */
+  /** DISC22-G: the revealed floor's extent on this sheet, in plan units, or null. */
   function revealedExtent() {
     const occ = ensure()?.plan?.occupancy;
     if (!occ) return null;
@@ -283,7 +381,7 @@ export function createAutomapSheet(deps = {}) {
     return { x0: occ.x0 + gx0 * occ.cell, y0: occ.z0 + gy0 * occ.cell, x1: occ.x0 + (gx1 + 1) * occ.cell, y1: occ.z0 + (gy1 + 1) * occ.cell };
   }
 
-  /** DISC22-G: is paper point (px, py) on floor this storey has revealed? A note is stuck to something seen, as
+  /** DISC22-G: is paper point (px, py) on floor this sheet has revealed? A note is stuck to something seen, as
    *  DFU's is stuck to what its ray hit. */
   function onRevealedFloor(mx, my) {
     const occ = ensure()?.plan?.occupancy;
@@ -291,49 +389,76 @@ export function createAutomapSheet(deps = {}) {
     return occ.at(Math.floor((mx - occ.x0) / occ.cell), Math.floor((my - occ.z0) / occ.cell));
   }
 
-  /** The player, in plan units, and only while they are ON this storey
+  /** DISC25-A: the height a note written at world (wx, wz) is pinned at - the storey of THIS sheet whose revealed
+   *  surface lies under that cell (a sheet holds floors at several heights), else the sheet's own. A storey's
+   *  height, not the surface's, so the note's lift off it can never carry it onto the next storey's sheet. */
+  function noteHeight(f, wx, wz) {
+    const sheet = f.sheets[index];
+    const fl = f.field;
+    const r = rec();
+    if (fl && r?.revealed) {
+      const gx = Math.floor((wx - fl.x0) / fl.cell), gz = Math.floor((wz - fl.z0) / fl.cell);
+      if (gx >= 0 && gz >= 0 && gx < fl.w && gz < fl.h) {
+        const k = gz * fl.w + gx;
+        for (let e = fl.start[k]; e < fl.start[k + 1]; e++) {
+          const s = fl.storey[e];
+          if (sheet.storeys.includes(s) && r.revealed.has(f.rows[fl.row[e]]?.key)) return f.floors[s].y;
+        }
+      }
+    }
+    return sheet.y;
+  }
+
+  /** The player, in plan units, and only while they are ON this sheet
    *  - a caret drawn on a floor the player is not standing on is a lie
    *  the 3D map could not tell. */
   function playerHere() {
     const f = ensureFrame();
     const p = deps.player?.();
     const feet = p?.feet;
-    if (!feet || !f.floors.length) return null;
-    if (floorAt(f.floors, feet[1]) !== index) return null;
+    if (!feet || !f.sheets.length) return null;
+    if (sheetAt(f, feet[1]) !== index) return null;
     const [x, z] = toPlan(feet[0], feet[2]);
     return { x, z, yaw: p?.yaw ?? 0 };
   }
 
-  /** DISC23-A: the party members standing on THIS storey, in plan units - the player caret's own law (a member on
-   *  another storey is not drawn on this one), read fresh on every paint because they walk while the map is up. */
+  /** DISC23-A: the party members standing on THIS sheet, in plan units - the player caret's own law (a member on
+   *  another floor is not drawn on this one), read fresh on every paint because they walk while the map is up. */
   function partyHere() {
     const f = ensureFrame();
-    if (!f.floors.length) return [];
+    if (!f.sheets.length) return [];
     const out = [];
     for (const m of readPartyBodies(deps.party)) {
-      if (floorAt(f.floors, m.feet[1]) !== index) continue;
+      if (sheetAt(f, m.feet[1]) !== index) continue;
       const [x, z] = toPlan(m.feet[0], m.feet[2]);
       out.push({ x, z, yaw: m.yaw, name: m.name });
     }
     return out;
   }
 
-  /** DISC23-A: the storeys the party stands on, as the strip's own indices. */
+  /** DISC23-A: the sheets the party stands on, as the strip's own indices. */
   function partyStoreys() {
     const f = ensureFrame();
-    if (!f.floors.length) return new Set();
-    return new Set(readPartyBodies(deps.party).map((m) => floorAt(f.floors, m.feet[1])));
+    if (!f.sheets.length) return new Set();
+    return new Set(readPartyBodies(deps.party).map((m) => sheetAt(f, m.feet[1])));
   }
 
-  /** The way in, while it has been found, and only on its own storey. */
+  /** The way in, while it has been found, and only on its own sheet. */
   function entranceHere() {
     const f = ensureFrame();
     const r = rec();
     const sm = deps.startMarker;
-    if (!sm || !r?.entranceDiscovered || !f.floors.length) return null;
-    if (floorAt(f.floors, sm.y) !== index) return null;
+    if (!sm || !r?.entranceDiscovered || !f.sheets.length) return null;
+    if (sheetAt(f, sm.y) !== index) return null;
     const [x, z] = toPlan(sm.x, sm.z);
     return { x, z };
+  }
+
+  /** DISC25-A: the sheet the way out is on, once it has been found - the strip marks it. */
+  function exitSheet() {
+    const f = ensureFrame();
+    const sm = deps.startMarker;
+    return sm && rec()?.entranceDiscovered && f.sheets.length ? sheetAt(f, sm.y) : -1;
   }
 
   /** How near a pointer must come to a mark, in paper pixels. The same
@@ -354,12 +479,24 @@ export function createAutomapSheet(deps = {}) {
     return best;
   }
 
-  /** A storey up (+1) or down (-1); false at the ends of the level. */
+  /** DISC25-A: the stair under the pointer, or null - the same reach as a mark. */
+  function nearestStair(px, py) {
+    if (!lastView) return null;
+    let best = null, bestD = MARK_REACH * MARK_REACH;
+    for (const s of ensure()?.stairs ?? []) {
+      const [x, y] = toPaper(lastView, s.x, s.z);
+      const d = (x - px) * (x - px) + (y - py) * (y - py);
+      if (d < bestD) { bestD = d; best = s; }
+    }
+    return best;
+  }
+
+  /** A sheet up (+1) or down (-1); false at the ends of the level. */
   function step(by) { return setFloor(index + by); }
 
   function setFloor(next) {
     const f = ensureFrame();
-    const want = Math.max(0, Math.min(f.floors.length - 1, next));
+    const want = Math.max(0, Math.min(f.sheets.length - 1, next));
     if (want === index) return false;
     index = want;
     cut = null;
@@ -391,13 +528,17 @@ export function createAutomapSheet(deps = {}) {
         paperW: env.paperW, paperH: env.paperH, dpr: env.dpr,
         walked: c?.walked ?? null,
       });
+      // DISC25-A: the stairs ride the kept layer with the walls they open
+      paintStairs(ctx, env.view, c?.stairs ?? [], { hands: env.reserveHands ?? null });
       // the floor strip rides the kept layer with the plan, so pressing
       // a storey re-letters it and a breathing beacon does not
       const f = ensureFrame();
-      strip = floorStripLayout(f.floors, index, {
+      strip = floorStripLayout(f.sheets, index, {
         paperW: env.paperW,
         paperH: env.paperH,
         reserveTop: env.reserveTop ?? 0,   // EM5: below the tab strip's band
+        hands: env.reserveHands ?? null,   // DISC25-A: ...and above the right gauntlet
+        you: youSheet(), exit: exitSheet(), seen: c?.seen ?? null,
         measure: ctx?.measureText ? (t) => { ctx.font = stripFont(env.paperW); return ctx.measureText(t).width; } : null,
       });
       lastPaper = env.paperW;
@@ -416,19 +557,24 @@ export function createAutomapSheet(deps = {}) {
         party: partyHere(),   // DISC23-A
         partyFill: PARTY_MARK_CSS,
       });
-      paintFloorStripParty(ctx, strip, partyStoreys(), PARTY_MARK_CSS);   // DISC23-A: and which storeys they are on
+      paintFloorStripParty(ctx, strip, partyStoreys(), PARTY_MARK_CSS);   // DISC23-A: and which floors they are on
     },
 
     pickAt(px, py) {
       const hit = floorStripHit(strip, px, py);
-      if (hit != null) setFloor(hit);
+      if (hit != null) { setFloor(hit); return; }
+      // DISC25-A (kurkku: "clicking stairs to move up or down a level is good"): a stair onto another floor turns
+      // the page to it. The view stays where it is, and the plan units are the level's, so the stair's other end is
+      // under the pointer that pressed it.
+      const stair = nearestStair(px, py);
+      if (stair?.cross) setFloor(stair.to);
     },
 
     hoverLabel(px, py) {
       const hit = floorStripHit(strip, px, py);
       if (hit != null) {
         const f = ensureFrame();
-        return { label: f.floors.find((s) => s.index === hit)?.label ?? '', cursor: 'pointer' };
+        return { label: f.sheets.find((s) => s.index === hit)?.label ?? '', cursor: 'pointer' };
       }
     // A NOTE UNDER THE POINTER ANSWERS ITS OWN WORDS, which is the law
     // the 3D map's hover has (automapPick's hoverKeyForHit: a note hit
@@ -445,6 +591,9 @@ export function createAutomapSheet(deps = {}) {
       }
       const mark = nearestMark(px, py);
       if (mark) return { label: mark.name || (deps.title ?? ''), cursor: 'pointer' };
+      // DISC25-A: a stair names where it goes
+      const stair = nearestStair(px, py);
+      if (stair) return { label: stair.cross ? `Stairs ${stair.name}` : 'Stairs up', cursor: stair.cross ? 'pointer' : '' };
       return { label: deps.title ?? '', cursor: '' };
     },
 
@@ -458,7 +607,7 @@ export function createAutomapSheet(deps = {}) {
     mark(px, py) {
       const f = ensureFrame();
       const r = rec();
-      if (!lastView || !r?.notes || !f.floors.length || typeof deps.askText !== 'function') return false;
+      if (!lastView || !r?.notes || !f.sheets.length || typeof deps.askText !== 'function') return false;
       const near = nearestMark(px, py);
       let id, fresh = false;
       if (near?.kind === 'note') id = near.id;
@@ -466,7 +615,7 @@ export function createAutomapSheet(deps = {}) {
         const [mx, my] = toMap(lastView, px, py);
         if (!onRevealedFloor(mx, my)) return false;
         const [wx, wz] = fromPlan(mx, my);
-        const res = tryAddOrEditUserNote(r, { point: [wx, f.floors[index].y, wz], normal: [0, 1, 0], name: '' });
+        const res = tryAddOrEditUserNote(r, { point: [wx, noteHeight(f, wx, wz), wz], normal: [0, 1, 0], name: '' });
         if (res.action !== 'add') return false;
         id = res.id; fresh = true;
       }
@@ -481,12 +630,15 @@ export function createAutomapSheet(deps = {}) {
     },
 
     /** DISC22-G: the way in breathes while it is on the sheet, so the window repaints on its beat. DISC23-A: and so
-     *  does a party with anyone in this level - on ANY storey, so a member who climbs onto this one appears within a
+     *  does a party with anyone in this level - on ANY floor, so a member who climbs onto this one appears within a
      *  beat rather than when something else next repaints. */
     breathes() { return !!entranceHere() || readPartyBodies(deps.party).length > 0; },
 
+    /** DISC25-A: what the window's foot says while this sheet is up. */
+    hint() { return AUTOMAP_HINT; },
+
     /**
-     * THE FLOOR KEYS. A storey up and a storey down, on the two pairs a
+     * THE FLOOR KEYS. A floor up and a floor down, on the two pairs a
      * player reaches for without looking: PageUp/PageDown, and the
      * bracket keys beside them on every layout the port already binds
      * (the quickbar's own neighbours). The arrows are NOT taken - they
@@ -497,12 +649,12 @@ export function createAutomapSheet(deps = {}) {
     key(code) {
       if (code === 'PageUp' || code === 'BracketRight') return step(1);
       if (code === 'PageDown' || code === 'BracketLeft') return step(-1);
-      // DISC22-G: HOME BRINGS YOU BACK - to your own storey and the view the map opened at (DFU's 3D map has its
+      // DISC22-G: HOME BRINGS YOU BACK - to your own floor and the view the map opened at (DFU's 3D map has its
       // focus-on-player key); the window reads 'home' and resets its view
       if (code === 'Home') {
         const feet = deps.player?.()?.feet;
         const f = ensureFrame();
-        if (feet && f.floors.length) setFloor(floorAt(f.floors, feet[1]));
+        if (feet && f.sheets.length) setFloor(sheetAt(f, feet[1]));
         return 'home';
       }
       return false;
@@ -513,15 +665,15 @@ export function createAutomapSheet(deps = {}) {
     mount() { /* the automap claims none of the world map's chrome */ },
     unmount() { /* ...so it gives none back */ },
 
-    /** At rest the whole storey is on the sheet, centred on the player
+    /** At rest the whole floor is on the sheet, centred on the player
      *  where they are on it and on the plan's middle where they are
      *  not. A dungeon map that opens on the far corner is a map the
      *  player has to pan before it says anything. */
     homeView(limits) {
       // DISC22-G: WHAT HAS BEEN SEEN, AT A SIZE A PLAYER CAN READ. The fit was the whole LEVEL's - revealed or not -
-      // which on a big dungeon is a corridor three pixels wide. It is the revealed floor of this storey now, never
+      // which on a big dungeon is a corridor three pixels wide. It is the revealed floor of this sheet now, never
       // zoomed out past READABLE_SCALE, centred on the player where they are on it and on what has been seen where
-      // they are not; a storey with nothing seen falls back to inkMap's own fit.
+      // they are not; a sheet with nothing seen falls back to inkMap's own fit.
       // the plan's second axis IS world z, which is the sheet's y
       const p = playerHere();
       const ext = revealedExtent();
@@ -534,14 +686,18 @@ export function createAutomapSheet(deps = {}) {
     },
 
     // ── the sheet's own handles, for the window's keys and its pins ──
-    /** Which storey is up, and the list it came from. */
-    get floor() { ensureFrame(); return index; },   // DISC22-G: the frame first - it is what sets the player's storey
-    floors() { return ensureFrame().floors; },
-    /** DISC23-A: the party on this storey (plan units), and the storeys the party stands on. */
+    /** Which floor is up, and the list it came from. DISC25-A: SHEETS - each names the storeys it holds. */
+    get floor() { ensureFrame(); return index; },   // DISC22-G: the frame first - it is what sets the player's floor
+    floors() { return ensureFrame().sheets; },
+    /** DISC25-A: the storeys underneath, the stairs between them, and the stairs this floor has seen. */
+    storeys() { return ensureFrame().floors; },
+    links() { return ensureFrame().links; },
+    stairs() { return ensure()?.stairs ?? []; },
+    /** DISC23-A: the party on this floor (plan units), and the floors the party stands on. */
     partyHere,
     partyStoreys,
     setFloor,
-    /** Up and down a storey - what the floor keys ask for. */
+    /** Up and down a floor - what the floor keys ask for. */
     step,
     /** The strip's last layout, in paper px (null before the first paint). */
     get strip() { return strip; },

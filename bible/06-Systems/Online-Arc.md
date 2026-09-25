@@ -2096,7 +2096,11 @@ Stamped as the welcome is built. `RELAY_VERSION` is `world51`.
 Online pane's copy the law of what is shared; WORLD5 shared the clock
 and the sky and said nothing. One sentence: the clock and the sky are
 the world's and run on real time; a rest, a trip, a sentence or a
-lesson takes none of it; the quest clocks stand still.
+lesson takes none of it; the quest clocks stand still. [DISC25-D, 2026-09-25:
+that last clause had been false since WORLD7, which charges quest clocks
+with played time online; the pane says so now - "so a quest that waits for
+an hour of the day waits for that hour of the world. Quest timers run while
+you play."]
 
 **C13 - THE INSTALL SAT BELOW THE SEASON READS.** `bootWorld` read
 `worldMinutes()` for the climate season and the mod's four-valued one
@@ -4831,7 +4835,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4232` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4233` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:255`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
