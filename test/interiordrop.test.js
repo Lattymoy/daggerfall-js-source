@@ -159,7 +159,7 @@ test('ID1: the piles are picked up, drawn, cached, restored and freed', () => {
   // GetSaveData has no empty guard (SerializableLootContainer.cs:55-77)
   // and an emptied scene-built container must ride it.
   assert.match(m, /const droppedPiles = interiorDropped\.snapshotScene\(\)\.map\(/, 'CacheScene builds them');   // TERRAIN-SCALE1: in the building's own frame
-  assert.match(m, /return \{ lootContainers, actionDoors, droppedPiles, droppedTorches, decor, decorItems, frame: 'building', terrainScale: STREAMING_TERRAIN_SCALE \};/,
+  assert.match(m, /return \{ lootContainers, actionDoors, droppedPiles, droppedTorches, decor, decorItems, decorOwn, frame: 'building', terrainScale: STREAMING_TERRAIN_SCALE \};/,
     'and RETURNS them - a built list the state does not carry is not cached at all');
   assert.match(m, /interiorDropped\.restorePiles\(data\.droppedPiles \? data\.droppedPiles\.map\(\(p\) => \(\{ \.\.\.p, pos: place\(p\.pos\) \}\)\) : data\.droppedPiles\);/, 'RestoreCachedScene brings them back');   // TERRAIN-SCALE1: placed in this visit's frame; none is still a clear
   // BOTH teardowns free them - the door exit and the quest-teleport /
