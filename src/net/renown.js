@@ -57,10 +57,11 @@ export { RENOWN_MAX };
  * evenings, and level 50 in hundreds of hours. The XP follows the level
  * of what was fought, and a class foe stands at the character's OWN
  * Daggerfall level (characters/enemyEntity.js), as does a quest's pay -
- * so a character that levelled offline climbs faster online: at
- * Daggerfall level 30 a class foe is worth 300, Renown 10 is 19 kills
- * and Renown 20 is 228 (AUDIT RENOWN1 DATA-6). Offline play itself still
- * earns nothing. The total to reach level L, with n = L - 1:
+ * so a character that levelled offline climbed ten times faster online
+ * (AUDIT RENOWN1 DATA-6), until RENOWN3 read every foe and quest against
+ * the character's Renown (below): at Daggerfall level 30, Renown 10 is 59
+ * kills and Renown 20 is 398, where it was 19 and 228. Offline play itself
+ * still earns nothing. The total to reach level L, with n = L - 1:
  *
  *     10 * floor((n^3 * (n + 10) + 300 * n) / 30)
  *
@@ -121,6 +122,22 @@ export function renownProgress(xp) {
  * A QUEST is worth what its giver scaled it to: Daggerfall sizes a quest
  * to the character's own level, so the XP does too.
  *
+ * RENOWN3 (2026-09-25, Mac: "a high level character shouldnt blow through
+ * online levels"): BOTH ARE READ AGAINST THE CHARACTER'S RENOWN. A career
+ * foe stands at the character's own Daggerfall level, and a quest is sized
+ * to it, so a character that levelled offline fought level-30 foes from
+ * its first minute online - Renown 10 in 19 kills, Renown 20 in 228. Now a
+ * foe, and a quest, is read at most RENOWN_OVER_MAX levels above the
+ * character's Renown: at Renown 1 a level-30 knight pays like a level-4 foe,
+ * and the ceiling rises with every level. A character new to Daggerfall
+ * fights foes at or under the ceiling almost from its first kill and earns
+ * what it did (fighting level-5 foes, one kill more in 1,365 to Renown 20:
+ * a level-5 foe is one over the ceiling at Renown 1); a Daggerfall
+ * level-30 character takes 59 kills to Renown 10 and 398 to Renown 20. It
+ * still climbs faster than one fighting level-5 foes (111 and 1,365) - a
+ * harder fight is worth more, up to the ceiling - but not ten times
+ * faster.
+ *
  * A PARTY earns MORE per head, never a share: every partymate in the
  * room earns the whole kill, plus RENOWN_PARTY_BONUS_PCT a head beyond the
  * first - group play is where the big numbers are (the pillar's own
@@ -133,6 +150,8 @@ export const RENOWN_QUEST_XP_BASE = 100;
 export const RENOWN_QUEST_XP_PER_LEVEL = 40;
 /** A quest's character level is read up to here, as a foe's is. */
 export const RENOWN_QUEST_LEVEL_MAX = 30;
+/** RENOWN3: a foe or a quest is read at most this many levels above the character's Renown. */
+export const RENOWN_OVER_MAX = 3;
 /** Each partymate in the room beyond the first adds this much to every kill, per cent. */
 export const RENOWN_PARTY_BONUS_PCT = 10;
 /** The most partymates the bonus counts - the party's own seats. */
@@ -140,11 +159,15 @@ export const RENOWN_PARTY_COUNT_MAX = 8;
 
 const clampInt = (v, lo, hi) => Math.max(lo, Math.min(hi, Math.round(Number(v) || 0)));
 
-/** A kill's XP, by the foe's level. */
-export const renownKillXp = (foeLevel) => RENOWN_KILL_XP_PER_LEVEL * clampInt(foeLevel, 1, RENOWN_KILL_LEVEL_MAX);
+/** RENOWN3: the highest level a foe or a quest is read at for a character of Renown `renown` - RENOWN_OVER_MAX above it.
+ *  A Renown not known yet (null) is Renown 1, the strictest: nothing is read higher than the service has said. */
+export const renownCeiling = (renown) => clampInt(renown ?? 1, 1, RENOWN_MAX) + RENOWN_OVER_MAX;
 
-/** A quest's XP, by the character's Daggerfall level when it was done. */
-export const renownQuestXp = (characterLevel) => RENOWN_QUEST_XP_BASE + RENOWN_QUEST_XP_PER_LEVEL * clampInt(characterLevel, 1, RENOWN_QUEST_LEVEL_MAX);
+/** A kill's XP, by the foe's level - read no higher than the character's Renown allows (RENOWN3). */
+export const renownKillXp = (foeLevel, renown = null) => RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel, 1, RENOWN_KILL_LEVEL_MAX), renownCeiling(renown));
+
+/** A quest's XP, by the character's Daggerfall level when it was done - read no higher than its Renown allows (RENOWN3). */
+export const renownQuestXp = (characterLevel, renown = null) => RENOWN_QUEST_XP_BASE + RENOWN_QUEST_XP_PER_LEVEL * Math.min(clampInt(characterLevel, 1, RENOWN_QUEST_LEVEL_MAX), renownCeiling(renown));
 
 /** A kill's XP with the party in the room counted: `present` is how many
  *  of the party are in the room, the player included (1 is alone). */

@@ -47,8 +47,8 @@
   {
     "name": "RENOWN1-kill-level-unclamped",
     "file": "src/net/renown.js",
-    "old": "export const renownKillXp = (foeLevel) => RENOWN_KILL_XP_PER_LEVEL * clampInt(foeLevel, 1, RENOWN_KILL_LEVEL_MAX);",
-    "new": "export const renownKillXp = (foeLevel) => RENOWN_KILL_XP_PER_LEVEL * clampInt(foeLevel, 0, 999);",
+    "old": "export const renownKillXp = (foeLevel, renown = null) => RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel, 1, RENOWN_KILL_LEVEL_MAX), renownCeiling(renown));",
+    "new": "export const renownKillXp = (foeLevel, renown = null) => RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel, 0, 999), renownCeiling(renown));",
     "tests": [
       "test/renown1.test.js"
     ]

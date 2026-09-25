@@ -107,13 +107,15 @@ test('RENOWN1 the curve: EverQuest\'s shape in integers - level 2 at 100, 10 at 
 });
 
 test('RENOWN1 the rules: a kill is ten to its foe\'s level (clamped 1..30), a quest 100 + 40 a character level, a party adds 10% a head beyond the first up to its eight seats; the online bonus is 3 health and 2 magicka a level past the first - level 1 adds nothing, level 50 adds 147 and 98 (mutants: a party that SPLITS the kill; the bonus from level 0; a clamp unread)', () => {
-  assert.equal(renownKillXp(1), 10);
-  assert.equal(renownKillXp(20), 200);
-  assert.equal(renownKillXp(0), RENOWN_KILL_XP_PER_LEVEL, 'a foe with no level is a level-1 foe');
-  assert.equal(renownKillXp(99), RENOWN_KILL_XP_PER_LEVEL * RENOWN_KILL_LEVEL_MAX);
-  assert.equal(renownQuestXp(1), 140);
-  assert.equal(renownQuestXp(10), 500);
-  assert.equal(renownQuestXp(99), renownQuestXp(30));
+  // RENOWN3 reads both against the character's Renown; at the cap's Renown nothing is read lower, so these are the
+  // RENOWN1 rules themselves (test/renown3.test.js holds the ceiling)
+  assert.equal(renownKillXp(1, RENOWN_MAX), 10);
+  assert.equal(renownKillXp(20, RENOWN_MAX), 200);
+  assert.equal(renownKillXp(0, RENOWN_MAX), RENOWN_KILL_XP_PER_LEVEL, 'a foe with no level is a level-1 foe');
+  assert.equal(renownKillXp(99, RENOWN_MAX), RENOWN_KILL_XP_PER_LEVEL * RENOWN_KILL_LEVEL_MAX);
+  assert.equal(renownQuestXp(1, RENOWN_MAX), 140);
+  assert.equal(renownQuestXp(10, RENOWN_MAX), 500);
+  assert.equal(renownQuestXp(99, RENOWN_MAX), renownQuestXp(30, RENOWN_MAX));
   assert.equal(renownPartyXp(100, 1), 100, 'alone: the kill');
   assert.equal(renownPartyXp(100, 4), 130, 'four in the room: MORE a head, never a share');
   assert.equal(renownPartyXp(100, 99), 100 + 10 * (RENOWN_PARTY_COUNT_MAX - 1));
@@ -490,8 +492,8 @@ test('RENOWN1 the tracker: nothing is earned while not earning (offline); a repo
   // the world host's wiring (pinned by source: the host is not driveable in node)
   const w = src('src/scenes/world.js');
   assert.match(w, /const renownTracker = onlineOn \? createRenownTracker\(/, 'never built offline');
-  assert.match(w, /setRenownKillHandler\(\(foe\) => \{ renownTracker\.earn\(renownPartyXp\(renownKillXp\(renownFoeLevel\(foe\)\), 1 \+ \(partyNear\(\)\?\.length \?\? 0\)\)\); \}\);/, 'a kill with my party in the room counted');
-  assert.match(w, /renownTracker\.earn\(renownQuestXp\(playerEntity\.level\)\)/, 'a quest by the character\'s level');
+  assert.match(w, /setRenownKillHandler\(\(foe\) => \{ renownTracker\.earn\(renownPartyXp\(renownKillXp\(renownFoeLevel\(foe\), renownNow\), 1 \+ \(partyNear\(\)\?\.length \?\? 0\)\)\); \}\);/, 'a kill with my party in the room counted');
+  assert.match(w, /renownTracker\.earn\(renownQuestXp\(playerEntity\.level, renownNow\)\)/, 'a quest by the character\'s level (RENOWN3: read against its Renown)');
   assert.match(w, /renownQuestEnded\?\.\(q\);/, 'the bridge\'s end reaches it');
   assert.match(w, /if \(!q\?\.questSuccess\) return;/, 'a failure pays nothing');
   assert.match(w, /renownTracker\?\.tick\(\);/);

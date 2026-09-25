@@ -301,7 +301,7 @@ import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, F
 import { accountTokenMinter, storedSession, accountPlayBeat, muteAccount, serviceBase, accountRefusalText, accountDuels, accountRenown } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4: and the beat that counts time played
 import { parseModCommand, runModCommand, mutedText, mutedNotices } from '../net/moderation.js';   // MOD1: /mute and /unmute, and the line a muted player reads
 import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, knocked from here and measured by the account service's clock
-import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/renown.js';   // RENOWN1: what a kill and a quest are worth, and the party's bonus
+import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/renown.js';   // RENOWN1: what a kill and a quest are worth, and the party's bonus (RENOWN3: read against my Renown)
 import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer, renownFoeCarry } from '../net/renownTracker.js';   // RENOWN1: what this character earns online, carried to the account service
 import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the level's health and magicka, on top of Daggerfall's while online
 import { appStorage } from '../systems/appStorage.js';   // ACC1d: where that session lives - the app's store, not the tab's (a second tab is the same player)
@@ -9915,14 +9915,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   }) : null;
   if (renownTracker) {
     globalThis.addEventListener?.('pagehide', () => { renownTracker.leave(); });   // RENOWN1: what was earned since the last report goes as the page does. AUDIT RENOWN1 GAME-8: by `keepalive`, under the report's own id
-    setRenownKillHandler((foe) => { renownTracker.earn(renownPartyXp(renownKillXp(renownFoeLevel(foe)), 1 + (partyNear()?.length ?? 0))); });
+    setRenownKillHandler((foe) => { renownTracker.earn(renownPartyXp(renownKillXp(renownFoeLevel(foe), renownNow), 1 + (partyNear()?.length ?? 0))); });   // RENOWN3: read against my Renown, never above it by more than RENOWN_OVER_MAX
     const paid = new Set();
     renownQuestEnded = (q) => {
       if (!q?.questSuccess) return;
       const key = String(q.uid ?? q.questName ?? '');
       if (!key || paid.has(key)) return;   // a quest pays once, however its end is heard again
       paid.add(key);
-      renownTracker.earn(renownQuestXp(playerEntity.level));
+      renownTracker.earn(renownQuestXp(playerEntity.level, renownNow));   // RENOWN3: the quest's level read against my Renown too
     };
   }
   // ACC4 (Mac: "time played to the icon profile"): THE WORLD IS WHERE

@@ -353,6 +353,14 @@ test('AUDIT RENOWN1 DATA-4/GAME-2: the tracker HOLDS one report until it is answ
   assert.equal(k.due(t), true, 'unless a report\'s worth has piled up - after an answer');
   await k.tick(t);
   assert.notEqual(sent.at(-1).rid, 'rid0000000000001', 'a new report, a new id');
+  // the early report is an ANSWER's privilege: after a refusal, a report's worth piled up behind the held one still waits
+  let u = 0;
+  const k2 = createRenownTracker({ report: async () => ({ ok: false, error: 'server' }), character: () => 'char-bbbb', now: () => u, rid: () => 'eeeeeeeeeeeeeeee' });
+  k2.earn(100);
+  await k2.tick(u);
+  k2.earn(RENOWN_XP_REPORT_MAX);
+  u += 1000;
+  assert.equal(k2.due(u), false, 'a refused report waits, whatever has piled up behind it');
 });
 
 test('AUDIT RENOWN1 GAME-8: the page\'s last word - `leave` sends the held report (or forms one from what is pending) by keepalive, under its own id, and clears nothing, so a page the back-forward cache brings back sends the same report again; the account client asks `call` for keepalive and adds the id only when there is one (mutants: leave clearing the report; keepalive dropped; a second credential door)', async () => {

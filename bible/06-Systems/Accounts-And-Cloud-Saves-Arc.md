@@ -3180,7 +3180,8 @@ read 12 inside a box").
   `10 * floor((n^3 * (n + 10) + 300n) / 30)` with n = L - 1. Level 2 at 100, 10 at 5,510, 20 at 68,200, 30 at 319,950,
   50 (the cap) at 2,318,660 - the first levels in minutes, level 50 in hundreds of hours.
 - **What earns it, online only.** A foe is worth ten to its own level (clamped 1..30); a quest that ends in success is
-  worth 100 + 40 a Daggerfall level (clamped at 30), once per quest. A party earns MORE a head, never a share: every
+  worth 100 + 40 a Daggerfall level (clamped at 30), once per quest - both read no higher than three levels above the
+  character's Renown since RENOWN3. A party earns MORE a head, never a share: every
   partymate in the room earns the whole kill plus 10% a head beyond the first, up to the party's eight seats (the
   pillar's "Group play is the prime source"). The city watch and townspeople pay nothing - a kill the law calls murder
   earns nothing - and since AUDIT RENOWN1 neither does another player's watch, my own summoned ally, or a quest's
@@ -3357,12 +3358,35 @@ renown's meters.
 - The numbers, stated honestly (DATA-6): the hourly bound never meets a solo character or a small party, but a full
   party of eight against the fiercest foes meets it (510 XP a kill at level 30 with the whole party's bonus, about forty
   kills an hour). And XP follows the level of what was fought - a class foe stands at the character's OWN Daggerfall
-  level - so a character that levelled offline climbs faster online: at Daggerfall level 30, Renown 10 is 19 kills and
-  Renown 20 is 228. Offline play itself still earns nothing. Both are Mac's to tune, not the audit's.
+  level - so a character that levelled offline climbed ten times faster online: at Daggerfall level 30, Renown 10 was
+  19 kills and Renown 20 was 228. Offline play itself still earns nothing. Both were Mac's to tune, not the audit's -
+  and Mac answered the second (RENOWN3, below).
 
 **At the merge:** main took `acct9` (FOUNDER2) and `world108` (HT-WAIST-NET) while this was on its branch, so this
 deploy is `acct10` and `world109` - the RELAY_VERSION row rewritten with the merged bundle's hash, `RENOWN_RELAY_MIN`
 109 - or the deploy's "names this deploy" check would pass on the old Worker.
 
 Pinned: `test/auditrenown1.test.js` (19), and the RENOWN1 pins the fixes moved. `tools/mutants/auditrenown1.json`
-(60); thirteen older records re-aimed by content (twelve in `renown1.json`, one in `disc10.json`).
+(60, all dead - the one survivor of the first run, the tracker's early report after a refusal, killed by a pin added
+with RENOWN3); thirteen older records re-aimed by content (twelve in `renown1.json`, one in `disc10.json`).
+
+## RENOWN3 — a foe pays by your Renown (2026-09-25)
+
+Mac, told the audit's number (a character that levelled offline took Renown 10 in 19 kills, ten times a new one's
+pace): "Whats the solution to this? Like a high level character shouldnt blow through online levels". Offered a foe
+read at most three levels above the character's Renown, Mac said "Yes".
+
+- **The ceiling** (`src/net/renown.js renownCeiling`, `RENOWN_OVER_MAX` 3). A kill and a quest are read no higher than
+  three levels above the character's Renown - a Renown the page does not know yet is Renown 1, the strictest. At Renown
+  1 a level-30 knight pays like a level-4 foe (40, not 300) and a quest sized to Daggerfall level 30 pays 260, not 1,300;
+  the ceiling rises with every level, and from Renown 27 no foe is cut. The party's bonus rides on top, unchanged.
+- **Why it answers the question.** Renown was paced by the Daggerfall character, because a career foe stands at the
+  character's own level and a quest is sized to it; now it is paced by Renown itself. A character new to Daggerfall
+  fights foes at or under the ceiling almost from its first kill and earns what it did (level-5 foes: 111 kills to
+  Renown 10 and 1,365 to Renown 20 - one more than before, a level-5 foe being one over the ceiling at Renown 1). A
+  Daggerfall level-30 character takes 59 kills to Renown 10 and 398 to Renown 20, where it took 19 and 228 - still
+  faster, since a harder fight is worth more up to the ceiling, but not ten times.
+- **Where it is read.** On the client, at the kill and at the quest's end, against the page's own Renown
+  (`scenes/world.js renownNow` - the token's word and the service's since). XP is the client's word in any case (the
+  service bounds it by the report and the hour); the ceiling is the pace an honest client keeps.
+- Pinned: `test/renown3.test.js` (2), the RENOWN1 rules and wiring pins it moved. `tools/mutants/renown3.json`.
