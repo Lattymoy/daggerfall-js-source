@@ -180,7 +180,18 @@ const SPENT_MAX = 4096;
 /** MOD1: the most accounts whose latest mute order one room remembers. */
 const ORDERS_MAX = 1024;
 
-import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, lookGate } from './relay.js';
+// ═══ WB3: THE GATE'S BOSS ROOM ═════════════════════════════════════
+//
+// Mac: "a gate of oblivion which takes place in a large boss arena with an oversized enemy with telegraphed attacks",
+// and Option B - the relay's object is the authority over the boss. THREE FILES JOIN THE BUNDLE, paid for once in this
+// deploy: net/gateLaw.js (the day's window and the room key - it imports wire.js alone), net/gateBrain.js (the fight,
+// pure law - it imports nothing) and net/gateReceipt.js (the kill's receipt, the relay's first signature - it imports
+// identityToken.js, already here). bible/11-Multiplayer/World-Bosses.md sections 5, 6 and 8.
+import { isGateRoom, gateDayOfRoom, gateAdmits, gateHolds, gateTimes, gateBossOf, GATE_COLLAPSE_MS } from '../../src/net/gateLaw.js';
+import { newFight, joinFight, applyHit, stepBrain, stateOf, earned, earnedBy, COURT_CENTRE, BRAIN_TICK_MS, CHECKPOINT_MS, GATE_FIGHTERS_MAX } from '../../src/net/gateBrain.js';
+import { mintReceipt, importReceiptKey } from '../../src/net/gateReceipt.js';
+
+import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, gateGate, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, lookGate } from './relay.js';
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
 // welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
@@ -191,6 +202,8 @@ import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, mute
 /** DICE1: the relay's own dice - 32 uniform bits from the runtime's CSPRNG a draw (net/dice.js rollDice throws a draw
  *  back past the last whole multiple of the sides, so every face is exactly as likely). Workers carry `crypto`. */
 const rand32 = () => crypto.getRandomValues(new Uint32Array(1))[0];
+/** WB3: the boss's dice - a [0,1) draw off the same CSPRNG (net/gateBrain.js takes its randomness as an argument). */
+const rand01 = () => rand32() / 4294967296;
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
 export default {
@@ -199,6 +212,9 @@ export default {
     if (url.pathname === '/health') return json({ ok: true, service: 'daggerfall-online', version: RELAY_VERSION, t: Date.now() });
     const key = roomOf(url.pathname);
     if (!key || (key.startsWith('chat:') && !isChatRoom(key))) return json({ error: 'no such room' }, 404);   // AUDIT CHAT A1: no object is minted for a channel the port does not run
+    // WB3: a gate's room stands only inside its day's window - no object is minted for a gate the clock did not raise
+    // (AUDIT CHAT A1's law, for a key a client could otherwise mint at will: `gate:<any day>`)
+    if (key.startsWith('gate:') && !(isGateRoom(key) && gateHolds(gateDayOfRoom(key), Date.now()))) return json({ error: 'the gate is closed' }, 404);
     if (String(request.headers.get('Upgrade') ?? '').toLowerCase() !== 'websocket') return json({ error: 'websocket only' }, 426);
     const id = env.ROOMS.idFromName(key);
     return env.ROOMS.get(id).fetch(request);
@@ -291,6 +307,12 @@ export class Room {
     // budget against the others, and a room that went quiet had no others acting. The attachment keeps what a wake
     // must recompute: the key, who the socket is, where it stands, the hello's stamp and the room's marks.
     this._meters = new WeakMap();   // ws -> its meters (_meterOf)
+    // WB3: A GATE ROOM'S FIGHT (net/gateBrain.js), read from storage once per instance life and checkpointed every
+    // CHECKPOINT_MS, so an eviction loses that much of it and not the fight; undefined = not read yet, null = none
+    this._fight = undefined;
+    this._fightSavedAt = 0;
+    this._receiptKey = undefined;   // WB3: the relay's signing key (GATE_SIGNING_KEY), imported once; null = none (the receipts go out unsigned)
+    this._gateFell = undefined;     // WB3: the hub's last word of a kill, said to a hello while its gate still holds
     try {
       // the runtime answers the client's ping while the object sleeps
       if (state.setWebSocketAutoResponse && typeof WebSocketRequestResponsePair === 'function') state.setWebSocketAutoResponse(new WebSocketRequestResponsePair('{"t":"ping"}', '{"t":"pong"}'));
@@ -302,6 +324,7 @@ export class Room {
     // /room/<key> alone (the default export above), so no socket and no browser ever reaches these paths.
     const path = new URL(request.url).pathname;
     if (path === PARK_INTERNAL_REG || path === PARK_INTERNAL_DROP) return this._parkInternal(path, request);
+    if (path === GATE_INTERNAL_FELL) return this._gateFellInternal(request);   // WB3: a gate's kill, said to the hub
     const key = roomOf(new URL(request.url).pathname);
     if (this.state.getWebSockets().length >= (isChatRoom(key) ? CHAT_SOCKETS_MAX : SOCKETS_MAX)) return json({ error: 'room full' }, 503);
     const pair = new WebSocketPair();
@@ -667,6 +690,7 @@ export class Room {
     // client names - its word goes PARK_TTL_MS after it was said, as the cell's record it points at does
     const reg = await this.state.storage.get('reg');
     if (reg) { const due = reg.at + PARK_TTL_MS; if (Date.now() >= due) await this.state.storage.delete('reg'); else await this.state.storage.setAlarm(due); return; }
+    if (await this._gateTick()) return;   // WB3: a gate room's alarm is its boss's beat
     for (const [, b] of this._all()) if (b.id) return;
     const m = await this.state.storage.list({ prefix: 'world:' });
     const dead = [...m.keys()];
@@ -896,6 +920,11 @@ export class Room {
       // attachment), so a refused hello leaves nothing behind - a tokenless one planted a secret that refused the owner
       const who = await this._named(m, now);
       if (who.error) { this._refuse(ws, who.error); return; }
+      // WB3: A GATE'S ROOM ADMITS ONLY INSIDE ITS DAY'S WINDOW, asked before anything is written (the token's law just
+      // above): a newcomer while the gate is open and its boss stands, a fighter already in the fight (a reconnect, a
+      // player cast out and back) until the wrath's end. The Worker refused the key outside the window already; this is
+      // the object's own word, for a socket that opened a moment before the seal.
+      if (isGateRoom(a.key)) { const no = await this._gateAdmit(a.key, who.subject, now); if (no) { this._refuse(ws, no); return; } }
       // the id's secret (A3): the first hello mints it, a later one must match
       const held = await this.state.storage.get(secretKey(m.id));
       if (held && held !== m.secret) { this._refuse(ws, 'id taken'); return; }
@@ -936,6 +965,8 @@ export class Room {
         // SOC1: the account, in the hub - after the welcome and the join, so a client's session has reset on the
         // welcome before its picture lands; a hello naming none is a build before this slice, admitted as it was
         if (isSocialRoom(a.key) && m.acct) { try { await this._helloAccount(ws, m, now); } catch (e) { console.warn('[hub] account hello failed', e?.message ?? e); } }   // AUDIT SOC A2: contained, as the acts and the leave are
+        // WB3: a gate's kill said while this player was away, while that gate still stands - so it collapses on their screen too
+        if (isSocialRoom(a.key)) { try { const g = await this._gateFellOf(); if (g && gateHolds(g.d, now)) this._send(ws, JSON.stringify({ t: 'gate', ...g })); } catch (e) { console.warn('[hub] gate word failed', e?.message ?? e); } }
         return;
       }
       // SLAM5 (2026-09-16, AUDIT SLAM): THE ROSTER IS CHOSEN BEFORE THE LOOKS ARE READ, and this was a hard wall.
@@ -1241,6 +1272,18 @@ export class Room {
       if (m.data.r && cell === here) await this._parkStore(k, a.sub, a.id, a.name ?? '', m.data.r, now);
       else if (here && cell !== here) await this._parkDrop(k);   // mine here is superseded: nothing parked, or it stands elsewhere
       await this._parkRegister(k, cell, now);
+      return;
+    }
+    if (m.t === 'gate') {
+      // WB3: A WORD TO A GATE'S BOSS ROOM - the level claim on entering or a blow on the boss. On its own bucket (the
+      // same strikes), in a gate room alone (anywhere else junk: a correct client sends none there), credited to the
+      // VERIFIED account (`sub`, off the token - never a word of the frame's). The brain judges every blow
+      // (net/gateBrain.js applyHit): the relay reads the damage a client claims and believes as much of it as the
+      // claimed level's bucket allows, from where the socket's own pose stands.
+      const now = Date.now();
+      if (!this._spend(ws, now, gateGate, 'gateBucket', 'gateDrops', 'too many gate frames')) return;
+      if (!isGateRoom(a.key) || typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }
+      try { await this._gateFrame(ws, a, m, now); } catch (e) { console.warn('[gate] frame failed', e?.message ?? e); }
       return;
     }
     if (m.t === 'look') {
@@ -1615,6 +1658,158 @@ export class Room {
     for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, out);
     if (!isChatRoom(a.key) && this._leads(a, ws)) this._sayHost({ skip: ws, except: ws });   // WORLD1: the host left - the next-longest in the room is the host now, said to everyone (ROSTER-G: a channel has no host)
     if (isSocialRoom(a.key) && a.acct) { try { await this._leaveAccount(ws, a, Date.now()); } catch (e) { console.warn('[hub] leave failed', e?.message ?? e); } }   // SOC1: last seen stamped, the friends and the party told
+  }
+
+  // ───────────────────────────── WB3: THE GATE ─────────────────────────────
+  /** The fight this gate room holds, or null - the instance's while it is awake, storage's (the last checkpoint) after
+   *  a wake. */
+  async _gateFightOf() {
+    if (this._fight === undefined) { const v = await this.state.storage.get('gatefight'); this._fight = v && typeof v === 'object' ? v : null; }
+    return this._fight;
+  }
+  /** Why a hello into a gate's room is refused, or null to admit it (the hello's own note says when). */
+  async _gateAdmit(key, sub, now) {
+    const day = gateDayOfRoom(key);
+    if (!gateHolds(day, now)) return 'the gate is closed';
+    const f = await this._gateFightOf();
+    if (f?.players[sub]) return null;
+    if (f?.fell || f?.wrath) return 'the gate is closing';
+    return gateAdmits(day, now) ? null : 'the gate is sealed';
+  }
+  /** A pose in the arena's dungeon frame, in the court's (net/gateBrain.js COURT_CENTRE). */
+  _courtOf(p) { return { x: p.x - COURT_CENTRE[0], z: p.z - COURT_CENTRE[2] }; }
+  /** The fight's bodies in the court now: one a fighter (its NEWEST socket speaks for it - AUDIT SOC B9's law), where
+   *  its last pose stands, and whether that pose says it died. */
+  _gateBodies(f) {
+    const newest = new Map();
+    for (const [, b] of this._all()) {
+      if (!b.id || !b.sub || !b.pose || !f.players[b.sub]) continue;
+      const had = newest.get(b.sub);
+      if (!had || (b.since ?? 0) >= (had.since ?? 0)) newest.set(b.sub, b);
+    }
+    return [...newest.values()].map((b) => { const c = this._courtOf(b.pose); return { sub: b.sub, x: c.x, z: c.z, dead: !!b.pose.dd }; });
+  }
+  /** The brain's frames to everyone in the room, in order. */
+  _gateFan(frames) {
+    if (!frames.length) return;
+    const outs = frames.map((fr) => JSON.stringify({ t: 'gate', ...fr }));
+    for (const [ws, b] of [...this._all()]) if (b.id) for (const s of outs) if (!this._send(ws, s)) break;
+  }
+  /** The fight to storage - every CHECKPOINT_MS from the beat, at once on a join and on the kill. */
+  async _gateSave(f, now, force) {
+    if (!force && now - this._fightSavedAt < CHECKPOINT_MS) return;
+    this._fightSavedAt = now;
+    await this.state.storage.put('gatefight', f);
+  }
+  /** The beat is armed now unless it already is, sooner. */
+  async _gateArm(now) {
+    const at = await this.state.storage.getAlarm();
+    if (at == null || at > now + BRAIN_TICK_MS) await this.state.storage.setAlarm(now + BRAIN_TICK_MS);
+  }
+  /** A gate frame in its room: `in` joins the fight and is answered with its whole state (and, after the kill, the
+   *  fighter's receipt again); `hit` is a blow the brain judges. */
+  async _gateFrame(ws, a, m, now) {
+    const day = gateDayOfRoom(a.key);
+    let f = await this._gateFightOf();
+    if (m.k === 'in') {
+      if (!f) f = this._fight = newFight(day, now, gateTimes(day).wrathAt, gateBossOf(day).id);
+      if (!joinFight(f, a.sub, a.name ?? '', m.lv, now, gateAdmits(day, now))) {
+        const no = f.fell || f.wrath ? 'the gate is closing' : Object.keys(f.players).length >= GATE_FIGHTERS_MAX ? 'the court is full' : 'the gate is sealed';
+        this._send(ws, JSON.stringify({ t: 'gate', k: 'no', m: no }));
+        return;
+      }
+      this._send(ws, JSON.stringify({ t: 'gate', ...stateOf(f) }));
+      const r = f.rc?.[a.sub];
+      if (r) this._send(ws, JSON.stringify({ t: 'gate', k: 'rcpt', r }));
+      await this._gateSave(f, now, true);
+      if (!f.fell && !f.wrath) await this._gateArm(now);
+      return;
+    }
+    // a blow: from a fighter (a correct client says `in` first), from where its own pose stands - the dead strike nothing
+    if (!f || !f.players[a.sub]) { this._junk(ws); return; }
+    applyHit(f, a.sub, m.d, m.r, a.pose && !a.pose.dd ? this._courtOf(a.pose) : null, now);
+    if (f.fell && !f.said) await this._gateFall(f, now);
+  }
+  /** ONE BEAT of a gate room's alarm: the brain stepped over the bodies in the court, its frames fanned, the kill said
+   *  once, the fight checkpointed - and the next beat armed while the fight lives and someone is here (a room nobody
+   *  stands in sleeps until an `in` wakes it), else the day's end, when the room forgets its fight. False when the room
+   *  holds no fight (the alarm is somebody else's). */
+  async _gateTick() {
+    const f = await this._gateFightOf();
+    if (!f) return false;
+    const now = Date.now();
+    const end = gateTimes(f.day).wrathAt + GATE_COLLAPSE_MS;
+    if (now >= end) { this._fight = null; await this.state.storage.delete('gatefight'); return true; }
+    try {
+      this._gateFan(stepBrain(f, now, this._gateBodies(f), rand01));
+      if (f.fell && !f.said) await this._gateFall(f, now);
+      await this._gateSave(f, now, false);
+    } catch (e) { console.warn('[gate] beat failed', e?.message ?? e); }
+    const here = [...this._all()].some(([, b]) => b.id);
+    await this.state.storage.setAlarm(here && !f.fell && !f.wrath ? now + BRAIN_TICK_MS : end);
+    return true;
+  }
+  /** THE KILL, SAID ONCE: `fell` to everyone in the court, a receipt to each account that earned one (bible section 6 -
+   *  one per account, the seed the relay's own), the fight checkpointed with them, and the hub's world line. */
+  async _gateFall(f, now) {
+    f.said = true;
+    this._gateFan([{ k: 'fell', at: f.fell.at, top: f.fell.top, n: f.fell.n }]);
+    const key = await this._receiptKeyOf();
+    const nowS = Math.floor(now / 1000);
+    f.rc = {};
+    for (const sub of Object.keys(f.players)) {
+      if (!earned(f, sub)) continue;
+      try { f.rc[sub] = await mintReceipt({ d: f.day, b: f.boss, s: sub, c: rand32(), x: earnedBy(f, sub) }, key, { subtle: crypto.subtle, nowS }); }
+      catch (e) { console.warn('[gate] receipt refused', e?.message ?? e); }
+    }
+    for (const [ws, b] of [...this._all()]) { const r = b.id && b.sub ? f.rc[b.sub] : null; if (r) this._send(ws, JSON.stringify({ t: 'gate', k: 'rcpt', r })); }
+    await this._gateSave(f, now, true);
+    await this._gateTellHub({ d: f.day, at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc) });
+  }
+  /** The relay's signing key, imported once (a CryptoKey cannot be stored; a deploy is a new object). */
+  async _receiptKeyOf() {
+    if (this._receiptKey === undefined) {
+      this._receiptKey = await importReceiptKey(this.env.GATE_SIGNING_KEY, { subtle: crypto.subtle });
+      if (!this._receiptKey && this.env.GATE_SIGNING_KEY) console.warn('[gate] GATE_SIGNING_KEY will not import - the receipts go out unsigned');
+    }
+    return this._receiptKey;
+  }
+  /** The hub's door: the kill and its receipts, to the one room every player online is in. A relay built without the
+   *  binding (a harness, a local dev worker) keeps the court's own word. */
+  async _gateTellHub(body) {
+    const rooms = this.env?.ROOMS;
+    if (!rooms?.idFromName || !rooms?.get) return;
+    try { await rooms.get(rooms.idFromName(SOCIAL_ROOM)).fetch(new Request(`https://relay.internal${GATE_INTERNAL_FELL}`, { method: 'POST', body: JSON.stringify(body) })); }
+    catch (e) { console.warn('[gate] hub', e?.message ?? e); }
+  }
+  /** The hub's last word of a kill (null for none) - the instance's, else storage's. */
+  async _gateFellOf() {
+    if (this._gateFell === undefined) { const v = await this.state.storage.get('gatefell'); this._gateFell = v && typeof v === 'object' ? v : null; }
+    return this._gateFell;
+  }
+  /** THE HUB'S HALF: a gate's kill, from the gate's own object. Everyone online hears it (their gate collapses, their
+   *  chat says it), a fighter outside the court - cast out, or away from it - is handed their receipt here, and the
+   *  word is kept for a hello while that gate still holds. Projected through the wire's own law, as a client would. */
+  async _gateFellInternal(request) {
+    let body = null;
+    try { body = await request.json(); } catch { /* refused below */ }
+    const fell = validGateOut({ k: 'fell', d: body?.d, at: body?.at, top: body?.top, n: body?.n });
+    if (!fell || fell.d === undefined) return json({ ok: false }, 400);
+    this._gateFell = fell;
+    await this.state.storage.put('gatefell', fell);
+    const said = JSON.stringify({ t: 'gate', ...fell });
+    const rc = new Map();
+    for (const e of Array.isArray(body.rc) ? body.rc : []) {
+      const r = Array.isArray(e) && typeof e[0] === 'string' ? validGateOut({ k: 'rcpt', r: e[1] }) : null;
+      if (r) rc.set(e[0], r);
+    }
+    for (const [ws, b] of [...this._all()]) {
+      if (!b.id) continue;
+      this._send(ws, said);
+      const r = b.sub ? rc.get(b.sub) : null;
+      if (r) this._send(ws, JSON.stringify({ t: 'gate', ...r }));
+    }
+    return json({ ok: true });
   }
 
   // ───────────────────────────── SOC1: THE HUB ─────────────────────────────

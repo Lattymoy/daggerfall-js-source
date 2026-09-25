@@ -135,8 +135,8 @@ the player's own and optional (MWA4), so nothing here may lean on it.
 
 ## 4. The arena - a completely different place (WB3)
 
-**The Burning Court.** A disc of black flagstones 36 m across, cut with a ring of glowing runes, standing over a sea
-of fire under a red sky; jagged spires around its rim with braziers between them; a broken bridge to the south where
+**The Burning Court.** A disc of black flagstones 48 m across, cut with a ring of glowing runes 16 m out that the
+boss never crosses (so the floor past it is always a way out), standing over a sea of fire under a red sky; jagged spires around its rim with braziers between them; a broken bridge to the south where
 the player arrives, and on it the way home - a second, smaller membrane. Nothing on the disc: no pillar, no step, no
 wall to hide behind. The only cover is distance and the boss's back.
 
@@ -207,7 +207,8 @@ that cannot be used to cheat, because the same claim bounds what the claimant ma
   deep, and no single blow over `12 * dpsRef(lv)`. Over it the blow is CLIPPED, not refused, and counted.
 
 So a claim of level 1 brings less health and may deal less; a claim of 60 brings more and may deal more. At every
-claim the fastest possible kill is `BOSS_TTK_S / 3` of full-rate damage - eighty seconds of the whole room at the cap.
+claim the fastest possible kill is `(BOSS_TTK_S - BUCKET_DEPTH_X) / BUCKET_RATE_X` of full-rate damage - seventy-five
+seconds of the whole room at the cap (the bucket's burst, then its rate; the pins measure it at levels 1 to 60).
 A modified client can still refuse to take damage (a player owns their body - co-op's law); it cannot kill the boss
 alone, faster, or for anyone else.
 
@@ -238,7 +239,7 @@ recovery:
 | **Ground Slam** | a disc, 7 m, around him | 1.6 s | 35% | 1+ |
 | **Charge** | a lane, 3.5 m wide, to the target and 22 m on; he runs it | 1.2 s | 25% | 1+ |
 | **Hellfire** | a 3.5 m disc under each of up to 5 players, where they stood | 2.0 s | 30% fire | 2+ |
-| **Flame Nova** | a ring from 4 m to 18 m - safe only at his feet | 2.2 s | 40% fire | 2+ |
+| **Flame Nova** | a ring from 4 m to 30 m - safe at his feet, or far across the floor from him | 2.2 s | 40% fire | 2+ |
 | **Dagon's Wrath** | the whole arena | 6 s | 999% | the wrath |
 
 *Hits for* is a share of the struck player's OWN maximum health, resolved by the struck player's own machine against
@@ -337,6 +338,8 @@ ordinary law.
 | `{t:'gate', k:'fell', at, top}` | room → all | the kill |
 | `{t:'gate', k:'rcpt', r}` | room → one account's sockets | the receipt |
 | `{t:'gate', k:'wrath', at}` | room → all | the wrath |
+| `{t:'gate', k:'no', m}` | room → one | an `in` refused, in words (GATE_NO_WORDS: sealed, closing, the court full) |
+| `{t:'gate', k:'fell', at, top, n, d}` / `rcpt` | hub → everyone online / one account | the kill said to the world, and a fighter's receipt outside the court (WB3a) |
 
 Every time is the RELAY's clock; the client reads it through the welcome's offset (WORLD5). A room key of the arena's
 own, `gate:<day>`, which the relay admits only inside that day's window (refused *the gate is closed* outside it) -
@@ -398,3 +401,18 @@ The door answers *The gate will not open to you yet.* until WB3's relay. Pins `t
 checks). Seen in a headless browser with its own stand-in lighting (the stone, its art, the fire and the beacon); not
 yet in the game with ARENA2, where the renderer's own lighting, fog and the terrain under it are the next look.
 
+**WB3a (2026-09-25) - the boss room on the relay.** `net/gateBrain.js` (the fight as pure law, stepped by the relay's
+alarm every 250 ms - the numbers a claim sets, the join, every refusal a blow meets, the walk, the six attacks, the
+phases, the wrath, who earned a receipt), `net/gateReceipt.js` (the relay's first signature; unsigned without its
+key), the `gate` frame both ways in `net/wire.js`, the Room's gate arm in `server/src/index.js` (the Worker's and the
+hello's window, the meter, the beat, the checkpoint, the kill said once, the receipts, the hub's line), and the
+session's `gateOk`/`sendGate`/`onGate`. RELAY_VERSION world110. What moved from the page above, each a pin's find or
+a number the court's shape asked for: the court is 48 m across with the boss kept inside 16 m (a fight radius the
+players can always step out of); the fastest kill is 75 s, not 80 (the bucket's first burst); the Nova's band reaches
+30 m; every attack carries a minimum gap (0 but the Charge's 8) so a player standing INSIDE his body is still in reach;
+a fighter outside the court (cast out, or away) is handed their receipt through the hub, and a hub hello while the gate
+still stands hears of its kill. **The relay's one secret is not set yet**: `GATE_SIGNING_KEY` (an Ed25519 private key,
+PKCS8 in base64, `npx wrangler secret put GATE_SIGNING_KEY` in `server/`) - until it is, the receipts go out unsigned,
+the spoils roll the same, and WB5's account service will decline them. Pins `test/wb3_gate_room.test.js` (21);
+mutants `tools/mutants/wb3.json` (60 dead). The arena place (WB3b) is next; until it lands the gate's door still
+answers "not yet".

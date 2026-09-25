@@ -7049,7 +7049,7 @@ answers that exact string in the object's sleep, no event, no wake. Only a
 CHANNEL session (chat, `presence: false`) used it. A presence session's
 liveness rode the pose.
 
-**Now (`src/net/wire.js:896`, `src/net/online.js:1708`):**
+**Now (`src/net/wire.js:896`, `src/net/online.js:1734`):**
 
 - `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
   before) or every 20 s standing, as the peers' proof of life and the silence
@@ -8178,3 +8178,14 @@ which says "not yet" until WB3 teaches the relay a gate's arena. Nothing crosses
 Re-aimed: `peerplaque`'s tie-order pin and `worldhover`'s press-against-plaque differential take the `gate` family;
 `audit18`'s foreign-pass count is thirteen (the gate's fire and beacon, the world host alone).
 
+## WB3a (2026-09-25, Mac: "a gate of oblivion which takes place in a large boss arena with an oversized enemy with telegraphed attacks") - the gate's boss room on the relay; see 11-Multiplayer/World-Bosses.md
+
+Option B, built: the relay's object is the authority over the boss. `net/gateBrain.js` is the whole fight as pure law
+(a point, a facing, a health bar, a clock and the players' feet - the arena is a flat disc so the boss needs no game),
+stepped by the object's alarm every 250 ms while someone stands in the court and checkpointed every two seconds; a
+blow is the client's own formula, believed as far as its level claim's bucket and the socket's own pose allow; the kill
+is stamped once, each earning account gets a receipt (`net/gateReceipt.js`, the relay's first signature - unsigned
+until `GATE_SIGNING_KEY` is set) and the hub says it to everyone online through an internal door. The `gate:<day>` key
+is admitted only inside its day's window, at the Worker (no object minted) and at the hello (a newcomer while open, a
+fighter until the wrath's end). RELAY_VERSION world110 - the bump drops every connected player once, and three files
+join the bundle. The client half so far is the session's (`gateOk`, `sendGate`, `onGate`); the arena place is WB3b.
