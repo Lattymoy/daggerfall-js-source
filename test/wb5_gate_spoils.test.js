@@ -216,7 +216,7 @@ test('WB5 the floor: the burst leaves one piece at a time from his chest, each c
   assert.equal(list.length, 5); assert.equal(list[3].tier, SIGIL_TIER); assert.ok(isSigilStone(list[3].item)); assert.equal(list[4].kind, 'gold');
   for (const q of list) assert.ok(RANDOM_TREASURE_ICONS.includes(q.record), 'dressed in a treasure flat');
   const burst = { day: 700, at: WALL, who: 'char-1', pieces: JSON.parse(JSON.stringify(list)) };
-  assert.deepEqual(h.st.get(SPOILS_STORE_KEY), burst, 'the record, at the burst: the pieces as rolled, when and whose');
+  assert.deepEqual(h.st.get(SPOILS_STORE_KEY), [burst], 'the record, at the burst: the pieces as rolled, when and whose');
   run(h, 100);
   assert.deepEqual(h.p.state().pieces.map((q) => q.left), [true, false, false, false, false], 'one at a time');
   run(h, 4000);
@@ -237,13 +237,13 @@ test('WB5 the floor: the burst leaves one piece at a time from his chest, each c
   assert.ok(h.pack.length >= 1, 'walked over, taken');
   assert.equal(h.pack[0].item.name, list[0].item.name, 'the first to land, the first taken');
   assert.equal(h.said[0], SPOILS_TEXT.item(list[0].item.name, list[0].tier), 'its name said, with its tier');
-  assert.deepEqual(h.st.get(SPOILS_STORE_KEY), burst, 'taking changes nothing in the record: the pack is only as safe as the last save');
+  assert.deepEqual(h.st.get(SPOILS_STORE_KEY), [burst], 'taking changes nothing in the record: the pack is only as safe as the last save');
   me.at = null;
   const before = h.pack.length;
   assert.equal(h.p.gather(), 5 - before, 'leaving gathers the rest');
   assert.equal(h.pack.length, 5, 'every piece in the pack');
   assert.equal(h.said.at(-1), SPOILS_TEXT.gathered);
-  assert.deepEqual(h.st.get(SPOILS_STORE_KEY), burst, 'and the record stands until a save holds them');
+  assert.deepEqual(h.st.get(SPOILS_STORE_KEY), [burst], 'and the record stands until a save holds them');
   assert.ok(h.pack.some((q) => q.kind === 'gold' && q.gold === rollSpoils(99, 8).gold));
   // a piece is never taken in the air
   const h2 = pool({ feet: () => [0, 3.1, 0] });
@@ -255,7 +255,7 @@ test('WB5 the floor: the burst leaves one piece at a time from his chest, each c
 test('WB5 once a day, on this device: the relay answers a fighter who comes back after the kill with his fall and the receipt again, so the day whose spoils left him is kept - a second burst that day spews nothing, gathered or not, in this pool or a new one on the same device; the next day\'s does; with no store the session still holds it (mutants: the device\'s word ignored; the session\'s word ignored)', () => {
   const h = pool();
   assert.equal(h.p.spew({ day: 700, seed: 99, level: 8, at: [0, 3.1, 0], bearing: 0 }), true);
-  assert.equal(h.st.get(SPOILS_DAY_KEY), 700, 'the day kept');
+  assert.deepEqual(h.st.get(SPOILS_DAY_KEY), ['700:'], 'the day kept, with its account (AUDIT WB A9 - none named here)');
   assert.equal(h.p.spew({ day: 700, seed: 99, level: 8, at: [0, 3.1, 0], bearing: 0 }), false, 'once');
   h.p.gather();
   assert.equal(h.p.spew({ day: 700, seed: 99, level: 8, at: [0, 3.1, 0], bearing: 0 }), false, 'gathered is not a new floor');
@@ -342,9 +342,9 @@ test('WB5 the seams, by source: the world host makes the floor on the link with 
   assert.match(w, /const takeSpoil = \(p\) => \{ if \(p\.kind === 'gold'\) addGoldPieces\(playerEntity, p\.gold\); else if \(p\.item\) addItem\(playerEntity\.items, p\.item\); \};/);
   assert.match(w, /const spoilsPool = gateLink \? createSpoilsPool\(\{/);
   assert.match(w, /ray: \(from, dir, len\) => \{ const c = modes\?\.dungeonCtx\?\.collider;/);
-  assert.match(w, /store: spoilsStore\(appStorage\(\)\),\n    who: \(\) => characterIdOf\(playerEntity\),/);
+  assert.match(w, /store: _spoilsStore,\n    who: \(\) => characterIdOf\(playerEntity\),/);   // AUDIT WB A6: the one store
   assert.match(w, /link: gateLink, spoils: spoilsPool,/);
-  assert.match(w, /const who = characterIdOf\(playerEntity\);\n    if \(who === _spoilsAskedFor\) return;\n    _spoilsAskedFor = who;\n    try \{ if \(recoverSpoils\(spoilsStore\(appStorage\(\)\), takeSpoil, \{ who, saves: enumerateSaves\(\)\.info\.values\(\) \}\)\) setMidScreenText\(SPOILS_TEXT\.gathered\); \}/);
+  assert.match(w, /const who = characterIdOf\(playerEntity\);\n    if \(who === _spoilsAskedFor\) return;\n    _spoilsAskedFor = who;\n    try \{ if \(recoverSpoils\(_spoilsStore, takeSpoil, \{ who, saves: enumerateSaves\(\)\.info\.values\(\) \}\)\) setMidScreenText\(SPOILS_TEXT\.gathered\); \}/);
   assert.match(w, /\n    spoilsRecoverFrame\(\);   \/\/ WB5[^\n]*\n    if \(onlineOn && playerSpawned\) \{/, 'in the main frame, ahead of the online one');
   assert.doesNotMatch(w, /_spoilsRecovered/, 'the online-only door is gone');
 });

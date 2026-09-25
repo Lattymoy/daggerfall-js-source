@@ -9,17 +9,23 @@
 //
 // SEEN BY THIS PLAYER ALONE, and never sent: every other player's spoils are their own seed's, on their own screen.
 //
-// ONCE A DAY. The relay answers a fighter who comes back to the court after the kill - a reconnect, a second door - with
-// his fall and the receipt again, and the court would burst again; so the last day whose spoils left him rides the
-// device (SPOILS_DAY_KEY), and a day already spent spews nothing.
+// ONCE A RECEIPT. The relay answers a fighter who comes back to the court after the kill - a reconnect, a second door -
+// with his fall and the receipt again, and the court would burst again; so the receipts whose spoils left him ride the
+// device (SPOILS_DAY_KEY - AUDIT WB A9: a list of day and ACCOUNT, the receipt's own `d` and `s`: two accounts on one
+// device each have their gate), and a receipt already spent spews nothing.
 //
 // A CRASH LOSES NOTHING. The court refuses the save (WB3b), so from the burst until a save holds them the spoils ride a
 // record in this device's storage (SPOILS_STORE_KEY - the day, when, whose, and THE PIECES AS ROLLED: the roll reads
-// the player's world as well as the seed - systems/gateSpoils.js - so a re-roll is not the same spoils). Taking a piece
-// changes nothing there: it is in the pack, and the pack is only as safe as the last save. At the next boot the record
-// is asked (`recoverSpoils`): a save of that character written since the burst holds every piece - the court refuses
-// the save and leaving it gathers the floor - and the record is cleared; else every piece is handed over again, and the
-// record stays until a save holds them.
+// the player's world as well as the seed - systems/gateSpoils.js - so a re-roll is not the same spoils). AUDIT WB A7: a
+// LIST of them, one a day and character - a second burst (another day, another character) before a save no longer
+// wrote over the first's. Taking a piece changes nothing there: it is in the pack, and the pack is only as safe as the
+// last save. At the next boot the records are asked (`recoverSpoils`): a save of a record's character written since
+// its burst holds every piece - the court refuses the save and leaving it gathers the floor - and the record goes;
+// else every piece is handed over again, and the record stays until a save holds them.
+//
+// AUDIT WB A2: A RECEIPT THAT COMES OUTSIDE ITS COURT - a fighter cast out before the kill, gone from the game, told
+// by the hub's next hello - is its spoils straight into the pack (`grant`): the court's burst was the only door, and it
+// never opened for them. The same once, the same record.
 //
 // Not a DFU member. Ledger A (WB).
 import { rollSpoils } from '../systems/gateSpoils.js';
@@ -49,6 +55,7 @@ export const SPOILS_TEXT = Object.freeze({
   gold: (n) => `You take ${n} gold pieces.`,
   item: (name, tier) => (tier && tier !== 'common' ? `You take ${name} (${RARITIES[tier]?.label ?? tier}).` : `You take ${name}.`),
   gathered: 'The spoils of the Burning Court are in your pack.',
+  granted: 'Your share of the Burning Court\'s spoils is in your pack.',   // AUDIT WB A2: a receipt that came outside its court
 });
 
 /**
@@ -69,14 +76,30 @@ export function spoilsList(seed, level) {
 }
 
 /** A device store (the app's own - systems/appStorage.js, a Storage's getItem/setItem/removeItem) as the pool's JSON
- *  record store; a store that throws or answers junk is a record never kept. */
+ *  record store; a store that throws or answers junk is a record never kept. AUDIT WB A6: a write the storage refuses
+ *  (a full quota, a private window) is kept in this session's memory instead and read back from there - the session
+ *  still knows its spent receipts and its records, and a later write that lands takes over. */
 export function spoilsStore(storage) {
+  const mem = new Map();
   return {
-    get(k) { try { const v = storage?.getItem?.(k); return v ? JSON.parse(v) : null; } catch { return null; } },
-    set(k, v) { try { storage?.setItem?.(k, JSON.stringify(v)); } catch { /* the floor still holds them */ } },
-    remove(k) { try { storage?.removeItem?.(k); } catch { /* nothing to lose */ } },
+    get(k) {
+      if (mem.has(k)) return mem.get(k);
+      try { const v = storage?.getItem?.(k); return v ? JSON.parse(v) : null; } catch { return null; }
+    },
+    set(k, v) {
+      try { if (!storage?.setItem) throw new Error('no storage'); storage.setItem(k, JSON.stringify(v)); mem.delete(k); }
+      catch { mem.set(k, JSON.parse(JSON.stringify(v ?? null))); }
+    },
+    remove(k) { mem.delete(k); try { storage?.removeItem?.(k); } catch { /* nothing to lose */ } },
   };
 }
+/** AUDIT WB A7: the most crash records the device keeps (one a day and character), and spent receipts it remembers. */
+export const SPOILS_RECORDS_MAX = 8;
+export const SPOILS_SPENT_MAX = 32;
+/** A spent receipt's key: its day and account (AUDIT WB A9). */
+export const spentKey = (day, acct) => `${day}:${acct ?? ''}`;
+/** The records as a list - an older build's single record is a list of one. */
+const recordsOf = (v) => (Array.isArray(v) ? v : v && typeof v === 'object' ? [v] : []);
 
 /** Whether a save of the character `who` was written after `at` (wall-clock ms, as the slots' realTime) - its pack holds
  *  every piece of a burst before it. `saves` the slots' SaveInfos (systems/saveSlots.js enumerateSaves). */
@@ -94,19 +117,26 @@ function keptPiece(p) {
  * THE CRASH'S DOOR, at boot: a record whose pieces no save of its character holds is handed over whole, and kept until
  * one does; a save since the burst holds them, and the record is cleared; another character's record waits for them.
  * Answers how many pieces it handed over.
- * @param {{ get: (k: string) => any, remove: (k: string) => void }} store @param {(piece: any) => void} take
+ * @param {{ get: (k: string) => any, remove: (k: string) => void, set?: (k: string, v: any) => void }} store @param {(piece: any) => void} take
  * @param {{ who?: string|null, saves?: Iterable<any> }} [opts] this character's id, and the save slots' infos
  */
 export function recoverSpoils(store, take, { who = null, saves = [] } = {}) {
-  let rec = null;
-  try { rec = store.get(SPOILS_STORE_KEY); } catch { rec = null; }
-  if (!rec) return 0;
-  const clear = () => { try { store.remove(SPOILS_STORE_KEY); } catch { /* the pack has them either way */ } };
-  if (typeof rec !== 'object' || !Array.isArray(rec.pieces) || !Number.isFinite(rec.at)) { clear(); return 0; }   // junk is no record
-  if (rec.who != null && rec.who !== who) return 0;
-  if (savedSince(saves, rec.who ?? who, rec.at)) { clear(); return 0; }
+  let v = null;
+  try { v = store.get(SPOILS_STORE_KEY); } catch { v = null; }
+  if (!v) return 0;
+  const infos = [...(saves ?? [])];
+  const all = recordsOf(v), left = [];
   let n = 0;
-  for (const p of rec.pieces) { const q = keptPiece(p); if (q) { take(q); n++; } }
+  for (const rec of all) {
+    if (!rec || typeof rec !== 'object' || !Array.isArray(rec.pieces) || !Number.isFinite(rec.at)) continue;   // junk is no record
+    if (rec.who != null && rec.who !== who) { left.push(rec); continue; }   // another character's waits for them
+    if (savedSince(infos, rec.who ?? who, rec.at)) continue;   // a save since holds them: it goes
+    for (const p of rec.pieces) { const q = keptPiece(p); if (q) { take(q); n++; } }
+    left.push(rec);   // and it stays until a save does
+  }
+  if (left.length !== all.length || !Array.isArray(v)) {
+    try { if (left.length) store.set?.(SPOILS_STORE_KEY, left); else store.remove(SPOILS_STORE_KEY); } catch { /* the pack has them either way */ }
+  }
   return n;
 }
 
@@ -127,19 +157,31 @@ export function createSpoilsPool({
 }) {
   let glow = null;
   try { if (gl) glow = new SpoilsGlowRenderer(gl); } catch (e) { console.warn('[gate] the spoils\' glow would not build', e?.message ?? e); glow = null; }
-  /** the spew under way: its day, when it began, where it left from; each piece's flight, rest and batch; the day spent */
-  let rec = null, t0 = 0, from = null, launches = [], spent = null;
+  /** the spew under way: its day, when it began, where it left from; each piece's flight, rest and batch */
+  let rec = null, t0 = 0, from = null, launches = [];
   /** @type {Array<{ piece: any, fly: any, left: boolean, restAt: number, taken: boolean, batch: any }>} */
   let floor = [];
   let lastT = 0, tex = null, texLoading = null;
 
   const keep = (k, v) => { try { store?.set(k, v); } catch { /* the floor still holds them */ } };
-  /** Whether `day`'s spoils have left him already - this session's word, or the device's. */
-  function spentOn(day) {
-    if (spent === day) return true;
-    let kept = null;
-    try { kept = store?.get(SPOILS_DAY_KEY) ?? null; } catch { kept = null; }
-    return kept === day;
+  const read = (k) => { try { return store?.get(k) ?? null; } catch { return null; } };
+  /** the receipts spent this session - the device's word may be lost (no store), this one is not */
+  const spentHere = new Set();
+  /** Whether the spoils of `day` for `acct` have left him already - this session's word, or the device's (an older
+   *  build's single day spent for anyone). */
+  function spentOn(day, acct) {
+    if (spentHere.has(spentKey(day, acct))) return true;
+    const kept = read(SPOILS_DAY_KEY);
+    return kept === day || (Array.isArray(kept) && (kept.includes(spentKey(day, acct)) || kept.includes(spentKey(day, '*'))));
+  }
+  /** The receipt spent, here and on the device, and its pieces kept as rolled until a save holds them. */
+  function spend(day, acct, list) {
+    spentHere.add(spentKey(day, acct));
+    const kept = read(SPOILS_DAY_KEY);
+    keep(SPOILS_DAY_KEY, [...(Array.isArray(kept) ? kept : Number.isSafeInteger(kept) ? [spentKey(kept, '*')] : []), spentKey(day, acct)].slice(-SPOILS_SPENT_MAX));
+    const w = who();
+    const recs = recordsOf(read(SPOILS_STORE_KEY)).filter((r) => r && !(r.day === day && r.who === w));
+    keep(SPOILS_STORE_KEY, [...recs, { day, at: wall(), who: w, pieces: list }].slice(-SPOILS_RECORDS_MAX));
   }
 
   function loadTex() {
@@ -171,17 +213,26 @@ export function createSpoilsPool({
      * (the dungeon's frame) toward `bearing` (the angle from him to the player). Once a day, on this device: a day
      * already spent is nothing. The pieces as rolled go into the device's record the moment they leave him.
      */
-    spew({ day, seed, level, at, bearing }) {
-      if (spentOn(day)) { spent = day; return false; }
-      spent = day;
-      keep(SPOILS_DAY_KEY, day);
+    spew({ day, seed, level, at, bearing, acct = '' }) {
+      if (spentOn(day, acct)) return false;
       rec = { day };
       t0 = now(); lastT = t0; from = [...at];
       const list = spoilsList(seed >>> 0, Math.max(1, level | 0));
       launches = spewLaunches(seededRng(((seed >>> 0) ^ 0x5a5a) >>> 0), list.length, bearing);
       floor = list.map((piece, i) => ({ piece, fly: spewPiece(from, launches[i]), left: false, restAt: 0, taken: false, batch: null }));
-      keep(SPOILS_STORE_KEY, { day, at: wall(), who: who(), pieces: list });
+      spend(day, acct, list);
       loadTex();
+      return true;
+    },
+    /** AUDIT WB A2: THE SPOILS WITH NO FLOOR - a receipt that came while its court was not this player's to stand in
+     *  (cast out before the kill, gone, told by the hub's next hello): the same pieces, straight into the pack, said
+     *  once. Once a receipt, as the burst is; answers whether they were given. */
+    grant({ day, seed, level, acct = '' }) {
+      if (spentOn(day, acct)) return false;
+      const list = spoilsList(seed >>> 0, Math.max(1, level | 0));
+      spend(day, acct, list);
+      for (const piece of list) take(piece);
+      say(SPOILS_TEXT.granted);
       return true;
     },
     /** One frame: the pieces leave on their schedule, fly, clatter and rest; a resting piece under the player's feet is

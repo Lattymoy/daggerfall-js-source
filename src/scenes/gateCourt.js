@@ -179,7 +179,7 @@ export function createGateCourt({
     const [x, z] = bossPlace(s, s.fell.at);
     const at = courtToDungeon(x, GLOW_UP, z), f = feet();
     const bearing = f ? Math.atan2(f[0] - at[0], f[2] - at[2]) : s.yaw;
-    spoils.spew({ day: s.day, seed: claims.c, level: player()?.level ?? 1, at, bearing });
+    spoils.spew({ day: s.day, seed: claims.c, level: player()?.level ?? 1, at, bearing, acct: claims.s });   // AUDIT WB A9: once a receipt - its day and account
   }
 
   function loadBody(s) {

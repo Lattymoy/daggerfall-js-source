@@ -384,7 +384,9 @@ export default {
         // service's own gap, not the player's: 503, and the client keeps
         // the receipt for the week it carries.
         const r = await claimGate(ctx, who.player, body.receipt, await gatePublicKey(env, subtle));
-        if (r.error) return no(r.error, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);
+        // AUDIT WB A5: a refused receipt says WHICH rung refused it - the client keeps one the service can mend (its key
+        // not the relay's pair, a clock) and lets go of one it cannot
+        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);
         return json(r, 200, origin);
       }
 

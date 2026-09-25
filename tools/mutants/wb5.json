@@ -155,7 +155,7 @@
   {
     "name": "WB5-no-record-kept",
     "file": "src/scenes/world.js",
-    "old": "    store: spoilsStore(appStorage()),\n    who: () => characterIdOf(playerEntity),",
+    "old": "    store: _spoilsStore,\n    who: () => characterIdOf(playerEntity),",
     "new": "    who: () => characterIdOf(playerEntity),",
     "tests": [
       "test/wb5_gate_spoils.test.js"
@@ -218,7 +218,7 @@
   {
     "name": "WB5-the-devices-word-ignored",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    return kept === day;",
+    "old": "    return kept === day || (Array.isArray(kept) && (kept.includes(spentKey(day, acct)) || kept.includes(spentKey(day, '*'))));",
     "new": "    return false;",
     "tests": [
       "test/wb5_gate_spoils.test.js"
@@ -227,7 +227,7 @@
   {
     "name": "WB5-the-sessions-word-ignored",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    if (spent === day) return true;\n",
+    "old": "    if (spentHere.has(spentKey(day, acct))) return true;\n",
     "new": "",
     "tests": [
       "test/wb5_gate_spoils.test.js"
@@ -236,8 +236,8 @@
   {
     "name": "WB5-the-record-without-its-pieces",
     "file": "src/scenes/spoilsPool.js",
-    "old": "keep(SPOILS_STORE_KEY, { day, at: wall(), who: who(), pieces: list });",
-    "new": "keep(SPOILS_STORE_KEY, { day, at: wall(), who: who(), pieces: [] });",
+    "old": "keep(SPOILS_STORE_KEY, [...recs, { day, at: wall(), who: w, pieces: list }].slice(-SPOILS_RECORDS_MAX));",
+    "new": "keep(SPOILS_STORE_KEY, [...recs, { day, at: wall(), who: w, pieces: [] }].slice(-SPOILS_RECORDS_MAX));",
     "tests": [
       "test/wb5_gate_spoils.test.js"
     ]
@@ -245,7 +245,7 @@
   {
     "name": "WB5-a-save-since-ignored",
     "file": "src/scenes/spoilsPool.js",
-    "old": "  if (savedSince(saves, rec.who ?? who, rec.at)) { clear(); return 0; }\n",
+    "old": "    if (savedSince(infos, rec.who ?? who, rec.at)) continue;   // a save since holds them: it goes\n",
     "new": "",
     "tests": [
       "test/wb5_gate_spoils.test.js"
@@ -254,7 +254,7 @@
   {
     "name": "WB5-another-character-handed-them",
     "file": "src/scenes/spoilsPool.js",
-    "old": "  if (rec.who != null && rec.who !== who) return 0;\n",
+    "old": "    if (rec.who != null && rec.who !== who) { left.push(rec); continue; }   // another character's waits for them\n",
     "new": "",
     "tests": [
       "test/wb5_gate_spoils.test.js"

@@ -132,6 +132,12 @@ test('WB5b the worker: /v1/gate/claim behind a session and never open - the sess
   assert.deepEqual((await call('POST', '/v1/gate/claim', { receipt: r, account: them.id }, me.secret)).body, { recorded: true, closed: 1 });
   assert.equal((await call('POST', '/v1/gate/claim', { receipt: r }, them.secret)).status, 403, 'another\'s receipt');
   assert.equal((await call('POST', '/v1/gate/claim', { receipt: 'r1.x.y' }, me.secret)).status, 400);
+  // AUDIT WB A5: a refused receipt says which rung refused it - a signature the service's half does not verify is one
+  // the client keeps (the pair can be mended within the week), a shape it lets go
+  const forged = await call('POST', '/v1/gate/claim', { receipt: await receiptFor(me.id, 704, (await gatePair()).priv, T0) }, me.secret);
+  assert.deepEqual([forged.status, forged.body], [400, { error: 'receipt', why: 'signature' }]);
+  assert.equal((await call('POST', '/v1/gate/claim', { receipt: 'r1.x.y' }, me.secret)).body.error, 'receipt');
+  assert.equal(typeof (await call('POST', '/v1/gate/claim', { receipt: 'r1.x.y' }, me.secret)).body.why, 'string');
   assert.deepEqual((await call('GET', '/v1/account', undefined, me.secret)).body.account.gates, { closed: 1 }, 'the main menu\'s card reads it here');
   assert.deepEqual((await call('POST', '/v1/duel/record', { id: me.id }, them.secret)).body.gates, { closed: 1 }, 'and the Inspect card with the duels');
   const bare = await stand();
@@ -160,7 +166,7 @@ test('WB5b the client: with no session there is no account to claim for - nothin
 });
 
 /** A device queue over a Map store, a scripted service, and two clocks. */
-async function queue(answers = () => ({ ok: true, data: { recorded: true, closed: 1 } })) {
+async function queue(answers = () => ({ ok: true, data: { recorded: true, closed: 1 } }), { me = 'acct-me' } = {}) {
   const mem = new Map();
   const store = { get: (k) => (mem.has(k) ? JSON.parse(mem.get(k)) : null), set: (k, v) => mem.set(k, JSON.stringify(v)) };
   const clock = { s: T0 + 10, ms: 1_000_000 };
@@ -168,6 +174,7 @@ async function queue(answers = () => ({ ok: true, data: { recorded: true, closed
   const q = createGateClaims({
     claim: async (r) => { asked.push(r); return answers(r, asked.length); },
     store, nowS: () => clock.s, nowMs: () => clock.ms, say: (t) => said.push(t), onClosed: (n) => closed.push(n),
+    me: () => me,   // AUDIT WB A9: the signed-in account - its receipts alone are offered
   });
   const { priv } = await gatePair();
   return { q, mem, store, clock, asked, said, closed, priv };
@@ -212,7 +219,9 @@ test('WB5b the device\'s queue: a receipt the relay hands the socket is kept and
   assert.equal(gateClaimVerdict({ ok: true, data: { recorded: true, closed: 3 } }), 'done');
   assert.equal(gateClaimVerdict({ ok: true, data: { recorded: false, why: 'claimed', closed: 3 } }), 'done');
   assert.equal(gateClaimVerdict({ ok: true, data: { recorded: false, why: 'guest', closed: 0 } }), 'keep');
-  for (const e of ['receipt', 'not-yours']) assert.equal(gateClaimVerdict({ ok: false, error: e }), 'done', e);
+  assert.equal(gateClaimVerdict({ ok: false, error: 'receipt', why: 'expired' }), 'done', 'not a receipt the gate signed, for good');
+  assert.equal(gateClaimVerdict({ ok: false, error: 'receipt' }), 'done', 'no rung named: for good');
+  assert.equal(gateClaimVerdict({ ok: false, error: 'not-yours' }), 'keep', 'AUDIT WB A9: another account\'s waits for it');
   for (const e of ['no-session', 'no-gate-key', 'offline', 'server', 'rate', 'auth']) assert.equal(gateClaimVerdict({ ok: false, error: e }), 'keep', e);
   // kept through a transient refusal; the guest told once
   const k = await queue((_r, n) => (n === 1 ? { ok: false, error: 'offline' } : { ok: true, data: { recorded: false, why: 'guest', closed: 0 } }));
@@ -233,10 +242,10 @@ test('WB5b the device\'s queue: a receipt the relay hands the socket is kept and
   await settle(); await settle();
   assert.equal(d.q.kept().length, GATE_CLAIMS_MAX, 'bounded');
   // refused for good
-  const f = await queue(() => ({ ok: false, error: 'not-yours' }));
+  const f = await queue(() => ({ ok: false, error: 'receipt', why: 'claims' }));
   f.q.add(await receiptFor('acct-me', 700, f.priv, T0));
   await settle();
-  assert.deepEqual(f.q.kept(), [], 'another\'s: let go');
+  assert.deepEqual(f.q.kept(), [], 'not the gate\'s: let go');
   assert.equal(JSON.parse(f.mem.get(GATE_CLAIMS_KEY)).length, 0);
 });
 
@@ -319,8 +328,10 @@ test('WB5b the seams: the gate link tells every receipt it folds; the world host
   link.word({ k: 'rcpt', r: 'junk' });
   assert.deepEqual(told, [], 'a word that is not a receipt tells nothing');
   const w = src('src/scenes/world.js');
-  assert.match(w, /const gateClaims = params\.has\('online'\) \? createGateClaims\(\{\n    claim: accountGates\(\{ fetch: \(u, i\) => globalThis\.fetch\(u, i\), storage: appStorage\(\) \}\)\.claim,\n    store: spoilsStore\(appStorage\(\)\),/);
-  assert.match(w, /\n    onReceipt: \(r\) => \{ gateClaims\?\.add\(r\); \},/);
+  assert.match(w, /const _spoilsStore = spoilsStore\(appStorage\(\)\);/);
+  assert.match(w, /const _accountGates = accountGates\(\{ fetch: \(u, i\) => globalThis\.fetch\(u, i\), storage: appStorage\(\) \}\);/);
+  assert.match(w, /const gateClaims = params\.has\('online'\) \? createGateClaims\(\{\n    claim: _accountGates\.claim,\n    me: _accountGates\.me,\n    store: _spoilsStore,/, 'AUDIT WB A6/A9: the one store, and the signed-in account');
+  assert.match(w, /\n    onReceipt: \(r\) => \{ gateClaims\?\.add\(r\); grantSpoilsOutside\(r\); \},/);
   assert.match(w, /\n    gateClaims\?\.tick\(\);   \/\/ WB5b/);
   assert.match(w, /duels: _profileSub \? profileDuelLine\(rec\) : null, gates: profileGateLine\(rec\) \};/);
   assert.ok(w.indexOf('const gateClaims = ') < w.indexOf('const gateLink = '), 'the queue stands before the link that feeds it');

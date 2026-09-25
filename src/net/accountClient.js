@@ -203,7 +203,7 @@ export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = nul
     // The service says `{ error: '<word>' }`. A proxy, a 502 or an
     // HTML error page says nothing we can read, and `server` is the
     // honest answer for that rather than a guess at which word it meant.
-    return { ok: false, error: typeof data?.error === 'string' ? data.error : 'server', status: res.status };
+    return { ok: false, error: typeof data?.error === 'string' ? data.error : 'server', ...(typeof data?.why === 'string' ? { why: data.why } : {}), status: res.status };   // AUDIT WB A5: and the rung, where the service names one
   }
   return { ok: true, data, status: res.status };
 }
@@ -471,6 +471,8 @@ export function accountGates({ fetch, storage }) {
   const io = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
   return {
     claim: async (receipt) => { const i = io(); return i ? claimGateReceipt(i, receipt) : { ok: false, error: 'no-session' }; },
+    /** AUDIT WB A9: the signed-in account's id - the receipts this device may offer are its alone. */
+    me: () => storedSession(storage)?.id ?? null,
   };
 }
 

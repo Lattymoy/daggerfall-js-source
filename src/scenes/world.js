@@ -170,7 +170,7 @@ import { createGateOmen, insideGateRing, gateSceneXZ, fellLine, OMEN_SETTLE_MS }
 import { gateScanner, findGateSite } from '../systems/gateSite.js';   // WB1: where the day's gate stands, over the map files every client holds alike
 import { createGatePool, GATE_TEXT } from './gatePool.js';   // WB2: the gate the world stands - its stone, its fire and beacon, its collider and its door
 import { drawGateBanner } from '../ui/gateBanner.js';
-import { createGateLink, GATE_NO_TEXT } from '../net/gateLink.js';   // WB3b: what the client holds of a gate's fight - the relay's words, folded
+import { createGateLink, GATE_NO_TEXT } from '../net/gateLink.js'; import { readReceipt } from '../net/gateReceipt.js';   // AUDIT WB A2: a receipt's day, seed and account, for its spoils outside the court   // WB3b: what the client holds of a gate's fight - the relay's words, folded
 import { createGateClaims } from '../net/gateClaims.js';   // WB5b: the kill receipts, carried to the account service until counted
 import { createGateCourt } from './gateCourt.js';   // WB4: the fight on this screen - the boss drawn, heard and read, and his blows on me
 import { DeadlandsRenderer, skyGain } from '../render/deadlands.js';   // WB6a: the Deadlands' sky and sea round the Burning Court
@@ -10816,16 +10816,22 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  the omen reads its word of a kill (a gate whose boss fell collapses on every screen), the chat says the kill. */
   /** WB5b: THE RECEIPTS THIS DEVICE CARRIES TO THE ACCOUNT SERVICE (net/gateClaims.js) - each kill the relay signed for
    *  me, kept on the device until the service has counted it (the spoils' own JSON-over-Storage door). */
+  /** AUDIT WB A6: ONE STORE FOR THE SPOILS AND THE RECEIPTS (scenes/spoilsPool.js spoilsStore) - its memory stands in
+   *  for a storage that refuses writes, so every reader is this one. */
+  const _spoilsStore = spoilsStore(appStorage());
+  /** AUDIT WB A9: the account service's door on this device - the claim, and whose receipts it may offer. */
+  const _accountGates = accountGates({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
   const gateClaims = params.has('online') ? createGateClaims({
-    claim: accountGates({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }).claim,
-    store: spoilsStore(appStorage()),
+    claim: _accountGates.claim,
+    me: _accountGates.me,
+    store: _spoilsStore,
     say: (text) => chatNotice(text),
   }) : null;
   const gateLink = params.has('online') ? createGateLink({
     now: () => Date.now() + _sharedOffsetMs,
     say: (text) => setMidScreenText(text),
     onFell: (day, f) => { const site = gateOmen?.current?.()?.site; chatNotice(fellLine({ near: site?.day === day ? site.near : 'the wilds', boss: gateBossOf(day).name, top: f.top })); },
-    onReceipt: (r) => { gateClaims?.add(r); },   // WB5b: to the account service, kept until it is counted
+    onReceipt: (r) => { gateClaims?.add(r); grantSpoilsOutside(r); },   // WB5b: to the account service, kept until it is counted; AUDIT WB A2: and its spoils, when no court's floor will give them
     onRefused: (why) => { if (modes?.gateArenaDay?.() != null) ejectFromCourt(GATE_NO_TEXT[why] ?? why); },   // AUDIT WB B5: the relay will not have me in this fight - out before the gate, not left in an empty court
   }) : null;
   let _gateInFor = -1;   // WB3b: the welcome my level claim was said for - once per welcome of the court's room
@@ -10843,9 +10849,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     now: () => Date.now() + _sharedOffsetMs,
     take: takeSpoil,
     say: (text) => setMidScreenText(text),
-    store: spoilsStore(appStorage()),
+    store: _spoilsStore,
     who: () => characterIdOf(playerEntity),
   }) : null;
+  /** AUDIT WB A2: THE SPOILS WITH NO FLOOR - a receipt that comes while this player is not in its court (cast out before
+   *  the kill, gone, handed it by the hub's next hello) is its spoils straight into the pack; in its court the burst
+   *  gives them. Once a receipt either way - the pool keeps which are spent. */
+  function grantSpoilsOutside(r) {
+    const c = readReceipt(r);
+    if (!c || !spoilsPool || modes?.gateArenaDay?.() === c.d) return;
+    try { spoilsPool.grant({ day: c.d, seed: c.c, level: playerEntity.level ?? 1, acct: c.s }); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); }
+  }
   /** WB5: THE CRASH'S DOOR (scenes/spoilsPool.js recoverSpoils) - asked once for each character that stands up in this
    *  session, online or not, before it can save: a boss's spoils no save of theirs holds are handed back. */
   /** WB6a: THE DEADLANDS' SKY AND SEA (render/deadlands.js), built the first time a court is stood in - a pass that will
@@ -10870,7 +10884,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const who = characterIdOf(playerEntity);
     if (who === _spoilsAskedFor) return;
     _spoilsAskedFor = who;
-    try { if (recoverSpoils(spoilsStore(appStorage()), takeSpoil, { who, saves: enumerateSaves().info.values() })) setMidScreenText(SPOILS_TEXT.gathered); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); }
+    try { if (recoverSpoils(_spoilsStore, takeSpoil, { who, saves: enumerateSaves().info.values() })) setMidScreenText(SPOILS_TEXT.gathered); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); }
   };
   const gateCourt = gateLink ? createGateCourt({
     renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio, link: gateLink, spoils: spoilsPool,

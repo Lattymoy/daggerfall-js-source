@@ -392,8 +392,10 @@ algorithm and is read first; signature first, content second; refuse, never repa
 an identity or an order, nor they as it**: its prefix is `r1`, which the identity verifier refuses before a byte is
 parsed, and it is signed by a different key. The relay's key is a Worker secret (`GATE_SIGNING_KEY`, PKCS8, sign
 only, non-extractable - `server-account/src/signing.js`'s shape); the account service holds its public half
-(`GATE_PUBLIC_KEY`), and the deploy checks the pair as it checks the identity pair. A relay with no key still runs
-the fight and the loot - the receipt is then unsigned and the account service declines it, and nothing else changes.
+(`GATE_PUBLIC_KEY`). Nothing checks the pair at deploy (AUDIT WB A5 - an earlier line here said the deploy did): a
+service whose half is not the relay's refuses every receipt at the `signature` rung, and the device keeps such a
+receipt for its week, so a mended pair still counts it. A relay with no key still runs the fight and the loot - the
+receipt is then unsigned and the account service declines it, and nothing else changes.
 
 **The account service** (acct10): migration 0009 `gate_kills (day, account, boss, earned, at)`, primary key
 `(day, account)`, so a receipt counts once whatever happens to it. `POST /v1/gate/claim { receipt }` behind a session
@@ -425,7 +427,10 @@ player's roll is its own.
   `addGoldPieces`), the name said in its colour. Leaving the arena with pieces still on the floor GATHERS them into
   the pack - a boss's reward is never lost to a door, a disconnect or a death. The spoils ride a record on the device
   from the burst until a save holds them (the court refuses the save - WB5a), so a crash between the spew and the next
-  save loses nothing either.
+  save loses nothing either - one record a day and character, a list (AUDIT WB A7).
+- **No floor** (AUDIT WB A2): a receipt that comes while the player is not in its court - cast out before the kill,
+  gone from the game, handed it by the hub's next hello - is its spoils straight into the pack, said once, kept on the
+  same record. Once a receipt (its day and account) whichever door gives them.
 
 ## 8. The wire
 
@@ -519,6 +524,16 @@ The relay's half (RELAY_VERSION world111):
 | A8 | a newcomer to a fight already bled came with a full damage bucket - a string of late joiners could each spend one at once | an empty bucket after the first blow |
 | A10 | the kill was fanned before it was written: an eviction between them told the court of a kill storage never kept (the wake resumed a living Warden) and re-minted every receipt on new seeds; the hub was told once, and a failed tell was never retried | minted, written, then said; the hub told until it answers (`told`, a beat every `GATE_TELL_RETRY_MS`) |
 | C7 | (the client's) a day's gate times made again every frame | made once and frozen (`net/gateLaw.js` is in the relay's bundle, so it rides this version) |
+
+The spoils and the claims:
+
+| # | what was wrong | now |
+|---|---|---|
+| A2 | a fighter outside the court at the kill (cast out, gone) had a receipt and no spoils: the court's burst was the only door | a receipt that comes outside its court grants its spoils straight into the pack (`grant`) |
+| A5 | the claim route dropped the verifier's rung, and the device let go of every refused receipt - a service whose public half was not the relay's pair threw away a week of everyone's gates; and this page claimed a deploy check of the pair that does not exist | the route says the rung; `signature`, `verify-threw`, `future` and `clock` are kept for the week (`GATE_CLAIM_MENDABLE`); the claim corrected |
+| A6 | a storage that refused writes (a full quota, a private window) lost the receipts and the spoils' records silently | the session's memory keeps what the storage would not, one store for every reader |
+| A7 | the spoils' crash record was one slot: a second burst before a save wrote over the first | a list, one a day and character |
+| A9 | the spent day and the claims' queue were the device's: a second account on the device had its spoils refused and its receipts offered under the wrong sign-in (and let go as `not-yours`) | spent by day and account; receipts kept one a day and account, only the signed-in account's offered, another's kept unasked |
 
 ## Shipped
 
@@ -732,3 +747,12 @@ alone written, the kill kept before it is said and the hub told until it answers
 bundle; the bump drops every connected player once. Pins `test/auditwb_relay.test.js` (9); re-aimed: the exact-version
 pins and soc1's version record, two WB3 mutant records (the join's `present`, the hub's answer); mutants
 `tools/mutants/auditwb_relay.json` (29 dead).
+
+**AUDIT WB - the spoils and the claims (2026-09-25).** A2, A5, A6, A7 and A9 above: `scenes/spoilsPool.js` (`grant`,
+spent by `spentKey` day and account, the records a list, `spoilsStore`'s memory), `net/gateClaims.js` (the mendable
+rungs, `me`, one a day and account, the memory), `net/accountClient.js` (the rung carried, `me`),
+`server-account/src/index.js` (the route says the rung - a redeploy of the account service carries it; until then the
+device keeps the old verdict), `scenes/gateCourt.js` (the burst's account), `scenes/world.js` (one store,
+`grantSpoilsOutside`). Pins `test/auditwb_spoils.test.js` (7); re-aimed: WB5's record and spent-day pins, WB5b's queue
+(the signed-in account), verdict, worker and seam pins, ten WB5/WB5b mutant records; mutants
+`tools/mutants/auditwb_spoils.json` (26 dead).

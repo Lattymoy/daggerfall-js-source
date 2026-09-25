@@ -74,7 +74,7 @@
   {
     "name": "WB5b-a-kept-receipt-lost",
     "file": "src/net/gateClaims.js",
-    "old": "  return answer?.error === 'receipt' || answer?.error === 'not-yours' ? 'done' : 'keep';",
+    "old": "  return answer?.error === 'receipt' && !GATE_CLAIM_MENDABLE.includes(answer.why) ? 'done' : 'keep';",
     "new": "  return 'done';",
     "tests": [
       "test/wb5b_gate_claim.test.js"
@@ -110,8 +110,8 @@
   {
     "name": "WB5b-an-offer-every-frame",
     "file": "src/net/gateClaims.js",
-    "old": "      if (busy || nowMs() - lastAt < GATE_CLAIM_RETRY_MS) return false;",
-    "new": "      if (busy) return false;",
+    "old": "      if (busy || (!signedIn && nowMs() - lastAt < GATE_CLAIM_RETRY_MS)) return false;",
+    "new": "      if (busy || !signedIn && false) return false;",
     "tests": [
       "test/wb5b_gate_claim.test.js"
     ]
@@ -128,7 +128,7 @@
   {
     "name": "WB5b-two-a-day",
     "file": "src/net/gateClaims.js",
-    "old": "k === r || readReceipt(k)?.d === c.d",
+    "old": "k === r || (o?.d === c.d && o?.s === c.s)",
     "new": "k === r",
     "tests": [
       "test/wb5b_gate_claim.test.js"
@@ -191,8 +191,8 @@
   {
     "name": "WB5b-no-receipt-to-the-queue",
     "file": "src/scenes/world.js",
-    "old": "    onReceipt: (r) => { gateClaims?.add(r); },",
-    "new": "    // onReceipt: (r) => { gateClaims?.add(r); },",
+    "old": "    onReceipt: (r) => { gateClaims?.add(r); grantSpoilsOutside(r); },",
+    "new": "    onReceipt: (r) => { grantSpoilsOutside(r); },",
     "tests": [
       "test/wb5b_gate_claim.test.js"
     ]
