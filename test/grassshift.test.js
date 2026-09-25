@@ -240,3 +240,139 @@ test('PERF-EXT-C2: the host moves the field at a shift, empties it at a teleport
   assert.match(rs, /if \(stride === 1 && labGrassField\) \{\n      const t = state\.pixelTranslation\(p\.px, p\.py\);\n      labGrassField\.invalidate\(t\[0\], t\[2\], t\[0\] \+ TERRAIN_SIZE, t\[2\] \+ TERRAIN_SIZE\);/,
     'a promotion to the near ring re-reads the cells over it');
 });
+
+// ─── PERF-EXT-C3: A WALK PLACES ITS RIM A SLICE A FRAME ──────────────
+/** A renderer that records, per written slot, the cell's lanes as bytes. */
+function laneRecorder() {
+  const writes = [];
+  return {
+    writes,
+    allocSlots() {}, clearSlot() {}, shiftSlots() {},
+    writeSlot(slot, placed) {
+      const bytes = (a) => Buffer.from(a.buffer, a.byteOffset, a.byteLength).toString('base64');
+      writes.push({ slot, count: placed.count, lanes: [placed.inst, placed.inst2, placed.rootY, placed.ground].map(bytes).join('|') });
+    },
+  };
+}
+const lanesOf = (p) => [p.inst, p.inst2, p.rootY, p.ground].map((a) => Buffer.from(a.buffer, a.byteOffset, a.byteLength).toString('base64')).join('|');
+
+test('PERF-EXT-C3: a cell placed a slice at a time is the cell placed whole - byte for byte, however the loop is cut', () => {
+  assert.equal(typeof G.beginGrassCell, 'function', 'the placer can be begun');
+  assert.equal(typeof G.stepGrassCell, 'function', 'and stepped');
+  const { closures } = ring(2);
+  const { keep, ground } = closures([-TERRAIN_SIZE, 0, 7]);   // a field that has crossed: the origin rides the placement
+  const perCell = G.grassPerCell();
+  for (let c = 0; c < 24; c++) {
+    const cx = (c % 6) * 5 - 12, cz = Math.floor(c / 6) * 7 - 12, originX = -TERRAIN_SIZE, originZ = 7;
+    const whole = G.placeLabGrassCell(cx, cz, { keep, ground, perCell, originX, originZ });
+    assert.ok(whole.count > 1000, `a cell that stands (${whole.count})`);
+    for (const slice of (c < 3 ? [1, 777, G.GRASS_SLICE, perCell] : [777, G.GRASS_SLICE, perCell])) {
+      const st = G.beginGrassCell(cx, cz, { perCell, originX, originZ });
+      let steps = 0;
+      while (!G.stepGrassCell(st, slice, { keep, ground })) steps++;
+      assert.equal(steps, Math.ceil(perCell / slice) - 1, 'done on the slice that places the last candidate, not before');
+      assert.equal(st.count, whole.count, `slice ${slice}: the same blades stood`);
+      assert.equal(lanesOf(st), lanesOf(whole), `slice ${slice}: the same bytes, lane for lane`);
+    }
+  }
+});
+
+test('PERF-EXT-C3: on a walk no frame places more than one slice, every rim cell lands whole and exact, and the field ends where a whole fill would', () => {
+  const { closures } = ring(2);
+  const off = [-TERRAIN_SIZE, 0, 0];   // the walk is on a field that has crossed once: the slices ride its origin
+  const cl0 = closures([0, 0, 0]), cl = closures(off);
+  let calls = 0;
+  const keep = (x, z) => { calls++; return cl.keep(x, z); };
+  const R = laneRecorder();
+  const field = G.createGrassField(R, cl0);
+  const E = [409.6 + off[0], 0, 409.6];
+  settle(field, [409.6, 0, 409.6], cl0);
+  field.shiftOrigin(off);
+  settle(field, E, { keep, ground: cl.ground });
+  assert.equal(field.pending, null, 'a settled field has nothing half placed');
+  R.writes.length = 0;
+  // walk east at 9 m/s for 40 m, a frame at a time
+  let ex = E[0], worst = 0, sliced = 0;
+  for (let f = 0; f < 270; f++) {
+    ex += 0.15;
+    calls = 0;
+    field.update(ex, E[2], keep, cl.ground);
+    worst = Math.max(worst, calls);
+    if (field.pending) sliced++;
+  }
+  for (let f = 0; f < 60; f++) field.update(ex, E[2], keep, cl.ground);
+  assert.ok(worst <= G.GRASS_SLICE, `no walking frame asks keep() more than a slice (worst ${worst}; a whole cell is ${field.perCell})`);
+  assert.ok(sliced > 20 && R.writes.length > 5, `the rim came in by slices (${sliced} frames with a cell in progress, ${R.writes.length} cells written)`);
+  // every cell the walk wrote is the cell placeLabGrassCell makes, at the field's origin
+  const written = new Map([...field.live.entries()].map(([k, h]) => [h.slot, h]));
+  let checked = 0;
+  for (const w of R.writes) {
+    const h = written.get(w.slot);
+    if (!h) continue;
+    checked++;
+    assert.equal(w.lanes, lanesOf(G.placeLabGrassCell(h.cx, h.cz, { keep: cl.keep, ground: cl.ground, perCell: field.perCell, originX: off[0], originZ: off[2] })), `cell ${h.cx},${h.cz}: the bytes a whole placement makes`);
+  }
+  assert.ok(checked > 5);
+  // and the walk ends holding what a field filled at the end point holds -
+  // plus the trailing cells PERF10's hysteresis keeps out to the span
+  const fresh = G.createGrassField(laneRecorder(), cl0);
+  fresh.shiftOrigin(off);
+  settle(fresh, [ex, 0, E[2]], cl);
+  const nearest = (h) => Math.hypot(Math.max(h.cx * G.GRASS_CELL + off[0] - ex, 0, ex - ((h.cx + 1) * G.GRASS_CELL + off[0])), Math.max(h.cz * G.GRASS_CELL - E[2], 0, E[2] - (h.cz + 1) * G.GRASS_CELL));
+  const missing = [...fresh.live.keys()].filter((k) => !field.live.has(k));
+  const extra = [...field.live.values()].filter((h) => !fresh.live.has(G.cellKey(h.cx, h.cz)));
+  assert.deepEqual(missing, [], 'every cell a whole fill holds, the walk holds');
+  assert.ok(extra.every((h) => nearest(h) > G.LAB_GRASS.range && nearest(h) <= G.LAB_GRASS.span), 'and the rest are the trailing rim the hysteresis keeps');
+});
+
+test('PERF-EXT-C3: inside the fade a cell still comes whole, a boot still fills two whole cells a frame, and a shift or an invalidate starts a half-placed cell again', () => {
+  // the fade's start is the SHADER's (the lab's text), not a second guess of it
+  const m = /smoothstep\(uRange\*([0-9.]+), uRange, d\)/.exec(G.LAB_GRASS_VS);
+  assert.ok(m, 'the lab shader fades from a fraction of the range');
+  assert.equal(G.GRASS_WHOLE_AT, Number(m[1]), 'a cell inside the fade start is placed whole');
+  const { closures } = ring(2);
+  const cl = closures([0, 0, 0]);
+  let calls = 0;
+  const keep = (x, z) => { calls++; return cl.keep(x, z); };
+  const R = laneRecorder();
+  const field = G.createGrassField(R, { keep, ground: cl.ground });
+  // a boot is a catch-up: two whole cells on the first frame
+  calls = 0;
+  const missing = field.update(409.6, 409.6, keep, cl.ground);
+  assert.ok(missing > G.GRASS_CATCH_UP && R.writes.length === 2 && calls === 2 * field.perCell, `a boot: two whole cells (${R.writes.length}, ${calls} keeps)`);
+  // ...and it keeps that pace to the rim: only the last GRASS_CATCH_UP cells come a slice at a time
+  const frames = settle(field, [409.6, 0, 409.6], { keep, ground: cl.ground });
+  const whole = Math.ceil((field.live.size - G.GRASS_CATCH_UP) / 2), tail = G.GRASS_CATCH_UP * Math.ceil(field.perCell / G.GRASS_SLICE);
+  assert.ok(frames <= whole + tail + 2, `the boot fills at two cells a frame to the last few (${frames} frames for ${field.live.size} cells; the old pace ${Math.ceil(field.live.size / 2)})`);
+  // two inner cells re-read (an invalidate under the eye): whole, both on the next frame
+  R.writes.length = 0;
+  field.invalidate(400, 400, 420, 420);   // the eye's own cell and a neighbour, well inside the fade start
+  calls = 0;
+  field.update(409.6, 409.6, keep, cl.ground);
+  assert.equal(R.writes.length, 2, 'the cells under the eye come back whole, on the frame they are missed');
+  assert.equal(field.pending, null);
+  // a half-placed rim cell: begun by a step, cancelled by a shift, by an
+  // invalidate over it, and by the eye walking away before it is done
+  let ex = 409.6;
+  for (const cancel of ['shift', 'invalidate', 'walked away']) {
+    for (let f = 0; f < 400 && !field.pending; f++) { ex += 0.15; field.update(ex, 409.6, keep, cl.ground); }
+    const p = field.pending;
+    assert.ok(p, 'a walk begins a rim cell');
+    if (cancel === 'shift') field.shiftOrigin([0, 0, 0]);
+    else if (cancel === 'invalidate') field.invalidate(p.cx * G.GRASS_CELL, p.cz * G.GRASS_CELL, p.cx * G.GRASS_CELL + 1, p.cz * G.GRASS_CELL + 1);
+    else {
+      field.update(ex - 60, 409.6, keep, cl.ground);   // sixty metres back: the cell is out of reach
+      assert.ok(!field.live.has(p.key), 'and it is not written out of reach');
+    }
+    assert.equal(field.pending, null, `${cancel}: the half-placed cell is dropped, to be begun again from the world as it stands`);
+    settle(field, [ex, 0, 409.6], { keep, ground: cl.ground });
+    assert.ok(field.live.has(p.key), `${cancel}: and it lands on a later frame`);
+  }
+  // a cell no bigger than a slice is placed whole even at the rim
+  const small = G.createGrassField(laneRecorder(), { ...cl, density: G.LAB_GRASS.density / 8 });
+  assert.ok(small.perCell <= G.GRASS_SLICE);
+  settle(small, [409.6, 0, 409.6], cl);
+  let sx = 409.6, landed = 0;
+  for (let f = 0; f < 200; f++) { sx += 0.15; const n = small.live.size; small.update(sx, 409.6, cl.keep, cl.ground); if (small.live.size > n) landed++; assert.equal(small.pending, null, 'nothing is left half placed'); }
+  assert.ok(landed > 0, 'and the walk did bring cells in');
+});

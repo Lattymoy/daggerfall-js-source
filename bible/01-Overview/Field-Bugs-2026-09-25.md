@@ -112,3 +112,9 @@ cluster C has the numbers and the laws):
   place (0.2-0.3 ms, no upload); every stale-cell heal the rebuild gave
   by accident is said on purpose (every publish, every promotion), and a
   teleport or a load - which never emptied the field - does.
+- **PERF-EXT-C3** - a walk places its grass rim a slice a frame. A cell
+  arriving at the 300 m rim was placed whole on the frame it arrived, a
+  4-8 ms spike on 5-17% of frames while moving; it is placed 1,500
+  candidates a frame now, byte for byte the same cell (walking p99 4.4-6.6
+  ms -> 1.4-1.8 ms). A boot or a teleport still fills whole cells at the
+  old pace.

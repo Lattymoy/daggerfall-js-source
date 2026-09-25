@@ -266,7 +266,9 @@ test('GR5: a cell grows the same blades whoever is looking, and walking touches 
   // ...and a five-metre step reaches only the leading rim, and frees
   // nothing at all: the fill radius is the draw's range and cells are
   // held out to `span`, so nothing churns at the trailing edge.
-  f.update(start + 5, start);
+  // (PERF-EXT-C3: a walk's few rim cells arrive a slice a frame, so the
+  // step is given the frames its rim takes to land - the eye stays put.)
+  for (let i = 0; i < 40; i++) f.update(start + 5, start);
   const near = w.filter((x) => x[0] === 'w').length;
   assert.ok(near > 0 && near < live / 20, `five metres: the leading rim only (${near} of ${live})`);
   assert.equal(w.filter((x) => x[0] === 'c').length, 0, 'five metres frees nothing - the hysteresis holds the trailing rim');
@@ -419,8 +421,9 @@ test('GRASS6: the patch is BAKED - the clump noise is the placer\u2019s, once a 
   const gt = lrnd();
   assert.ok(Math.abs(g.inst2[2] - bakedTint(gt, gx, gz)) < 1e-6, 'the field placer\u2019s first blade is pulled to its patch too');
   // GRASS AUDIT 1: the noise is paid AFTER keep() - a road cell refuses most of its candidates, and 0.43 ms a cell was going on blades that never stood
-  // (PERF-EXT-C2: the cell placer bakes at the FIELD's coordinates, fx/fz - the scene's x/z less the field's origin)
-  for (const [fn, bake] of [['export function placeLabGrassCell', 'bakedTint(tRnd, fx, fz)'], ['export function* placeLabGrassSteps', 'bakedTint(tRnd, x, z)']]) {
+  // (PERF-EXT-C2: the cell placer bakes at the FIELD's coordinates, fx/fz - the scene's x/z less the field's origin;
+  // PERF-EXT-C3: its loop is stepGrassCell's, which placeLabGrassCell runs end to end)
+  for (const [fn, bake] of [['export function stepGrassCell', 'bakedTint(tRnd, fx, fz)'], ['export function* placeLabGrassSteps', 'bakedTint(tRnd, x, z)']]) {
     const body = src.slice(src.indexOf(fn), src.indexOf('\n}\n', src.indexOf(fn)));
     assert.ok(body.indexOf('const tRnd = rnd();') > 0 && body.indexOf('const tRnd = rnd();') < body.indexOf('keep(x, z)') && body.indexOf('keep(x, z)') < body.indexOf(bake), `${fn}: the random is drawn in the lab's order, keep() decides, THEN the patch is looked up`);
   }

@@ -173,5 +173,140 @@
    "test/grassshift.test.js",
    "test/labGrass.test.js"
   ]
+ },
+ {
+  "name": "PERF-EXT-C3-a-begun-rim-cell-is-placed-whole-on-the-frame-it-arrives",
+  "file": "src/render/labGrass.js",
+  "old": "          if (!stepGrassCell(st, GRASS_SLICE, ask)) { pending = { d, cx, cz, key, st }; continue; }",
+  "new": "          if (!stepGrassCell(st, perCell, ask)) { pending = { d, cx, cz, key, st }; continue; }",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C3-the-cell-in-progress-takes-its-whole-rest-on-a-walk",
+  "file": "src/render/labGrass.js",
+  "old": "        if (stepGrassCell(pending.st, catchUp ? perCell : GRASS_SLICE, ask)) {",
+  "new": "        if (stepGrassCell(pending.st, perCell, ask)) {",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C3-a-slice-forgets-the-xorshift-word-so-the-rest-of-the-cell-is-another-cells",
+  "file": "src/render/labGrass.js",
+  "old": "  st.s = s; st.i = end; st.n = n; st.count = n;",
+  "new": "  st.i = end; st.n = n; st.count = n;",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C3-a-slice-forgets-how-many-stood-so-the-next-overwrites-them",
+  "file": "src/render/labGrass.js",
+  "old": "  st.s = s; st.i = end; st.n = n; st.count = n;",
+  "new": "  st.s = s; st.i = end; st.count = n;",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C3-a-frame-that-finished-a-cell-begins-another-two-slices-in-one-frame",
+  "file": "src/render/labGrass.js",
+  "old": "          if (pending || sliced) continue;           // one slice a frame",
+  "new": "          if (pending) continue;           // one slice a frame",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C3-a-cell-inside-the-fade-is-sliced-too",
+  "file": "src/render/labGrass.js",
+  "old": "        if (!item.st && !catchUp && d > wholeR2) {   // PERF-EXT-C3: a rim cell on a walk",
+  "new": "        if (!item.st && !catchUp) {   // PERF-EXT-C3: a rim cell on a walk",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C3-the-whole-cell-radius-is-a-guess-not-the-shaders-fade-start",
+  "file": "src/render/labGrass.js",
+  "old": "export const GRASS_WHOLE_AT = 0.55;",
+  "new": "export const GRASS_WHOLE_AT = 0.5;",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C3-the-field-never-catches-up-so-a-boot-slices-its-whole-rim",
+  "file": "src/render/labGrass.js",
+  "old": "      const catchUp = missing > GRASS_CATCH_UP;",
+  "new": "      const catchUp = false;",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C3-the-field-always-catches-up-so-the-walk-spikes-again",
+  "file": "src/render/labGrass.js",
+  "old": "      const catchUp = missing > GRASS_CATCH_UP;",
+  "new": "      const catchUp = true;",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C3-a-shift-keeps-a-half-placed-cell-of-the-old-frame",
+  "file": "src/render/labGrass.js",
+  "old": "      pending = null;   // PERF-EXT-C3: a half-placed cell holds scene positions of the old frame",
+  "new": "      void pending;   // PERF-EXT-C3: a half-placed cell holds scene positions of the old frame",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C3-an-invalidate-keeps-a-half-placed-cell-of-the-data-it-replaced",
+  "file": "src/render/labGrass.js",
+  "old": "      if (pending && pending.cx >= cx0 && pending.cx <= cx1 && pending.cz >= cz0 && pending.cz <= cz1) pending = null;",
+  "new": "      if (false) pending = null;",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C3-a-cell-the-eye-walked-away-from-is-still-finished-and-written",
+  "file": "src/render/labGrass.js",
+  "old": "      if (pending && nearSq(pending.cx, pending.cz, ex, ez) > fillR2) pending = null;",
+  "new": "      if (false) pending = null;",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C3-a-half-placed-cell-is-not-counted-missing-so-the-field-reads-settled-too-soon",
+  "file": "src/render/labGrass.js",
+  "old": "      const missing = want.length + (pending ? 1 : 0);",
+  "new": "      const missing = want.length;",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C3-a-begun-cell-is-placed-at-the-scene-origin",
+  "file": "src/render/labGrass.js",
+  "old": "          const st = beginGrassCell(cx, cz, { perCell, seed, cell, originX: gx, originZ: gz });",
+  "new": "          const st = beginGrassCell(cx, cz, { perCell, seed, cell });",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
+ },
+ {
+  "name": "PERF-EXT-C3-a-finished-cell-is-thrown-away-and-placed-again-whole",
+  "file": "src/render/labGrass.js",
+  "old": "renderer.writeSlot(slot, item.st ?? placeLabGrassCell(",
+  "new": "renderer.writeSlot(slot, placeLabGrassCell(",
+  "tests": [
+   "test/grassshift.test.js"
+  ]
  }
 ]

@@ -125,3 +125,63 @@ field; the teleport empties it), `audit_wod_branch.test.js` m2 and
 lost site). Mutants: `perfextc.json` C2; `grass2.json`, `grass6.json`
 and `grasspath.json` re-aimed by content (the tint's fx/fz, the grid's
 origin in nearSq).
+
+### PERF-EXT-C3 — a walk places its grass rim a slice a frame
+
+**Before.** A walking eye brings grass cells in at the rim - their nearest
+point just inside the 300 m range - and each was placed whole on the frame
+it arrived: 6,122 candidate blades, ~1.5-2 ms of keep()/ground()/noise
+plus ~0.9 ms of pack and upload, two cells a frame at most. On 5-17% of
+frames while moving (walk to gallop) that was a 4-8 ms spike, 10 ms at
+15 m/s.
+
+**After.** The placer is resumable: `beginGrassCell` is everything before
+its loop and `stepGrassCell` runs `budget` more candidates of it - the
+loop body word for word, carrying the xorshift word, the candidate index
+and the count of blades that stood - and `placeLabGrassCell` is the two
+run end to end. However the loop is cut the lanes are the same bytes.
+`createGrassField.update` places a rim cell - past `GRASS_WHOLE_AT` (0.55,
+the lab shader's own fade start) of the range - `GRASS_SLICE` (1,500)
+candidates a frame and writes it the frame it is done, one cell in
+progress and one slice a frame. A cell inside the fade's start still comes
+whole, and with more than `GRASS_CATCH_UP` (8) cells waiting - a boot, a
+teleport, a pixel re-read under the eye - every cell comes whole, two a
+frame, at the pace the field always filled at. A half-placed cell is
+dropped by a shift (its positions are the old frame's), by an invalidate
+over it, and by the eye walking out of reach; it is begun again from the
+world as it stands. Total work is the same; it is spread.
+
+**What the eye sees.** A rim cell lands ~4 frames later than it did - a
+metre at a gallop, 300 m out, where the draw keeps 0-2% of a cell's
+blades. At a boot the last eight rim cells come a slice at a time (211
+frames to settle against 180). Nothing else moves.
+
+**Not done: the worker.** The prover measured step 1 (this) and
+recommended the worker only as a later step, because the worker needs the
+near pixels' samples, tiles, paths, sites and grass records duplicated to
+it - the very state every stale-grass bug this field has had lived in
+(GRASS-STALE1, GRASS-PATH1, GRASS-WET1, the WoD sites, the stride-1
+filter). It was not proven, so it is not built.
+
+| harness (this tree) | before (base) | after |
+|---|---|---|
+| `grassWalkKeep.mjs` 4.4 m/s, 20 s | update() p99 4.37, max 5.21 ms; keep() max 6,122 a frame | p99 1.35, max 2.06 ms; keep() max 1,500 |
+| `grassWalkKeep.mjs` 8.1 m/s | p99 4.55, max 5.43 ms; keep() max 6,122 | p99 1.78, max 3.15 ms; keep() max 1,500 |
+| `grassWalkKeep.mjs` 15 m/s | p90 3.83, p99 6.61, max 9.95 ms; keep() max 12,244 | p90 1.12, p99 1.45, max 2.40 ms; keep() max 1,500 |
+| the same walks' mean update() | 0.23 / 0.40 / 0.72 ms | 0.24 / 0.41 / 0.73 ms (the same work, spread) |
+| the same walks' final field | - | the same cell set (hash-equal at every speed) |
+| `slicedTree.mjs` - 200 cells | whole cell median 1.59 ms | slices of 1 / 1,500 / whole byte-identical 20/20, 200/200, 200/200; a 1,500 slice median 0.33, p90 0.49, p99 0.81 ms |
+| `cellCost.mjs` - a whole cell (the boot's path) | 2.01-2.05 ms median | 2.02-2.03 ms |
+
+Pins: `test/grassshift.test.js` C3 x3 - the slice/whole byte identity at
+1, 777, 1,500 and the whole cell on a crossed field; a walk on a crossed
+field asks keep() at most a slice a frame, writes every rim cell with the
+bytes a whole placement makes, and ends holding a whole fill's cells plus
+the hysteresis' trailing rim; the whole-cell radius is the shader's fade
+start, a boot fills two whole cells a frame to its last eight, cells under
+the eye come back whole on the frame they are missed, a shift, an
+invalidate and a walk away each drop a half-placed cell that then lands,
+and a cell no bigger than a slice is never left half placed. Re-stated on
+purpose: `labGrass.test.js` GRASS6's order pin reads stepGrassCell (the
+loop's home) and GR5's five-metre step is given the frames its rim takes.
+Mutants: `perfextc.json` C3 x15, all dead.
