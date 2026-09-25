@@ -7596,14 +7596,14 @@ export async function bootWorld(canvas, renderer, params, status) {
      *  GameManager.Instance.WeaponManager.ToggleSheath() - a SINGLETON
      *  call with no scene gate at all, registered for both buttons at
      *  :211-212, so the panel is live on every screen the bar is drawn
-     *  on. Here routeAction's arm is optional (ui/input.js:796) and
+     *  on. Here routeAction's arm is optional (ui/input.js:809) and
      *  only dungeonContext.js carried the door, so above ground, in
      *  ?exterior and inside a building the click was swallowed by
      *  routeLargeHudClick's unconditional `return true` and nothing
      *  drew or sheathed - while Z kept working everywhere, which is
      *  why it read as "only the panel is dead". THE FOUR HOSTS RULE.
      *  No double-fire from the keyboard: routeKey declines
-     *  POLLED_ACTIONS (ui/input.js:644), so a Z press reaches the
+     *  POLLED_ACTIONS (ui/input.js:652), so a Z press reaches the
      *  frame's edge latch and nothing else. */
     toggleSheath: () => weaponRig.toggleSheath(),
     // QS2: the diamond's three presses, beside the sheath panel's door and for
@@ -7839,8 +7839,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     // now the press being used - runs once per action. A key with none runs it once with null: the HUD's own shortcuts are
     // keys, not actions, and they answer on the first pass alone, so a shared F10 cannot flip the large HUD twice.
     const acts = retroToggleKey(e, keys) ? [] : actionsOf(e, keys);   // I2: the registry owns the code -> action read; AUDIT RETRO1 G3: Shift-F11 is the HUD's (below), never QuickLoad's - routeKey's hosts take it first too
+    // AUDIT UXB1 F1: ...until a WINDOW comes up - a pausing one (bindCursorToggle's own predicate) or a pointer surface
+    // (the chat, the friends panel, the F-menu: they pause nothing, and take keys). The keys are its from there: a key
+    // shared by two windows' doors opens the first, not both stacked, and nothing after a door is done behind it.
+    const windowUp = () => gamePaused() || (modes?.modalWindowUp?.() ?? false) || pointerSurfaces.size > 0;
+    const upBefore = windowUp();
+    const pass = acts.length ? acts : [null];
     let spent = false;
-    (acts.length ? acts : [null]).forEach((act, i) => { if (worldKeyAction(act, i === 0)) spent = true; });
+    for (let i = 0; i < pass.length; i++) {
+      if (worldKeyAction(pass[i], i === 0)) spent = true;
+      if (!upBefore && windowUp()) break;
+    }
     if (spent) return;
     if (e.code === 'AltLeft') e.preventDefault();
     // DFU parity: mouselook is the resting state - any gameplay
@@ -7994,7 +8003,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // gates the position now, not just the presence.
         // WEAPON-VIS2: this ladder never calls routeKey (the comment
         // above the Escape arm says so directly), so routeKey's own
-        // `POLLED_ACTIONS.has(act)` decline (ui/input.js:755) never
+        // `POLLED_ACTIONS.has(act)` decline (ui/input.js:768) never
         // touched this door. hudCtx carries toggleSheath (AUDIT 58, for
         // the large HUD's sheath panel), so 'ReadyWeapon' - Z - reached
         // routeAction from BOTH here AND the frame's own poll below
@@ -8029,7 +8038,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // AUDIT 58 (f3/input) - THE ONE READER. This host builds the mode
   // machine unconditionally, and that machine used to register a
   // SECOND bindCursorToggle over the same module-global flag
-  // (player/pointerLock.js:57-171), so ONE Enter flipped it twice and
+  // (player/pointerLock.js:57-174), so ONE Enter flipped it twice and
   // `cursorActive()` could never rise here at all - the large HUD's
   // eleven panels were unreachable by mouse in this host, and the
   // second flip fired a releaseLook/requestLook pair inside one event.

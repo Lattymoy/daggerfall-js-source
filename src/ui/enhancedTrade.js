@@ -395,9 +395,16 @@ function transferSelected() {
  *  the footer's Buy takes that many. Offered only where the split is clean (inventory.js splitsCleanly): SplitStack
  *  mints a FRESH template item, so a potion or a book split off its stack would lose what made it that potion. */
 function buyMax(item) {
+  if (buyMaxMemo?.has(item)) return buyMaxMemo.get(item);
   const plan = planTake(item, { bag: [...deps.packItems(), ...basket], entity: deps.entity ?? null, dryRun: true });
-  return plan.ok ? plan.amount : 0;
+  const max = plan.ok ? plan.amount : 0;
+  buyMaxMemo?.set(item, max);
+  return max;
 }
+/** AUDIT UXB1 F7: one dry run per item per paint - the detail strip, its count and the footer each asked, three
+ *  walks of pack and basket a paint. Live only while render() builds, so no handler reads a figure from before its
+ *  own change. */
+let buyMaxMemo = null;
 function countOffered(item) {
   return inBuy() && selected?.item === item && selected.side === 'remote' && (item.stackCount ?? 1) > 1 && splitsCleanly(item);
 }
@@ -853,6 +860,10 @@ function render() {
   // back to its top every time.
   const prevScroll = Array.from(host.querySelectorAll('.packcol')).map((c) => c.scrollTop);
   repairEst = repairEstimatesNow();   // UXB1-K: one scheduler pass for every row this paint draws
+  buyMaxMemo = new Map();   // AUDIT UXB1 F7
+  try { paint(prevScroll); } finally { buyMaxMemo = null; }
+}
+function paint(prevScroll) {
   host.innerHTML = '';
   const shell = el('div', 'px-home px-over trade-shell');
   const win = el('div', 'px-win trade-win');

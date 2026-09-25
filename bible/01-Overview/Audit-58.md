@@ -175,7 +175,7 @@ spends most of their time in (`setDefaultEnchantCtx` is imported at
 `src/scenes/exterior.js:63` now, and the pool it answers with is the
 live one). **`scenes/interior.js` registered a keydown listener and never
 called `swallowBrowserKey`**, so F5 inside a building reloaded the page
-and destroyed the session - against `src/ui/input.js:691-713`'s own law,
+and destroyed the session - against `src/ui/input.js:699-721`'s own law,
 "one list, because there is one keyboard, and every host has to use it."
 **The large HUD's sheath panel answered only in the dungeon**, three
 hosts inert. The interior ray had no quest-foe click arm, so `clicked foe`

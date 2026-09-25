@@ -248,7 +248,15 @@ buttons on its fixed art, Slide's among them, unbound.
   ("Also: Jump"). The case that asked for it ("jump+swim-up") needs no share at all, and the page says so: Float up
   and Float down say, in the live keys, that Jump and Crouch already raise and lower a swimming or levitating body
   (LevitateMotor.cs:86-89), and giving Jump's key to Float up adds "you need neither" (`floatHint`,
-  `sharedFloatNote`) beside the three answers.
+  `sharedFloatNote`) beside the three answers - Use for both included (AUDIT UXB1 F10: a share would only take Float
+  up off its own key).
+- A shared key's actions run owner first, and **a window one of them opens ends the press** (AUDIT UXB1 F1) - above
+  ground a chat or menu surface too: the window owns the keys from there, so a key shared by two windows' doors opens
+  the first, not both stacked.
+- **A newer build's shares ride through** (AUDIT UXB1 F3/F8), as `unknown` carries its owners: a name this build does
+  not know, beside a known owner, and the whole list of a key whose owner it does not know (that key is not bound
+  here) are written back out while the key's owner is the one they were loaded under. A key rebound, cleared or
+  handed on here is this build's, and a full reset takes them with the primary's own shares.
 - **Defaults is staged**, as the page's own sentence says ("Nothing is saved until you press Confirm"): DFU's
   SetDefaults reset the live registry and saved on the spot; here Confirm commits the reset (with its joystick
   tail and removal marks) and any edit made after it. Leaving the page drops everything staged. (The button read

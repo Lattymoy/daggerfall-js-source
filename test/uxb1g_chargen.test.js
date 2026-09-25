@@ -193,6 +193,10 @@ test('UXB1-H: every value the builder\'s windows would refuse is refused on the 
   refuse((d) => { d.attributes.speed = 76; }, 'above it');
   refuse((d) => { delete d.attributes.luck; }, 'an attribute missing');
   refuse((d) => { d.reputations.nobility = 11; }, 'past the bar');
+  // AUDIT UXB1: a name is what the name box could type - no control or format characters
+  const odd = good();
+  odd.name = ' Spell\u202Esword\n\t\u200B ';
+  assert.equal(parseCustomClassDoc(odd).value.name, 'Spellsword');
 });
 
 test('UXB1-H: the special picks pass the windows\' own gates in the windows\' order - a pick they would not take is left out and named, never loaded', () => {

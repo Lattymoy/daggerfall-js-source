@@ -327,9 +327,10 @@ export function swingHint(code, mode, readyCode) {
 /** UXB1-D (2026-09-25, the UX backlog: "Is there a reason you cannot have multiple keys bound to the same action
  *  such as jump+swim-up?"): THE TWO ROWS WHOSE KEY IS NOT THE ONLY ONE THAT MOVES YOU. LevitateMotor.Update rises on
  *  Jump OR FloatUp and sinks on Crouch OR FloatDown (LevitateMotor.cs:86-89), and every host passes the pair
- *  (`up: jumpHeld || held(keys, 'FloatUp')`) - so the swim-up a player wanted Space for is already Space's. One key,
- *  one action (Controls.md law 3) is why Space cannot be bound to both; this line is why it never needs to be. Null
- *  for every other row, and when the partner action is unbound. `dict` is the shown set. */
+ *  (`up: jumpHeld || held(keys, 'FloatUp')`) - so the swim-up a player wanted Space for is already Space's. Since
+ *  UXB1-S a key CAN carry both (Use for both, Controls.md law 3); this line is why this pair never needs to (AUDIT
+ *  UXB1 F10: it still said the key could not). Null for every other row, and when the partner action is unbound.
+ *  `dict` is the shown set. */
 const FLOAT_PARTNERS = Object.freeze({
   FloatUp: Object.freeze({ partner: 'Jump', name: 'Jump', verb: 'rises' }),
   FloatDown: Object.freeze({ partner: 'Crouch', name: 'Crouch', verb: 'sinks' }),
@@ -343,11 +344,13 @@ export function floatHint(action, dict) {
 
 /** UXB1-D: ...and the replace prompt's answer for that pair. Binding Jump's key onto Float up (Crouch's onto Float
  *  down) asks like any held key, but the honest answer is "you need neither": the key already does both. Every holder
- *  must be the partner - a key someone else also holds is an ordinary clash - and the line names the key. */
+ *  must be the partner - a key someone else also holds is an ordinary clash - and the line names the key.
+ *  AUDIT UXB1 F10: the prompt has a third answer beside it now, and the line says that one is not needed either -
+ *  a share would only take Float up off its own key. */
 export function sharedFloatNote(action, holders, usingPrimary = true) {
   const f = FLOAT_PARTNERS[action];
   if (!f || !holders?.length || !holders.every((h) => h.action === f.partner)) return null;
-  return `${f.name} already ${f.verb} while you swim or levitate, so the key does both as it is: answer No to keep it on ${f.name}${usingPrimary ? '' : ' (secondary)'}.`;
+  return `${f.name} already ${f.verb} while you swim or levitate, so the key does both as it is, without ${SHARE_KEY_LABEL}: answer No to keep it on ${f.name}${usingPrimary ? '' : ' (secondary)'}.`;
 }
 
 /** GetButtonText + FormatButtonText. `full` skips the length cap

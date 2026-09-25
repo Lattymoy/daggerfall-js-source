@@ -90,6 +90,29 @@ test('UXB1-E: a sync writes only what differs, each into its own store, keeps wh
   assert.equal(undoOnlineSync(), 0);
 });
 
+test('AUDIT UXB1 F2: a second sync ADDS to the undo - the first sync\'s rows stay within Undo\'s reach, and a rule both wrote is one row with the later value', () => {
+  fresh();
+  setPref('enhancedAI', false);
+  const first = applyOnlineSync(onlineSyncPlan({ search: '' }), { now: 1 });
+  const id = (r) => `${r.store}:${r.section ?? r.vendor ?? ''}/${r.key}`;
+  assert.ok(first.rows.some((r) => id(r) === 'prefs:/enhancedAI'));
+  setPref('enhancedWater', false);
+  const second = applyOnlineSync(onlineSyncPlan({ search: '' }), { now: 2 });
+  const want = [...new Set([...first.rows.map(id), 'prefs:/enhancedWater'])].sort();
+  assert.deepEqual(second.rows.map(id).sort(), want, 'the first sync\'s rows kept beside the second\'s, one a rule');
+  assert.equal(second.at, 2);
+  assert.deepEqual(lastOnlineSync(), JSON.parse(JSON.stringify(second)), 'and that is the record stored');
+  assert.equal(undoOnlineSync(), want.length);
+  assert.equal(getPref('enhancedAI'), false, 'the FIRST sync is undone too - it was replaced, and beyond reach');
+  assert.equal(getPref('enhancedWater'), false);
+
+  fresh();
+  const row = (offline) => ({ id: 'prefs:enhancedAI', store: 'prefs', key: 'enhancedAI', label: 'Enhanced AI', online: true, offline, same: false });
+  applyOnlineSync([row('first')], { now: 1 });
+  const rec = applyOnlineSync([row('second')], { now: 2 });
+  assert.deepEqual(rec.rows.map((r) => [r.key, r.was]), [['enhancedAI', 'second']], 'one row, the value just before the later sync');
+});
+
 test('UXB1-E: an undo record from another build is read carefully - a key this build no longer declares is passed over, a broken record is none', () => {
   fresh();
   store.set(ONLINE_SYNC_STORE_KEY, JSON.stringify({ at: 1, rows: [

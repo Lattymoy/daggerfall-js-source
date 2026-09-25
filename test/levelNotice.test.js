@@ -427,7 +427,7 @@ test('AUDIT LV2 F4: the strip hangs in the HUD\'s own bottom column, not on the 
 
 test('AUDIT LV2 F5: the level\'s row names a key only when there IS one', () => {
   // `buttonText(null)` is KeyCode.None's own string, "NONE"
-  // (systems/controlsConfig.js:356), so a player who cleared the sheet
+  // (systems/controlsConfig.js:359), so a player who cleared the sheet
   // binding was handed a plate reading A LEVEL AWAITS / NONE.
   const store = loadOrCreateBindings();
   assert.notEqual(codeForAction(store, 'CharacterSheet'), null, 'the default build binds it');

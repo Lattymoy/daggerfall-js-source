@@ -27,6 +27,7 @@ const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const DAY = 1440;
 const oil = (n) => ({ group: 'UselessItems2', templateIndex: OIL_TEMPLATE, name: 'Oil', value: 4, stackCount: n });
 const REMOTE_SLOT0 = [290, 48 + 20];   // the middle of the classic shelf's first slot (test/nativetrade.test.js)
+const LOCAL_SLOT0 = [192, 48 + 20];    // ...and of the local list's, where the basket comes first
 
 // ── K: THE CLOCK, AS LAW ─────────────────────────────────────────
 
@@ -128,6 +129,27 @@ test('UXB1-L: a stack only partly carried asks too, seeded with what fits - and 
   assert.match(read('src/ui/nativeInventory.js'), /return splitRequired\(it, plan\.amount, this\._controlDown\);/);
   const trade = read('src/ui/nativeTrade.js');
   assert.match(trade, /if \(splitRequired\(item, plan\.amount, this\._controlDown\)\) \{\n\s+this\.inputBox = splitInputBox\(plan\.amount, this\._controlDown,/);
+});
+
+test('AUDIT UXB1 F4: a split lot put back on the classic shelf rejoins its stack - by the click back and by Clear', () => {
+  const shelf = [oil(12)];
+  const w = classicShop(shelf);
+  const split = (n) => { w.input('ControlLeft'); w.click(...REMOTE_SLOT0); typeInto(w.inputBox, String(n)); w.input('Enter'); w.keyup('ControlLeft'); };
+  split(2);
+  assert.deepEqual([w.basket.length, shelf.map((i) => i.stackCount)], [1, [10]]);
+  w.tab = 'clothing';   // Oil's page (tabAccepts' last arm): the basket lists on the page it belongs to
+  w.click(...LOCAL_SLOT0);
+  assert.equal(w.basket.length, 0);
+  assert.deepEqual(shelf.map((i) => i.stackCount), [12], 'one stack of twelve - not "Oil x10" beside "Oil x2"');
+  split(3);
+  split(4);
+  assert.deepEqual([w.basket.map((i) => i.stackCount), shelf.map((i) => i.stackCount)], [[7], [5]], 'the basket merges as it fills (applyTransfer\'s addItem)');
+  w._clear();   // the Clear button, and OnPop
+  assert.equal(w.basket.length, 0);
+  assert.deepEqual(shelf.map((i) => i.stackCount), [12], '...and the shelf as it empties');
+  const src = read('src/ui/nativeTrade.js');
+  assert.match(src, /if \(d\.kind === 'unstage'\) \{ this\._unstage\(item\); return; \}/);
+  assert.match(src, /while \(this\.basket\.length\) this\._unstage\(this\.basket\[0\]\);/);
 });
 
 // ── L: THE ENHANCED COUNTER'S COUNT ──────────────────────────────

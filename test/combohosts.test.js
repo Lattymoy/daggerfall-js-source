@@ -14,7 +14,7 @@
 // CharacterSheet, LogBook, NoteBook, AutoMap, TravelMap, Rest,
 // CastSpell, Status, Transport, UseMagicItem, QuickSave, QuickLoad,
 // Escape - was dead. A player who bound Inventory to Shift+I in the
-// controls window (systems/controlsConfig.js:415-420 mints exactly that
+// controls window (systems/controlsConfig.js:418-423 mints exactly that
 // code) got the Status box instead and could never open the inventory
 // from the keyboard. A8's pins drove the parameter no host passed.
 import { test } from 'node:test';
@@ -125,6 +125,6 @@ test('AUDIT 58 (f3/input): EVERY host that registers a keydown hands its held-ke
   assert.match(inp, /export function actionsOf\(e, keys = null\) \{\n {2}const b = bindings\(\);\n {2}if \(keys\) \{/);
   assert.match(inp, /export function actionOf\(e, keys = null\) \{\n {2}return actionsOf\(e, keys\)\[0\] \?\? null;/, 'the one-answer read is the first of them');
   assert.match(inp, /export function routeKey\(e, ctx, setPlayerPos = null, keys = null\) \{/);
-  assert.match(inp, /for \(const act of actionsOf\(e, keys\)\) used = routeKeyAction\(e, act, ctx, setPlayerPos\) \|\| used;/, 'routeKey forwards it (UXB1-S: every action a shared key carries)');
+  assert.match(inp, /for \(const act of actionsOf\(e, keys\)\) \{\n\s*used = routeKeyAction\(e, act, ctx, setPlayerPos\) \|\| used;/, 'routeKey forwards it (UXB1-S: every action a shared key carries)');
   assert.match(inp, /if \(actionsOf\(e, keys\)\.includes\('QuickLoad'\) && !retroToggleKey\(e, keys\)\)/, 'including the arm that answers from under a window (AUDIT RETRO1 C1: never on the retro toggle\'s chord)');
 });

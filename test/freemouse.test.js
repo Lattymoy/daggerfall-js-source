@@ -122,7 +122,7 @@ test('FREEMOUSE by source: ONE reader ORs the two actions - there is no second t
   // KB1: ...and ActivateCursor answers only while no chat claims THIS press (online, Enter opens the chat; Y frees the
   // mouse) - AUDIT KB1: the claim is asked with the event, so a chat that declines the press leaves Enter to DFU
   // UXB1-S: the host hands every action a shared key carries (actionsOf), so the one reader asks whether EITHER is among them
-  assert.match(pl, /const acts = \[actionOf\(e\)\]\.flat\(\)\.filter\(Boolean\);[^\n]*\n\s*if \(!acts\.includes\(FREE_MOUSE_ACTION\) && !\(acts\.includes\('ActivateCursor'\) && !cursorKeyClaimed\(e\)\)\) return;/);
+  assert.match(pl, /const got = actionsOf\(e\);\n\s*const acts = Array\.isArray\(got\) \? got : got \? \[got\] : \[\];[^\n]*\n\s*if \(!acts\.includes\(FREE_MOUSE_ACTION\) && !\(acts\.includes\('ActivateCursor'\) && !cursorKeyClaimed\(e\)\)\) return;/);
   assert.equal((pl.match(/addEventListener\('keydown', onKey, true\)/g) ?? []).length, 1, 'one listener');
   // No host COMPARES an event's code to the default key. The first
   // draft of this line swept for the string and caught

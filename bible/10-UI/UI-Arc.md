@@ -9383,7 +9383,7 @@ cited and ported somewhere in `src/`. FOUR were not:
 
 ### UI1 CLOSED: the use-magic-item window
 
-The port had the DOOR and not the room. `input.js:797` routed
+The port had the DOOR and not the room. `input.js:810` routed
 `Actions.UseMagicItem` to `ctx.openUseMagicItem`, `hudLarge.js:153`
 gave the large HUD's button its rect, `inputActions.js` bound KeyU -
 and no host implemented the method, so a live binding silently did
@@ -10026,7 +10026,7 @@ than because the screen agrees with a narrower port.
 stays unbuilt - an owner call, unchanged: the port has no gamepad layer
 at all, the serialized joystick blocks are simply absent from
 `KeyBindData_v1`, and the flag that says so is
-`src/systems/inputActions.js:1333`. The JOYSTICK tab still answers with
+`src/systems/inputActions.js:1368`. The JOYSTICK tab still answers with
 its note, and Ledger `:593`'s live clause now names that window alone.
 `weaponSensitivitySlider` is commented out in DFU itself (:42, :355) -
 nine controls are built, the tenth is a stub - and
@@ -10562,9 +10562,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:7881`,
+the other half went stale unnoticed. (The rest cite named `world.js:7890`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:7961` now.)
+deleted the second and the cite is `world.js:7970` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -10738,7 +10738,7 @@ if (alt.ContainsKey(code)) alt.Remove(code);        // InputManager.cs:729-734
 - and for a SECONDARY write the "other" dict IS the primary, so a
 secondary Jump written onto `ShiftLeft` deletes Run's primary row, and
 the reverse order deletes Jump's secondary row by the same line. The
-port carries it at `inputActions.js:815-816`. Either order collapses the
+port carries it at `inputActions.js:827-828`. Either order collapses the
 pair.
 
 The route that DOES produce it is the LOAD path. `LoadActionKeybinds`
@@ -10749,7 +10749,7 @@ if (!dict.ContainsKey(key) && actionVal != Actions.Unknown)
     dict.Add(key, actionVal);                       // InputManager.cs:1950-1969
 ```
 
-- ported at `inputActions.js:1022-1032`, whose own comment already said
+- ported at `inputActions.js:1057-1067`, whose own comment already said
 "Raw map-set, NOT setBinding". So a hand-edited `KeyBindings.txt` that
 puts Jump on the run key as a SECONDARY, with the primary `Space` spent
 on something else, loads exactly as written; and it SURVIVES the
@@ -16764,7 +16764,7 @@ removed.
 **REFUTED, and written down because the next reader will wonder.**
 A window key (F5/F6/L) pressed during a level-up cannot stack a second
 one. The overlay carries `isChoiceWindow`, and both key seams - the
-dungeon/interior `routeKey` (ui/input.js:716-728) and townTalk's own
+dungeon/interior `routeKey` (ui/input.js:724-736) and townTalk's own
 (:371-381) - hand the raw code to the OVERLAY and return before any
 toggle arm can run. The same guard is why QuickLoad, which routeKey
 otherwise allows from under any overlay, cannot reach past this one
@@ -17024,7 +17024,7 @@ UNDER the strip rather than at a box that now contains it. All four new
 checks fail against the shipped code.
 
 **F5 - THE ROW NAMED A KEY CALLED NONE.** `buttonText(null)` is
-KeyCode.None's own string (`systems/controlsConfig.js:356`), so a
+KeyCode.None's own string (`systems/controlsConfig.js:359`), so a
 player who CLEARED the character-sheet binding was handed a plate
 reading A LEVEL AWAITS / NONE - an instruction to press a key that does
 not exist, which is the bug the registry lookup was there to prevent
@@ -18181,3 +18181,44 @@ Pins: `test/uxb1*.test.js` (52), with `enhancedControls.test.js` (22), `ccrep`, 
 re-aimed, and for S every pin that stated one key, one action re-aimed to the shared-key law (the I4 duplicate and apply
 pins, SOC D3's yield, the hosts' ladder and window-key source pins). Mutants: `tools/mutants/uxb1.json`, 38, all dead;
 `worldhover.json`'s four signature records and thirty-one records S moved re-aimed by content.
+
+### AUDIT UXB1 (2026-09-25, "Audit before merge") - ten findings: nine mended, one checked and left, one found beside them
+
+- **F1 - a shared key dispatched past the window it opened.** routeKey and both self-routing ladders ran every action
+  on the key whatever the first one did, so Inventory and Character Sheet on one key opened both, stacked. The loop
+  stops once a window is up (routeKey on the context's live `uiOverlayActive`, the ladders on bindCursorToggle's own
+  predicate read before the pass, and above ground a pointer surface the pass opened - the chat, the friends panel,
+  the F-menu pause nothing and take keys); two actions that open nothing still both run.
+- **F2 - a second sync replaced the undo.** `applyOnlineSync` wrote a fresh record each time, so the first sync's
+  values were beyond Undo's reach after any second one. The record now grows: one row a rule, a rule both syncs wrote
+  keeping the later value (the player's own just before it).
+- **F3/F8 - a newer build's shares were lost.** The load dropped every unknown name and seated a key's first known
+  sharer as its OWNER where the file's owner was a newer build's action - and the save that followed wrote that name
+  over it, the one thing `unknown` exists to keep. What cannot be seated is carried (`sharedUnknown`,
+  `secondarySharedUnknown`) and written back while the key's owner is the one it was loaded under; a key whose owner
+  is unknown is not bound here, as for an unshared one. The seat itself is one function (`seatOnKey`) where the share
+  and the load had each spelled it.
+- **F4 - a split lot put back on the classic shelf stood apart.** UXB1-L's split makes a record of its own, and the
+  classic window's click-back and Clear pushed it, leaving "Oil x2" beside "Oil x10". Both go through AddItem's merge
+  now, as the enhanced counter's did.
+- **F5 - the frame's polls built a pair per key per call.** `held`/`pressed`/`released` walked dictEntries' generator
+  for every action every frame; they walk the maps as they stand, and a dict's sharers only where it has any.
+- **F7 - the enhanced counter ran the carry dry-run three times a paint** (the strip, its count, the footer); it runs
+  once per item per paint, the memo live only while render() builds. Recorded as an equivalent mutant: it changes no
+  figure.
+- **F9 - `bindCursorToggle`'s parameter was named for one action** and handed every action a shared key carries; named
+  for what it takes, and a single action still reads the same.
+- **F10 - a comment said a key could not carry both** (stale since S), and the float note did not name the third
+  answer; both mended.
+- **Checked, not changed. F6** - the classic repair labels are recomputed every frame: the pass is over the jobs the
+  window already walks each frame, and a cache would need keying on every job's condition and booking (Repair stamps
+  them in place without changing the list) - the draw now reads the list once and hands it over. And one found beside
+  them: an imported class name kept control and format characters the name box cannot type - a line break into the
+  classic label, a bidi override that turned the name around - so the parser strips them.
+
+Pins: `uxb1e` +1, `uxb1k` +1, `uxb1s` +1 and a secondary-share poll, `uxb1g`'s name, `enhancedControls`' note;
+`combohosts`' routeKey pin re-aimed to the loop, `freemouse`'s reader pin to the renamed parameter. Mutants:
+`uxb1.json` 52 - five S records re-aimed by content, fourteen new - 51 dead, 1 equivalent as recorded; `survtiers3.json`'s
+rest-window cite record re-aimed with the cite. Cites: 114 moved by `tools/citeShift.mjs`, ten struck Ledger and
+Settings-Screen-Spec cites CD4 reads moved by hand, and the Ledger's gamepad-note cite re-resolved (it had run two lines
+past the end of `inputActions.js` since UXB1-S).

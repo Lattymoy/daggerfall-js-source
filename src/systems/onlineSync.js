@@ -20,7 +20,8 @@
 // stands nothing; the rules that are not switches at all (the real-time clock, the rest and the journey that spend
 // none of it); and everything the lane leaves to the player.
 //
-// Undoable: the values it replaced are kept in the storage seam, and Undo writes them back.
+// Undoable: the values it replaced are kept in the storage seam, and Undo writes them back - every sync's since the
+// last Undo (AUDIT UXB1 F2).
 import { ONLINE_FORCED_PREFS, ONLINE_FORCED_SETTINGS, ONLINE_ROOM_MOD_KEYS, isOnlinePage } from './onlineLane.js';
 import { featureForControl } from './features.js';   // the registry declares its online prefs at load (declareOnlinePrefs), and names them
 import { getPref, setPref } from './uiPrefs.js';
@@ -96,17 +97,27 @@ function write(row, value) {
   else setModSetting(/** @type {string} */ (row.vendor), row.key, value);
 }
 
+/** One rule's identity in an undo record: its store, its section or vendor, its key. */
+const rowId = (r) => `${r?.store}:${r?.section ?? ''}:${r?.vendor ?? ''}:${r?.key}`;
+
 /**
  * The sync: every rule that differs is written the room's way, and what it replaced is kept for Undo. Answers the
  * undo record written - `{ at, rows: [{ store, section?, vendor?, key, was }] }` - or null when nothing differed
  * (the last record, if any, is left as it was).
+ *
+ * AUDIT UXB1 F2: a later sync ADDS to the record. It used to replace it, so a second sync (a rule changed back, a
+ * new one in a newer build) left the first sync's values beyond Undo's reach for good. A rule both wrote is one row,
+ * with the later `was` - the player's own value just before the sync that changed it.
  */
 export function applyOnlineSync(plan = onlineSyncPlan(), { storage = appStorage(), now = Date.now() } = {}) {
   const changed = (plan ?? []).filter((r) => !r.same);
   if (!changed.length) return null;
   for (const r of changed) write(r, r.online);
   if (changed.some((r) => r.store === 'settings')) saveSettings();
-  const record = { at: now, rows: changed.map(({ store, section, vendor, key, offline }) => ({ store, section, vendor, key, was: offline })) };
+  const rows = changed.map(({ store, section, vendor, key, offline }) => ({ store, section, vendor, key, was: offline }));
+  const ids = new Set(rows.map(rowId));
+  const kept = (lastOnlineSync({ storage })?.rows ?? []).filter((r) => !ids.has(rowId(r)));
+  const record = { at: now, rows: [...kept, ...rows] };
   try { storage?.setItem(ONLINE_SYNC_STORE_KEY, JSON.stringify(record)); } catch { /* no storage: the sync stands, without its undo */ }
   return record;
 }

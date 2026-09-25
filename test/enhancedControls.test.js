@@ -678,6 +678,7 @@ test('UXB1-D: Float up and Float down say Jump and Crouch move you too, in the l
     'a key someone else holds too is an ordinary clash');
   assert.equal(sharedFloatNote('FloatDown', [{ action: 'Jump', primary: true }]), null, 'Jump is not Float down\'s partner');
   assert.match(sharedFloatNote('FloatDown', [{ action: 'Crouch', primary: false }], false), /Crouch already sinks .* keep it on Crouch \(secondary\)\./);
+  assert.match(sharedFloatNote('FloatUp', [{ action: 'Jump', primary: true }]), /does both as it is, without Use for both: answer No/, 'AUDIT UXB1 F10: the third answer named as not needed');
   // the hint is the motor's law, in every host that drives the levitate motor (LevitateMotor.cs:86-89)
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeon.js']) {
     const src = read(host);

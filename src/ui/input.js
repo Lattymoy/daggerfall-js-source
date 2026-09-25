@@ -48,7 +48,7 @@
 import {
   loadOrCreateBindings, actionLive,
   getCombo, comboCode, comboModifiers, isPairedCode, modifierHeldFirstDict,
-  actionsForCode, dictEntries,
+  actionsForCode,
 } from '../systems/inputActions.js';
 // AUDIT 64 F36/F37: DaggerfallHUD.Update's own shortcut arms. A leaf
 // on systems/ alone, so this module can take it without a cycle.
@@ -417,8 +417,18 @@ export function held(keys, action) {
   if (!actionLive(action)) return false;   // KB1: a switched-off mod's action is never down
   const b = bindings();
   pollLatch(b, keys);           // the frame's raise/lower, before any read (:1826-1832)
-  for (const [code, a] of dictEntries(b, true)) if (a === action && codeDown(b, keys, code)) return true;   // UXB1-S: a shared key holds every action on it
-  for (const [code, a] of dictEntries(b, false)) if (a === action && codeDown(b, keys, code)) return true;
+  return actionDown(b, keys, action);   // UXB1-S: a shared key holds every action on it
+}
+
+/** UXB1-S: is a key `action` holds down - as the key's owner or beside it, the primary dict and then the secondary
+ *  (GetKey's dual-dict fallthrough, :1084)? `ring` is the edge ring for pressed/released; held reads the held Set.
+ *  AUDIT UXB1 F5: the frame's polls ask this per action per frame, so it walks the maps as they stand - the
+ *  dictEntries generator it replaced built a pair per key per call - and a dict's sharers only where it has any. */
+function actionDown(b, keys, action, ring) {
+  for (const [code, a] of b.primary) if (a === action && codeDown(b, keys, code, ring)) return true;
+  if (b.sharedPrimary?.size) for (const [code, list] of b.sharedPrimary) if (list.includes(action) && codeDown(b, keys, code, ring)) return true;
+  for (const [code, a] of b.secondary) if (a === action && codeDown(b, keys, code, ring)) return true;
+  if (b.sharedSecondary?.size) for (const [code, list] of b.sharedSecondary) if (list.includes(action) && codeDown(b, keys, code, ring)) return true;
   return false;
 }
 
@@ -477,9 +487,7 @@ function edgeAction(ring, keys, action) {
   if (!ring || !ring.size || !actionLive(action)) return false;
   const b = bindings();
   pollLatch(b, keys);           // the same frame sweep every read takes (:1826-1832)
-  for (const [code, a] of dictEntries(b, true)) if (a === action && codeDown(b, keys, code, ring)) return true;   // UXB1-S
-  for (const [code, a] of dictEntries(b, false)) if (a === action && codeDown(b, keys, code, ring)) return true;
-  return false;
+  return actionDown(b, keys, action, ring);   // UXB1-S
 }
 /** InputManager.GetKeyDown's dual-dict fallthrough over the frame's down ring. */
 export function pressed(edges, keys, action) { return edgeAction(edges?.downFrame, keys, action); }
@@ -741,8 +749,13 @@ export function routeKey(e, ctx, setPlayerPos = null, keys = null) {
   // UXB1-S: EVERY ACTION THE KEY CARRIES, in turn - a SHARED key (inputActions.js shareBinding) does all it was given,
   // owner first, and the press is used if any of them used it. One action is the loop run once: the arms below are
   // each action's, untouched.
+  // AUDIT UXB1 F1: until a window comes up - the overlay branch above owns the keys from then (uiOverlayActive is
+  // each context's live getter), so a key shared by two windows' doors opens the first, not both stacked.
   let used = false;
-  for (const act of actionsOf(e, keys)) used = routeKeyAction(e, act, ctx, setPlayerPos) || used;
+  for (const act of actionsOf(e, keys)) {
+    used = routeKeyAction(e, act, ctx, setPlayerPos) || used;
+    if (ctx.uiOverlayActive) break;
+  }
   return used;
 }
 function routeKeyAction(e, act, ctx, setPlayerPos) {

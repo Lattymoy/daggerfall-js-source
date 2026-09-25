@@ -46,7 +46,7 @@ import {
 } from '../systems/tradeModes.js';
 import { CANNOT_BE_REPAIRED_TEXT, INTERRUPT_REPAIR_TEXT, isBeingRepaired as itemIsBeingRepaired,
   isRepairFinished, collectRepaired, updateRepairTimes, repairStatusLabel } from '../systems/repairService.js';   // D7: the Repair mode's remote arm; UXB1-K: its misc label
-import { isSummoned, carriedWeight, totalWeight, transferAll } from '../systems/inventory.js';   // TransferItem's summoned guard; AUDIT 63 F48: transferAll is ItemCollection.TransferAll (:452), DoSteal's move
+import { isSummoned, carriedWeight, totalWeight, transferAll, addItem } from '../systems/inventory.js';   // TransferItem's summoned guard; AUDIT 63 F48: transferAll is ItemCollection.TransferAll (:452), DoSteal's move
 import { shopliftAttempt } from '../systems/theft.js';   // AUDIT 63 F48: DoSteal's decision (:909-916)
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // PlayerEntity.MaxEncumbrance
 // AUDIT 58: DaggerfallTradeWindow inherits the two target-icon panels
@@ -475,6 +475,16 @@ export class NativeTradeWindow {
     to.push(item);
   }
 
+  /** AUDIT UXB1 F4: goods put back on the shelf rejoin their stack - ItemCollection.AddItem's merge (inventory.js
+   *  addItem), which DFU's click-back (TransferItem, :800-801) and ClearSelectedItems (TransferAll) both reach. Since
+   *  UXB1-L a split lot is its own record, and `_move`'s push left "Oil x2" beside "Oil x10" on the shelf it came
+   *  from; the enhanced counter's unstageToShelf already merged. */
+  _unstage(item) {
+    const i = this.basket.indexOf(item);
+    if (i >= 0) this.basket.splice(i, 1);
+    addItem(this.hooks.shelfItems(), item);
+  }
+
   /** TEXT.RSC rows through the macro table. The trade records quote
    *  the SHOP, the CITY and the PRICE back at the player - "%cpn
    *  prides itself on having the lowest prices in %cn ... I can sell
@@ -549,7 +559,7 @@ export class NativeTradeWindow {
       return;
     }
     // Buy: a basket item clicks back OUT to the shelf (:800-801)
-    if (d.kind === 'unstage') { this._move(item, this.basket, this.hooks.shelfItems()); return; }
+    if (d.kind === 'unstage') { this._unstage(item); return; }
     if (d.kind === 'refuse') this._refuse(d.refusal);
   }
 
@@ -628,7 +638,7 @@ export class NativeTradeWindow {
    *  on the floor of a collection nobody reads. */
   _clear() {
     if (this.mode === 'Buy') {
-      while (this.basket.length) this._move(this.basket[0], this.basket, this.hooks.shelfItems());
+      while (this.basket.length) this._unstage(this.basket[0]);
       return;
     }
     if (this.mode === 'Repair') {
@@ -952,9 +962,10 @@ export class NativeTradeWindow {
     drawTargetIconPanel(renderer, m, font, R.localTargetIcon, lti.container, lti.label);
     const rti = this._remoteTargetIcon();
     drawTargetIconPanel(renderer, m, font, R.remoteTargetIcon, rti.container, rti.label);
-    const repairLabels = this._repairLabels();   // UXB1-K: one estimate pass per frame, for the misc label below
+    const remote = this.remoteList();
+    const repairLabels = this._repairLabels(remote);   // UXB1-K: one estimate pass per frame, over the list drawn
     for (const [rect, scroll, items] of [
-      [R.remoteList, this.remoteScroll, this.remoteList()],
+      [R.remoteList, this.remoteScroll, remote],
       [R.localList, this.localScroll, this.localList()],
     ]) {
       items.slice(scroll, scroll + LIST_SLOTS).forEach((it, s) => {
@@ -994,10 +1005,9 @@ export class NativeTradeWindow {
    *  answers a Map and stamps nothing), so running it per frame cannot ratchet the way DFU's stored
    *  EstimatedRepairTime would. Null outside Repair, and under InstantRepairs, where DFU's pass returns before it
    *  estimates anything (:516) and there is no clock to label. */
-  _repairLabels() {
+  _repairLabels(items = this.remoteList()) {
     if (this.mode !== 'Repair' || getBool('Controls', 'InstantRepairs')) return null;
     const now = this.hooks.nowMinutes?.() ?? 0;
-    const items = this.remoteList();
     const est = updateRepairTimes(items, { commit: false, nowMinutes: now });
     return new Map(items.map((it) => [it, repairStatusLabel(it, now, est.get(it) ?? null)]));
   }

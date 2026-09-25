@@ -93,7 +93,7 @@ test('UXB1-S: a share across the two dicts - a key one action holds as its prima
   assert.equal(getBinding(b, 'Jump', true), null, 'SetBinding still steals across the dicts - DFU\'s own');
 });
 
-test('UXB1-S: the file - shares only where there are any (a file without is what it was), round-tripped, an unknown name dropped; and the autofill does not put a shared action\'s default back', () => {
+test('UXB1-S: the file - shares only where there are any (a file without is what it was), round-tripped, an unknown name carried (AUDIT UXB1 F8); and the autofill does not put a shared action\'s default back', () => {
   const plain = defaults();
   assert.equal('sharedActionKeyBinds' in serializeKeyBinds(plain), false, 'no shares, no field');
   const b = defaults();
@@ -109,13 +109,50 @@ test('UXB1-S: the file - shares only where there are any (a file without is what
   assert.equal(actionForCode(back, floatUpDefault), null, 'and FloatUp, bound by its share, is not missing - its default is not put back');
   const odd = createBindings();
   loadKeyBinds(odd, { actionKeyBinds: { Space: 'Jump' }, sharedActionKeyBinds: { Space: ['NotAnAction', 'FloatUp', 'Jump'] } });
-  assert.deepEqual(actionsForCode(odd, 'Space'), ['Jump', 'FloatUp'], 'the unknown dropped, the owner not listed twice');
+  assert.deepEqual(actionsForCode(odd, 'Space'), ['Jump', 'FloatUp'], 'the unknown seated nowhere, the owner not listed twice');
+  assert.deepEqual(serializeKeyBinds(odd).sharedActionKeyBinds, { Space: ['FloatUp', 'NotAnAction'] }, 'AUDIT UXB1 F8: ...and written back - an older build never strips a newer one\'s file');
   // a build that predates shares reads the owners and nothing else
   const older = createBindings();
   const { sharedActionKeyBinds, ...rest } = file;
   assert.ok(sharedActionKeyBinds);
   loadKeyBinds(older, rest);
   assert.deepEqual(actionsForCode(older, space), ['Jump']);
+});
+
+test('AUDIT UXB1 F3/F8: a newer build\'s names ride through this one - the whole list of a key whose owner it does not know, a name beside a known owner - while the key\'s owner stands; a key rebound or cleared here is this build\'s', () => {
+  // the finding's probe: a key a newer build's action owns, Jump sharing it. The load seated Jump as the OWNER, and the
+  // save wrote Jump over the newer build's action - the one thing the `unknown` law is there to keep.
+  const file = { actionKeyBinds: { KeyQ: 'SomeNewAction', Space: 'Jump' }, sharedActionKeyBinds: { KeyQ: ['Jump', 'AnotherNew'], Space: ['NotAnAction'] } };
+  const b = createBindings();
+  loadKeyBinds(b, JSON.parse(JSON.stringify(file)));
+  assert.deepEqual(actionsForCode(b, 'KeyQ'), [], 'the newer build\'s key is not bound here - Jump is not made its owner');
+  assert.deepEqual(actionsForCode(b, 'Space'), ['Jump']);
+  let out = serializeKeyBinds(b);
+  assert.equal(out.actionKeyBinds.KeyQ, 'SomeNewAction', 'its owner written back (the unknown law)');
+  assert.deepEqual(out.sharedActionKeyBinds, file.sharedActionKeyBinds, 'and every list, whole');
+  // through the staging copy's own round trip (controlsConfig's serialize -> load) too
+  const copy = createBindings();
+  loadKeyBinds(copy, serializeKeyBinds(b));
+  assert.deepEqual(serializeKeyBinds(copy).sharedActionKeyBinds, file.sharedActionKeyBinds);
+  // shares added here join them; the carried names stay while the owner they were loaded under holds the key
+  shareBinding(b, 'Space', 'FloatUp');
+  assert.deepEqual(serializeKeyBinds(b).sharedActionKeyBinds.Space, ['FloatUp', 'NotAnAction']);
+  // a key rebound here is this build's: the unknown owner and its carried list go together
+  setBinding(b, 'KeyQ', 'Inventory');
+  out = serializeKeyBinds(b);
+  assert.equal(out.actionKeyBinds.KeyQ, 'Inventory');
+  assert.equal('KeyQ' in out.sharedActionKeyBinds, false);
+  // ...and a key cleared here keeps nothing
+  clearBindingByCode(b, 'Space');
+  assert.equal('sharedActionKeyBinds' in serializeKeyBinds(b), false);
+  // a full reset takes the carried shares with the primary's own
+  const r = createBindings();
+  loadKeyBinds(r, JSON.parse(JSON.stringify(file)));
+  resetDefaults(r);
+  assert.equal('sharedActionKeyBinds' in serializeKeyBinds(r), false);
+  // the ONE seat: the load and the share both take it
+  const src = read('src/systems/inputActions.js');
+  assert.equal((src.match(/seatOnKey\(store, code, action, primary\);/g) ?? []).length, 2);
 });
 
 // ── THE PRESS ────────────────────────────────────────────────────
@@ -141,19 +178,32 @@ test('UXB1-S: the frame\'s polls see every action on a shared key - held and pre
     assert.equal(eventAction(e), 'Jump');
     assert.equal(eventMeans(e, 'FloatUp'), true);
     assert.deepEqual(actionsOf({ code: 'Semicolon' }, new Set(['Semicolon'])), [], 'an unbound key means nothing');
+    // AUDIT UXB1 F5: the polls walk the maps as they stand - the secondary dict's sharers too
+    setBinding(b, 'KeyP', 'Crouch', false);
+    shareBinding(b, 'KeyP', 'FloatDown', false);
+    const pad = new Set(['KeyP']);
+    assert.equal(held(pad, 'Crouch'), true);
+    assert.equal(held(pad, 'FloatDown'), true, 'a secondary key\'s sharer is held too');
+    assert.equal(held(pad, 'FloatUp'), false);
   } finally { setBindings(null); }
 });
 
-test('UXB1-S: routeKey DISPATCHES every action a shared key carries - one press, both windows\' doors', () => {
+test('UXB1-S: routeKey DISPATCHES every action a shared key carries - one press, both doors; AUDIT UXB1 F1: until a window comes up', () => {
   const b = defaults();
+  const save = getBinding(b, 'QuickSave');
+  shareBinding(b, save, 'DebugOverlay');
   const sheet = getBinding(b, 'CharacterSheet');
   shareBinding(b, sheet, 'Inventory');
   setBindings(b);
   try {
     const calls = [];
-    const ctx = { uiOverlayActive: false, toggleCharSheet: () => calls.push('sheet'), toggleInventory: () => calls.push('pack') };
+    const ctx = { uiOverlayActive: false, quickSave: () => calls.push('save'), toggleDebugHud: () => calls.push('readout'),
+      toggleCharSheet: () => { calls.push('sheet'); ctx.uiOverlayActive = true; }, toggleInventory: () => calls.push('pack') };
+    assert.equal(routeKey({ code: save, target: null }, ctx, null, new Set([save])), true);
+    assert.deepEqual(calls, ['save', 'readout'], 'the owner first, then the sharer');
+    calls.length = 0;
     assert.equal(routeKey({ code: sheet, target: null }, ctx, null, new Set([sheet])), true);
-    assert.deepEqual(calls, ['sheet', 'pack'], 'the owner first, then the sharer');
+    assert.deepEqual(calls, ['sheet'], 'the sheet came up: the pack is not opened under it (the next press is the sheet\'s)');
   } finally { setBindings(null); }
 });
 
@@ -161,7 +211,9 @@ test('UXB1-S by source: the two self-routing hosts run their ladder once per act
   for (const [f, fn] of [['src/scenes/world.js', 'worldKeyAction'], ['src/scenes/exterior.js', 'exteriorKeyAction']]) {
     const s = read(f);
     assert.match(s, /const acts = retroToggleKey\(e, keys\) \? \[\] : actionsOf\(e, keys\);/, `${f}: every action, none under the retro chord`);
-    assert.match(s, new RegExp(`\\(acts\\.length \\? acts : \\[null\\]\\)\\.forEach\\(\\(act, i\\) => \\{ if \\(${fn}\\(act, i === 0\\)\\) spent = true; \\}\\);\\n\\s*if \\(spent\\) return;`), `${f}: the loop, and nothing after it once the press is used`);
+    assert.match(s, new RegExp(`for \\(let i = 0; i < pass\\.length; i\\+\\+\\) \\{\\n\\s*if \\(${fn}\\(pass\\[i\\], i === 0\\)\\) spent = true;\\n\\s*if \\(!upBefore && windowUp\\(\\)\\) break;\\n\\s*\\}\\n\\s*if \\(spent\\) return;`), `${f}: the loop, stopped by a window it opened (AUDIT UXB1 F1), and nothing after it once the press is used`);
+    assert.match(s, /const windowUp = \(\) => gamePaused\(\) \|\| \(modes\?\.modalWindowUp\?\.\(\) \?\? false\)( \|\| pointerSurfaces\.size > 0)?;\n\s*const upBefore = windowUp\(\);\n\s*const pass = acts\.length \? acts : \[null\];/, `${f}: bindCursorToggle's predicate, read before the pass`);
+    if (f === 'src/scenes/world.js') assert.match(s, /const windowUp = [^\n]*\|\| pointerSurfaces\.size > 0;/, 'and the world host\'s pointer surfaces - the chat and the F-menu pause nothing, and take keys');
     const body = s.slice(s.indexOf(`function ${fn}(act, first) {`), s.indexOf('\n    }\n', s.indexOf(`function ${fn}(act, first) {`)));
     assert.ok(body.length > 1000, `${f}: the ladder is the function`);
     assert.equal((body.replace(/^\s*\/\/.*$/gm, '').match(/\breturn;/g) ?? []).length, 0, `${f}: no arm returns nothing - each says whether the press was used`);
