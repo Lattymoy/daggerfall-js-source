@@ -1,0 +1,51 @@
+[
+  {
+    "name": "SPAWN-ROADS-the-host-never-asks-the-network",
+    "file": "src/scenes/world.js",
+    "old": "      if (net && !pathFreePixel(net, px, py)) return null;\n",
+    "new": "",
+    "tests": ["test/spawnroads.test.js"]
+  },
+  {
+    "name": "SPAWN-ROADS-water-is-not-a-path",
+    "file": "src/world/spawnedDungeons.js",
+    "old": "  for (let t = 0; t < PATH_KEYS.length; t++) if (dataPoint(net, t, px, py)) return false;",
+    "new": "  for (let t = 0; t < 2; t++) if (dataPoint(net, t, px, py)) return false;",
+    "tests": ["test/spawnroads.test.js"]
+  },
+  {
+    "name": "SPAWN-ROADS-every-pixel-is-path-free",
+    "file": "src/world/spawnedDungeons.js",
+    "old": "  for (let t = 0; t < PATH_KEYS.length; t++) if (dataPoint(net, t, px, py)) return false;",
+    "new": "  for (let t = 0; t < PATH_KEYS.length; t++) if (dataPoint(net, t, px, py) && false) return false;",
+    "tests": ["test/spawnroads.test.js"]
+  },
+  {
+    "name": "SPAWN-ROADS-a-pre-network-ruin-is-final",
+    "file": "src/scenes/world.js",
+    "old": "      if (!net) _spawnUnroaded.add(key);",
+    "new": "",
+    "tests": ["test/spawnroads.test.js"]
+  },
+  {
+    "name": "SPAWN-ROADS-the-sweep-rebuilds-with-the-ruin-still-standing",
+    "file": "src/scenes/world.js",
+    "old": "    _dropRoadedSpawns();   // SPAWN-ROADS",
+    "new": "    // SPAWN-ROADS",
+    "tests": ["test/spawnroads.test.js"]
+  },
+  {
+    "name": "SPAWN-ROADS-the-dungeon-underfoot-is-taken-back",
+    "file": "src/scenes/world.js",
+    "old": "      if (!pathFreePixel(net, px, py) && !_insideSpawn(key)) {",
+    "new": "      if (!pathFreePixel(net, px, py)) {",
+    "tests": ["test/spawnroads.test.js"]
+  },
+  {
+    "name": "SPAWN-ROADS-the-ttl-clock-outlives-the-ruin",
+    "file": "src/scenes/world.js",
+    "old": "{ locationIndex.delete(key); _spawnLedger.forget(key); }\n    }\n    _spawnUnroaded.clear();",
+    "new": "{ locationIndex.delete(key); }\n    }\n    _spawnUnroaded.clear();",
+    "tests": ["test/spawnroads.test.js"]
+  }
+]

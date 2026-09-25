@@ -16,6 +16,7 @@ import { mapPixelToLongitudeLatitude } from '../formats/mapsFile.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';   // TTL1: a day is the clock's own, never a second 1440
 import { TERRAIN_SIZE } from './terrainSampler.js';   // SPAWNED-DUNGEONS3: a pixel is 819.2 metres on a side
 import { getLocationTerrainTileOrigin, WORLD_MAP_TILE_DIM } from './terrainTiles.js';   // SPAWNED-DUNGEONS3: where a location stands in its pixel
+import { dataPoint, PATH_KEYS } from '../systems/travelPaths.js';   // SPAWN-ROADS: the network's own byte per pixel
 
 /** The chance a pixel holds a NORMAL spawned dungeon. */
 export const SPAWN_CHANCE = 0.30;
@@ -68,6 +69,17 @@ export const spawnRoll = (salt, px, py) => hash32(salt, px, py, 1) / 4294967296;
 
 /** Does this pixel hold a spawned dungeon of either kind? Deterministic in (salt, px, py). */
 export const spawnsDungeon = (salt, px, py, chance = ANY_SPAWN_CHANCE) => spawnRoll(salt, px, py) < chance;
+
+/** SPAWN-ROADS (2026-09-25, Mac: "Anyway to have things avoid being on a road?"): does no path cross this pixel?
+ *  Every path in the network runs from its pixel's CENTRE out to the edges its compass byte names
+ *  (travelPaths.js), and the centre is where a spawned ruin flattens its plateau - so a pixel with any
+ *  road, track, river or stream bit stands no ruin, and a pixel with none has no path inside it at all.
+ *  `net` is the terrain's network (terrainGen.roads()); an array it does not carry (the generated
+ *  network has no water) answers no path, which is dataPoint's own 0. */
+export function pathFreePixel(net, px, py) {
+  for (let t = 0; t < PATH_KEYS.length; t++) if (dataPoint(net, t, px, py)) return false;
+  return true;
+}
 
 /** Is this pixel's spawned dungeon elite? The slice of the same roll just above the normal share. */
 export const isEliteSpawn = (salt, px, py, normal = SPAWN_CHANCE, elite = ELITE_CHANCE) => {

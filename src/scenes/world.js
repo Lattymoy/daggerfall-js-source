@@ -165,7 +165,7 @@ import { liveLycanthropy } from '../systems/lycanthropy.js';   // SURV7: the env
 import { elementalResistanceChance, ELEMENTS } from '../systems/spellcast.js';   // SURV7: the env's fire and frost resistances
 import { createTownWatch, runTownWatchFrame } from '../systems/townWatch.js';   // DISC19-F: the watch defends the town
 import { rollCampEncountersOnChunkLoad, amGroupRollOwner, campAnchorSpot, CAMP_SIGHT_RADIUS } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
-import { WORLD_SALT, spawnsDungeon, isEliteSpawn, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger, spawnedLocationCentreLocal, dungeonSightLine } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
+import { WORLD_SALT, spawnsDungeon, pathFreePixel, isEliteSpawn, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger, spawnedLocationCentreLocal, dungeonSightLine } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
 import { isMainStoryDungeon } from '../world/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
 import { nearestSafeLocation, respawnFlavorText, reviveForPlay, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
@@ -617,6 +617,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let roadsSweepDue = false;
   function rebuildRoadless() { roadsSweepDue = true; }
   function sweepRoadless() {
+    _dropRoadedSpawns();   // SPAWN-ROADS: before the rebuild, so a crossed pixel comes back without its ruin
     const again = [];
     for (const [, p] of [...built]) if (!p.withRoads) again.push({ px: p.px, py: p.py });
     if (!again.length) return;
@@ -778,10 +779,30 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!locationIndex.get(key)?.spawned) return;
     _spawnLedger.clear(key, _spawnClock());
   };
+  const _spawnUnroaded = new Set();   // SPAWN-ROADS: spawned keys decided before the road network landed
+  /** SPAWN-ROADS: the roads sweep's first act - a ruin decided before the network landed that a path crosses
+   *  is taken back (the index and its TTL clock), unless the player stands in it (TTL1's own exception); its
+   *  pixel was built without roads, so the sweep rebuilds it and the stream asks spawnedDungeonAt again. */
+  function _dropRoadedSpawns() {
+    const net = terrainGen.roads();
+    if (!net) return;
+    for (const key of _spawnUnroaded) {
+      const [px, py] = key.split(',').map(Number);
+      if (!pathFreePixel(net, px, py) && !_insideSpawn(key)) { locationIndex.delete(key); _spawnLedger.forget(key); }
+    }
+    _spawnUnroaded.clear();
+  }
   const spawnedDungeonAt = (px, py) => {
     if (!params.has('online')) return null;
     try {
       if (!spawnsDungeon(_spawnSalt, px, py) || maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;
+      // SPAWN-ROADS (2026-09-25, Mac: "Anyway to have things avoid being on a road?"): no ruin on a pixel a road,
+      // track, river or stream crosses (spawnedDungeons.js pathFreePixel). Online the network is the room's (the
+      // lane forces Basic Roads, onlineLane.js ONLINE_ROOM_MOD_KEYS), so every client asks the same bytes. Asked
+      // BEFORE the network lands, the answer is PROVISIONAL: the ruin stands for now and its key is kept, and the
+      // roads sweep (sweepRoadless) takes back every provisional one a path crosses before it rebuilds the pixels.
+      const net = terrainGen.roads();
+      if (net && !pathFreePixel(net, px, py)) return null;
       // TTL1: ...AND NOT WHILE THE PLAYER IS IN IT. The creator's rule
       // says so twice ("when there is no player in it"), and this is
       // where it is kept: a pixel is only rebuilt from the overworld, so
@@ -801,6 +822,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         regionIndex, regionName: REGION_NAMES[regionIndex], politic: maps.getPoliticIndex(px, py), climate: getWorldClimateSettings(maps.getClimateIndex(px, py)),
       }, elite: isEliteSpawn(_spawnSalt, px, py) });   // ELITE: the same hash on every client
       locationIndex.set(key, loc);
+      if (!net) _spawnUnroaded.add(key);   // SPAWN-ROADS: decided without the network - the sweep asks again
       _spawnLedger.note(key, _spawnClock());   // TTL1: first sight starts the seven-day clock
       return loc;
     } catch (e) { console.warn('[spawned dungeons]', px, py, e?.message ?? e); return null; }
